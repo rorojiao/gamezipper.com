@@ -7,8 +7,23 @@ const ctx = canvas.getContext('2d');
 let W, H, dpr;
 
 // ========== CONFIG ==========
+// Animal image assets
+const ANIMAL_NAMES = ['bear','buffalo','chicken','chick','cow','crocodile','dog','duck','elephant','frog','giraffe','goat','gorilla','hippo','horse','monkey','moose','narwhal','owl','panda','penguin','pig','rabbit','rhino','sloth','snake','walrus','whale','zebra'];
+const animalImages = {};
+let imagesLoaded = 0;
+const cardBackImg = new Image();
+cardBackImg.src = 'images/card_back.png';
+const panelImg = new Image();
+panelImg.src = 'images/panel.png';
+ANIMAL_NAMES.forEach(name => {
+  const img = new Image();
+  img.src = 'images/' + name + '.png';
+  img.onload = () => imagesLoaded++;
+  animalImages[name] = img;
+});
+
 const THEMES = {
-  '🐱动物': ['🐶','🐱','🐰','🦊','🐻','🐼','🐨','🦁','🐸','🐵','🐷','🐮','🐔','🦄','🐝'],
+  '🐱动物': ANIMAL_NAMES.slice(0, 15),
   '🍎水果': ['🍎','🍊','🍋','🍇','🍓','🍑','🍒','🍌','🥝','🍍','🍉','🫐','🥭','🍈','🍐'],
   '🌍国旗': ['🇨🇳','🇺🇸','🇯🇵','🇬🇧','🇫🇷','🇩🇪','🇰🇷','🇧🇷','🇮🇳','🇨🇦','🇦🇺','🇮🇹','🇪🇸','🇷🇺','🇲🇽'],
   '😀表情': ['😀','😂','🥰','😎','🤩','😴','🤔','😱','🥳','🤪','😈','👻','💀','🤖','👽']
@@ -224,31 +239,55 @@ function drawCard(index, now) {
   drawRoundRect(-rect.w/2, -rect.h/2, rect.w, rect.h, 8);
   
   if (animFaceUp) {
-    // Face up - white card with emoji
+    // Face up - white card with emoji or animal image
     ctx.fillStyle = '#fff';
     ctx.fill();
     ctx.strokeStyle = '#ddd';
     ctx.lineWidth = 1;
     ctx.stroke();
-    ctx.font = Math.min(rect.w, rect.h) * 0.5 + 'px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(cards[index].emoji, 0, 4);
+    const emoji = cards[index].emoji;
+    // Check if it's an animal name (string without emoji)
+    if (animalImages[emoji] && animalImages[emoji].complete) {
+      const imgSize = Math.min(rect.w, rect.h) * 0.7;
+      ctx.drawImage(animalImages[emoji], -imgSize/2, -imgSize/2 + 2, imgSize, imgSize);
+    } else {
+      ctx.font = Math.min(rect.w, rect.h) * 0.5 + 'px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(emoji, 0, 4);
+    }
   } else {
-    // Face down - dark card with ?
-    const grd = ctx.createLinearGradient(-rect.w/2, -rect.h/2, rect.w/2, rect.h/2);
-    grd.addColorStop(0, '#2d3436');
-    grd.addColorStop(1, '#636e72');
-    ctx.fillStyle = grd;
-    ctx.fill();
+    // Face down - textured card with panel image
+    if (cardBackImg.complete) {
+      drawRoundRect(-rect.w/2, -rect.h/2, rect.w, rect.h, 8);
+      ctx.save();
+      ctx.clip();
+      ctx.drawImage(cardBackImg, -rect.w/2, -rect.h/2, rect.w, rect.h);
+      ctx.restore();
+      // Overlay gradient for depth
+      const grd = ctx.createLinearGradient(-rect.w/2, -rect.h/2, rect.w/2, rect.h/2);
+      grd.addColorStop(0, 'rgba(100,40,40,0.3)');
+      grd.addColorStop(1, 'rgba(60,20,20,0.5)');
+      drawRoundRect(-rect.w/2, -rect.h/2, rect.w, rect.h, 8);
+      ctx.fillStyle = grd;
+      ctx.fill();
+    } else {
+      const grd = ctx.createLinearGradient(-rect.w/2, -rect.h/2, rect.w/2, rect.h/2);
+      grd.addColorStop(0, '#2d3436');
+      grd.addColorStop(1, '#636e72');
+      ctx.fillStyle = grd;
+      ctx.fill();
+    }
     ctx.strokeStyle = '#555';
     ctx.lineWidth = 1;
     ctx.stroke();
-    ctx.font = Math.min(rect.w, rect.h) * 0.4 + 'px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#aaa';
-    ctx.fillText('❓', 0, 2);
+    if(scaleX>0.3){
+      ctx.font = Math.min(rect.w, rect.h) * 0.4 + 'px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#aaa';
+      ctx.fillText('❓', 0, 2);
+    }
   }
   
   ctx.restore();
@@ -287,10 +326,27 @@ function spawnParticles(x, y) {
 
 function drawBackground() {
   const grd = ctx.createLinearGradient(0, 0, W, H);
-  grd.addColorStop(0, '#667eea');
-  grd.addColorStop(1, '#764ba2');
+  grd.addColorStop(0, '#8b0000');
+  grd.addColorStop(0.5, '#660000');
+  grd.addColorStop(1, '#4a0000');
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, W, H);
+  // Panel texture overlay
+  if (panelImg.complete) {
+    ctx.globalAlpha = 0.08;
+    for (let x = 0; x < W; x += 256) {
+      for (let y = 0; y < H; y += 256) {
+        ctx.drawImage(panelImg, x, y, 256, 256);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  // Gold spotlight accents
+  ctx.globalAlpha = 0.06;
+  ctx.fillStyle = '#ffd700';
+  ctx.beginPath(); ctx.arc(W * 0.2, H * 0.3, 180, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W * 0.8, H * 0.5, 150, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
 }
 
 function drawHUD(now) {

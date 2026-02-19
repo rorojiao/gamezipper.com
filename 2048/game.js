@@ -25,6 +25,22 @@ function playCheerSound(){
   o.start(ac.currentTime+i*0.1);o.stop(ac.currentTime+i*0.1+0.3);});}catch(e){}
 }
 
+// === Tile Sprite Images ===
+const tileImages = {};
+const TILE_IMG_MAP = {2:'tile_grey',4:'tile_yellow',8:'tile_orange',16:'tile_red',32:'tile_blue',64:'tile_pink',128:'tile_green',256:'tile_red',512:'tile_pink',1024:'tile_blue',2048:'tile_yellow',4096:'tile_red',8192:'tile_black'};
+Object.entries(TILE_IMG_MAP).forEach(([val,name])=>{
+  const img=new Image();img.src='images/'+name+'.png';tileImages[val]=img;
+});
+const bgSpaceImg=new Image();bgSpaceImg.src='images/bg_space.png';
+let bgSpacePattern=null;
+bgSpaceImg.onload=function(){
+  const tmpC=document.createElement('canvas');tmpC.width=256;tmpC.height=256;
+  const tmpCtx=tmpC.getContext('2d');tmpCtx.drawImage(bgSpaceImg,0,0);
+  bgSpacePattern=ctx.createPattern(tmpC,'repeat');
+};
+const meteorImg1=new Image();meteorImg1.src='images/meteor1.png';
+const meteorImg2=new Image();meteorImg2.src='images/meteor2.png';
+
 // 🌌 Cosmic Galaxy Theme Colors
 const TILE_COLORS = {
   2:    {bg:'#7f8c8d',fg:'#f9fafb',glow:'#95a5a6',name:'Asteroid'},
@@ -642,6 +658,18 @@ function drawTile(cx, cy, val, scale=1, alpha=1, motionBlur=null) {
   drawRoundRect(x, y, s, s, cornerR * scale);
   ctx.fill();
 
+  // Tile sprite texture overlay
+  const tImg = tileImages[val];
+  if (tImg && tImg.complete) {
+    ctx.save();
+    drawRoundRect(x, y, s, s, cornerR * scale);
+    ctx.clip();
+    ctx.globalAlpha = 0.25;
+    ctx.drawImage(tImg, x, y, s, s);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
   // Inner glow highlight
   ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
@@ -704,14 +732,36 @@ function draw(now) {
   const w = canvas.width / (window.devicePixelRatio||1);
   ctx.clearRect(0,0,w,w);
 
-  // Deep space background
-  const bgGrad = ctx.createRadialGradient(w*0.3, w*0.3, 0, w*0.5, w*0.5, w*0.8);
-  bgGrad.addColorStop(0, '#0a1628');
-  bgGrad.addColorStop(0.5, '#060e1f');
-  bgGrad.addColorStop(1, '#020618');
-  ctx.fillStyle = bgGrad;
-  drawRoundRect(0,0,w,w,12);
-  ctx.fill();
+  // Deep space background with texture
+  if(bgSpacePattern){
+    ctx.fillStyle=bgSpacePattern;
+    drawRoundRect(0,0,w,w,12);
+    ctx.fill();
+    // Dark overlay for depth
+    const bgGrad = ctx.createRadialGradient(w*0.3, w*0.3, 0, w*0.5, w*0.5, w*0.8);
+    bgGrad.addColorStop(0, 'rgba(10,22,40,0.7)');
+    bgGrad.addColorStop(0.5, 'rgba(6,14,31,0.8)');
+    bgGrad.addColorStop(1, 'rgba(2,6,24,0.9)');
+    ctx.fillStyle = bgGrad;
+    drawRoundRect(0,0,w,w,12);
+    ctx.fill();
+  }else{
+    const bgGrad = ctx.createRadialGradient(w*0.3, w*0.3, 0, w*0.5, w*0.5, w*0.8);
+    bgGrad.addColorStop(0, '#0a1628');
+    bgGrad.addColorStop(0.5, '#060e1f');
+    bgGrad.addColorStop(1, '#020618');
+    ctx.fillStyle = bgGrad;
+    drawRoundRect(0,0,w,w,12);
+    ctx.fill();
+  }
+
+  // Floating meteor decorations
+  if(meteorImg1.complete){
+    ctx.globalAlpha=0.08;
+    ctx.drawImage(meteorImg1,w*0.85,w*0.05,40,33);
+    ctx.drawImage(meteorImg2,w*0.1,w*0.9,35,40);
+    ctx.globalAlpha=1;
+  }
 
   // Metal space station border
   ctx.strokeStyle = 'rgba(167,139,250,0.15)';
