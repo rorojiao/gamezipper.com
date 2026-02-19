@@ -47,6 +47,13 @@ let particles=[];
 let cardAnims={}; // cardIndex -> {phase,progress,startTime}
 let bestScores=JSON.parse(localStorage.getItem('mm_best')||'{}');
 
+// Web Audio
+let audioCtx2;
+function getAC2(){if(!audioCtx2)audioCtx2=new(window.AudioContext||window.webkitAudioContext)();return audioCtx2;}
+function sfxFlip(){try{const a=getAC2(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='sine';o.frequency.value=800;g.gain.setValueAtTime(.15,a.currentTime);g.gain.exponentialRampToValueAtTime(.01,a.currentTime+.08);o.start(a.currentTime);o.stop(a.currentTime+.08);}catch(e){}}
+function sfxMatch(){try{const a=getAC2();[523,659,784].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.2,a.currentTime+i*.08);g.gain.exponentialRampToValueAtTime(.01,a.currentTime+i*.08+.2);o.start(a.currentTime+i*.08);o.stop(a.currentTime+i*.08+.2);});}catch(e){}}
+function sfxFail(){try{const a=getAC2(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='square';o.frequency.setValueAtTime(300,a.currentTime);o.frequency.exponentialRampToValueAtTime(200,a.currentTime+.15);g.gain.setValueAtTime(.1,a.currentTime);g.gain.exponentialRampToValueAtTime(.01,a.currentTime+.15);o.start(a.currentTime);o.stop(a.currentTime+.15);}catch(e){}}
+
 // Layout
 let gridX,gridY,cardW,cardH,gap;
 
@@ -111,6 +118,7 @@ function flipCard(i){
   if(lockBoard||cards[i].flipped||cards[i].matched)return;
   cards[i].flipped=true;
   cardAnims[i]={phase:'flipOpen',progress:0,start:performance.now()};
+  sfxFlip();
   if(!first&&first!==0){first=i}
   else if(first!==null&&(second===null)){
     second=i;moves++;
@@ -123,6 +131,7 @@ function checkMatch(){
   if(cards[first].emoji===cards[second].emoji){
     cards[first].matched=true;cards[second].matched=true;
     spawnParticles(first);spawnParticles(second);
+    sfxMatch();
     matched++;
     if(matched===totalPairs){
       state='complete';
@@ -131,6 +140,7 @@ function checkMatch(){
 
     }
   }else{
+    sfxFail();
     cardAnims[first]={phase:'flipClose',progress:0,start:performance.now()};
     cardAnims[second]={phase:'flipClose',progress:0,start:performance.now()};
     setTimeout(()=>{cards[first].flipped=false;cards[second].flipped=false;first=null;second=null;lockBoard=false},350);
