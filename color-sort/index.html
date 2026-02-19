@@ -4,22 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Color Sort Puzzle</title>
-<script type="text/javascript">
-window.SDK_OPTIONS = {
-  gameId: "xjqpg0hmr1fp8hvzyf2xol25a1eb6ceb",
-  onEvent: function (a) {
-    switch (a.name) {
-      case "SDK_GAME_PAUSE": break;
-      case "SDK_GAME_START": break;
-      case "SDK_READY": break;
-    }
-  }
-};
-(function (a, b, c) {
-  var d = a.getElementsByTagName(b)[0];
-  a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
-})(document, "script", "gamemonetize-sdk");
-</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#e0f7fa,#f3e5f5,#fff3e0);min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
@@ -32,11 +16,15 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135d
 #btn-undo{background:linear-gradient(135deg,#ffb74d,#ff9800);color:#fff}
 #btn-restart{background:linear-gradient(135deg,#e57373,#ef5350);color:#fff}
 #btn-levels{background:linear-gradient(135deg,#81c784,#66bb6a);color:#fff}
-#game-area{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:14px;padding:20px 10px;max-width:600px}
+#btn-hint{background:linear-gradient(135deg,#4fc3f7,#29b6f6);color:#fff}
+#game-area{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:16px;padding:20px 10px;max-width:700px}
 .tube{position:relative;cursor:pointer;transition:transform .2s}
-.tube.selected{transform:translateY(-20px)}
+.tube.selected{transform:translateY(-24px)}
+.tube.hint-source canvas{filter:drop-shadow(0 0 8px #4fc3f7) drop-shadow(0 0 16px #4fc3f7)}
+.tube.hint-target canvas{filter:drop-shadow(0 0 8px #66bb6a) drop-shadow(0 0 16px #66bb6a)}
 .tube canvas{display:block}
 #particles-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100}
+#flying-ball{position:fixed;pointer-events:none;z-index:99;display:none;border-radius:50%}
 #overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:50;justify-content:center;align-items:center}
 #overlay.show{display:flex}
 #overlay-content{background:#fff;border-radius:20px;padding:30px;text-align:center;max-width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3)}
@@ -58,10 +46,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135d
 </div>
 <div id="controls">
 <button class="btn" id="btn-undo" onclick="undo()">↩ Undo</button>
+<button class="btn" id="btn-hint" onclick="showHint()">💡 Hint</button>
 <button class="btn" id="btn-restart" onclick="restartLevel()">🔄 Restart</button>
 <button class="btn" id="btn-levels" onclick="showLevels()">📋 Levels</button>
 </div>
 <div id="game-area"></div>
+<div id="flying-ball"></div>
 <canvas id="particles-canvas"></canvas>
 <div id="overlay" onclick="event.target===this&&hideOverlay()">
 <div id="overlay-content"></div>
@@ -73,9 +63,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135d
 </div>
 <script>
 const COLORS=['#ef5350','#42a5f5','#66bb6a','#ffa726','#ab47bc','#26c6da','#ec407a','#8d6e63','#78909c','#d4e157'];
-const TUBE_W=52,TUBE_H=160,BALL_R=18,CAP=4;
+const TUBE_W=68,TUBE_H=210,BALL_R=24,CAP=4;
 const LEVELS=[];
-// Level definitions: [numColors, numExtra] extra=empty tubes
 const LEVEL_DEFS=[
 [3,1],[3,2],[4,1],[4,2],[5,1],[5,2],[5,2],[6,2],[6,2],[6,2],
 [7,2],[7,2],[7,2],[7,3],[8,2],[8,2],[8,3],[9,2],[9,3],[10,2],
@@ -86,18 +75,47 @@ let state={level:0,tubes:[],history:[],selected:-1,won:false};
 let maxLevel=parseInt(localStorage.getItem('csort_max')||'0');
 let particles=[];
 let pCanvas,pCtx;
+let hintFrom=-1,hintTo=-1;
+let isAnimating=false;
+
+// === Web Audio ===
+let audioCtx;
+function getAudioCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+
+function playPourSound(){
+  try{
+    const ac=getAudioCtx();
+    const osc=ac.createOscillator();const gain=ac.createGain();
+    osc.connect(gain);gain.connect(ac.destination);
+    osc.type='sine';osc.frequency.setValueAtTime(600,ac.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(300,ac.currentTime+0.15);
+    gain.gain.setValueAtTime(0.3,ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.2);
+    osc.start(ac.currentTime);osc.stop(ac.currentTime+0.2);
+  }catch(e){}
+}
+
+function playCompleteSound(){
+  try{
+    const ac=getAudioCtx();
+    [523,659,784].forEach((f,i)=>{
+      const osc=ac.createOscillator();const gain=ac.createGain();
+      osc.connect(gain);gain.connect(ac.destination);
+      osc.type='triangle';osc.frequency.value=f;
+      gain.gain.setValueAtTime(0.25,ac.currentTime+i*0.1);
+      gain.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+i*0.1+0.3);
+      osc.start(ac.currentTime+i*0.1);osc.stop(ac.currentTime+i*0.1+0.3);
+    });
+  }catch(e){}
+}
 
 function genLevel(idx){
   const[nc,ne]=LEVEL_DEFS[Math.min(idx,LEVEL_DEFS.length-1)];
-  const total=nc*CAP;
   let balls=[];
   for(let c=0;c<nc;c++)for(let i=0;i<CAP;i++)balls.push(c);
-  // Shuffle with seeded random for reproducibility
   let seed=idx*2654435761+12345;
   function rng(){seed=(seed*1664525+1013904223)&0xffffffff;return(seed>>>0)/4294967296}
-  // Fisher-Yates
   for(let i=balls.length-1;i>0;i--){let j=Math.floor(rng()*(i+1));[balls[i],balls[j]]=[balls[j],balls[i]]}
-  // Distribute into tubes
   let tubes=[];
   for(let t=0;t<nc;t++){tubes.push(balls.slice(t*CAP,(t+1)*CAP))}
   for(let t=0;t<ne;t++)tubes.push([]);
@@ -112,6 +130,7 @@ function loadLevel(idx){
   state.history=[];
   state.selected=-1;
   state.won=false;
+  hintFrom=-1;hintTo=-1;
   document.getElementById('level-info').textContent='Level '+(idx+1);
   document.getElementById('win-msg').style.display='none';
   render();
@@ -122,7 +141,11 @@ function render(){
   area.innerHTML='';
   state.tubes.forEach((tube,i)=>{
     const div=document.createElement('div');
-    div.className='tube'+(state.selected===i?' selected':'');
+    let cls='tube';
+    if(state.selected===i) cls+=' selected';
+    if(hintFrom===i) cls+=' hint-source';
+    if(hintTo===i) cls+=' hint-target';
+    div.className=cls;
     const c=document.createElement('canvas');
     c.width=TUBE_W;c.height=TUBE_H;
     drawTube(c,tube,state.selected===i);
@@ -137,8 +160,7 @@ function drawTube(canvas,balls,sel){
   const ctx=canvas.getContext('2d');
   const w=TUBE_W,h=TUBE_H;
   ctx.clearRect(0,0,w,h);
-  // Tube body
-  const tx=6,tw=w-12,ty=10,th=h-16,br=8;
+  const tx=8,tw=w-16,ty=12,th=h-20,br=10;
   ctx.save();
   ctx.beginPath();
   ctx.moveTo(tx,ty+br);
@@ -149,14 +171,13 @@ function drawTube(canvas,balls,sel){
   ctx.lineWidth=sel?3:2;
   ctx.stroke();
   ctx.restore();
-  // Balls
   for(let i=0;i<balls.length;i++){
     const bi=balls.length-1-i;
     const bx=w/2;
-    const by=h-22-i*(BALL_R*2+2);
+    const by=h-28-i*(BALL_R*2+3);
     ctx.beginPath();
     ctx.arc(bx,by,BALL_R,0,Math.PI*2);
-    const g=ctx.createRadialGradient(bx-5,by-5,2,bx,by,BALL_R);
+    const g=ctx.createRadialGradient(bx-6,by-6,3,bx,by,BALL_R);
     const col=COLORS[balls[bi]];
     g.addColorStop(0,lighten(col,.3));
     g.addColorStop(1,col);
@@ -179,7 +200,8 @@ function lighten(hex,amt){
 function topBall(tube){return tube.length?tube[tube.length-1]:-1}
 
 function onTap(i){
-  if(state.won)return;
+  if(state.won||isAnimating)return;
+  clearHint();
   if(state.selected===-1){
     if(state.tubes[i].length>0){state.selected=i;render()}
   }else if(state.selected===i){
@@ -189,46 +211,181 @@ function onTap(i){
   }
 }
 
+function clearHint(){hintFrom=-1;hintTo=-1;}
+
+function getTubeElements(){return document.querySelectorAll('#game-area .tube')}
+
+function animateBallFly(fromIdx,toIdx,ballColor,count,callback){
+  isAnimating=true;
+  const tubes=getTubeElements();
+  const fromEl=tubes[fromIdx];const toEl=tubes[toIdx];
+  if(!fromEl||!toEl){isAnimating=false;callback();return;}
+  const fromRect=fromEl.getBoundingClientRect();
+  const toRect=toEl.getBoundingClientRect();
+
+  const startX=fromRect.left+fromRect.width/2-BALL_R;
+  const startY=fromRect.top-BALL_R;
+  const endX=toRect.left+toRect.width/2-BALL_R;
+  const destBalls=state.tubes[toIdx].length-count;
+  const endY=toRect.bottom-28-(destBalls+count-1)*(BALL_R*2+3)-BALL_R;
+
+  let done=0;
+  for(let b=0;b<count;b++){
+    setTimeout(()=>{
+      const fb=document.getElementById('flying-ball');
+      fb.style.display='block';
+      fb.style.width=BALL_R*2+'px';fb.style.height=BALL_R*2+'px';
+      fb.style.background=`radial-gradient(circle at 35% 35%, ${lighten(ballColor,.3)}, ${ballColor})`;
+      fb.style.boxShadow='0 4px 12px rgba(0,0,0,.3)';
+      
+      const duration=350;
+      const startTime=performance.now();
+      const midY=Math.min(startY,endY)-80;
+      
+      function anim(now){
+        const t=Math.min(1,(now-startTime)/duration);
+        const et=t;
+        const x=startX+(endX-startX)*et;
+        const y=(1-et)*(1-et)*startY+2*(1-et)*et*midY+et*et*endY;
+        fb.style.left=x+'px';fb.style.top=y+'px';
+        if(t<1){requestAnimationFrame(anim);}
+        else{
+          // Bounce
+          const bounceStart=performance.now();
+          const bounceDur=200;
+          function bounce(now2){
+            const bt=Math.min(1,(now2-bounceStart)/bounceDur);
+            const by2=Math.sin(bt*Math.PI)*-15;
+            fb.style.top=(endY+by2)+'px';
+            if(bt<1){requestAnimationFrame(bounce);}
+            else{
+              fb.style.display='none';
+              playPourSound();
+              done++;
+              if(done===count){
+                render();
+                isAnimating=false;
+                callback();
+              }
+            }
+          }
+          requestAnimationFrame(bounce);
+        }
+      }
+      requestAnimationFrame(anim);
+    },b*150);
+  }
+}
+
 function tryMove(from,to){
   const ft=state.tubes[from],tt=state.tubes[to];
   if(!ft.length){state.selected=-1;render();return}
   const ball=topBall(ft);
   if(tt.length>=CAP){state.selected=-1;render();return}
   if(tt.length>0&&topBall(tt)!==ball){state.selected=-1;render();return}
-  // Pour all matching top balls
+  
   state.history.push({from,to,tubes:deepCopy(state.tubes)});
+  const ballColor=COLORS[ball];
+  
+  // Count how many will move
   let count=0;
+  let tempFt=[...ft];let tempTt=[...tt];
+  while(tempFt.length>0&&topBall(tempFt)===ball&&tempTt.length<CAP){
+    tempTt.push(tempFt.pop());count++;
+  }
+  
+  // Actually move
   while(ft.length>0&&topBall(ft)===ball&&tt.length<CAP){
-    tt.push(ft.pop());count++;
+    tt.push(ft.pop());
   }
   state.selected=-1;
-  render();
-  checkWin();
+  
+  // Animate the ball flying
+  animateBallFly(from,to,ballColor,count,()=>{
+    checkWin();
+  });
 }
 
 function undo(){
-  if(!state.history.length||state.won)return;
+  if(!state.history.length||state.won||isAnimating)return;
   const h=state.history.pop();
   state.tubes=h.tubes;
   state.selected=-1;
+  clearHint();
   render();
 }
 
 function restartLevel(){loadLevel(state.level)}
 
 function checkWin(){
+  let tubeComplete=false;
   for(const t of state.tubes){
     if(t.length>0&&t.length<CAP)return;
     if(t.length===CAP&&new Set(t).size>1)return;
   }
+  // Check each tube for completion sound
+  for(const t of state.tubes){
+    if(t.length===CAP&&new Set(t).size===1) tubeComplete=true;
+  }
+  
   state.won=true;
   if(state.level>=maxLevel){maxLevel=state.level+1;localStorage.setItem('csort_max',''+maxLevel)}
-  if(typeof sdk!=='undefined'&&sdk.showBanner)sdk.showBanner();
+  playCompleteSound();
   setTimeout(()=>{
     document.getElementById('win-sub').textContent='Level '+(state.level+1)+' completed!';
     document.getElementById('win-msg').style.display='block';
     spawnParticles();
   },300);
+}
+
+// === Hint System ===
+function showHint(){
+  if(state.won||isAnimating)return;
+  clearHint();
+  state.selected=-1;
+  
+  const tubes=state.tubes;
+  let bestMove=null;let bestScore=-Infinity;
+  
+  for(let f=0;f<tubes.length;f++){
+    if(!tubes[f].length)continue;
+    const ball=topBall(tubes[f]);
+    // Count consecutive same-color balls on top
+    let fCount=0;
+    for(let k=tubes[f].length-1;k>=0&&tubes[f][k]===ball;k--)fCount++;
+    
+    for(let t=0;t<tubes.length;t++){
+      if(f===t)continue;
+      if(tubes[t].length>=CAP)continue;
+      if(tubes[t].length>0&&topBall(tubes[t])!==ball)continue;
+      // Don't move from a single-color tube to empty (pointless)
+      if(tubes[t].length===0&&new Set(tubes[f]).size===1)continue;
+      
+      let score=0;
+      // Prefer moving to same color (stacking)
+      if(tubes[t].length>0&&topBall(tubes[t])===ball){
+        let tCount=0;
+        for(let k=tubes[t].length-1;k>=0&&tubes[t][k]===ball;k--)tCount++;
+        score+=10+tCount+fCount;
+        // Would complete a tube?
+        if(tCount+fCount===CAP) score+=50;
+      }
+      // Moving to empty is ok but lower priority
+      if(tubes[t].length===0) score+=1;
+      // Expose different color underneath = good
+      if(fCount<tubes[f].length) score+=3;
+      
+      if(score>bestScore){bestScore=score;bestMove={from:f,to:t};}
+    }
+  }
+  
+  if(bestMove){
+    hintFrom=bestMove.from;
+    hintTo=bestMove.to;
+    render();
+    // Auto-clear hint after 3 seconds
+    setTimeout(()=>{if(hintFrom===bestMove.from&&hintTo===bestMove.to){clearHint();render();}},3000);
+  }
 }
 
 function nextLevel(){

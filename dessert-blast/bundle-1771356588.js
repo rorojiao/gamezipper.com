@@ -1035,7 +1035,7 @@ function updateBest() {
 function doGameOver() {
   gameActive = false;
   gameOver = true;
-  if(typeof sdk!=='undefined'&&sdk.showBanner)sdk.showBanner();
+  
   var elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
   var stats = save.getStats();
   stats.totalTime = (stats.totalTime || 0) + elapsed;

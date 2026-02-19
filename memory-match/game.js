@@ -41,6 +41,30 @@ let bestScores = JSON.parse(localStorage.getItem('mm_best') || '{}');
 let stars = 0;
 let menuHover = -1;
 
+// ========== WEB AUDIO ==========
+let audioCtx;
+function getAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playFlipSound(){
+  try{const ac=getAC();const o=ac.createOscillator();const g=ac.createGain();
+  o.connect(g);g.connect(ac.destination);o.type='sine';o.frequency.value=800;
+  g.gain.setValueAtTime(0.15,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.08);
+  o.start(ac.currentTime);o.stop(ac.currentTime+0.08);}catch(e){}
+}
+function playMatchSound(){
+  try{const ac=getAC();
+  [523,659,784].forEach((f,i)=>{const o=ac.createOscillator();const g=ac.createGain();
+  o.connect(g);g.connect(ac.destination);o.type='triangle';o.frequency.value=f;
+  g.gain.setValueAtTime(0.2,ac.currentTime+i*0.08);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+i*0.08+0.2);
+  o.start(ac.currentTime+i*0.08);o.stop(ac.currentTime+i*0.08+0.2);});}catch(e){}
+}
+function playFailSound(){
+  try{const ac=getAC();const o=ac.createOscillator();const g=ac.createGain();
+  o.connect(g);g.connect(ac.destination);o.type='square';o.frequency.setValueAtTime(300,ac.currentTime);
+  o.frequency.exponentialRampToValueAtTime(200,ac.currentTime+0.15);
+  g.gain.setValueAtTime(0.1,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.15);
+  o.start(ac.currentTime);o.stop(ac.currentTime+0.15);}catch(e){}
+}
+
 // ========== RESIZE ==========
 function resize() {
   dpr = window.devicePixelRatio || 1;
@@ -560,6 +584,7 @@ function handleClick(px, py) {
     // Flip card
     flipped.push(idx);
     animatingCards.push({ index: idx, startTime: performance.now(), direction: 'flip' });
+    playFlipSound();
     
     if (flipped.length === 2) {
       steps++;
@@ -568,6 +593,7 @@ function handleClick(px, py) {
       
       if (cards[a].emoji === cards[b].emoji) {
         // Match!
+        playMatchSound();
         setTimeout(() => {
           matched.push(a, b);
           disappearCards.push({ index: a, startTime: performance.now() });
@@ -598,6 +624,7 @@ function handleClick(px, py) {
         }, 500);
       } else {
         // No match
+        playFailSound();
         setTimeout(() => {
           shakeCards.push({ index: a, startTime: performance.now() });
           shakeCards.push({ index: b, startTime: performance.now() });

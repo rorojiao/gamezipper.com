@@ -9,8 +9,8 @@
   }
 
   function getBestSize() {
-    // !! 不能用 body.clientHeight !! body 被 canvas 撑大会形成循环
-    // 只用纯 viewport 相关尺寸
+    // Do not use body.clientHeight - causes loop with canvas
+    // Use viewport dimensions only
     var w = window.innerWidth || document.documentElement.clientWidth || 0;
     var h = window.innerHeight || document.documentElement.clientHeight || 0;
     if (window.visualViewport && window.visualViewport.width > 10) {
@@ -160,20 +160,20 @@ function require(name) {
 // ===== js/config.js =====
 _define('js/config', function(module, exports, require) {
 /**
- * Catch Turkey — 微信小游戏配置常量
+ * Catch Turkey — Config Constants
  */
 
 const TURKEY_TYPES = [
-  { id: 0, name: '红冠Turkey', desc: '大红冠是它的骄傲，热情似火！', body: '#E53935', bodyDk: '#B71C1C', tail: '#FF5722', tailTip: '#FFAB91', accent: '#D32F2F', hi: '#FF8A80' },
-  { id: 1, name: '蓝羽Turkey', desc: '优雅蓝色羽毛，翩翩绅士。', body: '#1E88E5', bodyDk: '#0D47A1', tail: '#42A5F5', tailTip: '#90CAF9', accent: '#1565C0', hi: '#82B1FF' },
-  { id: 2, name: '金色Turkey', desc: '金光闪闪，尊贵的Turkey贵族。', body: '#FFB300', bodyDk: '#FF8F00', tail: '#FFD54F', tailTip: '#FFF9C4', accent: '#F9A825', hi: '#FFECB3' },
-  { id: 3, name: '紫色Turkey', desc: '神秘紫色的魔法Turkey。', body: '#8E24AA', bodyDk: '#4A148C', tail: '#AB47BC', tailTip: '#CE93D8', accent: '#7B1FA2', hi: '#EA80FC' },
-  { id: 4, name: '橙色Turkey', desc: '活力满满的快乐Turkey！', body: '#FB8C00', bodyDk: '#E65100', tail: '#FFA726', tailTip: '#FFE0B2', accent: '#EF6C00', hi: '#FFD180' },
-  { id: 5, name: '粉色Turkey', desc: '可爱粉色少女心Turkey。', body: '#EC407A', bodyDk: '#AD1457', tail: '#F06292', tailTip: '#F8BBD0', accent: '#C2185B', hi: '#FF80AB' },
-  { id: 6, name: '绿色Turkey', desc: '森林守护者，自然之友。', body: '#43A047', bodyDk: '#1B5E20', tail: '#66BB6A', tailTip: '#A5D6A7', accent: '#2E7D32', hi: '#B9F6CA' },
-  { id: 7, name: '彩虹Turkey', desc: '稀有彩虹，七色光芒！', body: '#FF6B35', bodyDk: '#E91E63', tail: '#9C27B0', tailTip: '#2196F3', accent: '#4CAF50', hi: '#FFEB3B' },
-  { id: 8, name: '白色Turkey', desc: '纯白无瑕的优雅贵妇。', body: '#ECEFF1', bodyDk: '#B0BEC5', tail: '#CFD8DC', tailTip: '#FAFAFA', accent: '#90A4AE', hi: '#FFFFFF' },
-  { id: 9, name: '棕色Turkey', desc: '经典传统，朴实老前辈。', body: '#795548', bodyDk: '#3E2723', tail: '#8D6E63', tailTip: '#BCAAA4', accent: '#000', hi: '#D7CCC8' },
+  { id: 0, name: 'Red Crest Turkey', desc: 'A proud red crest, fiery and passionate!', body: '#E53935', bodyDk: '#B71C1C', tail: '#FF5722', tailTip: '#FFAB91', accent: '#D32F2F', hi: '#FF8A80' },
+  { id: 1, name: 'Blue Feather Turkey', desc: 'Elegant blue feathers, a true gentleman.', body: '#1E88E5', bodyDk: '#0D47A1', tail: '#42A5F5', tailTip: '#90CAF9', accent: '#1565C0', hi: '#82B1FF' },
+  { id: 2, name: 'Golden Turkey', desc: 'Shimmering gold, a noble turkey.', body: '#FFB300', bodyDk: '#FF8F00', tail: '#FFD54F', tailTip: '#FFF9C4', accent: '#F9A825', hi: '#FFECB3' },
+  { id: 3, name: 'Purple Turkey', desc: 'A mysterious magical purple turkey.', body: '#8E24AA', bodyDk: '#4A148C', tail: '#AB47BC', tailTip: '#CE93D8', accent: '#7B1FA2', hi: '#EA80FC' },
+  { id: 4, name: 'Orange Turkey', desc: 'Full of energy and joy!', body: '#FB8C00', bodyDk: '#E65100', tail: '#FFA726', tailTip: '#FFE0B2', accent: '#EF6C00', hi: '#FFD180' },
+  { id: 5, name: 'Pink Turkey', desc: 'Adorable pink turkey.', body: '#EC407A', bodyDk: '#AD1457', tail: '#F06292', tailTip: '#F8BBD0', accent: '#C2185B', hi: '#FF80AB' },
+  { id: 6, name: 'Green Turkey', desc: 'Forest guardian, friend of nature.', body: '#43A047', bodyDk: '#1B5E20', tail: '#66BB6A', tailTip: '#A5D6A7', accent: '#2E7D32', hi: '#B9F6CA' },
+  { id: 7, name: 'Rainbow Turkey', desc: 'Rare rainbow, seven colors of light!', body: '#FF6B35', bodyDk: '#E91E63', tail: '#9C27B0', tailTip: '#2196F3', accent: '#4CAF50', hi: '#FFEB3B' },
+  { id: 8, name: 'White Turkey', desc: 'Pure white elegance.', body: '#ECEFF1', bodyDk: '#B0BEC5', tail: '#CFD8DC', tailTip: '#FAFAFA', accent: '#90A4AE', hi: '#FFFFFF' },
+  { id: 9, name: 'Brown Turkey', desc: 'Classic and traditional.', body: '#795548', bodyDk: '#3E2723', tail: '#8D6E63', tailTip: '#BCAAA4', accent: '#000', hi: '#D7CCC8' },
 ];
 
 const LEVELS = [
@@ -213,7 +213,7 @@ module.exports = { TURKEY_TYPES, LEVELS, THEMES, COMBO_TEXTS, SLOT_COUNT };
 // ===== js/renderer.js =====
 _define('js/renderer', function(module, exports, require) {
 /**
- * Catch Turkey — Canvas 渲染基础框架（微信小游戏）
+ * Catch Turkey — Canvas Rendering Framework
  */
 
 const { windowWidth, windowHeight, pixelRatio } = wx.getSystemInfoSync();
@@ -222,7 +222,7 @@ const DESIGN_WIDTH = 375;
 const scale = windowWidth / DESIGN_WIDTH;
 
 const canvas = wx.createCanvas();
-// Settings canvas 实际像素尺寸（适配高pts屏）
+// Settings canvas pixel size (HiDPI)
 canvas.width = windowWidth * pixelRatio;
 canvas.height = windowHeight * pixelRatio;
 const ctx = canvas.getContext('2d');
@@ -293,7 +293,7 @@ const Renderer = {
 
 // resize: handled by wx._syncFrame()
 
-/* ========== 触摸事件管理 ========== */
+/* ========== Touch Event Management ========== */
 const _touchHandlers = [];
 
 const TouchManager = {
@@ -351,7 +351,7 @@ module.exports = { Renderer, TouchManager };
 // ===== js/save.js =====
 _define('js/save', function(module, exports, require) {
 /**
- * Catch Turkey — 存档管理模块（微信小游戏适配）
+ * Catch Turkey — Save Management Module
  */
 
 const SAVE_KEY = 'catch_turkey_v2';
@@ -434,7 +434,7 @@ module.exports = Save;
 // ===== js/sound.js =====
 _define('js/sound', function(module, exports, require) {
 /**
- * Catch Turkey — Sound模块（Web Audio API 合成）
+ * Catch Turkey — Sound Module (Web Audio API)
  */
 const Save = require('./save');
 
@@ -446,7 +446,7 @@ function getCtx() {
   return _ctx;
 }
 
-// 合成Sound：频率序列 + 波形 + 增益包络
+// Synthesize sound: freq sequence + waveform + envelope
 function playTones(notes, wave, gain, dur) {
   const ctx = getCtx(); if (!ctx) return;
   const now = ctx.currentTime;
@@ -465,7 +465,7 @@ function playTones(notes, wave, gain, dur) {
   });
 }
 
-// 噪声爆炸
+// Noise burst
 function playNoise(dur, gain) {
   const ctx = getCtx(); if (!ctx) return;
   const now = ctx.currentTime;
@@ -478,7 +478,7 @@ function playNoise(dur, gain) {
   const g = ctx.createGain();
   g.gain.setValueAtTime(gain, now);
   g.gain.exponentialRampToValueAtTime(0.001, now + dur);
-  // 低通滤波让爆炸更有力
+  // Low-pass filter for stronger burst
   const flt = ctx.createBiquadFilter();
   flt.type = 'lowpass';
   flt.frequency.setValueAtTime(2000, now);
@@ -487,17 +487,17 @@ function playNoise(dur, gain) {
   src.start(now); src.stop(now + dur);
 }
 
-// Turkey贱贱的尖叫！
+// Turkey squawk!
 function turkeyScream() {
   const ctx = getCtx(); if (!ctx) return;
   const now = ctx.currentTime;
-  // 高频下滑尖叫
+  // High-freq descending squawk
   const g = ctx.createGain();
   g.gain.setValueAtTime(0.25, now);
   g.gain.setValueAtTime(0.3, now + 0.05);
   g.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
   g.connect(ctx.destination);
-  // 主音：高频锯齿波快速下滑 (像鸡叫)
+  // Main: high-freq sawtooth slide (like a bird call)
   const o1 = ctx.createOscillator();
   o1.type = 'sawtooth';
   o1.frequency.setValueAtTime(1800, now);
@@ -505,7 +505,7 @@ function turkeyScream() {
   o1.frequency.setValueAtTime(2200, now + 0.1);
   o1.frequency.exponentialRampToValueAtTime(400, now + 0.3);
   o1.connect(g); o1.start(now); o1.stop(now + 0.35);
-  // 泛音
+  // Overtone
   const o2 = ctx.createOscillator();
   o2.type = 'square';
   o2.frequency.setValueAtTime(2400, now);
@@ -528,9 +528,9 @@ const Snd = {
   },
   pickup(typeId) {
     if (!Save.d.settings.sfx) return;
-    // 清脆的拾取音 + 轻微Turkey叫
+    // Crisp pickup + slight turkey call
     playTones([{f:500+typeId*80, f2:800+typeId*80}], 'sine', 0.2, 0.12);
-    // 小声的"咕"
+    // Soft "cluck"
     const ctx = getCtx(); if (!ctx) return;
     const now = ctx.currentTime;
     const o = ctx.createOscillator();
@@ -549,20 +549,20 @@ const Snd = {
   },
   match() {
     if (!Save.d.settings.sfx) return;
-    // 消除：Turkey尖叫 + 爆炸！
+    // Match: turkey squawk + explosion!
     turkeyScream();
     setTimeout(() => playNoise(0.3, 0.25), 80);
-    // 升调Confirm音
+    // Ascending confirm tone
     playTones([{f:523, d:0.06}, {f:659, t:0.06, d:0.06}, {f:784, t:0.12, d:0.1}], 'sine', 0.2, 0.25);
   },
   combo(n) {
     if (!Save.d.settings.sfx) return;
-    // Combo：更夸张的尖叫 + 多次爆炸
+    // Combo: bigger squawk + multi-burst
     for (let i = 0; i < Math.min(n, 4); i++) {
       setTimeout(() => turkeyScream(), i * 60);
     }
     setTimeout(() => playNoise(0.5, 0.35), 50);
-    // Victory和弦
+    // Victory chord
     playTones([
       {f:523, d:0.08}, {f:659, t:0.08, d:0.08},
       {f:784, t:0.16, d:0.08}, {f:1047, t:0.24, d:0.15}
@@ -574,7 +574,7 @@ const Snd = {
   },
   win() {
     if (!Save.d.settings.sfx) return;
-    // Victory大曲
+    // Victory fanfare
     playTones([
       {f:523, d:0.12}, {f:659, t:0.15, d:0.12},
       {f:784, t:0.3, d:0.12}, {f:1047, t:0.45, d:0.25}
@@ -594,7 +594,7 @@ const Snd = {
   startBgm() {
     if (!Save.d.settings.bgm) return;
     if (this.bgmAudio) return;
-    // TODO: 替换为实际 BGM 文件
+    // TODO: Replace with actual BGM file
   },
   stopBgm() {
     if (this.bgmAudio) {
@@ -612,7 +612,7 @@ module.exports = Snd;
 // ===== js/particles.js =====
 _define('js/particles', function(module, exports, require) {
 /**
- * Catch Turkey — 粒子效果系统（微信小游戏 Canvas 版）
+ * Catch Turkey — Particle Effects System
  */
 
 const PARTICLE_TYPES = {
@@ -638,7 +638,7 @@ for (let i = 0; i < POOL_SIZE; i++) {
   });
 }
 
-// ===== 屏幕特效 =====
+// ===== Screen Effects =====
 let _screenShake = 0;
 let _screenFlash = 0;
 let _shockwaves = [];
@@ -667,7 +667,7 @@ const ScreenFX = {
       _screenFlash *= 0.8;
     }
     
-    // 🌊 冲击波特效
+    // 🌊 Shockwave effect
     for (let i = _shockwaves.length - 1; i >= 0; i--) {
       const sw = _shockwaves[i];
       sw.r += 12;
@@ -677,7 +677,7 @@ const ScreenFX = {
         continue;
       }
       ctx.save();
-      // 外圈金色粗线
+      // Outer gold ring
       ctx.globalAlpha = sw.alpha;
       ctx.strokeStyle = '#FFD700';
       ctx.lineWidth = 5;
@@ -686,14 +686,14 @@ const ScreenFX = {
       ctx.beginPath();
       ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
       ctx.stroke();
-      // 中圈橙色
+      // Middle orange ring
       ctx.shadowBlur = 0;
       ctx.strokeStyle = '#FF6B35';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(sw.x, sw.y, sw.r * 0.7, 0, Math.PI * 2);
       ctx.stroke();
-      // 内圈白色
+      // Inner white ring
       ctx.globalAlpha = sw.alpha * 0.6;
       ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 2;
@@ -789,7 +789,7 @@ module.exports = Particles;
 // ===== js/scene-manager.js =====
 _define('js/scene-manager', function(module, exports, require) {
 /**
- * Catch Turkey — 场景管理器（微信小游戏）
+ * Catch Turkey — Scene Manager
  */
 
 const { Renderer, TouchManager } = require('./renderer');
@@ -857,7 +857,7 @@ const SceneManager = {
   _pushScene(name, params) {
     const scene = this._scenes[name];
     if (!scene) {
-      console.error('场景未注册:', name);
+      console.error('Scene not registered:', name);
       return;
     }
     this._stack.push(scene);
@@ -907,7 +907,7 @@ const SceneManager = {
       s.render(ctx, width, height);
     }
 
-    // 微信小游戏优先用 canvas.requestAnimationFrame
+    // prefer canvas.requestAnimationFrame
     const raf = (typeof canvas !== 'undefined' && canvas.requestAnimationFrame)
       ? canvas.requestAnimationFrame.bind(canvas)
       : requestAnimationFrame;
@@ -922,7 +922,7 @@ module.exports = { Scene, SceneManager };
 // ===== js/scenes/home.js =====
 _define('js/scenes/home', function(module, exports, require) {
 /**
- * Catch Turkey — 首页场景（微信小游戏 Canvas 版）
+ * Catch Turkey — Home Scene
  */
 
 const { Scene, SceneManager } = require('../scene-manager');
@@ -1011,7 +1011,7 @@ class HomeScene extends Scene {
     ctx.font = '12px sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    ctx.fillText('Catch Turkey v2.0 微信小游戏版', w / 2, h - 20);
+    ctx.fillText('Catch Turkey v2.0', w / 2, h - 20);
   }
 
   _drawBackground(ctx, w, h) {
@@ -1104,7 +1104,7 @@ module.exports = new HomeScene();
 // ===== js/scenes/level-select.js =====
 _define('js/scenes/level-select', function(module, exports, require) {
 /**
- * Catch Turkey — Level选择场景（微信小游戏 Canvas 版）
+ * Catch Turkey — Level Select Scene
  */
 
 const { Scene, SceneManager } = require('../scene-manager');
@@ -1278,9 +1278,9 @@ module.exports = new LevelSelectScene();
 // ===== js/scenes/game.js =====
 _define('js/scenes/game', function(module, exports, require) {
 /**
- * Catch Turkey — 核心游戏场景（微信小游戏 Canvas 版）
- * 包含：Turkey生成、层叠遮挡、Tap to Pick、槽位管理、三消匹配、
- *       计ptsCombo、Time、Level胜负判定、Item系统
+ * Catch Turkey — Core Game Scene
+ * Includes: turkey spawning, layered occlusion, tap to pick, slot management, match-3,
+ *       combo scoring, timer, level win/lose, item system
  */
 
 const { Scene, SceneManager } = require('../scene-manager');
@@ -1290,32 +1290,32 @@ const Save = require('../save');
 const Snd = require('../sound');
 const Particles = require('../particles');
 
-// ========== Turkey图片映射 ==========
+// ========== Turkey image mapping ==========
 const TURKEY_IMG_MAP = [
-  'images/turkey_red.png',     // 0 红冠
-  'images/turkey_blue.png',    // 1 蓝羽
-  'images/turkey_golden.png',  // 2 金色
-  'images/turkey_purple.png',  // 3 紫色
-  'images/turkey_orange.png',  // 4 橙色
-  'images/turkey_pink.png',    // 5 粉色
-  'images/turkey_green.png',   // 6 绿色
-  'images/turkey_rainbow.png', // 7 彩虹
-  'images/turkey_white.png',   // 8 白色
-  'images/turkey_black.png',   // 9 棕色/黑色
+  'images/turkey_red.png',     // 0 Red Crest
+  'images/turkey_blue.png',    // 1 Blue Feather
+  'images/turkey_golden.png',  // 2 Golden
+  'images/turkey_purple.png',  // 3 Purple
+  'images/turkey_orange.png',  // 4 Orange
+  'images/turkey_pink.png',    // 5 Pink
+  'images/turkey_green.png',   // 6 Green
+  'images/turkey_rainbow.png', // 7 Rainbow
+  'images/turkey_white.png',   // 8 White
+  'images/turkey_black.png',   // 9 Brown/Black
 ];
 
-// ========== 游戏常量 ==========
-const TURKEY_W = 80;   // Turkey绘制宽度
-const TURKEY_H = 85;   // Turkey绘制高度
-const SLOT_W = 50;     // 槽位宽度
-const SLOT_H = 56;     // 槽位高度
-const SLOT_GAP = 4;    // 槽位间距
-const SLOT_BAR_H = 80; // 槽位栏高度
+// ========== Game Constants ==========
+const TURKEY_W = 80;   // Turkey draw width
+const TURKEY_H = 85;   // Turkey draw height
+const SLOT_W = 50;     // Slot width
+const SLOT_H = 56;     // Slot height
+const SLOT_GAP = 4;    // Slot gap
+const SLOT_BAR_H = 80; // Slot bar height
 
-// ========== 游戏状态 ==========
-let level = null;       // 当前Level配置
+// ========== Game State ==========
+let level = null;       // Current level config
 let turkeys = [];       // All Turkeys {id, typeId, x, y, layer, removed, blocked}
-let slots = [];         // 槽位 [{typeId}]
+let slots = [];         // Slots [{typeId}]
 let score = 0;
 let combo = 0;
 let comboTimer = null;
@@ -1332,20 +1332,20 @@ let theme = null;
 // Item
 let props = { shuffle: 3, remove: 3, complete: 3 };
 
-// 动画状态
+// Animation state
 let comboText = '';
 let comboAlpha = 0;
 let comboScale = 1;
 let scoreFloats = [];  // [{x, y, text, alpha, vy}]
-let countdownNum = 0;  // Time数字（3,2,1,GO）
+let countdownNum = 0;  // Countdown number (3,2,1,GO)
 let countdownAlpha = 0;
 let _countdownCb = null;
 
-// 飞行动画
+// Flight animation
 let flyingTurkey = null; // legacy single ref (kept for compat)
 let flyingTurkeys = []; // support multiple simultaneous flying turkeys
 
-// HUD布局
+// HUD layout
 let _hudY = 0;
 let _slotBarY = 0;
 let _gameAreaY = 0;
@@ -1353,9 +1353,9 @@ let _gameAreaH = 0;
 let _propBtns = [];
 let _pauseBtn = null;
 
-// ========== 工具函数 ==========
+// ========== Utility Functions ==========
 
-/** 打乱数组 */
+/** Shuffle array */
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -1364,7 +1364,7 @@ function shuffle(arr) {
   return arr;
 }
 
-/** 绘制圆角矩形路径 */
+/** Draw rounded rect path */
 function roundRectPath(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -1386,7 +1386,7 @@ class GameScene extends Scene {
     if (!level) level = LEVELS[0];
     theme = THEMES[level.theme] || THEMES.spring;
 
-    // 重置状态
+    // Reset state
     score = 0;
     combo = 0;
     totalRemoved = 0;
@@ -1408,19 +1408,19 @@ class GameScene extends Scene {
     };
     timeLeft = level.time;
 
-    // 计算布局
+    // Calculate layout
     this._calcLayout();
 
-    // 预加载Turkey图片
+    // Preload turkey images
     const loadPromises = [];
     for (let i = 0; i < level.types; i++) {
       loadPromises.push(Renderer.loadImage(TURKEY_IMG_MAP[i]));
     }
 
-    // 生成Turkey
+    // Spawn turkeys
     this._generateTurkeys();
 
-    // 开始Time
+    // Start timer
     this._startCountdown(() => {
       this._startTimer();
     });
@@ -1441,7 +1441,7 @@ class GameScene extends Scene {
     Particles.clear();
   }
 
-  // ========== 布局计算 ==========
+  // ========== Layout Calculation ==========
   _calcLayout() {
     const w = Renderer.width;
     const h = Renderer.height;
@@ -1452,10 +1452,10 @@ class GameScene extends Scene {
     _gameAreaY = hudH;
     _gameAreaH = _slotBarY - hudH;
 
-    // Pause按钮
+    // Pause button
     _pauseBtn = { x: w - 50, y: 8, w: 36, h: 36 };
 
-    // Item按钮（槽位栏上方）
+    // Item buttons (above slot bar)
     const propY = _slotBarY - 50;
     const propW = 44;
     const propGap = 16;
@@ -1468,12 +1468,12 @@ class GameScene extends Scene {
     ];
   }
 
-  // ========== Turkey生成 ==========
+  // ========== Turkey Spawning ==========
   _generateTurkeys() {
     const lv = level;
     turkeys = [];
 
-    // 生成类型pts配（每种类型数量能被3整除）
+    // Generate type distribution (each type count divisible by 3)
     const turkeyList = [];
     const totalGroups = Math.floor(lv.count / 3);
     const groupsPerType = Math.floor(totalGroups / lv.types);
@@ -1489,7 +1489,7 @@ class GameScene extends Scene {
     // Shuffle
     shuffle(turkeyList);
 
-    // 可解性检查：确保每种类型在顶层至少有1只
+    // Solvability check: ensure each type has at least 1 on top
     const perLayer = Math.ceil(turkeyList.length / lv.layers);
     const topStart = (lv.layers - 1) * perLayer;
     const topSlice = turkeyList.slice(topStart);
@@ -1506,10 +1506,10 @@ class GameScene extends Scene {
       }
     }
 
-    // 布局：六角网格+层偏移
+    // Layout: hex grid + layer offset
     const w = Renderer.width;
     const areaW = w - 20;
-    const areaH = _gameAreaH - 60; // 留出Item区空间
+    const areaH = _gameAreaH - 60; // Leave space for item area
     const tw = TURKEY_W * 0.68;
     const th = TURKEY_H * 0.6;
     const cols = Math.max(4, Math.min(7, Math.ceil(Math.sqrt(perLayer * 1.5))));
@@ -1548,7 +1548,7 @@ class GameScene extends Scene {
     this._updateBlocked();
   }
 
-  // ========== 遮挡计算 ==========
+  // ========== Occlusion Calculation ==========
   _updateBlocked() {
     for (const t of turkeys) {
       if (t.removed) { t.blocked = false; continue; }
@@ -1578,8 +1578,8 @@ class GameScene extends Scene {
           if (countdownNum > 0) {
             tick();
           } else {
-            // 显示 GO!
-            countdownNum = -1; // 特殊值表示GO
+            // Show GO!
+            countdownNum = -1; // Special value for GO
             countdownAlpha = 1;
             setTimeout(() => {
               countdownNum = 0;
@@ -1593,7 +1593,7 @@ class GameScene extends Scene {
     tick();
   }
 
-  // ========== 计时器 ==========
+  // ========== Timer ==========
   _startTimer() {
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
@@ -1608,11 +1608,11 @@ class GameScene extends Scene {
     }, 1000);
   }
 
-  // ========== Turkey点击 ==========
+  // ========== Turkey Tap ==========
   _onTurkeyClick(turkey) {
     if (paused || gameOver || _matchAnimating || turkey.removed) return;
 
-    // 被遮挡的Turkey不能点
+    // Occluded turkeys cannot be tapped
     if (turkey.blocked) {
       // Vibration
       if (Save.d.settings.vibrate) {
@@ -1631,7 +1631,7 @@ class GameScene extends Scene {
 
     turkey.removed = true;
 
-    // 找到插入位置（相同类型相邻）
+    // Find insert position (same type adjacent)
     let insertIdx = slots.length;
     for (let i = 0; i < slots.length; i++) {
       if (slots[i].typeId === turkey.typeId) {
@@ -1643,7 +1643,7 @@ class GameScene extends Scene {
     }
     slots.splice(insertIdx, 0, { typeId: turkey.typeId });
 
-    // 飞行动画
+    // Flight animation
     const w = Renderer.width;
     const slotTotalW = SLOT_COUNT * (SLOT_W + SLOT_GAP) - SLOT_GAP;
     const slotStartX = (w - slotTotalW) / 2;
@@ -1664,13 +1664,13 @@ class GameScene extends Scene {
     flyingTurkeys.push(flyingTurkey);
     animating = true;
 
-    // 发射粒子
+    // Emit particles
     Particles.emit(startX, startY, 'sparkle', 2);
 
     this._updateBlocked();
   }
 
-  // ========== 匹配检查 ==========
+  // ========== Match Check ==========
   _checkMatch() {
     for (let i = 0; i <= slots.length - 3; i++) {
       if (slots[i].typeId === slots[i + 1].typeId && slots[i + 1].typeId === slots[i + 2].typeId) {
@@ -1694,14 +1694,14 @@ class GameScene extends Scene {
             this._showCombo(combo);
           }
 
-          // 🔥🔥🔥 超级爆炸消除特效！！！
+          // 🔥🔥🔥 Super explosion match effect!!!
           const w = Renderer.width;
           const slotTotalW = SLOT_COUNT * (SLOT_W + SLOT_GAP) - SLOT_GAP;
           const slotStartX = (w - slotTotalW) / 2;
           const cx = slotStartX + (i + 1) * (SLOT_W + SLOT_GAP);
           const cy = _slotBarY + SLOT_BAR_H / 2;
           
-          // 超大量粒子从中心爆炸
+          // Massive particles explode from center
           Particles.burst(cx, cy, 30);
           Particles.emit(cx, cy, 'fire', 12);
           Particles.emit(cx, cy, 'boom', 5);
@@ -1711,7 +1711,7 @@ class GameScene extends Scene {
           Particles.emit(cx, cy, 'confetti', 8);
           Particles.emit(cx, cy, 'heart', 4);
           
-          // 多个位置同时爆炸
+          // Multiple positions explode simultaneously
           for (let ei = 0; ei < 3; ei++) {
             const ox = cx + (Math.random() - 0.5) * 120;
             const oy = cy + (Math.random() - 0.5) * 80;
@@ -1719,12 +1719,12 @@ class GameScene extends Scene {
             Particles.emit(ox, oy, 'fire', 4);
           }
           
-          // 强烈Screen Shake + 闪光 + 多重冲击波
+          // Strong screen shake + flash + multi shockwave
           if (typeof ScreenFX !== 'undefined') {
             ScreenFX.shake(combo > 2 ? 20 : combo > 1 ? 15 : 12);
             ScreenFX.flash(combo > 2 ? 0.7 : combo > 1 ? 0.5 : 0.4);
             ScreenFX.shockwave(cx, cy);
-            // 延迟第二波冲击
+            // Delayed second shockwave
             setTimeout(() => {
               if (typeof ScreenFX !== 'undefined') {
                 ScreenFX.shockwave(cx + (Math.random()-0.5)*60, cy + (Math.random()-0.5)*40);
@@ -1732,7 +1732,7 @@ class GameScene extends Scene {
             }, 100);
           }
           
-          // Combo时全屏粒子风暴
+          // Full-screen particle storm on combo
           if (combo > 1) {
             for (let ci = 0; ci < combo * 4; ci++) {
               const rx = Math.random() * w;
@@ -1742,7 +1742,7 @@ class GameScene extends Scene {
             }
           }
 
-          // Score飘字（大号+多方向散射）
+          // Score float text (large + multi-directional)
           const pts = 100 + (combo > 1 ? combo * 20 : 0);
           scoreFloats.push({
             x: cx, y: cy - 20,
@@ -1750,7 +1750,7 @@ class GameScene extends Scene {
             alpha: 1, vy: -80,
             scale: combo > 2 ? 1.5 : 1,
           });
-          // 额外散射飘字
+          // Extra scattered float text
           if (combo > 1) {
             for (let si = 0; si < Math.min(combo, 5); si++) {
               scoreFloats.push({
@@ -1762,18 +1762,18 @@ class GameScene extends Scene {
             }
           }
 
-          // 震动
+          // Vibrate
           if (Save.d.settings.vibrate) {
             wx.vibrateShort({ type: combo > 2 ? 'heavy' : 'medium' });
           }
 
           animating = false; _matchAnimating = false;
 
-          // 判定Victory
+          // Check victory
           if (totalRemoved >= totalTurkeys) {
             this._onWin();
           } else {
-            // 递归检查连锁消除
+            // Recursive chain match check
             this._checkMatch();
           }
         }, 500);
@@ -1781,7 +1781,7 @@ class GameScene extends Scene {
       }
     }
 
-    // 无匹配 - 检查Game Over
+    // No match - check game over
     if (!gameOver) {
       if (slots.length >= SLOT_COUNT) {
         if (Save.d.settings.vibrate) wx.vibrateLong();
@@ -1795,7 +1795,7 @@ class GameScene extends Scene {
     return false;
   }
 
-  // ========== Combo显示 ==========
+  // ========== Combo Display ==========
   _showCombo(n) {
     const text = COMBO_TEXTS[Math.min(n - 2, COMBO_TEXTS.length - 1)];
     comboText = text + ' x' + n;
@@ -1803,7 +1803,7 @@ class GameScene extends Scene {
     comboScale = 1.5;
   }
 
-  // ========== Item系统 ==========
+  // ========== Item System ==========
   _useProp(type) {
     if (paused || gameOver || animating) return;
     if (props[type] <= 0) return;
@@ -1844,7 +1844,7 @@ class GameScene extends Scene {
     this._updateBlocked();
   }
 
-  /** 自动完成Item */
+  /** Auto-complete item */
   _propComplete() {
     if (slots.length === 0) return;
     const counts = {};
@@ -1886,13 +1886,13 @@ class GameScene extends Scene {
     Snd.stopBgm();
     Snd.win();
 
-    // 计算Stars
+    // Calculate stars
     const timePercent = timeLeft / level.time;
     let stars = 1;
     if (timePercent > 0.5) stars = 2;
     if (timePercent > 0.7) stars = 3;
 
-    // 保存进度
+    // Save progress
     Save.setStars(level.id, stars);
     Save.setScore(level.id, score);
     if (level.id >= Save.d.maxLevel && level.id < 10) {
@@ -1901,10 +1901,10 @@ class GameScene extends Scene {
     }
     Save.addCard(Math.min(level.id - 1, 9));
 
-    // 粒子庆祝
+    // Particle celebration
     Particles.fireworks(Renderer.width / 2, Renderer.height / 2);
 
-    // 延迟显示结果（Passed popup 状态）
+    // Delay showing result (passed popup state)
     setTimeout(() => {
       SceneManager.push('result', { win: true, stars, score, levelId: level.id });
     }, 1000);
@@ -1927,16 +1927,16 @@ class GameScene extends Scene {
     }, 800);
   }
 
-  // ========== 每帧更新 ==========
+  // ========== Per-Frame Update ==========
   update(dt) {
-    // Combo文字淡出
+    // Combo text fade out
     if (comboAlpha > 0) {
       comboAlpha -= dt * 1.5;
       comboScale = Math.max(1, comboScale - dt * 2);
       if (comboAlpha < 0) comboAlpha = 0;
     }
 
-    // Score飘字更新
+    // Score float text update
     for (let i = scoreFloats.length - 1; i >= 0; i--) {
       const f = scoreFloats[i];
       f.y += f.vy * dt;
@@ -1944,12 +1944,12 @@ class GameScene extends Scene {
       if (f.alpha <= 0) scoreFloats.splice(i, 1);
     }
 
-    // Time淡出
+    // Timer fade out
     if (countdownNum !== 0 && countdownAlpha > 0) {
-      // 不在这里做淡出，由回调控制
+      // No fade here, controlled by callback
     }
 
-    // 飞行动画 (支持多个同时飞行)
+    // Flight animation (supports multiple)
     for (let fi = flyingTurkeys.length - 1; fi >= 0; fi--) {
       const ft = flyingTurkeys[fi];
       ft.t += dt;
@@ -1963,29 +1963,29 @@ class GameScene extends Scene {
         Snd.drop();
         flyingTurkeys.splice(fi, 1);
 
-        // 检查匹配
+        // Check match
         const matched = this._checkMatch();
         if (!matched && flyingTurkeys.length === 0) animating = false;
       }
     }
     flyingTurkey = flyingTurkeys.length > 0 ? flyingTurkeys[flyingTurkeys.length - 1] : null;
 
-    // 粒子在 render 中绘制
+    // Particles drawn in render
   }
 
-  // ========== 渲染 ==========
+  // ========== Render ==========
   render(ctx, w, h) {
     // Screen Shake
     ctx.save();
     if (typeof ScreenFX !== 'undefined') ScreenFX.update(ctx, w, h);
     
-    // 背景
+    // Background
     this._drawBackground(ctx, w, h);
 
     // Turkey
     this._drawTurkeys(ctx);
 
-    // 飞行中的Turkey（支持多个）
+    // Flying turkeys (multiple)
     for (const ft of flyingTurkeys) {
       this._drawSingleTurkey(ctx, ft.typeId,
         ft.x - TURKEY_W / 2, ft.y - TURKEY_H / 2, 1);
@@ -1994,16 +1994,16 @@ class GameScene extends Scene {
     // HUD
     this._drawHUD(ctx, w, h);
 
-    // Item按钮
+    // Item buttons
     this._drawProps(ctx);
 
-    // 槽位栏
+    // Slot bar
     this._drawSlotBar(ctx, w, h);
 
-    // 粒子效果
+    // Particle effects
     Particles.update(ctx);
 
-    // Combo文字
+    // Combo text
     if (comboAlpha > 0) {
       ctx.save();
       ctx.globalAlpha = comboAlpha;
@@ -2011,7 +2011,7 @@ class GameScene extends Scene {
       ctx.fillStyle = '#FFD700';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      // 文字描边
+      // Text stroke
       ctx.strokeStyle = 'rgba(0,0,0,0.6)';
       ctx.lineWidth = 3;
       ctx.strokeText(comboText, w / 2, h * 0.35);
@@ -2019,7 +2019,7 @@ class GameScene extends Scene {
       ctx.restore();
     }
 
-    // Score飘字
+    // Score float text
     for (const f of scoreFloats) {
       ctx.save();
       ctx.globalAlpha = f.alpha;
@@ -2031,7 +2031,7 @@ class GameScene extends Scene {
       ctx.restore();
     }
 
-    // Time覆盖
+    // Timer overlay
     if (countdownNum !== 0) {
       ctx.save();
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -2046,7 +2046,7 @@ class GameScene extends Scene {
       ctx.restore();
     }
 
-    // Pause覆盖
+    // Pause overlay
     if (paused) {
       ctx.fillStyle = 'rgba(0,0,0,0.6)';
       ctx.fillRect(0, 0, w, h);
@@ -2054,25 +2054,25 @@ class GameScene extends Scene {
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('游戏Pause', w / 2, h / 2 - 30);
+      ctx.fillText('Game Paused', w / 2, h / 2 - 30);
       ctx.font = '18px sans-serif';
-      ctx.fillText('点击任意位置Resume', w / 2, h / 2 + 20);
+      ctx.fillText('Tap anywhere to resume', w / 2, h / 2 + 20);
     }
     
-    // 关闭Screen Shake的ctx.save
+    // Close screen shake ctx.save
     ctx.restore();
   }
 
-  // ---- 背景绘制 ----
+  // ---- Background Drawing ----
   _drawBackground(ctx, w, h) {
-    // 天空渐变
+    // Sky gradient
     const skyColors = theme.sky;
     const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.6);
     skyColors.forEach((c, i) => skyGrad.addColorStop(i / (skyColors.length - 1), c));
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, w, h * 0.6);
 
-    // 草地渐变
+    // Grass gradient
     const groundColors = theme.ground;
     const gGrad = ctx.createLinearGradient(0, h * 0.6, 0, h);
     groundColors.forEach((c, i) => gGrad.addColorStop(i / (groundColors.length - 1), c));
@@ -2080,9 +2080,9 @@ class GameScene extends Scene {
     ctx.fillRect(0, h * 0.6, w, h * 0.4);
   }
 
-  // ---- Turkey绘制 ----
+  // ---- Turkey Drawing ----
   _drawTurkeys(ctx) {
-    // 按layer和y排序绘制（底层先画）
+    // Draw sorted by layer and y (bottom first)
     const sorted = turkeys
       .filter(t => !t.removed)
       .sort((a, b) => a.layer !== b.layer ? a.layer - b.layer : a.y - b.y);
@@ -2091,7 +2091,7 @@ class GameScene extends Scene {
       const alpha = t.blocked ? 0.5 : 1;
       this._drawSingleTurkey(ctx, t.typeId, t.x, t.y, alpha);
 
-      // 被遮挡标记
+      // Occlusion mark
       if (t.blocked) {
         ctx.save();
         ctx.globalAlpha = 0.3;
@@ -2102,7 +2102,7 @@ class GameScene extends Scene {
     }
   }
 
-  /** 绘制单只Turkey */
+  /** Draw single turkey */
   _drawSingleTurkey(ctx, typeId, x, y, alpha) {
     ctx.save();
     ctx.globalAlpha = alpha;
@@ -2111,7 +2111,7 @@ class GameScene extends Scene {
     if (img) {
       Renderer.drawImage(src, x, y, TURKEY_W, TURKEY_H);
     } else {
-      // 图片未加载时画彩色占位圆
+      // Draw colored placeholder when image not loaded
       const t = TURKEY_TYPES[typeId] || TURKEY_TYPES[0];
       ctx.beginPath();
       ctx.ellipse(x + TURKEY_W / 2, y + TURKEY_H / 2, TURKEY_W / 2 - 4, TURKEY_H / 2 - 4, 0, 0, Math.PI * 2);
@@ -2120,7 +2120,7 @@ class GameScene extends Scene {
       ctx.strokeStyle = t.bodyDk;
       ctx.lineWidth = 2;
       ctx.stroke();
-      // Turkeyemoji标记
+      // Turkey emoji mark
       ctx.font = '20px serif';
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
@@ -2130,13 +2130,13 @@ class GameScene extends Scene {
     ctx.restore();
   }
 
-  // ---- HUD绘制 ----
+  // ---- HUD Drawing ----
   _drawHUD(ctx, w, h) {
-    // HUD背景
+    // HUDBackground
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.fillRect(0, 0, w, 50);
 
-    // Level名
+    // Level name
     ctx.font = 'bold 16px sans-serif';
     ctx.fillStyle = '#FFD700';
     ctx.textAlign = 'left';
@@ -2158,13 +2158,13 @@ class GameScene extends Scene {
     ctx.textAlign = 'right';
     ctx.fillText('⏱ ' + timeStr, w - 50, 25);
 
-    // Pause按钮
+    // Pause button
     ctx.font = '22px sans-serif';
     ctx.fillStyle = '#FFFFFF';
     ctx.textAlign = 'center';
     ctx.fillText('⏸', _pauseBtn.x + _pauseBtn.w / 2, _pauseBtn.y + _pauseBtn.h / 2);
 
-    // 进度条
+    // Progress bar
     const progW = w - 20;
     const progH = 6;
     const progY = 44;
@@ -2175,7 +2175,7 @@ class GameScene extends Scene {
     ctx.fillRect(10, progY, progW * progress, progH);
   }
 
-  // ---- Item按钮绘制 ----
+  // ---- Item Button Drawing ----
   _drawProps(ctx) {
     const propTypes = ['shuffle', 'remove', 'complete'];
     for (let i = 0; i < _propBtns.length; i++) {
@@ -2186,17 +2186,17 @@ class GameScene extends Scene {
       ctx.save();
       if (disabled) ctx.globalAlpha = 0.4;
 
-      // 按钮背景
+      // Button background
       Renderer.drawRoundRect(btn.x, btn.y, btn.w, btn.h, 10, 'rgba(0,0,0,0.5)');
 
-      // emoji图标
+      // Emoji icon
       ctx.font = '22px serif';
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(btn.emoji, btn.x + btn.w / 2, btn.y + btn.h / 2 - 4);
 
-      // 数量
+      // Count
       ctx.font = 'bold 11px sans-serif';
       ctx.fillStyle = '#FFD700';
       ctx.fillText('' + count, btn.x + btn.w / 2, btn.y + btn.h - 8);
@@ -2205,9 +2205,9 @@ class GameScene extends Scene {
     }
   }
 
-  // ---- 槽位栏绘制 ----
+  // ---- Slot Bar Drawing ----
   _drawSlotBar(ctx, w, h) {
-    // 槽位栏背景
+    // Slot bar background
     const barGrad = ctx.createLinearGradient(0, _slotBarY, 0, h);
     barGrad.addColorStop(0, '#1A237E');
     barGrad.addColorStop(0.3, '#283593');
@@ -2216,11 +2216,11 @@ class GameScene extends Scene {
     ctx.fillStyle = barGrad;
     ctx.fillRect(0, _slotBarY, w, SLOT_BAR_H);
 
-    // 顶部金线
+    // Top gold line
     ctx.fillStyle = '#FFD740';
     ctx.fillRect(0, _slotBarY, w, 3);
 
-    // 槽位
+    // Slots
     const totalW = SLOT_COUNT * (SLOT_W + SLOT_GAP) - SLOT_GAP;
     const startX = (w - totalW) / 2;
 
@@ -2228,13 +2228,13 @@ class GameScene extends Scene {
       const sx = startX + i * (SLOT_W + SLOT_GAP);
       const sy = _slotBarY + (SLOT_BAR_H - SLOT_H) / 2;
 
-      // 槽位背景
+      // SlotsBackground
       const slotColor = i < slots.length
         ? 'rgba(13,94,52,0.5)'
         : 'rgba(13,27,42,0.7)';
       Renderer.drawRoundRect(sx, sy, SLOT_W, SLOT_H, 8, slotColor);
 
-      // 槽位边框
+      // Slot border
       ctx.save();
       const borderColor = slots.length >= 7
         ? 'rgba(255,60,60,0.7)'
@@ -2245,7 +2245,7 @@ class GameScene extends Scene {
       ctx.stroke();
       ctx.restore();
 
-      // 槽中Turkey
+      // Turkey in slot
       if (i < slots.length) {
         const s = slots[i];
         const imgSrc = TURKEY_IMG_MAP[s.typeId] || TURKEY_IMG_MAP[0];
@@ -2256,19 +2256,19 @@ class GameScene extends Scene {
     }
   }
 
-  // ========== 触摸事件 ==========
+  // ========== Touch Events ==========
   onTouchStart(x, y) {
-    // Pause状态 - Tap to Resume
+    // Pause state - tap to resume
     if (paused) {
       paused = false;
       Snd.click();
       return;
     }
 
-    // Time中不响应
+    // No response during countdown
     if (countdownNum !== 0) return;
 
-    // Pause按钮
+    // Pause button
     if (x >= _pauseBtn.x && x <= _pauseBtn.x + _pauseBtn.w &&
         y >= _pauseBtn.y && y <= _pauseBtn.y + _pauseBtn.h) {
       if (!gameOver) {
@@ -2278,7 +2278,7 @@ class GameScene extends Scene {
       return;
     }
 
-    // Item按钮
+    // Item buttons
     for (const btn of _propBtns) {
       if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
         this._useProp(btn.id);
@@ -2286,7 +2286,7 @@ class GameScene extends Scene {
       }
     }
 
-    // Turkey点击检测（从顶层往下检测，先检测最上层的）
+    // Turkey tap detection (top layer first)
     const sorted = turkeys
       .filter(t => !t.removed)
       .sort((a, b) => b.layer !== a.layer ? b.layer - a.layer : b.y - a.y);
@@ -2307,7 +2307,7 @@ module.exports = new GameScene();
 // ===== js/scenes/result.js =====
 _define('js/scenes/result', function(module, exports, require) {
 /**
- * Catch Turkey — 结果弹窗场景（Victory/Game Over）
+ * Catch Turkey — Result Popup Scene (Victory/Game Over)
  */
 
 const { Scene, SceneManager } = require('../scene-manager');
@@ -2328,8 +2328,8 @@ class ResultScene extends Scene {
     _result = params || {};
     _animTime = 0;
     this._layoutButtons();
-    // Show GameMonetize ad on result screen
-    try { if (window.GameMonetizeSDK) window.GameMonetizeSDK.showBanner(); } catch(e) {}
+    
+    
   }
 
   exit() {
@@ -2349,7 +2349,7 @@ class ResultScene extends Scene {
       if (_result.levelId < 10) {
         _buttons.push({ id: 'next', text: 'Next Level', x: cx - btnW - 8, y: popupBottom, w: btnW, h: btnH, color: '#4CAF50' });
       }
-      _buttons.push({ id: 'levels', text: 'Level列表', x: cx + 8, y: popupBottom, w: btnW, h: btnH, color: '#1E88E5' });
+      _buttons.push({ id: 'levels', text: 'Levels', x: cx + 8, y: popupBottom, w: btnW, h: btnH, color: '#1E88E5' });
     } else {
       _buttons.push({ id: 'retry', text: 'Retry', x: cx - btnW - 8, y: popupBottom, w: btnW, h: btnH, color: '#FF6B35' });
       _buttons.push({ id: 'levels', text: 'Back', x: cx + 8, y: popupBottom, w: btnW, h: btnH, color: '#78909C' });
@@ -2401,7 +2401,7 @@ class ResultScene extends Scene {
 
   _drawWin(ctx, w, px, py, popW, popH) {
     const cx = w / 2;
-    // 动态弹入效果
+    // Dynamic pop-in effect
     const scale = Math.min(1, _animTime * 4);
     const bounce = scale < 1 ? scale : 1 + Math.sin(_animTime * 3) * 0.02;
     
@@ -2410,7 +2410,7 @@ class ResultScene extends Scene {
     ctx.scale(bounce, bounce);
     ctx.translate(-cx, -(py + popH / 2));
     
-    // 标题 - 大号带光晕
+    // Title - large with glow
     ctx.save();
     ctx.shadowColor = '#FFD700';
     ctx.shadowBlur = 20;
@@ -2420,7 +2420,7 @@ class ResultScene extends Scene {
     ctx.fillText('🎉 Victory! 🎉', cx, py + 15);
     ctx.restore();
 
-    // Stars - 大号带动画
+    // Stars - large with animation
     const starY = py + 60;
     for (let si = 0; si < 3; si++) {
       const isFull = si < _result.stars;
@@ -2442,7 +2442,7 @@ class ResultScene extends Scene {
       ctx.restore();
     }
 
-    // Score - 超大醒目
+    // Score - extra large
     ctx.save();
     ctx.font = 'bold 48px sans-serif';
     ctx.fillStyle = '#FFFFFF';
@@ -2452,13 +2452,13 @@ class ResultScene extends Scene {
     ctx.fillText('' + _result.score, cx, py + 105);
     ctx.restore();
     
-    // "pts" 标签
+    // "pts" label
     ctx.font = '16px sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.7)';
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    ctx.fillText('得 pts', cx, py + 155);
+    ctx.fillText('Score', cx, py + 155);
 
-    // Turkey卡片 - 带发光边框
+    // Turkey card - with glowing border
     const cardId = Math.min(_result.levelId - 1, 9);
     const turkey = TURKEY_TYPES[cardId];
     if (turkey) {
@@ -2468,7 +2468,7 @@ class ResultScene extends Scene {
       ctx.font = 'bold 16px sans-serif';
       ctx.fillStyle = '#FFD700';
       ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      ctx.fillText('🏆 获得图鉴：' + turkey.name, cx, py + 185);
+      ctx.fillText('🏆 Unlocked: ' + turkey.name, cx, py + 185);
       ctx.restore();
     }
     
@@ -2484,7 +2484,7 @@ class ResultScene extends Scene {
     ctx.scale(scale, scale);
     ctx.translate(-cx, -(py + popH / 2));
     
-    // 标题
+    // Title
     ctx.save();
     ctx.shadowColor = '#FF5252';
     ctx.shadowBlur = 15;
@@ -2494,7 +2494,7 @@ class ResultScene extends Scene {
     ctx.fillText('😢 Game Over', cx, py + 20);
     ctx.restore();
 
-    // 原因
+    // Reason
     if (_result.reason) {
       ctx.font = 'bold 18px sans-serif';
       ctx.fillStyle = '#FFAB91';
@@ -2502,7 +2502,7 @@ class ResultScene extends Scene {
       ctx.fillText(_result.reason, cx, py + 70);
     }
 
-    // 进度条
+    // Progress bar
     if (_result.removed !== undefined && _result.total) {
       const barW = popW * 0.6;
       const barH = 20;
@@ -2510,17 +2510,17 @@ class ResultScene extends Scene {
       const barY = py + 110;
       const pct = _result.removed / _result.total;
       
-      // 背景
+      // Background
       ctx.fillStyle = 'rgba(255,255,255,0.15)';
       ctx.beginPath();
       ctx.roundRect(barX, barY, barW, barH, 10);
       ctx.fill();
-      // 进度
+      // Progress
       ctx.fillStyle = pct > 0.7 ? '#FFB300' : pct > 0.4 ? '#FF7043' : '#EF5350';
       ctx.beginPath();
       ctx.roundRect(barX, barY, barW * pct, barH, 10);
       ctx.fill();
-      // 文字
+      // Text
       ctx.font = 'bold 14px sans-serif';
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -2562,8 +2562,8 @@ module.exports = new ResultScene();
 // ===== js/scenes/collection.js =====
 _define('js/scenes/collection', function(module, exports, require) {
 /**
- * Catch Turkey — 收藏/图鉴场景（微信小游戏 Canvas 版）
- * 展示Collected的10种Turkey，Not Collected显示为剪影/Locked
+ * Catch Turkey — Collection Scene
+ * Show 10 collected turkeys, uncollected shown as silhouette/locked
  */
 
 const { Scene, SceneManager } = require('../scene-manager');
@@ -2599,7 +2599,7 @@ class CollectionScene extends Scene {
 
     const cols = 2;
     const padding = 16;
-    const topOffset = 90; // 标题 + 进度条
+    const topOffset = 90; // Title + Progress bar
     const cardGap = 14;
     const gridW = w - padding * 2;
     const cardW = (gridW - cardGap * (cols - 1)) / cols;
@@ -2624,7 +2624,7 @@ class CollectionScene extends Scene {
   update(dt) {}
 
   render(ctx, w, h) {
-    // 背景
+    // Background
     const grad = ctx.createLinearGradient(0, 0, 0, h);
     grad.addColorStop(0, '#0D1B2A');
     grad.addColorStop(0.5, '#1B2838');
@@ -2632,14 +2632,14 @@ class CollectionScene extends Scene {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
-    // 标题栏
+    // Title bar
     ctx.font = 'bold 22px sans-serif';
     ctx.fillStyle = '#FFD700';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('Turkey Album', w / 2, 36);
 
-    // Back按钮
+    // Back button
     ctx.font = '28px sans-serif';
     ctx.fillStyle = '#FFFFFF';
     ctx.textAlign = 'center';
@@ -2654,7 +2654,7 @@ class CollectionScene extends Scene {
     ctx.textBaseline = 'middle';
     ctx.fillText(collected + '/10 Collected', w / 2, 62);
 
-    // 进度条
+    // Progress bar
     const barW = w * 0.6;
     const barH = 6;
     const barX = (w - barW) / 2;
@@ -2665,7 +2665,7 @@ class CollectionScene extends Scene {
       Renderer.drawRoundRect(barX, barY, fillW, barH, 3, '#FFD700');
     }
 
-    // 卡片网格（可滚动）
+    // Card grid (scrollable)
     ctx.save();
     ctx.translate(0, -_scrollY);
     for (const card of _cards) {
@@ -2678,43 +2678,43 @@ class CollectionScene extends Scene {
     const { turkey: t, x, y, w: cw, h: ch, unlocked } = card;
     const r = 12;
 
-    // 卡片背景
+    // Card background
     if (unlocked) {
       Renderer.drawRoundRect(x, y, cw, ch, r, 'rgba(255,255,255,0.1)');
     } else {
       Renderer.drawRoundRect(x, y, cw, ch, r, 'rgba(255,255,255,0.04)');
     }
 
-    // Turkey展示区域
+    // Turkey display area
     const previewY = y + 10;
     const previewH = ch - 60;
     const previewCx = x + cw / 2;
     const previewCy = previewY + previewH / 2;
 
     if (unlocked) {
-      // 绘制彩色Turkey简笔（身体 + 尾巴）
+      // Draw simple turkey (body + tail)
       this._drawTurkeyPreview(ctx, previewCx, previewCy, t);
 
-      // 名字
+      // Name
       ctx.font = 'bold 14px sans-serif';
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.fillText(t.name, x + cw / 2, y + ch - 44);
 
-      // 描述
+      // Description
       ctx.font = '10px sans-serif';
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.fillText(t.desc.length > 12 ? t.desc.substring(0, 12) + '...' : t.desc, x + cw / 2, y + ch - 24);
     } else {
-      // Locked剪影
+      // Locked silhouette
       ctx.font = '40px serif';
       ctx.fillStyle = 'rgba(255,255,255,0.15)';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('🦃', previewCx, previewCy);
 
-      // 锁图标
+      // Lock icon
       ctx.font = '20px serif';
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
       ctx.fillText('🔒', previewCx, previewCy + 30);
@@ -2726,15 +2726,15 @@ class CollectionScene extends Scene {
       ctx.fillText('???', x + cw / 2, y + ch - 44);
 
       ctx.font = '10px sans-serif';
-      ctx.fillText('通关对应Level解锁', x + cw / 2, y + ch - 24);
+      ctx.fillText('Clear the level to unlock', x + cw / 2, y + ch - 24);
     }
   }
 
-  /** 绘制简笔Turkey预览 */
+  /** Draw simple turkey preview */
   _drawTurkeyPreview(ctx, cx, cy, t) {
     ctx.save();
 
-    // 尾巴扇形
+    // Tail fan
     const tailR = 28;
     for (let i = -3; i <= 3; i++) {
       const angle = -Math.PI / 2 + i * 0.22;
@@ -2746,25 +2746,25 @@ class CollectionScene extends Scene {
       ctx.fill();
     }
 
-    // 身体
+    // Body
     ctx.beginPath();
     ctx.ellipse(cx, cy + 5, 18, 22, 0, 0, Math.PI * 2);
     ctx.fillStyle = t.body;
     ctx.fill();
 
-    // 深色腹部
+    // Dark belly
     ctx.beginPath();
     ctx.ellipse(cx, cy + 12, 12, 14, 0, 0, Math.PI * 2);
     ctx.fillStyle = t.bodyDk;
     ctx.fill();
 
-    // 头
+    // Head
     ctx.beginPath();
     ctx.arc(cx, cy - 18, 10, 0, Math.PI * 2);
     ctx.fillStyle = t.body;
     ctx.fill();
 
-    // 喙
+    // Beak
     ctx.beginPath();
     ctx.moveTo(cx + 8, cy - 18);
     ctx.lineTo(cx + 16, cy - 16);
@@ -2773,13 +2773,13 @@ class CollectionScene extends Scene {
     ctx.fillStyle = '#FF8F00';
     ctx.fill();
 
-    // 肉髯
+    // Wattle
     ctx.beginPath();
     ctx.ellipse(cx + 2, cy - 10, 3, 5, 0.2, 0, Math.PI * 2);
     ctx.fillStyle = '#E53935';
     ctx.fill();
 
-    // 眼睛
+    // Eyes
     ctx.beginPath();
     ctx.arc(cx + 3, cy - 20, 2.5, 0, Math.PI * 2);
     ctx.fillStyle = '#FFFFFF';
@@ -2817,7 +2817,7 @@ module.exports = new CollectionScene();
 // ===== js/scenes/settings.js =====
 _define('js/scenes/settings', function(module, exports, require) {
 /**
- * Catch Turkey — Settings场景（微信小游戏 Canvas 版）
+ * Catch Turkey — Settings Scene
  */
 
 const { Scene, SceneManager } = require('../scene-manager');
@@ -2860,13 +2860,13 @@ class SettingsScene extends Scene {
     _items = [
       { id: 'sfx', label: '🔊 Sound', key: 'sfx', x: cx - itemW / 2, y: startY, w: itemW, h: itemH },
       { id: 'bgm', label: '🎵 BGM', key: 'bgm', x: cx - itemW / 2, y: startY + (itemH + gap), w: itemW, h: itemH },
-      { id: 'vibrate', label: '📳 振动', key: 'vibrate', x: cx - itemW / 2, y: startY + (itemH + gap) * 2, w: itemW, h: itemH },
+      { id: 'vibrate', label: '📳 Vibration', key: 'vibrate', x: cx - itemW / 2, y: startY + (itemH + gap) * 2, w: itemW, h: itemH },
     ];
 
     const resetY = startY + (itemH + gap) * 3 + 20;
     _resetBtn = { x: cx - itemW / 2, y: resetY, w: itemW, h: 50 };
 
-    // Confirm弹窗按钮
+    // Confirm popup buttons
     const confirmW = w * 0.3;
     const confirmY = h / 2 + 30;
     _confirmButtons = [
@@ -2878,7 +2878,7 @@ class SettingsScene extends Scene {
   update(dt) {}
 
   render(ctx, w, h) {
-    // 背景
+    // Background
     const grad = ctx.createLinearGradient(0, 0, 0, h);
     grad.addColorStop(0, '#0D1B2A');
     grad.addColorStop(0.5, '#1B2838');
@@ -2886,27 +2886,27 @@ class SettingsScene extends Scene {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
-    // 标题
+    // Title
     ctx.font = 'bold 22px sans-serif';
     ctx.fillStyle = '#FFD700';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('Settings', w / 2, 36);
 
-    // Back按钮
+    // Back button
     ctx.font = '28px sans-serif';
     ctx.fillStyle = '#FFFFFF';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('←', _backBtn.x + _backBtn.w / 2, _backBtn.y + _backBtn.h / 2);
 
-    // Settings项
+    // Settings items
     const settings = Save.d.settings;
     for (const item of _items) {
       this._drawToggleItem(ctx, item, settings[item.key]);
     }
 
-    // 重置按钮
+    // Reset button
     Renderer.drawRoundRect(_resetBtn.x, _resetBtn.y, _resetBtn.w, _resetBtn.h, 12, '#E53935');
     ctx.font = 'bold 16px sans-serif';
     ctx.fillStyle = '#FFFFFF';
@@ -2914,14 +2914,14 @@ class SettingsScene extends Scene {
     ctx.textBaseline = 'middle';
     ctx.fillText('🗑️ Reset Data', _resetBtn.x + _resetBtn.w / 2, _resetBtn.y + _resetBtn.h / 2);
 
-    // 版本号
+    // Version
     ctx.font = '12px sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.3)';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.fillText('🦃 Catch Turkey v2.0', w / 2, h - 30);
 
-    // Confirm Reset弹窗
+    // Confirm Reset popup
     if (_confirmReset) {
       this._drawConfirmDialog(ctx, w, h);
     }
@@ -2933,7 +2933,7 @@ class SettingsScene extends Scene {
 
     Renderer.drawRoundRect(x, y, iw, ih, r, 'rgba(255,255,255,0.08)');
 
-    // 标签
+    // Label
     ctx.font = '16px sans-serif';
     ctx.fillStyle = '#FFFFFF';
     ctx.textAlign = 'left';
@@ -2947,10 +2947,10 @@ class SettingsScene extends Scene {
     const toggleY = y + (ih - toggleH) / 2;
     const toggleR = toggleH / 2;
 
-    // Toggle背景
+    // ToggleBackground
     Renderer.drawRoundRect(toggleX, toggleY, toggleW, toggleH, toggleR, isOn ? '#4CAF50' : 'rgba(255,255,255,0.2)');
 
-    // Toggle圆点
+    // Toggle dot
     const dotR = toggleH / 2 - 3;
     const dotX = isOn ? toggleX + toggleW - dotR - 5 : toggleX + dotR + 5;
     const dotY = toggleY + toggleH / 2;
@@ -2961,11 +2961,11 @@ class SettingsScene extends Scene {
   }
 
   _drawConfirmDialog(ctx, w, h) {
-    // 遮罩
+    // Overlay
     ctx.fillStyle = 'rgba(0,0,0,0.7)';
     ctx.fillRect(0, 0, w, h);
 
-    // 弹窗
+    // Popup
     const popW = w * 0.75;
     const popH = 160;
     const px = (w - popW) / 2;
@@ -2983,7 +2983,7 @@ class SettingsScene extends Scene {
     ctx.fillStyle = 'rgba(255,255,255,0.7)';
     ctx.fillText('All progress will be cleared！', w / 2, py + 55);
 
-    // Confirm/Cancel按钮
+    // Confirm/Cancel buttons
     for (const btn of _confirmButtons) {
       Renderer.drawRoundRect(btn.x, btn.y, btn.w, btn.h, 10, btn.color);
       ctx.font = 'bold 14px sans-serif';
@@ -2995,7 +2995,7 @@ class SettingsScene extends Scene {
   }
 
   onTouchStart(x, y) {
-    // Confirm弹窗优先
+    // Confirm popup priority
     if (_confirmReset) {
       for (const btn of _confirmButtons) {
         if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
@@ -3009,12 +3009,12 @@ class SettingsScene extends Scene {
           return;
         }
       }
-      // 点击弹窗外关闭
+      // Click outside to close
       _confirmReset = false;
       return;
     }
 
-    // Back按钮
+    // Back button
     if (x >= _backBtn.x && x <= _backBtn.x + _backBtn.w &&
         y >= _backBtn.y && y <= _backBtn.y + _backBtn.h) {
       Snd.click();
@@ -3022,7 +3022,7 @@ class SettingsScene extends Scene {
       return;
     }
 
-    // Settings项Toggle
+    // Settings itemsToggle
     for (const item of _items) {
       if (x >= item.x && x <= item.x + item.w && y >= item.y && y <= item.y + item.h) {
         Snd.click();
@@ -3036,7 +3036,7 @@ class SettingsScene extends Scene {
       }
     }
 
-    // 重置按钮
+    // Reset button
     if (x >= _resetBtn.x && x <= _resetBtn.x + _resetBtn.w &&
         y >= _resetBtn.y && y <= _resetBtn.y + _resetBtn.h) {
       Snd.click();
@@ -3053,14 +3053,14 @@ module.exports = new SettingsScene();
 // ===== game.js =====
 _define('game', function(module, exports, require) {
 /**
- * Catch Turkey — 微信小游戏入口
+ * Catch Turkey — Entry Point
  */
 
 const { Renderer, TouchManager } = require('./js/renderer');
 const { SceneManager } = require('./js/scene-manager');
 const Save = require('./js/save');
 
-// 场景导入
+// Scene imports
 const homeScene = require('./js/scenes/home');
 const levelSelectScene = require('./js/scenes/level-select');
 const gameScene = require('./js/scenes/game');
@@ -3068,13 +3068,13 @@ const resultScene = require('./js/scenes/result');
 const collectionScene = require('./js/scenes/collection');
 const settingsScene = require('./js/scenes/settings');
 
-// 初始化存档
+// Init save data
 Save.load();
 
-// 初始化触摸管理
+// Init touch management
 TouchManager.init();
 
-// 注册所有场景
+// Register all scenes
 SceneManager.register('home', homeScene);
 SceneManager.register('levelSelect', levelSelectScene);
 SceneManager.register('game', gameScene);
@@ -3082,7 +3082,7 @@ SceneManager.register('result', resultScene);
 SceneManager.register('collection', collectionScene);
 SceneManager.register('settings', settingsScene);
 
-// 预加载关键图片
+// Preload key images
 const preloadImages = [
   'images/title_cn.png',
   'images/bg_farm.png',

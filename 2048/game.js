@@ -152,7 +152,7 @@ function move(dir) {
       gameOver = true;
       gameOverEl.style.display = 'flex';
       finalScoreEl.textContent = 'Final Score: ' + score;
-      if(typeof sdk!=='undefined'&&sdk.showBanner)sdk.showBanner();
+      
     }
   }, ANIM_DURATION + MERGE_DURATION + 30);
 }
