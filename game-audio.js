@@ -20,6 +20,8 @@ const GameAudio = (() => {
     'color-sort': '/audio/color_crystal.mp3',
     'word-puzzle': '/audio/word_parchment.mp3',
     'dessert-blast': '/audio/dessert_candy.mp3',
+    'kitty-cafe': '/audio/kitty_cafe.mp3',
+    'paint-splash': '/audio/paint_splash.mp3',
     'catch-turkey': '/audio/turkey_farm.mp3',
     'flappy-wings': '/audio/flappy_cyber.mp3',
     'whack-a-mole': '/audio/whack_steam.mp3',
