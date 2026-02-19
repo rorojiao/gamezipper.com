@@ -3,211 +3,95 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Magic Cookie Bakery</title>
+<title>Mana Clicker - Alchemy Workshop</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-body{color:#eee;font-family:'MedievalSharp','Segoe UI',sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column;padding-top:24px;
-  background:
-    linear-gradient(180deg,#5a2a0a 0%,#3a1a05 15%,#2a1505 100%),
-    repeating-linear-gradient(90deg,rgba(80,40,10,.08) 0px,rgba(80,40,10,.08) 2px,transparent 2px,transparent 30px);
-  background-blend-mode:overlay;
-}
-/* Brick texture at top */
-body::before{content:'';position:fixed;top:0;left:0;right:0;height:30%;pointer-events:none;z-index:0;
-  background:
-    repeating-linear-gradient(90deg,#6a3520 0px,#6a3520 48px,#3a1a08 48px,#3a1a08 50px),
-    repeating-linear-gradient(0deg,#5a2a18 0px,#5a2a18 24px,#3a1a08 24px,#3a1a08 26px);
-  opacity:.15;mask:linear-gradient(180deg,#000 0%,transparent 100%)}
-
-/* Heat rising effect */
-.heat-wave{position:fixed;pointer-events:none;z-index:0;width:40px;opacity:.06;
-  border-left:2px solid rgba(255,200,100,.5);
-  animation:heatRise 4s ease-in-out infinite}
-@keyframes heatRise{0%{transform:translateY(0) scaleX(1)}25%{transform:translateY(-15vh) scaleX(1.3)}50%{transform:translateY(-30vh) scaleX(0.8)}75%{transform:translateY(-45vh) scaleX(1.2)}100%{transform:translateY(-60vh) scaleX(1);opacity:0}}
-
-#header{text-align:center;padding:10px;background:linear-gradient(180deg,#3a1505,#2a1005);
-  border-bottom:2px solid #8a5a30;position:relative;z-index:1}
-#header h1{color:#ffa030;font-size:1.4em;text-shadow:0 0 15px rgba(255,160,48,.6),0 0 30px rgba(255,100,0,.3)}
+body{background:#1a0a2e;color:#e0d0ff;font-family:'Segoe UI',sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column;padding-top:24px}
+/* Magic particle background canvas */
+#magic-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#header{text-align:center;padding:10px;background:linear-gradient(180deg,rgba(20,5,40,.9),rgba(30,10,50,.8));position:relative;z-index:1;border-bottom:1px solid rgba(138,43,226,.3)}
+#header h1{color:#a78bfa;font-size:1.4em;text-shadow:0 0 15px rgba(167,139,250,.5)}
 #stats{display:flex;justify-content:center;gap:20px;font-size:1.1em;margin-top:4px}
-#stats span{color:#ffa030}
-
+#stats span{color:#a78bfa}
 #game{display:flex;flex:1;overflow:hidden;position:relative;z-index:1}
 #cookie-area{flex:1;display:flex;align-items:center;justify-content:center;position:relative;min-width:0}
-
-/* Magic cookie */
-#cookie{width:min(55vw,280px);height:min(55vw,280px);border-radius:50%;cursor:pointer;user-select:none;
-  -webkit-tap-highlight-color:transparent;font-size:min(30vw,150px);display:flex;align-items:center;justify-content:center;position:relative;
-  background:radial-gradient(circle at 30% 25%,#e8a849,#c8852a 35%,#a06820 55%,#7a4f18 75%,#5a3a10);
-  box-shadow:inset 0 -8px 16px rgba(0,0,0,.4),inset 0 8px 16px rgba(255,220,150,.3),0 0 40px rgba(255,160,48,.5),0 8px 20px rgba(0,0,0,.5);
-  animation:cookieRotate 60s linear infinite;
-  transition:transform .15s cubic-bezier(.34,1.56,.64,1);
+#cookie{width:min(55vw,280px);height:min(55vw,280px);border-radius:50%;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:transform .1s;display:flex;align-items:center;justify-content:center;position:relative;
+  background:radial-gradient(circle at 35% 30%,#9f7aea,#7c3aed 40%,#5b21b6 60%,#3b0764 80%);
+  box-shadow:inset 0 -8px 20px rgba(0,0,0,.4),inset 0 8px 20px rgba(167,139,250,.4),0 0 40px rgba(124,58,237,.5),0 0 80px rgba(124,58,237,.2);
+  animation:orbPulse 2s ease-in-out infinite alternate;
 }
-@keyframes cookieRotate{to{transform:rotate(360deg)}}
-
-/* Rune ring overlay */
-#cookie::before{content:'';position:absolute;width:110%;height:110%;border-radius:50%;
-  border:2px solid transparent;
-  background:conic-gradient(from 0deg,rgba(255,200,100,.3),transparent 10%,transparent 25%,rgba(255,200,100,.3) 30%,transparent 40%,transparent 55%,rgba(255,200,100,.3) 60%,transparent 70%,transparent 85%,rgba(255,200,100,.3) 90%) border-box;
-  -webkit-mask:radial-gradient(transparent 68%,#000 70%,#000 100%);mask:radial-gradient(transparent 68%,#000 70%,#000 100%);
-  pointer-events:none;animation:runeRotate 8s linear infinite}
-@keyframes runeRotate{to{transform:rotate(-360deg)}}
-
-/* Magic halo */
-#cookie::after{content:'';position:absolute;width:130%;height:130%;border-radius:50%;
-  border:1px solid rgba(255,200,100,.2);
-  box-shadow:0 0 20px rgba(255,160,48,.2),inset 0 0 20px rgba(255,160,48,.1);
-  pointer-events:none;animation:haloPulse 3s ease-in-out infinite alternate}
-@keyframes haloPulse{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.05);opacity:1}}
-
-/* Chip dots */
-.cookie-chips{position:absolute;width:100%;height:100%;border-radius:50%;pointer-events:none;
-  background:
-    radial-gradient(circle at 25% 30%,#5a3210 8%,transparent 8.5%),
-    radial-gradient(circle at 60% 20%,#5a3210 6%,transparent 6.5%),
-    radial-gradient(circle at 75% 55%,#5a3210 7%,transparent 7.5%),
-    radial-gradient(circle at 35% 65%,#5a3210 5%,transparent 5.5%),
-    radial-gradient(circle at 50% 45%,#5a3210 6%,transparent 6.5%),
-    radial-gradient(circle at 20% 50%,#5a3210 5%,transparent 5.5%),
-    radial-gradient(circle at 65% 75%,#5a3210 6%,transparent 6.5%)}
-
-/* Squash & stretch click */
-#cookie.squash{animation:cookieSquash .15s cubic-bezier(.34,1.56,.64,1);transform:rotate(var(--rot,0deg))}
-@keyframes cookieSquash{0%{transform:scale(1,1)}20%{transform:scale(0.85,1.15)}50%{transform:scale(1.1,0.9)}100%{transform:scale(1,1)}}
-
-/* Sweep highlight */
-.cookie-sweep{position:absolute;width:100%;height:100%;border-radius:50%;pointer-events:none;overflow:hidden}
-.cookie-sweep::after{content:'';position:absolute;top:0;left:-100%;width:40%;height:100%;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);
-  animation:sweepAcross .2s ease-out forwards}
-@keyframes sweepAcross{to{left:150%}}
-
-/* Light rays on click */
-.light-ray{position:absolute;width:3px;height:50px;
-  background:linear-gradient(180deg,rgba(255,215,0,.8),transparent);
-  pointer-events:none;transform-origin:bottom center;
-  animation:rayBurst .3s ease-out forwards}
-@keyframes rayBurst{0%{opacity:1;height:0}50%{opacity:1;height:60px}100%{opacity:0;height:80px}}
-
-/* Crumb particles */
-.crumb{position:fixed;pointer-events:none;z-index:200;
-  animation:crumbFly .8s ease-out forwards}
-@keyframes crumbFly{0%{opacity:1;transform:translateY(0) rotate(0deg) scale(1)}
-  100%{opacity:0;transform:translateY(80px) rotate(360deg) scale(0.2)}}
-
-/* Orbiting cookie crumbs */
-.orbit-crumb{position:absolute;pointer-events:none;border-radius:50%;
-  animation:orbitFloat 6s linear infinite}
-@keyframes orbitFloat{0%{transform:rotate(0deg) translateX(var(--orbitR)) rotate(0deg)}
-  100%{transform:rotate(360deg) translateX(var(--orbitR)) rotate(-360deg)}}
-
-/* Golden flash */
-.gold-flash{position:fixed;inset:0;background:radial-gradient(circle,rgba(255,215,0,0.5),transparent 70%);
-  z-index:150;pointer-events:none;animation:goldFlash .4s ease-out forwards}
-@keyframes goldFlash{0%{opacity:1}100%{opacity:0}}
-
-/* Magic stars on upgrade */
-.magic-star{position:fixed;pointer-events:none;z-index:200;font-size:24px;
-  animation:starFall 1.2s ease-in forwards}
-@keyframes starFall{0%{opacity:1;transform:translateY(-20px) rotate(0deg) scale(1)}
-  100%{opacity:0;transform:translateY(100vh) rotate(720deg) scale(0.3)}}
-
-/* Score float */
-.float-text{position:fixed;color:#ffa030;font-weight:bold;font-size:1.4em;pointer-events:none;
-  animation:floatUp .8s forwards;
-  text-shadow:0 0 10px rgba(255,160,48,.8),0 0 20px rgba(255,215,0,.4)}
+@keyframes orbPulse{0%{box-shadow:inset 0 -8px 20px rgba(0,0,0,.4),inset 0 8px 20px rgba(167,139,250,.4),0 0 40px rgba(124,58,237,.4),0 0 80px rgba(124,58,237,.2)}100%{box-shadow:inset 0 -8px 20px rgba(0,0,0,.4),inset 0 8px 20px rgba(167,139,250,.4),0 0 70px rgba(124,58,237,.7),0 0 120px rgba(124,58,237,.4)}}
+/* Energy vortex inside orb */
+#cookie::before{content:'';position:absolute;width:60%;height:60%;border-radius:50%;
+  background:conic-gradient(from 0deg,rgba(167,139,250,.3),rgba(96,165,250,.3),rgba(167,139,250,.3),rgba(236,72,153,.3),rgba(167,139,250,.3));
+  animation:vortexSpin 3s linear infinite;pointer-events:none}
+@keyframes vortexSpin{to{transform:rotate(360deg)}}
+#cookie::after{content:'';position:absolute;width:35%;height:25%;top:18%;left:22%;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(255,255,255,.25),transparent);pointer-events:none}
+/* Rune particles on click */
+.rune{position:fixed;pointer-events:none;z-index:200;font-size:20px;animation:runeFly .8s ease-out forwards;color:#a78bfa;text-shadow:0 0 8px rgba(167,139,250,.8)}
+@keyframes runeFly{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(0.5) rotate(180deg)}}
+/* Click flash */
+#cookie.bounce{animation:bounce .15s}
+@keyframes bounce{0%{transform:scale(.88)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+#cookie:active{transform:scale(.92)}
+.float-text{position:absolute;color:#a78bfa;font-weight:bold;font-size:1.4em;pointer-events:none;animation:floatUp .8s forwards;text-shadow:0 0 8px rgba(167,139,250,.6)}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-80px)}}
-
+/* Gold flash → Magic flash */
+.gold-flash{position:fixed;inset:0;background:radial-gradient(circle,rgba(167,139,250,0.4),transparent 70%);z-index:150;pointer-events:none;animation:goldFlash .4s ease-out forwards}
+@keyframes goldFlash{0%{opacity:1}100%{opacity:0}}
+.light-beam{position:absolute;width:4px;background:linear-gradient(180deg,rgba(167,139,250,0),rgba(167,139,250,0.8),rgba(167,139,250,0));pointer-events:none;z-index:99;animation:beamDown .6s ease-out forwards}
+@keyframes beamDown{0%{height:0;opacity:1;top:-50%}60%{height:150%;opacity:1}100%{height:150%;opacity:0}}
 .score-bounce{animation:scoreBounce .2s cubic-bezier(.34,1.56,.64,1)}
 @keyframes scoreBounce{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+.crumb{position:fixed;border-radius:50%;pointer-events:none;z-index:200;animation:crumbFall .8s ease-in forwards}
+@keyframes crumbFall{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(80px) scale(0.3)}}
 
-/* Shop - magic recipe book */
-#shop{width:280px;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;
-  background:linear-gradient(180deg,#3a1a08,#2a1005);border-left:3px solid #8a5a30}
-#shop h2{color:#ffa030;text-align:center;font-size:1em;margin-bottom:4px;
-  text-shadow:0 0 10px rgba(255,160,48,.5)}
-.upgrade{background:linear-gradient(135deg,#d4b896,#c4a47a);border:2px solid #8a6a40;border-radius:8px;
-  padding:10px;cursor:pointer;transition:all .2s;color:#3a1a08;
-  box-shadow:inset 0 1px 3px rgba(255,255,255,.2)}
-.upgrade:hover{background:linear-gradient(135deg,#e4c8a6,#d4b48a);transform:scale(1.02)}
-.upgrade.affordable{border-color:#ffa030;box-shadow:0 0 10px rgba(255,160,48,.3)}
+#shop{width:280px;background:rgba(20,5,40,.9);overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;border-left:1px solid rgba(138,43,226,.2)}
+#shop h2{color:#a78bfa;text-align:center;font-size:1em;margin-bottom:4px}
+.upgrade{background:rgba(59,7,100,.6);border:2px solid rgba(138,43,226,.3);border-radius:8px;padding:10px;cursor:pointer;transition:background .2s,border-color .2s,box-shadow .2s}
+.upgrade:hover{background:rgba(91,33,182,.4);box-shadow:0 0 15px rgba(138,43,226,.3)}
+.upgrade.affordable{border-color:#a78bfa;box-shadow:0 0 10px rgba(167,139,250,.2)}
 .upgrade.locked{opacity:.4;cursor:default}
-.upgrade .name{font-weight:bold;color:#5a2a08;font-size:.95em}
-.upgrade .info{font-size:.8em;color:#6a4a28;margin-top:2px}
-.upgrade .owned{float:right;color:#8a3a10;font-weight:bold}
+.upgrade .name{font-weight:bold;color:#a78bfa;font-size:.95em}
+.upgrade .info{font-size:.8em;color:#9080b0;margin-top:2px}
+.upgrade .owned{float:right;color:#34d399;font-weight:bold}
 
-/* Upgrade absorb animation */
-.upgrade.absorbing{animation:absorbToCenter .4s ease-in forwards}
-@keyframes absorbToCenter{0%{transform:scale(1);opacity:1}100%{transform:scale(0.3);opacity:0}}
+/* Golden Cookie → Magic Potion */
+#golden-cookie{position:absolute;width:50px;height:50px;cursor:pointer;display:none;z-index:100;font-size:40px;line-height:50px;text-align:center;
+  animation:potionGlow 1s ease-in-out infinite alternate}
+@keyframes potionGlow{0%{transform:scale(1) rotate(-5deg);filter:drop-shadow(0 0 15px gold)}100%{transform:scale(1.15) rotate(5deg);filter:drop-shadow(0 0 30px gold)}}
 
-/* Cookie power-up glow */
-#cookie.powerup{box-shadow:inset 0 -8px 16px rgba(0,0,0,.4),inset 0 8px 16px rgba(255,220,150,.3),
-  0 0 60px rgba(255,215,0,.8),0 0 100px rgba(255,160,48,.5);
-  transform:scale(1.3)}
+/* Magic circle on purchase */
+#magic-circle{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0) rotate(0deg);width:200px;height:200px;pointer-events:none;z-index:200;opacity:0;transition:none}
+#magic-circle.show{animation:magicCircleAnim 0.8s ease-out forwards}
+@keyframes magicCircleAnim{0%{opacity:1;transform:translate(-50%,-50%) scale(0) rotate(0deg)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.2) rotate(180deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.5) rotate(360deg)}}
 
-/* Golden Cookie */
-#golden-cookie{position:absolute;width:50px;height:50px;cursor:pointer;display:none;z-index:100;
-  font-size:40px;line-height:50px;text-align:center;
-  animation:goldenEntry .5s cubic-bezier(.34,1.56,.64,1) forwards;
-  filter:drop-shadow(0 0 15px gold) drop-shadow(0 0 30px rgba(255,215,0,.8))}
-@keyframes goldenEntry{0%{transform:scale(0) rotate(0deg);opacity:0}
-  100%{transform:scale(1) rotate(720deg);opacity:1}}
-.golden-active{animation:goldenPulse 1s ease-in-out infinite alternate !important}
-@keyframes goldenPulse{0%{filter:drop-shadow(0 0 15px gold);transform:scale(1) rotate(-5deg)}
-  100%{filter:drop-shadow(0 0 30px gold) drop-shadow(0 0 50px rgba(255,215,0,.6));transform:scale(1.1) rotate(5deg)}}
-
-/* Golden stars orbit */
-.golden-star{position:absolute;pointer-events:none;font-size:16px;
-  animation:goldenOrbit 2s linear infinite}
-@keyframes goldenOrbit{0%{transform:rotate(0deg) translateX(35px) rotate(0deg)}
-  100%{transform:rotate(360deg) translateX(35px) rotate(-360deg)}}
-
-/* Golden click explosion */
-.golden-boom{position:fixed;pointer-events:none;z-index:200;border-radius:50%;
-  background:radial-gradient(circle,rgba(255,215,0,.8),transparent);
-  animation:goldenBoom .5s ease-out forwards}
-@keyframes goldenBoom{0%{width:10px;height:10px;opacity:1;transform:translate(-50%,-50%)}
-  100%{width:300px;height:300px;opacity:0;transform:translate(-50%,-50%)}}
-
-/* Buff text entry */
-.buff-entry{animation:buffBounce .4s cubic-bezier(.34,1.56,.64,1)}
-@keyframes buffBounce{0%{transform:scale(0)}50%{transform:scale(1.5)}100%{transform:scale(1)}}
-
-.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);
-  background:linear-gradient(135deg,#ffa030,#ff6b00);color:#3a1a08;
-  padding:12px 24px;border-radius:12px;font-weight:bold;font-size:.95em;z-index:10000;
-  animation:toastIn .4s ease-out,toastOut .4s ease-in 2.6s forwards;
-  box-shadow:0 4px 20px rgba(255,160,48,.5)}
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;padding:12px 24px;border-radius:12px;font-weight:bold;font-size:.95em;z-index:10000;animation:toastIn .4s ease-out,toastOut .4s ease-in 2.6s forwards;box-shadow:0 4px 20px rgba(124,58,237,.5);white-space:nowrap}
 @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-30px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 @keyframes toastOut{to{opacity:0;transform:translateX(-50%) translateY(-30px)}}
 
-#achiev-btn{position:fixed;bottom:10px;left:10px;
-  background:linear-gradient(135deg,#ffa030,#cc7000);color:#3a1a08;
-  border:2px solid #8a5a30;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:bold;
-  z-index:100;font-size:.85em;font-family:inherit;
-  box-shadow:0 0 10px rgba(255,160,48,.3)}
-#achiev-panel{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;display:none;align-items:center;justify-content:center}
+#achiev-btn{position:fixed;bottom:10px;left:10px;background:#7c3aed;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:bold;z-index:100;font-size:.85em;box-shadow:0 0 10px rgba(124,58,237,.3)}
+#achiev-panel{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,5,20,.9);z-index:9999;display:none;align-items:center;justify-content:center}
 #achiev-panel.show{display:flex}
-#achiev-inner{background:linear-gradient(180deg,#3a1a08,#2a1005);border:2px solid #8a5a30;border-radius:16px;padding:20px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
-#achiev-inner h2{color:#ffa030;margin-bottom:12px;text-align:center}
-.achiev-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;margin-bottom:6px;
-  background:rgba(138,90,48,.2);border:1px solid #8a5a3040}
+#achiev-inner{background:rgba(30,10,50,.95);border:2px solid rgba(138,43,226,.4);border-radius:16px;padding:20px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
+#achiev-inner h2{color:#a78bfa;margin-bottom:12px;text-align:center}
+.achiev-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;margin-bottom:6px;background:rgba(59,7,100,.4);border:1px solid rgba(138,43,226,.2)}
 .achiev-item.locked{opacity:.35}
 .achiev-item .a-icon{font-size:1.5em}
 .achiev-item .a-info{flex:1}
-.achiev-item .a-name{font-weight:bold;color:#ffa030;font-size:.9em}
-.achiev-item .a-desc{font-size:.75em;color:#aa8860}
-#achiev-close{float:right;background:#ffa030;color:#3a1a08;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;font-weight:bold}
+.achiev-item .a-name{font-weight:bold;color:#a78bfa;font-size:.9em}
+.achiev-item .a-desc{font-size:.75em;color:#9080b0}
+#achiev-close{float:right;background:#7c3aed;color:#fff;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;font-weight:bold}
 
 #buff-bar{position:fixed;bottom:10px;right:10px;z-index:100;display:flex;flex-direction:column;gap:4px}
-.buff-tag{background:rgba(255,160,48,.9);color:#3a1a08;padding:4px 10px;border-radius:6px;font-size:.75em;font-weight:bold;
-  animation:buffPulse 1s infinite alternate}
+.buff-tag{background:rgba(167,139,250,.9);color:#fff;padding:4px 10px;border-radius:6px;font-size:.75em;font-weight:bold;animation:buffPulse 1s infinite alternate}
 @keyframes buffPulse{to{opacity:.7}}
 
 @media(max-width:600px){
   #game{flex-direction:column}
   #cookie-area{flex:none;height:45vh}
-  #shop{width:100%;flex:1;flex-direction:row;flex-wrap:wrap;overflow-y:auto;padding:6px;border-left:none;border-top:3px solid #8a5a30}
+  #shop{width:100%;flex:1;flex-direction:row;flex-wrap:wrap;overflow-y:auto;padding:6px;border-left:none;border-top:1px solid rgba(138,43,226,.2)}
   #shop h2{width:100%}
   .upgrade{flex:1 1 45%;min-width:140px}
   #cookie{width:min(45vw,200px);height:min(45vw,200px)}
@@ -217,63 +101,130 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:30%;pointer-e
 </head>
 <body>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none">⬅ More Games at GameZipper.com</a>
-
-<!-- Heat waves -->
-<div class="heat-wave" style="left:15%;bottom:0;height:30px;animation-delay:0s"></div>
-<div class="heat-wave" style="left:40%;bottom:0;height:25px;animation-delay:1.2s"></div>
-<div class="heat-wave" style="left:65%;bottom:0;height:35px;animation-delay:2.5s"></div>
-<div class="heat-wave" style="left:85%;bottom:0;height:28px;animation-delay:0.8s"></div>
-
+<canvas id="magic-bg"></canvas>
 <div id="header">
-<h1>🧙 Magic Cookie Bakery</h1>
-<div id="stats"><div>Cookies: <span id="count">0</span></div><div>CPS: <span id="cps">0</span></div></div>
+<h1>🧪 Alchemy Workshop</h1>
+<div id="stats"><div>⚡ Mana: <span id="count">0</span></div><div>MPS: <span id="cps">0</span></div></div>
 </div>
 <div id="game">
 <div id="cookie-area">
-<div id="cookie"><div class="cookie-chips"></div></div>
-<div id="golden-cookie">🍪</div>
+<div id="cookie"></div>
+<div id="golden-cookie">🧪</div>
 </div>
-<div id="shop"><h2>📜 Magic Recipes</h2></div>
+<div id="shop"><h2>✨ Spellbook</h2></div>
 </div>
-<button id="achiev-btn" onclick="toggleAchievements()">🏆 Achievements</button>
+<button id="achiev-btn" onclick="toggleAchievements()">📖 Grimoire</button>
 <div id="buff-bar"></div>
 <div id="achiev-panel" onclick="if(event.target===this)toggleAchievements()">
-<div id="achiev-inner"><button id="achiev-close" onclick="toggleAchievements()">✕</button><h2>🏆 Achievements</h2><div id="achiev-list"></div></div>
+<div id="achiev-inner"><button id="achiev-close" onclick="toggleAchievements()">✕</button><h2>📖 Arcane Achievements</h2><div id="achiev-list"></div></div>
 </div>
+<!-- Magic circle overlay -->
+<canvas id="magic-circle" width="200" height="200"></canvas>
 <script>
+// Draw hexagram on magic circle canvas
+(function(){
+  const mc=document.getElementById('magic-circle');
+  const mctx=mc.getContext('2d');
+  mctx.translate(100,100);
+  mctx.strokeStyle='#a78bfa';mctx.lineWidth=2;mctx.shadowColor='#a78bfa';mctx.shadowBlur=15;
+  // Outer circle
+  mctx.beginPath();mctx.arc(0,0,90,0,Math.PI*2);mctx.stroke();
+  mctx.beginPath();mctx.arc(0,0,80,0,Math.PI*2);mctx.stroke();
+  // Hexagram (two overlapping triangles)
+  for(let t=0;t<2;t++){
+    mctx.beginPath();
+    for(let i=0;i<3;i++){
+      const a=(i*2*Math.PI/3)-(Math.PI/2)+(t?Math.PI/3:0);
+      const x=Math.cos(a)*70,y=Math.sin(a)*70;
+      i===0?mctx.moveTo(x,y):mctx.lineTo(x,y);
+    }
+    mctx.closePath();mctx.stroke();
+  }
+  // Inner runes
+  const runes=['✦','◇','△','♦','☆','✧'];
+  mctx.font='14px serif';mctx.fillStyle='#a78bfa';mctx.textAlign='center';mctx.textBaseline='middle';
+  for(let i=0;i<6;i++){
+    const a=i*Math.PI/3-Math.PI/2;
+    mctx.fillText(runes[i],Math.cos(a)*50,Math.sin(a)*50);
+  }
+})();
+
+// Magic background particles
+(function(){
+  const c=document.getElementById('magic-bg');
+  const ctx=c.getContext('2d');
+  let particles=[];
+  function resize(){
+    const dpr=window.devicePixelRatio||1;
+    c.width=window.innerWidth*dpr;c.height=window.innerHeight*dpr;
+    c.style.width=window.innerWidth+'px';c.style.height=window.innerHeight+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  resize();window.addEventListener('resize',resize);
+  // Init floating magic particles
+  for(let i=0;i<40;i++){
+    particles.push({
+      x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,
+      vx:(Math.random()-0.5)*0.3,vy:-0.2-Math.random()*0.3,
+      r:1+Math.random()*2,alpha:0.2+Math.random()*0.4,
+      color:['#a78bfa','#60a5fa','#c084fc','#818cf8','#e879f9'][Math.floor(Math.random()*5)],
+      phase:Math.random()*Math.PI*2
+    });
+  }
+  function draw(){
+    ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+    const t=performance.now()/1000;
+    for(const p of particles){
+      p.x+=p.vx+Math.sin(t+p.phase)*0.2;p.y+=p.vy;
+      if(p.y<-10){p.y=window.innerHeight+10;p.x=Math.random()*window.innerWidth;}
+      if(p.x<-10)p.x=window.innerWidth+10;
+      if(p.x>window.innerWidth+10)p.x=-10;
+      const flicker=0.5+0.5*Math.sin(t*2+p.phase);
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.color;ctx.globalAlpha=p.alpha*flicker;
+      ctx.shadowColor=p.color;ctx.shadowBlur=8;
+      ctx.fill();ctx.shadowBlur=0;
+    }
+    ctx.globalAlpha=1;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
 (function(){
 const upgrades=[
-  {name:'Enchanted Cursor',baseCost:10,cps:1,icon:'✨',owned:0},
-  {name:'Cookie Witch',baseCost:100,cps:5,icon:'🧙‍♀️',owned:0},
-  {name:'Magic Garden',baseCost:500,cps:20,icon:'🌿',owned:0},
-  {name:'Arcane Oven',baseCost:2000,cps:100,icon:'🔥',owned:0},
-  {name:'Crystal Mine',baseCost:10000,cps:500,icon:'💎',owned:0},
-  {name:'Dragon Vault',baseCost:50000,cps:2000,icon:'🐉',owned:0}
+  {name:'🪄 Magic Wand',baseCost:10,cps:1,icon:'🪄',owned:0},
+  {name:'🧙 Apprentice',baseCost:100,cps:5,icon:'🧙',owned:0},
+  {name:'📖 Spell Book',baseCost:500,cps:20,icon:'📖',owned:0},
+  {name:'⚗️ Alchemy Lab',baseCost:2000,cps:100,icon:'⚗️',owned:0},
+  {name:'💎 Crystal Mine',baseCost:10000,cps:500,icon:'💎',owned:0},
+  {name:'🏰 Wizard Tower',baseCost:50000,cps:2000,icon:'🏰',owned:0}
 ];
 let cookies=0,totalCookies=0,totalCps=0,lastSave=Date.now(),lastTick=Date.now();
 let clickValue=1,cpsMultiplier=1,clickMultiplier=1;
 const purchasedTypes=new Set();
+const RUNE_SYMBOLS=['✦','✧','☆','◇','△','♦','⟡','⊹','✶','⋆'];
 
 const actx=new(window.AudioContext||window.webkitAudioContext)();
-function playClick(){const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='triangle';o.frequency.value=600;g.gain.value=.12;o.start();o.frequency.exponentialRampToValueAtTime(1200,actx.currentTime+.06);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.12);o.stop(actx.currentTime+.12)}
-function playBuy(){const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='sine';o.frequency.value=523;g.gain.value=.15;o.start();o.frequency.exponentialRampToValueAtTime(1047,actx.currentTime+.15);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.25);o.stop(actx.currentTime+.25)}
-function playAchievement(){[523,659,784,1047].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='sine';o.frequency.value=f;g.gain.value=.12;o.start(actx.currentTime+i*.1);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.1+.3);o.stop(actx.currentTime+i*.1+.3)})}
-function playGolden(){[880,1108,1318,1568].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='sine';o.frequency.value=f;g.gain.value=.1;o.start(actx.currentTime+i*.08);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.08+.4);o.stop(actx.currentTime+i*.08+.4)})}
-function playGoldenClick(){[1200,1500,1800,2200].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='triangle';o.frequency.value=f;g.gain.value=.12;o.start(actx.currentTime+i*.05);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.05+.3);o.stop(actx.currentTime+i*.05+.3)})}
+function playClick(){const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.frequency.value=600;o.type='sine';g.gain.value=.12;o.start();o.frequency.exponentialRampToValueAtTime(900,actx.currentTime+0.05);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.12);o.stop(actx.currentTime+.12)}
+function playBuy(){const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='triangle';o.frequency.value=523;g.gain.value=.2;o.start();o.frequency.exponentialRampToValueAtTime(1047,actx.currentTime+.15);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.2);o.stop(actx.currentTime+.2)}
+function playAchievement(){const notes=[523,659,784,1047];notes.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='sine';o.frequency.value=f;g.gain.value=.15;o.start(actx.currentTime+i*.1);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.1+.3);o.stop(actx.currentTime+i*.1+.3)})}
+function playGolden(){const notes=[880,1108,1318,1568];notes.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='sine';o.frequency.value=f;g.gain.value=.12;o.start(actx.currentTime+i*.08);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.08+.4);o.stop(actx.currentTime+i*.08+.4)})}
+function playGoldenClick(){[1200,1500,1800].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='triangle';o.frequency.value=f;g.gain.value=.15;o.start(actx.currentTime+i*.06);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.06+.25);o.stop(actx.currentTime+i*.06+.25)})}
 
 const achievements=[
-  {id:'first',name:'First Cookie',desc:'Click your first cookie',icon:'🖱️',check:()=>totalCookies>=1},
-  {id:'hundred',name:'Cookie Jar',desc:'Bake 100 cookies',icon:'🫙',check:()=>totalCookies>=100},
-  {id:'thousand',name:'Cookie Monster',desc:'Bake 1,000 cookies',icon:'👹',check:()=>totalCookies>=1000},
-  {id:'tenk',name:'Cookie Baker',desc:'Bake 10,000 cookies',icon:'👨‍🍳',check:()=>totalCookies>=10000},
-  {id:'million',name:'Cookie Millionaire',desc:'Bake 1,000,000 cookies',icon:'💰',check:()=>totalCookies>=1e6},
-  {id:'billion',name:'Cookie Billionaire',desc:'Bake 1,000,000,000 cookies',icon:'💎',check:()=>totalCookies>=1e9},
-  {id:'speed',name:'Speed Clicker',desc:'Click 10 times in 1 second',icon:'⚡',check:()=>false},
-  {id:'grandma10',name:"Witch Coven",desc:'Own 10 Cookie Witches',icon:'🧙‍♀️',check:()=>upgrades[1].owned>=10},
-  {id:'factory5',name:'Oven Master',desc:'Own 5 Arcane Ovens',icon:'🔥',check:()=>upgrades[3].owned>=5},
-  {id:'cursor50',name:'Enchantment Farm',desc:'Own 50 Enchanted Cursors',icon:'✨',check:()=>upgrades[0].owned>=50},
-  {id:'allTypes',name:'Diversified',desc:'Own at least 1 of each recipe',icon:'🌈',check:()=>upgrades.every(u=>u.owned>0)},
-  {id:'golden3',name:'Lucky Cookie',desc:'Click 3 golden cookies',icon:'🍀',check:()=>goldenClicks>=3}
+  {id:'first',name:'First Spark',desc:'Channel your first mana',icon:'⚡',check:()=>totalCookies>=1},
+  {id:'hundred',name:'Mana Pool',desc:'Channel 100 mana',icon:'🫧',check:()=>totalCookies>=100},
+  {id:'thousand',name:'Arcane Surge',desc:'Channel 1,000 mana',icon:'🌊',check:()=>totalCookies>=1000},
+  {id:'tenk',name:'Mana Master',desc:'Channel 10,000 mana',icon:'🧙',check:()=>totalCookies>=10000},
+  {id:'million',name:'Archmage',desc:'Channel 1,000,000 mana',icon:'🌟',check:()=>totalCookies>=1e6},
+  {id:'billion',name:'Cosmic Sorcerer',desc:'Channel 1,000,000,000 mana',icon:'🌌',check:()=>totalCookies>=1e9},
+  {id:'speed',name:'Rapid Casting',desc:'Cast 10 times in 1 second',icon:'⚡',check:()=>false},
+  {id:'grandma10',name:"Apprentice Guild",desc:'Recruit 10 Apprentices',icon:'🧙',check:()=>upgrades[1].owned>=10},
+  {id:'factory5',name:'Lab Master',desc:'Own 5 Alchemy Labs',icon:'⚗️',check:()=>upgrades[3].owned>=5},
+  {id:'cursor50',name:'Wand Collection',desc:'Own 50 Magic Wands',icon:'🪄',check:()=>upgrades[0].owned>=50},
+  {id:'allTypes',name:'Full Curriculum',desc:'Own at least 1 of each spell',icon:'🌈',check:()=>upgrades.every(u=>u.owned>0)},
+  {id:'golden3',name:'Potion Finder',desc:'Find 3 magic potions',icon:'🧪',check:()=>goldenClicks>=3}
 ];
 const unlockedAch=new Set();
 let goldenClicks=0;
@@ -281,212 +232,122 @@ let goldenClicks=0;
 function checkAchievements(){
   achievements.forEach(a=>{
     if(!unlockedAch.has(a.id)&&a.check()){
-      unlockedAch.add(a.id);showToast(`🏆 ${a.name}: ${a.desc}`);playAchievement();
+      unlockedAch.add(a.id);
+      showToast(`📖 ${a.name}: ${a.desc}`);
+      playAchievement();
     }
   });
 }
+
 function showToast(msg){
   const t=document.createElement('div');t.className='toast';t.textContent=msg;
   document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
 }
+
 const clickTimes=[];
 function trackSpeed(){
   const now=Date.now();clickTimes.push(now);
   while(clickTimes.length>0&&now-clickTimes[0]>1000)clickTimes.shift();
   if(clickTimes.length>=10&&!unlockedAch.has('speed')){
-    unlockedAch.add('speed');showToast('🏆 Speed Clicker: 10 clicks in 1 second!');playAchievement();
+    unlockedAch.add('speed');showToast('📖 Rapid Casting: 10 casts in 1 second!');playAchievement();
   }
 }
+
 function toggleAchievements(){
   const p=document.getElementById('achiev-panel');p.classList.toggle('show');
   if(p.classList.contains('show'))renderAchievements();
 }
 window.toggleAchievements=toggleAchievements;
+
 function renderAchievements(){
-  document.getElementById('achiev-list').innerHTML=achievements.map(a=>`<div class="achiev-item ${unlockedAch.has(a.id)?'':'locked'}"><span class="a-icon">${a.icon}</span><div class="a-info"><div class="a-name">${a.name} ${unlockedAch.has(a.id)?'✅':''}</div><div class="a-desc">${a.desc}</div></div></div>`).join('');
+  const list=document.getElementById('achiev-list');
+  list.innerHTML=achievements.map(a=>`<div class="achiev-item ${unlockedAch.has(a.id)?'':'locked'}"><span class="a-icon">${a.icon}</span><div class="a-info"><div class="a-name">${a.name} ${unlockedAch.has(a.id)?'✅':''}</div><div class="a-desc">${a.desc}</div></div></div>`).join('');
 }
 
-// Golden Cookie
-let goldenTimer=null,goldenStarEls=[];
-function scheduleGolden(){goldenTimer=setTimeout(spawnGolden,(30+Math.random()*90)*1000)}
+let goldenTimer=null;
+function scheduleGolden(){const delay=(30+Math.random()*90)*1000;goldenTimer=setTimeout(spawnGolden,delay);}
 function spawnGolden(){
   const gc=document.getElementById('golden-cookie');
   const area=document.getElementById('cookie-area');
   const ar=area.getBoundingClientRect();
-  gc.style.left=Math.random()*(ar.width-60)+'px';gc.style.top=Math.random()*(ar.height-60)+'px';
-  gc.style.display='block';
-  gc.style.animation='goldenEntry .5s cubic-bezier(.34,1.56,.64,1) forwards';
-  playGolden();
-  setTimeout(()=>{gc.classList.add('golden-active');gc.style.animation=''},550);
-  // Add orbiting stars
-  goldenStarEls.forEach(s=>s.remove());goldenStarEls=[];
-  for(let i=0;i<3;i++){
-    const s=document.createElement('div');s.className='golden-star';s.textContent='⭐';
-    s.style.animationDelay=(i*0.66)+'s';
-    gc.parentElement.appendChild(s);
-    const updatePos=()=>{
-      if(gc.style.display==='none'){s.remove();return;}
-      s.style.left=(parseFloat(gc.style.left)+25)+'px';
-      s.style.top=(parseFloat(gc.style.top)+25)+'px';
-      requestAnimationFrame(updatePos);
-    };
-    updatePos();goldenStarEls.push(s);
-  }
-  const hideTimer=setTimeout(()=>{gc.style.display='none';gc.classList.remove('golden-active');
-    goldenStarEls.forEach(s=>s.remove());goldenStarEls=[];scheduleGolden()},10000);
+  gc.style.left=Math.random()*(ar.width-60)+'px';
+  gc.style.top=Math.random()*(ar.height-60)+'px';
+  gc.style.display='block';playGolden();
+  const beam=document.createElement('div');beam.className='light-beam';
+  beam.style.left=(parseFloat(gc.style.left)+25)+'px';beam.style.height='0';
+  area.appendChild(beam);setTimeout(()=>beam.remove(),600);
+  const hideTimer=setTimeout(()=>{gc.style.display='none';scheduleGolden()},10000);
   gc.onclick=function(e){
-    e.stopPropagation();
-    gc.style.display='none';gc.classList.remove('golden-active');
-    goldenStarEls.forEach(s=>s.remove());goldenStarEls=[];
-    clearTimeout(hideTimer);goldenClicks++;
-    playGoldenClick();
-    // Golden explosion - 50 particles
-    const gr=gc.getBoundingClientRect();
-    const cx=gr.left+gr.width/2,cy=gr.top+gr.height/2;
-    for(let i=0;i<50;i++){
-      const p=document.createElement('div');p.className='crumb';
-      const sz=4+Math.random()*10;
-      p.style.width=sz+'px';p.style.height=sz+'px';p.style.borderRadius='50%';
-      p.style.background=['#ffd700','#ffaa00','#ffe44d','#fff'][Math.floor(Math.random()*4)];
-      p.style.boxShadow='0 0 6px rgba(255,215,0,.8)';
-      const angle=Math.random()*Math.PI*2,dist=80+Math.random()*120;
-      p.style.left=(cx+Math.cos(angle)*dist*0.3)+'px';
-      p.style.top=(cy+Math.sin(angle)*dist*0.3)+'px';
-      p.style.setProperty('--tx',Math.cos(angle)*dist+'px');
-      p.style.animation='none';
-      p.animate([
-        {transform:'translate(0,0) scale(1)',opacity:1},
-        {transform:`translate(${Math.cos(angle)*dist}px,${Math.sin(angle)*dist}px) scale(0)`,opacity:0}
-      ],{duration:600,easing:'ease-out',fill:'forwards'});
-      document.body.appendChild(p);setTimeout(()=>p.remove(),600);
-    }
-    // Golden boom ring
-    const boom=document.createElement('div');boom.className='golden-boom';
-    boom.style.left=cx+'px';boom.style.top=cy+'px';
-    document.body.appendChild(boom);setTimeout(()=>boom.remove(),500);
-    // Full gold flash
-    const gf=document.createElement('div');gf.className='gold-flash';
-    document.body.appendChild(gf);setTimeout(()=>gf.remove(),400);
-    triggerGoldenEffect();checkAchievements();scheduleGolden();
+    e.stopPropagation();gc.style.display='none';clearTimeout(hideTimer);
+    goldenClicks++;playGoldenClick();triggerGoldenEffect();checkAchievements();scheduleGolden();
   };
 }
+
 function triggerGoldenEffect(){
   const r=Math.random();
   if(r<0.33){
-    cpsMultiplier=2;showToast('🌟 Frenzy! 2x CPS for 30 seconds!');showBuff('2x CPS',30000);
-    // Buff text bounce
-    showBuffText('2x CPS!');
-    setTimeout(()=>{cpsMultiplier=1},30000);
+    cpsMultiplier=2;showToast('🌟 Arcane Frenzy! 2x MPS for 30 seconds!');
+    showBuff('2x MPS',30000);setTimeout(()=>{cpsMultiplier=1},30000);
   }else if(r<0.66){
-    const bonus=Math.max(totalCps*60,100);cookies+=bonus;totalCookies+=bonus;
-    showToast('🌟 Lucky! +'+fmt(bonus)+' cookies!');showBuffText('+'+fmt(bonus)+'!');
+    const bonus=Math.max(totalCps*60,100);
+    cookies+=bonus;totalCookies+=bonus;
+    showToast('🌟 Mana Surge! +'+fmt(bonus)+' mana!');
   }else{
-    clickMultiplier=10;showToast('🌟 Click Frenzy! 10x clicks for 15 seconds!');showBuff('10x Click',15000);
-    showBuffText('10x Click!');
-    setTimeout(()=>{clickMultiplier=1},15000);
+    clickMultiplier=10;showToast('🌟 Power Channeling! 10x clicks for 15 seconds!');
+    showBuff('10x Cast',15000);setTimeout(()=>{clickMultiplier=1},15000);
   }
 }
-function showBuffText(text){
-  const div=document.createElement('div');
-  div.style.cssText='position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:48px;font-weight:bold;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,.8);z-index:10000;pointer-events:none;font-family:MedievalSharp,serif';
-  div.className='buff-entry';div.textContent=text;
-  document.body.appendChild(div);
-  div.animate([{transform:'translate(-50%,-50%) scale(0)'},{transform:'translate(-50%,-50%) scale(1.5)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:400});
-  setTimeout(()=>div.animate([{opacity:1},{opacity:0}],{duration:300,fill:'forwards'}),1500);
-  setTimeout(()=>div.remove(),1800);
-}
+
 function showBuff(text,duration){
+  const bar=document.getElementById('buff-bar');
   const tag=document.createElement('div');tag.className='buff-tag';tag.textContent=text;
-  document.getElementById('buff-bar').appendChild(tag);setTimeout(()=>tag.remove(),duration);
+  bar.appendChild(tag);setTimeout(()=>tag.remove(),duration);
+}
+
+// Show magic circle on purchase
+function showMagicCircle(){
+  const mc=document.getElementById('magic-circle');
+  mc.classList.remove('show');void mc.offsetWidth;mc.classList.add('show');
+  setTimeout(()=>mc.classList.remove('show'),800);
 }
 
 function fmt(n){if(n>=1e12)return(n/1e12).toFixed(1)+'T';if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return Math.floor(n).toString()}
 function cost(u){return Math.floor(u.baseCost*Math.pow(1.15,u.owned))}
 function calcCps(){totalCps=upgrades.reduce((s,u)=>s+u.cps*u.owned,0)}
 
-// Cookie click
 const cookieEl=document.getElementById('cookie');
-
-// Add orbiting crumbs
-const cookieArea=document.getElementById('cookie-area');
-for(let i=0;i<4;i++){
-  const oc=document.createElement('div');oc.className='orbit-crumb';
-  const sz=4+Math.random()*6;
-  oc.style.width=sz+'px';oc.style.height=sz+'px';
-  oc.style.background=['#c8852a80','#a0682080','#ffd70040','#e8a84960'][i];
-  oc.style.setProperty('--orbitR',(70+i*20)+'px');
-  oc.style.animationDelay=(-i*1.5)+'s';
-  oc.style.animationDuration=(5+i)+'s';
-  oc.style.left='50%';oc.style.top='50%';
-  cookieArea.appendChild(oc);
-}
-
 cookieEl.addEventListener('click',function(e){
   if(actx.state==='suspended')actx.resume();
   const val=clickValue*clickMultiplier;
   cookies+=val;totalCookies+=val;
   playClick();trackSpeed();
-
-  // Squash & stretch
-  cookieEl.classList.remove('squash');void cookieEl.offsetWidth;cookieEl.classList.add('squash');
-  setTimeout(()=>cookieEl.classList.remove('squash'),150);
-
-  // Sweep highlight
-  const existingSweep=cookieEl.querySelector('.cookie-sweep');
-  if(existingSweep)existingSweep.remove();
-  const sweep=document.createElement('div');sweep.className='cookie-sweep';
-  cookieEl.appendChild(sweep);setTimeout(()=>sweep.remove(),250);
-
-  // Light rays
-  const cr=cookieEl.getBoundingClientRect();
-  const ccx=cr.left+cr.width/2,ccy=cr.top+cr.height/2;
-  for(let i=0;i<8;i++){
-    const ray=document.createElement('div');ray.className='light-ray';
-    ray.style.position='fixed';
-    ray.style.left=ccx+'px';ray.style.top=(ccy-50)+'px';
-    ray.style.transformOrigin='bottom center';
-    ray.style.transform=`rotate(${i*45}deg)`;
-    document.body.appendChild(ray);setTimeout(()=>ray.remove(),300);
+  cookieEl.classList.remove('bounce');void cookieEl.offsetWidth;cookieEl.classList.add('bounce');
+  // Rune particles
+  const r=cookieEl.getBoundingClientRect();
+  const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  for(let i=0;i<6;i++){
+    const rn=document.createElement('div');rn.className='rune';
+    rn.textContent=RUNE_SYMBOLS[Math.floor(Math.random()*RUNE_SYMBOLS.length)];
+    rn.style.left=(cx+Math.random()*60-30)+'px';rn.style.top=(cy+Math.random()*40-20)+'px';
+    rn.style.fontSize=(16+Math.random()*10)+'px';
+    document.body.appendChild(rn);setTimeout(()=>rn.remove(),800);
   }
-
-  // Crumb particles - 15
-  const crumbColors=['#c8852a','#a06820','#e8a849','#ffd700','#8B4513','#D2691E','#5a3a10'];
-  for(let i=0;i<15;i++){
-    const c=document.createElement('div');c.className='crumb';
-    const sz=3+Math.random()*7;
-    const shapes=['50%','30%','0'];
-    c.style.width=sz+'px';c.style.height=sz*(0.6+Math.random()*0.8)+'px';
-    c.style.borderRadius=shapes[Math.floor(Math.random()*3)];
-    c.style.background=crumbColors[i%crumbColors.length];
-    const angle=Math.random()*Math.PI*2,dist=30+Math.random()*50;
-    c.style.left=(ccx+Math.cos(angle)*dist*0.3)+'px';
-    c.style.top=(ccy+Math.sin(angle)*dist*0.3)+'px';
-    c.animate([
-      {transform:'translate(0,0) rotate(0deg) scale(1)',opacity:1},
-      {transform:`translate(${Math.cos(angle)*dist}px,${80+Math.random()*40}px) rotate(${360+Math.random()*360}deg) scale(0.2)`,opacity:0}
-    ],{duration:700+Math.random()*300,easing:'ease-out',fill:'forwards'});
-    document.body.appendChild(c);setTimeout(()=>c.remove(),1000);
-  }
-
-  // Score bounce
   const countEl=document.getElementById('count');
   countEl.classList.remove('score-bounce');void countEl.offsetWidth;countEl.classList.add('score-bounce');
-
-  // Float text
   const ft=document.createElement('div');ft.className='float-text';ft.textContent='+'+fmt(val);
-  ft.style.left=(ccx-10+Math.random()*40-20)+'px';ft.style.top=(cr.top-10)+'px';
+  ft.style.left=(r.left+r.width/2-10+Math.random()*40-20)+'px';
+  ft.style.top=(r.top-10)+'px';ft.style.position='fixed';
   document.body.appendChild(ft);setTimeout(()=>ft.remove(),800);
   checkAchievements();updateUI();
 });
 
-// Shop
 const shopEl=document.getElementById('shop');
 function renderShop(){
   const existing=shopEl.querySelectorAll('.upgrade');
   if(existing.length===0){
     upgrades.forEach((u,i)=>{
       const d=document.createElement('div');d.className='upgrade';d.dataset.idx=i;
-      d.innerHTML=`<span class="owned" id="own${i}">0</span><div class="name">${u.icon} ${u.name}</div><div class="info">+${u.cps}/s | Cost: <span id="cost${i}">${fmt(cost(u))}</span></div>`;
+      d.innerHTML=`<span class="owned" id="own${i}">0</span><div class="name">${u.name}</div><div class="info">+${u.cps}/s | Cost: <span id="cost${i}">${fmt(cost(u))}</span></div>`;
       d.addEventListener('click',()=>buy(i));shopEl.appendChild(d);
     });
   }
@@ -497,27 +358,16 @@ function renderShop(){
     document.getElementById('own'+i).textContent=u.owned;
   });
 }
+
 function buy(i){
   const u=upgrades[i],c=cost(u);if(cookies<c)return;
-  cookies-=c;u.owned++;calcCps();playBuy();purchasedTypes.add(i);
-
-  // Upgrade card absorb effect
-  const card=shopEl.children[i+1];
-  card.classList.add('absorbing');
-  setTimeout(()=>card.classList.remove('absorbing'),400);
-
-  // Cookie power-up glow
-  cookieEl.classList.add('powerup');
-  setTimeout(()=>cookieEl.classList.remove('powerup'),300);
-
-  // Magic stars
-  for(let s=0;s<5;s++){
-    const star=document.createElement('div');star.className='magic-star';
-    star.textContent='✨';
-    star.style.left=(Math.random()*window.innerWidth)+'px';star.style.top='-20px';
-    star.style.animationDelay=(Math.random()*0.3)+'s';
-    document.body.appendChild(star);setTimeout(()=>star.remove(),1500);
-  }
+  cookies-=c;u.owned++;calcCps();playBuy();
+  purchasedTypes.add(i);
+  // Magic circle effect
+  showMagicCircle();
+  // Purple flash
+  const gf=document.createElement('div');gf.className='gold-flash';
+  document.body.appendChild(gf);setTimeout(()=>gf.remove(),400);
   checkAchievements();updateUI();
 }
 
@@ -553,11 +403,12 @@ function load(){
     cookies=d.cookies||0;totalCookies=d.totalCookies||cookies;
     if(d.types)d.types.forEach(t=>purchasedTypes.add(t));
     if(d.achievements)d.achievements.forEach(a=>unlockedAch.add(a));
-    if(d.goldenClicks)goldenClicks=d.goldenClicks;calcCps();
+    if(d.goldenClicks)goldenClicks=d.goldenClicks;
+    calcCps();
     if(d.time&&totalCps>0){
       const away=(Date.now()-d.time)/1000;
       if(away>5){const earned=totalCps*away;cookies+=earned;totalCookies+=earned;
-        setTimeout(()=>alert('Welcome back! You earned '+fmt(earned)+' cookies while away ('+Math.floor(away/60)+' min).'),300);}
+        setTimeout(()=>alert('Welcome back! You channeled '+fmt(earned)+' mana while away ('+Math.floor(away/60)+' min).'),300);}
     }
   }catch(e){}
 }
@@ -566,18 +417,18 @@ load();updateUI();requestAnimationFrame(tick);scheduleGolden();
 window.addEventListener('beforeunload',save);
 })();
 </script>
-<div id="tutorial-overlay" style="position:fixed;inset:0;pointer-events:auto;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;z-index:999999">
-<div style="background:linear-gradient(180deg,rgba(60,30,10,0.97),rgba(40,20,5,0.97));border:2px solid #8a5a30;border-radius:20px;padding:36px 28px;max-width:340px;text-align:center;color:#fff;box-shadow:0 0 40px rgba(255,160,48,0.3);font-family:MedievalSharp,serif">
-<div style="font-size:56px;margin-bottom:12px">🍪</div>
-<h2 style="font-size:24px;color:#ffa030;margin-bottom:16px;text-shadow:0 0 10px rgba(255,160,48,.5)">How to Play</h2>
-<p style="font-size:16px;line-height:1.9;text-align:left;color:#eee">
-👆 Tap the magic cookie to <b style="color:#ffa030">bake</b>!<br>
-📜 Buy magic recipes to <b style="color:#ffa030">auto-bake</b><br>
-✨ Watch for <b style="color:#ffd700">Golden Cookies</b>!<br>
-🏅 Unlock achievements as you grow!
+<div id="tutorial-overlay" style="position:fixed;inset:0;pointer-events:auto;background:rgba(10,5,20,0.9);display:flex;align-items:center;justify-content:center;z-index:999999">
+<div style="background:rgba(30,10,50,0.95);border:2px solid rgba(138,43,226,.4);border-radius:20px;padding:36px 28px;max-width:340px;text-align:center;color:#e0d0ff;box-shadow:0 0 30px rgba(124,58,237,0.3)">
+<div style="font-size:56px;margin-bottom:12px">🔮</div>
+<h2 style="font-size:24px;color:#a78bfa;margin-bottom:16px">How to Play</h2>
+<p style="font-size:16px;line-height:1.9;text-align:left;color:#c0b0e0">
+👆 Tap the crystal orb to <b>channel mana</b>!<br>
+🛒 Buy spells to <b>auto-channel</b> more<br>
+🧪 Watch for <b>Magic Potions</b> — tap for bonuses!<br>
+📖 Unlock arcane achievements!
 </p>
-<p style="font-size:14px;color:#aa8860;margin-top:12px">💤 Your cookies keep baking when away!</p>
-<button onclick="document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_idle','1')" style="margin-top:20px;padding:14px 36px;font-size:18px;border:2px solid #8a5a30;border-radius:12px;background:linear-gradient(135deg,#ffa030,#cc7000);color:#fff;cursor:pointer;font-weight:bold;font-family:inherit">Got it! 🧙</button>
+<p style="font-size:14px;color:#8070a0;margin-top:12px">💤 Tip: Mana keeps flowing even when you're away!</p>
+<button onclick="document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_idle','1')" ontouchstart="event.stopPropagation();document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_idle','1')" style="margin-top:20px;padding:14px 36px;font-size:18px;border:none;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;cursor:pointer;font-weight:bold;box-shadow:0 0 15px rgba(124,58,237,.4)">Got it! 🔮</button>
 </div></div>
 <script>if(localStorage.getItem('tutorial_idle'))document.getElementById('tutorial-overlay').remove();</script>
 </body>
