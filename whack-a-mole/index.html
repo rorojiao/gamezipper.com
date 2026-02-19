@@ -3,87 +3,188 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Whack-a-Mole</title>
+<title>Whack-a-Mole - Steampunk Workshop</title>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif}
-body{background:
-  radial-gradient(circle at 20% 50%,rgba(100,180,60,.3),transparent 40%),
-  radial-gradient(circle at 80% 30%,rgba(80,160,40,.3),transparent 40%),
-  repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(0,100,0,.05) 20px,rgba(0,100,0,.05) 40px),
-  linear-gradient(180deg,#5cb338 0%,#4a8f29 30%,#3d7a22 100%);
-  background-attachment:fixed}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Cinzel','Segoe UI',Arial,sans-serif}
+body{
+  background:
+    radial-gradient(circle at 50% 50%,rgba(205,150,80,.15),transparent 70%),
+    repeating-linear-gradient(90deg,rgba(180,130,60,.05) 0px,rgba(180,130,60,.05) 1px,transparent 1px,transparent 4px),
+    repeating-linear-gradient(0deg,rgba(180,130,60,.05) 0px,rgba(180,130,60,.05) 1px,transparent 1px,transparent 4px),
+    radial-gradient(circle at 20% 30%,#5a3e28,transparent 50%),
+    radial-gradient(circle at 80% 70%,#5a3e28,transparent 50%),
+    linear-gradient(180deg,#3a2515 0%,#4a3020 30%,#5a3828 60%,#3a2515 100%);
+  background-attachment:fixed;
+}
+/* Rivets in corners */
+body::before,body::after{content:'';position:fixed;width:16px;height:16px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,#d4a860,#8a6530);
+  box-shadow:inset 0 2px 3px rgba(255,255,255,.3),inset 0 -2px 3px rgba(0,0,0,.3);z-index:1}
+body::before{top:8px;left:8px;box-shadow:inset 0 2px 3px rgba(255,255,255,.3),inset 0 -2px 3px rgba(0,0,0,.3),calc(100vw - 32px) 0 0 0 #d4a860}
+body::after{bottom:8px;left:8px;box-shadow:inset 0 2px 3px rgba(255,255,255,.3),inset 0 -2px 3px rgba(0,0,0,.3),calc(100vw - 32px) 0 0 0 #d4a860}
+
+/* Moving metal reflection */
+@keyframes metalShine{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+body{animation:metalShine 8s ease-in-out infinite}
+
 #game-container{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;user-select:none;-webkit-user-select:none}
-#hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:10px 20px;font-size:clamp(16px,4vw,28px);color:#fff;text-shadow:2px 2px 4px rgba(0,0,0,.5);z-index:10;background:linear-gradient(180deg,rgba(0,0,0,.3),transparent)}
+#hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:10px 20px;
+  font-size:clamp(16px,4vw,28px);color:#d4a860;
+  text-shadow:0 0 10px rgba(212,168,96,.5),2px 2px 4px rgba(0,0,0,.7);
+  z-index:10;
+  background:linear-gradient(180deg,rgba(30,15,5,.8),transparent);
+  border-bottom:2px solid #8a653060}
 #hud>div{min-width:80px}
+
 #grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,2vw,20px);padding:clamp(8px,2vw,20px);max-width:min(90vw,90vh,500px);width:100%;aspect-ratio:1}
+
 .hole{position:relative;overflow:hidden;cursor:none;aspect-ratio:1;
-  background:radial-gradient(ellipse 80% 60% at 50% 55%,#1a0a00 0%,#2d1a0a 40%,#4a3020 70%,transparent 100%);
+  background:radial-gradient(ellipse 80% 60% at 50% 55%,#1a0800 0%,#2d1a0a 40%,transparent 100%);
   border-radius:50%;
-  box-shadow:inset 0 8px 20px rgba(0,0,0,.7),inset 0 -4px 10px rgba(0,0,0,.3),0 4px 8px rgba(0,0,0,.3)}
-.hole::before{content:'';position:absolute;top:5%;left:10%;width:80%;height:20%;background:radial-gradient(ellipse,rgba(255,255,255,.08),transparent);border-radius:50%;z-index:1}
-.hole::after{content:'';position:absolute;bottom:0;left:0;right:0;height:40%;background:linear-gradient(0deg,#2d1a0a,transparent);z-index:3;pointer-events:none}
+  border:3px solid #8a6530;
+  box-shadow:inset 0 8px 20px rgba(0,0,0,.7),0 0 15px rgba(138,101,48,.3),0 4px 8px rgba(0,0,0,.3)}
+
+/* Gear decorations on holes */
+.hole::before{content:'⚙';position:absolute;top:-8px;right:-8px;font-size:20px;color:#8a6530;
+  animation:gearSpin 4s linear infinite;z-index:5;opacity:0.7;filter:drop-shadow(0 0 3px rgba(212,168,96,.5))}
+@keyframes gearSpin{to{transform:rotate(360deg)}}
+.hole::after{content:'';position:absolute;bottom:0;left:0;right:0;height:40%;
+  background:linear-gradient(0deg,#2d1a0a,transparent);z-index:3;pointer-events:none}
+
+/* Persistent steam from pipes */
+.steam-puff{position:absolute;z-index:1;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,255,255,.15),transparent);
+  animation:steamRise 2.5s ease-out infinite}
+@keyframes steamRise{0%{opacity:.4;transform:translateY(0) scale(.5)}50%{opacity:.2}100%{opacity:0;transform:translateY(-40px) scale(1.5)}}
+
 .mole-wrapper{position:absolute;bottom:-100%;left:10%;width:80%;height:80%;z-index:2;transition:bottom .15s ease-out}
 .mole-wrapper.up{bottom:15%;animation:moleSpring .3s cubic-bezier(.34,1.56,.64,1)}
-@keyframes moleSpring{0%{bottom:-100%;transform:scaleX(1.1) scaleY(0.8)}40%{transform:scaleX(0.9) scaleY(1.15)}70%{transform:scaleX(1.03) scaleY(0.97)}100%{transform:scaleX(1) scaleY(1)}}
+@keyframes moleSpring{0%{bottom:-100%;transform:scaleX(1.2) scaleY(0.6)}30%{transform:scaleX(0.85) scaleY(1.2)}60%{transform:scaleX(1.05) scaleY(0.95)}100%{transform:scaleX(1) scaleY(1)}}
 .mole-wrapper.hit{bottom:15%;animation:moleHit .3s ease-out forwards}
-@keyframes moleHit{0%{transform:scaleY(1)}30%{transform:scaleY(0.3)}100%{transform:scaleY(0.3) translateY(100%)}}
+@keyframes moleHit{0%{transform:scaleY(1)}20%{transform:scaleY(0.2)}100%{transform:scaleY(0.2) translateY(100%)}}
 .mole-body{width:100%;height:100%;position:relative}
-/* Shockwave */
-.shockwave{position:absolute;z-index:52;pointer-events:none;border:3px solid rgba(255,215,0,0.8);border-radius:50%;animation:shockExpand .5s ease-out forwards}
-@keyframes shockExpand{0%{width:10px;height:10px;opacity:1;transform:translate(-50%,-50%)}100%{width:120px;height:120px;opacity:0;transform:translate(-50%,-50%)}}
-/* Gold rain */
-.gold-rain{position:absolute;z-index:51;width:6px;height:20px;background:linear-gradient(180deg,#ffd700,#ffaa00);border-radius:2px;pointer-events:none;animation:goldFall 1.5s ease-in forwards}
-@keyframes goldFall{0%{opacity:1;transform:translateY(-100vh) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}
-/* Red flash for bomb */
-.bomb-flash{position:fixed;inset:0;background:rgba(255,0,0,0.5);z-index:99;pointer-events:none;animation:bombFlash .4s ease-out forwards}
-@keyframes bombFlash{0%{opacity:1}100%{opacity:0}}
-/* CSS Cute Mole */
-.mole-head{width:70%;height:60%;background:radial-gradient(circle at 40% 35%,#c4944a,#8B6914 80%);border-radius:50% 50% 40% 40%;position:absolute;top:0;left:15%;display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:inset 0 -4px 8px rgba(0,0,0,.2)}
-.mole-wrapper.golden .mole-head{background:radial-gradient(circle at 40% 35%,#ffe680,#FFD700 80%);box-shadow:0 0 15px rgba(255,215,0,.6),inset 0 -4px 8px rgba(0,0,0,.15)}
-.mole-wrapper.bomb .mole-head{background:radial-gradient(circle at 40% 35%,#e74c3c,#c0392b 80%);border-radius:50%;box-shadow:0 0 10px rgba(255,0,0,.5)}
-/* Cheeks */
-.mole-head::after{content:'';position:absolute;bottom:25%;left:5%;width:90%;height:20%;background:radial-gradient(ellipse at 15% 50%,rgba(255,150,150,.4),transparent 50%),radial-gradient(ellipse at 85% 50%,rgba(255,150,150,.4),transparent 50%);pointer-events:none}
-.mole-eyes{display:flex;gap:15%;margin-top:15%}
-.mole-eye{width:22%;height:0;padding-bottom:22%;background:radial-gradient(circle at 40% 35%,#fff,#e8e8e8);border-radius:50%;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-.mole-eye::after{content:'';width:50%;height:50%;background:radial-gradient(circle at 40% 35%,#333,#111);border-radius:50%;position:absolute;top:25%;left:30%}
-/* Tiny eye highlight */
-.mole-eye::before{content:'';width:20%;height:20%;background:#fff;border-radius:50%;position:absolute;top:20%;left:50%;z-index:1}
-.mole-wrapper.hit .mole-eye::after{width:80%;height:15%;top:42%;left:10%;border-radius:0;background:#333}
-.mole-wrapper.hit .mole-eye::before{display:none}
-.mole-wrapper.hit .mole-head::before{content:'✕';position:absolute;top:15%;font-size:clamp(8px,2vw,14px);color:#c0392b;z-index:2}
-/* Nose */
-.mole-nose{width:16%;height:0;padding-bottom:12%;background:radial-gradient(circle at 40% 35%,#e8b87a,#d4a054);border-radius:50%;margin-top:5%;box-shadow:0 1px 2px rgba(0,0,0,.2)}
-.mole-wrapper.golden .mole-nose{background:radial-gradient(circle,#c9a030,#b8860b)}
+
+/* Robot mole - steampunk */
+.mole-head{width:75%;height:55%;
+  background:linear-gradient(180deg,#8a7050,#6a5040 40%,#5a4030);
+  border:2px solid #aa8860;
+  border-radius:8px 8px 4px 4px;
+  position:absolute;top:5%;left:12.5%;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  box-shadow:inset 0 2px 6px rgba(255,220,150,.3),inset 0 -4px 8px rgba(0,0,0,.3)}
+/* Antenna */
+.mole-head::before{content:'';position:absolute;top:-18%;left:45%;width:10%;height:20%;
+  background:linear-gradient(180deg,#d4a860,#8a6530);border-radius:2px}
+.mole-head::after{content:'';position:absolute;top:-25%;left:42%;width:16%;height:10%;
+  background:#ff6600;border-radius:50%;
+  box-shadow:0 0 8px #ff6600,0 0 15px rgba(255,102,0,.5);
+  animation:antennaBlink 1.5s ease-in-out infinite alternate}
+@keyframes antennaBlink{0%{opacity:.5;box-shadow:0 0 4px #ff6600}100%{opacity:1;box-shadow:0 0 12px #ff6600,0 0 20px rgba(255,102,0,.6)}}
+
+.mole-wrapper.golden .mole-head{background:linear-gradient(180deg,#ffd700,#daa520 40%,#b8860b);
+  border-color:#ffe44d;box-shadow:0 0 20px rgba(255,215,0,.6),inset 0 2px 6px rgba(255,255,200,.4)}
+.mole-wrapper.golden .mole-head::after{background:#fff;box-shadow:0 0 15px #fff,0 0 30px rgba(255,255,255,.8)}
+
+.mole-wrapper.bomb .mole-head{background:radial-gradient(circle at 50% 40%,#e74c3c,#c0392b 80%);
+  border-color:#ff4444;border-radius:50%;
+  box-shadow:0 0 15px rgba(255,0,0,.5);
+  animation:bombPulse .4s ease-in-out infinite alternate}
+@keyframes bombPulse{0%{box-shadow:0 0 10px rgba(255,0,0,.3)}100%{box-shadow:0 0 25px rgba(255,0,0,.7)}}
+
+/* Robot eyes - glowing */
+.mole-eyes{display:flex;gap:20%;margin-top:15%}
+.mole-eye{width:22%;height:0;padding-bottom:18%;background:#00ff41;border-radius:2px;position:relative;
+  box-shadow:0 0 8px #00ff41,inset 0 0 4px rgba(0,255,65,.5)}
+.mole-eye::after{content:'';width:40%;height:40%;background:#fff;border-radius:1px;
+  position:absolute;top:20%;left:30%}
+.mole-wrapper.golden .mole-eye{background:#fff;box-shadow:0 0 12px #fff}
+.mole-wrapper.hit .mole-eye{background:#ff0000;box-shadow:0 0 8px #ff0000}
+.mole-wrapper.hit .mole-eye::after{display:none}
+
+.mole-nose{width:20%;height:0;padding-bottom:10%;background:#aa8860;border-radius:2px;margin-top:8%;
+  border:1px solid #d4a860}
+.mole-wrapper.golden .mole-nose{background:#ffe44d;border-color:#fff}
 .mole-wrapper.bomb .mole-nose{display:none}
-/* Teeth */
-.mole-teeth{display:flex;gap:2px;margin-top:2%}
-.mole-tooth{width:12%;height:0;padding-bottom:14%;background:#fff;border-radius:0 0 3px 3px;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+
+.mole-teeth{display:flex;gap:3px;margin-top:4%}
+.mole-tooth{width:14%;height:0;padding-bottom:10%;background:#ccc;border-radius:0 0 2px 2px;
+  border:1px solid #999}
 .mole-wrapper.bomb .mole-teeth{display:none}
-.bomb-fuse{display:none}
-.mole-wrapper.bomb .bomb-fuse{display:block;position:absolute;top:-10%;left:50%;width:3px;height:20%;background:#333;transform:rotate(15deg)}
-.bomb-icon{display:none}
-.mole-wrapper.bomb .bomb-icon{display:block;position:absolute;top:30%;left:50%;transform:translateX(-50%);font-size:clamp(12px,3vw,24px);color:#fff}
 .mole-wrapper.bomb .mole-eyes{display:none}
-#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.7);z-index:100;color:#fff;text-align:center;padding:20px}
-#overlay h1{font-size:clamp(28px,8vw,60px);margin-bottom:10px;text-shadow:3px 3px 6px rgba(0,0,0,.5)}
-#overlay h2{font-size:clamp(18px,5vw,36px);margin-bottom:5px}
-#overlay p{font-size:clamp(14px,3.5vw,24px);margin:5px 0;color:#ccc}
-#overlay button{margin-top:20px;padding:12px 40px;font-size:clamp(16px,4vw,28px);background:#e67e22;color:#fff;border:none;border-radius:12px;cursor:pointer;font-weight:bold;box-shadow:0 4px 0 #c0612b;transition:transform .1s}
-#overlay button:active{transform:translateY(2px);box-shadow:0 2px 0 #c0612b}
-.float-score{position:absolute;z-index:50;font-size:clamp(18px,5vw,32px);font-weight:bold;pointer-events:none;animation:floatUp .8s ease-out forwards;text-shadow:2px 2px 4px rgba(0,0,0,.5)}
-.float-score.pos{color:#2ecc71}
-.float-score.neg{color:#e74c3c}
-.float-score.gold{color:#f1c40f}
+
+.bomb-fuse{display:none}
+.mole-wrapper.bomb .bomb-fuse{display:block;position:absolute;top:-10%;left:50%;width:3px;height:20%;background:#333}
+.bomb-icon{display:none}
+.mole-wrapper.bomb .bomb-icon{display:block;position:absolute;top:25%;left:50%;transform:translateX(-50%);
+  font-size:clamp(14px,3.5vw,28px);color:#fff;text-shadow:0 0 10px rgba(255,0,0,.8)}
+
+/* Shockwave - copper */
+.shockwave{position:absolute;z-index:52;pointer-events:none;border:3px solid rgba(212,168,96,0.9);
+  border-radius:50%;animation:shockExpand .5s ease-out forwards}
+@keyframes shockExpand{0%{width:10px;height:10px;opacity:1;transform:translate(-50%,-50%)}
+  100%{width:140px;height:140px;opacity:0;transform:translate(-50%,-50%)}}
+
+/* Gear debris particles */
+.gear-particle{position:absolute;z-index:52;pointer-events:none;color:#d4a860;
+  animation:gearDebris .8s ease-out forwards;font-size:14px}
+@keyframes gearDebris{0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1)}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(720deg) scale(0.3)}}
+
+/* Gear rain */
+.gold-rain{position:absolute;z-index:51;pointer-events:none;color:#ffd700;font-size:20px;
+  animation:gearFall 1.8s ease-in forwards;filter:drop-shadow(0 0 5px rgba(255,215,0,.5))}
+@keyframes gearFall{0%{opacity:1;transform:translateY(-100vh) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(1080deg)}}
+
+.bomb-flash{position:fixed;inset:0;background:rgba(255,0,0,0.5);z-index:99;pointer-events:none;
+  animation:bombFlash .4s ease-out forwards}
+@keyframes bombFlash{0%{opacity:1}100%{opacity:0}}
+
+/* Steam burst */
+.steam-burst{position:absolute;z-index:51;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,255,255,.6),rgba(255,255,255,.1));
+  animation:steamBurst .6s ease-out forwards}
+@keyframes steamBurst{0%{opacity:.8;transform:translate(-50%,-50%) scale(.3)}100%{opacity:0;transform:translate(-50%,-50%) scale(2) translateY(-40px)}}
+
+/* Alert mode - last 10 seconds */
+@keyframes alertPulse{0%,100%{border-color:transparent;box-shadow:none}50%{border-color:#ff0000;box-shadow:0 0 30px rgba(255,0,0,.4)}}
+.alert-mode{border:4px solid #ff0000;animation:alertPulse 1s ease-in-out infinite}
+
+#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(20,10,0,.85);z-index:100;color:#d4a860;text-align:center;padding:20px}
+#overlay h1{font-size:clamp(28px,8vw,60px);margin-bottom:10px;
+  text-shadow:0 0 20px rgba(212,168,96,.5),3px 3px 6px rgba(0,0,0,.5)}
+#overlay h2{font-size:clamp(18px,5vw,36px);margin-bottom:5px;color:#fff}
+#overlay p{font-size:clamp(14px,3.5vw,24px);margin:5px 0;color:#aa8860}
+#overlay button{margin-top:20px;padding:12px 40px;font-size:clamp(16px,4vw,28px);
+  background:linear-gradient(180deg,#d4a860,#8a6530);color:#fff;
+  border:2px solid #aa8860;border-radius:8px;cursor:pointer;font-weight:bold;font-family:inherit;
+  box-shadow:0 4px 0 #5a3828,0 0 15px rgba(212,168,96,.3);transition:transform .1s}
+#overlay button:active{transform:translateY(2px);box-shadow:0 2px 0 #5a3828}
+
+.float-score{position:absolute;z-index:50;font-size:clamp(18px,5vw,32px);font-weight:bold;
+  pointer-events:none;animation:floatUp .8s ease-out forwards;
+  font-family:'Cinzel',serif}
+.float-score.pos{color:#d4a860;text-shadow:0 0 10px rgba(212,168,96,.8),2px 2px 4px rgba(0,0,0,.5)}
+.float-score.neg{color:#e74c3c;text-shadow:0 0 10px rgba(231,76,60,.5)}
+.float-score.gold{color:#ffd700;text-shadow:0 0 15px rgba(255,215,0,.8)}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(1.3)}}
-/* Stars splash */
-.star{position:absolute;z-index:51;pointer-events:none;font-size:clamp(14px,3vw,24px);animation:starBurst .6s ease-out forwards}
-@keyframes starBurst{0%{opacity:1;transform:translate(0,0) scale(1) rotate(0deg)}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0.3) rotate(360deg)}}
-@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
-.shake{animation:shake .3s ease}
-#hammer{position:fixed;z-index:999;pointer-events:none;font-size:clamp(28px,6vw,48px);transform:rotate(-30deg);transition:transform 50ms;display:none}
-#hammer.smash{transform:rotate(10deg) scale(1.2)}
+
+.star{position:absolute;z-index:51;pointer-events:none;font-size:clamp(14px,3vw,24px);
+  animation:starBurst .6s ease-out forwards}
+@keyframes starBurst{0%{opacity:1;transform:translate(0,0) scale(1) rotate(0deg)}
+  100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0.3) rotate(360deg)}}
+
+@keyframes shake{0%,100%{transform:translate(0)}10%{transform:translate(-4px,-2px)}
+  30%{transform:translate(4px,2px)}50%{transform:translate(-3px,1px)}70%{transform:translate(3px,-1px)}}
+.shake{animation:shake .15s ease}
+
+#hammer{position:fixed;z-index:999;pointer-events:none;font-size:clamp(28px,6vw,48px);
+  transform:rotate(-30deg);transition:transform 50ms;display:none;
+  filter:drop-shadow(0 0 5px rgba(212,168,96,.5))}
+#hammer.smash{transform:rotate(10deg) scale(1.3)}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
 </head>
@@ -95,10 +196,10 @@ body{background:
   </div>
   <div id="grid"></div>
   <div id="overlay">
-    <h1>🔨 Whack-a-Mole</h1>
-    <p>Whack moles for points! Avoid bombs!</p>
-    <p>🟤 Normal +10 &nbsp; 🟡 Golden +50 &nbsp; 🔴 Bomb -30</p>
-    <button id="start-btn">Play!</button>
+    <h1>⚙️ Steam Whacker</h1>
+    <p>Smash the robots! Avoid the alarms!</p>
+    <p>🤖 Robot +10 &nbsp; ⭐ Gold Robot +50 &nbsp; 🔴 Alarm -30</p>
+    <button id="start-btn">Engage!</button>
   </div>
 </div>
 <div id="hammer">🔨</div>
@@ -115,44 +216,73 @@ let score=0,timeLeft=60,gameActive=false,timerInterval,spawnTimeout;
 let highScore=parseInt(localStorage.getItem('wam_high'))||0;
 const holes=[];
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+let alertInterval=null;
+
 function playSound(freq,dur,type='square',vol=.15){
   const o=audioCtx.createOscillator(),g=audioCtx.createGain();
   o.type=type;o.frequency.setValueAtTime(freq,audioCtx.currentTime);
   g.gain.setValueAtTime(vol,audioCtx.currentTime);
   g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);
-  o.connect(g);g.connect(audioCtx.destination);
-  o.start();o.stop(audioCtx.currentTime+dur);
+  o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur);
 }
-function hitSound(){playSound(800,.1);playSound(400,.15,'sawtooth',.1)}
-function goldSound(){playSound(1200,.1);playSound(1600,.15,'sine',.12);playSound(2000,.1,'sine',.08)}
-function bombSound(){playSound(150,.3,'sawtooth',.2);playSound(100,.2,'square',.15)}
+function hitSound(){playSound(300,.08,'sawtooth',.12);playSound(600,.12,'square',.1);playSound(150,.15,'triangle',.08)}
+function goldSound(){playSound(800,.15,'sine',.12);playSound(1200,.2,'sine',.1);playSound(1600,.15,'sine',.08)}
+function bombSound(){playSound(100,.4,'sawtooth',.2);playSound(80,.3,'square',.15)}
+function alertBeep(high){playSound(high?1000:600,.15,'square',.08)}
 
-function spawnStars(rect,count=20,golden=false){
-  const stars=['⭐','✨','💫','⚡','🌟'];
+function spawnSteam(rect,count,big){
+  const n=count||5;
+  for(let i=0;i<n;i++){
+    const s=document.createElement('div');s.className='steam-burst';
+    const sz=big?(20+Math.random()*20):(10+Math.random()*15);
+    s.style.width=sz+'px';s.style.height=sz+'px';
+    s.style.left=(rect.left+rect.width/2+Math.random()*30-15)+'px';
+    s.style.top=(rect.top+rect.height*0.3)+'px';
+    s.style.animationDelay=(Math.random()*0.15)+'s';
+    document.body.appendChild(s);setTimeout(()=>s.remove(),600);
+  }
+}
+
+function spawnGearDebris(rect,count,golden){
+  const parts=['⚙','🔩','🔧','⛓','🔨'];
+  const n=golden?60:count||30;
+  for(let i=0;i<n;i++){
+    const g=document.createElement('div');g.className='gear-particle';
+    g.textContent=parts[Math.floor(Math.random()*parts.length)];
+    const angle=Math.random()*Math.PI*2;
+    const dist=60+Math.random()*100;
+    g.style.setProperty('--dx',Math.cos(angle)*dist+'px');
+    g.style.setProperty('--dy',(Math.sin(angle)*dist-40)+'px');
+    g.style.left=(rect.left+rect.width/2)+'px';
+    g.style.top=(rect.top+rect.height*0.3)+'px';
+    if(golden)g.style.color='#ffd700';
+    document.body.appendChild(g);setTimeout(()=>g.remove(),800);
+  }
+}
+
+function spawnStars(rect,count,golden){
+  const stars=['⚙','✨','⭐','🔧','💫'];
   const n=golden?30:count;
   for(let i=0;i<n;i++){
-    const s=document.createElement('div');
-    s.className='star';
+    const s=document.createElement('div');s.className='star';
     s.textContent=stars[Math.random()*stars.length|0];
-    const angle=Math.random()*Math.PI*2;
-    const dist=50+Math.random()*80;
+    const angle=Math.random()*Math.PI*2;const dist=50+Math.random()*80;
     s.style.setProperty('--sx',Math.cos(angle)*dist+'px');
     s.style.setProperty('--sy',Math.sin(angle)*dist-30+'px');
-    s.style.left=rect.left+rect.width/2-10+'px';
-    s.style.top=rect.top+rect.height/3+'px';
-    s.style.fontSize=golden?'clamp(18px,4vw,32px)':'clamp(14px,3vw,24px)';
-    document.body.appendChild(s);
-    setTimeout(()=>s.remove(),600);
+    s.style.left=rect.left+rect.width/2-10+'px';s.style.top=rect.top+rect.height/3+'px';
+    document.body.appendChild(s);setTimeout(()=>s.remove(),600);
   }
-  // Shockwave
   const sw=document.createElement('div');sw.className='shockwave';
   sw.style.left=rect.left+rect.width/2+'px';sw.style.top=rect.top+rect.height/3+'px';
   document.body.appendChild(sw);setTimeout(()=>sw.remove(),500);
 }
+
 function spawnGoldRain(){
-  for(let i=0;i<10;i++){
+  for(let i=0;i<15;i++){
     const g=document.createElement('div');g.className='gold-rain';
+    g.textContent=['⚙','⚙','🔩'][Math.floor(Math.random()*3)];
     g.style.left=Math.random()*window.innerWidth+'px';g.style.top='0px';
+    g.style.fontSize=(16+Math.random()*20)+'px';
     g.style.animationDelay=Math.random()*0.5+'s';
     document.body.appendChild(g);setTimeout(()=>g.remove(),2000);
   }
@@ -160,60 +290,84 @@ function spawnGoldRain(){
 function spawnBombFlash(){
   const f=document.createElement('div');f.className='bomb-flash';
   document.body.appendChild(f);setTimeout(()=>f.remove(),400);
+  // All holes shake + steam
+  holes.forEach(h=>{
+    h.el.style.animation='shake .3s ease';
+    setTimeout(()=>h.el.style.animation='',300);
+    const r=h.el.getBoundingClientRect();
+    spawnSteam(r,3,false);
+  });
+}
+
+// Add persistent steam puffs to each hole
+function addPersistentSteam(hole){
+  for(let i=0;i<2;i++){
+    const sp=document.createElement('div');sp.className='steam-puff';
+    const sz=6+Math.random()*8;
+    sp.style.width=sz+'px';sp.style.height=sz+'px';
+    sp.style.left=(30+Math.random()*40)+'%';sp.style.top='10%';
+    sp.style.animationDelay=(Math.random()*2)+'s';
+    sp.style.animationDuration=(2+Math.random()*1.5)+'s';
+    hole.appendChild(sp);
+  }
 }
 
 for(let i=0;i<9;i++){
-  const hole=document.createElement('div');
-  hole.className='hole';
-  const mw=document.createElement('div');
-  mw.className='mole-wrapper';
-  mw.innerHTML=`<div class="mole-body"><div class="mole-head"><div class="mole-eyes"><div class="mole-eye"></div><div class="mole-eye"></div></div><div class="mole-nose"></div><div class="mole-teeth"><div class="mole-tooth"></div><div class="mole-tooth"></div></div></div><div class="bomb-fuse"></div><span class="bomb-icon">💣</span></div>`;
-  hole.appendChild(mw);
-  grid.appendChild(hole);
+  const hole=document.createElement('div');hole.className='hole';
+  addPersistentSteam(hole);
+  const mw=document.createElement('div');mw.className='mole-wrapper';
+  mw.innerHTML=`<div class="mole-body"><div class="mole-head"><div class="mole-eyes"><div class="mole-eye"></div><div class="mole-eye"></div></div><div class="mole-nose"></div><div class="mole-teeth"><div class="mole-tooth"></div><div class="mole-tooth"></div></div></div><div class="bomb-fuse"></div><span class="bomb-icon">⚠️</span></div>`;
+  hole.appendChild(mw);grid.appendChild(hole);
   const h={el:hole,mole:mw,active:false,type:'normal',timeout:null};
   holes.push(h);
   hole.addEventListener('pointerdown',e=>{e.preventDefault();whack(h,e)});
 }
-document.addEventListener('pointermove',e=>{
-  hammer.style.left=e.clientX-10+'px';
-  hammer.style.top=e.clientY-5+'px';
-});
+document.addEventListener('pointermove',e=>{hammer.style.left=e.clientX-10+'px';hammer.style.top=e.clientY-5+'px'});
 document.addEventListener('pointerdown',()=>{hammer.classList.add('smash');setTimeout(()=>hammer.classList.remove('smash'),100)});
 function showHammer(){hammer.style.display='block';document.body.style.cursor='none'}
 function hideHammer(){hammer.style.display='none';document.body.style.cursor=''}
+
 function whack(h,e){
   if(!gameActive||!h.active)return;
-  h.active=false;
-  clearTimeout(h.timeout);
+  h.active=false;clearTimeout(h.timeout);
   h.mole.classList.add('hit');
   let pts=0,cls='pos';
-  if(h.type==='golden'){pts=50;cls='gold';goldSound()}
-  else if(h.type==='bomb'){pts=-30;cls='neg';bombSound()}
-  else{pts=10;hitSound()}
-  score+=pts;
-  if(score<0)score=0;
-  scoreDisplay.textContent='Score: '+score;
-  // Stars + shake + effects
   const rect=h.el.getBoundingClientRect();
-  if(h.type==='golden'){spawnStars(rect,30,true);spawnGoldRain();}
-  else if(h.type==='bomb'){spawnBombFlash();}
-  else{spawnStars(rect,20,false);}
+
+  if(h.type==='golden'){
+    pts=50;cls='gold';goldSound();
+    spawnStars(rect,30,true);
+    spawnGearDebris(rect,60,true);
+    spawnSteam(rect,10,true);
+    spawnGoldRain();
+  }else if(h.type==='bomb'){
+    pts=-30;cls='neg';bombSound();
+    spawnBombFlash();
+  }else{
+    pts=10;hitSound();
+    spawnStars(rect,15,false);
+    spawnGearDebris(rect,30,false);
+    spawnSteam(rect,10,true);
+  }
+  score+=pts;if(score<0)score=0;
+  scoreDisplay.textContent='Score: '+score;
+
   container.classList.remove('shake');void container.offsetWidth;container.classList.add('shake');
-  const ft=document.createElement('div');
-  ft.className='float-score '+cls;
+
+  const ft=document.createElement('div');ft.className='float-score '+cls;
   ft.textContent=(pts>0?'+':'')+pts;
-  ft.style.left=rect.left+rect.width/2-20+'px';
-  ft.style.top=rect.top+'px';
-  document.body.appendChild(ft);
-  setTimeout(()=>ft.remove(),800);
+  ft.style.left=rect.left+rect.width/2-20+'px';ft.style.top=rect.top+'px';
+  document.body.appendChild(ft);setTimeout(()=>ft.remove(),800);
   setTimeout(()=>{h.mole.classList.remove('up','hit','golden','bomb');h.mole.className='mole-wrapper'},400);
 }
+
 function getSpeed(){
   const elapsed=60-timeLeft;
   const minInterval=400,maxInterval=1500;
   const interval=maxInterval-(maxInterval-minInterval)*(elapsed/60);
   return{interval:Math.max(minInterval,interval),stay:Math.max(500,1800-elapsed*20)};
 }
+
 function spawnMole(){
   if(!gameActive)return;
   const available=holes.filter(h=>!h.active);
@@ -225,7 +379,10 @@ function spawnMole(){
   else if(r<.18){h.type='golden';h.mole.classList.add('golden')}
   else{h.type='normal'}
   h.active=true;
-  h.mole.classList.add('up');
+  // Pre-steam burst
+  const rect=h.el.getBoundingClientRect();
+  spawnSteam(rect,5,false);
+  setTimeout(()=>h.mole.classList.add('up'),80);
   const{stay}=getSpeed();
   h.timeout=setTimeout(()=>{
     if(h.active){h.active=false;h.mole.classList.remove('up','golden','bomb');h.mole.className='mole-wrapper'}
@@ -233,44 +390,50 @@ function spawnMole(){
   const{interval}=getSpeed();
   spawnTimeout=setTimeout(spawnMole,interval*(.5+Math.random()*.8));
 }
+
 function startGame(){
   if(audioCtx.state==='suspended')audioCtx.resume();
   score=0;timeLeft=60;gameActive=true;
-  scoreDisplay.textContent='Score: 0';
-  timerDisplay.textContent='Time: 60';
-  overlay.style.display='none';
-  showHammer();
+  scoreDisplay.textContent='Score: 0';timerDisplay.textContent='Time: 60';
+  timerDisplay.style.color='#d4a860';
+  overlay.style.display='none';showHammer();
+  document.body.classList.remove('alert-mode');
   holes.forEach(h=>{h.active=false;h.mole.className='mole-wrapper'});
+  if(alertInterval){clearInterval(alertInterval);alertInterval=null;}
   timerInterval=setInterval(()=>{
-    timeLeft--;
-    timerDisplay.textContent='Time: '+timeLeft;
+    timeLeft--;timerDisplay.textContent='Time: '+timeLeft;
     if(timeLeft<=10){
-      timerDisplay.style.color='#e74c3c';
+      timerDisplay.style.color='#ff3333';
       timerDisplay.style.transition='transform 0.2s';
-      timerDisplay.style.transform='scale(1.3)';
+      timerDisplay.style.transform='scale(1.4)';
       setTimeout(()=>timerDisplay.style.transform='scale(1)',200);
+      document.body.classList.add('alert-mode');
+      if(!alertInterval){
+        let high=true;
+        alertInterval=setInterval(()=>{alertBeep(high);high=!high;},500);
+      }
     }
     if(timeLeft<=0)endGame();
   },1000);
-  spawnMole();
-  setTimeout(()=>{if(gameActive)spawnMole()},800);
+  spawnMole();setTimeout(()=>{if(gameActive)spawnMole()},800);
 }
+
 function endGame(){
-  gameActive=false;
-  clearInterval(timerInterval);
-  clearTimeout(spawnTimeout);
-  hideHammer();
-  timerDisplay.style.color='#fff';
+  gameActive=false;clearInterval(timerInterval);clearTimeout(spawnTimeout);
+  if(alertInterval){clearInterval(alertInterval);alertInterval=null;}
+  hideHammer();timerDisplay.style.color='#d4a860';
+  document.body.classList.remove('alert-mode');
   holes.forEach(h=>{clearTimeout(h.timeout);h.active=false;h.mole.className='mole-wrapper'});
   if(score>highScore){highScore=score;localStorage.setItem('wam_high',highScore)}
   overlay.innerHTML=`<h1>⏰ Time's Up!</h1><h2>Score: <span id="count-up">0</span></h2><p>Best: ${highScore}</p><button id="start-btn">Play Again</button>`;
   overlay.style.display='flex';
-  // Counting up animation
   const countEl=document.getElementById('count-up');
   let cur=0;const step=Math.max(1,Math.ceil(score/40));
   const countInterval=setInterval(()=>{
     cur=Math.min(cur+step,score);countEl.textContent=cur;
-    countEl.style.transform='scale(1.2)';setTimeout(()=>countEl.style.transform='scale(1)',50);
+    countEl.style.transform='scale(1.2)';
+    container.classList.remove('shake');void container.offsetWidth;container.classList.add('shake');
+    setTimeout(()=>countEl.style.transform='scale(1)',50);
     if(cur>=score)clearInterval(countInterval);
   },30);
   document.getElementById('start-btn').addEventListener('click',startGame);
@@ -279,12 +442,11 @@ startBtn.addEventListener('click',startGame);
 })();
 </script>
 
-<!-- Tutorial Overlay -->
-<div id="tutorial-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <div style="background:rgba(30,30,40,0.97);border-radius:20px;padding:32px 28px 24px;max-width:340px;width:90%;color:#fff;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
-    <div style="font-size:28px;font-weight:bold;margin-bottom:18px;">🔨 How to Play</div>
-    <div style="font-size:16px;line-height:1.8;text-align:left;margin-bottom:20px;">👆 Tap the moles when they pop up!<br>🐹 Normal mole = <b>+10</b> points<br>⭐ Golden mole = <b>+50</b> points<br>💣 Bomb = <b>-30</b> points — don't tap!<br><br>You have 60 seconds. GO! ⏱️</div>
-    <button onclick="document.getElementById('tutorial-overlay').style.display='none';localStorage.setItem('whack-a-mole-tutorial-seen','1');" ontouchstart="event.stopPropagation();document.getElementById('tutorial-overlay').style.display='none';localStorage.setItem('whack-a-mole-tutorial-seen','1');" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:12px;padding:14px 36px;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 4px 15px rgba(102,126,234,0.4);transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Got it! 🎮</button>
+<div id="tutorial-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;">
+  <div style="background:linear-gradient(180deg,rgba(60,40,20,0.97),rgba(40,25,10,0.97));border:2px solid #aa8860;border-radius:16px;padding:32px 28px 24px;max-width:340px;width:90%;color:#d4a860;text-align:center;box-shadow:0 0 30px rgba(212,168,96,0.3);">
+    <div style="font-size:28px;font-weight:bold;margin-bottom:18px;">⚙️ How to Play</div>
+    <div style="font-size:15px;line-height:1.8;text-align:left;margin-bottom:20px;color:#ccc;">👆 Smash the robots when they pop up!<br>🤖 Robot = <b style="color:#d4a860">+10</b> points<br>⭐ Gold Robot = <b style="color:#ffd700">+50</b> points<br>🔴 Alarm = <b style="color:#ff4444">-30</b> points — don't tap!<br><br>You have 60 seconds. GO! ⏱️</div>
+    <button onclick="document.getElementById('tutorial-overlay').style.display='none';localStorage.setItem('whack-a-mole-tutorial-seen','1');" style="background:linear-gradient(180deg,#d4a860,#8a6530);color:#fff;border:2px solid #aa8860;border-radius:8px;padding:14px 36px;font-size:18px;font-weight:bold;cursor:pointer;font-family:inherit;">Got it! ⚙️</button>
   </div>
 </div>
 <script>if(!localStorage.getItem('whack-a-mole-tutorial-seen')){document.getElementById('tutorial-overlay').style.display='flex';}else{document.getElementById('tutorial-overlay').style.display='none';}</script>

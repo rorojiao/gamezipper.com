@@ -6,32 +6,43 @@
 <title>2048 Merge Master</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#1a1a2e;font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;color:#eee;touch-action:none;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;color:#eee;touch-action:none;user-select:none}
+body{background:radial-gradient(ellipse at 30% 20%,#1a0a3e 0%,#0a0a2e 40%,#050520 100%)}
 #wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:10px}
 #header{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:500px;margin-bottom:8px}
-h1{font-size:clamp(18px,5vw,28px);background:linear-gradient(135deg,#f7971e,#ffd200);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900;letter-spacing:2px}
+h1{font-size:clamp(18px,5vw,28px);background:linear-gradient(135deg,#a78bfa,#818cf8,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900;letter-spacing:2px;animation:titleGlow 3s ease-in-out infinite}
+@keyframes titleGlow{0%,100%{filter:drop-shadow(0 0 8px rgba(167,139,250,0.5))}50%{filter:drop-shadow(0 0 16px rgba(167,139,250,0.9))}}
 .scores{display:flex;gap:8px}
-.score-box{background:rgba(255,255,255,.08);border-radius:8px;padding:4px 12px;text-align:center;min-width:70px}
-.score-box .label{font-size:10px;color:#aaa;text-transform:uppercase}
-.score-box .val{font-size:clamp(16px,4vw,22px);font-weight:700;color:#ffd200}
-#canvas-wrap{position:relative;width:100%;max-width:500px;aspect-ratio:1/1}
-canvas{width:100%;height:100%;border-radius:12px;display:block}
+.score-box{background:rgba(255,255,255,.06);border:1px solid rgba(167,139,250,0.2);border-radius:8px;padding:4px 12px;text-align:center;min-width:70px}
+.score-box .label{font-size:10px;color:#a78bfa;text-transform:uppercase}
+.score-box .val{font-size:clamp(16px,4vw,22px);font-weight:700;color:#c4b5fd}
+#canvas-wrap{position:relative;width:100%;max-width:500px;aspect-ratio:1/1;animation:boardFloat 5s ease-in-out infinite}
+@keyframes boardFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
+canvas{width:100%;height:100%;border-radius:12px;display:block;border:2px solid rgba(167,139,250,0.15);box-shadow:0 0 30px rgba(99,102,241,0.15),inset 0 0 30px rgba(99,102,241,0.05)}
 #btns{display:flex;gap:10px;margin-top:10px;width:100%;max-width:500px;justify-content:center}
-.btn{background:linear-gradient(135deg,#e94560,#c23152);border:none;color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:600;transition:transform .1s}
+.btn{background:linear-gradient(135deg,#7c3aed,#6366f1);border:none;color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:600;transition:transform .1s;box-shadow:0 0 12px rgba(124,58,237,0.3)}
 .btn:active{transform:scale(.95)}
-.btn.undo{background:linear-gradient(135deg,#0f3460,#16213e)}
+.btn.undo{background:linear-gradient(135deg,#1e1b4b,#312e81)}
 #undo-count{font-size:11px;opacity:.7}
-#game-over{position:absolute;inset:0;background:rgba(26,26,46,.85);display:none;align-items:center;justify-content:center;flex-direction:column;border-radius:12px;z-index:10}
-#game-over h2{font-size:28px;color:#e94560;margin-bottom:10px}
-#game-over p{font-size:18px;color:#ffd200;margin-bottom:20px}
+#game-over{position:absolute;inset:0;background:rgba(10,10,30,.9);display:none;align-items:center;justify-content:center;flex-direction:column;border-radius:12px;z-index:10}
+#game-over h2{font-size:28px;color:#a78bfa;margin-bottom:10px}
+#game-over p{font-size:18px;color:#c4b5fd;margin-bottom:20px}
+
+/* Stars background */
+#stars-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.star{position:absolute;background:#fff;border-radius:50%}
+@keyframes twinkle1{0%,100%{opacity:0.2}50%{opacity:1}}
+@keyframes twinkle2{0%,100%{opacity:0.1}50%{opacity:0.8}}
+@keyframes twinkle3{0%,100%{opacity:0.3}50%{opacity:0.9}}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
 </head>
 <body>
+<div id="stars-bg"></div>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none">⬅ More Games at GameZipper.com</a>
-<div id="wrap">
+<div id="wrap" style="position:relative;z-index:1">
   <div id="header">
-    <h1>2048 Merge Master</h1>
+    <h1>🌌 2048 Galaxy</h1>
     <div class="scores">
       <div class="score-box"><div class="label">Score</div><div class="val" id="score">0</div></div>
       <div class="score-box"><div class="label">Best</div><div class="val" id="best">0</div></div>
@@ -44,16 +55,16 @@ canvas{width:100%;height:100%;border-radius:12px;display:block}
       <p id="final-score"></p>
       <button class="btn" onclick="game.restart()">Try Again</button>
     </div>
-    <div id="tutorial" style="position:absolute;inset:0;background:rgba(26,26,46,.92);display:none;align-items:center;justify-content:center;flex-direction:column;border-radius:12px;z-index:20;text-align:center;padding:30px">
-      <div style="font-size:56px;margin-bottom:16px">🔢</div>
-      <h2 style="font-size:26px;color:#ffd200;margin-bottom:18px">How to Play</h2>
+    <div id="tutorial" style="position:absolute;inset:0;background:rgba(10,10,30,.95);display:none;align-items:center;justify-content:center;flex-direction:column;border-radius:12px;z-index:20;text-align:center;padding:30px">
+      <div style="font-size:56px;margin-bottom:16px">🌌</div>
+      <h2 style="font-size:26px;color:#a78bfa;margin-bottom:18px">How to Play</h2>
       <p style="font-size:17px;color:#eee;line-height:1.8;max-width:320px;text-align:left">
-        👆 <b>Swipe</b> to move all tiles<br>
-        🔗 Same numbers <b>merge</b> into one!<br>
-        🏆 Reach the <span style="color:#ffd200;font-weight:bold">2048</span> tile to win!
+        👆 <b>Swipe</b> to move all planets<br>
+        💥 Same planets <b>merge</b> into bigger ones!<br>
+        🏆 Reach the <span style="color:#ffd700;font-weight:bold">Supernova 2048</span> to win!
       </p>
-      <p style="font-size:14px;color:#aaa;margin-top:12px">💡 Tip: Keep your biggest number in a corner! 🧠</p>
-      <button class="btn" style="margin-top:24px;font-size:18px;padding:12px 32px" onclick="dismissTutorial()">Got it! 🎮</button>
+      <p style="font-size:14px;color:#aaa;margin-top:12px">💡 Tip: Keep your biggest planet in a corner! 🧠</p>
+      <button class="btn" style="margin-top:24px;font-size:18px;padding:12px 32px" onclick="dismissTutorial()">Got it! 🚀</button>
     </div>
   </div>
   <div id="btns">
@@ -62,6 +73,17 @@ canvas{width:100%;height:100%;border-radius:12px;display:block}
   </div>
 </div>
 <script>
+// Generate stars
+(function(){
+  const bg=document.getElementById('stars-bg');
+  for(let i=0;i<20;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    const size=1+Math.random()*3;
+    s.style.cssText=`width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation:twinkle${1+Math.floor(Math.random()*3)} ${2+Math.random()*4}s ease-in-out ${Math.random()*3}s infinite;opacity:${0.2+Math.random()*0.5}`;
+    bg.appendChild(s);
+  }
+})();
 function dismissTutorial(){document.getElementById('tutorial').style.display='none';localStorage.setItem('2048_tutorial_done','1');}
 if(!localStorage.getItem('2048_tutorial_done')){document.getElementById('tutorial').style.display='flex';}
 </script>
