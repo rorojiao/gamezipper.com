@@ -80,7 +80,7 @@
         var ts = e.touches ? Array.from(e.touches) : [e];
         cb({ touches: ts.map(function(t) { return { clientX: t.clientX - r.left, clientY: t.clientY - r.top }; }) });
       }
-      document.addEventListener('touchstart', function(e) { e.preventDefault(); handle(e); }, { passive: false });
+      document.addEventListener('touchstart', function(e) { if(document.getElementById('tutorial-overlay')&&document.getElementById('tutorial-overlay').contains(e.target))return; e.preventDefault(); handle(e); }, { passive: false });
       document.addEventListener('mousedown', handle);
     },
 
@@ -90,7 +90,7 @@
         var ts = e.touches ? Array.from(e.touches) : (e.buttons > 0 ? [e] : []);
         if (ts.length) cb({ touches: ts.map(function(t) { return { clientX: t.clientX - r.left, clientY: t.clientY - r.top }; }) });
       }
-      document.addEventListener('touchmove', function(e) { e.preventDefault(); handle(e); }, { passive: false });
+      document.addEventListener('touchmove', function(e) { if(document.getElementById('tutorial-overlay')&&document.getElementById('tutorial-overlay').contains(e.target))return; e.preventDefault(); handle(e); }, { passive: false });
       document.addEventListener('mousemove', handle);
     },
 
@@ -100,7 +100,7 @@
         var ts = e.changedTouches ? Array.from(e.changedTouches) : [e];
         cb({ changedTouches: ts.map(function(t) { return { clientX: t.clientX - r.left, clientY: t.clientY - r.top }; }) });
       }
-      document.addEventListener('touchend', function(e) { e.preventDefault(); handle(e); }, { passive: false });
+      document.addEventListener('touchend', function(e) { if(document.getElementById('tutorial-overlay')&&document.getElementById('tutorial-overlay').contains(e.target))return; e.preventDefault(); handle(e); }, { passive: false });
       document.addEventListener('mouseup', handle);
     },
 
