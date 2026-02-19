@@ -132,6 +132,7 @@ function checkMatch(){
   if(cards[first].emoji===cards[second].emoji){
     cards[first].matched=true;cards[second].matched=true;
     spawnParticles(first);spawnParticles(second);
+    matchFlashAlpha=0.4;
     sfxMatch();
     matched++;
     if(matched===totalPairs){
@@ -174,13 +175,19 @@ function getStars(){
 function spawnParticles(ci){
   const r=cardRect(ci);
   const cx=r.x+r.w/2, cy=r.y+r.h/2;
-  const colors=['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#96E6A1','#DDA0DD'];
-  for(let j=0;j<12;j++){
+  const colors=['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#96E6A1','#DDA0DD','#FF69B4','#00FF7F'];
+  for(let j=0;j<24;j++){
     const angle=Math.random()*Math.PI*2;
-    const speed=2+Math.random()*4;
-    particles.push({x:cx,y:cy,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:1,color:colors[j%colors.length],size:3+Math.random()*4});
+    const speed=2+Math.random()*6;
+    particles.push({x:cx,y:cy,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:1,color:colors[j%colors.length],size:3+Math.random()*6});
   }
 }
+
+// Screen flash for match
+let matchFlashAlpha=0,matchFlashColor='#FFD700';
+
+// Combo tracking
+let comboCount=0,lastMatchTime=0;
 
 // Drawing
 function drawRoundRect(x,y,w,h,r){
@@ -357,6 +364,13 @@ function drawPlaying(now){
     ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();
   }
   ctx.globalAlpha=1;
+
+  // Match flash
+  if(matchFlashAlpha>0){
+    ctx.fillStyle='rgba(255,215,0,'+matchFlashAlpha+')';
+    ctx.fillRect(0,0,W,H);
+    matchFlashAlpha-=0.03;
+  }
 
   // Bottom bar - back button
   ctx.fillStyle='rgba(0,0,0,0.2)';ctx.fillRect(0,H-44,W,44);
