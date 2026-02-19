@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Idle Cookie Clicker</title>
+<script type="text/javascript">
+window.SDK_OPTIONS = {
+  gameId: "m45nay5d25irgr10c79r3jmj3kvl9nb5",
+  onEvent: function (a) {
+    switch (a.name) {
+      case "SDK_GAME_PAUSE": break;
+      case "SDK_GAME_START": break;
+      case "SDK_READY": break;
+    }
+  }
+};
+(function (a, b, c) {
+  var d = a.getElementsByTagName(b)[0];
+  a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk");
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a2e;color:#eee;font-family:'Segoe UI',sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+#header{text-align:center;padding:10px;background:#16213e}
+#header h1{color:#f0a500;font-size:1.4em;text-shadow:0 0 10px rgba(240,165,0,.5)}
+#stats{display:flex;justify-content:center;gap:20px;font-size:1.1em;margin-top:4px}
+#stats span{color:#f0a500}
+#game{display:flex;flex:1;overflow:hidden}
+#cookie-area{flex:1;display:flex;align-items:center;justify-content:center;position:relative;min-width:0}
+#cookie{width:min(55vw,280px);height:min(55vw,280px);border-radius:50%;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:transform .1s;filter:drop-shadow(0 0 20px rgba(240,165,0,.4));font-size:min(30vw,150px);display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 35%,#f0a500,#b8860b 60%,#8B6914);position:relative}
+#cookie::after{content:'';position:absolute;width:12%;height:12%;background:#8B6914;border-radius:50%;box-shadow:
+  0 0 0 0 #8B6914,
+  120% -80% 0 -2px #8B6914,
+  -100% 60% 0 1px #8B6914,
+  60% 100% 0 -1px #8B6914,
+  -60% -100% 0 0 #8B6914,
+  -120% -20% 0 -2px #8B6914;
+  top:40%;left:42%}
+#cookie:active{transform:scale(.92)}
+#cookie.bounce{animation:bounce .15s}
+@keyframes bounce{0%{transform:scale(.88)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+.float-text{position:absolute;color:#f0a500;font-weight:bold;font-size:1.4em;pointer-events:none;animation:floatUp .8s forwards;text-shadow:0 0 6px rgba(240,165,0,.6)}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-80px)}}
+#shop{width:280px;background:#16213e;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px}
+#shop h2{color:#f0a500;text-align:center;font-size:1em;margin-bottom:4px}
+.upgrade{background:#0f3460;border:2px solid #1a1a5e;border-radius:8px;padding:10px;cursor:pointer;transition:background .2s,border-color .2s}
+.upgrade:hover{background:#1a4a7a}
+.upgrade.affordable{border-color:#f0a500}
+.upgrade.locked{opacity:.4;cursor:default}
+.upgrade .name{font-weight:bold;color:#f0a500;font-size:.95em}
+.upgrade .info{font-size:.8em;color:#aaa;margin-top:2px}
+.upgrade .owned{float:right;color:#5eead4;font-weight:bold}
+@media(max-width:600px){
+  #game{flex-direction:column}
+  #cookie-area{flex:none;height:45vh}
+  #shop{width:100%;flex:1;flex-direction:row;flex-wrap:wrap;overflow-y:auto;padding:6px}
+  #shop h2{width:100%}
+  .upgrade{flex:1 1 45%;min-width:140px}
+  #cookie{width:min(45vw,200px);height:min(45vw,200px)}
+}
+</style>
+</head>
+<body>
+<div id="header">
+<h1>🍪 Idle Cookie Clicker</h1>
+<div id="stats"><div>Cookies: <span id="count">0</span></div><div>CPS: <span id="cps">0</span></div></div>
+</div>
+<div id="game">
+<div id="cookie-area"><div id="cookie"></div></div>
+<div id="shop"><h2>Upgrades</h2></div>
+</div>
+<script>
+(function(){
+const upgrades=[
+  {name:'Cursor',baseCost:10,cps:1,icon:'👆',owned:0},
+  {name:'Grandma',baseCost:100,cps:5,icon:'👵',owned:0},
+  {name:'Farm',baseCost:500,cps:20,icon:'🌾',owned:0},
+  {name:'Factory',baseCost:2000,cps:100,icon:'🏭',owned:0},
+  {name:'Mine',baseCost:10000,cps:500,icon:'⛏️',owned:0},
+  {name:'Bank',baseCost:50000,cps:2000,icon:'🏦',owned:0}
+];
+let cookies=0,totalCps=0,lastSave=Date.now(),lastTick=Date.now();
+const purchasedTypes=new Set();
+
+// Audio
+const actx=new(window.AudioContext||window.webkitAudioContext)();
+function playClick(){const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.frequency.value=800;g.gain.value=.15;o.start();g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.1);o.stop(actx.currentTime+.1)}
+function playBuy(){const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='triangle';o.frequency.value=523;g.gain.value=.2;o.start();o.frequency.exponentialRampToValueAtTime(1047,actx.currentTime+.15);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.2);o.stop(actx.currentTime+.2)}
+
+function fmt(n){if(n>=1e12)return(n/1e12).toFixed(1)+'T';if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return Math.floor(n).toString()}
+function cost(u){return Math.floor(u.baseCost*Math.pow(1.15,u.owned))}
+
+function calcCps(){totalCps=upgrades.reduce((s,u)=>s+u.cps*u.owned,0)}
+
+// Cookie click
+const cookieEl=document.getElementById('cookie');
+const area=document.getElementById('cookie-area');
+cookieEl.addEventListener('click',function(e){
+  if(actx.state==='suspended')actx.resume();
+  cookies++;
+  playClick();
+  cookieEl.classList.remove('bounce');
+  void cookieEl.offsetWidth;
+  cookieEl.classList.add('bounce');
+  const ft=document.createElement('div');
+  ft.className='float-text';
+  ft.textContent='+1';
+  const r=cookieEl.getBoundingClientRect();
+  ft.style.left=(r.left+r.width/2-10+Math.random()*40-20)+'px';
+  ft.style.top=(r.top-10)+'px';
+  ft.style.position='fixed';
+  document.body.appendChild(ft);
+  setTimeout(()=>ft.remove(),800);
+  updateUI();
+});
+
+// Shop
+const shopEl=document.getElementById('shop');
+function renderShop(){
+  const existing=shopEl.querySelectorAll('.upgrade');
+  if(existing.length===0){
+    upgrades.forEach((u,i)=>{
+      const d=document.createElement('div');
+      d.className='upgrade';
+      d.dataset.idx=i;
+      d.innerHTML=`<span class="owned" id="own${i}">0</span><div class="name">${u.icon} ${u.name}</div><div class="info">+${u.cps}/s | Cost: <span id="cost${i}">${fmt(cost(u))}</span></div>`;
+      d.addEventListener('click',()=>buy(i));
+      shopEl.appendChild(d);
+    });
+  }
+  upgrades.forEach((u,i)=>{
+    const c=cost(u);
+    const el=shopEl.children[i+1];
+    el.className='upgrade'+(cookies>=c?' affordable':' locked');
+    document.getElementById('cost'+i).textContent=fmt(c);
+    document.getElementById('own'+i).textContent=u.owned;
+  });
+}
+
+function buy(i){
+  const u=upgrades[i],c=cost(u);
+  if(cookies<c)return;
+  cookies-=c;
+  const isNew=u.owned===0;
+  u.owned++;
+  calcCps();
+  playBuy();
+  if(isNew){
+    purchasedTypes.add(i);
+    if(typeof sdk!=='undefined'&&sdk.showBanner)sdk.showBanner();
+  }
+  updateUI();
+}
+
+function updateUI(){
+  document.getElementById('count').textContent=fmt(cookies);
+  document.getElementById('cps').textContent=fmt(totalCps);
+  renderShop();
+}
+
+// Game loop
+function tick(){
+  const now=Date.now();
+  const dt=(now-lastTick)/1000;
+  lastTick=now;
+  cookies+=totalCps*dt;
+  if(now-lastSave>10000){save();lastSave=now}
+  updateUI();
+  requestAnimationFrame(tick);
+}
+
+// Save/Load
+function save(){
+  const d={cookies,upgrades:upgrades.map(u=>u.owned),time:Date.now(),types:[...purchasedTypes]};
+  localStorage.setItem('idleCookie',JSON.stringify(d));
+}
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem('idleCookie'));
+    if(!d)return;
+    d.upgrades.forEach((n,i)=>{upgrades[i].owned=n});
+    cookies=d.cookies||0;
+    if(d.types)d.types.forEach(t=>purchasedTypes.add(t));
+    calcCps();
+    // Offline earnings
+    if(d.time&&totalCps>0){
+      const away=(Date.now()-d.time)/1000;
+      if(away>5){
+        const earned=totalCps*away;
+        cookies+=earned;
+        setTimeout(()=>alert('Welcome back! You earned '+fmt(earned)+' cookies while away ('+Math.floor(away/60)+' min).'),300);
+      }
+    }
+  }catch(e){}
+}
+
+load();
+updateUI();
+requestAnimationFrame(tick);
+window.addEventListener('beforeunload',save);
+})();
+</script>
+</body>
+</html>

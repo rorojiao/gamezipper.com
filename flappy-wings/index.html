@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Flappy Wings</title>
+<script type="text/javascript">
+window.SDK_OPTIONS = {
+  gameId: "uf7cxmmsh4amxsiky0xjsh2wteemqam9",
+  onEvent: function (a) {
+    switch (a.name) {
+      case "SDK_GAME_PAUSE": break;
+      case "SDK_GAME_START": break;
+      case "SDK_READY": break;
+    }
+  }
+};
+(function (a, b, c) {
+  var d = a.getElementsByTagName(b)[0];
+  a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk");
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;display:flex;justify-content:center;align-items:center}
+canvas{display:block;max-width:100%;max-height:100%}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(function(){
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+
+// Game dimensions (portrait)
+const W=400,H=700;
+canvas.width=W;canvas.height=H;
+
+// State
+const READY=0,PLAYING=1,GAMEOVER=2;
+let state=READY,score=0,bestScore=parseInt(localStorage.getItem('flappyWingsBest'))||0;
+let frameCount=0;
+
+// Bird
+let bird={x:80,y:H/2,vy:0,radius:18,wingAngle:0,wingDir:1};
+const GRAVITY=0.45,FLAP=-7.5;
+
+// Pipes
+let pipes=[];
+const PIPE_W=60,PIPE_SPEED=2.5,PIPE_INTERVAL=90;
+let pipeTimer=0;
+const GAP_START=150,GAP_MIN=100;
+
+function getGap(){return Math.max(GAP_MIN,GAP_START-score*2.5);}
+
+// Ground
+const GROUND_H=80;
+let groundX=0;
+
+// Clouds
+let clouds=[];
+for(let i=0;i<5;i++)clouds.push({x:Math.random()*W,y:30+Math.random()*150,w:60+Math.random()*80,s:0.3+Math.random()*0.5});
+
+function resetGame(){
+  bird.y=H/2;bird.vy=0;bird.wingAngle=0;
+  pipes=[];pipeTimer=PIPE_INTERVAL-30;score=0;frameCount=0;
+}
+
+function flap(){
+  if(state===READY){state=PLAYING;resetGame();}
+  if(state===PLAYING){bird.vy=FLAP;}
+  if(state===GAMEOVER&&frameCount>30){state=READY;resetGame();}
+}
+
+// Input
+canvas.addEventListener('pointerdown',e=>{e.preventDefault();flap();});
+document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();flap();}});
+
+function collides(){
+  const by=bird.y,bx=bird.x,br=bird.radius-2;
+  if(by+br>H-GROUND_H||by-br<0)return true;
+  for(const p of pipes){
+    if(bx+br>p.x&&bx-br<p.x+PIPE_W){
+      if(by-br<p.gapY||by+br>p.gapY+p.gap)return true;
+    }
+  }
+  return false;
+}
+
+function update(){
+  frameCount++;
+  if(state!==PLAYING)return;
+  
+  bird.vy+=GRAVITY;
+  bird.y+=bird.vy;
+  bird.wingAngle+=bird.wingDir*0.3;
+  if(bird.wingAngle>1||bird.wingAngle<-1)bird.wingDir*=-1;
+
+  // Pipes
+  pipeTimer++;
+  if(pipeTimer>=PIPE_INTERVAL){
+    pipeTimer=0;
+    const gap=getGap();
+    const gapY=80+Math.random()*(H-GROUND_H-gap-160);
+    pipes.push({x:W,gapY,gap,scored:false});
+  }
+  for(let i=pipes.length-1;i>=0;i--){
+    pipes[i].x-=PIPE_SPEED;
+    if(!pipes[i].scored&&pipes[i].x+PIPE_W<bird.x){pipes[i].scored=true;score++;if(score>bestScore){bestScore=score;localStorage.setItem('flappyWingsBest',bestScore);}}
+    if(pipes[i].x<-PIPE_W)pipes.splice(i,1);
+  }
+
+  groundX=(groundX-PIPE_SPEED)%40;
+
+  // Clouds
+  for(const c of clouds){c.x-=c.s;if(c.x+c.w<0){c.x=W+20;c.y=30+Math.random()*150;}}
+
+  if(collides()){
+    state=GAMEOVER;
+    if(typeof sdk!=='undefined'&&sdk.showBanner)sdk.showBanner();
+  }
+}
+
+function drawBg(){
+  const g=ctx.createLinearGradient(0,0,0,H-GROUND_H);
+  g.addColorStop(0,'#4EC5F1');g.addColorStop(1,'#B0E0FF');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H-GROUND_H);
+}
+
+function drawClouds(){
+  ctx.fillStyle='rgba(255,255,255,0.8)';
+  for(const c of clouds){
+    ctx.beginPath();
+    ctx.ellipse(c.x+c.w*0.3,c.y,c.w*0.3,18,0,0,Math.PI*2);
+    ctx.ellipse(c.x+c.w*0.6,c.y-5,c.w*0.25,22,0,0,Math.PI*2);
+    ctx.ellipse(c.x+c.w*0.5,c.y+2,c.w*0.35,16,0,0,Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function drawGround(){
+  ctx.fillStyle='#8B6914';ctx.fillRect(0,H-GROUND_H,W,GROUND_H);
+  ctx.fillStyle='#5DA832';ctx.fillRect(0,H-GROUND_H,W,20);
+  // Grass detail
+  ctx.fillStyle='#4A8C28';
+  for(let x=groundX;x<W;x+=40){ctx.fillRect(x,H-GROUND_H,20,8);}
+}
+
+function drawPipe(x,gapY,gap){
+  // Top pipe
+  let g=ctx.createLinearGradient(x,0,x+PIPE_W,0);
+  g.addColorStop(0,'#3A8C2E');g.addColorStop(0.5,'#5EC450');g.addColorStop(1,'#3A8C2E');
+  ctx.fillStyle=g;
+  ctx.fillRect(x,0,PIPE_W,gapY);
+  ctx.fillRect(x-4,gapY-26,PIPE_W+8,26);
+  // Bottom pipe
+  const botY=gapY+gap;
+  ctx.fillStyle=g;
+  ctx.fillRect(x,botY,PIPE_W,H-GROUND_H-botY);
+  ctx.fillRect(x-4,botY,PIPE_W+8,26);
+  // Pipe borders
+  ctx.strokeStyle='#2D6B23';ctx.lineWidth=2;
+  ctx.strokeRect(x,0,PIPE_W,gapY);
+  ctx.strokeRect(x-4,gapY-26,PIPE_W+8,26);
+  ctx.strokeRect(x,botY,PIPE_W,H-GROUND_H-botY);
+  ctx.strokeRect(x-4,botY,PIPE_W+8,26);
+}
+
+function drawBird(){
+  const {x,y,vy,radius,wingAngle}=bird;
+  ctx.save();ctx.translate(x,y);
+  const rot=Math.min(Math.max(vy*3,-30),70)*Math.PI/180;
+  ctx.rotate(rot);
+  // Body
+  const bg=ctx.createRadialGradient(-3,-3,2,0,0,radius);
+  bg.addColorStop(0,'#FFE135');bg.addColorStop(1,'#F5A623');
+  ctx.fillStyle=bg;
+  ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#D4880F';ctx.lineWidth=2;ctx.stroke();
+  // Eye
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(8,-5,6,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#000';ctx.beginPath();ctx.arc(10,-5,3,0,Math.PI*2);ctx.fill();
+  // Beak
+  ctx.fillStyle='#FF6B3D';
+  ctx.beginPath();ctx.moveTo(14,2);ctx.lineTo(26,-1);ctx.lineTo(14,7);ctx.fill();
+  // Wing
+  ctx.fillStyle='#F5C842';
+  ctx.save();ctx.translate(-5,4);ctx.rotate(wingAngle*0.5);
+  ctx.beginPath();ctx.ellipse(0,0,14,7,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#D4A00F';ctx.lineWidth=1;ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+}
+
+function drawScore(){
+  ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.font='bold 48px Arial';
+  ctx.strokeStyle='#000';ctx.lineWidth=4;ctx.strokeText(score,W/2,30);
+  ctx.fillStyle='#fff';ctx.fillText(score,W/2,30);
+}
+
+function drawReady(){
+  ctx.textAlign='center';
+  ctx.font='bold 42px Arial';
+  ctx.strokeStyle='#000';ctx.lineWidth=4;
+  ctx.strokeText('Flappy Wings',W/2,H/4);
+  ctx.fillStyle='#FFE135';ctx.fillText('Flappy Wings',W/2,H/4);
+  ctx.font='24px Arial';ctx.lineWidth=3;
+  ctx.strokeText('Tap or Press Space to Start',W/2,H/2+40);
+  ctx.fillStyle='#fff';ctx.fillText('Tap or Press Space to Start',W/2,H/2+40);
+}
+
+function drawGameOver(){
+  ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  // Panel
+  ctx.fillStyle='rgba(255,255,240,0.95)';
+  const pw=280,ph=220,px=(W-pw)/2,py=H/2-130;
+  ctx.beginPath();ctx.roundRect(px,py,pw,ph,16);ctx.fill();
+  ctx.strokeStyle='#8B6914';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(px,py,pw,ph,16);ctx.stroke();
+  
+  ctx.fillStyle='#D4440F';ctx.font='bold 36px Arial';ctx.fillText('Game Over',W/2,py+45);
+  ctx.fillStyle='#333';ctx.font='26px Arial';
+  ctx.fillText('Score: '+score,W/2,py+95);
+  ctx.fillText('Best: '+bestScore,W/2,py+130);
+  
+  // Button
+  ctx.fillStyle='#5EC450';ctx.beginPath();ctx.roundRect(W/2-80,py+155,160,44,10);ctx.fill();
+  ctx.strokeStyle='#3A8C2E';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(W/2-80,py+155,160,44,10);ctx.stroke();
+  ctx.fillStyle='#fff';ctx.font='bold 22px Arial';ctx.fillText('Play Again',W/2,py+183);
+}
+
+function draw(){
+  drawBg();drawClouds();
+  for(const p of pipes)drawPipe(p.x,p.gapY,p.gap);
+  drawGround();drawBird();
+  if(state===PLAYING)drawScore();
+  if(state===READY){drawScore();drawReady();}
+  if(state===GAMEOVER)drawGameOver();
+}
+
+function loop(){
+  update();draw();requestAnimationFrame(loop);
+}
+
+// Floating bird in ready state
+function readyFloat(){
+  if(state===READY){
+    bird.y=H/2+Math.sin(frameCount*0.05)*15;
+    bird.wingAngle+=0.05*bird.wingDir;
+    if(bird.wingAngle>1||bird.wingAngle<-1)bird.wingDir*=-1;
+  }
+}
+const origUpdate=update;
+const wrapped=function(){origUpdate();readyFloat();};
+// Replace update in loop
+function gameLoop(){wrapped();draw();requestAnimationFrame(gameLoop);}
+gameLoop();
+})();
+</script>
+</body>
+</html>

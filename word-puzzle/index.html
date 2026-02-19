@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Word Puzzle</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#121213;color:#fff;font-family:'Helvetica Neue',Arial,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh;overflow-x:hidden}
+#header{text-align:center;padding:16px 0 8px;border-bottom:1px solid #3a3a3c;width:100%;max-width:500px}
+#header h1{font-size:32px;font-weight:700;letter-spacing:2px}
+#header .day{font-size:13px;color:#818384;margin-top:4px}
+#message{text-align:center;padding:8px;font-size:15px;min-height:28px;color:#e0e0e0}
+#grid{display:grid;grid-template-columns:repeat(5,62px);grid-template-rows:repeat(6,62px);gap:5px;margin:12px auto}
+.cell{width:62px;height:62px;border:2px solid #3a3a3c;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;text-transform:uppercase;border-radius:2px;transition:transform 0.3s;user-select:none}
+.cell.filled{border-color:#565758;animation:pop 0.1s}
+.cell.correct{background:#538d4e;border-color:#538d4e}
+.cell.present{background:#b59f3b;border-color:#b59f3b}
+.cell.absent{background:#3a3a3c;border-color:#3a3a3c}
+.cell.flip{animation:flip 0.5s ease}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+@keyframes flip{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.shake{animation:shake 0.3s}
+#keyboard{margin:12px auto;max-width:500px;width:100%;padding:0 8px}
+.kb-row{display:flex;justify-content:center;margin-bottom:6px;gap:4px}
+.key{height:52px;min-width:32px;padding:0 8px;border:none;border-radius:4px;background:#818384;color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;text-transform:uppercase;flex:1;max-width:44px;user-select:none;transition:background 0.2s}
+.key.wide{max-width:66px;font-size:12px}
+.key.correct{background:#538d4e}
+.key.present{background:#b59f3b}
+.key.absent{background:#3a3a3c}
+.key:active{opacity:0.8}
+#toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.95);color:#121213;padding:12px 24px;border-radius:4px;font-size:14px;font-weight:700;display:none;z-index:99}
+#share-btn{display:none;margin:8px auto;padding:12px 24px;background:#538d4e;color:#fff;border:none;border-radius:4px;font-size:16px;font-weight:700;cursor:pointer}
+#share-btn:active{opacity:0.8}
+</style>
+<script src="https://api.gamemonetize.com/sdk.js" id="game_monetize_sdk" data-gameid="qhx0yj3wfrzgu1xtouhvmjlqq7q2e16b"></script>
+</head>
+<body>
+<div id="header"><h1>Word Puzzle</h1><div class="day" id="dayNum"></div></div>
+<div id="message"></div>
+<div id="grid"></div>
+<button id="share-btn" onclick="shareResult()">Share 📋</button>
+<div id="keyboard"></div>
+<div id="toast"></div>
+<script>
+const WORDS=["APPLE","BEACH","CRANE","DREAM","EAGLE","FLAME","GRAPE","HOUSE","IMAGE","JOKER","KNIFE","LEMON","MANGO","NOBLE","OCEAN","PIANO","QUEEN","RIVER","SNAKE","TIGER","ULTRA","VIVID","WHALE","XENON","YIELD","ZEBRA","ABOUT","BELOW","CHARM","DANCE","EARTH","FIELD","GLASS","HEART","INPUT","JUICE","KNEEL","LIGHT","MONEY","NIGHT","OLIVE","PEARL","QUIET","ROBIN","STONE","TRACE","UNITY","VALVE","WATCH","YOUTH","ANGER","BLOOM","CLOUD","DRIFT","EPOCH","FROST","GLOOM","HASTE","IVORY","JEWEL","KEBAB","LUNAR","MAGIC","NERVE","ORBIT","PIXEL","QUEST","RANCH","SOLAR","THUMB","USHER","VIGOR","WINDY","YEAST","ZONAL","BLAZE","CANDY","DELTA","ELBOW","FAIRY","GHOST","HAVEN","INBOX","JAZZY","KAYAK","LIVER","MEDAL","NASAL","OPERA","PATCH","QUILT","RADAR","SALAD","TOWER","URBAN","VAULT","WHEAT","ZIPPY","ALARM","BRUSH","CLASH","DIZZY","ERROR","FLUTE","GRASP","HOBBY","ISSUE","JEWEL","KOALA","LODGE","MERCY","NINNY","OXIDE","PLUMB","QUIRK","REALM","SKULL","TRICK","UMBRA","VENOM","WRIST","XYLEM","YACHT","BLISS","CHOIR","DWARF","EXILE","FETCH","GLYPH","HOIST","IRONY","JUMBO","KNACK","LLAMA","MOOSE","NUDGE","ONSET","PRISM","REIGN","SWIRL","TULIP","UNTIE","VOWEL","WHIRL","ABODE","BISON","CLAMP","DODGE","ESSAY","FIBER","GRIND","HUMID","JELLY","KNELT","LEDGE","MIRTH","NICHE","OUIJA","PLUCK","ROGUE","SPICE","TRUNK","UDDER","VERGE","WIDOW","BONUS","COUCH","DOUGH","FLOCK","GOUGE","HENCE","JOINT","LEASH","MARSH","NOTCH","OZONE","POUCH","RIDGE","SHOVE","THORN","USURP","VOILA","WRECK","BRISK","CRUST","DRAPE","FORGE","GUILT","HYPER","IMPEL","LATCH","NERVE","OLDEN","PLUSH","RINSE","SIXTH","TWIRL","UNZIP","VIBES","WALTZ"];
+const VALID=new Set(WORDS);
+const WL=5,MR=6;
+let row=0,col=0,grid=[],answer="",gameOver=false;
+
+function dayIndex(){const d=new Date(),e=new Date(2025,0,1);return Math.floor((d-e)/864e5)}
+function init(){
+  const di=dayIndex();
+  answer=WORDS[di%WORDS.length];
+  document.getElementById("dayNum").textContent="Puzzle #"+di;
+  const g=document.getElementById("grid");
+  for(let r=0;r<MR;r++){grid[r]=[];for(let c=0;c<WL;c++){const d=document.createElement("div");d.className="cell";d.id="c"+r+"_"+c;g.appendChild(d);grid[r][c]=""}}
+  buildKeyboard();
+  document.addEventListener("keydown",onKey);
+  loadState();
+}
+function buildKeyboard(){
+  const rows=[["Q","W","E","R","T","Y","U","I","O","P"],["A","S","D","F","G","H","J","K","L"],["ENTER","Z","X","C","V","B","N","M","⌫"]];
+  const kb=document.getElementById("keyboard");
+  rows.forEach(r=>{const d=document.createElement("div");d.className="kb-row";r.forEach(k=>{const b=document.createElement("button");b.className="key"+(k.length>1?" wide":"");b.textContent=k;b.id="k_"+k;b.onclick=()=>handleKey(k);d.appendChild(b)});kb.appendChild(d)})
+}
+function handleKey(k){
+  if(gameOver)return;
+  if(k==="⌫"||k==="BACKSPACE"){if(col>0){col--;grid[row][col]="";updateCell(row,col,"")}}
+  else if(k==="ENTER"){submitGuess()}
+  else if(k.length===1&&/^[A-Z]$/i.test(k)&&col<WL){grid[row][col]=k.toUpperCase();updateCell(row,col,k.toUpperCase());col++}
+}
+function onKey(e){
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  const k=e.key.toUpperCase();
+  if(k==="BACKSPACE")handleKey("⌫");
+  else if(k==="ENTER")handleKey("ENTER");
+  else if(k.length===1&&/^[A-Z]$/.test(k))handleKey(k);
+}
+function updateCell(r,c,v){const el=document.getElementById("c"+r+"_"+c);el.textContent=v;el.className=v?"cell filled":"cell"}
+function submitGuess(){
+  if(col<WL){shakeRow();return}
+  const guess=grid[row].join("");
+  if(!VALID.has(guess)){toast("Not in word list");shakeRow();return}
+  revealRow(row,guess);
+}
+function revealRow(r,guess){
+  const ans=[...answer],g=[...guess],res=Array(WL).fill("absent");
+  for(let i=0;i<WL;i++)if(g[i]===ans[i]){res[i]="correct";ans[i]="#";g[i]="*"}
+  for(let i=0;i<WL;i++)if(g[i]!=="*"){const j=ans.indexOf(g[i]);if(j>=0){res[i]="present";ans[j]="#"}}
+  let delay=0;
+  for(let i=0;i<WL;i++){const el=document.getElementById("c"+r+"_"+i);setTimeout(()=>{el.classList.add("flip");el.classList.add(res[i]);colorKey(grid[r][i],res[i])},delay);delay+=300}
+  setTimeout(()=>{
+    if(guess===answer){gameOver=true;msg(["Genius!","Magnificent!","Impressive!","Splendid!","Great!","Phew!"][r]);showEnd()}
+    else if(r===MR-1){gameOver=true;msg("The word was: "+answer);showEnd()}
+    else{row++;col=0}
+    saveState();
+  },delay+100);
+}
+function colorKey(letter,cls){
+  const el=document.getElementById("k_"+letter);if(!el)return;
+  const rank={correct:3,present:2,absent:1};
+  const cur=el.classList.contains("correct")?3:el.classList.contains("present")?2:el.classList.contains("absent")?1:0;
+  if(rank[cls]>cur){el.className="key"+(letter.length>1?" wide":"");el.classList.add(cls)}
+}
+function shakeRow(){for(let c=0;c<WL;c++){const el=document.getElementById("c"+row+"_"+c);el.classList.add("shake");setTimeout(()=>el.classList.remove("shake"),300)}}
+function msg(t){document.getElementById("message").textContent=t}
+function toast(t){const el=document.getElementById("toast");el.textContent=t;el.style.display="block";setTimeout(()=>el.style.display="none",1500)}
+function showEnd(){
+  document.getElementById("share-btn").style.display="block";
+  try{if(typeof sdk!=="undefined"&&sdk.showBanner)sdk.showBanner()}catch(e){}
+}
+function shareResult(){
+  const map={correct:"🟩",present:"🟨",absent:"⬛"};
+  let t="Word Puzzle #"+dayIndex()+" "+(gameOver&&grid[row-1]?.join("")===answer?(row)+"/6":"X/6")+"\n\n";
+  const maxR=gameOver&&grid[row]?.join("")===answer?row+1:gameOver?MR:row;
+  for(let r=0;r<maxR;r++){
+    const ans=[...answer],g=[...grid[r]],res=Array(WL).fill("absent");
+    for(let i=0;i<WL;i++)if(g[i]===ans[i]){res[i]="correct";ans[i]="#";g[i]="*"}
+    for(let i=0;i<WL;i++)if(g[i]!=="*"){const j=ans.indexOf(g[i]);if(j>=0){res[i]="present";ans[j]="#"}}
+    t+=res.map(r=>map[r]).join("")+"\n";
+  }
+  if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast("Copied to clipboard!"));
+  else toast("Share:\n"+t);
+}
+function saveState(){try{localStorage.setItem("wp_"+dayIndex(),JSON.stringify({row,col,grid,gameOver}))}catch(e){}}
+function loadState(){try{const s=JSON.parse(localStorage.getItem("wp_"+dayIndex()));if(!s)return;
+  for(let r=0;r<s.row||(s.gameOver&&r<=s.row);r++){if(!s.grid[r])break;for(let c=0;c<WL;c++){if(!s.grid[r][c])continue;grid[r][c]=s.grid[r][c];const el=document.getElementById("c"+r+"_"+c);el.textContent=s.grid[r][c];
+    const ans=[...answer],g=[...s.grid[r]],res=Array(WL).fill("absent");
+    for(let i=0;i<WL;i++)if(g[i]===ans[i]){res[i]="correct";ans[i]="#";g[i]="*"}
+    for(let i=0;i<WL;i++)if(g[i]!=="*"){const j=ans.indexOf(g[i]);if(j>=0){res[i]="present";ans[j]="#"}}
+    el.className="cell "+res[c];colorKey(s.grid[r][c],res[c])}}
+  row=s.row;col=s.col;gameOver=s.gameOver;
+  if(gameOver){document.getElementById("share-btn").style.display="block";if(s.grid[row-1]?.join("")===answer)msg(["Genius!","Magnificent!","Impressive!","Splendid!","Great!","Phew!"][row-1]);else msg("The word was: "+answer)}
+}catch(e){}}
+init();
+</script>
+</body>
+</html>

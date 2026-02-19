@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Debug</title>
+<style>
+*{margin:0;padding:0}
+html,body{width:100%;height:100%;background:#000;position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden}
+#info{color:#0f0;font:14px monospace;padding:10px;white-space:pre-wrap;position:absolute;top:0;left:0;z-index:9999;background:rgba(0,0,0,0.8);width:100%}
+canvas{position:absolute;top:0;left:0;background:red}
+</style>
+</head>
+<body>
+<div id="info">Loading...</div>
+<canvas id="c"></canvas>
+<script>
+function measure() {
+  var w = window.innerWidth;
+  var h = window.innerHeight;
+  var dw = document.documentElement.clientWidth;
+  var dh = document.documentElement.clientHeight;
+  var sw = screen.width;
+  var sh = screen.height;
+  var saw = screen.availWidth;
+  var sah = screen.availHeight;
+  var dpr = window.devicePixelRatio;
+  var vw = document.documentElement.getBoundingClientRect().width;
+  var vh = document.documentElement.getBoundingClientRect().height;
+  var bw = document.body.clientWidth;
+  var bh = document.body.clientHeight;
+  
+  var c = document.getElementById('c');
+  var cr = c.getBoundingClientRect();
+  
+  return {
+    'window.inner': w + 'x' + h,
+    'doc.client': dw + 'x' + dh,
+    'screen': sw + 'x' + sh,
+    'screen.avail': saw + 'x' + sah,
+    'devicePixelRatio': dpr,
+    'doc.rect': vw.toFixed(0) + 'x' + vh.toFixed(0),
+    'body.client': bw + 'x' + bh,
+    'canvas.rect': cr.width.toFixed(0) + 'x' + cr.height.toFixed(0),
+    'canvas.wh': c.width + 'x' + c.height,
+    'canvas.style': c.style.width + ' ' + c.style.height,
+    'visualViewport': window.visualViewport ? (window.visualViewport.width.toFixed(0) + 'x' + window.visualViewport.height.toFixed(0) + ' scale=' + window.visualViewport.scale) : 'N/A'
+  };
+}
+
+function update() {
+  var m = measure();
+  var c = document.getElementById('c');
+  var bestW = Math.max(window.innerWidth || 0, document.documentElement.clientWidth || 0, screen.width || 375);
+  var bestH = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, screen.height || 667);
+  c.style.width = bestW + 'px';
+  c.style.height = bestH + 'px';
+  c.width = bestW;
+  c.height = bestH;
+  var ctx = c.getContext('2d');
+  ctx.fillStyle = '#228B22';
+  ctx.fillRect(0, 0, bestW, bestH);
+  ctx.fillStyle = '#FFD700';
+  ctx.font = 'bold 30px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('FULLSCREEN TEST', bestW/2, bestH/2);
+  ctx.fillText(bestW + ' x ' + bestH, bestW/2, bestH/2 + 40);
+  
+  m['bestSize'] = bestW + 'x' + bestH;
+  var info = document.getElementById('info');
+  info.textContent = Object.keys(m).map(function(k){return k+': '+m[k]}).join('\n');
+  info.textContent += '\nTime: ' + new Date().toLocaleTimeString();
+}
+
+// Run multiple times to catch late layout
+update();
+setTimeout(update, 100);
+setTimeout(update, 500);
+setTimeout(update, 1000);
+setTimeout(update, 2000);
+setInterval(update, 3000);
+window.addEventListener('resize', update);
+</script>
+</body>
+</html>

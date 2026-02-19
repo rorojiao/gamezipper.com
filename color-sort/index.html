@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Color Sort Puzzle</title>
+<script type="text/javascript">
+window.SDK_OPTIONS = {
+  gameId: "xjqpg0hmr1fp8hvzyf2xol25a1eb6ceb",
+  onEvent: function (a) {
+    switch (a.name) {
+      case "SDK_GAME_PAUSE": break;
+      case "SDK_GAME_START": break;
+      case "SDK_READY": break;
+    }
+  }
+};
+(function (a, b, c) {
+  var d = a.getElementsByTagName(b)[0];
+  a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk");
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#e0f7fa,#f3e5f5,#fff3e0);min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
+#header{text-align:center;padding:16px 8px 8px}
+#header h1{font-size:28px;color:#5c6bc0;text-shadow:1px 1px 2px rgba(0,0,0,.1)}
+#level-info{font-size:16px;color:#78909c;margin-top:4px}
+#controls{display:flex;gap:12px;margin:10px 0;flex-wrap:wrap;justify-content:center}
+.btn{padding:10px 22px;border:none;border-radius:25px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:0 3px 8px rgba(0,0,0,.15)}
+.btn:active{transform:scale(.95)}
+#btn-undo{background:linear-gradient(135deg,#ffb74d,#ff9800);color:#fff}
+#btn-restart{background:linear-gradient(135deg,#e57373,#ef5350);color:#fff}
+#btn-levels{background:linear-gradient(135deg,#81c784,#66bb6a);color:#fff}
+#game-area{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:14px;padding:20px 10px;max-width:600px}
+.tube{position:relative;cursor:pointer;transition:transform .2s}
+.tube.selected{transform:translateY(-20px)}
+.tube canvas{display:block}
+#particles-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100}
+#overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:50;justify-content:center;align-items:center}
+#overlay.show{display:flex}
+#overlay-content{background:#fff;border-radius:20px;padding:30px;text-align:center;max-width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+#overlay-content h2{color:#5c6bc0;margin-bottom:16px}
+#level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:16px 0}
+.level-btn{width:50px;height:50px;border-radius:12px;border:2px solid #e0e0e0;background:#fff;font-size:18px;font-weight:700;cursor:pointer;transition:all .2s;color:#333}
+.level-btn.unlocked{border-color:#81c784;background:#e8f5e9}
+.level-btn.current{border-color:#5c6bc0;background:#e8eaf6;color:#5c6bc0}
+.level-btn.locked{opacity:.4;cursor:default;color:#999}
+#win-msg{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:101;background:rgba(255,255,255,.95);border-radius:24px;padding:40px;text-align:center;display:none;box-shadow:0 10px 40px rgba(0,0,0,.2)}
+#win-msg h2{font-size:32px;color:#66bb6a;margin-bottom:12px}
+#win-msg .btn{margin-top:16px}
+</style>
+</head>
+<body>
+<div id="header">
+<h1>🧪 Color Sort Puzzle</h1>
+<div id="level-info">Level 1</div>
+</div>
+<div id="controls">
+<button class="btn" id="btn-undo" onclick="undo()">↩ Undo</button>
+<button class="btn" id="btn-restart" onclick="restartLevel()">🔄 Restart</button>
+<button class="btn" id="btn-levels" onclick="showLevels()">📋 Levels</button>
+</div>
+<div id="game-area"></div>
+<canvas id="particles-canvas"></canvas>
+<div id="overlay" onclick="event.target===this&&hideOverlay()">
+<div id="overlay-content"></div>
+</div>
+<div id="win-msg">
+<h2>🎉 Level Complete!</h2>
+<p id="win-sub"></p>
+<button class="btn" style="background:linear-gradient(135deg,#5c6bc0,#7e57c2);color:#fff" onclick="nextLevel()">Next Level ➜</button>
+</div>
+<script>
+const COLORS=['#ef5350','#42a5f5','#66bb6a','#ffa726','#ab47bc','#26c6da','#ec407a','#8d6e63','#78909c','#d4e157'];
+const TUBE_W=52,TUBE_H=160,BALL_R=18,CAP=4;
+const LEVELS=[];
+// Level definitions: [numColors, numExtra] extra=empty tubes
+const LEVEL_DEFS=[
+[3,1],[3,2],[4,1],[4,2],[5,1],[5,2],[5,2],[6,2],[6,2],[6,2],
+[7,2],[7,2],[7,2],[7,3],[8,2],[8,2],[8,3],[9,2],[9,3],[10,2],
+[10,3],[11,2],[11,3],[12,2],[12,3]
+];
+
+let state={level:0,tubes:[],history:[],selected:-1,won:false};
+let maxLevel=parseInt(localStorage.getItem('csort_max')||'0');
+let particles=[];
+let pCanvas,pCtx;
+
+function genLevel(idx){
+  const[nc,ne]=LEVEL_DEFS[Math.min(idx,LEVEL_DEFS.length-1)];
+  const total=nc*CAP;
+  let balls=[];
+  for(let c=0;c<nc;c++)for(let i=0;i<CAP;i++)balls.push(c);
+  // Shuffle with seeded random for reproducibility
+  let seed=idx*2654435761+12345;
+  function rng(){seed=(seed*1664525+1013904223)&0xffffffff;return(seed>>>0)/4294967296}
+  // Fisher-Yates
+  for(let i=balls.length-1;i>0;i--){let j=Math.floor(rng()*(i+1));[balls[i],balls[j]]=[balls[j],balls[i]]}
+  // Distribute into tubes
+  let tubes=[];
+  for(let t=0;t<nc;t++){tubes.push(balls.slice(t*CAP,(t+1)*CAP))}
+  for(let t=0;t<ne;t++)tubes.push([]);
+  return tubes;
+}
+
+function deepCopy(t){return t.map(a=>[...a])}
+
+function loadLevel(idx){
+  state.level=idx;
+  state.tubes=genLevel(idx);
+  state.history=[];
+  state.selected=-1;
+  state.won=false;
+  document.getElementById('level-info').textContent='Level '+(idx+1);
+  document.getElementById('win-msg').style.display='none';
+  render();
+}
+
+function render(){
+  const area=document.getElementById('game-area');
+  area.innerHTML='';
+  state.tubes.forEach((tube,i)=>{
+    const div=document.createElement('div');
+    div.className='tube'+(state.selected===i?' selected':'');
+    const c=document.createElement('canvas');
+    c.width=TUBE_W;c.height=TUBE_H;
+    drawTube(c,tube,state.selected===i);
+    div.appendChild(c);
+    div.addEventListener('click',()=>onTap(i));
+    div.addEventListener('touchend',e=>{e.preventDefault();onTap(i)});
+    area.appendChild(div);
+  });
+}
+
+function drawTube(canvas,balls,sel){
+  const ctx=canvas.getContext('2d');
+  const w=TUBE_W,h=TUBE_H;
+  ctx.clearRect(0,0,w,h);
+  // Tube body
+  const tx=6,tw=w-12,ty=10,th=h-16,br=8;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(tx,ty+br);
+  ctx.arcTo(tx,ty+th,tx+tw/2,ty+th+10,br);
+  ctx.arcTo(tx+tw,ty+th,tx+tw,ty,br);
+  ctx.lineTo(tx+tw,ty);
+  ctx.strokeStyle=sel?'#5c6bc0':'#b0bec5';
+  ctx.lineWidth=sel?3:2;
+  ctx.stroke();
+  ctx.restore();
+  // Balls
+  for(let i=0;i<balls.length;i++){
+    const bi=balls.length-1-i;
+    const bx=w/2;
+    const by=h-22-i*(BALL_R*2+2);
+    ctx.beginPath();
+    ctx.arc(bx,by,BALL_R,0,Math.PI*2);
+    const g=ctx.createRadialGradient(bx-5,by-5,2,bx,by,BALL_R);
+    const col=COLORS[balls[bi]];
+    g.addColorStop(0,lighten(col,.3));
+    g.addColorStop(1,col);
+    ctx.fillStyle=g;
+    ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.1)';
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
+}
+
+function lighten(hex,amt){
+  let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  r=Math.min(255,Math.round(r+(255-r)*amt));
+  g=Math.min(255,Math.round(g+(255-g)*amt));
+  b=Math.min(255,Math.round(b+(255-b)*amt));
+  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+function topBall(tube){return tube.length?tube[tube.length-1]:-1}
+
+function onTap(i){
+  if(state.won)return;
+  if(state.selected===-1){
+    if(state.tubes[i].length>0){state.selected=i;render()}
+  }else if(state.selected===i){
+    state.selected=-1;render();
+  }else{
+    tryMove(state.selected,i);
+  }
+}
+
+function tryMove(from,to){
+  const ft=state.tubes[from],tt=state.tubes[to];
+  if(!ft.length){state.selected=-1;render();return}
+  const ball=topBall(ft);
+  if(tt.length>=CAP){state.selected=-1;render();return}
+  if(tt.length>0&&topBall(tt)!==ball){state.selected=-1;render();return}
+  // Pour all matching top balls
+  state.history.push({from,to,tubes:deepCopy(state.tubes)});
+  let count=0;
+  while(ft.length>0&&topBall(ft)===ball&&tt.length<CAP){
+    tt.push(ft.pop());count++;
+  }
+  state.selected=-1;
+  render();
+  checkWin();
+}
+
+function undo(){
+  if(!state.history.length||state.won)return;
+  const h=state.history.pop();
+  state.tubes=h.tubes;
+  state.selected=-1;
+  render();
+}
+
+function restartLevel(){loadLevel(state.level)}
+
+function checkWin(){
+  for(const t of state.tubes){
+    if(t.length>0&&t.length<CAP)return;
+    if(t.length===CAP&&new Set(t).size>1)return;
+  }
+  state.won=true;
+  if(state.level>=maxLevel){maxLevel=state.level+1;localStorage.setItem('csort_max',''+maxLevel)}
+  if(typeof sdk!=='undefined'&&sdk.showBanner)sdk.showBanner();
+  setTimeout(()=>{
+    document.getElementById('win-sub').textContent='Level '+(state.level+1)+' completed!';
+    document.getElementById('win-msg').style.display='block';
+    spawnParticles();
+  },300);
+}
+
+function nextLevel(){
+  document.getElementById('win-msg').style.display='none';
+  loadLevel(state.level+1);
+}
+
+function showLevels(){
+  const oc=document.getElementById('overlay-content');
+  let h='<h2>Select Level</h2><div id="level-grid">';
+  for(let i=0;i<LEVEL_DEFS.length;i++){
+    const unlocked=i<=maxLevel;
+    const cls=i===state.level?'current':unlocked?'unlocked':'locked';
+    h+=`<button class="level-btn ${cls}" ${unlocked?`onclick="pickLevel(${i})"`:''}>${i+1}</button>`;
+  }
+  h+='</div><button class="btn" style="background:#78909c;color:#fff" onclick="hideOverlay()">Close</button>';
+  oc.innerHTML=h;
+  document.getElementById('overlay').classList.add('show');
+}
+function pickLevel(i){hideOverlay();loadLevel(i)}
+function hideOverlay(){document.getElementById('overlay').classList.remove('show')}
+
+// Particles
+function initParticles(){
+  pCanvas=document.getElementById('particles-canvas');
+  pCtx=pCanvas.getContext('2d');
+  function resize(){pCanvas.width=window.innerWidth;pCanvas.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
+  requestAnimationFrame(animParticles);
+}
+function spawnParticles(){
+  for(let i=0;i<80;i++){
+    particles.push({
+      x:pCanvas.width/2+(Math.random()-.5)*100,
+      y:pCanvas.height/2,
+      vx:(Math.random()-.5)*12,
+      vy:Math.random()*-10-3,
+      r:Math.random()*6+3,
+      color:COLORS[Math.floor(Math.random()*COLORS.length)],
+      life:1,decay:Math.random()*.015+.008
+    });
+  }
+}
+function animParticles(){
+  pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);
+  particles=particles.filter(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vy+=.15;p.life-=p.decay;
+    if(p.life<=0)return false;
+    pCtx.globalAlpha=p.life;
+    pCtx.beginPath();pCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    pCtx.fillStyle=p.color;pCtx.fill();
+    return true;
+  });
+  pCtx.globalAlpha=1;
+  requestAnimationFrame(animParticles);
+}
+
+initParticles();
+loadLevel(maxLevel<LEVEL_DEFS.length?maxLevel:0);
+</script>
+</body>
+</html>
