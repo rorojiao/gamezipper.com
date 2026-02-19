@@ -6,20 +6,134 @@
 <title>🧠 Memory Master</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#1a1a2e}
-canvas{display:block;width:100%;height:100%;touch-action:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0520}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 30%,#1a0a40 0%,#0a0520 60%,#050210 100%);z-index:0}
+body::after{content:'';position:fixed;inset:0;background:repeating-conic-gradient(from 0deg at 50% 50%,transparent 0deg,rgba(167,139,250,0.02) 30deg,transparent 60deg);z-index:0;pointer-events:none}
+canvas{display:block;width:100%;height:100%;touch-action:none;position:relative;z-index:1}
+
+/* Magic overlay layer */
+#magic-overlay{position:fixed;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+
+/* Magic dust particles */
+.magic-dust{position:absolute;border-radius:50%;pointer-events:none}
+@keyframes dustFloat{0%{transform:translateY(-20px) scale(1);opacity:0}10%{opacity:0.8}80%{opacity:0.5}100%{transform:translateY(100vh) scale(0.3);opacity:0}}
+@keyframes dustTwinkle{0%,100%{opacity:0.3;box-shadow:0 0 4px currentColor}50%{opacity:1;box-shadow:0 0 10px currentColor}}
+
+/* Corner rune circles */
+.rune-circle{position:fixed;width:80px;height:80px;border:2px solid rgba(167,139,250,0.15);border-radius:50%;pointer-events:none;z-index:2}
+.rune-circle::before{content:'✦';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:rgba(167,139,250,0.3)}
+.rune-circle.tl{top:10px;left:10px;animation:runeRotate 12s linear infinite}
+.rune-circle.tr{top:10px;right:10px;animation:runeRotate 15s linear infinite reverse}
+.rune-circle.bl{bottom:10px;left:10px;animation:runeRotate 18s linear infinite}
+.rune-circle.br{bottom:10px;right:10px;animation:runeRotate 10s linear infinite reverse}
+@keyframes runeRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* Click effects */
+.magic-ring{position:absolute;border:2px solid rgba(167,139,250,0.6);border-radius:50%;pointer-events:none;animation:ringExpand 0.5s ease-out forwards}
+@keyframes ringExpand{0%{width:0;height:0;opacity:1;transform:translate(-50%,-50%)}100%{width:200px;height:200px;opacity:0;transform:translate(-50%,-50%)}}
+.magic-particle{position:absolute;pointer-events:none;font-size:10px;animation:particleBurst 0.8s ease-out forwards}
+@keyframes particleBurst{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0.3)}}
+
+/* Match flash */
+#match-flash{position:fixed;inset:0;background:rgba(167,139,250,0.3);pointer-events:none;z-index:3;opacity:0;transition:opacity 0.15s}
+#match-flash.active{opacity:1}
+
+/* Gold star burst for matches */
+.gold-star{position:absolute;pointer-events:none;z-index:4;animation:starBurst 1s ease-out forwards}
+@keyframes starBurst{0%{opacity:1;transform:translate(0,0) scale(1) rotate(0deg)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0) rotate(360deg)}}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
 </head>
 <body>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none">⬅ More Games at GameZipper.com</a>
 <canvas id="c"></canvas>
+
+<!-- Magic overlay -->
+<div id="magic-overlay">
+  <div class="rune-circle tl"></div>
+  <div class="rune-circle tr"></div>
+  <div class="rune-circle bl"></div>
+  <div class="rune-circle br"></div>
+</div>
+<div id="match-flash"></div>
+
+<script>
+// Spawn magic dust particles
+(function(){
+  const overlay=document.getElementById('magic-overlay');
+  for(let i=0;i<10;i++){
+    const d=document.createElement('div');
+    d.className='magic-dust';
+    const size=2+Math.random()*4;
+    const color=Math.random()>0.5?'#a78bfa':'#fbbf24';
+    d.style.cssText=`width:${size}px;height:${size}px;left:${Math.random()*100}%;top:-10px;background:${color};color:${color};animation:dustFloat ${10+Math.random()*15}s linear ${Math.random()*10}s infinite,dustTwinkle ${1+Math.random()*2}s ease-in-out infinite;box-shadow:0 0 6px ${color}`;
+    overlay.appendChild(d);
+  }
+})();
+
+// Click effects on canvas
+let lastClickPos=null;
+let matchDetected=false;
+let prevMatchCount=0;
+
+document.getElementById('c').addEventListener('click',function(e){
+  const overlay=document.getElementById('magic-overlay');
+  const x=e.clientX,y=e.clientY;
+  lastClickPos={x,y};
+  
+  // Magic ring
+  const ring=document.createElement('div');
+  ring.className='magic-ring';
+  ring.style.left=x+'px';ring.style.top=y+'px';
+  overlay.appendChild(ring);
+  setTimeout(()=>ring.remove(),500);
+  
+  // Magic particles
+  const colors=['#a78bfa','#fbbf24','#60a5fa'];
+  const shapes=['✦','✧','⭑','★','✶'];
+  for(let i=0;i<15;i++){
+    const p=document.createElement('div');
+    p.className='magic-particle';
+    const angle=Math.random()*Math.PI*2;
+    const dist=40+Math.random()*80;
+    p.style.cssText=`left:${x}px;top:${y}px;color:${colors[Math.floor(Math.random()*3)]};font-size:${8+Math.random()*10}px;--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;text-shadow:0 0 6px currentColor`;
+    p.textContent=shapes[Math.floor(Math.random()*shapes.length)];
+    overlay.appendChild(p);
+    setTimeout(()=>p.remove(),800);
+  }
+});
+
+// Poll for match detection (watch for matched cards increasing)
+setInterval(function(){
+  if(typeof window._matchCount!=='undefined' && window._matchCount>prevMatchCount){
+    prevMatchCount=window._matchCount;
+    // Purple flash
+    const flash=document.getElementById('match-flash');
+    flash.classList.add('active');
+    setTimeout(()=>flash.classList.remove('active'),200);
+    // Gold stars from last click position
+    if(lastClickPos){
+      const overlay=document.getElementById('magic-overlay');
+      for(let i=0;i<20;i++){
+        const s=document.createElement('div');
+        s.className='gold-star';
+        const angle=Math.random()*Math.PI*2;
+        const dist=50+Math.random()*120;
+        s.style.cssText=`left:${lastClickPos.x}px;top:${lastClickPos.y}px;color:#ffd700;font-size:${12+Math.random()*14}px;--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;text-shadow:0 0 8px #ffd700;z-index:4`;
+        s.textContent='⭐';
+        overlay.appendChild(s);
+        setTimeout(()=>s.remove(),1000);
+      }
+    }
+  }
+},100);
+</script>
+
 <script>
 (function(){
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 let W,H,dpr;
-// Themes
 const themes={
   animals:['🐶','🐱','🐰','🦊','🐻','🐼','🐨','🦁','🐸','🐵','🐷','🐮','🐔','🦄','🐝'],
   fruits:['🍎','🍊','🍋','🍇','🍓','🍑','🍒','🥝','🍌','🍉','🫐','🥭','🍍','🥥','🍈'],
@@ -28,34 +142,31 @@ const themes={
 };
 const themeNames={animals:'🐱 Animals',fruits:'🍎 Fruits',flags:'🌍 Flags',faces:'😀 Emoji'};
 const themeKeys=Object.keys(themes);
-
-// Difficulty
 const difficulties=[
   {name:'Easy',cols:4,rows:3},
   {name:'Normal',cols:4,rows:4},
   {name:'Hard',cols:5,rows:4},
   {name:'Extreme',cols:6,rows:5}
 ];
-
-// State
-let state='menu'; // menu, playing, complete
+let state='menu';
 let selDiff=1, selTheme=0;
 let cards=[], cols=0, rows=0;
 let first=null, second=null, lockBoard=false;
 let moves=0, startTime=0, elapsed=0, timerInterval=null;
 let matched=0, totalPairs=0;
 let particles=[];
-let cardAnims={}; // cardIndex -> {phase,progress,startTime}
+let cardAnims={};
 let bestScores=JSON.parse(localStorage.getItem('mm_best')||'{}');
 
-// Web Audio
+// Expose match count for overlay
+window._matchCount=0;
+
 let audioCtx2;
 function getAC2(){if(!audioCtx2)audioCtx2=new(window.AudioContext||window.webkitAudioContext)();return audioCtx2;}
 function sfxFlip(){try{const a=getAC2(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='sine';o.frequency.value=800;g.gain.setValueAtTime(.15,a.currentTime);g.gain.exponentialRampToValueAtTime(.01,a.currentTime+.08);o.start(a.currentTime);o.stop(a.currentTime+.08);}catch(e){}}
 function sfxMatch(){try{const a=getAC2();[523,659,784].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.2,a.currentTime+i*.08);g.gain.exponentialRampToValueAtTime(.01,a.currentTime+i*.08+.2);o.start(a.currentTime+i*.08);o.stop(a.currentTime+i*.08+.2);});}catch(e){}}
 function sfxFail(){try{const a=getAC2(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='square';o.frequency.setValueAtTime(300,a.currentTime);o.frequency.exponentialRampToValueAtTime(200,a.currentTime+.15);g.gain.setValueAtTime(.1,a.currentTime);g.gain.exponentialRampToValueAtTime(.01,a.currentTime+.15);o.start(a.currentTime);o.stop(a.currentTime+.15);}catch(e){}}
 
-// Layout
 let gridX,gridY,cardW,cardH,gap;
 
 function resize(){
@@ -74,7 +185,6 @@ function calcGrid(){
   const availW=W-gap*2, availH=H-topBar-bottomBar-gap*2;
   cardW=Math.min((availW-(cols-1)*gap)/cols, 120);
   cardH=Math.min((availH-(rows-1)*gap)/rows, 140);
-  // keep aspect ratio ~0.75
   if(cardW/cardH>0.85) cardW=cardH*0.75;
   if(cardH/cardW>1.5) cardH=cardW*1.4;
   const totalW=cols*cardW+(cols-1)*gap;
@@ -94,6 +204,7 @@ function startGame(){
   cards=deck.map((emoji,i)=>({emoji,flipped:false,matched:false,index:i}));
   first=null;second=null;lockBoard=false;
   moves=0;elapsed=0;matched=0;
+  window._matchCount=0;
   particles=[];cardAnims={};
   state='playing';
   calcGrid();
@@ -135,11 +246,11 @@ function checkMatch(){
     matchFlashAlpha=0.4;
     sfxMatch();
     matched++;
+    window._matchCount=matched;
     if(matched===totalPairs){
       state='complete';
       clearInterval(timerInterval);
       saveBest();
-
     }
   }else{
     sfxFail();
@@ -148,7 +259,6 @@ function checkMatch(){
     setTimeout(()=>{cards[first].flipped=false;cards[second].flipped=false;first=null;second=null;lockBoard=false},350);
     lockBoard=true;
     setTimeout(()=>{lockBoard=false},350);
-    // reset after close
     setTimeout(()=>{first=null;second=null},350);
     return;
   }
@@ -175,7 +285,7 @@ function getStars(){
 function spawnParticles(ci){
   const r=cardRect(ci);
   const cx=r.x+r.w/2, cy=r.y+r.h/2;
-  const colors=['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#96E6A1','#DDA0DD','#FF69B4','#00FF7F'];
+  const colors=['#a78bfa','#fbbf24','#c084fc','#818cf8','#e879f9','#38bdf8','#ffd700','#60a5fa'];
   for(let j=0;j<24;j++){
     const angle=Math.random()*Math.PI*2;
     const speed=2+Math.random()*6;
@@ -183,13 +293,8 @@ function spawnParticles(ci){
   }
 }
 
-// Screen flash for match
-let matchFlashAlpha=0,matchFlashColor='#FFD700';
+let matchFlashAlpha=0;
 
-// Combo tracking
-let comboCount=0,lastMatchTime=0;
-
-// Drawing
 function drawRoundRect(x,y,w,h,r){
   ctx.beginPath();
   ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
@@ -198,93 +303,106 @@ function drawRoundRect(x,y,w,h,r){
   ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
 }
 
-function drawGradientBg(){
-  const g=ctx.createLinearGradient(0,0,W*0.3,H);
-  g.addColorStop(0,'#667eea');g.addColorStop(0.5,'#764ba2');g.addColorStop(1,'#4a3080');
+function drawMagicBg(){
+  // Deep purple space
+  const g=ctx.createRadialGradient(W*0.4,H*0.3,0,W*0.5,H*0.5,Math.max(W,H)*0.7);
+  g.addColorStop(0,'#1a0a40');g.addColorStop(0.5,'#0d0525');g.addColorStop(1,'#050210');
   ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  
+  // Subtle magic circle pattern
+  ctx.save();
+  ctx.globalAlpha=0.03;
+  ctx.strokeStyle='#a78bfa';
+  ctx.lineWidth=1;
+  const cx=W/2,cy=H/2;
+  for(let i=0;i<3;i++){
+    const r=100+i*80;
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function drawMenu(){
-  drawGradientBg();
+  drawMagicBg();
   const cx=W/2;
-  // Title
   ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.font='bold 42px sans-serif';ctx.fillStyle='#fff';
-  ctx.fillText('🧠 Memory Master',cx,H*0.1);
-  ctx.font='16px sans-serif';ctx.fillStyle='rgba(255,255,255,0.7)';
-  ctx.fillText('Card Matching Memory Game',cx,H*0.1+40);
+  ctx.shadowColor='#a78bfa';ctx.shadowBlur=20;
+  ctx.fillText('🔮 Memory Master',cx,H*0.1);
+  ctx.shadowBlur=0;
+  ctx.font='16px sans-serif';ctx.fillStyle='rgba(167,139,250,0.7)';
+  ctx.fillText('Magical Card Matching',cx,H*0.1+40);
 
-  // Difficulty buttons
   const btnW=Math.min(260,W*0.65),btnH=48,btnGap=12;
   let startY=H*0.22;
   for(let i=0;i<difficulties.length;i++){
     const by=startY+i*(btnH+btnGap);
     const bx=cx-btnW/2;
     drawRoundRect(bx,by,btnW,btnH,12);
-    ctx.fillStyle=i===selDiff?'rgba(255,255,255,1)':'rgba(255,255,255,0.85)';
-    ctx.fill();
-    if(i===selDiff){ctx.strokeStyle='#667eea';ctx.lineWidth=3;ctx.stroke();}
-    ctx.fillStyle=i===selDiff?'#667eea':'#555';
+    if(i===selDiff){
+      const bg=ctx.createLinearGradient(bx,by,bx+btnW,by);
+      bg.addColorStop(0,'#a78bfa');bg.addColorStop(1,'#818cf8');
+      ctx.fillStyle=bg;ctx.fill();
+    }else{
+      ctx.fillStyle='rgba(255,255,255,0.85)';ctx.fill();
+    }
+    ctx.fillStyle=i===selDiff?'#fff':'#555';
     ctx.font=i===selDiff?'bold 17px sans-serif':'17px sans-serif';
     ctx.fillText(difficulties[i].name+' ('+difficulties[i].cols+'×'+difficulties[i].rows+')',cx,by+btnH/2);
-    // Store for hit detection
     difficulties[i]._rect={x:bx,y:by,w:btnW,h:btnH};
   }
 
-  // Theme
   startY+=difficulties.length*(btnH+btnGap)+20;
-  ctx.font='bold 16px sans-serif';ctx.fillStyle='#fff';
+  ctx.font='bold 16px sans-serif';ctx.fillStyle='#c4b5fd';
   ctx.fillText('Choose Theme',cx,startY);
   startY+=30;
   const tBtnW=Math.min(70,W*0.18),tBtnH=40,tGap=10;
   const totalTW=themeKeys.length*tBtnW+(themeKeys.length-1)*tGap;
   let tx=cx-totalTW/2;
+  window._tRects=[];
   for(let i=0;i<themeKeys.length;i++){
     const bx=tx+i*(tBtnW+tGap);
     drawRoundRect(bx,startY,tBtnW,tBtnH,10);
-    ctx.fillStyle=i===selTheme?'rgba(255,255,255,1)':'rgba(255,255,255,0.8)';
-    ctx.fill();
-    if(i===selTheme){ctx.strokeStyle='#667eea';ctx.lineWidth=2;ctx.stroke();}
-    ctx.fillStyle=i===selTheme?'#667eea':'#666';
+    if(i===selTheme){
+      const bg=ctx.createLinearGradient(bx,startY,bx+tBtnW,startY);
+      bg.addColorStop(0,'#a78bfa');bg.addColorStop(1,'#c084fc');
+      ctx.fillStyle=bg;ctx.fill();
+    }else{
+      ctx.fillStyle='rgba(255,255,255,0.8)';ctx.fill();
+    }
+    ctx.fillStyle=i===selTheme?'#fff':'#666';
     ctx.font='13px sans-serif';
     ctx.fillText(themeNames[themeKeys[i]],bx+tBtnW/2,startY+tBtnH/2);
-    themeKeys[i+'_rect']={x:bx,y:startY,w:tBtnW,h:tBtnH}; // hack
-  }
-  // store theme rects properly
-  if(!window._tRects)window._tRects=[];
-  window._tRects=[];
-  tx=cx-totalTW/2;
-  for(let i=0;i<themeKeys.length;i++){
-    window._tRects.push({x:tx+i*(tBtnW+tGap),y:startY,w:tBtnW,h:tBtnH});
+    window._tRects.push({x:bx,y:startY,w:tBtnW,h:tBtnH});
   }
 
-  // Start button
   startY+=tBtnH+35;
   const sBtnW=Math.min(220,W*0.55),sBtnH=54;
   const sbx=cx-sBtnW/2;
   drawRoundRect(sbx,startY,sBtnW,sBtnH,27);
   const sg=ctx.createLinearGradient(sbx,startY,sbx+sBtnW,startY);
-  sg.addColorStop(0,'#FF6B6B');sg.addColorStop(1,'#ee5a24');
+  sg.addColorStop(0,'#a78bfa');sg.addColorStop(1,'#c084fc');
   ctx.fillStyle=sg;ctx.fill();
+  ctx.shadowColor='#a78bfa';ctx.shadowBlur=15;
   ctx.font='bold 20px sans-serif';ctx.fillStyle='#fff';
-  ctx.fillText('Start Game 🎮',cx,startY+sBtnH/2);
+  ctx.fillText('Start Game 🔮',cx,startY+sBtnH/2);
+  ctx.shadowBlur=0;
   window._startBtn={x:sbx,y:startY,w:sBtnW,h:sBtnH};
 
-  // Best score
   const key=selDiff+'_'+selTheme;
   if(bestScores[key]){
     startY+=sBtnH+25;
-    ctx.font='14px sans-serif';ctx.fillStyle='rgba(255,255,255,0.6)';
+    ctx.font='14px sans-serif';ctx.fillStyle='rgba(167,139,250,0.6)';
     ctx.fillText('Best: '+bestScores[key].moves+' moves / '+bestScores[key].time+'s',cx,startY);
   }
 }
 
 function drawPlaying(now){
-  drawGradientBg();
+  drawMagicBg();
   // Top bar
-  ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(0,0,W,50);
+  ctx.fillStyle='rgba(10,5,32,0.6)';ctx.fillRect(0,0,W,50);
   ctx.textAlign='left';ctx.textBaseline='middle';
-  ctx.font='bold 16px sans-serif';ctx.fillStyle='#fff';
+  ctx.font='bold 16px sans-serif';ctx.fillStyle='#c4b5fd';
   ctx.fillText('Moves: '+moves,15,25);
   ctx.textAlign='center';
   ctx.fillText(difficulties[selDiff].name,W/2,25);
@@ -292,7 +410,6 @@ function drawPlaying(now){
   const m=(elapsed/60)|0,s=elapsed%60;
   ctx.fillText((m<10?'0':'')+m+':'+(s<10?'0':'')+s,W-15,25);
 
-  // Cards
   for(let i=0;i<cards.length;i++){
     const c=cards[i];
     const r=cardRect(i);
@@ -313,24 +430,22 @@ function drawPlaying(now){
       if(a.progress>=1)delete cardAnims[i];
     }
 
-    if(c.matched&&!cardAnims[i]){
-      // fade out matched
-      ctx.globalAlpha=0.3;
-    }
+    if(c.matched&&!cardAnims[i]){ctx.globalAlpha=0.3;}
 
     const cx2=r.x+r.w/2, cy2=r.y+r.h/2;
     const drawW=r.w*Math.max(0.02,scaleX);
 
-    // Shadow
+    // Shadow with purple glow
+    ctx.shadowColor='rgba(167,139,250,0.3)';
+    ctx.shadowBlur=10;
     ctx.fillStyle='rgba(0,0,0,0.2)';
     drawRoundRect(cx2-drawW/2+2,r.y+3,drawW,r.h,10);ctx.fill();
+    ctx.shadowBlur=0;
 
     if(showFront){
-      // Front face - white
       drawRoundRect(cx2-drawW/2,r.y,drawW,r.h,10);
-      ctx.fillStyle='#fff';ctx.fill();
-      ctx.strokeStyle='rgba(102,126,234,0.3)';ctx.lineWidth=2;ctx.stroke();
-      // Emoji
+      ctx.fillStyle='rgba(255,255,255,0.95)';ctx.fill();
+      ctx.strokeStyle='rgba(167,139,250,0.4)';ctx.lineWidth=2;ctx.stroke();
       if(scaleX>0.3){
         ctx.textAlign='center';ctx.textBaseline='middle';
         const fontSize=Math.min(cardW,cardH)*0.45;
@@ -338,17 +453,17 @@ function drawPlaying(now){
         ctx.fillText(c.emoji,cx2,cy2);
       }
     }else{
-      // Back face - gradient
       drawRoundRect(cx2-drawW/2,r.y,drawW,r.h,10);
       const bg=ctx.createLinearGradient(cx2-drawW/2,r.y,cx2+drawW/2,r.y+r.h);
-      bg.addColorStop(0,'#667eea');bg.addColorStop(1,'#764ba2');
+      bg.addColorStop(0,'#4a1a8a');bg.addColorStop(0.5,'#6b2fb0');bg.addColorStop(1,'#3a1070');
       ctx.fillStyle=bg;ctx.fill();
-      // Pattern
+      ctx.strokeStyle='rgba(167,139,250,0.3)';ctx.lineWidth=1;ctx.stroke();
       if(scaleX>0.3){
-        ctx.fillStyle='rgba(255,255,255,0.15)';
+        // Mystic symbol
+        ctx.fillStyle='rgba(255,255,255,0.2)';
         ctx.font='bold '+(Math.min(cardW,cardH)*0.3)+'px sans-serif';
         ctx.textAlign='center';ctx.textBaseline='middle';
-        ctx.fillText('?',cx2,cy2);
+        ctx.fillText('✦',cx2,cy2);
       }
     }
     ctx.globalAlpha=1;
@@ -361,74 +476,74 @@ function drawPlaying(now){
     if(p.life<=0){particles.splice(i,1);continue;}
     ctx.globalAlpha=p.life;
     ctx.fillStyle=p.color;
+    ctx.shadowColor=p.color;ctx.shadowBlur=6;
     ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();
+    ctx.shadowBlur=0;
   }
   ctx.globalAlpha=1;
 
-  // Match flash
   if(matchFlashAlpha>0){
-    ctx.fillStyle='rgba(255,215,0,'+matchFlashAlpha+')';
+    ctx.fillStyle='rgba(167,139,250,'+matchFlashAlpha+')';
     ctx.fillRect(0,0,W,H);
     matchFlashAlpha-=0.03;
   }
 
-  // Bottom bar - back button
-  ctx.fillStyle='rgba(0,0,0,0.2)';ctx.fillRect(0,H-44,W,44);
+  ctx.fillStyle='rgba(10,5,32,0.4)';ctx.fillRect(0,H-44,W,44);
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.font='15px sans-serif';ctx.fillStyle='rgba(255,255,255,0.7)';
+  ctx.font='15px sans-serif';ctx.fillStyle='rgba(167,139,250,0.7)';
   ctx.fillText('← Main Menu',W/2,H-22);
   window._backBtn={x:0,y:H-44,w:W,h:44};
 }
 
 function drawComplete(){
-  drawGradientBg();
+  drawMagicBg();
   const cx=W/2;
   ctx.textAlign='center';ctx.textBaseline='middle';
 
+  ctx.shadowColor='#a78bfa';ctx.shadowBlur=20;
   ctx.font='bold 36px sans-serif';ctx.fillStyle='#fff';
   ctx.fillText('🎉 Congratulations!',cx,H*0.2);
+  ctx.shadowBlur=0;
 
   const stars=getStars();
   ctx.font='48px sans-serif';
   ctx.fillText('⭐'.repeat(stars)+'☆'.repeat(3-stars),cx,H*0.32);
 
-  ctx.font='20px sans-serif';ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.font='20px sans-serif';ctx.fillStyle='rgba(196,181,253,0.9)';
   ctx.fillText('Moves: '+moves,cx,H*0.43);
   const m=(elapsed/60)|0,s=elapsed%60;
   ctx.fillText('Time: '+(m<10?'0':'')+m+':'+(s<10?'0':'')+s,cx,H*0.5);
 
-  ctx.font='14px sans-serif';ctx.fillStyle='rgba(255,255,255,0.5)';
-  const optimal=totalPairs;
-  ctx.fillText('Minimum moves: '+optimal,cx,H*0.57);
+  ctx.font='14px sans-serif';ctx.fillStyle='rgba(167,139,250,0.5)';
+  ctx.fillText('Minimum moves: '+totalPairs,cx,H*0.57);
 
-  // Replay button
   const btnW=200,btnH=50,bx=cx-btnW/2,by=H*0.65;
   drawRoundRect(bx,by,btnW,btnH,25);
   const g=ctx.createLinearGradient(bx,by,bx+btnW,by);
-  g.addColorStop(0,'#667eea');g.addColorStop(1,'#764ba2');
+  g.addColorStop(0,'#a78bfa');g.addColorStop(1,'#c084fc');
   ctx.fillStyle=g;ctx.fill();
   ctx.font='bold 18px sans-serif';ctx.fillStyle='#fff';
   ctx.fillText('Play Again',cx,by+btnH/2);
   window._replayBtn={x:bx,y:by,w:btnW,h:btnH};
 
-  // Menu button
   const by2=by+btnH+20;
   drawRoundRect(bx,by2,btnW,btnH,25);
-  ctx.fillStyle='rgba(255,255,255,0.2)';ctx.fill();
-  ctx.font='16px sans-serif';ctx.fillStyle='#fff';
+  ctx.fillStyle='rgba(167,139,250,0.2)';ctx.fill();
+  ctx.font='16px sans-serif';ctx.fillStyle='#c4b5fd';
   ctx.fillText('Main Menu',cx,by2+btnH/2);
   window._menuBtn={x:bx,y:by2,w:btnW,h:btnH};
 
-  // particles in complete screen too
   if(Math.random()<0.1){
-    const colors=['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#96E6A1'];
+    const colors=['#a78bfa','#fbbf24','#c084fc','#818cf8','#e879f9'];
     particles.push({x:Math.random()*W,y:H+10,vx:(Math.random()-0.5)*2,vy:-3-Math.random()*3,life:1,color:colors[Math.random()*colors.length|0],size:3+Math.random()*4});
   }
   for(let i=particles.length-1;i>=0;i--){
     const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.life-=0.008;
     if(p.life<=0){particles.splice(i,1);continue;}
     ctx.globalAlpha=p.life;ctx.fillStyle=p.color;
+    ctx.shadowColor=p.color;ctx.shadowBlur=6;
     ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
+    ctx.shadowBlur=0;
   }
   ctx.globalAlpha=1;
 }
@@ -475,17 +590,17 @@ resize();
 requestAnimationFrame(frame);
 })();
 </script>
-<div id="tutorial-overlay" style="position:fixed;inset:0;pointer-events:auto;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;z-index:999999">
-<div style="background:rgba(30,30,50,0.95);border-radius:20px;padding:36px 28px;max-width:340px;text-align:center;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
-<div style="font-size:56px;margin-bottom:12px">🧠</div>
-<h2 style="font-size:24px;color:#ffd700;margin-bottom:16px">How to Play</h2>
+<div id="tutorial-overlay" style="position:fixed;inset:0;pointer-events:auto;background:rgba(10,5,32,0.9);display:flex;align-items:center;justify-content:center;z-index:999999">
+<div style="background:linear-gradient(145deg,#1a0a40,#0d0525);border:2px solid rgba(167,139,250,0.3);border-radius:20px;padding:36px 28px;max-width:340px;text-align:center;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.5),0 0 40px rgba(167,139,250,0.1)">
+<div style="font-size:56px;margin-bottom:12px">🔮</div>
+<h2 style="font-size:24px;color:#c4b5fd;margin-bottom:16px">How to Play</h2>
 <p style="font-size:16px;line-height:1.9;text-align:left;color:#eee">
 👆 Tap a card to <b>flip</b> it over<br>
 🔍 Find and <b>match all pairs!</b><br>
 ⭐ Fewer moves = more stars ⭐⭐⭐
 </p>
-<p style="font-size:14px;color:#aaa;margin-top:12px">🎨 Choose your difficulty and theme, then start!</p>
-<button onclick="document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_memory','1')" ontouchstart="event.stopPropagation();document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_memory','1')" style="margin-top:20px;padding:14px 36px;font-size:18px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff6b6b,#ffa500);color:#fff;cursor:pointer;font-weight:bold">Got it! 🎮</button>
+<p style="font-size:14px;color:rgba(167,139,250,0.7);margin-top:12px">🎨 Choose your difficulty and theme, then start!</p>
+<button onclick="document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_memory','1')" style="margin-top:20px;padding:14px 36px;font-size:18px;border:none;border-radius:12px;background:linear-gradient(135deg,#a78bfa,#c084fc);color:#fff;cursor:pointer;font-weight:bold;box-shadow:0 0 20px rgba(167,139,250,0.3)">Got it! 🔮</button>
 </div></div>
 <script>if(localStorage.getItem('tutorial_memory'))document.getElementById('tutorial-overlay').remove();</script>
 </body>

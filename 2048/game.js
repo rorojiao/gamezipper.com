@@ -25,20 +25,21 @@ function playCheerSound(){
   o.start(ac.currentTime+i*0.1);o.stop(ac.currentTime+i*0.1+0.3);});}catch(e){}
 }
 
+// 🌌 Cosmic Galaxy Theme Colors
 const TILE_COLORS = {
-  2:    {bg:'#eee4da',fg:'#776e65',glow:'#eee4da'},
-  4:    {bg:'#ede0c8',fg:'#776e65',glow:'#ede0c8'},
-  8:    {bg:'#f2b179',fg:'#f9f6f2',glow:'#f2b179'},
-  16:   {bg:'#f59563',fg:'#f9f6f2',glow:'#f59563'},
-  32:   {bg:'#f67c5f',fg:'#f9f6f2',glow:'#f67c5f'},
-  64:   {bg:'#f65e3b',fg:'#f9f6f2',glow:'#f65e3b'},
-  128:  {bg:'#edcf72',fg:'#f9f6f2',glow:'#edcf72'},
-  256:  {bg:'#edcc61',fg:'#f9f6f2',glow:'#edcc61'},
-  512:  {bg:'#edc850',fg:'#f9f6f2',glow:'#edc850'},
-  1024: {bg:'#edc53f',fg:'#f9f6f2',glow:'#edc53f'},
-  2048: {bg:'#edc22e',fg:'#f9f6f2',glow:'#ffd700'},
-  4096: {bg:'#3c3a32',fg:'#f9f6f2',glow:'#ff6b6b'},
-  8192: {bg:'#3c3a32',fg:'#f9f6f2',glow:'#c471ed'},
+  2:    {bg:'#7f8c8d',fg:'#f9fafb',glow:'#95a5a6',name:'Asteroid'},
+  4:    {bg:'#f1c40f',fg:'#1a1a2e',glow:'#f7dc6f',name:'Moon'},
+  8:    {bg:'#e67e22',fg:'#fff',glow:'#f0a04b',name:'Mars'},
+  16:   {bg:'#f39c12',fg:'#fff',glow:'#f7c948',name:'Sun'},
+  32:   {bg:'#3498db',fg:'#fff',glow:'#5dade2',name:'Blue Giant'},
+  64:   {bg:'#9b59b6',fg:'#fff',glow:'#bb8fce',name:'Nebula'},
+  128:  {bg:'#ecf0f1',fg:'#1a1a2e',glow:'#f5f7f8',name:'White Dwarf'},
+  256:  {bg:'#e74c3c',fg:'#fff',glow:'#f1948a',name:'Supernova'},
+  512:  {bg:'#8e44ad',fg:'#fff',glow:'#af7ac5',name:'Black Hole'},
+  1024: {bg:'#2980b9',fg:'#fff',glow:'#5499c7',name:'Galaxy'},
+  2048: {bg:'#f1c40f',fg:'#fff',glow:'#f7dc6f',name:'Universe'},
+  4096: {bg:'#dc2626',fg:'#fff',glow:'#ff6b6b',name:'Multiverse'},
+  8192: {bg:'#7c3aed',fg:'#fff',glow:'#c471ed',name:'Infinity'},
 };
 
 const SIZE = 4;
@@ -68,9 +69,12 @@ let shockwaves = [];
 let floatingScores = [];
 let scoreAnimTime = 0;
 let lastMoveDir = null;
-let gameOverAnim = null; // {start, duration}
+let gameOverAnim = null;
 let reached2048 = false;
 let fireworks = [];
+let supernovaRings = []; // For 256+ merge supernova effect
+let cometTrails = []; // Comet tail afterimages
+let breathePhase = 0; // For tile breathing glow
 
 function resizeParticleCanvas() {
   const wrap = document.getElementById('canvas-wrap');
@@ -84,7 +88,6 @@ function resizeParticleCanvas() {
   pCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-// Background floating particles
 function initBgParticles() {
   bgParticles = [];
   const wrap = document.getElementById('canvas-wrap');
@@ -97,30 +100,61 @@ function initBgParticles() {
       vx: (Math.random() - 0.5) * 0.3,
       vy: (Math.random() - 0.5) * 0.3,
       alpha: 0.06 + Math.random() * 0.08,
-      color: ['#ffd700','#e94560','#4ecdc4','#f2b179','#c471ed','#538d4e','#edcf72'][i]
+      color: ['#a78bfa','#818cf8','#60a5fa','#c084fc','#e879f9','#38bdf8','#fbbf24'][i]
     });
   }
 }
 
 function spawnMergeParticles(cx, cy, color, count) {
+  // Spawn 25 particles for cosmic explosion
   for (let i = 0; i < count; i++) {
     const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.5;
-    const speed = 2 + Math.random() * 4;
+    const speed = 2.5 + Math.random() * 5;
     particles.push({
       x: cx, y: cy,
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed - 1.5,
-      r: 2 + Math.random() * 3,
+      r: 2 + Math.random() * 4,
       life: 1,
-      decay: 0.015 + Math.random() * 0.01,
+      decay: 0.012 + Math.random() * 0.01,
       color: color,
-      gravity: 0.12
+      gravity: 0.1
     });
   }
 }
 
 function spawnShockwave(cx, cy) {
-  shockwaves.push({ x: cx, y: cy, r: 0, maxR: 250, life: 1, decay: 0.025 });
+  shockwaves.push({ x: cx, y: cy, r: 0, maxR: 250, life: 1, decay: 0.02, color: 'rgba(255,255,255,' });
+}
+
+// Supernova rings for 256+ merges
+function spawnSupernovaRings(cx, cy, val) {
+  const colors = val >= 1024 ? ['#74b9ff','#a0d8ff','#ffffff'] :
+                 val >= 512 ? ['#ecf0f1','#bdc3c7','#74b9ff'] :
+                 ['#e74c3c','#ff6b6b','#ffd700'];
+  for (let i = 0; i < 3; i++) {
+    supernovaRings.push({
+      x: cx, y: cy, r: 5 + i * 8, maxR: 150 + i * 60,
+      life: 1, decay: 0.015 - i * 0.003,
+      color: colors[i], width: 4 - i
+    });
+  }
+}
+
+// Comet trail afterimages
+function spawnCometTrail(fromX, fromY, toX, toY, color) {
+  for (let i = 1; i <= 3; i++) {
+    const t = i * 0.25;
+    cometTrails.push({
+      x: fromX + (toX - fromX) * (1 - t),
+      y: fromY + (toY - fromY) * (1 - t),
+      life: 0.3 + (3 - i) * 0.15,
+      decay: 0.04,
+      alpha: 0.15 + (3 - i) * 0.1,
+      color: color,
+      size: tileSize * (0.6 + (3 - i) * 0.1)
+    });
+  }
 }
 
 function spawnFloatingScore(cx, cy, value) {
@@ -131,32 +165,77 @@ function spawnFloatingScore(cx, cy, value) {
 }
 
 function spawnFirework(cx, cy) {
-  const colors = ['#ffd700','#ff6b6b','#4ecdc4','#f2b179','#c471ed','#fff'];
-  for (let i = 0; i < 30; i++) {
+  const colors = ['#a78bfa','#818cf8','#60a5fa','#fbbf24','#e879f9','#fff','#38bdf8'];
+  for (let i = 0; i < 35; i++) {
     const angle = Math.random() * Math.PI * 2;
-    const speed = 2 + Math.random() * 6;
+    const speed = 2 + Math.random() * 7;
     particles.push({
       x: cx, y: cy,
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed - 2,
-      r: 1.5 + Math.random() * 2.5,
+      r: 1.5 + Math.random() * 3,
       life: 1,
-      decay: 0.008 + Math.random() * 0.008,
+      decay: 0.007 + Math.random() * 0.008,
       color: colors[Math.floor(Math.random() * colors.length)],
-      gravity: 0.06
+      gravity: 0.05
     });
   }
 }
 
-function triggerCelebration() {
+// 2048 Black hole → Big bang celebration
+function trigger2048Celebration() {
   const wrap = document.getElementById('canvas-wrap');
   const w = wrap.clientWidth;
-  // Burst fireworks from multiple points
-  for (let i = 0; i < 5; i++) {
-    setTimeout(() => {
-      spawnFirework(w * 0.2 + Math.random() * w * 0.6, w * 0.2 + Math.random() * w * 0.4);
-    }, i * 300);
+  const cx = w / 2, cy = w / 2;
+
+  // Phase 1: Black hole collapse - all tiles attracted to center (visual only)
+  // Spawn inward-moving particles
+  for (let i = 0; i < 50; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 100 + Math.random() * 150;
+    particles.push({
+      x: cx + Math.cos(angle) * dist,
+      y: cy + Math.sin(angle) * dist,
+      vx: -Math.cos(angle) * (3 + Math.random() * 4),
+      vy: -Math.sin(angle) * (3 + Math.random() * 4),
+      r: 2 + Math.random() * 3,
+      life: 1, decay: 0.025,
+      color: ['#a78bfa','#ffd700','#60a5fa','#e879f9'][Math.floor(Math.random()*4)],
+      gravity: 0
+    });
   }
+
+  // Phase 2: Big bang explosion after 300ms
+  setTimeout(() => {
+    // 200+ particles
+    for (let i = 0; i < 200; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 1 + Math.random() * 10;
+      particles.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        r: 1 + Math.random() * 4,
+        life: 1, decay: 0.004 + Math.random() * 0.006,
+        color: ['#ffd700','#ff6b6b','#a78bfa','#60a5fa','#e879f9','#38bdf8','#fff','#fbbf24'][Math.floor(Math.random()*8)],
+        gravity: 0.02
+      });
+    }
+    // 5 waves of fireworks
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => {
+        spawnFirework(cx * 0.3 + Math.random() * w * 0.4, cy * 0.3 + Math.random() * w * 0.4);
+      }, i * 400);
+    }
+    // Multiple shockwaves
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => spawnShockwave(cx, cy), i * 200);
+    }
+  }, 300);
+}
+
+function triggerCelebration() {
+  trigger2048Celebration();
 }
 
 function animateParticleLayer(now) {
@@ -180,6 +259,20 @@ function animateParticleLayer(now) {
   }
   pCtx.globalAlpha = 1;
 
+  // Comet trails
+  for (let i = cometTrails.length - 1; i >= 0; i--) {
+    const t = cometTrails[i];
+    t.life -= t.decay;
+    if (t.life <= 0) { cometTrails.splice(i, 1); continue; }
+    pCtx.globalAlpha = t.life * t.alpha;
+    pCtx.fillStyle = t.color;
+    const s = t.size * t.life;
+    pCtx.beginPath();
+    pCtx.arc(t.x, t.y, s / 2 * 0.5, 0, Math.PI * 2);
+    pCtx.fill();
+  }
+  pCtx.globalAlpha = 1;
+
   // Merge/firework particles
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
@@ -192,7 +285,11 @@ function animateParticleLayer(now) {
     pCtx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
     pCtx.fillStyle = p.color;
     pCtx.globalAlpha = p.life;
+    // Add glow to particles
+    pCtx.shadowColor = p.color;
+    pCtx.shadowBlur = 6;
     pCtx.fill();
+    pCtx.shadowBlur = 0;
   }
   pCtx.globalAlpha = 1;
 
@@ -204,10 +301,31 @@ function animateParticleLayer(now) {
     if (s.life <= 0) { shockwaves.splice(i, 1); continue; }
     pCtx.beginPath();
     pCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-    pCtx.strokeStyle = 'rgba(255,255,255,' + (s.life * 0.4) + ')';
+    pCtx.strokeStyle = 'rgba(255,255,255,' + (s.life * 0.5) + ')';
     pCtx.lineWidth = 3 * s.life;
+    pCtx.shadowColor = '#fff';
+    pCtx.shadowBlur = 10 * s.life;
     pCtx.stroke();
+    pCtx.shadowBlur = 0;
   }
+
+  // Supernova rings
+  for (let i = supernovaRings.length - 1; i >= 0; i--) {
+    const r = supernovaRings[i];
+    r.r += 3;
+    r.life -= r.decay;
+    if (r.life <= 0) { supernovaRings.splice(i, 1); continue; }
+    pCtx.beginPath();
+    pCtx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+    pCtx.strokeStyle = r.color;
+    pCtx.globalAlpha = r.life * 0.6;
+    pCtx.lineWidth = r.width * r.life;
+    pCtx.shadowColor = r.color;
+    pCtx.shadowBlur = 15 * r.life;
+    pCtx.stroke();
+    pCtx.shadowBlur = 0;
+  }
+  pCtx.globalAlpha = 1;
 
   // Floating scores
   for (let i = floatingScores.length - 1; i >= 0; i--) {
@@ -217,9 +335,12 @@ function animateParticleLayer(now) {
     if (f.life <= 0) { floatingScores.splice(i, 1); continue; }
     pCtx.font = 'bold 18px sans-serif';
     pCtx.textAlign = 'center';
-    pCtx.fillStyle = '#ffd200';
+    pCtx.fillStyle = '#c4b5fd';
     pCtx.globalAlpha = f.life;
+    pCtx.shadowColor = '#a78bfa';
+    pCtx.shadowBlur = 8;
     pCtx.fillText(f.value, f.x, f.y);
+    pCtx.shadowBlur = 0;
   }
   pCtx.globalAlpha = 1;
 
@@ -228,12 +349,9 @@ function animateParticleLayer(now) {
     const elapsed = now - gameOverAnim.start;
     const totalDuration = gameOverAnim.duration;
     if (elapsed < totalDuration + 500) {
-      // Gray overlay fading in
       const overlayAlpha = Math.min(0.7, elapsed / 1000);
-      pCtx.fillStyle = 'rgba(30,30,50,' + overlayAlpha + ')';
+      pCtx.fillStyle = 'rgba(5,5,20,' + overlayAlpha + ')';
       pCtx.fillRect(0, 0, w, w);
-      
-      // Shatter tiles from bottom-right to top-left
       for (let r = SIZE - 1; r >= 0; r--) {
         for (let c = SIZE - 1; c >= 0; c--) {
           const idx = (SIZE - 1 - r) * SIZE + (SIZE - 1 - c);
@@ -241,17 +359,15 @@ function animateParticleLayer(now) {
           const t = Math.max(0, elapsed - delay) / 400;
           if (t > 0 && t < 1) {
             const pos = cellPos(r, c);
-            // Shatter: scale down + rotate + fade
             pCtx.save();
             pCtx.translate(pos.x, pos.y);
             pCtx.rotate(t * 0.5);
             pCtx.scale(1 - t, 1 - t);
             pCtx.globalAlpha = 1 - t;
-            pCtx.fillStyle = 'rgba(255,255,255,0.15)';
+            pCtx.fillStyle = 'rgba(167,139,250,0.15)';
             const s = tileSize / 2;
             pCtx.fillRect(-s, -s, tileSize, tileSize);
             pCtx.restore();
-            // Spawn a few particles
             if (t > 0.1 && t < 0.15) {
               for (let p = 0; p < 3; p++) {
                 particles.push({
@@ -261,7 +377,7 @@ function animateParticleLayer(now) {
                   vy: (Math.random()-0.5)*3 - 1,
                   r: 2 + Math.random()*2,
                   life: 1, decay: 0.03,
-                  color: '#aaa', gravity: 0.08
+                  color: '#a78bfa', gravity: 0.08
                 });
               }
             }
@@ -270,6 +386,9 @@ function animateParticleLayer(now) {
       }
     }
   }
+
+  // Update breathe phase
+  breathePhase = (now % 3000) / 3000;
 
   requestAnimationFrame(animateParticleLayer);
 }
@@ -287,7 +406,7 @@ function resize() {
   cellSize = (w - padding * 5) / 4;
   tileSize = cellSize - padding * 0.4;
   gridX = 0; gridY = 0;
-  cornerR = cellSize * 0.08;
+  cornerR = 16; // Larger corner radius for planets
   resizeParticleCanvas();
 }
 
@@ -306,6 +425,8 @@ function init() {
   shockwaves = [];
   floatingScores = [];
   fireworks = [];
+  supernovaRings = [];
+  cometTrails = [];
   gameOverEl.style.display = 'none';
   bestScore = parseInt(localStorage.getItem('best2048') || '0');
   spawnTile(); spawnTile();
@@ -392,17 +513,31 @@ function move(dir) {
   playSwipeSound();
   if(mergeAnims.length>0) setTimeout(playMergeSound, ANIM_DURATION);
 
+  // Spawn comet trails for moving tiles
+  setTimeout(() => {
+    for (const ma of moveAnims) {
+      const from = cellPos(ma.fromR, ma.fromC);
+      const to = cellPos(ma.toR, ma.toC);
+      const col = getTileColor(ma.val);
+      spawnCometTrail(from.x, from.y, to.x, to.y, col.glow);
+    }
+  }, 20);
+
   // Spawn merge particles and effects after merge animation starts
   setTimeout(() => {
     for (const ma of mergeAnims) {
       const pos = cellPos(ma.r, ma.c);
       const col = getTileColor(ma.val);
-      spawnMergeParticles(pos.x, pos.y, col.bg, 15);
+      spawnMergeParticles(pos.x, pos.y, col.glow, 25);
+      spawnShockwave(pos.x, pos.y);
       spawnFloatingScore(pos.x, pos.y - tileSize/2, ma.val);
       
-      // Shockwave for 256+
+      // Supernova for 256+
       if (ma.val >= 256) {
-        spawnShockwave(pos.x, pos.y);
+        spawnSupernovaRings(pos.x, pos.y, ma.val);
+        // Full-screen white flash 0.3s
+        const flash = document.getElementById('supernova-flash');
+        if (flash) { flash.style.opacity = '0.7'; setTimeout(() => { flash.style.opacity = '0'; }, 300); }
       }
       
       // 2048 celebration
@@ -414,10 +549,8 @@ function move(dir) {
     }
   }, ANIM_DURATION);
 
-  // Score bounce
   scoreAnimTime = now;
 
-  // Check for new max tile
   let currentMax=0;
   for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(newGrid[r][c]>currentMax) currentMax=newGrid[r][c];
   if(currentMax>maxTileReached){maxTileReached=currentMax; if(currentMax>=128 && currentMax !== 2048) setTimeout(playCheerSound, ANIM_DURATION+50);}
@@ -451,8 +584,6 @@ function updateUI() {
   scoreEl.textContent = score;
   bestEl.textContent = bestScore;
   undoCountEl.textContent = '(' + undoLeft + ')';
-  
-  // Score bounce animation via CSS
   scoreEl.style.transform = 'scale(1.3)';
   scoreEl.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
   setTimeout(() => { scoreEl.style.transform = 'scale(1)'; }, 100);
@@ -475,7 +606,7 @@ function drawRoundRect(x,y,w,h,r) {
 }
 
 function getTileColor(val) {
-  return TILE_COLORS[val] || {bg:'#3c3a32',fg:'#f9f6f2',glow:'#ff6b6b'};
+  return TILE_COLORS[val] || {bg:'#3c3a52',fg:'#f9f6f2',glow:'#a78bfa'};
 }
 
 function drawTile(cx, cy, val, scale=1, alpha=1, motionBlur=null) {
@@ -487,28 +618,52 @@ function drawTile(cx, cy, val, scale=1, alpha=1, motionBlur=null) {
   ctx.save();
   ctx.globalAlpha = alpha;
 
-  // Motion blur effect
+  // Breathing glow effect
+  const breathe = Math.sin(breathePhase * Math.PI * 2) * 0.3 + 0.7;
+  const glowIntensity = val >= 256 ? 20 : val >= 64 ? 14 : 10;
+
+  // Motion blur / comet tail
   if (motionBlur) {
     ctx.shadowColor = col.glow;
-    ctx.shadowBlur = 2;
-    ctx.shadowOffsetX = motionBlur.dx * 8;
-    ctx.shadowOffsetY = motionBlur.dy * 8;
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetX = motionBlur.dx * 10;
+    ctx.shadowOffsetY = motionBlur.dy * 10;
   } else {
     ctx.shadowColor = col.glow;
-    ctx.shadowBlur = 8 * scale;
+    ctx.shadowBlur = glowIntensity * breathe * scale;
   }
 
-  // Gradient bg
-  const grad = ctx.createLinearGradient(x, y, x+s, y+s);
-  grad.addColorStop(0, col.bg);
-  grad.addColorStop(1, shadeColor(col.bg, -15));
+  // Planet-style gradient
+  const grad = ctx.createRadialGradient(cx - s*0.2, cy - s*0.2, s*0.1, cx, cy, s*0.6);
+  grad.addColorStop(0, lightenColor(col.bg, 30));
+  grad.addColorStop(0.7, col.bg);
+  grad.addColorStop(1, shadeColor(col.bg, -25));
   ctx.fillStyle = grad;
   drawRoundRect(x, y, s, s, cornerR * scale);
   ctx.fill();
 
+  // Inner glow highlight
   ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 0;
+  const innerGrad = ctx.createRadialGradient(cx - s*0.15, cy - s*0.15, 0, cx, cy, s*0.5);
+  innerGrad.addColorStop(0, 'rgba(255,255,255,0.15)');
+  innerGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = innerGrad;
+  drawRoundRect(x, y, s, s, cornerR * scale);
+  ctx.fill();
+
+  // Special: 2048 supernova rainbow border
+  if (val === 2048) {
+    const hue = (performance.now() / 20) % 360;
+    ctx.strokeStyle = `hsl(${hue},100%,70%)`;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = `hsl(${hue},100%,60%)`;
+    ctx.shadowBlur = 15;
+    drawRoundRect(x, y, s, s, cornerR * scale);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
 
   // Text
   ctx.fillStyle = col.fg;
@@ -516,9 +671,24 @@ function drawTile(cx, cy, val, scale=1, alpha=1, motionBlur=null) {
   ctx.font = `bold ${fontSize}px 'PingFang SC','Microsoft YaHei',sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  // Text glow for high values
+  if (val >= 128) {
+    ctx.shadowColor = col.glow;
+    ctx.shadowBlur = 8;
+  }
   ctx.fillText(val, cx, cy + 1);
+  ctx.shadowBlur = 0;
 
   ctx.restore();
+}
+
+function lightenColor(color, percent) {
+  const num = parseInt(color.replace('#',''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.min(255, (num >> 16) + amt);
+  const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+  const B = Math.min(255, (num & 0x0000FF) + amt);
+  return '#' + (0x1000000 + R*0x10000 + G*0x100 + B).toString(16).slice(1);
 }
 
 function shadeColor(color, percent) {
@@ -534,17 +704,31 @@ function draw(now) {
   const w = canvas.width / (window.devicePixelRatio||1);
   ctx.clearRect(0,0,w,w);
 
-  // Background
-  ctx.fillStyle = '#16213e';
+  // Deep space background
+  const bgGrad = ctx.createRadialGradient(w*0.3, w*0.3, 0, w*0.5, w*0.5, w*0.8);
+  bgGrad.addColorStop(0, '#0a1628');
+  bgGrad.addColorStop(0.5, '#060e1f');
+  bgGrad.addColorStop(1, '#020618');
+  ctx.fillStyle = bgGrad;
   drawRoundRect(0,0,w,w,12);
   ctx.fill();
 
-  // Grid cells
+  // Metal space station border
+  ctx.strokeStyle = 'rgba(167,139,250,0.15)';
+  ctx.lineWidth = 2;
+  drawRoundRect(0,0,w,w,12);
+  ctx.stroke();
+
+  // Grid cells - space station style
   for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
     const pos = cellPos(r,c);
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fillStyle = 'rgba(167,139,250,0.04)';
     drawRoundRect(pos.x-tileSize/2, pos.y-tileSize/2, tileSize, tileSize, cornerR);
     ctx.fill();
+    ctx.strokeStyle = 'rgba(167,139,250,0.08)';
+    ctx.lineWidth = 1;
+    drawRoundRect(pos.x-tileSize/2, pos.y-tileSize/2, tileSize, tileSize, cornerR);
+    ctx.stroke();
   }
 
   // Collect animated positions
@@ -562,7 +746,6 @@ function draw(now) {
       const to = cellPos(a.toR, a.toC);
       const cx = from.x + (to.x - from.x) * et;
       const cy = from.y + (to.y - from.y) * et;
-      // Motion blur direction
       let motionBlur = null;
       if (t < 0.8) {
         const dirMap = {left:{dx:-1,dy:0},right:{dx:1,dy:0},up:{dx:0,dy:-1},down:{dx:0,dy:1}};
@@ -573,14 +756,14 @@ function draw(now) {
       if (t > 0) {
         animatedCells.add(a.r + ',' + a.c);
         const pos = cellPos(a.r, a.c);
-        // Exaggerated bounce: scale 0 → 1.5 → 1 with overshoot
+        // Exaggerated cosmic bounce: 0 → 1.6 → 1
         let scale;
-        if (t < 0.3) {
-          scale = (t / 0.3) * 1.5; // 0 → 1.5
-        } else if (t < 0.6) {
-          scale = 1.5 - 0.5 * ((t - 0.3) / 0.3); // 1.5 → 1.0
-        } else if (t < 0.8) {
-          scale = 1.0 + 0.12 * Math.sin(((t - 0.6) / 0.2) * Math.PI); // small bounce
+        if (t < 0.25) {
+          scale = (t / 0.25) * 1.6;
+        } else if (t < 0.5) {
+          scale = 1.6 - 0.6 * ((t - 0.25) / 0.25);
+        } else if (t < 0.75) {
+          scale = 1.0 + 0.15 * Math.sin(((t - 0.5) / 0.25) * Math.PI);
         } else {
           scale = 1.0;
         }
@@ -589,16 +772,26 @@ function draw(now) {
     } else if (a.type === 'spawn') {
       animatedCells.add(a.r + ',' + a.c);
       const pos = cellPos(a.r, a.c);
-      // Pop: scale 0 → 1.15 → 1, alpha 0 → 1
+      // Star birth: light point → expand → settle
       let scale, alpha;
-      if (t < 0.6) {
-        scale = (t / 0.6) * 1.15;
-        alpha = t / 0.6;
+      if (t < 0.5) {
+        scale = (t / 0.5) * 1.3;
+        alpha = t / 0.5;
       } else {
-        scale = 1.15 - 0.15 * ((t - 0.6) / 0.4);
+        scale = 1.3 - 0.3 * ((t - 0.5) / 0.5);
         alpha = 1;
       }
       movingTiles.push({cx:pos.x, cy:pos.y, val:a.val, scale, alpha});
+      // Flash effect at spawn
+      if (t < 0.2) {
+        ctx.save();
+        ctx.globalAlpha = (1 - t / 0.2) * 0.4;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, tileSize * 0.8 * (t / 0.2), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
     }
   }
 

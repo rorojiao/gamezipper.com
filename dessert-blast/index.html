@@ -6,29 +6,29 @@
   <title>Dessert Blast 🧁</title>
   <style>
     *{margin:0;padding:0}
-    html,body{width:100%;height:100%;overflow:hidden;background:#fce4ec}
-    canvas{display:block;width:100%;height:100%;touch-action:none}
-    /* Candy Factory Background */
-    body::before{
-      content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
-      background:
-        repeating-linear-gradient(45deg,
-          rgba(255,182,193,0.15) 0px, rgba(255,182,193,0.15) 20px,
-          transparent 20px, transparent 40px,
-          rgba(255,228,225,0.12) 40px, rgba(255,228,225,0.12) 60px,
-          transparent 60px, transparent 80px
-        ),
-        linear-gradient(135deg, #fff0f5 0%, #fce4ec 30%, #f8bbd0 60%, #f48fb1 100%);
-    }
-    /* Sprinkle particles */
-    .sprinkle{position:fixed;pointer-events:none;z-index:10001;border-radius:50%;opacity:0.7}
-    /* Lollipop decorations */
-    .lollipop{position:fixed;pointer-events:none;z-index:10001;font-size:40px;animation:lolliSpin 4s linear infinite}
+    html,body{width:100%;height:100%;overflow:hidden;background:#fff0f5}
+    canvas{display:block;width:100%;height:100%;touch-action:none;position:relative;z-index:1}
+    /* Sweet bakery background layer */
+    #bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none;
+      background:linear-gradient(160deg,#fff5f8 0%,#ffe0ec 30%,#ffc0d8 60%,#ffb0cc 100%)}
+    /* Sugar powder particles */
+    .sugar-particle{position:fixed;pointer-events:none;z-index:0;border-radius:50%;background:#fff;opacity:.6}
+    /* Cream corner decorations */
+    .cream-corner{position:fixed;pointer-events:none;z-index:2;width:80px;height:80px}
+    .cream-corner.tl{top:22px;left:0;background:radial-gradient(ellipse at 0% 0%,rgba(255,255,255,.7) 0%,transparent 70%);border-radius:0 0 80px 0}
+    .cream-corner.tr{top:22px;right:0;background:radial-gradient(ellipse at 100% 0%,rgba(255,255,255,.7) 0%,transparent 70%);border-radius:0 0 0 80px}
+    .cream-corner.bl{bottom:0;left:0;background:radial-gradient(ellipse at 0% 100%,rgba(255,255,255,.7) 0%,transparent 70%);border-radius:0 80px 0 0}
+    .cream-corner.br{bottom:0;right:0;background:radial-gradient(ellipse at 100% 100%,rgba(255,255,255,.7) 0%,transparent 70%);border-radius:80px 0 0 0}
+    /* Candy Factory decorations */
+    .lollipop{position:fixed;pointer-events:none;z-index:2;font-size:40px;animation:lolliSpin 4s linear infinite}
     .lollipop.tl{top:30px;left:10px;animation-delay:0s}
     .lollipop.tr{top:30px;right:10px;animation-delay:1s}
     .lollipop.bl{bottom:10px;left:10px;animation-delay:2s}
     .lollipop.br{bottom:10px;right:10px;animation-delay:3s}
     @keyframes lolliSpin{0%{transform:rotate(0deg) scale(1)}50%{transform:rotate(180deg) scale(1.1)}100%{transform:rotate(360deg) scale(1)}}
+    /* Dessert emoji burst */
+    .dessert-emoji{position:fixed;pointer-events:none;z-index:10000;font-size:28px;animation:emojiFloat 1.5s ease-out forwards}
+    @keyframes emojiFloat{0%{opacity:1;transform:translate(0,0) scale(1) rotate(0deg)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.5) rotate(var(--rot))}}
     /* Shockwave */
     .candy-shockwave{position:fixed;pointer-events:none;z-index:10000;border-radius:50%;border:3px solid rgba(255,105,180,0.6);animation:candyShock 0.5s ease-out forwards}
     @keyframes candyShock{0%{width:0;height:0;opacity:1;transform:translate(-50%,-50%)}100%{width:400px;height:400px;opacity:0;transform:translate(-50%,-50%)}}
@@ -40,8 +40,17 @@
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
 </head>
 <body>
-<a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none">⬅ More Games at GameZipper.com</a>
+<!-- Background layer behind canvas -->
+<div id="bg-layer"></div>
+
+<a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(255,182,193,0.9);color:#c71585;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;border-bottom:1px solid rgba(255,105,180,.3)">⬅ More Games at GameZipper.com</a>
   <canvas id="gameCanvas"></canvas>
+
+  <!-- Cream corner decorations -->
+  <div class="cream-corner tl"></div>
+  <div class="cream-corner tr"></div>
+  <div class="cream-corner bl"></div>
+  <div class="cream-corner br"></div>
 
   <!-- Decoration Layer -->
   <div class="lollipop tl">🍭</div>
@@ -53,56 +62,58 @@
   <div id="fx-overlay" style="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden"></div>
 
   <script>
-  // Candy Factory Theme FX
   (function(){
     const overlay=document.getElementById('fx-overlay');
     const canvas=document.getElementById('gameCanvas');
 
-    // === Sprinkle particles (continuous falling) ===
-    const sprinkles=[];
-    const SPRINKLE_COUNT=15;
-    const sprinkleColors=['#fff','#ffb6c1','#ff69b4','#ffd700','#87ceeb','#98fb98','#dda0dd'];
-
-    function createSprinkle(){
+    // === Sugar powder particles (falling behind canvas) ===
+    const sugarParts=[];
+    const SUGAR_COUNT=20;
+    for(let i=0;i<SUGAR_COUNT;i++){
       const el=document.createElement('div');
-      el.className='sprinkle';
-      const sz=3+Math.random()*5;
-      el.style.width=sz+'px';
-      el.style.height=sz*(Math.random()>0.5?1:2.5)+'px';
-      el.style.borderRadius=Math.random()>0.5?'50%':'2px';
-      el.style.background=sprinkleColors[Math.floor(Math.random()*sprinkleColors.length)];
+      el.className='sugar-particle';
+      const sz=2+Math.random()*4;
+      el.style.width=sz+'px';el.style.height=sz+'px';
       document.body.appendChild(el);
-      return{
-        el,x:Math.random()*window.innerWidth,y:-20-Math.random()*200,
-        speed:0.3+Math.random()*0.8,drift:Math.random()*0.5-0.25,
-        rot:Math.random()*360,rotSpeed:Math.random()*2-1
-      };
+      sugarParts.push({
+        el,x:Math.random()*window.innerWidth,y:-10-Math.random()*300,
+        speed:0.15+Math.random()*0.3,drift:Math.random()*0.3-0.15
+      });
     }
-    for(let i=0;i<SPRINKLE_COUNT;i++){
-      const s=createSprinkle();
-      s.y=Math.random()*window.innerHeight;
-      sprinkles.push(s);
-    }
-
-    function animSprinkles(){
+    function animSugar(){
       const h=window.innerHeight,w=window.innerWidth;
-      for(const s of sprinkles){
-        s.y+=s.speed;s.x+=s.drift;s.rot+=s.rotSpeed;
-        if(s.y>h+20){s.y=-20;s.x=Math.random()*w;}
-        if(s.x<-20)s.x=w+10;if(s.x>w+20)s.x=-10;
-        s.el.style.transform=`translate(${s.x}px,${s.y}px) rotate(${s.rot}deg)`;
+      for(const s of sugarParts){
+        s.y+=s.speed;s.x+=s.drift;
+        if(s.y>h+10){s.y=-10;s.x=Math.random()*w;}
+        s.el.style.transform=`translate(${s.x}px,${s.y}px)`;
       }
-      requestAnimationFrame(animSprinkles);
+      requestAnimationFrame(animSugar);
     }
-    animSprinkles();
+    animSugar();
 
-    // === Click/Touch Effects ===
+    // === Click/Touch Effects - Dessert emoji burst ===
+    const dessertEmojis=['🍰','🍩','🧁','🍬','🍫'];
     const shapes=['●','■','★','♦','▲','♥'];
     const candyColors=['#ff1493','#ff6347','#ffd700','#00ff7f','#1e90ff','#ff69b4','#ffa500','#9370db'];
 
-    function spawnCandyBurst(x,y){
-      // 20 candy debris particles
-      for(let i=0;i<20;i++){
+    function spawnDessertBurst(x,y){
+      // 5 dessert emojis floating up
+      for(let i=0;i<5;i++){
+        const em=document.createElement('div');
+        em.className='dessert-emoji';
+        em.textContent=dessertEmojis[Math.floor(Math.random()*dessertEmojis.length)];
+        em.style.left=x+'px';em.style.top=y+'px';
+        const angle=-Math.PI/2+Math.random()*Math.PI-Math.PI/2;
+        const dist=60+Math.random()*80;
+        em.style.setProperty('--dx',(Math.cos(angle)*dist)+'px');
+        em.style.setProperty('--dy',(Math.sin(angle)*dist-40)+'px');
+        em.style.setProperty('--rot',(Math.random()*360-180)+'deg');
+        overlay.appendChild(em);
+        setTimeout(()=>em.remove(),1500);
+      }
+
+      // Candy debris
+      for(let i=0;i<15;i++){
         const p=document.createElement('div');
         p.className='candy-particle';
         p.textContent=shapes[Math.floor(Math.random()*shapes.length)];
@@ -111,9 +122,8 @@
         p.style.left=x+'px';p.style.top=y+'px';
         const angle=Math.random()*Math.PI*2;
         const dist=60+Math.random()*120;
-        const dy=Math.sin(angle)*dist+40; // gravity bias
         p.style.setProperty('--dx',Math.cos(angle)*dist+'px');
-        p.style.setProperty('--dy',dy+'px');
+        p.style.setProperty('--dy',(Math.sin(angle)*dist+40)+'px');
         p.style.setProperty('--rot',(Math.random()*720-360)+'deg');
         overlay.appendChild(p);
         setTimeout(()=>p.remove(),900);
@@ -126,7 +136,7 @@
       overlay.appendChild(sw);
       setTimeout(()=>sw.remove(),500);
 
-      // +Score float text
+      // Score float text
       const scores=['+100','+200','+50','Sweet!','Yummy!','🍰'];
       const sc=document.createElement('div');
       sc.className='score-pop';
@@ -136,27 +146,23 @@
       setTimeout(()=>sc.remove(),1200);
     }
 
-    let clickCount=0;
     canvas.addEventListener('pointerup',function(e){
-      clickCount++;
-      setTimeout(()=>{
-        spawnCandyBurst(e.clientX,e.clientY);
-      },200);
+      setTimeout(()=>spawnDessertBurst(e.clientX,e.clientY),200);
     });
   })();
   </script>
   <script src="bundle-1771356588.js"></script>
 <div id="tutorial-overlay" style="position:fixed;inset:0;pointer-events:auto;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;z-index:999999">
-<div style="background:rgba(30,30,50,0.95);border-radius:20px;padding:36px 28px;max-width:340px;text-align:center;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
+<div style="background:linear-gradient(135deg,#fff0f5,#ffe0ec);border-radius:20px;padding:36px 28px;max-width:340px;text-align:center;color:#8b0040;box-shadow:0 8px 32px rgba(255,105,180,0.3),0 0 20px rgba(255,182,193,.4)">
 <div style="font-size:56px;margin-bottom:12px">🍰</div>
-<h2 style="font-size:24px;color:#ffd700;margin-bottom:16px">How to Play</h2>
-<p style="font-size:16px;line-height:1.9;text-align:left;color:#eee">
+<h2 style="font-size:24px;color:#c71585;margin-bottom:16px">How to Play</h2>
+<p style="font-size:16px;line-height:1.9;text-align:left;color:#8b3060">
 🔄 Swap adjacent desserts to match <b>3+</b> in a row<br>
 ⚡ Match more for special <b>power-ups!</b><br>
 🎯 Clear the target desserts to win each level
 </p>
-<p style="font-size:14px;color:#aaa;margin-top:12px">💡 Tip: Look for L-shapes and T-shapes for bombs! 💥</p>
-<button onclick="document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_dessert','1')" ontouchstart="event.stopPropagation();document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_dessert','1')" style="margin-top:20px;padding:14px 36px;font-size:18px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff6b6b,#ffa500);color:#fff;cursor:pointer;font-weight:bold">Got it! 🎮</button>
+<p style="font-size:14px;color:#b06080;margin-top:12px">💡 Tip: Look for L-shapes and T-shapes for bombs! 💥</p>
+<button onclick="(function(){var cvs=document.querySelector('canvas');if(cvs)cvs.style.pointerEvents='auto';document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_dessert','1');})()" ontouchend="event.preventDefault();event.stopPropagation();(function(){var cvs=document.querySelector('canvas');if(cvs)cvs.style.pointerEvents='auto';document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_dessert','1');})()" style="touch-action:manipulation" style="margin-top:20px;padding:14px 36px;font-size:18px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff69b4,#ff1493);color:#fff;cursor:pointer;font-weight:bold;box-shadow:0 4px 15px rgba(255,20,147,.4)">Got it! 🎮</button>
 </div></div>
 <script>if(localStorage.getItem('tutorial_dessert'))document.getElementById('tutorial-overlay').remove();</script>
   </body>
