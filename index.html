@@ -32,20 +32,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .cat-btn{padding:8px 20px;border-radius:25px;border:2px solid #333;background:transparent;color:#fff;cursor:pointer;font-size:0.9em;transition:all 0.3s}
 .cat-btn:hover,.cat-btn.active{background:#4ecdc4;border-color:#4ecdc4;color:#000}
 .games{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;padding:20px;max-width:1200px;margin:0 auto}
-.game-card{background:#1a1a2e;border-radius:16px;overflow:hidden;transition:transform 0.3s,box-shadow 0.3s;cursor:pointer;text-decoration:none;color:#fff}
+.game-card{background:#1a1a2e;border-radius:16px;overflow:hidden;transition:transform 0.3s,box-shadow 0.3s,opacity 0.6s;cursor:pointer;text-decoration:none;color:#fff;opacity:0;transform:translateY(20px);position:relative}
+.game-card.visible{opacity:1;transform:translateY(0)}
 .game-card:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(78,205,196,0.3)}
-.game-thumb{width:100%;aspect-ratio:4/3;background:#2a2a4a;display:flex;align-items:center;justify-content:center;font-size:3em;position:relative;overflow:hidden}
+.game-thumb{width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:5em;position:relative;overflow:hidden}
 .game-thumb .overlay{position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.3s}
 .game-card:hover .overlay{opacity:1}
 .play-btn{background:#4ecdc4;color:#000;padding:12px 30px;border-radius:25px;font-weight:700;font-size:1em}
 .game-info{padding:15px}
 .game-info h3{font-size:1em;margin-bottom:5px}
+.game-info .desc{font-size:.75em;color:#999;margin-bottom:6px}
 .game-info .tags{display:flex;gap:5px;flex-wrap:wrap}
 .game-info .tag{font-size:0.7em;padding:3px 8px;background:#2a2a4a;border-radius:10px;color:#4ecdc4}
+.new-badge{position:absolute;top:10px;right:10px;background:#ff6b6b;color:#fff;padding:3px 10px;border-radius:10px;font-size:.7em;font-weight:bold;z-index:2;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
 .footer{text-align:center;padding:40px 20px;color:#555;border-top:1px solid #1a1a2e;margin-top:40px}
 .footer a{color:#4ecdc4;text-decoration:none}
 .stats{display:flex;gap:30px;justify-content:center;padding:10px;color:#888;font-size:0.9em}
-@media(max-width:600px){.header h1{font-size:1.8em}.games{grid-template-columns:repeat(2,1fr);gap:12px;padding:12px}.game-info h3{font-size:0.85em}}
+@media(max-width:600px){.header h1{font-size:1.8em}.games{grid-template-columns:repeat(2,1fr);gap:12px;padding:12px}.game-info h3{font-size:0.85em}.game-thumb{font-size:3.5em}}
 </style>
 </head>
 <body>
@@ -75,30 +79,51 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <script>
+const gradients=[
+  'linear-gradient(135deg,#667eea,#764ba2)',
+  'linear-gradient(135deg,#f093fb,#f5576c)',
+  'linear-gradient(135deg,#4facfe,#00f2fe)',
+  'linear-gradient(135deg,#43e97b,#38f9d7)',
+  'linear-gradient(135deg,#fa709a,#fee140)',
+  'linear-gradient(135deg,#a18cd1,#fbc2eb)',
+  'linear-gradient(135deg,#fccb90,#d57eeb)',
+  'linear-gradient(135deg,#ff9a9e,#fecfef)',
+  'linear-gradient(135deg,#ffecd2,#fcb69f)',
+  'linear-gradient(135deg,#a1c4fd,#c2e9fb)'
+];
+
 const games = [
   {name:"2048 Merge Master",emoji:"🔢",cat:"puzzle",tags:["Puzzle","Number"],url:"/2048/",desc:"Merge tiles to reach 2048! Classic number puzzle game."},
   {name:"Block Puzzle Mania",emoji:"🧩",cat:"puzzle",tags:["Puzzle","Block"],url:"/block-puzzle/",desc:"Drag & drop blocks to fill rows and columns!"},
   {name:"Color Sort Master",emoji:"🎨",cat:"puzzle",tags:["Puzzle","Sort"],url:"/color-sort/",desc:"Sort colored balls into tubes. 25 challenging levels!"},
   {name:"Daily Word Puzzle",emoji:"📝",cat:"puzzle",tags:["Word","Daily"],url:"/word-puzzle/",desc:"Guess the hidden word in 6 tries. New puzzle daily!"},
-  {name:"Dessert Blast",emoji:"🍰",cat:"puzzle",tags:["Match-3","Sweets"],url:"/dessert-blast/",desc:"Match and blast delicious desserts in this sweet puzzle!"},
-  {name:"Catch Turkey",emoji:"🦃",cat:"arcade",tags:["Arcade","Catch"],url:"/catch-turkey/",desc:"Catch the cheeky turkeys before they escape!"},
+  {name:"Dessert Blast",emoji:"🍰",cat:"puzzle",tags:["Match-3","Sweets"],url:"/dessert-blast/",desc:"Match and blast delicious desserts in this sweet puzzle!",isNew:true},
+  {name:"Catch Turkey",emoji:"🦃",cat:"arcade",tags:["Arcade","Catch"],url:"/catch-turkey/",desc:"Catch the cheeky turkeys before they escape!",isNew:true},
   {name:"Flappy Wings",emoji:"🐦",cat:"arcade",tags:["Arcade","Fly"],url:"/flappy-wings/",desc:"Flap through pipes! How far can you fly?"},
-  {name:"Crazy Whack a Mole",emoji:"🔨",cat:"arcade",tags:["Arcade","Whack"],url:"/whack-a-mole/",desc:"Whack moles for points, dodge bombs! 60 second challenge!"},
+  {name:"Crazy Whack a Mole",emoji:"🔨",cat:"arcade",tags:["Arcade","Whack"],url:"/whack-a-mole/",desc:"Whack moles for points, dodge bombs! 60 second challenge!",isNew:true},
   {name:"Card Memory Game",emoji:"🃏",cat:"card",tags:["Card","Memory"],url:"/memory-match/",desc:"Flip cards and find matching pairs. Train your memory!"},
-  {name:"Idle Cookie Clicker",emoji:"🍪",cat:"idle",tags:["Idle","Clicker"],url:"/idle-clicker/",desc:"Click cookies, buy upgrades, automate your cookie empire!"}
+  {name:"Idle Cookie Clicker",emoji:"🍪",cat:"idle",tags:["Idle","Clicker"],url:"/idle-clicker/",desc:"Click cookies, buy upgrades, automate your cookie empire!",isNew:true}
 ];
 
 function render(list){
-  document.getElementById('games').innerHTML = list.map(g => `
-    <a class="game-card" href="${g.url}" data-cat="${g.cat}">
-      <div class="game-thumb">${g.emoji}
+  document.getElementById('games').innerHTML = list.map((g,i) => `
+    <a class="game-card" href="${g.url}" data-cat="${g.cat}" style="transition-delay:${i*80}ms">
+      ${g.isNew?'<span class="new-badge">🔥 NEW</span>':''}
+      <div class="game-thumb" style="background:${gradients[games.indexOf(g)%gradients.length]}">${g.emoji}
         <div class="overlay"><span class="play-btn">▶ PLAY</span></div>
       </div>
       <div class="game-info">
         <h3>${g.name}</h3>
+        <div class="desc">${g.desc}</div>
         <div class="tags">${g.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
       </div>
     </a>`).join('');
+  // Animate cards in
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('.game-card').forEach((c,i)=>{
+      setTimeout(()=>c.classList.add('visible'),i*80);
+    });
+  });
 }
 
 function filter(cat){

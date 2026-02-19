@@ -1,6 +1,30 @@
 (() => {
 'use strict';
 
+// === Web Audio ===
+let audioCtx, maxTileReached=0;
+function getAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playSwipeSound(){
+  try{const ac=getAC();const o=ac.createOscillator();const g=ac.createGain();
+  o.connect(g);g.connect(ac.destination);o.type='sine';
+  o.frequency.setValueAtTime(200,ac.currentTime);o.frequency.linearRampToValueAtTime(150,ac.currentTime+0.06);
+  g.gain.setValueAtTime(0.08,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.06);
+  o.start(ac.currentTime);o.stop(ac.currentTime+0.06);}catch(e){}
+}
+function playMergeSound(){
+  try{const ac=getAC();const o=ac.createOscillator();const g=ac.createGain();
+  o.connect(g);g.connect(ac.destination);o.type='triangle';o.frequency.value=520;
+  g.gain.setValueAtTime(0.2,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.12);
+  o.start(ac.currentTime);o.stop(ac.currentTime+0.12);}catch(e){}
+}
+function playCheerSound(){
+  try{const ac=getAC();
+  [523,659,784,1047].forEach((f,i)=>{const o=ac.createOscillator();const g=ac.createGain();
+  o.connect(g);g.connect(ac.destination);o.type='triangle';o.frequency.value=f;
+  g.gain.setValueAtTime(0.2,ac.currentTime+i*0.1);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+i*0.1+0.3);
+  o.start(ac.currentTime+i*0.1);o.stop(ac.currentTime+i*0.1+0.3);});}catch(e){}
+}
+
 const TILE_COLORS = {
   2:    {bg:'#eee4da',fg:'#776e65',glow:'#eee4da'},
   4:    {bg:'#ede0c8',fg:'#776e65',glow:'#ede0c8'},
@@ -57,6 +81,7 @@ function init() {
   animations = [];
   isAnimating = false;
   gameOver = false;
+  maxTileReached = 0;
   gameOverEl.style.display = 'none';
   bestScore = parseInt(localStorage.getItem('best2048') || '0');
   spawnTile(); spawnTile();
@@ -142,6 +167,14 @@ function move(dir) {
   moveAnims.forEach(a => a.start = now);
   mergeAnims.forEach(a => a.start = now + ANIM_DURATION);
   animations = [...moveAnims, ...mergeAnims];
+
+  playSwipeSound();
+  if(mergeAnims.length>0) setTimeout(playMergeSound, ANIM_DURATION);
+  
+  // Check for new max tile
+  let currentMax=0;
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(newGrid[r][c]>currentMax) currentMax=newGrid[r][c];
+  if(currentMax>maxTileReached){maxTileReached=currentMax; if(currentMax>=128) setTimeout(playCheerSound, ANIM_DURATION+50);}
 
   setTimeout(() => {
     spawnTile();
@@ -272,7 +305,11 @@ function draw(now) {
       if (t > 0) {
         animatedCells.add(a.r + ',' + a.c);
         const pos = cellPos(a.r, a.c);
-        const scale = t < 0.5 ? 1 + 0.2 * (t/0.5) : 1.2 - 0.2 * ((t-0.5)/0.5);
+        // Enhanced bounce: grow big then bounce back
+        let scale;
+        if(t<0.3) scale=1+0.4*(t/0.3);
+        else if(t<0.6) scale=1.4-0.25*((t-0.3)/0.3);
+        else scale=1.15-0.15*((t-0.6)/0.4);
         movingTiles.push({cx:pos.x, cy:pos.y, val:a.val, scale, alpha:1});
       }
     } else if (a.type === 'spawn') {
