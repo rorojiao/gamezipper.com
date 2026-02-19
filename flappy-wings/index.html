@@ -6,7 +6,7 @@
 <title>Flappy Wings - Candy Dream</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#ffb6c1;display:flex;justify-content:center;align-items:center}
+html,body{width:100%;height:100%;overflow:hidden;background:#0b0033;display:flex;justify-content:center;align-items:center}
 canvas{display:block;max-width:100%;max-height:100%}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
@@ -52,6 +52,16 @@ function playCrashSound(){
   src.connect(g);g.connect(audioCtx.destination);src.start();
 }
 
+// Load sprite images
+const imgShip=new Image();imgShip.src='images/ship.png';
+const imgBgTile=new Image();imgBgTile.src='images/bg_space.png';
+const imgMeteor1=new Image();imgMeteor1.src='images/meteor1.png';
+const imgMeteor2=new Image();imgMeteor2.src='images/meteor2.png';
+const imgStar=new Image();imgStar.src='images/star_gold.png';
+const imgShield=new Image();imgShield.src='images/shield_gold.png';
+let bgPattern=null;
+imgBgTile.onload=function(){bgPattern=ctx.createPattern(imgBgTile,'repeat');};
+
 const CANDY_COLORS=['#ff69b4','#ff6b9d','#ff85c0','#ffb6c1','#dda0dd','#da70d6','#ba55d3'];
 const READY=0,PLAYING=1,GAMEOVER=2;
 let state=READY,score=0,bestScore=parseInt(localStorage.getItem('flappyWingsBest'))||0;
@@ -64,7 +74,7 @@ let deathSquash=1,deathFragments=[];
 
 // Rainbow trail
 let rainbowTrail=[];
-const RAINBOW=['#ff0000','#ff8800','#ffff00','#00cc00','#0066ff','#8800ff'];
+const RAINBOW=['#4466dd','#6688ff','#88aaff','#44ccff','#22ffcc','#88ff88'];
 
 // Candy drops on score
 let candyDrops=[];
@@ -276,92 +286,102 @@ function update(){
 }
 
 function drawBg(){
-  // Pink/purple gradient sky
-  const g=ctx.createLinearGradient(0,0,0,H-GROUND_H);
-  g.addColorStop(0,'#e8a0d0');g.addColorStop(0.3,'#f0b0d8');g.addColorStop(0.6,'#d8a0e0');g.addColorStop(1,'#c890d8');
-  ctx.fillStyle=g;ctx.fillRect(0,0,W,H-GROUND_H);
+  // Tiled space background
+  if(bgPattern){
+    ctx.fillStyle=bgPattern;
+    ctx.save();ctx.translate(0,0);ctx.fillRect(0,0,W,H-GROUND_H);ctx.restore();
+  }else{
+    const g=ctx.createLinearGradient(0,0,0,H-GROUND_H);
+    g.addColorStop(0,'#0b0033');g.addColorStop(0.5,'#1a0a4e');g.addColorStop(1,'#0d003a');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H-GROUND_H);
+  }
+  // Animated nebula overlay
+  ctx.globalAlpha=0.1;
+  const nebulaGrad=ctx.createRadialGradient(W*0.3+Math.sin(frameCount*0.005)*30,200,0,W*0.5,200,200);
+  nebulaGrad.addColorStop(0,'#6600cc');nebulaGrad.addColorStop(1,'transparent');
+  ctx.fillStyle=nebulaGrad;ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;
 
-  // Cotton candy clouds
+  // Cotton candy clouds as floating nebulae
   for(const c of clouds){
     ctx.save();
-    const col=c.pink?'rgba(255,182,193,':'rgba(255,255,255,';
     for(let j=0;j<5;j++){
       const ox=(j-2)*c.w*0.2;
       const oy=Math.sin(j*1.2)*c.h*0.2;
       const r=c.h*0.5+Math.sin(j*0.8)*5;
       ctx.beginPath();ctx.arc(c.x+ox,c.y+oy,r,0,Math.PI*2);
-      ctx.fillStyle=col+(0.6+j*0.05)+')';ctx.fill();
+      ctx.fillStyle=c.pink?'rgba(100,50,180,'+(0.15+j*0.02)+')':'rgba(50,50,150,'+(0.12+j*0.02)+')';ctx.fill();
     }
     ctx.restore();
   }
 }
 
 function drawGround(){
-  // Chocolate ground
+  // Asteroid field / metallic ground
   const g=ctx.createLinearGradient(0,H-GROUND_H,0,H);
-  g.addColorStop(0,'#8B4513');g.addColorStop(0.1,'#A0522D');g.addColorStop(0.5,'#6B3410');g.addColorStop(1,'#4a2008');
+  g.addColorStop(0,'#2a1a3a');g.addColorStop(0.1,'#3a2a4a');g.addColorStop(0.5,'#1a0a2a');g.addColorStop(1,'#0a0018');
   ctx.fillStyle=g;ctx.fillRect(0,H-GROUND_H,W,GROUND_H);
-  // Chocolate drip line
-  ctx.strokeStyle='#A0522D';ctx.lineWidth=3;
-  ctx.beginPath();ctx.moveTo(0,H-GROUND_H);
-  for(let x=0;x<W;x+=20){
-    ctx.quadraticCurveTo(x+10,H-GROUND_H+(Math.sin(x*0.1+frameCount*0.02)*5)+5,x+20,H-GROUND_H);
-  }
-  ctx.stroke();
-  // Dark stripes
-  ctx.strokeStyle='rgba(60,20,0,0.2)';ctx.lineWidth=2;
-  for(let x=groundX;x<W;x+=30){
-    ctx.beginPath();ctx.moveTo(x,H-GROUND_H+10);ctx.lineTo(x+15,H);ctx.stroke();
+  // Glowing edge line
+  ctx.strokeStyle='rgba(100,50,200,0.6)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(0,H-GROUND_H);ctx.lineTo(W,H-GROUND_H);ctx.stroke();
+  // Meteor texture tiles
+  if(imgMeteor1.complete){
+    ctx.globalAlpha=0.15;
+    for(let x=groundX;x<W;x+=50){
+      ctx.drawImage(imgMeteor1,x,H-GROUND_H+10,40,40);
+    }
+    ctx.globalAlpha=1;
   }
 }
 
 function drawLollipopPipe(x,gapY,gap,pipeId,stripeOffset,pipeColor){
   const flash=pipeFlashMap[pipeId]||0;
   
-  // Draw red-white spiral stripes
-  function drawStripedPipe(px,py,pw,ph){
+  // Space pillar style with meteor texture
+  function drawSpacePillar(px,py,pw,ph){
     ctx.save();
     ctx.beginPath();ctx.rect(px,py,pw,ph);ctx.clip();
-    // Base color
-    ctx.fillStyle='#fff';ctx.fillRect(px,py,pw,ph);
-    // Spiral stripes
-    const stripeW=15;
-    ctx.fillStyle=pipeColor||'#ff69b4';
-    for(let sy=py-pw+stripeOffset;sy<py+ph+pw;sy+=stripeW*2){
-      ctx.beginPath();
-      ctx.moveTo(px,sy);ctx.lineTo(px+pw,sy-pw);
-      ctx.lineTo(px+pw,sy-pw+stripeW);ctx.lineTo(px,sy+stripeW);
-      ctx.fill();
+    // Base metallic gradient
+    const g=ctx.createLinearGradient(px,0,px+pw,0);
+    g.addColorStop(0,'#1a0a3a');g.addColorStop(0.3,'#3a2a5a');g.addColorStop(0.5,'#4a3a6a');g.addColorStop(0.7,'#3a2a5a');g.addColorStop(1,'#1a0a3a');
+    ctx.fillStyle=g;ctx.fillRect(px,py,pw,ph);
+    // Meteor texture overlay
+    if(imgMeteor2.complete){
+      ctx.globalAlpha=0.3;
+      for(let sy=py;sy<py+ph;sy+=84){
+        ctx.drawImage(imgMeteor2,px+5,sy,pw-10,60);
+      }
+      ctx.globalAlpha=1;
     }
-    // Edge highlights
-    ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillRect(px,py,pw*0.2,ph);
-    ctx.fillStyle='rgba(0,0,0,0.1)';ctx.fillRect(px+pw*0.8,py,pw*0.2,ph);
+    // Glow edges
+    ctx.fillStyle='rgba(100,50,200,0.3)';ctx.fillRect(px,py,3,ph);
+    ctx.fillStyle='rgba(100,50,200,0.15)';ctx.fillRect(px+pw-3,py,3,ph);
     ctx.restore();
   }
 
   // Top pipe
-  drawStripedPipe(x,0,PIPE_W,gapY);
+  drawSpacePillar(x,0,PIPE_W,gapY);
   // Bottom pipe
-  drawStripedPipe(x,gapY+gap,PIPE_W,H-GROUND_H-(gapY+gap));
+  drawSpacePillar(x,gapY+gap,PIPE_W,H-GROUND_H-(gapY+gap));
 
-  // Candy ball caps
+  // Energy orb caps
   const ballR=PIPE_W*0.55;
   [gapY, gapY+gap].forEach((cy,idx)=>{
     const grad=ctx.createRadialGradient(x+PIPE_W/2-5,cy-3,2,x+PIPE_W/2,cy,ballR);
-    grad.addColorStop(0,'#fff');grad.addColorStop(0.3,pipeColor||'#ff69b4');grad.addColorStop(1,'#cc3366');
+    grad.addColorStop(0,'#fff');grad.addColorStop(0.3,'#8866ff');grad.addColorStop(1,'#4400aa');
     ctx.beginPath();ctx.arc(x+PIPE_W/2,cy,ballR,0,Math.PI*2);
     ctx.fillStyle=grad;ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=2;ctx.stroke();
-    // Shine
-    ctx.beginPath();ctx.arc(x+PIPE_W/2-5,cy-5,ballR*0.3,0,Math.PI*2);
-    ctx.fillStyle='rgba(255,255,255,0.4)';ctx.fill();
+    ctx.strokeStyle='rgba(150,100,255,0.6)';ctx.lineWidth=2;ctx.stroke();
+    // Glow
+    ctx.shadowColor='#8866ff';ctx.shadowBlur=15;
+    ctx.beginPath();ctx.arc(x+PIPE_W/2,cy,ballR*0.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(150,100,255,0.2)';ctx.fill();
+    ctx.shadowBlur=0;
   });
 
-  // Rainbow flash
+  // Score flash
   if(flash>0){
     ctx.save();ctx.globalAlpha=flash*0.3;
-    const hue=(frameCount*10)%360;
-    ctx.fillStyle=`hsl(${hue},100%,70%)`;
+    ctx.fillStyle='rgba(150,100,255,0.5)';
     ctx.fillRect(x-5,0,PIPE_W+10,H);
     ctx.restore();
   }
@@ -375,47 +395,27 @@ function drawBird(){
 
   ctx.save();ctx.translate(x,drawY);ctx.rotate(rot);ctx.scale(sq,2-sq);
 
-  // Body - cute round candy bird
-  const grad=ctx.createRadialGradient(-3,-3,2,0,0,radius);
-  grad.addColorStop(0,'#ffb6c1');grad.addColorStop(0.6,'#ff69b4');grad.addColorStop(1,'#ff1493');
-  ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);
-  ctx.fillStyle=grad;ctx.fill();
-  ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
-
-  // Blush cheeks
-  ctx.fillStyle='rgba(255,100,100,0.5)';
-  ctx.beginPath();ctx.arc(-8,5,5,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(8,5,5,0,Math.PI*2);ctx.fill();
-
-  // Eyes - bigger and cuter
-  ctx.fillStyle='#fff';
-  ctx.beginPath();ctx.arc(-5,-4,6,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(5,-4,6,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#333';
-  ctx.beginPath();ctx.arc(-4,-4,3,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(6,-4,3,0,Math.PI*2);ctx.fill();
-  // Eye shine
-  ctx.fillStyle='#fff';
-  ctx.beginPath();ctx.arc(-3,-5,1.5,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(7,-5,1.5,0,Math.PI*2);ctx.fill();
-
-  // Beak
-  ctx.fillStyle='#ffa500';
-  ctx.beginPath();ctx.moveTo(12,-2);ctx.lineTo(18,0);ctx.lineTo(12,3);ctx.closePath();ctx.fill();
-
-  // Heart-tipped wing
-  const wa=bird.wingAngle*10;
-  ctx.save();ctx.translate(-10,-2);ctx.rotate(wa*Math.PI/180);
-  ctx.fillStyle='#ff1493';
-  ctx.beginPath();
-  // Heart shape
-  ctx.moveTo(0,-8);
-  ctx.bezierCurveTo(-5,-14,-14,-10,-14,-4);
-  ctx.bezierCurveTo(-14,2,-7,6,0,10);
-  ctx.bezierCurveTo(7,6,14,2,14,-4);
-  ctx.bezierCurveTo(14,-10,5,-14,0,-8);
-  ctx.fill();
-  ctx.restore();
+  if(imgShip.complete){
+    // Draw spaceship sprite
+    const sw=radius*2.8,sh=radius*2.1;
+    ctx.shadowColor='#6688ff';ctx.shadowBlur=12;
+    ctx.drawImage(imgShip,-sw/2,-sh/2,sw,sh);
+    ctx.shadowBlur=0;
+    // Engine glow
+    if(state===PLAYING&&vy<0){
+      ctx.globalAlpha=0.6;
+      const flameH=8+Math.random()*8;
+      const grd=ctx.createLinearGradient(0,sh/2,0,sh/2+flameH);
+      grd.addColorStop(0,'#66aaff');grd.addColorStop(1,'transparent');
+      ctx.fillStyle=grd;
+      ctx.fillRect(-6,sh/2-4,12,flameH);
+      ctx.globalAlpha=1;
+    }
+  }else{
+    // Fallback: draw a simple ship shape
+    ctx.fillStyle='#6688ff';
+    ctx.beginPath();ctx.moveTo(radius,0);ctx.lineTo(-radius,-radius*0.7);ctx.lineTo(-radius*0.5,0);ctx.lineTo(-radius,radius*0.7);ctx.closePath();ctx.fill();
+  }
 
   ctx.restore();
 }
@@ -435,13 +435,13 @@ function drawScore(){
   ctx.save();ctx.translate(W/2,50);ctx.scale(bounce,bounce);
 
   // Candy panel background
-  ctx.fillStyle='rgba(255,255,255,0.85)';
-  ctx.strokeStyle='#ff69b4';ctx.lineWidth=3;
+  ctx.fillStyle='rgba(10,0,40,0.85)';
+  ctx.strokeStyle='#6688ff';ctx.lineWidth=3;
   ctx.beginPath();ctx.roundRect(-50,-10,100,55,15);ctx.fill();ctx.stroke();
 
   ctx.font='bold 42px Arial';
-  ctx.fillStyle='#ff1493';
-  ctx.shadowColor='#ff69b4';ctx.shadowBlur=10;
+  ctx.fillStyle='#fff';
+  ctx.shadowColor='#6688ff';ctx.shadowBlur=10;
   ctx.fillText(score,0,0);
   ctx.shadowBlur=0;
   ctx.restore();
@@ -453,25 +453,33 @@ function getMedal(s){
 
 function drawReady(){
   ctx.textAlign='center';
-  // Candy title
+  // Space title
   ctx.font='bold 38px Arial';
-  ctx.fillStyle='#ff1493';ctx.shadowColor='#ff69b4';ctx.shadowBlur=20;
-  ctx.fillText('CANDY FLAPPY',W/2,H/4);
+  ctx.fillStyle='#6688ff';ctx.shadowColor='#4466dd';ctx.shadowBlur=20;
+  ctx.fillText('SPACE FLAPPY',W/2,H/4);
   ctx.shadowBlur=0;
-  ctx.fillStyle='#fff';ctx.font='bold 36px Arial';
-  ctx.fillText('CANDY FLAPPY',W/2,H/4);
+  ctx.fillStyle='#aaccff';ctx.font='bold 36px Arial';
+  ctx.fillText('SPACE FLAPPY',W/2,H/4);
 
-  ctx.font='20px Arial';ctx.fillStyle='#8a2060';
+  ctx.font='20px Arial';ctx.fillStyle='#8899cc';
   ctx.fillText('Tap or Space to Start',W/2,H/2+40);
 
-  // Bouncing candy emoji
-  const candyY=H/2-20+Math.sin(frameCount*0.08)*10;
-  ctx.font='40px Arial';ctx.fillText('🍬',W/2-60,candyY);ctx.fillText('🍭',W/2+60,candyY+5);
+  // Ship sprite bouncing
+  if(imgShip.complete){
+    const sy=H/2-20+Math.sin(frameCount*0.08)*10;
+    ctx.drawImage(imgShip,W/2-50,sy,99,75);
+  }
+  // Star decorations
+  if(imgStar.complete){
+    const starY=H/2-20+Math.sin(frameCount*0.08+1)*10;
+    ctx.drawImage(imgStar,W/2-90,starY,30,30);
+    ctx.drawImage(imgStar,W/2+60,starY+5,30,30);
+  }
 }
 
 function drawGameOver(){
   if(flashAlpha>0){
-    ctx.fillStyle='rgba(255,182,193,'+flashAlpha+')';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(100,50,200,'+flashAlpha+')';ctx.fillRect(0,0,W,H);
   }
 
   // Death fragments
@@ -490,36 +498,36 @@ function drawGameOver(){
   }
 
   if(deathPhase===0){
-    ctx.fillStyle='rgba(255,200,220,'+(0.1+slowMoTimer*0.015)+')';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(100,50,200,'+(0.1+slowMoTimer*0.015)+')';ctx.fillRect(0,0,W,H);
   }
   if(deathPhase<2)return;
 
-  ctx.fillStyle='rgba(255,220,230,0.7)';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(10,0,40,0.7)';ctx.fillRect(0,0,W,H);
   ctx.textAlign='center';
   const t=Math.min(1,(frameCount-deathTimer)/20);
   const spring=t<1?1+0.3*Math.sin(t*Math.PI*3)*Math.pow(1-t,2):1;
   const pw=280,ph=260,px=(W-pw)/2,py=H/2-150;
   ctx.save();ctx.translate(W/2,py+ph/2);ctx.scale(spring,spring);ctx.translate(-W/2,-(py+ph/2));
 
-  // Candy panel
-  ctx.fillStyle='rgba(255,255,255,0.95)';
-  ctx.strokeStyle='#ff69b4';ctx.lineWidth=4;
+  // Space panel
+  ctx.fillStyle='rgba(10,5,40,0.95)';
+  ctx.strokeStyle='#6688ff';ctx.lineWidth=4;
   ctx.beginPath();ctx.roundRect(px,py,pw,ph,20);ctx.fill();ctx.stroke();
 
-  ctx.fillStyle='#ff1493';ctx.font='bold 36px Arial';
+  ctx.fillStyle='#aaccff';ctx.font='bold 36px Arial';
   ctx.fillText('GAME OVER',W/2,py+45);
 
   const medal=getMedal(score);
   if(medal){ctx.font='48px Arial';ctx.fillText(medal,W/2,py+95);}
 
-  ctx.fillStyle='#ff69b4';ctx.font='26px Arial';
+  ctx.fillStyle='#6688ff';ctx.font='26px Arial';
   ctx.fillText('Score: '+score,W/2,py+135);
-  ctx.fillStyle='#da70d6';
+  ctx.fillStyle='#8899cc';
   ctx.fillText('Best: '+bestScore,W/2,py+170);
 
   // Play again button
-  ctx.fillStyle='#ff69b4';ctx.beginPath();ctx.roundRect(W/2-80,py+195,160,44,12);ctx.fill();
-  ctx.fillStyle='#fff';ctx.font='bold 22px Arial';ctx.fillText('Play Again 🍬',W/2,py+223);
+  ctx.fillStyle='#4466dd';ctx.beginPath();ctx.roundRect(W/2-80,py+195,160,44,12);ctx.fill();
+  ctx.fillStyle='#fff';ctx.font='bold 22px Arial';ctx.fillText('Play Again 🚀',W/2,py+223);
   ctx.restore();
 }
 
@@ -547,7 +555,7 @@ function draw(){
 
   // Screen flash
   if(screenFlashAlpha>0){
-    ctx.fillStyle='rgba(255,182,193,'+screenFlashAlpha+')';
+    ctx.fillStyle='rgba(100,50,200,'+screenFlashAlpha+')';
     ctx.fillRect(0,0,W,H);
   }
 

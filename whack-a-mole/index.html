@@ -16,6 +16,8 @@ body{
     repeating-linear-gradient(0deg,rgba(180,130,60,.05) 0px,rgba(180,130,60,.05) 1px,transparent 1px,transparent 4px),
     radial-gradient(circle at 20% 30%,#5a3e28,transparent 50%),
     radial-gradient(circle at 80% 70%,#5a3e28,transparent 50%),
+    url('images/grass.png') repeat-x bottom,
+    url('images/dirt.png') repeat bottom 70px,
     linear-gradient(180deg,#3a2515 0%,#4a3020 30%,#5a3828 60%,#3a2515 100%);
   background-attachment:fixed;
 }
@@ -41,8 +43,15 @@ body{animation:metalShine 8s ease-in-out infinite}
 
 #grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,2vw,20px);padding:clamp(8px,2vw,20px);max-width:min(90vw,90vh,500px);width:100%;aspect-ratio:1}
 
+/* Animal sprite mole heads */
+.mole-sprite{width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.mole-wrapper.golden .mole-sprite{filter:drop-shadow(0 0 12px rgba(255,215,0,.8)) brightness(1.2)}
+.mole-wrapper.hit .mole-sprite{filter:grayscale(0.8) brightness(0.5)}
+.mole-wrapper.bomb .mole-sprite{display:none}
+
+/* Hole with dirt sprite */
 .hole{position:relative;overflow:hidden;cursor:none;aspect-ratio:1;
-  background:radial-gradient(ellipse 80% 60% at 50% 55%,#1a0800 0%,#2d1a0a 40%,transparent 100%);
+  background:radial-gradient(ellipse 80% 60% at 50% 55%,#1a0800 0%,#2d1a0a 40%,transparent 100%),url('images/dirt.png') center/cover;
   border-radius:50%;
   border:3px solid #8a6530;
   box-shadow:inset 0 8px 20px rgba(0,0,0,.7),0 0 15px rgba(138,101,48,.3),0 4px 8px rgba(0,0,0,.3)}
@@ -174,7 +183,7 @@ body{animation:metalShine 8s ease-in-out infinite}
 #overlay h2{font-size:clamp(18px,5vw,36px);margin-bottom:5px;color:#fff}
 #overlay p{font-size:clamp(14px,3.5vw,24px);margin:5px 0;color:#aa8860}
 #overlay button{margin-top:20px;padding:12px 40px;font-size:clamp(16px,4vw,28px);
-  background:linear-gradient(180deg,#d4a860,#8a6530);color:#fff;
+  background:url('images/btn_green.png') center/100% 100% no-repeat,linear-gradient(180deg,#d4a860,#8a6530);color:#fff;
   border:2px solid #aa8860;border-radius:8px;cursor:pointer;font-weight:bold;font-family:inherit;
   box-shadow:0 4px 0 #5a3828,0 0 15px rgba(212,168,96,.3);transition:transform .1s}
 #overlay button:active{transform:translateY(2px);box-shadow:0 2px 0 #5a3828}
@@ -233,6 +242,7 @@ let highScore=parseInt(localStorage.getItem('wam_high'))||0;
 const holes=[];
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 let alertInterval=null;
+const ANIMAL_SPRITES=['images/mole_bear.png','images/mole_monkey.png','images/mole_frog.png','images/mole_owl.png','images/mole_panda.png','images/mole_dog.png'];
 
 function playSound(freq,dur,type='square',vol=.15){
   const o=audioCtx.createOscillator(),g=audioCtx.createGain();
@@ -336,7 +346,7 @@ for(let i=0;i<9;i++){
   const hole=document.createElement('div');hole.className='hole';
   addPersistentSteam(hole);
   const mw=document.createElement('div');mw.className='mole-wrapper';
-  mw.innerHTML=`<div class="mole-body"><div class="mole-head"><div class="mole-eyes"><div class="mole-eye"></div><div class="mole-eye"></div></div><div class="mole-nose"></div><div class="mole-teeth"><div class="mole-tooth"></div><div class="mole-tooth"></div></div></div><div class="bomb-fuse"></div><span class="bomb-icon">⚠️</span></div>`;
+  mw.innerHTML=`<div class="mole-body"><img class="mole-sprite" src="${ANIMAL_SPRITES[i%ANIMAL_SPRITES.length]}" alt=""><div class="mole-head"><div class="mole-eyes"><div class="mole-eye"></div><div class="mole-eye"></div></div><div class="mole-nose"></div><div class="mole-teeth"><div class="mole-tooth"></div><div class="mole-tooth"></div></div></div><div class="bomb-fuse"></div><span class="bomb-icon">⚠️</span></div>`;
   hole.appendChild(mw);grid.appendChild(hole);
   const h={el:hole,mole:mw,active:false,type:'normal',timeout:null};
   holes.push(h);
@@ -395,9 +405,11 @@ function spawnMole(){
   const h=available[Math.floor(Math.random()*available.length)];
   const r=Math.random();
   h.mole.classList.remove('golden','bomb','hit');
-  if(r<.08){h.type='bomb';h.mole.classList.add('bomb')}
-  else if(r<.18){h.type='golden';h.mole.classList.add('golden')}
-  else{h.type='normal'}
+  // Randomize animal sprite
+  const spriteEl=h.mole.querySelector('.mole-sprite');
+  if(r<.08){h.type='bomb';h.mole.classList.add('bomb');if(spriteEl)spriteEl.style.display='none'}
+  else if(r<.18){h.type='golden';h.mole.classList.add('golden');if(spriteEl){spriteEl.style.display='';spriteEl.src='images/mole_golden.png'}}
+  else{h.type='normal';if(spriteEl){spriteEl.style.display='';spriteEl.src=ANIMAL_SPRITES[Math.floor(Math.random()*ANIMAL_SPRITES.length)]}}
   h.active=true;
   // Pre-steam burst
   const rect=h.el.getBoundingClientRect();
