@@ -6,37 +6,52 @@
 <title>Word Puzzle</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#121213;color:#fff;font-family:'Helvetica Neue',Arial,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh;overflow-x:hidden}
+body{background:#121213;color:#fff;font-family:'Helvetica Neue',Arial,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh;overflow-x:hidden;transition:background 0.3s}
+body.success-bg{background:linear-gradient(135deg,#1a3a1a,#2d5a2d)!important}
 #header{text-align:center;padding:16px 0 8px;border-bottom:1px solid #3a3a3c;width:100%;max-width:500px}
 #header h1{font-size:32px;font-weight:700;letter-spacing:2px}
 #header .day{font-size:13px;color:#818384;margin-top:4px}
 #message{text-align:center;padding:8px;font-size:15px;min-height:28px;color:#e0e0e0}
-#grid{display:grid;grid-template-columns:repeat(5,62px);grid-template-rows:repeat(6,62px);gap:5px;margin:12px auto;perspective:600px}
-.cell{width:62px;height:62px;border:2px solid #3a3a3c;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;text-transform:uppercase;border-radius:2px;user-select:none;position:relative;transform-style:preserve-3d}
-.cell.filled{border-color:#565758;animation:pop 0.1s}
+#grid{display:grid;grid-template-columns:repeat(5,62px);grid-template-rows:repeat(6,62px);gap:5px;margin:12px auto;perspective:1000px}
+.cell{width:62px;height:62px;border:2px solid #3a3a3c;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;text-transform:uppercase;border-radius:2px;user-select:none;position:relative;transform-style:preserve-3d;transition:box-shadow 0.3s}
+.cell.filled{border-color:#565758;animation:pop 0.1s cubic-bezier(0.175,0.885,0.32,1.275)}
+.cell.pop-in{animation:popIn 100ms cubic-bezier(0.175,0.885,0.32,1.275)}
 .cell.correct{background:#538d4e;border-color:#538d4e}
 .cell.present{background:#b59f3b;border-color:#b59f3b}
 .cell.absent{background:#3a3a3c;border-color:#3a3a3c}
-.cell.flip-anim{animation:flip3d 0.5s ease forwards}
+.cell.flip-anim{animation:flip3d 0.6s ease forwards}
+.cell.win-bounce{animation:winBounce 0.5s cubic-bezier(0.175,0.885,0.32,1.275)}
+.cell.hint-wiggle{animation:hintWiggle 0.5s ease}
+@keyframes popIn{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
 @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
 @keyframes flip3d{
-  0%{transform:rotateX(0deg)}
-  50%{transform:rotateX(90deg)}
-  100%{transform:rotateX(0deg)}
+  0%{transform:rotateX(0deg);box-shadow:0 0 0 transparent}
+  25%{box-shadow:0 0 15px rgba(255,255,255,0.4)}
+  50%{transform:rotateX(90deg);box-shadow:0 0 20px rgba(255,255,255,0.6)}
+  75%{box-shadow:0 0 15px rgba(255,255,255,0.4)}
+  100%{transform:rotateX(0deg);box-shadow:0 0 0 transparent}
 }
-@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@keyframes shake{0%,100%{transform:translateX(0)}10%,50%,90%{transform:translateX(-8px)}30%,70%{transform:translateX(8px)}}
+@keyframes winBounce{0%{transform:translateY(0)}40%{transform:translateY(-20px)}60%{transform:translateY(-5px)}80%{transform:translateY(-10px)}100%{transform:translateY(0)}}
+@keyframes hintWiggle{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+@keyframes celebText{0%{transform:scale(0);opacity:0}60%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}
 .shake{animation:shake 0.4s}
 #keyboard{margin:12px auto;max-width:500px;width:100%;padding:0 8px}
 .kb-row{display:flex;justify-content:center;margin-bottom:6px;gap:4px}
-.key{height:52px;min-width:32px;padding:0 8px;border:none;border-radius:4px;background:#818384;color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;text-transform:uppercase;flex:1;max-width:44px;user-select:none;transition:background 0.3s}
+.key{height:52px;min-width:32px;padding:0 8px;border:none;border-radius:4px;background:#818384;color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;text-transform:uppercase;flex:1;max-width:44px;user-select:none;transition:background 0.3s,transform 0.1s,box-shadow 0.1s}
 .key.wide{max-width:66px;font-size:12px}
 .key.correct{background:#538d4e}
 .key.present{background:#b59f3b}
 .key.absent{background:#3a3a3c}
-.key:active{opacity:0.8}
+.key:active{transform:translateY(2px);filter:brightness(0.8)}
 #toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.95);color:#121213;padding:12px 24px;border-radius:4px;font-size:14px;font-weight:700;display:none;z-index:99}
 #share-btn{display:none;margin:8px auto;padding:12px 24px;background:#538d4e;color:#fff;border:none;border-radius:4px;font-size:16px;font-weight:700;cursor:pointer}
 #share-btn:active{opacity:0.8}
+#particle-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9998}
+#celeb-text{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%) scale(0);font-size:48px;font-weight:900;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);z-index:9999;pointer-events:none;opacity:0}
+#celeb-text.show{animation:celebText 0.6s cubic-bezier(0.175,0.885,0.32,1.275) forwards}
+#red-flash{position:fixed;inset:0;border:4px solid transparent;pointer-events:none;z-index:9997;transition:border-color 0.1s}
+#red-flash.flash{border-color:rgba(255,0,0,0.6)}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
 </head>
@@ -48,11 +63,92 @@ body{background:#121213;color:#fff;font-family:'Helvetica Neue',Arial,sans-serif
 <button id="share-btn" onclick="shareResult()">Share 📋</button>
 <div id="keyboard"></div>
 <div id="toast"></div>
+<canvas id="particle-canvas"></canvas>
+<div id="celeb-text"></div>
+<div id="red-flash"></div>
 <script>
 const WORDS=["APPLE","BEACH","CRANE","DREAM","EAGLE","FLAME","GRAPE","HOUSE","IMAGE","JOKER","KNIFE","LEMON","MANGO","NOBLE","OCEAN","PIANO","QUEEN","RIVER","SNAKE","TIGER","ULTRA","VIVID","WHALE","XENON","YIELD","ZEBRA","ABOUT","BELOW","CHARM","DANCE","EARTH","FIELD","GLASS","HEART","INPUT","JUICE","KNEEL","LIGHT","MONEY","NIGHT","OLIVE","PEARL","QUIET","ROBIN","STONE","TRACE","UNITY","VALVE","WATCH","YOUTH","ANGER","BLOOM","CLOUD","DRIFT","EPOCH","FROST","GLOOM","HASTE","IVORY","JEWEL","KEBAB","LUNAR","MAGIC","NERVE","ORBIT","PIXEL","QUEST","RANCH","SOLAR","THUMB","USHER","VIGOR","WINDY","YEAST","ZONAL","BLAZE","CANDY","DELTA","ELBOW","FAIRY","GHOST","HAVEN","INBOX","JAZZY","KAYAK","LIVER","MEDAL","NASAL","OPERA","PATCH","QUILT","RADAR","SALAD","TOWER","URBAN","VAULT","WHEAT","ZIPPY","ALARM","BRUSH","CLASH","DIZZY","ERROR","FLUTE","GRASP","HOBBY","ISSUE","JEWEL","KOALA","LODGE","MERCY","NINNY","OXIDE","PLUMB","QUIRK","REALM","SKULL","TRICK","UMBRA","VENOM","WRIST","XYLEM","YACHT","BLISS","CHOIR","DWARF","EXILE","FETCH","GLYPH","HOIST","IRONY","JUMBO","KNACK","LLAMA","MOOSE","NUDGE","ONSET","PRISM","REIGN","SWIRL","TULIP","UNTIE","VOWEL","WHIRL","ABODE","BISON","CLAMP","DODGE","ESSAY","FIBER","GRIND","HUMID","JELLY","KNELT","LEDGE","MIRTH","NICHE","OUIJA","PLUCK","ROGUE","SPICE","TRUNK","UDDER","VERGE","WIDOW","BONUS","COUCH","DOUGH","FLOCK","GOUGE","HENCE","JOINT","LEASH","MARSH","NOTCH","OZONE","POUCH","RIDGE","SHOVE","THORN","USURP","VOILA","WRECK","BRISK","CRUST","DRAPE","FORGE","GUILT","HYPER","IMPEL","LATCH","NERVE","OLDEN","PLUSH","RINSE","SIXTH","TWIRL","UNZIP","VIBES","WALTZ"];
 const VALID=new Set(WORDS);
 const WL=5,MR=6;
 let row=0,col=0,grid=[],answer="",gameOver=false;
+
+// === Particle System ===
+const pCanvas=document.getElementById('particle-canvas');
+const pCtx=pCanvas.getContext('2d');
+let particles=[];
+function resizePCanvas(){
+  pCanvas.width=window.innerWidth*(window.devicePixelRatio||1);
+  pCanvas.height=window.innerHeight*(window.devicePixelRatio||1);
+  pCtx.setTransform(window.devicePixelRatio||1,0,0,window.devicePixelRatio||1,0,0);
+}
+resizePCanvas();
+window.addEventListener('resize',resizePCanvas);
+
+function spawnStars(cx,cy,count){
+  for(let i=0;i<count;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=1.5+Math.random()*3;
+    particles.push({type:'star',x:cx,y:cy,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-1,size:3+Math.random()*4,life:1,decay:0.02+Math.random()*0.01,color:'#ffd700',rot:Math.random()*Math.PI*2,rotV:0.1+Math.random()*0.15});
+  }
+}
+
+function spawnConfetti(count){
+  const colors=['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff6b9d','#c471ed','#ffd700','#4ecdc4'];
+  for(let i=0;i<count;i++){
+    particles.push({
+      type:'confetti',
+      x:Math.random()*window.innerWidth,
+      y:-20-Math.random()*100,
+      vx:(Math.random()-0.5)*3,
+      vy:1+Math.random()*3,
+      w:4+Math.random()*6,
+      h:8+Math.random()*8,
+      life:1,decay:0.003+Math.random()*0.003,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      rot:Math.random()*Math.PI*2,
+      rotV:0.05+Math.random()*0.1,
+      gravity:0.04
+    });
+  }
+}
+
+function drawStar(ctx,cx,cy,size,rot){
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);
+  ctx.beginPath();
+  for(let i=0;i<5;i++){
+    const a=(i*4*Math.PI/5)-Math.PI/2;
+    const r=i===0?size:size;
+    ctx[i===0?'moveTo':'lineTo'](Math.cos(a)*size,Math.sin(a)*size);
+    const a2=a+2*Math.PI/5;
+    ctx.lineTo(Math.cos(a2)*size*0.4,Math.sin(a2)*size*0.4);
+  }
+  ctx.closePath();ctx.fill();ctx.restore();
+}
+
+function animateParticles(){
+  pCtx.clearRect(0,0,window.innerWidth,window.innerHeight);
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.life-=p.decay;
+    if(p.life<=0){particles.splice(i,1);continue;}
+    if(p.type==='star'){
+      p.x+=p.vx;p.y+=p.vy;p.vy+=0.05;p.rot+=p.rotV;
+      pCtx.globalAlpha=p.life;
+      pCtx.fillStyle=p.color;
+      drawStar(pCtx,p.x,p.y,p.size*p.life,p.rot);
+    }else if(p.type==='confetti'){
+      p.x+=p.vx;p.y+=p.vy;p.vy+=p.gravity;p.rot+=p.rotV;
+      pCtx.globalAlpha=p.life;
+      pCtx.fillStyle=p.color;
+      pCtx.save();pCtx.translate(p.x,p.y);pCtx.rotate(p.rot);
+      pCtx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      pCtx.restore();
+    }
+  }
+  pCtx.globalAlpha=1;
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
 
 // Web Audio
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
@@ -100,7 +196,26 @@ function handleKey(k){
   if(audioCtx.state==='suspended')audioCtx.resume();
   if(k==="⌫"||k==="BACKSPACE"){if(col>0){col--;grid[row][col]="";updateCell(row,col,"")}}
   else if(k==="ENTER"){submitGuess()}
-  else if(k.length===1&&/^[A-Z]$/i.test(k)&&col<WL){grid[row][col]=k.toUpperCase();updateCell(row,col,k.toUpperCase());col++}
+  else if(k.length===1&&/^[A-Z]$/i.test(k)&&col<WL){
+    grid[row][col]=k.toUpperCase();
+    updateCell(row,col,k.toUpperCase());
+    // Pop-in animation
+    const el=document.getElementById("c"+row+"_"+col);
+    el.classList.remove('pop-in');
+    void el.offsetWidth;
+    el.classList.add('pop-in');
+    col++;
+    // Hint wiggle when last letter entered
+    if(col===WL){
+      setTimeout(()=>{
+        for(let c=0;c<WL;c++){
+          const cel=document.getElementById("c"+row+"_"+c);
+          cel.classList.add('hint-wiggle');
+          setTimeout(()=>cel.classList.remove('hint-wiggle'),500);
+        }
+      },150);
+    }
+  }
 }
 function onKey(e){
   if(e.ctrlKey||e.metaKey||e.altKey)return;
@@ -113,7 +228,15 @@ function updateCell(r,c,v){const el=document.getElementById("c"+r+"_"+c);el.text
 function submitGuess(){
   if(col<WL){shakeRow();return}
   const guess=grid[row].join("");
-  if(!VALID.has(guess)){toast("Not in word list");shakeRow();return}
+  if(!VALID.has(guess)){
+    toast("Not in word list");
+    shakeRow();
+    // Red flash
+    const rf=document.getElementById('red-flash');
+    rf.classList.add('flash');
+    setTimeout(()=>rf.classList.remove('flash'),200);
+    return;
+  }
   revealRow(row,guess);
 }
 function revealRow(r,guess){
@@ -132,15 +255,47 @@ function revealRow(r,guess){
       setTimeout(()=>{
         el.classList.add(cls);
         colorKey(letter,cls);
-      },250);
+        // Star particles for correct letters
+        if(cls==='correct'){
+          const rect=el.getBoundingClientRect();
+          spawnStars(rect.left+rect.width/2,rect.top+rect.height/2,5);
+        }
+      },300);
     },i*100);
   }
   setTimeout(()=>{
-    if(guess===answer){gameOver=true;msg(["Genius!","Magnificent!","Impressive!","Splendid!","Great!","Phew!"][r]);playCorrectSound();showEnd()}
+    if(guess===answer){
+      gameOver=true;
+      const msgs=["Genius!","Magnificent!","Impressive!","Splendid!","Great!","Phew!"];
+      msg(msgs[r]);
+      playCorrectSound();
+      
+      // Win celebration sequence
+      // 1. Bounce wave
+      for(let c=0;c<WL;c++){
+        const cel=document.getElementById("c"+r+"_"+c);
+        setTimeout(()=>{
+          cel.classList.add('win-bounce');
+          setTimeout(()=>cel.classList.remove('win-bounce'),500);
+        },c*80);
+      }
+      // 2. Confetti
+      setTimeout(()=>spawnConfetti(60),200);
+      // 3. Celebration text
+      const ct=document.getElementById('celeb-text');
+      ct.textContent=msgs[r];
+      ct.className='show';
+      setTimeout(()=>{ct.className='';ct.style.opacity='0';},2500);
+      // 4. Green background flash
+      document.body.classList.add('success-bg');
+      setTimeout(()=>document.body.classList.remove('success-bg'),1500);
+      
+      showEnd();
+    }
     else if(r===MR-1){gameOver=true;msg("The word was: "+answer);showEnd()}
     else{row++;col=0}
     saveState();
-  },WL*100+350);
+  },WL*100+400);
 }
 function colorKey(letter,cls){
   const el=document.getElementById("k_"+letter);if(!el)return;
@@ -151,10 +306,7 @@ function colorKey(letter,cls){
 function shakeRow(){for(let c=0;c<WL;c++){const el=document.getElementById("c"+row+"_"+c);el.classList.add("shake");setTimeout(()=>el.classList.remove("shake"),400)}}
 function msg(t){document.getElementById("message").textContent=t}
 function toast(t){const el=document.getElementById("toast");el.textContent=t;el.style.display="block";setTimeout(()=>el.style.display="none",1500)}
-function showEnd(){
-  document.getElementById("share-btn").style.display="block";
-  
-}
+function showEnd(){document.getElementById("share-btn").style.display="block"}
 function shareResult(){
   const map={correct:"🟩",present:"🟨",absent:"⬛"};
   let t="Word Puzzle #"+dayIndex()+" "+(gameOver&&grid[row-1]?.join("")===answer?(row)+"/6":"X/6")+"\n\n";

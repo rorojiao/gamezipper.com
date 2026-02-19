@@ -127,21 +127,39 @@ function hitSound(){playSound(800,.1);playSound(400,.15,'sawtooth',.1)}
 function goldSound(){playSound(1200,.1);playSound(1600,.15,'sine',.12);playSound(2000,.1,'sine',.08)}
 function bombSound(){playSound(150,.3,'sawtooth',.2);playSound(100,.2,'square',.15)}
 
-function spawnStars(rect){
-  const stars=['⭐','✨','💫','⚡'];
-  for(let i=0;i<6;i++){
+function spawnStars(rect,count=20,golden=false){
+  const stars=['⭐','✨','💫','⚡','🌟'];
+  const n=golden?30:count;
+  for(let i=0;i<n;i++){
     const s=document.createElement('div');
     s.className='star';
     s.textContent=stars[Math.random()*stars.length|0];
     const angle=Math.random()*Math.PI*2;
-    const dist=40+Math.random()*50;
+    const dist=50+Math.random()*80;
     s.style.setProperty('--sx',Math.cos(angle)*dist+'px');
-    s.style.setProperty('--sy',Math.sin(angle)*dist+'px');
+    s.style.setProperty('--sy',Math.sin(angle)*dist-30+'px');
     s.style.left=rect.left+rect.width/2-10+'px';
     s.style.top=rect.top+rect.height/3+'px';
+    s.style.fontSize=golden?'clamp(18px,4vw,32px)':'clamp(14px,3vw,24px)';
     document.body.appendChild(s);
     setTimeout(()=>s.remove(),600);
   }
+  // Shockwave
+  const sw=document.createElement('div');sw.className='shockwave';
+  sw.style.left=rect.left+rect.width/2+'px';sw.style.top=rect.top+rect.height/3+'px';
+  document.body.appendChild(sw);setTimeout(()=>sw.remove(),500);
+}
+function spawnGoldRain(){
+  for(let i=0;i<10;i++){
+    const g=document.createElement('div');g.className='gold-rain';
+    g.style.left=Math.random()*window.innerWidth+'px';g.style.top='0px';
+    g.style.animationDelay=Math.random()*0.5+'s';
+    document.body.appendChild(g);setTimeout(()=>g.remove(),2000);
+  }
+}
+function spawnBombFlash(){
+  const f=document.createElement('div');f.className='bomb-flash';
+  document.body.appendChild(f);setTimeout(()=>f.remove(),400);
 }
 
 for(let i=0;i<9;i++){
@@ -175,9 +193,11 @@ function whack(h,e){
   score+=pts;
   if(score<0)score=0;
   scoreDisplay.textContent='Score: '+score;
-  // Stars + shake
+  // Stars + shake + effects
   const rect=h.el.getBoundingClientRect();
-  if(h.type!=='bomb')spawnStars(rect);
+  if(h.type==='golden'){spawnStars(rect,30,true);spawnGoldRain();}
+  else if(h.type==='bomb'){spawnBombFlash();}
+  else{spawnStars(rect,20,false);}
   container.classList.remove('shake');void container.offsetWidth;container.classList.add('shake');
   const ft=document.createElement('div');
   ft.className='float-score '+cls;
@@ -224,6 +244,12 @@ function startGame(){
   timerInterval=setInterval(()=>{
     timeLeft--;
     timerDisplay.textContent='Time: '+timeLeft;
+    if(timeLeft<=10){
+      timerDisplay.style.color='#e74c3c';
+      timerDisplay.style.transition='transform 0.2s';
+      timerDisplay.style.transform='scale(1.3)';
+      setTimeout(()=>timerDisplay.style.transform='scale(1)',200);
+    }
     if(timeLeft<=0)endGame();
   },1000);
   spawnMole();
@@ -234,12 +260,20 @@ function endGame(){
   clearInterval(timerInterval);
   clearTimeout(spawnTimeout);
   hideHammer();
+  timerDisplay.style.color='#fff';
   holes.forEach(h=>{clearTimeout(h.timeout);h.active=false;h.mole.className='mole-wrapper'});
   if(score>highScore){highScore=score;localStorage.setItem('wam_high',highScore)}
-  overlay.innerHTML=`<h1>⏰ Time's Up!</h1><h2>Score: ${score}</h2><p>Best: ${highScore}</p><button id="start-btn">Play Again</button>`;
+  overlay.innerHTML=`<h1>⏰ Time's Up!</h1><h2>Score: <span id="count-up">0</span></h2><p>Best: ${highScore}</p><button id="start-btn">Play Again</button>`;
   overlay.style.display='flex';
+  // Counting up animation
+  const countEl=document.getElementById('count-up');
+  let cur=0;const step=Math.max(1,Math.ceil(score/40));
+  const countInterval=setInterval(()=>{
+    cur=Math.min(cur+step,score);countEl.textContent=cur;
+    countEl.style.transform='scale(1.2)';setTimeout(()=>countEl.style.transform='scale(1)',50);
+    if(cur>=score)clearInterval(countInterval);
+  },30);
   document.getElementById('start-btn').addEventListener('click',startGame);
-  
 }
 startBtn.addEventListener('click',startGame);
 })();

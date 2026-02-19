@@ -14,6 +14,63 @@
 <body>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none">⬅ More Games at GameZipper.com</a>
   <canvas id="gameCanvas"></canvas>
+  <!-- FX Overlay -->
+  <div id="fx-overlay" style="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden"></div>
+  <style>
+  .fx-flash{position:fixed;inset:0;pointer-events:none;animation:fxFlash .3s ease-out forwards}
+  @keyframes fxFlash{0%{opacity:1}100%{opacity:0}}
+  .fx-float{position:fixed;pointer-events:none;font-size:28px;font-weight:bold;color:#ffd700;text-shadow:0 0 10px rgba(255,215,0,.8),2px 2px 4px rgba(0,0,0,.5);animation:fxFloat 1s cubic-bezier(.25,.46,.45,.94) forwards;z-index:10000}
+  @keyframes fxFloat{0%{opacity:1;transform:translateY(0) scale(1.5)}100%{opacity:0;transform:translateY(-80px) scale(0.8)}}
+  .fx-particle{position:fixed;border-radius:50%;pointer-events:none;z-index:10000;animation:fxPart .8s ease-out forwards}
+  @keyframes fxPart{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0)}}
+  </style>
+  <script>
+  // DOM overlay FX for canvas games
+  (function(){
+    const overlay=document.getElementById('fx-overlay');
+    let lastScore=null;
+    // MutationObserver won't work on canvas, so we poll the canvas for score changes
+    // Use a proxy: observe canvas redraws and detect score via pixel sampling
+    // Simpler: intercept common score patterns - listen for any user interaction
+    const canvas=document.getElementById('gameCanvas');
+    function spawnFlash(color){
+      const f=document.createElement('div');f.className='fx-flash';
+      f.style.background=color||'radial-gradient(circle,rgba(255,255,255,0.6),transparent 70%)';
+      overlay.appendChild(f);setTimeout(()=>f.remove(),300);
+    }
+    function spawnFloatText(text,x,y){
+      const f=document.createElement('div');f.className='fx-float';
+      f.textContent=text;f.style.left=x+'px';f.style.top=y+'px';
+      overlay.appendChild(f);setTimeout(()=>f.remove(),1000);
+    }
+    function spawnParticles(x,y,count){
+      const colors=['#ff6b6b','#ffd700','#4ecdc4','#ff69b4','#00ff7f','#ff8c00'];
+      for(let i=0;i<count;i++){
+        const p=document.createElement('div');p.className='fx-particle';
+        const sz=4+Math.random()*8;
+        p.style.width=sz+'px';p.style.height=sz+'px';
+        p.style.background=colors[i%colors.length];
+        p.style.left=x+'px';p.style.top=y+'px';
+        const angle=Math.random()*Math.PI*2,dist=40+Math.random()*80;
+        p.style.setProperty('--dx',Math.cos(angle)*dist+'px');
+        p.style.setProperty('--dy',Math.sin(angle)*dist+'px');
+        overlay.appendChild(p);setTimeout(()=>p.remove(),800);
+      }
+    }
+    // Fire effects on canvas interactions (match-3 style game)
+    let clickCount=0;
+    canvas.addEventListener('pointerup',function(e){
+      clickCount++;
+      // After a swap, show effects after a short delay (when matches resolve)
+      setTimeout(()=>{
+        if(clickCount%2===0){// Every swap attempt
+          spawnParticles(e.clientX,e.clientY,12);
+          spawnFlash('radial-gradient(circle at '+e.clientX+'px '+e.clientY+'px,rgba(255,200,50,0.4),transparent 60%)');
+        }
+      },400);
+    });
+  })();
+  </script>
   <script src="bundle-1771356588.js"></script>
 <div id="tutorial-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;z-index:999999">
 <div style="background:rgba(30,30,50,0.95);border-radius:20px;padding:36px 28px;max-width:340px;text-align:center;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
