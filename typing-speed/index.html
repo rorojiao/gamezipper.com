@@ -308,42 +308,49 @@ function endGame(){
   resultCard.style.display="block";
 }
 
-input.addEventListener("input",function(e){
-  if(finished)return;
+var composing=false;
+input.addEventListener("compositionstart",function(){composing=true;});
+input.addEventListener("compositionend",function(){composing=false;handleInput();});
+
+function handleInput(){
+  if(finished||composing)return;
   if(actx.state==="suspended")actx.resume();
   if(!running)startTimer();
   const val=input.value;
-  const lastChar=val[val.length-1];
-  if(lastChar===text[charIndex]){
-    correct++;totalTyped++;charIndex++;playTick();
-    
-    // Green lines effect
-    const spans=display.querySelectorAll(".char");
-    if(spans[charIndex-1])spawnGreenLines(spans[charIndex-1]);
-    
-    // Check if word completed (space or end)
-    if(text[charIndex-1]===' '||charIndex>=text.length){
-      playWordComplete();
-      // Pulse the completed word
-      for(let j=lastWordEnd;j<charIndex;j++){
-        if(spans[j])spans[j].classList.add('word-complete');
+  // Process all characters in the input
+  for(let i=0;i<val.length;i++){
+    if(finished)break;
+    const ch=val[i];
+    if(ch===text[charIndex]){
+      correct++;totalTyped++;charIndex++;playTick();
+      const spans=display.querySelectorAll(".char");
+      if(spans[charIndex-1])spawnGreenLines(spans[charIndex-1]);
+      if(text[charIndex-1]===' '||charIndex>=text.length){
+        playWordComplete();
+        for(let j=lastWordEnd;j<charIndex;j++){
+          if(spans[j])spans[j].classList.add('word-complete');
+        }
+        lastWordEnd=charIndex;
       }
-      lastWordEnd=charIndex;
+      if(charIndex>=text.length){text+=(" "+genText())}
+    }else{
+      wrong++;totalTyped++;
+      if(mode==="survival"){survivalErrors++;timerEl.textContent=survivalErrors+"/3";if(survivalErrors>=3){endGame();break}}
+      playBuzz();
+      const spans=display.querySelectorAll(".char");
+      if(spans[charIndex]){spans[charIndex].classList.add("wrong");setTimeout(()=>spans[charIndex]&&spans[charIndex].classList.remove("wrong"),100)}
     }
-    
-    if(charIndex>=text.length){text+=(" "+genText())}
-  }else{
-    wrong++;totalTyped++;
-    if(mode==="survival"){survivalErrors++;timerEl.textContent=survivalErrors+"/3";if(survivalErrors>=3){endGame();return}}
-    playBuzz();
-    const spans=display.querySelectorAll(".char");
-    if(spans[charIndex]){spans[charIndex].classList.add("wrong");setTimeout(()=>spans[charIndex]&&spans[charIndex].classList.remove("wrong"),100)}
   }
-  input.value="";
+  // Use setTimeout to avoid iOS keyboard issues with immediate value clear
+  setTimeout(function(){input.value="";},0);
   renderText();
   updateStats();
   const cur=display.querySelector(".current");
   if(cur)cur.scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+
+input.addEventListener("input",function(e){
+  if(!composing)handleInput();
 });
 
 input.addEventListener("paste",e=>e.preventDefault());
