@@ -4,31 +4,67 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Whack-a-Mole</title>
+<script type="text/javascript">
+window.SDK_OPTIONS = {
+  gameId: "qmsj9pjub31i3vn79p3k7fqg9u4mfrhd",
+  onEvent: function (a) {
+    switch (a.name) {
+      case "SDK_GAME_PAUSE": break;
+      case "SDK_GAME_START": break;
+      case "SDK_READY": break;
+    }
+  }
+};
+(function (a, b, c) {
+  var d = a.getElementsByTagName(b)[0];
+  a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk");
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#4a8f29;font-family:'Segoe UI',Arial,sans-serif}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif}
+body{background:
+  radial-gradient(circle at 20% 50%,rgba(100,180,60,.3),transparent 40%),
+  radial-gradient(circle at 80% 30%,rgba(80,160,40,.3),transparent 40%),
+  repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(0,100,0,.05) 20px,rgba(0,100,0,.05) 40px),
+  linear-gradient(180deg,#5cb338 0%,#4a8f29 30%,#3d7a22 100%);
+  background-attachment:fixed}
 #game-container{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;user-select:none;-webkit-user-select:none}
 #hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:10px 20px;font-size:clamp(16px,4vw,28px);color:#fff;text-shadow:2px 2px 4px rgba(0,0,0,.5);z-index:10;background:linear-gradient(180deg,rgba(0,0,0,.3),transparent)}
 #hud>div{min-width:80px}
 #grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,2vw,20px);padding:clamp(8px,2vw,20px);max-width:min(90vw,90vh,500px);width:100%;aspect-ratio:1}
-.hole{position:relative;background:radial-gradient(ellipse at center,#2d1a0a 0%,#3d2b1a 60%,#5a3d20 100%);border-radius:50%;overflow:hidden;cursor:none;aspect-ratio:1}
+.hole{position:relative;overflow:hidden;cursor:none;aspect-ratio:1;
+  background:radial-gradient(ellipse 80% 60% at 50% 55%,#1a0a00 0%,#2d1a0a 40%,#4a3020 70%,transparent 100%);
+  border-radius:50%;
+  box-shadow:inset 0 8px 20px rgba(0,0,0,.7),inset 0 -4px 10px rgba(0,0,0,.3),0 4px 8px rgba(0,0,0,.3)}
+.hole::before{content:'';position:absolute;top:5%;left:10%;width:80%;height:20%;background:radial-gradient(ellipse,rgba(255,255,255,.08),transparent);border-radius:50%;z-index:1}
 .hole::after{content:'';position:absolute;bottom:0;left:0;right:0;height:40%;background:linear-gradient(0deg,#2d1a0a,transparent);z-index:3;pointer-events:none}
 .mole-wrapper{position:absolute;bottom:-100%;left:10%;width:80%;height:80%;z-index:2;transition:bottom .15s ease-out}
 .mole-wrapper.up{bottom:15%}
 .mole-wrapper.hit{bottom:15%}
 .mole-body{width:100%;height:100%;position:relative}
-/* Mole drawn with CSS */
-.mole-head{width:70%;height:60%;background:#8B6914;border-radius:50% 50% 40% 40%;position:absolute;top:0;left:15%;display:flex;align-items:center;justify-content:center;flex-direction:column}
-.mole-wrapper.golden .mole-head{background:#FFD700;box-shadow:0 0 15px rgba(255,215,0,.6)}
-.mole-wrapper.bomb .mole-head{background:#c0392b;border-radius:50%;box-shadow:0 0 10px rgba(255,0,0,.5)}
+/* CSS Cute Mole */
+.mole-head{width:70%;height:60%;background:radial-gradient(circle at 40% 35%,#c4944a,#8B6914 80%);border-radius:50% 50% 40% 40%;position:absolute;top:0;left:15%;display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:inset 0 -4px 8px rgba(0,0,0,.2)}
+.mole-wrapper.golden .mole-head{background:radial-gradient(circle at 40% 35%,#ffe680,#FFD700 80%);box-shadow:0 0 15px rgba(255,215,0,.6),inset 0 -4px 8px rgba(0,0,0,.15)}
+.mole-wrapper.bomb .mole-head{background:radial-gradient(circle at 40% 35%,#e74c3c,#c0392b 80%);border-radius:50%;box-shadow:0 0 10px rgba(255,0,0,.5)}
+/* Cheeks */
+.mole-head::after{content:'';position:absolute;bottom:25%;left:5%;width:90%;height:20%;background:radial-gradient(ellipse at 15% 50%,rgba(255,150,150,.4),transparent 50%),radial-gradient(ellipse at 85% 50%,rgba(255,150,150,.4),transparent 50%);pointer-events:none}
 .mole-eyes{display:flex;gap:15%;margin-top:15%}
-.mole-eye{width:18%;height:0;padding-bottom:18%;background:#fff;border-radius:50%;position:relative}
-.mole-eye::after{content:'';width:50%;height:50%;background:#111;border-radius:50%;position:absolute;top:25%;left:25%}
-.mole-wrapper.hit .mole-eye::after{width:80%;height:15%;top:42%;left:10%;border-radius:0}
-.mole-wrapper.hit .mole-head::before{content:'✕';position:absolute;top:15%;font-size:clamp(8px,2vw,14px);color:#c0392b}
-.mole-nose{width:14%;height:0;padding-bottom:10%;background:#d4a054;border-radius:50%;margin-top:5%}
-.mole-wrapper.golden .mole-nose{background:#b8860b}
+.mole-eye{width:22%;height:0;padding-bottom:22%;background:radial-gradient(circle at 40% 35%,#fff,#e8e8e8);border-radius:50%;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.mole-eye::after{content:'';width:50%;height:50%;background:radial-gradient(circle at 40% 35%,#333,#111);border-radius:50%;position:absolute;top:25%;left:30%}
+/* Tiny eye highlight */
+.mole-eye::before{content:'';width:20%;height:20%;background:#fff;border-radius:50%;position:absolute;top:20%;left:50%;z-index:1}
+.mole-wrapper.hit .mole-eye::after{width:80%;height:15%;top:42%;left:10%;border-radius:0;background:#333}
+.mole-wrapper.hit .mole-eye::before{display:none}
+.mole-wrapper.hit .mole-head::before{content:'✕';position:absolute;top:15%;font-size:clamp(8px,2vw,14px);color:#c0392b;z-index:2}
+/* Nose */
+.mole-nose{width:16%;height:0;padding-bottom:12%;background:radial-gradient(circle at 40% 35%,#e8b87a,#d4a054);border-radius:50%;margin-top:5%;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.mole-wrapper.golden .mole-nose{background:radial-gradient(circle,#c9a030,#b8860b)}
 .mole-wrapper.bomb .mole-nose{display:none}
+/* Teeth */
+.mole-teeth{display:flex;gap:2px;margin-top:2%}
+.mole-tooth{width:12%;height:0;padding-bottom:14%;background:#fff;border-radius:0 0 3px 3px;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.mole-wrapper.bomb .mole-teeth{display:none}
 .bomb-fuse{display:none}
 .mole-wrapper.bomb .bomb-fuse{display:block;position:absolute;top:-10%;left:50%;width:3px;height:20%;background:#333;transform:rotate(15deg)}
 .bomb-icon{display:none}
@@ -45,15 +81,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#4a8f29;font-family:
 .float-score.neg{color:#e74c3c}
 .float-score.gold{color:#f1c40f}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(1.3)}}
-@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+/* Stars splash */
+.star{position:absolute;z-index:51;pointer-events:none;font-size:clamp(14px,3vw,24px);animation:starBurst .6s ease-out forwards}
+@keyframes starBurst{0%{opacity:1;transform:translate(0,0) scale(1) rotate(0deg)}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0.3) rotate(360deg)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
 .shake{animation:shake .3s ease}
-/* Hammer cursor */
 #hammer{position:fixed;z-index:999;pointer-events:none;font-size:clamp(28px,6vw,48px);transform:rotate(-30deg);transition:transform 50ms;display:none}
-#hammer.smash{transform:rotate(10deg)}
+#hammer.smash{transform:rotate(10deg) scale(1.2)}
 </style>
 </head>
 <body>
-<a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none">⬅ More Games at GameZipper.com</a>
 <div id="game-container">
   <div id="hud">
     <div id="score-display">Score: 0</div>
@@ -92,20 +129,36 @@ function playSound(freq,dur,type='square',vol=.15){
 function hitSound(){playSound(800,.1);playSound(400,.15,'sawtooth',.1)}
 function goldSound(){playSound(1200,.1);playSound(1600,.15,'sine',.12);playSound(2000,.1,'sine',.08)}
 function bombSound(){playSound(150,.3,'sawtooth',.2);playSound(100,.2,'square',.15)}
-// Build grid
+
+function spawnStars(rect){
+  const stars=['⭐','✨','💫','⚡'];
+  for(let i=0;i<6;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    s.textContent=stars[Math.random()*stars.length|0];
+    const angle=Math.random()*Math.PI*2;
+    const dist=40+Math.random()*50;
+    s.style.setProperty('--sx',Math.cos(angle)*dist+'px');
+    s.style.setProperty('--sy',Math.sin(angle)*dist+'px');
+    s.style.left=rect.left+rect.width/2-10+'px';
+    s.style.top=rect.top+rect.height/3+'px';
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),600);
+  }
+}
+
 for(let i=0;i<9;i++){
   const hole=document.createElement('div');
   hole.className='hole';
   const mw=document.createElement('div');
   mw.className='mole-wrapper';
-  mw.innerHTML=`<div class="mole-body"><div class="mole-head"><div class="mole-eyes"><div class="mole-eye"></div><div class="mole-eye"></div></div><div class="mole-nose"></div></div><div class="bomb-fuse"></div><span class="bomb-icon">💣</span></div>`;
+  mw.innerHTML=`<div class="mole-body"><div class="mole-head"><div class="mole-eyes"><div class="mole-eye"></div><div class="mole-eye"></div></div><div class="mole-nose"></div><div class="mole-teeth"><div class="mole-tooth"></div><div class="mole-tooth"></div></div></div><div class="bomb-fuse"></div><span class="bomb-icon">💣</span></div>`;
   hole.appendChild(mw);
   grid.appendChild(hole);
   const h={el:hole,mole:mw,active:false,type:'normal',timeout:null};
   holes.push(h);
   hole.addEventListener('pointerdown',e=>{e.preventDefault();whack(h,e)});
 }
-// Hammer
 document.addEventListener('pointermove',e=>{
   hammer.style.left=e.clientX-10+'px';
   hammer.style.top=e.clientY-5+'px';
@@ -125,10 +178,10 @@ function whack(h,e){
   score+=pts;
   if(score<0)score=0;
   scoreDisplay.textContent='Score: '+score;
-  // shake
-  container.classList.remove('shake');void container.offsetWidth;container.classList.add('shake');
-  // float text
+  // Stars + shake
   const rect=h.el.getBoundingClientRect();
+  if(h.type!=='bomb')spawnStars(rect);
+  container.classList.remove('shake');void container.offsetWidth;container.classList.add('shake');
   const ft=document.createElement('div');
   ft.className='float-score '+cls;
   ft.textContent=(pts>0?'+':'')+pts;
@@ -177,7 +230,6 @@ function startGame(){
     if(timeLeft<=0)endGame();
   },1000);
   spawnMole();
-  // spawn extra after a bit for more action
   setTimeout(()=>{if(gameActive)spawnMole()},800);
 }
 function endGame(){
@@ -190,7 +242,7 @@ function endGame(){
   overlay.innerHTML=`<h1>⏰ Time's Up!</h1><h2>Score: ${score}</h2><p>Best: ${highScore}</p><button id="start-btn">Play Again</button>`;
   overlay.style.display='flex';
   document.getElementById('start-btn').addEventListener('click',startGame);
-  
+  try{if(typeof sdk!=='undefined'&&sdk.showBanner)sdk.showBanner()}catch(e){}
 }
 startBtn.addEventListener('click',startGame);
 })();
