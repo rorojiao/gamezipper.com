@@ -6,73 +6,147 @@
   <title>Dessert Blast 🧁</title>
   <style>
     *{margin:0;padding:0}
-    html,body{width:100%;height:100%;overflow:hidden;background:#0D1B2A}
+    html,body{width:100%;height:100%;overflow:hidden;background:#fce4ec}
     canvas{display:block;width:100%;height:100%;touch-action:none}
+    /* Candy Factory Background */
+    body::before{
+      content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+      background:
+        repeating-linear-gradient(45deg,
+          rgba(255,182,193,0.15) 0px, rgba(255,182,193,0.15) 20px,
+          transparent 20px, transparent 40px,
+          rgba(255,228,225,0.12) 40px, rgba(255,228,225,0.12) 60px,
+          transparent 60px, transparent 80px
+        ),
+        linear-gradient(135deg, #fff0f5 0%, #fce4ec 30%, #f8bbd0 60%, #f48fb1 100%);
+    }
+    /* Sprinkle particles */
+    .sprinkle{position:fixed;pointer-events:none;z-index:10001;border-radius:50%;opacity:0.7}
+    /* Lollipop decorations */
+    .lollipop{position:fixed;pointer-events:none;z-index:10001;font-size:40px;animation:lolliSpin 4s linear infinite}
+    .lollipop.tl{top:30px;left:10px;animation-delay:0s}
+    .lollipop.tr{top:30px;right:10px;animation-delay:1s}
+    .lollipop.bl{bottom:10px;left:10px;animation-delay:2s}
+    .lollipop.br{bottom:10px;right:10px;animation-delay:3s}
+    @keyframes lolliSpin{0%{transform:rotate(0deg) scale(1)}50%{transform:rotate(180deg) scale(1.1)}100%{transform:rotate(360deg) scale(1)}}
+    /* Shockwave */
+    .candy-shockwave{position:fixed;pointer-events:none;z-index:10000;border-radius:50%;border:3px solid rgba(255,105,180,0.6);animation:candyShock 0.5s ease-out forwards}
+    @keyframes candyShock{0%{width:0;height:0;opacity:1;transform:translate(-50%,-50%)}100%{width:400px;height:400px;opacity:0;transform:translate(-50%,-50%)}}
+    .candy-particle{position:fixed;pointer-events:none;z-index:10000;animation:candyPart 0.9s cubic-bezier(.25,.46,.45,.94) forwards}
+    @keyframes candyPart{0%{opacity:1;transform:translate(0,0) scale(1) rotate(0deg)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0.2) rotate(var(--rot))}}
+    .score-pop{position:fixed;pointer-events:none;z-index:10002;font-size:24px;font-weight:900;color:#ff1493;text-shadow:0 0 8px #ff69b4,0 0 20px #ff1493,2px 2px 4px rgba(0,0,0,0.3);animation:scorePop 1.2s cubic-bezier(.25,.46,.45,.94) forwards}
+    @keyframes scorePop{0%{opacity:1;transform:translateY(0) scale(1.8)}40%{transform:translateY(-40px) scale(1.2)}100%{opacity:0;transform:translateY(-100px) scale(0.6)}}
   </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
 </head>
 <body>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none">⬅ More Games at GameZipper.com</a>
   <canvas id="gameCanvas"></canvas>
+
+  <!-- Decoration Layer -->
+  <div class="lollipop tl">🍭</div>
+  <div class="lollipop tr">🍬</div>
+  <div class="lollipop bl">🍬</div>
+  <div class="lollipop br">🍭</div>
+
   <!-- FX Overlay -->
   <div id="fx-overlay" style="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden"></div>
-  <style>
-  .fx-flash{position:fixed;inset:0;pointer-events:none;animation:fxFlash .3s ease-out forwards}
-  @keyframes fxFlash{0%{opacity:1}100%{opacity:0}}
-  .fx-float{position:fixed;pointer-events:none;font-size:28px;font-weight:bold;color:#ffd700;text-shadow:0 0 10px rgba(255,215,0,.8),2px 2px 4px rgba(0,0,0,.5);animation:fxFloat 1s cubic-bezier(.25,.46,.45,.94) forwards;z-index:10000}
-  @keyframes fxFloat{0%{opacity:1;transform:translateY(0) scale(1.5)}100%{opacity:0;transform:translateY(-80px) scale(0.8)}}
-  .fx-particle{position:fixed;border-radius:50%;pointer-events:none;z-index:10000;animation:fxPart .8s ease-out forwards}
-  @keyframes fxPart{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0)}}
-  </style>
+
   <script>
-  // DOM overlay FX for canvas games
+  // Candy Factory Theme FX
   (function(){
     const overlay=document.getElementById('fx-overlay');
-    let lastScore=null;
-    // MutationObserver won't work on canvas, so we poll the canvas for score changes
-    // Use a proxy: observe canvas redraws and detect score via pixel sampling
-    // Simpler: intercept common score patterns - listen for any user interaction
     const canvas=document.getElementById('gameCanvas');
-    function spawnFlash(color){
-      const f=document.createElement('div');f.className='fx-flash';
-      f.style.background=color||'radial-gradient(circle,rgba(255,255,255,0.6),transparent 70%)';
-      overlay.appendChild(f);setTimeout(()=>f.remove(),300);
+
+    // === Sprinkle particles (continuous falling) ===
+    const sprinkles=[];
+    const SPRINKLE_COUNT=15;
+    const sprinkleColors=['#fff','#ffb6c1','#ff69b4','#ffd700','#87ceeb','#98fb98','#dda0dd'];
+
+    function createSprinkle(){
+      const el=document.createElement('div');
+      el.className='sprinkle';
+      const sz=3+Math.random()*5;
+      el.style.width=sz+'px';
+      el.style.height=sz*(Math.random()>0.5?1:2.5)+'px';
+      el.style.borderRadius=Math.random()>0.5?'50%':'2px';
+      el.style.background=sprinkleColors[Math.floor(Math.random()*sprinkleColors.length)];
+      document.body.appendChild(el);
+      return{
+        el,x:Math.random()*window.innerWidth,y:-20-Math.random()*200,
+        speed:0.3+Math.random()*0.8,drift:Math.random()*0.5-0.25,
+        rot:Math.random()*360,rotSpeed:Math.random()*2-1
+      };
     }
-    function spawnFloatText(text,x,y){
-      const f=document.createElement('div');f.className='fx-float';
-      f.textContent=text;f.style.left=x+'px';f.style.top=y+'px';
-      overlay.appendChild(f);setTimeout(()=>f.remove(),1000);
+    for(let i=0;i<SPRINKLE_COUNT;i++){
+      const s=createSprinkle();
+      s.y=Math.random()*window.innerHeight;
+      sprinkles.push(s);
     }
-    function spawnParticles(x,y,count){
-      const colors=['#ff6b6b','#ffd700','#4ecdc4','#ff69b4','#00ff7f','#ff8c00'];
-      for(let i=0;i<count;i++){
-        const p=document.createElement('div');p.className='fx-particle';
-        const sz=4+Math.random()*8;
-        p.style.width=sz+'px';p.style.height=sz+'px';
-        p.style.background=colors[i%colors.length];
-        p.style.left=x+'px';p.style.top=y+'px';
-        const angle=Math.random()*Math.PI*2,dist=40+Math.random()*80;
-        p.style.setProperty('--dx',Math.cos(angle)*dist+'px');
-        p.style.setProperty('--dy',Math.sin(angle)*dist+'px');
-        overlay.appendChild(p);setTimeout(()=>p.remove(),800);
+
+    function animSprinkles(){
+      const h=window.innerHeight,w=window.innerWidth;
+      for(const s of sprinkles){
+        s.y+=s.speed;s.x+=s.drift;s.rot+=s.rotSpeed;
+        if(s.y>h+20){s.y=-20;s.x=Math.random()*w;}
+        if(s.x<-20)s.x=w+10;if(s.x>w+20)s.x=-10;
+        s.el.style.transform=`translate(${s.x}px,${s.y}px) rotate(${s.rot}deg)`;
       }
+      requestAnimationFrame(animSprinkles);
     }
-    // Fire effects on canvas interactions (match-3 style game)
+    animSprinkles();
+
+    // === Click/Touch Effects ===
+    const shapes=['●','■','★','♦','▲','♥'];
+    const candyColors=['#ff1493','#ff6347','#ffd700','#00ff7f','#1e90ff','#ff69b4','#ffa500','#9370db'];
+
+    function spawnCandyBurst(x,y){
+      // 20 candy debris particles
+      for(let i=0;i<20;i++){
+        const p=document.createElement('div');
+        p.className='candy-particle';
+        p.textContent=shapes[Math.floor(Math.random()*shapes.length)];
+        p.style.fontSize=(10+Math.random()*14)+'px';
+        p.style.color=candyColors[Math.floor(Math.random()*candyColors.length)];
+        p.style.left=x+'px';p.style.top=y+'px';
+        const angle=Math.random()*Math.PI*2;
+        const dist=60+Math.random()*120;
+        const dy=Math.sin(angle)*dist+40; // gravity bias
+        p.style.setProperty('--dx',Math.cos(angle)*dist+'px');
+        p.style.setProperty('--dy',dy+'px');
+        p.style.setProperty('--rot',(Math.random()*720-360)+'deg');
+        overlay.appendChild(p);
+        setTimeout(()=>p.remove(),900);
+      }
+
+      // Pink shockwave ring
+      const sw=document.createElement('div');
+      sw.className='candy-shockwave';
+      sw.style.left=x+'px';sw.style.top=y+'px';
+      overlay.appendChild(sw);
+      setTimeout(()=>sw.remove(),500);
+
+      // +Score float text
+      const scores=['+100','+200','+50','Sweet!','Yummy!','🍰'];
+      const sc=document.createElement('div');
+      sc.className='score-pop';
+      sc.textContent=scores[Math.floor(Math.random()*scores.length)];
+      sc.style.left=(x-30)+'px';sc.style.top=(y-20)+'px';
+      overlay.appendChild(sc);
+      setTimeout(()=>sc.remove(),1200);
+    }
+
     let clickCount=0;
     canvas.addEventListener('pointerup',function(e){
       clickCount++;
-      // After a swap, show effects after a short delay (when matches resolve)
       setTimeout(()=>{
-        if(clickCount%2===0){// Every swap attempt
-          spawnParticles(e.clientX,e.clientY,12);
-          spawnFlash('radial-gradient(circle at '+e.clientX+'px '+e.clientY+'px,rgba(255,200,50,0.4),transparent 60%)');
-        }
-      },400);
+        spawnCandyBurst(e.clientX,e.clientY);
+      },200);
     });
   })();
   </script>
   <script src="bundle-1771356588.js"></script>
-<div id="tutorial-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;z-index:999999">
+<div id="tutorial-overlay" style="position:fixed;inset:0;pointer-events:auto;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;z-index:999999">
 <div style="background:rgba(30,30,50,0.95);border-radius:20px;padding:36px 28px;max-width:340px;text-align:center;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
 <div style="font-size:56px;margin-bottom:12px">🍰</div>
 <h2 style="font-size:24px;color:#ffd700;margin-bottom:16px">How to Play</h2>
@@ -82,7 +156,7 @@
 🎯 Clear the target desserts to win each level
 </p>
 <p style="font-size:14px;color:#aaa;margin-top:12px">💡 Tip: Look for L-shapes and T-shapes for bombs! 💥</p>
-<button onclick="document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_dessert','1')" style="margin-top:20px;padding:14px 36px;font-size:18px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff6b6b,#ffa500);color:#fff;cursor:pointer;font-weight:bold">Got it! 🎮</button>
+<button onclick="document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_dessert','1')" ontouchstart="event.stopPropagation();document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_dessert','1')" ontouchstart="event.stopPropagation();document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_dessert','1')" style="margin-top:20px;padding:14px 36px;font-size:18px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff6b6b,#ffa500);color:#fff;cursor:pointer;font-weight:bold">Got it! 🎮</button>
 </div></div>
 <script>if(localStorage.getItem('tutorial_dessert'))document.getElementById('tutorial-overlay').remove();</script>
   </body>

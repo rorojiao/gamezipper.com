@@ -9,60 +9,164 @@
   <title>Catch Turkey 🦃</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { width:100vw; height:100vh; overflow:hidden; background:#000; position:fixed; top:0; left:0; }
+    body { width:100vw; height:100vh; overflow:hidden; position:fixed; top:0; left:0;
+      background: linear-gradient(180deg, #87CEEB 0%, #98D8C8 40%, #F0E68C 70%, #8FBC8F 100%);
+    }
     #gameCanvas { display:block; touch-action:none; position:absolute; top:0; left:0; width:100%;height:100%; }
+
+    /* Falling leaves */
+    .leaf{position:fixed;pointer-events:none;z-index:10001;font-size:18px;opacity:0.7}
+
+    /* Windmill decorations */
+    .windmill{position:fixed;pointer-events:none;z-index:10001;font-size:32px}
+    .windmill.tl{top:35px;left:8px}
+    .windmill.tr{top:35px;right:8px}
+    .windmill.bl{bottom:50px;left:8px}
+    .windmill.br{bottom:50px;right:8px}
+    .windmill-spin{display:inline-block;animation:wmSpin 3s linear infinite}
+    .windmill.tr .windmill-spin{animation-duration:4s;animation-direction:reverse}
+    .windmill.bl .windmill-spin{animation-duration:3.5s}
+    .windmill.br .windmill-spin{animation-duration:2.5s;animation-direction:reverse}
+    @keyframes wmSpin{to{transform:rotate(360deg)}}
+
+    /* Grass at bottom */
+    .grass-row{position:fixed;bottom:0;left:0;right:0;pointer-events:none;z-index:10001;display:flex;overflow:hidden;height:35px}
+    .grass-blade{width:12px;height:30px;background:linear-gradient(to top,#228B22,#32CD32);border-radius:80% 80% 0 0;flex-shrink:0;transform-origin:bottom center;animation:grassSway 2s ease-in-out infinite}
+    @keyframes grassSway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+
+    /* Feather particles */
+    .feather{position:fixed;pointer-events:none;z-index:10000;animation:featherFall 1.5s ease-out forwards}
+    @keyframes featherFall{
+      0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1)}
+      100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(0.3)}
+    }
+    /* Gold stars */
+    .gold-star{position:fixed;pointer-events:none;z-index:10000;color:#ffd700;text-shadow:0 0 10px #ffd700,0 0 20px #ff8c00;animation:starBurst 0.7s ease-out forwards}
+    @keyframes starBurst{0%{opacity:1;transform:translate(0,0) scale(1.5) rotate(0deg)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0.2) rotate(360deg)}}
+    /* Shockwave */
+    .farm-shockwave{position:fixed;pointer-events:none;z-index:10000;border-radius:50%;border:3px solid rgba(255,215,0,0.6);box-shadow:0 0 15px rgba(255,215,0,0.3);animation:farmShock 0.5s ease-out forwards}
+    @keyframes farmShock{0%{width:0;height:0;opacity:1;transform:translate(-50%,-50%)}100%{width:300px;height:300px;opacity:0;transform:translate(-50%,-50%)}}
+    /* Screen shake */
+    @keyframes farmShake{0%,100%{transform:translate(0,0)}10%{transform:translate(-4px,2px)}30%{transform:translate(4px,-2px)}50%{transform:translate(-2px,4px)}70%{transform:translate(2px,-1px)}90%{transform:translate(-1px,1px)}}
   </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
 </head>
 <body>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none">⬅ More Games at GameZipper.com</a>
   <canvas id="gameCanvas"></canvas>
+
+  <!-- Windmill decorations -->
+  <div class="windmill tl"><span class="windmill-spin">🌀</span></div>
+  <div class="windmill tr"><span class="windmill-spin">🌀</span></div>
+  <div class="windmill bl"><span class="windmill-spin">🌀</span></div>
+  <div class="windmill br"><span class="windmill-spin">🌀</span></div>
+
+  <!-- Grass row -->
+  <div class="grass-row" id="grass-row"></div>
+
   <!-- FX Overlay -->
   <div id="fx-overlay" style="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden"></div>
-  <style>
-  .fx-flash{position:fixed;inset:0;pointer-events:none;animation:fxFlash .3s ease-out forwards}
-  @keyframes fxFlash{0%{opacity:1}100%{opacity:0}}
-  .fx-float{position:fixed;pointer-events:none;font-size:28px;font-weight:bold;color:#ffd700;text-shadow:0 0 10px rgba(255,215,0,.8),2px 2px 4px rgba(0,0,0,.5);animation:fxFloat 1s cubic-bezier(.25,.46,.45,.94) forwards;z-index:10000}
-  @keyframes fxFloat{0%{opacity:1;transform:translateY(0) scale(1.5)}100%{opacity:0;transform:translateY(-80px) scale(0.8)}}
-  .fx-particle{position:fixed;border-radius:50%;pointer-events:none;z-index:10000;animation:fxPart .8s ease-out forwards}
-  @keyframes fxPart{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0)}}
-  .fx-star{position:fixed;pointer-events:none;z-index:10000;font-size:20px;animation:fxStar .6s ease-out forwards}
-  @keyframes fxStar{0%{opacity:1;transform:translate(0,0) scale(1) rotate(0deg)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0.3) rotate(360deg)}}
-  </style>
+
   <script>
   (function(){
     const overlay=document.getElementById('fx-overlay');
     const canvas=document.getElementById('gameCanvas');
-    function spawnCatchFX(x,y){
-      const colors=['#ff6b6b','#ffd700','#4ecdc4','#ff69b4','#ff8c00'];
-      for(let i=0;i<15;i++){
-        const p=document.createElement('div');p.className='fx-particle';
-        const sz=4+Math.random()*8;
-        p.style.width=sz+'px';p.style.height=sz+'px';
-        p.style.background=colors[i%colors.length];
-        p.style.left=x+'px';p.style.top=y+'px';
-        const angle=Math.random()*Math.PI*2,dist=30+Math.random()*70;
-        p.style.setProperty('--dx',Math.cos(angle)*dist+'px');
-        p.style.setProperty('--dy',Math.sin(angle)*dist+'px');
-        overlay.appendChild(p);setTimeout(()=>p.remove(),800);
+
+    // === Generate grass blades ===
+    const grassRow=document.getElementById('grass-row');
+    const bladeCount=Math.ceil(window.innerWidth/10);
+    for(let i=0;i<bladeCount;i++){
+      const b=document.createElement('div');
+      b.className='grass-blade';
+      b.style.animationDelay=(Math.random()*2)+'s';
+      b.style.height=(22+Math.random()*16)+'px';
+      const greens=['#228B22','#2E8B57','#32CD32','#006400','#3CB371'];
+      b.style.background=`linear-gradient(to top,${greens[Math.floor(Math.random()*greens.length)]},${greens[Math.floor(Math.random()*greens.length)]})`;
+      grassRow.appendChild(b);
+    }
+
+    // === Falling leaves ===
+    const leaves=[];
+    const leafEmojis=['🍂','🍃','🍁','🌿'];
+    const LEAF_COUNT=10;
+    for(let i=0;i<LEAF_COUNT;i++){
+      const el=document.createElement('div');
+      el.className='leaf';
+      el.textContent=leafEmojis[Math.floor(Math.random()*leafEmojis.length)];
+      el.style.fontSize=(14+Math.random()*10)+'px';
+      document.body.appendChild(el);
+      leaves.push({
+        el,x:Math.random()*window.innerWidth,y:-30-Math.random()*300,
+        speed:0.4+Math.random()*0.6,drift:Math.random()*0.8-0.4,
+        rot:Math.random()*360,rotSpeed:Math.random()*1.5-0.75
+      });
+    }
+
+    function animLeaves(){
+      const h=window.innerHeight,w=window.innerWidth;
+      for(const l of leaves){
+        l.y+=l.speed;l.x+=l.drift+Math.sin(l.rot*0.02)*0.3;l.rot+=l.rotSpeed;
+        if(l.y>h+30){l.y=-30;l.x=Math.random()*w;}
+        l.el.style.transform=`translate(${l.x}px,${l.y}px) rotate(${l.rot}deg)`;
       }
-      const stars=['⭐','✨','🌟'];
-      for(let i=0;i<5;i++){
-        const s=document.createElement('div');s.className='fx-star';
-        s.textContent=stars[i%stars.length];
+      requestAnimationFrame(animLeaves);
+    }
+    animLeaves();
+
+    // === Click Effects ===
+    const featherColors=['#D2691E','#DEB887','#F4A460','#CD853F','#8B4513','#A0522D','#FFD700','#FF6347','#FF4500','#DA70D6'];
+
+    function spawnFeathers(x,y){
+      // 25 feather particles
+      for(let i=0;i<25;i++){
+        const f=document.createElement('div');
+        f.className='feather';
+        f.style.left=x+'px';f.style.top=y+'px';
+        const sz=6+Math.random()*10;
+        f.style.width=sz*0.4+'px';
+        f.style.height=sz+'px';
+        f.style.borderRadius='50%';
+        f.style.background=featherColors[Math.floor(Math.random()*featherColors.length)];
+        const angle=Math.random()*Math.PI*2;
+        const dist=50+Math.random()*120;
+        const dy=Math.sin(angle)*dist+60; // gravity
+        f.style.setProperty('--dx',Math.cos(angle)*dist+'px');
+        f.style.setProperty('--dy',dy+'px');
+        f.style.setProperty('--rot',(Math.random()*540-270)+'deg');
+        f.style.animationDuration=(1.0+Math.random()*0.8)+'s';
+        overlay.appendChild(f);
+        setTimeout(()=>f.remove(),1800);
+      }
+
+      // 5 big stars + 15 small stars
+      for(let i=0;i<20;i++){
+        const s=document.createElement('div');
+        s.className='gold-star';
+        s.textContent=i<5?'★':'✦';
+        s.style.fontSize=i<5?(20+Math.random()*12)+'px':(10+Math.random()*8)+'px';
         s.style.left=x+'px';s.style.top=y+'px';
-        const angle=Math.random()*Math.PI*2,dist=40+Math.random()*60;
+        const angle=Math.random()*Math.PI*2;
+        const dist=(i<5?60:30)+Math.random()*100;
         s.style.setProperty('--dx',Math.cos(angle)*dist+'px');
         s.style.setProperty('--dy',Math.sin(angle)*dist+'px');
-        overlay.appendChild(s);setTimeout(()=>s.remove(),600);
+        overlay.appendChild(s);
+        setTimeout(()=>s.remove(),700);
       }
-      // Screen flash
-      const f=document.createElement('div');f.className='fx-flash';
-      f.style.background='radial-gradient(circle at '+x+'px '+y+'px,rgba(255,200,50,0.35),transparent 50%)';
-      overlay.appendChild(f);setTimeout(()=>f.remove(),300);
+
+      // Shockwave
+      const sw=document.createElement('div');
+      sw.className='farm-shockwave';
+      sw.style.left=x+'px';sw.style.top=y+'px';
+      overlay.appendChild(sw);
+      setTimeout(()=>sw.remove(),500);
+
+      // Screen shake
+      document.body.style.animation='farmShake 0.25s ease-out';
+      setTimeout(()=>document.body.style.animation='',300);
     }
+
     canvas.addEventListener('pointerdown',function(e){
-      setTimeout(()=>spawnCatchFX(e.clientX,e.clientY),100);
+      setTimeout(()=>spawnFeathers(e.clientX,e.clientY),100);
     });
   })();
   </script>
@@ -77,7 +181,7 @@
 🏆 Collect all turkeys to complete each level
 </p>
 <p style="font-size:14px;color:#aaa;margin-top:12px">⭐ Special turkeys give bonus points!</p>
-<button onclick="document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_turkey','1')" style="margin-top:20px;padding:14px 36px;font-size:18px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff6b6b,#ffa500);color:#fff;cursor:pointer;font-weight:bold">Got it! 🎮</button>
+<button onclick="document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_turkey','1')" ontouchstart="event.stopPropagation();document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_turkey','1')" ontouchstart="event.stopPropagation();document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_turkey','1')" style="margin-top:20px;padding:14px 36px;font-size:18px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff6b6b,#ffa500);color:#fff;cursor:pointer;font-weight:bold">Got it! 🎮</button>
 </div></div>
 <script>if(localStorage.getItem('tutorial_turkey'))document.getElementById('tutorial-overlay').remove();</script>
 </body>
