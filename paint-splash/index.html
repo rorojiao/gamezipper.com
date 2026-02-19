@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Paint Splash - Color Puzzle Art Game | GameZipper</title>
+<meta name="description" content="Swipe and match colorful paint blocks to create stunning abstract art! A satisfying color splash puzzle game with 15+ levels. Play free online!">
+<meta name="keywords" content="paint puzzle, color splash, art game, color matching game, paint splash game, puzzle game, free online game">
+<meta property="og:title" content="Paint Splash - Color Puzzle Art Game">
+<meta property="og:description" content="Swipe color blocks, make paint splash, create art! Free browser puzzle game.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/paint-splash/">
+<link rel="canonical" href="https://gamezipper.com/paint-splash/">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
+<script src="../game-audio.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+body{background:#f5f0eb;display:flex;flex-direction:column;align-items:center}
+#top-bar{position:fixed;top:0;left:0;right:0;background:rgba(255,255,255,0.95);color:#333;text-align:center;padding:4px;font-size:12px;z-index:99999;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,0.1)}
+#top-bar a{color:#4488FF;text-decoration:none;padding:0 12px;font-weight:600}
+#wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;padding:40px 8px 8px;max-width:500px}
+#header{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px}
+h1{font-size:clamp(16px,4.5vw,24px);color:#333;font-weight:900}
+h1 span{background:linear-gradient(135deg,#FF4444,#4488FF,#FFD700,#44BB44,#9944FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.info-bar{display:flex;gap:8px}
+.info-box{background:#fff;border-radius:10px;padding:4px 12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);border:2px solid #eee}
+.info-box .label{font-size:9px;color:#999;text-transform:uppercase;font-weight:700}
+.info-box .val{font-size:clamp(14px,3.5vw,20px);font-weight:800;color:#333}
+#game-area{position:relative;width:100%;flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:0}
+#canvas-container{position:relative;width:100%;aspect-ratio:1/1;max-height:calc(100vh - 180px);border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.12);background:#fff;border:3px solid #e0d5cc}
+canvas#gameCanvas{width:100%;height:100%;display:block}
+#paint-progress{width:100%;height:8px;background:#e8e0d8;border-radius:4px;overflow:hidden;margin-top:2px}
+#paint-fill{height:100%;background:linear-gradient(90deg,#FF4444,#FFD700,#44BB44,#4488FF,#9944FF);border-radius:4px;transition:width 0.5s ease;width:0%}
+#btns{display:flex;gap:8px;margin-top:4px;width:100%}
+.btn{flex:1;background:#fff;border:2px solid #ddd;color:#555;padding:8px 12px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:700;transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,0.06)}
+.btn:active{transform:scale(.95);background:#f0f0f0}
+.btn.primary{background:linear-gradient(135deg,#4488FF,#6644FF);color:#fff;border-color:transparent}
+#mute-btn{position:fixed;bottom:10px;right:10px;z-index:999;background:#fff;border:2px solid #ddd;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+/* Overlays */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:10000;padding:20px}
+.overlay.show{display:flex}
+.overlay-box{background:#fff;border-radius:20px;padding:30px;max-width:380px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);position:relative}
+.overlay-box h2{font-size:24px;color:#333;margin-bottom:12px}
+.overlay-box p{font-size:15px;color:#666;line-height:1.6;margin-bottom:8px}
+.overlay-box .btn{margin-top:16px}
+/* Stars */
+.stars-row{display:flex;justify-content:center;gap:8px;margin:12px 0}
+.star{font-size:36px;opacity:0.2;transition:all 0.5s;transform:scale(0.5)}
+.star.earned{opacity:1;transform:scale(1);filter:drop-shadow(0 0 6px gold)}
+/* Level select */
+#level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:16px 0;max-height:300px;overflow-y:auto}
+.lvl-btn{width:100%;aspect-ratio:1;border-radius:10px;border:2px solid #ddd;background:#fff;font-size:16px;font-weight:800;cursor:pointer;position:relative;color:#333;transition:all .15s}
+.lvl-btn.locked{opacity:0.4;cursor:default;color:#ccc}
+.lvl-btn.current{border-color:#4488FF;background:#e8f0ff}
+.lvl-btn .lvl-stars{position:absolute;bottom:2px;left:0;right:0;font-size:8px;text-align:center}
+/* Cookie consent */
+#cookie{position:fixed;bottom:0;left:0;right:0;background:#333;color:#fff;padding:12px 20px;font-size:12px;z-index:100000;display:none;align-items:center;justify-content:space-between}
+#cookie.show{display:flex}
+#cookie button{background:#4488FF;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-weight:600}
+/* Paint canvas overlay for result */
+#result-painting{border:8px solid #e0d5cc;border-radius:12px;margin:12px auto;box-shadow:0 4px 16px rgba(0,0,0,0.15)}
+</style>
+</head>
+<body>
+<div id="top-bar">
+<a href="https://gamezipper.com">⬅ GameZipper</a>
+<span style="font-weight:700;color:#666">🎨 Paint Splash</span>
+<a href="https://gamezipper.com">More Games ➡</a>
+</div>
+
+<div id="wrap">
+<div id="header">
+<h1>🎨 <span>Paint Splash</span></h1>
+<div class="info-bar">
+<div class="info-box"><div class="label">Level</div><div class="val" id="level-num">1</div></div>
+<div class="info-box"><div class="label">Moves</div><div class="val" id="moves-left">20</div></div>
+<div class="info-box"><div class="label">Paint</div><div class="val" id="paint-pct">0%</div></div>
+</div>
+</div>
+<div id="game-area">
+<div id="canvas-container"><canvas id="gameCanvas"></canvas></div>
+<div id="paint-progress"><div id="paint-fill"></div></div>
+<div id="btns">
+<button class="btn" onclick="G.showLevels()">📋 Levels</button>
+<button class="btn" onclick="G.restart()">🔄 Restart</button>
+<button class="btn primary" onclick="G.undo()">↩ Undo</button>
+</div>
+</div>
+</div>
+
+<button id="mute-btn" onclick="G.toggleMute()">🔊</button>
+
+<!-- Tutorial overlay -->
+<div class="overlay" id="tutorial-overlay">
+<div class="overlay-box">
+<div style="font-size:60px;margin-bottom:8px">🎨</div>
+<h2>Welcome to Paint Splash!</h2>
+<p>👆 <b>Swipe</b> to slide color blocks!</p>
+<p>🎨 Match <b>3+ same colors</b> to splash paint!</p>
+<p>🖼️ Fill the canvas to complete each level!</p>
+<p style="font-size:13px;color:#999;margin-top:8px">💡 Fewer moves = more stars!</p>
+<button class="btn primary" id="tutorial-gotit" style="font-size:18px;padding:12px 40px;cursor:pointer;touch-action:manipulation">Got it! 🎨</button>
+</div>
+</div>
+
+<!-- Level complete overlay -->
+<div class="overlay" id="complete-overlay">
+<div class="overlay-box">
+<div style="font-size:48px" id="complete-emoji">🎉</div>
+<h2 id="complete-title">Level Complete!</h2>
+<div class="stars-row" id="complete-stars">
+<span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span>
+</div>
+<canvas id="result-painting" width="200" height="200"></canvas>
+<p id="complete-msg">Your abstract masterpiece!</p>
+<div style="display:flex;gap:8px;margin-top:12px">
+<button class="btn" onclick="G.showLevels()">📋 Levels</button>
+<button class="btn primary" onclick="G.nextLevel()">Next Level ➡</button>
+</div>
+</div>
+</div>
+
+<!-- Game over overlay -->
+<div class="overlay" id="gameover-overlay">
+<div class="overlay-box">
+<div style="font-size:48px">😅</div>
+<h2>Out of Moves!</h2>
+<p>You painted <span id="go-pct">0</span>% but needed <span id="go-target">60</span>%</p>
+<canvas id="go-painting" width="200" height="200"></canvas>
+<div style="display:flex;gap:8px;margin-top:12px">
+<button class="btn" onclick="G.showLevels()">📋 Levels</button>
+<button class="btn primary" onclick="G.restart()">Try Again 🔄</button>
+</div>
+</div>
+</div>
+
+<!-- Level select overlay -->
+<div class="overlay" id="levels-overlay">
+<div class="overlay-box">
+<h2>🎨 Select Level</h2>
+<div id="level-grid"></div>
+<button class="btn" onclick="document.getElementById('levels-overlay').classList.remove('show')">Close</button>
+</div>
+</div>
+
+<!-- Cookie consent -->
+<div id="cookie">
+<span>🍪 We use cookies to save your progress.</span>
+<button onclick="document.getElementById('cookie').classList.remove('show');localStorage.setItem('ps_cookie','1')">OK</button>
+</div>
+
+<script>
+'use strict';
+const G = (function(){
+// === CONSTANTS ===
+const GRID=6, COLORS=['#FF4444','#4488FF','#FFD700','#44BB44','#9944FF','#FF8800','#FF69B4','#00CED1'];
+const COLOR_NAMES=['Red','Blue','Yellow','Green','Purple','Orange','Pink','Teal'];
+
+// === LEVELS ===
+const LEVELS=[];
+for(let i=0;i<20;i++){
+  const numColors=Math.min(4+Math.floor(i/4),8);
+  const target=Math.min(55+i*2.5,95);
+  const moves=Math.max(30-i,12);
+  LEVELS.push({id:i+1,colors:numColors,target,moves,movesStar2:Math.floor(moves*0.7),movesStar3:Math.floor(moves*0.45)});
+}
+
+// === STATE ===
+let canvas,ctx,W,H,cellSize,gridOffsetX,gridOffsetY;
+let grid=[],paintCanvas,paintCtx;
+let currentLevel=0,movesLeft=0,paintPercent=0,undoStack=[];
+let animating=false,particles=[],splashes=[],blockAnims=[];
+let muted=false,progress={};
+let swipeStartX,swipeStartY,swiping=false;
+
+// === INIT ===
+function init(){
+  canvas=document.getElementById('gameCanvas');
+  ctx=canvas.getContext('2d');
+  // Create offscreen paint canvas
+  paintCanvas=document.createElement('canvas');
+  paintCanvas.width=300;paintCanvas.height=300;
+  paintCtx=paintCanvas.getContext('2d');
+  
+  loadProgress();
+  resize();
+  window.addEventListener('resize',resize);
+  
+  // Input
+  canvas.addEventListener('mousedown',onDown);
+  canvas.addEventListener('mousemove',onMove);
+  canvas.addEventListener('mouseup',onUp);
+  canvas.addEventListener('touchstart',onTouchStart,{passive:false});
+  canvas.addEventListener('touchmove',onTouchMove,{passive:false});
+  canvas.addEventListener('touchend',onTouchEnd,{passive:false});
+  document.addEventListener('keydown',onKey);
+  
+  // Tutorial
+  if(!localStorage.getItem('ps_tutorial')){
+    document.getElementById('tutorial-overlay').classList.add('show');
+  }
+  document.getElementById('tutorial-gotit').addEventListener('mousedown',closeTutorial);
+  document.getElementById('tutorial-gotit').addEventListener('touchend',function(e){e.preventDefault();closeTutorial();});
+  
+  // Cookie
+  if(!localStorage.getItem('ps_cookie')){
+    document.getElementById('cookie').classList.add('show');
+  }
+  
+  startLevel(progress.currentLevel||0);
+  requestAnimationFrame(loop);
+}
+
+function closeTutorial(){
+  document.getElementById('tutorial-overlay').classList.remove('show');
+  localStorage.setItem('ps_tutorial','1');
+}
+
+function resize(){
+  const dpr=window.devicePixelRatio||1;
+  const container=document.getElementById('canvas-container');
+  const w=container.clientWidth,h=container.clientHeight;
+  canvas.width=w*dpr;canvas.height=h*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  W=w;H=h;
+  // Grid sizing: grid takes ~65% of canvas, paint area on top-right
+  const gridArea=Math.min(W,H)*0.62;
+  cellSize=gridArea/GRID;
+  gridOffsetX=(W-GRID*cellSize)/2;
+  gridOffsetY=H-GRID*cellSize-(H*0.06);
+}
+
+// === LEVEL ===
+function startLevel(lvlIdx){
+  if(lvlIdx>=LEVELS.length)lvlIdx=LEVELS.length-1;
+  currentLevel=lvlIdx;
+  const lvl=LEVELS[lvlIdx];
+  movesLeft=lvl.moves;
+  paintPercent=0;
+  undoStack=[];
+  particles=[];splashes=[];blockAnims=[];
+  animating=false;
+  
+  // Clear paint canvas
+  paintCtx.fillStyle='#fff';
+  paintCtx.fillRect(0,0,300,300);
+  
+  // Generate grid
+  grid=[];
+  for(let r=0;r<GRID;r++){
+    grid[r]=[];
+    for(let c=0;c<GRID;c++){
+      grid[r][c]=Math.floor(Math.random()*lvl.colors);
+    }
+  }
+  // Ensure no initial matches
+  clearMatches(false);
+  
+  updateUI();
+}
+
+function updateUI(){
+  document.getElementById('level-num').textContent=currentLevel+1;
+  document.getElementById('moves-left').textContent=movesLeft;
+  document.getElementById('paint-pct').textContent=Math.floor(paintPercent)+'%';
+  document.getElementById('paint-fill').style.width=Math.min(paintPercent,100)+'%';
+}
+
+// === GRID LOGIC ===
+function slideGrid(dir){
+  if(animating||movesLeft<=0)return false;
+  
+  const oldGrid=grid.map(r=>[...r]);
+  let moved=false;
+  
+  if(dir==='left'||dir==='right'){
+    for(let r=0;r<GRID;r++){
+      let row=grid[r].slice();
+      if(dir==='right')row.reverse();
+      let newRow=row.filter(v=>v!==-1);
+      while(newRow.length<GRID)newRow.push(-1);
+      if(dir==='right')newRow.reverse();
+      for(let c=0;c<GRID;c++){
+        if(newRow[c]!==grid[r][c])moved=true;
+        grid[r][c]=newRow[c];
+      }
+    }
+  } else {
+    for(let c=0;c<GRID;c++){
+      let col=[];
+      for(let r=0;r<GRID;r++)col.push(grid[r][c]);
+      if(dir==='down')col.reverse();
+      let newCol=col.filter(v=>v!==-1);
+      while(newCol.length<GRID)newCol.push(-1);
+      if(dir==='down')newCol.reverse();
+      for(let r=0;r<GRID;r++){
+        if(newCol[r]!==grid[r][c])moved=true;
+        grid[r][c]=newCol[r];
+      }
+    }
+  }
+  
+  if(!moved)return false;
+  
+  undoStack.push(oldGrid);
+  if(undoStack.length>5)undoStack.shift();
+  movesLeft--;
+  
+  GameAudio.play('swoosh');
+  
+  // Check and clear matches
+  setTimeout(()=>clearMatches(true),150);
+  updateUI();
+  return true;
+}
+
+function findMatches(){
+  const visited=Array.from({length:GRID},()=>Array(GRID).fill(false));
+  const groups=[];
+  
+  for(let r=0;r<GRID;r++){
+    for(let c=0;c<GRID;c++){
+      if(visited[r][c]||grid[r][c]===-1)continue;
+      const color=grid[r][c];
+      const group=[];
+      const stack=[[r,c]];
+      visited[r][c]=true;
+      while(stack.length){
+        const[cr,cc]=stack.pop();
+        group.push([cr,cc]);
+        for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){
+          const nr=cr+dr,nc=cc+dc;
+          if(nr>=0&&nr<GRID&&nc>=0&&nc<GRID&&!visited[nr][nc]&&grid[nr][nc]===color){
+            visited[nr][nc]=true;
+            stack.push([nr,nc]);
+          }
+        }
+      }
+      if(group.length>=3)groups.push({color,cells:group});
+    }
+  }
+  return groups;
+}
+
+function clearMatches(doEffects){
+  const groups=findMatches();
+  if(groups.length===0){
+    if(doEffects)checkGameState();
+    return;
+  }
+  
+  for(const g of groups){
+    const colorHex=COLORS[g.color];
+    // Calculate center of group for splash
+    let cx=0,cy=0;
+    for(const[r,c]of g.cells){cx+=c;cy+=r;}
+    cx/=g.cells.length;cy/=g.cells.length;
+    
+    if(doEffects){
+      // Paint splash on canvas
+      addPaintSplash(colorHex,g.cells.length);
+      // Particle effects at grid position
+      const px=gridOffsetX+(cx+0.5)*cellSize;
+      const py=gridOffsetY+(cy+0.5)*cellSize;
+      spawnSplashParticles(px,py,colorHex,g.cells.length);
+      // Screen splashes
+      splashes.push({x:px,y:py,color:colorHex,t:0,size:g.cells.length*8});
+      
+      GameAudio.play('match');
+      setTimeout(()=>GameAudio.play('pour'),100);
+    }
+    
+    // Remove cells
+    for(const[r,c]of g.cells)grid[r][c]=-1;
+    
+    // Add paint
+    paintPercent+=g.cells.length*1.8;
+  }
+  
+  // Gravity: fill gaps
+  for(let c=0;c<GRID;c++){
+    let write=GRID-1;
+    for(let r=GRID-1;r>=0;r--){
+      if(grid[r][c]!==-1){
+        grid[write][c]=grid[r][c];
+        if(write!==r)grid[r][c]=-1;
+        write--;
+      }
+    }
+    // Fill top with new blocks
+    const lvl=LEVELS[currentLevel];
+    for(let r=write;r>=0;r--){
+      grid[r][c]=Math.floor(Math.random()*lvl.colors);
+    }
+  }
+  
+  updateUI();
+  
+  // Chain check
+  setTimeout(()=>clearMatches(doEffects),250);
+}
+
+function addPaintSplash(color,size){
+  const px=Math.random()*260+20;
+  const py=Math.random()*260+20;
+  const radius=8+size*4+Math.random()*15;
+  
+  paintCtx.save();
+  paintCtx.globalAlpha=0.7+Math.random()*0.3;
+  
+  // Main splash circle
+  const grad=paintCtx.createRadialGradient(px,py,0,px,py,radius);
+  grad.addColorStop(0,color);
+  grad.addColorStop(0.7,color+'CC');
+  grad.addColorStop(1,color+'00');
+  paintCtx.fillStyle=grad;
+  paintCtx.beginPath();
+  paintCtx.arc(px,py,radius,0,Math.PI*2);
+  paintCtx.fill();
+  
+  // Splatter droplets
+  for(let i=0;i<8+size*2;i++){
+    const angle=Math.random()*Math.PI*2;
+    const dist=radius+Math.random()*radius*0.8;
+    const dx=px+Math.cos(angle)*dist;
+    const dy=py+Math.sin(angle)*dist;
+    const dr=1.5+Math.random()*4;
+    paintCtx.fillStyle=color;
+    paintCtx.globalAlpha=0.5+Math.random()*0.5;
+    paintCtx.beginPath();
+    paintCtx.arc(dx,dy,dr,0,Math.PI*2);
+    paintCtx.fill();
+  }
+  
+  // Paint streak
+  paintCtx.strokeStyle=color;
+  paintCtx.lineWidth=2+Math.random()*3;
+  paintCtx.globalAlpha=0.4;
+  paintCtx.beginPath();
+  paintCtx.moveTo(px,py);
+  paintCtx.quadraticCurveTo(px+Math.random()*60-30,py+Math.random()*60-30,px+Math.random()*80-40,py+Math.random()*80-40);
+  paintCtx.stroke();
+  
+  paintCtx.restore();
+}
+
+function spawnSplashParticles(x,y,color,count){
+  const num=15+count*3;
+  for(let i=0;i<num;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=2+Math.random()*6;
+    particles.push({
+      x,y,
+      vx:Math.cos(angle)*speed,
+      vy:Math.sin(angle)*speed-2,
+      size:2+Math.random()*5,
+      color,
+      life:1,
+      decay:0.015+Math.random()*0.02,
+      gravity:0.15
+    });
+  }
+}
+
+function checkGameState(){
+  const lvl=LEVELS[currentLevel];
+  if(paintPercent>=lvl.target){
+    // Win!
+    setTimeout(()=>showComplete(),300);
+  } else if(movesLeft<=0){
+    setTimeout(()=>showGameOver(),300);
+  }
+}
+
+// === COMPLETE / GAMEOVER ===
+function showComplete(){
+  const lvl=LEVELS[currentLevel];
+  const usedMoves=lvl.moves-movesLeft;
+  let stars=1;
+  if(usedMoves<=lvl.movesStar2)stars=2;
+  if(usedMoves<=lvl.movesStar3)stars=3;
+  
+  // Save progress
+  if(!progress.levels)progress.levels={};
+  const prev=progress.levels[currentLevel]||0;
+  progress.levels[currentLevel]=Math.max(prev,stars);
+  if(currentLevel+1>=(progress.maxLevel||0))progress.maxLevel=currentLevel+1;
+  progress.currentLevel=currentLevel;
+  saveProgress();
+  
+  // Show overlay
+  const overlay=document.getElementById('complete-overlay');
+  const starsEl=document.getElementById('complete-stars').children;
+  for(let i=0;i<3;i++){
+    starsEl[i].className='star';
+    if(i<stars)setTimeout(()=>{starsEl[i].classList.add('earned');GameAudio.play('coin');},300+i*300);
+  }
+  
+  // Copy painting to result canvas
+  const rc=document.getElementById('result-painting');
+  rc.getContext('2d').drawImage(paintCanvas,0,0,200,200);
+  
+  document.getElementById('complete-msg').textContent=
+    stars===3?'Perfect masterpiece! 🏆':stars===2?'Beautiful work! 🎨':'Canvas complete! 🖼️';
+  
+  overlay.classList.add('show');
+  GameAudio.play('win');
+  
+  // Confetti
+  for(let i=0;i<40;i++){
+    setTimeout(()=>{
+      particles.push({
+        x:W/2+Math.random()*100-50,y:H*0.2,
+        vx:Math.random()*8-4,vy:-3-Math.random()*5,
+        size:3+Math.random()*4,
+        color:COLORS[Math.floor(Math.random()*COLORS.length)],
+        life:1,decay:0.008,gravity:0.12
+      });
+    },i*30);
+  }
+}
+
+function showGameOver(){
+  document.getElementById('go-pct').textContent=Math.floor(paintPercent);
+  document.getElementById('go-target').textContent=Math.floor(LEVELS[currentLevel].target);
+  const rc=document.getElementById('go-painting');
+  rc.getContext('2d').drawImage(paintCanvas,0,0,200,200);
+  document.getElementById('gameover-overlay').classList.add('show');
+  GameAudio.play('error');
+}
+
+function nextLevel(){
+  document.getElementById('complete-overlay').classList.remove('show');
+  startLevel(Math.min(currentLevel+1,LEVELS.length-1));
+}
+
+// === INPUT ===
+function onDown(e){swipeStartX=e.clientX;swipeStartY=e.clientY;swiping=true;}
+function onMove(e){if(!swiping)return;}
+function onUp(e){
+  if(!swiping)return;swiping=false;
+  handleSwipe(e.clientX-swipeStartX,e.clientY-swipeStartY);
+}
+function onTouchStart(e){
+  if(e.target.tagName!=='CANVAS')return;
+  e.preventDefault();
+  const t=e.touches[0];swipeStartX=t.clientX;swipeStartY=t.clientY;swiping=true;
+  // Start BGM on first touch
+  GameAudio.playBGM('paint-splash');
+}
+function onTouchMove(e){if(e.target.tagName!=='CANVAS')return;e.preventDefault();}
+function onTouchEnd(e){
+  if(!swiping)return;swiping=false;
+  const t=e.changedTouches[0];
+  handleSwipe(t.clientX-swipeStartX,t.clientY-swipeStartY);
+}
+function handleSwipe(dx,dy){
+  const minDist=30;
+  if(Math.abs(dx)<minDist&&Math.abs(dy)<minDist)return;
+  if(Math.abs(dx)>Math.abs(dy)){
+    slideGrid(dx>0?'right':'left');
+  }else{
+    slideGrid(dy>0?'down':'up');
+  }
+}
+function onKey(e){
+  const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};
+  if(map[e.key]){e.preventDefault();slideGrid(map[e.key]);}
+}
+
+// === RENDER ===
+function loop(t){
+  requestAnimationFrame(loop);
+  draw(t);
+  updateParticles();
+}
+
+function draw(t){
+  ctx.clearRect(0,0,W,H);
+  
+  // Background with subtle paint drips
+  ctx.fillStyle='#faf6f1';
+  ctx.fillRect(0,0,W,H);
+  drawBgDrips(t);
+  
+  // Draw miniature paint canvas in top area
+  const pcSize=Math.min(W*0.28,100);
+  const pcX=W-pcSize-10;
+  const pcY=10;
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,0.15)';ctx.shadowBlur=8;
+  ctx.fillStyle='#fff';
+  ctx.fillRect(pcX-3,pcY-3,pcSize+6,pcSize+6);
+  ctx.restore();
+  ctx.strokeStyle='#d0c8c0';ctx.lineWidth=2;
+  ctx.strokeRect(pcX-3,pcY-3,pcSize+6,pcSize+6);
+  ctx.drawImage(paintCanvas,pcX,pcY,pcSize,pcSize);
+  
+  // Target indicator
+  ctx.fillStyle='#999';ctx.font='bold 9px sans-serif';ctx.textAlign='center';
+  ctx.fillText('🖼️ Canvas',pcX+pcSize/2,pcY+pcSize+12);
+  const lvl=LEVELS[currentLevel];
+  ctx.fillText('Target: '+Math.floor(lvl.target)+'%',pcX+pcSize/2,pcY+pcSize+22);
+  
+  // Draw grid
+  drawGrid(t);
+  
+  // Splashes
+  for(let i=splashes.length-1;i>=0;i--){
+    const s=splashes[i];
+    s.t+=0.03;
+    if(s.t>=1){splashes.splice(i,1);continue;}
+    ctx.save();
+    ctx.globalAlpha=1-s.t;
+    ctx.fillStyle=s.color;
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,s.size*(0.5+s.t*2),0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+  
+  // Particles
+  for(const p of particles){
+    ctx.save();
+    ctx.globalAlpha=p.life;
+    ctx.fillStyle=p.color;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawBgDrips(t){
+  ctx.save();
+  ctx.globalAlpha=0.06;
+  const drips=[
+    {x:W*0.1,color:'#FF4444',h:H*0.3},
+    {x:W*0.85,color:'#4488FF',h:H*0.25},
+    {x:W*0.5,color:'#FFD700',h:H*0.15},
+  ];
+  for(const d of drips){
+    ctx.fillStyle=d.color;
+    ctx.beginPath();
+    ctx.moveTo(d.x-4,0);
+    ctx.lineTo(d.x+4,0);
+    ctx.lineTo(d.x+2,d.h+Math.sin(t*0.001)*10);
+    ctx.quadraticCurveTo(d.x,d.h+15+Math.sin(t*0.001)*10,d.x-2,d.h+Math.sin(t*0.001)*10);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawGrid(t){
+  // Grid background
+  ctx.save();
+  ctx.fillStyle='rgba(255,255,255,0.8)';
+  const pad=4;
+  ctx.beginPath();
+  roundRect(ctx,gridOffsetX-pad,gridOffsetY-pad,GRID*cellSize+pad*2,GRID*cellSize+pad*2,12);
+  ctx.fill();
+  ctx.strokeStyle='#e0d5cc';ctx.lineWidth=2;
+  ctx.beginPath();
+  roundRect(ctx,gridOffsetX-pad,gridOffsetY-pad,GRID*cellSize+pad*2,GRID*cellSize+pad*2,12);
+  ctx.stroke();
+  ctx.restore();
+  
+  // Cells
+  const gap=3;
+  for(let r=0;r<GRID;r++){
+    for(let c=0;c<GRID;c++){
+      const val=grid[r][c];
+      const x=gridOffsetX+c*cellSize+gap;
+      const y=gridOffsetY+r*cellSize+gap;
+      const s=cellSize-gap*2;
+      
+      if(val===-1){
+        ctx.fillStyle='#f0ebe5';
+        ctx.beginPath();
+        roundRect(ctx,x,y,s,s,6);
+        ctx.fill();
+        continue;
+      }
+      
+      const color=COLORS[val];
+      // Shadow
+      ctx.save();
+      ctx.shadowColor=color+'66';ctx.shadowBlur=6;ctx.shadowOffsetY=2;
+      ctx.fillStyle=color;
+      ctx.beginPath();
+      roundRect(ctx,x,y,s,s,8);
+      ctx.fill();
+      ctx.restore();
+      
+      // Highlight
+      ctx.save();
+      ctx.globalAlpha=0.3;
+      ctx.fillStyle='#fff';
+      ctx.beginPath();
+      roundRect(ctx,x+2,y+2,s-4,s*0.4,6);
+      ctx.fill();
+      ctx.restore();
+      
+      // Paint drop icon
+      ctx.save();
+      ctx.fillStyle='#fff';
+      ctx.globalAlpha=0.6;
+      ctx.font=`${s*0.35}px sans-serif`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('💧',x+s/2,y+s/2);
+      ctx.restore();
+    }
+  }
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+}
+
+function updateParticles(){
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx;p.y+=p.vy;p.vy+=p.gravity;
+    p.life-=p.decay;
+    if(p.life<=0)particles.splice(i,1);
+  }
+}
+
+// === SAVE/LOAD ===
+function saveProgress(){localStorage.setItem('ps_progress',JSON.stringify(progress));}
+function loadProgress(){
+  try{progress=JSON.parse(localStorage.getItem('ps_progress'))||{};}catch(e){progress={};}
+  if(!progress.levels)progress.levels={};
+  if(!progress.maxLevel)progress.maxLevel=0;
+}
+
+// === LEVEL SELECT ===
+function showLevels(){
+  document.getElementById('complete-overlay').classList.remove('show');
+  document.getElementById('gameover-overlay').classList.remove('show');
+  const grid=document.getElementById('level-grid');
+  let html='';
+  for(let i=0;i<LEVELS.length;i++){
+    const unlocked=i<=Math.max(progress.maxLevel||0,0);
+    const stars=progress.levels?.[i]||0;
+    const starStr='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+    html+=`<button class="lvl-btn ${unlocked?'':'locked'} ${i===currentLevel?'current':''}" ${unlocked?`onclick="G.selectLevel(${i})"`:''}>
+      ${i+1}<div class="lvl-stars">${unlocked?starStr:''}</div></button>`;
+  }
+  grid.innerHTML=html;
+  document.getElementById('levels-overlay').classList.add('show');
+}
+
+function selectLevel(i){
+  document.getElementById('levels-overlay').classList.remove('show');
+  startLevel(i);
+}
+
+function restart(){
+  document.getElementById('complete-overlay').classList.remove('show');
+  document.getElementById('gameover-overlay').classList.remove('show');
+  startLevel(currentLevel);
+}
+
+function undo(){
+  if(!undoStack.length)return;
+  grid=undoStack.pop();
+  movesLeft++;
+  updateUI();
+  GameAudio.play('whoosh');
+}
+
+function toggleMute(){
+  const m=GameAudio.toggleMute();
+  document.getElementById('mute-btn').textContent=m?'🔇':'🔊';
+}
+
+// === PUBLIC API ===
+return{init,restart,undo,nextLevel,showLevels,selectLevel,toggleMute};
+})();
+
+// Start on load
+window.addEventListener('DOMContentLoaded',G.init);
+// First click BGM
+document.addEventListener('click',function _b(){GameAudio.playBGM('paint-splash');document.removeEventListener('click',_b);},{once:true});
+</script>
+</body>
+</html>
