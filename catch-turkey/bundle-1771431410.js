@@ -946,7 +946,7 @@ class HomeScene extends Scene {
     _animTime = 0;
     fallingItems.length = 0;
     this._initButtons();
-    Renderer.loadImage('images/title_cn.png').then(() => { _titleLoaded = true; });
+    Renderer.loadImage('images/title_en.png').then(() => { _titleLoaded = true; });
     Renderer.loadImage('images/bg_farm.png').then(() => { _bgLoaded = true; });
   }
 
@@ -1043,7 +1043,7 @@ class HomeScene extends Scene {
     const titleX = (w - titleW) / 2;
 
     if (_titleLoaded) {
-      Renderer.drawImage('images/title_cn.png', titleX, titleY, titleW, titleH);
+      Renderer.drawImage('images/title_en.png', titleX, titleY, titleW, titleH);
     } else {
       ctx.save();
       ctx.font = 'bold 48px sans-serif';
@@ -3084,7 +3084,7 @@ SceneManager.register('settings', settingsScene);
 
 // Preload key images
 const preloadImages = [
-  'images/title_cn.png',
+  'images/title_en.png',
   'images/bg_farm.png',
   'images/turkey_red.png',
   'images/turkey_blue.png',
