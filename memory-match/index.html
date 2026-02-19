@@ -6,130 +6,113 @@
 <title>🧠 Memory Master</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0520}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 30%,#1a0a40 0%,#0a0520 60%,#050210 100%);z-index:0}
-body::after{content:'';position:fixed;inset:0;background:repeating-conic-gradient(from 0deg at 50% 50%,transparent 0deg,rgba(167,139,250,0.02) 30deg,transparent 60deg);z-index:0;pointer-events:none}
-canvas{display:block;width:100%;height:100%;touch-action:none;position:relative;z-index:1}
+html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#1a1a2e}
+canvas#c{display:block;width:100%;height:100%;touch-action:none;position:relative;z-index:1}
 
-/* Magic overlay layer */
-#magic-overlay{position:fixed;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+/* Carnival striped background */
+#carnivalBg{position:fixed;inset:0;z-index:0;
+  background:repeating-linear-gradient(45deg,#c0392b 0px,#c0392b 30px,#96281b 30px,#96281b 60px);
+}
 
-/* Magic dust particles */
-.magic-dust{position:absolute;border-radius:50%;pointer-events:none}
-@keyframes dustFloat{0%{transform:translateY(-20px) scale(1);opacity:0}10%{opacity:0.8}80%{opacity:0.5}100%{transform:translateY(100vh) scale(0.3);opacity:0}}
-@keyframes dustTwinkle{0%,100%{opacity:0.3;box-shadow:0 0 4px currentColor}50%{opacity:1;box-shadow:0 0 10px currentColor}}
+/* Floating balloons */
+@keyframes floatUp{
+  0%{transform:translateY(110vh) translateX(0);opacity:0.8}
+  50%{transform:translateY(50vh) translateX(20px);opacity:0.9}
+  100%{transform:translateY(-20vh) translateX(-10px);opacity:0.7}
+}
+@keyframes sway{
+  0%,100%{margin-left:0}
+  25%{margin-left:15px}
+  75%{margin-left:-15px}
+}
+.balloon{position:fixed;z-index:0;width:40px;height:50px;border-radius:50%;
+  animation:floatUp linear infinite,sway 3s ease-in-out infinite;
+  pointer-events:none;opacity:0.7;
+  box-shadow:inset -8px -4px 0 rgba(0,0,0,0.15)}
+.balloon::after{content:'';position:absolute;bottom:-12px;left:50%;width:2px;height:14px;background:rgba(0,0,0,0.3);transform:translateX(-50%)}
 
-/* Corner rune circles */
-.rune-circle{position:fixed;width:80px;height:80px;border:2px solid rgba(167,139,250,0.15);border-radius:50%;pointer-events:none;z-index:2}
-.rune-circle::before{content:'✦';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:rgba(167,139,250,0.3)}
-.rune-circle.tl{top:10px;left:10px;animation:runeRotate 12s linear infinite}
-.rune-circle.tr{top:10px;right:10px;animation:runeRotate 15s linear infinite reverse}
-.rune-circle.bl{bottom:10px;left:10px;animation:runeRotate 18s linear infinite}
-.rune-circle.br{bottom:10px;right:10px;animation:runeRotate 10s linear infinite reverse}
-@keyframes runeRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+/* Bunting flags in corners */
+.bunting{position:fixed;z-index:2;pointer-events:none}
+.bunting-top-left{top:28px;left:0}
+.bunting-top-right{top:28px;right:0}
+.bunting-bottom-left{bottom:0;left:0}
+.bunting-bottom-right{bottom:0;right:0}
+.bunting .flag{display:inline-block;width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:20px solid;margin:0 2px}
 
-/* Click effects */
-.magic-ring{position:absolute;border:2px solid rgba(167,139,250,0.6);border-radius:50%;pointer-events:none;animation:ringExpand 0.5s ease-out forwards}
-@keyframes ringExpand{0%{width:0;height:0;opacity:1;transform:translate(-50%,-50%)}100%{width:200px;height:200px;opacity:0;transform:translate(-50%,-50%)}}
-.magic-particle{position:absolute;pointer-events:none;font-size:10px;animation:particleBurst 0.8s ease-out forwards}
-@keyframes particleBurst{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0.3)}}
-
-/* Match flash */
-#match-flash{position:fixed;inset:0;background:rgba(167,139,250,0.3);pointer-events:none;z-index:3;opacity:0;transition:opacity 0.15s}
-#match-flash.active{opacity:1}
-
-/* Gold star burst for matches */
-.gold-star{position:absolute;pointer-events:none;z-index:4;animation:starBurst 1s ease-out forwards}
-@keyframes starBurst{0%{opacity:1;transform:translate(0,0) scale(1) rotate(0deg)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0) rotate(360deg)}}
+/* Confetti */
+@keyframes confettiFall{
+  0%{transform:translateY(-20px) rotate(0deg);opacity:1}
+  100%{transform:translateY(110vh) rotate(720deg);opacity:0.3}
+}
+.confetti{position:fixed;z-index:999;width:10px;height:14px;pointer-events:none;
+  animation:confettiFall 2.5s ease-in forwards}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
 </head>
 <body>
-<a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none">⬅ More Games at GameZipper.com</a>
+<div id="carnivalBg"></div>
+
+<!-- Bunting flags -->
+<div class="bunting bunting-top-left" id="buntingTL"></div>
+<div class="bunting bunting-top-right" id="buntingTR"></div>
+<div class="bunting bunting-bottom-left" id="buntingBL"></div>
+<div class="bunting bunting-bottom-right" id="buntingBR"></div>
+
+<a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#f1c40f;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none">⬅ More Games at GameZipper.com</a>
 <canvas id="c"></canvas>
 
-<!-- Magic overlay -->
-<div id="magic-overlay">
-  <div class="rune-circle tl"></div>
-  <div class="rune-circle tr"></div>
-  <div class="rune-circle bl"></div>
-  <div class="rune-circle br"></div>
-</div>
-<div id="match-flash"></div>
+<!-- Balloon container -->
+<div id="balloons"></div>
 
 <script>
-// Spawn magic dust particles
+// Create balloons
 (function(){
-  const overlay=document.getElementById('magic-overlay');
-  for(let i=0;i<10;i++){
-    const d=document.createElement('div');
-    d.className='magic-dust';
-    const size=2+Math.random()*4;
-    const color=Math.random()>0.5?'#a78bfa':'#fbbf24';
-    d.style.cssText=`width:${size}px;height:${size}px;left:${Math.random()*100}%;top:-10px;background:${color};color:${color};animation:dustFloat ${10+Math.random()*15}s linear ${Math.random()*10}s infinite,dustTwinkle ${1+Math.random()*2}s ease-in-out infinite;box-shadow:0 0 6px ${color}`;
-    overlay.appendChild(d);
+  const colors=['#e74c3c','#3498db','#f1c40f','#2ecc71','#e74c3c','#3498db','#f1c40f','#2ecc71'];
+  const container=document.getElementById('balloons');
+  for(let i=0;i<8;i++){
+    const b=document.createElement('div');
+    b.className='balloon';
+    b.style.background=colors[i];
+    b.style.left=(5+Math.random()*85)+'%';
+    b.style.animationDuration=(12+Math.random()*10)+'s,'+(2+Math.random()*2)+'s';
+    b.style.animationDelay=(Math.random()*15)+'s,0s';
+    container.appendChild(b);
   }
 })();
 
-// Click effects on canvas
-let lastClickPos=null;
-let matchDetected=false;
-let prevMatchCount=0;
-
-document.getElementById('c').addEventListener('click',function(e){
-  const overlay=document.getElementById('magic-overlay');
-  const x=e.clientX,y=e.clientY;
-  lastClickPos={x,y};
-  
-  // Magic ring
-  const ring=document.createElement('div');
-  ring.className='magic-ring';
-  ring.style.left=x+'px';ring.style.top=y+'px';
-  overlay.appendChild(ring);
-  setTimeout(()=>ring.remove(),500);
-  
-  // Magic particles
-  const colors=['#a78bfa','#fbbf24','#60a5fa'];
-  const shapes=['✦','✧','⭑','★','✶'];
-  for(let i=0;i<15;i++){
-    const p=document.createElement('div');
-    p.className='magic-particle';
-    const angle=Math.random()*Math.PI*2;
-    const dist=40+Math.random()*80;
-    p.style.cssText=`left:${x}px;top:${y}px;color:${colors[Math.floor(Math.random()*3)]};font-size:${8+Math.random()*10}px;--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;text-shadow:0 0 6px currentColor`;
-    p.textContent=shapes[Math.floor(Math.random()*shapes.length)];
-    overlay.appendChild(p);
-    setTimeout(()=>p.remove(),800);
-  }
-});
-
-// Poll for match detection (watch for matched cards increasing)
-setInterval(function(){
-  if(typeof window._matchCount!=='undefined' && window._matchCount>prevMatchCount){
-    prevMatchCount=window._matchCount;
-    // Purple flash
-    const flash=document.getElementById('match-flash');
-    flash.classList.add('active');
-    setTimeout(()=>flash.classList.remove('active'),200);
-    // Gold stars from last click position
-    if(lastClickPos){
-      const overlay=document.getElementById('magic-overlay');
-      for(let i=0;i<20;i++){
-        const s=document.createElement('div');
-        s.className='gold-star';
-        const angle=Math.random()*Math.PI*2;
-        const dist=50+Math.random()*120;
-        s.style.cssText=`left:${lastClickPos.x}px;top:${lastClickPos.y}px;color:#ffd700;font-size:${12+Math.random()*14}px;--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;text-shadow:0 0 8px #ffd700;z-index:4`;
-        s.textContent='⭐';
-        overlay.appendChild(s);
-        setTimeout(()=>s.remove(),1000);
-      }
+// Create bunting flags
+(function(){
+  const colors=['#e74c3c','#f1c40f','#3498db','#2ecc71','#9b59b6'];
+  ['buntingTL','buntingTR','buntingBL','buntingBR'].forEach(id=>{
+    const el=document.getElementById(id);
+    for(let i=0;i<5;i++){
+      const f=document.createElement('span');
+      f.className='flag';
+      f.style.borderTopColor=colors[i%colors.length];
+      el.appendChild(f);
     }
-  }
-},100);
-</script>
+  });
+})();
 
-<script>
+// Confetti spawner for match success
+function spawnConfetti(){
+  for(let i=0;i<10;i++){
+    const c=document.createElement('div');
+    c.className='confetti';
+    const colors=['#e74c3c','#f1c40f','#3498db','#2ecc71','#9b59b6','#e67e22','#ff69b4','#00d4ff'];
+    c.style.background=colors[Math.random()*colors.length|0];
+    c.style.left=Math.random()*100+'%';
+    c.style.width=(6+Math.random()*8)+'px';
+    c.style.height=(8+Math.random()*10)+'px';
+    c.style.borderRadius=Math.random()>0.5?'0':'50%';
+    c.style.animationDuration=(1.5+Math.random()*2)+'s';
+    c.style.animationDelay=(Math.random()*0.5)+'s';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),3500);
+  }
+}
+window._spawnConfetti=spawnConfetti;
+
 (function(){
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
@@ -142,12 +125,14 @@ const themes={
 };
 const themeNames={animals:'🐱 Animals',fruits:'🍎 Fruits',flags:'🌍 Flags',faces:'😀 Emoji'};
 const themeKeys=Object.keys(themes);
+
 const difficulties=[
   {name:'Easy',cols:4,rows:3},
   {name:'Normal',cols:4,rows:4},
   {name:'Hard',cols:5,rows:4},
   {name:'Extreme',cols:6,rows:5}
 ];
+
 let state='menu';
 let selDiff=1, selTheme=0;
 let cards=[], cols=0, rows=0;
@@ -157,9 +142,6 @@ let matched=0, totalPairs=0;
 let particles=[];
 let cardAnims={};
 let bestScores=JSON.parse(localStorage.getItem('mm_best')||'{}');
-
-// Expose match count for overlay
-window._matchCount=0;
 
 let audioCtx2;
 function getAC2(){if(!audioCtx2)audioCtx2=new(window.AudioContext||window.webkitAudioContext)();return audioCtx2;}
@@ -204,7 +186,6 @@ function startGame(){
   cards=deck.map((emoji,i)=>({emoji,flipped:false,matched:false,index:i}));
   first=null;second=null;lockBoard=false;
   moves=0;elapsed=0;matched=0;
-  window._matchCount=0;
   particles=[];cardAnims={};
   state='playing';
   calcGrid();
@@ -246,7 +227,8 @@ function checkMatch(){
     matchFlashAlpha=0.4;
     sfxMatch();
     matched++;
-    window._matchCount=matched;
+    // Spawn confetti on match!
+    if(window._spawnConfetti)window._spawnConfetti();
     if(matched===totalPairs){
       state='complete';
       clearInterval(timerInterval);
@@ -285,7 +267,7 @@ function getStars(){
 function spawnParticles(ci){
   const r=cardRect(ci);
   const cx=r.x+r.w/2, cy=r.y+r.h/2;
-  const colors=['#a78bfa','#fbbf24','#c084fc','#818cf8','#e879f9','#38bdf8','#ffd700','#60a5fa'];
+  const colors=['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#96E6A1','#DDA0DD','#FF69B4','#00FF7F'];
   for(let j=0;j<24;j++){
     const angle=Math.random()*Math.PI*2;
     const speed=2+Math.random()*6;
@@ -303,111 +285,122 @@ function drawRoundRect(x,y,w,h,r){
   ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
 }
 
-function drawMagicBg(){
-  // Deep purple space
-  const g=ctx.createRadialGradient(W*0.4,H*0.3,0,W*0.5,H*0.5,Math.max(W,H)*0.7);
-  g.addColorStop(0,'#1a0a40');g.addColorStop(0.5,'#0d0525');g.addColorStop(1,'#050210');
-  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-  
-  // Subtle magic circle pattern
-  ctx.save();
-  ctx.globalAlpha=0.03;
-  ctx.strokeStyle='#a78bfa';
-  ctx.lineWidth=1;
-  const cx=W/2,cy=H/2;
-  for(let i=0;i<3;i++){
-    const r=100+i*80;
-    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
-  }
-  ctx.restore();
+function drawGradientBg(){
+  // Transparent so carnival stripes show through
+  ctx.clearRect(0,0,W,H);
+  // Semi-transparent overlay for readability
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.fillRect(0,0,W,H);
 }
 
 function drawMenu(){
-  drawMagicBg();
+  drawGradientBg();
   const cx=W/2;
+  // Carnival title
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.font='bold 42px sans-serif';ctx.fillStyle='#fff';
-  ctx.shadowColor='#a78bfa';ctx.shadowBlur=20;
-  ctx.fillText('🔮 Memory Master',cx,H*0.1);
-  ctx.shadowBlur=0;
-  ctx.font='16px sans-serif';ctx.fillStyle='rgba(167,139,250,0.7)';
-  ctx.fillText('Magical Card Matching',cx,H*0.1+40);
+  ctx.font='bold 42px sans-serif';
+  ctx.fillStyle='#e74c3c';
+  ctx.shadowColor='#f1c40f';ctx.shadowBlur=0;
+  // Gold stroke effect via multiple shadows
+  ctx.save();
+  ctx.shadowColor='#f1c40f';ctx.shadowBlur=2;ctx.shadowOffsetX=2;ctx.shadowOffsetY=2;
+  ctx.fillText('🧠 Memory Master',cx,H*0.1);
+  ctx.restore();
+  ctx.fillStyle='#e74c3c';
+  ctx.fillText('🧠 Memory Master',cx,H*0.1);
 
+  ctx.font='16px sans-serif';ctx.fillStyle='#f1c40f';
+  ctx.fillText('🎪 Card Matching Memory Game 🎪',cx,H*0.1+40);
+
+  // Difficulty buttons - ticket style
   const btnW=Math.min(260,W*0.65),btnH=48,btnGap=12;
   let startY=H*0.22;
   for(let i=0;i<difficulties.length;i++){
     const by=startY+i*(btnH+btnGap);
     const bx=cx-btnW/2;
-    drawRoundRect(bx,by,btnW,btnH,12);
+    drawRoundRect(bx,by,btnW,btnH,6);
     if(i===selDiff){
-      const bg=ctx.createLinearGradient(bx,by,bx+btnW,by);
-      bg.addColorStop(0,'#a78bfa');bg.addColorStop(1,'#818cf8');
-      ctx.fillStyle=bg;ctx.fill();
+      ctx.fillStyle='#e74c3c';ctx.fill();
+      ctx.strokeStyle='#f1c40f';ctx.lineWidth=3;ctx.stroke();
+      // Dashed ticket border
+      ctx.setLineDash([4,3]);ctx.strokeStyle='rgba(255,255,255,0.4)';
+      drawRoundRect(bx+4,by+4,btnW-8,btnH-8,4);ctx.stroke();
+      ctx.setLineDash([]);
     }else{
-      ctx.fillStyle='rgba(255,255,255,0.85)';ctx.fill();
+      ctx.fillStyle='rgba(231,76,60,0.6)';ctx.fill();
+      ctx.strokeStyle='#f1c40f';ctx.lineWidth=2;ctx.stroke();
     }
-    ctx.fillStyle=i===selDiff?'#fff':'#555';
+    ctx.fillStyle='#fff';
     ctx.font=i===selDiff?'bold 17px sans-serif':'17px sans-serif';
-    ctx.fillText(difficulties[i].name+' ('+difficulties[i].cols+'×'+difficulties[i].rows+')',cx,by+btnH/2);
+    ctx.fillText('🎟️ '+difficulties[i].name+' ('+difficulties[i].cols+'×'+difficulties[i].rows+')',cx,by+btnH/2);
     difficulties[i]._rect={x:bx,y:by,w:btnW,h:btnH};
   }
 
+  // Theme
   startY+=difficulties.length*(btnH+btnGap)+20;
-  ctx.font='bold 16px sans-serif';ctx.fillStyle='#c4b5fd';
+  ctx.font='bold 16px sans-serif';ctx.fillStyle='#f1c40f';
   ctx.fillText('Choose Theme',cx,startY);
   startY+=30;
   const tBtnW=Math.min(70,W*0.18),tBtnH=40,tGap=10;
   const totalTW=themeKeys.length*tBtnW+(themeKeys.length-1)*tGap;
   let tx=cx-totalTW/2;
-  window._tRects=[];
   for(let i=0;i<themeKeys.length;i++){
     const bx=tx+i*(tBtnW+tGap);
     drawRoundRect(bx,startY,tBtnW,tBtnH,10);
     if(i===selTheme){
-      const bg=ctx.createLinearGradient(bx,startY,bx+tBtnW,startY);
-      bg.addColorStop(0,'#a78bfa');bg.addColorStop(1,'#c084fc');
-      ctx.fillStyle=bg;ctx.fill();
+      ctx.fillStyle='#e74c3c';ctx.fill();
+      ctx.strokeStyle='#f1c40f';ctx.lineWidth=2;ctx.stroke();
+      ctx.fillStyle='#fff';
     }else{
-      ctx.fillStyle='rgba(255,255,255,0.8)';ctx.fill();
+      ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fill();
+      ctx.strokeStyle='#f1c40f';ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle='#f1c40f';
     }
-    ctx.fillStyle=i===selTheme?'#fff':'#666';
     ctx.font='13px sans-serif';
     ctx.fillText(themeNames[themeKeys[i]],bx+tBtnW/2,startY+tBtnH/2);
-    window._tRects.push({x:bx,y:startY,w:tBtnW,h:tBtnH});
+  }
+  if(!window._tRects)window._tRects=[];
+  window._tRects=[];
+  tx=cx-totalTW/2;
+  for(let i=0;i<themeKeys.length;i++){
+    window._tRects.push({x:tx+i*(tBtnW+tGap),y:startY,w:tBtnW,h:tBtnH});
   }
 
+  // Start button - golden showtime
   startY+=tBtnH+35;
-  const sBtnW=Math.min(220,W*0.55),sBtnH=54;
+  const sBtnW=Math.min(240,W*0.6),sBtnH=58;
   const sbx=cx-sBtnW/2;
-  drawRoundRect(sbx,startY,sBtnW,sBtnH,27);
-  const sg=ctx.createLinearGradient(sbx,startY,sbx+sBtnW,startY);
-  sg.addColorStop(0,'#a78bfa');sg.addColorStop(1,'#c084fc');
+  drawRoundRect(sbx,startY,sBtnW,sBtnH,29);
+  const sg=ctx.createLinearGradient(sbx,startY,sbx+sBtnW,startY+sBtnH);
+  sg.addColorStop(0,'#f1c40f');sg.addColorStop(0.5,'#f39c12');sg.addColorStop(1,'#f1c40f');
   ctx.fillStyle=sg;ctx.fill();
-  ctx.shadowColor='#a78bfa';ctx.shadowBlur=15;
-  ctx.font='bold 20px sans-serif';ctx.fillStyle='#fff';
-  ctx.fillText('Start Game 🔮',cx,startY+sBtnH/2);
-  ctx.shadowBlur=0;
+  ctx.strokeStyle='#e67e22';ctx.lineWidth=3;ctx.stroke();
+  ctx.font='bold 22px sans-serif';ctx.fillStyle='#fff';
+  ctx.save();ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=4;ctx.shadowOffsetY=2;
+  ctx.fillText('🎪 Showtime!',cx,startY+sBtnH/2);
+  ctx.restore();
   window._startBtn={x:sbx,y:startY,w:sBtnW,h:sBtnH};
 
   const key=selDiff+'_'+selTheme;
   if(bestScores[key]){
     startY+=sBtnH+25;
-    ctx.font='14px sans-serif';ctx.fillStyle='rgba(167,139,250,0.6)';
+    ctx.font='14px sans-serif';ctx.fillStyle='rgba(241,196,15,0.7)';
     ctx.fillText('Best: '+bestScores[key].moves+' moves / '+bestScores[key].time+'s',cx,startY);
   }
 }
 
 function drawPlaying(now){
-  drawMagicBg();
-  // Top bar
-  ctx.fillStyle='rgba(10,5,32,0.6)';ctx.fillRect(0,0,W,50);
+  drawGradientBg();
+  ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(0,0,W,50);
   ctx.textAlign='left';ctx.textBaseline='middle';
-  ctx.font='bold 16px sans-serif';ctx.fillStyle='#c4b5fd';
+  ctx.font='bold 16px sans-serif';ctx.fillStyle='#f1c40f';
   ctx.fillText('Moves: '+moves,15,25);
   ctx.textAlign='center';
+  ctx.fillStyle='#fff';
   ctx.fillText(difficulties[selDiff].name,W/2,25);
   ctx.textAlign='right';
   const m=(elapsed/60)|0,s=elapsed%60;
+  ctx.fillStyle='#f1c40f';
   ctx.fillText((m<10?'0':'')+m+':'+(s<10?'0':'')+s,W-15,25);
 
   for(let i=0;i<cards.length;i++){
@@ -435,17 +428,13 @@ function drawPlaying(now){
     const cx2=r.x+r.w/2, cy2=r.y+r.h/2;
     const drawW=r.w*Math.max(0.02,scaleX);
 
-    // Shadow with purple glow
-    ctx.shadowColor='rgba(167,139,250,0.3)';
-    ctx.shadowBlur=10;
     ctx.fillStyle='rgba(0,0,0,0.2)';
     drawRoundRect(cx2-drawW/2+2,r.y+3,drawW,r.h,10);ctx.fill();
-    ctx.shadowBlur=0;
 
     if(showFront){
       drawRoundRect(cx2-drawW/2,r.y,drawW,r.h,10);
-      ctx.fillStyle='rgba(255,255,255,0.95)';ctx.fill();
-      ctx.strokeStyle='rgba(167,139,250,0.4)';ctx.lineWidth=2;ctx.stroke();
+      ctx.fillStyle='#fff';ctx.fill();
+      ctx.strokeStyle='#f1c40f';ctx.lineWidth=2;ctx.stroke();
       if(scaleX>0.3){
         ctx.textAlign='center';ctx.textBaseline='middle';
         const fontSize=Math.min(cardW,cardH)*0.45;
@@ -455,95 +444,92 @@ function drawPlaying(now){
     }else{
       drawRoundRect(cx2-drawW/2,r.y,drawW,r.h,10);
       const bg=ctx.createLinearGradient(cx2-drawW/2,r.y,cx2+drawW/2,r.y+r.h);
-      bg.addColorStop(0,'#4a1a8a');bg.addColorStop(0.5,'#6b2fb0');bg.addColorStop(1,'#3a1070');
+      bg.addColorStop(0,'#c0392b');bg.addColorStop(1,'#96281b');
       ctx.fillStyle=bg;ctx.fill();
-      ctx.strokeStyle='rgba(167,139,250,0.3)';ctx.lineWidth=1;ctx.stroke();
+      ctx.strokeStyle='#f1c40f';ctx.lineWidth=2;ctx.stroke();
       if(scaleX>0.3){
-        // Mystic symbol
-        ctx.fillStyle='rgba(255,255,255,0.2)';
+        ctx.fillStyle='rgba(241,196,15,0.4)';
         ctx.font='bold '+(Math.min(cardW,cardH)*0.3)+'px sans-serif';
         ctx.textAlign='center';ctx.textBaseline='middle';
-        ctx.fillText('✦',cx2,cy2);
+        ctx.fillText('🎪',cx2,cy2);
       }
     }
     ctx.globalAlpha=1;
   }
 
-  // Particles
   for(let i=particles.length-1;i>=0;i--){
     const p=particles[i];
     p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life-=0.02;
     if(p.life<=0){particles.splice(i,1);continue;}
     ctx.globalAlpha=p.life;
     ctx.fillStyle=p.color;
-    ctx.shadowColor=p.color;ctx.shadowBlur=6;
     ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();
-    ctx.shadowBlur=0;
   }
   ctx.globalAlpha=1;
 
   if(matchFlashAlpha>0){
-    ctx.fillStyle='rgba(167,139,250,'+matchFlashAlpha+')';
+    ctx.fillStyle='rgba(255,215,0,'+matchFlashAlpha+')';
     ctx.fillRect(0,0,W,H);
     matchFlashAlpha-=0.03;
   }
 
-  ctx.fillStyle='rgba(10,5,32,0.4)';ctx.fillRect(0,H-44,W,44);
+  ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(0,H-44,W,44);
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.font='15px sans-serif';ctx.fillStyle='rgba(167,139,250,0.7)';
+  ctx.font='15px sans-serif';ctx.fillStyle='#f1c40f';
   ctx.fillText('← Main Menu',W/2,H-22);
   window._backBtn={x:0,y:H-44,w:W,h:44};
 }
 
 function drawComplete(){
-  drawMagicBg();
+  drawGradientBg();
   const cx=W/2;
   ctx.textAlign='center';ctx.textBaseline='middle';
 
-  ctx.shadowColor='#a78bfa';ctx.shadowBlur=20;
-  ctx.font='bold 36px sans-serif';ctx.fillStyle='#fff';
-  ctx.fillText('🎉 Congratulations!',cx,H*0.2);
-  ctx.shadowBlur=0;
+  ctx.font='bold 36px sans-serif';ctx.fillStyle='#f1c40f';
+  ctx.save();ctx.shadowColor='#e74c3c';ctx.shadowBlur=8;
+  ctx.fillText('🎪 Congratulations! 🎪',cx,H*0.2);
+  ctx.restore();
 
   const stars=getStars();
   ctx.font='48px sans-serif';
   ctx.fillText('⭐'.repeat(stars)+'☆'.repeat(3-stars),cx,H*0.32);
 
-  ctx.font='20px sans-serif';ctx.fillStyle='rgba(196,181,253,0.9)';
+  ctx.font='20px sans-serif';ctx.fillStyle='#fff';
   ctx.fillText('Moves: '+moves,cx,H*0.43);
-  const m=(elapsed/60)|0,s=elapsed%60;
-  ctx.fillText('Time: '+(m<10?'0':'')+m+':'+(s<10?'0':'')+s,cx,H*0.5);
+  const m2=(elapsed/60)|0,s2=elapsed%60;
+  ctx.fillText('Time: '+(m2<10?'0':'')+m2+':'+(s2<10?'0':'')+s2,cx,H*0.5);
 
-  ctx.font='14px sans-serif';ctx.fillStyle='rgba(167,139,250,0.5)';
+  ctx.font='14px sans-serif';ctx.fillStyle='rgba(241,196,15,0.6)';
   ctx.fillText('Minimum moves: '+totalPairs,cx,H*0.57);
 
+  // Replay button - golden
   const btnW=200,btnH=50,bx=cx-btnW/2,by=H*0.65;
   drawRoundRect(bx,by,btnW,btnH,25);
-  const g=ctx.createLinearGradient(bx,by,bx+btnW,by);
-  g.addColorStop(0,'#a78bfa');g.addColorStop(1,'#c084fc');
+  const g=ctx.createLinearGradient(bx,by,bx+btnW,by+btnH);
+  g.addColorStop(0,'#f1c40f');g.addColorStop(1,'#f39c12');
   ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle='#e67e22';ctx.lineWidth=2;ctx.stroke();
   ctx.font='bold 18px sans-serif';ctx.fillStyle='#fff';
-  ctx.fillText('Play Again',cx,by+btnH/2);
+  ctx.fillText('🎪 Play Again',cx,by+btnH/2);
   window._replayBtn={x:bx,y:by,w:btnW,h:btnH};
 
   const by2=by+btnH+20;
   drawRoundRect(bx,by2,btnW,btnH,25);
-  ctx.fillStyle='rgba(167,139,250,0.2)';ctx.fill();
-  ctx.font='16px sans-serif';ctx.fillStyle='#c4b5fd';
+  ctx.fillStyle='rgba(231,76,60,0.6)';ctx.fill();
+  ctx.strokeStyle='#f1c40f';ctx.lineWidth=1;ctx.stroke();
+  ctx.font='16px sans-serif';ctx.fillStyle='#fff';
   ctx.fillText('Main Menu',cx,by2+btnH/2);
   window._menuBtn={x:bx,y:by2,w:btnW,h:btnH};
 
   if(Math.random()<0.1){
-    const colors=['#a78bfa','#fbbf24','#c084fc','#818cf8','#e879f9'];
+    const colors=['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#96E6A1'];
     particles.push({x:Math.random()*W,y:H+10,vx:(Math.random()-0.5)*2,vy:-3-Math.random()*3,life:1,color:colors[Math.random()*colors.length|0],size:3+Math.random()*4});
   }
   for(let i=particles.length-1;i>=0;i--){
     const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.life-=0.008;
     if(p.life<=0){particles.splice(i,1);continue;}
     ctx.globalAlpha=p.life;ctx.fillStyle=p.color;
-    ctx.shadowColor=p.color;ctx.shadowBlur=6;
     ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
-    ctx.shadowBlur=0;
   }
   ctx.globalAlpha=1;
 }
@@ -590,17 +576,17 @@ resize();
 requestAnimationFrame(frame);
 })();
 </script>
-<div id="tutorial-overlay" style="position:fixed;inset:0;pointer-events:auto;background:rgba(10,5,32,0.9);display:flex;align-items:center;justify-content:center;z-index:999999">
-<div style="background:linear-gradient(145deg,#1a0a40,#0d0525);border:2px solid rgba(167,139,250,0.3);border-radius:20px;padding:36px 28px;max-width:340px;text-align:center;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.5),0 0 40px rgba(167,139,250,0.1)">
-<div style="font-size:56px;margin-bottom:12px">🔮</div>
-<h2 style="font-size:24px;color:#c4b5fd;margin-bottom:16px">How to Play</h2>
-<p style="font-size:16px;line-height:1.9;text-align:left;color:#eee">
+<div id="tutorial-overlay" style="position:fixed;inset:0;pointer-events:auto;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;z-index:999999">
+<div style="background:linear-gradient(135deg,rgba(192,57,43,0.95),rgba(150,40,27,0.95));border-radius:20px;padding:36px 28px;max-width:340px;text-align:center;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.5);border:3px solid #f1c40f">
+<div style="font-size:56px;margin-bottom:12px">🎪</div>
+<h2 style="font-size:24px;color:#f1c40f;margin-bottom:16px;text-shadow:2px 2px 0 rgba(0,0,0,0.3)">How to Play</h2>
+<p style="font-size:16px;line-height:1.9;text-align:left;color:#fff">
 👆 Tap a card to <b>flip</b> it over<br>
 🔍 Find and <b>match all pairs!</b><br>
 ⭐ Fewer moves = more stars ⭐⭐⭐
 </p>
-<p style="font-size:14px;color:rgba(167,139,250,0.7);margin-top:12px">🎨 Choose your difficulty and theme, then start!</p>
-<button onclick="document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_memory','1')" style="margin-top:20px;padding:14px 36px;font-size:18px;border:none;border-radius:12px;background:linear-gradient(135deg,#a78bfa,#c084fc);color:#fff;cursor:pointer;font-weight:bold;box-shadow:0 0 20px rgba(167,139,250,0.3)">Got it! 🔮</button>
+<p style="font-size:14px;color:#f1c40f;margin-top:12px">🎨 Choose your difficulty and theme, then start!</p>
+<button onclick="document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_memory','1')" ontouchstart="event.stopPropagation();document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_memory','1')" style="margin-top:20px;padding:14px 36px;font-size:18px;border:3px solid #f1c40f;border-radius:12px;background:#e74c3c;color:#fff;cursor:pointer;font-weight:bold;text-shadow:1px 1px 0 rgba(0,0,0,0.3)">🎟️ Got it!</button>
 </div></div>
 <script>if(localStorage.getItem('tutorial_memory'))document.getElementById('tutorial-overlay').remove();</script>
 </body>
