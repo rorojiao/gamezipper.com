@@ -99,6 +99,7 @@ let cards=[], cols=0, rows=0;
 let first=null, second=null, lockBoard=false;
 let moves=0, startTime=0, elapsed=0, timerInterval=null;
 let matched=0, totalPairs=0;
+let comboCount=0, comboTimer2=null;
 let particles=[];
 let cardAnims={};
 let bestScores=JSON.parse(localStorage.getItem('mm_best')||'{}');
@@ -145,7 +146,7 @@ function startGame(){
   const deck=shuffle([...pool,...pool]);
   cards=deck.map((emoji,i)=>({emoji,flipped:false,matched:false,index:i}));
   first=null;second=null;lockBoard=false;
-  moves=0;elapsed=0;matched=0;
+  moves=0;elapsed=0;matched=0;comboCount=0;
   particles=[];cardAnims={};
   state='playing';
   calcGrid();
@@ -216,6 +217,17 @@ function checkMatch(){
     matchFlashAlpha=0.4;
     sfxMatch();
     matched++;
+    comboCount++;
+    if(comboTimer2)clearTimeout(comboTimer2);
+    comboTimer2=setTimeout(()=>{comboCount=0},3000);
+    if(comboCount>=2){
+      // Show combo text
+      const comboEl=document.createElement('div');
+      comboEl.style.cssText='position:fixed;top:30%;left:50%;transform:translateX(-50%);color:#ffd700;font-size:'+(28+comboCount*4)+'px;font-weight:bold;text-shadow:0 0 20px #ff0,0 0 40px #f80;z-index:10001;pointer-events:none;animation:confettiFall 1s ease-out forwards;';
+      comboEl.style.setProperty('--dx','0px');comboEl.style.setProperty('--dy','-60px');comboEl.style.setProperty('--rot','0deg');
+      comboEl.textContent=comboCount+'x Combo! 🔥';
+      overlay.appendChild(comboEl);setTimeout(()=>comboEl.remove(),1000);
+    }
     if(matched===totalPairs){
       // Curtain close then open
       document.body.classList.add('curtain-close');
@@ -228,6 +240,7 @@ function checkMatch(){
     }
   }else{
     sfxFail();
+    comboCount=0;
     cardAnims[first]={phase:'flipClose',progress:0,start:performance.now()};
     cardAnims[second]={phase:'flipClose',progress:0,start:performance.now()};
     setTimeout(()=>{cards[first].flipped=false;cards[second].flipped=false;first=null;second=null;lockBoard=false},350);

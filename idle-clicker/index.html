@@ -120,7 +120,7 @@ body{background:#1a0a2e;color:#e0d0ff;font-family:'Segoe UI',sans-serif;overflow
 <img class="idle-deco float" src="images/shield_gold.png" style="bottom:120px;right:10px;width:22px;animation-delay:0.5s" alt="">
 <div id="header">
 <h1>🧪 Alchemy Workshop</h1>
-<div id="stats"><div>⚡ Mana: <span id="count">0</span></div><div>MPS: <span id="cps">0</span></div></div>
+<div id="stats"><div>⚡ Mana: <span id="count">0</span></div><div>MPS: <span id="cps">0</span></div><div id="prestige-stat" style="display:none">♻️ <span id="plevel">0</span></div></div>
 </div>
 <div id="game">
 <div id="cookie-area">
@@ -130,6 +130,7 @@ body{background:#1a0a2e;color:#e0d0ff;font-family:'Segoe UI',sans-serif;overflow
 <div id="shop"><h2>✨ Spellbook</h2></div>
 </div>
 <button id="achiev-btn" onclick="toggleAchievements()">📖 Grimoire</button>
+<button id="prestige-btn" onclick="doPrestige()" style="position:fixed;bottom:10px;left:120px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:bold;z-index:100;font-size:.85em;box-shadow:0 0 10px rgba(245,158,11,.3);display:none">♻️ Prestige</button>
 <div id="buff-bar"></div>
 <div id="achiev-panel" onclick="if(event.target===this)toggleAchievements()">
 <div id="achiev-inner"><button id="achiev-close" onclick="toggleAchievements()">✕</button><h2>📖 Arcane Achievements</h2><div id="achiev-list"></div></div>
@@ -214,7 +215,13 @@ const upgrades=[
   {name:'📖 Spell Book',baseCost:500,cps:20,icon:'📖',owned:0},
   {name:'⚗️ Alchemy Lab',baseCost:2000,cps:100,icon:'⚗️',owned:0},
   {name:'💎 Crystal Mine',baseCost:10000,cps:500,icon:'💎',owned:0},
-  {name:'🏰 Wizard Tower',baseCost:50000,cps:2000,icon:'🏰',owned:0}
+  {name:'🏰 Wizard Tower',baseCost:50000,cps:2000,icon:'🏰',owned:0},
+  {name:'🐉 Dragon Familiar',baseCost:250000,cps:8000,icon:'🐉',owned:0},
+  {name:'🌙 Moon Portal',baseCost:1500000,cps:30000,icon:'🌙',owned:0},
+  {name:'⏳ Time Rift',baseCost:10000000,cps:120000,icon:'⏳',owned:0},
+  {name:'🌌 Void Gate',baseCost:80000000,cps:500000,icon:'🌌',owned:0},
+  {name:'💫 Celestial Forge',baseCost:500000000,cps:2000000,icon:'💫',owned:0},
+  {name:'🔮 Philosopher Stone',baseCost:5000000000,cps:10000000,icon:'🔮',owned:0}
 ];
 let cookies=0,totalCookies=0,totalCps=0,lastSave=Date.now(),lastTick=Date.now();
 let clickValue=1,cpsMultiplier=1,clickMultiplier=1;
@@ -228,19 +235,31 @@ function playAchievement(){const notes=[523,659,784,1047];notes.forEach((f,i)=>{
 function playGolden(){const notes=[880,1108,1318,1568];notes.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='sine';o.frequency.value=f;g.gain.value=.12;o.start(actx.currentTime+i*.08);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.08+.4);o.stop(actx.currentTime+i*.08+.4)})}
 function playGoldenClick(){[1200,1500,1800].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='triangle';o.frequency.value=f;g.gain.value=.15;o.start(actx.currentTime+i*.06);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.06+.25);o.stop(actx.currentTime+i*.06+.25)})}
 
+let prestigeLevel=0,prestigeMultiplier=1;
 const achievements=[
   {id:'first',name:'First Spark',desc:'Channel your first mana',icon:'⚡',check:()=>totalCookies>=1},
   {id:'hundred',name:'Mana Pool',desc:'Channel 100 mana',icon:'🫧',check:()=>totalCookies>=100},
   {id:'thousand',name:'Arcane Surge',desc:'Channel 1,000 mana',icon:'🌊',check:()=>totalCookies>=1000},
   {id:'tenk',name:'Mana Master',desc:'Channel 10,000 mana',icon:'🧙',check:()=>totalCookies>=10000},
+  {id:'hundred_k',name:'Grand Wizard',desc:'Channel 100,000 mana',icon:'🪄',check:()=>totalCookies>=1e5},
   {id:'million',name:'Archmage',desc:'Channel 1,000,000 mana',icon:'🌟',check:()=>totalCookies>=1e6},
+  {id:'ten_m',name:'Mana Overlord',desc:'Channel 10,000,000 mana',icon:'👑',check:()=>totalCookies>=1e7},
+  {id:'hundred_m',name:'Reality Bender',desc:'Channel 100,000,000 mana',icon:'🌀',check:()=>totalCookies>=1e8},
   {id:'billion',name:'Cosmic Sorcerer',desc:'Channel 1,000,000,000 mana',icon:'🌌',check:()=>totalCookies>=1e9},
+  {id:'trillion',name:'Omnipotent',desc:'Channel 1,000,000,000,000 mana',icon:'💥',check:()=>totalCookies>=1e12},
   {id:'speed',name:'Rapid Casting',desc:'Cast 10 times in 1 second',icon:'⚡',check:()=>false},
   {id:'grandma10',name:"Apprentice Guild",desc:'Recruit 10 Apprentices',icon:'🧙',check:()=>upgrades[1].owned>=10},
   {id:'factory5',name:'Lab Master',desc:'Own 5 Alchemy Labs',icon:'⚗️',check:()=>upgrades[3].owned>=5},
   {id:'cursor50',name:'Wand Collection',desc:'Own 50 Magic Wands',icon:'🪄',check:()=>upgrades[0].owned>=50},
+  {id:'dragon1',name:'Dragon Tamer',desc:'Summon your first Dragon',icon:'🐉',check:()=>upgrades[6].owned>=1},
+  {id:'moon1',name:'Moonwalker',desc:'Open a Moon Portal',icon:'🌙',check:()=>upgrades[7].owned>=1},
+  {id:'timerift1',name:'Time Lord',desc:'Create a Time Rift',icon:'⏳',check:()=>upgrades[8].owned>=1},
+  {id:'void1',name:'Void Walker',desc:'Open a Void Gate',icon:'🌌',check:()=>upgrades[9].owned>=1},
   {id:'allTypes',name:'Full Curriculum',desc:'Own at least 1 of each spell',icon:'🌈',check:()=>upgrades.every(u=>u.owned>0)},
-  {id:'golden3',name:'Potion Finder',desc:'Find 3 magic potions',icon:'🧪',check:()=>goldenClicks>=3}
+  {id:'golden3',name:'Potion Finder',desc:'Find 3 magic potions',icon:'🧪',check:()=>goldenClicks>=3},
+  {id:'golden10',name:'Potion Master',desc:'Find 10 magic potions',icon:'🧪',check:()=>goldenClicks>=10},
+  {id:'prestige1',name:'Rebirth',desc:'Perform your first Prestige',icon:'♻️',check:()=>prestigeLevel>=1},
+  {id:'prestige5',name:'Eternal Return',desc:'Prestige 5 times',icon:'🔄',check:()=>prestigeLevel>=5}
 ];
 const unlockedAch=new Set();
 let goldenClicks=0;
@@ -329,12 +348,27 @@ function showMagicCircle(){
 
 function fmt(n){if(n>=1e12)return(n/1e12).toFixed(1)+'T';if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return Math.floor(n).toString()}
 function cost(u){return Math.floor(u.baseCost*Math.pow(1.15,u.owned))}
-function calcCps(){totalCps=upgrades.reduce((s,u)=>s+u.cps*u.owned,0)}
+function calcCps(){totalCps=upgrades.reduce((s,u)=>s+u.cps*u.owned,0)*prestigeMultiplier}
+
+// Prestige system
+function canPrestige(){return totalCookies>=1e6}
+function prestigeGain(){return Math.max(1,Math.floor(Math.pow(totalCookies/1e6,0.5)))}
+function doPrestige(){
+  if(!canPrestige())return;
+  const gain=prestigeGain();
+  prestigeLevel+=gain;prestigeMultiplier=1+prestigeLevel*0.1;
+  cookies=0;totalCookies=0;
+  upgrades.forEach(u=>u.owned=0);
+  purchasedTypes.clear();calcCps();
+  showToast(`♻️ Prestige! +${gain} levels → ${prestigeMultiplier.toFixed(1)}x multiplier`);
+  playAchievement();checkAchievements();updateUI();save();
+}
+window.doPrestige=doPrestige;
 
 const cookieEl=document.getElementById('cookie');
 cookieEl.addEventListener('click',function(e){
   if(actx.state==='suspended')actx.resume();
-  const val=clickValue*clickMultiplier;
+  const val=clickValue*clickMultiplier*prestigeMultiplier;
   cookies+=val;totalCookies+=val;
   playClick();trackSpeed();
   cookieEl.classList.remove('bounce');void cookieEl.offsetWidth;cookieEl.classList.add('bounce');
@@ -397,6 +431,11 @@ function updateUI(){
     if(Math.abs(displayedCps-targetCps)<2)displayedCps=targetCps;
   }
   document.getElementById('cps').textContent=fmt(displayedCps);
+  // Prestige button
+  const pBtn=document.getElementById('prestige-btn');
+  if(pBtn){if(canPrestige()){pBtn.style.display='block';pBtn.textContent='♻️ Prestige (+'+prestigeGain()+')';}else{pBtn.style.display='none';}}
+  const pStat=document.getElementById('prestige-stat');
+  if(pStat&&prestigeLevel>0){pStat.style.display='';document.getElementById('plevel').textContent=prestigeLevel+' ('+prestigeMultiplier.toFixed(1)+'x)';}
   renderShop();
 }
 
@@ -409,7 +448,7 @@ function tick(){
 }
 
 function save(){
-  const d={cookies,totalCookies,upgrades:upgrades.map(u=>u.owned),time:Date.now(),types:[...purchasedTypes],achievements:[...unlockedAch],goldenClicks};
+  const d={cookies,totalCookies,upgrades:upgrades.map(u=>u.owned),time:Date.now(),types:[...purchasedTypes],achievements:[...unlockedAch],goldenClicks,prestigeLevel,prestigeMultiplier};
   localStorage.setItem('idleCookie',JSON.stringify(d));
 }
 function load(){
@@ -420,6 +459,7 @@ function load(){
     if(d.types)d.types.forEach(t=>purchasedTypes.add(t));
     if(d.achievements)d.achievements.forEach(a=>unlockedAch.add(a));
     if(d.goldenClicks)goldenClicks=d.goldenClicks;
+    if(d.prestigeLevel){prestigeLevel=d.prestigeLevel;prestigeMultiplier=d.prestigeMultiplier||1+prestigeLevel*0.1;}
     calcCps();
     if(d.time&&totalCps>0){
       const away=(Date.now()-d.time)/1000;
