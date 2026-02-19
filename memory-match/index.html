@@ -3,119 +3,78 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>🧠 Memory Master</title>
+<title>🎪 Memory Master - Carnival</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#1a1a2e}
-canvas#c{display:block;width:100%;height:100%;touch-action:none;position:relative;z-index:1}
-
-/* Carnival striped background */
-#carnivalBg{position:fixed;inset:0;z-index:0;
-  background:repeating-linear-gradient(45deg,#c0392b 0px,#c0392b 30px,#96281b 30px,#96281b 60px);
-}
-
+html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#1a0a0a}
+canvas{display:block;width:100%;height:100%;touch-action:none;position:relative;z-index:1}
+/* Circus tent stripe background */
+#bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:repeating-linear-gradient(45deg,
+    #8b0000 0px,#8b0000 30px,
+    #cc0000 30px,#cc0000 60px,
+    #ffd700 60px,#ffd700 62px,
+    #cc0000 62px,#cc0000 92px,
+    #8b0000 92px,#8b0000 122px);
+  opacity:.15}
 /* Floating balloons */
-@keyframes floatUp{
-  0%{transform:translateY(110vh) translateX(0);opacity:0.8}
-  50%{transform:translateY(50vh) translateX(20px);opacity:0.9}
-  100%{transform:translateY(-20vh) translateX(-10px);opacity:0.7}
-}
-@keyframes sway{
-  0%,100%{margin-left:0}
-  25%{margin-left:15px}
-  75%{margin-left:-15px}
-}
-.balloon{position:fixed;z-index:0;width:40px;height:50px;border-radius:50%;
-  animation:floatUp linear infinite,sway 3s ease-in-out infinite;
-  pointer-events:none;opacity:0.7;
-  box-shadow:inset -8px -4px 0 rgba(0,0,0,0.15)}
-.balloon::after{content:'';position:absolute;bottom:-12px;left:50%;width:2px;height:14px;background:rgba(0,0,0,0.3);transform:translateX(-50%)}
-
-/* Bunting flags in corners */
-.bunting{position:fixed;z-index:2;pointer-events:none}
-.bunting-top-left{top:28px;left:0}
-.bunting-top-right{top:28px;right:0}
-.bunting-bottom-left{bottom:0;left:0}
-.bunting-bottom-right{bottom:0;right:0}
-.bunting .flag{display:inline-block;width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:20px solid;margin:0 2px}
-
-/* Confetti */
-@keyframes confettiFall{
-  0%{transform:translateY(-20px) rotate(0deg);opacity:1}
-  100%{transform:translateY(110vh) rotate(720deg);opacity:0.3}
-}
-.confetti{position:fixed;z-index:999;width:10px;height:14px;pointer-events:none;
-  animation:confettiFall 2.5s ease-in forwards}
+.balloon{position:fixed;pointer-events:none;z-index:0;font-size:32px;opacity:.8}
+/* Confetti burst */
+.confetti{position:fixed;pointer-events:none;z-index:10000;animation:confettiFall 1.5s ease-out forwards}
+@keyframes confettiFall{0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.3)}}
+/* Curtain effect */
+#curtain-left,#curtain-right{position:fixed;top:0;bottom:0;width:0;z-index:200;pointer-events:none;transition:width 1s ease-in-out}
+#curtain-left{left:0;background:linear-gradient(90deg,#8b0000,#cc0000,#8b0000)}
+#curtain-right{right:0;background:linear-gradient(90deg,#8b0000,#cc0000,#8b0000)}
+.curtain-close #curtain-left,.curtain-close #curtain-right{width:50%}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
 </head>
 <body>
-<div id="carnivalBg"></div>
-
-<!-- Bunting flags -->
-<div class="bunting bunting-top-left" id="buntingTL"></div>
-<div class="bunting bunting-top-right" id="buntingTR"></div>
-<div class="bunting bunting-bottom-left" id="buntingBL"></div>
-<div class="bunting bunting-bottom-right" id="buntingBR"></div>
-
-<a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#f1c40f;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none">⬅ More Games at GameZipper.com</a>
+<div id="bg-layer"></div>
+<div id="curtain-left"></div>
+<div id="curtain-right"></div>
+<a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:linear-gradient(90deg,#8b0000,#cc0000,#8b0000);color:#ffd700;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;border-bottom:2px solid #ffd700;text-shadow:1px 1px 2px rgba(0,0,0,.5)">🎪 More Games at GameZipper.com</a>
 <canvas id="c"></canvas>
-
-<!-- Balloon container -->
-<div id="balloons"></div>
+<div id="fx-overlay" style="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden"></div>
 
 <script>
-// Create balloons
+// Floating balloons
 (function(){
-  const colors=['#e74c3c','#3498db','#f1c40f','#2ecc71','#e74c3c','#3498db','#f1c40f','#2ecc71'];
-  const container=document.getElementById('balloons');
+  const colors=['🎈'];
+  const balloonColors=['red','blue','yellow','green'];
+  const balloons=[];
   for(let i=0;i<8;i++){
-    const b=document.createElement('div');
-    b.className='balloon';
-    b.style.background=colors[i];
-    b.style.left=(5+Math.random()*85)+'%';
-    b.style.animationDuration=(12+Math.random()*10)+'s,'+(2+Math.random()*2)+'s';
-    b.style.animationDelay=(Math.random()*15)+'s,0s';
-    container.appendChild(b);
+    const el=document.createElement('div');
+    el.className='balloon';
+    el.textContent='🎈';
+    el.style.fontSize=(28+Math.random()*16)+'px';
+    // Color filter approximation via hue-rotate
+    el.style.filter='hue-rotate('+[0,200,60,120][i%4]+'deg)';
+    document.body.appendChild(el);
+    balloons.push({
+      el,x:Math.random()*window.innerWidth,y:window.innerHeight+30+Math.random()*200,
+      speed:0.3+Math.random()*0.4,phase:Math.random()*Math.PI*2,
+      swayAmp:10+Math.random()*15,swaySpeed:0.01+Math.random()*0.015
+    });
   }
-})();
-
-// Create bunting flags
-(function(){
-  const colors=['#e74c3c','#f1c40f','#3498db','#2ecc71','#9b59b6'];
-  ['buntingTL','buntingTR','buntingBL','buntingBR'].forEach(id=>{
-    const el=document.getElementById(id);
-    for(let i=0;i<5;i++){
-      const f=document.createElement('span');
-      f.className='flag';
-      f.style.borderTopColor=colors[i%colors.length];
-      el.appendChild(f);
+  function animBalloons(){
+    const h=window.innerHeight,w=window.innerWidth;
+    for(const b of balloons){
+      b.y-=b.speed;b.phase+=b.swaySpeed;
+      const sway=Math.sin(b.phase)*b.swayAmp;
+      if(b.y<-50){b.y=h+30;b.x=Math.random()*w;}
+      b.el.style.transform=`translate(${b.x+sway}px,${b.y}px)`;
     }
-  });
-})();
-
-// Confetti spawner for match success
-function spawnConfetti(){
-  for(let i=0;i<10;i++){
-    const c=document.createElement('div');
-    c.className='confetti';
-    const colors=['#e74c3c','#f1c40f','#3498db','#2ecc71','#9b59b6','#e67e22','#ff69b4','#00d4ff'];
-    c.style.background=colors[Math.random()*colors.length|0];
-    c.style.left=Math.random()*100+'%';
-    c.style.width=(6+Math.random()*8)+'px';
-    c.style.height=(8+Math.random()*10)+'px';
-    c.style.borderRadius=Math.random()>0.5?'0':'50%';
-    c.style.animationDuration=(1.5+Math.random()*2)+'s';
-    c.style.animationDelay=(Math.random()*0.5)+'s';
-    document.body.appendChild(c);
-    setTimeout(()=>c.remove(),3500);
+    requestAnimationFrame(animBalloons);
   }
-}
-window._spawnConfetti=spawnConfetti;
+  animBalloons();
+})();
 
 (function(){
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
+const overlay=document.getElementById('fx-overlay');
 let W,H,dpr;
 const themes={
   animals:['🐶','🐱','🐰','🦊','🐻','🐼','🐨','🦁','🐸','🐵','🐷','🐮','🐔','🦄','🐝'],
@@ -220,19 +179,51 @@ function flipCard(i){
   }
 }
 
+// DOM confetti burst for match
+function spawnConfetti(ci){
+  const r=cardRect(ci);
+  const cx=r.x+r.w/2, cy=r.y+r.h/2;
+  const emojis=['🎊','🎉'];
+  const confColors=['#ff0000','#ffd700','#00ff00','#0088ff','#ff00ff','#ff6600','#00ffff','#ff69b4'];
+  for(let i=0;i<10;i++){
+    const el=document.createElement('div');
+    el.className='confetti';
+    if(i<2){
+      el.textContent=emojis[i];el.style.fontSize='24px';
+    }else{
+      el.style.width=(4+Math.random()*8)+'px';
+      el.style.height=(8+Math.random()*12)+'px';
+      el.style.background=confColors[Math.floor(Math.random()*confColors.length)];
+      el.style.borderRadius='2px';
+    }
+    el.style.left=cx+'px';el.style.top=cy+'px';
+    const angle=Math.random()*Math.PI*2;
+    const dist=60+Math.random()*120;
+    el.style.setProperty('--dx',Math.cos(angle)*dist+'px');
+    el.style.setProperty('--dy',(Math.sin(angle)*dist+40)+'px');
+    el.style.setProperty('--rot',(Math.random()*720-360)+'deg');
+    overlay.appendChild(el);
+    setTimeout(()=>el.remove(),1500);
+  }
+}
+
 function checkMatch(){
   if(cards[first].emoji===cards[second].emoji){
     cards[first].matched=true;cards[second].matched=true;
     spawnParticles(first);spawnParticles(second);
+    spawnConfetti(first);spawnConfetti(second);
     matchFlashAlpha=0.4;
     sfxMatch();
     matched++;
-    // Spawn confetti on match!
-    if(window._spawnConfetti)window._spawnConfetti();
     if(matched===totalPairs){
-      state='complete';
-      clearInterval(timerInterval);
-      saveBest();
+      // Curtain close then open
+      document.body.classList.add('curtain-close');
+      setTimeout(()=>{
+        state='complete';
+        clearInterval(timerInterval);
+        saveBest();
+        document.body.classList.remove('curtain-close');
+      },1200);
     }
   }else{
     sfxFail();
@@ -267,7 +258,7 @@ function getStars(){
 function spawnParticles(ci){
   const r=cardRect(ci);
   const cx=r.x+r.w/2, cy=r.y+r.h/2;
-  const colors=['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#96E6A1','#DDA0DD','#FF69B4','#00FF7F'];
+  const colors=['#FFD700','#FF0000','#FF6B6B','#00FF7F','#FF69B4','#FFA500','#00BFFF'];
   for(let j=0;j<24;j++){
     const angle=Math.random()*Math.PI*2;
     const speed=2+Math.random()*6;
@@ -285,122 +276,111 @@ function drawRoundRect(x,y,w,h,r){
   ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
 }
 
-function drawGradientBg(){
-  // Transparent so carnival stripes show through
-  ctx.clearRect(0,0,W,H);
-  // Semi-transparent overlay for readability
-  ctx.fillStyle='rgba(0,0,0,0.3)';
-  ctx.fillRect(0,0,W,H);
+function drawCarnivalBg(){
+  // Dark carnival gradient
+  const g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*.7);
+  g.addColorStop(0,'#2a0a0a');g.addColorStop(.5,'#1a0505');g.addColorStop(1,'#0a0202');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  // Subtle spotlights
+  ctx.globalAlpha=.05;
+  ctx.fillStyle='#ffd700';
+  ctx.beginPath();ctx.arc(W*.2,H*.3,150,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(W*.8,H*.4,120,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=1;
 }
 
 function drawMenu(){
-  drawGradientBg();
+  drawCarnivalBg();
   const cx=W/2;
-  // Carnival title
   ctx.textAlign='center';ctx.textBaseline='middle';
+  // Carnival title
   ctx.font='bold 42px sans-serif';
-  ctx.fillStyle='#e74c3c';
-  ctx.shadowColor='#f1c40f';ctx.shadowBlur=0;
-  // Gold stroke effect via multiple shadows
-  ctx.save();
-  ctx.shadowColor='#f1c40f';ctx.shadowBlur=2;ctx.shadowOffsetX=2;ctx.shadowOffsetY=2;
-  ctx.fillText('🧠 Memory Master',cx,H*0.1);
-  ctx.restore();
-  ctx.fillStyle='#e74c3c';
-  ctx.fillText('🧠 Memory Master',cx,H*0.1);
+  ctx.fillStyle='#ffd700';
+  ctx.strokeStyle='#8b0000';ctx.lineWidth=4;
+  ctx.strokeText('🎪 Memory Master',cx,H*0.1);
+  ctx.fillText('🎪 Memory Master',cx,H*0.1);
+  ctx.shadowColor='#ffd700';ctx.shadowBlur=15;
+  ctx.fillText('🎪 Memory Master',cx,H*0.1);
+  ctx.shadowBlur=0;
+  ctx.font='16px sans-serif';ctx.fillStyle='rgba(255,215,0,0.7)';
+  ctx.fillText('🎪 The Greatest Card Show! 🎪',cx,H*0.1+40);
 
-  ctx.font='16px sans-serif';ctx.fillStyle='#f1c40f';
-  ctx.fillText('🎪 Card Matching Memory Game 🎪',cx,H*0.1+40);
-
-  // Difficulty buttons - ticket style
+  // Ticket-style difficulty buttons
   const btnW=Math.min(260,W*0.65),btnH=48,btnGap=12;
   let startY=H*0.22;
   for(let i=0;i<difficulties.length;i++){
     const by=startY+i*(btnH+btnGap);
     const bx=cx-btnW/2;
-    drawRoundRect(bx,by,btnW,btnH,6);
-    if(i===selDiff){
-      ctx.fillStyle='#e74c3c';ctx.fill();
-      ctx.strokeStyle='#f1c40f';ctx.lineWidth=3;ctx.stroke();
-      // Dashed ticket border
-      ctx.setLineDash([4,3]);ctx.strokeStyle='rgba(255,255,255,0.4)';
-      drawRoundRect(bx+4,by+4,btnW-8,btnH-8,4);ctx.stroke();
-      ctx.setLineDash([]);
-    }else{
-      ctx.fillStyle='rgba(231,76,60,0.6)';ctx.fill();
-      ctx.strokeStyle='#f1c40f';ctx.lineWidth=2;ctx.stroke();
+    // Ticket style: red bg + gold border + serrated edge
+    drawRoundRect(bx,by,btnW,btnH,8);
+    ctx.fillStyle=i===selDiff?'#cc0000':'#8b0000';
+    ctx.fill();
+    ctx.strokeStyle='#ffd700';ctx.lineWidth=2;ctx.stroke();
+    // Serrated edges (small notches)
+    ctx.fillStyle=i===selDiff?'#2a0a0a':'#1a0505';
+    for(let n=0;n<6;n++){
+      ctx.beginPath();ctx.arc(bx,by+8+n*7,3,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(bx+btnW,by+8+n*7,3,0,Math.PI*2);ctx.fill();
     }
-    ctx.fillStyle='#fff';
+    ctx.fillStyle='#ffd700';
     ctx.font=i===selDiff?'bold 17px sans-serif':'17px sans-serif';
     ctx.fillText('🎟️ '+difficulties[i].name+' ('+difficulties[i].cols+'×'+difficulties[i].rows+')',cx,by+btnH/2);
     difficulties[i]._rect={x:bx,y:by,w:btnW,h:btnH};
   }
 
-  // Theme
+  // Theme: "Performance Program"
   startY+=difficulties.length*(btnH+btnGap)+20;
-  ctx.font='bold 16px sans-serif';ctx.fillStyle='#f1c40f';
-  ctx.fillText('Choose Theme',cx,startY);
+  ctx.font='bold 16px sans-serif';ctx.fillStyle='#ffd700';
+  ctx.fillText('🎭 Choose Performance',cx,startY);
   startY+=30;
   const tBtnW=Math.min(70,W*0.18),tBtnH=40,tGap=10;
   const totalTW=themeKeys.length*tBtnW+(themeKeys.length-1)*tGap;
   let tx=cx-totalTW/2;
+  window._tRects=[];
   for(let i=0;i<themeKeys.length;i++){
     const bx=tx+i*(tBtnW+tGap);
     drawRoundRect(bx,startY,tBtnW,tBtnH,10);
-    if(i===selTheme){
-      ctx.fillStyle='#e74c3c';ctx.fill();
-      ctx.strokeStyle='#f1c40f';ctx.lineWidth=2;ctx.stroke();
-      ctx.fillStyle='#fff';
-    }else{
-      ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fill();
-      ctx.strokeStyle='#f1c40f';ctx.lineWidth=1;ctx.stroke();
-      ctx.fillStyle='#f1c40f';
-    }
+    ctx.fillStyle=i===selTheme?'#cc0000':'rgba(139,0,0,0.6)';
+    ctx.fill();
+    ctx.strokeStyle='#ffd700';ctx.lineWidth=i===selTheme?2:1;ctx.stroke();
+    ctx.fillStyle='#ffd700';
     ctx.font='13px sans-serif';
     ctx.fillText(themeNames[themeKeys[i]],bx+tBtnW/2,startY+tBtnH/2);
-  }
-  if(!window._tRects)window._tRects=[];
-  window._tRects=[];
-  tx=cx-totalTW/2;
-  for(let i=0;i<themeKeys.length;i++){
-    window._tRects.push({x:tx+i*(tBtnW+tGap),y:startY,w:tBtnW,h:tBtnH});
+    window._tRects.push({x:bx,y:startY,w:tBtnW,h:tBtnH});
   }
 
-  // Start button - golden showtime
+  // Start button: "SHOWTIME! 🎪"
   startY+=tBtnH+35;
-  const sBtnW=Math.min(240,W*0.6),sBtnH=58;
+  const sBtnW=Math.min(220,W*0.55),sBtnH=54;
   const sbx=cx-sBtnW/2;
-  drawRoundRect(sbx,startY,sBtnW,sBtnH,29);
-  const sg=ctx.createLinearGradient(sbx,startY,sbx+sBtnW,startY+sBtnH);
-  sg.addColorStop(0,'#f1c40f');sg.addColorStop(0.5,'#f39c12');sg.addColorStop(1,'#f1c40f');
+  drawRoundRect(sbx,startY,sBtnW,sBtnH,27);
+  const sg=ctx.createLinearGradient(sbx,startY,sbx+sBtnW,startY);
+  sg.addColorStop(0,'#cc0000');sg.addColorStop(.5,'#ff4400');sg.addColorStop(1,'#cc0000');
   ctx.fillStyle=sg;ctx.fill();
-  ctx.strokeStyle='#e67e22';ctx.lineWidth=3;ctx.stroke();
-  ctx.font='bold 22px sans-serif';ctx.fillStyle='#fff';
-  ctx.save();ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=4;ctx.shadowOffsetY=2;
-  ctx.fillText('🎪 Showtime!',cx,startY+sBtnH/2);
-  ctx.restore();
+  ctx.strokeStyle='#ffd700';ctx.lineWidth=3;ctx.stroke();
+  ctx.font='bold 20px sans-serif';ctx.fillStyle='#ffd700';
+  ctx.fillText('开场！🎪',cx,startY+sBtnH/2);
   window._startBtn={x:sbx,y:startY,w:sBtnW,h:sBtnH};
 
   const key=selDiff+'_'+selTheme;
   if(bestScores[key]){
     startY+=sBtnH+25;
-    ctx.font='14px sans-serif';ctx.fillStyle='rgba(241,196,15,0.7)';
+    ctx.font='14px sans-serif';ctx.fillStyle='rgba(255,215,0,0.5)';
     ctx.fillText('Best: '+bestScores[key].moves+' moves / '+bestScores[key].time+'s',cx,startY);
   }
 }
 
 function drawPlaying(now){
-  drawGradientBg();
-  ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(0,0,W,50);
+  drawCarnivalBg();
+  // Top bar
+  ctx.fillStyle='rgba(139,0,0,0.5)';ctx.fillRect(0,0,W,50);
   ctx.textAlign='left';ctx.textBaseline='middle';
-  ctx.font='bold 16px sans-serif';ctx.fillStyle='#f1c40f';
+  ctx.font='bold 16px sans-serif';ctx.fillStyle='#ffd700';
   ctx.fillText('Moves: '+moves,15,25);
   ctx.textAlign='center';
-  ctx.fillStyle='#fff';
   ctx.fillText(difficulties[selDiff].name,W/2,25);
   ctx.textAlign='right';
   const m=(elapsed/60)|0,s=elapsed%60;
-  ctx.fillStyle='#f1c40f';
   ctx.fillText((m<10?'0':'')+m+':'+(s<10?'0':'')+s,W-15,25);
 
   for(let i=0;i<cards.length;i++){
@@ -433,8 +413,8 @@ function drawPlaying(now){
 
     if(showFront){
       drawRoundRect(cx2-drawW/2,r.y,drawW,r.h,10);
-      ctx.fillStyle='#fff';ctx.fill();
-      ctx.strokeStyle='#f1c40f';ctx.lineWidth=2;ctx.stroke();
+      ctx.fillStyle='#fff8f0';ctx.fill();
+      ctx.strokeStyle='#ffd700';ctx.lineWidth=2;ctx.stroke();
       if(scaleX>0.3){
         ctx.textAlign='center';ctx.textBaseline='middle';
         const fontSize=Math.min(cardW,cardH)*0.45;
@@ -444,11 +424,11 @@ function drawPlaying(now){
     }else{
       drawRoundRect(cx2-drawW/2,r.y,drawW,r.h,10);
       const bg=ctx.createLinearGradient(cx2-drawW/2,r.y,cx2+drawW/2,r.y+r.h);
-      bg.addColorStop(0,'#c0392b');bg.addColorStop(1,'#96281b');
+      bg.addColorStop(0,'#8b0000');bg.addColorStop(.5,'#cc0000');bg.addColorStop(1,'#8b0000');
       ctx.fillStyle=bg;ctx.fill();
-      ctx.strokeStyle='#f1c40f';ctx.lineWidth=2;ctx.stroke();
+      ctx.strokeStyle='#ffd700';ctx.lineWidth=2;ctx.stroke();
       if(scaleX>0.3){
-        ctx.fillStyle='rgba(241,196,15,0.4)';
+        ctx.fillStyle='rgba(255,215,0,0.3)';
         ctx.font='bold '+(Math.min(cardW,cardH)*0.3)+'px sans-serif';
         ctx.textAlign='center';ctx.textBaseline='middle';
         ctx.fillText('🎪',cx2,cy2);
@@ -457,6 +437,7 @@ function drawPlaying(now){
     ctx.globalAlpha=1;
   }
 
+  // Particles
   for(let i=particles.length-1;i>=0;i--){
     const p=particles[i];
     p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life-=0.02;
@@ -473,56 +454,57 @@ function drawPlaying(now){
     matchFlashAlpha-=0.03;
   }
 
-  ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(0,H-44,W,44);
+  // Bottom bar
+  ctx.fillStyle='rgba(139,0,0,0.5)';ctx.fillRect(0,H-44,W,44);
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.font='15px sans-serif';ctx.fillStyle='#f1c40f';
+  ctx.font='15px sans-serif';ctx.fillStyle='#ffd700';
   ctx.fillText('← Main Menu',W/2,H-22);
   window._backBtn={x:0,y:H-44,w:W,h:44};
 }
 
 function drawComplete(){
-  drawGradientBg();
+  drawCarnivalBg();
   const cx=W/2;
   ctx.textAlign='center';ctx.textBaseline='middle';
 
-  ctx.font='bold 36px sans-serif';ctx.fillStyle='#f1c40f';
-  ctx.save();ctx.shadowColor='#e74c3c';ctx.shadowBlur=8;
-  ctx.fillText('🎪 Congratulations! 🎪',cx,H*0.2);
-  ctx.restore();
+  ctx.font='bold 36px sans-serif';ctx.fillStyle='#ffd700';
+  ctx.strokeStyle='#8b0000';ctx.lineWidth=3;
+  ctx.strokeText('🎪 Bravo!',cx,H*0.2);
+  ctx.fillText('🎪 Bravo!',cx,H*0.2);
 
   const stars=getStars();
   ctx.font='48px sans-serif';
   ctx.fillText('⭐'.repeat(stars)+'☆'.repeat(3-stars),cx,H*0.32);
 
-  ctx.font='20px sans-serif';ctx.fillStyle='#fff';
+  ctx.font='20px sans-serif';ctx.fillStyle='#ffd700';
   ctx.fillText('Moves: '+moves,cx,H*0.43);
   const m2=(elapsed/60)|0,s2=elapsed%60;
   ctx.fillText('Time: '+(m2<10?'0':'')+m2+':'+(s2<10?'0':'')+s2,cx,H*0.5);
 
-  ctx.font='14px sans-serif';ctx.fillStyle='rgba(241,196,15,0.6)';
+  ctx.font='14px sans-serif';ctx.fillStyle='rgba(255,215,0,0.5)';
   ctx.fillText('Minimum moves: '+totalPairs,cx,H*0.57);
 
-  // Replay button - golden
   const btnW=200,btnH=50,bx=cx-btnW/2,by=H*0.65;
   drawRoundRect(bx,by,btnW,btnH,25);
-  const g=ctx.createLinearGradient(bx,by,bx+btnW,by+btnH);
-  g.addColorStop(0,'#f1c40f');g.addColorStop(1,'#f39c12');
-  ctx.fillStyle=g;ctx.fill();
-  ctx.strokeStyle='#e67e22';ctx.lineWidth=2;ctx.stroke();
-  ctx.font='bold 18px sans-serif';ctx.fillStyle='#fff';
-  ctx.fillText('🎪 Play Again',cx,by+btnH/2);
+  const g2=ctx.createLinearGradient(bx,by,bx+btnW,by);
+  g2.addColorStop(0,'#cc0000');g2.addColorStop(1,'#8b0000');
+  ctx.fillStyle=g2;ctx.fill();
+  ctx.strokeStyle='#ffd700';ctx.lineWidth=2;ctx.stroke();
+  ctx.font='bold 18px sans-serif';ctx.fillStyle='#ffd700';
+  ctx.fillText('Encore! 🎪',cx,by+btnH/2);
   window._replayBtn={x:bx,y:by,w:btnW,h:btnH};
 
   const by2=by+btnH+20;
   drawRoundRect(bx,by2,btnW,btnH,25);
-  ctx.fillStyle='rgba(231,76,60,0.6)';ctx.fill();
-  ctx.strokeStyle='#f1c40f';ctx.lineWidth=1;ctx.stroke();
-  ctx.font='16px sans-serif';ctx.fillStyle='#fff';
+  ctx.fillStyle='rgba(139,0,0,0.5)';ctx.fill();
+  ctx.strokeStyle='#ffd700';ctx.lineWidth=1;ctx.stroke();
+  ctx.font='16px sans-serif';ctx.fillStyle='#ffd700';
   ctx.fillText('Main Menu',cx,by2+btnH/2);
   window._menuBtn={x:bx,y:by2,w:btnW,h:btnH};
 
+  // Celebration particles
   if(Math.random()<0.1){
-    const colors=['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#96E6A1'];
+    const colors=['#FFD700','#FF0000','#FF6B6B','#00FF7F','#FF69B4'];
     particles.push({x:Math.random()*W,y:H+10,vx:(Math.random()-0.5)*2,vy:-3-Math.random()*3,life:1,color:colors[Math.random()*colors.length|0],size:3+Math.random()*4});
   }
   for(let i=particles.length-1;i>=0;i--){
@@ -577,16 +559,16 @@ requestAnimationFrame(frame);
 })();
 </script>
 <div id="tutorial-overlay" style="position:fixed;inset:0;pointer-events:auto;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;z-index:999999">
-<div style="background:linear-gradient(135deg,rgba(192,57,43,0.95),rgba(150,40,27,0.95));border-radius:20px;padding:36px 28px;max-width:340px;text-align:center;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.5);border:3px solid #f1c40f">
+<div style="background:linear-gradient(135deg,#2a0a0a,#400a0a);border-radius:20px;padding:36px 28px;max-width:340px;text-align:center;color:#ffd700;box-shadow:0 8px 32px rgba(0,0,0,0.5);border:3px solid #ffd700">
 <div style="font-size:56px;margin-bottom:12px">🎪</div>
-<h2 style="font-size:24px;color:#f1c40f;margin-bottom:16px;text-shadow:2px 2px 0 rgba(0,0,0,0.3)">How to Play</h2>
-<p style="font-size:16px;line-height:1.9;text-align:left;color:#fff">
+<h2 style="font-size:24px;color:#ffd700;margin-bottom:16px">How to Play</h2>
+<p style="font-size:16px;line-height:1.9;text-align:left;color:#ffcc80">
 👆 Tap a card to <b>flip</b> it over<br>
 🔍 Find and <b>match all pairs!</b><br>
 ⭐ Fewer moves = more stars ⭐⭐⭐
 </p>
-<p style="font-size:14px;color:#f1c40f;margin-top:12px">🎨 Choose your difficulty and theme, then start!</p>
-<button onclick="document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_memory','1')" ontouchstart="event.stopPropagation();document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_memory','1')" style="margin-top:20px;padding:14px 36px;font-size:18px;border:3px solid #f1c40f;border-radius:12px;background:#e74c3c;color:#fff;cursor:pointer;font-weight:bold;text-shadow:1px 1px 0 rgba(0,0,0,0.3)">🎟️ Got it!</button>
+<p style="font-size:14px;color:#cc9944;margin-top:12px">🎭 Choose your act and difficulty, then showtime!</p>
+<button onclick="document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_memory','1')" ontouchstart="event.stopPropagation();document.getElementById('tutorial-overlay').remove();localStorage.setItem('tutorial_memory','1')" style="margin-top:20px;padding:14px 36px;font-size:18px;border:none;border-radius:12px;background:linear-gradient(135deg,#cc0000,#8b0000);color:#ffd700;cursor:pointer;font-weight:bold;border:2px solid #ffd700;box-shadow:0 4px 15px rgba(139,0,0,.5)">开场！🎪</button>
 </div></div>
 <script>if(localStorage.getItem('tutorial_memory'))document.getElementById('tutorial-overlay').remove();</script>
 </body>
