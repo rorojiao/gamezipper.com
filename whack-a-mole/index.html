@@ -224,6 +224,7 @@ body{animation:metalShine 8s ease-in-out infinite}
     <h1>⚙️ Steam Whacker</h1>
     <p>Smash the robots! Avoid the alarms!</p>
     <p>🤖 Robot +10 &nbsp; ⭐ Gold Robot +50 &nbsp; 🔴 Alarm -30</p>
+    <p style="font-size:clamp(12px,3vw,18px);color:#aa8860;margin-top:5px">🔥 Combo: 3x=2× &nbsp; 5x=3× &nbsp; 10x=4×</p>
     <button id="start-btn">Engage!</button>
   </div>
 </div>
@@ -239,6 +240,7 @@ const hammer=document.getElementById('hammer');
 const container=document.getElementById('game-container');
 let score=0,timeLeft=60,gameActive=false,timerInterval,spawnTimeout;
 let highScore=parseInt(localStorage.getItem('wam_high'))||0;
+let combo=0,lastHitTime=0,comboTimeout=null;
 const holes=[];
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 let alertInterval=null;
@@ -373,19 +375,32 @@ function whack(h,e){
   }else if(h.type==='bomb'){
     pts=-30;cls='neg';bombSound();
     spawnBombFlash();
+    combo=0;
   }else{
     pts=10;hitSound();
     spawnStars(rect,15,false);
     spawnGearDebris(rect,30,false);
     spawnSteam(rect,10,true);
   }
+
+  // Combo system
+  if(pts>0){
+    const now=Date.now();
+    if(now-lastHitTime<2000){combo++;} else {combo=1;}
+    lastHitTime=now;
+    clearTimeout(comboTimeout);
+    comboTimeout=setTimeout(()=>{combo=0;},2000);
+    const multiplier=combo>=10?4:combo>=5?3:combo>=3?2:1;
+    pts=pts*multiplier;
+  }
+
   score+=pts;if(score<0)score=0;
   scoreDisplay.textContent='Score: '+score;
 
   container.classList.remove('shake');void container.offsetWidth;container.classList.add('shake');
 
   const ft=document.createElement('div');ft.className='float-score '+cls;
-  ft.textContent=(pts>0?'+':'')+pts;
+  ft.textContent=(pts>0?'+':'')+pts+(combo>=3?' 🔥x'+Math.min(combo>=10?4:combo>=5?3:2):'');
   ft.style.left=rect.left+rect.width/2-20+'px';ft.style.top=rect.top+'px';
   document.body.appendChild(ft);setTimeout(()=>ft.remove(),800);
   setTimeout(()=>{h.mole.classList.remove('up','hit','golden','bomb');h.mole.className='mole-wrapper'},400);
@@ -425,7 +440,7 @@ function spawnMole(){
 
 function startGame(){
   if(audioCtx.state==='suspended')audioCtx.resume();
-  score=0;timeLeft=60;gameActive=true;
+  score=0;timeLeft=60;gameActive=true;combo=0;lastHitTime=0;
   scoreDisplay.textContent='Score: 0';timerDisplay.textContent='Time: 60';
   timerDisplay.style.color='#d4a860';
   overlay.style.display='none';showHammer();
