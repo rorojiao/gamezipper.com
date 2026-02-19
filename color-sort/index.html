@@ -6,25 +6,43 @@
 <title>Color Sort Puzzle</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#e0f7fa,#f3e5f5,#fff3e0);min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
-#header{text-align:center;padding:16px 8px 8px}
+body{font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;-webkit-tap-highlight-color:transparent;user-select:none;background:#e8f0fe}
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#header{text-align:center;padding:16px 8px 8px;position:relative;z-index:1}
 #header h1{font-size:28px;color:#5c6bc0;text-shadow:1px 1px 2px rgba(0,0,0,.1)}
 #level-info{font-size:16px;color:#78909c;margin-top:4px}
-#controls{display:flex;gap:12px;margin:10px 0;flex-wrap:wrap;justify-content:center}
-.btn{padding:10px 22px;border:none;border-radius:25px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:0 3px 8px rgba(0,0,0,.15)}
-.btn:active{transform:scale(.95)}
+#controls{display:flex;gap:12px;margin:10px 0;flex-wrap:wrap;justify-content:center;position:relative;z-index:1}
+.btn{padding:10px 22px;border:none;border-radius:25px;font-size:15px;font-weight:600;cursor:pointer;transition:all .25s;box-shadow:0 3px 8px rgba(0,0,0,.15);position:relative;overflow:hidden}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.btn:active{transform:scale(.95) translateY(0);box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.btn .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.4);transform:scale(0);animation:rippleAnim .5s ease-out forwards;pointer-events:none}
+@keyframes rippleAnim{to{transform:scale(3);opacity:0}}
 #btn-undo{background:linear-gradient(135deg,#ffb74d,#ff9800);color:#fff}
 #btn-restart{background:linear-gradient(135deg,#e57373,#ef5350);color:#fff}
 #btn-levels{background:linear-gradient(135deg,#81c784,#66bb6a);color:#fff}
 #btn-hint{background:linear-gradient(135deg,#4fc3f7,#29b6f6);color:#fff}
-#game-area{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:16px;padding:20px 10px;max-width:700px}
-.tube{position:relative;cursor:pointer;transition:transform .2s}
+#game-area{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:18px;padding:20px 10px;max-width:900px;position:relative;z-index:1}
+.tube{position:relative;cursor:pointer;transition:transform .25s cubic-bezier(.4,0,.2,1),filter .3s}
 .tube.selected{transform:translateY(-24px)}
-.tube.hint-source canvas{filter:drop-shadow(0 0 8px #4fc3f7) drop-shadow(0 0 16px #4fc3f7)}
-.tube.hint-target canvas{filter:drop-shadow(0 0 8px #66bb6a) drop-shadow(0 0 16px #66bb6a)}
-.tube canvas{display:block}
-#particles-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100}
-#flying-ball{position:fixed;pointer-events:none;z-index:99;display:none;border-radius:50%}
+.tube.selected .tube-body{box-shadow:0 0 18px var(--sel-glow,rgba(92,107,196,.5))}
+.tube.hint-source .tube-body{animation:hintPulse 1s ease-in-out infinite}
+.tube.hint-target .tube-body{animation:hintPulse 1s ease-in-out infinite .5s}
+@keyframes hintPulse{0%,100%{box-shadow:0 0 8px 2px rgba(79,195,247,.5)}50%{box-shadow:0 0 20px 6px rgba(79,195,247,.8)}}
+.tube-body{width:80px;height:260px;border-radius:0 0 20px 20px;position:relative;background:linear-gradient(90deg,rgba(255,255,255,.15) 0%,rgba(255,255,255,.05) 30%,rgba(200,210,230,.08) 70%,rgba(180,190,210,.12) 100%);border:2.5px solid rgba(160,175,200,.35);border-top:none;overflow:visible;transition:box-shadow .3s}
+.tube-body::before{content:'';position:absolute;left:4px;top:0;bottom:10px;width:8px;border-radius:4px;background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,.05));pointer-events:none}
+.tube-body::after{content:'';position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);width:60px;height:10px;border-radius:50%;background:rgba(0,0,0,.08);filter:blur(3px);pointer-events:none}
+.tube-rim{width:86px;height:8px;margin:0 auto -3px;border-radius:4px 4px 0 0;background:linear-gradient(180deg,rgba(220,230,245,.7),rgba(200,210,230,.3));border:2px solid rgba(160,175,200,.3);border-bottom:none;position:relative;left:-3px}
+.ball-container{position:absolute;bottom:10px;left:0;right:0;display:flex;flex-direction:column-reverse;align-items:center;gap:3px;padding:0 7px}
+.ball{width:56px;height:56px;border-radius:50%;position:relative;flex-shrink:0;transition:transform .15s}
+.ball-inner{width:100%;height:100%;border-radius:50%;position:relative;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.18),inset 0 -3px 6px rgba(0,0,0,.1)}
+.ball-inner::before{content:'';position:absolute;top:8px;left:10px;width:22px;height:16px;border-radius:50%;background:rgba(255,255,255,.4);transform:rotate(-25deg);pointer-events:none}
+.ball-inner::after{content:'';position:absolute;top:3px;right:12px;width:8px;height:5px;border-radius:50%;background:rgba(255,255,255,.2);transform:rotate(15deg);pointer-events:none}
+.tube.selected .ball:last-child .ball-inner{animation:breatheGlow 1.2s ease-in-out infinite}
+@keyframes breatheGlow{0%,100%{transform:scale(1);box-shadow:0 2px 6px rgba(0,0,0,.18),inset 0 -3px 6px rgba(0,0,0,.1),0 0 8px var(--ball-color)}50%{transform:scale(1.08);box-shadow:0 2px 6px rgba(0,0,0,.18),inset 0 -3px 6px rgba(0,0,0,.1),0 0 18px var(--ball-color)}}
+.tube-complete .tube-body{animation:tubeGoldSweep .6s ease-out}
+@keyframes tubeGoldSweep{0%{box-shadow:0 260px 0 -2px rgba(255,215,0,.6) inset}50%{box-shadow:0 130px 0 -2px rgba(255,215,0,.6) inset}100%{box-shadow:0 0 0 -2px rgba(255,215,0,0) inset}}
+#fx-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100}
+#hint-arrow{position:fixed;pointer-events:none;z-index:98;display:none}
 #overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:50;justify-content:center;align-items:center}
 #overlay.show{display:flex}
 #overlay-content{background:#fff;border-radius:20px;padding:30px;text-align:center;max-width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.3)}
@@ -34,13 +52,17 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135d
 .level-btn.unlocked{border-color:#81c784;background:#e8f5e9}
 .level-btn.current{border-color:#5c6bc0;background:#e8eaf6;color:#5c6bc0}
 .level-btn.locked{opacity:.4;cursor:default;color:#999}
-#win-msg{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:101;background:rgba(255,255,255,.95);border-radius:24px;padding:40px;text-align:center;display:none;box-shadow:0 10px 40px rgba(0,0,0,.2)}
-#win-msg h2{font-size:32px;color:#66bb6a;margin-bottom:12px}
+#win-msg{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:101;background:rgba(255,255,255,.97);border-radius:24px;padding:40px;text-align:center;display:none;box-shadow:0 10px 40px rgba(0,0,0,.2);transition:transform .4s cubic-bezier(.175,.885,.32,1.275)}
+#win-msg.visible{transform:translate(-50%,-50%) scale(1)}
+#win-msg h2{font-size:32px;color:#66bb6a;margin-bottom:12px;text-shadow:0 0 10px rgba(255,215,0,.4)}
 #win-msg .btn{margin-top:16px}
+#screen-flash{position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;opacity:0;pointer-events:none;z-index:99;transition:opacity .1s}
+@keyframes screenShake{0%,100%{transform:translateX(0)}10%{transform:translateX(-2px)}30%{transform:translateX(2px)}50%{transform:translateX(-1px)}70%{transform:translateX(1px)}}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
 </head>
 <body>
+<canvas id="bg-canvas"></canvas>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none">⬅ More Games at GameZipper.com</a>
 <div id="header">
 <h1>🧪 Color Sort Puzzle</h1>
@@ -53,8 +75,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135d
 <button class="btn" id="btn-levels" onclick="showLevels()">📋 Levels</button>
 </div>
 <div id="game-area"></div>
-<div id="flying-ball"></div>
-<canvas id="particles-canvas"></canvas>
+<canvas id="fx-canvas"></canvas>
+<svg id="hint-arrow" width="100%" height="100%"><defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="rgba(79,195,247,.8)"/></marker></defs><line id="hint-line" stroke="rgba(79,195,247,.8)" stroke-width="3" stroke-dasharray="8,6" marker-end="url(#ah)"/></svg>
+<div id="screen-flash"></div>
 <div id="overlay" onclick="event.target===this&&hideOverlay()">
 <div id="overlay-content"></div>
 </div>
@@ -63,10 +86,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135d
 <p id="win-sub"></p>
 <button class="btn" style="background:linear-gradient(135deg,#5c6bc0,#7e57c2);color:#fff" onclick="nextLevel()">Next Level ➜</button>
 </div>
+
 <script>
 const COLORS=['#ef5350','#42a5f5','#66bb6a','#ffa726','#ab47bc','#26c6da','#ec407a','#8d6e63','#78909c','#d4e157'];
-const TUBE_W=68,TUBE_H=210,BALL_R=24,CAP=4;
-const LEVELS=[];
+const COLORS_DARK=['#c62828','#1565c0','#2e7d32','#e65100','#6a1b9a','#00838f','#ad1457','#4e342e','#37474f','#9e9d24'];
+const TUBE_W=80,TUBE_H=260,BALL_D=56,CAP=4;
 const LEVEL_DEFS=[
 [3,1],[3,2],[4,1],[4,2],[5,1],[5,2],[5,2],[6,2],[6,2],[6,2],
 [7,2],[7,2],[7,2],[7,3],[8,2],[8,2],[8,3],[9,2],[9,3],[10,2],
@@ -75,42 +99,91 @@ const LEVEL_DEFS=[
 
 let state={level:0,tubes:[],history:[],selected:-1,won:false};
 let maxLevel=parseInt(localStorage.getItem('csort_max')||'0');
-let particles=[];
-let pCanvas,pCtx;
-let hintFrom=-1,hintTo=-1;
 let isAnimating=false;
+let hintFrom=-1,hintTo=-1,hintTimer=0;
 
-// === Web Audio ===
+// FX canvas & particles
+let fxC,fxCtx;
+const POOL_SIZE=600;
+let particles=new Array(POOL_SIZE);
+let pCount=0;
+for(let i=0;i<POOL_SIZE;i++) particles[i]={active:false};
+
+// Background canvas
+let bgC,bgCtx,bgBubbles=[];
+let bgHue=0;
+
+// ==================== Audio ====================
 let audioCtx;
-function getAudioCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function ac(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
 
-function playPourSound(){
+function playSound(type){
   try{
-    const ac=getAudioCtx();
-    const osc=ac.createOscillator();const gain=ac.createGain();
-    osc.connect(gain);gain.connect(ac.destination);
-    osc.type='sine';osc.frequency.setValueAtTime(600,ac.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(300,ac.currentTime+0.15);
-    gain.gain.setValueAtTime(0.3,ac.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.2);
-    osc.start(ac.currentTime);osc.stop(ac.currentTime+0.2);
+    const a=ac(),t=a.currentTime;
+    if(type==='select'){
+      const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);
+      o.type='sine';o.frequency.value=1200;g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.001,t+.12);
+      o.start(t);o.stop(t+.12);
+    }else if(type==='deselect'){
+      const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);
+      o.type='sine';o.frequency.value=400;g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.1);
+      o.start(t);o.stop(t+.1);
+    }else if(type==='fly'){
+      const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);
+      o.type='sine';o.frequency.setValueAtTime(800,t);o.frequency.exponentialRampToValueAtTime(300,t+.35);
+      g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.35);
+      o.start(t);o.stop(t+.35);
+    }else if(type==='bounce'){
+      [0,.08,.15].forEach((d,i)=>{
+        const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);
+        o.type='triangle';o.frequency.value=200-i*30;
+        const v=.2-i*.06;
+        g.gain.setValueAtTime(v,t+d);g.gain.exponentialRampToValueAtTime(.001,t+d+.08);
+        o.start(t+d);o.stop(t+d+.1);
+      });
+    }else if(type==='complete'){
+      [523,659,784].forEach((f,i)=>{
+        const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);
+        o.type='triangle';o.frequency.value=f;
+        g.gain.setValueAtTime(.2,t+i*.08);g.gain.exponentialRampToValueAtTime(.001,t+i*.08+.4);
+        o.start(t+i*.08);o.stop(t+i*.08+.4);
+      });
+      // shimmer
+      const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);
+      o.type='sine';o.frequency.setValueAtTime(2000,t+.1);o.frequency.exponentialRampToValueAtTime(4000,t+.5);
+      g.gain.setValueAtTime(.08,t+.1);g.gain.exponentialRampToValueAtTime(.001,t+.6);
+      o.start(t+.1);o.stop(t+.6);
+    }else if(type==='win'){
+      [523,587,659,784,1047].forEach((f,i)=>{
+        const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);
+        o.type='triangle';o.frequency.value=f;
+        g.gain.setValueAtTime(.2,t+i*.12);g.gain.exponentialRampToValueAtTime(.001,t+i*.12+.5);
+        o.start(t+i*.12);o.stop(t+i*.12+.5);
+      });
+    }else if(type==='error'){
+      const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);
+      o.type='square';o.frequency.value=100;
+      g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.12);
+      o.start(t);o.stop(t+.15);
+    }
   }catch(e){}
 }
 
-function playCompleteSound(){
-  try{
-    const ac=getAudioCtx();
-    [523,659,784].forEach((f,i)=>{
-      const osc=ac.createOscillator();const gain=ac.createGain();
-      osc.connect(gain);gain.connect(ac.destination);
-      osc.type='triangle';osc.frequency.value=f;
-      gain.gain.setValueAtTime(0.25,ac.currentTime+i*0.1);
-      gain.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+i*0.1+0.3);
-      osc.start(ac.currentTime+i*0.1);osc.stop(ac.currentTime+i*0.1+0.3);
-    });
-  }catch(e){}
-}
+// ==================== Ripple on buttons ====================
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('.btn');
+  if(!btn)return;
+  const r=document.createElement('span');r.className='ripple';
+  const rect=btn.getBoundingClientRect();
+  const sz=Math.max(rect.width,rect.height);
+  r.style.width=r.style.height=sz+'px';
+  r.style.left=(e.clientX-rect.left-sz/2)+'px';
+  r.style.top=(e.clientY-rect.top-sz/2)+'px';
+  btn.appendChild(r);
+  setTimeout(()=>r.remove(),500);
+});
 
+// ==================== Level generation ====================
 function genLevel(idx){
   const[nc,ne]=LEVEL_DEFS[Math.min(idx,LEVEL_DEFS.length-1)];
   let balls=[];
@@ -119,25 +192,36 @@ function genLevel(idx){
   function rng(){seed=(seed*1664525+1013904223)&0xffffffff;return(seed>>>0)/4294967296}
   for(let i=balls.length-1;i>0;i--){let j=Math.floor(rng()*(i+1));[balls[i],balls[j]]=[balls[j],balls[i]]}
   let tubes=[];
-  for(let t=0;t<nc;t++){tubes.push(balls.slice(t*CAP,(t+1)*CAP))}
-  for(let t=0;t<ne;t++)tubes.push([]);
+  for(let t=0;t<nc;t++) tubes.push(balls.slice(t*CAP,(t+1)*CAP));
+  for(let t=0;t<ne;t++) tubes.push([]);
   return tubes;
 }
 
 function deepCopy(t){return t.map(a=>[...a])}
 
 function loadLevel(idx){
-  state.level=idx;
-  state.tubes=genLevel(idx);
-  state.history=[];
-  state.selected=-1;
-  state.won=false;
+  state.level=idx;state.tubes=genLevel(idx);state.history=[];state.selected=-1;state.won=false;
   hintFrom=-1;hintTo=-1;
   document.getElementById('level-info').textContent='Level '+(idx+1);
   document.getElementById('win-msg').style.display='none';
+  document.getElementById('win-msg').classList.remove('visible');
+  hideHintArrow();
   render();
 }
 
+function lighten(hex,amt){
+  let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  r=Math.min(255,Math.round(r+(255-r)*amt));g=Math.min(255,Math.round(g+(255-g)*amt));b=Math.min(255,Math.round(b+(255-b)*amt));
+  return'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+function darken(hex,amt){
+  let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  r=Math.max(0,Math.round(r*(1-amt)));g=Math.max(0,Math.round(g*(1-amt)));b=Math.max(0,Math.round(b*(1-amt)));
+  return'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+// ==================== Render ====================
 function render(){
   const area=document.getElementById('game-area');
   area.innerHTML='';
@@ -148,253 +232,466 @@ function render(){
     if(hintFrom===i) cls+=' hint-source';
     if(hintTo===i) cls+=' hint-target';
     div.className=cls;
-    const c=document.createElement('canvas');
-    c.width=TUBE_W;c.height=TUBE_H;
-    drawTube(c,tube,state.selected===i);
-    div.appendChild(c);
+    div.dataset.idx=i;
+
+    // Set glow color based on top ball
+    if(state.selected===i && tube.length>0){
+      div.style.setProperty('--sel-glow',COLORS[tube[tube.length-1]]+'80');
+    }
+
+    // Rim
+    const rim=document.createElement('div');rim.className='tube-rim';
+    div.appendChild(rim);
+
+    // Body
+    const body=document.createElement('div');body.className='tube-body';
+    const bc=document.createElement('div');bc.className='ball-container';
+
+    for(let bi=0;bi<tube.length;bi++){
+      const col=COLORS[tube[bi]];
+      const ball=document.createElement('div');ball.className='ball';
+      ball.style.setProperty('--ball-color',col);
+      const inner=document.createElement('div');inner.className='ball-inner';
+      inner.style.background=`radial-gradient(circle at 38% 35%, ${lighten(col,.45)}, ${col} 55%, ${darken(col,.2)})`;
+      inner.style.border=`1px solid ${darken(col,.25)}`;
+      ball.appendChild(inner);
+      bc.appendChild(ball);
+    }
+
+    body.appendChild(bc);
+    div.appendChild(body);
+
     div.addEventListener('click',()=>onTap(i));
     div.addEventListener('touchend',e=>{e.preventDefault();onTap(i)});
     area.appendChild(div);
   });
+
+  updateHintArrow();
 }
 
-function drawTube(canvas,balls,sel){
-  const ctx=canvas.getContext('2d');
-  const w=TUBE_W,h=TUBE_H;
-  ctx.clearRect(0,0,w,h);
-  const tx=8,tw=w-16,ty=12,th=h-20,br=10;
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(tx,ty+br);
-  ctx.arcTo(tx,ty+th,tx+tw/2,ty+th+10,br);
-  ctx.arcTo(tx+tw,ty+th,tx+tw,ty,br);
-  ctx.lineTo(tx+tw,ty);
-  ctx.strokeStyle=sel?'#5c6bc0':'#b0bec5';
-  ctx.lineWidth=sel?3:2;
-  ctx.stroke();
-  ctx.restore();
-  for(let i=0;i<balls.length;i++){
-    const bi=balls.length-1-i;
-    const bx=w/2;
-    const by=h-28-i*(BALL_R*2+3);
-    ctx.beginPath();
-    ctx.arc(bx,by,BALL_R,0,Math.PI*2);
-    const g=ctx.createRadialGradient(bx-6,by-6,3,bx,by,BALL_R);
-    const col=COLORS[balls[bi]];
-    g.addColorStop(0,lighten(col,.3));
-    g.addColorStop(1,col);
-    ctx.fillStyle=g;
-    ctx.fill();
-    ctx.strokeStyle='rgba(0,0,0,.1)';
-    ctx.lineWidth=1;
-    ctx.stroke();
-  }
-}
-
-function lighten(hex,amt){
-  let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-  r=Math.min(255,Math.round(r+(255-r)*amt));
-  g=Math.min(255,Math.round(g+(255-g)*amt));
-  b=Math.min(255,Math.round(b+(255-b)*amt));
-  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
-}
-
+// ==================== Tap logic ====================
 function topBall(tube){return tube.length?tube[tube.length-1]:-1}
 
 function onTap(i){
   if(state.won||isAnimating)return;
   clearHint();
   if(state.selected===-1){
-    if(state.tubes[i].length>0){state.selected=i;render()}
+    if(state.tubes[i].length>0){state.selected=i;playSound('select');render();}
   }else if(state.selected===i){
-    state.selected=-1;render();
+    state.selected=-1;playSound('deselect');render();
   }else{
     tryMove(state.selected,i);
   }
 }
 
-function clearHint(){hintFrom=-1;hintTo=-1;}
-
-function getTubeElements(){return document.querySelectorAll('#game-area .tube')}
-
-function animateBallFly(fromIdx,toIdx,ballColor,count,callback){
-  isAnimating=true;
-  const tubes=getTubeElements();
-  const fromEl=tubes[fromIdx];const toEl=tubes[toIdx];
-  if(!fromEl||!toEl){isAnimating=false;callback();return;}
-  const fromRect=fromEl.getBoundingClientRect();
-  const toRect=toEl.getBoundingClientRect();
-
-  const startX=fromRect.left+fromRect.width/2-BALL_R;
-  const startY=fromRect.top-BALL_R;
-  const endX=toRect.left+toRect.width/2-BALL_R;
-  const destBalls=state.tubes[toIdx].length-count;
-  const endY=toRect.bottom-28-(destBalls+count-1)*(BALL_R*2+3)-BALL_R;
-
-  let done=0;
-  for(let b=0;b<count;b++){
-    setTimeout(()=>{
-      const fb=document.getElementById('flying-ball');
-      fb.style.display='block';
-      fb.style.width=BALL_R*2+'px';fb.style.height=BALL_R*2+'px';
-      fb.style.background=`radial-gradient(circle at 35% 35%, ${lighten(ballColor,.3)}, ${ballColor})`;
-      fb.style.boxShadow='0 4px 12px rgba(0,0,0,.3)';
-      
-      const duration=350;
-      const startTime=performance.now();
-      const midY=Math.min(startY,endY)-80;
-      
-      function anim(now){
-        const t=Math.min(1,(now-startTime)/duration);
-        const et=t;
-        const x=startX+(endX-startX)*et;
-        const y=(1-et)*(1-et)*startY+2*(1-et)*et*midY+et*et*endY;
-        fb.style.left=x+'px';fb.style.top=y+'px';
-        if(t<1){requestAnimationFrame(anim);}
-        else{
-          // Bounce
-          const bounceStart=performance.now();
-          const bounceDur=200;
-          function bounce(now2){
-            const bt=Math.min(1,(now2-bounceStart)/bounceDur);
-            const by2=Math.sin(bt*Math.PI)*-15;
-            fb.style.top=(endY+by2)+'px';
-            if(bt<1){requestAnimationFrame(bounce);}
-            else{
-              fb.style.display='none';
-              playPourSound();
-              done++;
-              if(done===count){
-                render();
-                isAnimating=false;
-                callback();
-              }
-            }
-          }
-          requestAnimationFrame(bounce);
-        }
-      }
-      requestAnimationFrame(anim);
-    },b*150);
-  }
-}
+function clearHint(){hintFrom=-1;hintTo=-1;clearTimeout(hintTimer);hideHintArrow();}
 
 function tryMove(from,to){
   const ft=state.tubes[from],tt=state.tubes[to];
   if(!ft.length){state.selected=-1;render();return}
   const ball=topBall(ft);
-  if(tt.length>=CAP){state.selected=-1;render();return}
-  if(tt.length>0&&topBall(tt)!==ball){state.selected=-1;render();return}
-  
+  if(tt.length>=CAP||(tt.length>0&&topBall(tt)!==ball)){
+    state.selected=-1;playSound('error');render();return;
+  }
   state.history.push({from,to,tubes:deepCopy(state.tubes)});
   const ballColor=COLORS[ball];
   
-  // Count how many will move
   let count=0;
-  let tempFt=[...ft];let tempTt=[...tt];
-  while(tempFt.length>0&&topBall(tempFt)===ball&&tempTt.length<CAP){
-    tempTt.push(tempFt.pop());count++;
-  }
+  let tmpF=[...ft],tmpT=[...tt];
+  while(tmpF.length>0&&topBall(tmpF)===ball&&tmpT.length<CAP){tmpT.push(tmpF.pop());count++;}
   
-  // Actually move
-  while(ft.length>0&&topBall(ft)===ball&&tt.length<CAP){
-    tt.push(ft.pop());
-  }
+  // Actually move in state
+  for(let c=0;c<count;c++) tt.push(ft.pop());
   state.selected=-1;
+  render();
   
-  // Animate the ball flying
-  animateBallFly(from,to,ballColor,count,()=>{
+  // Animate
+  animatePour(from,to,ballColor,count,()=>{
+    // Check tube completion
+    const t2=state.tubes[to];
+    if(t2.length===CAP&&new Set(t2).size===1){
+      onTubeComplete(to);
+    }
     checkWin();
   });
 }
 
-function undo(){
-  if(!state.history.length||state.won||isAnimating)return;
-  const h=state.history.pop();
-  state.tubes=h.tubes;
-  state.selected=-1;
-  clearHint();
-  render();
+// ==================== Pour animation (canvas) ====================
+function getTubeRect(idx){
+  const el=document.querySelectorAll('#game-area .tube')[idx];
+  if(!el)return null;
+  return el.getBoundingClientRect();
 }
 
-function restartLevel(){loadLevel(state.level)}
+function getBallY(tubeIdx,ballIdx){
+  // ballIdx: 0=bottom
+  const rect=getTubeRect(tubeIdx);
+  if(!rect)return 0;
+  return rect.bottom - 20 - ballIdx*(BALL_D+3) - BALL_D/2;
+}
 
+function animatePour(fromIdx,toIdx,color,count,cb){
+  isAnimating=true;
+  playSound('fly');
+  const fromRect=getTubeRect(fromIdx);
+  const toRect=getTubeRect(toIdx);
+  if(!fromRect||!toRect){isAnimating=false;cb();return;}
+
+  const destCount=state.tubes[toIdx].length; // already moved
+  let done=0;
+
+  // Hide the destination balls that just moved (we'll animate them appearing)
+  const toEl=document.querySelectorAll('#game-area .tube')[toIdx];
+  const ballEls=toEl?toEl.querySelectorAll('.ball'):[];
+  for(let i=0;i<count;i++){
+    const bi=destCount-count+i;
+    if(ballEls[bi]) ballEls[bi].style.visibility='hidden';
+  }
+
+  for(let b=0;b<count;b++){
+    setTimeout(()=>{
+      const startX=fromRect.left+fromRect.width/2;
+      const startY=fromRect.top-10;
+      const endX=toRect.left+toRect.width/2;
+      const destBi=destCount-count+b;
+      const endY=getBallY(toIdx,destBi);
+      const peakY=Math.min(startY,endY)-90;
+
+      const t0=performance.now();
+      const flyDur=400;
+      const trail=[];
+
+      function animFly(now){
+        const t=Math.min(1,(now-t0)/flyDur);
+        // ease in-out with slight pause at peak
+        const et=t<.45?2*t*t:(t<.55?.5:1-2*(1-t)*(1-t));
+        const x=startX+(endX-startX)*et;
+        const y=(1-et)*(1-et)*startY+2*(1-et)*et*peakY+et*et*endY;
+
+        // trail
+        trail.push({x,y,r:BALL_D/2,a:1,t:now});
+
+        // Draw ball + trail on fx canvas
+        // (drawn in main loop)
+        if(t<1){
+          requestAnimationFrame(animFly);
+        }else{
+          // Bounce phase
+          playSound('bounce');
+          spawnRipple(endX,endY,color);
+          const t1=performance.now();
+          const bDur=300;
+          function animBounce(now2){
+            const bt=Math.min(1,(now2-t1)/bDur);
+            // 3 bounces with decreasing amplitude
+            const bounceH=[18,9,4];
+            let by=0;
+            if(bt<.33) by=-bounceH[0]*Math.sin(bt/.33*Math.PI);
+            else if(bt<.66) by=-bounceH[1]*Math.sin((bt-.33)/.33*Math.PI);
+            else by=-bounceH[2]*Math.sin((bt-.66)/.34*Math.PI);
+            // squash & stretch
+            const sq=bt<.33?1+.15*Math.sin(bt/.33*Math.PI):1+.08*Math.sin((bt-.33)/.67*Math.PI*2);
+
+            // Update trail entry position for last ball
+            trail.push({x:endX,y:endY+by,r:BALL_D/2,a:1,sx:1/sq,sy:sq,t:now2});
+
+            if(bt<1){
+              requestAnimationFrame(animBounce);
+            }else{
+              // Show the real DOM ball
+              if(ballEls[destBi]) ballEls[destBi].style.visibility='visible';
+              done++;
+              if(done===count){isAnimating=false;cb();}
+            }
+          }
+          requestAnimationFrame(animBounce);
+        }
+      }
+      requestAnimationFrame(animFly);
+
+      // Store trail ref for fx drawing
+      activeTrails.push({trail,color,startTime:performance.now(),endTime:performance.now()+flyDur+300+200});
+    },b*120);
+  }
+}
+
+let activeTrails=[];
+
+function drawFlyingBalls(){
+  const now=performance.now();
+  // Clean up old trails
+  activeTrails=activeTrails.filter(t=>now<t.endTime);
+
+  for(const at of activeTrails){
+    const trail=at.trail;
+    if(!trail.length)continue;
+    // Draw trail (last 12 positions fading)
+    const len=trail.length;
+    const trailCount=Math.min(12,len);
+    for(let i=0;i<trailCount;i++){
+      const ti=len-trailCount+i;
+      const p=trail[ti];
+      const alpha=(i/trailCount)*0.35;
+      const r=p.r*(i/trailCount)*0.8;
+      fxCtx.beginPath();
+      fxCtx.arc(p.x,p.y,r,0,Math.PI*2);
+      fxCtx.fillStyle=at.color;
+      fxCtx.globalAlpha=alpha;
+      fxCtx.fill();
+    }
+    // Draw current ball
+    const cur=trail[len-1];
+    fxCtx.globalAlpha=1;
+    fxCtx.save();
+    fxCtx.translate(cur.x,cur.y);
+    if(cur.sx) fxCtx.scale(cur.sx,cur.sy);
+    const g=fxCtx.createRadialGradient(-4,-4,2,0,0,BALL_D/2);
+    g.addColorStop(0,lighten(at.color,.45));
+    g.addColorStop(.6,at.color);
+    g.addColorStop(1,darken(at.color,.2));
+    fxCtx.beginPath();
+    fxCtx.arc(0,0,BALL_D/2,0,Math.PI*2);
+    fxCtx.fillStyle=g;
+    fxCtx.fill();
+    fxCtx.strokeStyle=darken(at.color,.25);
+    fxCtx.lineWidth=1;
+    fxCtx.stroke();
+    // highlight
+    fxCtx.beginPath();
+    fxCtx.ellipse(-6,-8,10,7,-.4,0,Math.PI*2);
+    fxCtx.fillStyle='rgba(255,255,255,.35)';
+    fxCtx.fill();
+    fxCtx.restore();
+  }
+  fxCtx.globalAlpha=1;
+}
+
+// ==================== Ripple effect ====================
+function spawnRipple(x,y,color){
+  for(let i=0;i<3;i++){
+    spawnP({x,y,vx:0,vy:0,r:BALL_D/2+i*4,life:1,decay:.03,type:'ring',color,grow:2.5-i*.5});
+  }
+}
+
+// ==================== Tube complete ====================
+function onTubeComplete(idx){
+  playSound('complete');
+  const rect=getTubeRect(idx);
+  if(!rect)return;
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+  const col=COLORS[state.tubes[idx][0]];
+
+  // Gold sweep class
+  const el=document.querySelectorAll('#game-area .tube')[idx];
+  if(el){el.classList.add('tube-complete');setTimeout(()=>el.classList.remove('tube-complete'),600);}
+
+  // Particles from each ball position
+  for(let bi=0;bi<CAP;bi++){
+    const by=getBallY(idx,bi);
+    for(let p=0;p<20;p++){
+      const angle=Math.random()*Math.PI*2;
+      const speed=Math.random()*5+2;
+      spawnP({x:cx,y:by,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-2,r:Math.random()*4+2,
+        life:1,decay:Math.random()*.02+.01,type:'dot',color:col});
+    }
+  }
+  // Shockwave
+  spawnP({x:cx,y:cy,vx:0,vy:0,r:10,life:1,decay:.015,type:'ring',color:col,grow:8});
+
+  // Screen shake
+  document.body.style.animation='screenShake .2s linear';
+  setTimeout(()=>document.body.style.animation='',250);
+}
+
+// ==================== Win ====================
 function checkWin(){
-  let tubeComplete=false;
   for(const t of state.tubes){
     if(t.length>0&&t.length<CAP)return;
     if(t.length===CAP&&new Set(t).size>1)return;
   }
-  // Check each tube for completion sound
-  for(const t of state.tubes){
-    if(t.length===CAP&&new Set(t).size===1) tubeComplete=true;
-  }
-  
   state.won=true;
-  if(state.level>=maxLevel){maxLevel=state.level+1;localStorage.setItem('csort_max',''+maxLevel)}
-  playCompleteSound();
+  if(state.level>=maxLevel){maxLevel=state.level+1;localStorage.setItem('csort_max',''+maxLevel);}
+  playSound('win');
+
+  // Screen flash
+  const flash=document.getElementById('screen-flash');
+  flash.style.opacity='0.6';
+  setTimeout(()=>flash.style.opacity='0',200);
+
+  // Fireworks from 4 corners
+  const w=fxC.width,h=fxC.height;
+  const corners=[[0,0],[w,0],[0,h],[w,h]];
+  corners.forEach(([ox,oy])=>{
+    for(let i=0;i<60;i++){
+      const angle=Math.atan2(h/2-oy,w/2-ox)+((Math.random()-.5)*.8);
+      const speed=Math.random()*8+4;
+      spawnP({x:ox,y:oy,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
+        r:Math.random()*5+2,life:1,decay:Math.random()*.008+.005,type:'dot',
+        color:COLORS[Math.floor(Math.random()*COLORS.length)]});
+    }
+  });
+
+  // Stars falling
+  for(let i=0;i<30;i++){
+    spawnP({x:Math.random()*w,y:-Math.random()*100,vx:(Math.random()-.5)*.5,vy:Math.random()*1.5+.5,
+      r:Math.random()*6+3,life:1,decay:Math.random()*.003+.002,type:'star',
+      color:['#FFD700','#FFA500','#FF6347','#7B68EE'][Math.floor(Math.random()*4)],
+      rot:Math.random()*Math.PI*2,rotSpeed:(Math.random()-.5)*.1});
+  }
+
   setTimeout(()=>{
     document.getElementById('win-sub').textContent='Level '+(state.level+1)+' completed!';
-    document.getElementById('win-msg').style.display='block';
-    spawnParticles();
-  },300);
+    const wm=document.getElementById('win-msg');
+    wm.style.display='block';
+    requestAnimationFrame(()=>wm.classList.add('visible'));
+  },400);
 }
 
-// === Hint System ===
+// ==================== Particle system ====================
+function spawnP(opts){
+  // Find inactive slot
+  for(let i=0;i<POOL_SIZE;i++){
+    if(!particles[i].active){
+      Object.assign(particles[i],opts,{active:true});
+      return;
+    }
+  }
+}
+
+function tickParticles(){
+  fxCtx.clearRect(0,0,fxC.width,fxC.height);
+
+  drawFlyingBalls();
+
+  for(let i=0;i<POOL_SIZE;i++){
+    const p=particles[i];
+    if(!p.active)continue;
+    p.life-=p.decay;
+    if(p.life<=0){p.active=false;continue;}
+
+    if(p.type==='dot'){
+      p.x+=p.vx;p.y+=p.vy;p.vy+=.12;p.vx*=.99;
+      fxCtx.globalAlpha=p.life;
+      fxCtx.beginPath();fxCtx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);
+      fxCtx.fillStyle=p.color;fxCtx.fill();
+    }else if(p.type==='ring'){
+      p.r+=(p.grow||2);
+      fxCtx.globalAlpha=p.life*.4;
+      fxCtx.beginPath();fxCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      fxCtx.strokeStyle=p.color;fxCtx.lineWidth=2;fxCtx.stroke();
+    }else if(p.type==='star'){
+      p.x+=p.vx;p.y+=p.vy;
+      p.rot=(p.rot||0)+(p.rotSpeed||0);
+      fxCtx.globalAlpha=p.life;
+      fxCtx.save();fxCtx.translate(p.x,p.y);fxCtx.rotate(p.rot);
+      drawStar(fxCtx,0,0,p.r,p.r/2,5);
+      fxCtx.fillStyle=p.color;fxCtx.fill();
+      fxCtx.restore();
+    }
+  }
+  fxCtx.globalAlpha=1;
+}
+
+function drawStar(ctx,cx,cy,or,ir,n){
+  ctx.beginPath();
+  for(let i=0;i<n*2;i++){
+    const r=i%2===0?or:ir;
+    const a=Math.PI/n*i-Math.PI/2;
+    if(i===0)ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+    else ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+  }
+  ctx.closePath();
+}
+
+// ==================== Background ====================
+function initBg(){
+  bgC=document.getElementById('bg-canvas');
+  bgCtx=bgC.getContext('2d');
+  function resize(){bgC.width=window.innerWidth;bgC.height=window.innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  for(let i=0;i<10;i++){
+    bgBubbles.push({x:Math.random()*bgC.width,y:Math.random()*bgC.height,r:Math.random()*30+10,
+      speed:Math.random()*.3+.1,drift:Math.random()*Math.PI*2});
+  }
+}
+
+function tickBg(){
+  const w=bgC.width,h=bgC.height;
+  bgHue=(bgHue+.018)%360; // 20s cycle: 360/20/60*0.33
+  const h1=(200+bgHue)%360,h2=(280+bgHue)%360,h3=(40+bgHue)%360;
+  const grad=bgCtx.createLinearGradient(0,0,w,h);
+  grad.addColorStop(0,`hsl(${h1},70%,92%)`);
+  grad.addColorStop(.5,`hsl(${h2},60%,93%)`);
+  grad.addColorStop(1,`hsl(${h3},65%,92%)`);
+  bgCtx.fillStyle=grad;
+  bgCtx.fillRect(0,0,w,h);
+
+  // Bubbles
+  bgCtx.globalAlpha=.08;
+  for(const b of bgBubbles){
+    b.y-=b.speed;
+    b.x+=Math.sin(b.drift)*0.3;
+    b.drift+=.005;
+    if(b.y<-b.r*2){b.y=h+b.r;b.x=Math.random()*w;}
+    bgCtx.beginPath();bgCtx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    bgCtx.fillStyle='#fff';bgCtx.fill();
+  }
+  bgCtx.globalAlpha=1;
+}
+
+// ==================== Hint ====================
 function showHint(){
   if(state.won||isAnimating)return;
-  clearHint();
-  state.selected=-1;
-  
+  clearHint();state.selected=-1;
   const tubes=state.tubes;
-  let bestMove=null;let bestScore=-Infinity;
-  
+  let bestMove=null,bestScore=-Infinity;
   for(let f=0;f<tubes.length;f++){
     if(!tubes[f].length)continue;
     const ball=topBall(tubes[f]);
-    // Count consecutive same-color balls on top
     let fCount=0;
     for(let k=tubes[f].length-1;k>=0&&tubes[f][k]===ball;k--)fCount++;
-    
     for(let t=0;t<tubes.length;t++){
       if(f===t)continue;
       if(tubes[t].length>=CAP)continue;
       if(tubes[t].length>0&&topBall(tubes[t])!==ball)continue;
-      // Don't move from a single-color tube to empty (pointless)
       if(tubes[t].length===0&&new Set(tubes[f]).size===1)continue;
-      
       let score=0;
-      // Prefer moving to same color (stacking)
-      if(tubes[t].length>0&&topBall(tubes[t])===ball){
-        let tCount=0;
-        for(let k=tubes[t].length-1;k>=0&&tubes[t][k]===ball;k--)tCount++;
-        score+=10+tCount+fCount;
-        // Would complete a tube?
-        if(tCount+fCount===CAP) score+=50;
+      if(tubes[t].length>0){
+        let tCount=0;for(let k=tubes[t].length-1;k>=0&&tubes[t][k]===ball;k--)tCount++;
+        score+=10+tCount+fCount;if(tCount+fCount===CAP)score+=50;
       }
-      // Moving to empty is ok but lower priority
-      if(tubes[t].length===0) score+=1;
-      // Expose different color underneath = good
-      if(fCount<tubes[f].length) score+=3;
-      
+      if(tubes[t].length===0)score+=1;
+      if(fCount<tubes[f].length)score+=3;
       if(score>bestScore){bestScore=score;bestMove={from:f,to:t};}
     }
   }
-  
   if(bestMove){
-    hintFrom=bestMove.from;
-    hintTo=bestMove.to;
+    hintFrom=bestMove.from;hintTo=bestMove.to;
     render();
-    // Auto-clear hint after 3 seconds
-    setTimeout(()=>{if(hintFrom===bestMove.from&&hintTo===bestMove.to){clearHint();render();}},3000);
+    showHintArrow();
+    hintTimer=setTimeout(()=>{if(hintFrom===bestMove.from){clearHint();render();}},3000);
   }
 }
 
-function nextLevel(){
-  document.getElementById('win-msg').style.display='none';
-  loadLevel(state.level+1);
+function showHintArrow(){
+  const svg=document.getElementById('hint-arrow');
+  const line=document.getElementById('hint-line');
+  const fr=getTubeRect(hintFrom),tr=getTubeRect(hintTo);
+  if(!fr||!tr){svg.style.display='none';return;}
+  svg.style.display='block';
+  line.setAttribute('x1',fr.left+fr.width/2);
+  line.setAttribute('y1',fr.top-20);
+  line.setAttribute('x2',tr.left+tr.width/2);
+  line.setAttribute('y2',tr.top-20);
 }
+function hideHintArrow(){document.getElementById('hint-arrow').style.display='none';}
+function updateHintArrow(){if(hintFrom>=0&&hintTo>=0)showHintArrow();}
 
+// ==================== Undo / Restart / Levels ====================
+function undo(){if(!state.history.length||state.won||isAnimating)return;const h=state.history.pop();state.tubes=h.tubes;state.selected=-1;clearHint();render();}
+function restartLevel(){if(isAnimating)return;loadLevel(state.level);}
+function nextLevel(){document.getElementById('win-msg').style.display='none';document.getElementById('win-msg').classList.remove('visible');loadLevel(state.level+1);}
 function showLevels(){
   const oc=document.getElementById('overlay-content');
   let h='<h2>Select Level</h2><div id="level-grid">';
@@ -407,45 +704,24 @@ function showLevels(){
   oc.innerHTML=h;
   document.getElementById('overlay').classList.add('show');
 }
-function pickLevel(i){hideOverlay();loadLevel(i)}
-function hideOverlay(){document.getElementById('overlay').classList.remove('show')}
+function pickLevel(i){hideOverlay();loadLevel(i);}
+function hideOverlay(){document.getElementById('overlay').classList.remove('show');}
 
-// Particles
-function initParticles(){
-  pCanvas=document.getElementById('particles-canvas');
-  pCtx=pCanvas.getContext('2d');
-  function resize(){pCanvas.width=window.innerWidth;pCanvas.height=window.innerHeight}
+// ==================== Main loop ====================
+function initFx(){
+  fxC=document.getElementById('fx-canvas');fxCtx=fxC.getContext('2d');
+  function resize(){fxC.width=window.innerWidth;fxC.height=window.innerHeight;}
   resize();window.addEventListener('resize',resize);
-  requestAnimationFrame(animParticles);
-}
-function spawnParticles(){
-  for(let i=0;i<80;i++){
-    particles.push({
-      x:pCanvas.width/2+(Math.random()-.5)*100,
-      y:pCanvas.height/2,
-      vx:(Math.random()-.5)*12,
-      vy:Math.random()*-10-3,
-      r:Math.random()*6+3,
-      color:COLORS[Math.floor(Math.random()*COLORS.length)],
-      life:1,decay:Math.random()*.015+.008
-    });
-  }
-}
-function animParticles(){
-  pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);
-  particles=particles.filter(p=>{
-    p.x+=p.vx;p.y+=p.vy;p.vy+=.15;p.life-=p.decay;
-    if(p.life<=0)return false;
-    pCtx.globalAlpha=p.life;
-    pCtx.beginPath();pCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
-    pCtx.fillStyle=p.color;pCtx.fill();
-    return true;
-  });
-  pCtx.globalAlpha=1;
-  requestAnimationFrame(animParticles);
 }
 
-initParticles();
+function mainLoop(){
+  tickBg();
+  tickParticles();
+  requestAnimationFrame(mainLoop);
+}
+
+initBg();initFx();
+mainLoop();
 loadLevel(maxLevel<LEVEL_DEFS.length?maxLevel:0);
 </script>
 
