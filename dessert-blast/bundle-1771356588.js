@@ -81,21 +81,21 @@
 
   // Touch events
   document.addEventListener('touchstart', function(e) {
-    var tov=document.getElementById('tutorial-overlay');if(tov&&tov.contains(e.target))return;
+    if(e.target.tagName!=='CANVAS')return;
     e.preventDefault();
     var we = wrapTouchEvent(e);
     for (var i = 0; i < _touchStartCbs.length; i++) _touchStartCbs[i](we);
   }, { passive: false });
 
   document.addEventListener('touchmove', function(e) {
-    var tov=document.getElementById('tutorial-overlay');if(tov&&tov.contains(e.target))return;
+    if(e.target.tagName!=='CANVAS')return;
     e.preventDefault();
     var we = wrapTouchEvent(e);
     for (var i = 0; i < _touchMoveCbs.length; i++) _touchMoveCbs[i](we);
   }, { passive: false });
 
   document.addEventListener('touchend', function(e) {
-    var tov=document.getElementById('tutorial-overlay');if(tov&&tov.contains(e.target))return;
+    if(e.target.tagName!=='CANVAS')return;
     e.preventDefault();
     var we = wrapTouchEvent(e);
     for (var i = 0; i < _touchEndCbs.length; i++) _touchEndCbs[i](we);
