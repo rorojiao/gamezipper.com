@@ -69,6 +69,7 @@ body.success-bg{background:linear-gradient(135deg,#d4edda,#c3e6cb)!important}
 <div id="message"></div>
 <div id="grid"></div>
 <button id="share-btn" onclick="shareResult()">Share 📋</button>
+<button id="play-again-btn" onclick="newPuzzle()" style="display:none;margin:8px auto;padding:12px 24px;background:#6a4c2d;color:#fff;border:1px solid #4a3320;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;font-family:Georgia,serif">New Puzzle 🔄</button>
 <div id="keyboard"></div>
 <div id="toast"></div>
 <canvas id="particle-canvas"></canvas>
@@ -365,7 +366,27 @@ function colorKey(letter,cls){
 function shakeRow(){for(let c=0;c<WL;c++){const el=document.getElementById("c"+row+"_"+c);el.classList.add("shake");setTimeout(()=>el.classList.remove("shake"),400)}}
 function msg(t){document.getElementById("message").textContent=t}
 function toast(t){const el=document.getElementById("toast");el.textContent=t;el.style.display="block";setTimeout(()=>el.style.display="none",1500)}
-function showEnd(){document.getElementById("share-btn").style.display="block"}
+function showEnd(){document.getElementById("share-btn").style.display="block";document.getElementById("play-again-btn").style.display="block"}
+function newPuzzle(){
+  // Reset state for a random practice puzzle
+  gameOver=false;row=0;col=0;
+  grid=[];for(var i=0;i<MR;i++){grid[i]=[];for(var j=0;j<WL;j++)grid[i][j]="";}
+  // Pick a random word (not today's)
+  var idx=Math.floor(Math.random()*WORDS.length);
+  answer=WORDS[idx].toUpperCase();
+  document.getElementById("share-btn").style.display="none";
+  document.getElementById("play-again-btn").style.display="none";
+  document.getElementById("message").textContent="";
+  document.getElementById("dayNum").textContent="Practice Mode";
+  // Reset grid display
+  var gridEl=document.getElementById("grid");
+  gridEl.innerHTML="";
+  for(var r=0;r<MR;r++){var rowDiv=document.createElement("div");rowDiv.className="row";for(var c=0;c<WL;c++){var cell=document.createElement("div");cell.className="cell";rowDiv.appendChild(cell);}gridEl.appendChild(rowDiv);}
+  // Reset keyboard colors
+  document.querySelectorAll("#keyboard button").forEach(function(b){b.className="key";});
+  // Clear saved state
+  localStorage.removeItem("wp_"+dayIndex());
+}
 function shareResult(){
   const map={correct:"🟩",present:"🟨",absent:"⬛"};
   let t="Ancient Cipher #"+dayIndex()+" "+(gameOver&&grid[row]?.join("")===answer?(row+1)+"/6":"X/6")+"\n\n";
