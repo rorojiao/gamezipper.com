@@ -1,5 +1,6 @@
-// GameAudio - 游戏音效和背景音乐库
-// 使用Web Audio API合成SFX + MusicGen生成的BGM
+// GameAudio v2 - BGM + SFX simultaneous playback via Web Audio API
+// BGM: fetch + decodeAudioData (shares AudioContext with SFX)
+// SFX: oscillator/noise synthesis (unchanged)
 
 const GameAudio = (() => {
   let ctx;
@@ -9,8 +10,11 @@ const GameAudio = (() => {
     return ctx;
   };
 
-  let bgm = null;
+  let bgmSource = null;
+  let bgmBuffer = null;
+  let bgmGain = null;
   let bgmPlaying = false;
+  let bgmCurrentName = '';
   let muted = false;
 
   // BGM文件映射
@@ -29,7 +33,7 @@ const GameAudio = (() => {
     'idle-clicker': '/audio/alchemy_magic.mp3',
   };
 
-  // SFX合成器
+  // SFX合成器 (独立gain node，不影响BGM)
   const synth = (freq, dur, type = 'sine', vol = 0.3, ramp = true) => {
     try {
       const ac = getCtx();
@@ -48,61 +52,59 @@ const GameAudio = (() => {
   };
 
   // 噪声生成器
-  const noise = (dur, vol = 0.3, lpFreq = null, hpFreq = null) => {
+  const noise = (dur = 0.1, vol = 0.3, hiFreq = 4000, loFreq = 1000) => {
     try {
       const ac = getCtx();
       const now = ac.currentTime;
-      const buf = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate);
+      const bufSize = Math.ceil(ac.sampleRate * dur);
+      const buf = ac.createBuffer(1, bufSize, ac.sampleRate);
       const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * vol;
+      for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
       const src = ac.createBufferSource();
       src.buffer = buf;
-      let node = src;
-      if (lpFreq) {
-        const lp = ac.createBiquadFilter();
-        lp.type = 'lowpass'; lp.frequency.value = lpFreq;
-        node.connect(lp); node = lp;
-      }
-      if (hpFreq) {
-        const hp = ac.createBiquadFilter();
-        hp.type = 'highpass'; hp.frequency.value = hpFreq;
-        node.connect(hp); node = hp;
-      }
-      const g = ac.createGain();
-      g.gain.setValueAtTime(vol, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + dur);
-      node.connect(g);
-      g.connect(ac.destination);
+      const filt = ac.createBiquadFilter();
+      filt.type = 'bandpass';
+      filt.frequency.setValueAtTime((hiFreq + loFreq) / 2, now);
+      filt.Q.setValueAtTime(1, now);
+      const gain = ac.createGain();
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      src.connect(filt);
+      filt.connect(gain);
+      gain.connect(ac.destination);
       src.start(now);
     } catch(e) {}
   };
 
-  // 预定义音效
+  // SFX定义
   const sfxDefs = {
-    tap:       () => synth(1200, 0.05, 'sine', 0.4),
-    click:     () => synth(800, 0.06, 'square', 0.25),
-    coin:      () => { synth(1320, 0.15, 'sine', 0.5); setTimeout(() => synth(1760, 0.15, 'sine', 0.4), 70); },
-    error:     () => synth(200, 0.3, 'square', 0.5),
-    win:       () => { synth(523, 0.15, 'sine', 0.5); setTimeout(() => synth(659, 0.15, 'sine', 0.45), 100); setTimeout(() => synth(784, 0.15, 'sine', 0.4), 200); setTimeout(() => synth(1047, 0.3, 'sine', 0.5), 300); },
-    explosion: () => noise(0.6, 0.7, 800),
-    match:     () => { synth(660, 0.12, 'sine', 0.5); setTimeout(() => synth(880, 0.12, 'sine', 0.45), 80); setTimeout(() => synth(1100, 0.2, 'sine', 0.4), 160); },
-    merge:     () => synth(440, 0.2, 'sine', 0.5),
-    supernova: () => { noise(0.8, 0.6, 3000); synth(200, 0.8, 'sine', 0.3); },
-    upgrade:   () => { synth(523, 0.1, 'sine', 0.5); setTimeout(() => synth(659, 0.1, 'sine', 0.45), 80); setTimeout(() => synth(784, 0.2, 'sine', 0.5), 160); },
-    magic:     () => { synth(528, 0.5, 'sine', 0.4); synth(1056, 0.5, 'sine', 0.2); },
-    death:     () => synth(400, 0.5, 'sawtooth', 0.4),
-    turkey:    () => noise(0.2, 0.4, 600, 200),
-    flap:      () => noise(0.06, 0.35, null, 600),
-    whack:     () => noise(0.15, 0.7, 500),
-    flip:      () => synth(800, 0.12, 'sine', 0.35),
-    crystal:   () => synth(2093, 0.4, 'sine', 0.4),
-    whoosh:    () => noise(0.12, 0.3, null, 2000),
+    click:     () => synth(800, 0.08, 'sine', 0.3),
+    pop:       () => synth(600, 0.1, 'sine', 0.4),
+    match:     () => { synth(523, 0.1, 'sine', 0.3); setTimeout(() => synth(659, 0.1, 'sine', 0.3), 80); setTimeout(() => synth(784, 0.15, 'sine', 0.3), 160); },
+    win:       () => { for(let i=0;i<6;i++) setTimeout(() => synth(523*(1+i*0.2), 0.15, 'sine', 0.5), i*80); },
+    lose:      () => { synth(400, 0.3, 'sawtooth', 0.3); setTimeout(() => synth(300, 0.4, 'sawtooth', 0.3), 200); },
+    coin:      () => { synth(988, 0.08, 'square', 0.3); setTimeout(() => synth(1319, 0.15, 'square', 0.3), 80); },
+    whoosh:    () => noise(0.15, 0.3, 3000, 500),
+    drop:      () => synth(200, 0.2, 'sine', 0.4),
+    merge:     () => { synth(440, 0.08, 'sine', 0.4); setTimeout(() => synth(880, 0.15, 'sine', 0.4), 60); },
+    bounce:    () => synth(300, 0.1, 'triangle', 0.3),
+    tick:      () => synth(1000, 0.03, 'sine', 0.2),
+    buzz:      () => synth(150, 0.15, 'sawtooth', 0.2),
+    sparkle:   () => { for(let i=0;i<4;i++) setTimeout(() => synth(1200+i*200, 0.08, 'sine', 0.25), i*40); },
+    explosion: () => { noise(0.3, 0.5, 2000, 100); synth(80, 0.3, 'sawtooth', 0.4); },
+    jump:      () => { const ac=getCtx();const now=ac.currentTime;const o=ac.createOscillator();const g=ac.createGain();o.type='sine';o.frequency.setValueAtTime(300,now);o.frequency.exponentialRampToValueAtTime(800,now+0.1);g.gain.setValueAtTime(0.3,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.15);o.connect(g);g.connect(ac.destination);o.start(now);o.stop(now+0.15); },
+    hit:       () => { noise(0.08, 0.4, 3000, 500); synth(200, 0.1, 'square', 0.3); },
+    slide:     () => { const ac=getCtx();const now=ac.currentTime;const o=ac.createOscillator();const g=ac.createGain();o.type='sine';o.frequency.setValueAtTime(600,now);o.frequency.exponentialRampToValueAtTime(300,now+0.2);g.gain.setValueAtTime(0.2,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.25);o.connect(g);g.connect(ac.destination);o.start(now);o.stop(now+0.25); },
+    ding:      () => synth(1047, 0.2, 'sine', 0.4),
+    wrong:     () => { synth(300, 0.15, 'square', 0.3); setTimeout(() => synth(250, 0.2, 'square', 0.3), 150); },
+    success:   () => { synth(523, 0.1, 'sine', 0.4); setTimeout(() => synth(659, 0.1, 'sine', 0.4), 100); setTimeout(() => synth(784, 0.12, 'sine', 0.4), 200); setTimeout(() => synth(1047, 0.2, 'sine', 0.5), 300); },
+    tap:       () => synth(500, 0.05, 'sine', 0.25),
+    swoosh:    () => { noise(0.15, 0.25, 2000, 500); synth(600, 0.15, 'sine', 0.2); },
     keytype:   () => noise(0.04, 0.3, 4000, 2000),
     glitch:    () => synth(60, 0.2, 'square', 0.5),
     pour:      () => noise(0.3, 0.3, 1500, 300),
     combo:     () => { for(let i=0;i<5;i++) setTimeout(() => synth(440+i*110, 0.1, 'sine', 0.4), i*50); },
     levelup:   () => { for(let i=0;i<4;i++) setTimeout(() => synth(523*(1+i*0.25), 0.15, 'sine', 0.5), i*100); },
-    swoosh:    () => { noise(0.15, 0.25, 2000, 500); synth(600, 0.15, 'sine', 0.2); },
   };
 
   return {
@@ -113,35 +115,74 @@ const GameAudio = (() => {
     },
 
     playBGM: (gameName) => {
-      if (bgmPlaying || muted) return;
+      if (muted) return;
+      if (bgmPlaying && bgmCurrentName === gameName) return;
+      
+      // Stop current BGM if any
+      if (bgmSource) {
+        try { bgmSource.stop(); } catch(e) {}
+        bgmSource = null;
+      }
+      
       const url = bgmMap[gameName];
       if (!url) return;
-      bgm = new Audio(url);
-      bgm.loop = true;
-      bgm.volume = 0.25;
-      bgm.play().catch(() => {});
-      bgmPlaying = true;
+      
+      const ac = getCtx();
+      bgmCurrentName = gameName;
+      
+      // Use Web Audio API for BGM (same context as SFX = no conflict)
+      fetch(url)
+        .then(r => r.arrayBuffer())
+        .then(buf => ac.decodeAudioData(buf))
+        .then(audioBuffer => {
+          bgmBuffer = audioBuffer;
+          bgmSource = ac.createBufferSource();
+          bgmSource.buffer = audioBuffer;
+          bgmSource.loop = true;
+          bgmGain = ac.createGain();
+          bgmGain.gain.value = 0.2;
+          bgmSource.connect(bgmGain);
+          bgmGain.connect(ac.destination);
+          bgmSource.start(0);
+          bgmPlaying = true;
+        })
+        .catch(() => {
+          // Fallback to HTML5 Audio if fetch fails
+          const audio = new Audio(url);
+          audio.loop = true;
+          audio.volume = 0.2;
+          audio.play().catch(() => {});
+          bgmPlaying = true;
+          bgmSource = { stop: () => { audio.pause(); audio.currentTime = 0; } };
+        });
     },
 
     stopBGM: () => {
-      if (bgm) { bgm.pause(); bgm.currentTime = 0; }
+      if (bgmSource) {
+        try { bgmSource.stop(); } catch(e) {}
+        bgmSource = null;
+      }
       bgmPlaying = false;
+      bgmCurrentName = '';
+    },
+
+    switchBGM: (gameName) => {
+      if (bgmCurrentName === gameName) return;
+      GameAudio.stopBGM();
+      GameAudio.playBGM(gameName);
     },
 
     toggleMute: () => {
       muted = !muted;
-      if (muted && bgm) bgm.pause();
-      else if (!muted && bgmPlaying && bgm) bgm.play().catch(() => {});
+      if (muted) {
+        if (bgmGain) bgmGain.gain.value = 0;
+      } else {
+        if (bgmGain) bgmGain.gain.value = 0.2;
+      }
       return muted;
     },
 
     isMuted: () => muted,
+    isPlaying: () => bgmPlaying,
   };
 })();
-
-// 自动启动BGM（第一次交互后）
-document.addEventListener('click', function _startBGM() {
-  const path = window.location.pathname.split('/').filter(Boolean)[0] || '2048';
-  GameAudio.playBGM(path);
-  document.removeEventListener('click', _startBGM);
-}, { once: true });

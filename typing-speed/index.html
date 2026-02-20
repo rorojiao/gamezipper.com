@@ -26,7 +26,7 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
 .stat-val{font-size:28px;font-weight:700;color:#00ff41;text-shadow:0 0 10px rgba(0,255,65,0.5);font-family:'Courier New',monospace;animation:ledFlicker 3s ease-in-out infinite}
 @keyframes ledFlicker{0%,100%{opacity:1}50%{opacity:0.85}}
 .stat-label{font-size:11px;color:#005500;text-transform:uppercase;letter-spacing:2px}
-.text-display{background:rgba(0,10,0,0.8);border-radius:4px;padding:24px;font-size:20px;line-height:1.8;min-height:120px;border:1px solid #003300;margin-bottom:20px;position:relative;user-select:none;-webkit-user-select:none;font-family:'Courier New',monospace}
+.text-display{background:rgba(0,10,0,0.8);border-radius:4px;padding:24px;font-size:20px;line-height:1.8;max-height:calc(1.8em * 3 + 48px);min-height:calc(1.8em * 3 + 48px);overflow:hidden;border:1px solid #003300;margin-bottom:20px;position:relative;user-select:none;-webkit-user-select:none;font-family:'Courier New',monospace;word-wrap:break-word;overflow-wrap:break-word;scroll-behavior:smooth}
 .char{transition:color .1s}
 .char.correct{color:#005500}
 .char.current{color:#00ff41;background:rgba(0,255,65,.15);border-radius:2px;text-shadow:0 0 8px #00ff41}
@@ -126,7 +126,7 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
     <div class="stat"><div class="stat-val" id="timer">--</div><div class="stat-label" id="timer-label">Time</div></div>
   </div>
   <div class="text-display" id="textDisplay"><div class="start-msg">[AWAITING INPUT] Start typing to begin...</div></div>
-  <input class="input-area" id="inputArea" placeholder="> start typing here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <input class="input-area" id="inputArea" placeholder="> start typing here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="latin">
   <p class="mobile-hint">📱 Tap the input box to open your keyboard</p>
   <div class="result-card" id="resultCard">
     <h2>🏁 [TRANSMISSION COMPLETE]</h2>
@@ -350,7 +350,19 @@ function endGame(){
 
 var composing=false;
 input.addEventListener("compositionstart",function(){composing=true;});
-input.addEventListener("compositionend",function(){composing=false;handleInput();});
+input.addEventListener("compositionend",function(){
+  composing=false;
+  // IME produced non-Latin text (Chinese/Japanese/Korean) — discard it
+  // Only allow ASCII characters through for English typing test
+  var val=input.value;
+  input.value="";
+  // Filter: only process if all chars are ASCII printable
+  var ascii=val.replace(/[^\x20-\x7E]/g,"");
+  if(ascii.length>0){
+    input.value=ascii;
+    handleInput();
+  }
+});
 
 function handleInput(){
   if(finished||composing)return;
@@ -385,12 +397,29 @@ function handleInput(){
   setTimeout(function(){input.value="";},0);
   renderText();
   updateStats();
+  // Scroll text-display to keep current char visible (3-line window)
   const cur=display.querySelector(".current");
-  if(cur)cur.scrollIntoView({block:"nearest",behavior:"smooth"});
+  if(cur){
+    const containerTop=display.scrollTop;
+    const containerH=display.clientHeight;
+    const charTop=cur.offsetTop;
+    const lineH=cur.offsetHeight*1.8;
+    // Keep current char on the first visible line
+    if(charTop>containerTop+lineH){
+      display.scrollTop=charTop-lineH*0.5;
+    }
+  }
 }
 
 input.addEventListener("input",function(e){
-  if(!composing)handleInput();
+  // Block IME composition intermediate states (Chinese/Japanese/Korean input)
+  if(e.isComposing||composing){input.value="";return;}
+  handleInput();
+});
+
+// Block keydown during IME (keyCode 229 = IME processing)
+input.addEventListener("keydown",function(e){
+  if(e.isComposing||e.keyCode===229||composing){return;}
 });
 
 input.addEventListener("paste",e=>e.preventDefault());
