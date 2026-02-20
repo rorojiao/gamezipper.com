@@ -116,23 +116,30 @@ let candyRain=[];
 
 // Bird
 let bird={x:80,y:H/2,vy:0,radius:18,wingAngle:0,wingDir:1};
-const GRAVITY=0.45,FLAP=-7.5;
+const GRAVITY=0.35,FLAP=-7;
 
 // Pipes (lollipop)
 let pipes=[];
-const PIPE_W=60,PIPE_SPEED=2.5,PIPE_INTERVAL=90;
+const PIPE_W=60,PIPE_SPEED=2.0,PIPE_INTERVAL_START=120,PIPE_INTERVAL_MIN=85;
 let pipeTimer=0;
-const GAP_START=160,GAP_MIN=95;
+const GAP_START=200,GAP_MIN=115;
 function getGap(){
-  // Smooth logarithmic difficulty curve instead of linear
-  // Starts generous, narrows gradually, never becomes impossible
-  const progress=Math.log2(score+1)/Math.log2(50); // 0→1 over ~50 pipes
-  const eased=Math.min(1,progress*progress); // Quadratic ease-in (gentle start)
-  return Math.max(GAP_MIN,GAP_START-(GAP_START-GAP_MIN)*eased);
+  // Very generous start, gentle narrowing
+  if(score<3) return GAP_START; // First 3 pipes: maximum gap (tutorial zone)
+  if(score<8) return GAP_START - (score-3)*8; // 200→160 over pipes 3-8
+  const progress=Math.log2(score-7+1)/Math.log2(40); // gradual from pipe 8+
+  const eased=Math.min(1,progress*progress);
+  return Math.max(GAP_MIN,160-(160-GAP_MIN)*eased);
 }
 function getPipeSpeed(){
-  // Gradually increase speed: 2.5 → 3.5 over 30 points
-  return Math.min(3.5, PIPE_SPEED + score * 0.033);
+  // Very slow start, gradual increase: 2.0 → 3.0 over 40 points
+  if(score<3) return PIPE_SPEED; // Tutorial speed
+  return Math.min(3.0, PIPE_SPEED + (score-3) * 0.027);
+}
+function getPipeInterval(){
+  // Wider spacing at start, tighter later
+  if(score<5) return PIPE_INTERVAL_START;
+  return Math.max(PIPE_INTERVAL_MIN, PIPE_INTERVAL_START - (score-5)*2);
 }
 
 const GROUND_H=80;
@@ -140,7 +147,7 @@ let groundX=0;
 
 function resetGame(){
   bird.y=H/2;bird.vy=0;bird.wingAngle=0;
-  pipes=[];pipeTimer=PIPE_INTERVAL-30;score=0;frameCount=0;
+  pipes=[];pipeTimer=getPipeInterval()-30;score=0;frameCount=0;
   scoreBounce=0;deathRotation=0;flashAlpha=0;
   deathPhase=0;deathTimer=0;slowMoTimer=0;deathY=0;deathFallVy=0;
   deathSquash=1;deathFragments=[];
@@ -238,14 +245,14 @@ function update(){
   for(const t of rainbowTrail)t.alpha*=0.92;
 
   pipeTimer++;
-  if(pipeTimer>=PIPE_INTERVAL){
+  if(pipeTimer>=getPipeInterval()){
     pipeTimer=0;
     const gap=getGap();
     // Smart gap placement: constrain vertical change from last pipe to prevent impossible jumps
     let minGapY=80, maxGapY=H-GROUND_H-gap-80;
     if(pipes.length>0){
       const lastGapCenter=pipes[pipes.length-1].gapY+pipes[pipes.length-1].gap/2;
-      const maxShift=gap*1.2; // Max vertical shift proportional to gap size
+      const maxShift=score<5?gap*0.6:gap*1.2; // Less vertical shift early on
       minGapY=Math.max(minGapY, lastGapCenter-gap/2-maxShift);
       maxGapY=Math.min(maxGapY, lastGapCenter-gap/2+maxShift);
     }
