@@ -1656,7 +1656,7 @@ window._gameState = {
   get level() { return level; },
   get timeLeft() { return timeLeft; },
   get gameOver() { return gameOver; },
-  get scene() { return SceneManager.current(); },
+  get scene() { var s = SceneManager.current(); return s ? (s.name || s.constructor.name || 'unknown') : null; },
   get slots() { return slots; },
   get turkeys() { return turkeys; },
   get totalRemoved() { return totalRemoved; },
