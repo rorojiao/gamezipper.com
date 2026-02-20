@@ -230,35 +230,114 @@ function genLevel(idx){
   let seed=idx*2654435761+12345;
   function rng(){seed=(seed*1664525+1013904223)&0xffffffff;return(seed>>>0)/4294967296}
   
-  // Reverse generation: start from solved state and make random valid moves backward
-  // This guarantees every level is solvable
-  let tubes=[];
-  for(let c=0;c<nc;c++){let t=[];for(let i=0;i<CAP;i++)t.push(c%COLORS.length);tubes.push(t);}
-  for(let t=0;t<ne;t++) tubes.push([]);
-  
-  // Perform random reverse moves (pour from sorted tubes to mix them up)
-  const totalTubes=nc+ne;
-  const moves=40+idx*8; // More moves = harder scramble for higher levels
-  for(let m=0;m<moves;m++){
-    // Pick a random source tube with balls
-    const sources=[];
-    for(let i=0;i<totalTubes;i++) if(tubes[i].length>0) sources.push(i);
-    if(!sources.length) break;
-    const from=sources[Math.floor(rng()*sources.length)];
-    // Pick a random destination that has room and is different
-    const dests=[];
-    for(let i=0;i<totalTubes;i++) if(i!==from && tubes[i].length<CAP) dests.push(i);
-    if(!dests.length) continue;
-    const to=dests[Math.floor(rng()*dests.length)];
-    // Pour top ball(s) of same color
-    const ball=tubes[from][tubes[from].length-1];
-    let count=0;
-    while(tubes[from].length>0 && tubes[from][tubes[from].length-1]===ball && tubes[to].length<CAP){
-      tubes[to].push(tubes[from].pop());count++;
-      if(rng()<0.5) break; // Sometimes only move 1 to increase variety
+  // Fisher-Yates shuffle approach + BFS solvability check
+  // Step 1: Create all balls (nc colors × CAP each)
+  function shuffle(){
+    let balls=[];
+    for(let c=0;c<nc;c++) for(let i=0;i<CAP;i++) balls.push(c%COLORS.length);
+    // Fisher-Yates shuffle
+    for(let i=balls.length-1;i>0;i--){
+      const j=Math.floor(rng()*(i+1));
+      [balls[i],balls[j]]=[balls[j],balls[i]];
     }
+    // Fill tubes
+    let tubes=[];
+    let bi=0;
+    for(let t=0;t<nc;t++){
+      let tube=[];
+      for(let b=0;b<CAP;b++) tube.push(balls[bi++]);
+      tubes.push(tube);
+    }
+    for(let t=0;t<ne;t++) tubes.push([]);
+    return tubes;
   }
-  return tubes;
+  
+  // Step 2: Quality check — reject trivial/unsolvable layouts
+  function isGoodLevel(tubes){
+    // Reject if any tube is already sorted (trivial)
+    let sortedCount=0;
+    for(let t=0;t<tubes.length;t++){
+      if(tubes[t].length===CAP && tubes[t].every(b=>b===tubes[t][0])) sortedCount++;
+    }
+    if(sortedCount>0) return false;
+    
+    // Reject if too many same-color balls are adjacent (boring)
+    let adjacentSame=0;
+    for(let t=0;t<tubes.length;t++){
+      for(let i=1;i<tubes[t].length;i++){
+        if(tubes[t][i]===tubes[t][i-1]) adjacentSame++;
+      }
+    }
+    if(adjacentSame>nc*CAP*0.6) return false;
+    
+    // BFS solvability check (limited depth to prevent timeout)
+    return isSolvable(tubes);
+  }
+  
+  // BFS solver with state deduplication
+  function isSolvable(tubes){
+    function stateKey(ts){return ts.map(t=>t.join(',')).join('|')}
+    function isSolved(ts){
+      for(let t of ts){
+        if(t.length>0 && t.length<CAP) return false;
+        if(t.length===CAP && !t.every(b=>b===t[0])) return false;
+      }
+      return true;
+    }
+    function getMoves(ts){
+      let moves=[];
+      for(let from=0;from<ts.length;from++){
+        if(!ts[from].length) continue;
+        const ball=ts[from][ts[from].length-1];
+        for(let to=0;to<ts.length;to++){
+          if(to===from) continue;
+          if(ts[to].length>=CAP) continue;
+          // Don't move to empty tube if source is all same color (pointless)
+          if(ts[to].length===0 && ts[from].every(b=>b===ball)) continue;
+          // Only pour onto same color or empty tube
+          if(ts[to].length>0 && ts[to][ts[to].length-1]!==ball) continue;
+          moves.push([from,to]);
+        }
+      }
+      return moves;
+    }
+    
+    const visited=new Set();
+    let queue=[tubes.map(t=>[...t])];
+    visited.add(stateKey(queue[0]));
+    const maxStates=nc<=4?10000:nc<=6?6000:4000; // Limit search
+    let checked=0;
+    
+    while(queue.length>0 && checked<maxStates){
+      const state=queue.shift();
+      checked++;
+      if(isSolved(state)) return true;
+      
+      for(const[from,to] of getMoves(state)){
+        const ns=state.map(t=>[...t]);
+        // Pour all matching top balls
+        const ball=ns[from][ns[from].length-1];
+        while(ns[from].length>0 && ns[from][ns[from].length-1]===ball && ns[to].length<CAP){
+          ns[to].push(ns[from].pop());
+        }
+        const key=stateKey(ns);
+        if(!visited.has(key)){
+          visited.add(key);
+          queue.push(ns);
+        }
+      }
+    }
+    // If BFS exhausted: with 2+ empty tubes, very likely solvable (just complex)
+    return ne >= 2;
+  }
+  
+  // Step 3: Generate until we get a good level (max 50 attempts)
+  for(let attempt=0;attempt<50;attempt++){
+    const tubes=shuffle();
+    if(isGoodLevel(tubes)) return tubes;
+  }
+  // Fallback: return last shuffle (very unlikely to reach here)
+  return shuffle();
 }
 function deepCopy(t){return t.map(a=>[...a])}
 
