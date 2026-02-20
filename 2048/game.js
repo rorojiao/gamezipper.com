@@ -929,5 +929,5 @@ resize();
 init();
 requestAnimationFrame(draw);
 requestAnimationFrame(animateParticleLayer);
-window._gameState={get score(){return game.score},get best(){return game.best},get grid(){return game.grid},restart:function(){game.restart()},get reached2048(){return reached2048}};
+window._gameState={get score(){return score},get best(){return bestScore},get grid(){return grid},restart:function(){game.restart()},get reached2048(){return reached2048}};
 })();
