@@ -51,7 +51,8 @@ function syncFrame() {
 
 // Initial canvas setup
 syncCanvasSize();
-for (var d = 1; d <= 10; d++) setTimeout(syncCanvasSize, d * 200);
+// Single delayed resize to catch late viewport changes, not repeated
+setTimeout(syncCanvasSize, 500);
 window.addEventListener('resize', function() { syncCanvasSize(); });
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', function() { syncCanvasSize(); });
@@ -575,8 +576,11 @@ var SceneManager = {
     syncFrame();
     if (Renderer._resized) {
       Renderer._resized = false;
+      // Only recalculate layout, do NOT re-enter scene (which resets game state)
       var cs = this.current();
-      if (cs && cs.enter) cs.enter(cs._lastParams || {});
+      if (cs && cs._calcLayout) cs._calcLayout();
+      if (cs && cs._initButtons) cs._initButtons();
+      if (cs && cs._layoutCards) cs._layoutCards();
     }
 
     var now = Date.now();
