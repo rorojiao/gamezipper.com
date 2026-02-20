@@ -435,9 +435,12 @@ function newPuzzle(){
   // Reset grid display
   var gridEl=document.getElementById("grid");
   gridEl.innerHTML="";
-  for(var r=0;r<MR;r++){var rowDiv=document.createElement("div");rowDiv.className="row";for(var c=0;c<WL;c++){var cell=document.createElement("div");cell.className="cell";cell.id="c"+r+"_"+c;rowDiv.appendChild(cell);}gridEl.appendChild(rowDiv);}
+  for(var r=0;r<MR;r++){for(var c=0;c<WL;c++){var cell=document.createElement("div");cell.className="cell";cell.id="c"+r+"_"+c;gridEl.appendChild(cell);}}
   // Reset keyboard colors
-  document.querySelectorAll("#keyboard button").forEach(function(b){b.className="key";});
+  document.querySelectorAll("#keyboard button").forEach(function(b){
+    var isWide = b.textContent.length > 1;
+    b.className = "key" + (isWide ? " wide" : "");
+  });
   // Clear saved state
   localStorage.removeItem("wp_"+dayIndex());
 }
@@ -462,7 +465,7 @@ function loadState(){try{const s=JSON.parse(localStorage.getItem("wp_"+dayIndex(
     for(let i=0;i<WL;i++)if(g[i]!=="*"){const j=ans.indexOf(g[i]);if(j>=0){res[i]="present";ans[j]="#"}}
     el.className="cell "+res[c];colorKey(s.grid[r][c],res[c])}}
   row=s.row;col=s.col;gameOver=s.gameOver;
-  if(gameOver){document.getElementById("share-btn").style.display="block";if(s.grid[row-1]?.join("")===answer)msg(["BRILLIANT!","MAGNIFICENT!","IMPRESSIVE!","SPLENDID!","GREAT!","PHEW!"][row-1]);else msg("The word was: "+answer)}
+  if(gameOver){document.getElementById("share-btn").style.display="block";document.getElementById("play-again-btn").style.display="block";document.getElementById("hint-btn").style.display="none";if(s.grid[row-1]?.join("")===answer)msg(["BRILLIANT!","MAGNIFICENT!","IMPRESSIVE!","SPLENDID!","GREAT!","PHEW!"][row-1]);else msg("The word was: "+answer)}
 }catch(e){}}
 init();
 // Floating feather/page particles
@@ -514,18 +517,30 @@ window._gameState={get answer(){return answer},get row(){return row},get col(){r
       <div style="font-size:13px;text-align:left;"><b style="color:#999">U</b> is <b style="color:#999">not in the word</b> at all. 🪨</div>
     </div>
     <div style="font-size:12px;color:#8b7355;margin-bottom:14px;border-top:1px solid #5a4a2a;padding-top:10px;">A new word every day! Use the keyboard below or type on your physical keyboard.</div>
-    <button onmousedown="var o=document.getElementById('tutorial-overlay');if(o)o.style.display='none';localStorage.setItem('word-puzzle-tutorial-seen','1');" style="touch-action:manipulation;cursor:pointer;position:relative;z-index:10000000;background:linear-gradient(135deg,#8b6d3e,#d4a547);color:#2a1f14;border:none;border-radius:12px;padding:14px 36px;font-size:18px;font-weight:bold;box-shadow:0 4px 15px rgba(139,109,62,0.4);user-select:none;-webkit-user-select:none;">Let's Play! 📜</button>
+    <button id="wp-tutorial-btn" style="touch-action:manipulation;cursor:pointer;position:relative;z-index:10000000;background:linear-gradient(135deg,#8b6d3e,#d4a547);color:#2a1f14;border:none;border-radius:12px;padding:14px 36px;font-size:18px;font-weight:bold;box-shadow:0 4px 15px rgba(139,109,62,0.4);user-select:none;-webkit-user-select:none;">Let's Play! 📜</button>
   </div>
 </div>
-<script>if(!localStorage.getItem('word-puzzle-tutorial-seen')){document.getElementById('tutorial-overlay').style.display='flex';}else{document.getElementById('tutorial-overlay').style.display='none';}</script>
-
 <script>
 (function(){
   var ov = document.getElementById('tutorial-overlay');
   if (!ov) return;
-  // Show tutorial only if not seen before
-  if (!localStorage.getItem('word-puzzle-tutorial-seen')) {
-    ov.style.display = 'flex';
+  var KEY = 'word-puzzle-tutorial-seen';
+  if (localStorage.getItem(KEY)) {
+    ov.style.display = 'none';
+    return;
+  }
+  ov.style.display = 'flex';
+  
+  var closeTut = function(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    ov.style.display = 'none';
+    localStorage.setItem(KEY, '1');
+  };
+  
+  var btn = document.getElementById('wp-tutorial-btn');
+  if (btn) {
+    btn.addEventListener('mousedown', closeTut);
+    btn.addEventListener('touchend', function(e) { e.preventDefault(); closeTut(e); });
   }
 })();
 </script>
