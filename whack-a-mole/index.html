@@ -515,45 +515,45 @@ window._gameState={get score(){return score},get timeLeft(){return timeLeft},get
 })();
 </script>
 
-<div id="tutorial-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;">
+<div id="tutorial-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:99999;align-items:center;justify-content:center;font-family:'Cinzel',serif;">
   <div style="background:linear-gradient(180deg,rgba(60,40,20,0.97),rgba(40,25,10,0.97));border:2px solid #aa8860;border-radius:16px;padding:32px 28px 24px;max-width:340px;width:90%;color:#d4a860;text-align:center;box-shadow:0 0 30px rgba(212,168,96,0.3);">
     <div style="font-size:28px;font-weight:bold;margin-bottom:18px;">⚙️ How to Play</div>
     <div style="font-size:15px;line-height:1.8;text-align:left;margin-bottom:20px;color:#ccc;">👆 Smash the robots when they pop up!<br>🤖 Robot = <b style="color:#d4a860">+10</b> points<br>⭐ Gold Robot = <b style="color:#ffd700">+50</b> points<br>🔴 Alarm = <b style="color:#ff4444">-30</b> points — don't tap!<br><br>You have 60 seconds. GO! ⏱️</div>
-    <button  onmousedown="var o=document.getElementById('tutorial-overlay');if(o)o.remove();var c=document.getElementById('gameCanvas')||document.querySelector('canvas');if(c)c.style.pointerEvents='auto';" style="touch-action:manipulation;cursor:pointer;position:relative;z-index:10000000;background:linear-gradient(180deg,#d4a860,#8a6530);color:#fff;border:2px solid #aa8860;border-radius:8px;padding:14px 36px;font-size:18px;font-weight:bold;cursor:pointer;font-family:inherit;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;touch-action:manipulation;cursor:pointer;position:relative;z-index:10000000;background:linear-gradient(180deg,#d4a860,#8a6530);color:#fff;border:2px solid #aa8860;border-radius:8px;padding:14px 36px;font-size:18px;font-weight:bold;cursor:pointer;font-family:inherit;" >Got it! ⚙️</button>"
+    <button id="wam-tutorial-btn" style="touch-action:manipulation;cursor:pointer;position:relative;z-index:10000000;background:linear-gradient(180deg,#d4a860,#8a6530);color:#fff;border:2px solid #aa8860;border-radius:8px;padding:14px 36px;font-size:18px;font-weight:bold;font-family:inherit;user-select:none;-webkit-user-select:none;">Got it! ⚙️</button>
   </div>
 </div>
-<script>if(!localStorage.getItem('whack-a-mole-tutorial-seen')){document.getElementById('tutorial-overlay').style.display='flex';}else{document.getElementById('tutorial-overlay').style.display='none';}</script>
-
 <script>
 (function(){
   var ov = document.getElementById('tutorial-overlay');
   if (!ov) return;
+  var KEY = 'whack-a-mole-tutorial-seen';
   
-  // Get canvas for pointer-events reset
-  var cvs = document.getElementById('gameCanvas') || document.querySelector('canvas');
-  
-  // 如果已显示过tutorial，移除overlay
-  if (localStorage.getItem('tutorial-seen-' + window.location.pathname)) {
+  if (localStorage.getItem(KEY)) {
     ov.remove();
     return;
   }
   
-  // 设置overlay的全屏click/touch事件关闭
+  // Show tutorial
+  ov.style.display = 'flex';
+  
+  var closed = false;
   var closeTut = function(e) {
-    e && e.preventDefault && e.preventDefault();
-    e && e.stopPropagation && e.stopPropagation();
-    if (cvs) cvs.style.pointerEvents = 'auto';
+    if (closed) return;
+    closed = true;
+    if (e && e.preventDefault) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation();
     ov.remove();
-    localStorage.setItem('tutorial-seen-' + window.location.pathname, '1');
+    localStorage.setItem(KEY, '1');
   };
   
-  // 多种事件处理
+  var btn = document.getElementById('wam-tutorial-btn');
+  if (btn) {
+    btn.addEventListener('mousedown', closeTut);
+    btn.addEventListener('touchend', function(e) { e.preventDefault(); closeTut(e); });
+  }
+  // Also close on overlay click/touch (anywhere)
   ov.addEventListener('click', closeTut, true);
-  ov.addEventListener('touchend', closeTut, true);
-  ov.addEventListener('pointerdown', closeTut, true);
-  
-  // Disable canvas events during tutorial
-  if (cvs) cvs.style.pointerEvents = 'none';
+  ov.addEventListener('touchend', function(e) { e.preventDefault(); closeTut(e); }, true);
 })();
 </script>
   <script src="../game-audio-auto.js"></script>
