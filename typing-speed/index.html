@@ -26,7 +26,7 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
 .stat-val{font-size:28px;font-weight:700;color:#00ff41;text-shadow:0 0 10px rgba(0,255,65,0.5);font-family:'Courier New',monospace;animation:ledFlicker 3s ease-in-out infinite}
 @keyframes ledFlicker{0%,100%{opacity:1}50%{opacity:0.85}}
 .stat-label{font-size:11px;color:#005500;text-transform:uppercase;letter-spacing:2px}
-.text-display{background:rgba(0,10,0,0.8);border-radius:4px;padding:24px;font-size:20px;line-height:1.8;max-height:calc(1.8em * 3 + 48px);min-height:calc(1.8em * 3 + 48px);overflow:hidden;border:1px solid #003300;margin-bottom:20px;position:relative;user-select:none;-webkit-user-select:none;font-family:'Courier New',monospace;word-wrap:break-word;overflow-wrap:break-word;scroll-behavior:smooth}
+.text-display{background:rgba(0,10,0,0.8);border-radius:4px;padding:16px 20px;font-size:20px;line-height:1.8;height:calc(1.8em * 3 + 32px);overflow:hidden;border:1px solid #003300;margin-bottom:20px;position:relative;user-select:none;-webkit-user-select:none;font-family:'Courier New',monospace;word-wrap:break-word;overflow-wrap:break-word}
 .char{transition:color .1s}
 .char.correct{color:#005500}
 .char.current{color:#00ff41;background:rgba(0,255,65,.15);border-radius:2px;text-shadow:0 0 8px #00ff41}
@@ -88,10 +88,10 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
 .mode-btn.active{background-image:url('images/btn_green.png')}
 .restart-btn{background-image:url('images/btn_green.png');background-size:100% 100%;background-repeat:no-repeat;background-color:transparent}
 .stats-bar{background-image:url('images/panel_grey.png');background-size:100% 100%;background-repeat:no-repeat}
-.text-display{background-image:url('images/panel_blue.png');background-size:100% 100%;background-repeat:no-repeat}
+.text-display{background-image:url('images/panel_blue.png');background-size:100% 100%;background-repeat:no-repeat;background-clip:padding-box}
 @media(max-width:600px){
   h1{font-size:22px}
-  .text-display{font-size:17px;padding:16px}
+  .text-display{font-size:16px;padding:12px 16px;height:calc(1.8em * 3 + 24px)}
   .stat-val{font-size:22px}
   .mobile-hint{display:block}
   .result-stats{gap:16px}
@@ -243,13 +243,25 @@ function playWordComplete(){const o=actx.createOscillator(),g=actx.createGain();
 let currentWpm=0;
 function genText(){
   let w=[];
-  // Adaptive word selection based on current typing speed
-  for(let i=0;i<60;i++){
+  // Progressive difficulty: start very easy, ramp up based on WPM and time elapsed
+  // Mobile-friendly: use common words, avoid obscure spelling
+  var elapsed=running?(Date.now()-startTime)/1000:0;
+  var phase=Math.min(3,Math.floor(elapsed/20)); // 0-20s=phase0, 20-40s=phase1, 40-60s=phase2, 60+=phase3
+  for(let i=0;i<30;i++){
     let pool;
-    if(currentWpm<25) pool=WORDS_EASY;
-    else if(currentWpm<50) pool=Math.random()<0.6?WORDS_MED:WORDS_EASY;
-    else if(currentWpm<70) pool=Math.random()<0.5?WORDS_HARD:WORDS_MED;
-    else pool=Math.random()<0.7?WORDS_HARD:WORDS_MED;
+    if(phase===0 && currentWpm<30){
+      // Warm-up: easy short words only
+      pool=WORDS_EASY;
+    } else if(phase<=1 || currentWpm<35){
+      // Transition: mix easy+medium
+      pool=Math.random()<0.4?WORDS_MED:WORDS_EASY;
+    } else if(phase<=2 || currentWpm<55){
+      // Medium: mostly medium with some hard
+      pool=Math.random()<0.3?WORDS_HARD:WORDS_MED;
+    } else {
+      // Full speed: hard words dominant
+      pool=Math.random()<0.6?WORDS_HARD:WORDS_MED;
+    }
     w.push(pool[Math.random()*pool.length|0]);
   }
   return w.join(" ");
@@ -397,16 +409,15 @@ function handleInput(){
   setTimeout(function(){input.value="";},0);
   renderText();
   updateStats();
-  // Scroll text-display to keep current char visible (3-line window)
-  const cur=display.querySelector(".current");
+  // Scroll: hide already-typed lines by adjusting scrollTop
+  // Keep current character on the first visible line
+  var cur=display.querySelector(".current");
   if(cur){
-    const containerTop=display.scrollTop;
-    const containerH=display.clientHeight;
-    const charTop=cur.offsetTop;
-    const lineH=cur.offsetHeight*1.8;
-    // Keep current char on the first visible line
-    if(charTop>containerTop+lineH){
-      display.scrollTop=charTop-lineH*0.5;
+    var lineH=parseFloat(getComputedStyle(display).lineHeight)||36;
+    var charTop=cur.offsetTop-display.offsetTop;
+    // If current char is below the first line, scroll up
+    if(charTop>lineH*0.8){
+      display.scrollTop=charTop-4;
     }
   }
 }
