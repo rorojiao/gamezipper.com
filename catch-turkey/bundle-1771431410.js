@@ -178,15 +178,15 @@ const TURKEY_TYPES = [
 
 const LEVELS = [
   { id: 1, name: '🌸 Beginner', count: 18, layers: 2, types: 4, time: 600, theme: 'spring' },
-  { id: 2, name: '🌼 Novice', count: 24, layers: 2, types: 5, time: 600, theme: 'spring' },
-  { id: 3, name: '🌷 Chaos', count: 30, layers: 3, types: 6, time: 600, theme: 'spring' },
-  { id: 4, name: '☀️ Turkey Farm', count: 36, layers: 3, types: 6, time: 600, theme: 'summer' },
-  { id: 5, name: '🌻 Jungle', count: 42, layers: 3, types: 7, time: 600, theme: 'summer' },
-  { id: 6, name: '🍂 Autumn', count: 45, layers: 4, types: 7, time: 600, theme: 'autumn' },
-  { id: 7, name: '🍁 Desert', count: 48, layers: 4, types: 8, time: 600, theme: 'autumn' },
-  { id: 8, name: '❄️ Frozen', count: 51, layers: 4, types: 8, time: 600, theme: 'winter' },
-  { id: 9, name: '⛄ Volcano', count: 54, layers: 4, types: 9, time: 600, theme: 'winter' },
-  { id: 10, name: '🌈 Ultimate', count: 60, layers: 5, types: 10, time: 600, theme: 'rainbow' },
+  { id: 2, name: '🌼 Novice', count: 24, layers: 2, types: 5, time: 540, theme: 'spring' },
+  { id: 3, name: '🌷 Chaos', count: 30, layers: 3, types: 6, time: 480, theme: 'spring' },
+  { id: 4, name: '☀️ Turkey Farm', count: 36, layers: 3, types: 6, time: 420, theme: 'summer' },
+  { id: 5, name: '🌻 Jungle', count: 42, layers: 3, types: 7, time: 400, theme: 'summer' },
+  { id: 6, name: '🍂 Autumn', count: 45, layers: 4, types: 7, time: 380, theme: 'autumn' },
+  { id: 7, name: '🍁 Desert', count: 48, layers: 4, types: 8, time: 360, theme: 'autumn' },
+  { id: 8, name: '❄️ Frozen', count: 51, layers: 4, types: 8, time: 340, theme: 'winter' },
+  { id: 9, name: '⛄ Volcano', count: 54, layers: 4, types: 9, time: 320, theme: 'winter' },
+  { id: 10, name: '🌈 Ultimate', count: 60, layers: 5, types: 10, time: 300, theme: 'rainbow' },
 ];
 
 const THEMES = {

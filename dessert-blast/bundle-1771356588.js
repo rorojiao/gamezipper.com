@@ -876,10 +876,29 @@ function initGrid() {
 
 function generateCandidates() {
   candidates = [];
-  for (var i = 0; i < 3; i++) {
-    var shape = SHAPES[Math.floor(getRandom() * SHAPES.length)];
-    var color = Math.floor(getRandom() * 5);
-    candidates.push({ shape: shape, color: color, used: false });
+  // Smart generation: ensure at least one piece can fit on the board
+  var attempts = 0;
+  var hasPlaceable = false;
+  while (!hasPlaceable && attempts < 20) {
+    candidates = [];
+    for (var i = 0; i < 3; i++) {
+      var shape = SHAPES[Math.floor(getRandom() * SHAPES.length)];
+      var color = Math.floor(getRandom() * 5);
+      candidates.push({ shape: shape, color: color, used: false });
+    }
+    // Check if at least one candidate can be placed
+    for (var i = 0; i < candidates.length; i++) {
+      if (canPlaceAnywhere(candidates[i].shape)) { hasPlaceable = true; break; }
+    }
+    attempts++;
+  }
+  // If after 20 attempts still no fit, use smallest shapes
+  if (!hasPlaceable) {
+    var smallShapes = SHAPES.filter(function(s) { return s.length === 1 && s[0].length === 1; });
+    if (smallShapes.length === 0) smallShapes = [[[1]]]; // 1x1 fallback
+    for (var i = 0; i < 3; i++) {
+      candidates[i] = { shape: smallShapes[Math.floor(getRandom() * smallShapes.length)], color: Math.floor(getRandom() * 5), used: false };
+    }
   }
 }
 

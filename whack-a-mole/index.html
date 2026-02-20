@@ -241,6 +241,10 @@ const container=document.getElementById('game-container');
 let score=0,timeLeft=60,gameActive=false,timerInterval,spawnTimeout;
 let highScore=parseInt(localStorage.getItem('wam_high'))||0;
 let combo=0,lastHitTime=0,comboTimeout=null;
+let recentReactionTimes=[];
+let avgReactionTime=800; // Start assuming 800ms average
+let lastMoleShowTime=0;
+let lastSpawnedHole=-1; // Track last hole to avoid repeats
 const holes=[];
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 let alertInterval=null;
@@ -361,6 +365,13 @@ function hideHammer(){hammer.style.display='none';document.body.style.cursor=''}
 
 function whack(h,e){
   if(!gameActive||!h.active)return;
+  // Track reaction time for adaptive difficulty
+  if(h.showTime){
+    const reaction=Date.now()-h.showTime;
+    recentReactionTimes.push(reaction);
+    if(recentReactionTimes.length>8) recentReactionTimes.shift();
+    avgReactionTime=recentReactionTimes.reduce((a,b)=>a+b,0)/recentReactionTimes.length;
+  }
   h.active=false;clearTimeout(h.timeout);
   h.mole.classList.add('hit');
   let pts=0,cls='pos';
@@ -408,16 +419,28 @@ function whack(h,e){
 
 function getSpeed(){
   const elapsed=60-timeLeft;
-  const minInterval=400,maxInterval=1500;
-  const interval=maxInterval-(maxInterval-minInterval)*(elapsed/60);
-  return{interval:Math.max(minInterval,interval),stay:Math.max(500,1800-elapsed*20)};
+  // Base difficulty increases with time
+  const timeProgress=elapsed/60;
+  // Adaptive: if player is fast, speed up; if slow, ease off
+  const reactionFactor=Math.max(0.6, Math.min(1.4, 800/avgReactionTime));
+  const minInterval=350*reactionFactor;
+  const maxInterval=1400;
+  const interval=maxInterval-(maxInterval-minInterval)*timeProgress;
+  const minStay=Math.max(400, avgReactionTime*0.8); // Stay at least 80% of avg reaction
+  const maxStay=1800;
+  const stay=Math.max(minStay, maxStay-elapsed*20);
+  return{interval:Math.max(minInterval,interval),stay};
 }
 
 function spawnMole(){
   if(!gameActive)return;
   const available=holes.filter(h=>!h.active);
   if(!available.length){spawnTimeout=setTimeout(spawnMole,200);return}
-  const h=available[Math.floor(Math.random()*available.length)];
+  // Avoid spawning in same hole as last time for variety
+  let candidates=available.filter(h=>holes.indexOf(h)!==lastSpawnedHole);
+  if(!candidates.length) candidates=available;
+  const h=candidates[Math.floor(Math.random()*candidates.length)];
+  lastSpawnedHole=holes.indexOf(h);
   const r=Math.random();
   h.mole.classList.remove('golden','bomb','hit');
   // Randomize animal sprite
@@ -426,6 +449,7 @@ function spawnMole(){
   else if(r<.18){h.type='golden';h.mole.classList.add('golden');if(spriteEl){spriteEl.style.display='';spriteEl.src='images/mole_golden.png'}}
   else{h.type='normal';if(spriteEl){spriteEl.style.display='';spriteEl.src=ANIMAL_SPRITES[Math.floor(Math.random()*ANIMAL_SPRITES.length)]}}
   h.active=true;
+  h.showTime=Date.now();
   // Pre-steam burst
   const rect=h.el.getBoundingClientRect();
   spawnSteam(rect,5,false);
@@ -441,6 +465,7 @@ function spawnMole(){
 function startGame(){
   if(audioCtx.state==='suspended')audioCtx.resume();
   score=0;timeLeft=60;gameActive=true;combo=0;lastHitTime=0;
+  recentReactionTimes=[];avgReactionTime=800;lastSpawnedHole=-1;
   scoreDisplay.textContent='Score: 0';timerDisplay.textContent='Time: 60';
   timerDisplay.style.color='#d4a860';
   overlay.style.display='none';showHammer();

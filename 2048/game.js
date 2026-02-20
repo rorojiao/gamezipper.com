@@ -458,7 +458,27 @@ function spawnTile() {
   const empty = [];
   for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) if (!grid[r][c]) empty.push([r,c]);
   if (!empty.length) return;
-  const [r,c] = empty[Math.floor(Math.random()*empty.length)];
+  
+  // Smart spawn: weight positions away from the max tile for better gameplay
+  let maxVal = 0, maxR = 0, maxC = 0;
+  for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) {
+    if (grid[r][c] > maxVal) { maxVal = grid[r][c]; maxR = r; maxC = c; }
+  }
+  
+  // Calculate weights: farther from max tile = higher weight
+  const weights = empty.map(([r,c]) => {
+    const dist = Math.abs(r - maxR) + Math.abs(c - maxC);
+    return 1 + dist * 1.5; // Distance-based weighting
+  });
+  const totalWeight = weights.reduce((a,b) => a+b, 0);
+  let rand = Math.random() * totalWeight;
+  let chosen = empty[0];
+  for (let i = 0; i < empty.length; i++) {
+    rand -= weights[i];
+    if (rand <= 0) { chosen = empty[i]; break; }
+  }
+  
+  const [r,c] = chosen;
   const val = Math.random() < 0.9 ? 2 : 4;
   grid[r][c] = val;
   animations.push({type:'spawn',r,c,val,start:performance.now(),duration:SPAWN_DURATION});

@@ -348,7 +348,19 @@ function showMagicCircle(){
 
 function fmt(n){if(n>=1e12)return(n/1e12).toFixed(1)+'T';if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return Math.floor(n).toString()}
 function cost(u){return Math.floor(u.baseCost*Math.pow(1.15,u.owned))}
-function calcCps(){totalCps=upgrades.reduce((s,u)=>s+u.cps*u.owned,0)*prestigeMultiplier}
+function calcCps(){
+  // Base CPS from upgrades
+  let baseCps=upgrades.reduce((s,u)=>s+u.cps*u.owned,0);
+  // Synergy bonus: each unique type owned gives +2% to all CPS
+  const uniqueTypes=upgrades.filter(u=>u.owned>0).length;
+  const synergyBonus=1+uniqueTypes*0.02;
+  // Milestone bonuses: every 10 of same type gives +10% to that type
+  upgrades.forEach(u=>{
+    const milestoneBonus=Math.floor(u.owned/10)*0.1;
+    baseCps+=u.cps*u.owned*milestoneBonus;
+  });
+  totalCps=baseCps*synergyBonus*prestigeMultiplier;
+}
 
 // Prestige system
 function canPrestige(){return totalCookies>=1e6}

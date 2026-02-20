@@ -220,7 +220,10 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
 
 // Main game
 (function(){
-const WORDS=["the","be","to","of","and","a","in","that","have","i","it","for","not","on","with","he","as","you","do","at","this","but","his","by","from","they","we","say","her","she","or","an","will","my","one","all","would","there","their","what","so","up","out","if","about","who","get","which","go","me","when","make","can","like","time","no","just","him","know","take","people","into","year","your","good","some","could","them","see","other","than","then","now","look","only","come","its","over","think","also","back","after","use","two","how","our","work","first","well","way","even","new","want","because","any","these","give","day","most","us","great","find","here","thing","many","still","long","world","very","life","hand","high","place","old","end","much","while","last","might","home","never","best","same","big","keep","help","start","own","part","small","night","close","live","every","name","play","run","move","feel","house","try","again","turn","show","open","must","change","write","both","between","point","read","next","word","food","kind","tell","left","right","line","need","study","hard","learn","fast","real","city","hold","under","power","grow","talk","young","wait","sure","fire","water","earth","group","stand","plan","miss","warm","free","cool","head","sound","story","light","early","build","walk","watch","care","rest","area","draw","step","clear","team","class","color","white","paper","music","bring","child","game","let","dark","deep","mean","land","blue","green","happy","full","side","form","love","set","stop","state","done","level","front","wide","able","final","began","south","born","note","west","space"];
+const WORDS_EASY=["the","be","to","of","and","a","in","it","for","not","on","he","as","you","do","at","but","by","we","or","an","my","one","all","so","up","out","if","who","go","me","no","him","see","now","its","how","our","two","new","day","us","old","big","own","try","run","let","set","end"];
+const WORDS_MED=["that","have","this","from","they","say","will","would","there","their","what","about","which","when","make","time","just","know","take","people","into","year","good","some","could","them","other","than","then","look","only","come","over","think","also","back","after","work","first","well","even","want","give","most","find","here","thing","many","long","world","very","life","hand","high","place","while","last","might","home","never","best","same","keep","help","start","part","small","night","close","live","every","name","play","move","feel","house","again","turn","show","open","must","write","both","next","word","food","kind","tell","left","right","line","need","hard","fast","real","city","hold","power","grow","talk","wait","sure","fire"];
+const WORDS_HARD=["between","because","change","study","learn","water","earth","group","stand","plan","warm","free","cool","head","sound","story","light","early","build","watch","care","rest","area","draw","step","clear","team","class","color","white","paper","music","bring","child","game","dark","deep","mean","land","blue","green","happy","full","side","form","love","stop","state","done","level","front","wide","able","final","began","south","born","note","west","space","power","young","quick","under","group","world","write","point","study","still","could","while","would","their","about","those","might","every","house","after","first","story","human","earth","great","right","level","along","often","place","young"];
+const WORDS=WORDS_EASY.concat(WORDS_MED).concat(WORDS_HARD); // fallback
 let mode="30",timeLeft=30,running=false,finished=false,startTime=0;
 let charIndex=0,correct=0,wrong=0,totalTyped=0,survivalErrors=0;
 let text="",timerInterval=null;
@@ -237,7 +240,20 @@ function playCountdown(){const o=actx.createOscillator(),g=actx.createGain();o.c
 function playCheer(){[523,659,784,1047].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.frequency.value=f;g.gain.value=.08;o.start(actx.currentTime+i*.12);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.12+.3);o.stop(actx.currentTime+i*.12+.3)})}
 function playWordComplete(){const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='sine';o.frequency.value=880;g.gain.value=.06;o.start();g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.1);o.stop(actx.currentTime+.1)}
 
-function genText(){let w=[];for(let i=0;i<60;i++)w.push(WORDS[Math.random()*WORDS.length|0]);return w.join(" ")}
+let currentWpm=0;
+function genText(){
+  let w=[];
+  // Adaptive word selection based on current typing speed
+  for(let i=0;i<60;i++){
+    let pool;
+    if(currentWpm<25) pool=WORDS_EASY;
+    else if(currentWpm<50) pool=Math.random()<0.6?WORDS_MED:WORDS_EASY;
+    else if(currentWpm<70) pool=Math.random()<0.5?WORDS_HARD:WORDS_MED;
+    else pool=Math.random()<0.7?WORDS_HARD:WORDS_MED;
+    w.push(pool[Math.random()*pool.length|0]);
+  }
+  return w.join(" ");
+}
 function renderText(){
   let html="";
   for(let i=0;i<text.length;i++){
@@ -295,6 +311,7 @@ function startTimer(){
 function updateStats(){
   const elapsed=Math.max((Date.now()-startTime)/1000,1);
   const wpm=Math.round((correct/5)/(elapsed/60))||0;
+  currentWpm=wpm;
   const acc=totalTyped?Math.round(correct/totalTyped*100):100;
   wpmEl.textContent=wpm;accEl.textContent=acc+"%";
   

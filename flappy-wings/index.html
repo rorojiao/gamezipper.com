@@ -122,8 +122,18 @@ const GRAVITY=0.45,FLAP=-7.5;
 let pipes=[];
 const PIPE_W=60,PIPE_SPEED=2.5,PIPE_INTERVAL=90;
 let pipeTimer=0;
-const GAP_START=150,GAP_MIN=100;
-function getGap(){return Math.max(GAP_MIN,GAP_START-score*2.5);}
+const GAP_START=160,GAP_MIN=95;
+function getGap(){
+  // Smooth logarithmic difficulty curve instead of linear
+  // Starts generous, narrows gradually, never becomes impossible
+  const progress=Math.log2(score+1)/Math.log2(50); // 0→1 over ~50 pipes
+  const eased=Math.min(1,progress*progress); // Quadratic ease-in (gentle start)
+  return Math.max(GAP_MIN,GAP_START-(GAP_START-GAP_MIN)*eased);
+}
+function getPipeSpeed(){
+  // Gradually increase speed: 2.5 → 3.5 over 30 points
+  return Math.min(3.5, PIPE_SPEED + score * 0.033);
+}
 
 const GROUND_H=80;
 let groundX=0;
@@ -231,13 +241,22 @@ function update(){
   if(pipeTimer>=PIPE_INTERVAL){
     pipeTimer=0;
     const gap=getGap();
-    const gapY=80+Math.random()*(H-GROUND_H-gap-160);
+    // Smart gap placement: constrain vertical change from last pipe to prevent impossible jumps
+    let minGapY=80, maxGapY=H-GROUND_H-gap-80;
+    if(pipes.length>0){
+      const lastGapCenter=pipes[pipes.length-1].gapY+pipes[pipes.length-1].gap/2;
+      const maxShift=gap*1.2; // Max vertical shift proportional to gap size
+      minGapY=Math.max(minGapY, lastGapCenter-gap/2-maxShift);
+      maxGapY=Math.min(maxGapY, lastGapCenter-gap/2+maxShift);
+    }
+    if(minGapY>maxGapY) minGapY=maxGapY=80;
+    const gapY=minGapY+Math.random()*(maxGapY-minGapY);
     pipes.push({x:W,gapY,gap,scored:false,id:Math.random(),
       stripeOffset:Math.random()*20,
       color:CANDY_COLORS[Math.floor(Math.random()*CANDY_COLORS.length)]});
   }
   for(let i=pipes.length-1;i>=0;i--){
-    pipes[i].x-=PIPE_SPEED;
+    pipes[i].x-=getPipeSpeed();
     if(!pipes[i].scored&&pipes[i].x+PIPE_W<bird.x){
       pipes[i].scored=true;score++;
       scoreBounce=1;screenFlashAlpha=0.1;
@@ -257,7 +276,7 @@ function update(){
     if(pipes[i].x<-PIPE_W)pipes.splice(i,1);
   }
 
-  groundX=(groundX-PIPE_SPEED)%40;
+  groundX=(groundX-getPipeSpeed())%40;
   if(scoreBounce>0)scoreBounce=Math.max(0,scoreBounce-0.05);
 
   if(collides()){

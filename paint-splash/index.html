@@ -254,8 +254,90 @@ function startLevel(lvlIdx){
   }
   // Clear initial matches WITHOUT adding paint
   clearMatchesInitial();
+  // Ensure at least one potential match exists after sliding in any direction
+  ensureMatchPossible(lvl.colors);
   initBlockPositions();
   updateUI();
+}
+
+function ensureMatchPossible(numColors){
+  // Check if any slide direction would create a match
+  var dirs=['left','right','up','down'];
+  var hasMatch=false;
+  for(var d=0;d<dirs.length;d++){
+    var simGrid=simulateSlide(grid,dirs[d]);
+    if(findMatchesInGrid(simGrid).length>0){hasMatch=true;break;}
+  }
+  // If no match possible, plant a guaranteed match
+  if(!hasMatch){
+    var r=Math.floor(Math.random()*(GRID-2));
+    var c=Math.floor(Math.random()*GRID);
+    var color=Math.floor(Math.random()*numColors);
+    grid[r][c]=color;grid[r+1][c]=color;grid[r+2][c]=color;
+    clearMatchesInitial(); // Re-clear if we accidentally made instant matches
+  }
+}
+
+function simulateSlide(g,dir){
+  var ng=g.map(function(r){return r.slice();});
+  if(dir==='left'||dir==='right'){
+    for(var r=0;r<GRID;r++){
+      var row=ng[r].slice();
+      if(dir==='right')row.reverse();
+      var nr=row.filter(function(v){return v!==-1;});
+      while(nr.length<GRID)nr.push(-1);
+      if(dir==='right')nr.reverse();
+      ng[r]=nr;
+    }
+  } else {
+    for(var c=0;c<GRID;c++){
+      var col=[];
+      for(var r=0;r<GRID;r++)col.push(ng[r][c]);
+      if(dir==='down')col.reverse();
+      var nc=col.filter(function(v){return v!==-1;});
+      while(nc.length<GRID)nc.push(-1);
+      if(dir==='down')nc.reverse();
+      for(var r=0;r<GRID;r++)ng[r][c]=nc[r];
+    }
+  }
+  return ng;
+}
+
+function findMatchesInGrid(g){
+  var groups=[];
+  var visited=[];
+  for(var r=0;r<GRID;r++){visited[r]=[];for(var c=0;c<GRID;c++)visited[r][c]=false;}
+  // Horizontal
+  for(var r=0;r<GRID;r++){
+    var c=0;
+    while(c<GRID){
+      if(g[r][c]===-1){c++;continue;}
+      var end=c;
+      while(end+1<GRID&&g[r][end+1]===g[r][c])end++;
+      if(end-c>=2){
+        var cells=[];
+        for(var i=c;i<=end;i++){cells.push([r,i]);visited[r][i]=true;}
+        groups.push({color:g[r][c],cells:cells});
+      }
+      c=end+1;
+    }
+  }
+  // Vertical
+  for(var c=0;c<GRID;c++){
+    var r=0;
+    while(r<GRID){
+      if(g[r][c]===-1){r++;continue;}
+      var end=r;
+      while(end+1<GRID&&g[end+1][c]===g[r][c])end++;
+      if(end-r>=2){
+        var cells=[];
+        for(var i=r;i<=end;i++){cells.push([i,c]);}
+        groups.push({color:g[r][c],cells:cells});
+      }
+      r=end+1;
+    }
+  }
+  return groups;
 }
 
 function updateUI(){

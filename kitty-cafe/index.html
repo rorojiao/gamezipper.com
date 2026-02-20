@@ -157,6 +157,7 @@ function randomItem(){
 function ensureMerges(){
   var pairs=countMergePairs();
   var safety=0;
+  // Ensure at least 3 mergeable pairs for good gameplay
   while(pairs<3&&safety<50){
     var r=Math.floor(Math.random()*GRID);
     var c=Math.floor(Math.random()*(GRID-1));
@@ -164,6 +165,20 @@ function ensureMerges(){
     grid[r][c]=item; grid[r][c+1]=item;
     pairs=countMergePairs();
     safety++;
+  }
+  // Also try to create at least one merge chain (3 of same type nearby)
+  if(safety<50){
+    var chainFound=false;
+    for(var r=0;r<GRID&&!chainFound;r++)for(var c=0;c<GRID-2&&!chainFound;c++){
+      if(grid[r][c]>=0&&grid[r][c]===grid[r][c+1]&&grid[r][c]===grid[r][c+2]) chainFound=true;
+    }
+    if(!chainFound&&safety<45){
+      // Place a chain of 3 base items for satisfying combo
+      var cr=Math.floor(Math.random()*GRID);
+      var cc=Math.floor(Math.random()*(GRID-2));
+      var chainItem=randomItem();
+      grid[cr][cc]=chainItem;grid[cr][cc+1]=chainItem;grid[cr][cc+2]=chainItem;
+    }
   }
 }
 function countMergePairs(){
