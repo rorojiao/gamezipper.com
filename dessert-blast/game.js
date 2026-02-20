@@ -154,7 +154,7 @@ var renderer = {
     _rCanvas = document.getElementById('gameCanvas');
     _rCtx = _rCanvas.getContext('2d');
     _rW = window.innerWidth;
-    _rH = window.innerHeight;
+    _rH = window.innerHeight - 28;
     _rDpr = window.devicePixelRatio || 1;
     _rCanvas.width = _rW * _rDpr;
     _rCanvas.height = _rH * _rDpr;
@@ -1436,7 +1436,7 @@ document.addEventListener('mouseup', function(e) {
 
 window.addEventListener('resize', function() {
   _canvas.width = window.innerWidth * (window.devicePixelRatio || 1);
-  _canvas.height = window.innerHeight * (window.devicePixelRatio || 1);
+  _canvas.height = (window.innerHeight - 28) * (window.devicePixelRatio || 1);
 });
 
 // ===== MAIN LOOP =====

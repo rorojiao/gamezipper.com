@@ -9,6 +9,7 @@
 var _mainCanvas = document.getElementById('gameCanvas');
 
 function getBestSize() {
+  var BAR_H = 28;
   var w = window.innerWidth || document.documentElement.clientWidth || 0;
   var h = window.innerHeight || document.documentElement.clientHeight || 0;
   if (window.visualViewport && window.visualViewport.width > 10) {
@@ -17,6 +18,7 @@ function getBestSize() {
   }
   if (w < 200) w = screen.width || 375;
   if (h < 200) h = screen.height || 667;
+  h = h - BAR_H; // Account for top navigation bar
   return { w: Math.floor(w), h: Math.floor(h) };
 }
 
