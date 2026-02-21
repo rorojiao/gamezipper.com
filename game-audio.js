@@ -193,6 +193,7 @@ const GameAudio = (() => {
     },
 
     isMuted: () => muted,
+    _getAudio: () => bgmAudio,
     isPlaying: () => bgmPlaying,
 
     // 兼容旧接口（game-audio-auto.js 调用 playBGM）
@@ -203,3 +204,32 @@ const GameAudio = (() => {
 // 离开页面时停止 BGM
 window.addEventListener('pagehide', () => { try { GameAudio.stopBGM(); } catch(e) {} });
 window.addEventListener('beforeunload', () => { try { GameAudio.stopBGM(); } catch(e) {} });
+
+// ── Page Visibility API ──────────────────────────────────────────────────────
+// Safari 最小化 / 切换标签时触发，暂停BGM；返回时恢复（不重头播放）
+// 参考 MDN: https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API
+(function () {
+  var _wasPlaying = false;
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      // 页面进入后台：暂停（不是停止，保留播放位置）
+      _wasPlaying = GameAudio.isPlaying();
+      if (_wasPlaying) {
+        try {
+          // HTML5 Audio 暂停（保留位置）
+          var a = GameAudio._getAudio && GameAudio._getAudio();
+          if (a) a.pause();
+        } catch (e) {}
+      }
+    } else {
+      // 页面回到前台：如果之前在播放且未静音，继续
+      if (_wasPlaying && !GameAudio.isMuted()) {
+        try {
+          var a = GameAudio._getAudio && GameAudio._getAudio();
+          if (a) a.play().catch(function () {});
+        } catch (e) {}
+      }
+    }
+  });
+})();
