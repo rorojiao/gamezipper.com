@@ -1,7 +1,7 @@
-// GameAudio v3 - BGM + SFX simultaneous playback via Web Audio API
-// BGM: fetch + decodeAudioData (shares AudioContext with SFX)
-// SFX: oscillator/noise synthesis (unchanged)
-// v3 fixes: pagehide stop, DynamicsCompressor+LowpassFilter, crossfade loop
+// GameAudio v4 - BGM via HTML5 Audio, SFX via Web Audio API
+// BGM: HTML5 <audio> element (most reliable, no signal chain artifacts)
+// SFX: oscillator/noise synthesis (Web Audio API, unchanged)
+// v4 fixes: removed WaveShaper+EQ chain that caused clipping distortion on 0dBFS files
 
 const GameAudio = (() => {
   let ctx;
@@ -11,58 +11,30 @@ const GameAudio = (() => {
     return ctx;
   };
 
-  let bgmSource = null;
-  let bgmBuffer = null;
-  let bgmGain = null;
-  let bgmChain = null; // {compressor, filter}
+  // BGM via HTML5 Audio (simple, reliable, no DSP artifacts)
+  let bgmAudio = null;
   let bgmPlaying = false;
   let bgmCurrentName = '';
   let muted = false;
-
-  // 对 AudioBuffer 做头尾交叉淡化（消除循环爆音）
-  const makeSmoothLoopBuffer = (ac, buf) => {
-    try {
-      const ch = buf.numberOfChannels;
-      const len = buf.length;
-      const sr = buf.sampleRate;
-      // 交叉淡化区间：约 80ms
-      const fadeLen = Math.min(Math.floor(sr * 0.08), Math.floor(len * 0.05));
-      const out = ac.createBuffer(ch, len, sr);
-      for (let c = 0; c < ch; c++) {
-        const src = buf.getChannelData(c);
-        const dst = out.getChannelData(c);
-        dst.set(src);
-        // 头部：从0淡入（防止起始爆音）
-        for (let i = 0; i < fadeLen; i++) {
-          dst[i] = src[i] * (i / fadeLen);
-        }
-        // 尾部：淡出到0（防止循环接缝爆音）
-        for (let i = 0; i < fadeLen; i++) {
-          const idx = len - fadeLen + i;
-          dst[idx] = src[idx] * (1 - i / fadeLen);
-        }
-      }
-      return out;
-    } catch(e) { return buf; }
-  };
+  const BGM_VOL = 0.28;
 
   // BGM文件映射
   const bgmMap = {
-    '2048': '/audio/2048_galaxy.mp3?v=6',
-    'typing-speed': '/audio/typing_cyber.mp3?v=6',
-    'color-sort': '/audio/color_crystal.mp3?v=6',
-    'word-puzzle': '/audio/word_parchment.mp3?v=6',
+    '2048':          '/audio/2048_galaxy.mp3?v=6',
+    'typing-speed':  '/audio/typing_cyber.mp3?v=6',
+    'color-sort':    '/audio/color_crystal.mp3?v=6',
+    'word-puzzle':   '/audio/word_parchment.mp3?v=6',
     'dessert-blast': '/audio/dessert_candy.mp3?v=6',
-    'kitty-cafe': '/audio/kitty_cafe.mp3?v=6',
-    'paint-splash': '/audio/paint_splash.mp3?v=6',
-    'catch-turkey': '/audio/turkey_farm.mp3?v=6',
-    'flappy-wings': '/audio/flappy_cyber.mp3?v=6',
-    'whack-a-mole': '/audio/whack_steam.mp3?v=6',
-    'memory-match': '/audio/memory_circus.mp3?v=6',
-    'idle-clicker': '/audio/alchemy_magic.mp3?v=6',
+    'kitty-cafe':    '/audio/kitty_cafe.mp3?v=6',
+    'paint-splash':  '/audio/paint_splash.mp3?v=6',
+    'catch-turkey':  '/audio/turkey_farm.mp3?v=6',
+    'flappy-wings':  '/audio/flappy_cyber.mp3?v=6',
+    'whack-a-mole':  '/audio/whack_steam.mp3?v=6',
+    'memory-match':  '/audio/memory_circus.mp3?v=6',
+    'idle-clicker':  '/audio/alchemy_magic.mp3?v=6',
   };
 
-  // SFX合成器 (独立gain node，不影响BGM)
+  // SFX合成器 (Web Audio API, 独立于BGM)
   const synth = (freq, dur, type = 'sine', vol = 0.3, ramp = true) => {
     try {
       const ac = getCtx();
@@ -80,7 +52,6 @@ const GameAudio = (() => {
     } catch(e) {}
   };
 
-  // 噪声生成器
   const noise = (dur = 0.1, vol = 0.3, hiFreq = 4000, loFreq = 1000) => {
     try {
       const ac = getCtx();
@@ -105,7 +76,7 @@ const GameAudio = (() => {
     } catch(e) {}
   };
 
-  // SFX定义
+  // SFX定义 (全部保留)
   const sfxDefs = {
     click:     () => synth(800, 0.08, 'sine', 0.3),
     pop:       () => synth(600, 0.1, 'sine', 0.4),
@@ -136,8 +107,30 @@ const GameAudio = (() => {
     levelup:   () => { for(let i=0;i<4;i++) setTimeout(() => synth(523*(1+i*0.25), 0.15, 'sine', 0.5), i*100); },
   };
 
+  const stopBGMInternal = (fade = false) => {
+    if (!bgmAudio) return;
+    if (fade) {
+      // 150ms 淡出防爆音
+      const a = bgmAudio;
+      const startVol = a.volume;
+      const step = startVol / 15;
+      let v = startVol;
+      const t = setInterval(() => {
+        v -= step;
+        if (v <= 0) { a.pause(); a.currentTime = 0; clearInterval(t); }
+        else a.volume = v;
+      }, 10);
+    } else {
+      bgmAudio.pause();
+      bgmAudio.currentTime = 0;
+    }
+    bgmAudio = null;
+    bgmPlaying = false;
+    bgmCurrentName = '';
+  };
+
   return {
-    play: (name, vol) => {
+    play: (name) => {
       if (muted) return;
       const fn = sfxDefs[name];
       if (fn) fn();
@@ -146,184 +139,67 @@ const GameAudio = (() => {
     playBGM: (gameName) => {
       if (muted) return;
       if (bgmPlaying && bgmCurrentName === gameName) return;
-      
-      // Stop current BGM if any
-      if (bgmSource) {
-        try { bgmSource.stop(); } catch(e) {}
-        bgmSource = null;
-      }
-      
+      stopBGMInternal(false);
+
       const url = bgmMap[gameName];
       if (!url) return;
-      
-      const ac = getCtx();
+
+      const audio = new Audio(url);
+      audio.loop = true;
+      audio.volume = 0;  // 先静音，淡入
+      bgmAudio = audio;
+      bgmPlaying = true;
       bgmCurrentName = gameName;
-      
-      // Use Web Audio API for BGM (same context as SFX = no conflict)
-      fetch(url)
-        .then(r => r.arrayBuffer())
-        .then(buf => ac.decodeAudioData(buf))
-        .then(rawBuffer => {
-          // 对原始 buffer 做头尾交叉淡化，消除循环爆音
-          const audioBuffer = makeSmoothLoopBuffer(ac, rawBuffer);
-          bgmBuffer = audioBuffer;
 
-          bgmSource = ac.createBufferSource();
-          bgmSource.buffer = audioBuffer;
-          bgmSource.loop = true;
-
-          // 信号链 v4：highpass → warmth EQ → saturation → compressor → reverb → gain → output
-          // ① 去低频隆隆声（< 40Hz）
-          const hpf = ac.createBiquadFilter();
-          hpf.type = 'highpass'; hpf.frequency.value = 40; hpf.Q.value = 0.7;
-
-          // ② 温暖感：低频提升（120Hz +2.5dB）
-          const warmth = ac.createBiquadFilter();
-          warmth.type = 'lowshelf'; warmth.frequency.value = 120; warmth.gain.value = 2.5;
-
-          // ③ 去刺耳感：中高频轻微衰减（3.5kHz -1.5dB）
-          const harsh = ac.createBiquadFilter();
-          harsh.type = 'peaking'; harsh.frequency.value = 3500;
-          harsh.Q.value = 1.2; harsh.gain.value = -1.5;
-
-          // ④ 空气感：高频提升（9kHz +1.5dB）
-          const air = ac.createBiquadFilter();
-          air.type = 'highshelf'; air.frequency.value = 9000; air.gain.value = 1.5;
-
-          // ⑤ 去超声波毛刺（> 16kHz）
-          const lpf = ac.createBiquadFilter();
-          lpf.type = 'lowpass'; lpf.frequency.value = 16000; lpf.Q.value = 0.5;
-
-          // ⑥ 模拟磁带饱和（增加质感/谐波）
-          const saturator = ac.createWaveShaper();
-          const satCurve = new Float32Array(512);
-          for (let i = 0; i < 512; i++) {
-            const x = (i * 2) / 512 - 1;
-            satCurve[i] = ((Math.PI + 6) * x) / (Math.PI + 6 * Math.abs(x)); // 磁带软限幅
-          }
-          saturator.curve = satCurve;
-          saturator.oversample = '4x'; // 减少混叠
-
-          // ⑦ 压缩器（2.5:1 软拐点，避免泵气感）
-          const compressor = ac.createDynamicsCompressor();
-          compressor.threshold.value = -18;
-          compressor.knee.value      = 12;
-          compressor.ratio.value     = 2.5;
-          compressor.attack.value    = 0.02;  // 更慢的起音，保留冲击感
-          compressor.release.value   = 0.35;
-
-          // ⑧ 合成脉冲响应创造空间感（小厅混响, 0.7s）
-          const reverbIR = (() => {
-            const len = Math.floor(ac.sampleRate * 0.7);
-            const ir = ac.createBuffer(2, len, ac.sampleRate);
-            for (let ch = 0; ch < 2; ch++) {
-              const d = ir.getChannelData(ch);
-              for (let i = 0; i < len; i++) {
-                // 早期反射 + 扩散尾音
-                const t = i / len;
-                d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 3.5) * (ch === 0 ? 1 : 0.97);
-              }
-            }
-            return ir;
-          })();
-          const reverb = ac.createConvolver();
-          reverb.buffer = reverbIR;
-          const reverbGain = ac.createGain();
-          reverbGain.gain.value = 0.18; // 18% 混响湿度
-
-          // ⑨ 输出增益（含1秒淡入）
-          bgmGain = ac.createGain();
-          bgmGain.gain.setValueAtTime(0, ac.currentTime);
-          bgmGain.gain.linearRampToValueAtTime(0.22, ac.currentTime + 1.0);
-
-          // 连线：干声链
-          bgmSource.connect(hpf);
-          hpf.connect(warmth);
-          warmth.connect(harsh);
-          harsh.connect(air);
-          air.connect(lpf);
-          lpf.connect(saturator);
-          saturator.connect(compressor);
-          compressor.connect(bgmGain);
-          // 湿声（并联混响）
-          compressor.connect(reverb);
-          reverb.connect(reverbGain);
-          reverbGain.connect(bgmGain);
-          // 输出
-          bgmGain.connect(ac.destination);
-          bgmSource.start(0);
-          bgmPlaying = true;
-        })
-        .catch(() => {
-          // Fallback to HTML5 Audio if fetch fails
-          const audio = new Audio(url);
-          audio.loop = true;
-          audio.volume = 0.2;
-          audio.play().catch(() => {});
-          bgmPlaying = true;
-          bgmSource = { stop: () => { audio.pause(); audio.currentTime = 0; } };
-        });
+      // 1秒淡入
+      audio.play().then(() => {
+        let v = 0;
+        const target = BGM_VOL;
+        const step = target / 40;
+        const t = setInterval(() => {
+          v = Math.min(v + step, target);
+          if (bgmAudio === audio) audio.volume = v;
+          if (v >= target) clearInterval(t);
+        }, 25);
+      }).catch(() => {
+        bgmPlaying = false;
+        bgmCurrentName = '';
+        bgmAudio = null;
+      });
     },
 
-    stopBGM: () => {
-      if (bgmSource) {
-        try {
-          bgmGain && bgmGain.gain.setValueAtTime(bgmGain.gain.value, ctx.currentTime);
-          bgmGain && bgmGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15); // 淡出防爆音
-          setTimeout(() => {
-            try { bgmSource && bgmSource.stop(); } catch(e) {}
-          }, 180);
-        } catch(e) {
-          try { bgmSource.stop(); } catch(e2) {}
-        }
-        bgmSource = null;
-      }
-      bgmPlaying = false;
-      bgmCurrentName = '';
-    },
+    stopBGM: () => stopBGMInternal(true),
 
     switchBGM: (gameName) => {
       if (bgmCurrentName === gameName) return;
       GameAudio.stopBGM();
-      GameAudio.playBGM(gameName);
+      setTimeout(() => GameAudio.playBGM(gameName), 200);
     },
 
     toggleMute: () => {
       muted = !muted;
       if (muted) {
-        if (bgmGain) {
-          bgmGain.gain.cancelScheduledValues(ctx.currentTime);
-          bgmGain.gain.setValueAtTime(0, ctx.currentTime);
-        }
-        // 静音时暂停 AudioContext 节省资源
+        if (bgmAudio) bgmAudio.volume = 0;
         if (ctx && ctx.state === 'running') ctx.suspend().catch(() => {});
       } else {
-        // 取消静音时恢复 AudioContext（修复 autoplay policy 导致的无声问题）
         if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
-        if (bgmGain) {
-          bgmGain.gain.cancelScheduledValues(ctx.currentTime);
-          bgmGain.gain.setValueAtTime(0, ctx.currentTime);
-          bgmGain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.3); // 0.3s 淡入
-        }
+        if (bgmAudio) bgmAudio.volume = BGM_VOL;
       }
       return muted;
     },
 
-    // 主动恢复 AudioContext（供 sound-toggle 调用）
     resumeContext: () => {
       if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
     },
 
     isMuted: () => muted,
     isPlaying: () => bgmPlaying,
+
+    // 兼容旧接口（game-audio-auto.js 调用 playBGM）
+    bgmBuffer: null,
   };
 })();
 
-// 离开页面时停止 BGM（防止 bfcache 恢复后音乐继续）
-window.addEventListener('pagehide', () => {
-  try { GameAudio.stopBGM(); } catch(e) {}
-  try { if (window.audioCtx) window.audioCtx.suspend(); } catch(e) {}
-});
-window.addEventListener('beforeunload', () => {
-  try { GameAudio.stopBGM(); } catch(e) {}
-});
+// 离开页面时停止 BGM
+window.addEventListener('pagehide', () => { try { GameAudio.stopBGM(); } catch(e) {} });
+window.addEventListener('beforeunload', () => { try { GameAudio.stopBGM(); } catch(e) {} });
