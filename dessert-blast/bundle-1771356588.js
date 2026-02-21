@@ -1118,7 +1118,7 @@ function drawHUD(ctx) {
   ctx.fillStyle = 'rgba(255,215,0,0.4)';
   ctx.fillRect(0, _hudH - 2, _w, 2);
 
-  renderer.drawText('🍰 Dessert Blast', 80, _hudH / 2, { size: 18, bold: true, color: '#FFD700', shadow: true, align: 'left' });
+  renderer.drawText('🍰 Dessert Blast', 55, _hudH / 2, { size: 18, bold: true, color: '#FFD700', shadow: true, align: 'left' });
   renderer.drawText('' + score, _w - 80, _hudH / 2 - 8, { size: 22, bold: true, color: '#FFF', shadow: true });
   renderer.drawText('🏆 ' + best, _w - 80, _hudH / 2 + 12, { size: 12, color: '#FFD740' });
 }
@@ -1329,7 +1329,7 @@ var gameScene = {
     generateCandidates();
 
     // Home button
-    _homeBtn = { x: _w / 2 - 60, y: _candY + 50, w: 120, h: 36 };
+    _homeBtn = { x: 5, y: 5, w: 40, h: _hudH - 10 };
   },
 
   update: function(dt) {
@@ -1387,7 +1387,7 @@ var gameScene = {
 
     // Home button
     if (!gameOver && _homeBtn) {
-      renderer.drawButton(_homeBtn.x, _homeBtn.y, _homeBtn.w, _homeBtn.h, '🏠 Main Menu', {
+      renderer.drawButton(_homeBtn.x, _homeBtn.y, _homeBtn.w, _homeBtn.h, '🏠', {
         gradient: ['#4A90D9','#357ABD'], border: '#1a4a80', fontSize: 14
       });
     }
