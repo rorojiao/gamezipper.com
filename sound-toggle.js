@@ -36,18 +36,17 @@
 
   // 恢复 AudioContext（解决 autoplay suspended 问题）
   function resumeAudioCtx() {
-    // game-audio.js 内部的 AudioContext（通过调用一个空音效来触发 getCtx + resume）
-    if (typeof GameAudio !== 'undefined') {
-      try {
-        // 用 isMuted() 检查即可触发内部 ctx resume（不发声）
-        var wasMuted = GameAudio.isMuted();
-        // 如果当前未静音，播放 BGM（如果还没开始）
-        if (!wasMuted && !GameAudio.isPlaying() && gameName) {
-          GameAudio.playBGM(gameName);
-          if (window._gameAudioAutoState) window._gameAudioAutoState.markStarted();
-        }
-      } catch(e) {}
-    }
+    if (typeof GameAudio === 'undefined') return;
+    try {
+      // 恢复 AudioContext（解决 autoplay policy 导致的 suspended 状态）
+      if (GameAudio.resumeContext) GameAudio.resumeContext();
+      // 取消静音且在游戏页面时，启动 BGM
+      var isGamePage = gameName && window.location.pathname.split('/').filter(Boolean).length > 0;
+      if (!GameAudio.isMuted() && isGamePage && !GameAudio.isPlaying()) {
+        GameAudio.playBGM(gameName);
+        if (window._gameAudioAutoState) window._gameAudioAutoState.markStarted();
+      }
+    } catch(e) {}
   }
 
   // 按钮点击
