@@ -48,18 +48,18 @@ const GameAudio = (() => {
 
   // BGM文件映射
   const bgmMap = {
-    '2048': '/audio/2048_galaxy.mp3',
-    'typing-speed': '/audio/typing_cyber.mp3',
-    'color-sort': '/audio/color_crystal.mp3',
-    'word-puzzle': '/audio/word_parchment.mp3',
-    'dessert-blast': '/audio/dessert_candy.mp3',
-    'kitty-cafe': '/audio/kitty_cafe.mp3',
-    'paint-splash': '/audio/paint_splash.mp3',
-    'catch-turkey': '/audio/turkey_farm.mp3',
-    'flappy-wings': '/audio/flappy_cyber.mp3',
-    'whack-a-mole': '/audio/whack_steam.mp3',
-    'memory-match': '/audio/memory_circus.mp3',
-    'idle-clicker': '/audio/alchemy_magic.mp3',
+    '2048': '/audio/2048_galaxy.mp3?v=5',
+    'typing-speed': '/audio/typing_cyber.mp3?v=5',
+    'color-sort': '/audio/color_crystal.mp3?v=5',
+    'word-puzzle': '/audio/word_parchment.mp3?v=5',
+    'dessert-blast': '/audio/dessert_candy.mp3?v=5',
+    'kitty-cafe': '/audio/kitty_cafe.mp3?v=5',
+    'paint-splash': '/audio/paint_splash.mp3?v=5',
+    'catch-turkey': '/audio/turkey_farm.mp3?v=5',
+    'flappy-wings': '/audio/flappy_cyber.mp3?v=5',
+    'whack-a-mole': '/audio/whack_steam.mp3?v=5',
+    'memory-match': '/audio/memory_circus.mp3?v=5',
+    'idle-clicker': '/audio/alchemy_magic.mp3?v=5',
   };
 
   // SFX合成器 (独立gain node，不影响BGM)
