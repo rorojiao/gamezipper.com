@@ -1,4 +1,4 @@
-// GameAudio v4 - BGM via HTML5 Audio, SFX via Web Audio API
+// GameAudio v4.1 - BGM via HTML5 Audio, SFX via Web Audio API
 // BGM: HTML5 <audio> element (most reliable, no signal chain artifacts)
 // SFX: oscillator/noise synthesis (Web Audio API, unchanged)
 // v4 fixes: removed WaveShaper+EQ chain that caused clipping distortion on 0dBFS files
@@ -16,7 +16,7 @@ const GameAudio = (() => {
   let bgmPlaying = false;
   let bgmCurrentName = '';
   let muted = false;
-  const BGM_VOL = 0.28;
+  const BGM_VOL = 0.14;
 
   // BGM文件映射
   const bgmMap = {
@@ -78,33 +78,33 @@ const GameAudio = (() => {
 
   // SFX定义 (全部保留)
   const sfxDefs = {
-    click:     () => synth(800, 0.08, 'sine', 0.3),
-    pop:       () => synth(600, 0.1, 'sine', 0.4),
-    match:     () => { synth(523, 0.1, 'sine', 0.3); setTimeout(() => synth(659, 0.1, 'sine', 0.3), 80); setTimeout(() => synth(784, 0.15, 'sine', 0.3), 160); },
-    win:       () => { for(let i=0;i<6;i++) setTimeout(() => synth(523*(1+i*0.2), 0.15, 'sine', 0.5), i*80); },
-    lose:      () => { synth(400, 0.3, 'sawtooth', 0.3); setTimeout(() => synth(300, 0.4, 'sawtooth', 0.3), 200); },
-    coin:      () => { synth(988, 0.08, 'square', 0.3); setTimeout(() => synth(1319, 0.15, 'square', 0.3), 80); },
-    whoosh:    () => noise(0.15, 0.3, 3000, 500),
-    drop:      () => synth(200, 0.2, 'sine', 0.4),
-    merge:     () => { synth(440, 0.08, 'sine', 0.4); setTimeout(() => synth(880, 0.15, 'sine', 0.4), 60); },
-    bounce:    () => synth(300, 0.1, 'triangle', 0.3),
-    tick:      () => synth(1000, 0.03, 'sine', 0.2),
-    buzz:      () => synth(150, 0.15, 'sawtooth', 0.2),
-    sparkle:   () => { for(let i=0;i<4;i++) setTimeout(() => synth(1200+i*200, 0.08, 'sine', 0.25), i*40); },
-    explosion: () => { noise(0.3, 0.5, 2000, 100); synth(80, 0.3, 'sawtooth', 0.4); },
+    click:     () => synth(800, 0.08, 'sine', 0.54),
+    pop:       () => synth(600, 0.1, 'sine', 0.72),
+    match:     () => { synth(523, 0.1, 'sine', 0.54); setTimeout(() => synth(659, 0.1, 'sine', 0.54), 80); setTimeout(() => synth(784, 0.15, 'sine', 0.54), 160); },
+    win:       () => { for(let i=0;i<6;i++) setTimeout(() => synth(523*(1+i*0.2), 0.15, 'sine', 0.9), i*80); },
+    lose:      () => { synth(400, 0.3, 'sawtooth', 0.54); setTimeout(() => synth(300, 0.4, 'sawtooth', 0.54), 200); },
+    coin:      () => { synth(988, 0.08, 'square', 0.54); setTimeout(() => synth(1319, 0.15, 'square', 0.54), 80); },
+    whoosh:    () => noise(0.15, 0.54, 3000, 500),
+    drop:      () => synth(200, 0.2, 'sine', 0.72),
+    merge:     () => { synth(440, 0.08, 'sine', 0.72); setTimeout(() => synth(880, 0.15, 'sine', 0.72), 60); },
+    bounce:    () => synth(300, 0.1, 'triangle', 0.54),
+    tick:      () => synth(1000, 0.03, 'sine', 0.36),
+    buzz:      () => synth(150, 0.15, 'sawtooth', 0.36),
+    sparkle:   () => { for(let i=0;i<4;i++) setTimeout(() => synth(1200+i*200, 0.08, 'sine', 0.45), i*40); },
+    explosion: () => { noise(0.3, 0.9, 2000, 100); synth(80, 0.3, 'sawtooth', 0.72); },
     jump:      () => { const ac=getCtx();const now=ac.currentTime;const o=ac.createOscillator();const g=ac.createGain();o.type='sine';o.frequency.setValueAtTime(300,now);o.frequency.exponentialRampToValueAtTime(800,now+0.1);g.gain.setValueAtTime(0.3,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.15);o.connect(g);g.connect(ac.destination);o.start(now);o.stop(now+0.15); },
-    hit:       () => { noise(0.08, 0.4, 3000, 500); synth(200, 0.1, 'square', 0.3); },
+    hit:       () => { noise(0.08, 0.72, 3000, 500); synth(200, 0.1, 'square', 0.54); },
     slide:     () => { const ac=getCtx();const now=ac.currentTime;const o=ac.createOscillator();const g=ac.createGain();o.type='sine';o.frequency.setValueAtTime(600,now);o.frequency.exponentialRampToValueAtTime(300,now+0.2);g.gain.setValueAtTime(0.2,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.25);o.connect(g);g.connect(ac.destination);o.start(now);o.stop(now+0.25); },
-    ding:      () => synth(1047, 0.2, 'sine', 0.4),
-    wrong:     () => { synth(300, 0.15, 'square', 0.3); setTimeout(() => synth(250, 0.2, 'square', 0.3), 150); },
-    success:   () => { synth(523, 0.1, 'sine', 0.4); setTimeout(() => synth(659, 0.1, 'sine', 0.4), 100); setTimeout(() => synth(784, 0.12, 'sine', 0.4), 200); setTimeout(() => synth(1047, 0.2, 'sine', 0.5), 300); },
-    tap:       () => synth(500, 0.05, 'sine', 0.25),
-    swoosh:    () => { noise(0.15, 0.25, 2000, 500); synth(600, 0.15, 'sine', 0.2); },
-    keytype:   () => noise(0.04, 0.3, 4000, 2000),
-    glitch:    () => synth(60, 0.2, 'square', 0.5),
-    pour:      () => noise(0.3, 0.3, 1500, 300),
-    combo:     () => { for(let i=0;i<5;i++) setTimeout(() => synth(440+i*110, 0.1, 'sine', 0.4), i*50); },
-    levelup:   () => { for(let i=0;i<4;i++) setTimeout(() => synth(523*(1+i*0.25), 0.15, 'sine', 0.5), i*100); },
+    ding:      () => synth(1047, 0.2, 'sine', 0.72),
+    wrong:     () => { synth(300, 0.15, 'square', 0.54); setTimeout(() => synth(250, 0.2, 'square', 0.54), 150); },
+    success:   () => { synth(523, 0.1, 'sine', 0.72); setTimeout(() => synth(659, 0.1, 'sine', 0.72), 100); setTimeout(() => synth(784, 0.12, 'sine', 0.72), 200); setTimeout(() => synth(1047, 0.2, 'sine', 0.9), 300); },
+    tap:       () => synth(500, 0.05, 'sine', 0.45),
+    swoosh:    () => { noise(0.15, 0.45, 2000, 500); synth(600, 0.15, 'sine', 0.36); },
+    keytype:   () => noise(0.04, 0.54, 4000, 2000),
+    glitch:    () => synth(60, 0.2, 'square', 0.9),
+    pour:      () => noise(0.3, 0.54, 1500, 300),
+    combo:     () => { for(let i=0;i<5;i++) setTimeout(() => synth(440+i*110, 0.1, 'sine', 0.72), i*50); },
+    levelup:   () => { for(let i=0;i<4;i++) setTimeout(() => synth(523*(1+i*0.25), 0.15, 'sine', 0.9), i*100); },
   };
 
   const stopBGMInternal = (fade = false) => {
