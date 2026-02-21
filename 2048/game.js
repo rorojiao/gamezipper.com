@@ -540,6 +540,8 @@ function move(dir) {
   if (!moved) { prevState=null; return; }
 
   grid = newGrid;
+  // Update score DOM immediately so it's visible before animation completes
+  scoreEl.textContent = score;
   isAnimating = true;
   const now = performance.now();
   moveAnims.forEach(a => a.start = now);
