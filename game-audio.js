@@ -1,6 +1,7 @@
-// GameAudio v2 - BGM + SFX simultaneous playback via Web Audio API
+// GameAudio v3 - BGM + SFX simultaneous playback via Web Audio API
 // BGM: fetch + decodeAudioData (shares AudioContext with SFX)
 // SFX: oscillator/noise synthesis (unchanged)
+// v3 fixes: pagehide stop, DynamicsCompressor+LowpassFilter, crossfade loop
 
 const GameAudio = (() => {
   let ctx;
@@ -13,9 +14,37 @@ const GameAudio = (() => {
   let bgmSource = null;
   let bgmBuffer = null;
   let bgmGain = null;
+  let bgmChain = null; // {compressor, filter}
   let bgmPlaying = false;
   let bgmCurrentName = '';
   let muted = false;
+
+  // 对 AudioBuffer 做头尾交叉淡化（消除循环爆音）
+  const makeSmoothLoopBuffer = (ac, buf) => {
+    try {
+      const ch = buf.numberOfChannels;
+      const len = buf.length;
+      const sr = buf.sampleRate;
+      // 交叉淡化区间：约 80ms
+      const fadeLen = Math.min(Math.floor(sr * 0.08), Math.floor(len * 0.05));
+      const out = ac.createBuffer(ch, len, sr);
+      for (let c = 0; c < ch; c++) {
+        const src = buf.getChannelData(c);
+        const dst = out.getChannelData(c);
+        dst.set(src);
+        // 头部：从0淡入（防止起始爆音）
+        for (let i = 0; i < fadeLen; i++) {
+          dst[i] = src[i] * (i / fadeLen);
+        }
+        // 尾部：淡出到0（防止循环接缝爆音）
+        for (let i = 0; i < fadeLen; i++) {
+          const idx = len - fadeLen + i;
+          dst[idx] = src[idx] * (1 - i / fadeLen);
+        }
+      }
+      return out;
+    } catch(e) { return buf; }
+  };
 
   // BGM文件映射
   const bgmMap = {
@@ -134,15 +163,38 @@ const GameAudio = (() => {
       fetch(url)
         .then(r => r.arrayBuffer())
         .then(buf => ac.decodeAudioData(buf))
-        .then(audioBuffer => {
+        .then(rawBuffer => {
+          // 对原始 buffer 做头尾交叉淡化，消除循环爆音
+          const audioBuffer = makeSmoothLoopBuffer(ac, rawBuffer);
           bgmBuffer = audioBuffer;
+
           bgmSource = ac.createBufferSource();
           bgmSource.buffer = audioBuffer;
           bgmSource.loop = true;
+
+          // 信号链：source → compressor（防削波）→ lowpass（降高频噪声）→ gain → destination
+          const compressor = ac.createDynamicsCompressor();
+          compressor.threshold.value = -20;
+          compressor.knee.value     = 8;
+          compressor.ratio.value    = 4;
+          compressor.attack.value   = 0.005;
+          compressor.release.value  = 0.25;
+
+          const lowpass = ac.createBiquadFilter();
+          lowpass.type            = 'lowpass';
+          lowpass.frequency.value = 15000; // 截掉 15kHz 以上高频毛刺
+          lowpass.Q.value         = 0.5;
+
           bgmGain = ac.createGain();
-          bgmGain.gain.value = 0.2;
-          bgmSource.connect(bgmGain);
+          bgmGain.gain.setValueAtTime(0, ac.currentTime);
+          bgmGain.gain.linearRampToValueAtTime(0.2, ac.currentTime + 1.0); // 1秒淡入
+
+          bgmSource.connect(compressor);
+          compressor.connect(lowpass);
+          lowpass.connect(bgmGain);
           bgmGain.connect(ac.destination);
+
+          bgmChain = { compressor, lowpass };
           bgmSource.start(0);
           bgmPlaying = true;
         })
@@ -159,7 +211,15 @@ const GameAudio = (() => {
 
     stopBGM: () => {
       if (bgmSource) {
-        try { bgmSource.stop(); } catch(e) {}
+        try {
+          bgmGain && bgmGain.gain.setValueAtTime(bgmGain.gain.value, ctx.currentTime);
+          bgmGain && bgmGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15); // 淡出防爆音
+          setTimeout(() => {
+            try { bgmSource && bgmSource.stop(); } catch(e) {}
+          }, 180);
+        } catch(e) {
+          try { bgmSource.stop(); } catch(e2) {}
+        }
         bgmSource = null;
       }
       bgmPlaying = false;
@@ -175,13 +235,20 @@ const GameAudio = (() => {
     toggleMute: () => {
       muted = !muted;
       if (muted) {
-        if (bgmGain) bgmGain.gain.value = 0;
+        if (bgmGain) {
+          bgmGain.gain.cancelScheduledValues(ctx.currentTime);
+          bgmGain.gain.setValueAtTime(0, ctx.currentTime);
+        }
         // 静音时暂停 AudioContext 节省资源
         if (ctx && ctx.state === 'running') ctx.suspend().catch(() => {});
       } else {
         // 取消静音时恢复 AudioContext（修复 autoplay policy 导致的无声问题）
         if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
-        if (bgmGain) bgmGain.gain.value = 0.2;
+        if (bgmGain) {
+          bgmGain.gain.cancelScheduledValues(ctx.currentTime);
+          bgmGain.gain.setValueAtTime(0, ctx.currentTime);
+          bgmGain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.3); // 0.3s 淡入
+        }
       }
       return muted;
     },
@@ -195,3 +262,12 @@ const GameAudio = (() => {
     isPlaying: () => bgmPlaying,
   };
 })();
+
+// 离开页面时停止 BGM（防止 bfcache 恢复后音乐继续）
+window.addEventListener('pagehide', () => {
+  try { GameAudio.stopBGM(); } catch(e) {}
+  try { if (window.audioCtx) window.audioCtx.suspend(); } catch(e) {}
+});
+window.addEventListener('beforeunload', () => {
+  try { GameAudio.stopBGM(); } catch(e) {}
+});
