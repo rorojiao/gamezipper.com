@@ -172,29 +172,85 @@ const GameAudio = (() => {
           bgmSource.buffer = audioBuffer;
           bgmSource.loop = true;
 
-          // 信号链：source → compressor（防削波）→ lowpass（降高频噪声）→ gain → destination
+          // 信号链 v4：highpass → warmth EQ → saturation → compressor → reverb → gain → output
+          // ① 去低频隆隆声（< 40Hz）
+          const hpf = ac.createBiquadFilter();
+          hpf.type = 'highpass'; hpf.frequency.value = 40; hpf.Q.value = 0.7;
+
+          // ② 温暖感：低频提升（120Hz +2.5dB）
+          const warmth = ac.createBiquadFilter();
+          warmth.type = 'lowshelf'; warmth.frequency.value = 120; warmth.gain.value = 2.5;
+
+          // ③ 去刺耳感：中高频轻微衰减（3.5kHz -1.5dB）
+          const harsh = ac.createBiquadFilter();
+          harsh.type = 'peaking'; harsh.frequency.value = 3500;
+          harsh.Q.value = 1.2; harsh.gain.value = -1.5;
+
+          // ④ 空气感：高频提升（9kHz +1.5dB）
+          const air = ac.createBiquadFilter();
+          air.type = 'highshelf'; air.frequency.value = 9000; air.gain.value = 1.5;
+
+          // ⑤ 去超声波毛刺（> 16kHz）
+          const lpf = ac.createBiquadFilter();
+          lpf.type = 'lowpass'; lpf.frequency.value = 16000; lpf.Q.value = 0.5;
+
+          // ⑥ 模拟磁带饱和（增加质感/谐波）
+          const saturator = ac.createWaveShaper();
+          const satCurve = new Float32Array(512);
+          for (let i = 0; i < 512; i++) {
+            const x = (i * 2) / 512 - 1;
+            satCurve[i] = ((Math.PI + 6) * x) / (Math.PI + 6 * Math.abs(x)); // 磁带软限幅
+          }
+          saturator.curve = satCurve;
+          saturator.oversample = '4x'; // 减少混叠
+
+          // ⑦ 压缩器（2.5:1 软拐点，避免泵气感）
           const compressor = ac.createDynamicsCompressor();
-          compressor.threshold.value = -20;
-          compressor.knee.value     = 8;
-          compressor.ratio.value    = 4;
-          compressor.attack.value   = 0.005;
-          compressor.release.value  = 0.25;
+          compressor.threshold.value = -18;
+          compressor.knee.value      = 12;
+          compressor.ratio.value     = 2.5;
+          compressor.attack.value    = 0.02;  // 更慢的起音，保留冲击感
+          compressor.release.value   = 0.35;
 
-          const lowpass = ac.createBiquadFilter();
-          lowpass.type            = 'lowpass';
-          lowpass.frequency.value = 15000; // 截掉 15kHz 以上高频毛刺
-          lowpass.Q.value         = 0.5;
+          // ⑧ 合成脉冲响应创造空间感（小厅混响, 0.7s）
+          const reverbIR = (() => {
+            const len = Math.floor(ac.sampleRate * 0.7);
+            const ir = ac.createBuffer(2, len, ac.sampleRate);
+            for (let ch = 0; ch < 2; ch++) {
+              const d = ir.getChannelData(ch);
+              for (let i = 0; i < len; i++) {
+                // 早期反射 + 扩散尾音
+                const t = i / len;
+                d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 3.5) * (ch === 0 ? 1 : 0.97);
+              }
+            }
+            return ir;
+          })();
+          const reverb = ac.createConvolver();
+          reverb.buffer = reverbIR;
+          const reverbGain = ac.createGain();
+          reverbGain.gain.value = 0.18; // 18% 混响湿度
 
+          // ⑨ 输出增益（含1秒淡入）
           bgmGain = ac.createGain();
           bgmGain.gain.setValueAtTime(0, ac.currentTime);
-          bgmGain.gain.linearRampToValueAtTime(0.2, ac.currentTime + 1.0); // 1秒淡入
+          bgmGain.gain.linearRampToValueAtTime(0.22, ac.currentTime + 1.0);
 
-          bgmSource.connect(compressor);
-          compressor.connect(lowpass);
-          lowpass.connect(bgmGain);
+          // 连线：干声链
+          bgmSource.connect(hpf);
+          hpf.connect(warmth);
+          warmth.connect(harsh);
+          harsh.connect(air);
+          air.connect(lpf);
+          lpf.connect(saturator);
+          saturator.connect(compressor);
+          compressor.connect(bgmGain);
+          // 湿声（并联混响）
+          compressor.connect(reverb);
+          reverb.connect(reverbGain);
+          reverbGain.connect(bgmGain);
+          // 输出
           bgmGain.connect(ac.destination);
-
-          bgmChain = { compressor, lowpass };
           bgmSource.start(0);
           bgmPlaying = true;
         })
