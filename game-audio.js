@@ -176,10 +176,19 @@ const GameAudio = (() => {
       muted = !muted;
       if (muted) {
         if (bgmGain) bgmGain.gain.value = 0;
+        // 静音时暂停 AudioContext 节省资源
+        if (ctx && ctx.state === 'running') ctx.suspend().catch(() => {});
       } else {
+        // 取消静音时恢复 AudioContext（修复 autoplay policy 导致的无声问题）
+        if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
         if (bgmGain) bgmGain.gain.value = 0.2;
       }
       return muted;
+    },
+
+    // 主动恢复 AudioContext（供 sound-toggle 调用）
+    resumeContext: () => {
+      if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
     },
 
     isMuted: () => muted,
