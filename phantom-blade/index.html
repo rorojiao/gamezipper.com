@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Phantom Blade - Dark Neon Knife Game | GameZipper</title>
+<meta name="description" content="Throw glowing blades into a spinning rune disc. Avoid other knives, shatter bombs, conquer 15 dark neon levels!">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0A0A0F;overflow:hidden;font-family:'Segoe UI',sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;height:100vh;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+nav{width:100%;height:28px;background:#08080D;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:13px;z-index:10;flex-shrink:0;border-bottom:1px solid #1a1a2a}
+nav .left{display:flex;align-items:center;gap:4px}
+nav .right{display:flex;align-items:center;gap:10px;font-size:12px}
+nav .right span{cursor:pointer}
+#wrap{position:relative;width:400px;height:600px;max-width:100vw;max-height:calc(100vh - 28px)}
+canvas{display:block;width:100%;height:100%}
+</style>
+</head>
+<body>
+<nav>
+<div class="left">🗡️ <b>Phantom Blade</b></div>
+<div class="right"><span id="lvlTxt">Level 1</span><span id="sndBtn" onclick="toggleSound()">🔊</span></div>
+</nav>
+<div id="wrap"><canvas id="c"></canvas></div>
+
+<script>
+const C=document.getElementById('c'),ctx=C.getContext('2d');
+const W=400,H=600;
+C.width=W;C.height=H;
+
+// Sound
+let soundOn=true;
+let audioCtx=null;
+function getAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function toggleSound(){soundOn=!soundOn;document.getElementById('sndBtn').textContent=soundOn?'🔊':'🔇';}
+
+function playHit(){
+  if(!soundOn)return;
+  const a=getAudio(),t=a.currentTime;
+  const o=a.createOscillator(),g=a.createGain();
+  o.type='square';o.frequency.setValueAtTime(1800,t);o.frequency.exponentialRampToValueAtTime(400,t+0.08);
+  g.gain.setValueAtTime(0.3,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+  o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+0.12);
+}
+function playBoom(){
+  if(!soundOn)return;
+  const a=getAudio(),t=a.currentTime;
+  const buf=a.createBuffer(1,a.sampleRate*0.4,a.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++){d[i]=(Math.random()*2-1)*Math.exp(-i/(a.sampleRate*0.08));}
+  const s=a.createBufferSource(),g=a.createGain(),f=a.createBiquadFilter();
+  f.type='lowpass';f.frequency.value=300;
+  s.buffer=buf;g.gain.setValueAtTime(0.5,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+  s.connect(f);f.connect(g);g.connect(a.destination);s.start(t);
+}
+function playFail(){
+  if(!soundOn)return;
+  const a=getAudio(),t=a.currentTime;
+  const o=a.createOscillator(),g=a.createGain();
+  o.type='sawtooth';o.frequency.setValueAtTime(200,t);o.frequency.exponentialRampToValueAtTime(80,t+0.3);
+  g.gain.setValueAtTime(0.3,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+  o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+0.3);
+}
+
+// BGM
+let bgmPlaying=false,bgmInterval=null;
+function startBGM(bpm){
+  stopBGM();
+  if(!soundOn)return;
+  bgmPlaying=true;
+  const ms=60000/bpm;
+  let beat=0;
+  function tick(){
+    if(!bgmPlaying||!soundOn)return;
+    const a=getAudio(),t=a.currentTime;
+    // kick
+    const o=a.createOscillator(),g=a.createGain();
+    o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(30,t+0.1);
+    g.gain.setValueAtTime(0.15,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+    o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+0.15);
+    // hi-hat on off-beats
+    if(beat%2===1){
+      const buf=a.createBuffer(1,a.sampleRate*0.05,a.sampleRate);
+      const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(a.sampleRate*0.01));
+      const s=a.createBufferSource(),g2=a.createGain(),f=a.createBiquadFilter();
+      f.type='highpass';f.frequency.value=8000;s.buffer=buf;
+      g2.gain.setValueAtTime(0.08,t);g2.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+      s.connect(f);f.connect(g2);g2.connect(a.destination);s.start(t);
+    }
+    beat++;
+  }
+  tick();
+  bgmInterval=setInterval(tick,ms);
+}
+function stopBGM(){bgmPlaying=false;if(bgmInterval){clearInterval(bgmInterval);bgmInterval=null;}}
+
+// Particles
+let particles=[];
+function addParticle(x,y,color,count,speed,life){
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2,v=Math.random()*speed+speed*0.3;
+    particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life,maxLife:life,color,size:Math.random()*3+1});
+  }
+}
+function updateParticles(dt){
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
+    if(p.life<=0)particles.splice(i,1);
+  }
+}
+function drawParticles(){
+  for(const p of particles){
+    const alpha=p.life/p.maxLife;
+    ctx.globalAlpha=alpha;
+    ctx.fillStyle=p.color;
+    ctx.shadowBlur=8;ctx.shadowColor=p.color;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;ctx.shadowBlur=0;
+}
+
+// Star background particles
+const stars=[];
+for(let i=0;i<60;i++)stars.push({x:Math.random()*W,y:Math.random()*H,s:Math.random()*1.5+0.5,a:Math.random(),sp:Math.random()*0.3+0.1});
+
+function drawBG(){
+  ctx.fillStyle='#0A0A0F';ctx.fillRect(0,0,W,H);
+  // stars
+  for(const s of stars){
+    s.a+=s.sp*0.02;
+    ctx.globalAlpha=0.3+Math.sin(s.a)*0.3;
+    ctx.fillStyle='#556';
+    ctx.beginPath();ctx.arc(s.x,s.y,s.s,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  // city silhouette
+  ctx.strokeStyle='#1a1a25';ctx.lineWidth=1;
+  ctx.beginPath();
+  const baseY=H*0.85;
+  for(let x=0;x<W;x+=30){
+    const h=Math.random()*40+20;
+    ctx.moveTo(x,baseY);ctx.lineTo(x,baseY-h);ctx.lineTo(x+20,baseY-h);ctx.lineTo(x+20,baseY);
+  }
+  ctx.stroke();
+}
+
+// Levels
+const levels=[];
+for(let i=0;i<15;i++){
+  const spd=0.4+i*0.12;
+  const preKnives=Math.min(2+Math.floor(i*0.8),8);
+  const bombs=i<5?0:Math.min(1+Math.floor((i-5)*0.5),3);
+  const knives=5+Math.min(Math.floor(i*0.3),3);
+  const reverses=i>=10;
+  levels.push({speed:spd,preKnives,bombs,knives,reverses,bpm:80+i*8});
+}
+
+// Game state
+let state='menu'; // menu, playing, levelComplete, fail
+let level=0,score=0,highScore=0,combo=0;
+let discAngle=0,discSpeed=0,discDir=1;
+let stuckKnives=[],bombSlots=[];
+let flyingKnife=null,knifeQueue=0;
+let shakeTimer=0,flashTimer=0;
+let levelCompleteTimer=0;
+let menuDiscAngle=0;
+
+// Disc
+const DISC_X=W/2,DISC_Y=180,DISC_R=80;
+const KNIFE_LEN=50,KNIFE_W=4;
+const COLLISION_ANGLE=0.18; // radians threshold
+
+// saved state
+try{
+  const s=JSON.parse(localStorage.getItem('pb_save')||'{}');
+  level=s.level||0;highScore=s.highScore||0;score=s.score||0;
+}catch(e){}
+function save(){try{localStorage.setItem('pb_save',JSON.stringify({level,highScore,score}));}catch(e){}}
+
+function initLevel(){
+  const lv=levels[Math.min(level,levels.length-1)];
+  discAngle=0;discSpeed=lv.speed;discDir=1;
+  stuckKnives=[];bombSlots=[];flyingKnife=null;
+  knifeQueue=lv.knives;combo=0;
+  // pre-placed knives
+  const usedAngles=[];
+  for(let i=0;i<lv.preKnives;i++){
+    let a;
+    do{a=Math.random()*Math.PI*2;}while(usedAngles.some(u=>Math.abs(angleDiff(u,a))<COLLISION_ANGLE*1.5));
+    usedAngles.push(a);
+    stuckKnives.push({angle:a,isPlayer:false});
+  }
+  // bombs
+  for(let i=0;i<lv.bombs;i++){
+    let a;
+    do{a=Math.random()*Math.PI*2;}while(usedAngles.some(u=>Math.abs(angleDiff(u,a))<COLLISION_ANGLE*2));
+    usedAngles.push(a);
+    bombSlots.push({angle:a,alive:true,pulse:0});
+  }
+  startBGM(lv.bpm);
+  document.getElementById('lvlTxt').textContent='Level '+(level+1);
+}
+
+function angleDiff(a,b){let d=a-b;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return d;}
+
+function throwKnife(){
+  if(flyingKnife||knifeQueue<=0||state!=='playing')return;
+  flyingKnife={x:W/2,y:H-80,speed:800,trail:[]};
+  knifeQueue--;
+}
+
+function drawDisc(){
+  ctx.save();
+  ctx.translate(DISC_X,DISC_Y);
+  ctx.rotate(discAngle);
+  // glow
+  ctx.shadowBlur=30;ctx.shadowColor='#8B5CF6';
+  ctx.fillStyle='#2D2D3A';
+  ctx.beginPath();ctx.arc(0,0,DISC_R,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  // edge ring
+  ctx.strokeStyle='#8B5CF6';ctx.lineWidth=3;ctx.globalAlpha=0.7;
+  ctx.beginPath();ctx.arc(0,0,DISC_R,0,Math.PI*2);ctx.stroke();
+  ctx.globalAlpha=1;
+  // rune lines
+  ctx.strokeStyle='#8B5CF644';ctx.lineWidth=1;
+  for(let i=0;i<6;i++){
+    const a=i*Math.PI/3;
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(a)*DISC_R*0.8,Math.sin(a)*DISC_R*0.8);ctx.stroke();
+  }
+  ctx.strokeStyle='#8B5CF633';ctx.beginPath();ctx.arc(0,0,DISC_R*0.5,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.arc(0,0,DISC_R*0.3,0,Math.PI*2);ctx.stroke();
+  // inner glow dot
+  ctx.fillStyle='#8B5CF6';ctx.shadowBlur=10;ctx.shadowColor='#8B5CF6';
+  ctx.beginPath();ctx.arc(0,0,4,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.restore();
+}
+
+function drawStuckKnives(){
+  for(const k of stuckKnives){
+    const a=k.angle+discAngle;
+    const tipX=DISC_X+Math.cos(a)*(DISC_R+2);
+    const tipY=DISC_Y+Math.sin(a)*(DISC_R+2);
+    const endX=DISC_X+Math.cos(a)*(DISC_R+KNIFE_LEN);
+    const endY=DISC_Y+Math.sin(a)*(DISC_R+KNIFE_LEN);
+    // blade
+    ctx.strokeStyle=k.isPlayer?'#00D4FF':'#667';
+    ctx.lineWidth=KNIFE_W;
+    ctx.shadowBlur=k.isPlayer?12:0;ctx.shadowColor='#00D4FF';
+    ctx.beginPath();ctx.moveTo(tipX,tipY);ctx.lineTo(endX,endY);ctx.stroke();
+    ctx.shadowBlur=0;
+    // handle
+    const hx=DISC_X+Math.cos(a)*(DISC_R+KNIFE_LEN-8);
+    const hy=DISC_Y+Math.sin(a)*(DISC_R+KNIFE_LEN-8);
+    ctx.fillStyle=k.isPlayer?'#0090AA':'#444';
+    ctx.beginPath();ctx.arc(endX,endY,5,0,Math.PI*2);ctx.fill();
+  }
+}
+
+function drawBombs(){
+  for(const b of bombSlots){
+    if(!b.alive)continue;
+    b.pulse+=0.05;
+    const a=b.angle+discAngle;
+    const bx=DISC_X+Math.cos(a)*(DISC_R+20);
+    const by=DISC_Y+Math.sin(a)*(DISC_R+20);
+    // crystal shape
+    ctx.save();ctx.translate(bx,by);ctx.rotate(discAngle*2);
+    ctx.shadowBlur=15+Math.sin(b.pulse)*5;ctx.shadowColor='#FF2D55';
+    ctx.fillStyle='#FF2D55';
+    ctx.beginPath();
+    ctx.moveTo(0,-10);ctx.lineTo(8,0);ctx.lineTo(0,10);ctx.lineTo(-8,0);ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur=0;
+    // pulse ring
+    ctx.strokeStyle='#FF2D5566';ctx.lineWidth=2;
+    const pr=12+Math.sin(b.pulse)*4;
+    ctx.beginPath();ctx.arc(0,0,pr,0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawFlyingKnife(){
+  if(!flyingKnife)return;
+  const k=flyingKnife;
+  // trail
+  for(let i=0;i<k.trail.length;i++){
+    const t=k.trail[i];
+    const alpha=(i/k.trail.length)*0.4;
+    ctx.globalAlpha=alpha;
+    ctx.strokeStyle='#8B5CF6';ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(t.x,t.y);ctx.lineTo(t.x,t.y+20);ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+  // blade
+  ctx.shadowBlur=15;ctx.shadowColor='#00D4FF';
+  ctx.strokeStyle='#00D4FF';ctx.lineWidth=KNIFE_W;
+  ctx.beginPath();ctx.moveTo(k.x,k.y);ctx.lineTo(k.x,k.y+KNIFE_LEN);ctx.stroke();
+  ctx.shadowBlur=0;
+  // handle dot
+  ctx.fillStyle='#0090AA';
+  ctx.beginPath();ctx.arc(k.x,k.y+KNIFE_LEN-5,5,0,Math.PI*2);ctx.fill();
+}
+
+function drawKnifeQueue(){
+  for(let i=0;i<knifeQueue;i++){
+    const x=W/2,y=H-30-i*14;
+    ctx.globalAlpha=i===0?1:0.4;
+    ctx.strokeStyle='#00D4FF';ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+10);ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawScore(){
+  ctx.fillStyle='#fff';ctx.font='bold 16px Segoe UI';ctx.textAlign='center';
+  ctx.fillText('Score: '+score,W/2,H-10);
+  if(combo>1){
+    ctx.fillStyle='#00D4FF';ctx.font='bold 14px Segoe UI';
+    ctx.fillText('Combo x'+combo,W/2,DISC_Y+DISC_R+80);
+  }
+}
+
+// Menu
+function drawMenu(){
+  drawBG();
+  menuDiscAngle+=0.005;
+  // rotating disc bg
+  ctx.save();ctx.translate(W/2,280);ctx.rotate(menuDiscAngle);
+  ctx.globalAlpha=0.15;ctx.fillStyle='#2D2D3A';
+  ctx.beginPath();ctx.arc(0,0,120,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#8B5CF6';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,120,0,Math.PI*2);ctx.stroke();
+  ctx.globalAlpha=1;ctx.restore();
+
+  // title
+  ctx.save();
+  ctx.font='bold 42px Segoe UI';ctx.textAlign='center';
+  ctx.shadowBlur=20;ctx.shadowColor='#8B5CF6';
+  ctx.fillStyle='#8B5CF6';ctx.fillText('PHANTOM',W/2,160);
+  ctx.shadowColor='#00D4FF';
+  ctx.fillStyle='#00D4FF';ctx.fillText('BLADE',W/2,210);
+  ctx.shadowBlur=0;
+  ctx.restore();
+
+  // info
+  ctx.font='14px Segoe UI';ctx.fillStyle='#888';ctx.textAlign='center';
+  ctx.fillText('Level '+(level+1)+' / 15',W/2,300);
+  ctx.fillText('High Score: '+highScore,W/2,320);
+
+  // play button
+  const bx=W/2-70,by=380,bw=140,bh=50;
+  ctx.shadowBlur=15;ctx.shadowColor='#8B5CF6';
+  ctx.strokeStyle='#8B5CF6';ctx.lineWidth=2;
+  ctx.strokeRect(bx,by,bw,bh);
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#8B5CF6';ctx.font='bold 22px Segoe UI';
+  ctx.fillText('▶ PLAY',W/2,by+33);
+
+  // instructions
+  ctx.font='12px Segoe UI';ctx.fillStyle='#555';
+  ctx.fillText('Tap or click to throw knives',W/2,480);
+  ctx.fillText('Avoid other blades!',W/2,500);
+
+  drawParticles();
+}
+
+// Impact ring effect
+let impactRings=[];
+function addImpactRing(x,y){
+  impactRings.push({x,y,r:5,maxR:50,life:1});
+}
+function drawImpactRings(){
+  for(let i=impactRings.length-1;i>=0;i--){
+    const r=impactRings[i];
+    r.r+=(r.maxR-r.r)*0.15;r.life-=0.04;
+    if(r.life<=0){impactRings.splice(i,1);continue;}
+    ctx.globalAlpha=r.life*0.6;
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;
+    ctx.shadowBlur=10;ctx.shadowColor='#00D4FF';
+    ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,Math.PI*2);ctx.stroke();
+    ctx.shadowBlur=0;
+  }
+  ctx.globalAlpha=1;
+}
+
+// Level complete shatter particles
+let shatterParts=[];
+function shatterDisc(){
+  for(let i=0;i<40;i++){
+    const a=Math.random()*Math.PI*2,d=Math.random()*DISC_R;
+    const x=DISC_X+Math.cos(a)*d,y=DISC_Y+Math.sin(a)*d;
+    const v=Math.random()*200+100;
+    shatterParts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-50,life:1.5,color:Math.random()>0.5?'#8B5CF6':'#00D4FF',size:Math.random()*4+2});
+  }
+}
+function updateShatter(dt){
+  for(let i=shatterParts.length-1;i>=0;i--){
+    const p=shatterParts[i];
+    p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=200*dt;p.life-=dt;
+    if(p.life<=0)shatterParts.splice(i,1);
+  }
+}
+function drawShatter(){
+  for(const p of shatterParts){
+    ctx.globalAlpha=Math.max(0,p.life/1.5);
+    ctx.fillStyle=p.color;ctx.shadowBlur=6;ctx.shadowColor=p.color;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;ctx.shadowBlur=0;
+}
+
+let lastTime=performance.now();
+
+function update(){
+  const now=performance.now(),dt=Math.min((now-lastTime)/1000,0.05);
+  lastTime=now;
+
+  if(state==='menu'){
+    drawMenu();
+    requestAnimationFrame(update);
+    return;
+  }
+
+  // screen shake
+  ctx.save();
+  if(shakeTimer>0){
+    shakeTimer-=dt;
+    ctx.translate(Math.random()*8-4,Math.random()*8-4);
+  }
+
+  drawBG();
+
+  if(state==='playing'){
+    const lv=levels[Math.min(level,levels.length-1)];
+    // direction reversal
+    if(lv.reverses&&Math.random()<0.002)discDir*=-1;
+    discAngle+=discSpeed*discDir*dt;
+
+    drawDisc();
+    drawStuckKnives();
+    drawBombs();
+
+    // flying knife update
+    if(flyingKnife){
+      const k=flyingKnife;
+      k.trail.push({x:k.x,y:k.y});
+      if(k.trail.length>8)k.trail.shift();
+      k.y-=k.speed*dt;
+
+      // check if reached disc
+      const dy=k.y-DISC_Y,dx=k.x-DISC_X;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<=DISC_R+5){
+        // knife hit disc - determine angle relative to disc
+        const hitAngle=Math.atan2(dy,dx)-discAngle;
+        // normalize
+        let na=hitAngle;while(na<0)na+=Math.PI*2;while(na>=Math.PI*2)na-=Math.PI*2;
+
+        // check bomb collision
+        let hitBomb=false;
+        for(const b of bombSlots){
+          if(!b.alive)continue;
+          if(Math.abs(angleDiff(na,b.angle))<COLLISION_ANGLE*1.8){
+            b.alive=false;hitBomb=true;
+            const bx=DISC_X+Math.cos(b.angle+discAngle)*(DISC_R+20);
+            const by=DISC_Y+Math.sin(b.angle+discAngle)*(DISC_R+20);
+            addParticle(bx,by,'#FF2D55',20,150,0.8);
+            playBoom();
+            score+=50;combo++;
+            break;
+          }
+        }
+
+        if(!hitBomb){
+          // check knife collision
+          let collided=false;
+          for(const sk of stuckKnives){
+            if(Math.abs(angleDiff(na,sk.angle))<COLLISION_ANGLE){
+              collided=true;break;
+            }
+          }
+          if(collided){
+            // FAIL
+            state='fail';
+            flyingKnife=null;
+            playFail();
+            flashTimer=0.3;shakeTimer=0.3;
+            stopBGM();
+            combo=0;
+          } else {
+            // success
+            stuckKnives.push({angle:na,isPlayer:true});
+            const tipX=DISC_X+Math.cos(na+discAngle)*(DISC_R+2);
+            const tipY=DISC_Y+Math.sin(na+discAngle)*(DISC_R+2);
+            addImpactRing(tipX,tipY);
+            addParticle(tipX,tipY,'#00D4FF',8,80,0.4);
+            playHit();
+            score+=10+combo*5;combo++;
+          }
+        }
+        flyingKnife=null;
+
+        // check level complete
+        if(state==='playing'&&knifeQueue<=0&&!flyingKnife){
+          state='levelComplete';
+          levelCompleteTimer=2;
+          shatterDisc();
+          stopBGM();
+          if(score>highScore)highScore=score;
+          save();
+        }
+      }
+    }
+
+    drawFlyingKnife();
+    drawKnifeQueue();
+    drawScore();
+  }
+
+  if(state==='levelComplete'){
+    drawBG();
+    updateShatter(dt);drawShatter();
+    drawScore();
+    levelCompleteTimer-=dt;
+    ctx.font='bold 30px Segoe UI';ctx.textAlign='center';
+    ctx.shadowBlur=15;ctx.shadowColor='#8B5CF6';ctx.fillStyle='#8B5CF6';
+    ctx.fillText('LEVEL CLEAR!',W/2,300);
+    ctx.shadowBlur=0;
+    ctx.font='16px Segoe UI';ctx.fillStyle='#888';
+    ctx.fillText('Tap to continue',W/2,340);
+  }
+
+  if(state==='fail'){
+    drawDisc();drawStuckKnives();drawBombs();drawKnifeQueue();drawScore();
+    flashTimer-=dt;
+    if(flashTimer>0){
+      ctx.globalAlpha=flashTimer*0.5;ctx.fillStyle='#FF2D55';ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;
+    }
+    ctx.font='bold 30px Segoe UI';ctx.textAlign='center';
+    ctx.shadowBlur=15;ctx.shadowColor='#FF2D55';ctx.fillStyle='#FF2D55';
+    ctx.fillText('FAILED',W/2,350);
+    ctx.shadowBlur=0;
+    ctx.font='14px Segoe UI';ctx.fillStyle='#888';
+    ctx.fillText('Tap to retry',W/2,380);
+  }
+
+  updateParticles(dt);drawParticles();
+  drawImpactRings();
+  ctx.restore();
+  requestAnimationFrame(update);
+}
+
+// Input
+function handleTap(e){
+  e.preventDefault();
+  if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
+
+  if(state==='menu'){
+    state='playing';initLevel();
+  } else if(state==='playing'){
+    throwKnife();
+  } else if(state==='levelComplete'){
+    level=Math.min(level+1,levels.length-1);
+    state='playing';initLevel();save();
+  } else if(state==='fail'){
+    combo=0;score=Math.max(0,score-50);
+    state='playing';initLevel();
+  }
+}
+C.addEventListener('click',handleTap);
+C.addEventListener('touchstart',handleTap,{passive:false});
+
+requestAnimationFrame(update);
+</script>
+<script>new Image().src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p="+encodeURIComponent(location.pathname);</script>
+</body>
+</html>
