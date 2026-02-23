@@ -523,6 +523,17 @@ function findFloating(){
   return grid.filter(b=>!connected.has(b));
 }
 
+function snapAdjacentTo(hitBubble,bx,by,color){
+  let best=null,bestD=Infinity;
+  neighbors(hitBubble.col,hitBubble.row).forEach(({col:nc,row:nr})=>{
+    if(nr<0)return;const mx=nr%2===1?COLS-1:COLS;if(nc<0||nc>=mx)return;if(getAt(nc,nr))return;
+    const gx=gridX(nc,nr),gy=gridY(nr),d=(gx-bx)**2+(gy-by)**2;
+    if(d<bestD){bestD=d;best={col:nc,row:nr};}
+  });
+  if(!best)return afterShoot();
+  const nb={col:best.col,row:best.row,color,x:gridX(best.col,best.row),y:gridY(best.row),special:shootingSpecial};
+  grid.push(nb);processMatch(nb);
+}
 function snap(bx,by,color){
   const{col,row}=findNearest(bx,by);
   if(getAt(col,row)){
@@ -882,7 +893,7 @@ function update(){
     if(shootY<R){snap(shootX,shootY,curColor);return;}
     for(const b of grid){
       const dx=shootX-b.x,dy=shootY-b.y;
-      if(dx*dx+dy*dy<(D-2)*(D-2)){snap(shootX,shootY,curColor);return;}
+      if(dx*dx+dy*dy<(D-2)*(D-2)){snapAdjacentTo(b,shootX,shootY,curColor);return;}
     }
   }
   if(screenShake>0)screenShake-=1;
