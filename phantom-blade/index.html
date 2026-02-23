@@ -44,8 +44,8 @@ function resize(){
   C.width=W*dpr;C.height=H*dpr;
   C.style.width=W+'px';C.style.height=H+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  DISC_X=W/2;DISC_Y=H*0.3;DISC_R=Math.min(W,H)*0.13;
-  KNIFE_LEN=DISC_R*0.6;
+  DISC_X=W/2;DISC_Y=H*0.3;DISC_R=Math.min(W,H)*0.16;
+  KNIFE_LEN=DISC_R*0.8;
 }
 window.addEventListener('resize',resize);
 
@@ -178,7 +178,8 @@ for(let i=0;i<30;i++){
 let state='menu',level=0,score=0,highScore=0,combo=0,paused=false;
 let discAngle=0,discSpeed=0,discDir=1;
 let stuckKnives=[],bombSlots=[],flyingKnife=null,knifeQueue=0;
-let shakeTimer=0,flashTimer=0,flashColor='#FF2D55';
+let shakeTimer=0,flashTimer=0,flashColor='#FF2D55',hitFlash=0;
+let sparks=[];
 let levelCompleteTimer=0,menuDiscAngle=0;
 let impactRings=[],shatterParts=[];
 let runeAngle=0;
@@ -219,7 +220,7 @@ function initLevel(){
   discAngle=0;discSpeed=lv.speed;discDir=1;
   stuckKnives=[];bombSlots=[];flyingKnife=null;
   knifeQueue=lv.knives;combo=0;knifeGhosts=[];
-  impactRings=[];shatterParts=[];paused=false;
+  impactRings=[];shatterParts=[];sparks=[];hitFlash=0;paused=false;
   document.getElementById('pauseBtn').textContent='⏸';
   const usedAngles=[];
   for(let i=0;i<lv.preKnives;i++){
@@ -355,12 +356,12 @@ function drawGemTargets(){
     ctx.save();ctx.translate(gx,gy);ctx.rotate(discAngle*1.5);
     // Hexagon
     ctx.beginPath();
-    for(let i=0;i<6;i++){const ha=i*Math.PI/3;ctx.lineTo(Math.cos(ha)*10,Math.sin(ha)*10);}
+    for(let i=0;i<6;i++){const ha=i*Math.PI/3;ctx.lineTo(Math.cos(ha)*14,Math.sin(ha)*14);}
     ctx.closePath();
     ctx.fillStyle=`rgba(16,185,129,${0.3+Math.sin(g.pulse)*0.15})`;ctx.fill();
     ctx.strokeStyle='#10B981';ctx.lineWidth=2;ctx.shadowBlur=10;ctx.shadowColor='#10B981';ctx.stroke();
     ctx.shadowBlur=0;
-    ctx.font='12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font='16px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillStyle='#fff';ctx.fillText('💎',0,0);
     ctx.restore();
   }
@@ -406,9 +407,9 @@ function drawKnifeQueue(){
 }
 
 function drawScore(){
-  ctx.fillStyle='#fff';ctx.font='bold 16px Segoe UI';ctx.textAlign='center';
+  ctx.fillStyle='#fff';ctx.font='bold 20px Segoe UI';ctx.textAlign='center';
   ctx.fillText('Score: '+score,W/2,H-10);
-  if(combo>1){ctx.fillStyle=SKINS[currentSkin].color;ctx.font='bold 14px Segoe UI';ctx.fillText('Combo x'+combo,W/2,DISC_Y+DISC_R+KNIFE_LEN+40);}
+  if(combo>1){ctx.fillStyle=SKINS[currentSkin].color;ctx.font='bold 18px Segoe UI';ctx.fillText('Combo x'+combo,W/2,DISC_Y+DISC_R+KNIFE_LEN+40);}
 }
 
 // Impact rings
@@ -446,11 +447,11 @@ function drawOverlay(title,subtitle,btn1,btn2){
   ctx.fillStyle='#888';ctx.font=`${Math.max(14,W*0.035)}px Segoe UI`;
   ctx.fillText(subtitle,W/2,H*0.39);
   // Button 1
-  const bw=Math.max(140,W*0.35),bh=48,bx=W/2-bw/2,by=H*0.47;
+  const bw=Math.max(160,W*0.4),bh=56,bx=W/2-bw/2,by=H*0.47;
   ctx.shadowBlur=12;ctx.shadowColor='#8B5CF6';
   ctx.strokeStyle='#8B5CF6';ctx.lineWidth=2;
   ctx.beginPath();ctx.roundRect(bx,by,bw,bh,8);ctx.stroke();ctx.shadowBlur=0;
-  ctx.fillStyle='#8B5CF6';ctx.font=`bold ${Math.max(18,W*0.04)}px Segoe UI`;
+  ctx.fillStyle='#8B5CF6';ctx.font=`bold ${Math.max(20,W*0.05)}px Segoe UI`;
   ctx.fillText(btn1,W/2,by+bh*0.65);
   // Button 2
   if(btn2){
@@ -519,7 +520,7 @@ function update(){
   lastTime=now;animFrame++;
 
   ctx.save();
-  if(shakeTimer>0){shakeTimer-=dt;ctx.translate(Math.random()*10-5,Math.random()*10-5);}
+  if(shakeTimer>0){shakeTimer-=dt;ctx.translate((Math.random()-0.5)*shakeTimer*40,(Math.random()-0.5)*shakeTimer*40);}
 
   drawBG();
 
@@ -612,7 +613,7 @@ function update(){
       const k=flyingKnife;
       // Ghost trail (5+ frames)
       knifeGhosts.push({x:k.x,y:k.y});
-      if(knifeGhosts.length>7)knifeGhosts.shift();
+      if(knifeGhosts.length>10)knifeGhosts.shift();
       k.y-=k.speed*dt;
       const dy=k.y-DISC_Y,dx=k.x-DISC_X,dist=Math.sqrt(dx*dx+dy*dy);
       if(dist<=DISC_R+5){
@@ -639,7 +640,10 @@ function update(){
               const gx=DISC_X+Math.cos(g.angle+discAngle)*(DISC_R+20);
               const gy=DISC_Y+Math.sin(g.angle+discAngle)*(DISC_R+20);
               addParticle(gx,gy,'#10B981',30,150,0.8);
-              floatingTexts.push({text:'+100 💎',x:gx,y:gy,life:1.2,color:'#10B981',size:16});
+              addParticle(gx,gy,'#FFD700',20,200,1);
+              flashTimer=0.2;flashColor='#FFD700';shakeTimer=0.3;
+              floatingTexts.push({text:'💎 GEM!',x:W/2,y:H*0.35,life:2,color:'#FFD700',size:28});
+              floatingTexts.push({text:'+100',x:gx,y:gy,life:1.2,color:'#10B981',size:18});
             }
           }
         }
@@ -648,7 +652,7 @@ function update(){
           for(const sk of stuckKnives){if(Math.abs(angleDiff(na,sk.angle))<COLLISION_ANGLE){collided=true;break;}}
           if(collided){
             state='fail';flyingKnife=null;knifeGhosts=[];failedThisLevel=true;
-            playFail();flashTimer=0.4;flashColor='#FF2D55';shakeTimer=0.5;combo=0;
+            playFail();flashTimer=0.6;flashColor='#FF2D55';shakeTimer=0.7;combo=0;
           }else{
             stuckKnives.push({angle:na,isPlayer:true});
             const tipX=DISC_X+Math.cos(na+discAngle)*(DISC_R+2);
@@ -656,6 +660,8 @@ function update(){
             addImpactRing(tipX,tipY);
             const skin=SKINS[currentSkin];
             addParticle(tipX,tipY,skin.color,10,100,0.5);
+            shakeTimer=Math.max(shakeTimer,0.15);hitFlash=0.6;
+            for(let si=0;si<10;si++){const sa=Math.random()*Math.PI*2,ss=3+Math.random()*5;sparks.push({x:tipX,y:tipY,vx:Math.cos(sa)*ss,vy:Math.sin(sa)*ss,life:1,color:Math.random()>0.5?'#FFD700':'#FF8C00'});}
             playHit();score+=10+combo*5;combo++;
             // Speed bonus
             const throwTime=(performance.now()-throwStartTime)/1000;
@@ -668,9 +674,9 @@ function update(){
           // Perfect clear bonus
           if(!failedThisLevel){
             const bonus=50*(level+1);score+=bonus;
-            floatingTexts.push({text:'PERFECT! +'+bonus,x:W/2,y:H*0.5,life:2,color:'#FFD700',size:20});
+            floatingTexts.push({text:'👑 PERFECT! +'+bonus,x:W/2,y:H*0.5,life:2.5,color:'#FFD700',size:28});
           }
-          state='levelComplete';levelCompleteTimer=2;shatterDisc();shakeTimer=0.4;
+          state='levelComplete';levelCompleteTimer=2;shatterDisc();shakeTimer=0.6;flashTimer=0.15;flashColor='#FFFFFF';
           if(score>highScore)highScore=score;save();
         }
       }
@@ -716,6 +722,11 @@ function update(){
     ctx.fillStyle=flashColor;ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;
   }
 
+  // Sparks
+  if(hitFlash>0){hitFlash-=dt*3;ctx.save();ctx.globalAlpha=Math.max(0,hitFlash)*0.5;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(DISC_X,DISC_Y,DISC_R,0,Math.PI*2);ctx.fill();ctx.restore();}
+  for(let i=sparks.length-1;i>=0;i--){const sp=sparks[i];sp.x+=sp.vx;sp.y+=sp.vy;sp.vy+=0.15;sp.life-=0.04;if(sp.life<=0)sparks.splice(i,1);}
+  for(const sp of sparks){ctx.globalAlpha=sp.life;ctx.fillStyle=sp.color;ctx.beginPath();ctx.arc(sp.x,sp.y,2,0,Math.PI*2);ctx.fill();}
+  ctx.globalAlpha=1;
   // Particles
   for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=p.gravity*dt;p.life-=dt;if(p.life<=0)particles.splice(i,1);}
   for(const p of particles){ctx.globalAlpha=Math.max(0,p.life/p.maxLife);ctx.fillStyle=p.color;ctx.shadowBlur=8;ctx.shadowColor=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();}
