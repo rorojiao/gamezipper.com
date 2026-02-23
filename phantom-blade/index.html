@@ -155,10 +155,23 @@ function drawBG(){
 
 // Levels
 const levels=[];
-for(let i=0;i<15;i++){
-  levels.push({speed:0.4+i*0.12,preKnives:Math.min(Math.max(0,Math.floor(i*0.8)),8),
-    bombs:i<5?0:Math.min(1+Math.floor((i-5)*0.5),3),
-    knives:5+Math.min(Math.floor(i*0.3),3),reverses:i>=10});
+for(let i=0;i<30;i++){
+  let speed,preKnives,bombs,knives,reverses,boss;
+  if(i<15){
+    speed=0.4+i*0.12;preKnives=Math.min(Math.max(0,Math.floor(i*0.8)),8);
+    bombs=i<5?0:Math.min(1+Math.floor((i-5)*0.5),3);
+    knives=5+Math.min(Math.floor(i*0.3),3);reverses=i>=10;boss=false;
+  }else if(i<20){
+    speed=2.2+(i-15)*0.2;preKnives=7+Math.floor((i-15)*0.5);
+    bombs=2+Math.floor((i-15)*0.3);knives=7;reverses=true;boss=false;
+  }else if(i<25){
+    speed=2.5+(i-20)*0.15;preKnives=8;
+    bombs=3+Math.floor((i-20)*0.5);knives=8;reverses=true;boss=true;
+  }else{
+    speed=3.5+(i-25)*0.3;preKnives=9+Math.floor((i-25)*0.3);
+    bombs=4+Math.floor((i-25)*0.3);knives=9;reverses=true;boss=false;
+  }
+  levels.push({speed,preKnives,bombs,knives,reverses,boss});
 }
 
 // State
@@ -171,6 +184,29 @@ let impactRings=[],shatterParts=[];
 let runeAngle=0;
 // Knife trail ghosts
 let knifeGhosts=[];
+// Gem targets on disc
+let gemTargets=[];
+// Perfect clear
+let failedThisLevel=false;
+// Speed bonus
+let throwStartTime=0;
+let floatingTexts=[];
+// Knife skins
+const SKINS=[
+  {name:'Phantom',color:'#00D4FF',glow:'#00D4FF',trail:'#8B5CF6',unlock:0},
+  {name:'Inferno',color:'#FF6B2B',glow:'#FF4500',trail:'#FF8C00',unlock:500},
+  {name:'Void',color:'#9B30FF',glow:'#7B1FA2',trail:'#6A0DAD',unlock:1500}
+];
+let currentSkin=+(localStorage.getItem('pb_skin')||0);
+// Scores history
+let scoreHistory=[];
+try{scoreHistory=JSON.parse(localStorage.getItem('pb_scores')||'[]');}catch(e){}
+function saveScoreHistory(){
+  scoreHistory.push(score);scoreHistory.sort((a,b)=>b-a);
+  if(scoreHistory.length>5)scoreHistory.length=5;
+  localStorage.setItem('pb_scores',JSON.stringify(scoreHistory));
+}
+function isNewRecord(){return scoreHistory.length===0||score>scoreHistory[0];}
 
 try{const s=JSON.parse(localStorage.getItem('pb_save')||'{}');level=s.level||0;highScore=s.highScore||0;score=s.score||0;}catch(e){}
 function save(){try{localStorage.setItem('pb_save',JSON.stringify({level,highScore,score}));}catch(e){}}
@@ -194,11 +230,23 @@ function initLevel(){
     let a;do{a=Math.random()*Math.PI*2;}while(usedAngles.some(u=>Math.abs(angleDiff(u,a))<COLLISION_ANGLE*2));
     usedAngles.push(a);bombSlots.push({angle:a,alive:true,pulse:0,crackLevel:0});
   }
+  // Gem targets
+  gemTargets=[];
+  const gemCount=1+Math.floor(Math.random()*2);
+  for(let gi=0;gi<gemCount;gi++){
+    let ga;do{ga=Math.random()*Math.PI*2;}while(
+      usedAngles.some(u=>Math.abs(angleDiff(u,ga))<COLLISION_ANGLE*2.5)
+    );
+    usedAngles.push(ga);
+    gemTargets.push({angle:ga,alive:true,pulse:0});
+  }
+  failedThisLevel=false;
+  floatingTexts=[];
   document.getElementById('lvlTxt').textContent='Level '+(level+1);
 }
 
 function angleDiff(a,b){let d=a-b;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return d;}
-function throwKnife(){if(flyingKnife||knifeQueue<=0||state!=='playing'||paused)return;flyingKnife={x:W/2,y:H-H*0.13,speed:800};knifeQueue--;}
+function throwKnife(){if(flyingKnife||knifeQueue<=0||state!=='playing'||paused)return;flyingKnife={x:W/2,y:H-H*0.13,speed:800};knifeQueue--;throwStartTime=performance.now();}
 
 // Disc drawing with rune effects
 function drawDisc(){
@@ -242,6 +290,14 @@ function drawDisc(){
   ctx.beginPath();ctx.arc(0,0,4,0,Math.PI*2);ctx.fill();
   ctx.shadowBlur=0;
 
+  // Boss armor ring
+  const lv=levels[Math.min(level,levels.length-1)];
+  if(lv.boss&&bombSlots.some(b=>b.alive)){
+    ctx.strokeStyle='rgba(255,45,85,0.4)';ctx.lineWidth=4;ctx.setLineDash([8,4]);
+    ctx.beginPath();ctx.arc(0,0,DISC_R+3,0,Math.PI*2);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
   ctx.restore();
 }
 
@@ -250,13 +306,13 @@ function drawStuckKnives(){
     const a=k.angle+discAngle;
     const tipX=DISC_X+Math.cos(a)*(DISC_R+2),tipY=DISC_Y+Math.sin(a)*(DISC_R+2);
     const endX=DISC_X+Math.cos(a)*(DISC_R+KNIFE_LEN),endY=DISC_Y+Math.sin(a)*(DISC_R+KNIFE_LEN);
-    ctx.strokeStyle=k.isPlayer?'#00D4FF':'#667';
+    ctx.strokeStyle=k.isPlayer?SKINS[currentSkin].color:'#667';
     ctx.lineWidth=KNIFE_W;
-    if(k.isPlayer){ctx.shadowBlur=10;ctx.shadowColor='#00D4FF';}
+    if(k.isPlayer){ctx.shadowBlur=10;ctx.shadowColor=SKINS[currentSkin].glow;}
     ctx.beginPath();ctx.moveTo(tipX,tipY);ctx.lineTo(endX,endY);ctx.stroke();
     ctx.shadowBlur=0;
     // Handle glow
-    ctx.fillStyle=k.isPlayer?'#0090AA':'#444';
+    ctx.fillStyle=k.isPlayer?SKINS[currentSkin].color:'#444';
     ctx.beginPath();ctx.arc(endX,endY,4,0,Math.PI*2);ctx.fill();
     if(k.isPlayer){
       ctx.shadowBlur=6;ctx.shadowColor='#00D4FF';
@@ -291,6 +347,35 @@ function drawBombs(){
   }
 }
 
+function drawGemTargets(){
+  for(const g of gemTargets){
+    if(!g.alive)continue;g.pulse+=0.04;
+    const a=g.angle+discAngle;
+    const gx=DISC_X+Math.cos(a)*(DISC_R+20),gy=DISC_Y+Math.sin(a)*(DISC_R+20);
+    ctx.save();ctx.translate(gx,gy);ctx.rotate(discAngle*1.5);
+    // Hexagon
+    ctx.beginPath();
+    for(let i=0;i<6;i++){const ha=i*Math.PI/3;ctx.lineTo(Math.cos(ha)*10,Math.sin(ha)*10);}
+    ctx.closePath();
+    ctx.fillStyle=`rgba(16,185,129,${0.3+Math.sin(g.pulse)*0.15})`;ctx.fill();
+    ctx.strokeStyle='#10B981';ctx.lineWidth=2;ctx.shadowBlur=10;ctx.shadowColor='#10B981';ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.font='12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#fff';ctx.fillText('💎',0,0);
+    ctx.restore();
+  }
+}
+function drawFloatingTexts(dt){
+  for(let i=floatingTexts.length-1;i>=0;i--){
+    const ft=floatingTexts[i];ft.life-=dt;ft.y-=30*dt;
+    if(ft.life<=0){floatingTexts.splice(i,1);continue;}
+    ctx.globalAlpha=Math.min(1,ft.life*2);
+    ctx.fillStyle=ft.color;ctx.font=`bold ${ft.size}px Segoe UI`;ctx.textAlign='center';
+    ctx.shadowBlur=8;ctx.shadowColor=ft.color;
+    ctx.fillText(ft.text,ft.x,ft.y);ctx.shadowBlur=0;
+  }
+  ctx.globalAlpha=1;
+}
 function drawFlyingKnife(){
   if(!flyingKnife)return;
   const k=flyingKnife;
@@ -298,13 +383,13 @@ function drawFlyingKnife(){
   for(let i=0;i<knifeGhosts.length;i++){
     const g=knifeGhosts[i];
     const alpha=(i/knifeGhosts.length)*0.35;
-    ctx.globalAlpha=alpha;ctx.strokeStyle='#8B5CF6';ctx.lineWidth=3;
+    ctx.globalAlpha=alpha;ctx.strokeStyle=SKINS[currentSkin].trail;ctx.lineWidth=3;
     ctx.beginPath();ctx.moveTo(g.x,g.y);ctx.lineTo(g.x,g.y+KNIFE_LEN*0.6);ctx.stroke();
   }
   ctx.globalAlpha=1;
   // Blade with glow
-  ctx.shadowBlur=18;ctx.shadowColor='#00D4FF';
-  ctx.strokeStyle='#00D4FF';ctx.lineWidth=KNIFE_W;
+  ctx.shadowBlur=18;ctx.shadowColor=SKINS[currentSkin].glow;
+  ctx.strokeStyle=SKINS[currentSkin].color;ctx.lineWidth=KNIFE_W;
   ctx.beginPath();ctx.moveTo(k.x,k.y);ctx.lineTo(k.x,k.y+KNIFE_LEN);ctx.stroke();
   ctx.shadowBlur=0;
   ctx.fillStyle='#0090AA';ctx.beginPath();ctx.arc(k.x,k.y+KNIFE_LEN-5,5,0,Math.PI*2);ctx.fill();
@@ -314,7 +399,7 @@ function drawKnifeQueue(){
   for(let i=0;i<knifeQueue;i++){
     const x=W/2,y=H-H*0.04-i*14;
     ctx.globalAlpha=i===0?1:0.35;
-    ctx.strokeStyle='#00D4FF';ctx.lineWidth=3;
+    ctx.strokeStyle=SKINS[currentSkin].color;ctx.lineWidth=3;
     ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+10);ctx.stroke();
   }
   ctx.globalAlpha=1;
@@ -323,7 +408,7 @@ function drawKnifeQueue(){
 function drawScore(){
   ctx.fillStyle='#fff';ctx.font='bold 16px Segoe UI';ctx.textAlign='center';
   ctx.fillText('Score: '+score,W/2,H-10);
-  if(combo>1){ctx.fillStyle='#00D4FF';ctx.font='bold 14px Segoe UI';ctx.fillText('Combo x'+combo,W/2,DISC_Y+DISC_R+KNIFE_LEN+40);}
+  if(combo>1){ctx.fillStyle=SKINS[currentSkin].color;ctx.font='bold 14px Segoe UI';ctx.fillText('Combo x'+combo,W/2,DISC_Y+DISC_R+KNIFE_LEN+40);}
 }
 
 // Impact rings
@@ -388,6 +473,14 @@ function handleTap(e){
   const sx=x*(W/rect.width),sy=y*(H/rect.height);
 
   if(state==='menu'){
+    // Check skin buttons
+    if(PB._skinBtns){
+      for(const sb of PB._skinBtns){
+        if(sb.unlocked&&sx>=sb.x&&sx<=sb.x+sb.w&&sy>=sb.y&&sy<=sb.y+sb.h){
+          currentSkin=sb.idx;localStorage.setItem('pb_skin',currentSkin);return;
+        }
+      }
+    }
     const b=PB._btnBounds;
     if(b&&sx>=b.bx&&sx<=b.bx+b.bw&&sy>=b.by&&sy<=b.by+b.bh){
       if(!localStorage.getItem('pb_tutorial_shown')){
@@ -408,7 +501,7 @@ function handleTap(e){
     if(sx>=b.bx&&sx<=b.bx+b.bw&&sy>=b.by&&sy<=b.by+b.bh){
       // Primary
       if(state==='levelComplete'){level=Math.min(level+1,levels.length-1);state='playing';initLevel();save();}
-      else{combo=0;score=Math.max(0,score-50);state='playing';initLevel();}
+      else{combo=0;if(score>0)saveScoreHistory();state='playing';initLevel();}
       return;
     }
     const b2y=b.by+b.bh+15;
@@ -433,7 +526,33 @@ function update(){
     ctx.globalAlpha=0.12;ctx.fillStyle='#2D2D3A';ctx.beginPath();ctx.arc(0,0,W*0.2,0,Math.PI*2);ctx.fill();
     ctx.strokeStyle='#8B5CF6';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,W*0.2,0,Math.PI*2);ctx.stroke();
     ctx.globalAlpha=1;ctx.restore();
-    drawOverlay('PHANTOM BLADE','Level '+(level+1)+' / 15  |  Hi: '+highScore,'▶ PLAY',null);
+    // Skin selector
+    const skinY=H*0.62;
+    const skinBtnW=70,skinGap=10;
+    const totalSkinW=SKINS.length*(skinBtnW+skinGap)-skinGap;
+    const skinStartX=(W-totalSkinW)/2;
+    ctx.textAlign='center';ctx.font='bold 11px Segoe UI';
+    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fillText('🗡️ BLADE SKIN',W/2,skinY-12);
+    PB._skinBtns=[];
+    for(let si=0;si<SKINS.length;si++){
+      const sx=skinStartX+si*(skinBtnW+skinGap);
+      const s=SKINS[si];const unlocked=score>=s.unlock||highScore>=s.unlock;
+      const selected=si===currentSkin;
+      ctx.fillStyle=selected?'rgba(139,92,246,0.3)':'rgba(255,255,255,0.08)';
+      ctx.beginPath();ctx.roundRect(sx,skinY,skinBtnW,40,6);ctx.fill();
+      if(selected){ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(sx,skinY,skinBtnW,40,6);ctx.stroke();}
+      ctx.fillStyle=unlocked?s.color:'#555';ctx.font='10px Segoe UI';
+      ctx.fillText(s.name,sx+skinBtnW/2,skinY+16);
+      if(!unlocked){ctx.fillStyle='#888';ctx.font='9px Segoe UI';ctx.fillText('🔒'+s.unlock+'pts',sx+skinBtnW/2,skinY+30);}
+      else{
+        // Mini knife preview
+        ctx.strokeStyle=s.color;ctx.lineWidth=3;ctx.shadowBlur=6;ctx.shadowColor=s.glow;
+        ctx.beginPath();ctx.moveTo(sx+skinBtnW/2,skinY+24);ctx.lineTo(sx+skinBtnW/2,skinY+36);ctx.stroke();
+        ctx.shadowBlur=0;
+      }
+      PB._skinBtns.push({x:sx,y:skinY,w:skinBtnW,h:40,idx:si,unlocked});
+    }
+    drawOverlay('PHANTOM BLADE','Level '+(level+1)+' / 30  |  Best: '+highScore,'▶ PLAY',null);
     // Particles
     for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=p.gravity*dt;p.life-=dt;if(p.life<=0)particles.splice(i,1);}
     for(const p of particles){ctx.globalAlpha=Math.max(0,p.life/p.maxLife);ctx.fillStyle=p.color;ctx.shadowBlur=6;ctx.shadowColor=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();}
@@ -508,28 +627,52 @@ function update(){
             playBoom();score+=50;combo++;break;
           }
         }
+        // Check gem targets
+        if(!hitBomb){
+          for(const g of gemTargets){
+            if(!g.alive)continue;
+            if(Math.abs(angleDiff(na,g.angle))<COLLISION_ANGLE*2){
+              g.alive=false;score+=100;
+              const gx=DISC_X+Math.cos(g.angle+discAngle)*(DISC_R+20);
+              const gy=DISC_Y+Math.sin(g.angle+discAngle)*(DISC_R+20);
+              addParticle(gx,gy,'#10B981',30,150,0.8);
+              floatingTexts.push({text:'+100 💎',x:gx,y:gy,life:1.2,color:'#10B981',size:16});
+            }
+          }
+        }
         if(!hitBomb){
           let collided=false;
           for(const sk of stuckKnives){if(Math.abs(angleDiff(na,sk.angle))<COLLISION_ANGLE){collided=true;break;}}
           if(collided){
-            state='fail';flyingKnife=null;knifeGhosts=[];
+            state='fail';flyingKnife=null;knifeGhosts=[];failedThisLevel=true;
             playFail();flashTimer=0.4;flashColor='#FF2D55';shakeTimer=0.5;combo=0;
           }else{
             stuckKnives.push({angle:na,isPlayer:true});
             const tipX=DISC_X+Math.cos(na+discAngle)*(DISC_R+2);
             const tipY=DISC_Y+Math.sin(na+discAngle)*(DISC_R+2);
-            addImpactRing(tipX,tipY);addParticle(tipX,tipY,'#00D4FF',10,100,0.5);
+            addImpactRing(tipX,tipY);
+            const skin=SKINS[currentSkin];
+            addParticle(tipX,tipY,skin.color,10,100,0.5);
             playHit();score+=10+combo*5;combo++;
+            // Speed bonus
+            const throwTime=(performance.now()-throwStartTime)/1000;
+            if(throwTime<0.3){score+=10;floatingTexts.push({text:'⚡LIGHTNING! +10',x:tipX,y:tipY-20,life:1,color:'#FFD700',size:14});}
+            else if(throwTime<0.5){score+=5;floatingTexts.push({text:'FAST! +5',x:tipX,y:tipY-20,life:1,color:'#00D4FF',size:13});}
           }
         }
         flyingKnife=null;knifeGhosts=[];
         if(state==='playing'&&knifeQueue<=0&&!flyingKnife){
+          // Perfect clear bonus
+          if(!failedThisLevel){
+            const bonus=50*(level+1);score+=bonus;
+            floatingTexts.push({text:'PERFECT! +'+bonus,x:W/2,y:H*0.5,life:2,color:'#FFD700',size:20});
+          }
           state='levelComplete';levelCompleteTimer=2;shatterDisc();shakeTimer=0.4;
           if(score>highScore)highScore=score;save();
         }
       }
     }
-    drawFlyingKnife();drawKnifeQueue();drawScore();
+    drawGemTargets();drawFlyingKnife();drawKnifeQueue();drawScore();drawFloatingTexts(dt);
   }
 
   if(state==='levelComplete'){
@@ -543,7 +686,7 @@ function update(){
       ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
     }
     ctx.globalAlpha=1;ctx.shadowBlur=0;
-    drawScore();
+    drawScore();drawFloatingTexts(dt);
     // Sweep light
     levelCompleteTimer-=dt;
     const sweepX=(1-(levelCompleteTimer/2))*W;
@@ -552,11 +695,12 @@ function update(){
     sg.addColorStop(0,'rgba(0,212,255,0)');sg.addColorStop(0.5,'rgba(0,212,255,1)');sg.addColorStop(1,'rgba(0,212,255,0)');
     ctx.fillStyle=sg;ctx.fillRect(sweepX-30,0,60,H);ctx.restore();
 
-    drawOverlay('LEVEL CLEAR!','Score: '+score,'Next Level ▶','↩ Main Menu');
+    const perfectStr=!failedThisLevel?' 👑 PERFECT!':'';
+    drawOverlay('LEVEL CLEAR!'+perfectStr,'Score: '+score,'Next Level ▶','↩ Main Menu');
   }
 
   if(state==='fail'){
-    drawDisc();drawStuckKnives();drawBombs();drawKnifeQueue();drawScore();
+    drawDisc();drawStuckKnives();drawBombs();drawGemTargets();drawKnifeQueue();drawScore();drawFloatingTexts(dt);
     drawOverlay('FAILED','Score: '+score,'Try Again','↩ Main Menu');
   }
 
@@ -580,7 +724,7 @@ resize();
 state='menu';
 requestAnimationFrame(update);
 
-return{togglePause,toggleSound,_btnBounds:null};
+return{togglePause,toggleSound,_btnBounds:null,_skinBtns:null};
 })();
 </script>
 <script>new Image().src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p="+encodeURIComponent(location.pathname);</script>
