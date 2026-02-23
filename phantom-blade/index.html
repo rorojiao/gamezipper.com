@@ -51,7 +51,7 @@ window.addEventListener('resize',resize);
 
 // Dynamic positions
 let DISC_X=200,DISC_Y=180,DISC_R=80,KNIFE_LEN=50;
-const KNIFE_W=4,COLLISION_ANGLE=0.18;
+const KNIFE_W=4,COLLISION_ANGLE=0.12;
 
 // Sound
 let soundOn=true,audioCtx=null;
@@ -156,7 +156,7 @@ function drawBG(){
 // Levels
 const levels=[];
 for(let i=0;i<15;i++){
-  levels.push({speed:0.4+i*0.12,preKnives:Math.min(2+Math.floor(i*0.8),8),
+  levels.push({speed:0.4+i*0.12,preKnives:Math.min(Math.max(0,Math.floor(i*0.8)),8),
     bombs:i<5?0:Math.min(1+Math.floor((i-5)*0.5),3),
     knives:5+Math.min(Math.floor(i*0.3),3),reverses:i>=10});
 }
@@ -390,9 +390,17 @@ function handleTap(e){
   if(state==='menu'){
     const b=PB._btnBounds;
     if(b&&sx>=b.bx&&sx<=b.bx+b.bw&&sy>=b.by&&sy<=b.by+b.bh){
-      state='playing';initLevel();
+      if(!localStorage.getItem('pb_tutorial_shown')){
+        state='tutorial';initLevel();
+      }else{
+        state='playing';initLevel();
+      }
     }
     return;
+  }
+  if(state==='tutorial'){
+    localStorage.setItem('pb_tutorial_shown','1');
+    state='playing';return;
   }
   if(state==='playing'){throwKnife();return;}
   if(state==='levelComplete'||state==='fail'){
@@ -430,6 +438,35 @@ function update(){
     for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=p.gravity*dt;p.life-=dt;if(p.life<=0)particles.splice(i,1);}
     for(const p of particles){ctx.globalAlpha=Math.max(0,p.life/p.maxLife);ctx.fillStyle=p.color;ctx.shadowBlur=6;ctx.shadowColor=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();}
     ctx.globalAlpha=1;ctx.shadowBlur=0;
+    ctx.restore();requestAnimationFrame(update);return;
+  }
+
+  if(state==='tutorial'){
+    drawDisc();drawStuckKnives();
+    // Draw tutorial overlay
+    ctx.fillStyle='rgba(0,0,0,0.88)';ctx.fillRect(0,0,W,H);
+    const cx=W/2,fs=Math.max(15,W*0.035);
+    // Neon border
+    ctx.strokeStyle='#8B5CF6';ctx.shadowBlur=15;ctx.shadowColor='#8B5CF6';ctx.lineWidth=2;
+    const bx=W*0.08,bby=H*0.15,bw=W*0.84,bh=H*0.65;
+    ctx.strokeRect(bx,bby,bw,bh);ctx.shadowBlur=0;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#A78BFA';ctx.font=`bold ${fs*1.4}px "Segoe UI"`;
+    ctx.fillText('🗡️ HOW TO PLAY',cx,H*0.25);
+    ctx.fillStyle='rgba(139,92,246,0.4)';ctx.fillRect(W*0.2,H*0.3,W*0.6,1);
+    const lines=[
+      ['👆','Tap / Click — Throw a blade'],
+      ['🎯','Hit the disk — Score points'],
+      ['💥','Hit a bomb — Bonus explosion'],
+      ['⚠️','Hit a blade — FAILED!']
+    ];
+    ctx.font=`${fs}px "Segoe UI"`;
+    lines.forEach((l,i)=>{
+      ctx.fillStyle='#E0D4FF';ctx.fillText(l[0]+'  '+l[1],cx,H*0.38+i*fs*2.4);
+    });
+    ctx.fillStyle='rgba(139,92,246,0.4)';ctx.fillRect(W*0.2,H*0.38+lines.length*fs*2.4+fs,W*0.6,1);
+    ctx.fillStyle='rgba(167,139,250,0.6)';ctx.font=`${fs*0.85}px "Segoe UI"`;
+    ctx.fillText('[ TAP TO START ]',cx,H*0.75);
     ctx.restore();requestAnimationFrame(update);return;
   }
 

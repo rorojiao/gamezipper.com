@@ -39,6 +39,8 @@ const game=(()=>{
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 let W=400,H=600,scale=1,offX=0,offY=0;
+let _btnBounds=null;
+let showTutorial=false;
 
 function resize(){
   const wrap=document.getElementById('wrap');
@@ -546,14 +548,15 @@ function drawOverlay(title,subtitle,btnText){
   }
   ctx.restore();
   // Store button bounds for click
-  game._btnBounds={bx,by,bw,bh};
+  _btnBounds={bx,by,bw,bh};
 }
 
 function handleCanvasClick(cx,cy){
+  if(state==='tutorial'){localStorage.setItem('ogp_tutorial_shown','1');showTutorial=false;state='play';return;}
   if(state==='play')return;
   const rect=canvas.getBoundingClientRect();
   const x=(cx-rect.left)*(W/rect.width),y=(cy-rect.top)*(H/rect.height);
-  const b=game._btnBounds;
+  const b=_btnBounds;
   if(!b)return;
   // Primary button
   if(x>=b.bx&&x<=b.bx+b.bw&&y>=b.by&&y<=b.by+b.bh){
@@ -583,7 +586,33 @@ function startLevel(){
   shooting=false;comboCount=0;paused=false;screenShake=0;failFlash=0;
   curColor=pickColor();nextColor=pickColor();
   document.getElementById('pauseBtn').textContent='⏸';
-  state='play';
+  if(level===1&&!localStorage.getItem('ogp_tutorial_shown')){showTutorial=true;state='tutorial';}
+  else{state='play';}
+}
+
+function drawTutorial(){
+  ctx.save();
+  ctx.fillStyle='rgba(2,10,40,0.85)';ctx.fillRect(0,0,W,H);
+  const cx=W/2,fs=Math.max(16,W*0.04);
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='#5af';ctx.font=`bold ${fs*1.5}px Georgia`;
+  ctx.fillText('🧜 欢迎来到 Ocean Gem Pop！',cx,H*0.2);
+  ctx.fillStyle='rgba(90,170,255,0.4)';ctx.fillRect(W*0.15,H*0.27,W*0.7,2);
+  const lines=[
+    ['🎯','点击/触摸屏幕  发射宝石泡泡'],
+    ['🔴','消除同色泡泡  3个以上爆炸得分'],
+    ['💎','连消越多  奖励越高'],
+    ['⚠️','泡泡堆到底部  游戏结束']
+  ];
+  ctx.font=`${fs}px Georgia`;
+  lines.forEach((l,i)=>{
+    const y=H*0.35+i*fs*2.2;
+    ctx.fillStyle='#fff';ctx.fillText(l[0]+'  '+l[1],cx,y);
+  });
+  ctx.fillStyle='rgba(90,170,255,0.4)';ctx.fillRect(W*0.15,H*0.35+lines.length*fs*2.2+fs*0.5,W*0.7,2);
+  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font=`${fs*0.9}px Georgia`;
+  ctx.fillText('[ 点击任意处开始 ]',cx,H*0.8);
+  ctx.restore();
 }
 
 // === Main loop ===
@@ -638,6 +667,11 @@ function draw(){
     drawOverlay('🏆 You Win!',`Final Score: ${score} - All 10 levels!`,'Play Again');
   }else if(state==='menu'){
     drawOverlay('🐚 Ocean Gem Pop','Pop colorful gem bubbles in the deep ocean!','▶ Start');
+  }else if(state==='tutorial'){
+    drawHUD();
+    grid.forEach(b=>drawGem(b.x,b.y,b.color,R));
+    drawAimLine();drawShooter();
+    drawTutorial();
   }
 
   if(paused){
@@ -662,7 +696,7 @@ resize();
 state='menu';
 loop();
 
-return{togglePause,toggleSound,_btnBounds:null};
+return{togglePause,toggleSound};
 })();
 </script>
 <script>new Image().src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p="+encodeURIComponent(location.pathname);</script>
