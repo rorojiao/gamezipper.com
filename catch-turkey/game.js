@@ -85,6 +85,17 @@ var LEVELS = [
   { id: 8, name: '❄️ Frozen', count: 51, layers: 4, types: 8, time: 340, theme: 'winter' },
   { id: 9, name: '⛄ Volcano', count: 54, layers: 4, types: 9, time: 320, theme: 'winter' },
   { id: 10, name: '🌈 Ultimate', count: 60, layers: 5, types: 10, time: 300, theme: 'rainbow' },
+  // Expert levels 11-20
+  { id: 11, name: '🔮 Mystic Ocean', count: 65, layers: 5, types: 10, time: 280, theme: 'ocean' },
+  { id: 12, name: '⚡ Lightning', count: 70, layers: 5, types: 10, time: 270, theme: 'ocean' },
+  { id: 13, name: '🌊 Tsunami', count: 72, layers: 6, types: 10, time: 260, theme: 'ocean' },
+  { id: 14, name: '🌪️ Storm', count: 75, layers: 6, types: 10, time: 250, theme: 'volcano' },
+  { id: 15, name: '🌋 Inferno', count: 78, layers: 6, types: 10, time: 240, theme: 'volcano' },
+  { id: 16, name: '💎 Diamond', count: 80, layers: 6, types: 10, time: 230, theme: 'rainbow' },
+  { id: 17, name: '🏆 Champion', count: 82, layers: 6, types: 10, time: 220, theme: 'rainbow' },
+  { id: 18, name: '👑 Master', count: 85, layers: 7, types: 10, time: 210, theme: 'rainbow' },
+  { id: 19, name: '⭐ Legend', count: 88, layers: 7, types: 10, time: 200, theme: 'rainbow' },
+  { id: 20, name: '👑👑 Grand Master', count: 90, layers: 7, types: 10, time: 180, theme: 'rainbow' },
 ];
 
 var THEMES = {
