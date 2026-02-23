@@ -157,18 +157,18 @@ function drawBG(){
 const levels=[];
 for(let i=0;i<30;i++){
   let speed,preKnives,bombs,knives,reverses,boss;
-  if(i<15){
-    speed=0.4+i*0.12;preKnives=Math.min(Math.max(0,Math.floor(i*0.8)),8);
-    bombs=i<5?0:Math.min(1+Math.floor((i-5)*0.5),3);
-    knives=5+Math.min(Math.floor(i*0.3),3);reverses=i>=10;boss=false;
-  }else if(i<20){
-    speed=2.2+(i-15)*0.2;preKnives=7+Math.floor((i-15)*0.5);
-    bombs=2+Math.floor((i-15)*0.3);knives=7;reverses=true;boss=false;
+  if(i<5){
+    speed=0.8+i*0.1;preKnives=Math.min(Math.max(0,Math.floor(i*0.5)),3);
+    bombs=0;knives=5;reverses=false;boss=false;
+  }else if(i<15){
+    speed=1.2+(i-5)*0.06;preKnives=Math.min(Math.floor(i*0.8),8);
+    bombs=i<8?0:Math.min(1+Math.floor((i-8)*0.5),3);
+    knives=5+Math.min(Math.floor((i-5)*0.3),3);reverses=i>=10;boss=false;
   }else if(i<25){
-    speed=2.5+(i-20)*0.15;preKnives=8;
-    bombs=3+Math.floor((i-20)*0.5);knives=8;reverses=true;boss=true;
+    speed=1.8+(i-15)*0.07;preKnives=7+Math.floor((i-15)*0.3);
+    bombs=2+Math.floor((i-15)*0.3);knives=7+Math.floor((i-15)*0.2);reverses=true;boss=i>=20;
   }else{
-    speed=3.5+(i-25)*0.3;preKnives=9+Math.floor((i-25)*0.3);
+    speed=2.5+(i-25)*0.2;preKnives=9+Math.floor((i-25)*0.3);
     bombs=4+Math.floor((i-25)*0.3);knives=9;reverses=true;boss=false;
   }
   levels.push({speed,preKnives,bombs,knives,reverses,boss});
@@ -232,7 +232,7 @@ function initLevel(){
   }
   // Gem targets
   gemTargets=[];
-  const gemCount=1+Math.floor(Math.random()*2);
+  const gemCount=level<10?1:level<20?2:3;
   for(let gi=0;gi<gemCount;gi++){
     let ga;do{ga=Math.random()*Math.PI*2;}while(
       usedAngles.some(u=>Math.abs(angleDiff(u,ga))<COLLISION_ANGLE*2.5)
@@ -468,8 +468,10 @@ function handleTap(e){
   initAudio();
   if(paused){togglePause();return;}
   const rect=C.getBoundingClientRect();
-  const x=(e.clientX||e.changedTouches[0].clientX)-rect.left;
-  const y=(e.clientY||e.changedTouches[0].clientY)-rect.top;
+  const tx = e.clientX != null ? e.clientX : (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : 0);
+  const ty = e.clientY != null ? e.clientY : (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientY : 0);
+  const x=tx-rect.left;
+  const y=ty-rect.top;
   const sx=x*(W/rect.width),sy=y*(H/rect.height);
 
   if(state==='menu'){
@@ -508,8 +510,9 @@ function handleTap(e){
     if(sx>=b.bx&&sx<=b.bx+b.bw&&sy>=b2y&&sy<=b2y+b.bh){state='menu';return;}
   }
 }
-C.addEventListener('click',handleTap);
-C.addEventListener('touchstart',handleTap,{passive:false});
+let _lastTapTime=0;
+C.addEventListener('click',e=>{if(performance.now()-_lastTapTime<300)return;_lastTapTime=performance.now();handleTap(e);});
+C.addEventListener('touchstart',e=>{_lastTapTime=performance.now();handleTap(e);},{passive:false});
 
 function update(){
   const now=performance.now(),dt=Math.min((now-lastTime)/1000,0.05);
@@ -695,8 +698,11 @@ function update(){
     sg.addColorStop(0,'rgba(0,212,255,0)');sg.addColorStop(0.5,'rgba(0,212,255,1)');sg.addColorStop(1,'rgba(0,212,255,0)');
     ctx.fillStyle=sg;ctx.fillRect(sweepX-30,0,60,H);ctx.restore();
 
+    const gemsTotal=gemTargets.length+(gemTargets.filter(g=>!g.alive).length===0?0:0);
+    const gemsCollected=gemTargets.filter(g=>!g.alive).length;
+    const gemStr=gemsTotal>0?`  |  💎 ${gemsCollected}/${gemsTotal}`:'';
     const perfectStr=!failedThisLevel?' 👑 PERFECT!':'';
-    drawOverlay('LEVEL CLEAR!'+perfectStr,'Score: '+score,'Next Level ▶','↩ Main Menu');
+    drawOverlay('LEVEL CLEAR!'+perfectStr,'Score: '+score+gemStr,'Next Level ▶','↩ Main Menu');
   }
 
   if(state==='fail'){
