@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sushi Stack - Color Sort Puzzle 🍣</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:#FFF3DC;
+  font-family:'Segoe UI',Arial,sans-serif;
+  overflow:hidden;
+  width:100vw;height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+}
+#topBar{
+  position:fixed;top:0;left:0;right:0;
+  background:rgba(139,26,26,0.92);
+  color:#fff;text-align:center;
+  font-size:12px;padding:5px 8px;
+  z-index:1000;
+  text-decoration:none;
+  display:block;
+}
+#topBar a{color:#FFD580;text-decoration:none;font-weight:bold;}
+#hud{
+  position:fixed;top:26px;left:0;right:0;
+  background:rgba(255,240,200,0.95);
+  border-bottom:2px solid rgba(180,100,30,0.3);
+  display:flex;justify-content:space-around;
+  padding:6px 8px;z-index:100;
+  font-size:13px;
+}
+.hud-item{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.hud-label{font-size:10px;color:#8B4513;text-transform:uppercase;letter-spacing:0.5px;}
+.hud-value{font-size:16px;font-weight:bold;color:#8B1A1A;}
+#bottomBar{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(255,240,200,0.95);
+  border-top:2px solid rgba(180,100,30,0.3);
+  display:flex;justify-content:space-around;align-items:center;
+  padding:8px;z-index:100;
+}
+.btn-bar{
+  background:linear-gradient(135deg,#E65100,#BF360C);
+  color:#fff;border:none;border-radius:12px;
+  padding:8px 14px;font-size:13px;font-weight:bold;
+  cursor:pointer;box-shadow:0 3px 0 #7B1B0A;
+  transition:transform 0.1s;
+}
+.btn-bar:active{transform:translateY(2px);box-shadow:0 1px 0 #7B1B0A;}
+.btn-bar:disabled{opacity:0.5;cursor:not-allowed;}
+/* CANVAS */
+#gameCanvas{
+  position:fixed;
+  top:0;left:0;
+  touch-action:none;
+}
+/* SCREENS */
+.screen{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:200;
+}
+#menuScreen{
+  background:radial-gradient(ellipse at center, #FFF0D0, #F5E0B0);
+}
+#levelScreen{
+  background:rgba(255,240,200,0.97);
+  overflow-y:auto;
+  justify-content:flex-start;
+  padding-top:60px;
+}
+.sakura{
+  position:absolute;font-size:32px;opacity:0.18;
+  animation:float 9s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes float{
+  0%,100%{transform:translateY(0) rotate(0deg);}
+  50%{transform:translateY(-20px) rotate(20deg);}
+}
+.game-logo{
+  font-size:42px;font-weight:900;
+  color:#8B1A1A;
+  text-shadow:0 4px 0 #5C0E0E,0 0 20px rgba(180,60,30,0.4);
+  margin-bottom:4px;letter-spacing:-1px;
+}
+.game-logo span{color:#E65100;}
+.game-sub{font-size:14px;color:#8B4513;margin-bottom:8px;letter-spacing:1px;}
+.sushi-emoji{font-size:52px;animation:bounce 1.8s ease-in-out infinite;margin:8px 0 20px;}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.btn-play{
+  background:linear-gradient(135deg,#E65100,#BF360C);
+  color:#fff;border:none;border-radius:20px;
+  padding:14px 48px;font-size:20px;font-weight:bold;
+  cursor:pointer;box-shadow:0 6px 0 #7B1B0A;
+  margin:8px;transition:transform 0.1s;
+  letter-spacing:1px;
+}
+.btn-play:active{transform:translateY(3px);box-shadow:0 3px 0 #7B1B0A;}
+.btn-levels{
+  background:linear-gradient(135deg,#F9A825,#E65100);
+  color:#fff;border:none;border-radius:20px;
+  padding:12px 36px;font-size:16px;font-weight:bold;
+  cursor:pointer;box-shadow:0 5px 0 #BF6000;
+  margin:8px;
+}
+.best-score{color:#8B4513;font-size:14px;margin-top:8px;}
+/* Level select */
+.level-grid{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  gap:8px;padding:16px;width:100%;max-width:400px;
+}
+.level-cell{
+  aspect-ratio:1;border-radius:12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;border:3px solid #D4C5A0;
+  background:#EEE;color:#aaa;font-weight:bold;
+  transition:transform 0.1s;font-size:15px;
+  position:relative;
+}
+.level-cell.unlocked{
+  background:linear-gradient(135deg,#FFF8E8,#FFE8C0);
+  border:3px solid #D4801A;color:#8B1A1A;
+}
+.level-cell.completed{
+  background:linear-gradient(135deg,#E8F5E9,#C8E6C9);
+  border:3px solid #558B2F;color:#33691E;
+}
+.level-cell:active{transform:scale(0.93);}
+.level-stars{font-size:10px;position:absolute;bottom:3px;}
+.level-header{
+  font-size:20px;font-weight:bold;color:#8B1A1A;
+  padding:16px;text-align:center;
+}
+.btn-back{
+  background:linear-gradient(135deg,#8B4513,#6B2C0A);
+  color:#fff;border:none;border-radius:16px;
+  padding:10px 28px;font-size:15px;font-weight:bold;
+  cursor:pointer;margin:8px;
+}
+/* Modal */
+.modal-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.5);z-index:500;
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-box{
+  background:linear-gradient(145deg,#FFFDF5,#FFF3D0);
+  border:3px solid #D4801A;border-radius:20px;
+  padding:28px 32px;text-align:center;
+  max-width:300px;width:90%;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+}
+.modal-title{font-size:28px;font-weight:900;color:#8B1A1A;margin-bottom:8px;}
+.modal-sub{font-size:15px;color:#8B4513;margin-bottom:20px;}
+.modal-stars{font-size:28px;margin-bottom:16px;}
+.modal-btn{
+  display:block;width:100%;
+  background:linear-gradient(135deg,#E65100,#BF360C);
+  color:#fff;border:none;border-radius:14px;
+  padding:12px;font-size:16px;font-weight:bold;
+  cursor:pointer;margin:6px 0;
+  box-shadow:0 4px 0 #7B1B0A;
+}
+.modal-btn.secondary{
+  background:linear-gradient(135deg,#8B4513,#6B2C0A);
+  box-shadow:0 4px 0 #3E1A08;
+}
+/* Tutorial */
+#tutBox{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+  background:rgba(255,248,220,0.97);
+  border:2px solid #D4801A;border-radius:16px;
+  padding:14px 20px;max-width:320px;width:90%;
+  text-align:center;z-index:300;
+  box-shadow:0 4px 16px rgba(0,0,0,0.2);
+}
+#tutBox h3{color:#8B1A1A;font-size:16px;margin-bottom:6px;}
+#tutBox p{color:#5D3A1A;font-size:13px;line-height:1.5;}
+#tutBox button{
+  margin-top:10px;background:#E65100;color:#fff;
+  border:none;border-radius:10px;padding:8px 24px;
+  font-weight:bold;cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<div id="topBar">🍣 More Games at <a href="https://gamezipper.com/" target="_blank">GameZipper.com</a></div>
+
+<!-- MENU SCREEN -->
+<div class="screen" id="menuScreen">
+  <div class="sakura" style="top:5%;left:8%;animation-delay:0s">🌸</div>
+  <div class="sakura" style="top:12%;right:6%;animation-delay:1.5s">🌸</div>
+  <div class="sakura" style="top:65%;left:5%;animation-delay:2.8s">🌸</div>
+  <div class="sakura" style="top:70%;right:8%;animation-delay:0.8s">🌸</div>
+
+  <div class="game-logo">Sushi <span>Stack</span></div>
+  <div class="game-sub">Color Sort Puzzle 🍣</div>
+  <div class="sushi-emoji">🍱</div>
+
+  <button class="btn-play" id="playBtn">▶ Play!</button>
+  <button class="btn-levels" id="levelsBtn">📋 Levels</button>
+  <div class="best-score" id="menuBest">Best Score: 0</div>
+</div>
+
+<!-- LEVEL SELECT SCREEN -->
+<div class="screen" id="levelScreen" style="display:none">
+  <div class="level-header">🍣 Choose a Level</div>
+  <div class="level-grid" id="levelGrid"></div>
+  <button class="btn-back" id="backFromLevels">← Back</button>
+</div>
+
+<!-- GAME CANVAS -->
+<canvas id="gameCanvas" style="display:none"></canvas>
+
+<!-- HUD (game) -->
+<div id="hud" style="display:none">
+  <div class="hud-item"><span class="hud-label">Level</span><span class="hud-value" id="hudLevel">1</span></div>
+  <div class="hud-item"><span class="hud-label">Moves</span><span class="hud-value" id="hudMoves">0</span></div>
+  <div class="hud-item"><span class="hud-label">Score</span><span class="hud-value" id="hudScore">0</span></div>
+  <div class="hud-item"><span class="hud-label">Best</span><span class="hud-value" id="hudBest">0</span></div>
+</div>
+<div id="bottomBar" style="display:none">
+  <button class="btn-bar" id="undoBtn">↩ Undo (<span id="undoCnt">3</span>)</button>
+  <button class="btn-bar" id="menuBtn">🏠 Menu</button>
+  <button class="btn-bar" id="hintBtn">💡 Hint (<span id="hintCnt">3</span>)</button>
+</div>
+
+<!-- Tutorial box -->
+<div id="tutBox" style="display:none">
+  <h3>🍣 How to Stack</h3>
+  <p>Tap a chopstick to pick up sushi.<br>Tap another to drop it there.<br>Match 3 same-color sushi to eliminate!</p>
+  <button onclick="document.getElementById('tutBox').style.display='none'">Got it!</button>
+</div>
+
+<!-- Modal overlay -->
+<div class="modal-overlay" id="modalOverlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle">🎉</div>
+    <div class="modal-stars" id="modalStars"></div>
+    <div class="modal-sub" id="modalSub"></div>
+    <button class="modal-btn" id="modalNext">▶ Next Level</button>
+    <button class="modal-btn secondary" id="modalRetry">↩ Retry</button>
+    <button class="modal-btn secondary" id="modalMenu">🏠 Menu</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ─── COLORS ───────────────────────────────────────────────
+const COLORS = [
+  '#FF7043','#B71C1C','#558B2F','#F9A825',
+  '#00897B','#5D4037','#E65100','#AD1457'
+];
+const COLOR_DARK = [
+  '#BF360C','#7B0000','#33691E','#F57F17',
+  '#00695C','#3E2723','#BF360C','#880E4F'
+];
+const COLOR_LIGHT = [
+  '#FFCCBC','#FFCDD2','#DCEDC8','#FFF9C4',
+  '#B2DFDB','#D7CCC8','#FFE0B2','#FCE4EC'
+];
+const FOOD_NAMES = ['Salmon','Tuna','Avocado','Tamago','Cucumber','Eel','Uni','Gari'];
+
+// ─── LEVEL CONFIGS ────────────────────────────────────────
+const LEVEL_CONFIGS = [
+  ...Array(5).fill(null).map(()=>({rods:4, empty:2, colors:2, cap:3})),
+  ...Array(5).fill(null).map(()=>({rods:5, empty:1, colors:3, cap:3})),
+  ...Array(10).fill(null).map(()=>({rods:5, empty:2, colors:4, cap:3})),
+  ...Array(10).fill(null).map(()=>({rods:6, empty:2, colors:5, cap:3})),
+  ...Array(10).fill(null).map(()=>({rods:7, empty:2, colors:5, cap:4})),
+  ...Array(10).fill(null).map(()=>({rods:8, empty:2, colors:6, cap:4})),
+];
+
+// ─── SAVE/LOAD ────────────────────────────────────────────
+let saveData = {maxLevel:1, _tut:false, stars:{}, bests:{}, topBest:0};
+function loadSave(){
+  try{
+    const d=JSON.parse(localStorage.getItem('sushiStack_v1'));
+    if(d) saveData=d;
+  }catch(e){}
+}
+function writeSave(){
+  localStorage.setItem('sushiStack_v1',JSON.stringify(saveData));
+}
+loadSave();
+
+// ─── AUDIO ────────────────────────────────────────────────
+let audioCtx = null;
+function getAudio(){
+  if(!audioCtx) try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  return audioCtx;
+}
+function tone(freq, dur, type='sine', vol=0.2, delay=0, endFreq=null){
+  const ctx=getAudio(); if(!ctx) return;
+  try{
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type=type; o.frequency.setValueAtTime(freq, ctx.currentTime+delay);
+    if(endFreq) o.frequency.exponentialRampToValueAtTime(endFreq, ctx.currentTime+delay+dur);
+    g.gain.setValueAtTime(vol, ctx.currentTime+delay);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+delay+dur);
+    o.start(ctx.currentTime+delay);
+    o.stop(ctx.currentTime+delay+dur+0.01);
+  }catch(e){}
+}
+function sfxPick(){tone(880,0.06,'triangle',0.15,0,1200);}
+function sfxDrop(){tone(320,0.12,'triangle',0.2,0,160);}
+function sfxMatch(){[659,784,988].forEach((f,i)=>tone(f,0.15,'sine',0.22,i*0.1));}
+function sfxWin(){[392,494,587,784].forEach((f,i)=>tone(f,0.2,'sine',0.24,i*0.12));}
+function sfxError(){tone(180,0.1,'sawtooth',0.15);}
+
+// ─── DRAW HELPERS ─────────────────────────────────────────
+function drawSakura(ctx, x, y, size, angle, alpha){
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.translate(x,y);
+  ctx.rotate(angle);
+  for(let i=0;i<5;i++){
+    ctx.save();
+    ctx.rotate((i*Math.PI*2)/5);
+    ctx.fillStyle=['#FFB7C5','#FF9BAC','#FFC0CB','#FFD0DA','#FF85A2'][i%5];
+    ctx.beginPath();
+    ctx.ellipse(0,-size*0.5,size*0.25,size*0.45,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function drawSushiDisc(ctx, cx, cy, ci, r, thickness, selected, glowing){
+  const h = thickness;
+  // Glow
+  if(glowing){
+    ctx.save();
+    ctx.shadowColor=COLORS[ci]; ctx.shadowBlur=18;
+  }
+
+  // Side bottom ellipse
+  ctx.fillStyle=COLOR_DARK[ci]||'#111';
+  ctx.beginPath();
+  ctx.ellipse(cx,cy+h,r,r*0.28,0,0,Math.PI*2);
+  ctx.fill();
+
+  // Side nori strip
+  ctx.fillStyle='#1a1a0a';
+  ctx.fillRect(cx-r, cy, r*2, h);
+
+  // Colored filling side
+  ctx.fillStyle=COLORS[ci];
+  ctx.fillRect(cx-r*0.62, cy, r*1.24, h);
+
+  // Rice side
+  const riceGrad=ctx.createLinearGradient(cx-r,0,cx+r,0);
+  riceGrad.addColorStop(0,'rgba(250,248,240,0.7)');
+  riceGrad.addColorStop(0.3,'rgba(250,248,240,0)');
+  riceGrad.addColorStop(0.7,'rgba(250,248,240,0)');
+  riceGrad.addColorStop(1,'rgba(250,248,240,0.5)');
+  ctx.fillStyle=riceGrad;
+  ctx.fillRect(cx-r,cy,r*2,h);
+
+  // TOP FACE
+  // Outer nori
+  ctx.fillStyle='#1a1a0a';
+  ctx.beginPath(); ctx.ellipse(cx,cy,r,r*0.28,0,0,Math.PI*2); ctx.fill();
+
+  // Rice ring
+  ctx.fillStyle='#FAF8F0';
+  ctx.beginPath(); ctx.ellipse(cx,cy,r*0.85,r*0.85*0.28,0,0,Math.PI*2); ctx.fill();
+
+  // Filling core
+  ctx.fillStyle=COLORS[ci];
+  ctx.beginPath(); ctx.ellipse(cx,cy,r*0.6,r*0.6*0.28,0,0,Math.PI*2); ctx.fill();
+
+  // Filling radial highlight
+  const grad=ctx.createRadialGradient(cx-r*0.15,cy-r*0.05,1,cx,cy,r*0.6);
+  grad.addColorStop(0,'rgba(255,255,255,0.45)');
+  grad.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=grad;
+  ctx.beginPath(); ctx.ellipse(cx,cy,r*0.6,r*0.6*0.28,0,0,Math.PI*2); ctx.fill();
+
+  // Overall highlight
+  ctx.save(); ctx.globalAlpha=0.2; ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.ellipse(cx+r*0.2,cy-r*0.06,r*0.35,r*0.1,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  if(glowing) ctx.restore();
+
+  // Selected float ring
+  if(selected){
+    ctx.save();
+    ctx.strokeStyle='rgba(255,220,50,0.9)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.ellipse(cx,cy,r+4,(r+4)*0.28,0,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawChopstickPair(ctx, cx, topY, bottomY, selected){
+  const w=5;
+  const gap=9;
+  // Left stick
+  const lx=cx-gap;
+  const lgr=ctx.createLinearGradient(lx-w,0,lx+w,0);
+  lgr.addColorStop(0,'#8B2C14'); lgr.addColorStop(0.5,'#4A0F03'); lgr.addColorStop(1,'#6B1E0A');
+  ctx.fillStyle=lgr;
+  ctx.beginPath();
+  ctx.roundRect(lx-w, topY, w*2, bottomY-topY, [w,w,1,1]);
+  ctx.fill();
+  // Left tip (round)
+  ctx.fillStyle='#4A0F03';
+  ctx.beginPath(); ctx.arc(lx, topY, w, Math.PI, 0); ctx.fill();
+
+  // Right stick
+  const rx=cx+gap;
+  const rgr=ctx.createLinearGradient(rx-w,0,rx+w,0);
+  rgr.addColorStop(0,'#8B2C14'); rgr.addColorStop(0.5,'#4A0F03'); rgr.addColorStop(1,'#6B1E0A');
+  ctx.fillStyle=rgr;
+  ctx.beginPath();
+  ctx.roundRect(rx-w, topY, w*2, bottomY-topY, [w,w,1,1]);
+  ctx.fill();
+  ctx.fillStyle='#4A0F03';
+  ctx.beginPath(); ctx.arc(rx, topY, w, Math.PI, 0); ctx.fill();
+
+  if(selected){
+    ctx.save();
+    ctx.strokeStyle='rgba(255,200,0,0.7)'; ctx.lineWidth=2;
+    ctx.strokeRect(cx-gap-w-4, topY-4, gap*2+w*2+8, bottomY-topY+8);
+    ctx.restore();
+  }
+}
+
+// ─── GAME CLASS ───────────────────────────────────────────
+class SushiGame {
+  constructor(canvas, level){
+    this.cv = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.level = level;
+    const cfg = LEVEL_CONFIGS[level-1];
+    this.cfg = cfg;
+    this.cap = cfg.cap;
+    this.score = 0;
+    this.moves = 0;
+    this.sel = -1;        // selected rod index
+    this.undos = 3;
+    this.hints = 3;
+    this.history = [];    // [{rods snapshot}]
+    this.particles = [];
+    this.flyAnim = null;  // {disc, fromX,fromY, toX,toY, t, rodIdx}
+    this.glowAnims = [];  // [{rodIdx, ci, t}]
+    this.gameOver = false;
+    this.won = false;
+    this.rods = [];
+    this.rows = 1;
+    this.spacing = 80;
+    this.rh = 0; // rod height area
+
+    // expose globally for tests
+    window.game = this;
+
+    this._initLevel();
+    this._resize();
+    this._bindEvents();
+    requestAnimationFrame(()=>this._loop());
+  }
+
+  _initLevel(){
+    const {rods:n, empty, colors, cap} = this.cfg;
+    // Build deck
+    const deck = [];
+    for(let c=0;c<colors;c++)
+      for(let i=0;i<cap;i++) deck.push(c);
+    // Shuffle
+    for(let i=deck.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [deck[i],deck[j]]=[deck[j],deck[i]];
+    }
+    // Fill rods
+    const filledRods = n - empty;
+    this.rods = [];
+    for(let r=0;r<n;r++){
+      this.rods.push({d:[], x:0, y:0}); // d = disc color indices (bottom to top)
+    }
+    let di=0;
+    for(let r=0;r<filledRods;r++){
+      for(let i=0;i<cap;i++){
+        this.rods[r].d.push(deck[di++]);
+      }
+    }
+  }
+
+  _resize(){
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    this.cv.width = W;
+    this.cv.height = H;
+    this._calcLayout();
+  }
+
+  _calcLayout(){
+    const W = this.cv.width, H = this.cv.height;
+    const n = this.rods.length;
+    this.rows = n > 6 ? 2 : 1;
+    const perRow = Math.ceil(n / this.rows);
+    this.spacing = Math.min((W - 40) / perRow, 100);
+    this.discR = Math.min(this.spacing * 0.38, 28);
+
+    const hudH = 26 + 48; // topBar + hud
+    const botH = 68;
+    const usableH = H - hudH - botH;
+    const rowH = usableH / this.rows;
+
+    // rh = visual height of rod column (just the disc stacking area)
+    // Enough for cap+2 discs
+    const thick = this.discR * 0.55;
+    this.rh = (this.cap + 1) * thick * 1.3 + this.discR;
+
+    // rod.y = vertical center of the row (used as layout anchor)
+    // Discs are drawn upward from rod.y - discR
+    for(let r=0;r<n;r++){
+      const row = this.rows === 2 ? (r < Math.ceil(n/2) ? 0 : 1) : 0;
+      const col = this.rows === 2 ? (row===0 ? r : r-Math.ceil(n/2)) : r;
+      const rowCount = this.rows === 1 ? n : (row===0 ? Math.ceil(n/2) : Math.floor(n/2));
+      const offsetX = (W - rowCount * this.spacing) / 2 + this.spacing / 2;
+      this.rods[r].x = offsetX + col * this.spacing;
+      // rod.y = center-bottom area of the row
+      this.rods[r].y = hudH + (row + 0.78) * rowH;
+    }
+  }
+
+  _bindEvents(){
+    const handler = (e) => {
+      e.preventDefault();
+      const rect = this.cv.getBoundingClientRect();
+      let cx, cy;
+      if(e.touches){
+        cx = e.touches[0].clientX - rect.left;
+        cy = e.touches[0].clientY - rect.top;
+      } else {
+        cx = e.clientX - rect.left;
+        cy = e.clientY - rect.top;
+      }
+      this._handleClick(cx, cy);
+    };
+    this.cv.addEventListener('click', handler);
+    this.cv.addEventListener('touchstart', handler, {passive:false});
+  }
+
+  _handleClick(cx, cy){
+    if(this.gameOver || this.flyAnim) return;
+
+    // Find which rod was clicked (horizontal proximity, broad vertical range)
+    const hudH = 26 + 48;
+    const botH = 68;
+    const H = this.cv.height;
+    if(cy < hudH || cy > H - botH) return; // outside play area
+
+    let hit = -1;
+    let bestDist = this.spacing * 0.5;
+    for(let r=0;r<this.rods.length;r++){
+      const dx = Math.abs(cx - this.rods[r].x);
+      if(dx < bestDist){
+        bestDist = dx;
+        hit = r;
+      }
+    }
+    if(hit < 0) return;
+
+    if(this.sel < 0){
+      // Select
+      if(this.rods[hit].d.length === 0) return; // empty rod
+      this.sel = hit;
+      sfxPick();
+    } else if(this.sel === hit){
+      // Deselect
+      this.sel = -1;
+    } else {
+      // Try move
+      const moved = this._tryMove(this.sel, hit);
+      if(!moved){
+        sfxError();
+        // blink
+        this.sel = hit; // switch selection
+        if(this.rods[hit].d.length === 0 && this.rods[this.sel-0].d.length===0) this.sel=-1;
+        else sfxPick();
+      }
+    }
+    this._updateHUD();
+  }
+
+  _tryMove(from, to){
+    const src = this.rods[from], dst = this.rods[to];
+    if(src.d.length === 0) return false;
+    if(dst.d.length >= this.cap) return false;
+    const topSrc = src.d[src.d.length-1];
+    const topDst = dst.d.length > 0 ? dst.d[dst.d.length-1] : -1;
+    if(topDst >= 0 && topDst !== topSrc) return false;
+
+    // Save history
+    this._pushHistory();
+    // Do move via animation
+    const disc = topSrc;
+    src.d.pop();
+    this.sel = -1;
+    this.moves++;
+
+    // Compute positions
+    const fromX = src.x;
+    const fromY = this._discY(from, src.d.length); // after pop
+    const toX = dst.x;
+    // destination y after push
+    const toY = this._discY(to, dst.d.length);
+
+    this.flyAnim = {
+      disc, fromX, fromY, toX, toY,
+      rodIdx: to, dstRod: dst,
+      t: 0
+    };
+    sfxDrop();
+    return true;
+  }
+
+  _discY(rodIdx, stackLen){
+    // Y position of disc at stack position stackLen (0 = bottom)
+    const rod = this.rods[rodIdx];
+    const thick = this.discR * 0.55;
+    const baseY = rod.y - thick * 0.5;
+    return baseY - stackLen * thick * 1.1;
+  }
+
+  _finishFly(){
+    const a = this.flyAnim;
+    a.dstRod.d.push(a.disc);
+    this.flyAnim = null;
+    this._checkMatches(a.rodIdx);
+    this._checkWin();
+    if(!this.won) this._checkDeadlock();
+    this._updateHUD();
+  }
+
+  _checkMatches(rodIdx){
+    const rod = this.rods[rodIdx];
+    if(rod.d.length < 3) return;
+    // Check top N same color
+    const top = rod.d[rod.d.length-1];
+    let count = 0;
+    for(let i=rod.d.length-1; i>=0; i--){
+      if(rod.d[i]===top) count++;
+      else break;
+    }
+    if(count >= 3){
+      // Schedule glow then remove
+      this.glowAnims.push({rodIdx, ci:top, count, t:0});
+    }
+  }
+
+  _doMatch(rodIdx, count){
+    const rod = this.rods[rodIdx];
+    // Remove top `count` discs
+    const removed = rod.d.splice(rod.d.length - count, count);
+    const ci = removed[0];
+    // Particles
+    const rx = rod.x, ry = rod.y - this.rh*0.5;
+    for(let i=0;i<18;i++){
+      this.particles.push({
+        x:rx, y:ry,
+        vx:(Math.random()-0.5)*5,
+        vy:(Math.random()-0.8)*6,
+        size: this.discR*0.22 + Math.random()*this.discR*0.15,
+        angle: Math.random()*Math.PI*2,
+        spin: (Math.random()-0.5)*0.2,
+        alpha: 1,
+        life: 0.8+Math.random()*0.6
+      });
+    }
+    this.score += count * 100 + this.cap * 50;
+    sfxMatch();
+    // Check more matches (cascade)
+    this._checkMatches(rodIdx);
+  }
+
+  _checkWin(){
+    const total = this.rods.reduce((s,r)=>s+r.d.length, 0);
+    if(total === 0){
+      this.won = true;
+      this.gameOver = true;
+      sfxWin();
+      setTimeout(()=>this._showWin(), 800);
+    }
+  }
+
+  _checkDeadlock(){
+    // Has any valid move?
+    for(let f=0;f<this.rods.length;f++){
+      if(this.rods[f].d.length===0) continue;
+      const top = this.rods[f].d[this.rods[f].d.length-1];
+      for(let t=0;t<this.rods.length;t++){
+        if(t===f) continue;
+        if(this.rods[t].d.length >= this.cap) continue;
+        const dstTop = this.rods[t].d.length > 0 ? this.rods[t].d[this.rods[t].d.length-1] : -1;
+        if(dstTop < 0 || dstTop === top) return; // valid move exists
+      }
+    }
+    // Deadlock
+    this.gameOver = true;
+    setTimeout(()=>this._showFail(), 600);
+  }
+
+  _pushHistory(){
+    this.history.push(this.rods.map(r=>({...r, d:[...r.d]})));
+  }
+
+  undo(){
+    if(this.undos<=0 || this.history.length===0) return;
+    const snap = this.history.pop();
+    snap.forEach((rs,i)=>{
+      this.rods[i].d = [...rs.d];
+    });
+    this.undos--;
+    this.moves++;
+    this.sel=-1;
+    this._updateHUD();
+  }
+
+  hint(){
+    if(this.hints<=0) return;
+    // Find first valid move
+    for(let f=0;f<this.rods.length;f++){
+      if(this.rods[f].d.length===0) continue;
+      const top=this.rods[f].d[this.rods[f].d.length-1];
+      for(let t=0;t<this.rods.length;t++){
+        if(t===f) continue;
+        if(this.rods[t].d.length>=this.cap) continue;
+        const dstTop=this.rods[t].d.length>0?this.rods[t].d[this.rods[t].d.length-1]:-1;
+        if(dstTop<0||dstTop===top){
+          this.hints--;
+          this.sel=f;
+          // flash target
+          this._hintTarget=t;
+          this._hintT=1.0;
+          this._updateHUD();
+          return;
+        }
+      }
+    }
+    sfxError();
+  }
+
+  _showWin(){
+    const moves = this.moves;
+    const stars = moves <= this.cap*this.cfg.colors*1.2 ? 3 : moves <= this.cap*this.cfg.colors*1.8 ? 2 : 1;
+    saveData.maxLevel = Math.max(saveData.maxLevel, this.level+1);
+    saveData.stars[this.level] = Math.max(saveData.stars[this.level]||0, stars);
+    saveData.bests[this.level] = Math.min(saveData.bests[this.level]||99999, moves);
+    saveData.topBest = Math.max(saveData.topBest||0, this.score);
+    writeSave();
+
+    document.getElementById('modalTitle').textContent =
+      ['🎉 Itadakimasu!','✨ Excellent!','🍣 Perfect Omakase!'][stars-1];
+    document.getElementById('modalStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
+    document.getElementById('modalSub').textContent = `Score: ${this.score}  Moves: ${moves}`;
+    const nextBtn = document.getElementById('modalNext');
+    nextBtn.style.display = this.level < LEVEL_CONFIGS.length ? '' : 'none';
+    document.getElementById('modalOverlay').style.display='flex';
+  }
+
+  _showFail(){
+    document.getElementById('modalTitle').textContent = '😅 Sushi Jammed!';
+    document.getElementById('modalStars').textContent = '';
+    document.getElementById('modalSub').textContent = 'The rolls got stuck! Try again?';
+    document.getElementById('modalNext').style.display='none';
+    document.getElementById('modalOverlay').style.display='flex';
+  }
+
+  _updateHUD(){
+    document.getElementById('hudLevel').textContent = this.level;
+    document.getElementById('hudMoves').textContent = this.moves;
+    document.getElementById('hudScore').textContent = this.score;
+    document.getElementById('hudBest').textContent = saveData.topBest||0;
+    document.getElementById('undoCnt').textContent = this.undos;
+    document.getElementById('hintCnt').textContent = this.hints;
+    document.getElementById('undoBtn').disabled = this.undos<=0||this.history.length===0;
+    document.getElementById('hintBtn').disabled = this.hints<=0;
+  }
+
+  // ─── Test helper ──────────────────────────────────────
+  forceMatchForTest(){
+    // Fill first rod with cap copies of color 0
+    const rod = this.rods[0];
+    rod.d = [];
+    for(let i=0;i<3;i++) rod.d.push(0);
+    this._doMatch(0, 3);
+  }
+
+  // ─── RENDER ───────────────────────────────────────────
+  _loop(){
+    this._update();
+    this._draw();
+    requestAnimationFrame(()=>this._loop());
+  }
+
+  _update(){
+    const dt = 1/60;
+    // Fly animation
+    if(this.flyAnim){
+      this.flyAnim.t = Math.min(1, this.flyAnim.t + dt * 3.5);
+      if(this.flyAnim.t >= 1) this._finishFly();
+    }
+    // Glow anims
+    for(let i=this.glowAnims.length-1;i>=0;i--){
+      this.glowAnims[i].t += dt * 2.5;
+      if(this.glowAnims[i].t >= 1){
+        this._doMatch(this.glowAnims[i].rodIdx, this.glowAnims[i].count);
+        this.glowAnims.splice(i,1);
+      }
+    }
+    // Particles
+    for(let i=this.particles.length-1;i>=0;i--){
+      const p=this.particles[i];
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.15;
+      p.angle+=p.spin;
+      p.alpha-=dt/p.life;
+      if(p.alpha<=0) this.particles.splice(i,1);
+    }
+    // Hint flash
+    if(this._hintT>0) this._hintT-=dt*2;
+  }
+
+  _draw(){
+    const ctx=this.ctx, W=this.cv.width, H=this.cv.height;
+    // Background
+    const bg=ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#FFF8E7'); bg.addColorStop(1,'#F5E6C8');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    // Wood grain
+    ctx.fillStyle='rgba(180,120,50,0.06)';
+    for(let y=0;y<H;y+=40) ctx.fillRect(0,y,W,2);
+
+    // Draw rods
+    for(let r=0;r<this.rods.length;r++){
+      const rod=this.rods[r];
+      const topY = rod.y - this.rh;
+      const botY = rod.y + this.discR*0.3;
+
+      // Base (tray)
+      const baseW=this.discR*2.2, baseH=this.discR*0.55;
+      ctx.fillStyle='#D4C5A0';
+      ctx.beginPath();
+      ctx.roundRect(rod.x-baseW/2, rod.y-baseH/2, baseW, baseH, 5);
+      ctx.fill();
+      ctx.strokeStyle='rgba(140,100,40,0.4)'; ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.roundRect(rod.x-baseW/2, rod.y-baseH/2, baseW, baseH, 5);
+      ctx.stroke();
+
+      // Chopsticks
+      const isSel = this.sel===r;
+      const isHintSrc = this.sel===r;
+      const isHintDst = this._hintTarget===r && this._hintT>0;
+      drawChopstickPair(ctx, rod.x, topY, botY, isSel || isHintDst);
+
+      // Hint target highlight
+      if(isHintDst){
+        ctx.save();
+        ctx.globalAlpha=this._hintT*0.4;
+        ctx.fillStyle='#FFD700';
+        ctx.beginPath(); ctx.ellipse(rod.x, rod.y, this.discR*1.2, this.discR*0.35, 0,0,Math.PI*2); ctx.fill();
+        ctx.restore();
+      }
+
+      // Draw discs (bottom to top)
+      const thick = this.discR * 0.55;
+      const glowRod = this.glowAnims.find(g=>g.rodIdx===r);
+
+      for(let di=0;di<rod.d.length;di++){
+        const ci=rod.d[di];
+        const discY=this._discY(r,di);
+        const isGlowing = !!glowRod;
+        const isTopSel = isSel && di===rod.d.length-1;
+        const drawY = isTopSel ? discY - 14 : discY; // float up if selected
+        drawSushiDisc(ctx, rod.x, drawY, ci, this.discR, thick, isTopSel, isGlowing);
+      }
+    }
+
+    // Flying disc
+    if(this.flyAnim){
+      const a=this.flyAnim;
+      const t=a.t;
+      const ease=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+      const x=a.fromX+(a.toX-a.fromX)*ease;
+      const arcH=-80;
+      const y=a.fromY+(a.toY-a.fromY)*ease + arcH*Math.sin(t*Math.PI);
+      const thick=this.discR*0.55;
+      drawSushiDisc(ctx, x, y, a.disc, this.discR, thick, false, false);
+    }
+
+    // Particles (sakura)
+    for(const p of this.particles){
+      drawSakura(ctx, p.x, p.y, p.size, p.angle, p.alpha);
+    }
+  }
+}
+
+// ─── SCREENS ──────────────────────────────────────────────
+let currentGame = null;
+
+function showMenu(){
+  document.getElementById('menuScreen').style.display='flex';
+  document.getElementById('levelScreen').style.display='none';
+  document.getElementById('gameCanvas').style.display='none';
+  document.getElementById('hud').style.display='none';
+  document.getElementById('bottomBar').style.display='none';
+  document.getElementById('modalOverlay').style.display='none';
+  document.getElementById('tutBox').style.display='none';
+  document.getElementById('menuBest').textContent='Best Score: '+(saveData.topBest||0);
+  currentGame=null; window.game=null;
+}
+
+function showLevelSelect(){
+  document.getElementById('menuScreen').style.display='none';
+  document.getElementById('levelScreen').style.display='flex';
+  const grid=document.getElementById('levelGrid');
+  grid.innerHTML='';
+  for(let i=1;i<=LEVEL_CONFIGS.length;i++){
+    const cell=document.createElement('div');
+    const unlocked=i<=saveData.maxLevel;
+    const completed=saveData.stars&&saveData.stars[i];
+    cell.className='level-cell'+(unlocked?' unlocked':'')+(completed?' completed':'');
+    cell.textContent=i;
+    const stars=saveData.stars&&saveData.stars[i]||0;
+    if(stars>0){
+      const sd=document.createElement('div');
+      sd.className='level-stars';
+      sd.textContent='⭐'.repeat(stars);
+      cell.appendChild(sd);
+    }
+    if(unlocked) cell.onclick=()=>startGame(i);
+    grid.appendChild(cell);
+  }
+}
+
+function startGame(level){
+  document.getElementById('menuScreen').style.display='none';
+  document.getElementById('levelScreen').style.display='none';
+  document.getElementById('gameCanvas').style.display='block';
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('bottomBar').style.display='flex';
+  document.getElementById('modalOverlay').style.display='none';
+
+  const canvas=document.getElementById('gameCanvas');
+  currentGame=new SushiGame(canvas, level);
+  currentGame._updateHUD();
+
+  // Tutorial
+  if(!saveData._tut && level===1){
+    document.getElementById('tutBox').style.display='block';
+    saveData._tut=true; writeSave();
+  }
+}
+
+// ─── BUTTON WIRING ────────────────────────────────────────
+document.getElementById('playBtn').onclick=()=>{
+  startGame(Math.min(saveData.maxLevel||1, LEVEL_CONFIGS.length));
+};
+document.getElementById('levelsBtn').onclick=showLevelSelect;
+document.getElementById('backFromLevels').onclick=showMenu;
+
+document.getElementById('undoBtn').onclick=()=>{ if(currentGame) currentGame.undo(); };
+document.getElementById('menuBtn').onclick=showMenu;
+document.getElementById('hintBtn').onclick=()=>{ if(currentGame) currentGame.hint(); };
+
+document.getElementById('modalNext').onclick=()=>{
+  document.getElementById('modalOverlay').style.display='none';
+  if(currentGame) startGame(Math.min(currentGame.level+1, LEVEL_CONFIGS.length));
+};
+document.getElementById('modalRetry').onclick=()=>{
+  document.getElementById('modalOverlay').style.display='none';
+  if(currentGame) startGame(currentGame.level);
+};
+document.getElementById('modalMenu').onclick=()=>{
+  document.getElementById('modalOverlay').style.display='none';
+  showMenu();
+};
+
+// Resize
+window.addEventListener('resize',()=>{
+  if(currentGame) currentGame._resize();
+});
+
+// Init
+showMenu();
+</script>
+</body>
+</html>
