@@ -142,12 +142,20 @@ const COLORS_HEX = [0xFF6B35, 0xB71C1C, 0x33691E, 0xF9A825, 0x00796B, 0x5D4037, 
 const SAVE_KEY = 'sushiStack3d_v1';
 
 const LEVEL_CONFIGS = [
-  ...Array(5).fill({rods:4, empty:2, colors:2, cap:3}),
-  ...Array(5).fill({rods:5, empty:1, colors:3, cap:3}),
-  ...Array(10).fill({rods:5, empty:2, colors:4, cap:3}),
-  ...Array(10).fill({rods:6, empty:2, colors:5, cap:3}),
-  ...Array(10).fill({rods:7, empty:2, colors:5, cap:4}),
-  ...Array(10).fill({rods:8, empty:2, colors:6, cap:4}),
+  // 关1-5：超简单新手期（3根钉含1空，2色，深3）
+  ...Array(5).fill({rods:3, empty:1, colors:2, cap:3}),
+  // 关6-15：简单期（4根含1空，3色，深3）
+  ...Array(10).fill({rods:4, empty:1, colors:3, cap:3}),
+  // 关16-30：标准期（5根含2空，4色，深3）
+  ...Array(15).fill({rods:5, empty:2, colors:4, cap:3}),
+  // 关31-45：提升期（5根含2空，5色，深4）
+  ...Array(15).fill({rods:5, empty:2, colors:5, cap:4}),
+  // 关46-60：中级（6根含2空，5色，深4）
+  ...Array(15).fill({rods:6, empty:2, colors:5, cap:4}),
+  // 关61-75：高级（7根含2空，6色，深4）
+  ...Array(15).fill({rods:7, empty:2, colors:6, cap:4}),
+  // 关76-100：专家（8根含2空，6色，深5）
+  ...Array(25).fill({rods:8, empty:2, colors:6, cap:5}),
 ];
 
 // ─── Save / Load ──────────────────────────────────────────────────────────────
@@ -482,9 +490,10 @@ function initLevel(idx) {
     scene.add(rodMesh);
 
     // HitBox
-    const hitGeo = new THREE.BoxGeometry(1.1, rodH + 0.5, 0.7);
-    const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+    const hitGeo = new THREE.BoxGeometry(1.4, rodH + 1.0, 2.5);
+    const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
     const hitBox = new THREE.Mesh(hitGeo, hitMat);
+    hitBox.position.set(0, 0, 0.3);  // 向相机方向偏移，因为相机在+Z方向
     hitBox.userData.rodIndex = ri;
     rodMesh.add(hitBox);
 
@@ -840,80 +849,52 @@ function hideModals() {
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
+function handlePointer(clientX, clientY) {
+  if (state.phase !== 'playing' || state.busy) return;
+  const rect = canvas.getBoundingClientRect();
+  mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+
+  // Method 1: Raycaster
+  const hits = [];
+  state.rods.forEach((r, i) => {
+    if (!r.hitBox) return;
+    raycaster.intersectObject(r.hitBox, true).forEach(h => hits.push({...h, ri: i}));
+  });
+  hits.sort((a, b) => a.distance - b.distance);
+  if (hits.length) {
+    handleTap(hits[0].ri);
+    return;
+  }
+
+  // Method 2: Screen-space distance fallback
+  let best = -1, bestDist = 0.40;
+  const rodH = getRodHeight(state.cap);
+  state.rods.forEach((r, i) => {
+    if (!r.mesh) return;
+    const wp = new THREE.Vector3();
+    r.mesh.getWorldPosition(wp);
+    // Sample 5 heights along the rod
+    for (let t = 0; t <= 1; t += 0.25) {
+      const sp = new THREE.Vector3(wp.x, wp.y - rodH/2 + rodH*t, wp.z);
+      sp.project(camera);
+      const dx = sp.x - mouse.x, dy = sp.y - mouse.y;
+      const d = Math.sqrt(dx*dx + dy*dy);
+      if (d < bestDist) { bestDist = d; best = i; }
+    }
+  });
+  if (best >= 0) handleTap(best);
+}
+
 canvas.addEventListener('pointerdown', (e) => {
-  if (state.phase !== 'playing') return;
   e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const cx = e.touches ? e.touches[0].clientX : e.clientX;
-  const cy = e.touches ? e.touches[0].clientY : e.clientY;
-  mouse.x = ((cx - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((cy - rect.top) / rect.height) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-  const hits = [];
-  state.rods.forEach((r, i) => {
-    if (!r.hitBox) return;
-    raycaster.intersectObject(r.hitBox, true).forEach(h => hits.push({...h, ri: i}));
-  });
-  hits.sort((a, b) => a.distance - b.distance);
-  if (hits.length) {
-    handleTap(hits[0].ri);
-  } else {
-    // Fallback: simple distance-based detection using rod world positions
-    const vec = new THREE.Vector3(mouse.x, mouse.y, 0.5).unproject(camera);
-    let closestRod = -1, closestDist = Infinity;
-    state.rods.forEach((r, i) => {
-      if (!r.mesh) return;
-      const wp = new THREE.Vector3();
-      r.mesh.getWorldPosition(wp);
-      // Project rod to screen
-      const screenPos = wp.clone().project(camera);
-      const dx = screenPos.x - mouse.x;
-      const dy = screenPos.y - mouse.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      if (dist < 0.35 && dist < closestDist) {
-        closestDist = dist;
-        closestRod = i;
-      }
-    });
-    if (closestRod >= 0) handleTap(closestRod);
-  }
+  handlePointer(e.clientX, e.clientY);
 });
+
 canvas.addEventListener('touchstart', (e) => {
-  if (state.phase !== 'playing') return;
   e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const cx = e.touches[0].clientX;
-  const cy = e.touches[0].clientY;
-  mouse.x = ((cx - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((cy - rect.top) / rect.height) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-  const hits = [];
-  state.rods.forEach((r, i) => {
-    if (!r.hitBox) return;
-    raycaster.intersectObject(r.hitBox, true).forEach(h => hits.push({...h, ri: i}));
-  });
-  hits.sort((a, b) => a.distance - b.distance);
-  if (hits.length) {
-    handleTap(hits[0].ri);
-  } else {
-    // Fallback: simple distance-based detection
-    const vec = new THREE.Vector3(mouse.x, mouse.y, 0.5).unproject(camera);
-    let closestRod = -1, closestDist = Infinity;
-    state.rods.forEach((r, i) => {
-      if (!r.mesh) return;
-      const wp = new THREE.Vector3();
-      r.mesh.getWorldPosition(wp);
-      const screenPos = wp.clone().project(camera);
-      const dx = screenPos.x - mouse.x;
-      const dy = screenPos.y - mouse.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      if (dist < 0.35 && dist < closestDist) {
-        closestDist = dist;
-        closestRod = i;
-      }
-    });
-    if (closestRod >= 0) handleTap(closestRod);
-  }
+  handlePointer(e.touches[0].clientX, e.touches[0].clientY);
 }, { passive: false });
 
 // ─── Resize ───────────────────────────────────────────────────────────────────
@@ -1031,6 +1012,7 @@ document.getElementById('btnMenuFail').addEventListener('click', () => {
 window.game = state;
 window.startGame = (levelIdx) => { initLevel(levelIdx); showGame(); };
 window.handleTap = handleTap;
+window.handlePointer = handlePointer;
 
 // ─── Initial State ────────────────────────────────────────────────────────────
 showMenu();
