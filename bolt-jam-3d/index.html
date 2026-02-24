@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Bolt Jam 3D - Screw Puzzle</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #1a0f08;
+      font-family: 'Arial', sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      color: #FFD700;
+    }
+    #game-container {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    #gamezipper-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: linear-gradient(90deg,#2C1810,#5C3820,#2C1810);
+      color: #FFD700;
+      text-align: center;
+      padding: 5px;
+      font-size: 12px;
+      z-index: 99999;
+      text-decoration: none;
+      letter-spacing: 1px;
+      display: block;
+    }
+    #hud {
+      position: fixed;
+      top: 24px; left: 0; right: 0;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 6px 10px;
+      background: rgba(44,24,16,0.9);
+      border-bottom: 2px solid #5C3820;
+      z-index: 100;
+      height: 44px;
+    }
+    #hud span {
+      font-size: 13px;
+      font-weight: bold;
+      color: #FFD700;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+    #controls {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 8px;
+      background: rgba(44,24,16,0.95);
+      border-top: 2px solid #5C3820;
+      z-index: 100;
+      height: 56px;
+    }
+    #controls button {
+      background: linear-gradient(180deg,#8B6914,#5C4010);
+      color: #FFD700;
+      border: 2px solid #FFD700;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-width: 80px;
+    }
+    #controls button:hover { background: linear-gradient(180deg,#B8891A,#7C5510); }
+    #controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #three-canvas {
+      position: fixed;
+      top: 68px; left: 0;
+      width: 100vw;
+      height: calc(100vh - 124px);
+      display: block;
+    }
+    /* Overlays */
+    .overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .overlay.hidden { display: none; }
+    .panel {
+      background: linear-gradient(180deg,#3C2010,#1C0E08);
+      border: 3px solid #8B6914;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 380px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(255,165,0,0.3);
+    }
+    .panel h1 { font-size: 28px; color: #FFD700; margin-bottom: 8px; text-shadow: 0 0 10px #FF8C00; }
+    .panel h2 { font-size: 20px; color: #FFD700; margin-bottom: 16px; }
+    .panel p { color: #DEB887; margin: 6px 0; font-size: 14px; }
+    .btn-primary {
+      background: linear-gradient(180deg,#FFD700,#B8860B);
+      color: #2C1810;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 6px;
+      min-width: 130px;
+      transition: all 0.15s;
+      box-shadow: 0 4px 12px rgba(255,165,0,0.4);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(255,165,0,0.6); }
+    .btn-secondary {
+      background: linear-gradient(180deg,#5C3820,#2C1810);
+      color: #FFD700;
+      border: 2px solid #8B6914;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 6px;
+      min-width: 110px;
+      transition: all 0.15s;
+    }
+    .btn-secondary:hover { background: linear-gradient(180deg,#7C4830,#3C1E10); }
+    .stars { font-size: 28px; margin: 10px 0; }
+    /* Level select grid */
+    #level-grid {
+      display: grid;
+      grid-template-columns: repeat(5,1fr);
+      gap: 8px;
+      max-height: 350px;
+      overflow-y: auto;
+      margin: 12px 0;
+      padding: 4px;
+    }
+    .level-cell {
+      background: linear-gradient(180deg,#5C3820,#2C1810);
+      border: 2px solid #8B6914;
+      border-radius: 8px;
+      padding: 6px 4px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 13px;
+      font-weight: bold;
+      color: #FFD700;
+      transition: all 0.15s;
+      min-height: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .level-cell:hover { background: linear-gradient(180deg,#7C5830,#3C2010); border-color: #FFD700; }
+    .level-cell.locked { opacity: 0.4; cursor: not-allowed; }
+    .level-cell.locked:hover { background: linear-gradient(180deg,#5C3820,#2C1810); border-color: #8B6914; }
+    .level-cell .cell-stars { font-size: 9px; line-height: 1; margin-top: 2px; }
+    /* Scroll bar style */
+    #level-grid::-webkit-scrollbar { width: 6px; }
+    #level-grid::-webkit-scrollbar-track { background: #1C0E08; }
+    #level-grid::-webkit-scrollbar-thumb { background: #8B6914; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<a id="gamezipper-bar" href="https://gamezipper.com/" target="_blank">🔩 More Games at GameZipper.com</a>
+
+<div id="game-container">
+  <div id="hud">
+    <span id="level-display">LEVEL 1</span>
+    <span id="moves-display">MOVES: 0</span>
+    <span id="timer-display">⏱ 0:00</span>
+  </div>
+
+  <canvas id="three-canvas"></canvas>
+
+  <div id="controls">
+    <button id="undo-btn">↩ UNDO (3)</button>
+    <button id="hint-btn">💡 HINT (3)</button>
+    <button id="menu-btn">☰ MENU</button>
+  </div>
+</div>
+
+<!-- Main Menu -->
+<div id="menu-overlay" class="overlay">
+  <div class="panel">
+    <h1>🔩 BOLT JAM 3D</h1>
+    <p>Sort the colored disks onto rods.</p>
+    <p>Match 3 same colors to clear them!</p>
+    <br>
+    <button class="btn-primary" id="play-btn">▶ PLAY</button>
+    <br>
+    <button class="btn-secondary" id="levels-btn">📋 LEVELS</button>
+  </div>
+</div>
+
+<!-- Level Select -->
+<div id="level-overlay" class="overlay hidden">
+  <div class="panel">
+    <h2>SELECT LEVEL</h2>
+    <div id="level-grid"></div>
+    <button class="btn-secondary" id="back-to-menu-btn">← BACK</button>
+  </div>
+</div>
+
+<!-- Win Overlay -->
+<div id="win-overlay" class="overlay hidden">
+  <div class="panel">
+    <h2>🎉 LEVEL COMPLETE!</h2>
+    <div class="stars" id="win-stars">⭐⭐⭐</div>
+    <p id="win-moves">Moves: 0</p>
+    <p id="win-time">Time: 0:00</p>
+    <br>
+    <button class="btn-primary" id="next-level-btn">NEXT LEVEL ▶</button>
+    <br>
+    <button class="btn-secondary" id="retry-btn">↺ RETRY</button>
+    <button class="btn-secondary" id="win-menu-btn">☰ MENU</button>
+  </div>
+</div>
+
+<!-- Fail Overlay -->
+<div id="fail-overlay" class="overlay hidden">
+  <div class="panel">
+    <h2>😔 NO MORE MOVES!</h2>
+    <p>No valid moves remaining.</p>
+    <br>
+    <button class="btn-primary" id="fail-retry-btn">↺ TRY AGAIN</button>
+    <button class="btn-secondary" id="fail-menu-btn">☰ MENU</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ============================================================
+// CONSTANTS & CONFIG
+// ============================================================
+const COLORS = [
+  { hex: 0xFF4444, name: 'Red',    css: '#FF4444' },
+  { hex: 0xFF8C00, name: 'Orange', css: '#FF8C00' },
+  { hex: 0xFFD700, name: 'Yellow', css: '#FFD700' },
+  { hex: 0x44BB44, name: 'Green',  css: '#44BB44' },
+  { hex: 0x4488FF, name: 'Blue',   css: '#4488FF' },
+  { hex: 0xAA44FF, name: 'Purple', css: '#AA44FF' },
+  { hex: 0xFF66BB, name: 'Pink',   css: '#FF66BB' },
+  { hex: 0x00CCCC, name: 'Cyan',   css: '#00CCCC' },
+];
+
+// Generate 50 level configs
+function buildLevels() {
+  const levels = [];
+  for (let i = 1; i <= 50; i++) {
+    let rods, emptyRods, colors;
+    if (i <= 3)       { rods=4; emptyRods=2; colors=2; }
+    else if (i <= 5)  { rods=4; emptyRods=1; colors=2; }
+    else if (i <= 8)  { rods=5; emptyRods=1; colors=3; }
+    else if (i <= 10) { rods=5; emptyRods=2; colors=3; }
+    else if (i <= 20) { rods=6; emptyRods=2; colors=4; }
+    else if (i <= 30) { rods=7; emptyRods=2; colors=5; }
+    else if (i <= 40) { rods=8; emptyRods=2; colors=6; }
+    else              { rods=9; emptyRods=2; colors=7; }
+    levels.push({ id:i, rods, emptyRods, colors, capacity:3 });
+  }
+  return levels;
+}
+const LEVELS = buildLevels();
+
+// ============================================================
+// AUDIO
+// ============================================================
+function playSound(type) {
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    switch(type) {
+      case 'pick':
+        o.type = 'sine';
+        o.frequency.setValueAtTime(440, ac.currentTime);
+        o.frequency.exponentialRampToValueAtTime(880, ac.currentTime+0.08);
+        g.gain.setValueAtTime(0.2, ac.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, ac.currentTime+0.1);
+        o.start(); o.stop(ac.currentTime+0.1);
+        break;
+      case 'drop':
+        o.type = 'square';
+        o.frequency.setValueAtTime(200, ac.currentTime);
+        o.frequency.exponentialRampToValueAtTime(80, ac.currentTime+0.1);
+        g.gain.setValueAtTime(0.15, ac.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, ac.currentTime+0.1);
+        o.start(); o.stop(ac.currentTime+0.1);
+        break;
+      case 'match': {
+        const o1=ac.createOscillator(), o2=ac.createOscillator(), o3=ac.createOscillator();
+        const gm=ac.createGain();
+        [o1,o2,o3].forEach(ox=>{ ox.type='sine'; ox.connect(gm); });
+        gm.connect(ac.destination);
+        o1.frequency.value=523; o2.frequency.value=784; o3.frequency.value=1047;
+        gm.gain.setValueAtTime(0.25, ac.currentTime);
+        gm.gain.exponentialRampToValueAtTime(0.01, ac.currentTime+0.6);
+        o1.start(ac.currentTime); o1.stop(ac.currentTime+0.15);
+        o2.start(ac.currentTime+0.12); o2.stop(ac.currentTime+0.3);
+        o3.start(ac.currentTime+0.25); o3.stop(ac.currentTime+0.6);
+        break;
+      }
+      case 'win': {
+        const notes=[261,329,392,523,659,784,1047];
+        notes.forEach((freq,i)=>{
+          const ow=ac.createOscillator(), gw=ac.createGain();
+          ow.type='sine'; ow.connect(gw); gw.connect(ac.destination);
+          ow.frequency.value=freq;
+          const t=ac.currentTime+i*0.12;
+          gw.gain.setValueAtTime(0.2, t);
+          gw.gain.exponentialRampToValueAtTime(0.01, t+0.25);
+          ow.start(t); ow.stop(t+0.25);
+        });
+        break;
+      }
+      case 'invalid':
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(150, ac.currentTime);
+        g.gain.setValueAtTime(0.1, ac.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, ac.currentTime+0.15);
+        o.start(); o.stop(ac.currentTime+0.15);
+        break;
+    }
+  } catch(e) { /* audio not critical */ }
+}
+
+// ============================================================
+// THREE.JS SCENE
+// ============================================================
+const canvas = document.getElementById('three-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x2C1810);
+scene.fog = new THREE.Fog(0x1a0f08, 20, 60);
+
+// Camera
+const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+camera.position.set(0, 8, 10);
+camera.lookAt(0, 0, 0);
+
+// Lights
+const ambientLight = new THREE.AmbientLight(0xFFE4B5, 0.6);
+scene.add(ambientLight);
+const dirLight = new THREE.DirectionalLight(0xFFF5DC, 1.2);
+dirLight.position.set(-5, 10, 5);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(1024, 1024);
+scene.add(dirLight);
+const pointLight = new THREE.PointLight(0xFF8C00, 0.8, 20);
+pointLight.position.set(0, 6, 0);
+scene.add(pointLight);
+
+// Table surface
+const tableGeo = new THREE.PlaneGeometry(30, 20);
+const tableMat = new THREE.MeshStandardMaterial({
+  color: 0x3D2009,
+  roughness: 0.9,
+  metalness: 0.0,
+});
+const table = new THREE.Mesh(tableGeo, tableMat);
+table.rotation.x = -Math.PI/2;
+table.position.y = -0.1;
+table.receiveShadow = true;
+scene.add(table);
+
+// Raycaster
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+// ============================================================
+// GAME STATE
+// ============================================================
+let gameState = 'menu'; // menu | levelSelect | playing | win | fail
+let currentLevelId = 1;
+let rodDisks = [];       // rodDisks[rodIdx] = [colorIdx, ...]  bottom→top
+let capacity = 3;
+let selectedRod = -1;
+let moves = 0;
+let undoRemain = 3;
+let hintRemain = 3;
+let undoHistory = [];
+let timerSeconds = 0;
+let timerInterval = null;
+let hintRodIdx = -1;
+let hintTimer = 0;
+
+// 3D objects
+let rodGroup = new THREE.Group();
+scene.add(rodGroup);
+let rodBases = [];      // Array of mesh objects for raycasting
+let diskMeshes = [];    // diskMeshes[rodIdx] = [mesh, ...]
+let selectedMesh = null;
+let selectionRing = null;
+let particles = [];
+
+// ============================================================
+// STORAGE
+// ============================================================
+function saveProgress() {
+  try {
+    const data = JSON.parse(localStorage.getItem('boltjam3d') || '{}');
+    localStorage.setItem('boltjam3d', JSON.stringify(data));
+  } catch(e){}
+}
+function loadProgress() {
+  try {
+    return JSON.parse(localStorage.getItem('boltjam3d') || '{}');
+  } catch(e) { return {}; }
+}
+function getProgress() {
+  return loadProgress();
+}
+function setLevelComplete(levelId, starCount) {
+  const data = loadProgress();
+  if (!data.stars) data.stars = {};
+  if (!data.stars[levelId] || data.stars[levelId] < starCount) {
+    data.stars[levelId] = starCount;
+  }
+  if (!data.maxLevel || data.maxLevel < levelId + 1) {
+    data.maxLevel = Math.min(levelId + 1, 50);
+  }
+  localStorage.setItem('boltjam3d', JSON.stringify(data));
+}
+
+// ============================================================
+// LEVEL GENERATION
+// ============================================================
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function generateLevel(config) {
+  const { colors, capacity: cap, rods, emptyRods } = config;
+  const filledRods = rods - emptyRods;
+  let allDisks = [];
+  for (let c = 0; c < colors; c++) {
+    for (let i = 0; i < cap; i++) allDisks.push(c);
+  }
+  shuffle(allDisks);
+  const rodDisksArr = [];
+  for (let r = 0; r < filledRods; r++) {
+    rodDisksArr.push(allDisks.slice(r * cap, (r+1) * cap));
+  }
+  for (let r = 0; r < emptyRods; r++) rodDisksArr.push([]);
+  return rodDisksArr;
+}
+
+// ============================================================
+// 3D SCENE BUILDING
+// ============================================================
+function buildScene(levelConfig, disks) {
+  // Clear old
+  while(rodGroup.children.length > 0) rodGroup.remove(rodGroup.children[0]);
+  rodBases = [];
+  diskMeshes = [];
+  selectedRod = -1;
+  selectedMesh = null;
+  selectionRing = null;
+  particles = [];
+
+  const numRods = levelConfig.rods;
+  capacity = levelConfig.capacity;
+
+  // Layout rods in rows
+  const positions = getRodPositions(numRods);
+  adjustCamera(numRods);
+
+  for (let i = 0; i < numRods; i++) {
+    const pos = positions[i];
+    // Base
+    const baseGeo = new THREE.CylinderGeometry(0.6, 0.65, 0.2, 32);
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x6B4423, roughness: 0.8, metalness: 0.1 });
+    const base = new THREE.Mesh(baseGeo, baseMat);
+    base.position.set(pos.x, 0.1, pos.z);
+    base.castShadow = true;
+    base.receiveShadow = true;
+    base.userData = { rodIndex: i, type: 'base' };
+    rodGroup.add(base);
+    rodBases.push(base);
+
+    // Rod post
+    const rodGeo = new THREE.CylinderGeometry(0.12, 0.15, 4.0, 12);
+    const rodMat = new THREE.MeshStandardMaterial({ color: 0x8B6914, roughness: 0.3, metalness: 0.7 });
+    const rod = new THREE.Mesh(rodGeo, rodMat);
+    rod.position.set(pos.x, 2.1, pos.z);
+    rod.castShadow = true;
+    rod.userData = { rodIndex: i, type: 'rod' };
+    rodGroup.add(rod);
+    rodBases.push(rod); // also raycasted
+
+    // Rod tip (screw head)
+    const tipGeo = new THREE.CylinderGeometry(0.22, 0.12, 0.25, 12);
+    const tipMat = new THREE.MeshStandardMaterial({ color: 0xB8860B, roughness: 0.2, metalness: 0.9 });
+    const tip = new THREE.Mesh(tipGeo, tipMat);
+    tip.position.set(pos.x, 4.25, pos.z);
+    tip.userData = { rodIndex: i, type: 'tip' };
+    rodGroup.add(tip);
+    rodBases.push(tip);
+
+    // Disks
+    diskMeshes.push([]);
+    buildDisksForRod(i, pos, disks[i]);
+  }
+}
+
+function getRodPositions(numRods) {
+  const positions = [];
+  if (numRods <= 4) {
+    const spacing = 2.2;
+    const startX = -((numRods - 1) * spacing) / 2;
+    for (let i = 0; i < numRods; i++) {
+      positions.push({ x: startX + i * spacing, z: 0 });
+    }
+  } else if (numRods <= 6) {
+    const cols = Math.ceil(numRods / 2);
+    const rowSpacing = 2.5, colSpacing = 2.2;
+    for (let i = 0; i < numRods; i++) {
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+      const startX = -((cols - 1) * colSpacing) / 2;
+      const startZ = -((Math.ceil(numRods/cols) - 1) * rowSpacing) / 2;
+      positions.push({ x: startX + col * colSpacing, z: startZ + row * rowSpacing });
+    }
+  } else {
+    const cols = Math.ceil(Math.sqrt(numRods));
+    const rows = Math.ceil(numRods / cols);
+    const colSpacing = 2.1, rowSpacing = 2.4;
+    const startX = -((cols - 1) * colSpacing) / 2;
+    const startZ = -((rows - 1) * rowSpacing) / 2;
+    let idx = 0;
+    for (let r = 0; r < rows && idx < numRods; r++) {
+      for (let c = 0; c < cols && idx < numRods; c++, idx++) {
+        positions.push({ x: startX + c * colSpacing, z: startZ + r * rowSpacing });
+      }
+    }
+  }
+  return positions;
+}
+
+function adjustCamera(numRods) {
+  const dist = numRods <= 4 ? 10 : numRods <= 6 ? 12 : numRods <= 8 ? 15 : 18;
+  camera.position.set(0, dist * 0.75, dist);
+  camera.lookAt(0, 0, 0);
+}
+
+function buildDisksForRod(rodIdx, pos, diskColors) {
+  // Remove existing
+  const existing = diskMeshes[rodIdx] || [];
+  existing.forEach(m => rodGroup.remove(m));
+  diskMeshes[rodIdx] = [];
+
+  const BASE_Y = 0.3;
+  const DISK_SPACING = 0.28;
+  for (let d = 0; d < diskColors.length; d++) {
+    const colorIdx = diskColors[d];
+    const disk = createDiskMesh(colorIdx);
+    disk.position.set(pos.x, BASE_Y + d * DISK_SPACING, pos.z);
+    disk.castShadow = true;
+    disk.userData = { rodIndex: rodIdx, diskIndex: d, colorIdx };
+    rodGroup.add(disk);
+    diskMeshes[rodIdx].push(disk);
+  }
+}
+
+function createDiskMesh(colorIdx) {
+  // Outer ring with hole effect using torus-like shape
+  const outerGeo = new THREE.CylinderGeometry(0.7, 0.7, 0.22, 32);
+  const innerGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.26, 16);
+  const col = COLORS[colorIdx] || COLORS[0];
+  const mat = new THREE.MeshStandardMaterial({
+    color: col.hex,
+    roughness: 0.35,
+    metalness: 0.15,
+    emissive: col.hex,
+    emissiveIntensity: 0.05,
+  });
+  const mesh = new THREE.Mesh(outerGeo, mat);
+  // Carve hole via inner dark cylinder
+  const holeMat = new THREE.MeshStandardMaterial({ color: 0x1a0f08, roughness: 1 });
+  const hole = new THREE.Mesh(innerGeo, holeMat);
+  hole.position.y = 0;
+  mesh.add(hole);
+  mesh.userData.colorIdx = colorIdx;
+  return mesh;
+}
+
+function getDiskPosition(rodIdx, diskIdx) {
+  const positions = getRodPositions(LEVELS[currentLevelId-1].rods);
+  const pos = positions[rodIdx];
+  const BASE_Y = 0.3;
+  const DISK_SPACING = 0.28;
+  return new THREE.Vector3(pos.x, BASE_Y + diskIdx * DISK_SPACING, pos.z);
+}
+
+// ============================================================
+// GAME LOGIC
+// ============================================================
+function startLevel(levelId) {
+  currentLevelId = levelId;
+  const config = LEVELS[levelId - 1];
+  moves = 0;
+  undoRemain = 3;
+  hintRemain = 3;
+  undoHistory = [];
+  hintRodIdx = -1;
+  clearInterval(timerInterval);
+  timerSeconds = 0;
+  selectedRod = -1;
+
+  rodDisks = generateLevel(config);
+  buildScene(config, rodDisks);
+  updateHUD();
+  updateButtons();
+
+  timerInterval = setInterval(() => {
+    timerSeconds++;
+    updateTimerDisplay();
+  }, 1000);
+
+  gameState = 'playing';
+  hideAllOverlays();
+  console.log('[BoltJam] Level started:', levelId, 'rods:', config.rods, 'colors:', config.colors);
+}
+
+function handleRodClick(rodIdx) {
+  if (gameState !== 'playing') return;
+  hintRodIdx = -1;
+  clearBaseHighlights();
+
+  if (selectedRod === -1) {
+    // Select this rod's top disk
+    if (rodDisks[rodIdx].length === 0) {
+      // Empty rod, can't select
+      shakeRod(rodIdx);
+      return;
+    }
+    selectedRod = rodIdx;
+    liftTopDisk(rodIdx);
+    highlightValidTargets(rodIdx);
+    playSound('pick');
+  } else if (selectedRod === rodIdx) {
+    // Cancel selection
+    dropTopDisk(selectedRod);
+    selectedRod = -1;
+    removeSelectionRing();
+  } else {
+    // Move disk
+    const src = selectedRod;
+    const dst = rodIdx;
+    if (canMoveTo(dst)) {
+      performMove(src, dst);
+    } else {
+      // Invalid
+      shakeRod(dst);
+      playSound('invalid');
+      // Keep selection
+      highlightValidTargets(src);
+    }
+  }
+}
+
+function canMoveTo(dstRodIdx) {
+  return rodDisks[dstRodIdx].length < capacity;
+}
+
+function performMove(src, dst) {
+  // Save state for undo
+  undoHistory.push(JSON.parse(JSON.stringify(rodDisks)));
+  if (undoHistory.length > 10) undoHistory.shift();
+
+  const topColor = rodDisks[src].pop();
+  rodDisks[dst].push(topColor);
+  moves++;
+
+  // Animate
+  dropTopDisk(src);   // snap back
+  removeSelectionRing();
+  selectedRod = -1;
+
+  // Rebuild visual for both rods
+  rebuildRodVisuals(src);
+  rebuildRodVisuals(dst);
+
+  playSound('drop');
+  updateHUD();
+  updateButtons();
+
+  // Check for match on dst
+  setTimeout(() => {
+    checkMatch(dst);
+  }, 150);
+}
+
+function rebuildRodVisuals(rodIdx) {
+  const config = LEVELS[currentLevelId-1];
+  const positions = getRodPositions(config.rods);
+  const pos = positions[rodIdx];
+  buildDisksForRod(rodIdx, pos, rodDisks[rodIdx]);
+}
+
+function checkMatch(rodIdx) {
+  const stack = rodDisks[rodIdx];
+  if (stack.length < capacity) return;
+  // Check top 3 (or full if capacity=3)
+  const topN = stack.slice(-capacity);
+  if (topN.every(c => c === topN[0])) {
+    // Match! Remove
+    playSound('match');
+    spawnParticles(rodIdx, topN[0]);
+    rodDisks[rodIdx].splice(rodDisks[rodIdx].length - capacity, capacity);
+    rebuildRodVisuals(rodIdx);
+    console.log('[BoltJam] Match on rod', rodIdx, 'color', topN[0]);
+    setTimeout(() => checkWin(), 400);
+  }
+}
+
+function checkWin() {
+  const totalDisks = rodDisks.reduce((sum, r) => sum + r.length, 0);
+  if (totalDisks === 0) {
+    clearInterval(timerInterval);
+    gameState = 'win';
+    const starCount = moves <= 15 ? 3 : moves <= 25 ? 2 : 1;
+    setLevelComplete(currentLevelId, starCount);
+    playSound('win');
+    showWin(starCount);
+    console.log('[BoltJam] WIN! level', currentLevelId, 'moves', moves, 'stars', starCount);
+    return;
+  }
+  // Check fail: no valid moves
+  if (!hasAnyValidMove()) {
+    clearInterval(timerInterval);
+    gameState = 'fail';
+    showFail();
+  }
+}
+
+function hasAnyValidMove() {
+  for (let src = 0; src < rodDisks.length; src++) {
+    if (rodDisks[src].length === 0) continue;
+    for (let dst = 0; dst < rodDisks.length; dst++) {
+      if (dst === src) continue;
+      if (rodDisks[dst].length < capacity) return true;
+    }
+  }
+  return false;
+}
+
+// ============================================================
+// UNDO
+// ============================================================
+function doUndo() {
+  if (undoRemain <= 0 || undoHistory.length === 0) return;
+  undoRemain--;
+  rodDisks = undoHistory.pop();
+  rebuildAllRodVisuals();
+  selectedRod = -1;
+  removeSelectionRing();
+  clearBaseHighlights();
+  updateHUD();
+  updateButtons();
+}
+
+function rebuildAllRodVisuals() {
+  const config = LEVELS[currentLevelId-1];
+  const positions = getRodPositions(config.rods);
+  for (let i = 0; i < rodDisks.length; i++) {
+    const pos = positions[i];
+    buildDisksForRod(i, pos, rodDisks[i]);
+  }
+}
+
+// ============================================================
+// HINT
+// ============================================================
+function doHint() {
+  if (hintRemain <= 0) return;
+  hintRemain--;
+  // Find a valid move: prefer src→dst where dst top color = src top color
+  let bestSrc = -1, bestDst = -1;
+  for (let src = 0; src < rodDisks.length; src++) {
+    if (rodDisks[src].length === 0) continue;
+    const srcColor = rodDisks[src][rodDisks[src].length - 1];
+    for (let dst = 0; dst < rodDisks.length; dst++) {
+      if (dst === src) continue;
+      if (rodDisks[dst].length < capacity) {
+        if (bestSrc === -1) { bestSrc = src; bestDst = dst; }
+        // Prefer same-color
+        if (rodDisks[dst].length > 0 && rodDisks[dst][rodDisks[dst].length-1] === srcColor) {
+          bestSrc = src; bestDst = dst;
+          break;
+        }
+      }
+    }
+  }
+  if (bestSrc !== -1) {
+    hintRodIdx = bestSrc;
+    hintTimer = 3000;
+    flashBase(bestSrc);
+  }
+  updateButtons();
+}
+
+// ============================================================
+// VISUAL HELPERS
+// ============================================================
+function liftTopDisk(rodIdx) {
+  const meshes = diskMeshes[rodIdx];
+  if (meshes.length === 0) return;
+  const topMesh = meshes[meshes.length - 1];
+  topMesh.position.y += 0.9;
+  selectedMesh = topMesh;
+  // Selection ring
+  removeSelectionRing();
+  const ringGeo = new THREE.RingGeometry(0.75, 0.95, 32);
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0xFFD700, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
+  selectionRing = new THREE.Mesh(ringGeo, ringMat);
+  selectionRing.rotation.x = -Math.PI/2;
+  selectionRing.position.copy(topMesh.position);
+  selectionRing.position.y -= 0.12;
+  rodGroup.add(selectionRing);
+}
+
+function dropTopDisk(rodIdx) {
+  // Snap back to correct position
+  rebuildRodVisuals(rodIdx);
+  selectedMesh = null;
+  removeSelectionRing();
+}
+
+function removeSelectionRing() {
+  if (selectionRing) {
+    rodGroup.remove(selectionRing);
+    selectionRing = null;
+  }
+}
+
+function highlightValidTargets(srcRodIdx) {
+  const config = LEVELS[currentLevelId-1];
+  const positions = getRodPositions(config.rods);
+  for (let i = 0; i < rodDisks.length; i++) {
+    if (i === srcRodIdx) continue;
+    if (rodDisks[i].length < capacity) {
+      // Highlight base green
+      const base = rodBases.find(b => b.userData.rodIndex === i && b.userData.type === 'base');
+      if (base) {
+        base.material.color.setHex(0x44BB44);
+        base.material.emissive = new THREE.Color(0x004400);
+        base.material.emissiveIntensity = 0.3;
+      }
+    }
+  }
+}
+
+function clearBaseHighlights() {
+  rodBases.filter(b => b.userData.type === 'base').forEach(base => {
+    base.material.color.setHex(0x6B4423);
+    if (base.material.emissive) {
+      base.material.emissive.setHex(0x000000);
+      base.material.emissiveIntensity = 0;
+    }
+  });
+}
+
+function flashBase(rodIdx) {
+  const base = rodBases.find(b => b.userData.rodIndex === rodIdx && b.userData.type === 'base');
+  if (!base) return;
+  let count = 0;
+  const interval = setInterval(() => {
+    if (count >= 6 || hintRodIdx !== rodIdx) {
+      base.material.color.setHex(0x6B4423);
+      clearInterval(interval);
+      return;
+    }
+    base.material.color.setHex(count % 2 === 0 ? 0xFFD700 : 0x6B4423);
+    count++;
+  }, 250);
+}
+
+function shakeRod(rodIdx) {
+  const pos = getRodPositions(LEVELS[currentLevelId-1].rods)[rodIdx];
+  const base = rodBases.find(b => b.userData.rodIndex === rodIdx && b.userData.type === 'base');
+  if (!base) return;
+  const origX = pos.x;
+  const frames = [0.15, -0.15, 0.1, -0.1, 0];
+  let f = 0;
+  const interval = setInterval(() => {
+    if (f >= frames.length) { clearInterval(interval); return; }
+    base.position.x = origX + frames[f];
+    f++;
+  }, 50);
+}
+
+// ============================================================
+// PARTICLES
+// ============================================================
+function spawnParticles(rodIdx, colorIdx) {
+  const positions = getRodPositions(LEVELS[currentLevelId-1].rods);
+  const pos = positions[rodIdx];
+  const col = COLORS[colorIdx] || COLORS[0];
+  for (let p = 0; p < 20; p++) {
+    const geo = new THREE.SphereGeometry(0.1, 6, 6);
+    const mat = new THREE.MeshBasicMaterial({ color: col.hex });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(pos.x, 1.5, pos.z);
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 0.05 + Math.random() * 0.08;
+    const vy = 0.05 + Math.random() * 0.08;
+    mesh.userData.vx = Math.cos(angle) * speed;
+    mesh.userData.vy = vy;
+    mesh.userData.vz = Math.sin(angle) * speed;
+    mesh.userData.life = 1.0;
+    mesh.userData.isParticle = true;
+    rodGroup.add(mesh);
+    particles.push(mesh);
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.userData.life -= dt * 1.5;
+    if (p.userData.life <= 0) {
+      rodGroup.remove(p);
+      particles.splice(i, 1);
+      continue;
+    }
+    p.position.x += p.userData.vx;
+    p.position.y += p.userData.vy;
+    p.position.z += p.userData.vz;
+    p.userData.vy -= 0.003; // gravity
+    p.material.opacity = p.userData.life;
+    p.material.transparent = true;
+  }
+}
+
+// ============================================================
+// HUD & BUTTONS
+// ============================================================
+function updateHUD() {
+  document.getElementById('level-display').textContent = 'LEVEL ' + currentLevelId;
+  document.getElementById('moves-display').textContent = 'MOVES: ' + moves;
+}
+function updateTimerDisplay() {
+  const m = Math.floor(timerSeconds / 60);
+  const s = timerSeconds % 60;
+  document.getElementById('timer-display').textContent = `⏱ ${m}:${s.toString().padStart(2,'0')}`;
+}
+function updateButtons() {
+  document.getElementById('undo-btn').textContent = `↩ UNDO (${undoRemain})`;
+  document.getElementById('undo-btn').disabled = undoRemain <= 0 || undoHistory.length === 0;
+  document.getElementById('hint-btn').textContent = `💡 HINT (${hintRemain})`;
+  document.getElementById('hint-btn').disabled = hintRemain <= 0;
+}
+
+// ============================================================
+// OVERLAYS
+// ============================================================
+function hideAllOverlays() {
+  ['menu-overlay','level-overlay','win-overlay','fail-overlay'].forEach(id => {
+    document.getElementById(id).classList.add('hidden');
+  });
+}
+function showMenu() {
+  hideAllOverlays();
+  document.getElementById('menu-overlay').classList.remove('hidden');
+  gameState = 'menu';
+  clearInterval(timerInterval);
+}
+function showLevelSelect() {
+  hideAllOverlays();
+  buildLevelGrid();
+  document.getElementById('level-overlay').classList.remove('hidden');
+  gameState = 'levelSelect';
+}
+function showWin(stars) {
+  document.getElementById('win-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
+  document.getElementById('win-moves').textContent = 'Moves: ' + moves;
+  const m = Math.floor(timerSeconds/60), s = timerSeconds%60;
+  document.getElementById('win-time').textContent = `Time: ${m}:${s.toString().padStart(2,'0')}`;
+  document.getElementById('next-level-btn').style.display = currentLevelId < 50 ? '' : 'none';
+  document.getElementById('win-overlay').classList.remove('hidden');
+}
+function showFail() {
+  document.getElementById('fail-overlay').classList.remove('hidden');
+}
+
+function buildLevelGrid() {
+  const grid = document.getElementById('level-grid');
+  grid.innerHTML = '';
+  const progress = getProgress();
+  const maxLevel = progress.maxLevel || 1;
+  const stars = progress.stars || {};
+  for (let i = 1; i <= 50; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'level-cell' + (i > maxLevel ? ' locked' : '');
+    cell.innerHTML = `<div>${i}</div><div class="cell-stars">${starsStr(stars[i] || 0)}</div>`;
+    if (i <= maxLevel) {
+      cell.addEventListener('click', () => {
+        startLevel(i);
+      });
+    }
+    grid.appendChild(cell);
+  }
+}
+
+function starsStr(n) {
+  if (n === 0) return '';
+  return '★'.repeat(n) + '☆'.repeat(3-n);
+}
+
+// ============================================================
+// RESIZE
+// ============================================================
+function onResize() {
+  const w = window.innerWidth;
+  const h = window.innerHeight - 124; // hud(44) + gz-bar(24) + controls(56)
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', onResize);
+onResize();
+
+// ============================================================
+// POINTER INPUT
+// ============================================================
+renderer.domElement.addEventListener('pointerdown', onPointerDown);
+
+function onPointerDown(event) {
+  if (gameState !== 'playing') return;
+  event.preventDefault();
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+
+  // Intersect all clickable objects (bases, rods, tips)
+  const intersects = raycaster.intersectObjects(rodBases);
+  if (intersects.length > 0) {
+    const obj = intersects[0].object;
+    const rodIdx = obj.userData.rodIndex;
+    if (rodIdx !== undefined) {
+      handleRodClick(rodIdx);
+    }
+  }
+}
+
+// ============================================================
+// ANIMATION LOOP
+// ============================================================
+let lastTime = 0;
+function animate(time) {
+  requestAnimationFrame(animate);
+  const dt = Math.min((time - lastTime) / 1000, 0.1);
+  lastTime = time;
+
+  // Animate selection ring
+  if (selectionRing) {
+    selectionRing.rotation.z += dt * 2;
+    selectionRing.material.opacity = 0.7 + 0.3 * Math.sin(time * 0.005);
+  }
+
+  // Animate particles
+  updateParticles(dt);
+
+  // Animate selected disk bobbing
+  if (selectedMesh) {
+    selectedMesh.position.y = selectedMesh.position.y + Math.sin(time * 0.005) * 0.001;
+  }
+
+  renderer.render(scene, camera);
+}
+animate(0);
+
+// ============================================================
+// UI BUTTON EVENTS
+// ============================================================
+document.getElementById('play-btn').addEventListener('click', () => {
+  const progress = getProgress();
+  const level = progress.currentLevel || 1;
+  startLevel(level);
+});
+document.getElementById('levels-btn').addEventListener('click', showLevelSelect);
+document.getElementById('back-to-menu-btn').addEventListener('click', showMenu);
+document.getElementById('undo-btn').addEventListener('click', doUndo);
+document.getElementById('hint-btn').addEventListener('click', doHint);
+document.getElementById('menu-btn').addEventListener('click', showMenu);
+document.getElementById('next-level-btn').addEventListener('click', () => {
+  if (currentLevelId < 50) startLevel(currentLevelId + 1);
+});
+document.getElementById('retry-btn').addEventListener('click', () => startLevel(currentLevelId));
+document.getElementById('win-menu-btn').addEventListener('click', showMenu);
+document.getElementById('fail-retry-btn').addEventListener('click', () => startLevel(currentLevelId));
+document.getElementById('fail-menu-btn').addEventListener('click', showMenu);
+
+// ============================================================
+// INIT
+// ============================================================
+showMenu();
+console.log('[BoltJam] Game initialized. Three.js r134 loaded:', !!THREE);
+</script>
+</body>
+</html>
