@@ -944,7 +944,7 @@ gameScene._generateTurkeys = function() {
       turkeys.push({
         id: idx++, typeId: turkeyList[ii],
         x: Math.max(2, Math.min(tx, w - TURKEY_W - 2)),
-        y: Math.max(_gameAreaY + 2, Math.min(ty, _slotBarY - TURKEY_H - 60)),
+        y: Math.max(_gameAreaY + 2, Math.min(ty, _slotBarY - TURKEY_H - 20)),
         layer: layer, removed: false, blocked: false,
       });
     }
