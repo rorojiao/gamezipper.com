@@ -142,20 +142,22 @@ const COLORS_HEX = [0xFF6B35, 0xB71C1C, 0x33691E, 0xF9A825, 0x00796B, 0x5D4037, 
 const SAVE_KEY = 'sushiStack3d_v1';
 
 const LEVEL_CONFIGS = [
-  // 关1-5：超简单新手期（3根钉含1空，2色，深3）
-  ...Array(5).fill({rods:3, empty:1, colors:2, cap:3}),
-  // 关6-15：简单期（4根含1空，3色，深3）
+  // 关1-3：超简单教程（3根含1空，2色，深3）
+  ...Array(3).fill({rods:3, empty:1, colors:2, cap:3}),
+  // 关4-10：简单导入（4根含1空，2色，深3）
+  ...Array(7).fill({rods:4, empty:1, colors:2, cap:3}),
+  // 关11-20：入门（4根含1空，3色，深3）
   ...Array(10).fill({rods:4, empty:1, colors:3, cap:3}),
-  // 关16-30：标准期（5根含2空，4色，深3）
+  // 关21-35：标准（5根含2空，4色，深3）
   ...Array(15).fill({rods:5, empty:2, colors:4, cap:3}),
-  // 关31-45：提升期（5根含2空，5色，深4）
-  ...Array(15).fill({rods:5, empty:2, colors:5, cap:4}),
-  // 关46-60：中级（6根含2空，5色，深4）
+  // 关36-50：中级（5根含2空，4色，深4）
+  ...Array(15).fill({rods:5, empty:2, colors:4, cap:4}),
+  // 关51-65：提升（6根含2空，5色，深4）
   ...Array(15).fill({rods:6, empty:2, colors:5, cap:4}),
-  // 关61-75：高级（7根含2空，6色，深4）
+  // 关66-80：高级（7根含2空，6色，深4）
   ...Array(15).fill({rods:7, empty:2, colors:6, cap:4}),
-  // 关76-100：专家（8根含2空，6色，深5）
-  ...Array(25).fill({rods:8, empty:2, colors:6, cap:5}),
+  // 关81-100：专家（8根含2空，6色，深5）
+  ...Array(20).fill({rods:8, empty:2, colors:6, cap:5}),
 ];
 
 // ─── Save / Load ──────────────────────────────────────────────────────────────
@@ -845,56 +847,43 @@ function hideModals() {
   document.getElementById('failModal').classList.add('hidden');
 }
 
-// ─── Raycaster ────────────────────────────────────────────────────────────────
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
+// ─── Pointer Handler (1D screen-X method — works on all viewports/devices) ────
 function handlePointer(clientX, clientY) {
-  if (state.phase !== 'playing' || state.busy) return;
-  const rect = canvas.getBoundingClientRect();
-  mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-
-  // Method 1: Raycaster
-  const hits = [];
-  state.rods.forEach((r, i) => {
-    if (!r.hitBox) return;
-    raycaster.intersectObject(r.hitBox, true).forEach(h => hits.push({...h, ri: i}));
-  });
-  hits.sort((a, b) => a.distance - b.distance);
-  if (hits.length) {
-    handleTap(hits[0].ri);
-    return;
+  // busy timeout safety: if busy > 2s, force-reset
+  if (state.busy) {
+    const now = Date.now();
+    if (!state._busyStart) state._busyStart = now;
+    if (now - state._busyStart > 2000) {
+      state.busy = false;
+      state._busyStart = null;
+    } else {
+      return;
+    }
+  } else {
+    state._busyStart = null;
   }
+  if (state.phase !== 'playing') return;
 
-  // Method 2: Screen-space distance fallback
-  let best = -1, bestDist = 0.40;
-  const rodH = getRodHeight(state.cap);
+  const rect = canvas.getBoundingClientRect();
+
+  // Project each rod's world position to screen X, find closest
+  let best = -1, bestDist = rect.width * 0.25; // 25% screen width threshold
   state.rods.forEach((r, i) => {
     if (!r.mesh) return;
     const wp = new THREE.Vector3();
     r.mesh.getWorldPosition(wp);
-    // Sample 5 heights along the rod
-    for (let t = 0; t <= 1; t += 0.25) {
-      const sp = new THREE.Vector3(wp.x, wp.y - rodH/2 + rodH*t, wp.z);
-      sp.project(camera);
-      const dx = sp.x - mouse.x, dy = sp.y - mouse.y;
-      const d = Math.sqrt(dx*dx + dy*dy);
-      if (d < bestDist) { bestDist = d; best = i; }
-    }
+    wp.project(camera);
+    const screenX = (wp.x * 0.5 + 0.5) * rect.width + rect.left;
+    const d = Math.abs(screenX - clientX);
+    if (d < bestDist) { bestDist = d; best = i; }
   });
+
   if (best >= 0) handleTap(best);
 }
 
 canvas.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   handlePointer(e.clientX, e.clientY);
-});
-
-canvas.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  handlePointer(e.touches[0].clientX, e.touches[0].clientY);
 }, { passive: false });
 
 // ─── Resize ───────────────────────────────────────────────────────────────────
