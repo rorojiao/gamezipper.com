@@ -334,16 +334,17 @@ function drawSakura(ctx, x, y, size, angle, alpha){
 
 function drawSushiDisc(ctx, cx, cy, ci, r, thickness, selected, glowing){
   const h = thickness;
-  // Glow
+  const ry = r * 0.32;  // ellipse y-radius (竞品约0.32更立体，原0.28太扁)
+
   if(glowing){
     ctx.save();
-    ctx.shadowColor=COLORS[ci]; ctx.shadowBlur=18;
+    ctx.shadowColor=COLORS[ci]; ctx.shadowBlur=20;
   }
 
   // Side bottom ellipse
   ctx.fillStyle=COLOR_DARK[ci]||'#111';
   ctx.beginPath();
-  ctx.ellipse(cx,cy+h,r,r*0.28,0,0,Math.PI*2);
+  ctx.ellipse(cx,cy+h,r,ry,0,0,Math.PI*2);
   ctx.fill();
 
   // Side nori strip
@@ -354,7 +355,7 @@ function drawSushiDisc(ctx, cx, cy, ci, r, thickness, selected, glowing){
   ctx.fillStyle=COLORS[ci];
   ctx.fillRect(cx-r*0.62, cy, r*1.24, h);
 
-  // Rice side
+  // Rice side highlight
   const riceGrad=ctx.createLinearGradient(cx-r,0,cx+r,0);
   riceGrad.addColorStop(0,'rgba(250,248,240,0.7)');
   riceGrad.addColorStop(0.3,'rgba(250,248,240,0)');
@@ -366,42 +367,43 @@ function drawSushiDisc(ctx, cx, cy, ci, r, thickness, selected, glowing){
   // TOP FACE
   // Outer nori
   ctx.fillStyle='#1a1a0a';
-  ctx.beginPath(); ctx.ellipse(cx,cy,r,r*0.28,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx,cy,r,ry,0,0,Math.PI*2); ctx.fill();
 
   // Rice ring
   ctx.fillStyle='#FAF8F0';
-  ctx.beginPath(); ctx.ellipse(cx,cy,r*0.85,r*0.85*0.28,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx,cy,r*0.85,r*0.85*0.32,0,0,Math.PI*2); ctx.fill();
 
   // Filling core
   ctx.fillStyle=COLORS[ci];
-  ctx.beginPath(); ctx.ellipse(cx,cy,r*0.6,r*0.6*0.28,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx,cy,r*0.60,r*0.60*0.32,0,0,Math.PI*2); ctx.fill();
 
   // Filling radial highlight
-  const grad=ctx.createRadialGradient(cx-r*0.15,cy-r*0.05,1,cx,cy,r*0.6);
-  grad.addColorStop(0,'rgba(255,255,255,0.45)');
+  const grad=ctx.createRadialGradient(cx-r*0.15,cy-ry*0.4,1,cx,cy,r*0.6);
+  grad.addColorStop(0,'rgba(255,255,255,0.5)');
   grad.addColorStop(1,'rgba(255,255,255,0)');
   ctx.fillStyle=grad;
-  ctx.beginPath(); ctx.ellipse(cx,cy,r*0.6,r*0.6*0.28,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx,cy,r*0.60,r*0.60*0.32,0,0,Math.PI*2); ctx.fill();
 
-  // Overall highlight
-  ctx.save(); ctx.globalAlpha=0.2; ctx.fillStyle='#fff';
-  ctx.beginPath(); ctx.ellipse(cx+r*0.2,cy-r*0.06,r*0.35,r*0.1,0,0,Math.PI*2); ctx.fill();
+  // Overall top-right sheen
+  ctx.save(); ctx.globalAlpha=0.22; ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.ellipse(cx+r*0.22,cy-ry*0.3,r*0.32,ry*0.45,0,0,Math.PI*2); ctx.fill();
   ctx.restore();
 
   if(glowing) ctx.restore();
 
-  // Selected float ring
+  // Selected ring
   if(selected){
     ctx.save();
-    ctx.strokeStyle='rgba(255,220,50,0.9)'; ctx.lineWidth=3;
-    ctx.beginPath(); ctx.ellipse(cx,cy,r+4,(r+4)*0.28,0,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle='rgba(255,220,50,0.95)'; ctx.lineWidth=3;
+    ctx.shadowBlur=8; ctx.shadowColor='rgba(255,200,0,0.6)';
+    ctx.beginPath(); ctx.ellipse(cx,cy,r+5,ry+1.5,0,0,Math.PI*2); ctx.stroke();
     ctx.restore();
   }
 }
 
-function drawChopstickPair(ctx, cx, topY, bottomY, selected){
-  const w=5;
-  const gap=9;
+function drawChopstickPair(ctx, cx, topY, bottomY, discR, selected){
+  const w = Math.max(4, Math.round(discR * 0.14));  // 筷子宽度随discR缩放
+  const gap = Math.max(7, Math.round(discR * 0.28)); // 筷子间距随discR缩放
   // Left stick
   const lx=cx-gap;
   const lgr=ctx.createLinearGradient(lx-w,0,lx+w,0);
@@ -410,8 +412,7 @@ function drawChopstickPair(ctx, cx, topY, bottomY, selected){
   ctx.beginPath();
   ctx.roundRect(lx-w, topY, w*2, bottomY-topY, [w,w,1,1]);
   ctx.fill();
-  // Left tip (round)
-  ctx.fillStyle='#4A0F03';
+  ctx.fillStyle='#3A0800';
   ctx.beginPath(); ctx.arc(lx, topY, w, Math.PI, 0); ctx.fill();
 
   // Right stick
@@ -422,13 +423,14 @@ function drawChopstickPair(ctx, cx, topY, bottomY, selected){
   ctx.beginPath();
   ctx.roundRect(rx-w, topY, w*2, bottomY-topY, [w,w,1,1]);
   ctx.fill();
-  ctx.fillStyle='#4A0F03';
+  ctx.fillStyle='#3A0800';
   ctx.beginPath(); ctx.arc(rx, topY, w, Math.PI, 0); ctx.fill();
 
   if(selected){
     ctx.save();
-    ctx.strokeStyle='rgba(255,200,0,0.7)'; ctx.lineWidth=2;
-    ctx.strokeRect(cx-gap-w-4, topY-4, gap*2+w*2+8, bottomY-topY+8);
+    ctx.strokeStyle='rgba(255,210,0,0.75)'; ctx.lineWidth=2.5;
+    ctx.shadowBlur=10; ctx.shadowColor='rgba(255,200,0,0.5)';
+    ctx.strokeRect(cx-gap-w-5, topY-5, gap*2+w*2+10, bottomY-topY+10);
     ctx.restore();
   }
 }
@@ -505,29 +507,36 @@ class SushiGame {
     const n = this.rods.length;
     this.rows = n > 6 ? 2 : 1;
     const perRow = Math.ceil(n / this.rows);
-    this.spacing = Math.min((W - 40) / perRow, 100);
-    this.discR = Math.min(this.spacing * 0.38, 28);
+    this.spacing = Math.min((W - 36) / perRow, 110);
+    // discR scales with spacing, no low cap – fills horizontal space properly
+    this.discR = Math.min(this.spacing * 0.42, 46);
 
-    const hudH = 26 + 48; // topBar + hud
+    const hudH = 26 + 48; // topBar + hud HTML heights
     const botH = 68;
     const usableH = H - hudH - botH;
     const rowH = usableH / this.rows;
 
-    // rh = visual height of rod column (just the disc stacking area)
-    // Enough for cap+2 discs
-    const thick = this.discR * 0.55;
-    this.rh = (this.cap + 1) * thick * 1.3 + this.discR;
+    // Each disc layer visual height (3D ellipse: compressed by 0.32 ratio)
+    // Layer step = 2*discR*0.32 * spacing_factor ≈ discR * 0.72
+    const layerStep = this.discR * 0.72;
+    // Rod visual height: chopstick tip + disc stack + base
+    // Use 68% of rowH so content fills the screen, but not overflow
+    this.rh = Math.min((this.cap + 1.8) * layerStep + this.discR * 2.2,
+                       rowH * 0.72);
 
-    // rod.y = vertical center of the row (used as layout anchor)
-    // Discs are drawn upward from rod.y - discR
+    // Recompute layerStep to distribute discs evenly within rh
+    this.layerStep = (this.rh - this.discR * 2.2) / (this.cap + 1.8);
+
     for(let r=0;r<n;r++){
       const row = this.rows === 2 ? (r < Math.ceil(n/2) ? 0 : 1) : 0;
       const col = this.rows === 2 ? (row===0 ? r : r-Math.ceil(n/2)) : r;
       const rowCount = this.rows === 1 ? n : (row===0 ? Math.ceil(n/2) : Math.floor(n/2));
       const offsetX = (W - rowCount * this.spacing) / 2 + this.spacing / 2;
       this.rods[r].x = offsetX + col * this.spacing;
-      // rod.y = center-bottom area of the row
-      this.rods[r].y = hudH + (row + 0.78) * rowH;
+      // Center the entire rod visual vertically in its row:
+      // rod.y = base plate position = rowCenter + rh*0.38 (slight downward bias for aesthetic)
+      const rowCenter = hudH + (row + 0.5) * rowH;
+      this.rods[r].y = rowCenter + this.rh * 0.48;
     }
   }
 
@@ -624,11 +633,11 @@ class SushiGame {
   }
 
   _discY(rodIdx, stackLen){
-    // Y position of disc at stack position stackLen (0 = bottom)
+    // Y position of disc at stack index stackLen (0 = bottom)
     const rod = this.rods[rodIdx];
-    const thick = this.discR * 0.55;
-    const baseY = rod.y - thick * 0.5;
-    return baseY - stackLen * thick * 1.1;
+    const step = this.layerStep || this.discR * 0.72;
+    const baseY = rod.y - this.discR * 0.5;  // base plate center → disc bottom
+    return baseY - stackLen * step;
   }
 
   _finishFly(){
@@ -846,12 +855,14 @@ class SushiGame {
       const botY = rod.y + this.discR*0.3;
 
       // Base (tray)
-      const baseW=this.discR*2.2, baseH=this.discR*0.55;
-      ctx.fillStyle='#D4C5A0';
+      const baseW=this.discR*2.2, baseH=this.discR*0.6;
+      const isEmpty = rod.d.length === 0;
+      ctx.fillStyle= isEmpty ? '#EDE0C0' : '#D4C5A0';
       ctx.beginPath();
       ctx.roundRect(rod.x-baseW/2, rod.y-baseH/2, baseW, baseH, 5);
       ctx.fill();
-      ctx.strokeStyle='rgba(140,100,40,0.4)'; ctx.lineWidth=1;
+      ctx.strokeStyle= isEmpty ? 'rgba(160,120,50,0.6)' : 'rgba(140,100,40,0.8)';
+      ctx.lineWidth= isEmpty ? 1.5 : 2;
       ctx.beginPath();
       ctx.roundRect(rod.x-baseW/2, rod.y-baseH/2, baseW, baseH, 5);
       ctx.stroke();
@@ -860,7 +871,7 @@ class SushiGame {
       const isSel = this.sel===r;
       const isHintSrc = this.sel===r;
       const isHintDst = this._hintTarget===r && this._hintT>0;
-      drawChopstickPair(ctx, rod.x, topY, botY, isSel || isHintDst);
+      drawChopstickPair(ctx, rod.x, topY, botY, this.discR, isSel || isHintDst);
 
       // Hint target highlight
       if(isHintDst){
@@ -872,7 +883,8 @@ class SushiGame {
       }
 
       // Draw discs (bottom to top)
-      const thick = this.discR * 0.55;
+      const thick = (this.layerStep || this.discR * 0.72) * 0.82; // 3D disc height
+      const floatUp = Math.round(this.discR * 0.5); // selected disc float amount
       const glowRod = this.glowAnims.find(g=>g.rodIdx===r);
 
       for(let di=0;di<rod.d.length;di++){
@@ -880,7 +892,7 @@ class SushiGame {
         const discY=this._discY(r,di);
         const isGlowing = !!glowRod;
         const isTopSel = isSel && di===rod.d.length-1;
-        const drawY = isTopSel ? discY - 14 : discY; // float up if selected
+        const drawY = isTopSel ? discY - floatUp : discY; // float up if selected
         drawSushiDisc(ctx, rod.x, drawY, ci, this.discR, thick, isTopSel, isGlowing);
       }
     }
@@ -891,10 +903,10 @@ class SushiGame {
       const t=a.t;
       const ease=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
       const x=a.fromX+(a.toX-a.fromX)*ease;
-      const arcH=-80;
+      const arcH=-Math.max(60, this.discR*2.2);
       const y=a.fromY+(a.toY-a.fromY)*ease + arcH*Math.sin(t*Math.PI);
-      const thick=this.discR*0.55;
-      drawSushiDisc(ctx, x, y, a.disc, this.discR, thick, false, false);
+      const thick2=(this.layerStep||this.discR*0.72)*0.82;
+      drawSushiDisc(ctx, x, y, a.disc, this.discR, thick2, false, false);
     }
 
     // Particles (sakura)
