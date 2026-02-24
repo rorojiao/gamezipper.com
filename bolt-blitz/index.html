@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Bolt Blitz 3D</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Arial', sans-serif; background: #1a1008; }
+
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.screen.hidden { display: none !important; }
+
+/* MAIN MENU */
+#menuScreen {
+  background: radial-gradient(ellipse at center, #2d1a0a 0%, #0f0800 100%);
+}
+.game-logo {
+  font-size: clamp(38px, 10vw, 56px);
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #fff;
+  text-shadow: 0 0 20px #ff6b00, 0 0 40px #ff4400, 2px 2px 0 #8b3300, 4px 4px 0 #5a1f00, 6px 6px 10px rgba(0,0,0,0.8);
+  margin-bottom: 8px;
+  position: relative; z-index: 1;
+}
+.game-logo span { color: #ffcc00; text-shadow: 0 0 20px #ffcc00, 2px 2px 0 #886600, 4px 4px 0 #554200; }
+.game-subtitle { color: #c8956a; font-size: 16px; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 50px; z-index: 1; }
+.progress-display { color: #ffd700; font-size: 15px; margin-bottom: 40px; z-index: 1; background: rgba(0,0,0,0.3); padding: 8px 20px; border-radius: 20px; border: 1px solid rgba(255,215,0,0.3); }
+
+.btn { border: none; cursor: pointer; font-weight: 700; letter-spacing: 1px; transition: transform 0.1s, box-shadow 0.1s; z-index: 1; }
+.btn:active { transform: scale(0.96) !important; }
+
+.btn-play { background: linear-gradient(135deg, #ff8c00, #ff4500); color: #fff; font-size: 22px; padding: 16px 60px; border-radius: 50px; box-shadow: 0 6px 20px rgba(255,80,0,0.5); }
+.btn-play:hover { transform: scale(1.05); }
+.btn-levels { background: rgba(255,255,255,0.1); color: #ccc; font-size: 15px; padding: 10px 30px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.2); margin-top: 16px; }
+
+/* LEVEL SELECT */
+#levelScreen { background: radial-gradient(ellipse at center, #1e1408 0%, #0a0600 100%); }
+.level-header { width: 100%; max-width: 420px; display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; color: #ffd700; }
+.level-header h2 { font-size: 22px; font-weight: 800; }
+.btn-back { background: rgba(255,255,255,0.1); color: #ccc; font-size: 20px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.level-grid { flex: 1; overflow-y: auto; width: 100%; max-width: 420px; padding: 10px 16px 20px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.level-cell { aspect-ratio: 1; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; }
+.level-cell:active { transform: scale(0.92); }
+.level-cell.unlocked { background: linear-gradient(135deg, #2a1c08, #4a3010); border: 2px solid #8b6914; }
+.level-cell.locked { background: rgba(30,20,10,0.5); border: 2px solid #333; cursor: default; opacity: 0.5; }
+.level-cell.completed { background: linear-gradient(135deg, #0a2a0a, #1a4a1a); border: 2px solid #2a8a2a; }
+.level-num { font-size: 18px; font-weight: 800; color: #ffd700; }
+.level-cell.locked .level-num { color: #555; }
+.level-stars { display: flex; gap: 2px; margin-top: 3px; }
+.star { font-size: 9px; }
+.star.filled { color: #ffd700; }
+.star.empty { color: #444; }
+
+/* GAME */
+#gameScreen { background: radial-gradient(ellipse at 50% 30%, #2d1a0a 0%, #110a04 100%); flex-direction: column; }
+.hud { width: 100%; max-width: 500px; display: flex; align-items: center; justify-content: space-around; padding: 12px 16px 8px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,200,50,0.15); }
+.hud-item { display: flex; flex-direction: column; align-items: center; }
+.hud-label { font-size: 11px; color: #8a6a3a; text-transform: uppercase; letter-spacing: 1px; }
+.hud-value { font-size: 22px; font-weight: 800; color: #ffd700; line-height: 1.2; }
+.hud-best { color: #ff8c00; }
+#gameCanvas { flex: 1; width: 100%; cursor: pointer; touch-action: none; display: block; }
+.bottom-bar { width: 100%; max-width: 500px; display: flex; align-items: center; justify-content: space-around; padding: 10px 16px 16px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,200,50,0.15); }
+.bar-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 8px 16px; min-width: 70px; }
+.bar-btn:active { background: rgba(255,255,255,0.15); transform: scale(0.95); }
+.bar-btn .bar-icon { font-size: 22px; }
+.bar-btn .bar-label { font-size: 11px; color: #9a7a5a; }
+.bar-btn .bar-count { font-size: 12px; color: #ffd700; font-weight: 700; }
+.bar-btn.disabled { opacity: 0.4; cursor: default; }
+
+/* MODALS */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+.modal-overlay.hidden { display: none; }
+.modal-box { background: linear-gradient(135deg, #2a1a06, #1a0e02); border: 2px solid #8b6914; border-radius: 24px; padding: 32px 24px; width: min(90%, 360px); text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.8); animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-title { font-size: 28px; font-weight: 900; color: #ffd700; margin-bottom: 8px; }
+.modal-subtitle { color: #c89a5a; font-size: 14px; margin-bottom: 20px; }
+.modal-stars { display: flex; justify-content: center; gap: 12px; margin: 16px 0; }
+.modal-star { font-size: 36px; filter: grayscale(1) brightness(0.4); transition: filter 0.3s, transform 0.3s; }
+.modal-star.lit { filter: none; transform: scale(1.2); animation: starPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes starPop { 0% { transform: scale(0); } 100% { transform: scale(1.2); } }
+.modal-score { font-size: 20px; color: #fff; margin: 12px 0 20px; }
+.modal-score span { color: #ffd700; font-weight: 800; font-size: 26px; }
+.modal-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn-modal { padding: 12px 24px; border-radius: 25px; font-size: 16px; font-weight: 700; border: none; cursor: pointer; }
+.btn-next { background: linear-gradient(135deg, #ff8c00, #ff4500); color: #fff; }
+.btn-replay { background: rgba(255,255,255,0.1); color: #ddd; border: 1px solid rgba(255,255,255,0.2) !important; }
+.btn-menu-modal { background: rgba(255,215,0,0.15); color: #ffd700; border: 1px solid rgba(255,215,0,0.3) !important; }
+.tutorial-step { margin: 14px 0; display: flex; align-items: center; gap: 14px; text-align: left; }
+.tutorial-icon { font-size: 30px; flex-shrink: 0; width: 44px; text-align: center; }
+.tutorial-text { color: #ddc8a0; font-size: 14px; line-height: 1.5; }
+.tutorial-text strong { color: #ffd700; }
+
+#particleCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+#confettiCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 49; }
+</style>
+</head>
+<body>
+
+<canvas id="particleCanvas"></canvas>
+<canvas id="confettiCanvas"></canvas>
+
+<!-- MAIN MENU -->
+<div id="menuScreen" class="screen">
+  <div class="game-logo">BOLT <span>BLITZ</span></div>
+  <div class="game-subtitle">3D Puzzle</div>
+  <div class="progress-display" id="progressDisplay">已解锁 1/50 关卡</div>
+  <button class="btn btn-play" id="playBtn">▶ 开始游戏</button>
+  <button class="btn btn-levels" id="levelsBtn">📋 关卡选择</button>
+</div>
+
+<!-- LEVEL SELECT -->
+<div id="levelScreen" class="screen hidden">
+  <div class="level-header">
+    <button class="btn bar-btn" id="backFromLevels" style="min-width:40px;padding:8px;">◀</button>
+    <h2>⚡ 选择关卡</h2>
+    <div style="width:40px"></div>
+  </div>
+  <div class="level-grid" id="levelGrid"></div>
+</div>
+
+<!-- GAME -->
+<div id="gameScreen" class="screen hidden">
+  <div class="hud">
+    <div class="hud-item">
+      <div class="hud-label">关卡</div>
+      <div class="hud-value" id="hudLevel">1</div>
+    </div>
+    <div class="hud-item">
+      <div class="hud-label">步数</div>
+      <div class="hud-value" id="hudMoves">0</div>
+    </div>
+    <div class="hud-item">
+      <div class="hud-label">得分</div>
+      <div class="hud-value" id="hudScore">0</div>
+    </div>
+    <div class="hud-item">
+      <div class="hud-label">最高分</div>
+      <div class="hud-value hud-best" id="hudBest">0</div>
+    </div>
+  </div>
+  <canvas id="gameCanvas"></canvas>
+  <div class="bottom-bar">
+    <div class="bar-btn" id="btnUndo">
+      <div class="bar-icon">↩️</div>
+      <div class="bar-label">撤销</div>
+      <div class="bar-count" id="undoCount">3</div>
+    </div>
+    <div class="bar-btn" id="btnMenu2">
+      <div class="bar-icon">🏠</div>
+      <div class="bar-label">菜单</div>
+    </div>
+    <div class="bar-btn" id="btnHint">
+      <div class="bar-icon">💡</div>
+      <div class="bar-label">提示</div>
+      <div class="bar-count" id="hintCount">3</div>
+    </div>
+  </div>
+</div>
+
+<!-- WIN MODAL -->
+<div id="winModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-title">🎉 过关！</div>
+    <div class="modal-subtitle" id="winSubtitle">完美表现！</div>
+    <div class="modal-stars">
+      <div class="modal-star" id="star1">⭐</div>
+      <div class="modal-star" id="star2">⭐</div>
+      <div class="modal-star" id="star3">⭐</div>
+    </div>
+    <div class="modal-score">得分：<span id="winScore">0</span></div>
+    <div class="modal-btns">
+      <button class="btn btn-modal btn-replay" id="winReplay">🔄 重玩</button>
+      <button class="btn btn-modal btn-next" id="winNext">下一关 ▶</button>
+    </div>
+    <button class="btn btn-modal btn-menu-modal" id="winMenu" style="margin-top:10px;width:100%">🏠 主菜单</button>
+  </div>
+</div>
+
+<!-- FAIL MODAL -->
+<div id="failModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-title">🔒 卡住了！</div>
+    <div class="modal-subtitle">没有可行的移动了</div>
+    <div style="font-size: 48px; margin: 16px 0;">😰</div>
+    <div class="modal-btns">
+      <button class="btn btn-modal btn-replay" id="failReplay">🔄 重玩</button>
+      <button class="btn btn-modal btn-menu-modal" id="failMenu">🏠 菜单</button>
+    </div>
+  </div>
+</div>
+
+<!-- TUTORIAL -->
+<div id="tutorialModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-title">🔩 怎么玩</div>
+    <div class="tutorial-step"><div class="tutorial-icon">👆</div><div class="tutorial-text"><strong>点击柱子</strong>选中顶部木板，再点另一根柱子移动</div></div>
+    <div class="tutorial-step"><div class="tutorial-icon">🎯</div><div class="tutorial-text"><strong>颜色匹配</strong>才能叠放：同色或空柱才能接受木板</div></div>
+    <div class="tutorial-step"><div class="tutorial-icon">✨</div><div class="tutorial-text"><strong>3块同色消除！</strong>集齐3块（或4块）同色 → 爆炸消除 +100分</div></div>
+    <div class="tutorial-step"><div class="tutorial-icon">🏆</div><div class="tutorial-text"><strong>全部消除</strong>即为过关！步数越少星越多</div></div>
+    <button class="btn btn-modal btn-next" id="tutorialOk" style="width:100%;margin-top:16px">明白了！开始！</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+const COLORS = ['#FF4757','#3742FA','#2ED573','#FFA502','#A55EEA','#FF6B81'];
+const COLOR_DARK = ['#AA2030','#1a25b0','#1a8a48','#b07000','#6a35a0','#c03040'];
+const COLOR_LIGHT = ['#FF8090','#7080FF','#70FFB0','#FFCC60','#CC90FF','#FFA0B0'];
+
+const LEVEL_CONFIGS = [
+  ...Array(5).fill().map(() => ({ rods:4, empty:2, colors:2, discs:6, cap:3 })),
+  ...Array(5).fill().map(() => ({ rods:5, empty:1, colors:3, discs:9, cap:3 })),
+  ...Array(10).fill().map(() => ({ rods:5, empty:2, colors:4, discs:12, cap:3 })),
+  ...Array(10).fill().map(() => ({ rods:6, empty:2, colors:5, discs:15, cap:3 })),
+  ...Array(10).fill().map(() => ({ rods:7, empty:2, colors:5, discs:18, cap:4 })),
+  ...Array(10).fill().map(() => ({ rods:8, empty:2, colors:6, discs:21, cap:4 })),
+];
+
+// ============================================================
+// AUDIO
+// ============================================================
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){}
+  return audioCtx;
+}
+function playTone(freq, dur, type='sine', vol=0.25, delay=0) {
+  const ctx = getAudio(); if (!ctx) return;
+  try {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime+delay);
+    g.gain.setValueAtTime(vol, ctx.currentTime+delay);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+delay+dur);
+    osc.start(ctx.currentTime+delay);
+    osc.stop(ctx.currentTime+delay+dur+0.05);
+  } catch(e){}
+}
+function playDrop() { playTone(160, 0.12, 'triangle', 0.22); }
+function playMove() { playTone(440, 0.08, 'sine', 0.18); }
+function playError() { playTone(140, 0.15, 'sawtooth', 0.2); }
+function playSelect() { playTone(660, 0.07, 'sine', 0.13); }
+function playMatch() { [523,659,784].forEach((f,i) => playTone(f, 0.15, 'sine', 0.28, i*0.14)); }
+function playWin() { [523,659,784,1047].forEach((f,i) => playTone(f, 0.2, 'sine', 0.28, i*0.12)); }
+
+// ============================================================
+// PARTICLES
+// ============================================================
+const pCv = document.getElementById('particleCanvas');
+const pCx = pCv.getContext('2d');
+const cCv = document.getElementById('confettiCanvas');
+const cCx = cCv.getContext('2d');
+let particles = [];
+let confettiParticles = [];
+
+function resizePCvs() {
+  pCv.width = cCv.width = window.innerWidth;
+  pCv.height = cCv.height = window.innerHeight;
+}
+resizePCvs();
+window.addEventListener('resize', resizePCvs);
+
+function spawnMatchParticles(x, y, color, n=18) {
+  for (let i=0;i<n;i++) {
+    const a = Math.PI*2*i/n + Math.random()*0.5;
+    const s = 3+Math.random()*5;
+    particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s-2, color, size: 4+Math.random()*5, life: 1, decay: 0.025+Math.random()*0.02 });
+  }
+}
+function spawnConfetti() {
+  for (let i=0;i<80;i++) {
+    confettiParticles.push({
+      x: Math.random()*cCv.width, y: -10,
+      vx: (Math.random()-0.5)*4, vy: 2+Math.random()*4,
+      color: COLORS[Math.floor(Math.random()*COLORS.length)],
+      w: 8+Math.random()*8, h: 4+Math.random()*4,
+      angle: Math.random()*Math.PI*2, spin: (Math.random()-0.5)*0.2,
+      life: 1, decay: 0.006+Math.random()*0.004
+    });
+  }
+}
+function animParticles() {
+  pCx.clearRect(0,0,pCv.width,pCv.height);
+  particles = particles.filter(p=>p.life>0);
+  for (const p of particles) {
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.15; p.life-=p.decay;
+    pCx.globalAlpha=p.life; pCx.fillStyle=p.color;
+    pCx.beginPath(); pCx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); pCx.fill();
+  }
+  pCx.globalAlpha=1;
+  cCx.clearRect(0,0,cCv.width,cCv.height);
+  confettiParticles = confettiParticles.filter(p=>p.life>0&&p.y<cCv.height+20);
+  for (const p of confettiParticles) {
+    p.x+=p.vx; p.y+=p.vy; p.angle+=p.spin; p.life-=p.decay;
+    cCx.globalAlpha=p.life; cCx.fillStyle=p.color;
+    cCx.save(); cCx.translate(p.x,p.y); cCx.rotate(p.angle);
+    cCx.fillRect(-p.w/2,-p.h/2,p.w,p.h); cCx.restore();
+  }
+  cCx.globalAlpha=1;
+  requestAnimationFrame(animParticles);
+}
+animParticles();
+
+// ============================================================
+// SAVE / LOAD
+// ============================================================
+let saveData = { maxLevel:1, levelStars:{}, bestScores:{}, totalBest:0 };
+function loadSave() {
+  try { Object.assign(saveData, JSON.parse(localStorage.getItem('boltBlitz_v1')||'{}')); } catch(e){}
+}
+function writeSave() {
+  try { localStorage.setItem('boltBlitz_v1', JSON.stringify(saveData)); } catch(e){}
+}
+loadSave();
+
+// ============================================================
+// LEVEL GENERATION
+// ============================================================
+function generateLevel(idx) {
+  const cfg = LEVEL_CONFIGS[Math.min(idx, LEVEL_CONFIGS.length-1)];
+  const { rods, empty, colors, discs, cap } = cfg;
+  let rng = (idx * 1664525 + 1013904223) >>> 0;
+  function rand() { rng = (rng * 1664525 + 1013904223) >>> 0; return rng / 4294967295; }
+
+  const discPerColor = Math.floor(discs / colors);
+  const arr = [];
+  for (let c=0; c<colors; c++) for (let k=0; k<discPerColor; k++) arr.push(c);
+  while (arr.length < discs) arr.push(Math.floor(rand()*colors));
+  for (let i=arr.length-1;i>0;i--) { const j=Math.floor(rand()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+
+  const active = rods - empty;
+  const rodsData = [];
+  let di = 0;
+  for (let r=0; r<active; r++) {
+    const rod = [];
+    const maxPerRod = Math.ceil((discs-di)/(active-r));
+    const count = Math.min(cap, maxPerRod);
+    for (let k=0; k<count&&di<arr.length; k++,di++) rod.push(arr[di]);
+    rodsData.push(rod);
+  }
+  for (let r=0; r<empty; r++) rodsData.push([]);
+  return { rodsData, cap, colors, numRods: rods };
+}
+
+// ============================================================
+// GAME ENGINE
+// ============================================================
+class BoltBlitzGame {
+  constructor() {
+    this.canvas = document.getElementById('gameCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.rods = [];
+    this.selectedRod = -1;
+    this.moves = 0;
+    this.score = 0;
+    this.level = 1;
+    this.cap = 3;
+    this.history = [];
+    this.undosLeft = 3;
+    this.hintsLeft = 3;
+    this.hintRod = -1;
+    this.hintTimer = 0;
+    this.animating = false;
+    this.movingDisc = null;
+    this.glowRod = -1;
+    this.glowTimer = 0;
+    this.isGameOver = false;
+    this._won = false;
+    this.colors = 2;
+    this.rodSpacing = 80;
+    this.rodW = 20;
+    this.discR = 30;
+    this.discH = 12;
+    this.rodH = 180;
+    this.rows = 1;
+    this._lastTime = 0;
+
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+    this.canvas.addEventListener('click', e => this._onClick(e));
+    this.canvas.addEventListener('touchend', e => {
+      e.preventDefault();
+      const t = e.changedTouches[0];
+      this._onClick({ clientX: t.clientX, clientY: t.clientY });
+    }, { passive: false });
+    requestAnimationFrame(ts => this._loop(ts));
+  }
+
+  resize() {
+    const parent = this.canvas.parentElement;
+    const rect = parent ? parent.getBoundingClientRect() : null;
+    this.canvas.width = rect ? rect.width : window.innerWidth;
+    this.canvas.height = rect ? rect.height : (window.innerHeight - 130);
+    this._calcLayout();
+  }
+
+  _calcLayout() {
+    const W = this.canvas.width, H = this.canvas.height;
+    const n = this.rods.length;
+    if (!n) return;
+
+    this.rows = n > 6 ? 2 : 1;
+    const perRow = Math.ceil(n / this.rows);
+
+    const margin = 20;
+    this.rodSpacing = Math.min((W - margin*2) / perRow, 95);
+    this.rodW = Math.max(8, Math.min(this.rodSpacing * 0.52, 42));
+    this.discR = Math.max(14, Math.min(this.rodSpacing * 0.41, 34));
+    this.discH = Math.max(5, Math.min(this.discR * 0.42, 13));
+    this.rodH = (this.cap + 0.8) * (this.discR * 2.1 + 2) + 28;
+
+    const rowH = this.rodH + 50;
+    const totalH = rowH * this.rows;
+    const startY = (H - totalH) / 2 + 16;
+
+    for (let r=0; r<n; r++) {
+      const row = this.rows===2 ? (r < Math.ceil(n/2) ? 0 : 1) : 0;
+      const col = this.rows===2 ? (row===0 ? r : r - Math.ceil(n/2)) : r;
+      const rowCount = row===0 ? Math.ceil(n/2) : Math.floor(n/2);
+      const offsetX = (W - rowCount * this.rodSpacing) / 2 + this.rodSpacing/2;
+      this.rods[r].x = offsetX + col * this.rodSpacing;
+      this.rods[r].y = startY + row * rowH;
+    }
+  }
+
+  loadLevel(levelIdx) {
+    console.log('[BoltBlitz] loadLevel', levelIdx+1);
+    this.isGameOver = false;
+    this._won = false;
+    this.selectedRod = -1;
+    this.moves = 0;
+    this.score = 0;
+    this.level = levelIdx + 1;
+    this.undosLeft = 3;
+    this.hintsLeft = 3;
+    this.hintRod = -1;
+    this.hintTimer = 0;
+    this.history = [];
+    this.animating = false;
+    this.movingDisc = null;
+    this.glowRod = -1;
+    this.glowTimer = 0;
+
+    const { rodsData, cap, colors } = generateLevel(levelIdx);
+    this.cap = cap;
+    this.colors = colors;
+    this.rods = rodsData.map((discs,i) => ({ id:i, discs:[...discs], capacity:cap, x:0, y:0 }));
+    this._calcLayout();
+    this._updateHUD();
+    console.log('[BoltBlitz] Loaded: rods='+this.rods.length+' cap='+cap+' colors='+colors);
+  }
+
+  canMove(from, to) {
+    if (from===to || from<0 || to<0 || from>=this.rods.length || to>=this.rods.length) return false;
+    const f = this.rods[from], t = this.rods[to];
+    if (!f.discs.length) return false;
+    if (t.discs.length >= t.capacity) return false;
+    if (!t.discs.length) return true;
+    return f.discs[f.discs.length-1] === t.discs[t.discs.length-1];
+  }
+
+  checkMatch(rodIdx) {
+    const rod = this.rods[rodIdx];
+    if (!rod || rod.discs.length < 3) return false;
+    const n = rod.discs.length, top = rod.discs[n-1];
+    let c=0; for (let i=n-1; i>=0&&rod.discs[i]===top; i--) c++;
+    return c >= 3;
+  }
+
+  isDeadlock() {
+    if (this.animating || this._won) return false;
+    const total = this.rods.reduce((s,r)=>s+r.discs.length,0);
+    if (!total) return false;
+    for (let i=0;i<this.rods.length;i++)
+      for (let j=0;j<this.rods.length;j++)
+        if (this.canMove(i,j)) return false;
+    return true;
+  }
+
+  isWinState() { return this.rods.every(r=>r.discs.length===0); }
+
+  handleRodClick(rodIdx) {
+    if (this.animating || this.isGameOver || this._won) return;
+    if (rodIdx<0 || rodIdx>=this.rods.length) return;
+    console.log('[BoltBlitz] click rod', rodIdx, 'selected=', this.selectedRod);
+
+    if (this.selectedRod === -1) {
+      if (!this.rods[rodIdx].discs.length) { playError(); return; }
+      this.selectedRod = rodIdx;
+      this.hintRod = -1;
+      playSelect();
+    } else if (this.selectedRod === rodIdx) {
+      this.selectedRod = -1;
+    } else {
+      if (this.canMove(this.selectedRod, rodIdx)) {
+        this._executeMove(this.selectedRod, rodIdx);
+      } else {
+        if (this.rods[rodIdx].discs.length) { this.selectedRod = rodIdx; playSelect(); }
+        else { playError(); this.selectedRod = -1; }
+      }
+    }
+  }
+
+  _executeMove(fromIdx, toIdx) {
+    const from = this.rods[fromIdx], to = this.rods[toIdx];
+    this.history.push({ fromIdx, toIdx, fromDiscs:[...from.discs], toDiscs:[...to.discs], score:this.score, moves:this.moves });
+    if (this.history.length > 60) this.history.shift();
+
+    const disc = from.discs[from.discs.length-1];
+    const fromPos = this._getDiscPos(fromIdx, from.discs.length-1);
+    const toPos = this._getDiscPos(toIdx, to.discs.length);
+
+    this.selectedRod = -1;
+    this.animating = true;
+    this.movingDisc = { color:disc, fromX:fromPos.x, fromY:fromPos.y, toX:toPos.x, toY:toPos.y, t:0, dur:360, fromIdx, toIdx };
+    from.discs.pop();
+    this.moves++;
+    playMove();
+    this._updateHUD();
+  }
+
+  _finishMove(md) {
+    this.rods[md.toIdx].discs.push(md.color);
+    this.animating = false;
+    this.movingDisc = null;
+    playDrop();
+    if (this.checkMatch(md.toIdx)) {
+      setTimeout(() => this._triggerMatch(md.toIdx), 80);
+    } else if (this.isWinState()) {
+      setTimeout(() => this._triggerWin(), 200);
+    } else if (this.isDeadlock()) {
+      setTimeout(() => this._triggerFail(), 500);
+    }
+  }
+
+  _triggerMatch(rodIdx) {
+    const rod = this.rods[rodIdx];
+    const n = rod.discs.length, top = rod.discs[n-1];
+    let count=0; for (let i=n-1; i>=0&&rod.discs[i]===top; i--) count++;
+    console.log('[BoltBlitz] MATCH rod', rodIdx, 'color', top, 'count', count);
+
+    this.glowRod = rodIdx;
+    this.glowTimer = 500;
+
+    const rect = this.canvas.getBoundingClientRect();
+    for (let k=0; k<count; k++) {
+      const pos = this._getDiscPos(rodIdx, n-1-k);
+      spawnMatchParticles(rect.left+pos.x, rect.top+pos.y, COLORS[top], 14);
+    }
+    playMatch();
+
+    setTimeout(() => {
+      rod.discs.splice(n-count, count);
+      this.score += count * 100;
+      this.glowRod = -1;
+      this._updateHUD();
+      if (this.isWinState()) setTimeout(()=>this._triggerWin(), 300);
+      else if (this.isDeadlock()) setTimeout(()=>this._triggerFail(), 500);
+    }, 450);
+  }
+
+  _triggerWin() {
+    if (this._won) return;
+    this._won = true;
+    console.log('[BoltBlitz] WIN! level='+this.level+' score='+this.score+' moves='+this.moves);
+
+    const cfg = LEVEL_CONFIGS[this.level-1] || {};
+    const base = cfg.discs ? Math.ceil(cfg.discs*1.5) : 20;
+    let stars = 1;
+    if (this.moves <= base) stars = 2;
+    if (this.moves <= Math.ceil(base*0.65)) stars = 3;
+
+    const key = 'lv'+this.level;
+    saveData.levelStars[key] = Math.max(saveData.levelStars[key]||0, stars);
+    saveData.bestScores[key] = Math.max(saveData.bestScores[key]||0, this.score);
+    saveData.maxLevel = Math.max(saveData.maxLevel, this.level+1);
+    saveData.totalBest = Math.max(saveData.totalBest, this.score);
+    writeSave();
+
+    playWin();
+    spawnConfetti();
+
+    document.getElementById('winScore').textContent = this.score;
+    document.getElementById('winSubtitle').textContent = stars===3?'完美！太厉害了！':stars===2?'很棒！继续加油！':'过关！再接再厉！';
+    ['star1','star2','star3'].forEach((id,i)=>{
+      const el=document.getElementById(id);
+      el.classList.remove('lit');
+      if (i<stars) setTimeout(()=>el.classList.add('lit'), 300+i*200);
+    });
+    document.getElementById('winNext').style.display = this.level<50?'':'none';
+    document.getElementById('winModal').classList.remove('hidden');
+  }
+
+  _triggerFail() {
+    if (this._won || this.isGameOver) return;
+    this.isGameOver = true;
+    console.log('[BoltBlitz] DEADLOCK');
+    document.getElementById('failModal').classList.remove('hidden');
+  }
+
+  undo() {
+    if (!this.undosLeft || !this.history.length || this.animating) return;
+    const h = this.history.pop();
+    this.rods[h.fromIdx].discs = [...h.fromDiscs];
+    this.rods[h.toIdx].discs = [...h.toDiscs];
+    this.score = h.score; this.moves = h.moves;
+    this.undosLeft--;
+    this.selectedRod = -1;
+    this._updateHUD();
+    playSelect();
+  }
+
+  hint() {
+    if (!this.hintsLeft) return;
+    for (let i=0;i<this.rods.length;i++)
+      for (let j=0;j<this.rods.length;j++)
+        if (this.canMove(i,j)) {
+          this.hintRod=i; this.hintTimer=2500; this.hintsLeft--;
+          this._updateHUD(); return;
+        }
+  }
+
+  _updateHUD() {
+    document.getElementById('hudLevel').textContent = this.level;
+    document.getElementById('hudMoves').textContent = this.moves;
+    document.getElementById('hudScore').textContent = this.score;
+    document.getElementById('hudBest').textContent = saveData.totalBest||0;
+    document.getElementById('undoCount').textContent = this.undosLeft;
+    document.getElementById('hintCount').textContent = this.hintsLeft;
+    document.getElementById('btnUndo').classList.toggle('disabled', !this.undosLeft||!this.history.length);
+    document.getElementById('btnHint').classList.toggle('disabled', !this.hintsLeft);
+  }
+
+  _getDiscPos(rodIdx, discPos) {
+    const rod = this.rods[rodIdx];
+    const spacing = this.discR*2.1+2;
+    const rodBottom = rod.y + this.rodH - 14;
+    return { x: rod.x, y: rodBottom - discPos*spacing - this.discR - 6 };
+  }
+
+  _loop(ts) {
+    const dt = ts - this._lastTime;
+    this._lastTime = ts;
+    this._update(dt);
+    this._draw();
+    requestAnimationFrame(t => this._loop(t));
+  }
+
+  _update(dt) {
+    if (this.hintTimer > 0) this.hintTimer -= dt;
+    if (this.glowTimer > 0) this.glowTimer -= dt;
+    if (this.movingDisc) {
+      this.movingDisc.t += dt;
+      if (this.movingDisc.t >= this.movingDisc.dur) {
+        const md = this.movingDisc;
+        this._finishMove(md);
+      }
+    }
+  }
+
+  _draw() {
+    const ctx = this.ctx;
+    const W = this.canvas.width, H = this.canvas.height;
+
+    // Background
+    const bg = ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#1e1206'); bg.addColorStop(1,'#0a0602');
+    ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+    // Subtle wood grain
+    ctx.globalAlpha = 0.04;
+    for (let y=0; y<H; y+=38) {
+      ctx.fillStyle = '#8B6914';
+      ctx.fillRect(0, y, W, 18);
+    }
+    ctx.globalAlpha = 1;
+
+    if (!this.rods.length) return;
+    for (let i=0; i<this.rods.length; i++) this._drawRod(ctx, i);
+    if (this.movingDisc) this._drawMoving(ctx);
+  }
+
+  _drawRod(ctx, idx) {
+    const rod = this.rods[idx];
+    const cx=rod.x, topY=rod.y, botY=rod.y+this.rodH;
+    const rw = this.rodW/2;
+
+    // Shadow
+    ctx.save();
+    ctx.shadowBlur=12; ctx.shadowColor='rgba(0,0,0,0.5)'; ctx.shadowOffsetX=3;
+
+    // Body
+    const rg = ctx.createLinearGradient(cx-rw,0,cx+rw,0);
+    rg.addColorStop(0,'#222'); rg.addColorStop(0.3,'#777'); rg.addColorStop(0.5,'#ddd'); rg.addColorStop(0.7,'#777'); rg.addColorStop(1,'#1a1a1a');
+    ctx.fillStyle=rg;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(cx-rw,topY,rw*2,botY-topY,rw);
+    else { ctx.moveTo(cx-rw,topY+rw); ctx.arcTo(cx-rw,topY,cx,topY,rw); ctx.arcTo(cx+rw,topY,cx+rw,topY+rw,rw); ctx.lineTo(cx+rw,botY-rw); ctx.arcTo(cx+rw,botY,cx,botY,rw); ctx.arcTo(cx-rw,botY,cx-rw,botY-rw,rw); ctx.closePath(); }
+    ctx.fill();
+
+    // Threads
+    ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
+    for (let ty=topY+12; ty<botY-8; ty+=8) {
+      ctx.beginPath(); ctx.moveTo(cx-rw+2,ty); ctx.lineTo(cx+rw-2,ty); ctx.stroke();
+    }
+    ctx.restore();
+
+    // Cap
+    ctx.fillStyle='#bbb';
+    ctx.beginPath(); ctx.ellipse(cx,topY,rw*1.4,rw*0.5,0,0,Math.PI*2); ctx.fill();
+
+    // Selection highlight
+    if (idx===this.selectedRod) {
+      ctx.save(); ctx.strokeStyle='#ff8c00'; ctx.lineWidth=2.5; ctx.shadowBlur=14; ctx.shadowColor='#ff8c00';
+      ctx.beginPath(); ctx.roundRect?ctx.roundRect(cx-rw-5,topY-5,(rw+5)*2,botY-topY+10,rw+5):ctx.rect(cx-rw-5,topY-5,(rw+5)*2,botY-topY+10);
+      ctx.stroke(); ctx.restore();
+    }
+
+    // Hint
+    if (idx===this.hintRod && this.hintTimer>0) {
+      const a=(Math.sin(Date.now()*0.01)+1)*0.4+0.3;
+      ctx.save(); ctx.strokeStyle=`rgba(255,255,0,${a})`; ctx.lineWidth=2.5; ctx.shadowBlur=18; ctx.shadowColor='#ffff00';
+      ctx.beginPath(); ctx.roundRect?ctx.roundRect(cx-rw-6,topY-6,(rw+6)*2,botY-topY+12,rw+6):ctx.rect(cx-rw-6,topY-6,(rw+6)*2,botY-topY+12);
+      ctx.stroke(); ctx.restore();
+    }
+
+    // Glow match
+    if (idx===this.glowRod && this.glowTimer>0) {
+      const a=this.glowTimer/500;
+      ctx.save(); ctx.fillStyle=`rgba(255,255,255,${a*0.25})`; ctx.shadowBlur=25; ctx.shadowColor='#fff';
+      ctx.beginPath(); ctx.roundRect?ctx.roundRect(cx-rw-8,topY-8,(rw+8)*2,botY-topY+16,rw+8):ctx.rect(cx-rw-8,topY-8,(rw+8)*2,botY-topY+16);
+      ctx.fill(); ctx.restore();
+    }
+
+    // Discs
+    for (let d=0; d<rod.discs.length; d++) {
+      const pos=this._getDiscPos(idx,d);
+      const isTop=d===rod.discs.length-1;
+      const isSel=isTop&&idx===this.selectedRod;
+      const isGlow=idx===this.glowRod&&this.glowTimer>0;
+      this._drawDisc(ctx, pos.x, isSel?pos.y-18:pos.y, rod.discs[d], isSel, isGlow);
+    }
+  }
+
+  _drawMoving(ctx) {
+    const md=this.movingDisc;
+    const t=Math.min(md.t/md.dur,1);
+    const ease=t<0.5?2*t*t:-1+(4-2*t)*t;
+    const midY=Math.min(md.fromY,md.toY)-55-Math.abs(md.toX-md.fromX)*0.28;
+    const bx=md.fromX+(md.toX-md.fromX)*ease;
+    const by=(1-ease)*(1-ease)*md.fromY+2*(1-ease)*ease*midY+ease*ease*md.toY;
+    this._drawDisc(ctx, bx, by, md.color, true, false);
+  }
+
+  _drawDisc(ctx, cx, cy, ci, selected, glowing) {
+    const r=this.discR, h=this.discH;
+    const col=COLORS[ci]||'#888', dark=COLOR_DARK[ci]||'#444', light=COLOR_LIGHT[ci]||'#ccc';
+    ctx.save();
+    if (selected) { ctx.shadowBlur=18; ctx.shadowColor='#ff8c00'; }
+    if (glowing) { ctx.shadowBlur=22; ctx.shadowColor='#fff'; }
+
+    // Side
+    const sg=ctx.createLinearGradient(cx-r,cy,cx-r,cy+h);
+    sg.addColorStop(0,col); sg.addColorStop(1,dark);
+    ctx.fillStyle=sg;
+    ctx.beginPath(); ctx.ellipse(cx,cy+h,r,r*0.36,0,0,Math.PI*2); ctx.fill();
+    ctx.fillRect(cx-r,cy,r*2,h);
+
+    // Top
+    const tg=ctx.createRadialGradient(cx-r*0.2,cy-r*0.1,r*0.05,cx,cy,r);
+    tg.addColorStop(0,light); tg.addColorStop(0.4,col); tg.addColorStop(1,dark);
+    ctx.fillStyle=tg;
+    ctx.beginPath(); ctx.ellipse(cx,cy,r,r*0.36,0,0,Math.PI*2); ctx.fill();
+
+    // Highlight
+    ctx.fillStyle='rgba(255,255,255,0.22)';
+    ctx.beginPath(); ctx.ellipse(cx-r*0.18,cy-r*0.07,r*0.42,r*0.14,-0.25,0,Math.PI*2); ctx.fill();
+
+    // Center hole
+    ctx.fillStyle='rgba(0,0,0,0.38)';
+    ctx.beginPath(); ctx.ellipse(cx,cy,r*0.21,r*0.08,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  _onClick(e) {
+    const rect=this.canvas.getBoundingClientRect();
+    const x=e.clientX-rect.left, y=e.clientY-rect.top;
+    for (let i=0;i<this.rods.length;i++) {
+      const rod=this.rods[i];
+      const dx=Math.abs(x-rod.x);
+      if (dx < this.rodSpacing*0.5 && y>=rod.y-10 && y<=rod.y+this.rodH+10) {
+        this.handleRodClick(i); return;
+      }
+    }
+    this.selectedRod=-1;
+  }
+
+  // Test helper
+  forceMatchForTest() {
+    if (this.rods.length>0) {
+      this.rods[0].discs=[0,0,0];
+      const scoreBefore=this.score;
+      this._triggerMatch(0);
+    }
+  }
+}
+
+// ============================================================
+// UI
+// ============================================================
+let game = null;
+window.game = null;
+
+function showScreen(id) {
+  ['menuScreen','levelScreen','gameScreen'].forEach(s =>
+    document.getElementById(s).classList.toggle('hidden', s!==id)
+  );
+}
+
+function updateMenuProgress() {
+  document.getElementById('progressDisplay').textContent = `已解锁 ${saveData.maxLevel||1}/50 关卡`;
+}
+
+function buildLevelGrid() {
+  const grid=document.getElementById('levelGrid');
+  grid.innerHTML='';
+  for (let i=1;i<=50;i++) {
+    const cell=document.createElement('div');
+    cell.className='level-cell';
+    const key='lv'+i;
+    const stars=saveData.levelStars[key]||0;
+    const unlocked=i<=(saveData.maxLevel||1);
+    cell.classList.add(unlocked?(stars>0?'completed':'unlocked'):'locked');
+    const numDiv=document.createElement('div');
+    numDiv.className='level-num';
+    numDiv.textContent=unlocked?i:'🔒';
+    cell.appendChild(numDiv);
+    if (unlocked) {
+      const sd=document.createElement('div'); sd.className='level-stars';
+      for (let s=1;s<=3;s++) {
+        const st=document.createElement('span');
+        st.className='star '+(s<=stars?'filled':'empty');
+        st.textContent='⭐'; sd.appendChild(st);
+      }
+      cell.appendChild(sd);
+      const lvIdx=i-1;
+      cell.addEventListener('click', () => { showScreen('gameScreen'); startGame(lvIdx); });
+    }
+    grid.appendChild(cell);
+  }
+}
+
+function startGame(levelIdx) {
+  if (!game) { game=new BoltBlitzGame(); window.game=game; }
+  document.getElementById('winModal').classList.add('hidden');
+  document.getElementById('failModal').classList.add('hidden');
+  // Wait a frame so canvas has proper size
+  requestAnimationFrame(() => {
+    game.resize();
+    game.loadLevel(levelIdx);
+  });
+}
+
+// Init decorative bolts on menu
+(function() {
+  // Nothing needed, keep it clean
+})();
+
+// BUTTON EVENTS
+document.getElementById('playBtn').addEventListener('click', () => {
+  getAudio(); // unlock audio context on first interaction
+  if (!saveData._tutorialSeen) {
+    saveData._tutorialSeen=true; writeSave();
+    document.getElementById('tutorialModal').classList.remove('hidden');
+    document.getElementById('tutorialOk').onclick = () => {
+      document.getElementById('tutorialModal').classList.add('hidden');
+      showScreen('gameScreen');
+      startGame((saveData.maxLevel||1)-1);
+    };
+  } else {
+    showScreen('gameScreen');
+    startGame((saveData.maxLevel||1)-1);
+  }
+});
+
+document.getElementById('levelsBtn').addEventListener('click', () => {
+  buildLevelGrid();
+  showScreen('levelScreen');
+});
+
+document.getElementById('backFromLevels').addEventListener('click', () => {
+  showScreen('menuScreen');
+  updateMenuProgress();
+});
+
+document.getElementById('btnUndo').addEventListener('click', () => game && game.undo());
+document.getElementById('btnHint').addEventListener('click', () => game && game.hint());
+document.getElementById('btnMenu2').addEventListener('click', () => {
+  showScreen('menuScreen'); updateMenuProgress();
+});
+
+// Win modal
+document.getElementById('winReplay').addEventListener('click', () => {
+  document.getElementById('winModal').classList.add('hidden');
+  if (game) startGame(game.level-1);
+});
+document.getElementById('winNext').addEventListener('click', () => {
+  document.getElementById('winModal').classList.add('hidden');
+  if (game) startGame(game.level); // level is 1-based, so game.level = next index
+});
+document.getElementById('winMenu').addEventListener('click', () => {
+  document.getElementById('winModal').classList.add('hidden');
+  showScreen('menuScreen'); updateMenuProgress();
+});
+
+// Fail modal
+document.getElementById('failReplay').addEventListener('click', () => {
+  document.getElementById('failModal').classList.add('hidden');
+  if (game) startGame(game.level-1);
+});
+document.getElementById('failMenu').addEventListener('click', () => {
+  document.getElementById('failModal').classList.add('hidden');
+  showScreen('menuScreen'); updateMenuProgress();
+});
+
+// Init
+updateMenuProgress();
+</script>
+</body>
+</html>
