@@ -152,9 +152,42 @@ body{animation:metalShine 8s ease-in-out infinite}
   animation:gearFall 1.8s ease-in forwards;filter:drop-shadow(0 0 5px rgba(255,215,0,.5))}
 @keyframes gearFall{0%{opacity:1;transform:translateY(-100vh) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(1080deg)}}
 
-.bomb-flash{position:fixed;inset:0;background:rgba(205,127,50,0.5);z-index:99;pointer-events:none;
-  animation:bombFlash .4s ease-out forwards}
-@keyframes bombFlash{0%{opacity:1}100%{opacity:0}}
+.bomb-flash{position:fixed;inset:0;background:rgba(255,0,0,0.7);z-index:99;pointer-events:none;
+  animation:bombFlash .6s ease-out forwards}
+@keyframes bombFlash{0%{opacity:1}30%{opacity:0.9}60%{opacity:0.6}100%{opacity:0}}
+
+/* 屏幕震动 */
+@keyframes screenShake{
+  0%,100%{transform:translate(0,0) rotate(0deg)}
+  10%{transform:translate(-12px,-8px) rotate(-1.5deg)}
+  20%{transform:translate(12px,8px) rotate(1.5deg)}
+  30%{transform:translate(-10px,10px) rotate(-1deg)}
+  40%{transform:translate(10px,-10px) rotate(1deg)}
+  50%{transform:translate(-8px,6px) rotate(-0.8deg)}
+  60%{transform:translate(8px,-6px) rotate(0.8deg)}
+  70%{transform:translate(-5px,4px) rotate(-0.4deg)}
+  80%{transform:translate(5px,-4px) rotate(0.4deg)}
+  90%{transform:translate(-2px,2px) rotate(-0.2deg)}}
+.screen-shake{animation:screenShake .5s ease-out !important}
+
+/* 中央扣分提醒 */
+.bomb-penalty-center{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:9999;pointer-events:none;text-align:center;
+  animation:penaltyPop .8s ease-out forwards}
+.bomb-penalty-center .penalty-text{font-size:clamp(64px,18vw,120px);font-weight:900;
+  color:#ff0000;font-family:'Cinzel',serif;line-height:1;
+  text-shadow:0 0 30px #ff0000,0 0 60px rgba(255,0,0,0.8),4px 4px 0 #800000,-4px -4px 0 #800000,0 0 100px #ff4444;
+  -webkit-text-stroke:3px #ff6666}
+.bomb-penalty-center .penalty-label{font-size:clamp(28px,7vw,48px);font-weight:900;
+  color:#ff4444;font-family:'Cinzel',serif;text-shadow:0 0 20px #ff0000,2px 2px 0 #800000;
+  margin-top:8px}
+@keyframes penaltyPop{
+  0%{transform:translate(-50%,-50%) scale(0.2);opacity:0}
+  20%{transform:translate(-50%,-50%) scale(1.4);opacity:1}
+  40%{transform:translate(-50%,-50%) scale(0.95);opacity:1}
+  60%{transform:translate(-50%,-50%) scale(1.1);opacity:1}
+  80%{transform:translate(-50%,-50%) scale(1);opacity:1}
+  100%{transform:translate(-50%,-50%) scale(1.2) translateY(-40px);opacity:0}}
 
 /* Mushroom cloud effect */
 .mushroom-cloud{position:fixed;z-index:100;pointer-events:none;animation:mushroomRise 1.2s ease-out forwards}
@@ -319,12 +352,25 @@ function spawnGoldRain(){
     document.body.appendChild(g);setTimeout(()=>g.remove(),2000);
   }
 }
-function spawnBombFlash(){
+function spawnBombFlash(pts){
+  // 全屏红色闪烁
   const f=document.createElement('div');f.className='bomb-flash';
-  document.body.appendChild(f);setTimeout(()=>f.remove(),400);
+  document.body.appendChild(f);setTimeout(()=>f.remove(),600);
+  
+  // 屏幕猛烈震动
+  const gc=document.getElementById('game-container')||document.body;
+  gc.classList.remove('screen-shake');void gc.offsetWidth;gc.classList.add('screen-shake');
+  setTimeout(()=>gc.classList.remove('screen-shake'),500);
+  
+  // 超大扣分文字显示在屏幕中央
+  const ptsVal=pts||30;
+  const pc=document.createElement('div');pc.className='bomb-penalty-center';
+  pc.innerHTML=`<div class="penalty-text">-${ptsVal}</div><div class="penalty-label">💥 BOMB!</div>`;
+  document.body.appendChild(pc);setTimeout(()=>pc.remove(),800);
+  
   // Mushroom cloud
   const mc=document.createElement('div');mc.className='mushroom-cloud';
-  mc.textContent='☁️💥☁️';mc.style.cssText='position:fixed;top:40%;left:50%;transform:translateX(-50%);font-size:48px;z-index:100;pointer-events:none;';
+  mc.textContent='☁️💥☁️';mc.style.cssText='position:fixed;top:40%;left:50%;transform:translateX(-50%);font-size:64px;z-index:100;pointer-events:none;';
   mc.style.animation='mushroomRise 1.2s ease-out forwards';
   document.body.appendChild(mc);setTimeout(()=>mc.remove(),1200);
   holes.forEach(h=>{
@@ -385,7 +431,7 @@ function whack(h,e){
     spawnGoldRain();
   }else if(h.type==='bomb'){
     pts=-30;cls='neg';bombSound();
-    spawnBombFlash();
+    spawnBombFlash(30);
     combo=0;
   }else{
     pts=10;hitSound();
