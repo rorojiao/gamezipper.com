@@ -851,10 +851,32 @@ canvas.addEventListener('pointerdown', (e) => {
   raycaster.setFromCamera(mouse, camera);
   const hits = [];
   state.rods.forEach((r, i) => {
+    if (!r.hitBox) return;
     raycaster.intersectObject(r.hitBox, true).forEach(h => hits.push({...h, ri: i}));
   });
   hits.sort((a, b) => a.distance - b.distance);
-  if (hits.length) handleTap(hits[0].ri);
+  if (hits.length) {
+    handleTap(hits[0].ri);
+  } else {
+    // Fallback: simple distance-based detection using rod world positions
+    const vec = new THREE.Vector3(mouse.x, mouse.y, 0.5).unproject(camera);
+    let closestRod = -1, closestDist = Infinity;
+    state.rods.forEach((r, i) => {
+      if (!r.mesh) return;
+      const wp = new THREE.Vector3();
+      r.mesh.getWorldPosition(wp);
+      // Project rod to screen
+      const screenPos = wp.clone().project(camera);
+      const dx = screenPos.x - mouse.x;
+      const dy = screenPos.y - mouse.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 0.35 && dist < closestDist) {
+        closestDist = dist;
+        closestRod = i;
+      }
+    });
+    if (closestRod >= 0) handleTap(closestRod);
+  }
 });
 canvas.addEventListener('touchstart', (e) => {
   if (state.phase !== 'playing') return;
@@ -867,10 +889,31 @@ canvas.addEventListener('touchstart', (e) => {
   raycaster.setFromCamera(mouse, camera);
   const hits = [];
   state.rods.forEach((r, i) => {
+    if (!r.hitBox) return;
     raycaster.intersectObject(r.hitBox, true).forEach(h => hits.push({...h, ri: i}));
   });
   hits.sort((a, b) => a.distance - b.distance);
-  if (hits.length) handleTap(hits[0].ri);
+  if (hits.length) {
+    handleTap(hits[0].ri);
+  } else {
+    // Fallback: simple distance-based detection
+    const vec = new THREE.Vector3(mouse.x, mouse.y, 0.5).unproject(camera);
+    let closestRod = -1, closestDist = Infinity;
+    state.rods.forEach((r, i) => {
+      if (!r.mesh) return;
+      const wp = new THREE.Vector3();
+      r.mesh.getWorldPosition(wp);
+      const screenPos = wp.clone().project(camera);
+      const dx = screenPos.x - mouse.x;
+      const dy = screenPos.y - mouse.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 0.35 && dist < closestDist) {
+        closestDist = dist;
+        closestRod = i;
+      }
+    });
+    if (closestRod >= 0) handleTap(closestRod);
+  }
 }, { passive: false });
 
 // ─── Resize ───────────────────────────────────────────────────────────────────
