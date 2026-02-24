@@ -476,11 +476,13 @@ function startLevel(lvlIdx){
   }
 
   grid=[];
+  // 每个格子65%概率填充，确保每行都有空格供滑动
   for(var r=0;r<GRID;r++){
     grid[r]=[];
     for(var c=0;c<GRID;c++){
       if(obstacleMap[r][c])grid[r][c]=-2; // obstacle
-      else grid[r][c]=Math.floor(Math.random()*lvl.colors);
+      else if(Math.random()<0.65)grid[r][c]=Math.floor(Math.random()*lvl.colors);
+      else grid[r][c]=-1; // 35%空格
     }
   }
   clearMatchesInitial();
@@ -593,17 +595,20 @@ function updateUI(){
 
 function clearMatchesInitial(){
   var found=true,safety=0;
-  while(found&&safety<50){
+  var lvl=LEVELS[currentLevel];
+  while(found&&safety<100){
     safety++;
     var groups=findMatches();
     if(groups.length===0){found=false;break;}
+    // Re-randomize color只换颜色不删除，保持方块数量稳定
     for(var gi=0;gi<groups.length;gi++){
       var g=groups[gi];
       for(var ci=0;ci<g.cells.length;ci++){
-        grid[g.cells[ci][0]][g.cells[ci][1]]=-1;
+        if(grid[g.cells[ci][0]][g.cells[ci][1]]>=0){
+          grid[g.cells[ci][0]][g.cells[ci][1]]=Math.floor(Math.random()*lvl.colors);
+        }
       }
     }
-    applyGravityAndRefill();
   }
 }
 
@@ -621,7 +626,7 @@ function applyGravityAndRefill(){
     }
     var startFill=positions.length-vals.length;
     for(var i=0;i<positions.length;i++){
-      if(i<startFill)grid[positions[i]][c]=Math.floor(Math.random()*lvl.colors);
+      if(i<startFill)grid[positions[i]][c]=-1; // 留空，不填充新方块
       else grid[positions[i]][c]=vals[i-startFill];
     }
   }
@@ -877,7 +882,6 @@ function nextLevel(){
 }
 
 // Input handlers
-function onDown(e){swipeStartX=e.clientX;swipeStartY=e.clientY;swiping=true;}
 function onMove(){}
 function onUp(e){
   if(!swiping)return;swiping=false;
