@@ -333,7 +333,7 @@ scene.fogColor = new BABYLON.Color3(0.04, 0.01, 0.08);
 
 // ─── Camera ──────────────────────────────────────────────────────────────────
 const camera = new BABYLON.ArcRotateCamera("cam", -Math.PI / 2, 1.1, 18, BABYLON.Vector3.Zero(), scene);
-// Camera positioned programmatically via positionCamera()
+camera.fov = 1.0;  // ~57° — 平衡移动端宽度与视觉质量
 
 // ─── Lights ──────────────────────────────────────────────────────────────────
 const hemi = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(0, 1, 0), scene);
@@ -682,12 +682,24 @@ function discY(stackIdx) {
 
 function positionCamera(n, rows) {
   rows = rows || (n > 6 ? 2 : 1);
-  const hDist = 4.8 + n * 0.32 + (rows > 1 ? 2.2 : 0);
+  const aspectRatio = engine.getRenderWidth() / engine.getRenderHeight();
+  const isMobile = aspectRatio < 0.7;
+  const perRow = Math.ceil(n / rows);
+  const spacing = Math.min(1.2, 5.5 / perRow);
+  const totalWidth = (perRow - 1) * spacing;
   const rodH = getRodHeight(state.cap);
-  const rodCenterY = rodH / 2 - 0.15;
-  camera.setPosition(new BABYLON.Vector3(0, rodCenterY + hDist * 0.72, hDist));
-  camera.target = new BABYLON.Vector3(0, rodCenterY - rodH * 0.08, 0);
-  camera.radius = Math.sqrt(hDist * hDist + (hDist * 0.72) * (hDist * 0.72));
+
+  // 计算确保棒横向全部可见的最小距离
+  const hFovHalf = Math.atan(Math.tan(camera.fov / 2) * aspectRatio);
+  const distForWidth = (totalWidth / 2 + DISC_R * 2) / Math.tan(hFovHalf);
+  const distForHeight = (rodH + 2.0) / (2 * Math.tan(camera.fov / 2));
+  const dist = Math.max(distForWidth, distForHeight, 6.0) * (isMobile ? 1.45 : 1.1);
+
+  // 相机位置：杆顶上方，斜向下看
+  const rodTopY = rodH - 0.15;  // 杆顶世界坐标
+  const camY = rodTopY + dist * 0.4;
+  camera.setPosition(new BABYLON.Vector3(0, camY, dist));
+  camera.target = new BABYLON.Vector3(0, rodH * 0.3, 0);
 }
 // ─── Scene Cleanup ────────────────────────────────────────────────────────────
 function clearScene() {
