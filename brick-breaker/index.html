@@ -49,7 +49,7 @@ canvas{border:2px solid #1a3a5c;border-radius:8px;margin-top:32px;display:block}
 <span id="soundToggle"></span>
 </div>
 <canvas id="c"></canvas>
-<div id="hud"><span>Score: <b id="sc">0</b></span><span>Lives: <b id="lv">3</b></span><span>Level: <b id="lvl">1</b></span></div>
+<div id="hud"><span>Score: <b id="sc">0</b></span><span>Best: <b id="bs">0</b></span><span>Lives: <b id="lv">3</b></span><span>Level: <b id="lvl">1</b></span></div>
 <script src="../game-audio.js?v=9"></script>
 <script src="../sound-toggle.js?v=9"></script>
 <script>
@@ -63,6 +63,7 @@ function resize(){
 }
 resize();window.addEventListener('resize',resize);
 
+var bestScore=+(localStorage.getItem('brick_best')||0);
 var score=0,lives=3,currentLevel=1,gameState='menu';
 const COLS=8,ROWS=5,BRICK_W=CW/COLS-4,BRICK_H=20,BRICK_PAD=4,BRICK_TOP=50;
 let bricks=[],particles=[],powerups=[];
@@ -150,7 +151,7 @@ function playHit(){try{const ac=new AudioContext(),o=ac.createOscillator(),g=ac.
 
 function addParticles(x,y,color,n){for(let i=0;i<n;i++)particles.push({x,y,dx:(Math.random()-0.5)*6,dy:(Math.random()-0.5)*6,life:30,color});}
 
-function startGame(){score=0;lives=3;currentLevel=1;gameState='play';
+function startGame(){score=0;lives=3;currentLevel=1;gameState='play';document.getElementById('sc').textContent=0;document.getElementById('bs').textContent=bestScore;document.getElementById('lv').textContent=3;document.getElementById('lvl').textContent=1;
   document.getElementById('sc').textContent=0;document.getElementById('lv').textContent=3;document.getElementById('lvl').textContent=1;
   initLevel();loop();}
 
@@ -183,7 +184,7 @@ function update(){
       const br=bricks[i];
       if(b.x+b.r>br.x&&b.x-b.r<br.x+br.w&&b.y+b.r>br.y&&b.y-b.r<br.y+br.h){
         br.hp--;playHit();
-        if(br.hp<=0){bricks.splice(i,1);score+=br.maxHp*10;addParticles(br.x+br.w/2,br.y+br.h/2,COLORS[br.maxHp]||'#fff',8);document.getElementById('sc').textContent=score;}
+        if(br.hp<=0){bricks.splice(i,1);score+=br.maxHp*10;addParticles(br.x+br.w/2,br.y+br.h/2,COLORS[br.maxHp]||'#fff',8);document.getElementById('sc').textContent=score;if(score>bestScore){bestScore=score;localStorage.setItem('brick_best',bestScore);document.getElementById('bs').textContent=bestScore;}}
         // reflect
         const overlapL=b.x+b.r-br.x,overlapR=br.x+br.w-(b.x-b.r),overlapT=b.y+b.r-br.y,overlapB=br.y+br.h-(b.y-b.r);
         const minO=Math.min(overlapL,overlapR,overlapT,overlapB);
@@ -194,7 +195,7 @@ function update(){
   });
   for(let i=toRemove.length-1;i>=0;i--)balls.splice(toRemove[i],1);
   if(balls.length===0){lives--;document.getElementById('lv').textContent=lives;if(lives<=0){gameState='over';drawGameOver();}else resetBall();}
-  if(bricks.length===0){score+=100;document.getElementById('sc').textContent=score;currentLevel++;document.getElementById('lvl').textContent=currentLevel;if(currentLevel>10){gameState='win';drawWin();}else initLevel();}
+  if(bricks.length===0){score+=100;document.getElementById('sc').textContent=score;if(score>bestScore){bestScore=score;localStorage.setItem('brick_best',bestScore);document.getElementById('bs').textContent=bestScore;}currentLevel++;document.getElementById('lvl').textContent=currentLevel;if(currentLevel>10){gameState='win';drawWin();}else initLevel();}
   particles=particles.filter(p=>{p.x+=p.dx;p.y+=p.dy;p.life--;return p.life>0;});
 }
 
@@ -223,7 +224,7 @@ function drawGameOver(){
   ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,CW,CH);
   ctx.fillStyle='#fff';ctx.font='bold 36px Arial';ctx.textAlign='center';
   ctx.fillText('GAME OVER',CW/2,CH/2-40);
-  ctx.font='24px Arial';ctx.fillText('Score: '+score,CW/2,CH/2);
+  ctx.font='24px Arial';ctx.fillText('Score: '+score,CW/2,CH/2);ctx.fillText('Best: '+bestScore,CW/2,CH/2+32);
   ctx.fillStyle='#00ff88';ctx.fillRect(CW/2-70,CH/2+40,140,44);
   ctx.fillStyle='#000';ctx.font='bold 18px Arial';ctx.fillText('PLAY AGAIN',CW/2,CH/2+67);
 }
@@ -233,7 +234,7 @@ function drawWin(){
   ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,CW,CH);
   ctx.fillStyle='#ffd700';ctx.font='bold 36px Arial';ctx.textAlign='center';
   ctx.fillText('YOU WIN!',CW/2,CH/2-40);
-  ctx.fillStyle='#fff';ctx.font='24px Arial';ctx.fillText('Score: '+score,CW/2,CH/2);
+  ctx.fillStyle='#fff';ctx.font='24px Arial';ctx.fillText('Score: '+score,CW/2,CH/2);ctx.fillText('Best: '+bestScore,CW/2,CH/2+32);
   ctx.fillStyle='#00ff88';ctx.fillRect(CW/2-70,CH/2+40,140,44);
   ctx.fillStyle='#000';ctx.font='bold 18px Arial';ctx.fillText('PLAY AGAIN',CW/2,CH/2+67);
 }
