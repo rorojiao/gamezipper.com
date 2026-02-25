@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>Sushi Stack 3D - Color Sort Puzzle Game | GameZipper</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <style>
 html,body{overflow-x:hidden;max-width:100vw;}
 *{box-sizing:border-box;}
@@ -320,232 +320,164 @@ const snd = {
   error: () => beep(150, 0.1, 'sawtooth', 0.15),
 };
 
-// ─── Three.js Setup ───────────────────────────────────────────────────────────
+// ─── Babylon.js Setup ────────────────────────────────────────────────────────
 const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
-renderer.setClearColor(0x0A0618);  // 深夜紫色
+const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+engine.setHardwareScalingLevel(1 / Math.min(devicePixelRatio, 2));
 
-const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x0A0618, 0.018);  // 浅雾，紫色调
+const scene = new BABYLON.Scene(engine);
+scene.clearColor = new BABYLON.Color4(0.04, 0.01, 0.08, 1.0);
+scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+scene.fogDensity = 0.012;
+scene.fogColor = new BABYLON.Color3(0.04, 0.01, 0.08);
 
-// 天空渐变背景（通过 CSS 做，Three.js 清色即可）
+// ─── Camera ──────────────────────────────────────────────────────────────────
+const camera = new BABYLON.ArcRotateCamera("cam", -Math.PI / 2, 1.1, 18, BABYLON.Vector3.Zero(), scene);
+// Camera positioned programmatically via positionCamera()
 
-const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 200);
+// ─── Lights ──────────────────────────────────────────────────────────────────
+const hemi = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(0, 1, 0), scene);
+hemi.intensity = 0.35;
+hemi.diffuse = new BABYLON.Color3(0.9, 0.7, 1.0);
+hemi.groundColor = new BABYLON.Color3(0.08, 0.04, 0.18);
 
-// Lights — 深夜日式料理屋风格
-scene.add(new THREE.AmbientLight(0x8060CC, 0.30));  // 冷紫环境光
+const dirLight = new BABYLON.DirectionalLight("dir", new BABYLON.Vector3(-0.4, -1.2, -0.6), scene);
+dirLight.intensity = 1.5;
+dirLight.diffuse = new BABYLON.Color3(1.0, 0.88, 0.82);
+dirLight.position = new BABYLON.Vector3(5, 14, 7);
 
-const dirLight = new THREE.DirectionalLight(0xFFD8A0, 1.6);
-dirLight.position.set(5, 14, 7);
-dirLight.castShadow = true;
-dirLight.shadow.mapSize.width = 2048;
-dirLight.shadow.mapSize.height = 2048;
-dirLight.shadow.camera.near = 0.5;
-dirLight.shadow.camera.far = 80;
-dirLight.shadow.camera.left = -22;
-dirLight.shadow.camera.right = 22;
-dirLight.shadow.camera.top = 22;
-dirLight.shadow.camera.bottom = -22;
-scene.add(dirLight);
+const shadowGen = new BABYLON.ShadowGenerator(2048, dirLight);
+shadowGen.usePoissonSampling = true;
+shadowGen.bias = 0.0005;
 
-// 冷蓝侧光
-const blueLight = new THREE.DirectionalLight(0x5080FF, 0.5);
-blueLight.position.set(-10, 6, -5);
-scene.add(blueLight);
+const ptLight = new BABYLON.PointLight("pt", new BABYLON.Vector3(0, 8, 3), scene);
+ptLight.diffuse = new BABYLON.Color3(1.0, 0.7, 0.2);
+ptLight.intensity = 0.9;
+ptLight.range = 50;
 
-// 主暖色点光（位于场景上方，模拟灯笼）
-const ptLight = new THREE.PointLight(0xFFB030, 1.0, 50);
-ptLight.position.set(0, 8, 3);
-scene.add(ptLight);
+const bgLight1 = new BABYLON.PointLight("bg1", new BABYLON.Vector3(-8, 4, -6), scene);
+bgLight1.diffuse = new BABYLON.Color3(1.0, 0.1, 0.4);
+bgLight1.intensity = 0.5;
+bgLight1.range = 30;
 
-// 背景装饰点光（红紫，来自背后）
-const bgLight1 = new THREE.PointLight(0xFF2060, 0.6, 30);
-bgLight1.position.set(-8, 4, -6);
-scene.add(bgLight1);
-const bgLight2 = new THREE.PointLight(0x6030FF, 0.6, 30);
-bgLight2.position.set(8, 4, -6);
-scene.add(bgLight2);
+const bgLight2 = new BABYLON.PointLight("bg2", new BABYLON.Vector3(8, 4, -6), scene);
+bgLight2.diffuse = new BABYLON.Color3(0.4, 0.2, 1.0);
+bgLight2.intensity = 0.5;
+bgLight2.range = 30;
 
-// Ground — 光滑深色地板（模拟夜晚光可见反射的大理石）
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(80, 80, 20, 20),
-  new THREE.MeshStandardMaterial({
-    color: 0x0C0820,
-    roughness: 0.25,
-    metalness: 0.5,
-    envMapIntensity: 1.0
-  })
-);
-ground.rotation.x = -Math.PI / 2;
+// ─── Ground ───────────────────────────────────────────────────────────────────
+const groundMat = new BABYLON.PBRMaterial("gnd", scene);
+groundMat.albedoColor = new BABYLON.Color3(0.05, 0.02, 0.12);
+groundMat.metallic = 0.7;
+groundMat.roughness = 0.15;
+const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 60, height: 60, subdivisions: 20 }, scene);
+ground.material = groundMat;
 ground.position.y = -0.2;
-ground.receiveShadow = true;
-scene.add(ground);
+ground.receiveShadows = true;
 
-// 背景墙（远景日式屏风感）
-const bgWall = new THREE.Mesh(
-  new THREE.PlaneGeometry(60, 25),
-  new THREE.MeshBasicMaterial({ color: 0x0D0428, side: THREE.FrontSide })
-);
-bgWall.position.set(0, 8, -18);
-scene.add(bgWall);
+// ─── GlowLayer — the killer feature ✨ ────────────────────────────────────────
+const glowLayer = new BABYLON.GlowLayer("glow", scene);
+glowLayer.intensity = 1.8;
+glowLayer.customEmissiveColorSelector = function(mesh, subMesh, material, result) {
+  if (mesh.metadata && mesh.metadata.isGlowMesh) {
+    const c = mesh.metadata.glowColor;
+    result.set(c.r * 0.8, c.g * 0.8, c.b * 0.8, 1.0);
+  } else {
+    result.set(0, 0, 0, 0);
+  }
+};
 
-// ─── 远景：星空 ────────────────────────────────────────────────────────────────
-const STAR_COUNT = 60;
-const starGeo = new THREE.BufferGeometry();
-const starPositions = new Float32Array(STAR_COUNT * 3);
-const starPhases = [];
-for (let i = 0; i < STAR_COUNT; i++) {
-  starPositions[i*3]   = (Math.random() - 0.5) * 80;
-  starPositions[i*3+1] = 12 + Math.random() * 20;
-  starPositions[i*3+2] = -15 - Math.random() * 30;
-  starPhases.push(Math.random() * Math.PI * 2);
+// ─── HighlightLayer — selection indicator ─────────────────────────────────────
+const hlLayer = new BABYLON.HighlightLayer("hl", scene, { mainTextureFixedSize: 256 });
+
+// ─── Background: Stars ────────────────────────────────────────────────────────
+const starData = [];
+for (let i = 0; i < 60; i++) {
+  const s = BABYLON.MeshBuilder.CreateSphere("star" + i, { diameter: 0.18, segments: 3 }, scene);
+  const sm = new BABYLON.StandardMaterial("starm" + i, scene);
+  sm.emissiveColor = new BABYLON.Color3(0.9, 0.9, 1.0);
+  sm.disableLighting = true;
+  s.material = sm;
+  s.position = new BABYLON.Vector3(
+    (Math.random() - 0.5) * 80,
+    12 + Math.random() * 20,
+    -15 - Math.random() * 30
+  );
+  starData.push({ mesh: s, phase: Math.random() * Math.PI * 2, baseAlpha: 0.4 + Math.random() * 0.6 });
 }
-starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-const starMat = new THREE.PointsMaterial({
-  color: 0xFFFFFF, size: 0.22, transparent: true, opacity: 0.9, sizeAttenuation: true
-});
-const starPts = new THREE.Points(starGeo, starMat);
-scene.add(starPts);
 
-// ─── 远景：日本神社/灯笼剪影 ──────────────────────────────────────────────────
+// ─── Background: Torii Gate Silhouette ────────────────────────────────────────
 (function buildShrine() {
-  const silMat = new THREE.MeshBasicMaterial({ color: 0x0A0228 });
+  const silMat = new BABYLON.StandardMaterial("sil", scene);
+  silMat.diffuseColor = new BABYLON.Color3(0.04, 0.01, 0.1);
+  silMat.disableLighting = true;
   function addBox(w, h, d, x, y, z) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), silMat);
-    m.position.set(x, y, z);
-    scene.add(m);
+    const m = BABYLON.MeshBuilder.CreateBox("sil_" + x + y + z, { width: w, height: h, depth: d }, scene);
+    m.material = silMat;
+    m.position = new BABYLON.Vector3(x, y, z);
     return m;
   }
-  // 鸟居柱 left & right
-  addBox(0.4, 7, 0.4, -6,   3.5, -17);
+  addBox(0.4, 7, 0.4, -6, 3.5, -17);
   addBox(0.4, 7, 0.4, -3.6, 3.5, -17);
-  // 鸟居横梁 & 顶
   addBox(3.4, 0.5, 0.4, -4.8, 7.2, -17);
   addBox(4.0, 0.3, 0.4, -4.8, 7.8, -17);
-
-  // 灯笼 (右侧)
-  const lanternMat = new THREE.MeshBasicMaterial({ color: 0x180840 });
+  // Lanterns with glow
+  const lanternColors = [
+    new BABYLON.Color3(1.0, 0.5, 0.1),
+    new BABYLON.Color3(1.0, 0.2, 0.5),
+    new BABYLON.Color3(0.5, 0.2, 1.0)
+  ];
   [3, 6, 9].forEach((x, i) => {
-    const lantern = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), lanternMat);
-    lantern.position.set(x, 6 - i * 0.5, -16.5);
-    scene.add(lantern);
-    // 灯笼光晕
-    const glowMat2 = new THREE.MeshBasicMaterial({ color: 0xFF8040, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false });
-    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), glowMat2);
-    glow.position.set(x, 6 - i * 0.5, -16.5);
-    glow.userData.isLantern = true;
-    glow.userData.lanternPhase = i * 1.3;
-    scene.add(glow);
-    // 灯笼杆
+    const lantern = BABYLON.MeshBuilder.CreateBox("lan" + i, { width: 0.5, height: 0.7, depth: 0.5 }, scene);
+    const lm = new BABYLON.StandardMaterial("lanm" + i, scene);
+    lm.emissiveColor = lanternColors[i];
+    lm.disableLighting = true;
+    lantern.material = lm;
+    lantern.position = new BABYLON.Vector3(x, 6 - i * 0.5, -16.5);
+    lantern.metadata = { isGlowMesh: true, glowColor: lanternColors[i] };
     addBox(0.06, 1.5, 0.06, x, 6.9 - i * 0.5, -16.5);
   });
 })();
 
-// ─── 中景：3条光束从天上打下来 ─────────────────────────────────────────────────
-const beams = [];
-const beamColors = [0xFFE0A0, 0xC0A0FF, 0xFF80C0];
-const beamXPos  = [-5, 0, 5];
-for (let b = 0; b < 3; b++) {
-  const beamGeo = new THREE.BoxGeometry(0.3, 20, 0.3);
-  const beamMat = new THREE.MeshBasicMaterial({
-    color: beamColors[b],
-    transparent: true,
-    opacity: 0.06,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-  const beam = new THREE.Mesh(beamGeo, beamMat);
-  beam.position.set(beamXPos[b], 14, -5);
-  beam.userData.beamIdx = b;
-  beam.userData.beamPhaseOff = b * 1.1;
-  scene.add(beam);
-  beams.push(beam);
-}
-
-// ─── 近景：格纹地板覆盖层（叠加在光滑地板上方）─────────────────────────────────
-(function buildGridFloor() {
-  // 用 ShaderMaterial 实现 grid pattern
-  const gridMat = new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    uniforms: { uTime: { value: 0 } },
-    vertexShader: `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform float uTime;
-      varying vec2 vUv;
-      void main() {
-        vec2 grid = abs(fract(vUv * 20.0 - 0.5) - 0.5) / fwidth(vUv * 20.0);
-        float line = min(grid.x, grid.y);
-        float alpha = 1.0 - min(line, 1.0);
-        alpha *= 0.18 + 0.04 * sin(uTime * 0.5 + vUv.x * 10.0);
-        // fade at edges
-        float edgeFade = smoothstep(0.0, 0.2, min(min(vUv.x, 1.0-vUv.x), min(vUv.y, 1.0-vUv.y)));
-        gl_FragColor = vec4(0.6, 0.4, 1.0, alpha * edgeFade);
-      }
-    `
-  });
-  const gridMesh = new THREE.Mesh(new THREE.PlaneGeometry(50, 50), gridMat);
-  gridMesh.rotation.x = -Math.PI / 2;
-  gridMesh.position.y = -0.18;
-  gridMesh.userData.isGrid = true;
-  scene.add(gridMesh);
-})();
-
 // ─── Sakura Ambient Particles ─────────────────────────────────────────────────
-const SAKURA_COUNT = 80;
-const sakuraGeo = new THREE.BufferGeometry();
-const sakuraPos = new Float32Array(SAKURA_COUNT * 3);
-const sakuraVel = [];
-const sakuraPhase = [];
+const sakuraData = [];
+const SAKURA_COUNT = 60;
 for (let i = 0; i < SAKURA_COUNT; i++) {
-  sakuraPos[i*3]   = (Math.random() - 0.5) * 30;
-  sakuraPos[i*3+1] = Math.random() * 20 - 2;
-  sakuraPos[i*3+2] = (Math.random() - 0.5) * 20;
-  sakuraVel.push({
-    x: (Math.random() - 0.5) * 0.4,
-    y: -(0.5 + Math.random() * 1.2),
-    spin: (Math.random() - 0.5) * 2
+  const s = BABYLON.MeshBuilder.CreateDisc("sak" + i, { radius: 0.13, tessellation: 5 }, scene);
+  const sm = new BABYLON.StandardMaterial("sakm" + i, scene);
+  sm.diffuseColor = new BABYLON.Color3(1.0, 0.6, 0.75);
+  sm.emissiveColor = new BABYLON.Color3(0.5, 0.15, 0.3);
+  sm.backFaceCulling = false;
+  sm.alpha = 0.65;
+  s.material = sm;
+  s.position = new BABYLON.Vector3(
+    (Math.random() - 0.5) * 28,
+    Math.random() * 18 - 2,
+    (Math.random() - 0.5) * 18
+  );
+  s.rotation.x = Math.random() * Math.PI;
+  sakuraData.push({
+    mesh: s,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: -(0.4 + Math.random() * 1.0),
+    phase: Math.random() * Math.PI * 2,
+    spinZ: (Math.random() - 0.5) * 2.5
   });
-  sakuraPhase.push(Math.random() * Math.PI * 2);
 }
-sakuraGeo.setAttribute('position', new THREE.BufferAttribute(sakuraPos, 3));
-const sakuraMat = new THREE.PointsMaterial({
-  color: 0xFF88BB, size: 0.25, transparent: true, opacity: 0.7, sizeAttenuation: true
-});
-const sakuraPts = new THREE.Points(sakuraGeo, sakuraMat);
-scene.add(sakuraPts);
-
 function updateSakura(dt, elapsedTime) {
-  const pos = sakuraGeo.attributes.position.array;
-  for (let i = 0; i < SAKURA_COUNT; i++) {
-    sakuraPhase[i] += dt * 1.2;
-    pos[i*3]   += sakuraVel[i].x * dt + Math.sin(sakuraPhase[i]) * 0.01;
-    pos[i*3+1] += sakuraVel[i].y * dt;
-    pos[i*3+2] += Math.cos(sakuraPhase[i] * 0.7) * 0.008;
-    if (pos[i*3+1] < -3) {
-      pos[i*3]   = (Math.random() - 0.5) * 30;
-      pos[i*3+1] = 15 + Math.random() * 5;
-      pos[i*3+2] = (Math.random() - 0.5) * 20;
+  for (const s of sakuraData) {
+    s.phase += dt * 1.1;
+    s.mesh.position.x += s.vx * dt + Math.sin(s.phase) * 0.008;
+    s.mesh.position.y += s.vy * dt;
+    s.mesh.position.z += Math.cos(s.phase * 0.7) * 0.006;
+    s.mesh.rotation.z += s.spinZ * dt;
+    if (s.mesh.position.y < -3) {
+      s.mesh.position.x = (Math.random() - 0.5) * 28;
+      s.mesh.position.y = 14 + Math.random() * 5;
+      s.mesh.position.z = (Math.random() - 0.5) * 18;
     }
   }
-  sakuraGeo.attributes.position.needsUpdate = true;
-  sakuraMat.opacity = 0.5 + 0.2 * Math.sin(elapsedTime * 0.8);
 }
-
-// ─── 棒底部平台光晕（动态颜色） ───────────────────────────────────────────────
-const rodPlatformGlows = [];  // per-rod glow meshes, created in initLevel
-
 // ─── Tweens ───────────────────────────────────────────────────────────────────
 const tweens = [];
 function tweenTo(obj, prop, target, dur, ease='linear', onDone=null) {
@@ -583,135 +515,130 @@ function updateTweens(now) {
 const flyAnims = [];
 function lerp(a, b, t) { return a + (b-a)*t; }
 
-// ─── Particles ────────────────────────────────────────────────────────────────
-const particleSystems = [];
-function spawnParticles(cx, cy, cz, colorHex, count=20, upBias=0) {
-  const geo = new THREE.BufferGeometry();
-  const pos = new Float32Array(count * 3);
-  const vel = [];
+// ─── Match Particles ─────────────────────────────────────────────────────────
+const matchParticles = [];
+function spawnParticles(cx, cy, cz, colorHex, count = 30) {
+  const r = ((colorHex >> 16) & 0xFF) / 255;
+  const g = ((colorHex >> 8) & 0xFF) / 255;
+  const b = (colorHex & 0xFF) / 255;
   for (let i = 0; i < count; i++) {
-    pos[i*3] = cx; pos[i*3+1] = cy; pos[i*3+2] = cz;
-    vel.push({
-      x: (Math.random()-0.5)*5,
-      y: Math.random()*3+1 + upBias,
-      z: (Math.random()-0.5)*5,
-      drag: 0.92
+    const p = BABYLON.MeshBuilder.CreateSphere("mp" + Date.now() + i, { diameter: 0.2, segments: 3 }, scene);
+    const pm = new BABYLON.StandardMaterial("mpm" + i, scene);
+    pm.emissiveColor = new BABYLON.Color3(r, g, b);
+    pm.disableLighting = true;
+    p.material = pm;
+    p.position = new BABYLON.Vector3(cx, cy, cz);
+    const ang = Math.random() * Math.PI * 2;
+    const elev = (Math.random() - 0.2) * Math.PI * 0.9;
+    const spd = 2.5 + Math.random() * 3.5;
+    matchParticles.push({
+      mesh: p, mat: pm,
+      vx: Math.cos(ang) * Math.cos(elev) * spd,
+      vy: Math.sin(elev) * spd + 2,
+      vz: Math.sin(ang) * Math.cos(elev) * spd,
+      life: 0, maxLife: 0.85
     });
   }
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const mat = new THREE.PointsMaterial({ color: colorHex, size: 0.18, transparent: true, opacity: 1, sizeAttenuation: true, blending: THREE.AdditiveBlending, depthWrite: false });
-  const pts = new THREE.Points(geo, mat);
-  scene.add(pts);
-  particleSystems.push({ pts, vel, t: 0, dur: 1.2 });
 }
 function updateParticles(dt) {
-  for (let i = particleSystems.length-1; i >= 0; i--) {
-    const ps = particleSystems[i];
-    ps.t += dt;
-    if (ps.t >= ps.dur) {
-      scene.remove(ps.pts);
-      ps.pts.geometry.dispose();
-      particleSystems.splice(i, 1);
-      continue;
-    }
-    const pos = ps.pts.geometry.attributes.position.array;
-    const count = ps.vel.length;
-    for (let j = 0; j < count; j++) {
-      ps.vel[j].x *= ps.vel[j].drag;
-      ps.vel[j].z *= ps.vel[j].drag;
-      pos[j*3]   += ps.vel[j].x * dt;
-      pos[j*3+1] += ps.vel[j].y * dt - 4*dt*ps.t;
-      pos[j*3+2] += ps.vel[j].z * dt;
-    }
-    ps.pts.geometry.attributes.position.needsUpdate = true;
-    ps.pts.material.opacity = 1 - ps.t / ps.dur;
+  for (let i = matchParticles.length - 1; i >= 0; i--) {
+    const p = matchParticles[i];
+    p.life += dt;
+    if (p.life >= p.maxLife) { p.mesh.dispose(); matchParticles.splice(i, 1); continue; }
+    p.mesh.position.x += p.vx * dt;
+    p.mesh.position.y += p.vy * dt - 4 * dt * p.life;
+    p.mesh.position.z += p.vz * dt;
+    p.mat.alpha = 1 - p.life / p.maxLife;
   }
 }
-
 // ─── Mesh Builders ────────────────────────────────────────────────────────────
 function makeSushiDisc(colorIdx) {
-  const group = new THREE.Group();
+  const root = new BABYLON.TransformNode("disc_" + colorIdx + "_" + Date.now(), scene);
   const r = DISC_R, h = r * 0.65;
 
-  // 1. 海苔外圈
-  const noriMesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(r, r, h, 32),
-    new THREE.MeshStandardMaterial({ color: 0x0D0D08, roughness: 0.85, metalness: 0.04 })
-  );
-  noriMesh.castShadow = true;
-  group.add(noriMesh);
+  // Nori outer ring
+  const nori = BABYLON.MeshBuilder.CreateCylinder("nori", { diameter: r * 2, height: h, tessellation: 32 }, scene);
+  const noriMat = new BABYLON.PBRMaterial("noriM", scene);
+  noriMat.albedoColor = new BABYLON.Color3(0.05, 0.05, 0.03);
+  noriMat.roughness = 0.85; noriMat.metallic = 0.04;
+  nori.material = noriMat;
+  nori.parent = root;
+  shadowGen.addShadowCaster(nori);
 
-  // 2. 米饭环
-  group.add(new THREE.Mesh(
-    new THREE.CylinderGeometry(r*0.87, r*0.87, h+0.01, 32),
-    new THREE.MeshStandardMaterial({ color: 0xFAF8EE, roughness: 0.92 })
-  ));
+  // Rice ring
+  const rice = BABYLON.MeshBuilder.CreateCylinder("rice", { diameter: r * 0.87 * 2, height: h + 0.02, tessellation: 32 }, scene);
+  const riceMat = new BABYLON.PBRMaterial("riceM", scene);
+  riceMat.albedoColor = new BABYLON.Color3(0.98, 0.97, 0.94);
+  riceMat.roughness = 0.9; riceMat.metallic = 0.0;
+  rice.material = riceMat;
+  rice.parent = root;
 
-  // 3. 食材芯
-  const fillColor = new THREE.Color(COLORS_HEX[colorIdx]);
-  const fillMat = new THREE.MeshStandardMaterial({
-    color: fillColor,
-    roughness: 0.35,
-    metalness: 0.2,
-    emissive: fillColor.clone().multiplyScalar(0.35),
-    emissiveIntensity: 1.0
-  });
-  group.add(new THREE.Mesh(new THREE.CylinderGeometry(r*0.56, r*0.56, h+0.02, 28), fillMat));
+  // Colored fill — GLOWS via GlowLayer ✨
+  const hex = COLORS_HEX[colorIdx];
+  const fc = new BABYLON.Color3(((hex >> 16) & 0xFF) / 255, ((hex >> 8) & 0xFF) / 255, (hex & 0xFF) / 255);
+  const fill = BABYLON.MeshBuilder.CreateCylinder("fill", { diameter: r * 0.56 * 2, height: h + 0.04, tessellation: 28 }, scene);
+  const fillMat = new BABYLON.PBRMaterial("fillM_" + colorIdx, scene);
+  fillMat.albedoColor = fc;
+  fillMat.roughness = 0.3; fillMat.metallic = 0.2;
+  fillMat.emissiveColor = fc.scale(0.55);
+  fill.material = fillMat;
+  fill.parent = root;
+  fill.metadata = { isGlowMesh: true, glowColor: fc };
 
-  // 4. 顶面高光
-  const topMesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(r*0.56, r*0.56, 0.01, 28),
-    new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.15, metalness: 0.15, transparent: true, opacity: 0.28 })
-  );
-  topMesh.position.y = h/2 + 0.005;
-  group.add(topMesh);
+  // Top highlight
+  const top = BABYLON.MeshBuilder.CreateCylinder("top", { diameter: r * 0.56 * 2, height: 0.02, tessellation: 28 }, scene);
+  const topMat = new BABYLON.StandardMaterial("topM", scene);
+  topMat.diffuseColor = new BABYLON.Color3(1, 1, 1);
+  topMat.alpha = 0.25;
+  top.material = topMat;
+  top.position.y = h / 2 + 0.01;
+  top.parent = root;
 
-  // 5. 彩色发光光晕（比nori稍大，半透明加法混合）
-  const glowMat = new THREE.MeshBasicMaterial({
-    color: fillColor.clone().multiplyScalar(1.5),
-    transparent: true,
-    opacity: 0.18,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-  const glowMesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(r*1.2, r*1.3, 0.04, 24),
-    glowMat
-  );
-  glowMesh.position.y = -h/2 + 0.02;
-  group.add(glowMesh);
-
-  group.userData.ci = colorIdx;
-  group.userData.discR = r;
-  group.userData.discH = h;
-  group.castShadow = true;
-  return group;
+  root.metadata = { ci: colorIdx, discR: r, discH: h, fillMesh: fill };
+  return root;
 }
 
 function makeRodMesh(rodHeight) {
-  const group = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ color: 0x7B2412, roughness: 0.45, metalness: 0.18 });
+  const root = new BABYLON.TransformNode("rod_" + Date.now(), scene);
+  const mat = new BABYLON.PBRMaterial("rodM", scene);
+  mat.albedoColor = new BABYLON.Color3(0.48, 0.14, 0.07);
+  mat.roughness = 0.45; mat.metallic = 0.25;
   const gap = 0.19, sw = 0.065;
-  [-gap, gap].forEach(dx => {
-    const stick = new THREE.Mesh(new THREE.CylinderGeometry(sw, sw*1.08, rodHeight, 10), mat);
-    stick.position.x = dx;
-    stick.castShadow = true;
-    group.add(stick);
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(sw, 8, 8, 0, Math.PI*2, 0, Math.PI/2), mat);
-    cap.position.set(dx, rodHeight/2, 0);
-    group.add(cap);
-  });
-  const base = new THREE.Mesh(
-    new THREE.BoxGeometry(1.15, 0.09, 0.68),
-    new THREE.MeshStandardMaterial({ color: 0xC8A858, roughness: 0.75, metalness: 0.08 })
-  );
-  base.position.y = -rodHeight/2 - 0.05;
-  base.castShadow = true;
-  base.receiveShadow = true;
-  group.add(base);
-  return group;
-}
 
+  [-gap, gap].forEach(dx => {
+    const stick = BABYLON.MeshBuilder.CreateCylinder("stick", { diameter: sw * 2, diameterTop: sw * 2.16, height: rodHeight, tessellation: 10 }, scene);
+    stick.material = mat;
+    stick.position.x = dx;
+    stick.parent = root;
+    shadowGen.addShadowCaster(stick);
+    const cap = BABYLON.MeshBuilder.CreateSphere("cap", { diameter: sw * 2, segments: 6 }, scene);
+    cap.material = mat;
+    cap.position = new BABYLON.Vector3(dx, rodHeight / 2, 0);
+    cap.parent = root;
+  });
+
+  const base = BABYLON.MeshBuilder.CreateBox("base", { width: 1.15, height: 0.09, depth: 0.68 }, scene);
+  const baseMat = new BABYLON.PBRMaterial("baseM", scene);
+  baseMat.albedoColor = new BABYLON.Color3(0.78, 0.66, 0.34);
+  baseMat.roughness = 0.75; baseMat.metallic = 0.1;
+  base.material = baseMat;
+  base.position.y = -rodHeight / 2 - 0.05;
+  base.parent = root;
+  base.receiveShadows = true;
+
+  // Glowing platform ring
+  const ring = BABYLON.MeshBuilder.CreateTorus("ring", { diameter: 1.3, thickness: 0.04, tessellation: 32 }, scene);
+  const ringMat = new BABYLON.StandardMaterial("ringM", scene);
+  ringMat.emissiveColor = new BABYLON.Color3(0.5, 0.2, 1.0);
+  ringMat.disableLighting = true;
+  ring.material = ringMat;
+  ring.position.y = -rodHeight / 2 - 0.08;
+  ring.rotation.x = Math.PI / 2;
+  ring.parent = root;
+  ring.metadata = { isGlowMesh: true, glowColor: new BABYLON.Color3(0.5, 0.2, 1.0) };
+  root.metadata = { ringMesh: ring, ringMat };
+  return root;
+}
 // ─── Game State ───────────────────────────────────────────────────────────────
 const state = {
   level: 0, moves: 0, score: 0, sel: -1,
@@ -727,10 +654,7 @@ let saveData = loadSave();
 // ─── Layout ───────────────────────────────────────────────────────────────────
 const DISC_R = 0.46, DISC_H = 0.46 * 0.65, DISC_STEP = 0.46 * 0.65 + 0.04;
 
-// Rod height = disc stack PLUS 4 empty disc-heights above → chopsticks visible
-function getRodHeight(cap) {
-  return (cap + 4) * DISC_STEP + DISC_H;
-}
+function getRodHeight(cap) { return (cap + 4) * DISC_STEP + DISC_H; }
 
 function layoutRods(rods) {
   const n = rods.length;
@@ -738,94 +662,48 @@ function layoutRods(rods) {
   const perRow = Math.ceil(n / rows);
   const spacing = Math.min(1.2, 5.5 / perRow);
   const rodH = getRodHeight(state.cap);
-  // Raise rod so bottom of sticks sits just above floor (floor=y-0.2)
   const rodY = rodH / 2 - 0.15;
   rods.forEach((rod, i) => {
-    const row = (rows === 2 && i >= Math.ceil(n/2)) ? 1 : 0;
-    const col = row === 0 ? i : i - Math.ceil(n/2);
-    const rc = row === 0 ? Math.ceil(n/2) : n - Math.ceil(n/2);
+    const row = (rows === 2 && i >= Math.ceil(n / 2)) ? 1 : 0;
+    const col = row === 0 ? i : i - Math.ceil(n / 2);
+    const rc = row === 0 ? Math.ceil(n / 2) : n - Math.ceil(n / 2);
     const sx = -(rc - 1) * spacing / 2;
     const sz = -(rows - 1) * spacing * 0.8 / 2;
-    rod.mesh.position.set(sx + col * spacing, rodY, sz + row * spacing * 0.8);
+    rod.mesh.position.x = sx + col * spacing;
+    rod.mesh.position.y = rodY;
+    rod.mesh.position.z = sz + row * spacing * 0.8;
   });
 }
 
 function discY(stackIdx) {
   const rodH = getRodHeight(state.cap);
-  return -rodH/2 + DISC_H/2 + 0.06 + stackIdx * DISC_STEP;
+  return -rodH / 2 + DISC_H / 2 + 0.06 + stackIdx * DISC_STEP;
 }
 
-// ─── Camera Positioning ───────────────────────────────────────────────────────
 function positionCamera(n, rows) {
   rows = rows || (n > 6 ? 2 : 1);
   const hDist = 4.8 + n * 0.32 + (rows > 1 ? 2.2 : 0);
   const rodH = getRodHeight(state.cap);
   const rodCenterY = rodH / 2 - 0.15;
-  camera.position.set(0, rodCenterY + hDist * 0.72, hDist);
-  // lookAt 向上调整0.08，弥补HUD遮挡顶部导致内容上飘
-  camera.lookAt(0, rodCenterY - rodH * 0.08, 0);
+  camera.setPosition(new BABYLON.Vector3(0, rodCenterY + hDist * 0.72, hDist));
+  camera.target = new BABYLON.Vector3(0, rodCenterY - rodH * 0.08, 0);
+  camera.radius = Math.sqrt(hDist * hDist + (hDist * 0.72) * (hDist * 0.72));
 }
-
-// ─── Level Generation ─────────────────────────────────────────────────────────
-function genLevel(idx) {
-  const cfg = LEVEL_CONFIGS[Math.min(idx, LEVEL_CONFIGS.length - 1)];
-  const { rods, empty, colors, cap } = cfg;
-  const mixSteps = cfg.mix || (20 + idx * 2);
-
-  // 用 seeded RNG（确定性）
-  let rng = (idx * 1664525 + 1013904223) >>> 0;
-  const rand = (n) => {
-    rng = (rng * 1664525 + 1013904223) >>> 0;
-    return n === undefined ? rng / 4294967295 : (rng % n);
-  };
-
-  // ── 1. 从已解决状态开始 ──────────────────────────────
-  // rodData[i] = array of color indices (bottom to top)
-  const rodData = [];
-  for (let c = 0; c < colors; c++) {
-    rodData.push(Array(cap).fill(c));   // 每根棒装满一种颜色（已解）
-  }
-  for (let e = 0; e < empty; e++) {
-    rodData.push([]);                    // 空缓冲棒
-  }
-
-  // ── 2. 逆向打乱 N 步（保证可解）──────────────────────
-  for (let step = 0; step < mixSteps; step++) {
-    // 找所有可以移动的 (from, to) 对
-    const moves = [];
-    for (let f = 0; f < rods; f++) {
-      if (rodData[f].length === 0) continue;
-      const disc = rodData[f][rodData[f].length - 1];
-      for (let t = 0; t < rods; t++) {
-        if (t === f) continue;
-        if (rodData[t].length >= cap) continue;  // 目标棒满了
-        // 避免把相同颜色的移来移去（无意义）
-        if (rodData[t].length > 0 && rodData[t][rodData[t].length - 1] === disc) continue;
-        moves.push([f, t]);
-      }
-    }
-    if (moves.length === 0) break;
-    const [f, t] = moves[rand(moves.length)];
-    rodData[t].push(rodData[f].pop());
-  }
-
-  return { rodData, rods, empty, colors, cap };
-}
-
 // ─── Scene Cleanup ────────────────────────────────────────────────────────────
 function clearScene() {
   for (const rod of state.rods) {
-    scene.remove(rod.mesh);
-    if (rod.platformGlow) scene.remove(rod.platformGlow);
+    // Dispose all children of the rod TransformNode
+    rod.mesh.getChildMeshes().forEach(m => m.dispose());
+    rod.mesh.dispose();
+    if (rod.hitBox) rod.hitBox.dispose();
   }
   state.rods = [];
   tweens.length = 0;
   flyAnims.length = 0;
-  for (const ps of particleSystems) scene.remove(ps.pts);
-  particleSystems.length = 0;
-  rodPlatformGlows.length = 0;
+  matchParticles.forEach(p => p.mesh.dispose());
+  matchParticles.length = 0;
+  hlLayer.removeAllMeshes();
 }
-
 // ─── Init Level ───────────────────────────────────────────────────────────────
 function initLevel(idx) {
   clearScene();
@@ -841,161 +719,82 @@ function initLevel(idx) {
 
   const gen = genLevel(idx);
   state.cap = gen.cap;
-
   const rodH = getRodHeight(gen.cap);
 
   for (let ri = 0; ri < gen.rods; ri++) {
     const rodMesh = makeRodMesh(rodH);
-    scene.add(rodMesh);
-
-    // HitBox
-    const hitGeo = new THREE.BoxGeometry(1.4, rodH + 1.0, 2.5);
-    const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
-    const hitBox = new THREE.Mesh(hitGeo, hitMat);
-    hitBox.position.set(0, 0, 0.3);
-    hitBox.userData.rodIndex = ri;
-    rodMesh.add(hitBox);
+    // Invisible hit-zone (large box for click detection)
+    const hitBox = BABYLON.MeshBuilder.CreateBox("hit_" + ri, { width: 1.4, height: rodH + 1.0, depth: 2.5 }, scene);
+    const hitMat = new BABYLON.StandardMaterial("hitm", scene);
+    hitMat.alpha = 0.001;
+    hitBox.material = hitMat;
+    hitBox.position.z = 0.3;
+    hitBox.parent = rodMesh;
+    hitBox.metadata = { rodIndex: ri };
 
     const data = gen.rodData[ri] || [];
     const discs = [];
+    // Entry animation: rods rise from below
+    const targetY = rodH / 2 - 0.15;
+    rodMesh.position.y = targetY - 8;
+    setTimeout(() => {
+      const startY = rodMesh.position.y;
+      const t0 = performance.now();
+      const dur = 400;
+      function rise() {
+        const dt = performance.now() - t0;
+        const p = Math.min(dt / dur, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        rodMesh.position.y = startY + (targetY - startY) * ease;
+        if (p < 1) requestAnimationFrame(rise);
+      }
+      rise();
+    }, ri * 60);
+
     for (let si = 0; si < data.length; si++) {
       const disc = makeSushiDisc(data[si]);
       disc.position.y = discY(si);
-      rodMesh.add(disc);
+      disc.parent = rodMesh;
       discs.push(disc);
     }
-
-    // 底部平台光晕
-    const topColor = data.length > 0 ? new THREE.Color(COLORS_HEX[data[data.length-1]]) : new THREE.Color(0x8060CC);
-    const pgMat = new THREE.MeshBasicMaterial({
-      color: topColor, transparent: true, opacity: 0.22,
-      blending: THREE.AdditiveBlending, depthWrite: false
-    });
-    const platformGlow = new THREE.Mesh(new THREE.CircleGeometry(0.7, 20), pgMat);
-    platformGlow.rotation.x = -Math.PI / 2;
-    platformGlow.userData.isRodPlatform = true;
-    scene.add(platformGlow);
-    rodPlatformGlows.push(platformGlow);
-
-    state.rods.push({ discs, data: [...data], mesh: rodMesh, hitBox, platformGlow });
+    state.rods.push({ discs, data: [...data], mesh: rodMesh, hitBox });
   }
 
   layoutRods(state.rods);
   positionCamera(gen.rods, gen.rods > 6 ? 2 : 1);
-
-  // 更新平台光晕位置
-  state.rods.forEach((rod, ri) => {
-    const p = rod.mesh.position;
-    rod.platformGlow.position.set(p.x, -0.15, p.z);
-  });
-
-  // 入场动画：棒从下方升入（每根延迟 0.06 * ri 秒）
-  state.rods.forEach((rod, ri) => {
-    const finalY = rod.mesh.position.y;
-    rod.mesh.position.y = finalY - 8;
-    tweenTo(rod.mesh.position, 'y', finalY, 0.55, 'elastic', null);
-    // 手动给每根棒加延迟——通过修改 t0
-    const tw = tweens[tweens.length - 1];
-    if (tw) tw.t0 += ri * 60;
-  });
-
   updateHUD();
   updateBotBar();
   updateHintHighlight(-1);
-  console.log('[Sushi3D] initLevel', idx, 'rods=', state.rods.length, 'cap=', gen.cap);
 }
-
-// ─── HUD ──────────────────────────────────────────────────────────────────────
-function updateHUD() {
-  document.getElementById('hudLevel').textContent = state.level + 1;
-  document.getElementById('hudMoves').textContent = state.moves;
-  document.getElementById('hudScore').textContent = state.score;
-  const best = (saveData.best || {})[state.level] || 0;
-  document.getElementById('hudBest').textContent = best;
-}
-function updateBotBar() {
-  document.getElementById('undoCount').textContent = state.undosLeft;
-  document.getElementById('hintCount').textContent = state.hintsLeft;
-  document.getElementById('btnUndo').classList.toggle('disabled', state.undosLeft === 0 || state.undoStack.length === 0);
-  document.getElementById('btnHint').classList.toggle('disabled', state.hintsLeft === 0);
-}
-
-// ─── Game Logic ───────────────────────────────────────────────────────────────
-function topDisc(ri) {
-  const rod = state.rods[ri];
-  if (!rod || rod.discs.length === 0) return null;
-  return rod.discs[rod.discs.length - 1];
-}
-function topColor(ri) {
-  const rod = state.rods[ri];
-  if (!rod || rod.data.length === 0) return -1;
-  return rod.data[rod.data.length - 1];
-}
-function canMove(from, to) {
-  if (from === to) return false;
-  const fRod = state.rods[from], tRod = state.rods[to];
-  if (!fRod || fRod.data.length === 0) return false;
-  if (tRod.data.length >= state.cap) return false;
-  if (tRod.data.length === 0) return true;
-  return topColor(to) === topColor(from);
-}
-
-function checkWin() {
-  return state.rods.every(r => r.data.length === 0 || (r.data.every(c => c === r.data[0]) && r.data.length === state.cap));
-}
-function checkFail() {
-  for (let i = 0; i < state.rods.length; i++) {
-    if (state.rods[i].data.length === 0) continue;
-    for (let j = 0; j < state.rods.length; j++) {
-      if (i !== j && canMove(i, j)) return false;
-    }
-  }
-  return true;
-}
-
-function countTopMatch(ri) {
-  const rod = state.rods[ri];
-  if (rod.data.length === 0) return 0;
-  const top = topColor(ri);
-  let cnt = 0;
-  for (let i = rod.data.length-1; i >= 0; i--) {
-    if (rod.data[i] === top) cnt++;
-    else break;
-  }
-  return cnt;
-}
-
 // ─── Selection Highlight ──────────────────────────────────────────────────────
-let selOutline = null;
 function updateSelHighlight(ri) {
-  if (selOutline) { scene.remove(selOutline); selOutline = null; }
+  hlLayer.removeAllMeshes();
   if (ri < 0) return;
   const rod = state.rods[ri];
   if (!rod) return;
-  const rodH = getRodHeight(state.cap);
-  const geo = new THREE.BoxGeometry(1.3, rodH + 0.7, 0.9);
-  const mat = new THREE.MeshBasicMaterial({ color: 0xFFCC44, transparent: true, opacity: 0.18, side: THREE.BackSide });
-  selOutline = new THREE.Mesh(geo, mat);
-  selOutline.position.copy(rod.mesh.position);
-  scene.add(selOutline);
+  rod.mesh.getChildMeshes().forEach(m => {
+    if (m.metadata && m.metadata.isGlowMesh) {
+      hlLayer.addMesh(m, BABYLON.Color3.Yellow());
+    }
+  });
+  // Brighten the rod ring
+  if (rod.mesh.metadata && rod.mesh.metadata.ringMesh) {
+    rod.mesh.metadata.ringMesh.material.emissiveColor = new BABYLON.Color3(1.0, 0.8, 0.2);
+    rod.mesh.metadata.ringMesh.metadata = { isGlowMesh: true, glowColor: new BABYLON.Color3(1.0, 0.8, 0.2) };
+  }
 }
 
 function updateHintHighlight(ri) {
-  // Remove previous hint meshes
-  scene.children.filter(c => c.userData.isHint).forEach(c => scene.remove(c));
   if (ri < 0) return;
   const rod = state.rods[ri];
   if (!rod) return;
-  const rodH = getRodHeight(state.cap);
-  const geo = new THREE.BoxGeometry(1.3, rodH + 0.7, 0.9);
-  const mat = new THREE.MeshBasicMaterial({ color: 0x00FF88, transparent: true, opacity: 0.22, side: THREE.BackSide });
-  const hintMesh = new THREE.Mesh(geo, mat);
-  hintMesh.position.copy(rod.mesh.position);
-  hintMesh.userData.isHint = true;
-  scene.add(hintMesh);
-  setTimeout(() => { if (hintMesh.parent) scene.remove(hintMesh); }, 2000);
+  rod.mesh.getChildMeshes().forEach(m => {
+    if (m.metadata && m.metadata.isGlowMesh) {
+      hlLayer.addMesh(m, BABYLON.Color3.Green());
+    }
+  });
+  setTimeout(() => hlLayer.removeAllMeshes(), 2000);
 }
-
 // ─── Match Check & Remove ─────────────────────────────────────────────────────
 function checkMatchAndRemove(ri, afterDone) {
   const rod = state.rods[ri];
@@ -1005,18 +804,16 @@ function checkMatchAndRemove(ri, afterDone) {
   const matchDiscs = rod.discs.splice(rod.discs.length - cnt, cnt);
   rod.data.splice(rod.data.length - cnt, cnt);
 
-  // Detach from rod, add to scene in world position
-  const wpos = new THREE.Vector3();
+  // Detach from rod → world space (BABYLON)
   matchDiscs.forEach(d => {
-    rod.mesh.localToWorld(wpos.copy(d.position));
-    rod.mesh.remove(d);
-    d.position.copy(wpos);
-    scene.add(d);
+    const dp = BABYLON.Vector3.TransformCoordinates(d.position, rod.mesh.getWorldMatrix());
+    d.parent = null;
+    d.position.copyFrom(dp);
   });
 
   // Spawn particles — 60颗，带向上拖尾
   const cx = matchDiscs[0].position.x, cy = matchDiscs[0].position.y, cz = matchDiscs[0].position.z;
-  spawnParticles(cx, cy, cz, COLORS_HEX[matchDiscs[0].userData.ci], 60, 2.5);
+  spawnParticles(cx, cy, cz, COLORS_HEX[matchDiscs[0].metadata.ci], 60, 2.5);
   // 二次小爆炸（白光）
   spawnParticles(cx, cy, cz, 0xFFFFFF, 20, 1);
 
@@ -1033,7 +830,7 @@ function checkMatchAndRemove(ri, afterDone) {
   updateHUD();
 
   setTimeout(() => {
-    matchDiscs.forEach(d => scene.remove(d));
+    matchDiscs.forEach(d => d.dispose());
     if (afterDone) afterDone();
   }, 500);
 }
@@ -1109,20 +906,18 @@ function doMove(from, to) {
   state.sel = -1;
   updateSelHighlight(-1);
 
-  const wpos = new THREE.Vector3();
-  fromRod.mesh.localToWorld(wpos.copy(disc.position));
-  fromRod.mesh.remove(disc);
-  disc.position.copy(wpos);
-  scene.add(disc);
+  // Detach disc → world space
+  const wpos = BABYLON.Vector3.TransformCoordinates(disc.position, fromRod.mesh.getWorldMatrix());
+  disc.parent = null;
+  disc.position.copyFrom(wpos);
 
-  const targetWpos = new THREE.Vector3();
+  // Compute target world position
   const targetLocalY = discY(toRod.discs.length - 1);
   const tmpMesh = toRod.mesh;
-  // targetWpos is in WORLD space: rod world y + local disc y
-  targetWpos.set(tmpMesh.position.x, tmpMesh.position.y + targetLocalY, tmpMesh.position.z);
+  const toX_world = tmpMesh.position.x, toY_world = tmpMesh.position.y + targetLocalY, toZ_world = tmpMesh.position.z;
 
   const fromX = disc.position.x, fromY = disc.position.y, fromZ = disc.position.z;
-  const toX = targetWpos.x, toY = targetWpos.y, toZ = targetWpos.z;
+  const toX = toX_world, toY = toY_world, toZ = toZ_world;
   const arcH = 1.2 + Math.abs(toX - fromX) * 0.2 + Math.abs(toZ - fromZ) * 0.2;
   const FLY_DUR = 0.42;
   const fly = { t: 0, dur: FLY_DUR, disc, fromX, fromY, fromZ, toX, toY, toZ, arcH, done: false, toRod, colorIdx };
@@ -1146,10 +941,9 @@ function updateFlyAnims(dt) {
     fly.disc.rotation.y += dt * 6;
     if (fly.t >= 1) {
       fly.done = true;
-      // Re-attach to rod
-      scene.remove(fly.disc);
-      fly.toRod.mesh.add(fly.disc);
-      fly.disc.position.set(0, discY(fly.toRod.discs.length - 1), 0);
+      // Re-attach to rod (Babylon.js: set parent)
+      fly.disc.parent = fly.toRod.mesh;
+      fly.disc.position.copyFromFloats(0, discY(fly.toRod.discs.length - 1), 0);
       fly.disc.rotation.y = 0;
       // Check match
       const toIdx = state.rods.indexOf(fly.toRod);
@@ -1176,10 +970,9 @@ function doUndo() {
   fromRod.discs.push(disc);
   fromRod.data = u.fromData.slice();
   toRod.data = u.toData.slice();
-  // Snap disc back
-  toRod.mesh.remove(disc);
-  fromRod.mesh.add(disc);
-  disc.position.set(0, discY(fromRod.discs.length-1), 0);
+  // Snap disc back (Babylon.js parent re-attachment)
+  disc.parent = fromRod.mesh;
+  disc.position.copyFromFloats(0, discY(fromRod.discs.length-1), 0);
   disc.rotation.y = 0;
   state.sel = -1;
   updateSelHighlight(-1);
@@ -1270,10 +1063,9 @@ function handlePointer(clientX, clientY) {
   let best = -1, bestDist = rect.width * 0.25; // 25% screen width threshold
   state.rods.forEach((r, i) => {
     if (!r.mesh) return;
-    const wp = new THREE.Vector3();
-    r.mesh.getWorldPosition(wp);
-    wp.project(camera);
-    const screenX = (wp.x * 0.5 + 0.5) * rect.width + rect.left;
+    const wp = r.mesh.position;
+    const proj = BABYLON.Vector3.Project(wp, BABYLON.Matrix.Identity(), scene.getTransformMatrix(), camera.viewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight()));
+    const screenX = proj.x + rect.left;
     const d = Math.abs(screenX - clientX);
     if (d < bestDist) { bestDist = d; best = i; }
   });
@@ -1281,197 +1073,63 @@ function handlePointer(clientX, clientY) {
   if (best >= 0) handleTap(best);
 }
 
-canvas.addEventListener('pointerdown', (e) => {
-  e.preventDefault();
-  handlePointer(e.clientX, e.clientY);
-}, { passive: false });
+scene.onPointerDown = (evt, pickResult) => {
+  if (pickResult.hit && pickResult.pickedMesh) {
+    const ri = pickResult.pickedMesh.metadata?.rodIndex;
+    if (ri !== undefined) handleTap(ri);
+  } else {
+    // fallback: screen X projection
+    handlePointer(evt.clientX, evt.clientY);
+  }
+};
 
 // ─── Resize ───────────────────────────────────────────────────────────────────
-function onResize() {
-  const w = window.innerWidth, h = window.innerHeight;
-  renderer.setSize(w, h);
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-}
-window.addEventListener('resize', onResize);
-onResize();
+function onResize() { engine.resize(); }
+// Resize handled by engine.runRenderLoop section
 
 // ─── Render Loop ──────────────────────────────────────────────────────────────
 let lastTime = performance.now();
-let _elapsedTime = 0;
-function animate(now) {
-  requestAnimationFrame(animate);
+let elapsedTime = 0;
+
+engine.runRenderLoop(() => {
+  const now = performance.now();
   const dt = Math.min((now - lastTime) / 1000, 0.1);
   lastTime = now;
-  _elapsedTime += dt;
+  elapsedTime += dt;
 
   updateTweens(now);
   updateFlyAnims(dt);
   updateParticles(dt);
+  updateSakura(dt, elapsedTime);
 
-  // ── 樱花漂浮 ──
-  updateSakura(dt, _elapsedTime);
-
-  // ── 星星闪烁 ──
-  starMat.opacity = 0.7 + 0.3 * Math.sin(_elapsedTime * 1.2);
-
-  // ── 光束摇摆 ──
-  beams.forEach((b, i) => {
-    const phase = _elapsedTime * 0.3 + b.userData.beamPhaseOff;
-    b.position.x = beamXPos[i] + Math.sin(phase) * 1.5;
-    b.material.opacity = 0.04 + 0.03 * Math.sin(_elapsedTime * 0.7 + i);
-    b.rotation.z = Math.sin(phase * 0.6) * 0.08;
-  });
-
-  // ── 灯笼光晕闪烁 ──
-  scene.children.forEach(c => {
-    if (c.userData.isLantern) {
-      c.material.opacity = 0.25 + 0.15 * Math.sin(_elapsedTime * 2.5 + c.userData.lanternPhase);
-    }
-  });
-
-  // ── 格纹地板时间更新 ──
-  scene.children.forEach(c => {
-    if (c.userData.isGrid && c.material.uniforms) {
-      c.material.uniforms.uTime.value = _elapsedTime;
-    }
-  });
-
-  // ── 动态灯光呼吸 ──
-  ptLight.intensity = 0.9 + 0.3 * Math.sin(_elapsedTime * 1.5);
-  ptLight.position.x = Math.sin(_elapsedTime * 0.3) * 2;
-  bgLight1.intensity = 0.5 + 0.2 * Math.sin(_elapsedTime * 0.7 + 1);
-  bgLight2.intensity = 0.5 + 0.2 * Math.sin(_elapsedTime * 0.9 + 2);
-
-  // ── 相机轻微呼吸 ──
-  if (state.phase === 'playing') {
-    camera.position.y += 0.0008 * Math.sin(_elapsedTime * 0.7);
+  // Animate stars flicker
+  for (const s of starData) {
+    s.phase += dt * 1.5;
+    s.mesh.material.alpha = s.baseAlpha * (0.5 + 0.5 * Math.sin(s.phase));
   }
 
-  // ── 棒底部平台光晕：跟随棒位置，颜色随顶层碟片变化 ──
-  state.rods.forEach((rod, ri) => {
-    if (!rod.platformGlow) return;
-    const p = rod.mesh.position;
-    rod.platformGlow.position.set(p.x, -0.15, p.z);
-    const isSelected = (state.sel === ri);
-    const topC = rod.data.length > 0 ? new THREE.Color(COLORS_HEX[rod.data[rod.data.length-1]]) : new THREE.Color(0x8060CC);
-    rod.platformGlow.material.color.set(topC);
-    if (isSelected) {
-      rod.platformGlow.material.opacity = 0.55 + 0.2 * Math.sin(_elapsedTime * 8);
-      rod.platformGlow.scale.setScalar(1.3 + 0.15 * Math.sin(_elapsedTime * 8));
-    } else {
-      rod.platformGlow.material.opacity = 0.18 + 0.06 * Math.sin(_elapsedTime * 1.5 + ri);
-      rod.platformGlow.scale.setScalar(1.0);
-    }
-  });
+  // Animate lights breathing
+  ptLight.intensity = 0.85 + 0.2 * Math.sin(elapsedTime * 1.5);
+  ptLight.position.x = Math.sin(elapsedTime * 0.3) * 2;
+  bgLight1.intensity = 0.45 + 0.15 * Math.sin(elapsedTime * 0.7 + 1);
+  bgLight2.intensity = 0.45 + 0.15 * Math.sin(elapsedTime * 0.9 + 2);
 
-  renderer.render(scene, camera);
-}
-requestAnimationFrame(animate);
-
-// ─── Level Select ─────────────────────────────────────────────────────────────
-function buildLevelGrid() {
-  const grid = document.getElementById('lvGrid');
-  grid.innerHTML = '';
-  const total = LEVEL_CONFIGS.length;
-  const unlocked = saveData.unlocked || 1;
-  for (let i = 0; i < total; i++) {
-    const cell = document.createElement('div');
-    cell.className = 'lv-cell';
-    const done = (saveData.best || {})[i] !== undefined;
-    if (i < unlocked) {
-      cell.classList.add(done ? 'done' : 'unlocked');
-      cell.innerHTML = `<span class="lv-num">${i+1}</span><div class="lv-stars"><span class="st ${done?'on':'off'}">★</span></div>`;
-      cell.addEventListener('click', () => {
-        document.getElementById('levelScreen').classList.add('hidden');
-        initLevel(i);
-        showGame();
-      });
-    } else {
-      cell.classList.add('locked');
-      cell.innerHTML = `<span class="lv-num">🔒</span>`;
+  // Rod platform ring color follows top disc
+  for (const rod of state.rods) {
+    if (!rod.mesh.metadata) continue;
+    const topData = rod.data[rod.data.length - 1];
+    if (topData !== undefined) {
+      const hex = COLORS_HEX[topData];
+      const rc = new BABYLON.Color3(((hex>>16)&0xFF)/255,((hex>>8)&0xFF)/255,(hex&0xFF)/255);
+      rod.mesh.metadata.ringMesh.material.emissiveColor = rc;
+      rod.mesh.metadata.ringMesh.metadata = { isGlowMesh: true, glowColor: rc };
     }
-    grid.appendChild(cell);
   }
-}
 
-// ─── Screen Management ────────────────────────────────────────────────────────
-function showMenu() {
-  document.getElementById('menuScreen').classList.remove('hidden');
-  document.getElementById('hud').style.display = 'none';
-  document.getElementById('botBar').style.display = 'none';
-  state.phase = 'menu';
-}
-function showGame() {
-  document.getElementById('menuScreen').classList.add('hidden');
-  document.getElementById('levelScreen').classList.add('hidden');
-  document.getElementById('hud').style.display = 'flex';
-  document.getElementById('botBar').style.display = 'flex';
-  hideModals();
-}
-
-// ─── Button Handlers ──────────────────────────────────────────────────────────
-document.getElementById('btnPlay').addEventListener('click', () => {
-  if (!_ac) _ac = new (window.AudioContext || window.webkitAudioContext)();
-  const nextLevel = (saveData.unlocked || 1) - 1;
-  initLevel(Math.max(0, Math.min(nextLevel, LEVEL_CONFIGS.length-1)));
-  showGame();
-});
-document.getElementById('btnShowLevels').addEventListener('click', () => {
-  buildLevelGrid();
-  document.getElementById('levelScreen').classList.remove('hidden');
-  document.getElementById('menuScreen').classList.add('hidden');
-});
-document.getElementById('lvClose').addEventListener('click', () => {
-  document.getElementById('levelScreen').classList.add('hidden');
-  document.getElementById('menuScreen').classList.remove('hidden');
-});
-document.getElementById('btnUndo').addEventListener('click', () => {
-  if (!_ac) _ac = new (window.AudioContext || window.webkitAudioContext)();
-  doUndo();
-});
-document.getElementById('btnMenu').addEventListener('click', () => {
-  hideModals();
-  showMenu();
-});
-document.getElementById('btnHint').addEventListener('click', () => {
-  if (!_ac) _ac = new (window.AudioContext || window.webkitAudioContext)();
-  doHint();
-});
-document.getElementById('btnNext').addEventListener('click', () => {
-  hideModals();
-  const next = state.level + 1;
-  if (next < LEVEL_CONFIGS.length) { initLevel(next); showGame(); }
-  else showMenu();
-});
-document.getElementById('btnRetryWin').addEventListener('click', () => {
-  hideModals(); initLevel(state.level); showGame();
-});
-document.getElementById('btnMenuWin').addEventListener('click', () => {
-  hideModals(); showMenu();
-});
-document.getElementById('btnRetryFail').addEventListener('click', () => {
-  hideModals(); initLevel(state.level); showGame();
-});
-document.getElementById('btnMenuFail').addEventListener('click', () => {
-  hideModals(); showMenu();
+  scene.render();
 });
 
-// ─── Expose for testing ───────────────────────────────────────────────────────
-window.game = state;
-window.startGame = (levelIdx) => { initLevel(levelIdx); showGame(); };
-window.handleTap = handleTap;
-window.handlePointer = handlePointer;
-
-// ─── Initial State ────────────────────────────────────────────────────────────
-showMenu();
-// Pre-initialize level 0 scene in background for rendering
-initLevel(0);
-// But show menu on top
-showMenu();
-
-console.log('[Sushi3D] Game initialized. THREE r', THREE.REVISION);
+window.addEventListener('resize', () => engine.resize());
 </script>
-<script>new Image().src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com</body>p="+encodeURIComponent(location.pathname);</script>
 </body>
 </html>
