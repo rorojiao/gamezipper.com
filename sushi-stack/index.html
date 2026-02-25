@@ -1130,6 +1130,88 @@ engine.runRenderLoop(() => {
 });
 
 window.addEventListener('resize', () => engine.resize());
+
+// ─── Level Select ─────────────────────────────────────────────────────────────
+function buildLevelGrid() {
+  const grid = document.getElementById('lvGrid');
+  grid.innerHTML = '';
+  const total = LEVEL_CONFIGS.length;
+  const unlocked = saveData.unlocked || 1;
+  for (let i = 0; i < total; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'lv-cell';
+    const done = (saveData.best || {})[i] !== undefined;
+    if (i < unlocked) {
+      cell.classList.add(done ? 'done' : 'unlocked');
+      cell.innerHTML = `<span class="lv-num">${i+1}</span><div class="lv-stars"><span class="st ${done?'on':'off'}">★</span></div>`;
+      cell.addEventListener('click', () => {
+        document.getElementById('levelScreen').classList.add('hidden');
+        initLevel(i);
+        showGame();
+      });
+    } else {
+      cell.classList.add('locked');
+      cell.innerHTML = `<span class="lv-num">🔒</span>`;
+    }
+    grid.appendChild(cell);
+  }
+}
+
+// ─── Screen Management ────────────────────────────────────────────────────────
+function showMenu() {
+  document.getElementById('menuScreen').classList.remove('hidden');
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('botBar').style.display = 'none';
+  state.phase = 'menu';
+}
+function showGame() {
+  document.getElementById('menuScreen').classList.add('hidden');
+  document.getElementById('levelScreen').classList.add('hidden');
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('botBar').style.display = 'flex';
+  hideModals();
+}
+
+// ─── Button Handlers ──────────────────────────────────────────────────────────
+document.getElementById('btnPlay').addEventListener('click', () => {
+  const nextLevel = (saveData.unlocked || 1) - 1;
+  initLevel(Math.max(0, Math.min(nextLevel, LEVEL_CONFIGS.length-1)));
+  showGame();
+});
+document.getElementById('btnShowLevels').addEventListener('click', () => {
+  buildLevelGrid();
+  document.getElementById('levelScreen').classList.remove('hidden');
+  document.getElementById('menuScreen').classList.add('hidden');
+});
+document.getElementById('lvClose').addEventListener('click', () => {
+  document.getElementById('levelScreen').classList.add('hidden');
+  document.getElementById('menuScreen').classList.remove('hidden');
+});
+document.getElementById('btnUndo').addEventListener('click', () => { doUndo(); });
+document.getElementById('btnMenu').addEventListener('click', () => { hideModals(); showMenu(); });
+document.getElementById('btnHint').addEventListener('click', () => { doHint(); });
+document.getElementById('btnNext').addEventListener('click', () => {
+  hideModals();
+  const next = state.level + 1;
+  if (next < LEVEL_CONFIGS.length) { initLevel(next); showGame(); }
+  else showMenu();
+});
+document.getElementById('btnRetryWin').addEventListener('click', () => { hideModals(); initLevel(state.level); showGame(); });
+document.getElementById('btnMenuWin').addEventListener('click', () => { hideModals(); showMenu(); });
+document.getElementById('btnRetryFail').addEventListener('click', () => { hideModals(); initLevel(state.level); showGame(); });
+document.getElementById('btnMenuFail').addEventListener('click', () => { hideModals(); showMenu(); });
+
+// ─── Expose for testing ───────────────────────────────────────────────────────
+window.game = state;
+window.startGame = (levelIdx) => { initLevel(levelIdx); showGame(); };
+window.handleTap = handleTap;
+
+// ─── Initial State ────────────────────────────────────────────────────────────
+initLevel(0);
+showMenu();
+
+console.log('[Sushi3D] Babylon.js', BABYLON.Engine.Version, 'WebGL2 initialized ✅');
 </script>
+<script>new Image().src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p="+encodeURIComponent(location.pathname);</script>
 </body>
 </html>
