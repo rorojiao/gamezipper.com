@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Ball Catch - Free Arcade Game | GameZipper</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.88.2/phaser.min.js"></script>
+  <!-- AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
+  <!-- Analytics -->
+  <script>
+  (function() {
+    fetch('https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=' + encodeURIComponent(window.location.pathname)).catch(()=>{});
+  })();
+  </script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;overflow:hidden;background:#0A0A1A;font-family:Arial,sans-serif;}
+    #game-container{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+    /* Modal overlay styles */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:200;}
+    .modal.hidden{display:none;}
+    .modal-box{background:linear-gradient(145deg,#1a0a30,#0a0520);border:2px solid rgba(255,160,50,0.4);border-radius:24px;padding:28px 24px;width:min(90%,320px);text-align:center;color:#FFD080;}
+    .modal-title{font-size:28px;font-weight:900;margin-bottom:12px;}
+    .mbtn{border:none;cursor:pointer;font-weight:800;font-size:16px;border-radius:14px;padding:12px 24px;margin:6px;transition:transform 0.1s;}
+    .mbtn:active{transform:scale(0.92);}
+    .mbtn-primary{background:linear-gradient(135deg,#FF6B35,#E84010);color:#fff;}
+    .mbtn-secondary{background:rgba(255,160,50,0.15);color:#FFD080;border:1px solid rgba(255,160,50,0.4);}
+  </style>
+</head>
+<body>
+<div id="game-container"></div>
+<!-- Game Over Modal -->
+<div class="modal hidden" id="gameOverModal">
+  <div class="modal-box">
+    <div style="font-size:48px">😅</div>
+    <div class="modal-title">Game Over!</div>
+    <div style="color:#C08050;margin-bottom:8px">Score: <span id="finalScore" style="color:#FFD080;font-weight:900">0</span></div>
+    <div style="color:#C08050;margin-bottom:16px">Best: <span id="bestDisplay" style="color:#FFD080;font-weight:900">0</span></div>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;">
+      <button class="mbtn mbtn-primary" onclick="restartGame()">▶ Play Again</button>
+      <button class="mbtn mbtn-secondary" onclick="shareGame()">🔗 Share</button>
+    </div>
+  </div>
+</div>
+<script>
+'use strict';
+
+// ── Sound ──────────────────────────────────────────────────────────────
+const _ac = new (window.AudioContext || window.webkitAudioContext)();
+function beep(freq, vol, type, dur, delay) {
+  try {
+    const o = _ac.createOscillator(), g = _ac.createGain();
+    o.connect(g); g.connect(_ac.destination);
+    o.type = type || 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, _ac.currentTime + (delay||0));
+    g.gain.exponentialRampToValueAtTime(0.001, _ac.currentTime + (delay||0) + dur);
+    o.start(_ac.currentTime + (delay||0));
+    o.stop(_ac.currentTime + (delay||0) + dur + 0.05);
+  } catch(e) {}
+}
+
+// ── State ──────────────────────────────────────────────────────────────
+let score = 0, lives = 3;
+let bestScore = +(localStorage.getItem('ballcatch_best') || 0);
+const MILESTONES = [10, 25, 50, 100, 200];
+let reachedMilestones = new Set();
+
+function showMilestone(ms) {
+  const labels = {10:'🔥 Hot!', 25:'⭐ Star!', 50:'💎 Epic!', 100:'👑 Legend!', 200:'🚀 Godlike!'};
+  let el = document.getElementById('toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.style.cssText = 'position:fixed;top:35%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.85);color:#FFD700;font-size:24px;font-weight:900;padding:14px 28px;border-radius:16px;z-index:999;text-align:center;border:2px solid #FFD700;pointer-events:none;transition:opacity 0.5s;';
+    document.body.appendChild(el);
+  }
+  el.textContent = labels[ms] || `🎯 ${ms}!`;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.style.opacity = '0', 1500);
+}
+
+function shareGame() {
+  const url = window.location.href.split('?')[0];
+  const text = `I scored ${score} in Ball Catch! Can you beat me? 🎮`;
+  if (navigator.share) {
+    navigator.share({ title: 'Ball Catch', text, url }).catch(() => {});
+  } else {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+  }
+}
+
+function showGameOver() {
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('bestDisplay').textContent = bestScore;
+  document.getElementById('gameOverModal').classList.remove('hidden');
+}
+
+function restartGame() {
+  document.getElementById('gameOverModal').classList.add('hidden');
+  score = 0; lives = 3; reachedMilestones = new Set();
+  game.scene.getScene('GameScene').scene.restart();
+}
+
+// ── Phaser Scenes ──────────────────────────────────────────────────────
+class GameScene extends Phaser.Scene {
+  constructor() { super('GameScene'); }
+
+  create() {
+    const W = this.scale.width, H = this.scale.height;
+
+    // Stars background
+    for (let i = 0; i < 60; i++) {
+      const star = this.add.circle(
+        Phaser.Math.Between(0, W), Phaser.Math.Between(0, H),
+        Phaser.Math.FloatBetween(0.5, 2),
+        0xFFFFFF, Phaser.Math.FloatBetween(0.2, 0.8)
+      );
+      this.tweens.add({
+        targets: star, alpha: { from: star.alpha * 0.3, to: star.alpha },
+        duration: Phaser.Math.Between(800, 2000), yoyo: true, repeat: -1
+      });
+    }
+
+    // HUD
+    this.scoreTxt = this.add.text(16, 16, 'Score: 0', { fontSize: '20px', fontStyle: 'bold', color: '#FFD080' });
+    this.livesTxt = this.add.text(W - 16, 16, '❤️❤️❤️', { fontSize: '18px' }).setOrigin(1, 0);
+    this.bestTxt = this.add.text(16, 42, `Best: ${bestScore}`, { fontSize: '14px', color: '#C08050' });
+
+    // Paddle
+    this.paddle = this.add.rectangle(W/2, H - 50, 90, 16, 0xFF6B35);
+    this.physics.add.existing(this.paddle, true); // static
+
+    // Ball group
+    this.balls = this.physics.add.group();
+
+    // Ball spawner
+    this.ballTimer = this.time.addEvent({
+      delay: 1200,
+      callback: this.spawnBall,
+      callbackScope: this,
+      loop: true
+    });
+
+    // Paddle input
+    this.input.on('pointermove', (p) => {
+      this.paddle.x = Phaser.Math.Clamp(p.x, 50, W - 50);
+      this.paddle.body.reset(this.paddle.x, this.paddle.y);
+    });
+
+    // Overlap
+    this.physics.add.overlap(this.balls, this.paddle, this.catchBall, null, this);
+
+    this._ballsToRemove = [];
+  }
+
+  spawnBall() {
+    const W = this.scale.width;
+    const COLORS = [0xFF6B35, 0x44CC88, 0xFF4080, 0x4080FF, 0xFFD040, 0xCC44FF];
+    const color = COLORS[Phaser.Math.Between(0, COLORS.length - 1)];
+    const ball = this.add.circle(Phaser.Math.Between(30, W - 30), -20, 16, color);
+    this.physics.add.existing(ball);
+    const speed = 180 + Math.min(score * 2, 300);
+    ball.body.setVelocityY(speed);
+    ball.body.setBounce(0);
+    ball.tintColor = color;
+    this.balls.add(ball);
+  }
+
+  catchBall(ball) {
+    score++;
+    if (score > bestScore) {
+      bestScore = score;
+      localStorage.setItem('ballcatch_best', bestScore);
+      this.bestTxt.setText(`Best: ${bestScore}`);
+    }
+    this.scoreTxt.setText(`Score: ${score}`);
+    beep(600 + score * 10, 0.12, 'sine', 0.12);
+
+    // Milestone check
+    for (const m of MILESTONES) {
+      if (score >= m && !reachedMilestones.has(m)) {
+        reachedMilestones.add(m);
+        showMilestone(m);
+        beep(880, 0.2, 'sine', 0.3);
+        break;
+      }
+    }
+
+    // Score popup
+    const pop = this.add.text(ball.x, ball.y, '+1', {
+      fontSize: '22px', fontStyle: 'bold', color: '#FFD080'
+    }).setOrigin(0.5);
+    this.tweens.add({
+      targets: pop, y: pop.y - 40, alpha: 0, duration: 600,
+      onComplete: () => pop.destroy()
+    });
+
+    ball.destroy();
+    this._ballsToRemove = this._ballsToRemove.filter(b => b !== ball);
+  }
+
+  update() {
+    const H = this.scale.height;
+    this.balls.getChildren().forEach(ball => {
+      if (ball.y > H + 30 && !ball._missed) {
+        ball._missed = true;
+        lives--;
+        const liveStr = lives > 0 ? '❤️'.repeat(lives) : '💔';
+        this.livesTxt.setText(liveStr);
+        beep(150, 0.15, 'sawtooth', 0.2);
+
+        // Shake camera
+        this.cameras.main.shake(200, 0.015);
+
+        ball.destroy();
+
+        if (lives <= 0) {
+          this.ballTimer.remove();
+          this.balls.clear(true, true);
+          this.time.delayedCall(400, () => showGameOver());
+        }
+      }
+    });
+  }
+}
+
+// ── Game Init ──────────────────────────────────────────────────────────
+const game = new Phaser.Game({
+  type: Phaser.AUTO,
+  width: 400,
+  height: 700,
+  backgroundColor: '#0A0A1A',
+  parent: 'game-container',
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
+  physics: {
+    default: 'arcade',
+    arcade: { gravity: { y: 0 }, debug: false }
+  },
+  scene: [GameScene]
+});
+</script>
+</body>
+</html>
