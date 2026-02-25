@@ -203,6 +203,7 @@ function startGame(){
   moves=0;elapsed=0;matched=0;comboCount=0;
   particles=[];cardAnims={};
   state='playing';
+  const sbo=document.getElementById('share-btn-overlay');if(sbo)sbo.style.display='none';
   calcGrid();
   startTime=Date.now();
   if(timerInterval)clearInterval(timerInterval);
@@ -591,6 +592,7 @@ function drawComplete(){
     ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
   }
   ctx.globalAlpha=1;
+  window.finalScore=moves;const sbo=document.getElementById('share-btn-overlay');if(sbo&&sbo.style.display==='none')sbo.style.display='block';
 }
 
 function frame(now){
@@ -638,6 +640,14 @@ canvas.addEventListener('touchstart',e=>{
 resize();
 requestAnimationFrame(frame);
 window._gameState={get state(){return state},get moves(){return moves},get matched(){return matched},get totalPairs(){return totalPairs},get elapsed(){return elapsed},get cards(){return cards},start:function(){startGame()}};
+
+function shareGame(sc){
+  const url=window.location.href.split('?')[0];
+  const gameName=(document.title.split(' - ')[0])||'Memory Match';
+  const text=sc?'I completed '+gameName+' in '+sc+' moves! Can you beat me? 🎮':'Playing '+gameName+' on GameZipper! 🎮';
+  if(navigator.share){navigator.share({title:gameName,text,url}).catch(()=>window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url),'_blank'));}
+  else{window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url),'_blank');}
+}
 })();
 </script>
 <div id="tutorial-overlay" style="position:fixed;inset:0;pointer-events:auto;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;z-index:999999">
