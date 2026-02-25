@@ -480,8 +480,10 @@ function whack(h,e){
     pts=pts*multiplier;
   }
 
+  const _oldScore=score;
   score+=pts;if(score<0)score=0;
   scoreDisplay.textContent='Score: '+score;
+  if(pts>0)checkMilestone(_oldScore);
 
   container.classList.remove('shake');void container.offsetWidth;container.classList.add('shake');
 
@@ -572,7 +574,7 @@ function endGame(){
   document.body.classList.remove('alert-mode');
   holes.forEach(h=>{clearTimeout(h.timeout);h.active=false;h.mole.className='mole-wrapper'});
   if(score>highScore){highScore=score;localStorage.setItem('wam_high',highScore)}
-  overlay.innerHTML=`<h1>⏰ Time's Up!</h1><h2>Score: <span id="count-up">0</span></h2><p>Best: ${highScore}</p><button id="start-btn">Play Again</button>`;
+  overlay.innerHTML=`<h1>⏰ Time's Up!</h1><h2>Score: <span id="count-up">0</span></h2><p>Best: ${highScore}</p><div style="display:flex;gap:10px;margin-top:8px;"><button id="start-btn">Play Again</button><button onclick="shareGame(${score})" style="background:rgba(255,160,50,0.9);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:700;font-size:15px;cursor:pointer;">🔗 Share</button></div>`;
   overlay.style.display='flex';
   const countEl=document.getElementById('count-up');
   let cur=0;const step=Math.max(1,Math.ceil(score/40));
@@ -587,6 +589,27 @@ function endGame(){
 }
 startBtn.addEventListener('click',startGame);
 window._gameState={get score(){return score},get timeLeft(){return timeLeft},get gameActive(){return gameActive},start:function(){startGame();}};
+
+// 里程碑系统
+const MILESTONES=[5,15,30,50,100];
+function checkMilestone(oldScore){
+  for(const m of MILESTONES){if(score>=m&&oldScore<m){showMilestone(m);break;}}
+}
+function showMilestone(ms){
+  let el=document.getElementById('milestone-toast');
+  if(!el){el=document.createElement('div');el.id='milestone-toast';el.style.cssText='position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.82);color:#FFD700;font-size:clamp(18px,5vw,28px);font-weight:900;padding:14px 28px;border-radius:20px;z-index:9999;text-align:center;border:2px solid #FFD700;pointer-events:none;transition:opacity 0.5s;';document.body.appendChild(el);}
+  const msgs={5:'🏆 Score 5!',15:'⭐ Amazing!',30:'🔥 On Fire!',50:'💎 Legend!',100:'👑 God Mode!'};
+  el.textContent=msgs[ms]||'🎯 '+ms+'!';el.style.opacity='1';
+  clearTimeout(el._timer);el._timer=setTimeout(()=>{el.style.opacity='0';},1500);
+}
+// 分享功能
+function shareGame(sc){
+  const url=window.location.href.split('?')[0];
+  const gameName=(document.title.split(' - ')[0])||'Whack-a-Mole';
+  const text=sc?'I scored '+sc+' in '+gameName+'! Can you beat me? 🎮':'Playing '+gameName+' on GameZipper! 🎮';
+  if(navigator.share){navigator.share({title:gameName,text,url}).catch(()=>window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url),'_blank'));}
+  else{window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url),'_blank');}
+}
 })();
 </script>
 

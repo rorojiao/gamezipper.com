@@ -150,6 +150,7 @@ function startGame(){
   snake=[{x:12,y:12}];dir={x:1,y:0};nextDir={x:1,y:0};
   score=0;speed=150;eaten=0;specialFood=null;
   document.getElementById('sc').textContent=0;
+  const sbo=document.getElementById('share-btn-overlay');if(sbo)sbo.style.display='none';
   spawnFood();gameState='play';lastTime=performance.now();loop();
 }
 
@@ -176,14 +177,14 @@ function step(){
   snake.unshift(head);
   let ate=false;
   if(food&&head.x===food.x&&head.y===food.y){
-    score+=10;ate=true;eaten++;
+    const _oldScore=score;score+=10;ate=true;eaten++;checkMilestone(_oldScore);
     // 吃食物粒子 + 分数飘字
     spawnParticles(food.x*cellSize+cellSize/2,food.y*cellSize+cellSize/2,'#ff4444',12);
     scorePopups.push({x:food.x*cellSize+cellSize/2,y:food.y*cellSize+cellSize/2,score:10,color:'#ff4444',life:1});
     if(eaten%5===0)speed=Math.max(60,speed-10);playEat();spawnFood();
   }
   else if(specialFood&&head.x===specialFood.x&&head.y===specialFood.y){
-    score+=50;ate=true;
+    const _oldScore=score;score+=50;ate=true;checkMilestone(_oldScore);
     // 吃特殊食物粒子 + 分数飘字
     spawnParticles(specialFood.x*cellSize+cellSize/2,specialFood.y*cellSize+cellSize/2,'#ffd700',18);
     scorePopups.push({x:specialFood.x*cellSize+cellSize/2,y:specialFood.y*cellSize+cellSize/2,score:50,color:'#ffd700',life:1});
@@ -230,6 +231,8 @@ function drawGameOver(){
   ctx.fillText('Best: '+bestScore,W/2,H/2+35);
   ctx.fillStyle='#00ff88';ctx.fillRect(W/2-70,H/2+60,140,44);
   ctx.fillStyle='#000';ctx.font='bold 18px Arial';ctx.fillText('PLAY AGAIN',W/2,H/2+87);
+  window.finalScore=score;
+  const sbo=document.getElementById('share-btn-overlay');if(sbo)sbo.style.display='block';
 }
 
 function drawMenu(){
@@ -259,7 +262,32 @@ canvas.addEventListener('click',e=>{
 let touchX=0,touchY=0;
 canvas.addEventListener('touchstart',e=>{const t=e.touches[0];touchX=t.clientX;touchY=t.clientY;if(gameState==='menu'||gameState==='over')startGame();},{passive:true});
 canvas.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0],dx=t.clientX-touchX,dy=t.clientY-touchY;if(Math.abs(dx)+Math.abs(dy)>20){if(Math.abs(dx)>Math.abs(dy))setDir(dx>0?1:-1,0);else setDir(0,dy>0?1:-1);touchX=t.clientX;touchY=t.clientY;}},{passive:false});
+
+// 里程碑系统
+const MILESTONES=[50,150,300,500,1000];
+function checkMilestone(oldScore){
+  for(const m of MILESTONES){if(score>=m&&oldScore<m){showMilestone(m);break;}}
+}
+function showMilestone(ms){
+  let el=document.getElementById('milestone-toast');
+  if(!el){el=document.createElement('div');el.id='milestone-toast';el.style.cssText='position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.82);color:#FFD700;font-size:clamp(18px,5vw,28px);font-weight:900;padding:14px 28px;border-radius:20px;z-index:999;text-align:center;border:2px solid #FFD700;pointer-events:none;transition:opacity 0.5s;';document.body.appendChild(el);}
+  const msgs={50:'🏆 Score 50!',150:'⭐ Amazing!',300:'🔥 On Fire!',500:'💎 Legend!',1000:'👑 God Mode!'};
+  el.textContent=msgs[ms]||'🎯 '+ms+'!';el.style.opacity='1';
+  clearTimeout(el._timer);el._timer=setTimeout(()=>{el.style.opacity='0';},1500);
+}
+// 分享功能
+function shareGame(sc){
+  const url=window.location.href.split('?')[0];
+  const gameName=(document.title.split(' - ')[0])||'Snake';
+  const text=sc?'I scored '+sc+' in '+gameName+'! Can you beat me? 🎮':'Playing '+gameName+' on GameZipper! 🎮';
+  if(navigator.share){navigator.share({title:gameName,text,url}).catch(()=>_openTwitter(url,text));}
+  else{_openTwitter(url,text);}
+}
+function _openTwitter(url,text){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url),'_blank');}
 </script>
 <script>new Image().src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com</body>p="+encodeURIComponent(location.pathname);</script>
+<div id="share-btn-overlay" style="position:fixed;bottom:80px;right:16px;z-index:500;display:none;">
+  <button onclick="shareGame(window.finalScore||0)" style="background:rgba(255,160,50,0.9);color:#fff;border:none;border-radius:50px;padding:10px 20px;font-weight:700;font-size:14px;cursor:pointer;">🔗 Share Score</button>
+</div>
 </body>
 </html>
