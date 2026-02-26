@@ -912,6 +912,55 @@ function checkMatchAndRemove(ri, afterDone) {
   }, 500);
 }
 
+// ─── Core Game Logic (REQUIRED: was missing, now added) ──────────────────────
+/** Returns the top disc TransformNode on rod ri, or null */
+function topDisc(ri) {
+  const rod = state.rods[ri];
+  if (!rod || rod.discs.length === 0) return null;
+  return rod.discs[rod.discs.length - 1];
+}
+
+/** Count consecutive same-color discs on top of rod ri */
+function countTopMatch(ri) {
+  const rod = state.rods[ri];
+  if (!rod || rod.data.length === 0) return 0;
+  const topColor = rod.data[rod.data.length - 1];
+  let cnt = 0;
+  for (let i = rod.data.length - 1; i >= 0; i--) {
+    if (rod.data[i] === topColor) cnt++;
+    else break;
+  }
+  return cnt;
+}
+
+/**
+ * canMove: any disc can move to any non-full rod.
+ * Matches genLevel's reverse-shuffle (also unrestricted).
+ * Game mechanic is "match-3 clear": stack same colors → auto-remove.
+ */
+function canMove(from, to) {
+  if (from === to) return false;
+  const fromRod = state.rods[from], toRod = state.rods[to];
+  if (!fromRod || fromRod.data.length === 0) return false;
+  if (!toRod || toRod.data.length >= state.cap) return false;
+  return true;
+}
+
+/** Win: all rods empty (all discs cleared by match-3 mechanic) */
+function checkWin() {
+  return state.rods.every(rod => rod.data.length === 0);
+}
+
+/** Fail: no valid move exists (all non-source rods are full) */
+function checkFail() {
+  for (let i = 0; i < state.rods.length; i++) {
+    for (let j = 0; j < state.rods.length; j++) {
+      if (i !== j && canMove(i, j)) return false;
+    }
+  }
+  return true;
+}
+
 // ─── Main Tap Handler ─────────────────────────────────────────────────────────
 function handleTap(ri) {
   if (state.busy || state.phase !== 'playing') return;
