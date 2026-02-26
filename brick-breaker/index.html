@@ -69,8 +69,29 @@ var bestScore=+(localStorage.getItem('brick_best')||0);
 var score=0,lives=3,currentLevel=1,gameState='menu',paused=false;
 const COLS=8,ROWS=5,BRICK_W=CW/COLS-4,BRICK_H=20,BRICK_PAD=4,BRICK_TOP=50;
 let bricks=[],particles=[],powerups=[];
-var paddle={x:CW/2-40,y:CH-30,w:80,h:12};
+var paddle={x:CW/2-40,y:CH-30,w:80,h:12,baseW:80};
 var balls=[],launched=false;
+// Power-up system
+const POWERUP_TYPES={W:{label:'W',color:'#00e0ff',desc:'Wide Paddle'},B:{label:'B',color:'#ff9900',desc:'Multi-Ball'},L:{label:'L',color:'#00ff88',desc:'Extra Life'}};
+let paddleTimer=0;
+function spawnPowerup(x,y){
+  const rand=Math.random();
+  let type='W';
+  if(rand<0.3)type='L'; else if(rand<0.6)type='B';
+  powerups.push({x:x-10,y,w:20,h:14,dy:2,type});
+}
+function activatePowerup(type){
+  if(type==='W'){paddle.w=Math.min(paddle.baseW*2,150);paddleTimer=300;}
+  else if(type==='B'){
+    if(balls.length<5){
+      const b=balls[0];
+      const ang=Math.atan2(b.dy,b.dx);
+      balls.push({x:b.x,y:b.y,dx:Math.cos(ang+0.5)*5,dy:Math.sin(ang+0.5)*5,r:8});
+      balls.push({x:b.x,y:b.y,dx:Math.cos(ang-0.5)*5,dy:Math.sin(ang-0.5)*5,r:8});
+    }
+  }
+  else if(type==='L'){lives=Math.min(lives+1,5);document.getElementById('lv').textContent=lives;}
+}
 
 const COLORS={1:'#4488ff',2:'#44cc66',3:'#ffcc00'};
 const LEVELS=[
@@ -142,6 +163,7 @@ function genLevel(arr){
 
 function resetBall(){
   balls=[{x:CW/2,y:CH-50,dx:3.5,dy:-3.5,r:8}];launched=false;
+  paddle.w=paddle.baseW;paddleTimer=0;
 }
 
 function initLevel(){
@@ -188,7 +210,10 @@ function update(){
       const br=bricks[i];
       if(b.x+b.r>br.x&&b.x-b.r<br.x+br.w&&b.y+b.r>br.y&&b.y-b.r<br.y+br.h){
         br.hp--;playHit();
-        if(br.hp<=0){bricks.splice(i,1);score+=br.maxHp*10;addParticles(br.x+br.w/2,br.y+br.h/2,COLORS[br.maxHp]||'#fff',8);document.getElementById('sc').textContent=score;if(score>bestScore){bestScore=score;localStorage.setItem('brick_best',bestScore);document.getElementById('bs').textContent=bestScore;}}
+        if(br.hp<=0){bricks.splice(i,1);score+=br.maxHp*10;addParticles(br.x+br.w/2,br.y+br.h/2,COLORS[br.maxHp]||'#fff',8);document.getElementById('sc').textContent=score;if(score>bestScore){bestScore=score;localStorage.setItem('brick_best',bestScore);document.getElementById('bs').textContent=bestScore;}
+          // Spawn powerup with 20% chance
+          if(Math.random()<0.20)spawnPowerup(br.x+br.w/2,br.y+br.h/2);
+        }
         // reflect
         const overlapL=b.x+b.r-br.x,overlapR=br.x+br.w-(b.x-b.r),overlapT=b.y+b.r-br.y,overlapB=br.y+br.h-(b.y-b.r);
         const minO=Math.min(overlapL,overlapR,overlapT,overlapB);
@@ -201,6 +226,17 @@ function update(){
   if(balls.length===0){lives--;document.getElementById('lv').textContent=lives;if(lives<=0){gameState='over';drawGameOver();}else resetBall();}
   if(bricks.length===0){score+=100;document.getElementById('sc').textContent=score;if(score>bestScore){bestScore=score;localStorage.setItem('brick_best',bestScore);document.getElementById('bs').textContent=bestScore;}currentLevel++;document.getElementById('lvl').textContent=currentLevel;if(currentLevel>50){gameState='win';drawWin();}else initLevel();}
   particles=particles.filter(p=>{p.x+=p.dx;p.y+=p.dy;p.life--;return p.life>0;});
+  // Powerup update
+  powerups=powerups.filter(p=>{
+    p.y+=p.dy;
+    if(p.y>CH)return false;
+    if(p.x+p.w>=paddle.x&&p.x<=paddle.x+paddle.w&&p.y+p.h>=paddle.y&&p.y<=paddle.y+paddle.h){
+      activatePowerup(p.type);return false;
+    }
+    return true;
+  });
+  // Paddle width timer
+  if(paddleTimer>0){paddleTimer--;if(paddleTimer<=0)paddle.w=paddle.baseW;}
 }
 
 function drawAll(){
@@ -221,6 +257,14 @@ function drawAll(){
   balls.forEach(b=>{ctx.fillStyle='#fff';ctx.shadowColor='#fff';ctx.shadowBlur=15;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;});
   // particles
   particles.forEach(p=>{ctx.globalAlpha=p.life/30;ctx.fillStyle=p.color;ctx.fillRect(p.x-2,p.y-2,4,4);});ctx.globalAlpha=1;
+  // powerups
+  powerups.forEach(p=>{
+    const pt=POWERUP_TYPES[p.type];
+    ctx.fillStyle=pt.color;ctx.shadowColor=pt.color;ctx.shadowBlur=8;
+    ctx.fillRect(p.x,p.y,p.w,p.h);ctx.shadowBlur=0;
+    ctx.fillStyle='#000';ctx.font='bold 10px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(pt.label,p.x+p.w/2,p.y+p.h/2);ctx.textBaseline='alphabetic';
+  });
 }
 
 function drawGameOver(){
