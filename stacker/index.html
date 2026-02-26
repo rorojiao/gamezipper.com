@@ -65,7 +65,7 @@ function resize(){
 }
 resize();window.addEventListener('resize',resize);
 
-var score=0,level=0,bestScore=+(localStorage.getItem('stacker_best')||0);
+var score=0,level=0,bestScore=+(localStorage.getItem('stacker_best')||0),paused=false;
 document.getElementById('bs').textContent=bestScore;
 const BLOCK_H=30,BASE_Y=CH-40;
 let stack=[],current=null,fallingPieces=[],gameState='menu',perfectFlash=0,particles=[],scorePopups=[];
@@ -176,6 +176,7 @@ function place(){
 
 function loop(){
   if(gameState!=='play')return;
+  if(paused){drawAll();drawPause();requestAnimationFrame(loop);return;}
   requestAnimationFrame(loop);
   if(current){current.x+=current.speed*current.dir;if(current.x+current.w>CW){current.dir=-1;}if(current.x<0){current.dir=1;}}
   fallingPieces.forEach(f=>{f.dy+=0.5;f.y+=f.dy;});
@@ -210,6 +211,14 @@ function drawAll(){
   ctx.restore();
 }
 
+function drawPause(){
+  ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,0,CW,CH);
+  ctx.fillStyle='#fff';ctx.font='bold 32px Arial';ctx.textAlign='center';
+  ctx.fillText('⏸ PAUSED',CW/2,CH/2-10);
+  ctx.font='16px Arial';ctx.fillStyle='#aaa';
+  ctx.fillText('Press P to Resume',CW/2,CH/2+25);
+}
+
 function drawMenu(){
   ctx.fillStyle='#0a1628';ctx.fillRect(0,0,CW,CH);
   ctx.fillStyle='#ffd700';ctx.font='bold 40px Arial';ctx.textAlign='center';
@@ -233,11 +242,14 @@ function drawGameOver(){
 drawMenu();
 
 function handleAction(){
-  if(gameState==='menu'||gameState==='over'){startGame();return;}
-  if(gameState==='play')place();
+  if(gameState==='menu'||gameState==='over'){paused=false;startGame();return;}
+  if(gameState==='play'&&!paused)place();
 }
 
-document.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Space'){e.preventDefault();handleAction();}});
+document.addEventListener('keydown',e=>{
+  if(e.key==='p'||e.key==='P'){if(gameState==='play'){paused=!paused;}return;}
+  if(e.key===' '||e.key==='Space'){e.preventDefault();handleAction();}
+});
 canvas.addEventListener('click',handleAction);
 canvas.addEventListener('touchstart',e=>{handleAction();},{passive:true});
 

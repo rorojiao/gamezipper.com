@@ -41,6 +41,8 @@ canvas{border:2px solid #1a3a5c;border-radius:8px;margin-top:32px;display:block}
     "isAccessibleForFree": true
   }
   </script>
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
 </head>
 <body>
 <div class="nav">
@@ -64,7 +66,7 @@ function resize(){
 resize();window.addEventListener('resize',resize);
 
 var bestScore=+(localStorage.getItem('brick_best')||0);
-var score=0,lives=3,currentLevel=1,gameState='menu';
+var score=0,lives=3,currentLevel=1,gameState='menu',paused=false;
 const COLS=8,ROWS=5,BRICK_W=CW/COLS-4,BRICK_H=20,BRICK_PAD=4,BRICK_TOP=50;
 let bricks=[],particles=[],powerups=[];
 const paddle={x:CW/2-40,y:CH-30,w:80,h:12};
@@ -151,7 +153,7 @@ function playHit(){try{const ac=new AudioContext(),o=ac.createOscillator(),g=ac.
 
 function addParticles(x,y,color,n){for(let i=0;i<n;i++)particles.push({x,y,dx:(Math.random()-0.5)*6,dy:(Math.random()-0.5)*6,life:30,color});}
 
-function startGame(){score=0;lives=3;currentLevel=1;gameState='play';document.getElementById('sc').textContent=0;document.getElementById('bs').textContent=bestScore;document.getElementById('lv').textContent=3;document.getElementById('lvl').textContent=1;
+function startGame(){score=0;lives=3;currentLevel=1;gameState='play';paused=false;document.getElementById('sc').textContent=0;document.getElementById('bs').textContent=bestScore;document.getElementById('lv').textContent=3;document.getElementById('lvl').textContent=1;
   document.getElementById('sc').textContent=0;document.getElementById('lv').textContent=3;document.getElementById('lvl').textContent=1;
   const sbo=document.getElementById('share-btn-overlay');if(sbo)sbo.style.display='none';
   initLevel();loop();}
@@ -160,6 +162,7 @@ let lastT=0;
 function loop(){
   if(gameState!=='play'&&gameState!=='waiting')return;
   requestAnimationFrame(loop);
+  if(paused){drawAll();drawPause();return;}
   if(gameState==='waiting'){drawAll();return;}
   update();drawAll();
 }
@@ -196,7 +199,7 @@ function update(){
   });
   for(let i=toRemove.length-1;i>=0;i--)balls.splice(toRemove[i],1);
   if(balls.length===0){lives--;document.getElementById('lv').textContent=lives;if(lives<=0){gameState='over';drawGameOver();}else resetBall();}
-  if(bricks.length===0){score+=100;document.getElementById('sc').textContent=score;if(score>bestScore){bestScore=score;localStorage.setItem('brick_best',bestScore);document.getElementById('bs').textContent=bestScore;}currentLevel++;document.getElementById('lvl').textContent=currentLevel;if(currentLevel>10){gameState='win';drawWin();}else initLevel();}
+  if(bricks.length===0){score+=100;document.getElementById('sc').textContent=score;if(score>bestScore){bestScore=score;localStorage.setItem('brick_best',bestScore);document.getElementById('bs').textContent=bestScore;}currentLevel++;document.getElementById('lvl').textContent=currentLevel;if(currentLevel>50){gameState='win';drawWin();}else initLevel();}
   particles=particles.filter(p=>{p.x+=p.dx;p.y+=p.dy;p.life--;return p.life>0;});
 }
 
@@ -242,6 +245,14 @@ function drawWin(){
   window.finalScore=score;const sbo=document.getElementById('share-btn-overlay');if(sbo)sbo.style.display='block';
 }
 
+function drawPause(){
+  ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,0,CW,CH);
+  ctx.fillStyle='#fff';ctx.font='bold 32px Arial';ctx.textAlign='center';
+  ctx.fillText('⏸ PAUSED',CW/2,CH/2-10);
+  ctx.font='16px Arial';ctx.fillStyle='#aaa';
+  ctx.fillText('Press P to Resume',CW/2,CH/2+25);
+}
+
 function drawMenu(){
   ctx.fillStyle='#0a1628';ctx.fillRect(0,0,CW,CH);
   ctx.fillStyle='#4ecdc4';ctx.font='bold 40px Arial';ctx.textAlign='center';
@@ -265,10 +276,13 @@ canvas.addEventListener('touchmove',e=>{
 function handleLaunch(){
   if(gameState==='menu'){startGame();return;}
   if(gameState==='over'||gameState==='win'){startGame();return;}
-  if(!launched){launched=true;balls[0].dx=3.5;balls[0].dy=-3.5;}
+  if(!launched&&!paused){launched=true;balls[0].dx=3.5;balls[0].dy=-3.5;}
 }
 
-document.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Space'){e.preventDefault();handleLaunch();}});
+document.addEventListener('keydown',e=>{
+  if(e.key==='p'||e.key==='P'){if(gameState==='play'){paused=!paused;}return;}
+  if(e.key===' '||e.key==='Space'){e.preventDefault();handleLaunch();}
+});
 canvas.addEventListener('click',handleLaunch);
 canvas.addEventListener('touchstart',e=>{handleLaunch();},{passive:true});
 

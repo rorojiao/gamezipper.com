@@ -78,10 +78,7 @@ resize();window.addEventListener('resize',resize);
 var score=0,bestScore=+(localStorage.getItem('snake_best')||0);
 document.getElementById('bs').textContent=bestScore;
 let snake=[{x:12,y:12}],dir={x:1,y:0},nextDir={x:1,y:0},food=null,specialFood=null,specialTimer=0;
-let gameState='menu',speed=150,eaten=0,shakeTime=0,particles=[],scorePopups=[];
-
-function playEat(){try{const ac=new AudioContext(),o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.frequency.setValueAtTime(440,ac.currentTime);o.frequency.exponentialRampToValueAtTime(880,ac.currentTime+0.1);g.gain.setValueAtTime(0.3,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.15);o.start();o.stop(ac.currentTime+0.15)}catch(e){}}
-function playDie(){try{const ac=new AudioContext(),o=ac.createOscillator(),g=ac.createGain();o.type='sawtooth';o.connect(g);g.connect(ac.destination);o.frequency.setValueAtTime(300,ac.currentTime);o.frequency.exponentialRampToValueAtTime(50,ac.currentTime+0.5);g.gain.setValueAtTime(0.4,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.5);o.start();o.stop(ac.currentTime+0.5)}catch(e){}}
+let gameState='menu',speed=150,eaten=0,shakeTime=0,particles=[],scorePopups=[],paused=false;
 
 function spawnParticles(x,y,color,count=15){
   for(let i=0;i<count;i++){
@@ -148,7 +145,7 @@ function setDir(x,y){if(gameState==='menu'){startGame();return}if(x!==-dir.x||y!
 
 function startGame(){
   snake=[{x:12,y:12}];dir={x:1,y:0};nextDir={x:1,y:0};
-  score=0;speed=150;eaten=0;specialFood=null;
+  score=0;speed=150;eaten=0;specialFood=null;paused=false;
   document.getElementById('sc').textContent=0;
   const sbo=document.getElementById('share-btn-overlay');if(sbo)sbo.style.display='none';
   spawnFood();gameState='play';lastTime=performance.now();loop();
@@ -157,6 +154,7 @@ function startGame(){
 let lastTime=0,accumulator=0;
 function loop(){
   if(gameState!=='play')return;
+  if(paused){draw();drawPause();requestAnimationFrame(loop);return;}
   const now=performance.now(),dt=now-lastTime;lastTime=now;
   accumulator+=dt;
   if(specialFood){specialTimer-=dt;if(specialTimer<=0)specialFood=null;}
@@ -235,6 +233,14 @@ function drawGameOver(){
   const sbo=document.getElementById('share-btn-overlay');if(sbo)sbo.style.display='block';
 }
 
+function drawPause(){
+  ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff';ctx.font='bold 32px Arial';ctx.textAlign='center';
+  ctx.fillText('⏸ PAUSED',W/2,H/2-10);
+  ctx.font='16px Arial';ctx.fillStyle='#aaa';
+  ctx.fillText('Press P to Resume',W/2,H/2+25);
+}
+
 function drawMenu(){
   ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);
   ctx.fillStyle='#00ff88';ctx.font='bold 40px Arial';ctx.textAlign='center';
@@ -246,7 +252,8 @@ drawMenu();
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&(gameState==='menu'||gameState==='over')){startGame();return;}
-  if(gameState!=='play')return;
+  if(e.key==='p'||e.key==='P'){if(gameState==='play'){paused=!paused;if(!paused){lastTime=performance.now();loop();}}return;}
+  if(gameState!=='play'||paused)return;
   switch(e.key){case'ArrowUp':setDir(0,-1);break;case'ArrowDown':setDir(0,1);break;case'ArrowLeft':setDir(-1,0);break;case'ArrowRight':setDir(1,0);break;}
 });
 
