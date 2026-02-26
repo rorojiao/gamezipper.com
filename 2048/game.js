@@ -65,8 +65,8 @@ const MERGE_DURATION = 250;
 
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
-const scoreEl = document.getElementById('score');
-const bestEl = document.getElementById('best');
+const scoreEl = document.getElementById('score-val');
+const bestEl = document.getElementById('best-val');
 const undoCountEl = document.getElementById('undo-count');
 const gameOverEl = document.getElementById('game-over');
 const finalScoreEl = document.getElementById('final-score');
