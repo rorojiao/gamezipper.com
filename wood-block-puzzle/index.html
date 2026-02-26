@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Wood Block Puzzle - Free Online Game | GameZipper</title>
+<meta name="description" content="Drag wooden blocks to fill rows and columns! A relaxing yet addictive block puzzle game. Free online.">
+<meta name="keywords" content="wood block puzzle, block puzzle, blockudoku, puzzle game, free online">
+<link rel="canonical" href="https://gamezipper.com/wood-block-puzzle/">
+<meta property="og:title" content="Wood Block Puzzle - Free Online Game | GameZipper">
+<meta property="og:description" content="Drag wooden blocks to fill rows and columns! A relaxing yet addictive block puzzle game. Free online.">
+<meta property="og:url" content="https://gamezipper.com/wood-block-puzzle/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Wood Block Puzzle - Free Online Game | GameZipper">
+<meta name="twitter:description" content="Drag wooden blocks to fill rows and columns! Free online.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Wood Block Puzzle","url":"https://gamezipper.com/wood-block-puzzle/","description":"Drag wooden blocks to fill rows and columns! A relaxing yet addictive block puzzle game.","genre":["Puzzle"],"gamePlatform":"Web Browser"}</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#1a0e06;font-family:'Segoe UI',Arial,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+#nav{position:fixed;top:0;left:0;right:0;height:30px;background:rgba(10,6,2,0.95);display:flex;align-items:center;justify-content:space-between;padding:0 10px;z-index:100;border-bottom:1px solid #3d2a10}
+#nav a{color:#c8a06a;text-decoration:none;font-size:12px;font-weight:600}
+#hud{display:flex;justify-content:space-around;align-items:center;padding:6px 12px;background:rgba(30,16,4,0.9);border-bottom:1px solid #3d2a10}
+.hud-box{text-align:center}
+.hud-label{font-size:10px;color:#8a6040;text-transform:uppercase;letter-spacing:1px}
+.hud-val{font-size:22px;font-weight:900;color:#f0c060}
+canvas{display:block}
+#main{display:flex;flex-direction:column;align-items:center;position:fixed;top:30px;left:0;right:0;bottom:0}
+#canvas-wrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;width:100%}
+#gc{cursor:pointer}
+/* Overlay */
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:200;flex-direction:column}
+#overlay.show{display:flex}
+.ov-box{background:linear-gradient(135deg,#3d2010,#5a3418);border-radius:20px;padding:32px 28px;text-align:center;max-width:320px;width:90%;border:2px solid #8a5a2a;box-shadow:0 10px 40px rgba(0,0,0,0.6)}
+.ov-title{font-size:32px;color:#f0c060;font-weight:900;margin-bottom:8px}
+.ov-sub{font-size:16px;color:#c8a06a;margin-bottom:20px}
+.ov-btn{background:linear-gradient(135deg,#c8801a,#e8a030);color:#1a0e06;border:none;padding:14px 32px;border-radius:12px;font-size:18px;font-weight:800;cursor:pointer;margin:4px;box-shadow:0 4px 12px rgba(200,128,26,0.5);touch-action:manipulation}
+.ov-btn:hover{background:linear-gradient(135deg,#d89020,#f0b040)}
+</style>
+</head>
+<body>
+<div id="nav"><a href="https://gamezipper.com/">⬅ GameZipper.com</a><span style="color:#8a6040;font-size:11px">🪵 Wood Block Puzzle</span></div>
+<div id="main">
+  <div id="hud">
+    <div class="hud-box"><div class="hud-label">Score</div><div class="hud-val" id="score">0</div></div>
+    <div class="hud-box"><div class="hud-label">Best</div><div class="hud-val" id="best">0</div></div>
+    <div class="hud-box"><div class="hud-label">Combo</div><div class="hud-val" id="combo">x1</div></div>
+  </div>
+  <div id="canvas-wrap"><canvas id="gc"></canvas></div>
+</div>
+<div id="overlay">
+  <div class="ov-box">
+    <div class="ov-title" id="ov-title">Game Over</div>
+    <div class="ov-sub" id="ov-sub">No more blocks can be placed!</div>
+    <div style="font-size:28px;color:#f0c060;margin-bottom:18px" id="ov-score">Score: 0</div>
+    <button class="ov-btn" onclick="startGame()">🪵 Play Again</button>
+  </div>
+</div>
+<script>
+'use strict';
+const GRID = 9;
+const SAVE_KEY = 'wbp_best_v1';
+
+// Wood-themed colors (warm browns and ambers)
+const WOOD_COLORS = [
+  {fill:'#c8801a',stroke:'#8a5010',hi:'#e8a040'},  // oak
+  {fill:'#a05c14',stroke:'#6a3a08',hi:'#c07830'},  // dark walnut
+  {fill:'#d4982a',stroke:'#9a6a12',hi:'#f0b840'},  // maple
+  {fill:'#7a4a10',stroke:'#4a2808',hi:'#9a6a2a'},  // mahogany
+  {fill:'#b87020',stroke:'#7a4a08',hi:'#d89040'},  // pine
+  {fill:'#e0b050',stroke:'#a07818',hi:'#f8d070'},  // birch
+];
+
+// Block shapes (each is array of [row,col] offsets)
+const SHAPES = [
+  // 1-cell
+  [[0,0]],
+  // 2-cell
+  [[0,0],[0,1]],
+  [[0,0],[1,0]],
+  // 3-cell line
+  [[0,0],[0,1],[0,2]],
+  [[0,0],[1,0],[2,0]],
+  // L shapes
+  [[0,0],[1,0],[1,1]],
+  [[0,0],[0,1],[1,0]],
+  [[0,0],[0,1],[1,1]],
+  [[0,1],[1,0],[1,1]],
+  // T shape
+  [[0,0],[0,1],[0,2],[1,1]],
+  [[0,0],[1,0],[2,0],[1,1]],
+  [[1,0],[1,1],[1,2],[0,1]],
+  [[0,1],[1,1],[2,1],[1,0]],
+  // S/Z shapes
+  [[0,0],[0,1],[1,1],[1,2]],
+  [[0,1],[0,2],[1,0],[1,1]],
+  // 2x2 square
+  [[0,0],[0,1],[1,0],[1,1]],
+  // 3x3 square
+  [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]],
+  // 4-cell line
+  [[0,0],[0,1],[0,2],[0,3]],
+  [[0,0],[1,0],[2,0],[3,0]],
+  // 5-cell line
+  [[0,0],[0,1],[0,2],[0,3],[0,4]],
+  [[0,0],[1,0],[2,0],[3,0],[4,0]],
+  // L-tetromino
+  [[0,0],[1,0],[2,0],[2,1]],
+  [[0,0],[0,1],[0,2],[1,0]],
+  [[0,0],[0,1],[1,1],[2,1]],
+  [[0,2],[1,0],[1,1],[1,2]],
+  // J-tetromino
+  [[0,1],[1,1],[2,0],[2,1]],
+  [[0,0],[1,0],[1,1],[1,2]],
+  [[0,0],[0,1],[1,0],[2,0]],
+  [[0,0],[0,1],[0,2],[1,2]],
+];
+
+const canvas = document.getElementById('gc');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const bestEl = document.getElementById('best');
+const comboEl = document.getElementById('combo');
+const overlay = document.getElementById('overlay');
+const ovScore = document.getElementById('ov-score');
+
+let grid = [], score = 0, bestScore = 0, combo = 1;
+let pieces = [], dragging = null;
+let cellSize = 38, gridOffX = 0, gridOffY = 0;
+let pieceArea = {y:0, h:0};
+let floats = [], particles = [];
+let flashCells = {}; // row,col -> alpha for clear animation
+let shakeTime = 0, shakeIntensity = 0;
+let gameActive = false;
+let animFrame = null;
+
+try { bestScore = parseInt(localStorage.getItem(SAVE_KEY)) || 0; } catch(e){}
+bestEl.textContent = bestScore;
+
+// Audio
+let _ac = null;
+function getAC() { if (!_ac) try { _ac = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} return _ac; }
+function playTone(freq, type, gain, dur) {
+  try {
+    const ac = getAC(); if (!ac) return;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = type||'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(gain||0.15, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+dur);
+    o.start(); o.stop(ac.currentTime+dur);
+  } catch(e) {}
+}
+function playPlace() { playTone(440, 'triangle', 0.1, 0.08); }
+function playClear() {
+  [523,659,784,1047].forEach((f,i) => setTimeout(() => playTone(f,'triangle',0.15,0.15), i*80));
+}
+function playGameOver() { playTone(200, 'sawtooth', 0.2, 0.5); }
+function playCombo() { playTone(880, 'triangle', 0.2, 0.2); }
+
+function resize() {
+  const wrap = document.getElementById('canvas-wrap');
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight;
+  canvas.width = W; canvas.height = H;
+  // Grid takes 68% of height, piece area the rest
+  const gridAreaH = Math.min(H * 0.68, W * 0.95);
+  cellSize = Math.floor(Math.min(gridAreaH / GRID, W * 0.95 / GRID));
+  const gridW = cellSize * GRID;
+  const gridH = cellSize * GRID;
+  gridOffX = Math.floor((W - gridW) / 2);
+  gridOffY = Math.floor((H - gridH) / 2 - H * 0.08);
+  if (gridOffY < 4) gridOffY = 4;
+  pieceArea = { y: gridOffY + gridH + 8, h: H - gridOffY - gridH - 8 };
+}
+
+function initGrid() {
+  grid = Array.from({length:GRID}, () => Array(GRID).fill(0));
+}
+
+function getRandomPiece() {
+  const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+  const color = WOOD_COLORS[Math.floor(Math.random() * WOOD_COLORS.length)];
+  return { shape, color, x: 0, y: 0 };
+}
+
+function normalizePiece(p) {
+  // Normalize so min row/col = 0
+  const minR = Math.min(...p.shape.map(c=>c[0]));
+  const minC = Math.min(...p.shape.map(c=>c[1]));
+  p.shape = p.shape.map(([r,c]) => [r-minR, c-minC]);
+  p.rows = Math.max(...p.shape.map(c=>c[0])) + 1;
+  p.cols = Math.max(...p.shape.map(c=>c[1])) + 1;
+  return p;
+}
+
+function spawnPieces() {
+  pieces = [0,1,2].map(() => normalizePiece(getRandomPiece()));
+  layoutPieces();
+}
+
+function layoutPieces() {
+  const W = canvas.width;
+  const pW = Math.floor(W / 3);
+  const pCellSize = Math.min(Math.floor(pW * 0.85 / 4), cellSize - 2);
+  pieces.forEach((p, i) => {
+    if (!p || p.placed) return;
+    p.pCellSize = pCellSize;
+    const px = i * pW + pW / 2 - (p.cols * pCellSize) / 2;
+    const py = pieceArea.y + (pieceArea.h - p.rows * pCellSize) / 2;
+    p.baseX = px;
+    p.baseY = py;
+  });
+}
+
+function canPlace(shape, gr, gc) {
+  for (const [dr, dc] of shape) {
+    const r = gr + dr, c = gc + dc;
+    if (r < 0 || r >= GRID || c < 0 || c >= GRID) return false;
+    if (grid[r][c]) return false;
+  }
+  return true;
+}
+
+function canPlaceAnywhere(shape) {
+  for (let r = 0; r < GRID; r++)
+    for (let c = 0; c < GRID; c++)
+      if (canPlace(shape, r, c)) return true;
+  return false;
+}
+
+function hasAnyMove() {
+  for (const p of pieces) {
+    if (!p || p.placed) continue;
+    if (canPlaceAnywhere(p.shape)) return true;
+  }
+  return false;
+}
+
+function placePiece(piece, gr, gc) {
+  for (const [dr, dc] of piece.shape) {
+    grid[gr + dr][gc + dc] = piece.color;
+  }
+  playPlace();
+  piece.placed = true;
+  score += piece.shape.length;
+  scoreEl.textContent = score;
+  checkAndClearLines(gr, gc, piece.shape);
+}
+
+function checkAndClearLines(placedR, placedC, shape) {
+  // Find affected rows/cols
+  const affectedRows = new Set(shape.map(([r]) => placedR + r));
+  const affectedCols = new Set(shape.map(([,c]) => placedC + c));
+
+  const rowsToClear = [];
+  const colsToClear = [];
+
+  for (const r of affectedRows) {
+    if (grid[r].every(v => v !== 0)) rowsToClear.push(r);
+  }
+  for (const c of affectedCols) {
+    let full = true;
+    for (let r = 0; r < GRID; r++) if (!grid[r][c]) { full = false; break; }
+    if (full) colsToClear.push(c);
+  }
+
+  const totalLines = rowsToClear.length + colsToClear.length;
+  if (totalLines === 0) { combo = 1; comboEl.textContent = 'x1'; afterPlace(); return; }
+
+  combo = Math.min(combo + totalLines - 1, 8);
+  comboEl.textContent = 'x' + combo;
+
+  // Score: 9 per cell + bonus per line count
+  const clearScore = totalLines * GRID * 10 * combo;
+  score += clearScore;
+  scoreEl.textContent = score;
+
+  if (score > bestScore) {
+    bestScore = score;
+    try { localStorage.setItem(SAVE_KEY, bestScore); } catch(e){}
+    bestEl.textContent = bestScore;
+  }
+
+  // Animate cleared cells
+  const clearSet = new Set();
+  for (const r of rowsToClear) for (let c = 0; c < GRID; c++) clearSet.add(r + ',' + c);
+  for (const c of colsToClear) for (let r = 0; r < GRID; r++) clearSet.add(r + ',' + c);
+
+  for (const key of clearSet) {
+    flashCells[key] = 1.0;
+    const [r, c] = key.split(',').map(Number);
+    const cx = gridOffX + c * cellSize + cellSize / 2;
+    const cy = gridOffY + r * cellSize + cellSize / 2;
+    spawnParticles(cx, cy, grid[r][c] || WOOD_COLORS[0], 8);
+  }
+
+  shakeTime = 0.4;
+  shakeIntensity = Math.min(totalLines * 3, 12);
+
+  // Float score text
+  const midR = rowsToClear.length > 0 ? rowsToClear[Math.floor(rowsToClear.length/2)] : (GRID/2|0);
+  const midC = colsToClear.length > 0 ? colsToClear[Math.floor(colsToClear.length/2)] : (GRID/2|0);
+  const fx = gridOffX + midC * cellSize + cellSize / 2;
+  const fy = gridOffY + midR * cellSize + cellSize / 2;
+  floats.push({ text: '+' + clearScore, x: fx, y: fy, life: 1.5, dy: -1, color: '#f0c060', size: 22 + totalLines * 4 });
+
+  if (combo >= 2) {
+    floats.push({ text: 'COMBO x' + combo + '!', x: canvas.width / 2, y: canvas.height * 0.35, life: 1.5, dy: -0.8, color: '#ff9020', size: 28 });
+    playCombo();
+  } else {
+    playClear();
+  }
+
+  // Clear cells after flash
+  setTimeout(() => {
+    for (const r of rowsToClear) for (let c = 0; c < GRID; c++) grid[r][c] = 0;
+    for (const c of colsToClear) for (let r = 0; r < GRID; r++) grid[r][c] = 0;
+    flashCells = {};
+    afterPlace();
+  }, 350);
+}
+
+function afterPlace() {
+  // Check if all 3 pieces are placed; spawn new batch
+  if (pieces.every(p => !p || p.placed)) {
+    spawnPieces();
+  }
+  // Check game over
+  if (!hasAnyMove()) {
+    setTimeout(showGameOver, 500);
+  }
+}
+
+function spawnParticles(cx, cy, color, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 5;
+    particles.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2,
+      color: color.fill || '#c8801a',
+      r: 3 + Math.random() * 4,
+      life: 1, decay: 0.03 + Math.random() * 0.02,
+      gravity: 0.2
+    });
+  }
+}
+
+function showGameOver() {
+  gameActive = false;
+  playGameOver();
+  document.getElementById('ov-title').textContent = '🪵 Game Over!';
+  document.getElementById('ov-sub').textContent = 'No more blocks can be placed!';
+  ovScore.textContent = 'Score: ' + score + (score >= bestScore ? ' 🏆 Best!' : '');
+  overlay.classList.add('show');
+}
+
+function startGame() {
+  overlay.classList.remove('show');
+  score = 0; combo = 1;
+  scoreEl.textContent = '0'; comboEl.textContent = 'x1';
+  dragging = null; floats = []; particles = []; flashCells = {};
+  shakeTime = 0;
+  initGrid();
+  spawnPieces();
+  gameActive = true;
+}
+
+// Input: convert screen coords to grid coords
+function screenToGrid(sx, sy) {
+  const c = Math.floor((sx - gridOffX) / cellSize);
+  const r = Math.floor((sy - gridOffY) / cellSize);
+  return {r, c};
+}
+
+function pieceCellHit(p, sx, sy) {
+  if (!p || p.placed) return false;
+  const cs = p.pCellSize;
+  for (const [dr, dc] of p.shape) {
+    const px = p.baseX + dc * cs;
+    const py = p.baseY + dr * cs;
+    if (sx >= px - 4 && sx <= px + cs + 4 && sy >= py - 4 && sy <= py + cs + 4) return true;
+  }
+  return false;
+}
+
+let dragGr = -1, dragGc = -1;
+
+function getEventPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: src.clientX - r.left, y: src.clientY - r.top };
+}
+
+function onPointerDown(e) {
+  e.preventDefault();
+  if (!gameActive) return;
+  const {x, y} = getEventPos(e);
+  for (let i = 0; i < pieces.length; i++) {
+    const p = pieces[i];
+    if (!p || p.placed) continue;
+    if (pieceCellHit(p, x, y)) {
+      dragging = { pieceIdx: i, piece: p, x, y };
+      dragGr = -1; dragGc = -1;
+      break;
+    }
+  }
+}
+
+function onPointerMove(e) {
+  e.preventDefault();
+  if (!dragging) return;
+  const {x, y} = getEventPos(e);
+  dragging.x = x; dragging.y = y;
+  // Compute snap grid pos
+  const p = dragging.piece;
+  const cs = p.pCellSize;
+  // center of piece
+  const midDr = (Math.max(...p.shape.map(([r])=>r)) ) / 2;
+  const midDc = (Math.max(...p.shape.map(([,c])=>c)) ) / 2;
+  const snapX = x - (midDc + 0.5) * cellSize;
+  const snapY = y - (midDr + 0.5) * cellSize;
+  const gc2 = Math.round((snapX - gridOffX) / cellSize);
+  const gr2 = Math.round((snapY - gridOffY) / cellSize);
+  dragGr = gr2; dragGc = gc2;
+}
+
+function onPointerUp(e) {
+  e.preventDefault();
+  if (!dragging) return;
+  const p = dragging.piece;
+  const gr = dragGr, gc = dragGc;
+  if (gr >= 0 && gc >= 0 && canPlace(p.shape, gr, gc)) {
+    placePiece(p, gr, gc);
+  }
+  dragging = null; dragGr = -1; dragGc = -1;
+}
+
+canvas.addEventListener('pointerdown', onPointerDown, {passive:false});
+canvas.addEventListener('pointermove', onPointerMove, {passive:false});
+canvas.addEventListener('pointerup', onPointerUp, {passive:false});
+canvas.addEventListener('pointercancel', () => { dragging = null; }, {passive:false});
+canvas.addEventListener('touchstart', e => e.preventDefault(), {passive:false});
+
+// Draw
+function drawCell(r, c, color, alpha) {
+  alpha = alpha !== undefined ? alpha : 1;
+  const x = gridOffX + c * cellSize;
+  const y = gridOffY + r * cellSize;
+  const s = cellSize - 2;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color.fill;
+  ctx.strokeStyle = color.stroke;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(x + 1, y + 1, s, s, 4);
+  ctx.fill();
+  ctx.stroke();
+  // Highlight top edge (wood grain effect)
+  ctx.fillStyle = color.hi;
+  ctx.beginPath();
+  ctx.roundRect(x + 3, y + 3, s - 6, Math.max(4, s * 0.2), 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawGrid() {
+  // Background grid
+  for (let r = 0; r < GRID; r++) {
+    for (let c = 0; c < GRID; c++) {
+      const x = gridOffX + c * cellSize;
+      const y = gridOffY + r * cellSize;
+      const s = cellSize - 2;
+      // 3x3 box highlight
+      const bx = Math.floor(c / 3), by = Math.floor(r / 3);
+      const boxColor = (bx + by) % 2 === 0 ? 'rgba(255,200,100,0.05)' : 'rgba(0,0,0,0.05)';
+      ctx.fillStyle = boxColor;
+      ctx.fillRect(x + 1, y + 1, s, s);
+      ctx.strokeStyle = 'rgba(100,70,30,0.4)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 1, y + 1, s, s);
+      // Filled cell
+      if (grid[r][c]) {
+        const key = r + ',' + c;
+        if (flashCells[key]) {
+          drawCell(r, c, grid[r][c], 0.4 + flashCells[key] * 0.6);
+        } else {
+          drawCell(r, c, grid[r][c]);
+        }
+      }
+    }
+  }
+
+  // Hover preview
+  if (dragging && dragGr >= 0 && dragGc >= 0) {
+    const valid = canPlace(dragging.piece.shape, dragGr, dragGc);
+    for (const [dr, dc] of dragging.piece.shape) {
+      const r = dragGr + dr, c = dragGc + dc;
+      if (r < 0 || r >= GRID || c < 0 || c >= GRID) continue;
+      const x = gridOffX + c * cellSize;
+      const y = gridOffY + r * cellSize;
+      const s = cellSize - 2;
+      ctx.save();
+      ctx.globalAlpha = valid ? 0.5 : 0.25;
+      ctx.fillStyle = valid ? dragging.piece.color.fill : '#ff4444';
+      ctx.beginPath();
+      ctx.roundRect(x + 1, y + 1, s, s, 4);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+}
+
+function drawPieces() {
+  pieces.forEach((p, i) => {
+    if (!p || p.placed) return;
+    const isDragging = dragging && dragging.pieceIdx === i;
+    const cs = isDragging ? cellSize : p.pCellSize;
+    let bx = isDragging ? dragging.x - (Math.max(...p.shape.map(([,c])=>c)) + 1) / 2 * cs : p.baseX;
+    let by = isDragging ? dragging.y - (Math.max(...p.shape.map(([r])=>r)) + 1) / 2 * cs : p.baseY;
+    ctx.save();
+    if (isDragging) ctx.globalAlpha = 0.85;
+    for (const [dr, dc] of p.shape) {
+      const x = bx + dc * cs;
+      const y = by + dr * cs;
+      const s = cs - 2;
+      ctx.fillStyle = p.color.fill;
+      ctx.strokeStyle = p.color.stroke;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(x + 1, y + 1, s, s, Math.max(2, cs * 0.1));
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = p.color.hi;
+      ctx.beginPath();
+      ctx.roundRect(x + 3, y + 3, s - 6, Math.max(3, s * 0.2), 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  });
+}
+
+let lastTime = 0;
+function gameLoop(ts) {
+  const dt = Math.min((ts - lastTime) / 1000, 0.05);
+  lastTime = ts;
+
+  // Shake
+  let ox = 0, oy = 0;
+  if (shakeTime > 0) {
+    shakeTime -= dt;
+    ox = (Math.random() - 0.5) * shakeIntensity;
+    oy = (Math.random() - 0.5) * shakeIntensity;
+  }
+
+  ctx.save();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background
+  ctx.fillStyle = '#1a0e06';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.translate(ox, oy);
+
+  // Grid background panel
+  const pw = GRID * cellSize + 12;
+  const ph = GRID * cellSize + 12;
+  ctx.fillStyle = 'rgba(60,30,8,0.8)';
+  ctx.beginPath();
+  ctx.roundRect(gridOffX - 6, gridOffY - 6, pw, ph, 10);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(200,150,60,0.3)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 3x3 box dividers
+  ctx.strokeStyle = 'rgba(200,150,60,0.2)';
+  ctx.lineWidth = 2;
+  for (let i = 3; i < GRID; i += 3) {
+    ctx.beginPath();
+    ctx.moveTo(gridOffX + i * cellSize, gridOffY);
+    ctx.lineTo(gridOffX + i * cellSize, gridOffY + GRID * cellSize);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(gridOffX, gridOffY + i * cellSize);
+    ctx.lineTo(gridOffX + GRID * cellSize, gridOffY + i * cellSize);
+    ctx.stroke();
+  }
+
+  drawGrid();
+  drawPieces();
+
+  // Particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += p.gravity;
+    p.life -= p.decay;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Floats
+  for (let i = floats.length - 1; i >= 0; i--) {
+    const f = floats[i];
+    f.y += f.dy; f.life -= 0.02;
+    if (f.life <= 0) { floats.splice(i, 1); continue; }
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, f.life);
+    ctx.fillStyle = f.color;
+    ctx.font = `bold ${f.size}px Segoe UI`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(f.text, f.x, f.y);
+    ctx.restore();
+  }
+
+  // Flash cell animation
+  for (const key of Object.keys(flashCells)) {
+    flashCells[key] = Math.max(0, flashCells[key] - dt * 3);
+  }
+
+  ctx.restore();
+  animFrame = requestAnimationFrame(gameLoop);
+}
+
+window.addEventListener('resize', () => { resize(); layoutPieces(); });
+resize();
+startGame();
+animFrame = requestAnimationFrame(gameLoop);
+
+// Expose state for testing
+window._gameState = {
+  get score() { return score; },
+  get bestScore() { return bestScore; },
+  get grid() { return grid; },
+  get pieces() { return pieces; },
+  start: startGame
+};
+</script>
+<script>new Image().src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p="+encodeURIComponent(location.pathname);</script>
+</body>
+</html>
