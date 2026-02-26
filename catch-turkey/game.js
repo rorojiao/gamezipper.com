@@ -1188,7 +1188,7 @@ gameScene._onWin = function() {
   if (timePercent > 0.7) stars = 3;
   Save.setStars(level.id, stars);
   Save.setScore(level.id, score);
-  if (level.id >= Save.d.maxLevel && level.id < 10) { Save.d.maxLevel = level.id + 1; Save.save(); }
+  if (level.id >= Save.d.maxLevel && level.id < LEVELS.length) { Save.d.maxLevel = level.id + 1; Save.save(); }
   Save.addCard(Math.min(level.id - 1, 9));
   Particles.fireworks(Renderer.width / 2, Renderer.height / 2);
   setTimeout(function() {
