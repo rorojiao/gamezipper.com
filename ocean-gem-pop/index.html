@@ -178,6 +178,7 @@ let bestScores={};
 try{bestScores=JSON.parse(localStorage.getItem('ogp_best_scores')||'{}');}catch(e){}
 // Track if failed this attempt (for star calc)
 let shotsFired=0;
+let targetScore=0,continueCount=0,levelStartMsg='',levelStartTimer=0;
 
 function togglePause(){
   if(state!=='play')return;
@@ -228,7 +229,8 @@ function genLevel(lv){
       grid.push({col:c,row:r,color,x:gridX(c,r),y:gridY(r)});
     }
   }
-  shotsLeft=12+lv*2;
+  const coloredGems=grid.filter(b=>b.color>=0).length;
+  shotsLeft=Math.min(60,Math.max(15,Math.ceil(coloredGems*0.65/0.38)+5));
   shotsFired=0;
 }
 function pickColor(){
@@ -428,6 +430,14 @@ function drawHUD(){
   ctx.textAlign='right';ctx.fillText(`Score: ${score}`,W-8,16);
   ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font=`${Math.max(9,R*0.55)}px Georgia`;
   ctx.fillText(`Hi: ${highScore}`,W-8,30);
+  // Target score progress bar
+  const progRatio=Math.min(1,score/(targetScore||1));
+  const pbW=100,pbH=8,pbX=W/2-50,pbY=22;
+  ctx.fillStyle='rgba(0,0,0,0.4)';ctx.beginPath();ctx.roundRect(pbX,pbY,pbW,pbH,4);ctx.fill();
+  const barColor=progRatio<0.5?'#ff4444':progRatio<0.8?'#ffbb00':'#00cc44';
+  ctx.fillStyle=score>=targetScore?'#FFD700':barColor;
+  if(progRatio>0){ctx.beginPath();ctx.roundRect(pbX,pbY,pbW*progRatio,pbH,4);ctx.fill();}
+  if(score>=targetScore){ctx.fillStyle='#FFD700';ctx.font=`bold ${Math.max(10,pbH*1.5)}px Georgia`;ctx.textAlign='center';ctx.fillText('✓',pbX+pbW/2,pbY+pbH*0.9);}
   // Shots remaining
   ctx.fillStyle='rgba(100,200,255,0.7)';ctx.font=`${fs}px Georgia`;
   ctx.textAlign='center';ctx.fillText(`🎯 ${shotsLeft}`,W/2,18);
@@ -636,43 +646,75 @@ function processMatch(nb){
   afterShoot();
 }
 
-function calcStars(remaining){if(remaining>=5)return 3;if(remaining>=2)return 2;return 1;}
+function calcStars(currentScore,targetScore){const ratio=currentScore/targetScore;if(ratio>=2.0)return 3;if(ratio>=1.5)return 2;return 1;}
 function saveStars(lv,stars){const key='ogp_stars_L'+lv;const prev=+(localStorage.getItem(key)||0);if(stars>prev)localStorage.setItem(key,stars);}
 function getStars(lv){return+(localStorage.getItem('ogp_stars_L'+lv)||0);}
 function saveBest(lv,s){const key='ogp_best_L'+lv;const prev=+(localStorage.getItem(key)||0);if(s>prev)localStorage.setItem(key,s);}
 function getBest(lv){return+(localStorage.getItem('ogp_best_L'+lv)||0);}
 
+function getTargetScore(lv){
+  const L=LEVELS[lv-1];
+  const avgCols=COLS-0.5;
+  const totalColoredGems=Math.round(L.rows*avgCols*(1-L.grayChance));
+  const tier=lv<=10?1.0:lv<=25?1.3:lv<=40?1.6:2.0;
+  return Math.max(500,Math.round(totalColoredGems*10*0.6*tier/100)*100);
+}
+function checkLifeRecovery(){
+  if(lives>=5)return;
+  const last=+(localStorage.getItem('ogp_last_life_time')||0);
+  if(last&&Date.now()-last>=1800000){
+    lives++;localStorage.setItem('ogp_lives',lives);
+    localStorage.setItem('ogp_last_life_time',Date.now());
+  }
+}
+function getLifeRecoveryCountdown(){
+  if(lives>=5)return null;
+  const last=+(localStorage.getItem('ogp_last_life_time')||0);
+  if(!last)return null;
+  const remaining=1800000-(Date.now()-last);
+  if(remaining<=0)return'00:00';
+  const m=Math.floor(remaining/60000),s=Math.floor((remaining%60000)/1000);
+  return`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
 function failLevel(){
   lives--;lifeAnim=1.5;lifeAnimText='-1 ❤️';
   localStorage.setItem('ogp_lives',lives);
+  if(!localStorage.getItem('ogp_last_life_time'))localStorage.setItem('ogp_last_life_time',Date.now());
   playLose();
   if(lives<=0){
-    state='gameover';screenShake=15;failFlash=1;
+    state='noLives';screenShake=15;failFlash=1;
     if(score>highScore){highScore=score;localStorage.setItem('ogp_hi',highScore);}
   }else{
     state='lose';screenShake=15;failFlash=1;
   }
 }
 
+function doWin(){
+  if(score>highScore){highScore=score;localStorage.setItem('ogp_hi',highScore);}
+  starRating=calcStars(score,targetScore);
+  saveStars(level,starRating);saveBest(level,score);
+  starAnimTimer=0;
+  if(level<MAX_LEVEL){
+    if(level>=maxUnlocked){maxUnlocked=level+1;localStorage.setItem('ogp_progress',maxUnlocked);}
+    state='win';addLevelCompleteParticles();playWin();
+  }else{
+    maxUnlocked=MAX_LEVEL;localStorage.setItem('ogp_progress',maxUnlocked);
+    state='complete';addLevelCompleteParticles();playWin();
+  }
+}
 function afterShoot(){
   shooting=false;
-  if(grid.filter(b=>b.color>=0).length===0){
-    if(score>highScore){highScore=score;localStorage.setItem('ogp_hi',highScore);}
-    starRating=calcStars(shotsLeft);
-    saveStars(level,starRating);saveBest(level,score);
-    starAnimTimer=0;
-    if(level<MAX_LEVEL){
-      if(level>=maxUnlocked){maxUnlocked=level+1;localStorage.setItem('ogp_progress',maxUnlocked);}
-      state='win';addLevelCompleteParticles();playWin();
-    }else{
-      maxUnlocked=MAX_LEVEL;localStorage.setItem('ogp_progress',maxUnlocked);
-      state='complete';addLevelCompleteParticles();playWin();
-    }
-    return;
-  }
+  // Target score win (P1)
+  if(score>=targetScore&&state==='play'){doWin();return;}
+  // Full clear bonus
+  if(grid.filter(b=>b.color>=0).length===0){doWin();return;}
   const maxY=Math.max(...grid.map(b=>b.y));
   if(maxY>=H-90){failLevel();return;}
-  if(shotsLeft<=0){failLevel();return;}
+  if(shotsLeft<=0){
+    if(continueCount<2){state='continue';return;}
+    else{failLevel();return;}
+  }
   curColor=nextColor;nextColor=pickColor();
   curSpecial=nextSpecial;nextSpecial=pickSpecial();
 }
@@ -686,6 +728,7 @@ function aim(cx,cy){
 }
 function shoot(){
   if(shooting||state!=='play'||paused||shotsLeft<=0)return;
+  checkLifeRecovery();
   initAudio();shooting=true;shootX=W/2;shootY=H-50;shootRot=0;trailPoints=[];
   const sp=Math.max(8,H*0.013);
   shootVx=Math.cos(aimAngle)*sp;shootVy=Math.sin(aimAngle)*sp;
@@ -851,6 +894,17 @@ function handleCanvasClick(cx,cy){
     else if(state==='lose'){startLevel();}
     else if(state==='gameover'){score=0;lives=5;localStorage.setItem('ogp_lives',5);level=1;startLevel();}
     else if(state==='complete'){level=1;score=0;state='menu';}
+    else if(state==='noLives'){
+      // Watch Ad mock: +1 life after 500ms, go to levelselect
+      setTimeout(()=>{lives++;localStorage.setItem('ogp_lives',lives);state='levelselect';},500);
+      return;
+    }
+    else if(state==='continue'){
+      // Watch Ad mock: +5 shots, back to play
+      continueCount++;shotsLeft+=5;state='play';
+      curColor=nextColor;nextColor=pickColor();curSpecial=nextSpecial;nextSpecial=pickSpecial();
+      return;
+    }
     return;
   }
   // Button 2
@@ -860,6 +914,8 @@ function handleCanvasClick(cx,cy){
     if(state==='menu'){state='levelselect';return;}
     if(state==='win'){startLevel();return;} // Retry
     if(state==='lose'||state==='gameover'||state==='complete'){state='menu';return;}
+    if(state==='noLives'){state='menu';return;}
+    if(state==='continue'){failLevel();return;}
     return;
   }
   // Button 3
@@ -878,11 +934,16 @@ canvas.addEventListener('click',e=>{
 });
 
 function startLevel(){
+  checkLifeRecovery();
+  score=0;
   genLevel(level);particles=[];ringEffects=[];comboTexts=[];fallingBubbles=[];bigTexts=[];flashAlpha=0;trailPoints=[];
-  shooting=false;comboCount=0;paused=false;screenShake=0;failFlash=0;
+  shooting=false;comboCount=0;continueCount=0;paused=false;screenShake=0;failFlash=0;
+  targetScore=getTargetScore(level);
   curColor=pickColor();nextColor=pickColor();
   curSpecial='normal';nextSpecial=pickSpecial();
   starAnimTimer=0;
+  levelStartMsg=`Level ${level} · Target: ${targetScore} pts · Shots: ${shotsLeft}`;
+  levelStartTimer=120;
   document.getElementById('pauseBtn').textContent='⏸';
   if(level===1&&!localStorage.getItem('ogp_tutorial_shown')){showTutorial=true;state='tutorial';}
   else{state='play';}
@@ -917,6 +978,7 @@ function drawTutorial(){
 function update(){
   if(paused)return;
   animFrame++;
+  if(levelStartTimer>0)levelStartTimer--;
   if(shooting){
     shootX+=shootVx;shootY+=shootVy;shootRot+=0.15;
     trailPoints.push({x:shootX,y:shootY,a:0.6});if(trailPoints.length>12)trailPoints.shift();
@@ -960,6 +1022,15 @@ function draw(){
     }
     if(flashAlpha>0){ctx.globalAlpha=flashAlpha;ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;}
     bigTexts.forEach(bt=>{ctx.save();ctx.globalAlpha=Math.min(1,bt.life);ctx.font=`bold ${Math.round(36*bt.scale)}px Georgia`;ctx.textAlign='center';ctx.shadowBlur=20;ctx.shadowColor='#FFD700';ctx.fillStyle='#FFD700';ctx.fillText(bt.text,bt.x,bt.y);ctx.restore();});
+    if(state==='play'&&levelStartTimer>0){
+      ctx.save();ctx.textAlign='center';
+      const lsAlpha=Math.min(1,levelStartTimer/30);
+      ctx.globalAlpha=lsAlpha;ctx.fillStyle='rgba(255,255,255,0.9)';
+      ctx.font=`${Math.max(13,W*0.032)}px Georgia`;
+      ctx.shadowBlur=8;ctx.shadowColor='rgba(30,144,255,0.8)';
+      ctx.fillText(levelStartMsg,W/2,H*0.15);
+      ctx.restore();
+    }
     if(state==='lose'){
       drawOverlay('💔 LEVEL FAILED',`Score: ${score}`,'Try Again 🔄','🏠 Menu');
     }
@@ -970,11 +1041,18 @@ function draw(){
     drawHUD();drawParticles();
     drawOverlay('🏆 You Win!',`Final Score: ${score} - All ${MAX_LEVEL} levels!`,'Play Again','🏠 Menu');
   }else if(state==='menu'){
-    drawOverlay('🐚 Ocean Gem Pop','Pop colorful gem bubbles in the deep ocean!','▶ Continue','📋 Select Level');
+    const cdMenu=getLifeRecoveryCountdown();
+    const menuSub=cdMenu?`Lives: ${lives}/5 · Next life in ${cdMenu}`:'Pop colorful gem bubbles in the deep ocean!';
+    drawOverlay('🐚 Ocean Gem Pop',menuSub,'▶ Continue','📋 Select Level');
   }else if(state==='levelselect'){
     drawLevelSelect();
   }else if(state==='gameover'){
     drawOverlay('💀 GAME OVER',`Final Score: ${score}`,'Play Again','↩ Main Menu');
+  }else if(state==='noLives'){
+    const cd=getLifeRecoveryCountdown();
+    drawOverlay('💔 No Lives!',cd?`Next life in ${cd}`:'Come back later...','📺 Watch Ad +1 Life','⏰ Wait for Recovery');
+  }else if(state==='continue'){
+    drawOverlay('😅 So Close!',`${score} / ${targetScore} pts`,'📺 Watch Ad +5 Shots','Give Up −1 Life');
   }else if(state==='tutorial'){
     drawHUD();
     grid.forEach(b=>drawGem(b.x,b.y,b.color,R,b.special));
