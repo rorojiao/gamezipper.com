@@ -237,7 +237,9 @@ function genLevel(lv){
     }
   }
   const coloredGems=grid.filter(b=>b.color>=0).length;
-  shotsLeft=Math.min(60,Math.max(15,Math.ceil(coloredGems*0.65/0.38)+5));
+  // 发数随关卡增加适度减少（15%递减每10关，最低45%）
+  const shotMult=Math.max(0.45,1-Math.floor((lv-1)/10)*0.15);
+  shotsLeft=Math.min(60,Math.max(15,Math.ceil(coloredGems*0.65/0.38*shotMult)+5));
   shotsFired=0;
 }
 function pickColor(){
@@ -268,13 +270,14 @@ function initBG(){
 
 // === Drawing functions ===
 function shadeColor(hex,pct){
+  if(!hex||!hex.startsWith('#'))return hex||'#888';
   let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
   r=Math.max(0,Math.min(255,r+pct));g=Math.max(0,Math.min(255,g+pct));b=Math.max(0,Math.min(255,b+pct));
   return `rgb(${r},${g},${b})`;
 }
 
 function drawGem(x,y,colorIdx,r,special){
-  let c=colorIdx===-1?GRAY:COLORS[colorIdx];
+  let c=colorIdx===-1?GRAY:(COLORS[colorIdx]||GRAY);
   let glowC=colorIdx===-1?'rgba(102,102,102,':GLOW_COLORS[colorIdx];
   if(special==='rainbow'){c='hsl('+(animFrame*3%360)+',80%,60%)';glowC='rgba(255,200,100,';}
   if(special==='bomb'){c='#FF2020';glowC='rgba(255,30,30,';}
@@ -661,11 +664,8 @@ function saveBest(lv,s){const key='ogp_best_L'+lv;const prev=+(localStorage.getI
 function getBest(lv){return+(localStorage.getItem('ogp_best_L'+lv)||0);}
 
 function getTargetScore(lv){
-  const L=LEVELS[lv-1];
-  const avgCols=COLS-0.5;
-  const totalColoredGems=Math.round(L.rows*avgCols*(1-L.grayChance));
-  const tier=lv<=10?1.0:lv<=25?1.3:lv<=40?1.6:2.0;
-  return Math.max(500,Math.round(totalColoredGems*10*0.6*tier/100)*100);
+  // 每关线性递增 50 分，Lv1=500, Lv50=2950
+  return 500+(lv-1)*50;
 }
 function checkLifeRecovery(){
   if(lives>=5)return;
@@ -732,7 +732,7 @@ function aim(cx,cy){
   const rect=canvas.getBoundingClientRect();
   const x=(cx-rect.left)*(W/rect.width),y=(cy-rect.top)*(H/rect.height);
   const sx=W/2,sy=H-50;
-  aimAngle=Math.max(-Math.PI+0.15,Math.min(-0.15,Math.atan2(y-sy,x-sx)));
+  aimAngle=Math.max(-Math.PI+0.35,Math.min(-0.35,Math.atan2(y-sy,x-sx)));
 }
 function shoot(){
   if(shooting||state!=='play'||paused||shotsLeft<=0)return;
@@ -945,7 +945,7 @@ function startLevel(){
   checkLifeRecovery();
   score=0;
   genLevel(level);particles=[];ringEffects=[];comboTexts=[];fallingBubbles=[];bigTexts=[];flashAlpha=0;trailPoints=[];
-  shooting=false;comboCount=0;continueCount=0;paused=false;screenShake=0;failFlash=0;
+  shooting=false;shootFrames=0;comboCount=0;continueCount=0;paused=false;screenShake=0;failFlash=0;
   targetScore=getTargetScore(level);
   curColor=pickColor();nextColor=pickColor();
   curSpecial='normal';nextSpecial=pickSpecial();
@@ -988,15 +988,15 @@ function update(){
   animFrame++;
   if(levelStartTimer>0)levelStartTimer--;
   if(shooting){
-    shootX+=shootVx;shootY+=shootVy;shootRot+=0.15;
+    shootX+=shootVx;shootY+=shootVy;shootRot+=0.15;shootFrames=(shootFrames||0)+1;
     trailPoints.push({x:shootX,y:shootY,a:0.6});if(trailPoints.length>12)trailPoints.shift();
     // Wall bounce with squish effect
     if(shootX<R){shootX=R;shootVx=-shootVx;}
     if(shootX>W-R){shootX=W-R;shootVx=-shootVx;}
-    if(shootY<R){snap(shootX,shootY,curColor);return;}
+    if(shootY<R||(shootFrames||0)>350){shootFrames=0;snap(shootX,Math.min(shootY,R),curColor);return;}
     for(const b of grid){
       const dx=shootX-b.x,dy=shootY-b.y;
-      if(dx*dx+dy*dy<(D-2)*(D-2)){snapAdjacentTo(b,shootX,shootY,curColor);return;}
+      if(dx*dx+dy*dy<(D-2)*(D-2)){shootFrames=0;snapAdjacentTo(b,shootX,shootY,curColor);return;}
     }
   }
   if(screenShake>0)screenShake-=1;
@@ -1093,6 +1093,24 @@ loop();
 // Expose score & state for external access / testing
 Object.defineProperty(window,'score',{get:()=>score});
 Object.defineProperty(window,'gameState',{get:()=>state});
+// Test hooks (non-production safe to keep, just reads)
+window.__ogp = {
+  get state(){return state;},
+  get level(){return level;},
+  get score(){return score;},
+  get targetScore(){return targetScore;},
+  get shotsLeft(){return shotsLeft;},
+  get lives(){return lives;},
+  get grid(){return grid;},
+  get COLS(){return COLS;},
+  getLevels(){return LEVELS;},
+  getTargetScore(lv){return getTargetScore(lv);},
+  cheatWin(){score=targetScore+100;doWin();return state;},
+  nextLevel(){level++;startLevel();return state;},
+  startLevel(){startLevel();return state;},
+  setLevel(lv){level=lv;startLevel();return state;},
+  setState(s){state=s;},
+};
 // Keyboard shortcut: Space = shoot
 document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();shoot();}});
 return{togglePause,toggleSound,getScore:()=>score,getState:()=>state};
