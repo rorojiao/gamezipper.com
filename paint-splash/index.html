@@ -656,6 +656,24 @@ function clearMatchesInitial(){
   }
 }
 
+function safeColor(r,c,numColors){
+  // Pick a color that doesn't immediately form a 3-match with neighbors
+  var tried=[];
+  for(var attempt=0;attempt<numColors*3;attempt++){
+    var col=Math.floor(Math.random()*numColors);
+    if(tried.indexOf(col)>=0)continue;
+    tried.push(col);
+    // Check horizontal: 2 left same color
+    if(c>=2&&grid[r][c-1]===col&&grid[r][c-2]===col)continue;
+    // Check vertical: 2 above same color
+    if(r>=2&&grid[r-1][c]===col&&grid[r-2][c]===col)continue;
+    // Check horizontal: 1 left + 1 right
+    if(c>=1&&c<GRID-1&&grid[r][c-1]===col&&grid[r][c+1]===col)continue;
+    return col;
+  }
+  return Math.floor(Math.random()*numColors); // fallback
+}
+
 function applyGravityAndRefill(){
   var lvl=LEVELS[currentLevel];
   for(var c=0;c<GRID;c++){
@@ -670,7 +688,7 @@ function applyGravityAndRefill(){
     }
     var startFill=positions.length-vals.length;
     for(var i=0;i<positions.length;i++){
-      if(i<startFill)grid[positions[i]][c]=Math.floor(Math.random()*lvl.colors); // 从顶部补充新方块
+      if(i<startFill)grid[positions[i]][c]=safeColor(positions[i],c,lvl.colors);
       else grid[positions[i]][c]=vals[i-startFill];
     }
   }
