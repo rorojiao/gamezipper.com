@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>摸鱼发育 - 老板别来！</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a2e; display:flex; justify-content:center; align-items:center; min-height:100vh; font-family:'PingFang SC','Microsoft YaHei',sans-serif; overflow:hidden; }
+#wrap { position:relative; width:100%; max-width:480px; display:flex; flex-direction:column; height:100dvh; max-height:800px; background:#16213e; }
+#hud { background:#0f3460; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; color:#eee; font-size:14px; flex-shrink:0; border-bottom:2px solid #e94560; }
+#hud .fish { color:#4fc3f7; font-weight:bold; font-size:16px; }
+#hud .wave { color:#ffb347; font-weight:bold; }
+canvas { flex:1; display:block; width:100%; }
+#bossBar { background:#0f3460; padding:6px 12px; flex-shrink:0; }
+#bossBarLabel { color:#ccc; font-size:11px; margin-bottom:3px; display:flex; justify-content:space-between; }
+#bossBarOuter { background:#333; border-radius:4px; height:10px; overflow:hidden; }
+#bossBarInner { height:100%; background:linear-gradient(90deg,#e94560,#ff6b6b); border-radius:4px; width:0%; transition:width 0.2s; }
+#controls { background:#0a0a1a; padding:8px; flex-shrink:0; border-top:1px solid #1a1a3e; }
+.row { display:flex; gap:6px; margin-bottom:6px; }
+.row:last-child { margin-bottom:0; }
+.btn { flex:1; background:#0f3460; border:1px solid #1a5276; color:#eee; padding:7px 4px; border-radius:6px; font-size:11px; cursor:pointer; text-align:center; line-height:1.3; min-height:44px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:inherit; }
+.btn:active { transform:scale(.95); background:#1a4a7a; }
+.btn.dis { opacity:.4; cursor:not-allowed; }
+.btn.own { background:#1a5c2a; border-color:#2ecc71; }
+.cost { color:#4fc3f7; font-size:10px; }
+#overlay { position:absolute; inset:0; background:rgba(0,0,0,.85); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; z-index:10; padding:20px; text-align:center; }
+#overlay h1 { font-size:28px; margin-bottom:12px; }
+#overlay p { color:#aaa; margin-bottom:6px; font-size:13px; }
+.bigbtn { background:#e94560; color:#fff; border:none; padding:14px 40px; border-radius:10px; font-size:18px; cursor:pointer; margin-top:16px; font-family:inherit; }
+.greenbtn { background:#2ecc71; color:#fff; border:none; padding:11px 28px; border-radius:8px; font-size:14px; cursor:pointer; margin-top:10px; font-family:inherit; }
+#adBtn { position:absolute; bottom:130px; left:50%; transform:translateX(-50%); background:#f39c12; color:#fff; border:none; padding:9px 18px; border-radius:8px; font-size:13px; cursor:pointer; display:none; z-index:5; font-family:inherit; white-space:nowrap; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hud">
+    <span class="fish">🐟 <span id="fishCount">0</span></span>
+    <span class="wave">第<span id="waveNum">1</span>/8波</span>
+    <span id="timerText" style="color:#aaa;font-size:12px">准备中</span>
+  </div>
+  <canvas id="c"></canvas>
+  <div id="bossBar">
+    <div id="bossBarLabel"><span id="bossLbl">😌 摸鱼中...</span><span id="bossHPTxt"></span></div>
+    <div id="bossBarOuter"><div id="bossBarInner"></div></div>
+  </div>
+  <div id="controls">
+    <div class="row">
+      <button class="btn" id="bDesk" onclick="G.upgradeDesk()">
+        <span>💻 升级电脑</span>
+        <span class="cost" id="deskCost">50🐟</span>
+        <span id="deskLvTxt" style="font-size:10px;color:#aaa">Lv.1</span>
+      </button>
+      <button class="btn" id="bWall" onclick="G.upgradeWall()">
+        <span>🪟 强化屏风</span>
+        <span class="cost" id="wallCost">30🐟</span>
+        <span id="wallLvTxt" style="font-size:10px;color:#aaa">Lv.1</span>
+      </button>
+    </div>
+    <div class="row">
+      <button class="btn" id="bD0" onclick="G.place(0)"><span>🤖 摆烂助手</span><span class="cost">200🐟</span><span style="font-size:10px;color:#aaa">5/秒</span></button>
+      <button class="btn" id="bD1" onclick="G.place(1)"><span>📋 甩锅机器</span><span class="cost">600🐟</span><span style="font-size:10px;color:#aaa">12/秒</span></button>
+      <button class="btn" id="bD2" onclick="G.place(2)"><span>📊 汇报器</span><span class="cost">1500🐟</span><span style="font-size:10px;color:#aaa">25/秒</span></button>
+    </div>
+  </div>
+  <button id="adBtn" onclick="G.watchAd()">📺 看广告修复屏风！</button>
+  <div id="overlay">
+    <h1>🐟 摸鱼发育</h1>
+    <p>在工位偷偷摸鱼，抵御老板8次检查</p>
+    <p>升级💻电脑 → 摸鱼值更多</p>
+    <p>强化🪟屏风 → 挡住老板</p>
+    <p>部署道具 → 自动攻击老板</p>
+    <button class="bigbtn" onclick="G.start()">开始摸鱼！</button>
+  </div>
+</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+const DESK_COST=[50,150,400,1000,2500],DESK_MULT=[1,1.5,2.25,3.375,5.0625];
+const WALL_COST=[30,100,300,800,2000],WALL_HP=[100,250,600,1400,3000];
+const DEV_COST=[200,600,1500],DEV_ATK=[5,12,25],DEV_EMO=['🤖','📋','📊'];
+
+const G={
+  fish:0,fps:10,deskLv:1,wallLv:1,wallHP:100,wallMaxHP:100,
+  devs:[false,false,false],
+  wave:1,waveState:'cnt',cnt:3,cntMax:3,
+  boss:null,particles:[],lastT:0,running:false,
+
+  start(){
+    Object.assign(this,{fish:0,fps:10,deskLv:1,wallLv:1,wallHP:100,wallMaxHP:100,
+      devs:[false,false,false],wave:1,waveState:'cnt',cnt:3,cntMax:3,boss:null,particles:[]});
+    document.getElementById('overlay').style.display='none';
+    document.getElementById('adBtn').style.display='none';
+    this.running=true;
+    this.lastT=0;
+    requestAnimationFrame(t=>this.loop(t));
+  },
+
+  loop(t){
+    if(!this.running)return;
+    const dt=this.lastT?Math.min((t-this.lastT)/1000,.1):0;
+    this.lastT=t;
+    this.update(dt);
+    this.render();
+    requestAnimationFrame(ts=>this.loop(ts));
+  },
+
+  update(dt){
+    this.fish+=this.fps*dt;
+    this.particles=this.particles.filter(p=>{p.life-=dt;p.y-=p.vy*dt;p.x+=p.vx*dt;return p.life>0;});
+
+    if(this.waveState==='cnt'){
+      this.cnt-=dt;
+      if(this.cnt<=0)this.spawnBoss();
+    } else if(this.waveState==='boss'){
+      this.updateBoss(dt);
+    } else if(this.waveState==='rest'){
+      this.cnt-=dt;
+      if(this.cnt<=0){
+        this.wave++;
+        if(this.wave>8){this.victory();return;}
+        const iv=Math.max(20,30-(this.wave-1)*2);
+        this.cnt=iv;this.cntMax=iv;this.waveState='cnt';
+      }
+    }
+    this.updateUI();
+    // ad button
+    const ab=document.getElementById('adBtn');
+    ab.style.display=(this.waveState==='boss'&&this.wallHP/this.wallMaxHP<0.3)?'block':'none';
+  },
+
+  spawnBoss(){
+    const w=this.wave;
+    this.boss={hp:Math.round(80*Math.pow(1.3,w-1)),maxHP:Math.round(80*Math.pow(1.3,w-1)),
+      atk:Math.round(10*Math.pow(1.4,w-1)),x:canvas.width,alive:true};
+    this.waveState='boss';
+    this.pt(canvas.width/2,canvas.height/2,'😱老板来了！','#e94560',0,-1.5);
+  },
+
+  updateBoss(dt){
+    if(!this.boss||!this.boss.alive)return;
+    const W=canvas.width,wallX=W*.35,centerY=canvas.height*.45;
+    let atk=this.devs.reduce((s,o,i)=>s+(o?DEV_ATK[i]:0),0);
+    if(atk>0&&this.boss.x<W*.88)this.boss.hp-=atk*dt;
+    if(this.boss.hp<=0){
+      this.boss.alive=false;this.boss=null;
+      this.pt(W*.6,centerY,'👊老板被赶走！','#2ecc71',0,-1.5);
+      for(let i=0;i<5;i++)this.pt(W/2+(Math.random()-.5)*80,centerY,'+🐟','#4fc3f7',(Math.random()-.5)*50,1.2+Math.random());
+      this.cnt=4;this.cntMax=4;this.waveState='rest';
+      return;
+    }
+    const spd=30+this.wave*5;
+    this.boss.x-=spd*dt;
+    if(this.boss.x<=wallX){
+      this.boss.x=wallX;
+      this.wallHP-=this.boss.atk*dt;
+      if(this.wallHP<=0){this.wallHP=0;this.gameOver();}
+    }
+  },
+
+  pt(x,y,text,color,vx,vy){this.particles.push({x,y,text,color,vx:vx||(Math.random()-.5)*30,vy:vy||1.2,life:2});},
+
+  upgradeDesk(){
+    if(this.deskLv>=5)return;
+    const c=DESK_COST[this.deskLv];if(this.fish<c)return;
+    this.fish-=c;this.deskLv++;this.fps=10*DESK_MULT[this.deskLv-1];
+    this.pt(canvas.width*.18,canvas.height*.45,'💻升级！','#4fc3f7',0,-1.2);
+  },
+
+  upgradeWall(){
+    if(this.wallLv>=5)return;
+    const c=WALL_COST[this.wallLv];if(this.fish<c)return;
+    this.fish-=c;this.wallLv++;
+    this.wallMaxHP=WALL_HP[this.wallLv-1];this.wallHP=this.wallMaxHP;
+    this.pt(canvas.width*.35,canvas.height*.45,'🪟强化！','#2ecc71',0,-1.2);
+  },
+
+  place(i){
+    if(this.devs[i])return;
+    if(this.fish<DEV_COST[i])return;
+    this.fish-=DEV_COST[i];this.devs[i]=true;
+    this.pt(canvas.width*.65,canvas.height*.4+i*35,DEV_EMO[i]+'上岗！','#f39c12',0,-1);
+  },
+
+  watchAd(){
+    if(typeof window.showAd==='function'){window.showAd(()=>this.repairWall());}
+    else this.repairWall();
+  },
+  repairWall(){
+    this.wallHP=Math.min(this.wallMaxHP,this.wallHP+this.wallMaxHP*.5);
+    document.getElementById('adBtn').style.display='none';
+    this.pt(canvas.width*.35,canvas.height*.35,'🔧修复屏风！','#2ecc71',0,-1.3);
+  },
+
+  gameOver(){
+    this.running=false;
+    const ov=document.getElementById('overlay');
+    ov.style.display='flex';
+    ov.innerHTML=`<h1>😱 被抓了！</h1><p style="font-size:20px;margin:12px 0">老板发现你在摸鱼…</p>
+      <p style="color:#aaa">第${this.wave}波 | 摸鱼值:${Math.floor(this.fish)}🐟</p>
+      <button class="greenbtn" onclick="G.revive()">📺 看广告复活</button>
+      <button class="bigbtn" onclick="G.start()" style="background:#555;margin-top:8px">重新开始</button>`;
+  },
+
+  revive(){
+    this.wallHP=this.wallMaxHP*.6;
+    this.running=true;
+    document.getElementById('overlay').style.display='none';
+    this.lastT=performance.now();
+    requestAnimationFrame(t=>this.loop(t));
+  },
+
+  victory(){
+    this.running=false;
+    const ov=document.getElementById('overlay');
+    ov.style.display='flex';
+    ov.innerHTML=`<h1>🎉 成功下班！</h1><p style="font-size:22px;margin:12px 0">摸鱼大师！</p>
+      <p style="color:#f39c12">通关全部8波老板检查！</p>
+      <p style="color:#aaa">共摸到 ${Math.floor(this.fish+9999)} 🐟</p>
+      <button class="bigbtn" onclick="G.start()">再摸一局！</button>`;
+  },
+
+  updateUI(){
+    document.getElementById('fishCount').textContent=Math.floor(this.fish);
+    document.getElementById('waveNum').textContent=this.wave;
+    const bi=document.getElementById('bossBarInner');
+    if(this.waveState==='cnt'){
+      document.getElementById('timerText').textContent=Math.ceil(this.cnt)+'秒后老板来';
+      document.getElementById('bossLbl').textContent='😌 '+Math.ceil(this.cnt)+'秒后老板来检查...';
+      document.getElementById('bossHPTxt').textContent='';
+      bi.style.background='linear-gradient(90deg,#e94560,#ff6b6b)';
+      bi.style.width=(100-this.cnt/this.cntMax*100)+'%';
+    } else if(this.waveState==='boss'&&this.boss){
+      const p=Math.max(0,this.boss.hp/this.boss.maxHP*100);
+      document.getElementById('timerText').textContent='⚠️老板来了！';
+      document.getElementById('bossLbl').textContent='👔 老板HP';
+      document.getElementById('bossHPTxt').textContent=Math.ceil(this.boss.hp)+'/'+this.boss.maxHP;
+      bi.style.background='linear-gradient(90deg,#e74c3c,#e67e22)';
+      bi.style.width=p+'%';
+    } else if(this.waveState==='rest'){
+      document.getElementById('timerText').textContent='✅老板走了';
+      document.getElementById('bossLbl').textContent='😌 老板被击退，'+Math.ceil(this.cnt)+'秒后下一波';
+      document.getElementById('bossHPTxt').textContent='';
+      bi.style.width='0%';
+    }
+    // 升级按钮
+    const db=document.getElementById('bDesk'),wb=document.getElementById('bWall');
+    if(this.deskLv>=5){db.innerHTML='<span>💻电脑满级</span><span class="cost">MAX</span>';db.classList.add('own');}
+    else{document.getElementById('deskCost').textContent=DESK_COST[this.deskLv]+'🐟';document.getElementById('deskLvTxt').textContent='Lv.'+this.deskLv+'→'+(this.deskLv+1);db.classList.toggle('dis',this.fish<DESK_COST[this.deskLv]);}
+    if(this.wallLv>=5){wb.innerHTML='<span>🪟屏风满级</span><span class="cost">MAX</span>';wb.classList.add('own');}
+    else{document.getElementById('wallCost').textContent=WALL_COST[this.wallLv]+'🐟';document.getElementById('wallLvTxt').textContent='HP→'+WALL_HP[this.wallLv];wb.classList.toggle('dis',this.fish<WALL_COST[this.wallLv]);}
+    ['bD0','bD1','bD2'].forEach((id,i)=>{
+      const b=document.getElementById(id);
+      if(this.devs[i])b.classList.add('own');
+      else b.classList.toggle('dis',this.fish<DEV_COST[i]);
+    });
+  },
+
+  render(){
+    const W=canvas.width,H=canvas.height;
+    ctx.clearRect(0,0,W,H);
+    // 背景
+    ctx.fillStyle='#1a2a4a';ctx.fillRect(0,0,W,H);
+    // 地板格
+    ctx.strokeStyle='#1e3050';ctx.lineWidth=1;
+    for(let x=0;x<W;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+    const wallX=W*.35,cY=H*.45,fs=Math.min(W,H)*.09;
+
+    // 工位+电脑
+    ctx.font=fs*1.2+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('💻',W*.18,cY+8);
+    ctx.font=fs*.65+'px serif';
+    ctx.fillText('😎',W*.18,cY-fs*.75);
+    ctx.font=(W*.024)+'px sans-serif';ctx.fillStyle='#4fc3f7';
+    ctx.fillText('+'+this.fps.toFixed(1)+'🐟/s',W*.18,cY+fs*.85);
+
+    // 屏风
+    const wp=this.wallHP/this.wallMaxHP;
+    // 血条
+    const bw=65,bx=wallX-bw/2,by=cY-fs*.7-14;
+    ctx.fillStyle='#222';ctx.fillRect(bx,by,bw,8);
+    ctx.fillStyle=wp>.5?'#2ecc71':wp>.25?'#f39c12':'#e74c3c';ctx.fillRect(bx,by,bw*wp,8);
+    ctx.strokeStyle='#555';ctx.lineWidth=1;ctx.strokeRect(bx,by,bw,8);
+
+    ctx.font=fs*1.5+'px serif';ctx.textAlign='center';
+    if(wp<.3){ctx.shadowColor='#e74c3c';ctx.shadowBlur=12*Math.abs(Math.sin(Date.now()/200));}
+    ctx.fillText('🪟',wallX,cY);ctx.shadowBlur=0;
+
+    // 道具
+    const dpos=[[W*.58,H*.22],[W*.68,H*.45],[W*.58,H*.68]];
+    this.devs.forEach((o,i)=>{
+      if(!o)return;
+      ctx.font=fs*1.05+'px serif';ctx.textAlign='center';
+      ctx.fillText(DEV_EMO[i],dpos[i][0],dpos[i][1]);
+      if(this.boss&&this.boss.alive&&this.boss.x<W*.88){
+        ctx.strokeStyle=i===0?'#4fc3f7':i===1?'#f39c12':'#e74c3c';
+        ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+        ctx.beginPath();ctx.moveTo(dpos[i][0],dpos[i][1]);ctx.lineTo(this.boss.x,cY);ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    });
+
+    // 老板
+    if(this.boss&&this.boss.alive){
+      const sh=this.boss.x<wallX+15?(Math.random()-.5)*5:0;
+      ctx.font=fs*1.5+'px serif';ctx.textAlign='center';
+      ctx.fillText('👔',this.boss.x+sh,cY-5);
+      ctx.font=(W*.024)+'px sans-serif';ctx.fillStyle='#e74c3c';
+      ctx.fillText('波次'+this.wave,this.boss.x,cY-fs*1.1);
+    }
+
+    // 粒子
+    this.particles.forEach(p=>{
+      ctx.globalAlpha=Math.min(1,p.life);
+      ctx.font='bold '+(W*.032)+'px sans-serif';
+      ctx.fillStyle=p.color||'#fff';ctx.textAlign='center';
+      ctx.fillText(p.text,p.x,p.y);
+    });
+    ctx.globalAlpha=1;
+
+    // 休息倒计时
+    if(this.waveState==='rest'){
+      ctx.font=(W*.028)+'px sans-serif';ctx.fillStyle='#2ecc71';ctx.textAlign='right';
+      ctx.fillText('下一波'+Math.ceil(this.cnt)+'s',W-8,18);
+    }
+  }
+};
+
+function resize(){
+  const wrap=document.getElementById('wrap');
+  const hud=document.getElementById('hud');
+  const bar=document.getElementById('bossBar');
+  const ctrl=document.getElementById('controls');
+  canvas.width=wrap.clientWidth;
+  canvas.height=Math.max(wrap.clientHeight-hud.offsetHeight-bar.offsetHeight-ctrl.offsetHeight,180);
+}
+window.addEventListener('resize',resize);resize();
+// 初始封面
+ctx.fillStyle='#1a2a4a';ctx.fillRect(0,0,canvas.width,canvas.height);
+ctx.font=(canvas.width*.15)+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText('🐟',canvas.width/2,canvas.height/2);
+</script>
+</body>
+</html>
