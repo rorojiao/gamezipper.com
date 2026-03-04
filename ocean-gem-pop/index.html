@@ -301,7 +301,7 @@ function drawGem(x,y,colorIdx,r,special){
   if(special==='bomb'){c='#FF2020';glowC='rgba(255,30,30,';}
   // Outer glow
   ctx.save();
-  ctx.shadowBlur=15;ctx.shadowColor=c;
+  ctx.shadowBlur=20;ctx.shadowColor=c;
   // Main body with radial gradient
   const grad=ctx.createRadialGradient(x-r*0.25,y-r*0.25,r*0.05,x,y,r);
   grad.addColorStop(0,'rgba(255,255,255,0.7)');
@@ -478,19 +478,30 @@ function drawHUD(){
 // === Particles & effects ===
 function addBurstParticles(x,y,colorIdx){
   const c=colorIdx===-1?GRAY:COLORS[colorIdx];
-  for(let i=0;i<12;i++){
-    const a=Math.random()*Math.PI*2,sp=1.5+Math.random()*3.5;
-    particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color:c,r:1.5+Math.random()*3,tail:[]});
+  const gc=colorIdx>=0?GLOW_COLORS[colorIdx]:'rgba(102,102,102,';
+  for(let i=0;i<22;i++){
+    const a=Math.random()*Math.PI*2,sp=1.2+Math.random()*5;
+    particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,life:1+Math.random()*0.4,color:c,r:1.5+Math.random()*4,tail:[]});
   }
-  // Expanding ring
-  ringEffects.push({x,y,r:R,maxR:R*4,life:1,color:c});
+  // Bright white sparks
+  for(let i=0;i<8;i++){
+    const a=Math.random()*Math.PI*2,sp=3+Math.random()*6;
+    particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:0.6+Math.random()*0.4,color:'#fff',r:0.8+Math.random()*1.5,tail:[]});
+  }
+  // Two expanding rings
+  ringEffects.push({x,y,r:R*0.5,maxR:R*5,life:1,color:c});
+  ringEffects.push({x,y,r:R,maxR:R*3.5,life:0.7,color:'rgba(255,255,255,0.8)'});
 }
 
 function addLevelCompleteParticles(){
-  for(let i=0;i<120;i++){
-    const x=Math.random()*W,y=-Math.random()*H*0.5;
+  for(let i=0;i<200;i++){
+    const x=Math.random()*W,y=-Math.random()*H*0.3;
     const ci=Math.floor(Math.random()*COLORS.length);
-    particles.push({x,y,vx:(Math.random()-0.5)*3,vy:1+Math.random()*4,life:2+Math.random(),color:COLORS[ci],r:2+Math.random()*4,tail:[]});
+    const isStar=Math.random()<0.3;
+    particles.push({x,y,vx:(Math.random()-0.5)*5,vy:1.5+Math.random()*5,life:2.5+Math.random(),color:isStar?'#FFD700':COLORS[ci],r:isStar?3:2+Math.random()*5,tail:[]});
+  }
+  for(let i=0;i<5;i++){
+    ringEffects.push({x:Math.random()*W,y:Math.random()*H*0.5,r:5,maxR:W*0.4,life:0.8,color:COLORS[i%COLORS.length]});
   }
 }
 
@@ -546,13 +557,18 @@ function drawParticles(){
 
   fallingBubbles.forEach(fb=>{const fa=Math.max(0,0.85-Math.max(0,fb.y-H*0.5)/(H*0.5)*0.85);ctx.save();ctx.translate(fb.x,fb.y);ctx.rotate(fb.rot);ctx.globalAlpha=fa;ctx.beginPath();ctx.arc(0,0,R-2,0,Math.PI*2);ctx.fillStyle=COLORS[fb.color]||GRAY;ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;ctx.stroke();ctx.restore();});
   comboTexts.forEach(t=>{
-    ctx.globalAlpha=Math.min(1,t.life);
     ctx.save();
-    ctx.font=`bold ${Math.round(40*t.scale)}px Georgia`;
+    ctx.beginPath();ctx.rect(0,0,W,H);ctx.clip();
+    ctx.globalAlpha=Math.min(1,t.life);
+    const cFs=Math.min(Math.round(40*t.scale),Math.round(W*0.13));
+    ctx.font=`bold ${cFs}px Georgia`;
     ctx.textAlign='center';
-    ctx.shadowBlur=15;ctx.shadowColor='#F59E0B';
-    ctx.fillStyle='#FFD700';
-    ctx.fillText(t.text,t.x,t.y);
+    ctx.shadowBlur=25;ctx.shadowColor='#FF8800';
+    ctx.strokeStyle='rgba(60,10,0,0.8)';ctx.lineWidth=Math.max(3,cFs*0.09);
+    ctx.strokeText(t.text,t.x,t.y);
+    const cg=ctx.createLinearGradient(t.x-60,t.y-cFs,t.x+60,t.y);
+    cg.addColorStop(0,'#FFF176');cg.addColorStop(0.5,'#FF9900');cg.addColorStop(1,'#FFD700');
+    ctx.fillStyle=cg;ctx.fillText(t.text,t.x,t.y);
     ctx.restore();
   });
   ctx.globalAlpha=1;
@@ -623,8 +639,21 @@ function snap(bx,by,color){
 
 function triggerClearEffect(count,cx,cy){
   if(count>=3){screenShake=Math.min(20,count*3);}
-  if(count>=5){flashAlpha=0.35;const labels=['','','','','AWESOME!','GREAT!','SUPER!','AMAZING!','INCREDIBLE!','INCREDIBLE!','INCREDIBLE!','INCREDIBLE!','🌊 TSUNAMI!'];bigTexts.push({text:labels[Math.min(count,labels.length-1)]||'🌊 TSUNAMI!',x:W/2,y:H*0.35,life:1.8,scale:3});}
-  if(count>=8){screenShake=25;}
+  if(count>=4){
+    // Extra burst at match center
+    for(let i=0;i<15;i++){
+      const a=Math.random()*Math.PI*2,sp=2+Math.random()*6;
+      const ci=Math.floor(Math.random()*COLORS.length);
+      particles.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1.2+Math.random()*0.5,color:COLORS[ci],r:2+Math.random()*4,tail:[]});
+    }
+  }
+  if(count>=5){
+    flashAlpha=0.35;
+    const labels=['','','','','AWESOME!','GREAT!','SUPER!','AMAZING!','INCREDIBLE!','INCREDIBLE!','INCREDIBLE!','INCREDIBLE!','🌊 TSUNAMI!'];
+    bigTexts.push({text:labels[Math.min(count,labels.length-1)]||'🌊 TSUNAMI!',x:W/2,y:H*0.35,life:1.8,scale:3});
+    ringEffects.push({x:cx,y:cy,r:R,maxR:W*0.6,life:0.9,color:'rgba(255,220,50,1)'});
+  }
+  if(count>=8){screenShake=28;flashAlpha=0.5;}
 }
 function processMatch(nb){
   if(nb.color===-1&&nb.special!=='bomb'&&nb.special!=='rainbow')return afterShoot();
@@ -1047,7 +1076,21 @@ function draw(){
       ctx.globalAlpha=failFlash*0.3;ctx.fillStyle='#FF2020';ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;
     }
     if(flashAlpha>0){ctx.globalAlpha=flashAlpha;ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;}
-    bigTexts.forEach(bt=>{ctx.save();ctx.globalAlpha=Math.min(1,bt.life);ctx.font=`bold ${Math.round(36*bt.scale)}px Georgia`;ctx.textAlign='center';ctx.shadowBlur=20;ctx.shadowColor='#FFD700';ctx.fillStyle='#FFD700';ctx.fillText(bt.text,bt.x,bt.y);ctx.restore();});
+    bigTexts.forEach(bt=>{
+    ctx.save();
+    ctx.beginPath();ctx.rect(0,0,W,H);ctx.clip();
+    ctx.globalAlpha=Math.min(1,bt.life);
+    const bFs=Math.min(Math.round(36*bt.scale),Math.round(W*0.14));
+    ctx.font=`bold ${bFs}px Georgia`;
+    ctx.textAlign='center';
+    ctx.shadowBlur=30;ctx.shadowColor='rgba(255,200,0,0.9)';
+    ctx.strokeStyle='rgba(80,20,0,0.85)';ctx.lineWidth=Math.max(4,bFs*0.1);
+    ctx.strokeText(bt.text,bt.x,bt.y);
+    const bg2=ctx.createLinearGradient(bt.x-100,bt.y-bFs,bt.x+100,bt.y);
+    bg2.addColorStop(0,'#FFFFFF');bg2.addColorStop(0.3,'#FFE033');bg2.addColorStop(0.7,'#FF6600');bg2.addColorStop(1,'#FFD700');
+    ctx.fillStyle=bg2;ctx.fillText(bt.text,bt.x,bt.y);
+    ctx.restore();
+  });
     if(state==='play'&&levelStartTimer>0){
       ctx.save();ctx.textAlign='center';
       const lsAlpha=Math.min(1,levelStartTimer/30);
