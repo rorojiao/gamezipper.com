@@ -232,7 +232,7 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
     <button class="restart-btn" id="restartBtn">> TRY AGAIN</button>
   </div>
 </div>
-<div class="overlay" id="tutorialOverlay">
+<div class="overlay" id="tutorialOverlay" data-dismiss-fn="closeTypingTutorial">
   <div class="modal">
     <h2>⌨️ [INSTRUCTIONS]</h2>
     <ol>
@@ -541,6 +541,8 @@ $d("restartBtn").addEventListener("click",reset);
 if(!localStorage.getItem("typing_tutorial_seen")){
   $d("tutorialOverlay").classList.add("show");
 }
+window.closeTypingTutorial=function(){$d("tutorialOverlay").classList.remove("show");localStorage.setItem("typing_tutorial_seen","1");};
+$d("tutorialClose").addEventListener("click",window.closeTypingTutorial);
 $d("tutorialClose").addEventListener("mousedown",function(e){
   $d("tutorialOverlay").classList.remove("show");
   localStorage.setItem("typing_tutorial_seen","1");
@@ -612,43 +614,44 @@ flex:0 0 0px;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0;margin:0;}
   <div class="faq-item"><h3>Can I use the Typing Speed Test on mobile?</h3><p>Yes, you can use the typing test on mobile devices with a Bluetooth keyboard or on-screen keyboard. For the most accurate WPM results, a physical keyboard is recommended.</p></div>
 </section>
 <script>
-/* Game Focus Fix - restore canvas focus after any external interaction (ads, notifications) */
+/* Game Focus Fix - restore canvas focus after external interactions */
 (function(){
   var canvas = document.querySelector('canvas');
   if (!canvas) return;
   
-  // Make canvas focusable
+  // 如果頁面有 input/textarea（如打字遊戲），不搶焦點
+  var hasTextInput = document.querySelector('input[type="text"],textarea,input:not([type])');
+  if (hasTextInput) return;
+  
   canvas.setAttribute('tabindex', '0');
   canvas.style.outline = 'none';
   
-  // Auto-focus on page load
-  window.addEventListener('load', function() {
-    setTimeout(function() { canvas.focus(); }, 300);
-  });
+  function refocus() {
+    var ae = document.activeElement;
+    // 不搶 input/textarea/button 的焦點
+    if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
+    if (document.activeElement !== canvas) canvas.focus();
+  }
   
-  // Re-focus when clicking anywhere on page (esp. after closing ad notifications)
+  window.addEventListener('load', function() { setTimeout(refocus, 300); });
+  
   document.addEventListener('click', function(e) {
     var t = e.target;
-    // If click is outside game controls (buttons) and outside canvas, re-focus canvas
-    if (t !== canvas && !canvas.contains(t) && t.tagName !== 'BUTTON') {
-      setTimeout(function() { canvas.focus(); }, 100);
+    if (t !== canvas && !canvas.contains(t) && t.tagName !== 'BUTTON' && !/INPUT|TEXTAREA/.test(t.tagName)) {
+      setTimeout(refocus, 100);
     }
   }, true);
   
-  // MutationObserver: re-focus when any Monetag/ad element is removed
   var observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(m) {
-      if (m.removedNodes.length > 0) {
-        setTimeout(function() { if (document.activeElement !== canvas) canvas.focus(); }, 200);
-      }
+      if (m.removedNodes.length > 0) setTimeout(refocus, 200);
     });
   });
   observer.observe(document.body, { childList: true, subtree: true });
   
-  // Touch: ensure canvas touch events work after ad close
   document.addEventListener('touchend', function(e) {
     if (e.target !== canvas && !canvas.contains(e.target) && e.target.tagName !== 'BUTTON') {
-      setTimeout(function() { canvas.focus(); }, 50);
+      setTimeout(refocus, 50);
     }
   }, { passive: true, capture: true });
 })();

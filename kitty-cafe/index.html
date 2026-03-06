@@ -146,7 +146,7 @@ canvas{display:block;touch-action:none}
 <div id="footer"><a href="https://gamezipper.com/">GameZipper.com</a> 🐱</div>
 </div>
 
-<div id="tutorial-overlay" style="display:none">
+<div id="tutorial-overlay" style="display:none" data-dismiss-fn="closeTutorial">
 <div id="tutorial-box">
 <div style="font-size:48px;margin-bottom:8px">🐱☕</div>
 <h2>Welcome to Kitty's Café!</h2>
@@ -155,7 +155,7 @@ canvas{display:block;touch-action:none}
 <p>📋 Merge to create what customers order!</p>
 <p>🏠 Earn coins to unlock new café areas!</p>
 <p style="font-size:13px;color:#999;margin-top:8px">💡 Tap ❓ for merge chains!</p>
-<button id="tutorial-btn" ontouchend="event.preventDefault();closeTutorial()" onmousedown="closeTutorial()">Got it! 🐾</button>
+<button id="tutorial-btn" ontouchend="event.preventDefault();closeTutorial()" onmousedown="closeTutorial()" onclick="closeTutorial()">Got it! 🐾</button>
 </div>
 </div>
 
@@ -1037,43 +1037,44 @@ function roundRect(ctx,x,y,w,h,r){
   <div class="faq-item"><h3>Can I play Kitty Cafe on mobile?</h3><p>Yes! Kitty Cafe is designed for mobile play with tap-based controls. Serve customers and manage your cafe easily on smartphones and tablets with touch controls.</p></div>
 </section>
 <script>
-/* Game Focus Fix - restore canvas focus after any external interaction (ads, notifications) */
+/* Game Focus Fix - restore canvas focus after external interactions */
 (function(){
   var canvas = document.querySelector('canvas');
   if (!canvas) return;
   
-  // Make canvas focusable
+  // 如果頁面有 input/textarea（如打字遊戲），不搶焦點
+  var hasTextInput = document.querySelector('input[type="text"],textarea,input:not([type])');
+  if (hasTextInput) return;
+  
   canvas.setAttribute('tabindex', '0');
   canvas.style.outline = 'none';
   
-  // Auto-focus on page load
-  window.addEventListener('load', function() {
-    setTimeout(function() { canvas.focus(); }, 300);
-  });
+  function refocus() {
+    var ae = document.activeElement;
+    // 不搶 input/textarea/button 的焦點
+    if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
+    if (document.activeElement !== canvas) canvas.focus();
+  }
   
-  // Re-focus when clicking anywhere on page (esp. after closing ad notifications)
+  window.addEventListener('load', function() { setTimeout(refocus, 300); });
+  
   document.addEventListener('click', function(e) {
     var t = e.target;
-    // If click is outside game controls (buttons) and outside canvas, re-focus canvas
-    if (t !== canvas && !canvas.contains(t) && t.tagName !== 'BUTTON') {
-      setTimeout(function() { canvas.focus(); }, 100);
+    if (t !== canvas && !canvas.contains(t) && t.tagName !== 'BUTTON' && !/INPUT|TEXTAREA/.test(t.tagName)) {
+      setTimeout(refocus, 100);
     }
   }, true);
   
-  // MutationObserver: re-focus when any Monetag/ad element is removed
   var observer = new MutationObserver(function(mutations) {
     mutations.forEach(function(m) {
-      if (m.removedNodes.length > 0) {
-        setTimeout(function() { if (document.activeElement !== canvas) canvas.focus(); }, 200);
-      }
+      if (m.removedNodes.length > 0) setTimeout(refocus, 200);
     });
   });
   observer.observe(document.body, { childList: true, subtree: true });
   
-  // Touch: ensure canvas touch events work after ad close
   document.addEventListener('touchend', function(e) {
     if (e.target !== canvas && !canvas.contains(e.target) && e.target.tagName !== 'BUTTON') {
-      setTimeout(function() { canvas.focus(); }, 50);
+      setTimeout(refocus, 50);
     }
   }, { passive: true, capture: true });
 })();
