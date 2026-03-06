@@ -135,7 +135,6 @@ body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-selec
   ]
 }
 </script>
-<script src="https://quge5.com/88/tag.min.js" data-zone="10687756" async data-cfasync="false"></script>
 </head>
 <body>
 
@@ -358,5 +357,47 @@ body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-selec
   <div class="faq-item"><h3>Is Dessert Blast free to play?</h3><p>Yes, Dessert Blast on GameZipper is completely free with no downloads, accounts, or payments required. Open the page and start matching sweet treats immediately.</p></div>
   <div class="faq-item"><h3>Can I play Dessert Blast on mobile?</h3><p>Yes! Dessert Blast supports touch controls—swipe to swap candy pieces and create matches. The colorful game plays perfectly on smartphones and tablets.</p></div>
 </section>
+<script>
+/* Game Focus Fix - restore canvas focus after any external interaction (ads, notifications) */
+(function(){
+  var canvas = document.querySelector('canvas');
+  if (!canvas) return;
+  
+  // Make canvas focusable
+  canvas.setAttribute('tabindex', '0');
+  canvas.style.outline = 'none';
+  
+  // Auto-focus on page load
+  window.addEventListener('load', function() {
+    setTimeout(function() { canvas.focus(); }, 300);
+  });
+  
+  // Re-focus when clicking anywhere on page (esp. after closing ad notifications)
+  document.addEventListener('click', function(e) {
+    var t = e.target;
+    // If click is outside game controls (buttons) and outside canvas, re-focus canvas
+    if (t !== canvas && !canvas.contains(t) && t.tagName !== 'BUTTON') {
+      setTimeout(function() { canvas.focus(); }, 100);
+    }
+  }, true);
+  
+  // MutationObserver: re-focus when any Monetag/ad element is removed
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.removedNodes.length > 0) {
+        setTimeout(function() { if (document.activeElement !== canvas) canvas.focus(); }, 200);
+      }
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+  
+  // Touch: ensure canvas touch events work after ad close
+  document.addEventListener('touchend', function(e) {
+    if (e.target !== canvas && !canvas.contains(e.target) && e.target.tagName !== 'BUTTON') {
+      setTimeout(function() { canvas.focus(); }, 50);
+    }
+  }, { passive: true, capture: true });
+})();
+</script>
 </body>
 </html>

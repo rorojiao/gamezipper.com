@@ -134,7 +134,6 @@ canvas{display:block;touch-action:none}
   ]
 }
 </script>
-<script src="https://quge5.com/88/tag.min.js" data-zone="10687756" async data-cfasync="false"></script>
 </head>
 <body>
 
@@ -1037,5 +1036,47 @@ function roundRect(ctx,x,y,w,h,r){
   <div class="faq-item"><h3>Is Kitty Cafe free to play?</h3><p>Yes, Kitty Cafe on GameZipper is completely free. No downloads, accounts, or payments needed—open the page and start running your cat cafe right away.</p></div>
   <div class="faq-item"><h3>Can I play Kitty Cafe on mobile?</h3><p>Yes! Kitty Cafe is designed for mobile play with tap-based controls. Serve customers and manage your cafe easily on smartphones and tablets with touch controls.</p></div>
 </section>
+<script>
+/* Game Focus Fix - restore canvas focus after any external interaction (ads, notifications) */
+(function(){
+  var canvas = document.querySelector('canvas');
+  if (!canvas) return;
+  
+  // Make canvas focusable
+  canvas.setAttribute('tabindex', '0');
+  canvas.style.outline = 'none';
+  
+  // Auto-focus on page load
+  window.addEventListener('load', function() {
+    setTimeout(function() { canvas.focus(); }, 300);
+  });
+  
+  // Re-focus when clicking anywhere on page (esp. after closing ad notifications)
+  document.addEventListener('click', function(e) {
+    var t = e.target;
+    // If click is outside game controls (buttons) and outside canvas, re-focus canvas
+    if (t !== canvas && !canvas.contains(t) && t.tagName !== 'BUTTON') {
+      setTimeout(function() { canvas.focus(); }, 100);
+    }
+  }, true);
+  
+  // MutationObserver: re-focus when any Monetag/ad element is removed
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      if (m.removedNodes.length > 0) {
+        setTimeout(function() { if (document.activeElement !== canvas) canvas.focus(); }, 200);
+      }
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+  
+  // Touch: ensure canvas touch events work after ad close
+  document.addEventListener('touchend', function(e) {
+    if (e.target !== canvas && !canvas.contains(e.target) && e.target.tagName !== 'BUTTON') {
+      setTimeout(function() { canvas.focus(); }, 50);
+    }
+  }, { passive: true, capture: true });
+})();
+</script>
 </body>
 </html>
