@@ -1,0 +1,68 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "🌿 More Games at GameZipper.com" [ref=e2] [cursor=pointer]:
+    - /url: https://gamezipper.com/
+  - generic: 🍂
+  - generic: 🍁
+  - generic: 🍂
+  - generic: 🍁
+  - generic: 🍁
+  - generic: 🍁
+  - generic: 🍁
+  - generic: 🌿
+  - generic [ref=e4]:
+    - generic [ref=e5]: 🦃
+    - heading "How to Play" [level=2] [ref=e6]
+    - paragraph [ref=e7]:
+      - text: 👆 Tap turkeys to catch them!
+      - text: 🎯 Match 3 same-color turkeys in a row
+      - text: 🏆 Collect all turkeys to complete each level
+    - paragraph [ref=e8]: ⭐ Special turkeys give bonus points!
+    - button "Got it! 🌾" [ref=e9] [cursor=pointer]
+  - generic [ref=e10]:
+    - heading "Catch Turkey — Fun Arcade Catching Game" [level=1] [ref=e11]
+    - paragraph [ref=e12]: Play Catch Turkey free online! Move your basket to catch falling turkeys and collect points. A classic, family-friendly arcade game.
+    - heading "How to Play" [level=2] [ref=e13]
+    - list [ref=e14]:
+      - listitem [ref=e15]:
+        - text: Move the
+        - strong [ref=e16]: basket left and right
+        - text: using arrow keys or touch.
+      - listitem [ref=e17]:
+        - text: Catch the
+        - strong [ref=e18]: falling turkeys
+        - text: to score points.
+      - listitem [ref=e19]:
+        - text: Avoid catching
+        - strong [ref=e20]: bombs or bad items
+        - text: — they cost lives!
+      - listitem [ref=e21]:
+        - text: Survive as long as possible and beat your
+        - strong [ref=e22]: high score
+        - text: .
+    - heading "Game Features" [level=2] [ref=e23]
+    - list [ref=e24]:
+      - listitem [ref=e25]: 🦃 Fun seasonal arcade theme
+      - listitem [ref=e26]: 🧺 Simple but addictive catch mechanics
+      - listitem [ref=e27]: 💣 Dodge bombs for an extra challenge
+      - listitem [ref=e28]: 👨‍👩‍👦 Perfect for all ages
+    - heading "Tips & Tricks" [level=2] [ref=e29]
+    - list [ref=e30]:
+      - listitem [ref=e31]: Stay near the center — items spread randomly.
+      - listitem [ref=e32]: Prioritize avoiding bombs over catching turkeys.
+      - listitem [ref=e33]: The items speed up — stay alert!
+  - generic [ref=e34]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e35]
+    - generic [ref=e36]:
+      - heading "How do you play Catch Turkey?" [level=3] [ref=e37]
+      - paragraph [ref=e38]: Move your catcher left and right using arrow keys or mouse on desktop, or by tapping and dragging on mobile. Catch as many falling turkeys as possible before they hit the ground. Miss too many and the game ends—go for your highest score!
+    - generic [ref=e39]:
+      - heading "Is Catch Turkey free to play?" [level=3] [ref=e40]
+      - paragraph [ref=e41]: Yes, Catch Turkey on GameZipper is completely free with no downloads or registration required. Open the page and start catching turkeys immediately.
+    - generic [ref=e42]:
+      - heading "Can I play Catch Turkey on mobile?" [level=3] [ref=e43]
+      - paragraph [ref=e44]: Yes! Catch Turkey supports touch controls, making it easy to play on smartphones and tablets. Drag your catcher across the screen to catch falling turkeys.
+  - button "Toggle sound" [ref=e45] [cursor=pointer]: 🔊
+```

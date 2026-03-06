@@ -1,0 +1,116 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "⬅ More Games at GameZipper.com" [ref=e2] [cursor=pointer]:
+    - /url: https://gamezipper.com/
+  - generic [ref=e3]:
+    - heading "🧪 Alchemy Workshop" [level=1] [ref=e4]
+    - generic [ref=e5]:
+      - generic [ref=e6]: "⚡ Mana: 0"
+      - generic [ref=e7]: "MPS: 0"
+  - generic [ref=e11]:
+    - heading "✨ Spellbook" [level=2] [ref=e12]
+    - generic [ref=e13]:
+      - generic [ref=e14]: "0"
+      - generic [ref=e15]: 🪄 Magic Wand
+      - generic [ref=e16]: "+1/s | Cost: 10"
+    - generic [ref=e17]:
+      - generic [ref=e18]: "0"
+      - generic [ref=e19]: 🧙 Apprentice
+      - generic [ref=e20]: "+5/s | Cost: 100"
+    - generic [ref=e21]:
+      - generic [ref=e22]: "0"
+      - generic [ref=e23]: 📖 Spell Book
+      - generic [ref=e24]: "+20/s | Cost: 500"
+    - generic [ref=e25]:
+      - generic [ref=e26]: "0"
+      - generic [ref=e27]: ⚗️ Alchemy Lab
+      - generic [ref=e28]: "+100/s | Cost: 2.0K"
+    - generic [ref=e29]:
+      - generic [ref=e30]: "0"
+      - generic [ref=e31]: 💎 Crystal Mine
+      - generic [ref=e32]: "+500/s | Cost: 10.0K"
+    - generic [ref=e33]:
+      - generic [ref=e34]: "0"
+      - generic [ref=e35]: 🏰 Wizard Tower
+      - generic [ref=e36]: "+2000/s | Cost: 50.0K"
+    - generic [ref=e37]:
+      - generic [ref=e38]: "0"
+      - generic [ref=e39]: 🐉 Dragon Familiar
+      - generic [ref=e40]: "+8000/s | Cost: 250.0K"
+    - generic [ref=e41]:
+      - generic [ref=e42]: "0"
+      - generic [ref=e43]: 🌙 Moon Portal
+      - generic [ref=e44]: "+30000/s | Cost: 1.5M"
+    - generic [ref=e45]:
+      - generic [ref=e46]: "0"
+      - generic [ref=e47]: ⏳ Time Rift
+      - generic [ref=e48]: "+120000/s | Cost: 10.0M"
+    - generic [ref=e49]:
+      - generic [ref=e50]: "0"
+      - generic [ref=e51]: 🌌 Void Gate
+      - generic [ref=e52]: "+500000/s | Cost: 80.0M"
+    - generic [ref=e53]:
+      - generic [ref=e54]: "0"
+      - generic [ref=e55]: 💫 Celestial Forge
+      - generic [ref=e56]: "+2000000/s | Cost: 500.0M"
+    - generic [ref=e57]:
+      - generic [ref=e58]: "0"
+      - generic [ref=e59]: 🔮 Philosopher Stone
+      - generic [ref=e60]: "+10000000/s | Cost: 5.0B"
+  - button "📖 Grimoire" [ref=e61] [cursor=pointer]
+  - generic [ref=e63]:
+    - generic [ref=e64]: 🔮
+    - heading "How to Play" [level=2] [ref=e65]
+    - paragraph [ref=e66]:
+      - text: 👆 Tap the crystal orb to channel mana!
+      - text: 🛒 Buy spells to auto-channel more
+      - text: 🧪 Watch for Magic Potions — tap for bonuses!
+      - text: 📖 Unlock arcane achievements!
+    - paragraph [ref=e67]: "💤 Tip: Mana keeps flowing even when you're away!"
+    - button "Got it! 🔮" [ref=e68] [cursor=pointer]
+  - generic:
+    - heading "Idle Clicker — Free Incremental Game" [level=1] [ref=e69]
+    - paragraph [ref=e70]: Play Idle Clicker free online! Click to earn gold, buy upgrades, hire workers, and build an empire. The ultimate incremental idle game.
+    - heading "How to Play" [level=2] [ref=e71]
+    - list [ref=e72]:
+      - listitem [ref=e73]:
+        - strong [ref=e74]: Click
+        - text: the button to earn your first gold.
+      - listitem [ref=e75]:
+        - text: Spend gold on
+        - strong [ref=e76]: upgrades and workers
+        - text: to earn passively.
+      - listitem [ref=e77]:
+        - text: Workers generate gold
+        - strong [ref=e78]: automatically
+        - text: — even when idle.
+      - listitem [ref=e79]:
+        - text: Unlock new tiers to
+        - strong [ref=e80]: multiply your earnings
+        - text: .
+    - heading "Game Features" [level=2] [ref=e81]
+    - list [ref=e82]:
+      - listitem [ref=e83]: 💰 Exponential gold growth mechanics
+      - listitem [ref=e84]: 🤖 Auto-clicker workers for passive income
+      - listitem [ref=e85]: 📈 Upgrade tree with real strategic choices
+      - listitem [ref=e86]: 💾 Auto-save progress
+    - heading "Tips & Tricks" [level=2] [ref=e87]
+    - list [ref=e88]:
+      - listitem [ref=e89]: Always buy the highest-tier upgrade available.
+      - listitem [ref=e90]: Balance manual clicking with worker investment early on.
+      - listitem [ref=e91]: Come back after a break — idle earnings add up!
+  - generic [ref=e92]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e93]
+    - generic [ref=e94]:
+      - heading "How do you play Idle Clicker?" [level=3] [ref=e95]
+      - paragraph [ref=e96]: Click the main button to earn resources, then spend them on upgrades and automated production buildings. As you progress, resources generate automatically so your empire grows even when you're not actively clicking. Keep upgrading to reach new milestones!
+    - generic [ref=e97]:
+      - heading "Is Idle Clicker free to play?" [level=3] [ref=e98]
+      - paragraph [ref=e99]: Yes, Idle Clicker on GameZipper is completely free with no downloads or payments required. Open the page and start building your idle empire right away.
+    - generic [ref=e100]:
+      - heading "Can I play Idle Clicker on mobile?" [level=3] [ref=e101]
+      - paragraph [ref=e102]: Yes! Idle Clicker works great on mobile devices. Tap to click and tap buttons to purchase upgrades. Your progress is saved so you can pick up where you left off.
+  - button "Toggle sound" [ref=e103] [cursor=pointer]: 🔊
+```

@@ -1,0 +1,55 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "🍣 More Sweet 3D Games at GameZipper.com" [ref=e2] [cursor=pointer]:
+    - /url: https://gamezipper.com
+  - generic [ref=e3]:
+    - generic [ref=e4]: 🍣
+    - generic [ref=e5]: Sushi Stack 3D
+    - generic [ref=e6]: Color Sort Puzzle
+    - button "▶ PLAY" [ref=e7] [cursor=pointer]
+    - button "📋 Levels" [ref=e8] [cursor=pointer]
+  - generic [ref=e9]:
+    - heading "Sushi Stack 3D — Free Color Sort Puzzle" [level=1] [ref=e10]
+    - paragraph [ref=e11]: Play Sushi Stack 3D free online! Sort colorful sushi pieces into matching stacks. A satisfying 3D color sorting puzzle game.
+    - heading "How to Play" [level=2] [ref=e12]
+    - list [ref=e13]:
+      - listitem [ref=e14]:
+        - strong [ref=e15]: Tap a stack
+        - text: to pick up the top sushi piece.
+      - listitem [ref=e16]:
+        - text: Tap another stack to
+        - strong [ref=e17]: place it
+        - text: — only if the top matches or it's empty.
+      - listitem [ref=e18]:
+        - text: Sort all stacks so each one contains
+        - strong [ref=e19]: only one sushi color
+        - text: .
+      - listitem [ref=e20]:
+        - text: Complete all levels to
+        - strong [ref=e21]: become a Sushi Master
+        - text: "!"
+    - heading "Game Features" [level=2] [ref=e22]
+    - list [ref=e23]:
+      - listitem [ref=e24]: 🍣 Unique sushi-themed color sorting
+      - listitem [ref=e25]: 🎨 Vibrant 3D visual style
+      - listitem [ref=e26]: 🧩 Progressive difficulty across levels
+      - listitem [ref=e27]: 📱 Easy touch controls
+    - heading "Tips & Tricks" [level=2] [ref=e28]
+    - list [ref=e29]:
+      - listitem [ref=e30]: Always create an empty stack as a buffer.
+      - listitem [ref=e31]: Work on one color at a time.
+      - listitem [ref=e32]: Don't bury a color you need soon.
+  - generic [ref=e33]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e34]
+    - generic [ref=e35]:
+      - heading "How do you play Sushi Stack 3D?" [level=3] [ref=e36]
+      - paragraph [ref=e37]: Tap sushi stacks to move the top piece onto another stack. You can only place a piece on an empty stack or on top of the same-colored piece. Sort all sushi pieces so each stack contains only one color to complete the level!
+    - generic [ref=e38]:
+      - heading "Is Sushi Stack 3D free to play?" [level=3] [ref=e39]
+      - paragraph [ref=e40]: Yes, Sushi Stack 3D on GameZipper is completely free. No downloads, accounts, or payments needed—start stacking sushi immediately in your browser.
+    - generic [ref=e41]:
+      - heading "Can I play Sushi Stack 3D on mobile?" [level=3] [ref=e42]
+      - paragraph [ref=e43]: Yes! Sushi Stack 3D is perfect for mobile with touch controls. Simply tap stacks to move sushi pieces and sort colors on your smartphone or tablet.
+```

@@ -1,0 +1,75 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "⬅ More Games at GameZipper.com" [ref=e2] [cursor=pointer]:
+    - /url: https://gamezipper.com/
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - heading "🌌 2048 Galaxy" [level=1] [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e8]: Score
+          - generic [ref=e9]: "0"
+        - generic [ref=e10]:
+          - generic [ref=e11]: Best
+          - generic [ref=e12]: "0"
+    - generic [ref=e15]:
+      - generic [ref=e16]: 🌌
+      - heading "How to Play" [level=2] [ref=e17]
+      - paragraph [ref=e18]:
+        - text: 👆 Swipe to move all planets
+        - text: 💥 Same planets merge into bigger ones!
+        - text: 🏆 Reach the Supernova 2048 to win!
+      - paragraph [ref=e19]: "💡 Tip: Keep your biggest planet in a corner! 🧠"
+      - button "Got it! 🚀" [ref=e20] [cursor=pointer]
+    - generic [ref=e21]:
+      - button "New Game" [ref=e22] [cursor=pointer]
+      - button "Undo (3)" [ref=e23] [cursor=pointer]
+  - generic [ref=e24]:
+    - heading "2048 — Free Number Puzzle Game" [level=1] [ref=e25]
+    - paragraph [ref=e26]: Play 2048 free online. Slide numbered tiles to combine them and reach the 2048 tile. A classic number sliding puzzle with smooth animations.
+    - heading "How to Play" [level=2] [ref=e27]
+    - list [ref=e28]:
+      - listitem [ref=e29]:
+        - text: Use
+        - strong [ref=e30]: arrow keys
+        - text: (desktop) or
+        - strong [ref=e31]: swipe
+        - text: (mobile) to slide all tiles.
+      - listitem [ref=e32]:
+        - text: When two tiles with the
+        - strong [ref=e33]: same number
+        - text: collide, they merge into one.
+      - listitem [ref=e34]:
+        - text: Reach the
+        - strong [ref=e35]: 2048 tile
+        - text: to win — but keep going for a higher score!
+      - listitem [ref=e36]:
+        - text: The game ends when
+        - strong [ref=e37]: no more moves
+        - text: are possible.
+    - heading "Game Features" [level=2] [ref=e38]
+    - list [ref=e39]:
+      - listitem [ref=e40]: 🔢 Classic 4×4 grid gameplay
+      - listitem [ref=e41]: ✨ Smooth tile merge animations
+      - listitem [ref=e42]: 🏆 High score tracking
+      - listitem [ref=e43]: 📱 Swipe to play on mobile
+    - heading "Tips & Tricks" [level=2] [ref=e44]
+    - list [ref=e45]:
+      - listitem [ref=e46]: Keep your highest tile in a corner — never move it.
+      - listitem [ref=e47]: Build a snake-like chain of descending tiles.
+      - listitem [ref=e48]: Think before every move — one wrong swipe can end your run.
+  - generic [ref=e49]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e50]
+    - generic [ref=e51]:
+      - heading "How do you play 2048?" [level=3] [ref=e52]
+      - paragraph [ref=e53]: Use arrow keys on desktop or swipe on mobile to slide all tiles in one direction. When two tiles with the same number collide, they merge into one tile with double the value. Keep combining tiles until you reach 2048 to win!
+    - generic [ref=e54]:
+      - heading "Is 2048 free to play?" [level=3] [ref=e55]
+      - paragraph [ref=e56]: Yes, 2048 on GameZipper is completely free with no downloads, accounts, or payments needed. Just open the page and start sliding tiles instantly in your browser.
+    - generic [ref=e57]:
+      - heading "Can I play 2048 on mobile?" [level=3] [ref=e58]
+      - paragraph [ref=e59]: Yes! 2048 fully supports swipe controls on mobile, so you can slide tiles with a finger swipe in any direction. It works great on smartphones and tablets.
+  - button "Toggle sound" [ref=e60] [cursor=pointer]: 🔊
+```

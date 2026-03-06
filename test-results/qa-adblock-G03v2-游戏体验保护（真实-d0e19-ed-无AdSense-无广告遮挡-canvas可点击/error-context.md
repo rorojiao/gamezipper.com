@@ -1,0 +1,82 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic: NEW RECORD!
+  - link "⬅ More Games at GameZipper.com" [ref=e3] [cursor=pointer]:
+    - /url: https://gamezipper.com/
+  - generic [ref=e4]:
+    - heading "⚡ TYPING_SPEED_TEST" [level=1] [ref=e5]
+    - paragraph [ref=e6]: "[SYSTEM] How fast can you hack?"
+    - generic [ref=e7]:
+      - button "> 30s" [ref=e8] [cursor=pointer]
+      - button "> 60s" [ref=e9] [cursor=pointer]
+      - button "> survival" [ref=e10] [cursor=pointer]
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - generic [ref=e13]: "0"
+        - generic [ref=e14]: WPM
+      - generic [ref=e15]:
+        - generic [ref=e16]: 100%
+        - generic [ref=e17]: Accuracy
+      - generic [ref=e18]:
+        - generic [ref=e19]: "30"
+        - generic [ref=e20]: Time
+    - generic [ref=e21]: as if of my do who big out see us big as go on of you by run old no so at if and him old new for our do
+    - textbox "> start typing here..." [active] [ref=e22]
+  - generic [ref=e24]:
+    - heading "⌨️ [INSTRUCTIONS]" [level=2] [ref=e25]
+    - list [ref=e26]:
+      - listitem [ref=e27]: Choose a time mode (> 30s, > 60s, or > survival)
+      - listitem [ref=e28]: Type the words shown on screen as fast as you can!
+      - listitem [ref=e29]: Your speed (WPM) and accuracy are tracked in real-time
+    - paragraph [ref=e30]: "Survival mode: No time limit, but 3 mistakes and you're out! ❌❌❌"
+    - generic [ref=e31]: 💡 [TIP] Focus on accuracy first — speed comes with practice! 🎯
+    - button "> GOT IT" [ref=e32] [cursor=pointer]
+  - generic:
+    - heading "Typing Speed Test — Free WPM Typing Test Online" [level=1] [ref=e33]
+    - paragraph [ref=e34]: Test your typing speed for free! Measure your WPM (words per minute) and accuracy with real texts. The most accurate online typing test.
+    - heading "How to Play" [level=2] [ref=e35]
+    - list [ref=e36]:
+      - listitem [ref=e37]:
+        - text: Click
+        - strong [ref=e38]: Start
+        - text: and begin typing the displayed text as fast and accurately as possible.
+      - listitem [ref=e39]:
+        - text: Your
+        - strong [ref=e40]: WPM
+        - text: (words per minute) and
+        - strong [ref=e41]: accuracy %
+        - text: are tracked in real time.
+      - listitem [ref=e42]:
+        - text: Finish typing the full text to see your
+        - strong [ref=e43]: final score and rank
+        - text: .
+      - listitem [ref=e44]:
+        - text: Practice daily to watch your WPM
+        - strong [ref=e45]: improve over time
+        - text: .
+    - heading "Game Features" [level=2] [ref=e46]
+    - list [ref=e47]:
+      - listitem [ref=e48]: ⌨️ Accurate WPM calculation including error penalty
+      - listitem [ref=e49]: 📊 Real-time accuracy tracking
+      - listitem [ref=e50]: 🔄 Multiple text passages for variety
+      - listitem [ref=e51]: 📱 Works on any keyboard-connected device
+    - heading "Tips & Tricks" [level=2] [ref=e52]
+    - list [ref=e53]:
+      - listitem [ref=e54]: Focus on accuracy first — errors cost more time than going slowly.
+      - listitem [ref=e55]: Use all fingers — proper touch typing doubles your speed.
+      - listitem [ref=e56]: Practice 10 minutes daily for rapid improvement.
+  - generic [ref=e57]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e58]
+    - generic [ref=e59]:
+      - heading "How does the Typing Speed Test work?" [level=3] [ref=e60]
+      - paragraph [ref=e61]: Words or sentences appear on screen and you type them as quickly and accurately as possible. Your words per minute (WPM) and accuracy percentage are calculated in real-time. Finish the test to see your final score and compare to average typists!
+    - generic [ref=e62]:
+      - heading "Is the Typing Speed Test free?" [level=3] [ref=e63]
+      - paragraph [ref=e64]: Yes, Typing Speed Test on GameZipper is completely free with no downloads, accounts, or payments needed. Just click into the text field and start typing immediately.
+    - generic [ref=e65]:
+      - heading "Can I use the Typing Speed Test on mobile?" [level=3] [ref=e66]
+      - paragraph [ref=e67]: Yes, you can use the typing test on mobile devices with a Bluetooth keyboard or on-screen keyboard. For the most accurate WPM results, a physical keyboard is recommended.
+  - button "Toggle sound" [ref=e68] [cursor=pointer]: 🔊
+```

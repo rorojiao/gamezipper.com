@@ -1,0 +1,83 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "⬅ Games" [ref=e3] [cursor=pointer]:
+      - /url: ../
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]: LV
+        - generic [ref=e7]: "1"
+      - generic [ref=e8]:
+        - generic [ref=e9]: Moves
+        - generic [ref=e10]: "20"
+      - generic [ref=e11]:
+        - generic [ref=e12]: Paint
+        - generic [ref=e13]: 0%
+    - link "More ➡" [ref=e14] [cursor=pointer]:
+      - /url: ../
+  - generic [ref=e19]:
+    - button "📋 Levels" [ref=e20] [cursor=pointer]:
+      - text: 📋
+      - generic [ref=e21]: Levels
+    - button "🔄 Restart" [ref=e22] [cursor=pointer]:
+      - text: 🔄
+      - generic [ref=e23]: Restart
+    - button "↩️ Undo" [ref=e24] [cursor=pointer]:
+      - text: ↩️
+      - generic [ref=e25]: Undo
+    - button "💡 Hint 3" [ref=e26] [cursor=pointer]:
+      - text: 💡
+      - generic [ref=e27]: Hint
+      - generic [ref=e28]: "3"
+  - button "🔊" [ref=e29] [cursor=pointer]
+  - generic [ref=e32]:
+    - generic [ref=e33]: 🎨
+    - heading "Welcome to Paint Splash!" [level=2] [ref=e34]
+    - paragraph [ref=e35]: Let's learn how to create beautiful art!
+    - button "Let's Go! →" [ref=e36] [cursor=pointer]
+  - generic [ref=e37]:
+    - generic [ref=e38]: 🍪 Cookies save your progress.
+    - button "OK" [ref=e39] [cursor=pointer]
+  - generic:
+    - heading "Paint Splash — Free Color Sliding Puzzle" [level=1] [ref=e40]
+    - paragraph [ref=e41]: Play Paint Splash free online! Slide colored blocks to fill the canvas with paint. A creative and satisfying color puzzle experience.
+    - heading "How to Play" [level=2] [ref=e42]
+    - list [ref=e43]:
+      - listitem [ref=e44]:
+        - strong [ref=e45]: Swipe or drag
+        - text: the colored blocks across the grid.
+      - listitem [ref=e46]:
+        - text: Each block paints the cells it slides over in its
+        - strong [ref=e47]: color
+        - text: .
+      - listitem [ref=e48]:
+        - text: Fill the
+        - strong [ref=e49]: entire grid
+        - text: using all blocks to complete the level.
+      - listitem [ref=e50]: Each level has a unique solution — think before you swipe!
+    - heading "Game Features" [level=2] [ref=e51]
+    - list [ref=e52]:
+      - listitem [ref=e53]: 🎨 Artistic color-filling mechanics
+      - listitem [ref=e54]: 🧩 Unique puzzle design per level
+      - listitem [ref=e55]: 🌈 Satisfying paint trail animations
+      - listitem [ref=e56]: 📱 Smooth touch controls
+    - heading "Tips & Tricks" [level=2] [ref=e57]
+    - list [ref=e58]:
+      - listitem [ref=e59]: Plan your path — once paint is laid, it can't be undone.
+      - listitem [ref=e60]: Look for dead-end paths and fill those first.
+      - listitem [ref=e61]: Work outward from corners inward.
+  - generic [ref=e62]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e63]
+    - generic [ref=e64]:
+      - heading "How do you play Paint Splash?" [level=3] [ref=e65]
+      - paragraph [ref=e66]: Slide rows and columns of colorful paint tiles to align 3 or more matching colors. When tiles of the same color line up, they burst with a paint splash and clear from the board. Plan your slides carefully to create chain reactions and clear the board efficiently!
+    - generic [ref=e67]:
+      - heading "Is Paint Splash free to play?" [level=3] [ref=e68]
+      - paragraph [ref=e69]: Yes, Paint Splash on GameZipper is completely free. No downloads, accounts, or payments required—start splashing colors immediately in your browser.
+    - generic [ref=e70]:
+      - heading "Can I play Paint Splash on mobile?" [level=3] [ref=e71]
+      - paragraph [ref=e72]: Yes! Paint Splash fully supports swipe controls on mobile. Swipe to slide rows and columns of paint tiles and create colorful matches on your smartphone or tablet.
+  - button "Toggle sound" [ref=e73] [cursor=pointer]: 🔊
+```
