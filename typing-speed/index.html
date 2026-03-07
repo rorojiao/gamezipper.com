@@ -29,6 +29,7 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
 @keyframes ledFlicker{0%,100%{opacity:1}50%{opacity:0.85}}
 .stat-label{font-size:11px;color:#005500;text-transform:uppercase;letter-spacing:2px}
 .text-display{background:rgba(0,10,0,0.8);border-radius:4px;padding:16px 20px;font-size:20px;line-height:1.8;height:calc(1.8em * 3 + 32px);overflow-y:auto;overflow-x:hidden;border:1px solid #003300;margin-bottom:20px;position:relative;user-select:none;-webkit-user-select:none;font-family:'Courier New',monospace;word-wrap:break-word;overflow-wrap:break-word}
+.word-wrap{display:inline;white-space:nowrap}
 .char{transition:color .1s}
 .char.correct{color:#005500}
 .char.current{color:#00ff41;background:rgba(0,255,65,.15);border-radius:2px;text-shadow:0 0 8px #00ff41}
@@ -38,7 +39,7 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
 @keyframes glitch{0%{transform:translate(2px,-1px);filter:hue-rotate(90deg)}50%{transform:translate(-2px,1px);filter:hue-rotate(-90deg)}100%{transform:translate(0);filter:none}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 @keyframes wordPulse{0%{text-shadow:0 0 5px #00ff41}50%{text-shadow:0 0 20px #00ff41,0 0 40px #00ff41}100%{text-shadow:0 0 0}}
-.input-area{width:100%;padding:14px 18px;font-size:18px;background:rgba(0,10,0,0.9);border:1px solid #00ff41;border-radius:4px;color:#00ff41;outline:none;transition:all .2s;font-family:'Courier New',monospace;caret-color:#00ff41;box-shadow:0 0 10px rgba(0,255,65,0.1)}
+.input-area{width:100%;padding:14px 18px;font-size:18px;background:rgba(0,10,0,0.9);border:1px solid #00ff41;border-radius:4px;color:#00ff41;outline:none;transition:all .2s;font-family:'Courier New',monospace;caret-color:#ff6b6b;box-shadow:0 0 10px rgba(0,255,65,0.1)}
 .input-area:focus{border-color:#33ff66;box-shadow:0 0 20px rgba(0,255,65,0.3)}
 .input-area::placeholder{color:#005500}
 .mobile-hint{display:none;text-align:center;color:#005500;font-size:13px;margin-top:8px}
@@ -360,12 +361,20 @@ function genText(){
 }
 function renderText(){
   let html="";
+  let inWord=false;
   for(let i=0;i<text.length;i++){
     let cls="upcoming";
     if(i<charIndex)cls="correct";
     if(i===charIndex)cls="current";
-    html+=`<span class="char ${cls}" data-i="${i}">${text[i]===" "?"&nbsp;":text[i]}</span>`;
+    if(text[i]===" "){
+      if(inWord){html+="</span>";inWord=false;}
+      html+=`<span class="char ${cls}" data-i="${i}">&nbsp;</span>`;
+    } else {
+      if(!inWord){html+='<span class="word-wrap">';inWord=true;}
+      html+=`<span class="char ${cls}" data-i="${i}">${text[i]}</span>`;
+    }
   }
+  if(inWord)html+="</span>";
   display.innerHTML=html;
 }
 
