@@ -690,7 +690,8 @@ homeScene.render = function(c, w, h) {
   var titleY = h * 0.12, titleH = h * 0.22, titleW = w * 0.95, titleX = (w - titleW) / 2;
   if (_titleLoaded) { Renderer.drawImage('images/title_en.png', titleX, titleY, titleW, titleH); }
   else {
-    c.save(); c.font = 'bold 48px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    var titleFontSz = Math.min(Math.floor(w * 0.12), 48);
+    c.save(); c.font = 'bold ' + titleFontSz + 'px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillText('🦃 Catch Turkey', w / 2 + 2, titleY + titleH / 2 + 2);
     c.fillStyle = '#FFD700'; c.fillText('🦃 Catch Turkey', w / 2, titleY + titleH / 2); c.restore();
   }
@@ -1224,7 +1225,12 @@ gameScene.update = function(dt) {
     if (progress >= 1) {
       Snd.drop(); flyingTurkeys.splice(fi, 1);
       var matched = this._checkMatch();
-      if (!matched && flyingTurkeys.length === 0) animating = false;
+      if (!matched && flyingTurkeys.length === 0) {
+        // R28/R29: safety re-check after all animations done
+        animating = false;
+        var self2 = this;
+        setTimeout(function() { if (!_matchAnimating) self2._checkMatch(); }, 50);
+      }
     }
   }
   flyingTurkey = flyingTurkeys.length > 0 ? flyingTurkeys[flyingTurkeys.length - 1] : null;
@@ -1375,7 +1381,7 @@ var resultScene = new Scene('result');
 resultScene.enter = function(params) {
   _result = params || {}; _resultAnimTime = 0;
   var w = Renderer.width, h = Renderer.height;
-  var btnW = Math.min(w * 0.32, 130), btnH = 44, cx = w / 2, popupBottom = h / 2 + 120;
+  var btnW = Math.min(w * 0.32, 130), btnH = 44, cx = w / 2, popupBottom = h / 2 + 78;
   _resultButtons = [];
   if (_result.win) {
     if (_result.levelId < LEVELS.length) _resultButtons.push({ id: 'next', text: 'Next Level', x: cx - btnW - 8, y: popupBottom, w: btnW, h: btnH, color: '#4CAF50' });
@@ -1389,7 +1395,7 @@ resultScene.exit = function() { _result = null; };
 resultScene.update = function(dt) { _resultAnimTime += dt; };
 resultScene.render = function(c, w, h) {
   c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(0, 0, w, h);
-  var popW = w * 0.8, popH = 280, px = (w - popW) / 2, py = h / 2 - popH / 2 - 20;
+  var popW = w * 0.8, popH = 300, px = (w - popW) / 2, py = h / 2 - popH / 2 - 20;
   Renderer.drawRoundRect(px, py, popW, popH, 16, 'rgba(26,35,126,0.95)');
   c.save(); c.strokeStyle = '#FFD740'; c.lineWidth = 2; c.beginPath();
   c.moveTo(px + 16, py); c.arcTo(px + popW, py, px + popW, py + popH, 16);
