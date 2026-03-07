@@ -713,8 +713,20 @@ function shareGame(sc){
   const url=window.location.href.split('?')[0];
   const gameName=(document.title.split(' - ')[0])||'Memory Match';
   const text=sc?'I completed '+gameName+' in '+sc+' moves! Can you beat me? 🎮':'Playing '+gameName+' on GameZipper! 🎮';
-  if(navigator.share){navigator.share({title:gameName,text,url}).catch(()=>window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url),'_blank'));}
-  else{window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url),'_blank');}
+  function showCopyToast(){
+    var t=document.createElement('div');
+    t.textContent='🔗 Link copied to clipboard!';
+    t.style.cssText='position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:99999;pointer-events:none;';
+    document.body.appendChild(t);setTimeout(function(){t.remove();},2500);
+  }
+  if(navigator.share){
+    navigator.share({title:gameName,text,url}).catch(function(){
+      if(navigator.clipboard){navigator.clipboard.writeText(url).then(showCopyToast).catch(function(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url),'_blank');});}
+      else{window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url),'_blank');}
+    });
+  } else if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(showCopyToast).catch(function(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url),'_blank');});
+  } else{window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent(url),'_blank');}
 }
 })();
 </script>
