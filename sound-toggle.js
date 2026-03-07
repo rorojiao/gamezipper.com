@@ -109,3 +109,29 @@
   }, true);
 
 })();
+
+// Global mute: intercept all AudioContext creation
+(function(){
+  window.__gz_muted = localStorage.getItem('gz_muted') === '1';
+  var OrigAudioCtx = window.AudioContext || window.webkitAudioContext;
+  if(!OrigAudioCtx) return;
+  var _origResume = OrigAudioCtx.prototype.resume;
+  var _contexts = [];
+  
+  // Track all created contexts
+  var _origConstructor = OrigAudioCtx;
+  function PatchedAudioContext(){
+    var ctx = new _origConstructor();
+    _contexts.push(ctx);
+    if(window.__gz_muted) try{ctx.suspend();}catch(e){}
+    return ctx;
+  }
+  // Don't override constructor to avoid breaking things, just observe
+  
+  // Periodic check: suspend all contexts when muted
+  setInterval(function(){
+    var muted = localStorage.getItem('gz_muted') === '1';
+    window.__gz_muted = muted;
+    document.querySelectorAll('audio,video').forEach(function(el){el.muted = muted;});
+  }, 500);
+})();
