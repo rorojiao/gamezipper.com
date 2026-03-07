@@ -687,7 +687,7 @@ homeScene.render = function(c, w, h) {
   }
 
   // Title
-  var titleY = h * 0.12, titleH = h * 0.22, titleW = w * 0.8, titleX = (w - titleW) / 2;
+  var titleY = h * 0.12, titleH = h * 0.22, titleW = w * 0.95, titleX = (w - titleW) / 2;
   if (_titleLoaded) { Renderer.drawImage('images/title_en.png', titleX, titleY, titleW, titleH); }
   else {
     c.save(); c.font = 'bold 48px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
@@ -826,6 +826,8 @@ var comboText = '', comboAlpha = 0, comboScale = 1, scoreFloats = [];
 var countdownNum = 0, countdownAlpha = 0, _countdownCb = null;
 var flyingTurkey = null, flyingTurkeys = [];
 var _hudY = 0, _slotBarY = 0, _gameAreaY = 0, _gameAreaH = 0, _propBtns = [], _pauseBtn = null;
+var _toastMsg = "", _toastAlpha = 0;
+function showGameToast(msg) { _toastMsg = msg; _toastAlpha = 1.5; }
 
 function shuffle(arr) {
   for (var i = arr.length - 1; i > 0; i--) {
@@ -1028,6 +1030,7 @@ gameScene._onTurkeyClick = function(turkey) {
   this._updateBlocked();
 };
 gameScene._checkMatch = function() {
+  if (_matchAnimating) return false;
   var self = this;
   for (var i = 0; i <= slots.length - 3; i++) {
     if (slots[i].typeId === slots[i + 1].typeId && slots[i + 1].typeId === slots[i + 2].typeId) {
@@ -1115,7 +1118,7 @@ gameScene._showCombo = function(n) {
 };
 gameScene._useProp = function(type) {
   if (paused || gameOver || animating) return;
-  if (props[type] <= 0) return;
+  if (props[type] <= 0) { showGameToast("No more uses!"); return; }
   props[type]--;
   Snd.prop();
   if (Save.d.settings.vibrate && navigator.vibrate) navigator.vibrate(15);
@@ -1132,7 +1135,7 @@ gameScene._propShuffle = function() {
   this._updateBlocked();
 };
 gameScene._propRemove = function() {
-  if (slots.length === 0) return;
+  if (slots.length === 0) { showGameToast("Nothing to undo!"); return; }
   var count = Math.min(3, slots.length);
   var removed = slots.splice(slots.length - count, count);
   removed.forEach(function(s) {
@@ -1206,6 +1209,7 @@ gameScene._onLose = function(reason) {
 };
 gameScene.update = function(dt) {
   if (comboAlpha > 0) { comboAlpha -= dt * 1.5; comboScale = Math.max(1, comboScale - dt * 2); if (comboAlpha < 0) comboAlpha = 0; }
+  if (_toastAlpha > 0) { _toastAlpha -= dt; if (_toastAlpha < 0) _toastAlpha = 0; }
   for (var i = scoreFloats.length - 1; i >= 0; i--) {
     var f = scoreFloats[i]; f.y += f.vy * dt; f.alpha -= dt * 1.2;
     if (f.alpha <= 0) scoreFloats.splice(i, 1);
@@ -1371,10 +1375,10 @@ var resultScene = new Scene('result');
 resultScene.enter = function(params) {
   _result = params || {}; _resultAnimTime = 0;
   var w = Renderer.width, h = Renderer.height;
-  var btnW = w * 0.35, btnH = 44, cx = w / 2, popupBottom = h / 2 + 120;
+  var btnW = Math.min(w * 0.32, 130), btnH = 44, cx = w / 2, popupBottom = h / 2 + 120;
   _resultButtons = [];
   if (_result.win) {
-    if (_result.levelId < 10) _resultButtons.push({ id: 'next', text: 'Next Level', x: cx - btnW - 8, y: popupBottom, w: btnW, h: btnH, color: '#4CAF50' });
+    if (_result.levelId < LEVELS.length) _resultButtons.push({ id: 'next', text: 'Next Level', x: cx - btnW - 8, y: popupBottom, w: btnW, h: btnH, color: '#4CAF50' });
     _resultButtons.push({ id: 'levels', text: 'Levels', x: cx + 8, y: popupBottom, w: btnW, h: btnH, color: '#1E88E5' });
   } else {
     _resultButtons.push({ id: 'retry', text: 'Retry', x: cx - btnW - 8, y: popupBottom, w: btnW, h: btnH, color: '#FF6B35' });
@@ -1537,6 +1541,7 @@ collectionScene.render = function(c, w, h) {
       c.font = '10px sans-serif'; c.fillText('Clear the level to unlock', card.x + card.w / 2, card.y + card.h - 24);
     }
   }
+  if (_toastAlpha > 0) { c.save(); c.globalAlpha = Math.min(1, _toastAlpha); c.font = "bold 14px sans-serif"; var tw2 = c.measureText(_toastMsg).width + 30; var ttx = (w - tw2) / 2; var tty = h * 0.4; Renderer.drawRoundRect(ttx, tty, tw2, 36, 18, "rgba(0,0,0,0.8)"); c.fillStyle = "#FFFFFF"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(_toastMsg, w / 2, tty + 18); c.restore(); }
   c.restore();
 };
 collectionScene.onTouchStart = function(x, y) {
@@ -1564,7 +1569,7 @@ settingsScene._layout = function() {
     { id: 'bgm', label: '🎵 BGM', key: 'bgm', x: cx - itemW / 2, y: startY + itemH + gap, w: itemW, h: itemH },
     { id: 'vibrate', label: '📳 Vibration', key: 'vibrate', x: cx - itemW / 2, y: startY + (itemH + gap) * 2, w: itemW, h: itemH },
   ];
-  _setResetBtn = { x: cx - itemW / 2, y: startY + (itemH + gap) * 3 + 20, w: itemW, h: 50 };
+  _setResetBtn = { x: cx - itemW / 2, y: startY + (itemH + gap) * 3 + 10, w: itemW, h: 44 };
   var confirmW = w * 0.3, confirmY = h / 2 + 30;
   _confirmButtons = [
     { id: 'confirmYes', text: 'Confirm Reset', x: cx - confirmW - 10, y: confirmY, w: confirmW, h: 44, color: '#E53935' },

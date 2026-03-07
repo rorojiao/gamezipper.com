@@ -22,7 +22,7 @@ body{padding-top:28px;font-family:'Segoe UI',system-ui,sans-serif;min-height:100
 .btn:active{transform:scale(.95)}
 .btn .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.4);transform:scale(0);animation:rippleAnim .5s ease-out forwards;pointer-events:none}
 @keyframes rippleAnim{to{transform:scale(3);opacity:0}}
-#btn-undo{background:url('images/btn_yellow.png') center/100% 100% no-repeat,rgba(255,160,50,.2);border-color:rgba(255,160,50,.5);color:#ffc070}
+#btn-undo{background:url('images/btn_yellow.png') center/100% 100% no-repeat,rgba(255,160,50,.2);border-color:rgba(255,160,50,.5);color:#333}
 #btn-restart{background:url('images/btn_red.png') center/100% 100% no-repeat,rgba(255,80,80,.2);border-color:rgba(255,80,80,.5);color:#ff9090}
 #btn-levels{background:url('images/btn_green.png') center/100% 100% no-repeat,rgba(80,255,130,.2);border-color:rgba(80,255,130,.5);color:#90ffa0}
 #btn-hint{background:url('images/btn_blue.png') center/100% 100% no-repeat,rgba(80,200,255,.2);border-color:rgba(80,200,255,.5);color:#90d8ff}
@@ -207,8 +207,8 @@ body{padding-top:28px;font-family:'Segoe UI',system-ui,sans-serif;min-height:100
 </div>
 
 <script>
-const COLORS=['#39ff14','#00e5ff','#ff1493','#ff6d00','#bf00ff','#ffff00',
-              '#ff4444','#4488ff','#ff9900','#44dd88'];
+const COLORS=['#39ff14','#00bfff','#ff1493','#ff6d00','#bf00ff','#ffe600',
+              '#ff4444','#4488ff','#ff9900','#22cc88'];
 const COLORS_DARK=['#1a8a0a','#007a8a','#8a0a4a','#8a3a00','#5a0080','#8a8a00',
                    '#8a2222','#224488','#8a5500','#226644'];
 const TUBE_W=80,TUBE_H=260,BALL_D=56,CAP=4;
@@ -223,13 +223,24 @@ const LEVEL_DEFS=[
 // Levels 31-40: very hard (9→10 colors)
 [9,3],[10,2],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],
 // Levels 41-50: expert (10 colors, tight tubes)
-[10,2],[10,3],[10,2],[10,3],[10,2],[10,2],[10,3],[10,2],[10,3],[10,2]
+[10,2],[10,3],[10,2],[10,3],[10,2],[10,2],[10,3],[10,2],[10,3],[10,2],
+// Levels 51-60
+[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],
+// Levels 61-70
+[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],
+// Levels 71-80
+[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],
+// Levels 81-90
+[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],
+// Levels 91-100
+[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2]
 ];
 
 let state={level:0,tubes:[],history:[],selected:-1,won:false};
 let maxLevel=parseInt(localStorage.getItem('csort_max')||'0');
 let isAnimating=false;
 let hintFrom=-1,hintTo=-1,hintTimer=0;
+let hintUsed=0;const MAX_HINTS=3;
 
 let fxC,fxCtx;
 const POOL_SIZE=800;
@@ -446,7 +457,7 @@ function deepCopy(t){return t.map(a=>[...a])}
 
 function loadLevel(idx){
   state.level=idx;state.tubes=genLevel(idx);state.history=[];state.selected=-1;state.won=false;
-  hintFrom=-1;hintTo=-1;
+  hintFrom=-1;hintTo=-1;hintUsed=0;
   document.getElementById('level-info').textContent='Level '+(idx+1);
   document.getElementById('win-msg').style.display='none';document.getElementById('win-msg').classList.remove('visible');
   hideHintArrow();render();
@@ -775,7 +786,11 @@ function tickBg(){
 }
 
 function showHint(){
-  if(state.won||isAnimating)return;clearHint();state.selected=-1;
+  if(state.won||isAnimating)return;
+  if(hintUsed>=MAX_HINTS){alert("No hints left for this level! (" + MAX_HINTS + "/" + MAX_HINTS + ")");return;}
+  hintUsed++;document.getElementById("btn-hint").textContent="💡 Hint ("+( MAX_HINTS-hintUsed)+")";
+  if(hintUsed>=MAX_HINTS)document.getElementById("btn-hint").style.opacity="0.4";
+  clearHint();state.selected=-1;
   const tubes=state.tubes;let bestMove=null,bestScore=-Infinity;
   for(let f=0;f<tubes.length;f++){
     if(!tubes[f].length)continue;const ball=topBall(tubes[f]);

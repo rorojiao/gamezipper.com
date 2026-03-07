@@ -1386,15 +1386,16 @@ var _mouseDown = false;
 function wrapTouchEvent(e) {
   var touches = [];
   var changedTouches = [];
+  var rect = _canvas.getBoundingClientRect();
   if (e.touches) {
     for (var i = 0; i < e.touches.length; i++) {
-      touches.push({ clientX: e.touches[i].clientX, clientY: e.touches[i].clientY, identifier: e.touches[i].identifier });
+      touches.push({ clientX: e.touches[i].clientX - rect.left, clientY: e.touches[i].clientY - rect.top, identifier: e.touches[i].identifier });
     }
     for (var i = 0; i < e.changedTouches.length; i++) {
-      changedTouches.push({ clientX: e.changedTouches[i].clientX, clientY: e.changedTouches[i].clientY, identifier: e.changedTouches[i].identifier });
+      changedTouches.push({ clientX: e.changedTouches[i].clientX - rect.left, clientY: e.changedTouches[i].clientY - rect.top, identifier: e.changedTouches[i].identifier });
     }
   } else {
-    var t = { clientX: e.clientX, clientY: e.clientY, identifier: 0 };
+    var t = { clientX: e.clientX - rect.left, clientY: e.clientY - rect.top, identifier: 0 };
     touches.push(t);
     changedTouches.push(t);
   }

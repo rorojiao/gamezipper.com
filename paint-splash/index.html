@@ -914,13 +914,52 @@ function spawnParticles(x,y,color,count){
   }
 }
 
+function countColorBlocks(){
+  var count=0;
+  for(var r=0;r<GRID;r++)for(var c=0;c<GRID;c++)if(grid[r][c]>=0)count++;
+  return count;
+}
+function hasAnyMatch(){
+  var dirs=['left','right','up','down'];
+  for(var d=0;d<dirs.length;d++){
+    var sim=simulateSlide(grid,dirs[d]),changed=false;
+    for(var r=0;r<GRID&&!changed;r++)for(var c=0;c<GRID;c++)if(sim[r][c]!==grid[r][c]){changed=true;break;}
+    if(!changed)continue;
+    if(findMatchesInGrid(sim).length>0)return true;
+  }
+  return false;
+}
+function doShuffle(){
+  var vals=[];
+  for(var r=0;r<GRID;r++)for(var c=0;c<GRID;c++)if(grid[r][c]>=0)vals.push(grid[r][c]);
+  for(var i=vals.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=vals[i];vals[i]=vals[j];vals[j]=t;}
+  var vi=0;
+  for(var r=0;r<GRID;r++)for(var c=0;c<GRID;c++)if(grid[r][c]>=0){grid[r][c]=vals[vi++];}
+  clearMatchesInitial();
+  initBlockPositions();
+}
 function checkGameState(){
   var lvl=LEVELS[currentLevel];
   updateGameState();
+  // B12: All color blocks cleared = win
+  if(countColorBlocks()===0){
+    paintPercent=Math.max(paintPercent,lvl.target);
+    updateUI();
+    setTimeout(showComplete,300);
+    return;
+  }
   if(paintPercent>=lvl.target){
     setTimeout(showComplete,300);
   } else if(movesLeft<=0){
     setTimeout(showGameOver,300);
+  } else if(!hasAnyMatch()){
+    // B11: Deadlock - auto shuffle
+    doShuffle();
+    var tutDiv=document.createElement('div');
+    tutDiv.style='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(251,191,36,0.95);color:#000;padding:16px 32px;border-radius:12px;font-size:16px;font-weight:800;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
+    tutDiv.textContent='🔀 No matches! Shuffled!';
+    document.body.appendChild(tutDiv);
+    setTimeout(function(){if(tutDiv.parentNode)tutDiv.parentNode.removeChild(tutDiv);},1500);
   }
 }
 

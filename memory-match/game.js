@@ -24,8 +24,8 @@ ANIMAL_NAMES.forEach(name => {
 
 const THEMES = {
   '🐱动物': ANIMAL_NAMES.slice(0, 15),
-  '🍎水果': ['🍎','🍊','🍋','🍇','🍓','🍑','🍒','🍌','🥝','🍍','🍉','🫐','🥭','🍈','🍐'],
-  '🌍国旗': ['🇨🇳','🇺🇸','🇯🇵','🇬🇧','🇫🇷','🇩🇪','🇰🇷','🇧🇷','🇮🇳','🇨🇦','🇦🇺','🇮🇹','🇪🇸','🇷🇺','🇲🇽'],
+  '🍎水果': ['🍎','🍊','🍋','🍇','🍓','🍑','🍒','🍌','🥝','🍍','🍉','🍐','🥭','🍈','🍐'],
+  '🏳️旗帜': ['🏁','🚩','🎌','🏴','⛳','🔴','🔵','🟢','🟡','🟠','🟣','⚪','🟤','⬛','💜'],
   '😀表情': ['😀','😂','🥰','😎','🤩','😴','🤔','😱','🥳','🤪','😈','👻','💀','🤖','👽']
 };
 const THEME_KEYS = Object.keys(THEMES);
@@ -159,7 +159,7 @@ function startGame() {
     lockInput = false;
     peekTimer = 0;
     startTime = performance.now();
-  }, 2000);
+  }, [1500, 2000, 3000, 4000][currentDiff] || 2000);
 }
 
 // ========== DRAWING ==========
@@ -553,7 +553,16 @@ function drawComplete(now) {
   window._completeBtns = {
     replay: { x: boxX+12, y: btnY, w: btnW, h: btnH },
     next: { x: boxX + boxW - 12 - btnW, y: btnY, w: btnW, h: btnH },
-    boxW, boxH, boxX, boxY
+    boxW, boxH, boxX, boxY, share: { x: boxX+12, y: btnY + btnH + 10, w: boxW - 24, h: 36 }
+  
+  // Share button
+  var shareBtnY = btnY + btnH + 10;
+  drawRoundRect(boxX + 12, shareBtnY, boxW - 24, 36, 10);
+  ctx.fillStyle = "#48C9B0";
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 14px sans-serif";
+  ctx.fillText("📤 分享", boxX + boxW/2, shareBtnY + 18);
   };
 }
 
@@ -697,6 +706,12 @@ function handleClick(px, py) {
     const b = window._completeBtns;
     if (!b) return;
     if (inRect(px, py, b.replay)) { startGame(); return; }
+    if (b.share && inRect(px, py, b.share)) {
+      var text = "🧠 记忆大师 - " + DIFFICULTIES[currentDiff].name + " " + THEME_KEYS[currentTheme] + "\n步数: " + steps + " | 用时: " + formatTime(elapsed) + " | ⭐".repeat(stars) + "\n" + location.href;
+      if (navigator.share) { try { navigator.share({title:"记忆大师", text:text, url:location.href}); } catch(e){} }
+      else if (navigator.clipboard) { navigator.clipboard.writeText(text); }
+      return;
+    }
     if (inRect(px, py, b.next)) {
       if (currentDiff < DIFFICULTIES.length - 1) {
         currentDiff++;
