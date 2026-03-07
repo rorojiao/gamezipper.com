@@ -1127,7 +1127,7 @@ var gameScene = {
     for (var i = 0; i < candRects.length; i++) {
       var cr = candRects[i];
       if (candidates[cr.idx].used) continue;
-      if (tx >= cr.x - 10 && tx <= cr.x + cr.w + 10 && ty >= cr.y - 10 && ty <= cr.y + cr.h + 10) {
+      if (tx >= cr.x - 20 && tx <= cr.x + cr.w + 20 && ty >= cr.y - 20 && ty <= cr.y + cr.h + 20) {
         dragging = { index: cr.idx, tx: tx, ty: ty };
         return;
       }
