@@ -15,6 +15,7 @@ body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-selec
 
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0a1628;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;overflow-y:auto;overflow-x:hidden;touch-action:none}
+@keyframes lifePopup{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{opacity:0;transform:translate(-50%,-80%) scale(1)}}
 canvas{border:2px solid #1a3a5c;border-radius:8px;margin-top:32px;display:block}
 #hud{color:#e0e0e0;font-size:15px;display:flex;gap:20px;margin-top:8px}
 .nav{position:fixed;top:0;left:0;width:100%;height:28px;background:#0a1628;display:flex;align-items:center;justify-content:space-between;padding:0 10px;box-sizing:border-box;z-index:100;font-size:13px;color:#e0e0e0}
@@ -157,7 +158,11 @@ function activatePowerup(type){
       balls.push({x:b.x,y:b.y,dx:Math.cos(ang-0.5)*5,dy:Math.sin(ang-0.5)*5,r:8});
     }
   }
-  else if(type==='L'){lives=Math.min(lives+1,5);document.getElementById('lv').textContent=lives;}
+  else if(type==='L'){lives=Math.min(lives+1,5);document.getElementById('lv').textContent=lives;
+    // Extra Life visual feedback
+    var el=document.createElement('div');el.textContent='❤️ Extra Life!';el.style.cssText='position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:28px;font-weight:bold;color:#00ff88;text-shadow:0 0 20px #00ff88;z-index:9999;pointer-events:none;animation:lifePopup 1.2s ease-out forwards;';
+    document.body.appendChild(el);setTimeout(function(){el.remove();},1200);
+  }
 }
 
 const COLORS={1:'#4488ff',2:'#44cc66',3:'#ffcc00'};
@@ -244,8 +249,7 @@ function playHit(){try{const ac=new AudioContext(),o=ac.createOscillator(),g=ac.
 
 function addParticles(x,y,color,n){for(let i=0;i<n;i++)particles.push({x,y,dx:(Math.random()-0.5)*6,dy:(Math.random()-0.5)*6,life:30,color});}
 
-function startGame(){score=0;lives=3;currentLevel=1;gameState='play';paused=false;document.getElementById('sc').textContent=0;document.getElementById('bs').textContent=bestScore;document.getElementById('lv').textContent=3;document.getElementById('lvl').textContent=1;
-  document.getElementById('sc').textContent=0;document.getElementById('lv').textContent=3;document.getElementById('lvl').textContent=1;
+function startGame(startLevel){score=0;lives=3;currentLevel=startLevel||1;gameState='play';paused=false;document.getElementById('sc').textContent=0;document.getElementById('bs').textContent=bestScore;document.getElementById('lv').textContent=3;document.getElementById('lvl').textContent=currentLevel;
   const sbo=document.getElementById('share-btn-overlay');if(sbo)sbo.style.display='none';
   initLevel();loop();}
 
@@ -293,7 +297,7 @@ function update(){
   });
   for(let i=toRemove.length-1;i>=0;i--)balls.splice(toRemove[i],1);
   if(balls.length===0){lives--;document.getElementById('lv').textContent=lives;if(lives<=0){gameState='over';drawGameOver();}else resetBall();}
-  if(bricks.length===0){score+=100;document.getElementById('sc').textContent=score;if(score>bestScore){bestScore=score;localStorage.setItem('brick_best',bestScore);document.getElementById('bs').textContent=bestScore;}currentLevel++;document.getElementById('lvl').textContent=currentLevel;if(currentLevel>50){gameState='win';drawWin();}else initLevel();}
+  if(bricks.length===0){score+=100;document.getElementById('sc').textContent=score;if(score>bestScore){bestScore=score;localStorage.setItem('brick_best',bestScore);document.getElementById('bs').textContent=bestScore;}currentLevel++;document.getElementById('lvl').textContent=currentLevel;if(currentLevel>maxUnlockedLevel){maxUnlockedLevel=currentLevel;localStorage.setItem('brick_maxLevel',''+maxUnlockedLevel);}if(currentLevel>50){gameState='win';drawWin();}else initLevel();}
   particles=particles.filter(p=>{p.x+=p.dx;p.y+=p.dy;p.life--;return p.life>0;});
   // Powerup update
   powerups=powerups.filter(p=>{
@@ -366,14 +370,44 @@ function drawPause(){
   ctx.fillText('Press P to Resume',CW/2,CH/2+25);
 }
 
+var maxUnlockedLevel=Math.max(1,parseInt(localStorage.getItem('brick_maxLevel')||'1'));
 function drawMenu(){
   ctx.fillStyle='#0a1628';ctx.fillRect(0,0,CW,CH);
-  ctx.fillStyle='#4ecdc4';ctx.font='bold 40px Arial';ctx.textAlign='center';
-  ctx.fillText('🧱 BRICK BREAKER',CW/2,CH/2-40);
-  ctx.fillStyle='#e0e0e0';ctx.font='20px Arial';
-  ctx.fillText('Press SPACE or Tap to Start',CW/2,CH/2+20);
+  ctx.fillStyle='#4ecdc4';ctx.font='bold 32px Arial';ctx.textAlign='center';
+  ctx.fillText('🧱 BRICK BREAKER',CW/2,60);
+  ctx.fillStyle='#e0e0e0';ctx.font='16px Arial';
+  ctx.fillText('Select Level:',CW/2,95);
+  // Draw level grid
+  var cols=8,bw=48,bh=32,gap=6,startX=(CW-cols*(bw+gap)+gap)/2,startY=115;
+  for(var i=0;i<50;i++){
+    var col=i%cols,row=Math.floor(i/cols);
+    var bx=startX+col*(bw+gap),by=startY+row*(bh+gap);
+    var unlocked=i+1<=maxUnlockedLevel;
+    ctx.fillStyle=unlocked?'#1a3a5c':'#111';
+    ctx.fillRect(bx,by,bw,bh);
+    ctx.strokeStyle=unlocked?'#4ecdc4':'#333';ctx.lineWidth=1;ctx.strokeRect(bx,by,bw,bh);
+    ctx.fillStyle=unlocked?'#e0e0e0':'#444';ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(''+(i+1),bx+bw/2,by+bh/2);
+  }
+  ctx.textBaseline='alphabetic';
+  ctx.fillStyle='#888';ctx.font='14px Arial';
+  ctx.fillText('Tap a level or press SPACE for Level 1',CW/2,CH-30);
 }
 drawMenu();
+// Handle level select click
+canvas.addEventListener('click',function levelSelect(e){
+  if(gameState!=='menu')return;
+  var rect=canvas.getBoundingClientRect();
+  var mx=(e.clientX-rect.left)*(CW/rect.width),my=(e.clientY-rect.top)*(CH/rect.height);
+  var cols=8,bw=48,bh=32,gap=6,startX=(CW-cols*(bw+gap)+gap)/2,startY=115;
+  for(var i=0;i<50;i++){
+    var col=i%cols,row=Math.floor(i/cols);
+    var bx=startX+col*(bw+gap),by=startY+row*(bh+gap);
+    if(mx>=bx&&mx<=bx+bw&&my>=by&&my<=by+bh&&i+1<=maxUnlockedLevel){
+      startGame(i+1);return;
+    }
+  }
+});
 
 canvas.addEventListener('mousemove',e=>{
   const rect=canvas.getBoundingClientRect();
@@ -387,8 +421,8 @@ canvas.addEventListener('touchmove',e=>{
 },{passive:false});
 
 function handleLaunch(){
-  if(gameState==='menu'){startGame();return;}
-  if(gameState==='over'||gameState==='win'){startGame();return;}
+  if(gameState==='menu'){startGame(1);return;}
+  if(gameState==='over'||gameState==='win'){startGame(1);return;}
   if(!launched&&!paused){launched=true;balls[0].dx=3.5;balls[0].dy=-3.5;}
 }
 
