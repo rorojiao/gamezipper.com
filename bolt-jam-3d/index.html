@@ -360,7 +360,7 @@
 const COLORS = [
   { hex: 0xFF4444, name: 'Red',    css: '#FF4444' },
   { hex: 0xFF8C00, name: 'Orange', css: '#FF8C00' },
-  { hex: 0xFFD700, name: 'Yellow', css: '#FFD700' },
+  { hex: 0xE6B800, name: 'Yellow', css: '#E6B800' },
   { hex: 0x44BB44, name: 'Green',  css: '#44BB44' },
   { hex: 0x4488FF, name: 'Blue',   css: '#4488FF' },
   { hex: 0xAA44FF, name: 'Purple', css: '#AA44FF' },
@@ -493,8 +493,10 @@ table.position.y = -0.1;
 table.receiveShadow = true;
 scene.add(table);
 
-// Raycaster
+// Raycaster - expand params for easier tap on small rods
 const raycaster = new THREE.Raycaster();
+raycaster.params.Line = { threshold: 0.1 };
+raycaster.params.Points = { threshold: 0.1 };
 const mouse = new THREE.Vector2();
 
 // ============================================================
@@ -630,6 +632,15 @@ function buildScene(levelConfig, disks) {
     tip.userData = { rodIndex: i, type: 'tip' };
     rodGroup.add(tip);
     rodBases.push(tip);
+
+    // Invisible wide hit area for easier tapping
+    const hitGeo = new THREE.CylinderGeometry(0.55, 0.55, 4.5, 8);
+    const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+    const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+    hitMesh.position.set(pos.x, 2.1, pos.z);
+    hitMesh.userData = { rodIndex: i, type: 'hit' };
+    rodGroup.add(hitMesh);
+    rodBases.push(hitMesh);
 
     // Disks
     diskMeshes.push([]);
@@ -974,13 +985,12 @@ function highlightValidTargets(srcRodIdx) {
   for (let i = 0; i < rodDisks.length; i++) {
     if (i === srcRodIdx) continue;
     if (rodDisks[i].length < capacity) {
-      // Highlight base green
-      const base = rodBases.find(b => b.userData.rodIndex === i && b.userData.type === 'base');
-      if (base) {
-        base.material.color.setHex(0x44BB44);
-        base.material.emissive = new THREE.Color(0x004400);
-        base.material.emissiveIntensity = 0.3;
-      }
+      // Highlight base green + rod shaft
+      rodBases.filter(b => b.userData.rodIndex === i).forEach(mesh => {
+        mesh.material.color.setHex(0x44BB44);
+        mesh.material.emissive = new THREE.Color(0x004400);
+        mesh.material.emissiveIntensity = 0.5;
+      });
     }
   }
 }
@@ -991,6 +1001,13 @@ function clearBaseHighlights() {
     if (base.material.emissive) {
       base.material.emissive.setHex(0x000000);
       base.material.emissiveIntensity = 0;
+    }
+  });
+  rodBases.filter(b => b.userData.type !== 'base').forEach(mesh => {
+    mesh.material.color.setHex(0x8B6914);
+    if (mesh.material.emissive) {
+      mesh.material.emissive.setHex(0x000000);
+      mesh.material.emissiveIntensity = 0;
     }
   });
 }
