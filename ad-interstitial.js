@@ -73,6 +73,7 @@
     
     overlay.innerHTML = html;
     document.body.appendChild(overlay);
+    if (window.GZMonetagSafe) { window.GZMonetagSafe.maybeLoad(216786); }
     markAdShown();
     
     document.getElementById('gz-dismiss').addEventListener('click', function() {
