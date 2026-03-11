@@ -2,25 +2,16 @@
   'use strict';
   if (window.GZMonetagSafe) return;
 
-  var state = { loaded:false, loading:false, zone:null, timers:[] };
+  function onGamePage() {
+    return location.pathname !== '/' && /\/$/.test(location.pathname) && !/games\.html$/.test(location.pathname);
+  }
 
-  function inject(zone) {
-    if (state.loaded || state.loading || !zone) return false;
-    state.loading = true;
-    state.zone = zone;
-    var s = document.createElement('script');
-    s.src = 'https://quge5.com/88/tag.min.js';
-    s.async = true;
-    s.setAttribute('data-zone', String(zone));
-    s.setAttribute('data-cfasync', 'false');
-    s.onload = function(){ state.loaded = true; state.loading = false; };
-    s.onerror = function(){ state.loading = false; };
-    document.head.appendChild(s);
-    return true;
+  function onHubPage() {
+    return location.pathname === '/' || /games\.html$/.test(location.pathname);
   }
 
   function hasBlockingOverlay() {
-    var ids = ['tutorial-overlay','menu-overlay','level-overlay','win-overlay','fail-overlay'];
+    var ids = ['tutorial-overlay','menu-overlay','level-overlay','win-overlay','fail-overlay','gz-more-games'];
     return ids.some(function(id){
       var el = document.getElementById(id);
       if (!el) return false;
@@ -29,35 +20,38 @@
     });
   }
 
-  function onGamePage() {
-    return location.pathname !== '/' && /\/$/.test(location.pathname) && !/games\.html$/.test(location.pathname);
+  function shouldInjectThirdParty() {
+    // 用户要求：不能中断游戏。当前第三方广告脚本会带来弹出/打断风险，统一禁用。
+    return false;
   }
 
-  function scheduleHubLoad(zone) {
-    if (onGamePage()) return;
-    var fired = false;
-    function fire(){ if (fired) return; fired = true; if (!hasBlockingOverlay()) inject(zone); }
-    window.addEventListener('scroll', function(){ if (window.scrollY > 600) fire(); }, { passive:true, once:true });
-    document.addEventListener('click', function(e){
-      if (e.target.closest('a[href*="/"]')) fire();
-    }, { once:true, capture:true });
-    state.timers.push(setTimeout(fire, 15000));
+  function inject(zone) {
+    if (!shouldInjectThirdParty()) return false;
+    return false;
   }
 
-  function scheduleGameSafeLoad(zone) {
-    if (!onGamePage()) return;
-    window.addEventListener('gz-safe-ad-moment', function(){ if (!hasBlockingOverlay()) inject(zone); });
-    document.addEventListener('click', function(e){
-      if (e.target.closest('#game-footer a, a[href="/"], .gz-seo-section a, .faq-section a')) {
-        if (!hasBlockingOverlay()) inject(zone);
-      }
-    }, { capture:true });
+  function init(){
+    if (onGamePage()) {
+      console.log('[GZMonetagSafe] disabled on game page for UX protection');
+      return;
+    }
+    if (onHubPage()) {
+      console.log('[GZMonetagSafe] third-party pop / interstitial disabled; using inline promo rail only');
+    }
   }
 
   window.GZMonetagSafe = {
-    init: function(zone){ scheduleHubLoad(zone); scheduleGameSafeLoad(zone); },
-    loadNow: inject,
-    maybeLoad: function(zone){ if (!hasBlockingOverlay()) inject(zone); },
-    hasBlockingOverlay: hasBlockingOverlay
+    init: function(){ init(); },
+    loadNow: function(){ return false; },
+    maybeLoad: function(){ return false; },
+    hasBlockingOverlay: hasBlockingOverlay,
+    disabled: true,
+    mode: 'inline-only'
   };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once:true });
+  } else {
+    init();
+  }
 })();
