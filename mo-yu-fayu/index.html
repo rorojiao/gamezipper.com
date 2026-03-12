@@ -171,6 +171,7 @@ const player={x:120,y:200,w:22,h:26,spd:120};
 const towers=[],bosses=[],coinDrops=[],bullets=[],fx=[],floatingTexts=[];
 const keys={};
 const guideSlots=[{x:120,y:170},{x:120,y:330},{x:250,y:250}];
+let pointerState={active:false,id:null,startX:0,startY:0,moved:false};
 
 // Wave config
 function waveCfg(w){
@@ -503,31 +504,60 @@ document.getElementById('btnSpeed').onclick=()=>{
 };
 document.getElementById('btnStart').onclick=startGame;
 
-canvas.addEventListener('click',e=>{
+function canvasPoint(clientX, clientY){
   const r=canvas.getBoundingClientRect();
   const sx=canvas.width/r.width,sy=canvas.height/r.height;
-  const cx=(e.clientX-r.left)*sx,cy=(e.clientY-r.top)*sy;
+  return {cx:(clientX-r.left)*sx, cy:(clientY-r.top)*sy, left:r.left, top:r.top, width:r.width, height:r.height};
+}
+
+function handleCanvasTap(clientX, clientY){
+  const {cx, cy}=canvasPoint(clientX, clientY);
   if(buildMode){
     const slot=nearestGuideSlot(cx,cy);
     if(!towers.some(t=>Math.hypot(t.x-slot.x,t.y-slot.y)<24)) buildTower(slot.x,slot.y);
     else buildTower(cx,cy);
-    return;
+    return true;
   }
   let hit=null;
-  for(const t of towers)if(Math.hypot(t.x-cx,t.y-cy)<t.r+6){hit=t;break;}
+  for(const t of towers) if(Math.hypot(t.x-cx,t.y-cy)<t.r+10){hit=t;break;}
   selectedTower=hit===selectedTower?null:hit;
   refreshTutorial();
-});
+  return !!hit;
+}
 
-// Touch joystick
+// Pointer-first input: tap to build/select, drag on left zone to move
 let joy={a:false,sx:0,sy:0};
-canvas.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];joy={a:true,sx:t.clientX,sy:t.clientY};},{passive:false});
-canvas.addEventListener('touchmove',e=>{
-  e.preventDefault();if(!joy.a)return;
-  const t=e.touches[0],dx=t.clientX-joy.sx,dy=t.clientY-joy.sy;
+canvas.addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  const {cx, cy}=canvasPoint(e.clientX, e.clientY);
+  pointerState={active:true,id:e.pointerId,startX:e.clientX,startY:e.clientY,moved:false};
+  if(buildMode){
+    handleCanvasTap(e.clientX, e.clientY);
+    return;
+  }
+  if(cx < canvas.width * 0.35){
+    joy={a:true,sx:e.clientX,sy:e.clientY};
+  }
+},{passive:false});
+canvas.addEventListener('pointermove',e=>{
+  if(!pointerState.active || e.pointerId!==pointerState.id) return;
+  const dx=e.clientX-pointerState.startX, dy=e.clientY-pointerState.startY;
+  if(Math.hypot(dx,dy)>10) pointerState.moved=true;
+  if(!joy.a) return;
   keys['a']=dx<-15;keys['d']=dx>15;keys['w']=dy<-15;keys['s']=dy>15;
 },{passive:false});
-canvas.addEventListener('touchend',e=>{joy.a=false;keys['a']=keys['d']=keys['w']=keys['s']=false;});
+canvas.addEventListener('pointerup',e=>{
+  if(pointerState.active && e.pointerId===pointerState.id && !pointerState.moved && !buildMode){
+    handleCanvasTap(e.clientX, e.clientY);
+  }
+  pointerState.active=false;
+  joy.a=false;
+  keys['a']=keys['d']=keys['w']=keys['s']=false;
+},{passive:false});
+canvas.addEventListener('pointercancel',()=>{
+  pointerState.active=false; joy.a=false;
+  keys['a']=keys['d']=keys['w']=keys['s']=false;
+},{passive:false});
 
 requestAnimationFrame(ts=>{lastTime=ts;requestAnimationFrame(loop);});
 </script>
