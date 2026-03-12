@@ -17,6 +17,6 @@ test('mo-yu-fayu shows clear tower-defense onboarding on mobile', async ({ page 
   await page.getByRole('button', { name: /build mode/i }).click();
   await page.locator('canvas').click({ position: { x: 120, y: 170 } });
 
-  await expect(page.locator('#hudCoin')).toHaveText('$50');
+  await expect(page.locator('#hudCoin')).toHaveText('$60');
   await expect(page.getByText(/wave 1:/i)).toBeVisible();
 });
