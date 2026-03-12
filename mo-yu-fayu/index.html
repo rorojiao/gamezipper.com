@@ -4,8 +4,8 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-<title>SlackOff Defense - Free Online Office Survival Game | GameZipper</title>
-<meta content="Build office barriers, dodge your boss, and survive 8 inspection waves in SlackOff Defense. Play this free browser defense game instantly with no download." name="description"/>
+<title>SlackOff Defense - Free Online Office Tower Defense Game | GameZipper</title>
+<meta content="Deploy screen turrets, stop office inspectors, and survive 8 waves in SlackOff Defense. Play this free office tower defense game instantly with no download." name="description"/>
 <meta content="SlackOff Defense - Free Online Office Survival Game | GameZipper" property="og:title"/>
 <meta content="Build office barriers, dodge your boss, and survive 8 inspection waves in SlackOff Defense. Play instantly in your browser with no download." property="og:description"/>
 <meta content="website" property="og:type"/>
@@ -30,6 +30,14 @@ button:active{opacity:.7;}button:disabled{opacity:.35;cursor:default;}
 #overlay{position:absolute;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;z-index:10;gap:16px;}
 #overlay h1{font-size:26px;color:#ffd700;}#overlay p{font-size:13px;color:#ccc;text-align:center;max-width:280px;line-height:1.7;}
 #btnStart{padding:12px 32px;font-size:16px;border-radius:10px;border:none;cursor:pointer;font-weight:bold;background:#e94560;color:#fff;}
+
+#tutorialCard{position:absolute;left:12px;right:12px;top:58px;background:rgba(7,12,26,.92);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 12px;color:#fff;z-index:12;box-shadow:0 12px 30px rgba(0,0,0,.28);}
+#tutorialCard h2{font-size:14px;margin-bottom:4px;color:#ffd166;}
+#tutorialCard p{font-size:12px;line-height:1.45;color:#d9e2ff;}
+#tutorialCard .tip{font-size:11px;color:#8bd3ff;margin-top:4px;}
+#tutorialCard[hidden]{display:none !important;}
+.slot-guide{position:absolute;border:2px dashed rgba(255,209,102,.9);border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,0);pointer-events:none;animation:pulseGuide 1.2s infinite;}
+@keyframes pulseGuide{0%{transform:scale(1);opacity:.95}50%{transform:scale(1.04);opacity:.55}100%{transform:scale(1);opacity:.95}}
 #homeLink{position:fixed;top:max(8px,env(safe-area-inset-top));left:8px;z-index:20;background:rgba(0,0,0,.72);color:#4ecdc4;padding:8px 10px;border-radius:999px;text-decoration:none;font:600 12px/1 'Segoe UI',Arial,sans-serif;backdrop-filter:blur(4px);}
 .faq-section{display:none;}
 @media (min-width: 900px){
@@ -42,7 +50,7 @@ button:active{opacity:.7;}button:disabled{opacity:.35;cursor:default;}
   "@context": "https://schema.org",
   "@type": "VideoGame",
   "name": "SlackOff Defense",
-  "description": "Build office screens to block your boss in SlackOff Defense! Survive 8 inspection waves to clock out in this fun free casual defense game. Play instantly in your browser.",
+  "description": "Deploy office screen turrets, stop inspectors, and survive 8 waves in SlackOff Defense. A fast mobile-first office tower defense game you can play instantly in your browser.",
   "url": "https://gamezipper.com/mo-yu-fayu/",
   "genre": [
     "Casual",
@@ -130,20 +138,21 @@ button:active{opacity:.7;}button:disabled{opacity:.35;cursor:default;}
 <div id="statusLabel"><span id="statusText">Press Start</span><span id="fishStatus"></span></div>
 <div id="bossBarOuter"><div id="bossBarInner"></div></div>
 </div>
+<div id="tutorialCard"><h2>Step 1 · Build your first screen turret</h2><p>Tap <strong>Build Mode</strong>, then tap a glowing slot near the path. Turrets auto-fire at inspectors.</p><p class="tip">After that: tap a turret to select it, then use Upgrade. Use Take Break between waves for extra cash.</p></div>
 <div id="controls">
 <div class="row">
-<button id="btnBuild">🏢 Build Screen $50</button>
+<button id="btnBuild">🏢 Build Mode $50</button>
 <button id="btnUpgrade">⬆️ Upgrade $100</button>
 </div>
 <div class="row">
-<button id="btnFish">😴 Slack Off</button>
+<button id="btnFish">😴 Take Break</button>
 <button id="btnSpeed">⚡ Speed ×2</button>
 </div>
 </div>
 <div id="overlay">
 <h1>SlackOff Defense</h1>
-<p>Build office screens to block your boss.<br/>Survive 8 inspection waves to clock out.<br/>Get caught 5 times and it is game over.</p>
-<p style="font-size:11px;color:#888;">WASD / joystick to move · T / button to build · Space to slack off</p>
+<p><strong>Office tower defense.</strong><br/>Build screen turrets, stop inspectors, and survive 8 waves.<br/>If 5 inspectors leak through, your shift is over.</p>
+<p style="font-size:11px;color:#888;">Tap Build Mode, then tap a glowing slot to place your first turret</p>
 <button id="btnStart">Start Shift 🏢</button>
 </div>
 </div>
@@ -156,11 +165,12 @@ resize();window.addEventListener('resize',resize);
 let coins=100,wave=1,leaked=0,gameState='idle',speedMult=1,fishing=false;
 let fishTimer=0,restTimer=0,waveSpawnTimer=0;
 const MAXWAVE=8,MAXLEAK=5,WAVEINTERVAL=2000;
-let waveQueue=[],selectedTower=null,lastTime=0;
+let waveQueue=[],selectedTower=null,lastTime=0,buildMode=false,firstBuildDone=false,tutorialDone=false;
 
 const player={x:120,y:200,w:22,h:26,spd:120};
 const towers=[],bosses=[],coinDrops=[],bullets=[];
 const keys={};
+const guideSlots=[{x:120,y:170},{x:120,y:330},{x:250,y:250}];
 
 // Wave config
 function waveCfg(w){return{count:w+1,hp:50+w*20,spd:50+w*10,reward:25};}
@@ -169,6 +179,49 @@ function buildWave(w){
   const c=waveCfg(w);waveQueue=[];
   for(let i=0;i<c.count;i++)waveQueue.push({...c});
   waveSpawnTimer=0;
+}
+
+function nearestGuideSlot(x,y){
+  let best=guideSlots[0],bd=Infinity;
+  for(const s of guideSlots){const d=Math.hypot(s.x-x,s.y-y);if(d<bd){bd=d;best=s;}}
+  return best;
+}
+
+function refreshTutorial(){
+  const card=document.getElementById('tutorialCard');
+  if(!card)return;
+  const title=card.querySelector('h2');
+  const body=card.querySelector('p');
+  const tip=card.querySelector('.tip');
+  if(gameState==='idle'){
+    card.hidden=false;
+    title.textContent='Step 1 · Build your first screen turret';
+    body.innerHTML='Tap <strong>Build Mode</strong>, then tap a glowing slot near the path. Turrets auto-fire at inspectors.';
+    tip.textContent='Office tower defense: stop inspectors before 5 leak through.';
+    return;
+  }
+  if(!firstBuildDone){
+    card.hidden=false;
+    title.textContent='Step 1 · Build your first screen turret';
+    body.innerHTML='Wave 1 is waiting. Tap <strong>Build Mode</strong>, then tap a glowing slot.';
+    tip.textContent=buildMode ? 'Build mode is ON — tap a glowing slot now.' : 'Your first build costs $50 and starts the action.';
+    return;
+  }
+  if(selectedTower && selectedTower.lvl===1){
+    card.hidden=false;
+    title.textContent='Step 2 · Upgrade your turret';
+    body.innerHTML='Tap <strong>Upgrade</strong> to improve damage and range. Stronger turrets stop waves faster.';
+    tip.textContent='You can still build more turrets anywhere on the floor.';
+    return;
+  }
+  if(!tutorialDone){
+    tutorialDone=true;
+    console.log('[mo-yu-fayu] tutorial:complete', {wave,coins,towers:towers.length});
+  }
+  card.hidden = wave > 2;
+  title.textContent='Goal';
+  body.innerHTML='Stop inspectors before 5 leak through. Use <strong>Take Break</strong> between waves for bonus cash.';
+  tip.textContent='Tap a turret to select it, then use Upgrade. Build near the path for best coverage.';
 }
 
 // HUD
@@ -182,26 +235,38 @@ function hud(){
   document.getElementById('bossBarInner').style.width=Math.max(0,tot/max*100)+'%';
   document.getElementById('statusText').textContent=
     gameState==='rest'?`Break time: Wave ${wave+1} starts in ${Math.ceil(restTimer/1000)}s`:
+    gameState==='playing'&&!firstBuildDone?'Build your first turret to start Wave 1':
     gameState==='playing'?`Wave ${wave}: ${waveQueue.length+bosses.length} bosses left`:
     gameState==='win'?'🎉 Shift complete!':'Ready';
+  document.getElementById('btnBuild').textContent = buildMode ? '✅ Tap a Slot' : '🏢 Build Mode $50';
 }
 
 // Build tower at position
 function buildTower(x,y){
-  if(coins<50||gameState!=='playing')return;
+  if(coins<50||gameState!=='playing')return false;
   x=Math.max(18,Math.min(canvas.width-18,x));
   y=Math.max(18,Math.min(canvas.height-18,y));
   coins-=50;
   towers.push({x,y,r:16,dmg:10,range:120,rate:1000,cd:0,lvl:1,hp:50,hpMax:50});
+  if(!firstBuildDone){
+    firstBuildDone=true;
+    buildMode=false;
+    console.log('[mo-yu-fayu] tutorial:first-build', {x,y,coins});
+  }
   hud();
+  refreshTutorial();
+  return true;
 }
 
 function upgradeTower(t){
-  if(!t||t.lvl>=3||coins<100)return;
+  if(!t||t.lvl>=3||coins<100)return false;
   coins-=100;t.lvl++;
   if(t.lvl===2){t.dmg=20;t.range=160;t.rate=800;}
   else{t.dmg=40;t.range=200;t.rate=600;}
+  console.log('[mo-yu-fayu] turret:upgrade', {level:t.lvl,coins});
   hud();
+  refreshTutorial();
+  return true;
 }
 
 // Update
@@ -222,7 +287,7 @@ function update(dt){
   else fishTimer=0;
 
   // Spawn bosses
-  if(waveQueue.length>0){
+  if(waveQueue.length>0 && firstBuildDone){
     waveSpawnTimer+=dt;
     if(waveSpawnTimer>=WAVEINTERVAL){
       const cfg=waveQueue.shift();
@@ -287,7 +352,7 @@ function update(dt){
   }
 
   // Wave cleared
-  if(waveQueue.length===0&&bosses.length===0){
+  if(firstBuildDone && waveQueue.length===0&&bosses.length===0){
     coins+=50;
     if(wave>=MAXWAVE){endGame(true);return;}
     gameState='rest';restTimer=3000;
@@ -330,6 +395,14 @@ function draw(){
     ctx.fillText('¥',c.x,c.y);
     ctx.globalAlpha=1;
   }
+  if(buildMode && gameState==='playing'){
+    for(const slot of guideSlots){
+      if(towers.some(t=>Math.hypot(t.x-slot.x,t.y-slot.y)<24)) continue;
+      ctx.strokeStyle='rgba(255,209,102,0.95)';ctx.lineWidth=3;ctx.setLineDash([6,5]);
+      ctx.strokeRect(slot.x-20,slot.y-20,40,40);ctx.setLineDash([]);
+      ctx.fillStyle='rgba(255,209,102,0.12)';ctx.fillRect(slot.x-20,slot.y-20,40,40);
+    }
+  }
   // Towers
   for(const t of towers){
     const col=t.lvl===1?'#1565c0':t.lvl===2?'#6a1b9a':'#2e7d32';
@@ -367,14 +440,16 @@ function loop(ts){
 }
 
 function startGame(){
-  coins=100;wave=1;leaked=0;gameState='playing';speedMult=1;fishing=false;fishTimer=0;
+  coins=100;wave=1;leaked=0;gameState='playing';speedMult=1;fishing=false;fishTimer=0;buildMode=false;firstBuildDone=false;tutorialDone=false;
   towers.length=0;bosses.length=0;coinDrops.length=0;bullets.length=0;
   player.x=120;player.y=canvas.height/2;
   selectedTower=null;
   buildWave(1);
   document.getElementById('overlay').style.display='none';
   document.getElementById('btnSpeed').textContent='⚡ Speed ×2';
+  console.log('[mo-yu-fayu] start', {wave,coins});
   hud();
+  refreshTutorial();
 }
 
 // Input
@@ -385,12 +460,12 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{keys[e.key]=false;});
 
-document.getElementById('btnBuild').onclick=()=>buildTower(player.x,player.y);
+document.getElementById('btnBuild').onclick=()=>{ buildMode=!buildMode; console.log('[mo-yu-fayu] build-mode', {buildMode}); hud(); refreshTutorial(); };
 document.getElementById('btnUpgrade').onclick=()=>{
   const t=selectedTower||(towers.reduce((b,t)=>{const d=Math.hypot(t.x-player.x,t.y-player.y);return d<(b?Math.hypot(b.x-player.x,b.y-player.y):Infinity)?t:b;},null));
   if(t)upgradeTower(t);
 };
-document.getElementById('btnFish').onclick=()=>{fishing=!fishing;hud();};
+document.getElementById('btnFish').onclick=()=>{fishing=!fishing; console.log('[mo-yu-fayu] break-toggle', {fishing}); hud(); refreshTutorial();};
 document.getElementById('btnSpeed').onclick=()=>{
   speedMult=speedMult===1?2:1;
   document.getElementById('btnSpeed').textContent=speedMult===2?'⚡ Normal Speed':'⚡ Speed ×2';
@@ -401,9 +476,16 @@ canvas.addEventListener('click',e=>{
   const r=canvas.getBoundingClientRect();
   const sx=canvas.width/r.width,sy=canvas.height/r.height;
   const cx=(e.clientX-r.left)*sx,cy=(e.clientY-r.top)*sy;
+  if(buildMode){
+    const slot=nearestGuideSlot(cx,cy);
+    if(!towers.some(t=>Math.hypot(t.x-slot.x,t.y-slot.y)<24)) buildTower(slot.x,slot.y);
+    else buildTower(cx,cy);
+    return;
+  }
   let hit=null;
   for(const t of towers)if(Math.hypot(t.x-cx,t.y-cy)<t.r+6){hit=t;break;}
   selectedTower=hit===selectedTower?null:hit;
+  refreshTutorial();
 });
 
 // Touch joystick
@@ -420,7 +502,7 @@ requestAnimationFrame(ts=>{lastTime=ts;requestAnimationFrame(loop);});
 </script>
 <section class="faq-section">
 <h2 style="font-size:20px;font-weight:700;color:#fff;margin-bottom:16px;">FAQ</h2>
-<div class="faq-item"><h3>How do you play SlackOff Defense?</h3><p>Place office screens to block your boss during each inspection wave. Spend cash carefully, upgrade your defenses, and survive all 8 rounds without leaking too many bosses through.</p></div>
+<div class="faq-item"><h3>How do you play SlackOff Defense?</h3><p>Tap Build Mode, place screen turrets on the office floor, and stop inspectors before they leak through the right side. Upgrade turrets and survive all 8 waves.</p></div>
 <div class="faq-item"><h3>Is SlackOff Defense free?</h3><p>Yes. You can play SlackOff Defense for free in your browser on GameZipper with no download or sign-up required.</p></div>
 <div class="faq-item"><h3>Can I play on mobile?</h3><p>Yes. The game supports touch controls on phones and tablets, and the play area now fills the full screen for a better mobile experience.</p></div>
 </section>
@@ -472,5 +554,6 @@ requestAnimationFrame(ts=>{lastTime=ts;requestAnimationFrame(loop);});
 <script src="/monetag-safe.js"></script>
 <script>window.GZMonetagSafe&&window.GZMonetagSafe.init(216786);</script>
 <script src="/ad-interstitial.js"></script>
+<script>new Image().src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p="+encodeURIComponent(location.pathname);</script>
 </body>
 </html>
