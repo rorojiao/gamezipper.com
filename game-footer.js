@@ -1,4 +1,9 @@
 (function(){
+  try {
+    var img = new Image();
+    img.src = 'https://site-analytics.cap.1ktower.com/hit?s=' + encodeURIComponent(location.hostname || 'gamezipper.com') + '&p=' + encodeURIComponent(location.pathname || '/') + '&t=' + Date.now();
+  } catch (e) {}
+
   var games = [
     {n:'2048',e:'🔢',u:'/2048/',c:'puzzle'},
     {n:'Snake',e:'🐍',u:'/snake/',c:'arcade'},
