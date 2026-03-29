@@ -46,7 +46,7 @@
   var d = document.createElement('section');
   d.id = 'game-footer';
   d.setAttribute('aria-label', 'Related games');
-  d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,26,0.96);padding:8px 12px;z-index:99998;border-top:1px solid #333;display:none';
+  d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,26,0.96);padding:8px 12px;z-index:100;border-top:1px solid #333;display:none';
 
   var h = '<div style="display:flex;align-items:center;gap:8px;overflow-x:auto;white-space:nowrap">';
   h += '<span style="color:#4ecdc4;font-size:11px;font-family:sans-serif;flex-shrink:0">Related Games:</span>';
