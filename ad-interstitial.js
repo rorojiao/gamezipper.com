@@ -66,7 +66,7 @@
       '  <div class="gz-head">',
       '    <div>',
       '      <div class="gz-title">🎮 Continue with another quick game</div>',
-      '      <div class="gz-sub">只做页面内推荐，不弹窗、不遮挡、不打断操作。</div>',
+      '      <div class="gz-sub">In-page recommendations only. No popups, no overlays, no interruptions.</div>',
       '    </div>',
       '  </div>',
       '  <div class="gz-grid">',

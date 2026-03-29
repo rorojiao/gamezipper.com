@@ -23,17 +23,17 @@ ANIMAL_NAMES.forEach(name => {
 });
 
 const THEMES = {
-  '🐱动物': ANIMAL_NAMES.slice(0, 15),
-  '🍎水果': ['🍎','🍊','🍋','🍇','🍓','🍑','🍒','🍌','🥝','🍍','🍉','🍐','🥭','🍈','🍐'],
-  '🏳️旗帜': ['🏁','🚩','🎌','🏴','⛳','🔴','🔵','🟢','🟡','🟠','🟣','⚪','🟤','⬛','💜'],
-  '😀表情': ['😀','😂','🥰','😎','🤩','😴','🤔','😱','🥳','🤪','😈','👻','💀','🤖','👽']
+  '🐱 Animals': ANIMAL_NAMES.slice(0, 15),
+  '🍎 Fruits': ['🍎','🍊','🍋','🍇','🍓','🍑','🍒','🍌','🥝','🍍','🍉','🍐','🥭','🍈','🍐'],
+  '🏳️ Flags': ['🏁','🚩','🎌','🏴','⛳','🔴','🔵','🟢','🟡','🟠','🟣','⚪','🟤','⬛','💜'],
+  '😀 Emojis': ['😀','😂','🥰','😎','🤩','😴','🤔','😱','🥳','🤪','😈','👻','💀','🤖','👽']
 };
 const THEME_KEYS = Object.keys(THEMES);
 const DIFFICULTIES = [
-  { name: '简单', cols: 4, rows: 3, pairs: 6 },
-  { name: '普通', cols: 4, rows: 4, pairs: 8 },
-  { name: '困难', cols: 5, rows: 4, pairs: 10 },
-  { name: '地狱', cols: 6, rows: 5, pairs: 15 }
+  { name: 'Easy', cols: 4, rows: 3, pairs: 6 },
+  { name: 'Normal', cols: 4, rows: 4, pairs: 8 },
+  { name: 'Hard', cols: 5, rows: 4, pairs: 10 },
+  { name: 'Insane', cols: 6, rows: 5, pairs: 15 }
 ];
 
 // ========== STATE ==========
@@ -367,7 +367,7 @@ function drawHUD(now) {
   ctx.fillText(diff.name + ' ' + THEME_KEYS[currentTheme], 12, 25);
   
   ctx.textAlign = 'center';
-  ctx.fillText('步数: ' + steps, W/2, 25);
+  ctx.fillText('Steps: ' + steps, W/2, 25);
   
   ctx.textAlign = 'right';
   ctx.fillText('⏱ ' + formatTime(elapsed), W - 12, 25);
@@ -380,8 +380,8 @@ function drawHUD(now) {
   ctx.fillStyle = '#fff';
   ctx.font = '14px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('主题: ' + THEME_KEYS[currentTheme], W/4, H - 28);
-  ctx.fillText('🏠 菜单', W * 3/4, H - 28);
+  ctx.fillText('Theme: ' + THEME_KEYS[currentTheme], W/4, H - 28);
+  ctx.fillText('🏠 Menu', W * 3/4, H - 28);
 }
 
 function drawMenu(now) {
@@ -392,11 +392,11 @@ function drawMenu(now) {
   ctx.font = 'bold 42px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('🧠 记忆大师', W/2, H * 0.12);
+  ctx.fillText('🧠 Memory Master', W/2, H * 0.12);
   
   ctx.font = '16px sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  ctx.fillText('翻牌配对记忆游戏', W/2, H * 0.18);
+  ctx.fillText('Flip & Match Memory Game', W/2, H * 0.18);
   
   // Difficulty buttons
   const btnW = Math.min(220, W * 0.6);
@@ -431,7 +431,7 @@ function drawMenu(now) {
     if (bestScores[key]) {
       ctx.font = '12px sans-serif';
       ctx.fillStyle = i === currentDiff ? '#999' : 'rgba(255,255,255,0.6)';
-      ctx.fillText('最佳: ' + bestScores[key].steps + '步 ' + formatTime(bestScores[key].time), W/2, y + btnH/2 + 18);
+      ctx.fillText('Best: ' + bestScores[key].steps + ' moves ' + formatTime(bestScores[key].time), W/2, y + btnH/2 + 18);
       ctx.font = 'bold 18px sans-serif';
     }
   });
@@ -441,7 +441,7 @@ function drawMenu(now) {
   ctx.font = 'bold 16px sans-serif';
   ctx.fillStyle = '#fff';
   ctx.textAlign = 'center';
-  ctx.fillText('选择主题', W/2, themeY);
+  ctx.fillText('Select Theme', W/2, themeY);
   
   const tBtnW = Math.min(100, (W - 40) / 4 - 8);
   const tStartX = (W - (tBtnW * 4 + 24)) / 2;
@@ -477,7 +477,7 @@ function drawMenu(now) {
   ctx.font = 'bold 22px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('开始游戏 🎮', W/2, startBtnY + 27);
+  ctx.fillText('Start Game 🎮', W/2, startBtnY + 27);
   
   // Store button rects for click handling
   window._menuBtns = {
@@ -505,7 +505,7 @@ function drawComplete(now) {
   ctx.font = 'bold 28px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('🎉 完成！', W/2, boxY + 40);
+  ctx.fillText('🎉 Complete!', W/2, boxY + 40);
   
   // Stars
   const starStr = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
@@ -515,15 +515,15 @@ function drawComplete(now) {
   // Stats
   ctx.font = '18px sans-serif';
   ctx.fillStyle = '#666';
-  ctx.fillText('步数: ' + steps, W/2, boxY + 130);
-  ctx.fillText('用时: ' + formatTime(elapsed), W/2, boxY + 158);
+  ctx.fillText('Steps: ' + steps, W/2, boxY + 130);
+  ctx.fillText('Time: ' + formatTime(elapsed), W/2, boxY + 158);
   
   const diff = DIFFICULTIES[currentDiff];
   const key = currentTheme + '_' + currentDiff;
   if (bestScores[key]) {
     ctx.font = '14px sans-serif';
     ctx.fillStyle = '#999';
-    ctx.fillText('最佳: ' + bestScores[key].steps + '步 ' + formatTime(bestScores[key].time), W/2, boxY + 185);
+    ctx.fillText('Best: ' + bestScores[key].steps + ' moves ' + formatTime(bestScores[key].time), W/2, boxY + 185);
   }
   
   // Buttons
@@ -537,7 +537,7 @@ function drawComplete(now) {
   ctx.fill();
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 16px sans-serif';
-  ctx.fillText('🔄 重玩', boxX + 12 + btnW/2, btnY + btnH/2);
+  ctx.fillText('🔄 Retry', boxX + 12 + btnW/2, btnY + btnH/2);
   
   // Next / Menu
   drawRoundRect(boxX + boxW - 12 - btnW, btnY, btnW, btnH, 10);
@@ -545,9 +545,9 @@ function drawComplete(now) {
   ctx.fill();
   ctx.fillStyle = '#fff';
   if (currentDiff < DIFFICULTIES.length - 1) {
-    ctx.fillText('下一关 ▶', boxX + boxW - 12 - btnW/2, btnY + btnH/2);
+    ctx.fillText('Next ▶', boxX + boxW - 12 - btnW/2, btnY + btnH/2);
   } else {
-    ctx.fillText('🏠 菜单', boxX + boxW - 12 - btnW/2, btnY + btnH/2);
+    ctx.fillText('🏠 Menu', boxX + boxW - 12 - btnW/2, btnY + btnH/2);
   }
   
   window._completeBtns = {
@@ -562,7 +562,7 @@ function drawComplete(now) {
   ctx.fill();
   ctx.fillStyle = "#fff";
   ctx.font = "bold 14px sans-serif";
-  ctx.fillText("📤 分享", boxX + boxW/2, shareBtnY + 18);
+  ctx.fillText("📤 Share", boxX + boxW/2, shareBtnY + 18);
   };
 }
 
@@ -590,7 +590,7 @@ function frame(now) {
       ctx.textBaseline = 'middle';
       const remaining = Math.max(0, 2 - (now - peekTimer) / 1000);
       ctx.fillStyle = '#fff';
-      ctx.fillText('记住它们！ ' + remaining.toFixed(1) + 's', W/2, H - 80);
+      ctx.fillText('Remember! ' + remaining.toFixed(1) + 's', W/2, H - 80);
     }
   } else if (state === 'complete') {
     // Draw cards underneath
@@ -707,8 +707,8 @@ function handleClick(px, py) {
     if (!b) return;
     if (inRect(px, py, b.replay)) { startGame(); return; }
     if (b.share && inRect(px, py, b.share)) {
-      var text = "🧠 记忆大师 - " + DIFFICULTIES[currentDiff].name + " " + THEME_KEYS[currentTheme] + "\n步数: " + steps + " | 用时: " + formatTime(elapsed) + " | ⭐".repeat(stars) + "\n" + location.href;
-      if (navigator.share) { try { navigator.share({title:"记忆大师", text:text, url:location.href}); } catch(e){} }
+      var text = "🧠 Memory Master - " + DIFFICULTIES[currentDiff].name + " " + THEME_KEYS[currentTheme] + "\nSteps: " + steps + " | Time: " + formatTime(elapsed) + " | ⭐".repeat(stars) + "\n" + location.href;
+      if (navigator.share) { try { navigator.share({title:"Memory Master", text:text, url:location.href}); } catch(e){} }
       else if (navigator.clipboard) { navigator.clipboard.writeText(text); }
       return;
     }

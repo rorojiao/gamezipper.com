@@ -1,0 +1,44 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - link "🏠 More Games" [ref=e2] [cursor=pointer]:
+    - /url: https://gamezipper.com/
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: $60
+      - generic [ref=e6]: Wave 1 / 8
+      - generic [ref=e7]: "Leaks: 0/5"
+    - generic [ref=e11]: "Wave 1: 2 bosses left"
+    - generic [ref=e14]:
+      - heading "Step 2 · Upgrade your turret" [level=2] [ref=e15]
+      - paragraph [ref=e16]:
+        - text: Tap
+        - strong [ref=e17]: Upgrade
+        - text: to improve damage and range. Stronger turrets stop waves faster.
+      - paragraph [ref=e18]: You can still build more turrets anywhere on the floor.
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - button "🏢 Build Mode $40" [ref=e21] [cursor=pointer]
+        - button "⬆️ Upgrade $80" [ref=e22] [cursor=pointer]
+      - generic [ref=e23]:
+        - button "😴 Take Break" [ref=e24] [cursor=pointer]
+        - button "⚡ Speed ×2" [ref=e25] [cursor=pointer]
+  - region "Related games" [ref=e26]:
+    - generic [ref=e27]:
+      - generic [ref=e28]: "Related Games:"
+      - link "🐦 Flappy Wings" [ref=e29] [cursor=pointer]:
+        - /url: /flappy-wings/
+      - link "⌨️ Typing Speed" [ref=e30] [cursor=pointer]:
+        - /url: /typing-speed/
+      - link "⚔️ Phantom Blade" [ref=e31] [cursor=pointer]:
+        - /url: /phantom-blade/
+      - link "🍰 Dessert Blast" [ref=e32] [cursor=pointer]:
+        - /url: /dessert-blast/
+      - link "🐱 Kitty Cafe" [ref=e33] [cursor=pointer]:
+        - /url: /kitty-cafe/
+      - link "📝 Word Puzzle" [ref=e34] [cursor=pointer]:
+        - /url: /word-puzzle/
+      - link "🎮 All Games" [ref=e35] [cursor=pointer]:
+        - /url: /
+```
