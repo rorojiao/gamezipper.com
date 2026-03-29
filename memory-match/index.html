@@ -155,7 +155,35 @@ canvas{display:block;width:100%;height:100%;touch-action:none;position:relative;
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 let W = canvas.width = window.innerWidth;
-let H = canvas.height = window.innerHeight;
+let H = canvas.height = window.innerHeight;const themes={
+  animals:['🐶','🐱','🐰','🦊','🐻','🐼','🐨','🦁','🐸','🐵','🐷','🐮','🐔','🦄','🐝'],
+  fruits:['🍎','🍊','🍋','🍇','🍓','🍑','🍒','🥝','🍌','🍉','🫐','🥭','🍍','🥥','🍈'],
+  flags:['🇯🇵','🇰🇷','🇺🇸','🇬🇧','🇫🇷','🇩🇪','🇮🇹','🇪🇸','🇧🇷','🇨🇦','🇦🇺','🇷🇺','🇮🇳','🇲🇽','🇹🇷'],
+  faces:['😀','😂','🥰','😎','🤩','😜','🤗','😇','🥳','😏','🤔','😴','🤯','😱','🫡']
+};
+const themeNames={animals:'🐱 Animals',fruits:'🍎 Fruits',flags:'🌍 Flags',faces:'😀 Emoji'};
+const themeKeys=Object.keys(themes);
+const difficulties=[
+  {name:'Easy',cols:4,rows:3},
+  {name:'Normal',cols:4,rows:4},
+  {name:'Hard',cols:5,rows:4},
+  {name:'Extreme',cols:6,rows:5}
+];
+let state='menu';
+let selDiff=1, selTheme=0;
+let cards=[], cols=0, rows=0;
+let first=null, second=null, lockBoard=false;
+let moves=0, startTime=0, elapsed=0, timerInterval=null;
+let matched=0, totalPairs=0;
+let particles=[];
+let cardAnims={};
+let bestScores=JSON.parse(localStorage.getItem('mm_best')||'{}');
+let audioCtx2;
+function getAC2(){if(!audioCtx2)audioCtx2=new(window.AudioContext||window.webkitAudioContext)();return audioCtx2;}
+function sfxFlip(){try{const a=getAC2(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='sine';o.frequency.value=800;g.gain.setValueAtTime(.15,a.currentTime);g.gain.exponentialRampToValueAtTime(.01,a.currentTime+.08);o.start(a.currentTime);o.stop(a.currentTime+.08);}catch(e){}}
+function sfxMatch(){try{const a=getAC2();[523,659,784].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.2,a.currentTime+i*.08);g.gain.exponentialRampToValueAtTime(.01,a.currentTime+i*.08+.2);o.start(a.currentTime+i*.08);o.stop(a.currentTime+i*.08+.2);});}catch(e){}}
+function sfxFail(){try{const a=getAC2(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='square';o.frequency.setValueAtTime(300,a.currentTime);o.frequency.exponentialRampToValueAtTime(200,a.currentTime+.15);g.gain.setValueAtTime(.1,a.currentTime);g.gain.exponentialRampToValueAtTime(.01,a.currentTime+.15);o.start(a.currentTime);o.stop(a.currentTime+.15);}catch(e){}}
+
 window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
 
 
