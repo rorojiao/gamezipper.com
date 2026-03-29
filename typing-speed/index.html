@@ -262,6 +262,7 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
   </div>
 </div>
 <script>
+(function(){
 function renderText(){
   let html="";
   let inWord=false;
@@ -302,7 +303,7 @@ function spawnGreenLines(el){
 
 function reset(){
   running=false;finished=false;charIndex=0;correct=0;wrong=0;totalTyped=0;survivalErrors=0;lastWordEnd=0;
-  clearInterval(timerInterval);
+  timerInterval=null;
   text=genText();
   if(mode==="survival"){timeLeft=0;timerLbl.textContent="Errors";timerEl.textContent="0/3"}
   else{timeLeft=parseInt(mode);timerLbl.textContent="Time";timerEl.textContent=timeLeft}
@@ -312,16 +313,17 @@ function reset(){
 }
 
 function startTimer(){
-  if(mode==="survival"){startTime=Date.now();running=true;timerInterval=setInterval(updateStats,500);return}
+  if(mode==="survival"){startTime=Date.now();running=true;updateStats();return}
   startTime=Date.now();running=true;
-  timerInterval=setInterval(()=>{
+  function updateFrame(){
     const elapsed=(Date.now()-startTime)/1000|0;
     timeLeft=Math.max(0,parseInt(mode)-elapsed);
     timerEl.textContent=timeLeft;
     if(timeLeft<=5&&timeLeft>0)playCountdown();
     if(timeLeft<=0)endGame();
     updateStats();
-  },500);
+  }
+  updateFrame();
 }
 
 function updateStats(){
@@ -345,7 +347,7 @@ function updateStats(){
 }
 
 function endGame(){
-  finished=true;running=false;clearInterval(timerInterval);
+  finished=true;running=false;timerInterval=null;
   input.disabled=true;playCheer();
   // Matrix flood effect
   if(window.matrixFlood)window.matrixFlood();
