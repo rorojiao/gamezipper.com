@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Abyss Chef - Free Deep Sea Fishing Cooking Game | GameZipper</title>
+<meta name="description" content="Play Abyss Chef free! Help Ollie the octopus chef fish deep sea ingredients, cook amazing dishes, and run an underwater restaurant. 25 fish species, 30 days of service!">
+<meta property="og:title" content="Abyss Chef - Deep Sea Fishing Cooking Game">
+<meta property="og:description" content="Help Ollie the octopus chef fish deep sea ingredients, cook dishes, and run an underwater restaurant!">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/abyss-chef/">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐙</text></svg>">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Abyss Chef","description":"Deep sea fishing and cooking simulation game","genre":"Simulation","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://gamezipper.com/abyss-chef/"}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;overflow-x:hidden;max-width:100vw;background:#000;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none}
+canvas{display:block;margin:0 auto;image-rendering:pixelated}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+// ============================================================
+// ABYSS CHEF - Deep Sea Fishing & Cooking Game
+// Single-file HTML5 Canvas game
+// ============================================================
+
+const C = document.getElementById('c');
+const X = C.getContext('2d');
+let W, H;
+
+function resize() {
+  W = C.width = window.innerWidth;
+  H = C.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ---- CONSTANTS ----
+const FPS = 60;
+const TAU = Math.PI * 2;
+
+// ---- AUDIO (Web Audio API) ----
+let audioCtx;
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playTone(freq, dur, type='sine', vol=0.1) {
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  o.connect(g).connect(audioCtx.destination);
+  o.start();
+  o.stop(audioCtx.currentTime + dur);
+}
+
+function sfxBite() { playTone(800, 0.15, 'square', 0.08); playTone(600, 0.1, 'square', 0.06); }
+function sfxSnap() { playTone(200, 0.3, 'sawtooth', 0.1); }
+function sfxCook() { playTone(400, 0.1, 'triangle', 0.05); }
+function sfxCoin() { playTone(1200, 0.1, 'sine', 0.08); playTone(1500, 0.15, 'sine', 0.06); }
+function sfxClick() { playTone(600, 0.05, 'square', 0.04); }
+
+// ---- GAME STATE ----
+const STATE = { MENU: 0, FISHING: 1, COOKING: 2, RESULT: 3, UPGRADE: 4, COLLECTION: 5, RESTAURANT: 6, DAYEND: 7, ACHIEVEMENTS: 8 };
+let state = STATE.MENU;
+let frame = 0;
+let dt = 1 / FPS;
+
+// Player data (persisted in localStorage)
+let save = loadSave();
+
+function defaultSave() {
+  return {
+    coins: 0,
+    totalCoins: 0,
+    day: 1,
+    upgrades: { lineLen: 1, hookSize: 1, toughness: 1, kitchen: 1 },
+    collection: new Array(25).fill(false),
+    caught: [], // fish caught today
+    inventory: [], // fish available for cooking
+    achievements: new Array(10).fill(false),
+    vipServed: 0,
+    deepestMeter: 0,
+    starsToday: 0,
+    dayEarnings: 0,
+    dayTarget: 0,
+    bestDayStars: 0,
+  };
+}
+
+function loadSave() {
+  try {
+    const s = JSON.parse(localStorage.getItem('abyss_chef_save'));
+    if (s && s.upgrades) {
+      // Ensure arrays
+      if (!Array.isArray(s.collection)) s.collection = new Array(25).fill(false);
+      if (!Array.isArray(s.achievements)) s.achievements = new Array(10).fill(false);
+      return s;
+    }
+  } catch(e) {}
+  return defaultSave();
+}
+
+function writeSave() { try { localStorage.setItem('abyss_chef_save', JSON.stringify(save)); } catch(e) {} }
+
+function resetSave() { save = defaultSave(); writeSave(); }
+
+// ---- FISH DATA ----
+const FISH = [
+  // Shallow (0-30m)
+  { id:0, name:'Clownfish', score:10, chance:0.30, depthMin:0, depthMax:30, color:'#FF6B35', size:16, rarity:'Common' },
+  { id:1, name:'Goldfish', score:15, chance:0.25, depthMin:0, depthMax:30, color:'#FFD700', size:14, rarity:'Common' },
+  { id:2, name:'Shrimp', score:8, chance:0.30, depthMin:0, depthMax:30, color:'#FF9999', size:12, rarity:'Common' },
+  { id:3, name:'Starfish', score:12, chance:0.20, depthMin:0, depthMax:30, color:'#FF69B4', size:15, rarity:'Common' },
+  { id:4, name:'Crab', score:20, chance:0.15, depthMin:0, depthMax:30, color:'#DC143C', size:18, rarity:'Common' },
+  // Mid (30-80m)
+  { id:5, name:'Salmon', score:35, chance:0.20, depthMin:30, depthMax:80, color:'#FA8072', size:22, rarity:'Uncommon' },
+  { id:6, name:'Eel', score:40, chance:0.15, depthMin:30, depthMax:80, color:'#2E8B57', size:24, rarity:'Uncommon' },
+  { id:7, name:'Pufferfish', score:45, chance:0.12, depthMin:30, depthMax:80, color:'#DEB887', size:20, rarity:'Uncommon' },
+  { id:8, name:'Octopus', score:50, chance:0.10, depthMin:30, depthMax:80, color:'#9370DB', size:22, rarity:'Uncommon' },
+  { id:9, name:'Seahorse', score:30, chance:0.18, depthMin:30, depthMax:80, color:'#FFA07A', size:16, rarity:'Uncommon' },
+  // Deep (80-130m)
+  { id:10, name:'Swordfish', score:80, chance:0.08, depthMin:80, depthMax:130, color:'#4682B4', size:28, rarity:'Rare' },
+  { id:11, name:'Lobster', score:90, chance:0.06, depthMin:80, depthMax:130, color:'#FF4500', size:22, rarity:'Rare' },
+  { id:12, name:'Jellyfish', score:70, chance:0.10, depthMin:80, depthMax:130, color:'#E0E0FF', size:20, rarity:'Rare' },
+  { id:13, name:'Manta Ray', score:85, chance:0.07, depthMin:80, depthMax:130, color:'#4A4A6A', size:30, rarity:'Rare' },
+  { id:14, name:'Sea Turtle', score:75, chance:0.09, depthMin:80, depthMax:130, color:'#556B2F', size:26, rarity:'Rare' },
+  // Abyss (130-180m)
+  { id:15, name:'Shark', score:150, chance:0.04, depthMin:130, depthMax:180, color:'#708090', size:32, rarity:'Epic' },
+  { id:16, name:'Anglerfish', score:160, chance:0.03, depthMin:130, depthMax:180, color:'#2F1B14', size:24, rarity:'Epic' },
+  { id:17, name:'Giant Squid', score:170, chance:0.025, depthMin:130, depthMax:180, color:'#8B0000', size:34, rarity:'Epic' },
+  { id:18, name:'Tuna', score:130, chance:0.05, depthMin:130, depthMax:180, color:'#4169E1', size:28, rarity:'Epic' },
+  { id:19, name:'Mobula', score:140, chance:0.035, depthMin:130, depthMax:180, color:'#3B3B5B', size:30, rarity:'Epic' },
+  // Legendary (180m+)
+  { id:20, name:'Dragon Fish', score:300, chance:0.01, depthMin:180, depthMax:250, color:'#FF00FF', size:36, rarity:'Legendary' },
+  { id:21, name:'Glow Jelly', score:250, chance:0.015, depthMin:180, depthMax:250, color:'#00FFFF', size:28, rarity:'Legendary' },
+  { id:22, name:'Ancient Beast', score:500, chance:0.003, depthMin:180, depthMax:250, color:'#800080', size:40, rarity:'Legendary' },
+  { id:23, name:'Mermaid Fish', score:400, chance:0.005, depthMin:180, depthMax:250, color:'#FF69B4', size:32, rarity:'Legendary' },
+  { id:24, name:'Abyss King', score:1000, chance:0.001, depthMin:180, depthMax:250, color:'#FFD700', size:44, rarity:'Legendary' },
+];
+
+const RARITY_COLORS = { Common:'#AAAAAA', Uncommon:'#55FF55', Rare:'#5599FF', Epic:'#AA55FF', Legendary:'#FFAA00' };
+
+// ---- UPGRADES ----
+function upgradeCost(type, level) {
+  const bases = { lineLen:100, hookSize:150, toughness:200, kitchen:300 };
+  return Math.floor(bases[type] * Math.pow(1.8, level - 1));
+}
+
+function maxDepth() { return 50 + save.upgrades.lineLen * 30; }
+function hookBonus() { return save.upgrades.hookSize; }
+function toughnessMax() { return 80 + save.upgrades.toughness * 15; }
+function cookSpeed() { return 1 + save.upgrades.kitchen * 0.3; }
+
+// ---- DAY TARGETS ----
+function dayTarget(day) {
+  const t = [0, 100, 200, 350, 500, 700, 900, 1200, 1500, 1800, 2200, 2600, 3000];
+  return day <= 12 ? t[day] : 3000 + (day - 12) * 400;
+}
+
+// ---- CUSTOMERS ----
+const CUSTOMERS = [
+  { name:'Crab', color:'#DC143C', order:[0,2,4] },      // prefers shallow fish
+  { name:'Turtle', color:'#556B2F', order:[14,10,5] },
+  { name:'Whale', color:'#4682B4', order:[15,18,19] },
+  { name:'Jellyfish', color:'#E0E0FF', order:[12,21,7] },
+  { name:'Shark', color:'#708090', order:[15,17,10] },
+  { name:'Seahorse', color:'#FFA07A', order:[9,3,1] },
+  { name:'Starfish', color:'#FF69B4', order:[3,0,6] },
+  { name:'Urchin', color:'#2F2F2F', order:[2,11,7] },
+  { name:'Shellfish', color:'#DEB887', order:[4,11,2] },
+  { name:'Coral Fish', color:'#FF7F50', order:[0,5,14] },
+  { name:'Anemone', color:'#FF6347', order:[12,6,8] },
+  { name:'Sea Otter', color:'#8B6914', order:[4,5,3] },
+  { name:'Penguin', color:'#1C1C1C', order:[18,5,10] },
+  { name:'Walrus', color:'#C4A882', order:[11,15,4] },
+  { name:'Ollie Jr', color:'#FF6B9D', order:[8,6,9] },
+];
+
+// ---- INPUT ----
+let click = null;
+let mouseX = 0, mouseY = 0;
+
+function getPos(e) {
+  const r = C.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return { x: t.clientX - r.left, y: t.clientY - r.top };
+}
+
+C.addEventListener('mousedown', e => { const p = getPos(e); click = p; mouseX = p.x; mouseY = p.y; });
+C.addEventListener('mousemove', e => { const p = getPos(e); mouseX = p.x; mouseY = p.y; });
+C.addEventListener('touchstart', e => { e.preventDefault(); const p = getPos(e); click = p; mouseX = p.x; mouseY = p.y; }, { passive: false });
+C.addEventListener('touchmove', e => { e.preventDefault(); const p = getPos(e); mouseX = p.x; mouseY = p.y; }, { passive: false });
+
+// ---- BUTTONS ----
+let buttons = [];
+
+function btn(x, y, w, h, text, cb, color='#E63946', textColor='#FFF') {
+  buttons.push({ x, y, w, h, text, cb, color, textColor });
+}
+
+function drawButtons() {
+  for (const b of buttons) {
+    X.fillStyle = b.color;
+    const r = 8;
+    X.beginPath();
+    X.moveTo(b.x + r, b.y);
+    X.lineTo(b.x + b.w - r, b.y);
+    X.quadraticCurveTo(b.x + b.w, b.y, b.x + b.w, b.y + r);
+    X.lineTo(b.x + b.w, b.y + b.h - r);
+    X.quadraticCurveTo(b.x + b.w, b.y + b.h, b.x + b.w - r, b.y + b.h);
+    X.lineTo(b.x + r, b.y + b.h);
+    X.quadraticCurveTo(b.x, b.y + b.h, b.x, b.y + b.h - r);
+    X.lineTo(b.x, b.y + r);
+    X.quadraticCurveTo(b.x, b.y, b.x + r, b.y);
+    X.fill();
+    // Hover highlight
+    if (mouseX >= b.x && mouseX <= b.x + b.w && mouseY >= b.y && mouseY <= b.y + b.h) {
+      X.fillStyle = 'rgba(255,255,255,0.15)';
+      X.fill();
+    }
+    X.fillStyle = b.textColor;
+    X.font = `bold ${Math.min(b.h * 0.45, 18)}px sans-serif`;
+    X.textAlign = 'center';
+    X.textBaseline = 'middle';
+    X.fillText(b.text, b.x + b.w / 2, b.y + b.h / 2);
+  }
+}
+
+function handleButtons() {
+  if (!click) return;
+  for (const b of buttons) {
+    if (click.x >= b.x && click.x <= b.x + b.w && click.y >= b.y && click.y <= b.y + b.h) {
+      sfxClick();
+      b.cb();
+      return;
+    }
+  }
+}
+
+// ---- DRAW HELPERS ----
+function drawText(text, x, y, size, color='#FFF', align='center') {
+  X.fillStyle = color;
+  X.font = `bold ${size}px sans-serif`;
+  X.textAlign = align;
+  X.textBaseline = 'middle';
+  X.fillText(text, x, y);
+}
+
+function drawFishShape(f, x, y, scale=1, glow=false) {
+  const s = f.size * scale;
+  X.save();
+  if (glow) {
+    X.shadowColor = f.color;
+    X.shadowBlur = 15;
+  }
+  X.fillStyle = f.color;
+  // Simple fish body
+  X.beginPath();
+  X.ellipse(x, y, s, s * 0.5, 0, 0, TAU);
+  X.fill();
+  // Tail
+  X.beginPath();
+  X.moveTo(x + s * 0.8, y);
+  X.lineTo(x + s * 1.3, y - s * 0.4);
+  X.lineTo(x + s * 1.3, y + s * 0.4);
+  X.closePath();
+  X.fill();
+  // Eye
+  X.fillStyle = '#FFF';
+  X.beginPath();
+  X.arc(x - s * 0.4, y - s * 0.1, s * 0.15, 0, TAU);
+  X.fill();
+  X.fillStyle = '#000';
+  X.beginPath();
+  X.arc(x - s * 0.4, y - s * 0.1, s * 0.08, 0, TAU);
+  X.fill();
+  X.restore();
+}
+
+function drawOllie(x, y, scale=1, animFrame=0) {
+  const s = 30 * scale;
+  X.save();
+  // Body
+  X.fillStyle = '#FF6B9D';
+  X.beginPath();
+  X.ellipse(x, y, s, s * 0.8, 0, 0, TAU);
+  X.fill();
+  // Apron
+  X.fillStyle = '#E63946';
+  X.beginPath();
+  X.ellipse(x, y + s * 0.3, s * 0.6, s * 0.4, 0, 0, Math.PI);
+  X.fill();
+  // Chef hat
+  X.fillStyle = '#FFF';
+  X.fillRect(x - s * 0.4, y - s * 1.1, s * 0.8, s * 0.5);
+  X.fillRect(x - s * 0.5, y - s * 0.7, s, s * 0.15);
+  // Eyes
+  X.fillStyle = '#FFF';
+  X.beginPath();
+  X.ellipse(x - s * 0.25, y - s * 0.15, s * 0.18, s * 0.12, 0, 0, TAU);
+  X.ellipse(x + s * 0.15, y - s * 0.15, s * 0.18, s * 0.12, 0, 0, TAU);
+  X.fill();
+  X.fillStyle = '#000';
+  const eyeOff = Math.sin(animFrame * 0.1) * 2;
+  X.beginPath();
+  X.arc(x - s * 0.25 + eyeOff, y - s * 0.15, s * 0.06, 0, TAU);
+  X.arc(x + s * 0.15 + eyeOff, y - s * 0.15, s * 0.06, 0, TAU);
+  X.fill();
+  // Tentacles
+  X.strokeStyle = '#FF6B9D';
+  X.lineWidth = 3 * scale;
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI + 0.2;
+    const wave = Math.sin(animFrame * 0.08 + i) * 8 * scale;
+    X.beginPath();
+    X.moveTo(x + Math.cos(angle) * s * 0.6, y + s * 0.5);
+    X.quadraticCurveTo(
+      x + Math.cos(angle) * (s * 0.6 + 10 * scale) + wave,
+      y + s * 0.5 + 12 * scale,
+      x + Math.cos(angle) * (s * 0.4 + 5 * scale) + wave * 0.5,
+      y + s * 0.5 + 20 * scale
+    );
+    X.stroke();
+  }
+  X.restore();
+}
+
+// Deep sea background based on depth
+function drawSeaBg(depth, yStart, height) {
+  const zones = [
+    { d: 0, c1: '#0077B6', c2: '#00B4D8' },
+    { d: 30, c1: '#023E8A', c2: '#0077B6' },
+    { d: 80, c1: '#03045E', c2: '#023E8A' },
+    { d: 130, c1: '#010219', c2: '#03045E' },
+    { d: 180, c1: '#000000', c2: '#000000' },
+  ];
+  let zone = zones[0];
+  for (const z of zones) { if (depth >= z.d) zone = z; }
+  const grad = X.createLinearGradient(0, yStart, 0, yStart + height);
+  grad.addColorStop(0, zone.c2);
+  grad.addColorStop(1, zone.c1);
+  X.fillStyle = grad;
+  X.fillRect(0, yStart, W, height);
+}
+
+// ---- BUBBLE PARTICLES ----
+let bubbles = [];
+function updateBubbles() {
+  if (Math.random() < 0.05) {
+    bubbles.push({ x: Math.random() * W, y: H, r: 2 + Math.random() * 4, speed: 0.5 + Math.random() * 1.5 });
+  }
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    bubbles[i].y -= bubbles[i].speed;
+    bubbles[i].x += Math.sin(frame * 0.02 + i) * 0.3;
+    if (bubbles[i].y < -10) bubbles.splice(i, 1);
+  }
+}
+function drawBubbles() {
+  X.strokeStyle = 'rgba(255,255,255,0.3)';
+  X.lineWidth = 1;
+  for (const b of bubbles) {
+    X.beginPath();
+    X.arc(b.x, b.y, b.r, 0, TAU);
+    X.stroke();
+  }
+}
+
+// ============================================================
+// GAME SCREENS
+// ============================================================
+
+// ---- MENU ----
+function renderMenu() {
+  // Background
+  const grad = X.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#023E8A');
+  grad.addColorStop(1, '#000000');
+  X.fillStyle = grad;
+  X.fillRect(0, 0, W, H);
+  updateBubbles();
+  drawBubbles();
+
+  // Title
+  drawText('ABYSS CHEF', W / 2, H * 0.18, Math.min(48, W * 0.09), '#FF6B9D');
+  drawText('Deep Sea Cooking Adventure', W / 2, H * 0.25, Math.min(16, W * 0.03), '#88CCFF');
+
+  // Ollie animation
+  drawOllie(W / 2, H * 0.4, 1.5, frame);
+
+  // Day info
+  if (save.day > 1 || save.coins > 0) {
+    drawText(`Day ${save.day} | ${save.coins} coins`, W / 2, H * 0.55, 16, '#FFD700');
+  }
+
+  // Buttons
+  const bw = Math.min(220, W * 0.6);
+  const bh = 44;
+  const bx = W / 2 - bw / 2;
+  const startY = H * 0.62;
+  btn(bx, startY, bw, bh, `▶ PLAY (Day ${save.day})`, () => { startDay(); }, '#0077B6');
+  btn(bx, startY + 54, bw, bh, '📖 Collection', () => { state = STATE.COLLECTION; }, '#2E8B57');
+  btn(bx, startY + 108, bw, bh, '⬆ Upgrades', () => { state = STATE.UPGRADE; }, '#E63946');
+  btn(bx, startY + 162, bw, bh, '🏆 Achievements', () => { state = STATE.ACHIEVEMENTS; }, '#AA55FF');
+  drawButtons();
+
+  // Footer
+  drawText('gamezipper.com', W / 2, H - 20, 12, '#555');
+
+  // <!-- AD SLOT: banner bottom -->
+}
+
+// ---- FISHING ----
+let fishState = { phase: 'idle', hookY: 0, hookX: 0, depth: 0, tension: 0, hookedFish: null, fishes: [], timer: 0, lineBroken: false, catchAnim: 0 };
+
+function startFishing() {
+  fishState = {
+    phase: 'casting', // casting -> sinking -> waiting -> biting -> reeling -> caught/broken -> idle
+    hookX: W * 0.35,
+    hookY: H * 0.25,
+    depth: 0,
+    tension: 0,
+    hookedFish: null,
+    fishes: [],
+    timer: 0,
+    lineBroken: false,
+    catchAnim: 0,
+  };
+  // Spawn fish
+  const md = maxDepth();
+  for (let i = 0; i < 12; i++) {
+    const f = pickFish(Math.random() * md);
+    if (f) {
+      fishState.fishes.push({
+        fish: f,
+        x: Math.random() * W * 0.7 + W * 0.1,
+        y: H * 0.25 + Math.random() * (H * 0.7),
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 0.5,
+        hooked: false,
+      });
+    }
+  }
+}
+
+function pickFish(depth) {
+  const md = maxDepth();
+  const effectiveDepth = Math.min(depth, md);
+  let pool = FISH.filter(f => effectiveDepth >= f.depthMin && effectiveDepth <= f.depthMax);
+  if (pool.length === 0) pool = FISH.filter(f => f.depthMin === 0);
+  
+  // Legend day bonus
+  const legendMult = (save.day % 10 === 0) ? 5 : 1;
+  
+  let totalW = 0;
+  const weights = pool.map(f => {
+    let w = f.chance;
+    if (f.rarity === 'Legendary') w *= legendMult;
+    // Hook size bonus for bigger fish
+    if (f.size >= 25) w *= (1 + hookBonus() * 0.1);
+    totalW += w;
+    return w;
+  });
+  
+  let r = Math.random() * totalW;
+  for (let i = 0; i < pool.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return pool[i];
+  }
+  return pool[0];
+}
+
+function updateFishing() {
+  const fs = fishState;
+  fs.timer++;
+  
+  // Update fish movement
+  for (const f of fs.fishes) {
+    f.x += f.vx;
+    f.y += f.vy + Math.sin(frame * 0.02 + f.x) * 0.3;
+    if (f.x < 20 || f.x > W - 20) f.vx *= -1;
+    if (f.y < H * 0.25 || f.y > H - 20) f.vy *= -1;
+  }
+  
+  const seaTop = H * 0.22;
+  const maxHookDepth = seaTop + (maxDepth() / 250) * (H - seaTop - 40);
+  
+  if (fs.phase === 'casting') {
+    fs.hookY += 2;
+    fs.depth = ((fs.hookY - seaTop) / (H - seaTop)) * 250;
+    if (fs.hookY >= seaTop + 20) fs.phase = 'sinking';
+  }
+  
+  if (fs.phase === 'sinking') {
+    fs.hookY += 1.5;
+    fs.depth = ((fs.hookY - seaTop) / (H - seaTop)) * 250;
+    if (save.deepestMeter < fs.depth) save.deepestMeter = fs.depth;
+    
+    // Check for fish collision
+    for (const f of fs.fishes) {
+      if (!f.hooked && Math.abs(f.x - fs.hookX) < 25 && Math.abs(f.y - fs.hookY) < 25) {
+        // Check hook size vs fish size
+        if (hookBonus() >= Math.floor(f.fish.size / 15)) {
+          f.hooked = true;
+          fs.hookedFish = f;
+          fs.phase = 'reeling';
+          sfxBite();
+        }
+      }
+    }
+    
+    if (fs.hookY >= maxHookDepth || fs.hookY >= H - 30) {
+      fs.phase = 'waiting';
+      fs.timer = 0;
+    }
+  }
+  
+  if (fs.phase === 'waiting') {
+    // Wait for a bite
+    for (const f of fs.fishes) {
+      if (!f.hooked && Math.abs(f.x - fs.hookX) < 35 && Math.abs(f.y - fs.hookY) < 35) {
+        if (Math.random() < 0.02 && hookBonus() >= Math.floor(f.fish.size / 15)) {
+          f.hooked = true;
+          fs.hookedFish = f;
+          fs.phase = 'reeling';
+          sfxBite();
+        }
+      }
+    }
+    fs.timer++;
+    if (fs.timer > 300) {
+      // No bite, return
+      fs.phase = 'returning';
+    }
+  }
+  
+  if (fs.phase === 'reeling') {
+    const f = fs.hookedFish;
+    if (!f) { fs.phase = 'idle'; return; }
+    
+    // Tension mechanics
+    const struggling = Math.random() < 0.3;
+    if (struggling) {
+      fs.tension += 15;
+      f.x += (Math.random() - 0.5) * 8;
+      f.y += (Math.random() - 0.5) * 4;
+    } else {
+      fs.tension = Math.max(0, fs.tension - 5);
+    }
+    
+    // Reel in
+    fs.hookY -= 1 + hookBonus() * 0.3;
+    f.x += (fs.hookX - f.x) * 0.1;
+    f.y += (fs.hookY - f.y) * 0.1;
+    
+    if (fs.tension > toughnessMax()) {
+      fs.phase = 'broken';
+      fs.timer = 0;
+      sfxSnap();
+    }
+    
+    if (fs.hookY <= seaTop) {
+      fs.phase = 'caught';
+      fs.timer = 0;
+      sfxCoin();
+    }
+  }
+  
+  if (fs.phase === 'broken') {
+    fs.timer++;
+    if (fs.timer > 90) { state = STATE.FISHING; startFishing(); }
+  }
+  
+  if (fs.phase === 'caught') {
+    fs.timer++;
+    if (fs.timer > 90) {
+      // Add fish to caught
+      const f = fs.hookedFish.fish;
+      save.caught.push(f);
+      save.inventory.push(f);
+      save.collection[f.id] = true;
+      if (!save.achievements[0]) { save.achievements[0] = true; }
+      if (f.rarity === 'Legendary' && !save.achievements[3]) { save.achievements[3] = true; }
+      if (save.collection.filter(Boolean).length >= 13 && !save.achievements[4]) { save.achievements[4] = true; }
+      if (save.collection.every(Boolean) && !save.achievements[7]) { save.achievements[7] = true; }
+      writeSave();
+      state = STATE.RESULT;
+      resultFish = f;
+    }
+  }
+  
+  if (fs.phase === 'returning') {
+    fs.hookY -= 2;
+    if (fs.hookY <= seaTop) { state = STATE.FISHING; startFishing(); }
+  }
+}
+
+function renderFishing() {
+  const fs = fishState;
+  
+  // Sky / boat area
+  X.fillStyle = '#87CEEB';
+  X.fillRect(0, 0, W, H * 0.22);
+  
+  // Boat
+  X.fillStyle = '#8B4513';
+  X.beginPath();
+  X.moveTo(W * 0.2, H * 0.2);
+  X.lineTo(W * 0.55, H * 0.2);
+  X.lineTo(W * 0.5, H * 0.25);
+  X.lineTo(W * 0.25, H * 0.25);
+  X.closePath();
+  X.fill();
+  
+  // Ollie on boat
+  drawOllie(W * 0.35, H * 0.15, 0.8, frame);
+  
+  // Sea
+  drawSeaBg(fs.depth, H * 0.25, H * 0.75);
+  
+  // Draw fishes
+  for (const f of fs.fishes) {
+    if (f.y > H * 0.22) {
+      const isDeep = f.y > H * 0.6;
+      drawFishShape(f.fish, f.x, f.y, 0.8, isDeep);
+    }
+  }
+  
+  // Fishing line
+  X.strokeStyle = '#FFF';
+  X.lineWidth = 1;
+  X.beginPath();
+  X.moveTo(W * 0.35, H * 0.2);
+  X.lineTo(fs.hookX, fs.hookY);
+  X.stroke();
+  
+  // Hook
+  const blink = Math.sin(frame * 0.2) > 0;
+  X.fillStyle = blink ? '#FFD700' : '#AAA';
+  X.fillRect(fs.hookX - 4, fs.hookY - 4, 8, 8);
+  
+  // Depth display
+  drawText(`${Math.floor(fs.depth)}m`, 40, H * 0.28, 16, '#FFF', 'left');
+  drawText(`Max: ${maxDepth()}m`, 40, H * 0.32, 12, '#AAA', 'left');
+  
+  // Tension bar (if reeling)
+  if (fs.phase === 'reeling') {
+    const bx = W - 40;
+    const by = H * 0.3;
+    const bh = H * 0.5;
+    X.fillStyle = '#333';
+    X.fillRect(bx, by, 20, bh);
+    const pct = Math.min(1, fs.tension / toughnessMax());
+    const tColor = pct < 0.5 ? '#55FF55' : pct < 0.8 ? '#FFFF00' : '#FF0000';
+    X.fillStyle = tColor;
+    X.fillRect(bx, by, 20, bh * pct);
+    X.strokeStyle = '#FFF';
+    X.lineWidth = 1;
+    X.strokeRect(bx, by, 20, bh);
+    drawText('Tension', bx + 10, by - 10, 10, '#FFF');
+  }
+  
+  // Click to cast / reel hint
+  if (fs.phase === 'casting' || fs.phase === 'sinking') {
+    drawText('Tap to reel in', W / 2, H - 30, 14, 'rgba(255,255,255,0.7)');
+  }
+  
+  // Caught animation
+  if (fs.phase === 'caught') {
+    X.fillStyle = 'rgba(0,0,0,0.6)';
+    X.fillRect(0, 0, W, H);
+    drawText('CAUGHT!', W / 2, H * 0.3, 36, '#FFD700');
+    if (fs.hookedFish) {
+      drawFishShape(fs.hookedFish.fish, W / 2, H * 0.5, 2, true);
+      drawText(fs.hookedFish.fish.name, W / 2, H * 0.65, 24, RARITY_COLORS[fs.hookedFish.fish.rarity]);
+      drawText(`${fs.hookedFish.fish.score} pts`, W / 2, H * 0.72, 18, '#FFF');
+    }
+  }
+  
+  if (fs.phase === 'broken') {
+    X.fillStyle = 'rgba(0,0,0,0.6)';
+    X.fillRect(0, 0, W, H);
+    drawText('Line snapped!', W / 2, H * 0.4, 32, '#FF4444');
+    drawText('The fish got away...', W / 2, H * 0.5, 16, '#AAA');
+  }
+  
+  // Back button
+  btn(10, 10, 60, 30, '← Back', () => { state = STATE.RESTAURANT; });
+  drawButtons();
+}
+
+function handleFishingClick() {
+  const fs = fishState;
+  if (fs.phase === 'sinking' || fs.phase === 'waiting') {
+    if (fs.hookedFish) return;
+    fs.phase = 'returning';
+  }
+}
+
+// ---- COOKING ----
+let cookState = { dishes: [], cooking: [], slots: 1, timer: 0 };
+
+function startCooking() {
+  const slots = Math.min(3, Math.ceil(save.upgrades.kitchen / 2));
+  cookState = { dishes: [], cooking: [], slots, timer: 0 };
+  // Create random orders
+  for (let i = 0; i < Math.min(3 + Math.floor(save.day / 5), 5); i++) {
+    const cust = CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)];
+    const fishId = cust.order[Math.floor(Math.random() * cust.order.length)];
+    cookState.dishes.push({ customer: cust, fishId, served: false });
+  }
+}
+
+function renderCooking() {
+  X.fillStyle = '#1A1A2E';
+  X.fillRect(0, 0, W, H);
+  
+  drawText('🍳 Kitchen', W / 2, 30, 24, '#FFF');
+  
+  // Show available inventory
+  drawText('Your fish:', 20, 70, 14, '#AAA', 'left');
+  const invFish = [...new Set(save.inventory.map(f => f.id))];
+  for (let i = 0; i < invFish.length; i++) {
+    const f = FISH[invFish[i]];
+    const count = save.inventory.filter(fi => fi.id === f.id).length;
+    drawFishShape(f, 60 + i * 55, 100, 0.5);
+    drawText(`×${count}`, 60 + i * 55, 118, 10, '#FFF');
+  }
+  
+  // Orders
+  drawText('Orders:', 20, 150, 14, '#AAA', 'left');
+  for (let i = 0; i < cookState.dishes.length; i++) {
+    const d = cookState.dishes[i];
+    const y = 180 + i * 50;
+    X.fillStyle = d.served ? '#2E8B57' : '#333';
+    X.fillRect(20, y, W - 40, 40);
+    X.strokeStyle = '#555';
+    X.strokeRect(20, y, W - 40, 40);
+    drawText(`${d.customer.name} wants:`, 80, y + 14, 12, '#CCC', 'left');
+    if (!d.served) {
+      const fish = FISH[d.fishId];
+      drawText(`${fish.name}`, 80, y + 30, 14, RARITY_COLORS[fish.rarity], 'left');
+      // Cook button if we have the fish
+      if (save.inventory.some(f => f.id === d.fishId)) {
+        btn(W - 130, y + 5, 100, 30, 'Cook!', () => {
+          cookDish(i);
+        }, '#E63946');
+      } else {
+        drawText('Need fish!', W - 80, y + 20, 12, '#FF4444');
+      }
+    } else {
+      drawText('✅ Served!', 80, y + 25, 14, '#55FF55', 'left');
+    }
+  }
+  
+  btn(10, 10, 60, 30, '← Back', () => {
+    // Check if all served
+    if (cookState.dishes.every(d => d.served)) {
+      state = STATE.DAYEND;
+      calculateDayEnd();
+    } else {
+      state = STATE.RESTAURANT;
+    }
+  });
+  drawButtons();
+}
+
+function cookDish(idx) {
+  const d = cookState.dishes[idx];
+  if (d.served) return;
+  const fishIdx = save.inventory.findIndex(f => f.id === d.fishId);
+  if (fishIdx === -1) return;
+  
+  save.inventory.splice(fishIdx, 1);
+  d.served = true;
+  const fish = FISH[d.fishId];
+  let earnings = fish.score;
+  if (save.day % 5 === 0) earnings *= 2; // VIP day
+  save.dayEarnings += earnings;
+  save.coins += earnings;
+  save.totalCoins += earnings;
+  sfxCook();
+  sfxCoin();
+  
+  if (save.totalCoins >= 10000 && !save.achievements[6]) { save.achievements[6] = true; }
+  writeSave();
+}
+
+// ---- RESULT ----
+let resultFish = null;
+
+function renderResult() {
+  X.fillStyle = '#0A0A1A';
+  X.fillRect(0, 0, W, H);
+  updateBubbles();
+  drawBubbles();
+  
+  drawText('Fish Caught!', W / 2, H * 0.15, 28, '#FFD700');
+  
+  if (resultFish) {
+    drawFishShape(resultFish, W / 2, H * 0.35, 2.5, true);
+    drawText(resultFish.name, W / 2, H * 0.5, 24, RARITY_COLORS[resultFish.rarity]);
+    drawText(resultFish.rarity, W / 2, H * 0.56, 16, RARITY_COLORS[resultFish.rarity]);
+    drawText(`+${resultFish.score} points`, W / 2, H * 0.63, 18, '#FFF');
+  }
+  
+  const bw = Math.min(200, W * 0.5);
+  btn(W / 2 - bw / 2, H * 0.72, bw, 44, '🎣 Fish More', () => {
+    state = STATE.FISHING;
+    startFishing();
+  });
+  btn(W / 2 - bw / 2, H * 0.72 + 54, bw, 44, '🍳 To Kitchen', () => {
+    state = STATE.COOKING;
+    startCooking();
+  });
+  drawButtons();
+}
+
+// ---- RESTAURANT ----
+let restaurantCustomers = [];
+
+function startDay() {
+  save.dayEarnings = 0;
+  save.caught = [];
+  save.dayTarget = dayTarget(save.day);
+  restaurantCustomers = [];
+  
+  // Generate 5 customers
+  const isVip = save.day % 5 === 0;
+  for (let i = 0; i < 5; i++) {
+    const cust = CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)];
+    const fishId = cust.order[Math.floor(Math.random() * cust.order.length)];
+    restaurantCustomers.push({ ...cust, fishId, served: false, vip: isVip });
+    if (isVip) save.vipServed++;
+  }
+  
+  if (save.vipServed >= 10 && !save.achievements[8]) { save.achievements[8] = true; }
+  
+  state = STATE.FISHING;
+  startFishing();
+}
+
+function renderRestaurant() {
+  // Underwater restaurant bg
+  const grad = X.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#023E8A');
+  grad.addColorStop(1, '#010219');
+  X.fillStyle = grad;
+  X.fillRect(0, 0, W, H);
+  
+  // Coral tree (center decoration)
+  X.fillStyle = '#FF6347';
+  X.beginPath();
+  X.arc(W / 2, H * 0.3, 40, 0, TAU);
+  X.fill();
+  X.fillStyle = '#FF7F50';
+  X.beginPath();
+  X.arc(W / 2 - 20, H * 0.25, 25, 0, TAU);
+  X.arc(W / 2 + 25, H * 0.22, 20, 0, TAU);
+  X.fill();
+  
+  drawText(`🐙 Ollie's Restaurant - Day ${save.day}`, W / 2, 30, 20, '#FFD700');
+  drawText(`Target: ${save.dayTarget} coins | Earned: ${save.dayEarnings}`, W / 2, 55, 14, '#CCC');
+  
+  // Ollie cooking
+  drawOllie(W * 0.15, H * 0.35, 1, frame);
+  
+  // Customers
+  for (let i = 0; i < restaurantCustomers.length; i++) {
+    const c = restaurantCustomers[i];
+    const x = 80 + (i % 3) * (W / 3);
+    const y = H * 0.5 + Math.floor(i / 3) * 100;
+    
+    // Table
+    X.fillStyle = '#5C3317';
+    X.fillRect(x - 30, y + 20, 60, 6);
+    
+    // Customer body (simple colored circle)
+    X.fillStyle = c.color;
+    X.beginPath();
+    X.arc(x, y, 20, 0, TAU);
+    X.fill();
+    X.fillStyle = '#FFF';
+    X.beginPath();
+    X.arc(x - 5, y - 3, 3, 0, TAU);
+    X.arc(x + 5, y - 3, 3, 0, TAU);
+    X.fill();
+    
+    // Name
+    drawText(c.name, x, y + 38, 10, '#CCC');
+    
+    // Order bubble
+    if (!c.served) {
+      const fish = FISH[c.fishId];
+      X.fillStyle = 'rgba(255,255,255,0.9)';
+      X.beginPath();
+      X.arc(x, y - 35, 18, 0, TAU);
+      X.fill();
+      drawFishShape(fish, x, y - 35, 0.35);
+      
+      if (c.vip) {
+        drawText('VIP', x, y - 55, 10, '#FFD700');
+      }
+    } else {
+      drawText('✅', x, y - 35, 18, '#55FF55');
+    }
+  }
+  
+  const bw = Math.min(180, W * 0.45);
+  btn(W / 2 - bw - 5, H - 60, bw, 44, '🎣 Go Fishing', () => {
+    state = STATE.FISHING;
+    startFishing();
+  });
+  btn(W / 2 + 5, H - 60, bw, 44, '🍳 Kitchen', () => {
+    state = STATE.COOKING;
+    startCooking();
+  });
+  drawButtons();
+}
+
+// ---- DAY END ----
+let dayEndData = { earned: 0, target: 0, passed: false };
+
+function calculateDayEnd() {
+  dayEndData = {
+    earned: save.dayEarnings,
+    target: save.dayTarget,
+    passed: save.dayEarnings >= save.dayTarget,
+  };
+  
+  if (dayEndData.passed) {
+    save.day++;
+    if (!save.achievements[1]) save.achievements[1] = true;
+    if (save.day > 30 && !save.achievements[9]) { save.achievements[9] = true; }
+  }
+  writeSave();
+  state = STATE.DAYEND;
+}
+
+function renderDayEnd() {
+  X.fillStyle = '#0A0A2A';
+  X.fillRect(0, 0, W, H);
+  
+  drawText(`Day ${save.day - (dayEndData.passed ? 1 : 0)} Complete!`, W / 2, H * 0.15, 28, '#FFD700');
+  
+  drawText(`Earned: ${dayEndData.earned}`, W / 2, H * 0.3, 20, '#FFF');
+  drawText(`Target: ${dayEndData.target}`, W / 2, H * 0.37, 16, '#AAA');
+  
+  if (dayEndData.passed) {
+    drawText('✅ TARGET MET!', W / 2, H * 0.48, 28, '#55FF55');
+    drawText(`Day ${save.day} unlocked!`, W / 2, H * 0.56, 16, '#88FF88');
+  } else {
+    drawText('❌ Not enough...', W / 2, H * 0.48, 28, '#FF5555');
+    drawText('Try again!', W / 2, H * 0.56, 16, '#FFAAAA');
+  }
+  
+  // <!-- AD SLOT: interstitial -->
+  
+  const bw = Math.min(200, W * 0.5);
+  if (dayEndData.passed) {
+    btn(W / 2 - bw / 2, H * 0.68, bw, 44, 'Continue →', () => { state = STATE.MENU; });
+  } else {
+    btn(W / 2 - bw / 2, H * 0.68, bw, 44, 'Retry Day', () => { startDay(); });
+    btn(W / 2 - bw / 2, H * 0.68 + 54, bw, 44, 'Menu', () => { state = STATE.MENU; });
+  }
+  drawButtons();
+}
+
+// ---- UPGRADES ----
+function renderUpgrade() {
+  X.fillStyle = '#0A0A2E';
+  X.fillRect(0, 0, W, H);
+  
+  drawText(`⬆ Upgrades | Coins: ${save.coins}`, W / 2, 30, 20, '#FFD700');
+  
+  const items = [
+    { key: 'lineLen', name: '📐 Line Length', desc: () => `Max depth: ${maxDepth()}m` },
+    { key: 'hookSize', name: '🪝 Hook Size', desc: () => `Hook power: ${hookBonus()}` },
+    { key: 'toughness', name: '💪 Line Toughness', desc: () => `Max tension: ${toughnessMax()}` },
+    { key: 'kitchen', name: '🍳 Kitchen', desc: () => `Cook speed: ×${cookSpeed().toFixed(1)}` },
+  ];
+  
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    const lv = save.upgrades[it.key];
+    const y = 70 + i * 85;
+    const cost = lv < 6 ? upgradeCost(it.key, lv) : null;
+    
+    X.fillStyle = '#1A1A3E';
+    X.fillRect(20, y, W - 40, 70);
+    
+    drawText(it.name, 30, y + 18, 16, '#FFF', 'left');
+    drawText(`Level ${lv}/6 | ${it.desc()}`, 30, y + 38, 12, '#AAA', 'left');
+    
+    if (cost) {
+      const canBuy = save.coins >= cost;
+      btn(W - 150, y + 15, 120, 35, `${cost} 🪙`, () => {
+        if (save.coins >= cost) {
+          save.coins -= cost;
+          save.upgrades[it.key]++;
+          writeSave();
+        }
+      }, canBuy ? '#0077B6' : '#444');
+    } else {
+      drawText('MAX', W - 90, y + 35, 16, '#FFD700');
+    }
+  }
+  
+  btn(10, 10, 60, 30, '← Back', () => { state = STATE.MENU; });
+  drawButtons();
+}
+
+// ---- COLLECTION ----
+function renderCollection() {
+  X.fillStyle = '#0A0A2E';
+  X.fillRect(0, 0, W, H);
+  
+  const collected = save.collection.filter(Boolean).length;
+  drawText(`📖 Collection: ${collected}/25`, W / 2, 30, 20, '#FFD700');
+  
+  const cols = Math.min(5, Math.floor((W - 40) / 70));
+  const cardW = Math.min(65, (W - 40) / cols);
+  const startX = (W - cols * cardW) / 2;
+  
+  for (let i = 0; i < 25; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = startX + col * cardW;
+    const y = 60 + row * (cardW + 20);
+    
+    if (save.collection[i]) {
+      const f = FISH[i];
+      X.fillStyle = '#1A1A3E';
+      X.fillRect(x, y, cardW - 4, cardW + 10);
+      drawFishShape(f, x + cardW / 2 - 2, y + cardW / 2 - 5, 0.5, f.depthMin >= 180);
+      drawText(f.name, x + cardW / 2 - 2, y + cardW, 8, RARITY_COLORS[f.rarity]);
+    } else {
+      X.fillStyle = '#111';
+      X.fillRect(x, y, cardW - 4, cardW + 10);
+      X.fillStyle = '#333';
+      X.font = '20px sans-serif';
+      X.textAlign = 'center';
+      X.fillText('?', x + cardW / 2 - 2, y + cardW / 2);
+    }
+  }
+  
+  btn(10, 10, 60, 30, '← Back', () => { state = STATE.MENU; });
+  drawButtons();
+}
+
+// ---- ACHIEVEMENTS ----
+const ACH_NAMES = [
+  'First Catch', 'Chef de Cuisine', 'Deep Diver', 'Legend Hunter', 'Collector',
+  'Master Chef', 'Five Star Restaurant', 'Full House', 'VIP Host', 'Abyss King'
+];
+const ACH_DESC = [
+  'Catch your first fish', 'Complete Day 1', 'Reach 100m depth',
+  'Catch a Legendary fish', 'Collect 50% of fish', 'Get 3 stars in a day',
+  'Earn 10,000 total coins', 'Collect all 25 fish', 'Serve 10 VIP customers', 'Complete all 30 days'
+];
+
+function renderAchievements() {
+  X.fillStyle = '#0A0A2E';
+  X.fillRect(0, 0, W, H);
+  
+  const unlocked = save.achievements.filter(Boolean).length;
+  drawText(`🏆 Achievements: ${unlocked}/10`, W / 2, 30, 20, '#FFD700');
+  
+  for (let i = 0; i < 10; i++) {
+    const y = 60 + i * 50;
+    X.fillStyle = save.achievements[i] ? '#1A3A1A' : '#1A1A1A';
+    X.fillRect(20, y, W - 40, 42);
+    
+    const icon = save.achievements[i] ? '✅' : '🔒';
+    drawText(`${icon} ${ACH_NAMES[i]}`, 30, y + 14, 14, save.achievements[i] ? '#55FF55' : '#666', 'left');
+    drawText(ACH_DESC[i], 30, y + 32, 10, '#888', 'left');
+  }
+  
+  btn(10, 10, 60, 30, '← Back', () => { state = STATE.MENU; });
+  drawButtons();
+}
+
+// ============================================================
+// MAIN LOOP
+// ============================================================
+function update() {
+  if (state === STATE.FISHING && fishState.phase !== 'idle') {
+    updateFishing();
+  }
+  updateBubbles();
+}
+
+function render() {
+  buttons = [];
+  X.clearRect(0, 0, W, H);
+  
+  switch (state) {
+    case STATE.MENU: renderMenu(); break;
+    case STATE.FISHING: renderFishing(); break;
+    case STATE.COOKING: renderCooking(); break;
+    case STATE.RESULT: renderResult(); break;
+    case STATE.UPGRADE: renderUpgrade(); break;
+    case STATE.COLLECTION: renderCollection(); break;
+    case STATE.RESTAURANT: renderRestaurant(); break;
+    case STATE.DAYEND: renderDayEnd(); break;
+    case STATE.ACHIEVEMENTS: renderAchievements(); break;
+  }
+  
+  frame++;
+}
+
+function handleClick() {
+  if (!click) return;
+  
+  // Check buttons first
+  for (const b of buttons) {
+    if (click.x >= b.x && click.x <= b.x + b.w && click.y >= b.y && click.y <= b.y + b.h) {
+      sfxClick();
+      b.cb();
+      click = null;
+      return;
+    }
+  }
+  
+  if (state === STATE.FISHING) {
+    initAudio();
+    handleFishingClick();
+  } else if (state === STATE.MENU) {
+    initAudio();
+  }
+  
+  click = null;
+}
+
+function gameLoop() {
+  handleClick();
+  update();
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+// Start
+gameLoop();
+</script>
+<script>new Image().src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p="+encodeURIComponent(location.pathname);</script>
+</body>
+</html>
