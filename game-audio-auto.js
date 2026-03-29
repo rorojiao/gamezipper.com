@@ -1,6 +1,6 @@
 // GameAudio Auto v4 - BGM starts when user interacts WITH THE GAME, not the website
-// 正确逻辑：进入游戏主画面（点击 canvas / 教程按钮 / 键盘输入）时开始播放 BGM
-// 不在点击导航栏、返回链接等非游戏元素时触发
+// Correct logic: start BGM when entering game main screen (click canvas / tutorial button / keyboard input)
+// Do NOT trigger on navbar clicks, back links, or non-game elements
 
 (function() {
   if (typeof GameAudio === 'undefined') {
@@ -9,9 +9,9 @@
   }
 
   const gameName = window.location.pathname.split('/').filter(Boolean)[0] || '';
-  if (!gameName) return; // 主页不播放
+  if (!gameName) return; // Skip on homepage
 
-  // ── BGM 启动 ────────────────────────────────────────────────────
+  // ── BGM Startup ────────────────────────────────────────────────────
   let bgmStarted = false;
 
   const startBGM = () => {
@@ -19,27 +19,27 @@
     if (GameAudio.isMuted()) return;
     bgmStarted = true;
     GameAudio.playBGM(gameName);
-    // 暴露给 sound-toggle.js 知道 BGM 已启动
+    // Expose to sound-toggle.js that BGM has started
     if (window._gameAudioAutoState) window._gameAudioAutoState.markStarted();
   };
 
-  // 判断点击目标是否属于「游戏交互」（排除导航栏、返回链接、声音按钮）
+  // Check if click target is a "game interaction" (exclude navbar, back links, sound button)
   const isGameInteraction = (e) => {
     const t = e.target;
-    // 排除：顶部导航返回链接
+    // Exclude: top nav back link
     if (t.tagName === 'A') return false;
     if (t.closest && t.closest('a')) return false;
-    // 排除：声音开关按钮
+    // Exclude: sound toggle button
     if (t.id === 'gz-sound-toggle') return false;
-    // 排除：顶部 nav bar 区域（top: 0-28px 的固定元素，根据坐标排除）
+    // Exclude: top nav bar area (fixed elements at top 0-28px, excluded by coordinates)
     if (e.clientY < 30 && e.clientX > window.innerWidth - 50) return false;
     return true;
   };
 
-  // 监听 canvas 点击（所有 canvas 游戏）
+  // Listen for canvas clicks (all canvas games)
   const watchCanvas = () => {
     document.querySelectorAll('canvas').forEach(c => {
-      // 排除背景装饰 canvas（pointer-events:none）
+      // Exclude background decoration canvases (pointer-events:none)
       if (getComputedStyle(c).pointerEvents !== 'none') {
         c.addEventListener('pointerdown', startBGM, { once: true });
         c.addEventListener('touchend',    startBGM, { once: true });
@@ -47,7 +47,7 @@
     });
   };
 
-  // 监听教程「Got it」按钮（常见选择器）
+  // Listen for tutorial "Got it" buttons (common selectors)
   const watchTutorialBtn = () => {
     const selectors = [
       '#tutorial-overlay button',
@@ -63,22 +63,22 @@
     });
   };
 
-  // 监听键盘输入（word-puzzle、typing-speed 等文字游戏）
+  // Listen for keyboard input (word-puzzle, typing-speed, etc.)
   const watchKeyboard = () => {
     const textGames = ['word-puzzle', 'typing-speed', 'idiom-wordle'];
     if (!textGames.includes(gameName)) return;
 
-    // 键盘按钮点击
+    // On-screen keyboard button click
     document.addEventListener('click', (e) => {
       if (bgmStarted) return;
       const t = e.target;
-      // 游戏键盘按钮（letter keys）
+      // Game keyboard buttons (letter keys)
       if (t.classList && (t.classList.contains('key') || t.classList.contains('letter') || t.dataset.key)) {
         startBGM();
       }
     }, { once: false });
 
-    // 物理键盘输入
+    // Physical keyboard input
     document.addEventListener('keydown', (e) => {
       if (bgmStarted) return;
       if (e.key.length === 1 || e.key === 'Enter' || e.key === 'Backspace') {
@@ -87,7 +87,7 @@
     }, { once: true });
   };
 
-  // 游戏内任意非导航点击（兜底，比 canvas 更宽泛）
+  // Any non-nav click inside game (fallback, broader than canvas)
   const watchGameClick = () => {
     document.addEventListener('click', (e) => {
       if (bgmStarted) return;
@@ -97,14 +97,14 @@
     }, { capture: true });
   };
 
-  // 等 DOM 加载完再挂事件
+  // Wait for DOM to load before attaching events
   const init = () => {
     watchCanvas();
     watchTutorialBtn();
     watchKeyboard();
-    watchGameClick(); // 兜底
+    watchGameClick(); // Fallback
 
-    // 动态等待 canvas（有些游戏 canvas 是 JS 创建的）
+    // Dynamically wait for canvas (some games create canvas via JS)
     let watchAttempts = 0;
     const retryWatch = setInterval(() => {
       watchCanvas();
@@ -119,7 +119,7 @@
     init();
   }
 
-  // ── 游戏特定 SFX 触发器 ────────────────────────────────────────
+  // ── Game-specific SFX triggers ────────────────────────────────────────
   const setupSFX = () => {
     if (gameName === 'typing-speed') {
       const inp = document.getElementById('inputArea');
@@ -144,13 +144,13 @@
     setTimeout(setupSFX, 300);
   }
 
-  // 通用按钮 SFX（排除导航和声音按钮）
+  // Generic button SFX (exclude nav and sound buttons)
   document.addEventListener('click', (e) => {
     if (!isGameInteraction(e)) return;
     if (e.target.tagName === 'BUTTON') GameAudio.play('tap', 0.35);
   }, true);
 
-  // 暴露状态
+  // Expose state
   window._gameAudioAutoState = {
     gameName,
     get started() { return bgmStarted; },

@@ -1,4 +1,4 @@
-// 🧠 记忆大师 - Memory Match Game
+// 🧠 Memory Master - Memory Match Game
 (function() {
 'use strict';
 

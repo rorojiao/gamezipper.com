@@ -1,7 +1,7 @@
 /**
  * GameZipper UX-safe promo rail
- * 目标：绝不打断游戏，不再弹全屏、不拦截返回、不注入定时遮罩。
- * 行为：仅在首页/分类页渲染一个页面内联推荐条；游戏页完全不做任何打断式动作。
+ * Goal: never interrupt gameplay - no full-screen popups, no back-button intercepts, no timed overlays.
+ * Behavior: only render an inline recommendation bar on home/category pages; game pages are completely interruption-free.
  */
 (function () {
   'use strict';

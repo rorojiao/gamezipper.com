@@ -18,7 +18,7 @@ const GameAudio = (() => {
   let muted = false;
   const BGM_VOL = 0.14;
 
-  // BGM文件映射
+  // BGM file mapping
   const bgmMap = {
     '2048':          '/audio/2048_galaxy.mp3?v=6',
     'typing-speed':  '/audio/typing_cyber.mp3?v=6',
@@ -34,7 +34,7 @@ const GameAudio = (() => {
     'idle-clicker':  '/audio/alchemy_magic.mp3?v=6',
   };
 
-  // SFX合成器 (Web Audio API, 独立于BGM)
+  // SFX synthesizer (Web Audio API, independent of BGM)
   const synth = (freq, dur, type = 'sine', vol = 0.3, ramp = true) => {
     try {
       const ac = getCtx();
@@ -76,7 +76,7 @@ const GameAudio = (() => {
     } catch(e) {}
   };
 
-  // SFX定义 (全部保留)
+  // SFX definitions (all preserved)
   const sfxDefs = {
     click:     () => synth(800, 0.08, 'sine', 0.54),
     pop:       () => synth(600, 0.1, 'sine', 0.72),
@@ -110,7 +110,7 @@ const GameAudio = (() => {
   const stopBGMInternal = (fade = false) => {
     if (!bgmAudio) return;
     if (fade) {
-      // 150ms 淡出防爆音
+      // 150ms fade-out to prevent audio pop
       const a = bgmAudio;
       const startVol = a.volume;
       const step = startVol / 15;
@@ -146,12 +146,12 @@ const GameAudio = (() => {
 
       const audio = new Audio(url);
       audio.loop = true;
-      audio.volume = 0;  // 先静音，淡入
+      audio.volume = 0;  // Start muted, fade in
       bgmAudio = audio;
       bgmPlaying = true;
       bgmCurrentName = gameName;
 
-      // 1秒淡入
+      // 1s fade-in
       audio.play().then(() => {
         let v = 0;
         const target = BGM_VOL;
@@ -196,34 +196,34 @@ const GameAudio = (() => {
     _getAudio: () => bgmAudio,
     isPlaying: () => bgmPlaying,
 
-    // 兼容旧接口（game-audio-auto.js 调用 playBGM）
+    // Backward compatible (game-audio-auto.js calls playBGM)
     bgmBuffer: null,
   };
 })();
 
-// 离开页面时停止 BGM
+// Stop BGM when leaving page
 window.addEventListener('pagehide', () => { try { GameAudio.stopBGM(); } catch(e) {} });
 window.addEventListener('beforeunload', () => { try { GameAudio.stopBGM(); } catch(e) {} });
 
 // ── Page Visibility API ──────────────────────────────────────────────────────
-// Safari 最小化 / 切换标签时触发，暂停BGM；返回时恢复（不重头播放）
-// 参考 MDN: https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API
+// Safari minimize / tab switch: pause BGM; resume on return (no restart)
+// Ref: MDN Page Visibility API
 (function () {
   var _wasPlaying = false;
 
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
-      // 页面进入后台：暂停（不是停止，保留播放位置）
+      // Page background: pause, not stop, preserve playback position
       _wasPlaying = GameAudio.isPlaying();
       if (_wasPlaying) {
         try {
-          // HTML5 Audio 暂停（保留位置）
+          // HTML5 Audio pause, preserve position
           var a = GameAudio._getAudio && GameAudio._getAudio();
           if (a) a.pause();
         } catch (e) {}
       }
     } else {
-      // 页面回到前台：如果之前在播放且未静音，继续
+      // Page foreground: if was playing and not muted, resume
       if (_wasPlaying && !GameAudio.isMuted()) {
         try {
           var a = GameAudio._getAudio && GameAudio._getAudio();

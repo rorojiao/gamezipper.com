@@ -21,7 +21,7 @@
   }
 
   function shouldInjectThirdParty() {
-    // 用户要求：不能中断游戏。当前第三方广告脚本会带来弹出/打断风险，统一禁用。
+    // Requirement: never interrupt gameplay. Third-party ad scripts pose popup/interruption risks, disable them all.
     return false;
   }
 
