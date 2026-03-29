@@ -255,6 +255,51 @@ let totalCookies = 0;
 let totalCps = 0;
 let cpsMultiplier = 1;
 let prestigeLevel = 0;
+let prestigeMultiplier = 1;
+let clickValue = 1;
+let clickMultiplier = 1;
+let lastTick = Date.now();
+let lastSave = Date.now();
+let goldenClicks = 0;
+const purchasedTypes = new Set();
+const unlockedAch = new Set();
+const RUNE_SYMBOLS = ['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ','ᛇ','ᛈ','ᛉ','ᛊ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ','ᛝ','ᛟ','ᛞ'];
+const upgrades = [
+  {name:'Apprentice Mage',cps:0.5,baseCost:15,owned:0},
+  {name:'Familiar',cps:1,baseCost:100,owned:0},
+  {name:'Wand Enchanter',cps:3,baseCost:500,owned:0},
+  {name:'Potion Brewer',cps:8,baseCost:2000,owned:0},
+  {name:'Rune Forger',cps:20,baseCost:8000,owned:0},
+  {name:'Arcane Library',cps:50,baseCost:30000,owned:0},
+  {name:'Summoning Circle',cps:120,baseCost:100000,owned:0},
+  {name:'Mana Nexus',cps:300,baseCost:500000,owned:0},
+  {name:'Archmage Tower',cps:800,baseCost:2000000,owned:0},
+  {name:'Dimensional Rift',cps:2000,baseCost:10000000,owned:0}
+];
+const achievements = [
+  {id:'first',icon:'🎓',name:'First Spell',desc:'Cast your first spell'},
+  {id:'hundred',icon:'💯',name:'Centurion',desc:'Channel 100 mana'},
+  {id:'thousand',icon:'🌟',name:'Grand Mage',desc:'Channel 1,000 mana'},
+  {id:'million',icon:'👑',name:'Mana King',desc:'Channel 1,000,000 mana'},
+  {id:'billion',icon:'💎',name:'Diamond Mage',desc:'Channel 1,000,000,000 mana'},
+  {id:'speed',icon:'⚡',name:'Rapid Casting',desc:'10 casts in 1 second'},
+  {id:'golden',icon:'🧪',name:'Potion Collector',desc:'Tap 5 magic potions'},
+  {id:'shop5',icon:'🏪',name:'Shop Regular',desc:'Own 5 upgrades'},
+  {id:'shop20',icon:'🏰',name:'Castle Owner',desc:'Own 20 total upgrades'},
+  {id:'prestige',icon:'♻️',name:'Rebirth',desc:'Prestige for the first time'}
+];
+function checkAchievements(){
+  if(cookies>=1&&!unlockedAch.has('first')){unlockedAch.add('first');showToast('📖 First Spell!');}
+  if(totalCookies>=100&&!unlockedAch.has('hundred')){unlockedAch.add('hundred');showToast('📖 Centurion: 100 mana!');}
+  if(totalCookies>=1000&&!unlockedAch.has('thousand')){unlockedAch.add('thousand');showToast('📖 Grand Mage: 1K mana!');}
+  if(totalCookies>=1e6&&!unlockedAch.has('million')){unlockedAch.add('million');showToast('📖 Mana King: 1M mana!');}
+  if(totalCookies>=1e9&&!unlockedAch.has('billion')){unlockedAch.add('billion');showToast('📖 Diamond Mage: 1B mana!');}
+  if(goldenClicks>=5&&!unlockedAch.has('golden')){unlockedAch.add('golden');showToast('📖 Potion Collector!');}
+  const totalOwned=upgrades.reduce((s,u)=>s+u.owned,0);
+  if(totalOwned>=5&&!unlockedAch.has('shop5')){unlockedAch.add('shop5');showToast('📖 Shop Regular!');}
+  if(totalOwned>=20&&!unlockedAch.has('shop20')){unlockedAch.add('shop20');showToast('📖 Castle Owner!');}
+  if(prestigeLevel>0&&!unlockedAch.has('prestige')){unlockedAch.add('prestige');showToast('📖 Rebirth!');}
+}
 function showToast(msg){
   const t=document.createElement('div');t.className='toast';t.textContent=msg;
   document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
