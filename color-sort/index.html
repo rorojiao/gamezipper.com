@@ -9,6 +9,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Color Sort Puzzle - Free Online Puzzle Game | GameZipper</title>
 <style>
+
+
 *{margin:0;padding:0;box-sizing:border-box}
 body{padding-top:28px;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;-webkit-tap-highlight-color:transparent;user-select:none;background:#0a1628}
 #bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
@@ -85,6 +87,16 @@ body{padding-top:28px;font-family:'Segoe UI',system-ui,sans-serif;min-height:100
 .chem-smoke{position:fixed;pointer-events:none;z-index:99;border-radius:50%;animation:smokeExpand 1s ease-out forwards}
 @keyframes smokeExpand{0%{opacity:0.4;transform:translate(-50%,-50%) scale(0)}40%{opacity:0.25}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
 @keyframes screenShake{0%,100%{transform:translateX(0)}10%{transform:translateX(-3px)}30%{transform:translateX(3px)}50%{transform:translateX(-2px)}70%{transform:translateX(2px)}}
+
+/* ===== Splash BG ===== */
+#splash-screen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:url('splash-bg.jpg') center/cover no-repeat;transition:opacity 0.5s ease}
+#splash-screen.fade-out{opacity:0;pointer-events:none}
+#splash-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.6) 100%)}
+#splash-screen h1{position:relative;z-index:1;font-size:clamp(28px,8vw,52px);font-weight:900;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,0.8),0 0 40px rgba(0,0,0,0.5);letter-spacing:2px;text-align:center;padding:0 20px;font-family:'Segoe UI',system-ui,sans-serif}
+#splash-screen .splash-sub{position:relative;z-index:1;color:rgba(255,255,255,0.85);font-size:clamp(14px,3vw,18px);margin-top:16px;text-shadow:0 1px 8px rgba(0,0,0,0.6);letter-spacing:1px}
+#splash-screen .splash-hint{position:relative;z-index:1;color:rgba(255,255,255,0.5);font-size:12px;margin-top:40px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+
 </style>
   <script src="../game-audio.js?v=9"></script>
   <meta name="description" content="Sort colored liquids into matching bottles in Color Sort Puzzle, the satisfying free brain game. Pour and organize colors until each bottle has only one color. No download required.">
@@ -179,6 +191,7 @@ body{padding-top:28px;font-family:'Segoe UI',system-ui,sans-serif;min-height:100
 </script>
 </head>
 <body>
+<div id="splash-screen"><h1>Color Sort</h1><div class="splash-sub">🎮 Free Online Game</div><div class="splash-hint">Tap anywhere to play</div></div>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;font-family:sans-serif">&#x1f3e0; More Games at GameZipper.com</a>
 
 <canvas id="bg-canvas"></canvas>
@@ -208,63 +221,6 @@ body{padding-top:28px;font-family:'Segoe UI',system-ui,sans-serif;min-height:100
 </div>
 
 <script>
-const COLORS=['#39ff14','#00bfff','#ff1493','#ff6d00','#bf00ff','#ffe600',
-              '#ff4444','#4488ff','#ff9900','#22cc88'];
-const COLORS_DARK=['#1a8a0a','#007a8a','#8a0a4a','#8a3a00','#5a0080','#8a8a00',
-                   '#8a2222','#224488','#8a5500','#226644'];
-const TUBE_W=80,TUBE_H=260,BALL_D=56,CAP=4;
-// LEVEL_DEFS: [numColors, numEmptyTubes] — nc must not exceed COLORS.length (10)
-const LEVEL_DEFS=[
-// Levels 1-10: intro (3→6 colors)
-[3,1],[3,2],[4,1],[4,2],[5,1],[5,2],[5,2],[6,2],[6,2],[6,2],
-// Levels 11-20: medium (6→8 colors)
-[6,3],[7,2],[7,2],[7,3],[8,2],[8,2],[8,3],[8,2],[8,3],[8,2],
-// Levels 21-30: hard (8→9 colors)
-[8,3],[9,2],[9,2],[9,3],[9,2],[9,3],[9,2],[9,3],[9,2],[9,3],
-// Levels 31-40: very hard (9→10 colors)
-[9,3],[10,2],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],
-// Levels 41-50: expert (10 colors, tight tubes)
-[10,2],[10,3],[10,2],[10,3],[10,2],[10,2],[10,3],[10,2],[10,3],[10,2],
-// Levels 51-60
-[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],
-// Levels 61-70
-[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],
-// Levels 71-80
-[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],
-// Levels 81-90
-[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],
-// Levels 91-100
-[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2],[10,3],[10,2]
-];
-
-let state={level:0,tubes:[],history:[],selected:-1,won:false};
-let maxLevel=parseInt(localStorage.getItem('csort_max')||'0');
-let isAnimating=false;
-let hintFrom=-1,hintTo=-1,hintTimer=0;
-let hintUsed=0;const MAX_HINTS=3;
-
-let fxC,fxCtx;
-const POOL_SIZE=800;
-let particles=new Array(POOL_SIZE);
-let pCount=0;
-for(let i=0;i<POOL_SIZE;i++) particles[i]={active:false};
-
-let bgC,bgCtx,bgBubbles=[];
-
-// Snow particles
-let snowC,snowCtx,snowflakes=[];
-function initSnow(){
-  snowC=document.getElementById('snow-canvas');snowCtx=snowC.getContext('2d');
-  function resize(){snowC.width=window.innerWidth;snowC.height=window.innerHeight;}
-  resize();window.addEventListener('resize',resize);
-  for(let i=0;i<20;i++){
-    snowflakes.push({
-      x:Math.random()*snowC.width,y:Math.random()*snowC.height,
-      r:Math.random()*4+1,speed:Math.random()*.5+.2,
-      drift:Math.random()*Math.PI*2,opacity:Math.random()*.5+.3
-    });
-  }
-}
 function tickSnow(){
   snowCtx.clearRect(0,0,snowC.width,snowC.height);
   for(const s of snowflakes){
@@ -975,6 +931,18 @@ flex:0 0 0px;min-height:0;overflow:hidden;padding:0;margin:0;}
   <h2>Play more like this</h2>
   <p><a href="/paint-splash/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Paint Splash</a><a href="/wood-block-puzzle/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Wood Block Puzzle</a><a href="/kitty-cafe/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Kitty Cafe</a><a href="/puzzle-games.html" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Puzzle Games</a></p>
 </section>
+
+
+// Splash dismiss
+(function(){
+  var ss=document.getElementById('splash-screen');
+  if(!ss)return;
+  function dismiss(){ss.classList.add('fade-out');setTimeout(function(){ss.remove()},600);}
+  ss.addEventListener('click',dismiss);
+  ss.addEventListener('touchstart',dismiss,{passive:true});
+  document.addEventListener('keydown',function e(){dismiss();document.removeEventListener('keydown',e);});
+  setTimeout(dismiss,8000);
+})();
 
 </body>
 </html>

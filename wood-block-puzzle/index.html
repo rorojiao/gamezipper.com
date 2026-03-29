@@ -21,6 +21,8 @@
 <meta name="twitter:image" content="https://gamezipper.com/og-preview.png">
 <meta name="twitter:description" content="Place wooden block pieces onto the grid to fill rows and columns in Wood Block Puzzle. The free online block-dropping brain teaser with no time pressure. Play instantly in your browser.">
 <style>
+
+
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow-y:auto;overflow-x:hidden;background:#1a0e06;font-family:'Segoe UI',Arial,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
 #nav{position:fixed;top:0;left:0;right:0;height:30px;background:rgba(10,6,2,0.95);display:flex;align-items:center;justify-content:space-between;padding:0 10px;z-index:100;border-bottom:1px solid #3d2a10}
@@ -41,6 +43,16 @@ canvas{display:block}
 .ov-sub{font-size:16px;color:#c8a06a;margin-bottom:20px}
 .ov-btn{background:linear-gradient(135deg,#c8801a,#e8a030);color:#1a0e06;border:none;padding:14px 32px;border-radius:12px;font-size:18px;font-weight:800;cursor:pointer;margin:4px;box-shadow:0 4px 12px rgba(200,128,26,0.5);touch-action:manipulation;width:fit-content;max-width:220px;display:inline-block}
 .ov-btn:hover{background:linear-gradient(135deg,#d89020,#f0b040)}
+
+/* ===== Splash BG ===== */
+#splash-screen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:url('splash-bg.jpg') center/cover no-repeat;transition:opacity 0.5s ease}
+#splash-screen.fade-out{opacity:0;pointer-events:none}
+#splash-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.6) 100%)}
+#splash-screen h1{position:relative;z-index:1;font-size:clamp(28px,8vw,52px);font-weight:900;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,0.8),0 0 40px rgba(0,0,0,0.5);letter-spacing:2px;text-align:center;padding:0 20px;font-family:'Segoe UI',system-ui,sans-serif}
+#splash-screen .splash-sub{position:relative;z-index:1;color:rgba(255,255,255,0.85);font-size:clamp(14px,3vw,18px);margin-top:16px;text-shadow:0 1px 8px rgba(0,0,0,0.6);letter-spacing:1px}
+#splash-screen .splash-hint{position:relative;z-index:1;color:rgba(255,255,255,0.5);font-size:12px;margin-top:40px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+
 </style>
 <script type="application/ld+json">
 {
@@ -122,6 +134,7 @@ canvas{display:block}
 </script>
 </head>
 <body>
+<div id="splash-screen"><h1>Wood Block Puzzle</h1><div class="splash-sub">🎮 Free Online Game</div><div class="splash-hint">Tap anywhere to play</div></div>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;font-family:sans-serif">&#x1f3e0; More Games at GameZipper.com</a>
 
 <div id="main">
@@ -141,100 +154,6 @@ canvas{display:block}
   </div>
 </div>
 <script>
-'use strict';
-const GRID = 9;
-const SAVE_KEY = 'wbp_best_v1';
-
-// Wood-themed colors (warm browns and ambers)
-const WOOD_COLORS = [
-  {fill:'#c8801a',stroke:'#8a5010',hi:'#e8a040'},  // oak
-  {fill:'#a05c14',stroke:'#6a3a08',hi:'#c07830'},  // dark walnut
-  {fill:'#d4982a',stroke:'#9a6a12',hi:'#f0b840'},  // maple
-  {fill:'#7a4a10',stroke:'#4a2808',hi:'#9a6a2a'},  // mahogany
-  {fill:'#b87020',stroke:'#7a4a08',hi:'#d89040'},  // pine
-  {fill:'#e0b050',stroke:'#a07818',hi:'#f8d070'},  // birch
-];
-
-// Block shapes (each is array of [row,col] offsets)
-const SHAPES = [
-  // 1-cell
-  [[0,0]],
-  // 2-cell
-  [[0,0],[0,1]],
-  [[0,0],[1,0]],
-  // 3-cell line
-  [[0,0],[0,1],[0,2]],
-  [[0,0],[1,0],[2,0]],
-  // L shapes
-  [[0,0],[1,0],[1,1]],
-  [[0,0],[0,1],[1,0]],
-  [[0,0],[0,1],[1,1]],
-  [[0,1],[1,0],[1,1]],
-  // T shape
-  [[0,0],[0,1],[0,2],[1,1]],
-  [[0,0],[1,0],[2,0],[1,1]],
-  [[1,0],[1,1],[1,2],[0,1]],
-  [[0,1],[1,1],[2,1],[1,0]],
-  // S/Z shapes
-  [[0,0],[0,1],[1,1],[1,2]],
-  [[0,1],[0,2],[1,0],[1,1]],
-  // 2x2 square
-  [[0,0],[0,1],[1,0],[1,1]],
-  // 3x3 square
-  [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]],
-  // 4-cell line
-  [[0,0],[0,1],[0,2],[0,3]],
-  [[0,0],[1,0],[2,0],[3,0]],
-  // 5-cell line
-  [[0,0],[0,1],[0,2],[0,3],[0,4]],
-  [[0,0],[1,0],[2,0],[3,0],[4,0]],
-  // L-tetromino
-  [[0,0],[1,0],[2,0],[2,1]],
-  [[0,0],[0,1],[0,2],[1,0]],
-  [[0,0],[0,1],[1,1],[2,1]],
-  [[0,2],[1,0],[1,1],[1,2]],
-  // J-tetromino
-  [[0,1],[1,1],[2,0],[2,1]],
-  [[0,0],[1,0],[1,1],[1,2]],
-  [[0,0],[0,1],[1,0],[2,0]],
-  [[0,0],[0,1],[0,2],[1,2]],
-];
-
-const canvas = document.getElementById('gc');
-const ctx = canvas.getContext('2d');
-const scoreEl = document.getElementById('score');
-const bestEl = document.getElementById('best');
-const comboEl = document.getElementById('combo');
-const overlay = document.getElementById('overlay');
-const ovScore = document.getElementById('ov-score');
-
-let grid = [], score = 0, bestScore = 0, combo = 1;
-let pieces = [], dragging = null;
-let cellSize = 38, gridOffX = 0, gridOffY = 0;
-let pieceArea = {y:0, h:0};
-let floats = [], particles = [];
-let flashCells = {}; // row,col -> alpha for clear animation
-let shakeTime = 0, shakeIntensity = 0;
-let gameActive = false;
-let animFrame = null;
-
-try { bestScore = parseInt(localStorage.getItem(SAVE_KEY)) || 0; } catch(e){}
-bestEl.textContent = bestScore;
-
-// Audio
-let _ac = null;
-function getAC() { if (!_ac) try { _ac = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} return _ac; }
-function playTone(freq, type, gain, dur) {
-  try {
-    const ac = getAC(); if (!ac) return;
-    const o = ac.createOscillator(), g = ac.createGain();
-    o.connect(g); g.connect(ac.destination);
-    o.type = type||'sine'; o.frequency.value = freq;
-    g.gain.setValueAtTime(gain||0.15, ac.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+dur);
-    o.start(); o.stop(ac.currentTime+dur);
-  } catch(e) {}
-}
 function playPlace() { playTone(440, 'triangle', 0.1, 0.08); }
 function playClear() {
   [523,659,784,1047].forEach((f,i) => setTimeout(() => playTone(f,'triangle',0.15,0.15), i*80));
@@ -839,6 +758,18 @@ window._gameState = {
   <h2>Play more like this</h2>
   <p><a href="/2048/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">2048</a><a href="/color-sort/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Color Sort</a><a href="/bolt-jam-3d/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Bolt Jam 3D</a><a href="/puzzle-games.html" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Puzzle Games</a></p>
 </section>
+
+
+// Splash dismiss
+(function(){
+  var ss=document.getElementById('splash-screen');
+  if(!ss)return;
+  function dismiss(){ss.classList.add('fade-out');setTimeout(function(){ss.remove()},600);}
+  ss.addEventListener('click',dismiss);
+  ss.addEventListener('touchstart',dismiss,{passive:true});
+  document.addEventListener('keydown',function e(){dismiss();document.removeEventListener('keydown',e);});
+  setTimeout(dismiss,8000);
+})();
 
 </body>
 </html>

@@ -8,6 +8,8 @@
   <meta charset="utf-8">  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover">
   <title>Catch Turkey - Free Online Arcade Game | GameZipper</title>
   <style>
+
+
 html,body{overflow-x:hidden;max-width:100vw;}
 *{box-sizing:border-box;}
 body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
@@ -42,7 +44,17 @@ body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-selec
     /* Extra animal decorations */
     .deco-animal{position:fixed;pointer-events:none;z-index:10001;opacity:0.15;animation:animalBob 3s ease-in-out infinite}
     @keyframes animalBob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-10px) rotate(3deg)}}
-  </style>
+  
+/* ===== Splash BG ===== */
+#splash-screen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:url('splash-bg.jpg') center/cover no-repeat;transition:opacity 0.5s ease}
+#splash-screen.fade-out{opacity:0;pointer-events:none}
+#splash-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.6) 100%)}
+#splash-screen h1{position:relative;z-index:1;font-size:clamp(28px,8vw,52px);font-weight:900;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,0.8),0 0 40px rgba(0,0,0,0.5);letter-spacing:2px;text-align:center;padding:0 20px;font-family:'Segoe UI',system-ui,sans-serif}
+#splash-screen .splash-sub{position:relative;z-index:1;color:rgba(255,255,255,0.85);font-size:clamp(14px,3vw,18px);margin-top:16px;text-shadow:0 1px 8px rgba(0,0,0,0.6);letter-spacing:1px}
+#splash-screen .splash-hint{position:relative;z-index:1;color:rgba(255,255,255,0.5);font-size:12px;margin-top:40px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+
+</style>
   <script src="../game-audio.js?v=9"></script>
   <meta name="description" content="Catch falling turkeys before they hit the ground in this fun free arcade game. Test your reflexes and speed. Catch Turkey is free to play instantly in your browser—no download needed.">
   <meta name="keywords" content="catch turkey, arcade game, catching game, fun game, free online">
@@ -136,6 +148,7 @@ body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-selec
 </script>
 </head>
 <body>
+<div id="splash-screen"><h1>Catch Turkey</h1><div class="splash-sub">🎮 Free Online Game</div><div class="splash-hint">Tap anywhere to play</div></div>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;font-family:sans-serif">&#x1f3e0; More Games at GameZipper.com</a>
 
   <canvas id="gameCanvas"></canvas>
@@ -152,168 +165,6 @@ body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-selec
   <div id="fx-overlay" style="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden"></div>
 
   <script>
-  (function(){
-    const overlay=document.getElementById('fx-overlay');
-    const canvas=document.getElementById('gameCanvas');
-
-    // === Generate grass blades ===
-    const grassRow=document.getElementById('grass-row');
-    const bladeCount=Math.ceil(window.innerWidth/10);
-    for(let i=0;i<bladeCount;i++){
-      const b=document.createElement('div');
-      b.className='grass-blade';
-      b.style.animationDelay=(Math.random()*2)+'s';
-      b.style.height=(22+Math.random()*18)+'px';
-      const greens=['#228B22','#2E8B57','#32CD32','#006400','#3CB371'];
-      b.style.background=`linear-gradient(to top,${greens[Math.floor(Math.random()*greens.length)]},${greens[Math.floor(Math.random()*greens.length)]})`;
-      grassRow.appendChild(b);
-    }
-
-    // === Falling leaves with swaying ===
-    const leaves=[];
-    const leafEmojis=['🍂','🍁','🌿'];
-    const LEAF_COUNT=8;
-    for(let i=0;i<LEAF_COUNT;i++){
-      const el=document.createElement('div');
-      el.className='leaf';
-      el.textContent=leafEmojis[Math.floor(Math.random()*leafEmojis.length)];
-      el.style.fontSize=(14+Math.random()*10)+'px';
-      document.body.appendChild(el);
-      leaves.push({
-        el,x:Math.random()*window.innerWidth,y:-30-Math.random()*300,
-        speed:0.3+Math.random()*0.5,phase:Math.random()*Math.PI*2,
-        rot:Math.random()*360,rotSpeed:Math.random()*1-0.5,
-        swayAmp:15+Math.random()*20,swaySpeed:0.02+Math.random()*0.02
-      });
-    }
-
-    function animLeaves(){
-      const h=window.innerHeight,w=window.innerWidth;
-      for(const l of leaves){
-        l.y+=l.speed;l.phase+=l.swaySpeed;l.rot+=l.rotSpeed;
-        const sway=Math.sin(l.phase)*l.swayAmp;
-        if(l.y>h+30){l.y=-30;l.x=Math.random()*w;}
-        l.el.style.transform=`translate(${l.x+sway}px,${l.y}px) rotate(${l.rot}deg)`;
-      }
-      requestAnimationFrame(animLeaves);
-    }
-    animLeaves();
-
-    // === Click Effects - Feather burst ===
-    const featherColors=['#D2691E','#DEB887','#F4A460','#CD853F','#8B4513','#A0522D','#FFD700','#FF6347','#FF4500','#DA70D6'];
-
-    function spawnFeathers(x,y){
-      // 10 feather triangle particles
-      for(let i=0;i<10;i++){
-        const f=document.createElement('div');
-        f.className='feather';
-        f.style.left=x+'px';f.style.top=y+'px';
-        const sz=6+Math.random()*10;
-        const col=featherColors[Math.floor(Math.random()*featherColors.length)];
-        // CSS triangle
-        f.style.width='0';f.style.height='0';
-        f.style.borderLeft=(sz*.4)+'px solid transparent';
-        f.style.borderRight=(sz*.4)+'px solid transparent';
-        f.style.borderBottom=sz+'px solid '+col;
-        f.style.background='transparent';
-        const angle=Math.random()*Math.PI*2;
-        const dist=50+Math.random()*120;
-        const dy=Math.sin(angle)*dist+60;
-        f.style.setProperty('--dx',Math.cos(angle)*dist+'px');
-        f.style.setProperty('--dy',dy+'px');
-        f.style.setProperty('--rot',(Math.random()*540-270)+'deg');
-        f.style.animationDuration=(1.0+Math.random()*0.8)+'s';
-        overlay.appendChild(f);
-        setTimeout(()=>f.remove(),1800);
-      }
-
-      // Stars
-      for(let i=0;i<12;i++){
-        const s=document.createElement('div');
-        s.className='gold-star';
-        s.textContent=i<4?'★':'✦';
-        s.style.fontSize=i<4?(20+Math.random()*12)+'px':(10+Math.random()*8)+'px';
-        s.style.left=x+'px';s.style.top=y+'px';
-        const angle=Math.random()*Math.PI*2;
-        const dist=(i<4?60:30)+Math.random()*100;
-        s.style.setProperty('--dx',Math.cos(angle)*dist+'px');
-        s.style.setProperty('--dy',Math.sin(angle)*dist+'px');
-        overlay.appendChild(s);
-        setTimeout(()=>s.remove(),700);
-      }
-
-      // Shockwave
-      const sw=document.createElement('div');
-      sw.className='farm-shockwave';
-      sw.style.left=x+'px';sw.style.top=y+'px';
-      overlay.appendChild(sw);
-      setTimeout(()=>sw.remove(),500);
-
-      // removed: body shake
-      
-    }
-
-    canvas.addEventListener('pointerdown',function(e){
-      setTimeout(()=>spawnFeathers(e.clientX,e.clientY),100);
-    });
-  })();
-  </script>
-  <script src="game.js"></script>
-<div id="tutorial-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;z-index:999999">
-<div style="background:linear-gradient(135deg,#f5f0e0,#e8d8b0);border-radius:20px;padding:36px 28px;max-width:340px;text-align:center;color:#5D4037;box-shadow:0 8px 32px rgba(0,0,0,0.5);border:3px solid #8D6E63">
-<div style="font-size:56px;margin-bottom:12px">🦃</div>
-<h2 style="font-size:24px;color:#5D4037;margin-bottom:16px">How to Play</h2>
-<p style="font-size:16px;line-height:1.9;text-align:left;color:#6D4C41">
-👆 Tap turkeys to <b>catch</b> them!<br>
-🎯 Match <b>3 same-color</b> turkeys in a row<br>
-🏆 Collect all turkeys to complete each level
-</p>
-<p style="font-size:14px;color:#8D6E63;margin-top:12px">⭐ Special turkeys give bonus points!</p>
-<button ontouchend="event.preventDefault();var o=document.getElementById('tutorial-overlay');if(o)o.remove();var c=document.getElementById('gameCanvas')||document.querySelector('canvas');if(c)c.style.pointerEvents='auto';localStorage.setItem('tutorial-seen-catch-turkey','1');" onmousedown="var o=document.getElementById('tutorial-overlay');if(o)o.remove();var c=document.getElementById('gameCanvas')||document.querySelector('canvas');if(c)c.style.pointerEvents='auto';localStorage.setItem('tutorial-seen-catch-turkey','1');" style="touch-action:manipulation;cursor:pointer;position:relative;z-index:10000000;margin-top:20px;padding:14px 36px;font-size:18px;border:none;border-radius:12px;background:linear-gradient(135deg,#8D6E63,#6D4C41);color:#FFD54F;font-weight:bold;box-shadow:0 4px 15px rgba(93,64,55,.4);user-select:none;-webkit-user-select:none">Got it! 🌾</button>
-</div></div>
-<script>if(localStorage.getItem('tutorial_turkey')||localStorage.getItem('tutorial-seen-catch-turkey')){var o=document.getElementById('tutorial-overlay');if(o)o.remove();}</script>
-<script>
-(function(){
-  var ov = document.getElementById('tutorial-overlay');
-  if (!ov) return;
-  
-  // Get canvas for pointer-events reset
-  var cvs = document.getElementById('gameCanvas') || document.querySelector('canvas');
-  
-  // If tutorial already shown, remove overlay
-  if (localStorage.getItem('tutorial-seen-catch-turkey') || localStorage.getItem('tutorial_turkey') || localStorage.getItem('tutorial-seen-' + window.location.pathname)) {
-    ov.remove();
-    return;
-  }
-  
-  // Set overlay fullscreen click/touch events to close
-  var closeTut = function(e) {
-    e && e.preventDefault && e.preventDefault();
-    e && e.stopPropagation && e.stopPropagation();
-    if (cvs) cvs.style.pointerEvents = 'auto';
-    ov.remove();
-    localStorage.setItem('tutorial-seen-catch-turkey', '1');
-  };
-  
-  // Handle multiple event types
-  ov.addEventListener('click', closeTut, true);
-  ov.addEventListener('touchend', closeTut, true);
-  ov.addEventListener('pointerdown', closeTut, true);
-  
-  // Disable canvas events during tutorial
-  if (cvs) cvs.style.pointerEvents = 'none';
-})();
-</script>
-  <script src="../game-audio-auto.js?v=9"></script>
-<script src="../sound-toggle.js?v=9"></script>
-
-<!-- SEO Content Section -->
-<style>
-.gz-seo-section{
-  max-width:700px;margin:40px auto 24px;padding:0 16px;
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  color:#ccc;line-height:1.7;
-}
 .gz-seo-section h2{
   font-size:clamp(15px,3vw,18px);font-weight:700;color:#fff;
   margin:20px 0 8px;border-left:3px solid #FF6B35;padding-left:10px;
@@ -416,6 +267,18 @@ body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-selec
   <h2>Play more like this</h2>
   <p><a href="/snake/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Snake</a><a href="/flappy-wings/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Flappy Wings</a><a href="/brick-breaker/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Brick Breaker</a><a href="/arcade-games.html" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Arcade Games</a></p>
 </section>
+
+
+// Splash dismiss
+(function(){
+  var ss=document.getElementById('splash-screen');
+  if(!ss)return;
+  function dismiss(){ss.classList.add('fade-out');setTimeout(function(){ss.remove()},600);}
+  ss.addEventListener('click',dismiss);
+  ss.addEventListener('touchstart',dismiss,{passive:true});
+  document.addEventListener('keydown',function e(){dismiss();document.removeEventListener('keydown',e);});
+  setTimeout(dismiss,8000);
+})();
 
 </body>
 </html>

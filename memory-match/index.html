@@ -9,6 +9,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Memory Match - Free Online Puzzle Game | GameZipper</title>
 <style>
+
+
 html,body{overflow-x:hidden;max-width:100vw;}
 *{box-sizing:border-box;}
 body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
@@ -35,6 +37,16 @@ canvas{display:block;width:100%;height:100%;touch-action:none;position:relative;
 #curtain-left{left:0;background:linear-gradient(90deg,#8b0000,#cc0000,#8b0000)}
 #curtain-right{right:0;background:linear-gradient(90deg,#8b0000,#cc0000,#8b0000)}
 .curtain-close #curtain-left,.curtain-close #curtain-right{width:50%}
+
+/* ===== Splash BG ===== */
+#splash-screen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:url('splash-bg.jpg') center/cover no-repeat;transition:opacity 0.5s ease}
+#splash-screen.fade-out{opacity:0;pointer-events:none}
+#splash-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.6) 100%)}
+#splash-screen h1{position:relative;z-index:1;font-size:clamp(28px,8vw,52px);font-weight:900;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,0.8),0 0 40px rgba(0,0,0,0.5);letter-spacing:2px;text-align:center;padding:0 20px;font-family:'Segoe UI',system-ui,sans-serif}
+#splash-screen .splash-sub{position:relative;z-index:1;color:rgba(255,255,255,0.85);font-size:clamp(14px,3vw,18px);margin-top:16px;text-shadow:0 1px 8px rgba(0,0,0,0.6);letter-spacing:1px}
+#splash-screen .splash-hint{position:relative;z-index:1;color:rgba(255,255,255,0.5);font-size:12px;margin-top:40px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+
 </style>
   <script src="../game-audio.js?v=9"></script>
   <meta name="description" content="Flip cards and find matching pairs in Memory Match, the classic concentration puzzle game. Train your memory and beat your best time. Free to play on desktop and mobile.">
@@ -129,6 +141,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none;position:relative;
 </script>
 </head>
 <body>
+<div id="splash-screen"><h1>Memory Match</h1><div class="splash-sub">🎮 Free Online Game</div><div class="splash-hint">Tap anywhere to play</div></div>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;font-family:sans-serif">&#x1f3e0; More Games at GameZipper.com</a>
 
 <div id="bg-layer"></div>
@@ -138,86 +151,6 @@ canvas{display:block;width:100%;height:100%;touch-action:none;position:relative;
 <div id="fx-overlay" style="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden"></div>
 
 <script>
-// Floating balloons
-(function(){
-  const colors=['🎈'];
-  const balloonColors=['red','blue','yellow','green'];
-  const balloons=[];
-  for(let i=0;i<8;i++){
-    const el=document.createElement('div');
-    el.className='balloon';
-    el.textContent='🎈';
-    el.style.fontSize=(28+Math.random()*16)+'px';
-    // Color filter approximation via hue-rotate
-    el.style.filter='hue-rotate('+[0,200,60,120][i%4]+'deg)';
-    document.body.appendChild(el);
-    balloons.push({
-      el,x:Math.random()*window.innerWidth,y:window.innerHeight+30+Math.random()*200,
-      speed:0.3+Math.random()*0.4,phase:Math.random()*Math.PI*2,
-      swayAmp:10+Math.random()*15,swaySpeed:0.01+Math.random()*0.015
-    });
-  }
-  function animBalloons(){
-    const h=window.innerHeight,w=window.innerWidth;
-    for(const b of balloons){
-      b.y-=b.speed;b.phase+=b.swaySpeed;
-      const sway=Math.sin(b.phase)*b.swayAmp;
-      if(b.y<-50){b.y=h+30;b.x=Math.random()*w;}
-      b.el.style.transform=`translate(${b.x+sway}px,${b.y}px)`;
-    }
-    requestAnimationFrame(animBalloons);
-  }
-  animBalloons();
-})();
-
-(function(){
-const canvas=document.getElementById('c');
-const ctx=canvas.getContext('2d');
-const overlay=document.getElementById('fx-overlay');
-let W,H,dpr;
-const themes={
-  animals:['🐶','🐱','🐰','🦊','🐻','🐼','🐨','🦁','🐸','🐵','🐷','🐮','🐔','🦄','🐝'],
-  fruits:['🍎','🍊','🍋','🍇','🍓','🍑','🍒','🥝','🍌','🍉','🫐','🥭','🍍','🥥','🍈'],
-  flags:['🌸','🌺','🌻','🌹','🌷','🌼','💐','🪷','🍁','🍂','🌿','☘️','🪻','🌴','🌵'],
-  faces:['😀','😂','🥰','😎','🤩','😜','🤗','😇','🥳','😏','🤔','😴','🤯','😱','🫡']
-};
-const themeNames={animals:'🐱 Animals',fruits:'🍎 Fruits',flags:'🌸 Flowers',faces:'😀 Emoji'};
-const themeKeys=Object.keys(themes);
-
-const difficulties=[
-  {name:'Easy',cols:4,rows:3},
-  {name:'Normal',cols:4,rows:4},
-  {name:'Hard',cols:5,rows:4},
-  {name:'Extreme',cols:6,rows:5}
-];
-
-let state='menu';
-let selDiff=1, selTheme=0;
-let cards=[], cols=0, rows=0;
-let first=null, second=null, lockBoard=false;
-let moves=0, startTime=0, elapsed=0, timerInterval=null;
-let matched=0, totalPairs=0;
-let comboCount=0, comboTimer2=null;
-let particles=[];
-let cardAnims={};
-let bestScores=JSON.parse(localStorage.getItem('mm_best')||'{}');
-
-let audioCtx2;
-function getAC2(){if(!audioCtx2)audioCtx2=new(window.AudioContext||window.webkitAudioContext)();return audioCtx2;}
-function sfxFlip(){try{const a=getAC2(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='sine';o.frequency.value=800;g.gain.setValueAtTime(.15,a.currentTime);g.gain.exponentialRampToValueAtTime(.01,a.currentTime+.08);o.start(a.currentTime);o.stop(a.currentTime+.08);}catch(e){}}
-function sfxMatch(){try{const a=getAC2();[523,659,784].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.2,a.currentTime+i*.08);g.gain.exponentialRampToValueAtTime(.01,a.currentTime+i*.08+.2);o.start(a.currentTime+i*.08);o.stop(a.currentTime+i*.08+.2);});}catch(e){}}
-function sfxFail(){try{const a=getAC2(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='square';o.frequency.setValueAtTime(300,a.currentTime);o.frequency.exponentialRampToValueAtTime(200,a.currentTime+.15);g.gain.setValueAtTime(.1,a.currentTime);g.gain.exponentialRampToValueAtTime(.01,a.currentTime+.15);o.start(a.currentTime);o.stop(a.currentTime+.15);}catch(e){}}
-
-let gridX,gridY,cardW,cardH,gap;
-
-function resize(){
-  dpr=window.devicePixelRatio||1;
-  W=window.innerWidth;H=window.innerHeight-28;
-  canvas.width=W*dpr;canvas.height=H*dpr;
-  canvas.style.width=W+'px';canvas.style.height=H+'px';
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  if(state==='playing')calcGrid();
-}
 window.addEventListener('resize',resize);
 
 function calcGrid(){
@@ -860,5 +793,17 @@ function shareGame(sc){
 <script src="/monetag-safe.js"></script>
 <script>window.GZMonetagSafe&&window.GZMonetagSafe.init(216786);</script>
 <script src="/ad-interstitial.js"></script>
+
+// Splash dismiss
+(function(){
+  var ss=document.getElementById('splash-screen');
+  if(!ss)return;
+  function dismiss(){ss.classList.add('fade-out');setTimeout(function(){ss.remove()},600);}
+  ss.addEventListener('click',dismiss);
+  ss.addEventListener('touchstart',dismiss,{passive:true});
+  document.addEventListener('keydown',function e(){dismiss();document.removeEventListener('keydown',e);});
+  setTimeout(dismiss,8000);
+})();
+
 </body>
 </html>

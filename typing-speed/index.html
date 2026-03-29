@@ -9,6 +9,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Typing Speed Test - Free Online Typing Game | GameZipper</title>
 <style>
+
+
 *{margin:0;padding:0;box-sizing:border-box}
 body{padding-top:28px;background:#000;color:#00ff41;font-family:'Courier New',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;position:relative;overflow-x:hidden}
 #matrix-bg{position:fixed;inset:0;z-index:0;pointer-events:none;touch-action:none}
@@ -100,6 +102,16 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
   .result-stats{gap:16px}
   .result-stat .val{font-size:28px}
 }
+
+/* ===== Splash BG ===== */
+#splash-screen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:url('splash-bg.jpg') center/cover no-repeat;transition:opacity 0.5s ease}
+#splash-screen.fade-out{opacity:0;pointer-events:none}
+#splash-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.6) 100%)}
+#splash-screen h1{position:relative;z-index:1;font-size:clamp(28px,8vw,52px);font-weight:900;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,0.8),0 0 40px rgba(0,0,0,0.5);letter-spacing:2px;text-align:center;padding:0 20px;font-family:'Segoe UI',system-ui,sans-serif}
+#splash-screen .splash-sub{position:relative;z-index:1;color:rgba(255,255,255,0.85);font-size:clamp(14px,3vw,18px);margin-top:16px;text-shadow:0 1px 8px rgba(0,0,0,0.6);letter-spacing:1px}
+#splash-screen .splash-hint{position:relative;z-index:1;color:rgba(255,255,255,0.5);font-size:12px;margin-top:40px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+
 </style>
   <script src="../game-audio.js?v=9"></script>
   <meta name="description" content="Test and improve your typing speed with this free online WPM typing game. Type the displayed words as fast and accurately as you can. Track your words per minute and accuracy.">
@@ -194,6 +206,7 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
 </script>
 </head>
 <body>
+<div id="splash-screen"><h1>Typing Speed</h1><div class="splash-sub">🎮 Free Online Game</div><div class="splash-hint">Tap anywhere to play</div></div>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;font-family:sans-serif">&#x1f3e0; More Games at GameZipper.com</a>
 
 <canvas id="matrix-bg"></canvas>
@@ -248,118 +261,6 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
   </div>
 </div>
 <script>
-// Matrix rain background
-(function(){
-  const canvas=document.getElementById('matrix-bg');
-  const ctx=canvas.getContext('2d');
-  let W,H;
-  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZアイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789';
-  let columns=[];
-  let fontSize=14;
-  let rainSpeed=1;
-  let density=1;
-
-  function resize(){
-    W=window.innerWidth;H=window.innerHeight;
-    canvas.width=W;canvas.height=H;
-    const colCount=Math.floor(W/fontSize);
-    columns=[];
-    for(let i=0;i<colCount;i++){
-      columns.push({y:Math.random()*H,speed:0.5+Math.random()*1.5,chars:[]});
-    }
-  }
-
-  function draw(){
-    ctx.fillStyle='rgba(0,0,0,0.05)';
-    ctx.fillRect(0,0,W,H);
-    ctx.font=fontSize+'px monospace';
-    
-    for(let i=0;i<columns.length;i++){
-      const col=columns[i];
-      const char=chars[Math.floor(Math.random()*chars.length)];
-      const x=i*fontSize;
-      
-      // Bright head
-      ctx.fillStyle='#00ff41';
-      ctx.globalAlpha=0.9;
-      ctx.fillText(char,x,col.y);
-      
-      // Dimmer trail
-      ctx.fillStyle='#008020';
-      ctx.globalAlpha=0.4*density;
-      const trailChar=chars[Math.floor(Math.random()*chars.length)];
-      ctx.fillText(trailChar,x,col.y-fontSize);
-      
-      ctx.globalAlpha=1;
-      
-      col.y+=col.speed*fontSize*rainSpeed;
-      if(col.y>H+100){
-        col.y=-fontSize;
-        col.speed=0.5+Math.random()*1.5;
-      }
-    }
-    requestAnimationFrame(draw);
-  }
-
-  // Expose for end-game flood effect
-  window.matrixFlood=function(){
-    rainSpeed=3;density=2;
-    setTimeout(()=>{rainSpeed=1;density=1;},500);
-  };
-
-  window.addEventListener('resize',resize);
-  resize();
-  draw();
-})();
-
-// Main game
-(function(){
-const WORDS_EASY=["the","be","to","of","and","a","in","it","for","not","on","he","as","you","do","at","but","by","we","or","an","my","one","all","so","up","out","if","who","go","me","no","him","see","now","its","how","our","two","new","day","us","old","big","own","try","run","let","set","end"];
-const WORDS_MED=["that","have","this","from","they","say","will","would","there","their","what","about","which","when","make","time","just","know","take","people","into","year","good","some","could","them","other","than","then","look","only","come","over","think","also","back","after","work","first","well","even","want","give","most","find","here","thing","many","long","world","very","life","hand","high","place","while","last","might","home","never","best","same","keep","help","start","part","small","night","close","live","every","name","play","move","feel","house","again","turn","show","open","must","write","both","next","word","food","kind","tell","left","right","line","need","hard","fast","real","city","hold","power","grow","talk","wait","sure","fire"];
-const WORDS_HARD=["between","because","change","study","learn","water","earth","group","stand","plan","warm","free","cool","head","sound","story","light","early","build","watch","care","rest","area","draw","step","clear","team","class","color","white","paper","music","bring","child","game","dark","deep","mean","land","blue","green","happy","full","side","form","love","stop","state","done","level","front","wide","able","final","began","south","born","note","west","space","power","young","quick","under","group","world","write","point","study","still","could","while","would","their","about","those","might","every","house","after","first","story","human","earth","great","right","level","along","often","place","young"];
-const WORDS=WORDS_EASY.concat(WORDS_MED).concat(WORDS_HARD); // fallback
-let mode="30",timeLeft=30,running=false,finished=false,startTime=0;
-let charIndex=0,correct=0,wrong=0,totalTyped=0,survivalErrors=0;
-let text="",timerInterval=null;
-let bestWpm=parseInt(localStorage.getItem('typing_best_wpm')||'0');
-let lastWordEnd=0;
-const $d=id=>document.getElementById(id);
-const display=$d("textDisplay"),input=$d("inputArea"),wpmEl=$d("wpm"),accEl=$d("accuracy"),timerEl=$d("timer"),timerLbl=$d("timer-label");
-const resultCard=$d("resultCard"),rWpm=$d("rWpm"),rAcc=$d("rAcc"),rChars=$d("rChars"),rEmoji=$d("resultEmoji"),rRank=$d("resultRank");
-
-const actx=new(window.AudioContext||window.webkitAudioContext)();
-function playTick(){const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.frequency.value=1200;g.gain.value=.06;o.start();g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.03);o.stop(actx.currentTime+.03)}
-function playBuzz(){const o=actx.createOscillator(),g=actx.createGain();o.type="sawtooth";o.connect(g);g.connect(actx.destination);o.frequency.value=150;g.gain.value=.12;o.start();g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.1);o.stop(actx.currentTime+.1)}
-function playCountdown(){const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.frequency.value=1000;g.gain.value=.1;o.start();g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.08);o.stop(actx.currentTime+.08)}
-function playCheer(){[523,659,784,1047].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.frequency.value=f;g.gain.value=.08;o.start(actx.currentTime+i*.12);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.12+.3);o.stop(actx.currentTime+i*.12+.3)})}
-function playWordComplete(){const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='sine';o.frequency.value=880;g.gain.value=.06;o.start();g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.1);o.stop(actx.currentTime+.1)}
-
-let currentWpm=0;
-function genText(){
-  let w=[];
-  // Progressive difficulty: start very easy, ramp up based on WPM and time elapsed
-  // Mobile-friendly: use common words, avoid obscure spelling
-  var elapsed=running?(Date.now()-startTime)/1000:0;
-  var phase=Math.min(3,Math.floor(elapsed/20)); // 0-20s=phase0, 20-40s=phase1, 40-60s=phase2, 60+=phase3
-  for(let i=0;i<30;i++){
-    let pool;
-    if(phase===0 && currentWpm<30){
-      // Warm-up: easy short words only
-      pool=WORDS_EASY;
-    } else if(phase<=1 || currentWpm<35){
-      // Transition: mix easy+medium
-      pool=Math.random()<0.4?WORDS_MED:WORDS_EASY;
-    } else if(phase<=2 || currentWpm<55){
-      // Medium: mostly medium with some hard
-      pool=Math.random()<0.3?WORDS_HARD:WORDS_MED;
-    } else {
-      // Full speed: hard words dominant
-      pool=Math.random()<0.6?WORDS_HARD:WORDS_MED;
-    }
-    w.push(pool[Math.random()*pool.length|0]);
-  }
-  return w.join(" ");
-}
 function renderText(){
   let html="";
   let inWord=false;
@@ -670,5 +571,17 @@ flex:0 0 0px;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0;margin:0;}
 <script src="/monetag-safe.js"></script>
 <script>window.GZMonetagSafe&&window.GZMonetagSafe.init(216786);</script>
 <script src="/ad-interstitial.js"></script>
+
+// Splash dismiss
+(function(){
+  var ss=document.getElementById('splash-screen');
+  if(!ss)return;
+  function dismiss(){ss.classList.add('fade-out');setTimeout(function(){ss.remove()},600);}
+  ss.addEventListener('click',dismiss);
+  ss.addEventListener('touchstart',dismiss,{passive:true});
+  document.addEventListener('keydown',function e(){dismiss();document.removeEventListener('keydown',e);});
+  setTimeout(dismiss,8000);
+})();
+
 </body>
 </html>

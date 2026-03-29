@@ -9,6 +9,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Idle Clicker - Free Online Idle Game | GameZipper</title>
 <style>
+
+
 html,body{overflow-x:hidden;max-width:100vw;}
 *{box-sizing:border-box;}
 body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
@@ -113,6 +115,16 @@ body{background:#1a0a2e;color:#e0d0ff;font-family:'Segoe UI',sans-serif;overflow
   .upgrade{flex:1 1 45%;min-width:140px}
   #cookie{width:min(45vw,200px);height:min(45vw,200px)}
 }
+
+/* ===== Splash BG ===== */
+#splash-screen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:url('splash-bg.jpg') center/cover no-repeat;transition:opacity 0.5s ease}
+#splash-screen.fade-out{opacity:0;pointer-events:none}
+#splash-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.6) 100%)}
+#splash-screen h1{position:relative;z-index:1;font-size:clamp(28px,8vw,52px);font-weight:900;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,0.8),0 0 40px rgba(0,0,0,0.5);letter-spacing:2px;text-align:center;padding:0 20px;font-family:'Segoe UI',system-ui,sans-serif}
+#splash-screen .splash-sub{position:relative;z-index:1;color:rgba(255,255,255,0.85);font-size:clamp(14px,3vw,18px);margin-top:16px;text-shadow:0 1px 8px rgba(0,0,0,0.6);letter-spacing:1px}
+#splash-screen .splash-hint{position:relative;z-index:1;color:rgba(255,255,255,0.5);font-size:12px;margin-top:40px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+
 </style>
   <script src="../game-audio.js?v=9"></script>
   <meta name="description" content="Build your empire by clicking and buying upgrades in Idle Clicker, the free incremental idle game. Earn resources automatically even when offline. No download required.">
@@ -207,6 +219,7 @@ body{background:#1a0a2e;color:#e0d0ff;font-family:'Segoe UI',sans-serif;overflow
 </script>
 </head>
 <body>
+<div id="splash-screen"><h1>Idle Clicker</h1><div class="splash-sub">🎮 Free Online Game</div><div class="splash-hint">Tap anywhere to play</div></div>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;font-family:sans-serif">&#x1f3e0; More Games at GameZipper.com</a>
 
 <canvas id="magic-bg"></canvas>
@@ -236,141 +249,6 @@ body{background:#1a0a2e;color:#e0d0ff;font-family:'Segoe UI',sans-serif;overflow
 <!-- Magic circle overlay -->
 <canvas id="magic-circle" width="200" height="200"></canvas>
 <script>
-// Draw hexagram on magic circle canvas
-(function(){
-  const mc=document.getElementById('magic-circle');
-  const mctx=mc.getContext('2d');
-  mctx.translate(100,100);
-  mctx.strokeStyle='#a78bfa';mctx.lineWidth=2;mctx.shadowColor='#a78bfa';mctx.shadowBlur=15;
-  // Outer circle
-  mctx.beginPath();mctx.arc(0,0,90,0,Math.PI*2);mctx.stroke();
-  mctx.beginPath();mctx.arc(0,0,80,0,Math.PI*2);mctx.stroke();
-  // Hexagram (two overlapping triangles)
-  for(let t=0;t<2;t++){
-    mctx.beginPath();
-    for(let i=0;i<3;i++){
-      const a=(i*2*Math.PI/3)-(Math.PI/2)+(t?Math.PI/3:0);
-      const x=Math.cos(a)*70,y=Math.sin(a)*70;
-      i===0?mctx.moveTo(x,y):mctx.lineTo(x,y);
-    }
-    mctx.closePath();mctx.stroke();
-  }
-  // Inner runes
-  const runes=['✦','◇','△','♦','☆','✧'];
-  mctx.font='14px serif';mctx.fillStyle='#a78bfa';mctx.textAlign='center';mctx.textBaseline='middle';
-  for(let i=0;i<6;i++){
-    const a=i*Math.PI/3-Math.PI/2;
-    mctx.fillText(runes[i],Math.cos(a)*50,Math.sin(a)*50);
-  }
-})();
-
-// Magic background particles
-(function(){
-  const c=document.getElementById('magic-bg');
-  const ctx=c.getContext('2d');
-  let particles=[];
-  function resize(){
-    const dpr=window.devicePixelRatio||1;
-    c.width=window.innerWidth*dpr;c.height=window.innerHeight*dpr;
-    c.style.width=window.innerWidth+'px';c.style.height=window.innerHeight+'px';
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-  resize();window.addEventListener('resize',resize);
-  // Init floating magic particles
-  for(let i=0;i<40;i++){
-    particles.push({
-      x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,
-      vx:(Math.random()-0.5)*0.3,vy:-0.2-Math.random()*0.3,
-      r:1+Math.random()*2,alpha:0.2+Math.random()*0.4,
-      color:['#a78bfa','#60a5fa','#c084fc','#818cf8','#e879f9'][Math.floor(Math.random()*5)],
-      phase:Math.random()*Math.PI*2
-    });
-  }
-  function draw(){
-    ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
-    const t=performance.now()/1000;
-    for(const p of particles){
-      p.x+=p.vx+Math.sin(t+p.phase)*0.2;p.y+=p.vy;
-      if(p.y<-10){p.y=window.innerHeight+10;p.x=Math.random()*window.innerWidth;}
-      if(p.x<-10)p.x=window.innerWidth+10;
-      if(p.x>window.innerWidth+10)p.x=-10;
-      const flicker=0.5+0.5*Math.sin(t*2+p.phase);
-      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle=p.color;ctx.globalAlpha=p.alpha*flicker;
-      ctx.shadowColor=p.color;ctx.shadowBlur=8;
-      ctx.fill();ctx.shadowBlur=0;
-    }
-    ctx.globalAlpha=1;
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
-
-(function(){
-const upgrades=[
-  {name:'🪄 Magic Wand',baseCost:10,cps:1,icon:'🪄',owned:0},
-  {name:'🧙 Apprentice',baseCost:100,cps:5,icon:'🧙',owned:0},
-  {name:'📖 Spell Book',baseCost:500,cps:20,icon:'📖',owned:0},
-  {name:'⚗️ Alchemy Lab',baseCost:2000,cps:100,icon:'⚗️',owned:0},
-  {name:'💎 Crystal Mine',baseCost:10000,cps:500,icon:'💎',owned:0},
-  {name:'🏰 Wizard Tower',baseCost:50000,cps:2000,icon:'🏰',owned:0},
-  {name:'🐉 Dragon Familiar',baseCost:250000,cps:8000,icon:'🐉',owned:0},
-  {name:'🌙 Moon Portal',baseCost:1500000,cps:30000,icon:'🌙',owned:0},
-  {name:'⏳ Time Rift',baseCost:10000000,cps:120000,icon:'⏳',owned:0},
-  {name:'🌌 Void Gate',baseCost:80000000,cps:500000,icon:'🌌',owned:0},
-  {name:'💫 Celestial Forge',baseCost:500000000,cps:2000000,icon:'💫',owned:0},
-  {name:'🔮 Philosopher Stone',baseCost:5000000000,cps:10000000,icon:'🔮',owned:0}
-];
-let cookies=0,totalCookies=0,totalCps=0,lastSave=Date.now(),lastTick=Date.now();
-let clickValue=1,cpsMultiplier=1,clickMultiplier=1;
-const purchasedTypes=new Set();
-const RUNE_SYMBOLS=['✦','✧','☆','◇','△','♦','⟡','⊹','✶','⋆'];
-
-const actx=new(window.AudioContext||window.webkitAudioContext)();
-function playClick(){const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.frequency.value=600;o.type='sine';g.gain.value=.12;o.start();o.frequency.exponentialRampToValueAtTime(900,actx.currentTime+0.05);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.12);o.stop(actx.currentTime+.12)}
-function playBuy(){const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='triangle';o.frequency.value=523;g.gain.value=.2;o.start();o.frequency.exponentialRampToValueAtTime(1047,actx.currentTime+.15);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.2);o.stop(actx.currentTime+.2)}
-function playAchievement(){const notes=[523,659,784,1047];notes.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='sine';o.frequency.value=f;g.gain.value=.15;o.start(actx.currentTime+i*.1);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.1+.3);o.stop(actx.currentTime+i*.1+.3)})}
-function playGolden(){const notes=[880,1108,1318,1568];notes.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='sine';o.frequency.value=f;g.gain.value=.12;o.start(actx.currentTime+i*.08);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.08+.4);o.stop(actx.currentTime+i*.08+.4)})}
-function playGoldenClick(){[1200,1500,1800].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='triangle';o.frequency.value=f;g.gain.value=.15;o.start(actx.currentTime+i*.06);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.06+.25);o.stop(actx.currentTime+i*.06+.25)})}
-
-let prestigeLevel=0,prestigeMultiplier=1;
-const achievements=[
-  {id:'first',name:'First Spark',desc:'Channel your first mana',icon:'⚡',check:()=>totalCookies>=1},
-  {id:'hundred',name:'Mana Pool',desc:'Channel 100 mana',icon:'💧',check:()=>totalCookies>=100},
-  {id:'thousand',name:'Arcane Surge',desc:'Channel 1,000 mana',icon:'🌊',check:()=>totalCookies>=1000},
-  {id:'tenk',name:'Mana Master',desc:'Channel 10,000 mana',icon:'🧙',check:()=>totalCookies>=10000},
-  {id:'hundred_k',name:'Grand Wizard',desc:'Channel 100,000 mana',icon:'🪄',check:()=>totalCookies>=1e5},
-  {id:'million',name:'Archmage',desc:'Channel 1,000,000 mana',icon:'🌟',check:()=>totalCookies>=1e6},
-  {id:'ten_m',name:'Mana Overlord',desc:'Channel 10,000,000 mana',icon:'👑',check:()=>totalCookies>=1e7},
-  {id:'hundred_m',name:'Reality Bender',desc:'Channel 100,000,000 mana',icon:'🌀',check:()=>totalCookies>=1e8},
-  {id:'billion',name:'Cosmic Sorcerer',desc:'Channel 1,000,000,000 mana',icon:'🌌',check:()=>totalCookies>=1e9},
-  {id:'trillion',name:'Omnipotent',desc:'Channel 1,000,000,000,000 mana',icon:'💥',check:()=>totalCookies>=1e12},
-  {id:'speed',name:'Rapid Casting',desc:'Cast 10 times in 1 second',icon:'⚡',check:()=>false},
-  {id:'grandma10',name:"Apprentice Guild",desc:'Recruit 10 Apprentices',icon:'🧙',check:()=>upgrades[1].owned>=10},
-  {id:'factory5',name:'Lab Master',desc:'Own 5 Alchemy Labs',icon:'⚗️',check:()=>upgrades[3].owned>=5},
-  {id:'cursor50',name:'Wand Collection',desc:'Own 50 Magic Wands',icon:'🪄',check:()=>upgrades[0].owned>=50},
-  {id:'dragon1',name:'Dragon Tamer',desc:'Summon your first Dragon',icon:'🐉',check:()=>upgrades[6].owned>=1},
-  {id:'moon1',name:'Moonwalker',desc:'Open a Moon Portal',icon:'🌙',check:()=>upgrades[7].owned>=1},
-  {id:'timerift1',name:'Time Lord',desc:'Create a Time Rift',icon:'⏳',check:()=>upgrades[8].owned>=1},
-  {id:'void1',name:'Void Walker',desc:'Open a Void Gate',icon:'🌌',check:()=>upgrades[9].owned>=1},
-  {id:'allTypes',name:'Full Curriculum',desc:'Own at least 1 of each spell',icon:'🌈',check:()=>upgrades.every(u=>u.owned>0)},
-  {id:'golden3',name:'Potion Finder',desc:'Find 3 magic potions',icon:'🧪',check:()=>goldenClicks>=3},
-  {id:'golden10',name:'Potion Master',desc:'Find 10 magic potions',icon:'🧪',check:()=>goldenClicks>=10},
-  {id:'prestige1',name:'Rebirth',desc:'Perform your first Prestige',icon:'♻️',check:()=>prestigeLevel>=1},
-  {id:'prestige5',name:'Eternal Return',desc:'Prestige 5 times',icon:'🔄',check:()=>prestigeLevel>=5}
-];
-const unlockedAch=new Set();
-let goldenClicks=0;
-
-function checkAchievements(){
-  achievements.forEach(a=>{
-    if(!unlockedAch.has(a.id)&&a.check()){
-      unlockedAch.add(a.id);
-      showToast(`📖 ${a.name}: ${a.desc}`);
-      playAchievement();
-    }
-  });
-}
 
 function showToast(msg){
   const t=document.createElement('div');t.className='toast';t.textContent=msg;
@@ -743,6 +621,18 @@ flex:0 0 0px;min-height:0;overflow:hidden;padding:0;margin:0;}
   <h2>Play more like this</h2>
   <p><a href="/mo-yu-fayu/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Mo Yu Fayu</a><a href="/kitty-cafe/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Kitty Cafe</a><a href="/idle-games.html" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Idle Games</a><a href="/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">All Games</a></p>
 </section>
+
+
+// Splash dismiss
+(function(){
+  var ss=document.getElementById('splash-screen');
+  if(!ss)return;
+  function dismiss(){ss.classList.add('fade-out');setTimeout(function(){ss.remove()},600);}
+  ss.addEventListener('click',dismiss);
+  ss.addEventListener('touchstart',dismiss,{passive:true});
+  document.addEventListener('keydown',function e(){dismiss();document.removeEventListener('keydown',e);});
+  setTimeout(dismiss,8000);
+})();
 
 </body>
 </html>

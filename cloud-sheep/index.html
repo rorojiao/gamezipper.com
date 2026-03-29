@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Cloud & Sheep - Free Cute Sheep Care Simulator | GameZipper</title>
+<link rel="canonical" href="https://gamezipper.com/cloud-sheep/">
+<meta name="description" content="Care for adorable sheep by controlling clouds and weather. A free cute sheep simulator game.">
+<meta property="og:title" content="Cloud & Sheep - Free Cute Sheep Care Simulator | GameZipper">
+<meta property="og:description" content="Care for adorable sheep by controlling clouds and weather!">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/cloud-sheep/">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Cloud & Sheep","description":"Care for adorable sheep by controlling clouds and weather.","genre":"Simulation","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;overflow-x:hidden;background:#000;font-family:'Segoe UI',Arial,sans-serif;touch-action:none;-webkit-touch-callout:none;user-select:none}
+canvas{display:block;width:100%;height:100%}
+#ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+#ui>*{pointer-events:auto}
+.hud-top{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;color:#fff;font-size:14px;text-shadow:1px 1px 2px rgba(0,0,0,.7)}
+.hud-top>div{background:rgba(0,0,0,.35);border-radius:12px;padding:4px 10px}
+#sheep-panel{position:absolute;bottom:0;left:0;width:100%;display:flex;justify-content:center;gap:6px;padding:6px;background:rgba(0,0,0,.3)}
+.sheep-mini{display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.15);border-radius:10px;padding:4px 8px;min-width:50px}
+.sheep-mini canvas{width:30px;height:30px}
+.sheep-mini .bar{width:40px;height:4px;background:#555;border-radius:2px;margin-top:2px}
+.sheep-mini .bar-fill{height:100%;border-radius:2px;transition:width .3s}
+#status-popup{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,.95);border-radius:16px;padding:16px;min-width:260px;display:none;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+#status-popup h3{text-align:center;margin-bottom:8px;color:#333}
+.stat-row{display:flex;align-items:center;margin:4px 0;font-size:13px}
+.stat-row .label{width:60px;color:#555}
+.stat-row .bar{flex:1;height:10px;background:#ddd;border-radius:5px;overflow:hidden}
+.stat-row .bar-fill{height:100%;border-radius:5px;transition:width .3s}
+#challenge-list{position:absolute;top:50px;right:8px;width:200px;max-height:300px;overflow-y:auto;background:rgba(0,0,0,.5);border-radius:12px;padding:8px;color:#fff;font-size:12px;display:none}
+#challenge-list .ch{margin:3px 0;padding:3px 6px;border-radius:6px;background:rgba(255,255,255,.1)}
+#challenge-list .ch.done{background:rgba(100,255,100,.2);text-decoration:line-through}
+#btn-pause,#btn-speed,#btn-challenges,#btn-shop{position:absolute;background:rgba(0,0,0,.45);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#btn-pause{top:8px;left:8px}
+#btn-speed{top:8px;left:50px}
+#btn-challenges{top:8px;right:8px}
+#btn-shop{bottom:60px;left:8px}
+#pause-menu{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,.95);border-radius:16px;padding:24px;min-width:240px;display:none;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+#pause-menu h2{margin-bottom:16px;color:#333}
+#pause-menu button{display:block;width:100%;margin:8px 0;padding:10px;border:none;border-radius:8px;font-size:15px;cursor:pointer;background:#4CAF50;color:#fff}
+#pause-menu button:last-child{background:#999}
+#shop-panel{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,.95);border-radius:16px;padding:16px;min-width:280px;display:none;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+#shop-panel h3{text-align:center;margin-bottom:12px;color:#333}
+.shop-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee;cursor:pointer}
+.shop-item:hover{background:#f0f0f0}
+.shop-item .price{color:#FF9800;font-weight:bold}
+.overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);display:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-PD9VL4Y05J"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-PD9VL4Y05J');</script>
+<script>fetch('https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=cloud-sheep').catch(()=>{})</script>
+<div id="ui">
+  <div class="hud-top">
+    <div id="day-info">Day 1 ☀️</div>
+    <div id="stars-display">⭐ 0</div>
+    <div id="challenge-progress">0/20 Challenges</div>
+  </div>
+  <div id="sheep-panel"></div>
+  <button id="btn-pause">⏸</button>
+  <button id="btn-speed">⏩</button>
+  <button id="btn-challenges">📋</button>
+  <button id="btn-shop">🛒</button>
+  <div id="status-popup">
+    <h3 id="popup-name">Sheep</h3>
+    <div id="popup-stats"></div>
+    <div style="text-align:center;margin-top:8px"><button onclick="closePopup()" style="padding:6px 16px;border:none;border-radius:6px;background:#4CAF50;color:#fff;cursor:pointer">Close</button></div>
+  </div>
+  <div id="challenge-list"></div>
+  <div id="pause-menu">
+    <h2>☁️ Cloud & Sheep</h2>
+    <button onclick="resumeGame()">▶ Resume</button>
+    <button onclick="toggleChallengeList()">📋 Challenges</button>
+    <a href="https://gamezipper.com" style="text-decoration:none"><button style="background:#2196F3">🏠 Back to GameZipper</button></a>
+  </div>
+  <div id="shop-panel">
+    <h3>🛒 Item Shop</h3>
+    <div id="shop-items"></div>
+    <div style="text-align:center;margin-top:8px"><button onclick="closeShop()" style="padding:6px 16px;border:none;border-radius:6px;background:#999;color:#fff;cursor:pointer">Close</button></div>
+  </div>
+  <div class="overlay" id="overlay"></div>
+</div>
+<script>
+// ============ GAME ENGINE ============
+const C = document.getElementById('c');
+const ctx = C.getContext('2d');
+let W, H, GROUND_Y;
+
+function resize() {
+  W = C.width = window.innerWidth;
+  H = C.height = window.innerHeight;
+  GROUND_Y = H * 0.6;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ============ AUDIO SYSTEM ============
+let audioCtx;
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playTone(freq, dur, type='sine', vol=0.1) {
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.value = vol;
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime + dur);
+}
+
+function playBaa() { playTone(300+Math.random()*200, 0.3, 'sawtooth', 0.05); }
+function playRainSound() { if(audioCtx && Math.random()<0.02) playTone(800+Math.random()*400, 0.05, 'sine', 0.02); }
+function playGrowSound() { playTone(600+Math.random()*200, 0.15, 'sine', 0.03); }
+function playStarSound() { playTone(880, 0.1); setTimeout(()=>playTone(1100,0.1),100); setTimeout(()=>playTone(1320,0.2),200); }
+
+// BGM - simple guitar-like arpeggio
+let bgmInterval;
+function startBGM() {
+  if (bgmInterval) return;
+  const chords = [
+    [262,330,392], // C
+    [220,277,330], // Am
+    [349,440,523], // F
+    [392,494,587], // G
+  ];
+  let ci = 0, ni = 0;
+  bgmInterval = setInterval(() => {
+    if (paused) return;
+    const ch = chords[ci];
+    playTone(ch[ni%3]*(ni<3?1:2), 0.4, 'triangle', 0.015);
+    ni++;
+    if (ni >= 6) { ni = 0; ci = (ci+1)%chords.length; }
+  }, 400);
+}
+
+// ============ GAME STATE ============
+let paused = false, speed = 1, dayTime = 0, dayCount = 1, totalStars = 0;
+const DAY_CYCLE = 120; // seconds
+const GRASS_COLS = 12, GRASS_ROWS = 6;
+
+// Grass grid
+let grass = [];
+for (let r = 0; r < GRASS_ROWS; r++) {
+  grass[r] = [];
+  for (let c = 0; c < GRASS_COLS; c++) grass[r][c] = { level: 1 + Math.random() * 0.5, flower: false, flowerColor: null };
+}
+
+// Particles
+let particles = [];
+let raindrops = [];
+let zzzParticles = [];
+
+// ============ SHEEP ============
+let sheepIdCounter = 0;
+const SHEEP_NAMES = ['Woolly','Cotton','Fluffy','Cloudy','Snowball','Biscuit','Marshmallow','Daisy','Buttercup','Patches'];
+function makeSheep(x, y, baby=false) {
+  const s = {
+    id: sheepIdCounter++,
+    name: SHEEP_NAMES[sheepIdCounter % SHEEP_NAMES.length],
+    x, y, vx: 0, vy: 0,
+    baby,
+    w: baby ? 28 : 40,
+    h: baby ? 22 : 32,
+    hunger: 70, happy: 60, energy: 80, social: 50, clean: 90, health: 100,
+    state: 'idle', // idle, walking, eating, sleeping, playing, socializing
+    stateTimer: 0,
+    targetX: 0, targetY: 0,
+    walkFrame: 0, walkTimer: 0,
+    jumpVy: 0, onGround: true,
+    selected: false,
+    baaTimer: 5 + Math.random() * 10,
+    sleepZ: 0,
+    facingRight: true,
+    squish: 1, // vertical squash/stretch
+  };
+  return s;
+}
+
+let sheep = [makeSheep(W*0.3, GROUND_Y-20), makeSheep(W*0.5, GROUND_Y-20), makeSheep(W*0.7, GROUND_Y-20)];
+
+// ============ CLOUDS ============
+let clouds = [];
+function makeCloud(x, y, size=1) {
+  return {
+    x, y, size, // size 1=small, 2=medium, 3=large
+    dragging: false, dragOffX: 0, dragOffY: 0,
+    rainTimer: 0, stormy: false,
+    circles: generateCloudCircles(size),
+    rainActive: false,
+  };
+}
+function generateCloudCircles(size) {
+  const n = size + 2;
+  const circles = [];
+  const baseR = 20 + size * 10;
+  for (let i = 0; i < n; i++) {
+    circles.push({
+      ox: (i - (n-1)/2) * baseR * 0.8 + (Math.random()-0.5)*8,
+      oy: (Math.random()-0.5) * baseR * 0.4,
+      r: baseR * (0.7 + Math.random()*0.3)
+    });
+  }
+  return circles;
+}
+
+clouds = [makeCloud(W*0.2, H*0.15, 1), makeCloud(W*0.5, H*0.12, 2), makeCloud(W*0.75, H*0.18, 1)];
+
+// ============ SUN & MOON ============
+let sun = { x: W*0.85, y: H*0.1, r: 35 };
+
+// ============ ITEMS / SHOP ============
+const SHOP_ITEMS = [
+  { id:'ball', name:'⚽ Ball', cost:3, desc:'Sheep play with it' },
+  { id:'fountain', name:'⛲ Fountain', cost:5, desc:'Cleans sheep nearby' },
+  { id:'windmill', name:'🌀 Windmill', cost:4, desc:'Decoration + breeze' },
+  { id:'firework', name:'🎆 Firework', cost:3, desc:'Night time fun!' },
+  { id:'flowerpot', name:'🌷 Flower Pot', cost:2, desc:'Grows a flower' },
+];
+let placedItems = [];
+let selectedItem = null;
+
+// ============ CHALLENGES ============
+const CHALLENGES = [
+  { id:1, text:'Make a sheep happy (happy>80%)', check:()=>sheep.some(s=>s.happy>80), reward:1 },
+  { id:2, text:'Grow first flower', check:()=>grass.flat().some(g=>g.flower), reward:1 },
+  { id:3, text:'Make it rain', check:()=>stats.totalRain>0, reward:1 },
+  { id:4, text:'Feed all sheep (hunger>90%)', check:()=>sheep.length>0&&sheep.every(s=>s.hunger>90), reward:1 },
+  { id:5, text:'3 sheep sleeping at once', check:()=>sheep.filter(s=>s.state==='sleeping').length>=3, reward:2 },
+  { id:6, text:'Collect 10 flowers', check:()=>stats.totalFlowers>=10, reward:2 },
+  { id:7, text:'Breed a baby sheep', check:()=>sheep.some(s=>s.baby), reward:3 },
+  { id:8, text:'Create a storm', check:()=>stats.hadStorm, reward:2 },
+  { id:9, text:'All sheep clean>80%', check:()=>sheep.length>0&&sheep.every(s=>s.clean>80), reward:2 },
+  { id:10, text:'Reach Day 5', check:()=>dayCount>=5, reward:2 },
+  { id:11, text:'Have 5+ sheep', check:()=>sheep.length>=5, reward:2 },
+  { id:12, text:'Make a sheep jump', check:()=>stats.sheepJumped, reward:1 },
+  { id:13, text:'Grow grass to max in 5 tiles', check:()=>grass.flat().filter(g=>g.level>=3).length>=5, reward:1 },
+  { id:14, text:'Use a shop item', check:()=>stats.itemsUsed>0, reward:1 },
+  { id:15, text:'All sheep health 100%', check:()=>sheep.length>0&&sheep.every(s=>s.health>=99), reward:2 },
+  { id:16, text:'Reach Day 10', check:()=>dayCount>=10, reward:3 },
+  { id:17, text:'Feed a sheep 5 times', check:()=>stats.totalEats>=5, reward:1 },
+  { id:18, text:'Rain on 20 grass tiles', check:()=>stats.rainedTiles>=20, reward:2 },
+  { id:19, text:'All sheep happy at once', check:()=>sheep.length>0&&sheep.every(s=>s.happy>70), reward:3 },
+  { id:20, text:'Master Shepherd: 30 stars', check:()=>totalStars>=30, reward:3 },
+];
+let completedChallenges = new Set();
+
+let stats = {
+  totalRain: 0, totalFlowers: 0, hadStorm: false, sheepJumped: false,
+  itemsUsed: 0, totalEats: 0, rainedTiles: 0
+};
+
+// ============ INPUT ============
+let dragCloud = null, pointerDown = false, px = 0, py = 0;
+
+function getPos(e) {
+  const t = e.touches ? e.touches[0] : e;
+  return { x: t.clientX, y: t.clientY };
+}
+
+function hitCloud(x, y) {
+  for (let i = clouds.length-1; i >= 0; i--) {
+    const c = clouds[i];
+    const cw = (c.size+2)*30;
+    if (x > c.x-cw && x < c.x+cw && y > c.y-30 && y < c.y+30) return c;
+  }
+  return null;
+}
+
+function hitSheep(x, y) {
+  for (const s of sheep) {
+    if (x > s.x-s.w && x < s.x+s.w && y > s.y-s.h-20 && y < s.y+10) return s;
+  }
+  return null;
+}
+
+C.addEventListener('mousedown', e => onDown(getPos(e)));
+C.addEventListener('mousemove', e => onMove(getPos(e)));
+C.addEventListener('mouseup', e => onUp(getPos(e)));
+C.addEventListener('touchstart', e => { e.preventDefault(); onDown(getPos(e)); }, {passive:false});
+C.addEventListener('touchmove', e => { e.preventDefault(); onMove(getPos(e)); }, {passive:false});
+C.addEventListener('touchend', e => { e.preventDefault(); onUp({x:px,y:py}); }, {passive:false});
+
+function onDown(p) {
+  initAudio(); startBGM();
+  pointerDown = true; px = p.x; py = p.y;
+  const c = hitCloud(p.x, p.y);
+  if (c) { c.dragging = true; c.dragOffX = c.x - p.x; c.dragOffY = c.y - p.y; dragCloud = c; return; }
+  if (selectedItem) {
+    placedItems.push({type: selectedItem, x: p.x, y: Math.min(p.y, GROUND_Y - 10)});
+    stats.itemsUsed++;
+    selectedItem = null;
+    closeShop();
+    return;
+  }
+  const s = hitSheep(p.x, p.y);
+  if (s) showSheepPopup(s);
+}
+
+function onMove(p) {
+  if (!pointerDown) return;
+  px = p.x; py = p.y;
+  if (dragCloud) {
+    dragCloud.x = p.x + dragCloud.dragOffX;
+    dragCloud.y = p.y + dragCloud.dragOffY;
+  }
+}
+
+function onUp(p) {
+  pointerDown = false;
+  if (dragCloud) {
+    dragCloud.dragging = false;
+    // Check cloud merging
+    for (const c of clouds) {
+      if (c === dragCloud) continue;
+      const dx = c.x - dragCloud.x, dy = c.y - dragCloud.y;
+      if (Math.sqrt(dx*dx+dy*dy) < 60) {
+        // Merge
+        if (c.size < 3) c.size++;
+        c.circles = generateCloudCircles(c.size);
+        c.stormy = c.size >= 3;
+        clouds = clouds.filter(cl => cl !== dragCloud);
+        break;
+      }
+    }
+    // Check if dragged to sun
+    const dsx = dragCloud.x - sun.x, dsy = dragCloud.y - sun.y;
+    if (Math.sqrt(dsx*dsx+dsy*dsy) < 50 && dragCloud.size > 1) {
+      dragCloud.size = Math.max(1, dragCloud.size - 1);
+      dragCloud.circles = generateCloudCircles(dragCloud.size);
+      dragCloud.stormy = false;
+    }
+    dragCloud = null;
+  }
+}
+
+// ============ UI ============
+function showSheepPopup(s) {
+  const popup = document.getElementById('status-popup');
+  const statsDiv = document.getElementById('popup-stats');
+  document.getElementById('popup-name').textContent = s.name + (s.baby?' 👶':' 🐑');
+  const attrs = [
+    {name:'Hunger',val:s.hunger,col:'#FF9800'},
+    {name:'Happy',val:s.happy,col:'#FFEB3B'},
+    {name:'Energy',val:s.energy,col:'#4CAF50'},
+    {name:'Social',val:s.social,col:'#2196F3'},
+    {name:'Clean',val:s.clean,col:'#00BCD4'},
+    {name:'Health',val:s.health,col:'#F44336'},
+  ];
+  statsDiv.innerHTML = attrs.map(a=>`<div class="stat-row"><span class="label">${a.name}</span><div class="bar"><div class="bar-fill" style="width:${a.val}%;background:${a.col}"></div></div></div>`).join('');
+  popup.style.display = 'block';
+}
+function closePopup() { document.getElementById('status-popup').style.display='none'; }
+
+function toggleChallengeList() {
+  const cl = document.getElementById('challenge-list');
+  cl.style.display = cl.style.display === 'none' ? 'block' : 'none';
+  if (cl.style.display === 'block') renderChallenges();
+}
+function renderChallenges() {
+  const cl = document.getElementById('challenge-list');
+  cl.innerHTML = CHALLENGES.map(ch =>
+    `<div class="ch ${completedChallenges.has(ch.id)?'done':''}">${completedChallenges.has(ch.id)?'⭐':''} ${ch.text}</div>`
+  ).join('');
+}
+
+function openShop() {
+  const panel = document.getElementById('shop-panel');
+  const items = document.getElementById('shop-items');
+  items.innerHTML = SHOP_ITEMS.map(it =>
+    `<div class="shop-item" onclick="buyItem('${it.id}')"><span>${it.name}<br><small style="color:#888">${it.desc}</small></span><span class="price">⭐${it.cost}</span></div>`
+  ).join('');
+  panel.style.display = 'block';
+  document.getElementById('overlay').style.display = 'block';
+}
+function closeShop() {
+  document.getElementById('shop-panel').style.display='none';
+  document.getElementById('overlay').style.display='none';
+  selectedItem = null;
+}
+function buyItem(id) {
+  const item = SHOP_ITEMS.find(i=>i.id===id);
+  if (totalStars < item.cost) return;
+  totalStars -= item.cost;
+  selectedItem = id;
+  closeShop();
+  // Next click places item
+}
+
+document.getElementById('btn-pause').onclick = () => {
+  paused = true;
+  document.getElementById('pause-menu').style.display = 'block';
+  document.getElementById('overlay').style.display = 'block';
+};
+function resumeGame() {
+  paused = false;
+  document.getElementById('pause-menu').style.display = 'none';
+  document.getElementById('overlay').style.display = 'none';
+}
+document.getElementById('btn-speed').onclick = () => {
+  speed = speed === 1 ? 2 : speed === 2 ? 4 : 1;
+  document.getElementById('btn-speed').textContent = speed === 1 ? '⏩' : speed+'x';
+};
+document.getElementById('btn-challenges').onclick = toggleChallengeList;
+document.getElementById('btn-shop').onclick = openShop;
+
+// ============ GAME LOGIC ============
+function getDayPhase() {
+  const t = (dayTime % DAY_CYCLE) / DAY_CYCLE;
+  if (t < 0.5) return 'day'; // 0-60s
+  if (t < 0.583) return 'dusk'; // 60-70s
+  if (t < 0.917) return 'night'; // 70-110s
+  return 'dawn'; // 110-120s
+}
+
+function getSkyColors() {
+  const phase = getDayPhase();
+  const t = (dayTime % DAY_CYCLE) / DAY_CYCLE;
+  if (phase === 'day') return ['#87CEEB','#E0F0FF'];
+  if (phase === 'dusk') return ['#FF6B35','#FF8C42'];
+  if (phase === 'night') return ['#0C1445','#1A237E'];
+  return ['#C2185B','#7B1FA2'];
+}
+
+function updateGrass(dt) {
+  for (let r = 0; r < GRASS_ROWS; r++) {
+    for (let c = 0; c < GRASS_COLS; c++) {
+      const g = grass[r][c];
+      if (g.level > 2.5 && !g.flower && Math.random() < 0.001 * dt) {
+        g.flower = true;
+        g.flowerColor = ['#F44336','#FFEB3B','#9C27B0','#2196F3'][Math.floor(Math.random()*4)];
+        stats.totalFlowers++;
+      }
+    }
+  }
+}
+
+function updateSheep(dt) {
+  const phase = getDayPhase();
+  for (const s of sheep) {
+    // Decay
+    s.hunger = Math.max(0, s.hunger - 0.5 * dt);
+    s.happy = Math.max(0, s.happy - 0.3 * dt);
+    s.energy = Math.max(0, s.energy - 0.2 * dt);
+    s.social = Math.max(0, s.social - 0.15 * dt);
+    s.clean = Math.max(0, s.clean - 0.1 * dt);
+    s.health = Math.min(100, s.health - (s.hunger < 20 ? 0.3 : 0) * dt + (s.hunger > 50 ? 0.1 : 0) * dt);
+    s.health = Math.max(0, Math.min(100, s.health));
+
+    // Baa timer
+    s.baaTimer -= dt;
+    if (s.baaTimer <= 0) { playBaa(); s.baaTimer = 8 + Math.random()*12; }
+
+    // State machine
+    s.stateTimer -= dt;
+    if (s.stateTimer <= 0) {
+      if (phase === 'night' || phase === 'dusk') {
+        s.state = 'sleeping';
+        s.stateTimer = 30;
+      } else if (s.hunger < 40) {
+        // Find grass
+        s.state = 'walking';
+        const gc = Math.floor(Math.random() * GRASS_COLS);
+        const gr = Math.floor(Math.random() * GRASS_ROWS);
+        const gx = (gc + 0.5) / GRASS_COLS * W;
+        const gy = GROUND_Y + (gr + 0.5) / GRASS_ROWS * (H - GROUND_Y) * 0.7;
+        s.targetX = gx; s.targetY = Math.min(gy, GROUND_Y + (H-GROUND_Y)*0.6);
+        s.stateTimer = 5;
+      } else if (s.energy < 30) {
+        s.state = 'sleeping';
+        s.stateTimer = 15;
+      } else if (Math.random() < 0.3) {
+        s.state = 'walking';
+        s.targetX = 50 + Math.random() * (W - 100);
+        s.targetY = GROUND_Y + Math.random() * (H - GROUND_Y) * 0.5;
+        s.stateTimer = 4 + Math.random() * 4;
+      } else {
+        s.state = 'idle';
+        s.stateTimer = 2 + Math.random() * 3;
+      }
+    }
+
+    // Movement
+    if (s.state === 'walking') {
+      const dx = s.targetX - s.x, dy = s.targetY - s.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist > 5) {
+        const spd = (s.baby ? 30 : 50) * dt;
+        s.x += (dx/dist) * spd;
+        s.y += (dy/dist) * spd;
+        s.facingRight = dx > 0;
+        s.walkTimer += dt;
+        if (s.walkTimer > 0.15) { s.walkFrame = (s.walkFrame+1)%4; s.walkTimer = 0; }
+      } else {
+        // Arrived
+        if (s.hunger < 60) {
+          s.state = 'eating';
+          s.stateTimer = 2;
+        }
+      }
+    }
+
+    // Eating
+    if (s.state === 'eating') {
+      const gc = Math.floor(s.x / W * GRASS_COLS);
+      const gr = Math.floor((s.y - GROUND_Y) / (H - GROUND_Y) * GRASS_ROWS * 1.4);
+      if (gc >= 0 && gc < GRASS_COLS && gr >= 0 && gr < GRASS_ROWS) {
+        const g = grass[gr][gc];
+        if (g.level > 0.5) {
+          g.level -= 0.5 * dt;
+          s.hunger = Math.min(100, s.hunger + 15 * dt);
+          stats.totalEats += dt * 0.5;
+        }
+      }
+    }
+
+    // Sleeping
+    if (s.state === 'sleeping') {
+      s.energy = Math.min(100, s.energy + 5 * dt);
+      s.sleepZ += dt;
+    } else {
+      s.sleepZ = 0;
+    }
+
+    // Social - check proximity
+    for (const other of sheep) {
+      if (other === s) continue;
+      const dx = other.x - s.x, dy = other.y - s.y;
+      if (Math.sqrt(dx*dx+dy*dy) < 60) {
+        s.social = Math.min(100, s.social + 2 * dt);
+        other.social = Math.min(100, other.social + 2 * dt);
+      }
+    }
+
+    // Item interactions
+    for (const item of placedItems) {
+      const dx = item.x - s.x, dy = item.y - s.y;
+      if (Math.sqrt(dx*dx+dy*dy) < 60) {
+        if (item.type === 'ball') { s.happy = Math.min(100, s.happy + 3*dt); }
+        if (item.type === 'fountain') { s.clean = Math.min(100, s.clean + 5*dt); }
+        if (item.type === 'firework' && getDayPhase()==='night') { s.happy = Math.min(100, s.happy + 5*dt); }
+      }
+    }
+
+    // Clamp position
+    s.x = Math.max(s.w, Math.min(W - s.w, s.x));
+    s.y = Math.max(GROUND_Y - 10, Math.min(H - 30, s.y));
+
+    // Squish animation
+    s.squish += (1 - s.squish) * 5 * dt;
+  }
+}
+
+function updateClouds(dt) {
+  for (const c of clouds) {
+    if (!c.dragging) {
+      // Gentle drift
+      c.x += Math.sin(Date.now()/5000 + c.x) * 0.3 * dt * speed;
+    }
+    // Rain
+    c.rainTimer += dt;
+    if (c.size >= 2 && c.rainTimer > 0.1) {
+      c.rainTimer = 0;
+      c.rainActive = true;
+      const count = c.stormy ? 3 : c.size;
+      for (let i = 0; i < count; i++) {
+        raindrops.push({
+          x: c.x + (Math.random()-0.5) * (c.size+2)*30,
+          y: c.y + 20,
+          vy: 100 + Math.random()*50,
+          life: 1
+        });
+      }
+      stats.totalRain += dt;
+      if (c.stormy) stats.hadStorm = true;
+      playRainSound();
+    }
+    // Small clouds don't rain by default
+    if (c.size < 2) c.rainActive = false;
+  }
+}
+
+function updateRaindrops(dt) {
+  for (let i = raindrops.length-1; i >= 0; i--) {
+    const r = raindrops[i];
+    r.y += r.vy * dt;
+    r.life -= dt * 0.5;
+    if (r.y >= GROUND_Y || r.life <= 0) {
+      // Hit ground - grow grass
+      if (r.y >= GROUND_Y - 5) {
+        const gc = Math.floor(r.x / W * GRASS_COLS);
+        const gr = Math.floor((r.y - GROUND_Y) / (H - GROUND_Y) * GRASS_ROWS * 1.4);
+        if (gc >= 0 && gc < GRASS_COLS && gr >= 0 && gr < GRASS_ROWS) {
+          grass[gr][gc].level = Math.min(3, grass[gr][gc].level + 0.05);
+          stats.rainedTiles += dt * 0.01;
+        }
+        // Splash particle
+        particles.push({x:r.x,y:GROUND_Y,vx:(Math.random()-0.5)*20,vy:-30,life:0.3,color:'rgba(100,180,255,0.5)',r:2});
+      }
+      raindrops.splice(i, 1);
+    }
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length-1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 50 * dt;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+// Breeding check
+let breedTimer = 0;
+function checkBreeding(dt) {
+  breedTimer += dt;
+  if (breedTimer < 5) return;
+  breedTimer = 0;
+  const happySheep = sheep.filter(s => s.happy > 75 && !s.baby);
+  if (happySheep.length >= 2 && sheep.length < 10) {
+    const ns = makeSheep(
+      (happySheep[0].x + happySheep[1].x)/2,
+      Math.min((happySheep[0].y + happySheep[1].y)/2, GROUND_Y + 20),
+      true
+    );
+    sheep.push(ns);
+    for (let i = 0; i < 15; i++) {
+      particles.push({x:ns.x,y:ns.y-10,vx:(Math.random()-0.5)*60,vy:-40-Math.random()*30,life:1,color:'#FFB6C1',r:3});
+    }
+  }
+}
+
+function checkChallenges() {
+  for (const ch of CHALLENGES) {
+    if (!completedChallenges.has(ch.id) && ch.check()) {
+      completedChallenges.add(ch.id);
+      totalStars += ch.reward;
+      playStarSound();
+      // Star particles
+      for (let i = 0; i < 20; i++) {
+        particles.push({x:W/2,y:H/2,vx:(Math.random()-0.5)*200,vy:(Math.random()-0.5)*200,life:1.5,color:'#FFD700',r:4});
+      }
+    }
+  }
+}
+
+// ============ RENDERING ============
+function drawSky() {
+  const [c1, c2] = getSkyColors();
+  const grad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+  grad.addColorStop(0, c1);
+  grad.addColorStop(1, c2);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, GROUND_Y);
+}
+
+function drawSunMoon() {
+  const phase = getDayPhase();
+  if (phase === 'day' || phase === 'dawn') {
+    // Sun
+    const sx = W * 0.85, sy = H * 0.1;
+    ctx.fillStyle = '#FFD700';
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur = 30;
+    ctx.beginPath(); ctx.arc(sx, sy, 30, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+    // Rays
+    for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI/4 + Date.now()/3000;
+      ctx.strokeStyle = 'rgba(255,215,0,0.3)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sx + Math.cos(a)*35, sy + Math.sin(a)*35);
+      ctx.lineTo(sx + Math.cos(a)*55, sy + Math.sin(a)*55);
+      ctx.stroke();
+    }
+    sun.x = sx; sun.y = sy;
+  }
+  if (phase === 'night') {
+    // Moon
+    ctx.fillStyle = '#E8E8E8';
+    ctx.shadowColor = '#E8E8E8';
+    ctx.shadowBlur = 20;
+    ctx.beginPath(); ctx.arc(W*0.8, H*0.12, 25, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+    // Craters
+    ctx.fillStyle = '#CCC';
+    ctx.beginPath(); ctx.arc(W*0.8-8, H*0.12-5, 4, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(W*0.8+6, H*0.12+8, 3, 0, Math.PI*2); ctx.fill();
+    // Stars
+    ctx.fillStyle = '#FFF';
+    for (let i = 0; i < 30; i++) {
+      const sx = (Math.sin(i*137.5)*0.5+0.5)*W;
+      const sy = (Math.cos(i*73.1)*0.5+0.3)*GROUND_Y;
+      const twinkle = 0.5 + 0.5*Math.sin(Date.now()/500 + i);
+      ctx.globalAlpha = twinkle;
+      ctx.beginPath(); ctx.arc(sx, sy, 1.5, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawHills() {
+  ctx.fillStyle = '#388E3C';
+  ctx.beginPath();
+  ctx.moveTo(0, GROUND_Y);
+  for (let x = 0; x <= W; x += 5) {
+    const y = GROUND_Y - 15 - Math.sin(x/W*3)*20 - Math.sin(x/W*7+1)*10;
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(W, GROUND_Y);
+  ctx.fill();
+}
+
+function drawGround() {
+  const grad = ctx.createLinearGradient(0, GROUND_Y, 0, H);
+  grad.addColorStop(0, '#4CAF50');
+  grad.addColorStop(0.3, '#43A047');
+  grad.addColorStop(1, '#2E7D32');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+
+  // Dirt texture
+  ctx.fillStyle = 'rgba(139,90,43,0.08)';
+  for (let i = 0; i < 50; i++) {
+    const dx = (Math.sin(i*97.3)*0.5+0.5)*W;
+    const dy = GROUND_Y + (Math.cos(i*43.7)*0.5+0.5)*(H-GROUND_Y);
+    ctx.beginPath(); ctx.arc(dx, dy, 3+Math.sin(i)*2, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+function drawGrass() {
+  const cellW = W / GRASS_COLS;
+  const cellH = (H - GROUND_Y) / GRASS_ROWS * 0.8;
+  for (let r = 0; r < GRASS_ROWS; r++) {
+    for (let c = 0; c < GRASS_COLS; c++) {
+      const g = grass[r][c];
+      if (g.level < 0.3) continue;
+      const cx = (c + 0.5) * cellW;
+      const cy = GROUND_Y + (r + 0.5) * cellH;
+      const bladeH = g.level * 8;
+      const sway = Math.sin(Date.now()/800 + c*0.5 + r) * 2;
+      const blades = 3 + Math.floor(g.level);
+      for (let b = 0; b < blades; b++) {
+        const bx = cx + (b - blades/2) * 4;
+        ctx.strokeStyle = g.level > 2 ? '#2E7D32' : '#4CAF50';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(bx, cy);
+        ctx.quadraticCurveTo(bx + sway, cy - bladeH/2, bx + sway*1.5, cy - bladeH);
+        ctx.stroke();
+      }
+      // Flower
+      if (g.flower) {
+        ctx.fillStyle = g.flowerColor;
+        ctx.beginPath(); ctx.arc(cx + sway, cy - bladeH - 4, 4, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath(); ctx.arc(cx + sway, cy - bladeH - 4, 2, 0, Math.PI*2); ctx.fill();
+      }
+    }
+  }
+}
+
+function drawCloud(c) {
+  const col = c.stormy ? 'rgba(100,100,100,0.9)' : c.rainActive ? 'rgba(200,200,200,0.9)' : 'rgba(255,255,255,0.9)';
+  ctx.fillStyle = col;
+  ctx.shadowColor = 'rgba(0,0,0,0.1)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 5;
+  for (const ci of c.circles) {
+    ctx.beginPath();
+    ctx.arc(c.x + ci.ox, c.y + ci.oy, ci.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  // Storm lightning
+  if (c.stormy && Math.random() < 0.02) {
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(c.x, c.y + 30);
+    ctx.lineTo(c.x - 10, c.y + 50);
+    ctx.lineTo(c.x + 5, c.y + 55);
+    ctx.lineTo(c.x - 5, c.y + 75);
+    ctx.stroke();
+  }
+}
+
+function drawRain() {
+  ctx.strokeStyle = 'rgba(100,180,255,0.6)';
+  ctx.lineWidth = 1.5;
+  for (const r of raindrops) {
+    ctx.beginPath();
+    ctx.moveTo(r.x, r.y);
+    ctx.lineTo(r.x, r.y + 6);
+    ctx.stroke();
+  }
+}
+
+function drawSheep(s) {
+  ctx.save();
+  ctx.translate(s.x, s.y);
+  if (!s.facingRight) ctx.scale(-1, 1);
+
+  const squash = s.state === 'sleeping' ? 0.8 : s.squish;
+  ctx.scale(1/squash, squash);
+
+  const sc = s.baby ? 0.7 : 1;
+
+  // Legs
+  const legSwing = s.state === 'walking' ? Math.sin(s.walkFrame * Math.PI/2) * 8 : 0;
+  ctx.strokeStyle = '#5D4037';
+  ctx.lineWidth = 3 * sc;
+  ctx.beginPath(); ctx.moveTo(-10*sc, 0); ctx.lineTo(-10*sc + legSwing*0.3, 15*sc); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-3*sc, 0); ctx.lineTo(-3*sc - legSwing*0.3, 15*sc); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(5*sc, 0); ctx.lineTo(5*sc + legSwing*0.3, 15*sc); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(12*sc, 0); ctx.lineTo(12*sc - legSwing*0.3, 15*sc); ctx.stroke();
+
+  // Body - fluffy circles
+  ctx.fillStyle = '#FAFAFA';
+  const bodyParts = [
+    {x:0,y:-12*sc,r:16*sc},{x:-10*sc,y:-15*sc,r:12*sc},{x:10*sc,y:-15*sc,r:12*sc},
+    {x:-5*sc,y:-22*sc,r:10*sc},{x:5*sc,y:-22*sc,r:10*sc},{x:0,y:-26*sc,r:9*sc}
+  ];
+  for (const bp of bodyParts) {
+    ctx.beginPath(); ctx.arc(bp.x, bp.y, bp.r, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Tail
+  ctx.beginPath(); ctx.arc(-18*sc, -12*sc, 6*sc, 0, Math.PI*2); ctx.fill();
+
+  // Head
+  ctx.fillStyle = '#FFB6C1';
+  ctx.beginPath(); ctx.ellipse(18*sc, -18*sc, 10*sc, 8*sc, 0.2, 0, Math.PI*2); ctx.fill();
+
+  // Ears
+  ctx.fillStyle = '#FF9AAE';
+  ctx.beginPath(); ctx.ellipse(12*sc, -28*sc, 5*sc, 3*sc, -0.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(24*sc, -26*sc, 5*sc, 3*sc, 0.3, 0, Math.PI*2); ctx.fill();
+
+  // Eyes
+  const mood = s.happy > 70 ? 'happy' : s.hunger < 30 ? 'hungry' : s.energy < 30 ? 'sleepy' : s.happy < 40 ? 'sad' : 'normal';
+  if (s.state === 'sleeping') {
+    // Closed eyes
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(16*sc, -18*sc, 2, 0, Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(22*sc, -18*sc, 2, 0, Math.PI); ctx.stroke();
+  } else if (mood === 'happy') {
+    // Happy eyes - star shapes
+    ctx.fillStyle = '#333';
+    ctx.beginPath(); ctx.arc(16*sc, -20*sc, 2.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(22*sc, -20*sc, 2.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath(); ctx.arc(16.8*sc, -21*sc, 1*sc, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(22.8*sc, -21*sc, 1*sc, 0, Math.PI*2); ctx.fill();
+    // Smile
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(19*sc, -14*sc, 4*sc, 0.2, Math.PI-0.2); ctx.stroke();
+  } else {
+    // Normal/sad eyes
+    ctx.fillStyle = '#333';
+    ctx.beginPath(); ctx.arc(16*sc, -20*sc, 2.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(22*sc, -20*sc, 2.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath(); ctx.arc(16.8*sc, -21*sc, 1*sc, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(22.8*sc, -21*sc, 1*sc, 0, Math.PI*2); ctx.fill();
+    if (mood === 'sad') {
+      // Frown
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(19*sc, -10*sc, 4*sc, Math.PI+0.3, -0.3); ctx.stroke();
+      // Tear
+      ctx.fillStyle = '#64B5F6';
+      ctx.beginPath(); ctx.arc(15*sc, -16*sc, 1.5*sc, 0, Math.PI*2); ctx.fill();
+    } else if (mood === 'hungry') {
+      // Open mouth
+      ctx.fillStyle = '#333';
+      ctx.beginPath(); ctx.ellipse(19*sc, -13*sc, 3*sc, 2*sc, 0, 0, Math.PI*2); ctx.fill();
+    } else {
+      // Neutral mouth
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(17*sc,-13*sc); ctx.lineTo(21*sc,-13*sc); ctx.stroke();
+    }
+  }
+
+  // ZZZ for sleeping
+  if (s.state === 'sleeping' && s.sleepZ > 0.5) {
+    const zAlpha = 0.3 + 0.3*Math.sin(Date.now()/300);
+    ctx.fillStyle = `rgba(100,100,200,${zAlpha})`;
+    ctx.font = `${12*sc}px sans-serif`;
+    ctx.fillText('Z', 25*sc, -30*sc - 5*Math.sin(Date.now()/500));
+    ctx.font = `${10*sc}px sans-serif`;
+    ctx.fillText('z', 32*sc, -38*sc - 5*Math.sin(Date.now()/600));
+    ctx.font = `${8*sc}px sans-serif`;
+    ctx.fillText('z', 37*sc, -44*sc - 5*Math.sin(Date.now()/700));
+  }
+
+  ctx.restore();
+}
+
+function drawItems() {
+  for (const item of placedItems) {
+    ctx.save();
+    ctx.translate(item.x, item.y);
+    if (item.type === 'ball') {
+      ctx.fillStyle = '#F44336';
+      ctx.beginPath(); ctx.arc(0, -8, 10, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#FFF';
+      ctx.beginPath(); ctx.arc(-2, -10, 3, 0, Math.PI*2); ctx.fill();
+    } else if (item.type === 'fountain') {
+      ctx.fillStyle = '#90A4AE';
+      ctx.fillRect(-12, -5, 24, 15);
+      ctx.fillStyle = '#42A5F5';
+      ctx.beginPath(); ctx.arc(0, -8, 6, 0, Math.PI*2); ctx.fill();
+    } else if (item.type === 'windmill') {
+      ctx.fillStyle = '#795548';
+      ctx.fillRect(-2, -20, 4, 25);
+      ctx.strokeStyle = '#FFF';
+      ctx.lineWidth = 3;
+      const a = Date.now()/500;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a)*15, -15+Math.sin(a)*15);
+      ctx.lineTo(-Math.cos(a)*15, -15-Math.sin(a)*15);
+      ctx.moveTo(Math.sin(a)*15, -15-Math.cos(a)*15);
+      ctx.lineTo(-Math.sin(a)*15, -15+Math.cos(a)*15);
+      ctx.stroke();
+    } else if (item.type === 'firework') {
+      // Firework burst particles
+      if (getDayPhase() === 'night') {
+        for (let i = 0; i < 8; i++) {
+          const a = i * Math.PI/4 + Date.now()/800;
+          const r = 15 + 5*Math.sin(Date.now()/200);
+          ctx.fillStyle = ['#F44336','#FFEB3B','#2196F3','#4CAF50'][i%4];
+          ctx.beginPath(); ctx.arc(Math.cos(a)*r, -20+Math.sin(a)*r, 3, 0, Math.PI*2); ctx.fill();
+        }
+      } else {
+        ctx.fillStyle = '#F44336';
+        ctx.fillRect(-3, -15, 6, 15);
+      }
+    } else if (item.type === 'flowerpot') {
+      ctx.fillStyle = '#795548';
+      ctx.fillRect(-8, -5, 16, 12);
+      ctx.fillStyle = '#E91E63';
+      ctx.beginPath(); ctx.arc(0, -12, 7, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#FFC107';
+      ctx.beginPath(); ctx.arc(0, -12, 3, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = Math.min(1, p.life * 2);
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function updateUI() {
+  const phase = getDayPhase();
+  const icons = {day:'☀️',dusk:'🌅',night:'🌙',dawn:'🌄'};
+  document.getElementById('day-info').textContent = `Day ${dayCount} ${icons[phase]}`;
+  document.getElementById('stars-display').textContent = `⭐ ${totalStars}`;
+  document.getElementById('challenge-progress').textContent = `${completedChallenges.size}/${CHALLENGES.length} Challenges`;
+
+  // Sheep panel
+  const panel = document.getElementById('sheep-panel');
+  panel.innerHTML = sheep.map(s => {
+    const avg = (s.hunger + s.happy + s.energy + s.social + s.clean + s.health) / 6;
+    const col = avg > 70 ? '#4CAF50' : avg > 40 ? '#FF9800' : '#F44336';
+    return `<div class="sheep-mini" onclick="showSheepPopup(sheep.find(sh=>sh.id===${s.id}))">
+      <span style="font-size:16px">${s.state==='sleeping'?'😴':'🐑'}</span>
+      <span style="font-size:10px;color:#fff">${s.name}</span>
+      <div class="bar"><div class="bar-fill" style="width:${avg}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ============ MAIN LOOP ============
+let lastTime = 0;
+function gameLoop(time) {
+  requestAnimationFrame(gameLoop);
+  const rawDt = Math.min((time - lastTime) / 1000, 0.05);
+  lastTime = time;
+  if (paused) return;
+  const dt = rawDt * speed;
+
+  // Update day cycle
+  dayTime += dt;
+  if (dayTime >= DAY_CYCLE * dayCount) dayCount++;
+
+  // Update systems
+  updateClouds(dt);
+  updateRaindrops(dt);
+  updateSheep(dt);
+  updateGrass(dt);
+  updateParticles(dt);
+  checkBreeding(dt);
+  checkChallenges();
+
+  // Render
+  ctx.clearRect(0, 0, W, H);
+  drawSky();
+  drawSunMoon();
+  for (const c of clouds) drawCloud(c);
+  drawRain();
+  drawHills();
+  drawGround();
+  drawGrass();
+  drawItems();
+  for (const s of sheep) drawSheep(s);
+  drawParticles();
+
+  // Update UI every 10 frames
+  if (Math.floor(time/160) !== Math.floor((time-rawDt*1000)/160)) updateUI();
+}
+
+requestAnimationFrame(gameLoop);
+
+// Spawn new clouds periodically
+setInterval(() => {
+  if (paused) return;
+  if (clouds.length < 5) {
+    clouds.push(makeCloud(-50, H*0.1 + Math.random()*H*0.15, 1));
+  }
+}, 15000);
+
+// Place text indicator for shop mode
+function drawShopIndicator() {
+  if (selectedItem) {
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(W/2-100, 50, 200, 30);
+    ctx.fillStyle = '#FFF';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Click to place ' + selectedItem, W/2, 70);
+    ctx.textAlign = 'start';
+  }
+}
+const origLoop = gameLoop;
+// Patch loop to include shop indicator
+const origDraw = drawParticles;
+// We'll add it in the main loop - simpler approach:
+setInterval(() => { if (selectedItem && !paused) drawShopIndicator(); }, 50);
+</script>
+</body>
+</html>

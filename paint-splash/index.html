@@ -11,6 +11,8 @@
 <script src="../game-audio.js?v=9"></script>
 <script src="../game-audio-auto.js?v=9"></script>
 <style>
+
+
 html,body{overflow-x:hidden;max-width:100vw;}
 *{box-sizing:border-box;}
 body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
@@ -79,6 +81,16 @@ canvas#gameCanvas{width:100%;height:100%;display:block}
 @keyframes comboUp{0%{transform:translateY(0) scale(0.5);opacity:0}20%{transform:translateY(-10px) scale(1.2);opacity:1}100%{transform:translateY(-80px) scale(0.8);opacity:0}}
 /* Hint flash */
 @keyframes hintFlash{0%,100%{opacity:0.3}50%{opacity:1}}
+
+/* ===== Splash BG ===== */
+#splash-screen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:url('splash-bg.jpg') center/cover no-repeat;transition:opacity 0.5s ease}
+#splash-screen.fade-out{opacity:0;pointer-events:none}
+#splash-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.6) 100%)}
+#splash-screen h1{position:relative;z-index:1;font-size:clamp(28px,8vw,52px);font-weight:900;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,0.8),0 0 40px rgba(0,0,0,0.5);letter-spacing:2px;text-align:center;padding:0 20px;font-family:'Segoe UI',system-ui,sans-serif}
+#splash-screen .splash-sub{position:relative;z-index:1;color:rgba(255,255,255,0.85);font-size:clamp(14px,3vw,18px);margin-top:16px;text-shadow:0 1px 8px rgba(0,0,0,0.6);letter-spacing:1px}
+#splash-screen .splash-hint{position:relative;z-index:1;color:rgba(255,255,255,0.5);font-size:12px;margin-top:40px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+
 </style>
   <meta name="description" content="Slide colorful paint tiles to create matches in Paint Splash, the free creative color puzzle game. Match 3 or more same-colored tiles to clear the board. Play instantly in your browser.">
   <meta name="keywords" content="paint splash, sliding puzzle, color game, free online game">
@@ -172,6 +184,7 @@ canvas#gameCanvas{width:100%;height:100%;display:block}
 </script>
 </head>
 <body>
+<div id="splash-screen"><h1>Paint Splash</h1><div class="splash-sub">🎮 Free Online Game</div><div class="splash-hint">Tap anywhere to play</div></div>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;font-family:sans-serif">&#x1f3e0; More Games at GameZipper.com</a>
 
 <div id="top-bar">
@@ -288,195 +301,6 @@ canvas#gameCanvas{width:100%;height:100%;display:block}
 </div>
 
 <script>
-'use strict';
-var G=(function(){
-
-// Macaroon palette
-var COLORS=['#FF6B9D','#60A5FA','#FBBF24','#34D399','#C084FC','#FB923C'];
-var COLOR_LIGHT=['#FF8DB5','#93C5FD','#FCD34D','#6EE7B7','#D8B4FE','#FDBA74'];
-var COLOR_DARK=['#DB2777','#2563EB','#D97706','#059669','#7C3AED','#EA580C'];
-var OBSTACLE_COLOR='#4B5563';
-
-var LEVEL_NAMES=[
-  'Cherry Blossom','Mint Dream','Lemon Drop','Cotton Candy','Lavender Mist',
-  'Coral Reef','Ocean Breeze','Peach Sorbet','Emerald Isle','Sunset Glow',
-  'Berry Swirl','Tropical Dawn','Violet Haze','Caramel Drizzle','Sapphire Night',
-  'Golden Sunset','Rose Garden','Midnight Carnival','Rainbow Cascade','Aurora Finale',
-  // Levels 21-50
-  'Crystal Waters','Amber Glow','Jade Forest','Ruby Dreams','Sapphire Sky',
-  'Amethyst Mist','Topaz Dawn','Opal Night','Diamond Dust','Pearl Harbor',
-  'Crimson Tide','Azure Depths','Emerald Fire','Golden Hour','Silver Moon',
-  'Bronze Age','Copper Canyon','Platinum Peak','Obsidian Void','Quartz Creek',
-  'Moonstone Valley','Sunstone Peak','Starlight Bridge','Nebula swirl','Galaxy Core',
-  'Cosmic Dust','Solar Flare','Lunar Eclipse','Meteor Shower','Supernova Burst'
-];
-
-// Difficulty curve
-var LEVELS=[];
-// Levels 1-5: 3 colors, 4×4, generous moves
-(function(){
-  var cfgs=[
-    {colors:3,gridSize:4,target:30,moves:20,ms2:14,ms3:10},
-    {colors:3,gridSize:4,target:35,moves:18,ms2:13,ms3:9},
-    {colors:3,gridSize:4,target:40,moves:18,ms2:13,ms3:9},
-    {colors:3,gridSize:4,target:45,moves:16,ms2:12,ms3:8},
-    {colors:3,gridSize:4,target:50,moves:16,ms2:11,ms3:8}
-  ];
-  for(var i=0;i<cfgs.length;i++){
-    var c=cfgs[i];
-    LEVELS.push({id:i+1,name:LEVEL_NAMES[i],colors:c.colors,gridSize:c.gridSize,target:c.target,moves:c.moves,movesStar2:c.ms2,movesStar3:c.ms3,obstacles:0,difficulty:1});
-  }
-})();
-// Levels 6-10: 4 colors, 5×5
-(function(){
-  var cfgs=[
-    {colors:4,gridSize:5,target:45,moves:22,ms2:16,ms3:11},
-    {colors:4,gridSize:5,target:50,moves:22,ms2:15,ms3:10},
-    {colors:4,gridSize:5,target:55,moves:20,ms2:14,ms3:10},
-    {colors:4,gridSize:5,target:60,moves:20,ms2:14,ms3:9},
-    {colors:4,gridSize:5,target:65,moves:18,ms2:13,ms3:9}
-  ];
-  for(var i=0;i<cfgs.length;i++){
-    var c=cfgs[i];
-    LEVELS.push({id:i+6,name:LEVEL_NAMES[i+5],colors:c.colors,gridSize:c.gridSize,target:c.target,moves:c.moves,movesStar2:c.ms2,movesStar3:c.ms3,obstacles:0,difficulty:2});
-  }
-})();
-// Levels 11-15: 5 colors, 6×6, tight moves
-(function(){
-  var cfgs=[
-    {colors:5,gridSize:6,target:55,moves:22,ms2:16,ms3:11},
-    {colors:5,gridSize:6,target:60,moves:20,ms2:14,ms3:10},
-    {colors:5,gridSize:6,target:65,moves:20,ms2:14,ms3:9},
-    {colors:5,gridSize:6,target:70,moves:18,ms2:13,ms3:9},
-    {colors:5,gridSize:6,target:75,moves:18,ms2:12,ms3:8}
-  ];
-  for(var i=0;i<cfgs.length;i++){
-    var c=cfgs[i];
-    LEVELS.push({id:i+11,name:LEVEL_NAMES[i+10],colors:c.colors,gridSize:c.gridSize,target:c.target,moves:c.moves,movesStar2:c.ms2,movesStar3:c.ms3,obstacles:0,difficulty:3});
-  }
-})();
-// Levels 16-20: 6 colors, 6×6, strict, obstacles
-(function(){
-  var cfgs=[
-    {colors:6,gridSize:6,target:65,moves:18,ms2:13,ms3:8,obs:2},
-    {colors:6,gridSize:6,target:70,moves:16,ms2:12,ms3:8,obs:3},
-    {colors:6,gridSize:6,target:75,moves:16,ms2:11,ms3:7,obs:3},
-    {colors:6,gridSize:6,target:80,moves:15,ms2:11,ms3:7,obs:4},
-    {colors:6,gridSize:6,target:85,moves:14,ms2:10,ms3:6,obs:5}
-  ];
-  for(var i=0;i<cfgs.length;i++){
-    var c=cfgs[i];
-    LEVELS.push({id:i+16,name:LEVEL_NAMES[i+15],colors:c.colors,gridSize:c.gridSize,target:c.target,moves:c.moves,movesStar2:c.ms2,movesStar3:c.ms3,obstacles:c.obs,difficulty:4});
-  }
-})();
-// Levels 21-30: 6 colors, 7×7, more obstacles
-(function(){
-  var cfgs=[
-    {colors:6,gridSize:7,target:70,moves:20,ms2:15,ms3:10,obs:3},
-    {colors:6,gridSize:7,target:72,moves:20,ms2:14,ms3:10,obs:4},
-    {colors:6,gridSize:7,target:75,moves:19,ms2:14,ms3:9,obs:4},
-    {colors:6,gridSize:7,target:78,moves:19,ms2:13,ms3:9,obs:5},
-    {colors:6,gridSize:7,target:80,moves:18,ms2:13,ms3:8,obs:5},
-    {colors:6,gridSize:7,target:82,moves:18,ms2:12,ms3:8,obs:6},
-    {colors:6,gridSize:7,target:85,moves:17,ms2:12,ms3:8,obs:6},
-    {colors:6,gridSize:7,target:87,moves:17,ms2:11,ms3:7,obs:7},
-    {colors:6,gridSize:7,target:90,moves:16,ms2:11,ms3:7,obs:7},
-    {colors:6,gridSize:7,target:92,moves:16,ms2:10,ms3:6,obs:8}
-  ];
-  for(var i=0;i<cfgs.length;i++){
-    var c=cfgs[i];
-    LEVELS.push({id:i+21,name:LEVEL_NAMES[i+20],colors:c.colors,gridSize:c.gridSize,target:c.target,moves:c.moves,movesStar2:c.ms2,movesStar3:c.ms3,obstacles:c.obs,difficulty:5});
-  }
-})();
-// Levels 31-40: 6 colors, 7×7, strict, more obstacles
-(function(){
-  var cfgs=[
-    {colors:6,gridSize:7,target:85,moves:18,ms2:13,ms3:8,obs:7},
-    {colors:6,gridSize:7,target:87,moves:17,ms2:12,ms3:8,obs:8},
-    {colors:6,gridSize:7,target:90,moves:17,ms2:12,ms3:7,obs:8},
-    {colors:6,gridSize:7,target:92,moves:16,ms2:11,ms3:7,obs:9},
-    {colors:6,gridSize:7,target:94,moves:16,ms2:11,ms3:6,obs:9},
-    {colors:6,gridSize:7,target:95,moves:15,ms2:10,ms3:6,obs:10},
-    {colors:6,gridSize:7,target:96,moves:15,ms2:10,ms3:5,obs:10},
-    {colors:6,gridSize:7,target:97,moves:14,ms2:9,ms3:5,obs:11},
-    {colors:6,gridSize:7,target:98,moves:14,ms2:9,ms3:4,obs:11},
-    {colors:6,gridSize:7,target:99,moves:13,ms2:8,ms3:4,obs:12}
-  ];
-  for(var i=0;i<cfgs.length;i++){
-    var c=cfgs[i];
-    LEVELS.push({id:i+31,name:LEVEL_NAMES[i+30],colors:c.colors,gridSize:c.gridSize,target:c.target,moves:c.moves,movesStar2:c.ms2,movesStar3:c.ms3,obstacles:c.obs,difficulty:6});
-  }
-})();
-// Levels 41-50: 6 colors, 8×8, master difficulty
-(function(){
-  var cfgs=[
-    {colors:6,gridSize:8,target:80,moves:22,ms2:16,ms3:11,obs:8},
-    {colors:6,gridSize:8,target:82,moves:21,ms2:15,ms3:10,obs:9},
-    {colors:6,gridSize:8,target:85,moves:20,ms2:14,ms3:10,obs:10},
-    {colors:6,gridSize:8,target:87,moves:19,ms2:13,ms3:9,obs:11},
-    {colors:6,gridSize:8,target:90,moves:18,ms2:12,ms3:8,obs:12},
-    {colors:6,gridSize:8,target:92,moves:17,ms2:11,ms3:7,obs:13},
-    {colors:6,gridSize:8,target:94,moves:16,ms2:10,ms3:6,obs:14},
-    {colors:6,gridSize:8,target:96,moves:15,ms2:9,ms3:5,obs:15},
-    {colors:6,gridSize:8,target:98,moves:14,ms2:8,ms3:4,obs:16},
-    {colors:6,gridSize:8,target:100,moves:13,ms2:7,ms3:3,obs:18}
-  ];
-  for(var i=0;i<cfgs.length;i++){
-    var c=cfgs[i];
-    LEVELS.push({id:i+41,name:LEVEL_NAMES[i+40],colors:c.colors,gridSize:c.gridSize,target:c.target,moves:c.moves,movesStar2:c.ms2,movesStar3:c.ms3,obstacles:c.obs,difficulty:7});
-  }
-})();
-
-// State
-var canvas,ctx,W,H,cellSize,gridOffsetX,gridOffsetY;
-var GRID=6; // current grid size
-var grid=[];
-var obstacleMap=[]; // true = obstacle
-var paintCanvas2,paintCtx;
-var currentLevel=0,movesLeft=0,paintPercent=0,undoStack=[];
-var hintsLeft=3;
-var animating=false,particles=[],splashes=[],screenFlash=null;
-var comboCount=0; // consecutive match chains
-var muted=false,progress={};
-var swipeStartX,swipeStartY,swiping=false;
-var blockPositions=[];
-var slideAnimating=false;
-var hintHighlight=null; // {r,c,t} for hint flash
-var levelTransition=0; // 0=none, 1=fading out, 2=fading in
-
-function init(){
-  canvas=document.getElementById('gameCanvas');
-  ctx=canvas.getContext('2d');
-  paintCanvas2=document.createElement('canvas');
-  paintCanvas2.width=300;paintCanvas2.height=300;
-  paintCtx=paintCanvas2.getContext('2d');
-
-  loadProgress();
-  resize();
-  window.addEventListener('resize',resize);
-
-  canvas.addEventListener('mousedown',onDown);
-  canvas.addEventListener('mousemove',onMove);
-  canvas.addEventListener('mouseup',onUp);
-  canvas.addEventListener('touchstart',onTouchStart,{passive:false});
-  canvas.addEventListener('touchmove',onTouchMove,{passive:false});
-  canvas.addEventListener('touchend',onTouchEnd,{passive:false});
-  document.addEventListener('keydown',onKey);
-
-  if(!localStorage.getItem('ps_cookie')){
-    document.getElementById('cookie').classList.add('show');
-  }
-
-  var startLvl=progress.currentLevel||0;
-  // Show tutorial on level 1 if not done
-  if(!localStorage.getItem('ps_tutorial2')&&startLvl===0){
-    document.getElementById('tutorial-overlay').classList.add('show');
-  }
-
-  startLevel(startLvl);
-  requestAnimationFrame(loop);
-  updateGameState();
-}
 
 // Tutorial
 function tutNext(step){
@@ -1468,6 +1292,18 @@ flex:0 0 0px;min-height:0;overflow:hidden;padding:0;margin:0;}
   <h2>Play more like this</h2>
   <p><a href="/color-sort/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Color Sort</a><a href="/ocean-gem-pop/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Ocean Gem Pop</a><a href="/dessert-blast/" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Dessert Blast</a><a href="/puzzle-games.html" style="display:inline-block;padding:8px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px;margin:0 8px 8px 0">Puzzle Games</a></p>
 </section>
+
+
+// Splash dismiss
+(function(){
+  var ss=document.getElementById('splash-screen');
+  if(!ss)return;
+  function dismiss(){ss.classList.add('fade-out');setTimeout(function(){ss.remove()},600);}
+  ss.addEventListener('click',dismiss);
+  ss.addEventListener('touchstart',dismiss,{passive:true});
+  document.addEventListener('keydown',function e(){dismiss();document.removeEventListener('keydown',e);});
+  setTimeout(dismiss,8000);
+})();
 
 </body>
 </html>
