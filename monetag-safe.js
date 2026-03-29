@@ -2,6 +2,10 @@
   'use strict';
   if (window.GZMonetagSafe) return;
 
+  var GAME_ZONE = 216786;  // gamezipper.com zone
+  var loaded = false;
+  var gameAdShown = false;
+
   function onGamePage() {
     return location.pathname !== '/' && /\/$/.test(location.pathname) && !/games\.html$/.test(location.pathname);
   }
@@ -20,37 +24,55 @@
     });
   }
 
-  function shouldInjectThirdParty() {
-    // Requirement: never interrupt gameplay. Third-party ad scripts pose popup/interruption risks, disable them all.
-    return false;
+  function loadScript(zone) {
+    if (loaded) return true;
+    loaded = true;
+    // Monetag popunder / native ad script
+    var s = document.createElement('script');
+    s.src = '//a.magsrv.com/ad-provider.js';
+    s.async = true;
+    s.setAttribute('data-zone', zone);
+    document.head.appendChild(s);
+    console.log('[GZMonetagSafe] Monetag zone ' + zone + ' loaded');
+    return true;
   }
 
-  function inject(zone) {
-    if (!shouldInjectThirdParty()) return false;
-    return false;
-  }
+  function init(zone){
+    zone = zone || GAME_ZONE;
 
-  function init(){
-    if (onGamePage()) {
-      console.log('[GZMonetagSafe] disabled on game page for UX protection');
+    if (onHubPage()) {
+      // Hub pages: load Monetag immediately (no gameplay to interrupt)
+      loadScript(zone);
       return;
     }
-    if (onHubPage()) {
-      console.log('[GZMonetagSafe] third-party pop / interstitial disabled; using inline promo rail only');
+
+    if (onGamePage()) {
+      // Game pages: don't auto-load. Wait for game-over signal.
+      console.log('[GZMonetagSafe] game page — ads deferred until game-over signal');
+      return;
     }
+
+    // Other pages (about, privacy, etc): load with delay
+    setTimeout(function(){ loadScript(zone); }, 3000);
   }
 
   window.GZMonetagSafe = {
-    init: function(){ init(); },
-    loadNow: function(){ return false; },
-    maybeLoad: function(){ return false; },
+    init: function(zone){ init(zone); },
+    loadNow: function(zone){ loadScript(zone || GAME_ZONE); },
+    maybeLoad: function(zone){
+      // Called by game pages on game-over; only show once per session
+      if (gameAdShown) return false;
+      gameAdShown = true;
+      loadScript(zone || GAME_ZONE);
+      return true;
+    },
     hasBlockingOverlay: hasBlockingOverlay,
-    disabled: true,
-    mode: 'inline-only'
+    disabled: false,
+    mode: 'hub-auto+game-deferred'
   };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init, { once:true });
+    document.addEventListener('DOMContentLoaded', function(){ init(); }, { once:true });
   } else {
     init();
   }
