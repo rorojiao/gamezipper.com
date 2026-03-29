@@ -15,8 +15,17 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;overflow-x:hidden;background:#000;font-family:'Segoe UI',Arial,sans-serif;touch-action:none;-webkit-touch-callout:none;user-select:none}
 canvas{display:block;width:100%;height:100%}
+#splash{position:absolute;top:0;left:0;width:100%;height:100%;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#87CEEB 0%,#E8F5E9 50%,#FFF9C4 100%);transition:opacity 0.6s}
+#splash.fade-out{opacity:0;pointer-events:none}
+#splash h1{font-size:32px;color:#333;text-shadow:1px 1px 2px rgba(255,255,255,.5);margin-bottom:8px}
+#splash p{font-size:14px;color:#555;margin-bottom:24px;text-align:center;padding:0 20px}
+#splash button{padding:14px 48px;font-size:18px;border:none;border-radius:12px;background:#4CAF50;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s}
+#splash button:hover{transform:scale(1.05)}
+#splash button:active{transform:scale(0.95)}
+#splash .splash-hint{margin-top:16px;font-size:12px;color:#888}
 #ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
 #ui>*{pointer-events:auto}
+#btn-home{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.45);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;z-index:10}
 .hud-top{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;color:#fff;font-size:14px;text-shadow:1px 1px 2px rgba(0,0,0,.7)}
 .hud-top>div{background:rgba(0,0,0,.35);border-radius:12px;padding:4px 10px}
 #sheep-panel{position:absolute;bottom:0;left:0;width:100%;display:flex;justify-content:center;gap:6px;padding:6px;background:rgba(0,0,0,.3)}
@@ -34,7 +43,7 @@ canvas{display:block;width:100%;height:100%}
 #challenge-list .ch{margin:3px 0;padding:3px 6px;border-radius:6px;background:rgba(255,255,255,.1)}
 #challenge-list .ch.done{background:rgba(100,255,100,.2);text-decoration:line-through}
 #btn-pause,#btn-speed,#btn-challenges,#btn-shop{position:absolute;background:rgba(0,0,0,.45);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-#btn-pause{top:8px;left:8px}
+#btn-pause{top:8px;left:50px}
 #btn-speed{top:8px;left:50px}
 #btn-challenges{top:8px;right:8px}
 #btn-shop{bottom:60px;left:8px}
@@ -52,6 +61,12 @@ canvas{display:block;width:100%;height:100%}
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="splash">
+  <h1>☁️ Cloud & Sheep</h1>
+  <p>Care for adorable sheep! Drag clouds to make rain and grow grass. Keep your fluffy friends happy, fed, and clean. 🐑</p>
+  <button onclick="startGame()">▶ Start Game</button>
+  <div class="splash-hint">Tap sheep to check status • Drag clouds to water grass</div>
+</div>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-PD9VL4Y05J"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-PD9VL4Y05J');</script>
 <script>fetch('https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=cloud-sheep').catch(()=>{})</script>
@@ -62,6 +77,7 @@ canvas{display:block;width:100%;height:100%}
     <div id="challenge-progress">0/20 Challenges</div>
   </div>
   <div id="sheep-panel"></div>
+  <a id="btn-home" href="https://gamezipper.com" title="Back to GameZipper">🏠</a>
   <button id="btn-pause">⏸</button>
   <button id="btn-speed">⏩</button>
   <button id="btn-challenges">📋</button>
@@ -86,6 +102,17 @@ canvas{display:block;width:100%;height:100%}
   <div class="overlay" id="overlay"></div>
 </div>
 <script>
+// ============ SPLASH SCREEN ============
+let gameStarted = false;
+function startGame() {
+  gameStarted = true;
+  const splash = document.getElementById('splash');
+  splash.classList.add('fade-out');
+  setTimeout(() => splash.style.display = 'none', 600);
+  initAudio();
+  startBGM();
+}
+
 // ============ GAME ENGINE ============
 const C = document.getElementById('c');
 const ctx = C.getContext('2d');
@@ -518,6 +545,7 @@ function updateSheep(dt) {
         if (g.level > 0.5) {
           g.level -= 0.5 * dt;
           s.hunger = Math.min(100, s.hunger + 15 * dt);
+          s.happy = Math.min(100, s.happy + 3 * dt);
           stats.totalEats += dt * 0.5;
         }
       }
@@ -538,6 +566,8 @@ function updateSheep(dt) {
       if (Math.sqrt(dx*dx+dy*dy) < 60) {
         s.social = Math.min(100, s.social + 2 * dt);
         other.social = Math.min(100, other.social + 2 * dt);
+        s.happy = Math.min(100, s.happy + 1 * dt);
+        other.happy = Math.min(100, other.happy + 1 * dt);
       }
     }
 
@@ -996,6 +1026,7 @@ function updateUI() {
 let lastTime = 0;
 function gameLoop(time) {
   requestAnimationFrame(gameLoop);
+  if (!gameStarted) return;
   const rawDt = Math.min((time - lastTime) / 1000, 0.05);
   lastTime = time;
   if (paused) return;
@@ -1026,6 +1057,15 @@ function gameLoop(time) {
   drawItems();
   for (const s of sheep) drawSheep(s);
   drawParticles();
+  if (selectedItem && !paused) {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(W/2-110, 50, 220, 34);
+    ctx.fillStyle = '#FFF';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('👆 Tap to place ' + selectedItem, W/2, 72);
+    ctx.textAlign = 'start';
+  }
 
   // Update UI every 10 frames
   if (Math.floor(time/160) !== Math.floor((time-rawDt*1000)/160)) updateUI();
@@ -1041,23 +1081,7 @@ setInterval(() => {
   }
 }, 15000);
 
-// Place text indicator for shop mode
-function drawShopIndicator() {
-  if (selectedItem) {
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(W/2-100, 50, 200, 30);
-    ctx.fillStyle = '#FFF';
-    ctx.font = '14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Click to place ' + selectedItem, W/2, 70);
-    ctx.textAlign = 'start';
-  }
-}
-const origLoop = gameLoop;
-// Patch loop to include shop indicator
-const origDraw = drawParticles;
-// We'll add it in the main loop - simpler approach:
-setInterval(() => { if (selectedItem && !paused) drawShopIndicator(); }, 50);
+
 </script>
 </body>
 </html>
