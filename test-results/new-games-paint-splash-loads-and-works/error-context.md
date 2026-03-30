@@ -1,0 +1,99 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - heading "Paint Splash" [level=1] [ref=e3]
+    - generic [ref=e4]: 🎮 Free Online Game
+    - generic [ref=e5]: Tap anywhere to play
+  - link "🏠 More Games at GameZipper.com" [ref=e6] [cursor=pointer]:
+    - /url: https://gamezipper.com/
+  - generic [ref=e7]:
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e10]: LV
+        - generic [ref=e11]: "1"
+      - generic [ref=e12]:
+        - generic [ref=e13]: Moves
+        - generic [ref=e14]: "30"
+      - generic [ref=e15]:
+        - generic [ref=e16]: Paint
+        - generic [ref=e17]: 0%
+    - link "More ➡" [ref=e18] [cursor=pointer]:
+      - /url: ../
+  - generic [ref=e23]:
+    - button "📋 Levels" [ref=e24] [cursor=pointer]:
+      - text: 📋
+      - generic [ref=e25]: Levels
+    - button "🔄 Restart" [ref=e26] [cursor=pointer]:
+      - text: 🔄
+      - generic [ref=e27]: Restart
+    - button "↩️ Undo" [ref=e28] [cursor=pointer]:
+      - text: ↩️
+      - generic [ref=e29]: Undo
+    - button "💡 Hint 3" [ref=e30] [cursor=pointer]:
+      - text: 💡
+      - generic [ref=e31]: Hint
+      - generic [ref=e32]: "3"
+  - button "🔊" [ref=e33] [cursor=pointer]
+  - generic:
+    - heading "Paint Splash — Free Color Sliding Puzzle" [level=1] [ref=e34]
+    - paragraph [ref=e35]: Play Paint Splash free online! Slide colored blocks to fill the canvas with paint. A creative and satisfying color puzzle experience.
+    - heading "How to Play" [level=2] [ref=e36]
+    - list [ref=e37]:
+      - listitem [ref=e38]:
+        - strong [ref=e39]: Swipe or drag
+        - text: the colored blocks across the grid.
+      - listitem [ref=e40]:
+        - text: Each block paints the cells it slides over in its
+        - strong [ref=e41]: color
+        - text: .
+      - listitem [ref=e42]:
+        - text: Fill the
+        - strong [ref=e43]: entire grid
+        - text: using all blocks to complete the level.
+      - listitem [ref=e44]: Each level has a unique solution — think before you swipe!
+    - heading "Game Features" [level=2] [ref=e45]
+    - list [ref=e46]:
+      - listitem [ref=e47]: 🎨 Artistic color-filling mechanics
+      - listitem [ref=e48]: 🧩 Unique puzzle design per level
+      - listitem [ref=e49]: 🌈 Satisfying paint trail animations
+      - listitem [ref=e50]: 📱 Smooth touch controls
+    - heading "Tips & Tricks" [level=2] [ref=e51]
+    - list [ref=e52]:
+      - listitem [ref=e53]: Plan your path — once paint is laid, it can't be undone.
+      - listitem [ref=e54]: Look for dead-end paths and fill those first.
+      - listitem [ref=e55]: Work outward from corners inward.
+  - generic [ref=e56]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e57]
+    - generic [ref=e58]:
+      - heading "How do you play Paint Splash?" [level=3] [ref=e59]
+      - paragraph [ref=e60]: Slide rows and columns of colorful paint tiles to align 3 or more matching colors. When tiles of the same color line up, they burst with a paint splash and clear from the board. Plan your slides carefully to create chain reactions and clear the board efficiently!
+    - generic [ref=e61]:
+      - heading "Is Paint Splash free to play?" [level=3] [ref=e62]
+      - paragraph [ref=e63]: Yes, Paint Splash on GameZipper is completely free. No downloads, accounts, or payments required—start splashing colors immediately in your browser.
+    - generic [ref=e64]:
+      - heading "Can I play Paint Splash on mobile?" [level=3] [ref=e65]
+      - paragraph [ref=e66]: Yes! Paint Splash fully supports swipe controls on mobile. Swipe to slide rows and columns of paint tiles and create colorful matches on your smartphone or tablet.
+  - generic:
+    - heading "Paint Splash Game Guide" [level=2] [ref=e67]
+    - paragraph [ref=e68]: Paint Splash is one of the few pages already getting search impressions, so this page needs clearer topical language. It is a color-matching browser puzzle where you swipe to connect, clear, and set up higher-value cascades in short sessions.
+    - heading "Who this game is good for" [level=2] [ref=e69]
+    - paragraph [ref=e70]: Best for players who like relaxing color games, short puzzle sessions, and touch-friendly browser gameplay.
+    - heading "Quick strategy notes" [level=2] [ref=e71]
+    - list [ref=e72]:
+      - listitem [ref=e73]: Look one move ahead instead of chasing the first obvious match.
+      - listitem [ref=e74]: Try to leave large same-color groups for combo turns.
+      - listitem [ref=e75]: On mobile, short controlled swipes are more reliable than long diagonal drags.
+    - heading "Play more like this" [level=2] [ref=e76]
+    - paragraph [ref=e77]:
+      - link "Color Sort" [ref=e78] [cursor=pointer]:
+        - /url: /color-sort/
+      - link "Ocean Gem Pop" [ref=e79] [cursor=pointer]:
+        - /url: /ocean-gem-pop/
+      - link "Dessert Blast" [ref=e80] [cursor=pointer]:
+        - /url: /dessert-blast/
+      - link "Puzzle Games" [ref=e81] [cursor=pointer]:
+        - /url: /puzzle-games.html
+  - button "Toggle sound" [ref=e82] [cursor=pointer]: 🔊
+```

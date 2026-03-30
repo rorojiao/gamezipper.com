@@ -1,0 +1,130 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - heading "Word Puzzle" [level=1] [ref=e3]
+    - generic [ref=e4]: 🎮 Free Online Game
+    - generic [ref=e5]: Tap anywhere to play
+  - link "🏠 More Games at GameZipper.com" [ref=e6] [cursor=pointer]:
+    - /url: https://gamezipper.com/
+  - generic [ref=e7]:
+    - heading "📜 Word Puzzle" [level=1] [ref=e8]
+    - generic [ref=e9]: "Ancient Scroll #453"
+    - button "?" [ref=e10] [cursor=pointer]
+  - generic [ref=e43]:
+    - generic [ref=e44]: 💎 Correct
+    - generic [ref=e45]: 🟡 Wrong spot
+    - generic [ref=e46]: 🪨 Not in word
+  - button "💡 Hint (reveal a letter)" [ref=e47] [cursor=pointer]
+  - generic [ref=e48]:
+    - generic [ref=e49]:
+      - button "Q" [ref=e50] [cursor=pointer]
+      - button "W" [ref=e51] [cursor=pointer]
+      - button "E" [ref=e52] [cursor=pointer]
+      - button "R" [ref=e53] [cursor=pointer]
+      - button "T" [ref=e54] [cursor=pointer]
+      - button "Y" [ref=e55] [cursor=pointer]
+      - button "U" [ref=e56] [cursor=pointer]
+      - button "I" [ref=e57] [cursor=pointer]
+      - button "O" [ref=e58] [cursor=pointer]
+      - button "P" [ref=e59] [cursor=pointer]
+    - generic [ref=e60]:
+      - button "A" [ref=e61] [cursor=pointer]
+      - button "S" [ref=e62] [cursor=pointer]
+      - button "D" [ref=e63] [cursor=pointer]
+      - button "F" [ref=e64] [cursor=pointer]
+      - button "G" [ref=e65] [cursor=pointer]
+      - button "H" [ref=e66] [cursor=pointer]
+      - button "J" [ref=e67] [cursor=pointer]
+      - button "K" [ref=e68] [cursor=pointer]
+      - button "L" [ref=e69] [cursor=pointer]
+    - generic [ref=e70]:
+      - button "ENTER" [ref=e71] [cursor=pointer]
+      - button "Z" [ref=e72] [cursor=pointer]
+      - button "X" [ref=e73] [cursor=pointer]
+      - button "C" [ref=e74] [cursor=pointer]
+      - button "V" [ref=e75] [cursor=pointer]
+      - button "B" [ref=e76] [cursor=pointer]
+      - button "N" [ref=e77] [cursor=pointer]
+      - button "M" [ref=e78] [cursor=pointer]
+      - button "⌫" [ref=e79] [cursor=pointer]
+  - generic: 🪶
+  - generic: 📄
+  - generic: 🍂
+  - generic: ✒️
+  - generic: 📜
+  - generic [ref=e82]:
+    - generic [ref=e83]: 📜 How to Play
+    - generic [ref=e84]:
+      - text: Guess the hidden 5-letter word in 6 tries.
+      - text: After each guess, tiles change color to show how close you are.
+    - generic [ref=e85]:
+      - generic [ref=e86]: "Examples:"
+      - generic [ref=e87]:
+        - generic [ref=e88]: W
+        - generic [ref=e89]: E
+        - generic [ref=e90]: A
+        - generic [ref=e91]: R
+        - generic [ref=e92]: "Y"
+      - generic [ref=e93]: W is in the word and in the correct spot. 💎
+      - generic [ref=e94]:
+        - generic [ref=e95]: P
+        - generic [ref=e96]: I
+        - generic [ref=e97]: L
+        - generic [ref=e98]: L
+        - generic [ref=e99]: S
+      - generic [ref=e100]: I is in the word but in the wrong spot. 🟡
+      - generic [ref=e101]:
+        - generic [ref=e102]: V
+        - generic [ref=e103]: A
+        - generic [ref=e104]: G
+        - generic [ref=e105]: U
+        - generic [ref=e106]: E
+      - generic [ref=e107]: U is not in the word at all. 🪨
+    - generic [ref=e108]: A new word every day! Use the keyboard below or type on your physical keyboard.
+    - button "Let's Play! 📜" [ref=e109] [cursor=pointer]
+  - generic:
+    - heading "Word Puzzle — Free Word Finding Game" [level=1] [ref=e110]
+    - paragraph [ref=e111]: Play Word Puzzle free online! Find hidden words on the letter grid. Train your brain with this fun and challenging word search game.
+    - heading "How to Play" [level=2] [ref=e112]
+    - list [ref=e113]:
+      - listitem [ref=e114]:
+        - strong [ref=e115]: Click/tap and drag
+        - text: across letters to select a word.
+      - listitem [ref=e116]:
+        - text: Words can be hidden
+        - strong [ref=e117]: horizontally, vertically, or diagonally
+        - text: .
+      - listitem [ref=e118]:
+        - text: Find all the words in the list to
+        - strong [ref=e119]: complete the level
+        - text: .
+      - listitem [ref=e120]:
+        - text: The faster you find all words, the
+        - strong [ref=e121]: higher your score
+        - text: .
+    - heading "Game Features" [level=2] [ref=e122]
+    - list [ref=e123]:
+      - listitem [ref=e124]: 📖 Rich vocabulary challenges
+      - listitem [ref=e125]: 🧠 Multiple difficulty levels
+      - listitem [ref=e126]: ⏱️ Time-based scoring
+      - listitem [ref=e127]: 📱 Touch-friendly on mobile
+    - heading "Tips & Tricks" [level=2] [ref=e128]
+    - list [ref=e129]:
+      - listitem [ref=e130]: Scan rows and columns systematically.
+      - listitem [ref=e131]: Look for uncommon letters (Z, X, Q) first — they narrow it down.
+      - listitem [ref=e132]: Start with shorter words if you're stuck.
+  - generic [ref=e133]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e134]
+    - generic [ref=e135]:
+      - heading "How do you play Word Puzzle?" [level=3] [ref=e136]
+      - paragraph [ref=e137]: Search the grid of letters to find hidden words from the word list. Click and drag across letters to select a word—words can run horizontally, vertically, or diagonally in any direction. Find all the words to complete the puzzle!
+    - generic [ref=e138]:
+      - heading "Is Word Puzzle free to play?" [level=3] [ref=e139]
+      - paragraph [ref=e140]: Yes, Word Puzzle on GameZipper is completely free with no downloads or sign-ups required. Open the page and start searching for words immediately.
+    - generic [ref=e141]:
+      - heading "Can I play Word Puzzle on mobile?" [level=3] [ref=e142]
+      - paragraph [ref=e143]: Yes! Word Puzzle supports touch controls on mobile. Drag your finger across letters to select words. The grid adjusts to fit any screen size for comfortable gameplay.
+  - button "Toggle sound" [ref=e144] [cursor=pointer]: 🔊
+```

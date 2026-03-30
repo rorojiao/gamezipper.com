@@ -1,0 +1,66 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - link "🏠 More Games at GameZipper.com" [ref=e2] [cursor=pointer]:
+    - /url: https://gamezipper.com/
+  - generic [ref=e6]:
+    - link "GameZipper.com" [ref=e7] [cursor=pointer]:
+      - /url: https://gamezipper.com/
+    - text: 🐱
+  - generic [ref=e9]:
+    - generic [ref=e10]: 🐱☕
+    - heading "Welcome to Kitty's Café!" [level=2] [ref=e11]
+    - paragraph [ref=e12]: 👆 Tap an item, then tap a matching neighbor to merge!
+    - paragraph [ref=e13]: ↔️ Or drag onto a matching item!
+    - paragraph [ref=e14]: 📋 Merge to create what customers order!
+    - paragraph [ref=e15]: 🏠 Earn coins to unlock new café areas!
+    - paragraph [ref=e16]: 💡 Tap ❓ for merge chains!
+    - button "Got it! 🐾" [active] [ref=e17] [cursor=pointer]
+  - generic [ref=e18]:
+    - generic [ref=e19]: 🍪 Cookies for saving progress.
+    - button "OK" [ref=e20] [cursor=pointer]
+  - generic [ref=e21]:
+    - heading "Kitty's Café — Free Cat Merge Puzzle Game" [level=1] [ref=e22]
+    - paragraph [ref=e23]: Play Kitty's Café free online! Merge cute cats to discover new breeds and build the ultimate cat café. An adorable idle merge game.
+    - heading "How to Play" [level=2] [ref=e24]
+    - list [ref=e25]:
+      - listitem [ref=e26]:
+        - strong [ref=e27]: Drag two identical cats
+        - text: together to merge them into a new cat.
+      - listitem [ref=e28]:
+        - text: Serve
+        - strong [ref=e29]: customers
+        - text: by placing cats at their tables.
+      - listitem [ref=e30]:
+        - text: Earn
+        - strong [ref=e31]: coins
+        - text: to unlock new cat spots and upgrades.
+      - listitem [ref=e32]:
+        - text: Discover all cat breeds to
+        - strong [ref=e33]: complete your collection
+        - text: .
+    - heading "Game Features" [level=2] [ref=e34]
+    - list [ref=e35]:
+      - listitem [ref=e36]: 🐱 20+ adorable cat breeds to discover
+      - listitem [ref=e37]: ☕ Cozy café-building gameplay
+      - listitem [ref=e38]: 💰 Idle earnings while you're away
+      - listitem [ref=e39]: 🎨 Cute hand-drawn art style
+    - heading "Tips & Tricks" [level=2] [ref=e40]
+    - list [ref=e41]:
+      - listitem [ref=e42]: Always merge from the highest tier down.
+      - listitem [ref=e43]: Keep one empty slot as a buffer for merging.
+      - listitem [ref=e44]: Upgrade high-earning cat spots first.
+  - generic [ref=e45]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e46]
+    - generic [ref=e47]:
+      - heading "How do you play Kitty Cafe?" [level=3] [ref=e48]
+      - paragraph [ref=e49]: Serve cat customers by tapping to fulfill their orders before they leave. Earn coins to upgrade your cafe, unlock new items, and attract more kitty guests. Keep customers happy to grow your cafe's reputation and unlock all the adorable cats!
+    - generic [ref=e50]:
+      - heading "Is Kitty Cafe free to play?" [level=3] [ref=e51]
+      - paragraph [ref=e52]: Yes, Kitty Cafe on GameZipper is completely free. No downloads, accounts, or payments needed—open the page and start running your cat cafe right away.
+    - generic [ref=e53]:
+      - heading "Can I play Kitty Cafe on mobile?" [level=3] [ref=e54]
+      - paragraph [ref=e55]: Yes! Kitty Cafe is designed for mobile play with tap-based controls. Serve customers and manage your cafe easily on smartphones and tablets with touch controls.
+  - button "Toggle sound" [ref=e56] [cursor=pointer]: 🔊
+```

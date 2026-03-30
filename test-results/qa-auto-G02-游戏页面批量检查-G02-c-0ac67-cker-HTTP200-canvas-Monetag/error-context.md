@@ -1,0 +1,133 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - heading "Idle Clicker" [level=1] [ref=e3]
+    - generic [ref=e4]: 🎮 Free Online Game
+    - generic [ref=e5]: Tap anywhere to play
+  - link "🏠 More Games at GameZipper.com" [ref=e6] [cursor=pointer]:
+    - /url: https://gamezipper.com/
+  - generic [ref=e7]:
+    - heading "🧪 Alchemy Workshop" [level=1] [ref=e8]
+    - generic [ref=e9]:
+      - generic [ref=e10]: "⚡ Mana: 0"
+      - generic [ref=e11]: "MPS: 0"
+  - generic [ref=e15]:
+    - heading "✨ Spellbook" [level=2] [ref=e16]
+    - generic [ref=e17]:
+      - generic [ref=e18]: "0"
+      - generic [ref=e19]: Apprentice Mage
+      - generic [ref=e20]: "+0.5/s | Cost: 15"
+    - generic [ref=e21]:
+      - generic [ref=e22]: "0"
+      - generic [ref=e23]: Familiar
+      - generic [ref=e24]: "+1/s | Cost: 100"
+    - generic [ref=e25]:
+      - generic [ref=e26]: "0"
+      - generic [ref=e27]: Wand Enchanter
+      - generic [ref=e28]: "+3/s | Cost: 500"
+    - generic [ref=e29]:
+      - generic [ref=e30]: "0"
+      - generic [ref=e31]: Potion Brewer
+      - generic [ref=e32]: "+8/s | Cost: 2.0K"
+    - generic [ref=e33]:
+      - generic [ref=e34]: "0"
+      - generic [ref=e35]: Rune Forger
+      - generic [ref=e36]: "+20/s | Cost: 8.0K"
+    - generic [ref=e37]:
+      - generic [ref=e38]: "0"
+      - generic [ref=e39]: Arcane Library
+      - generic [ref=e40]: "+50/s | Cost: 30.0K"
+    - generic [ref=e41]:
+      - generic [ref=e42]: "0"
+      - generic [ref=e43]: Summoning Circle
+      - generic [ref=e44]: "+120/s | Cost: 100.0K"
+    - generic [ref=e45]:
+      - generic [ref=e46]: "0"
+      - generic [ref=e47]: Mana Nexus
+      - generic [ref=e48]: "+300/s | Cost: 500.0K"
+    - generic [ref=e49]:
+      - generic [ref=e50]: "0"
+      - generic [ref=e51]: Archmage Tower
+      - generic [ref=e52]: "+800/s | Cost: 2.0M"
+    - generic [ref=e53]:
+      - generic [ref=e54]: "0"
+      - generic [ref=e55]: Dimensional Rift
+      - generic [ref=e56]: "+2000/s | Cost: 10.0M"
+  - button "📖 Grimoire" [ref=e57] [cursor=pointer]
+  - generic [ref=e59]:
+    - generic [ref=e60]: 🔮
+    - heading "How to Play" [level=2] [ref=e61]
+    - paragraph [ref=e62]:
+      - text: 👆 Tap the crystal orb to channel mana!
+      - text: 🛒 Buy spells to auto-channel more
+      - text: 🧪 Watch for Magic Potions — tap for bonuses!
+      - text: 📖 Unlock arcane achievements!
+    - paragraph [ref=e63]: "💤 Tip: Mana keeps flowing even when you're away!"
+    - button "Got it! 🔮" [ref=e64] [cursor=pointer]
+  - generic:
+    - heading "Idle Clicker — Free Incremental Game" [level=1] [ref=e65]
+    - paragraph [ref=e66]: Play Idle Clicker free online! Click to earn gold, buy upgrades, hire workers, and build an empire. The ultimate incremental idle game.
+    - heading "How to Play" [level=2] [ref=e67]
+    - list [ref=e68]:
+      - listitem [ref=e69]:
+        - strong [ref=e70]: Click
+        - text: the button to earn your first gold.
+      - listitem [ref=e71]:
+        - text: Spend gold on
+        - strong [ref=e72]: upgrades and workers
+        - text: to earn passively.
+      - listitem [ref=e73]:
+        - text: Workers generate gold
+        - strong [ref=e74]: automatically
+        - text: — even when idle.
+      - listitem [ref=e75]:
+        - text: Unlock new tiers to
+        - strong [ref=e76]: multiply your earnings
+        - text: .
+    - heading "Game Features" [level=2] [ref=e77]
+    - list [ref=e78]:
+      - listitem [ref=e79]: 💰 Exponential gold growth mechanics
+      - listitem [ref=e80]: 🤖 Auto-clicker workers for passive income
+      - listitem [ref=e81]: 📈 Upgrade tree with real strategic choices
+      - listitem [ref=e82]: 💾 Auto-save progress
+    - heading "Tips & Tricks" [level=2] [ref=e83]
+    - list [ref=e84]:
+      - listitem [ref=e85]: Always buy the highest-tier upgrade available.
+      - listitem [ref=e86]: Balance manual clicking with worker investment early on.
+      - listitem [ref=e87]: Come back after a break — idle earnings add up!
+  - generic [ref=e88]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e89]
+    - generic [ref=e90]:
+      - heading "How do you play Idle Clicker?" [level=3] [ref=e91]
+      - paragraph [ref=e92]: Click the main button to earn resources, then spend them on upgrades and automated production buildings. As you progress, resources generate automatically so your empire grows even when you're not actively clicking. Keep upgrading to reach new milestones!
+    - generic [ref=e93]:
+      - heading "Is Idle Clicker free to play?" [level=3] [ref=e94]
+      - paragraph [ref=e95]: Yes, Idle Clicker on GameZipper is completely free with no downloads or payments required. Open the page and start building your idle empire right away.
+    - generic [ref=e96]:
+      - heading "Can I play Idle Clicker on mobile?" [level=3] [ref=e97]
+      - paragraph [ref=e98]: Yes! Idle Clicker works great on mobile devices. Tap to click and tap buttons to purchase upgrades. Your progress is saved so you can pick up where you left off.
+  - generic:
+    - heading "Idle Clicker Guide" [level=2] [ref=e99]
+    - paragraph [ref=e100]: Idle Clicker is the page most likely to capture clicker-game or idle-game intent. The page should explicitly talk about upgrades, progression loops, and casual browser play.
+    - heading "Who this game is good for" [level=2] [ref=e101]
+    - paragraph [ref=e102]: Best for players who want steady upgrade progress without intense action or strict timing.
+    - heading "Quick strategy notes" [level=2] [ref=e103]
+    - list [ref=e104]:
+      - listitem [ref=e105]: Buy upgrades that improve long-term production before cosmetic purchases.
+      - listitem [ref=e106]: Use early active clicks to unlock the first automation layer quickly.
+      - listitem [ref=e107]: Check every new multiplier because small compounding upgrades add up fast.
+    - heading "Play more like this" [level=2] [ref=e108]
+    - paragraph [ref=e109]:
+      - link "Mo Yu Fayu" [ref=e110] [cursor=pointer]:
+        - /url: /mo-yu-fayu/
+      - link "Kitty Cafe" [ref=e111] [cursor=pointer]:
+        - /url: /kitty-cafe/
+      - link "Idle Games" [ref=e112] [cursor=pointer]:
+        - /url: /idle-games.html
+      - link "All Games" [ref=e113] [cursor=pointer]:
+        - /url: /
+  - text: "// Splash dismiss (function(){ var ss=document.getElementById('splash-screen'); if(!ss)return; function dismiss(){ss.classList.add('fade-out');setTimeout(function(){ss.remove()},600);} ss.addEventListener('click',dismiss); ss.addEventListener('pointerdown',dismiss,{passive:true}); document.addEventListener('keydown',function e(){dismiss();document.removeEventListener('keydown',e);}); setTimeout(dismiss,8000); })();"
+  - button "Toggle sound" [ref=e114] [cursor=pointer]: 🔊
+```

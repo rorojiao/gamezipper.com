@@ -1,0 +1,83 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - heading "Bolt Jam 3D" [level=1] [ref=e3]
+    - generic [ref=e4]: 🎮 Free Online Game
+    - generic [ref=e5]: Tap anywhere to play
+  - link "🏠 More Games at GameZipper.com" [ref=e6] [cursor=pointer]:
+    - /url: https://gamezipper.com/
+  - generic [ref=e7]:
+    - generic [ref=e8]:
+      - generic [ref=e9]: LEVEL 1
+      - generic [ref=e10]: "MOVES: 0"
+      - generic [ref=e11]: ⏱ 0:00
+    - generic [ref=e13]:
+      - button "↩ UNDO (3)" [ref=e14] [cursor=pointer]
+      - button "💡 HINT (3)" [ref=e15] [cursor=pointer]
+      - button "☰ MENU" [ref=e16] [cursor=pointer]
+  - generic [ref=e18]:
+    - heading "🔩 BOLT JAM 3D" [level=1] [ref=e19]
+    - paragraph [ref=e20]: Sort the colored disks onto rods.
+    - paragraph [ref=e21]: Match 3 same colors to clear them!
+    - button "▶ PLAY" [ref=e22] [cursor=pointer]
+    - button "📋 LEVELS" [ref=e23] [cursor=pointer]
+  - generic [ref=e24]:
+    - heading "Bolt Jam 3D — Free 3D Screw Puzzle Game" [level=1] [ref=e25]
+    - paragraph [ref=e26]: Play Bolt Jam 3D free online! Unscrew the bolts in the right order to free all the items. A satisfying 3D mechanical puzzle game.
+    - heading "How to Play" [level=2] [ref=e27]
+    - list [ref=e28]:
+      - listitem [ref=e29]:
+        - strong [ref=e30]: Tap a bolt
+        - text: to unscrew it and remove the piece it holds.
+      - listitem [ref=e31]:
+        - text: Remove pieces in the
+        - strong [ref=e32]: correct order
+        - text: to avoid jams.
+      - listitem [ref=e33]:
+        - text: If a piece is blocked,
+        - strong [ref=e34]: unscrew others first
+        - text: to free it.
+      - listitem [ref=e35]:
+        - text: Clear all pieces to
+        - strong [ref=e36]: complete the puzzle
+        - text: .
+    - heading "Game Features" [level=2] [ref=e37]
+    - list [ref=e38]:
+      - listitem [ref=e39]: 🔩 Realistic 3D bolt unscrewing mechanics
+      - listitem [ref=e40]: 🧩 Increasingly complex puzzle designs
+      - listitem [ref=e41]: 😌 Satisfying and relaxing gameplay loop
+      - listitem [ref=e42]: 📱 Intuitive tap controls
+    - heading "Tips & Tricks" [level=2] [ref=e43]
+    - list [ref=e44]:
+      - listitem [ref=e45]: Always start with bolts that have only one piece to remove.
+      - listitem [ref=e46]: Look for bolts at the edge — they usually go first.
+      - listitem [ref=e47]: Think 2 moves ahead before tapping.
+  - generic [ref=e48]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e49]
+    - generic [ref=e50]:
+      - heading "How do you play Bolt Jam 3D?" [level=3] [ref=e51]
+      - paragraph [ref=e52]: Tap bolts in the correct order to unscrew and remove them from the puzzle board. You need to figure out which bolts are blocking others and plan your removal sequence. Clear all bolts to complete each level!
+    - generic [ref=e53]:
+      - heading "Is Bolt Jam 3D free to play?" [level=3] [ref=e54]
+      - paragraph [ref=e55]: Yes, Bolt Jam 3D on GameZipper is completely free. No downloads, accounts, or payments needed—open the page and start solving puzzles immediately.
+    - generic [ref=e56]:
+      - heading "Can I play Bolt Jam 3D on mobile?" [level=3] [ref=e57]
+      - paragraph [ref=e58]: Yes! Bolt Jam 3D is designed for touch screens. Simply tap bolts to interact with them. It plays perfectly on smartphones and tablets.
+  - region "Related games" [ref=e59]:
+    - generic [ref=e60]:
+      - generic [ref=e61]: "Related Games:"
+      - link "🍣 Sushi Stack" [ref=e62] [cursor=pointer]:
+        - /url: /sushi-stack/
+      - link "💎 Ocean Gem Pop" [ref=e63] [cursor=pointer]:
+        - /url: /ocean-gem-pop/
+      - link "🪵 Wood Block" [ref=e64] [cursor=pointer]:
+        - /url: /wood-block-puzzle/
+      - link "🐱 Kitty Cafe" [ref=e65] [cursor=pointer]:
+        - /url: /kitty-cafe/
+      - link "🧩 More Puzzle Games" [ref=e66] [cursor=pointer]:
+        - /url: /puzzle-games.html
+      - link "🎮 All Games" [ref=e67] [cursor=pointer]:
+        - /url: /
+```

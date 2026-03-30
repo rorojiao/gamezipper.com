@@ -1,0 +1,75 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - heading "Catch Turkey" [level=1] [ref=e3]
+    - generic [ref=e4]: 🎮 Free Online Game
+    - generic [ref=e5]: Tap anywhere to play
+  - link "🏠 More Games at GameZipper.com" [ref=e6] [cursor=pointer]:
+    - /url: https://gamezipper.com/
+  - generic [ref=e8]:
+    - heading "Catch Turkey — Fun Arcade Catching Game" [level=1] [ref=e9]
+    - paragraph [ref=e10]: Play Catch Turkey free online! Move your basket to catch falling turkeys and collect points. A classic, family-friendly arcade game.
+    - heading "How to Play" [level=2] [ref=e11]
+    - list [ref=e12]:
+      - listitem [ref=e13]:
+        - text: Move the
+        - strong [ref=e14]: basket left and right
+        - text: using arrow keys or touch.
+      - listitem [ref=e15]:
+        - text: Catch the
+        - strong [ref=e16]: falling turkeys
+        - text: to score points.
+      - listitem [ref=e17]:
+        - text: Avoid catching
+        - strong [ref=e18]: bombs or bad items
+        - text: — they cost lives!
+      - listitem [ref=e19]:
+        - text: Survive as long as possible and beat your
+        - strong [ref=e20]: high score
+        - text: .
+    - heading "Game Features" [level=2] [ref=e21]
+    - list [ref=e22]:
+      - listitem [ref=e23]: 🦃 Fun seasonal arcade theme
+      - listitem [ref=e24]: 🧺 Simple but addictive catch mechanics
+      - listitem [ref=e25]: 💣 Dodge bombs for an extra challenge
+      - listitem [ref=e26]: 👨‍👩‍👦 Perfect for all ages
+    - heading "Tips & Tricks" [level=2] [ref=e27]
+    - list [ref=e28]:
+      - listitem [ref=e29]: Stay near the center — items spread randomly.
+      - listitem [ref=e30]: Prioritize avoiding bombs over catching turkeys.
+      - listitem [ref=e31]: The items speed up — stay alert!
+  - generic [ref=e32]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e33]
+    - generic [ref=e34]:
+      - heading "How do you play Catch Turkey?" [level=3] [ref=e35]
+      - paragraph [ref=e36]: Move your catcher left and right using arrow keys or mouse on desktop, or by tapping and dragging on mobile. Catch as many falling turkeys as possible before they hit the ground. Miss too many and the game ends—go for your highest score!
+    - generic [ref=e37]:
+      - heading "Is Catch Turkey free to play?" [level=3] [ref=e38]
+      - paragraph [ref=e39]: Yes, Catch Turkey on GameZipper is completely free with no downloads or registration required. Open the page and start catching turkeys immediately.
+    - generic [ref=e40]:
+      - heading "Can I play Catch Turkey on mobile?" [level=3] [ref=e41]
+      - paragraph [ref=e42]: Yes! Catch Turkey supports touch controls, making it easy to play on smartphones and tablets. Drag your catcher across the screen to catch falling turkeys.
+  - generic [ref=e43]:
+    - heading "Catch Turkey Game Guide" [level=2] [ref=e44]
+    - paragraph [ref=e45]: Catch Turkey is an arcade reaction game built around quick tapping and target timing. The Search Console query “how to catch a turkey” suggests Google is testing this page for intent-driven searches, so the page should explain the objective clearly and use natural arcade-game wording.
+    - heading "Who this game is good for" [level=2] [ref=e46]
+    - paragraph [ref=e47]: Best for players who want a quick reflex game they can replay in under a minute.
+    - heading "Quick strategy notes" [level=2] [ref=e48]
+    - list [ref=e49]:
+      - listitem [ref=e50]: Stay near the center so you can react to movement on both sides.
+      - listitem [ref=e51]: Do not spam taps — accurate catches score better than panic clicking.
+      - listitem [ref=e52]: Treat early rounds as rhythm practice so later speed spikes feel easier.
+    - heading "Play more like this" [level=2] [ref=e53]
+    - paragraph [ref=e54]:
+      - link "Snake" [ref=e55] [cursor=pointer]:
+        - /url: /snake/
+      - link "Flappy Wings" [ref=e56] [cursor=pointer]:
+        - /url: /flappy-wings/
+      - link "Brick Breaker" [ref=e57] [cursor=pointer]:
+        - /url: /brick-breaker/
+      - link "Arcade Games" [ref=e58] [cursor=pointer]:
+        - /url: /arcade-games.html
+  - text: "// Splash dismiss (function(){ var ss=document.getElementById('splash-screen'); if(!ss)return; function dismiss(){ss.classList.add('fade-out');setTimeout(function(){ss.remove()},600);} ss.addEventListener('click',dismiss); ss.addEventListener('touchstart',dismiss,{passive:true}); document.addEventListener('keydown',function e(){dismiss();document.removeEventListener('keydown',e);}); setTimeout(dismiss,8000); })();"
+```

@@ -1,0 +1,63 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - heading "Brick Breaker" [level=1] [ref=e3]
+    - generic [ref=e4]: 🎮 Free Online Game
+    - generic [ref=e5]: Tap anywhere to play
+  - link "🏠 More Games at GameZipper.com" [ref=e6] [cursor=pointer]:
+    - /url: https://gamezipper.com/
+  - generic [ref=e8]: 🎮 Brick Breaker
+  - generic [ref=e10]:
+    - generic [ref=e11]: "Score: 0"
+    - generic [ref=e12]: "Best: 0"
+    - generic [ref=e13]: "Lives: 3"
+    - generic [ref=e14]: "Level: 1"
+  - generic:
+    - heading "Brick Breaker — Classic Breakout Arcade Game" [level=1] [ref=e15]
+    - paragraph [ref=e16]: Play Brick Breaker free online! Launch the ball, break all the bricks, collect power-ups, and clear every level. A timeless arcade classic.
+    - heading "How to Play" [level=2] [ref=e17]
+    - list [ref=e18]:
+      - listitem [ref=e19]:
+        - text: Move your
+        - strong [ref=e20]: mouse
+        - text: or use
+        - strong [ref=e21]: touch
+        - text: to control the paddle.
+      - listitem [ref=e22]:
+        - text: Bounce the ball to
+        - strong [ref=e23]: break bricks
+        - text: and clear the level.
+      - listitem [ref=e24]:
+        - text: Collect
+        - strong [ref=e25]: power-ups
+        - text: that fall from broken bricks.
+      - listitem [ref=e26]:
+        - text: Don't let the ball fall off the
+        - strong [ref=e27]: bottom
+        - text: — you lose a life!
+    - heading "Game Features" [level=2] [ref=e28]
+    - list [ref=e29]:
+      - listitem [ref=e30]: 🎮 Responsive paddle controls
+      - listitem [ref=e31]: "⚡ Multiple power-ups: wide paddle, multi-ball, laser"
+      - listitem [ref=e32]: 🏆 Progressive level difficulty
+      - listitem [ref=e33]: 📱 Touch and mouse support
+    - heading "Tips & Tricks" [level=2] [ref=e34]
+    - list [ref=e35]:
+      - listitem [ref=e36]: Aim for the top corners to create chain reactions.
+      - listitem [ref=e37]: Prioritize power-up bricks for game-changing boosts.
+      - listitem [ref=e38]: Use the edges of the paddle to change ball angle.
+  - generic [ref=e39]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e40]
+    - generic [ref=e41]:
+      - heading "How do you play Brick Breaker?" [level=3] [ref=e42]
+      - paragraph [ref=e43]: Move your paddle left and right using arrow keys or mouse (desktop) or by tapping and dragging (mobile) to bounce the ball and smash bricks. Collect power-ups that fall from destroyed bricks to get special abilities. Clear all bricks to advance to the next level!
+    - generic [ref=e44]:
+      - heading "Is Brick Breaker free to play?" [level=3] [ref=e45]
+      - paragraph [ref=e46]: Yes, Brick Breaker on GameZipper is completely free. No downloads, registration, or payments required—just open the page and play directly in your browser.
+    - generic [ref=e47]:
+      - heading "Can I play Brick Breaker on mobile?" [level=3] [ref=e48]
+      - paragraph [ref=e49]: Yes! Brick Breaker supports touch controls on mobile devices. Drag your finger across the screen to move the paddle and keep the ball in play on your smartphone or tablet.
+  - button "Toggle sound" [ref=e50] [cursor=pointer]: 🔊
+```

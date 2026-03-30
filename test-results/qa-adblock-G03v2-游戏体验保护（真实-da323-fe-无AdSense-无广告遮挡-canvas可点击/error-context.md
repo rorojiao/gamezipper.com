@@ -1,0 +1,85 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - heading "Kitty Cafe" [level=1] [ref=e3]
+    - generic [ref=e4]: 🎮 Free Online Game
+    - generic [ref=e5]: Tap anywhere to play
+  - link "🏠 More Games at GameZipper.com" [ref=e6] [cursor=pointer]:
+    - /url: https://gamezipper.com/
+  - generic [ref=e10]:
+    - link "GameZipper.com" [ref=e11] [cursor=pointer]:
+      - /url: https://gamezipper.com/
+    - text: 🐱
+  - generic [ref=e13]:
+    - generic [ref=e14]: 🐱☕
+    - heading "Welcome to Kitty's Café!" [level=2] [ref=e15]
+    - paragraph [ref=e16]: 👆 Tap an item, then tap a matching neighbor to merge!
+    - paragraph [ref=e17]: ↔️ Or drag onto a matching item!
+    - paragraph [ref=e18]: 📋 Merge to create what customers order!
+    - paragraph [ref=e19]: 🏠 Earn coins to unlock new café areas!
+    - paragraph [ref=e20]: 💡 Tap ❓ for merge chains!
+    - button "Got it! 🐾" [ref=e21] [cursor=pointer]
+  - generic [ref=e22]:
+    - generic [ref=e23]: 🍪 Cookies for saving progress.
+    - button "OK" [ref=e24] [cursor=pointer]
+  - generic [ref=e25]:
+    - heading "Kitty's Café — Free Cat Merge Puzzle Game" [level=1] [ref=e26]
+    - paragraph [ref=e27]: Play Kitty's Café free online! Merge cute cats to discover new breeds and build the ultimate cat café. An adorable idle merge game.
+    - heading "How to Play" [level=2] [ref=e28]
+    - list [ref=e29]:
+      - listitem [ref=e30]:
+        - strong [ref=e31]: Drag two identical cats
+        - text: together to merge them into a new cat.
+      - listitem [ref=e32]:
+        - text: Serve
+        - strong [ref=e33]: customers
+        - text: by placing cats at their tables.
+      - listitem [ref=e34]:
+        - text: Earn
+        - strong [ref=e35]: coins
+        - text: to unlock new cat spots and upgrades.
+      - listitem [ref=e36]:
+        - text: Discover all cat breeds to
+        - strong [ref=e37]: complete your collection
+        - text: .
+    - heading "Game Features" [level=2] [ref=e38]
+    - list [ref=e39]:
+      - listitem [ref=e40]: 🐱 20+ adorable cat breeds to discover
+      - listitem [ref=e41]: ☕ Cozy café-building gameplay
+      - listitem [ref=e42]: 💰 Idle earnings while you're away
+      - listitem [ref=e43]: 🎨 Cute hand-drawn art style
+    - heading "Tips & Tricks" [level=2] [ref=e44]
+    - list [ref=e45]:
+      - listitem [ref=e46]: Always merge from the highest tier down.
+      - listitem [ref=e47]: Keep one empty slot as a buffer for merging.
+      - listitem [ref=e48]: Upgrade high-earning cat spots first.
+  - generic [ref=e49]:
+    - heading "Frequently Asked Questions" [level=2] [ref=e50]
+    - generic [ref=e51]:
+      - heading "How do you play Kitty Cafe?" [level=3] [ref=e52]
+      - paragraph [ref=e53]: Serve cat customers by tapping to fulfill their orders before they leave. Earn coins to upgrade your cafe, unlock new items, and attract more kitty guests. Keep customers happy to grow your cafe's reputation and unlock all the adorable cats!
+    - generic [ref=e54]:
+      - heading "Is Kitty Cafe free to play?" [level=3] [ref=e55]
+      - paragraph [ref=e56]: Yes, Kitty Cafe on GameZipper is completely free. No downloads, accounts, or payments needed—open the page and start running your cat cafe right away.
+    - generic [ref=e57]:
+      - heading "Can I play Kitty Cafe on mobile?" [level=3] [ref=e58]
+      - paragraph [ref=e59]: Yes! Kitty Cafe is designed for mobile play with tap-based controls. Serve customers and manage your cafe easily on smartphones and tablets with touch controls.
+  - region "Related games" [ref=e60]:
+    - generic [ref=e61]:
+      - generic [ref=e62]: "Related Games:"
+      - link "🔩 Bolt Jam 3D" [ref=e63] [cursor=pointer]:
+        - /url: /bolt-jam-3d/
+      - link "🔢 2048" [ref=e64] [cursor=pointer]:
+        - /url: /2048/
+      - link "🪵 Wood Block" [ref=e65] [cursor=pointer]:
+        - /url: /wood-block-puzzle/
+      - link "🎨 Paint Splash" [ref=e66] [cursor=pointer]:
+        - /url: /paint-splash/
+      - link "🧩 More Puzzle Games" [ref=e67] [cursor=pointer]:
+        - /url: /puzzle-games.html
+      - link "🎮 All Games" [ref=e68] [cursor=pointer]:
+        - /url: /
+  - button "Toggle sound" [ref=e69] [cursor=pointer]: 🔊
+```
