@@ -29,9 +29,9 @@
     loaded = true;
     // Monetag popunder / native ad script
     var s = document.createElement('script');
-    s.src = '//a.magsrv.com/ad-provider.js';
+    s.src = 'https://a.magsrv.com/ad-provider.js';
     s.async = true;
-    s.setAttribute('data-zone', zone);
+    s.setAttribute('data-zone', String(zone));
     document.head.appendChild(s);
     console.log('[GZMonetagSafe] Monetag zone ' + zone + ' loaded');
     return true;
@@ -47,8 +47,14 @@
     }
 
     if (onGamePage()) {
-      // Game pages: don't auto-load. Wait for game-over signal.
-      console.log('[GZMonetagSafe] game page — ads deferred until game-over signal');
+      // Game pages: load after 6 seconds delay (user is engaged by then)
+      // Also listen for game-over to load sooner if available
+      var loadedEarly = false;
+      setTimeout(function(){
+        if (!loadedEarly) loadScript(zone);
+      }, 6000);
+      // Keep maybeLoad API for games that do signal game-over
+      console.log('[GZMonetagSafe] game page — Monetag will load after 6s or on game-over');
       return;
     }
 
