@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ad Experiment - GameZipper Testing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .experiment-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .experiment-title {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn.secondary {
+            background: #6c757d;
+        }
+        .btn.secondary:hover {
+            background: #545b62;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        #game-container {
+            width: 300px;
+            height: 300px;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            margin: 20px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        #game-controls {
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 GameZipper 广告实验测试</h1>
+        <p>在此页面测试新的广告模式，确保用户体验和广告效果平衡。</p>
+        
+        <div class="experiment-section">
+            <h2 class="experiment-title">🎮 模拟游戏场景</h2>
+            <div id="game-container">
+                <div style="text-align: center;">
+                    <div style="font-size: 24px; margin-bottom: 10px;">🎯 点击开始游戏</div>
+                    <button class="btn" onclick="startGame()">开始游戏</button>
+                </div>
+            </div>
+            <div id="game-controls">
+                <button class="btn" onclick="triggerGameOver()">游戏结束 (测试插屏广告)</button>
+                <button class="btn secondary" onclick="triggerLevelComplete()">关卡完成 (测试插屏广告)</button>
+            </div>
+        </div>
+        
+        <div class="experiment-section">
+            <h2 class="experiment-title">📱 底部横幅广告测试</h2>
+            <button class="btn" onclick="testBannerAd()">测试底部横幅</button>
+            <button class="btn secondary" onclick="hideBannerAd()">隐藏横幅</button>
+            <div class="status" id="banner-status">横幅广告状态：未激活</div>
+        </div>
+        
+        <div class="experiment-section">
+            <h2 class="experiment-title">🎯 侧边栏原生广告测试</h2>
+            <button class="btn" onclick="testSidebarAd()">测试侧边栏广告</button>
+            <button class="btn secondary" onclick="hideSidebarAd()">隐藏侧边栏</button>
+            <div class="status" id="sidebar-status">侧边栏广告状态：未激活</div>
+        </div>
+        
+        <div class="experiment-section">
+            <h2 class="experiment-title">📊 测试状态监控</h2>
+            <div id="test-log" style="background: #f8f9fa; padding: 15px; border-radius: 5px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                等待测试开始...
+            </div>
+            <button class="btn" onclick="clearLog()">清空日志</button>
+            <button class="btn secondary" onclick="runAATest()">运行A/B测试</button>
+        </div>
+    </div>
+
+    <!-- 广告脚本 -->
+    <script src="/ad-experiments/game-banner-ad.js"></script>
+    <script src="/ad-experiments/game-interstitial-ad.js"></script>
+    <script src="/ad-experiments/game-native-sidebar-ad.js"></script>
+    <script src="/monetag-safe.js"></script>
+    
+    <script>
+        // 游戏状态
+        let gameRunning = false;
+        let currentLevel = 1;
+        let score = 0;
+        
+        // 日志功能
+        function log(message) {
+            const logDiv = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[AD-TEST] ${message}`);
+        }
+        
+        function clearLog() {
+            document.getElementById('test-log').innerHTML = '日志已清空...\n';
+        }
+        
+        // 游戏功能
+        function startGame() {
+            gameRunning = true;
+            currentLevel = 1;
+            score = 0;
+            log(`游戏开始 - 关卡 ${currentLevel}, 分数 ${score}`);
+            document.getElementById('game-container').innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 18px; margin-bottom: 10px;">游戏进行中...</div>
+                    <div>关卡: ${currentLevel} | 分数: ${score}</div>
+                </div>
+            `;
+        }
+        
+        function triggerGameOver() {
+            if (!gameRunning) {
+                log('警告：游戏未运行，无法触发游戏结束');
+                return;
+            }
+            gameRunning = false;
+            log(`游戏结束 - 最终分数: ${score}`);
+            document.getElementById('game-container').innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 24px; color: red; margin-bottom: 10px;">💀 游戏结束</div>
+                    <div>最终分数: ${score}</div>
+                    <button class="btn" onclick="startGame()">重新开始</button>
+                </div>
+            `;
+            // 触发游戏结束事件
+            window.dispatchEvent(new CustomEvent('gzGameOver'));
+        }
+        
+        function triggerLevelComplete() {
+            if (!gameRunning) {
+                log('警告：游戏未运行，无法触发关卡完成');
+                return;
+            }
+            currentLevel++;
+            score += 100;
+            log(`关卡完成！进入关卡 ${currentLevel}, 分数: ${score}`);
+            document.getElementById('game-container').innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 20px; color: green; margin-bottom: 10px;">🎉 关卡完成！</div>
+                    <div>当前关卡: ${currentLevel} | 分数: ${score}</div>
+                    <button class="btn" onclick="continueToNextLevel()">继续下一关</button>
+                </div>
+            `;
+        }
+        
+        function continueToNextLevel() {
+            log(`继续关卡 ${currentLevel}`);
+            document.getElementById('game-container').innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 18px; margin-bottom: 10px;">关卡 ${currentLevel} 进行中...</div>
+                    <div>分数: ${score}</div>
+                </div>
+            `;
+        }
+        
+        // 广告测试功能
+        function testBannerAd() {
+            log('测试底部横幅广告');
+            window.GZGameBannerAd?.init(216786);
+            document.getElementById('banner-status').textContent = '横幅广告状态：已激活';
+        }
+        
+        function hideBannerAd() {
+            log('隐藏底部横幅广告');
+            window.GZGameBannerAd?.close();
+            document.getElementById('banner-status').textContent = '横幅广告状态：已隐藏';
+        }
+        
+        function testSidebarAd() {
+            log('测试侧边栏原生广告');
+            window.GZNativeSidebarAd?.init(216786);
+            document.getElementById('sidebar-status').textContent = '侧边栏广告状态：已激活';
+        }
+        
+        function hideSidebarAd() {
+            log('隐藏侧边栏原生广告');
+            window.GZNativeSidebarAd?.hide();
+            document.getElementById('sidebar-status').textContent = '侧边栏广告状态：已隐藏';
+        }
+        
+        // A/B测试功能
+        function runAATest() {
+            log('开始A/B测试序列...');
+            
+            // 初始化所有广告
+            window.GZMonetagSafe?.init(216786);
+            window.GZGameBannerAd?.init(216786);
+            window.GZInterstitialAd?.init(216786);
+            window.GZNativeSidebarAd?.init(216786);
+            
+            setTimeout(() => {
+                log('5秒后触发游戏页面横幅广告');
+                window.GZGameBannerAd?.showNow();
+            }, 5000);
+            
+            setTimeout(() => {
+                log('10秒后触发侧边栏广告');
+                window.GZNativeSidebarAd?.showNow();
+            }, 10000);
+            
+            setTimeout(() => {
+                log('15秒后触发插屏广告');
+                window.GZInterstitialAd?.showOnLevelComplete();
+            }, 15000);
+            
+            log('A/B测试序列已启动');
+        }
+        
+        // 页面加载时初始化
+        window.addEventListener('load', function() {
+            log('页面加载完成，准备广告测试');
+            // 初始化现有广告系统
+            window.GZMonetagSafe?.init(216786);
+        });
+        
+        // 监听广告事件
+        window.addEventListener('gzInterstitialClosed', function() {
+            log('插屏广告已关闭');
+        });
+        
+        // 监听自定义游戏事件
+        window.addEventListener('gzLevelComplete', function() {
+            log('收到关卡完成事件');
+        });
+    </script>
+</body>
+</html>
