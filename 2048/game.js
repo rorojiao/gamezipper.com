@@ -927,9 +927,21 @@ const game = {
 window.game = game;
 
 window.addEventListener('resize', () => { resize(); initBgParticles(); });
-resize();
-init();
-requestAnimationFrame(draw);
-requestAnimationFrame(animateParticleLayer);
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('2048 game DOM loaded');
+  resize();
+  init();
+  requestAnimationFrame(draw);
+  requestAnimationFrame(animateParticleLayer);
+});
+window.addEventListener('load', () => {
+  console.log('2048 game page fully loaded');
+  if (!window._gameState) {
+    resize();
+    init();
+    requestAnimationFrame(draw);
+    requestAnimationFrame(animateParticleLayer);
+  }
+});
 window._gameState={get score(){return score},get best(){return bestScore},get grid(){return grid},restart:function(){game.restart()},get reached2048(){return reached2048}};
 })();
