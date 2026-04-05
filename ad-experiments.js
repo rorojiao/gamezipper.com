@@ -2,8 +2,8 @@
   'use strict';
   if (window.GZMonetagExperiments) return;
 
-  var GAME_ZONE = 216786;  // gamezipper.com zone
-  var TOOL_ZONE = 216916;   // tools.gamezipper.com zone
+  var GAME_ZONE = 10687757;  // gamezipper.com zone
+  var TOOL_ZONE = 10689347;   // tools.gamezipper.com zone
   
   // 广告实验配置
   var EXPERIMENTS = {

@@ -3,7 +3,7 @@
     'usestrict';
     if (window.GZNativeSidebarAd) return;
     
-    var GAME_ZONE = 216786;  // gamezipper.com zone
+    var GAME_ZONE = 10687757;  // gamezipper.com zone
     var loaded = false;
     
     function onGamePage() {

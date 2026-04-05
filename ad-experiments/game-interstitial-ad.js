@@ -3,7 +3,7 @@
     'use strict';
     if (window.GZInterstitialAd) return;
     
-    var GAME_ZONE = 216786;  // gamezipper.com zone
+    var GAME_ZONE = 10687757;  // gamezipper.com zone
     var adLoaded = false;
     var showingInterstitial = false;
     var levelTransitionInProgress = false;
