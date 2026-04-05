@@ -61,3 +61,20 @@ All open source-ish if anyone wants to reference the code structure. Looking for
 - 建议先在lurker状态评论其他帖子2-3周
 - 帖子要真正帮助别人，不要纯self-promotion
 - 附上真实有用的内容（玩法攻略、tips）比纯链接效果更好
+
+## 帖子4: 针对学校/学生场景 (2026-04-05)
+**Subreddit: r/webgames 或 r/coolgithubprojects**
+```
+Title: 30+ unblocked games that actually work on school Chromebooks (free, no download)
+
+Found myself bored in study hall with nothing to do, so I compiled a list of browser games that actually work on school networks. Most games get blocked by school filters, but pure HTML5 games run directly in the browser tab — no download, no plugin, nothing to flag.
+
+The list covers:
+- Arcade classics: Snake, Brick Breaker, Flappy Wings
+- Puzzle brain trainers: 2048, Color Sort, Memory Match
+- Word games: Wordle-style unlimited play, typing practice
+- Casual: idle clickers, match-3, cat cafe sim
+
+All free, all no-install. Bookmark this for next time you're stuck in a boring class.
+
+Full list: https://gamezipper.com/blog/games-to-play-at-school-unblocked.html
