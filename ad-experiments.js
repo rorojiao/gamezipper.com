@@ -9,14 +9,14 @@
   var EXPERIMENTS = {
     'bottom-banner': {
       name: '底部固定Banner',
-      enabled: true,
+      enabled: false,
       priority: 1,
       description: '在游戏页面底部展示非遮挡广告',
       zone: GAME_ZONE
     },
     'interstitial-level': {
       name: '关卡间插屏广告',
-      enabled: true,
+      enabled: false,
       priority: 2,
       description: '游戏关卡结束后的2秒插屏广告',
       zone: GAME_ZONE
