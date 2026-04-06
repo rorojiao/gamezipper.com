@@ -166,19 +166,6 @@ function spawnPiece() {
 }
 
 // ─── COLLISION ────────────────────────────────────────────────────────────────
-function validPos(piece, px, py) {
-  const shape = getShape(piece.type, piece.rot);
-  for (let r = 0; r < shape.length; r++) {
-    for (let c = 0; c < shape[r].length; c++) {
-      if (!shape[r][c]) continue;
-      const bx = px + c, by = py + r;
-      if (bx < 0 || bx >= COLS || by >= ROWS) return false;
-      if (by >= 0 && board[by][bx]) return false;
-    }
-  }
-  return true;
-}
-
 // ─── PIECE OPERATIONS ─────────────────────────────────────────────────────────
 function moveLeft()  { if (validPos(currentPiece, currentPiece.x - 1, currentPiece.y)) { currentPiece.x--; sfxMove(); } }
 function moveRight() { if (validPos(currentPiece, currentPiece.x + 1, currentPiece.y)) { currentPiece.x++; sfxMove(); } }
@@ -561,7 +548,6 @@ btnRight.addEventListener('touchend',   e => { e.preventDefault(); dpadRelease()
 btnUp.addEventListener('touchstart',    e => { e.preventDefault(); initAudio(); rotate(); }, {passive:false});
 btnDown.addEventListener('touchstart',  e => { e.preventDefault(); initAudio(); dpadHold(moveDown, moveDown); }, {passive:false});
 btnDown.addEventListener('touchend',     e => { e.preventDefault(); dpadRelease(); }, {passive:false});
-btnDown.addEventListener('touchstart',  e => { e.preventDefault(); hardDrop(); }, {passive:false}); // double-tap handled by hardDrop
 
 // Also handle click for desktop dpad buttons
 btnLeft.addEventListener('click',  () => { initAudio(); moveLeft(); });
