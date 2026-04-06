@@ -665,7 +665,7 @@
       '<div class="best-label">Best: ' + bestScore + '</div>' +
       '<button class="btn" id="restart-btn">Play Again</button>' +
       '<button class="btn btn-share" id="share-score-btn" onclick="shareScore(' + score + ')">Share Score</button>';
-    document.getElementById('restart-btn').addEventListener('click', startGame);
+    setTimeout(function(){ document.getElementById('restart-btn').addEventListener('click', startGame); }, 50);
 
     // Trigger Monetag ad
     if (window.GZMonetagSafe) {
@@ -687,7 +687,7 @@
       '</div>' +
       '<div class="sub">60 seconds — score as many baskets as you can!</div>' +
       '<button class="btn" id="start-btn">Start Game</button>';
-    document.getElementById('start-btn').addEventListener('click', startGame);
+    setTimeout(function(){ document.getElementById('start-btn').addEventListener('click', startGame); }, 50);
   }
 
   // ─── Input Handling ──────────────────────────────────────────────
