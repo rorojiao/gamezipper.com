@@ -553,7 +553,8 @@ function drawComplete(now) {
   window._completeBtns = {
     replay: { x: boxX+12, y: btnY, w: btnW, h: btnH },
     next: { x: boxX + boxW - 12 - btnW, y: btnY, w: btnW, h: btnH },
-    boxW, boxH, boxX, boxY, share: { x: boxX+12, y: btnY + btnH + 10, w: boxW - 24, h: 36 }
+    boxW, boxH, boxX, boxY
+  };
   
   // Share button
   var shareBtnY = btnY + btnH + 10;
@@ -563,7 +564,6 @@ function drawComplete(now) {
   ctx.fillStyle = "#fff";
   ctx.font = "bold 14px sans-serif";
   ctx.fillText("📤 Share", boxX + boxW/2, shareBtnY + 18);
-  };
 }
 
 // ========== MAIN LOOP ==========
