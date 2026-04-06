@@ -45,7 +45,7 @@ class ChessGame {
     ];
   }
 
-  pieceChar(code) { return PIECES[code.toUpperCase() + code[1].toUpperCase()] || ''; }
+  pieceChar(code) { return PIECES[code[0].toUpperCase() + code[1].toUpperCase()] || ''; }
   pieceColor(code) { return isWhite(code) ? 'white' : 'black'; }
 
   // ---- Board Render ----
