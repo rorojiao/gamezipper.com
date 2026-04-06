@@ -6,8 +6,8 @@ const PIECES = {
   BK: '♚', BQ: '♛', BR: '♜', BB: '♝', BN: '♞', BP: '♟'
 };
 
-function isWhite(p) { return p && p === p.toUpperCase(); }
-function isBlack(p) { return p && p === p.toLowerCase(); }
+function isWhite(p) { return p && p[0] === 'w'; }
+function isBlack(p) { return p && p[0] === 'b'; }
 function other(color) { return color === 'white' ? 'black' : 'white'; }
 
 class ChessGame {
