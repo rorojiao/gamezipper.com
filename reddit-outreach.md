@@ -1,67 +1,51 @@
-# Reddit Post Templates - GameZipper
+# Reddit Outreach — GameZipper
 
-## r/webgames (Recommended)
-**Title:** I built a free browser game site with 25+ instant-play HTML5 games — no download, no signup
+## Target Subreddits
+- r/coolmathgames — "I made a free site with Cool Math Games alternatives that works at school"
+- r/gaming — general gaming, but avoid spammy self-promo
+- r/webgames — share HTML5 games collection
+- r/HTML5Games — specifically for browser games
+
+## Best Time to Post: Weekdays 6-9 AM UTC (US evening prime time)
+
+---
+
+## Draft: r/coolmathgames
+
+**Title:** "I built a free browser game site as an alternative when Cool Math Games is blocked at school"
 
 **Body:**
-Hey r/webgames 👋
+Cool Math Games gets blocked at a lot of schools these days. I put together GameZipper as a free alternative — all HTML5 games, no download, no signup, works on school Chromebooks and phones.
 
-I've been working on [GameZipper](https://gamezipper.com) — a free browser game site with 25+ HTML5 games you can play instantly, no download needed.
+Currently has ~38 games including classics like Snake, 2048, Chess, Tetris, Brick Breaker, Flappy Wings, Sudoku, Crossword, and more. All mobile-friendly.
 
-**What's on there:**
-- 🧩 Puzzles: 2048, Color Sort, Word Puzzle, Wood Block
-- 🕹️ Arcade: Snake, Flappy Wings, Brick Breaker
-- ⏰ Idle: Idle Clicker, Abyss Chef, Mo Yu Fayu
-- 🃏 Memory: Memory Match
+Made a dedicated page comparing it to Cool Math Games specifically for people looking for alternatives:
+https://gamezipper.com/cool-math-games-alternatives.html
 
-Everything works on mobile (touch controls) and desktop. No account needed. No full-screen pop ads.
-
-Would love feedback — what's missing? What would make you use a site like this?
+Would love feedback — is there anything missing from the collection you'd want to see?
 
 ---
 
-## r/AndroidGaming
-**Title:** Built a free browser game site that works great on Android Chrome — Snake, 2048, Brick Breaker and more
+## Draft: r/webgames
+
+**Title:** "I made a free browser game collection with no ads during gameplay (snake, 2048, chess, etc.)"
 
 **Body:**
-Hey everyone! I'm the developer behind [GameZipper](https://gamezipper.com) — a free browser game site that works on Android Chrome without any app install.
+Hey r/webgames — I run GameZipper, a free browser game collection. All games are HTML5, mobile-friendly, no signup needed.
 
-Games include Snake, 2048, Brick Breaker, Color Sort Puzzle, Flappy Wings, and more.
+Games include: Snake, 2048, Chess, Tetris, Brick Breaker, Flappy Wings, Sudoku, Crossword, Memory Match, and ~30 more.
 
-No signup, no download, no ads that interrupt gameplay. All games are mobile-friendly with touch controls.
+No intrusive ads during gameplay. Just click and play.
 
-Would love to know what games you'd want to see added!
+Homepage: https://gamezipper.com
+Specific list for brain games (Cool Math Games alternatives): https://gamezipper.com/cool-math-games-alternatives.html
 
----
-
-## r/Games (More general)
-**Title:** I made a free browser game site — 25 games, no download, works on school/work networks
-
-**Body:**
-Hi r/Games! I made [GameZipper](https://gamezipper.com) — a free browser game collection with 25 HTML5 games.
-
-**Why it exists:** I wanted a site where you could open a game and play in 3 seconds, without signup, download, or annoying ads.
-
-**Games:** Puzzle, arcade, idle, memory, word games — all mobile-friendly.
-
-**Not included:** No loot boxes, no gacha, no pay-to-win.
-
-Would appreciate any feedback on what games to add or what could be improved!
+Happy to answer questions or take requests for new games to add!
 
 ---
 
-## Posting Tips
-- Post during US daytime (9am-2pm PT) for best visibility
-- Engage with comments — respond within 1 hour
-- Don't karma-farm; genuine engagement works better
-- crosspost to r/android, r/iphone if relevant
-- Pin to profile after posting
-
----
-
-## Alternative Subreddits
-- r/indiegaming — for the dev side
-- r/WebGames — direct audience
-- r/Chromebook — many school Chromebooks block game sites
-- r/ios — mention mobile compatibility
-- r/parenting — family-safe games
+## Notes
+- Wait until Vercel deploy confirms page is live (check with curl)
+- Engage with comments — don't just post and disappear
+- Do NOT post the same content to multiple subreddits at once
+- Wait 1-2 weeks between posts if re-posting
