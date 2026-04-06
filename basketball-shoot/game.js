@@ -686,6 +686,7 @@
         '<p>🔥 Streak bonuses for consecutive shots!</p>' +
       '</div>' +
       '<div class="sub">60 seconds — score as many baskets as you can!</div>' +
+      '<div class="best-label">Best: <span id="best-val">' + bestScore + '</span></div>' +
       '<button class="btn" id="start-btn">Start Game</button>';
     setTimeout(function(){ 
       document.getElementById('start-btn').addEventListener('click', function() {
