@@ -614,7 +614,6 @@
   // ─── Start / End Game ─────────────────────────────────────────────
   function startGame() {
     score = 0;
-    console.log('[basketball] startGame called!');
     streak = 0;
     timeLeft = GAME_DURATION;
     scoredThisShot = false;
@@ -677,7 +676,6 @@
   function showStartScreen() {
     var overlay = document.getElementById('overlay');
     overlay.style.display = 'flex';
-    console.log('[basketball] showStartScreen setting innerHTML');
     overlay.innerHTML =
       '<h2>🏀 Basketball Shoot</h2>' +
       '<div class="how-to">' +
@@ -689,12 +687,8 @@
       '</div>' +
       '<div class="sub">60 seconds — score as many baskets as you can!</div>' +
       '<button class="btn" id="start-btn">Start Game</button>';
-    console.log('[basketball] innerHTML set, getting start-btn...');
     setTimeout(function(){ 
-      const sb = document.getElementById('start-btn');
-      console.log('[basketball] start-btn found:', !!sb, sb?.textContent);
-      sb.addEventListener('click', function() {
-        console.log('[basketball] START BTN CLICKED!');
+      document.getElementById('start-btn').addEventListener('click', function() {
         startGame();
       }); 
     }, 100);
