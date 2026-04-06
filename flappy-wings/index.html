@@ -183,24 +183,27 @@ let H = canvas.height = window.innerHeight - 40;
 window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight - 40; });
 
 
+let audioCtx=null;
+function getAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playFlapSound(){try{const ac=getAC();const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.setValueAtTime(500,ac.currentTime);o.frequency.exponentialRampToValueAtTime(800,ac.currentTime+0.08);g.gain.setValueAtTime(0.15,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.1);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+0.1);}catch(e){}}
 function playScoreSound(){
-  if(audioCtx.state==='suspended')audioCtx.resume();
+  const ac=getAC();if(ac.state==='suspended')ac.resume();
   const notes=[800,1000,1200];
-  notes.forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-  o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0.1,audioCtx.currentTime+i*0.06);
-  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+i*0.06+0.15);
-  o.connect(g);g.connect(audioCtx.destination);o.start(audioCtx.currentTime+i*0.06);o.stop(audioCtx.currentTime+i*0.06+0.15);});
+  notes.forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();
+  o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0.1,ac.currentTime+i*0.06);
+  g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+i*0.06+0.15);
+  o.connect(g);g.connect(ac.destination);o.start(ac.currentTime+i*0.06);o.stop(ac.currentTime+i*0.06+0.15);});
 }
 function playCrashSound(){
-  if(audioCtx.state==='suspended')audioCtx.resume();
-  const bufSize=audioCtx.sampleRate*0.3;
-  const buf=audioCtx.createBuffer(1,bufSize,audioCtx.sampleRate);
+  const ac=getAC();if(ac.state==='suspended')ac.resume();
+  const bufSize=ac.sampleRate*0.3;
+  const buf=ac.createBuffer(1,bufSize,ac.sampleRate);
   const data=buf.getChannelData(0);
   for(let i=0;i<bufSize;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/bufSize,2);
-  const src=audioCtx.createBufferSource();src.buffer=buf;
-  const g=audioCtx.createGain();g.gain.setValueAtTime(0.2,audioCtx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.3);
-  src.connect(g);g.connect(audioCtx.destination);src.start();
+  const src=ac.createBufferSource();src.buffer=buf;
+  const g=ac.createGain();g.gain.setValueAtTime(0.2,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.3);
+  src.connect(g);g.connect(ac.destination);src.start();
 }
 
 // Load sprite images
@@ -308,7 +311,7 @@ function resetGame(){
 }
 
 function flap(){
-  if(audioCtx.state==='suspended')audioCtx.resume();
+  try{const a=getAC();if(a.state==='suspended')a.resume();}catch(e){}
   if(state===READY){state=PLAYING;resetGame();}
   if(state===PLAYING){bird.vy=FLAP;playFlapSound();}
   if(state===GAMEOVER&&frameCount>30){state=READY;resetGame();}
