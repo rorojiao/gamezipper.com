@@ -25,7 +25,23 @@
     {n:'Stacker',e:'📦',u:'/stacker/',c:'arcade'},
     {n:'Wood Block',e:'🪵',u:'/wood-block-puzzle/',c:'puzzle'},
     {n:'Bolt Jam 3D',e:'🔩',u:'/bolt-jam-3d/',c:'puzzle'},
-    {n:'Mo Yu Fayu',e:'🐟',u:'/mo-yu-fayu/',c:'idle'}
+    {n:'Mo Yu Fayu',e:'🐟',u:'/mo-yu-fayu/',c:'idle'},
+    {n:'Tetris',e:'🧱',u:'/tetris/',c:'puzzle'},
+    {n:'Sudoku',e:'🔢',u:'/sudoku/',c:'puzzle'},
+    {n:'Chess',e:'♟️',u:'/chess/',c:'strategy'},
+    {n:'Pong',e:'🏓',u:'/pong/',c:'arcade'},
+    {n:'Crossword',e:'✏️',u:'/crossword/',c:'puzzle'},
+    {n:'Minesweeper',e:'💣',u:'/minesweeper/',c:'puzzle'},
+    {n:'Slope',e:'⛷️',u:'/slope/',c:'arcade'},
+    {n:'Bounce Bot',e:'🤖',u:'/bounce-bot/',c:'arcade'},
+    {n:'Alien Whack',e:'👾',u:'/alien-whack/',c:'arcade'},
+    {n:'Reaction Time',e:'⚡',u:'/reaction-time/',c:'skill'},
+    {n:'Cloud Sheep',e:'☁️',u:'/cloud-sheep/',c:'puzzle'},
+    {n:'Ball Catch',e:'⚾',u:'/ball-catch/',c:'arcade'},
+    {n:'Abyss Chef',e:'🍳',u:'/abyss-chef/',c:'puzzle'},
+    {n:'Neon Run',e:'⚡',u:'/neon-run/',c:'arcade'},
+    {n:'Basketball Shoot',e:'🏀',u:'/basketball-shoot/',c:'arcade'},
+    {n:'Glyph Quest',e:'🔤',u:'/glyph-quest/',c:'puzzle'}
   ];
 
   var cur = location.pathname;
@@ -57,6 +73,7 @@
     h += '<a href="' + categoryLinks[current.c].u + '" style="display:inline-flex;align-items:center;gap:4px;background:#ffd93d;padding:4px 10px;border-radius:12px;text-decoration:none;color:#000;font-size:11px;font-family:sans-serif;font-weight:700;flex-shrink:0">' + categoryLinks[current.c].t + '</a>';
   }
   h += '<a href="/" style="display:inline-flex;align-items:center;gap:4px;background:#4ecdc4;padding:4px 10px;border-radius:12px;text-decoration:none;color:#000;font-size:11px;font-family:sans-serif;font-weight:700;flex-shrink:0">🎮 All Games</a>';
+  h += '<a href="https://tools.gamezipper.com" style="display:inline-flex;align-items:center;gap:4px;background:#ffd93d;padding:4px 10px;border-radius:12px;text-decoration:none;color:#000;font-size:11px;font-family:sans-serif;font-weight:700;flex-shrink:0">🛠 Tools</a>';
   h += '</div>';
   d.innerHTML = h;
   document.body.appendChild(d);
