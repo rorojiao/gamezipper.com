@@ -235,3 +235,217 @@ function gameOver() {
   alert('Game Over! Score: ' + score);
   snake = [{ x: 10, y: 10 }];
   dx = 0;
+  dy = 0;
+  score = 0;
+}
+
+function placeFood() {
+  food = {
+    x: Math.floor(Math.random() * tileCount),
+    y: Math.floor(Math.random() * tileCount)
+  };
+}
+
+function update() {
+  const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+  // Wall collision
+  if (head.x &lt; 0 || head.x &gt;= tileCount || head.y &lt; 0 || head.y &gt;= tileCount) {
+    gameOver();
+    return;
+  }
+
+  // Self collision
+  for (let i = 0; i < snake.length; i++) {
+    if (head.x === snake[i].x && head.y === snake[i].y) {
+      gameOver();
+      return;
+    }
+  }
+
+  snake.unshift(head);
+  if (head.x === food.x && head.y === food.y) {
+    score += 10;
+    placeFood();
+  } else {
+    snake.pop();
+  }
+}
+
+function drawGame() {
+  ctx.fillStyle = '#0a1628';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#00ff88';
+  snake.forEach(part => {
+    ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize - 2, gridSize - 2);
+  });
+
+  ctx.fillStyle = '#ff6b6b';
+  ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '20px Arial';
+  ctx.fillText('Score: ' + score, 10, 25);
+}
+
+function gameLoop() {
+  update();
+  drawGame();
+}
+
+setInterval(gameLoop, 100);
+
+// Initialize
+placeFood();
+drawGame();
+  </script>
+</body>
+</html>
+
+<h2>Step 7: Add Scoring and Game Over Display</h2>
+<p>Right now, the score is displayed with a simple <code>ctx.fillText()</code> call, and the game over is a basic browser alert. Let's make it look better by drawing the score directly on the canvas and showing a proper game over screen:</p>
+<pre><code>function drawGameOver() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 30px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Game Over!', canvas.width / 2, canvas.height / 2 - 20);
+  ctx.font = '20px Arial';
+  ctx.fillText('Final Score: ' + score, canvas.width / 2, canvas.height / 2 + 20);
+  ctx.font = '16px Arial';
+  ctx.fillText('Refresh to play again', canvas.width / 2, canvas.height / 2 + 60);
+  ctx.textAlign = 'left';
+}
+
+function drawGame() {
+  ctx.fillStyle = '#0a1628';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#00ff88';
+  snake.forEach(part => {
+    ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize - 2, gridSize - 2);
+  });
+
+  ctx.fillStyle = '#ff6b6b';
+  ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '16px Arial';
+  ctx.fillText('Score: ' + score, 10, 25);
+}
+
+let gameRunning = true;
+
+function gameOver() {
+  gameRunning = false;
+  drawGameOver();
+}
+
+function gameLoop() {
+  if (gameRunning) {
+    update();
+    drawGame();
+  }
+}
+
+setInterval(gameLoop, 100);
+
+// Initialize
+placeFood();
+drawGame();
+</code></pre>
+
+<h2>Step 8: Add Mobile Touch Controls</h2>
+<p>Your game needs to work on phones too. Add touch controls so mobile users can swipe to change direction:</p>
+<pre><code>let touchStartX = 0;
+let touchStartY = 0;
+
+canvas.addEventListener('touchstart', (e) => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+canvas.addEventListener('touchmove', (e) => {
+  if (!e.touches.length) return;
+  const deltaX = e.touches[0].clientX - touchStartX;
+  const deltaY = e.touches[0].clientY - touchStartY;
+  
+  if (Math.abs(deltaX) > 30 || Math.abs(deltaY) > 30) {
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // Horizontal swipe
+      if (deltaX > 0 && dx !== -1) { dx = 1; dy = 0; }
+      else if (deltaX < 0 && dx !== 1) { dx = -1; dy = 0; }
+    } else {
+      // Vertical swipe
+      if (deltaY > 0 && dy !== -1) { dx = 0; dy = 1; }
+      else if (deltaY < 0 && dy !== 1) { dx = 0; dy = -1; }
+    }
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }
+}, { passive: true });</code></pre>
+
+<h2>How to Publish Your Game Online</h2>
+<p>Once your game is working, you can share it with the world. Here are the easiest ways to publish your browser game for free:</p>
+
+<h3>Option 1: GitHub Pages (Recommended)</h3>
+<p>Create a GitHub account, create a new repository, and upload your <code>index.html</code> file. Then enable GitHub Pages in the repository settings. Your game will be live at <code>username.github.io/repository-name</code> — completely free and fast.</p>
+
+<h3>Option 2: Netlify Drop</h3>
+<p>Go to <strong>app.netlify.com/drop</strong>, drag your <code>index.html</code> file onto the page, and your game is live instantly. No account needed for basic hosting. Share the generated link with anyone.</p>
+
+<h3>Option 3: Vercel</h3>
+<p>Similar to Netlify — create a project, upload your HTML file, and deploy. Vercel also offers excellent performance and global CDN distribution at no cost.</p>
+
+<div class="highlight-box">
+<strong>Pro Tip:</strong> If your game consists of multiple files (HTML + CSS + JS), put them all in a folder and drag that folder to Netlify Drop or Vercel. They handle multi-file projects automatically.
+</div>
+
+<h2>Ideas for Extending Your Game</h2>
+<p>Congratulations — you now have a working Snake game! But this is just the beginning. Here are some ideas to level up your game development skills:</p>
+<ul>
+<li><strong>Power-ups:</strong> Add special food items that give the snake speed boosts, temporary invincibility, or score multipliers</li>
+<li><strong>Multiple levels:</strong> Increase the game speed as the player scores higher</li>
+<li><strong>Obstacles:</strong> Add walls or moving obstacles that the snake must avoid</li>
+<li><strong>Sound effects:</strong> Use the Web Audio API to add eating sounds, game over sounds, and background music</li>
+<li><strong>High score board:</strong> Save the player's best score in localStorage so it persists between sessions</li>
+<li><strong>Mobile-optimized layout:</strong> Make the canvas responsive so it fills the screen on mobile devices</li>
+<li><strong>Different game modes:</strong> Add a "ghost mode" where the snake can pass through itself, or a two-player version</li>
+</ul>
+
+<h2>Where to Go Next</h2>
+<p>Building a Snake game teaches you the core concepts that apply to every browser game. Once you're comfortable with these fundamentals, you can build more complex games using the same principles:</p>
+<ul>
+<li><strong>Breakout/Brick Breaker:</strong> Add paddle control, ball physics, and brick collision — similar skills to Snake</li>
+<li><strong>Platformer:</strong> Add gravity, jumping physics, and tile-based level design</li>
+<li><strong>Top-down shooter:</strong> Learn sprite management, shooting mechanics, and enemy AI</li>
+</ul>
+<p>Practice by building a new game every week. Within a few months, you'll have a portfolio of browser games and a solid understanding of game development fundamentals.</p>
+
+<h2>❓ Frequently Asked Questions</h2>
+
+<p><strong>Q: I copied the code but the game doesn't work. What should I do?</strong><br>A: Check your browser's developer console (press F12 or Ctrl+Shift+I) for error messages. The most common issues are typos in the code or missing closing braces. Also make sure you're opening the HTML file directly in a browser, not through a word processor.</p>
+
+<p><strong>Q: Can I use this code in my own projects?</strong><br>A: Absolutely. This tutorial is designed for learning. You own what you build with these concepts. If you want to publish your Snake game publicly, feel free — just make it your own by adding unique features and styling.</p>
+
+<p><strong>Q: Do I need to learn TypeScript or other advanced languages?</strong><br>A: Not for browser games. JavaScript is the only language that runs natively in browsers. TypeScript compiles down to JavaScript and adds type safety, which is useful for large projects but not necessary when you're starting out.</p>
+
+<p><strong>Q: How do I add images and graphics to my game instead of colored rectangles?</strong><br>A: Use the Canvas <code>drawImage()</code> method. First, load an image with <code>new Image()</code>, set its <code>src</code> property, and draw it in your game loop once it loads. You can find free game sprites on sites like OpenGameArt.org.</p>
+
+<p><strong>Q: Can I make multiplayer games in the browser?</strong><br>A: Yes — but it requires a backend server to synchronize game state between players. For a beginner project, we recommend starting with single-player games. Once you're comfortable, look into WebSockets for real-time multiplayer communication.</p>
+
+<h2>🔗 Related Resources</h2>
+<a href="/blog/best-browser-games-2026-no-download.html" class="game-card">🎮 Best Browser Games 2026 — No Download</a>
+<a href="/blog/best-free-browser-games-no-download-2026.html" class="game-card">🚀 Best Free Browser Games — 2026 Edition</a>
+<a href="/snake/" class="game-card">🐍 Play Snake — Try the Real Thing</a>
+
+<p>Building games is one of the most rewarding skills in programming. You start with nothing but an idea, and end up with something interactive that anyone can play. That's a powerful feeling. So open your text editor, start coding, and see what you can create.</p>
+
+<p><strong>Good luck, and happy coding!</strong></p>
+
+</div>
+</div>
+</body>
+</html>
