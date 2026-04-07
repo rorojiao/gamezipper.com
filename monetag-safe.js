@@ -27,9 +27,9 @@
   function loadScript(zone) {
     if (loaded) return true;
     loaded = true;
-    // Monetag popunder / native ad script
+    // Monetag popunder / native ad script — zone param is required
     var s = document.createElement('script');
-    s.src = 'https://a.magsrv.com/ad-provider.js';
+    s.src = 'https://a.magsrv.com/ad-provider.js?zone=' + zone;
     s.async = true;
     s.setAttribute('data-zone', String(zone));
     document.head.appendChild(s);
