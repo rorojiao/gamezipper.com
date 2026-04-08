@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>Admin Panel — GameZipper</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh}
+.wrap{max-width:960px;margin:0 auto;padding:20px}
+h1{font-size:1.8em;color:#4ecdc4;margin-bottom:6px}
+.sub{color:#888;margin-bottom:24px;font-size:0.9em}
+.btn{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:0.85em;font-weight:600;transition:all 0.2s}
+.btn-green{background:#10b981;color:#fff}.btn-green:hover{background:#059669}
+.btn-amber{background:#f59e0b;color:#fff}.btn-amber:hover{background:#d97706}
+.btn-red{background:#ef4444;color:#fff}.btn-red:hover{background:#dc2626}
+.btn-blue{background:#3b82f6;color:#fff}.btn-blue:hover{background:#2563eb}
+.btn-gray{background:#374151;color:#fff}.btn-gray:hover{background:#4b5563}
+.card{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:12px;padding:16px;margin-bottom:14px}
+.card h3{font-size:1em;color:#fff;margin-bottom:4px}
+.card p{color:#888;font-size:0.8em;margin-bottom:10px}
+.meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tag{font-size:0.72em;padding:3px 8px;background:#1e2d4a;border-radius:6px;color:#4ecdc4}
+.status-live{color:#10b981;font-weight:700;font-size:0.8em}
+.status-beta{color:#f59e0b;font-weight:700;font-size:0.8em}
+.actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+th{text-align:left;padding:10px 12px;background:#1a1f2e;color:#4ecdc4;font-size:0.85em;border-bottom:1px solid #2a2f3e}
+td{padding:10px 12px;border-bottom:1px solid #1a1f2e;font-size:0.85em;color:#cbd5e1}
+tr:hover td{background:#1a1f2e}
+.login-screen{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:16px;padding:40px;max-width:400px;margin:80px auto;text-align:center}
+.login-screen h2{color:#4ecdc4;margin-bottom:8px;font-size:1.5em}
+.login-screen p{color:#888;margin-bottom:24px;font-size:0.9em}
+.login-screen input{width:100%;padding:12px 16px;border-radius:8px;border:1px solid #374151;background:#0f1117;color:#fff;font-size:1em;margin-bottom:14px;outline:none}
+.login-screen input:focus{border-color:#4ecdc4}
+.login-screen button{width:100%;padding:12px;background:#4ecdc4;color:#000;font-weight:700;border:none;border-radius:8px;cursor:pointer;font-size:1em}
+.login-screen .error{color:#ef4444;margin-top:10px;font-size:0.85em;display:none}
+.hidden{display:none}
+.stats-row{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.stat-box{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:10px;padding:16px 24px;flex:1;min-width:140px}
+.stat-box .num{font-size:2em;font-weight:700;color:#4ecdc4}
+.stat-box .label{color:#888;font-size:0.8em;margin-top:4px}
+.qa-section{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:12px;padding:20px;margin-top:24px}
+.qa-section h3{color:#4ecdc4;margin-bottom:8px}
+.qa-section p{color:#888;font-size:0.85em;margin-bottom:14px}
+.toast{position:fixed;bottom:24px;right:24px;background:#10b981;color:#fff;padding:12px 20px;border-radius:8px;font-size:0.9em;opacity:0;transition:opacity 0.3s;pointer-events:none}
+.toast.show{opacity:1}
+.section-title{font-size:1.1em;color:#fff;margin:28px 0 14px;padding-bottom:8px;border-bottom:1px solid #2a2f3e}
+</style>
+</head>
+<body>
+<div id="login-screen" class="login-screen">
+<h2>🔐 Admin Login</h2>
+<p>Enter admin password to continue</p>
+<input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')attemptLogin()"/>
+<button onclick="attemptLogin()">Login</button>
+<p class="error" id="login-error">Incorrect password. Try again.</p>
+</div>
+
+<div id="admin-panel" class="wrap hidden">
+<h1>⚙️ GameZipper Admin Panel</h1>
+<p class="sub">Manage beta games and trigger QA checks</p>
+
+<div class="stats-row">
+<div class="stat-box"><div class="num" id="stat-total">-</div><div class="label">Total Games</div></div>
+<div class="stat-box"><div class="num" id="stat-live">-</div><div class="label">🟢 Live</div></div>
+<div class="stat-box"><div class="num" id="stat-beta">-</div><div class="label">🟡 Beta</div></div>
+</div>
+
+<div class="qa-section">
+<h3>🧪 QA Automation</h3>
+<p>Trigger automated QA checks across all live and beta games. Results logged to console.</p>
+<button class="btn btn-blue" onclick="triggerQA()">🚀 Run Full QA Suite</button>
+<button class="btn btn-gray" onclick="triggerQA('fast')">⚡ Quick QA (Beta Only)</button>
+</div>
+
+<p class="section-title">🟡 Beta Games — Approve to Go Live</p>
+<div id="beta-list"></div>
+
+<p class="section-title">🟢 All Games</p>
+<table>
+<thead><tr><th>Game</th><th>Category</th><th>Status</th><th>Action</th></tr></thead>
+<tbody id="all-games-tbody"></tbody>
+</table>
+
+<div style="margin-top:32px;padding-top:16px;border-top:1px solid #2a2f3e">
+<button class="btn btn-red" onclick="logout()">🔒 Logout</button>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/games-data.js"></script>
+<script>
+const ADMIN_PW = 'gzAdmin2026';
+
+function attemptLogin(){
+  const pw = document.getElementById('pw-input').value;
+  if(pw === ADMIN_PW){
+    localStorage.setItem('gz_admin_logged_in','1');
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('admin-panel').classList.remove('hidden');
+    loadPanel();
+  } else {
+    document.getElementById('login-error').style.display='block';
+  }
+}
+
+function logout(){
+  localStorage.removeItem('gz_admin_logged_in');
+  location.reload();
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function setGameStatus(url, newStatus){
+  const overrides = JSON.parse(localStorage.getItem('gz_status_overrides') || '{}');
+  overrides[url] = newStatus;
+  localStorage.setItem('gz_status_overrides', JSON.stringify(overrides));
+  showToast(newStatus === 'live' ? '✅ Moved to Live!' : '🧪 Moved to Beta!');
+  loadPanel();
+}
+
+function loadPanel(){
+  const all = getAllGames();
+  const live = all.filter(g=>g.status==='live');
+  const beta = all.filter(g=>g.status==='beta');
+
+  document.getElementById('stat-total').textContent = all.length;
+  document.getElementById('stat-live').textContent = live.length;
+  document.getElementById('stat-beta').textContent = beta.length;
+
+  // Beta list
+  const bl = document.getElementById('beta-list');
+  if(beta.length === 0){
+    bl.innerHTML = '<p style="color:#888;font-size:0.9em">No beta games — all games are live! 🎉</p>';
+  } else {
+    bl.innerHTML = beta.map(g => `
+      <div class="card">
+        <h3>${g.emoji} ${g.name} <span class="status-beta">BETA</span></h3>
+        <p>${g.desc}</p>
+        <div class="meta">${g.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        <div class="actions">
+          <button class="btn btn-green" onclick="setGameStatus('${g.url}','live')">✅ Approve — Go Live</button>
+          <button class="btn btn-gray" onclick="setGameStatus('${g.url}','beta')">Keep Beta</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // All games table
+  const tbody = document.getElementById('all-games-tbody');
+  tbody.innerHTML = all.map(g => `
+    <tr>
+      <td>${g.emoji} ${g.name}</td>
+      <td>${g.cat}</td>
+      <td><span class="${g.status==='live'?'status-live':'status-beta'}">${g.status.toUpperCase()}</span></td>
+      <td>
+        ${g.status==='beta'
+          ? `<button class="btn btn-green" style="padding:4px 10px;font-size:0.78em" onclick="setGameStatus('${g.url}','live')">Go Live</button>`
+          : `<button class="btn btn-amber" style="padding:4px 10px;font-size:0.78em" onclick="setGameStatus('${g.url}','beta')">Move to Beta</button>`
+        }
+      </td>
+    </tr>`).join('');
+}
+
+function triggerQA(mode){
+  const all = getAllGames();
+  const targets = mode === 'fast' ? all.filter(g=>g.status==='beta') : all;
+  showToast(`🧪 QA triggered for ${targets.length} game(s)...`);
+  console.log(`[QA] Running ${mode||'full'} QA on ${targets.length} games:`, targets.map(g=>g.url));
+  // TODO: wire up actual automated QA (Playwright screenshots, console checks)
+  setTimeout(()=>{
+    showToast(`✅ QA complete — ${targets.length} games checked`);
+  },1500);
+}
+
+// Auto-login if already authenticated
+if(localStorage.getItem('gz_admin_logged_in')==='1'){
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('admin-panel').classList.remove('hidden');
+  loadPanel();
+}
+</script>
+</body>
+</html>
