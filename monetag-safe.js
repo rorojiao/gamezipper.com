@@ -7,11 +7,15 @@
   var gameAdShown = false;
 
   function onGamePage() {
-    return location.pathname !== '/' && /\/$/.test(location.pathname) && !/games\.html$/.test(location.pathname);
+    var path = location.pathname;
+    // Game pages: not root, not a file (no extension like .html), not games.html
+    return path !== '/' && !/\.[a-z]{2,5}$/.test(path) && !/\/games\.html$/.test(path);
   }
 
   function onHubPage() {
-    return location.pathname === '/' || /games\.html$/.test(location.pathname);
+    var path = location.pathname;
+    // Hub pages: root ('/') or games.html
+    return path === '/' || /\/games\.html$/.test(path);
   }
 
   function hasBlockingOverlay() {

@@ -33,9 +33,9 @@
   // 工具函数
   function loadScript(zone) {
     var s = document.createElement('script');
-    s.src = '//a.magsrv.com/ad-provider.js';
+    s.src = '//a.magsrv.com/ad-provider.js?zone=' + zone;
     s.async = true;
-    s.setAttribute('data-zone', zone);
+    s.setAttribute('data-zone', String(zone));
     document.head.appendChild(s);
     console.log('[GZMonetagExperiments] Monetag zone ' + zone + ' loaded');
     return true;
