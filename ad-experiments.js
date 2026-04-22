@@ -101,7 +101,7 @@
     if (!isGamePage() || !window.GZMonetagSafe) return;
     
     // 监听游戏事件
-    document.addEventListener('game-over', function() {
+    document.addEventListener('gameover', function() {
       if (document.getElementById('gz-ad-interstitial')) return;
       
       var overlay = document.createElement('div');
