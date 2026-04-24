@@ -148,7 +148,8 @@
     render();
 
     // Show on game-over (after Monetag popunder fires)
-    window.addEventListener('game-over', function () {
+    // Note: games dispatch 'gameover' (no hyphen) — fixed mismatch in 667d91e
+    window.addEventListener('gameover', function () {
       setTimeout(show, 500);
     });
 

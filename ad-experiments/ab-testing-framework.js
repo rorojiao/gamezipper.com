@@ -14,13 +14,13 @@
   var SESSION_KEY = STORAGE_KEY + 'session';
   var VARIANT_RATIO = 0.5; // 50% variant, 50% control
 
-  // Active experiments config
+  // Active experiments config — dates extended to 2026-05-15 for continued testing
   var EXPERIMENTS = {
     'bottom-banner': {
       id: 'exp_bottom_banner_v1',
       description: 'Bottom fixed banner ad on game pages',
       startDate: '2026-03-30',
-      endDate: '2026-04-06',
+      endDate: '2026-05-15',
       targetZone: 'game',
       targetGame: 'snake',
       variantRatio: VARIANT_RATIO,
@@ -30,7 +30,7 @@
       id: 'exp_interstitial_level_v1',
       description: 'Interstitial ad between game levels',
       startDate: '2026-03-31',
-      endDate: '2026-04-07',
+      endDate: '2026-05-15',
       targetZone: 'game',
       targetGame: 'all',
       variantRatio: VARIANT_RATIO,
@@ -40,7 +40,7 @@
       id: 'exp_sidebar_native_v1',
       description: 'Sidebar native ad on game pages',
       startDate: '2026-04-01',
-      endDate: '2026-04-08',
+      endDate: '2026-05-15',
       targetZone: 'game',
       targetGame: 'all',
       variantRatio: VARIANT_RATIO,
@@ -50,7 +50,7 @@
       id: 'exp_tools_recommendation_v1',
       description: 'Recommendation section below tool results',
       startDate: '2026-04-01',
-      endDate: '2026-04-08',
+      endDate: '2026-05-15',
       targetZone: 'tools',
       targetGame: null,
       variantRatio: VARIANT_RATIO,
@@ -60,7 +60,7 @@
       id: 'exp_native_push_v1',
       description: 'Native browser push notification prompt',
       startDate: '2026-04-02',
-      endDate: '2026-04-09',
+      endDate: '2026-05-15',
       targetZone: 'hub',
       targetGame: null,
       variantRatio: VARIANT_RATIO,
