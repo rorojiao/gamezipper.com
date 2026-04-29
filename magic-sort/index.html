@@ -145,6 +145,7 @@ let bgParticles = [];
 let menuScrollY = 0;
 let menuMaxScroll = 0;
 let hoverBtn = -1;
+let splashFooterLink = null;
 let now = 0;
 
 // Background particles
@@ -682,11 +683,13 @@ function renderSplash() {
     drawButton(bx, by, bw, bh, "▶  PLAY", hoverBtn === 0, true);
   }
 
-  // Footer
+  // Footer — clickable link to GameZipper home
   X.globalAlpha = 0.35;
   X.fillStyle = "#fff";
   X.font = "400 12px 'Nunito',sans-serif";
   X.fillText("GameZipper.com", W / 2, H - 25);
+  // Store footer link hit area for click detection
+  splashFooterLink = { x: W / 2 - 50, y: H - 37, w: 100, h: 24 };
   X.restore();
 }
 
@@ -700,8 +703,8 @@ function renderMenu() {
   X.textBaseline = "middle";
   X.fillText("Select Level", W / 2, 48);
 
-  // Back button
-  drawButton(12, 12, 65, 34, "← Back", hoverBtn === 100, false);
+  // Back button → GameZipper home
+  drawButton(12, 12, 105, 34, "← GameZipper", hoverBtn === 100, false);
 
   // Grid
   const cols = Math.min(5, Math.floor((W - 30) / 68));
@@ -759,11 +762,13 @@ function renderGame() {
   const layout = getBottleLayout();
 
   // HUD top bar
+  // GameZipper home link (small)
+  drawButton(10, 10, 28, 28, "🏠", hoverBtn === 13, false);
   X.fillStyle = "rgba(255,255,255,0.9)";
   X.font = "700 15px 'Nunito',sans-serif";
   X.textAlign = "left";
   X.textBaseline = "top";
-  X.fillText("Level " + (currentLevel + 1), 14, 14);
+  X.fillText("Level " + (currentLevel + 1), 44, 14);
 
   X.textAlign = "center";
   X.fillStyle = "rgba(255,255,255,0.5)";
@@ -935,13 +940,17 @@ function onTap(px, py) {
       state = "menu";
       menuScrollY = 0;
     }
+    // Footer GameZipper.com link
+    if (splashFooterLink && hitTest(px, py, splashFooterLink.x, splashFooterLink.y, splashFooterLink.w, splashFooterLink.h)) {
+      window.location.href = "/"; return;
+    }
     return;
   }
 
   // ── Menu ──
   if (state === "menu") {
-    if (hitTest(px, py, 12, 12, 65, 34)) {
-      sfxClick(); state = "splash"; splashTimer = 2; return;
+    if (hitTest(px, py, 12, 12, 105, 34)) {
+      window.location.href = "/"; return;
     }
     const cols = Math.min(5, Math.floor((W - 30) / 68));
     const gap = 8;
@@ -962,6 +971,10 @@ function onTap(px, py) {
 
   // ── Game ──
   if (state === "game" && !animating) {
+    // GameZipper home button
+    if (hitTest(px, py, 10, 10, 28, 28)) {
+      window.location.href = "/"; return;
+    }
     // HUD buttons
     const hudY = 36, hudBtnW = 52, hudBtnH = 28, hudGap = 6;
     const hudStartX = W - 14 - (hudBtnW * 3 + hudGap * 2);
