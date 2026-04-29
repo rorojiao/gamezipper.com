@@ -54,7 +54,8 @@ const GAMES = [
   {name:"Bounce Bot",emoji:"🤖",cat:"arcade",tags:["Arcade","Runner","Gravity"],url:"/bounce-bot/",desc:"Flip gravity to guide ZIP the robot through 30 levels of factory mayhem! One-tap runner!",isNew:true,status:"live"},
   {name:"Glyph Quest",emoji:"🏺",cat:"puzzle",tags:["Puzzle","Hexagon","Ancient"],url:"/glyph-quest/",desc:"Rotate hexagonal runes to connect ancient energy paths across 5 civilizations!",isNew:true,status:"live"},
   {name:"Abyss Chef",emoji:"🐙",cat:"idle",tags:["Idle","Fishing","Cooking"],url:"/abyss-chef/",desc:"Play as Ollie the octopus chef! Fish deep sea creatures, cook meals, and build your underwater restaurant!",isNew:true,status:"live"},
-  {name:"Cloud & Sheep",emoji:"☁️",cat:"idle",tags:["Simulation","Care","Cute"],url:"/cloud-sheep/",desc:"Care for adorable sheep! Drag clouds to make rain, grow grass, and keep your fluffy flock happy!",isNew:true,status:"live"}
+  {name:"Cloud & Sheep",emoji:"☁️",cat:"idle",tags:["Simulation","Care","Cute"],url:"/cloud-sheep/",desc:"Care for adorable sheep! Drag clouds to make rain, grow grass, and keep your fluffy flock happy!",isNew:true,status:"live"},
+  {name:"Magic Sort",emoji:"🧪",cat:"puzzle",tags:["Puzzle","Sort","Water","Casual"],url:"/magic-sort/",desc:"Sort colored water into matching bottles! A relaxing color sorting puzzle with many levels.",isNew:true,status:"live"}
 ];
 
 /**
