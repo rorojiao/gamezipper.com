@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Play Magic Sort Online Free - Water Color Sorting Puzzle | GameZipper</title>
+<meta name="description" content="Play Magic Sort online free! A relaxing water color sorting puzzle game. Sort colored water into matching bottles. No download needed.">
+<meta name="keywords" content="water sort, color sort, magic sort, puzzle game, free online game, sorting puzzle">
+<meta property="og:title" content="Magic Sort - Water Color Sorting Puzzle | GameZipper">
+<meta property="og:description" content="Sort colored water into matching bottles in this relaxing puzzle game!">
+<meta property="og:type" content="game">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a2e;font-family:'Nunito','Baloo 2',sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+canvas{display:block;position:absolute;top:0;left:0}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<!-- AD SLOT: top banner -->
+<script>
+"use strict";
+// ═══════════════════════════════════════════
+// Magic Sort - Water Color Sorting Puzzle
+// ═══════════════════════════════════════════
+const C = document.getElementById("c");
+const X = C.getContext("2d");
+let W, H, dpr;
+
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  C.width = W * dpr;
+  C.height = H * dpr;
+  C.style.width = W + "px";
+  C.style.height = H + "px";
+  X.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", resize);
+resize();
+
+// ─── Web Audio ───
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function ensureAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+
+function playTone(freq, dur, type, vol) {
+  ensureAudio();
+  try {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = type || "sine";
+    o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    g.gain.setValueAtTime(vol || 0.1, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  } catch (e) {}
+}
+
+function sfxSelect() { playTone(660, 0.08, "sine", 0.08); playTone(880, 0.06, "sine", 0.05); }
+function sfxPour()   { playTone(440, 0.12, "sine", 0.06); setTimeout(() => playTone(550, 0.1, "sine", 0.05), 70); }
+function sfxDrop()   { playTone(300, 0.15, "sine", 0.04); }
+function sfxError()  { playTone(200, 0.18, "triangle", 0.06); }
+function sfxClick()  { playTone(700, 0.06, "sine", 0.05); }
+function sfxWin()    { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.25, "sine", 0.09), i * 110)); }
+
+// ─── Water Color Palette ───
+const COLORS = [
+  { name: "Red",    top: "#ff4757", mid: "#ff6b81", bot: "#c0392b", glow: "rgba(255,71,87,0.35)" },
+  { name: "Blue",   top: "#3742fa", mid: "#5352ed", bot: "#2c3e99", glow: "rgba(55,66,250,0.35)" },
+  { name: "Green",  top: "#2ed573", mid: "#7bed9f", bot: "#1e8449", glow: "rgba(46,213,115,0.35)" },
+  { name: "Yellow", top: "#ffa502", mid: "#ffda79", bot: "#cc8400", glow: "rgba(255,165,2,0.35)" },
+  { name: "Purple", top: "#a55eea", mid: "#cd84f1", bot: "#7d3caa", glow: "rgba(165,94,234,0.35)" },
+  { name: "Orange", top: "#ff6348", mid: "#ff9f7f", bot: "#cc4f39", glow: "rgba(255,99,72,0.35)" },
+  { name: "Cyan",   top: "#18dcff", mid: "#7efaff", bot: "#12a3bf", glow: "rgba(24,220,255,0.35)" },
+  { name: "Pink",   top: "#fd79a8", mid: "#fab1c8", bot: "#c9607f", glow: "rgba(253,121,168,0.35)" },
+  { name: "Lime",   top: "#a3e635", mid: "#d9f99d", bot: "#82b82a", glow: "rgba(163,230,53,0.35)" },
+  { name: "Teal",   top: "#14b8a6", mid: "#5eead4", bot: "#0f9485", glow: "rgba(20,184,166,0.35)" },
+  { name: "Indigo", top: "#6366f1", mid: "#a5b4fc", bot: "#4f46e5", glow: "rgba(99,102,241,0.35)" },
+  { name: "Rose",   top: "#fb7185", mid: "#fda4af", bot: "#c95a6a", glow: "rgba(251,113,133,0.35)" },
+];
+
+// ─── Level Definitions (30 levels) ───
+// Each: { n: numColors, b: [ [layer...from bottom], ... ] }
+// Empty bottles are trailing []
+const LEVELS = [
+  // 1-5: 2 colors (4 bottles)
+  { n:2, b:[[0,1,0,1],[1,0,1,0],[],[]] },
+  { n:2, b:[[0,1,1,0],[1,0,0,1],[],[]] },
+  { n:2, b:[[0,0,1,1],[1,1,0,0],[],[]] },
+  { n:2, b:[[1,0,1,0],[0,1,0,1],[],[]] },
+  { n:2, b:[[0,1,0,1],[1,0,1,0],[],[]] },
+  // 6-10: 3 colors (6 bottles)
+  { n:3, b:[[0,1,2,0],[1,2,0,1],[2,0,1,2],[],[],[]] },
+  { n:3, b:[[0,2,1,2],[1,0,2,0],[2,1,0,1],[],[],[]] },
+  { n:3, b:[[1,0,2,1],[2,1,0,2],[0,2,1,0],[],[],[]] },
+  { n:3, b:[[2,0,1,0],[0,1,2,1],[1,2,0,2],[],[],[]] },
+  { n:3, b:[[0,1,2,1],[2,0,1,0],[1,2,0,2],[],[],[]] },
+  // 11-15: 4 colors (8 bottles)
+  { n:4, b:[[0,1,2,3],[1,2,3,0],[2,3,0,1],[3,0,1,2],[],[],[],[]] },
+  { n:4, b:[[0,3,1,2],[2,0,3,1],[1,2,0,3],[3,1,2,0],[],[],[],[]] },
+  { n:4, b:[[1,0,3,2],[3,2,0,1],[0,1,2,3],[2,3,1,0],[],[],[],[]] },
+  { n:4, b:[[3,0,2,1],[1,3,0,2],[2,1,3,0],[0,2,1,3],[],[],[],[]] },
+  { n:4, b:[[0,2,3,1],[3,1,0,2],[1,0,2,3],[2,3,1,0],[],[],[],[]] },
+  // 16-20: 5 colors (10 bottles)
+  { n:5, b:[[0,1,2,3],[1,2,3,4],[2,3,4,0],[3,4,0,1],[4,0,1,2],[],[],[],[],[]] },
+  { n:5, b:[[0,4,1,3],[2,0,3,1],[3,1,4,2],[4,2,0,4],[1,3,2,0],[],[],[],[],[]] },
+  { n:5, b:[[4,0,3,1],[1,4,0,2],[3,2,1,4],[0,3,2,1],[2,1,4,0],[],[],[],[],[]] },
+  { n:5, b:[[1,3,0,4],[4,2,1,0],[0,1,4,3],[3,0,2,1],[2,4,3,2],[],[],[],[],[]] },
+  { n:5, b:[[2,0,4,1],[3,1,0,4],[4,3,2,0],[0,2,1,3],[1,4,3,2],[],[],[],[],[]] },
+  // 21-25: 5-6 colors
+  { n:6, b:[[0,1,2,3],[1,2,3,4],[2,3,4,5],[3,4,5,0],[4,5,0,1],[5,0,1,2],[],[],[],[],[],[]] },
+  { n:6, b:[[5,0,1,3],[2,4,0,5],[3,1,4,2],[0,3,5,1],[4,2,3,0],[1,5,2,4],[],[],[],[],[],[]] },
+  { n:6, b:[[1,5,3,0],[4,0,2,5],[3,2,5,1],[0,4,1,3],[5,3,0,2],[2,1,4,5],[],[],[],[],[],[]] },
+  { n:6, b:[[3,0,5,2],[1,4,0,3],[5,2,3,1],[0,3,1,4],[2,5,4,0],[4,1,2,5],[],[],[],[],[],[]] },
+  { n:6, b:[[0,3,1,5],[2,5,4,0],[4,1,3,2],[5,2,0,1],[3,0,5,4],[1,4,2,3],[],[],[],[],[],[]] },
+  // 26-30: 6 colors (harder)
+  { n:6, b:[[5,1,3,0],[0,4,2,5],[2,0,5,1],[4,3,1,2],[1,2,0,4],[3,5,4,3],[],[],[],[],[],[]] },
+  { n:6, b:[[2,4,0,3],[5,1,3,4],[0,3,5,2],[3,0,2,1],[4,2,1,5],[1,5,4,0],[],[],[],[],[],[]] },
+  { n:6, b:[[4,0,2,5],[1,3,5,0],[3,5,1,4],[0,2,4,3],[5,4,0,1],[2,1,3,2],[],[],[],[],[],[]] },
+  { n:6, b:[[1,4,5,0],[3,0,2,4],[5,2,0,3],[0,3,1,5],[4,1,3,2],[2,5,4,1],[],[],[],[],[],[]] },
+  { n:6, b:[[0,5,3,1],[4,2,0,5],[3,1,4,2],[5,0,2,3],[2,4,1,0],[1,3,5,4],[],[],[],[],[],[]] },
+];
+const TOTAL_LEVELS = LEVELS.length;
+
+// ─── Game State ───
+let state = "splash"; // splash | menu | game | win
+let currentLevel = 0;
+let bottles = [];     // current game state (array of arrays)
+let numColors = 0;
+let selectedBottle = -1;
+let moves = 0;
+let undoStack = [];   // { from, to, colors: [colorIdx, ...] }
+let levelStars = {};  // levelIdx -> 1|2|3
+let levelUnlocked = { 0: true };
+let animating = false;
+let anim = { from: -1, to: -1, color: -1, count: 0, progress: 0, startX: 0, startY: 0, endX: 0, endY: 0 };
+let splashTimer = 0;
+let winTimer = 0;
+let confetti = [];
+let bgParticles = [];
+let menuScrollY = 0;
+let menuMaxScroll = 0;
+let hoverBtn = -1;
+let now = 0;
+
+// Background particles
+for (let i = 0; i < 80; i++) {
+  bgParticles.push({
+    x: Math.random(), y: Math.random(),
+    r: Math.random() * 2 + 0.5,
+    speed: Math.random() * 0.2 + 0.05,
+    phase: Math.random() * Math.PI * 2,
+    hue: Math.random() * 60 + 220
+  });
+}
+
+// ─── Persistent Storage ───
+function loadSave() {
+  try {
+    const d = JSON.parse(localStorage.getItem("magicSort_v2") || "{}");
+    levelStars = d.stars || {};
+    levelUnlocked = d.unlocked || { 0: true };
+  } catch (e) { levelUnlocked = { 0: true }; }
+}
+function saveSave() {
+  try {
+    localStorage.setItem("magicSort_v2", JSON.stringify({ stars: levelStars, unlocked: levelUnlocked }));
+  } catch (e) {}
+}
+loadSave();
+
+// ─── Game Logic ───
+function initLevel(idx) {
+  currentLevel = idx;
+  const lv = LEVELS[idx];
+  numColors = lv.n;
+  bottles = lv.b.map(b => [...b]); // deep copy
+  selectedBottle = -1;
+  moves = 0;
+  undoStack = [];
+  animating = false;
+  state = "game";
+}
+
+function topColor(bi) {
+  const b = bottles[bi];
+  return b.length > 0 ? b[b.length - 1] : -1;
+}
+
+function isSorted(bi) {
+  const b = bottles[bi];
+  if (b.length < 4) return false;
+  const c = b[0];
+  for (let i = 1; i < b.length; i++) if (b[i] !== c) return false;
+  return true;
+}
+
+function isWin() {
+  for (let i = 0; i < bottles.length; i++) {
+    if (bottles[i].length > 0 && !isSorted(i)) return false;
+  }
+  return true;
+}
+
+function canPour(from, to) {
+  if (from === to || bottles[from].length === 0 || bottles[to].length >= 4) return false;
+  const fc = topColor(from), tc = topColor(to);
+  if (tc === -1) return true;
+  return fc === tc;
+}
+
+function executePour(from, to) {
+  if (animating || !canPour(from, to)) {
+    if (!canPour(from, to) && bottles[from].length > 0 && from !== to) sfxError();
+    return;
+  }
+  const fc = topColor(from);
+  let count = 0;
+  for (let i = bottles[from].length - 1; i >= 0; i--) {
+    if (bottles[from][i] === fc) count++;
+    else break;
+  }
+  const space = 4 - bottles[to].length;
+  const pourCount = Math.min(count, space);
+  if (pourCount === 0) { sfxError(); return; }
+
+  // Save for undo
+  undoStack.push({ from, to, count: pourCount });
+
+  // Start animation
+  animating = true;
+  anim.from = from;
+  anim.to = to;
+  anim.color = fc;
+  anim.count = pourCount;
+  anim.progress = 0;
+
+  // Compute screen positions for the stream
+  const layout = getBottleLayout();
+  anim.startX = layout.cx[from];
+  anim.startY = layout.topY[from];
+  anim.endX = layout.cx[to];
+  anim.endY = layout.topY[to] + (4 - bottles[to].length - pourCount) * layout.layerH;
+
+  sfxPour();
+}
+
+function completePour() {
+  for (let i = 0; i < anim.count; i++) {
+    bottles[anim.from].pop();
+    bottles[anim.to].push(anim.color);
+  }
+  moves++;
+  animating = false;
+  selectedBottle = -1;
+  sfxDrop();
+
+  if (isWin()) {
+    state = "win";
+    winTimer = Date.now();
+    // Stars: based on moves vs number of bottles (more bottles = more moves expected)
+    const threshold1 = bottles.length; // excellent
+    const threshold2 = bottles.length * 2; // good
+    const stars = moves <= threshold1 ? 3 : moves <= threshold2 ? 2 : 1;
+    if (!levelStars[currentLevel] || levelStars[currentLevel] < stars) {
+      levelStars[currentLevel] = stars;
+    }
+    if (currentLevel + 1 < TOTAL_LEVELS) {
+      levelUnlocked[currentLevel + 1] = true;
+    }
+    saveSave();
+    sfxWin();
+    spawnConfetti();
+  }
+}
+
+function undoMove() {
+  if (undoStack.length === 0 || animating) return;
+  const u = undoStack.pop();
+  const removed = [];
+  for (let i = 0; i < u.count; i++) {
+    removed.push(bottles[u.to].pop());
+  }
+  for (let i = removed.length - 1; i >= 0; i--) {
+    bottles[u.from].push(removed[i]);
+  }
+  selectedBottle = -1;
+  sfxClick();
+}
+
+// ─── Layout Calculator ───
+function getBottleLayout() {
+  const total = bottles.length;
+  const cols = Math.min(total, Math.max(2, Math.floor(W / 76)));
+  const rows = Math.ceil(total / cols);
+  const bw = Math.min(58, (W - 30) / cols - 8);
+  const bh = bw * 1.65;
+  const layerH = (bh * 0.82) / 4;
+  const gapX = (W - cols * bw) / (cols + 1);
+  const gapY = Math.min(18, (H - 120 - rows * bh) / Math.max(rows, 1));
+  const startY = 70;
+  const cx = [], topY = [], cy = [];
+  for (let i = 0; i < total; i++) {
+    const c = i % cols, r = Math.floor(i / cols);
+    cx[i] = gapX + c * (bw + gapX) + bw / 2;
+    cy[i] = startY + r * (bh + gapY) + bh / 2;
+    topY[i] = cy[i] - bh / 2 + bh * 0.08;
+  }
+  return { total, cols, rows, bw, bh, layerH, gapX, gapY, startY, cx, cy, topY };
+}
+
+// ─── Confetti ───
+function spawnConfetti() {
+  confetti = [];
+  for (let i = 0; i < 100; i++) {
+    confetti.push({
+      x: W / 2 + (Math.random() - 0.5) * W * 0.4,
+      y: H * 0.4,
+      vx: (Math.random() - 0.5) * 14,
+      vy: -Math.random() * 16 - 4,
+      color: COLORS[Math.floor(Math.random() * numColors)].top,
+      w: Math.random() * 8 + 4,
+      h: Math.random() * 5 + 2,
+      rot: Math.random() * 360,
+      rv: (Math.random() - 0.5) * 15,
+      life: 1
+    });
+  }
+}
+
+// ═══════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════
+
+function roundRect(x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, w / 2, h / 2));
+  X.beginPath();
+  X.moveTo(x + r, y);
+  X.lineTo(x + w - r, y);
+  X.arcTo(x + w, y, x + w, y + r, r);
+  X.lineTo(x + w, y + h - r);
+  X.arcTo(x + w, y + h, x + w - r, y + h, r);
+  X.lineTo(x + r, y + h);
+  X.arcTo(x, y + h, x, y + h - r, r);
+  X.lineTo(x, y + r);
+  X.arcTo(x, y, x + r, y, r);
+  X.closePath();
+}
+
+function drawBackground() {
+  const g = X.createLinearGradient(0, 0, W * 0.3, H);
+  g.addColorStop(0, "#0a0a2e");
+  g.addColorStop(0.4, "#141452");
+  g.addColorStop(0.7, "#1a1a4e");
+  g.addColorStop(1, "#0d0d35");
+  X.fillStyle = g;
+  X.fillRect(0, 0, W, H);
+
+  // Floating particles
+  const t = now * 0.001;
+  for (const p of bgParticles) {
+    const alpha = 0.25 + 0.2 * Math.sin(t * p.speed * 3 + p.phase);
+    X.fillStyle = `hsla(${p.hue},60%,70%,${alpha})`;
+    X.beginPath();
+    X.arc(p.x * W, p.y * H, p.r, 0, Math.PI * 2);
+    X.fill();
+  }
+}
+
+// ─── Draw a single bottle ───
+function drawBottle(cx, cy, bw, bh, bottle, isSelected, isPourSource, isPourTarget, pourColor, pourCount) {
+  const neckW = bw * 0.36;
+  const neckH = bh * 0.07;
+  const bodyTop = cy - bh / 2 + neckH;
+  const bodyBot = cy + bh / 2;
+  const bodyH = bodyBot - bodyTop;
+  const layerH = bodyH / 4;
+  const rad = bw * 0.14;
+
+  X.save();
+
+  // Selection glow
+  if (isSelected) {
+    X.shadowColor = "rgba(162,155,254,0.7)";
+    X.shadowBlur = 25;
+  }
+
+  // Build bottle path (for stroke + clip)
+  function bottlePath() {
+    X.beginPath();
+    // Top left of neck
+    X.moveTo(cx - neckW / 2, cy - bh / 2);
+    X.lineTo(cx - neckW / 2, bodyTop);
+    // Curve out to body
+    X.quadraticCurveTo(cx - neckW / 2, bodyTop + rad, cx - bw / 2, bodyTop + rad);
+    // Left side
+    X.lineTo(cx - bw / 2, bodyBot - rad);
+    // Bottom left curve
+    X.quadraticCurveTo(cx - bw / 2, bodyBot, cx - bw / 2 + rad, bodyBot);
+    // Bottom
+    X.lineTo(cx + bw / 2 - rad, bodyBot);
+    // Bottom right curve
+    X.quadraticCurveTo(cx + bw / 2, bodyBot, cx + bw / 2, bodyBot - rad);
+    // Right side
+    X.lineTo(cx + bw / 2, bodyTop + rad);
+    // Curve in to neck
+    X.quadraticCurveTo(cx + neckW / 2, bodyTop + rad, cx + neckW / 2, bodyTop);
+    X.lineTo(cx + neckW / 2, cy - bh / 2);
+  }
+
+  // Glass background
+  bottlePath();
+  X.fillStyle = "rgba(200,210,255,0.06)";
+  X.fill();
+  X.strokeStyle = isSelected ? "rgba(200,195,255,0.85)" : "rgba(200,210,255,0.22)";
+  X.lineWidth = isSelected ? 2.5 : 1.8;
+  X.stroke();
+  X.shadowBlur = 0;
+
+  // Draw water layers (clip to bottle)
+  X.save();
+  bottlePath();
+  X.clip();
+
+  const displayBottle = isPourSource
+    ? bottle.slice(0, bottle.length - pourCount)
+    : isPourTarget
+    ? [...bottle, ...Array(pourCount).fill(pourColor)]
+    : bottle;
+
+  for (let i = 0; i < displayBottle.length; i++) {
+    const ci = displayBottle[i];
+    const col = COLORS[ci];
+    const ly = bodyBot - (i + 1) * layerH;
+
+    // Gradient fill
+    const wg = X.createLinearGradient(cx - bw / 2, ly, cx + bw / 2, ly + layerH);
+    wg.addColorStop(0, col.top);
+    wg.addColorStop(0.45, col.mid);
+    wg.addColorStop(1, col.bot);
+    X.fillStyle = wg;
+
+    const inset = 1;
+    X.fillRect(cx - bw / 2 + inset, ly + inset, bw - inset * 2, layerH - inset);
+
+    // Highlight stripe
+    X.fillStyle = "rgba(255,255,255,0.14)";
+    X.fillRect(cx - bw / 2 + 5, ly + 2, bw * 0.1, layerH - 4);
+
+    // Wave on top layer
+    if (i === displayBottle.length - 1) {
+      X.fillStyle = col.top;
+      const waveT = now * 0.004;
+      const amp = 2.5;
+      X.beginPath();
+      X.moveTo(cx - bw / 2, ly);
+      for (let wx = 0; wx <= bw; wx += 4) {
+        X.lineTo(cx - bw / 2 + wx, ly + Math.sin(waveT + wx * 0.15) * amp);
+      }
+      X.lineTo(cx + bw / 2, ly + layerH);
+      X.lineTo(cx - bw / 2, ly + layerH);
+      X.closePath();
+      X.fillStyle = `rgba(255,255,255,0.08)`;
+      X.fill();
+    }
+  }
+  X.restore();
+
+  // Glass shine (outside clip)
+  X.fillStyle = "rgba(255,255,255,0.06)";
+  roundRect(cx - bw / 2 + 3, bodyTop + 8, 3, bodyH * 0.45, 2);
+  X.fill();
+
+  // Rim
+  X.strokeStyle = isSelected ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.15)";
+  X.lineWidth = 1.5;
+  X.beginPath();
+  X.moveTo(cx - neckW / 2 - 2, cy - bh / 2);
+  X.lineTo(cx + neckW / 2 + 2, cy - bh / 2);
+  X.stroke();
+
+  // Sorted checkmark
+  if (!animating && isSorted(cx !== undefined ? 0 : -1) && bottle.length === 4 && !isPourSource && !isPourTarget) {
+    // We'll check outside
+  }
+
+  X.restore();
+}
+
+function drawSortedBadge(cx, cy, bh) {
+  X.save();
+  X.fillStyle = "rgba(46,213,115,0.9)";
+  X.font = "bold " + Math.round(bh * 0.2) + "px sans-serif";
+  X.textAlign = "center";
+  X.textBaseline = "middle";
+  X.fillText("✓", cx, cy - bh / 2 - 12);
+  X.restore();
+}
+
+// ─── Draw pour stream animation ───
+function drawPourStream() {
+  if (!animating) return;
+  const t = anim.progress;
+  const col = COLORS[anim.color];
+  const layout = getBottleLayout();
+  const sx = layout.cx[anim.from];
+  const sy = layout.topY[anim.from];
+  const dx = layout.cx[anim.to];
+  const dy = layout.topY[anim.to] + (4 - bottles[anim.to].length) * layout.layerH;
+
+  X.save();
+  X.globalAlpha = 0.85;
+
+  // Stream
+  const streamW = layout.bw * 0.22;
+  const midY = (sy + dy) / 2;
+  const wave = Math.sin(now * 0.012) * 4;
+
+  const sg = X.createLinearGradient(sx, sy, dx, dy);
+  sg.addColorStop(0, col.top);
+  sg.addColorStop(0.5, col.mid);
+  sg.addColorStop(1, col.top);
+  X.strokeStyle = sg;
+  X.lineWidth = streamW;
+  X.lineCap = "round";
+  X.beginPath();
+  X.moveTo(sx, sy - t * 20);
+  X.bezierCurveTo(sx + wave, midY - 20, dx - wave, midY + 20, dx, dy);
+  X.stroke();
+
+  // Glow
+  X.shadowColor = col.glow;
+  X.shadowBlur = 12;
+  X.stroke();
+  X.shadowBlur = 0;
+
+  // Drip particles
+  for (let d = 0; d < 5; d++) {
+    const dp = (t * 1.5 + d * 0.25) % 1;
+    const px = sx + (dx - sx) * dp + Math.sin(dp * 12 + d) * 6;
+    const py = sy + (dy - sy) * dp;
+    X.fillStyle = col.mid;
+    X.globalAlpha = 0.4 * (1 - dp);
+    X.beginPath();
+    X.arc(px, py, 2.5, 0, Math.PI * 2);
+    X.fill();
+  }
+
+  X.restore();
+}
+
+// ─── UI Button ───
+function drawButton(x, y, w, h, text, isHover, primary) {
+  X.save();
+  const g = X.createLinearGradient(x, y, x, y + h);
+  if (primary) {
+    g.addColorStop(0, isHover ? "#7c5ce7" : "#6c5ce7");
+    g.addColorStop(1, isHover ? "#5a3cc4" : "#4a3ab5");
+  } else {
+    g.addColorStop(0, isHover ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.08)");
+    g.addColorStop(1, isHover ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)");
+  }
+  roundRect(x, y, w, h, h * 0.3);
+  X.fillStyle = g;
+  X.fill();
+  X.strokeStyle = primary ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.1)";
+  X.lineWidth = 1.2;
+  X.stroke();
+
+  X.fillStyle = primary ? "#fff" : "rgba(255,255,255,0.85)";
+  const fontSize = Math.round(Math.min(h * 0.4, 18));
+  X.font = `700 ${fontSize}px 'Nunito','Baloo 2',sans-serif`;
+  X.textAlign = "center";
+  X.textBaseline = "middle";
+  X.fillText(text, x + w / 2, y + h / 2 + 1);
+  X.restore();
+}
+
+function hitTest(x, y, bx, by, bw, bh) {
+  return x >= bx && x <= bx + bw && y >= by && y <= by + bh;
+}
+
+// ─── Stars ───
+function drawStars(cx, cy, size, count) {
+  for (let i = 0; i < 3; i++) {
+    X.save();
+    X.translate(cx + i * (size * 1.4), cy);
+    X.fillStyle = i < count ? "#ffd32a" : "rgba(255,255,255,0.12)";
+    drawStarShape(0, 0, size, size * 0.42);
+    X.restore();
+  }
+}
+
+function drawStarShape(cx, cy, outer, inner) {
+  X.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a1 = -Math.PI / 2 + i * Math.PI * 2 / 5;
+    const a2 = a1 + Math.PI / 5;
+    X.lineTo(cx + Math.cos(a1) * outer, cy + Math.sin(a1) * outer);
+    X.lineTo(cx + Math.cos(a2) * inner, cy + Math.sin(a2) * inner);
+  }
+  X.closePath();
+  X.fill();
+}
+
+// ═══════════════════════════════════════════
+// SCREENS
+// ═══════════════════════════════════════════
+
+function renderSplash() {
+  drawBackground();
+  splashTimer += 0.016;
+  const t = Math.min(splashTimer / 1.2, 1);
+  const ease = 1 - Math.pow(1 - t, 3);
+
+  X.save();
+  X.globalAlpha = ease;
+
+  // Animated water drop icon
+  const dropY = H * 0.28 - ease * 15;
+  const dropBob = Math.sin(now * 0.003) * 4;
+
+  // Glow behind drop
+  const dg = X.createRadialGradient(W / 2, dropY + dropBob, 5, W / 2, dropY + dropBob, 50);
+  dg.addColorStop(0, "rgba(108,92,231,0.4)");
+  dg.addColorStop(1, "rgba(108,92,231,0)");
+  X.fillStyle = dg;
+  X.fillRect(W / 2 - 60, dropY - 60, 120, 120);
+
+  // Drop shape
+  X.fillStyle = "#6c5ce7";
+  X.beginPath();
+  X.moveTo(W / 2, dropY - 22 + dropBob);
+  X.bezierCurveTo(W / 2 - 18, dropY + 5 + dropBob, W / 2 - 22, dropY + 20 + dropBob, W / 2, dropY + 22 + dropBob);
+  X.bezierCurveTo(W / 2 + 22, dropY + 20 + dropBob, W / 2 + 18, dropY + 5 + dropBob, W / 2, dropY - 22 + dropBob);
+  X.fill();
+  // Shine
+  X.fillStyle = "rgba(255,255,255,0.25)";
+  X.beginPath();
+  X.ellipse(W / 2 - 6, dropY + 2 + dropBob, 4, 7, -0.3, 0, Math.PI * 2);
+  X.fill();
+
+  // Mini colored drops around
+  const miniColors = [COLORS[0].top, COLORS[1].top, COLORS[2].top, COLORS[3].top];
+  for (let i = 0; i < 4; i++) {
+    const angle = now * 0.001 + i * Math.PI / 2;
+    const mx = W / 2 + Math.cos(angle) * 55;
+    const my = dropY + dropBob + Math.sin(angle) * 25;
+    X.fillStyle = miniColors[i];
+    X.globalAlpha = ease * 0.6;
+    X.beginPath();
+    X.arc(mx, my, 5, 0, Math.PI * 2);
+    X.fill();
+  }
+  X.globalAlpha = ease;
+
+  // Title
+  const titleSize = Math.round(Math.min(W * 0.13, 54));
+  X.fillStyle = "#fff";
+  X.font = `800 ${titleSize}px 'Baloo 2','Nunito',sans-serif`;
+  X.textAlign = "center";
+  X.textBaseline = "middle";
+  X.shadowColor = "rgba(108,92,231,0.5)";
+  X.shadowBlur = 25;
+  X.fillText("Magic Sort", W / 2, H * 0.42);
+  X.shadowBlur = 0;
+
+  X.fillStyle = "rgba(255,255,255,0.55)";
+  X.font = `600 ${Math.round(Math.min(W * 0.038, 17))}px 'Nunito',sans-serif`;
+  X.fillText("Water Color Sorting Puzzle", W / 2, H * 0.42 + titleSize * 0.6);
+
+  // Play button
+  if (t >= 0.7) {
+    const bt = Math.min((t - 0.7) / 0.3, 1);
+    X.globalAlpha = bt;
+    const bw = Math.min(200, W * 0.55), bh = 50;
+    const bx = W / 2 - bw / 2, by = H * 0.58;
+    drawButton(bx, by, bw, bh, "▶  PLAY", hoverBtn === 0, true);
+  }
+
+  // Footer
+  X.globalAlpha = 0.35;
+  X.fillStyle = "#fff";
+  X.font = "400 12px 'Nunito',sans-serif";
+  X.fillText("GameZipper.com", W / 2, H - 25);
+  X.restore();
+}
+
+function renderMenu() {
+  drawBackground();
+
+  // Header
+  X.fillStyle = "#fff";
+  X.font = `800 ${Math.round(Math.min(W * 0.07, 32))}px 'Baloo 2','Nunito',sans-serif`;
+  X.textAlign = "center";
+  X.textBaseline = "middle";
+  X.fillText("Select Level", W / 2, 48);
+
+  // Back button
+  drawButton(12, 12, 65, 34, "← Back", hoverBtn === 100, false);
+
+  // Grid
+  const cols = Math.min(5, Math.floor((W - 30) / 68));
+  const gap = 8;
+  const cellW = (W - 24 - (cols - 1) * gap) / cols;
+  const cellH = cellW;
+  const gridTop = 80 - menuScrollY;
+
+  for (let i = 0; i < TOTAL_LEVELS; i++) {
+    const col = i % cols, row = Math.floor(i / cols);
+    const x = 12 + col * (cellW + gap);
+    const y = gridTop + row * (cellH + gap);
+    if (y + cellH < 60 || y > H) continue;
+
+    const unlocked = !!levelUnlocked[i];
+    const stars = levelStars[i] || 0;
+
+    // Cell
+    const cg = X.createLinearGradient(x, y, x, y + cellH);
+    if (unlocked) {
+      cg.addColorStop(0, "rgba(108,92,231,0.25)");
+      cg.addColorStop(1, "rgba(108,92,231,0.10)");
+    } else {
+      cg.addColorStop(0, "rgba(255,255,255,0.04)");
+      cg.addColorStop(1, "rgba(255,255,255,0.015)");
+    }
+    roundRect(x, y, cellW, cellH, 10);
+    X.fillStyle = cg;
+    X.fill();
+    X.strokeStyle = unlocked ? "rgba(108,92,231,0.45)" : "rgba(255,255,255,0.06)";
+    X.lineWidth = 1.3;
+    X.stroke();
+
+    // Level number
+    X.fillStyle = unlocked ? "#fff" : "rgba(255,255,255,0.2)";
+    X.font = `700 ${Math.round(cellW * 0.3)}px 'Nunito',sans-serif`;
+    X.textAlign = "center";
+    X.textBaseline = "middle";
+    const textY = y + cellH / 2 - (stars > 0 ? 8 : 0);
+    X.fillText(unlocked ? (i + 1).toString() : "🔒", x + cellW / 2, textY);
+
+    // Stars
+    if (stars > 0) {
+      drawStars(x + cellW / 2 - cellW * 0.28, y + cellH * 0.68, cellW * 0.12, stars);
+    }
+  }
+
+  const totalRows = Math.ceil(TOTAL_LEVELS / cols);
+  menuMaxScroll = Math.max(0, totalRows * (cellH + gap) + 80 - H + 10);
+}
+
+function renderGame() {
+  drawBackground();
+
+  const layout = getBottleLayout();
+
+  // HUD top bar
+  X.fillStyle = "rgba(255,255,255,0.9)";
+  X.font = "700 15px 'Nunito',sans-serif";
+  X.textAlign = "left";
+  X.textBaseline = "top";
+  X.fillText("Level " + (currentLevel + 1), 14, 14);
+
+  X.textAlign = "center";
+  X.fillStyle = "rgba(255,255,255,0.5)";
+  X.font = "600 12px 'Nunito',sans-serif";
+  X.fillText(numColors + " colors · " + bottles.length + " bottles", W / 2, 16);
+
+  X.textAlign = "right";
+  X.fillStyle = "rgba(255,255,255,0.9)";
+  X.font = "700 15px 'Nunito',sans-serif";
+  X.fillText("Moves: " + moves, W - 14, 14);
+
+  // HUD buttons
+  const hudY = 36;
+  const hudBtnW = 52, hudBtnH = 28, hudGap = 6;
+  const hudStartX = W - 14 - (hudBtnW * 3 + hudGap * 2);
+  drawButton(hudStartX, hudY, hudBtnW, hudBtnH, "Menu", hoverBtn === 10, false);
+  drawButton(hudStartX + hudBtnW + hudGap, hudY, hudBtnW, hudBtnH, "↩ Undo", hoverBtn === 11, undoStack.length > 0);
+  drawButton(hudStartX + (hudBtnW + hudGap) * 2, hudY, hudBtnW, hudBtnH, "↻ Reset", hoverBtn === 12, false);
+
+  // AD SLOT placeholder area
+  // X.fillStyle="rgba(255,255,255,0.03)"; X.fillRect(0,H-50,W,50);
+
+  // Draw bottles
+  for (let i = 0; i < bottles.length; i++) {
+    const isPS = animating && i === anim.from;
+    const isPT = animating && i === anim.to;
+    const pc = isPS ? anim.color : (isPT ? anim.color : -1);
+    const pcount = isPS ? anim.count : (isPT ? Math.round(anim.count * anim.progress) : 0);
+
+    drawBottle(
+      layout.cx[i], layout.cy[i], layout.bw, layout.bh,
+      bottles[i],
+      selectedBottle === i && !animating,
+      isPS, isPT, pc, pcount
+    );
+
+    // Sorted badge
+    if (!animating && isSorted(i) && bottles[i].length === 4) {
+      drawSortedBadge(layout.cx[i], layout.cy[i], layout.bh);
+    }
+  }
+
+  // Pour stream overlay
+  if (animating) {
+    drawPourStream();
+  }
+}
+
+function renderWin() {
+  drawBackground();
+  renderGame(); // draw game behind
+
+  const elapsed = Date.now() - winTimer;
+  const t = Math.min(elapsed / 400, 1);
+  const ease = 1 - Math.pow(1 - t, 3);
+
+  // Dim overlay
+  X.fillStyle = `rgba(5,5,30,${0.55 * ease})`;
+  X.fillRect(0, 0, W, H);
+
+  X.save();
+  X.globalAlpha = ease;
+
+  // Card
+  const cardW = Math.min(300, W * 0.85);
+  const cardH = 260;
+  const cardX = (W - cardW) / 2;
+  const cardY = (H - cardH) / 2 - 15;
+
+  // Card shadow
+  X.shadowColor = "rgba(108,92,231,0.3)";
+  X.shadowBlur = 40;
+  roundRect(cardX, cardY, cardW, cardH, 18);
+  X.fillStyle = "rgba(18,18,55,0.97)";
+  X.fill();
+  X.shadowBlur = 0;
+  X.strokeStyle = "rgba(108,92,231,0.4)";
+  X.lineWidth = 1.5;
+  X.stroke();
+
+  // Celebration text
+  X.fillStyle = "#fff";
+  const titleSize = Math.round(Math.min(W * 0.09, 36));
+  X.font = `800 ${titleSize}px 'Baloo 2','Nunito',sans-serif`;
+  X.textAlign = "center";
+  X.textBaseline = "middle";
+  X.fillText("🎉 Complete!", W / 2, cardY + 48);
+
+  // Stars
+  const stars = levelStars[currentLevel] || 1;
+  drawStars(W / 2 - 28, cardY + 82, 18, stars);
+
+  // Stats
+  X.fillStyle = "rgba(255,255,255,0.65)";
+  X.font = "600 15px 'Nunito',sans-serif";
+  X.fillText("Moves: " + moves, W / 2, cardY + 125);
+
+  // Buttons
+  const btnW = 115, btnH = 42, btnGap = 12;
+  const bx = W / 2 - btnW - btnGap / 2;
+  const by = cardY + 150;
+  drawButton(bx, by, btnW, btnH, "↻ Retry", hoverBtn === 20, false);
+  const hasNext = currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1];
+  if (hasNext) {
+    drawButton(bx + btnW + btnGap, by, btnW, btnH, "Next ▶", hoverBtn === 21, true);
+  }
+  drawButton(W / 2 - 55, cardY + 205, 110, btnH, "☰ Menu", hoverBtn === 22, false);
+
+  // Confetti
+  for (const c of confetti) {
+    X.save();
+    X.translate(c.x, c.y);
+    X.rotate(c.rot * Math.PI / 180);
+    X.globalAlpha = ease * c.life;
+    X.fillStyle = c.color;
+    X.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+    X.restore();
+  }
+
+  X.restore();
+}
+
+// ═══════════════════════════════════════════
+// UPDATE
+// ═══════════════════════════════════════════
+
+function update(dt) {
+  now = performance.now();
+
+  if (animating) {
+    anim.progress += 0.035;
+    if (anim.progress >= 1) {
+      anim.progress = 1;
+      completePour();
+    }
+  }
+
+  // Confetti physics
+  for (let i = confetti.length - 1; i >= 0; i--) {
+    const c = confetti[i];
+    c.x += c.vx;
+    c.y += c.vy;
+    c.vy += 0.25;
+    c.rot += c.rv;
+    c.life -= 0.006;
+    if (c.life <= 0 || c.y > H + 50) confetti.splice(i, 1);
+  }
+}
+
+// ═══════════════════════════════════════════
+// INPUT HANDLING
+// ═══════════════════════════════════════════
+
+function getPointerPos(e) {
+  const r = C.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: src.clientX - r.left, y: src.clientY - r.top };
+}
+
+function onTap(px, py) {
+  ensureAudio();
+
+  // ── Splash ──
+  if (state === "splash") {
+    const bw = Math.min(200, W * 0.55), bh = 50;
+    const bx = W / 2 - bw / 2, by = H * 0.58;
+    if (hitTest(px, py, bx, by, bw, bh) && splashTimer >= 0.8) {
+      sfxClick();
+      state = "menu";
+      menuScrollY = 0;
+    }
+    return;
+  }
+
+  // ── Menu ──
+  if (state === "menu") {
+    if (hitTest(px, py, 12, 12, 65, 34)) {
+      sfxClick(); state = "splash"; splashTimer = 2; return;
+    }
+    const cols = Math.min(5, Math.floor((W - 30) / 68));
+    const gap = 8;
+    const cellW = (W - 24 - (cols - 1) * gap) / cols;
+    const cellH = cellW;
+    const gridTop = 80 - menuScrollY;
+    for (let i = 0; i < TOTAL_LEVELS; i++) {
+      const col = i % cols, row = Math.floor(i / cols);
+      const x = 12 + col * (cellW + gap);
+      const y = gridTop + row * (cellH + gap);
+      if (hitTest(px, py, x, y, cellW, cellH)) {
+        if (levelUnlocked[i]) { sfxClick(); initLevel(i); }
+        return;
+      }
+    }
+    return;
+  }
+
+  // ── Game ──
+  if (state === "game" && !animating) {
+    // HUD buttons
+    const hudY = 36, hudBtnW = 52, hudBtnH = 28, hudGap = 6;
+    const hudStartX = W - 14 - (hudBtnW * 3 + hudGap * 2);
+    if (hitTest(px, py, hudStartX, hudY, hudBtnW, hudBtnH)) {
+      sfxClick(); state = "menu"; menuScrollY = 0; return;
+    }
+    if (hitTest(px, py, hudStartX + hudBtnW + hudGap, hudY, hudBtnW, hudBtnH)) {
+      undoMove(); return;
+    }
+    if (hitTest(px, py, hudStartX + (hudBtnW + hudGap) * 2, hudY, hudBtnW, hudBtnH)) {
+      sfxClick(); initLevel(currentLevel); return;
+    }
+
+    // Bottle taps
+    const layout = getBottleLayout();
+    for (let i = 0; i < bottles.length; i++) {
+      const bx = layout.cx[i] - layout.bw / 2 - 6;
+      const by = layout.cy[i] - layout.bh / 2 - 6;
+      const bw = layout.bw + 12;
+      const bh = layout.bh + 12;
+      if (hitTest(px, py, bx, by, bw, bh)) {
+        if (selectedBottle === -1) {
+          if (bottles[i].length > 0) {
+            selectedBottle = i;
+            sfxSelect();
+          }
+        } else if (selectedBottle === i) {
+          selectedBottle = -1;
+        } else {
+          executePour(selectedBottle, i);
+        }
+        return;
+      }
+    }
+    // Tapped empty area — deselect
+    selectedBottle = -1;
+    return;
+  }
+
+  // ── Win ──
+  if (state === "win") {
+    const cardW = Math.min(300, W * 0.85);
+    const cardH = 260;
+    const cardX = (W - cardW) / 2;
+    const cardY = (H - cardH) / 2 - 15;
+    const btnW = 115, btnH = 42, btnGap = 12;
+    const bx = W / 2 - btnW - btnGap / 2;
+    const by = cardY + 150;
+
+    if (hitTest(px, py, bx, by, btnW, btnH)) {
+      sfxClick(); initLevel(currentLevel); return;
+    }
+    if (hitTest(px, py, bx + btnW + btnGap, by, btnW, btnH)) {
+      if (currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1]) {
+        sfxClick(); initLevel(currentLevel + 1);
+      }
+      return;
+    }
+    if (hitTest(px, py, W / 2 - 55, cardY + 205, 110, btnH)) {
+      sfxClick(); state = "menu"; menuScrollY = 0; return;
+    }
+  }
+}
+
+// Pointer events (works for both mouse and touch)
+C.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  const p = getPointerPos(e);
+  onTap(p.x, p.y);
+});
+
+// Scroll for menu
+let touchStartY = 0, touchStartScroll = 0, isScrolling = false;
+C.addEventListener("touchstart", (e) => {
+  if (state === "menu") {
+    touchStartY = e.touches[0].clientY;
+    touchStartScroll = menuScrollY;
+    isScrolling = true;
+  }
+}, { passive: true });
+C.addEventListener("touchmove", (e) => {
+  if (state === "menu" && isScrolling) {
+    const dy = touchStartY - e.touches[0].clientY;
+    menuScrollY = Math.max(0, Math.min(menuMaxScroll, touchStartScroll + dy));
+  }
+}, { passive: true });
+C.addEventListener("touchend", () => { isScrolling = false; }, { passive: true });
+
+// Mouse wheel for menu
+C.addEventListener("wheel", (e) => {
+  if (state === "menu") {
+    menuScrollY = Math.max(0, Math.min(menuMaxScroll, menuScrollY + e.deltaY * 0.5));
+  }
+}, { passive: true });
+
+// ═══════════════════════════════════════════
+// MAIN LOOP
+// ═══════════════════════════════════════════
+
+let lastTime = performance.now();
+function gameLoop(timestamp) {
+  const dt = (timestamp - lastTime) / 1000;
+  lastTime = timestamp;
+  now = timestamp;
+
+  update(dt);
+
+  X.clearRect(0, 0, W, H);
+  if (state === "splash") renderSplash();
+  else if (state === "menu") renderMenu();
+  else if (state === "game") renderGame();
+  else if (state === "win") renderWin();
+
+  requestAnimationFrame(gameLoop);
+}
+requestAnimationFrame(gameLoop);
+</script>
+<!-- AD SLOT: bottom banner -->
+</body>
+</html>
