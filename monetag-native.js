@@ -55,10 +55,11 @@
     window.addEventListener('gameover', function() {
       setTimeout(loadVignette, 1000);
     });
-    // Fallback: load vignette after 60 seconds if no gameover event fires
+    // Fallback: load vignette after 120s if no gameover event fires
+    // (for idle/endless games that never emit gameover — long delay avoids gameplay interruption)
     setTimeout(function() {
       if (!loaded.vignette) loadVignette();
-    }, 60000);
+    }, 120000);
   }
 
   window.GZNativeAd = {
