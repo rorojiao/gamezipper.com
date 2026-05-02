@@ -41,7 +41,10 @@
     {n:'Abyss Chef',e:'🍳',u:'/abyss-chef/',c:'puzzle'},
     {n:'Neon Run',e:'⚡',u:'/neon-run/',c:'arcade'},
     {n:'Basketball Shoot',e:'🏀',u:'/basketball-shoot/',c:'arcade'},
-    {n:'Glyph Quest',e:'🔤',u:'/glyph-quest/',c:'puzzle'}
+    {n:'Glyph Quest',e:'🔤',u:'/glyph-quest/',c:'puzzle'},
+    {n:'Fruit Slash',e:'🍉',u:'/fruit-slash/',c:'arcade'},
+    {n:'Magic Sort',e:'✨',u:'/magic-sort/',c:'puzzle'},
+    {n:'T-Rex',e:'🦖',u:'/t-rex/',c:'arcade'}
   ];
 
   var cur = location.pathname;
@@ -56,7 +59,8 @@
     puzzle: {t:'🧩 More Puzzle Games', u:'/puzzle-games.html'},
     arcade: {t:'🕹️ More Arcade Games', u:'/arcade-games.html'},
     idle: {t:'⏰ More Idle Games', u:'/idle-games.html'},
-    card: {t:'🃏 More Card Games', u:'/card-games.html'}
+    card: {t:'🃏 More Card Games', u:'/card-games.html'},
+    strategy: {t:'♟️ More Strategy Games', u:'/strategy-games.html'}
   };
 
   var d = document.createElement('section');
