@@ -4,6 +4,9 @@
     img.src = 'https://site-analytics.cap.1ktower.com/hit?s=' + encodeURIComponent(location.hostname || 'gamezipper.com') + '&p=' + encodeURIComponent(location.pathname || '/') + '&t=' + Date.now();
   } catch (e) {}
 
+  // Respect user dismissal — use sessionStorage so it persists within the tab
+  if (sessionStorage.getItem('gz-footer-dismissed')) return;
+
   var games = [
     {n:'2048',e:'🔢',u:'/2048/',c:'puzzle'},
     {n:'Snake',e:'🐍',u:'/snake/',c:'arcade'},
@@ -56,17 +59,18 @@
   var pick = sameCat.slice(0, 4).concat(others.slice(0, Math.max(0, 6 - sameCat.length)));
 
   var categoryLinks = {
-    puzzle: {t:'🧩 More Puzzle Games', u:'/puzzle-games.html'},
-    arcade: {t:'🕹️ More Arcade Games', u:'/arcade-games.html'},
-    idle: {t:'⏰ More Idle Games', u:'/idle-games.html'},
-    card: {t:'🃏 More Card Games', u:'/card-games.html'},
-    strategy: {t:'♟️ More Strategy Games', u:'/strategy-games.html'}
+    puzzle: {t:'🧩 More Puzzle', u:'/puzzle-games.html'},
+    arcade: {t:'🕹️ More Arcade', u:'/arcade-games.html'},
+    idle: {t:'⏰ More Idle', u:'/idle-games.html'},
+    card: {t:'🃏 More Card', u:'/card-games.html'},
+    strategy: {t:'♟️ More Strategy', u:'/strategy-games.html'},
+    skill: {t:'⚡ More Skill', u:'/skill-games.html'}
   };
 
   var d = document.createElement('section');
   d.id = 'game-footer';
   d.setAttribute('aria-label', 'Related games');
-  d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,26,0.96);padding:8px 12px;z-index:100;border-top:1px solid #333;display:none';
+  d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,26,0.96);padding:8px 12px;z-index:40;border-top:1px solid #333;display:none;transition:transform .3s ease';
 
   var h = '<div style="display:flex;align-items:center;gap:8px;overflow-x:auto;white-space:nowrap">';
   h += '<span style="color:#4ecdc4;font-size:11px;font-family:sans-serif;flex-shrink:0">Related Games:</span>';
@@ -78,6 +82,7 @@
   }
   h += '<a href="/" style="display:inline-flex;align-items:center;gap:4px;background:#4ecdc4;padding:4px 10px;border-radius:12px;text-decoration:none;color:#000;font-size:11px;font-family:sans-serif;font-weight:700;flex-shrink:0">🎮 All Games</a>';
   h += '<a href="https://tools.gamezipper.com" style="display:inline-flex;align-items:center;gap:4px;background:#ffd93d;padding:4px 10px;border-radius:12px;text-decoration:none;color:#000;font-size:11px;font-family:sans-serif;font-weight:700;flex-shrink:0">🛠 Tools</a>';
+  h += '<button onclick="var f=document.getElementById(\'game-footer\');if(f){f.style.transform=\'translateY(100%)\';setTimeout(function(){f.remove()},300);}sessionStorage.setItem(\'gz-footer-dismissed\',\'1\');" style="background:none;border:none;color:#666;font-size:16px;cursor:pointer;padding:4px 6px;flex-shrink:0;line-height:1" aria-label="Close">&times;</button>';
   h += '</div>';
   d.innerHTML = h;
   document.body.appendChild(d);
