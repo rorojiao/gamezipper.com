@@ -17,7 +17,7 @@ const GAME_GRADIENTS = [
 ];
 
 const GAMES = [
-  {name:"Fruit Slash",emoji:"🍉",cat:"arcade",tags:["Arcade","Swipe","Fruit"],url:"/fruit-slash/",desc:"Swipe to slice fruits! Cut fast, combo big, dodge bombs. 60 seconds of juicy action!",isNew:true,status:"beta"},
+  {name:"Fruit Slash",emoji:"🍉",cat:"arcade",tags:["Arcade","Swipe","Fruit"],url:"/fruit-slash/",desc:"Swipe to slice fruits! Cut fast, combo big, dodge bombs. 60 seconds of juicy action!",isNew:true,status:"live"},
   {name:"Basketball Shoot",emoji:"🏀",cat:"arcade",tags:["Arcade","Sports","Physics"],url:"/basketball-shoot/",desc:"Shoot hoops in 60 seconds! Drag to aim, release to shoot. Swish for bonus points!",isNew:true,status:"live"},
   {name:"Neon Run",emoji:"⚡",cat:"arcade",tags:["Arcade","Runner","Platformer"],url:"/neon-run/",desc:"Run, jump, double-jump! Collect stars, dodge neon spikes. Endless neon platform runner.",isNew:true,status:"live"},
   {name:"2048 Galaxy",emoji:"🌌",cat:"puzzle",tags:["Puzzle","Number"],url:"/2048/",desc:"Merge tiles to reach 2048! Classic number puzzle game.",status:"live"},
