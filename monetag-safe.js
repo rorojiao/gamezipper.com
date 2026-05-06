@@ -2,9 +2,14 @@
   'use strict';
   if (window.GZMonetagSafe) return;
 
-  var GAME_ZONE = 10687757;  // gamezipper.com zone
+  var GAME_ZONE = 10687757;  // gamezipper.com Popunder zone
   var loaded = false;
   var gameAdShown = false;
+
+  // Frequency cap: only show popunder once per page visit
+  // (popunder is already one-shot per session via gameAdShown flag,
+  //  but we also check sessionStorage to avoid re-triggering on same-tab navigation)
+  var FREQUENCY_KEY = 'gz_popunder_shown';
 
   function onGamePage() {
     var path = location.pathname;
@@ -46,24 +51,42 @@
 
     if (onHubPage()) {
       // Hub pages: load Monetag immediately (no gameplay to interrupt)
-      loadScript(zone);
+      // But respect frequency cap: only once per session
+      if (!sessionStorage.getItem(FREQUENCY_KEY)) {
+        sessionStorage.setItem(FREQUENCY_KEY, '1');
+        loadScript(zone);
+      } else {
+        console.log('[GZMonetagSafe] Hub page — popunder already shown this session, skipping');
+      }
       return;
     }
 
     if (onGamePage()) {
-      // Game pages: load after 6 seconds delay (user is engaged by then)
-      // Also listen for game-over to load sooner if available
+      // Game pages: load after 4 seconds delay (reduced from 6s — user is engaged by then)
+      // Also respect frequency cap
+      if (sessionStorage.getItem(FREQUENCY_KEY)) {
+        console.log('[GZMonetagSafe] Game page — popunder already shown this session, skipping');
+        return;
+      }
       var loadedEarly = false;
       setTimeout(function(){
-        if (!loadedEarly) loadScript(zone);
-      }, 6000);
+        if (!loadedEarly) {
+          sessionStorage.setItem(FREQUENCY_KEY, '1');
+          loadScript(zone);
+        }
+      }, 4000);
       // Keep maybeLoad API for games that do signal game-over
-      console.log('[GZMonetagSafe] game page — Monetag will load after 6s or on game-over');
+      console.log('[GZMonetagSafe] game page — Monetag will load after 4s or on game-over');
       return;
     }
 
-    // Other pages (about, privacy, etc): load with delay
-    setTimeout(function(){ loadScript(zone); }, 3000);
+    // Other pages (about, privacy, etc): load with delay, respect frequency cap
+    if (!sessionStorage.getItem(FREQUENCY_KEY)) {
+      setTimeout(function(){
+        sessionStorage.setItem(FREQUENCY_KEY, '1');
+        loadScript(zone);
+      }, 3000);
+    }
   }
 
   window.GZMonetagSafe = {
@@ -72,7 +95,9 @@
     maybeLoad: function(zone){
       // Called by game pages on game-over; only show once per session
       if (gameAdShown) return false;
+      if (sessionStorage.getItem(FREQUENCY_KEY)) return false;
       gameAdShown = true;
+      sessionStorage.setItem(FREQUENCY_KEY, '1');
       loadScript(zone || GAME_ZONE);
       return true;
     },

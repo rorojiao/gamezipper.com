@@ -1,93 +1,180 @@
 /**
- * GameZipper UX-safe promo rail
- * Goal: never interrupt gameplay - no full-screen popups, no back-button intercepts, no timed overlays.
- * Behavior: only render an inline recommendation bar on home/category pages; game pages are completely interruption-free.
+ * GameZipper UX-Safe Interstitial Ad System
+ * ─────────────────────────────────────────
+ * Shows a non-blocking half-screen ad card at natural game pause points:
+ *   - level-complete (player beats a level)
+ *   - level-fail (player fails)
+ *   - gameover (generic game over)
+ *
+ * Hard rules:
+ *   - NO full-screen popups
+ *   - NO mid-game interruption
+ *   - NO back-button intercept
+ *   - Clear close button always visible
+ *   - Auto-dismiss after 2 seconds
+ *   - Frequency: every 3rd event only (1 in 3 ratio)
+ *   - Session interval: minimum 60 seconds between shows
+ *
+ * Zone: 10687759 — ⚠️ PLACEHOLDER, create in Monetag dashboard
  */
-(function () {
+(function(){
   'use strict';
+  if (window.GZInterstitial) return;
 
-  var RAIL_ID = 'gz-promo-rail';
-  var STYLE_ID = 'gz-promo-rail-style';
+  var INTERSTITIAL_ZONE = 10687759; // ⚠️ PLACEHOLDER — create this zone in Monetag dashboard
+  var CARD_ID = 'gz-interstitial-card';
+  var MIN_INTERVAL_MS = 60000; // 60s between interstitials
+  var EVENT_RATIO = 3;          // show 1 ad per 3 events
+
+  var state = {
+    eventCount: 0,
+    lastShown: 0,
+    currentCard: null,
+    dismissTimer: null
+  };
 
   function isGamePage() {
-    return location.pathname !== '/' && /\/$/.test(location.pathname) && !/games\.html$/.test(location.pathname);
+    var path = location.pathname;
+    return path !== '/' && !/\.[a-z]{2,5}$/.test(path) && !/\/games\.html$/.test(path);
   }
 
-  function isHubPage() {
-    return location.pathname === '/' || /games\.html$/.test(location.pathname);
+  function canShow() {
+    // Only on game pages
+    if (!isGamePage()) return false;
+    // Minimum interval between shows
+    if (Date.now() - state.lastShown < MIN_INTERVAL_MS) return false;
+    // Don't show if already visible
+    if (document.getElementById(CARD_ID)) return false;
+    return true;
   }
 
-  function ensureStyle() {
-    if (document.getElementById(STYLE_ID)) return;
+  function createCard(eventName) {
+    if (!canShow()) return;
+
+    state.eventCount++;
+    // Only show every Nth event
+    if (state.eventCount % EVENT_RATIO !== 0) {
+      console.log('[GZInterstitial] Event #' + state.eventCount + ' — skipped (shows every ' + EVENT_RATIO + ')');
+      return;
+    }
+
+    state.lastShown = Date.now();
+
+    // Create the ad card container
+    var overlay = document.createElement('div');
+    overlay.id = CARD_ID;
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-label', 'Sponsored content');
+
+    // Style: half-screen card, centered, with semi-transparent backdrop
     var style = document.createElement('style');
-    style.id = STYLE_ID;
+    style.id = 'gz-interstitial-style';
     style.textContent = [
-      '#' + RAIL_ID + '{margin:24px auto 32px;max-width:1100px;padding:0 16px;}',
-      '#' + RAIL_ID + ' .gz-card{background:linear-gradient(180deg,rgba(17,24,39,.98),rgba(15,23,42,.96));border:1px solid rgba(78,205,196,.22);border-radius:20px;padding:18px 18px 14px;box-shadow:0 10px 30px rgba(0,0,0,.15);}',
-      '#' + RAIL_ID + ' .gz-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;}',
-      '#' + RAIL_ID + ' .gz-title{font:700 18px/1.3 system-ui,-apple-system,sans-serif;color:#e6fffb;}',
-      '#' + RAIL_ID + ' .gz-sub{font:400 13px/1.5 system-ui,-apple-system,sans-serif;color:#9fb0c8;}',
-      '#' + RAIL_ID + ' .gz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}',
-      '#' + RAIL_ID + ' a.gz-item{text-decoration:none;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px 12px;display:flex;flex-direction:column;align-items:flex-start;min-height:94px;transition:transform .18s ease,border-color .18s ease,background .18s ease;}',
-      '#' + RAIL_ID + ' a.gz-item:hover{transform:translateY(-2px);border-color:rgba(78,205,196,.5);background:rgba(78,205,196,.08);}',
-      '#' + RAIL_ID + ' .gz-emoji{font-size:28px;margin-bottom:8px;}',
-      '#' + RAIL_ID + ' .gz-name{font:700 14px/1.4 system-ui,-apple-system,sans-serif;color:#f8fafc;}',
-      '#' + RAIL_ID + ' .gz-tag{font:500 12px/1.3 system-ui,-apple-system,sans-serif;color:#8ddad1;margin-top:4px;}',
-      '@media (max-width:640px){#' + RAIL_ID + '{padding:0 12px;margin:18px auto 24px;}}'
+      '#' + CARD_ID + '{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);animation:gzFadeIn 0.2s ease;pointer-events:auto}',
+      '#' + CARD_ID + ' .gz-card{position:relative;max-width:360px;width:90%;background:linear-gradient(135deg,#1a1a3e,#2d1b69);border-radius:16px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.4);color:#fff;text-align:center}',
+      '#' + CARD_ID + ' .gz-card h3{margin:0 0 8px;font-size:16px;font-weight:700;color:#4ecdc4}',
+      '#' + CARD_ID + ' .gz-card p{margin:0 0 16px;font-size:13px;color:#b8b8c8;line-height:1.5}',
+      '#' + CARD_ID + ' .gz-ad-slot{background:rgba(255,255,255,0.05);border:1px dashed rgba(78,205,196,0.3);border-radius:10px;min-height:120px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;overflow:hidden}',
+      '#' + CARD_ID + ' .gz-ad-slot span{color:#666;font-size:12px}',
+      '#' + CARD_ID + ' .gz-close{position:absolute;top:8px;right:12px;background:none;border:none;color:#888;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;z-index:10;transition:color 0.2s}',
+      '#' + CARD_ID + ' .gz-close:hover{color:#fff}',
+      '#' + CARD_ID + ' .gz-timer{font-size:11px;color:#666;margin-top:4px}',
+      '@keyframes gzFadeIn{from{opacity:0}to{opacity:1}}',
+      '@keyframes gzFadeOut{from{opacity:1}to{opacity:0}}'
     ].join('');
     document.head.appendChild(style);
-  }
 
-  function chooseGames() {
-    var items = [
-      { name: '2048 Galaxy', emoji: '🌌', url: '/2048/', tag: 'Number Puzzle' },
-      { name: 'Sushi Stack', emoji: '🍣', url: '/sushi-stack/', tag: '3D Sort' },
-      { name: 'Bolt Jam 3D', emoji: '🔩', url: '/bolt-jam-3d/', tag: 'Puzzle 3D' },
-      { name: 'Ocean Gem Pop', emoji: '🧜', url: '/ocean-gem-pop/', tag: 'Bubble Shooter' },
-      { name: 'Typing Speed', emoji: '⚡', url: '/typing-speed/', tag: 'Skill Typing' },
-      { name: 'Snake', emoji: '🐍', url: '/snake/', tag: 'Arcade Retro' }
-    ];
-    return items.filter(function (item) { return item.url !== location.pathname; }).slice(0, 6);
-  }
+    var adMsg = eventName === 'level-complete' ? '🎉 Level Complete!'
+              : eventName === 'level-fail' ? '💪 Try Again!'
+              : '🎮 Great Game!';
 
-  function findMountPoint() {
-    return document.querySelector('.faq-section, #faq, footer') || document.body;
-  }
-
-  function renderHubRail() {
-    if (!isHubPage() || document.getElementById(RAIL_ID)) return;
-    ensureStyle();
-    var games = chooseGames();
-    var wrap = document.createElement('section');
-    wrap.id = RAIL_ID;
-    wrap.setAttribute('aria-label', 'Recommended games');
-    wrap.innerHTML = [
+    overlay.innerHTML = [
       '<div class="gz-card">',
-      '  <div class="gz-head">',
-      '    <div>',
-      '      <div class="gz-title">🎮 Continue with another quick game</div>',
-      '      <div class="gz-sub">In-page recommendations only. No popups, no overlays, no interruptions.</div>',
-      '    </div>',
-      '  </div>',
-      '  <div class="gz-grid">',
-      games.map(function (g) {
-        return '<a class="gz-item" href="' + g.url + '"><div class="gz-emoji">' + g.emoji + '</div><div class="gz-name">' + g.name + '</div><div class="gz-tag">' + g.tag + '</div></a>';
-      }).join(''),
-      '  </div>',
+      '  <button class="gz-close" aria-label="Close">&times;</button>',
+      '  <h3>' + adMsg + '</h3>',
+      '  <p>Ads help us keep games free. Thanks for playing!</p>',
+      '  <div class="gz-ad-slot"><span>Ad loading...</span></div>',
+      '  <div class="gz-timer">Closing in 2s</div>',
       '</div>'
     ].join('');
-    var mount = findMountPoint();
-    if (mount === document.body) document.body.appendChild(wrap);
-    else mount.parentNode.insertBefore(wrap, mount);
+
+    // Close button handler
+    overlay.querySelector('.gz-close').addEventListener('click', function(e) {
+      e.stopPropagation();
+      dismissCard();
+    });
+
+    // Close on backdrop click
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) dismissCard();
+    });
+
+    document.body.appendChild(overlay);
+    state.currentCard = overlay;
+
+    // Load Monetag ad into the slot
+    var slot = overlay.querySelector('.gz-ad-slot');
+    slot.innerHTML = '';
+    var adScript = document.createElement('script');
+    adScript.async = true;
+    adScript.setAttribute('data-zone', String(INTERSTITIAL_ZONE));
+    adScript.src = 'https://a.magsrv.com/ad-provider.js';
+    slot.appendChild(adScript);
+
+    console.log('[GZInterstitial] Interstitial shown (event #' + state.eventCount + ', type: ' + eventName + ')');
+
+    // Auto-dismiss after 2 seconds
+    state.dismissTimer = setTimeout(function() {
+      dismissCard();
+    }, 2000);
+  }
+
+  function dismissCard() {
+    if (state.dismissTimer) {
+      clearTimeout(state.dismissTimer);
+      state.dismissTimer = null;
+    }
+    var card = document.getElementById(CARD_ID);
+    if (card) {
+      card.style.animation = 'gzFadeOut 0.2s ease forwards';
+      setTimeout(function() {
+        if (card.parentNode) card.parentNode.removeChild(card);
+      }, 200);
+    }
+    var style = document.getElementById('gz-interstitial-style');
+    if (style) style.parentNode.removeChild(style);
+    state.currentCard = null;
   }
 
   function init() {
-    if (isGamePage()) {
-      window.dispatchEvent(new CustomEvent('gz-ads-disabled-on-gamepage'));
+    if (!isGamePage()) {
+      console.log('[GZInterstitial] Not a game page — disabled');
       return;
     }
-    renderHubRail();
+
+    // Listen for game events — these are dispatched by games at natural pause points
+    // If a game doesn't dispatch these events, no ad will ever show (safe default)
+    var events = ['gameover', 'level-complete', 'level-fail'];
+    events.forEach(function(evt) {
+      window.addEventListener(evt, function() {
+        // Small delay to let the game render its own win/fail screen first
+        setTimeout(function() {
+          createCard(evt);
+        }, 300);
+      });
+    });
+
+    console.log('[GZInterstitial] Listening for: ' + events.join(', '));
   }
+
+  window.GZInterstitial = {
+    init: init,
+    show: createCard,
+    dismiss: dismissCard,
+    getStats: function() {
+      return { eventCount: state.eventCount, lastShown: state.lastShown };
+    }
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init, { once: true });
