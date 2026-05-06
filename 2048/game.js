@@ -604,6 +604,8 @@ function move(dir) {
       setTimeout(() => {
         gameOverEl.style.display = 'flex';
         finalScoreEl.textContent = 'Final Score: ' + score;
+        // Dispatch gameover event for ad-interstitial system
+        window.dispatchEvent(new CustomEvent('gameover', { detail: { score: score, game: '2048' } }));
       }, SIZE * SIZE * 50 + 800);
     }
   }, ANIM_DURATION + MERGE_DURATION + 30);

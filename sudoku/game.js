@@ -376,11 +376,15 @@ function endGame(won) {
     }
     // Trigger ad
     if (window.GZMonetagSafe) window.GZMonetagSafe.maybeLoad();
+    // Dispatch event for interstitial ad system
+    window.dispatchEvent(new CustomEvent(won ? 'level-complete' : 'level-fail', { detail: { game: 'sudoku' } }));
   } else {
     sfxFail();
     failOverlay.style.display = 'flex';
     // Trigger ad
     if (window.GZMonetagSafe) window.GZMonetagSafe.maybeLoad();
+    // Dispatch event for interstitial ad system
+    window.dispatchEvent(new CustomEvent('level-fail', { detail: { game: 'sudoku' } }));
   }
 }
 
