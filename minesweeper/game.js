@@ -301,6 +301,7 @@ function showGameOverOverlay(won) {
   }
   overlay.style.display = 'flex';
   window.finalScore = elapsedSeconds;
+  window.dispatchEvent(new CustomEvent('gameover', { detail: { game: 'minesweeper', won: won } }));
 }
 
 function hideGameOverOverlay() {

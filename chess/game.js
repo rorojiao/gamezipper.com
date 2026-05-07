@@ -259,6 +259,8 @@ class ChessGame {
     if (window.GZMonetagSafe && window.GZMonetagSafe.maybeLoad) {
       window.GZMonetagSafe.maybeLoad(10687757);
     }
+    // Dispatch gameover event for interstitial ad system
+    window.dispatchEvent(new CustomEvent('gameover', { detail: { game: 'chess' } }));
   }
 
   // ---- Legal Move Generation ----

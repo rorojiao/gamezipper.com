@@ -764,6 +764,9 @@ function doGameOver() {
   save.saveStats();
   sound.play('gameover');
 
+  // Dispatch gameover event for interstitial ad system
+  window.dispatchEvent(new CustomEvent('gameover', { detail: { game: 'dessert-blast', score: score } }));
+
   var cx = _w / 2;
   var bw = 200, bh = 44;
   _goButtons = [

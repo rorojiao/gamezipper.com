@@ -331,6 +331,7 @@ function die() {
   setTimeout(() => {
     document.getElementById('game-over').classList.remove('hidden');
     if (window.GZMonetagSafe) window.GZMonetagSafe.maybeLoad();
+    window.dispatchEvent(new CustomEvent('gameover', { detail: { game: 'neon-run', score: score } }));
   }, 600);
 }
 

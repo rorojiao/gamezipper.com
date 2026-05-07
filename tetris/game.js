@@ -330,6 +330,7 @@ function gameOver() {
   overlay.classList.remove('hidden');
   // Trigger Monetag ad on game over
   if (window.GZMonetagSafe) window.GZMonetagSafe.maybeLoad();
+  window.dispatchEvent(new CustomEvent('gameover', { detail: { game: 'tetris', score: score } }));
 }
 
 function togglePause() {

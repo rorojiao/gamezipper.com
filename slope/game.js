@@ -394,6 +394,7 @@ function triggerDeath() {
   setTimeout(() => {
     gameOverScreen.classList.add('active');
     if (window.GZMonetagSafe) window.GZMonetagSafe.maybeLoad();
+    window.dispatchEvent(new CustomEvent('gameover', { detail: { game: 'slope', score: score } }));
   }, 600);
 }
 

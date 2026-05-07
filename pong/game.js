@@ -474,6 +474,7 @@
     document.getElementById('diff-btns').style.display = 'flex';
     document.getElementById('start-btn').textContent = 'PLAY AGAIN';
     overlay.classList.remove('hidden');
+    window.dispatchEvent(new CustomEvent('gameover', { detail: { game: 'pong', score: p1Score } }));
   }
 
   function setDiff(d) {

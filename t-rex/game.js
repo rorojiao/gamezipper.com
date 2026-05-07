@@ -265,6 +265,7 @@ function triggerGameOver() {
   document.getElementById('gz-cta').style.display = 'block';
   if (isMobile && jumpBtn) jumpBtn.style.display = 'none';
   if (isMobile && duckBtn) duckBtn.style.display = 'none';
+  window.dispatchEvent(new CustomEvent('gameover', { detail: { game: 't-rex', score: Math.floor(score) } }));
 }
 
 // Drawing helpers

@@ -671,6 +671,8 @@
     if (window.GZMonetagSafe) {
       window.GZMonetagSafe.maybeLoad();
     }
+    // Dispatch gameover event for interstitial ad system
+    window.dispatchEvent(new CustomEvent('gameover', { detail: { game: 'basketball-shoot', score: score } }));
   }
 
   function showStartScreen() {

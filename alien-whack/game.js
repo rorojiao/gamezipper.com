@@ -687,6 +687,7 @@
     if (window.GZMonetagSafe) {
       window.GZMonetagSafe.maybeLoad();
     }
+    window.dispatchEvent(new CustomEvent('gameover', { detail: { game: 'alien-whack', score: score } }));
   }
 
   // ---- Init ----

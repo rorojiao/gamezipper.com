@@ -487,6 +487,8 @@ function endGame(bombHit) {
     document.getElementById('start-btn').textContent = '🔄 Play Again';
     document.getElementById('how-to').style.display = 'none';
     overlay.style.display = 'flex';
+    // Dispatch gameover event for interstitial ad system
+    window.dispatchEvent(new CustomEvent('gameover', { detail: { game: 'fruit-slash', score: score } }));
   }, bombHit ? 600 : 100);
 }
 
