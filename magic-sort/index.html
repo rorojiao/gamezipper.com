@@ -201,6 +201,8 @@ const COLORS = [
   { name: "Teal",   top: "#14b8a6", mid: "#5eead4", bot: "#0f9485", glow: "rgba(20,184,166,0.35)" },
   { name: "Indigo", top: "#6366f1", mid: "#a5b4fc", bot: "#4f46e5", glow: "rgba(99,102,241,0.35)" },
   { name: "Rose",   top: "#fb7185", mid: "#fda4af", bot: "#c95a6a", glow: "rgba(251,113,133,0.35)" },
+  { name: "Amber",  top: "#f59e0b", mid: "#fcd34d", bot: "#b45309", glow: "rgba(245,158,11,0.35)" },
+  { name: "Fuchsia",top: "#d946ef", mid: "#f0abfc", bot: "#a21caf", glow: "rgba(217,70,239,0.35)" },
 ];
 
 // ─── Level Definitions (600 levels) ───
@@ -1026,20 +1028,55 @@ function getBottleLayout() {
 }
 
 // ─── Confetti ───
+let confettiWave = 0; // track burst waves
 function spawnConfetti() {
+  confettiWave = 0;
   confetti = [];
-  for (let i = 0; i < 100; i++) {
+  // First wave: explosive burst from center
+  for (let i = 0; i < 80; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 4 + Math.random() * 14;
     confetti.push({
-      x: W / 2 + (Math.random() - 0.5) * W * 0.4,
-      y: H * 0.4,
-      vx: (Math.random() - 0.5) * 14,
-      vy: -Math.random() * 16 - 4,
+      x: W / 2 + (Math.random() - 0.5) * 40,
+      y: H * 0.42,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 6,
       color: COLORS[Math.floor(Math.random() * numColors)].top,
-      w: Math.random() * 8 + 4,
+      w: Math.random() * 10 + 4,
+      h: Math.random() * 6 + 2,
+      rot: Math.random() * 360,
+      rv: (Math.random() - 0.5) * 18,
+      life: 1,
+      shape: Math.random() < 0.3 ? "circle" : (Math.random() < 0.15 ? "star" : "rect"),
+      gravity: 0.2 + Math.random() * 0.15,
+      delay: 0 // first wave: no delay
+    });
+  }
+  // Schedule second wave
+  confettiSecondWaveTimer = 30; // frames
+}
+
+let confettiSecondWaveTimer = 0;
+
+function spawnConfettiSecondWave() {
+  confettiWave = 1;
+  for (let i = 0; i < 60; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 3 + Math.random() * 10;
+    confetti.push({
+      x: W * 0.2 + Math.random() * W * 0.6,
+      y: -10 - Math.random() * 40,
+      vx: Math.cos(angle) * speed * 0.5,
+      vy: Math.abs(Math.sin(angle)) * speed * 0.3 + 2,
+      color: COLORS[Math.floor(Math.random() * numColors)].top,
+      w: Math.random() * 8 + 3,
       h: Math.random() * 5 + 2,
       rot: Math.random() * 360,
-      rv: (Math.random() - 0.5) * 15,
-      life: 1
+      rv: (Math.random() - 0.5) * 14,
+      life: 1,
+      shape: Math.random() < 0.25 ? "circle" : (Math.random() < 0.2 ? "star" : "rect"),
+      gravity: 0.15 + Math.random() * 0.12,
+      delay: 0
     });
   }
 }
@@ -1047,6 +1084,17 @@ function spawnConfetti() {
 // ═══════════════════════════════════════════
 // RENDERING
 // ═══════════════════════════════════════════
+
+function drawMiniStar(cx, cy, outerR, innerR, points) {
+  X.beginPath();
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 === 0 ? outerR : innerR;
+    const a = (i * Math.PI / points) - Math.PI / 2;
+    if (i === 0) X.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+    else X.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+  }
+  X.closePath();
+}
 
 function roundRect(x, y, w, h, r) {
   r = Math.max(0, Math.min(r, w / 2, h / 2));
@@ -1095,10 +1143,24 @@ function drawBottle(cx, cy, bw, bh, bottle, isSelected, isPourSource, isPourTarg
 
   X.save();
 
-  // Selection glow
+  // Selection glow (pulsating + floating sparkles)
   if (isSelected) {
-    X.shadowColor = "rgba(162,155,254,0.7)";
-    X.shadowBlur = 25;
+    const glowPulse = 0.5 + 0.5 * Math.sin(now * 0.006);
+    X.shadowColor = `rgba(162,155,254,${0.4 + glowPulse * 0.4})`;
+    X.shadowBlur = 18 + glowPulse * 14;
+    // Floating sparkles orbiting selected bottle
+    for (let si = 0; si < 8; si++) {
+      const angle = (now * 0.002 + si * Math.PI / 4) % (Math.PI * 2);
+      const dist = bw * 0.58 + Math.sin(now * 0.003 + si * 1.7) * 7;
+      const sx = cx + Math.cos(angle) * dist;
+      const sy = cy - bh * 0.05 + Math.sin(angle) * dist * 0.55;
+      const sparkAlpha = 0.25 + 0.45 * Math.sin(now * 0.005 + si * 2.1);
+      const sparkR = 1.2 + Math.sin(now * 0.004 + si) * 0.8;
+      X.fillStyle = `rgba(200,195,255,${sparkAlpha})`;
+      X.beginPath();
+      X.arc(sx, sy, sparkR, 0, Math.PI * 2);
+      X.fill();
+    }
   }
 
   // Build bottle path (for stroke + clip)
@@ -1225,41 +1287,81 @@ function drawPourStream() {
   const dy = layout.topY[anim.to] + (4 - bottles[anim.to].length) * layout.layerH;
 
   X.save();
-  X.globalAlpha = 0.85;
 
-  // Stream
-  const streamW = layout.bw * 0.22;
+  // ─── Main stream (wide, tapered) ───
+  X.globalAlpha = 0.88;
+  const streamW = layout.bw * 0.28;
   const midY = (sy + dy) / 2;
-  const wave = Math.sin(now * 0.012) * 4;
+  const wave = Math.sin(now * 0.012) * 5;
 
   const sg = X.createLinearGradient(sx, sy, dx, dy);
   sg.addColorStop(0, col.top);
   sg.addColorStop(0.5, col.mid);
   sg.addColorStop(1, col.top);
   X.strokeStyle = sg;
-  X.lineWidth = streamW;
   X.lineCap = "round";
+
+  // Draw 3 overlapping strokes for a liquid-volume look
+  for (let layer = 0; layer < 3; layer++) {
+    const w = streamW * (1 - layer * 0.22);
+    const alpha = 0.9 - layer * 0.2;
+    X.globalAlpha = alpha;
+    X.lineWidth = w;
+    X.beginPath();
+    X.moveTo(sx, sy - t * 20);
+    const waveOff = wave * (1 + layer * 0.3);
+    X.bezierCurveTo(sx + waveOff, midY - 25, dx - waveOff, midY + 25, dx, dy);
+    X.stroke();
+  }
+
+  // Glow on main stream
+  X.globalAlpha = 0.5;
+  X.lineWidth = streamW * 1.4;
+  X.shadowColor = col.glow;
+  X.shadowBlur = 16;
+  X.strokeStyle = col.glow;
   X.beginPath();
   X.moveTo(sx, sy - t * 20);
-  X.bezierCurveTo(sx + wave, midY - 20, dx - wave, midY + 20, dx, dy);
-  X.stroke();
-
-  // Glow
-  X.shadowColor = col.glow;
-  X.shadowBlur = 12;
+  X.bezierCurveTo(sx + wave, midY - 25, dx - wave, midY + 25, dx, dy);
   X.stroke();
   X.shadowBlur = 0;
 
-  // Drip particles
-  for (let d = 0; d < 5; d++) {
-    const dp = (t * 1.5 + d * 0.25) % 1;
-    const px = sx + (dx - sx) * dp + Math.sin(dp * 12 + d) * 6;
-    const py = sy + (dy - sy) * dp;
-    X.fillStyle = col.mid;
-    X.globalAlpha = 0.4 * (1 - dp);
+  // ─── Drip particles (more, varied sizes) ───
+  for (let d = 0; d < 8; d++) {
+    const dp = (t * 1.8 + d * 0.15) % 1;
+    const px = sx + (dx - sx) * dp + Math.sin(dp * 14 + d * 1.3) * 8;
+    const py = sy + (dy - sy) * dp + Math.cos(dp * 10 + d) * 4;
+    const dr = 1.5 + Math.sin(d * 2.7) * 1.2;
+    X.fillStyle = d % 2 === 0 ? col.top : col.mid;
+    X.globalAlpha = 0.5 * (1 - dp);
     X.beginPath();
-    X.arc(px, py, 2.5, 0, Math.PI * 2);
+    X.arc(px, py, dr, 0, Math.PI * 2);
     X.fill();
+  }
+
+  // ─── Splash at target ───
+  if (t > 0.3) {
+    const splashT = (t - 0.3) / 0.7;
+    const splashAlpha = 0.6 * (1 - splashT * 0.5);
+    for (let sp = 0; sp < 6; sp++) {
+      const sAngle = (sp / 6) * Math.PI - Math.PI * 0.5 + Math.sin(now * 0.01 + sp) * 0.3;
+      const sDist = 6 + splashT * 18 + Math.sin(sp * 1.5) * 5;
+      const spx = dx + Math.cos(sAngle) * sDist;
+      const spy = dy - Math.abs(Math.sin(sAngle)) * sDist * 0.6;
+      const spr = 2 - splashT * 1.2;
+      X.fillStyle = sp % 2 === 0 ? col.top : col.mid;
+      X.globalAlpha = splashAlpha * (1 - splashT * 0.6);
+      X.beginPath();
+      X.arc(spx, spy, Math.max(0.5, spr), 0, Math.PI * 2);
+      X.fill();
+    }
+    // Splash ring
+    X.globalAlpha = 0.15 * (1 - splashT);
+    X.strokeStyle = col.top;
+    X.lineWidth = 1.5;
+    X.beginPath();
+    X.ellipse(dx, dy, splashT * 16, splashT * 6, 0, 0, Math.PI * 2);
+    X.stroke();
   }
 
   X.restore();
@@ -1536,18 +1638,43 @@ function renderWin() {
   const t = Math.min(elapsed / 400, 1);
   const ease = 1 - Math.pow(1 - t, 3);
 
+  // Initial flash burst (first 200ms)
+  const flashT = Math.min(elapsed / 200, 1);
+  if (flashT < 1) {
+    const flashAlpha = 0.4 * (1 - flashT);
+    const flashR = flashT * Math.max(W, H) * 0.8;
+    const flashGrad = X.createRadialGradient(W / 2, H * 0.42, 0, W / 2, H * 0.42, flashR);
+    flashGrad.addColorStop(0, `rgba(255,255,255,${flashAlpha})`);
+    flashGrad.addColorStop(0.3, `rgba(162,155,254,${flashAlpha * 0.5})`);
+    flashGrad.addColorStop(1, "rgba(162,155,254,0)");
+    X.fillStyle = flashGrad;
+    X.fillRect(0, 0, W, H);
+  }
+
   // Dim overlay
   X.fillStyle = `rgba(5,5,30,${0.55 * ease})`;
   X.fillRect(0, 0, W, H);
 
   X.save();
-  X.globalAlpha = ease;
 
-  // Card
+  // Card with scale-in + bounce effect
+  const cardScaleT = Math.min(elapsed / 500, 1);
+  const cardEase = cardScaleT < 0.6
+    ? (cardScaleT / 0.6) * 1.08  // overshoot
+    : 1.08 - 0.08 * ((cardScaleT - 0.6) / 0.4); // settle back
+  const cardScale = Math.min(cardEase, 1.08 - 0.08 * Math.max(0, (cardScaleT - 0.7) / 0.3));
+  const finalScale = cardScaleT >= 1 ? 1 : cardScale;
+
+  X.globalAlpha = ease;
   const cardW = Math.min(300, W * 0.85);
   const cardH = 260;
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2 - 15;
+
+  X.save();
+  X.translate(W / 2, H / 2 - 15);
+  X.scale(finalScale, finalScale);
+  X.translate(-(W / 2), -(H / 2 - 15));
 
   // Card shadow
   X.shadowColor = "rgba(108,92,231,0.3)";
@@ -1559,6 +1686,17 @@ function renderWin() {
   X.strokeStyle = "rgba(108,92,231,0.4)";
   X.lineWidth = 1.5;
   X.stroke();
+
+  // Card top glow accent
+  const accentGrad = X.createLinearGradient(cardX, cardY, cardX + cardW, cardY);
+  accentGrad.addColorStop(0, "rgba(108,92,231,0)");
+  accentGrad.addColorStop(0.5, "rgba(162,155,254,0.3)");
+  accentGrad.addColorStop(1, "rgba(108,92,231,0)");
+  X.fillStyle = accentGrad;
+  roundRect(cardX, cardY, cardW, 3, 2);
+  X.fill();
+
+  X.restore(); // restore card scale transform
 
   // Celebration text
   X.fillStyle = "#fff";
@@ -1595,7 +1733,16 @@ function renderWin() {
     X.rotate(c.rot * Math.PI / 180);
     X.globalAlpha = ease * c.life;
     X.fillStyle = c.color;
-    X.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+    if (c.shape === "circle") {
+      X.beginPath();
+      X.arc(0, 0, c.w / 2, 0, Math.PI * 2);
+      X.fill();
+    } else if (c.shape === "star") {
+      drawMiniStar(0, 0, c.w / 2, c.w / 4, 5);
+      X.fill();
+    } else {
+      X.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+    }
     X.restore();
   }
 
@@ -1618,14 +1765,20 @@ function update(dt) {
   }
 
   // Confetti physics
+  if (confettiSecondWaveTimer > 0) {
+    confettiSecondWaveTimer--;
+    if (confettiSecondWaveTimer === 0) spawnConfettiSecondWave();
+  }
   for (let i = confetti.length - 1; i >= 0; i--) {
     const c = confetti[i];
+    if (c.delay > 0) { c.delay--; continue; }
     c.x += c.vx;
     c.y += c.vy;
-    c.vy += 0.25;
+    c.vy += c.gravity || 0.25;
+    c.vx *= 0.99;
     c.rot += c.rv;
-    c.life -= 0.006;
-    if (c.life <= 0 || c.y > H + 50) confetti.splice(i, 1);
+    c.life -= 0.005;
+    if (c.life <= 0 || c.y > H + 60) confetti.splice(i, 1);
   }
 }
 

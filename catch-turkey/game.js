@@ -1196,6 +1196,7 @@ gameScene._onWin = function() {
   Save.addCard(Math.min(level.id - 1, 9));
   Particles.fireworks(Renderer.width / 2, Renderer.height / 2);
   setTimeout(function() {
+    try{window.dispatchEvent(new CustomEvent('level-complete',{detail:{game:'catch-turkey',level:level.id,score:score}}));}catch(e){}
     SceneManager.push('result', { win: true, stars: stars, score: score, levelId: level.id });
   }, 1000);
 };
@@ -1205,6 +1206,7 @@ gameScene._onLose = function(reason) {
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
   Snd.stopBgm(); Snd.lose();
   setTimeout(function() {
+    try{window.dispatchEvent(new CustomEvent('level-fail',{detail:{game:'catch-turkey',level:level.id,score:score}}));}catch(e){}
     SceneManager.push('result', { win: false, reason: reason || 'Slots Full!', removed: totalRemoved, total: totalTurkeys, score: score, levelId: level.id });
   }, 800);
 };
