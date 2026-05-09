@@ -87,5 +87,17 @@
   h += '</div>';
   d.innerHTML = h;
   document.body.appendChild(d);
-  setTimeout(function(){ d.style.display = 'block'; }, 2500);
+  // Smart display: show footer at natural pause points, not during active gameplay
+  // Strategy: listen for gameover/level-complete events; fallback to 8s delay
+  var footerShown = false;
+  function showFooter() {
+    if (footerShown) return;
+    footerShown = true;
+    d.style.display = 'block';
+  }
+  document.addEventListener('gameover', showFooter, { once: true });
+  document.addEventListener('level-complete', showFooter, { once: true });
+  document.addEventListener('level-fail', showFooter, { once: true });
+  // Fallback: show after 8 seconds (user is likely taking a break by then)
+  setTimeout(showFooter, 8000);
 })();
