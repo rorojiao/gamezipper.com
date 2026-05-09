@@ -47,7 +47,8 @@
     {n:'Glyph Quest',e:'🔤',u:'/glyph-quest/',c:'puzzle'},
     {n:'Fruit Slash',e:'🍉',u:'/fruit-slash/',c:'arcade'},
     {n:'Magic Sort',e:'✨',u:'/magic-sort/',c:'puzzle'},
-    {n:'T-Rex',e:'🦖',u:'/t-rex/',c:'arcade'}
+    {n:'T-Rex',e:'🦖',u:'/t-rex/',c:'arcade'},
+    {n:'Arrow Escape',e:'🚀',u:'/arrow-escape/',c:'puzzle'}
   ];
 
   var cur = location.pathname;
