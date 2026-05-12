@@ -21,7 +21,8 @@
   'use strict';
   if (window.GZInterstitial) return;
 
-  var INTERSTITIAL_ZONE = 10687759; // ⚠️ PLACEHOLDER — create this zone in Monetag dashboard
+  // var INTERSTITIAL_ZONE = 10687759; // DISABLED — placeholder zone was never created in Monetag dashboard
+  var INTERSTITIAL_ZONE = 0;             // 0 = disabled, no ad will load
   var CARD_ID = 'gz-interstitial-card';
   var MIN_INTERVAL_MS = 60000; // 60s between interstitials
   var EVENT_RATIO = 3;          // show 1 ad per 3 events
@@ -50,6 +51,7 @@
 
   function createCard(eventName) {
     if (!canShow()) return;
+    if (!INTERSTITIAL_ZONE) return; // Disabled — no zone configured
 
     state.eventCount++;
     // Only show every Nth event
