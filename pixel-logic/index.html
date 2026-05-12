@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Play Pixel Logic Nonogram Online Free | GameZipper</title>
+<link rel="canonical" href="https://gamezipper.com/pixel-logic/">
+<meta name="description" content="Play Pixel Logic - a free online Nonogram (Picross) puzzle game. Solve logic puzzles to reveal hidden pixel art! 30 puzzles across 3 difficulty levels.">
+<meta name="keywords" content="nonogram, picross, logic puzzle, pixel art, free game, brain teaser">
+<meta property="og:title" content="Pixel Logic - Free Nonogram Puzzle Game">
+<meta property="og:description" content="Solve logic puzzles to reveal hidden pixel art! Play free online.">
+<meta property="og:url" content="https://gamezipper.com/pixel-logic/">
+<meta property="og:type" content="website">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@graph":[
+    {
+      "@type":"VideoGame",
+      "name":"Pixel Logic - Nonogram Puzzle",
+      "description":"A free online Nonogram logic puzzle game. Fill in cells based on number clues to reveal hidden pixel art patterns. Features 30 hand-crafted puzzles across 3 difficulty levels.",
+      "genre":["Puzzle","Logic","Board Game"],
+      "gamePlatform":"Web Browser",
+      "applicationCategory":"Game",
+      "operatingSystem":"Any",
+      "playMode":"SinglePlayer",
+      "numberOfPlayers":{"@type":"QuantitativeValue","value":1},
+      "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}
+    },
+    {
+      "@type":"FAQPage",
+      "mainEntity":[
+        {
+          "@type":"Question",
+          "name":"What is a Nonogram?",
+          "acceptedAnswer":{"@type":"Answer","text":"A Nonogram (also known as Picross or Griddler) is a logic puzzle where you use number clues for each row and column to determine which cells should be filled in. The numbers indicate consecutive groups of filled cells in that line."}
+        },
+        {
+          "@type":"Question",
+          "name":"How do you play Nonogram puzzles?",
+          "acceptedAnswer":{"@type":"Answer","text":"Look at the numbers beside each row and above each column. These numbers tell you how many consecutive filled cells there are in that line. Use left-click or tap to fill cells, and right-click or long-press to mark cells as empty (X). When all clues are satisfied, the puzzle is complete!"}
+        },
+        {
+          "@type":"Question",
+          "name":"Is Pixel Logic free to play?",
+          "acceptedAnswer":{"@type":"Answer","text":"Yes! Pixel Logic is completely free to play in your web browser. No downloads or registration required. All 30 puzzles are available immediately."}
+        },
+        {
+          "@type":"Question",
+          "name":"What difficulty levels are available?",
+          "acceptedAnswer":{"@type":"Answer","text":"Pixel Logic offers three difficulty levels: Easy (5×5 grids with 10 puzzles), Medium (10×10 grids with 10 puzzles), and Hard (15×15 grids with 10 puzzles). Each puzzle is hand-crafted to ensure a unique solution."}
+        }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+/* ===== 全局变量与重置 ===== */
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#334155;
+  --primary:#8b5cf6;--primary-l:#a78bfa;--secondary:#ec4899;
+  --success:#10b981;--warn:#f59e0b;--error:#ef4444;
+  --text:#e2e8f0;--muted:#94a3b8;--dim:#475569;
+  --border:#334155;--cell-bg:#1e293b;--cell-fill:#8b5cf6;
+  --cell-mark:#334155;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden}
+body{font-family:'Fredoka',system-ui,sans-serif;background:var(--bg);color:var(--text);
+  touch-action:manipulation;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+
+/* ===== 屏幕管理 ===== */
+.screen{display:none;position:absolute;inset:0;flex-direction:column;overflow:hidden}
+.screen.active{display:flex}
+
+/* ===== 主菜单 ===== */
+#menu{justify-content:center;align-items:center;text-align:center;padding:2rem;
+  background:radial-gradient(ellipse at 50% 30%,#1e1b4b 0%,var(--bg) 70%)}
+.logo{margin-bottom:2rem}
+.logo h1{font-size:clamp(2.2rem,8vw,3.5rem);font-weight:700;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2}
+.logo p{font-size:clamp(.9rem,3vw,1.15rem);color:var(--muted);margin-top:.4rem;font-weight:400}
+.menu-btns{display:flex;flex-direction:column;gap:.75rem;width:min(280px,80vw)}
+
+/* ===== 按钮 ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+  padding:.8rem 1.8rem;border:none;border-radius:12px;font-family:inherit;font-size:1.05rem;
+  font-weight:600;cursor:pointer;transition:transform .12s,box-shadow .12s;outline:none}
+.btn:active{transform:scale(.94)}
+.btn:focus-visible{box-shadow:0 0 0 3px rgba(139,92,246,.5)}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;
+  box-shadow:0 4px 20px rgba(139,92,246,.35)}
+.btn-secondary{background:var(--surface2);color:var(--text)}
+.btn-sm{padding:.5rem 1rem;font-size:.9rem;border-radius:8px}
+.btn-icon{width:44px;height:44px;border-radius:10px;border:none;background:var(--surface2);
+  color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s}
+.btn-icon:active{background:var(--border)}
+.btn-icon.active{background:var(--primary);color:#fff}
+
+/* ===== 选择界面 ===== */
+#select{background:var(--bg)}
+.sel-header{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;
+  background:var(--surface);border-bottom:1px solid var(--border)}
+.sel-header h2{font-size:1.1rem;flex:1}
+.btn-back{width:36px;height:36px;border-radius:8px;border:none;background:var(--surface2);
+  color:var(--text);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border)}
+.tab{flex:1;padding:.65rem;border:none;background:none;color:var(--muted);font-family:inherit;
+  font-size:.95rem;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.puzzle-list{flex:1;overflow-y:auto;padding:.75rem;-webkit-overflow-scrolling:touch}
+.puzzle-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.65rem}
+.puzzle-card{background:var(--surface);border-radius:12px;padding:.7rem;cursor:pointer;
+  border:2px solid transparent;transition:border-color .2s,transform .12s;display:flex;flex-direction:column;gap:.4rem}
+.puzzle-card:active{transform:scale(.96)}
+.puzzle-card.completed{border-color:var(--success)}
+.puzzle-card.in-progress{border-color:var(--warn)}
+.pcard-preview{display:grid;gap:1px;border-radius:4px;overflow:hidden;background:var(--border);aspect-ratio:1}
+.pcard-preview .px{background:var(--cell-fill);border-radius:1px}
+.pcard-preview .pe{background:var(--surface)}
+.pcard-name{font-size:.9rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard-info{font-size:.75rem;color:var(--muted);display:flex;justify-content:space-between}
+.pcard-best{color:var(--success);font-weight:600}
+
+/* ===== 游戏界面 ===== */
+#game{background:var(--bg)}
+.game-hdr{display:flex;align-items:center;gap:.5rem;padding:.6rem .75rem;
+  background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.game-title{flex:1;text-align:center;font-size:.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.game-timer{font-size:.9rem;color:var(--primary-l);font-weight:600;font-variant-numeric:tabular-nums;min-width:3.5rem;text-align:center}
+.game-controls{display:flex;gap:.35rem}
+
+/* ===== 游戏棋盘 ===== */
+.board-wrap{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;
+  padding:.75rem;-webkit-overflow-scrolling:touch}
+.board{display:inline-grid;gap:0;background:var(--border);border:2px solid var(--border);border-radius:4px;
+  box-shadow:0 4px 24px rgba(0,0,0,.4)}
+.clue-cell{display:flex;align-items:center;justify-content:center;
+  background:var(--surface);color:var(--muted);font-size:var(--clue-fs,.7rem);
+  font-weight:600;padding:1px;min-width:var(--clue-sz,18px);min-height:var(--clue-sz,18px);
+  transition:color .3s}
+.clue-cell.done{color:var(--dim)}
+.clue-cell.cc{flex-direction:column}
+.clue-cell.cr{flex-direction:row;justify-content:flex-end;padding-right:4px}
+.cell{width:var(--cell-sz,36px);height:var(--cell-sz,36px);background:var(--cell-bg);
+  cursor:pointer;position:relative;transition:background .1s;touch-action:none}
+.cell:hover{background:var(--surface2)}
+.cell.filled{background:var(--cell-fill);animation:popIn .15s ease-out}
+.cell.filled:hover{background:var(--primary-l)}
+.cell.marked{background:var(--cell-mark)}
+.cell.marked::after{content:'✕';position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;font-size:calc(var(--cell-sz,36px)*.5);color:var(--dim);font-weight:400}
+.cell.err-flash{animation:errFlash .4s ease-out}
+.cell.thick-r{border-right:2px solid var(--text)!important}
+.cell.thick-b{border-bottom:2px solid var(--text)!important}
+.clue-cell.thick-r{border-right:2px solid var(--text)!important}
+.clue-cell.thick-b{border-bottom:2px solid var(--text)!important}
+@keyframes popIn{from{transform:scale(.75);opacity:.5}to{transform:scale(1);opacity:1}}
+@keyframes errFlash{0%,100%{background:var(--cell-fill)}20%,60%{background:var(--error)}40%,80%{background:var(--cell-fill)}}
+
+/* ===== 模态框 ===== */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;
+  justify-content:center;align-items:center;padding:1rem;backdrop-filter:blur(4px)}
+.modal.active{display:flex}
+.modal-box{background:var(--surface);border-radius:16px;padding:2rem;max-width:380px;
+  width:100%;text-align:center;animation:modalIn .25s ease-out}
+@keyframes modalIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-box h2{font-size:1.5rem;margin-bottom:.5rem}
+.modal-box p{color:var(--muted);margin-bottom:.3rem;font-size:.95rem}
+.modal-box .score-big{font-size:2.5rem;font-weight:700;color:var(--primary);
+  margin:.5rem 0;background:linear-gradient(135deg,var(--primary),var(--secondary));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.modal-btns{display:flex;flex-direction:column;gap:.6rem;margin-top:1.2rem}
+
+/* ===== 帮助内容 ===== */
+.help-content{text-align:left;max-height:60vh;overflow-y:auto;padding-right:.5rem}
+.help-content h3{color:var(--primary-l);margin:.8rem 0 .3rem;font-size:1rem}
+.help-content p,.help-content li{font-size:.88rem;color:var(--muted);line-height:1.5}
+.help-content ul{padding-left:1.2rem;margin:.3rem 0}
+.help-content li{margin:.2rem 0}
+
+/* ===== 提示条 ===== */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(100px);
+  background:var(--surface2);color:var(--text);padding:.6rem 1.2rem;border-radius:10px;
+  font-size:.9rem;font-weight:500;z-index:300;transition:transform .3s ease;pointer-events:none;
+  box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ===== 庆祝画布 ===== */
+#confetti{display:none;position:fixed;inset:0;z-index:200;pointer-events:none}
+
+/* ===== 响应式 ===== */
+@media(min-width:600px){
+  .puzzle-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:0s!important;transition-duration:0s!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 主菜单 ===== -->
+<div id="menu" class="screen active">
+  <div class="logo">
+    <h1>Pixel Logic</h1>
+    <p>Nonogram Puzzle</p>
+  </div>
+  <div class="menu-btns">
+    <button class="btn btn-primary" onclick="showScreen('select')">▶ Play</button>
+    <button class="btn btn-secondary" onclick="openModal('helpModal')">? How to Play</button>
+  </div>
+</div>
+
+<!-- ===== 谜题选择 ===== -->
+<div id="select" class="screen">
+  <div class="sel-header">
+    <button class="btn-back" onclick="showScreen('menu')">←</button>
+    <h2>Select Puzzle</h2>
+  </div>
+  <div class="tabs" id="diffTabs"></div>
+  <div class="puzzle-list">
+    <div class="puzzle-grid" id="puzzleGrid"></div>
+  </div>
+</div>
+
+<!-- ===== 游戏界面 ===== -->
+<div id="game" class="screen">
+  <div class="game-hdr">
+    <button class="btn-back" onclick="confirmBack()">←</button>
+    <div class="game-title" id="gTitle">-</div>
+    <div class="game-timer" id="gTimer">00:00</div>
+    <div class="game-controls">
+      <button class="btn-icon" id="btnHint" onclick="useHint()" title="Hint">💡</button>
+      <button class="btn-icon" id="btnErr" onclick="toggleErr()" title="Error check">🚫</button>
+      <button class="btn-icon" id="btnReset" onclick="confirmReset()" title="Reset">↺</button>
+    </div>
+  </div>
+  <div class="board-wrap" id="boardWrap">
+    <div class="board" id="board"></div>
+  </div>
+</div>
+
+<!-- ===== 胜利模态框 ===== -->
+<div id="victoryModal" class="modal">
+  <div class="modal-box">
+    <h2>🎉 Puzzle Complete!</h2>
+    <p id="vTime">Time: 00:00</p>
+    <p id="vHints">Hints used: 0</p>
+    <div class="score-big" id="vScore">1000</div>
+    <div class="modal-btns">
+      <button class="btn btn-primary" id="btnNext" onclick="nextPuzzle()">Next Puzzle →</button>
+      <button class="btn btn-secondary" onclick="closeModal('victoryModal');showScreen('select')">Puzzle List</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 帮助模态框 ===== -->
+<div id="helpModal" class="modal">
+  <div class="modal-box">
+    <h2>How to Play</h2>
+    <div class="help-content">
+      <h3>What is Nonogram?</h3>
+      <p>Nonogram (also known as Picross or Griddler) is a logic puzzle where you fill in cells on a grid based on number clues to reveal a hidden picture.</p>
+      <h3>Controls</h3>
+      <ul>
+        <li><b>Left click / Tap</b> — Fill a cell</li>
+        <li><b>Right click / Long press</b> — Mark X (cell is empty)</li>
+        <li><b>Drag</b> — Fill or mark multiple cells in a row/column</li>
+      </ul>
+      <h3>Reading the Clues</h3>
+      <p>Numbers next to each row and above each column indicate groups of consecutive filled cells. For example, "3 2" means there is a group of 3 filled cells followed by a group of 2, with at least one empty cell between them.</p>
+      <h3>Tips</h3>
+      <ul>
+        <li>Completed rows/columns have their clues grayed out</li>
+        <li>Use hints sparingly — each costs 100 points!</li>
+        <li>Enable error checking for a gentler experience</li>
+        <li>Your progress is saved automatically</li>
+      </ul>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="closeModal('helpModal')">Got it!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 确认模态框 ===== -->
+<div id="confirmModal" class="modal">
+  <div class="modal-box">
+    <h2 id="confirmTitle">Are you sure?</h2>
+    <p id="confirmMsg">Your progress will be lost.</p>
+    <div class="modal-btns">
+      <button class="btn btn-primary" id="confirmYes">Yes</button>
+      <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 提示条 ===== -->
+<div class="toast" id="toast"></div>
+<!-- ===== 庆祝画布 ===== -->
+<canvas id="confetti"></canvas>
+
+<script>
+/* ======================================================================
+   Pixel Logic — Nonogram 浏览器游戏
+   所有逻辑、样式、数据均在此单文件中
+   ====================================================================== */
+
+// ===== 谜题数据库 =====
+// n=名称, d=难度(0简单5×5, 1中等10×10, 2困难15×15), g=网格行('#'=填充,'.'=空)
+const PUZZLES = [
+  // ———— 简单 5×5 ————
+  {n:'Heart',    d:0,g:['.#.#.','#####','#####','.###.','..#..']},
+  {n:'Star',     d:0,g:['..#..','.###.','#####','.###.','.#.#.']},
+  {n:'Smiley',   d:0,g:['.###.','#.#.#','#...#','#.###','.###.']},
+  {n:'House',    d:0,g:['..#..','.###.','#####','#...#','#####']},
+  {n:'Tree',     d:0,g:['.#.#.','.###.','#####','..#..','..#..']},
+  {n:'Fish',     d:0,g:['..##.','.####','##.##','####.','..##.']},
+  {n:'Cup',      d:0,g:['.###.','#####','#####','..#..','.###.']},
+  {n:'Umbrella', d:0,g:['..###','.####','#####','..#..','..#..']},
+  {n:'Boat',     d:0,g:['..#..','..#..','#####','.###.','#...#']},
+  {n:'Diamond',  d:0,g:['..#..','#...#','.###.','#...#','..#..']},
+  // ———— 中等 10×10 ————
+  {n:'Mushroom', d:1,g:['...####...','..######..','.########.','##########',
+                        '##.####.##','##.####.##','##.####.##','....##....',
+                        '...####...','..######..']},
+  {n:'Butterfly',d:1,g:['.#......#.','##......##','###....###','##########',
+                        '.########.','.########.','##########','###....###',
+                        '##......##','.#......#.']},
+  {n:'Castle',   d:1,g:['.....#....','....###...','...#####..','..#######.',
+                        '##########','#.######.#','#.######.#','#.##..##.#',
+                        '#.##..##.#','##########']},
+  {n:'Flower',   d:1,g:['....##....','...####...','....##....','..######..',
+                        '.########.','..######..','....##....','....##....',
+                        '....##....','...####...']},
+  {n:'Crown',    d:1,g:['#...#...#.','#...#...#.','##########','##########',
+                        '.########.','..######..','..######..','..######..',
+                        '..######..','##########']},
+  {n:'Skull',    d:1,g:['..######..','.########.','.########.','##.####.##',
+                        '##.####.##','.########.','..#.##.#..','..######..',
+                        '.########.','..######..']},
+  {n:'Cat',      d:1,g:['#........#','##......##','##.####.##','##########',
+                        '##########','##.####.##','##.#..#.##','##.####.##',
+                        '..#....#..','..######..']},
+  {n:'Goblet',   d:1,g:['..######..','.########.','.########.','.########.',
+                        '.########.','##########','##########','..######..',
+                        '.########.','##########']},
+  {n:'Anchor',   d:1,g:['....##....','....##....','....##....','....##....',
+                        '.########.','##.####.##','.#..##..#.','....##....',
+                        '...####...','..######..']},
+  {n:'Rocket',   d:1,g:['....##....','...####...','..######..','..######..',
+                        '.########.','.########.','##########','##.####.##',
+                        '#..####..#','..##..##..']},
+  // ———— 困难 15×15 ————
+  {n:'Castle',   d:2,g:['#.....#.#.....#','##....#.#....##','##....###....##',
+                        '###############','#.##.#####.##.#','#.##.#####.##.#',
+                        '#.##.#####.##.#','#.##.#####.##.#','#.##.#####.##.#',
+                        '#.##.#####.##.#','#.##.#####.##.#','###############',
+                        '#.............#','#.............#','###############']},
+  {n:'Rocket',   d:2,g:['.......#.......','......###......','.....#####.....',
+                        '....#######....','...#########...','..###########..',
+                        '.#############.','###############','###############',
+                        '##.#########.##','#...#.....#...#','#...#.....#...#',
+                        '..###.....###..','..##.......##..','.###.......###.']},
+  {n:'Xmas Tree',d:2,g:['.......#.......','......###......','.....#####.....',
+                        '....#######....','...#########...','..###########..',
+                        '.#############.','###############','.......#.......',
+                        '.......#.......','.......#.......','......###......',
+                        '.#############.','.#############.','..###########..']},
+  {n:'Dragon',   d:2,g:['..###.....###..','..##.......##..','.###.......###.',
+                        '.####.....####.','.#############.','#.#########.#.',
+                        '.#.#.#####.#.#.','.#..#.....#..#.','.#...#####...#.',
+                        '..###.###.###..','...##.###.##...','...#########...',
+                        '....#######....','.....#####.....','......###......']},
+  {n:'Sailboat', d:2,g:['.......#.......','......##.......','.....###.......',
+                        '....####.......','...#####.......','....####.......',
+                        '.....###.......','......##.......','.......#.......',
+                        '###############','.#############.','..###########..',
+                        '...#########...','..###########..','###############']},
+  {n:'Guitar',   d:2,g:['.......#.......','......###......','.....#####.....',
+                        '....#######....','...#########...','..###########..',
+                        '.#############.','###############','.##.#######.##.',
+                        '.##.#######.##.','.##.#######.##.','.##.#######.##.',
+                        '..###########..','...#########...','....#######....']},
+  {n:'Robot',    d:2,g:['..###########..','.#############.','.#############.',
+                        '.##.#####.##.#.','.##.#####.##.#.','.#############.',
+                        '..###########..','....#######....','..###########..',
+                        '.#############.','.############.','.#.#########.#.',
+                        '.#.#.#####.#.#.','.#..#...#..#.#.','....#.###.#....']},
+  {n:'Bird',     d:2,g:['#..............','##.............','###............',
+                        '####...........','###############','..###########..',
+                        '...#########...','....##.##.##...','....##.##.##...',
+                        '...#########...','..###########..','.#############.',
+                        '###############','......###......','.....#####.....']},
+  {n:'Anchor',   d:2,g:['.......#.......','.......#.......','.......#.......',
+                        '.......#.......','.......#.......','..###########..',
+                        '..###########..','.#.#########.#.','.#..#######..#.',
+                        '.#...#####...#.','.#...#####...#.','.......#.......',
+                        '......###......','.....#####.....','....#######....']},
+  {n:'Lighthouse',d:2,g:['.......#.......','......###......','......###......',
+                        '.....#####.....','.....#####.....','....#######....',
+                        '....#######....','...#########...','..###########..',
+                        '.#############.','###############','###############',
+                        '###############','###############','###############']}
+];
+
+// ===== 难度配置 =====
+const DIFF_NAMES = ['Easy 5×5','Medium 10×10','Hard 15×15'];
+const DIFF_SIZES = [5, 10, 15];
+const SAVE_KEY = 'pixel-logic-save';
+const REC_KEY  = 'pixel-logic-records';
+
+// ===== 游戏状态 =====
+let G = {
+  diff: 0,           // 当前难度
+  idx: 0,            // 当前谜题索引
+  size: 5,           // 棋盘尺寸
+  sol: [],           // 解答网格
+  grid: [],          // 玩家网格 (0=空, 1=填充, 2=标记X)
+  rowClues: [],      // 行提示
+  colClues: [],      // 列提示
+  doneR: new Set(),  // 已完成行
+  doneC: new Set(),  // 已完成列
+  timer: 0,          // 已用秒数
+  tInterval: null,   // 计时器句柄
+  hints: 3,          // 剩余提示次数
+  hintsUsed: 0,      // 已用提示次数
+  errMode: false,    // 错误提示模式
+  dragging: false,   // 拖拽中
+  dragAct: null,     // 拖拽动作: 'fill'|'mark'|'unfill'|'unmark'
+  dragVisited: null, // Set: 已处理的单元格
+  longTimer: null,   // 长按计时器
+  longFired: false,  // 长按是否触发
+  won: false,        // 是否已胜利
+  cellEls: [],       // DOM 引用: cellEls[r][c]
+  rowClueEls: [],    // DOM 引用: rowClueEls[r]
+  colClueEls: [],    // DOM 引用: colClueEls[c]
+};
+
+// ===== 工具函数 =====
+
+/** 从一行数据中提取提示数字 */
+function clues(line) {
+  const c = []; let n = 0;
+  for (const v of line) { if (v === 1) n++; else if (n) { c.push(n); n = 0; } }
+  if (n) c.push(n);
+  return c.length ? c : [0];
+}
+
+/** 数组比较 */
+function eq(a, b) { return a.length === b.length && a.every((v, i) => v === b[i]); }
+
+/** 格式化时间 mm:ss */
+function fmtTime(s) {
+  const m = Math.floor(s / 60);
+  return String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+}
+
+// ===== 存档系统 =====
+
+function loadRecords() {
+  try { return JSON.parse(localStorage.getItem(REC_KEY)) || {}; } catch { return {}; }
+}
+function saveRecord(key, time, hintsUsed) {
+  const recs = loadRecords();
+  if (!recs[key] || time < recs[key].time) {
+    recs[key] = { time, hintsUsed, date: Date.now() };
+    localStorage.setItem(REC_KEY, JSON.stringify(recs));
+  }
+}
+function loadSave() {
+  try { return JSON.parse(localStorage.getItem(SAVE_KEY)); } catch { return null; }
+}
+function saveProg() {
+  if (!G.sol.length) return;
+  localStorage.setItem(SAVE_KEY, JSON.stringify({
+    diff: G.diff, idx: G.idx, grid: G.grid, timer: G.timer,
+    hints: G.hints, hintsUsed: G.hintsUsed, errMode: G.errMode
+  }));
+}
+function clearSave() { localStorage.removeItem(SAVE_KEY); }
+
+// ===== 渲染: 谜题选择列表 =====
+
+function renderSelect() {
+  // 难度标签
+  const tabs = document.getElementById('diffTabs');
+  tabs.innerHTML = DIFF_NAMES.map((n, i) =>
+    `<button class="tab${i === G.diff ? ' active' : ''}" onclick="switchDiff(${i})">${n}</button>`
+  ).join('');
+
+  // 谜题卡片
+  const recs = loadRecords();
+  const save = loadSave();
+  const puzzles = PUZZLES.filter(p => p.d === G.diff);
+  const grid = document.getElementById('puzzleGrid');
+
+  grid.innerHTML = puzzles.map((p, i) => {
+    const key = `${G.diff}-${i}`;
+    const rec = recs[key];
+    const sz = DIFF_SIZES[G.diff];
+    // 生成迷你预览
+    let preview = '';
+    for (let r = 0; r < p.g.length; r++) {
+      for (let c = 0; c < sz; c++) {
+        preview += `<div class="${p.g[r][c] === '#' ? 'px' : 'pe'}"></div>`;
+      }
+    }
+    const done = rec ? 'completed' : (save && save.diff === G.diff && save.idx === i ? ' in-progress' : '');
+    const best = rec ? `<span class="pcard-best">${fmtTime(rec.time)}</span>` : '<span></span>';
+    return `<div class="puzzle-card ${done}" onclick="startPuzzle(${G.diff},${i})">
+      <div class="pcard-preview" style="grid-template-columns:repeat(${sz},1fr)">${preview}</div>
+      <div class="pcard-name">${p.n}</div>
+      <div class="pcard-info"><span>${sz}×${sz}</span>${best}</div>
+    </div>`;
+  }).join('');
+}
+
+function switchDiff(d) { G.diff = d; renderSelect(); }
+
+// ===== 渲染: 游戏棋盘 =====
+
+function renderBoard() {
+  const sz = G.size;
+  const maxRC = Math.max(...G.rowClues.map(c => c.length));
+  const maxCC = Math.max(...G.colClues.map(c => c.length));
+
+  // 计算格子尺寸
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const hdrH = 56;
+  const pad = 24;
+  const clueW = maxRC * 22;
+  const clueH = maxCC * 18;
+  const availW = Math.min(vw - pad, 560) - clueW;
+  const availH = vh - hdrH - pad - clueH;
+  const cellSz = Math.max(18, Math.min(44, Math.floor(Math.min(availW / sz, availH / sz))));
+  const clueSz = Math.max(14, Math.min(20, Math.floor(cellSz * 0.55)));
+  const clueFs = Math.max(10, clueSz - 4);
+
+  const board = document.getElementById('board');
+  board.style.setProperty('--cell-sz', cellSz + 'px');
+  board.style.setProperty('--clue-sz', clueSz + 'px');
+  board.style.setProperty('--clue-fs', clueFs + 'px');
+  board.style.gridTemplateColumns = `repeat(${maxRC}, ${clueSz}px) repeat(${sz}, ${cellSz}px)`;
+  board.style.gridTemplateRows = `repeat(${maxCC}, ${clueSz}px) repeat(${sz}, ${cellSz}px)`;
+
+  let html = '';
+
+  // 角落区域
+  html += `<div style="grid-column:1/${maxRC + 1};grid-row:1/${maxCC + 1};background:var(--surface)"></div>`;
+
+  // 列提示
+  G.colClueEls = [];
+  for (let c = 0; c < sz; c++) {
+    const cl = G.colClues[c];
+    const gc = maxRC + 1 + c; // grid column
+    const span = maxCC;
+    html += `<div class="clue-cell cc" style="grid-column:${gc};grid-row:1/${span + 1}" data-cc="${c}">`;
+    // 底部对齐: 先填空格，再填数字
+    for (let i = 0; i < maxCC - cl.length; i++) html += '<span></span>';
+    for (const n of cl) html += `<span>${n}</span>`;
+    html += '</div>';
+    // 5格粗线
+    if (c > 0 && c % 5 === 0) {
+      // 在列提示底部添加粗线标记
+    }
+  }
+
+  // 行提示 + 游戏格子
+  G.rowClueEls = [];
+  G.cellEls = [];
+  for (let r = 0; r < sz; r++) {
+    const gr = maxCC + 1 + r; // grid row
+    // 行提示
+    const cl = G.rowClues[r];
+    html += `<div class="clue-cell cr" style="grid-column:1/${maxRC + 1};grid-row:${gr}" data-rc="${r}">`;
+    for (let i = 0; i < maxRC - cl.length; i++) html += '<span></span>';
+    for (const n of cl) html += `<span>${n}</span>`;
+    html += '</div>';
+
+    G.rowClueEls.push(null);
+    G.cellEls.push([]);
+
+    for (let c = 0; c < sz; c++) {
+      const gc = maxRC + 1 + c;
+      let cls = 'cell';
+      if (c > 0 && c % 5 === 0) cls += ' thick-r';
+      if (r > 0 && r % 5 === 0) cls += ' thick-b';
+      const v = G.grid[r][c];
+      if (v === 1) cls += ' filled';
+      else if (v === 2) cls += ' marked';
+      html += `<div class="${cls}" data-r="${r}" data-c="${c}" style="grid-column:${gc};grid-row:${gr}"></div>`;
+    }
+  }
+
+  board.innerHTML = html;
+
+  // 缓存 DOM 引用
+  for (let r = 0; r < sz; r++) {
+    G.rowClueEls[r] = board.querySelector(`[data-rc="${r}"]`);
+    G.cellEls[r] = [];
+    for (let c = 0; c < sz; c++) {
+      G.cellEls[r][c] = board.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+    }
+  }
+  G.colClueEls = [];
+  for (let c = 0; c < sz; c++) {
+    G.colClueEls.push(board.querySelector(`[data-cc="${c}"]`));
+  }
+
+  updateClueHighlight();
+}
+
+// ===== 提示高亮 =====
+
+function updateClueHighlight() {
+  const sz = G.size;
+  for (let r = 0; r < sz; r++) {
+    const done = isLineSolved('row', r);
+    G.rowClueEls[r]?.classList.toggle('done', done);
+    if (done) G.doneR.add(r); else G.doneR.delete(r);
+  }
+  for (let c = 0; c < sz; c++) {
+    const done = isLineSolved('col', c);
+    G.colClueEls[c]?.classList.toggle('done', done);
+    if (done) G.doneC.add(c); else G.doneC.delete(c);
+  }
+}
+
+/** 检查某行/列是否已正确完成 */
+function isLineSolved(type, idx) {
+  const sz = G.size;
+  for (let i = 0; i < sz; i++) {
+    const filled = type === 'row' ? G.grid[idx][i] === 1 : G.grid[i][idx] === 1;
+    const shouldFill = type === 'row' ? G.sol[idx][i] === 1 : G.sol[i][idx] === 1;
+    if (filled !== shouldFill) return false;
+  }
+  return true;
+}
+
+// ===== 输入处理 =====
+
+function setupInput() {
+  const board = document.getElementById('board');
+
+  // —— 鼠标事件 ——
+  board.addEventListener('mousedown', e => {
+    if (G.won) return;
+    const cell = e.target.closest('.cell');
+    if (!cell) return;
+    e.preventDefault();
+    const r = +cell.dataset.r, c = +cell.dataset.c;
+    const isRight = e.button === 2;
+    startAction(r, c, isRight ? 'mark' : 'fill');
+  });
+
+  board.addEventListener('contextmenu', e => e.preventDefault());
+
+  board.addEventListener('mouseover', e => {
+    if (!G.dragging || G.won) return;
+    const cell = e.target.closest('.cell');
+    if (!cell) return;
+    doAction(+cell.dataset.r, +cell.dataset.c);
+  });
+
+  document.addEventListener('mouseup', () => { endAction(); });
+
+  // —— 触摸事件 ——
+  board.addEventListener('touchstart', e => {
+    if (G.won) return;
+    const touch = e.touches[0];
+    const cell = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.cell');
+    if (!cell) return;
+    e.preventDefault();
+    const r = +cell.dataset.r, c = +cell.dataset.c;
+    // 长按检测: 400ms 后切换为标记模式
+    G.longFired = false;
+    G.longTimer = setTimeout(() => {
+      G.longFired = true;
+      // 取消之前的 fill 操作，改为 mark
+      if (G.dragging && G.dragAct === 'fill') {
+        // 撤销 drag 中的 fill 操作
+        undoDrag();
+      }
+      startAction(r, c, 'mark');
+      showToast('Mark mode');
+    }, 400);
+    // 先执行 fill
+    startAction(r, c, 'fill');
+  }, { passive: false });
+
+  board.addEventListener('touchmove', e => {
+    if (G.won) return;
+    e.preventDefault();
+    if (G.longTimer) { clearTimeout(G.longTimer); G.longTimer = null; }
+    if (!G.dragging) return;
+    const touch = e.touches[0];
+    const cell = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.cell');
+    if (!cell) return;
+    doAction(+cell.dataset.r, +cell.dataset.c);
+  }, { passive: false });
+
+  board.addEventListener('touchend', e => {
+    if (G.longTimer) { clearTimeout(G.longTimer); G.longTimer = null; }
+    endAction();
+  });
+
+  board.addEventListener('touchcancel', () => {
+    if (G.longTimer) { clearTimeout(G.longTimer); G.longTimer = null; }
+    endAction();
+  });
+}
+
+/** 开始一个拖拽动作 */
+function startAction(r, c, type) {
+  G.dragging = true;
+  G.dragVisited = new Set();
+  G.dragVisited.add(`${r},${c}`);
+
+  const cur = G.grid[r][c];
+
+  if (type === 'mark') {
+    // 标记/取消标记
+    if (cur === 2) {
+      G.dragAct = 'unmark';
+      G.grid[r][c] = 0;
+      setCellVisual(r, c, 0);
+    } else if (cur === 0) {
+      G.dragAct = 'mark';
+      G.grid[r][c] = 2;
+      setCellVisual(r, c, 2);
+    }
+    // 如果格子已填充则不操作
+  } else {
+    // 填充/取消填充
+    if (cur === 1) {
+      G.dragAct = 'unfill';
+      G.grid[r][c] = 0;
+      setCellVisual(r, c, 0);
+    } else {
+      G.dragAct = 'fill';
+      applyFill(r, c);
+    }
+  }
+}
+
+/** 执行拖拽动作 */
+function doAction(r, c) {
+  const key = `${r},${c}`;
+  if (G.dragVisited.has(key)) return;
+  G.dragVisited.add(key);
+
+  if (G.dragAct === 'fill') {
+    applyFill(r, c);
+  } else if (G.dragAct === 'unfill') {
+    G.grid[r][c] = 0;
+    setCellVisual(r, c, 0);
+  } else if (G.dragAct === 'mark') {
+    if (G.grid[r][c] === 0) { G.grid[r][c] = 2; setCellVisual(r, c, 2); }
+  } else if (G.dragAct === 'unmark') {
+    if (G.grid[r][c] === 2) { G.grid[r][c] = 0; setCellVisual(r, c, 0); }
+  }
+}
+
+/** 填充格子（含错误检测） */
+function applyFill(r, c) {
+  if (G.grid[r][c] === 1) return;
+  G.grid[r][c] = 1;
+  setCellVisual(r, c, 1);
+
+  // 错误检测
+  if (G.errMode && G.sol[r][c] !== 1) {
+    const el = G.cellEls[r][c];
+    el.classList.add('err-flash');
+    setTimeout(() => el.classList.remove('err-flash'), 450);
+  }
+}
+
+/** 撤销拖拽中的 fill 操作 */
+function undoDrag() {
+  if (!G.dragVisited) return;
+  for (const key of G.dragVisited) {
+    const [r, c] = key.split(',').map(Number);
+    if (G.dragAct === 'fill' && G.sol[r]?.[c] !== 1) {
+      G.grid[r][c] = 0;
+      setCellVisual(r, c, 0);
+    }
+  }
+  G.dragging = false;
+  G.dragVisited = null;
+  updateClueHighlight();
+}
+
+/** 结束拖拽 */
+function endAction() {
+  if (!G.dragging) return;
+  G.dragging = false;
+  G.dragVisited = null;
+  updateClueHighlight();
+  checkWin();
+  saveProg();
+}
+
+/** 更新单元格视觉 */
+function setCellVisual(r, c, val) {
+  const el = G.cellEls[r][c];
+  if (!el) return;
+  el.classList.remove('filled', 'marked');
+  if (val === 1) el.classList.add('filled');
+  else if (val === 2) el.classList.add('marked');
+}
+
+// ===== 游戏逻辑 =====
+
+/** 开始谜题 */
+function startPuzzle(diff, idx) {
+  const puzzles = PUZZLES.filter(p => p.d === diff);
+  const p = puzzles[idx];
+  G.diff = diff;
+  G.idx = idx;
+  G.size = DIFF_SIZES[diff];
+  G.won = false;
+  G.doneR = new Set();
+  G.doneC = new Set();
+  G.hintsUsed = 0;
+
+  // 解析解答
+  G.sol = p.g.map(row => [...row].map(ch => ch === '#' ? 1 : 0));
+
+  // 计算提示
+  G.rowClues = G.sol.map(row => clues(row));
+  G.colClues = [];
+  for (let c = 0; c < G.size; c++) {
+    const col = G.sol.map(row => row[c]);
+    G.colClues.push(clues(col));
+  }
+
+  // 尝试加载存档
+  const save = loadSave();
+  if (save && save.diff === diff && save.idx === idx && save.grid) {
+    G.grid = save.grid;
+    G.timer = save.timer || 0;
+    G.hints = save.hints ?? 3;
+    G.hintsUsed = save.hintsUsed || 0;
+    G.errMode = !!save.errMode;
+  } else {
+    G.grid = Array.from({ length: G.size }, () => Array(G.size).fill(0));
+    G.timer = 0;
+    G.hints = 3;
+    G.errMode = false;
+  }
+
+  // 更新 UI
+  document.getElementById('gTitle').textContent = p.n;
+  document.getElementById('btnErr').classList.toggle('active', G.errMode);
+  updateHintBtn();
+  renderBoard();
+  startTimer();
+  showScreen('game');
+  saveProg();
+}
+
+/** 计时器 */
+function startTimer() {
+  stopTimer();
+  G.tInterval = setInterval(() => {
+    G.timer++;
+    document.getElementById('gTimer').textContent = fmtTime(G.timer);
+  }, 1000);
+  document.getElementById('gTimer').textContent = fmtTime(G.timer);
+}
+function stopTimer() { if (G.tInterval) { clearInterval(G.tInterval); G.tInterval = null; } }
+
+/** 检查胜利 */
+function checkWin() {
+  for (let r = 0; r < G.size; r++) {
+    for (let c = 0; c < G.size; c++) {
+      if (G.sol[r][c] === 1 && G.grid[r][c] !== 1) return;
+      if (G.sol[r][c] === 0 && G.grid[r][c] === 1) return;
+    }
+  }
+  // 胜利！
+  G.won = true;
+  stopTimer();
+  clearSave();
+
+  // 保存记录
+  const key = `${G.diff}-${G.idx}`;
+  saveRecord(key, G.timer, G.hintsUsed);
+
+  // 计算分数
+  const baseScore = 1000;
+  const timePenalty = Math.min(G.timer, 900); // 最多扣 900
+  const hintPenalty = G.hintsUsed * 100;
+  const score = Math.max(100, baseScore - timePenalty - hintPenalty);
+
+  // 延迟显示胜利
+  setTimeout(() => {
+    document.getElementById('vTime').textContent = 'Time: ' + fmtTime(G.timer);
+    document.getElementById('vHints').textContent = 'Hints used: ' + G.hintsUsed;
+    document.getElementById('vScore').textContent = score;
+
+    // 判断是否还有下一个谜题
+    const puzzles = PUZZLES.filter(p => p.d === G.diff);
+    document.getElementById('btnNext').style.display =
+      G.idx < puzzles.length - 1 ? '' : 'none';
+
+    openModal('victoryModal');
+    showCelebration();
+  }, 300);
+}
+
+/** 使用提示 */
+function useHint() {
+  if (G.won || G.hints <= 0) return;
+  // 找到一个应该填充但还未填充的格子
+  const candidates = [];
+  for (let r = 0; r < G.size; r++) {
+    for (let c = 0; c < G.size; c++) {
+      if (G.sol[r][c] === 1 && G.grid[r][c] !== 1) candidates.push([r, c]);
+    }
+  }
+  if (!candidates.length) {
+    showToast('No hints needed!');
+    return;
+  }
+  const [r, c] = candidates[Math.floor(Math.random() * candidates.length)];
+  G.grid[r][c] = 1;
+  setCellVisual(r, c, 1);
+  G.hints--;
+  G.hintsUsed++;
+  updateHintBtn();
+  updateClueHighlight();
+  checkWin();
+  saveProg();
+  showToast('Hint used! (-100 pts)');
+}
+
+function updateHintBtn() {
+  document.getElementById('btnHint').textContent = '💡 ' + G.hints;
+  document.getElementById('btnHint').style.opacity = G.hints > 0 ? 1 : 0.4;
+}
+
+/** 切换错误检测模式 */
+function toggleErr() {
+  G.errMode = !G.errMode;
+  document.getElementById('btnErr').classList.toggle('active', G.errMode);
+  saveProg();
+  showToast(G.errMode ? 'Error check ON' : 'Error check OFF');
+}
+
+/** 确认重置 */
+function confirmReset() {
+  document.getElementById('confirmTitle').textContent = 'Reset Puzzle?';
+  document.getElementById('confirmMsg').textContent = 'All progress on this puzzle will be lost.';
+  document.getElementById('confirmYes').onclick = () => {
+    closeModal('confirmModal');
+    resetPuzzle();
+  };
+  openModal('confirmModal');
+}
+
+function resetPuzzle() {
+  G.grid = Array.from({ length: G.size }, () => Array(G.size).fill(0));
+  G.timer = 0;
+  G.hints = 3;
+  G.hintsUsed = 0;
+  G.won = false;
+  G.doneR = new Set();
+  G.doneC = new Set();
+  updateHintBtn();
+  renderBoard();
+  startTimer();
+  saveProg();
+}
+
+/** 确认返回 */
+function confirmBack() {
+  document.getElementById('confirmTitle').textContent = 'Leave Puzzle?';
+  document.getElementById('confirmMsg').textContent = 'Your progress is saved automatically.';
+  document.getElementById('confirmYes').onclick = () => {
+    closeModal('confirmModal');
+    stopTimer();
+    saveProg();
+    showScreen('select');
+  };
+  openModal('confirmModal');
+}
+
+/** 下一关 */
+function nextPuzzle() {
+  closeModal('victoryModal');
+  const puzzles = PUZZLES.filter(p => p.d === G.diff);
+  if (G.idx < puzzles.length - 1) {
+    startPuzzle(G.diff, G.idx + 1);
+  } else {
+    showScreen('select');
+  }
+}
+
+// ===== UI 管理 =====
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'select') renderSelect();
+}
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+// 点击模态框背景关闭
+document.querySelectorAll('.modal').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); });
+});
+
+// ===== 提示条 =====
+
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+// ===== 庆祝特效: 五彩纸屑 =====
+
+function showCelebration() {
+  const cvs = document.getElementById('confetti');
+  cvs.style.display = 'block';
+  const ctx = cvs.getContext('2d');
+  cvs.width = window.innerWidth;
+  cvs.height = window.innerHeight;
+
+  const colors = ['#8b5cf6','#ec4899','#10b981','#f59e0b','#ef4444','#3b82f6','#f97316'];
+  const particles = [];
+
+  // 生成粒子
+  for (let i = 0; i < 180; i++) {
+    particles.push({
+      x: Math.random() * cvs.width,
+      y: Math.random() * cvs.height * -1.2 - 20,
+      vx: (Math.random() - 0.5) * 8,
+      vy: Math.random() * 3 + 1.5,
+      w: Math.random() * 10 + 4,
+      h: Math.random() * 6 + 2,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * 360,
+      rotV: (Math.random() - 0.5) * 12,
+      alpha: 1,
+      shape: Math.random() > 0.5 ? 'rect' : 'circle'
+    });
+  }
+
+  let animId = null;
+  function animate() {
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    let alive = false;
+
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.08; // 重力
+      p.vx *= 0.99; // 空气阻力
+      p.rot += p.rotV;
+      p.alpha -= 0.002;
+
+      if (p.alpha > 0 && p.y < cvs.height + 50) {
+        alive = true;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot * Math.PI / 180);
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fillStyle = p.color;
+        if (p.shape === 'rect') {
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.w / 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    if (alive) {
+      animId = requestAnimationFrame(animate);
+    } else {
+      cvs.style.display = 'none';
+      if (animId) cancelAnimationFrame(animId);
+    }
+  }
+
+  // 尊重用户的减少动画偏好
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    cvs.style.display = 'none';
+  } else {
+    animate();
+  }
+}
+
+// ===== 窗口大小变化时重新渲染棋盘 =====
+
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (document.getElementById('game').classList.contains('active') && G.sol.length) {
+      renderBoard();
+    }
+  }, 200);
+});
+
+// ===== 清理: 页面卸载时停止计时器 =====
+window.addEventListener('beforeunload', () => {
+  stopTimer();
+  if (G.sol.length && !G.won) saveProg();
+});
+
+// ===== 初始化 =====
+
+(function init() {
+  setupInput();
+  renderSelect();
+})();
+</script>
+</body>
+</html>

@@ -57,7 +57,10 @@ const GAMES = [
   {name:"Cloud & Sheep",emoji:"☁️",cat:"idle",tags:["Simulation","Care","Cute"],url:"/cloud-sheep/",desc:"Care for adorable sheep! Drag clouds to make rain, grow grass, and keep your fluffy flock happy!",isNew:true,status:"live"},
   {name:"Magic Sort",emoji:"🧪",cat:"puzzle",tags:["Puzzle","Sort","Water","Casual"],url:"/magic-sort/",desc:"Sort colored water into matching bottles! A relaxing color sorting puzzle with many levels.",isNew:true,status:"live"},
   {name:"T-Rex Dino Runner",emoji:"🦖",cat:"arcade",tags:["Arcade","Runner","Retro","Dinosaur"],url:"/t-rex/",desc:"The classic Chrome dinosaur game! Jump over cacti, dodge pterodactyls, beat your high score. No download needed!",isNew:false,status:"live"},
-  {name:"Arrow Escape",emoji:"🚀",cat:"puzzle",tags:["Puzzle","Space","Logic","Arrow"],url:"/arrow-escape/",desc:"Launch spaceships in the right order! A cosmic logic puzzle with 20+ levels. Only ships with a clear flight path can escape!",isNew:true,status:"live"}
+  {name:"Arrow Escape",emoji:"🚀",cat:"puzzle",tags:["Puzzle","Space","Logic","Arrow"],url:"/arrow-escape/",desc:"Launch spaceships in the right order! A cosmic logic puzzle with 20+ levels. Only ships with a clear flight path can escape!",isNew:true,status:"live"},
+  {name:"Tile Dynasty",emoji:"🀄",cat:"puzzle",tags:["Puzzle","Mahjong","Tile","Matching","Strategy"],url:"/tile-dynasty/",desc:"Classic Mahjong Solitaire! Match free tiles to clear the board across 24 levels. Hint & shuffle included!",isNew:true,status:"live"},
+  {name:"Bubble Pop",emoji:"🫧",cat:"puzzle",tags:["Puzzle","Bubble","Shooter","Arcade","Casual"],url:"/bubble-pop/",desc:"Aim and shoot colorful bubbles! Match 3+ to pop them and clear 25 levels of bubble-shooting fun!",isNew:true,status:"live"},
+  {name:"Pixel Logic",emoji:"🧩",cat:"puzzle",tags:["Puzzle","Nonogram","Logic","Grid","Brain"],url:"/pixel-logic/",desc:"Solve Nonogram logic puzzles to reveal hidden pixel art! 30+ handcrafted puzzles in 3 difficulty levels.",isNew:true,status:"live"}
 ];
 
 /**
