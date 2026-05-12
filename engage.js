@@ -262,10 +262,14 @@
     // On tools site: show games link for frequent visitors
     if (isToolsSite() && visits >= 3) {
       var body = document.body;
+      // Check if sticky-ad banner already exists to avoid overlap
+      if (document.getElementById('gz-tools-sticky')) return;
       var banner = document.createElement('div');
       banner.style.cssText = 'text-align:center;padding:10px;background:#0a0a1a;border-top:1px solid #2a2a4a;position:fixed;bottom:0;left:0;right:0;z-index:9997';
       banner.innerHTML = '<a href="https://gamezipper.com/?utm_source=tools&utm_medium=games&utm_campaign=cross-promote" style="color:#4ecdc4;text-decoration:none;font-size:13px">🎮 Take a break? Play free games on GameZipper →</a>';
       body.appendChild(banner);
+      // Auto-remove after 20s to avoid permanent overlap with sticky-ad
+      setTimeout(function(){ if (banner.parentNode) banner.remove(); }, 20000);
     }
   }
 
