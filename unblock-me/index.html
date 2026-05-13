@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Unblock Me - Free Sliding Block Puzzle Game | GameZipper</title>
+<meta name="description" content="Play Unblock Me free online. Slide blocks to free the red block in this classic sliding puzzle game. 50+ levels, hints, undo, star ratings. No download required.">
+<meta name="keywords" content="unblock me, sliding puzzle, block puzzle, brain teaser, logic puzzle, free online game, html5 game">
+<link rel="canonical" href="https://gamezipper.com/unblock-me/">
+<meta property="og:title" content="Unblock Me - Free Sliding Block Puzzle">
+<meta property="og:description" content="Slide blocks to free the red block. Classic sliding puzzle with 50+ levels.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/unblock-me/">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Unblock Me","url":"https://gamezipper.com/unblock-me/","description":"Classic sliding block puzzle game. Slide blocks to free the red block.","applicationCategory":"Game","operatingSystem":"Any","browserRequirements":"Requires JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+<script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=unblock-me"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 100%);color:#e0e0f0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;overflow-x:hidden;user-select:none;-webkit-user-select:none;min-height:100vh;min-height:100dvh;touch-action:manipulation}
+canvas{display:block;touch-action:none}
+#game-container{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:8px}
+.hidden{display:none!important}
+.screen{display:flex;flex-direction:column;align-items:center;width:100%;max-width:500px}
+h1{font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,#ff6b6b,#ffd93d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;margin-bottom:4px;letter-spacing:-1px}
+h2{font-size:1.4rem;font-weight:600;color:#a0a0d0;margin-bottom:12px}
+.subtitle{color:#8080b0;font-size:.95rem;margin-bottom:24px}
+.btn{background:linear-gradient(135deg,#ff6b6b,#ff8e53);color:#fff;border:none;padding:14px 40px;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 15px rgba(255,107,107,.3);letter-spacing:.5px}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,107,.4)}
+.btn:active{transform:translateY(0);box-shadow:0 2px 10px rgba(255,107,107,.2)}
+.btn-secondary{background:linear-gradient(135deg,#4a4a6a,#3a3a5a);box-shadow:0 4px 15px rgba(0,0,0,.3)}
+.btn-secondary:hover{box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.btn-small{padding:10px 20px;font-size:.9rem;border-radius:10px}
+#title-screen .btn{min-width:200px;margin:8px 0}
+#level-select{padding:16px 0}
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;width:100%;max-width:350px;margin:12px auto}
+.level-btn{width:100%;aspect-ratio:1;border:2px solid #3a3a5a;border-radius:12px;background:linear-gradient(135deg,#1a1a3e,#2a2a5e);color:#e0e0f0;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.level-btn:disabled{opacity:.35;cursor:not-allowed}
+.level-btn .stars{font-size:.65rem;color:#ffd93d;letter-spacing:1px}
+.level-btn.current{border-color:#ff6b6b;box-shadow:0 0 10px rgba(255,107,107,.3)}
+#game-ui{width:100%;max-width:500px}
+.game-header{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;margin-bottom:4px}
+.game-header .moves{font-size:1.1rem;font-weight:600;color:#a0a0d0}
+.game-header .moves span{color:#ffd93d}
+.game-header .level-title{font-size:1rem;color:#8080b0}
+.game-controls{display:flex;justify-content:center;gap:10px;padding:8px 0;margin-top:4px}
+.game-controls .btn{padding:10px 18px;font-size:.85rem}
+.hint-count{font-size:.7rem;opacity:.7;margin-left:2px}
+#canvas-wrap{display:flex;justify-content:center;width:100%}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(4px)}
+.overlay-content{background:linear-gradient(135deg,#1a1a3e,#2a2a5e);border-radius:20px;padding:32px;text-align:center;max-width:360px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.overlay-content h2{color:#ffd93d;margin-bottom:8px;font-size:1.5rem}
+.overlay-content .result-stars{font-size:2rem;margin:12px 0;letter-spacing:4px}
+.overlay-content .result-stars .star{color:#3a3a5a}
+.overlay-content .result-stars .star.filled{color:#ffd93d}
+.overlay-content .result-moves{color:#a0a0d0;margin-bottom:16px;font-size:.95rem}
+.overlay-content .btn{margin:6px}
+.sound-toggle{position:fixed;top:12px;right:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#e0e0f0;border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer;z-index:50}
+.nav-row{display:flex;gap:8px;width:100%;max-width:350px;justify-content:center;margin:8px 0}
+.scroll-area{max-height:55vh;overflow-y:auto;width:100%;padding:0 8px;scrollbar-width:thin;scrollbar-color:#3a3a5a transparent}
+.scroll-area::-webkit-scrollbar{width:6px}
+.scroll-area::-webkit-scrollbar-thumb{background:#3a3a5a;border-radius:3px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .3s ease}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.pulse{animation:pulse 2s infinite}
+</style>
+</head>
+<body>
+<div id="game-container">
+
+<!-- Title Screen -->
+<div id="title-screen" class="screen fade-in">
+  <h1>Unblock Me</h1>
+  <p class="subtitle">Slide blocks. Free the red block.</p>
+  <canvas id="title-canvas"></canvas>
+  <button class="btn pulse" id="btn-play" style="margin-top:16px">Play</button>
+  <button class="btn btn-secondary btn-small" id="btn-how">How to Play</button>
+</div>
+
+<!-- How to Play -->
+<div id="how-screen" class="screen hidden fade-in">
+  <h2 style="color:#ffd93d">How to Play</h2>
+  <div style="text-align:left;color:#c0c0e0;max-width:340px;line-height:1.6;font-size:.92rem">
+    <p style="margin-bottom:10px"><strong style="color:#ff6b6b">Goal:</strong> Slide the red block to the exit on the right.</p>
+    <p style="margin-bottom:10px"><strong style="color:#6bcfff">Drag blocks</strong> horizontally or vertically to move them.</p>
+    <p style="margin-bottom:10px">Blocks can only move in their long direction and cannot overlap.</p>
+    <p style="margin-bottom:10px">Earn <span style="color:#ffd93d">3 stars</span> by solving in fewer moves!</p>
+    <p><strong>Hints:</strong> 3 per level. Shows the next optimal move.</p>
+  </div>
+  <button class="btn btn-secondary btn-small" id="btn-how-back" style="margin-top:20px">Back</button>
+</div>
+
+<!-- Level Select -->
+<div id="level-screen" class="screen hidden fade-in">
+  <h2>Select Level</h2>
+  <div class="nav-row">
+    <button class="btn btn-secondary btn-small" id="btn-levels-back">Back</button>
+    <button class="btn btn-secondary btn-small" id="btn-reset-progress">Reset Progress</button>
+  </div>
+  <div class="scroll-area">
+    <div class="level-grid" id="level-grid"></div>
+  </div>
+</div>
+
+<!-- Game Screen -->
+<div id="game-screen" class="screen hidden fade-in">
+  <div id="game-ui">
+    <div class="game-header">
+      <button class="btn btn-secondary btn-small" id="btn-back">Back</button>
+      <div class="level-title" id="level-title">Level 1</div>
+      <div class="moves">Moves: <span id="move-count">0</span></div>
+    </div>
+    <div id="canvas-wrap"><canvas id="game-canvas"></canvas></div>
+    <div class="game-controls">
+      <button class="btn btn-secondary btn-small" id="btn-undo">Undo</button>
+      <button class="btn btn-secondary btn-small" id="btn-restart">Restart</button>
+      <button class="btn btn-secondary btn-small" id="btn-hint">Hint<span class="hint-count" id="hint-count">(3)</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Level Complete Overlay -->
+<div id="complete-overlay" class="overlay hidden">
+  <div class="overlay-content fade-in">
+    <h2>Level Complete!</h2>
+    <div class="result-stars" id="result-stars"></div>
+    <div class="result-moves" id="result-moves"></div>
+    <button class="btn" id="btn-next">Next Level</button>
+    <button class="btn btn-secondary btn-small" id="btn-levels">Level Select</button>
+  </div>
+</div>
+
+<!-- Reset Confirm Overlay -->
+<div id="reset-overlay" class="overlay hidden">
+  <div class="overlay-content fade-in">
+    <h2 style="color:#ff6b6b">Reset Progress?</h2>
+    <p style="color:#a0a0d0;margin:12px 0;font-size:.9rem">This will erase all saved progress and stars. This cannot be undone.</p>
+    <button class="btn" id="btn-reset-yes" style="background:linear-gradient(135deg,#ff6b6b,#ff4444)">Reset</button>
+    <button class="btn btn-secondary btn-small" id="btn-reset-no">Cancel</button>
+  </div>
+</div>
+
+</div>
+
+<button class="sound-toggle" id="sound-toggle">Sound: ON</button>
+
+<script>
+(function(){
+"use strict";
+
+// ─── LEVELS ───
+// Each block: {x, y, w, h, color}
+// w=width in cells, h=height in cells
+// The "red" block must have color:"red" — it's the target to free
+// Exit is at row 2 (0-indexed), right edge
+const RED = "red";
+const COLORS = ["#4a90d9","#5bc0be","#9b59b6","#e67e22","#2ecc71","#e74c3c","#f39c12","#1abc9c","#3498db","#8e44ad"];
+
+const LEVELS = [
+  // Level 1 - Tutorial (1 move)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:3,y:2,w:1,h:1,color:"#4a90d9"}
+  ],
+  // Level 2 (2 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:1,w:1,h:2,color:"#4a90d9"},
+    {x:3,y:2,w:1,h:1,color:"#5bc0be"}
+  ],
+  // Level 3 (3 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:2,color:"#4a90d9"},
+    {x:2,y:3,w:1,h:2,color:"#5bc0be"},
+    {x:3,y:2,w:1,h:1,color:"#9b59b6"}
+  ],
+  // Level 4 (2 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:1,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:1,w:1,h:1,color:"#5bc0be"},
+    {x:3,y:3,w:1,h:1,color:"#9b59b6"}
+  ],
+  // Level 5 (4 moves)
+  [
+    {x:1,y:2,w:2,h:1,color:RED},
+    {x:0,y:0,w:1,h:2,color:"#4a90d9"},
+    {x:3,y:1,w:1,h:2,color:"#5bc0be"},
+    {x:3,y:2,w:1,h:1,color:"#9b59b6"},
+    {x:4,y:2,w:1,h:1,color:"#e67e22"}
+  ],
+  // Level 6 (3 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:2,w:1,h:2,color:"#4a90d9"},
+    {x:3,y:3,w:2,h:1,color:"#5bc0be"},
+    {x:2,y:0,w:1,h:2,color:"#9b59b6"}
+  ],
+  // Level 7 (4 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:1,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:1,w:2,h:1,color:"#5bc0be"},
+    {x:0,y:3,w:1,h:2,color:"#9b59b6"},
+    {x:3,y:0,w:1,h:1,color:"#e67e22"}
+  ],
+  // Level 8 (3 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:2,w:1,h:2,color:"#9b59b6"},
+    {x:3,y:4,w:2,h:1,color:"#e67e22"}
+  ],
+  // Level 9 (5 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:1,w:1,h:2,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:3,color:"#5bc0be"},
+    {x:0,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:0,y:3,w:1,h:2,color:"#e67e22"},
+    {x:4,y:3,w:1,h:2,color:"#2ecc71"}
+  ],
+  // Level 10 (4 moves)
+  [
+    {x:1,y:2,w:2,h:1,color:RED},
+    {x:0,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:3,color:"#5bc0be"},
+    {x:4,y:0,w:1,h:2,color:"#9b59b6"},
+    {x:4,y:2,w:2,h:1,color:"#e67e22"}
+  ],
+  // Level 11 (6 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:2,color:"#9b59b6"},
+    {x:4,y:3,w:2,h:1,color:"#e67e22"},
+    {x:0,y:3,w:1,h:2,color:"#2ecc71"}
+  ],
+  // Level 12 (5 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:1,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:3,y:2,w:1,h:2,color:"#e67e22"},
+    {x:0,y:0,w:1,h:2,color:"#2ecc71"}
+  ],
+  // Level 13 (7 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:4,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:2,w:1,h:2,color:"#9b59b6"},
+    {x:0,y:0,w:1,h:2,color:"#e67e22"},
+    {x:0,y:4,w:2,h:1,color:"#2ecc71"},
+    {x:4,y:2,w:1,h:1,color:"#f39c12"}
+  ],
+  // Level 14 (6 moves)
+  [
+    {x:1,y:2,w:2,h:1,color:RED},
+    {x:0,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:1,w:1,h:3,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:0,y:3,w:2,h:1,color:"#e67e22"},
+    {x:4,y:2,w:1,h:2,color:"#2ecc71"}
+  ],
+  // Level 15 (8 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:3,y:2,w:1,h:2,color:"#e67e22"},
+    {x:0,y:0,w:1,h:2,color:"#2ecc71"},
+    {x:0,y:3,w:1,h:2,color:"#f39c12"}
+  ],
+  // Level 16 (7 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:1,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:3,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:1,color:"#e67e22"},
+    {x:0,y:0,w:2,h:1,color:"#2ecc71"},
+    {x:4,y:4,w:2,h:1,color:"#f39c12"}
+  ],
+  // Level 17 (8 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:4,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:3,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:2,color:"#e67e22"},
+    {x:0,y:0,w:1,h:2,color:"#2ecc71"},
+    {x:0,y:4,w:2,h:1,color:"#f39c12"}
+  ],
+  // Level 18 (9 moves)
+  [
+    {x:1,y:2,w:2,h:1,color:RED},
+    {x:0,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:3,color:"#5bc0be"},
+    {x:4,y:0,w:1,h:2,color:"#9b59b6"},
+    {x:4,y:3,w:2,h:1,color:"#e67e22"},
+    {x:0,y:3,w:1,h:2,color:"#2ecc71"},
+    {x:5,y:0,w:1,h:3,color:"#f39c12"}
+  ],
+  // Level 19 (7 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:4,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:2,color:"#9b59b6"},
+    {x:4,y:1,w:2,h:1,color:"#e67e22"},
+    {x:0,y:0,w:2,h:1,color:"#2ecc71"},
+    {x:0,y:3,w:2,h:1,color:"#f39c12"},
+    {x:3,y:3,w:1,h:2,color:"#1abc9c"}
+  ],
+  // Level 20 (8 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:1,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:2,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:2,color:"#e67e22"},
+    {x:5,y:1,w:1,h:2,color:"#2ecc71"},
+    {x:0,y:0,w:1,h:2,color:"#f39c12"},
+    {x:0,y:4,w:1,h:2,color:"#1abc9c"}
+  ],
+  // Level 21 (10 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:4,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:3,y:2,w:1,h:2,color:"#e67e22"},
+    {x:4,y:2,w:1,h:2,color:"#2ecc71"},
+    {x:5,y:2,w:1,h:2,color:"#f39c12"},
+    {x:0,y:0,w:1,h:2,color:"#1abc9c"},
+    {x:0,y:4,w:2,h:1,color:"#3498db"}
+  ],
+  // Level 22 (9 moves)
+  [
+    {x:1,y:2,w:2,h:1,color:RED},
+    {x:0,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:3,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:3,color:"#e67e22"},
+    {x:5,y:1,w:1,h:2,color:"#2ecc71"},
+    {x:0,y:3,w:1,h:2,color:"#f39c12"},
+    {x:1,y:3,w:2,h:1,color:"#1abc9c"}
+  ],
+  // Level 23 (11 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:3,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:2,color:"#e67e22"},
+    {x:5,y:1,w:1,h:2,color:"#2ecc71"},
+    {x:0,y:0,w:2,h:1,color:"#f39c12"},
+    {x:0,y:3,w:1,h:2,color:"#1abc9c"},
+    {x:4,y:3,w:2,h:1,color:"#3498db"}
+  ],
+  // Level 24 (10 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:2,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:3,color:"#e67e22"},
+    {x:5,y:0,w:1,h:2,color:"#2ecc71"},
+    {x:0,y:0,w:1,h:2,color:"#f39c12"},
+    {x:0,y:3,w:2,h:1,color:"#1abc9c"},
+    {x:3,y:3,w:1,h:2,color:"#3498db"}
+  ],
+  // Level 25 (12 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:2,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:2,color:"#e67e22"},
+    {x:5,y:0,w:1,h:3,color:"#2ecc71"},
+    {x:0,y:0,w:1,h:2,color:"#f39c12"},
+    {x:0,y:3,w:1,h:2,color:"#1abc9c"},
+    {x:4,y:3,w:2,h:1,color:"#3498db"},
+    {x:1,y:0,w:1,h:2,color:"#8e44ad"}
+  ],
+  // Level 26 (10 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:3,y:2,w:1,h:2,color:"#e67e22"},
+    {x:4,y:2,w:1,h:2,color:"#2ecc71"},
+    {x:5,y:2,w:1,h:1,color:"#f39c12"},
+    {x:0,y:0,w:2,h:1,color:"#1abc9c"},
+    {x:0,y:3,w:1,h:2,color:"#3498db"},
+    {x:1,y:3,w:1,h:2,color:"#8e44ad"}
+  ],
+  // Level 27 (12 moves)
+  [
+    {x:1,y:2,w:2,h:1,color:RED},
+    {x:0,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:3,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:3,color:"#e67e22"},
+    {x:5,y:1,w:1,h:2,color:"#2ecc71"},
+    {x:0,y:3,w:1,h:2,color:"#f39c12"},
+    {x:1,y:0,w:1,h:2,color:"#1abc9c"},
+    {x:2,y:3,w:1,h:2,color:"#3498db"},
+    {x:5,y:3,w:1,h:2,color:"#8e44ad"}
+  ],
+  // Level 28 (11 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:3,y:2,w:1,h:2,color:"#e67e22"},
+    {x:4,y:1,w:1,h:2,color:"#2ecc71"},
+    {x:5,y:1,w:1,h:2,color:"#f39c12"},
+    {x:0,y:0,w:1,h:2,color:"#1abc9c"},
+    {x:0,y:3,w:2,h:1,color:"#3498db"},
+    {x:4,y:3,w:2,h:1,color:"#8e44ad"}
+  ],
+  // Level 29 (13 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:4,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:2,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:2,color:"#e67e22"},
+    {x:5,y:0,w:1,h:3,color:"#2ecc71"},
+    {x:0,y:0,w:1,h:2,color:"#f39c12"},
+    {x:0,y:4,w:2,h:1,color:"#1abc9c"},
+    {x:3,y:3,w:1,h:2,color:"#3498db"},
+    {x:4,y:3,w:1,h:2,color:"#8e44ad"}
+  ],
+  // Level 30 (14 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:3,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:2,color:"#e67e22"},
+    {x:5,y:0,w:1,h:3,color:"#2ecc71"},
+    {x:0,y:0,w:1,h:2,color:"#f39c12"},
+    {x:0,y:3,w:1,h:2,color:"#1abc9c"},
+    {x:1,y:0,w:1,h:2,color:"#3498db"},
+    {x:4,y:3,w:2,h:1,color:"#8e44ad"}
+  ],
+  // Level 31 (12 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:3,y:2,w:1,h:2,color:"#e67e22"},
+    {x:4,y:2,w:2,h:1,color:"#2ecc71"},
+    {x:0,y:0,w:1,h:2,color:"#f39c12"},
+    {x:0,y:3,w:1,h:2,color:"#1abc9c"},
+    {x:1,y:0,w:1,h:2,color:"#3498db"},
+    {x:1,y:4,w:1,h:1,color:"#8e44ad"}
+  ],
+  // Level 32 (14 moves)
+  [
+    {x:1,y:2,w:2,h:1,color:RED},
+    {x:0,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:3,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:2,color:"#e67e22"},
+    {x:5,y:1,w:1,h:3,color:"#2ecc71"},
+    {x:0,y:3,w:1,h:2,color:"#f39c12"},
+    {x:1,y:0,w:1,h:2,color:"#1abc9c"},
+    {x:1,y:3,w:1,h:2,color:"#3498db"},
+    {x:4,y:3,w:1,h:2,color:"#8e44ad"}
+  ],
+  // Level 33 (15 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:2,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:2,color:"#e67e22"},
+    {x:5,y:0,w:1,h:3,color:"#2ecc71"},
+    {x:0,y:0,w:1,h:2,color:"#f39c12"},
+    {x:0,y:3,w:2,h:1,color:"#1abc9c"},
+    {x:3,y:3,w:1,h:2,color:"#3498db"},
+    {x:4,y:3,w:1,h:2,color:"#8e44ad"},
+    {x:1,y:0,w:1,h:2,color:"#e74c3c"}
+  ],
+  // Level 34 (13 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:1,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:2,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:2,color:"#e67e22"},
+    {x:5,y:0,w:1,h:3,color:"#2ecc71"},
+    {x:0,y:0,w:2,h:1,color:"#f39c12"},
+    {x:0,y:3,w:1,h:2,color:"#1abc9c"},
+    {x:1,y:3,w:1,h:2,color:"#3498db"},
+    {x:4,y:3,w:2,h:1,color:"#8e44ad"}
+  ],
+  // Level 35 (16 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:4,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:3,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:2,color:"#e67e22"},
+    {x:5,y:0,w:1,h:2,color:"#2ecc71"},
+    {x:0,y:0,w:1,h:2,color:"#f39c12"},
+    {x:0,y:4,w:2,h:1,color:"#1abc9c"},
+    {x:4,y:3,w:1,h:2,color:"#3498db"},
+    {x:5,y:3,w:1,h:2,color:"#8e44ad"},
+    {x:1,y:0,w:1,h:2,color:"#e74c3c"}
+  ],
+  // Level 36 (14 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:3,y:2,w:1,h:3,color:"#e67e22"},
+    {x:4,y:1,w:1,h:2,color:"#2ecc71"},
+    {x:5,y:1,w:1,h:2,color:"#f39c12"},
+    {x:0,y:0,w:1,h:2,color:"#1abc9c"},
+    {x:0,y:3,w:2,h:1,color:"#3498db"},
+    {x:4,y:3,w:2,h:1,color:"#8e44ad"}
+  ],
+  // Level 37 (17 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:3,y:2,w:1,h:2,color:"#e67e22"},
+    {x:4,y:1,w:1,h:2,color:"#2ecc71"},
+    {x:5,y:1,w:1,h:3,color:"#f39c12"},
+    {x:0,y:0,w:1,h:2,color:"#1abc9c"},
+    {x:0,y:3,w:2,h:1,color:"#3498db"},
+    {x:3,y:4,w:1,h:2,color:"#8e44ad"},
+    {x:4,y:4,w:1,h:1,color:"#e74c3c"}
+  ],
+  // Level 38 (15 moves)
+  [
+    {x:1,y:2,w:2,h:1,color:RED},
+    {x:0,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:3,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:3,color:"#e67e22"},
+    {x:5,y:1,w:1,h:2,color:"#2ecc71"},
+    {x:0,y:3,w:1,h:2,color:"#f39c12"},
+    {x:1,y:0,w:1,h:2,color:"#1abc9c"},
+    {x:2,y:3,w:1,h:2,color:"#3498db"},
+    {x:5,y:3,w:1,h:2,color:"#8e44ad"},
+    {x:3,y:3,w:1,h:1,color:"#e74c3c"}
+  ],
+  // Level 39 (18 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:3,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:2,color:"#e67e22"},
+    {x:5,y:0,w:1,h:3,color:"#2ecc71"},
+    {x:0,y:0,w:1,h:2,color:"#f39c12"},
+    {x:0,y:3,w:1,h:2,color:"#1abc9c"},
+    {x:1,y:0,w:1,h:2,color:"#3498db"},
+    {x:4,y:3,w:1,h:2,color:"#8e44ad"},
+    {x:5,y:3,w:1,h:2,color:"#e74c3c"}
+  ],
+  // Level 40 (16 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:1,h:2,color:"#9b59b6"},
+    {x:5,y:0,w:1,h:2,color:"#e67e22"},
+    {x:3,y:2,w:1,h:3,color:"#2ecc71"},
+    {x:4,y:2,w:1,h:2,color:"#f39c12"},
+    {x:5,y:2,w:1,h:1,color:"#1abc9c"},
+    {x:0,y:0,w:1,h:2,color:"#3498db"},
+    {x:0,y:3,w:2,h:1,color:"#8e44ad"},
+    {x:4,y:4,w:2,h:1,color:"#e74c3c"}
+  ],
+  // Level 41 (18 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:1,h:2,color:"#9b59b6"},
+    {x:5,y:0,w:1,h:2,color:"#e67e22"},
+    {x:3,y:2,w:1,h:2,color:"#2ecc71"},
+    {x:4,y:2,w:1,h:2,color:"#f39c12"},
+    {x:5,y:2,w:1,h:2,color:"#1abc9c"},
+    {x:0,y:0,w:1,h:2,color:"#3498db"},
+    {x:0,y:3,w:2,h:1,color:"#8e44ad"},
+    {x:2,y:5,w:1,h:1,color:"#e74c3c"},
+    {x:3,y:4,w:2,h:1,color:"#f39c12"}
+  ],
+  // Level 42 (19 moves)
+  [
+    {x:1,y:2,w:2,h:1,color:RED},
+    {x:0,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:3,color:"#5bc0be"},
+    {x:4,y:0,w:1,h:2,color:"#9b59b6"},
+    {x:5,y:0,w:1,h:3,color:"#e67e22"},
+    {x:4,y:2,w:1,h:2,color:"#2ecc71"},
+    {x:5,y:3,w:1,h:2,color:"#f39c12"},
+    {x:0,y:3,w:1,h:2,color:"#1abc9c"},
+    {x:1,y:0,w:1,h:2,color:"#3498db"},
+    {x:2,y:3,w:1,h:2,color:"#8e44ad"},
+    {x:3,y:3,w:1,h:2,color:"#e74c3c"},
+    {x:1,y:4,w:1,h:2,color:"#f39c12"}
+  ],
+  // Level 43 (20 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:2,h:1,color:"#5bc0be"},
+    {x:3,y:1,w:1,h:2,color:"#9b59b6"},
+    {x:4,y:1,w:1,h:2,color:"#e67e22"},
+    {x:5,y:0,w:1,h:3,color:"#2ecc71"},
+    {x:3,y:3,w:1,h:2,color:"#f39c12"},
+    {x:4,y:3,w:1,h:2,color:"#1abc9c"},
+    {x:5,y:3,w:1,h:2,color:"#3498db"},
+    {x:0,y:0,w:1,h:2,color:"#8e44ad"},
+    {x:0,y:3,w:2,h:1,color:"#e74c3c"},
+    {x:1,y:4,w:1,h:2,color:"#f39c12"}
+  ],
+  // Level 44 (17 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:1,h:2,color:"#9b59b6"},
+    {x:5,y:0,w:1,h:3,color:"#e67e22"},
+    {x:3,y:2,w:1,h:2,color:"#2ecc71"},
+    {x:4,y:2,w:1,h:2,color:"#f39c12"},
+    {x:5,y:3,w:1,h:2,color:"#1abc9c"},
+    {x:0,y:0,w:1,h:2,color:"#3498db"},
+    {x:0,y:3,w:2,h:1,color:"#8e44ad"},
+    {x:2,y:3,w:1,h:2,color:"#e74c3c"},
+    {x:3,y:4,w:2,h:1,color:"#f39c12"}
+  ],
+  // Level 45 (21 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:1,h:2,color:"#9b59b6"},
+    {x:5,y:0,w:1,h:2,color:"#e67e22"},
+    {x:3,y:2,w:1,h:3,color:"#2ecc71"},
+    {x:4,y:2,w:1,h:2,color:"#f39c12"},
+    {x:5,y:2,w:1,h:1,color:"#1abc9c"},
+    {x:0,y:0,w:2,h:1,color:"#3498db"},
+    {x:0,y:3,w:2,h:1,color:"#8e44ad"},
+    {x:0,y:4,w:2,h:1,color:"#e74c3c"},
+    {x:4,y:3,w:2,h:1,color:"#f39c12"},
+    {x:5,y:4,w:1,h:2,color:"#1abc9c"}
+  ],
+  // Level 46 (19 moves)
+  [
+    {x:1,y:2,w:2,h:1,color:RED},
+    {x:0,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:3,color:"#5bc0be"},
+    {x:4,y:0,w:1,h:2,color:"#9b59b6"},
+    {x:5,y:0,w:1,h:3,color:"#e67e22"},
+    {x:4,y:2,w:1,h:3,color:"#2ecc71"},
+    {x:5,y:3,w:1,h:2,color:"#f39c12"},
+    {x:0,y:3,w:1,h:2,color:"#1abc9c"},
+    {x:1,y:0,w:1,h:2,color:"#3498db"},
+    {x:2,y:3,w:1,h:2,color:"#8e44ad"},
+    {x:3,y:3,w:1,h:2,color:"#e74c3c"},
+    {x:1,y:4,w:1,h:2,color:"#f39c12"}
+  ],
+  // Level 47 (22 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:1,h:2,color:"#9b59b6"},
+    {x:5,y:0,w:1,h:3,color:"#e67e22"},
+    {x:3,y:2,w:1,h:2,color:"#2ecc71"},
+    {x:4,y:2,w:1,h:2,color:"#f39c12"},
+    {x:5,y:3,w:1,h:2,color:"#1abc9c"},
+    {x:0,y:0,w:1,h:2,color:"#3498db"},
+    {x:1,y:0,w:1,h:2,color:"#8e44ad"},
+    {x:0,y:3,w:2,h:1,color:"#e74c3c"},
+    {x:3,y:4,w:2,h:1,color:"#f39c12"},
+    {x:5,y:4,w:1,h:2,color:"#1abc9c"}
+  ],
+  // Level 48 (20 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:3,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:2,h:1,color:"#9b59b6"},
+    {x:3,y:2,w:1,h:3,color:"#e67e22"},
+    {x:4,y:1,w:1,h:2,color:"#2ecc71"},
+    {x:5,y:0,w:1,h:3,color:"#f39c12"},
+    {x:0,y:0,w:1,h:2,color:"#1abc9c"},
+    {x:0,y:3,w:1,h:2,color:"#3498db"},
+    {x:1,y:0,w:1,h:2,color:"#8e44ad"},
+    {x:1,y:3,w:1,h:2,color:"#e74c3c"},
+    {x:4,y:3,w:1,h:2,color:"#f39c12"},
+    {x:5,y:3,w:1,h:2,color:"#1abc9c"}
+  ],
+  // Level 49 (23 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:1,h:2,color:"#9b59b6"},
+    {x:5,y:0,w:1,h:3,color:"#e67e22"},
+    {x:3,y:2,w:1,h:2,color:"#2ecc71"},
+    {x:4,y:2,w:1,h:2,color:"#f39c12"},
+    {x:5,y:3,w:1,h:2,color:"#1abc9c"},
+    {x:0,y:0,w:1,h:2,color:"#3498db"},
+    {x:1,y:0,w:1,h:2,color:"#8e44ad"},
+    {x:0,y:3,w:1,h:2,color:"#e74c3c"},
+    {x:1,y:3,w:1,h:2,color:"#f39c12"},
+    {x:3,y:4,w:2,h:1,color:"#1abc9c"},
+    {x:5,y:4,w:1,h:2,color:"#3498db"}
+  ],
+  // Level 50 (25 moves)
+  [
+    {x:0,y:2,w:2,h:1,color:RED},
+    {x:2,y:0,w:1,h:5,color:"#4a90d9"},
+    {x:3,y:0,w:1,h:2,color:"#5bc0be"},
+    {x:4,y:0,w:1,h:2,color:"#9b59b6"},
+    {x:5,y:0,w:1,h:2,color:"#e67e22"},
+    {x:3,y:2,w:1,h:2,color:"#2ecc71"},
+    {x:4,y:2,w:1,h:2,color:"#f39c12"},
+    {x:5,y:2,w:1,h:2,color:"#1abc9c"},
+    {x:0,y:0,w:1,h:2,color:"#3498db"},
+    {x:1,y:0,w:1,h:2,color:"#8e44ad"},
+    {x:0,y:3,w:1,h:2,color:"#e74c3c"},
+    {x:1,y:3,w:1,h:2,color:"#f39c12"},
+    {x:2,y:5,w:1,h:1,color:"#1abc9c"},
+    {x:3,y:4,w:2,h:1,color:"#3498db"},
+    {x:5,y:4,w:1,h:2,color:"#8e44ad"}
+  ]
+];
+
+// ─── SAVE STATE ───
+const SAVE_VERSION = 2;
+const SAVE_KEY = "unblockme_save_v2";
+
+function loadSave() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SAVE_KEY));
+    if (d && d.version === SAVE_VERSION) return d;
+  } catch(e) {}
+  return { version: SAVE_VERSION, completed: {}, hints: 3, currentLevel: 1 };
+}
+
+function writeSave(s) {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch(e) {}
+}
+
+let save = loadSave();
+
+// ─── AUDIO ───
+let audioCtx = null;
+let soundEnabled = true;
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+}
+
+function playSound(type) {
+  if (!soundEnabled) return;
+  try {
+    ensureAudio();
+    const t = audioCtx.currentTime;
+    if (type === "slide") {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(300, t);
+      o.frequency.exponentialRampToValueAtTime(150, t+0.08);
+      g.gain.setValueAtTime(0.1, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t+0.08);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t+0.08);
+    } else if (type === "click") {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = "square"; o.frequency.setValueAtTime(600, t);
+      g.gain.setValueAtTime(0.06, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t+0.05);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t+0.05);
+    } else if (type === "win") {
+      [523,659,784,1047].forEach((f,i)=>{
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = "sine"; o.frequency.setValueAtTime(f, t+i*0.12);
+        g.gain.setValueAtTime(0.12, t+i*0.12);
+        g.gain.exponentialRampToValueAtTime(0.001, t+i*0.12+0.3);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t+i*0.12); o.stop(t+i*0.12+0.3);
+      });
+    } else if (type === "hint") {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = "triangle"; o.frequency.setValueAtTime(800, t);
+      o.frequency.exponentialRampToValueAtTime(400, t+0.15);
+      g.gain.setValueAtTime(0.08, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t+0.15);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t+0.15);
+    }
+  } catch(e) {}
+}
+
+// ─── SCREEN MANAGEMENT ───
+const $ = id => document.getElementById(id);
+
+function showScreen(id) {
+  ["title-screen","how-screen","level-screen","game-screen"].forEach(s => {
+    $(s).classList.toggle("hidden", s !== id);
+  });
+  $("complete-overlay").classList.add("hidden");
+  $("reset-overlay").classList.add("hidden");
+  if (id === "level-screen") buildLevelGrid();
+}
+
+// ─── TITLE SCREEN ANIMATION ───
+let titleAnimId = null;
+const titleBlocks = [
+  {x:0,y:1,w:2,h:1,c:"#4a90d9"},
+  {x:2,y:0,w:1,h:2,c:"#5bc0be"},
+  {x:3,y:2,w:2,h:1,c:"#9b59b6"},
+  {x:0,y:3,w:1,h:2,c:"#e67e22"},
+  {x:2,y:3,w:2,h:1,c:"#2ecc71"},
+  {x:4,y:4,w:2,h:1,c:"#ff6b6b"},
+  {x:1,y:1,w:1,h:1,c:"#f39c12"}
+];
+
+function startTitleAnim() {
+  const c = $("title-canvas");
+  const sz = Math.min(window.innerWidth - 40, 300);
+  c.width = sz; c.height = sz * 0.7;
+  const ctx = c.getContext("2d");
+  let t = 0;
+  function draw() {
+    t += 0.016;
+    ctx.clearRect(0,0,c.width,c.height);
+    const cellSz = c.width / 7;
+    // draw grid bg
+    ctx.fillStyle = "rgba(20,20,50,0.5)";
+    roundRect(ctx, 0, 0, c.width, c.height, 12, true, false);
+    // draw blocks
+    titleBlocks.forEach((b,i) => {
+      const ox = Math.sin(t*0.5 + i*0.7) * cellSz * 0.1;
+      const oy = Math.cos(t*0.4 + i*0.9) * cellSz * 0.1;
+      const px = b.x * cellSz + 4 + ox;
+      const py = b.y * cellSz + 4 + oy;
+      const pw = b.w * cellSz - 8;
+      const ph = b.h * cellSz - 8;
+      const grad = ctx.createLinearGradient(px, py, px+pw, py+ph);
+      grad.addColorStop(0, b.c);
+      grad.addColorStop(1, shadeColor(b.c, -30));
+      ctx.fillStyle = grad;
+      roundRect(ctx, px, py, pw, ph, 8, true, false);
+      if (b.c === "#ff6b6b") {
+        ctx.shadowColor = "#ff6b6b";
+        ctx.shadowBlur = 10;
+        roundRect(ctx, px, py, pw, ph, 8, true, false);
+        ctx.shadowBlur = 0;
+      }
+    });
+    titleAnimId = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function stopTitleAnim() {
+  if (titleAnimId) { cancelAnimationFrame(titleAnimId); titleAnimId = null; }
+}
+
+// ─── LEVEL SELECT ───
+function buildLevelGrid() {
+  const grid = $("level-grid");
+  grid.innerHTML = "";
+  const totalLevels = LEVELS.length;
+  const maxUnlocked = Math.max(1, ...Object.keys(save.completed).map(Number)) + 1;
+  for (let i = 1; i <= totalLevels; i++) {
+    const btn = document.createElement("button");
+    btn.className = "level-btn";
+    const locked = i > maxUnlocked;
+    btn.disabled = locked;
+    if (i === save.currentLevel) btn.classList.add("current");
+    const stars = save.completed[i] || 0;
+    let starStr = "";
+    if (stars > 0) {
+      for (let s = 0; s < 3; s++) starStr += s < stars ? "★" : "☆";
+    }
+    btn.innerHTML = `<span>${i}</span>${starStr ? `<span class="stars">${starStr}</span>` : ""}`;
+    if (!locked) {
+      btn.addEventListener("click", () => { playSound("click"); startLevel(i); });
+    }
+    grid.appendChild(btn);
+  }
+}
+
+// ─── GAME STATE ───
+let currentLevel = 0;
+let blocks = [];
+let moveCount = 0;
+let moveHistory = [];
+let hintsLeft = 3;
+let animating = false;
+let gameWon = false;
+let dragBlock = null;
+let dragStartX = 0, dragStartY = 0;
+let dragOffsetX = 0, dragOffsetY = 0;
+let dragDir = null; // "h" or "v"
+let hintSolution = null;
+let hintIndex = 0;
+let hintHighlight = null;
+let hintTimer = null;
+let particles = [];
+let gameAnimId = null;
+let canvasW = 0, canvasH = 0, cellSize = 0, boardX = 0, boardY = 0;
+let lastTime = 0;
+
+function startLevel(n) {
+  currentLevel = n;
+  save.currentLevel = n;
+  writeSave(save);
+  const lvl = LEVELS[n-1];
+  blocks = lvl.map((b,i) => ({...b, id:i, dx:0, dy:0}));
+  moveCount = 0;
+  moveHistory = [];
+  hintsLeft = 3;
+  hintSolution = null;
+  hintIndex = 0;
+  hintHighlight = null;
+  gameWon = false;
+  animating = false;
+  dragBlock = null;
+  particles = [];
+  $("move-count").textContent = "0";
+  $("level-title").textContent = "Level " + n;
+  $("hint-count").textContent = "(" + hintsLeft + ")";
+  showScreen("game-screen");
+  setupCanvas();
+  startGameLoop();
+}
+
+function setupCanvas() {
+  const c = $("game-canvas");
+  const wrap = $("canvas-wrap");
+  const maxW = Math.min(wrap.clientWidth, 500);
+  // board is square, with some padding for exit indicator
+  const boardPad = 16;
+  canvasW = maxW;
+  cellSize = Math.floor((canvasW - boardPad*2 - 20) / 6);
+  const boardW = cellSize * 6;
+  canvasH = boardW + boardPad*2;
+  c.width = canvasW;
+  c.height = canvasH;
+  boardX = Math.floor((canvasW - boardW) / 2);
+  boardY = boardPad;
+  c.style.width = canvasW + "px";
+  c.style.height = canvasH + "px";
+}
+
+function getBlockColor(b) {
+  if (b.color === RED) return { main: "#ff6b6b", dark: "#cc4444", glow: true };
+  return { main: b.color, dark: shadeColor(b.color, -30), glow: false };
+}
+
+function shadeColor(c, pct) {
+  let r = parseInt(c.slice(1,3),16), g = parseInt(c.slice(3,5),16), b = parseInt(c.slice(5,7),16);
+  r = Math.max(0, Math.min(255, r + Math.round(r*pct/100)));
+  g = Math.max(0, Math.min(255, g + Math.round(g*pct/100)));
+  b = Math.max(0, Math.min(255, b + Math.round(b*pct/100)));
+  return "#" + [r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
+
+// ─── BOARD HELPERS ───
+function buildGrid(blks) {
+  const g = Array.from({length:6}, ()=> Array(6).fill(-1));
+  blks.forEach((b,i) => {
+    for (let dy=0; dy<b.h; dy++)
+      for (let dx=0; dx<b.w; dx++)
+        g[b.y+dy][b.x+dx] = i;
+  });
+  return g;
+}
+
+function canMove(blks, idx, dir, steps) {
+  const b = blks[idx];
+  const grid = buildGrid(blks);
+  if (dir === "right") {
+    for (let s=1; s<=steps; s++) {
+      const nx = b.x + b.w - 1 + s;
+      if (nx >= 6) return false;
+      for (let dy=0; dy<b.h; dy++) {
+        if (grid[b.y+dy][nx] !== -1 && grid[b.y+dy][nx] !== idx) return false;
+      }
+    }
+  } else if (dir === "left") {
+    for (let s=1; s<=steps; s++) {
+      const nx = b.x - s;
+      if (nx < 0) return false;
+      for (let dy=0; dy<b.h; dy++) {
+        if (grid[b.y+dy][nx] !== -1 && grid[b.y+dy][nx] !== idx) return false;
+      }
+    }
+  } else if (dir === "down") {
+    for (let s=1; s<=steps; s++) {
+      const ny = b.y + b.h - 1 + s;
+      if (ny >= 6) return false;
+      for (let dx=0; dx<b.w; dx++) {
+        if (grid[ny][b.x+dx] !== -1 && grid[ny][b.x+dx] !== idx) return false;
+      }
+    }
+  } else if (dir === "up") {
+    for (let s=1; s<=steps; s++) {
+      const ny = b.y - s;
+      if (ny < 0) return false;
+      for (let dx=0; dx<b.w; dx++) {
+        if (grid[ny][b.x+dx] !== -1 && grid[ny][b.x+dx] !== idx) return false;
+      }
+    }
+  }
+  return true;
+}
+
+function maxMove(blks, idx, dir) {
+  let steps = 0;
+  while (canMove(blks, idx, dir, steps+1)) steps++;
+  return steps;
+}
+
+function isHorizontal(b) { return b.w >= b.h; }
+
+// ─── BFS SOLVER ───
+function stateKey(blks) {
+  return blks.map(b => b.x + "," + b.y).join("|");
+}
+
+function findRedIdx(blks) {
+  return blks.findIndex(b => b.color === RED);
+}
+
+function solveBFS(blks) {
+  const redIdx = findRedIdx(blks);
+  if (redIdx === -1) return null;
+  const initState = blks.map(b => ({x:b.x, y:b.y, w:b.w, h:b.h, color:b.color}));
+  const initKey = stateKey(initState);
+
+  // Check if already solved
+  const rb = initState[redIdx];
+  if (rb.x + rb.w >= 6) return [];
+
+  const queue = [{state: initState, moves: []}];
+  const visited = new Set([initKey]);
+
+  while (queue.length > 0) {
+    const {state, moves} = queue.shift();
+    const redB = state[redIdx];
+    if (redB.x + redB.w >= 6) return moves;
+
+    const dirs = ["right","left","down","up"];
+    for (let i = 0; i < state.length; i++) {
+      const b = state[i];
+      const canH = isHorizontal(b);
+      for (const dir of dirs) {
+        if (dir === "right" || dir === "left") {
+          if (!canH) continue;
+        } else {
+          if (canH && b.w === b.h) { /* 1x1 can go either way */ }
+          else if (canH) continue;
+        }
+        const mx = maxMove(state, i, dir);
+        if (mx <= 0) continue;
+        for (let s = 1; s <= mx; s++) {
+          const ns = state.map(bl => ({...bl}));
+          if (dir === "right") ns[i].x += s;
+          else if (dir === "left") ns[i].x -= s;
+          else if (dir === "down") ns[i].y += s;
+          else if (dir === "up") ns[i].y -= s;
+          const key = stateKey(ns);
+          if (!visited.has(key)) {
+            visited.add(key);
+            const newMoves = [...moves, {blockIdx: i, dir, steps: s}];
+            const nrb = ns[redIdx];
+            if (nrb.x + nrb.w >= 6) return newMoves;
+            queue.push({state: ns, moves: newMoves});
+          }
+        }
+      }
+    }
+  }
+  return null; // no solution
+}
+
+function getHint() {
+  if (hintsLeft <= 0 || gameWon) return;
+  const currentBlocks = blocks.map(b => ({x:b.x, y:b.y, w:b.w, h:b.h, color:b.color}));
+  const solution = solveBFS(currentBlocks);
+  if (!solution || solution.length === 0) return;
+
+  hintsLeft--;
+  $("hint-count").textContent = "(" + hintsLeft + ")";
+  writeSave(save);
+  playSound("hint");
+
+  const move = solution[0];
+  hintHighlight = {
+    blockIdx: move.blockIdx,
+    dir: move.dir,
+    steps: move.steps,
+    timer: 120 // frames
+  };
+}
+
+// ─── STAR RATING ───
+function calcStars(moves) {
+  const lvl = LEVELS[currentLevel-1];
+  const sol = solveBFS(lvl.map(b=>({...b})));
+  const optimal = sol ? sol.length : moves;
+  if (moves <= optimal) return 3;
+  if (moves <= optimal * 1.5) return 2;
+  return 1;
+}
+
+// ─── DRAG / TOUCH HANDLING ───
+function getCanvasPos(e) {
+  const c = $("game-canvas");
+  const rect = c.getBoundingClientRect();
+  const scaleX = c.width / rect.width;
+  const scaleY = c.height / rect.height;
+  let px, py;
+  if (e.touches) {
+    px = (e.touches[0].clientX - rect.left) * scaleX;
+    py = (e.touches[0].clientY - rect.top) * scaleY;
+  } else {
+    px = (e.clientX - rect.left) * scaleX;
+    py = (e.clientY - rect.top) * scaleY;
+  }
+  return {px, py};
+}
+
+function hitTest(px, py) {
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    const b = blocks[i];
+    const bx = boardX + (b.x + b.dx) * cellSize;
+    const by = boardY + (b.y + b.dy) * cellSize;
+    const bw = b.w * cellSize;
+    const bh = b.h * cellSize;
+    if (px >= bx && px <= bx+bw && py >= by && py <= by+bh) return i;
+  }
+  return -1;
+}
+
+function onPointerDown(e) {
+  if (animating || gameWon) return;
+  e.preventDefault();
+  ensureAudio();
+  const {px, py} = getCanvasPos(e);
+  const idx = hitTest(px, py);
+  if (idx === -1) return;
+  dragBlock = idx;
+  dragStartX = px;
+  dragStartY = py;
+  dragOffsetX = 0;
+  dragOffsetY = 0;
+  dragDir = null;
+  hintHighlight = null;
+}
+
+function onPointerMove(e) {
+  if (dragBlock === null) return;
+  e.preventDefault();
+  const {px, py} = getCanvasPos(e);
+  const dx = px - dragStartX;
+  const dy = py - dragStartY;
+
+  if (dragDir === null) {
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      const b = blocks[dragBlock];
+      const h = isHorizontal(b);
+      if (h) dragDir = "h";
+      else dragDir = "v";
+      // 1x1 blocks: choose dominant axis
+      if (b.w === 1 && b.h === 1) {
+        dragDir = Math.abs(dx) >= Math.abs(dy) ? "h" : "v";
+      }
+    }
+  }
+
+  if (dragDir === "h") {
+    const maxR = maxMove(blocks, dragBlock, "right");
+    const maxL = maxMove(blocks, dragBlock, "left");
+    let d = dx / cellSize;
+    d = Math.max(-maxL, Math.min(maxR, d));
+    dragOffsetX = d;
+    dragOffsetY = 0;
+  } else if (dragDir === "v") {
+    const maxD = maxMove(blocks, dragBlock, "down");
+    const maxU = maxMove(blocks, dragBlock, "up");
+    let d = dy / cellSize;
+    d = Math.max(-maxU, Math.min(maxD, d));
+    dragOffsetX = 0;
+    dragOffsetY = d;
+  }
+}
+
+function onPointerUp(e) {
+  if (dragBlock === null) return;
+  e.preventDefault();
+
+  const b = blocks[dragBlock];
+  let snapX = Math.round(dragOffsetX);
+  let snapY = Math.round(dragOffsetY);
+
+  // Snap to grid
+  if (dragDir === "h") {
+    snapY = 0;
+    const maxR = maxMove(blocks, dragBlock, "right");
+    const maxL = maxMove(blocks, dragBlock, "left");
+    snapX = Math.max(-maxL, Math.min(maxR, snapX));
+  } else if (dragDir === "v") {
+    snapX = 0;
+    const maxD = maxMove(blocks, dragBlock, "down");
+    const maxU = maxMove(blocks, dragBlock, "up");
+    snapY = Math.max(-maxU, Math.min(maxD, snapY));
+  }
+
+  if (snapX !== 0 || snapY !== 0) {
+    const oldX = b.x, oldY = b.y;
+    moveHistory.push({idx: dragBlock, fromX: oldX, fromY: oldY, toX: b.x+snapX, toY: b.y+snapY});
+    b.x += snapX;
+    b.y += snapY;
+    moveCount++;
+    $("move-count").textContent = moveCount;
+    playSound("slide");
+    hintSolution = null; // invalidate cached solution
+    hintHighlight = null;
+    checkWin();
+  }
+
+  dragBlock = null;
+  dragOffsetX = 0;
+  dragOffsetY = 0;
+  dragDir = null;
+}
+
+function checkWin() {
+  const redIdx = findRedIdx(blocks);
+  if (redIdx === -1) return;
+  const rb = blocks[redIdx];
+  if (rb.x + rb.w >= 6) {
+    gameWon = true;
+    playSound("win");
+    spawnParticles(rb);
+    const stars = calcStars(moveCount);
+    if (!save.completed[currentLevel] || save.completed[currentLevel] < stars) {
+      save.completed[currentLevel] = stars;
+    }
+    writeSave(save);
+    setTimeout(() => showCompleteOverlay(stars), 600);
+  }
+}
+
+function showCompleteOverlay(stars) {
+  const overlay = $("complete-overlay");
+  let starHtml = "";
+  for (let i = 0; i < 3; i++) {
+    starHtml += `<span class="star${i < stars ? " filled" : ""}">★</span>`;
+  }
+  $("result-stars").innerHTML = starHtml;
+  $("result-moves").textContent = "Completed in " + moveCount + " moves";
+  overlay.classList.remove("hidden");
+}
+
+function spawnParticles(rb) {
+  const cx = boardX + (rb.x + rb.w) * cellSize;
+  const cy = boardY + rb.y * cellSize + rb.h * cellSize / 2;
+  for (let i = 0; i < 40; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 5;
+    particles.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 60 + Math.random() * 40,
+      maxLife: 100,
+      size: 3 + Math.random() * 5,
+      color: ["#ff6b6b","#ffd93d","#5bc0be","#4a90d9","#f39c12","#2ecc71"][Math.floor(Math.random()*6)]
+    });
+  }
+}
+
+// ─── UNDO ───
+function undo() {
+  if (moveHistory.length === 0 || gameWon || animating) return;
+  const last = moveHistory.pop();
+  blocks[last.idx].x = last.fromX;
+  blocks[last.idx].y = last.fromY;
+  moveCount--;
+  $("move-count").textContent = moveCount;
+  playSound("click");
+  hintSolution = null;
+  hintHighlight = null;
+}
+
+function restart() {
+  if (animating) return;
+  startLevel(currentLevel);
+  playSound("click");
+}
+
+// ─── GAME RENDER LOOP ───
+function startGameLoop() {
+  stopGameLoop();
+  lastTime = performance.now();
+  function loop(now) {
+    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    lastTime = now;
+    render(dt);
+    gameAnimId = requestAnimationFrame(loop);
+  }
+  gameAnimId = requestAnimationFrame(loop);
+}
+
+function stopGameLoop() {
+  if (gameAnimId) { cancelAnimationFrame(gameAnimId); gameAnimId = null; }
+}
+
+function render(dt) {
+  const c = $("game-canvas");
+  const ctx = c.getContext("2d");
+  ctx.clearRect(0, 0, canvasW, canvasH);
+
+  // Board background
+  ctx.fillStyle = "rgba(15,15,40,0.8)";
+  roundRect(ctx, boardX-4, boardY-4, cellSize*6+8, cellSize*6+8, 12, true, false);
+
+  // Grid lines
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 6; i++) {
+    ctx.beginPath();
+    ctx.moveTo(boardX + i*cellSize, boardY);
+    ctx.lineTo(boardX + i*cellSize, boardY + 6*cellSize);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(boardX, boardY + i*cellSize);
+    ctx.lineTo(boardX + 6*cellSize, boardY + i*cellSize);
+    ctx.stroke();
+  }
+
+  // Exit indicator (right side, row 2)
+  const exitY = boardY + 2 * cellSize;
+  const exitH = cellSize;
+  ctx.fillStyle = "rgba(46,204,113,0.15)";
+  ctx.fillRect(boardX + 6*cellSize, exitY, 20, exitH);
+  // Arrow
+  ctx.fillStyle = "#2ecc71";
+  ctx.globalAlpha = 0.6 + Math.sin(performance.now()/400)*0.3;
+  ctx.beginPath();
+  const ax = boardX + 6*cellSize + 8;
+  const ay = exitY + exitH/2;
+  ctx.moveTo(ax, ay-8);
+  ctx.lineTo(ax+12, ay);
+  ctx.lineTo(ax, ay+8);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Hint highlight
+  if (hintHighlight) {
+    const hb = blocks[hintHighlight.blockIdx];
+    const hx = boardX + hb.x * cellSize;
+    const hy = boardY + hb.y * cellSize;
+    const hw = hb.w * cellSize;
+    const hh = hb.h * cellSize;
+    const pulse = 0.4 + Math.sin(performance.now()/200) * 0.2;
+    ctx.strokeStyle = `rgba(255,217,61,${pulse})`;
+    ctx.lineWidth = 3;
+    roundRect(ctx, hx-2, hy-2, hw+4, hh+4, 10, false, true);
+
+    // Direction arrow
+    ctx.fillStyle = `rgba(255,217,61,${pulse + 0.2})`;
+    const acx = hx + hw/2;
+    const acy = hy + hh/2;
+    const as = cellSize * 0.3;
+    ctx.beginPath();
+    if (hintHighlight.dir === "right") {
+      ctx.moveTo(acx - as, acy - as);
+      ctx.lineTo(acx + as, acy);
+      ctx.lineTo(acx - as, acy + as);
+    } else if (hintHighlight.dir === "left") {
+      ctx.moveTo(acx + as, acy - as);
+      ctx.lineTo(acx - as, acy);
+      ctx.lineTo(acx + as, acy + as);
+    } else if (hintHighlight.dir === "down") {
+      ctx.moveTo(acx - as, acy - as);
+      ctx.lineTo(acx, acy + as);
+      ctx.lineTo(acx + as, acy - as);
+    } else if (hintHighlight.dir === "up") {
+      ctx.moveTo(acx - as, acy + as);
+      ctx.lineTo(acx, acy - as);
+      ctx.lineTo(acx + as, acy + as);
+    }
+    ctx.fill();
+
+    hintHighlight.timer--;
+    if (hintHighlight.timer <= 0) hintHighlight = null;
+  }
+
+  // Blocks
+  blocks.forEach((b, i) => {
+    let bx = boardX + b.x * cellSize;
+    let by = boardY + b.y * cellSize;
+    let bw = b.w * cellSize;
+    let bh = b.h * cellSize;
+
+    // Drag offset
+    if (i === dragBlock) {
+      bx += dragOffsetX * cellSize;
+      by += dragOffsetY * cellSize;
+    }
+
+    const col = getBlockColor(b);
+    const pad = 3;
+    const rx = bx + pad;
+    const ry = by + pad;
+    const rw = bw - pad*2;
+    const rh = bh - pad*2;
+
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    roundRect(ctx, rx+2, ry+2, rw, rh, 8, true, false);
+
+    // Block body
+    const grad = ctx.createLinearGradient(rx, ry, rx+rw, ry+rh);
+    grad.addColorStop(0, col.main);
+    grad.addColorStop(1, col.dark);
+    ctx.fillStyle = grad;
+
+    if (col.glow) {
+      ctx.shadowColor = col.main;
+      ctx.shadowBlur = 12;
+    }
+    roundRect(ctx, rx, ry, rw, rh, 8, true, false);
+    ctx.shadowBlur = 0;
+
+    // Top highlight
+    ctx.fillStyle = "rgba(255,255,255,0.12)";
+    roundRect(ctx, rx+2, ry+2, rw-4, rh*0.35, 6, true, false);
+  });
+
+  // Particles
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.1;
+    p.life--;
+    const alpha = Math.max(0, p.life / p.maxLife);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI*2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  particles = particles.filter(p => p.life > 0);
+}
+
+// ─── EVENT BINDINGS ───
+const canvas = $("game-canvas");
+canvas.addEventListener("pointerdown", onPointerDown);
+canvas.addEventListener("pointermove", onPointerMove);
+canvas.addEventListener("pointerup", onPointerUp);
+canvas.addEventListener("pointercancel", onPointerUp);
+
+// Prevent scrolling on canvas
+canvas.addEventListener("touchstart", e => e.preventDefault(), {passive:false});
+canvas.addEventListener("touchmove", e => e.preventDefault(), {passive:false});
+
+$("btn-play").addEventListener("click", () => {
+  playSound("click");
+  stopTitleAnim();
+  showScreen("level-screen");
+});
+
+$("btn-how").addEventListener("click", () => {
+  playSound("click");
+  showScreen("how-screen");
+});
+
+$("btn-how-back").addEventListener("click", () => {
+  playSound("click");
+  showScreen("title-screen");
+  startTitleAnim();
+});
+
+$("btn-levels-back").addEventListener("click", () => {
+  playSound("click");
+  showScreen("title-screen");
+  startTitleAnim();
+});
+
+$("btn-back").addEventListener("click", () => {
+  playSound("click");
+  stopGameLoop();
+  showScreen("level-screen");
+});
+
+$("btn-undo").addEventListener("click", undo);
+$("btn-restart").addEventListener("click", restart);
+$("btn-hint").addEventListener("click", () => { playSound("click"); getHint(); });
+
+$("btn-next").addEventListener("click", () => {
+  playSound("click");
+  $("complete-overlay").classList.add("hidden");
+  const next = currentLevel + 1;
+  if (next <= LEVELS.length) {
+    startLevel(next);
+  } else {
+    stopGameLoop();
+    showScreen("level-screen");
+  }
+});
+
+$("btn-levels").addEventListener("click", () => {
+  playSound("click");
+  $("complete-overlay").classList.add("hidden");
+  stopGameLoop();
+  showScreen("level-screen");
+});
+
+$("btn-reset-progress").addEventListener("click", () => {
+  playSound("click");
+  $("reset-overlay").classList.remove("hidden");
+});
+
+$("btn-reset-yes").addEventListener("click", () => {
+  playSound("click");
+  save = { version: SAVE_VERSION, completed: {}, hints: 3, currentLevel: 1 };
+  writeSave(save);
+  $("reset-overlay").classList.add("hidden");
+  buildLevelGrid();
+});
+
+$("btn-reset-no").addEventListener("click", () => {
+  playSound("click");
+  $("reset-overlay").classList.add("hidden");
+});
+
+// Sound toggle
+$("sound-toggle").addEventListener("click", () => {
+  soundEnabled = !soundEnabled;
+  $("sound-toggle").textContent = "Sound: " + (soundEnabled ? "ON" : "OFF");
+  if (soundEnabled) playSound("click");
+});
+
+// Resize
+window.addEventListener("resize", () => {
+  if (!$("game-screen").classList.contains("hidden")) {
+    setupCanvas();
+  }
+  if (!$("title-screen").classList.contains("hidden")) {
+    startTitleAnim();
+  }
+});
+
+// Init
+startTitleAnim();
+showScreen("title-screen");
+
+})();
+</script>
+</body>
+</html>
