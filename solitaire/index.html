@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,maximum-scale=1.0">
+<meta name="theme-color" content="#0a0e27">
+<title>Solitaire - Classic Klondike Card Game | GameZipper</title>
+<meta name="description" content="Play free Klondike Solitaire online. Classic card game with undo, hints, scoring and smooth animations. No download needed.">
+<link rel="canonical" href="https://gamezipper.com/solitaire/">
+<meta property="og:title" content="Solitaire - Classic Klondike Card Game | GameZipper">
+<meta property="og:description" content="Play free Klondike Solitaire online. Classic card game with undo, hints, scoring and smooth animations. No download needed.">
+<meta property="og:url" content="https://gamezipper.com/solitaire/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://gamezipper.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Solitaire - Classic Klondike Card Game | GameZipper">
+<meta name="twitter:description" content="Play free Klondike Solitaire online. Classic card game with undo, hints, scoring and smooth animations. No download needed.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden;max-width:100vw;height:100%}
+body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;
+  background:#0a0e27;display:flex;flex-direction:column;align-items:center;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#e0e8f0;
+  overflow-y:auto;touch-action:none}
+canvas{display:block}
+#hud{display:flex;align-items:center;justify-content:center;gap:12px;padding:6px 10px;
+  flex-wrap:wrap;font-size:13px;min-height:36px;width:100%;max-width:1280px}
+.hud-item{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px;padding:4px 10px;display:flex;align-items:center;gap:5px;backdrop-filter:blur(8px)}
+.hud-label{color:#8892b0;font-size:11px}
+.hud-val{color:#4ecdc4;font-weight:700;font-size:14px;min-width:30px;text-align:center}
+.btn{background:linear-gradient(135deg,#1a1f4e,#2d1b69);border:1px solid rgba(78,205,196,0.3);
+  color:#4ecdc4;padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;
+  transition:all .15s ease}
+.btn:hover{background:linear-gradient(135deg,#2a2f6e,#3d2b89);border-color:#4ecdc4;
+  box-shadow:0 0 12px rgba(78,205,196,0.2)}
+.btn:active{transform:scale(0.95)}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(26,31,78,0.95);border:1px solid rgba(78,205,196,0.4);color:#4ecdc4;
+  padding:10px 24px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;
+  transition:all .3s ease;pointer-events:none;z-index:100;backdrop-filter:blur(10px)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"VideoGame",
+  "name":"Solitaire - Klondike",
+  "description":"Play free Klondike Solitaire online. Classic card game with undo, hints, scoring and smooth animations.",
+  "image":"https://gamezipper.com/og-image.png",
+  "url":"https://gamezipper.com/solitaire/",
+  "genre":["Card Game","Puzzle"],
+  "gamePlatform":"Web Browser",
+  "applicationCategory":"Game",
+  "operatingSystem":"Any",
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+  "publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com"}
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"BreadcrumbList",
+  "itemListElement":[
+    {"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},
+    {"@type":"ListItem","position":2,"name":"Solitaire","item":"https://gamezipper.com/solitaire/"}
+  ]
+}
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-PD9VL4Y05J"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-PD9VL4Y05J');</script>
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=solitaire'></script>
+</head>
+<body>
+<div id="hud">
+  <div class="hud-item"><span class="hud-label">Time</span><span class="hud-val" id="hTimer">0:00</span></div>
+  <div class="hud-item"><span class="hud-label">Moves</span><span class="hud-val" id="hMoves">0</span></div>
+  <div class="hud-item"><span class="hud-label">Score</span><span class="hud-val" id="hScore">0</span></div>
+  <div class="hud-item"><span class="hud-label">Best</span><span class="hud-val" id="hBest">0</span></div>
+  <button class="btn" id="bUndo">Undo</button>
+  <button class="btn" id="bHint">Hint</button>
+  <button class="btn" id="bNew">New Game</button>
+</div>
+<canvas id="c"></canvas>
+<div id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ─── Config ─── */
+const CW=72,CH=100,CR=8,GAP=10;
+const SUITS=['spade','heart','diamond','club'];
+const SUIT_SYM=['♠','♥','♦','♣'];
+const SUIT_COLOR=[0,1,1,0]; // 0=black,1=red
+const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const SAVE_VER=2;
+const STORAGE_KEY='gz_solitaire_v2';
+
+/* ─── Audio ─── */
+let audioCtx=null;
+function initAudio(){if(!audioCtx)try{audioCtx=new(window.AudioContext||window.webkitAudioContext)}catch(e){}}
+function playTone(freq,dur,type,vol){
+  if(!audioCtx)return;
+  try{
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type=type||'sine';o.frequency.value=freq;
+    g.gain.setValueAtTime(vol||0.08,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+    o.connect(g);g.connect(audioCtx.destination);
+    o.start();o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+function sndPlace(){playTone(600,0.08,'sine',0.07)}
+function sndFlip(){playTone(800,0.06,'square',0.04)}
+function sndDeal(){playTone(440,0.05,'sine',0.05)}
+function sndWin(){const t=audioCtx?audioCtx.currentTime:0;
+  [523,659,784,1047].forEach((f,i)=>playTone(f,0.3,'sine',0.1))}
+function sndError(){playTone(200,0.15,'sawtooth',0.04)}
+
+/* ─── Card ─── */
+let cardIdCounter=0;
+function makeCard(suit,rank){
+  return{id:cardIdCounter++,suit,rank,faceUp:false,
+    value:RANKS.indexOf(rank),color:SUIT_COLOR[suit]}
+}
+
+/* ─── Deck ─── */
+function createDeck(){
+  let d=[];
+  for(let s=0;s<4;s++)for(let r=0;r<13;r++)d.push(makeCard(s,RANKS[r]));
+  return d;
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+
+/* ─── State ─── */
+let S={stock:[],waste:[],foundations:[[],[],[],[]],tableau:[[],[],[],[],[],[],[]],
+  undoStack:[],moves:0,score:0,best:0,timerStart:0,elapsed:0,timerRunning:false,
+  gameWon:false,animating:false};
+
+/* ─── Canvas ─── */
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+let W,H,scale=1,cardW,cardH,gap,tabY,foundY,stockX,wasteX,foundX,tabX,cascadeDown,cascadeUp;
+
+function resize(){
+  const dpr=window.devicePixelRatio||1;
+  const hudH=document.getElementById('hud').offsetHeight;
+  W=Math.min(window.innerWidth,1280);
+  H=Math.max(window.innerHeight-hudH,500);
+  canvas.style.width=W+'px';
+  canvas.style.height=H+'px';
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  // Scale cards to fit
+  const totalW=7*CW+6*GAP+40;
+  scale=Math.min(1,(W-20)/totalW);
+  cardW=CW*scale;cardH=CH*scale;gap=GAP*scale;
+  const topPad=10;
+  stockX=10;wasteX=stockX+cardW+gap;
+  foundX=W-4*(cardW+gap)-10;
+  foundY=topPad;tabY=topPad+cardH+16*scale;
+  tabX=(W-7*(cardW+gap)+gap)/2;
+  cascadeDown=18*scale;cascadeUp=28*scale;
+}
+
+/* ─── Layout helpers ─── */
+function tabCardPos(col,idx){
+  let y=tabY;
+  const pile=S.tableau[col];
+  for(let i=0;i<idx;i++) y+=(pile[i].faceUp?cascadeUp:cascadeDown);
+  return{x:tabX+col*(cardW+gap),y};
+}
+function wastePos(idx){
+  const spread=idx===S.waste.length-1?0:Math.min(cardW*0.15,15);
+  return{x:wasteX+idx*Math.max(0,spread),y:foundY};
+}
+function foundPos(fi){return{x:foundX+fi*(cardW+gap),y:foundY}}
+
+/* ─── Rendering ─── */
+function drawCard(x,y,card,highlight){
+  // Shadow
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,0.35)';ctx.shadowBlur=6*scale;ctx.shadowOffsetY=2*scale;
+  // Card body
+  ctx.fillStyle=card.faceUp?'#f8f9fc':'#2a2f5e';
+  roundRect(x,y,cardW,cardH,CR*scale);
+  ctx.fill();
+  ctx.restore();
+  // Border
+  ctx.strokeStyle=highlight?'#4ecdc4':'rgba(255,255,255,0.12)';
+  ctx.lineWidth=highlight?2.5*scale:1*scale;
+  roundRect(x,y,cardW,cardH,CR*scale);ctx.stroke();
+  if(highlight){ctx.shadowColor='#4ecdc4';ctx.shadowBlur=10*scale;
+    roundRect(x,y,cardW,cardH,CR*scale);ctx.stroke();ctx.shadowBlur=0}
+
+  if(!card.faceUp){
+    // Card back pattern
+    ctx.save();ctx.clip();
+    const p=3*scale;
+    ctx.strokeStyle='rgba(78,205,196,0.15)';
+    ctx.lineWidth=1*scale;
+    for(let i=-cardH;i<cardW+cardH;i+=6*scale){
+      ctx.beginPath();ctx.moveTo(x+i,y);ctx.lineTo(x+i-cardH,y+cardH);ctx.stroke();
+    }
+    // Center diamond
+    ctx.fillStyle='rgba(78,205,196,0.12)';
+    const cx=x+cardW/2,cy=y+cardH/2,sz=16*scale;
+    ctx.beginPath();ctx.moveTo(cx,cy-sz);ctx.lineTo(cx+sz,cy);ctx.lineTo(cx,cy+sz);ctx.lineTo(cx-sz,cy);ctx.closePath();ctx.fill();
+    ctx.restore();
+    return;
+  }
+
+  // Face-up card
+  const col=card.color===1?'#dc3545':'#1a1a2e';
+  const sym=SUIT_SYM[card.suit];
+  const rk=RANKS[card.value];
+  ctx.fillStyle=col;ctx.textBaseline='top';
+  // Top-left rank + suit
+  ctx.font=`bold ${12*scale}px -apple-system,BlinkMacSystemFont,sans-serif`;
+  ctx.fillText(rk,x+5*scale,y+4*scale);
+  ctx.font=`${11*scale}px serif`;
+  ctx.fillText(sym,x+5*scale,y+16*scale);
+  // Bottom-right (rotated)
+  ctx.save();ctx.translate(x+cardW-5*scale,y+cardH-4*scale);ctx.rotate(Math.PI);
+  ctx.textBaseline='top';
+  ctx.font=`bold ${12*scale}px -apple-system,BlinkMacSystemFont,sans-serif`;
+  ctx.fillText(rk,0,0);
+  ctx.font=`${11*scale}px serif`;
+  ctx.fillText(sym,0,12*scale);
+  ctx.restore();
+  // Center symbol(s)
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  const cx2=x+cardW/2,cy2=y+cardH/2;
+  if(card.value>=10){ // J,Q,K
+    ctx.font=`bold ${20*scale}px serif`;
+    ctx.fillText(rk,cx2,cy2-4*scale);
+    ctx.font=`${16*scale}px serif`;
+    ctx.fillText(sym,cx2,cy2+14*scale);
+  } else if(card.value===0){ // Ace
+    ctx.font=`${32*scale}px serif`;
+    ctx.fillText(sym,cx2,cy2);
+  } else {
+    drawPips(ctx,x,y,cardW,cardH,card.value+1,sym,col,scale);
+  }
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+}
+
+function drawPips(c,x,y,w,h,n,sym,col,sc){
+  c.fillStyle=col;
+  c.font=`${14*sc}px serif`;
+  const cx=x+w/2,cy=y+h/2;
+  const positions=getPipPositions(n);
+  positions.forEach(([px,py])=>{
+    c.fillText(sym,cx+px*14*sc,cy+py*14*sc);
+  });
+}
+function getPipPositions(n){
+  const ps={
+    2:[[0,-2.2],[0,2.2]],
+    3:[[0,-2.2],[0,0],[0,2.2]],
+    4:[[-1,-2.2],[1,-2.2],[-1,2.2],[1,2.2]],
+    5:[[-1,-2.2],[1,-2.2],[0,0],[-1,2.2],[1,2.2]],
+    6:[[-1,-2.2],[1,-2.2],[-1,0],[1,0],[-1,2.2],[1,2.2]],
+    7:[[-1,-2.2],[1,-2.2],[-1,0],[1,0],[-1,2.2],[1,2.2],[0,-1.1]],
+    8:[[-1,-2.2],[1,-2.2],[-1,0],[1,0],[-1,2.2],[1,2.2],[0,-1.1],[0,1.1]],
+    9:[[-1,-2.5],[1,-2.5],[-1,-0.8],[1,-0.8],[0,0],[-1,0.8],[1,0.8],[-1,2.5],[1,2.5]],
+    10:[[-1,-2.5],[1,-2.5],[-1,-0.8],[1,-0.8],[-1,0.8],[1,0.8],[-1,2.5],[1,2.5],[0,-1.65],[0,1.65]]
+  };
+  return ps[n]||[[0,0]];
+}
+
+function drawEmptySlot(x,y,label){
+  ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1.5*scale;
+  ctx.setLineDash([4*scale,4*scale]);
+  roundRect(x,y,cardW,cardH,CR*scale);ctx.stroke();
+  ctx.setLineDash([]);
+  if(label){
+    ctx.fillStyle='rgba(255,255,255,0.08)';
+    ctx.font=`${16*scale}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(label,x+cardW/2,y+cardH/2);
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  }
+}
+
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+function render(){
+  // Background gradient
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#0a0e27');bg.addColorStop(0.5,'#141845');bg.addColorStop(1,'#1a0a2e');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // Subtle grid pattern
+  ctx.strokeStyle='rgba(255,255,255,0.015)';ctx.lineWidth=1;
+  for(let i=0;i<W;i+=30*scale){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke()}
+  for(let i=0;i<H;i+=30*scale){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke()}
+
+  // Stock
+  if(S.stock.length>0){
+    drawCard(stockX,foundY,{faceUp:false,suit:0,value:0,color:0,id:-1},false);
+    // Count badge
+    ctx.fillStyle='rgba(78,205,196,0.8)';
+    ctx.font=`bold ${10*scale}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(S.stock.length,stockX+cardW/2,foundY+cardH+10*scale);
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  } else {
+    drawEmptySlot(stockX,foundY,'↻');
+  }
+
+  // Waste
+  drawEmptySlot(wasteX,foundY,'');
+  const showWaste=Math.min(S.waste.length,3);
+  const wStart=Math.max(0,S.waste.length-showWaste);
+  for(let i=0;i<showWaste;i++){
+    const wi=wStart+i;
+    const isTop=wi===S.waste.length-1;
+    drawCard(wasteX+(i>0?cardW*0.22:0),foundY,S.waste[wi],isTop&&hintCard===S.waste[wi]);
+  }
+
+  // Foundations
+  for(let fi=0;fi<4;fi++){
+    drawEmptySlot(foundX+fi*(cardW+gap),foundY,SUIT_SYM[fi]);
+    const f=S.foundations[fi];
+    if(f.length>0){
+      drawCard(foundX+fi*(cardW+gap),foundY,f[f.length-1],hintCard===f[f.length-1]);
+    }
+  }
+
+  // Tableau
+  for(let col=0;col<7;col++){
+    if(S.tableau[col].length===0){
+      drawEmptySlot(tabX+col*(cardW+gap),tabY,'K');
+    }
+    for(let idx=0;idx<S.tableau[col].length;idx++){
+      const card=S.tableau[col][idx];
+      const pos=tabCardPos(col,idx);
+      const isHint=hintCard===card;
+      if(dragCards.indexOf(card)===-1){
+        drawCard(pos.x,pos.y,card,isHint);
+      }
+    }
+  }
+
+  // Drag cards
+  if(dragCards.length>0){
+    dragCards.forEach((c,i)=>{
+      drawCard(dragX,dragY+i*cascadeUp,c,false);
+    });
+  }
+
+  // Win overlay
+  if(S.gameWon){
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#4ecdc4';
+    ctx.font=`bold ${36*scale}px -apple-system,sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('YOU WIN!',W/2,H/2-30*scale);
+    ctx.font=`${18*scale}px -apple-system,sans-serif`;
+    ctx.fillStyle='#e0e8f0';
+    ctx.fillText('Score: '+S.score+' | Moves: '+S.moves+' | Time: '+formatTime(S.elapsed),W/2,H/2+15*scale);
+    ctx.fillStyle='rgba(78,205,196,0.6)';
+    ctx.font=`${14*scale}px -apple-system,sans-serif`;
+    ctx.fillText('Tap "New Game" to play again',W/2,H/2+50*scale);
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';
+    renderConfetti();
+  }
+}
+
+/* ─── Win celebration ─── */
+let confetti=[];
+function spawnConfetti(){
+  confetti=[];
+  for(let i=0;i<80;i++){
+    confetti.push({
+      x:Math.random()*W,y:-Math.random()*H*0.5,
+      vx:(Math.random()-0.5)*3,vy:Math.random()*3+2,
+      size:Math.random()*6+3,
+      color:['#4ecdc4','#ff6b6b','#ffd93d','#6c5ce7','#a8e6cf','#ff8b94'][Math.random()*6|0],
+      rot:Math.random()*Math.PI*2,rv:(Math.random()-0.5)*0.2
+    });
+  }
+}
+function updateConfetti(dt){
+  confetti.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.05;p.rot+=p.rv;
+    if(p.y>H+20){p.y=-10;p.x=Math.random()*W;p.vy=Math.random()*3+2}
+  });
+}
+function renderConfetti(){
+  confetti.forEach(p=>{
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+    ctx.fillStyle=p.color;
+    ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+    ctx.restore();
+  });
+}
+
+/* ─── Hit testing ─── */
+function hitTest(px,py){
+  // Check waste top
+  if(S.waste.length>0){
+    const showWaste=Math.min(S.waste.length,3);
+    const wx=wasteX+(showWaste-1>0?cardW*0.22*(showWaste-1):0);
+    if(px>=wx&&px<=wx+cardW&&py>=foundY&&py<=foundY+cardH){
+      return{type:'waste',card:S.waste[S.waste.length-1],idx:S.waste.length-1};
+    }
+  }
+  // Check foundations (for dropping / double-click source isn't needed, just target)
+  // Check tableau (reverse order for top cards)
+  for(let col=6;col>=0;col--){
+    const pile=S.tableau[col];
+    for(let idx=pile.length-1;idx>=0;idx--){
+      const pos=tabCardPos(col,idx);
+      const card=pile[idx];
+      const cH=(idx===pile.length-1)?cardH:(pile[idx].faceUp?cascadeUp:cascadeDown);
+      if(px>=pos.x&&px<=pos.x+cardW&&py>=pos.y&&py<=pos.y+cH){
+        if(card.faceUp) return{type:'tableau',col,idx,card};
+        return null;
+      }
+    }
+    // Empty column
+    if(pile.length===0){
+      const x=tabX+col*(cardW+gap);
+      if(px>=x&&px<=x+cardW&&py>=tabY&&py<=tabY+cardH){
+        return{type:'tableau',col,idx:-1,card:null};
+      }
+    }
+  }
+  // Stock
+  if(px>=stockX&&px<=stockX+cardW&&py>=foundY&&py<=foundY+cardH){
+    return{type:'stock'};
+  }
+  // Foundation
+  for(let fi=0;fi<4;fi++){
+    const fx=foundX+fi*(cardW+gap);
+    if(px>=fx&&px<=fx+cardW&&py>=foundY&&py<=foundY+cardH){
+      return{type:'foundation',fi,card:S.foundations[fi].length>0?S.foundations[fi][S.foundations[fi].length-1]:null};
+    }
+  }
+  return null;
+}
+
+function findFoundationDrop(card){
+  // Exact suit match first
+  for(let fi=0;fi<4;fi++){
+    const f=S.foundations[fi];
+    if(f.length===0&&card.value===0) return fi;
+    if(f.length>0&&f[0].suit===card.suit&&f[f.length-1].value===card.value-1) return fi;
+  }
+  // Empty foundation for aces
+  for(let fi=0;fi<4;fi++){
+    if(S.foundations[fi].length===0&&card.value===0) return fi;
+  }
+  return -1;
+}
+
+function canPlaceOnTableau(card,col){
+  const pile=S.tableau[col];
+  if(pile.length===0) return card.value===12; // Only Kings
+  const top=pile[pile.length-1];
+  return top.faceUp&&card.color!==top.color&&card.value===top.value-1;
+}
+
+/* ─── Drag state ─── */
+let dragCards=[],dragSource=null,dragX=0,dragY=0,dragOffX=0,dragOffY=0;
+let isDragging=false;
+let hintCard=null,hintTimer=0;
+let lastClickTime=0,lastClickTarget=null;
+
+function startDrag(cards,source,sx,sy,offX,offY){
+  isDragging=true;dragCards=cards;dragSource=source;
+  dragX=sx-offX;dragY=sy-offY;dragOffX=offX;dragOffY=offY;
+}
+function endDrag(){
+  isDragging=false;dragCards=[];dragSource=null;
+}
+
+/* ─── Move logic ─── */
+function saveUndo(){
+  S.undoStack.push(JSON.parse(JSON.stringify({
+    stock:S.stock,waste:S.waste,foundations:S.foundations,tableau:S.tableau,
+    moves:S.moves,score:S.score
+  })));
+  if(S.undoStack.length>50) S.undoStack.shift();
+}
+
+function doMove(src,dst,cards){
+  saveUndo();
+  // Remove from source
+  if(src.type==='waste'){
+    S.waste.splice(S.waste.indexOf(cards[0]),cards.length);
+  } else if(src.type==='tableau'){
+    S.tableau[src.col].splice(src.idx,cards.length);
+    // Flip new top card
+    const pile=S.tableau[src.col];
+    if(pile.length>0&&!pile[pile.length-1].faceUp){
+      pile[pile.length-1].faceUp=true;
+      S.score+=5;
+    }
+  } else if(src.type==='foundation'){
+    S.foundations[src.fi].pop();
+  }
+  // Add to destination
+  if(dst.type==='tableau'){
+    S.tableau[dst.col].push(...cards);
+  } else if(dst.type==='foundation'){
+    S.foundations[dst.fi].push(cards[0]);
+    S.score+=10;
+  }
+  S.moves++;
+  updateHUD();
+  sndPlace();
+  checkWin();
+}
+
+function dealFromStock(){
+  if(S.stock.length===0){
+    // Recycle waste
+    if(S.waste.length===0) return;
+    saveUndo();
+    S.stock=S.waste.reverse();
+    S.stock.forEach(c=>c.faceUp=false);
+    S.waste=[];
+    S.score=Math.max(0,S.score-20);
+    S.moves++;
+    sndDeal();
+    updateHUD();
+    return;
+  }
+  saveUndo();
+  const card=S.stock.pop();
+  card.faceUp=true;
+  S.waste.push(card);
+  S.moves++;
+  sndDeal();
+  updateHUD();
+}
+
+function autoMoveToFoundation(card,source){
+  const fi=findFoundationDrop(card);
+  if(fi===-1) return false;
+  doMove(source,{type:'foundation',fi},[card]);
+  return true;
+}
+
+function flipTopCards(){
+  for(let col=0;col<7;col++){
+    const pile=S.tableau[col];
+    if(pile.length>0&&!pile[pile.length-1].faceUp){
+      pile[pile.length-1].faceUp=true;
+      S.score+=5;
+    }
+  }
+}
+
+function checkWin(){
+  for(let fi=0;fi<4;fi++){
+    if(S.foundations[fi].length!==13) return;
+  }
+  S.gameWon=true;S.timerRunning=false;
+  if(S.score>S.best){S.best=S.score;localStorage.setItem('gz_sol_best',S.best)}
+  sndWin();spawnConfetti();
+  updateHUD();
+}
+
+function canAutoComplete(){
+  // All tableau cards face up (stock/waste handled in autoComplete step)
+  for(let col=0;col<7;col++){
+    for(const c of S.tableau[col]) if(!c.faceUp) return false;
+  }
+  return true;
+}
+
+function autoComplete(){
+  if(S.animating||S.gameWon) return;
+  if(!canAutoComplete()) return;
+  S.animating=true;
+  let delay=0;
+  function step(){
+    let moved=false;
+    // First: deal from stock to waste if needed
+    if(S.stock.length>0){
+      setTimeout(()=>{
+        saveUndo();
+        const c=S.stock.pop();c.faceUp=true;S.waste.push(c);
+        S.moves++;updateHUD();sndDeal();
+      },delay);
+      delay+=80;moved=true;
+    }
+    // Try waste -> foundation
+    else if(S.waste.length>0){
+      const wc=S.waste[S.waste.length-1];
+      const fi=findFoundationDrop(wc);
+      if(fi!==-1){
+        setTimeout(()=>{
+          saveUndo();
+          S.waste.pop();S.foundations[fi].push(wc);
+          S.score+=10;S.moves++;updateHUD();sndPlace();checkWin();
+        },delay);
+        delay+=80;moved=true;
+      } else {
+        // Waste card can't go to foundation — stuck
+        S.animating=false;return;
+      }
+    }
+    // Try tableau -> foundation
+    if(!moved){
+      for(let col=0;col<7;col++){
+        const pile=S.tableau[col];
+        if(pile.length===0) continue;
+        const card=pile[pile.length-1];
+        const fi=findFoundationDrop(card);
+        if(fi!==-1){
+          setTimeout(()=>{
+            saveUndo();
+            pile.pop();
+            S.foundations[fi].push(card);
+            S.score+=10;S.moves++;
+            updateHUD();sndPlace();checkWin();
+          },delay);
+          delay+=80;moved=true;break;
+        }
+      }
+    }
+    if(moved&&!S.gameWon) setTimeout(step,delay+50);
+    else S.animating=false;
+  }
+  step();
+}
+
+/* ─── Hint ─── */
+function findHint(){
+  // Check waste -> foundation
+  if(S.waste.length>0){
+    const c=S.waste[S.waste.length-1];
+    if(findFoundationDrop(c)!==-1) return c;
+    for(let col=0;col<7;col++){
+      if(canPlaceOnTableau(c,col)){
+        hintCard=c;hintTimer=90;return c;
+      }
+    }
+  }
+  // Check tableau -> foundation
+  for(let col=0;col<7;col++){
+    const pile=S.tableau[col];
+    if(pile.length===0) continue;
+    const c=pile[pile.length-1];
+    if(c.faceUp&&findFoundationDrop(c)!==-1) return c;
+  }
+  // Check tableau -> tableau
+  for(let col=0;col<7;col++){
+    const pile=S.tableau[col];
+    for(let idx=0;idx<pile.length;idx++){
+      if(!pile[idx].faceUp) continue;
+      for(let dc=0;dc<7;dc++){
+        if(dc===col) continue;
+        if(canPlaceOnTableau(pile[idx],dc)){
+          // Don't suggest moving a King from an empty-base to another empty column
+          if(pile[idx].value===12&&idx===0&&S.tableau[dc].length===0) continue;
+          return pile[idx];
+        }
+      }
+    }
+  }
+  return null;
+}
+function showHint(){
+  const c=findHint();
+  if(c){hintCard=c;hintTimer=90;sndFlip()}
+  else showToast('No hints available');
+}
+
+/* ─── Undo ─── */
+function undo(){
+  if(S.undoStack.length===0||S.gameWon) return;
+  const prev=S.undoStack.pop();
+  S.stock=prev.stock;S.waste=prev.waste;S.foundations=prev.foundations;
+  S.tableau=prev.tableau;S.moves=prev.moves;S.score=prev.score;
+  updateHUD();sndFlip();
+}
+
+/* ─── Save/Load ─── */
+function saveGame(){
+  const data={
+    v:SAVE_VER,
+    stock:S.stock,waste:S.waste,foundations:S.foundations,tableau:S.tableau,
+    moves:S.moves,score:S.score,elapsed:S.elapsed,gameWon:S.gameWon
+  };
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data))}catch(e){}
+}
+function loadGame(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const data=JSON.parse(raw);
+    if(data.v!==SAVE_VER) return false;
+    S.stock=data.stock;S.waste=data.waste;S.foundations=data.foundations;
+    S.tableau=data.tableau;S.moves=data.moves;S.score=data.score;
+    S.elapsed=data.elapsed||0;S.gameWon=data.gameWon||false;
+    S.undoStack=[];S.timerRunning=!S.gameWon;
+    S.timerStart=performance.now()-S.elapsed*1000;
+    if(S.gameWon) spawnConfetti();
+    return true;
+  }catch(e){return false}
+}
+function clearSave(){try{localStorage.removeItem(STORAGE_KEY)}catch(e){}}
+
+/* ─── New Game ─── */
+function newGame(){
+  cardIdCounter=0;
+  const deck=shuffle(createDeck());
+  S.stock=[];S.waste=[];S.foundations=[[],[],[],[]];
+  S.tableau=[[],[],[],[],[],[],[]];
+  S.undoStack=[];S.moves=0;S.score=0;S.elapsed=0;
+  S.timerRunning=true;S.timerStart=performance.now();
+  S.gameWon=false;S.animating=false;
+  confetti=[];
+  // Deal tableau
+  let di=0;
+  for(let col=0;col<7;col++){
+    for(let row=0;row<=col;row++){
+      const card=deck[di++];
+      card.faceUp=(row===col);
+      S.tableau[col].push(card);
+    }
+  }
+  // Remaining to stock
+  for(;di<52;di++){
+    deck[di].faceUp=false;
+    S.stock.push(deck[di]);
+  }
+  clearSave();
+  updateHUD();
+}
+
+/* ─── Timer ─── */
+function formatTime(s){
+  const m=s/60|0;const sec=s%60|0;
+  return m+':'+(sec<10?'0':'')+sec;
+}
+function updateTimer(){
+  if(S.timerRunning){
+    S.elapsed=((performance.now()-S.timerStart)/1000)|0;
+  }
+  document.getElementById('hTimer').textContent=formatTime(S.elapsed);
+}
+
+/* ─── HUD ─── */
+function updateHUD(){
+  document.getElementById('hMoves').textContent=S.moves;
+  document.getElementById('hScore').textContent=S.score;
+  document.getElementById('hBest').textContent=S.best;
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+/* ─── Input handling ─── */
+let pointerDown=false,pointerStart={x:0,y:0},pointerTime=0,dragStarted=false;
+
+function getPos(e){
+  const rect=canvas.getBoundingClientRect();
+  const x=(e.clientX||e.pageX)-rect.left;
+  const y=(e.clientY||e.pageY)-rect.top;
+  return{x,y};
+}
+
+function onPointerDown(e){
+  e.preventDefault();initAudio();
+  const p=getPos(e);pointerDown=true;dragStarted=false;
+  pointerStart={x:p.x,y:p.y};pointerTime=performance.now();
+
+  if(S.gameWon) return;
+
+  const hit=hitTest(p.x,p.y);
+  if(!hit) return;
+
+  // Double click detection
+  const now=performance.now();
+  if(hit.card&&lastClickTarget===hit.card&&now-lastClickTime<400){
+    // Double click - auto move to foundation
+    if(hit.type==='waste'){
+      autoMoveToFoundation(hit.card,{type:'waste'});
+    } else if(hit.type==='tableau'&&hit.card===S.tableau[hit.col][S.tableau[hit.col].length-1]){
+      autoMoveToFoundation(hit.card,{type:'tableau',col:hit.col,idx:hit.idx});
+    }
+    lastClickTime=0;lastClickTarget=null;
+    return;
+  }
+  lastClickTime=now;lastClickTarget=hit.card;
+
+  // Stock click
+  if(hit.type==='stock'){
+    dealFromStock();return;
+  }
+
+  // Start drag
+  if(hit.card&&hit.type==='waste'){
+    const wx=wasteX+(Math.min(S.waste.length,3)-1>0?cardW*0.22*(Math.min(S.waste.length,3)-1):0);
+    startDrag([hit.card],{type:'waste'},wx,foundY,p.x-wx,p.y-foundY);
+  } else if(hit.card&&hit.type==='tableau'){
+    const pile=S.tableau[hit.col];
+    const cards=pile.slice(hit.idx);
+    const pos=tabCardPos(hit.col,hit.idx);
+    startDrag(cards,{type:'tableau',col:hit.col,idx:hit.idx},pos.x,pos.y,p.x-pos.x,p.y-pos.y);
+  } else if(hit.card&&hit.type==='foundation'){
+    const fx=foundX+hit.fi*(cardW+gap);
+    startDrag([hit.card],{type:'foundation',fi:hit.fi},fx,foundY,p.x-fx,p.y-foundY);
+  }
+}
+
+function onPointerMove(e){
+  e.preventDefault();
+  if(!isDragging||!pointerDown) return;
+  const p=getPos(e);
+  const dx=p.x-pointerStart.x,dy=p.y-pointerStart.y;
+  if(!dragStarted&&Math.abs(dx)+Math.abs(dy)>5) dragStarted=true;
+  if(dragStarted){
+    dragX=p.x-dragOffX;dragY=p.y-dragOffY;
+  }
+}
+
+function onPointerUp(e){
+  e.preventDefault();
+  if(!pointerDown) return;
+  pointerDown=false;
+  if(!isDragging){return}
+  if(!dragStarted){endDrag();return}
+  const p=getPos(e);
+
+  // Find drop target
+  let dropped=false;
+
+  // Try foundation
+  if(dragCards.length===1){
+    for(let fi=0;fi<4;fi++){
+      const fx=foundX+fi*(cardW+gap);
+      if(p.x>=fx&&p.x<=fx+cardW&&p.y>=foundY&&p.y<=foundY+cardH){
+        const card=dragCards[0];
+        const f=S.foundations[fi];
+        if((f.length===0&&card.value===0)||(f.length>0&&f[0].suit===card.suit&&f[f.length-1].value===card.value-1)){
+          doMove(dragSource,{type:'foundation',fi},dragCards);
+          dropped=true;break;
+        }
+      }
+    }
+  }
+
+  // Try tableau
+  if(!dropped){
+    for(let col=0;col<7;col++){
+      const tx=tabX+col*(cardW+gap);
+      const pile=S.tableau[col];
+      let ty;
+      if(pile.length===0) ty=tabY;
+      else {const lastPos=tabCardPos(col,pile.length-1);ty=lastPos.y;}
+      // Large drop target: full column width, from top of pile to canvas bottom
+      if(p.x>=tx-gap*0.5&&p.x<=tx+cardW+gap*0.5&&p.y>=ty-cardH*0.5&&p.y<=H){
+        if(canPlaceOnTableau(dragCards[0],col)){
+          doMove(dragSource,{type:'tableau',col},dragCards);
+          dropped=true;break;
+        }
+      }
+    }
+  }
+
+  if(!dropped) sndError();
+  endDrag();
+
+  // Auto-complete check
+  if(!S.gameWon&&canAutoComplete()) setTimeout(autoComplete,300);
+}
+
+// Touch & mouse events
+canvas.addEventListener('pointerdown',onPointerDown,{passive:false});
+canvas.addEventListener('pointermove',onPointerMove,{passive:false});
+canvas.addEventListener('pointerup',onPointerUp,{passive:false});
+canvas.addEventListener('pointercancel',onPointerUp,{passive:false});
+canvas.style.touchAction='none';
+
+// Buttons
+document.getElementById('bUndo').addEventListener('click',()=>{initAudio();undo()});
+document.getElementById('bHint').addEventListener('click',()=>{initAudio();showHint()});
+document.getElementById('bNew').addEventListener('click',()=>{initAudio();newGame();showToast('New game started')});
+
+// Keyboard shortcuts
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.key==='z'){e.preventDefault();undo()}
+  else if(e.key==='n'||e.key==='N'){newGame();showToast('New game started')}
+  else if(e.key==='h'||e.key==='H'){showHint()}
+});
+
+/* ─── Game loop ─── */
+let lastTime=0,autoSaveCounter=0;
+function gameLoop(ts){
+  const dt=(ts-lastTime)/1000;lastTime=ts;
+  // Timer
+  updateTimer();
+  // Hint
+  if(hintTimer>0){hintTimer--;if(hintTimer<=0)hintCard=null}
+  // Confetti
+  if(confetti.length>0) updateConfetti(dt);
+  // Render
+  render();
+  // Auto-save every ~5 seconds (300 frames at 60fps)
+  if(S.timerRunning&&!S.gameWon&&S.moves>0&&++autoSaveCounter>=300){autoSaveCounter=0;saveGame()}
+  requestAnimationFrame(gameLoop);
+}
+
+/* ─── Init ─── */
+function init(){
+  resize();
+  S.best=parseInt(localStorage.getItem('gz_sol_best'))||0;
+  if(!loadGame()) newGame();
+  updateHUD();
+  requestAnimationFrame(gameLoop);
+}
+
+window.addEventListener('resize',resize);
+
+// Prevent context menu on long press
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+
+// Save on page unload
+window.addEventListener('beforeunload',saveGame);
+window.addEventListener('pagehide',saveGame);
+
+init();
+
+})();
+</script>
+</body>
+</html>
