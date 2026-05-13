@@ -60,7 +60,8 @@ const GAMES = [
   {name:"Arrow Escape",emoji:"🚀",cat:"puzzle",tags:["Puzzle","Space","Logic","Arrow"],url:"/arrow-escape/",desc:"Launch spaceships in the right order! A cosmic logic puzzle with 20+ levels. Only ships with a clear flight path can escape!",isNew:true,status:"live"},
   {name:"Tile Dynasty",emoji:"🀄",cat:"puzzle",tags:["Puzzle","Mahjong","Tile","Matching","Strategy"],url:"/tile-dynasty/",desc:"Classic Mahjong Solitaire! Match free tiles to clear the board across 24 levels. Hint & shuffle included!",isNew:true,status:"live"},
   {name:"Bubble Pop",emoji:"🫧",cat:"puzzle",tags:["Puzzle","Bubble","Shooter","Arcade","Casual"],url:"/bubble-pop/",desc:"Aim and shoot colorful bubbles! Match 3+ to pop them and clear 25 levels of bubble-shooting fun!",isNew:true,status:"live"},
-  {name:"Pixel Logic",emoji:"🧩",cat:"puzzle",tags:["Puzzle","Nonogram","Logic","Grid","Brain"],url:"/pixel-logic/",desc:"Solve Nonogram logic puzzles to reveal hidden pixel art! 30+ handcrafted puzzles in 3 difficulty levels.",isNew:true,status:"live"}
+  {name:"Pixel Logic",emoji:"🧩",cat:"puzzle",tags:["Puzzle","Nonogram","Logic","Grid","Brain"],url:"/pixel-logic/",desc:"Solve Nonogram logic puzzles to reveal hidden pixel art! 30+ handcrafted puzzles in 3 difficulty levels.",isNew:true,status:"live"},
+  {name:"Watermelon Merge",emoji:"🍉",cat:"puzzle",tags:["Puzzle","Merge","Physics","Fruit","Casual","Suika"],url:"/watermelon-merge/",desc:"Drop and merge fruits to grow a giant watermelon! A satisfying physics puzzle where matching fruits combine into bigger ones. Can you reach the watermelon?",isNew:true,status:"live"},
 ];
 
 /**
