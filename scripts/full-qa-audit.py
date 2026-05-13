@@ -28,6 +28,24 @@ from urllib.parse import urlparse
 TZ_SH = timezone(timedelta(hours=8))
 NOW = datetime.now(TZ_SH)
 
+# ── 自动定位 kachilu-browser ───────────────────
+def _find_kachilu_browser():
+    """Locate kachilu-browser binary (installed via npm under nvm)."""
+    import shutil
+    path = shutil.which("kachilu-browser")
+    if path:
+        return path
+    # Fallback: scan nvm node bin directories
+    nvm_dir = os.path.expanduser("~/.nvm/versions/node")
+    if os.path.isdir(nvm_dir):
+        for ver in sorted(os.listdir(nvm_dir), reverse=True):
+            candidate = os.path.join(nvm_dir, ver, "bin", "kachilu-browser")
+            if os.path.isfile(candidate):
+                return candidate
+    return None
+
+KACHILU_BROWSER = _find_kachilu_browser()
+
 
 def parse_kachilu_eval(stdout_text: str) -> dict:
     """统一解析 Kachilu eval 输出（处理多种格式）"""
@@ -189,7 +207,7 @@ def check_js_errors(url: str) -> dict:
         # 启动 Kachilu 会话
         session = "qa-full-" + datetime.now().strftime("%H%M%S")
         subprocess.run(
-            ["kachilu-browser", "--session", session, "open", url],
+            [KACHILU_BROWSER, "--session", session, "open", url],
             timeout=30, capture_output=True
         )
         time.sleep(5)  # 等待页面加载完成
@@ -208,7 +226,7 @@ def check_js_errors(url: str) -> dict:
         });
         """
         proc = subprocess.run(
-            ["kachilu-browser", "--session", session, "eval", error_collector],
+            [KACHILU_BROWSER, "--session", session, "eval", error_collector],
             timeout=10, capture_output=True, text=True
         )
 
@@ -216,7 +234,7 @@ def check_js_errors(url: str) -> dict:
 
         # 收集结果
         proc = subprocess.run(
-            ["kachilu-browser", "--session", session, "eval", js_code],
+            [KACHILU_BROWSER, "--session", session, "eval", js_code],
             timeout=10, capture_output=True, text=True
         )
         try:
@@ -234,7 +252,7 @@ def check_js_errors(url: str) -> dict:
 
         # 清理
         subprocess.run(
-            ["kachilu-browser", "close", "--session", session],
+            [KACHILU_BROWSER, "close", "--session", session],
             timeout=10, capture_output=True
         )
 
@@ -333,13 +351,13 @@ def check_game_functionality(url: str) -> dict:
     try:
         session = "qa-game-" + datetime.now().strftime("%H%M%S")
         subprocess.run(
-            ["kachilu-browser", "--session", session, "open", url],
+            [KACHILU_BROWSER, "--session", session, "open", url],
             timeout=30, capture_output=True
         )
         time.sleep(6)  # 游戏加载需要更久
 
         proc = subprocess.run(
-            ["kachilu-browser", "--session", session, "eval", js_code],
+            [KACHILU_BROWSER, "--session", session, "eval", js_code],
             timeout=10, capture_output=True, text=True
         )
 
@@ -363,7 +381,7 @@ def check_game_functionality(url: str) -> dict:
             result["issues"].append("游戏检测 eval 解析失败")
 
         subprocess.run(
-            ["kachilu-browser", "close", "--session", session],
+            [KACHILU_BROWSER, "close", "--session", session],
             timeout=10, capture_output=True
         )
 
@@ -408,13 +426,13 @@ def check_monetag_ads(url: str, site_type: str) -> dict:
     try:
         session = "qa-ad-" + datetime.now().strftime("%H%M%S")
         subprocess.run(
-            ["kachilu-browser", "--session", session, "open", url],
+            [KACHILU_BROWSER, "--session", session, "open", url],
             timeout=30, capture_output=True
         )
         time.sleep(5)  # 广告脚本异步加载
 
         proc = subprocess.run(
-            ["kachilu-browser", "--session", session, "eval", js_code],
+            [KACHILU_BROWSER, "--session", session, "eval", js_code],
             timeout=10, capture_output=True, text=True
         )
 
@@ -449,7 +467,7 @@ def check_monetag_ads(url: str, site_type: str) -> dict:
             result["issues"].append("广告检测 eval 解析失败")
 
         subprocess.run(
-            ["kachilu-browser", "close", "--session", session],
+            [KACHILU_BROWSER, "close", "--session", session],
             timeout=10, capture_output=True
         )
 
@@ -629,7 +647,7 @@ def main():
         json.dump(all_results, f, ensure_ascii=False, indent=2, default=str)
 
     # 清理 Kachilu 残留
-    subprocess.run(["kachilu-browser", "close", "--all"], timeout=10, capture_output=True)
+    subprocess.run([KACHILU_BROWSER, "close", "--all"], timeout=10, capture_output=True)
 
     return 0
 
