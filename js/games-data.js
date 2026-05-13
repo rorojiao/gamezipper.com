@@ -63,6 +63,7 @@ const GAMES = [
   {name:"Pixel Logic",emoji:"🧩",cat:"puzzle",tags:["Puzzle","Nonogram","Logic","Grid","Brain"],url:"/pixel-logic/",desc:"Solve Nonogram logic puzzles to reveal hidden pixel art! 30+ handcrafted puzzles in 3 difficulty levels.",isNew:true,status:"live"},
   {name:"Watermelon Merge",emoji:"🍉",cat:"puzzle",tags:["Puzzle","Merge","Physics","Fruit","Casual","Suika"],url:"/watermelon-merge/",desc:"Drop and merge fruits to grow a giant watermelon! A satisfying physics puzzle where matching fruits combine into bigger ones. Can you reach the watermelon?",isNew:true,status:"live"},
   {name:"Solitaire",emoji:"🃏",cat:"puzzle",tags:["card","classic","klondike"],url:"/solitaire/",desc:"Play free Klondike Solitaire online with undo, hints, scoring and smooth card animations. The classic card game — no download needed.",isNew:true,status:"live"},
+  {name:"Triple Tile Match",emoji:"🧩",cat:"puzzle",tags:["Puzzle","Match-3","Tile","3D","Casual"],url:"/triple-tile/",desc:"Match 3 identical tiles in this addictive 3D puzzle! Tap tiles, fill the tray, clear matches before it fills up. 30 levels of layered tile fun!",isNew:true,status:"live"},
 ];
 
 /**
