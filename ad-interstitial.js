@@ -120,7 +120,7 @@
     var adScript = document.createElement('script');
     adScript.async = true;
     adScript.setAttribute('data-zone', String(INTERSTITIAL_ZONE));
-    adScript.src = 'https://a.magsrv.com/ad-provider.js';
+    adScript.src = 'https://a.magsrv.com/ad-provider.js?zone=' + INTERSTITIAL_ZONE;
     slot.appendChild(adScript);
 
     console.log('[GZInterstitial] Interstitial shown (event #' + state.eventCount + ', type: ' + eventName + ')');

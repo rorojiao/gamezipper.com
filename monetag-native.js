@@ -33,7 +33,7 @@
     var s = document.createElement('script');
     s.async = true;
     s.setAttribute('data-zone', String(INPAGE_PUSH_ZONE));
-    s.src = 'https://a.magsrv.com/ad-provider.js';
+    s.src = 'https://a.magsrv.com/ad-provider.js?zone=' + INPAGE_PUSH_ZONE;
     document.head.appendChild(s);
     console.log('[GZNativeAd] In-Page Push zone ' + INPAGE_PUSH_ZONE + ' loaded');
   }
@@ -50,7 +50,7 @@
     var s = document.createElement('script');
     s.async = true;
     s.setAttribute('data-zone', String(VIGNETTE_ZONE));
-    s.src = 'https://a.magsrv.com/ad-provider.js';
+    s.src = 'https://a.magsrv.com/ad-provider.js?zone=' + VIGNETTE_ZONE;
     document.head.appendChild(s);
     console.log('[GZNativeAd] Vignette Banner zone ' + VIGNETTE_ZONE + ' loaded');
   }
