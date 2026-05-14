@@ -68,6 +68,7 @@ const GAMES = [
   {name:"Sand Balls",emoji:"🏐",cat:"puzzle",tags:["Puzzle","Physics","Digging","Ball","Casual","Satisfying"],url:"/sand-balls/",desc:"Dig through sand to guide colorful balls into matching containers! A satisfying physics puzzle with 20+ handcrafted levels, stars, and obstacles. Play free now!",isNew:true,status:"live"},
   {name:"Pipe Connect",emoji:"🔧",cat:"puzzle",tags:["Puzzle","Pipe","Logic","Rotate","Plumbing","Brain"],url:"/pipe-connect/",desc:"Rotate pipe pieces to connect water from source to drain! 50+ levels of logic puzzle fun with progressive difficulty, hints, and 3-star ratings. No download needed.",isNew:true,status:"live"},
   {name:"Hex Block Puzzle",emoji:"⬡",cat:"puzzle",tags:["Puzzle","Hex","Block","Strategy","Brain","Casual"],url:"/hex-block/",desc:"Drag hex-shaped blocks onto the honeycomb grid and complete lines in 3 directions to clear them! An addictive hexagonal block puzzle with combo bonuses and satisfying effects. Play free now!",isNew:true,status:"live"},
+  {name:"Fill The Fridge",emoji:"🧊",cat:"puzzle",tags:["Puzzle","Organize","Drag","Fit","Casual","Brain"],url:"/fill-fridge/",desc:"Drag groceries into the fridge and fit everything perfectly! A satisfying organizing puzzle with 20 levels, undo, hints, and shuffle. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
