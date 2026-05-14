@@ -1,12 +1,12 @@
 # Reddit Post Draft - r/webgames / r/gaming
 
 ## Post Title Options:
-1. "I built a free browser game site with no ads during gameplay - 37 games, zero downloads"
-2. "After 6 months of building, I launched 37 free browser games - here's what I learned"
-3. "Just added 37 free games to my site - Snake, 2048, Tetris, Chess, Slope, and more (all playable in browser)"
+1. "I built a free browser game site with no ads during gameplay - 53 games, zero downloads"
+2. "After 6 months of building, I launched 53 free browser games - here's what I learned"
+3. "Just added 53 free games to my site - Snake, 2048, Tetris, Chess, Slope, and more (all playable in browser)"
 
 ## Body (Option 1 - Story approach):
-Hey everyone! I spent the last 6 months building a free browser game site called [GameZipper](https://gamezipper.com) — 37 games, all playable instantly, no downloads, no signup required.
+Hey everyone! I spent the last 6 months building a free browser game site called [GameZipper](https://gamezipper.com) — 53 games, all playable instantly, no downloads, no signup required.
 
 **Games included:**
 - 🐍 Snake (classic)
@@ -29,11 +29,11 @@ Would love honest feedback. No referral links, just want to know if the games ac
 ---
 
 ## Post Title Options:
-1. "Free unblocked games site - 37 browser games, no downloads"
-2. "I've been building gamezipper.com for fun - 37 free browser games, looking for feedback"
+1. "Free unblocked games site - 53 browser games, no downloads"
+2. "I've been building gamezipper.com for fun - 53 free browser games, looking for feedback"
 
 ## Body (Option 2 - Direct):
-Hey r/gaming! I built [gamezipper.com](https://gamezipper.com) — a free browser game aggregator with 37 games. All no-download, no-signup.
+Hey r/gaming! I built [gamezipper.com](https://gamezipper.com) — a free browser game aggregator with 53 games. All no-download, no-signup.
 
 Some popular ones:
 - Snake, 2048, Tetris, Chess, Sudoku
@@ -55,4 +55,4 @@ Looking for beta tester feedback. Is the site useful? Anything you'd change?
 - Do mention "no ads during gameplay" as unique selling point
 
 ## HN/Product Hunt potential angle:
-"Free browser games aggregator - 37 games, open source, no signup" (if repo is public)
+"Free browser games aggregator - 53 games, open source, no signup" (if repo is public)

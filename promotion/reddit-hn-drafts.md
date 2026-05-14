@@ -17,9 +17,9 @@ Works on mobile too — tap to jump.
 Curious what classic browser game I should add next?
 ```
 
-### 帖子2: r/ArcadeGames / r/HTML5Games - "37+ free browser games, no download needed"
+### 帖子2: r/ArcadeGames / r/HTML5Games - "53+ free browser games, no download needed"
 ```
-Title: I collected 37+ free browser games on one site — all playable instantly
+Title: I collected 53+ free browser games on one site — all playable instantly
 
 Body:
 Been building a free online games site as a side project. Everything runs in the browser, no download, no sign-up.
@@ -35,9 +35,9 @@ Site: https://gamezipper.com
 Looking for feedback — what game categories are you most interested in?
 ```
 
-### 帖子3: r/InternetIsBeautiful - "I made a free site with 37+ no-download games"
+### 帖子3: r/InternetIsBeautiful - "I made a free site with 53+ no-download games"
 ```
-Title: [I made this] Free site with 37+ browser games — snake, tetris, 2048, dino runner, and more
+Title: [I made this] Free site with 53+ browser games — snake, tetris, 2048, dino runner, and more
 
 Body:
 https://gamezipper.com
@@ -65,10 +65,10 @@ Would love feedback on what games to add next.
 无法直接在HN发帖（需要内测码或被邀请），但可准备内容用于未来提交：
 
 ```
-Title: Show HN: I built a free online games site (37+ HTML5 games, no download)
+Title: Show HN: I built a free online games site (53+ HTML5 games, no download)
 
 Body:
-Hey HN! I've been building gamezipper.com — a free online games site with 37+ HTML5 browser games.
+Hey HN! I've been building gamezipper.com — a free online games site with 53+ HTML5 browser games.
 
 No download, no sign-up. All games work on desktop and mobile.
 
