@@ -66,6 +66,7 @@ const GAMES = [
   {name:"Triple Tile Match",emoji:"🧩",cat:"puzzle",tags:["Puzzle","Match-3","Tile","3D","Casual"],url:"/triple-tile/",desc:"Match 3 identical tiles in this addictive 3D puzzle! Tap tiles, fill the tray, clear matches before it fills up. 30 levels of layered tile fun!",isNew:true,status:"live"},
   {name:"Unblock Me",emoji:"🧱",cat:"puzzle",tags:["Puzzle","Sliding","Block","Logic","Brain","Classic"],url:"/unblock-me/",desc:"Slide blocks to free the red block in this classic sliding puzzle! 50 handcrafted levels, hints, undo, and 3-star ratings. No download needed.",isNew:true,status:"live"},
   {name:"Sand Balls",emoji:"🏐",cat:"puzzle",tags:["Puzzle","Physics","Digging","Ball","Casual","Satisfying"],url:"/sand-balls/",desc:"Dig through sand to guide colorful balls into matching containers! A satisfying physics puzzle with 20+ handcrafted levels, stars, and obstacles. Play free now!",isNew:true,status:"live"},
+  {name:"Pipe Connect",emoji:"🔧",cat:"puzzle",tags:["Puzzle","Pipe","Logic","Rotate","Plumbing","Brain"],url:"/pipe-connect/",desc:"Rotate pipe pieces to connect water from source to drain! 50+ levels of logic puzzle fun with progressive difficulty, hints, and 3-star ratings. No download needed.",isNew:true,status:"live"},
 ];
 
 /**
