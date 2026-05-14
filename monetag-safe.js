@@ -62,21 +62,31 @@
     }
 
     if (onGamePage()) {
-      // Game pages: load after 4 seconds delay (reduced from 6s — user is engaged by then)
-      // Also respect frequency cap
+      // Game pages: only load popunder AFTER game-over (never during gameplay)
       if (sessionStorage.getItem(FREQUENCY_KEY)) {
         console.log('[GZMonetagSafe] Game page — popunder already shown this session, skipping');
         return;
       }
-      var loadedEarly = false;
+      // Listen for game-over event from games
+      window.addEventListener('gameover', function() {
+        if (sessionStorage.getItem(FREQUENCY_KEY)) return;
+        sessionStorage.setItem(FREQUENCY_KEY, '1');
+        setTimeout(function(){ loadScript(zone); }, 1000);
+      });
+      // Also listen for level-complete (interstitial system)
+      window.addEventListener('level-complete', function() {
+        if (sessionStorage.getItem(FREQUENCY_KEY)) return;
+        sessionStorage.setItem(FREQUENCY_KEY, '1');
+        setTimeout(function(){ loadScript(zone); }, 1500);
+      });
+      // Fallback: 120s if no gameover fires (idle/endless games)
       setTimeout(function(){
-        if (!loadedEarly) {
+        if (!loaded && !sessionStorage.getItem(FREQUENCY_KEY)) {
           sessionStorage.setItem(FREQUENCY_KEY, '1');
           loadScript(zone);
         }
-      }, 4000);
-      // Keep maybeLoad API for games that do signal game-over
-      console.log('[GZMonetagSafe] game page — Monetag will load after 4s or on game-over');
+      }, 120000);
+      console.log('[GZMonetagSafe] game page — popunder deferred to game-over (120s fallback)');
       return;
     }
 
