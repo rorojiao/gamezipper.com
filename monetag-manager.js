@@ -150,22 +150,20 @@
 
   } else if (isGamePage()) {
     /* ── Game Page ── */
-    // Popunder: 3s after first click (user is engaged)
-    var popTriggered = false;
-    function onFirstClick() {
-      if (popTriggered) return;
-      popTriggered = true;
-      setTimeout(loadPopunder, 3000);
-    }
-    document.addEventListener('click', onFirstClick, { once: true, passive: true });
-    document.addEventListener('touchstart', onFirstClick, { once: true, passive: true });
-    // Fallback: if no click after 8s, load anyway
+    // Popunder: ONLY after game-over / level-complete (never during gameplay)
+    window.addEventListener('gameover', function () {
+      setTimeout(loadPopunder, 1000);
+    });
+    window.addEventListener('level-complete', function () {
+      setTimeout(loadPopunder, 1500);
+    });
+    // Fallback: 120s for idle/endless games that never emit gameover
     setTimeout(function () {
-      if (!popTriggered) loadPopunder();
-    }, 8000);
+      if (!popLoaded && canShowPopunder()) loadPopunder();
+    }, 120000);
 
-    // In-Page Push: 2s delay (non-intrusive, safe for games)
-    setTimeout(loadInPagePush, 2000);
+    // In-Page Push: 5s delay (corner notification, safe for games)
+    setTimeout(loadInPagePush, 5000);
 
     // AdSense: 2s after first interaction (click/touch/key)
     var adsenseEngaged = false;
