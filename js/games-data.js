@@ -70,6 +70,7 @@ const GAMES = [
   {name:"Hex Block Puzzle",emoji:"⬡",cat:"puzzle",tags:["Puzzle","Hex","Block","Strategy","Brain","Casual"],url:"/hex-block/",desc:"Drag hex-shaped blocks onto the honeycomb grid and complete lines in 3 directions to clear them! An addictive hexagonal block puzzle with combo bonuses and satisfying effects. Play free now!",isNew:true,status:"live"},
   {name:"Fill The Fridge",emoji:"🧊",cat:"puzzle",tags:["Puzzle","Organize","Drag","Fit","Casual","Brain"],url:"/fill-fridge/",desc:"Drag groceries into the fridge and fit everything perfectly! A satisfying organizing puzzle with 20 levels, undo, hints, and shuffle. No download needed!",isNew:true,status:"live"},
   {name:"Little Alchemy",emoji:"⚗️",cat:"puzzle",tags:["Puzzle","Alchemy","Combine","Craft","Discovery","Casual"],url:"/little-alchemy/",desc:"Combine Water, Fire, Earth and Air to discover 100+ elements! A relaxing alchemy crafting puzzle with drag-and-drop, hints, and satisfying discovery animations. Play free online!",isNew:true,status:"live"},
+  {name:"The Impossible Quiz",emoji:"🧠",cat:"puzzle",tags:["Puzzle","Quiz","Brain","Trivia","Trick","Riddle","Humor","Casual"],url:"/impossible-quiz/",desc:"65 hilarious trick questions, riddles and brain teasers! The obvious answer is always wrong. 3 lives, bomb timers, skip power-ups, and outrageous humor. Can you beat them all?",isNew:true,status:"live"},
 ];
 
 /**
