@@ -8,9 +8,9 @@
   if (window.GZNativeAd) return;
 
   var INPAGE_PUSH_ZONE = 10687756;   // gamezipper.com In-Page Push
-  // VIGNETTE_ZONE: Placeholder ID — needs to be created in Monetag dashboard as a Vignette-specific zone
+  // VIGNETTE_ZONE: 10687758 was a placeholder never created in Monetag dashboard
   // Previously conflicted with Popunder zone 10687757 (used in monetag-safe.js)
-  var VIGNETTE_ZONE = 10687758;       // ⚠️ PLACEHOLDER — create this zone in Monetag dashboard
+  var VIGNETTE_ZONE = 0;              // Disabled — no zone configured
   var loaded = {};
 
   // Session-based frequency control: track when each ad type was last shown
@@ -39,6 +39,7 @@
   }
 
   function loadVignette() {
+    if (!VIGNETTE_ZONE) return; // Disabled — no zone configured
     if (loaded.vignette) return;
     // Frequency cap: don't load again within MIN_INTERVAL
     if (Date.now() - lastShown.vignette < MIN_INTERVAL) {
