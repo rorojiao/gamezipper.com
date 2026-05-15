@@ -7,7 +7,7 @@ base = "https://gamezipper.com"
 games = []
 for d in sorted(os.listdir('.')):
     if os.path.isdir(d) and os.path.exists(f'{d}/index.html'):
-        if d in ('node_modules','dist','audio','ad-experiments','scripts','test-results','template-phaser3','og-images','.git'):
+        if d in ('node_modules','dist','audio','ad-experiments','scripts','test-results','template-phaser3','og-images','.git','admin','beta'):
             continue
         games.append(d)
 
