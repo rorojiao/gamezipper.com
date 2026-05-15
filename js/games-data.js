@@ -77,6 +77,7 @@ const GAMES = [
   {name:"Jigsaw Puzzle",emoji:"🧩",cat:"puzzle",tags:["Puzzle","Jigsaw","Drag","Brain","Casual","Relaxing"],url:"/jigsaw-puzzle/",desc:"Solve beautiful jigsaw puzzles! 20 unique puzzles across 5 categories — Nature, Abstract, City, Art & Seasonal. Drag and drop pieces, use hints, earn stars. Procedurally generated art!",isNew:true,status:"live"},
   {name:"Nonogram Puzzle",emoji:"🔲",cat:"puzzle",tags:["Puzzle","Nonogram","Picross","Logic","Grid","Brain","Pixel Art"],url:"/nonogram/",desc:"Solve logic puzzles to reveal hidden pixel art! 30 handcrafted nonogram puzzles from 5×5 to 15×15. Fill cells using number clues, use marks to track empty cells. Hints, undo, error check, and 3-star ratings. No download needed!",isNew:true,status:"live"},
   {name:"Tangram Puzzle",emoji:"🔺",cat:"puzzle",tags:["Puzzle","Tangram","Shape","Geometry","Brain","Casual","Drag"],url:"/tangram/",desc:"Arrange 7 geometric pieces to complete 30 silhouette puzzles! 5 difficulty tiers from simple shapes to complex animals. Rotate, flip, and drag pieces. Tutorial, hints, and progress saving!",isNew:true,status:"live"},
+  {name:"Cut the Rope",emoji:"🍬",cat:"puzzle",tags:["Puzzle","Physics","Cut","Rope","Candy","Om Nom","Casual","Swipe","Brain"],url:"/cut-the-rope/",desc:"Swipe to cut ropes and feed candy to Om Nom! 25 handcrafted physics puzzle levels with Verlet rope physics, bumpers, and bubbles. Collect 3 stars per level. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
