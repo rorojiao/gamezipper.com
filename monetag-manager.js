@@ -1,31 +1,35 @@
 /**
- * GameZipper Unified Ad Manager
- * ─────────────────────────────
- * Replaces: monetag-safe.js, monetag-native.js, adsense-auto.js, ad-interstitial.js
- *
- * Zones (confirmed active in Monetag dashboard):
- *   - Popunder:    10687757
- *   - In-Page Push: 10687756
+ * GameZipper Unified Ad Manager v2
+ * ───────────────────────────────
+ * MultiTag zones (all MULTI = auto-anti-adblock + anti-fraud):
+ *   - Popunder:         11012001
+ *   - In-Page Push:     11012002
+ *   - Vignette Banner:  11012003
+ *   - Push Notifications: 11012004
  *
  * Strategy:
- *   1. Popunder: hub pages → immediate; game pages → gameover/level-complete only
- *      Frequency: every 30 min (localStorage, cross-tab)
- *   2. In-Page Push: all pages → 5s delay, once per page (deduped across containers)
- *   3. AdSense Auto Ads: game pages → 2s after first interaction, no session cap
- *   4. Banner ad container (below game / mid-grid): filled by Monetag ad-provider
+ *   1. Popunder: hub pages → first user click; game pages → gameover/level-complete click
+ *      Frequency: every 30 min (localStorage, cross-tab via BroadcastChannel)
+ *   2. In-Page Push: all pages → 5s delay, once per page
+ *   3. Vignette Banner: game pages → 60s idle or gameover, hub → 30s
+ *   4. Push Notifications: all pages → 15s delay, once per session
+ *   5. AdSense Auto Ads: game pages → 2s after first interaction
+ *   6. Container ads (below game / mid-grid): Monetag ad-provider
  */
 (function () {
   'use strict';
   if (window.GZAdManager) return;
   window.GZAdManager = true;
 
-  /* ── Zone Configuration ────────────────────────────────────── */
+  /* ── Zone Configuration (MultiTag — all MULTI) ────────────── */
   var ZONES = {
-    popunder:    10687757,
-    inpagePush:  10687756
+    popunder:    11012001,
+    inpagePush:  11012002,
+    vignette:    11012003,
+    pushNotif:   11012004
   };
 
-  /* ── Helpers ───────────────────────────────────────────────── */
+  /* ── Helpers ──────────────────────────────────────────────── */
   function isGamePage() {
     var p = location.pathname;
     return p !== '/' && !/\.[a-z]{2,5}$/.test(p) && !/\/games\.html$/.test(p) && !/\/blog\.html$/.test(p);
@@ -35,10 +39,23 @@
     return location.pathname === '/';
   }
 
-  /* ── 1. Popunder (zone 10687757) ───────────────────────────── */
+  /* ── BroadcastChannel for cross-tab frequency cap ─────────── */
+  var _bc = null;
+  try { _bc = new BroadcastChannel('gz_ad_popunder'); } catch(e) {}
+  function broadcastPopShown() {
+    if (_bc) try { _bc.postMessage(Date.now()); } catch(e) {}
+  }
+  if (_bc) {
+    _bc.onmessage = function(e) {
+      try { localStorage.setItem(POP_KEY, String(e.data)); } catch(e2) {}
+    };
+  }
+
+  /* ── 1. Popunder (zone 11012001) — CLICK-TRIGGERED ──────── */
   var POP_KEY = 'gz_pop_ts';
   var POP_INTERVAL = 30 * 60 * 1000; // 30 minutes
   var popLoaded = false;
+  var popPending = false; // true = waiting for user click to trigger
 
   function canShowPopunder() {
     try {
@@ -50,25 +67,38 @@
 
   function markPopunderShown() {
     try { localStorage.setItem(POP_KEY, String(Date.now())); } catch (e) {}
+    broadcastPopShown();
   }
 
   function loadPopunder() {
-    if (popLoaded) return;
-    if (!canShowPopunder()) {
-      console.log('[GZAdManager] Popunder frequency-capped (30 min interval)');
-      return;
-    }
+    if (popLoaded || !canShowPopunder()) return;
     popLoaded = true;
+    popPending = false;
     markPopunderShown();
     var s = document.createElement('script');
     s.async = true;
     s.setAttribute('data-zone', String(ZONES.popunder));
     s.src = 'https://a.magsrv.com/ad-provider.js?zone=' + ZONES.popunder;
     document.head.appendChild(s);
-    console.log('[GZAdManager] Popunder zone ' + ZONES.popunder + ' loaded');
+    console.log('[GZAdManager] Popunder zone ' + ZONES.popunder + ' triggered');
   }
 
-  /* ── 2. In-Page Push (zone 10687756) ───────────────────────── */
+  function armPopunder() {
+    // Arm popunder for next click. Modern browsers block non-click popunders,
+    // so we MUST load the script inside a click handler.
+    if (popLoaded || !canShowPopunder()) return;
+    popPending = true;
+  }
+
+  // Global click listener — if popunder is armed, fire it on next click
+  document.addEventListener('click', function () {
+    if (popPending) {
+      popPending = false;
+      loadPopunder();
+    }
+  }, { passive: true });
+
+  /* ── 2. In-Page Push (zone 11012002) ─────────────────────── */
   var ippLoaded = false;
 
   function loadInPagePush() {
@@ -82,7 +112,35 @@
     console.log('[GZAdManager] In-Page Push zone ' + ZONES.inpagePush + ' loaded');
   }
 
-  /* ── 3. AdSense Auto Ads ───────────────────────────────────── */
+  /* ── 3. Vignette Banner (zone 11012003) ──────────────────── */
+  var vignetteLoaded = false;
+
+  function loadVignette() {
+    if (vignetteLoaded) return;
+    vignetteLoaded = true;
+    var s = document.createElement('script');
+    s.async = true;
+    s.setAttribute('data-zone', String(ZONES.vignette));
+    s.src = 'https://a.magsrv.com/ad-provider.js?zone=' + ZONES.vignette;
+    document.head.appendChild(s);
+    console.log('[GZAdManager] Vignette Banner zone ' + ZONES.vignette + ' loaded');
+  }
+
+  /* ── 4. Push Notifications (zone 11012004) ───────────────── */
+  var pushLoaded = false;
+
+  function loadPushNotif() {
+    if (pushLoaded) return;
+    pushLoaded = true;
+    var s = document.createElement('script');
+    s.async = true;
+    s.setAttribute('data-zone', String(ZONES.pushNotif));
+    s.src = 'https://a.magsrv.com/ad-provider.js?zone=' + ZONES.pushNotif;
+    document.head.appendChild(s);
+    console.log('[GZAdManager] Push Notifications zone ' + ZONES.pushNotif + ' loaded');
+  }
+
+  /* ── 5. AdSense Auto Ads ─────────────────────────────────── */
   var AD_CLIENT = 'ca-pub-8346383990981353';
   var adsenseLoaded = false;
 
@@ -111,9 +169,7 @@
     console.log('[GZAdManager] AdSense auto ads loaded');
   }
 
-  /* ── 4. Container ads (below game / mid-grid) ─────────────── */
-  // These use the same zone as In-Page Push but are placed in specific containers.
-  // Monetag deduplicates by zone on their end, so no extra scripts are created.
+  /* ── 6. Container ads (below game / mid-grid) ────────────── */
   function fillContainerAd(containerId, delay) {
     setTimeout(function () {
       var container = document.getElementById(containerId);
@@ -128,33 +184,49 @@
     }, delay);
   }
 
-  /* ── Page-type Routing ─────────────────────────────────────── */
+  /* ── Page-type Routing ────────────────────────────────────── */
 
   if (isHubPage()) {
     /* ── Homepage ── */
-    // Popunder: immediate (no gameplay to interrupt)
-    loadPopunder();
+    // Popunder: arm for next click (must be user-initiated)
+    armPopunder();
     // In-Page Push: 2s delay
     setTimeout(loadInPagePush, 2000);
+    // Vignette Banner: 30s delay (user has browsed a bit)
+    setTimeout(loadVignette, 30000);
+    // Push Notifications: 15s delay
+    setTimeout(loadPushNotif, 15000);
     // Mid-grid container ad
     fillContainerAd('gz-ad-mid-grid', 2500);
 
   } else if (isGamePage()) {
     /* ── Game Page ── */
-    // Popunder: ONLY after game-over / level-complete (never during gameplay)
+    // Popunder: arm for gameover/level-complete clicks
+    armPopunder();
     window.addEventListener('gameover', function () {
-      setTimeout(loadPopunder, 1000);
+      armPopunder(); // re-arm in case frequency cap expired
     });
     window.addEventListener('level-complete', function () {
-      setTimeout(loadPopunder, 1500);
+      armPopunder(); // re-arm
     });
-    // Fallback: 120s for idle/endless games that never emit gameover
+    // Fallback: 120s arm for idle/endless games
     setTimeout(function () {
-      if (!popLoaded && canShowPopunder()) loadPopunder();
+      if (!popLoaded) armPopunder();
     }, 120000);
 
     // In-Page Push: 5s delay (corner notification, safe for games)
     setTimeout(loadInPagePush, 5000);
+
+    // Vignette Banner: 60s delay or gameover
+    window.addEventListener('gameover', function () {
+      setTimeout(loadVignette, 1000);
+    });
+    setTimeout(function () {
+      if (!vignetteLoaded) loadVignette();
+    }, 60000);
+
+    // Push Notifications: 20s delay
+    setTimeout(loadPushNotif, 20000);
 
     // AdSense: 2s after first interaction (click/touch/key)
     var adsenseEngaged = false;
@@ -176,24 +248,27 @@
 
   } else {
     /* ── Other pages (about, privacy, blog, category, etc.) ── */
-    setTimeout(loadPopunder, 2000);
+    armPopunder();
     setTimeout(loadInPagePush, 2000);
+    setTimeout(loadVignette, 20000);
+    setTimeout(loadPushNotif, 10000);
   }
 
-  /* ── Backward-compatible API ───────────────────────────────── */
+  /* ── Backward-compatible API ──────────────────────────────── */
   window.GZMonetagSafe = {
     init: function () {},
     loadNow: loadPopunder,
     maybeLoad: loadPopunder,
     hasBlockingOverlay: function () { return false; },
     disabled: false,
-    mode: 'unified-manager'
+    mode: 'unified-manager-v2'
   };
   window.GZNativeAd = {
     init: function () {},
     loadInPagePush: loadInPagePush,
-    loadVignette: function () {},
-    loaded: { inpage: ippLoaded }
+    loadVignette: loadVignette,
+    loadPushNotif: loadPushNotif,
+    loaded: { inpage: ippLoaded, vignette: vignetteLoaded, push: pushLoaded }
   };
   window.GZAdSenseAuto = { loaded: adsenseLoaded, skipped: false };
   window.GZInterstitial = {
@@ -203,5 +278,5 @@
     getStats: function () { return { eventCount: 0, lastShown: 0 }; }
   };
 
-  console.log('[GZAdManager] Initialized — unified ad manager active');
+  console.log('[GZAdManager] v2 Initialized — MultiTag zones active (Popunder: click-triggered)');
 })();
