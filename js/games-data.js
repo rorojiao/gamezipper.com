@@ -76,6 +76,7 @@ const GAMES = [
   {name:"Wordscapes",emoji:"🌿",cat:"puzzle",tags:["Puzzle","Word","Crossword","Spelling","Brain","Casual"],url:"/wordscapes/",desc:"Swipe letters to find hidden words and fill the crossword! 30 levels across 6 themed packs — Forest, Ocean, Mountain, Desert, Arctic & Space. Hints, coins, and beautiful particle effects!",isNew:true,status:"live"},
   {name:"Jigsaw Puzzle",emoji:"🧩",cat:"puzzle",tags:["Puzzle","Jigsaw","Drag","Brain","Casual","Relaxing"],url:"/jigsaw-puzzle/",desc:"Solve beautiful jigsaw puzzles! 20 unique puzzles across 5 categories — Nature, Abstract, City, Art & Seasonal. Drag and drop pieces, use hints, earn stars. Procedurally generated art!",isNew:true,status:"live"},
   {name:"Nonogram Puzzle",emoji:"🔲",cat:"puzzle",tags:["Puzzle","Nonogram","Picross","Logic","Grid","Brain","Pixel Art"],url:"/nonogram/",desc:"Solve logic puzzles to reveal hidden pixel art! 30 handcrafted nonogram puzzles from 5×5 to 15×15. Fill cells using number clues, use marks to track empty cells. Hints, undo, error check, and 3-star ratings. No download needed!",isNew:true,status:"live"},
+  {name:"Tangram Puzzle",emoji:"🔺",cat:"puzzle",tags:["Puzzle","Tangram","Shape","Geometry","Brain","Casual","Drag"],url:"/tangram/",desc:"Arrange 7 geometric pieces to complete 30 silhouette puzzles! 5 difficulty tiers from simple shapes to complex animals. Rotate, flip, and drag pieces. Tutorial, hints, and progress saving!",isNew:true,status:"live"},
 ];
 
 /**
