@@ -74,6 +74,7 @@ const GAMES = [
   {name:"Marble Run",emoji:"🔮",cat:"puzzle",tags:["Puzzle","Physics","Marble","Building","Track","Strategy","Casual","Simulation"],url:"/marble-run/",desc:"Build epic marble tracks with ramps, curves, trampolines and tubes! Place pieces on the grid, hit play, and watch your marble roll through physics-powered paths. 20 levels of creative puzzle fun!",isNew:true,status:"live"},
   {name:"Flow Connect",emoji:"🔗",cat:"puzzle",tags:["Puzzle","Flow","Connect","Dots","Logic","Brain","Casual"],url:"/flow-connect/",desc:"Connect matching colored dots by drawing paths! 100 levels across 5 difficulty packs from 5×5 to 9×9 grids. Hints, undo, daily puzzle. No download needed!",isNew:true,status:"live"},
   {name:"Wordscapes",emoji:"🌿",cat:"puzzle",tags:["Puzzle","Word","Crossword","Spelling","Brain","Casual"],url:"/wordscapes/",desc:"Swipe letters to find hidden words and fill the crossword! 30 levels across 6 themed packs — Forest, Ocean, Mountain, Desert, Arctic & Space. Hints, coins, and beautiful particle effects!",isNew:true,status:"live"},
+  {name:"Jigsaw Puzzle",emoji:"🧩",cat:"puzzle",tags:["Puzzle","Jigsaw","Drag","Brain","Casual","Relaxing"],url:"/jigsaw-puzzle/",desc:"Solve beautiful jigsaw puzzles! 20 unique puzzles across 5 categories — Nature, Abstract, City, Art & Seasonal. Drag and drop pieces, use hints, earn stars. Procedurally generated art!",isNew:true,status:"live"},
 ];
 
 /**
