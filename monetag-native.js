@@ -9,7 +9,7 @@
 
   var INPAGE_PUSH_ZONE = 10687756;   // gamezipper.com In-Page Push
   // VIGNETTE_ZONE: 10687758 was a placeholder never created in Monetag dashboard
-  // Previously conflicted with Popunder zone 10687757 (used in monetag-safe.js)
+  // Previously conflicted with Popunder zone 10687757 (used in monetag-manager.js)
   var VIGNETTE_ZONE = 0;              // Disabled — no zone configured
   var loaded = {};
 

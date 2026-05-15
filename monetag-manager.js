@@ -8,11 +8,11 @@
  *   - In-Page Push: 10687756
  *
  * Strategy:
- *   1. Popunder: hub pages → immediate; game pages → 3s after first click
+ *   1. Popunder: hub pages → immediate; game pages → gameover/level-complete only
  *      Frequency: every 30 min (localStorage, cross-tab)
- *   2. In-Page Push: all pages → 2s delay, once per page-view (no cross-page cap)
+ *   2. In-Page Push: all pages → 5s delay, once per page (deduped across containers)
  *   3. AdSense Auto Ads: game pages → 2s after first interaction, no session cap
- *   4. Banner ad container below game area (filled with In-Page Push zone)
+ *   4. Banner ad container (below game / mid-grid): filled by Monetag ad-provider
  */
 (function () {
   'use strict';
@@ -111,30 +111,21 @@
     console.log('[GZAdManager] AdSense auto ads loaded');
   }
 
-  /* ── 4. Banner ad below game area ──────────────────────────── */
-  function fillBelowGameAd() {
-    var container = document.getElementById('gz-ad-below-game');
-    if (!container || container.getAttribute('data-filled')) return;
-    container.setAttribute('data-filled', '1');
-    var s = document.createElement('script');
-    s.async = true;
-    s.setAttribute('data-zone', String(ZONES.inpagePush));
-    s.src = 'https://a.magsrv.com/ad-provider.js?zone=' + ZONES.inpagePush;
-    container.appendChild(s);
-    console.log('[GZAdManager] Below-game banner ad loaded');
-  }
-
-  /* ── 5. Homepage mid-grid ad ───────────────────────────────── */
-  function fillMidGridAd() {
-    var container = document.getElementById('gz-ad-mid-grid');
-    if (!container || container.getAttribute('data-filled')) return;
-    container.setAttribute('data-filled', '1');
-    var s = document.createElement('script');
-    s.async = true;
-    s.setAttribute('data-zone', String(ZONES.inpagePush));
-    s.src = 'https://a.magsrv.com/ad-provider.js?zone=' + ZONES.inpagePush;
-    container.appendChild(s);
-    console.log('[GZAdManager] Mid-grid banner ad loaded');
+  /* ── 4. Container ads (below game / mid-grid) ─────────────── */
+  // These use the same zone as In-Page Push but are placed in specific containers.
+  // Monetag deduplicates by zone on their end, so no extra scripts are created.
+  function fillContainerAd(containerId, delay) {
+    setTimeout(function () {
+      var container = document.getElementById(containerId);
+      if (!container || container.getAttribute('data-filled')) return;
+      container.setAttribute('data-filled', '1');
+      var s = document.createElement('script');
+      s.async = true;
+      s.setAttribute('data-zone', String(ZONES.inpagePush));
+      s.src = 'https://a.magsrv.com/ad-provider.js?zone=' + ZONES.inpagePush;
+      container.appendChild(s);
+      console.log('[GZAdManager] Container ad filled: ' + containerId);
+    }, delay);
   }
 
   /* ── Page-type Routing ─────────────────────────────────────── */
@@ -145,8 +136,8 @@
     loadPopunder();
     // In-Page Push: 2s delay
     setTimeout(loadInPagePush, 2000);
-    // Mid-grid ad: fill after DOM settles
-    setTimeout(fillMidGridAd, 2500);
+    // Mid-grid container ad
+    fillContainerAd('gz-ad-mid-grid', 2500);
 
   } else if (isGamePage()) {
     /* ── Game Page ── */
@@ -180,8 +171,8 @@
       if (!adsenseLoaded) loadAdSense();
     }, 10000);
 
-    // Below-game banner: fill after 3s (wait for page to render)
-    setTimeout(fillBelowGameAd, 3000);
+    // Below-game container ad
+    fillContainerAd('gz-ad-below-game', 3000);
 
   } else {
     /* ── Other pages (about, privacy, blog, category, etc.) ── */
