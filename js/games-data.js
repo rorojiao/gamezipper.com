@@ -73,6 +73,7 @@ const GAMES = [
   {name:"The Impossible Quiz",emoji:"🧠",cat:"puzzle",tags:["Puzzle","Quiz","Brain","Trivia","Trick","Riddle","Humor","Casual"],url:"/impossible-quiz/",desc:"65 hilarious trick questions, riddles and brain teasers! The obvious answer is always wrong. 3 lives, bomb timers, skip power-ups, and outrageous humor. Can you beat them all?",isNew:true,status:"live"},
   {name:"Marble Run",emoji:"🔮",cat:"puzzle",tags:["Puzzle","Physics","Marble","Building","Track","Strategy","Casual","Simulation"],url:"/marble-run/",desc:"Build epic marble tracks with ramps, curves, trampolines and tubes! Place pieces on the grid, hit play, and watch your marble roll through physics-powered paths. 20 levels of creative puzzle fun!",isNew:true,status:"live"},
   {name:"Flow Connect",emoji:"🔗",cat:"puzzle",tags:["Puzzle","Flow","Connect","Dots","Logic","Brain","Casual"],url:"/flow-connect/",desc:"Connect matching colored dots by drawing paths! 100 levels across 5 difficulty packs from 5×5 to 9×9 grids. Hints, undo, daily puzzle. No download needed!",isNew:true,status:"live"},
+  {name:"Wordscapes",emoji:"🌿",cat:"puzzle",tags:["Puzzle","Word","Crossword","Spelling","Brain","Casual"],url:"/wordscapes/",desc:"Swipe letters to find hidden words and fill the crossword! 30 levels across 6 themed packs — Forest, Ocean, Mountain, Desert, Arctic & Space. Hints, coins, and beautiful particle effects!",isNew:true,status:"live"},
 ];
 
 /**
