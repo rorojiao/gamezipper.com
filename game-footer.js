@@ -52,7 +52,8 @@
     {n:'Pixel Logic',e:'🧩',u:'/pixel-logic/',c:'puzzle'},
     {n:'Tile Dynasty',e:'🏮',u:'/tile-dynasty/',c:'puzzle'},
     {n:'Arrow Escape',e:'🚀',u:'/arrow-escape/',c:'puzzle'},
-    {n:'Bubble Shooter',e:'🫧',u:'/bubble-shooter/',c:'puzzle'}
+    {n:'Bubble Shooter',e:'🫧',u:'/bubble-shooter/',c:'puzzle'},
+    {n:'Tic Tac Toe',e:'⭕',u:'/tic-tac-toe/',c:'puzzle'}
   ];
 
   var cur = location.pathname;
