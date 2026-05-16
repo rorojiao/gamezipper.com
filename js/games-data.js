@@ -83,6 +83,7 @@ const GAMES = [
   {name:"Parking Jam",emoji:"🚗",cat:"puzzle",tags:["Puzzle","Parking","Car","Unblock","Logic","Brain","Casual"],url:"/parking-jam/",desc:"Unblock cars and clear the parking lot! 30 handcrafted levels with smooth slide mechanics, 3-star ratings, hints, undo, and progress saving. Think ahead to solve each traffic jam. No download needed!",isNew:true,status:"live"},
   {name:"SoliTen",emoji:"🔢",cat:"puzzle",tags:["Puzzle","Number","Sum","Math","Casual","Brain","Zen"],url:"/soliten/",desc:"Tap numbered cards that sum to exactly 10 to clear them from the board! 30 handcrafted levels with progressive difficulty, combo scoring, 3-star ratings, and power-ups (hint, shuffle, undo). A zen-inspired number puzzle that trains your math skills. No download needed!",isNew:true,status:"live"},
   {name:"Brain Out",emoji:"🧠",cat:"puzzle",tags:["Puzzle","Brain","Trick","Lateral Thinking","IQ","Casual","Riddle"],url:"/brain-out/",desc:"30 mind-bending levels that test your IQ with creative lateral thinking puzzles! The obvious answer is usually wrong. Drag, tap, and think outside the box. Hints, stars, progress saving. No download needed!",isNew:true,status:"live"},
+  {name:"Mahjong Solitaire",emoji:"🀄",cat:"puzzle",tags:["Mahjong","Tile","Matching","Solitaire","Classic","Relaxing","Casual"],url:"/mahjong-solitaire/",desc:"Play Mahjong Solitaire online free! Classic tile-matching puzzle with 20 levels, 10 unique layouts, traditional 144-tile set. Hints, shuffles, undo, scoring, star ratings. No download!",isNew:true,status:"live"},
 ];
 
 /**
