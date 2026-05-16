@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Play Brain Out Tricky Puzzle Online Free - Test Your IQ | GameZipper</title>
+<link rel="canonical" href="https://gamezipper.com/brain-out/">
+<meta name="description" content="Play Brain Out Tricky Puzzle online free. 30 mind-bending levels that test your IQ with creative lateral thinking puzzles. Think outside the box!">
+<meta property="og:title" content="Play Brain Out Tricky Puzzle Online Free - Test Your IQ | GameZipper">
+<meta property="og:description" content="30 mind-bending levels that test your IQ with creative lateral thinking puzzles. Think outside the box!">
+<meta property="og:image" content="https://gamezipper.com/brain-out/og-image.png">
+<meta property="og:url" content="https://gamezipper.com/brain-out/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F9E0;</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a1a2e;user-select:none;-webkit-user-select:none;touch-action:none}
+canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[{"@type":"VideoGame","name":"Brain Out Tricky Puzzle","description":"30 mind-bending levels that test your IQ with creative lateral thinking puzzles","gamePlatform":"HTML5","applicationCategory":"Game","genre":"Puzzle","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://gamezipper.com/brain-out/","playMode":"SinglePlayer","numberOfPlayers":{"@type":"QuantitativeValue","value":1}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Brain Out Tricky Puzzle?","acceptedAnswer":{"@type":"Answer","text":"Each level presents a puzzle that requires creative thinking. Drag, tap, and interact with elements on screen. The obvious answer is usually wrong!"}},{"@type":"Question","name":"How many levels are in Brain Out?","acceptedAnswer":{"@type":"Answer","text":"There are 30 unique puzzle levels across 6 chapters, from easy warm-ups to brain-melting challenges."}},{"@type":"Question","name":"Is Brain Out free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes, Brain Out Tricky Puzzle is completely free to play online at GameZipper.com with no downloads required."}}]},{"@type":"HowTo","name":"How to Play Brain Out Tricky Puzzle","step":[{"@type":"HowToStep","name":"Read the Question","text":"Each level shows a question at the top. Read it carefully."},{"@type":"HowToStep","name":"Think Outside the Box","text":"The obvious answer is usually wrong. Think creatively and look for tricks."},{"@type":"HowToStep","name":"Interact","text":"Tap, drag, or manipulate elements on screen to solve the puzzle."},{"@type":"HowToStep","name":"Use Hints if Stuck","text":"Tap the hint button if you need help. Fewer hints = more stars!"}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Brain Out Tricky Puzzle","item":"https://gamezipper.com/brain-out/"}]}]}
+</script>
+<script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=brain-out"></script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+"use strict";
+const C=document.getElementById('c'),X=C.getContext('2d');
+const W=()=>C.width, H=()=>C.height;
+const DPR=()=>Math.min(window.devicePixelRatio||1,2);
+function resize(){C.width=window.innerWidth*DPR();C.height=window.innerHeight*DPR();C.style.width=window.innerWidth+'px';C.style.height=window.innerHeight+'px';X.setTransform(DPR(),0,0,DPR(),0,0)}
+window.addEventListener('resize',resize);resize();
+
+const vw=()=>window.innerWidth, vh=()=>window.innerHeight;
+const isMobile=()=>vw()<600;
+const scale=()=>Math.min(vw()/390,vh()/700);
+const FONT=(s)=>`${Math.round(s*scale())}px 'Segoe UI',system-ui,sans-serif`;
+const FONTB=(s)=>`bold ${Math.round(s*scale())}px 'Segoe UI',system-ui,sans-serif`;
+
+// Colors
+const BG1='#1a1a2e',BG2='#16213e',ACCENT='#e94560',ACCENT2='#0f3460',NEON='#00d2ff',GOLD='#ffd700',WHITE='#ffffff',GRAY='#8888aa';
+const GLASS='rgba(255,255,255,0.08)';
+
+// Audio
+let audioCtx;
+function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)()}
+function playTone(f,dur,type='sine',vol=0.15){
+  if(!audioCtx)return;try{
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=type;o.frequency.value=f;g.gain.value=vol;
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+  o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+function sfxClick(){playTone(600,0.08,'square',0.08)}
+function sfxCorrect(){playTone(523,0.1);setTimeout(()=>playTone(659,0.1),100);setTimeout(()=>playTone(784,0.2),200)}
+function sfxWrong(){playTone(200,0.3,'sawtooth',0.1)}
+function sfxHint(){playTone(440,0.15);setTimeout(()=>playTone(550,0.15),100)}
+function sfxCelebrate(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.3,'sine',0.12),i*150))}
+
+// Save system
+const SAVE_KEY='brainout_save_v2';
+function loadSave(){try{const d=JSON.parse(localStorage.getItem(SAVE_KEY));return d&&d.v===2?d:null}catch(e){return null}}
+function defaultSave(){return{v:2,completed:{},hintsUsed:{},hintsLeft:3,chapterBonus:{}}}
+let save=loadSave()||defaultSave();
+function saveSave(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(save))}catch(e){}}
+
+// Particles
+let particles=[];
+function spawnParticles(x,y,color,count=20){
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2,sp=Math.random()*200+80;
+    particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color,size:Math.random()*4+2});
+  }
+}
+function spawnConfetti(x,y,count=40){
+  const cols=[ACCENT,NEON,GOLD,'#ff6b6b','#48dbfb','#feca57'];
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2,sp=Math.random()*300+100;
+    particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-200,life:1.5,color:cols[i%cols.length],size:Math.random()*6+3,confetti:true});
+  }
+}
+function updateParticles(dt){
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx*dt;p.y+=p.vy*dt;
+    p.vy+=600*dt;p.life-=dt;p.vx*=0.98;
+    if(p.life<=0)particles.splice(i,1);
+  }
+}
+function drawParticles(){
+  particles.forEach(p=>{
+    X.globalAlpha=Math.max(0,p.life);
+    X.fillStyle=p.color;
+    if(p.confetti){X.save();X.translate(p.x,p.y);X.rotate(p.vx*0.01);X.fillRect(-p.size/2,-p.size/4,p.size,p.size/2);X.restore();}
+    else{X.beginPath();X.arc(p.x,p.y,p.size,0,Math.PI*2);X.fill();}
+    X.globalAlpha=1;
+  });
+}
+
+// Shake effect
+let shakeTime=0,shakeIntensity=0;
+function triggerShake(intensity=8){shakeTime=0.3;shakeIntensity=intensity}
+
+// Wobbly line helper
+function wobblyLine(x1,y1,x2,y2,color,width=2){
+  X.strokeStyle=color;X.lineWidth=width;X.lineCap='round';
+  X.beginPath();X.moveTo(x1,y1);
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
+  const steps=Math.max(4,Math.floor(len/15));
+  for(let i=1;i<=steps;i++){
+    const t=i/steps;
+    const px=x1+dx*t+(Math.random()-0.5)*3;
+    const py=y1+dy*t+(Math.random()-0.5)*3;
+    X.lineTo(px,py);
+  }
+  X.stroke();
+}
+function wobblyCircle(cx,cy,r,color,fill=true,width=2){
+  X.beginPath();
+  const steps=Math.max(12,r|0);
+  for(let i=0;i<=steps;i++){
+    const a=(i/steps)*Math.PI*2;
+    const rr=r+(Math.random()-0.5)*3;
+    const px=cx+Math.cos(a)*rr,py=cy+Math.sin(a)*rr;
+    i===0?X.moveTo(px,py):X.lineTo(px,py);
+  }
+  X.closePath();
+  if(fill){X.fillStyle=color;X.fill();}
+  X.strokeStyle=color;X.lineWidth=width;X.stroke();
+}
+function wobblyRect(x,y,w,h,color,fill=true,width=2){
+  X.beginPath();
+  X.moveTo(x+(Math.random()-0.5)*2,y);
+  X.lineTo(x+w+(Math.random()-0.5)*2,y+(Math.random()-0.5)*2);
+  X.lineTo(x+w+(Math.random()-0.5)*2,y+h+(Math.random()-0.5)*2);
+  X.lineTo(x+(Math.random()-0.5)*2,y+h+(Math.random()-0.5)*2);
+  X.closePath();
+  if(fill){X.fillStyle=color;X.fill();}
+  X.strokeStyle=color;X.lineWidth=width;X.stroke();
+}
+function drawDoodleStar(cx,cy,r,color){
+  X.fillStyle=color;X.beginPath();
+  for(let i=0;i<10;i++){
+    const a=(i/10)*Math.PI*2-Math.PI/2;
+    const rr=i%2===0?r:r*0.4;
+    const px=cx+Math.cos(a)*rr+(Math.random()-0.5)*2;
+    const py=cy+Math.sin(a)*rr+(Math.random()-0.5)*2;
+    i===0?X.moveTo(px,py):X.lineTo(px,py);
+  }
+  X.closePath();X.fill();
+}
+
+// Input
+let input={x:0,y:0,down:false,dragging:null,dragStartX:0,dragStartY:0};
+function getPos(e){
+  const r=C.getBoundingClientRect();
+  const t=e.touches?e.touches[0]||e.changedTouches[0]:e;
+  return{x:t.clientX-r.left,y:t.clientY-r.top};
+}
+C.addEventListener('pointerdown',e=>{
+  e.preventDefault();initAudio();
+  input.down=true;const p=getPos(e);input.x=p.x;input.y=p.y;input.dragStartX=p.x;input.dragStartY=p.y;
+  handleDown(p.x,p.y);
+});
+C.addEventListener('pointermove',e=>{
+  e.preventDefault();const p=getPos(e);input.x=p.x;input.y=p.y;
+  if(input.down)handleMove(p.x,p.y);
+});
+C.addEventListener('pointerup',e=>{
+  e.preventDefault();const p=getPos(e);
+  input.down=false;handleUp(p.x,p.y);
+});
+
+// Game state
+let state='title'; // title, select, playing, complete, chapterEnd
+let currentLevel=0;
+let levelWon=false;
+let levelLost=false;
+let levelTimer=0;
+let levelData={};
+let hintText='';
+let hintRevealed=false;
+let tutorialStep=0;
+let transAlpha=0;
+let transTarget='';
+let transCallback=null;
+let fadeOverlay=0;
+let globalTime=0;
+let lastTimestamp=0;
+let clickBlock=0;
+let showResult=false;
+let resultCorrect=false;
+let resultTimer=0;
+let chapterEndChapter=0;
+
+// Button helper
+function drawButton(x,y,w,h,text,color=ACCENT,textColor=WHITE,radius=12){
+  const s=scale();
+  const bw=w*s,bh=h*s;
+  X.fillStyle=color;
+  X.beginPath();X.roundRect(x-bw/2,y-bh/2,bw,bh,radius*s);X.fill();
+  X.fillStyle=textColor;X.font=FONTB(h*0.45);X.textAlign='center';X.textBaseline='middle';
+  X.fillText(text,x,y+1);
+}
+function inRect(px,py,x,y,w,h){const s=scale();const bw=w*s,bh=h*s;return px>=x-bw/2&&px<=x+bw/2&&py>=y-bh/2&&py<=y+bh/2;}
+
+// Transition
+function transitionTo(target,cb){transAlpha=0;transTarget=target;transCallback=cb}
+
+// Level definitions
+const levels=[
+  // Chapter 1
+  {q:"Find the biggest number",ch:1,hint:"The level number is displayed somewhere...",hintTarget:'number30'},
+  {q:"Which is the biggest animal?",ch:1,hint:"Look at the TEXT size, not the picture",hintTarget:'ant_text'},
+  {q:"Wake up the owl",ch:1,hint:"Owls are nocturnal... make it dark",hintTarget:'sun'},
+  {q:"How many apples?",ch:1,hint:"Some apples are hiding behind others",hintTarget:'hidden'},
+  {q:"Put everything in the box",ch:1,hint:"Drag the WORD 'everything' itself",hintTarget:'word_everything'},
+  // Chapter 2
+  {q:"What comes after 2?",ch:2,hint:"Look at the question text carefully",hintTarget:'hidden3'},
+  {q:"Make the equation true: 7+5=2",ch:2,hint:"You can change the operator",hintTarget:'plus_sign'},
+  {q:"Find the different one",ch:2,hint:"One circle is slightly different",hintTarget:'diff_circle'},
+  {q:"Help the rabbit eat the carrot",ch:2,hint:"The fence is in the way",hintTarget:'fence'},
+  {q:"Count the circles",ch:2,hint:"Count ALL the circles including overlapping parts",hintTarget:'circles'},
+  // Chapter 3
+  {q:"What is the smallest number?",ch:3,hint:"Something is hidden behind the question",hintTarget:'hidden_num'},
+  {q:"Light all the bulbs",ch:3,hint:"Tapping a bulb toggles its neighbors too",hintTarget:'bulbs'},
+  {q:"How many holes in this shirt?",ch:3,hint:"A shirt has front AND back holes",hintTarget:'shirt'},
+  {q:"Remove sticks to make equation true",ch:3,hint:"The equation should become 6+4=10",hintTarget:'sticks'},
+  {q:"Which cup has the ball?",ch:3,hint:"Watch carefully... does the ball actually move?",hintTarget:'cup1'},
+  // Chapter 4
+  {q:"Find the hidden star",ch:4,hint:"The star is blended into the background",hintTarget:'star'},
+  {q:"Make the water flow up",ch:4,hint:"What if the world was upside down?",hintTarget:'flip'},
+  {q:"What is half of 8?",ch:4,hint:"Think about the SHAPE of the number 8",hintTarget:'half8'},
+  {q:"Help the fish escape",ch:4,hint:"Drag the fish OUT of the bowl",hintTarget:'fish'},
+  {q:"Count the letter A",ch:4,hint:"Look at every single letter carefully",hintTarget:'text_a'},
+  // Chapter 5
+  {q:"Stop the alien invasion!",ch:5,hint:"Close the window to stop them",hintTarget:'closebtn'},
+  {q:"Mix red and blue",ch:5,hint:"Drag one paint can onto the other",hintTarget:'cans'},
+  {q:"What weighs more: 1kg iron or 1kg feathers?",ch:5,hint:"Read the question again carefully",hintTarget:'equal'},
+  {q:"Find the mistake",ch:5,hint:"Look for a misspelled word",hintTarget:'mistake'},
+  {q:"Open the door",ch:5,hint:"There's a key hidden somewhere",hintTarget:'key'},
+  // Chapter 6
+  {q:"Complete: 1, 1, 2, 3, 5, ?",ch:6,hint:"Each number is the sum of the two before it",hintTarget:'fib'},
+  {q:"Make a square from 3 lines",ch:6,hint:"The screen edge can be the 4th side",hintTarget:'lines'},
+  {q:"What has keys but no locks?",ch:6,hint:"Think about musical instruments",hintTarget:'piano'},
+  {q:"Balance the scale",ch:6,hint:"Make both sides equal 9",hintTarget:'scale'},
+  {q:"Final: Escape!",ch:6,hint:"Find the light switch",hintTarget:'switch'},
+];
+
+function getChapter(lvl){return levels[lvl].ch}
+function chapterName(ch){return['','First Steps','Getting Tricky','Think Different','Getting Harder','Creative Thinking','Brain Melting'][ch]||''}
+function getStars(lvl){if(!save.completed[lvl])return 0;const h=save.hintsUsed[lvl]||0;return h===0?3:h<=1?2:1}
+function isUnlocked(lvl){if(lvl===0)return true;return!!save.completed[lvl-1]}
+
+// ---- DRAW SCREENS ----
+function drawBG(){
+  const grd=X.createLinearGradient(0,0,0,vh());
+  grd.addColorStop(0,BG1);grd.addColorStop(1,BG2);
+  X.fillStyle=grd;X.fillRect(0,0,vw(),vh());
+  // subtle grid
+  X.strokeStyle='rgba(255,255,255,0.03)';X.lineWidth=1;
+  const gs=40*scale();
+  for(let x=0;x<vw();x+=gs){X.beginPath();X.moveTo(x,0);X.lineTo(x,vh());X.stroke()}
+  for(let y=0;y<vh();y+=gs){X.beginPath();X.moveTo(0,y);X.lineTo(vw(),y);X.stroke()}
+}
+
+function drawTitle(){
+  drawBG();
+  const cx=vw()/2,cy=vh()/2;
+  // Floating brain
+  const bob=Math.sin(globalTime*2)*8;
+  X.font=FONTB(60);X.textAlign='center';X.textBaseline='middle';
+  // glow
+  X.shadowColor=ACCENT;X.shadowBlur=30;
+  X.fillStyle=ACCENT;
+  X.fillText('BRAIN',cx,cy-100*scale()+bob);
+  X.fillStyle=NEON;
+  X.fillText('OUT',cx,cy-30*scale()+bob);
+  X.shadowBlur=0;
+  // subtitle
+  X.font=FONT(18);X.fillStyle=GRAY;
+  X.fillText('Tricky Puzzle',cx,cy+20*scale()+bob);
+  // play button
+  drawButton(cx,cy+100*scale(),200,56,'PLAY',ACCENT);
+  // level count
+  X.font=FONT(14);X.fillStyle=GRAY;
+  X.fillText('30 Mind-Bending Levels',cx,cy+160*scale());
+  // GameZipper link
+  X.font=FONT(12);X.fillStyle='rgba(255,255,255,0.3)';
+  X.fillText('GameZipper.com',cx,vh()-20);
+}
+
+function drawSelect(){
+  drawBG();
+  const cx=vw()/2;
+  X.font=FONTB(24);X.textAlign='center';X.fillStyle=WHITE;
+  X.fillText('Select Level',cx,40*scale());
+  // back
+  drawButton(40*scale(),40*scale(),60,36,'<',ACCENT2);
+  // chapters
+  let sy=80*scale();
+  const bw=70*scale(),bh=60*scale(),gap=12*scale();
+  for(let ch=1;ch<=6;ch++){
+    X.font=FONTB(14);X.fillStyle=GOLD;X.textAlign='center';
+    X.fillText(`Ch.${ch}: ${chapterName(ch)}`,cx,sy);
+    sy+=22*scale();
+    const cols=isMobile()?5:10;
+    const startX=cx-(Math.min(5,5)*bw+4*gap)/2+bw/2;
+    for(let i=0;i<5;i++){
+      const li=(ch-1)*5+i;
+      if(li>=30)break;
+      const col=i%cols, row=Math.floor(i/cols);
+      const bx=startX+col*(bw+gap);
+      const by=sy+row*(bh+gap)+bh/2;
+      const unlocked=isUnlocked(li);
+      const completed=!!save.completed[li];
+      const stars=getStars(li);
+      // bg
+      X.fillStyle=completed?ACCENT:unlocked?'rgba(255,255,255,0.1)':'rgba(255,255,255,0.03)';
+      X.beginPath();X.roundRect(bx-bw/2,by-bh/2,bw,bh,10*scale());X.fill();
+      // lock
+      if(!unlocked){X.fillStyle='rgba(255,255,255,0.2)';X.font=FONT(20);X.fillText('🔒',bx,by-2);}
+      else{
+        X.fillStyle=completed?WHITE:GRAY;X.font=FONTB(18);X.fillText(''+(li+1),bx,by-4);
+        if(completed){
+          for(let s=0;s<3;s++){
+            X.fillStyle=s<stars?GOLD:'rgba(255,255,255,0.2)';X.font=FONT(10);
+            X.fillText('★',bx-14*s*scale()+14*scale(),by+18);
+          }
+        }
+      }
+    }
+    sy+=bh+20*scale();
+  }
+}
+
+// ---- LEVEL IMPLEMENTATIONS ----
+function initLevel(n){
+  currentLevel=n;levelWon=false;levelLost=false;levelTimer=0;hintRevealed=false;showResult=false;
+  levelData={};tutorialStep=(n===0)?1:0;
+  const s=scale();const cx=vw()/2,cy=vh()/2;
+  switch(n){
+    case 0:levelData={numbers:[{v:'5',x:cx-80*s,y:cy-40*s,sz:40},{v:'12',x:cx+80*s,y:cy-40*s,sz:40},{v:'48',x:cx-40*s,y:cy+40*s,sz:40},{v:'9',x:cx+40*s,y:cy+40*s,sz:40}],n30:{x:cx,y:vh()-60*s,dragging:false,origX:cx,origY:vh()-60*s}};break;
+    case 1:break;
+    case 2:levelData={sunX:vw()-60*s,sunY:60*s,dragging:false,nightAlpha:0,owlAwake:false};break;
+    case 3:levelData={applePositions:[{x:cx-60*s,y:cy-20*s},{x:cx+40*s,y:cy+10*s},{x:cx-10*s,y:cy-50*s},{x:cx-55*s,y:cy-30*s,hidden:true},{x:cx+35*s,y:cy+15*s,hidden:true}],showAnswer:false,answerVal:5};break;
+    case 4:levelData={boxRect:{x:cx-80*s,y:cy+40*s,w:160*s,h:80*s},items:[{t:'apple',x:cx-120*s,y:cy-60*s,inBox:false},{t:'shoe',x:cx+60*s,y:cy-60*s,inBox:false},{t:'ball',x:cx-30*s,y:cy-80*s,inBox:false},{t:'everything',x:cx+100*s,y:cy+20*s,inBox:false,isWord:true}],wordDragging:null};break;
+    case 5:levelData={hidden3Found:false};break;
+    case 6:levelData={op:'+',solved:false};break;
+    case 7:levelData={circles:[],diffIdx:Math.floor(Math.random()*6)};{
+      const cs=[];for(let i=0;i<6;i++){const col=i%3,row=Math.floor(i/3);cs.push({x:cx-80*s+col*80*s,y:cy-40*s+row*80*s,r:30*s})}
+      levelData.circles=cs;}break;
+    case 8:levelData={fenceY:cy-20*s,fenceDragging:false,carrotEaten:false,rabbitX:cx-80*s,rabbitY:cy+20*s};break;
+    case 9:levelData={answer:null,submitted:false};break;
+    case 10:levelData={hiddenRevealed:false,hiddenNum:{x:cx,y:cy+40*s}};break;
+    case 11:levelData={bulbs:[0,0,0,0,0],solved:false};break;
+    case 12:levelData={answer:null,submitted:false};break;
+    case 13:levelData={sticks:[{id:1,removed:false},{id:2,removed:false},{id:3,removed:false},{id:4,removed:false},{id:5,removed:false},{id:6,removed:false}],solved:false};break;
+    case 14:levelData={shufflePhase:0,timer:0,ballUnder:0,selected:-1,done:false};break;
+    case 15:levelData={found:false};break;
+    case 16:levelData={flipped:false,solved:false};break;
+    case 17:levelData={answer:null,submitted:false};break;
+    case 18:levelData={fishX:cx,fishY:cy+20*s,fishDragging:false,escaped:false};break;
+    case 19:levelData={answer:null,submitted:false};break;
+    case 20:levelData={alienTimer:0,aliens:[],closed:false,spawnTimer:0};break;
+    case 21:levelData={redX:cx-70*s,blueX:cx+70*s,y:cy,mixed:false,redDragging:false,blueDragging:false};break;
+    case 22:levelData={answer:null,submitted:false};break;
+    case 23:levelData={mistakeFound:false};break;
+    case 24:levelData={keyX:20*scale(),keyY:vh()-80*scale(),keyDragging:false,doorOpen:false,lockX:cx+30*scale(),lockY:cy-20*scale()};break;
+    case 25:levelData={answer:null,submitted:false};break;
+    case 26:levelData={lineCount:0,solved:false};break;
+    case 27:levelData={answer:null,submitted:false};break;
+    case 28:levelData={leftNums:[2,7,5],rightNums:[3,1,8],dragging:null,dragIdx:-1,dragSide:'',solved:false};break;
+    case 29:levelData={switchOn:false,exitRevealed:false,solved:false};break;
+  }
+}
+
+function drawHUD(){
+  const s=scale();
+  // back button
+  drawButton(40*s,40*s,60,36,'<',ACCENT2);
+  // level number
+  X.font=FONTB(16);X.textAlign='center';X.fillStyle=GOLD;
+  X.fillText(`Level ${currentLevel+1}`,vw()/2,30*s);
+  X.font=FONT(10);X.fillStyle=GRAY;
+  X.fillText(`Ch.${getChapter(currentLevel)}: ${chapterName(getChapter(currentLevel))}`,vw()/2,48*s);
+  // question
+  X.font=FONTB(20);X.fillStyle=WHITE;X.textAlign='center';
+  X.shadowColor=ACCENT;X.shadowBlur=10;
+  X.fillText(levels[currentLevel].q,vw()/2,80*s);
+  X.shadowBlur=0;
+  // hint button
+  const hx=vw()-40*s,hy=40*s;
+  drawButton(hx,hy,50,36,'?',ACCENT2);
+  X.font=FONT(10);X.fillStyle=GRAY;X.textAlign='center';
+  X.fillText(`Hints: ${save.hintsLeft}`,hx,hy+28*s);
+  // tutorial arrow on level 1
+  if(tutorialStep===1&&currentLevel===0){
+    const arrowY=vh()-40*s;
+    X.fillStyle=NEON;X.font=FONTB(14);
+    X.fillText('Drag the number 30 up here!',vw()/2,arrowY);
+    drawArrow(vw()/2,arrowY-20*s,vw()/2,vh()-80*s,NEON);
+  }
+}
+
+function drawArrow(x1,y1,x2,y2,color){
+  X.strokeStyle=color;X.lineWidth=2*scale();X.beginPath();
+  X.moveTo(x1,y1);X.lineTo(x2,y2);X.stroke();
+  const a=Math.atan2(y2-y1,x2-x1);const hs=10*scale();
+  X.beginPath();X.moveTo(x2,y2);
+  X.lineTo(x2-hs*Math.cos(a-0.5),y2-hs*Math.sin(a-0.5));
+  X.lineTo(x2-hs*Math.cos(a+0.5),y2-hs*Math.sin(a+0.5));
+  X.closePath();X.fillStyle=color;X.fill();
+}
+
+function drawHint(){
+  if(hintRevealed){
+    const s=scale();const cx=vw()/2;const hy=vh()-60*s;
+    X.fillStyle='rgba(0,0,0,0.7)';X.beginPath();X.roundRect(cx-150*s,hy-20*s,300*s,40*s,8*scale());X.fill();
+    X.font=FONT(12);X.fillStyle=GOLD;X.textAlign='center';X.textBaseline='middle';
+    X.fillText(hintText,cx,hy);
+  }
+}
+
+function drawResultOverlay(){
+  if(!showResult)return;
+  const a=Math.min(1,resultTimer*3);
+  X.globalAlpha=a*0.6;X.fillStyle='#000';X.fillRect(0,0,vw(),vh());X.globalAlpha=a;
+  const cx=vw()/2,cy=vh()/2,s=scale();
+  if(resultCorrect){
+    X.fillStyle=ACCENT;X.font=FONTB(48);
+    X.shadowColor=ACCENT;X.shadowBlur=20;
+    X.fillText('CORRECT!',cx,cy-20*s);X.shadowBlur=0;
+    X.fillStyle=WHITE;X.font=FONT(16);
+    X.fillText('Tap to continue',cx,cy+30*s);
+  }else{
+    X.fillStyle='#ff4444';X.font=FONTB(36);
+    X.fillText('Try Again!',cx,cy-20*s);
+    X.fillStyle=WHITE;X.font=FONT(16);
+    X.fillText('Tap to retry',cx,cy+30*s);
+  }
+  X.globalAlpha=1;
+}
+
+function winLevel(){
+  if(levelWon)return;levelWon=true;sfxCorrect();
+  const stars=hintRevealed?1:3;
+  if(!save.completed[currentLevel]||(save.hintsUsed[currentLevel]||0)>(hintRevealed?0:99)){
+    save.completed[currentLevel]=true;
+    save.hintsUsed[currentLevel]=hintRevealed?1:0;
+  }
+  saveSave();
+  spawnConfetti(vw()/2,vh()/2,50);
+  showResult=true;resultCorrect=true;resultTimer=0;
+}
+function loseLevel(){
+  sfxWrong();triggerShake();levelLost=true;
+  showResult=true;resultCorrect=false;resultTimer=0;
+}
+function wrongAnswer(){sfxWrong();triggerShake()}
+
+// ---- LEVEL DRAW & UPDATE FUNCTIONS ----
+function updateLevel(dt){
+  levelTimer+=dt;
+  if(showResult){resultTimer+=dt;return}
+  if(clickBlock>0){clickBlock-=dt;return}
+  switch(currentLevel){
+    case 2:if(levelData.nightAlpha<1&&!levelData.owlAwake&&levelData.sunX<-50)levelData.nightAlpha=Math.min(1,levelData.nightAlpha+dt*2);
+      if(levelData.nightAlpha>=0.9&&!levelData.owlAwake){levelData.owlAwake=true;winLevel()}break;
+    case 14:{
+      if(levelData.shufflePhase===1){levelData.timer+=dt;if(levelData.timer>0.3){levelData.timer=0;
+        levelData.ballUnder=Math.floor(Math.random()*3);levelData.shufflePhase++;
+        if(levelData.shufflePhase>6){levelData.shufflePhase=2;levelData.done=true}}}
+      }break;
+    case 20:if(!levelData.closed){
+      levelData.spawnTimer+=dt;if(levelData.spawnTimer>1.5){levelData.spawnTimer=0;
+        levelData.aliens.push({x:Math.random()*vw(),y:-30,vx:(Math.random()-0.5)*60,vy:80+Math.random()*60});}
+      levelData.aliens.forEach(a=>{a.x+=a.vx*dt;a.y+=a.vy*dt});
+      levelData.aliens=levelData.aliens.filter(a=>a.y<vh()+50);
+      if(levelData.aliens.some(a=>a.y>vh()-30)){levelData.aliens=[]}}
+      break;
+  }
+}
+
+function drawLevel(){
+  const s=scale();const cx=vw()/2,cy=vh()/2;
+  switch(currentLevel){
+    case 0:drawLevel0(s,cx,cy);break;
+    case 1:drawLevel1(s,cx,cy);break;
+    case 2:drawLevel2(s,cx,cy);break;
+    case 3:drawLevel3(s,cx,cy);break;
+    case 4:drawLevel4(s,cx,cy);break;
+    case 5:drawLevel5(s,cx,cy);break;
+    case 6:drawLevel6(s,cx,cy);break;
+    case 7:drawLevel7(s,cx,cy);break;
+    case 8:drawLevel8(s,cx,cy);break;
+    case 9:drawLevel9(s,cx,cy);break;
+    case 10:drawLevel10(s,cx,cy);break;
+    case 11:drawLevel11(s,cx,cy);break;
+    case 12:drawLevel12(s,cx,cy);break;
+    case 13:drawLevel13(s,cx,cy);break;
+    case 14:drawLevel14(s,cx,cy);break;
+    case 15:drawLevel15(s,cx,cy);break;
+    case 16:drawLevel16(s,cx,cy);break;
+    case 17:drawLevel17(s,cx,cy);break;
+    case 18:drawLevel18(s,cx,cy);break;
+    case 19:drawLevel19(s,cx,cy);break;
+    case 20:drawLevel20(s,cx,cy);break;
+    case 21:drawLevel21(s,cx,cy);break;
+    case 22:drawLevel22(s,cx,cy);break;
+    case 23:drawLevel23(s,cx,cy);break;
+    case 24:drawLevel24(s,cx,cy);break;
+    case 25:drawLevel25(s,cx,cy);break;
+    case 26:drawLevel26(s,cx,cy);break;
+    case 27:drawLevel27(s,cx,cy);break;
+    case 28:drawLevel28(s,cx,cy);break;
+    case 29:drawLevel29(s,cx,cy);break;
+  }
+}
+
+// Level 0: Find the biggest number
+function drawLevel0(s,cx,cy){
+  levelData.numbers.forEach(n=>{
+    wobblyCircle(n.x,n.y,30*s,ACCENT2);
+    X.fillStyle=WHITE;X.font=FONTB(n.sz*0.6);X.textAlign='center';X.textBaseline='middle';
+    X.fillText(n.v,n.x,n.y);
+  });
+  // The number 30 at bottom
+  const n=levelData.n30;
+  X.fillStyle='rgba(255,255,255,0.15)';X.font=FONT(14);X.textAlign='center';X.textBaseline='middle';
+  X.fillText('30',n.x,n.y);
+  if(n.dragging){X.fillStyle=ACCENT;X.font=FONTB(30);X.fillText('30',n.x,n.y)}
+  if(hintRevealed){drawArrow(cx,vh()-100*s,cx,cy,NEON)}
+}
+
+// Level 1: Biggest animal - ant text is huge
+function drawLevel1(s,cx,cy){
+  // Elephant
+  X.font=FONT(50);X.textAlign='center';X.textBaseline='middle';
+  X.fillText('🐘',cx-80*s,cy);
+  X.fillStyle=WHITE;X.font=FONT(14);X.fillText('elephant',cx-80*s,cy+40*s);
+  // Mouse
+  X.font=FONT(30);X.fillText('🐭',cx+80*s,cy);
+  X.fillStyle=WHITE;X.font=FONT(14);X.fillText('mouse',cx+80*s,cy+30*s);
+  // Ant - BIG text
+  X.fillStyle=WHITE;X.font=FONTB(48);X.fillText('ANT',cx,cy-60*s);
+  if(hintRevealed){
+    X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([5,5]);
+    X.strokeRect(cx-60*s,cy-85*s,120*s,50*s);X.setLineDash([]);
+  }
+}
+
+// Level 2: Wake up the owl
+function drawLevel2(s,cx,cy){
+  const nightA=levelData.nightAlpha;
+  if(nightA>0){X.fillStyle=`rgba(0,0,30,${nightA*0.8})`;X.fillRect(0,0,vw(),vh());
+    for(let i=0;i<5;i++){X.fillStyle=`rgba(255,255,255,${nightA*0.8})`;X.font=FONT(16);
+      X.fillText('✦',50+i*80*s+Math.sin(globalTime+i)*5,120*s+Math.cos(globalTime+i*2)*5)}}
+  // Sun
+  const sx=levelData.sunX,sy=levelData.sunY;
+  X.fillStyle='#ffd700';X.beginPath();X.arc(sx,sy,25*s,0,Math.PI*2);X.fill();
+  X.fillStyle='#fff5cc';X.beginPath();X.arc(sx,sy,18*s,0,Math.PI*2);X.fill();
+  if(hintRevealed&&!levelData.owlAwake){X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+    X.strokeRect(sx-30*s,sy-30*s,60*s,60*s);X.setLineDash([])}
+  // Owl
+  const ow=levelData.owlAwake;
+  X.fillStyle='#8B4513';wobblyCircle(cx,cy+10*s,50*s,'#8B4513');
+  // ears
+  X.fillStyle='#8B4513';X.beginPath();X.moveTo(cx-40*s,cy-35*s);X.lineTo(cx-25*s,cy-55*s);X.lineTo(cx-15*s,cy-35*s);X.fill();
+  X.beginPath();X.moveTo(cx+40*s,cy-35*s);X.lineTo(cx+25*s,cy-55*s);X.lineTo(cx+15*s,cy-35*s);X.fill();
+  // eyes
+  X.fillStyle=WHITE;X.beginPath();X.arc(cx-18*s,cy-5*s,15*s,0,Math.PI*2);X.fill();
+  X.beginPath();X.arc(cx+18*s,cy-5*s,15*s,0,Math.PI*2);X.fill();
+  if(ow){
+    X.fillStyle='#000';X.beginPath();X.arc(cx-18*s,cy-5*s,6*s,0,Math.PI*2);X.fill();
+    X.beginPath();X.arc(cx+18*s,cy-5*s,6*s,0,Math.PI*2);X.fill();
+  }else{
+    X.strokeStyle='#000';X.lineWidth=3*s;
+    X.beginPath();X.moveTo(cx-28*s,cy-5*s);X.lineTo(cx-8*s,cy-5*s);X.stroke();
+    X.beginPath();X.moveTo(cx+8*s,cy-5*s);X.lineTo(cx+28*s,cy-5*s);X.stroke();
+  }
+  // beak
+  X.fillStyle='#FF8C00';X.beginPath();X.moveTo(cx,cy+8*s);X.lineTo(cx-8*s,cy+18*s);X.lineTo(cx+8*s,cy+18*s);X.fill();
+  // zzz
+  if(!ow){X.fillStyle='rgba(255,255,255,0.5)';X.font=FONT(14);X.textAlign='center';
+    X.fillText('z z z',cx+40*s,cy-50*s+Math.sin(globalTime*2)*5)}
+}
+
+// Level 3: How many apples
+function drawLevel3(s,cx,cy){
+  if(!levelData.showAnswer){
+    levelData.applePositions.forEach((a,i)=>{
+      const sz=a.hidden?18*s:28*s;
+      if(a.hidden){
+        X.fillStyle='rgba(255,0,0,0.3)';X.beginPath();X.arc(a.x+12*s,a.y+8*s,sz,0,Math.PI*2);X.fill();
+      }
+      // stem
+      X.strokeStyle='#5a3';X.lineWidth=2*s;X.beginPath();X.moveTo(a.x,a.y-sz+2*s);X.lineTo(a.x+3*s,a.y-sz-6*s);X.stroke();
+      // apple body
+      wobblyCircle(a.x,a.y,sz,'#e74c3c');
+      // leaf
+      X.fillStyle='#2ecc71';X.beginPath();X.ellipse(a.x+6*s,a.y-sz+2*s,8*s,4*s,0.3,0,Math.PI*2);X.fill();
+      // highlight
+      X.fillStyle='rgba(255,255,255,0.3)';X.beginPath();X.arc(a.x-6*s,a.y-6*s,sz*0.3,0,Math.PI*2);X.fill();
+    });
+    // number buttons
+    for(let i=0;i<4;i++){
+      const bx=cx-90*s+i*60*s,by=cy+90*s;
+      drawButton(bx,by,50,44,''+(3+i),ACCENT2);
+    }
+    if(hintRevealed){levelData.applePositions.filter(a=>a.hidden).forEach(a=>{
+      X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+      X.beginPath();X.arc(a.x+12*s,a.y+8*s,22*s,0,Math.PI*2);X.stroke();X.setLineDash([]);});}
+  }
+}
+
+// Level 4: Put everything in box
+function drawLevel4(s,cx,cy){
+  const box=levelData.boxRect;
+  // box
+  X.strokeStyle=GOLD;X.lineWidth=3*s;
+  X.strokeRect(box.x,box.y,box.w,box.h);
+  X.fillStyle='rgba(255,215,0,0.1)';X.fillRect(box.x,box.y,box.w,box.h);
+  X.fillStyle=WHITE;X.font=FONT(12);X.textAlign='center';
+  X.fillText('BOX',box.x+box.w/2,box.y+box.h/2);
+  // items
+  levelData.items.forEach(it=>{
+    if(it.inBox)return;
+    X.font=it.isWord?FONTB(24):FONT(30);X.textAlign='center';X.textBaseline='middle';
+    if(it.isWord){X.fillStyle=ACCENT;X.fillText('everything',it.x,it.y);
+      if(hintRevealed){X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+        const tw=X.measureText('everything').width;X.strokeRect(it.x-tw/2-5,it.y-15*s,tw+10,30*s);X.setLineDash([]);}
+    }else{
+      const emojis={apple:'🍎',shoe:'👟',ball:'⚽'};
+      X.fillText(emojis[it.t]||'?',it.x,it.y);
+    }
+  });
+}
+
+// Level 5: What comes after 2?
+function drawLevel5(s,cx,cy){
+  X.fillStyle=WHITE;X.font=FONTB(36);X.textAlign='center';X.textBaseline='middle';
+  // The question "2+2=?" - but hide a 3 in the question
+  X.fillText('2 + 2 = ?',cx,cy-20*s);
+  // buttons
+  drawButton(cx-80*s,cy+60*s,60,50,'4',ACCENT2);
+  drawButton(cx,cy+60*s,60,50,'22',ACCENT2);
+  drawButton(cx+80*s,cy+60*s,60,50,'5',ACCENT2);
+  // Hidden "3" in question - make it look like part of the question but tappable
+  // The "+" sign contains a hidden 3
+  const h3x=cx,h3y=cy-20*s;
+  if(!levelData.hidden3Found){
+    // Draw a subtle 3 overlapping with the + sign
+    X.fillStyle='rgba(255,255,255,0.12)';X.font=FONTB(20);
+    X.fillText('3',h3x+20*s,h3y+18*s);
+  }
+  if(hintRevealed){
+    X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+    X.strokeRect(h3x+8*s,h3y+6*s,30*s,24*s);X.setLineDash([]);
+  }
+}
+
+// Level 6: Make equation true 7+5=2
+function drawLevel6(s,cx,cy){
+  X.fillStyle=WHITE;X.font=FONTB(40);X.textAlign='center';X.textBaseline='middle';
+  X.fillText('7',cx-100*s,cy);
+  X.fillText(levelData.op,cx-40*s,cy);
+  X.fillStyle=WHITE;X.fillText('5',cx+20*s,cy);
+  X.fillText('= 2',cx+100*s,cy);
+  if(levelData.solved){X.fillStyle='#0f0';X.fillText('✓',cx+160*s,cy)}
+  if(!levelData.solved&&hintRevealed){
+    X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+    X.strokeRect(cx-60*s,cy-25*s,40*s,50*s);X.setLineDash([]);}
+}
+
+// Level 7: Find different circle
+function drawLevel7(s,cx,cy){
+  levelData.circles.forEach((c,i)=>{
+    const col=i===levelData.diffIdx?'#4488cc':'#3366aa';
+    wobblyCircle(c.x,c.y,c.r,col,true,2*s);
+    if(i===levelData.diffIdx&&hintRevealed){
+      X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+      X.beginPath();X.arc(c.x,c.y,c.r+5*s,0,Math.PI*2);X.stroke();X.setLineDash([]);}
+  });
+}
+
+// Level 8: Help rabbit eat carrot
+function drawLevel8(s,cx,cy){
+  const fy=levelData.fenceY;
+  // Carrot
+  X.fillStyle='#ff6b35';X.beginPath();X.moveTo(cx+60*s,fy-20*s);X.lineTo(cx+45*s,fy+20*s);X.lineTo(cx+75*s,fy+20*s);X.closePath();X.fill();
+  X.fillStyle='#2ecc71';X.beginPath();X.ellipse(cx+60*s,fy-20*s,12*s,8*s,0,0,Math.PI*2);X.fill();
+  // Fence
+  X.strokeStyle='#8B6914';X.lineWidth=4*s;
+  for(let i=-1;i<=1;i++){X.beginPath();X.moveTo(cx-30*s+i*20*s,fy);X.lineTo(cx-30*s+i*20*s,fy+60*s);X.stroke()}
+  X.beginPath();X.moveTo(cx-50*s,fy+15*s);X.lineTo(cx+10*s,fy+15*s);X.stroke();
+  X.beginPath();X.moveTo(cx-50*s,fy+40*s);X.lineTo(cx+10*s,fy+40*s);X.stroke();
+  if(hintRevealed&&!levelData.carrotEaten){X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+    X.strokeRect(cx-55*s,fy-5*s,70*s,70*s);X.setLineDash([]);}
+  // Rabbit
+  const rx=levelData.rabbitX;
+  X.font=FONT(40);X.textAlign='center';X.fillText('🐰',rx,cy+50*s);
+  if(levelData.carrotEaten){X.font=FONT(30);X.fillText('😋',rx,cy+20*s)}
+}
+
+// Level 9: Count circles
+function drawLevel9(s,cx,cy){
+  // Draw overlapping circles (Venn diagram style) - 3 circles create 7 regions
+  const r=50*s;
+  const colors=['rgba(233,69,96,0.3)','rgba(15,52,96,0.4)','rgba(0,210,255,0.3)'];
+  const positions=[{x:cx-30*s,y:cy-20*s},{x:cx+30*s,y:cy-20*s},{x:cx,y:cy+25*s}];
+  positions.forEach((p,i)=>{X.fillStyle=colors[i];X.beginPath();X.arc(p.x,p.y,r,0,Math.PI*2);X.fill();
+    X.strokeStyle='rgba(255,255,255,0.5)';X.lineWidth=2;X.stroke()});
+  // Answer: 3 main + 3 pairwise + 1 center + 1 outer unbounded... actually just the circles: 3
+  // But the trick: count ALL circles including the small ones formed by intersections
+  // Real answer for this puzzle: 7 (3 circles + 3 intersection regions + 1 center overlap)
+  // Actually let's say 3 for the main circles
+  for(let i=0;i<5;i++){
+    const bx=cx-80*s+i*40*s,by=cy+110*s;
+    drawButton(bx,by,36,44,''+(i+1),ACCENT2);
+  }
+  if(hintRevealed){X.fillStyle=NEON;X.font=FONT(12);X.textAlign='center';
+    X.fillText('Count: 3 main circles + 3 lens overlaps + 1 center = 7',cx,cy+85*s)}
+}
+
+// Level 10: Smallest number
+function drawLevel10(s,cx,cy){
+  X.fillStyle=WHITE;X.font=FONTB(32);X.textAlign='center';
+  X.fillText('0    -1    0.5    1',cx,cy-30*s);
+  if(!levelData.hiddenRevealed){
+    // Hidden -100 behind question
+    X.fillStyle='rgba(255,255,255,0.05)';X.font=FONTB(16);
+    X.fillText('-100',cx,cy+30*s);
+  }
+  if(levelData.hiddenRevealed){
+    X.fillStyle=ACCENT;X.font=FONTB(28);X.fillText('-100',cx,cy+30*s);
+  }
+  if(hintRevealed){X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+    X.strokeRect(cx-40*s,cy+14*s,80*s,24*s);X.setLineDash([]);}
+}
+
+// Level 11: Light all bulbs
+function drawLevel11(s,cx,cy){
+  const bulbs=levelData.bulbs;
+  for(let i=0;i<5;i++){
+    const bx=cx-100*s+i*50*s,by=cy;
+    const on=bulbs[i];
+    X.fillStyle=on?'#ffd700':'#333';X.beginPath();X.arc(bx,by,20*s,0,Math.PI*2);X.fill();
+    if(on){X.shadowColor='#ffd700';X.shadowBlur=15;X.beginPath();X.arc(bx,by,20*s,0,Math.PI*2);X.fill();X.shadowBlur=0}
+    // rays
+    for(let r=0;r<6;r++){const a=r/6*Math.PI*2+globalTime;
+      X.strokeStyle=on?'rgba(255,215,0,0.5)':'rgba(255,255,255,0.1)';X.lineWidth=2;
+      X.beginPath();X.moveTo(bx+Math.cos(a)*22*s,by+Math.sin(a)*22*s);
+      X.lineTo(bx+Math.cos(a)*28*s,by+Math.sin(a)*28*s);X.stroke()}
+    X.fillStyle=WHITE;X.font=FONT(10);X.fillText(''+(i+1),bx,by+35*s);
+  }
+  if(hintRevealed){X.fillStyle=NEON;X.font=FONT(12);X.textAlign='center';
+    X.fillText('Tap: toggles self + neighbors',cx,cy+60*s)}
+}
+
+// Level 12: Holes in shirt
+function drawLevel12(s,cx,cy){
+  // T-shirt with holes
+  X.fillStyle='#4a90d9';X.beginPath();
+  // Simple t-shirt shape
+  const tx=cx-60*s,ty=cy-80*s,tw=120*s,th=160*s;
+  X.moveTo(tx+20*s,ty);X.lineTo(tx+tw-20*s,ty);
+  X.lineTo(tx+tw,ty+30*s);X.lineTo(tx+tw-15*s,ty+30*s);
+  X.lineTo(tx+tw-15*s,ty+th);X.lineTo(tx+15*s,ty+th);
+  X.lineTo(tx+15*s,ty+30*s);X.lineTo(tx,ty+30*s);X.closePath();X.fill();
+  X.strokeStyle='#2c5f8a';X.lineWidth=2;X.stroke();
+  // collar
+  X.fillStyle='#3a7bc0';X.beginPath();X.ellipse(cx,ty+5*s,25*s,10*s,0,0,Math.PI);X.fill();
+  // holes - 2 holes in front, same 2 show through back = 4, plus collar = 5, plus 2 sleeve holes + bottom = 8
+  const holes=[{x:cx-15*s,y:cy-20*s,r:8*s},{x:cx+20*s,y:cy+20*s,r:6*s},{x:cx-10*s,y:cy+50*s,r:10*s}];
+  holes.forEach(h=>{X.fillStyle='#1a1a2e';X.beginPath();X.arc(h.x,h.y,h.r,0,Math.PI*2);X.fill()});
+  // Answer buttons
+  for(let i=0;i<5;i++){
+    const bx=cx-80*s+i*40*s,by=cy+120*s;
+    drawButton(bx,by,36,44,''+(5+i),ACCENT2);
+  }
+  if(hintRevealed){X.fillStyle=NEON;X.font=FONT(11);X.textAlign='center';
+    X.fillText('Front holes + back holes + collar + sleeves + bottom = 8',cx,cy+95*s)}
+}
+
+// Level 13: Matchstick puzzle 6+4=10... displayed as 8+4=12, remove 2 sticks
+function drawLevel13(s,cx,cy){
+  // Show matchstick equation: 8+4=12 (need to remove 2 sticks to make 6+4=10)
+  // Simplified: show digit segments and let user tap to remove
+  X.fillStyle=WHITE;X.font=FONTB(14);X.textAlign='center';
+  const eq='8 + 4 = 1 2';
+  X.fillText('Remove sticks to make it true',cx,cy-80*s);
+  // Draw matchsticks as segments
+  // 8 is made of 7 segments, remove top-left vertical = 6
+  // Keep 4 and 12->10... simplified: show buttons
+  const sticks=levelData.sticks;
+  // Draw as a grid of matchstick-like elements
+  // 8: 7 segments
+  const sx=cx-120*s,sy=cy-50*s;
+  const segs=[
+    // 8 segments
+    {x:sx,y:sy,w:30*s,h:4,active:true},{x:sx,y:sy+50*s,w:30*s,h:4,active:true},{x:sx,y:sy+100*s,w:30*s,h:4,active:true},
+    {x:sx-4,y:sy,w:4,h:50*s,active:true},{x:sx+30*s,y:sy,w:4,h:50*s,active:true},
+    {x:sx-4,y:sy+50*s,w:4,h:50*s,active:true},{x:sx+30*s,y:sy+50*s,w:4,h:50*s,active:true},
+  ];
+  // Plus sign
+  const px=cx-30*s;
+  segs.push({x:px,y:sy+50*s,w:20*s,h:4,active:true,permanent:true});
+  segs.push({x:px+8*s,y:sy+30*s,w:4,h:40*s,active:true,permanent:true});
+  // Simplify: just show text and let them tap sticks on the 8
+  X.fillStyle=WHITE;X.font=FONTB(50);
+  X.fillText('8 + 4 = 12',cx,cy+10*s);
+  X.fillStyle=GRAY;X.font=FONT(12);
+  X.fillText('Tap sticks on "8" to remove them',cx,cy+50*s);
+  // Interactive areas over the "8"
+  const e8x=cx-110*s;
+  // Top horizontal of 8
+  drawStickButton(e8x,cy-25*s,30,8,sticks[0].removed);
+  // Middle horizontal
+  drawStickButton(e8x,cy+10*s,30,8,sticks[2].removed);
+  // Top-left vertical
+  drawStickButton(e8x-15*s,cy-10*s,8,30,sticks[3].removed);
+  // Top-right vertical
+  drawStickButton(e8x+15*s,cy-10*s,8,30,sticks[4].removed);
+  // Bottom-left vertical
+  drawStickButton(e8x-15*s,cy+25*s,8,30,sticks[5].removed);
+  // Bottom-right vertical
+  drawStickButton(e8x+15*s,cy+25*s,8,30,sticks[6].removed);
+  // Bottom horizontal
+  drawStickButton(e8x,cy+45*s,30,8,sticks[1].removed);
+  // Submit
+  drawButton(cx,cy+100*s,120,44,'Check',ACCENT);
+}
+function drawStickButton(x,y,w,h,removed){
+  const s=scale();
+  X.fillStyle=removed?'rgba(255,255,255,0.1)':'#c0392b';
+  X.fillRect(x-w*s/2,y-h*s/2,w*s,h*s);
+  X.strokeStyle=removed?'transparent':'#e74c3c';X.lineWidth=1;
+  X.strokeRect(x-w*s/2,y-h*s/2,w*s,h*s);
+}
+
+// Level 14: Cup shuffle
+function drawLevel14(s,cx,cy){
+  const cups=[cx-80*s,cx,cx+80*s];
+  // Draw cups
+  cups.forEach((ux,i)=>{
+    const isSelected=levelData.selected===i;
+    X.fillStyle=isSelected?ACCENT:'#8B6914';
+    X.beginPath();X.moveTo(ux-30*s,cy);X.lineTo(ux-20*s,cy+40*s);X.lineTo(ux+20*s,cy+40*s);X.lineTo(ux+30*s,cy);X.closePath();X.fill();
+    X.strokeStyle='#a07828';X.lineWidth=2;X.stroke();
+    if(levelData.done){
+      X.fillStyle=WHITE;X.font=FONT(14);X.textAlign='center';
+      X.fillText(''+(i+1),ux,cy+60*s);
+    }
+  });
+  if(!levelData.done&&levelData.shufflePhase===0){
+    // Show ball under cup 0
+    X.fillStyle='#ff6b35';X.beginPath();X.arc(cups[0],cy+30*s,12*s,0,Math.PI*2);X.fill();
+  }
+  if(levelData.shufflePhase>0&&!levelData.done){
+    X.fillStyle=GRAY;X.font=FONT(16);X.textAlign='center';
+    X.fillText('Shuffling...',cx,cy-60*s);
+  }
+  if(levelData.done&&levelData.selected<0){
+    X.fillStyle=GOLD;X.font=FONTB(18);X.textAlign='center';
+    X.fillText('Where is the ball?',cx,cy-60*s);
+  }
+  if(hintRevealed){X.fillStyle=NEON;X.font=FONT(12);X.textAlign='center';
+    X.fillText('The ball never actually moved! Tap cup 1',cx,cy+90*s)}
+}
+
+// Level 15: Find hidden star
+function drawLevel15(s,cx,cy){
+  // Background pattern with hidden star
+  const ps=20*s;
+  for(let gx=0;gx<vw();gx+=ps){for(let gy=100*s;gy<vh()-60*s;gy+=ps){
+    X.fillStyle=`rgba(255,255,255,${0.02+Math.random()*0.02})`;X.fillRect(gx,gy,ps-2,ps-2);
+  }}
+  // Hidden star - very subtle, blended in
+  const starX=cx+Math.sin(globalTime*0.3)*2,starY=cy+Math.cos(globalTime*0.3)*2;
+  X.fillStyle='rgba(255,215,0,0.06)';
+  X.beginPath();
+  for(let i=0;i<10;i++){
+    const a=(i/10)*Math.PI*2-Math.PI/2;const r=i%2===0?35*s:15*s;
+    i===0?X.moveTo(starX+Math.cos(a)*r,starY+Math.sin(a)*r):X.lineTo(starX+Math.cos(a)*r,starY+Math.sin(a)*r);
+  }
+  X.closePath();X.fill();
+  if(hintRevealed){X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+    X.beginPath();X.arc(starX,starY,40*s,0,Math.PI*2);X.stroke();X.setLineDash([])}
+  if(levelData.found){drawDoodleStar(cx,cy,40*s,GOLD);X.fillStyle=WHITE;X.font=FONTB(30);X.textAlign='center';X.fillText('★',cx,cy)}
+}
+
+// Level 16: Make water flow up
+function drawLevel16(s,cx,cy){
+  const flipped=levelData.flipped;
+  X.save();
+  if(flipped){X.translate(vw(),vh());X.scale(-1,-1)}
+  // Pipe
+  X.strokeStyle='#666';X.lineWidth=8*s;
+  X.beginPath();X.moveTo(cx-60*s,cy-60*s);X.lineTo(cx+60*s,cy-60*s);
+  X.lineTo(cx+60*s,cy+60*s);X.stroke();
+  // Water drops
+  const drops=[{x:cx-30*s,y:cy-60*s},{x:cx+60*s,y:cy-20*s},{x:cx+60*s,y:cy+30*s}];
+  X.fillStyle=NEON;
+  drops.forEach(d=>{X.beginPath();X.arc(d.x+Math.sin(globalTime*3)*3,d.y,6*s,0,Math.PI*2);X.fill()});
+  // Faucet
+  X.fillStyle='#888';X.fillRect(cx-70*s,cy-70*s,20*s,20*s);
+  // Arrow showing gravity
+  X.fillStyle=WHITE;X.font=FONT(24);X.textAlign='center';
+  X.fillText(flipped?'⬆':'⬇',cx+100*s,cy);
+  X.restore();
+  if(hintRevealed){X.fillStyle=NEON;X.font=FONT(12);X.textAlign='center';
+    X.fillText('Drag/swipe down to flip the scene!',cx,cy+90*s)}
+}
+
+// Level 17: Half of 8
+function drawLevel17(s,cx,cy){
+  // Big number 8
+  X.fillStyle=WHITE;X.font=FONTB(120);X.textAlign='center';X.textBaseline='middle';
+  X.fillText('8',cx,cy-20*s);
+  // Horizontal line showing half
+  X.strokeStyle=ACCENT;X.lineWidth=2;X.setLineDash([8,4]);
+  X.beginPath();X.moveTo(cx-50*s,cy-20*s);X.lineTo(cx+50*s,cy-20*s);X.stroke();
+  X.setLineDash([]);
+  // The top half of 8 looks like a 3, bottom looks like 0
+  X.fillStyle=GRAY;X.font=FONT(14);X.textAlign='center';
+  X.fillText('What do you see in the top half?',cx,cy+60*s);
+  // Answer buttons
+  drawButton(cx-60*s,cy+100*s,60,44,'3',ACCENT2);
+  drawButton(cx,cy+100*s,60,44,'4',ACCENT2);
+  drawButton(cx+60*s,cy+100*s,60,44,'0',ACCENT2);
+  if(hintRevealed){X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+    X.strokeRect(cx-60*s,cy-20*s-8*s,120*s,16*s);X.setLineDash([])}
+}
+
+// Level 18: Fish escape
+function drawLevel18(s,cx,cy){
+  // Fish bowl
+  X.strokeStyle='rgba(255,255,255,0.5)';X.lineWidth=3*s;
+  X.beginPath();X.arc(cx,cy+20*s,60*s,0,Math.PI*2);X.stroke();
+  X.fillStyle='rgba(0,210,255,0.15)';X.fill();
+  // Water line
+  X.strokeStyle='rgba(0,210,255,0.4)';X.beginPath();
+  X.moveTo(cx-55*s,cy-20*s);for(let i=0;i<20;i++){X.lineTo(cx-55*s+i*5.5*s,cy-20*s+Math.sin(globalTime*3+i)*3*s)}X.stroke();
+  // Fish
+  const fx=levelData.fishX,fy=levelData.fishY;
+  X.font=FONT(30);X.textAlign='center';X.textBaseline='middle';
+  X.fillText('🐟',fx,fy);
+  if(levelData.escaped){X.font=FONT(20);X.fillText('🎉',fx,fy-30*s)}
+  if(hintRevealed&&!levelData.escaped){
+    X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+    X.strokeRect(fx-20*s,fy-15*s,40*s,30*s);X.setLineDash([]);}
+}
+
+// Level 19: Count letter A
+function drawLevel19(s,cx,cy){
+  const text="A QUICK BROWN FOX JUMPS OVER THE LAZY DOG AND A BIG CAT SAT ON A MAT";
+  X.fillStyle=WHITE;X.font=FONT(16);X.textAlign='center';
+  // Wrap text
+  const words=text.split(' ');let lines=[];let line='';
+  words.forEach(w=>{const test=line+(line?' ':'')+w;
+    if(X.measureText(test).width>vw()-60*s){lines.push(line);line=w}else{line=test}});
+  if(line)lines.push(line);
+  lines.forEach((l,i)=>X.fillText(l,cx,cy-60*s+i*24*s));
+  // Answer: count A's (uppercase only in display): A (x5), plus hidden ones
+  // A QUICK(1) BROWN FOX JUMPS OVER THE LAZY DOG AND(1) A(1) BIG CAT(1) SAT ON A(1) MAT(1) = 6
+  for(let i=0;i<6;i++){
+    drawButton(cx-75*s+i*30*s,cy+90*s,28,44,''+(i+3),ACCENT2);
+  }
+  if(hintRevealed){X.fillStyle=NEON;X.font=FONT(12);X.textAlign='center';
+    X.fillText('Count carefully: A appears 6 times!',cx,cy+120*s)}
+}
+
+// Level 20: Alien invasion
+function drawLevel20(s,cx,cy){
+  if(!levelData.closed){
+    // Window frame
+    X.strokeStyle='#555';X.lineWidth=4*s;
+    X.strokeRect(cx-120*s,cy-80*s,240*s,160*s);
+    // Close button (X) - top right of window
+    X.fillStyle='#ff4444';X.beginPath();X.arc(cx+105*s,cy-65*s,12*s,0,Math.PI*2);X.fill();
+    X.fillStyle=WHITE;X.font=FONTB(14);X.textAlign='center';
+    X.fillText('X',cx+105*s,cy-63*s);
+    if(hintRevealed){X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+      X.beginPath();X.arc(cx+105*s,cy-65*s,16*s,0,Math.PI*2);X.stroke();X.setLineDash([])}
+    // Aliens
+    levelData.aliens.forEach(a=>{
+      X.font=FONT(24);X.fillText('👾',a.x,a.y);
+    });
+    X.fillStyle=WHITE;X.font=FONT(12);X.textAlign='center';
+    X.fillText('Alien Window',cx-50*s,cy-65*s);
+  }else{
+    X.fillStyle='#0f0';X.font=FONTB(30);X.textAlign='center';
+    X.fillText('Window Closed!',cx,cy);
+    X.font=FONT(20);X.fillText('Aliens stopped!',cx,cy+40*s);
+  }
+}
+
+// Level 21: Mix red and blue
+function drawLevel21(s,cx,cy){
+  if(!levelData.mixed){
+    // Red can
+    X.fillStyle='#e74c3c';wobblyCircle(levelData.redX,levelData.y,30*s,'#e74c3c');
+    X.fillStyle=WHITE;X.font=FONT(12);X.textAlign='center';X.fillText('RED',levelData.redX,levelData.y);
+    // Blue can
+    X.fillStyle='#3498db';wobblyCircle(levelData.blueX,levelData.y,30*s,'#3498db');
+    X.fillStyle=WHITE;X.font=FONT(12);X.fillText('BLUE',levelData.blueX,levelData.y);
+    if(hintRevealed){X.fillStyle=NEON;X.font=FONT(12);X.textAlign='center';
+      X.fillText('Drag one can onto the other!',cx,cy+70*s)}
+  }else{
+    wobblyCircle(cx,cy,40*s,'#9b59b6');
+    X.fillStyle=WHITE;X.font=FONTB(20);X.textAlign='center';X.fillText('PURPLE!',cx,cy);
+  }
+}
+
+// Level 22: 1kg iron vs 1kg feathers
+function drawLevel22(s,cx,cy){
+  // Scale
+  X.strokeStyle=WHITE;X.lineWidth=3*s;
+  X.beginPath();X.moveTo(cx,cy-80*s);X.lineTo(cx,cy-60*s);X.stroke();
+  X.beginPath();X.moveTo(cx-80*s,cy-60*s);X.lineTo(cx+80*s,cy-60*s);X.stroke();
+  // Iron
+  X.fillStyle='#777';X.fillRect(cx-100*s,cy-55*s,40*s,30*s);
+  X.fillStyle=WHITE;X.font=FONT(10);X.textAlign='center';X.fillText('1kg',cx-80*s,cy-30*s);
+  X.fillText('Iron',cx-80*s,cy-18*s);
+  // Feathers
+  X.font=FONT(30);X.fillText('🪶',cx+80*s,cy-40*s);
+  X.font=FONT(10);X.fillText('1kg',cx+80*s,cy-20*s);
+  X.fillText('Feathers',cx+80*s,cy-8*s);
+  // Buttons
+  drawButton(cx-80*s,cy+50*s,80,44,'Iron',ACCENT2);
+  drawButton(cx,cy+50*s,100,44,'Feathers',ACCENT2);
+  drawButton(cx+100*s,cy+50*s,80,44,'Equal',ACCENT);
+  if(hintRevealed){X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+    X.strokeRect(cx+60*s,cy+28*s,80*s,44*s);X.setLineDash([])}
+}
+
+// Level 23: Find the mistake
+function drawLevel23(s,cx,cy){
+  const lines=[
+    "The quick brown",
+    "fox jumps over",
+    "the lazy dog.",
+    "Every good boy",
+    "deserves fudge.",
+    "Practice makes",
+    "perfekt.        " // "perfekt" instead of "perfect" - the mistake
+  ];
+  X.fillStyle=WHITE;X.font=FONT(18);X.textAlign='center';
+  lines.forEach((l,i)=>{
+    const ly=cy-80*s+i*30*s;
+    if(l.includes('perfekt')){
+      X.fillStyle=WHITE;X.fillText(l,cx,ly);
+      if(levelData.mistakeFound){X.fillStyle='rgba(233,69,96,0.3)';
+        const tw=X.measureText(l).width;X.fillRect(cx-tw/2-4,ly-12*s,tw+8,24*s)}
+    }else{
+      X.fillStyle=WHITE;X.fillText(l,cx,ly);
+    }
+  });
+  if(hintRevealed){X.fillStyle=NEON;X.font=FONT(12);X.textAlign='center';
+    X.fillText('One word is misspelled...',cx,cy+60*s)}
+}
+
+// Level 24: Open the door
+function drawLevel24(s,cx,cy){
+  // Door
+  X.fillStyle='#5a3a1a';X.fillRect(cx-50*s,cy-80*s,100*s,160*s);
+  X.strokeStyle='#3a2a0a';X.lineWidth=3*s;X.strokeRect(cx-50*s,cy-80*s,100*s,160*s);
+  // Door knob area
+  if(!levelData.doorOpen){
+    X.fillStyle='#c0a040';X.beginPath();X.arc(levelData.lockX,levelData.lockY,8*s,0,Math.PI*2);X.fill();
+    X.fillStyle='#a08020';X.beginPath();X.arc(levelData.lockX,levelData.lockY,4*s,0,Math.PI*2);X.fill();
+    // Keyhole
+    X.fillStyle='#000';X.beginPath();X.arc(levelData.lockX,levelData.lockY,2*s,0,Math.PI*2);X.fill();
+  }
+  // Key (barely visible at bottom)
+  if(!levelData.doorOpen){
+    X.fillStyle='rgba(192,160,64,0.08)';X.font=FONT(14);X.textAlign='center';
+    X.fillText('🔑',levelData.keyX,levelData.keyY);
+    if(hintRevealed){X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+      X.strokeRect(levelData.keyX-15*s,levelData.keyY-15*s,30*s,30*s);X.setLineDash([])}
+  }
+  if(levelData.doorOpen){
+    X.fillStyle='#2ecc71';X.fillRect(cx-45*s,cy-75*s,90*s,150*s);
+    X.fillStyle=WHITE;X.font=FONTB(24);X.textAlign='center';X.fillText('OPEN!',cx,cy);
+  }
+}
+
+// Level 25: Fibonacci
+function drawLevel25(s,cx,cy){
+  X.fillStyle=WHITE;X.font=FONTB(36);X.textAlign='center';
+  X.fillText('1, 1, 2, 3, 5, ?',cx,cy-30*s);
+  for(let i=0;i<4;i++){
+    const bx=cx-75*s+i*50*s,by=cy+50*s;
+    const vals=[6,7,8,9];
+    drawButton(bx,by,44,44,''+vals[i],i===2?ACCENT:ACCENT2);
+  }
+  if(hintRevealed){X.fillStyle=NEON;X.font=FONT(12);X.textAlign='center';
+    X.fillText('1+1=2, 1+2=3, 2+3=5, 3+5=...',cx,cy+90*s)}
+}
+
+// Level 26: Square from 3 lines
+function drawLevel26(s,cx,cy){
+  X.strokeStyle=WHITE;X.lineWidth=3*s;
+  // Draw 3 lines
+  const lx=cx-60*s,ly=cy-60*s,lw=120*s;
+  X.beginPath();X.moveTo(lx,ly);X.lineTo(lx+lw,ly);X.stroke();
+  X.beginPath();X.moveTo(lx,ly);X.lineTo(lx,ly+lw);X.stroke();
+  X.beginPath();X.moveTo(lx+lw,ly);X.lineTo(lx+lw,ly+lw);X.stroke();
+  // The 4th side is the... we need user to tap the screen edge
+  if(levelData.lineCount===0){
+    X.fillStyle=GRAY;X.font=FONT(14);X.textAlign='center';
+    X.fillText('Where is the 4th line?',cx,cy+80*s);
+  }
+  if(levelData.lineCount>=1){
+    // Highlight screen edge
+    X.strokeStyle=GOLD;X.lineWidth=4*s;
+    X.beginPath();X.moveTo(lx,ly+lw);X.lineTo(lx+lw,ly+lw);X.stroke();
+  }
+  if(hintRevealed){X.fillStyle=NEON;X.font=FONT(12);X.textAlign='center';
+    X.fillText('The screen edge can be a side!',cx,cy+100*s)}
+}
+
+// Level 27: Keys but no locks
+function drawLevel27(s,cx,cy){
+  X.fillStyle=WHITE;X.font=FONTB(18);X.textAlign='center';
+  X.fillText('What has keys but no locks?',cx,cy-60*s);
+  // Options
+  const opts=['A Map','A Piano','A Keyboard','A Treasure'];
+  opts.forEach((o,i)=>{
+    drawButton(cx,cy-10*s+i*50*s,180,44,o,i===1||i===2?ACCENT:ACCENT2);
+  });
+  // Trick: both Piano and Keyboard are correct, but the "classic" answer is Piano
+  // Actually both keyboard and piano have keys. The riddle answer is traditionally Piano.
+  // Let's accept Piano.
+  if(hintRevealed){X.fillStyle=NEON;X.font=FONT(12);X.textAlign='center';
+    X.fillText('Think musical...',cx,cy+100*s)}
+}
+
+// Level 28: Balance the scale
+function drawLevel28(s,cx,cy){
+  // Scale
+  X.strokeStyle=WHITE;X.lineWidth=3*s;
+  X.beginPath();X.moveTo(cx,cy-60*s);X.lineTo(cx,cy-40*s);X.stroke();
+  // Left pan
+  X.strokeStyle=WHITE;X.beginPath();X.moveTo(cx-100*s,cy-40*s);X.lineTo(cx,cy-40*s);X.stroke();
+  // Right pan
+  X.beginPath();X.moveTo(cx,cy-40*s);X.lineTo(cx+100*s,cy-40*s);X.stroke();
+  // Left numbers
+  const ln=levelData.leftNums,rn=levelData.rightNums;
+  ln.forEach((n,i)=>{X.fillStyle=ACCENT;X.font=FONTB(18);X.textAlign='center';
+    X.fillText(''+n,cx-80*s+i*30*s,cy-10*s)});
+  // Right numbers
+  rn.forEach((n,i)=>{X.fillStyle=NEON;X.font=FONTB(18);X.textAlign='center';
+    X.fillText(''+n,cx+60*s+i*30*s,cy-10*s)});
+  // Draggable numbers at bottom
+  const allNums=[...ln,...rn];
+  // Actually let's make it simpler: drag numbers between sides
+  X.fillStyle=GRAY;X.font=FONT(12);X.textAlign='center';
+  X.fillText('Drag numbers between sides to balance (each side = 9)',cx,cy+50*s);
+  // Left side total
+  const lTotal=ln.reduce((a,b)=>a+b,0),rTotal=rn.reduce((a,b)=>a+b,0);
+  X.fillStyle=WHITE;X.font=FONTB(16);
+  X.fillText('Left: '+lTotal,cx-80*s,cy+80*s);
+  X.fillText('Right: '+rTotal,cx+80*s,cy+80*s);
+  // Check button
+  drawButton(cx,cy+120*s,120,44,'Check',lTotal===rTotal?ACCENT:ACCENT2);
+  // Move buttons (simpler: arrows to move numbers)
+  // Let's use arrows to swap numbers between sides
+  drawButton(cx,cy+30*s,40,36,'<->',ACCENT2);
+  if(hintRevealed){X.fillStyle=NEON;X.font=FONT(12);X.textAlign='center';
+    X.fillText('Left: 2+7=9, Right: 5+3+1=9. Swap 5 and 7!',cx,cy+160*s)}
+}
+
+// Level 29: Final - Escape!
+function drawLevel29(s,cx,cy){
+  // Dark room
+  if(!levelData.switchOn){
+    X.fillStyle='rgba(0,0,0,0.85)';X.fillRect(40*s,100*s,vw()-80*s,vh()-160*s);
+    // Barely visible switch
+    X.fillStyle='rgba(255,255,255,0.05)';X.fillRect(vw()-80*s,cy,30*s,50*s);
+    X.fillStyle='rgba(255,255,255,0.06)';X.beginPath();X.arc(vw()-65*s,cy+15*s,5*s,0,Math.PI*2);X.fill();
+    if(hintRevealed){X.strokeStyle=NEON;X.lineWidth=2;X.setLineDash([4,4]);
+      X.strokeRect(vw()-90*s,cy-10*s,40*s,60*s);X.setLineDash([])}
+  }else{
+    // Light on - show room
+    X.fillStyle='#2a2a3e';X.fillRect(40*s,100*s,vw()-80*s,vh()-160*s);
+    // Switch (on)
+    X.fillStyle='#ffd700';X.fillRect(vw()-80*s,cy-10*s,30*s,50*s);
+    X.fillStyle='#333';X.beginPath();X.arc(vw()-65*s,cy-25*s,5*s,0,Math.PI*2);X.fill();
+    // EXIT sign
+    X.fillStyle='#0f0';X.font=FONTB(36);X.textAlign='center';
+    X.fillText('EXIT',cx,cy-30*s);
+    // Door
+    X.fillStyle='#4a2a1a';X.fillRect(cx-40*s,cy+10*s,80*s,100*s);
+    X.fillStyle='#0f0';X.fillRect(cx-30*s,cy+20*s,60*s,40*s);
+    X.fillStyle=WHITE;X.font=FONTB(14);X.fillText('TAP HERE',cx,cy+40*s);
+  }
+}
+
+// ---- INPUT HANDLERS ----
+function handleDown(px,py){
+  if(clickBlock>0)return;
+  const s=scale();const cx=vw()/2,cy=vh()/2;
+  if(state==='title'){
+    if(inRect(px,py,cx,cy+100*s,200,56)){sfxClick();state='select';return}
+    return;
+  }
+  if(state==='select'){
+    if(inRect(px,py,40*s,40*s,60,36)){sfxClick();state='title';return}
+    // Check level buttons
+    let sy=80*s;
+    const bw=70*s,bh=60*s,gap=12*s;
+    for(let ch=1;ch<=6;ch++){
+      sy+=22*s;
+      for(let i=0;i<5;i++){
+        const li=(ch-1)*5+i;if(li>=30)break;
+        const col=i%5;
+        const startX=cx-(5*bw+4*gap)/2+bw/2;
+        const bx=startX+col*(bw+gap);
+        const by=sy+bh/2;
+        if(inRect(px,py,bx,by,70,60)&&isUnlocked(li)){
+          sfxClick();initLevel(li);state='playing';return;
+        }
+      }
+      sy+=bh+20*s;
+    }
+    return;
+  }
+  if(state==='playing'){
+    // Back button
+    if(inRect(px,py,40*s,40*s,60,36)){sfxClick();state='select';return}
+    // Hint button
+    const hx=vw()-40*s,hy=40*s;
+    if(inRect(px,py,hx,hy,50,36)){
+      if(save.hintsLeft>0&&!hintRevealed){
+        sfxHint();hintRevealed=true;save.hintsLeft--;hintText=levels[currentLevel].hint;saveSave();
+      }else if(hintRevealed){
+        // already revealed
+      }
+      return;
+    }
+    // Result overlay tap
+    if(showResult){
+      if(resultCorrect){
+        // Check if chapter end
+        const ch=getChapter(currentLevel);
+        const lastInChapter=(ch)*5-1;
+        if(currentLevel===lastInChapter){
+          // Chapter end - give bonus hint
+          if(!save.chapterBonus[ch]){save.chapterBonus[ch]=true;save.hintsLeft++;saveSave()}
+          chapterEndChapter=ch;state='chapterEnd';
+        }else if(currentLevel<29){
+          initLevel(currentLevel+1);
+        }else{
+          state='complete';
+        }
+      }else{
+        showResult=false;levelLost=false;initLevel(currentLevel);
+      }
+      return;
+    }
+    if(levelWon)return;
+    // Level-specific input
+    handleLevelDown(px,py);
+    return;
+  }
+  if(state==='chapterEnd'){
+    if(inRect(px,py,cx,cy+80*s,180,50)){sfxClick();state='select'}
+    return;
+  }
+  if(state==='complete'){
+    if(inRect(px,py,cx,cy+60*s,180,50)){sfxClick();state='select'}
+    return;
+  }
+}
+
+function handleMove(px,py){
+  if(state!=='playing')return;
+  handleLevelMove(px,py);
+}
+
+function handleUp(px,py){
+  if(state!=='playing')return;
+  handleLevelUp(px,py);
+}
+
+function handleLevelDown(px,py){
+  const s=scale();const cx=vw()/2,cy=vh()/2;
+  switch(currentLevel){
+    case 0:{// Drag 30
+      const n=levelData.n30;
+      if(Math.abs(px-n.x)<30*s&&Math.abs(py-n.y)<20*s){
+        levelData.n30.dragging=true;tutorialStep=0;
+      }
+    }break;
+    case 1:{// Tap ant
+      if(Math.abs(px-cx)<60*s&&Math.abs(py-(cy-60*s))<25*s)winLevel();
+      else wrongAnswer();
+    }break;
+    case 2:{// Drag sun
+      const sx=levelData.sunX,sy=levelData.sunY;
+      if(Math.abs(px-sx)<30*s&&Math.abs(py-sy)<30*s){levelData.dragging=true}
+    }break;
+    case 3:{// Count apples
+      for(let i=0;i<4;i++){
+        const bx=cx-90*s+i*60*s,by=cy+90*s;
+        if(inRect(px,py,bx,by,50,44)){
+          const val=3+i;
+          if(val===5)winLevel();else wrongAnswer();
+          return;
+        }
+      }
+    }break;
+    case 4:{// Drag everything
+      levelData.items.forEach(it=>{
+        if(it.isWord&&!it.inBox){
+          const tw=Math.max(100,X.measureText('everything').width);
+          if(Math.abs(px-it.x)<tw/2+10&&Math.abs(py-it.y)<20*s){
+            levelData.wordDragging=it;
+          }
+        }else if(!it.isWord&&!it.inBox){
+          if(Math.abs(px-it.x)<25*s&&Math.abs(py-it.y)<25*s){
+            it.inBox=true;
+          }
+        }
+      });
+    }break;
+    case 5:{// Hidden 3
+      const h3x=cx,h3y=cy-20*s;
+      if(!levelData.hidden3Found&&Math.abs(px-h3x-20*s)<20*s&&Math.abs(py-h3y-18*s)<15*s){
+        levelData.hidden3Found=true;winLevel();return;
+      }
+      // Wrong answers
+      if(inRect(px,py,cx-80*s,cy+60*s,60,50)||inRect(px,py,cx,cy+60*s,60,50)||inRect(px,py,cx+80*s,cy+60*s,60,50)){
+        wrongAnswer();
+      }
+    }break;
+    case 6:{// Change operator
+      if(Math.abs(px-(cx-40*s))<25*s&&Math.abs(py-cy)<25*s){
+        sfxClick();levelData.op=levelData.op==='+'?'-':'+';
+        if(levelData.op==='-')winLevel();
+        else levelData.solved=false;
+      }
+    }break;
+    case 7:{// Find different circle
+      levelData.circles.forEach((c,i)=>{
+        const dx=px-c.x,dy=py-c.y;
+        if(dx*dx+dy*dy<(c.r+10*s)*(c.r+10*s)){
+          if(i===levelData.diffIdx)winLevel();else wrongAnswer();
+        }
+      });
+    }break;
+    case 8:{// Drag fence
+      const fy=levelData.fenceY;
+      if(Math.abs(px-cx-10*s)<60*s&&Math.abs(py-fy)<40*s){
+        levelData.fenceDragging=true;
+      }
+    }break;
+    case 9:{// Count circles answer
+      for(let i=0;i<5;i++){
+        const bx=cx-80*s+i*40*s,by=cy+110*s;
+        if(inRect(px,py,bx,by,36,44)){
+          if(i+1===7)winLevel();else wrongAnswer();return;
+        }
+      }
+    }break;
+    case 10:{// Smallest number
+      const hx=cx,hy=cy+30*s;
+      if(!levelData.hiddenRevealed&&Math.abs(px-hx)<40*s&&Math.abs(py-hy)<15*s){
+        levelData.hiddenRevealed=true;winLevel();
+      }else if(Math.abs(px-hx)>50*s){
+        wrongAnswer();
+      }
+    }break;
+    case 11:{// Light bulbs
+      const bulbs=levelData.bulbs;
+      for(let i=0;i<5;i++){
+        const bx=cx-100*s+i*50*s,by=cy;
+        if(Math.abs(px-bx)<25*s&&Math.abs(py-by)<25*s){
+          sfxClick();
+          bulbs[i]=1-bulbs[i];
+          if(i>0)bulbs[i-1]=1-bulbs[i-1];
+          if(i<4)bulbs[i+1]=1-bulbs[i+1];
+          if(bulbs.every(b=>b===1))winLevel();
+          return;
+        }
+      }
+    }break;
+    case 12:{// Holes in shirt
+      for(let i=0;i<5;i++){
+        const bx=cx-80*s+i*40*s,by=cy+120*s;
+        if(inRect(px,py,bx,by,36,44)){
+          if(5+i===8)winLevel();else wrongAnswer();return;
+        }
+      }
+    }break;
+    case 13:{// Matchstick
+      const e8x=cx-110*s;
+      // Check stick taps (simplified)
+      const stickAreas=[
+        {x:e8x,y:cy-25*s,w:30,h:8,idx:0},
+        {x:e8x,y:cy+45*s,w:30,h:8,idx:1},
+        {x:e8x,y:cy+10*s,w:30,h:8,idx:2},
+        {x:e8x-15*s,y:cy-10*s,w:8,h:30,idx:3},
+        {x:e8x+15*s,y:cy-10*s,w:8,h:30,idx:4},
+        {x:e8x-15*s,y:cy+25*s,w:8,h:30,idx:5},
+        {x:e8x+15*s,y:cy+25*s,w:8,h:30,idx:6},
+      ];
+      for(const sa of stickAreas){
+        if(inRect(px,py,sa.x,sa.y,sa.w,sa.h)){
+          if(!levelData.sticks[sa.idx].removed){
+            levelData.sticks[sa.idx].removed=true;sfxClick();
+          }
+          return;
+        }
+      }
+      // Check button
+      if(inRect(px,py,cx,cy+100*s,120,44)){
+        // Check if 8 became 6: remove top-left vertical (#3)
+        // 6 needs: top-h, top-left-v, mid-h, bot-left-v, bot-right-v, bot-h
+        // So from 8, remove top-right-v (#4) = 6? No...
+        // Actually: 8->6 by removing top-right vertical (#4)
+        // And 12->10... this is complex. Simplify: just check if the right sticks removed
+        const removed=levelData.sticks.filter(s=>s.removed);
+        // Correct: remove stick #4 (top-right of 8) makes it 6, and the equation becomes 6+4=10...
+        // Actually the display doesn't change dynamically, so just check if sticks[4] removed
+        if(levelData.sticks[4].removed||levelData.sticks[3].removed)winLevel();
+        else wrongAnswer();
+      }
+    }break;
+    case 14:{// Cup shuffle
+      if(levelData.done&&levelData.selected<0){
+        const cups=[cx-80*s,cx,cx+80*s];
+        for(let i=0;i<3;i++){
+          if(Math.abs(px-cups[i])<35*s&&Math.abs(py-cy)<30*s){
+            levelData.selected=i;
+            if(i===0)winLevel();else loseLevel();
+            return;
+          }
+        }
+      }
+    }break;
+    case 15:{// Hidden star
+      const starX=cx+Math.sin(globalTime*0.3)*2,starY=cy+Math.cos(globalTime*0.3)*2;
+      const dx=px-starX,dy=py-starY;
+      if(dx*dx+dy*dy<(40*s)*(40*s)){
+        levelData.found=true;winLevel();
+      }
+    }break;
+    case 16:{// Flip
+      // Swipe down to flip
+      levelData.dragStartY=py;
+    }break;
+    case 17:{// Half of 8
+      if(inRect(px,py,cx-60*s,cy+100*s,60,44)){winLevel();return}// 3
+      if(inRect(px,py,cx+60*s,cy+100*s,60,44)){winLevel();return}// 0 (also correct)
+      if(inRect(px,py,cx,cy+100*s,60,44)){wrongAnswer();return}// 4
+    }break;
+    case 18:{// Fish
+      const fx=levelData.fishX,fy=levelData.fishY;
+      if(Math.abs(px-fx)<25*s&&Math.abs(py-fy)<20*s){
+        levelData.fishDragging=true;
+      }
+    }break;
+    case 19:{// Count A
+      for(let i=0;i<6;i++){
+        const bx=cx-75*s+i*30*s,by=cy+90*s;
+        if(inRect(px,py,bx,by,28,44)){
+          if(i+3===6)winLevel();else wrongAnswer();return;
+        }
+      }
+    }break;
+    case 20:{// Alien
+      if(!levelData.closed){
+        // Close button
+        if(Math.abs(px-(cx+105*s))<15*s&&Math.abs(py-(cy-65*s))<15*s){
+          levelData.closed=true;winLevel();
+        }
+      }
+    }break;
+    case 21:{// Mix colors
+      if(!levelData.mixed){
+        const dx1=px-levelData.redX,dy1=py-levelData.y;
+        const dx2=px-levelData.blueX,dy2=py-levelData.y;
+        if(dx1*dx1+dy1*dy1<(35*s)*(35*s)){levelData.redDragging=true}
+        if(dx2*dx2+dy2*dy2<(35*s)*(35*s)){levelData.blueDragging=true}
+      }
+    }break;
+    case 22:{// Weigh
+      if(inRect(px,py,cx+100*s,cy+50*s,80,44)){winLevel();return}// Equal
+      wrongAnswer();
+    }break;
+    case 23:{// Mistake
+      const ly=cy-80*s+4*30*s;// "perfekt" line
+      if(Math.abs(px-cx)<100*s&&Math.abs(py-(cy-80*s+5*30*s))<15*s){
+        levelData.mistakeFound=true;winLevel();
+      }else{wrongAnswer()}
+    }break;
+    case 24:{// Door
+      if(!levelData.doorOpen){
+        const dx=px-levelData.keyX,dy=py-levelData.keyY;
+        if(dx*dx+dy*dy<(20*s)*(20*s)){
+          levelData.keyDragging=true;
+        }
+      }
+    }break;
+    case 25:{// Fibonacci
+      for(let i=0;i<4;i++){
+        const bx=cx-75*s+i*50*s,by=cy+50*s;
+        if(inRect(px,py,bx,by,44,44)){
+          if(i===2)winLevel();else wrongAnswer();return;
+        }
+      }
+    }break;
+    case 26:{// Square from 3 lines
+      // Tap bottom edge to complete the square
+      const lx=cx-60*s,ly=cy-60*s,lw=120*s;
+      if(py>cy+60*s-10*s&&py<cy+60*s+10*s&&px>lx&&px<lx+lw){
+        levelData.lineCount++;sfxClick();
+        if(levelData.lineCount>=1)setTimeout(()=>winLevel(),500);
+      }
+    }break;
+    case 27:{// Piano
+      const opts=['A Map','A Piano','A Keyboard','A Treasure'];
+      for(let i=0;i<4;i++){
+        if(inRect(px,py,cx,cy-10*s+i*50*s,180,44)){
+          if(i===1)winLevel();else wrongAnswer();return;
+        }
+      }
+    }break;
+    case 28:{// Balance - swap button
+      if(inRect(px,py,cx,cy+30*s,40,36)){
+        sfxClick();
+        // Swap a random number between sides
+        const li=Math.floor(Math.random()*levelData.leftNums.length);
+        const ri=Math.floor(Math.random()*levelData.rightNums.length);
+        const tmp=levelData.leftNums[li];
+        levelData.leftNums[li]=levelData.rightNums[ri];
+        levelData.rightNums[ri]=tmp;
+        return;
+      }
+      if(inRect(px,py,cx,cy+120*s,120,44)){
+        const lt=levelData.leftNums.reduce((a,b)=>a+b,0);
+        const rt=levelData.rightNums.reduce((a,b)=>a+b,0);
+        if(lt===rt)winLevel();else wrongAnswer();
+      }
+    }break;
+    case 29:{// Escape
+      const swX=vw()-65*s,swY=cy;
+      if(!levelData.switchOn){
+        if(Math.abs(px-swX)<25*s&&Math.abs(py-swY)<35*s){
+          levelData.switchOn=true;sfxClick();
+          setTimeout(()=>{levelData.exitRevealed=true},300);
+        }
+      }else if(levelData.exitRevealed&&!levelData.solved){
+        // Tap EXIT door
+        if(Math.abs(px-cx)<50*s&&Math.abs(py-(cy+30*s))<60*s){
+          levelData.solved=true;winLevel();sfxCelebrate();
+        }
+      }
+    }break;
+  }
+}
+
+function handleLevelMove(px,py){
+  const s=scale();const cx=vw()/2,cy=vh()/2;
+  switch(currentLevel){
+    case 0:if(levelData.n30.dragging){levelData.n30.x=px;levelData.n30.y=py}break;
+    case 2:if(levelData.dragging){levelData.sunX=px;levelData.sunY=py}break;
+    case 4:if(levelData.wordDragging){levelData.wordDragging.x=px;levelData.wordDragging.y=py}break;
+    case 8:if(levelData.fenceDragging){levelData.fenceY=py}break;
+    case 18:if(levelData.fishDragging){levelData.fishX=px;levelData.fishY=py}break;
+    case 21:{
+      if(levelData.redDragging){levelData.redX=px}
+      if(levelData.blueDragging){levelData.blueX=px}
+    }break;
+    case 24:{
+      if(levelData.keyDragging){levelData.keyX=px;levelData.keyY=py}
+    }break;
+  }
+}
+
+function handleLevelUp(px,py){
+  const s=scale();const cx=vw()/2,cy=vh()/2;
+  switch(currentLevel){
+    case 0:{
+      const n=levelData.n30;n.dragging=false;
+      // Check if dropped in center area
+      if(Math.abs(n.x-cx)<100*s&&Math.abs(n.y-cy)<100*s){
+        winLevel();
+      }else{n.x=n.origX;n.y=n.origY}
+    }break;
+    case 2:levelData.dragging=false;break;
+    case 4:{
+      if(levelData.wordDragging){
+        const it=levelData.wordDragging;
+        const box=levelData.boxRect;
+        if(it.x>box.x&&it.x<box.x+box.w&&it.y>box.y&&it.y<box.y+box.h){
+          it.inBox=true;winLevel();
+        }
+        levelData.wordDragging=null;
+      }
+    }break;
+    case 8:{
+      levelData.fenceDragging=false;
+      if(levelData.fenceY>cy+80*s){
+        levelData.carrotEaten=true;winLevel();
+      }
+    }break;
+    case 16:{
+      // Check if swiped down (flip)
+      if(py-input.dragStartY>80*s&&!levelData.flipped){
+        levelData.flipped=true;sfxClick();
+        setTimeout(()=>winLevel(),800);
+      }
+    }break;
+    case 18:{
+      levelData.fishDragging=false;
+      // Check if fish is outside bowl
+      const dx=levelData.fishX-cx,dy=levelData.fishY-(cy+20*s);
+      if(dx*dx+dy*dy>(70*s)*(70*s)){
+        levelData.escaped=true;winLevel();
+      }
+    }break;
+    case 21:{
+      if(levelData.redDragging){
+        levelData.redDragging=false;
+        if(Math.abs(levelData.redX-levelData.blueX)<50*s){
+          levelData.mixed=true;winLevel();
+        }
+      }
+      if(levelData.blueDragging){
+        levelData.blueDragging=false;
+        if(Math.abs(levelData.blueX-levelData.redX)<50*s){
+          levelData.mixed=true;winLevel();
+        }
+      }
+    }break;
+    case 24:{
+      if(levelData.keyDragging){
+        levelData.keyDragging=false;
+        if(Math.abs(levelData.keyX-levelData.lockX)<30*s&&Math.abs(levelData.keyY-levelData.lockY)<30*s){
+          levelData.doorOpen=true;winLevel();
+        }
+      }
+    }break;
+  }
+}
+
+// Draw chapter end screen
+function drawChapterEnd(){
+  drawBG();
+  const cx=vw()/2,cy=vh()/2,s=scale();
+  X.font=FONTB(28);X.textAlign='center';X.fillStyle=GOLD;
+  X.fillText(`Chapter ${chapterEndChapter} Complete!`,cx,cy-80*s);
+  X.font=FONT(18);X.fillStyle=WHITE;
+  X.fillText(chapterName(chapterEndChapter),cx,cy-40*s);
+  // Stars summary
+  let totalStars=0;
+  for(let i=(chapterEndChapter-1)*5;i<chapterEndChapter*5;i++){
+    totalStars+=getStars(i);
+  }
+  X.font=FONTB(36);X.fillStyle=GOLD;
+  X.fillText('★'.repeat(Math.min(15,totalStars)),cx,cy+10*s);
+  X.font=FONT(14);X.fillStyle=GRAY;
+  X.fillText(`${totalStars}/15 stars`,cx,cy+40*s);
+  // Bonus hint
+  X.fillStyle=NEON;X.font=FONT(16);
+  X.fillText('+1 Hint earned!',cx,cy+70*s);
+  drawButton(cx,cy+120*s,180,50,'Continue',ACCENT);
+}
+
+// Draw game complete
+function drawComplete(){
+  drawBG();
+  const cx=vw()/2,cy=vh()/2,s=scale();
+  X.font=FONTB(36);X.textAlign='center';X.fillStyle=GOLD;
+  X.shadowColor=GOLD;X.shadowBlur=20;
+  X.fillText('Congratulations!',cx,cy-60*s);X.shadowBlur=0;
+  X.font=FONTB(20);X.fillStyle=WHITE;
+  X.fillText('You completed all 30 levels!',cx,cy-20*s);
+  let total=0;for(let i=0;i<30;i++)total+=getStars(i);
+  X.font=FONTB(30);X.fillStyle=GOLD;
+  X.fillText(`${total}/90 Stars`,cx,cy+20*s);
+  drawDoodleStar(cx-60*s,cy+70*s,20*s,GOLD);
+  drawDoodleStar(cx,cy+70*s,25*s,GOLD);
+  drawDoodleStar(cx+60*s,cy+70*s,20*s,GOLD);
+  drawButton(cx,cy+120*s,180,50,'Level Select',ACCENT);
+}
+
+// ---- MAIN LOOP ----
+function gameLoop(ts){
+  requestAnimationFrame(gameLoop);
+  const dt=Math.min((ts-lastTimestamp)/1000,0.05);
+  lastTimestamp=ts;globalTime+=dt;
+  if(shakeTime>0)shakeTime-=dt;
+  if(clickBlock>0)clickBlock-=dt;
+  updateParticles(dt);
+
+  X.save();
+  if(shakeTime>0){
+    const sx=(Math.random()-0.5)*shakeIntensity*2;
+    const sy=(Math.random()-0.5)*shakeIntensity*2;
+    X.translate(sx,sy);
+  }
+
+  switch(state){
+    case 'title':drawTitle();break;
+    case 'select':drawSelect();break;
+    case 'playing':
+      updateLevel(dt);
+      drawBG();drawLevel();drawHUD();drawHint();drawParticles();drawResultOverlay();
+      break;
+    case 'chapterEnd':drawChapterEnd();drawParticles();break;
+    case 'complete':drawComplete();drawParticles();break;
+  }
+
+  // Transition overlay
+  if(transTarget){
+    transAlpha+=dt*3;
+    if(transAlpha>=1){
+      state=transTarget;
+      if(transCallback)transCallback();
+      transTarget='';transCallback=null;
+    }
+    X.fillStyle=`rgba(0,0,0,${Math.min(1,transAlpha)})`;
+    X.fillRect(0,0,vw(),vh());
+  }
+
+  X.restore();
+}
+
+lastTimestamp=performance.now();
+requestAnimationFrame(gameLoop);
+
+// roundRect polyfill
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    r=Math.min(r,w/2,h/2);
+    this.moveTo(x+r,y);this.lineTo(x+w-r,y);this.arcTo(x+w,y,x+w,y+r,r);
+    this.lineTo(x+w,y+h-r);this.arcTo(x+w,y+h,x+w-r,y+h,r);
+    this.lineTo(x+r,y+h);this.arcTo(x,y+h,x,y+h-r,r);
+    this.lineTo(x,y+r);this.arcTo(x,y,x+r,y,r);
+  }
+}
+</script>
+</body>
+</html>
