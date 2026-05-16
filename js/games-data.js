@@ -85,6 +85,7 @@ const GAMES = [
   {name:"Brain Out",emoji:"🧠",cat:"puzzle",tags:["Puzzle","Brain","Trick","Lateral Thinking","IQ","Casual","Riddle"],url:"/brain-out/",desc:"30 mind-bending levels that test your IQ with creative lateral thinking puzzles! The obvious answer is usually wrong. Drag, tap, and think outside the box. Hints, stars, progress saving. No download needed!",isNew:true,status:"live"},
   {name:"Mahjong Solitaire",emoji:"🀄",cat:"puzzle",tags:["Mahjong","Tile","Matching","Solitaire","Classic","Relaxing","Casual"],url:"/mahjong-solitaire/",desc:"Play Mahjong Solitaire online free! Classic tile-matching puzzle with 20 levels, 10 unique layouts, traditional 144-tile set. Hints, shuffles, undo, scoring, star ratings. No download!",isNew:true,status:"live"},
   {name:"Bubble Shooter",emoji:"🫧",cat:"puzzle",tags:["Puzzle","Bubble","Shooter","Arcade","Casual","Match-3"],url:"/bubble-shooter/",desc:"Aim and shoot bubbles to match 3+ and pop them! Classic bubble shooter with 30 levels, wall bouncing, score combos, power-ups, and progressive difficulty. No download needed!",isNew:true,status:"live"},
+  {name:"Tic Tac Toe",emoji:"⭕",cat:"puzzle",tags:["Puzzle","Strategy","Board Game","Classic","2-Player","AI","XO","Noughts","Crosses"],url:"/tic-tac-toe/",desc:"Play Tic Tac Toe online free! Challenge AI in Easy, Medium, or Hard mode with minimax algorithm. Play with friends locally or watch AI vs AI battles. Win streaks, stats tracking, and neon visuals. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
