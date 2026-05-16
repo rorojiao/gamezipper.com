@@ -211,7 +211,7 @@ const COLORS = [
   { name: "Fuchsia",top: "#d946ef", mid: "#f0abfc", bot: "#a21caf", glow: "rgba(217,70,239,0.35)" },
 ];
 
-// ─── Level Definitions (830 levels) ───
+// ─── Level Definitions (1050 levels) ───
 // Each: { n: numColors, b: [ [layer...from bottom], ... ] }
 // Empty bottles are trailing []
 const LEVELS = [
@@ -1386,6 +1386,8 @@ function isWin() {
 
 function canPour(from, to) {
   if (from === to || bottles[from].length === 0 || bottles[to].length >= 4) return false;
+  // Prevent pouring from already-sorted bottles (QoL: protect completed work)
+  if (isSorted(from)) return false;
   const fc = topColor(from), tc = topColor(to);
   if (tc === -1) return true;
   return fc === tc;
@@ -1446,9 +1448,10 @@ function completePour() {
     stopSolve();
     state = "win";
     winTimer = Date.now();
-    // Stars: based on moves vs number of bottles (more bottles = more moves expected)
-    const threshold1 = bottles.length; // excellent
-    const threshold2 = bottles.length * 2; // good
+    // Stars: based on moves vs numColors (scales with puzzle complexity)
+    // Minimum moves ~ numColors * 4; 3★ at ~25% overhead, 2★ at ~100% overhead
+    const threshold1 = numColors * 5; // excellent (3 stars)
+    const threshold2 = numColors * 8; // good (2 stars)
     const stars = moves <= threshold1 ? 3 : moves <= threshold2 ? 2 : 1;
     if (!levelStars[currentLevel] || levelStars[currentLevel] < stars) {
       levelStars[currentLevel] = stars;
@@ -1485,17 +1488,24 @@ function undoMove() {
 
 // ─── BFS Hint Solver ───
 function findHint() {
+  // For complex puzzles (8+ colors), limit search to prevent UI freeze
+  const maxStates = numColors >= 10 ? 15000 : numColors >= 8 ? 25000 : 50000;
+  const timeLimit = numColors >= 8 ? 800 : 2000; // ms
+  const startTime = performance.now();
+
   const state = bottles.map(b => [...b]);
   const n = state.length;
   const key = (s) => s.map(b => b.join(',')).join('|');
   const visited = new Set();
   visited.add(key(state));
   const queue = [{ state, moves: [] }];
-  const maxDepth = n * 4;
-  const maxStates = 50000;
+  const maxDepth = numColors * 6; // generous depth limit based on colors
   let stateCount = 0;
 
   while (queue.length > 0 && stateCount < maxStates) {
+    // Time guard: abort if taking too long to prevent UI freeze
+    if (stateCount % 500 === 0 && performance.now() - startTime > timeLimit) return null;
+
     const { state: cur, moves } = queue.shift();
     stateCount++;
     if (moves.length >= maxDepth) continue;
@@ -1542,7 +1552,7 @@ function findHint() {
       }
     }
   }
-  return null; // no solution found
+  return null; // no solution found within limits
 }
 
 function showHint() {
