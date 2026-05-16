@@ -191,6 +191,7 @@ function sfxError()  { playTone(200, 0.18, "triangle", 0.06); }
 function sfxClick()  { playTone(700, 0.06, "sine", 0.05); }
 function sfxWin()    { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.25, "sine", 0.09), i * 110)); }
 function sfxSorted() { playTone(880, 0.12, "sine", 0.07); setTimeout(() => playTone(1175, 0.2, "sine", 0.06), 80); }
+function sfxHint()   { playTone(880, 0.1, "sine", 0.08); setTimeout(() => playTone(1100, 0.15, "sine", 0.06), 60); }
 
 // ─── Water Color Palette ───
 const COLORS = [
@@ -1294,6 +1295,19 @@ let now = 0;
 let sfxEnabled = true;
 let lastPlayedLevel = 0; // for Continue button
 
+// ─── Hint System ───
+let solving = false;
+let solveMoves = [];
+let solveMoveIndex = 0;
+let solveConfirm = false;
+let solveConfirmTimer = 0;
+let hintActive = false;
+let hintMove = null; // { from, to, count }
+let hintPhase = 0; // 0=source glow, 1=target glow, 2=arrow
+let hintTimer = 0;
+let hintTapCount = 0;
+let hintTapTimer = 0;
+
 // Difficulty sections for level select
 const DIFF_SECTIONS = [
   { start: 0, label: "🟢 Tutorial", color: "#2ed573" },
@@ -1337,6 +1351,8 @@ loadSave();
 // ─── Game Logic ───
 function initLevel(idx) {
   currentLevel = idx;
+  lastPlayedLevel = idx;
+  saveSave();
   const lv = LEVELS[idx];
   numColors = lv.n;
   bottles = lv.b.map(b => [...b]); // deep copy
@@ -1344,6 +1360,7 @@ function initLevel(idx) {
   moves = 0;
   undoStack = [];
   animating = false;
+  stopSolve();
   state = "game";
 }
 
@@ -1426,6 +1443,7 @@ function completePour() {
   }
 
   if (isWin()) {
+    stopSolve();
     state = "win";
     winTimer = Date.now();
     // Stars: based on moves vs number of bottles (more bottles = more moves expected)
@@ -1445,6 +1463,9 @@ function completePour() {
     try {
       window.dispatchEvent(new CustomEvent("level-complete", { detail: { level: currentLevel, stars: stars, moves: moves } }));
     } catch(e) {}
+  } else if (solving) {
+    // Continue auto-solve after pour completes
+    setTimeout(executeNextSolveMove, 100);
   }
 }
 
@@ -1460,6 +1481,123 @@ function undoMove() {
   }
   selectedBottle = -1;
   sfxClick();
+}
+
+// ─── BFS Hint Solver ───
+function findHint() {
+  const state = bottles.map(b => [...b]);
+  const n = state.length;
+  const key = (s) => s.map(b => b.join(',')).join('|');
+  const visited = new Set();
+  visited.add(key(state));
+  const queue = [{ state, moves: [] }];
+  const maxDepth = n * 4;
+  const maxStates = 50000;
+  let stateCount = 0;
+
+  while (queue.length > 0 && stateCount < maxStates) {
+    const { state: cur, moves } = queue.shift();
+    stateCount++;
+    if (moves.length >= maxDepth) continue;
+
+    for (let from = 0; from < cur.length; from++) {
+      for (let to = 0; to < cur.length; to++) {
+        if (from === to || cur[from].length === 0 || cur[to].length >= 4) continue;
+        const fc = cur[from][cur[from].length - 1];
+        const tc = cur[to].length > 0 ? cur[to][cur[to].length - 1] : -1;
+        if (tc !== -1 && tc !== fc) continue;
+
+        // Don't pour single color to empty (pointless unless clearing)
+        if (tc === -1 && cur[from].every(c => c === fc) && cur[to].length === 0) continue;
+
+        // Execute move
+        const next = cur.map(b => [...b]);
+        const count = Math.min(
+          [...next[from]].reverse().filter(c => c === fc).length,
+          4 - next[to].length
+        );
+        for (let i = 0; i < count; i++) {
+          next[from].pop();
+          next[to].push(fc);
+        }
+
+        const k = key(next);
+        if (visited.has(k)) continue;
+        visited.add(k);
+
+        const newMoves = [...moves, { from, to, count }];
+
+        // Check if solved
+        let solved = true;
+        for (const b of next) {
+          if (b.length > 0 && !(b.length === 4 && b.every(c => c === b[0]))) {
+            solved = false;
+            break;
+          }
+        }
+
+        if (solved) return newMoves;
+
+        queue.push({ state: next, moves: newMoves });
+      }
+    }
+  }
+  return null; // no solution found
+}
+
+function showHint() {
+  if (animating || solving) return;
+  const moves = findHint();
+  if (!moves || moves.length === 0) {
+    sfxError();
+    return;
+  }
+  hintMove = moves[0];
+  hintActive = true;
+  hintPhase = 0;
+  hintTimer = Date.now();
+  sfxHint();
+}
+
+function stopSolve() {
+  solving = false;
+  solveMoves = [];
+  solveMoveIndex = 0;
+  solveConfirm = false;
+  hintActive = false;
+  hintMove = null;
+}
+
+function startSolve() {
+  if (animating) return;
+  const allMoves = findHint();
+  if (!allMoves || allMoves.length === 0) {
+    sfxError();
+    return;
+  }
+  solving = true;
+  solveMoves = allMoves;
+  solveMoveIndex = 0;
+  solveConfirm = false;
+  hintActive = false;
+  hintMove = null;
+  sfxHint();
+  // Start first move after a short delay
+  setTimeout(executeNextSolveMove, 400);
+}
+
+function executeNextSolveMove() {
+  if (!solving || solveMoveIndex >= solveMoves.length) {
+    stopSolve();
+    return;
+  }
+  if (animating) {
+    setTimeout(executeNextSolveMove, 100);
+    return;
+  }
+  const move = solveMoves[solveMoveIndex];
+  executePour(move.from, move.to);
+  solveMoveIndex++;
 }
 
 // ─── Layout Calculator ───
@@ -1950,6 +2088,13 @@ function renderSplash() {
     const bw = Math.min(200, W * 0.55), bh = 50;
     const bx = W / 2 - bw / 2, by = H * 0.58;
     drawButton(bx, by, bw, bh, "▶  PLAY", hoverBtn === 0, true);
+
+    // Continue button (if player has played before)
+    if (lastPlayedLevel > 0) {
+      const contY = by + bh + 12;
+      const contW = Math.min(200, W * 0.55);
+      drawButton(W / 2 - contW / 2, contY, contW, 42, "⏩  Continue Lv." + (lastPlayedLevel + 1), hoverBtn === 1, false);
+    }
   }
 
   // Footer — clickable link to GameZipper home
@@ -1980,12 +2125,49 @@ function renderMenu() {
   const gap = 8;
   const cellW = (W - 24 - (cols - 1) * gap) / cols;
   const cellH = cellW;
+  const headerH = 28; // space for difficulty section headers
   const gridTop = 80 - menuScrollY;
+
+  // Track which section headers have been drawn (to avoid duplicates in same viewport)
+  const drawnSections = new Set();
 
   for (let i = 0; i < TOTAL_LEVELS; i++) {
     const col = i % cols, row = Math.floor(i / cols);
     const x = 12 + col * (cellW + gap);
-    const y = gridTop + row * (cellH + gap);
+
+    // Check if this is the first level of a new difficulty section
+    const section = DIFF_SECTIONS.find(s => s.start === i);
+    if (section && !drawnSections.has(i)) {
+      drawnSections.add(i);
+      const sy = gridTop + row * (cellH + gap) + headerH;
+      if (sy > 50 && sy < H) {
+        X.fillStyle = section.color;
+        X.font = "700 13px 'Nunito',sans-serif";
+        X.textAlign = "left";
+        X.textBaseline = "middle";
+        X.fillText(section.label + " (" + (i + 1) + "-" + (DIFF_SECTIONS[DIFF_SECTIONS.indexOf(section) + 1] ? DIFF_SECTIONS[DIFF_SECTIONS.indexOf(section) + 1].start : TOTAL_LEVELS) + ")", 14, sy + headerH / 2);
+        // Divider line
+        X.strokeStyle = section.color + "33";
+        X.lineWidth = 1;
+        X.beginPath();
+        X.moveTo(14, sy + headerH - 2);
+        X.lineTo(W - 14, sy + headerH - 2);
+        X.stroke();
+      }
+    }
+
+    // Calculate vertical offset for section headers
+    let rowOffset = 0;
+    for (const s of DIFF_SECTIONS) {
+      if (s.start <= i) {
+        const sectionRow = Math.floor(s.start / cols);
+        const levelRow = Math.floor(i / cols);
+        if (sectionRow < levelRow) rowOffset += headerH;
+        else if (sectionRow === levelRow && s.start <= i) rowOffset += headerH;
+      }
+    }
+
+    const y = gridTop + row * (cellH + gap) + rowOffset;
     if (y + cellH < 60 || y > H) continue;
 
     const unlocked = !!levelUnlocked[i];
@@ -2022,7 +2204,10 @@ function renderMenu() {
   }
 
   const totalRows = Math.ceil(TOTAL_LEVELS / cols);
-  menuMaxScroll = Math.max(0, totalRows * (cellH + gap) + 80 - H + 10);
+  // Account for section header height in scroll area
+  const sectionCount = DIFF_SECTIONS.filter(s => s.start < TOTAL_LEVELS).length;
+  const headerRows = Math.ceil(sectionCount * headerH / (cellH + gap));
+  menuMaxScroll = Math.max(0, (totalRows + headerRows) * (cellH + gap) + 80 - H + 10);
 }
 
 function renderGame() {
@@ -2052,11 +2237,14 @@ function renderGame() {
   // Sound toggle button (left side, below home)
   drawButton(10, 36, 28, 28, sfxEnabled ? "🔊" : "🔇", hoverBtn === 14, false);
   const hudY = 36;
-  const hudBtnW = 52, hudBtnH = 28, hudGap = 6;
-  const hudStartX = W - 14 - (hudBtnW * 3 + hudGap * 2);
+  const hudBtnW = 46, hudBtnH = 28, hudGap = 5;
+  const hudStartX = W - 14 - (hudBtnW * 4 + hudGap * 3);
   drawButton(hudStartX, hudY, hudBtnW, hudBtnH, "Menu", hoverBtn === 10, false);
-  drawButton(hudStartX + hudBtnW + hudGap, hudY, hudBtnW, hudBtnH, "↩ Undo", hoverBtn === 11, undoStack.length > 0);
-  drawButton(hudStartX + (hudBtnW + hudGap) * 2, hudY, hudBtnW, hudBtnH, "↻ Reset", hoverBtn === 12, false);
+  drawButton(hudStartX + hudBtnW + hudGap, hudY, hudBtnW, hudBtnH, "↩ Undo", hoverBtn === 11, undoStack.length > 0 && !solving);
+  // Hint button (shows solve confirm if solving, else label based on state)
+  const hintLabel = solveConfirm ? "🤖 Confirm?" : "💡 Hint";
+  drawButton(hudStartX + (hudBtnW + hudGap) * 2, hudY, hudBtnW, hudBtnH, hintLabel, hoverBtn === 15, !solving || !solveConfirm);
+  drawButton(hudStartX + (hudBtnW + hudGap) * 3, hudY, hudBtnW, hudBtnH, solving ? "⏹ Stop" : "↻ Reset", hoverBtn === 12, true);
 
   // AD SLOT placeholder area
   // X.fillStyle="rgba(255,255,255,0.03)"; X.fillRect(0,H-50,W,50);
@@ -2078,6 +2266,80 @@ function renderGame() {
     // Sorted badge
     if (!animating && isSorted(i) && bottles[i].length === 4) {
       drawSortedBadge(layout.cx[i], layout.cy[i], layout.bh);
+    }
+
+    // Hint glow overlay
+    if (hintActive && hintMove) {
+      const elapsed = Date.now() - hintTimer;
+      const glowPulse = 0.5 + 0.5 * Math.sin(elapsed * 0.008);
+      const showSource = hintPhase === 0;
+      const showTarget = hintPhase === 1 || hintPhase === 2;
+
+      if ((showSource && i === hintMove.from) || (showTarget && i === hintMove.to)) {
+        const alpha = (hintPhase === 0) ? (0.4 + glowPulse * 0.4) : (0.3 + glowPulse * 0.3);
+        const blur = (hintPhase === 0) ? (18 + glowPulse * 14) : (12 + glowPulse * 10);
+        X.save();
+        X.shadowColor = `rgba(255,215,0,${alpha})`;
+        X.shadowBlur = blur;
+        X.strokeStyle = `rgba(255,215,0,${0.6 + glowPulse * 0.3})`;
+        X.lineWidth = 3;
+        // Draw bottle outline glow
+        const neckW = layout.bw * 0.36;
+        const neckH = layout.bh * 0.07;
+        const bodyTop = layout.cy[i] - layout.bh / 2 + neckH;
+        const bodyBot = layout.cy[i] + layout.bh / 2;
+        const rad = layout.bw * 0.14;
+        X.beginPath();
+        X.moveTo(layout.cx[i] - neckW / 2, layout.cy[i] - layout.bh / 2);
+        X.lineTo(layout.cx[i] - neckW / 2, bodyTop);
+        X.quadraticCurveTo(layout.cx[i] - neckW / 2, bodyTop + rad, layout.cx[i] - layout.bw / 2, bodyTop + rad);
+        X.lineTo(layout.cx[i] - layout.bw / 2, bodyBot - rad);
+        X.quadraticCurveTo(layout.cx[i] - layout.bw / 2, bodyBot, layout.cx[i] - layout.bw / 2 + rad, bodyBot);
+        X.lineTo(layout.cx[i] + layout.bw / 2 - rad, bodyBot);
+        X.quadraticCurveTo(layout.cx[i] + layout.bw / 2, bodyBot, layout.cx[i] + layout.bw / 2, bodyBot - rad);
+        X.lineTo(layout.cx[i] + layout.bw / 2, bodyTop + rad);
+        X.quadraticCurveTo(layout.cx[i] + neckW / 2, bodyTop + rad, layout.cx[i] + neckW / 2, bodyTop);
+        X.lineTo(layout.cx[i] + neckW / 2, layout.cy[i] - layout.bh / 2);
+        X.stroke();
+        X.restore();
+      }
+    }
+  }
+
+  // Draw hint arrow
+  if (hintActive && hintMove && hintPhase === 2) {
+    const elapsed = Date.now() - hintTimer - 1000; // after 1 second delay
+    if (elapsed > 0) {
+      const sx = layout.cx[hintMove.from];
+      const sy = layout.cy[hintMove.from];
+      const tx = layout.cx[hintMove.to];
+      const ty = layout.cy[hintMove.to];
+      const arrowProgress = Math.min(elapsed / 500, 1);
+      const bounce = Math.sin(arrowProgress * Math.PI) * 8;
+      const midX = (sx + tx) / 2;
+      const midY = (sy + ty) / 2 - 30 - bounce;
+
+      X.save();
+      X.strokeStyle = `rgba(255,215,0,${0.8})`;
+      X.lineWidth = 3;
+      X.lineCap = "round";
+      // Draw arrow line
+      X.beginPath();
+      X.moveTo(sx, sy - layout.bh / 2 - 10);
+      X.quadraticCurveTo(midX, midY, tx, ty - layout.bh / 2 - 10);
+      X.stroke();
+
+      // Draw arrowhead
+      const angle = Math.atan2((ty - layout.bh / 2 - 10) - midY, tx - midX);
+      const arrowSize = 10;
+      X.fillStyle = `rgba(255,215,0,${0.9})`;
+      X.beginPath();
+      X.moveTo(tx, ty - layout.bh / 2 - 10);
+      X.lineTo(tx - arrowSize * Math.cos(angle - 0.4), ty - layout.bh / 2 - 10 - arrowSize * Math.sin(angle - 0.4));
+      X.lineTo(tx - arrowSize * Math.cos(angle + 0.4), ty - layout.bh / 2 - 10 - arrowSize * Math.sin(angle + 0.4));
+      X.closePath();
+      X.fill();
+      X.restore();
     }
   }
 
@@ -2221,6 +2483,26 @@ function update(dt) {
     }
   }
 
+  // Update hint phases
+  if (hintActive && hintMove) {
+    const elapsed = Date.now() - hintTimer;
+    if (hintPhase === 0 && elapsed >= 1000) {
+      hintPhase = 1;
+      hintTimer = Date.now();
+    } else if (hintPhase === 1 && elapsed >= 1000) {
+      hintPhase = 2;
+      hintTimer = Date.now();
+    } else if (hintPhase === 2 && elapsed >= 1500) {
+      hintActive = false;
+      hintMove = null;
+    }
+  }
+
+  // Update solve confirm timer
+  if (solveConfirm && Date.now() - solveConfirmTimer > 2000) {
+    solveConfirm = false;
+  }
+
   // Confetti physics
   if (confettiSecondWaveTimer > 0) {
     confettiSecondWaveTimer--;
@@ -2261,6 +2543,15 @@ function onTap(px, py) {
       state = "menu";
       menuScrollY = 0;
     }
+    // Continue button
+    if (lastPlayedLevel > 0) {
+      const contY = by + bh + 12;
+      const contW = Math.min(200, W * 0.55);
+      if (hitTest(px, py, W / 2 - contW / 2, contY, contW, 42) && splashTimer >= 0.8) {
+        sfxClick();
+        initLevel(lastPlayedLevel);
+      }
+    }
     // Footer GameZipper.com link
     if (splashFooterLink && hitTest(px, py, splashFooterLink.x, splashFooterLink.y, splashFooterLink.w, splashFooterLink.h)) {
       window.location.href = "/"; return;
@@ -2277,11 +2568,22 @@ function onTap(px, py) {
     const gap = 8;
     const cellW = (W - 24 - (cols - 1) * gap) / cols;
     const cellH = cellW;
+    const headerH = 28;
     const gridTop = 80 - menuScrollY;
     for (let i = 0; i < TOTAL_LEVELS; i++) {
       const col = i % cols, row = Math.floor(i / cols);
       const x = 12 + col * (cellW + gap);
-      const y = gridTop + row * (cellH + gap);
+      // Calculate vertical offset for section headers (must match renderMenu)
+      let rowOffset = 0;
+      for (const s of DIFF_SECTIONS) {
+        if (s.start <= i) {
+          const sectionRow = Math.floor(s.start / cols);
+          const levelRow = Math.floor(i / cols);
+          if (sectionRow < levelRow) rowOffset += headerH;
+          else if (sectionRow === levelRow && s.start <= i) rowOffset += headerH;
+        }
+      }
+      const y = gridTop + row * (cellH + gap) + rowOffset;
       if (hitTest(px, py, x, y, cellW, cellH)) {
         if (levelUnlocked[i]) { sfxClick(); initLevel(i); }
         return;
@@ -2304,17 +2606,49 @@ function onTap(px, py) {
       return;
     }
     // HUD buttons
-    const hudY = 36, hudBtnW = 52, hudBtnH = 28, hudGap = 6;
-    const hudStartX = W - 14 - (hudBtnW * 3 + hudGap * 2);
+    const hudY = 36, hudBtnW = 46, hudBtnH = 28, hudGap = 5;
+    const hudStartX = W - 14 - (hudBtnW * 4 + hudGap * 3);
     if (hitTest(px, py, hudStartX, hudY, hudBtnW, hudBtnH)) {
+      stopSolve();
       sfxClick(); state = "menu"; menuScrollY = 0; return;
     }
     if (hitTest(px, py, hudStartX + hudBtnW + hudGap, hudY, hudBtnW, hudBtnH)) {
-      undoMove(); return;
+      if (!solving) undoMove(); return;
     }
     if (hitTest(px, py, hudStartX + (hudBtnW + hudGap) * 2, hudY, hudBtnW, hudBtnH)) {
-      sfxClick(); initLevel(currentLevel); return;
+      // Hint button - single click shows hint, double-click triggers auto-solve
+      const nowClick = Date.now();
+      if (solveConfirm) {
+        // Second click - start solve
+        solveConfirm = false;
+        startSolve();
+      } else if (hintTapCount > 0 && nowClick - hintTapTimer < 400) {
+        // Double-click - trigger solve confirmation
+        hintTapCount = 0;
+        hintTapTimer = 0;
+        solveConfirm = true;
+        solveConfirmTimer = Date.now();
+        sfxClick();
+      } else {
+        hintTapCount = 1;
+        hintTapTimer = nowClick;
+        showHint();
+      }
+      return;
     }
+    if (hitTest(px, py, hudStartX + (hudBtnW + hudGap) * 3, hudY, hudBtnW, hudBtnH)) {
+      // Reset/Stop button
+      if (solving) {
+        stopSolve();
+        sfxClick();
+      } else {
+        sfxClick(); initLevel(currentLevel);
+      }
+      return;
+    }
+
+    // Block bottle taps during solving
+    if (solving) return;
 
     // Bottle taps
     const layout = getBottleLayout();
