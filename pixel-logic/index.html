@@ -190,7 +190,7 @@ body{font-family:'Fredoka',system-ui,sans-serif;background:var(--bg);color:var(-
   box-shadow:0 4px 16px rgba(0,0,0,.4)}
 .toast.show{transform:translateX(-50%) translateY(0)}
 
-/* ===== 庆祝画布 ===== */
+/* ===== 庆祝Canvas ===== */
 #confetti{display:none;position:fixed;inset:0;z-index:200;pointer-events:none}
 
 /* ===== 进度条 ===== */
@@ -261,6 +261,11 @@ body{font-family:'Fredoka',system-ui,sans-serif;background:var(--bg);color:var(-
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta property="og:image:type" content="image/png"/>
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pixel Logic - Free Nonogram Puzzle Game">
+<meta name="twitter:description" content="Solve logic puzzles to reveal hidden pixel art! Play free online.">
+<meta name="twitter:image" content="https://gamezipper.com/og-images/pixel-logic.png">
 </head>
 <body>
 <a href="https://gamezipper.com/" style="position:fixed;top:8px;left:8px;z-index:9999;font-size:18px;text-decoration:none;" title="Home">🏠</a>
@@ -382,19 +387,13 @@ body{font-family:'Fredoka',system-ui,sans-serif;background:var(--bg);color:var(-
 
   <!-- ===== 提示条 ===== -->
 <div class="toast" id="toast"></div>
-<!-- ===== 庆祝画布 ===== -->
+<!-- ===== 庆祝Canvas ===== -->
 <canvas id="confetti"></canvas>
 
 <script>
 /* ======================================================================
-   Pixel Logic — Nonogram 浏览器游戏
-   所有逻辑、样式、数据均在此单文件中
-   ====================================================================== */
 
-// ===== 谜题数据库 =====
-// n=名称, d=难度(0简单5×5, 1中等10×10, 2困难15×15), g=网格行('#'=填充,'.'=空)
 const PUZZLES = [
-  // ———— 简单 5×5 ————
   {n:'Heart',    d:0,g:['.#.#.','#####','#####','.###.','..#..']},
   {n:'Star',     d:0,g:['..#..','.###.','#####','.###.','.#.#.']},
   {n:'Smiley',   d:0,g:['.###.','#.#.#','#...#','#.###','.###.']},
@@ -405,7 +404,6 @@ const PUZZLES = [
   {n:'Umbrella', d:0,g:['..###','.####','#####','..#..','..#..']},
   {n:'Boat',     d:0,g:['..#..','..#..','#####','.###.','#...#']},
   {n:'Diamond',  d:0,g:['..#..','#...#','.###.','#...#','..#..']},
-  // ———— 中等 10×10 ————
   {n:'Mushroom', d:1,g:['...####...','..######..','.########.','##########',
                         '##.####.##','##.####.##','##.####.##','....##....',
                         '...####...','..######..']},
@@ -436,7 +434,6 @@ const PUZZLES = [
   {n:'Rocket',   d:1,g:['....##....','...####...','..######..','..######..',
                         '.########.','.########.','##########','##.####.##',
                         '#..####..#','..##..##..']},
-  // ———— 困难 15×15 ————
   {n:'Castle',   d:2,g:['#.....#.#.....#','##....#.#....##','##....###....##',
                         '###############','#.##.#####.##.#','#.##.#####.##.#',
                         '#.##.#####.##.#','#.##.#####.##.#','#.##.#####.##.#',
@@ -489,42 +486,39 @@ const PUZZLES = [
                         '###############','###############','###############']}
 ];
 
-// ===== 难度配置 =====
 const DIFF_NAMES = ['Easy 5×5','Medium 10×10','Hard 15×15'];
 const DIFF_SIZES = [5, 10, 15];
 const SAVE_KEY = 'pixel-logic-save';
 const REC_KEY  = 'pixel-logic-records';
 
-// ===== 游戏状态 =====
+// ===== Game State =====
 let G = {
-  diff: 0,           // 当前难度
-  idx: 0,            // 当前谜题索引
-  size: 5,           // 棋盘尺寸
-  sol: [],           // 解答网格
-  grid: [],          // 玩家网格 (0=空, 1=填充, 2=标记X)
-  rowClues: [],      // 行提示
-  colClues: [],      // 列提示
-  doneR: new Set(),  // 已完成行
-  doneC: new Set(),  // 已完成列
-  timer: 0,          // 已用秒数
-  tInterval: null,   // 计时器句柄
-  hints: 3,          // 剩余提示次数
-  hintsUsed: 0,      // 已用提示次数
-  errMode: false,    // 错误提示模式
-  dragging: false,   // 拖拽中
-  dragAct: null,     // 拖拽动作: 'fill'|'mark'|'unfill'|'unmark'
-  dragVisited: null, // Set: 已处理的单元格
-  longTimer: null,   // 长按计时器
-  longFired: false,  // 长按是否触发
-  won: false,        // 是否已胜利
-  cellEls: [],       // DOM 引用: cellEls[r][c]
-  rowClueEls: [],    // DOM 引用: rowClueEls[r]
-  colClueEls: [],    // DOM 引用: colClueEls[c]
+  diff: 0,
+  idx: 0,
+  size: 5,
+  sol: [],
+  grid: [],
+  rowClues: [],
+  colClues: [],
+  doneR: new Set(),
+  doneC: new Set(),
+  timer: 0,
+  tInterval: null,
+  hints: 3,          // Remaining Hints
+  hintsUsed: 0,
+  errMode: false,
+  dragging: false,
+  dragAct: null,
+  dragVisited: null,
+  longTimer: null,
+  longFired: false,
+  won: false,
+  cellEls: [],
+  rowClueEls: [],
+  colClueEls: [],
 };
 
-// ===== 工具函数 =====
-
-/** 从一行数据中提取提示数字 */
+/** Extract Clue Numbers From Row */
 function clues(line) {
   const c = []; let n = 0;
   for (const v of line) { if (v === 1) n++; else if (n) { c.push(n); n = 0; } }
@@ -532,16 +526,14 @@ function clues(line) {
   return c.length ? c : [0];
 }
 
-/** 数组比较 */
+/** Array Compare */
 function eq(a, b) { return a.length === b.length && a.every((v, i) => v === b[i]); }
 
-/** 格式化时间 mm:ss */
+/** Format Time mm:ss */
 function fmtTime(s) {
   const m = Math.floor(s / 60);
   return String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
 }
-
-// ===== 存档系统 =====
 
 function loadRecords() {
   try { return JSON.parse(localStorage.getItem(REC_KEY)) || {}; } catch { return {}; }
@@ -565,16 +557,12 @@ function saveProg() {
 }
 function clearSave() { localStorage.removeItem(SAVE_KEY); }
 
-// ===== 渲染: 谜题选择列表 =====
-
 function renderSelect() {
-  // 难度标签
   const tabs = document.getElementById('diffTabs');
   tabs.innerHTML = DIFF_NAMES.map((n, i) =>
     `<button class="tab${i === G.diff ? ' active' : ''}" onclick="switchDiff(${i})">${n}</button>`
   ).join('');
 
-  // 谜题卡片
   const recs = loadRecords();
   const save = loadSave();
   const puzzles = PUZZLES.filter(p => p.d === G.diff);
@@ -584,7 +572,6 @@ function renderSelect() {
     const key = `${G.diff}-${i}`;
     const rec = recs[key];
     const sz = DIFF_SIZES[G.diff];
-    // 生成迷你预览
     let preview = '';
     for (let r = 0; r < p.g.length; r++) {
       for (let c = 0; c < sz; c++) {
@@ -603,14 +590,11 @@ function renderSelect() {
 
 function switchDiff(d) { G.diff = d; renderSelect(); }
 
-// ===== 渲染: 游戏棋盘 =====
-
 function renderBoard() {
   const sz = G.size;
   const maxRC = Math.max(...G.rowClues.map(c => c.length));
   const maxCC = Math.max(...G.colClues.map(c => c.length));
 
-  // 计算格子尺寸
   const vw = window.innerWidth, vh = window.innerHeight;
   const hdrH = 56;
   const pad = 24;
@@ -631,32 +615,25 @@ function renderBoard() {
 
   let html = '';
 
-  // 角落区域
   html += `<div style="grid-column:1/${maxRC + 1};grid-row:1/${maxCC + 1};background:var(--surface)"></div>`;
 
-  // 列提示
   G.colClueEls = [];
   for (let c = 0; c < sz; c++) {
     const cl = G.colClues[c];
     const gc = maxRC + 1 + c; // grid column
     const span = maxCC;
     html += `<div class="clue-cell cc" style="grid-column:${gc};grid-row:1/${span + 1}" data-cc="${c}">`;
-    // 底部对齐: 先填空格，再填数字
     for (let i = 0; i < maxCC - cl.length; i++) html += '<span></span>';
     for (const n of cl) html += `<span>${n}</span>`;
     html += '</div>';
-    // 5格粗线
     if (c > 0 && c % 5 === 0) {
-      // 在列提示底部添加粗线标记
     }
   }
 
-  // 行提示 + 游戏格子
   G.rowClueEls = [];
   G.cellEls = [];
   for (let r = 0; r < sz; r++) {
     const gr = maxCC + 1 + r; // grid row
-    // 行提示
     const cl = G.rowClues[r];
     html += `<div class="clue-cell cr" style="grid-column:1/${maxRC + 1};grid-row:${gr}" data-rc="${r}">`;
     for (let i = 0; i < maxRC - cl.length; i++) html += '<span></span>';
@@ -680,7 +657,6 @@ function renderBoard() {
 
   board.innerHTML = html;
 
-  // 缓存 DOM 引用
   for (let r = 0; r < sz; r++) {
     G.rowClueEls[r] = board.querySelector(`[data-rc="${r}"]`);
     G.cellEls[r] = [];
@@ -696,8 +672,6 @@ function renderBoard() {
   updateClueHighlight();
 }
 
-// ===== 提示高亮 =====
-
 function updateClueHighlight() {
   const sz = G.size;
   const prevDoneR = new Set(G.doneR);
@@ -707,7 +681,6 @@ function updateClueHighlight() {
     const done = isLineSolved('row', r);
     G.rowClueEls[r]?.classList.toggle('done', done);
     if (done) G.doneR.add(r); else G.doneR.delete(r);
-    // 检测新完成的行
     if (done && !prevDoneR.has(r)) {
       SFX.play('lineDone');
       for (let c = 0; c < sz; c++) {
@@ -720,7 +693,6 @@ function updateClueHighlight() {
     const done = isLineSolved('col', c);
     G.colClueEls[c]?.classList.toggle('done', done);
     if (done) G.doneC.add(c); else G.doneC.delete(c);
-    // 检测新完成的列
     if (done && !prevDoneC.has(c)) {
       SFX.play('lineDone');
       for (let r = 0; r < sz; r++) {
@@ -731,7 +703,7 @@ function updateClueHighlight() {
   }
 }
 
-/** 检查某行/列是否已正确完成 */
+/** Check If Line/Column Completed */
 function isLineSolved(type, idx) {
   const sz = G.size;
   for (let i = 0; i < sz; i++) {
@@ -742,12 +714,11 @@ function isLineSolved(type, idx) {
   return true;
 }
 
-// ===== 输入处理 =====
+// ===== Input Handling =====
 
 function setupInput() {
   const board = document.getElementById('board');
 
-  // —— 鼠标事件 ——
   board.addEventListener('mousedown', e => {
     if (G.won) return;
     const cell = e.target.closest('.cell');
@@ -769,7 +740,6 @@ function setupInput() {
 
   document.addEventListener('mouseup', () => { endAction(); });
 
-  // —— 触摸事件 ——
   board.addEventListener('touchstart', e => {
     if (G.won) return;
     const touch = e.touches[0];
@@ -777,19 +747,15 @@ function setupInput() {
     if (!cell) return;
     e.preventDefault();
     const r = +cell.dataset.r, c = +cell.dataset.c;
-    // 长按检测: 400ms 后切换为标记模式
     G.longFired = false;
     G.longTimer = setTimeout(() => {
       G.longFired = true;
-      // 取消之前的 fill 操作，改为 mark
       if (G.dragging && G.dragAct === 'fill') {
-        // 撤销 drag 中的 fill 操作
         undoDrag();
       }
       startAction(r, c, 'mark');
       showToast('Mark mode');
     }, 400);
-    // 先执行 fill
     startAction(r, c, 'fill');
   }, { passive: false });
 
@@ -815,7 +781,7 @@ function setupInput() {
   });
 }
 
-/** 开始一个拖拽动作 */
+/** Start Drag Action */
 function startAction(r, c, type) {
   G.dragging = true;
   G.dragVisited = new Set();
@@ -824,7 +790,6 @@ function startAction(r, c, type) {
   const cur = G.grid[r][c];
 
   if (type === 'mark') {
-    // 标记/取消标记
     if (cur === 2) {
       G.dragAct = 'unmark';
       G.grid[r][c] = 0;
@@ -836,9 +801,7 @@ function startAction(r, c, type) {
       setCellVisual(r, c, 2);
       SFX.play('mark');
     }
-    // 如果格子已填充则不操作
   } else {
-    // 填充/取消填充
     if (cur === 1) {
       G.dragAct = 'unfill';
       G.grid[r][c] = 0;
@@ -852,7 +815,7 @@ function startAction(r, c, type) {
   }
 }
 
-/** 执行拖拽动作 */
+/** Execute Drag Action */
 function doAction(r, c) {
   const key = `${r},${c}`;
   if (G.dragVisited.has(key)) return;
@@ -871,7 +834,7 @@ function doAction(r, c) {
   }
 }
 
-/** 填充格子（含错误检测） */
+/** Fill Cell (with Error Check) */
 function applyFill(r, c) {
   if (G.grid[r][c] === 1) return;
   G.grid[r][c] = 1;
@@ -879,7 +842,6 @@ function applyFill(r, c) {
   SFX.play('fill');
   updateProgress();
 
-  // 错误检测
   if (G.errMode && G.sol[r][c] !== 1) {
     const el = G.cellEls[r][c];
     el.classList.add('err-flash');
@@ -888,7 +850,7 @@ function applyFill(r, c) {
   }
 }
 
-/** 撤销拖拽中的 fill 操作 */
+/** Undo Drag Fill */
 function undoDrag() {
   if (!G.dragVisited) return;
   for (const key of G.dragVisited) {
@@ -903,7 +865,7 @@ function undoDrag() {
   updateClueHighlight();
 }
 
-/** 结束拖拽 */
+/** End Drag */
 function endAction() {
   if (!G.dragging) return;
   G.dragging = false;
@@ -914,7 +876,7 @@ function endAction() {
   saveProg();
 }
 
-/** 更新单元格视觉 */
+/** Update Cell Visual */
 function setCellVisual(r, c, val) {
   const el = G.cellEls[r][c];
   if (!el) return;
@@ -923,9 +885,7 @@ function setCellVisual(r, c, val) {
   else if (val === 2) el.classList.add('marked');
 }
 
-// ===== 游戏逻辑 =====
-
-/** 开始谜题 */
+/** Start Puzzle */
 function startPuzzle(diff, idx) {
   const puzzles = PUZZLES.filter(p => p.d === diff);
   const p = puzzles[idx];
@@ -937,10 +897,8 @@ function startPuzzle(diff, idx) {
   G.doneC = new Set();
   G.hintsUsed = 0;
 
-  // 解析解答
   G.sol = p.g.map(row => [...row].map(ch => ch === '#' ? 1 : 0));
 
-  // 计算提示
   G.rowClues = G.sol.map(row => clues(row));
   G.colClues = [];
   for (let c = 0; c < G.size; c++) {
@@ -948,7 +906,6 @@ function startPuzzle(diff, idx) {
     G.colClues.push(clues(col));
   }
 
-  // 尝试加载存档
   const save = loadSave();
   if (save && save.diff === diff && save.idx === idx && save.grid) {
     G.grid = save.grid;
@@ -963,7 +920,6 @@ function startPuzzle(diff, idx) {
     G.errMode = false;
   }
 
-  // 更新 UI
   document.getElementById('gTitle').textContent = p.n;
   document.getElementById('btnErr').classList.toggle('active', G.errMode);
   updateHintBtn();
@@ -974,7 +930,7 @@ function startPuzzle(diff, idx) {
   saveProg();
 }
 
-/** 计时器 */
+/** Timer */
 function startTimer() {
   stopTimer();
   G.tInterval = setInterval(() => {
@@ -985,7 +941,7 @@ function startTimer() {
 }
 function stopTimer() { if (G.tInterval) { clearInterval(G.tInterval); G.tInterval = null; } }
 
-/** 检查胜利 */
+/** Check Win */
 function checkWin() {
   for (let r = 0; r < G.size; r++) {
     for (let c = 0; c < G.size; c++) {
@@ -993,34 +949,28 @@ function checkWin() {
       if (G.sol[r][c] === 0 && G.grid[r][c] === 1) return;
     }
   }
-  // 胜利！
   G.won = true;
   stopTimer();
   clearSave();
   clearHighlight();
 
-  // 棋盘闪光动画
   document.getElementById('board').classList.add('won');
   setTimeout(() => document.getElementById('board')?.classList.remove('won'), 1000);
 
-  // 保存记录
   const key = `${G.diff}-${G.idx}`;
   saveRecord(key, G.timer, G.hintsUsed);
 
-  // 计算分数
   const baseScore = 1000;
-  const timePenalty = Math.min(G.timer, 900); // 最多扣 900
+  const timePenalty = Math.min(G.timer, 900);
   const hintPenalty = G.hintsUsed * 100;
   const score = Math.max(100, baseScore - timePenalty - hintPenalty);
 
-  // 延迟显示胜利
   setTimeout(() => {
     SFX.play('victory');
     document.getElementById('vTime').textContent = 'Time: ' + fmtTime(G.timer);
     document.getElementById('vHints').textContent = 'Hints used: ' + G.hintsUsed;
     document.getElementById('vScore').textContent = score;
 
-    // 判断是否还有下一个谜题
     const puzzles = PUZZLES.filter(p => p.d === G.diff);
     document.getElementById('btnNext').style.display =
       G.idx < puzzles.length - 1 ? '' : 'none';
@@ -1031,10 +981,9 @@ function checkWin() {
   }, 400);
 }
 
-/** 使用提示 */
+/** Use Hint */
 function useHint() {
   if (G.won || G.hints <= 0) return;
-  // 找到一个应该填充但还未填充的格子
   const candidates = [];
   for (let r = 0; r < G.size; r++) {
     for (let c = 0; c < G.size; c++) {
@@ -1063,7 +1012,7 @@ function updateHintBtn() {
   document.getElementById('btnHint').style.opacity = G.hints > 0 ? 1 : 0.4;
 }
 
-/** 切换错误检测模式 */
+/** Toggle Error Check Mode */
 function toggleErr() {
   G.errMode = !G.errMode;
   document.getElementById('btnErr').classList.toggle('active', G.errMode);
@@ -1071,7 +1020,7 @@ function toggleErr() {
   showToast(G.errMode ? 'Error check ON' : 'Error check OFF');
 }
 
-/** 确认重置 */
+/** Confirm Reset */
 function confirmReset() {
   document.getElementById('confirmTitle').textContent = 'Reset Puzzle?';
   document.getElementById('confirmMsg').textContent = 'All progress on this puzzle will be lost.';
@@ -1097,7 +1046,7 @@ function resetPuzzle() {
   saveProg();
 }
 
-/** 确认返回 */
+/** Confirm Back */
 function confirmBack() {
   document.getElementById('confirmTitle').textContent = 'Leave Puzzle?';
   document.getElementById('confirmMsg').textContent = 'Your progress is saved automatically.';
@@ -1110,7 +1059,7 @@ function confirmBack() {
   openModal('confirmModal');
 }
 
-/** 下一关 */
+/** Next Level */
 function nextPuzzle() {
   closeModal('victoryModal');
   const puzzles = PUZZLES.filter(p => p.d === G.diff);
@@ -1121,8 +1070,6 @@ function nextPuzzle() {
   }
 }
 
-// ===== UI 管理 =====
-
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -1132,12 +1079,9 @@ function showScreen(id) {
 function openModal(id) { document.getElementById(id).classList.add('active'); }
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-// 点击模态框背景关闭
 document.querySelectorAll('.modal').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); });
 });
-
-// ===== 提示条 =====
 
 let toastTimer = null;
 function showToast(msg) {
@@ -1147,8 +1091,6 @@ function showToast(msg) {
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
 }
-
-// ===== 庆祝特效: 五彩纸屑 =====
 
 function showCelebration() {
   const cvs = document.getElementById('confetti');
@@ -1160,7 +1102,6 @@ function showCelebration() {
   const colors = ['#8b5cf6','#ec4899','#10b981','#f59e0b','#ef4444','#3b82f6','#f97316'];
   const particles = [];
 
-  // 生成粒子
   for (let i = 0; i < 250; i++) {
     particles.push({
       x: Math.random() * cvs.width,
@@ -1185,8 +1126,8 @@ function showCelebration() {
     for (const p of particles) {
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.08; // 重力
-      p.vx *= 0.99; // 空气阻力
+      p.vy += 0.08;
+      p.vx *= 0.99;
       p.rot += p.rotV;
       p.alpha -= 0.002;
 
@@ -1216,15 +1157,12 @@ function showCelebration() {
     }
   }
 
-  // 尊重用户的减少动画偏好
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     cvs.style.display = 'none';
   } else {
     animate();
   }
 }
-
-// ===== 窗口大小变化时重新渲染棋盘 =====
 
 let resizeTimer = null;
 window.addEventListener('resize', () => {
@@ -1236,13 +1174,12 @@ window.addEventListener('resize', () => {
   }, 200);
 });
 
-// ===== 清理: 页面卸载时停止计时器 =====
 window.addEventListener('beforeunload', () => {
   stopTimer();
   if (G.sol.length && !G.won) saveProg();
 });
 
-// ===== 音效系统 (Web Audio API) =====
+// ===== Sound System (Web Audio API) =====
 
 const SFX = {
   ctx: null,
@@ -1299,7 +1236,6 @@ const SFX = {
         osc.start(t); osc.stop(t + 0.25);
         break;
       case 'lineDone':
-        // 快速上升双音
         osc.frequency.setValueAtTime(523, t);
         osc.frequency.setValueAtTime(784, t + 0.1);
         osc.type = 'sine';
@@ -1308,8 +1244,7 @@ const SFX = {
         osc.start(t); osc.stop(t + 0.3);
         break;
       case 'victory':
-        // 四音上升旋律
-        osc.start(t); osc.stop(t + 0.01); // 不用这个 osc
+        osc.start(t); osc.stop(t + 0.01);
         const notes = [523, 659, 784, 1047];
         notes.forEach((freq, i) => {
           const o = this.ctx.createOscillator();
@@ -1334,8 +1269,6 @@ function toggleSfx() {
   localStorage.setItem('pixel-logic-sfx', SFX.enabled ? '1' : '0');
 }
 
-// ===== 进度追踪 =====
-
 function updateProgress() {
   if (!G.sol.length) return;
   let total = 0, filled = 0;
@@ -1353,8 +1286,6 @@ function updateProgress() {
   if (bar) bar.style.width = pct + '%';
   if (txt) txt.textContent = pct > 0 && pct < 100 ? pct + '%' : '';
 }
-
-// ===== 行列高亮 =====
 
 function clearHighlight() {
   document.querySelectorAll('.row-hl,.col-hl').forEach(el => {
@@ -1379,8 +1310,6 @@ function setupHighlighting() {
   });
   board.addEventListener('mouseleave', clearHighlight);
 }
-
-// ===== 教程系统 =====
 
 const TUTORIAL_KEY = 'pixel-logic-tutorial-v2';
 
@@ -1469,16 +1398,12 @@ function handlePlay() {
   }
 }
 
-// ===== 初始化 =====
-
 (function init() {
-  // 恢复音效设置
   if (localStorage.getItem('pixel-logic-sfx') === '0') {
     SFX.enabled = false;
     document.getElementById('btnSfx').textContent = '🔇';
     document.getElementById('btnSfx').classList.add('sfx-off');
   }
-  // 首次交互时初始化音频
   document.addEventListener('click', () => { SFX.init(); SFX.resume(); }, { once: true });
   document.addEventListener('touchstart', () => { SFX.init(); SFX.resume(); }, { once: true });
 
