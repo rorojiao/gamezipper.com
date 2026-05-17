@@ -59,12 +59,12 @@ class Fruit {
     this.y = H + 60;
 
     // Launch velocity — upward with slight horizontal
-    const speed = (H * 0.02) + Math.random() * (H * 0.008);
-    const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.8;
-    this.vx = Math.cos(angle) * speed * (Math.random() > 0.5 ? 1 : -1) * 0.4;
+    const speed = (H * 0.028) + Math.random() * (H * 0.012);
+    const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.6;
+    this.vx = Math.cos(angle) * speed * (Math.random() > 0.5 ? 1 : -1) * 0.3;
     this.vy = Math.sin(angle) * speed;
 
-    this.gravity = H * 0.0004;
+    this.gravity = H * 0.0003;
     this.rotation = 0;
     this.rotSpeed = (Math.random() - 0.5) * 0.12;
     this.sliced = false;
