@@ -158,7 +158,7 @@ var renderer = {
     _rDpr = window.devicePixelRatio || 1;
     _rCanvas.width = _rW * _rDpr;
     _rCanvas.height = _rH * _rDpr;
-    _rCtx.scale(_rDpr, _rDpr);
+    _rCtx.setTransform(_rDpr, 0, 0, _rDpr, 0, 0);
     return { canvas: _rCanvas, ctx: _rCtx, w: _rW, h: _rH, dpr: _rDpr };
   },
 
@@ -1440,8 +1440,13 @@ document.addEventListener('mouseup', function(e) {
 });
 
 window.addEventListener('resize', function() {
-  _canvas.width = window.innerWidth * (window.devicePixelRatio || 1);
-  _canvas.height = (window.innerHeight - 28) * (window.devicePixelRatio || 1);
+  var dpr = window.devicePixelRatio || 1;
+  _rW = window.innerWidth;
+  _rH = window.innerHeight - 28;
+  _canvas.width = _rW * dpr;
+  _canvas.height = _rH * dpr;
+  _rCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  calcLayout();
 });
 
 // ===== MAIN LOOP =====
