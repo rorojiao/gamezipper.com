@@ -57,7 +57,8 @@
     {n:'One Line Connect',e:'🔗',u:'/one-line-connect/',c:'puzzle'},
   {n:'Physics Draw Puzzle',e:'✏️',u:'/physics-draw-puzzle/',c:'puzzle'},
     {n:'Dots and Boxes',e:'⬜',u:'/dots-and-boxes/',c:'puzzle'},
-    {n:'Sliding Puzzle',e:'🔢',u:'/sliding-puzzle/',c:'puzzle'}
+    {n:'Sliding Puzzle',e:'🔢',u:'/sliding-puzzle/',c:'puzzle'},
+    {n:'Reversi',e:'⚫',u:'/reversi/',c:'puzzle'}
   ];
 
   var cur = location.pathname;
