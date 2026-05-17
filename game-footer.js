@@ -53,7 +53,9 @@
     {n:'Tile Dynasty',e:'🏮',u:'/tile-dynasty/',c:'puzzle'},
     {n:'Arrow Escape',e:'🚀',u:'/arrow-escape/',c:'puzzle'},
     {n:'Bubble Shooter',e:'🫧',u:'/bubble-shooter/',c:'puzzle'},
-    {n:'Tic Tac Toe',e:'⭕',u:'/tic-tac-toe/',c:'puzzle'}
+    {n:'Tic Tac Toe',e:'⭕',u:'/tic-tac-toe/',c:'puzzle'},
+    {n:'One Line Connect',e:'🔗',u:'/one-line-connect/',c:'puzzle'},
+  {n:'Physics Draw Puzzle',e:'✏️',u:'/physics-draw-puzzle/',c:'puzzle'}
   ];
 
   var cur = location.pathname;
