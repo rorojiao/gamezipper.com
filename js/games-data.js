@@ -94,6 +94,7 @@ const GAMES = [
   {name:"Reversi",emoji:"⚫",cat:"puzzle",tags:["Puzzle","Strategy","Board Game","Classic","Reversi","Othello","AI","Brain","Logic","2-Player"],url:"/reversi/",desc:"Play Reversi (Othello) online free against AI! Classic strategy board game with 6 difficulty levels from Beginner to Master. Smooth flip animations, hint system, undo, 3 board themes, and stats tracking. No download needed!",isNew:true,status:"live"},
   {name:"Word Connections",emoji:"🔗",cat:"puzzle",tags:["Puzzle","Word","Connections","Brain","Logic","Trivia","Daily","Grouping","Association","Casual"],url:"/word-connections/",desc:"Play Word Connections free online! Find groups of 4 related words in this addictive NYT Connections-style puzzle. 70 levels with color-coded categories, hints, daily challenge, share results, and stats. No download needed!",isNew:true,status:"live"},
   {name:"Marble Shooter",emoji:"🔮",cat:"puzzle",tags:["Puzzle","Marble","Zuma","Shooter","Match","Arcade","Chain","Casual","Pop","Strategy"],url:"/marble-shooter/",desc:"Play Marble Shooter free online! Match and pop colored marbles in this addictive Zuma-style puzzle game. 30 challenging levels with power-ups, chain reactions, and star ratings. No download needed!",isNew:true,status:"live"},
+{name:"Match Ninja",emoji:"🧊",cat:"puzzle",tags:["shape","matching","ninja","pattern","casual"],url:"/match-ninja/",desc:"Find the matching shape among decoys. Test your visual recognition with 30 levels of increasing difficulty.",isNew:true,status:"live"}
 ];
 
 /**
