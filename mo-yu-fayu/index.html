@@ -196,20 +196,20 @@ button:active{opacity:.7;}button:disabled{opacity:.35;cursor:default;}
 function gzShare(score){
   var gn=(document.title.split(" - ")[0])||"Game";
   var url=window.location.href.split("?")[0];
-  var txt=score?("I scored "+score+" in "+gn+"! Can you beat me? 🎮 Play at "+url):("Playing "+gn+" on GameZipper! 🎮 "+url);
+  var txt=score?("I scored "+score+" in "+gn+"! Can you beat me? [Game] Play at "+url):("Playing "+gn+" on GameZipper! [Game] "+url);
   if(navigator.share){navigator.share({title:gn,text:txt,url:url}).catch(function(){});}
-  else if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){alert("Copied to clipboard!")}).catch(function(){prompt("Copy:",txt)});}
-  else{prompt("Copy:",txt);}
+  else if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){gzToast("Copied to clipboard!")}).catch(function(){gzToast("Copied: "+txt)});}
+  else{gzToast("Copied: "+txt);}
 }
 </script>
 </head>
 <body>
-<div id="mute-toggle" onclick="toggleMute()" style="position:fixed;top:40px;right:12px;z-index:9998;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;">🔊</div>
+<div id="mute-toggle" onclick="toggleMute()" style="position:fixed;top:40px;right:12px;z-index:9998;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;">Sound On</div>
 <script>
 var _muted=false;
 function toggleMute(){
   _muted=!_muted;
-  document.getElementById('mute-toggle').textContent=_muted?'🔇':'🔊';
+  document.getElementById('mute-toggle').textContent=_muted?'Muted':'Sound On';
   try{if(window.AudioContext||window.webkitAudioContext){var ctx=new(window.AudioContext||window.webkitAudioContext)();if(_muted)ctx.suspend();else ctx.resume();}}catch(e){}
   try{var audios=document.getElementsByTagName('audio');for(var i=0;i<audios.length;i++){if(_muted)audios[i].pause();else audios[i].play();}}catch(e){}
 }
@@ -217,10 +217,10 @@ function toggleMute(){
 
 <a href="https://gamezipper.com/" id="gz-topnav" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;font-family:sans-serif;animation:pulse-glow 2.5s ease-in-out infinite">&#x1f3e0; More Games at GameZipper.com</a>
 <div id="splash-screen"><h1>SlackOff Defense</h1><div class="splash-sub">Free Online Tower Defense</div><div class="splash-hint">Tap anywhere to play</div></div>
-<a id="homeLink" href="https://gamezipper.com/">🏠 More Games</a>
+<a id="homeLink" href="https://gamezipper.com/">More Games</a>
 <div id="wrap">
 <div id="hud">
-<span class="coin" id="hudCoin">💰 100</span>
+<span class="coin" id="hudCoin">$100</span>
 <span class="wave" id="hudWave">Wave 1 / 8</span>
 <span class="leak" id="hudLeak">Leaks: 0/5</span>
 </div>
@@ -232,19 +232,19 @@ function toggleMute(){
 <div id="tutorialCard"><h2>Step 1 · Build your first screen turret</h2><p>Tap <strong>Build Mode</strong>, then tap a glowing slot near the path. Turrets auto-fire at inspectors.</p><p class="tip">After that: tap a turret to select it, then use Upgrade. Use Take Break between waves for extra cash.</p></div>
 <div id="controls">
 <div class="row">
-<button id="btnBuild">🏢 Build Mode $40</button>
-<button id="btnUpgrade">⬆️ Upgrade $80</button>
+<button id="btnBuild">Build Mode $40</button>
+<button id="btnUpgrade">Upgrade $80</button>
 </div>
 <div class="row">
-<button id="btnFish">😴 Take Break</button>
-<button id="btnSpeed">⚡ Speed ×2</button>
+<button id="btnFish">Take Break</button>
+<button id="btnSpeed">Speed ×2</button>
 </div>
 </div>
 <div id="overlay">
 <h1>SlackOff Defense</h1>
 <p><strong>Office tower defense.</strong><br/>Build screen turrets, stop inspectors, and survive 8 waves.<br/>If 5 inspectors leak through, your shift is over.</p>
 <p style="font-size:11px;color:#888;">Tap Build Mode, then tap a glowing slot to place your first turret</p>
-<button id="btnStart">Start Shift 🏢</button>
+<button id="btnStart">Start Shift</button>
 </div>
 </div>
 <script>
@@ -334,8 +334,7 @@ function refreshTutorial(){
   }
   if(!tutorialDone){
     tutorialDone=true;
-    console.log('[mo-yu-fayu] tutorial:complete', {wave,coins,towers:towers.length});
-  }
+}
   card.hidden = wave > 2;
   title.textContent='Goal';
   body.innerHTML='Stop inspectors before 5 leak through. Use <strong>Take Break</strong> between waves for bonus cash.';
@@ -347,7 +346,7 @@ function hud(){
   document.getElementById('hudCoin').textContent='$'+Math.floor(coins);
   document.getElementById('hudWave').textContent=`Wave ${wave} / ${MAXWAVE}`;
   document.getElementById('hudLeak').textContent=`Leaks: ${leaked}/${MAXLEAK}`;
-  document.getElementById('fishStatus').textContent=fishing?'😴 +5/s':'';
+  document.getElementById('fishStatus').textContent=fishing?'+5/s':'';
   const tot=bosses.reduce((s,b)=>s+Math.max(0,b.hp),0);
   const max=bosses.length?bosses[0].hpMax*(bosses.length+waveQueue.length):1;
   document.getElementById('bossBarInner').style.width=Math.max(0,tot/max*100)+'%';
@@ -355,9 +354,9 @@ function hud(){
     gameState==='rest'?`Break time: Wave ${wave+1} starts in ${Math.ceil(restTimer/1000)}s`:
     gameState==='playing'&&!firstBuildDone?'Build your first turret to start Wave 1':
     gameState==='playing'?`Wave ${wave}: ${waveQueue.length+bosses.length} bosses left`:
-    gameState==='win'?'🎉 Shift complete!':'Ready';
-  document.getElementById('btnBuild').textContent = buildMode ? '✅ Tap a Slot' : '🏢 Build Mode $40';
-  document.getElementById('btnUpgrade').textContent = selectedTower && selectedTower.lvl===1 ? '⬆️ Upgrade $80' : '⬆️ Upgrade $120';
+    gameState==='win'?'Shift complete!':'Ready';
+  document.getElementById('btnBuild').textContent = buildMode ? 'Tap a Slot' : 'Build Mode $40';
+  document.getElementById('btnUpgrade').textContent = selectedTower && selectedTower.lvl===1 ? 'Upgrade $80' : 'Upgrade $120';
 }
 
 // Build tower at position
@@ -374,8 +373,7 @@ function buildTower(x,y){
   if(!firstBuildDone){
     firstBuildDone=true;
     buildMode=false;
-    console.log('[mo-yu-fayu] tutorial:first-build', {x,y,coins});
-  }
+}
   hud();
   refreshTutorial();
   return true;
@@ -388,8 +386,7 @@ function upgradeTower(t){
   if(t.lvl===2){t.dmg=24;t.range=170;t.rate=700;}
   else{t.dmg=44;t.range=220;t.rate=520;}
   t.flash=220; addBurst(t.x,t.y,'#c084fc',12,90); floatingTexts.push({x:t.x,y:t.y-24,text:'Upgrade!',life:750,color:'#ffd166',size:15});
-  console.log('[mo-yu-fayu] turret:upgrade', {level:t.lvl,coins});
-  hud();
+hud();
   refreshTutorial();
   return true;
 }
@@ -495,11 +492,11 @@ function update(dt){
 function endGame(win){
   gameState=win?'win':'lose';
   const ov=document.getElementById('overlay');
-  ov.innerHTML=`<h1>${win?'🎉 Clocked Out!':'😭 Busted by the Boss!'}</h1>
+  ov.innerHTML=`<h1>${win?'Clocked Out!':'Busted by the Boss!'}</h1>
     <p>${win?'You survived all 8 waves. Great slacking!':'The boss caught you. Try again tomorrow!'}</p>
     <p style="color:#ffd700;margin-top:8px">Coins left: ${Math.floor(coins)}</p>
     <button onclick="startGame()" style="padding:12px 32px;font-size:15px;border-radius:10px;border:none;cursor:pointer;background:#e94560;color:#fff;font-weight:bold;margin-top:8px;text-align:center">Play Again</button>
-<a href="https://gamezipper.com/" style="display:inline-block;margin-top:12px;padding:10px 24px;background:linear-gradient(135deg,#00ff88,#00cc6a);color:#000;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">🎮 Try More Games</a>`;
+<a href="https://gamezipper.com/" style="display:inline-block;margin-top:12px;padding:10px 24px;background:linear-gradient(135deg,#00ff88,#00cc6a);color:#000;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px;">[Game] Try More Games</a>`;
   ov.style.display='flex';
 }
 
@@ -546,7 +543,7 @@ function draw(){
     ctx.beginPath();ctx.arc(t.x,t.y,t.range,0,Math.PI*2);ctx.stroke();
     ctx.fillStyle='rgba(0,0,0,.22)'; ctx.fillRect(t.x-t.r+3,t.y-t.r+4,t.r*2,t.r*2); ctx.fillStyle=col;ctx.fillRect(t.x-t.r,t.y-t.r,t.r*2,t.r*2); if(t.flash>0){ ctx.fillStyle='rgba(255,255,255,'+(t.flash/160)+')'; ctx.fillRect(t.x-t.r,t.y-t.r,t.r*2,t.r*2); }
     ctx.font='14px serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(['','🏢','🪴','🌿'][t.lvl],t.x,t.y);
+    ctx.fillText(['','B','G','F'][t.lvl],t.x,t.y);
     // HP bar
     ctx.fillStyle='#222';ctx.fillRect(t.x-t.r,t.y-t.r-7,t.r*2,4);
     ctx.fillStyle='#4caf50';ctx.fillRect(t.x-t.r,t.y-t.r-7,t.r*2*(t.hp/t.hpMax),4);
@@ -558,7 +555,7 @@ function draw(){
   for(const b of bosses){
     const bob=Math.sin((b.anim||0))*2; ctx.fillStyle='rgba(0,0,0,.2)'; ctx.fillRect(b.x-b.w/2+3,b.y-b.h/2+4+bob,b.w,b.h); ctx.fillStyle=b.hitFlash>0 ? '#ffd1d9' : '#e94560';ctx.fillRect(b.x-b.w/2,b.y-b.h/2+bob,b.w,b.h);
     ctx.font='16px serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText('👔',b.x,b.y+bob);
+    ctx.fillText('[Boss]',b.x,b.y+bob);
     ctx.fillStyle='#222';ctx.fillRect(b.x-b.w/2,b.y-b.h/2-9,b.w,5);
     ctx.fillStyle='#e94560';ctx.fillRect(b.x-b.w/2,b.y-b.h/2-9,b.w*Math.max(0,b.hp/b.hpMax),5);
   }
@@ -568,13 +565,19 @@ function draw(){
   ctx.fillStyle=fishing?'#81d4fa':'#4fc3f7';
   ctx.fillRect(player.x-player.w/2,player.y-player.h/2,player.w,player.h);
   ctx.font='16px serif';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(fishing?'😴':'😎',player.x,player.y);
+  ctx.fillText(fishing?'Zzz':'[Go]',player.x,player.y);
 }
 
+var _rafId=null;
 function loop(ts){
   const dt=Math.min(ts-lastTime,80);lastTime=ts;
-  update(dt);draw();requestAnimationFrame(loop);
+  update(dt);draw();_rafId=requestAnimationFrame(loop);
 }
+function cleanup(){if(_rafId){cancelAnimationFrame(_rafId);_rafId=null;}for(var i=0;i<_timers.length;i++)clearInterval(_timers[i]);_timers=[];}
+document.addEventListener('visibilitychange',function(){if(document.hidden){if(_rafId){cancelAnimationFrame(_rafId);_rafId=null;}}else if(gameState==='play'){lastTime=performance.now();_rafId=requestAnimationFrame(loop);}});
+window.addEventListener('beforeunload',cleanup);
+
+_rafId=requestAnimationFrame(ts=>{lastTime=ts;_rafId=requestAnimationFrame(loop);});
 
 function startGame(){
   coins=100;wave=1;leaked=0;gameState='playing';speedMult=1;fishing=false;fishTimer=0;buildMode=false;firstBuildDone=false;tutorialDone=false;
@@ -583,9 +586,8 @@ function startGame(){
   selectedTower=null;
   buildWave(1);
   document.getElementById('overlay').style.display='none';
-  document.getElementById('btnSpeed').textContent='⚡ Speed ×2';
-  console.log('[mo-yu-fayu] start', {wave,coins});
-  hud();
+  document.getElementById('btnSpeed').textContent='Speed ×2';
+hud();
   refreshTutorial();
 }
 
@@ -597,15 +599,17 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{keys[e.key]=false;});
 
-document.getElementById('btnBuild').onclick=()=>{ buildMode=!buildMode; console.log('[mo-yu-fayu] build-mode', {buildMode}); hud(); refreshTutorial(); };
+document.getElementById('btnBuild').onclick=()=>{ buildMode=!buildMode;
+hud(); refreshTutorial(); };
 document.getElementById('btnUpgrade').onclick=()=>{
   const t=selectedTower || (towers.length===1 ? towers[0] : towers[towers.length-1]) || (towers.reduce((b,t)=>{const d=Math.hypot(t.x-player.x,t.y-player.y);return d<(b?Math.hypot(b.x-player.x,b.y-player.y):Infinity)?t:b;},null));
   if(t)upgradeTower(t);
 };
-document.getElementById('btnFish').onclick=()=>{fishing=!fishing; console.log('[mo-yu-fayu] break-toggle', {fishing}); hud(); refreshTutorial();};
+document.getElementById('btnFish').onclick=()=>{fishing=!fishing;
+hud(); refreshTutorial();};
 document.getElementById('btnSpeed').onclick=()=>{
   speedMult=speedMult===1?2:1;
-  document.getElementById('btnSpeed').textContent=speedMult===2?'⚡ Normal Speed':'⚡ Speed ×2';
+  document.getElementById('btnSpeed').textContent=speedMult===2?'Normal Speed':'Speed ×2';
 };
 document.getElementById('btnStart').onclick=startGame;
 
@@ -664,7 +668,6 @@ canvas.addEventListener('pointercancel',()=>{
   keys['a']=keys['d']=keys['w']=keys['s']=false;
 },{passive:false});
 
-requestAnimationFrame(ts=>{lastTime=ts;requestAnimationFrame(loop);});
 </script>
 <section class="faq-section">
 <h2 style="font-size:20px;font-weight:700;color:#fff;margin-bottom:16px;">SlackOff Defense — Tower Defense Strategy Guide</h2>
@@ -696,9 +699,9 @@ requestAnimationFrame(ts=>{lastTime=ts;requestAnimationFrame(loop);});
 <h3 style="font-size:18px;font-weight:700;color:#ffd700;margin:20px 0 10px;">More Games You Might Like</h3>
 <p>If you enjoy SlackOff Defense, try <a href="https://gamezipper.com/brick-breaker/" style="color:#4ecdc4;">Brick Breaker</a> for fast-paced arcade action, <a href="https://gamezipper.com/idle-clicker/" style="color:#4ecdc4;">Idle Clicker</a> for a relaxing progression game, or <a href="https://gamezipper.com/2048/" style="color:#4ecdc4;">2048</a> for a brain-teasing puzzle challenge.</p>
 <div class="gz-related-games">
-<h3>🎮 You May Also Like</h3>
+<h3>[Game] You May Also Like</h3>
 <div class="gz-related-grid">
-<a href="/idle-clicker/" class="gz-related-card"><span class="gz-related-emoji">👆</span><span class="gz-related-name">Idle Clicker</span></a><a href="/dessert-blast/" class="gz-related-card"><span class="gz-related-emoji">🧁</span><span class="gz-related-name">Dessert Blast</span></a><a href="/2048/" class="gz-related-card"><span class="gz-related-emoji">🔢</span><span class="gz-related-name">2048</span></a><a href="/color-sort/" class="gz-related-card"><span class="gz-related-emoji">🎨</span><span class="gz-related-name">Color Sort</span></a><a href="/glyph-quest/" class="gz-related-card"><span class="gz-related-emoji">🔮</span><span class="gz-related-name">Glyph Quest</span></a>
+<a href="/idle-clicker/" class="gz-related-card"><span class="gz-related-emoji"></span><span class="gz-related-name">Idle Clicker</span></a><a href="/dessert-blast/" class="gz-related-card"><span class="gz-related-emoji"></span><span class="gz-related-name">Dessert Blast</span></a><a href="/2048/" class="gz-related-card"><span class="gz-related-emoji"></span><span class="gz-related-name">2048</span></a><a href="/color-sort/" class="gz-related-card"><span class="gz-related-emoji"></span><span class="gz-related-name">Color Sort</span></a><a href="/glyph-quest/" class="gz-related-card"><span class="gz-related-emoji"></span><span class="gz-related-name">Glyph Quest</span></a>
 </div>
 </div>
 
@@ -767,14 +770,14 @@ requestAnimationFrame(ts=>{lastTime=ts;requestAnimationFrame(loop);});
 
 
 <div id="share-btn-overlay" style="position:fixed;bottom:80px;right:16px;z-index:500;display:none;">
-  <button onclick="shareGame(window.finalScore||window.score||window.currentScore||0)" style="background:rgba(255,160,50,0.9);color:#fff;border:none;border-radius:50px;padding:10px 20px;font-weight:700;font-size:14px;cursor:pointer;text-align:center;">🔗 Share Score</button>
+  <button onclick="shareGame(window.finalScore||window.score||window.currentScore||0)" style="background:rgba(255,160,50,0.9);color:#fff;border:none;border-radius:50px;padding:10px 20px;font-weight:700;font-size:14px;cursor:pointer;text-align:center;">Share Score</button>
 </div>
 
 <script>
 function shareGame(sc){
   const url=window.location.href.split('?')[0];
   const gameName=(document.title.split(' - ')[0])||'Game';
-  const text=sc?'I scored '+sc+' in '+gameName+'! Can you beat me? 🎮':'Playing '+gameName+' on GameZipper! 🎮';
+  const text=sc?'I scored '+sc+' in '+gameName+'! Can you beat me? [Game]':'Playing '+gameName+' on GameZipper! [Game]';
   if(navigator.share){navigator.share({title:gameName,text,url}).catch(()=>_openTwitter(url,text));}
   else{_openTwitter(url,text);}
 }
@@ -796,10 +799,10 @@ function _openTwitter(url,text){window.open('https://twitter.com/intent/tweet?te
 
 <h2 style="font-size:clamp(15px,3vw,18px);font-weight:700;color:#fff;margin:20px 0 8px;border-left:3px solid #FF6B35;padding-left:10px;">Game Features</h2>
 <ul style="padding-left:20px;margin:10px 0">
-<li>🏢 Office-themed tower defense with 8 challenging waves</li>
-<li>🔧 Build and upgrade screen turrets along the path</li>
-<li>💰 Earn cash to expand your defenses</li>
-<li>📱 Play on desktop or mobile browser</li>
+<li>Office-themed tower defense with 8 challenging waves</li>
+<li>Build and upgrade screen turrets along the path</li>
+<li>Earn cash to expand your defenses</li>
+<li>Play on desktop or mobile browser</li>
 </ul>
 
 <h2 style="font-size:clamp(15px,3vw,18px);font-weight:700;color:#fff;margin:20px 0 8px;border-left:3px solid #FF6B35;padding-left:10px;">Tips & Strategy</h2>
@@ -821,15 +824,15 @@ function _openTwitter(url,text){window.open('https://twitter.com/intent/tweet?te
 </section>
 
 <section style="max-width:700px;margin:30px auto 24px;padding:0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#ccc;line-height:1.7;">
-<h2 style="font-size:20px;font-weight:700;color:#fff;margin-bottom:10px;">🎮 More Free Games</h2>
-<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"><a href="/snake/" style="display:inline-block;padding:6px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">🐍 Snake</a><a href="/phantom-blade/" style="display:inline-block;padding:6px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">⚔️ Phantom Blade</a><a href="/brick-breaker/" style="display:inline-block;padding:6px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">🧱 Brick Breaker</a><a href="/bounce-bot/" style="display:inline-block;padding:6px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">🤖 Bounce Bot</a><a href="/kitty-cafe/" style="display:inline-block;padding:6px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">🐱 Kitty Cafe</a></div>
-<div style="margin-top:16px"><a href="/arcade-games.html" style="display:inline-block;padding:8px 16px;background:#00ff88;color:#000;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px">🎮 More Arcade Games</a></div>
+<h2 style="font-size:20px;font-weight:700;color:#fff;margin-bottom:10px;">[Game] More Free Games</h2>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"><a href="/snake/" style="display:inline-block;padding:6px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">Snake</a><a href="/phantom-blade/" style="display:inline-block;padding:6px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">Phantom Blade</a><a href="/brick-breaker/" style="display:inline-block;padding:6px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">Brick Breaker</a><a href="/bounce-bot/" style="display:inline-block;padding:6px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">Bounce Bot</a><a href="/kitty-cafe/" style="display:inline-block;padding:6px 12px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">Kitty Cafe</a></div>
+<div style="margin-top:16px"><a href="/arcade-games.html" style="display:inline-block;padding:8px 16px;background:#00ff88;color:#000;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px">[Game] More Arcade Games</a></div>
 
 
 </section>
 
 <div style="max-width:800px;margin:20px auto;padding:0 20px">
-  <h3 style="font-size:16px;color:#e6fffb;margin-bottom:10px">📖 Tips &amp; Guides</h3>
+  <h3 style="font-size:16px;color:#e6fffb;margin-bottom:10px">Tips &amp; Guides</h3>
   <div style="display:flex;flex-wrap:wrap;gap:8px">
 <a href="/blog/best-brain-games-free.html" style="display:inline-block;padding:6px 14px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">Best Brain Games Free</a>
     <a href="/blog/best-browser-games-no-download.html" style="display:inline-block;padding:6px 14px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">No Download Browser Games</a>
@@ -838,7 +841,7 @@ function _openTwitter(url,text){window.open('https://twitter.com/intent/tweet?te
 
 <div id="game-over-overlay" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9998;background:linear-gradient(transparent,rgba(0,0,0,.95) 30%);padding:60px 16px 20px;pointer-events:none;">
   <div style="max-width:500px;margin:0 auto;text-align:center;">
-    <p style="color:rgba(255,255,255,.7);font-size:13px;margin-bottom:12px;font-family:sans-serif;">🎮 Want more games?</p>
+    <p style="color:rgba(255,255,255,.7);font-size:13px;margin-bottom:12px;font-family:sans-serif;">[Game] Want more games?</p>
     <a href="https://gamezipper.com/" style="display:inline-block;background:#4ecdc4;color:#000;font-weight:700;font-size:16px;padding:12px 32px;border-radius:50px;text-decoration:none;pointer-events:auto;font-family:sans-serif;">Play More Free Games →</a>
   </div>
 </div>
@@ -856,9 +859,9 @@ if(e&&(e.style.display!=="none"||getComputedStyle(e).display!=="none")){s=true;o
 
 <div id="gz-cta" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(transparent,rgba(0,0,0,.95) 30%);padding:50px 16px 20px;text-align:center;pointer-events:none;">
   <div style="max-width:400px;margin:0 auto;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;pointer-events:auto;">
-    <button onclick="location.reload()" style="background:#ff6b6b;color:#fff;border:none;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;cursor:pointer;font-family:sans-serif;">🔄 Play Again</button>
-    <button onclick="gzShare(window.finalScore||window.score||window.currentScore||window.highScore||0)" style="background:#ff9f43;color:#fff;border:none;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;cursor:pointer;font-family:sans-serif;">🔗 Share Score</button>
-    <a href="https://gamezipper.com/" style="background:#4ecdc4;color:#000;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;text-decoration:none;font-family:sans-serif;display:inline-block;">🏠 More Games</a>
+    <button onclick="location.reload()" style="background:#ff6b6b;color:#fff;border:none;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;cursor:pointer;font-family:sans-serif;">Play Again</button>
+    <button onclick="gzShare(window.finalScore||window.score||window.currentScore||window.highScore||0)" style="background:#ff9f43;color:#fff;border:none;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;cursor:pointer;font-family:sans-serif;">Share Score</button>
+    <a href="https://gamezipper.com/" style="background:#4ecdc4;color:#000;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;text-decoration:none;font-family:sans-serif;display:inline-block;">More Games</a>
   </div>
 </div>
 
