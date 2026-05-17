@@ -264,6 +264,7 @@ canvas#board{display:block;border-radius:8px;border:3px solid #2a2a4a;box-shadow
     <div id="controls">
       <button class="ctrl-btn hint-btn" id="hint-btn" onclick="showHint()">Hint</button>
       <button class="ctrl-btn" onclick="undoMove()">Undo</button>
+      <button class="ctrl-btn" onclick="showAchievements()" style="background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.3);color:#ffd700">Trophies</button>
       <button class="ctrl-btn accent" onclick="newGame()">New Game</button>
       <button class="ctrl-btn" onclick="showMenu()">Menu</button>
     </div>
@@ -292,6 +293,27 @@ canvas#board{display:block;border-radius:8px;border:3px solid #2a2a4a;box-shadow
         <button class="ctrl-btn" onclick="closeTutorial()">Skip</button>
         <button class="ctrl-btn accent" id="tut-next" onclick="nextTutorialStep()">Next</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ACHIEVEMENT TOAST -->
+  <div id="ach-toast" style="position:fixed;top:-80px;left:50%;transform:translateX(-50%);z-index:500;background:linear-gradient(135deg,#1a1a3a,#2a2a5a);border:1px solid rgba(255,215,0,.4);border-radius:12px;padding:12px 24px;display:flex;align-items:center;gap:12px;transition:top .4s ease;backdrop-filter:blur(12px);box-shadow:0 4px 20px rgba(255,215,0,.2)">
+    <span style="font-size:28px" id="ach-icon">🏆</span>
+    <div>
+      <div style="color:#ffd700;font-weight:700;font-size:14px" id="ach-title"></div>
+      <div style="color:#aaa;font-size:12px" id="ach-desc"></div>
+    </div>
+  </div>
+
+  <!-- ACHIEVEMENTS MODAL -->
+  <div id="ach-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:450;padding:20px">
+    <div style="background:rgba(20,20,50,.95);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:28px;width:min(440px,92vw);max-height:80vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="color:#ffd700;font-size:22px;font-weight:900;margin:0">Achievements</h2>
+        <button class="ctrl-btn" onclick="document.getElementById('ach-modal').style.display='none'" style="font-size:18px;padding:4px 12px">✕</button>
+      </div>
+      <div id="ach-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+      <div style="text-align:center;margin-top:16px;color:#888;font-size:13px" id="ach-count"></div>
     </div>
   </div>
 
@@ -1345,6 +1367,7 @@ function resetGame() {
   currentPlayer = BLACK;
   gameActive = true;
   moveCount = 0;
+  maxDeficit = 0;
   undoStack = [];
   animating = false;
   animData = null;
@@ -1401,6 +1424,97 @@ function updateUI() {
   }
   document.getElementById('turn-label').textContent = turnText;
   document.getElementById('move-num').textContent = moveCount;
+}
+
+// ---- ACHIEVEMENT SYSTEM ----
+const ACHIEVEMENTS = [
+  {id:'first_win', name:'First Win', desc:'Win your first game', icon:'🏆'},
+  {id:'perfect_game', name:'Perfect Game', desc:'Shutout: opponent has 0 pieces', icon:'💎'},
+  {id:'corner_master', name:'Corner Master', desc:'Capture all 4 corners', icon:'🏰'},
+  {id:'edge_player', name:'Edge Player', desc:'Capture 10+ edge pieces', icon:'🌊'},
+  {id:'quick_win', name:'Quick Win', desc:'Win in under 20 moves', icon:'⚡'},
+  {id:'comeback_kid', name:'Comeback Kid', desc:'Win after trailing by 10+', icon:'🔄'},
+  {id:'grandmaster', name:'Grandmaster', desc:'Beat the Master AI', icon:'👑'},
+  {id:'win_streak', name:'Win Streak 5', desc:'Get a 5-game win streak', icon:'🔥'}
+];
+
+let maxDeficit = 0; // track max deficit during game
+
+function loadAchievements() {
+  try {
+    const d = JSON.parse(localStorage.getItem('reversi_ach_v2'));
+    return d && d.v === 2 ? d.unlocked : [];
+  } catch(e) { return []; }
+}
+
+function saveAchievements(unlocked) {
+  localStorage.setItem('reversi_ach_v2', JSON.stringify({v:2, unlocked}));
+}
+
+function unlockAchievement(id) {
+  const unlocked = loadAchievements();
+  if (unlocked.includes(id)) return;
+  unlocked.push(id);
+  saveAchievements(unlocked);
+  const ach = ACHIEVEMENTS.find(a => a.id === id);
+  if (ach) showAchToast(ach);
+  playSound('win');
+}
+
+function showAchToast(ach) {
+  const t = document.getElementById('ach-toast');
+  document.getElementById('ach-icon').textContent = ach.icon;
+  document.getElementById('ach-title').textContent = ach.name;
+  document.getElementById('ach-desc').textContent = ach.desc;
+  t.style.top = '20px';
+  setTimeout(() => { t.style.top = '-80px'; }, 3500);
+}
+
+function showAchievements() {
+  const unlocked = loadAchievements();
+  const grid = document.getElementById('ach-grid');
+  grid.innerHTML = '';
+  ACHIEVEMENTS.forEach(a => {
+    const has = unlocked.includes(a.id);
+    const el = document.createElement('div');
+    el.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;border:1px solid ' + (has ? 'rgba(255,215,0,.3)' : 'rgba(255,255,255,.08)') + ';background:' + (has ? 'rgba(255,215,0,.08)' : 'rgba(255,255,255,.03)') + ';opacity:' + (has ? '1' : '.5');
+    el.innerHTML = '<span style="font-size:24px">' + (has ? a.icon : '🔒') + '</span><div><div style="color:' + (has ? '#ffd700' : '#666') + ';font-weight:700;font-size:13px">' + a.name + '</div><div style="color:#888;font-size:11px">' + a.desc + '</div></div>';
+    grid.appendChild(el);
+  });
+  document.getElementById('ach-count').textContent = unlocked.length + '/' + ACHIEVEMENTS.length + ' Achievements';
+  document.getElementById('ach-modal').style.display = 'flex';
+}
+
+function checkAchievements(result) {
+  // Count pieces
+  let b = 0, w = 0;
+  const corners = [[0,0],[0,7],[7,0],[7,7]];
+  let bCorners = 0;
+  const edgeSet = new Set();
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    if (board[r][c] === 1) b++; else if (board[r][c] === 2) w++;
+  }
+  for (const [r,c] of corners) if (board[r][c] === 1) bCorners++;
+  // Count edge pieces (non-corner border)
+  let bEdges = 0;
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    if (board[r][c] !== 1) continue;
+    if (r === 0 || r === 7 || c === 0 || c === 7) {
+      if (!(r===0&&c===0) && !(r===0&&c===7) && !(r===7&&c===0) && !(r===7&&c===7)) bEdges++;
+    }
+  }
+  const stats = JSON.parse(localStorage.getItem('reversi_stats_v2') || '{}');
+  
+  if (result === 'win') {
+    unlockAchievement('first_win');
+    if (w === 0) unlockAchievement('perfect_game');
+    if (bCorners === 4) unlockAchievement('corner_master');
+    if (bEdges >= 10) unlockAchievement('edge_player');
+    if (moveCount < 20) unlockAchievement('quick_win');
+    if (maxDeficit >= 10) unlockAchievement('comeback_kid');
+    if (aiDifficulty === 'master') unlockAchievement('grandmaster');
+    if ((stats.winStreak || 0) >= 5) unlockAchievement('win_streak');
+  }
 }
 
 function checkGameEnd() {
@@ -1476,6 +1590,9 @@ function endGame() {
   
   // 更新统计
   updateStats(result);
+  
+  // Check achievements
+  checkAchievements(result);
   
   // 显示结果
   const modal = document.getElementById('game-over');
@@ -1588,6 +1705,14 @@ function animateFlips() {
     // 切换玩家
     currentPlayer = currentPlayer === BLACK ? WHITE : BLACK;
     updateUI();
+    
+    // Track max deficit for comeback achievement
+    let bc = 0, wc = 0;
+    for (let r2 = 0; r2 < 8; r2++) for (let c2 = 0; c2 < 8; c2++) {
+      if (board[r2][c2] === 1) bc++; else if (board[r2][c2] === 2) wc++;
+    }
+    const deficit = wc - bc;
+    if (deficit > maxDeficit) maxDeficit = deficit;
     
     // 检查游戏是否结束
     if (checkGameEnd()) return;
