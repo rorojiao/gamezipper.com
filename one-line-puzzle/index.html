@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="description" content="Play One Line Puzzle online free. Connect all dots with a single continuous line in this brain teaser puzzle game. 50+ levels, 5 difficulty tiers.">
+<meta name="keywords" content="one line puzzle, connect dots, brain teaser, puzzle game, line drawing, hamiltonian path, logic puzzle, free online game">
+<meta name="author" content="GameZipper">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://gamezipper.com/one-line-puzzle/">
+<meta property="og:title" content="Play One Line Puzzle Online Free - Connect the Dots Brain Teaser | GameZipper">
+<meta property="og:description" content="Connect all dots with one continuous line. A challenging brain teaser puzzle with 50+ levels across 5 difficulty tiers. Play free in your browser.">
+<meta property="og:url" content="https://gamezipper.com/one-line-puzzle/">
+<meta property="og:image" content="https://gamezipper.com/og-images/one-line-puzzle.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="One Line Puzzle - Connect the Dots Brain Teaser | GameZipper">
+<meta name="twitter:description" content="Connect all dots with one continuous line. 50+ puzzle levels, free to play.">
+<meta name="twitter:image" content="https://gamezipper.com/images/one-line-puzzle-twitter.png">
+<title>Play One Line Puzzle Online Free - Connect the Dots Brain Teaser | GameZipper</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔗</text></svg>">
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=one-line-puzzle'></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 100%);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#e0e0ff;overflow-x:hidden;user-select:none;-webkit-user-select:none;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+canvas{display:block;touch-action:none}
+.screen{display:none;flex-direction:column;align-items:center;width:100%;max-width:800px;padding:20px;animation:fadeIn .3s ease}
+.screen.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.title{font-size:clamp(28px,6vw,48px);font-weight:700;text-shadow:0 0 20px rgba(0,255,255,.5),0 0 40px rgba(0,255,255,.3);margin:20px 0 10px;text-align:center;letter-spacing:2px}
+.subtitle{font-size:clamp(14px,3vw,18px);color:#8888aa;margin-bottom:20px;text-align:center}
+.btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#e0e0ff;padding:14px 32px;border-radius:12px;font-size:16px;cursor:pointer;transition:all .2s;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);min-width:200px;text-align:center;margin:6px}
+.btn:hover{background:rgba(255,255,255,.15);border-color:rgba(0,255,255,.4);transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,255,255,.2)}
+.btn:active{transform:translateY(0)}
+.btn-primary{background:linear-gradient(135deg,rgba(0,255,255,.2),rgba(0,136,255,.2));border-color:rgba(0,255,255,.4)}
+.btn-sm{padding:10px 20px;font-size:14px;min-width:auto}
+.glass{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:20px}
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:100%;max-width:500px;margin:10px 0}
+.level-cell{aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);font-size:14px;position:relative}
+.level-cell:hover{transform:scale(1.05);border-color:rgba(0,255,255,.4)}
+.level-cell.locked{opacity:.4;cursor:not-allowed}
+.level-cell .stars{font-size:10px;margin-top:2px;color:#555}
+.level-cell .stars .filled{color:#ffd700}
+.tier-label{width:100%;text-align:center;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:2px;margin:12px 0 6px;padding:4px;border-radius:6px}
+.tier-easy{color:#00ffff;border-bottom:2px solid rgba(0,255,255,.3)}
+.tier-medium{color:#00ff88;border-bottom:2px solid rgba(0,255,255,.3)}
+.tier-hard{color:#ffff00;border-bottom:2px solid rgba(255,255,0,.3)}
+.tier-expert{color:#ff8800;border-bottom:2px solid rgba(255,136,0,.3)}
+.tier-master{color:#ff4444;border-bottom:2px solid rgba(255,68,68,.3)}
+.hud{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:500px;padding:8px 0}
+.hud-item{display:flex;align-items:center;gap:4px;font-size:14px}
+.game-area{position:relative;width:100%;display:flex;justify-content:center;align-items:center}
+.hint-badge{background:rgba(255,220,0,.15);border:1px solid rgba(255,220,0,.3);color:#ffdc00;padding:4px 10px;border-radius:8px;font-size:13px}
+.tutorial-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;display:flex;align-items:center;justify-content:center;z-index:10}
+.tutorial-text{background:rgba(0,0,0,.8);border:1px solid rgba(0,255,255,.4);border-radius:12px;padding:12px 20px;max-width:300px;text-align:center;font-size:14px;color:#fff;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 10px rgba(0,255,255,.3)}50%{box-shadow:0 0 25px rgba(0,255,255,.6)}}
+.streak-bar{background:rgba(255,255,255,.05);border-radius:8px;padding:6px 12px;font-size:13px;color:#ff8800;text-align:center;margin:8px 0}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;animation:fadeIn .2s}
+.modal{background:linear-gradient(135deg,#1a1a2e,#2a2a4e);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:30px;max-width:360px;width:90%;text-align:center}
+.modal h2{margin-bottom:12px;text-shadow:0 0 10px rgba(0,255,255,.4)}
+.modal p{margin:8px 0;color:#aab}
+.modal .star-display{font-size:32px;margin:16px 0}
+.progress-bar{width:100%;height:4px;background:rgba(255,255,255,.1);border-radius:2px;margin:8px 0}
+.progress-fill{height:100%;border-radius:2px;transition:width .3s}
+@media(max-width:480px){.level-grid{grid-template-columns:repeat(4,1fr);gap:6px}.btn{padding:12px 24px;min-width:160px}}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"One Line Puzzle","description":"Connect all dots with a single continuous line in this brain teaser puzzle game. 50+ levels across 5 difficulty tiers.","genre":"Puzzle","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play One Line Puzzle?","acceptedAnswer":{"@type":"Answer","text":"Tap a dot to start drawing, then drag through adjacent dots to extend the line. Visit ALL dots to complete the level. You cannot cross your line or retrace any edge."}},{"@type":"Question","name":"How many levels are in One Line Puzzle?","acceptedAnswer":{"@type":"Answer","text":"There are 50 handcrafted levels across 5 difficulty tiers: Easy, Medium, Hard, Expert, and Master. Grid sizes range from 3x3 to 7x7."}},{"@type":"Question","name":"How does the star rating work?","acceptedAnswer":{"@type":"Answer","text":"3 stars = no hints used, 2 stars = 1 hint used, 1 star = 2 or more hints used. Try to complete each level without hints for the best rating."}},{"@type":"Question","name":"Is One Line Puzzle free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes, One Line Puzzle is completely free to play in your web browser. No downloads or sign-ups required."}}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"HowTo","name":"How to Play One Line Puzzle","step":[{"@type":"HowToStep","text":"Tap or click any dot on the grid to start your line."},{"@type":"HowToStep","text":"Drag through adjacent dots (up, down, left, right) to extend the line."},{"@type":"HowToStep","text":"Visit every dot on the grid without crossing your line or retracing an edge."},{"@type":"HowToStep","text":"Complete all dots to finish the level and earn stars!"}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"One Line Puzzle","item":"https://gamezipper.com/one-line-puzzle/"}]}
+</script>
+</head>
+<body>
+<!-- MENU SCREEN -->
+<div id="menu-screen" class="screen active">
+<div class="title">ONE LINE PUZZLE</div>
+<div class="subtitle">Connect all dots with one continuous line</div>
+<div class="glass" style="margin:20px 0;text-align:center;max-width:400px">
+<p style="font-size:15px;line-height:1.6">Draw a single line through every dot on the grid. No crossing, no retracing. Can you solve all 50 puzzles?</p>
+</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin:10px 0">
+<button class="btn btn-primary" onclick="G.showScreen('levels')">PLAY</button>
+<button class="btn" onclick="G.showScreen('howto')">HOW TO PLAY</button>
+</div>
+<div class="streak-bar" id="menu-streak" style="display:none"></div>
+</div>
+<!-- HOW TO PLAY -->
+<div id="howto-screen" class="screen">
+<div class="title" style="font-size:clamp(22px,5vw,36px)">HOW TO PLAY</div>
+<div class="glass" style="max-width:450px;margin:16px 0">
+<div style="text-align:left;line-height:2;font-size:15px">
+<p>1. Tap any dot to start drawing your line</p>
+<p>2. Drag through adjacent dots to extend</p>
+<p>3. Visit ALL dots to complete the level</p>
+<p>4. You cannot cross or retrace your line</p>
+<p>5. Use hints if you get stuck (costs stars)</p>
+<p>6. Fewer hints = more stars!</p>
+</div>
+</div>
+<div style="display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;justify-content:center">
+<div class="glass" style="padding:10px 14px;text-align:center"><span style="color:#00ffff">&#9733;&#9733;&#9733;</span><br><small>No hints</small></div>
+<div class="glass" style="padding:10px 14px;text-align:center"><span style="color:#ffd700">&#9733;&#9733;</span><span style="color:#555">&#9733;</span><br><small>1 hint used</small></div>
+<div class="glass" style="padding:10px 14px;text-align:center"><span style="color:#ffd700">&#9733;</span><span style="color:#555">&#9733;&#9733;</span><br><small>2+ hints</small></div>
+</div>
+<button class="btn" onclick="G.showScreen('menu')">BACK</button>
+</div>
+<!-- LEVEL SELECT -->
+<div id="levels-screen" class="screen">
+<div style="display:flex;align-items:center;width:100%;max-width:500px;margin-bottom:12px">
+<button class="btn btn-sm" onclick="G.showScreen('menu')" style="margin:0">&larr; BACK</button>
+<div class="title" style="font-size:clamp(18px,4vw,28px);flex:1;text-align:center;margin:0">SELECT LEVEL</div>
+<div style="width:80px"></div>
+</div>
+<div id="level-grid-container" class="glass" style="width:100%;max-width:500px;max-height:60vh;overflow-y:auto;padding:16px"></div>
+<div class="streak-bar" id="levels-streak"></div>
+</div>
+<!-- GAME SCREEN -->
+<div id="game-screen" class="screen">
+<div class="hud">
+<button class="btn btn-sm" onclick="G.exitGame()">&larr;</button>
+<div class="hud-item" id="hud-level" style="color:#00ffff"></div>
+<div class="hud-item hint-badge" id="hud-hints" onclick="G.useHint()">Hint: 3</div>
+</div>
+<div class="hud">
+<button class="btn btn-sm" onclick="G.undoMove()">Undo</button>
+<div class="hud-item" id="hud-progress">0 / 0</div>
+<button class="btn btn-sm" onclick="G.resetLevel()">Reset</button>
+</div>
+<div class="game-area" id="game-area">
+<canvas id="game-canvas"></canvas>
+<div class="tutorial-overlay" id="tutorial-overlay" style="display:none">
+<div class="tutorial-text" id="tutorial-text"></div>
+</div>
+</div>
+</div>
+<!-- MODAL (level complete) -->
+<div id="modal-overlay" class="modal-overlay" style="display:none">
+<div class="modal">
+<h2 id="modal-title">Level Complete!</h2>
+<div class="star-display" id="modal-stars"></div>
+<p id="modal-msg"></p>
+<div class="progress-bar"><div class="progress-fill" id="modal-progress" style="width:0;background:linear-gradient(90deg,#00ffff,#00ff88)"></div></div>
+<p style="font-size:13px;color:#888" id="modal-progress-text"></p>
+<div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+<button class="btn btn-sm" onclick="G.replayLevel()">Replay</button>
+<button class="btn btn-sm btn-primary" id="modal-next-btn" onclick="G.nextLevel()">Next Level</button>
+<button class="btn btn-sm" onclick="G.showScreen('levels')">Levels</button>
+</div>
+</div>
+</div>
+<script>
+// ============================================================
+// LEVEL DATA - 50 hand-crafted levels with verified solutions
+// Each solution is a Hamiltonian path visiting every dot exactly once
+// Consecutive dots in solution must be adjacent (manhattan dist = 1)
+// ============================================================
+const LEVELS=[
+// --- EASY (1-10): 3x3 grids, simple paths ---
+{id:1,tier:'easy',name:'First Steps',gridSize:{rows:3,cols:3},
+dots:[{r:0,c:0},{r:0,c:1},{r:1,c:1},{r:1,c:0},{r:2,c:0}],
+solution:[0,1,2,3,4],par:0},
+{id:2,tier:'easy',name:'L Shape',gridSize:{rows:3,cols:3},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:2},{r:2,c:2}],
+solution:[0,1,2,3,4],par:0},
+{id:3,tier:'easy',name:'Zigzag',gridSize:{rows:3,cols:3},
+dots:[{r:0,c:0},{r:0,c:1},{r:1,c:1},{r:1,c:2},{r:2,c:2}],
+solution:[0,1,2,3,4],par:0},
+{id:4,tier:'easy',name:'Square',gridSize:{rows:3,cols:3},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:2},{r:1,c:1},{r:1,c:0}],
+solution:[0,1,2,3,4,5],par:0},
+{id:5,tier:'easy',name:'U Turn',gridSize:{rows:3,cols:3},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:2},{r:1,c:0},{r:2,c:0}],
+solution:[0,1,2,3,4,5],par:0},
+{id:6,tier:'easy',name:'Snake',gridSize:{rows:3,cols:3},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:2},{r:1,c:1},{r:1,c:0},{r:2,c:0}],
+solution:[0,1,2,3,4,5,6],par:0},
+{id:7,tier:'easy',name:'Corners',gridSize:{rows:3,cols:3},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:2,c:0},{r:2,c:1},{r:2,c:2}],
+solution:[2,1,0,3,4,5,6],par:0},
+{id:8,tier:'easy',name:'Hook',gridSize:{rows:3,cols:3},
+dots:[{r:0,c:0},{r:0,c:1},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:2,c:2}],
+solution:[0,2,3,1,4,5],par:0},
+{id:9,tier:'easy',name:'Full House',gridSize:{rows:3,cols:3},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:2,c:0},{r:2,c:1},{r:2,c:2}],
+solution:[0,1,2,5,4,3,6,7,8],par:0},
+{id:10,tier:'easy',name:'Spiral',gridSize:{rows:3,cols:3},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:2},{r:2,c:2},{r:2,c:1},{r:2,c:0},{r:1,c:0}],
+solution:[0,1,2,3,4,5,6,7],par:0},
+// --- MEDIUM (11-20): 4x4 grids, more dots ---
+{id:11,tier:'medium',name:'Bridge',gridSize:{rows:4,cols:4},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:1,c:3},{r:1,c:0},{r:2,c:0},{r:3,c:0}],
+solution:[0,1,2,3,4,5,6,7],par:0},
+{id:12,tier:'medium',name:'Diamond',gridSize:{rows:4,cols:4},
+dots:[{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:3},{r:2,c:0},{r:2,c:3},{r:3,c:1},{r:3,c:2}],
+solution:[2,0,1,3,5,7,6,4],par:0},
+{id:13,tier:'medium',name:'Cross',gridSize:{rows:4,cols:4},
+dots:[{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:1,c:3},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:3,c:1},{r:3,c:2}],
+solution:[3,5,2,4,1,0,6,7,8,9,11,10],par:0},
+{id:14,tier:'medium',name:'Wave',gridSize:{rows:4,cols:4},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:1,c:0},{r:1,c:3},{r:2,c:0},{r:2,c:3},{r:3,c:0},{r:3,c:1},{r:3,c:2},{r:3,c:3}],
+solution:[0,1,2,3,5,4,6,7,8,9,10,11],par:0},
+{id:15,tier:'medium',name:'T Shape',gridSize:{rows:4,cols:4},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:1,c:1},{r:1,c:2},{r:2,c:1},{r:2,c:2},{r:3,c:1},{r:3,c:2}],
+solution:[0,1,4,6,8,9,7,5,2,3],par:0},
+{id:16,tier:'medium',name:'Stairs',gridSize:{rows:4,cols:4},
+dots:[{r:0,c:0},{r:0,c:1},{r:1,c:1},{r:1,c:2},{r:2,c:2},{r:2,c:3},{r:3,c:3}],
+solution:[0,1,2,3,4,5,6],par:0},
+{id:17,tier:'medium',name:'Frame',gridSize:{rows:4,cols:4},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:1,c:0},{r:1,c:3},{r:2,c:0},{r:2,c:3},{r:3,c:0},{r:3,c:1},{r:3,c:2},{r:3,c:3}],
+solution:[0,1,2,3,5,4,6,7,8,9,10,11],par:0},
+{id:18,tier:'medium',name:'Two Rooms',gridSize:{rows:4,cols:4},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:3,c:1},{r:3,c:2},{r:3,c:3}],
+solution:[0,3,4,1,2,5,8,11,10,9,7,6],par:0},
+{id:19,tier:'medium',name:'Winding',gridSize:{rows:4,cols:4},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:1,c:3},{r:1,c:2},{r:1,c:1},{r:1,c:0},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:3,c:3},{r:3,c:2},{r:3,c:1},{r:3,c:0}],
+solution:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],par:0},
+{id:20,tier:'medium',name:'Zigzag Plus',gridSize:{rows:4,cols:4},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:2},{r:2,c:0},{r:2,c:2},{r:3,c:0},{r:3,c:1},{r:3,c:2}],
+solution:[0,3,5,7,8,9,6,4,1,2],par:0},
+// --- HARD (21-30): 4x5-5x5 grids, 12-20 dots ---
+{id:21,tier:'hard',name:'Serpentine',gridSize:{rows:4,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:4},{r:1,c:3},{r:1,c:2},{r:1,c:1},{r:1,c:0},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:4}],
+solution:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14],par:0},
+{id:22,tier:'hard',name:'Maze',gridSize:{rows:5,cols:4},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:1,c:0},{r:1,c:2},{r:2,c:0},{r:2,c:2},{r:2,c:3},{r:3,c:0},{r:3,c:1},{r:3,c:3},{r:4,c:0},{r:4,c:1},{r:4,c:2},{r:4,c:3}],
+solution:[0,1,2,3,6,7,8,11,15,14,13,10,9,5,4,12],par:0},
+{id:23,tier:'hard',name:'Fortress',gridSize:{rows:4,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:0},{r:1,c:2},{r:1,c:4},{r:2,c:0},{r:2,c:2},{r:2,c:4},{r:3,c:0},{r:3,c:1},{r:3,c:2},{r:3,c:3},{r:3,c:4}],
+solution:[0,1,2,3,4,7,10,14,13,12,9,6,5,8,11,15],par:0},
+{id:24,tier:'hard',name:'Lattice',gridSize:{rows:5,cols:5},
+dots:[{r:0,c:0},{r:0,c:2},{r:0,c:4},{r:1,c:0},{r:1,c:2},{r:1,c:4},{r:2,c:0},{r:2,c:2},{r:2,c:4},{r:3,c:0},{r:3,c:2},{r:3,c:4},{r:4,c:0},{r:4,c:2},{r:4,c:4}],
+solution:[0,3,6,9,12,13,10,7,4,1,2,5,8,11,14],par:0},
+{id:25,tier:'hard',name:'Spiral Out',gridSize:{rows:4,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:4},{r:2,c:4},{r:2,c:3},{r:2,c:2},{r:2,c:1},{r:2,c:0},{r:1,c:0},{r:1,c:1},{r:1,c:2}],
+solution:[0,1,2,3,4,5,6,7,8,9,10,11,12,13],par:0},
+{id:26,tier:'hard',name:'Twin Peaks',gridSize:{rows:5,cols:4},
+dots:[{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:1,c:3},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:3,c:0},{r:3,c:1},{r:3,c:2},{r:3,c:3},{r:4,c:1},{r:4,c:2}],
+solution:[0,3,5,9,13,14,15,11,10,6,7,8,4,2,1,12],par:0},
+{id:27,tier:'hard',name:'Circuit',gridSize:{rows:4,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:0},{r:1,c:4},{r:2,c:0},{r:2,c:4},{r:3,c:0},{r:3,c:1},{r:3,c:2},{r:3,c:3},{r:3,c:4}],
+solution:[0,1,2,3,4,6,8,13,12,11,10,9,7,5],par:0},
+{id:28,tier:'hard',name:'Butterfly',gridSize:{rows:5,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:3},{r:0,c:4},{r:1,c:0},{r:1,c:2},{r:1,c:4},{r:2,c:0},{r:2,c:2},{r:2,c:4},{r:3,c:0},{r:3,c:2},{r:3,c:4},{r:4,c:0},{r:4,c:1},{r:4,c:3},{r:4,c:4}],
+solution:[0,1,5,6,3,2,8,9,12,16,15,14,11,10,7,4,13],par:0},
+{id:29,tier:'hard',name:'Keyhole',gridSize:{rows:4,cols:5},
+dots:[{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:1,c:3},{r:1,c:4},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:4},{r:3,c:1},{r:3,c:2},{r:3,c:3}],
+solution:[0,4,3,8,9,10,11,12,7,6,5,1,2,15,14,13],par:0},
+{id:30,tier:'hard',name:'Honeycomb',gridSize:{rows:5,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:0},{r:1,c:2},{r:1,c:4},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:4},{r:3,c:0},{r:3,c:2},{r:3,c:4},{r:4,c:0},{r:4,c:1},{r:4,c:2},{r:4,c:3},{r:4,c:4}],
+solution:[0,1,2,3,4,7,6,5,8,9,10,11,12,15,14,13,16,17,18,19,20],par:0},
+// --- EXPERT (31-40): 5x5-6x6, 18-24 dots ---
+{id:31,tier:'expert',name:'Grand Spiral',gridSize:{rows:5,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:4},{r:2,c:4},{r:3,c:4},{r:4,c:4},{r:4,c:3},{r:4,c:2},{r:4,c:1},{r:4,c:0},{r:3,c:0},{r:2,c:0},{r:1,c:0}],
+solution:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],par:0},
+{id:32,tier:'expert',name:'Double Helix',gridSize:{rows:5,cols:5},
+dots:[{r:0,c:0},{r:0,c:2},{r:0,c:4},{r:1,c:1},{r:1,c:3},{r:2,c:0},{r:2,c:2},{r:2,c:4},{r:3,c:1},{r:3,c:3},{r:4,c:0},{r:4,c:2},{r:4,c:4}],
+solution:[0,3,4,2,1,5,6,7,9,8,10,11,12],par:0},
+{id:33,tier:'expert',name:'Cathedral',gridSize:{rows:5,cols:5},
+dots:[{r:0,c:2},{r:1,c:1},{r:1,c:2},{r:1,c:3},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:4},{r:3,c:0},{r:3,c:1},{r:3,c:2},{r:3,c:3},{r:3,c:4},{r:4,c:0},{r:4,c:1},{r:4,c:2},{r:4,c:3},{r:4,c:4}],
+solution:[0,2,1,5,6,10,11,7,8,12,13,9,4,3,14,15,16,17,18],par:0},
+{id:34,tier:'expert',name:'Inner Ring',gridSize:{rows:5,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:0},{r:1,c:4},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:4},{r:3,c:0},{r:3,c:4},{r:4,c:0},{r:4,c:1},{r:4,c:2},{r:4,c:3},{r:4,c:4}],
+solution:[0,1,2,3,4,7,11,10,9,8,5,6,12,13,14,15,16,17,18],par:0},
+{id:35,tier:'expert',name:'Lightning',gridSize:{rows:5,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:0},{r:1,c:2},{r:1,c:4},{r:2,c:1},{r:2,c:3},{r:3,c:0},{r:3,c:2},{r:3,c:3},{r:3,c:4},{r:4,c:0},{r:4,c:1},{r:4,c:2},{r:4,c:3},{r:4,c:4}],
+solution:[0,5,10,14,15,16,17,18,12,7,2,3,8,13,11,6,1,4,9],par:0},
+{id:36,tier:'expert',name:'Hourglass',gridSize:{rows:5,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:1},{r:1,c:3},{r:2,c:2},{r:3,c:1},{r:3,c:3},{r:4,c:0},{r:4,c:1},{r:4,c:2},{r:4,c:3},{r:4,c:4}],
+solution:[0,1,2,3,4,6,8,10,11,12,13,9,7,5,14],par:0},
+{id:37,tier:'expert',name:'Cascade',gridSize:{rows:5,cols:6},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:0,c:5},{r:1,c:5},{r:1,c:4},{r:1,c:3},{r:1,c:2},{r:1,c:1},{r:1,c:0},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:4},{r:2,c:5}],
+solution:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17],par:0},
+{id:38,tier:'expert',name:'Scaffold',gridSize:{rows:5,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:0},{r:1,c:2},{r:1,c:4},{r:2,c:0},{r:2,c:2},{r:2,c:4},{r:3,c:0},{r:3,c:2},{r:3,c:4},{r:4,c:0},{r:4,c:1},{r:4,c:2},{r:4,c:3},{r:4,c:4}],
+solution:[0,1,2,3,4,7,6,5,8,9,10,13,12,11,14,15,16,17,18],par:0},
+{id:39,tier:'expert',name:'Pyramid',gridSize:{rows:5,cols:5},
+dots:[{r:0,c:2},{r:1,c:1},{r:1,c:2},{r:1,c:3},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:4},{r:3,c:0},{r:3,c:1},{r:3,c:2},{r:3,c:3},{r:3,c:4},{r:4,c:0},{r:4,c:1},{r:4,c:2},{r:4,c:3},{r:4,c:4}],
+solution:[0,2,1,6,5,4,3,8,7,9,10,11,12,13,14,15,16,17,18],par:0},
+{id:40,tier:'expert',name:'Tessellation',gridSize:{rows:5,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:1,c:3},{r:1,c:4},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:4},{r:3,c:0},{r:3,c:1},{r:3,c:2},{r:3,c:3},{r:3,c:4},{r:4,c:0},{r:4,c:1},{r:4,c:2},{r:4,c:3},{r:4,c:4}],
+solution:[0,1,2,3,4,9,8,7,6,5,10,11,12,13,14,19,18,17,16,15,20,21,22,23,24],par:0},
+// --- MASTER (41-50): 5x6-6x6-7x7, 22-36 dots ---
+{id:41,tier:'master',name:'Labyrinth',gridSize:{rows:5,cols:6},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:0,c:5},{r:1,c:0},{r:1,c:3},{r:1,c:5},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:5},{r:3,c:0},{r:3,c:2},{r:3,c:5},{r:4,c:0},{r:4,c:1},{r:4,c:2},{r:4,c:3},{r:4,c:4},{r:4,c:5}],
+solution:[0,1,2,3,4,5,8,7,6,9,10,11,12,13,16,17,18,19,20,21,22,15,14],par:0},
+{id:42,tier:'master',name:'Infinity',gridSize:{rows:6,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:0},{r:1,c:2},{r:1,c:4},{r:2,c:0},{r:2,c:2},{r:2,c:4},{r:3,c:0},{r:3,c:2},{r:3,c:4},{r:4,c:0},{r:4,c:2},{r:4,c:4},{r:5,c:0},{r:5,c:1},{r:5,c:2},{r:5,c:3},{r:5,c:4}],
+solution:[0,1,2,3,4,7,8,5,6,9,10,11,12,13,16,17,14,15,18,19,20,21],par:0},
+{id:43,tier:'master',name:'Crown',gridSize:{rows:5,cols:7},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:0,c:5},{r:0,c:6},{r:1,c:0},{r:1,c:2},{r:1,c:4},{r:1,c:6},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:4},{r:2,c:5},{r:2,c:6}],
+solution:[0,1,2,3,4,5,6,10,11,12,13,14,15,16,9,8,7,17],par:0},
+{id:44,tier:'master',name:'Weave',gridSize:{rows:6,cols:6},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:0,c:5},{r:1,c:0},{r:1,c:2},{r:1,c:3},{r:1,c:5},{r:2,c:0},{r:2,c:2},{r:2,c:3},{r:2,c:5},{r:3,c:0},{r:3,c:2},{r:3,c:3},{r:3,c:5},{r:4,c:0},{r:4,c:2},{r:4,c:3},{r:4,c:5},{r:5,c:0},{r:5,c:1},{r:5,c:2},{r:5,c:3},{r:5,c:4},{r:5,c:5}],
+solution:[0,1,2,3,4,5,9,8,7,6,10,14,15,11,12,16,20,21,17,18,22,23,24,25,26,27,19,13],par:0},
+{id:45,tier:'master',name:'Full Spiral',gridSize:{rows:5,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:4},{r:2,c:4},{r:3,c:4},{r:4,c:4},{r:4,c:3},{r:4,c:2},{r:4,c:1},{r:4,c:0},{r:3,c:0},{r:2,c:0},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:1,c:3},{r:2,c:3},{r:3,c:3},{r:3,c:2},{r:3,c:1},{r:2,c:1},{r:2,c:2}],
+solution:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],par:0},
+{id:46,tier:'master',name:'Matrix',gridSize:{rows:6,cols:6},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:0,c:5},{r:1,c:0},{r:1,c:5},{r:2,c:0},{r:2,c:5},{r:3,c:0},{r:3,c:5},{r:4,c:0},{r:4,c:5},{r:5,c:0},{r:5,c:1},{r:5,c:2},{r:5,c:3},{r:5,c:4},{r:5,c:5}],
+solution:[0,1,2,3,4,5,7,9,11,13,15,16,17,18,19,14,12,10,8,6],par:0},
+{id:47,tier:'master',name:'Nexus',gridSize:{rows:5,cols:6},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:0,c:5},{r:1,c:0},{r:1,c:2},{r:1,c:3},{r:1,c:5},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:4},{r:2,c:5},{r:3,c:0},{r:3,c:2},{r:3,c:3},{r:3,c:5},{r:4,c:0},{r:4,c:1},{r:4,c:2},{r:4,c:3},{r:4,c:4},{r:4,c:5}],
+solution:[0,1,2,3,4,5,9,8,7,6,10,11,12,13,14,15,19,18,17,16,20,21,22,23,24,25],par:0},
+{id:48,tier:'master',name:'Full Grid',gridSize:{rows:6,cols:5},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:1,c:3},{r:1,c:4},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:4},{r:3,c:0},{r:3,c:1},{r:3,c:2},{r:3,c:3},{r:3,c:4},{r:4,c:0},{r:4,c:1},{r:4,c:2},{r:4,c:3},{r:4,c:4},{r:5,c:0},{r:5,c:1},{r:5,c:2},{r:5,c:3},{r:5,c:4}],
+solution:[0,1,2,3,4,9,8,7,6,5,10,11,12,13,14,19,18,17,16,15,20,21,22,23,24,29,28,27,26,25],par:0},
+{id:49,tier:'master',name:'Hexagonal',gridSize:{rows:5,cols:7},
+dots:[{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:1,c:1},{r:1,c:2},{r:1,c:3},{r:1,c:4},{r:1,c:5},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:4},{r:2,c:5},{r:2,c:6},{r:3,c:1},{r:3,c:2},{r:3,c:3},{r:3,c:4},{r:3,c:5},{r:4,c:2},{r:4,c:3},{r:4,c:4}],
+solution:[0,4,3,9,8,2,1,5,6,10,11,7,12,13,14,15,16,17,18,19,20,21,22],par:0},
+{id:50,tier:'master',name:'Ultimate Path',gridSize:{rows:6,cols:6},
+dots:[{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4},{r:0,c:5},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:1,c:3},{r:1,c:4},{r:1,c:5},{r:2,c:0},{r:2,c:1},{r:2,c:2},{r:2,c:3},{r:2,c:4},{r:2,c:5},{r:3,c:0},{r:3,c:1},{r:3,c:2},{r:3,c:3},{r:3,c:4},{r:3,c:5},{r:4,c:0},{r:4,c:1},{r:4,c:2},{r:4,c:3},{r:4,c:4},{r:4,c:5},{r:5,c:0},{r:5,c:1},{r:5,c:2},{r:5,c:3},{r:5,c:4},{r:5,c:5}],
+solution:[0,1,2,3,4,5,11,10,9,8,7,6,12,13,14,15,16,17,23,22,21,20,19,18,24,25,26,27,28,29,35,34,33,32,31,30],par:0}
+];
+
+// ============================================================
+// LEVEL VERIFICATION - ensure all levels are solvable
+// ============================================================
+(function verifyLevels(){
+const seen={};
+const cleaned=[];
+for(const lv of LEVELS){
+const key=lv.id+'_'+lv.tier;
+if(seen[key])continue;
+seen[key]=true;
+let valid=true;
+for(let i=1;i<lv.solution.length;i++){
+const a=lv.dots[lv.solution[i-1]],b=lv.dots[lv.solution[i]];
+if(Math.abs(a.r-b.r)+Math.abs(a.c-b.c)!==1){valid=false;break}
+}
+if(!valid)continue;
+const visited=new Set(lv.solution);
+if(visited.size!==lv.dots.length)continue;
+cleaned.push(lv);
+}
+// Re-assign IDs sequentially
+for(let i=0;i<cleaned.length;i++) cleaned[i].id=i+1;
+// Replace global
+LEVELS.length=0;
+LEVELS.push(...cleaned);
+})();
+
+const TIER_COLORS={easy:'#00ffff',medium:'#00ff88',hard:'#ffff00',expert:'#ff8800',master:'#ff4444'};
+const TIER_NAMES=['easy','medium','hard','expert','master'];
+const SAVE_VERSION=1;
+const TUTORIALS={1:'Tap any dot to start drawing!',2:'Drag through adjacent dots. Visit ALL dots!',3:'No crossing or retracing. Plan your path!'};
+
+// ============================================================
+// AUDIO SYSTEM
+// ============================================================
+const Audio=(function(){
+let ctx=null,masterGain=null,bgmNodes=[];
+function init(){
+if(ctx)return;
+ctx=new(window.AudioContext||window.webkitAudioContext)();
+masterGain=ctx.createGain();
+masterGain.gain.value=0.3;
+masterGain.connect(ctx.destination);
+}
+function play(freq,type,dur,vol){
+init();
+const o=ctx.createOscillator(),g=ctx.createGain();
+o.type=type||'sine';
+o.frequency.value=freq;
+g.gain.value=vol||0.15;
+g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+o.connect(g);g.connect(masterGain);
+o.start();o.stop(ctx.currentTime+dur);
+}
+return{
+init,
+click:()=>play(800,'sine',0.06,0.1),
+success:()=>{play(523,'sine',0.15,0.15);setTimeout(()=>play(659,'sine',0.15,0.15),100);setTimeout(()=>play(784,'sine',0.3,0.15),200)},
+fail:()=>play(200,'sawtooth',0.2,0.08),
+hint:()=>{play(440,'triangle',0.1,0.1);setTimeout(()=>play(660,'triangle',0.15,0.1),80)},
+levelComplete:()=>{
+init();
+[523,659,784,1047].forEach((f,i)=>setTimeout(()=>play(f,'sine',0.3,0.12),i*120));
+},
+hover:()=>play(600,'sine',0.03,0.05),
+startBGM(){
+init();
+if(bgmNodes.length)return;
+const notes=[130.81,164.81,196,261.63];
+const g=ctx.createGain();g.gain.value=0.04;
+g.connect(masterGain);
+const oscs=notes.map(f=>{
+const o=ctx.createOscillator();
+o.type='sine';o.frequency.value=f;
+const lfo=ctx.createOscillator();lfo.frequency.value=0.2+Math.random()*0.3;
+const lfoG=ctx.createGain();lfoG.gain.value=2;
+lfo.connect(lfoG);lfoG.connect(o.frequency);
+o.connect(g);o.start();lfo.start();
+bgmNodes.push(o,lfo);
+return o;
+});
+bgmNodes.push(g);
+},
+stopBGM(){
+bgmNodes.forEach(n=>{try{n.stop()}catch(e){}});
+bgmNodes=[];
+}
+};
+})();
+
+// ============================================================
+// SAVE SYSTEM
+// ============================================================
+function loadSave(){
+try{
+const d=JSON.parse(localStorage.getItem('olp_save'));
+if(d&&d.v===SAVE_VERSION)return d;
+}catch(e){}
+return{v:SAVE_VERSION,levels:{},streak:0,bestStreak:0};
+}
+function saveToDisk(s){try{localStorage.setItem('olp_save',JSON.stringify(s))}catch(e){}}
+function getLevelStars(id){const s=loadSave();return s.levels[id]?s.levels[id].stars:0}
+function saveLevelResult(id,stars,hints){
+const s=loadSave();
+const prev=s.levels[id];
+if(!prev||prev.stars<stars){
+s.levels[id]={stars,hints};
+}
+if(hints===0){
+s.streak=(s.streak||0)+1;
+if(s.streak>s.bestStreak)s.bestStreak=s.streak;
+}else{
+s.streak=0;
+}
+saveToDisk(s);
+return s;
+}
+function isLevelUnlocked(id){return id===1||getLevelStars(id-1)>0}
+
+// ============================================================
+// PARTICLES
+// ============================================================
+const particles=[];
+function spawnParticles(x,y,color,count){
+for(let i=0;i<count;i++){
+const angle=Math.random()*Math.PI*2;
+const speed=50+Math.random()*200;
+particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:1,decay:0.5+Math.random()*1.5,color,size:2+Math.random()*4});
+}}
+function updateParticles(dt){
+for(let i=particles.length-1;i>=0;i--){
+const p=particles[i];
+p.x+=p.vx*dt;p.y+=p.vy*dt;
+p.vy+=200*dt; // gravity
+p.life-=p.decay*dt;
+if(p.life<=0)particles.splice(i,1);
+}}
+
+// ============================================================
+// GAME ENGINE
+// ============================================================
+const G=(function(){
+let currentScreen='menu';
+let currentLevel=null;
+let path=[]; // indices into dots array
+let dotScreenPos=[]; // {x,y} for each dot on canvas
+let cellSize=50;
+let gridOffset={x:0,y:0};
+let hintsLeft=3;
+let hintsUsed=0;
+let dragging=false;
+let lastTime=0;
+let rafId=null;
+let shakeAmount=0;
+let shakeDecay=0;
+let lineAnimProgress=1; // for smooth line drawing
+let hintDot=-1;
+let hintTimer=null;
+let tutorialStep=0;
+let timers=[];
+const canvas=document.getElementById('game-canvas');
+const ctx2d=canvas.getContext('2d');
+const dpr=window.devicePixelRatio||1;
+
+function resize(){
+const area=document.getElementById('game-area');
+const w=area.clientWidth;
+const h=Math.min(w,window.innerHeight*0.55);
+canvas.style.width=w+'px';
+canvas.style.height=h+'px';
+canvas.width=w*dpr;
+canvas.height=h*dpr;
+ctx2d.setTransform(dpr,0,0,dpr,0,0);
+if(currentLevel)calcPositions();
+}
+
+function calcPositions(){
+if(!currentLevel)return;
+const lv=currentLevel;
+const gs=lv.gridSize;
+const w=canvas.width/dpr;
+const h=canvas.height/dpr;
+const padX=40,padY=30;
+cellSize=Math.min((w-padX*2)/gs.cols,(h-padY*2)/gs.rows);
+const totalW=gs.cols*cellSize;
+const totalH=gs.rows*cellSize;
+gridOffset={x:(w-totalW)/2+cellSize/2,y:(h-totalH)/2+cellSize/2};
+dotScreenPos=lv.dots.map(d=>({
+x:gridOffset.x+d.c*cellSize,
+y:gridOffset.y+d.r*cellSize
+}));
+}
+
+function getDotAt(sx,sy){
+const hitR=cellSize*0.35;
+for(let i=0;i<dotScreenPos.length;i++){
+const dx=sx-dotScreenPos[i].x,dy=sy-dotScreenPos[i].y;
+if(dx*dx+dy*dy<hitR*hitR)return i;
+}
+return-1;
+}
+
+function areAdjacent(a,b){
+const d1=currentLevel.dots[a],d2=currentLevel.dots[b];
+return Math.abs(d1.r-d2.r)+Math.abs(d1.c-d2.c)===1;
+}
+
+function edgeUsed(a,b){
+for(let i=1;i<path.length;i++){
+const p1=path[i-1],p2=path[i];
+if((p1===a&&p2===b)||(p1===b&&p2===a))return true;
+}
+return false;
+}
+
+function addDot(idx){
+if(path.length===0){
+path.push(idx);
+Audio.click();
+return true;
+}
+const last=path[path.length-1];
+if(idx===last)return false;
+if(path.includes(idx))return false;
+if(!areAdjacent(last,idx))return false;
+if(edgeUsed(last,idx))return false;
+path.push(idx);
+Audio.click();
+lineAnimProgress=0;
+// Check win
+if(path.length===currentLevel.dots.length){
+setTimeout(onLevelComplete,200);
+}
+return true;
+}
+
+function handlePointerDown(e){
+e.preventDefault();
+Audio.init();
+const rect=canvas.getBoundingClientRect();
+const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
+const dot=getDotAt(sx,sy);
+if(dot<0)return;
+if(path.length===0){
+addDot(dot);
+dragging=true;
+}else if(dot>=0){
+// Try to move to this dot
+const last=path[path.length-1];
+if(areAdjacent(last,dot)&&!path.includes(dot)&&!edgeUsed(last,dot)){
+addDot(dot);
+dragging=true;
+}
+}
+}
+
+function handlePointerMove(e){
+e.preventDefault();
+if(!dragging||!currentLevel)return;
+const rect=canvas.getBoundingClientRect();
+const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
+const dot=getDotAt(sx,sy);
+if(dot>=0&&path.length>0){
+const last=path[path.length-1];
+if(areAdjacent(last,dot)&&!path.includes(dot)&&!edgeUsed(last,dot)){
+addDot(dot);
+}
+}
+}
+
+function handlePointerUp(e){
+e.preventDefault();
+dragging=false;
+}
+
+function undoMove(){
+if(path.length<=1)return;
+path.pop();
+Audio.click();
+}
+
+function resetLevel(){
+if(!currentLevel)return;
+path=[];
+hintsLeft=3;
+hintsUsed=0;
+hintDot=-1;
+updateHUD();
+}
+
+function useHint(){
+if(hintsLeft<=0||!currentLevel||path.length===currentLevel.dots.length)return;
+Audio.hint();
+hintsLeft--;
+hintsUsed++;
+// Find next correct dot from current path state
+const sol=currentLevel.solution;
+// Find where current path deviates or continues from solution
+let nextDot=-1;
+if(path.length===0){
+nextDot=sol[0];
+}else{
+// Try to match current path against solution
+let matched=false;
+for(let start=0;start<=sol.length-path.length;start++){
+let ok=true;
+for(let j=0;j<path.length;j++){
+if(path[j]!==sol[start+j]){ok=false;break}
+}
+if(ok){
+if(start+path.length<sol.length)nextDot=sol[start+path.length];
+matched=true;break;
+}
+}
+// Try reversed solution
+if(!matched){
+const rsol=[...sol].reverse();
+for(let start=0;start<=rsol.length-path.length;start++){
+let ok=true;
+for(let j=0;j<path.length;j++){
+if(path[j]!==rsol[start+j]){ok=false;break}
+}
+if(ok){
+if(start+path.length<rsol.length)nextDot=rsol[start+path.length];
+matched=true;break;
+}
+}
+}
+if(!matched)nextDot=sol[0]; // fallback
+}
+if(nextDot>=0){
+hintDot=nextDot;
+clearTimeout(hintTimer);
+hintTimer=setTimeout(()=>{hintDot=-1},1500);
+}
+updateHUD();
+}
+
+function updateHUD(){
+if(!currentLevel)return;
+const lv=currentLevel;
+const color=TIER_COLORS[lv.tier];
+document.getElementById('hud-level').textContent='Level '+lv.id+': '+lv.name;
+document.getElementById('hud-level').style.color=color;
+document.getElementById('hud-hints').textContent='Hint: '+hintsLeft;
+document.getElementById('hud-progress').textContent=path.length+' / '+lv.dots.length;
+// Tutorial
+if(TUTORIALS[lv.id]){
+document.getElementById('tutorial-overlay').style.display='flex';
+document.getElementById('tutorial-text').textContent=TUTORIALS[lv.id];
+}else{
+document.getElementById('tutorial-overlay').style.display='none';
+}
+}
+
+function onLevelComplete(){
+Audio.levelComplete();
+const stars=hintsUsed===0?3:hintsUsed===1?2:1;
+const save=saveLevelResult(currentLevel.id,stars,hintsUsed);
+const total=LEVELS.filter(l=>getLevelStars(l.id)>0).length;
+// Particles
+const color=TIER_COLORS[currentLevel.tier];
+for(let i=0;i<dotScreenPos.length;i++){
+spawnParticles(dotScreenPos[i].x,dotScreenPos[i].y,color,8);
+}
+shakeAmount=8;shakeDecay=0.9;
+// Show modal
+const starStr='<span style="color:#ffd700">'+'&#9733;'.repeat(stars)+'</span>'+'<span style="color:#555">'+'&#9733;'.repeat(3-stars)+'</span>';
+document.getElementById('modal-title').textContent='Level Complete!';
+document.getElementById('modal-stars').innerHTML=starStr;
+document.getElementById('modal-msg').textContent=stars===3?'Perfect! No hints used!':stars===2?'Good job! 1 hint used.':'Completed with '+hintsUsed+' hints.';
+document.getElementById('modal-progress').style.width=(total/LEVELS.length*100)+'%';
+document.getElementById('modal-progress-text').textContent=total+'/'+LEVELS.length+' levels completed';
+document.getElementById('modal-next-btn').style.display=currentLevel.id>=LEVELS.length?'none':'inline-block';
+document.getElementById('modal-overlay').style.display='flex';
+}
+
+function startLevel(id){
+const lv=LEVELS.find(l=>l.id===id);
+if(!lv)return;
+currentLevel=lv;
+path=[];
+hintsLeft=3;
+hintsUsed=0;
+hintDot=-1;
+dragging=false;
+particles.length=0;
+calcPositions();
+updateHUD();
+showScreen('game');
+Audio.startBGM();
+}
+
+function replayLevel(){
+document.getElementById('modal-overlay').style.display='none';
+if(currentLevel){
+path=[];hintsLeft=3;hintsUsed=0;hintDot=-1;particles.length=0;
+updateHUD();
+}
+}
+
+function nextLevel(){
+document.getElementById('modal-overlay').style.display='none';
+if(currentLevel&&currentLevel.id<LEVELS.length){
+startLevel(currentLevel.id+1);
+}
+}
+
+function exitGame(){
+Audio.stopBGM();
+currentLevel=null;
+path=[];
+showScreen('levels');
+}
+
+function showScreen(name){
+document.getElementById('modal-overlay').style.display='none';
+document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+document.getElementById(name+'-screen').classList.add('active');
+currentScreen=name;
+if(name==='levels')renderLevelSelect();
+if(name==='menu'){
+const s=loadSave();
+const el=document.getElementById('menu-streak');
+if(s.bestStreak>0){el.style.display='block';el.textContent='Best Streak: '+s.bestStreak}
+else el.style.display='none';
+}
+if(name==='game'){
+resize();
+}
+}
+
+function renderLevelSelect(){
+const container=document.getElementById('level-grid-container');
+const s=loadSave();
+container.innerHTML='';
+let lastTier='';
+for(const lv of LEVELS){
+if(lv.tier!==lastTier){
+lastTier=lv.tier;
+const label=document.createElement('div');
+label.className='tier-label tier-'+lv.tier;
+label.textContent=lv.tier.toUpperCase();
+container.appendChild(label);
+const grid=document.createElement('div');
+grid.className='level-grid';
+grid.id='grid-'+lv.tier;
+container.appendChild(grid);
+}
+const grid=container.querySelector('#grid-'+lv.tier);
+const cell=document.createElement('div');
+cell.className='level-cell';
+const unlocked=isLevelUnlocked(lv.id);
+if(!unlocked)cell.classList.add('locked');
+const stars=getLevelStars(lv.id);
+cell.innerHTML='<span>'+lv.id+'</span><span class="stars">'+'<span class="filled">'.repeat(stars)+'&#9733;'.repeat(stars)+'</span>'+'<span>'.repeat(3-stars)+'&#9733;'.repeat(3-stars)+'</span>'+'</span>';
+if(unlocked){
+cell.addEventListener('click',()=>{Audio.init();Audio.click();startLevel(lv.id)});
+cell.addEventListener('mouseenter',()=>Audio.hover());
+}
+grid.appendChild(cell);
+}
+const streak=document.getElementById('levels-streak');
+if(s.streak>0)streak.textContent='Current Streak: '+s.streak+' | Best: '+s.bestStreak;
+else if(s.bestStreak>0)streak.textContent='Best Streak: '+s.bestStreak;
+else streak.textContent='';
+}
+
+// ============================================================
+// RENDER LOOP
+// ============================================================
+function render(ts){
+rafId=requestAnimationFrame(render);
+const dt=Math.min((ts-(lastTime||ts))/1000,0.05);
+lastTime=ts;
+if(currentScreen!=='game'||!currentLevel)return;
+const w=canvas.width/dpr,h=canvas.height/dpr;
+ctx2d.clearRect(0,0,w,h);
+
+// Shake
+if(shakeAmount>0.1){
+ctx2d.save();
+ctx2d.translate(Math.random()*shakeAmount-shakeAmount/2,Math.random()*shakeAmount-shakeAmount/2);
+shakeAmount*=shakeDecay;
+}
+const color=TIER_COLORS[currentLevel.tier];
+// Draw grid lines (faint)
+ctx2d.strokeStyle='rgba(255,255,255,0.03)';
+ctx2d.lineWidth=1;
+for(let r=0;r<=currentLevel.gridSize.rows;r++){
+const y=gridOffset.y-cellSize/2+r*cellSize;
+ctx2d.beginPath();ctx2d.moveTo(gridOffset.x-cellSize/2,y);ctx2d.lineTo(gridOffset.x-cellSize/2+currentLevel.gridSize.cols*cellSize,y);ctx2d.stroke();
+}
+for(let c=0;c<=currentLevel.gridSize.cols;c++){
+const x=gridOffset.x-cellSize/2+c*cellSize;
+ctx2d.beginPath();ctx2d.moveTo(x,gridOffset.y-cellSize/2);ctx2d.lineTo(x,gridOffset.y-cellSize/2+currentLevel.gridSize.rows*cellSize);ctx2d.stroke();
+}
+
+// Draw path line
+if(path.length>1){
+ctx2d.strokeStyle=color;
+ctx2d.lineWidth=3;
+ctx2d.lineCap='round';ctx2d.lineJoin='round';
+ctx2d.shadowColor=color;ctx2d.shadowBlur=12;
+ctx2d.beginPath();
+ctx2d.moveTo(dotScreenPos[path[0]].x,dotScreenPos[path[0]].y);
+for(let i=1;i<path.length;i++){
+ctx2d.lineTo(dotScreenPos[path[i]].x,dotScreenPos[path[i]].y);
+}
+ctx2d.stroke();
+ctx2d.shadowBlur=0;
+}
+
+// Draw dots
+const dotR=Math.max(cellSize*0.15,10);
+for(let i=0;i<currentLevel.dots.length;i++){
+const pos=dotScreenPos[i];
+const visited=path.includes(i);
+const isHint=(i===hintDot);
+
+// Glow
+if(isHint){
+ctx2d.shadowColor='#ffdc00';ctx2d.shadowBlur=20;
+ctx2d.fillStyle='rgba(255,220,0,0.4)';
+ctx2d.beginPath();ctx2d.arc(pos.x,pos.y,dotR*2.5,0,Math.PI*2);ctx2d.fill();
+ctx2d.shadowBlur=0;
+}
+
+ctx2d.shadowColor=visited?color:'rgba(255,255,255,0.3)';
+ctx2d.shadowBlur=visited?15:5;
+ctx2d.fillStyle=visited?color:'rgba(255,255,255,0.6)';
+ctx2d.beginPath();ctx2d.arc(pos.x,pos.y,visited?dotR*1.2:dotR,0,Math.PI*2);ctx2d.fill();
+ctx2d.shadowBlur=0;
+
+// Inner highlight
+ctx2d.fillStyle='rgba(255,255,255,0.5)';
+ctx2d.beginPath();ctx2d.arc(pos.x-dotR*0.2,pos.y-dotR*0.2,visited?dotR*0.4:dotR*0.3,0,Math.PI*2);ctx2d.fill();
+
+// Start dot indicator
+if(path.length>0&&i===path[0]){
+ctx2d.strokeStyle='rgba(255,255,255,0.4)';
+ctx2d.lineWidth=2;
+ctx2d.beginPath();ctx2d.arc(pos.x,pos.y,dotR*1.8,0,Math.PI*2);ctx2d.stroke();
+}
+// Current tip
+if(path.length>0&&i===path[path.length-1]&&path.length<currentLevel.dots.length){
+ctx2d.strokeStyle='rgba(255,255,255,0.6)';
+ctx2d.lineWidth=2;
+ctx2d.beginPath();ctx2d.arc(pos.x,pos.y,dotR*2,0,Math.PI*2);ctx2d.stroke();
+}
+}
+
+// Draw valid moves (subtle) when few dots visited
+if(path.length>0&&path.length<currentLevel.dots.length){
+const last=path[path.length-1];
+for(let i=0;i<currentLevel.dots.length;i++){
+if(path.includes(i))continue;
+if(!areAdjacent(last,i))continue;
+if(edgeUsed(last,i))continue;
+const pos=dotScreenPos[i];
+ctx2d.fillStyle='rgba(255,255,255,0.08)';
+ctx2d.beginPath();ctx2d.arc(pos.x,pos.y,dotR*1.5,0,Math.PI*2);ctx2d.fill();
+}
+}
+
+// Particles
+updateParticles(dt);
+for(const p of particles){
+ctx2d.globalAlpha=Math.max(0,p.life);
+ctx2d.fillStyle=p.color;
+ctx2d.beginPath();ctx2d.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx2d.fill();
+}
+ctx2d.globalAlpha=1;
+
+if(shakeAmount>0.1)ctx2d.restore();
+lineAnimProgress=Math.min(1,lineAnimProgress+dt*5);
+}
+
+// ============================================================
+// INIT & EVENT SETUP
+// ============================================================
+function init(){
+// Pointer events
+canvas.addEventListener('pointerdown',handlePointerDown);
+canvas.addEventListener('pointermove',handlePointerMove);
+canvas.addEventListener('pointerup',handlePointerUp);
+canvas.addEventListener('pointercancel',handlePointerUp);
+// Resize
+window.addEventListener('resize',resize);
+resize();
+// Start render loop
+rafId=requestAnimationFrame(render);
+// Show menu streak
+const s=loadSave();
+const el=document.getElementById('menu-streak');
+if(s.bestStreak>0){el.style.display='block';el.textContent='Best Streak: '+s.bestStreak}
+}
+
+function cleanup(){
+cancelAnimationFrame(rafId);
+Audio.stopBGM();
+clearTimeout(hintTimer);
+timers.forEach(t=>clearTimeout(t));
+timers=[];
+canvas.removeEventListener('pointerdown',handlePointerDown);
+canvas.removeEventListener('pointermove',handlePointerMove);
+canvas.removeEventListener('pointerup',handlePointerUp);
+canvas.removeEventListener('pointercancel',handlePointerUp);
+window.removeEventListener('resize',resize);
+}
+
+// Expose public API
+return{showScreen,startLevel,exitGame,undoMove,resetLevel,useHint,replayLevel,nextLevel,init,cleanup};
+})();
+
+// Boot
+G.init();
+</script>
+</body>
+</html>
