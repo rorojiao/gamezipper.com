@@ -117,6 +117,7 @@ const ctx = canvas.getContext('2d');
 let cw, ch, blockW; // canvas px width/height and per-cell size
 
 function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
   const container = document.getElementById('canvas-container');
   const availW = Math.min(container.clientWidth, 380);
   const availH = container.clientHeight || window.innerHeight * 0.65;
@@ -128,8 +129,11 @@ function resizeCanvas() {
     cw = availW;
     ch = Math.floor(availW / aspect);
   }
-  canvas.width = cw;
-  canvas.height = ch;
+  canvas.width = cw * dpr;
+  canvas.height = ch * dpr;
+  canvas.style.width = cw + 'px';
+  canvas.style.height = ch + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   blockW = cw / COLS;
 }
 

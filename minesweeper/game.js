@@ -320,6 +320,7 @@ function resizeCanvas() {
   if (!canvas) return;
   ctx = canvas.getContext('2d');
 
+  const dpr = window.devicePixelRatio || 1;
   const cfg = DIFFICULTIES[difficulty];
   const headerH = 140; // roughly ms-header + ms-hud + ms-controls
   const navH = 28;
@@ -330,10 +331,11 @@ function resizeCanvas() {
   boardPixelW = cfg.cols * cellSize;
   boardPixelH = cfg.rows * cellSize;
 
-  canvas.width = boardPixelW;
-  canvas.height = boardPixelH;
+  canvas.width = boardPixelW * dpr;
+  canvas.height = boardPixelH * dpr;
   canvas.style.width = boardPixelW + 'px';
   canvas.style.height = boardPixelH + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
 // ── Drawing ─────────────────────────────────────────────────────────

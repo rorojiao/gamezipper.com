@@ -12,9 +12,15 @@ const GROUND = 0.72; // ground Y ratio
 let W, H, GY;
 
 function resize() {
+  const dpr = window.devicePixelRatio || 1;
   const maxW = Math.min(window.innerWidth, 800);
-  W = canvas.width  = maxW;
-  H = canvas.height = window.innerHeight;
+  W = maxW;
+  H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   GY = H * GROUND;
 }
 resize();

@@ -278,21 +278,22 @@ var particles = {
     for (var i = 0; i < count; i++) {
       var p = { x: x, y: y, color: color, type: type, life: 1, rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.4 };
       var angle = Math.random() * Math.PI * 2;
+      var H = renderer.getHeight();
       if (type === 'chunk') {
         var speed = Math.random() * 18 + 8;
         p.vx = Math.cos(angle) * speed; p.vy = Math.sin(angle) * speed - 4;
-        p.gravity = 0.6; p.size = Math.random() * 8 + 4; p.decay = 0.015;
+        p.gravity = H * 0.0015; p.size = Math.random() * 8 + 4; p.decay = 0.015;
       } else if (type === 'spark') {
         var speed = Math.random() * 25 + 12;
         p.vx = Math.cos(angle) * speed; p.vy = Math.sin(angle) * speed;
-        p.gravity = 0.1; p.size = Math.random() * 3 + 1; p.decay = 0.04;
+        p.gravity = H * 0.00025; p.size = Math.random() * 3 + 1; p.decay = 0.04;
       } else if (type === 'ring') {
         p.vx = 0; p.vy = 0; p.gravity = 0; p.size = 5;
         p.maxSize = Math.random() * 60 + 40; p.decay = 0.035;
       } else if (type === 'star') {
         var speed = Math.random() * 6 + 2;
         p.vx = Math.cos(angle) * speed; p.vy = Math.sin(angle) * speed - 3;
-        p.gravity = 0.05; p.size = Math.random() * 6 + 3; p.decay = 0.012;
+        p.gravity = H * 0.000125; p.size = Math.random() * 6 + 3; p.decay = 0.012;
       }
       _particles.push(p);
     }
