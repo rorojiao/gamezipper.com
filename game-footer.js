@@ -60,7 +60,8 @@
     {n:'Dots and Boxes',e:'⬜',u:'/dots-and-boxes/',c:'puzzle'},
     {n:'Sliding Puzzle',e:'🔢',u:'/sliding-puzzle/',c:'puzzle'},
     {n:'Reversi',e:'⚫',u:'/reversi/',c:'puzzle'},
-    {n:'Match Ninja',e:'🧊',u:'/match-ninja/',c:'puzzle'}
+    {n:'Match Ninja',e:'🧊',u:'/match-ninja/',c:'puzzle'},
+    {n:'Jewel Coloring',e:'💎',u:'/jewel-coloring/',c:'puzzle'}
   ];
 
   var cur = location.pathname;
