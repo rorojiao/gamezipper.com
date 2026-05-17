@@ -28,6 +28,7 @@
     {n:'Stacker',e:'📦',u:'/stacker/',c:'arcade'},
     {n:'Wood Block',e:'🪵',u:'/wood-block-puzzle/',c:'puzzle'},
     {n:'Bolt Jam 3D',e:'🔩',u:'/bolt-jam-3d/',c:'puzzle'},
+    {n:'Block Blast Bingo',e:'🧩',u:'/block-blast-bingo/',c:'puzzle'},
     {n:'Mo Yu Fayu',e:'🐟',u:'/mo-yu-fayu/',c:'idle'},
     {n:'Tetris',e:'🧱',u:'/tetris/',c:'puzzle'},
     {n:'Sudoku',e:'🔢',u:'/sudoku/',c:'puzzle'},
