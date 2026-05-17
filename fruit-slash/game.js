@@ -6,8 +6,14 @@ const ctx = canvas.getContext('2d');
 
 let W, H;
 function resize() {
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
+  const dpr = window.devicePixelRatio || 1;
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 resize();
 window.addEventListener('resize', resize);
@@ -48,17 +54,17 @@ class Fruit {
     this.isBomb = typeIdx === 8;
 
     // Spawn from bottom, random x
-    this.x = 80 + Math.random() * (W - 160);
+    this.r = Math.max(24, Math.min(40, W * 0.05)) + Math.random() * 10;
+    this.x = this.r + Math.random() * (W - this.r * 2);
     this.y = H + 60;
-    this.r = 36 + Math.random() * 14;
 
     // Launch velocity — upward with slight horizontal
-    const speed = 11 + Math.random() * 5;
+    const speed = (H * 0.02) + Math.random() * (H * 0.008);
     const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.8;
     this.vx = Math.cos(angle) * speed * (Math.random() > 0.5 ? 1 : -1) * 0.4;
     this.vy = Math.sin(angle) * speed;
 
-    this.gravity = 0.28;
+    this.gravity = H * 0.0004;
     this.rotation = 0;
     this.rotSpeed = (Math.random() - 0.5) * 0.12;
     this.sliced = false;
