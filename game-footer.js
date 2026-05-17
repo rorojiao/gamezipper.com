@@ -55,7 +55,8 @@
     {n:'Bubble Shooter',e:'🫧',u:'/bubble-shooter/',c:'puzzle'},
     {n:'Tic Tac Toe',e:'⭕',u:'/tic-tac-toe/',c:'puzzle'},
     {n:'One Line Connect',e:'🔗',u:'/one-line-connect/',c:'puzzle'},
-  {n:'Physics Draw Puzzle',e:'✏️',u:'/physics-draw-puzzle/',c:'puzzle'}
+  {n:'Physics Draw Puzzle',e:'✏️',u:'/physics-draw-puzzle/',c:'puzzle'},
+    {n:'Dots and Boxes',e:'⬜',u:'/dots-and-boxes/',c:'puzzle'}
   ];
 
   var cur = location.pathname;
