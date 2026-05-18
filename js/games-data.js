@@ -14,7 +14,6 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#ff9a9e,#fecfef)',
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
   'linear-gradient(135deg,#a1c4fd,#c2e9fb)'
-,{name:"Bridge Builder",emoji:"🌉",cat:"puzzle",tags:["Bridge","Builder","Physics","Engineering","Puzzle","Construction","Strategy","Brain Teaser"],url:"/bridge-builder/",desc:"Build bridges and test your engineering skills! 30 physics puzzle levels with wood, steel, and rope materials. Budget challenges, star ratings, and stress visualization. Play free, no download!",isNew:true,status:"live"}
 ];
 const GAMES = [
   {name:"Fruit Slash",emoji:"🍉",cat:"arcade",tags:["Arcade","Swipe","Fruit"],url:"/fruit-slash/",desc:"Swipe to slice fruits! Cut fast, combo big, dodge bombs. 60 seconds of juicy action!",isNew:true,status:"live"},
