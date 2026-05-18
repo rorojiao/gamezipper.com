@@ -17,10 +17,10 @@
 <meta content="Play 91 free online games in 2026 — 2048, Snake, Solitaire, Checkers, Mahjong, Sliding Puzzle, brick breaker, word puzzles & more. No download, no signup. Works on Chromebook and mobile. Updated May 2026." name="description"/>
 <meta content="free online games, html5 games, browser games, puzzle games, arcade games, idle games" name="keywords"/>
 <link href="https://gamezipper.com/" rel="canonical"/>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com">
 <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+<link rel="prefetch" href="/2048/">
+<link rel="prefetch" href="/snake/">
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
@@ -49,7 +49,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .cat-btn{padding:8px 20px;border-radius:25px;border:2px solid #333;background:transparent;color:#fff;cursor:pointer;font-size:0.9em;transition:all 0.3s}
 .cat-btn:hover,.cat-btn.active{background:#4ecdc4;border-color:#4ecdc4;color:#000}
 .games{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;padding:20px;max-width:1200px;margin:0 auto}
-.game-card{background:#1a1a2e;border-radius:16px;overflow:hidden;transition:transform 0.3s,box-shadow 0.3s,opacity 0.6s;cursor:pointer;text-decoration:none;color:#fff;opacity:0;transform:translateY(20px);position:relative}
+.game-card{background:#1a1a2e;border-radius:16px;overflow:hidden;transition:transform 0.3s,box-shadow 0.3s,opacity 0.6s;cursor:pointer;text-decoration:none;color:#fff;opacity:0;transform:translateY(20px);position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .game-card.visible{opacity:1;transform:translateY(0)}
 .game-card:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(78,205,196,0.3)}
 .game-thumb{width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:5em;position:relative;overflow:hidden}
@@ -78,7 +78,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gz-cta-btn.secondary{background:transparent;border:2px solid #4ecdc4;color:#4ecdc4;box-shadow:none}
 .gz-cta-btn.secondary:hover{background:rgba(78,205,196,0.1)}
 @media(max-width:600px){.header h1{font-size:1.8em}.games{grid-template-columns:repeat(2,1fr);gap:12px;padding:12px}.game-info h3{font-size:0.85em}.game-thumb{font-size:3.5em}}.new-badge{top:5px;right:5px;font-size:.6em;padding:2px 6px}
+.game-card:active{transform:scale(0.97)!important;box-shadow:0 2px 10px rgba(78,205,196,0.2)!important}
+.cat-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.cat-btn:active{transform:scale(0.95)}
+.gz-cta-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.gz-cta-btn:active{transform:scale(0.97)}
+@media(prefers-reduced-motion:reduce){*{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}.game-card{opacity:1;transform:none}.gz-skeleton{animation:none;background:#252545}}
 </style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"GameZipper","url":"https://gamezipper.com","logo":"https://gamezipper.com/favicon.svg","sameAs":[],"description":"Free online browser games — no downloads, no sign-up. 90+ puzzle, arcade, idle & card games."}</script>
 <script type="application/ld+json">{
   "@context": "https://schema.org",
   "@type": "VideoGame",
@@ -367,6 +374,17 @@ function render(list){
         <div class="tags">${g.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
       </div>
     </a>`).join('');
+  // IntersectionObserver for lazy reveal animation
+  if('IntersectionObserver' in window){
+    var obs=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}
+      });
+    },{threshold:0.1,rootMargin:'50px'});
+    document.querySelectorAll('.game-card').forEach(function(c){obs.observe(c)});
+  }else{
+    document.querySelectorAll('.game-card').forEach(function(c){c.classList.add('visible')});
+  }
   // Insert mid-grid ad after 20th game card
   if(list.length > 20){
     var cards = document.getElementById('games').querySelectorAll('.game-card');
@@ -377,11 +395,6 @@ function render(list){
       cards[20].parentNode.insertBefore(adDiv, cards[20].nextSibling);
     }
   }
-  requestAnimationFrame(()=>{
-    document.querySelectorAll('.game-card').forEach((c,i)=>{
-      setTimeout(()=>c.classList.add('visible'),i*80);
-    });
-  });
 }
 
 function filter(cat,btn){
@@ -552,5 +565,41 @@ document.getElementById('game-count').textContent=liveGames.length;
 </footer>
 <script src="/gz-analytics.js" defer></script>
 <script src="/engage.js" defer></script>
+<!-- Back to Top Button -->
+<style>
+#gz-btt{position:fixed;bottom:24px;right:24px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4ecdc4,#45b7d1);color:#000;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;transform:translateY(10px);z-index:9999;box-shadow:0 4px 16px rgba(78,205,196,0.4);touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#gz-btt.visible{opacity:1;pointer-events:auto;transform:translateY(0)}
+#gz-btt:active{transform:scale(0.9)}
+@media(prefers-reduced-motion:reduce){#gz-btt{transition:none}}
+</style>
+<button id="gz-btt" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+(function(){var b=document.getElementById('gz-btt');var t=0;window.addEventListener('scroll',function(){if(!t){t=setTimeout(function(){t=0;b.classList.toggle('visible',window.scrollY>600)},100)}},false)})();
+</script>
+<!-- FAQ Accordion -->
+<script>
+(function(){
+var faqs=document.querySelectorAll('.faq-item');
+if(!faqs.length)return;
+faqs.forEach(function(item){
+var h3=item.querySelector('h3');
+if(!h3)return;
+h3.style.cursor='pointer';
+h3.setAttribute('role','button');
+h3.setAttribute('aria-expanded','true');
+h3.setAttribute('tabindex','0');
+var p=item.querySelector('p');
+if(p)p.style.display='block';
+function toggle(){
+var open=p.style.display!=='none';
+p.style.display=open?'none':'block';
+h3.setAttribute('aria-expanded',String(!open));
+h3.querySelector('span')||(h3.innerHTML=h3.textContent+' <span style="float:right;font-size:.8em">'+(open?'▶':'▼')+'</span>');
+}
+h3.addEventListener('click',toggle);
+h3.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}});
+});
+})();
+</script>
 </body>
 </html>
