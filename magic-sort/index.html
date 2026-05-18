@@ -1917,6 +1917,44 @@ let hintTimer = 0;
 let hintTapCount = 0;
 let hintTapTimer = 0;
 
+// ─── Daily Challenge ───
+let dailyChallengeLevel = -1;
+let dailyCompleted = {};
+function getDailySeed() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+function getDailyLevel() {
+  const seed = getDailySeed();
+  // Use a simple hash to pick a level from medium+ range (100+)
+  let h = seed;
+  h = ((h >> 16) ^ h) * 0x45d9f3b;
+  h = ((h >> 16) ^ h) * 0x45d9f3b;
+  h = (h >> 16) ^ h;
+  const minLv = 100;
+  const maxLv = TOTAL_LEVELS - 1;
+  dailyChallengeLevel = minLv + (Math.abs(h) % (maxLv - minLv + 1));
+  return dailyChallengeLevel;
+}
+function loadDailySave() {
+  try {
+    const d = JSON.parse(localStorage.getItem("magicSort_v2") || "{}");
+    dailyCompleted = d.dailyCompleted || {};
+  } catch (e) { dailyCompleted = {}; }
+}
+function saveDailySave() {
+  try {
+    const d = JSON.parse(localStorage.getItem("magicSort_v2") || "{}");
+    d.dailyCompleted = dailyCompleted;
+    localStorage.setItem("magicSort_v2", JSON.stringify(d));
+  } catch (e) {}
+}
+function isDailyDone() {
+  return !!dailyCompleted[getDailySeed()];
+}
+getDailyLevel();
+loadDailySave();
+
 // Difficulty sections for level select
 const DIFF_SECTIONS = [
   { start: 0, label: "TUTORIAL", color: "#2ed573" },
@@ -2071,6 +2109,11 @@ function completePour() {
       levelUnlocked[currentLevel + 1] = true;
     }
     saveSave();
+    // Record daily challenge completion
+    if (currentLevel === dailyChallengeLevel) {
+      dailyCompleted[getDailySeed()] = { stars, moves };
+      saveDailySave();
+    }
     sfxWin();
     spawnConfetti();
     // Dispatch custom event for interstitial ad system
@@ -2714,11 +2757,17 @@ function renderSplash() {
     drawButton(bx, by, bw, bh, "▶  PLAY", hoverBtn === 0, true);
 
     // Continue button (if player has played before)
+    let nextBtnY = by + bh + 12;
     if (lastPlayedLevel > 0) {
-      const contY = by + bh + 12;
       const contW = Math.min(200, W * 0.55);
-      drawButton(W / 2 - contW / 2, contY, contW, 42, "⏩  Continue Lv." + (lastPlayedLevel + 1), hoverBtn === 1, false);
+      drawButton(W / 2 - contW / 2, nextBtnY, contW, 42, "⏩  Continue Lv." + (lastPlayedLevel + 1), hoverBtn === 1, false);
+      nextBtnY += 42 + 10;
     }
+
+    // Daily Challenge button
+    const dailyDone = isDailyDone();
+    const dailyW = Math.min(200, W * 0.55);
+    drawButton(W / 2 - dailyW / 2, nextBtnY, dailyW, 42, (dailyDone ? "✅ " : "🔥 ") + "Daily Challenge", hoverBtn === 2, true);
   }
 
   // Footer — clickable link to GameZipper home
@@ -2734,12 +2783,36 @@ function renderSplash() {
 function renderMenu() {
   drawBackground();
 
+  // Daily challenge banner (if not done today)
+  if (!isDailyDone()) {
+    const bannerH = 28;
+    const bannerY = 4;
+    X.save();
+    const bannerGrad = X.createLinearGradient(0, bannerY, W, bannerY);
+    bannerGrad.addColorStop(0, "rgba(255,107,53,0.15)");
+    bannerGrad.addColorStop(0.5, "rgba(255,165,2,0.2)");
+    bannerGrad.addColorStop(1, "rgba(255,107,53,0.15)");
+    X.fillStyle = bannerGrad;
+    roundRect(8, bannerY, W - 16, bannerH, 6);
+    X.fill();
+    X.strokeStyle = "rgba(255,165,2,0.3)";
+    X.lineWidth = 1;
+    X.stroke();
+    X.fillStyle = "#ffa502";
+    X.font = "600 11px 'Nunito',sans-serif";
+    X.textAlign = "center";
+    X.textBaseline = "middle";
+    X.fillText("🔥 Daily Challenge: Level " + (dailyChallengeLevel + 1) + " — Tap to play!", W / 2, bannerY + bannerH / 2);
+    X.restore();
+  }
+
   // Header
   X.fillStyle = "#fff";
   X.font = `800 ${Math.round(Math.min(W * 0.07, 32))}px 'Baloo 2','Nunito',sans-serif`;
   X.textAlign = "center";
   X.textBaseline = "middle";
-  X.fillText("Select Level", W / 2, 34);
+  const headerY = isDailyDone() ? 34 : 48;
+  X.fillText("Select Level", W / 2, headerY);
 
   // Stats bar — completed count & stars with progress bar
   const completedCount = Object.keys(levelStars).length;
@@ -3296,13 +3369,20 @@ function onTap(px, py) {
       menuScrollY = 0;
     }
     // Continue button
+    let nextBtnY = by + bh + 12;
     if (lastPlayedLevel > 0) {
-      const contY = by + bh + 12;
       const contW = Math.min(200, W * 0.55);
-      if (hitTest(px, py, W / 2 - contW / 2, contY, contW, 42) && splashTimer >= 0.8) {
+      if (hitTest(px, py, W / 2 - contW / 2, nextBtnY, contW, 42) && splashTimer >= 0.8) {
         sfxClick();
         initLevel(lastPlayedLevel);
       }
+      nextBtnY += 42 + 10;
+    }
+    // Daily Challenge button
+    const dailyW = Math.min(200, W * 0.55);
+    if (hitTest(px, py, W / 2 - dailyW / 2, nextBtnY, dailyW, 42) && splashTimer >= 0.8) {
+      sfxClick();
+      initLevel(dailyChallengeLevel);
     }
     // Footer GameZipper.com link
     if (splashFooterLink && hitTest(px, py, splashFooterLink.x, splashFooterLink.y, splashFooterLink.w, splashFooterLink.h)) {
@@ -3368,6 +3448,10 @@ function onTap(px, py) {
 
     if (hitTest(px, py, 12, 8, 90, 30)) {
       window.location.href = "/"; return;
+    }
+    // Daily challenge banner tap
+    if (!isDailyDone() && hitTest(px, py, 8, 4, W - 16, 28)) {
+      sfxClick(); initLevel(dailyChallengeLevel); return;
     }
     // Jump button
     if (hitTest(px, py, W - 78, 8, 66, 30)) {
