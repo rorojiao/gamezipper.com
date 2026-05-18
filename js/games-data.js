@@ -109,6 +109,7 @@ const GAMES = [
   {name:"Connect Four",emoji:"🔴",cat:"puzzle",tags:["Puzzle","Board","Strategy","Connect","Four","Disc","AI","Classic","Two Player","Brain"],url:"/connect-four/",desc:"Drop discs and connect four in a row to win! Classic strategy board game with smart AI opponent (3 difficulty levels), local 2-player mode, win streaks, undo and score tracking. No download needed!",isNew:true,status:"live"},
   {name:"Hangman",emoji:"🎯",cat:"puzzle",tags:["Puzzle","Word","Guess","Classic","Brain","Letter","Spelling","Vocabulary","Trivia","Kids"],url:"/hangman/",desc:"Guess the hidden word letter by letter before the hangman is drawn! 200+ words across 10 categories, 3 difficulty levels, daily challenges, hints, streaks and stats tracking. Free online hangman game!",isNew:true,status:"live"},
 {name:"Gomoku",emoji:"⚫",cat:"puzzle",tags:["Puzzle","Board","Strategy","Gomoku","Five in a Row","AI","Classic","Two Player","Brain","Go"],url:"/gomoku/",desc:"Play Gomoku (Five in a Row) online free! Challenge AI with 4 difficulty levels or play local 2-player on 9x9, 13x13 or 15x15 boards. Smart minimax AI with alpha-beta pruning. No download needed!",isNew:true,status:"live"},
+{name:"Dominoes",emoji:"🁣",cat:"puzzle",tags:["Puzzle","Board","Dominoes","Domino","Strategy","Classic","Tile","AI","Two Player","Brain"],url:"/dominoes/",desc:"Play dominoes online free against AI or a friend! Draw, Block and All Fives (Muggins) modes. Classic double-six dominoes with 3 difficulty levels, undo, stats and tutorial. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
