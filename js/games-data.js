@@ -106,6 +106,7 @@ const GAMES = [
   {name:"Twisted Tangle",emoji:"🧶",cat:"puzzle",tags:["Puzzle","Yarn","Untangle","Rope","Casual","Relaxing","Brain","Strategy"],url:"/tangled-yarn/",desc:"Untangle twisted yarn ropes by dragging segments! Relaxing puzzle game with 50 levels across 5 packs. Remove all crossings to solve each puzzle. 3-star rating system. No download needed!",isNew:true,status:"live"},
 {name:"Word Search",emoji:"🔍",cat:"puzzle",tags:["Puzzle","Word","Search","Find","Hidden","Letters","Grid","Brain","Casual","Daily"],url:"/word-search/",desc:"Find hidden words in letter grids! 30+ themed categories, 4 difficulty levels, daily puzzle, hints, timer and star ratings. The classic word search puzzle with unlimited free puzzles. No download needed!",isNew:true,status:"live"},
   {name:"Connect Four",emoji:"🔴",cat:"puzzle",tags:["Puzzle","Board","Strategy","Connect","Four","Disc","AI","Classic","Two Player","Brain"],url:"/connect-four/",desc:"Drop discs and connect four in a row to win! Classic strategy board game with smart AI opponent (3 difficulty levels), local 2-player mode, win streaks, undo and score tracking. No download needed!",isNew:true,status:"live"},
+  {name:"Hangman",emoji:"🎯",cat:"puzzle",tags:["Puzzle","Word","Guess","Classic","Brain","Letter","Spelling","Vocabulary","Trivia","Kids"],url:"/hangman/",desc:"Guess the hidden word letter by letter before the hangman is drawn! 200+ words across 10 categories, 3 difficulty levels, daily challenges, hints, streaks and stats tracking. Free online hangman game!",isNew:true,status:"live"},
 ];
 
 /**
