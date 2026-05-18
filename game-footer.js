@@ -76,6 +76,7 @@
       {n:'Brain Out',e:'🧠',u:'/brain-out/',c:'puzzle'},
       {n:'Bridge Builder',e:'🌉',u:'/bridge-builder/',c:'puzzle'},
       {n:'Checkers',e:'⬤',u:'/checkers/',c:'puzzle'},
+      {n:'Gomoku',e:'⚫',u:'/gomoku/',c:'puzzle'},
       {n:'Cut the Rope',e:'🍬',u:'/cut-the-rope/',c:'puzzle'},
       {n:'Drive Fury',e:'🏎️',u:'/drive-fury/',c:'arcade'},
       {n:'Escape Manor',e:'🏚️',u:'/escape-manor/',c:'puzzle'},
