@@ -2490,49 +2490,72 @@
     // ============================================================
     // SECTION 15: INITIALIZATION
     // ============================================================
+    function preventContextMenu(e) { e.preventDefault(); }
+
+    function handleVisibilityChange() {
+        if (document.hidden && gameState && gameState.screen === 'gameScreen' && !gameState.paused && !gameState.gameOver) {
+            togglePause();
+        }
+    }
+
+    function handleKeydown(e) {
+        if (!gameState) return;
+        if (e.code === 'Space' && gameState.screen === 'gameScreen' && !gameState.paused && !gameState.waveInProgress) {
+            e.preventDefault();
+            startWave();
+        }
+        if (e.code === 'Escape') {
+            if (gameState.selectedTower) {
+                gameState.selectedTower = null;
+                updateTowerPanel();
+            } else if (gameState.selectedTowerType) {
+                gameState.selectedTowerType = null;
+                gameState.placingTower = false;
+                updateTowerPanel();
+            } else if (!gameState.paused) {
+                togglePause();
+            }
+        }
+    }
+
+    function cleanup() {
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+        activeTimers.forEach(id => clearTimeout(id));
+        activeTimers = [];
+        stopBGM();
+        if (audioCtx) {
+            try { audioCtx.close(); } catch(e) {}
+            audioCtx = null;
+        }
+        if (canvas) {
+            canvas.removeEventListener('pointerdown', handlePointerDown);
+            canvas.removeEventListener('pointermove', handlePointerMove);
+            canvas.removeEventListener('pointerup', handlePointerUp);
+            canvas.removeEventListener('pointercancel', handlePointerUp);
+            canvas.removeEventListener('contextmenu', preventContextMenu);
+        }
+        window.removeEventListener('resize', resizeCanvas);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('beforeunload', cleanup);
+        document.removeEventListener('keydown', handleKeydown);
+        document.removeEventListener('contextmenu', preventContextMenu);
+        gameState = null;
+    }
+
     function init() {
         loadProgress();
         initCanvas();
         buildTowerPanel();
-        
-        // Start game loop
+
         animationId = requestAnimationFrame(gameLoop);
-        
-        // Visibility change - pause when tab hidden
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden && gameState.screen === 'gameScreen' && !gameState.paused && !gameState.gameOver) {
-                togglePause();
-            }
-        });
-        
-        // Cleanup on unload
-        window.addEventListener('beforeunload', () => {
-            if (animationId) cancelAnimationFrame(animationId);
-            stopBGM();
-        });
-        
-        // Prevent right-click context
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        
-        // Start wave button handler
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && gameState.screen === 'gameScreen' && !gameState.paused && !gameState.waveInProgress) {
-                e.preventDefault();
-                startWave();
-            }
-            if (e.code === 'Escape') {
-                if (gameState.selectedTower) {
-                    gameState.selectedTower = null;
-                    updateTowerPanel();
-                } else if (gameState.selectedTowerType) {
-                    gameState.selectedTowerType = null;
-                    gameState.placingTower = false;
-                    updateTowerPanel();
-                } else if (!gameState.paused) {
-                    togglePause();
-                }
-            }
-        });
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('beforeunload', cleanup);
+        document.addEventListener('contextmenu', preventContextMenu);
+        document.addEventListener('keydown', handleKeydown);
     }
 
     // Auto-init when DOM ready
