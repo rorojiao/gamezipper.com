@@ -1885,6 +1885,7 @@ let selectedBottle = -1;
 let moves = 0;
 let undoStack = [];   // { from, to, colors: [colorIdx, ...] }
 let levelStars = {};  // levelIdx -> 1|2|3
+let bestMoves = {};  // levelIdx -> best move count
 let levelUnlocked = { 0: true };
 let animating = false;
 let anim = { from: -1, to: -1, color: -1, count: 0, progress: 0, startX: 0, startY: 0, endX: 0, endY: 0 };
@@ -1985,6 +1986,7 @@ function loadSave() {
   try {
     const d = JSON.parse(localStorage.getItem("magicSort_v2") || "{}");
     levelStars = d.stars || {};
+    bestMoves = d.bestMoves || {};
     levelUnlocked = d.unlocked || { 0: true };
     if (d.sfx !== undefined) sfxEnabled = d.sfx;
     if (d.lastPlayed !== undefined) lastPlayedLevel = d.lastPlayed;
@@ -1992,7 +1994,7 @@ function loadSave() {
 }
 function saveSave() {
   try {
-    localStorage.setItem("magicSort_v2", JSON.stringify({ stars: levelStars, unlocked: levelUnlocked, sfx: sfxEnabled, lastPlayed: lastPlayedLevel }));
+    localStorage.setItem("magicSort_v2", JSON.stringify({ stars: levelStars, unlocked: levelUnlocked, sfx: sfxEnabled, lastPlayed: lastPlayedLevel, bestMoves: bestMoves }));
   } catch (e) {}
 }
 loadSave();
@@ -2104,6 +2106,9 @@ function completePour() {
     const stars = moves <= threshold1 ? 3 : moves <= threshold2 ? 2 : 1;
     if (!levelStars[currentLevel] || levelStars[currentLevel] < stars) {
       levelStars[currentLevel] = stars;
+    }
+    if (!bestMoves[currentLevel] || moves < bestMoves[currentLevel]) {
+      bestMoves[currentLevel] = moves;
     }
     if (currentLevel + 1 < TOTAL_LEVELS) {
       levelUnlocked[currentLevel + 1] = true;
@@ -3057,7 +3062,7 @@ function renderGame() {
   X.textAlign = "right";
   X.fillStyle = "rgba(255,255,255,0.9)";
   X.font = "700 15px 'Nunito',sans-serif";
-  X.fillText("Moves: " + moves, W - 14, 14);
+  X.fillText("Moves: " + moves + (bestMoves[currentLevel] ? " (Best:" + bestMoves[currentLevel] + ")" : ""), W - 14, 14);
 
   // Sound toggle button (left side, below home)
   drawButton(10, 36, 28, 28, sfxEnabled ? "SFX" : "OFF", hoverBtn === 14, false);
@@ -3258,6 +3263,13 @@ function renderWin() {
   X.fillStyle = "rgba(255,255,255,0.65)";
   X.font = "600 15px 'Nunito',sans-serif";
   X.fillText("Moves: " + moves, W / 2, cardY + 125);
+  // Best record
+  if (bestMoves[currentLevel]) {
+    const bestStr = moves <= bestMoves[currentLevel] ? "🏆 New Best!" : "Best: " + bestMoves[currentLevel];
+    X.fillStyle = moves <= bestMoves[currentLevel] ? "#ffd32a" : "rgba(255,255,255,0.4)";
+    X.font = "600 12px 'Nunito',sans-serif";
+    X.fillText(bestStr, W / 2, cardY + 143);
+  }
 
   // Buttons
   const btnW = 115, btnH = 42, btnGap = 12;
