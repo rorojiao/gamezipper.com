@@ -291,11 +291,61 @@
     return div.innerHTML;
   }
 
+  // ── 5. Scroll Depth Tracking for GA4 Engagement ───────
+  function trackScrollDepth() {
+    if (location.pathname !== '/') return;
+    var milestones = [25, 50, 75, 90];
+    var fired = {};
+    var startTime = Date.now();
+
+    function onScroll() {
+      var scrollY = window.scrollY || window.pageYOffset;
+      var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (docHeight <= 0) return;
+      var pct = Math.round((scrollY / docHeight) * 100);
+
+      milestones.forEach(function(m) {
+        if (pct >= m && !fired[m]) {
+          fired[m] = true;
+          // Fire GA4 event if gtag is available
+          if (typeof gtag === 'function') {
+            gtag('event', 'scroll_depth', {
+              event_category: 'engagement',
+              event_label: m + '%',
+              value: m,
+              non_interaction: true
+            });
+          }
+          // Also send to custom analytics
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(
+              'https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=' +
+              encodeURIComponent(location.pathname) +
+              '&t=' + Date.now() +
+              '&scroll=' + m
+            );
+          }
+        }
+      });
+    }
+
+    var scrollTimer = 0;
+    window.addEventListener('scroll', function() {
+      if (!scrollTimer) {
+        scrollTimer = setTimeout(function() {
+          scrollTimer = 0;
+          onScroll();
+        }, 200);
+      }
+    }, { passive: true });
+  }
+
   // ── Initialize ──────────────────────────────────────────
   // Use requestIdleCallback for non-critical initialization
   function init() {
     trackVisit();
     showContinuePlaying();
+    trackScrollDepth();
 
     if ('requestIdleCallback' in window) {
       requestIdleCallback(function() {
