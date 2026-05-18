@@ -380,8 +380,9 @@ function updateHUD() {
   document.getElementById('combo-val').textContent = 'x' + combo;
 }
 
-// ── Game Loop ────────────────────────────────────────────────
+// ── Game Loop ───────────────────────────────────────────────
 let lastTime = 0;
+let rafId = null;
 
 function gameLoop(ts) {
   const dt = Math.min(ts - lastTime, 50);
@@ -420,10 +421,33 @@ function gameLoop(ts) {
     drawComboTexts();
   }
 
-  requestAnimationFrame(gameLoop);
+  rafId = requestAnimationFrame(gameLoop);
 }
 
-requestAnimationFrame(ts => { lastTime = ts; requestAnimationFrame(gameLoop); });
+requestAnimationFrame(ts => { lastTime = ts; rafId = requestAnimationFrame(gameLoop); });
+
+// ── Visibility & Cleanup ───────────────────────────────────
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  } else {
+    if (state === 'playing') {
+      rafId = requestAnimationFrame(gameLoop);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer-val').textContent = timeLeft;
+        if (timeLeft <= 0) { endGame(false); }
+        if (timeLeft % 15 === 0 && spawnInterval > 500) { spawnInterval -= 80; }
+      }, 1000);
+    }
+  }
+});
+
+window.addEventListener('beforeunload', function() {
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+});
 
 // ── Start Game ───────────────────────────────────────────────
 function startGame() {

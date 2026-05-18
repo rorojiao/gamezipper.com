@@ -430,14 +430,14 @@ canvas#board{display:block;border-radius:8px;border:3px solid #2a2a4a;box-shadow
 // ============================================================
 'use strict';
 
-// ---- 常量定义 ----
+// ---- Constants ----
 const EMPTY = 0;
-const BLACK = 1;  // 玩家 - 黑色
-const WHITE = 2;  // AI - 白色
+const BLACK = 1;  // Player - Black
+const WHITE = 2;  // AI - White
 const BOARD_SIZE = 8;
-const ANIM_DURATION = 300;  // 翻转动画时长
+const ANIM_DURATION = 300;  // Flip animation duration
 
-// ---- 主题配置 ----
+// ---- Theme Configuration ----
 const THEMES = {
   green: {
     boardLight: '#2d5a27',
@@ -464,7 +464,7 @@ const THEMES = {
 
 let currentTheme = 'green';
 
-// ---- 音频系统 ----
+// ---- Audio System ----
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 let soundEnabled = true;
@@ -478,7 +478,7 @@ function getAudioCtx() {
   return audioCtx;
 }
 
-// 播放音效 - 使用Web Audio API生成
+// Play sound effects using Web Audio API
 function playSound(type) {
   if (!soundEnabled) return;
   try {
@@ -489,7 +489,7 @@ function playSound(type) {
     
     switch (type) {
       case 'place': {
-        // 放置音效 - 短促的咔嗒声
+        // Placement sound - short click
         const o = ctx.createOscillator();
         o.type = 'triangle';
         o.frequency.value = 800;
@@ -501,7 +501,7 @@ function playSound(type) {
         break;
       }
       case 'flip': {
-        // 翻转音效 - 快速呼啸
+        // Flip sound - quick whoosh
         const o = ctx.createOscillator();
         o.type = 'sine';
         o.frequency.setValueAtTime(400, now);
@@ -514,7 +514,7 @@ function playSound(type) {
         break;
       }
       case 'capture': {
-        // 捕获音效 - 满足的爆裂声
+        // Capture sound - satisfying burst
         const o = ctx.createOscillator();
         o.type = 'sine';
         o.frequency.value = 600;
@@ -525,7 +525,7 @@ function playSound(type) {
         o.connect(g2);
         o.start(now);
         o.stop(now + 0.2);
-        // 添加谐波
+        // Add harmonics
         const o2 = ctx.createOscillator();
         o2.type = 'sine';
         o2.frequency.value = 1200;
@@ -539,7 +539,7 @@ function playSound(type) {
         break;
       }
       case 'invalid': {
-        // 无效音效 - 短促的嗡嗡
+        // Invalid sound - short buzz
         const o = ctx.createOscillator();
         o.type = 'square';
         o.frequency.value = 200;
@@ -551,7 +551,7 @@ function playSound(type) {
         break;
       }
       case 'win': {
-        // 胜利音效 - 升调琶音 C-E-G-C
+        // Victory sound - ascending arpeggio C-E-G-C
         [523, 659, 784, 1047].forEach((f, i) => {
           const o = ctx.createOscillator();
           o.type = 'sine';
@@ -567,7 +567,7 @@ function playSound(type) {
         break;
       }
       case 'lose': {
-        // 失败音效 - 降调 G-E-C
+        // Defeat sound - descending G-E-C
         [392, 330, 262].forEach((f, i) => {
           const o = ctx.createOscillator();
           o.type = 'sine';
@@ -583,7 +583,7 @@ function playSound(type) {
         break;
       }
       case 'draw': {
-        // 平局音效 - 中性和弦 C-E-G
+        // Draw sound - neutral chord C-E-G
         [523, 659, 784].forEach((f, i) => {
           const o = ctx.createOscillator();
           o.type = 'sine';
@@ -599,7 +599,7 @@ function playSound(type) {
         break;
       }
       case 'hint': {
-        // 提示音效 - 柔和的叮声
+        // Hint sound - soft ding
         const o = ctx.createOscillator();
         o.type = 'sine';
         o.frequency.value = 1200;
@@ -611,7 +611,7 @@ function playSound(type) {
         break;
       }
       case 'button': {
-        // 按钮点击音效
+        // Button click sound
         const o = ctx.createOscillator();
         o.type = 'sine';
         o.frequency.value = 600;
@@ -626,7 +626,7 @@ function playSound(type) {
   } catch (e) {}
 }
 
-// BGM系统 - 使用Web Audio API生成背景音乐
+// BGM system - generate background music using Web Audio API
 const BGM_SCENES = {
   menu: {
     chords: [
@@ -695,7 +695,7 @@ function playBgmScene(scene) {
       playBgNote(freq, time, 4, 0.02);
     });
     
-    // 和弦变化间隔
+    // Chord change interval
     const interval = 2000 + Math.random() * 1000;
     const timeout = setTimeout(scheduleChord, interval);
     bgmTimeouts.push(timeout);
@@ -722,7 +722,7 @@ function startBgm() {
   playBgmScene('menu');
 }
 
-// ---- 游戏状态 ----
+// ---- Game State ----
 let board = [];
 let currentPlayer = BLACK;
 let aiDifficulty = 'medium';
@@ -732,14 +732,14 @@ let undoStack = [];
 let animating = false;
 let animData = null;
 let animStart = 0;
-let flippingPieces = [];  // 正在翻转的棋子队列
+let flippingPieces = [];  // Queue of pieces currently flipping
 let hintCell = null;
 let canvasW = 0;
 let cellSize = 0;
 let lastClickTime = 0;
 let score = 0;
 
-// ---- 统计系统 ----
+// ---- Statistics System ----
 const SAVE_VERSION = 1;
 
 function loadStats() {
@@ -807,10 +807,10 @@ function updateMenuStats() {
   }
 }
 
-// ---- 棋盘逻辑 ----
+// ---- Board Logic ----
 function initBoard() {
   board = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(EMPTY));
-  // 标准开局 - 4个中心棋子
+  // Standard opening - 4 center pieces
   board[3][3] = WHITE;
   board[3][4] = BLACK;
   board[4][3] = BLACK;
@@ -821,12 +821,12 @@ function cloneBoard(b) {
   return b.map(r => r.slice());
 }
 
-// 检查坐标是否在棋盘内
+// Check if coordinates are within the board
 function inBounds(r, c) {
   return r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE;
 }
 
-// 获取某方向上的棋子序列
+// Get sequence of pieces in a direction
 function getLine(r, c, dr, dc, board) {
   const line = [];
   let nr = r + dr;
@@ -841,7 +841,7 @@ function getLine(r, c, dr, dc, board) {
   return line;
 }
 
-// 获取某位置的所有可翻转方向
+// Get all flippable directions for a position
 function getFlips(r, c, color, board) {
   if (board[r][c] !== EMPTY) return [];
   
@@ -852,7 +852,7 @@ function getFlips(r, c, color, board) {
   for (const [dr, dc] of directions) {
     const line = getLine(r, c, dr, dc, board);
     if (line.length > 0 && line[0].color === opponent) {
-      // 检查是否以己方棋子结束
+      // Check if ends with own piece
       const last = line[line.length - 1];
       if (last.color === color) {
         allFlips.push(...line);
@@ -863,7 +863,7 @@ function getFlips(r, c, color, board) {
   return allFlips;
 }
 
-// 获取玩家的所有有效移动
+// Get all valid moves for player
 function getValidMoves(board, player) {
   const moves = [];
   for (let r = 0; r < BOARD_SIZE; r++) {
@@ -879,7 +879,7 @@ function getValidMoves(board, player) {
   return moves;
 }
 
-// 应用移动到棋盘
+// Apply move to board
 function applyMove(boardState, move, player) {
   const newBoard = cloneBoard(boardState);
   newBoard[move.r][move.c] = player;
@@ -891,17 +891,17 @@ function applyMove(boardState, move, player) {
   return newBoard;
 }
 
-// ---- AI系统 ----
+// ---- AI System ----
 
-// 评估函数 - 根据多个因素评估棋盘状态
+// Evaluation function - evaluates board state based on multiple factors
 function evaluateBoard(boardState, aiPlayer) {
   const humanPlayer = aiPlayer === BLACK ? WHITE : BLACK;
   let score = 0;
   
-  // 棋子数量差
+  // Piece count difference
   let aiPieces = 0, humanPieces = 0;
-  let aiFrontier = 0, humanFrontier = 0;  // 前线棋子（邻近空位的棋子）
-  let aiMobility = 0, humanMobility = 0;   // 可移动位置数
+  let aiFrontier = 0, humanFrontier = 0;  // Frontier pieces (pieces adjacent to empty spots)
+  let aiMobility = 0, humanMobility = 0;   // Number of valid moves
   
   const corners = [[0, 0], [0, 7], [7, 0], [7, 7]];
   const edges = [
@@ -925,24 +925,24 @@ function evaluateBoard(boardState, aiPlayer) {
       if (isAi) aiPieces++;
       else humanPieces++;
       
-      // 检查是否为角落
+      // Check if is a corner
       const isCorner = corners.some(([cr, cc]) => cr === r && cc === c);
       if (isCorner) {
         if (isAi) aiCorners++;
         else humanCorners++;
-        score += sign * 100;  // 角落价值
-        continue;  // 角落棋子不再计入其他评估
+        score += sign * 100;  // Corner value
+        continue;  // Corner pieces no longer counted in other evaluations
       }
       
-      // 检查是否为边缘
+      // Check if is an edge
       const isEdge = edges.some(([er, ec]) => er === r && ec === c);
       if (isEdge) {
         if (isAi) aiEdges++;
         else humanEdges++;
-        score += sign * 25;  // 边缘价值
+        score += sign * 25;  // Edge value
       }
       
-      // 前线棋子惩罚
+      // Frontier piece penalty
       let isFrontier = false;
       for (let dr = -1; dr <= 1; dr++) {
         for (let dc = -1; dc <= 1; dc++) {
@@ -962,31 +962,31 @@ function evaluateBoard(boardState, aiPlayer) {
     }
   }
   
-  // 移动力评估
+  // Mobility evaluation
   aiMobility = getValidMoves(boardState, aiPlayer).length;
   humanMobility = getValidMoves(boardState, humanPlayer).length;
   score += (aiMobility - humanMobility) * 10;
   
-  // 前线棋子惩罚（减少被翻转风险）
+  // Frontier piece penalty (reduces flip risk)
   score -= (aiFrontier - humanFrontier) * 5;
   
-  // 棋子数量差
+  // Piece count difference
   score += (aiPieces - humanPieces) * 1;
   
   return score;
 }
 
-// 极大极小算法 + Alpha-Beta剪枝
+// Minimax algorithm + Alpha-Beta pruning
 function minimax(boardState, depth, alpha, beta, maximizing, aiPlayer) {
   const currentPlayer = maximizing ? aiPlayer : (aiPlayer === BLACK ? WHITE : BLACK);
   const moves = getValidMoves(boardState, currentPlayer);
   
-  // 终止条件
+  // Termination condition
   if (moves.length === 0) {
-    // 对方也无法移动，游戏结束
+    // Opponent cannot move either, game over
     const oppMoves = getValidMoves(boardState, aiPlayer === BLACK ? WHITE : BLACK);
     if (oppMoves.length === 0) {
-      // 双方都无法移动，统计棋子
+      // Neither player can move, count pieces
       let aiCount = 0, humanCount = 0;
       for (let r = 0; r < BOARD_SIZE; r++) {
         for (let c = 0; c < BOARD_SIZE; c++) {
@@ -996,7 +996,7 @@ function minimax(boardState, depth, alpha, beta, maximizing, aiPlayer) {
       }
       return aiCount > humanCount ? 10000 + depth : (aiCount < humanCount ? -10000 - depth : 0);
     }
-    // 当前玩家无法移动，跳过
+    // Current player cannot move, skip
     return minimax(boardState, depth, alpha, beta, !maximizing, aiPlayer);
   }
   
@@ -1027,7 +1027,7 @@ function minimax(boardState, depth, alpha, beta, maximizing, aiPlayer) {
   }
 }
 
-// 根据难度获取AI移动
+// Get AI move based on difficulty
 function getAIMove() {
   const moves = getValidMoves(board, WHITE);
   if (moves.length === 0) return null;
@@ -1043,12 +1043,12 @@ function getAIMove() {
   
   const depth = difficultyDepths[aiDifficulty] || 2;
   
-  // Beginner: 随机选择
+  // Beginner: random selection
   if (aiDifficulty === 'beginner') {
     return moves[Math.floor(Math.random() * moves.length)];
   }
   
-  // Easy: 贪心选择（最大化翻转数量），偶尔随机
+  // Easy: greedy (maximize flips), occasionally random
   if (aiDifficulty === 'easy') {
     if (Math.random() < 0.2) {
       return moves[Math.floor(Math.random() * moves.length)];
@@ -1084,7 +1084,7 @@ function getAIMove() {
     }
   }
   
-  //  Expert和Master增加一些随机性避免太可预测
+  // Expert and Master add randomness to avoid being too predictable
   if (aiDifficulty === 'expert' || aiDifficulty === 'master') {
     const secondBestMoves = moves.filter(m => m !== bestMove && 
       Math.abs(getAIMoveValue(m, board, depth) - bestVal) < 50);
@@ -1101,7 +1101,7 @@ function getAIMoveValue(move, boardState, depth) {
   return minimax(newBoard, depth - 1, -Infinity, Infinity, false, WHITE);
 }
 
-// ---- 渲染系统 ----
+// ---- Rendering System ----
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 
@@ -1121,21 +1121,21 @@ function drawBoard() {
   const theme = THEMES[currentTheme];
   const cs = cellSize;
   
-  // 绘制棋盘格子
+  // Draw board grid
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
       const isLight = (r + c) % 2 === 0;
       ctx.fillStyle = isLight ? theme.boardLight : theme.boardDark;
       ctx.fillRect(c * cs, r * cs, cs, cs);
       
-      // 网格线
+      // Grid lines
       ctx.strokeStyle = theme.gridLine;
       ctx.lineWidth = 0.5;
       ctx.strokeRect(c * cs, r * cs, cs, cs);
     }
   }
   
-  // 高亮最后落子位置
+  // Highlight last move position
   if (undoStack.length > 0) {
     const lastMove = undoStack[undoStack.length - 1];
     if (lastMove.move) {
@@ -1144,7 +1144,7 @@ function drawBoard() {
     }
   }
   
-  // 高亮有效移动
+  // Highlight valid moves
   if (gameActive && currentPlayer === BLACK && !animating) {
     const validMoves = getValidMoves(board, BLACK);
     const time = performance.now();
@@ -1154,7 +1154,7 @@ function drawBoard() {
       const cy = move.r * cs + cs / 2;
       const pulse = 0.5 + 0.5 * Math.sin(time / 300);
       
-      // 绘制发光效果
+      // Draw glow effect
       const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, cs * 0.4);
       gradient.addColorStop(0, theme.validGlow.replace(')', `,${pulse * 0.6})`).replace('rgba', 'rgba'));
       gradient.addColorStop(1, 'transparent');
@@ -1163,7 +1163,7 @@ function drawBoard() {
       ctx.arc(cx, cy, cs * 0.4, 0, Math.PI * 2);
       ctx.fill();
       
-      // 中心圆点
+      // Center dot
       ctx.fillStyle = `rgba(0, 255, 136, ${0.3 + pulse * 0.3})`;
       ctx.beginPath();
       ctx.arc(cx, cy, cs * 0.15, 0, Math.PI * 2);
@@ -1171,7 +1171,7 @@ function drawBoard() {
     }
   }
   
-  // 高亮提示位置
+  // Highlight hint position
   if (hintCell && hintsEnabled) {
     const { r, c } = hintCell;
     const cx = c * cs + cs / 2;
@@ -1186,13 +1186,13 @@ function drawBoard() {
     ctx.stroke();
   }
   
-  // 绘制棋子
+  // Draw pieces
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
       const piece = board[r][c];
       if (piece === EMPTY) continue;
       
-      // 检查是否在翻转动画中
+      // Check if in flip animation
       const flipping = flippingPieces.find(p => p.r === r && p.c === c);
       if (flipping) {
         drawFlippingPiece(flipping, cs);
@@ -1202,13 +1202,13 @@ function drawBoard() {
     }
   }
   
-  // 处理翻转动画
+  // Handle flip animation
   if (animating && flippingPieces.length > 0) {
     const elapsed = performance.now() - animStart;
     const progress = Math.min(1, elapsed / ANIM_DURATION);
     
     if (progress >= 1) {
-      // 动画完成
+      // Animation complete
       for (const fp of flippingPieces) {
         board[fp.r][fp.c] = fp.toColor;
       }
@@ -1216,16 +1216,16 @@ function drawBoard() {
       animating = false;
       animData = null;
       
-      // 延迟后继续AI回合
+      // After delay, continue AI turn
       setTimeout(() => {
         if (gameActive) {
           currentPlayer = BLACK;
           updateUI();
           
-          // 检查游戏是否结束
+          // Check if game is over
           if (checkGameEnd()) return;
           
-          // AI回合
+          // AI turn
           setTimeout(doAITurn, 300);
         }
       }, 100);
@@ -1238,14 +1238,14 @@ function drawBoard() {
 function drawPiece(color, cx, cy, cs, glow = false) {
   const radius = cs * 0.4;
   
-  // 阴影
+  // Shadow
   ctx.save();
   ctx.beginPath();
   ctx.arc(cx + 2, cy + 3, radius, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(0,0,0,0.3)';
   ctx.fill();
   
-  // 3D效果 - 径向渐变
+  // 3D effect - radial gradient
   const grad = ctx.createRadialGradient(
     cx - radius * 0.3, cy - radius * 0.3, radius * 0.1,
     cx, cy, radius
@@ -1266,7 +1266,7 @@ function drawPiece(color, cx, cy, cs, glow = false) {
   ctx.fillStyle = grad;
   ctx.fill();
   
-  // 高光
+  // Highlight
   const highlightGrad = ctx.createRadialGradient(
     cx - radius * 0.4, cy - radius * 0.4, 0,
     cx - radius * 0.2, cy - radius * 0.2, radius * 0.5
@@ -1278,14 +1278,14 @@ function drawPiece(color, cx, cy, cs, glow = false) {
   ctx.fillStyle = highlightGrad;
   ctx.fill();
   
-  // 外圈
+  // Outer ring
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
   ctx.strokeStyle = color === BLACK ? 'rgba(80,80,80,0.5)' : 'rgba(200,200,200,0.5)';
   ctx.lineWidth = 1;
   ctx.stroke();
   
-  // 发光效果
+  // Glow effect
   if (glow) {
     ctx.beginPath();
     ctx.arc(cx, cy, radius + 3, 0, Math.PI * 2);
@@ -1310,7 +1310,7 @@ function drawFlippingPiece(fp, cs) {
   const color = progress < 0.5 ? fp.fromColor : fp.toColor;
   const radius = cs * 0.4;
   
-  // 径向渐变
+  // Radial gradient
   const grad = ctx.createRadialGradient(
     -radius * 0.3, -radius * 0.3, radius * 0.1,
     0, 0, radius
@@ -1331,7 +1331,7 @@ function drawFlippingPiece(fp, cs) {
   ctx.fillStyle = grad;
   ctx.fill();
   
-  // 高光
+  // Highlight
   const highlightGrad = ctx.createRadialGradient(
     -radius * 0.4, -radius * 0.4, 0,
     -radius * 0.2, -radius * 0.2, radius * 0.5
@@ -1346,7 +1346,7 @@ function drawFlippingPiece(fp, cs) {
   ctx.restore();
 }
 
-// ---- 游戏流程 ----
+// ---- Game Flow ----
 function startGame(diff) {
   playSound('button');
   aiDifficulty = diff || 'medium';
@@ -1358,7 +1358,7 @@ function startGame(diff) {
   resizeCanvas();
   drawBoard();
   
-  // 启动BGM
+  // Start BGM
   startBgm();
 }
 
@@ -1396,7 +1396,7 @@ function showMenu() {
 }
 
 function updateUI() {
-  // 棋子数量
+  // Piece count
   let blackCount = 0, whiteCount = 0;
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
@@ -1410,7 +1410,7 @@ function updateUI() {
   document.getElementById('black-score').textContent = blackCount;
   document.getElementById('white-score').textContent = whiteCount;
   
-  // 当前回合
+  // Current turn
   const blackInfo = document.getElementById('black-info');
   const whiteInfo = document.getElementById('white-info');
   blackInfo.classList.toggle('active', currentPlayer === BLACK);
@@ -1428,14 +1428,14 @@ function updateUI() {
 
 // ---- ACHIEVEMENT SYSTEM ----
 const ACHIEVEMENTS = [
-  {id:'first_win', name:'First Win', desc:'Win your first game', icon:'🏆'},
-  {id:'perfect_game', name:'Perfect Game', desc:'Shutout: opponent has 0 pieces', icon:'💎'},
-  {id:'corner_master', name:'Corner Master', desc:'Capture all 4 corners', icon:'🏰'},
-  {id:'edge_player', name:'Edge Player', desc:'Capture 10+ edge pieces', icon:'🌊'},
-  {id:'quick_win', name:'Quick Win', desc:'Win in under 20 moves', icon:'⚡'},
-  {id:'comeback_kid', name:'Comeback Kid', desc:'Win after trailing by 10+', icon:'🔄'},
-  {id:'grandmaster', name:'Grandmaster', desc:'Beat the Master AI', icon:'👑'},
-  {id:'win_streak', name:'Win Streak 5', desc:'Get a 5-game win streak', icon:'🔥'}
+  {id:'first_win', name:'First Win', desc:'Win your first game', icon:'*'},
+  {id:'perfect_game', name:'Perfect Game', desc:'Shutout: opponent has 0 pieces', icon:'*'},
+  {id:'corner_master', name:'Corner Master', desc:'Capture all 4 corners', icon:'*'},
+  {id:'edge_player', name:'Edge Player', desc:'Capture 10+ edge pieces', icon:'*'},
+  {id:'quick_win', name:'Quick Win', desc:'Win in under 20 moves', icon:'*'},
+  {id:'comeback_kid', name:'Comeback Kid', desc:'Win after trailing by 10+', icon:'*'},
+  {id:'grandmaster', name:'Grandmaster', desc:'Beat the Master AI', icon:'*'},
+  {id:'win_streak', name:'Win Streak 5', desc:'Get a 5-game win streak', icon:'*'}
 ];
 
 let maxDeficit = 0; // track max deficit during game
@@ -1478,7 +1478,7 @@ function showAchievements() {
     const has = unlocked.includes(a.id);
     const el = document.createElement('div');
     el.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;border:1px solid ' + (has ? 'rgba(255,215,0,.3)' : 'rgba(255,255,255,.08)') + ';background:' + (has ? 'rgba(255,215,0,.08)' : 'rgba(255,255,255,.03)') + ';opacity:' + (has ? '1' : '.5');
-    el.innerHTML = '<span style="font-size:24px">' + (has ? a.icon : '🔒') + '</span><div><div style="color:' + (has ? '#ffd700' : '#666') + ';font-weight:700;font-size:13px">' + a.name + '</div><div style="color:#888;font-size:11px">' + a.desc + '</div></div>';
+    el.innerHTML = '<span style="font-size:24px">' + (has ? a.icon : 'X') + '</span><div><div style="color:' + (has ? '#ffd700' : '#666') + ';font-weight:700;font-size:13px">' + a.name + '</div><div style="color:#888;font-size:11px">' + a.desc + '</div></div>';
     grid.appendChild(el);
   });
   document.getElementById('ach-count').textContent = unlocked.length + '/' + ACHIEVEMENTS.length + ' Achievements';
@@ -1522,7 +1522,7 @@ function checkGameEnd() {
   const whiteMoves = getValidMoves(board, WHITE);
   
   if (blackMoves.length === 0 && whiteMoves.length === 0) {
-    // 双方都无法移动，游戏结束
+    // Neither player can move, game over
     endGame();
     return true;
   }
@@ -1534,7 +1534,7 @@ function endGame() {
   gameActive = false;
   stopBgm();
   
-  // 统计最终棋子
+  // Count final pieces
   let blackCount = 0, whiteCount = 0;
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
@@ -1543,11 +1543,11 @@ function endGame() {
     }
   }
   
-  // 计算得分
+  // Calculate score
   const pieceDiff = blackCount - whiteCount;
   const baseScore = pieceDiff * 10;
   
-  // 统计角落和边缘
+  // Count corners and edges
   const corners = [[0, 0], [0, 7], [7, 0], [7, 7]];
   let blackCorners = 0, whiteCorners = 0;
   let blackEdges = 0, whiteEdges = 0;
@@ -1577,7 +1577,7 @@ function endGame() {
   if (blackCount > whiteCount) {
     result = 'win';
     winBonus = 100;
-    if (whiteCount === 0) winBonus += 200; // 完胜奖励
+    if (whiteCount === 0) winBonus += 200; // Perfect victory bonus
   } else if (whiteCount > blackCount) {
     result = 'loss';
     winBonus = -50;
@@ -1588,13 +1588,13 @@ function endGame() {
   score = baseScore + cornerBonus + edgeBonus + winBonus;
   score = Math.max(0, score);
   
-  // 更新统计
+  // Update statistics
   updateStats(result);
   
   // Check achievements
   checkAchievements(result);
   
-  // 显示结果
+  // Show result
   const modal = document.getElementById('game-over');
   const title = document.getElementById('go-title');
   const text = document.getElementById('go-text');
@@ -1625,12 +1625,12 @@ function endGame() {
   drawBoard();
 }
 
-// ---- 撤销 ----
+// ---- Undo ----
 function undoMove() {
   playSound('button');
   if (undoStack.length < 2 || !gameActive) return;
   
-  // 撤销两步（玩家+AI）
+  // Undo two moves (player+AI)
   for (let i = 0; i < 2 && undoStack.length > 0; i++) {
     const state = undoStack.pop();
     board = state.board;
@@ -1653,12 +1653,12 @@ function saveState(move) {
   if (undoStack.length > 50) undoStack.shift();
 }
 
-// ---- 落子执行 ----
+// ---- Move Execution ----
 function executeMove(move, player) {
   playSound('place');
   saveState(move);
   
-  // 收集需要翻转的棋子
+  // Collect pieces to flip
   flippingPieces = move.flips.map(f => ({
     r: f.r,
     c: f.c,
@@ -1667,17 +1667,17 @@ function executeMove(move, player) {
     progress: 0
   }));
   
-  // 在棋盘上放置棋子
+  // Place piece on board
   board[move.r][move.c] = player;
   
-  // 开始翻转动画
+  // Start flip animation
   animating = true;
   animStart = performance.now();
   moveCount++;
   
   playSound('flip');
   
-  // 启动翻转动画
+  // Launch flip animation
   animateFlips();
   requestAnimationFrame(drawBoard);
 }
@@ -1693,7 +1693,7 @@ function animateFlips() {
   }
   
   if (progress >= 1) {
-    // 动画完成
+    // Animation complete
     for (const fp of flippingPieces) {
       board[fp.r][fp.c] = fp.toColor;
     }
@@ -1702,7 +1702,7 @@ function animateFlips() {
     
     playSound('capture');
     
-    // 切换玩家
+    // Switch player
     currentPlayer = currentPlayer === BLACK ? WHITE : BLACK;
     updateUI();
     
@@ -1714,17 +1714,17 @@ function animateFlips() {
     const deficit = wc - bc;
     if (deficit > maxDeficit) maxDeficit = deficit;
     
-    // 检查游戏是否结束
+    // Check if game is over
     if (checkGameEnd()) return;
     
-    // AI回合
+    // AI turn
     if (gameActive && currentPlayer === WHITE) {
       setTimeout(doAITurn, 300);
     } else if (gameActive && currentPlayer === BLACK) {
-      // 检查玩家是否有有效移动
+      // Check if player has valid moves
       const validMoves = getValidMoves(board, BLACK);
       if (validMoves.length === 0) {
-        // 玩家无法移动，跳过
+        // Player cannot move, skip
         currentPlayer = WHITE;
         updateUI();
         setTimeout(doAITurn, 300);
@@ -1740,14 +1740,14 @@ function doAITurn() {
   
   playBgmScene('thinking');
   
-  // 延迟模拟思考时间
+  // Delay to simulate thinking time
   setTimeout(() => {
     if (!gameActive || currentPlayer !== WHITE) return;
     
     const move = getAIMove();
     
     if (!move) {
-      // AI无法移动
+      // AI cannot move
       currentPlayer = BLACK;
       updateUI();
       
@@ -1762,14 +1762,14 @@ function doAITurn() {
   }, 500 + Math.random() * 500);
 }
 
-// ---- 提示系统 ----
+// ---- Hint System ----
 function showHint() {
   if (!gameActive || currentPlayer !== BLACK) return;
   
   const moves = getValidMoves(board, BLACK);
   if (moves.length === 0) return;
   
-  // 使用AI逻辑找出最佳移动
+  // Use AI logic to find best move
   const difficultyDepths = {
     beginner: 0,
     easy: 1,
@@ -1802,7 +1802,7 @@ function showHint() {
   playSound('hint');
   drawBoard();
   
-  // 3秒后清除提示
+  // Clear hint after 3 seconds
   setTimeout(() => {
     if (hintCell && hintCell.r === bestMove.r && hintCell.c === bestMove.c) {
       hintCell = null;
@@ -1811,9 +1811,9 @@ function showHint() {
   }, 3000);
 }
 
-// ---- 输入处理 ----
+// ---- Input Handling ----
 function handleClick(r, c) {
-  // 防重复点击
+  // Prevent duplicate clicks
   const now = Date.now();
   if (now - lastClickTime < 200) return;
   lastClickTime = now;
@@ -1821,10 +1821,10 @@ function handleClick(r, c) {
   if (!gameActive || animating) return;
   if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) return;
   
-  // AI回合不能点击
+  // Cannot click during AI turn
   if (currentPlayer !== BLACK) return;
   
-  // 检查是否为有效移动
+  // Check if valid move
   const moves = getValidMoves(board, BLACK);
   const move = moves.find(m => m.r === r && m.c === c);
   
@@ -1857,7 +1857,7 @@ canvas.addEventListener('touchend', function(e) {
   handleClick(r, c);
 });
 
-// ---- 主题系统 ----
+// ---- Theme System ----
 function setTheme(theme) {
   currentTheme = theme;
   document.querySelectorAll('.theme-btn').forEach(btn => {
@@ -1869,7 +1869,7 @@ function setTheme(theme) {
   } catch (e) {}
 }
 
-// ---- 设置面板 ----
+// ---- Settings Panel ----
 function toggleSettings() {
   const panel = document.getElementById('settings-panel');
   panel.classList.toggle('open');
@@ -1901,7 +1901,7 @@ function toggleHints() {
   }
 }
 
-// ---- 教程 ----
+// ---- Tutorial ----
 let tutorialStep = 0;
 const tutorialSteps = [
   {
@@ -1982,16 +1982,16 @@ function drawTutObjective(tctx, tcs) {
 
 function drawTutOutflank(tctx, tcs) {
   drawTutBoard(tctx, tcs);
-  // 水平翻转示例
+  // Horizontal flip example
   drawTutPiece(tctx, 2 * tcs, 3.5 * tcs, tcs * 0.35, BLACK);
   drawTutPiece(tctx, 3 * tcs, 3.5 * tcs, tcs * 0.35, WHITE);
   drawTutPiece(tctx, 4 * tcs, 3.5 * tcs, tcs * 0.35, WHITE);
-  // 箭头指向
+  // Arrow direction
   tctx.fillStyle = '#00ff88';
   tctx.beginPath();
   tctx.arc(5 * tcs, 3.5 * tcs, tcs * 0.2, 0, Math.PI * 2);
   tctx.fill();
-  // 翻转箭头
+  // Flip arrow
   tctx.strokeStyle = '#00ff88';
   tctx.lineWidth = 2;
   tctx.beginPath();
@@ -2006,7 +2006,7 @@ function drawTutValidMoves(tctx, tcs) {
   drawTutPiece(tctx, 4.5 * tcs, 3.5 * tcs, tcs * 0.35, BLACK);
   drawTutPiece(tctx, 3.5 * tcs, 4.5 * tcs, tcs * 0.35, BLACK);
   drawTutPiece(tctx, 4.5 * tcs, 4.5 * tcs, tcs * 0.35, WHITE);
-  // 有效移动位置
+  // Valid move position
   const validPositions = [[2, 2], [2, 5], [5, 2], [5, 5]];
   for (const [r, c] of validPositions) {
     tctx.fillStyle = 'rgba(0, 255, 136, 0.4)';
@@ -2018,12 +2018,12 @@ function drawTutValidMoves(tctx, tcs) {
 
 function drawTutStrategy(tctx, tcs) {
   drawTutBoard(tctx, tcs);
-  // 角落棋子
+  // Corner piece
   drawTutPiece(tctx, 0.5 * tcs, 0.5 * tcs, tcs * 0.35, BLACK);
-  // 边缘棋子
+  // Edge piece
   drawTutPiece(tctx, 0.5 * tcs, 2 * tcs, tcs * 0.35, BLACK);
   drawTutPiece(tctx, 2 * tcs, 0.5 * tcs, tcs * 0.35, WHITE);
-  // 角落标记
+  // Corner marker
   tctx.strokeStyle = '#ffd700';
   tctx.lineWidth = 2;
   tctx.strokeRect(0.2 * tcs, 0.2 * tcs, tcs * 0.6, tcs * 0.6);
@@ -2044,7 +2044,7 @@ function closeTutorial() {
   document.getElementById('tutorial-overlay').classList.remove('show');
 }
 
-// ---- 统计面板 ----
+// ---- Statistics Panel ----
 function showStats() {
   playSound('button');
   document.getElementById('stat-wins').textContent = stats.wins;
@@ -2054,7 +2054,7 @@ function showStats() {
   document.getElementById('stat-streak').textContent = stats.streak;
   document.getElementById('stat-best').textContent = stats.bestStreak;
   
-  // 按难易度显示
+  // Show by difficulty
   const diffList = document.getElementById('diff-stats-list');
   diffList.innerHTML = '';
   const diffNames = ['beginner', 'easy', 'medium', 'hard', 'expert', 'master'];
@@ -2086,7 +2086,7 @@ function closeHowTo() {
   document.getElementById('howto-modal').classList.remove('show');
 }
 
-// ---- 响应式调整 ----
+// ---- Responsive Adjustments ----
 window.addEventListener('resize', function() {
   if (document.getElementById('game-screen').style.display !== 'none') {
     resizeCanvas();
@@ -2094,7 +2094,7 @@ window.addEventListener('resize', function() {
   }
 });
 
-// ---- 清理和状态保存 ----
+// ---- Cleanup and State Saving ----
 function cleanup() {
   stopBgm();
   if (animationFrameId) {
@@ -2104,8 +2104,8 @@ function cleanup() {
 
 let animationFrameId = null;
 
-// ---- 初始化 ----
-// 加载保存的主题
+// ---- Initialization ----
+// Load saved theme
 try {
   const savedTheme = localStorage.getItem('reversi_theme');
   if (savedTheme && THEMES[savedTheme]) {
@@ -2116,10 +2116,10 @@ try {
   }
 } catch (e) {}
 
-// 更新菜单统计
+// Update menu statistics
 updateMenuStats();
 
-// 页面可见性变化处理
+// Page visibility change handling
 document.addEventListener('visibilitychange', function() {
   if (document.hidden) {
     stopBgm();
@@ -2128,7 +2128,7 @@ document.addEventListener('visibilitychange', function() {
   }
 });
 
-// 页面卸载处理
+// Page unload handling
 window.addEventListener('beforeunload', cleanup);
 </script>
 <script async src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=reversi"></script>

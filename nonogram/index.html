@@ -1225,6 +1225,34 @@ window.addEventListener('resize', () => {
 
 // Prevent context menu on long press
 document.addEventListener('contextmenu', e => e.preventDefault());
+
+let rafId = null;
+
+// ── Visibility & Cleanup ───────────────────────────────────
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+  } else {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    if (document.getElementById('gameScreen').classList.contains('active') && !state.completed) {
+      state.timerInterval = setInterval(() => {
+        if (state.completed) return;
+        state.timerSeconds++;
+        const m = String(Math.floor(state.timerSeconds / 60)).padStart(2, '0');
+        const s = String(state.timerSeconds % 60).padStart(2, '0');
+        document.getElementById('timer').textContent = m + ':' + s;
+      }, 1000);
+    }
+  }
+});
+
+window.addEventListener('beforeunload', function() {
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  clearInterval(state.timerInterval);
+  state.timerInterval = null;
+});
 </script>
 <h1 style="display:none">Nonogram</h1>
 <script src="/monetag-manager.js"></script>

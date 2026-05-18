@@ -167,7 +167,7 @@ const SEASON_NAMES=['Spring','Summer','Autumn','Winter'];
 const SEASON_COLORS=['#ff9ecd','#ffcc00','#ff8c42','#87ceeb'];
 const FLOWER_NAMES=['Plum','Orchid','Chrysanthemum','Bamboo'];
 const FLOWER_COLORS=['#ff69b4','#da70d6','#ffd700','#2d8a4e'];
-const CHAR_TEXT=['一','二','三','四','五','六','七','八','九'];
+const CHAR_TEXT=['one','two','three','four','five','six','seven','eight','nine'];
 
 function buildTileSet(){
 const tiles=[];let id=0;
@@ -485,7 +485,7 @@ c.fillText(labels[v],cx,cy);
 }
 
 function drawDragons(c,cx,cy,w,h,s,v){
-const labels=['中','發','□'];
+const labels=['Red','Green','White'];
 c.fillStyle=DRAGON_COLORS[v];c.font=`bold ${Math.max(8,Math.floor(14*s))}px serif`;
 c.textAlign='center';c.textBaseline='middle';
 c.fillText(labels[v],cx,cy);
@@ -720,7 +720,7 @@ document.getElementById('timer').textContent=m+':'+(s<10?'0':'')+s;
 }
 
 function showWin(stars,score){
-document.getElementById('result-stars').textContent='★'.repeat(stars)+'☆'.repeat(3-stars);
+document.getElementById('result-stars').textContent='*'.repeat(stars)+'*'.repeat(3-stars);
 document.getElementById('result-score').textContent='Score: '+score;
 document.getElementById('result-time').textContent='Time: '+document.getElementById('timer').textContent;
 document.getElementById('next-btn').style.display=G.level<TOTAL_LEVELS?'inline-block':'none';
@@ -737,7 +737,7 @@ const btn=document.createElement('button');btn.className='level-btn';
 const unlocked=i===1||save.levels[i-1];
 if(!unlocked)btn.classList.add('locked');
 const d=save.levels[i];
-const starsText=d?'★'.repeat(d.stars)+'☆'.repeat(3-d.stars):'';
+const starsText=d?'*'.repeat(d.stars)+'*'.repeat(3-d.stars):'';
 btn.innerHTML=`<div>Level ${i}</div><div style="font-size:11px;opacity:.7">${LAYOUT_NAMES[(i-1)%10]}</div>${starsText?'<div class="stars">'+starsText+'</div>':''}`;
 if(unlocked)btn.onclick=()=>{initAudio();resumeAudio();startLevel(i);};
 grid.appendChild(btn);
@@ -763,6 +763,33 @@ const save=getSave();save.sound=G.soundOn;saveProg(save);if(G.soundOn)startBGM()
 document.getElementById('tutorial-ok').onclick=()=>{document.getElementById('tutorial').classList.remove('active');const s=getSave();s.tutorialDone=true;saveProg(s);};
 
 window.addEventListener('resize',()=>{if(G.screen==='game'){resizeCanvas();render();}});
+
+let rafId=null;
+
+// ── Visibility & Cleanup ───────────────────────────────────
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){
+    if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+    clearInterval(G.timerRef);
+    G.timerRef=null;
+    stopBGM();
+  }else{
+    if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+    if(G.screen==='game'&&!G.paused){
+      G.timerRef=setInterval(()=>{
+        if(!G.paused&&G.screen==='game'){G.elapsed++;updateTimer();}
+      },1000);
+      if(G.soundOn)startBGM();
+    }
+  }
+});
+
+window.addEventListener('beforeunload',function(){
+  if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+  clearInterval(G.timerRef);
+  G.timerRef=null;
+  stopBGM();
+});
 
 // Init
 const saved=getSave();G.soundOn=saved.sound!==false;

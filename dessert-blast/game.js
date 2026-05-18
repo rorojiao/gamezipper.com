@@ -29,37 +29,37 @@ var THEMES = {
 };
 
 var ACHIEVEMENTS = [
-  {id:'first_clear', name:'First Sweet', desc:'First clear', icon:'🍬', check: function(s) { return s.totalClears >= 1; }},
-  {id:'clear_10', name:'Pastry Chef', desc:'Clear 10 rows', icon:'👨‍🍳', check: function(s) { return s.totalClears >= 10; }},
-  {id:'clear_100', name:'Dessert Master', desc:'Clear 100 rows', icon:'🎂', check: function(s) { return s.totalClears >= 100; }},
-  {id:'clear_500', name:'Legendary Baker', desc:'Clear 500 rows', icon:'👑', check: function(s) { return s.totalClears >= 500; }},
-  {id:'combo_2', name:'Double Clear', desc:'Clear 2 rows at once', icon:'✌️', check: function(s) { return s.maxCombo >= 2; }},
-  {id:'combo_3', name:'Triple Combo', desc:'Clear 3 rows at once', icon:'🔥', check: function(s) { return s.maxCombo >= 3; }},
-  {id:'combo_4', name:'Quad Combo!', desc:'Clear 4+ rows at once', icon:'💥', check: function(s) { return s.maxCombo >= 4; }},
-  {id:'score_500', name:'Sweet Start', desc:'Score 500 in one game', icon:'⭐', check: function(s) { return s.bestScore >= 500; }},
-  {id:'score_2000', name:'Candy Whirlwind', desc:'Score 2000 in one game', icon:'🌟', check: function(s) { return s.bestScore >= 2000; }},
-  {id:'score_5000', name:'Dessert Storm', desc:'Score 5000 in one game', icon:'💫', check: function(s) { return s.bestScore >= 5000; }},
-  {id:'score_10000', name:'10K Legend', desc:'Score 10000 in one game', icon:'🏆', check: function(s) { return s.bestScore >= 10000; }},
-  {id:'games_10', name:'Regular', desc:'Play 10 games', icon:'🎮', check: function(s) { return s.totalGames >= 10; }},
-  {id:'games_50', name:'Loyal Fan', desc:'Play 50 games', icon:'❤️', check: function(s) { return s.totalGames >= 50; }},
-  {id:'streak_3', name:'3-Day Streak', desc:'Login 3 days in a row', icon:'📅', check: function(s) { return s.streak >= 3; }},
-  {id:'streak_7', name:'Weekly Streak', desc:'Login 7 days in a row', icon:'🔥', check: function(s) { return s.streak >= 7; }},
+  {id:'first_clear', name:'First Sweet', desc:'First clear', icon:'[candy]', check: function(s) { return s.totalClears >= 1; }},
+  {id:'clear_10', name:'Pastry Chef', desc:'Clear 10 rows', icon:'[chef]', check: function(s) { return s.totalClears >= 10; }},
+  {id:'clear_100', name:'Dessert Master', desc:'Clear 100 rows', icon:'[cake]', check: function(s) { return s.totalClears >= 100; }},
+  {id:'clear_500', name:'Legendary Baker', desc:'Clear 500 rows', icon:'[crown]', check: function(s) { return s.totalClears >= 500; }},
+  {id:'combo_2', name:'Double Clear', desc:'Clear 2 rows at once', icon:'[ok]', check: function(s) { return s.maxCombo >= 2; }},
+  {id:'combo_3', name:'Triple Combo', desc:'Clear 3 rows at once', icon:'[fire]', check: function(s) { return s.maxCombo >= 3; }},
+  {id:'combo_4', name:'Quad Combo!', desc:'Clear 4+ rows at once', icon:'[boom]', check: function(s) { return s.maxCombo >= 4; }},
+  {id:'score_500', name:'Sweet Start', desc:'Score 500 in one game', icon:'[star]', check: function(s) { return s.bestScore >= 500; }},
+  {id:'score_2000', name:'Candy Whirlwind', desc:'Score 2000 in one game', icon:'[star2]', check: function(s) { return s.bestScore >= 2000; }},
+  {id:'score_5000', name:'Dessert Storm', desc:'Score 5000 in one game', icon:'[sparkle]', check: function(s) { return s.bestScore >= 5000; }},
+  {id:'score_10000', name:'10K Legend', desc:'Score 10000 in one game', icon:'[trophy]', check: function(s) { return s.bestScore >= 10000; }},
+  {id:'games_10', name:'Regular', desc:'Play 10 games', icon:'[game]', check: function(s) { return s.totalGames >= 10; }},
+  {id:'games_50', name:'Loyal Fan', desc:'Play 50 games', icon:'[heart]', check: function(s) { return s.totalGames >= 50; }},
+  {id:'streak_3', name:'3-Day Streak', desc:'Login 3 days in a row', icon:'[cal]', check: function(s) { return s.streak >= 3; }},
+  {id:'streak_7', name:'Weekly Streak', desc:'Login 7 days in a row', icon:'[fire]', check: function(s) { return s.streak >= 7; }},
 ];
 
 var SIGNIN_REWARDS = [
   {day:1, reward:'+50 pts', score:50},
   {day:2, reward:'+100 pts', score:100},
-  {day:3, reward:'🍇Fruit Theme', score:0, theme:'fruit'},
+  {day:3, reward:'[Fruit Theme]', score:0, theme:'fruit'},
   {day:4, reward:'+200 pts', score:200},
   {day:5, reward:'+300 pts', score:300},
-  {day:6, reward:'🚀Space Theme', score:0, theme:'space'},
-  {day:7, reward:'+500 pts+🌊Ocean', score:500, theme:'ocean'},
+  {day:6, reward:'[Space Theme]', score:0, theme:'space'},
+  {day:7, reward:'+500 pts+[Ocean]', score:500, theme:'ocean'},
 ];
 
 var TUTORIAL_STEPS = [
-  { text: '👆 Drag blocks to empty spaces', yRatio: 0.55 },
-  { text: '✨ Fill a row or column to clear', yRatio: 0.35 },
-  { text: '⚠️ Game ends when no blocks can fit', yRatio: 0.60 },
+  { text: 'Drag blocks to empty spaces', yRatio: 0.55 },
+  { text: 'Fill a row or column to clear', yRatio: 0.35 },
+  { text: 'Game ends when no blocks can fit', yRatio: 0.60 },
 ];
 
 // ===== SAVE =====
@@ -420,15 +420,15 @@ var homeScene = {
     var cx = _homeW / 2;
     var bw = 220, bh = 48;
     var startY = _homeH * 0.48;
-    _homeButtons = [
-      { x: cx - bw/2, y: startY, w: bw, h: bh, text: '▶️ Classic Mode', action: 'classic', gradient: ['#6DD834','#5CBF2A'], border: '#2a5a10' },
-      { x: cx - bw/2, y: startY + 64, w: bw, h: bh, text: '📅 Daily Challenge', action: 'daily', gradient: ['#4A90D9','#357ABD'], border: '#1a4a80' },
+_homeButtons = [
+      { x: cx - bw/2, y: startY, w: bw, h: bh, text: '> Classic Mode', action: 'classic', gradient: ['#6DD834','#5CBF2A'], border: '#2a5a10' },
+      { x: cx - bw/2, y: startY + 64, w: bw, h: bh, text: '[Calendar] Daily Challenge', action: 'daily', gradient: ['#4A90D9','#357ABD'], border: '#1a4a80' },
     ];
-    var iconSize = 48, iconGap = 16;
+
     var icons = [
-      { emoji: '🏆', action: 'achievements' },
-      { emoji: '🎨', action: 'themes' },
-      { emoji: '📊', action: 'stats' },
+      { emoji: '[Trophy]', action: 'achievements' },
+      { emoji: '[Palette]', action: 'themes' },
+      { emoji: '[Stats]', action: 'stats' },
       { emoji: sound.isMuted() ? '🔇' : '🔊', action: 'mute' },
     ];
     var totalW = icons.length * iconSize + (icons.length - 1) * iconGap;
@@ -454,7 +454,7 @@ var homeScene = {
 
     var stats = save.getStats();
     var best = stats.bestScore || save.getBest();
-    renderer.drawText('🏆 Best Score: ' + best, _homeW / 2, _homeH * 0.35, { size: 18, bold: true, color: '#FFD740', shadow: true });
+    renderer.drawText('[Best Score]: ' + best, _homeW / 2, _homeH * 0.35, { size: 18, bold: true, color: '#FFD740', shadow: true });
 
     for (var i = 0; i < _homeButtons.length; i++) {
       var b = _homeButtons[i];
@@ -478,7 +478,7 @@ var homeScene = {
 
     var signIn = save.getSignIn();
     if (signIn.streak > 0) {
-      renderer.drawText('📅 Login Streak: Day ' + signIn.streak + '', _homeW / 2, _homeH * 0.85, { size: 14, color: 'rgba(255,255,255,0.7)' });
+      renderer.drawText('[Login Streak]: Day ' + signIn.streak + '', _homeW / 2, _homeH * 0.85, { size: 14, color: 'rgba(255,255,255,0.7)' });
     }
   },
 
@@ -819,7 +819,7 @@ function drawHUD(ctx) {
 
   renderer.drawText('🍰 Dessert Blast', 55, _hudH / 2, { size: 18, bold: true, color: '#FFD700', shadow: true, align: 'left' });
   renderer.drawText('' + score, _w - 80, _hudH / 2 - 8, { size: 22, bold: true, color: '#FFF', shadow: true });
-  renderer.drawText('🏆 ' + best, _w - 80, _hudH / 2 + 12, { size: 12, color: '#FFD740' });
+  renderer.drawText('[Trophy] ' + best, _w - 80, _hudH / 2 + 12, { size: 12, color: '#FFD740' });
 }
 
 function drawBoard(ctx) {
@@ -1191,7 +1191,7 @@ var achievementsScene = {
   draw: function(ctx) {
     var theme = THEMES[save.getTheme()] || THEMES.dessert;
     renderer.clear(theme.bg);
-    renderer.drawText('🏆 Achievements', _achW / 2, 40, { size: 24, bold: true, color: '#FFD740', shadow: true });
+    renderer.drawText('[Achievements]', _achW / 2, 40, { size: 24, bold: true, color: '#FFD740', shadow: true });
 
     var stats = save.getStats();
     var achs = ACHIEVEMENTS;
@@ -1250,7 +1250,7 @@ var themesScene = {
   draw: function(ctx) {
     var curTheme = THEMES[save.getTheme()] || THEMES.dessert;
     renderer.clear(curTheme.bg);
-    renderer.drawText('🎨 Themes', _thW / 2, 40, { size: 24, bold: true, color: '#FFD740', shadow: true });
+    renderer.drawText('[Themes]', _thW / 2, 40, { size: 24, bold: true, color: '#FFD740', shadow: true });
 
     var stats = save.getStats();
     var current = save.getTheme();

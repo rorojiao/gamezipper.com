@@ -194,7 +194,7 @@ const MILESTONES = [10, 25, 50, 100, 200];
 let reachedMilestones = new Set();
 
 function showMilestone(ms) {
-  const labels = {10:'🔥 Hot!', 25:'⭐ Star!', 50:'💎 Epic!', 100:'👑 Legend!', 200:'🚀 Godlike!'};
+  const labels = {10:'[Hot!]', 25:'[Star!]', 50:'[Epic!]', 100:'[Legend!]', 200:'[Godlike!]'};
   let el = document.getElementById('toast');
   if (!el) {
     el = document.createElement('div');
@@ -202,7 +202,7 @@ function showMilestone(ms) {
     el.style.cssText = 'position:fixed;top:35%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.85);color:#FFD700;font-size:24px;font-weight:900;padding:14px 28px;border-radius:16px;z-index:999;text-align:center;border:2px solid #FFD700;pointer-events:none;transition:opacity 0.5s;';
     document.body.appendChild(el);
   }
-  el.textContent = labels[ms] || `🎯 ${ms}!`;
+  el.textContent = labels[ms] || `[${ms}]!`;
   el.style.opacity = '1';
   clearTimeout(el._t);
   el._t = setTimeout(() => el.style.opacity = '0', 1500);
@@ -256,7 +256,7 @@ class GameScene extends Phaser.Scene {
 
     // HUD
     this.scoreTxt = this.add.text(16, 16, 'Score: 0', { fontSize: '20px', fontStyle: 'bold', color: '#FFD080' });
-    this.livesTxt = this.add.text(W - 16, 16, '❤️❤️❤️', { fontSize: '18px' }).setOrigin(1, 0);
+    this.livesTxt = this.add.text(W - 16, 16, '[Health x3]', { fontSize: '18px' }).setOrigin(1, 0);
     this.bestTxt = this.add.text(16, 42, `Best: ${bestScore}`, { fontSize: '14px', color: '#C08050' });
 
     // Paddle
@@ -338,7 +338,7 @@ class GameScene extends Phaser.Scene {
       if (ball.y > H + 30 && !ball._missed) {
         ball._missed = true;
         lives--;
-        const liveStr = lives > 0 ? '❤️'.repeat(lives) : '💔';
+        const liveStr = lives > 0 ? `[Health x${lives}]` : '[Dead]';
         this.livesTxt.setText(liveStr);
         beep(150, 0.15, 'sawtooth', 0.2);
 
@@ -416,11 +416,13 @@ const game = new Phaser.Game({
 (function(){
 var s=false,o=document.getElementById("game-over-overlay");
 if(!o)return;
-setInterval(function(){
+var overlayTimer=setInterval(function(){
 if(s)return;
 var e=document.querySelector("#game-over,#game-over-screen,.game-over,[id*=game-over],[class*=game-over]");
-if(e&&(e.style.display!=="none"||getComputedStyle(e).display!=="none")){s=true;o.style.display="block";setTimeout(function(){s=false;},8000);}
+if(e&&(e.style.display!=="none"||getComputedStyle(e).display!=="none")){s=true;o.style.display="block";window.dispatchEvent(new CustomEvent("gameover"));setTimeout(function(){s=false;},8000);}
 },1000);
+window.addEventListener("beforeunload",function(){clearInterval(overlayTimer);});
+document.addEventListener("visibilitychange",function(){if(document.hidden)clearInterval(overlayTimer);});
 })();
 </script>
 
@@ -436,7 +438,7 @@ if(e&&(e.style.display!=="none"||getComputedStyle(e).display!=="none")){s=true;o
 (function(){
 var d=false,cta=document.getElementById("gz-cta");
 if(!cta)return;
-setInterval(function(){
+var ctaTimer=setInterval(function(){
 if(d)return;
 var el=document.querySelector("#game-over,#game-over-screen,.game-over,[id*=game-over],[class*=game-over]");
 if(el){
@@ -447,6 +449,8 @@ if(el){
   }
 }
 },800);
+window.addEventListener("beforeunload",function(){clearInterval(ctaTimer);});
+document.addEventListener("visibilitychange",function(){if(document.hidden)clearInterval(ctaTimer);});
 })();
 </script>
 <script src="/game-footer.js"></script>
