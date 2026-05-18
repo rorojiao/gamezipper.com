@@ -21,6 +21,17 @@
   if (window.GZAdManager) return;
   window.GZAdManager = true;
 
+  /* ── AD PAUSE SWITCH ── Set to false to re-enable all ads */
+  var ADS_ENABLED = false;
+  if (!ADS_ENABLED) {
+    console.log('[GZAdManager] All ads PAUSED — set ADS_ENABLED=true to resume');
+    window.GZMonetagSafe = { init:function(){}, loadNow:function(){}, maybeLoad:function(){}, hasBlockingOverlay:function(){return false}, disabled:true, mode:'paused' };
+    window.GZNativeAd = { init:function(){}, loadInPagePush:function(){}, loadVignette:function(){}, loadPushNotif:function(){}, loaded:{inpage:false,vignette:false,push:false} };
+    window.GZAdSenseAuto = { loaded:false, skipped:true };
+    window.GZInterstitial = { init:function(){}, show:function(){}, dismiss:function(){}, getStats:function(){return{eventCount:0,lastShown:0}} };
+    return;
+  }
+
   /* ── Zone Configuration (MultiTag — all MULTI) ────────────── */
   var ZONES = {
     popunder:    11012001,
