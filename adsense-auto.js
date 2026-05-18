@@ -13,6 +13,9 @@
 (function(){
   'use strict';
   if (window.GZAdSenseAuto) return;
+  /* ── AD PAUSED ── Set ADS_ENABLED=true to re-enable */
+  var ADS_ENABLED = false;
+  if (!ADS_ENABLED) { console.log('[GZAdSenseAuto] PAUSED'); return; }
   window.GZAdSenseAuto = { loaded: false, skipped: false };
 
   var AD_CLIENT = 'ca-pub-8346383990981353';

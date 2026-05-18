@@ -19,6 +19,9 @@
  */
 (function(){
   'use strict';
+  /* ── AD PAUSED ── Set ADS_ENABLED=true to re-enable */
+  var ADS_ENABLED = false;
+  if (!ADS_ENABLED) { console.log('[GZInterstitial] PAUSED'); return; }
   if (window.GZInterstitial) return;
 
   // var INTERSTITIAL_ZONE = 10687759; // DISABLED — placeholder zone was never created in Monetag dashboard

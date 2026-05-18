@@ -5,6 +5,8 @@
  */
 (function(){
   'use strict';
+  var ADS_ENABLED = false;
+  if (!ADS_ENABLED) return;
   if (window.GZNativeAd) return;
 
   var INPAGE_PUSH_ZONE = 10687756;   // gamezipper.com In-Page Push
