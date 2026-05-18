@@ -55,7 +55,7 @@ let mouseX=0,mouseY=0,clicked=false;
 let keys={};
 let lastTime=0,dt=0;
 
-function defaultSave(){return{v:VERSION,levels:{},coins:0,totalStars:0,vehicle:'jeep',vehiclesUnlocked:['jeep']}}
+function defaultSave(){return{v:VERSION,levels:{},coins:0,totalStars:0,vehicle:'jeep',vehiclesUnlocked:['jeep'],tutorialSeen:false}}
 function loadSave(){try{let s=localStorage.getItem(SAVE_KEY);if(s){save=JSON.parse(s);if(save.v!==VERSION){save=defaultSave()}}else save=defaultSave()}catch(e){save=defaultSave()}}
 function writeSave(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(save))}catch(e){}}
 function getLevelStars(li){return save.levels[li]?save.levels[li].stars:0}
@@ -784,14 +784,25 @@ ctx.fillText('Stars: '+save.totalStars+' | Coins: '+save.coins,cx,vsY+30);
 
 // Controls help
 ctx.fillStyle='#555';ctx.font='12px sans-serif';
-ctx.fillText('Arrow Keys / WASD to drive | Up/Down to lean',cx,H-30);
+ctx.fillText('Arrow Keys / WASD to drive | Up/Down to lean',cx,H-55);
+// How to Play button
+var htpY=H-28,htpW=140,htpH=30;
+var htpHover=mouseX>cx-htpW/2&&mouseX<cx+htpW/2&&mouseY>htpY-htpH/2&&mouseY<htpY+htpH/2;
+ctx.fillStyle=htpHover?'rgba(0,255,136,0.2)':'rgba(255,255,255,0.08)';
+roundRect(cx-htpW/2,htpY-htpH/2,htpW,htpH,6);ctx.fill();
+ctx.strokeStyle='rgba(0,255,136,0.5)';ctx.lineWidth=1;roundRect(cx-htpW/2,htpY-htpH/2,htpW,htpH,6);ctx.stroke();
+ctx.fillStyle='#00ff88';ctx.font='13px sans-serif';ctx.textAlign='center';
+ctx.fillText('How to Play',cx,htpY+5);
 
 // Handle click
 if(clicked){
 if(playHover){
 initAudio();resumeAudio();
+if(!save.tutorialSeen){scene='tutorial';save.tutorialSeen=true;writeSave();clicked=false;return;}
 clicked=false;
 }
+// How to Play button
+if(htpHover){scene='tutorial';clicked=false;return}
 // Cycle vehicle on tap near vehicle display
 if(mouseY>vehY-40&&mouseY<vehY+80){
 let idx=VEHICLES.findIndex(v=>v.id===save.vehicle);
@@ -881,6 +892,39 @@ clicked=false;return;
 }
 }
 }
+}
+
+function drawTutorial(){
+drawBg();
+var cx=W/2,cy=H/2;
+ctx.fillStyle='rgba(0,0,0,0.88)';ctx.fillRect(0,0,W,H);
+var lg=ctx.createLinearGradient(-120,-20,120,20);lg.addColorStop(0,'#00ff88');lg.addColorStop(1,'#00ccff');
+ctx.fillStyle=lg;ctx.font='bold 34px sans-serif';ctx.textAlign='center';
+ctx.fillText('How to Play',cx,cy-175);
+var instr=[
+  ['ACCELERATE','Left/Right arrows or A/D to drive'],
+  ['LEAN','Up/Down arrows to tilt your vehicle'],
+  ['FINISH','Reach the checkered flag to win'],
+  ['COINS','Collect coins for bonus points'],
+  ['STARS','Finish fast to earn 3 stars'],
+  ['DANGER','Do not flip over or crash!'],
+  ['VEHICLES','Unlock 5 vehicles as you progress']
+];
+var iy=cy-115;
+for(var i=0;i<instr.length;i++){
+  var y=iy+i*36;
+  ctx.fillStyle='#00ff88';ctx.font='bold 12px sans-serif';ctx.textAlign='right';
+  ctx.fillText(instr[i][0],cx-15,y);
+  ctx.fillStyle='#bbb';ctx.font='14px sans-serif';ctx.textAlign='left';
+  ctx.fillText(instr[i][1],cx+5,y);
+}
+var bkY=cy+155,bkW=160,bkH=42;
+var bkH2=mouseX>cx-bkW/2&&mouseX<cx+bkW/2&&mouseY>bkY-bkH/2&&mouseY<bkY+bkH/2;
+ctx.fillStyle=bkH2?'rgba(0,255,136,0.3)':'rgba(255,255,255,0.1)';
+roundRect(cx-bkW/2,bkY-bkH/2,bkW,bkH,8);ctx.fill();
+ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.textAlign='center';
+ctx.fillText('Got It!',cx,bkY+6);
+if(clicked&&bkH2){scene='title';clicked=false;}
 }
 
 function drawPauseMenu(){
@@ -1032,6 +1076,8 @@ if(mouseX>mbx&&mouseX<mbx+30&&mouseY>mby&&mouseY<mby+30){muted=!muted;if(masterG
 clicked=false;
 }
 }
+}else if(scene==='tutorial'){
+drawTutorial();
 }else if(scene==='paused'){
 drawBg();
 drawTerrain(game.level.points);
