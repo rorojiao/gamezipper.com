@@ -141,3 +141,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Ice Breaker",emoji:"🧊",cat:"puzzle",tags:["ice","physics","viking","cutting","rescue"],url:"/ice-breaker/",desc:"Cut ice blocks to rescue frozen vikings in this addictive physics puzzle game. Draw lines to slice through ice and guide vikings to safety.",isNew:true,status:"live"},

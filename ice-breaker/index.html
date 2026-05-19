@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a1628">
+<title>Play Ice Breaker Puzzle Online Free - Cut Ice to Rescue Vikings! | GameZipper</title>
+<meta name="description" content="Cut ice blocks to rescue frozen vikings in this addictive physics puzzle game. 30 handcrafted levels, star ratings, and satisfying ice-shattering mechanics. Play free online now!">
+<meta name="keywords" content="ice breaker, physics puzzle, viking rescue, cut ice, puzzle game, online game, free game">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://gamezipper.com/ice-breaker/">
+
+<meta property="og:title" content="Ice Breaker Puzzle - Cut Ice to Rescue Vikings! | GameZipper">
+<meta property="og:description" content="Slice through ice blocks to rescue frozen vikings in this Nitrome-inspired physics puzzle. 30 challenging levels await!">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta property="og:image" content="https://gamezipper.com/og-images/ice-breaker.png">
+<meta property="og:url" content="https://gamezipper.com/ice-breaker/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GameZipper">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ice Breaker Puzzle - Rescue Vikings!">
+<meta name="twitter:description" content="Cut ice blocks and rescue frozen vikings in this addictive physics puzzle game.">
+
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=ice-breaker'></script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "Ice Breaker Puzzle",
+  "description": "A physics puzzle game where you cut ice blocks to rescue frozen vikings",
+  "genre": ["Puzzle", "Physics", "Arcade"],
+  "gamePlatform": "Web Browser",
+  "applicationCategory": "Game",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "1250"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [{
+    "@type": "Question",
+    "name": "How do I play Ice Breaker?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Draw lines (click and drag) to cut through ice blocks. Guide the vikings to the longboat at the bottom to rescue them. Use fewer cuts to earn more stars."
+    }
+  }, {
+    "@type": "Question",
+    "name": "How many levels are in Ice Breaker?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Ice Breaker features 30 handcrafted levels across 5 difficulty tiers, from beginner to expert."
+    }
+  }]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Play Ice Breaker",
+  "description": "Learn to cut ice and rescue vikings in this physics puzzle game",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Draw to Cut",
+      "text": "Click or touch and drag to draw a cutting line through ice blocks"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Physics",
+      "text": "Cut ice pieces fall with gravity and interact with each other"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Rescue Vikings",
+      "text": "Guide vikings into the longboat to complete each level"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://gamezipper.com/"},
+    {"@type": "ListItem", "position": 2, "name": "Ice Breaker", "item": "https://gamezipper.com/ice-breaker/"}
+  ]
+}
+</script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overflow-x: hidden;
+  background: #0a1628;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<script>
+(function() {
+'use strict';
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let W, H, scale;
+const GRAVITY = 600;
+const ICE_DENSITY = 0.001;
+const WOOD_DENSITY = 0.0007;
+const FRICTION = 0.98;
+const BOUNCE = 0.3;
+const MIN_PIECE = 15;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  scale = Math.min(W / 800, H / 600);
+}
+window.addEventListener('resize', resize);
+resize();
+
+const STORAGE_KEY = 'iceBreaker_v1';
+
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function playSound(type) {
+  if (!audioCtx) return;
+  try {
+    if (type === 'crack') {
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.15, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        const t = i / data.length;
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2) * 0.5;
+      }
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      const flt = audioCtx.createBiquadFilter();
+      flt.type = 'highpass';
+      flt.frequency.value = 800;
+      src.connect(flt);
+      flt.connect(audioCtx.destination);
+      src.start();
+    } else if (type === 'splash') {
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.3, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        const t = i / data.length;
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 1.5) * Math.sin(t * 20) * 0.4;
+      }
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      const flt = audioCtx.createBiquadFilter();
+      flt.type = 'lowpass';
+      flt.frequency.value = 400;
+      src.connect(flt);
+      flt.connect(audioCtx.destination);
+      src.start();
+    } else if (type === 'star') {
+      [0, 0.1, 0.2].forEach((delay, i) => {
+        setTimeout(() => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = 523 * Math.pow(2, i / 12);
+          gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.3);
+        }, delay * 1000);
+      });
+    } else if (type === 'complete') {
+      [0, 0.15, 0.3].forEach((delay, i) => {
+        setTimeout(() => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = [261, 329, 392][i];
+          gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.5);
+        }, delay * 1000);
+      });
+    } else if (type === 'fail') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.4);
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.4);
+    } else if (type === 'cut') {
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.08, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.3;
+      }
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      const flt = audioCtx.createBiquadFilter();
+      flt.type = 'bandpass';
+      flt.frequency.value = 2000;
+      src.connect(flt);
+      flt.connect(audioCtx.destination);
+      src.start();
+    }
+  } catch(e) {}
+}
+
+const LEVELS = [
+  { name: "First Steps", ice: [{x:350,y:150,w:100,h:80,type:'ice'}], vikings: [{x:400,y:190}], goal:{x:300,y:520,w:200,h:60}, par:1, max:5 },
+  { name: "Simple Drop", ice: [{x:320,y:120,w:160,h:70,type:'ice'}], vikings: [{x:400,y:155}], goal:{x:300,y:520,w:200,h:60}, par:1, max:6 },
+  { name: "Tilted", ice: [{x:280,y:130,w:90,h:100,type:'ice'},{x:430,y:130,w:90,h:100,type:'ice'}], vikings: [{x:325,y:180},{x:475,y:180}], goal:{x:300,y:520,w:200,h:60}, par:2, max:7 },
+  { name: "Stack", ice: [{x:350,y:100,w:100,h:60,type:'ice'},{x:350,y:170,w:100,h:60,type:'ice'}], vikings: [{x:400,y:130},{x:400,y:200}], goal:{x:300,y:520,w:200,h:60}, par:1, max:5 },
+  { name: "Wide", ice: [{x:200,y:140,w:400,h:60,type:'ice'}], vikings: [{x:300,y:170},{x:400,y:170},{x:500,y:170}], goal:{x:300,y:520,w:200,h:60}, par:2, max:6 },
+  { name: "Narrow Gap", ice: [{x:250,y:120,w:80,h:90,type:'ice'},{x:470,y:120,w:80,h:90,type:'ice'},{x:330,y:180,w:140,h:60,type:'ice'}], vikings: [{x:290,y:165},{x:510,y:165}], goal:{x:300,y:520,w:200,h:60}, par:2, max:6 },
+
+  { name: "Double Trouble", ice: [{x:250,y:100,w:120,h:70,type:'ice'},{x:430,y:100,w:120,h:70,type:'ice'}], vikings: [{x:310,y:135},{x:490,y:135}], goal:{x:300,y:520,w:200,h:60}, par:2, max:7 },
+  { name: "Rock Barrier", ice: [{x:300,y:130,w:200,h:60,type:'ice'},{x:380,y:80,w:40,h:60,type:'rock'}], vikings: [{x:350,y:160},{x:450,y:160}], goal:{x:300,y:520,w:200,h:60}, par:2, max:6 },
+  { name: "Pyramid", ice: [{x:350,y:80,w:100,h:50,type:'ice'},{x:275,y:140,w:100,h:50,type:'ice'},{x:425,y:140,w:100,h:50,type:'ice'},{x:200,y:200,w:100,h:50,type:'ice'},{x:500,y:200,w:100,h:50,type:'ice'}], vikings: [{x:400,y:105},{x:325,y:165},{x:475,y:165}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
+  { name: "Three Vikings", ice: [{x:200,y:120,w:400,h:50,type:'ice'},{x:300,y:180,w:200,h:50,type:'ice'}], vikings: [{x:250,y:145},{x:400,y:145},{x:500,y:205}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
+  { name: "Wooden Plank", ice: [{x:250,y:100,w:300,h:40,type:'wood'},{x:250,y:150,w:300,h:40,type:'ice'}], vikings: [{x:350,y:170}], goal:{x:300,y:520,w:200,h:60}, par:2, max:6 },
+  { name: "Two Boats", ice: [{x:150,y:140,w:150,h:60,type:'ice'},{x:500,y:140,w:150,h:60,type:'ice'}], vikings: [{x:225,y:170},{x:575,y:170}], goal:{x:300,y:520,w:200,h:60}, par:2, max:7 },
+
+  { name: "Rock Maze", ice: [{x:200,y:100,w:100,h:80,type:'ice'},{x:400,y:100,w:100,h:80,type:'ice'},{x:300,y:160,w:100,h:60,type:'rock'},{x:300,y:230,w:100,h:50,type:'ice'}], vikings: [{x:250,y:140},{x:450,y:140},{x:350,y:255}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
+  { name: "Four Friends", ice: [{x:180,y:90,w:100,h:60,type:'ice'},{x:320,y:90,w:100,h:60,type:'ice'},{x:460,y:90,w:100,h:60,type:'ice'},{x:250,y:160,w:100,h:60,type:'ice'},{x:390,y:160,w:100,h:60,type:'ice'}], vikings: [{x:230,y:120},{x:370,y:120},{x:510,y:120},{x:300,y:190}], goal:{x:300,y:520,w:200,h:60}, par:4, max:10 },
+  { name: "Heavy Rock", ice: [{x:300,y:100,w:200,h:50,type:'ice'},{x:250,y:160,w:80,h:80,type:'rock'},{x:470,y:160,w:80,h:80,type:'rock'},{x:300,y:160,w:80,h:80,type:'ice'}], vikings: [{x:340,y:135},{x:340,y:200}], goal:{x:300,y:520,w:200,h:60}, par:2, max:6 },
+  { name: "Bridge", ice: [{x:200,y:120,w:400,h:40,type:'ice'},{x:300,y:170,w:200,h:40,type:'wood'},{x:200,y:220,w:100,h:60,type:'ice'},{x:500,y:220,w:100,h:60,type:'ice'}], vikings: [{x:250,y:145},{x:550,y:250},{x:250,y:250}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
+  { name: "Step Down", ice: [{x:250,y:80,w:120,h:50,type:'ice'},{x:430,y:130,w:120,h:50,type:'ice'},{x:250,y:180,w:120,h:50,type:'ice'}], vikings: [{x:310,y:105},{x:490,y:155},{x:310,y:205}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
+  { name: "Island", ice: [{x:300,y:100,w:200,h:50,type:'ice'},{x:250,y:160,w:60,h:100,type:'rock'},{x:490,y:160,w:60,h:100,type:'rock'},{x:320,y:160,w:60,h:80,type:'ice'},{x:420,y:160,w:60,h:80,type:'ice'}], vikings: [{x:350,y:135},{x:450,y:135}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
+
+  { name: "Falling Rocks", ice: [{x:250,y:80,w:80,h:60,type:'ice'},{x:470,y:80,w:80,h:60,type:'ice'},{x:250,y:150,w:80,h:60,type:'rock'},{x:470,y:150,w:80,h:60,type:'rock'},{x:300,y:220,w:200,h:40,type:'ice'}], vikings: [{x:290,y:110},{x:510,y:110},{x:400,y:240}], goal:{x:300,y:520,w:200,h:60}, par:4, max:10 },
+  { name: "Pendulum", ice: [{x:350,y:60,w:100,h:40,type:'wood'},{x:300,y:110,w:80,h:80,type:'ice'},{x:420,y:110,w:80,h:80,type:'ice'}], vikings: [{x:340,y:150},{x:460,y:150}], goal:{x:300,y:520,w:200,h:60}, par:2, max:7 },
+  { name: "Five", ice: [{x:150,y:80,w:500,h:40,type:'ice'},{x:150,y:130,w:80,h:60,type:'ice'},{x:270,y:130,w:80,h:60,type:'ice'},{x:390,y:130,w:80,h:60,type:'ice'},{x:510,y:130,w:80,h:60,type:'ice'}], vikings: [{x:190,y:95},{x:310,y:95},{x:430,y:95},{x:550,y:95},{x:400,y:160}], goal:{x:300,y:520,w:200,h:60}, par:3, max:9 },
+  { name: "Cave", ice: [{x:200,y:60,w:400,h:40,type:'ice'},{x:200,y:110,w:60,h:100,type:'rock'},{x:540,y:110,w:60,h:100,type:'rock'},{x:200,y:220,w:400,h:40,type:'ice'},{x:300,y:270,w:200,h:50,type:'ice'}], vikings: [{x:350,y:80},{x:350,y:295} ], goal:{x:300,y:520,w:200,h:60}, par:4, max:10 },
+  { name: "Tower", ice: [{x:350,y:60,w:100,h:40,type:'ice'},{x:350,y:110,w:100,h:40,type:'ice'},{x:350,y:160,w:100,h:40,type:'ice'},{x:350,y:210,w:100,h:40,type:'ice'},{x:300,y:260,w:200,h:40,type:'ice'}], vikings: [{x:400,y:80},{x:400,y:130},{x:400,y:180},{x:400,y:230},{x:400,y:280}], goal:{x:300,y:520,w:200,h:60}, par:5, max:12 },
+  { name: "Complex", ice: [{x:200,y:80,w:100,h:50,type:'ice'},{x:500,y:80,w:100,h:50,type:'ice'},{x:300,y:140,w:200,h:40,type:'rock'},{x:250,y:190,w:120,h:50,type:'ice'},{x:430,y:190,w:120,h:50,type:'ice'},{x:200,y:250,w:100,h:50,type:'ice'},{x:500,y:250,w:100,h:50,type:'ice'}], vikings: [{x:250,y:105},{x:550,y:105},{x:310,y:215},{x:490,y:215},{x:250,y:275},{x:550,y:275}], goal:{x:300,y:520,w:200,h:60}, par:5, max:12 },
+
+  { name: "Expert 1", ice: [{x:200,y:60,w:60,h:80,type:'ice'},{x:280,y:60,w:60,h:80,type:'rock'},{x:360,y:60,w:60,h:80,type:'ice'},{x:440,y:60,w:60,h:80,type:'rock'},{x:520,y:60,w:60,h:80,type:'ice'},{x:240,y:150,w:320,h:40,type:'ice'},{x:280,y:200,w:240,h:40,type:'rock'},{x:300,y:250,w:200,h:50,type:'ice'}], vikings: [{x:230,y:100},{x:390,y:100},{x:550,y:100},{x:400,y:275}], goal:{x:300,y:520,w:200,h:60}, par:5, max:12 },
+  { name: "Expert 2", ice: [{x:150,y:60,w:500,h:30,type:'ice'},{x:150,y:100,w:80,h:60,type:'ice'},{x:570,y:100,w:80,h:60,type:'ice'},{x:270,y:100,w:60,h:60,type:'rock'},{x:470,y:100,w:60,h:60,type:'rock'},{x:340,y:100,w:120,h:60,type:'ice'},{x:250,y:170,w:300,h:40,type:'wood'},{x:300,y:220,w:200,h:50,type:'ice'}], vikings: [{x:190,y:130},{x:610,y:130},{x:400,y:245}], goal:{x:300,y:520,w:200,h:60}, par:5, max:12 },
+  { name: "Expert 3", ice: [{x:200,y:50,w:400,h:30,type:'ice'},{x:200,y:90,w:30,h:100,type:'ice'},{x:570,y:90,w:30,h:100,type:'ice'},{x:250,y:90,w:80,h:50,type:'rock'},{x:470,y:90,w:80,h:50,type:'rock'},{x:350,y:90,w:100,h:50,type:'ice'},{x:300,y:150,w:200,h:30,type:'wood'},{x:320,y:190,w:160,h:50,type:'ice'},{x:250,y:250,w:100,h:40,type:'ice'},{x:450,y:250,w:100,h:40,type:'ice'}], vikings: [{x:400,y:115},{x:350,y:215},{x:300,y:270},{x:500,y:270}], goal:{x:300,y:520,w:200,h:60}, par:6, max:14 },
+  { name: "Expert 4", ice: [{x:150,y:60,w:100,h:50,type:'ice'},{x:550,y:60,w:100,h:50,type:'ice'},{x:280,y:60,w:240,h:30,type:'rock'},{x:200,y:120,w:400,h:30,type:'ice'},{x:200,y:160,w:60,h:80,type:'rock'},{x:540,y:160,w:60,h:80,type:'rock'},{x:280,y:160,w:240,h:30,type:'ice'},{x:300,y:200,w:200,h:50,type:'ice'},{x:200,y:260,w:80,h:50,type:'ice'},{x:520,y:260,w:80,h:50,type:'ice'}], vikings: [{x:200,y:85},{x:600,y:85},{x:400,y:135},{x:400,y:225},{x:240,y:285},{x:560,y:285}], goal:{x:300,y:520,w:200,h:60}, par:6, max:14 },
+  { name: "Expert 5", ice: [{x:200,y:40,w:400,h:25,type:'ice'},{x:200,y:75,w:50,h:50,type:'ice'},{x:275,y:75,w:50,h:50,type:'rock'},{x:350,y:75,w:100,h:50,type:'ice'},{x:475,y:75,w:50,h:50,type:'rock'},{x:550,y:75,w:50,h:50,type:'ice'},{x:250,y:135,w:300,h:25,type:'ice'},{x:250,y:170,w:60,h:60,type:'ice'},{x:490,y:170,w:60,h:60,type:'ice'},{x:330,y:170,w:140,h:30,type:'rock'},{x:350,y:210,w:100,h:50,type:'ice'},{x:200,y:270,w:400,h:30,type:'wood'}], vikings: [{x:225,y:100},{x:575,y:100},{x:280,y:200},{x:520,y:200},{x:400,y:235}], goal:{x:300,y:520,w:200,h:60}, par:7, max:15 },
+  { name: "Final Challenge", ice: [{x:100,y:40,w:600,h:20,type:'ice'},{x:100,y:70,w:40,h:60,type:'ice'},{x:200,y:70,w:40,h:60,type:'rock'},{x:300,y:70,w:40,h:60,type:'ice'},{x:400,y:70,w:40,h:60,type:'rock'},{x:500,y:70,w:40,h:60,type:'ice'},{x:600,y:70,w:40,h:60,type:'ice'},{x:150,y:140,w:500,h:20,type:'ice'},{x:150,y:170,w:80,h:60,type:'ice'},{x:270,y:170,w:80,h:60,type:'rock'},{x:390,y:170,w:80,h:60,type:'ice'},{x:510,y:170,w:80,h:60,type:'rock'},{x:630,y:170,w:20,h:60,type:'ice'},{x:200,y:240,w:400,h:20,type:'ice'},{x:250,y:270,w:300,h:40,type:'ice'},{x:300,y:320,w:200,h:40,type:'ice'}], vikings: [{x:120,y:100},{x:320,y:100},{x:520,y:100},{x:720,y:100},{x:190,y:200},{x:430,y:200},{x:630,y:200},{x:400,y:290},{x:400,y:340}], goal:{x:300,y:520,w:200,h:60}, par:8, max:18 }
+];
+
+let state = {
+  screen: 'menu',
+  level: 0,
+  cuts: 0,
+  pieces: [],
+  vikings: [],
+  particles: [],
+  stars: 0,
+  won: false,
+  lost: false,
+  tutorial: false,
+  tutorialStep: 0,
+  auroraPhase: 0
+};
+
+let saved = {};
+try {
+  saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+} catch(e) {}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+}
+
+function getStars(cuts, par) {
+  if (cuts <= par) return 3;
+  if (cuts <= par + 2) return 2;
+  return 1;
+}
+
+function initLevel(lvlIdx) {
+  const lvl = LEVELS[lvlIdx];
+  state.level = lvlIdx;
+  state.cuts = 0;
+  state.pieces = [];
+  state.vikings = [];
+  state.particles = [];
+  state.won = false;
+  state.lost = false;
+  state.tutorial = lvlIdx === 0 && !saved['tutorial_done'];
+  state.tutorialStep = 0;
+
+  lvl.ice.forEach((block, i) => {
+    state.pieces.push({
+      id: i,
+      x: block.x,
+      y: block.y,
+      w: block.w,
+      h: block.h,
+      vx: 0,
+      vy: 0,
+      type: block.type,
+      viking: null,
+      angle: 0
+    });
+  });
+
+  lvl.vikings.forEach((v, i) => {
+    state.vikings.push({
+      id: i,
+      x: v.x,
+      y: v.y,
+      rescued: false,
+      fallSpeed: 0
+    });
+  });
+
+  state.pieces.forEach(p => {
+    state.vikings.forEach(v => {
+      if (!v.rescued && v.x > p.x && v.x < p.x + p.w && v.y > p.y && v.y < p.y + p.h) {
+        if (!p.viking) p.viking = v;
+      }
+    });
+  });
+  initAudio();
+  startBGM();
+}
+
+function lineIntersectsRect(x1, y1, x2, y2, rx, ry, rw, rh) {
+  function lineSegs(xa, ya, xb, yb, xc, yc, xd, yd) {
+    const denom = (xb - xa) * (yd - yc) - (yb - ya) * (xd - xc);
+    if (Math.abs(denom) < 0.0001) return null;
+    const t = ((xa - xc) * (yd - yc) - (ya - yc) * (xd - xc)) / denom;
+    const u = ((xa - xc) * (yb - ya) - (ya - yc) * (xa - xb)) / denom;
+    if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+      return { x: xa + t * (xb - xa), y: ya + t * (yb - ya) };
+    }
+    return null;
+  }
+  const edges = [
+    [rx, ry, rx + rw, ry],
+    [rx + rw, ry, rx + rw, ry + rh],
+    [rx + rw, ry + rh, rx, ry + rh],
+    [rx, ry + rh, rx, ry]
+  ];
+  const hits = [];
+  for (const e of edges) {
+    const hit = lineSegs(x1, y1, x2, y2, e[0], e[1], e[2], e[3]);
+    if (hit) hits.push(hit);
+  }
+  return hits.length >= 2 ? hits : null;
+}
+
+function cutPiece(piece, x1, y1, x2, y2) {
+  const hits = lineIntersectsRect(x1, y1, x2, y2, piece.x, piece.y, piece.w, piece.h);
+  if (!hits || piece.type === 'rock') return [];
+
+  const px = piece.x, py = piece.y, pw = piece.w, ph = piece.h;
+  const pts = [
+    { x: px, y: py },
+    { x: px + pw, y: py },
+    { x: px + pw, y: py + ph },
+    { x: px, y: py + ph }
+  ];
+
+  const intersections = [];
+  const edges = [[0,1],[1,2],[2,3],[3,0]];
+  edges.forEach((e, i) => {
+    const sec = lineSegs(x1, y1, x2, y2, pts[e[0]].x, pts[e[0]].y, pts[e[1]].x, pts[e[1]].y);
+    if (sec) intersections.push({ p: sec, edge: i });
+  });
+
+  if (intersections.length < 2) return [];
+
+  const i1 = intersections[0];
+  const i2 = intersections[1];
+
+  const midX = (i1.p.x + i2.p.x) / 2;
+  const midY = (i1.p.y + i2.p.y) / 2;
+
+  if (midX < px || midX > px + pw || midY < py || midY > py + ph) return [];
+
+  const leftPts = [], rightPts = [];
+  const ordered = [...pts];
+  ordered.forEach(p => {
+    const side = (p.x - x1) * (y2 - y1) - (p.y - y1) * (x2 - x1);
+    if (side < 0) leftPts.push(p);
+    else rightPts.push(p);
+  });
+
+  leftPts.push(i1.p, i2.p);
+  rightPts.push(i1.p, i2.p);
+
+  function buildPoly(ptsArr) {
+    if (ptsArr.length < 3) return null;
+    const unique = [];
+    const seen = new Set();
+    ptsArr.forEach(p => {
+      const key = Math.round(p.x) + ',' + Math.round(p.y);
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(p);
+      }
+    });
+    if (unique.length < 3) return null;
+
+    let minX = Infinity, minY = Infinity;
+    unique.forEach(p => {
+      if (p.x < minX || (p.x === minX && p.y < minY)) {
+        minX = p.x;
+        minY = p.y;
+      }
+    });
+    const origin = { x: minX, y: minY };
+    unique.sort((a, b) => {
+      const angA = Math.atan2(a.y - origin.y, a.x - origin.x);
+      const angB = Math.atan2(b.y - origin.y, b.x - origin.x);
+      return angA - angB;
+    });
+
+    let area = 0;
+    for (let i = 0; i < unique.length; i++) {
+      const j = (i + 1) % unique.length;
+      area += unique[i].x * unique[j].y;
+      area -= unique[j].x * unique[i].y;
+    }
+    area = Math.abs(area) / 2;
+    if (area < MIN_PIECE * MIN_PIECE / 2) return null;
+
+    let minPx = Infinity, minPy = Infinity;
+    unique.forEach(p => {
+      minPx = Math.min(minPx, p.x);
+      minPy = Math.min(minPy, p.y);
+    });
+
+    return {
+      x: minPx,
+      y: minPy,
+      w: Math.max(...unique.map(p => p.x)) - minPx,
+      h: Math.max(...unique.map(p => p.y)) - minPy,
+      vx: 0,
+      vy: 0,
+      type: piece.type,
+      viking: null,
+      angle: 0,
+      original: piece
+    };
+  }
+
+  const poly1 = buildPoly(leftPts);
+  const poly2 = buildPoly(rightPts);
+  const result = [];
+  if (poly1) result.push(poly1);
+  if (poly2) result.push(poly2);
+  return result;
+}
+
+function updatePhysics(dt) {
+  const lvl = LEVELS[state.level];
+  const goal = lvl.goal;
+
+  state.pieces.forEach(p => {
+    if (p.type === 'rock') return;
+    const density = p.type === 'wood' ? WOOD_DENSITY : ICE_DENSITY;
+    const area = p.w * p.h;
+    p.vy += GRAVITY * dt * density * 1000;
+    p.vx *= FRICTION;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+
+    if (p.x < 0) { p.x = 0; p.vx = Math.abs(p.vx) * BOUNCE; }
+    if (p.x + p.w > W) { p.x = W - p.w; p.vx = -Math.abs(p.vx) * BOUNCE; }
+
+    if (p.y + p.h > H + 200) {
+      p.dead = true;
+    }
+
+    if (p.y + p.h > goal.y && p.y < goal.y + goal.h && p.x + p.w > goal.x && p.x < goal.x + goal.w) {
+      if (p.viking && !p.viking.rescued) {
+        p.viking.rescued = true;
+        playSound('splash');
+        state.stars++;
+        if (p.viking) {
+          state.particles.push(...createParticles(p.x + p.w/2, p.y + p.h/2, '#ff6600', 8));
+        }
+      }
+      p.dead = true;
+    }
+  });
+
+  state.vikings.forEach(v => {
+    if (!v.rescued) {
+      let inPiece = false;
+      state.pieces.forEach(p => {
+        if (!p.dead && v.x > p.x && v.x < p.x + p.w && v.y > p.y && v.y < p.y + p.h) {
+          if (!p.viking) p.viking = v;
+          inPiece = true;
+        }
+      });
+      if (!inPiece) {
+        v.fallSpeed += GRAVITY * dt;
+        v.y += v.fallSpeed * dt;
+        if (v.y > H + 50) {
+          state.lost = true;
+          playSound('fail');
+        }
+      }
+    }
+  });
+
+  state.pieces = state.pieces.filter(p => !p.dead);
+
+  state.particles.forEach(p => {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 200 * dt;
+    p.life -= dt;
+  });
+  state.particles = state.particles.filter(p => p.life > 0);
+
+  if (state.won) return;
+  const allRescued = state.vikings.every(v => v.rescued);
+  if (allRescued) {
+    state.won = true;
+    const stars = getStars(state.cuts, lvl.par);
+    const key = 'level_' + state.level;
+    if (!saved[key] || saved[key] < stars) {
+      saved[key] = stars;
+    }
+    saved.level = state.level;
+    save();
+    setTimeout(() => playSound('complete'), 100);
+    setTimeout(() => playSound('star'), 300);
+  }
+}
+
+function createParticles(x, y, color, count) {
+  const parts = [];
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 50 + Math.random() * 150;
+    parts.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 50,
+      color,
+      size: 2 + Math.random() * 4,
+      life: 0.5 + Math.random() * 0.5
+    });
+  }
+  return parts;
+}
+
+let drawing = false;
+let drawStart = { x: 0, y: 0 };
+let drawEnd = { x: 0, y: 0 };
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
+canvas.addEventListener('mousedown', e => {
+  initAudio();
+  if (state.screen === 'menu') {
+    state.screen = 'levelSelect';
+    return;
+  }
+  if (state.screen === 'levelSelect') {
+    const lvl = Math.floor((e.clientX - W * 0.15) / (W * 0.12));
+    const tier = Math.floor((e.clientY - H * 0.12) / (H * 0.15));
+    const idx = tier * 6 + lvl;
+    if (idx >= 0 && idx < 30) {
+      initLevel(idx);
+      state.screen = 'game';
+    }
+    return;
+  }
+  if (state.screen === 'game' && !state.won && !state.lost) {
+    drawing = true;
+    const pos = getPos(e);
+    drawStart = { x: pos.x, y: pos.y };
+    drawEnd = { x: pos.x, y: pos.y };
+  }
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (drawing) {
+    const pos = getPos(e);
+    drawEnd = { x: pos.x, y: pos.y };
+  }
+});
+
+canvas.addEventListener('mouseup', e => {
+  if (drawing && state.screen === 'game') {
+    const pos = getPos(e);
+    drawEnd = { x: pos.x, y: pos.y };
+    tryCut();
+  }
+  drawing = false;
+});
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  initAudio();
+  if (state.screen === 'menu') {
+    state.screen = 'levelSelect';
+    return;
+  }
+  if (state.screen === 'levelSelect') {
+    const touch = e.touches[0];
+    const lvl = Math.floor((touch.clientX - W * 0.15) / (W * 0.12));
+    const tier = Math.floor((touch.clientY - H * 0.12) / (H * 0.15));
+    const idx = tier * 6 + lvl;
+    if (idx >= 0 && idx < 30) {
+      initLevel(idx);
+      state.screen = 'game';
+    }
+    return;
+  }
+  if (state.screen === 'game' && !state.won && !state.lost) {
+    drawing = true;
+    const pos = getPos(e);
+    drawStart = { x: pos.x, y: pos.y };
+    drawEnd = { x: pos.x, y: pos.y };
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (drawing) {
+    const pos = getPos(e);
+    drawEnd = { x: pos.x, y: pos.y };
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  if (drawing && state.screen === 'game') {
+    tryCut();
+  }
+  drawing = false;
+}, { passive: false });
+
+function tryCut() {
+  const dx = drawEnd.x - drawStart.x;
+  const dy = drawEnd.y - drawStart.y;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len < 30) return;
+
+  let cutSomething = false;
+  const newPieces = [];
+
+  state.pieces.forEach(p => {
+    if (p.type === 'rock') return;
+    const result = cutPiece(p, drawStart.x, drawStart.y, drawEnd.x, drawEnd.y);
+    if (result.length > 0) {
+      cutSomething = true;
+      result.forEach(np => {
+        if (p.viking) {
+          const vx = p.viking.x;
+          const vy = p.viking.y;
+          const relX = (vx - p.x) / p.w;
+          const relY = (vy - p.y) / p.h;
+          np.viking = {
+            id: p.viking.id,
+            x: np.x + relX * np.w,
+            y: np.y + relY * np.h,
+            rescued: false,
+            fallSpeed: 0
+          };
+        }
+        newPieces.push(np);
+      });
+      p.dead = true;
+    }
+  });
+
+  if (cutSomething) {
+    state.cuts++;
+    state.pieces = state.pieces.filter(p => !p.dead);
+    state.pieces.push(...newPieces);
+    playSound('cut');
+    state.particles.push(...createParticles((drawStart.x + drawEnd.x)/2, (drawStart.y + drawEnd.y)/2, '#aaeeff', 12));
+  }
+}
+
+function renderAurora() {
+  state.auroraPhase += 0.005;
+  const grad = ctx.createLinearGradient(0, 0, W, H * 0.4);
+  const alpha1 = 0.08 + Math.sin(state.auroraPhase) * 0.03;
+  const alpha2 = 0.06 + Math.cos(state.auroraPhase * 1.3) * 0.02;
+  grad.addColorStop(0, `rgba(0, 255, 150, ${alpha1})`);
+  grad.addColorStop(0.5, `rgba(100, 0, 255, ${alpha2})`);
+  grad.addColorStop(1, `rgba(0, 100, 255, 0)`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H * 0.4);
+}
+
+function renderBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#0a1628');
+  grad.addColorStop(0.5, '#0d1e38');
+  grad.addColorStop(1, '#1a3a5c');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  for (let i = 0; i < 50; i++) {
+    const x = (i * 73 + state.auroraPhase * 10) % W;
+    const y = (i * 47) % H;
+    ctx.beginPath();
+    ctx.arc(x, y, 1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function renderBoat(x, y, w, h) {
+  ctx.fillStyle = '#8B4513';
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + w * 0.1, y + h);
+  ctx.lineTo(x + w * 0.9, y + h);
+  ctx.lineTo(x + w, y);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#5D2E0C';
+  ctx.beginPath();
+  ctx.moveTo(x + w * 0.3, y);
+  ctx.lineTo(x + w * 0.35, y - h * 0.3);
+  ctx.lineTo(x + w * 0.65, y - h * 0.3);
+  ctx.lineTo(x + w * 0.7, y);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = '#ddd';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x + w * 0.5, y - h * 0.3);
+  ctx.lineTo(x + w * 0.5, y - h * 0.8);
+  ctx.lineTo(x + w * 0.8, y - h * 0.55);
+  ctx.stroke();
+
+  ctx.fillStyle = '#f5f5dc';
+  ctx.beginPath();
+  ctx.moveTo(x + w * 0.48, y - h * 0.8);
+  ctx.lineTo(x + w * 0.52, y - h * 0.8);
+  ctx.lineTo(x + w * 0.8, y - h * 0.55);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function renderPiece(p) {
+  ctx.save();
+  if (p.type === 'ice') {
+    const grad = ctx.createLinearGradient(p.x, p.y, p.x + p.w, p.y + p.h);
+    grad.addColorStop(0, 'rgba(180, 230, 255, 0.7)');
+    grad.addColorStop(0.5, 'rgba(150, 210, 240, 0.6)');
+    grad.addColorStop(1, 'rgba(120, 200, 230, 0.7)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(p.x, p.y, p.w, p.h);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fillRect(p.x + 3, p.y + 3, p.w * 0.3, p.h * 0.2);
+  } else if (p.type === 'wood') {
+    ctx.fillStyle = 'rgba(139, 90, 43, 0.8)';
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.strokeStyle = '#5D2E0C';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(p.x, p.y, p.w, p.h);
+    ctx.strokeStyle = 'rgba(93, 46, 12, 0.4)';
+    for (let i = 0; i < p.h; i += 8) {
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y + i);
+      ctx.lineTo(p.x + p.w, p.y + i);
+      ctx.stroke();
+    }
+  } else if (p.type === 'rock') {
+    ctx.fillStyle = 'rgba(80, 80, 80, 0.9)';
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(p.x, p.y, p.w, p.h);
+    ctx.strokeStyle = 'rgba(60,60,60,0.5)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < p.w + p.h; i += 10) {
+      ctx.beginPath();
+      ctx.moveTo(p.x + Math.min(i, p.w), p.y + Math.max(0, i - p.w));
+      ctx.lineTo(p.x + Math.max(0, i - p.h), p.y + Math.min(i, p.h));
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function renderViking(v) {
+  if (v.rescued) return;
+  ctx.save();
+  ctx.fillStyle = '#ff6b35';
+  ctx.beginPath();
+  ctx.arc(v.x, v.y, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#8B4513';
+  ctx.beginPath();
+  ctx.moveTo(v.x - 14, v.y - 8);
+  ctx.lineTo(v.x - 8, v.y - 20);
+  ctx.lineTo(v.x - 4, v.y - 8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(v.x + 14, v.y - 8);
+  ctx.lineTo(v.x + 8, v.y - 20);
+  ctx.lineTo(v.x + 4, v.y - 8);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#ddd';
+  ctx.beginPath();
+  ctx.arc(v.x, v.y - 5, 7, Math.PI, 0);
+  ctx.fill();
+  ctx.restore();
+}
+
+function renderGame() {
+  const lvl = LEVELS[state.level];
+  const goal = lvl.goal;
+
+  renderBoat(goal.x, goal.y, goal.w, goal.h);
+
+  state.pieces.forEach(p => renderPiece(p));
+  state.vikings.forEach(v => renderViking(v));
+
+  state.particles.forEach(p => {
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  if (drawing) {
+    ctx.strokeStyle = '#00ffff';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#00ffff';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(drawStart.x, drawStart.y);
+    ctx.lineTo(drawEnd.x, drawEnd.y);
+    ctx.stroke();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.moveTo(drawStart.x, drawStart.y);
+    ctx.lineTo(drawEnd.x, drawEnd.y);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(10, 10, 180, 80);
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${Math.floor(18 * scale)}px sans-serif`;
+  ctx.fillText(`Level ${state.level + 1}: ${lvl.name}`, 20, 35);
+  ctx.font = `${Math.floor(16 * scale)}px sans-serif`;
+  ctx.fillText(`Cuts: ${state.cuts} / Par: ${lvl.par}`, 20, 58);
+  ctx.fillText(`Vikings: ${state.vikings.filter(v => v.rescued).length}/${state.vikings.length}`, 20, 80);
+
+  const starY = 60;
+  for (let i = 0; i < 3; i++) {
+    const earned = getStars(state.cuts || 0, lvl.par) > i;
+    ctx.fillStyle = earned ? '#FFD700' : '#444';
+    ctx.beginPath();
+    const sx = W - 80 + i * 25;
+    ctx.moveTo(sx, starY - 8);
+    ctx.lineTo(sx + 5, starY - 3);
+    ctx.lineTo(sx + 10, starY - 8);
+    ctx.lineTo(sx + 7, starY - 2);
+    ctx.lineTo(sx + 8, starY + 8);
+    ctx.lineTo(sx, starY + 3);
+    ctx.lineTo(sx - 8, starY + 8);
+    ctx.lineTo(sx - 7, starY - 2);
+    ctx.lineTo(sx - 10, starY - 8);
+    ctx.lineTo(sx - 5, starY - 3);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#888';
+  ctx.font = `${Math.floor(14 * scale)}px sans-serif`;
+  ctx.fillText('Menu', 20, H - 20);
+
+  if (state.tutorial && state.tutorialStep === 0) {
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(28 * scale)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('Tutorial', W/2, H * 0.25);
+    ctx.font = `${Math.floor(18 * scale)}px sans-serif`;
+    ctx.fillText('Draw a line through the ice to cut it', W/2, H * 0.35);
+    ctx.fillText('Guide the viking to the boat', W/2, H * 0.42);
+    ctx.fillText('Use fewer cuts for more stars!', W/2, H * 0.49);
+
+    ctx.strokeStyle = '#00ffff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.3, H * 0.6);
+    ctx.lineTo(W * 0.7, H * 0.6);
+    ctx.stroke();
+
+    ctx.fillStyle = '#00ffff';
+    ctx.font = `${Math.floor(16 * scale)}px sans-serif`;
+    ctx.fillText('Swipe to cut', W/2, H * 0.72);
+    ctx.fillStyle = '#aaa';
+    ctx.fillText('Tap anywhere to continue', W/2, H * 0.82);
+    ctx.textAlign = 'left';
+  }
+
+  if (state.won) {
+    ctx.fillStyle = 'rgba(0,50,0,0.8)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(36 * scale)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('Level Complete!', W/2, H * 0.35);
+    const stars = getStars(state.cuts, lvl.par);
+    for (let i = 0; i < 3; i++) {
+      ctx.fillStyle = i < stars ? '#FFD700' : '#444';
+      ctx.beginPath();
+      const sx = W/2 - 40 + i * 40;
+      ctx.moveTo(sx, H * 0.45 - 12);
+      ctx.lineTo(sx + 8, H * 0.45 - 5);
+      ctx.lineTo(sx + 15, H * 0.45 - 12);
+      ctx.lineTo(sx + 10, H * 0.45 - 3);
+      ctx.lineTo(sx + 12, H * 0.45 + 12);
+      ctx.lineTo(sx, H * 0.45 + 5);
+      ctx.lineTo(sx - 12, H * 0.45 + 12);
+      ctx.lineTo(sx - 10, H * 0.45 - 3);
+      ctx.lineTo(sx - 15, H * 0.45 - 12);
+      ctx.lineTo(sx - 8, H * 0.45 - 5);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.fillStyle = '#ccc';
+    ctx.font = `${Math.floor(16 * scale)}px sans-serif`;
+    ctx.fillText(`Cuts: ${state.cuts} (Par: ${lvl.par})`, W/2, H * 0.58);
+    ctx.fillStyle = '#fff';
+    ctx.font = `${Math.floor(20 * scale)}px sans-serif`;
+    const nextText = state.level < 29 ? 'Next Level' : 'Back to Menu';
+    ctx.fillText(nextText, W/2, H * 0.68);
+    ctx.fillText('Menu', W/2, H * 0.76);
+    ctx.textAlign = 'left';
+  }
+
+  if (state.lost) {
+    ctx.fillStyle = 'rgba(50,0,0,0.8)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(32 * scale)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('Viking Lost!', W/2, H * 0.4);
+    ctx.fillStyle = '#ccc';
+    ctx.font = `${Math.floor(18 * scale)}px sans-serif`;
+    ctx.fillText('Try Again', W/2, H * 0.52);
+    ctx.fillText('Menu', W/2, H * 0.6);
+    ctx.textAlign = 'left';
+  }
+}
+
+function renderMenu() {
+  renderBackground();
+  renderAurora();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${Math.floor(48 * scale)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('ICE BREAKER', W/2, H * 0.3);
+
+  ctx.font = `${Math.floor(20 * scale)}px sans-serif`;
+  ctx.fillStyle = '#aaddff';
+  ctx.fillText('Rescue the Vikings!', W/2, H * 0.38);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = `${Math.floor(24 * scale)}px sans-serif`;
+  ctx.fillText('Tap to Start', W/2, H * 0.55);
+
+  const totalStars = Object.values(saved).filter(v => typeof v === 'number' && v <= 3).reduce((a, b) => a + b, 0);
+  ctx.fillStyle = '#FFD700';
+  ctx.font = `${Math.floor(18 * scale)}px sans-serif`;
+  ctx.fillText(`Total Stars: ${totalStars} / 90`, W/2, H * 0.65);
+}
+
+function renderLevelSelect() {
+  renderBackground();
+  renderAurora();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${Math.floor(32 * scale)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('Select Level', W/2, H * 0.08);
+
+  const cols = 6;
+  const rows = 5;
+  const cellW = W * 0.12;
+  const cellH = H * 0.15;
+  const startX = W * 0.15;
+  const startY = H * 0.12;
+
+  for (let tier = 0; tier < 5; tier++) {
+    ctx.fillStyle = ['#4CAF50', '#2196F3', '#FF9800', '#F44336', '#9C27B0'][tier];
+    ctx.font = `bold ${Math.floor(14 * scale)}px sans-serif`;
+    ctx.fillText(['Easy', 'Medium', 'Hard', 'Expert', 'Master'][tier], W * 0.07, startY + tier * cellH + 20);
+    for (let lvl = 0; lvl < 6; lvl++) {
+      const idx = tier * 6 + lvl;
+      const x = startX + lvl * cellW;
+      const y = startY + tier * cellH;
+      const stars = saved['level_' + idx];
+      const unlocked = idx === 0 || saved['level_' + (idx - 1)] !== undefined;
+
+      ctx.fillStyle = unlocked ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.3)';
+      ctx.fillRect(x, y, cellW * 0.85, cellH * 0.85);
+
+      if (unlocked) {
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, cellW * 0.85, cellH * 0.85);
+      }
+
+      ctx.fillStyle = unlocked ? '#fff' : '#555';
+      ctx.font = `bold ${Math.floor(16 * scale)}px sans-serif`;
+      ctx.fillText(String(idx + 1), x + cellW * 0.42, y + cellH * 0.35);
+
+      if (stars) {
+        const starSize = cellW * 0.12;
+        for (let s = 0; s < 3; s++) {
+          ctx.fillStyle = s < stars ? '#FFD700' : '#333';
+          ctx.beginPath();
+          const sx = x + cellW * 0.25 + s * starSize * 1.5;
+          const sy = y + cellH * 0.55;
+          ctx.moveTo(sx, sy - starSize * 0.5);
+          ctx.lineTo(sx + starSize * 0.3, sy - starSize * 0.15);
+          ctx.lineTo(sx + starSize * 0.6, sy - starSize * 0.5);
+          ctx.lineTo(sx + starSize * 0.35, sy - starSize * 0.05);
+          ctx.lineTo(sx + starSize * 0.4, sy + starSize * 0.5);
+          ctx.lineTo(sx, sy + starSize * 0.15);
+          ctx.lineTo(sx - starSize * 0.4, sy + starSize * 0.5);
+          ctx.lineTo(sx - starSize * 0.35, sy - starSize * 0.05);
+          ctx.lineTo(sx - starSize * 0.6, sy - starSize * 0.5);
+          ctx.lineTo(sx - starSize * 0.3, sy - starSize * 0.15);
+          ctx.closePath();
+          ctx.fill();
+        }
+      } else if (!unlocked) {
+        ctx.fillStyle = '#555';
+        ctx.font = `${Math.floor(12 * scale)}px sans-serif`;
+        ctx.fillText('Locked', x + cellW * 0.42, y + cellH * 0.6);
+      }
+    }
+  }
+
+  ctx.fillStyle = '#888';
+  ctx.font = `${Math.floor(14 * scale)}px sans-serif`;
+  ctx.fillText('Back', 20, H - 20);
+}
+
+canvas.addEventListener('click', e => {
+  if (state.screen === 'levelSelect') {
+    if (e.clientX < 60 && e.clientY > H - 40) {
+      state.screen = 'menu';
+    }
+    if (state.won) {
+      if (e.clientY > H * 0.72 && state.level < 29) {
+        initLevel(state.level + 1);
+      } else if (e.clientY > H * 0.64 && state.level === 29) {
+        state.screen = 'levelSelect';
+      } else if (e.clientY > H * 0.7) {
+        state.screen = 'levelSelect';
+      }
+    } else if (state.lost) {
+      if (e.clientY > H * 0.44) {
+        initLevel(state.level);
+      } else if (e.clientY > H * 0.54) {
+        state.screen = 'levelSelect';
+      }
+    }
+  } else if (state.screen === 'game') {
+    if (state.won) {
+      if (e.clientY > H * 0.72 && state.level < 29) {
+        initLevel(state.level + 1);
+      } else if (e.clientY > H * 0.64 && state.level === 29) {
+        state.screen = 'levelSelect';
+      } else if (e.clientY > H * 0.7) {
+        state.screen = 'levelSelect';
+      }
+    } else if (state.lost) {
+      if (e.clientY > H * 0.44) {
+        initLevel(state.level);
+      } else if (e.clientY > H * 0.54) {
+        state.screen = 'levelSelect';
+      }
+    } else if (e.clientY > H - 40 && e.clientX < 80) {
+      state.screen = 'levelSelect';
+    }
+  }
+  if (state.tutorial && state.tutorialStep === 0) {
+    state.tutorialStep = 1;
+    saved['tutorial_done'] = true;
+    save();
+  }
+});
+
+let rafId = null;
+let lastTime = 0;
+function loop(time) {
+  const dt = Math.min((time - lastTime) / 1000, 0.05);
+  lastTime = time;
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (state.screen === 'menu') {
+    renderMenu();
+  } else if (state.screen === 'levelSelect') {
+    renderLevelSelect();
+  } else if (state.screen === 'game') {
+    if (!state.won && !state.lost) {
+      updatePhysics(dt);
+    }
+    renderBackground();
+    renderGame();
+  }
+
+  rafId = requestAnimationFrame(loop);
+}
+
+function cleanup() {
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  if (audioCtx) { audioCtx.close().catch(function(){}); audioCtx = null; }
+}
+window.addEventListener('beforeunload', cleanup);
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  } else {
+    lastTime = performance.now();
+    rafId = requestAnimationFrame(loop);
+  }
+});
+
+// BGM: ambient arctic chord loop
+let bgmNodes = [];
+function startBGM() {
+  if (!audioCtx || bgmNodes.length) return;
+  try {
+    var sr = audioCtx.sampleRate;
+    var dur = 16;
+    var bufSize = sr * dur;
+    var buf = audioCtx.createBuffer(1, bufSize, sr);
+    var d = buf.getChannelData(0);
+    var chords = [[220,277.18,329.63],[246.94,311.13,369.99],[261.63,329.63,392],[246.94,311.13,369.99]];
+    var chordDur = dur / chords.length;
+    for (var i = 0; i < bufSize; i++) {
+      var t = i / sr;
+      var ci = Math.min(Math.floor(t / chordDur), chords.length - 1);
+      var chord = chords[ci];
+      var s = 0;
+      for (var n = 0; n < chord.length; n++) {
+        s += Math.sin(2 * Math.PI * chord[n] * t) * 0.04;
+        s += Math.sin(2 * Math.PI * chord[n] * 0.5 * t) * 0.02;
+      }
+      var fade = t % chordDur;
+      var fadeIn = Math.min(fade / 0.8, 1);
+      var fadeOut = Math.min((chordDur - fade) / 0.8, 1);
+      s *= fadeIn * fadeOut;
+      var lfo = Math.sin(2 * Math.PI * 0.15 * t) * 0.1 + 1;
+      d[i] = s * lfo * 0.4;
+    }
+    var src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    var flt = audioCtx.createBiquadFilter();
+    flt.type = 'lowpass';
+    flt.frequency.value = 600;
+    var g = audioCtx.createGain();
+    g.gain.value = state.soundOn ? 0.25 : 0;
+    src.connect(flt);
+    flt.connect(g);
+    g.connect(audioCtx.destination);
+    src.start();
+    bgmNodes = [src, flt, g];
+  } catch(e) {}
+}
+function stopBGM() {
+  bgmNodes.forEach(function(n) { try { n.stop ? n.stop() : n.disconnect(); } catch(e) {} });
+  bgmNodes = [];
+}
+
+rafId = requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
