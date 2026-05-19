@@ -15,6 +15,7 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
   'linear-gradient(135deg,#a1c4fd,#c2e9fb)'
 ];
+
 const GAMES = [
   {name:"Fruit Slash",emoji:"🍉",cat:"arcade",tags:["Arcade","Swipe","Fruit"],url:"/fruit-slash/",desc:"Swipe to slice fruits! Cut fast, combo big, dodge bombs. 60 seconds of juicy action!",isNew:true,status:"live"},
   {name:"Basketball Shoot",emoji:"🏀",cat:"arcade",tags:["Arcade","Sports","Physics"],url:"/basketball-shoot/",desc:"Shoot hoops in 60 seconds! Drag to aim, release to shoot. Swish for bonus points!",isNew:true,status:"live"},
@@ -118,7 +119,8 @@ const GAMES = [
   {name:"Number Slide",emoji:"🔢",cat:"puzzle",tags:["Puzzle","Sliding","Number","15 Puzzle","Brain","Strategy","Classic","Tile","Board","Casual"],url:"/number-slide/",desc:"Play Number Slide (15 Puzzle) online free! Classic sliding tile puzzle with 3x3 to 6x6 grids, 3 puzzle patterns, daily challenge, hints, undo, stats and 4 themes. Train your brain with the ultimate number puzzle game!",isNew:true,status:"live"},
   {name:"Peg Solitaire",emoji:"⚪",cat:"puzzle",tags:["Puzzle","Peg","Marble","Solitaire","Board","Classic","Brain","Strategy","Jump","Logic"],url:"/peg-solitaire/",desc:"Play Peg Solitaire online free! 8 board layouts from easy triangle to expert cross. Classic marble jumping puzzle with hints, undo, star ratings and progress tracking. No download needed!",isNew:true,status:"live"},
   {name:"Rope Rescue",emoji:"🪢",cat:"puzzle",tags:["Puzzle","Physics","Rope","Cut","Rescue","Strategy","Casual","Brain","Logic","Swipe"],url:"/rope-rescue/",desc:"Cut ropes to rescue targets in this physics puzzle game! 40+ levels with rope physics, obstacles, and star ratings. Swipe to cut, use physics to your advantage. The ultimate rope cutting brain teaser!",isNew:true,status:"live"},
-  {name:"Ice Breaker",emoji:"🧊",cat:"puzzle",tags:["ice","physics","viking","cutting","rescue","puzzle","brain","strategy","casual"],url:"/ice-breaker/",desc:"Cut ice blocks to rescue frozen vikings in this addictive physics puzzle game! Draw lines to slice through ice and guide vikings to safety. 30 levels across 5 tiers with ice, rock, and wood obstacles.",isNew:true,status:"live"}
+  {name:"Ice Breaker",emoji:"🧊",cat:"puzzle",tags:["ice","physics","viking","cutting","rescue","puzzle","brain","strategy","casual"],url:"/ice-breaker/",desc:"Cut ice blocks to rescue frozen vikings in this addictive physics puzzle game! Draw lines to slice through ice and guide vikings to safety. 30 levels across 5 tiers with ice, rock, and wood obstacles.",isNew:true,status:"live"},
+
 ];
 
 /**
@@ -142,4 +144,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Path Finder",emoji:"🔗",cat:"puzzle",tags:["Path","Finder","Numberlink","Flow","Connect","Puzzle","Logic","Grid","Brain","Lines"],url:"/path-finder/",desc:"Connect matching pairs with non-crossing paths and fill every cell! 41 hand-crafted levels across 4 grid sizes (5x5 to 8x8), hints, undo, daily puzzle, achievements, timer and star ratings. The ultimate free online Numberlink logic puzzle!",isNew:true,status:"live"},
