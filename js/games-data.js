@@ -111,7 +111,9 @@ const GAMES = [
 {name:"Gomoku",emoji:"⚫",cat:"puzzle",tags:["Puzzle","Board","Strategy","Gomoku","Five in a Row","AI","Classic","Two Player","Brain","Go"],url:"/gomoku/",desc:"Play Gomoku (Five in a Row) online free! Challenge AI with 4 difficulty levels or play local 2-player on 9x9, 13x13 or 15x15 boards. Smart minimax AI with alpha-beta pruning. No download needed!",isNew:true,status:"live"},
 {name:"Dominoes",emoji:"🁣",cat:"puzzle",tags:["Puzzle","Board","Dominoes","Tile","Strategy","AI","Classic","Two Player","Brain","Casual"],url:"/dominoes/",desc:"Play Dominoes online free! 3 game modes: Draw, Block, and All Fives (Muggins). Challenge smart AI with 3 difficulty levels or play local 2-player. Score points, use undo, track stats. The classic tile matching board game!",isNew:true,status:"live"},
   {name:"Backgammon",emoji:"🎲",cat:"board",tags:["backgammon","board game","dice","strategy","classic","2 player"],url:"/backgammon/",desc:"Play Backgammon online free. Classic board game with AI opponent, local 2-player, doubling cube, and full rules.",isNew:true,status:"live"},
-  {name:"Ludo",emoji:"🎲",cat:"board",tags:["ludo","board game","dice","multiplayer","classic","strategy","family"],url:"/ludo/",desc:"Play Ludo online free! Classic board game with AI opponents, local multiplayer, dice rolling, token captures and smooth animations. No download needed.",isNew:true,status:"live"}
+  {name:"Ludo",emoji:"🎲",cat:"board",tags:["ludo","board game","dice","multiplayer","classic","strategy","family"],url:"/ludo/",desc:"Play Ludo online free! Classic board game with AI opponents, local multiplayer, dice rolling, token captures and smooth animations. No download needed.",isNew:true,status:"live"},
+  {name:"Color by Number",emoji:"🎨",cat:"puzzle",tags:["coloring","number","pixel art","relaxing","casual"],url:"/color-by-number/",desc:"Color by Number free online! 30+ procedural color-by-number puzzles across 6 categories. Relax and reveal beautiful pixel art!",isNew:true,status:"live"},
+  {name:"Spot the Difference",emoji:"🔍",cat:"puzzle",tags:["spot the difference","find differences","hidden objects","observation","brain"],url:"/spot-the-difference/",desc:"Find hidden differences between two pictures in this free online puzzle game. 30 levels, 6 categories, hints, and daily challenges!",isNew:true,status:"live"}
 ];
 
 /**
@@ -135,4 +137,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Spot the Difference",emoji:"🔍",cat:"puzzle",tags:["spot the difference","find differences","hidden objects","observation","brain"],url:"/spot-the-difference/",desc:"Find hidden differences between two pictures in this free online puzzle game. 30 levels, 6 categories, hints, and daily challenges!",isNew:true,status:"live"},
+
