@@ -108,7 +108,8 @@
       {n:'Watermelon Merge',e:'🍉',u:'/watermelon-merge/',c:'puzzle'},
       {n:'Word Connections',e:'🔗',u:'/word-connections/',c:'puzzle'},
       {n:'Word Search',e:'🔍',u:'/word-search/',c:'puzzle'},
-      {n:'Wordscapes',e:'🌿',u:'/wordscapes/',c:'puzzle'}
+      {n:'Wordscapes',e:'🌿',u:'/wordscapes/',c:'puzzle'},
+      {n:'Ludo',e:'🎲',u:'/ludo/',c:'board'}
 
     75|    ];
     76|
