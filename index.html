@@ -78,7 +78,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .game-card:hover .overlay{opacity:1}
 .play-btn{background:#4ecdc4;color:#000;padding:12px 30px;border-radius:25px;font-weight:700;font-size:1em}
 .game-info{padding:15px}
-.game-info h3{font-size:1em;margin-bottom:5px}
+.game-info h3{font-size:1em;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .game-info .desc{font-size:.75em;color:#999;margin-bottom:6px}
 .game-info .tags{display:flex;gap:5px;flex-wrap:wrap}
 .game-info .tag{font-size:0.7em;padding:3px 8px;background:#2a2a4a;border-radius:10px;color:#4ecdc4}
@@ -107,6 +107,9 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 .cat-btn:active{transform:scale(0.95)}
 .gz-cta-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .gz-cta-btn:active{transform:scale(0.97)}
+.game-card:focus-visible,.cat-btn:focus-visible,.gz-cta-btn:focus-visible{outline:3px solid #4ecdc4;outline-offset:2px}
+.cat-btn:focus-visible{border-radius:25px}
+.gz-cta-btn:focus-visible{border-radius:30px}
 @media(prefers-reduced-motion:reduce){*{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}.game-card{opacity:1;transform:none}.gz-skeleton{animation:none;background:#252545}}
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"GameZipper","url":"https://gamezipper.com","logo":"https://gamezipper.com/favicon.svg","sameAs":[],"description":"Free online browser games — no downloads, no sign-up. 97 puzzle, arcade, idle & card games."}</script>
@@ -238,7 +241,7 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 <button class="cat-btn" onclick="filter('idle',this)" role="tab" aria-selected="false" aria-label="Filter idle games">⏰ Idle</button>
 <button class="cat-btn" onclick="filter('card',this)" role="tab" aria-selected="false" aria-label="Filter card games">🃏 Card</button>
 </div>
-<div class="games" id="games" role="list" aria-label="Game collection">
+<div class="games" id="games" role="list" aria-label="Game collection" aria-live="polite" aria-relevant="additions removals">
   <!-- Skeleton loaders: match grid layout to prevent CLS when JS renders -->
   <div class="gz-skeleton" style="aspect-ratio:4/3"></div>
   <div class="gz-skeleton" style="aspect-ratio:4/3"></div>
@@ -454,8 +457,7 @@ function render(list){
 function filter(cat,btn){
   document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');else document.querySelector('.cat-btn').classList.add('active');
-  render(cat==='all'?liveGames:liveGames.filter(g=>g.cat===cat));
-  document.getElementById('games').classList.add('loaded');
+  requestAnimationFrame(function(){render(cat==='all'?liveGames:liveGames.filter(g=>g.cat===cat));document.getElementById('games').classList.add('loaded');});
 }
 
 // Only render live (正式上线) games on the main site
@@ -629,7 +631,7 @@ COMMENTED OUT AD SDK -->
 </style>
 <button id="gz-btt" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 <script>
-(function(){var b=document.getElementById('gz-btt');var t=0;window.addEventListener('scroll',function(){if(!t){t=setTimeout(function(){t=0;b.classList.toggle('visible',window.scrollY>600)},100)}},false)})();
+(function(){var b=document.getElementById('gz-btt');var t=0;window.addEventListener('scroll',function(){if(!t){t=setTimeout(function(){t=0;b.classList.toggle('visible',window.scrollY>600)},100)}},{passive:true},false)})();
 </script>
 <!-- Exit Intent: catch desktop users about to leave -->
 <style>
@@ -662,7 +664,7 @@ COMMENTED OUT AD SDK -->
     var o=document.getElementById('gz-exit-overlay');
     o.classList.add('show');
     try{sessionStorage.setItem('gz_exit_shown','1')}catch(e){}
-  });
+  },{passive:true});
   document.getElementById('gz-exit-close').addEventListener('click',function(){
     document.getElementById('gz-exit-overlay').classList.remove('show');
   });
