@@ -142,3 +142,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Path Finder",emoji:"🔗",cat:"puzzle",tags:["Path","Finder","Numberlink","Flow","Connect","Puzzle","Logic","Grid","Brain","Lines"],url:"/path-finder/",desc:"Connect matching pairs with non-crossing paths and fill every cell! 41 hand-crafted levels across 4 grid sizes (5x5 to 8x8), hints, undo, daily puzzle, achievements, timer and star ratings. The ultimate free online Numberlink logic puzzle!",isNew:true,status:"live"},
