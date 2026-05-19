@@ -135,3 +135,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Color by Number",emoji:"🎨",cat:"puzzle",tags:["coloring","relaxation","art","paint"],url:"/color-by-number/",desc:"Relax with 30+ color-by-number puzzles across 6 categories. Tap numbered regions to fill them with matching colors and reveal beautiful artwork.",isNew:true,status:"live"},
