@@ -2,6 +2,7 @@
 (function() {
   var SITE = 'gamezipper.com';
   var EP = 'https://site-analytics.cap.1ktower.com/api/event';
+  var EP_LOCAL = 'http://10.10.29.67:8090/api/collect.gz';
   var BK = 'gz_ab';
   var T = 30000;
   var P = location.pathname;
@@ -21,11 +22,14 @@
   function snd(p) {
     if (!p || !p.length) return;
     var d = JSON.stringify(p);
+    // Send to external analytics (original)
     if (N.sendBeacon) {
       if (!N.sendBeacon(EP, d)) fS(d);
     } else {
       fS(d);
     }
+    // Also send to local BI server (dual-write)
+    try { fetch(EP_LOCAL, { method: 'POST', body: d, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(function() {}); } catch(e) {}
   }
   function fS(d) {
     fetch(EP, { method: 'POST', body: d, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(function() {});
