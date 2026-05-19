@@ -1,6 +1,7 @@
 """
 Optimized level generator for Magic Sort puzzle.
 Uses DFS with smart heuristics and state memoization.
+Supports 2-16 color levels.
 """
 import random
 import sys
@@ -43,7 +44,7 @@ def get_moves(bottles, cap=CAP):
                 if amt > 0: moves.append((i, j, amt))
     return moves
 
-def solve_dfs(bottles, cap=CAP, max_depth=300, time_limit=5.0):
+def solve_dfs(bottles, cap=CAP, max_depth=400, time_limit=5.0):
     """DFS solver with time limit."""
     start_time = time.time()
     initial_key = tuple(tuple(b) for b in bottles)
@@ -108,7 +109,7 @@ def solve_dfs(bottles, cap=CAP, max_depth=300, time_limit=5.0):
     
     return False, len(visited)
 
-def generate_level(num_colors, seed, extra_tubes=2, time_limit=3.0):
+def generate_level(num_colors, seed, extra_tubes=2, time_limit=5.0):
     for attempt in range(20):
         s = seed * 1000 + attempt
         state = generate_random_state(num_colors, s, extra_tubes)
@@ -117,16 +118,15 @@ def generate_level(num_colors, seed, extra_tubes=2, time_limit=3.0):
         solved_count = sum(1 for b in state if len(b) == CAP and len(set(b)) == 1)
         if solved_count >= num_colors * 0.7: continue
         
-        result, info = solve_dfs(state, CAP, max_depth=300, time_limit=time_limit)
+        result, info = solve_dfs(state, CAP, max_depth=400, time_limit=time_limit)
         if result is True:
             return state, solved_count, info
         elif result is None:
             # Timeout - try next attempt with different seed
             continue
-    
     return None, 0, 0
 
-def generate_batch(start_id, count, num_colors, seed_base, time_limit=3.0):
+def generate_batch(start_id, count, num_colors, seed_base, time_limit=5.0):
     levels = []
     failures = 0
     t0 = time.time()
@@ -150,22 +150,68 @@ def generate_batch(start_id, count, num_colors, seed_base, time_limit=3.0):
     print(f"\nGenerated {len(levels)}/{count}, {failures} failures")
     return levels
 
+def deduplicate_levels(levels):
+    """Remove duplicate level states."""
+    seen = set()
+    unique = []
+    for lvl in levels:
+        key = lvl.strip()
+        if key not in seen:
+            seen.add(key)
+            unique.append(lvl)
+    return unique
+
 if __name__ == "__main__":
-    print("=== Test: 5 colors ===")
-    lvl, sc, depth = generate_level(5, 42, time_limit=2.0)
-    if lvl:
-        print(f"Level: {lvl}")
-        print(f"Pre-solved: {sc}/5, solution depth: {depth}")
-    else:
-        print("Test FAILED")
+    mode = sys.argv[1] if len(sys.argv) > 1 else "generate"
     
-    print("\n=== Generating levels 751-830 (14 colors, 3s/level limit) ===")
-    levels = generate_batch(751, 80, 14, 100000, time_limit=3.0)
+    if mode == "test":
+        print("=== Test: 5 colors ===")
+        lvl, sc, depth = generate_level(5, 42, time_limit=2.0)
+        if lvl:
+            print(f"Level: {lvl}")
+            print(f"Pre-solved: {sc}/5, solution depth: {depth}")
+        else:
+            print("Test FAILED")
     
-    if levels:
-        with open('new_levels.txt', 'w') as f:
-            for l in levels:
-                f.write(f"  {l},\n")
-        print(f"\nWrote {len(levels)} levels to new_levels.txt")
-    else:
-        print("No levels generated!")
+    elif mode == "generate":
+        # Generate 15-color levels (MYTHIC difficulty)
+        print("=== Generating 15-color levels (1210-1310) ===")
+        levels_15 = generate_batch(1210, 100, 15, 200000, time_limit=5.0)
+        
+        # Generate 16-color levels (COSMIC difficulty)
+        print("\n=== Generating 16-color levels (1310-1410) ===")
+        levels_16 = generate_batch(1310, 100, 16, 300000, time_limit=8.0)
+        
+        all_levels = levels_15 + levels_16
+        all_levels = deduplicate_levels(all_levels)
+        
+        if all_levels:
+            with open('new_levels_expansion.txt', 'w') as f:
+                for l in all_levels:
+                    f.write(f"  {l},\n")
+            print(f"\nWrote {len(all_levels)} levels to new_levels_expansion.txt")
+            print(f"  15-color: {len(levels_15)}, 16-color: {len(levels_16)}")
+        else:
+            print("No levels generated!")
+    
+    elif mode == "15":
+        count = int(sys.argv[2]) if len(sys.argv) > 2 else 100
+        seed = int(sys.argv[3]) if len(sys.argv) > 3 else 200000
+        print(f"=== Generating {count} 15-color levels from seed {seed} ===")
+        levels = generate_batch(1210, count, 15, seed, time_limit=5.0)
+        if levels:
+            with open('levels_15color.txt', 'w') as f:
+                for l in levels:
+                    f.write(f"  {l},\n")
+            print(f"Wrote {len(levels)} levels to levels_15color.txt")
+    
+    elif mode == "16":
+        count = int(sys.argv[2]) if len(sys.argv) > 2 else 100
+        seed = int(sys.argv[3]) if len(sys.argv) > 3 else 300000
+        print(f"=== Generating {count} 16-color levels from seed {seed} ===")
+        levels = generate_batch(1310, count, 16, seed, time_limit=8.0)
+        if levels:
+            with open('levels_16color.txt', 'w') as f:
+                for l in levels:
+                    f.write(f"  {l},\n")
+            print(f"Wrote {len(levels)} levels to levels_16color.txt")
