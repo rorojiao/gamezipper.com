@@ -138,4 +138,5 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Number Slide",emoji:"🔢",cat:"puzzle",tags:["Puzzle","Sliding","Number","15 Puzzle","Brain","Strategy","Classic","Tile","Board","Casual"],url:"/number-slide/",desc:"Play Number Slide (15 Puzzle) online free! Classic sliding tile puzzle with 3x3 to 6x6 grids, 3 puzzle patterns, daily challenge, hints, undo, stats and 4 themes. Train your brain with the ultimate number puzzle game!",isNew:true,status:"live"},
+{name:"Number Slide",emoji:"🔢",cat:"puzzle",tags:["Puzzle","Sliding","Number","15 Puzzle","Brain","Strategy","Classic","Tile","Board","Casual"],url:"/number-slide/",desc:"Play Number Slide (15 Puzzle) online free! Classic sliding tile puzzle with 3x3 to 6x6 grids, 3 puzzle patterns, daily challenge, hints, undo, stats and 4 themes. Train your brain with the ultimate number puzzle game!",isNew:true,status:"live"}
+{name:"Rope Rescue",emoji:"🪢",cat:"puzzle",tags:["Puzzle","Physics","Rope","Cut","Rescue","Strategy","Casual","Brain","Logic","Swipe"],url:"/rope-rescue/",desc:"Cut ropes to rescue targets in this physics puzzle game! 40+ levels with rope physics, obstacles, and star ratings. Swipe to cut, use physics to your advantage. The ultimate rope cutting brain teaser!",isNew:true,status:"live"},
