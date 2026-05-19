@@ -5,7 +5,7 @@
  */
 (function(){
   'use strict';
-  var ADS_ENABLED = false;
+  var ADS_ENABLED = (window.GZ_ADS_ENABLED !== undefined) ? window.GZ_ADS_ENABLED : true;
   if (!ADS_ENABLED) return;
   if (window.GZNativeAd) return;
 
