@@ -111,8 +111,9 @@
       {n:'Wordscapes',e:'🌿',u:'/wordscapes/',c:'puzzle'},
       {n:'Ludo',e:'🎲',u:'/ludo/',c:'board'},
       {n:'Number Slide',e:'🔢',u:'/number-slide/',c:'puzzle'},
-      {n:'Rope Rescue',e:'🪢',u:'/rope-rescue/',c:'puzzle'}
-      {n:'Peg Solitaire',e:'🎱',u:'/peg-solitaire/',c:'puzzle'}
+      {n:'Rope Rescue',e:'🪢',u:'/rope-rescue/',c:'puzzle'},
+      {n:'Peg Solitaire',e:'🎱',u:'/peg-solitaire/',c:'puzzle'},
+      {n:'Ice Breaker',e:'🧊',u:'/ice-breaker/',c:'puzzle'}
 
     75|    ];
     76|
