@@ -137,4 +137,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-
+{name:"Sokoban",emoji:"📦",cat:"puzzle",tags:["sokoban","box","push","warehouse","logic","strategy"],url:"/sokoban/",desc:"Play Sokoban online free. Push boxes to target positions in 50 challenging puzzle levels. Classic warehouse logic game with undo, hints and star ratings.",isNew:true,status:"live"},
