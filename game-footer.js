@@ -109,7 +109,9 @@
       {n:'Word Connections',e:'🔗',u:'/word-connections/',c:'puzzle'},
       {n:'Word Search',e:'🔍',u:'/word-search/',c:'puzzle'},
       {n:'Wordscapes',e:'🌿',u:'/wordscapes/',c:'puzzle'},
-      {n:'Ludo',e:'🎲',u:'/ludo/',c:'board'}
+      {n:'Ludo',e:'🎲',u:'/ludo/',c:'board'},
+      {n:'Number Slide',e:'🔢',u:'/number-slide/',c:'puzzle'},
+      {n:'Rope Rescue',e:'🪢',u:'/rope-rescue/',c:'puzzle'}
 
     75|    ];
     76|
