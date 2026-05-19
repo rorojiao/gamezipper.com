@@ -2241,10 +2241,23 @@
         });
 
         // ==================== CLEANUP ====================
-        window.addEventListener('beforeunload', () => {
-            if (animationId) cancelAnimationFrame(animationId);
+        function cleanup() {
+            if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
             intervalIds.forEach(id => clearInterval(id));
-            if (audioCtx) audioCtx.close();
+            intervalIds = [];
+            if (audioCtx) { audioCtx.close().catch(function(){}); audioCtx = null; }
+            stopMusic();
+        }
+
+        window.addEventListener('beforeunload', cleanup);
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
+            } else if (state.screen === 'game') {
+                lastTime = performance.now();
+                animationId = requestAnimationFrame(render);
+            }
         });
 
         // ==================== INITIALIZATION ====================
@@ -2258,5 +2271,9 @@
         init();
     })();
     </script>
+<script src="/monetag-manager.js"></script>
+<script src="/game-footer.js"></script>
+<script src="/engage.js" defer></script>
+<a href="/" style="position:fixed;top:8px;left:8px;z-index:9999;font-size:18px;text-decoration:none;opacity:0.7;" title="Home">&#x1F3E0;</a>
 </body>
 </html>
