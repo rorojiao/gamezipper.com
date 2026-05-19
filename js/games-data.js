@@ -135,3 +135,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Spot the Difference",emoji:"🔍",cat:"puzzle",tags:["spot the difference","find differences","hidden objects","observation","brain"],url:"/spot-the-difference/",desc:"Find hidden differences between two pictures in this free online puzzle game. 30 levels, 6 categories, hints, and daily challenges!",isNew:true,status:"live"},
