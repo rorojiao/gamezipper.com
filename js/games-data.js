@@ -113,7 +113,8 @@ const GAMES = [
   {name:"Backgammon",emoji:"🎲",cat:"board",tags:["backgammon","board game","dice","strategy","classic","2 player"],url:"/backgammon/",desc:"Play Backgammon online free. Classic board game with AI opponent, local 2-player, doubling cube, and full rules.",isNew:true,status:"live"},
   {name:"Ludo",emoji:"🎲",cat:"board",tags:["ludo","board game","dice","multiplayer","classic","strategy","family"],url:"/ludo/",desc:"Play Ludo online free! Classic board game with AI opponents, local multiplayer, dice rolling, token captures and smooth animations. No download needed.",isNew:true,status:"live"},
   {name:"Color by Number",emoji:"🎨",cat:"puzzle",tags:["coloring","number","pixel art","relaxing","casual"],url:"/color-by-number/",desc:"Color by Number free online! 30+ procedural color-by-number puzzles across 6 categories. Relax and reveal beautiful pixel art!",isNew:true,status:"live"},
-  {name:"Spot the Difference",emoji:"🔍",cat:"puzzle",tags:["spot the difference","find differences","hidden objects","observation","brain"],url:"/spot-the-difference/",desc:"Find hidden differences between two pictures in this free online puzzle game. 30 levels, 6 categories, hints, and daily challenges!",isNew:true,status:"live"}
+  {name:"Spot the Difference",emoji:"🔍",cat:"puzzle",tags:["spot the difference","find differences","hidden objects","observation","brain"],url:"/spot-the-difference/",desc:"Find hidden differences between two pictures in this free online puzzle game. 30 levels, 6 categories, hints, and daily challenges!",isNew:true,status:"live"},
+  {name:"Sokoban",emoji:"📦",cat:"puzzle",tags:["sokoban","box","push","warehouse","logic","strategy"],url:"/sokoban/",desc:"Play Sokoban online free. Push boxes to target positions in 50 challenging puzzle levels. Classic warehouse logic game with undo, hints and star ratings.",isNew:true,status:"live"}
 ];
 
 /**
@@ -137,4 +138,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Sokoban",emoji:"📦",cat:"puzzle",tags:["sokoban","box","push","warehouse","logic","strategy"],url:"/sokoban/",desc:"Play Sokoban online free. Push boxes to target positions in 50 challenging puzzle levels. Classic warehouse logic game with undo, hints and star ratings.",isNew:true,status:"live"},
