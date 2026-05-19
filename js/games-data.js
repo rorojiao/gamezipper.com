@@ -133,3 +133,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Backgammon",emoji:"🎲",cat:"board",tags:["backgammon","board game","dice","strategy","classic","2 player"],url:"/backgammon/",desc:"Play Backgammon online free. Classic board game with AI opponent, local 2-player, doubling cube, and full rules.",isNew:true,status:"live"},
