@@ -66,6 +66,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .header h1{font-size:2.5em;background:linear-gradient(90deg,#ff6b6b,#ffd93d,#6bcf7f,#4ecdc4,#45b7d1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;min-height:1.2em}
 .header p{color:#aaa;margin-top:8px;font-size:1.1em}
 .badge{display:inline-block;background:#ffd93d;color:#000;padding:4px 12px;border-radius:20px;font-size:0.8em;font-weight:700;margin-top:10px}
+
+.gz-search-wrap{display:flex;justify-content:center;padding:0 20px 8px;max-width:400px;margin:0 auto}
+.gz-search{width:100%;padding:10px 16px 10px 40px;border-radius:25px;border:2px solid #333;background:#1a1a2e;color:#fff;font-size:0.95em;outline:none;transition:border-color 0.3s;box-sizing:border-box}
+.gz-search:focus{border-color:#4ecdc4}
+.gz-search::placeholder{color:#666}
+.gz-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#666;font-size:1em;pointer-events:none}
+.gz-search-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#888;cursor:pointer;font-size:1.1em;padding:4px;display:none}
+.gz-search-clear.show{display:block}
+.gz-no-results{text-align:center;padding:40px 20px;color:#888;display:none}
+.gz-no-results.show{display:block}
 .categories{display:flex;gap:10px;justify-content:center;padding:20px;flex-wrap:wrap}
 .cat-btn{padding:8px 20px;border-radius:25px;border:2px solid #333;background:transparent;color:#fff;cursor:pointer;font-size:0.9em;transition:all 0.3s}
 .cat-btn:hover,.cat-btn.active{background:#4ecdc4;border-color:#4ecdc4;color:#000}
@@ -234,6 +244,12 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
   <a href="/snake/" class="gz-cta-btn secondary">🐍 Try Snake</a>
 </div>
 </div>
+<div class="gz-search-wrap" style="position:relative">
+  <span class="gz-search-icon">🔍</span>
+  <input type="text" class="gz-search" id="gz-search" placeholder="Search games..." aria-label="Search games" autocomplete="off">
+  <button class="gz-search-clear" id="gz-search-clear" aria-label="Clear search">&times;</button>
+</div>
+<div id="gz-no-results" class="gz-no-results">No games found. <a href="/sitemap-page.html" style="color:#4ecdc4">Browse all games →</a></div>
 <div class="categories" role="tablist" aria-label="Game categories">
 <button class="cat-btn active" onclick="filter('all',this)" role="tab" aria-selected="true" aria-label="Show all games">🎮 All</button>
 <button class="cat-btn" onclick="filter('puzzle',this)" role="tab" aria-selected="false" aria-label="Filter puzzle games">🧩 Puzzle</button>
@@ -698,6 +714,72 @@ h3.addEventListener('click',toggle);
 h3.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}});
 });
 })();
+</script>
+<script>
+// Game search functionality
+(function(){
+  var input = document.getElementById('gz-search');
+  var clearBtn = document.getElementById('gz-search-clear');
+  var noResults = document.getElementById('gz-no-results');
+  if (!input) return;
+  
+  var debounceTimer;
+  input.addEventListener('input', function(){
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function(){
+      var q = input.value.trim().toLowerCase();
+      clearBtn.classList.toggle('show', q.length > 0);
+      // Deselect category buttons when searching
+      if (q.length > 0) {
+        document.querySelectorAll('.cat-btn').forEach(function(b){b.classList.remove('active')});
+      } else {
+        document.querySelector('.cat-btn').classList.add('active');
+      }
+      doSearch(q);
+    }, 200);
+  }, {passive: true});
+  
+  clearBtn.addEventListener('click', function(){
+    input.value = '';
+    clearBtn.classList.remove('show');
+    document.querySelector('.cat-btn').classList.add('active');
+    document.querySelectorAll('.cat-btn').forEach(function(b){if(b!==document.querySelector('.cat-btn'))b.classList.remove('active')});
+    doSearch('');
+    input.focus();
+  });
+  
+  function doSearch(q) {
+    var base = (typeof liveGames !== 'undefined') ? liveGames : [];
+    if (!q) {
+      render(base);
+      noResults.classList.remove('show');
+      return;
+    }
+    var results = base.filter(function(g){
+      return g.name.toLowerCase().indexOf(q) !== -1 || 
+             g.desc.toLowerCase().indexOf(q) !== -1 ||
+             g.tags.some(function(t){ return t.toLowerCase().indexOf(q) !== -1; });
+    });
+    render(results);
+    noResults.classList.toggle('show', results.length === 0);
+    // Send GA event for search
+    if (q.length >= 2 && typeof gtag === 'function') {
+      gtag('event', 'search', {'search_term': q});
+    }
+  }
+  
+  // Expose doSearch globally so filter() can reset it
+  window._gzClearSearch = function(){
+    if(input){input.value='';clearBtn.classList.remove('show');noResults.classList.remove('show');}
+  };
+})();
+
+// Patch filter() to clear search when category clicked
+var _origFilter = window.filter;
+window.filter = function(cat, btn){
+  if(window._gzClearSearch) window._gzClearSearch();
+  if(_origFilter) _origFilter(cat, btn);
+};
 </script>
 </body>
 </html>
