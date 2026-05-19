@@ -727,7 +727,7 @@ function puzzleComplete() {
   // Trigger Monetag ad
   try {
     if (window.GZMonetagSafe) {
-      window.GZMonetagSafe.maybeLoad(10687757);
+      window.GZMonetagSafe.maybeLoad();
     }
   } catch(e) {}
 }

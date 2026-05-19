@@ -199,14 +199,8 @@
 
   if (isHubPage()) {
     /* ── Homepage ── */
-    // Popunder: arm for next click (must be user-initiated)
-    armPopunder();
-    // In-Page Push: 2s delay
+    // In-Page Push only on hub — keep it light
     setTimeout(loadInPagePush, 2000);
-    // Vignette Banner: 30s delay (user has browsed a bit)
-    setTimeout(loadVignette, 30000);
-    // Push Notifications: 15s delay
-    setTimeout(loadPushNotif, 15000);
     // Mid-grid container ad
     fillContainerAd('gz-ad-mid-grid', 2500);
 
@@ -228,16 +222,10 @@
     // In-Page Push: 5s delay (corner notification, safe for games)
     setTimeout(loadInPagePush, 5000);
 
-    // Vignette Banner: 60s delay or gameover
+    // Vignette Banner: gameover only (not timer-based)
     window.addEventListener('gameover', function () {
       setTimeout(loadVignette, 1000);
     });
-    setTimeout(function () {
-      if (!vignetteLoaded) loadVignette();
-    }, 60000);
-
-    // Push Notifications: 20s delay
-    setTimeout(loadPushNotif, 20000);
 
     // AdSense: 2s after first interaction (click/touch/key)
     var adsenseEngaged = false;
@@ -258,11 +246,12 @@
     fillContainerAd('gz-ad-below-game', 3000);
 
   } else {
-    /* ── Other pages (about, privacy, blog, category, etc.) ── */
-    armPopunder();
-    setTimeout(loadInPagePush, 2000);
-    setTimeout(loadVignette, 20000);
-    setTimeout(loadPushNotif, 10000);
+    /* ── Category/landing pages only — no ads on privacy, about, 404, sitemap ── */
+    var noAdPages = /\/(privacy|about|sitemap|embed-games|monetag-review)(\.html)?$|\/404|\/blog\//;
+    if (!noAdPages.test(location.pathname)) {
+      // Category pages get minimal ads
+      setTimeout(loadInPagePush, 3000);
+    }
   }
 
   /* ── Backward-compatible API ──────────────────────────────── */
