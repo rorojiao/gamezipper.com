@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="en" dir="ltr">
+<html lang="en" dir="ltr" style="scroll-behavior:smooth">
 <head>
 <meta content="max-age=3600" http-equiv="Cache-Control"/>
 <meta content="20260331001" name="build"/>
@@ -25,7 +25,7 @@
 <!--
  <!-- PAUSED: preconnect gtag --> -->
 <link rel="preconnect" href="https://gamezipper-bi.cap.1ktower.com" crossorigin>
-<link rel="preconnect" href="https://site-analytics.cap.1ktower.com">
+<link rel="preconnect" href="https://site-analytics.cap.1ktower.com" crossorigin>
 <link rel="preconnect" href="https://pages.github.io" crossorigin>
 <script>requestAnimationFrame(function(){new Image().src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p="+encodeURIComponent(location.pathname)+"&t="+Date.now()});</script>
 <link rel="prefetch" href="/2048/">
@@ -132,6 +132,12 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 .gz-reveal{opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease}
 .gz-reveal.visible{opacity:1;transform:translateY(0)}
 @media(prefers-reduced-motion:reduce){.gz-reveal{opacity:1;transform:none;transition:none}}
+
+.gz-fav-btn{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,0.5);color:#fff;font-size:14px;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;backdrop-filter:blur(4px);padding:0;line-height:1}
+.gz-fav-btn:hover{background:rgba(255,107,107,0.8);transform:scale(1.15)}
+.gz-fav-btn.active{color:#ff6b6b;background:rgba(255,107,107,0.2)}
+.gz-fav-btn.active:hover{background:rgba(255,107,107,0.4)}
+@media(prefers-reduced-motion:reduce){.gz-fav-btn{transition:none}}
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"GameZipper","url":"https://gamezipper.com","logo":"https://gamezipper.com/favicon.svg","sameAs":[],"description":"Free online browser games — no downloads, no sign-up. 104 puzzle, arcade, idle & card games."}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"GameZipper","url":"https://gamezipper.com/","potentialAction":{"@type":"SearchAction","target":"https://gamezipper.com/sitemap-page.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
@@ -281,7 +287,7 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 <div class="gz-nav-sticky">
 <div class="gz-search-wrap" style="position:relative">
   <span class="gz-search-icon">🔍</span>
-  <input type="text" class="gz-search" id="gz-search" placeholder="🔍 Search 104 games..." aria-label="Search games" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="gz-search-suggestions" aria-haspopup="listbox" aria-autocomplete="list">
+  <input type="text" class="gz-search" id="gz-search" placeholder="🔍 Search 104 games... (press /)" aria-label="Search games" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="gz-search-suggestions" aria-haspopup="listbox" aria-autocomplete="list"><div style="text-align:center;font-size:0.7em;color:#555;margin-top:2px;margin-bottom:4px">Press <kbd style="background:#333;padding:1px 5px;border-radius:3px;font-size:0.9em;border:1px solid #444">/</kbd> to search</div>
   <div id="gz-search-suggestions" role="listbox" aria-label="Search suggestions" style="position:absolute;top:100%;left:0;right:0;background:#1a1a2e;border:1px solid #333;border-radius:0 0 12px 12px;max-height:280px;overflow-y:auto;display:none;z-index:1001;box-shadow:0 8px 24px rgba(0,0,0,0.5)"></div>
   <button class="gz-search-clear" id="gz-search-clear" aria-label="Clear search">&times;</button>
 </div>
@@ -487,7 +493,7 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 function render(list){
   document.getElementById('games').innerHTML = list.map((g,i) => `
     <a class="game-card" href="${g.url}" data-cat="${g.cat}" style="transition-delay:${i*80}ms" role="listitem">
-      ${g.isNew?'<span class="new-badge">🔥 NEW</span>':''}
+      ${g.isNew?'<span class="new-badge">🔥 NEW</span>':''}<button class="gz-fav-btn ${gzFavs.includes(g.name)?'active':''}" data-game="${g.name}" onclick="event.preventDefault();gzToggleFav(this.dataset.game)" aria-label="Toggle favorite">♥</button>
       <div class="game-thumb" style="background:${GAME_GRADIENTS[i%GAME_GRADIENTS.length]}">${g.emoji}
         <div class="overlay"><span class="play-btn">▶ PLAY</span></div>
       </div>
@@ -1035,6 +1041,56 @@ window.filter = function(cat, btn){
     document.querySelectorAll('.gz-reveal').forEach(function(el){el.classList.add('visible')});
   }
 })();
+
+  // Favorite games (localStorage)
+  var gzFavs=JSON.parse(localStorage.getItem('gz_favs')||'[]');
+  function gzToggleFav(name){
+    var idx=gzFavs.indexOf(name);
+    if(idx>-1){gzFavs.splice(idx,1)}else{gzFavs.push(name)}
+    localStorage.setItem('gz_favs',JSON.stringify(gzFavs));
+    document.querySelectorAll('.gz-fav-btn').forEach(function(b){
+      b.classList.toggle('active',gzFavs.includes(b.dataset.game));
+    });
+  }
+
+  // Keyboard shortcut: "/" to focus search
+  document.addEventListener('keydown',function(e){
+    if(e.key==='/' && !e.ctrlKey && !e.metaKey && !e.altKey){
+      var active=document.activeElement;
+      if(active && (active.tagName==='INPUT'||active.tagName==='TEXTAREA'||active.isContentEditable)) return;
+      e.preventDefault();
+      var s=document.getElementById('gz-search');
+      if(s){s.focus();s.select()}
+    }
+  },{passive:false});
+
+  // Add category count badges
+  (function(){
+    var catCounts={all:0};
+    if(typeof liveGames!=='undefined'){
+      liveGames.forEach(function(g){
+        catCounts.all=(catCounts.all||0)+1;
+        if(g.cat) catCounts[g.cat]=(catCounts[g.cat]||0)+1;
+      });
+    }
+    document.querySelectorAll('.cat-btn').forEach(function(btn){
+      var label=btn.textContent.trim();
+      var cat='all';
+      if(label.includes('Puzzle')) cat='puzzle';
+      else if(label.includes('Arcade')) cat='arcade';
+      else if(label.includes('Idle')) cat='idle';
+      else if(label.includes('Card')) cat='card';
+      else if(label.includes('Strategy')) cat='strategy';
+      else if(label.includes('Word')) cat='word';
+      var count=catCounts[cat]||0;
+      if(count>0){
+        var badge=document.createElement('span');
+        badge.textContent=count;
+        badge.style.cssText='font-size:0.75em;opacity:0.7;margin-left:3px';
+        btn.appendChild(badge);
+      }
+    });
+  })();
 </script>
 
 </body>
