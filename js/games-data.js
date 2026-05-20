@@ -150,3 +150,5 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Tower of Hanoi",emoji:"🗼",cat:"puzzle",tags:["tower of hanoi","logic","math","brain","classic","disks"],url:"/tower-of-hanoi/",desc:"Play Tower of Hanoi online free! Classic mathematical puzzle — move all disks from one peg to another. 20 levels, 3 themes, hints, auto-solve, and star ratings!",isNew:true,status:"live"},
+  {name:"Tower of Hanoi",emoji:"🏰",cat:"puzzle",tags:["Puzzle","Logic","Classic"],url:"/tower-of-hanoi/",desc:"Classic puzzle! Move all disks from one peg to another. 20 levels, auto-solve demo, hints, and themes.",isNew:true,status:"live"},
