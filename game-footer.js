@@ -114,7 +114,8 @@
       {n:'Rope Rescue',e:'🪢',u:'/rope-rescue/',c:'puzzle'},
       {n:'Peg Solitaire',e:'🎱',u:'/peg-solitaire/',c:'puzzle'},
       {n:'Path Finder',e:'🔗',u:'/path-finder/',c:'puzzle'},
-      {n:'Ice Breaker',e:'🧊',u:'/ice-breaker/',c:'puzzle'}
+      {n:'Ice Breaker',e:'🧊',u:'/ice-breaker/',c:'puzzle'},
+      {n:'Logic Gates',e:'🔌',u:'/logic-gates/',c:'puzzle'}
 
     75|    ];
     76|

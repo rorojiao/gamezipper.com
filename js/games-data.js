@@ -120,6 +120,7 @@ const GAMES = [
   {name:"Peg Solitaire",emoji:"⚪",cat:"puzzle",tags:["Puzzle","Peg","Marble","Solitaire","Board","Classic","Brain","Strategy","Jump","Logic"],url:"/peg-solitaire/",desc:"Play Peg Solitaire online free! 8 board layouts from easy triangle to expert cross. Classic marble jumping puzzle with hints, undo, star ratings and progress tracking. No download needed!",isNew:true,status:"live"},
   {name:"Rope Rescue",emoji:"🪢",cat:"puzzle",tags:["Puzzle","Physics","Rope","Cut","Rescue","Strategy","Casual","Brain","Logic","Swipe"],url:"/rope-rescue/",desc:"Cut ropes to rescue targets in this physics puzzle game! 40+ levels with rope physics, obstacles, and star ratings. Swipe to cut, use physics to your advantage. The ultimate rope cutting brain teaser!",isNew:true,status:"live"},
   {name:"Ice Breaker",emoji:"🧊",cat:"puzzle",tags:["ice","physics","viking","cutting","rescue","puzzle","brain","strategy","casual"],url:"/ice-breaker/",desc:"Cut ice blocks to rescue frozen vikings in this addictive physics puzzle game! Draw lines to slice through ice and guide vikings to safety. 30 levels across 5 tiers with ice, rock, and wood obstacles.",isNew:true,status:"live"},
+  {name:"Logic Gates",emoji:"🔌",cat:"puzzle",tags:["logic","circuit","gates","AND","OR","NOT","XOR","brain","educational","electronics"],url:"/logic-gates/",desc:"Solve circuit puzzles by placing AND, OR, NOT, XOR, NAND, NOR, XNOR gates. 30 levels across 6 chapters with tutorials, hints, and star ratings. No download required.",isNew:true,status:"live"},
 
 ];
 
