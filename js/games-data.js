@@ -121,6 +121,7 @@ const GAMES = [
   {name:"Rope Rescue",emoji:"🪢",cat:"puzzle",tags:["Puzzle","Physics","Rope","Cut","Rescue","Strategy","Casual","Brain","Logic","Swipe"],url:"/rope-rescue/",desc:"Cut ropes to rescue targets in this physics puzzle game! 40+ levels with rope physics, obstacles, and star ratings. Swipe to cut, use physics to your advantage. The ultimate rope cutting brain teaser!",isNew:true,status:"live"},
   {name:"Ice Breaker",emoji:"🧊",cat:"puzzle",tags:["ice","physics","viking","cutting","rescue","puzzle","brain","strategy","casual"],url:"/ice-breaker/",desc:"Cut ice blocks to rescue frozen vikings in this addictive physics puzzle game! Draw lines to slice through ice and guide vikings to safety. 30 levels across 5 tiers with ice, rock, and wood obstacles.",isNew:true,status:"live"},
   {name:"Logic Gates",emoji:"🔌",cat:"puzzle",tags:["logic","circuit","gates","AND","OR","NOT","XOR","brain","educational","electronics"],url:"/logic-gates/",desc:"Solve circuit puzzles by placing AND, OR, NOT, XOR, NAND, NOR, XNOR gates. 30 levels across 6 chapters with tutorials, hints, and star ratings. No download required.",isNew:true,status:"live"},
+  {name:"Path Finder",emoji:"🔗",cat:"puzzle",tags:["puzzle","numberlink","path","connect","grid","brain","logic","casual"],url:"/path-finder/",desc:"Connect matching numbers to fill the grid! 40 hand-crafted Numberlink puzzles from 5x5 to 8x8. Free online, no download.",isNew:true,status:"live"},
 
 ];
 
@@ -145,3 +146,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"KenKen Puzzle",emoji:"🧮",cat:"puzzle",tags:["kenken","mathdoku","math puzzle","logic","sudoku","number puzzle"],url:"/kenken/",desc:"Play free KenKen (MathDoku) puzzles online. Challenge your math and logic skills with 4x4 to 7x7 grids. Daily puzzles, hints, and stats.",isNew:true,status:"live"},

@@ -115,7 +115,15 @@
       {n:'Peg Solitaire',e:'🎱',u:'/peg-solitaire/',c:'puzzle'},
       {n:'Path Finder',e:'🔗',u:'/path-finder/',c:'puzzle'},
       {n:'Ice Breaker',e:'🧊',u:'/ice-breaker/',c:'puzzle'},
-      {n:'Logic Gates',e:'🔌',u:'/logic-gates/',c:'puzzle'}
+      {n:'Logic Gates',e:'🔌',u:'/logic-gates/',c:'puzzle'},
+      {n:'Backgammon',e:'🎲',u:'/backgammon/',c:'board'},
+      {n:'Color by Number',e:'🎨',u:'/color-by-number/',c:'puzzle'},
+      {n:'Connect Four',e:'🔴',u:'/connect-four/',c:'puzzle'},
+      {n:'Dominoes',e:'🁣',u:'/dominoes/',c:'puzzle'},
+      {n:'Hangman',e:'🎯',u:'/hangman/',c:'puzzle'},
+      {n:'Sokoban',e:'📦',u:'/sokoban/',c:'puzzle'},
+      {n:'Spot the Difference',e:'🔍',u:'/spot-the-difference/',c:'puzzle'},
+      {n:'Tower Defense',e:'🏰',u:'/tower-defense/',c:'puzzle'}
 
     75|    ];
     76|
