@@ -117,6 +117,7 @@
       {n:'Ice Breaker',e:'🧊',u:'/ice-breaker/',c:'puzzle'},
       {n:'Logic Gates',e:'🔌',u:'/logic-gates/',c:'puzzle'},
       {n:'KenKen Puzzle',e:'🧮',u:'/kenken/',c:'puzzle'},
+      {n:'Kakuro Puzzle',e:'🔢',u:'/kakuro/',c:'puzzle'},
       {n:'Backgammon',e:'🎲',u:'/backgammon/',c:'board'},
       {n:'Color by Number',e:'🎨',u:'/color-by-number/',c:'puzzle'},
       {n:'Connect Four',e:'🔴',u:'/connect-four/',c:'puzzle'},
