@@ -119,6 +119,7 @@
       {n:'KenKen Puzzle',e:'🧮',u:'/kenken/',c:'puzzle'},
       {n:'Kakuro Puzzle',e:'🔢',u:'/kakuro/',c:'puzzle'},
       {n:'Mastermind',e:'🔐',u:'/mastermind/',c:'puzzle'},
+      {n:'Simon Says',e:'🧠',u:'/simon-says/',c:'puzzle'},
       {n:'Battleship',e:'🚢',u:'/battleship/',c:'puzzle'},
       {n:'Lights Out',e:'💡',u:'/lights-out/',c:'puzzle'},
       {n:'Backgammon',e:'🎲',u:'/backgammon/',c:'board'},
