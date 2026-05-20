@@ -42,7 +42,7 @@ const GAMES = [
   {name:"Kitty's Café",emoji:"🐱",cat:"puzzle",tags:["Merge","Cat"],url:"/kitty-cafe/",desc:"Adopt a stray kitty and build the cutest cat café! Merge items to fulfill orders.",status:"live"},
   {name:"Paint Splash",emoji:"🎨",cat:"puzzle",tags:["Puzzle","Art"],url:"/paint-splash/",desc:"Swipe color blocks to create stunning abstract art! Match & splash paint!",status:"live"},
   {name:"Ocean Gem Pop",emoji:"🧜",cat:"puzzle",tags:["Bubble","Shooter"],url:"/ocean-gem-pop/",desc:"Shoot gem bubbles in the deep ocean! Match 3+ to pop. 10 levels of sparkling fun!",status:"live"},
-  {name:"Phantom Blade",emoji:"🗡️",cat:"arcade",tags:["Arcade","Knife"],url:"/phantom-blade/",desc:"Throw glowing blades into a spinning rune disc. Dark neon aesthetics, 15 levels!",status:"live"},
+  {name:"Phantom Blade",emoji:"🗡️",cat:"arcade",tags:["Arcade","Knife"],url:"/phantom-blade/",desc:"Throw glowing blades into a spinning rune disc. Dark neon aesthetics, 15 levels!",isNew:true,status:"live"},
   {name:"Sushi Stack",emoji:"🍣",cat:"puzzle",tags:["Sort","Puzzle"],url:"/sushi-stack/",desc:"Stack matching sushi rolls on chopsticks to clear the board! Japanese-themed 3D color sort puzzle!",isNew:true,status:"live"},
   {name:"Bolt Jam 3D",emoji:"🔩",cat:"puzzle",tags:["Puzzle","3D"],url:"/bolt-jam-3d/",desc:"Unscrew bolts and untangle rings in this mind-bending 3D screw puzzle game!",isNew:true,status:"live"},
   {name:"Brick Breaker",emoji:"🧱",cat:"arcade",tags:["Arcade","Classic"],url:"/brick-breaker/",desc:"Break all the bricks with your paddle! Classic breakout arcade action with power-ups!",status:"live"},
@@ -122,7 +122,11 @@ const GAMES = [
   {name:"Ice Breaker",emoji:"🧊",cat:"puzzle",tags:["ice","physics","viking","cutting","rescue","puzzle","brain","strategy","casual"],url:"/ice-breaker/",desc:"Cut ice blocks to rescue frozen vikings in this addictive physics puzzle game! Draw lines to slice through ice and guide vikings to safety. 30 levels across 5 tiers with ice, rock, and wood obstacles.",isNew:true,status:"live"},
   {name:"Logic Gates",emoji:"🔌",cat:"puzzle",tags:["logic","circuit","gates","AND","OR","NOT","XOR","brain","educational","electronics"],url:"/logic-gates/",desc:"Solve circuit puzzles by placing AND, OR, NOT, XOR, NAND, NOR, XNOR gates. 30 levels across 6 chapters with tutorials, hints, and star ratings. No download required.",isNew:true,status:"live"},
   {name:"Path Finder",emoji:"🔗",cat:"puzzle",tags:["puzzle","numberlink","path","connect","grid","brain","logic","casual"],url:"/path-finder/",desc:"Connect matching numbers to fill the grid! 40 hand-crafted Numberlink puzzles from 5x5 to 8x8. Free online, no download.",isNew:true,status:"live"},
-
+  {name:"KenKen Puzzle",emoji:"🧮",cat:"puzzle",tags:["kenken","mathdoku","math puzzle","logic","sudoku","number puzzle"],url:"/kenken/",desc:"Play free KenKen (MathDoku) puzzles online. Challenge your math and logic skills with 4x4 to 7x7 grids. Daily puzzles, hints, and stats.",isNew:true,status:"live"},
+  {name:"Kakuro",emoji:"🧩",cat:"puzzle",tags:["kakuro","cross sums","number puzzle","math","sudoku alternative","logic"],url:"/kakuro/",desc:"Play Kakuro online free — the classic cross sums number puzzle. Fill cells with digits 1-9 to match row and column sums. 40+ levels, daily puzzle, hints and more.",isNew:true,status:"live"},
+  {name:"Mastermind",emoji:"🔐",cat:"puzzle",tags:["logic","code","deduction","brain","classic"],url:"/mastermind/",desc:"Crack the secret color code using logic and deduction. Mastermind is a classic code-breaking puzzle — guess the hidden pattern in as few tries as possible!",isNew:true,status:"live"},
+  {name:"Lights Out",emoji:"💡",cat:"puzzle",tags:["lights out","grid puzzle","logic","brain"],url:"/lights-out/",desc:"Classic Lights Out puzzle - tap to toggle lights and neighbors, turn all off to win! 50 levels across 3 grid sizes.",isNew:true,status:"live"},
+  {name:"Battleship",emoji:"🚢",cat:"puzzle",tags:["strategy","naval","board","classic","ai"],url:"/battleship/",desc:"Play Battleship online free! Classic naval strategy game with AI opponent. Place your fleet, aim, fire, and sink all enemy ships. No download required.",isNew:true,status:"live"},
 ];
 
 /**
@@ -146,8 +150,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"KenKen Puzzle",emoji:"🧮",cat:"puzzle",tags:["kenken","mathdoku","math puzzle","logic","sudoku","number puzzle"],url:"/kenken/",desc:"Play free KenKen (MathDoku) puzzles online. Challenge your math and logic skills with 4x4 to 7x7 grids. Daily puzzles, hints, and stats.",isNew:true,status:"live"}
-{name:"Kakuro",emoji:"🧩",cat:"puzzle",tags:["kakuro","cross sums","number puzzle","math","sudoku alternative","logic"],url:"/kakuro/",desc:"Play Kakuro online free — the classic cross sums number puzzle. Fill cells with digits 1-9 to match row and column sums. 40+ levels, daily puzzle, hints and more.",isNew:true,status:"live"}
-{name:"Mastermind",emoji:"🔐",cat:"puzzle",tags:["logic","code","deduction","brain","classic"],url:"/mastermind/",desc:"Crack the secret color code using logic and deduction. Mastermind is a classic code-breaking puzzle — guess the hidden pattern in as few tries as possible!",isNew:true,status:"live"}
-{name:"Lights Out",emoji:"💡",cat:"puzzle",tags:["lights out","grid puzzle","logic","brain"],url:"/lights-out/",desc:"Classic Lights Out puzzle - tap to toggle lights and neighbors, turn all off to win! 50 levels across 3 grid sizes.",isNew:true,status:"live"}
-{name:"Battleship",emoji:"⚓",cat:"puzzle",tags:["naval","strategy","board","ai","classic"],url:"/battleship/",desc:"Play Battleship online free - classic naval strategy game with AI opponent, salvo mode, and multiple difficulty levels.",isNew:true,status:"live"},
