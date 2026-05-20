@@ -151,3 +151,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Simon Says",emoji:"🧠",cat:"puzzle",tags:["Puzzle","Memory","Classic","Brain"],url:"/simon-says/",desc:"Test your memory! Repeat the color and sound patterns in this classic electronic memory game. 4 difficulty modes, scoring system, and stats tracking.",isNew:true,status:"live"},
