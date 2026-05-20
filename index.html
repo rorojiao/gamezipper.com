@@ -142,6 +142,10 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 .gz-fav-btn.active{color:#ff6b6b;background:rgba(255,107,107,0.2)}
 .gz-fav-btn.active:hover{background:rgba(255,107,107,0.4)}
 @media(prefers-reduced-motion:reduce){.gz-fav-btn{transition:none}}
+/* Ripple click feedback for game cards */
+.gz-ripple{position:absolute;border-radius:50%;background:rgba(78,205,196,0.35);transform:scale(0);animation:gz-ripple-expand .5s ease-out forwards;pointer-events:none}
+@keyframes gz-ripple-expand{to{transform:scale(4);opacity:0}}
+@media(prefers-reduced-motion:reduce){.gz-ripple{animation:none;display:none}}
 </style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"GameZipper","url":"https://gamezipper.com","logo":"https://gamezipper.com/favicon.svg","sameAs":[],"description":"Free online browser games — no downloads, no sign-up. 107 puzzle, arcade, idle & card games."}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"GameZipper","url":"https://gamezipper.com/","potentialAction":{"@type":"SearchAction","target":"https://gamezipper.com/sitemap-page.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
@@ -521,6 +525,19 @@ function render(list){
   }else{
     document.querySelectorAll('.game-card').forEach(function(c){c.classList.add('visible')});
   }
+  // Ripple click effect on game cards
+  document.querySelectorAll('.game-card').forEach(function(card){
+    card.addEventListener('pointerdown',function(e){
+      var rect=card.getBoundingClientRect();
+      var size=Math.max(rect.width,rect.height);
+      var ripple=document.createElement('span');
+      ripple.className='gz-ripple';
+      ripple.style.cssText='width:'+size+'px;height:'+size+'px;left:'+(e.clientX-rect.left-size/2)+'px;top:'+(e.clientY-rect.top-size/2)+'px';
+      card.style.overflow='hidden';
+      card.appendChild(ripple);
+      setTimeout(function(){ripple.remove()},600);
+    });
+  });
   // Insert mid-grid ad after 20th game card
   if(list.length > 20){
     var cards = document.getElementById('games').querySelectorAll('.game-card');
