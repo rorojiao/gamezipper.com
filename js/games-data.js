@@ -147,4 +147,5 @@ function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
 {name:"KenKen Puzzle",emoji:"🧮",cat:"puzzle",tags:["kenken","mathdoku","math puzzle","logic","sudoku","number puzzle"],url:"/kenken/",desc:"Play free KenKen (MathDoku) puzzles online. Challenge your math and logic skills with 4x4 to 7x7 grids. Daily puzzles, hints, and stats.",isNew:true,status:"live"}
-{name:"Kakuro",emoji:"🧩",cat:"puzzle",tags:["kakuro","cross sums","number puzzle","math","sudoku alternative","logic"],url:"/kakuro/",desc:"Play Kakuro online free — the classic cross sums number puzzle. Fill cells with digits 1-9 to match row and column sums. 40+ levels, daily puzzle, hints and more.",isNew:true,status:"live"},
+{name:"Kakuro",emoji:"🧩",cat:"puzzle",tags:["kakuro","cross sums","number puzzle","math","sudoku alternative","logic"],url:"/kakuro/",desc:"Play Kakuro online free — the classic cross sums number puzzle. Fill cells with digits 1-9 to match row and column sums. 40+ levels, daily puzzle, hints and more.",isNew:true,status:"live"}
+{name:"Mastermind",emoji:"🔐",cat:"puzzle",tags:["logic","code","deduction","brain","classic"],url:"/mastermind/",desc:"Crack the secret color code using logic and deduction. Mastermind is a classic code-breaking puzzle — guess the hidden pattern in as few tries as possible!",isNew:true,status:"live"},
