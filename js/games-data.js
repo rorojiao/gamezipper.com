@@ -152,4 +152,5 @@ function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
 {name:"Simon Says",emoji:"🧠",cat:"puzzle",tags:["Puzzle","Memory","Classic","Brain"],url:"/simon-says/",desc:"Test your memory! Repeat the color and sound patterns in this classic electronic memory game. 4 difficulty modes, scoring system, and stats tracking.",isNew:true,status:"live"}
-{name:"Slitherlink",emoji:"🔗",cat:"puzzle",tags:["Puzzle","Logic","Board Game","Loop","Nikoli"],url:"/slitherlink/",desc:"Draw a single loop through the grid following number clues. 42 hand-crafted puzzles, hints, undo, and daily challenge.",isNew:true,status:"live"},
+{name:"Slitherlink",emoji:"🔗",cat:"puzzle",tags:["Puzzle","Logic","Board Game","Loop","Nikoli"],url:"/slitherlink/",desc:"Draw a single loop through the grid following number clues. 42 hand-crafted puzzles, hints, undo, and daily challenge.",isNew:true,status:"live"}
+{name:"Maze Runner",emoji:"🏃",cat:"puzzle",tags:["maze","labyrinth","fog","navigation","escape"],url:"/maze-runner/",desc:"Navigate through neon mazes with fog of war, collect keys, find stars, and reach the exit. 30 levels across 5 difficulty tiers with procedural maze generation.",isNew:true,status:"live"},
