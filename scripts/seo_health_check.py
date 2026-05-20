@@ -5,7 +5,6 @@ Checks: robots.txt, sitemap.xml, IndexNow key, site accessibility, HTTP status
 """
 import urllib.request
 import urllib.error
-import ssl
 import json
 import sys
 from datetime import datetime, date
@@ -22,32 +21,34 @@ INDEXNOW_KEYS = {
 
 def check_url(url, name, follow_redirects=False):
     """Check URL accessibility and status code."""
-    ctx = ssl.create_default_context()
+    # Create unverified SSL context for all requests
+    import ssl as ssl_module
+    ctx = ssl_module.create_default_context()
     ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
+    ctx.verify_mode = ssl_module.CERT_NONE
+    # Install as default for urllib
+    old_default = ssl_module._create_unverified_context
+    ssl_module._create_unverified_context = lambda *a, **k: ctx
+
     try:
-        if follow_redirects:
-            req = urllib.request.Request(url)
-            req.timeout = 15
-            resp = urllib.request.urlopen(req, context=ctx)
-            final_url = resp.url
-            status = resp.status
-        else:
+        if not follow_redirects:
             class NoRedirect(urllib.request.HTTPRedirectHandler):
                 def redirect_request(self, req, fp, code, msg, headers, newurl):
                     return None
             opener = urllib.request.build_opener(NoRedirect())
-            req = urllib.request.Request(url)
-            req.timeout = 15
-            resp = opener.open(req, context=ctx)
-            final_url = resp.url
-            status = resp.status
+            resp = opener.open(url, timeout=15)
+        else:
+            resp = urllib.request.urlopen(url, timeout=15)
+        final_url = resp.url
+        status = resp.status
         content = resp.read(500).decode('utf-8', errors='ignore')
         return {"url": url, "name": name, "status": status, "final_url": final_url, "content_preview": content[:200], "ok": True, "error": None}
     except urllib.error.HTTPError as e:
         return {"url": url, "name": name, "status": e.code, "final_url": None, "content_preview": None, "ok": False, "error": f"HTTP {e.code}"}
     except Exception as e:
         return {"url": url, "name": name, "status": None, "final_url": None, "content_preview": None, "ok": False, "error": str(e)}
+    finally:
+        ssl_module._create_unverified_context = old_default
 
 def main():
     today = date.today().isoformat()
