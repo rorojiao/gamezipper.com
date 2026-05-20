@@ -126,7 +126,8 @@ const GAMES = [
   {name:"Kakuro",emoji:"🧩",cat:"puzzle",tags:["kakuro","cross sums","number puzzle","math","sudoku alternative","logic"],url:"/kakuro/",desc:"Play Kakuro online free — the classic cross sums number puzzle. Fill cells with digits 1-9 to match row and column sums. 40+ levels, daily puzzle, hints and more.",isNew:true,status:"live"},
   {name:"Mastermind",emoji:"🔐",cat:"puzzle",tags:["logic","code","deduction","brain","classic"],url:"/mastermind/",desc:"Crack the secret color code using logic and deduction. Mastermind is a classic code-breaking puzzle — guess the hidden pattern in as few tries as possible!",isNew:true,status:"live"},
   {name:"Lights Out",emoji:"💡",cat:"puzzle",tags:["lights out","grid puzzle","logic","brain"],url:"/lights-out/",desc:"Classic Lights Out puzzle - tap to toggle lights and neighbors, turn all off to win! 50 levels across 3 grid sizes.",isNew:true,status:"live"},
-  {name:"Battleship",emoji:"🚢",cat:"puzzle",tags:["strategy","naval","board","classic","ai"],url:"/battleship/",desc:"Play Battleship online free! Classic naval strategy game with AI opponent. Place your fleet, aim, fire, and sink all enemy ships. No download required.",isNew:true,status:"live"},
+  {name:"Battleship",emoji:"🚢",cat:"puzzle",tags:["strategy","naval","board","classic","ai"],url:"/battleship/",desc:"Play Battleship online free! Classic naval strategy game with AI opponent. Place your fleet, aim, fire, and sink all enemy ships. No download required.",status:"live"},
+  {name:"Tower of Hanoi",emoji:"🏰",cat:"puzzle",tags:["Puzzle","Logic","Classic"],url:"/tower-of-hanoi/",desc:"Classic puzzle! Move all disks from one peg to another. 20 levels, auto-solve demo, hints, and themes.",isNew:true,status:"live"},
 ];
 
 /**
@@ -150,5 +151,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Tower of Hanoi",emoji:"🗼",cat:"puzzle",tags:["tower of hanoi","logic","math","brain","classic","disks"],url:"/tower-of-hanoi/",desc:"Play Tower of Hanoi online free! Classic mathematical puzzle — move all disks from one peg to another. 20 levels, 3 themes, hints, auto-solve, and star ratings!",isNew:true,status:"live"},
-  {name:"Tower of Hanoi",emoji:"🏰",cat:"puzzle",tags:["Puzzle","Logic","Classic"],url:"/tower-of-hanoi/",desc:"Classic puzzle! Move all disks from one peg to another. 20 levels, auto-solve demo, hints, and themes.",isNew:true,status:"live"},

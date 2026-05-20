@@ -128,7 +128,8 @@
       {n:'Hangman',e:'🎯',u:'/hangman/',c:'puzzle'},
       {n:'Sokoban',e:'📦',u:'/sokoban/',c:'puzzle'},
       {n:'Spot the Difference',e:'🔍',u:'/spot-the-difference/',c:'puzzle'},
-      {n:'Tower Defense',e:'🏰',u:'/tower-defense/',c:'puzzle'}
+      {n:'Tower Defense',e:'🏰',u:'/tower-defense/',c:'puzzle'},
+      {n:'Tower of Hanoi',e:'🏰',u:'/tower-of-hanoi/',c:'puzzle'}
 
     75|    ];
     76|
