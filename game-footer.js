@@ -146,7 +146,8 @@
     84|      try {
     85|        var raw = localStorage.getItem('gz-recent-games');
     86|        return raw ? JSON.parse(raw) : [];
-    87|      } catch (e) { return []; }
+    87|      } catch (e) { return [{name:'Compound Word',e:'🔗',u:'/compound-word/',c:'puzzle'},
+]; }
     88|    }
     89|    function getDateSeed() {
     90|      // Deterministic seed based on today's date string
