@@ -1034,34 +1034,73 @@
         const sx = s.x, sy = s.y;
         const r = BALL_W * 0.45 * gameScale;
 
-        // 底座
+        // 底座圆盘 - 100%对标原始 central.png
         ctx.save();
         ctx.translate(sx, sy);
+
+        // 外圈光晕
         ctx.beginPath();
-        ctx.arc(0, 0, r * 2.2, 0, Math.PI * 2);
-        const bg = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r * 2.2);
-        bg.addColorStop(0, 'rgba(60,30,90,0.8)');
-        bg.addColorStop(1, 'rgba(30,15,50,0.6)');
+        ctx.arc(0, 0, r * 2.5, 0, Math.PI * 2);
+        const outerGlow = ctx.createRadialGradient(0, 0, r * 1.5, 0, 0, r * 2.5);
+        outerGlow.addColorStop(0, 'rgba(255,200,100,0.15)');
+        outerGlow.addColorStop(1, 'rgba(255,200,100,0)');
+        ctx.fillStyle = outerGlow;
+        ctx.fill();
+
+        // 中心圆盘
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 2, 0, Math.PI * 2);
+        const bg = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.3, 0, 0, r * 2);
+        bg.addColorStop(0, 'rgba(90,50,140,0.9)');
+        bg.addColorStop(0.6, 'rgba(60,30,100,0.85)');
+        bg.addColorStop(1, 'rgba(40,20,70,0.7)');
         ctx.fillStyle = bg;
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // 发射管
-        ctx.save();
-        ctx.rotate(shooter.angle + Math.PI / 2);
-        const tw = 10, th = r * 2.8;
+        // 内圈
         ctx.beginPath();
-        ctx.roundRect(-tw / 2, -th, tw, th, 4);
-        const tg = ctx.createLinearGradient(-tw / 2, 0, tw / 2, 0);
-        tg.addColorStop(0, '#5a4080');
-        tg.addColorStop(0.5, '#7b5ea7');
-        tg.addColorStop(1, '#5a4080');
-        ctx.fillStyle = tg;
+        ctx.arc(0, 0, r * 1.3, 0, Math.PI * 2);
+        const inner = ctx.createRadialGradient(-r * 0.2, -r * 0.2, r * 0.1, 0, 0, r * 1.3);
+        inner.addColorStop(0, 'rgba(120,80,180,0.6)');
+        inner.addColorStop(1, 'rgba(60,30,100,0.3)');
+        ctx.fillStyle = inner;
         ctx.fill();
         ctx.restore();
-        ctx.restore();
+
+        // 方向箭头 - 100%对标原始arrows (setOrigin(.5, 3.6)表示锚点在下方远处)
+        if (shooter.status === 'none') {
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(shooter.angle + Math.PI / 2);
+
+            // 箭头线（从中心向上延伸）
+            const arrowLen = r * 3.6;
+            const arrowW = r * 0.3;
+
+            ctx.beginPath();
+            ctx.moveTo(-arrowW, 0);
+            ctx.lineTo(-arrowW * 0.6, -arrowLen * 0.85);
+            ctx.lineTo(0, -arrowLen);
+            ctx.lineTo(arrowW * 0.6, -arrowLen * 0.85);
+            ctx.lineTo(arrowW, 0);
+            ctx.closePath();
+
+            const ag = ctx.createLinearGradient(0, 0, 0, -arrowLen);
+            ag.addColorStop(0, 'rgba(200,160,255,0.8)');
+            ag.addColorStop(0.5, 'rgba(180,140,240,0.5)');
+            ag.addColorStop(1, 'rgba(160,120,220,0.2)');
+            ctx.fillStyle = ag;
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.restore();
+        }
 
         // 轨迹预览
         if (shooter.status === 'none') {
@@ -1110,11 +1149,11 @@
             }
         }
 
-        // 队列预览
-        const qx0 = sx + r * 3;
-        const qy0 = sy;
-        for (let i = 0; i < Math.min(3, shooter.queue.length); i++) {
-            drawBean3D(qx0 + i * r * 1.2, qy0, shooter.queue[i], r * 0.55, 0.5 - i * 0.12);
+        // 队列预览 - 100%对标原始initBalls（在startPoint左侧排列）
+        const sp = toScreen(START_POINT_X, START_POINT_Y);
+        const qr = r * 0.55;
+        for (let i = 0; i < Math.min(5, shooter.queue.length); i++) {
+            drawBean3D(sp.x - (i + 1) * qr * 2.2, sp.y, shooter.queue[i], qr, 0.6 - i * 0.08);
         }
 
         // Hit Counter环
