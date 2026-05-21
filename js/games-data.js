@@ -135,6 +135,7 @@ const GAMES = [
   {name:"Quordle",emoji:"🔤",cat:"puzzle",tags:["word","wordle","daily","spelling","brain"],url:"/quordle/",desc:"Guess four 5-letter words at once in 9 tries. Free daily Quordle puzzle with stats, practice mode, and share results.",isNew:true,status:"live"},
   {name:"Schulte Table",emoji:"🧠",cat:"puzzle",tags:["brain-training","attention","speed","visual"],url:"/schulte-table/",desc:"Train your brain with Schulte Table - improve peripheral vision, attention, and visual scanning speed with multiple game modes and difficulty levels.",isNew:true,status:"live"},
   {name:"Contexto",emoji:"🧠",cat:"puzzle",tags:["word","semantic","daily","brain","guessing"],url:"/contexto/",desc:"Guess the secret word by semantic proximity. Contexto is a free daily word puzzle game with unlimited practice mode, stats, and share results.",isNew:true,status:"live"},
+  {name:"Waffle",emoji:"🧇",cat:"puzzle",tags:["word","daily","crossword"],url:"/waffle/",desc:"Daily word puzzle - swap letters to solve 6 interconnected 5-letter words in a 5x5 grid.",isNew:true,status:"live"},
 ];
 
 /**
@@ -157,3 +158,4 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
+{name:"Waffle",emoji:"🧇",cat:"puzzle",tags:["word","crossword","daily","anagram"],url:"/waffle/",desc:"Swap letters to solve 6 intersecting words in a 5x5 grid. Daily word puzzle with color feedback, star ratings, and unlimited practice mode.",isNew:true,status:"live"},
