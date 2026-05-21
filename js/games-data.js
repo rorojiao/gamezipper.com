@@ -137,6 +137,7 @@ const GAMES = [
   {name:"Contexto",emoji:"🧠",cat:"puzzle",tags:["word","semantic","daily","brain","guessing"],url:"/contexto/",desc:"Guess the secret word by semantic proximity. Contexto is a free daily word puzzle game with unlimited practice mode, stats, and share results.",isNew:true,status:"live"},
   {name:"Chocolate Bean Storm",emoji:"🍫",cat:"arcade",tags:["bubble-shooter","casual","match-3"],url:"/chocolate-bean-storm/",desc:"Aim, shoot and match 3+ same-colored chocolate beans in this fun bubble shooter puzzle game. Clear all beans to advance through levels!",isNew:true,status:"live"},
   {name:"Waffle",emoji:"🧇",cat:"puzzle",tags:["word","daily","crossword"],url:"/waffle/",desc:"Daily word puzzle - swap letters to solve 6 interconnected 5-letter words in a 5x5 grid.",isNew:true,status:"live"},
+  {name:"Mancala",emoji:"🫘",cat:"board",tags:["mancala","kalah","strategy","board","classic","african"],url:"/mancala/",desc:"Play Mancala (Kalah) online free. Classic African stone-counting strategy game. Challenge AI or play with a friend. Tutorial, stats, and 3 difficulty levels.",isNew:true,status:"live"},
 ];
 
 /**
@@ -159,4 +160,4 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
-{name:"Mancala",emoji:"🫘",cat:"board",tags:["mancala","kalah","strategy","board","classic","african"],url:"/mancala/",desc:"Play Mancala (Kalah) online free. Classic African stone-counting strategy game. Challenge AI or play with a friend. Tutorial, stats, and 3 difficulty levels.",isNew:true,status:"live"},
+}
