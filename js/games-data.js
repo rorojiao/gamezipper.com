@@ -161,3 +161,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Yahtzee",emoji:"🎲",cat:"puzzle",tags:["dice","board","classic","strategy"],url:"/yahtzee/",desc:"Play Yahtzee free online - roll dice, score combinations, compete against AI. Classic dice game with full rules, statistics and achievements.",isNew:true,status:"live"},
