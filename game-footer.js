@@ -149,6 +149,8 @@
     87|      } catch (e) { return [{name:'Compound Word',e:'🔗',u:'/compound-word/',c:'puzzle'},
 {name:'Quordle',e:'🔤',u:'/quordle/',c:'puzzle'},
 {name:'Schulte Table',e:'🧠',u:'/schulte-table/',c:'puzzle'},
+{name:'Chocolate Bean Storm',e:'🍫',u:'/chocolate-bean-storm/',c:'arcade'},
+{name:'Waffle',e:'🧇',u:'/waffle/',c:'puzzle'},
 {name:'Contexto',e:'🧠',u:'/contexto/',c:'puzzle'},
 ]; }
     88|    }
