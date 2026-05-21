@@ -161,4 +161,5 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Yahtzee",emoji:"🎲",cat:"puzzle",tags:["dice","board","classic","strategy"],url:"/yahtzee/",desc:"Play Yahtzee free online - roll dice, score combinations, compete against AI. Classic dice game with full rules, statistics and achievements.",isNew:true,status:"live"},
+{name:"Yahtzee",emoji:"🎲",cat:"puzzle",tags:["dice","board","classic","strategy"],url:"/yahtzee/",desc:"Play Yahtzee free online - roll dice, score combinations, compete against AI. Classic dice game with full rules, statistics and achievements.",isNew:true,status:"live"}
+{name:"Hashiwokakero",emoji:"🌉",cat:"puzzle",tags:["logic","bridges","hashi","brain","nikoli"],url:"/hashiwokakero/",desc:"Connect numbered islands with bridges in this classic Japanese logic puzzle. Build up to 2 bridges between islands and connect them all into one network.",isNew:true,status:"live"},
