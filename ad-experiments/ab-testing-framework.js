@@ -163,7 +163,7 @@
       userId: getUserId()
     };
     try {
-      new Image().src = 'https://gamezipper-bi.cap.1ktower.com/ab-track?d=' + encodeURIComponent(JSON.stringify(payload));
+      new Image().src = 'https://bi.gamezipper.com/ab-track?d=' + encodeURIComponent(JSON.stringify(payload));
     } catch (e) { console.warn('[GZ_AB]', e); }
   }
 

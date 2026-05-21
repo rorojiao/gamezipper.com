@@ -158,4 +158,3 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
-{name:"Waffle",emoji:"🧇",cat:"puzzle",tags:["word","crossword","daily","anagram"],url:"/waffle/",desc:"Swap letters to solve 6 intersecting words in a 5x5 grid. Daily word puzzle with color feedback, star ratings, and unlimited practice mode.",isNew:true,status:"live"},

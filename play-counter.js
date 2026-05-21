@@ -1,7 +1,7 @@
 (function() {
   'use strict';
   
-  const ANALYTICS_URL = 'https://site-analytics.cap.1ktower.com';
+  const ANALYTICS_URL = 'https://site-analytics.gamezipper.com';
   const SITE = 'gamezipper.com';
   
   function formatCount(n) {

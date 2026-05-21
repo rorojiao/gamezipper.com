@@ -3,7 +3,7 @@
      3|  function sendBI() {
      4|    try {
      5|      var img = new Image();
-     6|      img.src = 'https://site-analytics.cap.1ktower.com/hit?s=' + encodeURIComponent(location.hostname || 'gamezipper.com') + '&p=' + encodeURIComponent(location.pathname || '/') + '&t=' + Date.now();
+     6|      img.src = 'https://site-analytics.gamezipper.com/hit?s=' + encodeURIComponent(location.hostname || 'gamezipper.com') + '&p=' + encodeURIComponent(location.pathname || '/') + '&t=' + Date.now();
      7|    } catch (e) {}
      8|  }
      9|  if ('requestIdleCallback' in window) {

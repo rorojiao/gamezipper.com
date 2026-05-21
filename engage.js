@@ -319,7 +319,7 @@
           // Also send to custom analytics
           if (navigator.sendBeacon) {
             navigator.sendBeacon(
-              'https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=' +
+              'https://site-analytics.gamezipper.com/hit?s=gamezipper.com&p=' +
               encodeURIComponent(location.pathname) +
               '&t=' + Date.now() +
               '&scroll=' + m
