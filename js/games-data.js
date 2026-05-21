@@ -154,3 +154,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Compound Word",emoji:"🔗",cat:"puzzle",tags:["word","compound","brain","vocabulary","bridge"],url:"/compound-word/",desc:"Find the bridge word that completes two compound words! A challenging word puzzle that tests your vocabulary and creative thinking.",isNew:true,status:"live"},
