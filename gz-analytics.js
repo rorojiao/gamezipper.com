@@ -1,7 +1,7 @@
 /* gz-analytics.js — lightweight behavioral tracking, no deps, <5KB */
 (function() {
   var SITE = 'gamezipper.com';
-  var EP = 'https://site-analytics.cap.1ktower.com/api/event';
+  var EP = 'http://10.10.29.67:8090/api/collect.gz';
   var EP_LOCAL = 'http://10.10.29.67:8090/api/collect.gz';
   var BK = 'gz_ab';
   var T = 30000;

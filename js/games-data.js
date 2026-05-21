@@ -157,5 +157,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 },
-
-{name:"Schulte Table",emoji:"🧠",cat:"puzzle",tags:["brain","training","speed","concentration","schulte","attention"],url:"/schulte-table/",desc:"Train your brain with Schulte Table. Improve peripheral vision, attention, and reading speed with this scientifically-proven brain training exercise.",isNew:true,status:"live"},
