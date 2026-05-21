@@ -425,6 +425,7 @@ _homeButtons = [
       { x: cx - bw/2, y: startY + 64, w: bw, h: bh, text: '[Calendar] Daily Challenge', action: 'daily', gradient: ['#4A90D9','#357ABD'], border: '#1a4a80' },
     ];
 
+    var iconSize = 48, iconGap = 16;
     var icons = [
       { emoji: '[Trophy]', action: 'achievements' },
       { emoji: '[Palette]', action: 'themes' },
