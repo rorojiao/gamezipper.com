@@ -154,5 +154,5 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
-}
-
+},
+{name:"Quordle",emoji:"🔤",cat:"puzzle",tags:["word","wordle","daily","spelling","brain"],url:"/quordle/",desc:"Guess four 5-letter words at once in 9 tries. Free daily Quordle puzzle with stats, practice mode, and share results.",isNew:true,status:"live"},
