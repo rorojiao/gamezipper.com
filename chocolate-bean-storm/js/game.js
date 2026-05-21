@@ -1,6 +1,6 @@
 // ============================================
-// Chocolate Bean Storm - 100%对标Bubble Storm
-// 六角蜂巢网格 + BFS消除 + 轨迹预览 + 关卡系统
+// Chocolate Bean Storm - 100%对标Bubble Storm (Adgard/Poki)
+// 基于原始源码反编译还原的六角蜂巢射击消除游戏
 // ============================================
 
 (function() {
@@ -44,65 +44,86 @@
         rainbowSprite.src = RAINBOW_FILE;
     });
 
-    // === 布局参数 ===
+    // === 方向常量 ===
+    const DIR_TOP = 0, DIR_RIGHT = 1, DIR_BOTTOM = 2, DIR_LEFT = 3;
+
+    // === 游戏配置 - 100%对标原始 ===
     const isHorizontal = window.innerWidth > window.innerHeight;
 
-    // 球体参数
-    const BALL_SIZE = 40;
-    const BALL_RADIUS = BALL_SIZE / 2;
+    // 原始: window.horis ? (29,17) : (16,32)
+    const SIZE_X = isHorizontal ? 29 : 16;
+    const SIZE_Y = isHorizontal ? 17 : 32;
 
-    // 游戏区域逻辑尺寸
+    // 原始: window.horis ? (10,6) : (5,10) - startSize
+    const START_SIZE_X = isHorizontal ? 10 : 5;
+    const START_SIZE_Y = isHorizontal ? 6 : 10;
+
+    // 原始: offset - window.horis ? (42,40) : (34,34)
+    const OFFSET_X = isHorizontal ? 42 : 34;
+    const OFFSET_Y = isHorizontal ? 40 : 34;
+
+    // 原始: size = Point(42,36)
+    const CELL_W = 42;
+    const CELL_H = 36;
+
+    // 原始: pair=false时偏移20
+    const ODD_ROW_OFFSET = 20;
+
+    // 原始: levelRadius = 16
+    const LEVEL_RADIUS = 16;
+
+    // 原始: ball size 40x41px spritesheet, 17 frames (0-16)
+    const BALL_W = 40;
+    const BALL_H = 41;
+
+    // 原始: aimPoint - window.horis ? (628,328) : (348,574)
+    const AIM_POINT_X = isHorizontal ? 628 : 348;
+    const AIM_POINT_Y = isHorizontal ? 328 : 574;
+
+    // 原始: startPoint - window.horis ? (600,684) : (684,600)
+    const START_POINT_X = isHorizontal ? 600 : 684;
+    const START_POINT_Y = isHorizontal ? 684 : 600;
+
+    // 原始: wall bounds
+    const WALL_LEFT = 0;
+    const WALL_RIGHT = isHorizontal ? 1280 : 720;
+    const WALL_TOP = 0;
+    const WALL_BOTTOM = isHorizontal ? 720 : 1280;
+
+    // 原始: 游戏分辨率
     const GAME_W = isHorizontal ? 1280 : 720;
     const GAME_H = isHorizontal ? 720 : 1280;
 
-    // 网格尺寸 - 垂直16列, 水平29列
-    const GRID_COLS = isHorizontal ? 29 : 16;
-    const GRID_ROWS = isHorizontal ? 17 : 32;
-
-    // 初始填充尺寸
-    const INIT_COLS = isHorizontal ? 10 : 5;
-    const INIT_ROWS = isHorizontal ? 6 : 10;
-
-    // 颜色定义 - 对标原始11种颜色
-    const COLORS = [
-        { name:'red',       css:'#FD0B0B', light:'#ff4d4d', dark:'#b00808' },
-        { name:'green',     css:'#1FFF1F', light:'#66ff66', dark:'#14b314' },
-        { name:'blue',      css:'#0000FF', light:'#4d4dff', dark:'#0000b3' },
-        { name:'pink',      css:'#FE08FE', light:'#fe66fe', dark:'#b305b3' },
-        { name:'cyan',      css:'#0EFFFF', light:'#66ffff', dark:'#0ab3b3' },
-        { name:'yellow',    css:'#FFFF00', light:'#ffff66', dark:'#b3b300' },
-        { name:'darkgreen', css:'#009933', light:'#33cc66', dark:'#006622' },
-        { name:'purple',    css:'#9900FF', light:'#b366ff', dark:'#6b00b3' },
-        { name:'lightblue', css:'#008FFE', light:'#4db3ff', dark:'#0066b3' },
-        { name:'orange',    css:'#FF6600', light:'#ff994d', dark:'#b34700' },
-        { name:'white',     css:'#FFFFFF', light:'#ffffff', dark:'#cccccc' },
-    ];
+    // 原始: initialColorsNumber=5, startColorsNumber=10, maxColorsNumber=16
+    const INITIAL_COLORS = 5;
+    const MAX_COLORS = 16;
     const RAINBOW_TYPE = 16;
 
-    // 关卡数据
-    const LEVEL_GOALS = [
-        [9900,1e4,10,0,0,0,0,0,0,0],[99,10,5,5,0,0,0,0,0,0],[99,20,0,0,0,0,0,0,0,0],
-        [99,10,10,10,10,0,0,0,0,0],[100,10,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0],
-        [100,50,0,0,0,0,0,0,0,0],[100,20,20,0,0,0,0,0,0,0],[10,0,0,0,0,0,0,0,0,0],
-        [10,20,20,20,0,0,0,0,0,0],[10,50,0,0,0,0,0,0,0,0],[100,50,100,0,0,0,0,0,0],
-        [100,70,70,0,0,0,0,0,0,0],[100,40,40,40,0,0,0,0,0,0],[100,80,70,60,0,0,0,0,0],
-        [100,0,0,80,80,0,0,0,0,0],[100,0,70,70,0,0,0,0,0,0],[100,80,0,0,80,0,0,0,0,0],
-        [100,90,0,0,0,0,0,0,0,0],[100,90,0,0,0,0,0,0,0,0],[100,90,0,0,0,0,0,0,0,0],
-        [100,0,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0],
-        [100,0,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0],
-        [100,0,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0],
-        [100,0,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0],
-        [100,0,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0],
-        [100,0,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0],
-        [100,0,0,0,0,0,0,0,0,0],[100,0,0,0,0,0,0,0,0,0]
+    // 原始: speed=1500, constDt=0.018
+    const SHOOT_SPEED = 1500;
+    const CONST_DT = 0.018;
+
+    // 原始: radiusWall=50
+    const RADIUS_WALL = 50;
+
+    // 原始颜色值
+    const COLORS_HEX = [
+        '#FD0B0B', '#1FFF1F', '#0000FF', '#FE08FE', '#0EFFFF',
+        '#FFFF00', '#009933', '#9900FF', '#008FFE', '#FF6600', '#FFFFFF'
+    ];
+    const COLORS_LIGHT = [
+        '#ff4d4d', '#66ff66', '#4d4dff', '#fe66fe', '#66ffff',
+        '#ffff66', '#33cc66', '#b366ff', '#4db3ff', '#ff994d', '#ffffff'
+    ];
+    const COLORS_DARK = [
+        '#b00808', '#14b314', '#0000b3', '#b305b3', '#0ab3b3',
+        '#b3b300', '#006622', '#6b00b3', '#0066b3', '#b34700', '#cccccc'
     ];
 
-    // === Canvas设置 ===
+    // === Canvas ===
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    let W, H, dpr, scale;
-    let cellSize, gridOffX, gridOffY, gridWidth, gridHeight;
-    let aimX, aimY;
+    let W, H, dpr, gameScale;
     let bgCache = null;
 
     function setupCanvas() {
@@ -111,10 +132,9 @@
         const cw = container.clientWidth;
         const ch = container.clientHeight;
 
-        // 缩放以适应屏幕
-        scale = Math.min(cw / GAME_W, ch / GAME_H);
-        W = Math.floor(GAME_W * scale);
-        H = Math.floor(GAME_H * scale);
+        gameScale = Math.min(cw / GAME_W, ch / GAME_H);
+        W = Math.floor(GAME_W * gameScale);
+        H = Math.floor(GAME_H * gameScale);
 
         canvas.width = W * dpr;
         canvas.height = H * dpr;
@@ -122,133 +142,64 @@
         canvas.style.height = H + 'px';
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        // 网格单元格大小 - 基于游戏宽度
-        // 球体大小 = 40px * scale, 但确保网格能容纳所有列
-        cellSize = (W * 0.92) / GRID_COLS;
-        const ballRadius = cellSize / 2 * 0.85;
-
-        // 网格居中
-        gridWidth = GRID_COLS * cellSize;
-        gridHeight = GRID_ROWS * cellSize * 0.87;
-        gridOffX = (W - gridWidth) / 2;
-        gridOffY = W * 0.02;
-
-        // 射击点位置
-        if (isHorizontal) {
-            aimX = W * 0.49;
-            aimY = H * 0.85;
-        } else {
-            aimX = W * 0.5;
-            aimY = H * 0.87;
-        }
-
         bgCache = null;
     }
 
     setupCanvas();
-    window.addEventListener('resize', setupCanvas);
+    window.addEventListener('resize', () => { setupCanvas(); });
 
-    // === 网格系统 ===
-    let grid = [];
-
-    function initGrid() {
-        grid = [];
-        for (let r = 0; r < GRID_ROWS; r++) {
-            grid[r] = [];
-            for (let c = 0; c < GRID_COLS; c++) {
-                grid[r][c] = null;
-            }
-        }
+    // === 坐标转换: 游戏坐标 -> 屏幕坐标 ===
+    function toScreen(gx, gy) {
+        return { x: gx * gameScale, y: gy * gameScale };
     }
 
-    // 六角网格像素坐标
-    function cellPos(row, col) {
-        const halfCell = cellSize / 2;
-        const offset = (row % 2 === 1) ? halfCell : 0;
-        const x = gridOffX + col * cellSize + halfCell + offset;
-        const y = gridOffY + row * cellSize * 0.87 + halfCell;
-        return { x, y };
+    function fromScreen(sx, sy) {
+        return { x: sx / gameScale, y: sy / gameScale };
     }
 
-    // 获取六角邻居
-    function getNeighbors(row, col) {
-        const even = row % 2 === 0;
-        const offsets = even
-            ? [[-1,-1],[-1,0],[0,-1],[0,1],[1,-1],[1,0]]
-            : [[-1,0],[-1,1],[0,-1],[0,1],[1,0],[1,1]];
-        const result = [];
-        for (const [dr, dc] of offsets) {
-            const nr = row + dr, nc = col + dc;
-            if (nr >= 0 && nr < GRID_ROWS && nc >= 0 && nc < GRID_COLS) {
-                result.push({ row: nr, col: nc });
-            }
-        }
-        return result;
-    }
+    // === 六角网格节点 - 100%对标原始class K ===
+    class GridNode {
+        constructor(col, row) {
+            this.col = col;
+            this.row = row;
+            this.pair = row % 2 === 0; // 原始: pair=true for even rows
+            this.tile = null; // tile type (0-10=颜色, 16=彩虹)
+            this.removed = false;
+            this.locked = false;
+            this.floated = true;
+            this.hintFlag = true;
+            this.static = false;
 
-    // BFS找同色相连
-    function findConnected(row, col) {
-        const startType = grid[row][col];
-        if (startType === null) return [];
-        const visited = new Set();
-        const connected = [];
-        const queue = [{ row, col }];
-        visited.add(`${row},${col}`);
+            // 计算位置 - 100%对标原始
+            let offsetX = 0;
+            if (!this.pair) offsetX = ODD_ROW_OFFSET;
+            this.x = col * CELL_W + offsetX + OFFSET_X;
+            this.y = row * CELL_H + OFFSET_Y;
 
-        while (queue.length > 0) {
-            const { row: r, col: c } = queue.shift();
-            const type = grid[r][c];
-            if (type === null) continue;
+            // 邻居 - sync()时设置
+            this.right = null;
+            this.left = null;
+            this.left_top = null;
+            this.left_bottom = null;
+            this.right_top = null;
+            this.right_bottom = null;
+        }
 
-            const match = startType === RAINBOW_TYPE ||
-                          type === RAINBOW_TYPE ||
-                          type === startType;
-            if (!match) continue;
+        getNeighbours() {
+            return [this.right, this.left, this.left_top, this.left_bottom, this.right_top, this.right_bottom];
+        }
 
-            connected.push({ row: r, col: c });
-            for (const n of getNeighbors(r, c)) {
-                const key = `${n.row},${n.col}`;
-                if (!visited.has(key)) {
-                    visited.add(key);
-                    queue.push(n);
-                }
-            }
+        getNeigboursEmpty() {
+            return this.getNeighbours().filter(n => n && n.tile === null);
         }
-        return connected;
-    }
 
-    // 找悬浮球体
-    function findFloating() {
-        const connected = new Set();
-        const queue = [];
-        for (let c = 0; c < GRID_COLS; c++) {
-            if (grid[0][c] !== null) {
-                queue.push({ row: 0, col: c });
-                connected.add(`0,${c}`);
-            }
+        getNeigboursFull() {
+            return this.getNeighbours().filter(n => n && n.tile !== null);
         }
-        while (queue.length > 0) {
-            const { row, col } = queue.shift();
-            for (const n of getNeighbors(row, col)) {
-                const key = `${n.row},${n.col}`;
-                if (!connected.has(key) && grid[n.row][n.col] !== null) {
-                    connected.add(key);
-                    queue.push(n);
-                }
-            }
-        }
-        const floating = [];
-        for (let r = 0; r < GRID_ROWS; r++) {
-            for (let c = 0; c < GRID_COLS; c++) {
-                if (grid[r][c] !== null && !connected.has(`${r},${c}`)) {
-                    floating.push({ row: r, col: c });
-                }
-            }
-        }
-        return floating;
     }
 
     // === 游戏状态 ===
+    let gridArray = [];
     let gameState = 'menu';
     let currentLevel = 1;
     let score = 0;
@@ -261,6 +212,8 @@
     let particles = [];
     let fallingBeans = [];
     let flyBall = null;
+    let directions = [1, 1, 1, 1]; // 4面墙壁
+    let startColorsNumber = INITIAL_COLORS;
 
     // 射击器
     let shooter = {
@@ -268,12 +221,289 @@
         currentType: 0,
         queue: [],
         status: 'none',
-        firstAd: false
+        firstAd: false,
+        prevColor: -1,
+        maxBalls: 6,
+        currentBalls: 6
     };
 
-    // 可用颜色数
+    // === 网格初始化 ===
+    function initGrid() {
+        gridArray = [];
+        for (let row = 0; row < SIZE_Y; row++) {
+            gridArray[row] = [];
+            for (let col = 0; col < SIZE_X; col++) {
+                gridArray[row][col] = new GridNode(col, row);
+            }
+        }
+        syncGrid();
+    }
+
+    // 100%对标原始sync() - 链接所有邻居
+    function syncGrid() {
+        for (let row = 0; row < SIZE_Y; row++) {
+            for (let col = 0; col < SIZE_X; col++) {
+                const node = gridArray[row][col];
+                node.right = getRight(col, row);
+                node.left = getLeft(col, row);
+                node.left_top = getLeftTop(col, row);
+                node.left_bottom = getLeftBottom(col, row);
+                node.right_top = getRightTop(col, row);
+                node.right_bottom = getRightBottom(col, row);
+            }
+        }
+    }
+
+    // 100%对标原始邻居计算 - pair影响对角线邻居
+    function getRight(col, row) {
+        if (col + 1 < SIZE_X) return gridArray[row][col + 1];
+        return null;
+    }
+
+    function getLeft(col, row) {
+        if (col - 1 >= 0) return gridArray[row][col - 1];
+        return null;
+    }
+
+    function getLeftTop(col, row) {
+        const pair = row % 2 === 0;
+        const offset = pair ? -1 : 0;
+        const nc = col + offset;
+        const nr = row - 1;
+        if (nc >= 0 && nr >= 0) return gridArray[nr][nc];
+        return null;
+    }
+
+    function getLeftBottom(col, row) {
+        const pair = row % 2 === 0;
+        const offset = pair ? -1 : 0;
+        const nc = col + offset;
+        const nr = row + 1;
+        if (nc >= 0 && nr < SIZE_Y) return gridArray[nr][nc];
+        return null;
+    }
+
+    function getRightTop(col, row) {
+        const pair = row % 2 === 0;
+        const offset = pair ? 0 : 1;
+        const nc = col + offset;
+        const nr = row - 1;
+        if (nc < SIZE_X && nr >= 0) return gridArray[nr][nc];
+        return null;
+    }
+
+    function getRightBottom(col, row) {
+        const pair = row % 2 === 0;
+        const offset = pair ? 0 : 1;
+        const nc = col + offset;
+        const nr = row + 1;
+        if (nc < SIZE_X && nr < SIZE_Y) return gridArray[nr][nc];
+        return null;
+    }
+
+    // === 碰撞检测 - 100%对标原始circleIntersection ===
+    function circleIntersection(x1, y1, r1, x2, y2, r2) {
+        const dx = x1 - x2;
+        const dy = y1 - y2;
+        return Math.sqrt(dx * dx + dy * dy) < r1 + r2;
+    }
+
+    // 100%对标原始checkAimBall - 飞行球碰撞
+    function checkAimBall(ball) {
+        for (let row = 0; row < SIZE_Y; row++) {
+            for (let col = 0; col < SIZE_X; col++) {
+                const node = gridArray[row][col];
+                if (node.tile !== null && circleIntersection(
+                    ball.x + BALL_W / 2, ball.y + BALL_H / 2, LEVEL_RADIUS,
+                    node.x + BALL_W / 2, node.y + BALL_H / 2, LEVEL_RADIUS
+                )) {
+                    return node;
+                }
+            }
+        }
+        return null;
+    }
+
+    // 100%对标原始checkTopWall - 顶墙吸附
+    function checkTopWall(ball) {
+        for (let col = 0; col < SIZE_X; col++) {
+            const node = gridArray[0][col];
+            if (node.tile === null && circleIntersection(
+                ball.x + BALL_W / 2, ball.y + BALL_H / 2, LEVEL_RADIUS,
+                node.x + BALL_W / 2, node.y + BALL_H / 2, LEVEL_RADIUS
+            )) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    // === 颜色匹配 - 100%对标原始getNeighboursByType ===
+    function getNeighboursByType(startNode) {
+        const result = [startNode];
+        const type = startNode.tile;
+        let added = true;
+
+        while (added) {
+            added = false;
+            const currentBatch = [...result];
+            for (const node of currentBatch) {
+                const neighbours = node.getNeighbours();
+                for (const n of neighbours) {
+                    if (n && n.tile !== null && result.indexOf(n) === -1) {
+                        if (n.tile === type || type === RAINBOW_TYPE) {
+                            result.push(n);
+                            added = true;
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    // === 浮动检测 - 100%对标原始checkFloatBubbles ===
+    function checkFloatBubbles() {
+        doFloated();
+
+        // 从四面墙壁开始BFS标记不浮动的
+        if (directions[DIR_TOP]) {
+            for (let col = 0; col < SIZE_X; col++) {
+                const node = gridArray[0][col];
+                if (node.tile !== null) {
+                    doNotFloated(node);
+                }
+            }
+        }
+        if (directions[DIR_BOTTOM]) {
+            for (let col = 0; col < SIZE_X; col++) {
+                const node = gridArray[SIZE_Y - 1][col];
+                if (node.tile !== null) {
+                    doNotFloated(node);
+                }
+            }
+        }
+        if (directions[DIR_LEFT]) {
+            for (let row = 0; row < SIZE_Y; row++) {
+                const node = gridArray[row][0];
+                if (node.tile !== null) {
+                    doNotFloated(node);
+                }
+            }
+        }
+        if (directions[DIR_RIGHT]) {
+            for (let row = 0; row < SIZE_Y; row++) {
+                const node = gridArray[row][SIZE_X - 1];
+                if (node.tile !== null) {
+                    doNotFloated(node);
+                }
+            }
+        }
+
+        return removeFloated();
+    }
+
+    function doFloated() {
+        for (let row = 0; row < SIZE_Y; row++)
+            for (let col = 0; col < SIZE_X; col++)
+                if (gridArray[row][col].tile !== null)
+                    gridArray[row][col].floated = true;
+    }
+
+    function doNotFloated(startNode) {
+        const visited = new Set();
+        const queue = [startNode];
+        visited.add(startNode);
+        while (queue.length > 0) {
+            const node = queue.shift();
+            node.floated = false;
+            const neighbours = node.getNeighbours();
+            for (const n of neighbours) {
+                if (n && n.tile !== null && !visited.has(n)) {
+                    visited.add(n);
+                    queue.push(n);
+                }
+            }
+        }
+    }
+
+    function removeFloated() {
+        const result = [];
+        for (let row = 0; row < SIZE_Y; row++)
+            for (let col = 0; col < SIZE_X; col++) {
+                const node = gridArray[row][col];
+                if (node.tile !== null && node.floated)
+                    result.push(node);
+            }
+        return result;
+    }
+
+    // === 失败检测 - 100%对标原始failGrids ===
+    function checkForFail() {
+        // 垂直模式的failGrids
+        const failGrids = isHorizontal ? [
+            [14,8],[13,8],[15,8],[13,7],[14,7],[13,9],[14,9]
+        ] : [
+            [8,16],[7,16],[7,14],[8,14],[6,15],[8,15]
+        ];
+
+        for (const [col, row] of failGrids) {
+            if (gridArray[row] && gridArray[row][col] && gridArray[row][col].tile !== null)
+                return true;
+        }
+        return false;
+    }
+
+    // === 检查通关 - 100%对标原始checkFirstLine ===
+    function checkFirstLine() {
+        let count = 0;
+        let allEmpty = true;
+        let rainbowCount = 0;
+
+        for (let dir = 0; dir < 4; dir++) {
+            count = 0;
+            switch (dir) {
+                case DIR_TOP:
+                    for (let col = 0; col < SIZE_X; col++) {
+                        const node = gridArray[0][col];
+                        if (node.tile !== null) { count++; allEmpty = false; if (node.tile === RAINBOW_TYPE) rainbowCount++; }
+                    }
+                    if (directions[DIR_TOP] && count === 0) { directions[DIR_TOP] = 0; }
+                    break;
+                case DIR_BOTTOM:
+                    for (let col = 0; col < SIZE_X; col++) {
+                        const node = gridArray[SIZE_Y - 1][col];
+                        if (node.tile !== null) { count++; allEmpty = false; if (node.tile === RAINBOW_TYPE) rainbowCount++; }
+                    }
+                    if (directions[DIR_BOTTOM] && count === 0) { directions[DIR_BOTTOM] = 0; }
+                    break;
+                case DIR_LEFT:
+                    for (let row = 0; row < SIZE_Y; row++) {
+                        const node = gridArray[row][0];
+                        if (node.tile !== null) { count++; allEmpty = false; if (node.tile === RAINBOW_TYPE) rainbowCount++; }
+                    }
+                    if (directions[DIR_LEFT] && count === 0) { directions[DIR_LEFT] = 0; }
+                    break;
+                case DIR_RIGHT:
+                    for (let row = 0; row < SIZE_Y; row++) {
+                        const node = gridArray[row][SIZE_X - 1];
+                        if (node.tile !== null) { count++; allEmpty = false; if (node.tile === RAINBOW_TYPE) rainbowCount++; }
+                    }
+                    if (directions[DIR_RIGHT] && count === 0) { directions[DIR_RIGHT] = 0; }
+                    break;
+            }
+        }
+
+        let activeDirs = 0;
+        for (let d = 0; d < 4; d++) if (directions[d] === 0) activeDirs++;
+        allEmpty = activeDirs === 4;
+
+        return allEmpty;
+    }
+
+    // === 颜色数和队列 ===
     function getColorCount() {
-        return Math.min(3 + (currentLevel - 1), COLORS.length);
+        return Math.min(startColorsNumber, MAX_COLORS);
     }
 
     function getHitCounter(level) {
@@ -282,15 +512,11 @@
 
     function randomType() {
         const count = getColorCount();
-        // 优先选择网格中存在的颜色
         const inGrid = new Set();
-        for (let r = 0; r < GRID_ROWS; r++) {
-            for (let c = 0; c < GRID_COLS; c++) {
-                if (grid[r][c] !== null && grid[r][c] !== RAINBOW_TYPE) {
-                    inGrid.add(grid[r][c]);
-                }
-            }
-        }
+        for (let row = 0; row < SIZE_Y; row++)
+            for (let col = 0; col < SIZE_X; col++)
+                if (gridArray[row][col].tile !== null && gridArray[row][col].tile !== RAINBOW_TYPE)
+                    inGrid.add(gridArray[row][col].tile);
         if (inGrid.size > 0) {
             const arr = Array.from(inGrid);
             return arr[Math.floor(Math.random() * arr.length)];
@@ -307,61 +533,136 @@
         shooter.queue.push(randomType());
     }
 
-    // === 关卡加载 ===
+    // === 关卡加载 - 100%对标原始loadLevel ===
     function loadLevel() {
-        const colorCount = getColorCount();
-        const rows = Math.min(INIT_ROWS, GRID_ROWS);
-        const cols = Math.min(INIT_COLS, GRID_COLS);
+        let count = 0;
 
-        // 居中列偏移
-        const colOffset = Math.floor((GRID_COLS - cols) / 2);
-
-        for (let r = 0; r < rows; r++) {
-            const rowCols = (r % 2 === 1) ? Math.max(0, cols - 1) : cols;
-            const rowOff = (r % 2 === 1) ? colOffset + 1 : colOffset;
-            for (let c = 0; c < rowCols; c++) {
-                const gc = rowOff + c;
-                if (gc >= 0 && gc < GRID_COLS) {
-                    grid[r][gc] = Math.floor(Math.random() * colorCount);
+        // 顶部
+        for (let row = 0; row < START_SIZE_Y; row++) {
+            for (let col = 0; col < SIZE_X; col++) {
+                const node = gridArray[row][col];
+                if (node.tile === null) {
+                    const type = Math.floor(Math.random() * startColorsNumber);
+                    node.tile = type;
+                    count++;
                 }
             }
         }
-    }
 
-    // === 碰撞和吸附 ===
-    function getNearestEmpty(px, py) {
-        let best = null, bestDist = Infinity;
-        for (let r = 0; r < GRID_ROWS; r++) {
-            for (let c = 0; c < GRID_COLS; c++) {
-                if (grid[r][c] !== null) continue;
-                const pos = cellPos(r, c);
-                const dx = px - pos.x, dy = py - pos.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < bestDist && dist < cellSize * 1.3) {
-                    if (r === 0 || hasNeighborTile(r, c)) {
-                        bestDist = dist;
-                        best = { row: r, col: c };
-                    }
+        // 底部
+        for (let row = SIZE_Y - 1; row > SIZE_Y - 1 - START_SIZE_Y; row--) {
+            for (let col = 0; col < SIZE_X; col++) {
+                const node = gridArray[row][col];
+                if (node.tile === null) {
+                    const type = Math.floor(Math.random() * startColorsNumber);
+                    node.tile = type;
+                    count++;
                 }
             }
         }
-        return best;
+
+        // 左侧
+        for (let row = 0; row < SIZE_Y; row++) {
+            for (let col = 0; col < START_SIZE_X; col++) {
+                const node = gridArray[row][col];
+                if (node.tile === null) {
+                    const type = Math.floor(Math.random() * startColorsNumber);
+                    node.tile = type;
+                    count++;
+                }
+            }
+        }
+
+        // 右侧
+        for (let row = 0; row < SIZE_Y; row++) {
+            for (let col = SIZE_X - 1; col > SIZE_X - 2 - START_SIZE_X; col--) {
+                const node = gridArray[row][col];
+                if (node.tile === null) {
+                    const type = Math.floor(Math.random() * startColorsNumber);
+                    node.tile = type;
+                    count++;
+                }
+            }
+        }
+
+        // 放一个彩虹球
+        if (currentLevel > 1) {
+            const singles = [];
+            for (let row = 1; row < SIZE_Y - 1; row++)
+                for (let col = 1; col < SIZE_X - 1; col++) {
+                    const node = gridArray[row][col];
+                    if (node.tile !== null) singles.push(node);
+                }
+            if (singles.length > 0) {
+                shuffleArray(singles);
+                singles[0].tile = RAINBOW_TYPE;
+            }
+        }
+
+        return count;
     }
 
-    function hasNeighborTile(r, c) {
-        return getNeighbors(r, c).some(n => grid[n.row] && grid[n.row][n.col] !== null);
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
     }
 
-    // === 射击系统 ===
+    // === 消除检查 - 100%对标原始getColor ===
+    function checkColors(node) {
+        if (node.tile === null) return;
+
+        const connected = getNeighboursByType(node);
+        if (connected.length <= 2) return;
+
+        // 过滤掉static节点
+        const removable = connected.filter(n => !n.static);
+
+        if (removable.length > 1) {
+            comboCount++;
+            const pts = removable.length * 10 * comboCount;
+            score += pts;
+
+            for (const n of removable) {
+                const s = toScreen(n.x, n.y);
+                const t = n.tile;
+                const color = (t < COLORS_HEX.length) ? COLORS_HEX[t] : '#fff';
+                spawnParticles(s.x, s.y, color, 8);
+                spawnFallingBean(s.x, s.y, t);
+                n.tile = null;
+                n.removed = false;
+            }
+
+            showCombo(comboCount, removable.length);
+
+            // 浮动检测
+            const floating = checkFloatBubbles();
+            if (floating.length > 0) {
+                score += floating.length * 15 * comboCount;
+                for (const n of floating) {
+                    const s = toScreen(n.x, n.y);
+                    const t = n.tile;
+                    const color = (t < COLORS_HEX.length) ? COLORS_HEX[t] : '#fff';
+                    spawnParticles(s.x, s.y, color, 5);
+                    spawnFallingBean(s.x, s.y, t);
+                    n.tile = null;
+                }
+            }
+        } else {
+            comboCount = 0;
+        }
+    }
+
+    // === 射击系统 - 100%对标原始aim class ===
     function shoot() {
         if (shooter.status !== 'none' || gameState !== 'playing') return;
         shooter.status = 'fly';
-        const speed = 12;
         flyBall = {
-            x: aimX,
-            y: aimY,
-            vx: Math.cos(shooter.angle) * speed,
-            vy: Math.sin(shooter.angle) * speed,
+            x: AIM_POINT_X,
+            y: AIM_POINT_Y,
+            rotation: shooter.angle,
             type: shooter.currentType
         };
     }
@@ -369,121 +670,120 @@
     function updateFlyBall() {
         if (!flyBall || shooter.status !== 'fly') return;
 
-        const steps = 4;
-        const svx = flyBall.vx / steps;
-        const svy = flyBall.vy / steps;
+        const dt = CONST_DT;
 
-        for (let s = 0; s < steps; s++) {
-            flyBall.x += svx;
-            flyBall.y += svy;
+        // 100%对标原始update: hitBall.x += t * speed * Math.sin(hitRotation)
+        flyBall.x += dt * SHOOT_SPEED * Math.sin(flyBall.rotation);
+        flyBall.y -= dt * SHOOT_SPEED * Math.cos(flyBall.rotation);
 
-            // 左右墙壁反弹
-            const margin = gridOffX + cellSize * 0.4;
-            const rightBound = W - margin;
-            if (flyBall.x < margin) {
-                flyBall.x = margin;
-                flyBall.vx = -flyBall.vx;
-            }
-            if (flyBall.x > rightBound) {
-                flyBall.x = rightBound;
-                flyBall.vx = -flyBall.vx;
-            }
-
-            // 碰到顶部
-            if (flyBall.y <= gridOffY + cellSize * 0.3) {
-                doSnap();
-                return;
-            }
-
-            // 碰到已有球体
-            for (let r = 0; r < GRID_ROWS; r++) {
-                for (let c = 0; c < GRID_COLS; c++) {
-                    if (grid[r][c] === null) continue;
-                    const pos = cellPos(r, c);
-                    const dx = flyBall.x - pos.x, dy = flyBall.y - pos.y;
-                    if (Math.sqrt(dx * dx + dy * dy) < cellSize * 0.75) {
-                        doSnap();
-                        return;
-                    }
-                }
-            }
+        // 碰到已有球体
+        const hitNode = checkAimBall(flyBall);
+        if (hitNode) {
+            snapBubble(hitNode, flyBall);
+            return;
         }
-    }
 
-    function doSnap() {
-        const snap = getNearestEmpty(flyBall.x, flyBall.y);
-        if (!snap) {
+        // 碰到顶墙
+        const topNode = checkTopWall(flyBall);
+        if (topNode) {
+            snapBubbleToWall(topNode, flyBall);
+            return;
+        }
+
+        // 出界检查
+        if (flyBall.y <= WALL_TOP - RADIUS_WALL || flyBall.y >= WALL_BOTTOM + RADIUS_WALL) {
+            shooter.status = 'none';
+            flyBall = null;
+            minusQueue();
             reborn();
             return;
         }
-
-        let ballType = flyBall.type;
-
-        // 彩虹球匹配附近颜色
-        if (ballType === RAINBOW_TYPE) {
-            const neighbors = getNeighbors(snap.row, snap.col);
-            for (const n of neighbors) {
-                if (grid[n.row][n.col] !== null && grid[n.row][n.col] !== RAINBOW_TYPE) {
-                    ballType = grid[n.row][n.col];
-                    break;
-                }
-            }
+        if (flyBall.x <= WALL_LEFT - RADIUS_WALL || flyBall.x > WALL_RIGHT + RADIUS_WALL) {
+            shooter.status = 'none';
+            flyBall = null;
+            minusQueue();
+            reborn();
+            return;
         }
+    }
 
-        grid[snap.row][snap.col] = ballType;
+    // 100%对标原始snapBubble
+    function snapBubble(hitNode, ball) {
+        const emptyNeighbours = hitNode.getNeigboursEmpty();
+        const fullNeighbours = hitNode.getNeigboursFull();
 
-        // BFS匹配
-        const connected = findConnected(snap.row, snap.col);
-        if (connected.length >= 3) {
-            comboCount++;
-            const pts = connected.length * 10 * comboCount;
-            score += pts;
+        // 找最近空位
+        const target = getNearestGrid(emptyNeighbours, ball);
+        if (target) {
+            target.tile = ball.type;
+            hitCounter--;
+            failCounter++;
+            checkColors(target);
 
-            for (const item of connected) {
-                const pos = cellPos(item.row, item.col);
-                const t = grid[item.row][item.col];
-                const color = (t !== null && t < COLORS.length) ? COLORS[t].css : '#fff';
-                spawnParticles(pos.x, pos.y, color, 8);
-                spawnFallingBean(pos.x, pos.y, t);
-                grid[item.row][item.col] = null;
+            // 检查失败
+            if (checkForFail()) {
+                gameState = 'gameover';
+                showGameOver();
+                shooter.status = 'none';
+                flyBall = null;
+                return;
             }
 
-            // 悬浮球体
-            const floating = findFloating();
-            if (floating.length > 0) {
-                score += floating.length * 15 * comboCount;
-                for (const item of floating) {
-                    const pos = cellPos(item.row, item.col);
-                    const t = grid[item.row][item.col];
-                    const color = (t !== null && t < COLORS.length) ? COLORS[t].css : '#fff';
-                    spawnParticles(pos.x, pos.y, color, 5);
-                    spawnFallingBean(pos.x, pos.y, t);
-                    grid[item.row][item.col] = null;
+            // 检查通关
+            if (checkFirstLine()) {
+                completeLevel();
+                shooter.status = 'none';
+                flyBall = null;
+                return;
+            }
+
+            // hitCounter耗尽
+            if (hitCounter <= 0) {
+                if (!shooter.firstAd) {
+                    shooter.firstAd = true;
+                    shooter.currentType = RAINBOW_TYPE;
+                    hitCounter = getHitCounter(currentLevel);
+                    hitCounterMax = hitCounter;
+                    shooter.status = 'none';
+                    flyBall = null;
+                    minusQueue();
+                    return;
                 }
+                hitCounter = getHitCounter(currentLevel);
+                hitCounterMax = hitCounter;
             }
 
-            showCombo(comboCount, connected.length);
+            minusQueue();
+            reborn();
         } else {
-            comboCount = 0;
+            shooter.status = 'none';
+            flyBall = null;
+            minusQueue();
+            reborn();
         }
+    }
 
-        // 减少hitCounter
+    function snapBubbleToWall(topNode, ball) {
+        topNode.tile = ball.type;
         hitCounter--;
+        failCounter++;
+        checkColors(topNode);
 
-        // 检查失败
-        if (checkFail()) {
+        if (checkForFail()) {
             gameState = 'gameover';
             showGameOver();
+            shooter.status = 'none';
+            flyBall = null;
             return;
         }
 
-        // 检查通关
-        if (checkWin()) {
+        if (checkFirstLine()) {
             completeLevel();
+            shooter.status = 'none';
+            flyBall = null;
             return;
         }
 
-        // hitCounter耗尽时给彩虹球
         if (hitCounter <= 0) {
             if (!shooter.firstAd) {
                 shooter.firstAd = true;
@@ -492,43 +792,49 @@
                 hitCounterMax = hitCounter;
                 shooter.status = 'none';
                 flyBall = null;
+                minusQueue();
                 return;
             }
             hitCounter = getHitCounter(currentLevel);
             hitCounterMax = hitCounter;
         }
 
+        minusQueue();
         reborn();
+    }
+
+    // 100%对标原始getNearestGrid
+    function getNearestGrid(nodes, ball) {
+        let bestDist = 2000;
+        let best = null;
+        for (const n of nodes) {
+            const dx = n.x - ball.x;
+            const dy = n.y - ball.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = n;
+            }
+        }
+        return best;
+    }
+
+    function minusQueue() {
+        if (shooter.queue.length > 0) {
+            shooter.queue.pop();
+        }
     }
 
     function reborn() {
         if (shooter.queue.length > 0) {
+            shooter.prevColor = shooter.currentType;
             shooter.currentType = shooter.queue.shift();
-            shooter.queue.push(randomType());
         } else {
             shooter.currentType = randomType();
         }
+        shooter.queue.push(randomType());
         shooter.status = 'none';
         flyBall = null;
-    }
-
-    function checkFail() {
-        const dangerRow = GRID_ROWS - 3;
-        for (let r = dangerRow; r < GRID_ROWS; r++) {
-            for (let c = 0; c < GRID_COLS; c++) {
-                if (grid[r][c] !== null) return true;
-            }
-        }
-        return false;
-    }
-
-    function checkWin() {
-        for (let r = 0; r < GRID_ROWS; r++) {
-            for (let c = 0; c < GRID_COLS; c++) {
-                if (grid[r][c] !== null) return false;
-            }
-        }
-        return true;
     }
 
     function completeLevel() {
@@ -537,11 +843,13 @@
         setTimeout(() => {
             currentLevel++;
             if (currentLevel > 40) currentLevel = 40;
+            startColorsNumber = Math.min(INITIAL_COLORS + (currentLevel - 1), MAX_COLORS);
             hitCounter = getHitCounter(currentLevel);
             hitCounterMax = hitCounter;
             shooter.firstAd = false;
             failCounter = 0;
             comboCount = 0;
+            directions = [1, 1, 1, 1];
             initGrid();
             loadLevel();
             initQueue();
@@ -550,35 +858,61 @@
         }, 1500);
     }
 
-    // === 轨迹预览 ===
-    function calcTrajectory(angle) {
+    // === 轨迹预览 - 100%对标原始emulateUpdate ===
+    function calcTrajectory(rotation) {
         const pts = [];
-        let x = aimX, y = aimY;
-        const speed = 8;
-        let vx = Math.cos(angle) * speed;
-        let vy = Math.sin(angle) * speed;
-        pts.push({ x, y });
+        let x = AIM_POINT_X;
+        let y = AIM_POINT_Y;
+        const speed = SHOOT_SPEED;
+        const dt = CONST_DT;
+        let bouncePoints = [];
 
         for (let i = 0; i < 100; i++) {
-            x += vx;
-            y += vy;
-            const margin = gridOffX + cellSize * 0.4;
-            const rightBound = W - margin;
-            if (x < margin) { x = margin; vx = -vx; }
-            if (x > rightBound) { x = rightBound; vx = -vx; }
-            if (y <= gridOffY + cellSize * 0.3) { pts.push({ x, y }); break; }
+            x += dt * speed * Math.sin(rotation);
+            y -= dt * speed * Math.cos(rotation);
 
-            let hit = false;
-            for (let r = 0; r < GRID_ROWS && !hit; r++) {
-                for (let c = 0; c < GRID_COLS && !hit; c++) {
-                    if (grid[r][c] === null) continue;
-                    const pos = cellPos(r, c);
-                    const dx = x - pos.x, dy = y - pos.y;
-                    if (Math.sqrt(dx * dx + dy * dy) < cellSize * 0.75) hit = true;
+            // 碰撞检查
+            let hit = null;
+            for (let row = 0; row < SIZE_Y; row++) {
+                for (let col = 0; col < SIZE_X; col++) {
+                    const node = gridArray[row][col];
+                    if (node.tile !== null && circleIntersection(
+                        x + BALL_W / 2, y + BALL_H / 2, LEVEL_RADIUS,
+                        node.x + BALL_W / 2, node.y + BALL_H / 2, LEVEL_RADIUS
+                    )) {
+                        hit = node;
+                        break;
+                    }
                 }
+                if (hit) break;
             }
+
+            if (hit) {
+                pts.push({ x, y });
+                break;
+            }
+
+            // 顶墙
+            if (y <= WALL_TOP + RADIUS_WALL) {
+                pts.push({ x, y });
+                break;
+            }
+
+            // 左右墙反弹
+            if (x <= WALL_LEFT + RADIUS_WALL) {
+                bouncePoints.push({ x, y });
+                x = WALL_LEFT + RADIUS_WALL;
+                rotation = -rotation;
+            }
+            if (x > WALL_RIGHT - RADIUS_WALL) {
+                bouncePoints.push({ x, y });
+                x = WALL_RIGHT - RADIUS_WALL;
+                rotation = -rotation;
+            }
+
             pts.push({ x, y });
-            if (hit) break;
+
+            if (y >= WALL_BOTTOM + RADIUS_WALL) break;
         }
         return pts;
     }
@@ -592,7 +926,6 @@
             const bgCtx = bgCache.getContext('2d');
             bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-            // 暖色渐变（对标原始bg0.png）
             const grad = bgCtx.createLinearGradient(0, 0, W * 0.3, H);
             grad.addColorStop(0, '#ff8c42');
             grad.addColorStop(0.35, '#ff6b6b');
@@ -601,7 +934,6 @@
             bgCtx.fillStyle = grad;
             bgCtx.fillRect(0, 0, W, H);
 
-            // 半透明光球
             for (let i = 0; i < 15; i++) {
                 const bx = Math.random() * W;
                 const by = Math.random() * H;
@@ -614,14 +946,6 @@
                 bgCtx.fillStyle = g;
                 bgCtx.fill();
             }
-
-            // 游戏区域半透明底
-            const gw = gridWidth + 10;
-            const gh = GRID_ROWS * cellSize * 0.87 + 10;
-            bgCtx.fillStyle = 'rgba(0,0,0,0.08)';
-            bgCtx.beginPath();
-            bgCtx.roundRect(gridOffX - 5, gridOffY - 5, gw, gh, 12);
-            bgCtx.fill();
         }
         ctx.drawImage(bgCache, 0, 0, canvas.width, canvas.height, 0, 0, W, H);
     }
@@ -630,7 +954,6 @@
         radius = Math.max(2, radius);
         const a = alpha !== undefined ? alpha : 1;
 
-        // 尝试使用AI生成的精灵图
         if (spritesLoaded) {
             const sprite = type === RAINBOW_TYPE ? rainbowSprite
                          : (type >= 0 && type < beanSprites.length) ? beanSprites[type]
@@ -644,9 +967,8 @@
             }
         }
 
-        // 降级：Canvas 2D绘制
         const isRainbow = type === RAINBOW_TYPE;
-        const colorObj = (!isRainbow && type >= 0 && type < COLORS.length) ? COLORS[type] : null;
+        const ci = (!isRainbow && type >= 0 && type < COLORS_HEX.length) ? type : -1;
 
         ctx.save();
         ctx.globalAlpha = a;
@@ -666,11 +988,11 @@
             g.addColorStop(0.67, '#3498db'); g.addColorStop(0.83, '#9b59b6');
             g.addColorStop(1, '#e74c3c');
             ctx.fillStyle = g;
-        } else if (colorObj) {
+        } else if (ci >= 0) {
             const g = ctx.createRadialGradient(-radius * 0.25, -radius * 0.3, radius * 0.08, 0, 0, radius);
-            g.addColorStop(0, colorObj.light);
-            g.addColorStop(0.5, colorObj.css);
-            g.addColorStop(1, colorObj.dark);
+            g.addColorStop(0, COLORS_LIGHT[ci]);
+            g.addColorStop(0.5, COLORS_HEX[ci]);
+            g.addColorStop(1, COLORS_DARK[ci]);
             ctx.fillStyle = g;
         } else {
             ctx.fillStyle = '#ccc';
@@ -695,14 +1017,15 @@
     }
 
     function drawGrid() {
-        const r = cellSize * 0.42;
-        for (let row = 0; row < GRID_ROWS; row++) {
-            for (let col = 0; col < GRID_COLS; col++) {
-                if (!grid[row]) continue;
-                const type = grid[row][col];
-                if (type !== null) {
-                    const pos = cellPos(row, col);
-                    drawBean3D(pos.x, pos.y, type, r, 1);
+        if (gridArray.length === 0) return;
+        const r = BALL_W * 0.45 * gameScale;
+        for (let row = 0; row < SIZE_Y; row++) {
+            if (!gridArray[row]) continue;
+            for (let col = 0; col < SIZE_X; col++) {
+                const node = gridArray[row][col];
+                if (node && node.tile !== null) {
+                    const s = toScreen(node.x, node.y);
+                    drawBean3D(s.x, s.y, node.tile, r, 1);
                 }
             }
         }
@@ -711,8 +1034,9 @@
     function drawShooter() {
         if (gameState !== 'playing' && gameState !== 'levelcomplete') return;
 
-        const sx = aimX, sy = aimY;
-        const r = cellSize * 0.42;
+        const s = toScreen(AIM_POINT_X, AIM_POINT_Y);
+        const sx = s.x, sy = s.y;
+        const r = BALL_W * 0.45 * gameScale;
 
         // 底座
         ctx.save();
@@ -752,14 +1076,18 @@
             ctx.lineWidth = 1.5;
             ctx.beginPath();
             if (traj.length > 0) {
-                ctx.moveTo(traj[0].x, traj[0].y);
-                for (let i = 1; i < traj.length; i++) ctx.lineTo(traj[i].x, traj[i].y);
+                const p0 = toScreen(traj[0].x, traj[0].y);
+                ctx.moveTo(p0.x, p0.y);
+                for (let i = 1; i < traj.length; i++) {
+                    const p = toScreen(traj[i].x, traj[i].y);
+                    ctx.lineTo(p.x, p.y);
+                }
             }
             ctx.stroke();
             ctx.setLineDash([]);
 
             if (traj.length > 1) {
-                const last = traj[traj.length - 1];
+                const last = toScreen(traj[traj.length - 1].x, traj[traj.length - 1].y);
                 ctx.beginPath();
                 ctx.arc(last.x, last.y, r * 0.8, 0, Math.PI * 2);
                 ctx.strokeStyle = 'rgba(255,255,255,0.15)';
@@ -790,8 +1118,7 @@
         const qx0 = sx + r * 3;
         const qy0 = sy;
         for (let i = 0; i < Math.min(3, shooter.queue.length); i++) {
-            const a = 0.5 - i * 0.12;
-            drawBean3D(qx0 + i * r * 1.2, qy0, shooter.queue[i], r * 0.55, a);
+            drawBean3D(qx0 + i * r * 1.2, qy0, shooter.queue[i], r * 0.55, 0.5 - i * 0.12);
         }
 
         // Hit Counter环
@@ -821,37 +1148,28 @@
 
     function drawFlyBall() {
         if (!flyBall || shooter.status !== 'fly') return;
-        const r = cellSize * 0.42;
-        drawBean3D(flyBall.x, flyBall.y, flyBall.type, r, 1);
-
-        ctx.save();
-        for (let i = 1; i <= 3; i++) {
-            ctx.globalAlpha = 0.2 / i;
-            drawBean3D(flyBall.x - flyBall.vx * i, flyBall.y - flyBall.vy * i, flyBall.type, r * 0.8, 0.2 / i);
-        }
-        ctx.restore();
+        const r = BALL_W * 0.45 * gameScale;
+        const s = toScreen(flyBall.x, flyBall.y);
+        drawBean3D(s.x, s.y, flyBall.type, r, 1);
     }
 
     function drawDangerZone() {
-        const dangerRow = GRID_ROWS - 3;
-        const y = gridOffY + dangerRow * cellSize * 0.87;
-        let danger = false;
-        for (let r = Math.max(0, dangerRow - 2); r <= dangerRow; r++) {
-            for (let c = 0; c < GRID_COLS; c++) {
-                if (grid[r] && grid[r][c] !== null) { danger = true; break; }
-            }
-            if (danger) break;
-        }
-        if (danger) {
+        if (checkForFail()) {
             const alpha = 0.3 + Math.sin(animFrame * 0.06) * 0.15;
             ctx.save();
             ctx.globalAlpha = alpha;
             ctx.setLineDash([8, 4]);
             ctx.strokeStyle = '#e74c3c';
             ctx.lineWidth = 2;
+            const y0 = toScreen(0, 0).y;
+            const y1 = toScreen(0, WALL_BOTTOM).y;
             ctx.beginPath();
-            ctx.moveTo(15, y);
-            ctx.lineTo(W - 15, y);
+            ctx.moveTo(15, y0);
+            ctx.lineTo(W - 15, y0);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(15, y1);
+            ctx.lineTo(W - 15, y1);
             ctx.stroke();
             ctx.setLineDash([]);
             ctx.restore();
@@ -913,7 +1231,7 @@
     }
 
     function drawFallingBeans() {
-        const r = cellSize * 0.42;
+        const r = BALL_W * 0.45 * gameScale;
         for (const fb of fallingBeans) {
             ctx.save();
             ctx.globalAlpha = fb.life;
@@ -950,15 +1268,18 @@
     // === 输入 ===
     function updateAim(cx, cy) {
         const rect = canvas.getBoundingClientRect();
-        const mx = (cx - rect.left) * (W / rect.width);
-        const my = (cy - rect.top) * (H / rect.height);
+        const mx = cx - rect.left;
+        const my = cy - rect.top;
         if (gameState !== 'playing' || shooter.status !== 'none') return;
 
-        const dx = mx - aimX, dy = my - aimY;
+        // 转换到游戏坐标
+        const s = toScreen(AIM_POINT_X, AIM_POINT_Y);
+        const dx = mx - s.x, dy = my - s.y;
         let angle = Math.atan2(dy, dx);
 
-        if (angle > -0.15) angle = -0.15;
-        if (angle < -Math.PI + 0.15) angle = -Math.PI + 0.15;
+        // 100%对标原始: leftLimit = -PI/2 + 0.2, rightLimit = PI/2 - 0.2
+        if (angle > -Math.PI / 2 + 0.2) angle = -Math.PI / 2 + 0.2;
+        if (angle < -Math.PI / 2 - 0.2 + (-Math.PI)) angle = -Math.PI / 2 - 0.2 + (-Math.PI);
         shooter.angle = angle;
     }
 
@@ -1007,15 +1328,18 @@
         score = 0;
         currentLevel = 1;
         comboCount = 0;
+        startColorsNumber = INITIAL_COLORS;
         hitCounter = getHitCounter(currentLevel);
         hitCounterMax = hitCounter;
         failCounter = 0;
         shooter.firstAd = false;
         shooter.status = 'none';
+        shooter.prevColor = -1;
         flyBall = null;
         particles = [];
         fallingBeans = [];
         bgCache = null;
+        directions = [1, 1, 1, 1];
 
         initGrid();
         loadLevel();
