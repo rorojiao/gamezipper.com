@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0a0a1a">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
 <title>Play Hashiwokakero (Bridges) Online Free - Logic Puzzle | GameZipper</title>
 <meta name="description" content="Play Hashiwokakero (Bridges) puzzle online free. Connect islands with bridges. Multiple difficulty levels, daily puzzles, hints & undo. No download required.">
 <meta name="keywords" content="hashiwokakero, bridges puzzle, logic puzzle, hashi, brain teaser, puzzle game, free online game">
@@ -26,7 +27,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow-x:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
-body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3a 100%);color:#e0e0e0;font-family:'Inter',system-ui,sans-serif;min-height:100vh;touch-action:none}
+body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3a 100%);color:#e0e0e0;font-family:'Inter',system-ui,sans-serif;min-height:100vh;touch-action:manipulation;-webkit-text-stroke:0 transparent;text-stroke:0 transparent}
 .hidden{display:none!important}
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;background:linear-gradient(135deg,#0a0a1a,#1a1a3a);padding:20px;overflow-y:auto}
 .screen h1{font-family:'Orbitron',monospace;font-size:clamp(28px,6vw,48px);font-weight:900;background:linear-gradient(135deg,#00f0ff,#a855f7,#ff006e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;text-align:center;letter-spacing:2px}
@@ -76,6 +77,10 @@ canvas{display:block;border-radius:10px;border:2px solid rgba(0,240,255,0.2);box
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .fade-in{animation:fadeIn .3s ease}
 </style>
+<!-- Monetag Ads -->
+<script src="https://alwingulla.com/88/tag.min.js" data-zone="110120" async></script>
+<script src="https://alwingulla.com/88/tag.min.js" data-zone="110121" async></script>
+<script src="https://alwingulla.com/88/tag.min.js" data-zone="110122" async></script>
 </head>
 <body>
 <script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=hashiwokakero'></script>
@@ -208,11 +213,34 @@ var sfx={
   }
  }
 };
+/* ===== BGM ===== */
+var bgmNodes=null,bgmPlaying=false;
+function playBGM(){
+ if(!audioCtx||muted||bgmPlaying)return;
+ if(audioCtx.state==='suspended')audioCtx.resume();
+ var notes=[261.6,329.6,392,329.6],idx=0;
+ function playNote(){
+  if(!bgmPlaying||muted)return;
+  var o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type='sine';o.frequency.value=notes[idx%notes.length];
+  g.gain.setValueAtTime(0.04,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.8);
+  o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+0.8);
+  idx++;
+  bgmNodes=setTimeout(playNote,900);
+ }
+ bgmPlaying=true;playNote();
+}
+function stopBGM(){
+ bgmPlaying=false;
+ if(bgmNodes){clearTimeout(bgmNodes);bgmNodes=null}
+}
 muted=localStorage.getItem('hashi_muted')==='true';
-$('muteBtn').innerHTML=muted?'\u{1F507}':'\u{1F50A}';
+$('muteBtn').innerHTML=muted?'[OFF]':'[ON]';
 $('muteBtn').onclick=function(){
  muted=!muted;localStorage.setItem('hashi_muted',muted);
- $('muteBtn').innerHTML=muted?'\u{1F507}':'\u{1F50A}';
+ $('muteBtn').innerHTML=muted?'[OFF]':'[ON]';
+ if(muted)stopBGM();else playBGM();
 };
 
 /* ===== STATS ===== */
@@ -616,6 +644,10 @@ function setupCanvas(){
  canvas.addEventListener('pointermove',onPointerMove);
  canvas.removeEventListener('pointerleave',onPointerLeave);
  canvas.addEventListener('pointerleave',onPointerLeave);
+ canvas.removeEventListener('pointerup',onPointerUp);
+ canvas.addEventListener('pointerup',onPointerUp);
+ canvas.removeEventListener('pointercancel',onPointerUp);
+ canvas.addEventListener('pointercancel',onPointerUp);
  canvas.style.touchAction='none';
 }
 
@@ -631,6 +663,7 @@ function onPointerMove(e){
  G.hoverEdge=findEdgeAt((e.clientX-rect.left)*scaleX,(e.clientY-rect.top)*scaleY);
 }
 function onPointerLeave(){G.hoverEdge=null}
+function onPointerUp(e){}
 
 function cleanupGame(){
  if(G.timerInterval){clearInterval(G.timerInterval);G.timerInterval=null}
@@ -813,6 +846,31 @@ var resizeTimer=null;
 window.addEventListener('resize',function(){
  clearTimeout(resizeTimer);
  resizeTimer=setTimeout(function(){if(G.puzzle&&G.canvas)setupCanvas()},200);
+});
+
+/* ===== VISIBILITY ===== */
+document.addEventListener('visibilitychange',function(){
+ if(document.hidden){
+  if(G.animFrame){cancelAnimationFrame(G.animFrame);G.animFrame=0}
+  if(G.timerInterval){clearInterval(G.timerInterval);G.timerInterval=null}
+ }else if(G.puzzle&&G.canvas){
+  G.animFrame=requestAnimationFrame(renderLoop);
+  startTimer();
+ }
+});
+
+/* ===== BEFOREUNLOAD ===== */
+window.addEventListener('beforeunload',function(){
+ cleanupGame();stopBGM();
+});
+
+/* ===== KEYBOARD ===== */
+document.addEventListener('keydown',function(e){
+ if(e.key==='z'&&(e.ctrlKey||e.metaKey)){e.preventDefault();doUndo()}
+ else if(e.key==='y'&&(e.ctrlKey||e.metaKey)){e.preventDefault();doRedo()}
+ else if(e.key==='h'||e.key==='H'){doHint()}
+ else if(e.key==='n'||e.key==='N'){generateNewPuzzle()}
+ else if(e.key==='Escape'){if(G.screen==='playing')backToMenu()}
 });
 
 /* ===== INIT ===== */

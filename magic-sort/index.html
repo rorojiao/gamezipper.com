@@ -2199,6 +2199,8 @@ let confetti = [];
 let bgParticles = [];
 let sortedParticles = []; // {x,y,vx,vy,life,size} star particles from completed bottles
 let bubbles = []; // {bx,by,vy,size,alpha,life} surface bubbles per bottle
+let bottleWobbles = []; // per-bottle wobble: { amp, freq, phase, decay }
+let bottleBounces = []; // per-bottle bounce: { scale, velocity }
 let menuScrollY = 0;
 let menuMaxScroll = 0;
 let hoverBtn = -1;
@@ -2323,6 +2325,8 @@ function initLevel(idx) {
   stopSolve();
   sortedParticles = [];
   bubbles = [];
+  bottleWobbles = [];
+  bottleBounces = [];
   state = "game";
 }
 
@@ -2400,6 +2404,12 @@ function completePour() {
   animating = false;
   selectedBottle = -1;
   sfxDrop();
+
+  // Trigger wobble on target bottle (liquid physics splash)
+  bottleWobbles[anim.to] = { amp: 3.5 + anim.count * 1.8, freq: 12 + anim.count * 3, phase: 0, decay: 0.92 + Math.random() * 0.03 };
+
+  // Trigger bounce on target bottle
+  bottleBounces[anim.to] = { scale: 1.08, velocity: 0 };
 
   // Check if any bottle just became sorted
   if (!isWin()) {
@@ -2758,7 +2768,7 @@ function drawBackground() {
 }
 
 // ─── Draw a single bottle ───
-function drawBottle(cx, cy, bw, bh, bottle, isSelected, isPourSource, isPourTarget, pourColor, pourCount, isSorted) {
+function drawBottle(cx, cy, bw, bh, bottle, isSelected, isPourSource, isPourTarget, pourColor, pourCount, isSorted, bottleIndex) {
   const neckW = bw * 0.36;
   const neckH = bh * 0.07;
   const bodyTop = cy - bh / 2 + neckH;
@@ -2767,7 +2777,23 @@ function drawBottle(cx, cy, bw, bh, bottle, isSelected, isPourSource, isPourTarg
   const layerH = bodyH / 4;
   const rad = bw * 0.14;
 
+  // ── Bottle bounce scale animation ──
+  const bounce = bottleBounces[bottleIndex];
+  let scaleX = 1, scaleY = 1;
+  if (bounce) {
+    scaleX = bounce.scale;
+    // Squash/stretch: vertical inverse of horizontal for liquid feel
+    scaleY = 1 + (1 - bounce.scale) * 0.6;
+  }
+
   X.save();
+
+  // Apply bounce transform
+  if (scaleX !== 1 || scaleY !== 1) {
+    X.translate(cx, cy);
+    X.scale(scaleX, scaleY);
+    X.translate(-cx, -cy);
+  }
 
   // ── Bottom shadow (floating effect) ──
   X.save();
@@ -2902,15 +2928,18 @@ function drawBottle(cx, cy, bw, bh, bottle, isSelected, isPourSource, isPourTarg
     X.fillStyle = "rgba(255,255,255,0.14)";
     X.fillRect(cx - bw / 2 + 5, ly + 2, bw * 0.1, layerH - 4);
 
-    // Enhanced wave on top layer
+    // Enhanced wave on top layer (with wobble physics)
     if (i === displayBottle.length - 1) {
       const waveT = now * 0.004;
-      const amp = 2.5;
+      const wobble = bottleWobbles[bottleIndex];
+      const wobbleAmp = wobble ? wobble.amp * Math.sin(wobble.phase) : 0;
+      const amp = 2.5 + wobbleAmp;
       X.fillStyle = col.top;
       X.beginPath();
       X.moveTo(cx - bw / 2, ly);
       for (let wx = 0; wx <= bw; wx += 4) {
-        X.lineTo(cx - bw / 2 + wx, ly + Math.sin(waveT + wx * 0.15) * amp);
+        const wobbleOffset = wobble ? wobble.amp * 0.5 * Math.sin(wobble.phase * 1.3 + wx * 0.08) : 0;
+        X.lineTo(cx - bw / 2 + wx, ly + Math.sin(waveT + wx * 0.15) * amp + wobbleOffset);
       }
       X.lineTo(cx + bw / 2, ly + layerH);
       X.lineTo(cx - bw / 2, ly + layerH);
@@ -2923,15 +2952,34 @@ function drawBottle(cx, cy, bw, bh, bottle, isSelected, isPourSource, isPourTarg
       X.beginPath();
       X.moveTo(cx - bw / 2, ly);
       for (let wx = 0; wx <= bw; wx += 3) {
-        const wy = ly + Math.sin(waveT + wx * 0.15) * amp;
+        const wobbleOffset = wobble ? wobble.amp * 0.5 * Math.sin(wobble.phase * 1.3 + wx * 0.08) : 0;
+        const wy = ly + Math.sin(waveT + wx * 0.15) * amp + wobbleOffset;
         X.lineTo(cx - bw / 2 + wx, wy);
       }
       for (let wx = bw; wx >= 0; wx -= 3) {
-        const wy = ly + Math.sin(waveT + wx * 0.15) * amp + 2;
+        const wobbleOffset = wobble ? wobble.amp * 0.5 * Math.sin(wobble.phase * 1.3 + wx * 0.08) : 0;
+        const wy = ly + Math.sin(waveT + wx * 0.15) * amp + wobbleOffset + 2;
         X.lineTo(cx - bw / 2 + wx, wy);
       }
       X.closePath();
       X.fill();
+
+      // ── Wobble splash droplets on water surface ──
+      if (wobble && wobble.amp > 1) {
+        const splashAlpha = Math.min(wobble.amp / 8, 0.5);
+        for (let sd = 0; sd < 3; sd++) {
+          const sdAngle = wobble.phase * 1.5 + sd * 2.1;
+          const sdDist = wobble.amp * 1.5 + sd * 3;
+          const sdx = cx + Math.cos(sdAngle) * sdDist;
+          const sdy = ly + Math.sin(sdAngle * 0.7) * wobble.amp * 0.4 - Math.abs(wobble.amp - 3) * 0.3;
+          X.fillStyle = col.top;
+          X.globalAlpha = splashAlpha * (1 - sd * 0.3);
+          X.beginPath();
+          X.arc(sdx, sdy, 1.5 - sd * 0.3, 0, Math.PI * 2);
+          X.fill();
+        }
+        X.globalAlpha = 1;
+      }
     }
   }
   X.restore();
@@ -3582,7 +3630,8 @@ function renderGame() {
       bottles[i],
       selectedBottle === i && !animating,
       isPS, isPT, pc, pcount,
-      isSorted(i)
+      isSorted(i),
+      i
     );
 
     // Hint glow overlay
@@ -3888,6 +3937,31 @@ function update(dt) {
       });
     }
   }
+
+  // ── Bottle wobble physics (damped oscillation) ──
+  for (let i = 0; i < bottleWobbles.length; i++) {
+    const w = bottleWobbles[i];
+    if (!w || w.amp < 0.05) { bottleWobbles[i] = null; continue; }
+    w.phase += 0.15;
+    w.amp *= w.decay;
+    if (w.amp < 0.05) bottleWobbles[i] = null;
+  }
+
+  // ── Bottle bounce physics (spring back to scale 1) ──
+  for (let i = 0; i < bottleBounces.length; i++) {
+    const b = bottleBounces[i];
+    if (!b) continue;
+    // Spring: target = 1.0, stiffness + damping
+    const target = 1.0;
+    const spring = 0.3;
+    const damping = 0.7;
+    b.velocity += (target - b.scale) * spring;
+    b.velocity *= damping;
+    b.scale += b.velocity;
+    if (Math.abs(b.scale - 1.0) < 0.001 && Math.abs(b.velocity) < 0.001) {
+      bottleBounces[i] = null;
+    }
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -4099,6 +4173,8 @@ function onTap(px, py) {
           if (bottles[i].length > 0) {
             selectedBottle = i;
             sfxSelect();
+            // Tap bounce effect
+            bottleBounces[i] = { scale: 1.06, velocity: 0 };
           }
         } else if (selectedBottle === i) {
           selectedBottle = -1;
