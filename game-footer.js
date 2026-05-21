@@ -148,6 +148,7 @@
     86|        return raw ? JSON.parse(raw) : [];
     87|      } catch (e) { return [{name:'Compound Word',e:'🔗',u:'/compound-word/',c:'puzzle'},
 {name:'Quordle',e:'🔤',u:'/quordle/',c:'puzzle'},
+{name:'Schulte Table',e:'🧠',u:'/schulte-table/',c:'puzzle'},
 ]; }
     88|    }
     89|    function getDateSeed() {
