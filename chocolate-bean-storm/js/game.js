@@ -1281,7 +1281,7 @@
     function showCombo(c, count) {
         const el = document.getElementById('combo-display');
         if (!el) return;
-        el.textContent = c > 1 ? `${c}x 连击! +${count * 10 * c}` : count >= 5 ? `超级消除! x${count}` : `+${count * 10}`;
+        el.textContent = c > 1 ? `${c}x Combo! +${count * 10 * c}` : count >= 5 ? `Super Clear! x${count}` : `+${count * 10}`;
         el.classList.add('show');
         clearTimeout(comboTimer);
         comboTimer = setTimeout(() => el.classList.remove('show'), 1200);
@@ -1351,7 +1351,7 @@
             ctx.textBaseline = 'middle';
             ctx.shadowColor = 'rgba(255,200,0,0.5)';
             ctx.shadowBlur = 20;
-            ctx.fillText(`关卡 ${currentLevel} 完成!`, W / 2, H / 2);
+            ctx.fillText(`Level ${currentLevel} Complete!`, W / 2, H / 2);
             ctx.restore();
         }
 
