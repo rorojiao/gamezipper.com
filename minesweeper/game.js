@@ -278,13 +278,6 @@ function checkWin() {
 }
 
 function showGameOverOverlay(won) {
-  // Trigger Monetag ad on game end
-  try {
-    if (typeof window.monetagSafe === 'object' && typeof window.monetagSafe.trigger === 'function') {
-      window.monetagSafe.trigger();
-    }
-  } catch(e) {}
-
   const overlay = document.getElementById('game-over-overlay');
   const title = document.getElementById('go-title');
   const subtitle = document.getElementById('go-subtitle');
