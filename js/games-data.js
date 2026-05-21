@@ -159,3 +159,4 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
+{name:"Mancala",emoji:"🫘",cat:"board",tags:["mancala","kalah","strategy","board","classic","african"],url:"/mancala/",desc:"Play Mancala (Kalah) online free. Classic African stone-counting strategy game. Challenge AI or play with a friend. Tutorial, stats, and 3 difficulty levels.",isNew:true,status:"live"},
