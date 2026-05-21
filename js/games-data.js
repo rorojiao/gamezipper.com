@@ -156,4 +156,5 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
-},
+},{name:"Contexto",emoji:"🧠",cat:"puzzle",tags:["word","semantic","daily","brain","guessing"],url:"/contexto/",desc:"Guess the secret word by semantic proximity. Contexto is a free daily word puzzle game with unlimited practice mode, stats, and share results.",isNew:true,status:"live"}
+]
