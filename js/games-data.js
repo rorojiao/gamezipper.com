@@ -132,6 +132,7 @@ const GAMES = [
   {name:"Slitherlink",emoji:"🔗",cat:"puzzle",tags:["Puzzle","Logic","Board Game","Loop","Nikoli"],url:"/slitherlink/",desc:"Draw a single loop through the grid following number clues. 42 hand-crafted puzzles, hints, undo, and daily challenge.",isNew:true,status:"live"},
   {name:"Maze Runner",emoji:"🏃",cat:"puzzle",tags:["maze","labyrinth","fog","navigation","escape"],url:"/maze-runner/",desc:"Navigate through neon mazes with fog of war, collect keys, find stars, and reach the exit. 30 levels across 5 difficulty tiers with procedural maze generation.",isNew:true,status:"live"},
   {name:"Compound Word",emoji:"🔗",cat:"puzzle",tags:["word","compound","brain","vocabulary","bridge"],url:"/compound-word/",desc:"Find the bridge word that completes two compound words! A challenging word puzzle that tests your vocabulary and creative thinking.",isNew:true,status:"live"},
+  {name:"Quordle",emoji:"🔤",cat:"puzzle",tags:["word","wordle","daily","spelling","brain"],url:"/quordle/",desc:"Guess four 5-letter words at once in 9 tries. Free daily Quordle puzzle with stats, practice mode, and share results.",isNew:true,status:"live"},
 ];
 
 /**
@@ -155,4 +156,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 },
-{name:"Quordle",emoji:"🔤",cat:"puzzle",tags:["word","wordle","daily","spelling","brain"],url:"/quordle/",desc:"Guess four 5-letter words at once in 9 tries. Free daily Quordle puzzle with stats, practice mode, and share results.",isNew:true,status:"live"},
+,
