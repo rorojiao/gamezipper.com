@@ -2,7 +2,7 @@
 (function() {
   var SITE = 'gamezipper.com';
   var EP = 'https://site-analytics.gamezipper.com/api/collect.gz';
-  var EP_LOCAL = 'https://site-analytics.gamezipper.com/api/collect.gz';
+  var EP_LOCAL = 'https://gamezipper.com/api/collect-bi.gz';
   var BK = 'gz_ab';
   var T = 30000;
   var P = location.pathname;
