@@ -95,8 +95,9 @@
     const GAME_H = isHorizontal ? 720 : 1280;
 
     // 原始: initialColorsNumber=5, startColorsNumber=10, maxColorsNumber=16
-    const INITIAL_COLORS = 5;
-    const MAX_COLORS = 16;
+    // storage.initColors初始=3，随关卡递增
+    const INITIAL_COLORS = 3;
+    const MAX_COLORS = 10;
     const RAINBOW_TYPE = 16;
 
     // 原始: speed=1500, constDt=0.018
@@ -501,9 +502,27 @@
         return allEmpty;
     }
 
-    // === 颜色数和队列 ===
+    // === 颜色数 - 100%对标原始initColors ===
+    function initColors(level) {
+        let e = 2;
+        if (level === 0) e = 3;
+        else {
+            switch (level) {
+                case 1: e = 4; break;
+                case 2: e = 5; break;
+                case 3: e = 6; break;
+                case 4: e = 7; break;
+                case 5: e = 8; break;
+                case 6: case 7: e = 9; break;
+                default: e = 10; break;
+            }
+        }
+        return e - 1;
+    }
+
     function getColorCount() {
-        return Math.min(startColorsNumber, MAX_COLORS);
+        if (startColorsNumber > MAX_COLORS) startColorsNumber = MAX_COLORS;
+        return startColorsNumber;
     }
 
     function getHitCounter(level) {
@@ -536,6 +555,7 @@
     // === 关卡加载 - 100%对标原始loadLevel ===
     function loadLevel() {
         let count = 0;
+        if (startColorsNumber > MAX_COLORS) startColorsNumber = MAX_COLORS;
 
         // 顶部
         for (let row = 0; row < START_SIZE_Y; row++) {
@@ -717,7 +737,6 @@
         if (target) {
             target.tile = ball.type;
             hitCounter--;
-            failCounter++;
             checkColors(target);
 
             // 检查失败
@@ -737,22 +756,6 @@
                 return;
             }
 
-            // hitCounter耗尽
-            if (hitCounter <= 0) {
-                if (!shooter.firstAd) {
-                    shooter.firstAd = true;
-                    shooter.currentType = RAINBOW_TYPE;
-                    hitCounter = getHitCounter(currentLevel);
-                    hitCounterMax = hitCounter;
-                    shooter.status = 'none';
-                    flyBall = null;
-                    minusQueue();
-                    return;
-                }
-                hitCounter = getHitCounter(currentLevel);
-                hitCounterMax = hitCounter;
-            }
-
             minusQueue();
             reborn();
         } else {
@@ -766,7 +769,6 @@
     function snapBubbleToWall(topNode, ball) {
         topNode.tile = ball.type;
         hitCounter--;
-        failCounter++;
         checkColors(topNode);
 
         if (checkForFail()) {
@@ -782,21 +784,6 @@
             shooter.status = 'none';
             flyBall = null;
             return;
-        }
-
-        if (hitCounter <= 0) {
-            if (!shooter.firstAd) {
-                shooter.firstAd = true;
-                shooter.currentType = RAINBOW_TYPE;
-                hitCounter = getHitCounter(currentLevel);
-                hitCounterMax = hitCounter;
-                shooter.status = 'none';
-                flyBall = null;
-                minusQueue();
-                return;
-            }
-            hitCounter = getHitCounter(currentLevel);
-            hitCounterMax = hitCounter;
         }
 
         minusQueue();
@@ -819,7 +806,20 @@
         return best;
     }
 
+    // 100%对标原始minusQueue - failCounter在此递增
     function minusQueue() {
+        failCounter++;
+        if (hitCounter <= 0 && !shooter.firstAd) {
+            shooter.firstAd = true;
+            if (currentLevel === 1) {
+                shooter.currentType = RAINBOW_TYPE;
+            }
+            hitCounter = getHitCounter(currentLevel);
+            hitCounterMax = hitCounter;
+        } else if (shooter.firstAd && hitCounter <= 0) {
+            hitCounter = getHitCounter(currentLevel);
+            hitCounterMax = hitCounter;
+        }
         if (shooter.queue.length > 0) {
             shooter.queue.pop();
         }
@@ -843,7 +843,7 @@
         setTimeout(() => {
             currentLevel++;
             if (currentLevel > 40) currentLevel = 40;
-            startColorsNumber = Math.min(INITIAL_COLORS + (currentLevel - 1), MAX_COLORS);
+            startColorsNumber = initColors(currentLevel);
             hitCounter = getHitCounter(currentLevel);
             hitCounterMax = hitCounter;
             shooter.firstAd = false;
@@ -898,16 +898,12 @@
                 break;
             }
 
-            // 左右墙反弹
+            // 左右墙（记录位置但不反弹，100%对标原始）
             if (x <= WALL_LEFT + RADIUS_WALL) {
                 bouncePoints.push({ x, y });
-                x = WALL_LEFT + RADIUS_WALL;
-                rotation = -rotation;
             }
             if (x > WALL_RIGHT - RADIUS_WALL) {
                 bouncePoints.push({ x, y });
-                x = WALL_RIGHT - RADIUS_WALL;
-                rotation = -rotation;
             }
 
             pts.push({ x, y });
@@ -1328,7 +1324,7 @@
         score = 0;
         currentLevel = 1;
         comboCount = 0;
-        startColorsNumber = INITIAL_COLORS;
+        startColorsNumber = 3;
         hitCounter = getHitCounter(currentLevel);
         hitCounterMax = hitCounter;
         failCounter = 0;
