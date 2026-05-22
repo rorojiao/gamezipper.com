@@ -141,6 +141,7 @@ const GAMES = [
   {name:"Yahtzee",emoji:"🎲",cat:"puzzle",tags:["dice","board","classic","strategy"],url:"/yahtzee/",desc:"Play Yahtzee free online - roll dice, score combinations, compete against AI. Classic dice game with full rules, statistics and achievements.",isNew:true,status:"live"},
     {name:"Killer Sudoku",emoji:"🧩",cat:"puzzle",tags:["killer-sudoku","sudoku","math","logic","brain","number","cage"],url:"/killer-sudoku/",desc:"Play Killer Sudoku online free — cage sum puzzles with 4 difficulty levels, daily challenge, notes mode, hints, undo, timer.",isNew:true,status:"live"},
 {name:"Hashiwokakero",emoji:"🌉",cat:"puzzle",tags:["logic","bridges","hashi","brain","nikoli"],url:"/hashiwokakero/",desc:"Connect numbered islands with bridges in this classic Japanese logic puzzle. Build up to 2 bridges between islands and connect them all into one network.",isNew:true,status:"live"},
+{name:"Merge Kingdom",emoji:"👑",cat:"puzzle",tags:["merge","puzzle","drag","combine","strategy","casual","kingdom","idle"],url:"/merge-kingdom/",desc:"Play Merge Kingdom online free — drag and merge identical items to create new ones. Complete orders, manage energy, and master 6 magical merge chains across 30 levels.",isNew:true,status:"live"},
 ];
 
 /**
