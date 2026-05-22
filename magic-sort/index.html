@@ -2310,6 +2310,11 @@ let now = 0;
 let sfxEnabled = true;
 let lastPlayedLevel = 0; // for Continue button
 
+// ─── Extra Tube Power-up ───
+let extraTubeUses = 3;   // uses per level session
+let extraTubeUsed = 0;   // how many used in current level
+let extraTubeConfirm = false;
+
 // ─── Level Jump Dialog ───
 let jumpDialogOpen = false;
 let jumpInput = "";
@@ -2380,6 +2385,7 @@ const DIFF_SECTIONS = [
   { start: 1651, label: "🔮 MYTHIC", color: "#ff00ff" },
   { start: 1751, label: "🌌 COSMIC", color: "#00ffff" },
   { start: 1951, label: "💫 COSMIC++", color: "#ff44ff" }
+
 ];
 
 // Background particles
@@ -2428,6 +2434,10 @@ function initLevel(idx) {
   bubbles = [];
   bottleWobbles = [];
   bottleBounces = [];
+  // Reset extra tube power-up
+  extraTubeUses = 3;
+  extraTubeUsed = 0;
+  extraTubeConfirm = false;
   state = "game";
 }
 
@@ -2556,6 +2566,17 @@ function completePour() {
 function undoMove() {
   if (undoStack.length === 0 || animating) return;
   const u = undoStack.pop();
+  if (u.type === 'extraTube') {
+    // Undo extra tube: remove last bottle (must be empty)
+    if (bottles.length > 0 && bottles[bottles.length - 1].length === 0) {
+      bottles.pop();
+      extraTubeUses++;
+      extraTubeUsed--;
+    }
+    selectedBottle = -1;
+    sfxClick();
+    return;
+  }
   const removed = [];
   for (let i = 0; i < u.count; i++) {
     removed.push(bottles[u.to].pop());
@@ -2657,6 +2678,14 @@ function stopSolve() {
   solveConfirm = false;
   hintActive = false;
   hintMove = null;
+}
+
+function addExtraTube() {
+  if (extraTubeUses <= 0 || animating || solving) return;
+  bottles.push([]); // add empty bottle
+  extraTubeUses--;
+  extraTubeUsed++;
+  undoStack.push({ type: 'extraTube' }); // track for undo compatibility
 }
 
 function startSolve() {
@@ -3693,6 +3722,17 @@ function renderGame() {
   X.textAlign = "left";
   X.textBaseline = "top";
   X.fillText("Level " + (currentLevel + 1), 44, 14);
+  // Difficulty badge
+  const diffSec = DIFF_SECTIONS.filter(s => s.start <= currentLevel).pop();
+  if (diffSec) {
+    const badgeText = diffSec.label.split(" ").pop(); // last emoji+text
+    X.font = "600 10px 'Nunito',sans-serif";
+    const lvTextW = X.measureText("Level " + (currentLevel + 1)).width;
+    X.fillStyle = diffSec.color;
+    X.globalAlpha = 0.7;
+    X.fillText(diffSec.label, 44 + lvTextW + 6, 16);
+    X.globalAlpha = 1;
+  }
 
   X.textAlign = "center";
   X.fillStyle = "rgba(255,255,255,0.5)";
@@ -3707,14 +3747,17 @@ function renderGame() {
   // Sound toggle button (left side, below home)
   drawButton(10, 36, 28, 28, sfxEnabled ? "SFX" : "OFF", hoverBtn === 14, false);
   const hudY = 36;
-  const hudBtnW = 46, hudBtnH = 28, hudGap = 5;
-  const hudStartX = W - 14 - (hudBtnW * 4 + hudGap * 3);
+  const hudBtnW = 38, hudBtnH = 28, hudGap = 4;
+  const hudStartX = W - 14 - (hudBtnW * 5 + hudGap * 4);
   drawButton(hudStartX, hudY, hudBtnW, hudBtnH, "Menu", hoverBtn === 10, false);
   drawButton(hudStartX + hudBtnW + hudGap, hudY, hudBtnW, hudBtnH, "↩ Undo", hoverBtn === 11, undoStack.length > 0 && !solving);
   // Hint button (shows solve confirm if solving, else label based on state)
   const hintLabel = solveConfirm ? "Auto?" : "Hint";
   drawButton(hudStartX + (hudBtnW + hudGap) * 2, hudY, hudBtnW, hudBtnH, hintLabel, hoverBtn === 15, !solving || !solveConfirm);
   drawButton(hudStartX + (hudBtnW + hudGap) * 3, hudY, hudBtnW, hudBtnH, solving ? "⏹ Stop" : "↻ Reset", hoverBtn === 12, true);
+  // Extra Tube button
+  const tubeLabel = "+Tube" + (extraTubeUses > 0 ? " (" + extraTubeUses + ")" : "");
+  drawButton(hudStartX + (hudBtnW + hudGap) * 4, hudY, hudBtnW, hudBtnH, tubeLabel, hoverBtn === 16, extraTubeUses > 0 && !solving);
 
   // AD SLOT placeholder area
   // X.fillStyle="rgba(255,255,255,0.03)"; X.fillRect(0,H-50,W,50);
@@ -3813,6 +3856,32 @@ function renderGame() {
   // Pour stream overlay
   if (animating) {
     drawPourStream();
+  }
+
+  // ── Mini progress bar (level completion) ──
+  const completedCount = Object.keys(levelStars).length;
+  if (completedCount > 0) {
+    const barW = Math.min(160, W * 0.4);
+    const barH = 4;
+    const barX = (W - barW) / 2;
+    const barY = H - 16;
+    const progress = Math.min(completedCount / TOTAL_LEVELS, 1);
+    X.fillStyle = "rgba(255,255,255,0.08)";
+    roundRect(barX, barY, barW, barH, 2);
+    X.fill();
+    if (progress > 0) {
+      const grad = X.createLinearGradient(barX, barY, barX + barW * progress, barY);
+      grad.addColorStop(0, "#6c5ce7");
+      grad.addColorStop(1, "#a29bfe");
+      X.fillStyle = grad;
+      roundRect(barX, barY, barW * progress, barH, 2);
+      X.fill();
+    }
+    X.fillStyle = "rgba(255,255,255,0.35)";
+    X.font = "500 9px 'Nunito',sans-serif";
+    X.textAlign = "center";
+    X.textBaseline = "bottom";
+    X.fillText(completedCount + "/" + TOTAL_LEVELS, W / 2, barY - 2);
   }
 
   // ── Sorted star particles (drawn on top of everything) ──
@@ -4218,8 +4287,8 @@ function onTap(px, py) {
       return;
     }
     // HUD buttons
-    const hudY = 36, hudBtnW = 46, hudBtnH = 28, hudGap = 5;
-    const hudStartX = W - 14 - (hudBtnW * 4 + hudGap * 3);
+    const hudY = 36, hudBtnW = 38, hudBtnH = 28, hudGap = 4;
+    const hudStartX = W - 14 - (hudBtnW * 5 + hudGap * 4);
     if (hitTest(px, py, hudStartX, hudY, hudBtnW, hudBtnH)) {
       stopSolve();
       sfxClick(); state = "menu"; menuScrollY = 0; return;
@@ -4255,6 +4324,14 @@ function onTap(px, py) {
         sfxClick();
       } else {
         sfxClick(); initLevel(currentLevel);
+      }
+      return;
+    }
+    if (hitTest(px, py, hudStartX + (hudBtnW + hudGap) * 4, hudY, hudBtnW, hudBtnH)) {
+      // Extra Tube button
+      if (extraTubeUses > 0 && !solving) {
+        sfxClick();
+        addExtraTube();
       }
       return;
     }
