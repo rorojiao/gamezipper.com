@@ -138,7 +138,9 @@
       {n:'Killer Sudoku',e:'🔢',u:'/killer-sudoku/',c:'puzzle'},
       {n:'Mancala',e:'🫘',u:'/mancala/',c:'board'}
 
-    75|    ];
+    75|      {n:'Merge Kingdom',e:'👑',u:'/merge-kingdom/',c:'puzzle'},
+  {n:'Spider Solitaire',e:'🕷️',u:'/spider-solitaire/',c:'card'},
+];
     76|
     77|    var cur = location.pathname;
     78|    var current = games.find(function(g){ return g.u === cur; });
