@@ -92,7 +92,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 .gz-nav-sticky{position:sticky;top:0;z-index:1000;background:linear-gradient(180deg,#0a0a1a 60%,transparent);padding:12px 0 8px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:box-shadow 0.3s;will-change:transform}.gz-nav-sticky.scrolled{box-shadow:0 4px 20px rgba(0,0,0,0.5)}.gz-search-wrap{display:flex;justify-content:center;padding:0 20px 8px;max-width:400px;margin:0 auto}
 .gz-search{width:100%;padding:10px 16px 10px 40px;border-radius:25px;border:2px solid #333;background:#1a1a2e;color:#fff;font-size:0.95em;outline:none;transition:border-color 0.3s;box-sizing:border-box}
-.gz-search:focus{border-color:#4ecdc4}
+.gz-search:focus{border-color:#4ecdc4;transition:border-color 0.2s,box-shadow 0.2s}.gz-search.typing{box-shadow:0 0 0 3px rgba(78,205,196,0.2)}
 .gz-search::placeholder{color:#666}
 .gz-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#666;font-size:1em;pointer-events:none}
 .gz-search-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#888;cursor:pointer;font-size:1.1em;padding:4px;display:none}
@@ -324,7 +324,7 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 <nav aria-label="Game navigation"><div class="gz-nav-sticky">
 <div class="gz-search-wrap" style="position:relative">
   <span class="gz-search-icon">🔍</span>
-  <input type="text" class="gz-search" id="gz-search" placeholder="🔍 Search 124 games... (press /)" aria-label="Search games" autocomplete="off" inputmode="search" enterkeyhint="search" role="combobox" aria-expanded="false" aria-controls="gz-search-suggestions" aria-haspopup="listbox" aria-autocomplete="list"><div style="text-align:center;font-size:0.7em;color:#555;margin-top:2px;margin-bottom:4px">Press <kbd style="background:#333;padding:1px 5px;border-radius:3px;font-size:0.9em;border:1px solid #444">/</kbd> to search</div>
+  <input type="text" class="gz-search" id="gz-search" placeholder="🔍 Search 124 games... (press /)" aria-label="Search games" autocomplete="off" inputmode="search" enterkeyhint="search" role="combobox" aria-expanded="false" aria-controls="gz-search-suggestions" aria-haspopup="listbox" aria-autocomplete="list"><div style="text-align:center;font-size:0.7em;color:#555;margin-top:2px;margin-bottom:4px">Press <kbd style="background:#333;padding:1px 5px;border-radius:3px;font-size:0.9em;border:1px solid #444">/</kbd> to search · <kbd style="background:#333;padding:1px 5px;border-radius:3px;font-size:0.9em;border:1px solid #444">Esc</kbd> to clear</div>
   <div id="gz-search-suggestions" role="listbox" aria-label="Search suggestions" style="position:absolute;top:100%;left:0;right:0;background:#1a1a2e;border:1px solid #333;border-radius:0 0 12px 12px;max-height:280px;overflow-y:auto;display:none;z-index:1001;box-shadow:0 8px 24px rgba(0,0,0,0.5)"></div>
   <button class="gz-search-clear" id="gz-search-clear" aria-label="Clear search">&times;</button>
 </div>
@@ -936,10 +936,10 @@ var h3=item.querySelector('h3');
 if(!h3)return;
 h3.style.cursor='pointer';
 h3.setAttribute('role','button');
-h3.setAttribute('aria-expanded','true');
+h3.setAttribute('aria-expanded','false');
 h3.setAttribute('tabindex','0');
 var p=item.querySelector('p');
-if(p)p.style.display='block';
+if(p)p.style.display='none';
 function toggle(){
 var open=p.style.display!=='none';
 p.style.display=open?'none':'block';
@@ -1265,7 +1265,10 @@ function playRandom(){
     s.src='/monetag-manager.js';
     document.head.appendChild(s);
   }
-  if('requestIdleCallback' in window){
+  // Use scheduler.yield() if available (INP optimization 2026), fallback to requestIdleCallback
+  if('scheduler' in window && 'yield' in window.scheduler){
+    scheduler.yield().then(loadAdManager);
+  }else if('requestIdleCallback' in window){
     requestIdleCallback(loadAdManager,{timeout:3000});
   }else{
     setTimeout(loadAdManager,2000);
