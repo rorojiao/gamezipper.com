@@ -1,47 +1,69 @@
-# Contexto — Competitor Benchmark
+# Contexto - Competitive Benchmark
 
 ## Core Concept
-Guess the secret word using semantic proximity. Each guess is ranked by how close it is in meaning (not letters) to the secret word.
+Guess a secret word by entering words. The game ranks each guess by semantic similarity (how close in meaning) to the secret word using AI-powered word embeddings. Color-coded feedback shows proximity: dark red = very close, yellow = moderate, cool blue = far.
 
-## Competitors Analyzed
+## Competitor Analysis
 
 ### 1. Contexto.me (Original)
-- **Mechanic**: Type a word, get a rank number (#1 = secret word, #2 = very close, #3000 = far away)
-- **UI**: Minimalist, color-coded bar (green=#1, red=far), guess history list
-- **Features**: Daily puzzle, unlimited practice, dark mode
-- **Feedback**: Number position + color gradient bar
-- **Dictionary**: ~5000+ words, uses AI embeddings (likely word2vec/glove)
+- **Daily puzzle format**: One new puzzle per day
+- **Unlimited practice mode**: Free play
+- **Color system**: Warm colors (close) → Cool colors (far)
+- **Position number**: Shows #1 = exact match, #1000+ = far
+- **Word ranking**: Each guess gets ranked among all words
+- **Share results**: Social sharing of grid
+- **Stats**: Current streak, max streak, guesses distribution
+- **No word list shown**: Players discover through guessing
+- **5000+ word dictionary**
 
-### 2. Semantle.com
-- **Mechanic**: Similar to Contexto but uses Word2Vec
-- **Features**: Daily puzzle, guess history, cold/warm/hot labels
-- **Score formula**: cosine similarity displayed as percentage
+### 2. Semantle (npmcoleman.github.io/semantle)
+- Similar mechanic but different scoring (similarity score -67 to 100)
+- Shows exact similarity value
+- "Getting warmer/colder" feedback
+- No color-coded grid
+- Daily + unlimited mode
 
-### 3. ContextoGame.io (Clone)
-- **Mechanic**: Same as Contexto.me
-- **Features**: Unlimited mode, daily, hints
-- **UI**: Cleaner than original
+### 3. Categorle
+- Combination of Connections + Contexto
+- Players sort words by how close they are to the secret word
+- Different twist but same core mechanic
 
-## Systems to Implement
-1. **Word Embedding System**: Pre-computed similarity scores (use hardcoded semantic clusters)
-2. **Daily Puzzle**: Seeded random from word list (date-based seed)
+## Systems to Implement (ALL Required)
+
+### Core Systems
+1. **Semantic Word Ranking**: Pre-computed word similarity data for 2000+ words
+2. **Daily Puzzle**: Seeded random for reproducible daily word (one per day)
 3. **Practice/Unlimited Mode**: Random word selection
-4. **Guess Input**: Text input with autocomplete suggestions
-5. **Visual Feedback**: Color-coded proximity bar (gradient green→yellow→orange→red)
-6. **Guess History**: Scrollable list showing all guesses with rank numbers
-7. **Share Results**: Emoji-based share grid (like Wordle)
-8. **Statistics**: Games played, win %, current streak, best streak, avg guesses
-9. **Progress Saving**: localStorage with version field
-10. **Sound Effects**: Web Audio API (click, correct, wrong, win fanfare)
-11. **Dark Neon Theme**: GameZipper consistent style
-12. **Responsive**: Desktop + mobile, large touch targets
-13. **SEO**: JSON-LD, OG tags, analytics, canonical URL
+4. **Guess History**: Visual grid showing position numbers + color coding
+5. **Share Results**: Copy emoji grid + stats to clipboard
+
+### Scoring & Feedback
+6. **Color-coded proximity**: Position #1-10 = dark red, #11-50 = orange, #51-200 = yellow, #201-500 = green, #501-1000 = blue, #1000+ = gray
+7. **Position numbers**: Show exact rank (#1 = perfect)
+8. **Guess count**: Track number of guesses
+9. **"Getting warmer" animation**: Visual feedback when getting closer
+
+### Progression & Stats
+10. **Statistics**: Games played, win %, current streak, max streak, avg guesses
+11. **Guess distribution**: Bar chart of how many guesses per game
+12. **Streak tracking**: Daily play streaks
+
+### UX Systems
+13. **Tutorial**: First-time play guide explaining the mechanic
+14. **Hint system**: Reveal the first letter or category of the secret word
+15. **Sound effects**: Web Audio API for guess submission, close guess celebration, win fanfare
+16. **Dark neon theme**: GameZipper style
+17. **Responsive**: Desktop + mobile
+18. **Settings**: Sound toggle, dark mode
+
+### SEO & Analytics
+19. **JSON-LD structured data**: VideoGame + FAQPage + HowTo + BreadcrumbList
+20. **og:title, og:description, og:image**
+21. **Analytics tracking**: site-analytics.cap.1ktower.com
 
 ## Technical Approach
-Since we can't use an API, implement semantic similarity via:
-- **Pre-built word clusters**: Group ~2000 words into 50+ semantic categories
-- **Category distance**: Words in same category = close, adjacent categories = medium, far categories = distant
-- **Within-category ranking**: Alphabetical or frequency-based within same cluster
-- **Special rules**: Synonyms, antonyms handled via cluster adjacency
-
-This gives a convincing "AI-ranked" feel without actual embeddings.
+- Pre-computed similarity data: Hardcoded top-200 most-common-secret-words with their top-100 nearest neighbors
+- Cosine similarity mapping to rank positions
+- Seeded PRNG for daily word selection (based on date)
+- Canvas-based rendering for smooth animations
+- All English, no Chinese
