@@ -142,7 +142,8 @@ const GAMES = [
     {name:"Killer Sudoku",emoji:"🧩",cat:"puzzle",tags:["killer-sudoku","sudoku","math","logic","brain","number","cage"],url:"/killer-sudoku/",desc:"Play Killer Sudoku online free — cage sum puzzles with 4 difficulty levels, daily challenge, notes mode, hints, undo, timer.",isNew:true,status:"live"},
 {name:"Hashiwokakero",emoji:"🌉",cat:"puzzle",tags:["logic","bridges","hashi","brain","nikoli"],url:"/hashiwokakero/",desc:"Connect numbered islands with bridges in this classic Japanese logic puzzle. Build up to 2 bridges between islands and connect them all into one network.",isNew:true,status:"live"},
 {name:"Merge Kingdom",emoji:"👑",cat:"puzzle",tags:["merge","puzzle","drag","combine","strategy","casual","kingdom","idle"],url:"/merge-kingdom/",desc:"Play Merge Kingdom online free — drag and merge identical items to create new ones. Complete orders, manage energy, and master 6 magical merge chains across 30 levels.",isNew:true,status:"live"},
-];
+
+  {name:"Spider Solitaire",emoji:"🕷️",cat:"card",tags:["spider solitaire","solitaire","card","classic","spider","patience"],url:"/spider-solitaire/",desc:"Play Spider Solitaire online free. Classic card game with 1, 2, or 4 suit modes. Undo, hints, statistics, and timer included.",isNew:true,status:"live"},];
 
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
@@ -165,4 +166,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Spider Solitaire",emoji:"🕷️",cat:"card",tags:["spider solitaire","solitaire","card","classic","spider","patience"],url:"/spider-solitaire/",desc:"Play Spider Solitaire online free. Classic card game with 1, 2, or 4 suit modes. Undo, hints, statistics, and timer included.",isNew:true,status:"live"},
+
