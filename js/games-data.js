@@ -144,7 +144,9 @@ const GAMES = [
 {name:"Merge Kingdom",emoji:"👑",cat:"puzzle",tags:["merge","puzzle","drag","combine","strategy","casual","kingdom","idle"],url:"/merge-kingdom/",desc:"Play Merge Kingdom online free — drag and merge identical items to create new ones. Complete orders, manage energy, and master 6 magical merge chains across 30 levels.",isNew:true,status:"live"},
 
   {name:"Spider Solitaire",emoji:"🕷️",cat:"card",tags:["spider solitaire","solitaire","card","classic","spider","patience"],url:"/spider-solitaire/",desc:"Play Spider Solitaire online free. Classic card game with 1, 2, or 4 suit modes. Undo, hints, statistics, and timer included.",isNew:true,status:"live"},
-  {name:"FreeCell Solitaire",emoji:"🃏",cat:"card",tags:["freecell","solitaire","card","classic","patience"],url:"/freecell/",desc:"Play FreeCell Solitaire online free. Classic card game with undo, hints, game numbers, and statistics. No download required.",isNew:true,status:"live"},];
+  {name:"FreeCell Solitaire",emoji:"🃏",cat:"card",tags:["freecell","solitaire","card","classic","patience"],url:"/freecell/",desc:"Play FreeCell Solitaire online free. Classic card game with undo, hints, game numbers, and statistics. No download required.",isNew:true,status:"live"},
+  {name:"Chinese Checkers",emoji:"⭐",cat:"board",tags:["chinese checkers","board game","strategy","marble","star","classic","multiplayer","ai"],url:"/chinese-checkers/",desc:"Play Chinese Checkers online free! Classic star-shaped board strategy game. Challenge AI with 3 difficulty levels or play local multiplayer. 2-6 players, no download needed.",isNew:true,status:"live"}
+];
 
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
@@ -167,4 +169,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Chinese Checkers",emoji:"⭐",cat:"board",tags:["chinese checkers","board game","strategy","marble","star","classic","multiplayer","ai"],url:"/chinese-checkers/",desc:"Play Chinese Checkers online free! Classic star-shaped board strategy game. Challenge AI with 3 difficulty levels or play local multiplayer. 2-6 players, no download needed.",isNew:true,status:"live"},
+
