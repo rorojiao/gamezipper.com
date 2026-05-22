@@ -139,7 +139,8 @@ const GAMES = [
   {name:"Waffle",emoji:"🧇",cat:"puzzle",tags:["word","daily","crossword"],url:"/waffle/",desc:"Daily word puzzle - swap letters to solve 6 interconnected 5-letter words in a 5x5 grid.",isNew:true,status:"live"},
   {name:"Mancala",emoji:"🫘",cat:"board",tags:["mancala","kalah","strategy","board","classic","african"],url:"/mancala/",desc:"Play Mancala (Kalah) online free. Classic African stone-counting strategy game. Challenge AI or play with a friend. Tutorial, stats, and 3 difficulty levels.",isNew:true,status:"live"},
   {name:"Yahtzee",emoji:"🎲",cat:"puzzle",tags:["dice","board","classic","strategy"],url:"/yahtzee/",desc:"Play Yahtzee free online - roll dice, score combinations, compete against AI. Classic dice game with full rules, statistics and achievements.",isNew:true,status:"live"},
-  {name:"Hashiwokakero",emoji:"🌉",cat:"puzzle",tags:["logic","bridges","hashi","brain","nikoli"],url:"/hashiwokakero/",desc:"Connect numbered islands with bridges in this classic Japanese logic puzzle. Build up to 2 bridges between islands and connect them all into one network.",isNew:true,status:"live"},
+    {name:"Killer Sudoku",emoji:"🧩",cat:"puzzle",tags:["killer-sudoku","sudoku","math","logic","brain","number","cage"],url:"/killer-sudoku/",desc:"Play Killer Sudoku online free — cage sum puzzles with 4 difficulty levels, daily challenge, notes mode, hints, undo, timer.",isNew:true,status:"live"},
+{name:"Hashiwokakero",emoji:"🌉",cat:"puzzle",tags:["logic","bridges","hashi","brain","nikoli"],url:"/hashiwokakero/",desc:"Connect numbered islands with bridges in this classic Japanese logic puzzle. Build up to 2 bridges between islands and connect them all into one network.",isNew:true,status:"live"},
 ];
 
 /**

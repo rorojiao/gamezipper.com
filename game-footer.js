@@ -133,7 +133,10 @@
       {n:'Sokoban',e:'📦',u:'/sokoban/',c:'puzzle'},
       {n:'Spot the Difference',e:'🔍',u:'/spot-the-difference/',c:'puzzle'},
       {n:'Tower Defense',e:'🏰',u:'/tower-defense/',c:'puzzle'},
-      {n:'Tower of Hanoi',e:'🏰',u:'/tower-of-hanoi/',c:'puzzle'}
+      {n:'Tower of Hanoi',e:'🏰',u:'/tower-of-hanoi/',c:'puzzle'},
+      {n:'Hashiwokakero',e:'🌉',u:'/hashiwokakero/',c:'puzzle'},
+      {n:'Killer Sudoku',e:'🔢',u:'/killer-sudoku/',c:'puzzle'},
+      {n:'Mancala',e:'🫘',u:'/mancala/',c:'board'}
 
     75|    ];
     76|
