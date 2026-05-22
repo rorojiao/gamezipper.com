@@ -202,8 +202,8 @@
    127|      arcade: {t:'🕹️ More Arcade', u:'/arcade-games.html'},
    128|      idle: {t:'⏰ More Idle', u:'/idle-games.html'},
    129|      card: {t:'🃏 More Card', u:'/card-games.html'},
-   130|      strategy: {t:'♟️ More Strategy', u:'/strategy-games.html'},
-   131|      skill: {t:'⚡ More Skill', u:'/skill-games.html'}
+      strategy: {t:'♟️ More Strategy', u:'/simulation-games.html'},
+      skill: {t:'⚡ More Skill', u:'/word-typing-games.html'}
    132|    };
    133|
    134|    var d = document.createElement('section');
