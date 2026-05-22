@@ -1,6 +1,6 @@
 // Proxy endpoint for gz-analytics.js → forwards to internal BI server
 // gz-analytics.js sends JSON array events to this endpoint
-// We proxy to http://10.10.29.67:8090/api/collect.gz
+// We proxy to https://site-analytics.gamezipper.com/api/collect.gz
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
@@ -9,7 +9,7 @@ export default async function handler(req) {
 
   try {
     const body = await req.text();
-    const BI_SERVER = 'http://10.10.29.67:8090/api/collect.gz';
+    const BI_SERVER = 'https://site-analytics.gamezipper.com/api/collect.gz';
 
     const response = await fetch(BI_SERVER, {
       method: 'POST',

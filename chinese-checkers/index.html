@@ -347,9 +347,7 @@ const PLAYER_NAMES = ['Red','Blue','Green','Orange','Purple','Pink'];
 const ANIM_DURATION = 220;
 const ANIM_JUMP_DURATION = 180;
 
-// Triangle definitions (indices into the 121 positions)
-// Each triangle has rows of 1,2,3,4 positions = 10 total
-// Triangle 0 = top, then clockwise
+// Triangle tips (used for target determination)
 const TRIANGLE_TIPS = [
   {q:0,r:-8},   // top
   {q:8,r:-4},   // top-right
@@ -357,6 +355,47 @@ const TRIANGLE_TIPS = [
   {q:0,r:8},    // bottom
   {q:-8,r:4},   // bottom-left
   {q:-8,r:-4}   // top-left
+];
+
+// The 6 triangles explicitly defined with their 10 positions each
+// Each triangle has rows of 1, 2, 3, 4 positions (10 total)
+const TRIANGLE_COORDS = [
+  // Triangle 0: top (points up)
+  [
+    {q:0,r:-8}, {q:-1,r:-7},{q:1,r:-7},
+    {q:-2,r:-6},{q:0,r:-6},{q:2,r:-6},
+    {q:-3,r:-5},{q:-1,r:-5},{q:1,r:-5},{q:3,r:-5}
+  ],
+  // Triangle 1: top-right (points up-right)
+  [
+    {q:8,r:-4},{q:7,r:-3},{q:9,r:-3},
+    {q:6,r:-2},{q:8,r:-2},{q:10,r:-2},
+    {q:5,r:-1},{q:7,r:-1},{q:9,r:-1},{q:11,r:-1}
+  ],
+  // Triangle 2: bottom-right (points down-right)
+  [
+    {q:8,r:4},{q:7,r:5},{q:9,r:5},
+    {q:6,r:6},{q:8,r:6},{q:10,r:6},
+    {q:5,r:7},{q:7,r:7},{q:9,r:7},{q:11,r:7}
+  ],
+  // Triangle 3: bottom (points down)
+  [
+    {q:0,r:8},{q:-1,r:7},{q:1,r:7},
+    {q:-2,r:6},{q:0,r:6},{q:2,r:6},
+    {q:-3,r:5},{q:-1,r:5},{q:1,r:5},{q:3,r:5}
+  ],
+  // Triangle 4: bottom-left (points down-left)
+  [
+    {q:-8,r:4},{q:-9,r:5},{q:-7,r:5},
+    {q:-10,r:6},{q:-8,r:6},{q:-6,r:6},
+    {q:-11,r:7},{q:-9,r:7},{q:-7,r:7},{q:-5,r:7}
+  ],
+  // Triangle 5: top-left (points up-left)
+  [
+    {q:-8,r:-4},{q:-9,r:-3},{q:-7,r:-3},
+    {q:-10,r:-2},{q:-8,r:-2},{q:-6,r:-2},
+    {q:-11,r:-1},{q:-9,r:-1},{q:-7,r:-1},{q:-5,r:-1}
+  ]
 ];
 
 // Generate all 121 board positions
@@ -369,85 +408,22 @@ function generateBoard() {
     for (let q = -4; q <= 4; q++) {
       if (max3(Math.abs(q), Math.abs(r), Math.abs(q+r)) <= 4) {
         const key = q+','+r;
-        positions.push({q, r, index: positions.length});
+        positions.push({q, r, index: positions.length, inCenter: true});
         posMap[key] = positions.length - 1;
       }
     }
   }
 
-  // 6 triangles, each with 10 positions (1+2+3+4 rows)
-  // Direction vectors for each triangle tip
-  const dirs = [
-    {dq:0, dr:-1},   // top (pointing up)
-    {dq:1, dr:-1},   // top-right
-    {dq:1, dr:0},    // bottom-right
-    {dq:0, dr:1},    // bottom
-    {dq:-1, dr:1},   // bottom-left
-    {dq:-1, dr:0}    // top-left
-  ];
-
+  // Add all triangle positions from the predefined coordinates
   for (let t = 0; t < 6; t++) {
-    const tip = TRIANGLE_TIPS[t];
-    const dir = dirs[t];
-    // Build triangle rows: row 0 is tip, then 4 more rows
-    // Row i (0-indexed from tip): width = i+1, starting from tip
-    // Position: tip + (i+1)*dir for the "start" of the row, then spread
-    for (let row = 0; row < 4; row++) {
-      const rowLen = row + 1;
-      const baseQ = tip.q + (row + 1) * dir.dq;
-      const baseR = tip.r + (row + 1) * dir.dr;
-      // Spread positions across the row perpendicular to direction
-      for (let i = 0; i < rowLen; i++) {
-        let q, r;
-        if (t === 0) { // top, rows go downward
-          q = baseQ - Math.floor(row/2) + i;
-          r = baseR;
-        } else if (t === 1) { // top-right
-          q = baseQ;
-          r = baseR - Math.floor(row/2) + i;
-        } else if (t === 2) { // bottom-right
-          q = baseQ + Math.floor(row/2) - i;
-          r = baseR;
-        } else if (t === 3) { // bottom
-          q = baseQ + Math.floor(row/2) - i;
-          r = baseR;
-        } else if (t === 4) { // bottom-left
-          q = baseQ;
-          r = baseR + Math.floor(row/2) - i;
-        } else { // top-left
-          q = baseQ - Math.floor(row/2) + i;
-          r = baseR;
-        }
-        const key = q+','+r;
-        if (posMap[key] === undefined) {
-          positions.push({q, r, index: positions.length, triangle: t});
-          posMap[key] = positions.length - 1;
-        }
+    for (const coord of TRIANGLE_COORDS[t]) {
+      const key = coord.q+','+coord.r;
+      if (posMap[key] === undefined) {
+        positions.push({q: coord.q, r: coord.r, index: positions.length, triangle: t});
+        posMap[key] = positions.length - 1;
       }
     }
   }
-
-  // Verify we have 121 positions
-  // If not, add missing positions from max<=6
-  if (positions.length < 121) {
-    for (let r = -6; r <= 6; r++) {
-      for (let q = -6; q <= 6; q++) {
-        if (max3(Math.abs(q), Math.abs(r), Math.abs(q+r)) <= 6) {
-          const key = q+','+r;
-          if (posMap[key] === undefined && positions.length < 121) {
-            positions.push({q, r, index: positions.length});
-            posMap[key] = positions.length - 1;
-          }
-        }
-      }
-    }
-  }
-
-  // Assign triangle membership to positions near triangle tips
-  // First, let's ensure each triangle has exactly 10 positions
-  // by identifying which positions are "in" each triangle
-  // For now, assign triangle index to center hex boundary positions
-  // and the explicitly added triangle positions
 
   // Pre-compute adjacency
   for (let i = 0; i < positions.length; i++) {
@@ -500,63 +476,13 @@ function getStartingTriangles(numPlayers) {
   return [0, 3];
 }
 
-// Find positions that belong to a given triangle
+// Find positions (indices) that belong to a given triangle
 function getTrianglePositions(triangleIdx) {
-  const tip = TRIANGLE_TIPS[triangleIdx];
-  const positions = [];
-
-  // Direction for this triangle
-  const dirs = [
-    {dq:0, dr:-1},
-    {dq:1, dr:-1},
-    {dq:1, dr:0},
-    {dq:0, dr:1},
-    {dq:-1, dr:1},
-    {dq:-1, dr:0}
-  ];
-  const dir = dirs[triangleIdx];
-
-  // BFS from tip to find all positions in this triangle
-  const visited = new Set();
-  const queue = [{q: tip.q, r: tip.r}];
-  visited.add(tip.q+','+tip.r);
-
-  while (queue.length > 0 && positions.length < 15) {
-    const curr = queue.shift();
-    const key = curr.q+','+curr.r;
-    if (POS_MAP[key] !== undefined) {
-      positions.push(POS_MAP[key]);
-    }
-
-    // Explore in the direction and perpendicular
-    for (let i = 0; i < 6; i++) {
-      const d = dirs[i];
-      const nq = curr.q + d.dq;
-      const nr = curr.r + d.dr;
-      const nkey = nq+','+nr;
-      if (!visited.has(nkey)) {
-        visited.add(nkey);
-        // Only add if it's on the board and roughly in the triangle direction
-        if (POS_MAP[nkey] !== undefined) {
-          // Check if this position is in the general direction of the triangle
-          const dotProduct = nq * dir.dq + nr * dir.dr;
-          if (dotProduct >= 0 || i === triangleIdx) {
-            queue.push({q: nq, r: nr});
-          }
-        }
-      }
-    }
-  }
-
-  // Sort by distance from tip (roughly)
-  positions.sort((a, b) => {
-    const pa = POSITIONS[a], pb = POSITIONS[b];
-    const da = Math.abs(pa.q - tip.q) + Math.abs(pa.r - tip.r);
-    const db = Math.abs(pb.q - tip.q) + Math.abs(pb.r - tip.r);
-    return da - db;
-  });
-
-  return positions.slice(0, 10);
+  // Return indices into POSITIONS for this triangle's 10 positions
+  const coords = TRIANGLE_COORDS[triangleIdx];
+  return coords
+    .map(c => POS_MAP[c.q+','+c.r])
+    .filter(i => i !== undefined);
 }
 
 // Pre-compute triangle positions for all 6 triangles
@@ -2030,7 +1956,7 @@ selectDiff('medium');
   });
 })();
 </script>
-<script async src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=chinese-checkers"></script>
+<script async src="https://site-analytics.gamezipper.com/hit?s=gamezipper.com&p=chinese-checkers"></script>
 <a href="/" style="position:fixed;top:8px;left:8px;z-index:9999;font-size:18px;text-decoration:none;opacity:0.7;" title="Home"></a>
 </body>
 </html>
