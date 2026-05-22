@@ -1,44 +1,70 @@
-# Spider Solitaire — Competitive Benchmark
+# Spider Solitaire - Competitive Benchmark
 
-## Top Competitors
-1. **Microsoft Spider Solitaire** (Microsoft Solitaire Collection) — Gold standard
-2. **spidersolitaire.co.za** — Popular browser version
-3. **thesolitaire.com** — 100+ solitaire games, Spider featured prominently
+## Core Rules (from Microsoft/trysolitaire.com/solitaires.gg)
 
-## Core Mechanics
-- 104 cards (2 standard decks)
-- 10 tableau columns: first 4 columns have 6 cards (5 face-down + 1 face-up), last 6 have 5 cards (4 face-down + 1 face-up)
-- 50 remaining cards in stock (5 deals of 10 cards)
-- Build down by rank (K→Q→J→...→A), same suit sequences can be moved as a group
-- Complete K→A same-suit sequence auto-removed to foundation
-- Win when all 8 sequences removed
+### Setup
+- **2 decks (104 cards)**, 10 tableau columns
+- Columns 1-4: 6 cards each (5 face-down, 1 face-up)
+- Columns 5-10: 5 cards each (4 face-down, 1 face-up)
+- Stock pile: 50 cards (5 deals × 10 cards)
 
-## Difficulty Modes
-- **1 Suit (Easy)**: All Spades — beginners, most games winnable
-- **2 Suits (Medium)**: Spades + Hearts — moderate challenge
-- **4 Suits (Hard)**: All 4 suits — expert level, very challenging
+### Goal
+- Build 8 complete King-to-Ace sequences in the same suit
+- Complete sequences auto-remove to foundation
 
-## Systems to Implement
-- **Scoring**: 500 base - 1 per move, +100 per completed suit. Bonus for fewer moves.
-- **Hint system**: Highlight valid moves when stuck
-- **Undo**: Full undo stack (unlimited)
-- **Auto-complete**: Detect when game is won, auto-remove remaining sequences
-- **Statistics**: Games played/won, win %, best score, current streak, best streak
-- **Timer**: Optional timer display
-- **Tutorial**: First-time player walkthrough
-- **New Game / Restart**: Confirmed restart with stats warning
-- **Settings**: Sound toggle, auto-complete toggle, timer toggle
+### Rules
+1. Cards stacked in descending order (K, Q, J, 10...A)
+2. Any card can go on any card one rank higher (regardless of suit)
+3. **Only same-suit sequences can be moved as a group**
+4. Any card can fill an empty column
+5. Cannot deal from stock if any column is empty
+6. 5 deals available from stock
 
-## Visual Style
-- Dark gradient background (GameZipper standard)
-- Smooth card animations (deal, move, complete sequence)
-- Neon accent for selected/valid moves
-- Card rendering with proper suits (♠♥♦♣)
-- Glass-morphism panels
+### Difficulty Levels
+| Level | Suits | Win Rate |
+|-------|-------|----------|
+| 1-Suit | Spades only | ~60% |
+| 2-Suit | Spades + Hearts | ~15% |
+| 4-Suit | All 4 suits | ~5% |
 
-## Audio
-- BGM: Relaxing ambient (Web Audio or MiniMax)
-- SFX: Card deal, card move, card flip, sequence complete, win fanfare, button click, error
+### Scoring System (Windows Standard)
+- Starting score: 500
+- Each move: -1 point
+- Each undo: -1 point
+- Completed suit sequence: +100 points
+- Theoretical max: ~1,254 points
+- Average winning score: 400-700
+- Good score: 900-1,100
 
-## SEO Targets
-- "spider solitaire", "spider solitaire free", "spider solitaire online", "spider solitaire 1 suit", "spider solitaire 2 suit", "spider solitaire 4 suit"
+## Competitive Feature Matrix
+
+| Feature | Microsoft Solitaire | solitaire.com | spidersolitaire.io | Spiderette | **GZ Target** |
+|---------|-------------------|---------------|---------------------|-------------|---------------|
+| 1/2/4 Suit | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Unlimited Undo | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Hints | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Daily Challenge | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Statistics | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Win Streaks | ✅ | ✅ | ❌ | ❌ | ✅ |
+| Timer | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Auto-Complete | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Sound Effects | ✅ | ❌ | ✅ | ✅ | ✅ |
+| BGM | ✅ | ❌ | ❌ | ✅ | ✅ |
+| Score Tracking | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Best Score | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Tutorial | ✅ | ❌ | ✅ | ❌ | ✅ |
+| Settings | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Mobile Touch | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Dark Theme | ✅ | ❌ | ✅ | ✅ | ✅ |
+
+## Key Differentiators for GZ
+1. **Smooth drag-and-drop** with card snapping
+2. **Double-click auto-move** to valid position
+3. **Hint system** that highlights best move
+4. **Win animation** with card cascade effect
+5. **Daily challenge** with seed-based puzzle
+6. **Score + Best Score + Move counter**
+7. **Web Audio BGM + procedural SFX**
+8. **Canvas-rendered cards** (custom design, dark neon theme)
+9. **Undo system** with full history
+10. **Auto-complete** when all cards face-up and sorted
