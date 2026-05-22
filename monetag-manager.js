@@ -391,8 +391,46 @@
   }
 
   // ==================== GAME STATE MANAGEMENT ====================
+  // ==================== AUDIO MUTE (Poki-compliant) ====================
+  var mutedElements = [];
+
+  function muteAllAudio() {
+    // Mute all <audio> and <video> elements, save their original volume
+    try {
+      document.querySelectorAll('audio, video').forEach(function(el) {
+        if (el.muted === false && el.volume > 0) {
+          mutedElements.push({ el: el, wasMuted: el.muted, volume: el.volume });
+          el.muted = true;
+        }
+      });
+      // Also pause audio context if Web Audio API is used
+      if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+        (function() {
+          var AC = typeof AudioContext !== 'undefined' ? AudioContext : webkitAudioContext;
+          // The gain node approach: hook into AudioContext.prototype.createGain
+          // Simple approach: just set a flag that games can check
+          window.__gz_ad_muted = true;
+        })();
+      }
+    } catch(e) {}
+  }
+
+  function unmuteAllAudio() {
+    try {
+      mutedElements.forEach(function(item) {
+        if (item.el && item.el.isConnected) {
+          item.el.muted = item.wasMuted;
+          item.el.volume = item.volume;
+        }
+      });
+      mutedElements = [];
+      window.__gz_ad_muted = false;
+    } catch(e) {}
+  }
+
   function pauseGame() {
     state.gameplayActive = false;
+    muteAllAudio();
     // Pause any Canvas games by dispatching a pause event
     try {
       window.dispatchEvent(new CustomEvent('gz-ad-pause'));
@@ -400,6 +438,7 @@
   }
 
   function resumeGame() {
+    unmuteAllAudio();
     try {
       window.dispatchEvent(new CustomEvent('gz-ad-resume'));
     } catch(e) {}
@@ -462,6 +501,17 @@
 
     detectPage();
     initBroadcast();
+
+    // Ad-block detection: try loading ad-provider, if blocked → graceful degradation
+    state.adBlockDetected = false;
+    var testScript = document.createElement('script');
+    testScript.src = CONFIG.AD_PROVIDER;
+    testScript.onerror = function() {
+      // Ad-blocker detected — degrade silently, never punish the player
+      state.adBlockDetected = true;
+      console.log('[GZAds] Ad-blocker detected — running in silent mode');
+    };
+    document.head.appendChild(testScript);
 
     // Only show ads on homepage and game pages (not blog, terms, etc.)
     if (!state.isHomePage && !state.isGamePage) return;
