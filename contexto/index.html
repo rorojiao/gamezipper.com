@@ -457,6 +457,33 @@ transition:var(--transition);
 .pulse{animation:pulse 0.5s ease}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 
+/* Hint Button & Messages */
+.input-row{display:flex;gap:8px;width:100%;position:relative}
+.hint-btn{
+width:44px;height:44px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.15);
+background:var(--bg-card);backdrop-filter:blur(10px);cursor:pointer;
+display:flex;align-items:center;justify-content:center;flex-shrink:0;
+transition:var(--transition);color:var(--accent-orange);position:relative;
+}
+.hint-btn:hover:not(:disabled){background:rgba(255,107,53,0.15);border-color:var(--accent-orange)}
+.hint-btn:disabled{opacity:0.35;cursor:not-allowed}
+.hint-btn svg{width:20px;height:20px;fill:currentColor}
+.hint-badge{
+position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:9px;
+background:var(--accent-orange);color:#000;font-size:11px;font-weight:700;
+display:flex;align-items:center;justify-content:center;padding:0 4px;
+}
+.hint-messages{
+width:100%;display:flex;flex-direction:column;gap:6px;margin-bottom:8px;
+}
+.hint-msg{
+padding:10px 14px;border-radius:var(--radius);
+background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.25);
+font-size:14px;color:var(--accent-orange);
+animation:slideIn 0.3s ease;
+}
+.hint-msg svg{width:14px;height:14px;fill:var(--accent-orange);vertical-align:middle;margin-right:6px}
+
 /* Utility */
 .text-green{color:var(--accent-green)}
 .text-blue{color:var(--accent-blue)}
@@ -507,12 +534,21 @@ How to Play
 <div class="mode-badge" id="modeBadge">Daily</div>
 </div>
 <div class="input-area">
+<div class="input-row">
+<button class="hint-btn" id="hintBtn" aria-label="Get a hint">
+<svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6A4.997 4.997 0 017 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"/></svg>
+<span class="hint-badge" id="hintBadge">3</span>
+</button>
+<div style="flex:1;position:relative">
 <input type="text" class="game-input" id="gameInput" placeholder="Type a word..." autocomplete="off" autocapitalize="off" spellcheck="false">
 <button class="submit-btn" id="submitBtn" aria-label="Submit guess">
 <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
 </button>
+</div>
+</div>
 <div class="autocomplete" id="autocomplete"></div>
 </div>
+<div class="hint-messages" id="hintMessages"></div>
 <div class="guess-history">
 <div class="guess-list" id="guessList"></div>
 </div>
@@ -1355,6 +1391,7 @@ secretWord: '',
 guesses: [],
 won: false,
 date: null,
+hintsUsed: [],
 settings: {
 sound: true,
 music: true,
@@ -1395,6 +1432,9 @@ const guessList = document.getElementById('guessList');
 const guessCount = document.getElementById('guessCount');
 const modeBadge = document.getElementById('modeBadge');
 const winStats = document.getElementById('winStats');
+const hintBtn = document.getElementById('hintBtn');
+const hintBadge = document.getElementById('hintBadge');
+const hintMessages = document.getElementById('hintMessages');
 
 // ============ AUDIO ============
 function initAudio() {
@@ -1598,6 +1638,7 @@ hideAllModals();
 state.mode = mode;
 state.guesses = [];
 state.won = false;
+state.hintsUsed = [];
 state.date = new Date().toDateString();
 if (mode === 'daily') {
 state.secretWord = getDailyWord();
@@ -1606,15 +1647,25 @@ modeBadge.textContent = 'Daily';
 state.secretWord = getRandomWord();
 modeBadge.textContent = 'Practice';
 }
+const resumed = loadGameProgress();
 SIMILARITY_CACHE = {};
 guessList.innerHTML = '';
-guessCount.textContent = '0';
+hintMessages.innerHTML = '';
+if (resumed && state.guesses.length > 0) {
+state.guesses.forEach(g => renderGuess(g));
+guessCount.textContent = state.guesses.length;
+}
+renderHints();
+if (resumed && state.won) {
+setTimeout(() => showWinScreen(), 300);
+}
 showScreen('game');
 gameInput.value = '';
 gameInput.focus();
 autocomplete.classList.remove('show');
 playSound('click');
 saveState();
+saveGameProgress();
 if (!bgmPlaying && state.settings.music) startBGM();
 }
 
@@ -1641,6 +1692,7 @@ gameInput.value = '';
 autocomplete.classList.remove('show');
 if (rank === 1) {
 state.won = true;
+updateHintBadge();
 setTimeout(() => {
 showWinScreen();
 playSound('win');
@@ -1765,6 +1817,114 @@ setTimeout(() => { btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 
 });
 } catch(e) {}
 playSound('click');
+}
+
+// ============ HINT SYSTEM ============
+function getHintSuperCategory() {
+const secretCats = WORD_TO_CATS[state.secretWord] || [];
+if (secretCats.length === 0) return null;
+const cat = secretCats[0];
+const superCat = getSuperCategory(cat);
+if (superCat) return superCat.charAt(0).toUpperCase() + superCat.slice(1);
+return cat.charAt(0).toUpperCase() + cat.slice(1);
+}
+
+function getHintFirstLetter() {
+return state.secretWord.charAt(0).toUpperCase();
+}
+
+function getHintCloseWord() {
+const secretCats = WORD_TO_CATS[state.secretWord] || [];
+if (secretCats.length === 0) return null;
+const catWords = CATEGORY_WORDS[secretCats[0]];
+if (!catWords || catWords.length < 2) return null;
+const candidates = catWords.filter(w => w.toLowerCase() !== state.secretWord);
+if (candidates.length === 0) return null;
+return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+function useHint() {
+if (state.won || state.hintsUsed.length >= 3) return;
+playSound('click');
+const hintNum = state.hintsUsed.length + 1;
+let text = '';
+if (hintNum === 1) {
+const cat = getHintSuperCategory();
+if (!cat) return;
+text = 'The secret word is related to: ' + cat;
+} else if (hintNum === 2) {
+text = 'The secret word starts with: "' + getHintFirstLetter() + '"';
+} else {
+const word = getHintCloseWord();
+if (!word) return;
+text = 'A top-10 related word: ' + word;
+}
+state.hintsUsed.push(hintNum);
+const msg = document.createElement('div');
+msg.className = 'hint-msg';
+msg.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>' + text;
+hintMessages.appendChild(msg);
+updateHintBadge();
+saveGameProgress();
+}
+
+function updateHintBadge() {
+const remaining = 3 - state.hintsUsed.length;
+hintBadge.textContent = remaining;
+hintBtn.disabled = remaining <= 0 || state.won;
+}
+
+function renderHints() {
+hintMessages.innerHTML = '';
+state.hintsUsed.forEach(function(num) {
+let text = '';
+if (num === 1) {
+const cat = getHintSuperCategory();
+text = cat ? 'The secret word is related to: ' + cat : '';
+} else if (num === 2) {
+text = 'The secret word starts with: "' + getHintFirstLetter() + '"';
+} else {
+const word = getHintCloseWord();
+text = word ? 'A top-10 related word: ' + word : '';
+}
+if (text) {
+const msg = document.createElement('div');
+msg.className = 'hint-msg';
+msg.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>' + text;
+hintMessages.appendChild(msg);
+}
+});
+updateHintBadge();
+}
+
+function saveGameProgress() {
+try {
+const key = 'contexto_progress_' + state.date;
+localStorage.setItem(key, JSON.stringify({
+guesses: state.guesses,
+won: state.won,
+hintsUsed: state.hintsUsed,
+secretWord: state.secretWord,
+mode: state.mode
+}));
+} catch(e) {}
+}
+
+function loadGameProgress() {
+try {
+const key = 'contexto_progress_' + state.date;
+const saved = localStorage.getItem(key);
+if (saved) {
+const data = JSON.parse(saved);
+if (data.secretWord && data.secretWord === state.secretWord) {
+state.guesses = data.guesses || [];
+state.won = data.won || false;
+state.hintsUsed = data.hintsUsed || [];
+return true;
+}
+}
+} catch(e) {}
+return false;
 }
 
 // ============ UTILITY ============

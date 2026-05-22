@@ -164,3 +164,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Contexto",emoji:"🧠",cat:"word",tags:["word","guessing","daily","puzzle","semantic","brain"],url:"/contexto/",desc:"Guess the secret word by semantic proximity. The closer your guess is in meaning, the lower the rank. Daily puzzle + unlimited practice mode.",isNew:true,status:"live"},
