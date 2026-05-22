@@ -273,6 +273,7 @@ canvas{display:block;position:absolute;top:0;left:0;}
       </div>
       <div class="settings-row">
         <button class="btn btn-sm" id="btn-reset-progress" style="width:100%;margin-top:10px;">Reset Progress</button>
+        <button class="btn btn-sm" id="btn-debug-complete" style="width:100%;margin-top:5px;display:none;">[Debug] Complete Current Level</button>
       </div>
       <div class="modal-btns" style="margin-top:15px;">
         <button class="btn btn-sm" id="btn-close-settings">Close</button>
@@ -281,6 +282,11 @@ canvas{display:block;position:absolute;top:0;left:0;}
   </div>
 </div>
 <div id="ad-banner" data-tag="110120"></div>
+<script>
+// DEBUG: auto-unlock all levels via ?debug=unlock
+if(location.search.includes("debug=unlock")){(function(){var s={version:1,unlockedLevels:30,level:1,coins:9999,totalStars:90,progress:{},settings:{sound:true,music:true,vibration:true}};for(var i=1;i<=30;i++)s.progress[i]={stars:3};localStorage.setItem("mergeKingdom_v1",JSON.stringify(s));location.href=location.pathname;})();throw"redir";}
+if(location.search.includes("debug=reset")){localStorage.removeItem("mergeKingdom_v1");location.href=location.pathname;throw"redir";}
+</script>
 <script>
 (function(){
 "use strict";
@@ -378,6 +384,13 @@ function initUI(){
   $('toggle-music').onclick=function(){settings.music=!settings.music;this.classList.toggle('on',settings.music);if(audioCtx){if(settings.music)startBGM();else stopBGM();}};
   $('toggle-vibration').onclick=function(){settings.vibration=!settings.vibration;this.classList.toggle('on',settings.vibration);};
   $('btn-reset-progress').onclick=function(){if(confirm('Reset all progress?')){localStorage.removeItem(CFG.SAVE_KEY);gameState={screen:'title',level:1,coins:0,totalStars:0,unlockedLevels:1,progress:{}};showScreen('title');}};
+  $('btn-debug-complete').onclick=function(){
+    // Debug: complete current level with max stars
+    if(gameState.screen!=='game')return;
+    var config=CFG.LEVEL_CONFIG(gameState.level);
+    orders.forEach(function(o){o.completed=true;o.claimed=true;o.rewards={coins:50,stars:config.targetStars};});
+    checkLevelComplete();
+  };
   $('btn-close-settings').onclick=()=>{const prev=getPrevScreen();showScreen(prev);};
   initStorageSlots();
   initSpawnSlots();
@@ -1429,7 +1442,6 @@ initUI();
 loadGame();
 lastTime=performance.now();
   rafId=requestAnimationFrame(gameLoop);
-  window.__GZ=gameState;window.__CFG=CFG;
 })();
 </script>
 <script src="//cdn.jsdelivr.net/npm/monetag@latest" async></script>
