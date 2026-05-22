@@ -78,6 +78,7 @@
     sessionAdCount: 0,
     lastAdTimes: {},
     loaded: { inpagePush: false, vignette: false },
+    adBlockDetected: false,
     channel: null,
   };
 
@@ -154,6 +155,9 @@
   // ==================== AD LOADER ====================
   function loadZone(zoneId, targetEl, attrs) {
     return new Promise(function(resolve, reject) {
+      // Skip if ad-blocker detected
+      if (state.adBlockDetected) { reject(new Error('Ad-blocked')); return; }
+
       var timeout = setTimeout(function() {
         reject(new Error('Ad load timeout'));
       }, CONFIG.TIMING.adLoadTimeout);
