@@ -3,8 +3,7 @@
 Daily SEO Health Check for GameZipper
 Checks: robots.txt, sitemap.xml, IndexNow key, site accessibility, HTTP status
 """
-import urllib.request
-import urllib.error
+import requests
 import json
 import sys
 from datetime import datetime, date
@@ -19,36 +18,26 @@ INDEXNOW_KEYS = {
     "tools.gamezipper.com": "b7e3f8c2d1a94b5e",
 }
 
-def check_url(url, name, follow_redirects=False):
-    """Check URL accessibility and status code."""
-    # Create unverified SSL context for all requests
-    import ssl as ssl_module
-    ctx = ssl_module.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl_module.CERT_NONE
-    # Install as default for urllib
-    old_default = ssl_module._create_unverified_context
-    ssl_module._create_unverified_context = lambda *a, **k: ctx
+_session = requests.Session()
+_session.headers.update({"User-Agent": "GameZipper-SEO-Checker/1.0"})
 
+def check_url(url, name, allow_redirects=False, timeout=15):
+    """Check URL accessibility and status code using requests."""
     try:
-        if not follow_redirects:
-            class NoRedirect(urllib.request.HTTPRedirectHandler):
-                def redirect_request(self, req, fp, code, msg, headers, newurl):
-                    return None
-            opener = urllib.request.build_opener(NoRedirect())
-            resp = opener.open(url, timeout=15)
-        else:
-            resp = urllib.request.urlopen(url, timeout=15)
-        final_url = resp.url
-        status = resp.status
-        content = resp.read(500).decode('utf-8', errors='ignore')
-        return {"url": url, "name": name, "status": status, "final_url": final_url, "content_preview": content[:200], "ok": True, "error": None}
-    except urllib.error.HTTPError as e:
-        return {"url": url, "name": name, "status": e.code, "final_url": None, "content_preview": None, "ok": False, "error": f"HTTP {e.code}"}
+        resp = _session.get(url, timeout=timeout, allow_redirects=allow_redirects, verify=True)
+        content_preview = resp.text[:200] if resp.text else None
+        return {
+            "url": url, "name": name,
+            "status": resp.status_code,
+            "final_url": resp.url,
+            "content_preview": content_preview,
+            "ok": resp.status_code < 400,
+            "error": None
+        }
+    except requests.exceptions.SSLError as e:
+        return {"url": url, "name": name, "status": None, "final_url": None, "content_preview": None, "ok": False, "error": f"SSL Error: {e}"}
     except Exception as e:
         return {"url": url, "name": name, "status": None, "final_url": None, "content_preview": None, "ok": False, "error": str(e)}
-    finally:
-        ssl_module._create_unverified_context = old_default
 
 def main():
     today = date.today().isoformat()
@@ -67,7 +56,7 @@ def main():
             results["summary"].append(f"[FAIL] {site}/robots.txt → {robots.get('status') or 'ERROR'}")
         
         # 2. sitemap.xml (no follow)
-        sitemap = check_url(f"{base_url}/sitemap.xml", "sitemap.xml", follow_redirects=False)
+        sitemap = check_url(f"{base_url}/sitemap.xml", "sitemap.xml", allow_redirects=False)
         checks["sitemap_xml"] = sitemap
         if sitemap["ok"] and sitemap["status"] == 200:
             results["summary"].append(f"[OK] {site}/sitemap.xml → {sitemap['status']}")
@@ -81,7 +70,7 @@ def main():
         # 3. IndexNow key URL
         key_name = INDEXNOW_KEYS.get(site, "unknown")
         key_url = f"{base_url}/indexnowkey.txt"
-        key = check_url(key_url, "indexnowkey.txt", follow_redirects=False)
+        key = check_url(key_url, "indexnowkey.txt", allow_redirects=False)
         checks["indexnow_key"] = key
         if key["ok"] and key["status"] == 200:
             content = key.get("content_preview", "")
@@ -98,7 +87,7 @@ def main():
             results["summary"].append(f"[WARN] {site}/indexnowkey.txt → {key.get('status') or 'ERROR'}")
         
         # 4. Homepage
-        home = check_url(base_url, "homepage", follow_redirects=False)
+        home = check_url(base_url, "homepage", allow_redirects=False)
         checks["homepage"] = home
         if home["ok"] and home["status"] in (200, 301):
             if home["status"] == 301 and home.get("final_url") == base_url:
@@ -114,7 +103,7 @@ def main():
         
         # 5. Test a game page (for gamezipper.com)
         if site == "gamezipper.com":
-            game = check_url(f"{base_url}/2048/", "game page", follow_redirects=False)
+            game = check_url(f"{base_url}/2048/", "game page", allow_redirects=False)
             checks["game_page"] = game
             if game["ok"] and game["status"] == 200:
                 results["summary"].append(f"[OK] {site}/2048/ → {game['status']}")
