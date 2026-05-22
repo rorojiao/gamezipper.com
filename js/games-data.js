@@ -169,4 +169,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-
+{name:"Hearts",emoji:"♥️",cat:"card",tags:["hearts","card","trick","classic","hearts card game"],url:"/hearts/",desc:"Play Hearts card game online free. Classic trick-taking card game with AI opponents, pass cards, shoot the moon, and statistics tracking.",isNew:true,status:"live"},
