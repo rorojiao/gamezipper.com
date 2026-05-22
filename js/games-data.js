@@ -167,4 +167,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-
+{name:"Chinese Checkers",emoji:"⭐",cat:"board",tags:["chinese checkers","board game","strategy","marble","star","classic","multiplayer","ai"],url:"/chinese-checkers/",desc:"Play Chinese Checkers online free! Classic star-shaped board strategy game. Challenge AI with 3 difficulty levels or play local multiplayer. 2-6 players, no download needed.",isNew:true,status:"live"},
