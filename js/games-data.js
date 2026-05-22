@@ -164,3 +164,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Spider Solitaire",emoji:"🕷️",cat:"card",tags:["spider solitaire","solitaire","card","classic","spider","patience"],url:"/spider-solitaire/",desc:"Play Spider Solitaire online free. Classic card game with 1, 2, or 4 suit modes. Undo, hints, statistics, and timer included.",isNew:true,status:"live"},
