@@ -460,9 +460,7 @@ function startLevel(lv){
   dragItem=null;
   dragFrom=null;
   const config=CFG.LEVEL_CONFIG(lv);
-  generateSpawnItem();
-  generateSpawnItem();
-  generateSpawnItem();
+  for(let i=0;i<CFG.SPAWN_SLOTS;i++){spawnItems[i]=generateSpawnItem();}
   generateOrders(config);
   updateHUD();
   renderBoard();
@@ -483,6 +481,12 @@ function generateSpawnItem(){
   const chain=CFG.CHAINS[theme];
   const tier=Math.random()<0.8?0:Math.random()<0.7?1:2;
   return{theme,chain,tier,id:Date.now()+Math.random()};
+}
+function refillEmptySpawns(){
+  for(let i=0;i<CFG.SPAWN_SLOTS;i++){
+    if(!spawnItems[i]&&!dragItem){spawnItems[i]=generateSpawnItem();}
+  }
+  renderSpawnZone();
 }
 function generateOrders(config){
   orders=[];
@@ -688,8 +692,9 @@ function placeItem(item,cx,cy,idx){
   checkMergeAt(idx);
   checkOrders();
   renderBoard();
-  renderSpawnZone();
+  renderBoard();renderSpawnZone();renderStorage();
   updateHUD();
+  refillEmptySpawns();
   checkGameOver();
 }
 function mergeItems(item1,item2,cx,cy,idx){
@@ -707,6 +712,7 @@ function mergeItems(item1,item2,cx,cy,idx){
   checkOrders();
   renderBoard();
   updateHUD();
+  refillEmptySpawns();
   checkGameOver();
 }
 function checkMergeAt(idx){
