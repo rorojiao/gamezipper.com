@@ -145,7 +145,8 @@ const GAMES = [
 
   {name:"Spider Solitaire",emoji:"🕷️",cat:"puzzle",tags:["Puzzle","Card","Solitaire","Spider","Board","Strategy","Classic","Brain","Casual"],url:"/spider-solitaire/",desc:"Play Spider Solitaire free online! Classic 2-deck card game with 1, 2, and 4 suit difficulty modes. Unlimited undo, hints, statistics, daily challenge and score tracking. The best free Spider Solitaire!",isNew:true,status:"live"},
   {name:"FreeCell Solitaire",emoji:"🃏",cat:"card",tags:["freecell","solitaire","card","classic","patience"],url:"/freecell/",desc:"Play FreeCell Solitaire online free. Classic card game with undo, hints, game numbers, and statistics. No download required.",isNew:true,status:"live"},
-  {name:"Chinese Checkers",emoji:"⭐",cat:"board",tags:["chinese checkers","board game","strategy","marble","star","classic","multiplayer","ai"],url:"/chinese-checkers/",desc:"Play Chinese Checkers online free! Classic star-shaped board strategy game. Challenge AI with 3 difficulty levels or play local multiplayer. 2-6 players, no download needed.",isNew:true,status:"live"}
+  {name:"Chinese Checkers",emoji:"⭐",cat:"board",tags:["chinese checkers","board game","strategy","marble","star","classic","multiplayer","ai"],url:"/chinese-checkers/",desc:"Play Chinese Checkers online free! Classic star-shaped board strategy game. Challenge AI with 3 difficulty levels or play local multiplayer. 2-6 players, no download needed.",isNew:true,status:"live"},
+  {name:"Hearts",emoji:"♥️",cat:"card",tags:["hearts","card","trick","classic","hearts card game"],url:"/hearts/",desc:"Play Hearts card game online free. Classic trick-taking card game with AI opponents, pass cards, shoot the moon, and statistics tracking.",isNew:true,status:"live"}
 ];
 
 /**
@@ -169,4 +170,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Hearts",emoji:"♥️",cat:"card",tags:["hearts","card","trick","classic","hearts card game"],url:"/hearts/",desc:"Play Hearts card game online free. Classic trick-taking card game with AI opponents, pass cards, shoot the moon, and statistics tracking.",isNew:true,status:"live"},
