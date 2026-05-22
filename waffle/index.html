@@ -509,6 +509,34 @@ function playSound(type){
   }catch(e){}
 }
 
+// ===== BGM =====
+let bgmNodes=[];
+function startBGM(){
+  if(bgmNodes.length||!state.settings.music)return;
+  try{
+    const ctx=getAudioCtx();if(ctx.state==='suspended')ctx.resume();
+    const sr=ctx.sampleRate;const dur=24;const bufSize=sr*dur;
+    const buf=ctx.createBuffer(1,bufSize,sr);const d=buf.getChannelData(0);
+    const chords=[[261.63,329.63,392.00],[293.66,349.23,440.00],[349.23,440.00,523.25],[329.63,392.00,493.88]];
+    const chordDur=dur/chords.length;
+    for(let i=0;i<bufSize;i++){
+      const t=i/sr;const ci=Math.min(Math.floor(t/chordDur),chords.length-1);const chord=chords[ci];
+      let s=0;
+      for(let n=0;n<chord.length;n++){const f=chord[n];s+=Math.sin(2*Math.PI*f*t)*.04;s+=Math.sin(2*Math.PI*f*2*t)*.01;s+=Math.sin(2*Math.PI*f*.5*t)*.02;}
+      const fade=t%chordDur;const fadeIn=Math.min(fade/0.8,1);const fadeOut=Math.min((chordDur-fade)/0.8,1);
+      s*=fadeIn*fadeOut;const lfo=Math.sin(2*Math.PI*0.2*t)*0.1+1;d[i]=s*lfo*0.4;
+    }
+    const src=ctx.createBufferSource();src.buffer=buf;src.loop=true;
+    const filt=ctx.createBiquadFilter();filt.type='lowpass';filt.frequency.value=600;filt.Q.value=1;
+    const g=ctx.createGain();g.gain.value=.2;
+    src.connect(filt);filt.connect(g);g.connect(ctx.destination);src.start();
+    bgmNodes=[src,filt,g];
+  }catch(e){}
+}
+function stopBGM(){
+  bgmNodes.forEach(n=>{try{if(n.stop)n.stop();n.disconnect();}catch(e){}});bgmNodes=[];
+}
+
 // ===== CONFETTI =====
 let confettiParts=[],confettiAnim=null;
 function launchConfetti(){
@@ -579,7 +607,7 @@ function initGame(seed){
   const grid=scrambleGrid(solution,seed);
   state.puzzle=puzzle;state.solution=solution;state.grid=grid.map(r=>[...r]);
   state.selected=null;state.swapsUsed=0;state.startTime=Date.now();state.elapsed=0;
-  showScreen('game');renderGrid();renderSwapDots();renderWordStatus();startTimer();
+  showScreen('game');renderGrid();renderSwapDots();renderWordStatus();startTimer();startBGM();
   if(state.settings.tutorial&&state.stats.played===0)setTimeout(()=>document.getElementById('tutorial').classList.add('show'),500);
 }
 
@@ -688,6 +716,7 @@ function toggleSetting(k){
   state.settings[k]=!state.settings[k];saveState();
   const el=document.getElementById('toggle-'+k);if(el)el.className='toggle'+(state.settings[k]?' on':'');
   if(k==='sfx'){const b=document.getElementById('btn-sound');if(b)b.className='icon-btn'+(state.settings.sfx?' active-toggle':'')}
+  if(k==='music'){if(state.settings.music)startBGM();else stopBGM();}
 }
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
 
@@ -695,11 +724,12 @@ loadState();updateHomeStats();
 document.getElementById('btn-sound').className='icon-btn'+(state.settings.sfx?' active-toggle':'');
 window.addEventListener('resize',()=>{const c=document.getElementById('confetti');c.width=innerWidth;c.height=innerHeight});
 document.addEventListener('dblclick',e=>e.preventDefault());
-function cleanup(){const ac=getAudioCtx();if(ac&&ac.state!=='closed'){try{ac.close()}catch(e){}}window.removeEventListener('resize',()=>{});document.removeEventListener('dblclick',()=>{})}
+function cleanup(){stopBGM();const ac=getAudioCtx();if(ac&&ac.state!=='closed'){try{ac.close()}catch(e){}}window.removeEventListener('resize',()=>{});document.removeEventListener('dblclick',()=>{})}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)cleanup()});
 window.addEventListener('beforeunload',cleanup);
 </script>
 <script src='https://site-analytics.gamezipper.com/hit?s=gamezipper.com&p=waffle'></script>
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=waffle'></script>
 <script src="/game-footer.js"></script>
 <script src="/monetag-manager.js"></script>
 <div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
