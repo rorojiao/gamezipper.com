@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,maximum-scale=1.0">
+<meta name="theme-color" content="#0a0e27">
+<title>Play Spades Online Free - Classic Card Game | GameZipper</title>
+<meta name="description" content="Play free Spades online. Classic 4-player trick-taking card game with smart AI opponents, bidding, nil bids, bags, and full scoring. No download needed.">
+<link rel="canonical" href="https://gamezipper.com/spades/">
+<meta property="og:title" content="Play Spades Online Free - Classic Card Game | GameZipper">
+<meta property="og:description" content="Play free Spades online. Classic 4-player trick-taking card game with smart AI opponents, bidding, nil bids, bags, and full scoring. No download needed.">
+<meta property="og:url" content="https://gamezipper.com/spades/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://gamezipper.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Play Spades Online Free - Classic Card Game | GameZipper">
+<meta name="twitter:description" content="Play free Spades online. Classic 4-player trick-taking card game with smart AI opponents, bidding, nil bids, bags, and full scoring. No download needed.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden;max-width:100vw;height:100%}
+body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;
+  background:#0a0e27;display:flex;flex-direction:column;align-items:center;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#e0e8f0;
+  overflow:hidden;touch-action:none}
+canvas{display:block}
+#hud{display:flex;align-items:center;justify-content:center;gap:8px;padding:5px 8px;
+  flex-wrap:wrap;font-size:12px;min-height:34px;width:100%;max-width:1280px}
+.hud-item{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px;padding:3px 8px;display:flex;align-items:center;gap:4px;backdrop-filter:blur(8px)}
+.hud-label{color:#8892b0;font-size:10px}
+.hud-val{color:#4ecdc4;font-weight:700;font-size:13px;min-width:24px;text-align:center}
+.hud-val.warn{color:#ff6b6b}
+.btn{background:linear-gradient(135deg,#1a1f4e,#2d1b69);border:1px solid rgba(78,205,196,0.3);
+  color:#4ecdc4;padding:4px 10px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:600;
+  transition:all .15s ease}
+.btn:hover{background:linear-gradient(135deg,#2a2f6e,#3d2b89);border-color:#4ecdc4;
+  box-shadow:0 0 12px rgba(78,205,196,0.2)}
+.btn:active{transform:scale(0.95)}
+.btn:disabled{opacity:0.4;pointer-events:none}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(26,31,78,0.95);border:1px solid rgba(78,205,196,0.4);color:#4ecdc4;
+  padding:10px 24px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;
+  transition:all .3s ease;pointer-events:none;z-index:100;backdrop-filter:blur(10px);
+  white-space:nowrap;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);
+  display:none;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px)}
+#modal.active{display:flex}
+#modal-box{background:linear-gradient(135deg,#1a1f4e,#2d1b69);border:1px solid rgba(78,205,196,0.3);
+  border-radius:16px;padding:24px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;
+  box-shadow:0 0 40px rgba(78,205,196,0.15)}
+#modal-box h2{color:#4ecdc4;font-size:18px;margin-bottom:12px;text-align:center}
+#modal-box p{color:#c0c8d8;font-size:13px;line-height:1.6;margin-bottom:8px}
+#modal-box .btn-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+#modal-box .bid-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:12px 0}
+#modal-box .bid-btn{background:rgba(78,205,196,0.1);border:1px solid rgba(78,205,196,0.3);
+  color:#4ecdc4;padding:8px 4px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;
+  text-align:center;transition:all .15s}
+#modal-box .bid-btn:hover{background:rgba(78,205,196,0.25);border-color:#4ecdc4}
+#modal-box .bid-btn.active{background:#4ecdc4;color:#1a1f4e}
+.spade-indicator{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+  font-size:64px;color:#4ecdc4;opacity:0;pointer-events:none;z-index:150;
+  text-shadow:0 0 30px rgba(78,205,196,0.5);transition:none}
+.spade-indicator.show{animation:spadeFlash .8s ease-out forwards}
+@keyframes spadeFlash{
+  0%{transform:translate(-50%,-50%) scale(0);opacity:0}
+  30%{transform:translate(-50%,-50%) scale(1.2);opacity:1}
+  100%{transform:translate(-50%,-50%) scale(0.5);opacity:0}
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"VideoGame",
+  "name":"Spades - Classic Card Game",
+  "description":"Play free Spades online. Classic 4-player trick-taking card game with smart AI, bidding, nil bids, bags, and scoring to 500 points.",
+  "image":"https://gamezipper.com/og-image.png",
+  "url":"https://gamezipper.com/spades/",
+  "genre":["Card Game","Strategy","Multiplayer"],
+  "gamePlatform":"Web Browser",
+  "applicationCategory":"Game",
+  "operatingSystem":"Any",
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+  "publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com"},
+  "numberOfPlayers":{"@type":"QuantitativeValue","minValue":4,"maxValue":4}
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"FAQPage",
+  "mainEntity":[
+    {"@type":"Question","name":"How do you play Spades?","acceptedAnswer":{"@type":"Answer","text":"Spades is a 4-player trick-taking card game. Players bid on how many tricks they'll take, then play 13 tricks. Spades are always trumps. You must follow suit if possible. The game is played to 500 points."}},
+    {"@type":"Question","name":"What is a nil bid in Spades?","acceptedAnswer":{"@type":"Answer","text":"A nil bid means you're betting you won't take any tricks. If successful, you earn 100 bonus points. If you take even one trick, you lose 100 points."}},
+    {"@type":"Question","name":"What are bags in Spades?","acceptedAnswer":{"@type":"Answer","text":"Bags are overtricks - tricks you win beyond your bid. Each bag is worth 1 point, but accumulating 10 bags costs you a 100-point penalty."}}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"HowTo",
+  "name":"How to Play Spades",
+  "step":[
+    {"@type":"HowToStep","name":"Deal","text":"A standard 52-card deck is dealt evenly to 4 players, 13 cards each."},
+    {"@type":"HowToStep","name":"Bid","text":"Each player bids 0-13 tricks they expect to win. A bid of 0 is called nil."},
+    {"@type":"HowToStep","name":"Play","text":"Players take turns playing cards. You must follow the led suit if possible. Spades are trumps and beat all other suits."},
+    {"@type":"HowToStep","name":"Score","text":"Making your bid earns 10x bid points plus 1 per overtrick. Missing your bid costs 10x bid. First to 500 wins!"}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"BreadcrumbList",
+  "itemListElement":[
+    {"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},
+    {"@type":"ListItem","position":2,"name":"Spades","item":"https://gamezipper.com/spades/"}
+  ]
+}
+</script>
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=spades'></script>
+</head>
+<body>
+<a href="https://gamezipper.com/" style="position:fixed;top:8px;left:8px;z-index:9999;font-size:18px;text-decoration:none;color:#4ecdc4" title="Home">&#9664;</a>
+<h1 style="display:none">Play Spades Online Free - Classic Card Game | GameZipper</h1>
+<div id="hud">
+  <div class="hud-item"><span class="hud-label">N/S</span><span class="hud-val" id="hNS">0</span></div>
+  <div class="hud-item"><span class="hud-label">E/W</span><span class="hud-val" id="hEW">0</span></div>
+  <div class="hud-item"><span class="hud-label">Tricks</span><span class="hud-val" id="hTrick">0/13</span></div>
+  <div class="hud-item"><span class="hud-label">Bags</span><span class="hud-val" id="hBags">0</span></div>
+  <div class="hud-item"><span class="hud-label" id="hTrumpLabel">&#9824;</span><span class="hud-val" id="hTrump" style="color:#4ecdc4">Trump</span></div>
+  <button class="btn" id="bUndo" disabled>Undo</button>
+  <button class="btn" id="bStats">Stats</button>
+  <button class="btn" id="bNew">New Game</button>
+</div>
+<canvas id="c"></canvas>
+<div id="toast"></div>
+<div id="spadeFlash" class="spade-indicator">&#9824;</div>
+<div id="modal"><div id="modal-box"></div></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ─── Constants ─── */
+const SAVE_VER=1, STORAGE_KEY='gz_spades_v1', STATS_KEY='gz_spades_stats';
+const SUITS=['spade','heart','diamond','club'];
+const SUIT_SYM=['♠','♥','♦','♣'];
+const SUIT_COLOR=[0,1,1,0];
+const RANKS=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const SOUTH=0,WEST=1,NORTH=2,EAST=3;
+const PLAYER_NAMES=['You','West','North','East'];
+const TEAMS=[[SOUTH,NORTH],[WEST,EAST]];
+const CW=70,CH=100,CR=8;
+
+/* ─── Audio ─── */
+let audioCtx=null;
+function initAudio(){
+  if(!audioCtx)try{audioCtx=new(window.AudioContext||window.webkitAudioContext)}catch(e){}
+}
+function playTone(freq,dur,type,vol){
+  if(!audioCtx)return;
+  try{
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type=type||'sine';o.frequency.value=freq;
+    g.gain.setValueAtTime(vol||0.06,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+    o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+function sndCard(){playTone(680,0.07,'sine',0.06)}
+function sndTrick(){playTone(520,0.12,'triangle',0.08);setTimeout(()=>playTone(780,0.1,'sine',0.06),60)}
+function sndError(){playTone(200,0.12,'sawtooth',0.04)}
+function sndBid(){playTone(440,0.08,'sine',0.05)}
+function sndWin(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.3,'sine',0.1),i*120))}
+function sndLose(){[400,350,300,250].forEach((f,i)=>setTimeout(()=>playTone(f,0.25,'sawtooth',0.06),i*150))}
+function sndSpadeBroken(){playTone(880,0.15,'square',0.05);setTimeout(()=>playTone(1100,0.2,'sine',0.08),80)}
+function sndNil(){playTone(330,0.1,'triangle',0.07);setTimeout(()=>playTone(660,0.15,'sine',0.1),100)}
+
+/* ─── Card ─── */
+function makeCard(suit,rankIdx){
+  return{suit,rank:RANKS[rankIdx],value:rankIdx,color:SUIT_COLOR[suit]};
+}
+function createDeck(){
+  const d=[];
+  for(let s=0;s<4;s++)for(let r=0;r<13;r++)d.push(makeCard(s,r));
+  return d;
+}
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}
+  return a;
+}
+function cardKey(c){return c.suit+'_'+c.rank}
+function sameCard(a,b){return a&&b&&a.suit===b.suit&&a.rank===b.rank}
+function isSpade(c){return c.suit===0}
+function sortHand(h){
+  const suitOrder=[1,2,3,0];
+  h.sort((a,b)=>suitOrder.indexOf(a.suit)!==suitOrder.indexOf(b.suit)?
+    suitOrder.indexOf(a.suit)-suitOrder.indexOf(b.suit):a.value-b.value);
+}
+
+/* ─── State ─── */
+let G={
+  phase:'menu', // menu,bidding,playing,scoring,gameOver
+  hands:[[],[],[],[]],
+  bids:[-1,-1,-1,-1],
+  blindNil:[false,false,false,false],
+  tricksWon:[0,0,0,0],
+  currentTrick:[],
+  trickLeader:0,
+  currentPlayer:0,
+  tricksPlayed:0,
+  spadesBroken:false,
+  scoreNS:0,scoreEW:0,
+  bagsNS:0,bagsEW:0,
+  roundNumber:0,
+  dealer:0,
+  bidFirst:0,
+  undoState:null,
+  animating:false,
+  animCards:[],
+  dealAnim:0,
+  trickWinnerAnim:0,
+  lastTrick:[],
+  lastTrickWinner:-1,
+  showLastTrick:false,
+  hintCard:null,
+  gameOverWinner:-1,
+  nilBonusShown:false
+};
+let stats=loadStats();
+
+/* ─── Canvas ─── */
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+let W,H,scale,cardW,cardH;
+let centerX,centerY;
+let southY,westX,northY,eastX;
+let playerPositions=[];
+
+function resize(){
+  const dpr=window.devicePixelRatio||1;
+  const hudH=document.getElementById('hud').offsetHeight;
+  W=Math.min(window.innerWidth,1280);
+  H=Math.max(window.innerHeight-hudH,400);
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  scale=Math.min(W/900,H/700,1);
+  cardW=CW*scale;cardH=CH*scale;
+  centerX=W/2;centerY=H/2;
+  southY=H-cardH-20*scale;
+  northY=20*scale;
+  westX=15*scale;
+  eastX=W-cardW-15*scale;
+  playerPositions=[
+    {x:centerX,y:southY+cardH/2,label:'You'},
+    {x:westX+cardW/2,y:centerY,label:'West'},
+    {x:centerX,y:northY+cardH/2,label:'North'},
+    {x:eastX+cardW/2,y:centerY,label:'East'}
+  ];
+}
+
+/* ─── Rendering Helpers ─── */
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+function drawCard(x,y,card,highlight,small){
+  const w=small?cardW*0.7:cardW;
+  const h=small?cardH*0.7:cardH;
+  const r=CR*scale;
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,0.4)';ctx.shadowBlur=5*scale;ctx.shadowOffsetY=2*scale;
+  ctx.fillStyle='#f8f9fc';
+  roundRect(x,y,w,h,r);ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle=highlight?'#4ecdc4':'rgba(255,255,255,0.15)';
+  ctx.lineWidth=highlight?2.5*scale:1*scale;
+  roundRect(x,y,w,h,r);ctx.stroke();
+  if(highlight){
+    ctx.save();ctx.shadowColor='#4ecdc4';ctx.shadowBlur=12*scale;
+    roundRect(x,y,w,h,r);ctx.stroke();ctx.restore();
+  }
+  const col=card.color===1?'#dc3545':'#1a1a2e';
+  const sym=SUIT_SYM[card.suit];
+  const rk=card.rank;
+  const fs=small?0.65:1;
+  ctx.fillStyle=col;ctx.textBaseline='top';
+  ctx.font=`bold ${11*scale*fs}px -apple-system,BlinkMacSystemFont,sans-serif`;
+  ctx.fillText(rk,x+4*scale*fs,y+3*scale*fs);
+  ctx.font=`${10*scale*fs}px serif`;
+  ctx.fillText(sym,x+4*scale*fs,y+14*scale*fs);
+  ctx.save();ctx.translate(x+w-4*scale*fs,y+h-3*scale*fs);ctx.rotate(Math.PI);
+  ctx.textBaseline='top';
+  ctx.font=`bold ${11*scale*fs}px -apple-system,BlinkMacSystemFont,sans-serif`;
+  ctx.fillText(rk,0,0);
+  ctx.font=`${10*scale*fs}px serif`;
+  ctx.fillText(sym,0,11*scale*fs);
+  ctx.restore();
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  const cx2=x+w/2,cy2=y+h/2;
+  if(card.value>=10){
+    ctx.font=`bold ${18*scale*fs}px serif`;
+    ctx.fillText(rk,cx2,cy2-4*scale*fs);
+    ctx.font=`${14*scale*fs}px serif`;
+    ctx.fillText(sym,cx2,cy2+12*scale*fs);
+  } else if(card.value===12){
+    ctx.font=`${28*scale*fs}px serif`;
+    ctx.fillText(sym,cx2,cy2);
+  } else {
+    ctx.font=`${12*scale*fs}px serif`;
+    const n=card.value+1;
+    const positions=getPipPositions(n);
+    positions.forEach(([px,py])=>{ctx.fillText(sym,cx2+px*10*scale*fs,cy2+py*10*scale*fs)});
+  }
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  if(isSpade(card)){
+    ctx.save();
+    ctx.globalAlpha=0.08;
+    ctx.fillStyle='#4ecdc4';
+    roundRect(x,y,w,h,r);ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawCardBack(x,y,small){
+  const w=small?cardW*0.7:cardW;
+  const h=small?cardH*0.7:cardH;
+  const r=CR*scale;
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,0.35)';ctx.shadowBlur=5*scale;ctx.shadowOffsetY=2*scale;
+  ctx.fillStyle='#2a2f5e';
+  roundRect(x,y,w,h,r);ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle='rgba(78,205,196,0.2)';ctx.lineWidth=1*scale;
+  roundRect(x,y,w,h,r);ctx.stroke();
+  ctx.save();
+  roundRect(x,y,w,h,r);ctx.clip();
+  ctx.strokeStyle='rgba(78,205,196,0.1)';ctx.lineWidth=1*scale;
+  for(let i=-h;i<w+h;i+=5*scale){
+    ctx.beginPath();ctx.moveTo(x+i,y);ctx.lineTo(x+i-h,y+h);ctx.stroke();
+  }
+  ctx.fillStyle='rgba(78,205,196,0.1)';
+  const cx=x+w/2,cy=y+h/2,sz=12*scale;
+  ctx.beginPath();ctx.moveTo(cx,cy-sz);ctx.lineTo(cx+sz,cy);ctx.lineTo(cx,cy+sz);ctx.lineTo(cx-sz,cy);ctx.closePath();ctx.fill();
+  ctx.restore();
+}
+
+function getPipPositions(n){
+  const ps={
+    2:[[0,-2],[0,2]],
+    3:[[0,-2],[0,0],[0,2]],
+    4:[[-1,-2],[1,-2],[-1,2],[1,2]],
+    5:[[-1,-2],[1,-2],[0,0],[-1,2],[1,2]],
+    6:[[-1,-2],[1,-2],[-1,0],[1,0],[-1,2],[1,2]],
+    7:[[-1,-2],[1,-2],[-1,0],[1,0],[-1,2],[1,2],[0,-1]],
+    8:[[-1,-2],[1,-2],[-1,0],[1,0],[-1,2],[1,2],[0,-1],[0,1]],
+    9:[[-1,-2.3],[1,-2.3],[-1,-0.8],[1,-0.8],[0,0],[-1,0.8],[1,0.8],[-1,2.3],[1,2.3]],
+    10:[[-1,-2.3],[1,-2.3],[-1,-0.8],[1,-0.8],[-1,0.8],[1,0.8],[-1,2.3],[1,2.3],[0,-1.5],[0,1.5]]
+  };
+  return ps[n]||[[0,0]];
+}
+
+/* ─── Layout ─── */
+function getSouthCardPos(idx,total){
+  const overlap=Math.min(cardW*0.55,(W-80)/(total));
+  const totalW=overlap*(total-1)+cardW;
+  const sx=centerX-totalW/2;
+  return{x:sx+idx*overlap,y:southY};
+}
+
+function getNorthCardPos(idx,total){
+  const overlap=Math.min(cardW*0.4,(W-200)/(total));
+  const totalW=overlap*(total-1)+cardW*0.7;
+  const sx=centerX-totalW/2;
+  return{x:sx+idx*overlap,y:northY};
+}
+
+function getWestCardPos(idx,total){
+  const overlap=Math.min(cardH*0.25,(H-200)/(total));
+  const totalH=overlap*(total-1)+cardH*0.7;
+  const sy=centerY-totalH/2;
+  return{x:westX,y:sy+idx*overlap};
+}
+
+function getEastCardPos(idx,total){
+  const overlap=Math.min(cardH*0.25,(H-200)/(total));
+  const totalH=overlap*(total-1)+cardH*0.7;
+  const sy=centerY-totalH/2;
+  return{x:eastX,y:sy+idx*overlap};
+}
+
+function getTrickCardPos(player){
+  const offsets=[
+    {x:centerX-cardW/2,y:centerY+10*scale},
+    {x:centerX-cardW-25*scale,y:centerY-cardH/2},
+    {x:centerX-cardW/2,y:centerY-cardH-10*scale},
+    {x:centerX+25*scale,y:centerY-cardH/2}
+  ];
+  return offsets[player];
+}
+
+/* ─── Render ─── */
+function render(){
+  ctx.clearRect(0,0,W,H);
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#0a0e27');bg.addColorStop(0.5,'#141845');bg.addColorStop(1,'#1a0a2e');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // Table felt
+  const felt=ctx.createRadialGradient(centerX,centerY,0,centerX,centerY,Math.max(W,H)*0.6);
+  felt.addColorStop(0,'rgba(20,60,40,0.3)');felt.addColorStop(1,'rgba(10,20,15,0.1)');
+  ctx.fillStyle=felt;ctx.fillRect(0,0,W,H);
+
+  // Trump indicator
+  drawTrumpIndicator();
+
+  // Spades broken indicator
+  if(G.spadesBroken){
+    ctx.fillStyle='rgba(78,205,196,0.12)';
+    ctx.font=`bold ${11*scale}px -apple-system,sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('Spades Broken',centerX,centerY-cardH*0.9);
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  }
+
+  // Player labels & bids
+  drawPlayerInfo();
+
+  // Hands
+  drawHands();
+
+  // Current trick
+  drawTrick();
+
+  // Animations
+  drawAnimations();
+
+  // Last trick overlay
+  if(G.showLastTrick){
+    drawLastTrickOverlay();
+  }
+}
+
+function drawTrumpIndicator(){
+  const x=centerX,y=8*scale;
+  ctx.save();
+  ctx.fillStyle='rgba(78,205,196,0.15)';
+  ctx.font=`bold ${14*scale}px serif`;
+  ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('♠ TRUMP ♠',x,y);
+  ctx.restore();
+}
+
+function drawPlayerInfo(){
+  const names=['You','West','North','East'];
+  for(let p=0;p<4;p++){
+    const pos=playerPositions[p];
+    let lx=pos.x,ly;
+    if(p===SOUTH){ly=southY-18*scale}
+    else if(p===NORTH){ly=northY+cardH*0.7+18*scale+8*scale}
+    else if(p===WEST){ly=pos.y-cardH*0.7/2-18*scale;lx=pos.x}
+    else{ly=pos.y-cardH*0.7/2-18*scale;lx=pos.x}
+
+    const isCurrentTurn=G.phase==='playing'&&G.currentPlayer===p&&!G.animating;
+    const team=p===SOUTH||p===NORTH?'N/S':'E/W';
+
+    ctx.save();
+    if(isCurrentTurn){
+      ctx.shadowColor='#4ecdc4';ctx.shadowBlur=10;
+    }
+    ctx.fillStyle=isCurrentTurn?'#4ecdc4':'rgba(255,255,255,0.6)';
+    ctx.font=`bold ${11*scale}px -apple-system,sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(names[p]+(p===G.dealer?' (D)':''),lx,ly);
+    ctx.restore();
+
+    // Bid display
+    if(G.bids[p]>=0){
+      const bidText=G.blindNil[p]?'BN:'+G.bids[p]:G.bids[p]===0?'Nil':''+G.bids[p];
+      ctx.fillStyle='rgba(78,205,196,0.5)';
+      ctx.font=`${10*scale}px -apple-system,sans-serif`;
+      ctx.textAlign='center';
+      ctx.fillText('Bid: '+bidText,lx,ly+13*scale);
+
+      // Tricks won
+      if(G.phase==='playing'||G.phase==='scoring'){
+        ctx.fillStyle='rgba(255,200,100,0.6)';
+        ctx.fillText('Won: '+G.tricksWon[p],lx,ly+25*scale);
+      }
+    }
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  }
+}
+
+function drawHands(){
+  // South - face up, interactive
+  const south=G.hands[SOUTH];
+  for(let i=0;i<south.length;i++){
+    const pos=getSouthCardPos(i,south.length);
+    const canPlay=G.phase==='playing'&&G.currentPlayer===SOUTH&&!G.animating&&isLegalPlay(south[i],i);
+    const isHint=G.hintCard&&sameCard(south[i],G.hintCard);
+    const isHover=hoverCardIdx===i&&canPlay;
+    const yOff=isHover?-12*scale:0;
+    drawCard(pos.x,pos.y+yOff,south[i],canPlay||isHint,false);
+  }
+
+  // North - card backs
+  const north=G.hands[NORTH];
+  for(let i=0;i<north.length;i++){
+    const pos=getNorthCardPos(i,north.length);
+    drawCardBack(pos.x,pos.y,true);
+  }
+
+  // West - card backs
+  const west=G.hands[WEST];
+  for(let i=0;i<west.length;i++){
+    const pos=getWestCardPos(i,west.length);
+    drawCardBack(pos.x,pos.y,true);
+  }
+
+  // East - card backs
+  const east=G.hands[EAST];
+  for(let i=0;i<east.length;i++){
+    const pos=getEastCardPos(i,east.length);
+    drawCardBack(pos.x,pos.y,true);
+  }
+}
+
+function drawTrick(){
+  for(let i=0;i<G.currentTrick.length;i++){
+    const tc=G.currentTrick[i];
+    const pos=getTrickCardPos(tc.player);
+    drawCard(pos.x,pos.y,tc.card,false,false);
+  }
+}
+
+function drawAnimations(){
+  for(const a of G.animCards){
+    const t=Math.min(1,a.progress);
+    const ease=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+    const x=a.fromX+(a.toX-a.fromX)*ease;
+    const y=a.fromY+(a.toY-a.fromY)*ease;
+    drawCard(x,y,a.card,false,false);
+  }
+}
+
+function drawLastTrickOverlay(){
+  ctx.fillStyle='rgba(0,0,0,0.5)';
+  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#4ecdc4';
+  ctx.font=`bold ${14*scale}px -apple-system,sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('Last Trick - '+PLAYER_NAMES[G.lastTrickWinner]+' wins',centerX,centerY-cardH-30*scale);
+  for(let i=0;i<G.lastTrick.length;i++){
+    const tc=G.lastTrick[i];
+    const pos=getTrickCardPos(tc.player);
+    drawCard(pos.x,pos.y,tc.card,tc.player===G.lastTrickWinner,false);
+  }
+  ctx.fillStyle='rgba(255,255,255,0.5)';
+  ctx.font=`${11*scale}px -apple-system,sans-serif`;
+  ctx.fillText('Tap to close',centerX,centerY+cardH+35*scale);
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+}
+
+/* ─── Game Logic ─── */
+function startNewGame(){
+  G.phase='bidding';
+  G.scoreNS=0;G.scoreEW=0;G.bagsNS=0;G.bagsEW=0;
+  G.roundNumber=0;G.dealer=Math.random()*4|0;
+  G.gameOverWinner=-1;
+  G.undoState=null;
+  startNewRound();
+}
+
+function startNewRound(){
+  G.roundNumber++;
+  const deck=shuffle(createDeck());
+  G.hands=[[],[],[],[]];
+  for(let i=0;i<52;i++) G.hands[i%4].push(deck[i]);
+  for(let p=0;p<4;p++) sortHand(G.hands[p]);
+  G.bids=[-1,-1,-1,-1];
+  G.blindNil=[false,false,false,false];
+  G.tricksWon=[0,0,0,0];
+  G.currentTrick=[];
+  G.tricksPlayed=0;
+  G.spadesBroken=false;
+  G.animating=false;
+  G.animCards=[];
+  G.hintCard=null;
+  G.showLastTrick=false;
+  G.nilBonusShown=false;
+  G.dealer=(G.dealer+1)%4;
+  G.bidFirst=(G.dealer+1)%4;
+  G.currentPlayer=G.bidFirst;
+  G.phase='bidding';
+  saveState();
+  updateHUD();
+
+  if(G.currentPlayer!==SOUTH){
+    setTimeout(()=>aiBidSequence(),400);
+  } else {
+    showBidDialog();
+  }
+}
+
+function getAIBid(player){
+  const hand=G.hands[player];
+  let bid=0;
+  // Count high cards and spades
+  let spadeCount=0,highSpades=0;
+  let aces=0,kings=0;
+  const suitCounts=[0,0,0,0];
+
+  for(const c of hand){
+    suitCounts[c.suit]++;
+    if(isSpade(c)){
+      spadeCount++;
+      if(c.value>=11)highSpades++;
+    }
+    if(c.rank==='A')aces++;
+    if(c.rank==='K')kings++;
+  }
+
+  // Aces are near-guaranteed tricks
+  bid+=aces;
+
+  // Kings are likely tricks (unless in short suit)
+  for(const c of hand){
+    if(c.rank==='K'){
+      if(suitCounts[c.suit]>=2) bid+=0.8;
+      else bid+=0.4;
+    }
+  }
+
+  // High spades
+  bid+=highSpades*0.5;
+
+  // Short suits (void or singleton) - can trump
+  for(let s=1;s<4;s++){
+    if(suitCounts[s]===0) bid+=0.5+spadeCount*0.1;
+    else if(suitCounts[s]===1) bid+=0.2;
+  }
+
+  // Long spade suit
+  if(spadeCount>=5) bid+=(spadeCount-4)*0.3;
+
+  bid=Math.max(0,Math.min(13,Math.round(bid)));
+
+  // Sometimes bid nil if hand is very weak
+  if(bid<=1&&Math.random()<0.15) bid=0;
+
+  return bid;
+}
+
+function aiBidSequence(){
+  if(G.phase!=='bidding')return;
+  if(G.currentPlayer===SOUTH){
+    showBidDialog();
+    return;
+  }
+  const bid=getAIBid(G.currentPlayer);
+  placeBid(G.currentPlayer,bid,false);
+}
+
+function placeBid(player,bid,blindNil){
+  initAudio();
+  sndBid();
+  G.bids[player]=bid;
+  G.blindNil[player]=blindNil;
+  updateHUD();
+
+  // Check if all bids are in
+  if(G.bids.every(b=>b>=0)){
+    setTimeout(()=>{
+      G.phase='playing';
+      G.undoState=JSON.parse(JSON.stringify({
+        hands:G.hands,bids:G.bids,blindNil:G.blindNil,tricksWon:G.tricksWon,
+        spadesBroken:G.spadesBroken,tricksPlayed:G.tricksPlayed,scoreNS:G.scoreNS,
+        scoreEW:G.scoreEW,bagsNS:G.bagsNS,bagsEW:G.bagsEW
+      }));
+      document.getElementById('bUndo').disabled=false;
+      G.trickLeader=G.bidFirst;
+      G.currentPlayer=G.trickLeader;
+      if(G.currentPlayer!==SOUTH){
+        setTimeout(()=>aiPlaySequence(),500);
+      }
+    },300);
+    return;
+  }
+
+  G.currentPlayer=(G.currentPlayer+1)%4;
+  if(G.currentPlayer===SOUTH){
+    showBidDialog();
+  } else {
+    setTimeout(aiBidSequence,500);
+  }
+}
+
+function showBidDialog(){
+  const hand=G.hands[SOUTH];
+  let html='<h2>Your Bid</h2>';
+  html+='<p>How many tricks will you win? (0 = Nil = +100/-100 bonus)</p>';
+  html+='<div class="bid-grid">';
+  for(let i=0;i<=13;i++){
+    const label=i===0?'Nil':''+i;
+    html+=`<div class="bid-btn" data-bid="${i}">${label}</div>`;
+  }
+  html+='</div>';
+  html+='<div class="btn-row">';
+  html+='<button class="btn" id="bBlindNil">Blind Nil (+200/-200)</button>';
+  html+='</div>';
+  setModal(html);
+
+  document.querySelectorAll('.bid-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const bid=parseInt(btn.dataset.bid);
+      closeModal();
+      placeBid(SOUTH,bid,false);
+    });
+  });
+
+  const bnBtn=document.getElementById('bBlindNil');
+  if(bnBtn)bnBtn.addEventListener('click',()=>{
+    closeModal();
+    placeBid(SOUTH,0,true);
+  });
+}
+
+function isLegalPlay(card,handIdx){
+  const hand=G.hands[SOUTH];
+  if(handIdx<0||handIdx>=hand.length)return false;
+  if(!sameCard(hand[handIdx],card))return false;
+
+  // First card of trick - any card is legal, but can't lead spades unless broken
+  if(G.currentTrick.length===0){
+    if(isSpade(card)&&!G.spadesBroken){
+      // Can lead spades only if all cards are spades
+      return hand.every(c=>isSpade(c));
+    }
+    return true;
+  }
+
+  // Must follow suit
+  const ledSuit=G.currentTrick[0].card.suit;
+  const hasSuit=hand.some(c=>c.suit===ledSuit);
+  if(hasSuit) return card.suit===ledSuit;
+  return true;
+}
+
+function playCard(player,card){
+  initAudio();
+  // Remove from hand
+  const idx=G.hands[player].findIndex(c=>sameCard(c,card));
+  if(idx<0)return;
+  G.hands[player].splice(idx,1);
+
+  // Check spades broken
+  if(isSpade(card)&&!G.spadesBroken){
+    G.spadesBroken=true;
+    sndSpadeBroken();
+    showSpadeFlash();
+  }
+
+  // Add to trick
+  G.currentTrick.push({player,card});
+
+  // Animate
+  const targetPos=getTrickCardPos(player);
+  let fromPos;
+  if(player===SOUTH){
+    fromPos=getSouthCardPos(idx,G.hands[SOUTH].length+1);
+  } else if(player===NORTH){
+    fromPos=getNorthCardPos(0,G.hands[NORTH].length+1);
+  } else if(player===WEST){
+    fromPos=getWestCardPos(0,G.hands[WEST].length+1);
+  } else {
+    fromPos=getEastCardPos(0,G.hands[EAST].length+1);
+  }
+
+  G.animating=true;
+  const anim={card,fromX:fromPos.x,fromY:fromPos.y,toX:targetPos.x,toY:targetPos.y,progress:0};
+  G.animCards=[anim];
+
+  sndCard();
+
+  const animDuration=250;
+  const startTime=performance.now();
+  function tick(now){
+    anim.progress=Math.min(1,(now-startTime)/animDuration);
+    if(anim.progress<1){
+      requestAnimationFrame(tick);
+    } else {
+      G.animCards=[];
+      G.animating=false;
+      afterCardPlayed();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+function afterCardPlayed(){
+  if(G.currentTrick.length<4){
+    G.currentPlayer=(G.currentPlayer+1)%4;
+    if(G.currentPlayer!==SOUTH){
+      setTimeout(()=>aiPlaySequence(),300);
+    }
+    saveState();
+    return;
+  }
+
+  // Trick complete - determine winner
+  const winner=determineTrickWinner();
+  G.tricksWon[winner]++;
+  G.tricksPlayed++;
+  G.lastTrick=G.currentTrick.slice();
+  G.lastTrickWinner=winner;
+
+  sndTrick();
+
+  // Show trick briefly then collect
+  G.trickWinnerAnim=winner;
+  toast(PLAYER_NAMES[winner]+' wins the trick!');
+
+  setTimeout(()=>{
+    G.currentTrick=[];
+    G.trickLeader=winner;
+    G.currentPlayer=winner;
+    G.trickWinnerAnim=-1;
+
+    if(G.tricksPlayed>=13){
+      scoreRound();
+    } else if(G.currentPlayer!==SOUTH){
+      setTimeout(()=>aiPlaySequence(),400);
+    }
+    saveState();
+  },900);
+}
+
+function determineTrickWinner(){
+  const ledSuit=G.currentTrick[0].card.suit;
+  let winner=G.currentTrick[0];
+  for(let i=1;i<G.currentTrick.length;i++){
+    const tc=G.currentTrick[i];
+    if(isSpade(tc.card)&&!isSpade(winner.card)){
+      winner=tc;
+    } else if(tc.card.suit===winner.card.suit&&tc.card.value>winner.card.value){
+      winner=tc;
+    }
+  }
+  return winner.player;
+}
+
+function getAIPlay(player){
+  const hand=G.hands[player];
+  if(hand.length===0)return null;
+
+  // First to play - choose strategically
+  if(G.currentTrick.length===0){
+    return aiLead(player);
+  }
+
+  const ledSuit=G.currentTrick[0].card.suit;
+  const hasSuit=hand.some(c=>c.suit===ledSuit);
+  const bid=G.bids[player];
+  const won=G.tricksWon[player];
+  const need=bid-won;
+
+  if(hasSuit){
+    return aiFollowSuit(player,ledSuit,need);
+  } else {
+    return aiCantFollow(player,need);
+  }
+}
+
+function aiLead(player){
+  const hand=G.hands[player];
+  const bid=G.bids[player];
+  const won=G.tricksWon[player];
+  const need=bid-won;
+
+  // Try to lead non-spade high cards if we need tricks
+  const nonSpades=hand.filter(c=>!isSpade(c));
+  if(nonSpades.length>0){
+    if(need>0){
+      // Lead highest non-spade
+      const sorted=[...nonSpades].sort((a,b)=>b.value-a.value);
+      return sorted[0];
+    } else {
+      // Lead lowest non-spade to avoid winning
+      const sorted=[...nonSpades].sort((a,b)=>a.value-b.value);
+      return sorted[0];
+    }
+  }
+
+  // Only spades left
+  const sorted=[...hand].sort((a,b)=>a.value-b.value);
+  return sorted[0];
+}
+
+function aiFollowSuit(player,ledSuit,need){
+  const hand=G.hands[player];
+  const suitCards=hand.filter(c=>c.suit===ledSuit).sort((a,b)=>a.value-b.value);
+  const currentWinning=getCurrentWinningCard();
+  const canWin=suitCards.filter(c=>c.value>currentWinning.value&&
+    (currentWinning.suit===ledSuit||isSpade(c)));
+
+  if(need>0&&canWin.length>0){
+    // Win with lowest winning card
+    return canWin[0];
+  }
+
+  // Play lowest
+  return suitCards[0];
+}
+
+function aiCantFollow(player,need){
+  const hand=G.hands[player];
+  const spades=hand.filter(c=>isSpade(c)).sort((a,b)=>a.value-b.value);
+  const nonSpades=hand.filter(c=>!isSpade(c)).sort((a,b)=>a.value-b.value);
+
+  if(need>0&&spades.length>0){
+    // Trump with lowest spade
+    return spades[0];
+  }
+
+  // Dump lowest non-spade, or lowest spade
+  if(nonSpades.length>0) return nonSpades[0];
+  return spades[0]||hand[0];
+}
+
+function getCurrentWinningCard(){
+  if(G.currentTrick.length===0)return null;
+  const ledSuit=G.currentTrick[0].card.suit;
+  let best=G.currentTrick[0];
+  for(let i=1;i<G.currentTrick.length;i++){
+    const c=G.currentTrick[i];
+    if(isSpade(c.card)&&!isSpade(best.card)) best=c;
+    else if(c.card.suit===best.card.suit&&c.card.value>best.card.value) best=c;
+  }
+  return best.card;
+}
+
+function aiPlaySequence(){
+  if(G.phase!=='playing'||G.animating)return;
+  if(G.currentPlayer===SOUTH)return;
+  const card=getAIPlay(G.currentPlayer);
+  if(card) playCard(G.currentPlayer,card);
+}
+
+function scoreRound(){
+  G.phase='scoring';
+  const scores=[0,0,0,0];
+
+  for(let p=0;p<4;p++){
+    const bid=G.bids[p];
+    const won=G.tricksWon[p];
+
+    if(bid===0){
+      // Nil bid
+      if(won===0){
+        scores[p]=G.blindNil[p]?200:100;
+        if(!G.nilBonusShown){sndNil();G.nilBonusShown=true}
+      } else {
+        scores[p]=G.blindNil[p]?-200:-100;
+      }
+    } else if(won>=bid){
+      scores[p]=bid*10+(won-bid);
+    } else {
+      scores[p]=-bid*10;
+    }
+  }
+
+  const nsScore=scores[SOUTH]+scores[NORTH];
+  const ewScore=scores[WEST]+scores[EAST];
+
+  // Count bags
+  let nsBags=0,ewBags=0;
+  for(let p=0;p<4;p++){
+    if(G.bids[p]>0&&G.tricksWon[p]>G.bids[p]){
+      const over=G.tricksWon[p]-G.bids[p];
+      if(p===SOUTH||p===NORTH) nsBags+=over;
+      else ewBags+=over;
+    }
+  }
+
+  G.bagsNS+=nsBags;
+  G.bagsEW+=ewBags;
+
+  // Bag penalty
+  let nsBagPen=0,ewBagPen=0;
+  if(G.bagsNS>=10){nsBagPen=-100;G.bagsNS-=10}
+  if(G.bagsEW>=10){ewBagPen=-100;G.bagsEW-=10}
+
+  G.scoreNS+=nsScore+nsBagPen;
+  G.scoreEW+=ewScore+ewBagPen;
+
+  // Update stats
+  stats.totalRounds++;
+
+  showScoreDialog(scores,nsScore,ewScore,nsBags,ewBags,nsBagPen,ewBagPen);
+  updateHUD();
+}
+
+function showScoreDialog(scores,nsTrickScore,ewTrickScore,nsBags,ewBags,nsBagPen,ewBagPen){
+  let html='<h2>Round '+G.roundNumber+' Results</h2>';
+  html+='<table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:13px">';
+  html+='<tr style="color:#8892b0"><th style="text-align:left;padding:4px">Player</th><th>Bid</th><th>Won</th><th>Score</th></tr>';
+  for(let p=0;p<4;p++){
+    const isTeam=p===SOUTH||p===NORTH;
+    html+=`<tr style="color:${isTeam?'#4ecdc4':'#e0e8f0'};border-top:1px solid rgba(255,255,255,0.1)">`;
+    html+=`<td style="padding:4px">${PLAYER_NAMES[p]}${G.blindNil[p]?' (Blind Nil)':''}</td>`;
+    html+=`<td style="text-align:center">${G.bids[p]===0?'Nil':G.bids[p]}</td>`;
+    html+=`<td style="text-align:center">${G.tricksWon[p]}</td>`;
+    html+=`<td style="text-align:center;color:${scores[p]>=0?'#4ecdc4':'#ff6b6b'}">${scores[p]>=0?'+':''}${scores[p]}</td>`;
+    html+='</tr>';
+  }
+  html+='</table>';
+  html+=`<p style="font-size:13px;margin-top:8px">N/S Round: <span style="color:${nsTrickScore>=0?'#4ecdc4':'#ff6b6b'}">${nsTrickScore>=0?'+':''}${nsTrickScore}</span>`;
+  html+=` &nbsp; E/W Round: <span style="color:${ewTrickScore>=0?'#4ecdc4':'#ff6b6b'}">${ewTrickScore>=0?'+':''}${ewTrickScore}</span></p>`;
+  if(nsBags>0||ewBags>0) html+=`<p style="font-size:12px;color:#ffcc66">Bags: N/S ${nsBags} (${G.bagsNS} total) | E/W ${ewBags} (${G.bagsEW} total)</p>`;
+  if(nsBagPen<0) html+=`<p style="font-size:12px;color:#ff6b6b">N/S Bag Penalty: ${nsBagPen}</p>`;
+  if(ewBagPen<0) html+=`<p style="font-size:12px;color:#ff6b6b">E/W Bag Penalty: ${ewBagPen}</p>`;
+  html+=`<p style="font-size:14px;font-weight:bold;margin-top:8px">Total: N/S ${G.scoreNS} | E/W ${G.scoreEW}</p>`;
+
+  // Check game over
+  if(G.scoreNS>=500||G.scoreEW>=500){
+    const winner=G.scoreNS>=500?0:1;
+    G.phase='gameOver';
+    G.gameOverWinner=winner;
+    const winTeam=winner===0?'N/S (Your Team)':'E/W';
+    html+=`<h2 style="color:#4ecdc4;margin-top:12px">${winTeam} Wins!</h2>`;
+    if(winner===0){sndWin();stats.gamesWon++}else{sndLose();stats.gamesLost++}
+    stats.totalScore+=G.scoreNS;
+    stats.bestScore=Math.max(stats.bestScore,G.scoreNS);
+    stats.totalTricks+=G.tricksWon[SOUTH];
+    saveStats();
+    html+='<div class="btn-row"><button class="btn" id="bPlayAgain">Play Again</button></div>';
+  } else {
+    html+='<div class="btn-row"><button class="btn" id="bNextRound">Next Round</button></div>';
+  }
+
+  setModal(html);
+
+  const nextBtn=document.getElementById('bNextRound');
+  if(nextBtn)nextBtn.addEventListener('click',()=>{closeModal();startNewRound()});
+  const againBtn=document.getElementById('bPlayAgain');
+  if(againBtn)againBtn.addEventListener('click',()=>{closeModal();startNewGame()});
+}
+
+/* ─── Undo ─── */
+function doUndo(){
+  if(!G.undoState||G.phase!=='playing')return;
+  const s=G.undoState;
+  G.hands=JSON.parse(JSON.stringify(s.hands));
+  G.bids=[...s.bids];
+  G.blindNil=[...s.blindNil];
+  G.tricksWon=[...s.tricksWon];
+  G.spadesBroken=s.spadesBroken;
+  G.tricksPlayed=s.tricksPlayed;
+  G.currentTrick=[];
+  G.trickLeader=G.bidFirst;
+  G.currentPlayer=G.bidFirst;
+  G.animating=false;
+  G.animCards=[];
+  document.getElementById('bUndo').disabled=true;
+  sndCard();
+  toast('Round restarted from bidding');
+  if(G.currentPlayer!==SOUTH){
+    setTimeout(()=>aiPlaySequence(),500);
+  }
+  saveState();
+}
+
+/* ─── Input ─── */
+let hoverCardIdx=-1;
+let clickLocked=false;
+
+function getClickedCard(mx,my){
+  if(G.phase!=='playing'||G.currentPlayer!==SOUTH||G.animating)return-1;
+  const hand=G.hands[SOUTH];
+  for(let i=hand.length-1;i>=0;i--){
+    const pos=getSouthCardPos(i,hand.length);
+    const nextPos=i<hand.length-1?getSouthCardPos(i+1,hand.length):null;
+    const rightEdge=nextPos?nextPos.x:pos.x+cardW;
+    if(mx>=pos.x&&mx<rightEdge&&my>=pos.y-12*scale&&my<=pos.y+cardH){
+      return i;
+    }
+  }
+  return -1;
+}
+
+function getMousePos(e){
+  const r=canvas.getBoundingClientRect();
+  const x=(e.clientX!==undefined?e.clientX:e.touches[0].clientX)-r.left;
+  const y=(e.clientY!==undefined?e.clientY:e.touches[0].clientY)-r.top;
+  return{x,y};
+}
+
+canvas.addEventListener('mousemove',(e)=>{
+  if(G.phase!=='playing'||G.currentPlayer!==SOUTH||G.animating){hoverCardIdx=-1;return}
+  const{x,y}=getMousePos(e);
+  hoverCardIdx=getClickedCard(x,y);
+  canvas.style.cursor=hoverCardIdx>=0?'pointer':'default';
+});
+
+canvas.addEventListener('click',(e)=>{
+  initAudio();
+  if(clickLocked)return;
+  const{x,y}=getMousePos(e);
+
+  if(G.showLastTrick){
+    G.showLastTrick=false;
+    return;
+  }
+
+  if(G.phase==='playing'&&G.currentPlayer===SOUTH&&!G.animating){
+    const idx=getClickedCard(x,y);
+    if(idx>=0){
+      const card=G.hands[SOUTH][idx];
+      if(isLegalPlay(card,idx)){
+        clickLocked=true;
+        playCard(SOUTH,card);
+        setTimeout(()=>{clickLocked=false},300);
+      } else {
+        sndError();
+        toast('You must follow suit!');
+      }
+    }
+  }
+});
+
+canvas.addEventListener('touchstart',(e)=>{
+  e.preventDefault();
+  initAudio();
+  if(clickLocked)return;
+  const touch=e.touches[0];
+  const{x,y}=getMousePos({clientX:touch.clientX,clientY:touch.clientY});
+
+  if(G.showLastTrick){
+    G.showLastTrick=false;
+    return;
+  }
+
+  if(G.phase==='playing'&&G.currentPlayer===SOUTH&&!G.animating){
+    const idx=getClickedCard(x,y);
+    if(idx>=0){
+      const card=G.hands[SOUTH][idx];
+      if(isLegalPlay(card,idx)){
+        clickLocked=true;
+        playCard(SOUTH,card);
+        setTimeout(()=>{clickLocked=false},300);
+      } else {
+        sndError();
+        toast('You must follow suit!');
+      }
+    }
+  }
+},{passive:false});
+
+/* ─── Toast ─── */
+let toastTimer=null;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2000);
+}
+
+function showSpadeFlash(){
+  const el=document.getElementById('spadeFlash');
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),900);
+}
+
+/* ─── Modal ─── */
+function setModal(html){
+  document.getElementById('modal-box').innerHTML=html;
+  document.getElementById('modal').classList.add('active');
+}
+function closeModal(){
+  document.getElementById('modal').classList.remove('active');
+}
+
+/* ─── HUD ─── */
+function updateHUD(){
+  document.getElementById('hNS').textContent=G.scoreNS;
+  document.getElementById('hEW').textContent=G.scoreEW;
+  document.getElementById('hTrick').textContent=G.tricksPlayed+'/13';
+  document.getElementById('hBags').textContent=G.bagsNS+'/'+G.bagsEW;
+  document.getElementById('hBags').className='hud-val'+(G.bagsNS>=7?' warn':'');
+  document.getElementById('bUndo').disabled=!G.undoState||G.phase!=='playing';
+}
+
+/* ─── Statistics ─── */
+function loadStats(){
+  try{
+    const s=JSON.parse(localStorage.getItem(STATS_KEY));
+    if(s&&s.version===SAVE_VER)return s;
+  }catch(e){}
+  return{version:SAVE_VER,gamesWon:0,gamesLost:0,totalRounds:0,totalTricks:0,
+    totalScore:0,bestScore:0,nilAttempts:0,nilSuccesses:0,blindNilAttempts:0,blindNilSuccesses:0};
+}
+
+function saveStats(){
+  try{localStorage.setItem(STATS_KEY,JSON.stringify(stats))}catch(e){}
+}
+
+function showStatsDialog(){
+  let html='<h2>Statistics</h2>';
+  html+=`<p>Games Won: <strong style="color:#4ecdc4">${stats.gamesWon}</strong></p>`;
+  html+=`<p>Games Lost: <strong style="color:#ff6b6b">${stats.gamesLost}</strong></p>`;
+  html+=`<p>Win Rate: <strong>${stats.gamesWon+stats.gamesLost>0?Math.round(stats.gamesWon/(stats.gamesWon+stats.gamesLost)*100):0}%</strong></p>`;
+  html+=`<p>Total Rounds: <strong>${stats.totalRounds}</strong></p>`;
+  html+=`<p>Total Tricks Won: <strong>${stats.totalTricks}</strong></p>`;
+  html+=`<p>Best Score: <strong style="color:#4ecdc4">${stats.bestScore}</strong></p>`;
+  html+=`<p>Avg Score: <strong>${stats.gamesWon+stats.gamesLost>0?Math.round(stats.totalScore/(stats.gamesWon+stats.gamesLost)):0}</strong></p>`;
+  html+='<div class="btn-row"><button class="btn" id="bCloseStats">Close</button>';
+  html+='<button class="btn" id="bResetStats" style="color:#ff6b6b;border-color:rgba(255,107,107,0.3)">Reset</button></div>';
+  setModal(html);
+  document.getElementById('bCloseStats').addEventListener('click',closeModal);
+  document.getElementById('bResetStats').addEventListener('click',()=>{
+    stats={version:SAVE_VER,gamesWon:0,gamesLost:0,totalRounds:0,totalTricks:0,
+      totalScore:0,bestScore:0,nilAttempts:0,nilSuccesses:0,blindNilAttempts:0,blindNilSuccesses:0};
+    saveStats();closeModal();toast('Stats reset');
+  });
+}
+
+/* ─── Tutorial ─── */
+function showTutorial(){
+  let html='<h2>How to Play Spades</h2>';
+  html+='<p><strong style="color:#4ecdc4">Overview:</strong> 4-player trick-taking card game. You (South) partner with North against West & East. First team to 500 points wins!</p>';
+  html+='<p><strong style="color:#4ecdc4">Bidding:</strong> Each player bids 0-13 tricks they expect to win. Bid 0 for <em>Nil</em> (bonus 100 points if you take zero tricks, -100 if you take any).</p>';
+  html+='<p><strong style="color:#4ecdc4">Playing:</strong> The leader plays any card. You must follow suit if you can. If you can\'t, play any card (including spades to trump). Highest card of the led suit wins, unless a spade is played.</p>';
+  html+='<p><strong style="color:#4ecdc4">Spades (Trump):</strong> Spades always beat non-spades. You cannot lead spades until they have been "broken" (played when unable to follow suit).</p>';
+  html+='<p><strong style="color:#4ecdc4">Scoring:</strong> Making your bid = 10x bid + overtricks. Missing = -10x bid. Nil = +100/-100. Blind Nil = +200/-200.</p>';
+  html+='<p><strong style="color:#4ecdc4">Bags:</strong> Overtricks are called "bags." Every 10 bags = -100 point penalty!</p>';
+  html+='<p><strong style="color:#4ecdc4">Tips:</strong></p>';
+  html+='<p> - Count your high cards (Aces, Kings) when bidding<br> - Void suits let you trump with spades<br> - Watch your bags - they add up!<br> - Nil bids can be risky but rewarding</p>';
+  html+='<div class="btn-row"><button class="btn" id="bStartGame">Start Playing</button></div>';
+  setModal(html);
+  document.getElementById('bStartGame').addEventListener('click',()=>{
+    closeModal();
+    startNewGame();
+    localStorage.setItem('gz_spades_tutorial','1');
+  });
+}
+
+/* ─── Save/Load ─── */
+function saveState(){
+  try{
+    const state={version:SAVE_VER,phase:G.phase,hands:G.hands,bids:G.bids,
+      blindNil:G.blindNil,tricksWon:G.tricksWon,currentTrick:G.currentTrick,
+      trickLeader:G.trickLeader,currentPlayer:G.currentPlayer,tricksPlayed:G.tricksPlayed,
+      spadesBroken:G.spadesBroken,scoreNS:G.scoreNS,scoreEW:G.scoreEW,
+      bagsNS:G.bagsNS,bagsEW:G.bagsEW,roundNumber:G.roundNumber,dealer:G.dealer,
+      bidFirst:G.bidFirst};
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  }catch(e){}
+}
+
+function loadState(){
+  try{
+    const s=JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if(s&&s.version===SAVE_VER){
+      Object.assign(G,s);
+      G.animating=false;G.animCards=[];G.showLastTrick=false;G.hintCard=null;
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+/* ─── Buttons ─── */
+document.getElementById('bNew').addEventListener('click',()=>{
+  initAudio();sndCard();startNewGame();
+});
+document.getElementById('bUndo').addEventListener('click',doUndo);
+document.getElementById('bStats').addEventListener('click',showStatsDialog);
+
+/* ─── Game Loop ─── */
+let lastTime=0;
+function gameLoop(time){
+  const dt=time-lastTime;
+  lastTime=time;
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+/* ─── Init ─── */
+function init(){
+  resize();
+  window.addEventListener('resize',resize);
+
+  if(!loadState()||G.phase==='gameOver'){
+    if(!localStorage.getItem('gz_spades_tutorial')){
+      showTutorial();
+    } else {
+      showWelcomeMenu();
+    }
+  } else {
+    updateHUD();
+    // Resume AI if needed
+    if(G.phase==='playing'&&G.currentPlayer!==SOUTH&&!G.animating){
+      setTimeout(()=>aiPlaySequence(),500);
+    }
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+function showWelcomeMenu(){
+  let html='<h2>Spades</h2>';
+  html+='<p style="text-align:center;font-size:40px">♠</p>';
+  html+='<p style="text-align:center">Classic 4-Player Trick-Taking Card Game</p>';
+  html+='<p style="text-align:center;font-size:12px;color:#8892b0">You + North vs West + East | First to 500 wins</p>';
+  html+='<div class="btn-row"><button class="btn" id="bNewGame" style="padding:10px 30px;font-size:14px">New Game</button></div>';
+  html+='<div class="btn-row"><button class="btn" id="bHowTo">How to Play</button></div>';
+  setModal(html);
+  document.getElementById('bNewGame').addEventListener('click',()=>{closeModal();startNewGame()});
+  document.getElementById('bHowTo').addEventListener('click',()=>{closeModal();showTutorial()});
+}
+
+/* ─── Cleanup ─── */
+function cleanup(){
+  G.animating=false;G.animCards=[];
+  localStorage.removeItem(STORAGE_KEY);
+}
+window.addEventListener('beforeunload',()=>{
+  if(G.phase!=='menu'&&G.phase!=='gameOver') saveState();
+});
+
+/* ─── Hint system ─── */
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='h'||e.key==='H'){
+    if(G.phase==='playing'&&G.currentPlayer===SOUTH&&!G.animating){
+      const hand=G.hands[SOUTH];
+      for(let i=0;i<hand.length;i++){
+        if(isLegalPlay(hand[i],i)){
+          G.hintCard=hand[i];
+          toast('Hint: play '+hand[i].rank+SUIT_SYM[hand[i].suit]);
+          setTimeout(()=>{G.hintCard=null},1500);
+          return;
+        }
+      }
+    }
+  }
+  // View last trick with 'l'
+  if((e.key==='l'||e.key==='L')&&G.lastTrick.length>0&&!G.animating){
+    G.showLastTrick=!G.showLastTrick;
+  }
+});
+
+init();
+
+})();
+</script>
+</body>
+</html>
