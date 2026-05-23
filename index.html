@@ -690,30 +690,37 @@ document.getElementById('game-count').textContent=liveGames.length;
   requestAnimationFrame(step);
 })();
 
-// Fix: re-render game grid when page is restored from bfcache or becomes visible
-// bfcache restores page from memory without re-executing JS, so skeleton loaders persist.
-// Also handles: tab switch, mobile back button, swipe-back gestures.
-function _gz_ensureRendered() {
+// Fix: bfcache restores page without re-executing JS or external scripts,
+// so GAMES data and const liveGames are lost while skeleton loaders persist.
+// Solution: detect bfcache restore, reload games-data.js, then re-render.
+(function() {
+  var GAMES_SCRIPT = '/js/games-data.js?v=3e480482';
   var grid = document.getElementById('games');
   if (!grid) return;
-  var hasCards = grid.querySelectorAll('.game-card').length > 0;
-  if (!hasCards && typeof render === 'function') {
-    var live = (typeof liveGames !== 'undefined') ? liveGames :
-               (typeof GAMES !== 'undefined') ? GAMES.filter(function(g){ return g.status==='live' }) : [];
-    if (live.length > 0) {
-      render(live);
-      grid.classList.add('loaded');
-    }
-  } else if (hasCards) {
-    grid.classList.add('loaded');
+  function needsRender() { return grid.querySelectorAll('.game-card').length === 0; }
+  function reloadAndRender() {
+    if (!needsRender()) { grid.classList.add('loaded'); return; }
+    var s = document.createElement('script');
+    s.src = GAMES_SCRIPT;
+    s.onload = function() {
+      if (typeof GAMES !== 'undefined' && typeof render === 'function') {
+        var live = GAMES.filter(function(g){ return g.status === 'live'; });
+        live.sort(function(a,b){ return (b.isNew?1:0) - (a.isNew?1:0); });
+        render(live);
+        grid.classList.add('loaded');
+        var countEl = document.getElementById('game-count');
+        if (countEl) countEl.textContent = live.length;
+      }
+    };
+    document.head.appendChild(s);
   }
-}
-window.addEventListener('pageshow', function(e) {
-  if (e.persisted || document.querySelectorAll('.game-card').length === 0) _gz_ensureRendered();
-});
-document.addEventListener('visibilitychange', function() {
-  if (document.visibilityState === 'visible' && document.querySelectorAll('.game-card').length === 0) _gz_ensureRendered();
-});
+  window.addEventListener('pageshow', function(e) {
+    if (e.persisted) setTimeout(reloadAndRender, 50);
+  });
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible' && needsRender()) setTimeout(reloadAndRender, 50);
+  });
+})();
 </script>
 <script src="play-counter.js?v=e3994f7b" defer></script>
 
