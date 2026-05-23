@@ -177,3 +177,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Rummy",emoji:"🃏",cat:"card",tags:["card game","rummy","classic","strategy","multiplayer"],url:"/rummy/",desc:"Play Rummy online free - Classic card game with draw, meld sets and runs, knock or go gin. Challenge smart AI opponents in Rummy, Gin Rummy and Oklahoma modes.",isNew:true,status:"live"},
