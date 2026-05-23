@@ -153,7 +153,9 @@ const GAMES = [
   {name:"TriPeaks Solitaire",emoji:"🏔️",cat:"card",tags:["Card","Solitaire","Classic"],url:"/tripeaks/",desc:"Play TriPeaks Solitaire online free! Clear three card peaks by matching cards one higher or lower. Challenging levels!",isNew:true,status:"live"},
   {name:"Pool Billiards",emoji:"🎱",cat:"sports",tags:["pool","billiards","8-ball","9-ball","sports"],url:"/pool/",desc:"Play free online Pool and Billiards. 8-Ball, 9-Ball, and Practice modes with realistic physics and AI opponents.",isNew:true,status:"live"},
   {name:"Golf Solitaire",emoji:"⛳",cat:"card",tags:["Card","Solitaire","Golf","Classic","Patience"],url:"/golf-solitaire/",desc:"Play Golf Solitaire free online! Classic patience card game with scoring, hints, daily challenges, undo and achievements. King wraps to Ace!",isNew:true,status:"live"},
-{name:"Bejeweled",emoji:"💎",cat:"puzzle",tags:["Puzzle","Match-3","Classic","Arcade"],url:"/bejeweled/",desc:"Play Bejeweled free online! Swap gems to match 3 or more. Create striped, wrapped and rainbow special gems. 30 levels with progressive difficulty!",isNew:true,status:"live"}
+  {name:"Bejeweled",emoji:"💎",cat:"puzzle",tags:["Puzzle","Match-3","Classic","Arcade"],url:"/bejeweled/",desc:"Play Bejeweled free online! Swap gems to match 3 or more. Create striped, wrapped and rainbow special gems. 30 levels with progressive difficulty!",isNew:true,status:"live"},
+  {name:"Rummy",emoji:"🃏",cat:"card",tags:["card game","rummy","classic","strategy","multiplayer"],url:"/rummy/",desc:"Play Rummy online free - Classic card game with draw, meld sets and runs, knock or go gin. Challenge smart AI opponents in Rummy, Gin Rummy and Oklahoma modes.",isNew:true,status:"live"},
+  {name:"Farkle",emoji:"🎲",cat:"board",tags:["dice","farkle","board","casino","multiplayer"],url:"/farkle/",desc:"Play Farkle dice game free online. Roll 6 dice, score combinations, push your luck to reach 10000. 3 AI difficulties and local 2-player mode.",isNew:true,status:"live"},
 
 ];
 
@@ -178,5 +180,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Rummy",emoji:"🃏",cat:"card",tags:["card game","rummy","classic","strategy","multiplayer"],url:"/rummy/",desc:"Play Rummy online free - Classic card game with draw, meld sets and runs, knock or go gin. Challenge smart AI opponents in Rummy, Gin Rummy and Oklahoma modes.",isNew:true,status:"live"}
-{name:"Farkle",emoji:"🎲",cat:"board",tags:["dice","farkle","board","casino","multiplayer"],url:"/farkle/",desc:"Play Farkle dice game free online. Roll 6 dice, score combinations, push your luck to reach 10000. 3 AI difficulties and local 2-player mode.",isNew:true,status:"live"},

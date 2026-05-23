@@ -262,4 +262,4 @@
      setTimeout(init, 100);
    }
  }
-})()
+},{n:'Farkle',e:'🎲',u:'/farkle/',c:'board'})()
