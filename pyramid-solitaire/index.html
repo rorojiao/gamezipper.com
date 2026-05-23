@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Play Pyramid Solitaire Online Free - Classic Card Game | GameZipper</title>
+<meta name="description" content="Play Pyramid Solitaire free online. Match cards that sum to 13 in this classic card game. Daily challenges, achievements, and statistics.">
+<link rel="canonical" href="https://gamezipper.com/pyramid-solitaire/">
+<meta property="og:title" content="Play Pyramid Solitaire Online Free - Classic Card Game | GameZipper">
+<meta property="og:description" content="Match cards that sum to 13 in this classic Pyramid Solitaire card game. Free to play with daily challenges.">
+<meta property="og:image" content="https://gamezipper.com/pyramid-solitaire/og-image.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/pyramid-solitaire/">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow-x:hidden;user-select:none;-webkit-user-select:none;background:#1a472a;font-family:Georgia,'Times New Roman',serif;touch-action:none}
+canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
+#ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
+#ui>*{pointer-events:auto}
+.hud{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:linear-gradient(180deg,rgba(0,0,0,.45) 0%,rgba(0,0,0,.2) 100%);color:#ffd700;font-size:14px;font-weight:bold;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.hud-group{display:flex;gap:12px;align-items:center}
+.hud-item{display:flex;flex-direction:column;align-items:center;line-height:1.2}
+.hud-label{font-size:9px;color:#c0c0c0;font-weight:normal;text-transform:uppercase;letter-spacing:.5px}
+.hud-val{font-size:15px;color:#ffd700}
+.btn-bar{display:flex;gap:6px;justify-content:center;padding:4px 8px}
+.gbtn{background:linear-gradient(180deg,#4a7c59 0%,#2d5a3a 100%);border:1px solid #6aaa6e;color:#fff;padding:6px 12px;border-radius:6px;font-size:12px;font-family:inherit;cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,.5);box-shadow:0 2px 4px rgba(0,0,0,.3);transition:all .15s}
+.gbtn:hover{background:linear-gradient(180deg,#5a9c69 0%,#3d7a4a 100%);transform:translateY(-1px)}
+.gbtn:active{transform:translateY(1px);box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.gbtn:disabled{opacity:.4;cursor:default;transform:none}
+.gbtn.accent{background:linear-gradient(180deg,#d4a017 0%,#b8860b 100%);border-color:#f0c040;color:#1a1a1a;text-shadow:none}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:flex;justify-content:center;align-items:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.active{opacity:1;pointer-events:auto}
+.modal{background:linear-gradient(180deg,#2d5a3a,#1a472a);border:2px solid #6aaa6e;border-radius:12px;padding:24px;max-width:380px;width:90%;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.modal h2{color:#ffd700;font-size:20px;margin-bottom:12px;text-align:center}
+.modal p{font-size:13px;line-height:1.5;margin-bottom:8px;color:#ddd}
+.modal .gbtn{margin-top:12px;width:100%;padding:10px;font-size:14px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.stat-box{background:rgba(0,0,0,.3);border-radius:8px;padding:8px;text-align:center}
+.stat-box .sv{font-size:18px;color:#ffd700}
+.stat-box .sl{font-size:10px;color:#aaa;margin-top:2px}
+.ach-list{margin:12px 0}
+.ach-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:12px}
+.ach-item.locked{opacity:.4}
+.ach-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;background:#3a3a3a;flex-shrink:0}
+.ach-item.unlocked .ach-icon{background:linear-gradient(135deg,#ffd700,#ff8c00)}
+.ach-name{font-weight:bold;color:#ffd700}
+.ach-desc{color:#aaa;font-size:10px}
+.tut-step{text-align:center}
+.tut-step h3{color:#ffd700;margin-bottom:8px;font-size:16px}
+.tut-step p{margin-bottom:16px}
+.tut-img{font-size:48px;margin:16px 0;display:block}
+.tut-dots{display:flex;justify-content:center;gap:6px;margin:12px 0}
+.tut-dot{width:8px;height:8px;border-radius:50%;background:#555}
+.tut-dot.active{background:#ffd700}
+.daily-badge{background:#d4a017;color:#1a1a1a;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:bold;display:inline-block;margin-left:4px}
+.combo-popup{position:fixed;pointer-events:none;color:#ffd700;font-size:28px;font-weight:bold;text-shadow:0 2px 8px rgba(0,0,0,.8);z-index:50;animation:comboUp .8s ease-out forwards}
+@keyframes comboUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(1.3)}}
+@media(max-width:600px){.hud{font-size:12px;padding:4px 6px}.hud-val{font-size:13px}.gbtn{padding:5px 8px;font-size:11px}.modal{padding:16px}}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[{"@type":"VideoGame","name":"Pyramid Solitaire","description":"Classic Pyramid Solitaire card game. Match card pairs summing to 13 to clear the pyramid.","genre":"Card Game","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://gamezipper.com/pyramid-solitaire/","publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com/"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Pyramid Solitaire?","acceptedAnswer":{"@type":"Answer","text":"Remove pairs of cards that sum to 13 (A=1, 2=2, ... 10=10, J=11, Q=12). Kings (13) are removed alone. Cards in the pyramid are blocked until both cards below are removed."}},{"@type":"Question","name":"What is a good Pyramid Solitaire score?","acceptedAnswer":{"@type":"Answer","text":"Scores depend on combos and speed. Clearing the full pyramid earns 50 bonus points. Consecutive pairs earn combo multipliers (x2, x3, etc)."}},{"@type":"Question","name":"Can Pyramid Solitaire always be won?","acceptedAnswer":{"@type":"Answer","text":"Not every deal is winnable, but the daily challenge is the same for everyone so you can compare strategies."}}]},{"@type":"HowTo","name":"How to Play Pyramid Solitaire","step":[{"@type":"HowToStep","position":1,"text":"Cards are dealt in a pyramid of 7 rows (28 cards). The remaining 24 cards form the stock pile."},{"@type":"HowToStep","position":2,"text":"Click two uncovered cards that add up to 13 to remove them. Kings (value 13) can be removed alone."},{"@type":"HowToStep","position":3,"text":"Draw cards from the stock pile to the waste pile. The top waste card is available for matching."},{"@type":"HowToStep","position":4,"text":"Clear all 28 pyramid cards to win. You get 3 passes through the stock pile."}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Card Games","item":"https://gamezipper.com/category/card-games/"},{"@type":"ListItem","position":3,"name":"Pyramid Solitaire"}]}]}
+</script>
+</head>
+<body>
+<canvas id="gc"></canvas>
+<div id="ui">
+  <div class="hud" id="hud">
+    <div class="hud-group">
+      <div class="hud-item"><span class="hud-label">Score</span><span class="hud-val" id="hud-score">0</span></div>
+      <div class="hud-item"><span class="hud-label">Combo</span><span class="hud-val" id="hud-combo">-</span></div>
+    </div>
+    <div class="hud-group">
+      <div class="hud-item"><span class="hud-label">Time</span><span class="hud-val" id="hud-time">0:00</span></div>
+      <div class="hud-item"><span class="hud-label">Passes</span><span class="hud-val" id="hud-passes">3</span></div>
+      <div class="hud-item" id="daily-hud" style="display:none"><span class="hud-label">Daily</span><span class="daily-badge">DAILY</span></div>
+    </div>
+  </div>
+  <div class="btn-bar" id="btn-bar">
+    <button class="gbtn" id="btn-undo" title="Undo">Undo</button>
+    <button class="gbtn" id="btn-hint" title="Hint">Hint</button>
+    <button class="gbtn" id="btn-new" title="New Game">New</button>
+    <button class="gbtn" id="btn-daily" title="Daily Challenge">Daily</button>
+    <button class="gbtn" id="btn-stats" title="Statistics">Stats</button>
+    <button class="gbtn" id="btn-ach" title="Achievements">Awards</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-tut">
+  <div class="modal" id="tut-modal"></div>
+</div>
+<div class="overlay" id="overlay-win">
+  <div class="modal" id="win-modal"></div>
+</div>
+<div class="overlay" id="overlay-stats">
+  <div class="modal" id="stats-modal"></div>
+</div>
+<div class="overlay" id="overlay-ach">
+  <div class="modal" id="ach-modal"></div>
+</div>
+<div class="overlay" id="overlay-menu">
+  <div class="modal" id="menu-modal"></div>
+</div>
+<div class="overlay" id="overlay-lose">
+  <div class="modal" id="lose-modal"></div>
+</div>
+
+<script>
+'use strict';
+(function(){
+/* ── Constants ── */
+const SUITS=['spades','hearts','diamonds','clubs'];
+const SUIT_SYM=['♠','♥','♦','♣'];
+const SUIT_RED=[false,true,true,false];
+const VAL_NAME=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const PYRAMID_ROWS=7;
+const PYRAMID_TOTAL=28;
+const STOCK_SIZE=24;
+const MAX_PASSES=3;
+const SAVE_VER=2;
+
+/* ── Canvas & State ── */
+const canvas=document.getElementById('gc');
+const ctx=canvas.getContext('2d');
+let W,H,dpr;
+let gameState='idle'; // idle, dealing, playing, won, lost
+let pyramid=[]; // array of card objects [row][col]
+let flatPyramid=[]; // flat list for easy access
+let stock=[];
+let waste=[];
+let selectedCard=null;
+let score=0;
+let combo=0;
+let maxCombo=0;
+let comboTimer=0;
+let passesLeft=MAX_PASSES;
+let timerStart=0;
+let elapsedTime=0;
+let undoStack=[];
+let hintCards=[];
+let hintTimer=0;
+let particles=[];
+let animCards=[];
+let dealQueue=[];
+let dealTimer=0;
+let shakeAmount=0;
+let shakeTimer=0;
+let isDaily=false;
+let dailySeed=0;
+let stockUsedCount=0;
+let gameTimerInterval=null;
+let rafId=null;
+let audioCtx=null;
+let lastFrameTime=0;
+let cleanupDone=false;
+let frameDt=0; // current frame delta time, available to all functions
+
+/* ── Layout metrics (recomputed on resize) ── */
+let M={};
+function computeMetrics(){
+  const pad=8, hudH=document.getElementById('hud').offsetHeight||40;
+  const barH=document.getElementById('btn-bar').offsetHeight||36;
+  const topY=hudH+pad;
+  const botArea=H-topY;
+  const stockAreaH=Math.min(130,botArea*.22);
+  const pyramidH=botArea-stockAreaH-barH-pad;
+  // Card width: fit 7 cards in bottom row with gaps, min 44px for touch
+  const maxCW=(W-pad*2)/PYRAMID_ROWS-2;
+  const cw=Math.max(44,Math.min(72,maxCW));
+  const ch=cw*1.4;
+  const overlap=Math.min(ch*.78,pyramidH/PYRAMID_ROWS);
+  const pyrY=topY+10;
+  const stockY=pyrY+(PYRAMID_ROWS-1)*overlap+ch+ch*.3;
+  const stockX=W*.15;
+  const wasteX=Math.min(W*.4,stockX+cw+50);
+  M={cw,ch,overlap,pyrY,stockY,stockX,wasteX,topY,stockAreaH,barH,pad};
+}
+
+/* ── Card object ── */
+function makeCard(suit,value){
+  return{suit,value,faceUp:false,removed:false,x:0,y:0,tx:0,ty:0,
+    flipAnim:0,flipTarget:0,removeAnim:0,highlight:0,glow:0,row:-1,col:-1,
+    source:'pyramid',animating:false};
+}
+
+function cardColor(c){return SUIT_RED[c.suit]?'red':'black'}
+function cardVal(c){return c.value+1} // A=1 .. K=13
+function cardName(c){return VAL_NAME[c.value]+SUIT_SYM[c.suit]}
+
+/* ── Seeded RNG ── */
+function seededRandom(seed){
+  let s=seed|0;
+  return function(){s=(s*1664525+1013904223)|0;return(s>>>0)/4294967296};
+}
+
+/* ── Deck & Deal ── */
+function createDeck(rng){
+  const d=[];
+  for(let s=0;s<4;s++)for(let v=0;v<13;v++)d.push(makeCard(s,v));
+  // Fisher-Yates shuffle
+  for(let i=d.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[d[i],d[j]]=[d[j],d[i]]}
+  return d;
+}
+
+function dealGame(seed){
+  const rng=seed!=null?seededRandom(seed):seededRandom(Date.now());
+  const deck=createDeck(rng);
+  pyramid=[];flatPyramid=[];
+  let idx=0;
+  for(let r=0;r<PYRAMID_ROWS;r++){
+    pyramid[r]=[];
+    for(let c=0;c<=r;c++){
+      const card=deck[idx++];
+      card.row=r;card.col=c;card.source='pyramid';
+      // Top row is always uncovered
+      if(r===0)card.faceUp=true;
+      pyramid[r].push(card);
+      flatPyramid.push(card);
+    }
+  }
+  stock=[];waste=[];
+  for(let i=0;i<STOCK_SIZE;i++){
+    const card=deck[idx++];
+    card.source='stock';
+    stock.push(card);
+  }
+  // Assign positions
+  positionAllCards();
+  // Deal animation
+  startDealAnimation();
+}
+
+function positionAllCards(){
+  const{cw,ch,overlap,pyrY,stockX,stockY,wasteX}=M;
+  const gap=2;
+  for(let r=0;r<PYRAMID_ROWS;r++){
+    const rowW=(r+1)*(cw+gap);
+    const startX=W/2-rowW/2+cw/2;
+    for(let c=0;c<=r;c++){
+      const card=pyramid[r][c];
+      card.tx=startX+c*(cw+gap);
+      card.ty=pyrY+r*overlap;
+      if(!card.animating){card.x=card.tx;card.y=card.ty}
+    }
+  }
+  // Stock
+  for(let i=0;i<stock.length;i++){
+    stock[i].tx=stockX;stock[i].ty=stockY;
+    if(!stock[i].animating){stock[i].x=stockX;stock[i].y=stockY}
+  }
+  // Waste
+  for(let i=0;i<waste.length;i++){
+    waste[i].tx=wasteX;waste[i].ty=stockY;
+    if(!waste[i].animating){waste[i].x=wasteX;waste[i].y=stockY}
+  }
+}
+
+/* ── Deal Animation ── */
+function startDealAnimation(){
+  gameState='dealing';
+  dealQueue=[];
+  for(let r=0;r<PYRAMID_ROWS;r++){
+    for(let c=0;c<=r;c++){
+      dealQueue.push({card:pyramid[r][c],delay:r*80+c*30});
+    }
+  }
+  dealTimer=0;
+  // Start all cards from center top
+  for(let r=0;r<PYRAMID_ROWS;r++){
+    for(let c=0;c<=r;c++){
+      const card=pyramid[r][c];
+      card.x=W/2;card.y=-M.ch;
+      card.animating=true;
+    }
+  }
+}
+
+/* ── Card covering logic ── */
+function isCovered(card){
+  if(card.source!=='pyramid')return false;
+  const r=card.row,c=card.col;
+  if(r>=PYRAMID_ROWS-1)return false;
+  const below1=pyramid[r+1][c];
+  const below2=pyramid[r+1][c+1];
+  return!below1.removed||!below2.removed;
+}
+
+function uncoverCards(){
+  for(let r=0;r<PYRAMID_ROWS;r++){
+    for(let c=0;c<=r;c++){
+      const card=pyramid[r][c];
+      if(!card.removed&&!card.faceUp&&!isCovered(card)){
+        card.faceUp=true;
+        card.flipTarget=1;
+        card.flipAnim=0;
+        playSound('flip');
+      }
+    }
+  }
+}
+
+/* ── Game Logic ── */
+function canSelect(card){
+  if(!card||card.removed)return false;
+  if(card.source==='pyramid'&&!card.faceUp)return false;
+  if(card.source==='pyramid'&&isCovered(card))return false;
+  if(card.source==='stock')return false;
+  if(card.source==='waste'&&card!==waste[waste.length-1])return false;
+  return true;
+}
+
+function tryMatch(c1,c2){
+  if(!c1||!c2)return false;
+  if(c1===c2)return false;
+  const v1=cardVal(c1),v2=cardVal(c2);
+  if(v1+v2===13)return true;
+  return false;
+}
+
+function removeCards(c1,c2){
+  // Save undo state
+  saveUndo();
+  c1.removed=true;c2.removed=true;
+  c1.removeAnim=1;c2.removeAnim=1;
+  // Scoring
+  combo++;
+  if(combo>maxCombo)maxCombo=combo;
+  comboTimer=2;
+  const mult=Math.min(combo,10);
+  const pts=10*mult;
+  score+=pts;
+  if(combo>1)showComboPopup(combo,pts);
+  // Particles
+  spawnParticles(c1.tx+M.cw/2,c1.ty+M.ch/2,cardColor(c1)==='red'?'#ff4444':'#4444ff');
+  spawnParticles(c2.tx+M.cw/2,c2.ty+M.ch/2,cardColor(c2)==='red'?'#ff4444':'#4444ff');
+  playSound('match');
+  selectedCard=null;
+  hintCards=[];
+  // Check uncover
+  timers.push(setTimeout(()=>{uncoverCards();checkWin()},300));
+  updateHUD();
+}
+
+function removeKing(card){
+  saveUndo();
+  card.removed=true;
+  card.removeAnim=1;
+  combo++;
+  if(combo>maxCombo)maxCombo=combo;
+  comboTimer=2;
+  const mult=Math.min(combo,10);
+  const pts=10*mult;
+  score+=pts;
+  if(combo>1)showComboPopup(combo,pts);
+  spawnParticles(card.tx+M.cw/2,card.ty+M.ch/2,'#ffd700');
+  playSound('match');
+  selectedCard=null;
+  hintCards=[];
+  timers.push(setTimeout(()=>{uncoverCards();checkWin()},300));
+  updateHUD();
+}
+
+function drawStock(){
+  if(stock.length===0){
+    if(passesLeft>0){
+      saveUndo();
+      passesLeft--;
+      // Recycle waste back to stock
+      while(waste.length>0){
+        const c=waste.pop();
+        c.source='stock';
+        c.faceUp=false;
+        stock.push(c);
+      }
+      playSound('flip');
+    }else{
+      triggerShake();
+      playSound('error');
+    }
+    updateHUD();
+    return;
+  }
+  saveUndo();
+  const card=stock.pop();
+  card.source='waste';
+  card.faceUp=true;
+  waste.push(card);
+  stockUsedCount++;
+  // Animate from stock to waste
+  card.animating=true;
+  const startX=card.x,startY=card.y;
+  card.tx=M.wasteX;card.ty=M.stockY;
+  // Simple lerp animation
+  const anim={card,startX,startY,progress:0,duration:.25};
+  animCards.push(anim);
+  playSound('flip');
+  updateHUD();
+}
+
+function checkWin(){
+  const allRemoved=flatPyramid.every(c=>c.removed);
+  if(allRemoved){
+    gameState='won';
+    const timeBonus=Math.max(0,500-Math.floor(elapsedTime));
+    const clearBonus=50;
+    score+=clearBonus+timeBonus;
+    // Check achievements
+    checkAchievements(true);
+    // Win celebration
+    spawnFireworks();
+    playSound('win');
+    clearInterval(gameTimerInterval);
+    // Save stats
+    saveStats(true);
+    timers.push(setTimeout(()=>showWinModal(timeBonus,clearBonus),800));
+    updateHUD();
+  }else{
+    checkNoMoves();
+  }
+}
+
+function checkNoMoves(){
+  // Check if any moves are possible
+  const available=getAvailablePairs();
+  const canDraw=stock.length>0||passesLeft>0;
+  if(available.length===0&&!canDraw){
+    gameState='lost';
+    clearInterval(gameTimerInterval);
+    saveStats(false);
+    playSound('error');
+    timers.push(setTimeout(showLoseModal,500));
+  }
+}
+
+function getAvailablePairs(){
+  const pairs=[];
+  const wasteTop=waste.length>0?waste[waste.length-1]:null;
+  const faceUpCards=flatPyramid.filter(c=>!c.removed&&c.faceUp&&!isCovered(c));
+  // Kings alone
+  for(const c of faceUpCards){
+    if(cardVal(c)===13)pairs.push([c,null]);
+  }
+  // Pyramid pairs
+  for(let i=0;i<faceUpCards.length;i++){
+    for(let j=i+1;j<faceUpCards.length;j++){
+      if(tryMatch(faceUpCards[i],faceUpCards[j]))pairs.push([faceUpCards[i],faceUpCards[j]]);
+    }
+  }
+  // Waste + pyramid
+  if(wasteTop){
+    for(const c of faceUpCards){
+      if(tryMatch(wasteTop,c))pairs.push([wasteTop,c]);
+    }
+    if(cardVal(wasteTop)===13)pairs.push([wasteTop,null]);
+  }
+  return pairs;
+}
+
+/* ── Undo System ── */
+function saveUndo(){
+  const state={
+    pyramid:flatPyramid.map(c=>({row:c.row,col:c.col,suit:c.suit,value:c.value,faceUp:c.faceUp,removed:c.removed,source:c.source})),
+    stock:stock.map(c=>({suit:c.suit,value:c.value})),
+    waste:waste.map(c=>({suit:c.suit,value:c.value,faceUp:c.faceUp,source:c.source})),
+    score,combo,passesLeft,stockUsedCount,selectedCardIdx:selectedCard?flatPyramid.indexOf(selectedCard):-1
+  };
+  undoStack.push(state);
+  if(undoStack.length>100)undoStack.shift();
+}
+
+function doUndo(){
+  if(undoStack.length===0)return;
+  const state=undoStack.pop();
+  // Restore
+  score=state.score;combo=state.combo;comboTimer=0;passesLeft=state.passesLeft;stockUsedCount=state.stockUsedCount;
+  // Rebuild pyramid
+  for(let i=0;i<state.pyramid.length;i++){
+    const s=state.pyramid[i];const c=flatPyramid[i];
+    c.faceUp=s.faceUp;c.removed=s.removed;c.source=s.source;
+  }
+  // Rebuild stock
+  stock=[];
+  for(const s of state.stock){const c=makeCard(s.suit,s.value);c.source='stock';c.faceUp=false;stock.push(c)}
+  // Rebuild waste
+  waste=[];
+  for(const s of state.waste){const c=makeCard(s.suit,s.value);c.faceUp=s.faceUp;c.source=s.source||'waste';waste.push(c)}
+  selectedCard=null;hintCards=[];animCards=[];
+  positionAllCards();
+  playSound('click');
+  updateHUD();
+}
+
+/* ── Hint System ── */
+function showHint(){
+  const pairs=getAvailablePairs();
+  if(pairs.length===0){
+    if(stock.length>0||passesLeft>0){
+      // Hint to draw
+      hintCards=[];
+      triggerShake();
+      playSound('error');
+    }else{
+      triggerShake();
+      playSound('error');
+    }
+    return;
+  }
+  const pair=pairs[Math.floor(Math.random()*pairs.length)];
+  hintCards=pair.filter(c=>c!==null);
+  hintTimer=2;
+  playSound('click');
+}
+
+/* ── Rendering ── */
+function render(dt){
+  ctx.clearRect(0,0,W,H);
+  drawBackground();
+  // Shake
+  let sx=0,sy=0;
+  if(shakeTimer>0){
+    shakeTimer-=dt;
+    sx=(Math.random()-.5)*shakeAmount*2;
+    sy=(Math.random()-.5)*shakeAmount*2;
+    shakeAmount*=.9;
+  }
+  ctx.save();
+  ctx.translate(sx,sy);
+  // Draw pyramid cards (back to front: row 0 first, row 6 last/on top)
+  for(let r=0;r<PYRAMID_ROWS;r++){
+    for(let c=0;c<=r;c++){
+      drawCard(pyramid[r][c]);
+    }
+  }
+  // Stock pile
+  drawStockPile();
+  // Waste pile - only draw top card
+  if(waste.length>0)drawCard(waste[waste.length-1]);
+  // Hint glow
+  if(hintTimer>0){
+    hintTimer-=dt;
+    const glow=.5+.5*Math.sin(hintTimer*8);
+    for(const c of hintCards){
+      if(!c||c.removed)continue;
+      ctx.save();
+      ctx.shadowColor='#ffd700';
+      ctx.shadowBlur=15+glow*10;
+      ctx.strokeStyle='rgba(255,215,0,'+(0.6+glow*0.4)+')';
+      ctx.lineWidth=3;
+      roundRect(ctx,c.x,c.y,M.cw,M.ch,6);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+  // Particles
+  updateAndDrawParticles(dt);
+  // Fireworks
+  updateAndDrawFireworks(dt);
+}
+
+function drawBackground(){
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#1a5c2e');
+  grad.addColorStop(.5,'#1a472a');
+  grad.addColorStop(1,'#0f2e1a');
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,W,H);
+  // Subtle felt texture
+  ctx.globalAlpha=.04;
+  for(let i=0;i<200;i++){
+    const x=((i*7919)%W);
+    const y=((i*104729)%H);
+    ctx.fillStyle=i%2?'#fff':'#000';
+    ctx.fillRect(x,y,1,1);
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawCard(card){
+  if(!card||card.removed&&card.removeAnim<=0)return;
+  const{cw,ch}=M;
+  let x=card.x,y=card.y;
+  let alpha=1;
+  let scaleX=1;
+  // Remove animation
+  if(card.removeAnim>0){
+    card.removeAnim-=frameDt*1.8;
+    if(card.removeAnim<=0){card.removeAnim=0;return}
+    alpha=card.removeAnim;
+    y-=30*(1-card.removeAnim);
+    scaleX=1+card.removeAnim*.1;
+  }
+  // Flip animation
+  if(card.flipAnim<card.flipTarget){
+    card.flipAnim=Math.min(card.flipAnim+frameDt*3.5,card.flipTarget);
+    const flip=card.flipAnim;
+    if(flip<.5)scaleX=Math.abs(1-flip*2);
+    else scaleX=Math.abs((flip-.5)*2);
+    if(flip>=.5)card.faceUp=true;
+  }
+  // Highlight for selected
+  if(card===selectedCard){
+    card.glow=Math.min((card.glow||0)+frameDt*4,1);
+  }else{
+    card.glow=Math.max((card.glow||0)-frameDt*4,0);
+  }
+
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.translate(x+cw/2,y+ch/2);
+  ctx.scale(scaleX,1);
+
+  if(card.faceUp||card.flipAnim>.5){
+    drawCardFace(card,-cw/2,-ch/2,cw,ch);
+  }else{
+    drawCardBack(-cw/2,-ch/2,cw,ch);
+  }
+  // Selection highlight
+  if(card.glow>0){
+    ctx.strokeStyle='rgba(255,215,0,'+card.glow*.8+')';
+    ctx.lineWidth=3;
+    ctx.shadowColor='#ffd700';
+    ctx.shadowBlur=10*card.glow;
+    roundRect(ctx,-cw/2,-ch/2,cw,ch,6);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawCardFace(card,x,y,w,h){
+  // White card
+  ctx.fillStyle='#fff';
+  roundRect(ctx,x,y,w,h,6);
+  ctx.fill();
+  ctx.strokeStyle='#ccc';
+  ctx.lineWidth=1;
+  roundRect(ctx,x,y,w,h,6);
+  ctx.stroke();
+  const color=cardColor(card)==='red'?'#cc0000':'#1a1a1a';
+  ctx.fillStyle=color;
+  ctx.textAlign='left';
+  ctx.textBaseline='top';
+  // Value top-left
+  ctx.font='bold '+Math.round(w*.22)+'px Georgia';
+  ctx.fillText(VAL_NAME[card.value],x+3,y+2);
+  // Suit below value
+  ctx.font=Math.round(w*.18)+'px Georgia';
+  ctx.fillText(SUIT_SYM[card.suit],x+3,y+2+w*.22);
+  // Center suit
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.font=Math.round(w*.4)+'px Georgia';
+  ctx.fillText(SUIT_SYM[card.suit],x+w/2,y+h/2);
+  // Bottom-right (inverted)
+  ctx.save();
+  ctx.translate(x+w,y+h);
+  ctx.rotate(Math.PI);
+  ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.font='bold '+Math.round(w*.22)+'px Georgia';
+  ctx.fillText(VAL_NAME[card.value],3,2);
+  ctx.font=Math.round(w*.18)+'px Georgia';
+  ctx.fillText(SUIT_SYM[card.suit],3,2+w*.22);
+  ctx.restore();
+}
+
+function drawCardBack(x,y,w,h){
+  const grad=ctx.createLinearGradient(x,y,x+w,y+h);
+  grad.addColorStop(0,'#2244aa');
+  grad.addColorStop(1,'#1a3388');
+  ctx.fillStyle=grad;
+  roundRect(ctx,x,y,w,h,6);
+  ctx.fill();
+  ctx.strokeStyle='#1a3388';
+  ctx.lineWidth=1;
+  roundRect(ctx,x,y,w,h,6);
+  ctx.stroke();
+  // Pattern
+  ctx.strokeStyle='rgba(255,255,255,.15)';
+  ctx.lineWidth=1;
+  const p=4;
+  roundRect(ctx,x+p,y+p,w-p*2,h-p*2,4);
+  ctx.stroke();
+  // Diamond pattern
+  ctx.beginPath();
+  const cx=x+w/2,cy=y+h/2;
+  const sz=Math.min(w,h)*.25;
+  ctx.moveTo(cx,cy-sz);ctx.lineTo(cx+sz,cy);ctx.lineTo(cx,cy+sz);ctx.lineTo(cx-sz,cy);ctx.closePath();
+  ctx.strokeStyle='rgba(255,215,0,.3)';ctx.lineWidth=1.5;ctx.stroke();
+}
+
+function drawStockPile(){
+  const{cw,ch,stockX,stockY}=M;
+  if(stock.length>0){
+    // Draw stack effect
+    const layers=Math.min(3,Math.ceil(stock.length/8));
+    for(let i=layers-1;i>=0;i--){
+      const ox=i*1.5,oy=-i*1.5;
+      drawCardBack(stockX+ox,stockY+oy,cw,ch);
+    }
+    // Count
+    ctx.fillStyle='rgba(255,255,255,.7)';
+    ctx.font='bold 11px Georgia';
+    ctx.textAlign='center';
+    ctx.fillText(stock.length,stockX+cw/2,stockY+ch+14);
+  }else if(passesLeft>0){
+    // Recycle indicator
+    ctx.strokeStyle='rgba(255,215,0,.4)';
+    ctx.lineWidth=2;
+    ctx.setLineDash([4,4]);
+    roundRect(ctx,stockX,stockY,cw,ch,6);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(255,215,0,.6)';
+    ctx.font='18px Georgia';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('↻',stockX+cw/2,stockY+ch/2);
+  }
+}
+
+function roundRect(c,x,y,w,h,r){
+  c.beginPath();
+  c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h);c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);
+  c.closePath();
+}
+
+/* ── Particles ── */
+function spawnParticles(x,y,color){
+  for(let i=0;i<12;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=80+Math.random()*120;
+    particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
+      life:1,decay:.8+Math.random()*.5,size:3+Math.random()*4,color});
+  }
+}
+let fireworks=[];
+function spawnFireworks(){
+  for(let i=0;i<5;i++){
+    setTimeout(()=>{
+      const fx=W*.15+Math.random()*W*.7;
+      const fy=H*.15+Math.random()*H*.4;
+      const colors=['#ff4444','#44ff44','#4444ff','#ffff44','#ff44ff','#ffd700'];
+      const col=colors[Math.floor(Math.random()*colors.length)];
+      for(let j=0;j<30;j++){
+        const angle=Math.random()*Math.PI*2;
+        const speed=50+Math.random()*150;
+        particles.push({x:fx,y:fy,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-30,
+          life:1,decay:.3+Math.random()*.3,size:2+Math.random()*3,color:col});
+      }
+    },i*400);
+  }
+}
+
+function updateAndDrawParticles(dt){
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx*dt;p.y+=p.vy*dt;
+    p.vy+=200*dt; // gravity
+    p.life-=p.decay*dt;
+    if(p.life<=0){particles.splice(i,1);continue}
+    ctx.globalAlpha=p.life;
+    ctx.fillStyle=p.color;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+
+function updateAndDrawFireworks(dt){}
+
+/* ── Animations ── */
+function updateAnimations(dt){
+  // Deal animation
+  if(gameState==='dealing'){
+    dealTimer+=dt*1000;
+    let allDone=true;
+    for(const d of dealQueue){
+      if(dealTimer>=d.delay){
+        const card=d.card;
+        const dx=card.tx-card.x,dy=card.ty-card.y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist>1){
+          card.x+=dx*.15;card.y+=dy*.15;
+          allDone=false;
+        }else{
+          card.x=card.tx;card.y=card.ty;
+          card.animating=false;
+        }
+      }else{
+        allDone=false;
+      }
+    }
+    if(allDone){
+      gameState='playing';
+      startTimer();
+      uncoverCards();
+      // Show tutorial if first time
+      if(!localStorage.getItem('pyr_tut_done'))showTutorial();
+    }
+  }
+  // Card slide animations
+  for(let i=animCards.length-1;i>=0;i--){
+    const a=animCards[i];
+    a.progress+=dt/a.duration;
+    if(a.progress>=1){
+      a.card.x=a.card.tx;a.card.y=a.card.ty;a.card.animating=false;
+      animCards.splice(i,1);
+    }else{
+      const t=a.progress;
+      a.card.x=a.startX+(a.card.tx-a.startX)*t;
+      a.card.y=a.startY+(a.card.ty-a.startY)*t;
+    }
+  }
+  // Combo timer
+  if(comboTimer>0){
+    comboTimer-=dt;
+    if(comboTimer<=0){combo=0;comboTimer=0;updateHUD()}
+  }
+}
+
+/* ── Game Loop ── */
+function gameLoop(timestamp){
+  if(cleanupDone)return;
+  const dt=Math.min((timestamp-lastFrameTime)/1000,.05);
+  frameDt=dt;
+  lastFrameTime=timestamp;
+  updateAnimations(dt);
+  render(dt);
+  rafId=requestAnimationFrame(gameLoop);
+}
+
+/* ── Timer ── */
+function startTimer(){
+  timerStart=Date.now();
+  clearInterval(gameTimerInterval);
+  gameTimerInterval=setInterval(()=>{
+    if(gameState==='playing'){
+      elapsedTime=Math.floor((Date.now()-timerStart)/1000);
+      updateTimeDisplay();
+    }
+  },1000);
+}
+
+function updateTimeDisplay(){
+  const m=Math.floor(elapsedTime/60);
+  const s=elapsedTime%60;
+  document.getElementById('hud-time').textContent=m+':'+(s<10?'0':'')+s;
+}
+
+/* ── HUD ── */
+function updateHUD(){
+  document.getElementById('hud-score').textContent=score;
+  document.getElementById('hud-combo').textContent=combo>1?'x'+combo:'-';
+  document.getElementById('hud-passes').textContent=passesLeft;
+}
+
+function showComboPopup(combo,pts){
+  const el=document.createElement('div');
+  el.className='combo-popup';
+  el.textContent='x'+combo+' +'+pts;
+  el.style.left='50%';el.style.top='40%';
+  el.style.transform='translateX(-50%)';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),900);
+}
+
+function triggerShake(){
+  shakeAmount=6;shakeTimer=.3;
+}
+
+/* ── Sound (Web Audio API, procedural) ── */
+function initAudio(){
+  if(audioCtx)return;
+  try{audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return}
+}
+
+function playSound(type){
+  if(!audioCtx)return;
+  if(audioCtx.state==='suspended')audioCtx.resume();
+  const now=audioCtx.currentTime;
+  const g=audioCtx.createGain();
+  g.connect(audioCtx.destination);
+  const o=audioCtx.createOscillator();
+  switch(type){
+    case'flip':
+      o.type='sine';o.frequency.setValueAtTime(800,now);
+      o.frequency.exponentialRampToValueAtTime(400,now+.05);
+      g.gain.setValueAtTime(.08,now);g.gain.exponentialRampToValueAtTime(.001,now+.05);
+      o.connect(g);o.start(now);o.stop(now+.05);break;
+    case'match':
+      o.type='sine';o.frequency.setValueAtTime(523,now);
+      o.frequency.setValueAtTime(659,now+.08);
+      o.frequency.setValueAtTime(784,now+.16);
+      g.gain.setValueAtTime(.12,now);g.gain.exponentialRampToValueAtTime(.001,now+.3);
+      o.connect(g);o.start(now);o.stop(now+.3);break;
+    case'error':
+      o.type='sawtooth';o.frequency.setValueAtTime(200,now);
+      o.frequency.exponentialRampToValueAtTime(100,now+.15);
+      g.gain.setValueAtTime(.06,now);g.gain.exponentialRampToValueAtTime(.001,now+.15);
+      o.connect(g);o.start(now);o.stop(now+.15);break;
+    case'win':{
+      const notes=[523,659,784,1047,784,1047];
+      notes.forEach((f,i)=>{
+        const oo=audioCtx.createOscillator();
+        const gg=audioCtx.createGain();
+        oo.type='sine';oo.frequency.value=f;
+        gg.gain.setValueAtTime(.1,now+i*.15);
+        gg.gain.exponentialRampToValueAtTime(.001,now+i*.15+.2);
+        oo.connect(gg);gg.connect(audioCtx.destination);
+        oo.start(now+i*.15);oo.stop(now+i*.15+.25);
+      });return}
+    case'click':
+      o.type='sine';o.frequency.setValueAtTime(600,now);
+      g.gain.setValueAtTime(.05,now);g.gain.exponentialRampToValueAtTime(.001,now+.03);
+      o.connect(g);o.start(now);o.stop(now+.03);break;
+  }
+}
+
+/* ── Input Handling ── */
+function getCardAt(px,py){
+  // Check waste top first
+  if(waste.length>0){
+    const c=waste[waste.length-1];
+    if(px>=c.x&&px<=c.x+M.cw&&py>=c.y&&py<=c.y+M.ch)return c;
+  }
+  // Check pyramid (front to back: row 6 first as it's visually on top)
+  for(let r=PYRAMID_ROWS-1;r>=0;r--){
+    for(let c=0;c<=r;c++){
+      const card=pyramid[r][c];
+      if(card.removed)continue;
+      if(px>=card.x&&px<=card.x+M.cw&&py>=card.y&&py<=card.y+M.ch)return card;
+    }
+  }
+  // Check stock area
+  if(px>=M.stockX&&px<=M.stockX+M.cw&&py>=M.stockY&&py<=M.stockY+M.ch){
+    return{source:'stock-pile'};
+  }
+  return null;
+}
+
+let lastClickTime=0;
+function handleClick(px,py){
+  if(gameState!=='playing')return;
+  initAudio();
+  // Prevent rapid double clicks
+  const now=Date.now();
+  if(now-lastClickTime<150)return;
+  lastClickTime=now;
+
+  const hit=getCardAt(px,py);
+  if(!hit)return;
+
+  // Stock pile click
+  if(hit.source==='stock-pile'){
+    drawStock();
+    return;
+  }
+  if(hit.source==='stock')return;
+  if(!canSelect(hit))return;
+
+  // King auto-remove
+  if(cardVal(hit)===13){
+    removeKing(hit);
+    return;
+  }
+
+  if(!selectedCard){
+    selectedCard=hit;
+    playSound('click');
+  }else{
+    if(selectedCard===hit){
+      selectedCard=null;
+      playSound('click');
+      return;
+    }
+    if(tryMatch(selectedCard,hit)){
+      removeCards(selectedCard,hit);
+    }else{
+      triggerShake();
+      playSound('error');
+      selectedCard=hit;
+    }
+  }
+}
+
+function onPointerDown(e){
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect();
+  const px=e.clientX-rect.left;
+  const py=e.clientY-rect.top;
+  handleClick(px,py);
+}
+
+/* ── Statistics (localStorage) ── */
+function loadStats(){
+  try{return JSON.parse(localStorage.getItem('pyr_stats'))||{played:0,won:0,best:0,streak:0,maxStreak:0,version:SAVE_VER}}
+  catch(e){return{played:0,won:0,best:0,streak:0,maxStreak:0,version:SAVE_VER}}
+}
+
+function saveStats(won){
+  const s=loadStats();
+  s.played++;s.version=SAVE_VER;
+  if(won){
+    s.won++;s.streak++;
+    if(s.streak>s.maxStreak)s.maxStreak=s.streak;
+    if(score>s.best)s.best=score;
+  }else{
+    s.streak=0;
+  }
+  localStorage.setItem('pyr_stats',JSON.stringify(s));
+}
+
+/* ── Achievements ── */
+const ACHIEVEMENTS=[
+  {id:'first_win',name:'First Victory',desc:'Win your first game',icon:'T'},
+  {id:'speed_demon',name:'Speed Demon',desc:'Win in under 3 minutes',icon:'S'},
+  {id:'perfect_clear',name:'Perfect Clear',desc:'Win without using the stock pile',icon:'P'},
+  {id:'streak_master',name:'Streak Master',desc:'Win 3 games in a row',icon:'M'},
+  {id:'combo_king',name:'Combo King',desc:'Reach a 5x combo',icon:'C'},
+  {id:'daily_done',name:'Daily Champion',desc:'Complete a daily challenge',icon:'D'},
+];
+
+function getAchievements(){
+  try{return JSON.parse(localStorage.getItem('pyr_ach'))||[]}
+  catch(e){return[]}
+}
+function unlockAchievement(id){
+  const achs=getAchievements();
+  if(achs.includes(id))return;
+  achs.push(id);
+  localStorage.setItem('pyr_ach',JSON.stringify(achs));
+  playSound('match');
+}
+
+function checkAchievements(won){
+  if(!won)return;
+  const stats=loadStats();
+  unlockAchievement('first_win');
+  if(elapsedTime<180)unlockAchievement('speed_demon');
+  if(stockUsedCount===0)unlockAchievement('perfect_clear');
+  if(stats.streak>=3)unlockAchievement('streak_master');
+  if(maxCombo>=5)unlockAchievement('combo_king');
+  if(isDaily)unlockAchievement('daily_done');
+}
+
+/* ── Tutorial ── */
+const TUT_STEPS=[
+  {title:'Welcome to Pyramid Solitaire!',text:'Remove all cards from the pyramid by matching pairs that sum to 13.',icon:'🃏'},
+  {title:'Card Values',text:'A=1, 2=2, 3=3 ... 10=10, J=11, Q=12, K=13. Kings are worth 13 and can be removed alone!',icon:'👑'},
+  {title:'The Pyramid',text:'Cards are blocked by the two cards below them. Remove blocking cards first to uncover new ones.',icon:'🔺'},
+  {title:'Stock & Waste',text:'Draw cards from the stock pile to the waste pile. The top waste card is available for matching. You get 3 passes through the stock.',icon:'📥'},
+  {title:'Tips',text:'Use Hint if you\'re stuck. Undo mistakes. Try to build combos for bonus points! Good luck!',icon:'💡'},
+];
+let tutStep=0;
+
+function showTutorial(){
+  tutStep=0;renderTutStep();
+  document.getElementById('overlay-tut').classList.add('active');
+}
+
+function renderTutStep(){
+  const step=TUT_STEPS[tutStep];
+  const modal=document.getElementById('tut-modal');
+  let dots='<div class="tut-dots">';
+  for(let i=0;i<TUT_STEPS.length;i++)dots+='<div class="tut-dot'+(i===tutStep?' active':'')+'"></div>';
+  dots+='</div>';
+  modal.innerHTML='<div class="tut-step"><span class="tut-img">'+step.icon+'</span><h3>'+step.title+'</h3><p>'+step.text+'</p>'+dots+
+    '<button class="gbtn accent" id="tut-next">'+(tutStep<TUT_STEPS.length-1?'Next':'Got it!')+'</button></div>';
+  document.getElementById('tut-next').onclick=()=>{
+    tutStep++;
+    if(tutStep>=TUT_STEPS.length){
+      document.getElementById('overlay-tut').classList.remove('active');
+      localStorage.setItem('pyr_tut_done','1');
+    }else{renderTutStep()}
+  };
+}
+
+/* ── Modals ── */
+function showWinModal(timeBonus,clearBonus){
+  const modal=document.getElementById('win-modal');
+  modal.innerHTML='<h2>You Win!</h2><div class="stats-grid">'+
+    '<div class="stat-box"><div class="sv">'+score+'</div><div class="sl">Total Score</div></div>'+
+    '<div class="stat-box"><div class="sv">'+formatTime(elapsedTime)+'</div><div class="sl">Time</div></div>'+
+    '<div class="stat-box"><div class="sv">+'+clearBonus+'</div><div class="sl">Clear Bonus</div></div>'+
+    '<div class="stat-box"><div class="sv">+'+timeBonus+'</div><div class="sl">Time Bonus</div></div></div>'+
+    (maxCombo>1?'<p style="text-align:center;color:#ffd700">Max Combo: x'+maxCombo+'</p>':'')+
+    '<button class="gbtn accent" onclick="document.getElementById(\'overlay-win\').classList.remove(\'active\');newGame()">Play Again</button>'+
+    '<button class="gbtn" onclick="document.getElementById(\'overlay-win\').classList.remove(\'active\')" style="margin-top:6px">Close</button>';
+  document.getElementById('overlay-win').classList.add('active');
+}
+
+function showLoseModal(){
+  const modal=document.getElementById('lose-modal');
+  const remaining=flatPyramid.filter(c=>!c.removed).length;
+  modal.innerHTML='<h2>No Moves Left</h2><p style="text-align:center">You had '+remaining+' card'+(remaining!==1?'s':'')+' remaining.</p>'+
+    '<div class="stats-grid"><div class="stat-box"><div class="sv">'+score+'</div><div class="sl">Score</div></div>'+
+    '<div class="stat-box"><div class="sv">'+formatTime(elapsedTime)+'</div><div class="sl">Time</div></div></div>'+
+    '<button class="gbtn accent" onclick="document.getElementById(\'overlay-lose\').classList.remove(\'active\');newGame()">Try Again</button>'+
+    '<button class="gbtn" onclick="document.getElementById(\'overlay-lose\').classList.remove(\'active\');doUndo()" style="margin-top:6px">Undo Last Move</button>';
+  document.getElementById('overlay-lose').classList.add('active');
+}
+
+function showStatsModal(){
+  const s=loadStats();
+  const wr=s.played>0?Math.round(s.won/s.played*100):0;
+  const modal=document.getElementById('stats-modal');
+  modal.innerHTML='<h2>Statistics</h2><div class="stats-grid">'+
+    '<div class="stat-box"><div class="sv">'+s.played+'</div><div class="sl">Games Played</div></div>'+
+    '<div class="stat-box"><div class="sv">'+s.won+'</div><div class="sl">Games Won</div></div>'+
+    '<div class="stat-box"><div class="sv">'+wr+'%</div><div class="sl">Win Rate</div></div>'+
+    '<div class="stat-box"><div class="sv">'+s.best+'</div><div class="sl">Best Score</div></div>'+
+    '<div class="stat-box"><div class="sv">'+s.streak+'</div><div class="sl">Current Streak</div></div>'+
+    '<div class="stat-box"><div class="sv">'+s.maxStreak+'</div><div class="sl">Best Streak</div></div></div>'+
+    '<button class="gbtn" onclick="document.getElementById(\'overlay-stats\').classList.remove(\'active\')">Close</button>';
+  document.getElementById('overlay-stats').classList.add('active');
+}
+
+function showAchievementsModal(){
+  const unlocked=getAchievements();
+  const modal=document.getElementById('ach-modal');
+  let html='<h2>Achievements</h2><div class="ach-list">';
+  for(const a of ACHIEVEMENTS){
+    const has=unlocked.includes(a.id);
+    html+='<div class="ach-item '+(has?'unlocked':'locked')+'"><div class="ach-icon">'+(has?a.icon:'?')+'</div><div><div class="ach-name">'+a.name+'</div><div class="ach-desc">'+a.desc+'</div></div></div>';
+  }
+  html+='</div><button class="gbtn" onclick="document.getElementById(\'overlay-ach\').classList.remove(\'active\')">Close</button>';
+  modal.innerHTML=html;
+  document.getElementById('overlay-ach').classList.add('active');
+}
+
+function showNewGameMenu(){
+  const modal=document.getElementById('menu-modal');
+  modal.innerHTML='<h2>New Game</h2>'+
+    '<button class="gbtn accent" onclick="document.getElementById(\'overlay-menu\').classList.remove(\'active\');newGame()">Random Deal</button>'+
+    '<button class="gbtn" onclick="document.getElementById(\'overlay-menu\').classList.remove(\'active\');startDaily()" style="margin-top:6px">Daily Challenge</button>'+
+    '<button class="gbtn" onclick="document.getElementById(\'overlay-menu\').classList.remove(\'active\')" style="margin-top:6px">Cancel</button>';
+  document.getElementById('overlay-menu').classList.add('active');
+}
+
+function formatTime(s){
+  const m=Math.floor(s/60);const ss=s%60;
+  return m+':'+(ss<10?'0':'')+ss;
+}
+
+/* ── Daily Challenge ── */
+function getDailySeed(){
+  const d=new Date();
+  return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+}
+
+function startDaily(){
+  dailySeed=getDailySeed();
+  isDaily=true;
+  document.getElementById('daily-hud').style.display='flex';
+  newGame(dailySeed);
+}
+
+/* ── New Game ── */
+function newGame(seed){
+  clearInterval(gameTimerInterval);
+  score=0;combo=0;maxCombo=0;comboTimer=0;
+  passesLeft=MAX_PASSES;elapsedTime=0;
+  undoStack=[];selectedCard=null;hintCards=[];hintTimer=0;
+  particles=[];animCards=[];fireworks=[];
+  stockUsedCount=0;
+  gameState='idle';
+  dealGame(seed);
+  updateHUD();updateTimeDisplay();
+}
+
+/* ── Resize ── */
+function resize(){
+  dpr=window.devicePixelRatio||1;
+  const cssW=window.innerWidth,cssH=window.innerHeight;
+  canvas.width=cssW*dpr;canvas.height=cssH*dpr;
+  canvas.style.width=cssW+'px';canvas.style.height=cssH+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  W=cssW;H=cssH;
+  computeMetrics();
+  positionAllCards();
+}
+
+/* ── Button Wiring ── */
+document.getElementById('btn-undo').addEventListener('click',()=>{initAudio();doUndo()});
+document.getElementById('btn-hint').addEventListener('click',()=>{initAudio();showHint()});
+document.getElementById('btn-new').addEventListener('click',()=>{initAudio();playSound('click');showNewGameMenu()});
+document.getElementById('btn-daily').addEventListener('click',()=>{initAudio();playSound('click');startDaily()});
+document.getElementById('btn-stats').addEventListener('click',()=>{initAudio();playSound('click');showStatsModal()});
+document.getElementById('btn-ach').addEventListener('click',()=>{initAudio();playSound('click');showAchievementsModal()});
+
+/* ── Cleanup ── */
+const timers=[];
+function cleanup(){
+  cleanupDone=true;
+  if(rafId)cancelAnimationFrame(rafId);
+  clearInterval(gameTimerInterval);
+  window.removeEventListener('resize',resize);
+  canvas.removeEventListener('pointerdown',onPointerDown);
+  timers.forEach(t=>clearTimeout(t));
+  if(audioCtx){try{audioCtx.close()}catch(e){}}
+}
+
+/* ── Init ── */
+window.newGame=newGame;
+window.doUndo=doUndo;
+
+function init(){
+  window.addEventListener('resize',resize);
+  canvas.addEventListener('pointerdown',onPointerDown);
+  canvas.style.touchAction='none';
+  resize();
+  newGame();
+  lastFrameTime=performance.now();
+  rafId=requestAnimationFrame(gameLoop);
+  // Cleanup on page hide
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden)clearInterval(gameTimerInterval);
+    else if(gameState==='playing')startTimer();
+  });
+}
+
+init();
+})();
+</script>
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=pyramid-solitaire'></script>
+</body>
+</html>
