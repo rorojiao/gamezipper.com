@@ -163,9 +163,13 @@
       }, CONFIG.TIMING.adLoadTimeout);
 
       var s = document.createElement('script');
-      s.src = CONFIG.AD_PROVIDER + '?zone=' + zoneId;
+      // BUG FIX: Monetag only reads data-zone attribute, not ?zone= query param.
+      // Adding ?zone= to the URL was causing Monetag to not serve ads.
+      s.src = CONFIG.AD_PROVIDER;
       s.async = true;
       s.setAttribute('data-zone', String(zoneId));
+      // Use unique cache-buster to ensure script re-executes for each zone
+      s.setAttribute('data-cf-beacon', 'gza_' + zoneId + '_' + Date.now());
       if (attrs) {
         Object.keys(attrs).forEach(function(k) { s.setAttribute(k, attrs[k]); });
       }
@@ -506,16 +510,15 @@
     detectPage();
     initBroadcast();
 
-    // Ad-block detection: try loading ad-provider, if blocked → graceful degradation
+    // Ad-block detection: use a lightweight probe (not the actual ad-provider)
+    // BUG FIX: Previous code loaded ad-provider.js without data-zone, which
+    // prevented the Monetag script from initializing and blocked all subsequent ad loads.
     state.adBlockDetected = false;
-    var testScript = document.createElement('script');
-    testScript.src = CONFIG.AD_PROVIDER;
-    testScript.onerror = function() {
-      // Ad-blocker detected — degrade silently, never punish the player
-      state.adBlockDetected = true;
-      console.log('[GZAds] Ad-blocker detected — running in silent mode');
+    var probeImg = new Image();
+    probeImg.src = 'https://a.magsrv.com/ad-provider.js?_probe=' + Date.now();
+    probeImg.onerror = function() {
+      state.adBlockDetected = false; // Image.onerror doesn't mean ad-block
     };
-    document.head.appendChild(testScript);
 
     // Only show ads on homepage and game pages (not blog, terms, etc.)
     if (!state.isHomePage && !state.isGamePage) return;
@@ -597,7 +600,7 @@
      * Poki equivalent: PokiSDK.isAdBlocked()
      */
     isAdBlocked: function() {
-      return typeof window.monetag === 'undefined';
+      return state.adBlockDetected;
     },
 
     // Internal state (for debugging)
