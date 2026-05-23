@@ -580,14 +580,15 @@ if(navigator.connection&&navigator.connection.saveData){document.querySelectorAl
 if (typeof gzFavs === 'undefined') var gzFavs = [];
 function render(list){
   document.getElementById('games').innerHTML = list.map((g,i) => `
-    <a class="game-card" href="${g.url}" data-cat="${g.cat}" style="transition-delay:${(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)?0:i*80}ms" role="listitem">
-      ${g.isNew?'<span class="new-badge">🔥 NEW</span>':''}<button class="gz-fav-btn ${gzFavs.includes(g.name)?'active':''}" data-game="${g.name}" onclick="event.preventDefault();gzToggleFav(this.dataset.game)" aria-label="Toggle favorite">♥</button>
-      <div class="game-thumb" style="background:${GAME_GRADIENTS[i%GAME_GRADIENTS.length]}">${g.emoji}
+    <a class="game-card" href="${g.url}" data-cat="${g.cat}" itemscope itemtype="https://schema.org/Game" style="transition-delay:${(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)?0:i*80}ms" role="listitem" aria-label="${g.name} — ${g.tags[0]||''} game. Click to play.">
+      <meta itemprop="name" content="${g.name}"><meta itemprop="url" content="https://gamezipper.com${g.url}"><meta itemprop="description" content="${g.desc.replace(/"/g,'&quot;')}"><meta itemprop="genre" content="${g.cat}"><meta itemprop="gamePlatform" content="Web Browser"><meta itemprop="applicationCategory" content="Game"><meta itemprop="operatingSystem" content="Any"><meta itemprop="offers" content="https://schema.org/Offer"><meta itemprop="price" content="0"><meta itemprop="priceCurrency" content="USD">
+      ${g.isNew?'<span class="new-badge">🔥 NEW</span>':''}<button class="gz-fav-btn ${gzFavs.includes(g.name)?'active':''}" data-game="${g.name}" onclick="event.preventDefault();gzToggleFav(this.dataset.game)" aria-label="Toggle favorite ${g.name}">♥</button>
+      <div class="game-thumb" style="background:${GAME_GRADIENTS[i%GAME_GRADIENTS.length]}" itemprop="image" itemscope itemtype="https://schema.org/ImageObject"><meta itemprop="contentUrl" content="https://gamezipper.com/og-image.webp">${g.emoji}
         <div class="overlay"><span class="play-btn">▶ PLAY</span></div>
       </div>
       <div class="game-info" style="position:relative">
-        <h3>${g.name}</h3>
-        <div class="desc">${g.desc}</div>
+        <h3 itemprop="name">${g.name}</h3>
+        <div class="desc" itemprop="description">${g.desc}</div>
         <div class="tags">${g.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
         <div class="gz-card-tooltip">${g.tags.length?g.tags[0]+' Game':'Browser Game'} — Click to play!</div>
       </div>
@@ -603,6 +604,33 @@ function render(list){
   }else{
     document.querySelectorAll('.game-card').forEach(function(c){c.classList.add('visible')});
   }
+  // Keyboard arrow-key navigation for game grid
+  (function(){
+    var cards=document.querySelectorAll('.game-card');
+    if(!cards.length)return;
+    function getGridCols(){
+      var cs=getComputedStyle(cards[0].parentElement);
+      var gridCols=cs.getPropertyValue('grid-template-columns').split(' ').length;
+      return gridCols||4;
+    }
+    document.getElementById('games').addEventListener('keydown',function(e){
+      var focused=document.activeElement;
+      if(!focused||!focused.classList.contains('game-card'))return;
+      var cards=Array.from(document.querySelectorAll('.game-card'));
+      var idx=cards.indexOf(focused);
+      if(idx<0)return;
+      var cols=getGridCols();
+      var next=-1;
+      switch(e.key){
+        case'ArrowRight':next=idx+1;break;
+        case'ArrowLeft':next=idx-1;break;
+        case'ArrowDown':next=idx+cols;break;
+        case'ArrowUp':next=idx-cols;break;
+        default:return;
+      }
+      if(next>=0&&next<cards.length){e.preventDefault();cards[next].focus()}
+    });
+  })();
   // Ripple click effect on game cards
   document.querySelectorAll('.game-card').forEach(function(card){
     card.addEventListener('pointerdown',function(e){
@@ -919,7 +947,7 @@ try{if('scrollRestoration' in history){history.scrollRestoration='manual'}var _g
 
 <script>
 // Scroll depth tracking: 25/50/75/100% milestones
-(function(){if(!('sendBeacon' in navigator))return;var sent={};function check(){var pct=Math.round((window.scrollY+window.innerHeight)/document.documentElement.scrollHeight*100);[25,50,75,100].forEach(function(t){if(pct>=t&&!sent[t]){sent[t]=1;try{var u='https://site-analytics.gamezipper.com/hit?s=gamezipper.com&p=/&t='+Date.now()+'&scroll='+t+'pct';navigator.sendBeacon(u)}catch(e){}}})}var tid=null;window.addEventListener('scroll',function(){if(tid)return;tid=setTimeout(function(){tid=null;check()},200)},{passive:true});check()})();
+(function(){if(!('sendBeacon' in navigator))return;var sent={};function check(){var pct=Math.round((window.scrollY+window.innerHeight)/document.documentElement.scrollHeight*100);[25,50,75,100].forEach(function(t){if(pct>=t&&!sent[t]){sent[t]=1;try{var u='https://site-analytics.gamezipper.com/hit?s=gamezipper.com&p=/&t='+Date.now()+'&scroll='+t+'pct';navigator.sendBeacon(u)}catch(e){}if(t===50&&!sessionStorage.getItem('gz_scroll_cta')){sessionStorage.setItem('gz_scroll_cta','1');setTimeout(function(){var toast=document.createElement('div');toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a1a3e,#2d1b69);color:#fff;padding:14px 24px;border-radius:16px;z-index:10000;font-size:.9em;box-shadow:0 8px 32px rgba(0,0,0,.5);border:1px solid #4ecdc4;display:flex;align-items:center;gap:10px;max-width:90vw';toast.innerHTML='<span>🎮 Found a game? <a href="#gz-gotd" style="color:#4ecdc4;font-weight:700;text-decoration:none">Play our Game of the Day!</a></span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#999;font-size:1.2em;cursor:pointer;padding:0 0 0 8px" aria-label="Dismiss">✕</button>';toast.setAttribute('role','status');toast.setAttribute('aria-live','polite');document.body.appendChild(toast);setTimeout(function(){if(toast.parentElement)toast.remove()},15000)},500)}}})}var tid=null;window.addEventListener('scroll',function(){if(tid)return;tid=setTimeout(function(){tid=null;check()},200)},{passive:true});check()})();
 </script>
 
 <!-- Exit Intent: catch desktop users about to leave -->
@@ -1296,5 +1324,12 @@ function playRandom(){
 })();
 </script>
 <script src="/game-footer.js" defer></script>
+
+<script>
+// Register Service Worker for offline capability
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(function(){});
+}
+</script>
 </body>
 </html>
