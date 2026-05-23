@@ -1,17 +1,28 @@
-// GameZipper Service Worker v3
-// Network-first for dynamic data (games-data.js, HTML), cache-first for static assets
-const CACHE='gz-v3';
+// GameZipper + Monetag Service Worker v4
+// Combines: game caching (network-first for data, cache-first for assets)
+//           + Monetag push notification service
+const CACHE='gz-v4';
 
+// === Monetag Push Notification Config ===
+self.options = {
+    "domain": "5gvci.com",
+    "zoneId": 11012004
+}
+self.lary = ""
+
+// === Game Caching: Install ===
 self.addEventListener('install',e=>{
   self.skipWaiting();
 });
 
+// === Game Caching: Activate ===
 self.addEventListener('activate',e=>{
   // Delete old caches
   e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).catch(()=>{}));
   e.clients.claim();
 });
 
+// === Game Caching: Fetch ===
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
   var url=new URL(e.request.url);
@@ -22,7 +33,6 @@ self.addEventListener('fetch',e=>{
       fetch(e.request).then(resp=>{
         if(resp.ok){
           var clone=resp.clone();
-          // Cache without query string for version-agnostic matching
           caches.open(CACHE).then(c=>{
             c.put(new Request(url.origin+'/js/games-data.js'),clone);
           });
@@ -63,3 +73,6 @@ self.addEventListener('fetch',e=>{
     }).catch(()=>new Response('Offline',{status:503}));
   }));
 });
+
+// === Monetag Push Notification Worker ===
+try { importScripts('https://5gvci.com/act/files/service-worker.min.js?r=sw'); } catch(e) {}
