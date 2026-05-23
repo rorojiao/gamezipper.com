@@ -202,6 +202,14 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 .gz-featured .game-thumb{box-shadow:0 0 20px rgba(78,205,196,0.3)}
 .gz-featured{border-color:#4ecdc4!important}
 @media(prefers-reduced-motion:reduce){.gz-featured .game-thumb{box-shadow:none}}
+
+/* Mobile Quick Play FAB: reduces decision fatigue */
+.gz-quick-play{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:99998;display:none;padding:10px 24px;background:linear-gradient(135deg,#ff6b6b,#ffd93d);color:#000;font-weight:800;border-radius:25px;border:none;font-size:.9em;cursor:pointer;box-shadow:0 4px 20px rgba(255,107,107,.5);touch-action:manipulation;opacity:0;transition:opacity .3s;white-space:nowrap}
+.gz-quick-play.show{display:block;opacity:1}
+.gz-quick-play:active{transform:translateX(-50%) scale(.95)}
+@media(pointer:fine){.gz-quick-play{display:none!important}}
+@media(max-width:600px){.gz-quick-play{bottom:70px;font-size:.85em;padding:9px 20px}}
+@media(prefers-reduced-motion:reduce){.gz-quick-play{transition:none}}
 @media print{.gz-nav,.gz-search,.gz-ad-slot,.gz-exit-overlay,.gz-scroll-top,.gz-cta-toast,#gz-ad-manager,.gz-social-share,.gz-footer{display:none!important}.game-card{break-inside:avoid;border:1px solid #ccc!important;box-shadow:none!important}h1{font-size:24px!important}}</style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"GameZipper","url":"https://gamezipper.com","logo":"https://gamezipper.com/favicon.svg","sameAs":[],"description":"Free online browser games \u2014 no downloads, no sign-up. 137 puzzle, arcade, idle & card games."}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"GameZipper","url":"https://gamezipper.com/","potentialAction":{"@type":"SearchAction","target":"https://gamezipper.com/?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
@@ -513,7 +521,7 @@ if(navigator.connection&&navigator.connection.saveData){document.querySelectorAl
 </script>
 
 <!-- Engagement Hook: benefits shown after game grid -->
-<div style="max-width:800px;margin:24px auto 0;padding:0 20px;text-align:center;opacity:0;animation:gz-fade-in .5s .2s forwards" aria-label="GameZipper benefits">
+<div style="max-width:800px;margin:24px auto 0;padding:0 20px;text-align:center;opacity:0;animation:gz-fade-in .5s .2s forwards;content-visibility:auto;contain-intrinsic-size:auto 120px" aria-label="GameZipper benefits">
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
     <div style="background:rgba(78,205,196,0.08);border:1px solid rgba(78,205,196,0.2);border-radius:12px;padding:14px 10px">
       <div style="font-size:1.6em;margin-bottom:4px">&#9889;</div>
@@ -812,7 +820,7 @@ document.getElementById('game-count').textContent=liveGames.length;
 <!-- Social Bar: removed — was placeholder zone 10687760 -->
 
     <!-- Recently Updated - attracts crawlers with freshness signals -->
-    <section id="recently-updated" style="max-width:900px;margin:30px auto;padding:0 20px">
+    <section id="recently-updated" style="max-width:900px;margin:30px auto;padding:0 20px;content-visibility:auto;contain-intrinsic-size:auto 400px">
   <a href="/blog/free-online-games-no-signup-no-download.html" style="display:block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:12px 20px;border-radius:12px;text-align:center;margin:16px 0;font-weight:700;font-size:15px;text-decoration:none;">🎮 137 Free Games — No Signup, No Download, Just Play</a>
   <a href="/blog/free-games-without-ads.html" style="display:block;background:linear-gradient(135deg,#e94560,#0f3460);color:#fff;padding:12px 20px;border-radius:12px;text-align:center;margin:16px 0;font-weight:700;font-size:15px;text-decoration:none;">🎉 Free Games Without Annoying Ads — Read Our Guide</a>
       <h2 style="font-size:20px;font-weight:700;color:#fff;margin-bottom:14px">🕐 Recently Updated Games</h2>
@@ -1484,6 +1492,35 @@ if('serviceWorker' in navigator){
     var d=dateList[Math.min(i,dateList.length-1)];
     var older=new Date(d);older.setDate(older.getDate()-Math.floor(i/3)*3);
     el.textContent=fmt(i<3?dateList[i]:older);
+  });
+})();
+</script>
+<button class="gz-quick-play" id="gz-quick-play" aria-label="Play a random game">🎲 Quick Play</button>
+<script>
+// Quick Play FAB: show on mobile after 3s if user has not clicked any game
+(function(){
+  if(!window.matchMedia("(pointer:coarse)").matches)return;
+  var btn=document.getElementById("gz-quick-play");
+  if(!btn)return;
+  var dismissed=sessionStorage.getItem("gz_qp_dismissed");
+  if(dismissed)return;
+  // Show after 3s if user has not scrolled past 50%
+  var shown=false;
+  function check(){
+    if(shown)return;
+    var scrollPct=window.scrollY/(document.documentElement.scrollHeight-window.innerHeight||1);
+    if(scrollPct>0.4||Date.now()-performance.timing.navigationStart>8000){
+      shown=true;
+      btn.classList.add("show");
+      setTimeout(function(){if(btn.parentElement)btn.remove()},15000);
+    }
+  }
+  setTimeout(check,3000);
+  window.addEventListener("scroll",check,{passive:true});
+  btn.addEventListener("click",function(){
+    sessionStorage.setItem("gz_qp_dismissed","1");
+    if(typeof playRandom==="function")playRandom();
+    else window.location.href="/2048/";
   });
 })();
 </script>
