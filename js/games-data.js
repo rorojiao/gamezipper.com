@@ -160,6 +160,8 @@ const GAMES = [
 {name:"Crazy Eights",emoji:"🃏",cat:"card",tags:["card game","uno","crazy eights","shedding","wild card"],url:"/crazy-eights/",desc:"Play Crazy Eights online free - the classic UNO-style shedding card game with wild cards, special actions, and AI opponents.",isNew:true,status:"live"},
   {name:"Cribbage",emoji:"🃏",cat:"card",tags:["card game","cribbage","classic","pegging","scoring","board","strategy"],url:"/cribbage/",desc:"Play Cribbage online free - Classic 2-player card game with pegging, scoring hands, crib, and pegboard. Challenge AI with 3 difficulty levels. First to 121 wins!",isNew:true,status:"live"},
   {name:"Happy Glass",emoji:"🥛",cat:"puzzle",tags:["Puzzle","Draw","Physics","Water","Fill","Casual","Brain"],url:"/happy-glass/",desc:"Draw lines to guide water into a happy glass! 40 levels of creative physics puzzles with ink limits, star ratings, and hint system. How many glasses can you fill?",isNew:true,status:"live"},
+  {name:"Euchre",emoji:"♠️",cat:"card",tags:["euchre","trick-taking","cards","trump","partnership"],url:"/euchre/",desc:"Play Euchre online free - classic 4-player trick-taking card game with trump, going alone, and partnership strategy",isNew:true,status:"live"},
+
 ];
 
 /**
