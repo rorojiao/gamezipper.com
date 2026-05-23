@@ -2381,6 +2381,23 @@ const LEVELS = [
 
 const TOTAL_LEVELS = LEVELS.length;
 
+// Precompute section header row offsets for menu rendering (avoids O(n*m) per frame)
+function precomputeSectionRowOffsets(cols) {
+  const offsets = new Uint16Array(TOTAL_LEVELS);
+  for (let i = 0; i < TOTAL_LEVELS; i++) {
+    let rowOff = 0;
+    for (let s = 0; s < DIFF_SECTIONS.length; s++) {
+      if (DIFF_SECTIONS[s].start <= i) {
+        const secRow = Math.floor(DIFF_SECTIONS[s].start / cols);
+        const lvlRow = Math.floor(i / cols);
+        rowOff += 28; // headerH
+      } else break;
+    }
+    offsets[i] = rowOff;
+  }
+  return offsets;
+}
+
 // ─── Game State ───
 let state = "splash"; // splash | menu | game | win
 let currentLevel = 0;
@@ -2404,6 +2421,8 @@ let bottleWobbles = []; // per-bottle wobble: { amp, freq, phase, decay }
 let bottleBounces = []; // per-bottle bounce: { scale, velocity }
 let menuScrollY = 0;
 let menuMaxScroll = 0;
+let menuCachedCols = 0;
+let menuSectionOffsets = null;
 let hoverBtn = -1;
 let splashFooterLink = null;
 let now = 0;
@@ -3615,9 +3634,34 @@ function renderMenu() {
   // Track which section headers have been drawn (to avoid duplicates in same viewport)
   const drawnSections = new Set();
 
+  // Use precomputed section offsets (invalidate on cols change)
+  if (cols !== menuCachedCols) {
+    menuCachedCols = cols;
+    menuSectionOffsets = precomputeSectionRowOffsets(cols);
+  }
+  const secOffsets = menuSectionOffsets;
+
+  // Viewport culling: compute visible row range
+  const viewTop = 60;
+  const viewBot = H + 50; // extra margin for section headers
+  // Estimate first visible level: gridTop + row*(cellH+gap) + secOffset >= viewTop
+  // Since secOffsets grow monotonically, we can binary search
+  let startI = 0, endI = TOTAL_LEVELS;
   for (let i = 0; i < TOTAL_LEVELS; i++) {
+    const row = Math.floor(i / cols);
+    const y = gridTop + row * (cellH + gap) + secOffsets[i];
+    if (y + cellH >= viewTop) { startI = Math.max(0, i - cols * 2); break; }
+  }
+  for (let i = TOTAL_LEVELS - 1; i >= 0; i--) {
+    const row = Math.floor(i / cols);
+    const y = gridTop + row * (cellH + gap) + secOffsets[i];
+    if (y <= viewBot) { endI = Math.min(TOTAL_LEVELS, i + cols * 2); break; }
+  }
+
+  for (let i = startI; i < endI; i++) {
     const col = i % cols, row = Math.floor(i / cols);
     const x = 12 + col * (cellW + gap);
+    const rowOffset = secOffsets[i];
 
     // Check if this is the first level of a new difficulty section
     const section = DIFF_SECTIONS.find(s => s.start === i);
@@ -3640,34 +3684,19 @@ function renderMenu() {
       }
     }
 
-    // Calculate vertical offset for section headers
-    let rowOffset = 0;
-    for (const s of DIFF_SECTIONS) {
-      if (s.start <= i) {
-        const sectionRow = Math.floor(s.start / cols);
-        const levelRow = Math.floor(i / cols);
-        if (sectionRow < levelRow) rowOffset += headerH;
-        else if (sectionRow === levelRow && s.start <= i) rowOffset += headerH;
-      }
-    }
-
     const y = gridTop + row * (cellH + gap) + rowOffset;
     if (y + cellH < 60 || y > H) continue;
 
     const unlocked = !!levelUnlocked[i];
     const stars = levelStars[i] || 0;
 
-    // Cell
-    const cg = X.createLinearGradient(x, y, x, y + cellH);
+    // Cell (use flat colors instead of gradient per cell for performance)
     if (unlocked) {
-      cg.addColorStop(0, "rgba(108,92,231,0.25)");
-      cg.addColorStop(1, "rgba(108,92,231,0.10)");
+      X.fillStyle = "rgba(108,92,231,0.18)";
     } else {
-      cg.addColorStop(0, "rgba(255,255,255,0.04)");
-      cg.addColorStop(1, "rgba(255,255,255,0.015)");
+      X.fillStyle = "rgba(255,255,255,0.03)";
     }
     roundRect(x, y, cellW, cellH, 10);
-    X.fillStyle = cg;
     X.fill();
     X.strokeStyle = unlocked ? "rgba(108,92,231,0.45)" : "rgba(255,255,255,0.06)";
     X.lineWidth = 1.3;
@@ -4330,20 +4359,18 @@ function onTap(px, py) {
     const cellH = cellW;
     const headerH = 28;
     const gridTop = 70 - menuScrollY;
+    // Ensure offsets are computed for tap handling
+    if (cols !== menuCachedCols) {
+      menuCachedCols = cols;
+      menuSectionOffsets = precomputeSectionRowOffsets(cols);
+    }
+    const secOffsets = menuSectionOffsets;
     for (let i = 0; i < TOTAL_LEVELS; i++) {
       const col = i % cols, row = Math.floor(i / cols);
       const x = 12 + col * (cellW + gap);
-      // Calculate vertical offset for section headers (must match renderMenu)
-      let rowOffset = 0;
-      for (const s of DIFF_SECTIONS) {
-        if (s.start <= i) {
-          const sectionRow = Math.floor(s.start / cols);
-          const levelRow = Math.floor(i / cols);
-          if (sectionRow < levelRow) rowOffset += headerH;
-          else if (sectionRow === levelRow && s.start <= i) rowOffset += headerH;
-        }
-      }
+      const rowOffset = secOffsets[i];
       const y = gridTop + row * (cellH + gap) + rowOffset;
+      if (y + cellH < 0 || y > H) continue; // viewport cull for tap too
       if (hitTest(px, py, x, y, cellW, cellH)) {
         if (levelUnlocked[i]) { sfxClick(); initLevel(i); }
         return;
