@@ -2,7 +2,7 @@
 
 <html lang="en" dir="ltr" style="scroll-behavior:smooth;overscroll-behavior-y:contain">
 <head>
-<script data-zone="11012001" src="https://a.magsrv.com/ad-provider.js" async data-cfasync="false"></script>
+<script data-zone="11012001" src="https://a.magsrv.com/ad-provider.js" async data-cfasync="false" fetchpriority="low"></script>
 
 
 
@@ -10,7 +10,6 @@
 <meta content="max-age=300, stale-while-revalidate=3600" http-equiv="Cache-Control"/>
 <meta content="20260522002" name="build"/>
 <meta charset="utf-8"/>
-<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 <meta content="ca-pub-8346383990981353" name="google-adsense-account"/>
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" name="viewport"/>
 <meta http-equiv="Accept-CH" content="DPR, Width, Viewport-Width">
@@ -506,8 +505,10 @@ if(navigator.connection&&navigator.connection.saveData){document.querySelectorAl
   </div>
 </div>
 <script>
+// Deferred with requestIdleCallback for INP optimization (non-critical DOM work)
 (function(){
-  try{
+  function renderRecent(){
+    try{
     var d=JSON.parse(localStorage.getItem('gz_recent_games')||'[]');
     if(!d.length)return;
     var c=document.getElementById('gz-recent-cards');
@@ -520,7 +521,10 @@ if(navigator.connection&&navigator.connection.saveData){document.querySelectorAl
     }
     c.innerHTML=html;
     w.style.display='block';
-  }catch(e){}
+    }catch(e){}
+  }
+  if('requestIdleCallback' in window){requestIdleCallback(renderRecent,{timeout:2000})}
+  else{setTimeout(renderRecent,100)}
 })();
 </script>
 
@@ -767,10 +771,12 @@ function initGames() {
 const liveGames = GAMES.filter(g => g.status === 'live');
 window._liveGames = liveGames;
 liveGames.sort((a,b)=>(b.isNew?1:0)-(a.isNew?1:0));
-render(liveGames);
-document.getElementById('games').classList.add('loaded');
-document.getElementById('game-count').textContent=liveGames.length;
-// Animate game count from 0 to actual number for engagement
+  // INP optimization: use scheduler.yield or rAF to avoid blocking main thread
+  function doInitialRender(){
+    render(liveGames);
+    document.getElementById('games').classList.add('loaded');
+    document.getElementById('game-count').textContent=liveGames.length;
+    // Animate game count from 0 to actual number for engagement
 (function(){
   var el=document.getElementById('game-count');
   var target=parseInt(el.textContent,10);
@@ -787,6 +793,10 @@ document.getElementById('game-count').textContent=liveGames.length;
   }
   requestAnimationFrame(step);
 })();
+  }
+  if('scheduler' in window && 'yield' in window.scheduler){scheduler.yield().then(doInitialRender)}
+  else if('requestAnimationFrame' in window){requestAnimationFrame(doInitialRender)}
+  else{doInitialRender()}
 } // end initGames()
 // so GAMES data and const liveGames are lost while skeleton loaders persist.
 // Solution: detect bfcache restore, reload games-data.js, then re-render.
