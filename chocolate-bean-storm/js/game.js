@@ -641,6 +641,10 @@
         const removable = connected.filter(n => !n.static);
 
         if (removable.length > 1) {
+            // 添加消除音效
+            if (typeof audioSystem !== 'undefined') {
+                audioSystem.playPop();
+            }
             comboCount++;
             const pts = removable.length * 10 * comboCount;
             score += pts;
@@ -656,10 +660,19 @@
             }
 
             showCombo(comboCount, removable.length);
+            
+            // 添加连击音效
+            if (typeof audioSystem !== 'undefined' && comboCount > 1) {
+                audioSystem.playCombo(comboCount);
+            }
 
             // 浮动检测
             const floating = checkFloatBubbles();
             if (floating.length > 0) {
+            // 添加连锁消除音效
+            if (typeof audioSystem !== 'undefined') {
+                audioSystem.playChain();
+            }
                 score += floating.length * 15 * comboCount;
                 for (const n of floating) {
                     const s = toScreen(n.x, n.y);
@@ -677,6 +690,10 @@
 
     // === 射击系统 - 100%对标原始aim class ===
     function shoot() {
+        // 添加射击音效
+        if (typeof audioSystem !== 'undefined') {
+            audioSystem.playShoot();
+        }
         if (shooter.status !== 'none' || gameState !== 'playing') return;
         shooter.status = 'fly';
         flyBall = {
@@ -838,6 +855,10 @@
     }
 
     function completeLevel() {
+        // 添加游戏完成音效
+        if (typeof audioSystem !== 'undefined') {
+            audioSystem.playGameComplete();
+        }
         gameState = 'levelcomplete';
         score += 500;
         setTimeout(() => {
@@ -1295,6 +1316,11 @@
     }
 
     function showGameOver() {
+        // 添加失败音效并切换 BGM
+        if (typeof audioSystem !== 'undefined') {
+            audioSystem.playLose();
+            audioSystem.switchBGM('gameover');
+        }
         document.getElementById('final-score').textContent = score;
         document.getElementById('final-wave').textContent = currentLevel;
         document.getElementById('game-over-screen').classList.remove('hidden');
@@ -1360,6 +1386,11 @@
 
     // === 启动 ===
     function startGame() {
+        // 初始化音频系统并开始播放游戏 BGM
+        if (typeof audioSystem !== 'undefined') {
+            audioSystem.init();
+            audioSystem.playBGM('gameplay');
+        }
         score = 0;
         currentLevel = 1;
         comboCount = 0;

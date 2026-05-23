@@ -180,3 +180,5 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Crazy Eights",emoji:"🃏",cat:"card",tags:["crazy eights","uno","card game","color matching","wild card"],url:"/crazy-eights/",desc:"Play Crazy Eights online free - UNO-style card game with Skip, Reverse, Draw Two and Wild cards. Match by suit or rank, call Crazy when down to one card!",isNew:true,status:"live"}
+{name:"Crazy Eights",emoji:"🃏",cat:"card",tags:["card game","uno","crazy eights","shedding","wild card"],url:"/crazy-eights/",desc:"Play Crazy Eights online free - the classic UNO-style shedding card game with wild cards, special actions, and AI opponents.",isNew:true,status:"live"},
