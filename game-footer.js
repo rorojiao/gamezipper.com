@@ -143,7 +143,7 @@
       {n:'FreeCell Solitaire',e:'🃏',u:'/freecell/',c:'card'},
       {n:'Chinese Checkers',e:'⭐',u:'/chinese-checkers/',c:'board'},
       {n:'Chinese Chess',e:'🐉',u:'/chinese-chess/',c:'puzzle'},
-      {n:'Hearts',e:'♥️',u:'/hearts/',c:'card'},{n:'Pool',e:'🎱',u:'/pool/',c:'classic'},{n:'Pyramid Solitaire',e:'🃏',u:'/pyramid-solitaire/',c:'card'},{n:'Spades',e:'♠️',u:'/spades/',c:'card'},{n:'Tripeaks',e:'🏔️',u:'/tripeaks/',c:'card'},
+      {n:'Hearts',e:'♥️',u:'/hearts/',c:'card'},{n:'Pool',e:'🎱',u:'/pool/',c:'classic'},{n:'Pyramid Solitaire',e:'🃏',u:'/pyramid-solitaire/',c:'card'},{n:'Spades',e:'♠️',u:'/spades/',c:'card'},{n:'Tripeaks',e:'🏔️',u:'/tripeaks/',c:'card'},{n:'Golf Solitaire',e:'⛳',u:'/golf-solitaire/',c:'card'},
     ];
 
   var cur = location.pathname;

@@ -151,7 +151,8 @@ const GAMES = [
   {name:"Pyramid Solitaire",emoji:"🔺",cat:"card",tags:["Card","Solitaire","Classic"],url:"/pyramid-solitaire/",desc:"Play Pyramid Solitaire free online! Match cards that sum to 13 to clear the pyramid. Daily challenges and hints available!",isNew:true,status:"live"},
   {name:"Spades",emoji:"♠️",cat:"card",tags:["Card","Trick","Classic"],url:"/spades/",desc:"Play free Spades online! Classic 4-player trick-taking card game with smart AI opponents, bidding, and nil bonuses!",isNew:true,status:"live"},
   {name:"TriPeaks Solitaire",emoji:"🏔️",cat:"card",tags:["Card","Solitaire","Classic"],url:"/tripeaks/",desc:"Play TriPeaks Solitaire online free! Clear three card peaks by matching cards one higher or lower. Challenging levels!",isNew:true,status:"live"},
-  {name:"Pool Billiards",emoji:"🎱",cat:"sports",tags:["pool","billiards","8-ball","9-ball","sports"],url:"/pool/",desc:"Play free online Pool and Billiards. 8-Ball, 9-Ball, and Practice modes with realistic physics and AI opponents.",isNew:true,status:"live"}
+  {name:"Pool Billiards",emoji:"🎱",cat:"sports",tags:["pool","billiards","8-ball","9-ball","sports"],url:"/pool/",desc:"Play free online Pool and Billiards. 8-Ball, 9-Ball, and Practice modes with realistic physics and AI opponents.",isNew:true,status:"live"},
+  {name:"Golf Solitaire",emoji:"⛳",cat:"card",tags:["Card","Solitaire","Golf","Classic","Patience"],url:"/golf-solitaire/",desc:"Play Golf Solitaire free online! Classic patience card game with scoring, hints, daily challenges, undo and achievements. King wraps to Ace!",isNew:true,status:"live"}
 
 ];
 
