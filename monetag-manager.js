@@ -46,7 +46,7 @@
       // popunder: 11012001,  // DISABLED — no popups
       // pushNotif: 11012004   // DISABLED — no push
     },
-    AD_PROVIDER: 'https://a.magsrv.com/ad-provider.js',
+    AD_PROVIDER: 'https://quge5.com/88/tag.min.js',
     FREQUENCY: {
       homepageBanner: 30 * 60 * 1000,   // 30 min
       gameInterstitial: 30 * 60 * 1000,  // 30 min per game
@@ -515,7 +515,7 @@
     // prevented the Monetag script from initializing and blocked all subsequent ad loads.
     state.adBlockDetected = false;
     var probeImg = new Image();
-    probeImg.src = 'https://a.magsrv.com/ad-provider.js?_probe=' + Date.now();
+    probeImg.src = 'https://quge5.com/88/tag.min.js?_probe=' + Date.now();
     probeImg.onerror = function() {
       state.adBlockDetected = false; // Image.onerror doesn't mean ad-block
     };
