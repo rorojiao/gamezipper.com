@@ -176,4 +176,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Pool Billiards",emoji:"🎱",cat:"sports",tags:["pool","billiards","8-ball","9-ball","sports"],url:"/pool/",desc:"Play free online Pool and Billiards. 8-Ball, 9-Ball, and Practice modes with realistic physics and AI opponents.",isNew:true,status:"live"},
