@@ -142,6 +142,7 @@
       {n:'Spider Solitaire',e:'🕷️',u:'/spider-solitaire/',c:'card'},
       {n:'FreeCell Solitaire',e:'🃏',u:'/freecell/',c:'card'},
       {n:'Chinese Checkers',e:'⭐',u:'/chinese-checkers/',c:'board'},
+      {n:'Chinese Chess',e:'🐉',u:'/chinese-chess/',c:'puzzle'},
       {n:'Hearts',e:'♥️',u:'/hearts/',c:'card'},
     ];
 

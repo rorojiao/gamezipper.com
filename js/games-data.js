@@ -146,7 +146,12 @@ const GAMES = [
   {name:"Spider Solitaire",emoji:"🕷️",cat:"puzzle",tags:["Puzzle","Card","Solitaire","Spider","Board","Strategy","Classic","Brain","Casual"],url:"/spider-solitaire/",desc:"Play Spider Solitaire free online! Classic 2-deck card game with 1, 2, and 4 suit difficulty modes. Unlimited undo, hints, statistics, daily challenge and score tracking. The best free Spider Solitaire!",isNew:true,status:"live"},
   {name:"FreeCell Solitaire",emoji:"🃏",cat:"card",tags:["freecell","solitaire","card","classic","patience"],url:"/freecell/",desc:"Play FreeCell Solitaire online free. Classic card game with undo, hints, game numbers, and statistics. No download required.",isNew:true,status:"live"},
   {name:"Chinese Checkers",emoji:"⭐",cat:"board",tags:["chinese checkers","board game","strategy","marble","star","classic","multiplayer","ai"],url:"/chinese-checkers/",desc:"Play Chinese Checkers online free! Classic star-shaped board strategy game. Challenge AI with 3 difficulty levels or play local multiplayer. 2-6 players, no download needed.",isNew:true,status:"live"},
-  {name:"Hearts",emoji:"♥️",cat:"card",tags:["hearts","card","trick","classic","hearts card game"],url:"/hearts/",desc:"Play Hearts card game online free. Classic trick-taking card game with AI opponents, pass cards, shoot the moon, and statistics tracking.",isNew:true,status:"live"}
+  {name:"Hearts",emoji:"♥️",cat:"card",tags:["hearts","card","trick","classic","hearts card game"],url:"/hearts/",desc:"Play Hearts card game online free. Classic trick-taking card game with AI opponents, pass cards, shoot the moon, and statistics tracking.",isNew:true,status:"live"},
+  {name:"Chinese Chess",emoji:"🐉",cat:"puzzle",tags:["chinese chess","xiangqi","strategy","board game","ai"],url:"/chinese-chess/",desc:"Play Chinese Chess (Xiangqi) online free. Challenge AI or play local 2-player. Master the ancient strategy game.",isNew:true,status:"live"},
+  {name:"Pyramid Solitaire",emoji:"🔺",cat:"card",tags:["Card","Solitaire","Classic"],url:"/pyramid-solitaire/",desc:"Play Pyramid Solitaire free online! Match cards that sum to 13 to clear the pyramid. Daily challenges and hints available!",isNew:true,status:"live"},
+  {name:"Spades",emoji:"♠️",cat:"card",tags:["Card","Trick","Classic"],url:"/spades/",desc:"Play free Spades online! Classic 4-player trick-taking card game with smart AI opponents, bidding, and nil bonuses!",isNew:true,status:"live"},
+  {name:"TriPeaks Solitaire",emoji:"🏔️",cat:"card",tags:["Card","Solitaire","Classic"],url:"/tripeaks/",desc:"Play TriPeaks Solitaire online free! Clear three card peaks by matching cards one higher or lower. Challenging levels!",isNew:true,status:"live"}
+
 ];
 
 /**
@@ -170,4 +175,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Chinese Chess",emoji:"🐉",cat:"puzzle",tags:["chinese chess","xiangqi","strategy","board game","ai"],url:"/chinese-chess/",desc:"Play Chinese Chess (Xiangqi) online free. Challenge AI or play local 2-player. Master the ancient strategy game.",isNew:true,status:"live"},
