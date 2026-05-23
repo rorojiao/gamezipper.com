@@ -690,18 +690,29 @@ document.getElementById('game-count').textContent=liveGames.length;
   requestAnimationFrame(step);
 })();
 
-// bfcache fix: re-render games when user navigates back via browser back button
-// bfcache restores the page from memory without re-executing JS, so skeletons persist
-window.addEventListener('pageshow', function(e) {
-  if (e.persisted) {
-    // Page restored from bfcache — re-render game grid
+// Fix: re-render game grid when page is restored from bfcache or becomes visible
+// bfcache restores page from memory without re-executing JS, so skeleton loaders persist.
+// Also handles: tab switch, mobile back button, swipe-back gestures.
+function _gz_ensureRendered() {
+  var grid = document.getElementById('games');
+  if (!grid) return;
+  var hasCards = grid.querySelectorAll('.game-card').length > 0;
+  if (!hasCards && typeof render === 'function') {
     var live = (typeof liveGames !== 'undefined') ? liveGames :
                (typeof GAMES !== 'undefined') ? GAMES.filter(function(g){ return g.status==='live' }) : [];
-    if (live.length > 0 && typeof render === 'function') {
+    if (live.length > 0) {
       render(live);
-      document.getElementById('games').classList.add('loaded');
+      grid.classList.add('loaded');
     }
+  } else if (hasCards) {
+    grid.classList.add('loaded');
   }
+}
+window.addEventListener('pageshow', function(e) {
+  if (e.persisted || document.querySelectorAll('.game-card').length === 0) _gz_ensureRendered();
+});
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible' && document.querySelectorAll('.game-card').length === 0) _gz_ensureRendered();
 });
 </script>
 <script src="play-counter.js?v=e3994f7b" defer></script>
