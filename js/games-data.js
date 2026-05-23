@@ -178,4 +178,5 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Rummy",emoji:"🃏",cat:"card",tags:["card game","rummy","classic","strategy","multiplayer"],url:"/rummy/",desc:"Play Rummy online free - Classic card game with draw, meld sets and runs, knock or go gin. Challenge smart AI opponents in Rummy, Gin Rummy and Oklahoma modes.",isNew:true,status:"live"},
+{name:"Rummy",emoji:"🃏",cat:"card",tags:["card game","rummy","classic","strategy","multiplayer"],url:"/rummy/",desc:"Play Rummy online free - Classic card game with draw, meld sets and runs, knock or go gin. Challenge smart AI opponents in Rummy, Gin Rummy and Oklahoma modes.",isNew:true,status:"live"}
+{name:"Farkle",emoji:"🎲",cat:"board",tags:["dice","farkle","board","casino","multiplayer"],url:"/farkle/",desc:"Play Farkle dice game free online. Roll 6 dice, score combinations, push your luck to reach 10000. 3 AI difficulties and local 2-player mode.",isNew:true,status:"live"},
