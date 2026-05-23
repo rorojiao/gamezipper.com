@@ -170,3 +170,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Chinese Chess",emoji:"🐉",cat:"puzzle",tags:["chinese chess","xiangqi","strategy","board game","ai"],url:"/chinese-chess/",desc:"Play Chinese Chess (Xiangqi) online free. Challenge AI or play local 2-player. Master the ancient strategy game.",isNew:true,status:"live"},
