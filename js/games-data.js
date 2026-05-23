@@ -13,7 +13,7 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#fccb90,#d57eeb)',
   'linear-gradient(135deg,#ff9a9e,#fecfef)',
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
-  'linear-gradient(135deg,#a1c4fd,#c2e9fb)'
+  'linear-gradient(135deg,#a1c4fd,#c2e9fb)',
 ];
 
 const GAMES = [
@@ -157,6 +157,7 @@ const GAMES = [
   {name:"Rummy",emoji:"🃏",cat:"card",tags:["card game","rummy","classic","strategy","multiplayer"],url:"/rummy/",desc:"Play Rummy online free - Classic card game with draw, meld sets and runs, knock or go gin. Challenge smart AI opponents in Rummy, Gin Rummy and Oklahoma modes.",isNew:true,status:"live"},
   {name:"Farkle",emoji:"🎲",cat:"board",tags:["dice","farkle","board","casino","multiplayer"],url:"/farkle/",desc:"Play Farkle dice game free online. Roll 6 dice, score combinations, push your luck to reach 10000. 3 AI difficulties and local 2-player mode.",isNew:true,status:"live"},
 
+{name:"Crazy Eights",emoji:"🃏",cat:"card",tags:["card game","uno","crazy eights","shedding","wild card"],url:"/crazy-eights/",desc:"Play Crazy Eights online free - the classic UNO-style shedding card game with wild cards, special actions, and AI opponents.",isNew:true,status:"live"},
 ];
 
 /**
@@ -180,5 +181,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Crazy Eights",emoji:"🃏",cat:"card",tags:["crazy eights","uno","card game","color matching","wild card"],url:"/crazy-eights/",desc:"Play Crazy Eights online free - UNO-style card game with Skip, Reverse, Draw Two and Wild cards. Match by suit or rank, call Crazy when down to one card!",isNew:true,status:"live"}
-{name:"Crazy Eights",emoji:"🃏",cat:"card",tags:["card game","uno","crazy eights","shedding","wild card"],url:"/crazy-eights/",desc:"Play Crazy Eights online free - the classic UNO-style shedding card game with wild cards, special actions, and AI opponents.",isNew:true,status:"live"},
