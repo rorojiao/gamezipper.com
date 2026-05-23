@@ -689,6 +689,20 @@ document.getElementById('game-count').textContent=liveGames.length;
   }
   requestAnimationFrame(step);
 })();
+
+// bfcache fix: re-render games when user navigates back via browser back button
+// bfcache restores the page from memory without re-executing JS, so skeletons persist
+window.addEventListener('pageshow', function(e) {
+  if (e.persisted) {
+    // Page restored from bfcache — re-render game grid
+    var live = (typeof liveGames !== 'undefined') ? liveGames :
+               (typeof GAMES !== 'undefined') ? GAMES.filter(function(g){ return g.status==='live' }) : [];
+    if (live.length > 0 && typeof render === 'function') {
+      render(live);
+      document.getElementById('games').classList.add('loaded');
+    }
+  }
+});
 </script>
 <script src="play-counter.js?v=e3994f7b" defer></script>
 
