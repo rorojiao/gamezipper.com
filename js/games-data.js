@@ -199,3 +199,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Word Scramble",emoji:"🔤",cat:"puzzle",tags:["word","anagram","scramble","spelling"],url:"/word-scramble/",desc:"Unscramble jumbled letters to form words. 500+ words across 10 categories with daily puzzles, hints, and streaks.",isNew:true,status:"live"},
