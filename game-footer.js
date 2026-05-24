@@ -147,6 +147,14 @@
       {n:'Rummy',e:'🃏',u:'/rummy/',c:'card'},
       {n:'Bejeweled',e:'💎',u:'/bejeweled/',c:'puzzle'},
     {n:'Crazy Eights',e:'🃏',u:'/crazy-eights/',c:'card'},
+
+      {n:'Happy Glass',e:'🥛',u:'/happy-glass/',c:'puzzle'},
+      {n:'Farkle',e:'🎲',u:'/farkle/',c:'board'},
+      {n:'Cribbage',e:'🃏',u:'/cribbage/',c:'card'},
+      {n:'Euchre',e:'♠️',u:'/euchre/',c:'card'},
+      {n:'Wordle',e:'🔤',u:'/wordle/',c:'puzzle'},
+      {n:'Hidden Object',e:'🔍',u:'/hidden-object/',c:'puzzle'},
+      {n:'Tiny Fishing',e:'🎣',u:'/tiny-fishing/',c:'casual'}
     ];
 
   var cur = location.pathname;
@@ -263,4 +271,4 @@
      setTimeout(init, 100);
    }
  }
-},{n:'Happy Glass',e:'🥛',u:'/happy-glass/',c:'puzzle'},{n:'Farkle',e:'🎲',u:'/farkle/',c:'board'},{n:'Cribbage',e:'🃏',u:'/cribbage/',c:'card'},{n:'Euchre',e:'♠️',u:'/euchre/',c:'card'},{n:'Wordle',e:'🔤',u:'/wordle/',c:'puzzle'})()
+})();
