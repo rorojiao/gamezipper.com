@@ -290,4 +290,4 @@
 {n:'Doodle Jump',e:'🐸',u:'/doodle-jump/',c:'arcade'},
 {n:'Papas Freezeria',e:'🍦',u:'/papas-freezeria/',c:'simulation'},
 {n:'Gravity Run',e:'🏃',u:'/gravity-run/',c:'arcade'},
-{n:'Cookie Clicker',e:'🍪',u:'/cookie-clicker/',c:'idle'})();
+{n:'Cookie Clicker',e:'🍪',u:'/cookie-clicker/',c:'idle'},{n:'Moto X3M',e:'🏍️',u:'/moto-x3m/',c:'racing'})();
