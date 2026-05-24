@@ -169,6 +169,7 @@ const GAMES = [
 {name:"Doodle Jump",emoji:"🐸",cat:"arcade",tags:["Platformer","Jumping","Arcade"],url:"/doodle-jump/",desc:"Play Doodle Jump online free! Bounce higher and higher on platforms, collect power-ups, shoot monsters, and chase your high score in this classic vertical platformer game.",isNew:true,status:"live"},
 {name:"Papas Freezeria",emoji:"🍦",cat:"simulation",tags:["Restaurant","Cooking","Simulation"],url:"/papas-freezeria/",desc:"Play Papas Freezeria online free! Take orders, build sundaes, mix treats, and top with whipped cream in this classic restaurant simulation game.",isNew:true,status:"live"},
   {name:"Cookie Clicker",emoji:"🍪",cat:"idle",tags:["Idle","Clicker","Cookie","Baking","Simulation","Casual"],url:"/cookie-clicker/",desc:"Bake billions of cookies in this free online idle clicker game! Click the cookie, buy buildings, unlock upgrades, click golden cookies for bonuses, and prestige for permanent rewards. The ultimate baking empire!",isNew:true,status:"live"},
+{name:"Gravity Run",emoji:"🏃",cat:"arcade",tags:["Runner","Tunnel","Gravity","3D","Platformer","Arcade"],url:"/gravity-run/",desc:"Run through a 3D tunnel where gravity flips when you hit walls. 30 story levels across 6 zones, infinite mode, character unlocks, and procedural level generation in this neon tunnel runner.",isNew:true,status:"live"},
 ];
 
 /**
