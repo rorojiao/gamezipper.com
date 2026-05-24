@@ -14,7 +14,6 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#ff9a9e,#fecfef)',
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
   'linear-gradient(135deg,#a1c4fd,#c2e9fb)',
-  {name:"Wordle",emoji:"🔤",cat:"puzzle",tags:["word","daily","guessing","vocabulary"],url:"/wordle/",desc:"Guess the hidden word in 6 tries with color-coded clues. Daily puzzle, practice mode, hard mode, and full statistics.",isNew:true,status:"live"},
 ];
 
 const GAMES = [
