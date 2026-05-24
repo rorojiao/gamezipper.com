@@ -173,6 +173,9 @@ const GAMES = [
 {name:"Moto X3M",emoji:"🏍️",cat:"racing",tags:["motorcycle","racing","stunt","physics","obstacle"],url:"/moto-x3m/",desc:"Race through 25 obstacle courses on a physics motorcycle with flips, stunts, and time trials in Moto X3M.",isNew:true,status:"live"},
 {name:"Math 24",emoji:"🔢",cat:"puzzle",tags:["math","number","24","card","calculator","brain"],url:"/math-24/",desc:"Use four numbers and basic operations to make 24. Challenge yourself with hundreds of solvable puzzles, speed mode, and daily challenges.",isNew:true,status:"live"},
 {name:"Mind Reader",emoji:"🔮",cat:"puzzle",tags:["guessing","20-questions","akinator","trivia","brain","thinking"],url:"/akinator/",desc:"Think of anything and let the Mind Reader guess it! A smart AI asks questions to figure out what you are thinking of. Teach it new things and track your stats.",isNew:true,status:"live"},
+  {name:"Blocky Blast",emoji:"🧩",cat:"puzzle",tags:["block","puzzle","blast","grid","casual","strategy"],url:"/blocky-blast/",desc:"Drag and drop colorful blocks onto the 8x8 grid. Complete rows and columns to clear them. Build combos for massive scores in this addictive block puzzle!",isNew:true,status:"live"},
+  
+  
 ];
 
 /**
