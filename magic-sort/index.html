@@ -2751,6 +2751,12 @@ let hintTimer = 0;
 let hintTapCount = 0;
 let hintTapTimer = 0;
 
+// ─── Extra Tube Power-Up ───
+let extraTubeUses = 3; // starting uses (free)
+let extraTubeUsed = 0; // currently active extra tubes this level
+const MAX_EXTRA_TUBES = 1; // max extra tubes per level
+let extraTubeBtnCooldown = 0;
+
 // ─── Daily Challenge ───
 let dailyChallengeLevel = -1;
 let dailyCompleted = {};
@@ -2829,11 +2835,12 @@ function loadSave() {
     levelUnlocked = d.unlocked || { 0: true };
     if (d.sfx !== undefined) sfxEnabled = d.sfx;
     if (d.lastPlayed !== undefined) lastPlayedLevel = d.lastPlayed;
+    if (d.extraTubeUses !== undefined) extraTubeUses = d.extraTubeUses;
   } catch (e) { levelUnlocked = { 0: true }; }
 }
 function saveSave() {
   try {
-    localStorage.setItem("magicSort_v2", JSON.stringify({ stars: levelStars, unlocked: levelUnlocked, sfx: sfxEnabled, lastPlayed: lastPlayedLevel, bestMoves: bestMoves }));
+    localStorage.setItem("magicSort_v2", JSON.stringify({ stars: levelStars, unlocked: levelUnlocked, sfx: sfxEnabled, lastPlayed: lastPlayedLevel, bestMoves: bestMoves, extraTubeUses: extraTubeUses }));
   } catch (e) {}
 }
 loadSave();
@@ -2855,7 +2862,27 @@ function initLevel(idx) {
   bubbles = [];
   bottleWobbles = [];
   bottleBounces = [];
+  extraTubeUsed = 0;
   state = "game";
+}
+
+function addExtraTube() {
+  if (animating || solving) return;
+  if (extraTubeUsed >= MAX_EXTRA_TUBES) { sfxError(); return; }
+  if (extraTubeUses <= 0) { sfxError(); return; }
+  // Check if there's already an empty bottle we added
+  const hasEmpty = bottles.some(b => b.length === 0);
+  // Only add if useful (existing empty tubes are not from our power-up)
+  bottles.push([]); // add empty bottle
+  extraTubeUses--;
+  extraTubeUsed++;
+  undoStack.push({ type: 'extraTube' });
+  sfxHint();
+  // Trigger bounce on the new bottle
+  bottleBounces[bottles.length - 1] = { scale: 1.15, velocity: 0 };
+  // Vibrate on mobile
+  if (navigator.vibrate) navigator.vibrate(30);
+  saveSave();
 }
 
 function topColor(bi) {
@@ -2961,6 +2988,13 @@ function completePour() {
     }
     if (currentLevel + 1 < TOTAL_LEVELS) {
       levelUnlocked[currentLevel + 1] = true;
+    }
+    // Reward extra tube uses: 3-star gives +1, and every 10 levels gives +1
+    let extraReward = 0;
+    if (stars === 3) extraReward++;
+    if ((currentLevel + 1) % 10 === 0) extraReward++;
+    if (extraReward > 0) {
+      extraTubeUses += extraReward;
     }
     saveSave();
     // Record daily challenge completion
@@ -3851,7 +3885,17 @@ function renderSplash() {
     const dailyDone = isDailyDone();
     const dailyW = Math.min(200, W * 0.55);
     drawButton(W / 2 - dailyW / 2, nextBtnY, dailyW, 42, (dailyDone ? "✅ " : "🔥 ") + "Daily Challenge", hoverBtn === 2, true);
+
+    // Stats summary line on splash
+    const splashCompleted = Object.keys(levelStars).length;
+    if (splashCompleted > 0) {
+      const splashTotalStars = Object.values(levelStars).reduce((a, b) => a + b, 0);
+      X.fillStyle = "rgba(255,255,255,0.3)";
+      X.font = "500 11px 'Nunito',sans-serif";
+      X.fillText(splashTotalStars + " ★  |  " + splashCompleted + "/" + TOTAL_LEVELS + " levels  |  Tubes: " + extraTubeUses, W / 2, nextBtnY + 58);
+    }
   }
+
 
   // Footer — clickable link to GameZipper home
   X.globalAlpha = 0.35;
@@ -4174,6 +4218,34 @@ function renderGame() {
   drawButton(hudStartX + (hudBtnW + hudGap) * 2, hudY, hudBtnW, hudBtnH, hintLabel, hoverBtn === 15, !solving || !solveConfirm);
   drawButton(hudStartX + (hudBtnW + hudGap) * 3, hudY, hudBtnW, hudBtnH, solving ? "⏹ Stop" : "↻ Reset", hoverBtn === 12, true);
 
+  // ── Extra Tube button (left side, below SFX) ──
+  const etbY = 66;
+  const etbW = 80, etbH = 28;
+  const etbEnabled = extraTubeUses > 0 && extraTubeUsed < MAX_EXTRA_TUBES && !solving && !animating;
+  const etbLabel = "+ Tube " + extraTubeUses;
+  if (etbEnabled) {
+    X.save();
+    roundRect(10, etbY, etbW, etbH, 6);
+    X.fillStyle = hoverBtn === 16 ? "rgba(46,213,115,0.35)" : "rgba(46,213,115,0.2)";
+    X.fill();
+    X.strokeStyle = "rgba(46,213,115,0.6)";
+    X.lineWidth = 1.2;
+    X.stroke();
+    X.restore();
+  } else {
+    roundRect(10, etbY, etbW, etbH, 6);
+    X.fillStyle = "rgba(255,255,255,0.05)";
+    X.fill();
+    X.strokeStyle = "rgba(255,255,255,0.1)";
+    X.lineWidth = 1;
+    X.stroke();
+  }
+  X.fillStyle = etbEnabled ? "rgba(46,213,115,0.95)" : "rgba(255,255,255,0.25)";
+  X.font = "700 12px 'Nunito',sans-serif";
+  X.textAlign = "center";
+  X.textBaseline = "middle";
+  X.fillText(etbLabel, 10 + etbW / 2, etbY + etbH / 2);
+
   // AD SLOT placeholder area
   // X.fillStyle="rgba(255,255,255,0.03)"; X.fillRect(0,H-50,W,50);
 
@@ -4347,7 +4419,7 @@ function renderWin() {
 
   X.globalAlpha = ease;
   const cardW = Math.min(300, W * 0.85);
-  const cardH = 260;
+  const cardH = 280;
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2 - 15;
 
@@ -4393,25 +4465,34 @@ function renderWin() {
   // Stats
   X.fillStyle = "rgba(255,255,255,0.65)";
   X.font = "600 15px 'Nunito',sans-serif";
-  X.fillText("Moves: " + moves, W / 2, cardY + 125);
+  X.fillText("Moves: " + moves, W / 2, cardY + 115);
+  // Extra tube reward display
+  let extraReward = 0;
+  if (stars === 3) extraReward++;
+  if ((currentLevel + 1) % 10 === 0) extraReward++;
+  if (extraReward > 0) {
+    X.fillStyle = "rgba(46,213,115,0.9)";
+    X.font = "600 12px 'Nunito',sans-serif";
+    X.fillText("+ Tube x" + extraReward + " earned!", W / 2, cardY + 133);
+  }
   // Best record
   if (bestMoves[currentLevel]) {
     const bestStr = moves <= bestMoves[currentLevel] ? "🏆 New Best!" : "Best: " + bestMoves[currentLevel];
     X.fillStyle = moves <= bestMoves[currentLevel] ? "#ffd32a" : "rgba(255,255,255,0.4)";
     X.font = "600 12px 'Nunito',sans-serif";
-    X.fillText(bestStr, W / 2, cardY + 143);
+    X.fillText(bestStr, W / 2, cardY + 148);
   }
 
   // Buttons
   const btnW = 115, btnH = 42, btnGap = 12;
   const bx = W / 2 - btnW - btnGap / 2;
-  const by = cardY + 150;
+  const by = cardY + 160;
   drawButton(bx, by, btnW, btnH, "↻ Retry", hoverBtn === 20, false);
   const hasNext = currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1];
   if (hasNext) {
     drawButton(bx + btnW + btnGap, by, btnW, btnH, "Next ▶", hoverBtn === 21, true);
   }
-  drawButton(W / 2 - 55, cardY + 205, 110, btnH, "Menu", hoverBtn === 22, false);
+  drawButton(W / 2 - 55, cardY + 215, 110, btnH, "Menu", hoverBtn === 22, false);
 
   // Confetti
   for (const c of confetti) {
@@ -4699,6 +4780,11 @@ function onTap(px, py) {
       saveSave();
       return;
     }
+    // Extra tube button
+    if (hitTest(px, py, 10, 66, 80, 28)) {
+      addExtraTube();
+      return;
+    }
     // HUD buttons
     const hudY = 36, hudBtnW = 46, hudBtnH = 28, hudGap = 5;
     const hudStartX = W - 14 - (hudBtnW * 4 + hudGap * 3);
@@ -4775,12 +4861,12 @@ function onTap(px, py) {
   // ── Win ──
   if (state === "win") {
     const cardW = Math.min(300, W * 0.85);
-    const cardH = 260;
+    const cardH = 280;
     const cardX = (W - cardW) / 2;
     const cardY = (H - cardH) / 2 - 15;
     const btnW = 115, btnH = 42, btnGap = 12;
     const bx = W / 2 - btnW - btnGap / 2;
-    const by = cardY + 150;
+    const by = cardY + 160;
 
     if (hitTest(px, py, bx, by, btnW, btnH)) {
       sfxClick(); initLevel(currentLevel); return;
@@ -4791,7 +4877,7 @@ function onTap(px, py) {
       }
       return;
     }
-    if (hitTest(px, py, W / 2 - 55, cardY + 205, 110, btnH)) {
+    if (hitTest(px, py, W / 2 - 55, cardY + 215, 110, btnH)) {
       sfxClick(); state = "menu"; menuScrollY = 0; return;
     }
   }
