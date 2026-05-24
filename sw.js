@@ -1,7 +1,7 @@
-// GameZipper Service Worker v5
+// GameZipper Service Worker v6
 // Pure game caching — Monetag push NOTIFICATIONS DISABLED per user request
-// Only handles: network-first for data, cache-first for static assets
-const CACHE='gz-v5';
+// Strategies: cache-first (static), stale-while-revalidate (HTML), network-first (API)
+const CACHE='gz-v6';
 
 // === Install ===
 self.addEventListener('install',e=>{
@@ -22,6 +22,9 @@ self.addEventListener('fetch',e=>{
   // Skip non-http requests
   if(!url.protocol.startsWith('http'))return;
 
+  // Skip third-party requests (ads, analytics) — let browser handle
+  if(url.origin!==self.location.origin)return;
+
   // Cache-first for static assets (js, css, images, fonts, audio)
   if(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|mp3|ogg|wav|webp)$/i.test(url.pathname)){
     e.respondWith(
@@ -41,10 +44,33 @@ self.addEventListener('fetch',e=>{
     return;
   }
 
-  // Network-first for everything else (HTML, API, etc.)
+  // Stale-while-revalidate for HTML pages (same-origin navigation)
+  // Returning users get instant load from cache (~0ms TTFB), while
+  // the SW fetches and caches the fresh version in the background
+  if(url.pathname.endsWith('/')||url.pathname.endsWith('.html')||url.pathname==='/'){
+    e.respondWith(
+      caches.open(CACHE).then(c=>
+        c.match(e.request).then(cached=>{
+          var fetchPromise=fetch(e.request).then(resp=>{
+            if(resp&&resp.status===200){
+              var clone=resp.clone();
+              c.put(e.request,clone).catch(()=>{});
+            }
+            return resp;
+          }).catch(()=>cached);
+
+          // Return cached immediately if available, else wait for network
+          return cached||fetchPromise;
+        })
+      ).catch(()=>fetch(e.request))
+    );
+    return;
+  }
+
+  // Network-first for everything else
   e.respondWith(
     fetch(e.request).then(resp=>{
-      if(resp&&resp.status===200&&url.origin===self.location.origin){
+      if(resp&&resp.status===200){
         var clone=resp.clone();
         caches.open(CACHE).then(c=>c.put(e.request,clone)).catch(()=>{});
       }
