@@ -165,6 +165,7 @@ const GAMES = [
 
   {name:"Wordle",emoji:"🔤",cat:"puzzle",tags:["word","daily","guessing","vocabulary"],url:"/wordle/",desc:"Guess the hidden word in 6 tries with color-coded clues. Daily puzzle, practice mode, hard mode, and full statistics.",isNew:true,status:"live"},
   {name:"Tiny Fishing",emoji:"🎣",cat:"casual",tags:["fishing","idle","upgrade","ocean","catch","relaxing","arcade"],url:"/tiny-fishing/",desc:"Cast your hook and catch rare fish in this addictive idle fishing game! Upgrade your rod, line, and bait to explore deeper ocean zones. 30 fish species across 5 depth zones, from Shore to the Abyss.",isNew:true,status:"live"},
+    {name:"Hidden Object",emoji:"🔍",cat:"puzzle",tags:["hidden object","find items","search","seek","puzzle","casual","brain","observation"],url:"/hidden-object/",desc:"Search beautifully illustrated scenes to find hidden objects! 30 levels across 6 themed categories with timer, hints, combo scoring, and daily puzzles.",isNew:true,status:"live"},
 ];
 
 /**
