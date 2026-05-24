@@ -193,3 +193,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Math 24",emoji:"🔢",cat:"puzzle",tags:["math","number","24","card","calculator","brain"],url:"/math-24/",desc:"Use four numbers and basic operations to make 24. Challenge yourself with hundreds of solvable puzzles, speed mode, and daily challenges.",isNew:true,status:"live"},
