@@ -166,6 +166,8 @@ const GAMES = [
   {name:"Wordle",emoji:"🔤",cat:"puzzle",tags:["word","daily","guessing","vocabulary"],url:"/wordle/",desc:"Guess the hidden word in 6 tries with color-coded clues. Daily puzzle, practice mode, hard mode, and full statistics.",isNew:true,status:"live"},
   {name:"Tiny Fishing",emoji:"🎣",cat:"casual",tags:["fishing","idle","upgrade","ocean","catch","relaxing","arcade"],url:"/tiny-fishing/",desc:"Cast your hook and catch rare fish in this addictive idle fishing game! Upgrade your rod, line, and bait to explore deeper ocean zones. 30 fish species across 5 depth zones, from Shore to the Abyss.",isNew:true,status:"live"},
     {name:"Hidden Object",emoji:"🔍",cat:"puzzle",tags:["hidden object","find items","search","seek","puzzle","casual","brain","observation"],url:"/hidden-object/",desc:"Search beautifully illustrated scenes to find hidden objects! 30 levels across 6 themed categories with timer, hints, combo scoring, and daily puzzles.",isNew:true,status:"live"},
+{name:"Doodle Jump",emoji:"🐸",cat:"arcade",tags:["Platformer","Jumping","Arcade"],url:"/doodle-jump/",desc:"Play Doodle Jump online free! Bounce higher and higher on platforms, collect power-ups, shoot monsters, and chase your high score in this classic vertical platformer game.",isNew:true,status:"live"},
+{name:"Papas Freezeria",emoji:"🍦",cat:"simulation",tags:["Restaurant","Cooking","Simulation"],url:"/papas-freezeria/",desc:"Play Papas Freezeria online free! Take orders, build sundaes, mix treats, and top with whipped cream in this classic restaurant simulation game.",isNew:true,status:"live"},
 ];
 
 /**
@@ -189,5 +191,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Doodle Jump",emoji:"🐸",cat:"arcade",tags:["Platformer","Jumping","Arcade"],url:"/doodle-jump/",desc:"Play Doodle Jump online free! Bounce higher and higher on platforms, collect power-ups, shoot monsters, and chase your high score in this classic vertical platformer game.",isNew:true,status:"live"}
-{name:"Papas Freezeria",emoji:"🍦",cat:"simulation",tags:["Restaurant","Cooking","Simulation"],url:"/papas-freezeria/",desc:"Play Papas Freezeria online free! Take orders, build sundaes, mix treats, and top with whipped cream in this classic restaurant simulation game.",isNew:true,status:"live"},

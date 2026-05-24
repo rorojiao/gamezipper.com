@@ -271,4 +271,6 @@
      setTimeout(init, 100);
    }
  }
-})();
+},
+{n:'Doodle Jump',e:'🐸',u:'/doodle-jump/',c:'arcade'},
+{n:'Papas Freezeria',e:'🍦',u:'/papas-freezeria/',c:'simulation'})();
