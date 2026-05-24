@@ -174,8 +174,8 @@ const GAMES = [
 {name:"Math 24",emoji:"🔢",cat:"puzzle",tags:["math","number","24","card","calculator","brain"],url:"/math-24/",desc:"Use four numbers and basic operations to make 24. Challenge yourself with hundreds of solvable puzzles, speed mode, and daily challenges.",isNew:true,status:"live"},
 {name:"Mind Reader",emoji:"🔮",cat:"puzzle",tags:["guessing","20-questions","akinator","trivia","brain","thinking"],url:"/akinator/",desc:"Think of anything and let the Mind Reader guess it! A smart AI asks questions to figure out what you are thinking of. Teach it new things and track your stats.",isNew:true,status:"live"},
   {name:"Blocky Blast",emoji:"🧩",cat:"puzzle",tags:["block","puzzle","blast","grid","casual","strategy"],url:"/blocky-blast/",desc:"Drag and drop colorful blocks onto the 8x8 grid. Complete rows and columns to clear them. Build combos for massive scores in this addictive block puzzle!",isNew:true,status:"live"},
-  
-  
+  {name:"Pin Master",emoji:"📌",cat:"puzzle",tags:["Puzzle","Screw","Logic","Pin","Strategy"],url:"/pin-master/",desc:"Tap pins in the right order to drop metal plates! A satisfying screw puzzle with 40 levels, hints, undo, and star ratings.",isNew:true,status:"live"},
+
 ];
 
 /**

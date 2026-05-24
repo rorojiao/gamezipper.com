@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Play Pin Master Online Free - Satisfying Screw Puzzle | GameZipper</title>
+<meta name="description" content="Play Pin Master online free. Tap pins in the right order to drop metal plates in this satisfying screw puzzle game. 40+ levels, hints, undo, and star ratings.">
+<link rel="canonical" href="https://gamezipper.com/pin-master/">
+<meta property="og:title" content="Play Pin Master Online Free - Satisfying Screw Puzzle | GameZipper">
+<meta property="og:description" content="Tap pins in the right order to drop metal plates. 40+ levels of satisfying screw puzzle gameplay.">
+<meta property="og:image" content="https://gamezipper.com/pin-master/og-image.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/pin-master/">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow-x:hidden;user-select:none;-webkit-user-select:none;background:#0a0a1a}
+body{display:flex;justify-content:center;align-items:center;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+canvas{display:block;touch-action:none}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"VideoGame","name":"Pin Master","description":"A satisfying screw puzzle game where players tap pins in the correct order to drop metal plates.","genre":"Puzzle","gamePlatform":"HTML5","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://gamezipper.com/pin-master/","publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com"}},
+{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Pin Master?","acceptedAnswer":{"@type":"Answer","text":"Tap pins in the correct order to release metal plates so they fall to matching color slots below. Remove all plates to complete each level."}},{"@type":"Question","name":"How many levels does Pin Master have?","acceptedAnswer":{"@type":"Answer","text":"Pin Master features 40 hand-crafted levels across 4 difficulty tiers, from tutorial to expert."}},{"@type":"Question","name":"What are the different pin types?","acceptedAnswer":{"@type":"Answer","text":"Normal, Color, Locked, Ice, Chain, and Bomb pins - each introduced progressively through the levels."}}]},
+{"@type":"HowTo","name":"How to Play Pin Master","step":[{"@type":"HowToStep","name":"Observe","text":"Look at the plate arrangement and identify which pins hold which plates."},{"@type":"HowToStep","name":"Plan","text":"Determine the correct order to remove pins so plates can drop freely."},{"@type":"HowToStep","name":"Tap","text":"Remove pins by tapping them. Color pins go to matching slots."},{"@type":"HowToStep","name":"Complete","text":"Drop all plates to their slots to earn stars and unlock the next level."}]},
+{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com"},{"@type":"ListItem","position":2,"name":"Pin Master","item":"https://gamezipper.com/pin-master/"}]}
+]}
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+'use strict';
+(function(){
+const SAVE_VERSION=1,SAVE_KEY='pinMaster_v1';
+const COLORS={red:'#ff4466',blue:'#4488ff',green:'#44ff88',yellow:'#ffdd44',purple:'#bb66ff',orange:'#ff8844',cyan:'#44ffdd',pink:'#ff66cc'};
+const PIN_COLORS=['red','blue','green','yellow','purple','orange'];
+const TIER_NAMES=['Tutorial','Easy','Medium','Hard','Expert'];
+let canvas,ctx,W,H,dpr;
+let gameState='menu'; // menu, levelSelect, playing, levelComplete, levelFail, settings, stats, tutorial
+let currentLevel=0;
+let saveData=null;
+let audioCtx=null;
+let musicGain=null,musicPlaying=false;
+let sfxEnabled=true,musicEnabled=true;
+let animFrame=0;
+let lastTime=0;
+let gameObjects={plates:[],pins:[],slots:[],particles:[],floatingTexts:[]};
+let moveHistory=[];
+let hintsRemaining=3;
+let hintsUsed=0;
+let undosRemaining=3;
+let comboCount=0;
+let comboTimer=0;
+let score=0;
+let levelTime=0;
+let screenShake={x:0,y:0,intensity:0};
+let tutorialStep=0;
+let tutorialLevel=0;
+let fadeAlpha=0;
+let fadeTarget=0;
+let fadeCallback=null;
+let bgStars=[];
+let pendingCleanup=[];
+let activeTimers=[];
+let reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Layout
+let layout={};
+let plateArea={x:0,y:0,w:0,h:0};
+let slotArea={x:0,y:0,w:0,h:0};
+let gridCols=6,gridRows=8;
+
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function lerp(a,b,t){return a+(b-a)*t}
+function rand(a,b){return a+Math.random()*(b-a)}
+function randInt(a,b){return Math.floor(rand(a,b+1))}
+function dist(x1,y1,x2,y2){return Math.hypot(x2-x1,y2-y1)}
+
+// --- LEVEL DATA ---
+const LEVELS=[
+// Tier 1: Tutorial/Easy (1-10)
+{id:1,name:"First Steps",tier:1,gridW:5,gridH:6,plates:[
+{id:'p1',x:1,y:0,w:3,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:1,y:2,w:3,h:1,color:'silver',pinIds:['pin3','pin4']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'normal'},
+{id:'pin2',x:3,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:1,y:2,color:'blue',type:'normal'},
+{id:'pin4',x:3,y:2,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:1},{color:'blue',x:3}
+],tutorial:true,tutorialSteps:['pins','slots','order']},
+{id:2,name:"Color Match",tier:1,gridW:5,gridH:6,plates:[
+{id:'p1',x:0,y:0,w:2,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:3,y:0,w:2,h:1,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:1,y:3,w:3,h:1,color:'gray',pinIds:['pin5','pin6']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'normal'},
+{id:'pin2',x:1,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:3,y:0,color:'green',type:'normal'},
+{id:'pin4',x:4,y:0,color:'red',type:'normal'},
+{id:'pin5',x:1,y:3,color:'green',type:'normal'},
+{id:'pin6',x:3,y:3,color:'blue',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:4}
+],par:8},
+{id:3,name:"Stack Up",tier:1,gridW:5,gridH:7,plates:[
+{id:'p1',x:1,y:0,w:3,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:1,y:2,w:3,h:1,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:1,y:4,w:3,h:1,color:'gray',pinIds:['pin5','pin6']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'normal'},
+{id:'pin2',x:3,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:1,y:2,color:'blue',type:'normal'},
+{id:'pin4',x:3,y:2,color:'green',type:'normal'},
+{id:'pin5',x:1,y:4,color:'green',type:'normal'},
+{id:'pin6',x:3,y:4,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:4}
+],par:8},
+{id:4,name:"Side by Side",tier:1,gridW:6,gridH:6,plates:[
+{id:'p1',x:0,y:0,w:2,h:2,color:'gray',pinIds:['pin1','pin2','pin3']},
+{id:'p2',x:3,y:0,w:3,h:2,color:'silver',pinIds:['pin4','pin5']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'normal'},
+{id:'pin2',x:1,y:1,color:'blue',type:'normal'},
+{id:'pin3',x:0,y:1,color:'green',type:'normal'},
+{id:'pin4',x:3,y:0,color:'blue',type:'normal'},
+{id:'pin5',x:5,y:1,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:1},{color:'blue',x:3},{color:'green',x:5}
+],par:7},
+{id:5,name:"Cross Pattern",tier:1,gridW:5,gridH:7,plates:[
+{id:'p1',x:0,y:0,w:2,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:3,y:0,w:2,h:1,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:1,y:3,w:3,h:1,color:'gray',pinIds:['pin5','pin6']},
+{id:'p4',x:0,y:5,w:2,h:1,color:'silver',pinIds:['pin7','pin8']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'normal'},
+{id:'pin2',x:1,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:3,y:0,color:'red',type:'normal'},
+{id:'pin4',x:4,y:0,color:'green',type:'normal'},
+{id:'pin5',x:1,y:3,color:'green',type:'normal'},
+{id:'pin6',x:3,y:3,color:'blue',type:'normal'},
+{id:'pin7',x:0,y:5,color:'blue',type:'normal'},
+{id:'pin8',x:1,y:5,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:4}
+],par:10},
+{id:6,name:"The Bridge",tier:1,gridW:6,gridH:6,plates:[
+{id:'p1',x:0,y:0,w:6,h:1,color:'gray',pinIds:['pin1','pin2','pin3']},
+{id:'p2',x:1,y:2,w:4,h:1,color:'silver',pinIds:['pin4','pin5']},
+{id:'p3',x:2,y:4,w:2,h:1,color:'gray',pinIds:['pin6']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'normal'},
+{id:'pin2',x:3,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:5,y:0,color:'green',type:'normal'},
+{id:'pin4',x:1,y:2,color:'green',type:'normal'},
+{id:'pin5',x:4,y:2,color:'red',type:'normal'},
+{id:'pin6',x:2,y:4,color:'blue',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:4}
+],par:8},
+{id:7,name:"Twin Towers",tier:1,gridW:6,gridH:7,plates:[
+{id:'p1',x:0,y:0,w:2,h:2,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:4,y:0,w:2,h:2,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:0,y:3,w:2,h:2,color:'silver',pinIds:['pin5','pin6']},
+{id:'p4',x:4,y:3,w:2,h:2,color:'gray',pinIds:['pin7','pin8']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'normal'},
+{id:'pin2',x:1,y:1,color:'blue',type:'normal'},
+{id:'pin3',x:4,y:0,color:'blue',type:'normal'},
+{id:'pin4',x:5,y:1,color:'green',type:'normal'},
+{id:'pin5',x:0,y:3,color:'green',type:'normal'},
+{id:'pin6',x:1,y:4,color:'red',type:'normal'},
+{id:'pin7',x:4,y:3,color:'red',type:'normal'},
+{id:'pin8',x:5,y:4,color:'blue',type:'normal'}
+],slots:[
+{color:'red',x:1},{color:'blue',x:3},{color:'green',x:5}
+],par:10},
+{id:8,name:"Zigzag",tier:1,gridW:5,gridH:7,plates:[
+{id:'p1',x:0,y:0,w:2,h:1,color:'gray',pinIds:['pin1']},
+{id:'p2',x:3,y:1,w:2,h:1,color:'silver',pinIds:['pin2']},
+{id:'p3',x:0,y:3,w:2,h:1,color:'gray',pinIds:['pin3']},
+{id:'p4',x:3,y:4,w:2,h:1,color:'silver',pinIds:['pin4']},
+{id:'p5',x:1,y:6,w:3,h:1,color:'gray',pinIds:['pin5','pin6']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'normal'},
+{id:'pin2',x:3,y:1,color:'blue',type:'normal'},
+{id:'pin3',x:1,y:3,color:'green',type:'normal'},
+{id:'pin4',x:4,y:4,color:'red',type:'normal'},
+{id:'pin5',x:1,y:6,color:'blue',type:'normal'},
+{id:'pin6',x:3,y:6,color:'green',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:4}
+],par:8},
+{id:9,name:"Wide Load",tier:1,gridW:6,gridH:6,plates:[
+{id:'p1',x:0,y:0,w:3,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:3,y:0,w:3,h:1,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:1,y:2,w:4,h:2,color:'gray',pinIds:['pin5','pin6','pin7']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'normal'},
+{id:'pin2',x:2,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:3,y:0,color:'green',type:'normal'},
+{id:'pin4',x:5,y:0,color:'red',type:'normal'},
+{id:'pin5',x:1,y:2,color:'blue',type:'normal'},
+{id:'pin6',x:3,y:3,color:'green',type:'normal'},
+{id:'pin7',x:4,y:2,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:1},{color:'blue',x:3},{color:'green',x:5}
+],par:9},
+{id:10,name:"Graduation",tier:1,gridW:6,gridH:7,plates:[
+{id:'p1',x:2,y:0,w:2,h:1,color:'gray',pinIds:['pin1']},
+{id:'p2',x:1,y:2,w:4,h:1,color:'silver',pinIds:['pin2','pin3']},
+{id:'p3',x:0,y:4,w:6,h:1,color:'gray',pinIds:['pin4','pin5','pin6']},
+{id:'p4',x:1,y:6,w:4,h:1,color:'silver',pinIds:['pin7','pin8']}
+],pins:[
+{id:'pin1',x:2,y:0,color:'red',type:'normal'},
+{id:'pin2',x:1,y:2,color:'blue',type:'normal'},
+{id:'pin3',x:4,y:2,color:'green',type:'normal'},
+{id:'pin4',x:0,y:4,color:'red',type:'normal'},
+{id:'pin5',x:3,y:4,color:'green',type:'normal'},
+{id:'pin6',x:5,y:4,color:'blue',type:'normal'},
+{id:'pin7',x:1,y:6,color:'blue',type:'normal'},
+{id:'pin8',x:4,y:6,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:4}
+],par:10},
+// Tier 2: Medium (11-20)
+{id:11,name:"Double Stack",tier:2,gridW:6,gridH:7,plates:[
+{id:'p1',x:0,y:0,w:3,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:3,y:0,w:3,h:1,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:0,y:2,w:2,h:1,color:'gray',pinIds:['pin5']},
+{id:'p4',x:4,y:2,w:2,h:1,color:'silver',pinIds:['pin6']},
+{id:'p5',x:1,y:4,w:4,h:1,color:'gray',pinIds:['pin7','pin8']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'normal'},
+{id:'pin2',x:2,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:3,y:0,color:'green',type:'normal'},
+{id:'pin4',x:5,y:0,color:'yellow',type:'normal'},
+{id:'pin5',x:1,y:2,color:'yellow',type:'normal'},
+{id:'pin6',x:5,y:2,color:'red',type:'normal'},
+{id:'pin7',x:1,y:4,color:'green',type:'normal'},
+{id:'pin8',x:4,y:4,color:'blue',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:10},
+{id:12,name:"Chains Begin",tier:2,gridW:5,gridH:7,plates:[
+{id:'p1',x:0,y:0,w:2,h:1,color:'gray',pinIds:['pin1']},
+{id:'p2',x:3,y:0,w:2,h:1,color:'silver',pinIds:['pin2']},
+{id:'p3',x:0,y:2,w:5,h:1,color:'gray',pinIds:['pin3','pin4']},
+{id:'p4',x:1,y:4,w:3,h:1,color:'silver',pinIds:['pin5','pin6']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'chain',chainWith:'pin2'},
+{id:'pin2',x:3,y:0,color:'blue',type:'chain',chainWith:'pin1'},
+{id:'pin3',x:0,y:2,color:'blue',type:'normal'},
+{id:'pin4',x:4,y:2,color:'red',type:'normal'},
+{id:'pin5',x:1,y:4,color:'green',type:'normal'},
+{id:'pin6',x:3,y:4,color:'green',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:4}
+],par:8},
+{id:13,name:"Ice Breaker",tier:2,gridW:6,gridH:7,plates:[
+{id:'p1',x:1,y:0,w:4,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:0,y:2,w:2,h:1,color:'silver',pinIds:['pin3']},
+{id:'p3',x:4,y:2,w:2,h:1,color:'gray',pinIds:['pin4']},
+{id:'p4',x:1,y:4,w:4,h:1,color:'silver',pinIds:['pin5','pin6']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'ice'},
+{id:'pin2',x:4,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:1,y:2,color:'blue',type:'normal'},
+{id:'pin4',x:4,y:2,color:'red',type:'normal'},
+{id:'pin5',x:1,y:4,color:'green',type:'normal'},
+{id:'pin6',x:4,y:4,color:'green',type:'normal'}
+],slots:[
+{color:'red',x:1},{color:'blue',x:3},{color:'green',x:5}
+],par:9},
+{id:14,name:"Lock & Key",tier:2,gridW:6,gridH:7,plates:[
+{id:'p1',x:0,y:0,w:3,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:3,y:0,w:3,h:1,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:2,y:3,w:2,h:2,color:'gray',pinIds:['pin5','pin6']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'normal'},
+{id:'pin2',x:2,y:0,color:'blue',type:'locked',lockedBy:'pin3'},
+{id:'pin3',x:3,y:0,color:'green',type:'normal'},
+{id:'pin4',x:5,y:0,color:'red',type:'normal'},
+{id:'pin5',x:2,y:3,color:'blue',type:'normal'},
+{id:'pin6',x:3,y:4,color:'green',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:4}
+],par:8},
+{id:15,name:"Cascade",tier:2,gridW:6,gridH:8,plates:[
+{id:'p1',x:2,y:0,w:2,h:1,color:'gray',pinIds:['pin1']},
+{id:'p2',x:0,y:2,w:2,h:1,color:'silver',pinIds:['pin2']},
+{id:'p3',x:4,y:2,w:2,h:1,color:'gray',pinIds:['pin3']},
+{id:'p4',x:1,y:4,w:4,h:1,color:'silver',pinIds:['pin4','pin5']},
+{id:'p5',x:2,y:6,w:2,h:1,color:'gray',pinIds:['pin6']}
+],pins:[
+{id:'pin1',x:2,y:0,color:'red',type:'normal'},
+{id:'pin2',x:1,y:2,color:'blue',type:'normal'},
+{id:'pin3',x:5,y:2,color:'green',type:'normal'},
+{id:'pin4',x:1,y:4,color:'red',type:'normal'},
+{id:'pin5',x:4,y:4,color:'blue',type:'normal'},
+{id:'pin6',x:2,y:6,color:'green',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:4}
+],par:8},
+{id:16,name:"Four Corners",tier:2,gridW:6,gridH:7,plates:[
+{id:'p1',x:0,y:0,w:2,h:1,color:'gray',pinIds:['pin1']},
+{id:'p2',x:4,y:0,w:2,h:1,color:'silver',pinIds:['pin2']},
+{id:'p3',x:2,y:3,w:2,h:1,color:'gray',pinIds:['pin3','pin4']},
+{id:'p4',x:0,y:5,w:2,h:1,color:'silver',pinIds:['pin5']},
+{id:'p5',x:4,y:5,w:2,h:1,color:'gray',pinIds:['pin6']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'normal'},
+{id:'pin2',x:5,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:2,y:3,color:'green',type:'normal'},
+{id:'pin4',x:3,y:3,color:'yellow',type:'normal'},
+{id:'pin5',x:1,y:5,color:'yellow',type:'normal'},
+{id:'pin6',x:4,y:5,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:9},
+{id:17,name:"Staircase",tier:2,gridW:6,gridH:7,plates:[
+{id:'p1',x:0,y:0,w:2,h:1,color:'gray',pinIds:['pin1']},
+{id:'p2',x:2,y:1,w:2,h:1,color:'silver',pinIds:['pin2']},
+{id:'p3',x:4,y:2,w:2,h:1,color:'gray',pinIds:['pin3']},
+{id:'p4',x:2,y:3,w:2,h:1,color:'silver',pinIds:['pin4']},
+{id:'p5',x:0,y:4,w:2,h:1,color:'gray',pinIds:['pin5']},
+{id:'p6',x:2,y:5,w:2,h:1,color:'silver',pinIds:['pin6']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'normal'},
+{id:'pin2',x:2,y:1,color:'blue',type:'normal'},
+{id:'pin3',x:5,y:2,color:'green',type:'normal'},
+{id:'pin4',x:3,y:3,color:'red',type:'normal'},
+{id:'pin5',x:0,y:4,color:'blue',type:'normal'},
+{id:'pin6',x:3,y:5,color:'green',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:4}
+],par:9},
+{id:18,name:"Weave",tier:2,gridW:6,gridH:7,plates:[
+{id:'p1',x:0,y:0,w:3,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:2,y:2,w:3,h:1,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:0,y:4,w:3,h:1,color:'gray',pinIds:['pin5','pin6']},
+{id:'p4',x:1,y:6,w:4,h:1,color:'silver',pinIds:['pin7','pin8']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'normal'},
+{id:'pin2',x:2,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:2,y:2,color:'green',type:'normal'},
+{id:'pin4',x:4,y:2,color:'red',type:'normal'},
+{id:'pin5',x:0,y:4,color:'blue',type:'normal'},
+{id:'pin6',x:2,y:4,color:'green',type:'normal'},
+{id:'pin7',x:1,y:6,color:'red',type:'normal'},
+{id:'pin8',x:4,y:6,color:'blue',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:4}
+],par:10},
+{id:19,name:"The Vault",tier:2,gridW:6,gridH:7,plates:[
+{id:'p1',x:1,y:0,w:4,h:2,color:'gray',pinIds:['pin1','pin2','pin3','pin4']},
+{id:'p2',x:2,y:3,w:2,h:2,color:'silver',pinIds:['pin5','pin6']},
+{id:'p3',x:0,y:5,w:2,h:1,color:'gray',pinIds:['pin7']},
+{id:'p4',x:4,y:5,w:2,h:1,color:'silver',pinIds:['pin8']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'locked',lockedBy:'pin5'},
+{id:'pin2',x:4,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:1,y:1,color:'green',type:'normal'},
+{id:'pin4',x:4,y:1,color:'yellow',type:'normal'},
+{id:'pin5',x:2,y:3,color:'blue',type:'normal'},
+{id:'pin6',x:3,y:4,color:'red',type:'normal'},
+{id:'pin7',x:1,y:5,color:'green',type:'normal'},
+{id:'pin8',x:4,y:5,color:'yellow',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:10},
+{id:20,name:"Frozen Locks",tier:2,gridW:6,gridH:8,plates:[
+{id:'p1',x:0,y:0,w:3,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:3,y:0,w:3,h:1,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:1,y:3,w:4,h:1,color:'gray',pinIds:['pin5','pin6']},
+{id:'p4',x:0,y:5,w:2,h:1,color:'silver',pinIds:['pin7']},
+{id:'p5',x:4,y:5,w:2,h:1,color:'gray',pinIds:['pin8']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'ice'},
+{id:'pin2',x:2,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:3,y:0,color:'green',type:'locked',lockedBy:'pin1'},
+{id:'pin4',x:5,y:0,color:'yellow',type:'normal'},
+{id:'pin5',x:1,y:3,color:'blue',type:'normal'},
+{id:'pin6',x:4,y:3,color:'red',type:'normal'},
+{id:'pin7',x:1,y:5,color:'green',type:'normal'},
+{id:'pin8',x:4,y:5,color:'yellow',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:11},
+// Tier 3: Hard (21-30)
+{id:21,name:"Chain Reaction",tier:3,gridW:6,gridH:8,plates:[
+{id:'p1',x:0,y:0,w:2,h:1,color:'gray',pinIds:['pin1']},
+{id:'p2',x:4,y:0,w:2,h:1,color:'silver',pinIds:['pin2']},
+{id:'p3',x:0,y:2,w:6,h:1,color:'gray',pinIds:['pin3','pin4','pin5']},
+{id:'p4',x:1,y:4,w:4,h:1,color:'silver',pinIds:['pin6','pin7']},
+{id:'p5',x:2,y:6,w:2,h:1,color:'gray',pinIds:['pin8']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'chain',chainWith:'pin2'},
+{id:'pin2',x:5,y:0,color:'blue',type:'chain',chainWith:'pin1'},
+{id:'pin3',x:0,y:2,color:'green',type:'normal'},
+{id:'pin4',x:3,y:2,color:'yellow',type:'chain',chainWith:'pin5'},
+{id:'pin5',x:5,y:2,color:'red',type:'chain',chainWith:'pin4'},
+{id:'pin6',x:1,y:4,color:'blue',type:'normal'},
+{id:'pin7',x:4,y:4,color:'green',type:'normal'},
+{id:'pin8',x:2,y:6,color:'yellow',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:10},
+{id:22,name:"Ice Fortress",tier:3,gridW:6,gridH:8,plates:[
+{id:'p1',x:0,y:0,w:6,h:1,color:'gray',pinIds:['pin1','pin2','pin3']},
+{id:'p2',x:1,y:2,w:4,h:2,color:'silver',pinIds:['pin4','pin5','pin6']},
+{id:'p3',x:0,y:5,w:2,h:1,color:'gray',pinIds:['pin7']},
+{id:'p4',x:4,y:5,w:2,h:1,color:'silver',pinIds:['pin8']},
+{id:'p5',x:2,y:7,w:2,h:1,color:'gray',pinIds:['pin9']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'ice'},
+{id:'pin2',x:3,y:0,color:'blue',type:'ice'},
+{id:'pin3',x:5,y:0,color:'green',type:'normal'},
+{id:'pin4',x:1,y:2,color:'yellow',type:'normal'},
+{id:'pin5',x:3,y:3,color:'red',type:'normal'},
+{id:'pin6',x:4,y:2,color:'blue',type:'ice'},
+{id:'pin7',x:1,y:5,color:'green',type:'normal'},
+{id:'pin8',x:4,y:5,color:'yellow',type:'normal'},
+{id:'pin9',x:2,y:7,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:12},
+{id:23,name:"Lockdown",tier:3,gridW:6,gridH:8,plates:[
+{id:'p1',x:0,y:0,w:2,h:2,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:4,y:0,w:2,h:2,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:2,y:3,w:2,h:2,color:'gray',pinIds:['pin5','pin6']},
+{id:'p4',x:0,y:6,w:3,h:1,color:'silver',pinIds:['pin7','pin8']},
+{id:'p5',x:3,y:6,w:3,h:1,color:'gray',pinIds:['pin9','pin10']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'locked',lockedBy:'pin3'},
+{id:'pin2',x:1,y:1,color:'blue',type:'normal'},
+{id:'pin3',x:4,y:0,color:'green',type:'normal'},
+{id:'pin4',x:5,y:1,color:'red',type:'locked',lockedBy:'pin5'},
+{id:'pin5',x:2,y:3,color:'yellow',type:'normal'},
+{id:'pin6',x:3,y:4,color:'blue',type:'normal'},
+{id:'pin7',x:0,y:6,color:'green',type:'normal'},
+{id:'pin8',x:2,y:6,color:'yellow',type:'normal'},
+{id:'pin9',x:3,y:6,color:'red',type:'normal'},
+{id:'pin10',x:5,y:6,color:'green',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:13},
+{id:24,name:"Bomb Squad",tier:3,gridW:6,gridH:7,plates:[
+{id:'p1',x:1,y:0,w:4,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:0,y:2,w:2,h:1,color:'silver',pinIds:['pin3']},
+{id:'p3',x:4,y:2,w:2,h:1,color:'gray',pinIds:['pin4']},
+{id:'p4',x:1,y:4,w:4,h:1,color:'silver',pinIds:['pin5','pin6']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'bomb'},
+{id:'pin2',x:4,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:1,y:2,color:'green',type:'normal'},
+{id:'pin4',x:4,y:2,color:'yellow',type:'normal'},
+{id:'pin5',x:1,y:4,color:'blue',type:'normal'},
+{id:'pin6',x:4,y:4,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:8},
+{id:25,name:"Entangled",tier:3,gridW:6,gridH:8,plates:[
+{id:'p1',x:0,y:0,w:3,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:3,y:1,w:3,h:1,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:0,y:3,w:3,h:1,color:'gray',pinIds:['pin5','pin6']},
+{id:'p4',x:3,y:4,w:3,h:1,color:'silver',pinIds:['pin7','pin8']},
+{id:'p5',x:1,y:6,w:4,h:1,color:'gray',pinIds:['pin9','pin10']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'chain',chainWith:'pin3'},
+{id:'pin2',x:2,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:3,y:1,color:'green',type:'chain',chainWith:'pin1'},
+{id:'pin4',x:5,y:1,color:'yellow',type:'normal'},
+{id:'pin5',x:0,y:3,color:'yellow',type:'chain',chainWith:'pin7'},
+{id:'pin6',x:2,y:3,color:'red',type:'normal'},
+{id:'pin7',x:3,y:4,color:'blue',type:'chain',chainWith:'pin5'},
+{id:'pin8',x:5,y:4,color:'green',type:'normal'},
+{id:'pin9',x:1,y:6,color:'red',type:'normal'},
+{id:'pin10',x:4,y:6,color:'blue',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:12},
+{id:26,name:"Glacier",tier:3,gridW:6,gridH:8,plates:[
+{id:'p1',x:0,y:0,w:3,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:3,y:0,w:3,h:1,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:0,y:2,w:6,h:1,color:'gray',pinIds:['pin5','pin6','pin7']},
+{id:'p4',x:1,y:4,w:4,h:1,color:'silver',pinIds:['pin8','pin9']},
+{id:'p5',x:2,y:6,w:2,h:1,color:'gray',pinIds:['pin10']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'ice'},
+{id:'pin2',x:2,y:0,color:'blue',type:'ice'},
+{id:'pin3',x:3,y:0,color:'green',type:'normal'},
+{id:'pin4',x:5,y:0,color:'yellow',type:'ice'},
+{id:'pin5',x:0,y:2,color:'yellow',type:'normal'},
+{id:'pin6',x:3,y:2,color:'red',type:'normal'},
+{id:'pin7',x:5,y:2,color:'blue',type:'normal'},
+{id:'pin8',x:1,y:4,color:'green',type:'ice'},
+{id:'pin9',x:4,y:4,color:'blue',type:'normal'},
+{id:'pin10',x:2,y:6,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:13},
+{id:27,name:"Fortress",tier:3,gridW:6,gridH:8,plates:[
+{id:'p1',x:0,y:0,w:6,h:1,color:'gray',pinIds:['pin1','pin2','pin3']},
+{id:'p2',x:0,y:2,w:2,h:2,color:'silver',pinIds:['pin4','pin5']},
+{id:'p3',x:4,y:2,w:2,h:2,color:'gray',pinIds:['pin6','pin7']},
+{id:'p4',x:2,y:5,w:2,h:1,color:'silver',pinIds:['pin8']},
+{id:'p5',x:0,y:7,w:6,h:1,color:'gray',pinIds:['pin9','pin10','pin11']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'locked',lockedBy:'pin4'},
+{id:'pin2',x:3,y:0,color:'blue',type:'normal'},
+{id:'pin3',x:5,y:0,color:'green',type:'locked',lockedBy:'pin6'},
+{id:'pin4',x:0,y:2,color:'yellow',type:'normal'},
+{id:'pin5',x:1,y:3,color:'red',type:'normal'},
+{id:'pin6',x:4,y:2,color:'blue',type:'normal'},
+{id:'pin7',x:5,y:3,color:'green',type:'normal'},
+{id:'pin8',x:2,y:5,color:'yellow',type:'normal'},
+{id:'pin9',x:0,y:7,color:'blue',type:'normal'},
+{id:'pin10',x:3,y:7,color:'green',type:'normal'},
+{id:'pin11',x:5,y:7,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:13},
+{id:28,name:"Interlock",tier:3,gridW:6,gridH:8,plates:[
+{id:'p1',x:0,y:0,w:2,h:1,color:'gray',pinIds:['pin1']},
+{id:'p2',x:2,y:0,w:2,h:1,color:'silver',pinIds:['pin2']},
+{id:'p3',x:4,y:0,w:2,h:1,color:'gray',pinIds:['pin3']},
+{id:'p4',x:1,y:2,w:4,h:2,color:'silver',pinIds:['pin4','pin5','pin6']},
+{id:'p5',x:0,y:5,w:2,h:1,color:'gray',pinIds:['pin7']},
+{id:'p6',x:4,y:5,w:2,h:1,color:'silver',pinIds:['pin8']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'normal'},
+{id:'pin2',x:3,y:0,color:'blue',type:'chain',chainWith:'pin5'},
+{id:'pin3',x:5,y:0,color:'green',type:'normal'},
+{id:'pin4',x:1,y:2,color:'green',type:'normal'},
+{id:'pin5',x:3,y:3,color:'yellow',type:'chain',chainWith:'pin2'},
+{id:'pin6',x:4,y:2,color:'red',type:'normal'},
+{id:'pin7',x:1,y:5,color:'blue',type:'normal'},
+{id:'pin8',x:5,y:5,color:'yellow',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:10},
+{id:29,name:"The Maze",tier:3,gridW:6,gridH:9,plates:[
+{id:'p1',x:2,y:0,w:2,h:1,color:'gray',pinIds:['pin1']},
+{id:'p2',x:0,y:2,w:2,h:1,color:'silver',pinIds:['pin2']},
+{id:'p3',x:4,y:2,w:2,h:1,color:'gray',pinIds:['pin3']},
+{id:'p4',x:1,y:4,w:4,h:1,color:'silver',pinIds:['pin4','pin5']},
+{id:'p5',x:0,y:6,w:2,h:1,color:'gray',pinIds:['pin6']},
+{id:'p6',x:4,y:6,w:2,h:1,color:'silver',pinIds:['pin7']},
+{id:'p7',x:2,y:8,w:2,h:1,color:'gray',pinIds:['pin8']}
+],pins:[
+{id:'pin1',x:2,y:0,color:'red',type:'ice'},
+{id:'pin2',x:1,y:2,color:'blue',type:'normal'},
+{id:'pin3',x:5,y:2,color:'green',type:'normal'},
+{id:'pin4',x:1,y:4,color:'red',type:'normal'},
+{id:'pin5',x:4,y:4,color:'yellow',type:'normal'},
+{id:'pin6',x:1,y:6,color:'green',type:'normal'},
+{id:'pin7',x:5,y:6,color:'blue',type:'normal'},
+{id:'pin8',x:2,y:8,color:'yellow',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:10},
+{id:30,name:"Convergence",tier:3,gridW:6,gridH:8,plates:[
+{id:'p1',x:0,y:0,w:2,h:1,color:'gray',pinIds:['pin1']},
+{id:'p2',x:4,y:0,w:2,h:1,color:'silver',pinIds:['pin2']},
+{id:'p3',x:0,y:2,w:6,h:1,color:'gray',pinIds:['pin3','pin4','pin5']},
+{id:'p4',x:0,y:4,w:2,h:1,color:'silver',pinIds:['pin6']},
+{id:'p5',x:4,y:4,w:2,h:1,color:'gray',pinIds:['pin7']},
+{id:'p6',x:1,y:6,w:4,h:1,color:'silver',pinIds:['pin8','pin9']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'chain',chainWith:'pin2'},
+{id:'pin2',x:5,y:0,color:'blue',type:'chain',chainWith:'pin1'},
+{id:'pin3',x:0,y:2,color:'green',type:'locked',lockedBy:'pin6'},
+{id:'pin4',x:3,y:2,color:'yellow',type:'normal'},
+{id:'pin5',x:5,y:2,color:'red',type:'locked',lockedBy:'pin7'},
+{id:'pin6',x:1,y:4,color:'blue',type:'normal'},
+{id:'pin7',x:5,y:4,color:'green',type:'normal'},
+{id:'pin8',x:1,y:6,color:'yellow',type:'normal'},
+{id:'pin9',x:4,y:6,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:2},{color:'green',x:3},{color:'yellow',x:5}
+],par:11},
+// Tier 4: Expert (31-40)
+{id:31,name:"Grand Lock",tier:4,gridW:6,gridH:9,plates:[
+{id:'p1',x:1,y:0,w:4,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:0,y:2,w:2,h:2,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:4,y:2,w:2,h:2,color:'gray',pinIds:['pin5','pin6']},
+{id:'p4',x:2,y:5,w:2,h:1,color:'silver',pinIds:['pin7']},
+{id:'p5',x:0,y:7,w:6,h:1,color:'gray',pinIds:['pin8','pin9','pin10']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'locked',lockedBy:'pin3'},
+{id:'pin2',x:4,y:0,color:'blue',type:'locked',lockedBy:'pin5'},
+{id:'pin3',x:0,y:2,color:'green',type:'normal'},
+{id:'pin4',x:1,y:3,color:'yellow',type:'normal'},
+{id:'pin5',x:4,y:2,color:'orange',type:'normal'},
+{id:'pin6',x:5,y:3,color:'red',type:'normal'},
+{id:'pin7',x:2,y:5,color:'blue',type:'normal'},
+{id:'pin8',x:0,y:7,color:'green',type:'normal'},
+{id:'pin9',x:3,y:7,color:'orange',type:'normal'},
+{id:'pin10',x:5,y:7,color:'yellow',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:1},{color:'green',x:2},{color:'yellow',x:3},{color:'orange',x:5}
+],par:12},
+{id:32,name:"Deep Freeze",tier:4,gridW:6,gridH:9,plates:[
+{id:'p1',x:0,y:0,w:6,h:1,color:'gray',pinIds:['pin1','pin2','pin3']},
+{id:'p2',x:1,y:2,w:4,h:1,color:'silver',pinIds:['pin4','pin5']},
+{id:'p3',x:0,y:4,w:2,h:2,color:'gray',pinIds:['pin6','pin7']},
+{id:'p4',x:4,y:4,w:2,h:2,color:'silver',pinIds:['pin8','pin9']},
+{id:'p5',x:2,y:7,w:2,h:1,color:'gray',pinIds:['pin10']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'ice'},
+{id:'pin2',x:3,y:0,color:'blue',type:'ice'},
+{id:'pin3',x:5,y:0,color:'green',type:'ice'},
+{id:'pin4',x:1,y:2,color:'yellow',type:'normal'},
+{id:'pin5',x:4,y:2,color:'orange',type:'normal'},
+{id:'pin6',x:0,y:4,color:'orange',type:'normal'},
+{id:'pin7',x:1,y:5,color:'red',type:'normal'},
+{id:'pin8',x:4,y:4,color:'blue',type:'normal'},
+{id:'pin9',x:5,y:5,color:'green',type:'normal'},
+{id:'pin10',x:2,y:7,color:'yellow',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:1},{color:'green',x:2},{color:'yellow',x:3},{color:'orange',x:5}
+],par:13},
+{id:33,name:"Chain Storm",tier:4,gridW:6,gridH:9,plates:[
+{id:'p1',x:0,y:0,w:2,h:1,color:'gray',pinIds:['pin1']},
+{id:'p2',x:2,y:0,w:2,h:1,color:'silver',pinIds:['pin2']},
+{id:'p3',x:4,y:0,w:2,h:1,color:'gray',pinIds:['pin3']},
+{id:'p4',x:0,y:2,w:6,h:1,color:'silver',pinIds:['pin4','pin5','pin6']},
+{id:'p5',x:1,y:4,w:4,h:1,color:'gray',pinIds:['pin7','pin8']},
+{id:'p6',x:0,y:6,w:6,h:1,color:'silver',pinIds:['pin9','pin10','pin11']},
+{id:'p7',x:2,y:8,w:2,h:1,color:'gray',pinIds:['pin12']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'chain',chainWith:'pin2'},
+{id:'pin2',x:3,y:0,color:'blue',type:'chain',chainWith:'pin1'},
+{id:'pin3',x:5,y:0,color:'green',type:'chain',chainWith:'pin4'},
+{id:'pin4',x:0,y:2,color:'yellow',type:'chain',chainWith:'pin3'},
+{id:'pin5',x:3,y:2,color:'orange',type:'normal'},
+{id:'pin6',x:5,y:2,color:'red',type:'normal'},
+{id:'pin7',x:1,y:4,color:'blue',type:'chain',chainWith:'pin8'},
+{id:'pin8',x:4,y:4,color:'green',type:'chain',chainWith:'pin7'},
+{id:'pin9',x:0,y:6,color:'yellow',type:'normal'},
+{id:'pin10',x:3,y:6,color:'orange',type:'normal'},
+{id:'pin11',x:5,y:6,color:'blue',type:'normal'},
+{id:'pin12',x:2,y:8,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:1},{color:'green',x:2},{color:'yellow',x:3},{color:'orange',x:5}
+],par:14},
+{id:34,name:"Master Lock",tier:4,gridW:6,gridH:9,plates:[
+{id:'p1',x:0,y:0,w:3,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:3,y:0,w:3,h:1,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:1,y:2,w:4,h:2,color:'gray',pinIds:['pin5','pin6','pin7']},
+{id:'p4',x:0,y:5,w:2,h:1,color:'silver',pinIds:['pin8']},
+{id:'p5',x:4,y:5,w:2,h:1,color:'gray',pinIds:['pin9']},
+{id:'p6',x:1,y:7,w:4,h:1,color:'silver',pinIds:['pin10','pin11']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'locked',lockedBy:'pin5'},
+{id:'pin2',x:2,y:0,color:'blue',type:'locked',lockedBy:'pin6'},
+{id:'pin3',x:3,y:0,color:'green',type:'normal'},
+{id:'pin4',x:5,y:0,color:'yellow',type:'locked',lockedBy:'pin7'},
+{id:'pin5',x:1,y:2,color:'orange',type:'normal'},
+{id:'pin6',x:3,y:3,color:'red',type:'normal'},
+{id:'pin7',x:4,y:2,color:'blue',type:'normal'},
+{id:'pin8',x:1,y:5,color:'green',type:'normal'},
+{id:'pin9',x:4,y:5,color:'yellow',type:'normal'},
+{id:'pin10',x:1,y:7,color:'orange',type:'normal'},
+{id:'pin11',x:4,y:7,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:1},{color:'green',x:2},{color:'yellow',x:3},{color:'orange',x:5}
+],par:13},
+{id:35,name:"Ice Chains",tier:4,gridW:6,gridH:9,plates:[
+{id:'p1',x:0,y:0,w:3,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:3,y:0,w:3,h:1,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:0,y:2,w:6,h:1,color:'gray',pinIds:['pin5','pin6','pin7']},
+{id:'p4',x:1,y:4,w:4,h:1,color:'silver',pinIds:['pin8','pin9']},
+{id:'p5',x:0,y:6,w:2,h:1,color:'gray',pinIds:['pin10']},
+{id:'p6',x:4,y:6,w:2,h:1,color:'silver',pinIds:['pin11']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'ice'},
+{id:'pin2',x:2,y:0,color:'blue',type:'chain',chainWith:'pin3'},
+{id:'pin3',x:3,y:0,color:'green',type:'chain',chainWith:'pin2'},
+{id:'pin4',x:5,y:0,color:'yellow',type:'ice'},
+{id:'pin5',x:0,y:2,color:'orange',type:'normal'},
+{id:'pin6',x:3,y:2,color:'red',type:'normal'},
+{id:'pin7',x:5,y:2,color:'blue',type:'normal'},
+{id:'pin8',x:1,y:4,color:'green',type:'ice'},
+{id:'pin9',x:4,y:4,color:'yellow',type:'normal'},
+{id:'pin10',x:1,y:6,color:'orange',type:'normal'},
+{id:'pin11',x:4,y:6,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:1},{color:'green',x:2},{color:'yellow',x:3},{color:'orange',x:5}
+],par:13},
+{id:36,name:"Bombastic",tier:4,gridW:6,gridH:9,plates:[
+{id:'p1',x:1,y:0,w:4,h:1,color:'gray',pinIds:['pin1','pin2']},
+{id:'p2',x:0,y:2,w:2,h:2,color:'silver',pinIds:['pin3','pin4']},
+{id:'p3',x:4,y:2,w:2,h:2,color:'gray',pinIds:['pin5','pin6']},
+{id:'p4',x:2,y:5,w:2,h:1,color:'silver',pinIds:['pin7']},
+{id:'p5',x:0,y:7,w:6,h:1,color:'gray',pinIds:['pin8','pin9','pin10']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'bomb'},
+{id:'pin2',x:4,y:0,color:'blue',type:'bomb'},
+{id:'pin3',x:0,y:2,color:'green',type:'locked',lockedBy:'pin1'},
+{id:'pin4',x:1,y:3,color:'yellow',type:'normal'},
+{id:'pin5',x:4,y:2,color:'orange',type:'locked',lockedBy:'pin2'},
+{id:'pin6',x:5,y:3,color:'red',type:'normal'},
+{id:'pin7',x:2,y:5,color:'blue',type:'normal'},
+{id:'pin8',x:0,y:7,color:'green',type:'normal'},
+{id:'pin9',x:3,y:7,color:'orange',type:'normal'},
+{id:'pin10',x:5,y:7,color:'yellow',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:1},{color:'green',x:2},{color:'yellow',x:3},{color:'orange',x:5}
+],par:12},
+{id:37,name:"The Gauntlet",tier:4,gridW:6,gridH:10,plates:[
+{id:'p1',x:2,y:0,w:2,h:1,color:'gray',pinIds:['pin1']},
+{id:'p2',x:0,y:2,w:6,h:1,color:'silver',pinIds:['pin2','pin3','pin4']},
+{id:'p3',x:1,y:4,w:4,h:1,color:'gray',pinIds:['pin5','pin6']},
+{id:'p4',x:0,y:6,w:6,h:1,color:'silver',pinIds:['pin7','pin8','pin9']},
+{id:'p5',x:2,y:8,w:2,h:1,color:'gray',pinIds:['pin10']}
+],pins:[
+{id:'pin1',x:2,y:0,color:'red',type:'ice'},
+{id:'pin2',x:0,y:2,color:'blue',type:'chain',chainWith:'pin3'},
+{id:'pin3',x:3,y:2,color:'green',type:'chain',chainWith:'pin2'},
+{id:'pin4',x:5,y:2,color:'yellow',type:'normal'},
+{id:'pin5',x:1,y:4,color:'orange',type:'locked',lockedBy:'pin4'},
+{id:'pin6',x:4,y:4,color:'red',type:'normal'},
+{id:'pin7',x:0,y:6,color:'blue',type:'normal'},
+{id:'pin8',x:3,y:6,color:'green',type:'ice'},
+{id:'pin9',x:5,y:6,color:'yellow',type:'normal'},
+{id:'pin10',x:2,y:8,color:'orange',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:1},{color:'green',x:2},{color:'yellow',x:3},{color:'orange',x:5}
+],par:13},
+{id:38,name:"Titanium",tier:4,gridW:6,gridH:10,plates:[
+{id:'p1',x:0,y:0,w:6,h:1,color:'gray',pinIds:['pin1','pin2','pin3']},
+{id:'p2',x:0,y:2,w:3,h:1,color:'silver',pinIds:['pin4','pin5']},
+{id:'p3',x:3,y:2,w:3,h:1,color:'gray',pinIds:['pin6','pin7']},
+{id:'p4',x:1,y:4,w:4,h:2,color:'silver',pinIds:['pin8','pin9','pin10']},
+{id:'p5',x:0,y:7,w:2,h:1,color:'gray',pinIds:['pin11']},
+{id:'p6',x:4,y:7,w:2,h:1,color:'silver',pinIds:['pin12']},
+{id:'p7',x:2,y:9,w:2,h:1,color:'gray',pinIds:['pin13']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'locked',lockedBy:'pin4'},
+{id:'pin2',x:3,y:0,color:'blue',type:'ice'},
+{id:'pin3',x:5,y:0,color:'green',type:'locked',lockedBy:'pin6'},
+{id:'pin4',x:0,y:2,color:'yellow',type:'normal'},
+{id:'pin5',x:2,y:2,color:'orange',type:'normal'},
+{id:'pin6',x:3,y:2,color:'red',type:'normal'},
+{id:'pin7',x:5,y:2,color:'blue',type:'normal'},
+{id:'pin8',x:1,y:4,color:'green',type:'chain',chainWith:'pin9'},
+{id:'pin9',x:4,y:5,color:'yellow',type:'chain',chainWith:'pin8'},
+{id:'pin10',x:2,y:4,color:'orange',type:'normal'},
+{id:'pin11',x:1,y:7,color:'blue',type:'normal'},
+{id:'pin12',x:5,y:7,color:'green',type:'normal'},
+{id:'pin13',x:2,y:9,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:1},{color:'green',x:2},{color:'yellow',x:3},{color:'orange',x:5}
+],par:15},
+{id:39,name:"Obsidian",tier:4,gridW:6,gridH:10,plates:[
+{id:'p1',x:0,y:0,w:2,h:1,color:'gray',pinIds:['pin1']},
+{id:'p2',x:2,y:0,w:2,h:1,color:'silver',pinIds:['pin2']},
+{id:'p3',x:4,y:0,w:2,h:1,color:'gray',pinIds:['pin3']},
+{id:'p4',x:0,y:2,w:2,h:2,color:'silver',pinIds:['pin4','pin5']},
+{id:'p5',x:2,y:2,w:2,h:2,color:'gray',pinIds:['pin6','pin7']},
+{id:'p6',x:4,y:2,w:2,h:2,color:'silver',pinIds:['pin8','pin9']},
+{id:'p7',x:1,y:5,w:4,h:1,color:'gray',pinIds:['pin10','pin11']},
+{id:'p8',x:2,y:7,w:2,h:1,color:'silver',pinIds:['pin12']}
+],pins:[
+{id:'pin1',x:1,y:0,color:'red',type:'ice'},
+{id:'pin2',x:3,y:0,color:'blue',type:'chain',chainWith:'pin6'},
+{id:'pin3',x:5,y:0,color:'green',type:'ice'},
+{id:'pin4',x:0,y:2,color:'yellow',type:'locked',lockedBy:'pin10'},
+{id:'pin5',x:1,y:3,color:'orange',type:'normal'},
+{id:'pin6',x:2,y:2,color:'red',type:'chain',chainWith:'pin2'},
+{id:'pin7',x:3,y:3,color:'blue',type:'normal'},
+{id:'pin8',x:4,y:2,color:'green',type:'normal'},
+{id:'pin9',x:5,y:3,color:'yellow',type:'normal'},
+{id:'pin10',x:1,y:5,color:'orange',type:'normal'},
+{id:'pin11',x:4,y:5,color:'red',type:'normal'},
+{id:'pin12',x:2,y:7,color:'green',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:1},{color:'green',x:2},{color:'yellow',x:3},{color:'orange',x:5}
+],par:15},
+{id:40,name:"Grand Finale",tier:4,gridW:6,gridH:10,plates:[
+{id:'p1',x:0,y:0,w:6,h:1,color:'gray',pinIds:['pin1','pin2','pin3']},
+{id:'p2',x:0,y:2,w:3,h:1,color:'silver',pinIds:['pin4','pin5']},
+{id:'p3',x:3,y:2,w:3,h:1,color:'gray',pinIds:['pin6','pin7']},
+{id:'p4',x:1,y:4,w:4,h:2,color:'silver',pinIds:['pin8','pin9','pin10']},
+{id:'p5',x:0,y:7,w:2,h:1,color:'gray',pinIds:['pin11']},
+{id:'p6',x:4,y:7,w:2,h:1,color:'silver',pinIds:['pin12']},
+{id:'p7',x:2,y:9,w:2,h:1,color:'gray',pinIds:['pin13']}
+],pins:[
+{id:'pin1',x:0,y:0,color:'red',type:'ice'},
+{id:'pin2',x:3,y:0,color:'blue',type:'locked',lockedBy:'pin8'},
+{id:'pin3',x:5,y:0,color:'green',type:'chain',chainWith:'pin4'},
+{id:'pin4',x:0,y:2,color:'yellow',type:'chain',chainWith:'pin3'},
+{id:'pin5',x:2,y:2,color:'orange',type:'ice'},
+{id:'pin6',x:3,y:2,color:'red',type:'normal'},
+{id:'pin7',x:5,y:2,color:'blue',type:'locked',lockedBy:'pin10'},
+{id:'pin8',x:1,y:4,color:'green',type:'normal'},
+{id:'pin9',x:3,y:5,color:'yellow',type:'chain',chainWith:'pin12'},
+{id:'pin10',x:4,y:4,color:'orange',type:'normal'},
+{id:'pin11',x:1,y:7,color:'blue',type:'normal'},
+{id:'pin12',x:4,y:7,color:'green',type:'chain',chainWith:'pin9'},
+{id:'pin13',x:2,y:9,color:'red',type:'normal'}
+],slots:[
+{color:'red',x:0},{color:'blue',x:1},{color:'green',x:2},{color:'yellow',x:3},{color:'orange',x:5}
+],par:16}
+];
+
+// --- AUDIO ---
+function initAudio(){
+if(audioCtx)return;
+try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+musicGain=audioCtx.createGain();musicGain.gain.value=0.3;musicGain.connect(audioCtx.destination);
+}catch(e){}
+}
+function playTone(freq,dur,type,vol,ramp){
+if(!audioCtx||!sfxEnabled)return;
+try{
+let o=audioCtx.createOscillator(),g=audioCtx.createGain();
+o.type=type||'sine';o.frequency.value=freq;
+g.gain.value=vol||0.15;
+if(ramp)o.frequency.linearRampToValueAtTime(ramp,audioCtx.currentTime+dur);
+o.connect(g);g.connect(audioCtx.destination);
+o.start();g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+dur);
+o.stop(audioCtx.currentTime+dur+0.05);
+}catch(e){}
+}
+function playNoise(dur,vol,freq,q){
+if(!audioCtx||!sfxEnabled)return;
+try{
+let bufSize=audioCtx.sampleRate*dur,buf=audioCtx.createBuffer(1,bufSize,audioCtx.sampleRate);
+let data=buf.getChannelData(0);for(let i=0;i<bufSize;i++)data[i]=Math.random()*2-1;
+let s=audioCtx.createBufferSource();s.buffer=buf;
+let g=audioCtx.createGain();g.gain.value=vol||0.1;
+let f=audioCtx.createBiquadFilter();f.type='lowpass';f.frequency.value=freq||800;f.Q.value=q||1;
+s.connect(f);f.connect(g);g.connect(audioCtx.destination);s.start();
+g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+dur);
+}catch(e){}
+}
+function sfxUnscrew(){playTone(800,0.2,'sine',0.12,400);playNoise(0.15,0.06,2000,2)}
+function sfxDrop(){playNoise(0.3,0.15,400,3);playTone(150,0.2,'sine',0.1,80)}
+function sfxCombo(n){for(let i=0;i<3;i++)setTimeout(()=>playTone(400+i*200,0.15,'sine',0.1),i*60)}
+function sfxComplete(){
+[0,100,200,300,400].forEach((d,i)=>setTimeout(()=>playTone(523+i*100,0.3,'sine',0.1),d));
+}
+function sfxStar(){playTone(1200,0.15,'sine',0.08)}
+function sfxClick(){playNoise(0.03,0.05,3000,1)}
+function sfxError(){playTone(150,0.3,'sawtooth',0.08,100)}
+function sfxIce(){playTone(1500,0.1,'sine',0.08);playNoise(0.1,0.04,4000,5)}
+function sfxBomb(){playNoise(0.4,0.2,300,2);playTone(100,0.3,'sine',0.12,50)}
+function sfxChain(){playTone(600,0.15,'triangle',0.1,800)}
+
+let bgmOscillators=[];
+function startBGM(){
+if(!audioCtx||musicPlaying||!musicEnabled)return;
+musicPlaying=true;
+try{
+let nodes=[];
+let pad1=audioCtx.createOscillator();pad1.type='sine';pad1.frequency.value=65;
+let pad1g=audioCtx.createGain();pad1g.gain.value=0.04;
+let lfo=audioCtx.createOscillator();lfo.frequency.value=0.3;
+let lfoG=audioCtx.createGain();lfoG.gain.value=5;
+lfo.connect(lfoG);lfoG.connect(pad1.frequency);
+pad1.connect(pad1g);pad1g.connect(musicGain);
+pad1.start();lfo.start();nodes.push(pad1,lfo);
+let pad2=audioCtx.createOscillator();pad2.type='triangle';pad2.frequency.value=98;
+let pad2g=audioCtx.createGain();pad2g.gain.value=0.025;
+pad2.connect(pad2g);pad2g.connect(musicGain);pad2.start();nodes.push(pad2);
+let pad3=audioCtx.createOscillator();pad3.type='sine';pad3.frequency.value=131;
+let pad3g=audioCtx.createGain();pad3g.gain.value=0.015;
+pad3.connect(pad3g);pad3g.connect(musicGain);pad3.start();nodes.push(pad3);
+bgmOscillators=nodes;
+}catch(e){}
+}
+function stopBGM(){
+bgmOscillators.forEach(n=>{try{n.stop()}catch(e){}});
+bgmOscillators=[];musicPlaying=false;
+}
+
+// --- SAVE ---
+function defaultSave(){return{version:SAVE_VERSION,levels:{},stats:{totalScore:0,starsEarned:0,levelsCompleted:0,hintsUsed:0},hints:3,sfx:true,music:true}}
+function loadSave(){
+try{let d=localStorage.getItem(SAVE_KEY);if(d){let p=JSON.parse(d);if(p.version===SAVE_VERSION){saveData=p;sfxEnabled=saveData.sfx!==false;musicEnabled=saveData.music!==false;return}}}catch(e){}
+saveData=defaultSave();
+}
+function saveSave(){try{saveData.sfx=sfxEnabled;saveData.music=musicEnabled;localStorage.setItem(SAVE_KEY,JSON.stringify(saveData))}catch(e){}}
+function getLevelStars(lvl){
+if(!saveData.levels[lvl])return 0;
+return saveData.levels[lvl].stars||0;
+}
+function setLevelResult(lvl,stars,score){
+if(!saveData.levels[lvl]||saveData.levels[lvl].stars<stars){
+saveData.levels[lvl]={stars,score};
+}
+saveData.stats.totalScore+=score;
+saveData.stats.starsEarned+=stars;
+saveData.stats.levelsCompleted=Math.max(saveData.stats.levelsCompleted,
+Object.keys(saveData.levels).filter(k=>saveData.levels[k].stars>0).length);
+saveSave();
+}
+
+// --- PARTICLES ---
+function spawnParticles(x,y,color,count,spread,speed,life){
+for(let i=0;i<count;i++){
+let angle=Math.random()*Math.PI*2;
+let spd=(Math.random()*0.7+0.3)*(speed||120);
+gameObjects.particles.push({
+x,y,vx:Math.cos(angle)*spd*(spread||1),vy:Math.sin(angle)*spd*(spread||1)-30,
+life:life||1,maxLife:life||1,
+color:color||'#fff',size:rand(2,5),gravity:200
+});
+}}
+function spawnFloatingText(x,y,text,color,size){
+gameObjects.floatingTexts.push({x,y,text,color,size:size||18,life:1.2,maxLife:1.2,vy:-60});
+}
+
+// --- LAYOUT ---
+function computeLayout(){
+dpr=window.devicePixelRatio||1;
+W=window.innerWidth;H=window.innerHeight;
+canvas.width=W*dpr;canvas.height=H*dpr;
+canvas.style.width=W+'px';canvas.style.height=H+'px';
+ctx.setTransform(dpr,0,0,dpr,0,0);
+// BG stars
+if(bgStars.length===0){
+for(let i=0;i<80;i++)bgStars.push({x:Math.random()*2000,y:Math.random()*2000,s:rand(0.5,2),b:rand(0.3,1),sp:rand(0.1,0.5)});
+}
+}
+function getGridMetrics(lvl){
+let pad=Math.min(W,H)*0.04;
+let topBar=56;
+let bottomBar=70;
+let slotH=44;
+let availW=W-pad*2;
+let availH=H-topBar-bottomBar-slotH-pad;
+let cellW=availW/lvl.gridW;
+let cellH=availH/lvl.gridH;
+let cell=Math.min(cellW,cellH,60);
+let gw=lvl.gridW*cell;
+let gh=lvl.gridH*cell;
+let ox=(W-gw)/2;
+let oy=topBar+pad+(availH-gh)/2;
+return{cell,ox,oy,gw,gh};
+}
+
+// --- GAME LOGIC ---
+function loadLevel(idx){
+currentLevel=idx;
+let lvl=LEVELS[idx];
+gameObjects={plates:[],pins:[],slots:[],particles:[],floatingTexts:[]};
+moveHistory=[];
+comboCount=0;comboTimer=0;score=0;levelTime=0;
+hintsUsed=0;hintsRemaining=3;
+undosRemaining=3;
+tutorialStep=0;
+let g=getGridMetrics(lvl);
+// Build plates
+lvl.plates.forEach(p=>{
+let px=g.ox+p.x*g.cell,py=g.oy+p.y*g.cell;
+let pw=p.w*g.cell,ph=p.h*g.cell;
+gameObjects.plates.push({
+id:p.id,x:px,y:py,w:pw,h:ph,color:p.color,
+pinIds:[...p.pinIds],removedPins:[],dropping:false,
+dropTarget:null,dropSpeed:0,origY:py,
+shine:0,removed:false
+});
+});
+// Build pins
+lvl.pins.forEach(p=>{
+gameObjects.pins.push({
+id:p.id,x:g.ox+p.x*g.cell+g.cell/2,y:g.oy+p.y*g.cell+g.cell/2,
+color:p.color,type:p.type,chainWith:p.chainWith||null,
+lockedBy:p.lockedBy||null,removed:false,
+iceHits:p.type==='ice'?0:0,iceNeeded:p.type==='ice'?2:1,
+animProgress:0,animating:false,rotAngle:0
+});
+});
+// Build slots
+let slotW=Math.min(50,g.cell*0.8);
+let slotGap=(W-slotW*lvl.slots.length)/(lvl.slots.length+1);
+gameObjects.slots=lvl.slots.map((s,i)=>({
+color:s.color,x:slotGap+i*(slotW+slotGap)+slotW/2,
+y:H-bottomBar-slotH/2+10,w:slotW,
+filled:false,filledColor:null
+}));
+gameState='playing';
+if(lvl.tutorial)gameState='tutorial';
+}
+
+function findPin(id){return gameObjects.pins.find(p=>p.id===id)}
+function findPlate(id){return gameObjects.plates.find(p=>p.id===id)}
+
+function canRemovePin(pin){
+if(pin.removed||pin.animating)return false;
+if(pin.type==='locked'){
+let locker=findPin(pin.lockedBy);
+if(locker&&!locker.removed)return false;
+}
+return true;
+}
+
+function removePin(pin){
+if(!canRemovePin(pin))return false;
+pin.animating=true;pin.animProgress=0;
+moveHistory.push({pinId:pin.id,plateDrops:[]});
+sfxUnscrew();
+return true;
+}
+
+function checkPlateDrops(){
+let g=getGridMetrics(LEVELS[currentLevel]);
+let anyDropped=false;
+gameObjects.plates.forEach(plate=>{
+if(plate.dropping||plate.removed)return;
+let allRemoved=true;
+for(let pid of plate.pinIds){
+let pin=findPin(pid);
+if(pin&&!pin.removed){allRemoved=false;break}
+}
+if(allRemoved&&!plate.dropping){
+// Find drop target - bottom of grid or onto another plate
+let dropY=g.oy+LEVELS[currentLevel].gridH*g.cell;
+// Check if there's a plate below
+let targetSlot=null;
+let pinsOfPlate=plate.pinIds.map(id=>findPin(id)).filter(p=>p);
+if(pinsOfPlate.length>0){
+let slotColor=pinsOfPlate[0].color;
+targetSlot=gameObjects.slots.find(s=>s.color===slotColor&&!s.filled);
+}
+if(targetSlot){
+plate.dropping=true;
+plate.dropTarget={y:targetSlot.y-plate.h/2,slot:targetSlot};
+plate.dropSpeed=0;
+plate.shine=0;
+}else{
+plate.dropping=true;
+plate.dropTarget={y:dropY,slot:null};
+plate.dropSpeed=0;
+}
+sfxDrop();
+anyDropped=true;
+}
+});
+return anyDropped;
+}
+
+function updateCombo(){
+comboCount++;
+comboTimer=2;
+if(comboCount>1){
+sfxCombo(comboCount);
+screenShake.intensity=Math.min(comboCount*2,10);
+let bonus=comboCount*50;
+score+=bonus;
+let g=getGridMetrics(LEVELS[currentLevel]);
+spawnFloatingText(W/2,H/2-50,`Combo x${comboCount}! +${bonus}`,'#ffdd44',22);
+}
+}
+
+function updatePins(dt){
+gameObjects.pins.forEach(pin=>{
+if(!pin.animating)return;
+pin.animProgress+=dt*3;
+pin.rotAngle+=dt*15;
+if(pin.animProgress>=1){
+pin.animating=false;pin.removed=true;
+pin.animProgress=1;
+// Handle chain
+if(pin.type==='chain'&&pin.chainWith){
+let partner=findPin(pin.chainWith);
+if(partner&&!partner.removed&&!partner.animating){
+sfxChain();
+partner.animating=true;partner.animProgress=0;
+partner.removed=true;
+}
+}
+// Handle bomb
+if(pin.type==='bomb'){
+sfxBomb();
+spawnParticles(pin.x,pin.y,'#ff8844',20,1.5,200,0.8);
+spawnParticles(pin.x,pin.y,'#ffdd44',15,1,150,0.6);
+// Unlock nearby locked pins
+gameObjects.pins.forEach(p=>{
+if(p.type==='locked'&&!p.removed&&dist(p.x,p.y,pin.x,pin.y)<200){
+p.lockedBy=null;
+}
+});
+}
+// Handle ice
+if(pin.type==='ice'){
+sfxIce();
+spawnParticles(pin.x,pin.y,'#88ddff',8,1,80,0.5);
+}
+updateCombo();
+setTimeout(()=>checkPlateDrops(),100);
+}
+});
+}
+
+function updatePlates(dt){
+gameObjects.plates.forEach(plate=>{
+if(!plate.dropping)return;
+plate.dropSpeed+=800*dt;
+plate.y+=plate.dropSpeed*dt;
+if(plate.dropTarget&&plate.y>=plate.dropTarget.y){
+plate.y=plate.dropTarget.y;
+plate.dropping=false;
+plate.removed=true;
+if(plate.dropTarget.slot){
+plate.dropTarget.slot.filled=true;
+plate.dropTarget.slot.filledColor=plate.pinIds.map(id=>{let p=findPin(id);return p?p.color:null}).filter(Boolean)[0]||'gray';
+}
+spawnParticles(plate.x+plate.w/2,plate.y+plate.h,COLORS[plate.pinIds.map(id=>{let p=findPin(id);return p?p.color:null}).filter(Boolean)[0]||'red']||'#aaa',12,1.2,100,0.6);
+sfxDrop();
+score+=100;
+spawnFloatingText(plate.x+plate.w/2,plate.y,`+100`,'#fff',16);
+checkWin();
+}
+});
+}
+
+function updateParticles(dt){
+gameObjects.particles.forEach(p=>{
+p.x+=p.vx*dt;p.y+=p.vy*dt;
+p.vy+=p.gravity*dt;p.life-=dt;
+});
+gameObjects.particles=gameObjects.particles.filter(p=>p.life>0);
+gameObjects.floatingTexts.forEach(t=>{
+t.y+=t.vy*dt;t.life-=dt;
+});
+gameObjects.floatingTexts=gameObjects.floatingTexts.filter(t=>t.life>0);
+}
+
+function checkWin(){
+let allRemoved=gameObjects.plates.every(p=>p.removed);
+if(allRemoved&&gameState==='playing'){
+gameState='levelComplete';
+sfxComplete();
+let stars=3;
+if(hintsUsed>=1)stars=2;
+if(hintsUsed>=2)stars=1;
+let timeBonus=Math.max(0,Math.floor((60-levelTime)*10));
+let finalScore=score+timeBonus;
+setLevelResult(LEVELS[currentLevel].id,stars,finalScore);
+// Star particles
+for(let i=0;i<stars;i++){
+setTimeout(()=>sfxStar(),i*200);
+let sx=W*0.3+i*W*0.2,sy=H*0.35;
+spawnParticles(sx,sy,'#ffdd44',10,1.5,150,1);
+}
+}
+}
+
+function doHint(){
+if(hintsRemaining<=0)return;
+hintsRemaining--;hintsUsed++;
+// Find a removable pin that hasn't been removed
+let pin=gameObjects.pins.find(p=>!p.removed&&!p.animating&&canRemovePin(p));
+if(pin){
+spawnParticles(pin.x,pin.y,'#ffdd44',8,1,60,0.8);
+spawnFloatingText(pin.x,pin.y-30,'Try this!','#ffdd44',14);
+}
+}
+
+function doUndo(){
+if(undosRemaining<=0||moveHistory.length===0)return;
+undosRemaining--;
+let last=moveHistory.pop();
+// Restore pin
+let pin=findPin(last.pinId);
+if(pin){pin.removed=false;pin.animating=false;pin.animProgress=0;pin.iceHits=0;}
+// Restore chain partner
+if(pin&&pin.type==='chain'&&pin.chainWith){
+let partner=findPin(pin.chainWith);
+if(partner){partner.removed=false;partner.animating=false;partner.animProgress=0;}
+}
+// Restore plates
+last.plateDrops.forEach(pid=>{
+let plate=findPlate(pid);
+if(plate){plate.dropping=false;plate.removed=false;plate.y=plate.origY;plate.dropSpeed=0;
+if(plate.dropTarget&&plate.dropTarget.slot){plate.dropTarget.slot.filled=false;plate.dropTarget.slot.filledColor=null;}}
+});
+}
+
+function getHintPin(){
+return gameObjects.pins.find(p=>!p.removed&&!p.animating&&canRemovePin(p));
+}
+
+// --- INPUT ---
+let clickLock=false;
+function handleClick(mx,my){
+if(clickLock)return;
+clickLock=true;setTimeout(()=>clickLock=false,150);
+initAudio();
+if(gameState==='menu'){
+// Start button
+if(my>H*0.55&&my<H*0.62){
+sfxClick();gameState='levelSelect';
+}else if(my>H*0.65&&my<H*0.72){
+sfxClick();gameState='settings';
+}
+return;
+}
+if(gameState==='settings'){
+// SFX toggle
+if(mx>W/2-100&&mx<W/2+100&&my>H*0.35&&my<H*0.42){
+sfxEnabled=!sfxEnabled;saveData.sfx=sfxEnabled;saveSave();sfxClick();
+}
+// Music toggle
+if(mx>W/2-100&&mx<W/2+100&&my>H*0.47&&my<H*0.54){
+musicEnabled=!musicEnabled;saveData.music=musicEnabled;saveSave();
+if(musicEnabled)startBGM();else stopBGM();sfxClick();
+}
+// Reset
+if(mx>W/2-100&&mx<W/2+100&&my>H*0.59&&my<H*0.66){
+saveData=defaultSave();saveSave();sfxClick();
+}
+// Back
+if(mx>W/2-60&&mx<W/2+60&&my>H*0.72&&my<H*0.79){
+sfxClick();gameState='menu';
+}
+return;
+}
+if(gameState==='stats'){
+if(mx>W/2-60&&mx<W/2+60&&my>H*0.82&&my<H*0.89){
+sfxClick();gameState='menu';
+}
+return;
+}
+if(gameState==='levelSelect'){
+// Back button
+if(mx<60&&my<50){sfxClick();gameState='menu';return;}
+// Level buttons
+let cols=5,rows=4;
+let padX=20,padY=80;
+let bw=Math.min(60,(W-padX*(cols+1))/cols);
+let bh=bw;
+let gapX=(W-cols*bw)/(cols+1);
+let gapY=12;
+for(let i=0;i<LEVELS.length;i++){
+let col=i%cols,row=Math.floor(i/cols);
+let bx=gapX+col*(bw+gapX);
+let by=padY+row*(bh+gapY);
+if(mx>=bx&&mx<=bx+bw&&my>=by&&my<=by+bh){
+if(i>0&&getLevelStars(LEVELS[i-1].id)===0)return;
+sfxClick();loadLevel(i);
+if(musicEnabled&&!musicPlaying)startBGM();
+return;
+}
+}
+return;
+}
+if(gameState==='tutorial'){
+// Tap to advance
+tutorialStep++;
+let lvl=LEVELS[currentLevel];
+if(tutorialStep>=(lvl.tutorialSteps?lvl.tutorialSteps.length:0)){
+gameState='playing';
+}
+sfxClick();
+return;
+}
+if(gameState==='levelComplete'){
+// Next level
+if(mx>W/2-80&&mx<W/2+80&&my>H*0.68&&my<H*0.75){
+sfxClick();
+if(currentLevel<LEVELS.length-1){loadLevel(currentLevel+1);}
+else{gameState='levelSelect';}
+return;
+}
+// Menu
+if(mx>W/2-80&&mx<W/2+80&&my>H*0.77&&my<H*0.84){
+sfxClick();gameState='levelSelect';
+}
+return;
+}
+if(gameState==='levelFail'){
+if(mx>W/2-80&&mx<W/2+80&&my>H*0.6&&my<H*0.67){
+sfxClick();loadLevel(currentLevel);
+}
+return;
+}
+if(gameState==='playing'){
+// Back button
+if(mx<60&&my<50){sfxClick();gameState='levelSelect';stopBGM();return;}
+// Hint button
+let hbY=H-60;
+if(mx>W/2+30&&mx<W/2+100&&my>hbY-20&&my<hbY+20){
+doHint();return;
+}
+// Undo button
+if(mx>W/2-100&&mx<W/2-30&&my>hbY-20&&my<hbY+20){
+doUndo();return;
+}
+// Check pin taps
+for(let pin of gameObjects.pins){
+if(pin.removed||pin.animating)continue;
+let pr=Math.max(22,Math.min(28,getGridMetrics(LEVELS[currentLevel]).cell*0.35));
+if(dist(mx,my,pin.x,pin.y)<pr+8){
+if(!canRemovePin(pin)){
+sfxError();
+spawnFloatingText(pin.x,pin.y-20,'Locked!','#ff4466',13);
+if(pin.type==='locked'){
+let locker=findPin(pin.lockedBy);
+if(locker)spawnFloatingText(locker.x,locker.y-20,'Remove this first','#ffaa44',11);
+}
+}else if(pin.type==='ice'&&pin.iceHits<pin.iceNeeded-1){
+pin.iceHits++;sfxIce();
+spawnFloatingText(pin.x,pin.y-20,`Hit ${pin.iceNeeded-pin.iceHits} more!`,'#88ddff',12);
+spawnParticles(pin.x,pin.y,'#88ddff',5,0.8,60,0.4);
+}else{
+removePin(pin);
+}
+return;
+}
+}
+return;
+}
+}
+
+// --- RENDERING ---
+function drawBG(){
+let grad=ctx.createLinearGradient(0,0,0,H);
+grad.addColorStop(0,'#0a0a1a');grad.addColorStop(1,'#1a1a3a');
+ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+// Stars
+let t=Date.now()*0.001;
+bgStars.forEach(s=>{
+let alpha=(Math.sin(t*s.sp+s.x)*0.3+0.7)*s.b*0.4;
+ctx.fillStyle=`rgba(200,200,255,${alpha})`;
+ctx.fillRect((s.x%W),(s.y%H),s.s,s.s);
+});
+}
+
+function drawMetalPlate(x,y,w,h,variant,shine){
+ctx.save();
+let base=variant==='gray'?'#607080':'#8899aa';
+let light=variant==='gray'?'#8899aa':'#aabbcc';
+let dark=variant==='gray'?'#404858':'#607080';
+let grad=ctx.createLinearGradient(x,y,x,y+h);
+grad.addColorStop(0,light);grad.addColorStop(0.3,base);grad.addColorStop(1,dark);
+ctx.fillStyle=grad;
+ctx.beginPath();
+let r=Math.min(6,h*0.2);
+ctx.roundRect(x+1,y+1,w-2,h-2,r);
+ctx.fill();
+// Shine
+ctx.fillStyle='rgba(255,255,255,0.08)';
+ctx.fillRect(x+2,y+2,w-4,h*0.35);
+// Border
+ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;
+ctx.beginPath();ctx.roundRect(x+1,y+1,w-2,h-2,r);ctx.stroke();
+// Extra shine pulse
+if(shine!==undefined){
+let sa=Math.sin(Date.now()*0.003)*0.05+0.05;
+ctx.fillStyle=`rgba(255,255,255,${sa})`;
+ctx.fillRect(x+w*0.2,y+h*0.1,w*0.6,h*0.3);
+}
+ctx.restore();
+}
+
+function drawPin(pin){
+if(pin.removed)return;
+let pr=Math.max(16,Math.min(22,getGridMetrics(LEVELS[currentLevel]).cell*0.3));
+let col=COLORS[pin.color]||'#fff';
+let scale=1;
+let alpha=1;
+if(pin.animating){
+scale=1-pin.animProgress;
+alpha=1-pin.animProgress;
+}
+ctx.save();
+ctx.globalAlpha=alpha;
+ctx.translate(pin.x,pin.y);
+ctx.rotate(pin.animating?pin.rotAngle:0);
+ctx.scale(scale,scale);
+// Glow
+ctx.shadowColor=col;ctx.shadowBlur=pin.animating?20:8;
+// Outer circle
+let grad=ctx.createRadialGradient(0,0,0,0,0,pr);
+grad.addColorStop(0,'#fff');grad.addColorStop(0.3,col);grad.addColorStop(1,darkenColor(col,0.5));
+ctx.fillStyle=grad;
+ctx.beginPath();ctx.arc(0,0,pr,0,Math.PI*2);ctx.fill();
+// Screw head lines
+ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=2;
+ctx.beginPath();ctx.moveTo(-pr*0.5,0);ctx.lineTo(pr*0.5,0);ctx.stroke();
+ctx.beginPath();ctx.moveTo(0,-pr*0.5);ctx.lineTo(0,pr*0.5);ctx.stroke();
+ctx.shadowBlur=0;
+// Type indicators
+if(pin.type==='locked'){
+let locker=findPin(pin.lockedBy);
+if(locker&&!locker.removed){
+ctx.strokeStyle='#ff4466';ctx.lineWidth=2;
+ctx.beginPath();ctx.arc(0,0,pr+4,0,Math.PI*2);ctx.stroke();
+// Lock icon
+ctx.fillStyle='#ff4466';ctx.fillRect(-4,-pr-10,8,6);
+ctx.beginPath();ctx.arc(0,-pr-10,4,Math.PI,0);ctx.stroke();
+}
+}
+if(pin.type==='ice'){
+let cracks=pin.iceHits;
+ctx.fillStyle='rgba(136,221,255,0.3)';
+ctx.beginPath();ctx.arc(0,0,pr+3,0,Math.PI*2);ctx.fill();
+if(cracks>0){
+ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=1;
+for(let i=0;i<cracks*3;i++){
+let a=i*2.1;let r2=pr*0.7;
+ctx.beginPath();ctx.moveTo(0,0);
+ctx.lineTo(Math.cos(a)*r2,Math.sin(a)*r2);ctx.stroke();
+}
+}
+}
+if(pin.type==='chain'){
+ctx.strokeStyle='rgba(200,200,200,0.5)';ctx.lineWidth=2;
+ctx.setLineDash([3,3]);
+let partner=findPin(pin.chainWith);
+if(partner&&!partner.removed){
+ctx.beginPath();ctx.moveTo(0,0);
+ctx.lineTo(partner.x-pin.x,partner.y-pin.y);ctx.stroke();
+}
+ctx.setLineDash([]);
+}
+if(pin.type==='bomb'){
+ctx.fillStyle='rgba(255,136,68,0.4)';
+ctx.beginPath();ctx.arc(0,0,pr+5,0,Math.PI*2);ctx.fill();
+// Fuse
+ctx.strokeStyle='#ffdd44';ctx.lineWidth=2;
+ctx.beginPath();ctx.moveTo(pr*0.5,-pr*0.5);
+ctx.quadraticCurveTo(pr+5,-pr-5,pr,-pr-10);ctx.stroke();
+// Spark
+let sparkT=Date.now()*0.005;
+ctx.fillStyle=`rgba(255,221,68,${Math.sin(sparkT)*0.5+0.5})`;
+ctx.beginPath();ctx.arc(pr,-pr-10,3,0,Math.PI*2);ctx.fill();
+}
+ctx.restore();
+}
+
+function darkenColor(hex,factor){
+let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+r=Math.floor(r*factor);g=Math.floor(g*factor);b=Math.floor(b*factor);
+return`#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+
+function drawSlot(slot){
+let r=slot.w/2;
+ctx.save();ctx.translate(slot.x,slot.y);
+// Empty slot
+if(!slot.filled){
+ctx.strokeStyle=COLORS[slot.color]||'#fff';
+ctx.lineWidth=2;ctx.globalAlpha=0.5;
+ctx.setLineDash([4,4]);
+ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();
+ctx.setLineDash([]);
+// Color dot
+ctx.globalAlpha=0.3;
+ctx.fillStyle=COLORS[slot.color]||'#fff';
+ctx.beginPath();ctx.arc(0,0,r*0.3,0,Math.PI*2);ctx.fill();
+}else{
+ctx.globalAlpha=0.8;
+let grad=ctx.createRadialGradient(0,0,0,0,0,r);
+grad.addColorStop(0,'#fff');
+grad.addColorStop(0.4,COLORS[slot.filledColor]||COLORS[slot.color]);
+grad.addColorStop(1,darkenColor(COLORS[slot.filledColor]||COLORS[slot.color],0.5));
+ctx.fillStyle=grad;
+ctx.shadowColor=COLORS[slot.filledColor]||COLORS[slot.color];
+ctx.shadowBlur=10;
+ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
+}
+ctx.restore();
+}
+
+function drawButton(x,y,w,h,text,fontSize,color){
+ctx.save();
+let isHover=false;
+ctx.fillStyle=color||'rgba(255,255,255,0.08)';
+ctx.beginPath();ctx.roundRect(x,y,w,h,h*0.3);ctx.fill();
+ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1;
+ctx.beginPath();ctx.roundRect(x,y,w,h,h*0.3);ctx.stroke();
+ctx.fillStyle='#fff';ctx.font=`bold ${fontSize||14}px 'Segoe UI',system-ui,sans-serif`;
+ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(text,x+w/2,y+h/2);
+ctx.restore();
+}
+
+function renderMenu(){
+drawBG();
+// Title
+ctx.save();
+ctx.textAlign='center';ctx.textBaseline='middle';
+// Title glow
+ctx.shadowColor='#4488ff';ctx.shadowBlur=30;
+ctx.font="bold 42px 'Segoe UI',system-ui,sans-serif";
+ctx.fillStyle='#fff';
+ctx.fillText('PIN MASTER',W/2,H*0.28);
+ctx.shadowBlur=0;
+// Subtitle
+ctx.font="16px 'Segoe UI',system-ui,sans-serif";
+ctx.fillStyle='rgba(255,255,255,0.6)';
+ctx.fillText('Satisfying Screw Puzzle',W/2,H*0.34);
+// Decorative pins
+let t=Date.now()*0.001;
+for(let i=0;i<6;i++){
+let angle=i*Math.PI/3+t*0.3;
+let px=W/2+Math.cos(angle)*80;
+let py=H*0.44+Math.sin(angle)*40;
+let col=COLORS[PIN_COLORS[i]];
+ctx.fillStyle=col;
+ctx.shadowColor=col;ctx.shadowBlur=10;
+ctx.beginPath();ctx.arc(px,py,10,0,Math.PI*2);ctx.fill();
+ctx.shadowBlur=0;
+// Screw lines
+ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=1.5;
+ctx.beginPath();ctx.moveTo(px-5,py);ctx.lineTo(px+5,py);ctx.stroke();
+ctx.beginPath();ctx.moveTo(px,py-5);ctx.lineTo(px,py+5);ctx.stroke();
+}
+// Play button
+drawButton(W/2-80,H*0.55,160,44,'PLAY',18,'rgba(68,136,255,0.3)');
+// Settings button
+drawButton(W/2-80,H*0.65,160,44,'SETTINGS',14,'rgba(255,255,255,0.06)');
+// Stats
+ctx.font="13px 'Segoe UI',system-ui,sans-serif";
+ctx.fillStyle='rgba(255,255,255,0.4)';
+let completed=saveData?saveData.stats.levelsCompleted:0;
+let stars=saveData?saveData.stats.starsEarned:0;
+ctx.fillText(`${completed}/40 Levels  |  ${stars} Stars  |  ${saveData?saveData.stats.totalScore:0} pts`,W/2,H*0.82);
+// GameZipper branding
+ctx.font="12px 'Segoe UI',system-ui,sans-serif";
+ctx.fillStyle='rgba(255,255,255,0.25)';
+ctx.fillText('GameZipper.com',W/2,H*0.92);
+ctx.restore();
+}
+
+function renderLevelSelect(){
+drawBG();
+// Back button
+ctx.save();
+ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font="24px 'Segoe UI',system-ui,sans-serif";
+ctx.textAlign='left';ctx.textBaseline='middle';
+ctx.fillText('← Back',12,30);
+ctx.restore();
+// Title
+ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.font="bold 22px 'Segoe UI',system-ui,sans-serif";ctx.fillStyle='#fff';
+ctx.fillText('SELECT LEVEL',W/2,30);
+ctx.restore();
+// Level grid
+let cols=5,padX=20,padY=65;
+let bw=Math.min(56,(W-padX*(cols+1))/cols);
+let bh=bw;
+let gapX=(W-cols*bw)/(cols+1);
+let gapY=12;
+for(let i=0;i<LEVELS.length;i++){
+let col=i%cols,row=Math.floor(i/cols);
+let bx=gapX+col*(bw+gapX);
+let by=padY+row*(bh+gapY);
+let stars=getLevelStars(LEVELS[i].id);
+let unlocked=i===0||getLevelStars(LEVELS[i-1].id)>0;
+ctx.save();
+// Tier backgrounds
+let tierColors=['rgba(68,136,255,0.1)','rgba(68,136,255,0.15)','rgba(255,136,68,0.15)','rgba(255,68,102,0.15)'];
+ctx.fillStyle=tierColors[LEVELS[i].tier-1]||'rgba(255,255,255,0.05)';
+ctx.beginPath();ctx.roundRect(bx,by,bw,bh,8);ctx.fill();
+if(stars>0){
+ctx.strokeStyle='rgba(255,221,68,0.4)';ctx.lineWidth=1.5;
+ctx.beginPath();ctx.roundRect(bx,by,bw,bh,8);ctx.stroke();
+}
+ctx.textAlign='center';ctx.textBaseline='middle';
+if(unlocked){
+ctx.fillStyle='#fff';ctx.font=`bold ${Math.min(18,bw*0.35)}px 'Segoe UI',system-ui,sans-serif`;
+ctx.fillText(LEVELS[i].id,bx+bw/2,by+bh*0.42);
+// Stars
+let starY=by+bh*0.78;
+for(let s=0;s<3;s++){
+ctx.fillStyle=s<stars?'#ffdd44':'rgba(255,255,255,0.15)';
+ctx.font=`${Math.min(10,bw*0.2)}px sans-serif`;
+ctx.fillText('★',bx+bw*0.25+s*bw*0.25,starY);
+}
+}else{
+ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font=`${Math.min(16,bw*0.3)}px sans-serif`;
+ctx.fillText('\u{1F512}',bx+bw/2,by+bh/2);
+}
+ctx.restore();
+}
+// Tier labels
+ctx.save();ctx.textAlign='center';ctx.font="11px 'Segoe UI',system-ui,sans-serif";
+let tierY=padY-12;
+['Tutorial','Medium','Hard','Expert'].forEach((name,i)=>{
+let row=i*2;let cy=padY+row*(bh+gapY)-10;
+});
+ctx.restore();
+}
+
+function renderPlaying(){
+drawBG();
+// Top bar
+ctx.save();
+ctx.fillStyle='rgba(0,0,0,0.3)';ctx.fillRect(0,0,W,50);
+ctx.textBaseline='middle';
+// Back
+ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font="20px 'Segoe UI',system-ui,sans-serif";
+ctx.textAlign='left';ctx.fillText('←',12,25);
+// Level name
+ctx.fillStyle='#fff';ctx.font="bold 15px 'Segoe UI',system-ui,sans-serif";
+ctx.textAlign='center';
+ctx.fillText(`Level ${LEVELS[currentLevel].id}: ${LEVELS[currentLevel].name}`,W/2,18);
+// Score + combo
+ctx.font="12px 'Segoe UI',system-ui,sans-serif";ctx.fillStyle='rgba(255,255,255,0.7)';
+ctx.fillText(`Score: ${score}`,W/2,38);
+if(comboCount>1&&comboTimer>0){
+ctx.fillStyle='#ffdd44';ctx.font="bold 13px 'Segoe UI',system-ui,sans-serif";
+ctx.fillText(`Combo x${comboCount}`,W/2+100,25);
+}
+ctx.restore();
+// Screen shake
+ctx.save();
+if(screenShake.intensity>0){
+ctx.translate(screenShake.x,screenShake.y);
+}
+// Draw plates
+gameObjects.plates.forEach(p=>{
+if(!p.removed||p.dropping) drawMetalPlate(p.x,p.y,p.w,p.h,p.color,p.shine);
+});
+// Draw pins
+gameObjects.pins.forEach(p=>drawPin(p));
+// Draw slots
+gameObjects.slots.forEach(s=>drawSlot(s));
+ctx.restore();
+// Bottom bar
+ctx.save();
+ctx.fillStyle='rgba(0,0,0,0.3)';ctx.fillRect(0,H-65,W,65);
+// Undo
+drawButton(W/2-100,H-55,70,36,`Undo (${undosRemaining})`,11);
+// Hint
+drawButton(W/2+30,H-55,70,36,`Hint (${hintsRemaining})`,11);
+ctx.restore();
+// Particles
+gameObjects.particles.forEach(p=>{
+ctx.save();ctx.globalAlpha=p.life/p.maxLife;
+ctx.fillStyle=p.color;
+ctx.beginPath();ctx.arc(p.x,p.y,p.size*(p.life/p.maxLife),0,Math.PI*2);ctx.fill();
+ctx.restore();
+});
+// Floating texts
+gameObjects.floatingTexts.forEach(t=>{
+ctx.save();ctx.globalAlpha=t.life/t.maxLife;
+ctx.fillStyle=t.color;ctx.font=`bold ${t.size}px 'Segoe UI',system-ui,sans-serif`;
+ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(t.text,t.x,t.y);
+ctx.restore();
+});
+}
+
+function renderTutorial(){
+renderPlaying();
+let lvl=LEVELS[currentLevel];
+let steps=lvl.tutorialSteps||[];
+if(tutorialStep>=steps.length)return;
+// Overlay
+ctx.save();
+ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(0,0,W,H);
+ctx.textAlign='center';ctx.textBaseline='middle';
+let messages={
+pins:'Tap the colored pins to unscrew them!',
+slots:'Match pin colors to the slots below!',
+order:'Remove pins in the right order to drop plates!'
+};
+let msg=messages[steps[tutorialStep]]||'Tap to continue!';
+// Panel
+let pw=Math.min(300,W*0.8),ph=80;
+drawButton(W/2-pw/2,H*0.45-ph/2,pw,ph,msg,15,'rgba(68,136,255,0.3)');
+// Arrow to relevant object
+if(steps[tutorialStep]==='pins'&&gameObjects.pins.length>0){
+let pin=gameObjects.pins[0];
+ctx.fillStyle='#ffdd44';ctx.font="24px sans-serif";
+ctx.fillText('⬇',pin.x,pin.y-40);
+}
+ctx.restore();
+}
+
+function renderLevelComplete(){
+drawBG();
+ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+// Title
+ctx.shadowColor='#44ff88';ctx.shadowBlur=20;
+ctx.font="bold 32px 'Segoe UI',system-ui,sans-serif";ctx.fillStyle='#fff';
+ctx.fillText('LEVEL COMPLETE!',W/2,H*0.18);
+ctx.shadowBlur=0;
+// Stars
+let stars=saveData.levels[LEVELS[currentLevel].id]?saveData.levels[LEVELS[currentLevel].id].stars:1;
+for(let i=0;i<3;i++){
+let sx=W/2-60+i*60,sy=H*0.3;
+ctx.font="40px sans-serif";
+ctx.fillStyle=i<stars?'#ffdd44':'rgba(255,255,255,0.15)';
+ctx.fillText('★',sx,sy);
+}
+// Score
+ctx.font="18px 'Segoe UI',system-ui,sans-serif";ctx.fillStyle='rgba(255,255,255,0.8)';
+ctx.fillText(`Score: ${saveData.levels[LEVELS[currentLevel].id]?saveData.levels[LEVELS[currentLevel].id].score:score}`,W/2,H*0.42);
+// Rating text
+let ratingText=['','Good job!','Great work!','Perfect!'][stars];
+ctx.font="16px 'Segoe UI',system-ui,sans-serif";ctx.fillStyle='#ffdd44';
+ctx.fillText(ratingText,W/2,H*0.49);
+// Buttons
+let hasNext=currentLevel<LEVELS.length-1;
+if(hasNext){
+drawButton(W/2-80,H*0.58,160,44,'NEXT LEVEL',16,'rgba(68,255,136,0.2)');
+}
+drawButton(W/2-80,H*0.68,160,44,'LEVEL SELECT',14,'rgba(255,255,255,0.06)');
+drawButton(W/2-80,H*0.78,160,44,'PLAY AGAIN',14,'rgba(255,255,255,0.06)');
+ctx.restore();
+// Particles
+gameObjects.particles.forEach(p=>{
+ctx.save();ctx.globalAlpha=p.life/p.maxLife;
+ctx.fillStyle=p.color;
+ctx.beginPath();ctx.arc(p.x,p.y,p.size*(p.life/p.maxLife),0,Math.PI*2);ctx.fill();
+ctx.restore();
+});
+}
+
+function renderSettings(){
+drawBG();
+ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.font="bold 24px 'Segoe UI',system-ui,sans-serif";ctx.fillStyle='#fff';
+ctx.fillText('SETTINGS',W/2,H*0.15);
+// SFX
+let sfxCol=sfxEnabled?'rgba(68,255,136,0.3)':'rgba(255,68,102,0.3)';
+drawButton(W/2-100,H*0.35,200,40,`Sound: ${sfxEnabled?'ON':'OFF'}`,15,sfxCol);
+// Music
+let musCol=musicEnabled?'rgba(68,255,136,0.3)':'rgba(255,68,102,0.3)';
+drawButton(W/2-100,H*0.47,200,40,`Music: ${musicEnabled?'ON':'OFF'}`,15,musCol);
+// Reset
+drawButton(W/2-100,H*0.59,200,40,'Reset Progress',14,'rgba(255,68,102,0.2)');
+// Back
+drawButton(W/2-60,H*0.72,120,40,'Back',14,'rgba(255,255,255,0.08)');
+ctx.restore();
+}
+
+function renderStats(){
+drawBG();
+ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.font="bold 24px 'Segoe UI',system-ui,sans-serif";ctx.fillStyle='#fff';
+ctx.fillText('STATISTICS',W/2,H*0.12);
+let s=saveData.stats;
+let items=[
+['Levels Completed',`${s.levelsCompleted}/40`],
+['Total Stars',`${s.starsEarned}/${40*3}`],
+['Total Score',s.totalScore.toString()],
+['Hints Used',s.hintsUsed.toString()]
+];
+items.forEach((item,i)=>{
+let y=H*0.25+i*50;
+ctx.font="14px 'Segoe UI',system-ui,sans-serif";ctx.fillStyle='rgba(255,255,255,0.6)';
+ctx.fillText(item[0],W/2,y);
+ctx.font="bold 18px 'Segoe UI',system-ui,sans-serif";ctx.fillStyle='#fff';
+ctx.fillText(item[1],W/2,y+22);
+});
+drawButton(W/2-60,H*0.82,120,40,'Back',14,'rgba(255,255,255,0.08)');
+ctx.restore();
+}
+
+// --- MAIN LOOP ---
+function update(dt){
+levelTime+=dt;
+comboTimer-=dt;
+if(comboTimer<=0)comboCount=0;
+// Screen shake
+if(screenShake.intensity>0){
+screenShake.x=(Math.random()-0.5)*screenShake.intensity;
+screenShake.y=(Math.random()-0.5)*screenShake.intensity;
+screenShake.intensity*=0.9;
+if(screenShake.intensity<0.5)screenShake.intensity=0;
+}
+if(gameState==='playing'||gameState==='tutorial'){
+updatePins(dt);
+updatePlates(dt);
+}
+updateParticles(dt);
+}
+
+function render(){
+ctx.clearRect(0,0,W,H);
+switch(gameState){
+case'menu':renderMenu();break;
+case'levelSelect':renderLevelSelect();break;
+case'playing':renderPlaying();break;
+case'tutorial':renderTutorial();break;
+case'levelComplete':renderLevelComplete();break;
+case'levelFail':renderLevelFail();break;
+case'settings':renderSettings();break;
+case'stats':renderStats();break;
+}
+}
+
+function renderLevelFail(){
+drawBG();
+ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.font="bold 28px 'Segoe UI',system-ui,sans-serif";ctx.fillStyle='#ff4466';
+ctx.fillText('STUCK!',W/2,H*0.35);
+ctx.font="16px 'Segoe UI',system-ui,sans-serif";ctx.fillStyle='rgba(255,255,255,0.7)';
+ctx.fillText('Try a different order',W/2,H*0.43);
+drawButton(W/2-80,H*0.55,160,44,'RETRY',16,'rgba(68,136,255,0.3)');
+ctx.restore();
+}
+
+function gameLoop(ts){
+animFrame=requestAnimationFrame(gameLoop);
+let dt=Math.min((ts-lastTime)/1000,0.05);
+lastTime=ts;
+update(dt);
+render();
+}
+
+// --- EVENTS ---
+function onPointerDown(e){
+e.preventDefault();
+let rect=canvas.getBoundingClientRect();
+let mx=e.clientX-rect.left,my=e.clientY-rect.top;
+handleClick(mx,my);
+}
+function onResize(){
+computeLayout();
+if(gameState==='playing'||gameState==='tutorial'){
+// Recalculate positions
+let lvl=LEVELS[currentLevel];
+let g=getGridMetrics(lvl);
+lvl.plates.forEach((pd,i)=>{
+let plate=gameObjects.plates[i];
+if(plate&&!plate.dropping&&!plate.removed){
+plate.x=g.ox+pd.x*g.cell;plate.y=g.oy+pd.y*g.cell;plate.w=pd.w*g.cell;plate.h=pd.h*g.cell;
+plate.origY=plate.y;
+}
+});
+lvl.pins.forEach((pd,i)=>{
+let pin=gameObjects.pins[i];
+if(pin&&!pin.removed){
+pin.x=g.ox+pd.x*g.cell+g.cell/2;pin.y=g.oy+pd.y*g.cell+g.cell/2;
+}
+});
+let slotW=Math.min(50,g.cell*0.8);
+let slotGap=(W-slotW*lvl.slots.length)/(lvl.slots.length+1);
+gameObjects.slots.forEach((s,i)=>{
+s.x=slotGap+i*(slotW+slotGap)+slotW/2;
+s.y=H-65-slotW/2+10;s.w=slotW;
+});
+}
+}
+
+// --- INIT ---
+function init(){
+canvas=document.getElementById('c');
+ctx=canvas.getContext('2d');
+computeLayout();
+loadSave();
+canvas.addEventListener('pointerdown',onPointerDown);
+window.addEventListener('resize',onResize);
+document.addEventListener('visibilitychange',()=>{
+if(document.hidden)stopBGM();
+else if(musicEnabled&&gameState==='playing')startBGM();
+});
+lastTime=performance.now();
+gameLoop(lastTime);
+}
+
+// --- CLEANUP ---
+function cleanup(){
+if(animFrame)cancelAnimationFrame(animFrame);
+canvas.removeEventListener('pointerdown',onPointerDown);
+window.removeEventListener('resize',onResize);
+stopBGM();
+activeTimers.forEach(t=>clearTimeout(t));
+activeTimers=[];
+gameObjects={plates:[],pins:[],slots:[],particles:[],floatingTexts:[]};
+}
+
+// roundRect polyfill
+if(!CanvasRenderingContext2D.prototype.roundRect){
+CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+r=Math.min(r,w/2,h/2);
+this.moveTo(x+r,y);this.lineTo(x+w-r,y);this.arcTo(x+w,y,x+w,y+r,r);
+this.lineTo(x+w,y+h-r);this.arcTo(x+w,y+h,x+w-r,y+h,r);
+this.lineTo(x+r,y+h);this.arcTo(x,y+h,x,y+h-r,r);
+this.lineTo(x,y+r);this.arcTo(x,y,x+r,y,r);
+};
+}
+
+init();
+})();
+</script>
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=pin-master' defer></script>
+</body>
+</html>
