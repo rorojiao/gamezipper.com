@@ -79,7 +79,7 @@
 .gz-skip-link{position:absolute;top:-100%;left:16px;background:#4ecdc4;color:#000;padding:8px 16px;border-radius:0 0 8px 8px;font-weight:700;z-index:99999;text-decoration:none;transition:top .2s}
 .gz-skip-link:focus{top:0}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a1a;color:#fff;min-height:100dvh;-webkit-overflow-scrolling:touch;text-rendering:optimizeLegibility}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a1a;color:#fff;min-height:100dvh;-webkit-overflow-scrolling:touch;text-rendering:optimizeLegibility;font-display:swap}
 .header{text-align:center;padding:40px 20px 20px;background:linear-gradient(135deg,#1a1a3e,#2d1b69)}
 .header h1{font-size:2.5em;background:linear-gradient(90deg,#ff6b6b,#ffd93d,#6bcf7f,#4ecdc4,#45b7d1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;min-height:1.2em}
 .header p{color:#aaa;margin-top:8px;font-size:1.1em}
@@ -649,6 +649,7 @@ if(navigator.connection&&navigator.connection.saveData){document.querySelectorAl
   </div>
 </section>
 
+<script>if(!("scheduler" in window))window.scheduler={yield:function(){return new Promise(function(r){setTimeout(r,0)})}};</script>
 <script src="/js/games-data.js?v=d0504390" defer></script>
 <script>
 // Wait for deferred games-data.js to load before rendering (FCP/LCP optimization)
@@ -1510,6 +1511,7 @@ if('serviceWorker' in navigator){
   });
 })();
 </script>
+<script>(function(){if(!navigator.vibrate||!window.matchMedia("(pointer:coarse)").matches)return;document.addEventListener("click",function(e){var card=e.target.closest(".game-card");if(card)navigator.vibrate(10)},{passive:true})})();</script>
 <button class="gz-quick-play" id="gz-quick-play" aria-label="Play a random game">🎲 Quick Play</button>
 <script>
 // Quick Play FAB: show on mobile after 3s if user has not clicked any game
@@ -1565,6 +1567,70 @@ if('serviceWorker' in navigator){
 })();
 
 <!-- Cookie Consent: GDPR-friendly minimal banner -->
+<script>
+(function(){
+if(sessionStorage.getItem("gz_rec_shown"))return;
+var timer=setTimeout(function(){
+if(sessionStorage.getItem("gz_rec_shown"))return;
+sessionStorage.setItem("gz_rec_shown","1");
+var picks=[
+{name:"2048",url:"/2048/",emoji:"2048",tag:"Puzzle"},
+{name:"Snake",url:"/snake/",emoji:"Snake",tag:"Arcade"},
+{name:"Solitaire",url:"/solitaire/",emoji:"Cards",tag:"Card"},
+{name:"Sudoku",url:"/sudoku/",emoji:"Sudoku",tag:"Puzzle"},
+{name:"Word Search",url:"/word-search/",emoji:"Words",tag:"Word"},
+{name:"Mahjong",url:"/mahjong-solitaire/",emoji:"Mahjong",tag:"Puzzle"},
+{name:"Tetris",url:"/tetris/",emoji:"Tetris",tag:"Arcade"},
+{name:"Minesweeper",url:"/minesweeper/",emoji:"Mine",tag:"Puzzle"}
+];
+var pick=picks[Math.floor(Math.random()*picks.length)];
+var toast=document.createElement("div");
+toast.id="gz-rec-toast";
+toast.setAttribute("role","status");
+toast.setAttribute("aria-live","polite");
+var s="position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);";
+s+="background:linear-gradient(135deg,#1a1a3e,#2d1b69);color:#fff;";
+s+="padding:16px 24px;border-radius:16px;z-index:10000;font-size:.9em;";
+s+="box-shadow:0 8px 32px rgba(0,0,0,.5);border:1px solid #4ecdc4;";
+s+="display:flex;align-items:center;gap:12px;max-width:92vw;";
+s+="transition:transform .4s cubic-bezier(.22,1,.36,1),opacity .4s;opacity:0";
+toast.style.cssText=s;
+var h='<span style="font-size:1.5em;background:#2a2a4a;width:40px;height:40px;';
+h+='border-radius:10px;display:flex;align-items:center;justify-content:center;';
+h+='font-weight:700;color:#4ecdc4">'+pick.emoji+'</span>';
+h+='<div><div style="font-weight:700;color:#4ecdc4;margin-bottom:2px">';
+h+=pick.tag+' Pick for You</div><div>'+pick.name+' — try it now!</div></div>';
+h+='<a href="'+pick.url+'" style="background:linear-gradient(135deg,#4ecdc4,#45b7d1);';
+h+='color:#000;font-weight:700;padding:10px 20px;border-radius:20px;';
+h+='text-decoration:none;white-space:nowrap">Play ▶</a>';
+h+='<button id="gz-rec-close" style="background:none;border:none;color:#999;';
+h+='font-size:1.2em;cursor:pointer;padding:0 0 0 4px" aria-label="Dismiss">✕</button>';
+toast.innerHTML=h;
+document.body.appendChild(toast);
+requestAnimationFrame(function(){
+requestAnimationFrame(function(){
+toast.style.transform="translateX(-50%) translateY(0)";
+toast.style.opacity="1";
+})});
+var closeBtn=document.getElementById("gz-rec-close");
+if(closeBtn)closeBtn.onclick=function(){
+toast.style.transform="translateX(-50%) translateY(100px)";
+toast.style.opacity="0";
+setTimeout(function(){if(toast.parentElement)toast.remove()},400);
+};
+setTimeout(function(){
+if(toast.parentElement){
+toast.style.transform="translateX(-50%) translateY(100px)";
+toast.style.opacity="0";
+setTimeout(function(){if(toast.parentElement)toast.remove()},400);
+}
+},20000);
+},15000);
+document.addEventListener("click",function(e){
+if(e.target.closest(".game-card"))clearTimeout(timer);
+},{once:true});
+})();
+</script>
 <div class="gz-cookie-consent" id="gz-cookie-consent" role="dialog" aria-label="Cookie consent">
   <span>🍪 We use cookies to improve your experience and serve relevant ads.</span>
   <button class="gz-cookie-accept" id="gz-cookie-accept">Accept</button>
