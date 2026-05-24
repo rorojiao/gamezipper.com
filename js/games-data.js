@@ -192,3 +192,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Moto X3M",emoji:"🏍️",cat:"racing",tags:["motorcycle","racing","stunt","physics","obstacle"],url:"/moto-x3m/",desc:"Race through 25 obstacle courses on a physics motorcycle with flips, stunts, and time trials in Moto X3M.",isNew:true,status:"live"},
