@@ -51,7 +51,7 @@
       inpagePush: 11012002,
       vignette: 11012003,
     },
-    AD_PROVIDER: 'https://quge5.com/88/tag.min.js',
+    AD_PROVIDER: 'https://a.magsrv.com/ad-provider.js',
     FREQUENCY: {
       minBetweenAds: 45 * 1000,        // 45s minimum between any two ads
       firstAdDelay: 60 * 1000,          // 60s before first ad (gentler for new users)
@@ -223,10 +223,11 @@
       var timeout = setTimeout(function() { reject(new Error('timeout')); }, CONFIG.TIMING.adLoadTimeout);
 
       var s = document.createElement('script');
-      s.src = CONFIG.AD_PROVIDER;
+      s.src = CONFIG.AD_PROVIDER + '?zone=' + String(zoneId);
       s.async = true;
       s.setAttribute('data-zone', String(zoneId));
       s.setAttribute('data-cf-beacon', 'gz4_' + zoneId + '_' + Date.now());
+      s.setAttribute('data-cf-async', 'false');
       s.onload = function() { clearTimeout(timeout); resolve(true); };
       s.onerror = function() { clearTimeout(timeout); state.adBlockDetected = true; reject(new Error('load_err')); };
 
@@ -585,7 +586,7 @@
   function detectAdBlock() {
     // Use a proper script-based detection
     var testScript = document.createElement('script');
-    testScript.src = 'https://quge5.com/88/tag.min.js?_probe=' + Date.now();
+    testScript.src = 'https://a.magsrv.com/ad-provider.js?zone=' + String(CONFIG.ZONES.inpagePush) + '&_probe=' + Date.now();
     testScript.async = true;
     var done = false;
     
