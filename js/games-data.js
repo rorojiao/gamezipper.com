@@ -170,6 +170,7 @@ const GAMES = [
   {name:"Cookie Clicker",emoji:"🍪",cat:"idle",tags:["Idle","Clicker","Cookie","Baking","Simulation","Casual"],url:"/cookie-clicker/",desc:"Bake billions of cookies in this free online idle clicker game! Click the cookie, buy buildings, unlock upgrades, click golden cookies for bonuses, and prestige for permanent rewards. The ultimate baking empire!",isNew:true,status:"live"},
 {name:"Gravity Run",emoji:"🏃",cat:"arcade",tags:["Runner","Tunnel","Gravity","3D","Platformer","Arcade"],url:"/gravity-run/",desc:"Run through a 3D tunnel where gravity flips when you hit walls. 30 story levels across 6 zones, infinite mode, character unlocks, and procedural level generation in this neon tunnel runner.",isNew:true,status:"live"},
 {name:"Moto X3M",emoji:"🏍️",cat:"racing",tags:["motorcycle","racing","stunt","physics","obstacle"],url:"/moto-x3m/",desc:"Race through 25 obstacle courses on a physics motorcycle with flips, stunts, and time trials in Moto X3M.",isNew:true,status:"live"},
+{name:"Math 24",emoji:"🔢",cat:"puzzle",tags:["math","number","24","card","calculator","brain"],url:"/math-24/",desc:"Use four numbers and basic operations to make 24. Challenge yourself with hundreds of solvable puzzles, speed mode, and daily challenges.",isNew:true,status:"live"},
 ];
 
 /**
@@ -193,4 +194,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Math 24",emoji:"🔢",cat:"puzzle",tags:["math","number","24","card","calculator","brain"],url:"/math-24/",desc:"Use four numbers and basic operations to make 24. Challenge yourself with hundreds of solvable puzzles, speed mode, and daily challenges.",isNew:true,status:"live"},
