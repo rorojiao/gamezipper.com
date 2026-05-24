@@ -185,3 +185,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Wordle",emoji:"🔤",cat:"puzzle",tags:["word","daily","guessing","vocabulary"],url:"/wordle/",desc:"Guess the hidden word in 6 tries with color-coded clues. Daily puzzle, practice mode, hard mode, and full statistics.",isNew:true,status:"live"},
