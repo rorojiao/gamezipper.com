@@ -164,6 +164,7 @@ const GAMES = [
   {name:"Euchre",emoji:"♠️",cat:"card",tags:["euchre","trick-taking","cards","trump","partnership"],url:"/euchre/",desc:"Play Euchre online free - classic 4-player trick-taking card game with trump, going alone, and partnership strategy",isNew:true,status:"live"},
 
   {name:"Wordle",emoji:"🔤",cat:"puzzle",tags:["word","daily","guessing","vocabulary"],url:"/wordle/",desc:"Guess the hidden word in 6 tries with color-coded clues. Daily puzzle, practice mode, hard mode, and full statistics.",isNew:true,status:"live"},
+  {name:"Tiny Fishing",emoji:"🎣",cat:"casual",tags:["fishing","idle","upgrade","ocean","catch","relaxing","arcade"],url:"/tiny-fishing/",desc:"Cast your hook and catch rare fish in this addictive idle fishing game! Upgrade your rod, line, and bait to explore deeper ocean zones. 30 fish species across 5 depth zones, from Shore to the Abyss.",isNew:true,status:"live"},
 ];
 
 /**
