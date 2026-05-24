@@ -189,4 +189,5 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Doodle Jump",emoji:"🐸",cat:"arcade",tags:["Platformer","Jumping","Arcade"],url:"/doodle-jump/",desc:"Play Doodle Jump online free! Bounce higher and higher on platforms, collect power-ups, shoot monsters, and chase your high score in this classic vertical platformer game.",isNew:true,status:"live"},
+{name:"Doodle Jump",emoji:"🐸",cat:"arcade",tags:["Platformer","Jumping","Arcade"],url:"/doodle-jump/",desc:"Play Doodle Jump online free! Bounce higher and higher on platforms, collect power-ups, shoot monsters, and chase your high score in this classic vertical platformer game.",isNew:true,status:"live"}
+{name:"Papas Freezeria",emoji:"🍦",cat:"simulation",tags:["Restaurant","Cooking","Simulation"],url:"/papas-freezeria/",desc:"Play Papas Freezeria online free! Take orders, build sundaes, mix treats, and top with whipped cream in this classic restaurant simulation game.",isNew:true,status:"live"},
