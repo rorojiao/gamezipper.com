@@ -237,10 +237,25 @@
    h += '<a href="https://tools.gamezipper.com" style="display:inline-flex;align-items:center;gap:4px;background:#ffd93d;padding:4px 10px;border-radius:12px;text-decoration:none;color:#000;font-size:11px;font-family:sans-serif;font-weight:700;flex-shrink:0">🛠 Tools</a>';
    h += '<button onclick="var f=document.getElementById(\'game-footer\');if(f){f.style.transform=\'translateY(100%)\';setTimeout(function(){f.remove()},300);}sessionStorage.setItem(\'gz-footer-dismissed\',\'1\');" style="background:none;border:none;color:#666;font-size:16px;cursor:pointer;padding:4px 6px;flex-shrink:0;line-height:1" aria-label="Close">&times;</button>';
    h += '</div>';
-   d.innerHTML = h;
-   document.body.appendChild(d);
+  d.innerHTML = h;
+  document.body.appendChild(d);
 
-   // Smart display: show footer at natural pause points, not during active gameplay
+  // === Poki-model: Commercial Break on game link click ===
+  // When user clicks a game link, trigger commercialBreak (ad may or may not show)
+  d.addEventListener('click', function(e) {
+    var link = e.target.closest('a');
+    if (!link) return;
+    var href = link.getAttribute('href');
+    if (!href || href.indexOf('/') !== 0) return; // only internal game links
+    // Trigger commercialBreak asynchronously — don't block navigation
+    try {
+      if (window.GZAds && window.GZAds.commercialBreak) {
+        window.GZAds.commercialBreak();
+      }
+    } catch(err) {}
+  }, { passive: true });
+
+  // Smart display: show footer at natural pause points, not during active gameplay
    // Strategy: listen for gameover/level-complete events; fallback to 8s delay
    var footerShown = false;
    function showFooter() {
