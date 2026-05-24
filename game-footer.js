@@ -263,4 +263,4 @@
      setTimeout(init, 100);
    }
  }
-},{n:'Happy Glass',e:'🥛',u:'/happy-glass/',c:'puzzle'},{n:'Farkle',e:'🎲',u:'/farkle/',c:'board'},{n:'Cribbage',e:'🃏',u:'/cribbage/',c:'card'},{n:'Euchre',e:'♠️',u:'/euchre/',c:'card'})()
+},{n:'Happy Glass',e:'🥛',u:'/happy-glass/',c:'puzzle'},{n:'Farkle',e:'🎲',u:'/farkle/',c:'board'},{n:'Cribbage',e:'🃏',u:'/cribbage/',c:'card'},{n:'Euchre',e:'♠️',u:'/euchre/',c:'card'},{n:'Wordle',e:'🔤',u:'/wordle/',c:'puzzle'})()

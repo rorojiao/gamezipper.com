@@ -14,6 +14,7 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#ff9a9e,#fecfef)',
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
   'linear-gradient(135deg,#a1c4fd,#c2e9fb)',
+  {name:"Wordle",emoji:"🔤",cat:"puzzle",tags:["word","daily","guessing","vocabulary"],url:"/wordle/",desc:"Guess the hidden word in 6 tries with color-coded clues. Daily puzzle, practice mode, hard mode, and full statistics.",isNew:true,status:"live"},
 ];
 
 const GAMES = [
@@ -162,6 +163,7 @@ const GAMES = [
   {name:"Happy Glass",emoji:"🥛",cat:"puzzle",tags:["Puzzle","Draw","Physics","Water","Fill","Casual","Brain"],url:"/happy-glass/",desc:"Draw lines to guide water into a happy glass! 40 levels of creative physics puzzles with ink limits, star ratings, and hint system. How many glasses can you fill?",isNew:true,status:"live"},
   {name:"Euchre",emoji:"♠️",cat:"card",tags:["euchre","trick-taking","cards","trump","partnership"],url:"/euchre/",desc:"Play Euchre online free - classic 4-player trick-taking card game with trump, going alone, and partnership strategy",isNew:true,status:"live"},
 
+  {name:"Wordle",emoji:"🔤",cat:"puzzle",tags:["word","daily","guessing","vocabulary"],url:"/wordle/",desc:"Guess the hidden word in 6 tries with color-coded clues. Daily puzzle, practice mode, hard mode, and full statistics.",isNew:true,status:"live"},
 ];
 
 /**
@@ -185,4 +187,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Wordle",emoji:"🔤",cat:"puzzle",tags:["word","daily","guessing","vocabulary"],url:"/wordle/",desc:"Guess the hidden word in 6 tries with color-coded clues. Daily puzzle, practice mode, hard mode, and full statistics.",isNew:true,status:"live"},
+
