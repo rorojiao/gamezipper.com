@@ -1138,7 +1138,7 @@ try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){s('in
 new PerformanceObserver(function(l){l.getEntries().forEach(function(e){s('ttfb',e.responseStart-e.requestStart)})}).observe({type:'navigation',buffered:true});
 }})();
 // ux-097: Scroll position save/restore for back-navigation UX
-try{if('scrollRestoration' in history){history.scrollRestoration='manual'}var _gzSP=function(){try{sessionStorage.setItem('gz_sp',JSON.stringify({x:scrollX,y:scrollY,u:location.pathname}))}catch(e){}};addEventListener('scroll',_gzSP,{passive:true});addEventListener('beforeunload',_gzSP);try{var _d=JSON.parse(sessionStorage.getItem('gz_sp')||'{}');if(_d.u===location.pathname)requestAnimationFrame(function(){scrollTo(_d.x||0,_d.y||0)})}catch(e){}}catch(e){}
+try{if('scrollRestoration' in history){history.scrollRestoration='manual'}var _gzSP=function(){try{sessionStorage.setItem('gz_sp',JSON.stringify({x:scrollX,y:scrollY,u:location.pathname}))}catch(e){}};addEventListener('scroll',_gzSP,{passive:true});addEventListener('pagehide',function(e){_gzSP()})/* bfcache-opt */;try{var _d=JSON.parse(sessionStorage.getItem('gz_sp')||'{}');if(_d.u===location.pathname)requestAnimationFrame(function(){scrollTo(_d.x||0,_d.y||0)})}catch(e){}}catch(e){}
 
 </script>
 
@@ -1768,5 +1768,164 @@ var _gzInp=0;new PerformanceObserver(function(l){l.getEntries().forEach(function
 // Preconnect to self on first interaction (reduces navigation latency)
 (function(){var done=false;function pc(){if(done)return;done=true;var l=document.createElement('link');l.rel='preconnect';l.href=window.location.origin;document.head.appendChild(l)}['pointerdown','keydown','touchstart'].forEach(function(e){document.addEventListener(e,pc,{once:true,passive:true})})})();
 </script>
+
+<!-- UX-OPT: Tab re-engagement — dynamic title when user switches away, brings users back -->
+<script>
+(function(){
+  var origTitle=document.title;
+  var altTitle='🎮 Come back and play! — GameZipper';
+  var altShown=false;
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='hidden'){
+      setTimeout(function(){
+        if(document.hidden){
+          document.title=altTitle;
+          altShown=true;
+        }
+      },3000);
+    }else if(altShown){
+      document.title=origTitle;
+      altShown=false;
+    }
+  });
+})();
+</script>
+
+
+<!-- UX-OPT: Keyboard shortcuts — / to search, Escape to clear, improves power user engagement -->
+<script>
+(function(){
+  var s=document.querySelector('.gz-search');
+  if(!s)return;
+  document.addEventListener('keydown',function(e){
+    if(e.key==='/'&&!e.ctrlKey&&!e.metaKey&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){
+      e.preventDefault();
+      s.focus();
+      s.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+    if(e.key==='Escape'&&document.activeElement===s){
+      s.value='';
+      s.dispatchEvent(new Event('input'));
+      s.blur();
+    }
+  });
+  // Show keyboard hint on search placeholder for desktop users
+  if(!('ontouchstart' in window)){
+    s.placeholder='Search games... (press /)';
+  }
+})();
+</script>
+
+<!-- UX-OPT: Idle engagement prompt — suggest a random popular game after 30s idle to reduce bounce -->
+<script>
+(function(){
+  if(sessionStorage.getItem('gz_iep'))return;
+  var popularGames=[
+    {name:'2048',emoji:'🔢',url:'/2048/'},
+    {name:'Snake',emoji:'🐍',url:'/snake/'},
+    {name:'Sudoku',emoji:'🧩',url:'/sudoku/'},
+    {name:'Tetris',emoji:'🧱',url:'/tetris/'},
+    {name:'Solitaire',emoji:'🃏',url:'/solitaire/'},
+    {name:'Chess',emoji:'♟️',url:'/chess/'}
+  ];
+  var idleTimer=null;
+  var shown=false;
+  function resetIdle(){clearTimeout(idleTimer);if(!shown)idleTimer=setTimeout(showPrompt,30000)}
+  function showPrompt(){
+    if(shown)return;shown=true;
+    var g=popularGames[Math.floor(Math.random()*popularGames.length)];
+    var d=document.createElement('div');
+    d.id='gz-idle-prompt';
+    d.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:linear-gradient(135deg,#1a1a3e,#2d1b69);border:1px solid #4ecdc4;border-radius:16px;padding:14px 20px;display:flex;align-items:center;gap:12px;z-index:99998;opacity:0;transition:opacity .4s,transform .4s;box-shadow:0 8px 32px rgba(0,0,0,0.5);max-width:340px;font-size:0.9em';
+    var btn=document.createElement('a');
+    btn.href=g.url;
+    btn.style.cssText='margin-left:auto;background:linear-gradient(135deg,#4ecdc4,#45b7d1);color:#000;padding:8px 16px;border-radius:20px;text-decoration:none;font-weight:700;font-size:0.85em;white-space:nowrap';
+    btn.textContent='Play \u2192';
+    var closeBtn=document.createElement('button');
+    closeBtn.style.cssText='position:absolute;top:6px;right:8px;background:none;border:none;color:#666;cursor:pointer;font-size:1em;padding:4px;line-height:1';
+    closeBtn.textContent='\u00d7';
+    closeBtn.onclick=function(){d.style.opacity='0';setTimeout(function(){if(d.parentElement)d.remove()},400)};
+    d.innerHTML='<span style="font-size:1.5em">'+g.emoji+'</span><div><div style="color:#fff;font-weight:600">Try '+g.name+'?</div><div style="color:#888;font-size:0.8em;margin-top:2px">Our players love it</div></div>';
+    d.appendChild(btn);
+    d.appendChild(closeBtn);
+    document.body.appendChild(d);
+    requestAnimationFrame(function(){d.style.opacity='1';d.style.transform='translateX(-50%) translateY(0)'});
+    sessionStorage.setItem('gz_iep','1');
+    setTimeout(function(){if(d.parentElement){d.style.opacity='0';setTimeout(function(){if(d.parentElement)d.remove()},400)}},8000);
+  }
+  ['mousemove','keydown','scroll','touchstart','click'].forEach(function(e){
+    document.addEventListener(e,resetIdle,{passive:true})
+  });
+  resetIdle();
+})();
+</script>
+
+<!-- UX-OPT: Returning visitor personalized greeting — increases engagement for repeat visitors -->
+<script>
+(function(){
+  var visited=parseInt(localStorage.getItem('gz_vc')||'0',10);
+  visited++;
+  localStorage.setItem('gz_vc',String(visited));
+  // Only show personalized greeting on 3rd+ visit (returning user)
+  if(visited<3)return;
+  var lastGame=JSON.parse(localStorage.getItem('gz_recent_games')||'[]');
+  if(!lastGame.length)return;
+  var header=document.querySelector('.header p');
+  if(!header)return;
+  var greeting=visited<10?'Welcome back!':'Thanks for being a loyal player!';
+  header.textContent=greeting+' You\u2019ve played '+lastGame.length+' game'+(lastGame.length>1?'s':'')+'.';
+  header.style.color='#4ecdc4';
+})();
+</script>
+
+<!-- UX-OPT: Smart "You might also like" section after game grid — increases pages/session by suggesting games -->
+<script>
+(function(){
+  if(sessionStorage.getItem('gz_ylk'))return;
+  // Only show on 2nd+ pageview (session-based)
+  var pv=parseInt(sessionStorage.getItem('gz_pv')||'0',10);
+  pv++;
+  sessionStorage.setItem('gz_pv',String(pv));
+  if(pv<2)return;
+  // Requires games data to be loaded
+  var grid=document.getElementById('games');
+  if(!grid||!grid.classList.contains('loaded'))return;
+  var cards=grid.querySelectorAll('.game-card');
+  if(cards.length<6)return;
+  // Pick 4 random cards that the user hasn't seen in "recently played"
+  var recent=JSON.parse(localStorage.getItem('gz_recent_games')||'[]');
+  var recentUrls=recent.map(function(g){return g.url});
+  var available=[];
+  for(var i=0;i<cards.length;i++){
+    var href=cards[i].getAttribute('href')||'';
+    if(href&&recentUrls.indexOf(href)===-1)available.push(cards[i]);
+  }
+  if(available.length<4)return;
+  // Shuffle and pick 4
+  available.sort(function(){return 0.5-Math.random()});
+  var picked=available.slice(0,4);
+  var section=document.createElement('div');
+  section.style.cssText='max-width:1100px;margin:24px auto 0;padding:0 20px;content-visibility:auto;contain-intrinsic-size:auto 200px';
+  section.innerHTML='<div style="background:linear-gradient(135deg,#11182f,#1a1a3e);border:1px solid #223154;border-radius:18px;padding:20px"><h2 style="font-size:1.2em;color:#4ecdc4;margin:0 0 14px">\u2728 You might also like</h2><div id="gz-ylk-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px"></div></div>';
+  var innerGrid=section.querySelector('#gz-ylk-grid');
+  picked.forEach(function(card){
+    var clone=card.cloneNode(true);
+    clone.classList.add('visible');
+    clone.style.opacity='1';
+    clone.style.transform='none';
+    innerGrid.appendChild(clone);
+  });
+  // Insert after the games grid
+  var parent=grid.parentElement;
+  var nextSibling=grid.nextElementSibling;
+  if(nextSibling){
+    parent.insertBefore(section,nextSibling);
+  }else{
+    parent.appendChild(section);
+  }
+  sessionStorage.setItem('gz_ylk','1');
+})();
+</script>
+
 </body>
 </html>

@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Duck Life - Train & Race!</title>
+<meta name="description" content="Train your duck's speed, swimming, flying and stamina in fun mini-games. Race against AI ducks across 4 challenging environments!">
+<link rel="canonical" href="https://gamezipper.com/duck-life/">
+<meta property="og:title" content="Duck Life - Train & Race!">
+<meta property="og:description" content="Train your duck and race to victory!">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/duck-life/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "Duck Life - Train & Race",
+  "description": "Train your duck's speed, swimming, flying and stamina in fun mini-games. Race against AI ducks across 4 challenging environments!",
+  "genre": ["Racing", "Simulation", "Arcade"],
+  "gamePlatform": "Web Browser",
+  "applicationCategory": "Game",
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+  "publisher": {"@type": "Organization", "name": "GameZipper", "url": "https://gamezipper.com"}
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "How do I train my duck in Duck Life?", "acceptedAnswer": {"@type": "Answer", "text": "Visit the training area from the home screen. Choose from Running, Swimming, or Flying training. Each mini-game improves the corresponding stat. Collect coins and avoid obstacles to maximize your training gains."}},
+    {"@type": "Question", "name": "How do I win races in Duck Life?", "acceptedAnswer": {"@type": "Answer", "text": "Train your duck's Speed, Swim, and Fly stats before racing. Your stats determine how fast you go in each race segment. Beat all 3 AI ducks to win the tournament and unlock the next environment."}},
+    {"@type": "Question", "name": "What are the environments in Duck Life?", "acceptedAnswer": {"@type": "Answer", "text": "There are 4 environments: Grassland (easy), Mountain (medium), Glacier (hard), and Volcano (expert). Each environment has 4 races including a final boss race. Beat all races in an environment to unlock the next one."}}
+  ]
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23ffeb3b'/><circle cx='50' cy='55' r='30' fill='%23ffeb3b'/><ellipse cx='50' cy='60' rx='18' ry='12' fill='%23ff9800'/><circle cx='40' cy='42' r='6' fill='%23333'/><circle cx='60' cy='42' r='6' fill='%23333'/><circle cx='42' cy='40' r='2' fill='white'/><circle cx='62' cy='40' r='2' fill='white'/></svg>">
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=duck-life'></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;color:#eee;background:#0a0a1a;touch-action:none;-webkit-user-select:none;user-select:none}
+#gameCanvas{display:block;width:100%;height:100%}
+#adBanner{position:fixed;bottom:0;left:0;right:0;height:60px;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:100}
+#adNative{position:fixed;bottom:10px;left:10px;right:10px;background:rgba(20,20,40,0.95);border-radius:12px;border:1px solid rgba(255,255,255,0.1);padding:12px;display:none;z-index:100;max-width:400px;margin:0 auto}
+#adInterstitial{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:200}
+#interstitialContent{background:rgba(20,20,50,0.98);border-radius:16px;padding:32px;text-align:center;max-width:360px;border:1px solid rgba(255,255,255,0.15)}
+#interstitialContent h2{color:#f39c12;margin-bottom:12px;font-size:22px}
+#interstitialContent p{color:#aaa;font-size:14px;line-height:1.5;margin-bottom:20px}
+#interstitialContent button{background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:none;padding:12px 32px;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer}
+#soundToggle{position:fixed;top:10px;right:60px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer;z-index:50;display:none}
+#musicToggle{position:fixed;top:10px;right:110px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer;z-index:50;display:none}
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<button id="soundToggle" onclick="toggleSound()">&#9834;</button>
+<button id="musicToggle" onclick="toggleMusic()">&#9833;</button>
+<div id="adBanner"></div>
+<div id="adNative"></div>
+<div id="adInterstitial">
+<div id="interstitialContent">
+<h2>Environment Unlocked!</h2>
+<p id="interstitialText">You conquered the Grassland! A new challenge awaits...</p>
+<button onclick="closeInterstitial()">Continue</button>
+</div>
+</div>
+<script>
+'use strict';
+// ============================================================
+// DUCK LIFE - Complete HTML5 Game
+// ============================================================
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, scale = 1;
+
+// ---- Game States ----
+const STATE = { TITLE:0, HOME:1, TRAINING:2, RUNNING:3, SWIMMING:4, FLYING:5, RACING:6, SHOP:7, RACE_RESULT:8, ENV_SELECT:9, TUTORIAL:10 };
+let gameState = STATE.TITLE;
+let prevState = STATE.TITLE;
+let stateTime = 0;
+let rafId = null;
+let intervals = [];
+
+// ---- Duck Data ----
+let duck = { speed:5, stamina:5, swim:5, fly:5, energy:100, maxEnergy:100, coins:0, hat:0 };
+let unlocks = { grassland:true, mountain:false, glacier:false, volcano:false };
+let raceProgress = { grassland:0, mountain:0, glacier:0, volcano:0 };
+let shopItems = [
+  {id:0, name:'Cap', price:50, owned:false},
+  {id:1, name:'Sunglasses', price:100, owned:false},
+  {id:2, name:'Headband', price:200, owned:false},
+  {id:3, name:'Top Hat', price:350, owned:false},
+  {id:4, name:'Crown', price:500, owned:false}
+];
+let trainingHistory = { speed:0, swim:0, fly:0 };
+let firstVisit = true;
+
+// ---- Audio ----
+let audioCtx = null;
+let bgmOsc = null, bgmGain = null;
+let soundEnabled = true;
+let musicEnabled = true;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playSound(type) {
+  if (!soundEnabled) return;
+  try {
+    const ac = getAudio();
+    const now = ac.currentTime;
+    const g = ac.createGain();
+    g.connect(ac.destination);
+    if (type === 'jump') {
+      const o = ac.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(300, now); o.frequency.exponentialRampToValueAtTime(600, now + 0.08);
+      g.gain.setValueAtTime(0.1, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      o.connect(g); o.start(now); o.stop(now + 0.1);
+    } else if (type === 'coin') {
+      const o = ac.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(880, now); o.frequency.setValueAtTime(1100, now + 0.05);
+      g.gain.setValueAtTime(0.08, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      o.connect(g); o.start(now); o.stop(now + 0.15);
+    } else if (type === 'start') {
+      [523,659,784].forEach((f,i) => {
+        const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        const g2 = ac.createGain(); g2.connect(ac.destination);
+        g2.gain.setValueAtTime(0.1, now + i * 0.1); g2.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.15);
+        o.connect(g2); o.start(now + i * 0.1); o.stop(now + i * 0.1 + 0.15);
+      });
+    } else if (type === 'win') {
+      [523,659,784,1047].forEach((f,i) => {
+        const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        const g2 = ac.createGain(); g2.connect(ac.destination);
+        g2.gain.setValueAtTime(0.12, now + i * 0.12); g2.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.25);
+        o.connect(g2); o.start(now + i * 0.12); o.stop(now + i * 0.12 + 0.25);
+      });
+    } else if (type === 'lose') {
+      [400,300,220,180].forEach((f,i) => {
+        const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        const g2 = ac.createGain(); g2.connect(ac.destination);
+        g2.gain.setValueAtTime(0.1, now + i * 0.15); g2.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.2);
+        o.connect(g2); o.start(now + i * 0.15); o.stop(now + i * 0.15 + 0.2);
+      });
+    } else if (type === 'levelup') {
+      [523,659,784,1047,1319].forEach((f,i) => {
+        const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        const g2 = ac.createGain(); g2.connect(ac.destination);
+        g2.gain.setValueAtTime(0.08, now + i * 0.08); g2.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.15);
+        o.connect(g2); o.start(now + i * 0.08); o.stop(now + i * 0.08 + 0.15);
+      });
+    } else if (type === 'click') {
+      const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = 600;
+      g.gain.setValueAtTime(0.06, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      o.connect(g); o.start(now); o.stop(now + 0.05);
+    } else if (type === 'splash') {
+      const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(400, now);
+      o.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+      g.gain.setValueAtTime(0.15, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      o.connect(g); o.start(now); o.stop(now + 0.25);
+    } else if (type === 'flap') {
+      const o = ac.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(150, now); o.frequency.exponentialRampToValueAtTime(80, now + 0.08);
+      g.gain.setValueAtTime(0.06, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      o.connect(g); o.start(now); o.stop(now + 0.1);
+    }
+  } catch(e) {}
+}
+function startBGM() {
+  if (!musicEnabled || bgmOsc) return;
+  try {
+    const ac = getAudio();
+    bgmGain = ac.createGain();
+    bgmGain.gain.value = 0.04;
+    bgmGain.connect(ac.destination);
+    const chords = [[261,329,392],[293,369,440],[220,277,330],[246,310,369]];
+    let chordIdx = 0;
+    function playChord() {
+      if (!bgmOsc) return;
+      const c = chords[chordIdx % chords.length];
+      c.forEach((f,i) => {
+        const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        const g2 = ac.createGain(); g2.gain.value = 0.03;
+        o.connect(g2); g2.connect(bgmGain); o.start(); o.stop(ac.currentTime + 1.5);
+      });
+      chordIdx++;
+    }
+    playChord();
+    bgmOsc = setInterval(playChord, 1500);
+  } catch(e) {}
+}
+function stopBGM() {
+  if (bgmOsc) { clearInterval(bgmOsc); bgmOsc = null; }
+}
+function toggleSound() { soundEnabled = !soundEnabled; document.getElementById('soundToggle').textContent = soundEnabled ? '\u266B' : '\u266B'; }
+function toggleMusic() { musicEnabled = !musicEnabled; document.getElementById('musicToggle').textContent = musicEnabled ? '\u266A' : '\u266A'; if (musicEnabled) startBGM(); else stopBGM(); }
+
+// ---- Environments ----
+const ENVS = {
+  grassland: { name:'Grassland', bg1:'#87ceeb', bg2:'#228b22', fg:'#32cd32', accent:'#90ee90', rock:'#8b7355', water:'#4169e1' },
+  mountain: { name:'Mountain', bg1:'#b0c4de', bg2:'#696969', fg:'#808080', accent:'#f5f5f5', rock:'#555', water:'#4682b4' },
+  glacier: { name:'Glacier', bg1:'#e0ffff', bg2:'#87ceeb', fg:'#b0e0e6', accent:'#fff', rock:'#add8e6', water:'#5f9ea0' },
+  volcano: { name:'Volcano', bg1:'#2f1f1f', bg2:'#8b0000', fg:'#ff4500', accent:'#ff6347', rock:'#3c1414', water:'#8b4513' }
+};
+let currentEnv = 'grassland';
+let currentRace = 0;
+
+// ---- Training Game State ----
+let trainGame = null;
+let trainTimer = 0;
+let trainCoins = 0;
+let trainStartStat = 0;
+let trainStat = '';
+let trainRunning = false;
+
+// ---- Race Game State ----
+let raceGame = null;
+let raceTimer = 0;
+let raceResult = null;
+let playerRacePos = 0;
+let aiDucks = [];
+
+// ---- Tutorial ----
+let tutStep = 0;
+const TUT_STEPS = [
+  { title:'Welcome to Duck Life!', text:'Train your duck to become the racing champion! Use the home screen to start training or racing.', img:'duck' },
+  { title:'Training', text:'Visit the training area to improve Speed, Swim, and Fly stats. Each mini-game costs energy but earns coins and stat XP.', img:'train' },
+  { title:'Racing', text:'Enter races to compete against AI ducks. Your stats determine your speed in each race segment: Run, Swim, and Fly!', img:'race' },
+  { title:'Progression', text:'Beat all races in an environment to unlock the next one. There are 4 environments with increasing difficulty.', img:'env' }
+];
+
+// ---- Save/Load ----
+function saveGame() {
+  try {
+    const data = { duck, unlocks, raceProgress, shopItems, trainingHistory, firstVisit:false };
+    localStorage.setItem('ducklife_save', JSON.stringify(data));
+  } catch(e) {}
+}
+function loadGame() {
+  try {
+    const d = JSON.parse(localStorage.getItem('ducklife_save'));
+    if (d) {
+      duck = d.duck || duck;
+      unlocks = d.unlocks || unlocks;
+      raceProgress = d.raceProgress || raceProgress;
+      if (d.shopItems) shopItems = d.shopItems;
+      trainingHistory = d.trainingHistory || trainingHistory;
+      firstVisit = d.firstVisit !== undefined ? d.firstVisit : false;
+    }
+  } catch(e) {}
+}
+function isFirstVisit() {
+  try { return !localStorage.getItem('ducklife_save'); } catch(e) { return true; }
+}
+
+// ---- Utility ----
+function lerp(a,b,t) { return a + (b-a)*t; }
+function clamp(v,mn,mx) { return Math.max(mn,Math.min(mx,v)); }
+function rand(min,max) { return min + Math.random()*(max-min); }
+function randInt(min,max) { return Math.floor(rand(min,max+1)); }
+function dist(x1,y1,x2,y2) { return Math.sqrt((x2-x1)**2+(y2-y1)**2); }
+
+// ---- Resize ----
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  scale = Math.min(W/800, H/600);
+  canvas.width = W * devicePixelRatio;
+  canvas.height = H * devicePixelRatio;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ---- Input ----
+let pointerDown = false;
+let pointerX = 0, pointerY = 0;
+canvas.addEventListener('pointerdown', e => { pointerDown = true; pointerX = e.clientX; pointerY = e.clientY; handlePointer('down', e.clientX, e.clientY); e.preventDefault(); }, {passive:false});
+canvas.addEventListener('pointermove', e => { if(pointerDown) handlePointer('move', e.clientX, e.clientY); e.preventDefault(); }, {passive:false});
+canvas.addEventListener('pointerup', e => { pointerDown = false; handlePointer('up', e.clientX, e.clientY); e.preventDefault(); }, {passive:false});
+canvas.addEventListener('pointercancel', e => { pointerDown = false; }, {passive:false});
+
+function getScaledPos(cx, cy) {
+  return { x: cx, y: cy };
+}
+function handlePointer(action, cx, cy) {
+  if (action === 'down') { playSound('click'); onTap(cx, cy); }
+  if (action === 'up' && trainGame && trainGame.pointerUp) trainGame.pointerUp();
+}
+
+// ---- Button System ----
+let buttons = [];
+function addBtn(x,y,w,h,label,cb,color,textColor) {
+  buttons.push({x,y,w,h,label,cb,color:textColor?textColor:'#fff',bg:color||'rgba(255,255,255,0.1)'});
+}
+function drawBtn(btn, hovered) {
+  ctx.fillStyle = hovered ? lighten(btn.bg, 20) : btn.bg;
+  roundRect(btn.x, btn.y, btn.w, btn.h, 8);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1;
+  roundRect(btn.x, btn.y, btn.w, btn.h, 8);
+  ctx.stroke();
+  ctx.fillStyle = btn.color;
+  ctx.font = `bold ${Math.round(Math.min(btn.w,btn.h)*0.25)}px Segoe UI,Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(btn.label, btn.x + btn.w/2, btn.y + btn.h/2);
+}
+function lighten(hex, amt) {
+  if (hex.startsWith('rgba')) return hex;
+  let r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  r = clamp(r+amt,0,255); g = clamp(g+amt,0,255); b = clamp(b+amt,0,255);
+  return `rgb(${r},${g},${b})`;
+}
+function roundRect(x,y,w,h,r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+function hitBtn(cx,cy) {
+  for (let i=buttons.length-1;i>=0;i--) {
+    const b = buttons[i];
+    if (cx>=b.x && cx<=b.x+b.w && cy>=b.y && cy<=b.y+b.h) return b;
+  }
+  return null;
+}
+function onTap(cx,cy) {
+  const b = hitBtn(cx,cy);
+  if (b) { b.cb(); return; }
+  if (trainGame && trainGame.onTap) trainGame.onTap(cx, cy);
+  if (raceGame && raceGame.onTap) raceGame.onTap(cx, cy);
+}
+
+// ---- Duck Drawing ----
+function drawDuck(cx, cy, size, hatId, animPhase) {
+  const s = size;
+  ctx.save();
+  ctx.translate(cx, cy);
+  // body
+  const bg = ctx.createRadialGradient(-s*0.15,-s*0.15,0,0,0,s*0.55);
+  bg.addColorStop(0,'#fff176'); bg.addColorStop(1,'#fbc02d');
+  ctx.fillStyle = bg;
+  ctx.beginPath(); ctx.arc(0,0,s*0.55,0,Math.PI*2); ctx.fill();
+  // wing
+  ctx.fillStyle = '#f9a825';
+  ctx.beginPath(); ctx.ellipse(-s*0.2,s*0.1,s*0.25,s*0.15,Math.PI*0.2,0,Math.PI*2); ctx.fill();
+  // head
+  const hg = ctx.createRadialGradient(-s*0.08,-s*0.35,0,0,-s*0.3,s*0.35);
+  hg.addColorStop(0,'#fff176'); hg.addColorStop(1,'#fbc02d');
+  ctx.fillStyle = hg;
+  ctx.beginPath(); ctx.arc(0,-s*0.3,s*0.38,0,Math.PI*2); ctx.fill();
+  // beak
+  ctx.fillStyle = '#ff9800';
+  ctx.beginPath(); ctx.moveTo(s*0.2,-s*0.28); ctx.lineTo(s*0.5,-s*0.22); ctx.lineTo(s*0.2,-s*0.18); ctx.closePath(); ctx.fill();
+  // eye white
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(s*0.08,-s*0.38,s*0.12,0,Math.PI*2); ctx.fill();
+  // pupil
+  ctx.fillStyle = '#222';
+  ctx.beginPath(); ctx.arc(s*0.11,-s*0.37,s*0.07,0,Math.PI*2); ctx.fill();
+  // eye shine
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(s*0.13,-s*0.4,s*0.03,0,Math.PI*2); ctx.fill();
+  // blush
+  ctx.fillStyle = 'rgba(255,150,150,0.3)';
+  ctx.beginPath(); ctx.arc(s*0.15,-s*0.25,s*0.08,0,Math.PI*2); ctx.fill();
+  // feet
+  ctx.fillStyle = '#ff9800';
+  ctx.beginPath(); ctx.ellipse(-s*0.15,s*0.55,s*0.18,s*0.08,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(s*0.15,s*0.55,s*0.18,s*0.08,0,0,Math.PI*2); ctx.fill();
+  // hat
+  if (hatId === 0) { // cap
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath(); ctx.arc(0,-s*0.62,s*0.28,Math.PI,0); ctx.fill();
+    ctx.fillRect(-s*0.3,-s*0.62,s*0.6,s*0.08);
+    ctx.fillStyle = '#c0392b';
+    ctx.beginPath(); ctx.ellipse(0,-s*0.55,s*0.35,s*0.08,0,0,Math.PI*2); ctx.fill();
+  } else if (hatId === 1) { // sunglasses
+    ctx.fillStyle = '#222';
+    ctx.fillRect(s*0.02,-s*0.42,s*0.18,s*0.1);
+    ctx.fillRect(-s*0.22,-s*0.42,s*0.18,s*0.1);
+    ctx.fillRect(-s*0.04,-s*0.38,s*0.08,s*0.03);
+  } else if (hatId === 2) { // headband
+    ctx.fillStyle = '#3498db';
+    ctx.fillRect(-s*0.32,-s*0.52,s*0.64,s*0.1);
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath(); ctx.arc(0,-s*0.47,s*0.08,0,Math.PI*2); ctx.fill();
+  } else if (hatId === 3) { // top hat
+    ctx.fillStyle = '#222';
+    ctx.fillRect(-s*0.2,-s*0.85,s*0.4,s*0.35);
+    ctx.fillRect(-s*0.3,-s*0.52,s*0.6,s*0.08);
+  } else if (hatId === 4) { // crown
+    ctx.fillStyle = '#f1c40f';
+    ctx.beginPath();
+    ctx.moveTo(-s*0.25,-s*0.52);
+    ctx.lineTo(-s*0.25,-s*0.8);
+    ctx.lineTo(-s*0.12,-s*0.65);
+    ctx.lineTo(0,-s*0.82);
+    ctx.lineTo(s*0.12,-s*0.65);
+    ctx.lineTo(s*0.25,-s*0.8);
+    ctx.lineTo(s*0.25,-s*0.52);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath(); ctx.arc(-s*0.12,-s*0.68,s*0.05,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(s*0.12,-s*0.68,s*0.05,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ---- Draw Stat Bar ----
+function drawStatBar(x,y,w,h,val,max,color,label) {
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  roundRect(x,y,w,h,4); ctx.fill();
+  const pct = val/max;
+  if (pct > 0) {
+    const grad = ctx.createLinearGradient(x,y,x+w,0);
+    grad.addColorStop(0,color); grad.addColorStop(1,lighten(color,30));
+    ctx.fillStyle = grad;
+    roundRect(x,y,w*pct,h,4); ctx.fill();
+  }
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 11px Segoe UI,Arial';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`${label}: ${Math.round(val)}`, x+4, y+h/2);
+}
+
+// ---- Background Drawing ----
+function drawBG(env, phase) {
+  const e = ENVS[env];
+  if (env === 'grassland') {
+    // sky
+    const sky = ctx.createLinearGradient(0,0,0,H*0.6);
+    sky.addColorStop(0,e.bg1); sky.addColorStop(1,'#b0e0e6');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
+    // sun
+    ctx.fillStyle = '#fff176';
+    ctx.beginPath(); ctx.arc(W*0.85,H*0.12,40,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,241,118,0.3)';
+    ctx.beginPath(); ctx.arc(W*0.85,H*0.12,60,0,Math.PI*2); ctx.fill();
+    // clouds
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    for (let i=0;i<4;i++) {
+      const cx = (W*0.15 + i*W*0.25 + phase*20) % (W+100) - 50;
+      const cy = H*0.08 + i*25;
+      ctx.beginPath(); ctx.arc(cx,cy,25,0,Math.PI*2); ctx.arc(cx+25,cy-10,20,0,Math.PI*2); ctx.arc(cx+45,cy,25,0,Math.PI*2); ctx.fill();
+    }
+    // hills
+    ctx.fillStyle = e.bg2;
+    ctx.beginPath(); ctx.moveTo(0,H*0.5); ctx.quadraticCurveTo(W*0.25,H*0.35,W*0.5,H*0.5); ctx.quadraticCurveTo(W*0.75,H*0.65,W,H*0.5); ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.fill();
+    ctx.fillStyle = e.fg;
+    ctx.beginPath(); ctx.moveTo(0,H*0.6); ctx.quadraticCurveTo(W*0.3,H*0.45,W*0.6,H*0.6); ctx.quadraticCurveTo(W*0.85,H*0.75,W,H*0.6); ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.fill();
+  } else if (env === 'mountain') {
+    const sky = ctx.createLinearGradient(0,0,0,H*0.6);
+    sky.addColorStop(0,e.bg1); sky.addColorStop(1,'#778899');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
+    // peaks
+    ctx.fillStyle = '#f5f5f5';
+    for (let i=0;i<5;i++) {
+      const px = W*0.1 + i*W*0.22;
+      const ph = H*0.25 + (i%2)*H*0.08;
+      ctx.beginPath(); ctx.moveTo(px-W*0.12, H*0.55); ctx.lineTo(px, H*0.55-ph); ctx.lineTo(px+W*0.12, H*0.55); ctx.fill();
+    }
+    ctx.fillStyle = e.bg2;
+    ctx.beginPath(); ctx.moveTo(0,H*0.55); ctx.lineTo(W*0.25,H*0.35); ctx.lineTo(W*0.5,H*0.5); ctx.lineTo(W*0.75,H*0.38); ctx.lineTo(W,H*0.5); ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.fill();
+    // pine trees
+    ctx.fillStyle = '#2e7d32';
+    for (let i=0;i<6;i++) {
+      const tx = (i*W/5 + phase*0.5) % W;
+      const ty = H*0.58 + i%2*20;
+      ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx-15,ty+40); ctx.lineTo(tx+15,ty+40); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(tx, ty-20); ctx.lineTo(tx-12,ty+15); ctx.lineTo(tx+12,ty+15); ctx.fill();
+    }
+  } else if (env === 'glacier') {
+    const sky = ctx.createLinearGradient(0,0,0,H*0.5);
+    sky.addColorStop(0,'#d0e8f0'); sky.addColorStop(1,'#87ceeb');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
+    // ice formations
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    for (let i=0;i<8;i++) {
+      const ix = (i*W/7 + phase*0.3) % W;
+      ctx.beginPath(); ctx.moveTo(ix-30,H*0.5); ctx.lineTo(ix,H*0.3+(i%3)*20); ctx.lineTo(ix+30,H*0.5); ctx.fill();
+    }
+    // frozen lake
+    ctx.fillStyle = 'rgba(173,216,230,0.7)';
+    ctx.beginPath(); ctx.ellipse(W/2, H*0.72, W*0.4, H*0.1, 0, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(W/2, H*0.72, W*0.4, H*0.1, 0, 0, Math.PI*2); ctx.stroke();
+    // snow ground
+    ctx.fillStyle = '#e8f4f8';
+    ctx.fillRect(0, H*0.55, W, H*0.45);
+  } else if (env === 'volcano') {
+    const sky = ctx.createLinearGradient(0,0,0,H*0.5);
+    sky.addColorStop(0,'#1a0a0a'); sky.addColorStop(1,'#4a1a1a');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
+    // lava glow
+    const lavaGlow = ctx.createRadialGradient(W/2,H*0.3,0,W/2,H*0.3,W*0.5);
+    lavaGlow.addColorStop(0,'rgba(255,100,0,0.4)'); lavaGlow.addColorStop(1,'rgba(255,0,0,0)');
+    ctx.fillStyle = lavaGlow; ctx.fillRect(0,0,W,H);
+    // volcano
+    ctx.fillStyle = '#3c1414';
+    ctx.beginPath(); ctx.moveTo(W*0.2,H*0.55); ctx.lineTo(W*0.5,H*0.15); ctx.lineTo(W*0.8,H*0.55); ctx.fill();
+    // lava flow
+    ctx.strokeStyle = '#ff4500';
+    ctx.lineWidth = 8;
+    ctx.beginPath(); ctx.moveTo(W*0.5,H*0.15); ctx.quadraticCurveTo(W*0.4,H*0.3,W*0.45,H*0.45); ctx.stroke();
+    ctx.strokeStyle = '#ff6347';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    // lava at base
+    ctx.fillStyle = '#ff4500';
+    ctx.beginPath(); ctx.ellipse(W*0.5,H*0.58,W*0.35,H*0.05,0,0,Math.PI*2); ctx.fill();
+    // dark ground
+    ctx.fillStyle = '#2a1010';
+    ctx.fillRect(0,H*0.6,W,H*0.4);
+  }
+}
+
+// ---- Training: Running ----
+function initRunningGame() {
+  const speed = 2 + duck.speed * 0.15;
+  trainGame = {
+    type:'running', phase:0, timer:18, coins:0, score:0,
+    playerX: W*0.15, playerY: H*0.65, velocityY:0, grounded:true,
+    obstacles:[], coinItems:[], scrollX:0, speed,
+    particles:[],
+    onTap(cx,cy) {
+      if (this.grounded) {
+        this.velocityY = -12 * scale;
+        this.grounded = false;
+        playSound('jump');
+        this.addDust();
+      }
+    },
+    pointerUp() {},
+    addDust() {
+      for (let i=0;i<6;i++) {
+        this.particles.push({ x:this.playerX, y:this.playerY+H*0.05, vx:(Math.random()-0.5)*4, vy:-Math.random()*3, life:1, color:'#c8a86b' });
+      }
+    },
+    update(dt) {
+      this.phase += dt;
+      this.timer -= dt;
+      this.scrollX += this.speed;
+      // gravity
+      this.velocityY += 25 * dt;
+      this.playerY += this.velocityY * dt * scale;
+      const groundY = H*0.7;
+      if (this.playerY >= groundY) { this.playerY = groundY; this.velocityY = 0; this.grounded = true; }
+      // spawn obstacles
+      if (Math.random() < 0.02) {
+        const type = Math.random() < 0.5 ? 'rock' : 'bush';
+        this.obstacles.push({ x: W + 50, y: groundY + (type==='rock'?H*0.02:H*0.05), w: type==='rock'?40:50, h: type==='rock'?35:25, type });
+      }
+      // spawn coins
+      if (Math.random() < 0.025) {
+        this.coinItems.push({ x: W + 30, y: H*0.3 + Math.random()*H*0.3, collected:false });
+      }
+      // move obstacles
+      this.obstacles = this.obstacles.filter(o => { o.x -= this.speed; return o.x > -60; });
+      this.coinItems = this.coinItems.filter(c => {
+        c.x -= this.speed;
+        if (!c.collected && dist(c.x, c.y, this.playerX, this.playerY) < 45) {
+          c.collected = true; this.coins++; playSound('coin'); return false;
+        }
+        return c.x > -30;
+      });
+      // collision
+      for (const o of this.obstacles) {
+        if (dist(o.x, o.y, this.playerX, this.playerY) < o.w*0.5 + 25) {
+          playSound('splash');
+          this.timer -= 3;
+          o.x = -100;
+        }
+      }
+      // particles
+      this.particles = this.particles.filter(p => { p.x += p.vx; p.y += p.vy; p.vy += 5*dt; p.life -= dt*2; return p.life > 0; });
+      return this.timer > 0;
+    },
+    render() {
+      drawBG(currentEnv, this.phase);
+      // ground
+      ctx.fillStyle = '#8b7355';
+      ctx.fillRect(0, H*0.7, W, H*0.3);
+      ctx.fillStyle = '#6d5a3a';
+      ctx.fillRect(0, H*0.7, W, 4);
+      // coins
+      for (const c of this.coinItems) {
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath(); ctx.arc(c.x, c.y, 12, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#ffeb3b';
+        ctx.beginPath(); ctx.arc(c.x-3, c.y-3, 4, 0, Math.PI*2); ctx.fill();
+      }
+      // obstacles
+      for (const o of this.obstacles) {
+        if (o.type === 'rock') {
+          ctx.fillStyle = '#777';
+          ctx.beginPath(); ctx.moveTo(o.x-o.w/2,o.y); ctx.lineTo(o.x-o.w/3,o.y-o.h); ctx.lineTo(o.x+o.w/3,o.y-o.h); ctx.lineTo(o.x+o.w/2,o.y); ctx.fill();
+          ctx.fillStyle = '#999';
+          ctx.beginPath(); ctx.moveTo(o.x-o.w/3,o.y-o.h); ctx.lineTo(o.x,o.y-o.h*0.7); ctx.lineTo(o.x+o.w/3,o.y-o.h); ctx.fill();
+        } else {
+          ctx.fillStyle = '#228b22';
+          ctx.beginPath(); ctx.arc(o.x,o.y,o.h*0.8,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle = '#32cd32';
+          ctx.beginPath(); ctx.arc(o.x-5,o.y-5,o.h*0.5,0,Math.PI*2); ctx.fill();
+        }
+      }
+      // player duck
+      drawDuck(this.playerX, this.playerY, 50, duck.hat);
+      // particles
+      for (const p of this.particles) {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      // UI
+      drawTrainingUI(this.timer, this.coins, 'Speed');
+    }
+  };
+  trainStat = 'speed';
+  trainStartStat = duck.speed;
+  trainCoins = 0;
+}
+
+// ---- Training: Swimming ----
+function initSwimmingGame() {
+  const swimSpeed = 2 + duck.swim * 0.12;
+  trainGame = {
+    type:'swimming', phase:0, timer:18, coins:0, playerY:H*0.5, velocityY:0,
+    obstacles:[], coinItems:[], scrollX:0, speed:swimSpeed, diving:false,
+    particles:[],
+    onTap(cx,cy) {
+      this.diving = true;
+      this.velocityY = 8;
+    },
+    pointerUp() { this.diving = false; this.velocityY = -6; playSound('flap'); },
+    update(dt) {
+      this.phase += dt;
+      this.timer -= dt;
+      this.scrollX += this.speed;
+      // buoyancy
+      if (!this.diving) this.velocityY = lerp(this.velocityY, -4, dt*3);
+      else this.velocityY = lerp(this.velocityY, 8, dt*3);
+      this.playerY += this.velocityY * dt * scale;
+      this.playerY = clamp(this.playerY, H*0.15, H*0.8);
+      // bubbles
+      if (Math.random() < 0.05) {
+        this.particles.push({ x:this.playerX||W*0.2, y:this.playerY, vx:-this.speed*0.5, vy:-1-rand(0,2), life:1, size:rand(3,8) });
+      }
+      // spawn obstacles
+      if (Math.random() < 0.02) {
+        const type = Math.random() < 0.5 ? 'rock' : 'fish';
+        this.obstacles.push({ x:W+60, y:H*0.2+Math.random()*H*0.5, w:40, h:30, type, dir: Math.random()<0.5?-1:1 });
+      }
+      // spawn coins
+      if (Math.random() < 0.025) {
+        this.coinItems.push({ x:W+30, y:H*0.15+Math.random()*H*0.5, collected:false });
+      }
+      this.obstacles = this.obstacles.filter(o => {
+        o.x -= this.speed + (o.type==='fish'?2:0);
+        if (o.type==='fish') o.y += Math.sin(this.phase*3+o.x*0.05)*1.5;
+        return o.x > -60;
+      });
+      this.coinItems = this.coinItems.filter(c => {
+        c.x -= this.speed;
+        if (!c.collected && dist(c.x, c.y, W*0.2, this.playerY) < 45) {
+          c.collected = true; this.coins++; playSound('coin'); return false;
+        }
+        return c.x > -30;
+      });
+      for (const o of this.obstacles) {
+        if (dist(o.x, o.y, W*0.2, this.playerY) < o.w*0.4+25) {
+          playSound('splash');
+          this.timer -= 3;
+          o.x = -100;
+        }
+      }
+      this.particles = this.particles.filter(p => { p.x += p.vx; p.y += p.vy; p.life -= dt; return p.life > 0; });
+      return this.timer > 0;
+    },
+    render() {
+      // underwater bg
+      const uw = ctx.createLinearGradient(0,0,0,H);
+      uw.addColorStop(0,'#1a6b8f'); uw.addColorStop(1,'#0d3d5c');
+      ctx.fillStyle = uw; ctx.fillRect(0,0,W,H);
+      // light rays
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      for (let i=0;i<6;i++) {
+        const rx = ((i*W/5 + this.scrollX*0.3) % W);
+        ctx.beginPath(); ctx.moveTo(rx,0); ctx.lineTo(rx-30,H); ctx.lineTo(rx+30,H); ctx.fill();
+      }
+      // bubbles
+      for (const p of this.particles) {
+        ctx.globalAlpha = p.life * 0.6;
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      // coins
+      for (const c of this.coinItems) {
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath(); ctx.arc(c.x, c.y, 12, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#ffeb3b';
+        ctx.beginPath(); ctx.arc(c.x-3, c.y-3, 4, 0, Math.PI*2); ctx.fill();
+      }
+      // obstacles
+      for (const o of this.obstacles) {
+        if (o.type === 'rock') {
+          ctx.fillStyle = '#555';
+          ctx.beginPath(); ctx.arc(o.x,o.y,o.w/2,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle = '#777';
+          ctx.beginPath(); ctx.arc(o.x-5,o.y-5,o.w/3,0,Math.PI*2); ctx.fill();
+        } else {
+          // fish
+          ctx.fillStyle = '#ff9800';
+          ctx.save(); ctx.translate(o.x,o.y); ctx.scale(o.dir,1);
+          ctx.beginPath(); ctx.ellipse(0,0,o.w/2,o.h/3,0,0,Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(o.w/2,0); ctx.lineTo(o.w/2+15,0); ctx.lineTo(o.w/2,-8); ctx.lineTo(o.w/2,8); ctx.fill();
+          ctx.fillStyle = '#222';
+          ctx.beginPath(); ctx.arc(-o.w/4,0,4,0,Math.PI*2); ctx.fill();
+          ctx.restore();
+        }
+      }
+      // player duck
+      drawDuck(W*0.2, this.playerY, 50, duck.hat);
+      drawTrainingUI(this.timer, this.coins, 'Swim');
+    }
+  };
+  trainStat = 'swim';
+  trainStartStat = duck.swim;
+  trainCoins = 0;
+}
+
+// ---- Training: Flying ----
+function initFlyingGame() {
+  const flySpeed = 2 + duck.fly * 0.1;
+  trainGame = {
+    type:'flying', phase:0, timer:18, coins:0, playerY:H*0.5, velocityY:0,
+    obstacles:[], coinItems:[], scrollX:0, speed:flySpeed,
+    flapping:false, particles:[],
+    onTap(cx,cy) {
+      this.flapping = true;
+      this.velocityY = -10;
+      playSound('flap');
+    },
+    pointerUp() { this.flapping = false; },
+    update(dt) {
+      this.phase += dt;
+      this.timer -= dt;
+      this.scrollX += this.speed;
+      // gravity + lift
+      const lift = this.flapping ? -12 : -2;
+      this.velocityY = lerp(this.velocityY, lift, dt*4);
+      this.playerY += this.velocityY * dt * scale;
+      this.playerY = clamp(this.playerY, H*0.1, H*0.85);
+      // spawn obstacles
+      if (Math.random() < 0.02) {
+        const type = Math.random() < 0.5 ? 'cloud' : 'bird';
+        this.obstacles.push({ x:W+60, y:H*0.15+Math.random()*H*0.6, w:50, h:type==='cloud'?35:25, type });
+      }
+      // spawn coins
+      if (Math.random() < 0.025) {
+        this.coinItems.push({ x:W+30, y:H*0.15+Math.random()*H*0.6, collected:false });
+      }
+      this.obstacles = this.obstacles.filter(o => {
+        o.x -= this.speed + (o.type==='bird'?1.5:0);
+        if (o.type==='bird') o.y += Math.sin(this.phase*2+o.x*0.03)*1.2;
+        return o.x > -80;
+      });
+      this.coinItems = this.coinItems.filter(c => {
+        c.x -= this.speed;
+        if (!c.collected && dist(c.x, c.y, W*0.2, this.playerY) < 45) {
+          c.collected = true; this.coins++; playSound('coin'); return false;
+        }
+        return c.x > -30;
+      });
+      for (const o of this.obstacles) {
+        if (o.x > W*0.05 && o.x < W*0.35 && Math.abs(o.y - this.playerY) < o.h + 20) {
+          playSound('splash');
+          this.timer -= 3;
+          o.x = -100;
+        }
+      }
+      // feather particles
+      if (this.flapping && Math.random() < 0.3) {
+        this.particles.push({ x:W*0.2, y:this.playerY+20, vx:-this.speed*0.3, vy:rand(-1,1), life:1, color:'#fff' });
+      }
+      this.particles = this.particles.filter(p => { p.x += p.vx; p.y += p.vy; p.life -= dt; return p.life > 0; });
+      return this.timer > 0;
+    },
+    render() {
+      // sky bg
+      const sky = ctx.createLinearGradient(0,0,0,H);
+      sky.addColorStop(0,'#1a237e'); sky.addColorStop(1,'#4fc3f7');
+      ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
+      // clouds bg
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      for (let i=0;i<5;i++) {
+        const cx = ((i*W/4 + this.scrollX*0.1) % (W+100)) - 50;
+        const cy = H*0.15 + i*30;
+        ctx.beginPath(); ctx.arc(cx,cy,35,0,Math.PI*2); ctx.arc(cx+30,cy-8,28,0,Math.PI*2); ctx.arc(cx+55,cy,35,0,Math.PI*2); ctx.fill();
+      }
+      // coins
+      for (const c of this.coinItems) {
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath(); ctx.arc(c.x, c.y, 12, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#ffeb3b';
+        ctx.beginPath(); ctx.arc(c.x-3, c.y-3, 4, 0, Math.PI*2); ctx.fill();
+      }
+      // obstacles
+      for (const o of this.obstacles) {
+        if (o.type === 'cloud') {
+          ctx.fillStyle = 'rgba(255,255,255,0.8)';
+          ctx.beginPath(); ctx.arc(o.x,o.y,o.h,0,Math.PI*2); ctx.arc(o.x+o.h*0.8,o.y-o.h*0.3,o.h*0.7,0,Math.PI*2); ctx.arc(o.x+o.h*1.5,o.y,o.h*0.8,0,Math.PI*2); ctx.fill();
+        } else {
+          // bird
+          ctx.fillStyle = '#333';
+          ctx.save(); ctx.translate(o.x,o.y);
+          ctx.beginPath(); ctx.ellipse(0,0,o.w/2,o.h/2,0,0,Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(o.w/2,0); ctx.lineTo(o.w/2+12,-8); ctx.lineTo(o.w/2+12,8); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(-o.w/2,0); ctx.lineTo(-o.w/2-12,-8); ctx.lineTo(-o.w/2-12,8); ctx.fill();
+          ctx.restore();
+        }
+      }
+      // feather particles
+      for (const p of this.particles) {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.ellipse(p.x,p.y,6,3,0,0,Math.PI*2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      // player duck (with wing flap)
+      drawDuck(W*0.2, this.playerY, 50, duck.hat);
+      drawTrainingUI(this.timer, this.coins, 'Fly');
+    }
+  };
+  trainStat = 'fly';
+  trainStartStat = duck.fly;
+  trainCoins = 0;
+}
+
+function drawTrainingUI(timer, coins, statName) {
+  buttons = [];
+  // timer bar
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  roundRect(W*0.05, H*0.04, W*0.9, 16, 8); ctx.fill();
+  const pct = clamp(timer/18,0,1);
+  const tcolor = timer > 10 ? '#2ecc71' : timer > 5 ? '#f39c12' : '#e74c3c';
+  ctx.fillStyle = tcolor;
+  roundRect(W*0.05, H*0.04, W*0.9*pct, 16, 8); ctx.fill();
+  // coin display
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 20px Segoe UI,Arial';
+  ctx.textAlign = 'right';
+  ctx.fillText(`Coins: ${coins}`, W*0.95, H*0.1);
+  // tap hint
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '14px Segoe UI,Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('TAP to interact', W/2, H*0.96);
+  // back button
+  addBtn(W*0.02, H*0.88, W*0.18, H*0.07, 'Back', () => { endTraining(); }, 'rgba(200,200,200,0.3)');
+  for (const b of buttons) drawBtn(b);
+}
+
+function endTraining() {
+  if (trainGame && duck.energy > 0) {
+    const gain = Math.round(trainGame.coins * 0.5 + trainTimer * 0.3);
+    duck[trainStat] = Math.min(100, duck[trainStat] + gain);
+    duck.coins += trainGame.coins;
+    trainingHistory[trainStat] += gain;
+    duck.energy = Math.max(0, duck.energy - 15);
+    if (gain > 0) playSound('levelup');
+  }
+  trainGame = null;
+  gameState = STATE.HOME;
+  showHomeScreen();
+  saveGame();
+}
+
+// ---- Race System ----
+function initRace() {
+  const e = currentEnv;
+  const envIndex = ['grassland','mountain','glacier','volcano'].indexOf(e);
+  const aiMult = [1, 1.3, 1.7, 2.2][envIndex];
+  const isBoss = currentRace === 3;
+  aiDucks = [];
+  for (let i=0;i<3;i++) {
+    const base = 15 + envIndex*10 + (isBoss?10:0) + i*5;
+    aiDucks.push({ speed: base*aiMult*0.8, swim: base*aiMult*0.8, fly: base*aiMult*0.8, name: ['Quacker','Ribbit','Waddles'][i] });
+  }
+  raceGame = {
+    phase:'countdown', countdown:3, timer:0, segment:0, playerX:W*0.15, playerY:H*0.5,
+    playerProgress:0, aiProgress:[0,0,0], speed:2+duck.speed*0.1, swim:2+duck.swim*0.1, fly:2+duck.fly*0.1,
+    segDurations:[8,8,8], segTimer:0, winner:null,
+    particles:[],
+    update(dt) {
+      if (this.phase === 'countdown') {
+        this.countdown -= dt;
+        if (this.countdown <= 0) { this.phase = 'racing'; playSound('start'); }
+        return true;
+      }
+      if (this.phase === 'racing') {
+        this.timer += dt;
+        this.segTimer += dt;
+        // segment timing
+        const segDuration = this.segDurations[this.segment];
+        if (this.segTimer >= segDuration && this.segment < 2) {
+          this.segment++;
+          this.segTimer = 0;
+          playSound('splash');
+        }
+        // player speed based on segment
+        let pSpeed = this.speed;
+        if (this.segment === 1) pSpeed = this.swim;
+        if (this.segment === 2) pSpeed = this.fly;
+        this.playerProgress += pSpeed * dt * 3;
+        // AI progress
+        for (let i=0;i<3;i++) {
+          let aSpd = aiDucks[i].speed;
+          if (this.segment === 1) aSpd = aiDucks[i].swim;
+          if (this.segment === 2) aSpd = aiDucks[i].fly;
+          this.aiProgress[i] += aSpd * dt * 3 * (0.85 + Math.random()*0.3);
+        }
+        // check finish
+        const finishLine = 100;
+        if (this.playerProgress >= finishLine) {
+          this.playerProgress = finishLine;
+          this.winner = 'player';
+          this.phase = 'finished';
+          playSound('win');
+          return false;
+        }
+        for (let i=0;i<3;i++) {
+          if (this.aiProgress[i] >= finishLine) {
+            this.aiProgress[i] = finishLine;
+            if (!this.winner) { this.winner = 'ai'; playSound('lose'); }
+          }
+        }
+        // particles
+        if (Math.random() < 0.05) {
+          this.particles.push({ x:this.playerX+20, y:this.playerY, vx:rand(-3,0), vy:rand(-2,2), life:1, color:'#fff' });
+        }
+        this.particles = this.particles.filter(p => { p.x+=p.vx; p.y+=p.vy; p.life-=dt*2; return p.life>0; });
+      }
+      return true;
+    },
+    render() {
+      const e = ENVS[currentEnv];
+      if (this.phase === 'countdown') {
+        drawBG(currentEnv, this.timer);
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(0,0,W,H);
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.min(W,H)*0.2}px Segoe UI,Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(Math.ceil(this.countdown), W/2, H/2);
+        drawDuck(W/2, H*0.65, 70, duck.hat);
+        return;
+      }
+      drawBG(currentEnv, this.timer);
+      // track
+      const trackY = H*0.65;
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      roundRect(W*0.05, trackY-H*0.25, W*0.9, H*0.5, 12); ctx.fill();
+      // segment dividers
+      const segW = W*0.9/3;
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 2;
+      for (let i=1;i<3;i++) {
+        ctx.beginPath(); ctx.moveTo(W*0.05+segW*i, trackY-H*0.25); ctx.lineTo(W*0.05+segW*i, trackY+H*0.25); ctx.stroke();
+      }
+      // segment labels
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '12px Segoe UI,Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('RUN', W*0.05+segW*0.5, trackY-H*0.22);
+      ctx.fillText('SWIM', W*0.05+segW*1.5, trackY-H*0.22);
+      ctx.fillText('FLY', W*0.05+segW*2.5, trackY-H*0.22);
+      // finish line
+      ctx.fillStyle = '#fff';
+      for (let i=0;i<8;i++) {
+        ctx.fillRect(W*0.92, trackY-H*0.25+i*12, 8, 6);
+      }
+      // progress bars for each racer
+      const racers = [{name:'You', prog:this.playerProgress, color:'#f1c40f', isPlayer:true}];
+      for (let i=0;i<3;i++) racers.push({name:aiDucks[i].name, prog:this.aiProgress[i], color:['#e74c3c','#3498db','#2ecc71'][i]});
+      const barH = 18;
+      const startX = W*0.08;
+      const barW = W*0.84;
+      racers.forEach((r,idx) => {
+        const ry = trackY - H*0.15 + idx*barH*1.5;
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        roundRect(startX, ry, barW, barH, 4); ctx.fill();
+        ctx.fillStyle = r.color;
+        roundRect(startX, ry, barW*(r.prog/100), barH, 4); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px Segoe UI,Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(r.name, startX+4, ry+barH/2+1);
+      });
+      // player duck position
+      const duckX = startX + barW*(this.playerProgress/100);
+      drawDuck(clamp(duckX, startX+25, startX+barW-25), trackY, 35, duck.hat);
+      // particles
+      for (const p of this.particles) {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      // race info
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      roundRect(W*0.05, H*0.02, W*0.9, H*0.06, 8); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px Segoe UI,Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Race ${currentRace+1}/4 - ${['Grassland','Mountain','Glacier','Volcano'][envIndex]}`, W/2, H*0.055);
+    }
+  };
+  raceGame.playerX = W*0.15;
+  raceGame.playerY = H*0.55;
+  raceTimer = 0;
+}
+
+function showRaceResult(won) {
+  gameState = STATE.RACE_RESULT;
+  raceResult = won;
+  if (won) {
+    duck.coins += 50 + currentRace*20;
+    if (currentRace < 3) raceProgress[currentEnv] = Math.max(raceProgress[currentEnv], currentRace+1);
+    if (currentRace === 3) {
+      // beat boss, unlock next env
+      const envs = ['grassland','mountain','glacier','volcano'];
+      const idx = envs.indexOf(currentEnv);
+      if (idx < 3) {
+        unlocks[envs[idx+1]] = true;
+        showInterstitial(envs[idx+1]);
+      }
+    }
+  }
+  saveGame();
+  // show native ad
+  showNativeAd();
+}
+
+// ---- Shop ----
+function showShopScreen() {
+  gameState = STATE.SHOP;
+  buttons = [];
+  // Back button
+  addBtn(W*0.03, H*0.04, W*0.15, H*0.06, 'Back', () => { gameState = STATE.HOME; showHomeScreen(); }, 'rgba(200,200,200,0.3)');
+  // coin display
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 20px Segoe UI,Arial';
+  ctx.textAlign = 'right';
+  ctx.fillText(`Coins: ${duck.coins}`, W*0.97, H*0.1);
+  // item buttons
+  const itemY = H*0.2;
+  const itemH = H*0.12;
+  for (let i=0;i<shopItems.length;i++) {
+    const item = shopItems[i];
+    const iy = itemY + i*itemH*1.3;
+    const owned = item.owned || duck.hat === i;
+    const canAfford = duck.coins >= item.price;
+    let bg = owned ? 'rgba(46,204,113,0.3)' : canAfford ? 'rgba(52,152,219,0.3)' : 'rgba(150,150,150,0.2)';
+    addBtn(W*0.25, iy, W*0.5, itemH, `${item.name} - ${item.price} coins`, () => {
+      if (!item.owned && duck.coins >= item.price) {
+        duck.coins -= item.price;
+        item.owned = true;
+        duck.hat = item.id;
+        playSound('levelup');
+        saveGame();
+        showShopScreen();
+      }
+    }, bg);
+  }
+}
+function drawShopScreen() {
+  drawBG(currentEnv, stateTime*0.1);
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${Math.min(W,H)*0.06}px Segoe UI,Arial`;
+  ctx.textAlign = 'center';
+  ctx.fillText('SHOP', W/2, H*0.12);
+  // duck preview
+  drawDuck(W*0.12, H*0.5, 80, duck.hat);
+  buttons = [];
+  addBtn(W*0.03, H*0.04, W*0.15, H*0.06, 'Back', () => { gameState = STATE.HOME; showHomeScreen(); }, 'rgba(200,200,200,0.3)');
+  // items
+  const itemY = H*0.2;
+  const itemH = H*0.1;
+  for (let i=0;i<shopItems.length;i++) {
+    const item = shopItems[i];
+    const iy = itemY + i*itemH*1.2;
+    const owned = item.owned || duck.hat === item.id;
+    const canAfford = duck.coins >= item.price;
+    let bg = owned ? 'rgba(46,204,113,0.4)' : canAfford ? 'rgba(52,152,219,0.4)' : 'rgba(100,100,100,0.3)';
+    let label = item.name;
+    if (owned) label = item.name + ' (Owned)';
+    else label = `${item.name} - ${item.price}`;
+    addBtn(W*0.28, iy, W*0.44, itemH, label, () => {
+      if (!item.owned && duck.coins >= item.price) {
+        duck.coins -= item.price;
+        item.owned = true;
+        duck.hat = item.id;
+        playSound('levelup');
+        saveGame();
+        showShopScreen();
+      }
+    }, bg, owned ? '#2ecc71' : canAfford ? '#fff' : '#888');
+  }
+  // Draw preview hat on duck
+  buttons.forEach(b => drawBtn(b));
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 18px Segoe UI,Arial';
+  ctx.textAlign = 'right';
+  ctx.fillText(`Coins: ${duck.coins}`, W*0.97, H*0.1);
+}
+
+// ---- Environment Select ----
+function showEnvSelect() {
+  gameState = STATE.ENV_SELECT;
+  buttons = [];
+}
+function drawEnvSelect() {
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${Math.min(W,H)*0.06}px Segoe UI,Arial`;
+  ctx.textAlign = 'center';
+  ctx.fillText('SELECT ENVIRONMENT', W/2, H*0.08);
+  const envs = ['grassland','mountain','glacier','volcano'];
+  const cols = 2;
+  const cardW = Math.min(W*0.4, 200);
+  const cardH = H*0.3;
+  const gap = W*0.05;
+  const startX = (W - cols*(cardW+gap))/2;
+  const startY = H*0.15;
+  for (let i=0;i<envs.length;i++) {
+    const e = envs[i];
+    const col = i%cols;
+    const row = Math.floor(i/cols);
+    const cx = startX + col*(cardW+gap);
+    const cy = startY + row*(cardH+gap*2);
+    const locked = !unlocks[e];
+    drawBG(e, stateTime*0.1);
+    ctx.fillStyle = locked ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.4)';
+    roundRect(cx, cy, cardW, cardH, 12); ctx.fill();
+    ctx.strokeStyle = locked ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 2;
+    roundRect(cx, cy, cardW, cardH, 12); ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.min(cardW,cardH)*0.1}px Segoe UI,Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillText(ENVS[e].name, cx+cardW/2, cy+cardH*0.3);
+    ctx.font = '12px Segoe UI,Arial';
+    ctx.fillText(`Races: ${raceProgress[e]}/4`, cx+cardW/2, cy+cardH*0.5);
+    if (locked) {
+      ctx.fillStyle = '#aaa';
+      ctx.font = 'bold 20px Segoe UI,Arial';
+      ctx.fillText('LOCKED', cx+cardW/2, cy+cardH*0.7);
+    } else {
+      ctx.fillStyle = '#2ecc71';
+      ctx.font = 'bold 14px Segoe UI,Arial';
+      ctx.fillText('TAP TO RACE', cx+cardW/2, cy+cardH*0.7);
+    }
+    const b = {x:cx, y:cy, w:cardW, h:cardH, label:'', cb:() => {
+      if (!locked) { currentEnv = e; currentRace = 0; startRace(); }
+    }};
+    buttons.push(b);
+  }
+  buttons.push({x:W*0.03, y:H*0.03, w:W*0.15, h:H*0.06, label:'Back', cb:() => { gameState = STATE.HOME; showHomeScreen(); }, bg:'rgba(200,200,200,0.3)', color:'#fff'});
+  buttons.forEach(b => drawBtn(b));
+}
+
+function startRace() {
+  gameState = STATE.RACING;
+  initRace();
+}
+
+// ---- Home Screen ----
+function showHomeScreen() {
+  gameState = STATE.HOME;
+  buttons = [];
+}
+function drawHomeScreen() {
+  drawBG(currentEnv, stateTime*0.1);
+  // overlay
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(0,0,W,H);
+  // title
+  ctx.fillStyle = '#f1c40f';
+  ctx.font = `bold ${Math.min(W,H)*0.07}px Segoe UI,Arial`;
+  ctx.textAlign = 'center';
+  ctx.fillText('DUCK LIFE', W/2, H*0.08);
+  // duck
+  drawDuck(W/2, H*0.3, 70, duck.hat);
+  // stats panel
+  const panelX = W*0.02;
+  const panelY = H*0.42;
+  const panelW = W*0.28;
+  const panelH = H*0.42;
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  roundRect(panelX, panelY, panelW, panelH, 12); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 13px Segoe UI,Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('STATS', panelX+10, panelY+20);
+  drawStatBar(panelX+8, panelY+32, panelW-16, 14, duck.speed, 100, '#e74c3c', 'Speed');
+  drawStatBar(panelX+8, panelY+52, panelW-16, 14, duck.stamina, 100, '#f39c12', 'Stamina');
+  drawStatBar(panelX+8, panelY+72, panelW-16, 14, duck.swim, 100, '#3498db', 'Swim');
+  drawStatBar(panelX+8, panelY+92, panelW-16, 14, duck.fly, 100, '#2ecc71', 'Fly');
+  // energy bar
+  drawStatBar(panelX+8, panelY+115, panelW-16, 14, duck.energy, duck.maxEnergy, '#9b59b6', 'Energy');
+  // coins
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 14px Segoe UI,Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(`Coins: ${duck.coins}`, panelX+panelW/2, panelY+panelH-10);
+  // buttons panel
+  const btnX = W*0.32;
+  const btnW = W*0.32;
+  const btnH = H*0.07;
+  const btnGap = H*0.01;
+  // Train Speed
+  addBtn(btnX, H*0.42, btnW, btnH, 'Train Speed', () => { if (duck.energy > 0) { gameState=STATE.RUNNING; initRunningGame(); } }, 'rgba(231,76,60,0.7)');
+  // Train Swim
+  addBtn(btnX, H*0.42+(btnH+btnGap)*1, btnW, btnH, 'Train Swim', () => { if (duck.energy > 0) { gameState=STATE.SWIMMING; initSwimmingGame(); } }, 'rgba(52,152,219,0.7)');
+  // Train Fly
+  addBtn(btnX, H*0.42+(btnH+btnGap)*2, btnW, btnH, 'Train Fly', () => { if (duck.energy > 0) { gameState=STATE.FLYING; initFlyingGame(); } }, 'rgba(46,204,113,0.7)');
+  // Race
+  addBtn(btnX, H*0.42+(btnH+btnGap)*3, btnW, btnH, 'Races', () => { gameState=STATE.ENV_SELECT; }, 'rgba(243,156,18,0.7)');
+  // Shop
+  addBtn(btnX, H*0.42+(btnH+btnGap)*4, btnW, btnH, 'Shop', () => { showShopScreen(); }, 'rgba(155,89,182,0.7)');
+  // Energy recharge hint
+  if (duck.energy < duck.maxEnergy) {
+    ctx.fillStyle = 'rgba(150,150,150,0.6)';
+    ctx.font = '11px Segoe UI,Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Energy recharges over time...', btnX+btnW/2, H*0.88);
+  }
+  buttons.forEach(b => drawBtn(b));
+}
+
+// ---- Title Screen ----
+function drawTitleScreen() {
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0,0,W,H);
+  // animated ducks
+  for (let i=0;i<5;i++) {
+    const dx = (W*0.15 + i*W*0.2 + Math.sin(stateTime*2+i)*30) % (W+60) - 30;
+    const dy = H*0.3 + Math.cos(stateTime*1.5+i)*20;
+    ctx.globalAlpha = 0.6;
+    drawDuck(dx, dy, 40, i);
+  }
+  ctx.globalAlpha = 1;
+  // title
+  ctx.fillStyle = '#f1c40f';
+  ctx.font = `bold ${Math.min(W,H)*0.12}px Segoe UI,Arial`;
+  ctx.textAlign = 'center';
+  ctx.fillText('DUCK LIFE', W/2, H*0.2);
+  ctx.fillStyle = '#fff';
+  ctx.font = `${Math.min(W,H)*0.04}px Segoe UI,Arial`;
+  ctx.fillText('Train Your Duck. Win the Race!', W/2, H*0.28);
+  // play button
+  buttons = [];
+  addBtn(W*0.3, H*0.65, W*0.4, H*0.1, 'PLAY', () => {
+    if (firstVisit) { firstVisit=false; gameState=STATE.TUTORIAL; tutStep=0; }
+    else { gameState=STATE.HOME; showHomeScreen(); }
+  }, 'rgba(46,204,113,0.8)', '#fff');
+  buttons.forEach(b => drawBtn(b));
+}
+
+// ---- Tutorial ----
+function drawTutorial() {
+  ctx.fillStyle = 'rgba(0,0,0,0.85)';
+  ctx.fillRect(0,0,W,H);
+  const step = TUT_STEPS[tutStep];
+  const cardW = Math.min(W*0.85, 400);
+  const cardH = Math.min(H*0.75, 450);
+  const cx = (W-cardW)/2;
+  const cy = (H-cardH)/2;
+  ctx.fillStyle = 'rgba(20,20,60,0.98)';
+  roundRect(cx, cy, cardW, cardH, 16); ctx.fill();
+  ctx.strokeStyle = '#f39c12';
+  ctx.lineWidth = 2;
+  roundRect(cx, cy, cardW, cardH, 16); ctx.stroke();
+  ctx.fillStyle = '#f39c12';
+  ctx.font = `bold ${Math.min(cardW,cardH)*0.06}px Segoe UI,Arial`;
+  ctx.textAlign = 'center';
+  ctx.fillText(step.title, W/2, cy+cardH*0.12);
+  ctx.fillStyle = '#888';
+  ctx.font = `${Math.min(cardW,cardH)*0.035}px Segoe UI,Arial`;
+  ctx.fillText(`Step ${tutStep+1} of ${TUT_STEPS.length}`, W/2, cy+cardH*0.2);
+  // draw duck in tutorial
+  drawDuck(W/2, cy+cardH*0.42, 60, 4);
+  ctx.fillStyle = '#ccc';
+  ctx.font = `${Math.min(cardW,cardH)*0.04}px Segoe UI,Arial`;
+  ctx.fillText(step.text, W/2, cy+cardH*0.7);
+  buttons = [];
+  if (tutStep > 0) addBtn(cx+20, cy+cardH*0.82, cardW*0.35, cardH*0.1, 'Back', () => { tutStep--; playSound('click'); }, 'rgba(100,100,100,0.6)');
+  addBtn(cx+cardW*0.4, cy+cardH*0.82, cardW*0.55, cardH*0.1, tutStep < TUT_STEPS.length-1 ? 'Next' : 'Play!', () => {
+    if (tutStep < TUT_STEPS.length-1) { tutStep++; playSound('click'); }
+    else { gameState=STATE.HOME; showHomeScreen(); saveGame(); }
+  }, 'rgba(46,204,113,0.7)');
+  buttons.forEach(b => drawBtn(b));
+}
+
+// ---- Race Result Screen ----
+function drawRaceResult() {
+  drawBG(currentEnv, stateTime*0.1);
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0,0,W,H);
+  const won = raceResult;
+  ctx.fillStyle = won ? '#2ecc71' : '#e74c3c';
+  ctx.font = `bold ${Math.min(W,H)*0.1}px Segoe UI,Arial`;
+  ctx.textAlign = 'center';
+  ctx.fillText(won ? 'YOU WIN!' : 'YOU LOSE', W/2, H*0.3);
+  drawDuck(W/2, H*0.5, 80, duck.hat);
+  ctx.fillStyle = '#fff';
+  ctx.font = '20px Segoe UI,Arial';
+  ctx.fillText(won ? `+${50+currentRace*20} coins!` : 'Try training more!', W/2, H*0.65);
+  if (won && currentRace < 3) ctx.fillText(`Race ${currentRace+1} unlocked!`, W/2, H*0.72);
+  if (won && currentRace === 3) ctx.fillText('Boss defeated! New environment unlocked!', W/2, H*0.72);
+  buttons = [];
+  if (won && currentRace < 3) addBtn(W*0.25, H*0.78, W*0.5, H*0.08, 'Next Race', () => { currentRace++; startRace(); }, 'rgba(46,204,113,0.7)');
+  else if (!won) addBtn(W*0.25, H*0.78, W*0.5, H*0.08, 'Try Again', () => { startRace(); }, 'rgba(231,76,60,0.7)');
+  addBtn(W*0.02, H*0.04, W*0.15, H*0.06, 'Home', () => { gameState=STATE.HOME; duck.energy = Math.min(duck.maxEnergy, duck.energy+10); showHomeScreen(); }, 'rgba(200,200,200,0.3)');
+  buttons.forEach(b => drawBtn(b));
+}
+
+// ---- Race Screen Render ----
+function drawRacingScreen() {
+  if (raceGame) {
+    raceGame.render();
+    buttons = [];
+    addBtn(W*0.02, H*0.04, W*0.15, H*0.06, 'Quit', () => {
+      raceGame = null;
+      gameState = STATE.ENV_SELECT;
+      showEnvSelect();
+    }, 'rgba(200,200,200,0.3)');
+    buttons.forEach(b => drawBtn(b));
+  }
+}
+
+// ---- Training Render ----
+function drawTrainingScreen() {
+  if (trainGame) {
+    trainGame.render();
+  }
+}
+
+// ---- Ads ----
+function showNativeAd() {
+  try {
+    const el = document.getElementById('adNative');
+    if (typeof monetize === 'undefined') { el.style.display = 'none'; return; }
+    el.innerHTML = '<div style="color:#aaa;font-size:12px">Sponsored</div><div style="color:#fff;margin-top:4px">Upgrade your duck with new hats in the Shop!</div>';
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 8000);
+  } catch(e) {}
+}
+function showInterstitial(nextEnv) {
+  try {
+    if (typeof monetize !== 'undefined') {
+      const zone = document.getElementById('adInterstitial');
+      zone.style.display = 'flex';
+    }
+  } catch(e) {}
+}
+function closeInterstitial() {
+  document.getElementById('adInterstitial').style.display = 'none';
+}
+function showBannerAd() {
+  try {
+    if (typeof monetize !== 'undefined') {
+      const el = document.getElementById('adBanner');
+      el.style.display = 'flex';
+    }
+  } catch(e) {}
+}
+function hideBannerAd() {
+  document.getElementById('adBanner').style.display = 'none';
+}
+
+// ---- Visibility / Cleanup ----
+let paused = false;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { paused = true; if (rafId) cancelAnimationFrame(rafId); }
+  else { paused = false; lastTime = performance.now(); requestAnimationFrame(gameLoop); }
+});
+window.addEventListener('beforeunload', () => {
+  saveGame();
+  if (rafId) cancelAnimationFrame(rafId);
+  intervals.forEach(id => clearInterval(id));
+});
+
+// ---- Energy Recharge ----
+function startEnergyRecharge() {
+  const id = setInterval(() => {
+    if (duck.energy < duck.maxEnergy) {
+      duck.energy = Math.min(duck.maxEnergy, duck.energy + 2);
+      saveGame();
+    }
+  }, 3000);
+  intervals.push(id);
+}
+
+// ---- Main Loop ----
+let lastTime = 0;
+function gameLoop(now) {
+  const dt = Math.min((now - lastTime) / 1000, 0.05);
+  lastTime = now;
+  stateTime += dt;
+  ctx.clearRect(0, 0, W, H);
+  buttons = [];
+  switch (gameState) {
+    case STATE.TITLE: drawTitleScreen(); break;
+    case STATE.HOME: drawHomeScreen(); break;
+    case STATE.TRAINING: drawTrainingScreen(); break;
+    case STATE.RUNNING:
+    case STATE.SWIMMING:
+    case STATE.FLYING:
+      if (trainGame) {
+        const alive = trainGame.update(dt);
+        if (!alive) { endTraining(); }
+        else { drawTrainingScreen(); }
+      }
+      break;
+    case STATE.RACING:
+      if (raceGame) {
+        const alive = raceGame.update(dt);
+        if (!alive) { showRaceResult(raceGame.winner === 'player'); }
+        else { drawRacingScreen(); }
+      }
+      break;
+    case STATE.SHOP: drawShopScreen(); break;
+    case STATE.RACE_RESULT: drawRaceResult(); break;
+    case STATE.ENV_SELECT: drawEnvSelect(); break;
+    case STATE.TUTORIAL: drawTutorial(); break;
+  }
+  if (!paused) rafId = requestAnimationFrame(gameLoop);
+}
+
+// ---- Init ----
+function init() {
+  loadGame();
+  if (isFirstVisit()) firstVisit = true;
+  resize();
+  startEnergyRecharge();
+  // show banner on home
+  document.getElementById('soundToggle').style.display = 'block';
+  document.getElementById('musicToggle').style.display = 'block';
+  document.getElementById('soundToggle').textContent = soundEnabled ? '\u266B' : '\u266B';
+  document.getElementById('musicToggle').textContent = musicEnabled ? '\u266A' : '\u266A';
+  lastTime = performance.now();
+  rafId = requestAnimationFrame(gameLoop);
+  // start music on first interaction
+  document.addEventListener('pointerdown', () => { startBGM(); }, {once:true});
+}
+
+init();
+</script>
+</body>
+</html>
