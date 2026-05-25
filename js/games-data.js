@@ -184,7 +184,8 @@ const GAMES = [
  * Get effective game status (checks localStorage overrides from admin panel)
  */
 function getGameStatus(game) {
-  const overrides = JSON.parse(localStorage.getItem('gz_status_overrides') || '{}');
+  const overrides = JSON.parse(localStorage.getItem('gz_status_overrides') || '{}
+{name:"Type Racer",emoji:"🏎️",cat:"puzzle",tags:["typing","racing","speed","wpm","keyboard","words","text","race","competitive"],url:"/type-racer/",desc:"Race against AI opponents by typing fast! Type passages at speed, track your WPM and accuracy, unlock 6 cool cars, and climb from Bronze to Master rank in this thrilling typing race game.",isNew:true,status:"live"},');
   return overrides[game.url] || game.status || 'live';
 }
 
