@@ -178,15 +178,16 @@ const GAMES = [
   {name:"Word Scramble",emoji:"🔤",cat:"puzzle",tags:["word","anagram","scramble","spelling"],url:"/word-scramble/",desc:"Unscramble jumbled letters to form words. 500+ words across 10 categories with daily puzzles, hints, and streaks.",isNew:true,status:"live"},
 {name:"There Is No Game",emoji:"🎮",cat:"puzzle",tags:["meta","puzzle","adventure","point-and-click","funny"],url:"/there-is-no-game/",desc:"A hilarious meta-puzzle where the game insists it does not exist. Break the fourth wall, glitch the system, and outsmart the narrator in this mind-bending adventure.",isNew:true,status:"live"},
 {name:"Zuma Marble Shooter",emoji:"🔮",cat:"puzzle",tags:["zuma","marble","shooter","match3","chain","puzzle","arcade","casual","frog","temple"],url:"/zuma/",desc:"Shoot marbles to match 3+ colors and pop them before they reach the skull! 30 levels, chain reactions, 5 power-ups, and 3-star ratings in this classic Zuma-style marble shooter.",isNew:true,status:"live"},
-  {name:"Draw To Home",emoji:"🏠",cat:"puzzle",tags:["draw","path","puzzle","casual","cute","home","guide"],url:"/draw-to-home/",desc:"Draw paths to guide cute characters to their matching colored homes! Avoid walls and moving obstacles. 50 levels across 5 chapters!",isNew:true,status:"live"}
+  {name:"Draw To Home",emoji:"🏠",cat:"puzzle",tags:["draw","path","puzzle","casual","cute","home","guide"],url:"/draw-to-home/",desc:"Draw paths to guide cute characters to their matching colored homes! Avoid walls and moving obstacles. 50 levels across 5 chapters!",isNew:true,status:"live"},
+  {name:"Bloxorz",emoji:"🔲",cat:"puzzle",tags:["block","roll","logic","grid","spatial"],url:"/bloxorz/",desc:"Roll the block through 33 challenging puzzle levels. Navigate switches, bridges, and fragile tiles in this classic block roll puzzle game.",isNew:true,status:"live"},
+  {name:"Type Racer",emoji:"🏎️",cat:"puzzle",tags:["typing","racing","speed","wpm","keyboard","words","text","race","competitive"],url:"/type-racer/",desc:"Race against AI opponents by typing fast! Type passages at speed, track your WPM and accuracy, unlock 6 cool cars, and climb from Bronze to Master rank.",isNew:true,status:"live"}
 ];
 
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
  */
 function getGameStatus(game) {
-  const overrides = JSON.parse(localStorage.getItem('gz_status_overrides') || '{}
-{name:"Type Racer",emoji:"🏎️",cat:"puzzle",tags:["typing","racing","speed","wpm","keyboard","words","text","race","competitive"],url:"/type-racer/",desc:"Race against AI opponents by typing fast! Type passages at speed, track your WPM and accuracy, unlock 6 cool cars, and climb from Bronze to Master rank in this thrilling typing race game.",isNew:true,status:"live"},');
+  const overrides = JSON.parse(localStorage.getItem('gz_status_overrides') || '{}');
   return overrides[game.url] || game.status || 'live';
 }
 
@@ -203,4 +204,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Bloxorz",emoji:"🔲",cat:"puzzle",tags:["block","roll","logic","grid","spatial"],url:"/bloxorz/",desc:"Roll the block through 33 challenging puzzle levels. Navigate switches, bridges, and fragile tiles in this classic block roll puzzle game.",isNew:true,status:"live"},
