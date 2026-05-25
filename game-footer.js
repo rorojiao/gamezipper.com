@@ -291,4 +291,4 @@
 {n:'Doodle Jump',e:'🐸',u:'/doodle-jump/',c:'arcade'},
 {n:'Papas Freezeria',e:'🍦',u:'/papas-freezeria/',c:'simulation'},
 {n:'Gravity Run',e:'🏃',u:'/gravity-run/',c:'arcade'},
-{n:'Cookie Clicker',e:'🍪',u:'/cookie-clicker/',c:'idle'},{n:'Moto X3M',e:'🏍️',u:'/moto-x3m/',c:'racing'},{n:'Math 24',e:'🔢',u:'/math-24/',c:'puzzle'},{n:'Mind Reader',e:'🔮',u:'/akinator/',c:'puzzle'},{n:'Blocky Blast',e:'🧱',u:'/blocky-blast/',c:'puzzle'},{n:'Pin Master',e:'📌',u:'/pin-master/',c:'puzzle'},{n:'Word Scramble',e:'🔤',u:'/word-scramble/',c:'puzzle'},{n:'There Is No Game',e:'🎮',u:'/there-is-no-game/',c:'puzzle'})();
+{n:'Cookie Clicker',e:'🍪',u:'/cookie-clicker/',c:'idle'},{n:'Moto X3M',e:'🏍️',u:'/moto-x3m/',c:'racing'},{n:'Math 24',e:'🔢',u:'/math-24/',c:'puzzle'},{n:'Mind Reader',e:'🔮',u:'/akinator/',c:'puzzle'},{n:'Blocky Blast',e:'🧱',u:'/blocky-blast/',c:'puzzle'},{n:'Pin Master',e:'📌',u:'/pin-master/',c:'puzzle'},{n:'Word Scramble',e:'🔤',u:'/word-scramble/',c:'puzzle'},{n:'There Is No Game',e:'🎮',u:'/there-is-no-game/',c:'puzzle'},{n:'Type Racer',e:'⌨️',u:'/type-racer/',c:'skill'})();
