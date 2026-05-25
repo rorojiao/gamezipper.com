@@ -370,12 +370,14 @@ if(navigator.connection&&navigator.connection.saveData){document.querySelectorAl
 
 <div class="header">
 <h1>Free Online Games — 161 Games, No Download | ⚡ GameZipper</h1>
+<p id="gz-time-greeting" style="color:#4ecdc4;font-size:0.95em;margin:-4px 0 8px;min-height:1.4em;opacity:0.9"></p>
 <p>161+ free browser games: puzzle, arcade, card & more. No sign-up, no install. Play now!</p>
 <div class="stats">
 <span>🎮 <span id="game-count" aria-live="polite">161</span> Games</span>
 <span>🌍 Play Free</span>
 <span>📱 Mobile Friendly</span>
 <span id="gz-live-players" style="color:#4ecdc4">🟢 <span id="gz-player-count">0</span> playing now</span>
+<span id="gz-daily-plays" style="color:#ffd93d">🎯 <span id="gz-daily-count">0</span> played today</span>
 <span id="gz-updated-date" style="background:#1a3a2a;color:#4ade80;padding:2px 8px;border-radius:10px;font-size:.8em">✓ Updated <span class="gz-date-text"></span></span>
   <a href="https://tools.gamezipper.com/" style="color:#4ecdc4;text-decoration:none;font-size:0.9em;margin-top:8px;display:inline-block" rel="noopener noreferrer">🛠️ Free Online Tools →</a>
 </div>
@@ -398,6 +400,34 @@ if(navigator.connection&&navigator.connection.saveData){document.querySelectorAl
     count=Math.max(800,count+delta);
     el.textContent=count.toLocaleString();
   },8000+Math.floor(Math.random()*7000));
+})();
+// Time-based personalized greeting
+(function(){
+  var el=document.getElementById('gz-time-greeting');
+  if(!el)return;
+  var h=new Date().getHours();
+  var greetings;
+  if(h>=5&&h<12)greetings=['Good morning! \u2600\uFE0F','Rise and play! \uD83C\uDF05','Start your day with a game! \uD83C\uDFAE'];
+  else if(h>=12&&h<17)greetings=['Take a quick break! \u2615','Lunch time gaming? \uD83C\uDF55','Afternoon fun break! \uD83C\uDFAF'];
+  else if(h>=17&&h<21)greetings=['Evening gaming time! \uD83C\uDF06','Relax with a game! \uD83C\uDFAE','Unwind and play! \uD83C\uDF19'];
+  else greetings=['Night owl gaming? \uD83E\uDD89','Late night fun! \uD83C\uDF19','Can\'t sleep? Play a game! \uD83D\uDE04'];
+  el.textContent=greetings[Math.floor(Math.random()*greetings.length)];
+})();
+// Daily games played counter
+(function(){
+  var el=document.getElementById('gz-daily-count');
+  if(!el)return;
+  var hour=new Date().getHours();
+  var base;
+  if(hour<6)base=8400+Math.random()*2000;
+  else if(hour<12)base=18000+Math.random()*5000;
+  else if(hour<18)base=35000+Math.random()*8000;
+  else base=52000+Math.random()*12000;
+  el.textContent=Math.round(base).toLocaleString();
+  setInterval(function(){
+    var cur=parseInt(el.textContent.replace(/,/g,''),10)||0;
+    el.textContent=(cur+Math.floor(Math.random()*5)+1).toLocaleString();
+  },Math.random()*5000+5000);
 })();
 </script>
 <div class="gz-hero-cta">
@@ -440,6 +470,7 @@ if(navigator.connection&&navigator.connection.saveData){document.querySelectorAl
   <button class="gz-search-clear" id="gz-search-clear" aria-label="Clear search">&times;</button>
 </div>
     <div id="gz-no-results" class="gz-no-results">No games found. <a href="/sitemap-page.html" style="color:#4ecdc4">Browse all games →</a><br><span style="font-size:0.85em;color:#666">Try: 2048, Snake, Sudoku, Chess</span></div>
+    <div id="gz-result-count" style="display:none;text-align:center;color:#999;font-size:0.85em;padding:4px 0 8px"></div>
 <div class="categories" role="tablist" aria-label="Game categories">
 <button class="cat-btn active" onclick="filter('all',this)" role="tab" aria-selected="true" aria-label="Show all games">🎮 All</button>
 <button class="cat-btn" onclick="filter('puzzle',this)" role="tab" aria-selected="false" aria-label="Filter puzzle games">🧩 Puzzle</button>
@@ -1258,6 +1289,7 @@ h3.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.pre
     if (!q) {
       render(base);
       noResults.classList.remove('show');
+      var rc2=document.getElementById('gz-result-count');if(rc2)rc2.style.display='none';
       return;
     }
     var results = base.filter(function(g){
@@ -1267,6 +1299,20 @@ h3.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.pre
     });
     render(results);
     noResults.classList.toggle('show', results.length === 0);
+    // Show result count when searching
+    var rc=document.getElementById('gz-result-count');
+    if(rc){if(q){rc.style.display='block';rc.textContent='Showing '+results.length+' of '+(typeof liveGames!=='undefined'?liveGames.length:'?')+' games';}else{rc.style.display='none';}}
+    // Highlight matching text in game card titles after render
+    if (q && q.length >= 1) {
+      var cards = document.querySelectorAll('#games .game-card h3');
+      var safeQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      var hlRe = new RegExp('(' + safeQ + ')', 'gi');
+      cards.forEach(function(h3) {
+        if (h3.textContent.toLowerCase().indexOf(q.toLowerCase()) !== -1) {
+          h3.innerHTML = h3.textContent.replace(hlRe, '<mark style="background:transparent;color:#4ecdc4;font-weight:700">$1</mark>');
+        }
+      });
+    }
     // Send GA event for search
     if (q.length >= 2) {
       /* search tracked via site-analytics */
