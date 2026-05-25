@@ -105,7 +105,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .categories{display:flex;gap:10px;justify-content:center;padding:20px;flex-wrap:wrap;contain:layout style}
 .cat-btn{padding:8px 20px;border-radius:25px;border:2px solid #333;background:transparent;color:#fff;cursor:pointer;font-size:0.9em;transition:all 0.3s}
 .cat-btn:hover,.cat-btn.active{background:#4ecdc4;border-color:#4ecdc4;color:#000}
-.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;padding:20px;max-width:1200px;margin:0 auto;contain:content;transition:opacity .15s ease}
+.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;padding:20px;max-width:1200px;margin:0 auto;contain:content;transition:opacity .15s ease;will-change:opacity}
 .game-card{background:#1a1a2e;border-radius:16px;overflow:hidden;contain:layout style;transition:transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .3s,opacity .5s cubic-bezier(.34,1.56,.64,1);cursor:pointer;text-decoration:none;color:#fff;opacity:0;transform:translateY(20px);position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent;will-change:transform,opacity;contain:layout style paint}
 .game-card.visible{opacity:1;transform:translateY(0);transition:opacity .4s cubic-bezier(.34,1.56,.64,1),transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .3s}
 .game-card:hover{transform:translate3d(0,-5px,0);box-shadow:0 10px 30px rgba(78,205,196,0.3)}.game-card:hover .game-thumb{filter:brightness(1.15);transition:filter .3s ease}
@@ -142,6 +142,12 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 .gz-cta-btn.secondary:hover{background:rgba(78,205,196,0.1)}
 @media(max-width:600px){.header h1{font-size:1.8em}.games{grid-template-columns:repeat(2,1fr);gap:12px;padding:12px}.game-info h3{font-size:0.85em}.game-thumb{font-size:3.5em}}.new-badge{top:5px;right:5px;font-size:.6em;padding:2px 6px}@media(pointer:coarse){.cat-btn{min-height:44px;min-width:44px}.gz-search{min-height:44px;padding:12px 16px}.game-card{min-height:44px}}
 .game-card:active{transform:scale(0.97)!important;box-shadow:0 2px 10px rgba(78,205,196,0.2)!important}
+/* CSS :has() optimization — pure-CSS active category highlight, reduces JS main thread work */
+.categories:has(.cat-btn.active[data-cat="puzzle"])~.games .game-card:not([data-cat="puzzle"]){opacity:.35;transform:scale(.96);pointer-events:none}
+.categories:has(.cat-btn.active[data-cat="arcade"])~.games .game-card:not([data-cat="arcade"]){opacity:.35;transform:scale(.96);pointer-events:none}
+.categories:has(.cat-btn.active[data-cat="idle"])~.games .game-card:not([data-cat="idle"]){opacity:.35;transform:scale(.96);pointer-events:none}
+.categories:has(.cat-btn.active[data-cat="card"])~.games .game-card:not([data-cat="card"]){opacity:.35;transform:scale(.96);pointer-events:none}
+.categories:has(.cat-btn.active[data-cat="board"])~.games .game-card:not([data-cat="board"]){opacity:.35;transform:scale(.96);pointer-events:none}
 .cat-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .cat-btn:active{transform:scale(0.95)}
 .gz-cta-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
@@ -1799,6 +1805,10 @@ new PerformanceObserver(function(l){var e=l.getEntries();var last=e[e.length-1];
 new PerformanceObserver(function(l){var e=l.getEntries();var s=0;e.forEach(function(i){if(!i.hadRecentInput)s+=i.value});send({m:'CLS',v:Math.round(s*10000)/10000,u:location.pathname})}).observe({type:'layout-shift',buffered:true});
 var _gzInp=0;new PerformanceObserver(function(l){l.getEntries().forEach(function(e){if(e.duration>_gzInp)_gzInp=e.duration})}).observe({type:'event',buffered:true,durationThreshold:40});addEventListener('pagehide',function(){if(_gzInp>0)send({m:'INP',v:Math.round(_gzInp),u:location.pathname})});
 </script>
+<script id="gz-loaf-rum">
+// Long Animation Frames API: pinpoint exact scripts causing INP issues (2026 standard)
+try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){if(e.duration>150){var s='none';if(e.scripts&&e.scripts.length){var sc=e.scripts[e.scripts.length-1];s=sc.name||sc.invoker||'unknown';if(sc.sourceURL)s=sc.sourceURL.split('/').pop()+'@'+sc.sourceCharPosition}try{navigator.sendBeacon('/beacon/webvitals',JSON.stringify({m:'LoAF',v:Math.round(e.duration),src:s,u:location.pathname}))}catch(x){}}})}).observe({type:'long-animation-frame',buffered:true})}catch(e){}
+</script>
 
 <!-- Post-load low-priority prefetch for top game pages (engagement optimization) -->
 <script>
@@ -1844,6 +1854,9 @@ var _gzInp=0;new PerformanceObserver(function(l){l.getEntries().forEach(function
 (function(){
   var origTitle=document.title;
   var altTitle='🎮 Come back and play! — GameZipper';
+  // Favicon badge: change to notification-style favicon when tab is hidden
+  var origIcon=document.querySelector('link[rel="icon"]');var badgeIcon=false;
+  if(origIcon){var canvas=document.createElement('canvas');canvas.width=32;canvas.height=32;var ctx=canvas.getContext('2d');try{var img=new Image();img.crossOrigin='anonymous';img.onload=function(){ctx.drawImage(img,0,0,32,32);ctx.fillStyle='#ff6b6b';ctx.beginPath();ctx.arc(26,8,8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('!',26,8);var nl=document.createElement('link');nl.rel='icon';nl.type='image/png';nl.href=canvas.toDataURL();badgeIcon=nl}}catch(x){}}
   var altShown=false;
   document.addEventListener('visibilitychange',function(){
     if(document.visibilityState==='hidden'){
