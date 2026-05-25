@@ -1,4 +1,3 @@
-
 /**
  * GameZipper - Centralized Game Data
  * Each game has a `status` field: "live" (visible on main site) or "beta" (test zone only)
@@ -181,7 +180,9 @@ const GAMES = [
   {name:"Draw To Home",emoji:"🏠",cat:"puzzle",tags:["draw","path","puzzle","casual","cute","home","guide"],url:"/draw-to-home/",desc:"Draw paths to guide cute characters to their matching colored homes! Avoid walls and moving obstacles. 50 levels across 5 chapters!",isNew:true,status:"live"},
   {name:"Bloxorz",emoji:"🔲",cat:"puzzle",tags:["block","roll","logic","grid","spatial"],url:"/bloxorz/",desc:"Roll the block through 33 challenging puzzle levels. Navigate switches, bridges, and fragile tiles in this classic block roll puzzle game.",isNew:true,status:"live"},
   {name:"Duck Life",emoji:"🦆",cat:"puzzle",tags:["Training","Racing","Simulation","RPG","Pet","Casual"],url:"/duck-life/",desc:"Train your duck to run, swim, and fly! Level up stats through 3 mini-games, collect coins, buy accessories, and race against AI opponents across 4 worlds. Can you win the championship?",isNew:true,status:"live"},
-  {name:"Type Racer",emoji:"🏎️",cat:"puzzle",tags:["typing","racing","speed","wpm","keyboard","words","text","race","competitive"],url:"/type-racer/",desc:"Race against AI opponents by typing fast! Type passages at speed, track your WPM and accuracy, unlock 6 cool cars, and climb from Bronze to Master rank.",isNew:true,status:"live"}
+  {name:"Type Racer",emoji:"🏎️",cat:"puzzle",tags:["typing","racing","speed","wpm","keyboard","words","text","race","competitive"],url:"/type-racer/",desc:"Race against AI opponents by typing fast! Type passages at speed, track your WPM and accuracy, unlock 6 cool cars, and climb from Bronze to Master rank.",isNew:true,status:"live"},
+
+  {name:"Stickman Swing",emoji:"🏃",cat:"arcade",tags:["swing","pendulum","physics","stickman","momentum"],url:"/stickman-swing/",desc:"Swing from anchors with pendulum physics. Tap to grab, release to fly through 40 levels. Unlock 12 skins and earn 3 stars on every stage.",isNew:true,status:"live"},
 ];
 
 /**
