@@ -206,3 +206,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Drift Boss",emoji:"🏎️",cat:"arcade",tags:["driving","drift","arcade","casual","skill","one-button"],url:"/drift-boss/",desc:"Master one-tap drifting on a winding platform track. Collect coins, unlock car skins, and chase your high score in this addictive driving game. How far can you drift?",isNew:true,status:"live"},
