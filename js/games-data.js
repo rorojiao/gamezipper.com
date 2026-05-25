@@ -175,8 +175,9 @@ const GAMES = [
 {name:"Mind Reader",emoji:"🔮",cat:"puzzle",tags:["guessing","20-questions","akinator","trivia","brain","thinking"],url:"/akinator/",desc:"Think of anything and let the Mind Reader guess it! A smart AI asks questions to figure out what you are thinking of. Teach it new things and track your stats.",isNew:true,status:"live"},
   {name:"Blocky Blast",emoji:"🧩",cat:"puzzle",tags:["block","puzzle","blast","grid","casual","strategy"],url:"/blocky-blast/",desc:"Drag and drop colorful blocks onto the 8x8 grid. Complete rows and columns to clear them. Build combos for massive scores in this addictive block puzzle!",isNew:true,status:"live"},
   {name:"Pin Master",emoji:"📌",cat:"puzzle",tags:["Puzzle","Screw","Logic","Pin","Strategy"],url:"/pin-master/",desc:"Tap pins in the right order to drop metal plates! A satisfying screw puzzle with 40 levels, hints, undo, and star ratings.",isNew:true,status:"live"},
-,
-  {name:"Word Scramble",emoji:"🔤",cat:"puzzle",tags:["word","anagram","scramble","spelling"],url:"/word-scramble/",desc:"Unscramble jumbled letters to form words. 500+ words across 10 categories with daily puzzles, hints, and streaks.",isNew:true,status:"live"}
+  {name:"Word Scramble",emoji:"🔤",cat:"puzzle",tags:["word","anagram","scramble","spelling"],url:"/word-scramble/",desc:"Unscramble jumbled letters to form words. 500+ words across 10 categories with daily puzzles, hints, and streaks.",isNew:true,status:"live"},
+{name:"There Is No Game",emoji:"🎮",cat:"puzzle",tags:["meta","puzzle","adventure","point-and-click","funny"],url:"/there-is-no-game/",desc:"A hilarious meta-puzzle where the game insists it does not exist. Break the fourth wall, glitch the system, and outsmart the narrator in this mind-bending adventure.",isNew:true,status:"live"},
+{name:"Zuma Marble Shooter",emoji:"🔮",cat:"puzzle",tags:["zuma","marble","shooter","match3","chain","puzzle","arcade","casual","frog","temple"],url:"/zuma/",desc:"Shoot marbles to match 3+ colors and pop them before they reach the skull! 30 levels, chain reactions, 5 power-ups, and 3-star ratings in this classic Zuma-style marble shooter.",isNew:true,status:"live"}
 ];
 
 /**
@@ -200,5 +201,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"There Is No Game",emoji:"🎮",cat:"puzzle",tags:["meta","puzzle","adventure","point-and-click","funny"],url:"/there-is-no-game/",desc:"A hilarious meta-puzzle where the game insists it does not exist. Break the fourth wall, glitch the system, and outsmart the narrator in this mind-bending adventure.",isNew:true,status:"live"},
-{name:"Zuma Marble Shooter",emoji:"🔮",cat:"puzzle",tags:["zuma","marble","shooter","match3","chain","puzzle","arcade","casual","frog","temple"],url:"/zuma/",desc:"Shoot marbles to match 3+ colors and pop them before they reach the skull! 30 levels, chain reactions, 5 power-ups, and 3-star ratings in this classic Zuma-style marble shooter.",isNew:true,status:"live"},
+
