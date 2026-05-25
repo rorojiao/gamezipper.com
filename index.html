@@ -825,12 +825,14 @@ function filter(cat,btn){
 
 // Only render live (正式上线) games on the main site
 function initGames() {
+  try{performance.mark("gz-init-start")}catch(e){}
 const liveGames = GAMES.filter(g => g.status === 'live');
 window._liveGames = liveGames;
 liveGames.sort((a,b)=>(b.isNew?1:0)-(a.isNew?1:0));
   // INP optimization: use scheduler.yield or rAF to avoid blocking main thread
   function doInitialRender(){
     render(liveGames);
+    try{performance.mark("gz-games-rendered")}catch(e){}
     var g=document.getElementById('games');g.classList.add('loaded');g.setAttribute('aria-busy','false');
     document.getElementById('game-count').textContent=liveGames.length;
     // Animate game count from 0 to actual number for engagement
@@ -1733,10 +1735,19 @@ if(e.target.closest(".game-card"))clearTimeout(timer);
   <button class="gz-cookie-decline" id="gz-cookie-decline">Decline</button>
 </div>
 <script>
+// UX-OPT: Cookie consent with focus trap (WCAG accessibility compliance)
 (function(){
   if(localStorage.getItem('gz_cc'))return;
   var b=document.getElementById('gz-cookie-consent');if(!b)return;
-  setTimeout(function(){b.classList.add('show');b.removeAttribute('inert')},2000);
+  // Focus trap: keep Tab within dialog while open
+  var focusable=b.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  var firstF=focusable[0],lastF=focusable[focusable.length-1];
+  b.addEventListener('keydown',function(e){
+    if(e.key!=='Tab')return;
+    if(e.shiftKey){if(document.activeElement===firstF){e.preventDefault();lastF.focus()}}
+    else{if(document.activeElement===lastF){e.preventDefault();firstF.focus()}}
+  });
+  setTimeout(function(){b.classList.add('show');b.removeAttribute('inert');if(firstF)firstF.focus()},2000);
   document.getElementById('gz-cookie-accept').onclick=function(){
     localStorage.setItem('gz_cc','1');b.classList.remove('show');
     setTimeout(function(){b.remove()},400);
@@ -1760,6 +1771,10 @@ if(e.target.closest(".game-card"))clearTimeout(timer);
 (function(){var bar=document.createElement('div');bar.id='gz-scroll-progress';document.head.appendChild(bar);function update(){var h=document.documentElement.scrollHeight-window.innerHeight;var p=h>0?(window.scrollY/h)*100:0;bar.style.width=Math.min(p,100)+'%'}window.addEventListener('scroll',update,{passive:true});update()})();
 </script>
 <script>
+<script>
+// UX-OPT: Pause animations when page hidden (GPU/battery optimization)
+(function(){var s=null;document.addEventListener("visibilitychange",function(){if(document.hidden){s=document.createElement("style");s.id="gz-pause-anim";s.textContent=".gz-skeleton{animation-play-state:paused!important}";document.head.appendChild(s)}else if(s){s.remove();s=null}})})();
+</script>
 // Copy link button feedback
 (function(){var btn=document.getElementById('gz-copy-link');if(!btn)return;btn.addEventListener('click',function(){var orig=this.textContent;this.textContent='✅ Copied!';this.style.background='linear-gradient(135deg,#22c55e,#16a34a)';var self=this;setTimeout(function(){self.textContent=orig;self.style.background=''},1520)})})();
 </script>
