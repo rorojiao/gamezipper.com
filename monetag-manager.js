@@ -52,23 +52,25 @@
       vignette: 11012003,
     },
     AD_PROVIDER: 'https://a.magsrv.com/ad-provider.js',
+    // Preconnect for faster ad loading
+    PRECONNECT: ['https://a.magsrv.com', 'https://static.magsrv.com'],
     FREQUENCY: {
-      minBetweenAds: 45 * 1000,        // 45s minimum between any two ads
-      firstAdDelay: 60 * 1000,          // 60s before first ad (gentler for new users)
+      minBetweenAds: 30 * 1000,        // 30s minimum between any two ads (optimized)
+      firstAdDelay: 30 * 1000,          // 30s before first ad (optimized from 60s)
       sessionWindowMs: 30 * 60 * 1000,  // 30-min rolling window
-      sessionMaxAds: 20,                // max 20 ads per 30-min window
+      sessionMaxAds: 30,                // max 30 ads per 30-min window (optimized from 20)
       dailyWindowMs: 24 * 60 * 60 * 1000, // 24h rolling window
-      dailyMaxAds: 60,                  // max 60 ads per day
-      homepageBannerCooldown: 20 * 60 * 1000, // 20 min between homepage banners
-      containerAdCooldown: 5 * 60 * 1000,     // 5 min between container ads
+      dailyMaxAds: 100,                 // max 100 ads per day (optimized from 60)
+      homepageBannerCooldown: 10 * 60 * 1000, // 10 min between homepage banners (optimized from 20)
+      containerAdCooldown: 3 * 60 * 1000,   // 3 min between container ads (optimized from 5)
     },
     TIMING: {
-      homepageBannerDelay: 2000,
+      homepageBannerDelay: 1500,
       interstitialSkipAfter: 3000,
       interstitialMaxDuration: 6000,
-      containerAdDelay: 4000,
+      containerAdDelay: 3000,
       adLoadTimeout: 5000,
-      commercialBreakCooldown: 45 * 1000, // same as minBetweenAds
+      commercialBreakCooldown: 30 * 1000, // same as minBetweenAds
       gameOverDetectionDelay: 1500,      // wait 1.5s after overlay appears
     },
     STORAGE_PREFIX: 'gz4_',
@@ -550,6 +552,37 @@
     }, CONFIG.TIMING.homepageBannerDelay);
   }
 
+  // ==================== HOMEPAGE SECOND BANNER (below game grid) ====================
+  function showHomepageSecondBanner() {
+    if (!state.isHomePage) return;
+    if (!canShowAd('homepage_banner')) return;
+
+    var container = $('#gz-home-banner-2');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'gz-home-banner-2';
+      container.style.cssText = 'max-width:728px;margin:16px auto;text-align:center;min-height:90px;overflow:hidden;';
+      if (isMobile()) {
+        container.style.maxWidth = '320px';
+        container.style.minHeight = '50px';
+      }
+      // Insert after the #games section
+      var gamesSection = $('#games');
+      if (gamesSection && gamesSection.parentNode) {
+        gamesSection.parentNode.insertBefore(container, gamesSection.nextSibling);
+      }
+    }
+
+    setTimeout(function() {
+      if (container.getAttribute('data-filled')) return;
+      if (!canShowAd('homepage_banner')) return;
+      loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
+        container.setAttribute('data-filled', '1');
+        markAdShown('homepage_banner');
+      }).catch(function() {});
+    }, CONFIG.TIMING.homepageBannerDelay + 5000); // 6.5s total delay
+  }
+
   // ==================== BELOW-GAME CONTAINER AD ====================
   function autoFillContainer() {
     if (!state.isGamePage) return;
@@ -612,6 +645,17 @@
     if (state.initialized) return;
     state.initialized = true;
 
+    // Preconnect to ad provider for faster ad loading
+    if (CONFIG.PRECONNECT) {
+      CONFIG.PRECONNECT.forEach(function(origin) {
+        var link = document.createElement('link');
+        link.rel = 'preconnect';
+        link.href = origin;
+        link.crossOrigin = 'anonymous';
+        document.head.appendChild(link);
+      });
+    }
+
     detectPage();
     initBroadcast();
     detectAdBlock();
@@ -621,6 +665,7 @@
 
     if (state.isHomePage) {
       showHomepageBanner();
+      showHomepageSecondBanner();
     }
 
     if (state.isGamePage) {
