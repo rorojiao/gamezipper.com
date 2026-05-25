@@ -90,6 +90,7 @@
       {n:'Little Alchemy',e:'⚗️',u:'/little-alchemy/',c:'puzzle'},
       {n:'Mahjong Solitaire',e:'🀄',u:'/mahjong-solitaire/',c:'puzzle'},
       {n:'Marble Run',e:'🔮',u:'/marble-run/',c:'puzzle'},
+     {n:'Zuma Marble Shooter',e:'🔮',u:'/zuma/',c:'puzzle'},
       {n:'Marble Shooter',e:'🔮',u:'/marble-shooter/',c:'puzzle'},
       {n:'Nonogram Puzzle',e:'🔲',u:'/nonogram/',c:'puzzle'},
       {n:'One Line Puzzle',e:'✏️',u:'/one-line-puzzle/',c:'puzzle'},

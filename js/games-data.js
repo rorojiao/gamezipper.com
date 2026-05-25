@@ -201,3 +201,4 @@ function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
 {name:"There Is No Game",emoji:"🎮",cat:"puzzle",tags:["meta","puzzle","adventure","point-and-click","funny"],url:"/there-is-no-game/",desc:"A hilarious meta-puzzle where the game insists it does not exist. Break the fourth wall, glitch the system, and outsmart the narrator in this mind-bending adventure.",isNew:true,status:"live"},
+{name:"Zuma Marble Shooter",emoji:"🔮",cat:"puzzle",tags:["zuma","marble","shooter","match3","chain","puzzle","arcade","casual","frog","temple"],url:"/zuma/",desc:"Shoot marbles to match 3+ colors and pop them before they reach the skull! 30 levels, chain reactions, 5 power-ups, and 3-star ratings in this classic Zuma-style marble shooter.",isNew:true,status:"live"},
