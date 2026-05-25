@@ -200,3 +200,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"There Is No Game",emoji:"🎮",cat:"puzzle",tags:["meta","puzzle","adventure","point-and-click","funny"],url:"/there-is-no-game/",desc:"A hilarious meta-puzzle where the game insists it does not exist. Break the fourth wall, glitch the system, and outsmart the narrator in this mind-bending adventure.",isNew:true,status:"live"},
