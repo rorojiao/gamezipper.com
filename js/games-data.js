@@ -183,7 +183,9 @@ const GAMES = [
   {name:"Type Racer",emoji:"🏎️",cat:"puzzle",tags:["typing","racing","speed","wpm","keyboard","words","text","race","competitive"],url:"/type-racer/",desc:"Race against AI opponents by typing fast! Type passages at speed, track your WPM and accuracy, unlock 6 cool cars, and climb from Bronze to Master rank.",isNew:true,status:"live"},
 
   {name:"Stickman Swing",emoji:"🏃",cat:"arcade",tags:["swing","pendulum","physics","stickman","momentum"],url:"/stickman-swing/",desc:"Swing from anchors with pendulum physics. Tap to grab, release to fly through 40 levels. Unlock 12 skins and earn 3 stars on every stage.",isNew:true,status:"live"},
-{name:"Drift Boss",emoji:"🏎️",cat:"arcade",tags:["driving","drift","arcade","casual","skill","one-button"],url:"/drift-boss/",desc:"Master one-tap drifting on a winding platform track. Collect coins, unlock car skins, and chase your high score in this addictive driving game. How far can you drift?",isNew:true,status:"live"}
+{name:"Drift Boss",emoji:"🏎️",cat:"arcade",tags:["driving","drift","arcade","casual","skill","one-button"],url:"/drift-boss/",desc:"Master one-tap drifting on a winding platform track. Collect coins, unlock car skins, and chase your high score in this addictive driving game. How far can you drift?",isNew:true,status:"live"},
+{name:"Blockudoku",emoji:"🧩",cat:"puzzle",tags:["block","sudoku","puzzle","grid","casual","logic"],url:"/blockudoku/",desc:"Play Blockudoku, an addictive block puzzle game with Sudoku-style 9x9 grid. Drag and drop blocks to clear rows, columns and 3x3 boxes. Score combos and streaks in this free online puzzle game.",isNew:true,status:"live"},
+
 ];
 
 /**
