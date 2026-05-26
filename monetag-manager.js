@@ -731,6 +731,9 @@
 
   // Backward compatibility stubs
   window.GZMonetagSafe = window.GZMonetagSafe || {};
+  if (!window.GZMonetagSafe.maybeLoad) {
+    window.GZMonetagSafe.maybeLoad = function() { return commercialBreak(); };
+  }
   window.GZNativeAd = window.GZNativeAd || {};
   window.GZAdSenseAuto = window.GZAdSenseAuto || {};
   window.GZInterstitial = { show: function() { return commercialBreak(); } };
