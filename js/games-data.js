@@ -210,3 +210,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Thief Puzzle",emoji:"🦝",cat:"puzzle",tags:["thief","steal","swipe","maze","dodge"],url:"/thief-puzzle/",desc:"Swipe your way through lasers, cameras, and guards to steal treasures in this sneaky puzzle adventure",isNew:true,status:"live"},
