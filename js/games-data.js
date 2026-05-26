@@ -209,4 +209,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-
+{name:"Rubik's Cube",emoji:"🧊",cat:"puzzle",tags:["rubik","cube","3d","timer","solver"],url:"/rubiks-cube/",desc:"Free 3D Rubik's Cube simulator with timer, scramble, undo, patterns and solve guide. Multiple sizes from 2x2 to 5x5.",isNew:true,status:"live"},
