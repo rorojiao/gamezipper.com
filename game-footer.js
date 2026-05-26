@@ -293,4 +293,5 @@
 {n:'Gravity Run',e:'🏃',u:'/gravity-run/',c:'arcade'},
 {n:'Cookie Clicker',e:'🍪',u:'/cookie-clicker/',c:'idle'},{n:'Moto X3M',e:'🏍️',u:'/moto-x3m/',c:'racing'},{n:'Math 24',e:'🔢',u:'/math-24/',c:'puzzle'},{n:'Mind Reader',e:'🔮',u:'/akinator/',c:'puzzle'},{n:'Blocky Blast',e:'🧱',u:'/blocky-blast/',c:'puzzle'},{n:'Pin Master',e:'📌',u:'/pin-master/',c:'puzzle'},{n:'Word Scramble',e:'🔤',u:'/word-scramble/',c:'puzzle'},{n:'There Is No Game',e:'🎮',u:'/there-is-no-game/',c:'puzzle'},
   {n:'Bloxorz',e:'🔲',u:'/bloxorz/',c:'puzzle'},
-  {n:'Draw To Home',e:'🏠',u:'/draw-to-home/',c:'puzzle'},{n:'Duck Life',e:'🦆',u:'/duck-life/',c:'puzzle'},{n:'Type Racer',e:'⌨️',u:'/type-racer/',c:'skill'},{n:"Stickman Swing",e:"🏃",u:"/stickman-swing/",c:"arcade"})();
+  {n:'Draw To Home',e:'🏠',u:'/draw-to-home/',c:'puzzle'},{n:'Duck Life',e:'🦆',u:'/duck-life/',c:'puzzle'},{n:'Type Racer',e:'⌨️',u:'/type-racer/',c:'skill'},{n:"Stickman Swing",e:"🏃",u:"/stickman-swing/",c:"arcade"},
+{n:'Drift Boss',e:'🏎️',u:'/drift-boss/',c:'racing'})();
