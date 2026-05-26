@@ -186,7 +186,8 @@ const GAMES = [
 {name:"Drift Boss",emoji:"🏎️",cat:"arcade",tags:["driving","drift","arcade","casual","skill","one-button"],url:"/drift-boss/",desc:"Master one-tap drifting on a winding platform track. Collect coins, unlock car skins, and chase your high score in this addictive driving game. How far can you drift?",isNew:true,status:"live"},
 {name:"Blockudoku",emoji:"🧩",cat:"puzzle",tags:["block","sudoku","puzzle","grid","casual","logic"],url:"/blockudoku/",desc:"Play Blockudoku, an addictive block puzzle game with Sudoku-style 9x9 grid. Drag and drop blocks to clear rows, columns and 3x3 boxes. Score combos and streaks in this free online puzzle game.",isNew:true,status:"live"},
 {name:"Rubik's Cube",emoji:"🧊",cat:"puzzle",tags:["rubik","cube","3d","puzzle","simulator","timer","speedcube"],url:"/rubiks-cube/",desc:"Play Rubik's Cube online free! 3D interactive simulator with 2x2, 3x3, 4x4, 5x5 cubes. Timer, move counter, scramble, undo, patterns, and best times. Solve it now!",isNew:true,status:"live"},
-{name:"Thief Puzzle",emoji:"🦝",cat:"puzzle",tags:["thief","steal","swipe","maze","dodge"],url:"/thief-puzzle/",desc:"Swipe your way through lasers, cameras, and guards to steal treasures in this sneaky puzzle adventure",isNew:true,status:"live"}
+{name:"Thief Puzzle",emoji:"🦝",cat:"puzzle",tags:["thief","steal","swipe","maze","dodge"],url:"/thief-puzzle/",desc:"Swipe your way through lasers, cameras, and guards to steal treasures in this sneaky puzzle adventure",isNew:true,status:"live"},
+{name:"Threes!",emoji:"🔢",cat:"puzzle",tags:["threes","number","merge","slide","puzzle","strategy","math","2048"],url:"/threes/",desc:"Play Threes! free online - the original number merge puzzle. Slide tiles and combine 1+2=3, then merge matching numbers to reach the highest tile in this addictive brain game.",isNew:true,status:"live"},
 
 ];
 
