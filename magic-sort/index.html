@@ -3308,6 +3308,53 @@ let extraTubeUsed = 0; // currently active extra tubes this level
 const MAX_EXTRA_TUBES = 1; // max extra tubes per level
 let extraTubeBtnCooldown = 0;
 
+// ─── Streak Tracker ───
+let streakCount = 0;       // consecutive days played
+let lastPlayDate = "";     // YYYY-MM-DD of last play
+let levelsToday = 0;       // levels completed today
+
+function getToday() { return new Date().toISOString().slice(0, 10); }
+function updateStreak() {
+  const today = getToday();
+  if (lastPlayDate === today) return; // already counted today
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  if (lastPlayDate === yesterday) {
+    streakCount++;
+  } else if (lastPlayDate !== today) {
+    streakCount = lastPlayDate === "" ? 0 : 1;
+  }
+  lastPlayDate = today;
+  levelsToday = 1;
+}
+function getMilestoneEmoji(levelIdx) {
+  const lv = levelIdx + 1;
+  if (lv === 50) return "🌟";
+  if (lv === 100) return "💎";
+  if (lv === 200) return "🔥";
+  if (lv === 300) return "⚡";
+  if (lv === 500) return "👑";
+  if (lv === 750) return "🏆";
+  if (lv === 1000) return "🎯";
+  if (lv === 1500) return "🌌";
+  if (lv === 2000) return "🔮";
+  if (lv === 2500) return "💫";
+  if (lv === 3000) return "🏆";
+  if (lv % 100 === 0) return "🎉";
+  return null;
+}
+
+// ─── Web Share API ───
+async function shareResult() {
+  const stars = levelStars[currentLevel] || 1;
+  const lv = currentLevel + 1;
+  const text = `🧪 Magic Sort — Level ${lv} Complete!\n${"⭐".repeat(stars)} (${moves} moves)\n${streakCount > 1 ? "🔥 " + streakCount + "-day streak!\n" : ""}Play free at gamezipper.com/magic-sort/`;
+  if (navigator.share) {
+    try { await navigator.share({ title: "Magic Sort", text, url: "https://gamezipper.com/magic-sort/" }); } catch(e) {}
+  } else if (navigator.clipboard) {
+    try { await navigator.clipboard.writeText(text); sfxClick(); } catch(e) {}
+  }
+}
+
 // ─── Daily Challenge ───
 let dailyChallengeLevel = -1;
 let dailyCompleted = {};
@@ -3393,11 +3440,14 @@ function loadSave() {
     if (d.sfx !== undefined) sfxEnabled = d.sfx;
     if (d.lastPlayed !== undefined) lastPlayedLevel = d.lastPlayed;
     if (d.extraTubeUses !== undefined) extraTubeUses = d.extraTubeUses;
+    if (d.streakCount !== undefined) streakCount = d.streakCount;
+    if (d.lastPlayDate !== undefined) lastPlayDate = d.lastPlayDate;
+    if (d.levelsToday !== undefined) levelsToday = d.levelsToday;
   } catch (e) { levelUnlocked = { 0: true }; }
 }
 function saveSave() {
   try {
-    localStorage.setItem("magicSort_v2", JSON.stringify({ stars: levelStars, unlocked: levelUnlocked, sfx: sfxEnabled, lastPlayed: lastPlayedLevel, bestMoves: bestMoves, extraTubeUses: extraTubeUses }));
+    localStorage.setItem("magicSort_v2", JSON.stringify({ stars: levelStars, unlocked: levelUnlocked, sfx: sfxEnabled, lastPlayed: lastPlayedLevel, bestMoves: bestMoves, extraTubeUses: extraTubeUses, streakCount, lastPlayDate, levelsToday }));
   } catch (e) {}
 }
 loadSave();
@@ -3561,6 +3611,9 @@ function completePour() {
     }
     sfxWin();
     spawnConfetti();
+    updateStreak();
+    levelsToday++;
+    saveSave();
     // Dispatch custom event for interstitial ad system
     try {
       window.dispatchEvent(new CustomEvent("level-complete", { detail: { level: currentLevel, stars: stars, moves: moves } }));
@@ -4449,7 +4502,7 @@ function renderSplash() {
       const splashTotalStars = Object.values(levelStars).reduce((a, b) => a + b, 0);
       X.fillStyle = "rgba(255,255,255,0.3)";
       X.font = "500 11px 'Nunito',sans-serif";
-      X.fillText(splashTotalStars + " ★  |  " + splashCompleted + "/" + TOTAL_LEVELS + " levels  |  Tubes: " + extraTubeUses, W / 2, nextBtnY + 58);
+      X.fillText(splashTotalStars + " ★  |  " + splashCompleted + "/" + TOTAL_LEVELS + " levels  |  Tubes: " + extraTubeUses + (streakCount >= 2 ? "  |  🔥" + streakCount + " streak" : ""), W / 2, nextBtnY + 58);
     }
   }
 
@@ -4741,7 +4794,7 @@ function renderGame() {
   X.font = "700 15px 'Nunito',sans-serif";
   X.textAlign = "left";
   X.textBaseline = "top";
-  X.fillText("Level " + (currentLevel + 1), 44, 14);
+  X.fillText("Level " + (currentLevel + 1) + (streakCount >= 2 ? " 🔥" + streakCount : ""), 44, 14);
   // Difficulty badge
   const diffSec = DIFF_SECTIONS.filter(s => s.start <= currentLevel).pop();
   if (diffSec) {
@@ -5040,16 +5093,37 @@ function renderWin() {
     X.fillText(bestStr, W / 2, cardY + 148);
   }
 
+  // Streak display
+  if (streakCount >= 2) {
+    X.fillStyle = "#ff6348";
+    X.font = "700 13px 'Baloo 2','Nunito',sans-serif";
+    X.fillText("🔥 " + streakCount + "-day streak! (" + levelsToday + " today)", W / 2, cardY + 165);
+  }
+
+  // Milestone badge
+  const milestone = getMilestoneEmoji(currentLevel);
+  if (milestone) {
+    X.fillStyle = "#ffd32a";
+    X.font = "700 13px 'Baloo 2','Nunito',sans-serif";
+    X.fillText(milestone + " Level " + (currentLevel + 1) + " Milestone!", W / 2, cardY + (streakCount >= 2 ? 180 : 165));
+  }
+
   // Buttons
-  const btnW = 115, btnH = 42, btnGap = 12;
-  const bx = W / 2 - btnW - btnGap / 2;
-  const by = cardY + 160;
-  drawButton(bx, by, btnW, btnH, "↻ Retry", hoverBtn === 20, false);
+  const btnW = 90, btnH = 40, btnGap = 8;
+  const totalBtns = (currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1]) ? 4 : 3;
+  const totalW = totalBtns * btnW + (totalBtns - 1) * btnGap;
+  const btnStartX = W / 2 - totalW / 2;
+  const by = cardY + (streakCount >= 2 || milestone ? 195 : 178);
+  drawButton(btnStartX, by, btnW, btnH, "↻ Retry", hoverBtn === 20, false);
+  let btnIdx = 1;
   const hasNext = currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1];
   if (hasNext) {
-    drawButton(bx + btnW + btnGap, by, btnW, btnH, "Next ▶", hoverBtn === 21, true);
+    drawButton(btnStartX + btnIdx * (btnW + btnGap), by, btnW, btnH, "Next ▶", hoverBtn === 21, true);
+    btnIdx++;
   }
-  drawButton(W / 2 - 55, cardY + 215, 110, btnH, "Menu", hoverBtn === 22, false);
+  drawButton(btnStartX + btnIdx * (btnW + btnGap), by, btnW, btnH, "Share", hoverBtn === 23, false);
+  btnIdx++;
+  drawButton(btnStartX + btnIdx * (btnW + btnGap), by, btnW, btnH, "Menu", hoverBtn === 22, false);
 
   // Confetti
   for (const c of confetti) {
@@ -5421,20 +5495,33 @@ function onTap(px, py) {
     const cardH = 280;
     const cardX = (W - cardW) / 2;
     const cardY = (H - cardH) / 2 - 15;
-    const btnW = 115, btnH = 42, btnGap = 12;
-    const bx = W / 2 - btnW - btnGap / 2;
-    const by = cardY + 160;
+    const wBtnW = 90, wBtnH = 40, wBtnGap = 8;
+    const milestone = getMilestoneEmoji(currentLevel);
+    const hasNextBtn = currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1];
+    const totalBtns = hasNextBtn ? 4 : 3;
+    const totalBtnW = totalBtns * wBtnW + (totalBtns - 1) * wBtnGap;
+    const bsX = W / 2 - totalBtnW / 2;
+    const wBy = cardY + (streakCount >= 2 || milestone ? 195 : 178);
 
-    if (hitTest(px, py, bx, by, btnW, btnH)) {
+    // Retry button (index 0)
+    if (hitTest(px, py, bsX, wBy, wBtnW, wBtnH)) {
       sfxClick(); initLevel(currentLevel); return;
     }
-    if (hitTest(px, py, bx + btnW + btnGap, by, btnW, btnH)) {
-      if (currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1]) {
-        sfxClick(); initLevel(currentLevel + 1);
+    let bIdx = 1;
+    // Next button (index 1)
+    if (hasNextBtn) {
+      if (hitTest(px, py, bsX + bIdx * (wBtnW + wBtnGap), wBy, wBtnW, wBtnH)) {
+        sfxClick(); initLevel(currentLevel + 1); return;
       }
-      return;
+      bIdx++;
     }
-    if (hitTest(px, py, W / 2 - 55, cardY + 215, 110, btnH)) {
+    // Share button (index 2)
+    if (hitTest(px, py, bsX + bIdx * (wBtnW + wBtnGap), wBy, wBtnW, wBtnH)) {
+      shareResult(); return;
+    }
+    bIdx++;
+    // Menu button (index 3)
+    if (hitTest(px, py, bsX + bIdx * (wBtnW + wBtnGap), wBy, wBtnW, wBtnH)) {
       sfxClick(); state = "menu"; menuScrollY = 0; return;
     }
   }
