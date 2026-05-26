@@ -1,7 +1,8 @@
-// GameZipper Service Worker v6
+// GameZipper Service Worker v7
 // Pure game caching — Monetag push NOTIFICATIONS DISABLED per user request
-// Strategies: cache-first (static), stale-while-revalidate (HTML), network-first (API)
-const CACHE='gz-v6';
+// Strategies: cache-first (static), stale-while-revalidate with 4h max-age (HTML), network-first (API)
+const CACHE='gz-v7';
+const HTML_MAX_AGE=4*60*60*1000; // 4 hours in ms
 
 // === Install ===
 self.addEventListener('install',e=>{
@@ -45,8 +46,7 @@ self.addEventListener('fetch',e=>{
   }
 
   // Stale-while-revalidate for HTML pages (same-origin navigation)
-  // Returning users get instant load from cache (~0ms TTFB), while
-  // the SW fetches and caches the fresh version in the background
+  // With 4-hour max-age: if cache is older than 4h, prefer fresh network response
   if(url.pathname.endsWith('/')||url.pathname.endsWith('.html')||url.pathname==='/'){
     e.respondWith(
       caches.open(CACHE).then(c=>
@@ -59,7 +59,12 @@ self.addEventListener('fetch',e=>{
             return resp;
           }).catch(()=>cached);
 
-          // Return cached immediately if available, else wait for network
+          // If cached is fresh (<4h), return immediately; else wait for network
+          if(cached){
+            var dateHeader=cached.headers.get('date');
+            var age=dateHeader?(Date.now()-new Date(dateHeader).getTime()):HTML_MAX_AGE+1;
+            if(age<HTML_MAX_AGE)return cached;
+          }
           return cached||fetchPromise;
         })
       ).catch(()=>fetch(e.request))
