@@ -155,7 +155,7 @@
       {n:'Euchre',e:'♠️',u:'/euchre/',c:'card'},
       {n:'Wordle',e:'🔤',u:'/wordle/',c:'puzzle'},
       {n:'Hidden Object',e:'🔍',u:'/hidden-object/',c:'puzzle'},
-      {n:'Tiny Fishing',e:'🎣',u:'/tiny-fishing/',c:'casual'}
+      {n:'Tiny Fishing',e:'🎣',u:'/tiny-fishing/',c:'casual'},{n:"Threes!",e:"🔢",u:"/threes/",c:"puzzle"}
     ];
 
   var cur = location.pathname;
