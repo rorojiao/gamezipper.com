@@ -214,4 +214,5 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
-}
+},
+{name:"Text Twist",emoji:"🔤",cat:"puzzle",tags:["word","anagram","vocabulary","letters"],url:"/text-twist/",desc:"Unscramble letters to form words in this classic word puzzle. Find all words and the BINGO word to advance through rounds!",isNew:true,status:"live"},
