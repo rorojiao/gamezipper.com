@@ -190,6 +190,7 @@ const GAMES = [
 {name:"Threes!",emoji:"🔢",cat:"puzzle",tags:["threes","number","merge","slide","puzzle","strategy","math","2048"],url:"/threes/",desc:"Play Threes! free online - the original number merge puzzle. Slide tiles and combine 1+2=3, then merge matching numbers to reach the highest tile in this addictive brain game.",isNew:true,status:"live"},
 {name:"Words Klondike",emoji:"🃏",cat:"puzzle",tags:["word","cards","solitaire","category","sorting","brain","trivia","vocabulary"],url:"/words-klondike/",desc:"Play Words Klondike free online - a relaxing word association solitaire puzzle. Flip cards, match words to categories, and clear the board. 50 levels across 10 themed packs. No download required.",isNew:true,status:"live"},
 {name:"Stack Ball",emoji:"🔴",cat:"arcade",tags:["stack","ball","smash","helix","drop"],url:"/stack-ball/",desc:"Smash your ball through colorful helix platforms, dodge black obstacles, and chain combos for epic fireball mode",isNew:true,status:"live"},
+{name:"Text Twist",emoji:"🔤",cat:"puzzle",tags:["text","twist","word","anagram","unscramble","letters","puzzle","vocabulary"],url:"/text-twist/",desc:"Unscramble 6 letters to find all hidden words! Play Classic, Untimed, or Lightning mode. Twist, shuffle, and use hints in this addictive word puzzle game.",isNew:true,status:"live"},
 
 ];
 
