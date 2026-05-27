@@ -8,7 +8,7 @@
 
 
 <meta content="max-age=300, stale-while-revalidate=3600" http-equiv="Cache-Control"/>
-<meta content="20260527005" name="build"/>
+<meta content="202605270611006" name="build"/>
 <meta charset="utf-8"/>
 <meta content="ca-pub-8346383990981353" name="google-adsense-account"/>
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" name="viewport"/>
@@ -246,6 +246,15 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 /* View Transitions API: smooth cross-page fade (Chrome 111+, progressive enhancement) */
 @supports(view-transition:works){@keyframes vt-fade-in{from{opacity:0}to{opacity:1}}::view-transition-old(root){animation:vt-fade-in .15s ease-in}::view-transition-new(root){animation:vt-fade-in .2s ease-out}}@media(prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none!important}}
 </style>
+.gz-show-more-wrap{text-align:center;padding:20px 0;margin:0 auto;max-width:1200px}
+.gz-show-more-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 36px;background:linear-gradient(135deg,#4ecdc4,#45b7d1);color:#000;font-weight:800;font-size:1em;border-radius:30px;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(78,205,196,0.4);transition:transform .2s,box-shadow .2s;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.gz-show-more-btn:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(78,205,196,0.5)}
+.gz-show-more-btn:active{transform:scale(0.97)}
+.gz-show-more-btn .gz-remaining{font-size:0.8em;opacity:0.8;font-weight:600}
+.gz-show-more-btn[disabled]{opacity:0.5;cursor:default;transform:none;box-shadow:none}
+@media(prefers-reduced-motion:reduce){.gz-show-more-btn{transition:none}}
+.gz-progress-hint{color:#888;font-size:0.8em;margin-top:8px}
+
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"GameZipper","url":"https://gamezipper.com","logo":"https://gamezipper.com/favicon.svg","sameAs":["https://x.com/gamezipper"],"description":"Free online unblocked browser games \u2014 no downloads, no sign-up. 168 puzzle, arcade, idle & card games."}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","mainEntity":{"@type":"ItemList","name":"Free Online Games","numberOfItems":8,"itemListElement":{"@type":"ListItem","position":1,"name":"GameZipper Free Games Collection","url":"https://gamezipper.com/"}},"name":"GameZipper","url":"https://gamezipper.com/","potentialAction":{"@type":"SearchAction","target":"https://gamezipper.com/?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
 <script type="application/ld+json">{
@@ -359,7 +368,7 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
   document.head.appendChild(el);
 })();
 </script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Free Online Games 2026 — Play 168 Browser Games | GameZipper","description":"Play 168+ free online games — 2048, Snake, Solitaire, Mahjong, puzzles & more. No download, no signup.","url":"https://gamezipper.com/","datePublished":"2025-01-15T00:00:00+00:00","dateModified":"2026-05-27T04:41:48+00:00","isPartOf":{"@type":"WebSite","name":"GameZipper","url":"https://gamezipper.com/"},"about":{"@type":"Thing","name":"Free Online Browser Games"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Free Online Games 2026 — Play 168 Browser Games | GameZipper","description":"Play 168+ free online games — 2048, Snake, Solitaire, Mahjong, puzzles & more. No download, no signup.","url":"https://gamezipper.com/","datePublished":"2025-01-15T00:00:00+00:00","dateModified":"2026-05-27","isPartOf":{"@type":"WebSite","name":"GameZipper","url":"https://gamezipper.com/"},"about":{"@type":"Thing","name":"Free Online Browser Games"}}</script>
 <link rel="sitemap" href="/sitemap.xml" title="Sitemap">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -567,6 +576,7 @@ if(navigator.connection&&navigator.connection.saveData){document.querySelectorAl
   <div class="gz-skeleton" style="aspect-ratio:4/3"></div>
   <div class="gz-skeleton" style="aspect-ratio:4/3"></div>
 </div>
+<div class="gz-show-more-wrap" id="gz-show-more-wrap" style="display:none"><button class="gz-show-more-btn" id="gz-show-more" onclick="gzShowMoreGames()">&#x1F3AE; Show More Games <span class="gz-remaining" id="gz-remaining-count"></span></button><div class="gz-progress-hint" id="gz-progress-hint"></div></div>
 <noscript><div style="max-width:1100px;margin:0 auto;padding:0 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
 <a href="/basketball-shoot/" style="display:block;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:12px;padding:14px;text-decoration:none;color:#fff"><strong>🏀 Basketball Shoot</strong></a>
 <a href="/neon-run/" style="display:block;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:12px;padding:14px;text-decoration:none;color:#fff"><strong>🏃 Neon Run</strong></a>
@@ -884,24 +894,36 @@ function filter(cat,btn){
   grid.style.opacity='0.5';
   requestAnimationFrame(function(){
     var games=window._liveGames||[];
-    render(cat==='all'?games:games.filter(g=>g.cat===cat));
+    var filtered=cat==='all'?games:games.filter(g=>g.cat===cat);
+    _gzAllGames=filtered;_gzShownCount=filtered.length;
+    render(filtered);
+    gzUpdateShowMoreBtn();
     grid.classList.add('loaded');grid.setAttribute('aria-busy','false');
     requestAnimationFrame(function(){grid.style.opacity='1'});
   });
 }
 
-// Only render live (正式上线) games on the main site
+// Progressive rendering: show INITIAL_COUNT games first, then "Show More"
+var GZ_INITIAL_COUNT = 24;
+var GZ_SHOW_MORE_COUNT = 24;
+var _gzAllGames = [];
+var _gzShownCount = 0;
+
 function initGames() {
   try{performance.mark("gz-init-start")}catch(e){}
 const liveGames = GAMES.filter(g => g.status === 'live');
 window._liveGames = liveGames;
 liveGames.sort((a,b)=>(b.isNew?1:0)-(a.isNew?1:0));
+  _gzAllGames = liveGames;
   // INP optimization: use scheduler.yield or rAF to avoid blocking main thread
   function doInitialRender(){
-    render(liveGames);
+    var initialBatch = liveGames.slice(0, GZ_INITIAL_COUNT);
+    render(initialBatch);
+    _gzShownCount = initialBatch.length;
     try{performance.mark("gz-games-rendered");performance.measure("gz-games-init","gz-init-start","gz-games-rendered")}catch(e){}
     var g=document.getElementById('games');g.classList.add('loaded');g.setAttribute('aria-busy','false');
     document.getElementById('game-count').textContent=liveGames.length;
+    gzUpdateShowMoreBtn();
     // Animate game count from 0 to actual number for engagement
 // Skip animation if prefers-reduced-motion (WCAG consistency)
 (function(){
@@ -926,7 +948,11 @@ liveGames.sort((a,b)=>(b.isNew?1:0)-(a.isNew?1:0));
   else if('requestAnimationFrame' in window){requestAnimationFrame(doInitialRender)}
   else{doInitialRender()}
 } // end initGames()
-// so GAMES data and const liveGames are lost while skeleton loaders persist.
+// so GAMES data and const liveGames are lost while skeleton loaders persist.// Show More: progressive game loading
+function gzShowMoreGames(){var r=_gzAllGames.length-_gzShownCount;if(r<=0)return;var b=_gzAllGames.slice(_gzShownCount,_gzShownCount+GZ_SHOW_MORE_COUNT);_gzShownCount+=b.length;var g=document.getElementById('games');var h=b.map(function(gm,i){var idx=_gzShownCount-b.length+i;return '<a class="game-card visible" href="'+gm.url+'" data-cat="'+gm.cat+'" itemscope itemtype="https://schema.org/Game" role="listitem" aria-label="'+gm.name+' \u2014 '+(gm.tags[0]||'')+' game. Click to play." style="opacity:1;transform:translateY(0)"><meta itemprop="name" content="'+gm.name+'"><meta itemprop="url" content="https://gamezipper.com'+gm.url+'">'+(gm.isNew?'<span class="new-badge">&#x1F525; NEW</span>':'')+'<button class="gz-fav-btn '+(gzFavs.includes(gm.name)?'active':'')+'" data-game="'+gm.name+'" onclick="event.preventDefault();gzToggleFav(this.dataset.game)" aria-label="Toggle favorite '+gm.name+'">&#x2665;</button><div class="game-thumb" style="background:'+GAME_GRADIENTS[idx%GAME_GRADIENTS.length]+'" itemprop="image"><meta itemprop="contentUrl" content="https://gamezipper.com/og-image.webp">'+gm.emoji+'<div class="overlay"><span class="play-btn">&#x25B6; PLAY</span></div></div><div class="game-info"><h3 itemprop="name">'+gm.name+'</h3><div class="desc" itemprop="description">'+gm.desc+'</div><div class="tags">'+gm.tags.map(function(t){return '<span class="tag">'+t+'</span>'}).join('')+'</div><div class="gz-rating"><span class="gz-star">&#x2605;&#x2605;&#x2605;&#x2605;</span><span style="color:#ffd93d">&#x2605;</span><span class="gz-rating-num">'+(function(s){var h=0;for(var i=0;i<s.length;i++)h=((h<<5)-h)+s.charCodeAt(i);return(4.5+Math.abs(h%5)*0.1).toFixed(1)})(gm.name)+'</span></div><div class="gz-card-tooltip">'+(gm.tags.length?gm.tags[0]+' Game':'Browser Game')+' \u2014 Click to play!</div></div></a>'}).join('');g.insertAdjacentHTML('beforeend',h);gzUpdateShowMoreBtn()}
+function gzUpdateShowMoreBtn(){var w=document.getElementById('gz-show-more-wrap'),b=document.getElementById('gz-show-more'),rc=document.getElementById('gz-remaining-count'),h=document.getElementById('gz-progress-hint');if(!w||!b)return;var r=_gzAllGames.length-_gzShownCount;if(r<=0){w.style.display='none';return}w.style.display='block';rc.textContent='('+Math.min(r,GZ_SHOW_MORE_COUNT)+' more)';h.textContent='Showing '+_gzShownCount+' of '+_gzAllGames.length+' games';b.disabled=false}
+
+
 // Solution: detect bfcache restore, reload games-data.js, then re-render.
 (function() {
   var GAMES_SCRIPT = '/js/games-data.js?v=d0504390';
@@ -941,10 +967,14 @@ liveGames.sort((a,b)=>(b.isNew?1:0)-(a.isNew?1:0));
       if (typeof GAMES !== 'undefined' && typeof render === 'function') {
         var live = GAMES.filter(function(g){ return g.status === 'live'; });
         live.sort(function(a,b){ return (b.isNew?1:0) - (a.isNew?1:0); });
-        render(live);
+        _gzAllGames = live;
+        var batch = live.slice(0, GZ_INITIAL_COUNT);
+        _gzShownCount = batch.length;
+        render(batch);
         grid.classList.add('loaded');
         var countEl = document.getElementById('game-count');
         if (countEl) countEl.textContent = live.length;
+        gzUpdateShowMoreBtn();
       }
     };
     document.head.appendChild(s);
