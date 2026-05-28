@@ -1,11 +1,35 @@
 // GameZipper Service Worker v8
 // Pure game caching — Monetag push NOTIFICATIONS DISABLED per user request
 // Strategies: cache-first (static), stale-while-revalidate with 4h max-age (HTML), network-first (API)
-const CACHE='gz-v8';
+const CACHE='gz-v9';
 const HTML_MAX_AGE=4*60*60*1000; // 4 hours in ms
 
 // === Install ===
 self.addEventListener('install',e=>{
+  // Precache top 5 game pages for instant back-navigation
+  var precacheURLs=[
+    '/2048/',
+    '/snake/',
+    '/tetris/',
+    '/sudoku/',
+    '/solitaire/'
+  ];
+  e.waitUntil(
+    caches.open(CACHE).then(function(c){
+      return Promise.allSettled(
+        precacheURLs.map(function(url){
+          return c.match(url).then(function(r){
+            if(r)return; // already cached
+            return fetch(url).then(function(resp){
+              if(resp&&resp.status===200){
+                return c.put(url,resp.clone());
+              }
+            }).catch(function(){});
+          });
+        })
+      );
+    }).catch(function(){})
+  );
   self.skipWaiting();
 });
 
