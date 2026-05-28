@@ -160,6 +160,21 @@
 
   var cur = location.pathname;
   var current = games.find(function(g){ return g.u === cur; });
+
+  // SAVE current game to localStorage for homepage "Continue Playing" feature
+  // This was missing — caused gz_recent_games to never be populated
+  if (current) {
+    try {
+      var recentList = JSON.parse(localStorage.getItem('gz_recent_games') || '[]');
+      var entry = {name: current.n, emoji: current.e, url: current.u, cat: current.c, ts: Date.now()};
+      // Remove duplicate if exists, then prepend
+      recentList = recentList.filter(function(r) { return r.url !== current.u; });
+      recentList.unshift(entry);
+      // Keep only last 12 games
+      if (recentList.length > 12) recentList = recentList.slice(0, 12);
+      localStorage.setItem('gz_recent_games', JSON.stringify(recentList));
+    } catch(e) {}
+  }
   var sameCat = games.filter(function(g){ return current && g.c === current.c && g.u !== cur; });
    var others = games.filter(function(g){ return g.u !== cur && (!current || g.c !== current.c); });
 
