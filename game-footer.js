@@ -179,7 +179,8 @@
 {n:'Stack Ball',e:'🔴',u:'/stack-ball/',c:'arcade'},
 {n:'Stickman Swing',e:'🏃',u:'/stickman-swing/',c:'arcade'},
 {n:'Threes!',e:'🔢',u:'/threes/',c:'puzzle'},
-{n:'Words Klondike',e:'🃏',u:'/words-klondike/',c:'puzzle'}
+{n:'Words Klondike',e:'🃏',u:'/words-klondike/',c:'puzzle'},
+{n:'Find N Merge',e:'🔍',u:'/find-n-merge/',c:'puzzle'}
 ]; }
    }
    function getDateSeed() {
