@@ -4349,9 +4349,81 @@ function getMilestoneEmoji(levelIdx) {
   if (lv === 2000) return "🔮";
   if (lv === 2500) return "💫";
   if (lv === 3000) return "🏆";
+  if (lv === 3500) return "🌟";
+  if (lv === 4000) return "🎊";
   if (lv % 100 === 0) return "🎉";
   return null;
 }
+
+// ─── Achievement System ───
+const ACHIEVEMENTS = [
+  { id: "first_sort", name: "First Sort!", desc: "Complete your first level", icon: "🧪", check: (s) => s.completed >= 1 },
+  { id: "ten_clear", name: "Getting Started", desc: "Complete 10 levels", icon: "⭐", check: (s) => s.completed >= 10 },
+  { id: "fifty_done", name: "Half Hundred", desc: "Complete 50 levels", icon: "🌟", check: (s) => s.completed >= 50 },
+  { id: "century", name: "Century Club", desc: "Complete 100 levels", icon: "💎", check: (s) => s.completed >= 100 },
+  { id: "two_hundo", name: "Double Century", desc: "Complete 200 levels", icon: "🔥", check: (s) => s.completed >= 200 },
+  { id: "five_hundo", name: "Sort Master", desc: "Complete 500 levels", icon: "👑", check: (s) => s.completed >= 500 },
+  { id: "thousand", name: "Legendary Sorter", desc: "Complete 1000 levels", icon: "🎯", check: (s) => s.completed >= 1000 },
+  { id: "two_k", name: "Sort God", desc: "Complete 2000 levels", icon: "🔮", check: (s) => s.completed >= 2000 },
+  { id: "four_k", name: "Transcendent", desc: "Complete 4000 levels", icon: "🎊", check: (s) => s.completed >= 4000 },
+  { id: "three_star_10", name: "Perfectionist", desc: "Get 3★ on 10 levels", icon: "✨", check: (s) => s.threeStars >= 10 },
+  { id: "three_star_50", name: "Star Collector", desc: "Get 3★ on 50 levels", icon: "🌠", check: (s) => s.threeStars >= 50 },
+  { id: "three_star_100", name: "Star Lord", desc: "Get 3★ on 100 levels", icon: "💫", check: (s) => s.threeStars >= 100 },
+  { id: "streak_3", name: "On Fire", desc: "3-day streak", icon: "🔥", check: (s) => s.streak >= 3 },
+  { id: "streak_7", name: "Weekly Warrior", desc: "7-day streak", icon: "🔥", check: (s) => s.streak >= 7 },
+  { id: "streak_30", name: "Monthly Master", desc: "30-day streak", icon: "🔥", check: (s) => s.streak >= 30 },
+  { id: "hint_free", name: "No Help Needed", desc: "Complete 10 levels without hints", icon: "🧠", check: (s) => s.noHintCount >= 10 },
+  { id: "speed_demon", name: "Speed Demon", desc: "Complete 5 levels in under 30s each", icon: "⚡", check: (s) => s.speedCount >= 5 },
+];
+
+let achievementPopup = null; // { name, icon, timer }
+let earnedAchievements = {};
+
+function loadAchievements() {
+  try {
+    const d = JSON.parse(localStorage.getItem("magicSort_v2") || "{}");
+    earnedAchievements = d.achievements || {};
+  } catch(e) { earnedAchievements = {}; }
+}
+
+function saveAchievements() {
+  try {
+    const d = JSON.parse(localStorage.getItem("magicSort_v2") || "{}");
+    d.achievements = earnedAchievements;
+    localStorage.setItem("magicSort_v2", JSON.stringify(d));
+  } catch(e) {}
+}
+
+function checkAchievements() {
+  const completed = Object.keys(levelStars).length;
+  const threeStars = Object.values(levelStars).filter(s => s === 3).length;
+  const stats = {
+    completed, threeStars,
+    streak: streakCount,
+    noHintCount: (window._noHintStreak || 0),
+    speedCount: (window._speedWins || 0),
+  };
+  let newAchievement = null;
+  for (const a of ACHIEVEMENTS) {
+    if (!earnedAchievements[a.id] && a.check(stats)) {
+      earnedAchievements[a.id] = true;
+      newAchievement = a;
+    }
+  }
+  if (newAchievement) {
+    achievementPopup = { name: newAchievement.name, icon: newAchievement.icon, timer: 180 };
+    sfxWin();
+    saveAchievements();
+  }
+}
+
+loadAchievements();
+
+// Track no-hint and speed runs
+window._noHintStreak = window._noHintStreak || 0;
+window._speedWins = window._speedWins || 0;
+let levelUsedHint = false;
+let levelStartTime = 0;
 
 // ─── Web Share API ───
 async function shareResult() {
@@ -4488,6 +4560,8 @@ function initLevel(idx) {
   bottleWobbles = [];
   bottleBounces = [];
   extraTubeUsed = 0;
+  levelUsedHint = false;
+  levelStartTime = Date.now();
   state = "game";
 }
 
@@ -4631,6 +4705,16 @@ function completePour() {
     spawnConfetti();
     updateStreak();
     levelsToday++;
+    // Achievement tracking
+    if (!levelUsedHint) {
+      window._noHintStreak = (window._noHintStreak || 0) + 1;
+    } else {
+      window._noHintStreak = 0;
+    }
+    if (levelStartTime > 0 && (Date.now() - levelStartTime) < 30000) {
+      window._speedWins = (window._speedWins || 0) + 1;
+    }
+    checkAchievements();
     saveSave();
     // Dispatch custom event for interstitial ad system
     try {
@@ -4747,6 +4831,7 @@ function showHint() {
   hintActive = true;
   hintPhase = 0;
   hintTimer = Date.now();
+  levelUsedHint = true;
   sfxHint();
 }
 
@@ -5573,10 +5658,11 @@ function renderMenu() {
   const completedCount = Object.keys(levelStars).length;
   const totalStars = Object.values(levelStars).reduce((a, b) => a + b, 0);
   const maxStars = TOTAL_LEVELS * 3;
+  const achieved = Object.keys(earnedAchievements).length;
   X.fillStyle = "rgba(255,255,255,0.45)";
   X.font = "600 11px 'Nunito',sans-serif";
   X.textAlign = "center";
-  X.fillText(`Stars ${totalStars}/${maxStars}  |  Done ${completedCount}/${TOTAL_LEVELS}`, W / 2, 52);
+  X.fillText(`Stars ${totalStars}/${maxStars}  |  Done ${completedCount}/${TOTAL_LEVELS}  |  🏅${achieved}/${ACHIEVEMENTS.length}`, W / 2, 52);
 
   // Mini progress bar
   const barW = Math.min(160, W * 0.45);
@@ -6609,6 +6695,44 @@ function gameLoop(timestamp) {
   else if (state === "menu") renderMenu();
   else if (state === "game") renderGame();
   else if (state === "win") renderWin();
+
+  // Achievement popup overlay
+  if (achievementPopup && achievementPopup.timer > 0) {
+    achievementPopup.timer--;
+    const t = achievementPopup.timer;
+    let alpha = 1;
+    if (t > 160) alpha = (180 - t) / 20; // fade in
+    if (t < 30) alpha = t / 30; // fade out
+    const popW = Math.min(260, W * 0.8);
+    const popH = 50;
+    const popX = (W - popW) / 2;
+    const popY = 8;
+    X.save();
+    X.globalAlpha = alpha * 0.92;
+    // Background
+    X.fillStyle = "rgba(30,30,60,0.95)";
+    roundRect(popX, popY, popW, popH, 12);
+    X.fill();
+    X.strokeStyle = "rgba(255,200,50,0.6)";
+    X.lineWidth = 1.5;
+    X.stroke();
+    // Icon
+    X.globalAlpha = alpha;
+    X.font = "24px sans-serif";
+    X.textAlign = "left";
+    X.textBaseline = "middle";
+    X.fillText(achievementPopup.icon, popX + 12, popY + popH / 2);
+    // Text
+    X.fillStyle = "#ffd700";
+    X.font = "700 13px 'Nunito',sans-serif";
+    X.textAlign = "left";
+    X.fillText("Achievement Unlocked!", popX + 44, popY + 16);
+    X.fillStyle = "#fff";
+    X.font = "600 12px 'Nunito',sans-serif";
+    X.fillText(achievementPopup.name, popX + 44, popY + 34);
+    X.restore();
+    if (t <= 1) achievementPopup = null;
+  }
 
   requestAnimationFrame(gameLoop);
 }
