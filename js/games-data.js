@@ -194,7 +194,8 @@ const GAMES = [
 {name:"Onet Connect",emoji:"🀄",cat:"puzzle",tags:["onet","connect","tile","match","pair","puzzle","path","link"],url:"/onet/",desc:"Play Onet Connect free online - the classic tile matching puzzle game. Connect pairs of identical tiles with a path of at most 2 bends. 30 levels, hints, shuffles, and combos.",isNew:true,status:"live"},
 
 
-{name:"Neon Dash",emoji:"⚡",cat:"arcade",tags:["neon","dash","rhythm","platformer","geometry","jump","fly","music","runner"],url:"/neon-dash/",desc:"Play Neon Dash free online - a fast-paced rhythm platformer. One-tap controls, 4 game modes, 30 levels, neon glow effects, and procedural music. Jump, fly, flip and dash through obstacles!",isNew:true,status:"live"}
+{name:"Neon Dash",emoji:"⚡",cat:"arcade",tags:["neon","dash","rhythm","platformer","geometry","jump","fly","music","runner"],url:"/neon-dash/",desc:"Play Neon Dash free online - a fast-paced rhythm platformer. One-tap controls, 4 game modes, 30 levels, neon glow effects, and procedural music. Jump, fly, flip and dash through obstacles!",isNew:true,status:"live"},
+{name:"Pinball",emoji:"🎱",cat:"arcade",tags:["pinball","arcade","flipper","bumper","ramp","neon","physics","ball","classic","retro"],url:"/pinball/",desc:"Play Pinball free online - classic arcade pinball with neon graphics and realistic physics. Flippers, bumpers, ramps, targets, combos, and high score chasing!",isNew:true,status:"live"}
 ];
 
 /**
