@@ -221,3 +221,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Find N Merge",emoji:"🔍",cat:"puzzle",tags:["hidden object","merge","find","search"],url:"/find-n-merge/",desc:"Find hidden objects scattered across scenes, then merge matching items to create higher-tier collectibles in this addictive puzzle game.",isNew:true,status:"live"},
