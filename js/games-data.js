@@ -223,3 +223,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Cover Orange",emoji:"🍊",cat:"puzzle",tags:["physics","protection","drag-and-drop","rain","shelter"],url:"/cover-orange/",desc:"Protect the orange from acid rain! Drag and drop objects to build shelters in this physics puzzle game.",isNew:true,status:"live"},
