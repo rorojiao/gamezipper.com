@@ -1,7 +1,7 @@
-// GameZipper Service Worker v7
+// GameZipper Service Worker v8
 // Pure game caching — Monetag push NOTIFICATIONS DISABLED per user request
 // Strategies: cache-first (static), stale-while-revalidate with 4h max-age (HTML), network-first (API)
-const CACHE='gz-v7';
+const CACHE='gz-v8';
 const HTML_MAX_AGE=4*60*60*1000; // 4 hours in ms
 
 // === Install ===
