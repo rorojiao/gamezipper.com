@@ -220,3 +220,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Word Card Sort",emoji:"🃏",cat:"puzzle",tags:["word","sorting","cards","categories","brain"],url:"/word-card-sort/",desc:"Sort word cards into correct categories in this addictive solitaire-style word puzzle. 50 levels with hints, shuffle and undo.",isNew:true,status:"live"},
