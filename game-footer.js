@@ -175,6 +175,11 @@
 {name:'Waffle',e:'🧇',u:'/waffle/',c:'puzzle'},
 {name:'Contexto',e:'🧠',u:'/contexto/',c:'puzzle'},
 {n:'Pinball',e:'🎱',u:'/pinball/',c:'arcade'},
+{n:'Word Card Sort',e:'🃏',u:'/word-card-sort/',c:'puzzle'},
+{n:'Stack Ball',e:'🔴',u:'/stack-ball/',c:'arcade'},
+{n:'Stickman Swing',e:'🏃',u:'/stickman-swing/',c:'arcade'},
+{n:'Threes!',e:'🔢',u:'/threes/',c:'puzzle'},
+{n:'Words Klondike',e:'🃏',u:'/words-klondike/',c:'puzzle'}
 ]; }
    }
    function getDateSeed() {
