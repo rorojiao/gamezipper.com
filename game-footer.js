@@ -174,6 +174,7 @@
 {name:'Chocolate Bean Storm',e:'🍫',u:'/chocolate-bean-storm/',c:'arcade'},
 {name:'Waffle',e:'🧇',u:'/waffle/',c:'puzzle'},
 {name:'Contexto',e:'🧠',u:'/contexto/',c:'puzzle'},
+{n:'Pinball',e:'🎱',u:'/pinball/',c:'arcade'},
 ]; }
    }
    function getDateSeed() {
