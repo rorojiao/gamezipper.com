@@ -219,3 +219,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Knit Off",emoji:"🧶",cat:"puzzle",tags:["cozy","thread","yarn","untangle","sorting"],url:"/knit-off/",desc:"Untangle colorful yarn threads in this cozy puzzle game. Drag threads between pegs to solve satisfying tangle puzzles with 50 levels.",isNew:true,status:"live"},
