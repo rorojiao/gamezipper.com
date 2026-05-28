@@ -191,6 +191,7 @@ const GAMES = [
 {name:"Words Klondike",emoji:"🃏",cat:"puzzle",tags:["word","cards","solitaire","category","sorting","brain","trivia","vocabulary"],url:"/words-klondike/",desc:"Play Words Klondike free online - a relaxing word association solitaire puzzle. Flip cards, match words to categories, and clear the board. 50 levels across 10 themed packs. No download required.",isNew:true,status:"live"},
 {name:"Stack Ball",emoji:"🔴",cat:"arcade",tags:["stack","ball","smash","helix","drop"],url:"/stack-ball/",desc:"Smash your ball through colorful helix platforms, dodge black obstacles, and chain combos for epic fireball mode",isNew:true,status:"live"},
 {name:"Text Twist",emoji:"🔤",cat:"puzzle",tags:["text","twist","word","anagram","unscramble","letters","puzzle","vocabulary"],url:"/text-twist/",desc:"Unscramble 6 letters to find all hidden words! Play Classic, Untimed, or Lightning mode. Twist, shuffle, and use hints in this addictive word puzzle game.",isNew:true,status:"live"},
+{name:"Onet Connect",emoji:"🀄",cat:"puzzle",tags:["onet","connect","tile","match","pair","puzzle","path","link"],url:"/onet/",desc:"Play Onet Connect free online - the classic tile matching puzzle game. Connect pairs of identical tiles with a path of at most 2 bends. 30 levels, hints, shuffles, and combos.",isNew:true,status:"live"},
 
 ];
 
