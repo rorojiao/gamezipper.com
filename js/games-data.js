@@ -197,7 +197,8 @@ const GAMES = [
 {name:"Neon Dash",emoji:"⚡",cat:"arcade",tags:["neon","dash","rhythm","platformer","geometry","jump","fly","music","runner"],url:"/neon-dash/",desc:"Play Neon Dash free online - a fast-paced rhythm platformer. One-tap controls, 4 game modes, 30 levels, neon glow effects, and procedural music. Jump, fly, flip and dash through obstacles!",isNew:true,status:"live"},
 {name:"Pinball",emoji:"🎱",cat:"arcade",tags:["pinball","arcade","flipper","bumper","ramp","neon","physics","ball","classic","retro"],url:"/pinball/",desc:"Play Pinball free online - classic arcade pinball with neon graphics and realistic physics. Flippers, bumpers, ramps, targets, combos, and high score chasing!",isNew:true,status:"live"},
 {name:"Knit Off",emoji:"🧶",cat:"puzzle",tags:["cozy","thread","yarn","untangle","sorting"],url:"/knit-off/",desc:"Untangle colorful yarn threads in this cozy puzzle game. Drag threads between pegs to solve satisfying tangle puzzles with 50 levels.",isNew:true,status:"live"},
-  {name:"Word Card Sort",emoji:"🃏",cat:"puzzle",tags:["word","sorting","cards","categories","brain"],url:"/word-card-sort/",desc:"Sort word cards into correct categories in this addictive solitaire-style word puzzle. 50 levels with hints, shuffle and undo.",isNew:true,status:"live"}
+  {name:"Word Card Sort",emoji:"🃏",cat:"puzzle",tags:["word","sorting","cards","categories","brain"],url:"/word-card-sort/",desc:"Sort word cards into correct categories in this addictive solitaire-style word puzzle. 50 levels with hints, shuffle and undo.",isNew:true,status:"live"},
+  {name:"Find N Merge",emoji:"🔍",cat:"puzzle",tags:["hidden object","merge","find","search"],url:"/find-n-merge/",desc:"Find hidden objects scattered across scenes, then merge matching items to create higher-tier collectibles in this addictive puzzle game.",isNew:true,status:"live"}
 ];
 
 /**
@@ -221,4 +222,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Find N Merge",emoji:"🔍",cat:"puzzle",tags:["hidden object","merge","find","search"],url:"/find-n-merge/",desc:"Find hidden objects scattered across scenes, then merge matching items to create higher-tier collectibles in this addictive puzzle game.",isNew:true,status:"live"},
