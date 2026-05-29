@@ -232,3 +232,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Who Is",emoji:"🔍",cat:"puzzle",tags:["detective","logic","brain-teaser","mystery"],url:"/who-is/",desc:"Solve 40+ detective puzzles by finding clues, spotting liars, and catching imposters. Test your observation skills!",isNew:true,status:"live"},
