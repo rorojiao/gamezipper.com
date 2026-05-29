@@ -155,8 +155,46 @@
       {n:'Euchre',e:'♠️',u:'/euchre/',c:'card'},
       {n:'Wordle',e:'🔤',u:'/wordle/',c:'puzzle'},
       {n:'Hidden Object',e:'🔍',u:'/hidden-object/',c:'puzzle'},
-      {n:'Tiny Fishing',e:'🎣',u:'/tiny-fishing/',c:'casual'},{n:"Threes!",e:"🔢",u:"/threes/",c:"puzzle"}
-    ];
+      {n:'Tiny Fishing',e:'🎣',u:'/tiny-fishing/',c:'casual'},{n:"Threes!",e:"🔢",u:"/threes/",c:"puzzle"},
+      {n:'Doodle Jump',e:'🐸',u:'/doodle-jump/',c:'arcade'},
+      {n:'Papas Freezeria',e:'🍦',u:'/papas-freezeria/',c:'simulation'},
+      {n:'Gravity Run',e:'🏃',u:'/gravity-run/',c:'arcade'},
+      {n:'Cookie Clicker',e:'🍪',u:'/cookie-clicker/',c:'idle'},
+      {n:'Moto X3M',e:'🏍️',u:'/moto-x3m/',c:'racing'},
+      {n:'Math 24',e:'🔢',u:'/math-24/',c:'puzzle'},
+      {n:'Mind Reader',e:'🔮',u:'/akinator/',c:'puzzle'},
+      {n:'Blocky Blast',e:'🧱',u:'/blocky-blast/',c:'puzzle'},
+      {n:'Pin Master',e:'📌',u:'/pin-master/',c:'puzzle'},
+      {n:'Word Scramble',e:'🔤',u:'/word-scramble/',c:'puzzle'},
+      {n:'There Is No Game',e:'🎮',u:'/there-is-no-game/',c:'puzzle'},
+      {n:'Bloxorz',e:'🔲',u:'/bloxorz/',c:'puzzle'},
+      {n:'Draw To Home',e:'🏠',u:'/draw-to-home/',c:'puzzle'},
+      {n:'Duck Life',e:'🦆',u:'/duck-life/',c:'puzzle'},
+      {n:'Type Racer',e:'⌨️',u:'/type-racer/',c:'skill'},
+      {n:'Drift Boss',e:'🏎️',u:'/drift-boss/',c:'racing'},
+      {n:'Blockudoku',e:'🧩',u:'/blockudoku/',c:'puzzle'},
+      {n:'Thief Puzzle',e:'🦝',u:'/thief-puzzle/',c:'puzzle'},
+      {n:'Text Twist',e:'🔤',u:'/text-twist/',c:'puzzle'},
+      {n:'Onet Connect',e:'🔗',u:'/onet/',c:'puzzle'},
+      {n:'Neon Dash',e:'⚡',u:'/neon-dash/',c:'arcade'},
+      {n:'Knit Off',e:'🧶',u:'/knit-off/',c:'puzzle'},
+      {n:'Infinity Loop',e:'♾️',u:'/infinity-loop/',c:'puzzle'},
+      {n:'Tens',e:'🔢',u:'/tens-game/',c:'puzzle'},
+      {n:'Pinball',e:'🎱',u:'/pinball/',c:'arcade'},
+      {n:'Word Card Sort',e:'🃏',u:'/word-card-sort/',c:'puzzle'},
+      {n:'Stack Ball',e:'🔴',u:'/stack-ball/',c:'arcade'},
+      {n:'Stickman Swing',e:'🏃',u:'/stickman-swing/',c:'arcade'},
+      {n:'Words Klondike',e:'🃏',u:'/words-klondike/',c:'puzzle'},
+      {n:'Find N Merge',e:'🔍',u:'/find-n-merge/',c:'puzzle'},
+          {n:'Cover Orange',e:'🍊',u:'/cover-orange/',c:'puzzle'},
+      {n:"Rubik's Cube",e:'🧊',u:'/rubiks-cube/',c:'puzzle'},
+      {n:'Chocolate Bean Storm',e:'🍫',u:'/chocolate-bean-storm/',c:'arcade'},
+      {n:'Compound Word',e:'🔗',u:'/compound-word/',c:'puzzle'},
+      {n:'Contexto',e:'🧠',u:'/contexto/',c:'puzzle'},
+      {n:'Quordle',e:'🔤',u:'/quordle/',c:'puzzle'},
+      {n:'Schulte Table',e:'🧠',u:'/schulte-table/',c:'puzzle'},
+      {n:'Waffle',e:'🧇',u:'/waffle/',c:'puzzle'},
+];
 
   var cur = location.pathname;
   var current = games.find(function(g){ return g.u === cur; });
@@ -309,11 +347,4 @@
      setTimeout(init, 100);
    }
  }
-},
-{n:'Doodle Jump',e:'🐸',u:'/doodle-jump/',c:'arcade'},
-{n:'Papas Freezeria',e:'🍦',u:'/papas-freezeria/',c:'simulation'},
-{n:'Gravity Run',e:'🏃',u:'/gravity-run/',c:'arcade'},
-{n:'Cookie Clicker',e:'🍪',u:'/cookie-clicker/',c:'idle'},{n:'Moto X3M',e:'🏍️',u:'/moto-x3m/',c:'racing'},{n:'Math 24',e:'🔢',u:'/math-24/',c:'puzzle'},{n:'Mind Reader',e:'🔮',u:'/akinator/',c:'puzzle'},{n:'Blocky Blast',e:'🧱',u:'/blocky-blast/',c:'puzzle'},{n:'Pin Master',e:'📌',u:'/pin-master/',c:'puzzle'},{n:'Word Scramble',e:'🔤',u:'/word-scramble/',c:'puzzle'},{n:'There Is No Game',e:'🎮',u:'/there-is-no-game/',c:'puzzle'},
-  {n:'Bloxorz',e:'🔲',u:'/bloxorz/',c:'puzzle'},
-  {n:'Draw To Home',e:'🏠',u:'/draw-to-home/',c:'puzzle'},{n:'Duck Life',e:'🦆',u:'/duck-life/',c:'puzzle'},{n:'Type Racer',e:'⌨️',u:'/type-racer/',c:'skill'},{n:"Stickman Swing",e:"🏃",u:"/stickman-swing/",c:"arcade"},
-{n:'Drift Boss',e:'🏎️',u:'/drift-boss/',c:'racing'},{n:'Blockudoku',e:'🧩',u:'/blockudoku/',c:'puzzle'},{n:"Rubik's Cube",e:'🧊',u:'/rubiks-cube/',c:'puzzle'},{n:'Thief Puzzle',e:'🦝',u:'/thief-puzzle/',c:'puzzle'},{n:"Words Klondike",e:"📚",u:"/words-klondike/",c:"word"},{n:"Stack Ball",e:"🔴",u:"/stack-ball/",c:"arcade"},{n:'Text Twist',e:'🔤',u:'/text-twist/',c:'puzzle'},{n:'Onet Connect',e:'🔗',u:'/onet/',c:'puzzle'},{n:'Neon Dash',e:'⚡',u:'/neon-dash/',c:'arcade'},{n:'Knit Off',e:'🧶',u:'/knit-off/',c:'puzzle'},{n:'Infinity Loop',e:'♾️',u:'/infinity-loop/',c:'puzzle'},{n:"Cover Orange",e:"🍊",u:"/cover-orange/",c:"puzzle"})();
+})();
