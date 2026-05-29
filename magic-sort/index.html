@@ -221,6 +221,15 @@ const COLORS = [
   { name: "Gold",   top: "#fbbf24", mid: "#fde68a", bot: "#d97706", glow: "rgba(251,191,36,0.35)" },
   { name: "Periwinkle", top: "#8b9cf7", mid: "#b8c4fd", bot: "#5b6abf", glow: "rgba(139,156,247,0.35)" },
   { name: "Copper", top: "#c27830", mid: "#d4956b", bot: "#8b5a2b", glow: "rgba(194,120,48,0.35)" },
+  { name: "Lavender", top: "#b088f9", mid: "#c9a8ff", bot: "#7c5cbf", glow: "rgba(176,136,249,0.35)" },
+  { name: "Salmon", top: "#fa8072", mid: "#ffb4aa", bot: "#c45c52", glow: "rgba(250,128,114,0.35)" },
+  { name: "Olive", top: "#9ab44a", mid: "#b8cc6e", bot: "#6f8234", glow: "rgba(154,180,74,0.35)" },
+  { name: "Magenta", top: "#e040fb", mid: "#ea80fc", bot: "#a020b0", glow: "rgba(224,64,251,0.35)" },
+  { name: "Steel", top: "#71797E", mid: "#9ea7ad", bot: "#4a5256", glow: "rgba(113,121,126,0.35)" },
+  { name: "Peach", top: "#ffccbc", mid: "#ffe0d4", bot: "#d4a594", glow: "rgba(255,204,188,0.35)" },
+  { name: "Turquoise", top: "#40e0d0", mid: "#80fff0", bot: "#2aac9e", glow: "rgba(64,224,208,0.35)" },
+  { name: "Maroon", top: "#800020", mid: "#b03050", bot: "#500015", glow: "rgba(128,0,32,0.35)" },
+  { name: "Navy", top: "#1a1a6e", mid: "#4040a0", bot: "#0a0a40", glow: "rgba(26,26,110,0.35)" },
 ];
 
 // ─── Level Definitions (5000 levels) ───
@@ -5900,7 +5909,7 @@ function getBottleLayout() {
   const layerH = (bh * 0.82) / 4;
   const gapX = (W - cols * bw) / (cols + 1);
   const gapY = Math.min(18, (H - 120 - rows * bh) / Math.max(rows, 1));
-  const startY = 70;
+  const startY = 106;
   const cx = [], topY = [], cy = [];
   for (let i = 0; i < total; i++) {
     const c = i % cols, r = Math.floor(i / cols);
@@ -6752,7 +6761,12 @@ function renderMenu() {
         X.font = "700 13px 'Nunito',sans-serif";
         X.textAlign = "left";
         X.textBaseline = "middle";
-        X.fillText(section.label + " (" + (i + 1) + "-" + (DIFF_SECTIONS[DIFF_SECTIONS.indexOf(section) + 1] ? DIFF_SECTIONS[DIFF_SECTIONS.indexOf(section) + 1].start : TOTAL_LEVELS) + ")", 14, sy + headerH / 2);
+        // Calculate section completion
+        const secEndIdx = DIFF_SECTIONS[DIFF_SECTIONS.indexOf(section) + 1] ? DIFF_SECTIONS[DIFF_SECTIONS.indexOf(section) + 1].start : TOTAL_LEVELS;
+        let secDone = 0;
+        for (let si = section.start; si < secEndIdx; si++) { if (levelStars[si]) secDone++; }
+        const secPctMenu = Math.round(secDone / Math.max(1, secEndIdx - section.start) * 100);
+        X.fillText(section.label + " (" + (i + 1) + "-" + secEndIdx + ")" + (secPctMenu > 0 ? " " + secPctMenu + "%" : ""), 14, sy + headerH / 2);
         // Divider line
         X.strokeStyle = section.color + "33";
         X.lineWidth = 1;
@@ -6974,6 +6988,40 @@ function renderGame() {
   X.textBaseline = "middle";
   X.fillText(etbLabel, 10 + etbW / 2, etbY + etbH / 2);
 
+  // ── Chapter Progress Bar (below HUD buttons) ──
+  const progBarY = 96;
+  const progBarH = 4;
+  const progBarX = 14;
+  const progBarW = W - 28;
+  // Find current section boundaries
+  const curSecIdx = DIFF_SECTIONS.findIndex(s => s.start > currentLevel) - 1;
+  const secStart = curSecIdx >= 0 ? DIFF_SECTIONS[curSecIdx].start : 0;
+  const secEnd = curSecIdx + 1 < DIFF_SECTIONS.length ? DIFF_SECTIONS[curSecIdx + 1].start : TOTAL_LEVELS;
+  const secProgress = (currentLevel - secStart) / Math.max(1, secEnd - secStart);
+  // Count completed levels in section
+  let secCompleted = 0;
+  for (let si = secStart; si < secEnd; si++) {
+    if (levelStars[si]) secCompleted++;
+  }
+  const secPct = Math.round(secCompleted / Math.max(1, secEnd - secStart) * 100);
+  // Background
+  X.fillStyle = "rgba(255,255,255,0.08)";
+  roundRect(progBarX, progBarY, progBarW, progBarH, 2);
+  X.fill();
+  // Fill
+  const secColor = curSecIdx >= 0 ? DIFF_SECTIONS[curSecIdx].color : "#6c5ce7";
+  X.fillStyle = secColor;
+  X.globalAlpha = 0.6;
+  roundRect(progBarX, progBarY, Math.max(4, progBarW * secProgress), progBarH, 2);
+  X.fill();
+  X.globalAlpha = 1;
+  // Progress text
+  X.fillStyle = "rgba(255,255,255,0.3)";
+  X.font = "500 9px 'Nunito',sans-serif";
+  X.textAlign = "right";
+  X.textBaseline = "middle";
+  X.fillText(secPct + "% done (" + secCompleted + "/" + (secEnd - secStart) + ")", W - 14, progBarY + progBarH / 2 + 1);
+
   // AD SLOT placeholder area
   // X.fillStyle="rgba(255,255,255,0.03)"; X.fillRect(0,H-50,W,50);
 
@@ -7147,7 +7195,7 @@ function renderWin() {
 
   X.globalAlpha = ease;
   const cardW = Math.min(300, W * 0.85);
-  const cardH = 280;
+  const cardH = 300;
   const cardX = (W - cardW) / 2;
   const cardY = (H - cardH) / 2 - 15;
 
@@ -7226,12 +7274,34 @@ function renderWin() {
     X.fillText(milestone + " Level " + (currentLevel + 1) + " Milestone!", W / 2, cardY + (streakCount >= 2 ? 180 : 165));
   }
 
+  // ── Overall progress bar in win screen ──
+  const totalCompleted = Object.keys(levelStars).length;
+  const overallPct = Math.round(totalCompleted / TOTAL_LEVELS * 100);
+  const wProgY = cardY + (streakCount >= 2 || milestone ? 192 : 175);
+  const wProgW = cardW * 0.7;
+  const wProgX = (W - wProgW) / 2;
+  const wProgH = 3;
+  // Bar background
+  X.fillStyle = "rgba(255,255,255,0.1)";
+  roundRect(wProgX, wProgY, wProgW, wProgH, 1.5);
+  X.fill();
+  // Bar fill
+  X.fillStyle = "rgba(108,92,231,0.7)";
+  roundRect(wProgX, wProgY, Math.max(3, wProgW * (totalCompleted / TOTAL_LEVELS)), wProgH, 1.5);
+  X.fill();
+  // Text
+  X.fillStyle = "rgba(255,255,255,0.35)";
+  X.font = "500 9px 'Nunito',sans-serif";
+  X.textAlign = "center";
+  X.textBaseline = "top";
+  X.fillText(overallPct + "% complete (" + totalCompleted + "/" + TOTAL_LEVELS + ")", W / 2, wProgY + wProgH + 2);
+
   // Buttons
   const btnW = 90, btnH = 40, btnGap = 8;
   const totalBtns = (currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1]) ? 4 : 3;
   const totalW = totalBtns * btnW + (totalBtns - 1) * btnGap;
   const btnStartX = W / 2 - totalW / 2;
-  const by = cardY + (streakCount >= 2 || milestone ? 195 : 178);
+  const by = cardY + (streakCount >= 2 || milestone ? 210 : 193);
   drawButton(btnStartX, by, btnW, btnH, "↻ Retry", hoverBtn === 20, false);
   let btnIdx = 1;
   const hasNext = currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1];
@@ -7610,7 +7680,7 @@ function onTap(px, py) {
   // ── Win ──
   if (state === "win") {
     const cardW = Math.min(300, W * 0.85);
-    const cardH = 280;
+    const cardH = 300;
     const cardX = (W - cardW) / 2;
     const cardY = (H - cardH) / 2 - 15;
     const wBtnW = 90, wBtnH = 40, wBtnGap = 8;
@@ -7619,7 +7689,7 @@ function onTap(px, py) {
     const totalBtns = hasNextBtn ? 4 : 3;
     const totalBtnW = totalBtns * wBtnW + (totalBtns - 1) * wBtnGap;
     const bsX = W / 2 - totalBtnW / 2;
-    const wBy = cardY + (streakCount >= 2 || milestone ? 195 : 178);
+    const wBy = cardY + (streakCount >= 2 || milestone ? 210 : 193);
 
     // Retry button (index 0)
     if (hitTest(px, py, bsX, wBy, wBtnW, wBtnH)) {
