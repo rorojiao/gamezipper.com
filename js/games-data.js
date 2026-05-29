@@ -224,3 +224,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Tens",emoji:"🔟",cat:"puzzle",tags:["number","math","strategy","add","logic"],url:"/tens-game/",desc:"TENS is a relaxing number puzzle. Place numbers on a 5x5 grid and clear adjacent pairs that sum to 10. Chain combos for high scores.",isNew:true,status:"live"},
