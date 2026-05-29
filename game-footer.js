@@ -238,7 +238,9 @@
 {n:'Stickman Swing',e:'🏃',u:'/stickman-swing/',c:'arcade'},
 {n:'Threes!',e:'🔢',u:'/threes/',c:'puzzle'},
 {n:'Words Klondike',e:'🃏',u:'/words-klondike/',c:'puzzle'},
-{n:'Find N Merge',e:'🔍',u:'/find-n-merge/',c:'puzzle'}
+{n:'Find N Merge',e:'🔍',u:'/find-n-merge/',c:'puzzle'},
+  {n:'Cryptograms',e:'🔐',u:'/cryptograms/',c:'puzzle'},
+  {n:'Mekorama',e:'🤖',u:'/mekorama/',c:'puzzle'}
 ]; }
    }
    function getDateSeed() {
