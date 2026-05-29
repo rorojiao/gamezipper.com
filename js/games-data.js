@@ -204,7 +204,9 @@ const GAMES = [
 {name:"Cover Orange",emoji:"🍊",cat:"puzzle",tags:["physics","protection","drag-and-drop","rain","shelter"],url:"/cover-orange/",desc:"Protect the orange from acid rain! Drag and drop objects to build shelters in this physics puzzle game.",isNew:true,status:"live"},
 {name:"Tens",emoji:"🔢",cat:"puzzle",tags:["number","math","strategy","add","logic"],url:"/tens-game/",desc:"TENS is a relaxing number puzzle. Place numbers on a 5x5 grid and clear adjacent pairs that sum to 10. Chain combos for high scores.",isNew:true,status:"live"},
 {name:"BoxRob",emoji:"📦",cat:"puzzle",tags:["physics","platformer","box","puzzle","push"],url:"/boxrob/",desc:"Push boxes to solve physics platformer puzzles in 40 challenging levels. Play BoxRob free online!",isNew:true,status:"live"},
-  {name:"Mekorama",emoji:"🤖",cat:"puzzle",tags:["isometric","diorama","3d puzzle","rotation","pathfinding","brain teaser","casual","relaxing"],url:"/mekorama/",desc:"Guide a cute robot through charming 3D isometric diorama worlds! Tap to move, rotate the view to find hidden paths, collect stars, and solve 50 handcrafted puzzles across 10 themed packs.",isNew:true,status:"live"}
+  {name:"Mekorama",emoji:"🤖",cat:"puzzle",tags:["isometric","diorama","3d puzzle","rotation","pathfinding","brain teaser","casual","relaxing"],url:"/mekorama/",desc:"Guide a cute robot through charming 3D isometric diorama worlds! Tap to move, rotate the view to find hidden paths, collect stars, and solve 50 handcrafted puzzles across 10 themed packs.",isNew:true,status:"live"},
+
+{name:"100 Doors Puzzle Box",emoji:"🚪",cat:"puzzle",tags:["100 doors","escape","puzzle","point and click","brain teaser","door puzzle","escape room","hidden objects","logic"],url:"100-doors",desc:"Open 50 locked doors by solving clever puzzles! Tap, drag, and think your way through unique brain-teasing escape challenges across 5 themed zones.",rating:4.8,isNew:true,status:"live"}
 ];
 
 /**

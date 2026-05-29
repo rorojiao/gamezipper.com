@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Play 100 Doors Puzzle Box Online Free - Escape Door Puzzle Game | GameZipper</title>
+<meta name="description" content="Play 100 Doors Puzzle Box free online! Solve escape door puzzles across 50 challenging levels in 5 themed zones. A point-and-click brain teaser game at GameZipper.">
+<meta name="keywords" content="100 doors, puzzle box, escape game, door puzzle, point and click, brain teaser, online game, free game">
+<meta name="robots" content="index,follow">
+<meta name="author" content="GameZipper">
+<link rel="canonical" href="https://gamezipper.com/100-doors/">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚪</text></svg>">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Play 100 Doors Puzzle Box Online Free - Escape Door Puzzle Game | GameZipper">
+<meta property="og:description" content="Solve 50 escape door puzzles across 5 themed zones. Free online point-and-click brain teaser game.">
+<meta property="og:url" content="https://gamezipper.com/100-doors/">
+<meta property="og:site_name" content="GameZipper">
+<meta property="og:image" content="https://gamezipper.com/100-doors/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="100 Doors Puzzle Box - Free Online Escape Door Game">
+<meta name="twitter:description" content="Solve 50 escape door puzzles across 5 themed zones. Free online point-and-click brain teaser.">
+<meta name="twitter:image" content="https://gamezipper.com/100-doors/og-image.png">
+<script src="/monetag-manager.js"></script>
+<script src="https://site-analytics.gamezipper.com/script.js" data-website-id="a1b2c3d4-e5f6-7890-abcd-ef1234567890" defer></script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[{"@type":"VideoGame","name":"100 Doors Puzzle Box","description":"A point-and-click escape door puzzle game with 50 levels across 5 themed zones.","genre":"Puzzle","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","availability":"https://schema.org/InStock"},"url":"https://gamezipper.com/100-doors/","publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How many levels are in 100 Doors Puzzle Box?","acceptedAnswer":{"@type":"Answer","text":"The game features 50 levels across 5 themed zones: The Cottage, The Library, The Laboratory, The Tower, and The Vault."}},{"@type":"Question","name":"Is 100 Doors Puzzle Box free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes, the game is completely free to play online in your web browser."}},{"@type":"Question","name":"What types of puzzles are in the game?","acceptedAnswer":{"@type":"Answer","text":"The game includes 15+ puzzle types: tap mechanics, hidden objects, color sequences, number codes, sliding panels, light patterns, rotation dials, memory sequences, timing challenges, and more."}}]},{"@type":"HowTo","name":"How to Play 100 Doors Puzzle Box","step":[{"@type":"HowToStep","name":"Open the Game","text":"Navigate to the game page and click Play to start."},{"@type":"HowToStep","name":"Select a Level","text":"Choose a zone and pick any unlocked level to begin."},{"@type":"HowToStep","name":"Solve the Puzzle","text":"Interact with objects on screen to find clues and solve each door's unique puzzle."},{"@type":"HowToStep","name":"Open the Door","text":"Use hints if needed. Complete the puzzle to open the door and earn stars."}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Games","item":"https://gamezipper.com/games/"},{"@type":"ListItem","position":3,"name":"100 Doors Puzzle Box","item":"https://gamezipper.com/100-doors/"}]}]}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif;touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+canvas{display:block;width:100%;height:100%;touch-action:manipulation}
+</style>
+</head>
+<body>
+<canvas id="gc"></canvas>
+<script>
+var C=document.getElementById('gc'),X=C.getContext('2d');
+var W=800,H=600,dpr=1;
+var audioCtx=null,animId=null,gameState='menu',currentZone=0,currentLevel=0;
+var menuBtn=[],zoneBtn=[],levelBtn=[],gameObjects=[],gameUI=[];
+var levelStartTime=0,hintsUsed=0,hintShown=-1,victoryShown=false;
+var doorOpenAnim=0,doorOpening=false,starsEarned=0;
+var dragObj=null,dragX=0,dragY=0,dragOffX=0,dragOffY=0;
+var codeInput='',codeDisplay='',selectedDial=0;
+var sequenceInput=[],flashTimer=0,flashObj=-1;
+var timerMoving=false,timerPos=0,timerDir=1,timerHit=false;
+var puzzleSolved=false,levelData=null;
+var hoverObj=null,totalStars=0;
+
+// --- SAVE SYSTEM ---
+function loadSave(){try{var d=JSON.parse(localStorage.getItem('doors100')||'{}');return d;}catch(e){return {};}}
+function saveSave(d){try{localStorage.setItem('doors100',JSON.stringify(d));}catch(e){}}
+var saveData=loadSave();
+if(!saveData.levels)saveData.levels={};
+if(!saveData.zones)saveData.zones={0:true};
+
+function isLevelComplete(lid){return saveData.levels[lid]&&saveData.levels[lid].complete;}
+function getLevelStars(lid){return saveData.levels[lid]?saveData.levels[lid].stars:0;}
+function isZoneUnlocked(z){if(z===0)return true;for(var i=(z-1)*10+1;i<=z*10;i++){if(!isLevelComplete(i))return false;}return true;}
+function calcStars(timeMs,hints){if(hints===0&&timeMs<20000)return 3;if(hints<=1&&timeMs<45000)return 2;return 1;}
+
+// --- AUDIO ---
+function initAudio(){if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();}}
+function playTone(freq,dur,type,vol){
+  if(!audioCtx)return;try{
+  var o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=type||'sine';o.frequency.value=freq;
+  g.gain.value=vol||0.15;g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+  o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+function sndClick(){playTone(600,0.08,'sine',0.12);}
+function sndSuccess(){playTone(523,0.15,'sine',0.15);setTimeout(function(){playTone(659,0.15,'sine',0.15);},120);setTimeout(function(){playTone(784,0.25,'sine',0.18);},240);}
+function sndFail(){playTone(200,0.2,'sawtooth',0.1);}
+function sndHint(){playTone(440,0.1,'triangle',0.1);}
+function sndOpen(){playTone(300,0.3,'sine',0.1);setTimeout(function(){playTone(400,0.3,'sine',0.12);},150);}
+
+// --- RESIZE ---
+function resize(){
+  dpr=window.devicePixelRatio||1;
+  W=window.innerWidth;H=window.innerHeight;
+  C.width=W*dpr;C.height=H*dpr;
+  C.style.width=W+'px';C.style.height=H+'px';
+  X.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize',resize);
+resize();
+
+// --- UTILITY ---
+function inRect(px,py,rx,ry,rw,rh){return px>=rx&&px<=rx+rw&&py>=ry&&py<=ry+rh;}
+function lerp(a,b,t){return a+(b-a)*t;}
+function formatTime(ms){var s=Math.floor(ms/1000);var m=Math.floor(s/60);s=s%60;return m+':'+(s<10?'0':'')+s;}
+
+// --- ZONES ---
+var zones=[
+  {name:'The Cottage',color1:'#8B6914',color2:'#5C3A11',accent:'#D4A547'},
+  {name:'The Library',color1:'#3A2618',color2:'#1A0E08',accent:'#8B7355'},
+  {name:'The Laboratory',color1:'#1A3A2A',color2:'#0A1A12',accent:'#4A8B6A'},
+  {name:'The Tower',color1:'#2A1A3A',color2:'#12081A',accent:'#8B5A9B'},
+  {name:'The Vault',color1:'#3A1A1A',color2:'#1A0808',accent:'#9B4A4A'}
+];
+
+// --- LEVEL DEFINITIONS ---
+// Puzzle types: tap,key,colorcode,numcode,slide,lightpattern,drag,rotate,math,switches,memory,puzzle,timing,count,symbol,word cipher,order,wire,colorflip,simon,path,dialcombo,grid,mirror,morse,ratchet,valve,circuit,maze,blink
+var LT={TAP:1,KEY:2,COLOR:3,NUMCODE:4,SLIDE:5,LIGHT:6,DRAG:7,ROTATE:8,MATH:9,SWITCH:10,MEMORY:11,PUZZLE:12,TIMING:13,COUNT:14,SYMBOL:15,CIPHER:16,ORDER:17,WIRE:18,COLORFLIP:19,SIMON:20,PATH:21,DIAL:22,GRID:23,MIRROR:24,RATCHET:25,VALVE:26};
+
+function makeLevels(){
+var L=[];
+// Zone 1: The Cottage (1-10)
+L.push({id:1,zone:0,name:'Just Open It',pt:LT.TAP,parTime:10000,
+  objects:[{type:'handle',x:0.62,y:0.45,w:0.04,h:0.06,color:'#C0A040',id:'handle'}],
+  hints:['Try tapping the door handle.','The handle is on the right side of the door.','Just tap the handle!'],
+  solution:'handle'});
+L.push({id:2,zone:0,name:'Hidden Key',pt:LT.KEY,parTime:25000,
+  objects:[{type:'vase',x:0.12,y:0.6,w:0.08,h:0.12,color:'#B87333',id:'vase',hasKey:true},
+    {type:'lock',x:0.5,y:0.48,w:0.06,h:0.06,color:'#888',id:'lock'}],
+  hints:['Look behind objects for a key.','The vase might be hiding something.','Drag the key from the vase to the lock.'],
+  solution:'keyToLock'});
+L.push({id:3,zone:0,name:'Color Sequence',pt:LT.COLOR,parTime:30000,
+  objects:[{type:'painting',x:0.08,y:0.15,w:0.15,h:0.2,color:'#FF4444',id:'c1'},{type:'painting',x:0.25,y:0.15,w:0.15,h:0.2,color:'#44FF44',id:'c2'},
+    {type:'painting',x:0.6,y:0.15,w:0.15,h:0.2,color:'#4444FF',id:'c3'},{type:'painting',x:0.77,y:0.15,w:0.15,h:0.2,color:'#FFFF44',id:'c4'}],
+  hints:['Notice the color order.','The paintings show a sequence.','Tap: Red, Green, Blue, Yellow.'],
+  solution:['c1','c2','c3','c4']});
+L.push({id:4,zone:0,name:'Secret Numbers',pt:LT.NUMCODE,parTime:35000,
+  objects:[{type:'clock',x:0.1,y:0.2,w:0.1,h:0.12,color:'#DDD',val:7,id:'cl1'},{type:'book',x:0.78,y:0.55,w:0.08,h:0.06,color:'#8B4513',val:3,id:'cl2'},
+    {type:'plant',x:0.12,y:0.7,w:0.07,h:0.1,color:'#228B22',val:5,id:'cl3'},{type:'shelf',x:0.75,y:0.2,w:0.15,h:0.06,color:'#654321',val:9,id:'cl4'}],
+  hints:['Numbers are hidden around the room.','Look at the clock, book, plant, and shelf.','The code is 7359.'],
+  solution:'7359'});
+L.push({id:5,zone:0,name:'Slide to Reveal',pt:LT.SLIDE,parTime:20000,
+  objects:[{type:'panel',x:0.4,y:0.7,w:0.2,h:0.06,color:'#8B7355',id:'panel',slideX:0.2},
+    {type:'button',x:0.5,y:0.72,w:0.05,h:0.05,color:'#FF4444',id:'hiddenbtn',hidden:true}],
+  hints:['Try sliding the panel at the bottom.','Slide it to the right.','Press the revealed button.'],
+  solution:'hiddenbtn'});
+L.push({id:6,zone:0,name:'Light Pattern',pt:LT.LIGHT,parTime:35000,
+  objects:[{type:'dot',x:0.35,y:0.3,w:0.06,h:0.06,color:'#FF4444',id:'d1'},{type:'dot',x:0.45,y:0.3,w:0.06,h:0.06,color:'#44FF44',id:'d2'},
+    {type:'dot',x:0.55,y:0.3,w:0.06,h:0.06,color:'#4444FF',id:'d3'},{type:'dot',x:0.65,y:0.3,w:0.06,h:0.06,color:'#FFFF44',id:'d4'}],
+  hints:['Watch the light pattern carefully.','The dots flash in a specific order.','The pattern is: Red, Green, Yellow, Blue.'],
+  solution:['d1','d2','d4','d3'],flashDelay:800});
+L.push({id:7,zone:0,name:'Clear the Way',pt:LT.DRAG,parTime:25000,
+  objects:[{type:'crate',x:0.35,y:0.65,w:0.12,h:0.12,color:'#A0522D',id:'cr1'},{type:'crate',x:0.55,y:0.65,w:0.12,h:0.12,color:'#8B6914',id:'cr2'},
+    {type:'button',x:0.48,y:0.72,w:0.06,h:0.06,color:'#FF4444',id:'switch1',hidden:true}],
+  hints:['Move the crates out of the way.','Drag each crate to the side.','The button was under the right crate.'],
+  solution:'switch1'});
+L.push({id:8,zone:0,name:'Symbol Dial',pt:LT.ROTATE,parTime:30000,
+  objects:[{type:'dial',x:0.5,y:0.35,w:0.15,h:0.15,color:'#B8860B',id:'dial1',symbols:['☀','☽','★','✿'],target:2}],
+  hints:['Rotate the dial to the correct symbol.','The carving on the wall shows a star.','Set the dial to ★.'],
+  solution:2});
+L.push({id:9,zone:0,name:'Math Lock',pt:LT.MATH,parTime:30000,
+  objects:[{type:'equation',x:0.15,y:0.25,w:0.3,h:0.08,color:'#DDD',id:'eq',text:'12 + 7 - 3 = ?'}],
+  hints:['Solve the equation on the wall.','12 plus 7 minus 3...','The answer is 16.'],
+  solution:'16'});
+L.push({id:10,zone:0,name:'Switch Order',pt:LT.SWITCH,parTime:35000,
+  objects:[{type:'lever',x:0.15,y:0.45,w:0.04,h:0.12,color:'#CD853F',id:'sw1',order:2},{type:'lever',x:0.25,y:0.45,w:0.04,h:0.12,color:'#CD853F',id:'sw2',order:1},
+    {type:'lever',x:0.71,y:0.45,w:0.04,h:0.12,color:'#CD853F',id:'sw3',order:3}],
+  hints:['The switches must be pulled in order.','Look for numbering clues.','Order: middle switch first, then left, then right.'],
+  solution:['sw2','sw1','sw3']});
+
+// Zone 2: The Library (11-20)
+L.push({id:11,zone:1,name:'Memory Buttons',pt:LT.MEMORY,parTime:40000,
+  objects:[{type:'btn',x:0.35,y:0.65,w:0.07,h:0.07,color:'#FF6347',id:'m1'},{type:'btn',x:0.45,y:0.65,w:0.07,h:0.07,color:'#4682B4',id:'m2'},
+    {type:'btn',x:0.55,y:0.65,w:0.07,h:0.07,color:'#32CD32',id:'m3'},{type:'btn',x:0.65,y:0.65,w:0.07,h:0.07,color:'#FFD700',id:'m4'}],
+  hints:['Watch which buttons light up.','The sequence gets longer each time.','Blue, Red, Yellow, Green.'],
+  solution:['m2','m1','m4','m3']});
+L.push({id:12,zone:1,name:'Puzzle Pieces',pt:LT.PUZZLE,parTime:45000,
+  objects:[{type:'piece',x:0.1,y:0.6,w:0.08,h:0.08,color:'#FF6347',id:'p1',slot:0},{type:'piece',x:0.2,y:0.7,w:0.08,h:0.08,color:'#4682B4',id:'p2',slot:1},
+    {type:'piece',x:0.7,y:0.6,w:0.08,h:0.08,color:'#32CD32',id:'p3',slot:2},{type:'piece',x:0.8,y:0.7,w:0.08,h:0.08,color:'#FFD700',id:'p4',slot:3}],
+  hints:['Drag pieces to their matching slots on the door.','Each piece has a unique color.','Match colors from left to right.'],
+  solution:true});
+L.push({id:13,zone:1,name:'Perfect Timing',pt:LT.TIMING,parTime:20000,
+  objects:[{type:'meter',x:0.3,y:0.6,w:0.4,h:0.06,color:'#555',id:'meter'},{type:'target',x:0.5,y:0.58,w:0.04,h:0.1,color:'#FF4444',id:'tgt'}],
+  hints:['Stop the moving indicator at the right moment.','Hit the red zone!','Press when the indicator is in the center.'],
+  solution:true});
+L.push({id:14,zone:1,name:'Book Count',pt:LT.COUNT,parTime:30000,
+  objects:[{type:'book',x:0.08,y:0.3,w:0.04,h:0.06,color:'#8B0000',id:'b1'},{type:'book',x:0.13,y:0.3,w:0.04,h:0.06,color:'#006400',id:'b2'},
+    {type:'book',x:0.08,y:0.38,w:0.04,h:0.06,color:'#8B0000',id:'b3'},{type:'book',x:0.13,y:0.38,w:0.04,h:0.06,color:'#8B0000',id:'b4'},
+    {type:'book',x:0.08,y:0.46,w:0.04,h:0.06,color:'#006400',id:'b5'},{type:'book',x:0.13,y:0.46,w:0.04,h:0.06,color:'#8B0000',id:'b6'}],
+  hints:['Count the red books.','How many dark red books are on the shelf?','There are 4 red books. Code: 4.'],
+  solution:'4'});
+L.push({id:15,zone:1,name:'Symbol Match',pt:LT.SYMBOL,parTime:35000,
+  objects:[{type:'sym',x:0.1,y:0.2,w:0.08,h:0.08,color:'#DDD',id:'s1',sym:'♔'},{type:'sym',x:0.22,y:0.2,w:0.08,h:0.08,color:'#DDD',id:'s2',sym:'♕'},
+    {type:'sym',x:0.7,y:0.2,w:0.08,h:0.08,color:'#DDD',id:'s3',sym:'♖'},{type:'sym',x:0.82,y:0.2,w:0.08,h:0.08,color:'#DDD',id:'s4',sym:'♘'}],
+  hints:['Match the wall symbols to the door slots.','The door shows ♕ and ♖.','Tap the Queen and Rook symbols.'],
+  solution:['s2','s3']});
+L.push({id:16,zone:1,name:'Cipher Code',pt:LT.CIPHER,parTime:40000,
+  objects:[{type:'note',x:0.1,y:0.6,w:0.12,h:0.08,color:'#FFFACD',id:'note',text:'A=1,B=2...D=4'}],
+  hints:['The note has a cipher hint.','A=1, B=2, C=3, D=4 spells a code.','The word is CAB. Code: 312.'],
+  solution:'312'});
+L.push({id:17,zone:1,name:'Correct Order',pt:LT.ORDER,parTime:35000,
+  objects:[{type:'shelf2',x:0.05,y:0.2,w:0.25,h:0.08,color:'#8B4513',id:'shelf'},{type:'item',x:0.07,y:0.21,w:0.04,h:0.06,color:'#FF0000',id:'it1',label:'3'},
+    {type:'item',x:0.12,y:0.21,w:0.04,h:0.06,color:'#00FF00',id:'it2',label:'1'},{type:'item',x:0.17,y:0.21,w:0.04,h:0.06,color:'#0000FF',id:'it3',label:'2'}],
+  hints:['Tap items in the numbered order.','The labels show the sequence.','Green(1), Blue(2), Red(3).'],
+  solution:['it2','it3','it1']});
+L.push({id:18,zone:1,name:'Wire Connect',pt:LT.WIRE,parTime:35000,
+  objects:[{type:'port',x:0.15,y:0.3,w:0.05,h:0.05,color:'#FF0000',id:'w1'},{type:'port',x:0.15,y:0.5,w:0.05,h:0.05,color:'#00FF00',id:'w2'},
+    {type:'port',x:0.8,y:0.3,w:0.05,h:0.05,color:'#00FF00',id:'w3'},{type:'port',x:0.8,y:0.5,w:0.05,h:0.05,color:'#FF0000',id:'w4'}],
+  hints:['Connect matching colored ports.','Red to Red, Green to Green.','Tap left ports then matching right ports.'],
+  solution:{w1:'w4',w2:'w3'}});
+L.push({id:19,zone:1,name:'Color Flip',pt:LT.COLORFLIP,parTime:30000,
+  objects:[{type:'tile',x:0.3,y:0.2,w:0.08,h:0.08,color:'#FF4444',id:'t1',target:'#4444FF'},
+    {type:'tile',x:0.42,y:0.2,w:0.08,h:0.08,color:'#4444FF',id:'t2',target:'#FF4444'},
+    {type:'tile',x:0.54,y:0.2,w:0.08,h:0.08,color:'#FF4444',id:'t3',target:'#4444FF'},
+    {type:'tile',x:0.66,y:0.2,w:0.08,h:0.08,color:'#4444FF',id:'t4',target:'#FF4444'}],
+  hints:['Flip tiles to their target color.','The small dot shows the target color.','Tap each tile to flip it.'],
+  solution:true});
+L.push({id:20,zone:1,name:'Simon Says',pt:LT.SIMON,parTime:40000,
+  objects:[{type:'panel',x:0.3,y:0.6,w:0.1,h:0.1,color:'#FF4444',id:'s1'},{type:'panel',x:0.42,y:0.6,w:0.1,h:0.1,color:'#44FF44',id:'s2'},
+    {type:'panel',x:0.54,y:0.6,w:0.1,h:0.1,color:'#4444FF',id:'s3'},{type:'panel',x:0.66,y:0.6,w:0.1,h:0.1,color:'#FFFF44',id:'s4'}],
+  hints:['Watch the sequence, then repeat it.','Starts with one, adds one each round.','Sequence: Red, Blue, Green, Yellow.'],
+  solution:['s1','s3','s2','s4']});
+
+// Zone 3: The Laboratory (21-30)
+L.push({id:21,zone:2,name:'Path Trace',pt:LT.PATH,parTime:30000,
+  objects:[{type:'node',x:0.2,y:0.3,w:0.06,h:0.06,color:'#44FF44',id:'n1',order:0},{type:'node',x:0.4,y:0.2,w:0.06,h:0.06,color:'#FFAA00',id:'n2',order:1},
+    {type:'node',x:0.6,y:0.35,w:0.06,h:0.06,color:'#4444FF',id:'n3',order:2},{type:'node',x:0.75,y:0.25,w:0.06,h:0.06,color:'#FF44FF',id:'n4',order:3}],
+  hints:['Trace the path from start to end.','Follow the numbers on the nodes.','Green, Orange, Blue, Purple.'],
+  solution:['n1','n2','n3','n4']});
+L.push({id:22,zone:2,name:'Dial Combination',pt:LT.DIAL,parTime:35000,
+  objects:[{type:'dial',x:0.3,y:0.3,w:0.12,h:0.12,color:'#888',id:'d1',symbols:['1','2','3','4'],target:0},
+    {type:'dial',x:0.55,y:0.3,w:0.12,h:0.12,color:'#888',id:'d2',symbols:['5','6','7','8'],target:2}],
+  hints:['Two dials need correct numbers.','Check the formulas on the wall.','Left=1, Right=7.'],
+  solution:[0,2]});
+L.push({id:23,zone:2,name:'Grid Lock',pt:LT.GRID,parTime:35000,
+  objects:[{type:'cell',x:0.35,y:0.2,w:0.06,h:0.06,color:'#333',id:'g0',row:0,col:0,on:false},{type:'cell',x:0.42,y:0.2,w:0.06,h:0.06,color:'#FF0',id:'g1',row:0,col:1,on:true},
+    {type:'cell',x:0.49,y:0.2,w:0.06,h:0.06,color:'#333',id:'g2',row:0,col:2,on:false},{type:'cell',x:0.35,y:0.27,w:0.06,h:0.06,color:'#FF0',id:'g3',row:1,col:0,on:true},
+    {type:'cell',x:0.42,y:0.27,w:0.06,h:0.06,color:'#333',id:'g4',row:1,col:1,on:false},{type:'cell',x:0.49,y:0.27,w:0.06,h:0.06,color:'#FF0',id:'g5',row:1,col:2,on:true},
+    {type:'cell',x:0.35,y:0.34,w:0.06,h:0.06,color:'#333',id:'g6',row:2,col:0,on:false},{type:'cell',x:0.42,y:0.34,w:0.06,h:0.06,color:'#FF0',id:'g7',row:2,col:1,on:true},
+    {type:'cell',x:0.49,y:0.34,w:0.06,h:0.06,color:'#333',id:'g8',row:2,col:2,on:false}],
+  hints:['Toggle cells to match the pattern.','Create a checkerboard of lights.','All corner cells should be off.'],
+  solution:true});
+L.push({id:24,zone:2,name:'Mirror Match',pt:LT.MIRROR,parTime:30000,
+  objects:[{type:'sym',x:0.15,y:0.3,w:0.08,h:0.08,color:'#0FF',id:'mr1',sym:'◀'},{type:'sym',x:0.15,y:0.45,w:0.08,h:0.08,color:'#F0F',id:'mr2',sym:'◆'},
+    {type:'sym',x:0.77,y:0.3,w:0.08,h:0.08,color:'#F0F',id:'mr3',sym:'▶'},{type:'sym',x:0.77,y:0.45,w:0.08,h:0.08,color:'#0FF',id:'mr4',sym:'◆'}],
+  hints:['Match mirrored pairs left to right.','Left points to ◀, right to ▶.','Tap left-then-right for each pair.'],
+  solution:['mr1','mr3','mr2','mr4']});
+L.push({id:25,zone:2,name:'Ratchet Lock',pt:LT.RATCHET,parTime:25000,
+  objects:[{type:'gear',x:0.5,y:0.35,w:0.15,h:0.15,color:'#AAA',id:'gear',notches:8,target:3}],
+  hints:['Rotate the gear to the right position.','Count 3 notches clockwise from the mark.','Tap the gear to rotate it.'],
+  solution:3});
+L.push({id:26,zone:2,name:'Valve Puzzle',pt:LT.VALVE,parTime:30000,
+  objects:[{type:'valve',x:0.2,y:0.35,w:0.1,h:0.1,color:'#B87333',id:'v1',pos:0},{type:'valve',x:0.7,y:0.35,w:0.1,h:0.1,color:'#B87333',id:'v2',pos:0}],
+  hints:['Turn both valves to open position.','Each valve needs to point up.','Tap each valve 3 times.'],
+  solution:[3,3]});
+L.push({id:27,zone:2,name:'Beaker Code',pt:LT.NUMCODE,parTime:30000,
+  objects:[{type:'beaker',x:0.1,y:0.3,w:0.06,h:0.1,color:'#00AAFF',id:'bk1',val:4},{type:'beaker',x:0.2,y:0.3,w:0.06,h:0.1,color:'#FF6600',id:'bk2',val:2},
+    {type:'beaker',x:0.78,y:0.3,w:0.06,h:0.1,color:'#AA00FF',id:'bk3',val:8},{type:'beaker',x:0.88,y:0.3,w:0.06,h:0.1,color:'#00FF88',id:'bk4',val:1}],
+  hints:['Read the numbers on the beakers.','Order: blue, orange, purple, green.','Code is 4281.'],
+  solution:'4281'});
+L.push({id:28,zone:2,name:'Formula',pt:LT.MATH,parTime:30000,
+  objects:[{type:'equation',x:0.2,y:0.2,w:0.4,h:0.08,color:'#AFA',id:'eq',text:'3 × 9 - 7 = ?'}],
+  hints:['Solve the equation.','3 times 9 minus 7...','The answer is 20.'],
+  solution:'20'});
+L.push({id:29,zone:2,name:'Blink Sequence',pt:LT.LIGHT,parTime:35000,
+  objects:[{type:'dot',x:0.2,y:0.35,w:0.08,h:0.08,color:'#FF8800',id:'b1'},{type:'dot',x:0.35,y:0.35,w:0.08,h:0.08,color:'#00FF88',id:'b2'},
+    {type:'dot',x:0.5,y:0.35,w:0.08,h:0.08,color:'#FF0088',id:'b3'},{type:'dot',x:0.65,y:0.35,w:0.08,h:0.08,color:'#0088FF',id:'b4'}],
+  hints:['Watch the blinking carefully.','Pattern: orange, pink, blue, green.','Repeat after the flash.'],
+  solution:['b1','b3','b4','b2'],flashDelay:600});
+L.push({id:30,zone:2,name:'Master Switch',pt:LT.SWITCH,parTime:40000,
+  objects:[{type:'lever',x:0.1,y:0.4,w:0.04,h:0.12,color:'#CD853F',id:'sw1',order:3},{type:'lever',x:0.2,y:0.4,w:0.04,h:0.12,color:'#CD853F',id:'sw2',order:1},
+    {type:'lever',x:0.72,y:0.4,w:0.04,h:0.12,color:'#CD853F',id:'sw3',order:4},{type:'lever',x:0.82,y:0.4,w:0.04,h:0.12,color:'#CD853F',id:'sw4',order:2}],
+  hints:['Pull levers in the right sequence.','The roman numerals on the wall: II, IV, I, III.','Order: sw2, sw4, sw1, sw3.'],
+  solution:['sw2','sw4','sw1','sw3']});
+
+// Zone 4: The Tower (31-40)
+L.push({id:31,zone:3,name:'Tower Key',pt:LT.KEY,parTime:30000,
+  objects:[{type:'chest',x:0.12,y:0.6,w:0.1,h:0.08,color:'#8B6914',id:'chest',hasKey:true},
+    {type:'lock',x:0.5,y:0.48,w:0.06,h:0.06,color:'#888',id:'lock'}],
+  hints:['Search the chest for a key.','The old chest contains something.','Drag the key to the lock.'],
+  solution:'keyToLock'});
+L.push({id:32,zone:3,name:'Tower Math',pt:LT.MATH,parTime:30000,
+  objects:[{type:'equation',x:0.15,y:0.2,w:0.5,h:0.08,color:'#D8BFD8',id:'eq',text:'(15 + 9) ÷ 6 × 4 = ?'}],
+  hints:['Solve step by step.','15+9=24, 24÷6=4, 4×4=16.','The answer is 16.'],
+  solution:'16'});
+L.push({id:33,zone:3,name:'Crystal Colors',pt:LT.COLOR,parTime:30000,
+  objects:[{type:'gem',x:0.15,y:0.3,w:0.06,h:0.06,color:'#FF00FF',id:'c1'},{type:'gem',x:0.3,y:0.3,w:0.06,h:0.06,color:'#00FFFF',id:'c2'},
+    {type:'gem',x:0.6,y:0.3,w:0.06,h:0.06,color:'#FFFF00',id:'c3'},{type:'gem',x:0.75,y:0.3,w:0.06,h:0.06,color:'#FF8800',id:'c4'}],
+  hints:['The crystal order is written above the door.','Purple, Cyan, Yellow, Orange.','Tap gems in that order.'],
+  solution:['c1','c2','c3','c4']});
+L.push({id:34,zone:3,name:'Star Dials',pt:LT.DIAL,parTime:35000,
+  objects:[{type:'dial',x:0.25,y:0.3,w:0.12,h:0.12,color:'#9370DB',id:'d1',symbols:['♈','♉','♊','♋'],target:1},
+    {type:'dial',x:0.6,y:0.3,w:0.12,h:0.12,color:'#9370DB',id:'d2',symbols:['♌','♍','♎','♏'],target:3}],
+  hints:['Align both star dials.','Left: Taurus, Right: Scorpio.','♉ and ♏.'],
+  solution:[1,3]});
+L.push({id:35,zone:3,name:'Timing Lock',pt:LT.TIMING,parTime:25000,
+  objects:[{type:'meter',x:0.25,y:0.6,w:0.5,h:0.06,color:'#555',id:'meter'},{type:'target',x:0.45,y:0.58,w:0.04,h:0.1,color:'#FF4444',id:'tgt'}],
+  hints:['Stop the bar in the sweet spot.','The target is slightly left of center.','Press when the bar is near the red mark.'],
+  solution:true});
+L.push({id:36,zone:3,name:'Glyph Match',pt:LT.SYMBOL,parTime:35000,
+  objects:[{type:'sym',x:0.08,y:0.25,w:0.08,h:0.08,color:'#DDD',id:'s1',sym:'♦'},{type:'sym',x:0.18,y:0.25,w:0.08,h:0.08,color:'#DDD',id:'s2',sym:'♠'},
+    {type:'sym',x:0.72,y:0.25,w:0.08,h:0.08,color:'#DDD',id:'s3',sym:'♥'},{type:'sym',x:0.82,y:0.25,w:0.08,h:0.08,color:'#DDD',id:'s4',sym:'♣'}],
+  hints:['The door shows ♠ and ♥.','Match the correct symbols.','Tap Spade and Heart.'],
+  solution:['s2','s3']});
+L.push({id:37,zone:3,name:'Multi Slide',pt:LT.SLIDE,parTime:35000,
+  objects:[{type:'panel',x:0.3,y:0.7,w:0.15,h:0.05,color:'#9370DB',id:'p1',slideX:0.15},
+    {type:'panel',x:0.55,y:0.7,w:0.15,h:0.05,color:'#9370DB',id:'p2',slideX:-0.15},
+    {type:'button',x:0.47,y:0.72,w:0.06,h:0.05,color:'#FF4444',id:'hiddenbtn',hidden:true}],
+  hints:['Two panels block the button.','Slide both panels outward.','The button is in the middle.'],
+  solution:'hiddenbtn'});
+L.push({id:38,zone:3,name:'Tower Memory',pt:LT.MEMORY,parTime:40000,
+  objects:[{type:'btn',x:0.32,y:0.65,w:0.07,h:0.07,color:'#FF6347',id:'m1'},{type:'btn',x:0.42,y:0.65,w:0.07,h:0.07,color:'#4682B4',id:'m2'},
+    {type:'btn',x:0.52,y:0.65,w:0.07,h:0.07,color:'#32CD32',id:'m3'},{type:'btn',x:0.62,y:0.65,w:0.07,h:0.07,color:'#FFD700',id:'m4'}],
+  hints:['Watch the button sequence.','Longer sequence this time.','Green, Red, Blue, Yellow, Green.'],
+  solution:['m3','m1','m2','m4','m3']});
+L.push({id:39,zone:3,name:'Weight Puzzle',pt:LT.COUNT,parTime:30000,
+  objects:[{type:'weight',x:0.1,y:0.5,w:0.05,h:0.05,color:'#888',id:'w1',val:2},{type:'weight',x:0.17,y:0.5,w:0.05,h:0.05,color:'#888',id:'w2',val:3},
+    {type:'weight',x:0.24,y:0.5,w:0.05,h:0.05,color:'#888',id:'w3',val:5},{type:'weight',x:0.31,y:0.5,w:0.05,h:0.05,color:'#888',id:'w4',val:1}],
+  hints:['Add the weight values together.','2+3+5+1 = ?','Total weight is 11. Code: 11.'],
+  solution:'11'});
+L.push({id:40,zone:3,name:'Tower Simon',pt:LT.SIMON,parTime:40000,
+  objects:[{type:'panel',x:0.28,y:0.6,w:0.1,h:0.1,color:'#FF4444',id:'s1'},{type:'panel',x:0.4,y:0.6,w:0.1,h:0.1,color:'#44FF44',id:'s2'},
+    {type:'panel',x:0.52,y:0.6,w:0.1,h:0.1,color:'#4444FF',id:'s3'},{type:'panel',x:0.64,y:0.6,w:0.1,h:0.1,color:'#FFFF44',id:'s4'}],
+  hints:['Repeat the growing sequence.','Watch carefully!','Blue, Red, Yellow, Green, Blue.'],
+  solution:['s3','s1','s4','s2','s3']});
+
+// Zone 5: The Vault (41-50)
+L.push({id:41,zone:4,name:'Vault Sequence',pt:LT.ORDER,parTime:35000,
+  objects:[{type:'item',x:0.1,y:0.25,w:0.06,h:0.06,color:'#FF0000',id:'i1',label:'4'},{type:'item',x:0.2,y:0.25,w:0.06,h:0.06,color:'#FF8800',id:'i2',label:'2'},
+    {type:'item',x:0.68,y:0.25,w:0.06,h:0.06,color:'#00FF00',id:'i3',label:'1'},{type:'item',x:0.78,y:0.25,w:0.06,h:0.06,color:'#0088FF',id:'i4',label:'3'}],
+  hints:['Sort by the number labels.','1, 2, 3, 4.','Green, Orange, Blue, Red.'],
+  solution:['i3','i2','i4','i1']});
+L.push({id:42,zone:4,name:'Dual Code',pt:LT.NUMCODE,parTime:35000,
+  objects:[{type:'plate',x:0.1,y:0.3,w:0.1,h:0.06,color:'#CCC',id:'pl1',text:'XIV'},{type:'plate',x:0.8,y:0.3,w:0.1,h:0.06,color:'#CCC',id:'pl2',text:'XXVII'}],
+  hints:['The plates show Roman numerals.','XIV=14, XXVII=27.','Code is 1427.'],
+  solution:'1427'});
+L.push({id:43,zone:4,name:'Vault Light',pt:LT.LIGHT,parTime:35000,
+  objects:[{type:'dot',x:0.2,y:0.3,w:0.08,h:0.08,color:'#FF0044',id:'b1'},{type:'dot',x:0.35,y:0.3,w:0.08,h:0.08,color:'#44FF00',id:'b2'},
+    {type:'dot',x:0.5,y:0.3,w:0.08,h:0.08,color:'#0044FF',id:'b3'},{type:'dot',x:0.65,y:0.3,w:0.08,h:0.08,color:'#FF4400',id:'b4'}],
+  hints:['The lights flash a tricky sequence.','Pink, Green, Orange, Blue.','Watch carefully and repeat.'],
+  solution:['b1','b2','b4','b3'],flashDelay:500});
+L.push({id:44,zone:4,name:'Safe Dials',pt:LT.DIAL,parTime:40000,
+  objects:[{type:'dial',x:0.2,y:0.35,w:0.12,h:0.12,color:'#C0C0C0',id:'d1',symbols:['N','E','S','W'],target:1},
+    {type:'dial',x:0.42,y:0.35,w:0.12,h:0.12,color:'#C0C0C0',id:'d2',symbols:['N','E','S','W'],target:2},
+    {type:'dial',x:0.64,y:0.35,w:0.12,h:0.12,color:'#C0C0C0',id:'d3',symbols:['N','E','S','W'],target:3}],
+  hints:['Set all three compass dials.','The clue reads: East, South, West.','E, S, W.'],
+  solution:[1,2,3]});
+L.push({id:45,zone:4,name:'Vault Grid',pt:LT.GRID,parTime:40000,
+  objects:[],extraCells:true,
+  hints:['Toggle all cells to light.','A 4×4 grid - make an X pattern.','Toggle corners and center cells.'],
+  solution:true});
+L.push({id:46,zone:4,name:'Complex Math',pt:LT.MATH,parTime:35000,
+  objects:[{type:'equation',x:0.1,y:0.2,w:0.6,h:0.08,color:'#FDD',id:'eq',text:'√144 + ³√27 × 2 = ?'}],
+  hints:['Break it down step by step.','√144=12, ³√27=3, so 12+3×2.','12+6=18.'],
+  solution:'18'});
+L.push({id:47,zone:4,name:'Multi Wire',pt:LT.WIRE,parTime:40000,
+  objects:[{type:'port',x:0.1,y:0.25,w:0.04,h:0.04,color:'#FF0000',id:'w1'},{type:'port',x:0.1,y:0.35,w:0.04,h:0.04,color:'#00FF00',id:'w2'},
+    {type:'port',x:0.1,y:0.45,w:0.04,h:0.04,color:'#0000FF',id:'w3'},{type:'port',x:0.86,y:0.25,w:0.04,h:0.04,color:'#0000FF',id:'w4'},
+    {type:'port',x:0.86,y:0.35,w:0.04,h:0.04,color:'#FF0000',id:'w5'},{type:'port',x:0.86,y:0.45,w:0.04,h:0.04,color:'#00FF00',id:'w6'}],
+  hints:['Connect 3 pairs of wires.','Cross-connect the colors.','Red→Red, Blue→Blue, Green→Green.'],
+  solution:{w1:'w5',w2:'w6',w3:'w4'}});
+L.push({id:48,zone:4,name:'Vault Simon',pt:LT.SIMON,parTime:45000,
+  objects:[{type:'panel',x:0.25,y:0.6,w:0.1,h:0.1,color:'#FF4444',id:'s1'},{type:'panel',x:0.38,y:0.6,w:0.1,h:0.1,color:'#44FF44',id:'s2'},
+    {type:'panel',x:0.51,y:0.6,w:0.1,h:0.1,color:'#4444FF',id:'s3'},{type:'panel',x:0.64,y:0.6,w:0.1,h:0.1,color:'#FFFF44',id:'s4'}],
+  hints:['The sequence is 6 steps long.','Green, Red, Blue, Yellow, Red, Green.','Stay focused!'],
+  solution:['s2','s1','s3','s4','s1','s2']});
+L.push({id:49,zone:4,name:'Final Cipher',pt:LT.CIPHER,parTime:40000,
+  objects:[{type:'note',x:0.1,y:0.55,w:0.12,h:0.08,color:'#FFFACD',id:'note',text:'OPEN=D=4,O=2,E=1,N=3'}],
+  hints:['Decode the word OPEN.','Each letter maps to a number.','O=2,P=?,E=1,N=3. P=5. Code: 2513.'],
+  solution:'2513'});
+L.push({id:50,zone:4,name:'The Final Door',pt:LT.SWITCH,parTime:45000,
+  objects:[{type:'lever',x:0.05,y:0.35,w:0.04,h:0.12,color:'#FFD700',id:'sw1',order:5},{type:'lever',x:0.15,y:0.35,w:0.04,h:0.12,color:'#FFD700',id:'sw2',order:2},
+    {type:'lever',x:0.25,y:0.35,w:0.04,h:0.12,color:'#FFD700',id:'sw3',order:4},{type:'lever',x:0.69,y:0.35,w:0.04,h:0.12,color:'#FFD700',id:'sw4',order:1},
+    {type:'lever',x:0.79,y:0.35,w:0.04,h:0.12,color:'#FFD700',id:'sw5',order:3}],
+  hints:['All 5 levers in the right order.','Carved above: III, I, V, II, IV.','sw4, sw2, sw5, sw3, sw1.'],
+  solution:['sw4','sw2','sw5','sw3','sw1']});
+return L;
+}
+
+var ALL_LEVELS=makeLevels();
+
+// --- LEVEL RUNTIME STATE ---
+var lvlState={};
+
+function resetLevelState(){
+  lvlState={input:[],dialPos:[],panelSlid:{},objMoved:{},flipped:{},gridState:{},wireFirst:null,wireConns:{},
+    leverPulled:{},simonPhase:0,simonInput:[],flashPhase:-1,flashIdx:0,flashTimer:0,flashing:false,
+    timingRunning:false,timingPos:0,timingDir:1,timingStopped:false,memoryShown:false,memoryShowIdx:0,memoryTimer:0,
+    revealedKey:false,codeStr:'',puzzlePieceSlots:[false,false,false,false,false],piecesPlaced:0,valvePos:[0,0],gearPos:0};
+}
+
+function initLevel(lid){
+  levelData=ALL_LEVELS[lid-1];
+  if(!levelData)return;
+  currentLevel=lid;
+  resetLevelState();
+  levelStartTime=Date.now();
+  hintsUsed=0;hintShown=-1;victoryShown=false;
+  doorOpenAnim=0;doorOpening=false;starsEarned=0;
+  puzzleSolved=false;codeInput='';codeDisplay='';
+  dragObj=null;hoverObj=null;flashTimer=0;flashObj=-1;
+
+  if(levelData.pt===LT.DIAL||levelData.pt===LT.DIAL){
+    if(Array.isArray(levelData.solution)){
+      lvlState.dialPos=new Array(levelData.solution.length).fill(0);
+    }
+  }
+  if(levelData.pt===LT.GRID){
+    var objs=levelData.objects;
+    if(objs.length===0&&levelData.extraCells){
+      // Create 4x4 grid
+      levelData.objects=[];
+      for(var r=0;r<4;r++){for(var c=0;c<4;c++){
+        var on=(r===1||r===2)&&(c===1||c===2);
+        levelData.objects.push({type:'cell',x:0.35+c*0.07,y:0.2+r*0.07,w:0.06,h:0.06,color:on?'#FF0':'#333',id:'g'+r*4+c,row:r,col:c,on:on});
+        lvlState.gridState[r*4+c]=on;
+      }}
+    }else{
+      for(var i=0;i<objs.length;i++){lvlState.gridState[i]=objs[i].on;}
+    }
+  }
+  if(levelData.pt===LT.VALVE){lvlState.valvePos=[0,0];}
+  if(levelData.pt===LT.RATCHET){lvlState.gearPos=0;}
+  if(levelData.pt===LT.LIGHT||levelData.pt===LT.SIMON||levelData.pt===LT.MEMORY){
+    lvlState.flashPhase=0;lvlState.flashIdx=0;lvlState.flashTimer=Date.now();
+    lvlState.flashing=true;
+  }
+  if(levelData.pt===LT.TIMING){lvlState.timingRunning=true;lvlState.timingPos=0;lvlState.timingDir=1;lvlState.timingStopped=false;}
+}
+
+// --- DRAWING ---
+function drawBg(){
+  var z=levelData?levelData.zone:0;
+  var grd=X.createLinearGradient(0,0,0,H);
+  grd.addColorStop(0,zones[z].color1);grd.addColorStop(1,zones[z].color2);
+  X.fillStyle=grd;X.fillRect(0,0,W,H);
+}
+
+function drawDoor(openAmt){
+  var dx=W*0.35,dy=H*0.15,dw=W*0.3,dh=H*0.65;
+  // Frame
+  X.fillStyle='#5C4033';X.fillRect(dx-8,dy-8,dw+16,dh+8);
+  X.fillStyle='#8B7355';X.fillRect(dx-4,dy-4,dw+8,dh+4);
+  // Door
+  var openPx=openAmt*dw*0.4;
+  X.save();
+  // Left panel
+  X.fillStyle='#6B4226';X.fillRect(dx,dy,dw/2-openPx,dh);
+  // Door details
+  X.strokeStyle='#5C3A11';X.lineWidth=2;
+  X.strokeRect(dx+4,dy+4,dw/2-openPx-8,dh-8);
+  // Right panel  
+  X.fillStyle='#6B4226';X.fillRect(dx+dw/2+openPx,dy,dw/2-openPx,dh);
+  X.strokeRect(dx+dw/2+openPx+4,dy+4,dw/2-openPx-8,dh-8);
+  X.restore();
+  // Handle
+  if(openAmt<0.5){
+    var hx=dx+dw*0.7,hy=dy+dh*0.45;
+    X.fillStyle='#D4A547';X.beginPath();X.arc(hx,hy,Math.max(1,dw*0.035),0,Math.PI*2);X.fill();
+    X.strokeStyle='#B8860B';X.lineWidth=2;X.stroke();
+    // Keyhole
+    X.fillStyle='#333';X.beginPath();X.arc(hx,hy,Math.max(1,dw*0.012),0,Math.PI*2);X.fill();
+  }
+  return {x:dx,y:dy,w:dw,h:dh};
+}
+
+function drawObject(obj,highlight){
+  var ox=obj.x*W,oy=obj.y*H,ow=obj.w*W,oh=obj.h*H;
+  if(obj.hidden&&!lvlState.revealedKey)return;
+  X.save();
+  if(highlight){X.shadowColor='#FFD700';X.shadowBlur=10;}
+  
+  switch(obj.type){
+    case 'handle':
+      X.fillStyle=obj.color;X.beginPath();X.arc(ox+ow/2,oy+oh/2,Math.max(1,ow/2),0,Math.PI*2);X.fill();
+      X.strokeStyle='#B8860B';X.lineWidth=2;X.stroke();
+      break;
+    case 'vase':case 'chest':
+      X.fillStyle=obj.color;
+      X.beginPath();X.moveTo(ox+ow*0.15,oy+oh);X.lineTo(ox,oy+oh*0.3);
+      X.quadraticCurveTo(ox+ow*0.5,oy-oh*0.1,ox+ow,oy+oh*0.3);
+      X.lineTo(ox+ow*0.85,oy+oh);X.closePath();X.fill();
+      X.strokeStyle='#0003';X.lineWidth=1;X.stroke();
+      if(lvlState.revealedKey&&obj.hasKey){
+        // Draw key
+        X.fillStyle='#FFD700';X.fillRect(ox+ow*0.35,oy+oh*0.4,ow*0.3,oh*0.15);
+        X.beginPath();X.arc(ox+ow*0.35,oy+oh*0.47,ow*0.12,0,Math.PI*2);X.fill();
+      }
+      break;
+    case 'lock':
+      X.fillStyle=obj.color;X.fillRect(ox,oy,ow,oh);
+      X.fillStyle='#555';X.beginPath();X.arc(ox+ow/2,oy+oh/2,Math.max(1,ow*0.25),0,Math.PI*2);X.fill();
+      break;
+    case 'painting':case 'gem':
+      X.fillStyle=obj.color;X.fillRect(ox,oy,ow,oh);
+      X.strokeStyle='#333';X.lineWidth=2;X.strokeRect(ox,oy,ow,oh);
+      break;
+    case 'clock':
+      X.fillStyle=obj.color;X.beginPath();X.arc(ox+ow/2,oy+oh/2,Math.max(1,Math.min(ow,oh)/2),0,Math.PI*2);X.fill();
+      X.strokeStyle='#333';X.lineWidth=2;X.stroke();
+      X.fillStyle='#333';X.font=Math.max(8,oh*0.4)+'px monospace';X.textAlign='center';X.textBaseline='middle';
+      X.fillText(obj.val||'',ox+ow/2,oy+oh/2);
+      break;
+    case 'book':case 'weight':case 'item':
+      X.fillStyle=obj.color;X.fillRect(ox,oy,ow,oh);
+      X.strokeStyle='#222';X.lineWidth=1;X.strokeRect(ox,oy,ow,oh);
+      if(obj.val!==undefined){X.fillStyle='#FFF';X.font=Math.max(6,oh*0.5)+'px sans-serif';X.textAlign='center';X.textBaseline='middle';X.fillText(obj.val,ox+ow/2,oy+oh/2);}
+      if(obj.label){X.fillStyle='#FFF';X.font='bold '+Math.max(8,oh*0.6)+'px sans-serif';X.textAlign='center';X.textBaseline='middle';X.fillText(obj.label,ox+ow/2,oy+oh/2);}
+      break;
+    case 'plant':
+      X.fillStyle=obj.color;X.beginPath();X.arc(ox+ow/2,oy+oh*0.3,Math.max(1,ow*0.4),0,Math.PI*2);X.fill();
+      X.fillStyle='#8B4513';X.fillRect(ox+ow*0.3,oy+oh*0.5,ow*0.4,oh*0.5);
+      if(obj.val!==undefined){X.fillStyle='#FF0';X.font=Math.max(6,oh*0.3)+'px sans-serif';X.textAlign='center';X.fillText(obj.val,ox+ow/2,oy+oh*0.35);}
+      break;
+    case 'shelf':case 'shelf2':
+      X.fillStyle=obj.color;X.fillRect(ox,oy,ow,oh);X.strokeStyle='#222';X.lineWidth=1;X.strokeRect(ox,oy,ow,oh);
+      break;
+    case 'panel':
+      var slideAmt=lvlState.panelSlid[obj.id]||0;
+      X.fillStyle=obj.color;X.fillRect(ox+slideAmt*W,oy,ow,oh);
+      X.strokeStyle='#222';X.lineWidth=1;X.strokeRect(ox+slideAmt*W,oy,ow,oh);
+      // Arrow
+      X.fillStyle='#FFF';X.font=Math.max(8,oh*0.6)+'px sans-serif';X.textAlign='center';X.textBaseline='middle';
+      X.fillText('⟺',ox+slideAmt*W+ow/2,oy+oh/2);
+      break;
+    case 'button':
+      if(!obj.hidden||lvlState.revealedKey){
+        X.fillStyle=obj.color;X.beginPath();X.arc(ox+ow/2,oy+oh/2,Math.max(1,Math.min(ow,oh)/2),0,Math.PI*2);X.fill();
+        X.strokeStyle='#800';X.lineWidth=2;X.stroke();
+      }
+      break;
+    case 'dot':
+      var bright=(flashObj===obj.id);
+      X.fillStyle=bright?'#FFF':obj.color;X.beginPath();X.arc(ox+ow/2,oy+oh/2,Math.max(1,Math.min(ow,oh)/2),0,Math.PI*2);X.fill();
+      X.strokeStyle='#222';X.lineWidth=1;X.stroke();
+      break;
+    case 'crate':
+      var mx=lvlState.objMoved[obj.id]?lvlState.objMoved[obj.id].dx:0;
+      var my=lvlState.objMoved[obj.id]?lvlState.objMoved[obj.id].dy:0;
+      X.fillStyle=obj.color;X.fillRect(ox+mx,oy+my,ow,oh);
+      X.strokeStyle='#5C3A11';X.lineWidth=2;X.strokeRect(ox+mx,oy+my,ow,oh);
+      X.beginPath();X.moveTo(ox+mx,oy+my);X.lineTo(ox+mx+ow,oy+my+oh);X.moveTo(ox+mx+ow,oy+my);X.lineTo(ox+mx,oy+my+oh);X.stroke();
+      break;
+    case 'dial':
+      X.fillStyle=obj.color;X.beginPath();X.arc(ox+ow/2,oy+oh/2,Math.max(1,Math.min(ow,oh)/2),0,Math.PI*2);X.fill();
+      X.strokeStyle='#333';X.lineWidth=2;X.stroke();
+      var dp=-1;
+      if(Array.isArray(lvlState.dialPos)){
+        var idx=levelData.objects.indexOf(obj);
+        dp=lvlState.dialPos[idx]||0;
+      }
+      var syms=obj.symbols||[];
+      for(var si=0;si<syms.length;si++){
+        var ang=(si/syms.length)*Math.PI*2-Math.PI/2;
+        var r=Math.min(ow,oh)*0.32;
+        X.fillStyle=(si===dp)?'#FF0':'#333';
+        X.font=Math.max(8,Math.min(ow,oh)*0.25)+'px sans-serif';X.textAlign='center';X.textBaseline='middle';
+        X.fillText(syms[si],ox+ow/2+Math.cos(ang)*r,oy+oh/2+Math.sin(ang)*r);
+      }
+      // Pointer
+      X.fillStyle='#F00';X.beginPath();X.arc(ox+ow/2,oy+oh*0.1,Math.max(2,ow*0.04),0,Math.PI*2);X.fill();
+      break;
+    case 'equation':
+      X.fillStyle=obj.color;X.fillRect(ox,oy,ow,oh);
+      X.strokeStyle='#333';X.lineWidth=1;X.strokeRect(ox,oy,ow,oh);
+      X.fillStyle='#333';X.font='bold '+Math.max(10,oh*0.6)+'px monospace';X.textAlign='center';X.textBaseline='middle';
+      X.fillText(obj.text||'',ox+ow/2,oy+oh/2);
+      break;
+    case 'lever':
+      var pulled=lvlState.leverPulled[obj.id];
+      X.fillStyle=obj.color;
+      X.save();X.translate(ox+ow/2,oy+oh);
+      var ang2=pulled?-Math.PI*0.7:0;
+      X.rotate(ang2);X.fillRect(-ow/2,-oh,ow,oh);
+      X.restore();
+      X.fillStyle=pulled?'#0F0':'#888';X.beginPath();X.arc(ox+ow/2,pulled?oy-ow/2:oy+oh/2,Math.max(2,ow*0.5),0,Math.PI*2);X.fill();
+      break;
+    case 'btn':case 'panel':
+      X.fillStyle=obj.color;X.fillRect(ox,oy,ow,oh);
+      X.strokeStyle='#222';X.lineWidth=2;X.strokeRect(ox,oy,ow,oh);
+      break;
+    case 'piece':
+      if(!lvlState.puzzlePieceSlots[levelData.objects.indexOf(obj)]||!lvlState.puzzlePieceSlots[levelData.objects.indexOf(obj)].placed){
+        var pmx=lvlState.objMoved[obj.id]?lvlState.objMoved[obj.id].dx:0;
+        var pmy=lvlState.objMoved[obj.id]?lvlState.objMoved[obj.id].dy:0;
+        X.fillStyle=obj.color;X.fillRect(ox+pmx,oy+pmy,ow,oh);
+        X.strokeStyle='#222';X.lineWidth=2;X.strokeRect(ox+pmx,oy+pmy,ow,oh);
+      }
+      break;
+    case 'meter':
+      X.fillStyle=obj.color;X.fillRect(ox,oy,ow,oh);
+      X.strokeStyle='#888';X.lineWidth=2;X.strokeRect(ox,oy,ow,oh);
+      if(lvlState.timingRunning){
+        X.fillStyle='#0F0';X.fillRect(ox+lvlState.timingPos*ow-2,oy-4,4,oh+8);
+      }
+      break;
+    case 'target':
+      X.fillStyle=obj.color+'88';X.fillRect(ox,oy,ow,oh);
+      X.strokeStyle='#F00';X.lineWidth=1;X.strokeRect(ox,oy,ow,oh);
+      break;
+    case 'sym':
+      X.fillStyle=obj.color;X.fillRect(ox,oy,ow,oh);
+      X.strokeStyle='#333';X.lineWidth=1;X.strokeRect(ox,oy,ow,oh);
+      X.fillStyle='#000';X.font=Math.max(10,Math.min(ow,oh)*0.7)+'px serif';X.textAlign='center';X.textBaseline='middle';
+      X.fillText(obj.sym||'',ox+ow/2,oy+oh/2);
+      break;
+    case 'note':
+      X.fillStyle=obj.color;X.fillRect(ox,oy,ow,oh);X.strokeStyle='#888';X.lineWidth=1;X.strokeRect(ox,oy,ow,oh);
+      X.fillStyle='#333';X.font=Math.max(6,oh*0.3)+'px monospace';X.textAlign='center';
+      X.fillText(obj.text||'',ox+ow/2,oy+oh*0.3);
+      break;
+    case 'port':
+      X.fillStyle=obj.color;X.beginPath();X.arc(ox+ow/2,oy+oh/2,Math.max(2,Math.min(ow,oh)/2),0,Math.PI*2);X.fill();
+      X.strokeStyle='#333';X.lineWidth=1;X.stroke();
+      break;
+    case 'tile':
+      var flipped=lvlState.flipped[obj.id];
+      X.fillStyle=flipped?obj.target:obj.color;X.fillRect(ox,oy,ow,oh);
+      X.strokeStyle='#222';X.lineWidth=1;X.strokeRect(ox,oy,ow,oh);
+      // Target indicator dot
+      X.fillStyle=obj.target;X.beginPath();X.arc(ox+ow-4,oy+4,3,0,Math.PI*2);X.fill();
+      break;
+    case 'node':
+      X.fillStyle=obj.color;X.beginPath();X.arc(ox+ow/2,oy+oh/2,Math.max(3,Math.min(ow,oh)/2),0,Math.PI*2);X.fill();
+      X.strokeStyle='#222';X.lineWidth=2;X.stroke();
+      X.fillStyle='#FFF';X.font='bold '+Math.max(8,oh*0.4)+'px sans-serif';X.textAlign='center';X.textBaseline='middle';
+      X.fillText(''+(obj.order+1),ox+ow/2,oy+oh/2);
+      break;
+    case 'cell':
+      var cs=lvlState.gridState[levelData.objects.indexOf(obj)];
+      X.fillStyle=cs?'#FF0':'#333';X.fillRect(ox,oy,ow,oh);
+      X.strokeStyle='#555';X.lineWidth=1;X.strokeRect(ox,oy,ow,oh);
+      break;
+    case 'gear':
+      X.fillStyle=obj.color;X.beginPath();X.arc(ox+ow/2,oy+oh/2,Math.max(4,Math.min(ow,oh)/2),0,Math.PI*2);X.fill();
+      X.strokeStyle='#333';X.lineWidth=2;X.stroke();
+      // Indicator
+      var gAng=(lvlState.gearPos/obj.notches)*Math.PI*2-Math.PI/2;
+      X.fillStyle='#F00';X.beginPath();
+      X.arc(ox+ow/2+Math.cos(gAng)*ow*0.3,oy+oh/2+Math.sin(gAng)*oh*0.3,4,0,Math.PI*2);X.fill();
+      // Target mark
+      X.fillStyle='#0F0';X.beginPath();X.arc(ox+ow/2,oy+oh*0.08,4,0,Math.PI*2);X.fill();
+      break;
+    case 'valve':
+      var vi=levelData.objects.indexOf(obj);
+      var vp=lvlState.valvePos[vi]||0;
+      X.fillStyle=obj.color;X.beginPath();X.arc(ox+ow/2,oy+oh/2,Math.max(4,Math.min(ow,oh)/2),0,Math.PI*2);X.fill();
+      X.strokeStyle='#333';X.lineWidth=2;X.stroke();
+      // Valve handle
+      var vAng=(vp/4)*Math.PI*2;
+      X.strokeStyle='#654321';X.lineWidth=3;
+      X.beginPath();
+      X.moveTo(ox+ow/2-Math.cos(vAng)*ow*0.35,oy+oh/2-Math.sin(vAng)*oh*0.35);
+      X.lineTo(ox+ow/2+Math.cos(vAng)*ow*0.35,oy+oh/2+Math.sin(vAng)*oh*0.35);
+      X.stroke();
+      break;
+    case 'beaker':case 'plate':
+      X.fillStyle=obj.color;X.fillRect(ox,oy,ow,oh);X.strokeStyle='#333';X.lineWidth=1;X.strokeRect(ox,oy,ow,oh);
+      X.fillStyle='#333';X.font=Math.max(6,oh*0.4)+'px sans-serif';X.textAlign='center';X.textBaseline='middle';
+      X.fillText(obj.text||obj.val||'',ox+ow/2,oy+oh/2);
+      break;
+  }
+  X.restore();
+}
+
+// Code input overlay
+function drawCodeInput(){
+  if(levelData.pt!==LT.NUMCODE&&levelData.pt!==LT.MATH&&levelData.pt!==LT.CIPHER&&levelData.pt!==LT.COUNT)return;
+  var bx=W*0.35,by=H*0.82,bw=W*0.3,bh=H*0.05;
+  X.fillStyle='#0008';X.fillRect(bx-4,by-4,bw+8,bh+8);
+  X.fillStyle='#222';X.fillRect(bx,by,bw,bh);
+  X.fillStyle='#0F0';X.font=Math.max(12,bh*0.6)+'px monospace';X.textAlign='center';X.textBaseline='middle';
+  X.fillText(codeInput+(Date.now()%800<400?'_':''),bx+bw/2,by+bh/2);
+  // Keypad
+  var keys=['1','2','3','4','5','6','7','8','9','C','0','⌫'];
+  var kw=bw/3,kh=bh*0.9;
+  for(var ki=0;ki<12;ki++){
+    var kr=Math.floor(ki/3),kc=ki%3;
+    var kx=bx+kc*kw,ky=by+bh+6+kr*kh;
+    X.fillStyle='#444';X.fillRect(kx+1,ky+1,kw-2,kh-2);
+    X.fillStyle='#FFF';X.font=Math.max(10,kh*0.5)+'px sans-serif';X.textAlign='center';X.textBaseline='middle';
+    X.fillText(keys[ki],kx+kw/2,ky+kh/2);
+  }
+}
+
+function drawUI(){
+  // Level number
+  X.fillStyle='#FFF';X.font='bold 18px sans-serif';X.textAlign='left';X.textBaseline='top';
+  X.fillText('Level '+currentLevel+' - '+(levelData?levelData.name:''),10,10);
+  // Timer
+  var elapsed=Date.now()-levelStartTime;
+  X.textAlign='right';X.fillText(formatTime(elapsed),W-10,10);
+  // Hint button
+  var hbx=W-50,hby=40,hbr=20;
+  X.fillStyle='#FFD700';X.beginPath();X.arc(hbx,hby,hbr,0,Math.PI*2);X.fill();
+  X.fillStyle='#333';X.font='bold 16px sans-serif';X.textAlign='center';X.textBaseline='middle';
+  X.fillText('?',hbx,hby);
+  // Hint text
+  if(hintShown>=0&&levelData){
+    var htext=levelData.hints[Math.min(hintShown,levelData.hints.length-1)];
+    X.fillStyle='#0008';X.fillRect(W*0.1,H*0.05,W*0.8,H*0.06);
+    X.fillStyle='#FFD700';X.font='14px sans-serif';X.textAlign='center';X.textBaseline='middle';
+    X.fillText('Hint: '+htext,W/2,H*0.08);
+  }
+  // Stars display
+  for(var si=0;si<3;si++){
+    X.fillStyle=si<starsEarned?'#FFD700':'#555';
+    drawStar(W/2-30+si*25,15,8,5);
+  }
+  // Back button
+  X.fillStyle='#FFF8';X.fillRect(5,H-35,60,30);
+  X.fillStyle='#FFF';X.font='14px sans-serif';X.textAlign='center';X.textBaseline='middle';
+  X.fillText('← Back',35,H-20);
+}
+
+function drawStar(cx,cy,r,points){
+  X.beginPath();
+  for(var i=0;i<points*2;i++){
+    var a=(i/(points*2))*Math.PI*2-Math.PI/2;
+    var rr=i%2===0?r:r*0.4;
+    if(i===0)X.moveTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);
+    else X.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);
+  }
+  X.closePath();X.fill();
+}
+
+function drawVictory(){
+  X.fillStyle='rgba(0,0,0,0.7)';X.fillRect(0,0,W,H);
+  X.fillStyle='#FFD700';X.font='bold 32px sans-serif';X.textAlign='center';X.textBaseline='middle';
+  X.fillText('Door Opened!',W/2,H*0.3);
+  for(var si=0;si<3;si++){
+    X.fillStyle=si<starsEarned?'#FFD700':'#555';
+    drawStar(W/2-40+si*40,H*0.42,16,5);
+  }
+  X.fillStyle='#FFF';X.font='20px sans-serif';
+  X.fillText('Stars: '+starsEarned+'/3',W/2,H*0.54);
+  // Next button
+  X.fillStyle='#4CAF50';X.fillRect(W/2-60,H*0.62,120,40);
+  X.fillStyle='#FFF';X.font='bold 16px sans-serif';X.fillText(currentLevel<50?'Next Level':'Finish!',W/2,H*0.62+20);
+  // Retry button
+  X.fillStyle='#FF9800';X.fillRect(W/2-60,H*0.72,120,40);
+  X.fillStyle='#FFF';X.fillText('Retry',W/2,H*0.72+20);
+}
+
+// --- SCREENS ---
+function drawMenu(){
+  var grd=X.createLinearGradient(0,0,0,H);
+  grd.addColorStop(0,'#1a0a2e');grd.addColorStop(1,'#0a0a1a');
+  X.fillStyle=grd;X.fillRect(0,0,W,H);
+  // Title
+  X.fillStyle='#FFD700';X.font='bold '+Math.max(20,W*0.06)+'px sans-serif';X.textAlign='center';X.textBaseline='middle';
+  X.fillText('100 Doors',W/2,H*0.2);
+  X.fillStyle='#FFF';X.font=Math.max(14,W*0.03)+'px sans-serif';
+  X.fillText('Puzzle Box',W/2,H*0.28);
+  // Door icon
+  X.fillStyle='#6B4226';X.fillRect(W/2-30,H*0.35,60,90);
+  X.fillStyle='#D4A547';X.beginPath();X.arc(W/2+15,H*0.35+45,6,0,Math.PI*2);X.fill();
+  // Play button
+  X.fillStyle='#4CAF50';
+  roundRect(W/2-80,H*0.6,160,50,10);X.fill();
+  X.fillStyle='#FFF';X.font='bold 22px sans-serif';X.fillText('PLAY',W/2,H*0.6+25);
+  // Zones button
+  X.fillStyle='#2196F3';
+  roundRect(W/2-80,H*0.72,160,50,10);X.fill();
+  X.fillStyle='#FFF';X.fillText('ZONES',W/2,H*0.72+25);
+  // Credits
+  X.fillStyle='#888';X.font='12px sans-serif';
+  X.fillText('GameZipper.com',W/2,H*0.92);
+  menuBtn=[
+    {x:W/2-80,y:H*0.6,w:160,h:50,action:'play'},
+    {x:W/2-80,y:H*0.72,w:160,h:50,action:'zones'}
+  ];
+}
+
+function drawZoneSelect(){
+  var grd=X.createLinearGradient(0,0,0,H);
+  grd.addColorStop(0,'#1a1a2e');grd.addColorStop(1,'#0a0a1a');
+  X.fillStyle=grd;X.fillRect(0,0,W,H);
+  X.fillStyle='#FFF';X.font='bold 24px sans-serif';X.textAlign='center';X.textBaseline='middle';
+  X.fillText('Select Zone',W/2,H*0.08);
+  zoneBtn=[];
+  for(var zi=0;zi<5;zi++){
+    var bx=W*0.1,by=H*0.15+zi*(H*0.14),bw=W*0.8,bh=H*0.11;
+    var unlocked=isZoneUnlocked(zi);
+    X.fillStyle=unlocked?zones[zi].color1:'#333';
+    roundRect(bx,by,bw,bh,8);X.fill();
+    X.strokeStyle=zones[zi].accent;X.lineWidth=2;roundRect(bx,by,bw,bh,8);X.stroke();
+    X.fillStyle=unlocked?'#FFF':'#666';X.font='bold 18px sans-serif';
+    X.fillText((zi+1)+'. '+zones[zi].name,bx+bw/2,by+bh*0.4);
+    // Stars count
+    var zs=0;for(var li=zi*10+1;li<=(zi+1)*10;li++){zs+=getLevelStars(li);}
+    X.font='14px sans-serif';X.fillStyle='#FFD700';
+    X.fillText('★ '+zs+'/30',bx+bw/2,by+bh*0.75);
+    if(!unlocked){
+      X.fillStyle='#0008';roundRect(bx,by,bw,bh,8);X.fill();
+      X.fillStyle='#888';X.font='16px sans-serif';X.fillText('🔒 Locked',bx+bw/2,by+bh/2);
+    }
+    zoneBtn.push({x:bx,y:by,w:bw,h:bh,zone:zi,unlocked:unlocked});
+  }
+  // Back
+  X.fillStyle='#FFF8';X.fillRect(5,H-35,60,30);
+  X.fillStyle='#FFF';X.font='14px sans-serif';X.textAlign='center';X.textBaseline='middle';X.fillText('← Back',35,H-20);
+}
+
+function drawLevelSelect(){
+  var z=zones[currentZone];
+  var grd=X.createLinearGradient(0,0,0,H);
+  grd.addColorStop(0,z.color1);grd.addColorStop(1,z.color2);
+  X.fillStyle=grd;X.fillRect(0,0,W,H);
+  X.fillStyle='#FFF';X.font='bold 22px sans-serif';X.textAlign='center';X.textBaseline='middle';
+  X.fillText(z.name,W/2,H*0.06);
+  levelBtn=[];
+  for(var li=0;li<10;li++){
+    var lid=currentZone*10+li+1;
+    var cols=5,row=Math.floor(li/5),col=li%5;
+    var bw=Math.min(80,(W-60)/5),bh=bw;
+    var sx=(W-cols*bw-(cols-1)*8)/2;
+    var bx=sx+col*(bw+8),by=H*0.14+row*(bh+12);
+    var complete=isLevelComplete(lid);
+    var stars=getLevelStars(lid);
+    X.fillStyle=complete?z.accent:'#555';
+    roundRect(bx,by,bw,bh,8);X.fill();
+    X.strokeStyle=complete?'#FFD700':'#777';X.lineWidth=2;roundRect(bx,by,bw,bh,8);X.stroke();
+    X.fillStyle='#FFF';X.font='bold '+Math.max(12,bw*0.3)+'px sans-serif';
+    X.fillText(''+lid,bx+bw/2,by+bh*0.45);
+    for(var si=0;si<3;si++){
+      X.fillStyle=si<stars?'#FFD700':'#555';
+      drawStar(bx+bw/2-12+si*12,by+bh*0.78,5,5);
+    }
+    levelBtn.push({x:bx,y:by,w:bw,h:bh,lid:lid});
+  }
+  // Back
+  X.fillStyle='#FFF8';X.fillRect(5,H-35,60,30);
+  X.fillStyle='#FFF';X.font='14px sans-serif';X.textAlign='center';X.textBaseline='middle';X.fillText('← Back',35,H-20);
+}
+
+function roundRect(x,y,w,h,r){
+  X.beginPath();X.moveTo(x+r,y);X.lineTo(x+w-r,y);X.quadraticCurveTo(x+w,y,x+w,y+r);
+  X.lineTo(x+w,y+h-r);X.quadraticCurveTo(x+w,y+h,x+w-r,y+h);X.lineTo(x+r,y+h);
+  X.quadraticCurveTo(x,y+h,x,y+h-r);X.lineTo(x,y+r);X.quadraticCurveTo(x,y,x+r,y);X.closePath();
+}
+
+// --- PUZZLE LOGIC ---
+function handleGameTap(px,py){
+  if(victoryShown)return;
+  if(doorOpening)return;
+  // Back button
+  if(inRect(px,py,5,H-35,60,30)){gameState='levelSelect';sndClick();return;}
+  // Hint button
+  if(Math.hypot(px-(W-50),py-40)<20){sndHint();hintShown=Math.min(hintShown+1,2);hintsUsed=Math.max(hintsUsed,hintShown+1);return;}
+  // Check objects
+  if(levelData.pt===LT.NUMCODE||levelData.pt===LT.MATH||levelData.pt===LT.CIPHER||levelData.pt===LT.COUNT){
+    handleCodeTap(px,py);return;
+  }
+  if(levelData.pt===LT.TAP){
+    // Check handle
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(o.id==='handle'&&inRect(px,py,o.x*W,o.y*H,o.w*W,o.h*H)){sndClick();solvePuzzle();return;}
+    }
+    // Tap anywhere on door handle area
+    var dr=getDoorRect();
+    if(inRect(px,py,dr.x+dr.w*0.6,dr.y+dr.h*0.4,dr.w*0.2,dr.h*0.15)){sndClick();solvePuzzle();}
+    return;
+  }
+  if(levelData.pt===LT.KEY){
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(o.hasKey&&!lvlState.revealedKey&&inRect(px,py,o.x*W,o.y*H,o.w*W,o.h*H)){
+        lvlState.revealedKey=true;sndClick();return;
+      }
+    }
+    return;
+  }
+  if(levelData.pt===LT.COLOR||levelData.pt===LT.ORDER||levelData.pt===LT.SYMBOL||levelData.pt===LT.PATH||levelData.pt===LT.MIRROR){
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(inRect(px,py,o.x*W,o.y*H,o.w*W,o.h*H)){
+        sndClick();lvlState.input.push(o.id);
+        checkSequenceSolution();return;
+      }
+    }
+  }
+  if(levelData.pt===LT.SLIDE){
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(o.type==='panel'&&inRect(px,py,o.x*W,o.y*H,o.w*W,o.h*H)){
+        sndClick();lvlState.panelSlid[o.id]=(lvlState.panelSlid[o.id]||0)===0?(o.slideX||0.15):0;
+        // Check if all panels slid and button revealed
+        var allSlid=true;
+        for(var j=0;j<levelData.objects.length;j++){if(levelData.objects[j].type==='panel'&&!lvlState.panelSlid[levelData.objects[j].id])allSlid=false;}
+        if(allSlid)lvlState.revealedKey=true;
+        return;
+      }
+      if(o.type==='button'&&lvlState.revealedKey&&inRect(px,py,o.x*W,o.y*H,o.w*W,o.h*H)){
+        sndClick();solvePuzzle();return;
+      }
+    }
+  }
+  if(levelData.pt===LT.LIGHT||levelData.pt===LT.MEMORY||levelData.pt===LT.SIMON){
+    if(lvlState.flashing)return;
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(inRect(px,py,o.x*W,o.y*H,o.w*W,o.h*H)){
+        sndClick();lvlState.input.push(o.id);
+        flashObj=o.id;flashTimer=Date.now();
+        checkSequenceSolution();return;
+      }
+    }
+  }
+  if(levelData.pt===LT.ROTATE||levelData.pt===LT.RATCHET){
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if((o.type==='dial'||o.type==='gear')&&inRect(px,py,o.x*W,o.y*H,o.w*W,o.h*H)){
+        sndClick();
+        if(o.type==='dial'){
+          var idx=levelData.objects.indexOf(o);
+          lvlState.dialPos[idx]=(lvlState.dialPos[idx]+1)%(o.symbols?o.symbols.length:4);
+          checkDialSolution();
+        }else{
+          lvlState.gearPos=(lvlState.gearPos+1)%o.notches;
+          if(lvlState.gearPos===o.target)solvePuzzle();
+        }
+        return;
+      }
+    }
+  }
+  if(levelData.pt===LT.SWITCH){
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(o.type==='lever'&&!lvlState.leverPulled[o.id]&&inRect(px,py,o.x*W-5,o.y*H-10,o.w*W+10,o.h*H+15)){
+        sndClick();lvlState.leverPulled[o.id]=true;
+        lvlState.input.push(o.id);
+        checkSwitchSolution();return;
+      }
+    }
+  }
+  if(levelData.pt===LT.TIMING){
+    if(lvlState.timingRunning){
+      sndClick();lvlState.timingRunning=false;lvlState.timingStopped=true;
+      // Check if near center (target zone)
+      var meter=null,tgt=null;
+      for(var i=0;i<levelData.objects.length;i++){
+        if(levelData.objects[i].type==='meter')meter=levelData.objects[i];
+        if(levelData.objects[i].type==='target')tgt=levelData.objects[i];
+      }
+      if(meter&&tgt){
+        var targetPos=(tgt.x-meter.x)/meter.w+0.5*tgt.w/meter.w;
+        if(Math.abs(lvlState.timingPos-targetPos)<0.12)solvePuzzle();
+        else{sndFail();setTimeout(function(){lvlState.timingRunning=true;lvlState.timingPos=0;lvlState.timingDir=1;lvlState.timingStopped=false;},500);}
+      }
+    }
+  }
+  if(levelData.pt===LT.DRAG){
+    // Start drag on crate
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(o.type==='crate'){
+        var mx=lvlState.objMoved[o.id]?lvlState.objMoved[o.id].dx:0;
+        var my=lvlState.objMoved[o.id]?lvlState.objMoved[o.id].dy:0;
+        if(inRect(px,py,o.x*W+mx,o.y*H+my,o.w*W,o.h*H)){
+          dragObj=o;dragOffX=px-(o.x*W+mx);dragOffY=py-(o.y*H+my);sndClick();return;
+        }
+      }
+      if(o.type==='button'&&lvlState.revealedKey&&inRect(px,py,o.x*W,o.y*H,o.w*W,o.h*H)){
+        sndClick();solvePuzzle();return;
+      }
+    }
+  }
+  if(levelData.pt===LT.PUZZLE){
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(o.type==='piece'&&!lvlState.puzzlePieceSlots[i]){
+        var pmx=lvlState.objMoved[o.id]?lvlState.objMoved[o.id].dx:0;
+        var pmy=lvlState.objMoved[o.id]?lvlState.objMoved[o.id].dy:0;
+        if(inRect(px,py,o.x*W+pmx,o.y*H+pmy,o.w*W,o.h*H)){
+          dragObj=o;dragOffX=px-(o.x*W+pmx);dragOffY=py-(o.y*H+pmy);sndClick();return;
+        }
+      }
+    }
+  }
+  if(levelData.pt===LT.COLORFLIP){
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(o.type==='tile'&&inRect(px,py,o.x*W,o.y*H,o.w*W,o.h*H)){
+        sndClick();lvlState.flipped[o.id]=!lvlState.flipped[o.id];
+        checkColorFlip();return;
+      }
+    }
+  }
+  if(levelData.pt===LT.WIRE){
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(o.type==='port'&&inRect(px,py,o.x*W,o.y*H,o.w*W,o.h*H)){
+        sndClick();
+        if(!lvlState.wireFirst){lvlState.wireFirst=o.id;}
+        else{
+          // Check if this pair matches
+          var sol=levelData.solution;
+          var a=lvlState.wireFirst,b=o.id;
+          if((sol[a]===b)||(sol[b]===a)){
+            lvlState.wireConns[a]=b;lvlState.wireConns[b]=a;
+            delete sol[a];delete sol[b];
+            if(Object.keys(sol).length===0)solvePuzzle();
+          }
+          lvlState.wireFirst=null;
+        }
+        return;
+      }
+    }
+  }
+  if(levelData.pt===LT.GRID){
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(o.type==='cell'&&inRect(px,py,o.x*W,o.y*H,o.w*W,o.h*H)){
+        sndClick();toggleGrid(o);return;
+      }
+    }
+  }
+  if(levelData.pt===LT.VALVE){
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(o.type==='valve'&&inRect(px,py,o.x*W,o.y*H,o.w*W,o.h*H)){
+        sndClick();
+        var vi=levelData.objects.indexOf(o);
+        lvlState.valvePos[vi]=(lvlState.valvePos[vi]+1)%4;
+        checkValveSolution();return;
+      }
+    }
+  }
+}
+
+function getDoorRect(){return {x:W*0.35,y:H*0.15,w:W*0.3,h:H*0.65};}
+
+function handleCodeTap(px,py){
+  var bx=W*0.35,by=H*0.82,bw=W*0.3,bh=H*0.05;
+  var keys=['1','2','3','4','5','6','7','8','9','C','0','⌫'];
+  var kw=bw/3,kh=bh*0.9;
+  for(var ki=0;ki<12;ki++){
+    var kr=Math.floor(ki/3),kc=ki%3;
+    var kx=bx+kc*kw,ky=by+bh+6+kr*kh;
+    if(inRect(px,py,kx,ky,kw,kh)){
+      sndClick();
+      if(keys[ki]==='C'){codeInput='';}
+      else if(keys[ki]==='⌫'){codeInput=codeInput.slice(0,-1);}
+      else{codeInput+=keys[ki];if(codeInput.length>=6)checkCodeSolution();}
+      return;
+    }
+  }
+}
+
+function checkCodeSolution(){
+  if(codeInput===levelData.solution){
+    solvePuzzle();
+  }else if(codeInput.length>=levelData.solution.length){
+    sndFail();codeInput='';
+  }
+}
+
+function checkSequenceSolution(){
+  var sol=levelData.solution;
+  var inp=lvlState.input;
+  // Check if input so far matches solution prefix
+  for(var i=0;i<inp.length;i++){
+    if(inp[i]!==sol[i]){sndFail();lvlState.input=[];return;}
+  }
+  if(inp.length===sol.length){solvePuzzle();}
+}
+
+function checkSwitchSolution(){
+  var sol=levelData.solution;
+  var inp=lvlState.input;
+  for(var i=0;i<inp.length;i++){
+    if(inp[i]!==sol[i]){sndFail();lvlState.input=[];for(var k in lvlState.leverPulled)lvlState.leverPulled[k]=false;return;}
+  }
+  if(inp.length===sol.length){solvePuzzle();}
+}
+
+function checkDialSolution(){
+  var sol=levelData.solution;
+  for(var i=0;i<sol.length;i++){
+    if(lvlState.dialPos[i]!==sol[i])return;
+  }
+  solvePuzzle();
+}
+
+function checkColorFlip(){
+  for(var i=0;i<levelData.objects.length;i++){
+    var o=levelData.objects[i];
+    if(o.type==='tile'){
+      if(!lvlState.flipped[o.id]&&o.color!==o.target)return;
+      if(lvlState.flipped[o.id]&&o.color===o.target)return;
+    }
+  }
+  solvePuzzle();
+}
+
+function toggleGrid(obj){
+  var idx=levelData.objects.indexOf(obj);
+  var r=obj.row,c=obj.col;
+  lvlState.gridState[idx]=!lvlState.gridState[idx];
+  // Toggle neighbors
+  var dirs=[[0,1],[0,-1],[1,0],[-1,0]];
+  for(var d=0;d<dirs.length;d++){
+    var nr=r+dirs[d][0],nc=c+dirs[d][1];
+    if(nr>=0&&nr<4&&nc>=0&&nc<4){
+      var ni=-1;
+      for(var j=0;j<levelData.objects.length;j++){
+        if(levelData.objects[j].row===nr&&levelData.objects[j].col===nc){ni=j;break;}
+      }
+      if(ni>=0)lvlState.gridState[ni]=!lvlState.gridState[ni];
+    }
+  }
+  // Check all on
+  for(var i=0;i<levelData.objects.length;i++){
+    if(!lvlState.gridState[i])return;
+  }
+  solvePuzzle();
+}
+
+function checkValveSolution(){
+  var sol=levelData.solution;
+  for(var i=0;i<sol.length;i++){
+    if(lvlState.valvePos[i]!==sol[i])return;
+  }
+  solvePuzzle();
+}
+
+function handleDragMove(px,py){
+  if(!dragObj)return;
+  var dx=px-dragOffX-dragObj.x*W;
+  var dy=py-dragOffY-dragObj.y*H;
+  lvlState.objMoved[dragObj.id]={dx:dx,dy:dy};
+}
+
+function handleDragEnd(px,py){
+  if(!dragObj)return;
+  if(levelData.pt===LT.KEY){
+    // Check if key dropped on lock
+    var lock=null;
+    for(var i=0;i<levelData.objects.length;i++){
+      if(levelData.objects[i].type==='lock')lock=levelData.objects[i];
+    }
+    if(lock){
+      var lx=lock.x*W,ly=lock.y*H;
+      if(Math.hypot(px-(lx+lock.w*W/2),py-(ly+lock.h*H/2))<40){
+        solvePuzzle();dragObj=null;return;
+      }
+    }
+    // Reset key position
+    delete lvlState.objMoved[dragObj.id];
+  }
+  if(levelData.pt===LT.DRAG){
+    // Check if crates moved enough to reveal button
+    var allMoved=true;
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(o.type==='crate'){
+        var m=lvlState.objMoved[o.id];
+        if(!m||(Math.abs(m.dx)<o.w*W*0.5&&Math.abs(m.dy)<o.h*H*0.3))allMoved=false;
+      }
+    }
+    if(allMoved)lvlState.revealedKey=true;
+  }
+  if(levelData.pt===LT.PUZZLE){
+    // Check if piece dropped near its slot
+    var dr=getDoorRect();
+    var slotW=dr.w/4;
+    var slotX=dr.x;var slotY=dr.y+dr.h*0.3;
+    var idx=levelData.objects.indexOf(dragObj);
+    if(idx>=0){
+      var targetSlotX=slotX+dragObj.slot*slotW;
+      var px2=dragObj.x*W+(lvlState.objMoved[dragObj.id]?lvlState.objMoved[dragObj.id].dx:0);
+      var py2=dragObj.y*H+(lvlState.objMoved[dragObj.id]?lvlState.objMoved[dragObj.id].dy:0);
+      if(Math.abs(px2-targetSlotX)<slotW&&Math.abs(py2-slotY)<dr.h*0.2){
+        // Snap to slot
+        lvlState.objMoved[dragObj.id]={dx:targetSlotX-dragObj.x*W,dy:slotY-dragObj.y*H};
+        lvlState.puzzlePieceSlots[idx]={placed:true};
+        lvlState.piecesPlaced++;
+        if(lvlState.piecesPlaced>=levelData.objects.length)solvePuzzle();
+      }
+    }
+  }
+  dragObj=null;
+}
+
+function solvePuzzle(){
+  puzzleSolved=true;doorOpening=true;sndOpen();
+  setTimeout(function(){
+    var elapsed=Date.now()-levelStartTime;
+    starsEarned=calcStars(elapsed,hintsUsed);
+    if(!saveData.levels[currentLevel]||saveData.levels[currentLevel].stars<starsEarned){
+      saveData.levels[currentLevel]={complete:true,stars:starsEarned};
+    }
+    saveSave(saveData);
+    victoryShown=true;
+    sndSuccess();
+    document.dispatchEvent(new CustomEvent('level-complete',{detail:{level:currentLevel,stars:starsEarned}}));
+    document.dispatchEvent(new CustomEvent('gameover',{detail:{level:currentLevel,stars:starsEarned}}));
+  },1200);
+}
+
+// --- UPDATE ---
+function update(){
+  if(gameState!=='game'||!levelData)return;
+  // Door open animation
+  if(doorOpening&&doorOpenAnim<1){doorOpenAnim=Math.min(1,doorOpenAnim+0.03);}
+  // Flash sequence for LIGHT/SIMON/MEMORY
+  if(lvlState.flashing&&levelData.solution.length>0){
+    var now=Date.now();
+    var delay=levelData.flashDelay||800;
+    if(now-lvlState.flashTimer>delay){
+      lvlState.flashTimer=now;
+      lvlState.flashIdx++;
+      if(lvlState.flashIdx<levelData.solution.length){
+        flashObj=levelData.solution[lvlState.flashIdx];
+      }else{
+        lvlState.flashing=false;flashObj=-1;
+      }
+    }
+  }else{
+    // Auto-clear flash
+    if(flashObj!==-1&&Date.now()-flashTimer>300)flashObj=-1;
+  }
+  // Timing mechanic
+  if(lvlState.timingRunning&&!lvlState.timingStopped){
+    lvlState.timingPos+=lvlState.timingDir*0.008;
+    if(lvlState.timingPos>=1){lvlState.timingPos=1;lvlState.timingDir=-1;}
+    if(lvlState.timingPos<=0){lvlState.timingPos=0;lvlState.timingDir=1;}
+  }
+}
+
+// --- MAIN LOOP ---
+function gameLoop(){
+  animId=requestAnimationFrame(gameLoop);
+  X.clearRect(0,0,W,H);
+  if(gameState==='menu'){drawMenu();}
+  else if(gameState==='zones'){drawZoneSelect();}
+  else if(gameState==='levelSelect'){drawLevelSelect();}
+  else if(gameState==='game'){
+    update();
+    drawBg();
+    drawDoor(doorOpenAnim);
+    if(levelData){
+      for(var i=0;i<levelData.objects.length;i++){
+        var isH=hoverObj===levelData.objects[i];
+        drawObject(levelData.objects[i],isH);
+      }
+      drawCodeInput();
+      drawUI();
+      if(victoryShown)drawVictory();
+    }
+  }
+}
+
+// --- INPUT ---
+function getPos(e){
+  var rect=C.getBoundingClientRect();
+  var t=e.touches?e.touches[0]:e;
+  return {x:t.clientX-rect.left,y:t.clientY-rect.top};
+}
+
+C.addEventListener('pointerdown',function(e){
+  e.preventDefault();initAudio();
+  var p=getPos(e);
+  if(gameState==='menu'){
+    for(var i=0;i<menuBtn.length;i++){
+      var b=menuBtn[i];
+      if(inRect(p.x,p.y,b.x,b.y,b.w,b.h)){
+        sndClick();
+        if(b.action==='play'){currentZone=0;gameState='levelSelect';}
+        else if(b.action==='zones'){gameState='zones';}
+        return;
+      }
+    }
+  }
+  else if(gameState==='zones'){
+    if(inRect(p.x,p.y,5,H-35,60,30)){gameState='menu';sndClick();return;}
+    for(var i=0;i<zoneBtn.length;i++){
+      var b=zoneBtn[i];
+      if(b.unlocked&&inRect(p.x,p.y,b.x,b.y,b.w,b.h)){
+        sndClick();currentZone=b.zone;gameState='levelSelect';return;
+      }
+    }
+  }
+  else if(gameState==='levelSelect'){
+    if(inRect(p.x,p.y,5,H-35,60,30)){
+      if(currentZone===0)gameState='menu';else gameState='zones';
+      sndClick();return;
+    }
+    for(var i=0;i<levelBtn.length;i++){
+      var b=levelBtn[i];
+      if(inRect(p.x,p.y,b.x,b.y,b.w,b.h)){
+        sndClick();initLevel(b.lid);gameState='game';return;
+      }
+    }
+  }
+  else if(gameState==='game'){
+    if(victoryShown){
+      // Next level button
+      if(inRect(p.x,p.y,W/2-60,H*0.62,120,40)){
+        sndClick();
+        if(currentLevel<50){initLevel(currentLevel+1);}
+        else{gameState='menu';}
+        return;
+      }
+      // Retry
+      if(inRect(p.x,p.y,W/2-60,H*0.72,120,40)){sndClick();initLevel(currentLevel);return;}
+      return;
+    }
+    handleGameTap(p.x,p.y);
+    if(dragObj)handleDragMove(p.x,p.y);
+  }
+});
+
+C.addEventListener('pointermove',function(e){
+  e.preventDefault();
+  var p=getPos(e);
+  if(dragObj){handleDragMove(p.x,p.y);}
+  // Hover detect
+  if(gameState==='game'&&levelData){
+    hoverObj=null;
+    for(var i=0;i<levelData.objects.length;i++){
+      var o=levelData.objects[i];
+      if(inRect(p.x,p.y,o.x*W,o.y*H,o.w*W,o.h*H)){hoverObj=o;break;}
+    }
+  }
+});
+
+C.addEventListener('pointerup',function(e){
+  e.preventDefault();
+  var p=getPos(e);
+  if(dragObj){handleDragEnd(p.x,p.y);}
+});
+
+C.addEventListener('pointerleave',function(e){
+  if(dragObj){dragObj=null;}
+});
+
+// Prevent zoom
+document.addEventListener('gesturestart',function(e){e.preventDefault();});
+
+// --- CLEANUP ---
+function cleanup(){
+  if(animId){cancelAnimationFrame(animId);animId=null;}
+  if(audioCtx){try{audioCtx.close();}catch(e){}audioCtx=null;}
+}
+window.addEventListener('beforeunload',cleanup);
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){if(animId){cancelAnimationFrame(animId);animId=null;}}
+  else if(!animId){gameLoop();}
+});
+
+// --- START ---
+gameLoop();
+</script>
+</body>
+</html>

@@ -196,6 +196,8 @@
       {n:'Waffle',e:'🧇',u:'/waffle/',c:'puzzle'},
       {n:'BoxRob',e:'📦',u:'/boxrob/',c:'puzzle'},
       {n:'Blackjack 21',e:'🃏',u:'/blackjack/',c:'card'},
+
+{name:"100 Doors Puzzle Box",url:"100-doors"}
 ];
 
   var cur = location.pathname;
