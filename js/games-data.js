@@ -210,6 +210,7 @@ const GAMES = [
 {name:"Crossmath",emoji:"🧮",cat:"puzzle",tags:["crossmath","math crossword","number puzzle","equation","educational","brain training","math game","logic"],url:"/crossmath/",desc:"Fill numbers into a crossword grid so horizontal and vertical equations are correct. Multiple difficulty levels, daily challenge, hints, and star ratings.",rating:4.7,isNew:true,status:"live"},
 {name:"Cryptograms",emoji:"🔐",cat:"puzzle",tags:["cryptogram","cipher","code","decode","quotes","word puzzle","substitution","brain training","logic","daily"],url:"/cryptograms/",desc:"Decode famous quotes encrypted with letter substitution ciphers! 200 curated puzzles across 8 categories, 3 difficulty levels, daily challenge, hints and streaks.",rating:4.6,isNew:true,status:"live"},
 {name:"Who Is",emoji:"🔍",cat:"puzzle",tags:["detective","logic","brain-teaser","mystery"],url:"/who-is/",desc:"Solve 40+ detective puzzles by finding clues, spotting liars, and catching imposters. Test your observation skills!",isNew:true,status:"live"},
+{name:"Two Dots",emoji:"🔴",cat:"puzzle",tags:["two dots","connect dots","dot puzzle","chain","match","color","brain training","logic","casual"],url:"/two-dots/",desc:"Connect same-colored dots in chains to complete objectives. 50 levels across 5 chapters with ice blocks, anchors, and combos!",rating:4.6,isNew:true,status:"live"},
 ];
 
 /**
