@@ -1273,6 +1273,14 @@ function gzUpdateShowMoreBtn(){var w=document.getElementById('gz-show-more-wrap'
   </div>
 </section>
 
+<!-- UX-Random: Quick Pick section to reduce bottom-page bounce -->
+<section id="gz-quick-pick" style="max-width:900px;margin:10px auto 0;padding:0 20px" aria-label="Quick game picks">
+  <h2 style="font-size:1.3em;margin:0 0 12px;text-align:center;color:#fff">🎲 Quick Pick — Try Something New!</h2>
+  <p style="text-align:center;color:#78909c;margin:0 0 12px;font-size:.9em">Can't decide? Here are 4 random games to jump into right now.</p>
+  <div id="gz-quick-pick-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
+  <p style="text-align:center;margin-top:10px"><a href="javascript:void(0)" id="gz-quick-pick-refresh" style="color:#4ecdc4;text-decoration:none;font-size:.85em;cursor:pointer" role="button" aria-label="Get new random game suggestions">🔄 Shuffle again</a></p>
+</section>
+
 <div id="gz-social-proof" style="max-width:900px;margin:10px auto 0;text-align:center;padding:12px 20px;display:flex;justify-content:center;gap:24px;flex-wrap:wrap;font-size:0.85em;color:#78909c">
   <span>🎮 <strong style="color:#4ecdc4" id="gz-stat-games"><span class="gz-counter" data-count="179">0</span>+</strong> Free Games</span>
   <span>⚡ Instant Play — No Downloads</span>
@@ -1739,6 +1747,37 @@ function playRandom(){
   }else{
     setTimeout(loadAdManager,2000);
   }
+})();
+</script>
+// Quick Pick: random game recommendations to reduce bottom-page bounce (UX optimization)
+(function(){
+  function renderQuickPick(){
+    if(typeof GAMES==='undefined')return;
+    var live=GAMES.filter(function(g){return g.status==='live'});
+    if(!live.length)return;
+    var shuffled=live.slice().sort(function(){return 0.5-Math.random()});
+    var picks=shuffled.slice(0,4);
+    var grid=document.getElementById('gz-quick-pick-grid');
+    if(!grid)return;
+    var colors=['#4ecdc4','#ff6b6b','#ffd93d','#a78bfa','#f472b6','#34d399','#60a5fa','#fb923c'];
+    grid.innerHTML=picks.map(function(g,i){
+      var c=colors[i%colors.length];
+      return '<a href="'+g.url+'" style="display:block;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:12px;padding:14px;text-decoration:none;color:#fff;transition:transform .15s,border-color .15s;touch-action:manipulation" onmouseenter="this.style.borderColor=\''+c+'\';this.style.transform=\'translateY(-2px)\'" onmouseleave="this.style.borderColor=\'#2a2a4a\';this.style.transform=\'none\'" aria-label="Play '+g.name+'"><div style="font-size:1.8em;margin-bottom:6px">'+g.emoji+'</div><div style="font-size:.95em;font-weight:700;margin-bottom:4px">'+g.name+'</div><div style="color:#78909c;font-size:.8em;line-height:1.4">'+g.desc+'</div></a>';
+    }).join('');
+  }
+  // Initial render + refresh button
+  function init(){
+    renderQuickPick();
+    var btn=document.getElementById('gz-quick-pick-refresh');
+    if(btn)btn.addEventListener('click',function(){renderQuickPick()});
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}
+  // Also re-render when GAMES loads if it hasn't yet
+  var _checkCount=0;
+  var _iv=setInterval(function(){
+    if(typeof GAMES!=='undefined'){clearInterval(_iv);renderQuickPick();return}
+    if(++_checkCount>50)clearInterval(_iv);
+  },100);
 })();
 </script>
 <script src="/game-footer.js?v=461d4c4b" defer fetchpriority="low"></script>
