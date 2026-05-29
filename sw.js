@@ -1,12 +1,17 @@
-// GameZipper Service Worker v11
+// GameZipper Service Worker v12
 // Pure game caching — Monetag push NOTIFICATIONS DISABLED per user request
 // Strategies: cache-first (static), stale-while-revalidate with 4h max-age (HTML), network-first (API)
-// v10: offline fallback page, SW update notification via postMessage, preconnect hints
-const CACHE='gz-v11';
+// v12: navigationPreload for faster TTFB on navigation requests
+const CACHE='gz-v12';
 const HTML_MAX_AGE=4*60*60*1000; // 4 hours in ms
 
 // === Install ===
 self.addEventListener('install',e=>{
+  // Enable navigation preload for faster TTFB on navigation
+  if(self.registration.navigationPreload){
+    e.waitUntil(self.registration.navigationPreload.enable());
+  }
+
   // Precache top 5 game pages + offline fallback for instant access
   var precacheURLs=[
     '/',
@@ -15,7 +20,8 @@ self.addEventListener('install',e=>{
     '/snake/',
     '/tetris/',
     '/sudoku/',
-    '/solitaire/'
+    '/solitaire/',
+    '/chess/'
   ];
   e.waitUntil(
     caches.open(CACHE).then(function(c){
@@ -88,11 +94,13 @@ self.addEventListener('fetch',e=>{
 
   // Stale-while-revalidate for HTML pages (same-origin navigation)
   // With 4-hour max-age: if cache is older than 4h, prefer fresh network response
+  // Uses navigationPreload for faster TTFB when network response is needed
   if(url.pathname.endsWith('/')||url.pathname.endsWith('.html')||url.pathname==='/'){
     e.respondWith(
       caches.open(CACHE).then(function(c){
         return c.match(e.request).then(function(cached){
-          var fetchPromise=fetch(e.request).then(function(resp){
+          // Use navigationPreload response if available, otherwise fetch
+          var networkPromise=(e.preloadResponse||fetch(e.request)).then(function(resp){
             if(resp&&resp.status===200){
               var clone=resp.clone();
               c.put(e.request,clone).catch(function(){});
@@ -106,7 +114,7 @@ self.addEventListener('fetch',e=>{
             var age=dateHeader?(Date.now()-new Date(dateHeader).getTime()):HTML_MAX_AGE+1;
             if(age<HTML_MAX_AGE)return cached;
           }
-          return cached||fetchPromise;
+          return cached||networkPromise;
         });
       }).catch(function(){
         // Offline fallback: serve offline.html for navigation requests
