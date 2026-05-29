@@ -197,7 +197,8 @@
       {n:'BoxRob',e:'📦',u:'/boxrob/',c:'puzzle'},
       {n:'Blackjack 21',e:'🃏',u:'/blackjack/',c:'card'},
 
-{name:"100 Doors Puzzle Box",url:"100-doors"}
+{n:'100 Doors Puzzle Box',e:'🚪',u:'/100-doors/',c:'puzzle'},
+{n:'Crossmath',e:'🧮',u:'/crossmath/',c:'puzzle'}
 ];
 
   var cur = location.pathname;

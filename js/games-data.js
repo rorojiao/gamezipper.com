@@ -206,7 +206,8 @@ const GAMES = [
 {name:"BoxRob",emoji:"📦",cat:"puzzle",tags:["physics","platformer","box","puzzle","push"],url:"/boxrob/",desc:"Push boxes to solve physics platformer puzzles in 40 challenging levels. Play BoxRob free online!",isNew:true,status:"live"},
   {name:"Mekorama",emoji:"🤖",cat:"puzzle",tags:["isometric","diorama","3d puzzle","rotation","pathfinding","brain teaser","casual","relaxing"],url:"/mekorama/",desc:"Guide a cute robot through charming 3D isometric diorama worlds! Tap to move, rotate the view to find hidden paths, collect stars, and solve 50 handcrafted puzzles across 10 themed packs.",isNew:true,status:"live"},
 
-{name:"100 Doors Puzzle Box",emoji:"🚪",cat:"puzzle",tags:["100 doors","escape","puzzle","point and click","brain teaser","door puzzle","escape room","hidden objects","logic"],url:"100-doors",desc:"Open 50 locked doors by solving clever puzzles! Tap, drag, and think your way through unique brain-teasing escape challenges across 5 themed zones.",rating:4.8,isNew:true,status:"live"}
+{name:"100 Doors Puzzle Box",emoji:"🚪",cat:"puzzle",tags:["100 doors","escape","puzzle","point and click","brain teaser","door puzzle","escape room","hidden objects","logic"],url:"/100-doors/",desc:"Open 50 locked doors by solving clever puzzles! Tap, drag, and think your way through unique brain-teasing escape challenges across 5 themed zones.",rating:4.8,isNew:true,status:"live"},
+{name:"Crossmath",emoji:"🧮",cat:"puzzle",tags:["crossmath","math crossword","number puzzle","equation","educational","brain training","math game","logic"],url:"/crossmath/",desc:"Fill numbers into a crossword grid so horizontal and vertical equations are correct. Multiple difficulty levels, daily challenge, hints, and star ratings.",rating:4.7,isNew:true,status:"live"}
 ];
 
 /**
