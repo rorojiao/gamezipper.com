@@ -349,4 +349,4 @@
      setTimeout(init, 100);
    }
  }
-})();
+},{n:"Mekorama",e:"🤖",u:"/mekorama/",c:"puzzle"})();
