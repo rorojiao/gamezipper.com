@@ -1,13 +1,16 @@
-// GameZipper Service Worker v8
+// GameZipper Service Worker v10
 // Pure game caching — Monetag push NOTIFICATIONS DISABLED per user request
 // Strategies: cache-first (static), stale-while-revalidate with 4h max-age (HTML), network-first (API)
-const CACHE='gz-v9';
+// v10: offline fallback page, SW update notification via postMessage, preconnect hints
+const CACHE='gz-v10';
 const HTML_MAX_AGE=4*60*60*1000; // 4 hours in ms
 
 // === Install ===
 self.addEventListener('install',e=>{
-  // Precache top 5 game pages for instant back-navigation
+  // Precache top 5 game pages + offline fallback for instant access
   var precacheURLs=[
+    '/',
+    '/offline.html',
     '/2048/',
     '/snake/',
     '/tetris/',
@@ -35,11 +38,25 @@ self.addEventListener('install',e=>{
 
 // === Activate ===
 self.addEventListener('activate',e=>{
-  e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).catch(()=>{}));
+  e.waitUntil(
+    caches.keys().then(function(ks){
+      // Clean old caches
+      return Promise.all(ks.filter(function(k){return k!==CACHE;}).map(function(k){return caches.delete(k);}));
+    }).catch(function(){})
+  );
   e.clients.claim();
+
+  // Notify all clients about the update
+  e.waitUntil(
+    self.clients.matchAll().then(function(clients){
+      clients.forEach(function(client){
+        client.postMessage({type:'SW_UPDATED',version:CACHE});
+      });
+    })
+  );
 });
 
-// === Fetch: Smart caching strategy ===
+// === Fetch: Smart caching strategy with offline fallback ===
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
   var url=new URL(e.request.url);
@@ -53,18 +70,18 @@ self.addEventListener('fetch',e=>{
   // Cache-first for static assets (js, css, images, fonts, audio)
   if(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|mp3|ogg|wav|webp)$/i.test(url.pathname)){
     e.respondWith(
-      caches.open(CACHE).then(c=>
-        c.match(e.request).then(r=>{
+      caches.open(CACHE).then(function(c){
+        return c.match(e.request).then(function(r){
           if(r)return r;
-          return fetch(e.request).then(resp=>{
+          return fetch(e.request).then(function(resp){
             if(resp&&resp.status===200){
               var clone=resp.clone();
               c.put(e.request,clone);
             }
             return resp;
           });
-        })
-      ).catch(()=>fetch(e.request))
+        });
+      }).catch(function(){return fetch(e.request);})
     );
     return;
   }
@@ -73,15 +90,15 @@ self.addEventListener('fetch',e=>{
   // With 4-hour max-age: if cache is older than 4h, prefer fresh network response
   if(url.pathname.endsWith('/')||url.pathname.endsWith('.html')||url.pathname==='/'){
     e.respondWith(
-      caches.open(CACHE).then(c=>
-        c.match(e.request).then(cached=>{
-          var fetchPromise=fetch(e.request).then(resp=>{
+      caches.open(CACHE).then(function(c){
+        return c.match(e.request).then(function(cached){
+          var fetchPromise=fetch(e.request).then(function(resp){
             if(resp&&resp.status===200){
               var clone=resp.clone();
-              c.put(e.request,clone).catch(()=>{});
+              c.put(e.request,clone).catch(function(){});
             }
             return resp;
-          }).catch(()=>cached);
+          }).catch(function(){return cached;});
 
           // If cached is fresh (<4h), return immediately; else wait for network
           if(cached){
@@ -90,20 +107,26 @@ self.addEventListener('fetch',e=>{
             if(age<HTML_MAX_AGE)return cached;
           }
           return cached||fetchPromise;
-        })
-      ).catch(()=>fetch(e.request))
+        });
+      }).catch(function(){
+        // Offline fallback: serve offline.html for navigation requests
+        if(e.request.mode==='navigate'){
+          return caches.match('/offline.html');
+        }
+        return fetch(e.request);
+      })
     );
     return;
   }
 
   // Network-first for everything else
   e.respondWith(
-    fetch(e.request).then(resp=>{
+    fetch(e.request).then(function(resp){
       if(resp&&resp.status===200){
         var clone=resp.clone();
-        caches.open(CACHE).then(c=>c.put(e.request,clone)).catch(()=>{});
+        caches.open(CACHE).then(function(c){c.put(e.request,clone);}).catch(function(){});
       }
       return resp;
-    }).catch(()=>caches.match(e.request))
+    }).catch(function(){return caches.match(e.request);})
   );
 });
