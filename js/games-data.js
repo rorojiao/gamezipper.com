@@ -201,7 +201,8 @@ const GAMES = [
   {name:"Find N Merge",emoji:"🔍",cat:"puzzle",tags:["hidden object","merge","find","search"],url:"/find-n-merge/",desc:"Find hidden objects scattered across scenes, then merge matching items to create higher-tier collectibles in this addictive puzzle game.",isNew:true,status:"live"},
 {name:"Infinity Loop",emoji:"♾️",cat:"puzzle",tags:["infinity loop","tile puzzle","rotation puzzle","path puzzle","relax","zen","brain teaser","connect","loop","pipe"],url:"/infinity-loop/",desc:"Play Infinity Loop online free - a relaxing tile rotation puzzle game. Connect paths to form complete loops with no loose ends. 50 levels across 5 packs, procedurally generated puzzles.",isNew:true,status:"live"},
 {name:"Cover Orange",emoji:"🍊",cat:"puzzle",tags:["physics","protection","drag-and-drop","rain","shelter"],url:"/cover-orange/",desc:"Protect the orange from acid rain! Drag and drop objects to build shelters in this physics puzzle game.",isNew:true,status:"live"},
-{name:"Tens",emoji:"🔢",cat:"puzzle",tags:["number","math","strategy","add","logic"],url:"/tens-game/",desc:"TENS is a relaxing number puzzle. Place numbers on a 5x5 grid and clear adjacent pairs that sum to 10. Chain combos for high scores.",isNew:true,status:"live"}
+{name:"Tens",emoji:"🔢",cat:"puzzle",tags:["number","math","strategy","add","logic"],url:"/tens-game/",desc:"TENS is a relaxing number puzzle. Place numbers on a 5x5 grid and clear adjacent pairs that sum to 10. Chain combos for high scores.",isNew:true,status:"live"},
+{name:"BoxRob",emoji:"📦",cat:"puzzle",tags:["physics","platformer","box","puzzle","push"],url:"/boxrob/",desc:"Push boxes to solve physics platformer puzzles in 40 challenging levels. Play BoxRob free online!",isNew:true,status:"live"}
 ];
 
 /**
@@ -225,4 +226,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"BoxRob",emoji:"📦",cat:"puzzle",tags:["physics","platformer","box","puzzle","push"],url:"/boxrob/",desc:"Push boxes to solve physics platformer puzzles in 40 challenging levels. Play BoxRob free online!",isNew:true,status:"live"},

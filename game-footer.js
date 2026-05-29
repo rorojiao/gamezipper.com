@@ -194,6 +194,7 @@
       {n:'Quordle',e:'🔤',u:'/quordle/',c:'puzzle'},
       {n:'Schulte Table',e:'🧠',u:'/schulte-table/',c:'puzzle'},
       {n:'Waffle',e:'🧇',u:'/waffle/',c:'puzzle'},
+      {n:'BoxRob',e:'📦',u:'/boxrob/',c:'puzzle'},
 ];
 
   var cur = location.pathname;
