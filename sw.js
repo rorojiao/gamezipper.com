@@ -1,8 +1,8 @@
-// GameZipper Service Worker v12
+// GameZipper Service Worker v14
 // Pure game caching — Monetag push NOTIFICATIONS DISABLED per user request
 // Strategies: cache-first (static), stale-while-revalidate with 4h max-age (HTML), network-first (API)
 // v12: navigationPreload for faster TTFB on navigation requests
-const CACHE='gz-v13';
+const CACHE='gz-v14';
 const HTML_MAX_AGE=4*60*60*1000; // 4 hours in ms
 
 // === Install ===
@@ -54,6 +54,18 @@ self.addEventListener('activate',e=>{
     }).catch(function(){})
   );
   e.clients.claim();
+
+  // Prune oversized cache entries (keep cache under 50MB)
+  e.waitUntil(
+    caches.open(CACHE).then(function(c){
+      return c.keys().then(function(keys){
+        // If cache has >200 entries, remove oldest ones beyond 200
+        if(keys.length<=200)return;
+        var toDelete=keys.slice(200);
+        return Promise.all(toDelete.map(function(req){return c.delete(req);}));
+      });
+    }).catch(function(){})
+  );
 
   // Notify all clients about the update
   e.waitUntil(
