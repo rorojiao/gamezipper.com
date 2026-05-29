@@ -229,4 +229,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Mekorama",emoji:"🤖",cat:"puzzle",tags:["isometric","diorama","robot","3d","spatial"],url:"/mekorama/",desc:"Guide a cute robot through isometric mechanical dioramas. Rotate the view, find hidden paths, and solve 50 brain-teasing spatial puzzles!",isNew:true,status:"live"},
