@@ -225,3 +225,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"BoxRob",emoji:"📦",cat:"puzzle",tags:["physics","platformer","box","puzzle","push"],url:"/boxrob/",desc:"Push boxes to solve physics platformer puzzles in 40 challenging levels. Play BoxRob free online!",isNew:true,status:"live"},
