@@ -199,7 +199,8 @@ const GAMES = [
 {name:"Knit Off",emoji:"🧶",cat:"puzzle",tags:["cozy","thread","yarn","untangle","sorting"],url:"/knit-off/",desc:"Untangle colorful yarn threads in this cozy puzzle game. Drag threads between pegs to solve satisfying tangle puzzles with 50 levels.",isNew:true,status:"live"},
   {name:"Word Card Sort",emoji:"🃏",cat:"puzzle",tags:["word","sorting","cards","categories","brain"],url:"/word-card-sort/",desc:"Sort word cards into correct categories in this addictive solitaire-style word puzzle. 50 levels with hints, shuffle and undo.",isNew:true,status:"live"},
   {name:"Find N Merge",emoji:"🔍",cat:"puzzle",tags:["hidden object","merge","find","search"],url:"/find-n-merge/",desc:"Find hidden objects scattered across scenes, then merge matching items to create higher-tier collectibles in this addictive puzzle game.",isNew:true,status:"live"},
-{name:"Infinity Loop",emoji:"♾️",cat:"puzzle",tags:["infinity loop","tile puzzle","rotation puzzle","path puzzle","relax","zen","brain teaser","connect","loop","pipe"],url:"/infinity-loop/",desc:"Play Infinity Loop online free - a relaxing tile rotation puzzle game. Connect paths to form complete loops with no loose ends. 50 levels across 5 packs, procedurally generated puzzles.",isNew:true,status:"live"}
+{name:"Infinity Loop",emoji:"♾️",cat:"puzzle",tags:["infinity loop","tile puzzle","rotation puzzle","path puzzle","relax","zen","brain teaser","connect","loop","pipe"],url:"/infinity-loop/",desc:"Play Infinity Loop online free - a relaxing tile rotation puzzle game. Connect paths to form complete loops with no loose ends. 50 levels across 5 packs, procedurally generated puzzles.",isNew:true,status:"live"},
+{name:"Cover Orange",emoji:"🍊",cat:"puzzle",tags:["physics","protection","drag-and-drop","rain","shelter"],url:"/cover-orange/",desc:"Protect the orange from acid rain! Drag and drop objects to build shelters in this physics puzzle game.",isNew:true,status:"live"}
 ];
 
 /**
@@ -223,4 +224,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Cover Orange",emoji:"🍊",cat:"puzzle",tags:["physics","protection","drag-and-drop","rain","shelter"],url:"/cover-orange/",desc:"Protect the orange from acid rain! Drag and drop objects to build shelters in this physics puzzle game.",isNew:true,status:"live"},
