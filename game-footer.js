@@ -195,6 +195,7 @@
       {n:'Schulte Table',e:'🧠',u:'/schulte-table/',c:'puzzle'},
       {n:'Waffle',e:'🧇',u:'/waffle/',c:'puzzle'},
       {n:'BoxRob',e:'📦',u:'/boxrob/',c:'puzzle'},
+      {n:'Blackjack 21',e:'🃏',u:'/blackjack/',c:'card'},
 ];
 
   var cur = location.pathname;
