@@ -178,6 +178,48 @@ def check_http_health(url: str) -> dict:
 
     return result
 
+# ══════════════════════════════════════════════════
+# 层 1.5: CSS 泄露检测（静态分析HTML）
+# ══════════════════════════════════════════════════
+def check_css_leak(url: str) -> dict:
+    """检查CSS/JS代码是否泄露到<style>/<script>标签外面
+    
+    根因历史：
+    - 2026-05-30 :root{accent-color} 在<html>和<head>之间泄露
+    - 2026-05-30 .gz-show-more-* CSS 在</style>外面泄露
+    - 2026-05-30 Quick Pick JS 代码缺少<script>开标签，1894字符泄露
+    
+    使用 scripts/code_leak_check.py 的检测逻辑。
+    """
+    import urllib.request
+    
+    result = {
+        "url": url,
+        "has_leak": False,
+        "leaked_rules": [],
+        "details": ""
+    }
+    
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "GameZipperQA/2.0"})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            content = resp.read().decode("utf-8", errors="replace")
+    except Exception as e:
+        result["details"] = f"Failed to fetch: {e}"
+        return result
+    
+    # 运行完整代码泄露检测（CSS + JS）
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, script_dir)
+    from code_leak_check import check_code_leaks
+    leak_result = check_code_leaks(content, url)
+    
+    result["has_leak"] = leak_result["has_leak"]
+    result["leaked_rules"] = leak_result["leaked_items"]
+    result["details"] = leak_result["details"]
+    
+    return result
+
 
 # ══════════════════════════════════════════════════
 # 层 2: JS 错误 + 资源 404 (Kachilu)
@@ -600,6 +642,10 @@ def main():
         # 层 1: HTTP
         log("  层1: HTTP 健康检查...")
         checks["http"] = check_http_health(url)
+
+        # 层 1.5: CSS 泄露检测（静态HTML中CSS出现在</style>外面）
+        log("  层1.5: CSS 泄露检测...")
+        checks["css_leak"] = check_css_leak(url)
 
         # 层 2: JS 错误
         log("  层2: JS 错误检测...")
