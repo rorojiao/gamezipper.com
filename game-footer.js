@@ -356,4 +356,4 @@
      setTimeout(init, 100);
    }
  }
-},{n:"Mekorama",e:"🤖",u:"/mekorama/",c:"puzzle"},{n:"Who Is",e:"🔍",u:"/who-is/",c:"puzzle"})();
+},{n:"Mekorama",e:"🤖",u:"/mekorama/",c:"puzzle"},{n:"Who Is",e:"🔍",u:"/who-is/",c:"puzzle"},{n:"IQ Ball",e:"🎯",u:"/iq-ball/",c:"puzzle"});})();
