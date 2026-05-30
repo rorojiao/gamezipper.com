@@ -243,4 +243,4 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
-{name:"Drive Fury",emoji:"🏎️",cat:"racing",tags:["Racing","Physics","Driving","Cars","Stunts","Flips","Obstacle","Browser","Free","HTML5"],url:"/drive-fury/",desc:"Play Drive Fury - an exciting physics driving game with 40 challenging levels, 5 unique vehicles, flips, obstacles and endless mode. No download needed!",isNew:true,status:"live"},
+}
