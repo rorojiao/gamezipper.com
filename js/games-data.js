@@ -18,6 +18,7 @@ const GAME_GRADIENTS = [
 
 const GAMES = [
   {name:"Fruit Slash",emoji:"🍉",cat:"arcade",tags:["Arcade","Swipe","Fruit"],url:"/fruit-slash/",desc:"Swipe to slice fruits! Cut fast, combo big, dodge bombs. 60 seconds of juicy action!",isNew:true,status:"live"},
+{name:"Circuit Logic",emoji:"⚡",cat:"puzzle",tags:["Puzzle","Logic","Circuit","Rotation","Grid","Brain","Strategy","Connect","Neon","Browser","Free","HTML5"],url:"/circuit-logic/",desc:"Play Circuit Logic - rotate circuit tiles to connect all paths in this addictive brain puzzle. 65 free levels from easy 4x4 to expert 8x8 grids. No download needed!",isNew:true,status:"live"},
   {name:"Basketball Shoot",emoji:"🏀",cat:"arcade",tags:["Arcade","Sports","Physics"],url:"/basketball-shoot/",desc:"Shoot hoops in 60 seconds! Drag to aim, release to shoot. Swish for bonus points!",isNew:true,status:"live"},
   {name:"Neon Run",emoji:"⚡",cat:"arcade",tags:["Arcade","Runner","Platformer"],url:"/neon-run/",desc:"Run, jump, double-jump! Collect stars, dodge neon spikes. Endless neon platform runner.",isNew:true,status:"live"},
   {name:"2048 Galaxy",emoji:"🌌",cat:"puzzle",tags:["Puzzle","Number"],url:"/2048/",desc:"Merge tiles to reach 2048! Classic number puzzle game.",status:"live"},
@@ -242,4 +243,4 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
-}
+{name:"Drive Fury",emoji:"🏎️",cat:"racing",tags:["Racing","Physics","Driving","Cars","Stunts","Flips","Obstacle","Browser","Free","HTML5"],url:"/drive-fury/",desc:"Play Drive Fury - an exciting physics driving game with 40 challenging levels, 5 unique vehicles, flips, obstacles and endless mode. No download needed!",isNew:true,status:"live"},

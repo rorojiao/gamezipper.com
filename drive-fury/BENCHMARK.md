@@ -1,99 +1,93 @@
-# Drive Fury — BENCHMARK.md
+# BENCHMARK.md — Drive Fury
 
-## Game Overview
-Physics-based 2D side-view driving game. Control unstable vehicles across obstacle courses.
+**Target**: Physics-based 2D side-scrolling driving game
+**Slug**: drive-fury
+**Date**: 2026-05-30
 
-## Competitor Analysis
+## Competitive Analysis
 
-### Drive Mad (Poki, 300M+ plays)
-- **Core Mechanic**: 2D side-view, control vehicle acceleration/braking on hilly terrain
-- **Physics**: Realistic vehicle tilt, suspension, momentum
-- **Levels**: 100+ levels, increasing difficulty
-- **Scoring**: Time-based, 3-star rating per level
-- **Vehicles**: Cars, trucks, buses, tanks
-- **Visual Style**: Simple colorful 3D-ish, clean
-- **Music**: Upbeat background music, engine sounds
+### 1. Drive Mad (Martin Magni / Poki) — 300M+ plays
+- **Core mechanic**: Two-button physics (accel/brake), no steering, fixed 2D side-scroll track
+- **Physics**: Torque, weight transfer, friction, separate wheel suspension. High center of gravity for exaggerated tilts.
+- **Levels**: 200+ handcrafted. Vehicles auto-assigned per level.
+- **Vehicles**: 10+ types (pickup truck, monster truck, snowplow, limo, jet airplane, excavator, tank)
+- **Scoring**: Binary pass/fail (no stars). Speedrun.com leaderboards.
+- **Controls**: Desktop (WASD/arrows), Mobile (tap left/right sides)
+- **Visual**: Voxel 3D, toy-like, bright & colorful
+- **Audio**: Minimal — toy engine hum, crash sounds, subtle BGM
+- **Key**: No tutorial (learn-by-failure), instant restart (no load screens)
 
-### Moto X3M (CrazyGames, long-time top)
-- **Core Mechanic**: Motorbike obstacle racing, flip tricks
-- **Physics**: Bike tilt, flip rotation, speed control
-- **Levels**: 22 levels + unlockable bikes
-- **Scoring**: Time + stunts + stars
-- **Features**: Checkpoints, explosive obstacles, loops
-- **Music**: Rock/energetic soundtrack
+### 2. Moto X3M (MadPuffers / CrazyGames)
+- **Core mechanic**: 4-key side-view stunt racing (accel/brake/lean L/R). Mid-air rotation for tricks.
+- **Physics**: Box2D, rear-wheel boost on landing, wheelie speed trick.
+- **Levels**: 22 original + expansion packs (Winter, Pool Party, Spooky Land).
+- **Scoring**: **3-star rating per level** based on completion time. Flip bonus: -0.5s per 360° flip.
+- **Checkpoints**: Mid-level checkpoints within each level.
+- **Vehicles**: 3+ bikes unlocked by spending stars.
+- **Controls**: Desktop (arrows), Mobile (on-screen buttons)
+- **Visual**: Cartoon 2D, varied environments, ragdoll crash animation
+- **Audio**: Engine revving, crash SFX, upbeat rock BGM
 
-### Hill Climb Racing (500M+ downloads)
-- **Core Mechanic**: Uphill driving with fuel management
-- **Physics**: Vehicle balance (lean forward/backward), terrain grip
-- **Levels**: Multiple environments (countryside, desert, arctic, moon)
-- **Monetization**: Fuel system, vehicle upgrades, coin collection
-- **Vehicles**: Jeep, motocross, tank, truck, snowmobile
+### 3. Hill Climb Racing (Fingersoft) — 1B+ downloads
+- **Core mechanic**: 2-button (gas/brake), physics-driven tilt, fuel system
+- **Vehicles**: 13-20+ purchasable, each with unique physics (weight, grip, power, fuel)
+- **Upgrade system**: 4 stats per vehicle (Engine, Suspension, Tires, Fuel) — primary retention mechanic
+- **Maps**: 9+ endless environments (Countryside, Desert, Arctic, Moon, Volcano)
+- **Scoring**: Distance-based + coin collection. Coins = upgrade currency.
+- **Controls**: 2-button only (gas/brake). No lean control.
 
-### Turbo Dismount (10M+)
-- **Core Mechanic**: Vehicle crash physics
-- **Physics**: Ragdoll, impact forces
-- **Levels**: Various obstacle courses
-- **Features**: Slow-motion replay, multiple vehicles
+## Drive Fury Feature Specification
 
-## Systems to Implement
+### Must-Have (from competitive analysis)
+1. **Simple 2-button controls** (accel + brake) — proven sweet spot for browser physics games
+2. **Instant restart** — no load screens, one-more-try loop
+3. **Physics-driven tilt** — high center of gravity, suspension bounce, "about to flip" tension
+4. **3-star rating per level** — time-based thresholds (Moto X3M model)
+5. **Varied vehicles** — 5 vehicles with unique physics, auto-assigned per level group
+6. **Checkpoints** in longer levels (Moto X3M model)
+7. **Progressive difficulty** — 40 levels from trivial to expert
+8. **Endless mode** — distance-based with procedural terrain (Hill Climb Racing model)
+9. **Fuel/coin system** — fuel cans + coins scattered on track for retention
+10. **Garage** — vehicle display, stats comparison, unlock progress
+11. **Flip bonus** — aerial 360° flips give time bonus (Moto X3M mechanic)
+12. **All English UI**, dark gradient GameZipper theme
 
-### 1. Physics Engine
-- Vehicle body with center of mass
-- Wheel physics (rotation, traction, bounce)
-- Gravity + terrain collision
-- Tilt/rotation based on terrain slope
-- Momentum and inertia
-- Suspension bounce effect
+### 40-Level Progression Plan
+- **Levels 1-5**: Tutorial (flat terrain, gentle hills, no obstacles). Teaches accel/brake/tilt.
+- **Levels 6-10**: Introduce jumps, ramps, basic gaps. First vehicle (Truck).
+- **Levels 11-15**: Moving platforms, breakable bridges, narrow passages. Vehicle 2 (Buggy).
+- **Levels 16-20**: Loops, steep climbs, ice physics. Vehicle 3 (Monster Truck).
+- **Levels 21-25**: Explosive barrels, collapsing terrain, pendulums. Vehicle 4 (Sports Car).
+- **Levels 26-30**: Combined mechanics, precision required. Vehicle 5 (Tank).
+- **Levels 31-35**: Expert levels — all mechanics, narrow margins.
+- **Levels 36-40**: "Final exam" — combination of everything, extreme difficulty.
 
-### 2. Level System (40 levels)
-- Terrain: procedurally generated hills, ramps, gaps, loops
-- Obstacles: spikes, barriers, moving platforms, breakable walls
-- Difficulty curve: flat → hills → ramps → gaps → loops → combos
-- Star rating: time-based (3-star = under par time)
-- Checkpoints on long levels
+### 5 Vehicles
+1. **Dusty Truck** (starter) — Balanced, forgiving, good grip
+2. **Sand Buggy** — Light, fast, low stability, great for jumps
+3. **Monster Truck** — Heavy, powerful, huge wheels, slow acceleration
+4. **Racer X** — Fast, low center of gravity, fragile
+5. **Thunder Tank** — Very heavy, nearly un-flippable, slow but unstoppable
 
-### 3. Vehicle System (5 vehicles)
-- Jeep (balanced)
-- Sports Car (fast, unstable)
-- Monster Truck (heavy, powerful)
-- Motorcycle (light, agile)
-- Tank (slow, indestructible)
+### Core Systems
+- Score: time-based 3-star rating + flip bonus + coin count
+- Progress: localStorage with version field
+- Settings: Sound toggle, fullscreen, controls info
+- Tutorial: First 3 levels are implicit tutorial
+- Garage: Show unlocked vehicles with stats
 
-### 4. Scoring System
-- Time-based scoring per level
-- 3-star rating (gold/silver/bronze times)
-- Coin collection (bonus points)
-- Flip tricks (360° rotation bonus)
-- Best time saved (localStorage)
+### Audio Requirements
+- Engine sound per vehicle (pitch varies)
+- Crash/impact SFX
+- Coin collect SFX
+- Flip success SFX
+- Level complete celebration
+- Ambient BGM (upbeat electronic/rock)
+- All via Web Audio API (procedural)
 
-### 5. Progression
-- Level select map
-- Stars unlock next levels
-- Vehicle unlock at milestone levels
-- localStorage save with version field
-
-### 6. Tutorial
-- First 3 levels serve as tutorial
-- Visual hints for controls
-- Skip button available
-
-### 7. Audio
-- Engine sound (pitch varies with speed)
-- Crash/explosion sounds
-- Coin pickup sound
-- Star achievement sound
-- Background music (Web Audio procedural)
-
-### 8. Visual Style
-- GameZipper dark gradient theme
-- Neon accent colors
-- Particle effects (dust, sparks, explosions)
-- Screen shake on crashes
+### Visual Requirements
+- Dark gradient background (GameZipper dark style)
+- Parallax scrolling background layers
+- Neon accent colors per vehicle
+- Particle effects (exhaust, crash debris, coin sparkle)
 - Smooth 60fps Canvas rendering
-
-## Key Numerics
-- Max speed per vehicle: Jeep=12, Sports=18, Monster=10, Moto=15, Tank=8
-- Gravity: 0.5 per frame
-- Flip bonus: 500 points per 360°
-- Star times: Gold = par × 1.0, Silver = par × 1.5, Bronze = par × 2.0
-- Level par times: Level 1 = 15s, increasing ~2s per level
