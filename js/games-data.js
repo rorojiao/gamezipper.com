@@ -217,7 +217,8 @@ const GAMES = [
 
 {name:"Jewel Crush",emoji:"💎",cat:"puzzle",tags:["match-3","jewel","candy","gems","casual"],url:"/jewel-crush/",desc:"Play Jewel Crush online free! Swap gems to match 3 or more in this addictive puzzle game. Special power-ups, cascading combos, 50 levels!",isNew:true,status:"live"},
 {name:"Go Fish",emoji:"🐟",cat:"card",tags:["card","classic","family","go-fish","kids"],url:"/go-fish/",desc:"Play Go Fish online free! Classic family card game - ask opponents for cards, collect books of four, and win. No download required.",isNew:true,status:"live"},
-{name:"Guess The Emoji",emoji:"🤔",cat:"word",tags:["emoji","puzzle","quiz","word game","trivia","brain teaser","guess","fun","casual"],url:"/guess-the-emoji/",desc:"Can you guess the word from emojis? 200+ emoji puzzles across 10 categories. Free online, no download!",rating:4.8,isNew:true,status:"live"}
+{name:"Guess The Emoji",emoji:"🤔",cat:"word",tags:["emoji","puzzle","quiz","word game","trivia","brain teaser","guess","fun","casual"],url:"/guess-the-emoji/",desc:"Can you guess the word from emojis? 200+ emoji puzzles across 10 categories. Free online, no download!",rating:4.8,isNew:true,status:"live"},
+{name:"Plinko",emoji:"⚪",cat:"arcade",tags:["plinko","ball drop","peg board","physics","casual","browser game"],url:"/plinko/",desc:"Drop balls through pegs to score big! 30 levels across 3 modes - Classic, Peggle, and Challenge. Free online, no download!",rating:4.7,isNew:true,status:"live"}
 ];
 
 /**
