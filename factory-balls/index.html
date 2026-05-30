@@ -153,7 +153,7 @@ var st='menu',curLv=0,steps=0;
 var ball={top:'white',eyes:'white',middle:'white',strip_h:'white',face:'white',strip_v:'white'};
 var ballTools=[]; /* tools currently on the ball */
 var unlocked=1,best={};
-var drag=null,dragOX=0,dragOY=0,pStartX=0,pStartY=0;
+var drag=null,dragOX=0,dragOY=0,pStartX=0,pStartY=0,dragPointerId=-1;
 var particles=[];
 var history=[];
 
@@ -390,11 +390,11 @@ function onDown(e){
   if(dist(p.x,p.y,L.cX,L.cY)<L.cR+12){
     history.push({ball:cloneBall(ball),tools:ballTools.slice(),steps:steps});
     drag={x:L.cX,y:L.cY,ball:cloneBall(ball),tools:ballTools.slice()};
-    dragOX=p.x-L.cX;dragOY=p.y-L.cY;sfxDrop();return;
+    dragOX=p.x-L.cX;dragOY=p.y-L.cY;dragPointerId=e.pointerId;sfxDrop();return;
   }
 }
 function onMove(e){
-  e.preventDefault();if(!drag)return;
+  e.preventDefault();if(!drag||e.pointerId!==dragPointerId)return;
   var p=gp(e);drag.x=p.x-dragOX;drag.y=p.y-dragOY;render();
 }
 function onUp(e){
@@ -422,7 +422,7 @@ function onUp(e){
       steps++;sfxPaint();emit(bx,L.bkY,C[lv.paints[i]],8);hit=true;break;
     }
   }
-  if(hit){drag=null;render();return}
+  if(hit){drag=null;dragPointerId=-1;render();return}
 
   /* Check tool slots */
   for(var i=0;i<lv.tools.length;i++){
@@ -435,18 +435,18 @@ function onUp(e){
       }
     }
   }
-  if(hit){drag=null;render();return}
+  if(hit){drag=null;dragPointerId=-1;render();return}
 
   /* Check shipping box */
   if(dist(drag.x,drag.y,L.sX,L.sY)<L.sW/2+12){
     ball=cloneBall(drag.ball);ballTools=drag.tools.slice();
     if(ballMatches(lv.t,ball)&&ballTools.length===0){sfxWin();emit(L.sX,L.sY+L.sH/2,'#f1c40f',18);winLevel()}
     else{sfxFail();resetBall();history=[]}
-    drag=null;render();return;
+    drag=null;dragPointerId=-1;render();return;
   }
 
   /* Drop nowhere: put ball back */
-  ball=cloneBall(drag.ball);ballTools=drag.tools.slice();drag=null;render();
+  ball=cloneBall(drag.ball);ballTools=drag.tools.slice();drag=null;dragPointerId=-1;render();
 }
 
 /* ===== GAME FLOW ===== */
