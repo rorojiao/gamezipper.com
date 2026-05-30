@@ -363,4 +363,4 @@
      setTimeout(init, 100);
    }
  }
-})();
+},{n:'Jewel Crush',e:'💎',u:'/jewel-crush/',c:'puzzle'})();
