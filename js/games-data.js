@@ -242,3 +242,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Fireboy & Watergirl",emoji:"🔥",cat:"puzzle",tags:["co-op","platformer","two-player","logic"],url:"/fireboy-watergirl/",desc:"Control Fireboy and Watergirl through elemental puzzle temple levels. Cooperative two-player platformer with 25 stages.",isNew:true,status:"live"},
