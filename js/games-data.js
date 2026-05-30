@@ -212,6 +212,8 @@ const GAMES = [
 {name:"Who Is",emoji:"🔍",cat:"puzzle",tags:["detective","logic","brain-teaser","mystery"],url:"/who-is/",desc:"Solve 40+ detective puzzles by finding clues, spotting liars, and catching imposters. Test your observation skills!",isNew:true,status:"live"},
 {name:"Two Dots",emoji:"🔴",cat:"puzzle",tags:["two dots","connect dots","dot puzzle","chain","match","color","brain training","logic","casual"],url:"/two-dots/",desc:"Connect same-colored dots in chains to complete objectives. 50 levels across 5 chapters with ice blocks, anchors, and combos!",rating:4.6,isNew:true,status:"live"},
 {name:"IQ Ball",emoji:"🎯",cat:"puzzle",tags:["physics","grapple","puzzle","swing","hook","brain teaser","logic","momentum"],url:"/iq-ball/",desc:"Shoot your grappling hook to swing and fling your way to the target! Solve 30 physics puzzles with momentum and strategy.",rating:4.8,isNew:true,status:"live"},
+
+{name:"Color Cars Parking",emoji:"🚗",cat:"puzzle",tags:["parking","cars","color","logic","brain"],url:"/color-cars-parking/",desc:"Park colored cars in matching spots by clicking them in the right order. Solve 50 logic puzzles with increasing difficulty.",isNew:true,status:"live"}
 ];
 
 /**
