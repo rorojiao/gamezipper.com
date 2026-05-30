@@ -244,4 +244,5 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Pattern Palace",emoji:"🔮",cat:"puzzle",tags:["pattern","iq","brain-training","logic","visual"],url:"/pattern-palace/",desc:"Test your visual IQ with shape sequences, color patterns, and 3x3 matrix puzzles. 50+ brain-bending levels of pattern recognition.",isNew:true,status:"live"},
+{name:"Pattern Palace",emoji:"🔮",cat:"puzzle",tags:["pattern","iq","brain-training","logic","visual"],url:"/pattern-palace/",desc:"Test your visual IQ with shape sequences, color patterns, and 3x3 matrix puzzles. 50+ brain-bending levels of pattern recognition.",isNew:true,status:"live"}
+{name:"Mahjong Dimensions",emoji:"🔲",cat:"puzzle",tags:["mahjong","3d","tile-matching","cube","matching"],url:"/mahjong-dimensions/",desc:"Rotate the 3D cube to match exposed tile pairs in this stunning dimensional Mahjong puzzle. Timed challenges with multiple cube layouts.",isNew:true,status:"live"},
