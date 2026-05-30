@@ -205,6 +205,9 @@
       {n:'Mekorama',e:'🤖',u:'/mekorama/',c:'puzzle'},
       {n:'IQ Ball',e:'🎯',u:'/iq-ball/',c:'puzzle'},
       {n:'Color Cars Parking',e:'🚗',u:'/color-cars-parking/',c:'puzzle'}
+   ,
+      {n:'Cryptograms',e:'🔐',u:'/cryptograms/',c:'puzzle'},
+      {n:'Threes',e:'3️⃣',u:'/threes/',c:'puzzle'}
    ];
 
   var cur = location.pathname;
