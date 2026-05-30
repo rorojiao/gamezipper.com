@@ -198,7 +198,9 @@
       {n:'Blackjack 21',e:'🃏',u:'/blackjack/',c:'card'},
 
 {n:'100 Doors Puzzle Box',e:'🚪',u:'/100-doors/',c:'puzzle'},
-{n:'Crossmath',e:'🧮',u:'/crossmath/',c:'puzzle'}
+{n:'Crossmath',e:'🧮',u:'/crossmath/',c:'puzzle'},,
+      {n:'Two Dots',e:'🔴',u:'/two-dots/',c:'puzzle'},
+      {n:'Who Is',e:'🤔',u:'/who-is/',c:'puzzle'}
 ];
 
   var cur = location.pathname;
