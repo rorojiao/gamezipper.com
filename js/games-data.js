@@ -220,7 +220,9 @@ const GAMES = [
 {name:"Go Fish",emoji:"🐟",cat:"card",tags:["card","classic","family","go-fish","kids"],url:"/go-fish/",desc:"Play Go Fish online free! Classic family card game - ask opponents for cards, collect books of four, and win. No download required.",isNew:true,status:"live"},
 {name:"Guess The Emoji",emoji:"🤔",cat:"word",tags:["emoji","puzzle","quiz","word game","trivia","brain teaser","guess","fun","casual"],url:"/guess-the-emoji/",desc:"Can you guess the word from emojis? 200+ emoji puzzles across 10 categories. Free online, no download!",rating:4.8,isNew:true,status:"live"},
 {name:"Plinko",emoji:"⚪",cat:"arcade",tags:["plinko","ball drop","peg board","physics","casual","browser game"],url:"/plinko/",desc:"Drop balls through pegs to score big! 30 levels across 3 modes - Classic, Peggle, and Challenge. Free online, no download!",rating:4.7,isNew:true,status:"live"},
-{name:"Fireboy & Watergirl",emoji:"🔥",cat:"puzzle",tags:["co-op","platformer","two-player","logic"],url:"/fireboy-watergirl/",desc:"Control Fireboy and Watergirl through elemental puzzle temple levels. Cooperative two-player platformer with 25 stages.",isNew:true,status:"live"}
+{name:"Fireboy & Watergirl",emoji:"🔥",cat:"puzzle",tags:["co-op","platformer","two-player","logic"],url:"/fireboy-watergirl/",desc:"Control Fireboy and Watergirl through elemental puzzle temple levels. Cooperative two-player platformer with 25 stages.",isNew:true,status:"live"},
+{name:"Pattern Palace",emoji:"🔮",cat:"puzzle",tags:["pattern","iq","brain-training","logic","visual"],url:"/pattern-palace/",desc:"Test your visual IQ with shape sequences, color patterns, and 3x3 matrix puzzles. 50+ brain-bending levels of pattern recognition.",isNew:true,status:"live"},
+{name:"Mahjong Dimensions",emoji:"🔲",cat:"puzzle",tags:["Mahjong","3D","Tile-Matching","Cube","Puzzle","Matching","Rotating","Isometric","Timed","Brain"],url:"/mahjong-dimensions/",desc:"Play Mahjong Dimensions free online! Match tile pairs on rotating 3D cubes across 30 levels and 5 cube shapes (Cube, Tower, Cross, Diamond, Pyramid). Drag to rotate, find matching pairs with hints, shuffle, and undo. Timer-based scoring with combos and speed bonuses. No download needed!",isNew:true,status:"live"}
 ];
 
 /**
@@ -244,5 +246,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Pattern Palace",emoji:"🔮",cat:"puzzle",tags:["pattern","iq","brain-training","logic","visual"],url:"/pattern-palace/",desc:"Test your visual IQ with shape sequences, color patterns, and 3x3 matrix puzzles. 50+ brain-bending levels of pattern recognition.",isNew:true,status:"live"}
-{name:"Mahjong Dimensions",emoji:"🔲",cat:"puzzle",tags:["mahjong","3d","tile-matching","cube","matching"],url:"/mahjong-dimensions/",desc:"Rotate the 3D cube to match exposed tile pairs in this stunning dimensional Mahjong puzzle. Timed challenges with multiple cube layouts.",isNew:true,status:"live"},

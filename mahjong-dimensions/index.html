@@ -570,6 +570,8 @@ function generateBlocks(cfg) {
       break;
     }
   }
+  // Ensure even block count for valid tile pairing
+  if (blocks.length % 2 !== 0) blocks.pop();
   return blocks;
 }
 
@@ -708,45 +710,90 @@ function drawSymbol(ctx, tile, cx, cy, w, h) {
   ctx.textBaseline = 'middle';
 
   switch (tile.suit) {
-    case 'bamboo':
+    case 'bamboo': {
       ctx.strokeStyle = '#2d8a4e';
       ctx.lineWidth = Math.max(1.5, 2 * s);
       ctx.lineCap = 'round';
-      for (let i = 0; i < Math.min(tile.value, 5); i++) {
-        const ox = (i - (Math.min(tile.value, 5) - 1) / 2) * s * 3;
-        ctx.beginPath();
-        ctx.moveTo(cx + ox, cy - h * 0.3);
-        ctx.lineTo(cx + ox, cy + h * 0.3);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(cx + ox, cy - h * 0.3, s * 1.2, 0, Math.PI * 2);
-        ctx.fillStyle = '#2d8a4e';
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(cx + ox, cy + h * 0.3, s * 1.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      break;
-
-    case 'circles':
-      ctx.fillStyle = '#2a6db5';
-      ctx.strokeStyle = '#1a4d85';
-      ctx.lineWidth = s * 0.8;
-      for (let i = 0; i < Math.min(tile.value, 5); i++) {
-        const ox = (i - (Math.min(tile.value, 5) - 1) / 2) * s * 3.5;
-        const r = s * 2;
-        ctx.beginPath();
-        ctx.arc(cx + ox, cy, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        if (tile.value > 5 && i === 4) {
+      ctx.fillStyle = '#2d8a4e';
+      const v = tile.value;
+      if (v <= 5) {
+        for (let i = 0; i < v; i++) {
+          const ox = (i - (v - 1) / 2) * s * 3;
           ctx.beginPath();
-          ctx.arc(cx, cy, r * 0.6, 0, Math.PI * 2);
-          ctx.fillStyle = '#fff';
+          ctx.moveTo(cx + ox, cy - h * 0.3);
+          ctx.lineTo(cx + ox, cy + h * 0.3);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cx + ox, cy - h * 0.3, s * 1.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(cx + ox, cy + h * 0.3, s * 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        // 6-9: two rows layout
+        const top = v <= 7 ? 3 : 4;
+        const bot = v - top;
+        for (let i = 0; i < top; i++) {
+          const ox = (i - (top - 1) / 2) * s * 2.5;
+          ctx.beginPath();
+          ctx.moveTo(cx + ox, cy - h * 0.35);
+          ctx.lineTo(cx + ox, cy);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cx + ox, cy - h * 0.35, s, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        for (let i = 0; i < bot; i++) {
+          const ox = (i - (bot - 1) / 2) * s * 2.5;
+          ctx.beginPath();
+          ctx.moveTo(cx + ox, cy);
+          ctx.lineTo(cx + ox, cy + h * 0.35);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cx + ox, cy + h * 0.35, s, 0, Math.PI * 2);
           ctx.fill();
         }
       }
       break;
+    }
+
+    case 'circles': {
+      ctx.fillStyle = '#2a6db5';
+      ctx.strokeStyle = '#1a4d85';
+      ctx.lineWidth = s * 0.8;
+      const v = tile.value;
+      if (v <= 5) {
+        for (let i = 0; i < v; i++) {
+          const ox = (i - (v - 1) / 2) * s * 3.5;
+          const r = s * 2;
+          ctx.beginPath();
+          ctx.arc(cx + ox, cy, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+      } else {
+        // 6-9: two rows layout
+        const top = v <= 7 ? 3 : 4;
+        const bot = v - top;
+        const r = s * 1.6;
+        for (let i = 0; i < top; i++) {
+          const ox = (i - (top - 1) / 2) * s * 2.8;
+          ctx.beginPath();
+          ctx.arc(cx + ox, cy - r * 1.2, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+        for (let i = 0; i < bot; i++) {
+          const ox = (i - (bot - 1) / 2) * s * 2.8;
+          ctx.beginPath();
+          ctx.arc(cx + ox, cy + r * 1.2, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+      }
+      break;
+    }
 
     case 'chars':
       ctx.fillStyle = '#c4342d';
@@ -1658,9 +1705,7 @@ function init() {
 window.addEventListener('DOMContentLoaded', init);
 </script>
 <!-- Analytics -->
-<script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=mahjong-dimensions"></script>
 <!-- Monetag Ads -->
-<script>(function(){var el=document.createElement('div');el.style.cssText='position:absolute;bottom:0;left:0;right:0;height:50px;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:12px;color:#666;z-index:1';el.textContent='Advertisement';document.body.appendChild(el);})();</script>
-<div id="ad-zone-native" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.4);border-radius:8px;padding:6px 10px;font-size:11px;color:#888;max-width:160px;z-index:1">Ad</div>
+<script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=mahjong-dimensions"></script>
 </body>
 </html>
