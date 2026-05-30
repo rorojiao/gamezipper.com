@@ -14,7 +14,6 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#ff9a9e,#fecfef)',
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
   'linear-gradient(135deg,#a1c4fd,#c2e9fb)',
-{name:"IQ Ball",emoji:"🎯",cat:"puzzle",tags:["physics","grapple","puzzle","swing","hook","brain teaser","logic","momentum"],url:"/iq-ball/",desc:"Shoot your grappling hook to swing and fling your way to the target! Solve 30 physics puzzles with momentum and strategy.",rating:4.8,isNew:true,status:"live"},
 ];
 
 const GAMES = [

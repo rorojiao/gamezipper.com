@@ -201,7 +201,11 @@
 {n:'Crossmath',e:'🧮',u:'/crossmath/',c:'puzzle'},,
       {n:'Two Dots',e:'🔴',u:'/two-dots/',c:'puzzle'},
       {n:'Who Is',e:'🤔',u:'/who-is/',c:'puzzle'}
-];
+,
+      {n:'Mekorama',e:'🤖',u:'/mekorama/',c:'puzzle'},
+      {n:'IQ Ball',e:'🎯',u:'/iq-ball/',c:'puzzle'},
+      {n:'Color Cars Parking',e:'🚗',u:'/color-cars-parking/',c:'puzzle'}
+   ];
 
   var cur = location.pathname;
   var current = games.find(function(g){ return g.u === cur; });
@@ -356,4 +360,4 @@
      setTimeout(init, 100);
    }
  }
-},{n:"Mekorama",e:"🤖",u:"/mekorama/",c:"puzzle"},{n:"Who Is",e:"🔍",u:"/who-is/",c:"puzzle"},{n:"IQ Ball",e:"🎯",u:"/iq-ball/",c:"puzzle"});})();
+})();
