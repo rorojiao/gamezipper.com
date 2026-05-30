@@ -248,3 +248,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Antistress",emoji:"\u1fae7",cat:"casual",tags:["relaxing","asmr","fidget","zen","calm"],url:"/antistress/",desc:"Play relaxing fidget toys and ASMR games online free. 15+ satisfying interactive toys including bubble wrap, Newtons cradle, slime, and more.",isNew:true,status:"live"},
