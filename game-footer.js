@@ -366,4 +366,4 @@
 },{n:'Jewel Crush',e:'💎',u:'/jewel-crush/',c:'puzzle'},
       {n:'Go Fish',e:'🐟',u:'/go-fish/',c:'card'},
       {n:'Guess The Emoji',e:'🤔',u:'/guess-the-emoji/',c:'puzzle'},
-      {n:'Trivia Crack',e:'❓',u:'/trivia-crack/',c:'puzzle'})();
+      {n:'Trivia Crack',e:'❓',u:'/trivia-crack/',c:'puzzle'},{n:'Fireboy & Watergirl',e:'🔥',u:'/fireboy-watergirl/',c:'puzzle'},{n:'Plinko',e:'⚪',u:'/plinko/',c:'arcade'})();
