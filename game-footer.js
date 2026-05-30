@@ -23,6 +23,7 @@
      {n:'Flappy Wings',e:'🐦',u:'/flappy-wings/',c:'arcade'},
      {n:'Color Sort',e:'🎨',u:'/color-sort/',c:'puzzle'},
      {n:'Word Puzzle',e:'📝',u:'/word-puzzle/',c:'puzzle'},
+     {n:'Circuit Logic',e:'⚡',u:'/circuit-logic/',c:'puzzle'},
      {n:'Whack-a-Mole',e:'🔨',u:'/whack-a-mole/',c:'arcade'},
      {n:'Memory Match',e:'🧠',u:'/memory-match/',c:'card'},
      {n:'Sushi Stack',e:'🍣',u:'/sushi-stack/',c:'puzzle'},
