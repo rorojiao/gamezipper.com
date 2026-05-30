@@ -233,4 +233,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-
+{name:"IQ Ball",emoji:"🎯",cat:"puzzle",tags:["physics","grapple","puzzle","swing","hook","brain teaser","logic","momentum"],url:"/iq-ball/",desc:"Shoot your grappling hook to swing and fling your way to the target! Solve 30 physics puzzles with momentum and strategy.",rating:4.8,isNew:true,status:"live"},
