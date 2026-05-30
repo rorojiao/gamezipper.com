@@ -239,3 +239,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Go Fish",emoji:"🐟",cat:"card",tags:["card","classic","family","go-fish","kids"],url:"/go-fish/",desc:"Play Go Fish online free! Classic family card game - ask opponents for cards, collect books of four, and win. No download required.",isNew:true,status:"live"},
