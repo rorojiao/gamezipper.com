@@ -230,6 +230,7 @@ const GAMES = [
 {name:"Antistress",emoji:"\\U0001fae7",cat:"casual",tags:["relaxing","asmr","fidget","zen","calm"],url:"/antistress/",desc:"Play relaxing fidget toys and ASMR games online free. 15+ satisfying interactive toys including bubble wrap, Newtons cradle, slime, and more.",isNew:true,status:"live"},
   {name:"Paper Fold Puzzle",emoji:"📄",cat:"puzzle",tags:["Puzzle","Origami","Folding","Brain","Logic","Paper","Casual","Creative"],url:"/paper-fold/",desc:"Fold paper to match target patterns in this origami brain teaser! 30 levels of satisfying paper folding puzzles with star ratings, undo, hints, and procedural generation. No download needed!",isNew:true,status:"live"},
   {name:"Unpacking",emoji:"📦",cat:"puzzle",tags:["Puzzle","Unpacking","Organizing","Drag","Cozy","Casual","Relaxing","Room","Decoration","Brain","HTML5","Free","Browser"],url:"/unpacking/",desc:"Unpacking is a cozy room organizing puzzle game. Drag items from boxes to their correct spots to decorate rooms and reveal a moving-in story. 30 puzzle levels across 5 chapters with star ratings. Play free online, no download needed!",isNew:true,status:"live"},
+  {name:"Eggy Car",emoji:"🥚",cat:"arcade",tags:["physics","driving","egg","balance","casual","browser game"],url:"/eggy-car/",desc:"Play Eggy Car free online! Drive carefully over hills to keep your egg safe. Collect coins, unlock vehicles and beat your best distance!",isNew:true,status:"live"},
 ];
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
@@ -252,4 +253,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Eggy Car",emoji:"🥚",cat:"arcade",tags:["physics","driving","egg","balance","casual","browser game"],url:"/eggy-car/",desc:"Play Eggy Car free online! Drive carefully over hills to keep your egg safe. Collect coins, unlock vehicles and beat your best distance!",isNew:true,status:"live"},
