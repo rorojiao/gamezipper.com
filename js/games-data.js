@@ -256,3 +256,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Number Nexus",emoji:"🔗",cat:"puzzle",tags:["Puzzle","Number","Path","Logic","Grid","Connect","Brain","Casual"],url:"/number-nexus/",desc:"Connect numbers in order to fill every cell! 30 handcrafted number path puzzles from 4x4 to 9x9 grids. A satisfying logic challenge. No download needed!",isNew:true,status:"live"},
