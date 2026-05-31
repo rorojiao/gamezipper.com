@@ -232,6 +232,39 @@ const COLORS = [
   { name: "Navy", top: "#1a1a6e", mid: "#4040a0", bot: "#0a0a40", glow: "rgba(26,26,110,0.35)" },
 ];
 
+// ─── Colorblind Symbols (one per color, drawn on water layers) ───
+const CB_SYMBOLS = [
+  "●",   // 0 Red - circle
+  "■",   // 1 Blue - square
+  "▲",   // 2 Green - triangle up
+  "◆",   // 3 Yellow - diamond
+  "★",   // 4 Purple - star
+  "▼",   // 5 Orange - triangle down
+  "◈",   // 6 Cyan - diamond outline
+  "♥",   // 7 Pink - heart
+  "✦",   // 8 Lime - 4-point star
+  "⬡",   // 9 Teal - hexagon
+  "◆",   // 10 Indigo - filled diamond
+  "✿",   // 11 Rose - flower
+  "⬟",   // 12 Chartreuse - pentagon
+  "✧",   // 13 Fuchsia - 4-point star outline
+  "◑",   // 14 Coral - half circle
+  "△",   // 15 Sky - triangle outline
+  "◎",   // 16 Mint - bullseye
+  "✶",   // 17 Gold - 6-point star
+  "⬢",   // 18 Periwinkle - hexagon filled
+  "◐",   // 19 Copper - half circle
+  "✦",   // 20 Lavender - 4-point star
+  "⬡",   // 21 Aquamarine - hexagon
+  "⬟",   // 22 Olive - pentagon
+  "✿",   // 23 Violet - flower
+  "□",   // 24 Steel - square outline
+  "○",   // 25 Peach - circle outline
+  "△",   // 26 Turquoise - triangle
+  "◉",   // 27 Maroon - target
+  "▪",   // 28 Navy - small square
+];
+
 // ─── Level Definitions (6000 levels) ───
 // Each: { n: numColors, b: [ [layer...from bottom], ... ] }
 // Empty bottles are trailing []
@@ -291,6 +324,7 @@ let hoverBtn = -1;
 let splashFooterLink = null;
 let now = 0;
 let sfxEnabled = true;
+let colorblindMode = false; // adds symbols to water layers for colorblind accessibility
 let lastPlayedLevel = 0; // for Continue button
 
 // ─── Level Jump Dialog ───
@@ -547,6 +581,7 @@ function loadSave() {
     bestMoves = d.bestMoves || {};
     levelUnlocked = d.unlocked || { 0: true };
     if (d.sfx !== undefined) sfxEnabled = d.sfx;
+    if (d.cb !== undefined) colorblindMode = d.cb;
     if (d.lastPlayed !== undefined) lastPlayedLevel = d.lastPlayed;
     if (d.extraTubeUses !== undefined) extraTubeUses = d.extraTubeUses;
     if (d.streakCount !== undefined) streakCount = d.streakCount;
@@ -556,7 +591,7 @@ function loadSave() {
 }
 function saveSave() {
   try {
-    localStorage.setItem("magicSort_v2", JSON.stringify({ stars: levelStars, unlocked: levelUnlocked, sfx: sfxEnabled, lastPlayed: lastPlayedLevel, bestMoves: bestMoves, extraTubeUses: extraTubeUses, streakCount, lastPlayDate, levelsToday }));
+    localStorage.setItem("magicSort_v2", JSON.stringify({ stars: levelStars, unlocked: levelUnlocked, sfx: sfxEnabled, cb: colorblindMode, lastPlayed: lastPlayedLevel, bestMoves: bestMoves, extraTubeUses: extraTubeUses, streakCount, lastPlayDate, levelsToday }));
   } catch (e) {}
 }
 loadSave();
@@ -1232,6 +1267,17 @@ function drawBottle(cx, cy, bw, bh, bottle, isSelected, isPourSource, isPourTarg
     // Highlight stripe
     X.fillStyle = "rgba(255,255,255,0.14)";
     X.fillRect(cx - bw / 2 + 5, ly + 2, bw * 0.1, layerH - 4);
+
+    // Colorblind symbol overlay
+    if (colorblindMode && CB_SYMBOLS[ci]) {
+      X.save();
+      X.fillStyle = "rgba(255,255,255,0.85)";
+      X.font = `bold ${Math.max(8, Math.min(layerH * 0.7, 14))}px sans-serif`;
+      X.textAlign = "center";
+      X.textBaseline = "middle";
+      X.fillText(CB_SYMBOLS[ci], cx, ly + layerH / 2);
+      X.restore();
+    }
 
     // Enhanced wave on top layer (with wobble physics)
     if (i === displayBottle.length - 1) {
@@ -1946,6 +1992,8 @@ function renderGame() {
 
   // Sound toggle button (left side, below home)
   drawButton(10, 36, 28, 28, sfxEnabled ? "SFX" : "OFF", hoverBtn === 14, false);
+  // Colorblind mode toggle (right of SFX)
+  drawButton(42, 36, 28, 28, colorblindMode ? "CB" : "cb", hoverBtn === 16, colorblindMode);
   const hudY = 36;
   const hudBtnW = 46, hudBtnH = 28, hudGap = 5;
   const hudStartX = W - 14 - (hudBtnW * 4 + hudGap * 3);
@@ -2592,6 +2640,13 @@ function onTap(px, py) {
     if (hitTest(px, py, 10, 36, 28, 28)) {
       sfxEnabled = !sfxEnabled;
       if (sfxEnabled) sfxClick();
+      saveSave();
+      return;
+    }
+    // Colorblind mode toggle
+    if (hitTest(px, py, 42, 36, 28, 28)) {
+      colorblindMode = !colorblindMode;
+      sfxClick();
       saveSave();
       return;
     }
