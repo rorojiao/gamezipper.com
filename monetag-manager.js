@@ -217,6 +217,40 @@
     }
   }
 
+  // ==================== ADSENSE LOADER ====================
+  var adsenseLoaded = false;
+
+  function loadAdSenseScript() {
+    if (adsenseLoaded || window.adsbygoogle) { adsenseLoaded = true; return; }
+    adsenseLoaded = true;
+    var s = document.createElement('script');
+    s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353';
+    s.crossOrigin = 'anonymous';
+    s.async = true;
+    document.head.appendChild(s);
+  }
+
+  function loadAdSenseAd(container, slotId) {
+    slotId = slotId || 'auto';
+    return new Promise(function(resolve) {
+      loadAdSenseScript();
+      var ins = document.createElement('ins');
+      ins.className = 'adsbygoogle';
+      ins.style.cssText = 'display:block;width:100%;max-height:100px;overflow:hidden;';
+      ins.setAttribute('data-ad-client', 'ca-pub-8346383990981353');
+      ins.setAttribute('data-ad-slot', slotId);
+      ins.setAttribute('data-ad-format', 'auto');
+      ins.setAttribute('data-full-width-responsive', 'false');
+      container.innerHTML = '';
+      container.appendChild(ins);
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch(e) {}
+      // Resolve quickly — AdSense fills async
+      setTimeout(resolve, 500);
+    });
+  }
+
   // ==================== AD LOADER ====================
   function loadZone(zoneId, targetEl) {
     return new Promise(function(resolve, reject) {
@@ -545,10 +579,17 @@
     setTimeout(function() {
       if (container.getAttribute('data-filled')) return;
       if (!canShowAd('homepage_banner')) return;
-      loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
-        container.setAttribute('data-filled', '1');
-        markAdShown('homepage_banner');
-      }).catch(function() {});
+      // Try AdSense first (higher fill rate); use Monetag as fallback
+      loadAdSenseAd(container, '1099212472');
+      // Fallback to Monetag after 2s if AdSense hasn't filled
+      setTimeout(function() {
+        if (container.getAttribute('data-filled')) return;
+        if (!canShowAd('homepage_banner')) return;
+        loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
+          container.setAttribute('data-filled', '1');
+          markAdShown('homepage_banner');
+        }).catch(function() {});
+      }, 2000);
     }, CONFIG.TIMING.homepageBannerDelay);
   }
 
@@ -576,10 +617,16 @@
     setTimeout(function() {
       if (container.getAttribute('data-filled')) return;
       if (!canShowAd('homepage_banner')) return;
-      loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
-        container.setAttribute('data-filled', '1');
-        markAdShown('homepage_banner');
-      }).catch(function() {});
+      // Try AdSense first; Monetag fallback after 2s
+      loadAdSenseAd(container, '1099212472');
+      setTimeout(function() {
+        if (container.getAttribute('data-filled')) return;
+        if (!canShowAd('homepage_banner')) return;
+        loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
+          container.setAttribute('data-filled', '1');
+          markAdShown('homepage_banner');
+        }).catch(function() {});
+      }, 2000);
     }, CONFIG.TIMING.homepageBannerDelay + 5000); // 6.5s total delay
   }
 
@@ -593,10 +640,16 @@
     setTimeout(function() {
       if (container.getAttribute('data-filled')) return;
       if (!canShowAd('container')) return;
-      loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
-        container.setAttribute('data-filled', '1');
-        markAdShown('container');
-      }).catch(function() {});
+      // Try AdSense first (higher fill); Monetag fallback after 2s
+      loadAdSenseAd(container, '7373732357');
+      setTimeout(function() {
+        if (container.getAttribute('data-filled')) return;
+        if (!canShowAd('container')) return;
+        loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
+          container.setAttribute('data-filled', '1');
+          markAdShown('container');
+        }).catch(function() {});
+      }, 2000);
     }, CONFIG.TIMING.containerAdDelay);
   }
 
@@ -655,6 +708,16 @@
         document.head.appendChild(link);
       });
     }
+    // Preconnect to Google AdSense
+    ['https://pagead2.googlesyndication.com', 'https://googleads.g.doubleclick.net'].forEach(function(origin) {
+      try {
+        var link = document.createElement('link');
+        link.rel = 'preconnect';
+        link.href = origin;
+        link.crossOrigin = 'anonymous';
+        document.head.appendChild(link);
+      } catch(e) {}
+    });
 
     detectPage();
     initBroadcast();
@@ -736,6 +799,12 @@
   }
   window.GZNativeAd = window.GZNativeAd || {};
   window.GZAdSenseAuto = window.GZAdSenseAuto || {};
+  if (!window.GZAdSenseAuto.loadAd) {
+    window.GZAdSenseAuto.loadAd = function(containerId) {
+      var container = document.getElementById(containerId);
+      if (container) loadAdSenseAd(container);
+    };
+  }
   window.GZInterstitial = { show: function() { return commercialBreak(); } };
 
   // Auto-init
