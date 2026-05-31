@@ -43,6 +43,9 @@
 <link href="https://gamezipper.com/" rel="canonical"/>
 <link rel="alternate" type="application/rss+xml" title="GameZipper Blog RSS Feed" href="/feed.xml"/>
 <link rel="dns-prefetch" href="https://tools.gamezipper.com">
+<link rel="prefetch" href="/2048/">
+<link rel="prefetch" href="/snake/">
+<link rel="prefetch" href="/sudoku/">
 <!-- Resource hints: preconnect + prefetch + preload for performance -->
 <!-- UX: Critical resource optimization for faster LCP -->
 <link rel="preconnect" href="https://site-analytics.gamezipper.com" crossorigin>
@@ -81,6 +84,7 @@
 
 <style>
 :root{accent-color:#4ecdc4}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .gz-skip-link{position:absolute;top:-100%;left:16px;background:#4ecdc4;color:#000;padding:8px 16px;border-radius:0 0 8px 8px;font-weight:700;z-index:99999;text-decoration:none;transition:top .2s}
 .gz-skip-link:focus{top:0}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -650,7 +654,8 @@ document.querySelectorAll('.gz-reveal').forEach(function(el){observer.observe(el
 })();
 </script>
 <a href="#main-content" class="gz-skip-link" style="position:absolute;top:-100%;left:0;background:#4ecdc4;color:#000;padding:12px 24px;z-index:99999;font-weight:700;text-decoration:none;border-radius:0 0 8px 0;transition:top .2s" onfocus="this.style.top=0" onblur="this.style.top='-100%'">Skip to games</a>
-<main role="main" id="main-content" tabindex="-1"><section id="gz-main" aria-label="Game collection"><div class="games" id="games" role="list" aria-label="Game collection" aria-live="polite" aria-relevant="additions removals" aria-busy="true">
+<main role="main" id="main-content" tabindex="-1"><section id="gz-main" aria-label="Game collection"><div class="games" id="games" aria-live="polite" aria-relevant="additions removals" role="list" aria-label="Game collection" aria-busy="true">
+  <span class="sr-only" role="status" aria-live="assertive">Loading 202 free games...</span>
   <!-- Skeleton loaders: match grid layout to prevent CLS when JS renders -->
   <div class="gz-skeleton" style="aspect-ratio:4/3"></div>
   <div class="gz-skeleton" style="aspect-ratio:4/3"></div>
@@ -896,6 +901,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <script>
+// UX-OPT: Precompute rating hash for all games (avoids rehashing on every card render)
+var _gzRatingMap={};
+function _gzPrecomputeRatings(games){for(var i=0;i<games.length;i++){var s=games[i].name;var h=0;for(var j=0;j<s.length;j++)h=((h<<5)-h)+s.charCodeAt(j);_gzRatingMap[s]=(4.5+Math.abs(h%5)*0.1).toFixed(1)}}
+
 // Main game initialization - called after games-data.js is loaded
 // Ensure gzFavs exists before render() uses it (full definition at line ~1128)
 if (typeof gzFavs === 'undefined') var gzFavs = [];
@@ -911,7 +920,7 @@ function render(list){
         <h3 itemprop="name">${g.name}</h3>
         <div class="desc" itemprop="description">${g.desc}</div>
         <div class="tags">${g.tags.map(t=>`<span class="tag" style="cursor:pointer" onclick="event.preventDefault();event.stopPropagation();filter(t,this.parentElement.parentElement.parentElement)">${t}</span>`).join('')}</div>
-        <div class="gz-rating"><span class="gz-star">★★★★</span><span style="color:#ffd93d">★</span><span class="gz-rating-num">${(function(s){var h=0;for(var i=0;i<s.length;i++)h=((h<<5)-h)+s.charCodeAt(i);return(4.5+Math.abs(h%5)*0.1).toFixed(1)})(g.name)}</span></div>
+        <div class="gz-rating"><span class="gz-star">★★★★</span><span style="color:#ffd93d">★</span><span class="gz-rating-num">${_gzRatingMap[g.name]||"4.8"}</span></div>
         <div class="gz-card-tooltip">${g.tags.length?g.tags[0]+' Game':'Browser Game'} — Click to play!</div>
       </div>
     </a>`).join('');
@@ -1006,6 +1015,7 @@ const liveGames = GAMES.filter(g => g.status === 'live');
 window._liveGames = liveGames;
 liveGames.sort((a,b)=>(b.isNew?1:0)-(a.isNew?1:0));
   _gzAllGames = liveGames;
+  _gzPrecomputeRatings(liveGames);
   // INP optimization: use scheduler.yield or rAF to avoid blocking main thread
   function doInitialRender(){
     var initialBatch = liveGames.slice(0, GZ_INITIAL_COUNT);
@@ -1042,7 +1052,7 @@ liveGames.sort((a,b)=>(b.isNew?1:0)-(a.isNew?1:0));
   else{doInitialRender()}
 } // end initGames()
 // so GAMES data and const liveGames are lost while skeleton loaders persist.// Show More: progressive game loading
-function gzShowMoreGames(){var r=_gzAllGames.length-_gzShownCount;if(r<=0)return;var b=_gzAllGames.slice(_gzShownCount,_gzShownCount+GZ_SHOW_MORE_COUNT);_gzShownCount+=b.length;var g=document.getElementById('games');var h=b.map(function(gm,i){var idx=_gzShownCount-b.length+i;return '<a class="game-card visible" href="'+gm.url+'" data-cat="'+gm.cat+'" itemscope itemtype="https://schema.org/Game" role="listitem" aria-label="'+gm.name+' \u2014 '+(gm.tags[0]||'')+' game. Click to play." title="'+gm.name+' — Click to play!" style="opacity:1;transform:translateY(0)"><meta itemprop="name" content="'+gm.name+'"><meta itemprop="url" content="https://gamezipper.com'+gm.url+'">'+(gm.isNew?'<span class="new-badge">&#x1F525; NEW</span>':'')+'<button class="gz-fav-btn '+(gzFavs.includes(gm.name)?'active':'')+'" data-game="'+gm.name+'" onclick="event.preventDefault();gzToggleFav(this.dataset.game)" aria-label="Toggle favorite '+gm.name+'">&#x2665;</button><div class="game-thumb" style="background:'+GAME_GRADIENTS[idx%GAME_GRADIENTS.length]+'" itemprop="image"><meta itemprop="contentUrl" content="https://gamezipper.com/og-image.webp">'+gm.emoji+'<div class="overlay"><span class="play-btn">&#x25B6; PLAY</span></div></div><div class="game-info"><h3 itemprop="name">'+gm.name+'</h3><div class="desc" itemprop="description">'+gm.desc+'</div><div class="tags">'+gm.tags.map(function(t){return '<span class="tag" style="cursor:pointer" onclick="event.preventDefault();event.stopPropagation();filter(t,this.parentElement.parentElement.parentElement)">'+t+'</span>'}).join('')+'</div><div class="gz-rating"><span class="gz-star">&#x2605;&#x2605;&#x2605;&#x2605;</span><span style="color:#ffd93d">&#x2605;</span><span class="gz-rating-num">'+(function(s){var h=0;for(var i=0;i<s.length;i++)h=((h<<5)-h)+s.charCodeAt(i);return(4.5+Math.abs(h%5)*0.1).toFixed(1)})(gm.name)+'</span></div><div class="gz-card-tooltip">'+(gm.tags.length?gm.tags[0]+' Game':'Browser Game')+' \u2014 Click to play!</div></div></a>'}).join('');g.insertAdjacentHTML('beforeend',h);gzUpdateShowMoreBtn()}
+function gzShowMoreGames(){var r=_gzAllGames.length-_gzShownCount;if(r<=0)return;var b=_gzAllGames.slice(_gzShownCount,_gzShownCount+GZ_SHOW_MORE_COUNT);_gzShownCount+=b.length;var g=document.getElementById('games');var h=b.map(function(gm,i){var idx=_gzShownCount-b.length+i;return '<a class="game-card visible" href="'+gm.url+'" data-cat="'+gm.cat+'" itemscope itemtype="https://schema.org/Game" role="listitem" aria-label="'+gm.name+' \u2014 '+(gm.tags[0]||'')+' game. Click to play." title="'+gm.name+' — Click to play!" style="opacity:1;transform:translateY(0)"><meta itemprop="name" content="'+gm.name+'"><meta itemprop="url" content="https://gamezipper.com'+gm.url+'">'+(gm.isNew?'<span class="new-badge">&#x1F525; NEW</span>':'')+'<button class="gz-fav-btn '+(gzFavs.includes(gm.name)?'active':'')+'" data-game="'+gm.name+'" onclick="event.preventDefault();gzToggleFav(this.dataset.game)" aria-label="Toggle favorite '+gm.name+'">&#x2665;</button><div class="game-thumb" style="background:'+GAME_GRADIENTS[idx%GAME_GRADIENTS.length]+'" itemprop="image"><meta itemprop="contentUrl" content="https://gamezipper.com/og-image.webp">'+gm.emoji+'<div class="overlay"><span class="play-btn">&#x25B6; PLAY</span></div></div><div class="game-info"><h3 itemprop="name">'+gm.name+'</h3><div class="desc" itemprop="description">'+gm.desc+'</div><div class="tags">'+gm.tags.map(function(t){return '<span class="tag" style="cursor:pointer" onclick="event.preventDefault();event.stopPropagation();filter(t,this.parentElement.parentElement.parentElement)">'+t+'</span>'}).join('')+'</div><div class="gz-rating"><span class="gz-star">&#x2605;&#x2605;&#x2605;&#x2605;</span><span style="color:#ffd93d">&#x2605;</span><span class="gz-rating-num">'+_gzRatingMap[gm.name]||"4.8"+'</span></div><div class="gz-card-tooltip">'+(gm.tags.length?gm.tags[0]+' Game':'Browser Game')+' \u2014 Click to play!</div></div></a>'}).join('');g.insertAdjacentHTML('beforeend',h);gzUpdateShowMoreBtn()}
 function gzUpdateShowMoreBtn(){var w=document.getElementById('gz-show-more-wrap'),b=document.getElementById('gz-show-more'),rc=document.getElementById('gz-remaining-count'),h=document.getElementById('gz-progress-hint');if(!w||!b)return;var r=_gzAllGames.length-_gzShownCount;if(r<=0){w.style.display='none';return}w.style.display='block';rc.textContent='('+Math.min(r,GZ_SHOW_MORE_COUNT)+' more)';h.textContent='Showing '+_gzShownCount+' of '+_gzAllGames.length+' games';b.disabled=false}
 // Infinite scroll: auto-load when sentinel visible (UX: reduces click friction, +15-30% engagement)
 (function(){var _gzAutoLoading=false;function setupInfiniteScroll(){var s=document.getElementById('gz-scroll-sentinel');if(!s||!('IntersectionObserver' in window))return;var obs=new IntersectionObserver(function(e){if(e[0].isIntersecting&&!_gzAutoLoading){var r=_gzAllGames.length-_gzShownCount;if(r>0){_gzAutoLoading=true;gzShowMoreGames();setTimeout(function(){_gzAutoLoading=false},300)}}},{rootMargin:'200px',threshold:0});obs.observe(s)}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',setupInfiniteScroll)}else{setupInfiniteScroll()}})();
