@@ -251,3 +251,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Eggy Car",emoji:"🥚",cat:"arcade",tags:["physics","driving","egg","balance","casual","browser game"],url:"/eggy-car/",desc:"Play Eggy Car free online! Drive carefully over hills to keep your egg safe. Collect coins, unlock vehicles and beat your best distance!",isNew:true,status:"live"},
