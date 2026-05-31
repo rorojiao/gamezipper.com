@@ -265,7 +265,7 @@
 {n:'Liquid Sort',e:'🧪',u:'/liquid-sort/',c:'puzzle'},
 {n:"Factory Balls",e:"🎨",u:"/factory-balls/",c:"puzzle"},
 {n:"4 Pics 1 Word",e:"🖼️",u:"/picture-word-guessing/",c:"puzzle"},
-{n:"Antistress",e:"🧸",u:"/antistress/",c:"casual"},{n:"Monkey Mart",e:"🐒",u:"/monkey-mart/",c:"casual"}
+{n:"Antistress",e:"🧸",u:"/antistress/",c:"casual"},{n:"Monkey Mart",e:"🐒",u:"/monkey-mart/",c:"casual"},{n:"Gravity Drop",e:"🔴",u:"/gravity-drop/",c:"puzzle"}
 ]; }
    }
    function getDateSeed() {
