@@ -224,7 +224,8 @@ const GAMES = [
 {name:"Pattern Palace",emoji:"🔮",cat:"puzzle",tags:["pattern","iq","brain-training","logic","visual"],url:"/pattern-palace/",desc:"Test your visual IQ with shape sequences, color patterns, and 3x3 matrix puzzles. 50+ brain-bending levels of pattern recognition.",isNew:true,status:"live"},
 {name:"Mahjong Dimensions",emoji:"🔲",cat:"puzzle",tags:["Mahjong","3D","Tile-Matching","Cube","Puzzle","Matching","Rotating","Isometric","Timed","Brain"],url:"/mahjong-dimensions/",desc:"Play Mahjong Dimensions free online! Match tile pairs on rotating 3D cubes across 30 levels and 5 cube shapes (Cube, Tower, Cross, Diamond, Pyramid). Drag to rotate, find matching pairs with hints, shuffle, and undo. Timer-based scoring with combos and speed bonuses. No download needed!",isNew:true,status:"live"},
 {name:"Factory Balls",emoji:"🎨",cat:"puzzle",tags:["factory balls","paint","puzzle","color","brain","logic","drag","tool","creative","casual"],url:"/factory-balls/",desc:"Play Factory Balls online free! Drag balls into paint and use masking tools (hats, glasses, belts, tape) to match the target design. 50 creative puzzle levels with star ratings and step challenges. No download needed!",rating:4.6,isNew:true,status:"live"},
-{name:"4 Pics 1 Word",emoji:"🖼️",cat:"puzzle",tags:["4 pics 1 word","picture word","guess","emoji","brain teaser","word puzzle","logic","casual","trivia"],url:"/picture-word-guessing/",desc:"Look at 4 pictures and guess the word they have in common! 50 creative puzzle levels with emoji clues, hints, coins, star ratings, and daily challenge. Free online, no download!",rating:4.6,isNew:true,status:"live"}
+{name:"4 Pics 1 Word",emoji:"🖼️",cat:"puzzle",tags:["4 pics 1 word","picture word","guess","emoji","brain teaser","word puzzle","logic","casual","trivia"],url:"/picture-word-guessing/",desc:"Look at 4 pictures and guess the word they have in common! 50 creative puzzle levels with emoji clues, hints, coins, star ratings, and daily challenge. Free online, no download!",rating:4.6,isNew:true,status:"live"},
+{name:"Antistress",emoji:"\u1fae7",cat:"casual",tags:["relaxing","asmr","fidget","zen","calm"],url:"/antistress/",desc:"Play relaxing fidget toys and ASMR games online free. 15+ satisfying interactive toys including bubble wrap, Newtons cradle, slime, and more.",isNew:true,status:"live"}
 ];
 
 /**
@@ -248,4 +249,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Antistress",emoji:"\u1fae7",cat:"casual",tags:["relaxing","asmr","fidget","zen","calm"],url:"/antistress/",desc:"Play relaxing fidget toys and ASMR games online free. 15+ satisfying interactive toys including bubble wrap, Newtons cradle, slime, and more.",isNew:true,status:"live"},

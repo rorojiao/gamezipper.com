@@ -250,7 +250,18 @@
 {n:'Words Klondike',e:'🃏',u:'/words-klondike/',c:'puzzle'},
 {n:'Find N Merge',e:'🔍',u:'/find-n-merge/',c:'puzzle'},
   {n:'Cryptograms',e:'🔐',u:'/cryptograms/',c:'puzzle'},
-  {n:'Mekorama',e:'🤖',u:'/mekorama/',c:'puzzle'}
+  {n:'Mekorama',e:'🤖',u:'/mekorama/',c:'puzzle'},
+{n:'Jewel Crush',e:'💎',u:'/jewel-crush/',c:'puzzle'},
+{n:'Go Fish',e:'🐟',u:'/go-fish/',c:'card'},
+{n:'Guess The Emoji',e:'🤔',u:'/guess-the-emoji/',c:'puzzle'},
+{n:'Trivia Crack',e:'❓',u:'/trivia-crack/',c:'puzzle'},
+{n:'Fireboy & Watergirl',e:'🔥',u:'/fireboy-watergirl/',c:'puzzle'},
+{n:'Plinko',e:'⚪',u:'/plinko/',c:'arcade'},
+{n:'Mahjong Dimensions',e:'🀄',u:'/mahjong-dimensions/',c:'puzzle'},
+{n:'Pattern Palace',e:'🔮',u:'/pattern-palace/',c:'puzzle'},
+{n:"Factory Balls",e:"🎨",u:"/factory-balls/",c:"puzzle"},
+{n:"4 Pics 1 Word",e:"🖼️",u:"/picture-word-guessing/",c:"puzzle"},
+{n:"Antistress",e:"🧸",u:"/antistress/",c:"casual"}
 ]; }
    }
    function getDateSeed() {
@@ -361,11 +372,7 @@
    if ('requestIdleCallback' in window) {
      requestIdleCallback(init);
    } else {
-     setTimeout(init, 100);
-   }
- }
-},{n:'Jewel Crush',e:'💎',u:'/jewel-crush/',c:'puzzle'},
-      {n:'Go Fish',e:'🐟',u:'/go-fish/',c:'card'},
-      {n:'Guess The Emoji',e:'🤔',u:'/guess-the-emoji/',c:'puzzle'},
-      {n:'Trivia Crack',e:'❓',u:'/trivia-crack/',c:'puzzle'},{n:'Fireboy & Watergirl',e:'🔥',u:'/fireboy-watergirl/',c:'puzzle'},{n:'Plinko',e:'⚪',u:'/plinko/',c:'arcade'},{n:'Mahjong Dimensions',e:'🀄',u:'/mahjong-dimensions/',c:'puzzle'},{n:'Pattern Palace',e:'🔮',u:'/pattern-palace/',c:'puzzle'},
-{n:"Factory Balls",e:"🎨",u:"/factory-balls/",c:"puzzle"})();
+    setTimeout(init, 100);
+  }
+}
+})();
