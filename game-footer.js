@@ -262,6 +262,7 @@
 {n:'Plinko',e:'⚪',u:'/plinko/',c:'arcade'},
 {n:'Mahjong Dimensions',e:'🀄',u:'/mahjong-dimensions/',c:'puzzle'},
 {n:'Pattern Palace',e:'🔮',u:'/pattern-palace/',c:'puzzle'},
+{n:'Liquid Sort',e:'🧪',u:'/liquid-sort/',c:'puzzle'},
 {n:"Factory Balls",e:"🎨",u:"/factory-balls/",c:"puzzle"},
 {n:"4 Pics 1 Word",e:"🖼️",u:"/picture-word-guessing/",c:"puzzle"},
 {n:"Antistress",e:"🧸",u:"/antistress/",c:"casual"},{n:"Monkey Mart",e:"🐒",u:"/monkey-mart/",c:"casual"}
