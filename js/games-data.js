@@ -256,3 +256,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Nut Sort",emoji:"🔩",cat:"puzzle",tags:["sort","city","logic","brain"],url:"/nut-sort/",desc:"Sort colorful nuts onto matching bolts and build your dream city in this addictive puzzle game",isNew:true,status:"live"},
