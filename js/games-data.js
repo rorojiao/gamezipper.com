@@ -253,3 +253,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Liquid Sort",emoji:"🧪",cat:"puzzle",tags:["sort","water","color","logic","brain"],url:"/liquid-sort/",desc:"Sort colored liquids into matching tubes in this addictive water sort puzzle game with 50 levels, daily challenges and achievements",isNew:true,status:"live"},
