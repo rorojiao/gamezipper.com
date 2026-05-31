@@ -227,9 +227,10 @@ const GAMES = [
 {name:"4 Pics 1 Word",emoji:"🖼️",cat:"puzzle",tags:["4 pics 1 word","picture word","guess","emoji","brain teaser","word puzzle","logic","casual","trivia"],url:"/picture-word-guessing/",desc:"Look at 4 pictures and guess the word they have in common! 50 creative puzzle levels with emoji clues, hints, coins, star ratings, and daily challenge. Free online, no download!",rating:4.6,isNew:true,status:"live"},
 
 {name:"Monkey Mart",emoji:"🐵",cat:"arcade",tags:["management", "idle", "supermarket", "monkey", "simulation"],url:"/monkey-mart/",desc:"Run your own supermarket as a cute monkey! Harvest crops, stock shelves, serve customers, hire workers and expand your store empire.",isNew:true,status:"live"},
-{name:"Antistress",emoji:"\U0001fae7",cat:"casual",tags:["relaxing","asmr","fidget","zen","calm"],url:"/antistress/",desc:"Play relaxing fidget toys and ASMR games online free. 15+ satisfying interactive toys including bubble wrap, Newtons cradle, slime, and more.",isNew:true,status:"live"},
-{name:"Paper Fold Puzzle",emoji:"📄",cat:"puzzle",tags:["Puzzle","Origami","Folding","Brain","Logic","Paper","Casual","Creative"],url:"/paper-fold/",desc:"Fold paper to match target patterns in this origami brain teaser! 30 levels of satisfying paper folding puzzles with star ratings, undo, hints, and procedural generation. No download needed!",isNew:true,status:"live"},];
-
+{name:"Antistress",emoji:"\\U0001fae7",cat:"casual",tags:["relaxing","asmr","fidget","zen","calm"],url:"/antistress/",desc:"Play relaxing fidget toys and ASMR games online free. 15+ satisfying interactive toys including bubble wrap, Newtons cradle, slime, and more.",isNew:true,status:"live"},
+  {name:"Paper Fold Puzzle",emoji:"📄",cat:"puzzle",tags:["Puzzle","Origami","Folding","Brain","Logic","Paper","Casual","Creative"],url:"/paper-fold/",desc:"Fold paper to match target patterns in this origami brain teaser! 30 levels of satisfying paper folding puzzles with star ratings, undo, hints, and procedural generation. No download needed!",isNew:true,status:"live"},
+  {name:"Unpacking",emoji:"📦",cat:"puzzle",tags:["Puzzle","Unpacking","Organizing","Drag","Cozy","Casual","Relaxing","Room","Decoration","Brain","HTML5","Free","Browser"],url:"/unpacking/",desc:"Unpacking is a cozy room organizing puzzle game. Drag items from boxes to their correct spots to decorate rooms and reveal a moving-in story. 30 puzzle levels across 5 chapters with star ratings. Play free online, no download needed!",isNew:true,status:"live"},
+];
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
  */
