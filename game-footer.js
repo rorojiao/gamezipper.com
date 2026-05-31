@@ -208,7 +208,10 @@
       {n:'Color Cars Parking',e:'🚗',u:'/color-cars-parking/',c:'puzzle'}
    ,
       {n:'Cryptograms',e:'🔐',u:'/cryptograms/',c:'puzzle'},
-      {n:'Threes',e:'3️⃣',u:'/threes/',c:'puzzle'}
+      {n:'Threes',e:'3️⃣',u:'/threes/',c:'puzzle'},
+      {n:'Paper Fold Puzzle',e:'📄',u:'/paper-fold/',c:'puzzle'},
+      {n:'Eggy Car',e:'🥚',u:'/eggy-car/',c:'driving'},
+      {n:'Unpacking',e:'📦',u:'/unpacking/',c:'puzzle'}
    ];
 
   var cur = location.pathname;
@@ -375,4 +378,5 @@
     setTimeout(init, 100);
   }
 }
-},{n:"Paper Fold Puzzle",e:"📄",u:"/paper-fold/",c:"puzzle"})();
+
+})();
