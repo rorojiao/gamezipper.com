@@ -375,4 +375,4 @@
     setTimeout(init, 100);
   }
 }
-})();
+},{n:"Paper Fold Puzzle",e:"📄",u:"/paper-fold/",c:"puzzle"})();
