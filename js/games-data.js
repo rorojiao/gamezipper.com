@@ -232,6 +232,8 @@ const GAMES = [
   {name:"Unpacking",emoji:"📦",cat:"puzzle",tags:["Puzzle","Unpacking","Organizing","Drag","Cozy","Casual","Relaxing","Room","Decoration","Brain","HTML5","Free","Browser"],url:"/unpacking/",desc:"Unpacking is a cozy room organizing puzzle game. Drag items from boxes to their correct spots to decorate rooms and reveal a moving-in story. 30 puzzle levels across 5 chapters with star ratings. Play free online, no download needed!",isNew:true,status:"live"},
   {name:"Eggy Car",emoji:"🥚",cat:"arcade",tags:["physics","driving","egg","balance","casual","browser game"],url:"/eggy-car/",desc:"Play Eggy Car free online! Drive carefully over hills to keep your egg safe. Collect coins, unlock vehicles and beat your best distance!",isNew:true,status:"live"},
   {name:"Liquid Sort",emoji:"🧪",cat:"puzzle",tags:["sort","water","color","logic","brain"],url:"/liquid-sort/",desc:"Sort colored liquids into matching tubes in this addictive water sort puzzle game with 50 levels, daily challenges and achievements",isNew:true,status:"live"},
+  {name:"Gravity Drop",emoji:"🔴",cat:"puzzle",tags:["physics","block","puzzle","gravity","ball","drop","brain","casual","browser game"],url:"/gravity-drop/",desc:"Remove blocks to guide the ball to the goal in this physics puzzle! 30 levels with bouncy platforms, ice slides, breakable blocks, and chain reactions. Play free online.",isNew:true,status:"live"},
+  {name:"Liquid Sort",emoji:"🧪",cat:"puzzle",tags:["sort","water","color","logic","brain"],url:"/liquid-sort/",desc:"Sort colored liquids into matching tubes in this addictive water sort puzzle game with 50 levels, daily challenges and achievements",isNew:true,status:"live"},
 
 ];
 /**
