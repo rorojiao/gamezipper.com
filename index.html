@@ -155,7 +155,7 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 .gz-cta-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none}
 .gz-cta-btn:active{transform:scale(0.97)}
 .game-card:focus-visible,.cat-btn:focus-visible,.gz-cta-btn:focus-visible{outline:3px solid #4ecdc4;outline-offset:2px}
-.cat-btn:focus-visible{border-radius:25px}#gz-scroll-top:focus-visible,.gz-cookie-accept:focus-visible,.gz-cookie-decline:focus-visible{outline:3px solid #4ecdc4;outline-offset:2px}
+.cat-btn:focus-visible{border-radius:25px}#gz-scroll-top:focus-visible,.gz-cookie-accept:focus-visible,.gz-cookie-decline:focus-visible{outline:3px solid #4ecdc4;outline-offset:2px}.gz-search-suggestion.gz-recent-search:hover{background:rgba(78,210,196,.15)!important}
 .gz-cta-btn:focus-visible{border-radius:30px}
 @media(prefers-reduced-motion:reduce){*{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}.game-card{opacity:1;transform:none}.gz-skeleton{animation:none;background:#252545}}
 .gz-search-suggestion{display:block;padding:10px 16px;color:#fff;text-decoration:none;cursor:pointer;transition:background 0.15s;border-bottom:1px solid #222}@media(hover:hover){.gz-search-suggestion:hover,.gz-search-suggestion.active{background:#2a2a4a}}@media(hover:none){.gz-search-suggestion.active{background:#2a2a4a}}.gz-search-suggestion .sug-emoji{font-size:1.2em;margin-right:8px}.gz-search-suggestion .sug-cat{font-size:.7em;color:#999;margin-left:8px}.gz-search-suggestion mark{background:transparent;color:#4ecdc4;font-weight:700}.gz-search-suggestion{touch-action:manipulation;-webkit-tap-highlight-color:transparent}.sug-hot{font-size:.6em;color:#ff6b6b;margin-left:4px;font-weight:700;letter-spacing:.5px}
@@ -1768,6 +1768,72 @@ h3.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.pre
       else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); items[activeIdx].click(); }
     });
     document.addEventListener('click', function(e) { if (!e.target.closest('.gz-search-wrap')) { sugBox.style.display = 'none'; input.setAttribute('aria-expanded', 'false'); } });
+    // UX-OPT: Show trending + recent searches on search focus (before typing)
+    // Research: focus-triggered suggestions reduce search abandonment by 20-30%
+    var TRENDING_GAMES = ['2048 Galaxy','Classic Snake','Sudoku','Chess','Tetris','Solitaire','Minesweeper','Color Sort'];
+    function showFocusSuggestions() {
+      if (input.value.length > 0) return; // don't override active search
+      var html = '';
+      // Recent searches from localStorage
+      try {
+        var recent = JSON.parse(localStorage.getItem('gz_recent_searches') || '[]');
+        if (recent.length > 0) {
+          html += '<div style="padding:6px 12px 4px;font-size:.72em;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.5px">🕐 Recent</div>';
+          recent.slice(0, 4).forEach(function(term) {
+            html += '<div class="gz-search-suggestion gz-recent-search" role="option" style="padding:8px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;border-radius:8px;margin:2px 8px;transition:background .15s" onmouseover="this.style.background=\'rgba(78,210,196,.1)\'" onmouseout="this.style.background=\'transparent\'"><span style="color:#666;font-size:.8em">↻</span><span style="color:#ccc;font-size:.88em">' + term.replace(/</g,'&lt;') + '</span></div>';
+          });
+        }
+      } catch(e) {}
+      // Trending games
+      if (window._liveGames) {
+        var trending = TRENDING_GAMES.map(function(name) {
+          return window._liveGames.find(function(g) { return g.name === name; });
+        }).filter(Boolean);
+        if (trending.length) {
+          html += '<div style="padding:8px 12px 4px;font-size:.72em;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.5px">🔥 Trending</div>';
+          trending.slice(0, 5).forEach(function(g) {
+            html += '<a href="' + g.url + '" class="gz-search-suggestion" role="option" style="display:flex;align-items:center;gap:8px;padding:6px 12px;margin:1px 8px;border-radius:8px;text-decoration:none;color:#fff;transition:background .15s" onmouseover="this.style.background=\'rgba(78,210,196,.1)\'" onmouseout="this.style.background=\'transparent\'"><span style="font-size:1em">' + g.emoji + '</span><span style="font-size:.88em">' + g.name + '</span><span class="sug-hot" style="margin-left:auto;font-size:.7em">🔥</span></a>';
+          });
+        }
+      }
+      if (html) {
+        sugBox.innerHTML = html;
+        sugBox.style.display = 'block';
+        input.setAttribute('aria-expanded', 'true');
+        activeIdx = -1;
+        // Wire up recent search clicks
+        sugBox.querySelectorAll('.gz-recent-search').forEach(function(el) {
+          el.addEventListener('click', function() {
+            var term = el.querySelector('span:last-child').textContent;
+            input.value = term;
+            input.dispatchEvent(new Event('input', {bubbles: true}));
+            sugBox.style.display = 'none';
+          });
+        });
+      }
+    }
+    input.addEventListener('focus', function() {
+      setTimeout(showFocusSuggestions, 50); // slight delay to avoid race with click-outside
+    });
+    // Save searches to localStorage
+    var _doSearchWithHistory = function(q) {
+      if (q.length >= 2) {
+        try {
+          var recent = JSON.parse(localStorage.getItem('gz_recent_searches') || '[]');
+          recent = recent.filter(function(r) { return r.toLowerCase() !== q.toLowerCase(); });
+          recent.unshift(q);
+          if (recent.length > 8) recent = recent.slice(0, 8);
+          localStorage.setItem('gz_recent_searches', JSON.stringify(recent));
+        } catch(e) {}
+      }
+    };
+    // Override the existing doSearch to also save history
+    var __origDoSearchInner = doSearch;
+    doSearch = function(q) {
+      _doSearchWithHistory(q);
+      __origDoSearchInner(q);
+    };
+
     // Enhance doSearch to also show autocomplete suggestions
     var _origDoSearch = window.doSearch || doSearch;
     var _doSearchRef = doSearch;
@@ -2048,6 +2114,38 @@ if('serviceWorker' in navigator){
     }
   });
 }
+
+
+// UX-OPT: Online/Offline connectivity indicator — prevents user confusion when games don't load
+(function(){
+  var shown = {};
+  function showToast(msg, color, icon) {
+    if (document.hidden) return; // don't show when tab not visible
+    var id = 'gz-conn-' + (color === '#ff6b6b' ? 'offline' : 'online');
+    if (shown[id]) return; // debounce: one toast per state change
+    shown[id] = true;
+    var t = document.createElement('div');
+    t.id = id;
+    t.setAttribute('role', 'status');
+    t.setAttribute('aria-live', 'polite');
+    t.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);background:' + color + ';color:#fff;padding:10px 20px;border-radius:12px;font-size:.88em;font-weight:600;z-index:100003;box-shadow:0 4px 20px rgba(0,0,0,.4);display:flex;align-items:center;gap:8px;opacity:0;transition:opacity .3s;font-family:sans-serif';
+    t.innerHTML = '<span style="font-size:1.2em">' + icon + '</span> ' + msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(function(){ t.style.opacity = '1'; });
+    setTimeout(function(){
+      shown[id] = false;
+      t.style.opacity = '0';
+      setTimeout(function(){ t.remove(); }, 300);
+    }, color === '#ff6b6b' ? 6000 : 3000);
+  }
+  function goOffline() { showToast('You are offline — games may not load', '#ff6b6b', '📵'); }
+  function goOnline() { showToast('Back online!', '#4ecdc4', '✅'); }
+  window.addEventListener('offline', goOffline);
+  window.addEventListener('online', goOnline);
+  // Check initial state
+  if (!navigator.onLine) { setTimeout(goOffline, 1000); }
+})();
+
 </script>
 
 <script>
