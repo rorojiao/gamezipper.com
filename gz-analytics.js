@@ -157,6 +157,51 @@
     })();
   }
 
+  /* INP Observer: Core Web Vitals 2025 */
+  (function(){
+    try {
+      var _po2 = window.PerformanceObserver || window.webkitPerformanceObserver;
+      if (_po2) {
+        var _inpWorst = 0;
+        var _inpObs = new _po2(function(list) {
+          var entries = list.getEntries();
+          for (var i = 0; i < entries.length; i++) {
+            var e = entries[i];
+            if (e.duration > _inpWorst) {
+              _inpWorst = Math.round(e.duration);
+            }
+          }
+        });
+        _inpObs.observe({ type: 'event', buffered: true, durationThreshold: 100 });
+        document.addEventListener('visibilitychange', function() {
+          if (document.visibilityState === 'hidden' && _inpWorst > 0) {
+            ps('inp_worst', { u: P, dur: _inpWorst });
+          }
+        });
+      }
+    } catch(e) {}
+  })();
+
+  /* Active engagement time: measure real user focus time */
+  (function(){
+    var _aeStart = Date.now();
+    var _aeTotal = 0;
+    var _aeVisible = !document.hidden;
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') {
+        if (_aeVisible) { _aeTotal += Date.now() - _aeStart; }
+        _aeVisible = false;
+      } else {
+        _aeStart = Date.now();
+        _aeVisible = true;
+      }
+    });
+    window.addEventListener('beforeunload', function() {
+      if (_aeVisible) { _aeTotal += Date.now() - _aeStart; }
+      if (_aeTotal > 0) { ps('active_time', { u: P, ms: _aeTotal }); }
+    });
+  })();
+
   window.gzAnalytics = {
     gameLoaded: function() { if (st.gL) return; st.gL = true; ps('g_loaded', { u: P }); },
     gameStart:  function() { if (st.gS) return; st.gS = true; ps('g_start',  { u: P }); },
