@@ -237,6 +237,7 @@ const GAMES = [
   {name:"Number Nexus",emoji:"🔗",cat:"puzzle",tags:["Puzzle","Number","Path","Logic","Grid","Connect","Brain","Casual"],url:"/number-nexus/",desc:"Play Number Nexus Online Free! Fill the grid by connecting numbers in sequence. 50 levels across 5 chapters from 4x4 to 8x8 grids with daily challenges. A satisfying number path puzzle!",isNew:true,status:"live"},
   {name:"Nut Sort",emoji:"🔩",cat:"puzzle",tags:["sort","city","logic","brain"],url:"/nut-sort/",desc:"Sort colorful nuts onto matching bolts and build your dream city in this addictive puzzle game",isNew:true,status:"live"},
   {name:"Merge Sweets",emoji:"🧁",cat:"puzzle",tags:["merge","bakery","puzzle","casual"],url:"/merge-sweets/",desc:"Tap bakery stations to generate ingredients, merge matching treats, and fulfill customer orders in this delicious merge-2 puzzle game with 25 levels!",isNew:true,status:"live"},
+  {name:"Poly Art 3D",emoji:"🎨",cat:"puzzle",tags:["Puzzle","Art","3D","Polygon","Low-Poly","Creative","Brain","Casual","Browser","Free","HTML5"],url:"/poly-art-3d/",desc:"Assemble stunning 3D polygon artwork! Rotate and place colorful pieces to complete 30 beautiful low-poly paintings across 6 categories. Free online puzzle game!",isNew:true,status:"live"},
 ];
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
