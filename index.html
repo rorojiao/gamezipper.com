@@ -1570,6 +1570,26 @@ try{if('scrollRestoration' in history){history.scrollRestoration='manual'}var _g
     o.classList.add('show');o.removeAttribute('inert');
     try{sessionStorage.setItem('gz_exit_shown','1')}catch(e){}
   },{passive:true});
+  // UX-OPT: Mobile exit-intent detection (rapid scroll to top = user leaving)
+  // Desktop uses mouseout; mobile needs scroll-based detection
+  (function(){
+    if(shown)return; // respect desktop exit-intent state
+    var scrollStart=null,scrollStartY=0;
+    document.addEventListener('scroll',function(){
+      if(shown)return;
+      var sy=window.scrollY;
+      if(sy>300){scrollStart=Date.now();scrollStartY=sy}
+      else if(scrollStart&&sy<100&&(scrollStartY-sy)>400&&(Date.now()-scrollStart)<800){
+        // User scrolled 400+ px upward in <800ms from 300+ px position — exit intent
+        try{var d=localStorage.getItem('gz_exit_dismissed');if(d&&(Date.now()-parseInt(d))<7*86400000)return}catch(x){}
+        shown=true;populateExitGames();
+        var o=document.getElementById('gz-exit-overlay');
+        o.classList.add('show');o.removeAttribute('inert');
+        try{sessionStorage.setItem('gz_exit_shown','1')}catch(e){}
+        scrollStart=null;
+      }
+    },{passive:true});
+  })();
   document.getElementById('gz-exit-close').addEventListener('click',function(){
     document.getElementById('gz-exit-overlay').classList.remove('show');
     try{localStorage.setItem('gz_exit_dismissed',String(Date.now()))}catch(e){}
