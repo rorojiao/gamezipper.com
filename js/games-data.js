@@ -262,3 +262,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Traffic Escape",emoji:"🚗",cat:"puzzle",tags:["traffic","parking","cars","logic","unblock"],url:"/traffic-escape/",desc:"Clear the road by moving cars in the right order. A traffic puzzle with 50 levels of increasing difficulty.",isNew:true,status:"live"},
