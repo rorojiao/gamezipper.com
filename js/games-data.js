@@ -263,3 +263,5 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Slice Master",emoji:"🔪",cat:"puzzle",tags:["Puzzle","Slice","Cut","Geometry","Physics","Brain","Casual","Browser","Free","HTML5"],url:"/slice-master/",desc:"Draw cutting lines to slice geometric shapes into target pieces. 50 satisfying physics-based cut puzzles across 5 chapters. Precision slicing with star ratings!",isNew:true,status:"live"}
+{name:"Slice Master",emoji:"🔪",cat:"puzzle",tags:["slice","cutting","physics","geometry"],url:"/slice-master/",desc:"Slice geometric shapes into pieces by drawing cutting lines. Physics puzzle game with 50 levels, star ratings and combo scoring.",isNew:true,status:"live"},
