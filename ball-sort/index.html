@@ -187,6 +187,27 @@ canvas#game-canvas{display:block;border-radius:12px;border:2px solid rgba(255,25
 .modal-close{position:absolute;top:14px;right:16px;background:none;border:none;color:#666;font-size:22px;cursor:pointer}
 .modal-close:hover{color:#fff}
 
+/* Score display */
+.score-display{font-size:clamp(12px,3vw,14px);color:#ffd700;font-weight:700;background:rgba(255,215,0,.08);padding:5px 12px;border-radius:8px;border:1px solid rgba(255,215,0,.2)}
+.best-score{font-size:10px;color:#aa8800;font-weight:400}
+
+/* Tutorial overlay */
+#tutorial-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:500;pointer-events:auto}
+#tutorial-overlay.show{display:flex}
+.tutorial-card{background:rgba(15,15,40,.97);backdrop-filter:blur(20px);border:1px solid rgba(255,215,0,.3);border-radius:16px;padding:24px 28px;width:min(360px,90vw);text-align:center}
+.tutorial-card h3{font-size:18px;font-weight:800;color:#ffd700;margin-bottom:10px}
+.tutorial-card p{font-size:14px;color:#ccc;margin-bottom:16px;line-height:1.5}
+.tutorial-card .tutorial-arrow{font-size:28px;animation:tutPulse 1s ease-in-out infinite;display:inline-block}
+@keyframes tutPulse{0%,100%{transform:translateY(0);opacity:1}50%{transform:translateY(8px);opacity:.7}}
+.tutorial-skip{background:none;border:1px solid rgba(255,255,255,.2);color:#888;padding:8px 20px;border-radius:8px;font-family:inherit;font-size:13px;cursor:pointer;margin-top:8px}
+.tutorial-skip:hover{color:#fff;border-color:rgba(255,255,255,.5)}
+.tutorial-step{display:flex;align-items:center;gap:10px;margin:8px 0}
+.tutorial-step-num{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#6bcb77,#4d96ff);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* Extra tube button */
+.ctrl-btn.extra-tube{background:rgba(187,68,255,.12);border-color:rgba(187,68,255,.35);color:#bb44ff}
+.ctrl-btn.extra-tube:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
 /* Ad container */
 #ad-container{position:fixed;bottom:0;left:0;right:0;height:50px;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:11px;color:#555;z-index:50}
 
@@ -237,6 +258,7 @@ canvas#game-canvas{display:block;border-radius:12px;border:2px solid rgba(255,25
     <div id="game-header">
       <div class="game-level-info">Level <span id="current-level-num">1</span></div>
       <div class="move-display">Moves: <span id="move-count">0</span></div>
+      <div class="score-display">Score: <span id="score-display">1000</span><div class="best-score" id="best-score-display"></div></div>
       <div class="hdr-btns">
         <button class="icon-btn" id="btn-home" title="Home">&#x2302;</button>
         <button class="icon-btn" id="btn-settings" title="Settings">&#x2699;</button>
@@ -252,6 +274,9 @@ canvas#game-canvas{display:block;border-radius:12px;border:2px solid rgba(255,25
       </button>
       <button class="ctrl-btn hint-btn" id="btn-hint">
         Hint <span class="hint-count" id="hint-count">3</span>
+      </button>
+      <button class="ctrl-btn extra-tube" id="btn-extra-tube">
+        + Tube
       </button>
       <button class="ctrl-btn restart-btn" id="btn-restart">
         &#x21bb; Restart
@@ -286,11 +311,21 @@ canvas#game-canvas{display:block;border-radius:12px;border:2px solid rgba(255,25
     <div class="stars-display" id="stars-display">&#9733;&#9733;&#9733;</div>
     <p class="move-info" id="complete-moves">Moves: 0</p>
     <p class="par-info" id="complete-par">Par: 0</p>
+    <p class="par-info" id="complete-score" style="color:#ffd700;font-weight:700;font-size:16px"></p>
     <div class="modal-btns">
       <button class="modal-btn home-btn" id="btn-complete-home">Home</button>
       <button class="modal-btn secondary" id="btn-complete-restart">Replay</button>
       <button class="modal-btn primary" id="btn-next-level">Next Level</button>
     </div>
+  </div>
+</div>
+
+<!-- Tutorial Overlay -->
+<div id="tutorial-overlay">
+  <div class="tutorial-card">
+    <h3>How to Play</h3>
+    <div id="tutorial-content"></div>
+    <button class="tutorial-skip" id="btn-tutorial-skip">Got it, start playing!</button>
   </div>
 </div>
 
@@ -492,7 +527,10 @@ var state = {
   anim: null,
   particles: [],
   settings: {music:true, sfx:true},
-  progress: {}
+  progress: {},
+  extraTubeUsed: false,
+  tutorialStep: 0,
+  tutorialDismissed: false
 };
 
 var canvas, ctx;
@@ -717,6 +755,7 @@ function loadProgress(){
       var p = JSON.parse(d);
       state.progress = p.progress || {};
       state.settings = p.settings || {music:true, sfx:true};
+      state.tutorialDismissed = p.tutorialDismissed || false;
       unlockedLevels = state.progress.unlocked || 1;
     }
   } catch(e){}
@@ -725,10 +764,15 @@ function loadProgress(){
 function saveProgress(){
   try {
     state.progress.unlocked = unlockedLevels;
-    state.progress['star_' + state.level] = Math.min(state.progress['star_' + state.level] || 0, calculateStars());
+    state.progress['star_' + state.level] = Math.max(state.progress['star_' + state.level] || 0, calculateStars());
+    var score = calculateScore();
+    var bestKey = 'best_' + state.level;
+    state.progress[bestKey] = Math.max(state.progress[bestKey] || 0, score);
     localStorage.setItem('ballsort_v1', JSON.stringify({
+      version: 1,
       progress: state.progress,
-      settings: state.settings
+      settings: state.settings,
+      tutorialDismissed: state.tutorialDismissed
     }));
   } catch(e){}
 }
@@ -738,6 +782,12 @@ function calculateStars(){
   if(state.moves <= par) return 3;
   if(state.moves <= par + 2) return 2;
   return 1;
+}
+
+function calculateScore(){
+  var par = LEVELS[state.level].p;
+  var score = Math.max(100, 1000 - (state.moves - par) * 20);
+  return score;
 }
 
 function startLevel(idx){
@@ -750,8 +800,10 @@ function startLevel(idx){
   state.phase = 'idle';
   state.anim = null;
   state.particles = [];
+  state.extraTubeUsed = false;
   showScreen('game');
   updateUI();
+  showTutorialIfNeeded();
 }
 
 function restartLevel(){
@@ -843,6 +895,40 @@ function triggerShake(tubeIdx){
   var wrap = document.getElementById('canvas-wrap');
   wrap.classList.add('shake');
   setTimeout(function(){wrap.classList.remove('shake')}, ANIM_SHAKE);
+}
+
+function addExtraTube(){
+  if(state.extraTubeUsed || state.phase !== 'idle') return;
+  state.extraTubeUsed = true;
+  state.tubes.push([]);
+  document.getElementById('btn-extra-tube').disabled = true;
+  playPop();
+  updateUI();
+}
+
+function showTutorialIfNeeded(){
+  if(state.tutorialDismissed) return;
+  if(state.level > 2) return;
+  var overlay = document.getElementById('tutorial-overlay');
+  var content = document.getElementById('tutorial-content');
+  var steps = [
+    {title:'Select a Ball', text:'Tap any tube with colored balls to select the top ball. The ball will lift up with a golden glow.', arrow:'&#x2193;'},
+    {title:'Pour the Ball', text:'Tap another tube to pour the ball. You can pour onto a matching color or into an empty tube.', arrow:'&#x2192;'},
+    {title:'Sort All Colors', text:'Continue sorting until each tube contains only one color. A tube is complete when it has 4 balls of the same color. Use Undo, Hint, or Extra Tube if you get stuck!', arrow:'&#x2728;'}
+  ];
+  var step = steps[state.level] || steps[0];
+  content.innerHTML = '<div class="tutorial-step"><span class="tutorial-step-num">' + (state.level + 1) + '</span><span>' + step.text + '</span></div><div class="tutorial-arrow">' + step.arrow + '</div>';
+  overlay.classList.add('show');
+}
+
+function hideTutorial(){
+  document.getElementById('tutorial-overlay').classList.remove('show');
+}
+
+function dismissTutorialForever(){
+  state.tutorialDismissed = true;
+  hideTutorial();
+  saveProgress();
 }
 
 function triggerComplete(){
@@ -1149,6 +1235,12 @@ function updateUI(){
   document.getElementById('move-count').textContent = state.moves;
   document.getElementById('hint-count').textContent = state.hints;
   document.getElementById('hint-display').textContent = '';
+  var score = calculateScore();
+  document.getElementById('score-display').textContent = score;
+  var bestKey = 'best_' + state.level;
+  var best = state.progress[bestKey] || 0;
+  document.getElementById('best-score-display').textContent = best > 0 ? 'Best: ' + best : '';
+  document.getElementById('btn-extra-tube').disabled = state.extraTubeUsed;
 }
 
 function updateHintDisplay(){
@@ -1162,6 +1254,8 @@ function showCompleteModal(stars){
   document.getElementById('stars-display').innerHTML = starStr;
   document.getElementById('complete-moves').textContent = 'Moves: ' + state.moves;
   document.getElementById('complete-par').textContent = 'Par: ' + LEVELS[state.level].p;
+  var score = calculateScore();
+  document.getElementById('complete-score').textContent = 'Score: ' + score;
   modal.classList.add('show');
 
   var btnNext = document.getElementById('btn-next-level');
@@ -1359,6 +1453,18 @@ function setupUI(){
   document.getElementById('btn-restart').onclick = function(){
     restartLevel();
   };
+
+  document.getElementById('btn-extra-tube').onclick = function(){
+    addExtraTube();
+  };
+
+  document.getElementById('btn-tutorial-skip').onclick = function(){
+    dismissTutorialForever();
+  };
+
+  document.getElementById('tutorial-overlay').addEventListener('click', function(e){
+    if(e.target === this) dismissTutorialForever();
+  });
 
   document.getElementById('btn-complete-home').onclick = function(){
     hideCompleteModal();

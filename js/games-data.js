@@ -262,3 +262,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Ball Sort Puzzle",emoji:"🎯",cat:"puzzle",tags:["sorting","balls","tubes","logic"],url:"/ball-sort/",desc:"Sort colorful balls into tubes in this addictive puzzle game. Tap to pour, match all colors to win!",isNew:true,status:"live"},
