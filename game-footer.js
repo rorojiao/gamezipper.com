@@ -266,7 +266,8 @@
 {n:'Liquid Sort',e:'🧪',u:'/liquid-sort/',c:'puzzle'},
 {n:"Factory Balls",e:"🎨",u:"/factory-balls/",c:"puzzle"},
 {n:"4 Pics 1 Word",e:"🖼️",u:"/picture-word-guessing/",c:"puzzle"},
-{n:"Antistress",e:"🧸",u:"/antistress/",c:"casual"},{n:"Monkey Mart",e:"🐒",u:"/monkey-mart/",c:"casual"},{n:"Gravity Drop",e:"🔴",u:"/gravity-drop/",c:"puzzle"},{n:'Number Nexus',e:'🔢',u:'/number-nexus/',c:'puzzle'},{n:'Poly Art 3D',e:'🎨',u:'/poly-art-3d/',c:'puzzle'},{n:"Baba Is You",e:"🧩",u:"/baba-is-you/",c:"puzzle"},{n:"Nut Sort",e:"🔩",u:"/nut-sort/",c:"puzzle"}
+{n:"Antistress",e:"🧸",u:"/antistress/",c:"casual"},{n:"Monkey Mart",e:"🐒",u:"/monkey-mart/",c:"casual"},{n:"Gravity Drop",e:"🔴",u:"/gravity-drop/",c:"puzzle"},{n:'Number Nexus',e:'🔢',u:'/number-nexus/',c:'puzzle'},{n:'Poly Art 3D',e:'🎨',u:'/poly-art-3d/',c:'puzzle'},{n:"Baba Is You",e:"🧩",u:"/baba-is-you/",c:"puzzle"},{n:"Nut Sort",e:"🔩",u:"/nut-sort/",c:"puzzle"},
+{n:"Pop Them",e:"💥",u:"/pop-them/",c:"puzzle"}
 ]; }
    }
    function getDateSeed() {
