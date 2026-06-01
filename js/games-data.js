@@ -235,7 +235,8 @@ const GAMES = [
   {name:"Liquid Sort",emoji:"🧪",cat:"puzzle",tags:["sort","water","color","logic","brain"],url:"/liquid-sort/",desc:"Sort colored liquids into matching tubes in this addictive water sort puzzle game with 50 levels, daily challenges and achievements",isNew:true,status:"live"},
   {name:"Gravity Drop",emoji:"🔴",cat:"puzzle",tags:["physics","block","puzzle","gravity","ball","drop","brain","casual","browser game"],url:"/gravity-drop/",desc:"Remove blocks to guide the ball to the goal in this physics puzzle! 30 levels with bouncy platforms, ice slides, breakable blocks, and chain reactions. Play free online.",isNew:true,status:"live"},
   {name:"Number Nexus",emoji:"🔗",cat:"puzzle",tags:["Puzzle","Number","Path","Logic","Grid","Connect","Brain","Casual"],url:"/number-nexus/",desc:"Play Number Nexus Online Free! Fill the grid by connecting numbers in sequence. 50 levels across 5 chapters from 4x4 to 8x8 grids with daily challenges. A satisfying number path puzzle!",isNew:true,status:"live"},
-  {name:"Nut Sort",emoji:"🔩",cat:"puzzle",tags:["sort","city","logic","brain"],url:"/nut-sort/",desc:"Sort colorful nuts onto matching bolts and build your dream city in this addictive puzzle game",isNew:true,status:"live"}
+  {name:"Nut Sort",emoji:"🔩",cat:"puzzle",tags:["sort","city","logic","brain"],url:"/nut-sort/",desc:"Sort colorful nuts onto matching bolts and build your dream city in this addictive puzzle game",isNew:true,status:"live"},
+  {name:"Merge Sweets",emoji:"🧁",cat:"puzzle",tags:["merge","bakery","cake","cookie","puzzle","drag","casual","browser game"],url:"/merge-sweets/",desc:"Play Merge Sweets free online! Drag and merge matching bakery treats to create delicious cakes. 30 levels across 6 chapters with 12 tiers of sweet evolution. No download needed.",isNew:true,status:"live"}
 ];
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
