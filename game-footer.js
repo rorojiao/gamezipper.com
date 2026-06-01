@@ -211,7 +211,8 @@
       {n:'Threes',e:'3️⃣',u:'/threes/',c:'puzzle'},
       {n:'Paper Fold Puzzle',e:'📄',u:'/paper-fold/',c:'puzzle'},
       {n:'Eggy Car',e:'🥚',u:'/eggy-car/',c:'driving'},
-      {n:'Unpacking',e:'📦',u:'/unpacking/',c:'puzzle'}
+      {n:'Unpacking',e:'📦',u:'/unpacking/',c:'puzzle'},
+      {n:'Merge Sweets',e:'🍰',u:'/merge-sweets/',c:'puzzle'}
    ];
 
   var cur = location.pathname;
