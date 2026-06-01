@@ -52,6 +52,8 @@
   });
 
   var st = { fC: 0, mS: 0, en: 0, gL: false, gS: false, gE: false };
+  var milestones = { m25: false, m50: false, m75: false, m100: false };
+  var timeMilestones = { t30: false, t60: false };
 
   document.addEventListener('click', function() {
     if (!st.fC) {
@@ -68,12 +70,25 @@
       var sM = Math.max(document.body.scrollHeight - window.innerHeight, 0);
       var dp = sM > 0 ? Math.round((window.scrollY / sM) * 100) : 0;
       if (dp > st.mS) { st.mS = dp; ps('u_scroll', { u: P, d: dp }); }
+      // Scroll depth milestone tracking (25/50/75/100%)
+      if (dp >= 25 && !milestones.m25) { milestones.m25 = true; ps('scroll_milestone', { u: P, m: 25 }); }
+      if (dp >= 50 && !milestones.m50) { milestones.m50 = true; ps('scroll_milestone', { u: P, m: 50 }); }
+      if (dp >= 75 && !milestones.m75) { milestones.m75 = true; ps('scroll_milestone', { u: P, m: 75 }); }
+      if (dp >= 95 && !milestones.m100) { milestones.m100 = true; ps('scroll_milestone', { u: P, m: 100 }); }
       tk = false;
     });
   }
   window.addEventListener('scroll', updS, { passive: true });
 
   var t0 = Date.now();
+
+  // Time-based engagement milestones (30s and 60s)
+  setTimeout(function() {
+    if (!timeMilestones.t30) { timeMilestones.t30 = true; ps('engaged_time', { u: P, s: 30 }); }
+  }, 30000);
+  setTimeout(function() {
+    if (!timeMilestones.t60) { timeMilestones.t60 = true; ps('engaged_time', { u: P, s: 60 }); }
+  }, 60000);
   ps('u_enter', { u: P });
 
   window.addEventListener('visibilitychange', function() {
