@@ -241,6 +241,7 @@ const GAMES = [
   {name:"Pop Them",emoji:"💥",cat:"puzzle",tags:["Puzzle","Match","Pop","Chain","Reaction","Orb","Casual","Brain","Browser","Free","HTML5"],url:"/pop-them/",desc:"Tap groups of matching orbs to create satisfying chain reactions! 30 levels across 5 chapters, power-ups, frozen blocks. Play free online!",isNew:true,status:"live"},
   {name:"Ball Sort",emoji:"🎱",cat:"puzzle",tags:["Puzzle","Sort","Ball","Color","Tube","Logic","Brain","Casual","Browser","Free","HTML5"],url:"/ball-sort/",desc:"Sort colored balls into matching tubes in this addictive ball sort puzzle! 50 levels from easy to expert with neon visuals and sound effects. Play free online!",isNew:true,status:"live"},
   {name:"Traffic Escape",emoji:"🚗",cat:"puzzle",tags:["traffic","parking","cars","logic","unblock"],url:"/traffic-escape/",desc:"Clear the road by moving cars in the right order. A traffic puzzle with 50 levels of increasing difficulty.",isNew:true,status:"live"},
+  {name:"Slice Master",emoji:"🔪",cat:"puzzle",tags:["Puzzle","Slice","Cut","Geometry","Physics","Brain","Casual","Browser","Free","HTML5"],url:"/slice-master/",desc:"Draw cutting lines to slice geometric shapes into target pieces. 50 satisfying physics-based cut puzzles across 5 chapters. Precision slicing with star ratings!",isNew:true,status:"live"},
 ];
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
@@ -263,5 +264,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Slice Master",emoji:"🔪",cat:"puzzle",tags:["Puzzle","Slice","Cut","Geometry","Physics","Brain","Casual","Browser","Free","HTML5"],url:"/slice-master/",desc:"Draw cutting lines to slice geometric shapes into target pieces. 50 satisfying physics-based cut puzzles across 5 chapters. Precision slicing with star ratings!",isNew:true,status:"live"}
-{name:"Slice Master",emoji:"🔪",cat:"puzzle",tags:["slice","cutting","physics","geometry"],url:"/slice-master/",desc:"Slice geometric shapes into pieces by drawing cutting lines. Physics puzzle game with 50 levels, star ratings and combo scoring.",isNew:true,status:"live"},
