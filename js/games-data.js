@@ -239,6 +239,7 @@ const GAMES = [
   {name:"Merge Sweets",emoji:"🧁",cat:"puzzle",tags:["merge","bakery","puzzle","casual"],url:"/merge-sweets/",desc:"Tap bakery stations to generate ingredients, merge matching treats, and fulfill customer orders in this delicious merge-2 puzzle game with 25 levels!",isNew:true,status:"live"},
   {name:"Poly Art 3D",emoji:"🎨",cat:"puzzle",tags:["Puzzle","Art","3D","Polygon","Low-Poly","Creative","Brain","Casual","Browser","Free","HTML5"],url:"/poly-art-3d/",desc:"Assemble stunning 3D polygon artwork! Rotate and place colorful pieces to complete 30 beautiful low-poly paintings across 6 categories. Free online puzzle game!",isNew:true,status:"live"},
   {name:"Pop Them",emoji:"💥",cat:"puzzle",tags:["Puzzle","Match","Pop","Chain","Reaction","Orb","Casual","Brain","Browser","Free","HTML5"],url:"/pop-them/",desc:"Tap groups of matching orbs to create satisfying chain reactions! 30 levels across 5 chapters, power-ups, frozen blocks. Play free online!",isNew:true,status:"live"},
+  {name:"Ball Sort",emoji:"🎱",cat:"puzzle",tags:["Puzzle","Sort","Ball","Color","Tube","Logic","Brain","Casual","Browser","Free","HTML5"],url:"/ball-sort/",desc:"Sort colored balls into matching tubes in this addictive ball sort puzzle! 50 levels from easy to expert with neon visuals and sound effects. Play free online!",isNew:true,status:"live"},
 ];
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
