@@ -1,31 +1,37 @@
 /**
- * GameZipper Ad Manager v4 — Poki-Style Adaptive Ad System
+ * GameZipper Ad Manager v5 — Poki-Style Adaptive Ad System
  * 
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ * 
+ * v5 Changes (Poki 对标优化):
+ *   - Commercial Break 视觉升级: 毛玻璃 + 品牌文案 + 进度条
+ *   - Rewarded Break 视觉升级: 精致卡片设计
+ *   - 频率控制调优: 45s间隔、20次/30分、60次/天
+ *   - 新增 Pre-roll 支持: 15s 无交互后触发
+ *   - 首次广告延迟 45s (新用户友好)
  * 
  * KEY PRINCIPLE (from Poki SDK docs):
  *   "Call commercialBreak() as often as possible at natural break points.
  *    Not every call will trigger an ad — the system decides when the user is ready."
  * 
  * Ad Triggers (Poki-model — zero game code dependency):
- *   1. Page Load Interstitial — Vignette, 3s skip, auto-dismiss 6s
- *   2. Commercial Break — Called at EVERY natural break point:
+ *   1. Commercial Break — Called at EVERY natural break point:
  *      - Game over (detected via DOM overlay + Canvas freeze)
  *      - Level complete (detected via DOM changes)
  *      - Game restart (detected via user interaction pattern)
  *      - Page navigation via game-footer links
+ *   2. Pre-roll — Game page load, 15s 无交互后触发
  *   3. Homepage Banner — 728x90/320x50, below nav
  *   4. Below-Game Container — Auto-fill after 4s
  *   5. Rewarded Ad — GZAds.rewardedBreak() for opt-in video
  * 
  * Smart Frequency Control (Poki-model):
  *   - Frontend calls ad functions often → System decides whether to show
- *   - Minimum 45s between ANY two ad impressions (configurable)
+ *   - Minimum 45s between ANY two ad impressions
  *   - Max 20 ads per 30-min rolling session
  *   - Max 60 ads per 24h rolling window
- *   - First visit: gentler (60s first ad, then 45s)
- *   - Returning visit: normal timing
+ *   - First visit: 45s first ad delay
  *   - Cross-tab sync via BroadcastChannel
  * 
  * Game Event Detection (zero-dependency):
@@ -54,28 +60,30 @@
     AD_PROVIDER: 'https://a.magsrv.com/ad-provider.js',
     // Preconnect for faster ad loading
     PRECONNECT: ['https://a.magsrv.com', 'https://static.magsrv.com'],
+    // 频率控制 — 对标 Poki 克制策略
     FREQUENCY: {
-      minBetweenAds: 30 * 1000,        // 30s minimum between any two ads (optimized)
-      firstAdDelay: 30 * 1000,          // 30s before first ad (optimized from 60s)
+      minBetweenAds: 45 * 1000,        // 45s minimum between any two ads (对标 Poki)
+      firstAdDelay: 45 * 1000,          // 45s before first ad (新用户友好)
       sessionWindowMs: 30 * 60 * 1000,  // 30-min rolling window
-      sessionMaxAds: 30,                // max 30 ads per 30-min window (optimized from 20)
+      sessionMaxAds: 20,                // max 20 ads per 30-min window (对标 Poki 克制)
       dailyWindowMs: 24 * 60 * 60 * 1000, // 24h rolling window
-      dailyMaxAds: 100,                 // max 100 ads per day (optimized from 60)
-      homepageBannerCooldown: 10 * 60 * 1000, // 10 min between homepage banners (optimized from 20)
-      containerAdCooldown: 3 * 60 * 1000,   // 3 min between container ads (optimized from 5)
+      dailyMaxAds: 60,                  // max 60 ads per day (对标 Poki 克制)
+      homepageBannerCooldown: 10 * 60 * 1000, // 10 min between homepage banners
+      containerAdCooldown: 3 * 60 * 1000,   // 3 min between container ads
     },
     TIMING: {
       homepageBannerDelay: 1500,
-      interstitialSkipAfter: 3000,
-      interstitialMaxDuration: 6000,
+      commercialBreakSkipAfter: 5000,   // 5s skip countdown (Poki-style)
+      commercialBreakMaxDuration: 8000, // 8s auto-dismiss
       containerAdDelay: 3000,
       adLoadTimeout: 5000,
-      commercialBreakCooldown: 30 * 1000, // same as minBetweenAds
+      commercialBreakCooldown: 45 * 1000, // same as minBetweenAds
       gameOverDetectionDelay: 1500,      // wait 1.5s after overlay appears
+      prerollDelay: 15 * 1000,           // 15s 无交互后触发 pre-roll
     },
-    STORAGE_PREFIX: 'gz4_',
-    BC_CHANNEL: 'gz4-sync',
-    VERSION: '4.0',
+    STORAGE_PREFIX: 'gz5_',
+    BC_CHANNEL: 'gz5-sync',
+    VERSION: '5.0',
   };
 
   // ==================== STATE ====================
@@ -96,6 +104,8 @@
     canvasFrozenSince: 0,
     overlayDetected: false,
     pendingCommercialBreak: false,
+    prerollTriggered: false,   // v5: pre-roll 是否已触发
+    firstInteraction: 0,       // v5: 首次用户交互时间
   };
 
   // ==================== UTILITIES ====================
@@ -132,7 +142,7 @@
     });
     if (sessionAds.length >= CONFIG.FREQUENCY.sessionMaxAds) return false;
     
-    // Check minimum between ads
+    // Check minimum between ads (first 2 ads use firstAdDelay, rest use minBetweenAds)
     if (state.adTimestamps.length > 0) {
       var lastAd = Math.max.apply(null, state.adTimestamps);
       var minGap = state.adTimestamps.length <= 2 ? CONFIG.FREQUENCY.firstAdDelay : CONFIG.FREQUENCY.minBetweenAds;
@@ -262,7 +272,7 @@
       s.src = CONFIG.AD_PROVIDER + '?zone=' + String(zoneId);
       s.async = true;
       s.setAttribute('data-zone', String(zoneId));
-      s.setAttribute('data-cf-beacon', 'gz4_' + zoneId + '_' + Date.now());
+      s.setAttribute('data-cf-beacon', 'gz5_' + zoneId + '_' + Date.now());
       s.setAttribute('data-cf-async', 'false');
       s.onload = function() { clearTimeout(timeout); resolve(true); };
       s.onerror = function() { clearTimeout(timeout); state.adBlockDetected = true; reject(new Error('load_err')); };
@@ -275,8 +285,8 @@
     });
   }
 
-  // ==================== COMMERCIAL BREAK (Poki-model core) ====================
-  // "Call this as often as possible. Not every call triggers an ad."
+  // ==================== COMMERCIAL BREAK (Poki-model core, v5 视觉升级) ====================
+  // 对标 Poki: 毛玻璃覆盖层 + 品牌文案 + 进度条 + 倒计时
   function commercialBreak() {
     return new Promise(function(resolve) {
       if (!canShowAd('commercial_break')) {
@@ -284,31 +294,89 @@
         return;
       }
 
-      // Create skip overlay
+      // 创建 Poki-style 毛玻璃覆盖层
       var overlay = document.createElement('div');
       overlay.id = 'gz-cb-overlay';
-      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:16px;background:rgba(0,0,0,0.6);backdrop-filter:blur(2px);transition:opacity 0.3s;';
+      overlay.style.cssText = [
+        'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999',
+        'display:flex;flex-direction:column;align-items:center;justify-content:center',
+        'background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)',
+        'transition:opacity 0.4s ease;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif',
+      ].join(';');
 
+      // 品牌区域 — 顶部 "Game Break" + GameZipper
+      var brandDiv = document.createElement('div');
+      brandDiv.style.cssText = 'position:absolute;top:24px;left:0;right:0;text-align:center;';
+      var brandLabel = document.createElement('div');
+      brandLabel.style.cssText = 'font-size:11px;font-weight:500;color:#5D6B84;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;';
+      brandLabel.textContent = 'GAME BREAK';
+      var brandName = document.createElement('div');
+      brandName.style.cssText = 'font-size:14px;font-weight:600;color:#4F8EFF;letter-spacing:0.5px;';
+      brandName.textContent = '🎮 GameZipper';
+      brandDiv.appendChild(brandLabel);
+      brandDiv.appendChild(brandName);
+      overlay.appendChild(brandDiv);
+
+      // 中央文案 — 对标 Poki "We'll be back after this short break"
+      var centerDiv = document.createElement('div');
+      centerDiv.style.cssText = 'text-align:center;margin-bottom:24px;';
+      var msgLine1 = document.createElement('div');
+      msgLine1.style.cssText = 'font-size:16px;font-weight:700;color:#fff;margin-bottom:8px;';
+      msgLine1.textContent = "We'll be right back after this short break";
+      var msgLine2 = document.createElement('div');
+      msgLine2.id = 'gz-cb-status';
+      msgLine2.style.cssText = 'font-size:12px;color:#5D6B84;';
+      msgLine2.textContent = 'Preparing...';
+      centerDiv.appendChild(msgLine1);
+      centerDiv.appendChild(msgLine2);
+      overlay.appendChild(centerDiv);
+
+      // 底部进度条 (Poki-style: 蓝色渐变 #4F8EFF → #00D4FF, 5px 高度)
+      var progressContainer = document.createElement('div');
+      progressContainer.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:5px;background:rgba(255,255,255,0.08);';
+      var progressBar = document.createElement('div');
+      progressBar.style.cssText = 'height:100%;width:0%;background:linear-gradient(90deg,#4F8EFF,#00D4FF);border-radius:0 3px 3px 0;transition:width 0.3s linear;';
+      progressContainer.appendChild(progressBar);
+      overlay.appendChild(progressContainer);
+
+      // 跳过按钮 (Poki-style: "Continue in Xs..." 而非 "Skip in Xs")
       var skipBtn = document.createElement('button');
-      skipBtn.style.cssText = 'display:none;padding:8px 24px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:20px;font-size:13px;cursor:pointer;backdrop-filter:blur(4px);';
-      
-      var remaining = Math.ceil(CONFIG.TIMING.interstitialSkipAfter / 1000);
-      skipBtn.textContent = 'Skip in ' + remaining + 's';
-
+      var skipSeconds = Math.ceil(CONFIG.TIMING.commercialBreakSkipAfter / 1000);
+      skipBtn.style.cssText = [
+        'position:absolute;bottom:20px;right:20px',
+        'padding:8px 20px;background:rgba(255,255,255,0.12);color:#fff',
+        'border:1px solid rgba(255,255,255,0.2);border-radius:20px;font-size:13px',
+        'cursor:pointer;backdrop-filter:blur(4px);display:none;',
+      ].join(';');
+      skipBtn.textContent = 'Continue in ' + skipSeconds + 's...';
       overlay.appendChild(skipBtn);
+
       document.body.appendChild(overlay);
 
       // Mute audio during ad
       muteAllAudio();
 
-      // Countdown timer
-      var timer = setInterval(function() {
+      // 进度条动画 (总时长 = commercialBreakMaxDuration)
+      var progressStart = now();
+      var progressInterval = setInterval(function() {
+        var elapsed = now() - progressStart;
+        var pct = Math.min(100, (elapsed / CONFIG.TIMING.commercialBreakMaxDuration) * 100);
+        progressBar.style.width = pct + '%';
+        if (pct >= 100) clearInterval(progressInterval);
+      }, 100);
+
+      // 倒计时
+      var remaining = skipSeconds;
+      var countdownTimer = setInterval(function() {
         remaining--;
         if (remaining > 0) {
-          skipBtn.textContent = 'Skip in ' + remaining + 's';
+          skipBtn.textContent = 'Continue in ' + remaining + 's...';
+          // 更新状态文字
+          var statusEl = document.getElementById('gz-cb-status');
+          if (statusEl) statusEl.textContent = 'Ad playing...';
         } else {
-          clearInterval(timer);
-          skipBtn.textContent = '✕ Skip Ad';
+          clearInterval(countdownTimer);
+          skipBtn.textContent = '✕ Continue';
           skipBtn.style.display = 'block';
           skipBtn.onclick = function() {
             finishAd();
@@ -317,15 +385,20 @@
       }, 1000);
 
       // Load ad
-      loadZone(CONFIG.ZONES.vignette).catch(function() {});
+      loadZone(CONFIG.ZONES.vignette).then(function() {
+        // 广告加载成功，更新状态
+        var statusEl = document.getElementById('gz-cb-status');
+        if (statusEl) statusEl.textContent = 'Ad playing...';
+      }).catch(function() {});
 
       // Auto-complete after max duration
       var maxTimer = setTimeout(function() {
         finishAd();
-      }, CONFIG.TIMING.interstitialMaxDuration);
+      }, CONFIG.TIMING.commercialBreakMaxDuration);
 
       function finishAd() {
-        clearInterval(timer);
+        clearInterval(progressInterval);
+        clearInterval(countdownTimer);
         clearTimeout(maxTimer);
         if (overlay.parentNode) overlay.remove();
         unmuteAllAudio();
@@ -335,37 +408,71 @@
     });
   }
 
-  // ==================== REWARDED BREAK ====================
+  // ==================== REWARDED BREAK (v5 视觉升级) ====================
+  // 对标 Poki: 精致卡片 + 奖励图标动画
   function rewardedBreak() {
     return new Promise(function(resolve) {
       var usedKey = 'rewarded_' + state.gameSlug;
       if (storageGet(usedKey)) { resolve(false); return; }
       if (!canShowAd('rewarded')) { resolve(false); return; }
 
-      // Create UI
+      // 创建精致毛玻璃背景
       var overlay = document.createElement('div');
       overlay.id = 'gz-rewarded-overlay';
-      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99998;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;';
+      overlay.style.cssText = [
+        'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99998',
+        'background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)',
+        'display:flex;align-items:center;justify-content:center',
+        'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif',
+      ].join(';');
 
+      // 精致卡片 — 圆角渐变 + 奖励图标
       var box = document.createElement('div');
-      box.style.cssText = 'background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(255,215,0,0.3);border-radius:16px;padding:28px 24px;text-align:center;max-width:340px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
+      box.style.cssText = [
+        'background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)',
+        'border:1px solid rgba(79,142,255,0.25);border-radius:20px',
+        'padding:32px 28px;text-align:center;max-width:360px;width:90%',
+        'box-shadow:0 12px 40px rgba(0,0,0,0.5),0 0 60px rgba(79,142,255,0.08);',
+      ].join(';');
+
+      // 奖励图标 (带动画)
+      var iconDiv = document.createElement('div');
+      iconDiv.style.cssText = 'font-size:40px;margin-bottom:16px;animation:gz-reward-bounce 1.5s ease infinite;';
+      iconDiv.textContent = '🎁';
+      // 注入动画 keyframes
+      if (!document.getElementById('gz-reward-keyframes')) {
+        var styleEl = document.createElement('style');
+        styleEl.id = 'gz-reward-keyframes';
+        styleEl.textContent = '@keyframes gz-reward-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}';
+        document.head.appendChild(styleEl);
+      }
 
       var title = document.createElement('h3');
-      title.style.cssText = 'color:#FFD700;margin:0 0 10px;font-size:17px;';
-      title.textContent = '🎁 Watch Ad for Reward';
+      title.style.cssText = 'color:#4F8EFF;margin:0 0 10px;font-size:18px;font-weight:700;';
+      title.textContent = '🎁 Watch a Quick Ad';
 
       var desc = document.createElement('p');
-      desc.style.cssText = 'color:#aaa;margin:0 0 20px;font-size:13px;line-height:1.4;';
-      desc.textContent = 'Watch a short ad to earn your reward!';
+      desc.style.cssText = 'color:#8899AA;margin:0 0 24px;font-size:13px;line-height:1.5;';
+      desc.textContent = 'Watch a quick ad to earn your reward!';
 
       var watchBtn = document.createElement('button');
-      watchBtn.style.cssText = 'padding:12px 28px;background:linear-gradient(135deg,#00e5ff,#0088ff);color:#fff;border:none;border-radius:10px;font-size:15px;cursor:pointer;font-weight:bold;width:100%;';
+      watchBtn.style.cssText = [
+        'padding:12px 28px;background:linear-gradient(135deg,#4F8EFF,#00D4FF)',
+        'color:#fff;border:none;border-radius:12px;font-size:15px',
+        'cursor:pointer;font-weight:700;width:100%;transition:transform 0.15s,box-shadow 0.15s',
+        'box-shadow:0 4px 16px rgba(79,142,255,0.3);',
+      ].join(';');
       watchBtn.textContent = '▶ Watch Ad';
+      watchBtn.onmouseover = function() { watchBtn.style.transform = 'scale(1.02)'; };
+      watchBtn.onmouseout = function() { watchBtn.style.transform = 'scale(1)'; };
 
       var skipBtn = document.createElement('button');
-      skipBtn.style.cssText = 'margin-top:10px;padding:8px 20px;background:transparent;color:#666;border:1px solid #444;border-radius:8px;font-size:13px;cursor:pointer;width:100%;';
-      skipBtn.textContent = 'No Thanks';
+      skipBtn.style.cssText = 'margin-top:12px;padding:8px 20px;background:transparent;color:#5D6B84;border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:13px;cursor:pointer;width:100%;transition:color 0.15s;';
+      skipBtn.textContent = 'No thanks, skip';
+      skipBtn.onmouseover = function() { skipBtn.style.color = '#8899AA'; };
+      skipBtn.onmouseout = function() { skipBtn.style.color = '#5D6B84'; };
 
+      box.appendChild(iconDiv);
       box.appendChild(title);
       box.appendChild(desc);
       box.appendChild(watchBtn);
@@ -391,6 +498,38 @@
         });
       };
     });
+  }
+
+  // ==================== PRE-ROLL (v5 新增) ====================
+  // 游戏页面首次加载，15s 无交互后触发一次 commercialBreak
+  function initPreroll() {
+    if (!state.isGamePage) return;
+    if (state.prerollTriggered) return;
+
+    var prerollTimer = null;
+    var interacted = false;
+
+    function triggerPreroll() {
+      if (state.prerollTriggered) return;
+      if (interacted) return;
+      state.prerollTriggered = true;
+      commercialBreak();
+    }
+
+    function onFirstInteraction() {
+      interacted = true;
+      state.firstInteraction = now();
+      // 用户开始交互，取消 pre-roll
+      if (prerollTimer) clearTimeout(prerollTimer);
+    }
+
+    // 监听首次交互
+    document.addEventListener('click', onFirstInteraction, { once: true, passive: true });
+    document.addEventListener('keydown', onFirstInteraction, { once: true, passive: true });
+    document.addEventListener('touchstart', onFirstInteraction, { once: true, passive: true });
+
+    // 15s 后如果还没交互，触发 pre-roll
+    prerollTimer = setTimeout(triggerPreroll, CONFIG.TIMING.prerollDelay);
   }
 
   // ==================== AUDIO MANAGEMENT ====================
@@ -739,6 +878,9 @@
       
       // Auto-fill container ad
       autoFillContainer();
+
+      // v5: Pre-roll 支持 — 15s 无交互后触发
+      initPreroll();
     }
   }
 
