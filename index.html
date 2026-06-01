@@ -2559,21 +2559,26 @@ try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){if(e.
 })();
 </script>
 
-<!-- UX-OPT: Global JS Error Boundary — only shows toast when GAMES data truly failed to load -->
+<!-- UX-OPT: Global JS Error Boundary — delayed toast only if GAMES truly failed to load -->
 <script>
 (function(){
+  var _pendingToast=null;
   function reportErr(type,msg,src,lineno,colno,err){
-    // Always beacon for analytics, but only from own domain
-    if(src&&src.indexOf(location.origin)===0||src&&src.indexOf('/js/')!==-1){
+    // Beacon analytics only for own-domain scripts
+    if(src&&(src.indexOf(location.origin)===0||src.indexOf('/js/')!==-1)){
       try{navigator.sendBeacon('/beacon/webvitals',JSON.stringify({m:'jsErr',v:type,u:location.pathname,d:String(msg||'').substring(0,200),s:String(src||'').substring(0,100),l:lineno||0}))}catch(x){}
     }
-    // Toast: ONLY show if GAMES array failed to load (undefined or empty)
-    // Third-party script errors (ads, analytics, CDNs) should never trigger the toast
-    if(typeof GAMES!=='undefined'&&GAMES.length>0)return;
-    if(!msg||!msg.trim())return;
-    // Ignore third-party script errors entirely
-    if(src&&src.indexOf(location.origin)!==0&&src.indexOf('/js/')===-1)return;
-    showRecoveryToast();
+    // Toast: delay 3s then check if GAMES actually failed — avoids false positives from third-party scripts
+    // and handles deferred games-data.js loading order
+    if(!_pendingToast){
+      _pendingToast=setTimeout(function(){
+        _pendingToast=null;
+        if(typeof GAMES!=='undefined'&&GAMES.length>0)return;
+        var grid=document.getElementById('games');
+        if(grid&&grid.classList.contains('loaded'))return;
+        showRecoveryToast();
+      },3000);
+    }
   }
   function showRecoveryToast(){
     var existing=document.getElementById('gz-error-toast');
