@@ -234,7 +234,8 @@ const GAMES = [
   {name:"Eggy Car",emoji:"🥚",cat:"arcade",tags:["physics","driving","egg","balance","casual","browser game"],url:"/eggy-car/",desc:"Play Eggy Car free online! Drive carefully over hills to keep your egg safe. Collect coins, unlock vehicles and beat your best distance!",isNew:true,status:"live"},
   {name:"Liquid Sort",emoji:"🧪",cat:"puzzle",tags:["sort","water","color","logic","brain"],url:"/liquid-sort/",desc:"Sort colored liquids into matching tubes in this addictive water sort puzzle game with 50 levels, daily challenges and achievements",isNew:true,status:"live"},
   {name:"Gravity Drop",emoji:"🔴",cat:"puzzle",tags:["physics","block","puzzle","gravity","ball","drop","brain","casual","browser game"],url:"/gravity-drop/",desc:"Remove blocks to guide the ball to the goal in this physics puzzle! 30 levels with bouncy platforms, ice slides, breakable blocks, and chain reactions. Play free online.",isNew:true,status:"live"},
-  {name:"Number Nexus",emoji:"🔗",cat:"puzzle",tags:["Puzzle","Number","Path","Logic","Grid","Connect","Brain","Casual"],url:"/number-nexus/",desc:"Play Number Nexus Online Free! Fill the grid by connecting numbers in sequence. 50 levels across 5 chapters from 4x4 to 8x8 grids with daily challenges. A satisfying number path puzzle!",isNew:true,status:"live"}
+  {name:"Number Nexus",emoji:"🔗",cat:"puzzle",tags:["Puzzle","Number","Path","Logic","Grid","Connect","Brain","Casual"],url:"/number-nexus/",desc:"Play Number Nexus Online Free! Fill the grid by connecting numbers in sequence. 50 levels across 5 chapters from 4x4 to 8x8 grids with daily challenges. A satisfying number path puzzle!",isNew:true,status:"live"},
+  {name:"Nut Sort",emoji:"🔩",cat:"puzzle",tags:["sort","city","logic","brain"],url:"/nut-sort/",desc:"Sort colorful nuts onto matching bolts and build your dream city in this addictive puzzle game",isNew:true,status:"live"}
 ];
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
@@ -257,4 +258,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Nut Sort",emoji:"🔩",cat:"puzzle",tags:["sort","city","logic","brain"],url:"/nut-sort/",desc:"Sort colorful nuts onto matching bolts and build your dream city in this addictive puzzle game",isNew:true,status:"live"},
