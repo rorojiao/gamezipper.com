@@ -165,12 +165,10 @@ def main():
         if last_section_pattern in diff_content:
             new_sections = """,
   { start: 8001, label: "💀 DEATH INCARNATE", color: "#330033" },
-  { start: 8151, label: "🌑 ETERNAL DARK", color: "#0d0d0d" },
-  { start: 8301, label: "🌀 CHAOS SUPREME", color: "#ff0044" },
-  { start: 8451, label: "💎 DIAMOND APEX", color: "#b9f2ff" },
+  { start: 8201, label: "🌑 ETERNAL DARK", color: "#0d0d0d" },
+  { start: 8401, label: "🌀 CHAOS SUPREME", color: "#ff0044" },
   { start: 8601, label: "⚡ THUNDER GOD", color: "#ffff00" },
-  { start: 8751, label: "🔥 RAINBOW END", color: "#ff3366" },
-  { start: 8901, label: "👑 ABSOLUTE ZERO", color: "#00cccc" }"""
+  { start: 8801, label: "👑 ABSOLUTE ZERO", color: "#00cccc" }"""
             diff_content = diff_content.replace(
                 last_section_pattern,
                 last_section_pattern + new_sections
@@ -186,12 +184,10 @@ def main():
                 last_entry = last_entry_match.group(1)
                 new_sections = """,
   { start: 8001, label: "💀 DEATH INCARNATE", color: "#330033" },
-  { start: 8151, label: "🌑 ETERNAL DARK", color: "#0d0d0d" },
-  { start: 8301, label: "🌀 CHAOS SUPREME", color: "#ff0044" },
-  { start: 8451, label: "💎 DIAMOND APEX", color: "#b9f2ff" },
+  { start: 8201, label: "🌑 ETERNAL DARK", color: "#0d0d0d" },
+  { start: 8401, label: "🌀 CHAOS SUPREME", color: "#ff0044" },
   { start: 8601, label: "⚡ THUNDER GOD", color: "#ffff00" },
-  { start: 8751, label: "🔥 RAINBOW END", color: "#ff3366" },
-  { start: 8901, label: "👑 ABSOLUTE ZERO", color: "#00cccc" }"""
+  { start: 8801, label: "👑 ABSOLUTE ZERO", color: "#00cccc" }"""
                 diff_content = diff_content.replace(
                     last_entry,
                     last_entry + new_sections
