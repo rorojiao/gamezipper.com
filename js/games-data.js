@@ -242,6 +242,8 @@ const GAMES = [
   {name:"Ball Sort",emoji:"🎱",cat:"puzzle",tags:["Puzzle","Sort","Ball","Color","Tube","Logic","Brain","Casual","Browser","Free","HTML5"],url:"/ball-sort/",desc:"Sort colored balls into matching tubes in this addictive ball sort puzzle! 50 levels from easy to expert with neon visuals and sound effects. Play free online!",isNew:true,status:"live"},
   {name:"Traffic Escape",emoji:"🚗",cat:"puzzle",tags:["traffic","parking","cars","logic","unblock"],url:"/traffic-escape/",desc:"Clear the road by moving cars in the right order. A traffic puzzle with 50 levels of increasing difficulty.",isNew:true,status:"live"},
   {name:"Slice Master",emoji:"🔪",cat:"puzzle",tags:["Puzzle","Slice","Cut","Geometry","Physics","Brain","Casual","Browser","Free","HTML5"],url:"/slice-master/",desc:"Draw cutting lines to slice geometric shapes into target pieces. 50 satisfying physics-based cut puzzles across 5 chapters. Precision slicing with star ratings!",isNew:true,status:"live"},
+
+{name:"TriPeaks Solitaire",emoji:"🃏",cat:"card",tags:["tripeaks","solitaire","card","puzzle","peaks","tri-peaks","casual","classic"],desc:"Clear three pyramids by matching cards within one rank. Undo, hints, wild cards, 36 levels, daily challenges!",url:"/tripeaks-solitaire/",isNew:true,status:"live"}
 ];
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
