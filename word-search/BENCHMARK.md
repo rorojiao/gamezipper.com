@@ -1,60 +1,106 @@
 # Word Search — Competitive Benchmark
 
-## Competitor Analysis
+## Market Position
+- **Genre**: Word Puzzle (Search/Find)
+- **Market Size**: Word Search Journey (100M+ DL), Word Search Explorer (50M+ DL), Word Search Quest (100M+ DL)
+- **GameZipper Status**: Zero coverage — pure SEO gap
+- **Target SEO**: "word search", "word search puzzle", "word search game online", "free word search"
 
-### 1. Word Search Unlimited (Web)
-- **Grid sizes**: 8x8, 10x10, 12x12, 15x15
-- **Categories**: 50+ themed categories (Animals, Food, Sports, Science, etc.)
-- **Word placement**: Horizontal, Vertical, Diagonal (all 8 directions)
-- **Selection**: Click start letter + drag to end letter, line highlights
-- **Hints**: Reveal first letter of unfound word (limited uses)
-- **Timer**: Optional countdown timer, best time per puzzle
-- **Scoring**: Points per word based on length + time bonus
-- **Difficulty**: Easy (horizontal/vertical only) → Hard (all 8 directions + longer words)
-- **Progress**: Stars (1-3) per puzzle, category completion %
-- **Daily puzzle**: One puzzle per day, shared across players
+## Top Competitors
 
-### 2. Word Search by Brain Training (Mobile)
-- **Hint system**: 3 types — reveal letter, reveal word, highlight area
-- **Streak tracking**: Daily streak counter, consecutive days played
-- **Word list**: Shows found/unfound words with check marks
-- **Animations**: Word found celebration, line draw animation, confetti
-- **Sound**: Satisfying "ding" on word found, whoosh on wrong selection, BGM
-- **Themes**: Dark mode, light mode, color themes
+### 1. Word Search Journey (Bluetile) — 100M+ downloads, 4.8★
+- **Grid**: 10x10 to 15x15
+- **Words**: 5-8 per puzzle
+- **Categories**: 23+ themes (animals, food, sports, nature, etc.)
+- **Standout**: Free board rotation to see words from different angles
+- **Progression**: Infinite levels, map-based chapters
+- **Languages**: English, Spanish, French, German
+- **Monetization**: Banner + interstitial ads (every 3-4 puzzles)
 
-### 3. The Word Search (Popular Web Version)
-- **Categories**: Animals, Body, Buildings, Cities, Clothing, Colors, Countries
-- **Difficulty curve**: Grid size increases, word length increases, more directions
-- **Extra features**: Shuffle letters button, auto-find last word
-- **Social**: Share puzzle completion time
+### 2. Word Search Explorer (PlaySimple) — 50M+ downloads, 4.9★
+- **Grid**: 8x8 to 14x14
+- **Words**: 6-10 per puzzle
+- **Categories**: 30+ themed packs
+- **Features**: Hint system, shuffle, daily bonus, achievements
+- **Progression**: Level-based with difficulty tiers (Easy/Medium/Hard/Expert)
+- **Monetization**: Rewarded ads for hints, interstitials between chapters
 
-## Required Systems for GZ Word Search
+### 3. Word Search 2 - Hidden Words (IsCool) — 1M+ downloads, 4.9★
+- **Grid**: 8x8 to 16x16
+- **Features**: 4,200+ levels, **weekend tournaments with leaderboards**
+- **Standout**: Competitive events drive retention
+- **Difficulty**: Progressive with timed challenges
 
-### Core Gameplay
-1. **Grid Generation**: Algorithmic puzzle generation with backtracking word placement
-2. **Word Placement**: 8 directions (horizontal L/R, vertical U/D, diagonal 4 ways)
-3. **Selection**: Click/touch + drag line selection with visual feedback
-4. **Word Validation**: Instant feedback when word is found
+### 4. Word Search Quest (Blackout Lab) — 100M+ downloads, 4.7★
+- **Grid**: 10x10 to 15x15
+- **Features**: 10 languages, 23 themes, portrait/landscape modes
+- **Progression**: Map-based journey
 
-### Systems
-1. **30+ Themed Categories**: Animals, Food, Sports, Science, Nature, Music, Movies, Technology, Body, Countries, Cities, Colors, Space, Ocean, Weather, Emotions, Jobs, Vehicles, Furniture, Clothes, Fruits, Vegetables, Kitchen, School, Travel, History, Geography, Art, Math, Music Instruments
-2. **Difficulty Levels**: Easy (H+V, 8x8, short words) → Medium (+Diagonal, 10x10) → Hard (all 8 directions, 12x12, long words) → Expert (15x15)
-3. **Timer System**: Countdown timer with bonus scoring for speed
-4. **Hint System**: 3 hints per puzzle, reveals first letter + direction of unfound word
-5. **Scoring**: Base points × word length × difficulty multiplier + time bonus
-6. **Star Rating**: 3 stars based on time (fast=3, medium=2, slow=1)
-7. **Progress Saving**: localStorage with version, tracks completed puzzles, best times, stars
-8. **Daily Puzzle**: Seeded random for same puzzle daily
-9. **Tutorial**: First-time interactive tutorial showing how to select words
-10. **Achievements**: First puzzle, speed demon, category master, daily streak
+### 5. Daily Word Search (Article 19 Group) — HTML5, 9.0/10, 4,107 votes on CrazyGames
+- **Format**: 3 daily puzzles (Easy 10x10, Medium 12x12, Hard 15x15)
+- **Words**: 8-12 per puzzle
+- **Standout**: Daily format drives strongest return behavior
+- **No power-ups**: Pure search, no hints — clean design
+- **Timer**: Optional timer for competitive play
 
-### Audio (Web Audio API)
-- BGM: Relaxing ambient loop
-- SFX: Word found chime, wrong selection buzz, hint use sound, level complete fanfare, button click
+### 6. Word Search (Code This Lab) — HTML5 on CrazyGames, 8.4/10
+- **Grid**: Fixed sizes
+- **Features**: Basic implementation, category selection
+- **Note**: Simple, but proves HTML5 viability
 
-### Visual
-- Dark gradient background (GameZipper style)
-- Grid with subtle cell borders, neon highlight for found words
-- Line drawn from start to end letter when selecting
-- Particle confetti on word found
-- Smooth transitions between puzzles
+## Core Mechanics Summary
+
+| Feature | Standard | Advanced |
+|---------|----------|----------|
+| Grid Size | 8x8 to 15x15 | Dynamic based on difficulty |
+| Words per puzzle | 5-10 | 8-15 for expert |
+| Word directions | 4 (H/V) | 8 (H/V/D and reverse) |
+| Categories | 5-10 | 20-30+ themes |
+| Daily puzzle | Optional | 3 difficulty tiers |
+| Hints | 1-3 per game | Rewarded ad refill |
+| Timer | Optional | Competitive leaderboards |
+| Scoring | Word count | Time bonus + streak multiplier |
+| Star rating | 3-star based on time | Stars unlock chapters |
+| Progress | Level-based | Map + chapter system |
+
+## Key Design Insights
+
+1. **Board rotation** (Word Search Journey) is the most praised unique feature — highly engaging
+2. **Daily puzzle format** (Daily WS 9.0★) drives strongest retention
+3. **Tournaments/leaderboards** drive competitive retention
+4. **20+ word categories** essential for content freshness
+5. **Interstitial ads every 3-4 puzzles** is the sweet spot — more causes uninstall
+6. **Rewarded ads for hints** are widely accepted
+7. **8 word directions** (including diagonals and reverse) for higher difficulty
+8. **Timed mode** adds replayability but must be optional
+9. **Hint highlights first letter** of an unfound word — standard UX
+10. **Word list shows as checklist** — found words get crossed off
+
+## GZ Implementation Plan
+
+### Grid & Difficulty
+- 30 levels across 5 chapters (6 levels each)
+- Ch1 (Easy): 8x8 grid, 5 words, 4 directions (H/V)
+- Ch2 (Medium): 10x10 grid, 6 words, 6 directions (+ diagonals)
+- Ch3 (Hard): 12x12 grid, 7 words, 8 directions (+ reverse)
+- Ch4 (Expert): 13x13 grid, 8 words, 8 directions
+- Ch5 (Master): 15x15 grid, 10 words, 8 directions
+
+### Features to Implement
+1. 30 themed categories (animals, food, sports, etc.)
+2. Word placement with validation (no overlaps guaranteed, backtracking)
+3. Random letter fill (weighted toward common letters)
+4. Touch/mouse line-dragging to select words
+5. Hint system (3 per game, highlights first letter)
+6. Timer (optional, shows at end)
+7. Star rating (3-star based on time + hints used)
+8. Daily challenge (seeded by date)
+9. Streak tracking
+10. Sound effects (word found, hint, complete, button clicks)
+11. BGM (ambient puzzle music)
+12. Progress save (localStorage)
+
+### Word List
+- 150+ English words across 30 categories (5 words per category)
+- Words: 3-8 letters long
+- Each category: 15 words (extras for variety in random selection)
