@@ -1011,7 +1011,8 @@ document.getElementById('level-name').textContent = 'Level ' + (levelIdx + 1);
 document.getElementById('hint-text').textContent = '';
 document.getElementById('hint-count').textContent = gameState.coins;
 showScreen('game');
-requestAnimationFrame(gameLoop);
+if (rafId) cancelAnimationFrame(rafId);
+rafId = requestAnimationFrame(gameLoop);
 }
 
 function loadLevel(idx) {
@@ -1576,13 +1577,21 @@ showTutorial(gameState.currentLevel);
 }
 
 // ==================== GAME LOOP ====================
+var rafId = null;
+var timers = [];
 var lastTime = 0;
 function gameLoop(time) {
 if (gameState.currentScreen !== 'game') return;
 var dt = time - lastTime;
 lastTime = time;
 drawGame();
-requestAnimationFrame(gameLoop);
+rafId = requestAnimationFrame(gameLoop);
+}
+function cleanup() {
+if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+timers.forEach(function(id) { clearInterval(id); });
+timers = [];
+stopBGM();
 }
 
 // ==================== INPUT HANDLING ====================
@@ -1634,6 +1643,7 @@ startBGM();
 
 window.addEventListener('beforeunload', function() {
 saveGame();
+cleanup();
 });
 
 // ==================== INITIALIZATION ====================
