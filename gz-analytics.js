@@ -1,10 +1,14 @@
-/* gz-analytics.js — lightweight behavioral tracking, no deps, <5KB */
+/* gz-analytics.js — lightweight behavioral tracking, no deps, <5KB
+   2026-06-02 fix: removed hardcoded internal IP 10.10.29.67:8090
+   (mixed-active-content blocked + LAN-only). All events now persist
+   to localStorage only (gz_aa = analytics archive, gz_ab = batch buffer).
+   When a real production endpoint is provisioned, change EP + uncomment
+   the sendBeacon/fetch calls in snd() and fS(). */
 (function() {
   var SITE = 'gamezipper.com';
-  var EP = 'http://10.10.29.67:8090/api/collect.gz';
-  // EP_LOCAL removed: same as EP (was a duplicate-fetch bug — sendBeacon fallback
-  // + dual fetch both hit the same endpoint, doubling server load)
-  var BK = 'gz_ab';
+  // var EP = '';  // TODO: set production analytics endpoint (HTTPS only)
+  var BK = 'gz_ab';   // batch buffer (cleared on flush)
+  var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
   var P = location.pathname;
   var N = navigator;
@@ -15,23 +19,31 @@
   function sB(b) {
     try { localStorage.setItem(BK, JSON.stringify(b)); } catch(e) {}
   }
+  function archive(p) {
+    // Long-term archive: keep last 500 events across all sessions
+    try {
+      var a = JSON.parse(localStorage.getItem(AR) || '[]');
+      a = a.concat(p);
+      if (a.length > 500) a = a.slice(a.length - 500);
+      localStorage.setItem(AR, JSON.stringify(a));
+    } catch(e) {}
+  }
   function ps(n, d) {
     var b = gB();
     b.push({ s: SITE, e: n, d: d || {}, t: Date.now() });
     sB(b);
   }
   function snd(p) {
+    // No remote endpoint configured — archive locally, keep buffer empty
     if (!p || !p.length) return;
-    var d = JSON.stringify(p);
-    if (N.sendBeacon) {
-      N.sendBeacon(EP, d);
-    } else {
-      fS(d);
-    }
+    archive(p);
+    // When EP is set, uncomment:
+    // var d = JSON.stringify(p);
+    // if (N.sendBeacon) { N.sendBeacon(EP, d); } else { fS(d); }
   }
-  function fS(d) {
-    fetch(EP, { method: 'POST', body: d, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(function() {});
-  }
+  // function fS(d) {
+  //   fetch(EP, { method: 'POST', body: d, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(function() {});
+  // }
 
   setInterval(function() {
     var b = gB();
