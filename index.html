@@ -234,13 +234,14 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
   .gz-card::after{display:none!important}
   #gz-scroll-progress{display:none!important}
 }
-/* UX-OPT: Back-to-top button for long scroll pages */
-.gz-btt{position:fixed;bottom:28px;right:28px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4ecdc4,#45b7d1);color:#000;border:none;cursor:pointer;font-size:1.3em;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(78,210,196,0.4);z-index:99998;opacity:0;transform:translateY(20px);transition:opacity .3s,transform .3s,background .2s;pointer-events:none;contain:layout style paint}
-.gz-btt:hover{background:linear-gradient(135deg,#45b7d1,#6366f1);box-shadow:0 6px 24px rgba(78,210,196,0.6);transform:translateY(-2px)!important}
-.gz-btt:active{transform:scale(0.9)!important}
-.gz-btt.visible{opacity:1;transform:translateY(0);pointer-events:auto}
-@media(max-width:600px){.gz-btt{bottom:20px;right:16px;width:42px;height:42px;font-size:1.1em}}
-@media(prefers-reduced-motion:reduce){.gz-btt{transition:opacity .1s}}
+/* UX-OPT: Floating "Surprise Me" random game button — companion to gz-scroll-top */
+.gz-random-fab{position:fixed;bottom:80px;right:24px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#ff6b6b,#ffd93d);color:#000;border:none;cursor:pointer;font-size:1.4em;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(255,107,107,.4);z-index:99998;opacity:0;transform:translateY(20px) scale(.8);transition:opacity .3s,transform .3s,box-shadow .2s;pointer-events:none;contain:layout style paint;touch-action:manipulation}
+.gz-random-fab.visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+@media(hover:hover){.gz-random-fab:hover{box-shadow:0 8px 24px rgba(255,107,107,.6);transform:translateY(-3px) scale(1.05)!important;background:linear-gradient(135deg,#ffd93d,#ff6b6b)}}
+.gz-random-fab:active{transform:scale(.9)!important}
+.gz-random-fab:focus-visible{outline:3px solid #4ecdc4;outline-offset:3px}
+@media(max-width:600px){.gz-random-fab{bottom:72px;right:16px;width:44px;height:44px;font-size:1.2em}}
+@media(prefers-reduced-motion:reduce){.gz-random-fab{transition:opacity .1s}}
 /* Scroll-driven nav compaction: progressive enhancement (Chrome 115+) */
 @media(min-width:601px){@supports(animation-timeline:scroll()){.gz-nav-sticky{animation:gz-nav-compact-anim linear both;animation-timeline:scroll();animation-range:entry 0% entry 100%}@keyframes gz-nav-compact-anim{from{padding:12px 0 8px}to{padding:6px 0 4px}}}}
 @media(prefers-reduced-transparency:reduce){.gz-nav-sticky{backdrop-filter:none;-webkit-backdrop-filter:none;background:#0a0a1a}.gz-exit-overlay,#gz-exit-overlay{backdrop-filter:none}.gz-cookie-consent{backdrop-filter:none}}/* Cookie Consent: minimal GDPR-friendly banner */
@@ -494,6 +495,7 @@ document.querySelectorAll('.gz-reveal').forEach(function(el){observer.observe(el
 <span id="gz-daily-plays" style="color:#ffd93d">🎯 <span id="gz-daily-count">0</span> played today</span>
 <span id="gz-weekly-new" style="color:#c084fc">🆕 <span>3 new games this week</span></span>
 <span id="gz-updated-date" style="background:#1a3a2a;color:#4ade80;padding:2px 8px;border-radius:10px;font-size:.8em">✓ Updated <span class="gz-date-text"></span></span>
+<span id="gz-streak" style="color:#ff6b6b;display:none" aria-live="polite">🔥 <span id="gz-streak-count">0</span> day streak</span>
   <a href="https://tools.gamezipper.com/" style="color:#4ecdc4;text-decoration:none;font-size:0.9em;margin-top:8px;display:inline-block" rel="noopener noreferrer">🛠️ Free Online Tools →</a>
 </div>
 <script>
@@ -913,11 +915,15 @@ function _gzPrecomputeRatings(games){for(var i=0;i<games.length;i++){var s=games
 // Ensure gzFavs exists before render() uses it (full definition at line ~1128)
 if (typeof gzFavs === 'undefined') var gzFavs = [];
 function render(list){
-  document.getElementById('games').innerHTML = list.map((g,i) => `
-    <a class="game-card" href="${g.url}" data-cat="${g.cat}" itemscope itemtype="https://schema.org/Game" style="transition-delay:${(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)?0:i*80}ms" role="listitem" aria-label="${g.name} — ${g.tags[0]||''} game. Click to play." title="${g.name} — Click to play!">
+  document.getElementById('games').innerHTML = list.map((g,i) => {
+    // LCP-OPT: Mark first 4 above-fold game cards so CSS/content-visibility skips their paint
+    var lcpClass = i < 4 ? ' lcp-card' : '';
+    var lcpStyle = i < 4 ? 'style="content-visibility:visible;contain-intrinsic-size:auto"' : '';
+    return `
+    <a class="game-card${lcpClass}" href="${g.url}" data-cat="${g.cat}"${i < 4 ? ' fetchpriority="high"' : ''} itemscope itemtype="https://schema.org/Game" style="transition-delay:${(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)?0:i*80}ms" role="listitem" aria-label="${g.name} — ${g.tags[0]||''} game. Click to play." title="${g.name} — Click to play!">
       <meta itemprop="name" content="${g.name}"><meta itemprop="url" content="https://gamezipper.com${g.url}"><meta itemprop="description" content="${g.desc.replace(/"/g,'&quot;')}"><meta itemprop="genre" content="${g.cat}"><meta itemprop="gamePlatform" content="Web Browser"><meta itemprop="applicationCategory" content="Game"><meta itemprop="operatingSystem" content="Any"><meta itemprop="offers" content="https://schema.org/Offer"><meta itemprop="price" content="0"><meta itemprop="priceCurrency" content="USD">
       ${g.isNew?'<span class="new-badge">🔥 NEW</span>':''}<button class="gz-fav-btn ${gzFavs.includes(g.name)?'active':''}" data-game="${g.name}" onclick="event.preventDefault();gzToggleFav(this.dataset.game)" aria-label="Toggle favorite ${g.name}">♥</button><button class="gz-card-share" onclick="event.preventDefault();event.stopPropagation();gzShareGame('${g.name}','${g.url}')" aria-label="Share ${g.name}" title="Share this game">↗</button>
-      <div class="game-thumb" style="background:${GAME_GRADIENTS[i%GAME_GRADIENTS.length]}" itemprop="image" itemscope itemtype="https://schema.org/ImageObject"><meta itemprop="contentUrl" content="https://gamezipper.com/og-image.webp">${g.emoji}
+      <div class="game-thumb" ${lcpStyle} style="background:${GAME_GRADIENTS[i%GAME_GRADIENTS.length]}" itemprop="image" itemscope itemtype="https://schema.org/ImageObject"><meta itemprop="contentUrl" content="https://gamezipper.com/og-image.webp">${g.emoji}
         <div class="overlay"><span class="play-btn">▶ PLAY</span></div>
       </div>
       <div class="game-info" style="position:relative">
@@ -927,7 +933,7 @@ function render(list){
         <div class="gz-rating"><span class="gz-star">★★★★</span><span style="color:#ffd93d">★</span><span class="gz-rating-num">${_gzRatingMap[g.name]||"4.8"}</span></div>
         <div class="gz-card-tooltip">${g.tags.length?g.tags[0]+' Game':'Browser Game'} — Click to play!</div>
       </div>
-    </a>`).join('');
+    </a>`}).join('');
   // IntersectionObserver for lazy reveal animation
   if('IntersectionObserver' in window){
     var obs=new IntersectionObserver(function(entries){
@@ -1978,6 +1984,7 @@ window.filter = function(cat, btn){
 <!-- Scroll-to-Top Button: reduces friction on long game lists -->
 
 <button id="gz-scroll-top" aria-label="Scroll to top" title="Back to top">↑</button>
+<button id="gz-random-fab" class="gz-random-fab" aria-label="Play a random game" title="Surprise me! Play a random game">🎲</button>
 <script>
 (function(){
   var btn=document.getElementById('gz-scroll-top');
@@ -1990,6 +1997,41 @@ window.filter = function(cat, btn){
   }
   window.addEventListener('scroll',function(){if(!ticking){ticking=true;requestAnimationFrame(check)}},{passive:true});
   btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  check();
+})();
+</script>
+<script>
+// UX-OPT: Floating "Surprise Me" button — show after 600px scroll, click to play random game
+(function(){
+  var fab=document.getElementById('gz-random-fab');
+  if(!fab)return;
+  var visible=false,ticking=false;
+  function check(){
+    var shouldShow=window.scrollY>600;
+    if(shouldShow!==visible){visible=shouldShow;fab.classList.toggle('visible',shouldShow);}
+    ticking=false;
+  }
+  window.addEventListener('scroll',function(){if(!ticking){ticking=true;requestAnimationFrame(check)}},{passive:true});
+  fab.addEventListener('click',function(){
+    if(!window.GAMES||!GAMES.length){window.location.href='/2048/';return}
+    // Avoid recently played games (last 3) to maximize freshness
+    var history=[];
+    try{history=JSON.parse(localStorage.getItem('gz-recent-games')||'[]')}catch(e){}
+    var recent=new Set(history.slice(0,3));
+    var pool=GAMES.filter(function(g){return !recent.has(g.url)});
+    if(!pool.length)pool=GAMES;
+    var g=pool[Math.floor(Math.random()*pool.length)];
+    // Track play (gated to homepage navigation only)
+    try{
+      var h=JSON.parse(localStorage.getItem('gz-recent-games')||'[]');
+      h=h.filter(function(u){return u!==g.url});
+      h.unshift(g.url);
+      localStorage.setItem('gz-recent-games',JSON.stringify(h.slice(0,8)));
+    }catch(e){}
+    // Spin animation feedback
+    fab.style.transform='rotate(360deg) scale(1.1)';
+    setTimeout(function(){window.location.href=g.url},200);
+  });
   check();
 })();
 </script>
@@ -2182,6 +2224,41 @@ if('serviceWorker' in navigator){
 <script>
 // Dynamic date for header "Updated" badge (replaces parser-blocking document.write)
 (function(){var el=document.querySelector("#gz-updated-date .gz-date-text");if(el)el.textContent=new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})})();
+// UX-OPT: Streak counter — tracks consecutive days of visits to drive return engagement
+(function(){
+  try{
+    var today=new Date().toISOString().slice(0,10);
+    var yesterday=new Date(Date.now()-864e5).toISOString().slice(0,10);
+    var data=JSON.parse(localStorage.getItem('gz_streak')||'{}');
+    var lastDate=data.last||'';
+    var streak=parseInt(data.count||0,10);
+    if(lastDate===today){
+      // Same-day visit, count unchanged
+    }else if(lastDate===yesterday){
+      streak+=1;
+    }else{
+      streak=1; // reset streak (gap > 1 day)
+    }
+    data={last:today,count:streak};
+    localStorage.setItem('gz_streak',JSON.stringify(data));
+    // Only show if streak >= 2 (avoid "1 day streak" awkwardness for first-time)
+    if(streak>=2){
+      var wrap=document.getElementById('gz-streak');
+      var countEl=document.getElementById('gz-streak-count');
+      if(wrap&&countEl){
+        countEl.textContent=streak;
+        wrap.style.display='inline-flex';
+        wrap.style.alignItems='center';
+        wrap.style.gap='4px';
+        wrap.style.background='rgba(255,107,107,.12)';
+        wrap.style.padding='2px 8px';
+        wrap.style.borderRadius='10px';
+        wrap.style.fontSize='.85em';
+        wrap.title=streak>=7?'You\'re on fire! 🔥 Keep your streak alive.':'Visit daily to grow your streak!';
+      }
+    }
+  }catch(e){}
+})();
 // Dynamic date for "Recently Updated" section
 (function(){
   var dates=document.querySelectorAll('.updated-date');
@@ -2625,11 +2702,6 @@ try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){if(e.
   requestAnimationFrame(function(){d.style.opacity='1';d.style.transform='translate(-50%,-50%) scale(1)'});
   setTimeout(function(){d.style.opacity='0';d.style.transform='translate(-50%,-50%) scale(0.8)';setTimeout(function(){if(d.parentElement)d.remove()},400)},4000);
 })();
-</script>
-<button class="gz-btt" id="gz-btt" aria-label="Back to top" title="Back to top">&#8593;</button>
-<script>
-// UX-OPT: Back-to-top button with smooth scroll
-(function(){var btn=document.getElementById('gz-btt');if(!btn)return;var visible=false;function check(){var show=window.scrollY>600;if(show!==visible){visible=show;btn.classList.toggle('visible',show)}}window.addEventListener('scroll',function(){if(!visible){requestAnimationFrame(check)}},{passive:true});btn.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});btn.classList.remove('visible');visible=false});check()})();
 </script>
 <script>
 // UX-OPT: Idle detection — show game suggestion after 45s of inactivity
