@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Chain Reaction Puzzle - Strategic Chain Reaction Game | GameZipper</title>
+<meta name="description" content="Play Chain Reaction Puzzle online free. Tap cells to trigger explosive chain reactions and capture the entire grid. 40 strategic puzzle levels.">
+<meta name="keywords" content="chain reaction puzzle, chain reaction game, chain explosion, grid puzzle, strategy puzzle">
+<link rel="canonical" href="https://gamezipper.com/chain-reaction/">
+<meta property="og:title" content="Chain Reaction Puzzle - Strategic Chain Reaction Game">
+<meta property="og:description" content="Tap to trigger explosive chain reactions. 40 strategic puzzle levels free online.">
+<meta property="og:url" content="https://gamezipper.com/chain-reaction/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://gamezipper.com/chain-reaction/icon.png">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Chain Reaction Puzzle","description":"Tap cells to trigger explosive chain reactions and capture the entire grid in this strategic puzzle game.","genre":"Puzzle","gamePlatform":"HTML5","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"numberOfPlayers":{"@type":"QuantitativeValue","value":1},"playMode":"SinglePlayer","url":"https://gamezipper.com/chain-reaction/"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Chain Reaction Puzzle?","acceptedAnswer":{"@type":"Answer","text":"Tap any cell on the grid to add an atom. When a cell reaches its critical mass, it explodes and sends atoms to neighbors, creating chain reactions. Capture all enemy cells within the move limit."}},{"@type":"Question","name":"What is critical mass in Chain Reaction?","acceptedAnswer":{"@type":"Answer","text":"Critical mass depends on position: corner cells need 2 atoms, edge cells need 3, and center cells need 4. When a cell reaches its critical mass, it explodes."}},{"@type":"Question","name":"How do you get 3 stars in Chain Reaction Puzzle?","acceptedAnswer":{"@type":"Answer","text":"Complete the level using par moves or fewer. Each level has a par score that represents the optimal number of moves."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"How to Play Chain Reaction Puzzle","step":[{"@type":"HowToStep","name":"Observe the Grid","text":"Look at the grid layout and pre-placed enemy atoms."},{"@type":"HowToStep","name":"Plan Your Moves","text":"Figure out which cells to tap to trigger the best chain reaction."},{"@type":"HowToStep","name":"Tap Strategically","text":"Tap a cell to add your atom. Plan to overload cells for cascading explosions."},{"@type":"HowToStep","name":"Win","text":"Capture all enemy cells within the move limit to complete the level."}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Chain Reaction Puzzle","item":"https://gamezipper.com/chain-reaction/"}]}</script>
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=chain-reaction'></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow-x:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;background:#0a0a1a;color:#e0e0f0;font-family:'Segoe UI',system-ui,sans-serif;touch-action:none}
+canvas{display:block}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
+.overlay.active{pointer-events:all}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+(function(){
+'use strict';
+/* ============ CONSTANTS ============ */
+var DIRS=[[[- 1,0],[1,0],[0,-1],[0,1]],[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]];
+var COLORS={bg:'#0a0a1a',bg2:'#12122a',grid:'#1a1a3a',player:'#00d4ff',playerGlow:'#00a8cc',enemy:'#ff3366',enemyGlow:'#cc2952',neutral:'#333355',text:'#e0e0f0',textDim:'#7777aa',accent:'#ffcc00',star:'#ffcc00',starEmpty:'#333355',btn:'#1a1a4a',btnHover:'#2a2a6a',btnText:'#e0e0f0',success:'#00ff88',danger:'#ff4444',panel:'rgba(15,15,40,0.95)'};
+
+/* ============ LEVEL DATA ============ */
+var LEVELS=[
+// Chapter 1: Ignition (8 levels, 3x3-5x5)
+{r:3,c:3,cells:[[0,0,1,1],[0,1,1,1],[0,2,1,1],[1,0,1,1],[1,1,0,1],[1,2,1,1],[2,0,1,1],[2,1,1,1],[2,2,1,1]],par:2,name:"First Spark"},
+{r:3,c:3,cells:[[0,0,0,2],[0,1,1,2],[0,2,0,2],[1,0,1,2],[1,1,2,2],[1,2,1,2],[2,0,0,2],[2,1,1,2],[2,2,0,2]],par:1,name:"Ready to Blow"},
+{r:4,c:4,cells:[[0,0,1,1],[0,1,0,1],[0,2,0,1],[0,3,1,1],[1,0,0,1],[1,1,1,2],[1,2,1,2],[1,3,0,1],[2,0,0,1],[2,1,1,2],[2,2,1,2],[2,3,0,1],[3,0,1,1],[3,1,0,1],[3,2,0,1],[3,3,1,1]],par:2,name:"Double Tap"},
+{r:4,c:4,cells:[[0,0,0,2],[0,1,1,2],[0,2,1,2],[0,3,0,2],[1,0,1,2],[1,1,0,2],[1,2,0,2],[1,3,1,2],[2,0,1,2],[2,1,0,2],[2,2,0,2],[2,3,1,2],[3,0,0,2],[3,1,1,2],[3,2,1,2],[3,3,0,2]],par:2,name:"Cross Fire"},
+{r:5,c:5,cells:[[0,0,1,1],[0,4,1,1],[4,0,1,1],[4,4,1,1],[2,2,1,1]],par:3,name:"Four Corners"},
+{r:5,c:5,cells:[[0,0,1,2],[0,1,1,2],[0,2,1,2],[0,3,1,2],[0,4,1,2],[1,0,1,2],[1,4,1,2],[2,0,1,2],[2,4,1,2],[3,0,1,2],[3,4,1,2],[4,0,1,2],[4,1,1,2],[4,2,1,2],[4,3,1,2],[4,4,1,2],[2,2,1,1]],par:3,name:"Ring of Fire"},
+{r:5,c:5,cells:[[0,2,2,2],[2,0,2,2],[2,4,2,2],[4,2,2,2],[1,1,1,2],[1,3,1,2],[3,1,1,2],[3,3,1,2],[2,2,0,1]],par:2,name:"Diamond Core"},
+{r:5,c:5,cells:[[0,0,1,2],[0,2,1,2],[0,4,1,2],[2,0,1,2],[2,2,0,1],[2,4,1,2],[4,0,1,2],[4,2,1,2],[4,4,1,2],[1,1,1,2],[1,3,1,2],[3,1,1,2],[3,3,1,2]],par:3,name:"X Marks"},
+// Chapter 2: Cascade (8 levels, 5x5-6x6)
+{r:5,c:5,cells:[[0,0,1,2],[0,1,1,2],[0,2,1,2],[1,0,1,2],[1,1,2,2],[1,2,1,2],[2,0,1,2],[2,1,1,2],[2,2,2,2],[3,0,1,2],[3,1,1,2],[3,2,1,2],[4,0,1,2],[4,1,1,2],[4,2,1,2]],par:2,name:"Cascade Start"},
+{r:5,c:5,cells:[[0,0,2,2],[0,4,2,2],[2,0,2,2],[2,2,1,1],[2,4,2,2],[4,0,2,2],[4,4,2,2],[0,2,1,2],[2,0,1,2],[2,4,1,2],[4,2,1,2]],par:2,name:"Diagonal Lines"},
+{r:5,c:5,cells:[[0,1,2,2],[1,0,2,2],[1,3,2,2],[3,1,2,2],[3,4,2,2],[4,3,2,2],[0,4,2,2],[4,0,2,2],[2,2,0,1]],par:2,name:"Spiral Seed"},
+{r:5,c:5,cells:[[0,0,2,2],[0,1,1,2],[0,2,1,2],[1,0,1,2],[1,2,1,2],[2,0,1,2],[2,1,1,2],[2,2,2,2],[3,2,1,2],[3,3,1,2],[4,2,1,2],[4,3,1,2],[4,4,2,2]],par:2,name:"S-Curve"},
+{r:6,c:6,cells:[[0,0,1,2],[0,5,1,2],[5,0,1,2],[5,5,1,2],[2,2,2,2],[2,3,2,2],[3,2,2,2],[3,3,2,2],[1,1,1,2],[1,4,1,2],[4,1,1,2],[4,4,1,2]],par:3,name:"Wider Grid"},
+{r:6,c:6,cells:[[0,2,1,2],[1,2,2,2],[2,0,2,2],[2,1,2,2],[2,3,1,1],[2,5,1,2],[3,1,1,2],[3,4,2,2],[4,4,2,2],[5,3,2,2]],par:2,name:"River Flow"},
+{r:6,c:6,cells:[[0,0,2,2],[0,3,1,2],[0,5,2,2],[1,2,1,2],[2,1,2,2],[2,4,1,2],[3,0,2,2],[3,3,1,1],[3,5,2,2],[4,2,1,2],[5,1,2,2],[5,4,1,2]],par:3,name:"Scattered"},
+{r:6,c:6,cells:[[0,0,2,2],[0,1,1,2],[0,2,1,2],[1,0,1,2],[1,1,1,2],[1,2,1,2],[2,0,1,2],[2,1,1,2],[2,2,1,1],[3,3,1,1],[3,4,1,2],[3,5,1,2],[4,3,1,2],[4,4,1,2],[4,5,1,2],[5,3,1,2],[5,4,1,2],[5,5,2,2]],par:2,name:"Twin Blocks"},
+// Chapter 3: Strategy (8 levels, 6x6-7x7)
+{r:6,c:6,cells:[[0,0,2,2],[0,1,2,2],[0,2,1,2],[0,3,1,2],[0,4,2,2],[0,5,2,2],[1,1,1,2],[1,4,1,2],[2,2,1,2],[2,3,1,2],[3,2,1,2],[3,3,1,2],[4,1,1,2],[4,4,1,2],[5,0,2,2],[5,1,2,2],[5,2,1,2],[5,3,1,2],[5,4,2,2],[5,5,2,2],[3,0,0,1],[2,5,0,1]],par:2,name:"Horseshoe"},
+{r:6,c:6,cells:[[0,2,2,2],[0,3,2,2],[1,1,2,2],[1,4,2,2],[2,0,1,2],[2,2,0,1],[2,3,0,1],[2,5,1,2],[3,0,1,2],[3,2,0,1],[3,3,0,1],[3,5,1,2],[4,1,2,2],[4,4,2,2],[5,2,2,2],[5,3,2,2]],par:3,name:"Eye of Storm"},
+{r:7,c:7,cells:[[0,3,2,2],[1,2,2,2],[1,4,2,2],[2,1,2,2],[2,5,2,2],[3,0,1,2],[3,3,0,1],[3,6,1,2],[4,1,2,2],[4,5,2,2],[5,2,2,2],[5,4,2,2],[6,3,2,2]],par:3,name:"Starburst"},
+{r:7,c:7,cells:[[0,0,2,2],[0,6,2,2],[1,1,2,2],[1,5,2,2],[2,2,2,2],[2,4,2,2],[3,3,0,1],[4,2,2,2],[4,4,2,2],[5,1,2,2],[5,5,2,2],[6,0,2,2],[6,6,2,2]],par:2,name:"Diamond Ring"},
+{r:7,c:7,cells:[[0,1,1,2],[0,5,1,2],[1,0,1,2],[1,2,1,2],[1,3,1,2],[1,4,1,2],[1,6,1,2],[2,1,1,2],[2,5,1,2],[3,3,0,1],[4,1,1,2],[4,5,1,2],[5,0,1,2],[5,2,1,2],[5,3,1,2],[5,4,1,2],[5,6,1,2],[6,1,1,2],[6,5,1,2]],par:3,name:"Labyrinth"},
+{r:6,c:6,cells:[[0,0,2,2],[0,5,2,2],[1,1,1,2],[1,4,1,2],[2,2,1,2],[2,3,1,2],[3,2,1,2],[3,3,1,2],[4,1,1,2],[4,4,1,2],[5,0,2,2],[5,5,2,2]],par:2,name:"Pressure Cook"},
+{r:7,c:7,cells:[[0,0,2,2],[0,3,1,2],[0,6,2,2],[1,1,1,2],[1,5,1,2],[2,2,1,2],[2,4,1,2],[3,0,0,1],[3,3,1,1],[3,6,0,1],[4,2,1,2],[4,4,1,2],[5,1,1,2],[5,5,1,2],[6,0,2,2],[6,3,1,2],[6,6,2,2]],par:3,name:"Plus Sign"},
+{r:7,c:7,cells:[[0,0,2,2],[0,1,1,2],[1,0,1,2],[1,1,1,2],[0,5,2,2],[0,6,1,2],[1,5,1,2],[1,6,1,2],[5,0,2,2],[5,1,1,2],[6,0,1,2],[6,1,1,2],[5,5,2,2],[5,6,1,2],[6,5,1,2],[6,6,1,2],[3,3,0,1]],par:3,name:"Four Corners II"},
+// Chapter 4: Complexity (8 levels, 7x7-8x8)
+{r:7,c:7,cells:[[0,0,2,2],[0,2,1,2],[0,4,1,2],[0,6,2,2],[1,1,1,2],[1,3,1,2],[1,5,1,2],[2,0,2,2],[2,2,1,2],[2,4,1,2],[2,6,2,2],[3,1,1,2],[3,3,0,1],[3,5,1,2],[4,0,2,2],[4,2,1,2],[4,4,1,2],[4,6,2,2],[5,1,1,2],[5,3,1,2],[5,5,1,2],[6,0,2,2],[6,2,1,2],[6,4,1,2],[6,6,2,2]],par:3,name:"Checkerboard"},
+{r:7,c:7,cells:[[0,3,2,2],[1,1,2,2],[1,2,1,2],[1,3,1,2],[1,4,1,2],[1,5,2,2],[2,0,1,2],[2,6,1,2],[3,3,1,1],[4,0,1,2],[4,6,1,2],[5,1,2,2],[5,2,1,2],[5,3,1,2],[5,4,1,2],[5,5,2,2],[6,3,2,2]],par:3,name:"Butterfly"},
+{r:8,c:8,cells:[[0,0,2,2],[0,1,1,2],[0,6,1,2],[0,7,2,2],[1,0,1,2],[1,2,2,2],[1,5,2,2],[1,7,1,2],[2,1,1,2],[2,3,1,2],[2,4,1,2],[2,6,1,2],[3,2,1,2],[3,5,1,2],[4,2,1,2],[4,5,1,2],[5,1,1,2],[5,3,1,2],[5,4,1,2],[5,6,1,2],[6,0,1,2],[6,2,2,2],[6,5,2,2],[6,7,1,2],[7,0,2,2],[7,1,1,2],[7,6,1,2],[7,7,2,2]],par:4,name:"Fortress"},
+{r:8,c:8,cells:[[0,3,1,2],[0,4,1,2],[1,2,1,2],[1,5,1,2],[2,1,1,2],[2,6,1,2],[3,0,1,2],[3,3,0,1],[3,4,1,1],[3,7,1,2],[4,0,1,2],[4,3,1,1],[4,4,0,1],[4,7,1,2],[5,1,1,2],[5,6,1,2],[6,2,1,2],[6,5,1,2],[7,3,1,2],[7,4,1,2]],par:4,name:"Frame Trap"},
+{r:7,c:7,cells:[[0,0,2,2],[0,6,2,2],[1,1,2,2],[1,5,2,2],[2,2,2,2],[2,4,2,2],[3,0,0,1],[3,3,1,1],[3,6,0,1],[4,2,2,2],[4,4,2,2],[5,1,2,2],[5,5,2,2],[6,0,2,2],[6,6,2,2]],par:3,name:"Concentric"},
+{r:8,c:8,cells:[[0,0,2,2],[0,7,2,2],[1,1,2,2],[1,6,2,2],[2,2,2,2],[2,5,2,2],[3,3,1,2],[3,4,1,2],[4,3,1,2],[4,4,1,2],[5,2,2,2],[5,5,2,2],[6,1,2,2],[6,6,2,2],[7,0,2,2],[7,7,2,2]],par:3,name:"Shell"},
+{r:8,c:8,cells:[[0,2,2,2],[0,5,2,2],[1,0,2,2],[1,3,1,2],[1,7,2,2],[2,0,1,2],[2,4,1,2],[2,6,1,2],[3,1,1,2],[3,3,0,1],[3,5,1,2],[4,2,1,2],[4,4,0,1],[4,6,1,2],[5,1,1,2],[5,3,1,2],[5,7,1,2],[6,0,1,2],[6,3,1,2],[6,7,2,2],[7,0,2,2],[7,4,2,2],[7,7,2,2]],par:3,name:"Twin Cores"},
+{r:8,c:8,cells:[[0,1,1,2],[0,2,1,2],[0,5,1,2],[0,6,1,2],[1,0,1,2],[1,3,1,2],[1,4,1,2],[1,7,1,2],[2,1,1,2],[2,6,1,2],[3,0,1,2],[3,3,0,1],[3,4,0,1],[3,7,1,2],[4,0,1,2],[4,3,0,1],[4,4,0,1],[4,7,1,2],[5,1,1,2],[5,6,1,2],[6,0,1,2],[6,3,1,2],[6,4,1,2],[6,7,1,2],[7,1,1,2],[7,2,1,2],[7,5,1,2],[7,6,1,2]],par:4,name:"Grid Lock"},
+// Chapter 5: Master (8 levels, 8x8)
+{r:8,c:8,cells:[[0,0,2,2],[0,1,1,2],[0,2,1,2],[0,5,1,2],[0,6,1,2],[0,7,2,2],[1,0,1,2],[1,3,1,2],[1,4,1,2],[1,7,1,2],[2,0,1,2],[2,7,1,2],[3,1,1,2],[3,2,0,1],[3,3,0,1],[3,4,0,1],[3,5,1,2],[4,1,1,2],[4,2,0,1],[4,3,0,1],[4,4,0,1],[4,5,1,2],[5,0,1,2],[5,7,1,2],[6,0,1,2],[6,3,1,2],[6,4,1,2],[6,7,1,2],[7,0,2,2],[7,1,1,2],[7,2,1,2],[7,5,1,2],[7,6,1,2],[7,7,2,2]],par:3,name:"Hollow Core"},
+{r:8,c:8,cells:[[0,0,2,2],[0,4,1,2],[0,7,2,2],[1,1,1,2],[1,3,1,2],[1,5,1,2],[2,0,1,2],[2,2,2,2],[2,4,1,2],[2,6,1,2],[3,1,1,2],[3,3,0,1],[3,5,1,2],[4,0,1,2],[4,2,2,2],[4,4,1,2],[4,6,1,2],[5,1,1,2],[5,3,1,2],[5,5,1,2],[6,0,1,2],[6,2,2,2],[6,4,1,2],[6,6,1,2],[7,0,2,2],[7,4,1,2],[7,7,2,2]],par:3,name:"Cascade Master"},
+{r:8,c:8,cells:[[0,3,1,2],[0,4,1,2],[1,2,1,2],[1,5,1,2],[2,1,1,2],[2,6,1,2],[3,0,2,2],[3,3,0,1],[3,4,0,1],[3,7,2,2],[4,0,2,2],[4,3,0,1],[4,4,0,1],[4,7,2,2],[5,1,1,2],[5,6,1,2],[6,2,1,2],[6,5,1,2],[7,3,1,2],[7,4,1,2]],par:5,name:"Isolated"},
+{r:9,c:9,cells:[[0,0,2,2],[0,8,2,2],[1,1,2,2],[1,7,2,2],[2,2,2,2],[2,6,2,2],[3,3,1,2],[3,5,1,2],[4,4,0,1],[5,3,1,2],[5,5,1,2],[6,2,2,2],[6,6,2,2],[7,1,2,2],[7,7,2,2],[8,0,2,2],[8,8,2,2]],par:3,name:"Grand Diamond"},
+{r:9,c:9,cells:[[0,2,1,2],[0,3,1,2],[0,5,1,2],[0,6,1,2],[1,1,1,2],[1,4,1,2],[1,7,1,2],[2,0,1,2],[2,3,0,1],[2,6,0,1],[2,8,1,2],[3,2,1,2],[3,5,1,2],[3,8,1,2],[4,0,0,1],[4,4,1,1],[4,8,0,1],[5,0,1,2],[5,3,1,2],[5,6,1,2],[6,0,1,2],[6,2,0,1],[6,5,0,1],[6,8,1,2],[7,1,1,2],[7,4,1,2],[7,7,1,2],[8,2,1,2],[8,3,1,2],[8,5,1,2],[8,6,1,2]],par:4,name:"Zigzag"},
+{r:9,c:9,cells:[[0,0,2,2],[0,1,1,2],[0,7,1,2],[0,8,2,2],[1,0,1,2],[1,2,2,2],[1,6,2,2],[1,8,1,2],[2,1,1,2],[2,3,1,2],[2,5,1,2],[2,7,1,2],[3,2,1,2],[3,4,0,1],[3,6,1,2],[4,0,0,1],[4,4,1,1],[4,8,0,1],[5,2,1,2],[5,4,0,1],[5,6,1,2],[6,1,1,2],[6,3,1,2],[6,5,1,2],[6,7,1,2],[7,0,1,2],[7,2,2,2],[7,6,2,2],[7,8,1,2],[8,0,2,2],[8,1,1,2],[8,7,1,2],[8,8,2,2]],par:4,name:"Enclosure"},
+{r:9,c:9,cells:[[0,4,2,2],[1,3,2,2],[1,5,2,2],[2,2,2,2],[2,6,2,2],[3,1,1,2],[3,7,1,2],[4,0,0,1],[4,4,1,1],[4,8,0,1],[5,1,1,2],[5,7,1,2],[6,2,2,2],[6,6,2,2],[7,3,2,2],[7,5,2,2],[8,4,2,2]],par:4,name:"Hourglass"},
+{r:10,c:10,cells:[[0,0,2,2],[0,9,2,2],[1,1,2,2],[1,8,2,2],[2,2,2,2],[2,7,2,2],[3,3,1,2],[3,6,1,2],[4,4,0,1],[4,5,0,1],[5,4,0,1],[5,5,0,1],[6,3,1,2],[6,6,1,2],[7,2,2,2],[7,7,2,2],[8,1,2,2],[8,8,2,2],[9,0,2,2],[9,9,2,2]],par:4,name:"Final Chain"}
+];
+
+/* ============ STATE ============ */
+var canvas, ctx, W, H, dpr;
+var state='menu'; // menu, levels, playing, win
+var currentLevel=0, moves=0, grid=[], gridRows=0, gridCols=0;
+var particles=[], screenShake=0;
+var animating=false, animQueue=[];
+var hintCell=null, showHint=false;
+var history=[];
+var soundOn=true, musicOn=true;
+var audioCtx=null, bgmNodes=[];
+var saveData=null;
+var rafId=null, timers=[];
+var touchStartCell=null;
+var levelScroll=0;
+var fadeAlpha=0, fadeDir=0;
+var tutorialStep=0, showTutorial=false;
+var chapterNames=["Ignition","Cascade","Strategy","Complexity","Master"];
+var totalStars=0;
+
+/* ============ UTILITY ============ */
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function lerp(a,b,t){return a+(b-a)*t}
+function rnd(a,b){return a+Math.random()*(b-a)}
+
+/* ============ AUDIO ============ */
+function initAudio(){
+  if(audioCtx)return;
+  try{audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}
+}
+function playTone(freq,dur,type,vol){
+  if(!soundOn||!audioCtx)return;
+  try{
+    var o=audioCtx.createOscillator();
+    var g=audioCtx.createGain();
+    o.type=type||'sine';
+    o.frequency.setValueAtTime(freq,audioCtx.currentTime);
+    g.gain.setValueAtTime(vol||0.15,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+(dur||0.2));
+    o.connect(g);g.connect(audioCtx.destination);
+    o.start();o.stop(audioCtx.currentTime+(dur||0.2));
+  }catch(e){}
+}
+function playClick(){playTone(800,0.05,'sine',0.08)}
+function playExplosion(){
+  if(!soundOn||!audioCtx)return;
+  try{
+    var buf=audioCtx.createBuffer(1,audioCtx.sampleRate*0.3,audioCtx.sampleRate);
+    var d=buf.getChannelData(0);
+    for(var i=0;i<d.length;i++){d[i]=(Math.random()*2-1)*Math.exp(-i/d.length*6)*0.3}
+    var s=audioCtx.createBufferSource();s.buffer=buf;
+    var g=audioCtx.createGain();g.gain.value=0.4;
+    s.connect(g);g.connect(audioCtx.destination);s.start();
+  }catch(e){}
+}
+function playWin(){
+  [523,659,784,1047].forEach(function(f,i){
+    setTimeout(function(){playTone(f,0.3,'sine',0.12)},i*120);
+  });
+}
+function playFail(){playTone(200,0.4,'sawtooth',0.1)}
+function startBGM(){
+  if(!musicOn||!audioCtx||bgmNodes.length)return;
+  try{
+    var sr=audioCtx.sampleRate,dur=16,bufSize=sr*dur;
+    var buf=audioCtx.createBuffer(1,bufSize,sr);
+    var d=buf.getChannelData(0);
+    var chords=[[220,277,330],[261,330,392],[293,370,440],[261,330,392]];
+    var chordDur=dur/chords.length;
+    for(var i=0;i<bufSize;i++){
+      var t=i/sr;
+      var ci=Math.min(Math.floor(t/chordDur),chords.length-1);
+      var ch=chords[ci];
+      var s=0;
+      for(var n=0;n<ch.length;n++){
+        s+=Math.sin(2*Math.PI*ch[n]*t)*0.04;
+        s+=Math.sin(2*Math.PI*ch[n]*0.5*t)*0.02;
+      }
+      var fade=t%chordDur;
+      var fadeIn=Math.min(fade/0.5,1);
+      var fadeOut=Math.min((chordDur-fade)/0.5,1);
+      s*=fadeIn*fadeOut;
+      var lfo=Math.sin(2*Math.PI*0.2*t)*0.1+1;
+      d[i]=s*lfo*0.5;
+    }
+    var src=audioCtx.createBufferSource();src.buffer=buf;src.loop=true;
+    var filt=audioCtx.createBiquadFilter();filt.type='lowpass';filt.frequency.value=600;filt.Q.value=1;
+    var g=audioCtx.createGain();g.gain.value=musicOn?0.2:0;
+    src.connect(filt);filt.connect(g);g.connect(audioCtx.destination);src.start();
+    bgmNodes=[src,filt,g];
+  }catch(e){}
+}
+function stopBGM(){
+  bgmNodes.forEach(function(n){try{n.stop()}catch(e){}});
+  bgmNodes=[];
+}
+function toggleSound(){soundOn=!soundOn;if(soundOn)initAudio()}
+function toggleMusic(){musicOn=!musicOn;if(bgmNodes[2])bgmNodes[2].gain.value=musicOn?0.2:0;if(musicOn&&!bgmNodes.length)startBGM()}
+
+/* ============ SAVE ============ */
+function loadSave(){
+  try{
+    var s=localStorage.getItem('chain-reaction-save');
+    if(s){saveData=JSON.parse(s);if(saveData.v!==1)saveData=null}
+  }catch(e){saveData=null}
+  if(!saveData)saveData={v:1,levels:{},totalStars:0};
+  totalStars=saveData.totalStars||0;
+}
+function saveLevelComplete(idx,stars){
+  var k='l'+idx;
+  if(!saveData.levels[k]||saveData.levels[k]<stars)saveData.levels[k]=stars;
+  totalStars=0;
+  for(var key in saveData.levels)totalStars+=saveData.levels[key];
+  saveData.totalStars=totalStars;
+  try{localStorage.setItem('chain-reaction-save',JSON.stringify(saveData))}catch(e){}
+}
+function isUnlocked(idx){return idx===0||saveData.levels['l'+(idx-1)]>0}
+function getStars(idx){return saveData.levels['l'+idx]||0}
+
+/* ============ GRID ============ */
+function getCapacity(r,c){
+  var n=0;
+  if(r>0)n++;if(r<gridRows-1)n++;if(c>0)n++;if(c<gridCols-1)n++;
+  return n+1; // corner=2, edge=3, center=4+1=5... 
+  // Actually let's use: corner=2, edge=3, center=4
+  // n = number of orthogonal neighbors
+  // corner has 2 neighbors → cap 2
+  // edge has 3 neighbors → cap 3
+  // center has 4 neighbors → cap 4
+  return n;
+}
+function initGrid(){
+  var lv=LEVELS[currentLevel];
+  gridRows=lv.r;gridCols=lv.c;
+  grid=[];
+  for(var r=0;r<gridRows;r++){
+    grid[r]=[];
+    for(var c=0;c<gridCols;c++){
+      grid[r][c]={atoms:0,owner:0,popped:false};
+    }
+  }
+  for(var i=0;i<lv.cells.length;i++){
+    var cell=lv.cells[i];
+    grid[cell[0]][cell[1]].atoms=cell[2];
+    grid[cell[0]][cell[1]].owner=cell[3]; // 1=player, 2=enemy
+  }
+  moves=0;history=[];particles=[];hintCell=null;showHint=false;animating=false;animQueue=[];
+}
+
+/* ============ CHAIN REACTION ============ */
+function simulateChain(cellR,cellC,cb){
+  animQueue=[];
+  grid[cellR][cellC].atoms++;
+  grid[cellR][cellC].owner=1;
+  playClick();
+  processWaves(cb);
+}
+function processWaves(cb){
+  var maxWaves=50,wave=0;
+  function step(){
+    wave++;
+    if(wave>maxWaves){cb&&cb();return}
+    var toPop=[];
+    for(var r=0;r<gridRows;r++){
+      for(var c=0;c<gridCols;c++){
+        if(!grid[r][c].popped&&grid[r][c].atoms>=getCapacity(r,c)){
+          toPop.push([r,c]);
+        }
+      }
+    }
+    if(toPop.length===0){cb&&cb();return}
+    // Collect deltas
+    var deltas=[];
+    for(var i=0;i<toPop.length;i++){
+      var r=toPop[i][0],c=toPop[i][1];
+      grid[r][c].popped=true;
+      grid[r][c].atoms=0;
+      grid[r][c].owner=1;
+      // Spawn particles
+      spawnExplosion(r,c);
+      for(var d=0;d<4;d++){
+        var nr=r+DIRS[0][d][0],nc=c+DIRS[0][d][1];
+        if(nr>=0&&nr<gridRows&&nc>=0&&nc<gridCols){
+          deltas.push([nr,nc]);
+        }
+      }
+    }
+    playExplosion();
+    screenShake=Math.min(screenShake+2,6);
+    // Apply deltas
+    for(var i=0;i<deltas.length;i++){
+      var dr=deltas[i][0],dc=deltas[i][1];
+      if(!grid[dr][dc].popped){
+        grid[dr][dc].atoms++;
+        grid[dr][dc].owner=1;
+      }
+    }
+    // Check win after a delay for animation
+    animating=true;
+    setTimeout(function(){animating=false;step()},80);
+  }
+  step();
+}
+
+/* ============ PARTICLES ============ */
+function spawnExplosion(r,c){
+  var lv=LEVELS[currentLevel];
+  var cellSize=Math.min((W-40)/lv.c,(H-160)/lv.r);
+  var ox=(W-lv.c*cellSize)/2;
+  var oy=(H-lv.r*cellSize)/2+30;
+  var cx=ox+(c+0.5)*cellSize;
+  var cy=oy+(r+0.5)*cellSize;
+  for(var i=0;i<12;i++){
+    var a=rnd(0,Math.PI*2);
+    var spd=rnd(1,4);
+    particles.push({x:cx,y:cy,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,life:1,color:COLORS.player,size:rnd(2,5)});
+  }
+}
+function updateParticles(dt){
+  for(var i=particles.length-1;i>=0;i--){
+    var p=particles[i];
+    p.x+=p.vx;p.y+=p.vy;
+    p.vx*=0.96;p.vy*=0.96;
+    p.life-=dt*2;
+    if(p.life<=0)particles.splice(i,1);
+  }
+}
+
+/* ============ HINT ============ */
+function findHint(){
+  // Simulate clicking each cell and find one that leads to capturing all enemy cells
+  var lv=LEVELS[currentLevel];
+  for(var r=0;r<gridRows;r++){
+    for(var c=0;c<gridCols;c++){
+      // Quick simulation
+      var result=simulateQuick(r,c);
+      if(result===gridRows*gridCols){
+        return[r,c];
+      }
+    }
+  }
+  return null;
+}
+function simulateQuick(clickR,clickC){
+  // Deep copy grid
+  var g=[];
+  for(var r=0;r<gridRows;r++){
+    g[r]=[];
+    for(var c=0;c<gridCols;c++){
+      g[r][c]={atoms:grid[r][c].atoms,owner:grid[r][c].owner,popped:grid[r][c].popped};
+    }
+  }
+  g[clickR][clickC].atoms++;
+  g[clickR][clickC].owner=1;
+  // Process waves
+  for(var wave=0;wave<50;wave++){
+    var toPop=[];
+    for(var r=0;r<gridRows;r++){
+      for(var c=0;c<gridCols;c++){
+        if(!g[r][c].popped&&g[r][c].atoms>=getCapacity(r,c))toPop.push([r,c]);
+      }
+    }
+    if(toPop.length===0)break;
+    var deltas=[];
+    for(var i=0;i<toPop.length;i++){
+      var r2=toPop[i][0],c2=toPop[i][1];
+      g[r2][c2].popped=true;g[r2][c2].atoms=0;g[r2][c2].owner=1;
+      for(var d=0;d<4;d++){
+        var nr=r2+DIRS[0][d][0],nc=c2+DIRS[0][d][1];
+        if(nr>=0&&nr<gridRows&&nc>=0&&nc<gridCols)deltas.push([nr,nc]);
+      }
+    }
+    for(var i=0;i<deltas.length;i++){
+      if(!g[deltas[i][0]][deltas[i][1]].popped){
+        g[deltas[i][0]][deltas[i][1]].atoms++;
+        g[deltas[i][0]][deltas[i][1]].owner=1;
+      }
+    }
+  }
+  var count=0;
+  for(var r=0;r<gridRows;r++){
+    for(var c=0;c<gridCols;c++){
+      if(g[r][c].popped)count++;
+    }
+  }
+  return count;
+}
+
+/* ============ WIN CHECK ============ */
+function checkWin(){
+  // Win if all non-empty cells are player's
+  for(var r=0;r<gridRows;r++){
+    for(var c=0;c<gridCols;c++){
+      if(!grid[r][c].popped&&grid[r][c].atoms>0&&grid[r][c].owner===2)return false;
+    }
+  }
+  // Also check: all cells that started with atoms should be popped or player-owned
+  var lv=LEVELS[currentLevel];
+  for(var i=0;i<lv.cells.length;i++){
+    var cell=lv.cells[i];
+    if(!grid[cell[0]][cell[1]].popped&&grid[cell[0]][cell[1]].owner!==1)return false;
+  }
+  return true;
+}
+function hasEnemyCells(){
+  for(var r=0;r<gridRows;r++){
+    for(var c=0;c<gridCols;c++){
+      if(!grid[r][c].popped&&grid[r][c].atoms>0&&grid[r][c].owner===2)return true;
+    }
+  }
+  return false;
+}
+
+/* ============ UNDO ============ */
+function saveState(){
+  var s={grid:[],moves:moves};
+  for(var r=0;r<gridRows;r++){
+    s.grid[r]=[];
+    for(var c=0;c<gridCols;c++){
+      s.grid[r][c]={atoms:grid[r][c].atoms,owner:grid[r][c].owner,popped:grid[r][c].popped};
+    }
+  }
+  history.push(s);
+  if(history.length>20)history.shift();
+}
+function undo(){
+  if(history.length===0||animating)return;
+  var s=history.pop();
+  grid=s.grid;moves=s.moves;
+  playClick();
+}
+
+/* ============ RENDERING ============ */
+function resize(){
+  dpr=window.devicePixelRatio||1;
+  W=window.innerWidth;H=window.innerHeight;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function drawBg(){
+  var grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#0a0a1a');grad.addColorStop(1,'#12122a');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+  // Subtle grid dots
+  ctx.fillStyle='rgba(100,100,180,0.05)';
+  for(var x=0;x<W;x+=40){
+    for(var y=0;y<H;y+=40){
+      ctx.beginPath();ctx.arc(x,y,1,0,Math.PI*2);ctx.fill();
+    }
+  }
+}
+function drawButton(x,y,w,h,text,hover,accent){
+  var r=8;
+  ctx.fillStyle=hover?(accent?'rgba(0,212,255,0.2)':'#2a2a6a'):(accent?'rgba(0,212,255,0.1)':'#1a1a4a');
+  ctx.strokeStyle=accent?COLORS.player:'rgba(100,100,200,0.3)';
+  ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle=accent?COLORS.player:COLORS.btnText;
+  ctx.font='bold 16px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(text,x+w/2,y+h/2);
+}
+function drawStars(x,y,count,size){
+  for(var i=0;i<3;i++){
+    var sx=x+i*(size*2+4);
+    ctx.fillStyle=i<count?COLORS.star:COLORS.starEmpty;
+    drawStar(sx,y,size);
+  }
+}
+function drawStar(cx,cy,size){
+  ctx.beginPath();
+  for(var i=0;i<10;i++){
+    var a=Math.PI/2+i*Math.PI/5;
+    var r=i%2===0?size:size*0.4;
+    if(i===0)ctx.moveTo(cx+Math.cos(a)*r,cy-Math.sin(a)*r);
+    else ctx.lineTo(cx+Math.cos(a)*r,cy-Math.sin(a)*r);
+  }
+  ctx.closePath();ctx.fill();
+}
+
+function render(){
+  ctx.save();
+  // Screen shake
+  if(screenShake>0){
+    ctx.translate(rnd(-screenShake,screenShake),rnd(-screenShake,screenShake));
+    screenShake*=0.9;
+    if(screenShake<0.1)screenShake=0;
+  }
+  drawBg();
+  if(state==='menu')renderMenu();
+  else if(state==='levels')renderLevelSelect();
+  else if(state==='playing'||state==='win')renderGame();
+  // Particles
+  for(var i=0;i<particles.length;i++){
+    var p=particles[i];
+    ctx.globalAlpha=p.life;
+    ctx.fillStyle=p.color;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  // Fade
+  if(fadeAlpha>0){
+    ctx.fillStyle='rgba(10,10,26,'+fadeAlpha+')';
+    ctx.fillRect(-10,-10,W+20,H+20);
+  }
+  ctx.restore();
+}
+
+/* ============ MENU ============ */
+var menuHover=-1;
+function renderMenu(){
+  // Title
+  ctx.fillStyle=COLORS.player;
+  ctx.font='bold 36px system-ui';ctx.textAlign='center';
+  ctx.shadowColor=COLORS.player;ctx.shadowBlur=20;
+  ctx.fillText('Chain Reaction',W/2,H*0.2);
+  ctx.shadowBlur=0;
+  ctx.fillStyle=COLORS.textDim;
+  ctx.font='18px system-ui';
+  ctx.fillText('Strategic Puzzle',W/2,H*0.2+35);
+  // Total stars
+  ctx.fillStyle=COLORS.star;
+  ctx.font='16px system-ui';
+  drawStars(W/2-40,H*0.2+65,totalStars,8);
+  ctx.fillStyle=COLORS.textDim;
+  ctx.fillText(totalStars+'/120',W/2+40,H*0.2+65);
+  // Buttons
+  var bw=200,bh=50,bx=W/2-bw/2;
+  drawButton(bx,H*0.45,bw,bh,'Play',menuHover===0,false);
+  drawButton(bx,H*0.45+bh+15,bw,bh,'Settings',menuHover===1,false);
+  // How to play
+  ctx.fillStyle=COLORS.textDim;
+  ctx.font='14px system-ui';ctx.textAlign='center';
+  ctx.fillText('Tap cells to trigger chain reactions',W/2,H*0.78);
+  ctx.fillText('Capture all enemy cells to win',W/2,H*0.78+22);
+  ctx.fillText('Fewer moves = more stars',W/2,H*0.78+44);
+}
+
+/* ============ LEVEL SELECT ============ */
+function renderLevelSelect(){
+  ctx.fillStyle=COLORS.text;
+  ctx.font='bold 28px system-ui';ctx.textAlign='center';
+  ctx.fillText('Select Level',W/2,45);
+  // Back
+  drawButton(10,15,70,36,'Back',false,false);
+  // Grid of levels
+  var cols=5,cellW=60,cellH=70,gap=10;
+  var totalW=cols*(cellW+gap)-gap;
+  var startX=(W-totalW)/2;
+  var startY=70-levelScroll;
+  for(var i=0;i<LEVELS.length;i++){
+    var ci=i%cols,ri=Math.floor(i/cols);
+    var x=startX+ci*(cellW+gap);
+    var y=startY+ri*(cellH+gap);
+    if(y<-cellH||y>H+50)continue;
+    var unlocked=isUnlocked(i);
+    var stars=getStars(i);
+    var completed=stars>0;
+    // Chapter header
+    if(ci===0&&i>0){
+      var chIdx=Math.floor(i/8);
+      if(chIdx!==Math.floor((i-1)/8)&&chIdx<chapterNames.length){
+        var hy=startY+ri*(cellH+gap)-20;
+        ctx.fillStyle=COLORS.player;ctx.font='bold 14px system-ui';ctx.textAlign='left';
+        ctx.fillText('Ch.'+chIdx+' - '+chapterNames[chIdx],x,hy);
+      }
+    }
+    // Cell
+    ctx.fillStyle=unlocked?(completed?'rgba(0,212,255,0.15)':'rgba(30,30,60,0.8)'):'rgba(20,20,40,0.5)';
+    ctx.strokeStyle=unlocked?(completed?COLORS.player:'rgba(100,100,180,0.4)'):'rgba(50,50,80,0.3)';
+    ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.roundRect(x,y,cellW,cellH,8);ctx.fill();ctx.stroke();
+    // Number
+    ctx.fillStyle=unlocked?COLORS.text:COLORS.textDim;
+    ctx.font='bold 20px system-ui';ctx.textAlign='center';
+    ctx.fillText(''+(i+1),x+cellW/2,y+28);
+    // Stars
+    if(completed){
+      drawStars(x+cellW/2-18,y+48,stars,6);
+    }else if(unlocked){
+      ctx.fillStyle=COLORS.starEmpty;
+      drawStars(x+cellW/2-18,y+48,0,6);
+    }else{
+      ctx.fillStyle=COLORS.textDim;ctx.font='16px system-ui';
+      ctx.fillText('\u{1F512}',x+cellW/2,y+52);
+    }
+  }
+}
+
+/* ============ GAME ============ */
+function renderGame(){
+  var lv=LEVELS[currentLevel];
+  var topBar=60;
+  // Top bar
+  ctx.fillStyle=COLORS.text;
+  ctx.font='bold 18px system-ui';ctx.textAlign='left';
+  ctx.fillText('Level '+(currentLevel+1),15,topBar-20);
+  ctx.fillStyle=COLORS.textDim;ctx.font='14px system-ui';ctx.textAlign='center';
+  ctx.fillText(lv.name,W/2,topBar-20);
+  // Move counter
+  ctx.fillStyle=moves<=lv.par?COLORS.success:COLORS.text;
+  ctx.font='bold 16px system-ui';ctx.textAlign='right';
+  ctx.fillText('Moves: '+moves+' / '+lv.par,W-15,topBar-20);
+  // Buttons
+  drawButton(W-200,8,55,32,'Undo',false,false);
+  drawButton(W-140,8,55,32,'Hint',false,false);
+  drawButton(W-80,8,65,32,'Reset',false,false);
+  drawButton(10,8,45,32,'Back',false,false);
+  // Grid
+  var maxCellW=(W-40)/lv.c;
+  var maxCellH=(H-topBar-80)/lv.r;
+  var cellSize=Math.min(maxCellW,maxCellH,70);
+  var ox=(W-lv.c*cellSize)/2;
+  var oy=topBar+(H-topBar-60-lv.r*cellSize)/2;
+  // Draw grid background
+  ctx.fillStyle='rgba(20,20,50,0.5)';
+  ctx.beginPath();ctx.roundRect(ox-5,oy-5,lv.c*cellSize+10,lv.r*cellSize+10,10);ctx.fill();
+  // Draw cells
+  for(var r=0;r<gridRows;r++){
+    for(var c=0;c<gridCols;c++){
+      var cx=ox+(c+0.5)*cellSize;
+      var cy=oy+(r+0.5)*cellSize;
+      var cell=grid[r][c];
+      var cap=getCapacity(r,c);
+      var radius=cellSize*0.38;
+      // Hint highlight
+      if(showHint&&hintCell&&hintCell[0]===r&&hintCell[1]===c){
+        ctx.strokeStyle=COLORS.accent;
+        ctx.lineWidth=2;
+        ctx.globalAlpha=0.5+0.5*Math.sin(Date.now()*0.005);
+        ctx.beginPath();ctx.arc(cx,cy,radius+4,0,Math.PI*2);ctx.stroke();
+        ctx.globalAlpha=1;
+      }
+      if(cell.popped){
+        // Popped cell - dimmed
+        ctx.fillStyle='rgba(0,212,255,0.08)';
+        ctx.beginPath();ctx.arc(cx,cy,radius,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle='rgba(0,212,255,0.2)';ctx.lineWidth=1;
+        ctx.stroke();
+        // Checkmark
+        ctx.strokeStyle='rgba(0,255,136,0.5)';ctx.lineWidth=2;
+        ctx.beginPath();ctx.moveTo(cx-6,cy);ctx.lineTo(cx-2,cy+5);ctx.lineTo(cx+7,cy-5);ctx.stroke();
+        continue;
+      }
+      // Cell circle
+      var isPlayer=cell.owner===1;
+      var isEnemy=cell.owner===2;
+      var baseColor=isPlayer?COLORS.player:(isEnemy?COLORS.enemy:COLORS.neutral);
+      // Glow for atoms
+      if(cell.atoms>0){
+        ctx.shadowColor=baseColor;ctx.shadowBlur=cell.atoms>=cap-1?15:8;
+      }
+      ctx.fillStyle=isPlayer?'rgba(0,212,255,0.15)':(isEnemy?'rgba(255,51,102,0.15)':'rgba(50,50,80,0.3)');
+      ctx.beginPath();ctx.arc(cx,cy,radius,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle=baseColor;ctx.lineWidth=cell.atoms>=cap-1?2.5:1.5;
+      ctx.stroke();
+      ctx.shadowBlur=0;
+      // Critical mass indicator
+      if(cell.atoms>0&&cell.atoms>=cap-1){
+        ctx.strokeStyle=COLORS.accent;ctx.lineWidth=1;
+        ctx.globalAlpha=0.4+0.3*Math.sin(Date.now()*0.008);
+        ctx.beginPath();ctx.arc(cx,cy,radius+2,0,Math.PI*2);ctx.stroke();
+        ctx.globalAlpha=1;
+      }
+      // Draw atoms
+      if(cell.atoms>0){
+        var atomR=Math.min(cellSize*0.12,8);
+        var atomColor=isPlayer?COLORS.player:(isEnemy?COLORS.enemy:COLORS.textDim);
+        if(cell.atoms===1){
+          ctx.fillStyle=atomColor;
+          ctx.beginPath();ctx.arc(cx,cy,atomR,0,Math.PI*2);ctx.fill();
+        }else if(cell.atoms===2){
+          var off=cellSize*0.12;
+          ctx.fillStyle=atomColor;
+          ctx.beginPath();ctx.arc(cx-off,cy,atomR,0,Math.PI*2);ctx.fill();
+          ctx.beginPath();ctx.arc(cx+off,cy,atomR,0,Math.PI*2);ctx.fill();
+        }else if(cell.atoms===3){
+          var off=cellSize*0.14;
+          ctx.fillStyle=atomColor;
+          ctx.beginPath();ctx.arc(cx,cy-off*0.6,atomR,0,Math.PI*2);ctx.fill();
+          ctx.beginPath();ctx.arc(cx-off,cy+off*0.5,atomR,0,Math.PI*2);ctx.fill();
+          ctx.beginPath();ctx.arc(cx+off,cy+off*0.5,atomR,0,Math.PI*2);ctx.fill();
+        }else{
+          // 4+ atoms: diamond layout
+          var off=cellSize*0.16;
+          ctx.fillStyle=atomColor;
+          ctx.beginPath();ctx.arc(cx,cy-off,atomR,0,Math.PI*2);ctx.fill();
+          ctx.beginPath();ctx.arc(cx-off,cy,atomR,0,Math.PI*2);ctx.fill();
+          ctx.beginPath();ctx.arc(cx+off,cy,atomR,0,Math.PI*2);ctx.fill();
+          ctx.beginPath();ctx.arc(cx,cy+off,atomR,0,Math.PI*2);ctx.fill();
+          if(cell.atoms>4){
+            ctx.fillStyle=isPlayer?'rgba(0,212,255,0.6)':'rgba(255,51,102,0.6)';
+            ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+            ctx.fillText('+'+(cell.atoms-4),cx,cy+off+10);
+          }
+        }
+      }else{
+        // Empty cell - show capacity
+        ctx.fillStyle='rgba(100,100,150,0.3)';
+        ctx.font='10px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(cap+'',cx,cy);
+      }
+    }
+  }
+  // Bottom info
+  var iy=H-35;
+  ctx.fillStyle=COLORS.textDim;ctx.font='13px system-ui';ctx.textAlign='center';
+  if(hasEnemyCells()){
+    ctx.fillText('Tap any cell to add an atom. Reach critical mass to explode!',W/2,iy);
+  }else if(state==='playing'){
+    ctx.fillText('All captured! Processing...',W/2,iy);
+  }
+  // Win overlay
+  if(state==='win'){
+    ctx.fillStyle='rgba(10,10,26,0.8)';ctx.fillRect(0,0,W,H);
+    var bw2=250,bh2=280;
+    var bx2=W/2-bw2/2,by2=H/2-bh2/2;
+    ctx.fillStyle=COLORS.panel;ctx.beginPath();ctx.roundRect(bx2,by2,bw2,bh2,12);ctx.fill();
+    ctx.strokeStyle=COLORS.player;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=COLORS.success;ctx.font='bold 28px system-ui';ctx.textAlign='center';
+    ctx.fillText('Complete!',W/2,by2+45);
+    var par=LEVELS[currentLevel].par;
+    var stars=moves<=par?3:(moves<=par+1?2:1);
+    drawStars(W/2-36,by2+85,stars,12);
+    ctx.fillStyle=COLORS.text;ctx.font='16px system-ui';
+    ctx.fillText('Moves: '+moves+(moves<=par?' (Par!)':''),W/2,by2+130);
+    ctx.fillStyle=COLORS.textDim;ctx.font='14px system-ui';
+    ctx.fillText('Stars: '+stars+'/3',W/2,by2+155);
+    // Buttons
+    drawButton(bx2+20,by2+185,bw2-40,42,'Next Level',false,true);
+    drawButton(bx2+20,by2+237,bw2/2-30,35,'Retry',false,false);
+    drawButton(bx2+bw2/2+10,by2+237,bw2/2-30,35,'Levels',false,false);
+  }
+}
+
+/* ============ INPUT ============ */
+function getCellAt(px,py){
+  var lv=LEVELS[currentLevel];
+  var topBar=60;
+  var maxCellW=(W-40)/lv.c;
+  var maxCellH=(H-topBar-80)/lv.r;
+  var cellSize=Math.min(maxCellW,maxCellH,70);
+  var ox=(W-lv.c*cellSize)/2;
+  var oy=topBar+(H-topBar-60-lv.r*cellSize)/2;
+  var c2=Math.floor((px-ox)/cellSize);
+  var r2=Math.floor((py-oy)/cellSize);
+  if(r2>=0&&r2<gridRows&&c2>=0&&c2<gridCols)return[r2,c2];
+  return null;
+}
+function handleTap(x,y){
+  initAudio();
+  if(!audioCtx)initAudio();
+  if(fadeAlpha>0)return;
+  if(state==='menu'){
+    var bw=200,bh=50,bx=W/2-bw/2;
+    if(x>=bx&&x<=bx+bw&&y>=H*0.45&&y<=H*0.45+bh){
+      state='levels';levelScroll=0;playClick();return;
+    }
+    if(x>=bx&&x<=bx+bw&&y>=H*0.45+bh+15&&y<=H*0.45+2*bh+15){
+      // Settings modal inline
+      soundOn=!soundOn;musicOn=!musicOn;
+      if(musicOn&&!bgmNodes.length)startBGM();
+      if(!musicOn)stopBGM();
+      playClick();return;
+    }
+  }else if(state==='levels'){
+    if(x>=10&&x<=80&&y>=15&&y<=51){state='menu';playClick();return}
+    var cols=5,cellW=60,cellH=70,gap=10;
+    var totalW=cols*(cellW+gap)-gap;
+    var startX=(W-totalW)/2;
+    var startY=70-levelScroll;
+    for(var i=0;i<LEVELS.length;i++){
+      var ci=i%cols,ri=Math.floor(i/cols);
+      var cx=startX+ci*(cellW+gap);
+      var cy=startY+ri*(cellH+gap);
+      if(x>=cx&&x<=cx+cellW&&y>=cy&&y<=cy+cellH){
+        if(isUnlocked(i)){
+          startLevel(i);return;
+        }
+        return;
+      }
+    }
+  }else if(state==='playing'){
+    // Buttons
+    if(x>=W-200&&x<=W-145&&y>=8&&y<=40){undo();return}
+    if(x>=W-140&&x<=W-85&&y>=8&&y<=40){
+      hintCell=findHint();showHint=true;
+      playClick();return;
+    }
+    if(x>=W-80&&x<=W-15&&y>=8&&y<=40){
+      initGrid();playClick();return;
+    }
+    if(x>=10&&x<=55&&y>=8&&y<=40){
+      state='levels';playClick();return;
+    }
+    // Grid tap
+    if(animating)return;
+    var cell=getCellAt(x,y);
+    if(cell){
+      saveState();
+      moves++;
+      showHint=false;
+      simulateChain(cell[0],cell[1],function(){
+        if(checkWin()||!hasEnemyCells()){
+          state='win';
+          var par=LEVELS[currentLevel].par;
+          var stars=moves<=par?3:(moves<=par+1?2:1);
+          saveLevelComplete(currentLevel,stars);
+          playWin();
+        }
+      });
+    }
+  }else if(state==='win'){
+    var bw2=250,bh2=280;
+    var bx2=W/2-bw2/2,by2=H/2-bh2/2;
+    if(x>=bx2+20&&x<=bx2+bw2-20&&y>=by2+185&&y<=by2+227){
+      // Next level
+      if(currentLevel<LEVELS.length-1&&isUnlocked(currentLevel+1)){
+        startLevel(currentLevel+1);
+      }
+      return;
+    }
+    if(x>=bx2+20&&x<=bx2+bw2/2-10&&y>=by2+237&&y<=by2+272){
+      startLevel(currentLevel);return;
+    }
+    if(x>=bx2+bw2/2+10&&x<=bx2+bw2-20&&y>=by2+237&&y<=by2+272){
+      state='levels';return;
+    }
+  }
+}
+function startLevel(idx){
+  currentLevel=idx;
+  initGrid();
+  state='playing';
+  playClick();
+  if(!bgmNodes.length&&musicOn)startBGM();
+}
+
+/* ============ TOUCH/MOUSE ============ */
+canvas.addEventListener('pointerdown',function(e){
+  e.preventDefault();
+  var rect=canvas.getBoundingClientRect();
+  handleTap(e.clientX-rect.left,e.clientY-rect.top);
+});
+canvas.addEventListener('wheel',function(e){
+  if(state==='levels'){
+    e.preventDefault();
+    levelScroll=clamp(levelScroll+e.deltaY*0.5,0,Math.max(0,Math.ceil(LEVELS.length/5)*(80)-H+100));
+  }
+},{passive:false});
+
+/* ============ CLEANUP ============ */
+function cleanup(){
+  if(rafId){cancelAnimationFrame(rafId);rafId=null}
+  timers.forEach(function(id){clearInterval(id)});timers=[];
+  stopBGM();
+  if(audioCtx){audioCtx.close().catch(function(){});audioCtx=null}
+}
+window.addEventListener('beforeunload',cleanup);
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){
+    if(rafId){cancelAnimationFrame(rafId);rafId=null}
+  }else if(state==='playing'&&!rafId){
+    lastTime=performance.now();
+    rafId=requestAnimationFrame(loop);
+  }
+});
+
+/* ============ GAME LOOP ============ */
+var lastTime=0;
+function loop(ts){
+  rafId=requestAnimationFrame(loop);
+  var dt=Math.min((ts-lastTime)/1000,0.05);
+  lastTime=ts;
+  updateParticles(dt);
+  render();
+}
+
+/* ============ INIT ============ */
+function init(){
+  canvas=document.getElementById('game');
+  ctx=canvas.getContext('2d');
+  resize();
+  window.addEventListener('resize',resize);
+  loadSave();
+  if(showTutorial)tutorialStep=0;
+  lastTime=performance.now();
+  rafId=requestAnimationFrame(loop);
+}
+document.addEventListener('DOMContentLoaded',init);
+if(document.readyState!=='loading')init();
+})();
+</script>
+</body>
+</html>
