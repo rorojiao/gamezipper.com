@@ -204,6 +204,8 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 /* Merged: scroll-to-top button */
 #gz-scroll-top{position:fixed;bottom:24px;right:24px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4ecdc4,#45b7d1);color:#000;border:none;font-size:1.4em;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(78,210,196,0.4);z-index:99999;touch-action:manipulation;transition:transform .2s,opacity .3s;opacity:0}
 #gz-scroll-top.show{display:flex;opacity:1}
+@keyframes gz-cat-pulse{0%,100%{box-shadow:0 0 0 0 rgba(78,210,196,.5)}50%{box-shadow:0 0 0 8px rgba(78,210,196,0)}}#gz-last-cat-bar{animation:gz-cat-pulse 2s ease-in-out 2;animation-fill-mode:both}
+@media(prefers-reduced-motion:reduce){#gz-last-cat-bar{animation:none}}
 @media(hover:hover){#gz-scroll-top:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(78,210,196,0.5)}}
 #gz-scroll-top:active{transform:scale(0.92)}
 @media(max-width:600px){#gz-scroll-top{bottom:16px;right:16px;width:44px;height:44px;font-size:1.2em}}
@@ -698,6 +700,13 @@ document.querySelectorAll('.gz-reveal').forEach(function(el){observer.observe(el
   <span style="display:flex;align-items:center;gap:6px;font-size:.9em;color:#b8b8c8">📱 <b style="color:#fff">Mobile Ready</b> — Any device</span>
   <span style="display:flex;align-items:center;gap:6px;font-size:.9em;color:#b8b8c8">🆓 <b style="color:#fff">222+ Games — All free 🔒</span>
   <span style="display:flex;align-items:center;gap:6px;font-size:.9em;color:#b8b8c8">💻 <b style="color:#fff">School Safe</b> — Works on Chromebook</span>
+</div>
+<!-- UX-OPT 2026-06-03: Recently browsed category shortcut (returning visitors see their last category) -->
+<div id="gz-last-cat-bar" style="display:none;max-width:900px;margin:6px auto 0;padding:8px 20px;background:linear-gradient(135deg,#1a1a3e,#2d1b69);border:1px solid #4ecdc4;border-radius:12px;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;font-size:.88em" aria-live="polite">
+  <span style="color:#b8b8c8">⏪</span>
+  <span style="color:#fff"><b id="gz-last-cat-name">Your last category</b></span>
+  <button id="gz-last-cat-btn" style="background:#4ecdc4;color:#000;border:none;padding:6px 16px;border-radius:18px;font-weight:700;cursor:pointer;font-size:.9em;touch-action:manipulation">▶ Resume</button>
+  <button id="gz-last-cat-dismiss" style="background:none;border:1px solid #555;color:#888;padding:4px 10px;border-radius:14px;font-size:.78em;cursor:pointer" aria-label="Dismiss">✕</button>
 </div>
 <div id="gz-continue-bar"><span>▶ </span><span id="gz-continue-text">Continue where you left off</span> — <a id="gz-continue-link" href="#">Play now</a></div>
 <script>
@@ -1966,7 +1975,38 @@ var _origFilter = window.filter;
 window.filter = function(cat, btn){
   if(window._gzClearSearch) window._gzClearSearch();
   if(_origFilter) _origFilter(cat, btn);
+  // UX-OPT 2026-06-03: Track last selected category for returning visitors
+  if(cat && cat !== 'all'){
+    try{localStorage.setItem('gz_last_cat', JSON.stringify({cat:cat, t:Date.now()}))}catch(e){}
+  }
 };
+
+// UX-OPT 2026-06-03: Last category resume bar for returning visitors
+(function(){
+  var bar=document.getElementById('gz-last-cat-bar');
+  if(!bar)return;
+  try{
+    var data=JSON.parse(localStorage.getItem('gz_last_cat')||'null');
+    if(!data||!data.cat)return;
+    // Only show if last visit was within 7 days and not 'all'
+    if(Date.now()-data.t>7*24*3600*1000)return;
+    if(data.cat==='all')return;
+    var LABELS={puzzle:'🧩 Puzzle',arcade:'🕹️ Arcade',idle:'⏰ Idle',card:'🃏 Card',board:'♟️ Board',casual:'🎯 Casual',sports:'⚽ Sports',simulation:'🔧 Simulation',racing:'🏎️ Racing',skill:'⚡ Skill'};
+    var name=LABELS[data.cat]||data.cat;
+    var nameEl=document.getElementById('gz-last-cat-name');
+    var btnEl=document.getElementById('gz-last-cat-btn');
+    var disEl=document.getElementById('gz-last-cat-dismiss');
+    if(nameEl)nameEl.textContent='Welcome back — your last category: '+name;
+    bar.style.display='flex';
+    if(btnEl)btnEl.addEventListener('click',function(){
+      var catBtn=document.querySelector('.cat-btn[data-cat="'+data.cat+'"]')||Array.from(document.querySelectorAll('.cat-btn')).find(function(b){return (b.getAttribute('onclick')||'').indexOf("'"+data.cat+"'")>=0});
+      if(catBtn)catBtn.click();
+      bar.style.display='none';
+      try{localStorage.removeItem('gz_last_cat')}catch(e){}
+    });
+    if(disEl)disEl.addEventListener('click',function(){bar.style.display='none'});
+  }catch(e){}
+})();
 </script>
 <script>
 // Hide hero scroll arrow on first scroll
