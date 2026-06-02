@@ -373,17 +373,18 @@
  if (document.readyState === 'loading') {
    document.addEventListener('DOMContentLoaded', function() {
      if ('requestIdleCallback' in window) {
-       requestIdleCallback(init);
+       requestIdleCallback(init, { timeout: 2000 });
      } else {
        setTimeout(init, 100);
      }
    });
  } else {
-   // DOM already ready — still defer to requestIdleCallback
+   // DOM already ready — still defer to requestIdleCallback with hard timeout fallback.
+   // RIC may never fire on idle headless browsers (Kachilu, Lighthouse), so always
+   // schedule a setTimeout fallback that runs init() within 2s regardless.
    if ('requestIdleCallback' in window) {
-     requestIdleCallback(init);
-   } else {
-    setTimeout(init, 100);
-  }
-}
+     requestIdleCallback(init, { timeout: 2000 });
+   }
+   setTimeout(init, 2000);
+ }
 })();
