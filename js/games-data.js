@@ -243,7 +243,7 @@ const GAMES = [
   {name:"Traffic Escape",emoji:"🚗",cat:"puzzle",tags:["traffic","parking","cars","logic","unblock"],url:"/traffic-escape/",desc:"Clear the road by moving cars in the right order. A traffic puzzle with 50 levels of increasing difficulty.",isNew:true,status:"live"},
   {name:"Slice Master",emoji:"🔪",cat:"puzzle",tags:["Puzzle","Slice","Cut","Geometry","Physics","Brain","Casual","Browser","Free","HTML5"],url:"/slice-master/",desc:"Draw cutting lines to slice geometric shapes into target pieces. 50 satisfying physics-based cut puzzles across 5 chapters. Precision slicing with star ratings!",isNew:true,status:"live"},
 
-{name:"TriPeaks Solitaire",emoji:"🃏",cat:"card",tags:["tripeaks","solitaire","card","puzzle","peaks","tri-peaks","casual","classic"],desc:"Clear three pyramids by matching cards within one rank. Undo, hints, wild cards, 36 levels, daily challenges!",url:"/tripeaks-solitaire/",isNew:true,status:"live"}
+{name:"Magic Tiles",emoji:"🎹",cat:"puzzle",tags:["Puzzle","Music","Rhythm","Piano","Tiles","Tap","Casual","Brain","Browser","Free","HTML5"],url:"/magic-tiles/",desc:"Tap black tiles in time with the music! 30+ procedural piano songs across 5 difficulty chapters. Perfect for rhythm-game fans, no download needed.",isNew:true,status:"live"},{name:"TriPeaks Solitaire",emoji:"🃏",cat:"card",tags:["tripeaks","solitaire","card","puzzle","peaks","tri-peaks","casual","classic"],desc:"Clear three pyramids by matching cards within one rank. Undo, hints, wild cards, 36 levels, daily challenges!",url:"/tripeaks-solitaire/",isNew:true,status:"live"}
 ];
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
