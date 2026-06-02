@@ -2917,6 +2917,67 @@ if(d){d.style.display='block';setTimeout(function(){gzDismissOnboarding()},8000)
   el.addEventListener('focus',function(){el.setAttribute('placeholder',orig)});
   el.addEventListener('blur',function(){if(!el.value)rotate()});
 })();
+
+<script id="gz-search-restore">
+/* UX-OPT: Search query restore — show "↻ Restore: <term>" chip on focus
+   if user has a previous search term saved in localStorage.
+   One-tap restore: clicks the chip to refill the input.                      */
+(function(){
+  try {
+    var el = document.getElementById('gz-search');
+    if (!el) return;
+    var KEY = 'gz_last_search';
+    var last = localStorage.getItem(KEY);
+    if (!last) return;
+    var chip = document.createElement('div');
+    chip.id = 'gz-search-restore-chip';
+    chip.setAttribute('role', 'button');
+    chip.setAttribute('tabindex', '0');
+    chip.style.cssText = 'display:none;position:absolute;top:50%;right:50px;transform:translateY(-50%);' +
+      'background:rgba(78,210,196,.12);border:1px solid rgba(78,210,196,.4);color:#4ecdc4;' +
+      'padding:4px 10px;border-radius:12px;font-size:.75em;cursor:pointer;z-index:2;' +
+      'max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:none';
+    chip.innerHTML = '↻ <span></span>';
+    chip.title = 'Restore your last search: ' + last;
+    chip.querySelector('span').textContent = 'Restore: ' + (last.length > 18 ? last.slice(0,18) + '…' : last);
+    // Insert after the search input wrap
+    var wrap = el.parentNode;
+    if (wrap && getComputedStyle(wrap).position === 'static') {
+      wrap.style.position = 'relative';
+    }
+    if (wrap) wrap.appendChild(chip);
+
+    function show() { if (el.value === '') chip.style.display = 'block'; }
+    function hide() { chip.style.display = 'none'; }
+    el.addEventListener('focus', show);
+    el.addEventListener('blur', function(){ setTimeout(hide, 150); }); // delay to allow chip click
+    el.addEventListener('input', function(){ if (el.value === '') show(); else hide(); });
+
+    function restore() {
+      el.value = last;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.focus();
+      hide();
+    }
+    chip.addEventListener('click', restore);
+    chip.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); restore(); }
+    });
+
+    // Persist search on input change (debounced 800ms)
+    var saveT = null;
+    el.addEventListener('input', function(){
+      if (saveT) clearTimeout(saveT);
+      saveT = setTimeout(function(){
+        try {
+          var v = el.value.trim();
+          if (v) localStorage.setItem(KEY, v);
+          else localStorage.removeItem(KEY);
+        } catch(e){}
+      }, 800);
+    });
+  } catch(e){}
+})();
 </script>
 
 <script>
