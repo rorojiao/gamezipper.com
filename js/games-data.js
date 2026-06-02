@@ -271,4 +271,4 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
-}
+,{name:"Coin Merge Machine",emoji:"🪙",cat:"arcade",tags:["Coin","Merge","Puzzle","Physics","Arcade","Casual","Brain","Drop","Browser","Free","HTML5"],url:"/coin-machine/",desc:"Drop coins into the machine and merge identical ones to create higher-value coins! Physics-based merge puzzle with 11 coin types from Copper to Legendary. Free online, no download!",isNew:true,status:"live"}}
