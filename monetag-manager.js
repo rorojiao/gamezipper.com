@@ -772,6 +772,8 @@
   // ==================== HOMEPAGE MID-GRID AD ====================
   // The homepage dynamically inserts a #gz-ad-mid-grid div after the 20th game card.
   // This fills that ad slot with AdSense primary + Monetag fallback.
+  // Container is created hidden by index.html — we only show it when an ad ACTUALLY fills.
+  // AdSense iframe presence = fill; Monetag script onload = fill. Anything else = hide.
   function showHomepageMidGrid() {
     if (!state.isHomePage) return;
     var container = $('#gz-ad-mid-grid');
@@ -781,16 +783,48 @@
     setTimeout(function() {
       if (container.getAttribute('data-filled')) return;
       if (!canShowAd('homepage_banner')) return;
-      // Try AdSense first (higher fill); Monetag fallback after 2s
-      loadAdSenseAd(container, '1099212472');
+
+      // Try AdSense first (higher fill). Use an iframe-presence check to detect actual fill.
+      try {
+        loadAdSenseAd(container, '1099212472');
+      } catch(e) {}
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
         if (!canShowAd('homepage_banner')) return;
+        // Monetag fallback. Resolve on script load, reject on error/timeout.
         loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
+          // Monetag script loaded successfully — they injected an iframe/element
           container.setAttribute('data-filled', '1');
           markAdShown('homepage_banner');
-        }).catch(function() {});
+          container.style.display = 'block';
+          container.style.minHeight = '100px';
+          container.style.textAlign = 'center';
+          container.style.padding = '12px 0';
+        }).catch(function() {
+          // Both AdSense and Monetag failed — keep container hidden (no white box)
+          container.style.display = 'none';
+        });
       }, 2000);
+
+      // Independent AdSense fill check: poll iframe presence for up to 4s after AdSense call
+      var adsenseStart = Date.now();
+      var adsenseTimer = setInterval(function() {
+        if (container.getAttribute('data-filled')) { clearInterval(adsenseTimer); return; }
+        var ins = container.querySelector('ins.adsbygoogle');
+        var hasIframe = ins && ins.querySelector('iframe');
+        var hasContent = ins && ins.getAttribute('data-ad-status') === 'filled';
+        if (hasIframe || hasContent) {
+          container.setAttribute('data-filled', '1');
+          markAdShown('homepage_banner');
+          container.style.display = 'block';
+          container.style.minHeight = '100px';
+          container.style.textAlign = 'center';
+          container.style.padding = '12px 0';
+          clearInterval(adsenseTimer);
+          return;
+        }
+        if (Date.now() - adsenseStart > 4000) { clearInterval(adsenseTimer); }
+      }, 500);
     }, CONFIG.TIMING.homepageBannerDelay + 3000); // 4.5s total delay (between first + second banner)
   }
 
@@ -801,19 +835,47 @@
     if (!container) return;
     if (container.getAttribute('data-filled')) return;
 
+    // Hide by default — only show if an ad actually fills. Prevents white box on fill failure.
+    var wasHidden = container.style.display === 'none';
+    if (!wasHidden) {
+      container.setAttribute('data-gz-orig-display', container.style.display || '');
+      container.style.display = 'none';
+    }
+
     setTimeout(function() {
       if (container.getAttribute('data-filled')) return;
       if (!canShowAd('container')) return;
       // Try AdSense first (higher fill); Monetag fallback after 2s
-      loadAdSenseAd(container, '7373732357');
+      try { loadAdSenseAd(container, '7373732357'); } catch(e) {}
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
         if (!canShowAd('container')) return;
         loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
           container.setAttribute('data-filled', '1');
           markAdShown('container');
-        }).catch(function() {});
+          container.style.display = container.getAttribute('data-gz-orig-display') || 'block';
+        }).catch(function() {
+          // Keep hidden — no white box
+          container.style.display = 'none';
+        });
       }, 2000);
+
+      // AdSense fill check: poll for actual iframe insertion
+      var adsenseStart = Date.now();
+      var adsenseTimer = setInterval(function() {
+        if (container.getAttribute('data-filled')) { clearInterval(adsenseTimer); return; }
+        var ins = container.querySelector('ins.adsbygoogle');
+        var hasIframe = ins && ins.querySelector('iframe');
+        var hasContent = ins && ins.getAttribute('data-ad-status') === 'filled';
+        if (hasIframe || hasContent) {
+          container.setAttribute('data-filled', '1');
+          markAdShown('container');
+          container.style.display = container.getAttribute('data-gz-orig-display') || 'block';
+          clearInterval(adsenseTimer);
+          return;
+        }
+        if (Date.now() - adsenseStart > 4000) { clearInterval(adsenseTimer); }
+      }, 500);
     }, CONFIG.TIMING.containerAdDelay);
   }
 
