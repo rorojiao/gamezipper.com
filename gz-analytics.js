@@ -2,7 +2,8 @@
 (function() {
   var SITE = 'gamezipper.com';
   var EP = 'http://10.10.29.67:8090/api/collect.gz';
-  var EP_LOCAL = 'http://10.10.29.67:8090/api/collect.gz';
+  // EP_LOCAL removed: same as EP (was a duplicate-fetch bug — sendBeacon fallback
+  // + dual fetch both hit the same endpoint, doubling server load)
   var BK = 'gz_ab';
   var T = 30000;
   var P = location.pathname;
@@ -22,14 +23,11 @@
   function snd(p) {
     if (!p || !p.length) return;
     var d = JSON.stringify(p);
-    // Send to external analytics (original)
     if (N.sendBeacon) {
-      if (!N.sendBeacon(EP, d)) fS(d);
+      N.sendBeacon(EP, d);
     } else {
       fS(d);
     }
-    // Also send to local BI server (dual-write)
-    try { fetch(EP_LOCAL, { method: 'POST', body: d, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(function() {}); } catch(e) {}
   }
   function fS(d) {
     fetch(EP, { method: 'POST', body: d, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(function() {});
@@ -200,6 +198,112 @@
       if (_aeVisible) { _aeTotal += Date.now() - _aeStart; }
       if (_aeTotal > 0) { ps('active_time', { u: P, ms: _aeTotal }); }
     });
+  })();
+
+  /* Web Vitals Rating: classify LCP/CLS/INP as good/needs-improvement/poor
+     Thresholds (Google official 2024-2026):
+     LCP:  good <=2500ms, poor >4000ms
+     CLS:  good <=0.1,   poor >0.25
+     INP:  good <=200ms,  poor >500ms                                       */
+  (function(){
+    function rate(metric, value) {
+      if (value == null) return null;
+      if (metric === 'lcp') return value <= 2500 ? 'good' : value <= 4000 ? 'needs-improvement' : 'poor';
+      if (metric === 'cls') return value <= 0.1  ? 'good' : value <= 0.25 ? 'needs-improvement' : 'poor';
+      if (metric === 'inp') return value <= 200  ? 'good' : value <= 500  ? 'needs-improvement' : 'poor';
+      if (metric === 'fcp') return value <= 1800 ? 'good' : value <= 3000 ? 'needs-improvement' : 'poor';
+      if (metric === 'ttfb')return value <= 800  ? 'good' : value <= 1800 ? 'needs-improvement' : 'poor';
+      return null;
+    }
+    var reported = { lcp: false, cls: false, inp: false };
+    var pObs2 = window.PerformanceObserver || window.webkitPerformanceObserver;
+    if (!pObs2) return;
+    try {
+      // LCP
+      new pObs2(function(list){
+        var entries = list.getEntries();
+        var last = entries[entries.length - 1];
+        if (last && !reported.lcp) { reported.lcp = true; ps('vitals_rating', { u: P, metric: 'lcp', v: Math.round(last.startTime), r: rate('lcp', last.startTime) }); }
+      }).observe({ type: 'largest-contentful-paint', buffered: true });
+      // CLS — sum all shifts, report on hide
+      var clsSum = 0;
+      new pObs2(function(list){
+        for (var i = 0; i < list.getEntries().length; i++) {
+          if (!list.getEntries()[i].hadRecentInput) clsSum += list.getEntries()[i].value;
+        }
+      }).observe({ type: 'layout-shift', buffered: true });
+      document.addEventListener('visibilitychange', function(){
+        if (document.visibilityState === 'hidden' && !reported.cls && clsSum) {
+          reported.cls = true;
+          ps('vitals_rating', { u: P, metric: 'cls', v: Math.round(clsSum * 1000) / 1000, r: rate('cls', clsSum) });
+        }
+      });
+      // INP — use existing _inpWorst logic
+      var inpW = 0;
+      new pObs2(function(list){
+        for (var i = 0; i < list.getEntries().length; i++) {
+          if (list.getEntries()[i].duration > inpW) inpW = Math.round(list.getEntries()[i].duration);
+        }
+      }).observe({ type: 'event', buffered: true, durationThreshold: 16 });
+      document.addEventListener('visibilitychange', function(){
+        if (document.visibilityState === 'hidden' && !reported.inp && inpW > 0) {
+          reported.inp = true;
+          ps('vitals_rating', { u: P, metric: 'inp', v: inpW, r: rate('inp', inpW) });
+        }
+      });
+    } catch(e) {}
+  })();
+
+  /* Rage Click Detection: user rapidly clicks same spot 3+ times in 1s
+     — strong signal of broken UI / dead buttons / no feedback              */
+  (function(){
+    var _rcLastTarget = null;
+    var _rcLastTime = 0;
+    var _rcCount = 0;
+    var _rcLastX = 0, _rcLastY = 0;
+    document.addEventListener('click', function(e){
+      var now = Date.now();
+      var x = e.clientX || 0, y = e.clientY || 0;
+      var sameArea = Math.abs(x - _rcLastX) < 30 && Math.abs(y - _rcLastY) < 30;
+      if (e.target === _rcLastTarget && now - _rcLastTime < 1000 && sameArea) {
+        _rcCount++;
+        if (_rcCount >= 3) {
+          ps('rage_click', { u: P, tag: e.target.tagName, cls: (e.target.className||'').toString().slice(0,50), x: x, y: y, n: _rcCount });
+          _rcCount = 0; // reset, report once per burst
+        }
+      } else {
+        _rcCount = 1;
+      }
+      _rcLastTarget = e.target;
+      _rcLastTime = now;
+      _rcLastX = x; _rcLastY = y;
+    }, true);
+  })();
+
+  /* Dead Click Detection: user clicks but no navigation/event fires within 1s
+     — signals non-interactive element that LOOKS clickable (UX confusion)     */
+  (function(){
+    document.addEventListener('click', function(e){
+      var t = e.target;
+      var tag = t.tagName;
+      // Only flag suspicious elements: divs/spans/labels that aren't links
+      if (tag === 'DIV' || tag === 'SPAN' || tag === 'LABEL' || tag === 'LI' || tag === 'IMG' || tag === 'SVG' || tag === 'P') {
+        var lookClickable = t.getAttribute('role') === 'button'
+          || t.onclick
+          || (t.style && t.style.cursor === 'pointer')
+          || (t.className && /click|card|btn|tile|thumb/i.test(t.className.toString()));
+        if (lookClickable) {
+          var clickedAt = Date.now();
+          var sel = (t.tagName || '?') + '.' + (t.className||'').toString().slice(0,40);
+          // After 1.5s, check if URL changed (no nav = dead click)
+          setTimeout(function(){
+            if (location.pathname === P && Date.now() - clickedAt >= 1400) {
+              ps('dead_click', { u: P, sel: sel });
+            }
+          }, 1500);
+        }
+      }
+    }, true);
   })();
 
   window.gzAnalytics = {
