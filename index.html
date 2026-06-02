@@ -493,6 +493,16 @@ document.querySelectorAll('.gz-reveal').forEach(function(el){observer.observe(el
 /* #4 Reduced motion for game cards */
 @media(prefers-reduced-motion:reduce){.game-card,.game-card *,.gz-reveal,.gz-reveal *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
+<style>
+/* === GameZipper UX Batch 2 2026-06-02 11:30 === */
+/* Scroll depth milestone pill */
+.gz-milestone-pill{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:linear-gradient(135deg,#1a1a3e,#2d1b69);color:#fff;padding:10px 18px;border-radius:24px;border:1px solid rgba(78,205,196,.4);box-shadow:0 6px 24px rgba(0,0,0,.5);z-index:99995;display:flex;align-items:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .4s,transform .4s;font-size:.88em;max-width:90vw;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-weight:500}
+.gz-milestone-pill.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.gz-milestone-pill button.gz-ms-action{padding:6px 14px;background:#4ecdc4;color:#000;border:none;border-radius:18px;font-weight:700;cursor:pointer;font-size:.85em;white-space:nowrap;touch-action:manipulation;min-height:32px}
+.gz-milestone-pill button.gz-ms-dismiss{background:transparent;border:none;color:#888;cursor:pointer;font-size:1.1em;padding:2px 6px;min-height:32px;min-width:32px;touch-action:manipulation}
+@media(max-width:480px){.gz-milestone-pill{font-size:.8em;padding:8px 12px;flex-direction:column;gap:6px;text-align:center;bottom:14px}}
+@media(prefers-reduced-motion:reduce){.gz-milestone-pill{transition:none}}
+</style>
 </head>
 <body>
 <div class="gz-scroll-progress" id="gz-scroll-progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Page scroll progress"></div>
@@ -638,6 +648,12 @@ document.querySelectorAll('.gz-reveal').forEach(function(el){observer.observe(el
   <span>🎲 Looking for something new?</span>
   <button class="gz-idle-action" id="gz-idle-surprise" type="button">Surprise Me!</button>
   <button class="gz-idle-dismiss" id="gz-idle-dismiss" type="button" aria-label="Dismiss">×</button>
+</div>
+<!-- UX Batch 2 2026-06-02 11:30: scroll depth milestone pill -->
+<div class="gz-milestone-pill" id="gz-milestone-pill" role="status" aria-live="polite" hidden>
+  <span id="gz-ms-text">Almost there!</span>
+  <button class="gz-ms-action" id="gz-ms-action" type="button">Discover more ↓</button>
+  <button class="gz-ms-dismiss" id="gz-ms-dismiss" type="button" aria-label="Dismiss">×</button>
 </div>
 <nav aria-label="Game navigation"><div class="gz-nav-sticky">
 <div class="gz-search-wrap" role="search" style="position:relative">
@@ -3011,6 +3027,60 @@ if(d){d.style.display='block';setTimeout(function(){gzDismissOnboarding()},8000)
   setTimeout(function(){
     if(!shownThisSession)resetIdle();
   },2000);
+})();
+</script>
+<script>
+/* === GameZipper UX Batch 2 2026-06-02 11:30 === */
+(function(){
+  'use strict';
+  if(window.__gzUxBatch2)return;window.__gzUxBatch2=1;
+  var pill=document.getElementById('gz-milestone-pill');
+  if(!pill)return;
+  var text=document.getElementById('gz-ms-text');
+  var action=document.getElementById('gz-ms-action');
+  var dismiss=document.getElementById('gz-ms-dismiss');
+  var shown=Object.create(null);
+  function showPill(pct,message,actionText,actionTarget){
+    if(shown[pct])return;
+    shown[pct]=true;
+    text.textContent=message;
+    action.textContent=actionText;
+    action.onclick=function(){
+      if(actionTarget==='top'){window.scrollTo({top:0,behavior:'smooth'})}
+      else if(actionTarget==='surprise'){
+        var fab=document.querySelector('[onclick*="Surprise"],.gz-surprise-fab,#gz-surprise');
+        if(fab){fab.click();return}
+        var trending=document.getElementById('gz-trending-section');
+        if(trending){trending.scrollIntoView({behavior:'smooth'})}
+      }
+      else{var t=document.getElementById(actionTarget);if(t){t.scrollIntoView({behavior:'smooth'})}}
+      hidePill();
+    };
+    pill.hidden=false;
+    requestAnimationFrame(function(){pill.classList.add('show')});
+  }
+  function hidePill(){
+    pill.classList.remove('show');
+    setTimeout(function(){if(!pill.classList.contains('show'))pill.hidden=true},400);
+  }
+  dismiss.addEventListener('click',hidePill);
+  var ticking=false;
+  function checkMilestone(){
+    if(ticking)return;
+    ticking=true;
+    requestAnimationFrame(function(){
+      var doc=document.documentElement;
+      var total=doc.scrollHeight-doc.clientHeight;
+      if(total<=0){ticking=false;return}
+      var pct=Math.round((window.scrollY/total)*100);
+      if(pct>=25&&pct<50)showPill(25,'Keep exploring!','Continue ↓','gz-trending-section');
+      else if(pct>=50&&pct<75)showPill(50,'Halfway through — try something new','Surprise Me','surprise');
+      else if(pct>=75&&pct<90)showPill(75,'Almost there!','Discover more ↓','gz-discover');
+      else if(pct>=90)showPill(90,'Back to top?','↑ Top','top');
+      ticking=false;
+    });
+  }
+  window.addEventListener('scroll',checkMilestone,{passive:true});
 })();
 </script>
 </body>
