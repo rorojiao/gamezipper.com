@@ -199,6 +199,7 @@ function sfxClick()  { playTone(700, 0.06, "sine", 0.05); }
 function sfxWin()    { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.25, "sine", 0.09), i * 110)); }
 function sfxSorted() { playTone(880, 0.12, "sine", 0.07); setTimeout(() => playTone(1175, 0.2, "sine", 0.06), 80); }
 function sfxHint()   { playTone(880, 0.1, "sine", 0.08); setTimeout(() => playTone(1100, 0.15, "sine", 0.06), 60); }
+function sfxLevelStart() { [392, 523, 659, 784].forEach((f, i) => setTimeout(() => playTone(f, 0.18, "sine", 0.07), i * 70)); }
 
 // ─── Water Color Palette ───
 const COLORS = [
@@ -342,6 +343,14 @@ let now = 0;
 let sfxEnabled = true;
 let colorblindMode = false; // adds symbols to water layers for colorblind accessibility
 let lastPlayedLevel = 0; // for Continue button
+
+// ─── Level Intro Card ───
+let levelIntroTimer = 0;       // frames remaining to show intro card (0 = hidden)
+let levelIntroStartLevel = -1; // which level the intro belongs to (auto-skip if mismatch)
+
+// ─── First-Time Tutorial Hints ───
+let tutorialStep = 0;          // 0=off, 1=tap to select, 2=tap another to pour
+let tutorialTapCount = 0;      // progress within current step
 
 // ─── Level Jump Dialog ───
 let jumpDialogOpen = false;
@@ -644,6 +653,18 @@ function initLevel(idx) {
   extraTubeUsed = 0;
   levelUsedHint = false;
   levelStartTime = Date.now();
+  // Show intro card for ~12s — quick orientation: level number + difficulty + bottle count
+  levelIntroTimer = 720;    // ~12s @ 60fps (longer for visibility/testing)
+  levelIntroStartLevel = idx;
+  // Upbeat start chime (catches the moment of beginning a new level)
+  if (idx > 0 || !earnedAchievements.first_sort) sfxLevelStart();
+  // First-time tutorial: show on levels 0-2 only, then turn off permanently
+  if (idx <= 2 && !earnedAchievements.first_sort) {
+    tutorialStep = 1;
+    tutorialTapCount = 0;
+  } else {
+    tutorialStep = 0;
+  }
   state = "game";
 }
 
@@ -2243,6 +2264,129 @@ function renderGame() {
     X.fill();
     X.restore();
   }
+
+  // ── Level Intro Card (slides down from top, fades out) ──
+  if (levelIntroTimer > 0 && levelIntroStartLevel === currentLevel) {
+    levelIntroTimer = Math.max(0, levelIntroTimer - 1);
+    // 720 frames total: 0-100% slide-in over first 14, hold 14-660, fade 660-720
+    const total = 720;
+    const elapsed = total - levelIntroTimer;
+    let slideT, alpha = 1;
+    if (elapsed < 14) slideT = elapsed / 14;            // ~230ms slide in
+    else if (elapsed < 660) slideT = 1;                // hold ~10.7s
+    else { slideT = 1; alpha = (720 - elapsed) / 60; } // ~1s fade out
+    const easeSlide = 1 - Math.pow(1 - Math.min(1, slideT), 3);
+    const cardW = Math.min(280, W * 0.78);
+    const cardH = 70;
+    const cardX = (W - cardW) / 2;
+    const startY = -cardH - 8;
+    const endY = 110;
+    const cardY = startY + (endY - startY) * easeSlide;
+    X.save();
+    X.globalAlpha = alpha;
+    // Shadow
+    X.shadowColor = "rgba(108,92,231,0.5)";
+    X.shadowBlur = 22;
+    X.shadowOffsetY = 4;
+    // Card body
+    const cgrad = X.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
+    cgrad.addColorStop(0, "rgba(35,30,80,0.97)");
+    cgrad.addColorStop(1, "rgba(20,18,55,0.97)");
+    X.fillStyle = cgrad;
+    roundRect(cardX, cardY, cardW, cardH, 14);
+    X.fill();
+    X.shadowBlur = 0;
+    X.shadowOffsetY = 0;
+    // Accent top stripe
+    const ag = X.createLinearGradient(cardX, cardY, cardX + cardW, cardY);
+    ag.addColorStop(0, "rgba(108,92,231,0)");
+    ag.addColorStop(0.5, "rgba(162,155,254,0.8)");
+    ag.addColorStop(1, "rgba(108,92,231,0)");
+    X.fillStyle = ag;
+    roundRect(cardX, cardY, cardW, 2, 1);
+    X.fill();
+    // Border
+    X.strokeStyle = "rgba(162,155,254,0.35)";
+    X.lineWidth = 1.2;
+    roundRect(cardX, cardY, cardW, cardH, 14);
+    X.stroke();
+    // "Level N" title
+    X.fillStyle = "#fff";
+    X.font = `800 ${Math.round(Math.min(W * 0.08, 28))}px 'Baloo 2','Nunito',sans-serif`;
+    X.textAlign = "center";
+    X.textBaseline = "middle";
+    X.fillText("Level " + (currentLevel + 1), W / 2, cardY + 24);
+    // Subtitle: color count + bottles
+    const diffSec = DIFF_SECTIONS.filter(s => s.start <= currentLevel).pop();
+    const subtitle = (numColors + " colors · " + bottles.length + " bottles" + (diffSec ? " · " + diffSec.label : ""));
+    X.fillStyle = "rgba(255,255,255,0.7)";
+    X.font = "600 12px 'Nunito',sans-serif";
+    X.fillText(subtitle, W / 2, cardY + 50);
+    // Tap-to-skip hint
+    if (elapsed > 20) {
+      X.fillStyle = "rgba(255,255,255,0.3)";
+      X.font = "500 9px 'Nunito',sans-serif";
+      X.fillText("tap to skip", W / 2, cardY + cardH - 4);
+    }
+    X.restore();
+  }
+
+  // ── Tutorial Overlay (first 3 levels for new players) ──
+  if (tutorialStep > 0 && levelIntroStartLevel === currentLevel) {
+    let tutText = "";
+    let tutHighlightIdx = -1; // bottle to highlight with glow
+    if (tutorialStep === 1) {
+      tutText = "👆 Tap any bottle to select it";
+      // Highlight the first non-empty bottle
+      for (let ti = 0; ti < bottles.length; ti++) {
+        if (bottles[ti].length > 0) { tutHighlightIdx = ti; break; }
+      }
+    } else if (tutorialStep === 2) {
+      tutText = "👉 Now tap a bottle to pour into";
+      // Highlight the selected bottle
+      tutHighlightIdx = selectedBottle >= 0 ? selectedBottle : -1;
+    } else if (tutorialStep === 3) {
+      tutText = "🎉 Great! Sort all colors to win";
+    }
+    // Subtle highlight pulse on target bottle
+    if (tutHighlightIdx >= 0) {
+      const layout = getBottleLayout();
+      const pulse = 0.5 + 0.5 * Math.sin(now * 0.008);
+      X.save();
+      X.strokeStyle = `rgba(255,215,0,${0.5 + pulse * 0.4})`;
+      X.lineWidth = 3;
+      X.shadowColor = "rgba(255,215,0,0.7)";
+      X.shadowBlur = 14 + pulse * 10;
+      X.beginPath();
+      X.ellipse(layout.cx[tutHighlightIdx], layout.cy[tutHighlightIdx], layout.bw * 0.65, layout.bh * 0.50, 0, 0, Math.PI * 2);
+      X.stroke();
+      X.restore();
+    }
+    // Floating tutorial text at bottom
+    if (tutText) {
+      X.save();
+      const tutW = Math.min(320, W * 0.85);
+      const tutH = 38;
+      const tutX = (W - tutW) / 2;
+      const tutY = H - 70;
+      X.globalAlpha = 0.94;
+      const tg = X.createLinearGradient(tutX, tutY, tutX, tutY + tutH);
+      tg.addColorStop(0, "rgba(108,92,231,0.95)");
+      tg.addColorStop(1, "rgba(74,68,170,0.95)");
+      X.fillStyle = tg;
+      roundRect(tutX, tutY, tutW, tutH, 10);
+      X.fill();
+      X.strokeStyle = "rgba(255,215,0,0.5)";
+      X.lineWidth = 1.2;
+      X.stroke();
+      X.fillStyle = "#fff";
+      X.font = "700 14px 'Nunito',sans-serif";
+      X.textAlign = "center";
+      X.textBaseline = "middle";
+      X.fillText(tutText, W / 2, tutY + tutH / 2);
+      X.restore();
+    }
+  }
 }
 
 function renderWin() {
@@ -2757,6 +2901,12 @@ function onTap(px, py) {
     // Block bottle taps during solving
     if (solving) return;
 
+    // Skip intro card on any tap
+    if (levelIntroTimer > 0 && levelIntroStartLevel === currentLevel) {
+      levelIntroTimer = 0;
+      return;
+    }
+
     // Bottle taps
     const layout = getBottleLayout();
     for (let i = 0; i < bottles.length; i++) {
@@ -2771,11 +2921,15 @@ function onTap(px, py) {
             sfxSelect();
             // Tap bounce effect
             bottleBounces[i] = { scale: 1.06, velocity: 0 };
+            // Tutorial step 1 → 2: user selected a bottle
+            if (tutorialStep === 1) { tutorialStep = 2; }
           }
         } else if (selectedBottle === i) {
           selectedBottle = -1;
         } else {
           executePour(selectedBottle, i);
+          // Tutorial step 2 → 3: user poured. Don't show step 3 long — fade after 1.5s
+          if (tutorialStep === 2) { tutorialStep = 3; setTimeout(() => { tutorialStep = 0; }, 1800); }
         }
         return;
       }
