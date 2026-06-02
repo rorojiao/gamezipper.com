@@ -352,6 +352,9 @@ let levelIntroStartLevel = -1; // which level the intro belongs to (auto-skip if
 let tutorialStep = 0;          // 0=off, 1=tap to select, 2=tap another to pour
 let tutorialTapCount = 0;      // progress within current step
 
+// ─── Keyboard Shortcuts Help ───
+let shortcutsOpen = false;     // show shortcuts panel
+
 // ─── Level Jump Dialog ───
 let jumpDialogOpen = false;
 let jumpInput = "";
@@ -642,6 +645,7 @@ loadSave();
 function initLevel(idx) {
   currentLevel = idx;
   lastPlayedLevel = idx;
+  shortcutsOpen = false;
   saveSave();
   const lv = decodeLevel(idx);
   numColors = lv.n;
@@ -1717,6 +1721,12 @@ function renderSplash() {
     const dailyDone = isDailyDone();
     const dailyW = Math.min(200, W * 0.55);
     drawButton(W / 2 - dailyW / 2, nextBtnY, dailyW, 42, (dailyDone ? "✅ " : "🔥 ") + "Daily Challenge", hoverBtn === 2, true);
+    nextBtnY += 42 + 10;
+
+    // Random Level button (picks any unlocked level)
+    const randomW = Math.min(200, W * 0.55);
+    drawButton(W / 2 - randomW / 2, nextBtnY, randomW, 42, "🎲  Random Level", hoverBtn === 5, true);
+    nextBtnY += 42 + 10;
 
     // Stats summary line on splash
     const splashCompleted = Object.keys(levelStars).length;
@@ -2063,6 +2073,8 @@ function renderGame() {
   drawButton(10, 36, 28, 28, sfxEnabled ? "SFX" : "OFF", hoverBtn === 14, false);
   // Colorblind mode toggle (right of SFX)
   drawButton(42, 36, 28, 28, colorblindMode ? "CB" : "cb", hoverBtn === 16, colorblindMode);
+  // Keyboard shortcuts help (right of CB)
+  drawButton(74, 36, 28, 28, "?", hoverBtn === 17, shortcutsOpen);
   const hudY = 36;
   const hudBtnW = 46, hudBtnH = 28, hudGap = 5;
   const hudStartX = W - 14 - (hudBtnW * 4 + hudGap * 3);
@@ -2391,6 +2403,82 @@ function renderGame() {
       X.fillText(tutText, W / 2, tutY + tutH / 2);
       X.restore();
     }
+  }
+
+  // ── Keyboard Shortcuts Panel (toggle with ? button or /) ──
+  if (shortcutsOpen) {
+    const panelW = Math.min(340, W * 0.9);
+    const panelH = 270;
+    const panelX = (W - panelW) / 2;
+    const panelY = (H - panelH) / 2 - 10;
+    // Dim background
+    X.save();
+    X.fillStyle = "rgba(5,5,30,0.6)";
+    X.fillRect(0, 0, W, H);
+    // Panel shadow + body
+    X.shadowColor = "rgba(108,92,231,0.5)";
+    X.shadowBlur = 24;
+    X.shadowOffsetY = 4;
+    const pg = X.createLinearGradient(panelX, panelY, panelX, panelY + panelH);
+    pg.addColorStop(0, "rgba(35,30,80,0.97)");
+    pg.addColorStop(1, "rgba(20,18,55,0.97)");
+    X.fillStyle = pg;
+    roundRect(panelX, panelY, panelW, panelH, 14);
+    X.fill();
+    X.shadowBlur = 0;
+    X.shadowOffsetY = 0;
+    X.strokeStyle = "rgba(162,155,254,0.4)";
+    X.lineWidth = 1.5;
+    roundRect(panelX, panelY, panelW, panelH, 14);
+    X.stroke();
+    // Title
+    X.fillStyle = "#fff";
+    X.font = `800 ${Math.round(Math.min(W * 0.06, 22))}px 'Baloo 2','Nunito',sans-serif`;
+    X.textAlign = "center";
+    X.textBaseline = "middle";
+    X.fillText("⌨️ Keyboard Shortcuts", W / 2, panelY + 24);
+    // Shortcut rows
+    const rows = [
+      ["1-9",   "Select bottle"],
+      ["Z / U", "Undo last move"],
+      ["H",     "Show hint"],
+      ["R",     "Reset level"],
+      ["T",     "Add extra tube"],
+      ["J",     "Jump to level"],
+      ["M / Esc", "Back to menu"],
+      ["?",     "Toggle this help"],
+    ];
+    const rowStartY = panelY + 50;
+    const rowH = 24;
+    X.textAlign = "left";
+    for (let i = 0; i < rows.length; i++) {
+      const y = rowStartY + i * rowH;
+      // Key pill background
+      const keyW = 70;
+      X.fillStyle = "rgba(108,92,231,0.25)";
+      roundRect(panelX + 18, y - 10, keyW, 20, 5);
+      X.fill();
+      X.strokeStyle = "rgba(162,155,254,0.4)";
+      X.lineWidth = 1;
+      X.stroke();
+      // Key text
+      X.fillStyle = "#a29bfe";
+      X.font = "700 12px 'Nunito',sans-serif";
+      X.textAlign = "center";
+      X.textBaseline = "middle";
+      X.fillText(rows[i][0], panelX + 18 + keyW / 2, y);
+      // Description
+      X.fillStyle = "rgba(255,255,255,0.85)";
+      X.font = "500 12px 'Nunito',sans-serif";
+      X.textAlign = "left";
+      X.fillText(rows[i][1], panelX + 18 + keyW + 12, y);
+    }
+    // Hint at bottom
+    X.fillStyle = "rgba(255,255,255,0.35)";
+    X.font = "500 10px 'Nunito',sans-serif";
+    X.textAlign = "center";
+    X.fillText("tap anywhere or press ? to close", W / 2, panelY + panelH - 12);
+    X.restore();
   }
 }
 
@@ -2733,6 +2821,18 @@ function onTap(px, py) {
       sfxClick();
       initLevel(dailyChallengeLevel);
     }
+    nextBtnY += 42 + 10;
+    // Random Level button
+    const randomW = Math.min(200, W * 0.55);
+    if (hitTest(px, py, W / 2 - randomW / 2, nextBtnY, randomW, 42) && splashTimer >= 0.8) {
+      sfxClick();
+      // Pick a random unlocked level
+      const unlocked = Object.keys(levelUnlocked).filter(k => levelUnlocked[k]).map(Number);
+      if (unlocked.length > 0) {
+        const pick = unlocked[Math.floor(Math.random() * unlocked.length)];
+        initLevel(pick);
+      }
+    }
     // Footer GameZipper.com link
     if (splashFooterLink && hitTest(px, py, splashFooterLink.x, splashFooterLink.y, splashFooterLink.w, splashFooterLink.h)) {
       window.location.href = "/"; return;
@@ -2854,6 +2954,17 @@ function onTap(px, py) {
       colorblindMode = !colorblindMode;
       sfxClick();
       saveSave();
+      return;
+    }
+    // Keyboard shortcuts help toggle
+    if (hitTest(px, py, 74, 36, 28, 28)) {
+      shortcutsOpen = !shortcutsOpen;
+      sfxClick();
+      return;
+    }
+    // If shortcuts panel is open, close it on any tap
+    if (shortcutsOpen) {
+      shortcutsOpen = false;
       return;
     }
     // Extra tube button
@@ -3034,20 +3145,116 @@ C.addEventListener("wheel", (e) => {
   }
 }, { passive: true });
 
-// Keyboard input for jump dialog
+// Keyboard input — handles both jump dialog and in-game shortcuts
 document.addEventListener("keydown", (e) => {
-  if (!jumpDialogOpen) return;
-  if (e.key === "Escape") { jumpDialogOpen = false; jumpInput = ""; return; }
-  if (e.key === "Enter") {
-    const lv = Number(jumpInput) - 1;
-    if (jumpInput.length > 0 && lv >= 0 && lv < TOTAL_LEVELS && levelUnlocked[lv]) {
-      jumpDialogOpen = false; jumpInput = "";
-      sfxClick(); initLevel(lv);
+  // Don't intercept if user is typing in an input
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  // Jump dialog keyboard input
+  if (jumpDialogOpen) {
+    if (e.key === "Escape") { jumpDialogOpen = false; jumpInput = ""; return; }
+    if (e.key === "Enter") {
+      const lv = Number(jumpInput) - 1;
+      if (jumpInput.length > 0 && lv >= 0 && lv < TOTAL_LEVELS && levelUnlocked[lv]) {
+        jumpDialogOpen = false; jumpInput = "";
+        sfxClick(); initLevel(lv);
+      }
+      return;
     }
+    if (e.key === "Backspace") { jumpInput = jumpInput.slice(0, -1); return; }
+    if (/^[0-9]$/.test(e.key) && jumpInput.length < 4) { jumpInput += e.key; }
     return;
   }
-  if (e.key === "Backspace") { jumpInput = jumpInput.slice(0, -1); return; }
-  if (/^[0-9]$/.test(e.key) && jumpInput.length < 4) { jumpInput += e.key; }
+
+  // In-game shortcuts (only when in game state, not animating)
+  if (state === "game" && !animating) {
+    const k = e.key.toLowerCase();
+    if (k === 'z' || k === 'u') {
+      // Undo
+      if (undoStack.length > 0 && !solving) { undoMove(); e.preventDefault(); }
+      return;
+    }
+    if (k === 'r') {
+      // Reset
+      if (!solving) { sfxClick(); initLevel(currentLevel); e.preventDefault(); }
+      return;
+    }
+    if (k === 'h') {
+      // Hint
+      if (!solving) { showHint(); e.preventDefault(); }
+      return;
+    }
+    if (k === 'm' || k === 'escape') {
+      // Back to menu (also closes shortcuts panel)
+      shortcutsOpen = false;
+      stopSolve();
+      sfxClick(); state = "menu"; menuScrollY = 0;
+      e.preventDefault();
+      return;
+    }
+    if (k === 't') {
+      // Add extra tube
+      if (extraTubeUses > 0 && extraTubeUsed < MAX_EXTRA_TUBES) { addExtraTube(); e.preventDefault(); }
+      return;
+    }
+    if (k === 'j') {
+      // Jump dialog
+      sfxClick(); jumpDialogOpen = true; jumpInput = "";
+      e.preventDefault();
+      return;
+    }
+    if (k === '?' || k === '/') {
+      // Toggle shortcuts panel
+      shortcutsOpen = !shortcutsOpen;
+      sfxClick();
+      e.preventDefault();
+      return;
+    }
+    // Number keys 1-9 for quick-select first 9 bottles
+    const n = parseInt(e.key);
+    if (!isNaN(n) && n >= 1 && n <= Math.min(9, bottles.length)) {
+      const i = n - 1;
+      if (selectedBottle === -1) {
+        if (bottles[i].length > 0) {
+          selectedBottle = i;
+          sfxSelect();
+          bottleBounces[i] = { scale: 1.06, velocity: 0 };
+          if (tutorialStep === 1) tutorialStep = 2;
+        }
+      } else if (selectedBottle === i) {
+        selectedBottle = -1;
+      } else {
+        executePour(selectedBottle, i);
+        if (tutorialStep === 2) { tutorialStep = 3; setTimeout(() => { tutorialStep = 0; }, 1800); }
+      }
+      e.preventDefault();
+      return;
+    }
+  }
+
+  // Win state shortcuts
+  if (state === "win") {
+    const k = e.key.toLowerCase();
+    if (k === 'enter' || k === 'n' || k === ' ') {
+      // Next level
+      if (currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1]) {
+        sfxClick(); initLevel(currentLevel + 1);
+        e.preventDefault();
+      }
+      return;
+    }
+    if (k === 'r') {
+      // Retry
+      sfxClick(); initLevel(currentLevel);
+      e.preventDefault();
+      return;
+    }
+    if (k === 'm' || k === 'escape') {
+      sfxClick(); state = "menu"; menuScrollY = 0;
+      e.preventDefault();
+      return;
+    }
+  }
 });
 
 // ═══════════════════════════════════════════
