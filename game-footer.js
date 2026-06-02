@@ -212,7 +212,12 @@
       {n:'Paper Fold Puzzle',e:'📄',u:'/paper-fold/',c:'puzzle'},
       {n:'Eggy Car',e:'🥚',u:'/eggy-car/',c:'driving'},
       {n:'Unpacking',e:'📦',u:'/unpacking/',c:'puzzle'},
-      {n:'Merge Sweets',e:'🍰',u:'/merge-sweets/',c:'puzzle'}
+      {n:'Merge Sweets',e:'🍰',u:'/merge-sweets/',c:'puzzle'},
+      {n:'Traffic Escape',e:'🚗',u:'/traffic-escape/',c:'puzzle'},
+      {n:'Ball Sort',e:'🎱',u:'/ball-sort/',c:'puzzle'},
+      {n:'Slice Master',e:'🔪',u:'/slice-master/',c:'puzzle'},
+      {n:'TriPeaks Solitaire',e:'🃏',u:'/tripeaks-solitaire/',c:'card'},
+      {n:'Magic Tiles',e:'🎹',u:'/magic-tiles/',c:'puzzle'}
    ];
 
   var cur = location.pathname;
@@ -381,5 +386,4 @@
     setTimeout(init, 100);
   }
 }
-
-},{n:'Traffic Escape',e:'🚗',u:'/traffic-escape/',c:'puzzle'},{n:"Ball Sort",e:"🎱",u:"/ball-sort/",c:"puzzle"},{n:"Slice Master",e:"🔪",u:"/slice-master/",c:"puzzle"},{n:"TriPeaks Solitaire",e:"🃏",u:"/tripeaks-solitaire/",c:"card"},{n:"Magic Tiles",e:"🎹",u:"/magic-tiles/",c:"puzzle"})();
+})();
