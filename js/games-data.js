@@ -244,8 +244,7 @@ const GAMES = [
   {name:"Slice Master",emoji:"🔪",cat:"puzzle",tags:["Puzzle","Slice","Cut","Geometry","Physics","Brain","Casual","Browser","Free","HTML5"],url:"/slice-master/",desc:"Draw cutting lines to slice geometric shapes into target pieces. 50 satisfying physics-based cut puzzles across 5 chapters. Precision slicing with star ratings!",isNew:true,status:"live"},
 
 {name:"Magic Tiles",emoji:"🎹",cat:"puzzle",tags:["Puzzle","Music","Rhythm","Piano","Tiles","Tap","Casual","Brain","Browser","Free","HTML5"],url:"/magic-tiles/",desc:"Tap black tiles in time with the music! 30+ procedural piano songs across 5 difficulty chapters. Perfect for rhythm-game fans, no download needed.",isNew:true,status:"live"},{name:"TriPeaks Solitaire",emoji:"🃏",cat:"card",tags:["tripeaks","solitaire","card","puzzle","peaks","tri-peaks","casual","classic"],desc:"Clear three pyramids by matching cards within one rank. Undo, hints, wild cards, 36 levels, daily challenges!",url:"/tripeaks-solitaire/",isNew:true,status:"live"}
-,{name:"Carrom Board",emoji:"🎯",cat:"puzzle",tags:["Board Game","Carrom","Disc","Classic","Strategy","Physics","Multiplayer","AI","Casual","Brain"],url:"/carrom/",desc:"Play Carrom Board free online! Classic tabletop disc-flicking game with realistic physics, AI opponent and local 2-player mode. 3 difficulty levels, 4 board themes, score tracking and statistics.",isNew:true,status:"live"}
-];
+,{name:"Carrom Board",emoji:"🎯",cat:"puzzle",tags:["Board Game","Carrom","Disc","Classic","Strategy","Physics","Multiplayer","AI","Casual","Brain"],url:"/carrom/",desc:"Play Carrom Board free online! Classic tabletop disc-flicking game with realistic physics, AI opponent and local 2-player mode. 3 difficulty levels, 4 board themes, score tracking and statistics.",isNew:true,status:"live"},{name:"Coin Pusher",emoji:"🪙",cat:"arcade",tags:["Puzzle","Arcade","Casino","Coins","Pusher","Dozer","Vegas","Casual","Brain","Browser","Free","HTML5"],url:"/coin-pusher/",desc:"Drop coins, push prizes off the edge, and win big across 6 themed Vegas-style coin pusher machines! Satisfying physics, big-win celebrations, free daily coins, no download needed.",isNew:true,status:"live"}];
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
  */
@@ -266,6 +265,4 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
-},
-{name:"Coin Pusher",emoji:"🪙",cat:"puzzle",tags:["Puzzle","Arcade","Casino","Coins","Pusher","Dozer","Vegas","Casual","Brain","Browser","Free","HTML5"],url:"/coin-pusher/",desc:"Drop coins, push prizes off the edge, and win big across 6 themed Vegas-style coin pusher machines! Satisfying physics, big-win celebrations, free daily coins, no download needed.",isNew:true,status:"live"},
-];
+}
