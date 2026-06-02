@@ -248,6 +248,7 @@ const GAMES = [
 ,{name:"Hexa Sort",emoji:"⬡",cat:"puzzle",tags:["Hexagon","Sorting","Puzzle","Brain","Casual","Stack","Chain","Browser","Free","HTML5"],url:"/hexa-sort/",desc:"Drag and drop hexagonal pieces to sort by color on a honeycomb grid! Stack same-color hexes, form groups of 3+ to clear them, trigger chain reactions for combos. 50 levels across 5 chapters with undo, shuffle, and bomb power-ups. Free, no download!",isNew:true,status:"live"},
   {name:"Mini Golf",emoji:"⛳",cat:"puzzle",tags:["Mini Golf","Putt","Golf","Sports","Physics","Brain","Casual","Browser","Free","HTML5"],url:"/mini-golf/",desc:"Play Mini Golf online free! Top-view 2D putting across 50 hand-crafted holes in 5 themed courses (Classic, Pirate, Space, Ice, Candy). Realistic physics, hole-in-one celebrations, achievements, daily challenge, and star ratings.",isNew:true,status:"live"},
 
+{name:"Spelling Bee",emoji:"\ud83d\udc1d",cat:"puzzle",tags:["Word","Puzzle","Spelling","Vocabulary","Daily","Brain","Casual","Browser","Free","HTML5"],url:"/spelling-bee/",desc:"Play Spelling Bee online free! Form words from 7 letters in this NYT-style honeycomb word puzzle. 50+ levels across 5 chapters, daily challenge, hints, pangrams, and Queen Bee rank. No download.",isNew:true,status:"live"},
 ];
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
