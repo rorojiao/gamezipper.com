@@ -249,6 +249,7 @@ const GAMES = [
   {name:"Mini Golf",emoji:"⛳",cat:"puzzle",tags:["Mini Golf","Putt","Golf","Sports","Physics","Brain","Casual","Browser","Free","HTML5"],url:"/mini-golf/",desc:"Play Mini Golf online free! Top-view 2D putting across 50 hand-crafted holes in 5 themed courses (Classic, Pirate, Space, Ice, Candy). Realistic physics, hole-in-one celebrations, achievements, daily challenge, and star ratings.",isNew:true,status:"live"},
 
 {name:"Spelling Bee",emoji:"\ud83d\udc1d",cat:"puzzle",tags:["Word","Puzzle","Spelling","Vocabulary","Daily","Brain","Casual","Browser","Free","HTML5"],url:"/spelling-bee/",desc:"Play Spelling Bee online free! Form words from 7 letters in this NYT-style honeycomb word puzzle. 50+ levels across 5 chapters, daily challenge, hints, pangrams, and Queen Bee rank. No download.",isNew:true,status:"live"},
+{name:"Chain Reaction",emoji:"\ud83d\udca3",cat:"puzzle",tags:["Chain","Reaction","Puzzle","Cascade","Explosion","Strategy","Brain","Casual","Browser","Free","HTML5"],url:"/chain-reaction/",desc:"Play Chain Reaction Puzzle online free! Trigger explosive chain reactions to capture all enemy cells. 40 levels across 5 chapters with star ratings, hints, and undo. No download.",isNew:true,status:"live"},
 ];
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
