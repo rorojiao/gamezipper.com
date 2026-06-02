@@ -769,6 +769,31 @@
     }, CONFIG.TIMING.homepageBannerDelay + 5000); // 6.5s total delay
   }
 
+  // ==================== HOMEPAGE MID-GRID AD ====================
+  // The homepage dynamically inserts a #gz-ad-mid-grid div after the 20th game card.
+  // This fills that ad slot with AdSense primary + Monetag fallback.
+  function showHomepageMidGrid() {
+    if (!state.isHomePage) return;
+    var container = $('#gz-ad-mid-grid');
+    if (!container) return;
+    if (container.getAttribute('data-filled')) return;
+
+    setTimeout(function() {
+      if (container.getAttribute('data-filled')) return;
+      if (!canShowAd('homepage_banner')) return;
+      // Try AdSense first (higher fill); Monetag fallback after 2s
+      loadAdSenseAd(container, '1099212472');
+      setTimeout(function() {
+        if (container.getAttribute('data-filled')) return;
+        if (!canShowAd('homepage_banner')) return;
+        loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
+          container.setAttribute('data-filled', '1');
+          markAdShown('homepage_banner');
+        }).catch(function() {});
+      }, 2000);
+    }, CONFIG.TIMING.homepageBannerDelay + 3000); // 4.5s total delay (between first + second banner)
+  }
+
   // ==================== BELOW-GAME CONTAINER AD ====================
   function autoFillContainer() {
     if (!state.isGamePage) return;
@@ -868,6 +893,7 @@
     if (state.isHomePage) {
       showHomepageBanner();
       showHomepageSecondBanner();
+      showHomepageMidGrid();
     }
 
     if (state.isGamePage) {
