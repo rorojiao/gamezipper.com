@@ -816,17 +816,8 @@ function startLevel(idx){
 }
 
 /* ============ TOUCH/MOUSE ============ */
-canvas.addEventListener('pointerdown',function(e){
-  e.preventDefault();
-  var rect=canvas.getBoundingClientRect();
-  handleTap(e.clientX-rect.left,e.clientY-rect.top);
-});
-canvas.addEventListener('wheel',function(e){
-  if(state==='levels'){
-    e.preventDefault();
-    levelScroll=clamp(levelScroll+e.deltaY*0.5,0,Math.max(0,Math.ceil(LEVELS.length/5)*(80)-H+100));
-  }
-},{passive:false});
+// Canvas event listeners are registered inside init() to avoid ReferenceError
+// (canvas is null at top-level script execution before init() runs).
 
 /* ============ CLEANUP ============ */
 function cleanup(){
@@ -862,6 +853,18 @@ function init(){
   resize();
   window.addEventListener('resize',resize);
   loadSave();
+  // Register canvas event listeners now that canvas is set
+  canvas.addEventListener('pointerdown',function(e){
+    e.preventDefault();
+    var rect=canvas.getBoundingClientRect();
+    handleTap(e.clientX-rect.left,e.clientY-rect.top);
+  });
+  canvas.addEventListener('wheel',function(e){
+    if(state==='levels'){
+      e.preventDefault();
+      levelScroll=clamp(levelScroll+e.deltaY*0.5,0,Math.max(0,Math.ceil(LEVELS.length/5)*(80)-H+100));
+    }
+  },{passive:false});
   if(showTutorial)tutorialStep=0;
   lastTime=performance.now();
   rafId=requestAnimationFrame(loop);
