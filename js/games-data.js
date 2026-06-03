@@ -255,6 +255,7 @@ const GAMES = [
 {name:"Brain It On!",emoji:"🧠",cat:"puzzle",tags:["Physics","Drawing","Puzzle","Brain","Strategy","Casual","Browser","Free","HTML5"],url:"/brain-it-on/",desc:"Draw shapes that become physics objects! Solve challenging puzzles by drawing ramps, bridges, and levers. 30+ brain-teasing levels. Free online, no download!",isNew:true,status:"live"},
 {name:"Snow Rider",emoji:"🏂",cat:"arcade",tags:["Arcade","Winter","Sled","3D","Endless Runner","Obstacle","Collect","Snow","Mountain","Browser","Free","HTML5"],url:"/snow-rider/",desc:"Ride your sled down snowy mountains at breakneck speed! Dodge trees, rocks, and snowmen. Collect gifts and snowflakes for bonus points. How far can you ride?",isNew:true,status:"live"},
 {name:"Helix Jump",emoji:"🌀",cat:"arcade",tags:["helix","jump","ball drop","spiral","arcade","casual"],url:"/helix-jump/",desc:"Drop the ball through neon spiral towers in this addictive one-tap arcade game. Free browser play, no download.",isNew:true,status:"live"}
+{name:"Color Helix Smash",emoji:"🌈",cat:"puzzle",tags:["Puzzle","Color","Helix","Smash","Hyper-Casual","Match","Arcade","Action","Drop","Rotate","Casual","Browser","Free","HTML5"],url:"/color-helix-smash/",desc:"Play Color Helix Smash free online! Drop the ball, match colors, and smash through neon spiral rings. 30 levels, combo system, power-ups. No download needed!",isNew:true,status:"live"},
 ];
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
@@ -277,3 +278,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Jelly Dye",emoji:"\U0001F3A8",cat:"puzzle",tags:["color","flood","fill","puzzle","brain"],url:"/jelly-dye/",desc:"Color flood fill puzzle game. Fill the grid with one color in limited moves. 30 levels, 3-star ratings.",isNew:true,status:"live"},
