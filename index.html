@@ -855,6 +855,49 @@ document.querySelectorAll('.gz-reveal').forEach(function(el){observer.observe(el
 })();
 </script>
 
+<!-- Personalized For You: shows games NOT yet visited (uses gz_recent_games + gz_favs) — 2026 adaptive UI trend -->
+<div id="gz-for-you" style="max-width:1100px;margin:16px auto 0;padding:0 20px;display:none" content-visibility:auto contain-intrinsic-size:100px>
+  <div style="background:linear-gradient(135deg,#1a1a3e,#2d1b69);border:1px solid rgba(78,210,196,0.3);border-radius:18px;padding:20px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <h2 style="font-size:1.25em;color:#fff;margin:0">✨ For You</h2>
+      <span style="color:#999;font-size:.78em;margin-left:4px">Fresh picks based on your activity</span>
+    </div>
+    <div id="gz-for-you-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px"></div>
+  </div>
+</div>
+<script>
+(function(){
+  function renderForYou(){
+    try{
+      var recent=JSON.parse(localStorage.getItem('gz_recent_games')||'[]');
+      var favs=JSON.parse(localStorage.getItem('gz_favs')||'[]');
+      if(typeof GAMES==='undefined'){return}
+      // Pick 6 games the user hasn't played (excludes recent + favs for variety)
+      var seen={};
+      recent.forEach(function(r){seen[r.name]=1});
+      favs.forEach(function(f){seen[f]=1});
+      var unseen=GAMES.filter(function(g){return g.status==='live' && !seen[g.name]});
+      // If user has no history, skip — first-visit users get generic grid
+      if(!recent.length && !favs.length){return}
+      // If user has seen almost everything, fall back to random live games
+      var pool=unseen.length>=6?unseen:GAMES.filter(function(g){return g.status==='live'});
+      var shuffled=pool.slice().sort(function(){return 0.5-Math.random()});
+      var picks=shuffled.slice(0,Math.min(6,shuffled.length));
+      var html=picks.map(function(g){
+        return '<a href="'+g.url+'" class="gz-for-you-card" style="display:block;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:12px;padding:14px;text-decoration:none;color:#fff;transition:transform 0.2s,border-color 0.2s;touch-action:manipulation"><div style="font-size:1.8em;margin-bottom:4px">'+g.emoji+'</div><div style="font-weight:600;font-size:.9em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+g.name+'</div><div style="font-size:.7em;color:#4ecdc4;margin-top:3px">Try something new</div></a>';
+      }).join('');
+      var c=document.getElementById('gz-for-you-cards');
+      var w=document.getElementById('gz-for-you');
+      if(!c||!w)return;
+      c.innerHTML=html;
+      w.style.display='block';
+    }catch(e){}
+  }
+  if('requestIdleCallback' in window){requestIdleCallback(renderForYou,{timeout:3000})}
+  else{setTimeout(renderForYou,300)}
+})();
+</script>
+<style>.gz-for-you-card:hover{border-color:#4ecdc4!important;transform:translateY(-2px)}@media(prefers-reduced-motion:reduce){.gz-for-you-card:hover{transform:none}}</style>
 <!-- Engagement Hook: benefits shown after game grid -->
 <div style="max-width:800px;margin:24px auto 0;padding:0 20px;text-align:center;opacity:0;animation:gz-fade-in .5s .2s forwards;content-visibility:auto;contain-intrinsic-size:auto 120px" aria-label="GameZipper benefits">
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
