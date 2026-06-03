@@ -1855,7 +1855,7 @@ function openAchievements(){
 }
 
 /* ---------- Tutorial ---------- */
-function openTutorial(){
+function openTutorial(onComplete){
   const html = `
     <div class="modal-backdrop" id="tut-back">
       <div class="modal">
@@ -1874,23 +1874,12 @@ function openTutorial(){
     </div>
   `;
   ui.modals.innerHTML = html;
-  document.getElementById("tut-close").addEventListener("click", () => {
-    save.tutorialSeen = true;
-    persistSave();
-    closeModal();
-  });
+  const finish = () => { save.tutorialSeen = true; persistSave(); closeModal(); if(typeof onComplete === "function") onComplete(); };
+  document.getElementById("tut-close").addEventListener("click", finish);
   document.getElementById("tut-back").addEventListener("click", (e) => {
-    if(e.target.id === "tut-back"){
-      save.tutorialSeen = true;
-      persistSave();
-      closeModal();
-    }
+    if(e.target.id === "tut-back") finish();
   });
-  document.getElementById("tut-start").addEventListener("click", () => {
-    save.tutorialSeen = true;
-    persistSave();
-    closeModal();
-  });
+  document.getElementById("tut-start").addEventListener("click", finish);
 }
 
 /* ---------- Pause ---------- */
@@ -1925,13 +1914,16 @@ function openPause(){
 
 /* ---------- Wire up buttons ---------- */
 function wireButtons(){
-  $("btn-daily").addEventListener("click", startDailyChallenge);
+  $("btn-daily").addEventListener("click", () => {
+    if(!save.tutorialSeen) openTutorial(() => startDailyChallenge());
+    else startDailyChallenge();
+  });
   $("btn-campaign").addEventListener("click", () => {
-    if(!save.tutorialSeen) openTutorial();
+    if(!save.tutorialSeen) openTutorial(() => startChapter(save.currentChapter || 1));
     else startChapter(save.currentChapter || 1);
   });
   $("btn-endless").addEventListener("click", () => {
-    if(!save.tutorialSeen) openTutorial();
+    if(!save.tutorialSeen) openTutorial(() => startEndless());
     else startEndless();
   });
   $("btn-back").addEventListener("click", () => {
