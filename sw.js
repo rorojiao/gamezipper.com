@@ -31,7 +31,9 @@ self.addEventListener('install',e=>{
     '/magic-sort/',
     '/minesweeper/',
     '/crossword/',
-    '/blackjack/'
+    '/blackjack/',
+    '/color-helix-smash/',
+    '/jelly-dye/'
   ];
   e.waitUntil(
     caches.open(CACHE).then(function(c){

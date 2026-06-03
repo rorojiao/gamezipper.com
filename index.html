@@ -556,6 +556,7 @@ document.querySelectorAll('.gz-reveal').forEach(function(el){observer.observe(el
 <span id="gz-weekly-new" style="color:#c084fc">🆕 <span>3 new games this week</span></span>
 <span id="gz-updated-date" style="background:#1a3a2a;color:#4ade80;padding:2px 8px;border-radius:10px;font-size:.8em">✓ Updated <span class="gz-date-text"></span></span>
 <span id="gz-streak" style="color:#ff6b6b;display:none" aria-live="polite">🔥 <span id="gz-streak-count">0</span> day streak</span>
+<span id="gz-you-played" style="color:#a78bfa;display:none" aria-live="polite">⭐ <span id="gz-you-played-count">0</span> played this week</span>
   <a href="https://tools.gamezipper.com/" style="color:#4ecdc4;text-decoration:none;font-size:0.9em;margin-top:8px;display:inline-block" rel="noopener noreferrer">🛠️ Free Online Tools →</a>
 </div>
 <script>
@@ -2453,6 +2454,57 @@ if('serviceWorker' in navigator){
     }
   }catch(e){}
 })();
+// "You played X games this week" — personal stat (2026 personalization trend, Duolingo-style subtle social proof)
+(function(){
+  try{
+    var raw=localStorage.getItem('gz-recent-games');
+    if(!raw)return;
+    var hist=JSON.parse(raw);
+    if(!Array.isArray(hist)||hist.length===0)return;
+    // hist entries are URL strings (stored by gz-random-fab)
+    // Backward-compat: support legacy {name,ts} objects too
+    var now=Date.now();
+    var weekMs=7*24*60*60*1000;
+    var hasTimestamps=hist.length>0&&typeof hist[0]==='object'&&hist[0]!==null;
+    if(hasTimestamps){
+      // Count unique entries from the last 7 days
+      var uniq={};
+      var count=0;
+      for(var i=0;i<hist.length;i++){
+        var e=hist[i];
+        var ts=e&&e.ts?e.ts:0;
+        var name=e&&e.name?e.name:'';
+        if(!name||uniq[name])continue;
+        uniq[name]=1;
+        if(ts&&(now-ts)<=weekMs)count++;
+      }
+      if(count>=1)showYouPlayed(count);
+    }else{
+      // URL-string format: show count of unique games ever played (no time data, so use total)
+      var uniqUrls={};
+      var c2=0;
+      for(var j=0;j<hist.length;j++){
+        if(!uniqUrls[hist[j]]){uniqUrls[hist[j]]=1;c2++}
+      }
+      if(c2>=1)showYouPlayed(c2);
+    }
+    function showYouPlayed(n){
+      var wrap=document.getElementById('gz-you-played');
+      var countEl=document.getElementById('gz-you-played-count');
+      if(wrap&&countEl){
+        countEl.textContent=n;
+        wrap.style.display='inline-flex';
+        wrap.style.alignItems='center';
+        wrap.style.gap='4px';
+        wrap.style.background='rgba(167,139,250,.12)';
+        wrap.style.padding='2px 8px';
+        wrap.style.borderRadius='10px';
+        wrap.style.fontSize='.85em';
+        wrap.title='Your weekly play history — keep exploring new games!';
+      }
+    }
+  }catch(e){}
+})();
 // Dynamic date for "Recently Updated" section
 (function(){
   var dates=document.querySelectorAll('.updated-date');
@@ -3290,7 +3342,9 @@ if(d){d.style.display='block';setTimeout(function(){gzDismissOnboarding()},8000)
   onScroll();
   if(btt){
     btt.addEventListener('click',function(){
-      try{window.scrollTo({top:0,behavior:'smooth'})}catch(e){window.scrollTo(0,0)}
+      // Respect prefers-reduced-motion (WCAG 2.3.3 + 2026 CWV best practice)
+      var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      try{window.scrollTo({top:0,behavior:reduced?'auto':'smooth'})}catch(e){window.scrollTo(0,0)}
     });
   }
 
@@ -3396,18 +3450,35 @@ if(d){d.style.display='block';setTimeout(function(){gzDismissOnboarding()},8000)
   var overlay=document.getElementById('gz-kb-overlay');
   if(!overlay)return;
   var closeBtn=document.getElementById('gz-kb-close');
+  var _kbPrevFocus=null; // WCAG 2.4.3 — restore focus to opener on close
+  var _kbKeyHandler=null;
   function isTypingTarget(el){
     if(!el)return false;
     var t=el.tagName;
     return t==='INPUT'||t==='TEXTAREA'||el.isContentEditable;
   }
+  function trapFocus(e){
+    if(e.key!=='Tab')return;
+    var focusable=overlay.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
+    if(!focusable.length)return;
+    var first=focusable[0],last=focusable[focusable.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+  }
   function show(){
     // Close any conflicting exit overlay to prevent stacking dialogs
     var exit=document.getElementById('gz-exit-overlay');
     if(exit)exit.classList.remove('show');
+    _kbPrevFocus=document.activeElement;
     overlay.style.display='flex';
+    if(closeBtn){try{closeBtn.focus({preventScroll:true})}catch(e){closeBtn.focus()}}
+    if(!_kbKeyHandler){_kbKeyHandler=trapFocus;overlay.addEventListener('keydown',_kbKeyHandler)}
   }
-  function hide(){overlay.style.display='none'}
+  function hide(){
+    overlay.style.display='none';
+    if(_kbKeyHandler){overlay.removeEventListener('keydown',_kbKeyHandler);_kbKeyHandler=null}
+    if(_kbPrevFocus&&_kbPrevFocus.focus){try{_kbPrevFocus.focus({preventScroll:true})}catch(e){_kbPrevFocus.focus()}}
+  }
   function toggle(){if(overlay.style.display==='flex'){hide()}else{show()}}
   closeBtn&&closeBtn.addEventListener('click',hide);
   overlay.addEventListener('click',function(e){if(e.target===overlay)hide()});
