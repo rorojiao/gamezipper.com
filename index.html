@@ -4,7 +4,7 @@
 <head>
 
 <meta content="max-age=300, stale-while-revalidate=3600" http-equiv="Cache-Control"/>
-<meta content="202606030448" name="build"/>
+<meta content="202606030452" name="build"/>
 <meta charset="utf-8"/>
 <meta content="ca-pub-8346383990981353" name="google-adsense-account"/>
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" name="viewport"/>
@@ -505,15 +505,14 @@ document.querySelectorAll('.gz-reveal').forEach(function(el){observer.observe(el
 .gz-milestone-pill button.gz-ms-dismiss{background:transparent;border:none;color:#888;cursor:pointer;font-size:1.1em;padding:2px 6px;min-height:32px;min-width:32px;touch-action:manipulation}
 @media(max-width:480px){.gz-milestone-pill{font-size:.8em;padding:8px 12px;flex-direction:column;gap:6px;text-align:center;bottom:14px}}
 @media(prefers-reduced-motion:reduce){.gz-milestone-pill{transition:none}}
-/* UX-OPT 2026-06-03 04h: scroll progress bar (top) + back-to-top button + quick-favorites chip */
-.gz-scroll-progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#4ecdc4,#45b7d1,#a78bfa);z-index:100000;transition:width .1s linear,opacity .3s;box-shadow:0 1px 6px rgba(78,205,196,.5);pointer-events:none;will-change:width}
-.gz-scroll-progress.hide{opacity:0}
+/* UX-OPT 2026-06-03 04h: back-to-top floating button + quick-favorites chip
+   (Note: scroll progress bar already exists at L266/L314 with @supports scroll() — skipped to avoid duplication) */
 .gz-back-to-top{position:fixed;bottom:90px;right:18px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4ecdc4,#45b7d1);color:#000;border:none;cursor:pointer;font-size:1.3em;font-weight:700;z-index:99990;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.4);opacity:0;transform:translateY(20px) scale(.8);pointer-events:none;transition:opacity .3s,transform .3s,background .2s;touch-action:manipulation;min-width:48px;min-height:48px}
 .gz-back-to-top.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
 .gz-back-to-top:hover{background:linear-gradient(135deg,#45b7d1,#a78bfa);transform:translateY(-2px) scale(1.05)}
 .gz-back-to-top:active{transform:translateY(0) scale(.95)}
 @media(max-width:480px){.gz-back-to-top{bottom:80px;right:12px;width:44px;height:44px;font-size:1.2em;min-width:44px;min-height:44px}}
-@media(prefers-reduced-motion:reduce){.gz-back-to-top,.gz-scroll-progress{transition:opacity .3s}}
+@media(prefers-reduced-motion:reduce){.gz-back-to-top{transition:opacity .3s}}
 .gz-fav-chip{position:fixed;bottom:18px;right:18px;max-width:280px;background:linear-gradient(135deg,#1a1a3e,#2d1b69);border:1px solid #ff6b6b;border-radius:18px;padding:8px 10px;z-index:99985;display:none;flex-direction:column;gap:6px;box-shadow:0 6px 20px rgba(0,0,0,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);max-height:60vh;overflow-y:auto;scrollbar-width:thin}
 .gz-fav-chip.show{display:flex;animation:gz-fav-pop .35s ease-out}
 .gz-fav-chip-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 4px}
@@ -692,8 +691,6 @@ document.querySelectorAll('.gz-reveal').forEach(function(el){observer.observe(el
   <button class="gz-ms-action" id="gz-ms-action" type="button">Discover more ↓</button>
   <button class="gz-ms-dismiss" id="gz-ms-dismiss" type="button" aria-label="Dismiss">×</button>
 </div>
-<!-- UX-OPT 2026-06-03 04h: scroll progress bar -->
-<div class="gz-scroll-progress hide" id="gz-scroll-progress" aria-hidden="true"></div>
 <!-- UX-OPT 2026-06-03 04h: back-to-top floating button -->
 <button class="gz-back-to-top" id="gz-back-to-top" type="button" aria-label="Back to top" title="Back to top">↑</button>
 <!-- UX-OPT 2026-06-03 04h: quick-favorites chip (1-tap access to favorite games) -->
@@ -3231,31 +3228,21 @@ if(d){d.style.display='block';setTimeout(function(){gzDismissOnboarding()},8000)
   window.addEventListener('scroll',checkMilestone,{passive:true});
 })();
 </script>
-<!-- UX-OPT 2026-06-03 04h: scroll progress + back-to-top + quick-favorites logic -->
+<!-- UX-OPT 2026-06-03 04h: back-to-top + quick-favorites logic (scroll progress uses existing @supports scroll() native API) -->
 <script>
 (function(){
   'use strict';
   if(window.__gzUxBatch3)return;window.__gzUxBatch3=1;
 
-  // 1. Scroll progress bar + back-to-top visibility
-  var prog=document.getElementById('gz-scroll-progress');
+  // 1. Back-to-top visibility (existing scroll progress bar at L266 uses native CSS scroll() API)
   var btt=document.getElementById('gz-back-to-top');
   var ticking=false;
   function onScroll(){
     if(ticking)return;
     ticking=true;
     requestAnimationFrame(function(){
-      var doc=document.documentElement;
-      var total=doc.scrollHeight-doc.clientHeight;
       var y=window.scrollY||window.pageYOffset||0;
-      var pct=total>0?Math.min(100,Math.max(0,(y/total)*100)):0;
-      if(prog){
-        prog.style.width=pct+'%';
-        if(y>120){prog.classList.remove('hide')}else{prog.classList.add('hide')}
-      }
-      if(btt){
-        if(y>400){btt.classList.add('show')}else{btt.classList.remove('show')}
-      }
+      if(btt){btt.classList.toggle('show',y>400)}
       ticking=false;
     });
   }
@@ -3294,10 +3281,6 @@ if(d){d.style.display='block';setTimeout(function(){gzDismissOnboarding()},8000)
       'Pong':'🏓','Breakout':'🧱','Pinball':'🎳','Tower Defense':'🏰'
     };
     return m[name]||'🎮';
-  }
-  function urlFor(name){
-    var g=findGameByName(name);
-    return g?g.url:'/';
   }
 
   function renderChip(){
