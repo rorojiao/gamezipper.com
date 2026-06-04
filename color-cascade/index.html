@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Color Cascade — Conveyor Puzzle Shooter | GameZipper</title>
+<meta name="description" content="Color Cascade: a fast-paced conveyor-shooter puzzle game. Tap to launch colored blocks, match and flood-fill the pixel grid, chain combos, and clear 30 hand-crafted levels. Free browser game, no download required.">
+<link rel="canonical" href="https://gamezipper.com/color-cascade/">
+<meta property="og:title" content="Color Cascade — Conveyor Puzzle Shooter">
+<meta property="og:description" content="Tap to launch colored blocks from a sliding conveyor, match colors on the pixel grid, chain combos and earn 3 stars across 30 levels. Free HTML5 game.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/color-cascade/">
+<meta property="og:image" content="https://gamezipper.com/color-cascade/og-icon.png">
+<meta property="og:site_name" content="GameZipper">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Color Cascade","description":"A fast-paced conveyor-shooter puzzle game with 30 levels, combo chains, and 3-star ratings.","genre":["Puzzle","Casual"],"gamePlatform":"HTML5","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://gamezipper.com/color-cascade/","publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com/"}}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a1a;font-family:'Inter',sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+canvas{display:block;position:absolute;top:0;left:0}
+#ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+#ui>*{pointer-events:auto}
+.screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,10,26,.92);transition:opacity .3s}
+.screen.hidden{opacity:0;pointer-events:none!important}
+.screen.hidden *{pointer-events:none!important}
+.title{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(28px,6vw,56px);color:#fff;text-shadow:0 0 20px #0ff,0 0 40px #0ff,0 0 60px #08f;margin-bottom:12px;text-align:center}
+.subtitle{font-family:'Inter',sans-serif;font-weight:600;font-size:clamp(12px,2.5vw,18px);color:#88ccff;margin-bottom:32px;text-shadow:0 0 8px rgba(0,180,255,.5)}
+.btn{font-family:'Orbitron',monospace;font-weight:700;font-size:clamp(14px,2.8vw,20px);padding:12px 36px;border:2px solid;border-radius:8px;cursor:pointer;margin:6px;transition:all .15s;outline:none;text-shadow:0 0 6px currentColor}
+.btn-primary{background:linear-gradient(135deg,#00c8ff,#0066ff);color:#fff;border-color:#0af}
+.btn-primary:hover,.btn-primary:active{background:linear-gradient(135deg,#00e0ff,#0088ff);transform:scale(1.05)}
+.btn-secondary{background:rgba(255,255,255,.08);color:#88ccff;border-color:#446}
+.btn-secondary:hover,.btn-secondary:active{background:rgba(255,255,255,.15)}
+.btn-danger{background:rgba(255,50,50,.15);color:#f66;border-color:#644}
+.btn-danger:hover,.btn-danger:active{background:rgba(255,50,50,.3)}
+.hud{position:absolute;top:0;left:0;width:100%;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;font-family:'Orbitron',monospace;color:#fff;font-size:clamp(12px,2.2vw,16px);text-shadow:0 0 4px rgba(0,200,255,.5)}
+.hud>div{pointer-events:auto}
+.hud-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:4px 10px;color:#fff;cursor:pointer;font-family:'Orbitron',monospace;font-size:clamp(10px,2vw,14px)}
+.stars-display{display:flex;gap:4px;font-size:clamp(16px,3vw,24px)}
+.star{color:#333;transition:color .3s}
+.star.active{color:#fc0;text-shadow:0 0 8px #fa0}
+.powerup-bar{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto}
+.powerup{width:clamp(36px,8vw,48px);height:clamp(36px,8vw,48px);border-radius:8px;border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:clamp(14px,3vw,20px);cursor:pointer;background:rgba(0,0,0,.5)}
+.powerup.has{border-color:#0ff;background:rgba(0,200,255,.15)}
+.powerup .count{position:absolute;top:-4px;right:-4px;background:#f44;border-radius:50%;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif}
+.level-select{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:16px;max-width:400px;width:90%;max-height:60vh;overflow-y:auto}
+.level-btn{aspect-ratio:1;border-radius:8px;border:2px solid #334;background:rgba(255,255,255,.05);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-family:'Orbitron',monospace;font-weight:700;color:#fff;font-size:clamp(12px,2.5vw,18px);transition:all .15s}
+.level-btn.unlocked{border-color:#0af;background:rgba(0,150,255,.1)}
+.level-btn.unlocked:hover{background:rgba(0,150,255,.25);transform:scale(1.08)}
+.level-btn.locked{opacity:.4;cursor:default}
+.level-btn .mini-stars{font-size:clamp(8px,1.5vw,11px);margin-top:2px}
+.tutorial-overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:100;transition:opacity .3s}
+.tutorial-overlay.hidden{opacity:0;pointer-events:none}
+.tutorial-box{background:rgba(10,10,40,.95);border:2px solid #0af;border-radius:12px;padding:24px;max-width:320px;text-align:center;color:#fff;font-size:clamp(13px,2.5vw,16px)}
+.tutorial-box h3{font-family:'Orbitron',monospace;color:#0ff;margin-bottom:8px;font-size:clamp(14px,3vw,18px)}
+.achievements-list{padding:16px;max-width:360px;width:90%;max-height:55vh;overflow-y:auto}
+.ach-item{display:flex;align-items:center;gap:10px;padding:8px 12px;margin:4px 0;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid #223}
+.ach-item.done{border-color:#0a0;background:rgba(0,255,100,.05)}
+.ach-icon{font-size:24px;width:32px;text-align:center}
+.ach-info{flex:1}
+.ach-info .name{font-family:'Orbitron',monospace;font-size:clamp(11px,2vw,13px);color:#0ff}
+.ach-info .desc{font-size:clamp(10px,1.8vw,12px);color:#889}
+.settings-panel{padding:16px;max-width:320px;width:85%}
+.setting-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #223;color:#cce;font-size:clamp(12px,2.5vw,15px)}
+.toggle{width:44px;height:24px;border-radius:12px;background:#334;cursor:pointer;position:relative;transition:background .2s}
+.toggle.on{background:#0a6}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s}
+.toggle.on::after{left:22px}
+.combo-popup{position:absolute;font-family:'Orbitron',monospace;font-weight:900;pointer-events:none;transition:all .4s;opacity:0}
+.combo-popup.show{opacity:1}
+.banner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(24px,5vw,40px);color:#fff;text-shadow:0 0 20px #0ff,0 0 40px #0ff;pointer-events:none;opacity:0;transition:opacity .4s}
+.banner.show{opacity:1}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+<div id="menu-screen" class="screen">
+<div class="title">COLOR CASCADE</div>
+<div class="subtitle">Conveyor Puzzle Shooter</div>
+<button class="btn btn-primary" onclick="G.showLevels()">PLAY</button>
+<button class="btn btn-secondary" onclick="G.showSettings()">SETTINGS</button>
+<button class="btn btn-secondary" onclick="G.showAchievements()">ACHIEVEMENTS</button>
+</div>
+<div id="level-screen" class="screen hidden">
+<div style="font-family:'Orbitron',monospace;color:#fff;font-size:clamp(14px,3vw,20px);margin-bottom:12px;text-shadow:0 0 8px #0af">SELECT LEVEL</div>
+<div id="level-grid" class="level-select"></div>
+<button class="btn btn-secondary" onclick="G.showMenu()" style="margin-top:12px">BACK</button>
+</div>
+<div id="game-screen" class="screen hidden">
+<div class="hud">
+<div id="hud-level"></div>
+<div id="hud-score" style="text-shadow:0 0 8px #ff0"></div>
+<div><button class="hud-btn" onclick="G.pause()">⏸</button></div>
+</div>
+<div class="stars-display" id="hud-stars" style="position:absolute;top:32px;left:50%;transform:translateX(-50%);pointer-events:none"></div>
+<div class="powerup-bar" id="powerup-bar"></div>
+<div id="game-combo" class="combo-popup"></div>
+<div id="game-banner" class="banner"></div>
+</div>
+<div id="pause-screen" class="screen hidden">
+<div style="font-family:'Orbitron',monospace;color:#fff;font-size:clamp(18px,4vw,28px);margin-bottom:20px;text-shadow:0 0 12px #0af">PAUSED</div>
+<button class="btn btn-primary" onclick="G.resume()">RESUME</button>
+<button class="btn btn-secondary" onclick="G.restartLevel()">RESTART</button>
+<button class="btn btn-secondary" onclick="G.showLevels();G.unpause()">LEVELS</button>
+<button class="btn btn-secondary" onclick="G.showMenu();G.unpause()">MENU</button>
+</div>
+<div id="win-screen" class="screen hidden">
+<div id="win-title" style="font-family:'Orbitron',monospace;color:#fff;font-size:clamp(20px,5vw,36px);margin-bottom:8px;text-shadow:0 0 20px #0ff"></div>
+<div id="win-stars" class="stars-display" style="font-size:clamp(28px,6vw,48px);margin-bottom:8px"></div>
+<div id="win-score" style="font-family:'Orbitron',monospace;color:#fc0;font-size:clamp(14px,3vw,20px);margin-bottom:16px;text-shadow:0 0 8px #fa0"></div>
+<div id="win-detail" style="color:#8af;font-size:clamp(11px,2vw,14px);margin-bottom:16px"></div>
+<button class="btn btn-primary" onclick="G.nextLevel()">NEXT LEVEL</button>
+<button class="btn btn-secondary" onclick="G.showLevels()">LEVELS</button>
+</div>
+<div id="settings-screen" class="screen hidden">
+<div style="font-family:'Orbitron',monospace;color:#fff;font-size:clamp(14px,3vw,20px);margin-bottom:16px;text-shadow:0 0 8px #0af">SETTINGS</div>
+<div class="settings-panel">
+<div class="setting-row"><span>Sound FX</span><div id="tog-sfx" class="toggle on" onclick="G.toggleSetting('sfx')"></div></div>
+<div class="setting-row"><span>Music</span><div id="tog-music" class="toggle on" onclick="G.toggleSetting('music')"></div></div>
+<div class="setting-row"><span>Screen Shake</span><div id="tog-shake" class="toggle on" onclick="G.toggleSetting('shake')"></div></div>
+</div>
+<button class="btn btn-danger" onclick="G.resetProgress()" style="margin-top:12px">RESET PROGRESS</button>
+<button class="btn btn-secondary" onclick="G.showMenu()" style="margin-top:8px">BACK</button>
+</div>
+<div id="ach-screen" class="screen hidden">
+<div style="font-family:'Orbitron',monospace;color:#fff;font-size:clamp(14px,3vw,20px);margin-bottom:12px;text-shadow:0 0 8px #0af">ACHIEVEMENTS</div>
+<div id="ach-list" class="achievements-list"></div>
+<button class="btn btn-secondary" onclick="G.showMenu()" style="margin-top:12px">BACK</button>
+</div>
+<div id="tutorial-overlay" class="tutorial-overlay hidden">
+<div class="tutorial-box" id="tutorial-box">
+<h3 id="tut-title"></h3>
+<p id="tut-text"></p>
+<button class="btn btn-primary" onclick="G.dismissTutorial()" style="margin-top:12px;font-size:clamp(12px,2vw,14px);padding:8px 20px">GOT IT</button>
+</div>
+</div>
+</div>
+<script>
+"use strict";
+const SAVE_VERSION="1.0.0";
+const COLORS=["#f44","#4f4","#44f","#ff4","#f4f","#4ff","#fa4","#a4f"];
+const COLOR_NAMES=["red","green","blue","yellow","magenta","cyan","orange","purple"];
+const CN=6,GRID_COLS=6,GRID_ROWS=8;
+const ACH_DEFS=[
+{id:"first_clear",icon:"💥",name:"First Clear",desc:"Clear your first group"},
+{id:"combo5",icon:"🔥",name:"Combo Master",desc:"Chain 5 combos in a row"},
+{id:"perfect10",icon:"⭐",name:"Perfectionist",desc:"Get 10 perfect (3★) levels"},
+{id:"clear25",icon:"🎯",name:"Sharpshooter",desc:"Clear 25 levels total"},
+{id:"complete30",icon:"🏆",name:"Champion",desc:"Complete all 30 levels"}
+];
+const LEVELS=[
+{id:1,colors:3,fill:.45,speed:1,goal:200,stars:[200,350,500],shots:20},
+{id:2,colors:3,fill:.50,speed:1.1,goal:250,stars:[250,400,600],shots:20},
+{id:3,colors:3,fill:.55,speed:1.2,goal:300,stars:[300,500,700],shots:18},
+{id:4,colors:4,fill:.45,speed:1.2,goal:350,stars:[350,550,800],shots:20},
+{id:5,colors:4,fill:.50,speed:1.3,goal:400,stars:[400,600,900],shots:20},
+{id:6,colors:4,fill:.55,speed:1.3,goal:450,stars:[450,700,1000],shots:18},
+{id:7,colors:4,fill:.58,speed:1.4,goal:500,stars:[500,750,1100],shots:18},
+{id:8,colors:5,fill:.48,speed:1.4,goal:550,stars:[550,800,1200],shots:20},
+{id:9,colors:5,fill:.52,speed:1.5,goal:600,stars:[600,900,1300],shots:18},
+{id:10,colors:5,fill:.55,speed:1.5,goal:700,stars:[700,1000,1500],shots:18},
+{id:11,colors:5,fill:.58,speed:1.6,goal:750,stars:[750,1100,1600],shots:16},
+{id:12,colors:5,fill:.60,speed:1.6,goal:800,stars:[800,1200,1800],shots:16},
+{id:13,colors:5,fill:.62,speed:1.7,goal:850,stars:[850,1300,1900],shots:16},
+{id:14,colors:6,fill:.50,speed:1.7,goal:900,stars:[900,1300,2000],shots:18},
+{id:15,colors:6,fill:.52,speed:1.8,goal:1000,stars:[1000,1500,2200],shots:18},
+{id:16,colors:6,fill:.55,speed:1.8,goal:1050,stars:[1050,1600,2300],shots:16},
+{id:17,colors:6,fill:.57,speed:1.9,goal:1100,stars:[1100,1700,2500],shots:16},
+{id:18,colors:6,fill:.60,speed:1.9,goal:1200,stars:[1200,1800,2700],shots:15},
+{id:19,colors:6,fill:.62,speed:2.0,goal:1300,stars:[1300,1900,2800],shots:15},
+{id:20,colors:6,fill:.65,speed:2.0,goal:1400,stars:[1400,2000,3000],shots:15},
+{id:21,colors:6,fill:.60,speed:2.1,goal:1500,stars:[1500,2200,3300],shots:16},
+{id:22,colors:6,fill:.62,speed:2.1,goal:1600,stars:[1600,2300,3500],shots:15},
+{id:23,colors:6,fill:.65,speed:2.2,goal:1700,stars:[1700,2500,3700],shots:14},
+{id:24,colors:6,fill:.67,speed:2.2,goal:1800,stars:[1800,2600,4000],shots:14},
+{id:25,colors:6,fill:.70,speed:2.3,goal:1900,stars:[1900,2800,4200],shots:13},
+{id:26,colors:6,fill:.68,speed:2.3,goal:2000,stars:[2000,3000,4500],shots:14},
+{id:27,colors:6,fill:.70,speed:2.4,goal:2200,stars:[2200,3200,4800],shots:13},
+{id:28,colors:6,fill:.72,speed:2.4,goal:2400,stars:[2400,3500,5200],shots:12},
+{id:29,colors:6,fill:.75,speed:2.5,goal:2600,stars:[2600,3800,5600],shots:12},
+{id:30,colors:6,fill:.78,speed:2.5,goal:3000,stars:[3000,4200,6200],shots:12}
+];
+const canvas=document.getElementById("c"),ctx=canvas.getContext("2d");
+let W,H,dpr;
+function resize(){
+dpr=window.devicePixelRatio||1;
+W=window.innerWidth;H=window.innerHeight;
+canvas.width=W*dpr;canvas.height=H*dpr;
+canvas.style.width=W+"px";canvas.style.height=H+"px";
+ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener("resize",resize);resize();
+function showScreen(id){document.querySelectorAll(".screen").forEach(s=>{s.classList.toggle("hidden",s.id!==id+"-screen")})}
+function $(id){return document.getElementById(id)}
+const TUTORIALS=[
+{title:"Welcome!",text:"Colored blocks slide on the conveyor below. Tap the grid to launch the current block upward!"},
+{title:"Match Colors!",text:"Hit a matching-color group on the grid to clear it. Bigger groups = more points!"},
+{title:"Chain Combos!",text:"Clear multiple groups in one shot for combo multipliers. Aim for 3 stars! ★★★"}
+];
+const G={
+state:"menu",levelIdx:0,grid:[],conveyor:[],activeColor:0,
+score:0,combo:0,shotsLeft:0,paused:false,sloMo:0,
+shakeX:0,shakeY:0,shakeDur:0,
+particles:[],shootAnim:null,bannerText:"",bannerTimer:0,
+powerups:{bomb:0,wipe:0,slow:0},
+awardedThisLevel:{bomb:false,wipe:false,slow:false},
+totalCombos:0,levelClears:0,
+save:null,
+init(){
+this.loadSave();this.showMenu();
+requestAnimationFrame(this.loop.bind(this));
+window.addEventListener("beforeunload",()=>this.cleanup());
+},
+cleanup(){
+try{
+this.audio.stopBGM();
+if(this.audio.ctx){this.audio.ctx.close();this.audio.ctx=null}
+this.shootAnim=null;this.bannerTimer=0;this.particles.length=0;
+this.shakeDur=0;this.combo=0;
+}catch(e){}
+},
+loadSave(){
+try{
+const d=JSON.parse(localStorage.getItem("color-cascade-save"));
+if(d&&d.v===SAVE_VERSION){this.save=d;return}
+}catch(e){}
+this.save={v:SAVE_VERSION,levels:{},ach:{},settings:{sfx:true,music:true,shake:true}};
+this.writeSave();
+},
+writeSave(){try{localStorage.setItem("color-cascade-save",JSON.stringify(this.save))}catch(e){}},
+toggleSetting(k){
+this.save.settings[k]=!this.save.settings[k];
+this.writeSave();
+$("tog-"+k).classList.toggle("on",this.save.settings[k]);
+if(k==="music"){this.save.settings.music?this.audio.startBGM():this.audio.stopBGM()}
+},
+resetProgress(){
+if(confirm("Erase all progress?")){localStorage.removeItem("color-cascade-save");this.loadSave();this.showSettings()}
+},
+showMenu(){
+this.state="menu";this.audio.stopBGM();showScreen("menu");
+setTimeout(()=>this.audio.startBGM(),100);
+},
+showSettings(){
+showScreen("settings");
+const s=this.save.settings;
+["sfx","music","shake"].forEach(k=>{$("tog-"+k).classList.toggle("on",s[k])});
+},
+showAchievements(){
+showScreen("ach");
+const list=$("ach-list");list.innerHTML="";
+ACH_DEFS.forEach(a=>{
+const done=!!this.save.ach[a.id];
+list.innerHTML+=`<div class="ach-item ${done?'done':''}"><div class="ach-icon">${a.icon}</div><div class="ach-info"><div class="name">${a.name}</div><div class="desc">${a.desc}</div></div><div style="color:${done?'#0f0':'#555'}">${done?'✓':'—'}</div></div>`;
+});
+},
+showLevels(){
+this.state="levels";showScreen("level");
+const g=$("level-grid");g.innerHTML="";
+for(let i=0;i<30;i++){
+const ld=this.save.levels[i+1];
+const unlocked=i===0||(this.save.levels[i]&&this.save.levels[i].done);
+const stars=ld?ld.stars:0;
+let sh="";for(let s=0;s<3;s++)sh+=`<span style="color:${s<stars?'#fc0':'#333'}">★</span>`;
+g.innerHTML+=`<div class="level-btn ${unlocked?'unlocked':'locked'}" ${unlocked?`onclick="G.startLevel(${i+1})"`:''}>${i+1}<div class="mini-stars">${sh}</div></div>`;
+}
+},
+startLevel(n){
+this.levelIdx=n;this.state="playing";this.paused=false;
+const def=LEVELS[n-1];
+this.score=0;this.combo=0;this.sloMo=0;
+this.shotsLeft=def.shots;
+this.powerups={bomb:0,wipe:0,slow:0};
+this.awardedThisLevel={bomb:false,wipe:false,slow:false};
+this.shakeX=0;this.shakeY=0;this.shakeDur=0;
+this.particles=[];this.shootAnim=null;
+this.bannerText="";this.bannerTimer=0;
+this.buildGrid(def);
+this.buildConveyor(def);
+showScreen("game");
+$("hud-level").textContent="LV "+n;
+this.updateHUD();
+if(n<=3&&!(this.save.levels[n]&&this.save.levels[n].tutDone)){
+this.showTutorial(n-1);
+}
+},
+buildGrid(def){
+this.grid=[];
+const nC=def.colors;
+for(let r=0;r<GRID_ROWS;r++){
+this.grid[r]=[];
+for(let c=0;c<GRID_COLS;c++){
+this.grid[r][c]=Math.random()<def.fill?Math.floor(Math.random()*nC):-1;
+}
+}
+},
+buildConveyor(def){
+this.conveyor=[];
+for(let i=0;i<8;i++){
+this.conveyor.push(Math.floor(Math.random()*def.colors));
+}
+this.activeColor=this.conveyor.shift();
+this.conveyor.push(Math.floor(Math.random()*def.colors));
+this.conveyorPos=0;this.conveyorSpeed=def.speed;
+},
+showTutorial(idx){
+$("tut-title").textContent=TUTORIALS[idx].title;
+$("tut-text").textContent=TUTORIALS[idx].text;
+$("tutorial-overlay").classList.remove("hidden");
+},
+dismissTutorial(){
+$("tutorial-overlay").classList.add("hidden");
+if(!this.save.levels[this.levelIdx])this.save.levels[this.levelIdx]={};
+this.save.levels[this.levelIdx].tutDone=true;
+this.writeSave();
+},
+pause(){if(this.state==="playing"){this.paused=true;showScreen("pause")}},
+unpause(){this.paused=false;showScreen("game")},
+resume(){this.paused=false;showScreen("game")},
+restartLevel(){this.startLevel(this.levelIdx)},
+getGridRect(){
+const pad=10,top=60;
+const gw=Math.min((W-pad*2)/GRID_COLS,(H-top-120)/(GRID_ROWS));
+const gh=gw;
+const totalW=gw*GRID_COLS,totalH=gh*GRID_ROWS;
+const gx=(W-totalW)/2,gy=top+(H-top-120-totalH)/2;
+return{x:gx,y:gy,cw:gw,ch:gh};
+},
+getConveyorY(){
+const gr=this.getGridRect();
+return gr.y+GRID_ROWS*gr.ch+16;
+},
+handleTap(px,py){
+if(this.state!=="playing"||this.paused)return;
+const gr=this.getGridRect();
+const col=Math.floor((px-gr.x)/gr.cw);
+const row=Math.floor((py-gr.y)/gr.ch);
+if(col<0||col>=GRID_COLS||row<0||row>=GRID_ROWS)return;
+this.launchShooter(col);
+},
+launchShooter(col){
+if(this.shotsLeft<=0||this.shootAnim)return;
+this.shotsLeft--;
+const gr=this.getGridRect();
+const cy=this.getConveyorY();
+const color=this.activeColor;
+const startX=W/2,startY=cy;
+const endX=gr.x+col*gr.cw+gr.cw/2;
+const targetRow=this.findTargetRow(col,color);
+const endY=targetRow>=0?gr.y+targetRow*gr.ch+gr.ch/2:gr.y-20;
+this.shootAnim={sx:startX,sy:startY,ex:endX,ey:endY,color:color,col:col,row:targetRow,t:0,dur:0.22,dist:0};
+this.audio.playShoot();
+},
+findTargetRow(col,color){
+for(let r=GRID_ROWS-1;r>=0;r--){
+if(this.grid[r][col]===-1)continue;
+if(this.grid[r][col]===color)return r;
+}
+for(let r=GRID_ROWS-1;r>=0;r--){
+if(this.grid[r][col]===-1)return r;
+}
+return-1;
+},
+onShootComplete(){
+const a=this.shootAnim;if(!a)return;
+this.shootAnim=null;
+if(a.row<0){this.miss();this.advanceConveyor();this.updateHUD();return}
+const color=a.color;
+if(this.grid[a.row][a.col]!==color){
+this.grid[a.row][a.col]=color;
+this.audio.playHit();this.advanceConveyor();this.updateHUD();return;
+}
+const cluster=this.floodFill(a.row,a.col,color);
+if(cluster.length>=2){
+this.clearCluster(cluster,color);
+}else{
+this.audio.playHit();
+this.advanceConveyor();
+}
+this.updateHUD();
+},
+usePowerup(type){
+if(type==="bomb"&&this.powerups.bomb>0){this.powerups.bomb--;this.activateBomb()}
+else if(type==="wipe"&&this.powerups.wipe>0){this.powerups.wipe--;this.activateWipe()}
+else if(type==="slow"&&this.powerups.slow>0){this.powerups.slow--;this.sloMo=5}
+this.updateHUD();
+},
+activateBomb(){
+let best=null,bestLen=0;
+for(let r=0;r<GRID_ROWS;r++)for(let c=0;c<GRID_COLS;c++){
+if(this.grid[r][c]<0)continue;
+const cl=this.floodFill(r,c,this.grid[r][c]);
+if(cl.length>bestLen){bestLen=cl.length;best=cl}
+}
+if(best)this.clearCluster(best,this.grid[best[0][0]][best[0][1]]);
+this.audio.playBomb();
+},
+activateWipe(){
+const col=0;let removed=0;
+for(let c=0;c<GRID_COLS;c++)for(let r=0;r<GRID_ROWS;r++){
+if(this.grid[r][c]>=0){this.spawnParticles(c,r,this.grid[r][c]);this.grid[r][c]=-1;removed++}
+}
+this.score+=removed*5;this.audio.playBomb();
+},
+miss(){
+this.combo=0;
+},
+clearCluster(cluster,color){
+const n=cluster.length;
+this.combo++;this.totalCombos++;
+const mult=this.combo>=3?3:this.combo===2?2:1.5;
+const def=LEVELS[this.levelIdx-1];
+const pts=Math.round(n*10*mult*(1+this.levelIdx*0.05));
+this.score+=pts;
+cluster.forEach(([r,c])=>{this.grid[r][c]=-1;this.spawnParticles(c,r,color)});
+if(n>=4){
+this.audio.playClear();
+}else{
+this.audio.playHit();
+}
+if(this.combo>=3&&this.save.settings.shake){
+this.shakeDur=0.3;this.shakeX=0;this.shakeY=0;
+}
+this.showBanner(n>=6?"MEGA CLEAR!":n>=4?"GREAT!":"",mult>1?`x${mult} COMBO`:"");
+this.checkAchievements();
+if(this.totalCombos>=3&&this.combo>=3&&!this.awardedThisLevel.bomb){this.powerups.bomb++;this.awardedThisLevel.bomb=true;this.showBanner("","💣 BOMB!")}
+if(this.score>=def.stars[1]&&!this.awardedThisLevel.wipe){this.powerups.wipe++;this.awardedThisLevel.wipe=true;this.showBanner("","🌈 WIPE!")}
+if(this.score>=def.stars[0]&&!this.awardedThisLevel.slow){this.powerups.slow++;this.awardedThisLevel.slow=true;this.showBanner("","⏳ SLOW!")}
+this.advanceConveyor();
+const empty=this.grid.flat().every(v=>v===-1);
+if(empty||this.shotsLeft<=0){setTimeout(()=>this.endLevel(),600)}
+},
+floodFill(sr,sc,color){
+if(sr<0||sr>=GRID_ROWS||sc<0||sc>=GRID_COLS)return[];
+if(this.grid[sr][sc]!==color)return[];
+const visited=new Set(),stack=[[sr,sc]],result=[];
+while(stack.length){
+const[r,c]=stack.pop();
+const k=r*GRID_COLS+c;
+if(visited.has(k))continue;
+if(r<0||r>=GRID_ROWS||c<0||c>=GRID_COLS)continue;
+if(this.grid[r][c]!==color)continue;
+visited.add(k);result.push([r,c]);
+stack.push([r-1,c],[r+1,c],[r,c-1],[r,c+1]);
+}
+return result;
+},
+advanceConveyor(){
+this.activeColor=this.conveyor.shift();
+const def=LEVELS[this.levelIdx-1];
+this.conveyor.push(Math.floor(Math.random()*def.colors));
+},
+spawnParticles(gc,gr,color){
+const rect=this.getGridRect();
+const cx=rect.x+gc*rect.cw+rect.cw/2;
+const cy=rect.y+gr*rect.ch+rect.ch/2;
+for(let i=0;i<6;i++){
+this.particles.push({x:cx,y:cy,vx:(Math.random()-.5)*120,vy:(Math.random()-.5)*120,life:0.6+Math.random()*0.3,maxLife:0.9,color:COLORS[color],size:3+Math.random()*3});
+}
+},
+showBanner(main,sub){
+this.bannerText=main;if(sub)this.bannerText+="<br><span style='font-size:0.6em;color:#ff0'>"+sub+"</span>";
+this.bannerTimer=1.2;
+},
+endLevel(){
+const def=LEVELS[this.levelIdx-1];
+const won=this.score>=def.goal;
+const stars=won?(this.score>=def.stars[2]?3:this.score>=def.stars[1]?2:1):0;
+if(!this.save.levels[this.levelIdx])this.save.levels[this.levelIdx]={done:false,stars:0,best:0};
+const lv=this.save.levels[this.levelIdx];
+if(won){lv.done=true;lv.stars=Math.max(lv.stars,stars)}
+lv.best=Math.max(lv.best,this.score);
+this.levelClears=Object.values(this.save.levels).filter(l=>l&&l.done).length;
+this.checkAchievements();
+this.writeSave();
+if(won){
+this.audio.playWin();
+showScreen("win");
+$("win-title").textContent=stars===3?"PERFECT!":stars===2?"GREAT!":"CLEARED!";
+let sh="";for(let s=0;s<3;s++)sh+=`<span class="star ${s<stars?'active':''}">★</span>`;
+$("win-stars").innerHTML=sh;
+$("win-score").textContent=this.score+" PTS";
+const comb=this.combo;const rem=this.grid.flat().filter(v=>v===-1).length;
+$("win-detail").textContent=`Combos: ${this.totalCombos} | Grid cleared: ${Math.round(rem/(GRID_COLS*GRID_ROWS)*100)}%`;
+}else{
+this.audio.playFail();
+showScreen("win");
+$("win-title").textContent="TRY AGAIN";
+$("win-stars").innerHTML='<span style="color:#f44;font-size:0.5em">Not enough points</span>';
+$("win-score").textContent=this.score+" / "+def.goal;
+$("win-detail").textContent="Tap Restart or select another level.";
+}
+},
+nextLevel(){
+const next=this.levelIdx+1;
+if(next<=30)this.startLevel(next);else this.showLevels();
+},
+checkAchievements(){
+const a=this.save.ach;
+const cls=Object.values(this.save.levels).filter(l=>l&&l.done).length;
+const perf=Object.values(this.save.levels).filter(l=>l&&l.stars===3).length;
+if(!a.first_clear&&cls>=1){a.first_clear=true}
+if(!a.combo5&&this.combo>=5){a.combo5=true}
+if(!a.perfect10&&perf>=10){a.perfect10=true}
+if(!a.clear25&&cls>=25){a.clear25=true}
+if(!a.complete30&&cls>=30){a.complete30=true}
+},
+updateHUD(){
+const def=LEVELS[this.levelIdx-1];
+$("hud-score").textContent=this.score;
+$("hud-stars").innerHTML=`<span style="font-size:0.7em;opacity:.7">Shots: ${this.shotsLeft}</span>`;
+const pb=$("powerup-bar");
+pb.innerHTML=
+`<div class="powerup ${this.powerups.bomb>0?'has':''}" onclick="G.usePowerup('bomb')">💣${this.powerups.bomb>0?'<div class="count">'+this.powerups.bomb+'</div>':''}</div>`+
+`<div class="powerup ${this.powerups.wipe>0?'has':''}" onclick="G.usePowerup('wipe')">🌈${this.powerups.wipe>0?'<div class="count">'+this.powerups.wipe+'</div>':''}</div>`+
+`<div class="powerup ${this.powerups.slow>0?'has':''}" onclick="G.usePowerup('slow')">⏳${this.powerups.slow>0?'<div class="count">'+this.powerups.slow+'</div>':''}</div>`;
+},
+audio:{
+ctx:null,bgmNodes:[],bgmGain:null,
+init(){
+if(this.ctx)return;
+this.ctx=new(window.AudioContext||window.webkitAudioContext)();
+this.bgmGain=this.ctx.createGain();this.bgmGain.gain.value=0.12;this.bgmGain.connect(this.ctx.destination);
+},
+resume(){if(this.ctx&&this.ctx.state==="suspended")this.ctx.resume()},
+tone(freq,dur,type,vol,dest){
+if(!G.save.settings.sfx)return;this.init();this.resume();
+const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+o.type=type||"square";o.frequency.value=freq;
+g.gain.value=vol||.15;g.gain.exponentialRampToValueAtTime(.001,this.ctx.currentTime+dur);
+o.connect(g);g.connect(dest||this.ctx.destination);o.start();o.stop(this.ctx.currentTime+dur);
+},
+playShoot(){this.tone(520,.08,"square",.12)},
+playHit(){this.tone(660,.06,"square",.1);this.tone(880,.08,"triangle",.08)},
+playClear(){this.tone(440,.05,"square",.1);setTimeout(()=>this.tone(660,.05,"square",.1),50);setTimeout(()=>this.tone(880,.1,"square",.12),100);setTimeout(()=>this.tone(1100,.15,"triangle",.1),150)},
+playBomb(){this.tone(120,.3,"sawtooth",.2)},
+playWin(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>this.tone(f,.2,"triangle",.15),i*120))},
+playFail(){[400,350,300,200].forEach((f,i)=>setTimeout(()=>this.tone(f,.25,"sawtooth",.1),i*150))},
+startBGM(){
+if(!G.save.settings.music)return;
+this.init();this.stopBGM();
+const ct=this.ctx,gn=this.bgmGain;
+const melody=[262,330,392,523,392,330,262,196,262,330,392,523,659,523,392,330];
+let t=ct.currentTime;
+const play=()=>{
+if(!G.save.settings.music)return;
+const now=ct.currentTime;if(now<t)return;
+melody.forEach((note,i)=>{
+const o=ct.createOscillator(),g=ct.createGain();
+o.type=i%2===0?"square":"triangle";
+o.frequency.value=note;
+g.gain.value=.08;
+g.gain.setValueAtTime(.08,t+i*.18);
+g.gain.exponentialRampToValueAtTime(.001,t+i*.18+.16);
+o.connect(g);g.connect(gn);
+o.start(t+i*.18);o.stop(t+i*.18+.18);
+this.bgmNodes.push(o);
+});
+const bass=[131,165,196,262];
+bass.forEach((note,i)=>{
+const o=ct.createOscillator(),g=ct.createGain();
+o.type="triangle";o.frequency.value=note;
+g.gain.value=.06;
+g.gain.setValueAtTime(.06,t+i*.72);
+g.gain.exponentialRampToValueAtTime(.001,t+i*.72+.7);
+o.connect(g);g.connect(gn);
+o.start(t+i*.72);o.stop(t+i*.72+.72);
+this.bgmNodes.push(o);
+});
+t+=melody.length*.18;
+setTimeout(play,(melody.length*.18-.5)*1000);
+};
+play();
+},
+stopBGM(){
+this.bgmNodes.forEach(n=>{try{n.stop()}catch(e){}});
+this.bgmNodes=[];
+}
+},
+update(dt){
+if(this.state!=="playing"||this.paused)return;
+if(this.sloMo>0)this.sloMo-=dt;
+const spd=(this.sloMo>0?0.4:1)*this.conveyorSpeed;
+this.conveyorPos+=spd*dt*60;
+if(this.shootAnim){
+const a=this.shootAnim;
+const adt=this.sloMo>0?dt*0.4:dt;
+a.t+=adt/a.dur;
+if(a.t>=1){
+a.t=1;this.onShootComplete();
+}
+}
+if(this.bannerTimer>0)this.bannerTimer-=dt;
+if(this.shakeDur>0){
+this.shakeDur-=dt;
+this.shakeX=(Math.random()-.5)*6;
+this.shakeY=(Math.random()-.5)*6;
+}else{this.shakeX=0;this.shakeY=0}
+this.particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=180*dt;p.life-=dt});
+this.particles=this.particles.filter(p=>p.life>0);
+},
+render(){
+ctx.save();
+ctx.clearRect(0,0,W,H);
+ctx.translate(this.shakeX,this.shakeY);
+if(this.state==="playing"||this.state==="menu"){
+this.drawGrid();
+this.drawConveyor();
+this.drawParticles();
+this.drawShootAnim();
+}
+const banner=$("game-banner");
+if(this.bannerTimer>0){banner.innerHTML=this.bannerText;banner.classList.add("show")}
+else{banner.classList.remove("show")}
+ctx.restore();
+},
+drawGrid(){
+if(this.state!=="playing")return;
+const gr=this.getGridRect();
+for(let r=0;r<GRID_ROWS;r++){
+for(let c=0;c<GRID_COLS;c++){
+const v=this.grid[r]&&this.grid[r][c];
+const x=gr.x+c*gr.cw+1,y=gr.y+r*gr.ch+1;
+const w=gr.cw-2,h=gr.ch-2;
+if(v>=0){
+ctx.fillStyle=COLORS[v];
+ctx.beginPath();
+ctx.roundRect(x,y,w,h,Math.max(1,gr.cw*.12));
+ctx.fill();
+ctx.fillStyle="rgba(255,255,255,.15)";
+ctx.fillRect(x+2,y+2,w*.4,h*.3);
+}else{
+ctx.fillStyle="rgba(255,255,255,.04)";
+ctx.beginPath();
+ctx.roundRect(x,y,w,h,Math.max(1,gr.cw*.08));
+ctx.fill();
+}
+}
+}
+ctx.strokeStyle="rgba(0,180,255,.15)";ctx.lineWidth=1;
+ctx.strokeRect(gr.x,gr.y,GRID_COLS*gr.cw,GRID_ROWS*gr.ch);
+},
+drawConveyor(){
+if(this.state!=="playing")return;
+const gr=this.getGridRect();
+const cy=this.getConveyorY();
+const cw=gr.cw,ch=gr.ch*.7;
+const totalW=cw*CN;
+const sx=(W-totalW)/2;
+ctx.fillStyle="rgba(0,0,0,.4)";
+ctx.beginPath();
+ctx.roundRect(sx-8,cy-4,totalW+16,ch+8,8);
+ctx.fill();
+for(let i=0;i<CN;i++){
+const x=sx+i*cw+2;
+const color=i===0?this.activeColor:this.conveyor[i-1]!==undefined?this.conveyor[i-1]:0;
+ctx.fillStyle=COLORS[color];
+ctx.globalAlpha=i===0?1:0.5;
+ctx.beginPath();
+ctx.roundRect(x,cy,cw-4,ch,4);
+ctx.fill();
+ctx.fillStyle="rgba(255,255,255,.2)";
+ctx.fillRect(x+2,cy+2,cw*.4,ch*.35);
+ctx.globalAlpha=1;
+if(i===0){
+ctx.strokeStyle="#fff";ctx.lineWidth=2;
+ctx.beginPath();
+ctx.roundRect(x-1,cy-1,cw-2,ch+2,5);
+ctx.stroke();
+}
+}
+const miniY=cy+ch+8;
+const miniW=16,miniGap=4;
+const miniStart=(W-5*(miniW+miniGap))/2;
+ctx.font="9px Inter";ctx.fillStyle="rgba(255,255,255,.4)";ctx.textAlign="center";
+ctx.fillText("NEXT",(W)/2,miniY-2);
+for(let i=0;i<5&&i<this.conveyor.length;i++){
+ctx.fillStyle=COLORS[this.conveyor[i]];ctx.globalAlpha=.5;
+ctx.beginPath();ctx.roundRect(miniStart+i*(miniW+miniGap),miniY+4,miniW,miniW,3);ctx.fill();
+}
+ctx.globalAlpha=1;
+},
+drawParticles(){
+this.particles.forEach(p=>{
+const alpha=Math.max(0,p.life/p.maxLife);
+ctx.globalAlpha=alpha;
+ctx.fillStyle=p.color;
+ctx.beginPath();
+ctx.arc(p.x,p.y,p.size*alpha,0,Math.PI*2);
+ctx.fill();
+});
+ctx.globalAlpha=1;
+},
+drawShootAnim(){
+const a=this.shootAnim;if(!a)return;
+const t=a.t;
+const x=a.sx+(a.ex-a.sx)*t;
+const y=a.sy+(a.ey-a.sy)*t;
+const sz=this.getGridRect().cw*.6;
+ctx.fillStyle=COLORS[a.color];
+ctx.shadowColor=COLORS[a.color];ctx.shadowBlur=12;
+ctx.beginPath();ctx.arc(x,y,sz/2,0,Math.PI*2);ctx.fill();
+ctx.shadowBlur=0;
+for(let i=0;i<4;i++){
+const tt=Math.max(0,t-i*.06);
+const tx=a.sx+(a.ex-a.sx)*tt;
+const ty=a.sy+(a.ey-a.sy)*tt;
+ctx.globalAlpha=.3-i*.07;
+ctx.fillStyle=COLORS[a.color];
+ctx.beginPath();ctx.arc(tx,ty,sz*.3,0,Math.PI*2);ctx.fill();
+}
+ctx.globalAlpha=1;
+},
+lastTime:0,
+loop(ts){
+const dt=Math.min((ts-this.lastTime)/1000,0.05);
+this.lastTime=ts;
+this.update(dt);
+this.render();
+requestAnimationFrame(this.loop.bind(this));
+}
+};
+function handleInput(e){
+e.preventDefault();
+const t=e.touches?e.touches[0]:e;
+G.handleTap(t.clientX,t.clientY);
+}
+canvas.addEventListener("pointerdown",handleInput);
+canvas.addEventListener("touchstart",e=>e.preventDefault(),{passive:false});
+G.init();
+</script>
+<img src="https://site-analytics.cap.1ktower.com/pixel.gif?game=color-cascade&t="+Date.now() style="display:none" alt="" width="1" height="1">
+</body>
+</html>

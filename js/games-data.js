@@ -260,6 +260,8 @@ const GAMES = [
   {name:"Save the Doge",emoji:"🐕",cat:"puzzle",tags:["Puzzle","Draw","Rescue","Dog","Bee","Fire","Physics","Barrier","Casual","Browser","Free","HTML5"],url:"/save-the-doge/",desc:"Draw lines to save the cute doge from bees, fire, and spikes! 30 levels of draw-to-rescue puzzle fun. No download needed!",isNew:true,status:"live"},
   {name:"Snake vs Block",emoji:"🐍",cat:"arcade",tags:["Arcade","Snake","Block","Hyper-Casual","Mobile","Swipe","Smash","Color","Browser","Free","HTML5"],url:"/snake-vs-block/",desc:"Play Snake vs Block free online! Smash numbered blocks, collect stars, dodge bombs. 30 challenging levels, combo system, and power-ups. No download needed!",isNew:true,status:"live"},
   {name:"Monster Truck Madness",emoji:"🚗",cat:"racing",tags:["Racing","Driving","Physics","Truck","Monster Truck","Arcade","Casual","Balance","Obstacle","2D"],url:"/monster-truck-madness/",desc:"Play Monster Truck Madness free online! Drive a monster truck through 30 physics-based obstacle courses across 6 biomes. No download needed!",isNew:true,status:"live"},
+{name:"Color Cascade",emoji:"🎨",cat:"puzzle",tags:["Puzzle","Color","Shooter","Conveyor","Match","Hybrid-Casual","Casual","Brain","Strategy"],url:"/color-cascade/",desc:"Play Color Cascade free online! Tap to launch colorful shooters at matching pixel clusters in this fast-paced conveyor-shooter puzzle. 30 hand-crafted levels, combos, power-ups, and 3-star ratings. No download required!",isNew:true,status:"live"},
+
 ];
 
 /**
