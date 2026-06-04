@@ -291,3 +291,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Tidy Up 3D",emoji:"🧹",cat:"puzzle",tags:["sort","tidy","organize","match","casual"],url:"/tidy-up-3d/",desc:"Satisfying sorting puzzle game. Tap to select items and place them into matching zones. Match 3+ to burst and clear all 30 levels.",isNew:true,status:"live"},
