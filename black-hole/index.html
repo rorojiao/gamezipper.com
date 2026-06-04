@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Play Black Hole Online Free - Eat Everything and Grow | GameZipper</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="Control a black hole and consume everything in your path! 30 levels, 6 tiers, 6 hole skins, 12 achievements, power-ups. Free browser play, no download.">
+<meta property="og:title" content="Play Black Hole Online Free - Eat Everything and Grow | GameZipper">
+<meta property="og:description" content="Control a black hole and consume everything in your path! 30 levels, 6 tiers, 6 hole skins, 12 achievements, power-ups. Free browser play, no download.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/black-hole/">
+<meta property="og:image" content="https://gamezipper.com/black-hole/preview.png">
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:title" content="Play Black Hole Online Free - Eat Everything and Grow | GameZipper">
+<meta property="twitter:description" content="Control a black hole and consume everything in your path! 30 levels, 6 tiers, 6 hole skins, 12 achievements, power-ups.">
+<meta property="twitter:image" content="https://gamezipper.com/black-hole/preview.png">
+<link rel="canonical" href="https://gamezipper.com/black-hole/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"VideoGame","name":"Black Hole","description":"Control a black hole and consume everything in your path! 30 levels across 6 tiers with power-ups, achievements, and 6 unlockable hole skins.","genre":"Arcade","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://gamezipper.com/black-hole/","publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com/"},"numberOfLevels":"30","playMode":"SinglePlayer"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Black Hole?","acceptedAnswer":{"@type":"Answer","text":"Move your black hole with the mouse or touch to consume smaller objects. Grow bigger to eat larger objects and reach the target mass to complete each level."}},{"@type":"Question","name":"How many levels are in Black Hole?","acceptedAnswer":{"@type":"Answer","text":"There are 30 levels across 6 tiers: Cosmic Dust, Asteroid Field, Planetary Debris, Star System, Nebula Storm, and Singularity."}},{"@type":"Question","name":"Can I play Black Hole on mobile?","acceptedAnswer":{"@type":"Answer","text":"Yes! Black Hole is fully responsive and works on both desktop and mobile browsers with touch controls."}},{"@type":"Question","name":"How do I unlock hole skins?","acceptedAnswer":{"@type":"Answer","text":"Earn stars by completing levels. Unlock skins at 5, 10, 15, 20, 30, and 50 total stars."}}]},{"@context":"https://schema.org","@type":"HowTo","name":"How to Play Black Hole","step":[{"@type":"HowToStep","position":1,"text":"Select a level from the level select screen or start from level 1."},{"@type":"HowToStep","position":2,"text":"Move the black hole with your mouse or finger to approach smaller objects."},{"@type":"HowToStep","position":3,"text":"Consume objects smaller than your hole to grow in size and mass."},{"@type":"HowToStep","position":4,"text":"Collect power-ups like Vortex Burst, Magnetic Pull, and Ghost for special abilities."},{"@type":"HowToStep","position":5,"text":"Reach the target mass before time runs out to complete the level and earn up to 3 stars."}]},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Black Hole","item":"https://gamezipper.com/black-hole/"}]}]
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow-x:hidden;user-select:none;-webkit-user-select:none;background:#000;font-family:'Inter',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;min-height:100dvh}
+canvas{display:block;touch-action:none;-webkit-touch-callout:none}
+#gc{position:relative;width:100%;height:100%}
+#gc canvas{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+</style>
+</head>
+<body>
+<div id="gc"></div>
+<script>
+'use strict';
+/* ================================================================
+   BLACK HOLE — Complete Single-File Game
+   ================================================================ */
+
+// ==================== CONSTANTS ====================
+const SAVE_KEY = 'gz_black_hole_save_v1';
+const SAVE_VER = 1;
+const ARENA_W = 800;
+const ARENA_H = 800;
+const SUCTION_MULT = 1.5;
+const GROWTH_FACTOR = 0.4;
+const MASS_RADIUS_SCALE = 3;
+const CONSUME_LENIENCY = 1.0;
+
+// ==================== COLORS ====================
+const OBJ_COLORS = ['#ff4466','#ff8833','#ffdd33','#44ff66','#33ffee','#4488ff','#ffffff','#ff66cc'];
+const TIER_NAMES = ['Cosmic Dust','Asteroid Field','Planetary Debris','Star System','Nebula Storm','Singularity'];
+const TIER_COLORS = ['#aa66ff','#ff6644','#44aaff','#ffdd33','#ff66cc','#ff4466'];
+
+// ==================== SKINS ====================
+const SKINS = [
+  { name:'Cosmic', stars:0, c1:'#ff44ff', c2:'#8844cc', c3:'#220044' },
+  { name:'Plasma', stars:5, c1:'#44ffff', c2:'#0088cc', c3:'#002244' },
+  { name:'Galaxy', stars:10, c1:'#ff44ff', c2:'#4444ff', c3:'#ff4444' },
+  { name:'Singularity', stars:15, c1:'#ffcc00', c2:'#cc8800', c3:'#442200' },
+  { name:'Event Horizon', stars:20, c1:'#ffffff', c2:'#aaaacc', c3:'#333344' },
+  { name:'Quasar', stars:50, c1:'#ff44ff', c2:'#44ffff', c3:'#ffff44' }
+];
+
+// ==================== POWERUP DATA ====================
+const POWERUP_TYPES = [
+  { id:'vortex', name:'Vortex Burst', dur:3, icon:'🌀', desc:'Enlarged suction 3s' },
+  { id:'magnet', name:'Magnetic Pull', dur:5, icon:'🧲', desc:'Double range 5s' },
+  { id:'ghost', name:'Ghost', dur:5, icon:'👻', desc:'Pass through walls 5s' }
+];
+
+// ==================== ACHIEVEMENTS ====================
+const ACHIEVEMENTS = [
+  { id:'first_bite', name:'First Bite', desc:'Complete level 1', icon:'🍎' },
+  { id:'size_matters', name:'Size Matters', desc:'Reach size 10 in any level', icon:'📏' },
+  { id:'cosmic_power', name:'Cosmic Power', desc:'Use a power-up', icon:'⚡' },
+  { id:'stellar_streak', name:'Stellar Streak', desc:'Get 3 stars on 3 levels in a row', icon:'🌟' },
+  { id:'halfway', name:'Halfway There', desc:'Complete level 15', icon:'🎯' },
+  { id:'star_hunter', name:'Star Hunter', desc:'Earn 10 stars total', icon:'⭐' },
+  { id:'star_master', name:'Star Master', desc:'Earn 25 stars total', icon:'🏆' },
+  { id:'galaxy_conqueror', name:'Galaxy Conqueror', desc:'Earn 50 stars total', icon:'👑' },
+  { id:'speed_demon', name:'Speed Demon', desc:'Complete a tier 6 level with 15+ seconds left', icon:'💨' },
+  { id:'wanderer', name:'Wanderer', desc:'Move 10,000 pixels in a single level', icon:'🚶' },
+  { id:'vortex_master', name:'Vortex Master', desc:'Use vortex 5 times total', icon:'🌀' },
+  { id:'completionist', name:'Completionist', desc:'Get 3 stars on all 30 levels', icon:'💯' }
+];
+
+// ==================== LEVEL DEFINITIONS ====================
+const LEVELS = [
+  // Tier 1: Cosmic Dust (1-5) — no timer, simple
+  { tier:0, target:3, time:0, orbs:[{n:30,s:1}], moving:[], walls:[], pups:[] },
+  { tier:0, target:4, time:0, orbs:[{n:35,s:1},{n:5,s:2}], moving:[], walls:[], pups:[] },
+  { tier:0, target:5, time:0, orbs:[{n:25,s:1},{n:4,s:3}], moving:[], walls:[], pups:[] },
+  { tier:0, target:6, time:0, orbs:[{n:30,s:1},{n:6,s:3}], moving:[], walls:[], pups:[] },
+  { tier:0, target:8, time:0, orbs:[{n:35,s:1},{n:5,s:3},{n:2,s:2}], moving:[], walls:[], pups:[] },
+  // Tier 2: Asteroid Field (6-10) — no timer, mixed
+  { tier:1, target:8, time:0, orbs:[{n:10,s:1},{n:10,s:2},{n:10,s:3},{n:10,s:4}], moving:[], walls:[], pups:[] },
+  { tier:1, target:10, time:0, orbs:[{n:10,s:1},{n:10,s:2},{n:13,s:3},{n:12,s:4}], moving:[], walls:[], pups:[] },
+  { tier:1, target:12, time:0, orbs:[{n:7,s:1},{n:7,s:2},{n:8,s:3},{n:8,s:4},{n:5,s:5}], moving:[], walls:[], pups:[] },
+  { tier:1, target:14, time:0, orbs:[{n:8,s:1},{n:8,s:2},{n:8,s:3},{n:8,s:4},{n:8,s:5}], moving:[], walls:[], pups:['vortex'] },
+  { tier:1, target:16, time:0, orbs:[{n:9,s:1},{n:9,s:2},{n:9,s:3},{n:9,s:4},{n:9,s:5}], moving:[], walls:[], pups:['vortex'] },
+  // Tier 3: Planetary Debris (11-15) — no timer, larger objects
+  { tier:2, target:16, time:0, orbs:[{n:6,s:1},{n:6,s:2},{n:6,s:3},{n:4,s:4},{n:4,s:5},{n:4,s:6}], moving:[], walls:[], pups:['magnet'] },
+  { tier:2, target:18, time:0, orbs:[{n:7,s:1},{n:7,s:2},{n:6,s:3},{n:5,s:4},{n:5,s:5},{n:5,s:6}], moving:[], walls:[], pups:['magnet'] },
+  { tier:2, target:20, time:0, orbs:[{n:5,s:1},{n:5,s:2},{n:5,s:3},{n:5,s:4},{n:5,s:5},{n:3,s:6},{n:2,s:7}], moving:[], walls:[], pups:['ghost'] },
+  { tier:2, target:22, time:0, orbs:[{n:6,s:1},{n:6,s:2},{n:5,s:3},{n:5,s:4},{n:5,s:5},{n:4,s:6},{n:4,s:7}], moving:[], walls:[], pups:['ghost'] },
+  { tier:2, target:24, time:0, orbs:[{n:7,s:1},{n:6,s:2},{n:6,s:3},{n:5,s:4},{n:5,s:5},{n:5,s:6},{n:4,s:7},{n:2,s:8}], moving:[], walls:[], pups:['vortex','magnet','ghost'] },
+  // Tier 4: Star System (16-20) — 90s timer, moving objects
+  { tier:3, target:20, time:90, orbs:[{n:7,s:1},{n:7,s:2},{n:7,s:3},{n:5,s:4},{n:5,s:5},{n:4,s:6}], moving:[{n:5,s:3}], walls:[], pups:[] },
+  { tier:3, target:22, time:90, orbs:[{n:8,s:1},{n:7,s:2},{n:7,s:3},{n:6,s:4},{n:6,s:5},{n:6,s:7}], moving:[{n:8,s:4}], walls:[], pups:[] },
+  { tier:3, target:24, time:90, orbs:[{n:7,s:1},{n:6,s:2},{n:6,s:3},{n:5,s:4},{n:5,s:5},{n:6,s:7}], moving:[{n:10,s:4}], walls:[], pups:['vortex'] },
+  { tier:3, target:26, time:90, orbs:[{n:8,s:1},{n:7,s:2},{n:7,s:3},{n:6,s:4},{n:6,s:5},{n:6,s:8}], moving:[{n:12,s:5}], walls:[], pups:['magnet'] },
+  { tier:3, target:30, time:90, orbs:[{n:10,s:1},{n:8,s:2},{n:8,s:3},{n:6,s:4},{n:6,s:5},{n:6,s:6},{n:6,s:8}], moving:[{n:15,s:5}], walls:[], pups:['vortex','magnet','ghost'] },
+  // Tier 5: Nebula Storm (21-25) — 90s timer, walls
+  { tier:4, target:28, time:90, orbs:[{n:10,s:1},{n:8,s:2},{n:8,s:3},{n:6,s:4},{n:6,s:5},{n:6,s:6},{n:6,s:7}], moving:[{n:6,s:4}], walls:[{x:200,y:200,w:400,h:16},{x:200,y:584,w:400,h:16}], pups:[] },
+  { tier:4, target:30, time:90, orbs:[{n:11,s:1},{n:8,s:2},{n:8,s:3},{n:7,s:4},{n:7,s:5},{n:7,s:6},{n:7,s:8}], moving:[{n:8,s:5}], walls:[{x:100,y:200,w:250,h:16},{x:450,y:200,w:250,h:16},{x:300,y:400,w:200,h:16}], pups:[] },
+  { tier:4, target:32, time:90, orbs:[{n:10,s:1},{n:8,s:2},{n:7,s:3},{n:6,s:4},{n:6,s:5},{n:6,s:6},{n:7,s:8}], moving:[{n:8,s:5}], walls:[{x:100,y:150,w:200,h:16},{x:500,y:150,w:200,h:16},{x:300,y:350,w:200,h:16},{x:100,y:550,w:200,h:16},{x:500,y:550,w:200,h:16}], pups:['vortex'] },
+  { tier:4, target:34, time:90, orbs:[{n:11,s:1},{n:8,s:2},{n:8,s:3},{n:7,s:4},{n:7,s:5},{n:7,s:6},{n:6,s:8}], moving:[{n:10,s:5}], walls:[{x:150,y:200,w:500,h:16},{x:150,y:584,w:500,h:16}], pups:['magnet'] },
+  { tier:4, target:38, time:90, orbs:[{n:12,s:1},{n:9,s:2},{n:8,s:3},{n:7,s:4},{n:7,s:5},{n:7,s:6},{n:5,s:7},{n:5,s:9}], moving:[{n:12,s:6}], walls:[{x:100,y:150,w:250,h:16},{x:450,y:150,w:250,h:16},{x:300,y:400,w:200,h:16}], pups:['vortex','magnet','ghost'] },
+  // Tier 6: Singularity (26-30) — 60s timer, maximum chaos
+  { tier:5, target:34, time:60, orbs:[{n:12,s:1},{n:10,s:2},{n:10,s:3},{n:8,s:4},{n:8,s:5},{n:6,s:6},{n:6,s:8}], moving:[{n:8,s:5}], walls:[{x:150,y:200,w:500,h:16},{x:150,y:584,w:500,h:16}], pups:[] },
+  { tier:5, target:36, time:60, orbs:[{n:14,s:1},{n:12,s:2},{n:10,s:3},{n:8,s:4},{n:8,s:5},{n:8,s:6},{n:10,s:8}], moving:[{n:10,s:6}], walls:[{x:100,y:150,w:250,h:16},{x:450,y:150,w:250,h:16},{x:300,y:400,w:200,h:16}], pups:[] },
+  { tier:5, target:38, time:60, orbs:[{n:14,s:1},{n:10,s:2},{n:10,s:3},{n:8,s:4},{n:8,s:5},{n:8,s:6},{n:6,s:7},{n:6,s:9}], moving:[{n:12,s:6}], walls:[{x:100,y:130,w:200,h:16},{x:500,y:130,w:200,h:16},{x:300,y:300,w:200,h:16},{x:100,y:500,w:200,h:16},{x:500,y:500,w:200,h:16}], pups:['vortex'] },
+  { tier:5, target:42, time:60, orbs:[{n:16,s:1},{n:12,s:2},{n:10,s:3},{n:10,s:4},{n:10,s:5},{n:8,s:6},{n:8,s:7},{n:6,s:9}], moving:[{n:14,s:7}], walls:[{x:150,y:200,w:500,h:16},{x:150,y:584,w:500,h:16}], pups:['vortex','magnet','ghost'] },
+  { tier:5, target:50, time:60, orbs:[{n:16,s:1},{n:14,s:2},{n:12,s:3},{n:10,s:4},{n:10,s:5},{n:8,s:6},{n:6,s:7},{n:4,s:10}], moving:[{n:16,s:8}], walls:[{x:100,y:130,w:250,h:16},{x:450,y:130,w:250,h:16},{x:300,y:400,w:200,h:16},{x:100,y:600,w:250,h:16},{x:450,y:600,w:250,h:16}], pups:['vortex','magnet','ghost'] }
+];
+
+// ==================== GAME GLOBALS ====================
+let canvas, ctx, W, H, dpr, gameContainer;
+let audioCtx = null, masterGain = null, bgmNodes = [], bgmIntervals = [];
+let running = false, animId = null;
+let state = 'TITLE';
+let dt = 0, lastTime = 0, gameTime = 0;
+let screenShake = 0, shakeX = 0, shakeY = 0;
+let transitionAlpha = 0, transitioning = false, nextState = null;
+let camX = 0, camY = 0;
+
+// Input
+let mouseX = ARENA_W/2, mouseY = ARENA_H/2;
+let keysDown = {};
+
+// Level state
+let currentLevel = 0;
+let hole = { x: ARENA_W/2, y: ARENA_H/2, mass: 1, radius: 3 };
+let objects = [];
+let walls = [];
+let powerups = [];
+let activePups = {};
+let particles = [];
+let bgStars = [];
+let timeRemaining = 0;
+let levelActive = false;
+let totalDist = 0;
+let prevHoleX = 0, prevHoleY = 0;
+let vortexUses = 0;
+let pupsUsed = false;
+let tutorialStep = -1;
+let suctionGain = null;
+
+// UI state
+let hoveredBtn = null;
+let activeBtn = null;
+let notifications = [];
+let confetti = [];
+let skinAnimT = 0;
+
+// ==================== SAVE STATE ====================
+let save = {
+  version: SAVE_VER,
+  levels: {},
+  achievements: {},
+  totalStars: 0,
+  skinsUnlocked: ['Cosmic'],
+  selectedSkin: 'Cosmic',
+  musicOn: true,
+  sfxOn: true,
+  tutorialDone: false,
+  vortexTotal: 0
+};
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.version === SAVE_VER) {
+        save = { ...save, ...parsed };
+        if (!save.levels) save.levels = {};
+        if (!save.achievements) save.achievements = {};
+        if (!save.skinsUnlocked) save.skinsUnlocked = ['Cosmic'];
+        if (!save.selectedSkin) save.selectedSkin = 'Cosmic';
+        if (save.vortexTotal === undefined) save.vortexTotal = 0;
+      }
+    }
+  } catch(e) { /* ignore corrupt data */ }
+}
+
+function saveGame() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch(e) { /* ignore */ }
+}
+
+loadGame();
+
+// ==================== UTILITY ====================
+function getMassRadius(m) { return Math.sqrt(Math.max(1, m)) * MASS_RADIUS_SCALE; }
+function dist(ax,ay,bx,by) { const dx=ax-bx,dy=ay-by; return Math.sqrt(dx*dx+dy*dy); }
+function lerp(a,b,t) { return a+(b-a)*t; }
+function clamp(v,lo,hi) { return Math.max(lo,Math.min(hi,v)); }
+function rnd(lo,hi) { return lo+Math.random()*(hi-lo); }
+function rndInt(lo,hi) { return Math.floor(rnd(lo,hi+1)); }
+
+// ==================== AUDIO ENGINE ====================
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.4;
+    masterGain.connect(audioCtx.destination);
+  } catch(e) { audioCtx = null; }
+}
+
+function stopBGM() {
+  bgmNodes.forEach(n => { try { n.stop(); } catch(e) {} });
+  bgmNodes = [];
+  bgmIntervals.forEach(id => clearInterval(id));
+  bgmIntervals = [];
+  if (suctionGain) { try { suctionGain.disconnect(); } catch(e) {} suctionGain = null; }
+}
+
+function playBGM() {
+  if (!audioCtx || !save.musicOn) return;
+  stopBGM();
+  const t = audioCtx.currentTime;
+  const sc = [110, 138.6, 164.8, 196, 220, 261.6, 329.6, 392];
+
+  // Sub bass drone
+  const bassOsc = audioCtx.createOscillator();
+  const bassGain = audioCtx.createGain();
+  const bassFilt = audioCtx.createBiquadFilter();
+  bassOsc.type = 'sine';
+  bassOsc.frequency.value = 55;
+  bassFilt.type = 'lowpass'; bassFilt.frequency.value = 100;
+  bassGain.gain.value = 0.12;
+  bassOsc.connect(bassFilt).connect(bassGain).connect(masterGain);
+  bassOsc.start(t);
+  bgmNodes.push(bassOsc);
+
+  // LFO pulsing the bass
+  const bassLfo = audioCtx.createOscillator();
+  const bassLfoG = audioCtx.createGain();
+  bassLfo.type = 'sine'; bassLfo.frequency.value = 0.5;
+  bassLfoG.gain.value = 0.04;
+  bassLfo.connect(bassLfoG).connect(bassGain.gain);
+  bassLfo.start(t);
+  bgmNodes.push(bassLfo);
+
+  // Detuned pad
+  const p1 = audioCtx.createOscillator();
+  const p2 = audioCtx.createOscillator();
+  const pG = audioCtx.createGain();
+  const pF = audioCtx.createBiquadFilter();
+  p1.type = 'triangle'; p1.frequency.value = 130.8;
+  p2.type = 'triangle'; p2.frequency.value = 131.2;
+  pF.type = 'lowpass'; pF.frequency.value = 500;
+  pG.gain.value = 0.05;
+  p1.connect(pF); p2.connect(pF);
+  pF.connect(pG).connect(masterGain);
+  p1.start(t); p2.start(t);
+  bgmNodes.push(p1, p2);
+
+  // Arp melody
+  const mO = audioCtx.createOscillator();
+  const mG = audioCtx.createGain();
+  const mF = audioCtx.createBiquadFilter();
+  mO.type = 'square'; mO.frequency.value = sc[4];
+  mF.type = 'lowpass'; mF.frequency.value = 1200;
+  mG.gain.value = 0.018;
+  mO.connect(mF).connect(mG).connect(masterGain);
+  mO.start(t);
+  bgmNodes.push(mO);
+  let ni = 0;
+  const arpId = setInterval(() => {
+    if (!audioCtx || audioCtx.state === 'closed') { clearInterval(arpId); return; }
+    ni = (ni + 1) % sc.length;
+    const now = audioCtx.currentTime;
+    mO.frequency.setValueAtTime(sc[ni] * 2, now);
+    mG.gain.setValueAtTime(0.018, now);
+    mG.gain.exponentialRampToValueAtTime(0.003, now + 0.4);
+  }, 500);
+  bgmIntervals.push(arpId);
+
+  // Suction whir
+  const sO = audioCtx.createOscillator();
+  const sG = audioCtx.createGain();
+  const sF = audioCtx.createBiquadFilter();
+  sO.type = 'sawtooth'; sO.frequency.value = 80;
+  sF.type = 'lowpass'; sF.frequency.value = 200;
+  sG.gain.value = 0;
+  sO.connect(sF).connect(sG).connect(masterGain);
+  sO.start(t);
+  bgmNodes.push(sO);
+  suctionGain = sG;
+}
+
+function playSFX(type) {
+  if (!audioCtx || !save.sfxOn) return;
+  const t = audioCtx.currentTime;
+  const g = audioCtx.createGain();
+  g.connect(masterGain);
+
+  if (type === 'click') {
+    const o = audioCtx.createOscillator();
+    o.type = 'square'; o.frequency.value = 200;
+    g.gain.setValueAtTime(0.15, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+    o.connect(g); o.start(t); o.stop(t + 0.03);
+  }
+  else if (type === 'consume') {
+    const f = rnd(400, 800);
+    const o = audioCtx.createOscillator();
+    o.type = 'sine'; o.frequency.value = f;
+    const n = audioCtx.createBufferSource();
+    const nb = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate);
+    const nd = nb.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * 0.3;
+    n.buffer = nb;
+    const ng = audioCtx.createGain();
+    ng.gain.setValueAtTime(0.1, t);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+    n.connect(ng).connect(masterGain);
+    n.start(t); n.stop(t + 0.05);
+    g.gain.setValueAtTime(0.2, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    o.connect(g); o.start(t); o.stop(t + 0.1);
+  }
+  else if (type === 'growth') {
+    const o = audioCtx.createOscillator();
+    o.type = 'sine'; o.frequency.value = 60;
+    g.gain.setValueAtTime(0.3, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    o.connect(g); o.start(t); o.stop(t + 0.2);
+    const n = audioCtx.createBufferSource();
+    const nb = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.08, audioCtx.sampleRate);
+    const nd = nb.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * 0.5;
+    n.buffer = nb;
+    const ng = audioCtx.createGain();
+    ng.gain.setValueAtTime(0.15, t);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    n.connect(ng).connect(masterGain);
+    n.start(t); n.stop(t + 0.08);
+  }
+  else if (type === 'complete') {
+    [523.3, 659.3, 784, 1047].forEach((f, i) => {
+      const o = audioCtx.createOscillator();
+      const g2 = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g2.gain.setValueAtTime(0.001, t + i * 0.15);
+      g2.gain.linearRampToValueAtTime(0.2, t + i * 0.15 + 0.01);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + i * 0.15 + 0.4);
+      o.connect(g2); g2.connect(masterGain);
+      o.start(t + i * 0.15); o.stop(t + i * 0.15 + 0.4);
+    });
+  }
+  else if (type === 'fail') {
+    [220, 175].forEach((f, i) => {
+      const o = audioCtx.createOscillator();
+      const g2 = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g2.gain.setValueAtTime(0.2, t + i * 0.5);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + i * 0.5 + 0.45);
+      o.connect(g2); g2.connect(masterGain);
+      o.start(t + i * 0.5); o.stop(t + i * 0.5 + 0.45);
+    });
+  }
+  else if (type === 'star') {
+    const o = audioCtx.createOscillator();
+    o.type = 'triangle'; o.frequency.value = 1600;
+    g.gain.setValueAtTime(0.2, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    o.connect(g); o.start(t); o.stop(t + 0.2);
+  }
+  else if (type === 'powerup') {
+    [800, 1000, 1200].forEach((f, i) => {
+      const o = audioCtx.createOscillator();
+      const g2 = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g2.gain.setValueAtTime(0.001, t + i * 0.05);
+      g2.gain.linearRampToValueAtTime(0.15, t + i * 0.05 + 0.01);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + i * 0.05 + 0.15);
+      o.connect(g2); g2.connect(masterGain);
+      o.start(t + i * 0.05); o.stop(t + i * 0.05 + 0.15);
+    });
+  }
+  else if (type === 'bounce') {
+    const o = audioCtx.createOscillator();
+    o.type = 'sine'; o.frequency.value = 150;
+    o.frequency.exponentialRampToValueAtTime(60, t + 0.1);
+    g.gain.setValueAtTime(0.15, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    o.connect(g); o.start(t); o.stop(t + 0.1);
+  }
+}
+
+// ==================== STARS BACKGROUND ====================
+function generateStars() {
+  bgStars = [];
+  for (let i = 0; i < 120; i++) {
+    bgStars.push({ x: rnd(0, ARENA_W), y: rnd(0, ARENA_H), r: rnd(0.5, 2), b: rnd(0.3, 1), s: rnd(0.5, 2) });
+  }
+}
+
+function drawStars(ctx, t) {
+  for (const s of bgStars) {
+    const flicker = 0.5 + 0.5 * Math.sin(t * s.s + s.x);
+    const alpha = s.b * flicker;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ==================== PARTICLES ====================
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = rnd(0, Math.PI * 2);
+    const speed = rnd(40, 120);
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      r: rnd(1.5, 4),
+      color,
+      life: 1,
+      decay: rnd(1.2, 2.5)
+    });
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= 0.96;
+    p.vy *= 0.96;
+    p.life -= p.decay * dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function drawParticles(ctx) {
+  for (const p of particles) {
+    ctx.globalAlpha = clamp(p.life, 0, 1);
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
+}
+
+// ==================== CONFETTI ====================
+function spawnConfetti() {
+  for (let i = 0; i < 60; i++) {
+    confetti.push({
+      x: rnd(0, ARENA_W), y: rnd(-50, -10),
+      vx: rnd(-20, 20), vy: rnd(30, 80),
+      r: rnd(2, 5), rot: rnd(0, Math.PI * 2),
+      rv: rnd(-3, 3), color: OBJ_COLORS[rndInt(0, 7)], life: 1, decay: rnd(0.15, 0.3)
+    });
+  }
+}
+
+function updateConfetti(dt) {
+  for (let i = confetti.length - 1; i >= 0; i--) {
+    const c = confetti[i];
+    c.x += c.vx * dt;
+    c.y += c.vy * dt;
+    c.rot += c.rv * dt;
+    c.life -= c.decay * dt;
+    if (c.life <= 0) confetti.splice(i, 1);
+  }
+}
+
+function drawConfetti(ctx) {
+  for (const c of confetti) {
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(c.rot);
+    ctx.globalAlpha = clamp(c.life, 0, 1);
+    ctx.fillStyle = c.color;
+    ctx.fillRect(-c.r, -c.r * 0.5, c.r * 2, c.r);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ==================== DRAWING ====================
+function drawHole(ctx, x, y, r) {
+  const skin = SKINS.find(s => s.name === save.selectedSkin) || SKINS[0];
+  skinAnimT += dt;
+
+  // Outer glow
+  ctx.save();
+  ctx.shadowColor = skin.c1;
+  ctx.shadowBlur = r * 0.8;
+
+  // Radial gradient
+  const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+  grad.addColorStop(0, '#000000');
+  grad.addColorStop(0.4, skin.c3);
+  grad.addColorStop(0.75, skin.c2);
+  grad.addColorStop(1, skin.c1);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Neon rim
+  ctx.strokeStyle = skin.c1;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Particle ring
+  ctx.shadowBlur = 0;
+  const ringCount = 8;
+  for (let i = 0; i < ringCount; i++) {
+    const angle = (i / ringCount) * Math.PI * 2 + skinAnimT * 1.5;
+    const pr = r + 4 + Math.sin(skinAnimT * 3 + i) * 3;
+    const px = x + Math.cos(angle) * pr;
+    const py = y + Math.sin(angle) * pr;
+    ctx.fillStyle = skin.c1;
+    ctx.globalAlpha = 0.6 + 0.3 * Math.sin(skinAnimT * 2 + i);
+    ctx.beginPath();
+    ctx.arc(px, py, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
+function drawObject(ctx, obj) {
+  if (obj.consumed) return;
+  ctx.save();
+
+  // Glow
+  ctx.shadowColor = obj.color;
+  ctx.shadowBlur = 8;
+
+  // Body
+  const grad = ctx.createRadialGradient(obj.x - obj.radius * 0.2, obj.y - obj.radius * 0.2, 0, obj.x, obj.y, obj.radius);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.3, obj.color);
+  grad.addColorStop(1, obj.color);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(obj.x, obj.y, obj.radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Subtle rotation highlight
+  const rot = (gameTime * 0.5 + obj.x * 0.01) % (Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.beginPath();
+  ctx.arc(obj.x + Math.cos(rot) * obj.radius * 0.3, obj.y + Math.sin(rot) * obj.radius * 0.3, obj.radius * 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawWall(ctx, w) {
+  ctx.save();
+  ctx.shadowColor = '#6644aa';
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = 'rgba(100,60,180,0.5)';
+  ctx.fillRect(w.x, w.y, w.w, w.h);
+  ctx.strokeStyle = '#8866cc';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(w.x, w.y, w.w, w.h);
+  ctx.restore();
+}
+
+function drawPowerup(ctx, p) {
+  if (p.consumed) return;
+  ctx.save();
+  const pulse = 1 + 0.15 * Math.sin(gameTime * 4);
+  const r = 14 * pulse;
+  ctx.shadowColor = '#ffdd44';
+  ctx.shadowBlur = 15;
+  ctx.fillStyle = 'rgba(255,220,50,0.2)';
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, r + 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffdd44';
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.font = 'bold 14px Inter';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const pt = POWERUP_TYPES.find(t => t.id === p.type);
+  ctx.fillText(pt ? pt.icon : '?', p.x, p.y);
+  ctx.restore();
+}
+
+// ==================== LEVEL SETUP ====================
+function loadLevel(n) {
+  const def = LEVELS[n - 1];
+  if (!def) return;
+
+  hole = { x: ARENA_W / 2, y: ARENA_H / 2, mass: 1, radius: 3 };
+  objects = [];
+  walls = [];
+  powerups = [];
+  activePups = {};
+  particles = [];
+  confetti = [];
+  totalDist = 0;
+  prevHoleX = hole.x;
+  prevHoleY = hole.y;
+  pupsUsed = false;
+
+  timeRemaining = def.time;
+
+  // Generate objects
+  const margin = 30;
+  for (const od of def.orbs) {
+    for (let i = 0; i < od.n; i++) {
+      let ox, oy, tries = 0;
+      do {
+        ox = rnd(margin, ARENA_W - margin);
+        oy = rnd(margin, ARENA_H - margin);
+        tries++;
+      } while (tries < 50 && dist(ox, oy, ARENA_W/2, ARENA_H/2) < 60);
+
+      objects.push({
+        x: ox, y: oy,
+        radius: od.s * 3 + 2,
+        size: od.s,
+        color: OBJ_COLORS[rndInt(0, 7)],
+        consumed: false,
+        moving: false
+      });
+    }
+  }
+
+  // Moving objects
+  for (const md of def.moving) {
+    for (let i = 0; i < md.n; i++) {
+      const cx = rnd(100, ARENA_W - 100);
+      const cy = rnd(100, ARENA_H - 100);
+      const orbitR = rnd(40, 100);
+      const speed = rnd(0.5, 1.5);
+      const startAngle = rnd(0, Math.PI * 2);
+      objects.push({
+        x: cx + Math.cos(startAngle) * orbitR,
+        y: cy + Math.sin(startAngle) * orbitR,
+        radius: md.s * 3 + 2,
+        size: md.s,
+        color: OBJ_COLORS[rndInt(0, 7)],
+        consumed: false,
+        moving: true,
+        cx, cy, orbitR, speed, angle: startAngle
+      });
+    }
+  }
+
+  // Walls
+  for (const wd of def.walls) {
+    walls.push({ x: wd.x, y: wd.y, w: wd.w, h: wd.h });
+  }
+
+  // Powerups
+  for (const pid of def.pups) {
+    let px, py, tries = 0;
+    do {
+      px = rnd(60, ARENA_W - 60);
+      py = rnd(60, ARENA_H - 60);
+      tries++;
+    } while (tries < 50 && dist(px, py, ARENA_W/2, ARENA_H/2) < 80);
+    powerups.push({ x: px, y: py, type: pid, consumed: false });
+  }
+
+  generateStars();
+  gameTime = 0;
+}
+
+// ==================== GAME LOGIC ====================
+function consumeObject(obj) {
+  obj.consumed = true;
+  const prevTier = Math.floor(hole.mass / 5);
+  hole.mass += obj.size * 0.5 + 0.5;
+  hole.radius = getMassRadius(hole.mass);
+  const newTier = Math.floor(hole.mass / 5);
+
+  spawnParticles(obj.x, obj.y, obj.color, rndInt(8, 12));
+  playSFX('consume');
+
+  if (newTier > prevTier) {
+    playSFX('growth');
+    screenShake = 8;
+    spawnParticles(hole.x, hole.y, '#ffffff', 15);
+  }
+
+  if (hole.mass >= 10) {
+    unlockAchievement('size_matters');
+  }
+}
+
+function unlockAchievement(id) {
+  if (save.achievements[id]) return;
+  save.achievements[id] = true;
+  const ach = ACHIEVEMENTS.find(a => a.id === id);
+  if (ach) {
+    notifications.push({ text: ach.icon + ' ' + ach.name, sub: ach.desc, timer: 3 });
+  }
+  saveGame();
+}
+
+function levelComplete() {
+  levelActive = false;
+  playSFX('complete');
+  spawnConfetti();
+
+  const def = LEVELS[currentLevel - 1];
+  let stars = 1;
+  if (hole.mass >= def.target * 1.1) stars = 2;
+  if (hole.mass >= def.target * 1.3) stars = 3;
+
+  // Play star sounds
+  for (let i = 0; i < stars; i++) {
+    setTimeout(() => playSFX('star'), i * 200);
+  }
+
+  // Update save
+  if (!save.levels[currentLevel]) save.levels[currentLevel] = { stars: 0, bestMass: 0, bestTime: 0 };
+  const sl = save.levels[currentLevel];
+  sl.stars = Math.max(sl.stars, stars);
+  sl.bestMass = Math.max(sl.bestMass, hole.mass);
+  if (def.time > 0) {
+    sl.bestTime = Math.max(sl.bestTime, def.time - timeRemaining);
+  }
+
+  // Calculate total stars
+  let ts = 0;
+  for (const k in save.levels) ts += save.levels[k].stars;
+  save.totalStars = ts;
+
+  // Skin unlock check
+  for (const s of SKINS) {
+    if (ts >= s.stars && !save.skinsUnlocked.includes(s.name)) {
+      save.skinsUnlocked.push(s.name);
+      notifications.push({ text: '🎨 Skin Unlocked: ' + s.name, sub: 'Select it in settings!', timer: 4 });
+    }
+  }
+
+  // Achievement checks
+  if (currentLevel === 1) unlockAchievement('first_bite');
+  if (currentLevel === 15) unlockAchievement('halfway');
+  if (ts >= 10) unlockAchievement('star_hunter');
+  if (ts >= 25) unlockAchievement('star_master');
+  if (ts >= 50) unlockAchievement('galaxy_conqueror');
+  if (totalDist >= 10000) unlockAchievement('wanderer');
+  if (save.vortexTotal >= 5) unlockAchievement('vortex_master');
+
+  // Speed demon
+  if (def.time > 0 && def.tier === 5 && timeRemaining >= 15) {
+    unlockAchievement('speed_demon');
+  }
+
+  // Stellar streak
+  let streak = 0;
+  for (let i = currentLevel; i >= 1; i--) {
+    if (save.levels[i] && save.levels[i].stars === 3) streak++;
+    else break;
+  }
+  if (streak >= 3) unlockAchievement('stellar_streak');
+
+  // Completionist
+  let allThree = true;
+  for (let i = 1; i <= 30; i++) {
+    if (!save.levels[i] || save.levels[i].stars < 3) { allThree = false; break; }
+  }
+  if (allThree) unlockAchievement('completionist');
+
+  saveGame();
+  state = 'COMPLETE';
+
+  // Store results for display
+  window._lcStars = stars;
+  window._lcMass = hole.mass;
+  window._lcTime = def.time > 0 ? (def.time - timeRemaining) : gameTime;
+}
+
+function levelFail() {
+  levelActive = false;
+  playSFX('fail');
+  state = 'FAIL';
+}
+
+// ==================== UPDATE ====================
+function update(dt) {
+  if (state !== 'PLAYING' || !levelActive) return;
+  gameTime += dt;
+
+  // Timer
+  const def = LEVELS[currentLevel - 1];
+  if (def.time > 0) {
+    timeRemaining -= dt;
+    if (timeRemaining <= 0) {
+      timeRemaining = 0;
+      levelFail();
+      return;
+    }
+  }
+
+  // Input — mouse/touch target
+  let tx = mouseX, ty = mouseY;
+  if (keysDown['ArrowLeft'] || keysDown['KeyA']) tx = hole.x - 100;
+  if (keysDown['ArrowRight'] || keysDown['KeyD']) tx = hole.x + 100;
+  if (keysDown['ArrowUp'] || keysDown['KeyW']) ty = hole.y - 100;
+  if (keysDown['ArrowDown'] || keysDown['KeyS']) ty = hole.y + 100;
+
+  // Move hole toward target
+  const dx = tx - hole.x;
+  const dy = ty - hole.y;
+  const d = Math.sqrt(dx * dx + dy * dy);
+  const speed = Math.min(d, 250 * dt);
+  if (d > 1) {
+    hole.x += (dx / d) * speed;
+    hole.y += (dy / d) * speed;
+  }
+
+  // Track distance
+  totalDist += dist(hole.x, hole.y, prevHoleX, prevHoleY);
+  prevHoleX = hole.x;
+  prevHoleY = hole.y;
+
+  // Clamp to arena
+  hole.x = clamp(hole.x, hole.radius, ARENA_W - hole.radius);
+  hole.y = clamp(hole.y, hole.radius, ARENA_H - hole.radius);
+
+  // Wall collision
+  const isGhost = activePups.ghost && activePups.ghost > 0;
+  for (const w of walls) {
+    if (isGhost) continue;
+    const hr = hole.radius;
+    const cx = clamp(hole.x, w.x, w.x + w.w);
+    const cy = clamp(hole.y, w.y, w.y + w.h);
+    const wd = dist(hole.x, hole.y, cx, cy);
+    if (wd < hr) {
+      const nd = Math.max(wd, 0.1);
+      const nx = (hole.x - cx) / nd;
+      const ny = (hole.y - cy) / nd;
+      hole.x = cx + nx * hr;
+      hole.y = cy + ny * hr;
+      playSFX('bounce');
+    }
+  }
+
+  // Update suction range
+  let suctionRange = hole.radius * SUCTION_MULT;
+  if (activePups.vortex && activePups.vortex > 0) suctionRange *= 1.8;
+  if (activePups.magnet && activePups.magnet > 0) suctionRange *= 2;
+
+  // Suction whir volume
+  if (suctionGain) {
+    let nearDist = Infinity;
+    for (const o of objects) {
+      if (o.consumed) continue;
+      const od = dist(hole.x, hole.y, o.x, o.y);
+      if (od < suctionRange && od < nearDist) nearDist = od;
+    }
+    const vol = nearDist < suctionRange ? clamp(0.06 * (1 - nearDist / suctionRange), 0, 0.06) : 0;
+    suctionGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05);
+  }
+
+  // Update objects
+  for (const o of objects) {
+    if (o.consumed) continue;
+
+    // Moving objects
+    if (o.moving) {
+      o.angle += o.speed * dt;
+      o.x = o.cx + Math.cos(o.angle) * o.orbitR;
+      o.y = o.cy + Math.sin(o.angle) * o.orbitR;
+    }
+
+    const od = dist(hole.x, hole.y, o.x, o.y);
+
+    // Suction pull (only for smaller objects)
+    if (od < suctionRange && o.radius <= hole.radius * 1.1) {
+      const pullStrength = (1 - od / suctionRange) * 120 * dt;
+      const ax = hole.x - o.x;
+      const ay = hole.y - o.y;
+      const ad = Math.max(Math.sqrt(ax * ax + ay * ay), 0.1);
+      o.x += (ax / ad) * pullStrength;
+      o.y += (ay / ad) * pullStrength;
+    }
+
+    // Consume check
+    if (od < hole.radius * CONSUME_LENIENCY && o.radius <= hole.radius) {
+      consumeObject(o);
+    }
+    // Bounce off larger objects
+    else if (od < hole.radius + o.radius && o.radius > hole.radius) {
+      const nx = (hole.x - o.x) / Math.max(od, 0.1);
+      const ny = (hole.y - o.y) / Math.max(od, 0.1);
+      hole.x = o.x + nx * (hole.radius + o.radius + 1);
+      hole.y = o.y + ny * (hole.radius + o.radius + 1);
+    }
+  }
+
+  // Powerup pickup
+  for (const p of powerups) {
+    if (p.consumed) continue;
+    if (dist(hole.x, hole.y, p.x, p.y) < hole.radius + 14) {
+      p.consumed = true;
+      activePups[p.type] = POWERUP_TYPES.find(t => t.id === p.type).dur;
+      spawnParticles(p.x, p.y, '#ffdd44', 10);
+      playSFX('powerup');
+      pupsUsed = true;
+      unlockAchievement('cosmic_power');
+      if (p.type === 'vortex') {
+        save.vortexTotal = (save.vortexTotal || 0) + 1;
+        if (save.vortexTotal >= 5) unlockAchievement('vortex_master');
+        saveGame();
+      }
+    }
+  }
+
+  // Decay powerups
+  for (const k in activePups) {
+    if (activePups[k] > 0) {
+      activePups[k] -= dt;
+      if (activePups[k] <= 0) delete activePups[k];
+    }
+  }
+
+  // Screen shake decay
+  if (screenShake > 0) {
+    screenShake *= 0.9;
+    if (screenShake < 0.5) screenShake = 0;
+    shakeX = rnd(-screenShake, screenShake);
+    shakeY = rnd(-screenShake, screenShake);
+  } else {
+    shakeX = 0; shakeY = 0;
+  }
+
+  updateParticles(dt);
+  updateConfetti(dt);
+
+  // Win check
+  if (hole.mass >= def.target) {
+    levelComplete();
+  }
+
+  // All consumed — auto win if target met
+  const remaining = objects.filter(o => !o.consumed).length;
+  if (remaining === 0 && hole.mass < def.target) {
+    levelFail();
+  }
+}
+
+// ==================== RENDER ====================
+function render(dt) {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, W, H);
+
+  if (state === 'TITLE') renderTitle();
+  else if (state === 'LEVELSELECT') renderLevelSelect();
+  else if (state === 'PLAYING' || state === 'PAUSE') renderGame();
+  else if (state === 'COMPLETE') renderGame();
+  else if (state === 'FAIL') renderGame();
+  else if (state === 'SETTINGS') renderSettings();
+  else if (state === 'TUTORIAL') renderGame();
+}
+
+function renderTitle() {
+  // Background gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#1a0a2e');
+  grad.addColorStop(1, '#000000');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars
+  drawStars(ctx, gameTime);
+
+  // Animated hole
+  const hx = W / 2, hy = H * 0.35;
+  const hr = 40 + 5 * Math.sin(gameTime * 1.5);
+  drawHole(ctx, hx, hy, hr);
+
+  // Title
+  ctx.save();
+  ctx.font = '900 ' + Math.min(W * 0.1, 56) + 'px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ff66ff';
+  ctx.shadowColor = '#ff44ff';
+  ctx.shadowBlur = 20;
+  ctx.fillText('BLACK HOLE', W / 2, H * 0.15);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  // Subtitle
+  ctx.font = '600 ' + Math.min(W * 0.03, 16) + 'px Inter';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#aa88cc';
+  ctx.fillText('Eat Everything. Grow. Dominate.', W / 2, H * 0.2);
+
+  // Buttons
+  const bw = Math.min(W * 0.5, 200), bh = 48;
+  const btns = [
+    { label: 'PLAY', y: H * 0.55 },
+    { label: 'LEVELS', y: H * 0.64 },
+    { label: 'SETTINGS', y: H * 0.73 }
+  ];
+  for (const b of btns) {
+    drawButton(W / 2 - bw / 2, b.y, bw, bh, b.label, hoveredBtn === b.label);
+  }
+
+  // Version
+  ctx.font = '400 11px Inter';
+  ctx.fillStyle = '#554466';
+  ctx.fillText('v1.0 — GameZipper', W / 2, H - 20);
+}
+
+function renderLevelSelect() {
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#1a0a2e');
+  grad.addColorStop(1, '#000000');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Title
+  ctx.save();
+  ctx.font = '700 ' + Math.min(W * 0.06, 28) + 'px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ff66ff';
+  ctx.shadowColor = '#ff44ff';
+  ctx.shadowBlur = 10;
+  ctx.fillText('SELECT LEVEL', W / 2, 40);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  // Grid: 6 rows x 5 cols
+  const cols = 5;
+  const margin = 12;
+  const availW = W - margin * 2;
+  const cellW = (availW - (cols - 1) * 8) / cols;
+  const cellH = cellW * 1.2;
+  const startX = margin;
+  const startY = 70;
+
+  for (let i = 0; i < 30; i++) {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    const cx = startX + col * (cellW + 8) + cellW / 2;
+    const cy = startY + row * (cellH + 8) + cellH / 2;
+    const lvlNum = i + 1;
+    const tierIdx = Math.floor(i / 5);
+    const sl = save.levels[lvlNum];
+    const isUnlocked = lvlNum === 1 || (save.levels[lvlNum - 1] && save.levels[lvlNum - 1].stars > 0);
+    const stars = sl ? sl.stars : 0;
+
+    ctx.save();
+    const bgColor = isUnlocked ? 'rgba(40,20,60,0.8)' : 'rgba(20,10,30,0.6)';
+    const borderColor = isUnlocked ? TIER_COLORS[tierIdx] : '#333344';
+    ctx.fillStyle = bgColor;
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, cx - cellW / 2, cy - cellH / 2, cellW, cellH, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    if (isUnlocked) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 ' + Math.min(cellW * 0.35, 18) + 'px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(lvlNum, cx, cy - 8);
+
+      // Stars
+      const starY = cy + cellH * 0.25;
+      for (let s = 0; s < 3; s++) {
+        ctx.fillStyle = s < stars ? '#ffdd33' : '#333344';
+        ctx.font = '12px Inter';
+        ctx.fillText('★', cx - 14 + s * 14, starY);
+      }
+    } else {
+      ctx.fillStyle = '#444455';
+      ctx.font = '20px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🔒', cx, cy);
+    }
+    ctx.restore();
+  }
+
+  // Back button
+  const bw = Math.min(W * 0.4, 160), bh = 40;
+  drawButton(W / 2 - bw / 2, H - 60, bw, bh, 'BACK', hoveredBtn === 'BACK');
+
+  // Stars count
+  ctx.font = '600 14px Inter';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffdd33';
+  ctx.fillText('★ ' + (save.totalStars || 0) + ' / 90', W / 2, H - 85);
+}
+
+function renderGame() {
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#1a0a2e');
+  grad.addColorStop(1, '#000000');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Camera transform
+  ctx.save();
+
+  // Calculate scale to fit arena
+  const scaleX = W / ARENA_W;
+  const scaleY = H / ARENA_H;
+  const scale = Math.min(scaleX, scaleY);
+  const offX = (W - ARENA_W * scale) / 2;
+  const offY = (H - ARENA_H * scale) / 2;
+
+  ctx.translate(offX + shakeX * scale, offY + shakeY * scale);
+  ctx.scale(scale, scale);
+
+  // Stars
+  drawStars(ctx, gameTime);
+
+  // Arena border (subtle)
+  ctx.strokeStyle = 'rgba(100,60,180,0.3)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 0, ARENA_W, ARENA_H);
+
+  // Walls
+  for (const w of walls) drawWall(ctx, w);
+
+  // Objects
+  for (const o of objects) drawObject(ctx, o);
+
+  // Powerups
+  for (const p of powerups) drawPowerup(ctx, p);
+
+  // Hole
+  drawHole(ctx, hole.x, hole.y, hole.radius);
+
+  // Particles
+  drawParticles(ctx);
+  drawConfetti(ctx);
+
+  // Suction range indicator (subtle)
+  let suctionRange = hole.radius * SUCTION_MULT;
+  if (activePups.vortex > 0) suctionRange *= 1.8;
+  if (activePups.magnet > 0) suctionRange *= 2;
+  ctx.strokeStyle = 'rgba(255,100,255,0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(hole.x, hole.y, suctionRange, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.restore();
+
+  // HUD
+  renderHUD();
+
+  // Overlays
+  if (state === 'PAUSE') renderPauseOverlay();
+  else if (state === 'COMPLETE') renderCompleteOverlay();
+  else if (state === 'FAIL') renderFailOverlay();
+  else if (state === 'TUTORIAL') renderTutorialOverlay();
+
+  // Active powerup indicator
+  for (const k in activePups) {
+    if (activePups[k] > 0) {
+      const pt = POWERUP_TYPES.find(t => t.id === k);
+      if (pt) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,220,50,0.15)';
+        ctx.fillRect(W - 110, 60, 100, 30);
+        ctx.strokeStyle = '#ffdd44';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(W - 110, 60, 100, 30);
+        ctx.fillStyle = '#ffdd44';
+        ctx.font = '600 12px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(pt.icon + ' ' + Math.ceil(activePups[k]) + 's', W - 60, 80);
+        ctx.restore();
+      }
+    }
+  }
+
+  // Notifications
+  renderNotifications();
+}
+
+function renderHUD() {
+  ctx.save();
+  // Mass display (top-left)
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  roundRect(ctx, 8, 8, 120, 32, 6);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '700 14px Inter';
+  ctx.textAlign = 'left';
+  ctx.fillText('SIZE: ' + hole.mass.toFixed(1), 16, 29);
+
+  // Target (top-left, below mass)
+  const def = LEVELS[currentLevel - 1];
+  if (def) {
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    roundRect(ctx, 8, 44, 120, 24, 6);
+    ctx.fill();
+    ctx.fillStyle = '#aa88cc';
+    ctx.font = '600 12px Inter';
+    ctx.fillText('TARGET: ' + def.target, 16, 60);
+  }
+
+  // Timer or level (top-right)
+  if (def && def.time > 0) {
+    ctx.fillStyle = timeRemaining < 15 ? 'rgba(180,40,40,0.7)' : 'rgba(0,0,0,0.5)';
+    roundRect(ctx, W - 108, 8, 100, 32, 6);
+    ctx.fill();
+    ctx.fillStyle = timeRemaining < 15 ? '#ff6666' : '#ffffff';
+    ctx.font = '700 14px Inter';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.ceil(timeRemaining) + 's', W - 16, 29);
+  } else {
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    roundRect(ctx, W - 108, 8, 100, 32, 6);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 14px Inter';
+    ctx.textAlign = 'right';
+    ctx.fillText('LVL ' + currentLevel, W - 16, 29);
+  }
+
+  // Pause button (bottom center)
+  const pbw = 70, pbh = 32;
+  drawButton(W / 2 - pbw / 2, H - 44, pbw, pbh, 'PAUSE', hoveredBtn === 'PAUSE');
+
+  ctx.restore();
+}
+
+function renderPauseOverlay() {
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.font = '700 ' + Math.min(W * 0.07, 32) + 'px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ff66ff';
+  ctx.shadowColor = '#ff44ff';
+  ctx.shadowBlur = 10;
+  ctx.fillText('PAUSED', W / 2, H * 0.25);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  const bw = Math.min(W * 0.5, 180), bh = 42;
+  const btns = [
+    { label: 'RESUME', y: H * 0.38 },
+    { label: 'RESTART', y: H * 0.47 },
+    { label: 'SETTINGS', y: H * 0.56 },
+    { label: 'HOME', y: H * 0.65 }
+  ];
+  for (const b of btns) {
+    drawButton(W / 2 - bw / 2, b.y, bw, bh, b.label, hoveredBtn === b.label);
+  }
+}
+
+function renderCompleteOverlay() {
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(0, 0, W, H);
+
+  drawConfetti(ctx);
+
+  ctx.save();
+  ctx.font = '700 ' + Math.min(W * 0.06, 28) + 'px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#44ff66';
+  ctx.shadowColor = '#22cc44';
+  ctx.shadowBlur = 10;
+  ctx.fillText('LEVEL COMPLETE', W / 2, H * 0.2);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  // Stars
+  const stars = window._lcStars || 0;
+  const starSize = Math.min(W * 0.08, 36);
+  ctx.font = starSize + 'px Inter';
+  ctx.textAlign = 'center';
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = i < stars ? '#ffdd33' : '#333344';
+    ctx.fillText('★', W / 2 - 40 + i * 40, H * 0.3);
+  }
+
+  // Stats
+  ctx.font = '600 14px Inter';
+  ctx.fillStyle = '#ccccdd';
+  ctx.textAlign = 'center';
+  ctx.fillText('Mass: ' + (window._lcMass || 0).toFixed(1), W / 2, H * 0.38);
+  ctx.fillText('Time: ' + ((window._lcTime || 0)).toFixed(1) + 's', W / 2, H * 0.43);
+
+  const bw = Math.min(W * 0.45, 160), bh = 42;
+  if (currentLevel < 30) {
+    drawButton(W / 2 - bw / 2, H * 0.52, bw, bh, 'NEXT', hoveredBtn === 'NEXT');
+  }
+  drawButton(W / 2 - bw / 2, H * 0.6, bw, bh, 'RETRY', hoveredBtn === 'RETRY');
+  drawButton(W / 2 - bw / 2, H * 0.68, bw, bh, 'HOME', hoveredBtn === 'HOME');
+}
+
+function renderFailOverlay() {
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.font = '700 ' + Math.min(W * 0.06, 28) + 'px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ff4444';
+  ctx.shadowColor = '#ff2222';
+  ctx.shadowBlur = 10;
+  ctx.fillText('TIME\'S UP!', W / 2, H * 0.3);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  ctx.font = '600 14px Inter';
+  ctx.fillStyle = '#ccccdd';
+  ctx.textAlign = 'center';
+  ctx.fillText('Mass: ' + hole.mass.toFixed(1), W / 2, H * 0.4);
+
+  const bw = Math.min(W * 0.45, 160), bh = 42;
+  drawButton(W / 2 - bw / 2, H * 0.5, bw, bh, 'TRY AGAIN', hoveredBtn === 'TRY AGAIN');
+  drawButton(W / 2 - bw / 2, H * 0.58, bw, bh, 'HOME', hoveredBtn === 'HOME');
+}
+
+function renderTutorialOverlay() {
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(0, 0, W, H);
+
+  const steps = [
+    { text: 'Move your black hole with\nmouse or touch', arrow: false },
+    { text: 'Consume objects smaller\nthan your hole to grow', arrow: false },
+    { text: 'Grow big enough to eat\nlarger objects!', arrow: false }
+  ];
+
+  if (tutorialStep >= 0 && tutorialStep < steps.length) {
+    const s = steps[tutorialStep];
+    const boxW = Math.min(W * 0.7, 280);
+    const boxH = 100;
+    const bx = W / 2 - boxW / 2;
+    const by = H * 0.35;
+
+    ctx.fillStyle = 'rgba(40,20,60,0.9)';
+    ctx.strokeStyle = '#ff66ff';
+    ctx.lineWidth = 2;
+    roundRect(ctx, bx, by, boxW, boxH, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    // Step indicator
+    ctx.fillStyle = '#aa88cc';
+    ctx.font = '400 12px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText((tutorialStep + 1) + ' / 3', W / 2, by + 18);
+
+    // Text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '600 15px Inter';
+    const lines = s.text.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i], W / 2, by + 42 + i * 22);
+    }
+
+    const bw = 120, bh = 36;
+    if (tutorialStep < 2) {
+      drawButton(W / 2 - bw / 2, by + boxH + 16, bw, bh, 'NEXT', hoveredBtn === 'NEXT');
+    } else {
+      drawButton(W / 2 - bw / 2, by + boxH + 16, bw, bh, 'GOT IT', hoveredBtn === 'GOT IT');
+    }
+
+    // Skip
+    ctx.fillStyle = '#775599';
+    ctx.font = '400 12px Inter';
+    ctx.fillText('Skip', W / 2, by + boxH + 66);
+  }
+}
+
+function renderSettings() {
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#1a0a2e');
+  grad.addColorStop(1, '#000000');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.font = '700 ' + Math.min(W * 0.06, 28) + 'px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ff66ff';
+  ctx.shadowColor = '#ff44ff';
+  ctx.shadowBlur = 10;
+  ctx.fillText('SETTINGS', W / 2, 50);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  const bw = Math.min(W * 0.55, 220), bh = 42;
+  const startY = 100;
+
+  // Music toggle
+  const musicLabel = 'Music: ' + (save.musicOn ? 'ON' : 'OFF');
+  drawButton(W / 2 - bw / 2, startY, bw, bh, musicLabel, hoveredBtn === musicLabel);
+
+  // SFX toggle
+  const sfxLabel = 'SFX: ' + (save.sfxOn ? 'ON' : 'OFF');
+  drawButton(W / 2 - bw / 2, startY + 52, bw, bh, sfxLabel, hoveredBtn === sfxLabel);
+
+  // Skin selection
+  ctx.font = '700 16px Inter';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('Hole Skin', W / 2, startY + 115);
+
+  const skinCols = 3;
+  const skinW = Math.min((W - 40) / skinCols, 80);
+  const skinH = 50;
+  for (let i = 0; i < SKINS.length; i++) {
+    const si = i;
+    const col = i % skinCols;
+    const row = Math.floor(i / skinCols);
+    const sx = W / 2 - (skinCols * (skinW + 6)) / 2 + col * (skinW + 6);
+    const sy = startY + 130 + row * (skinH + 6);
+    const unlocked = save.skinsUnlocked.includes(SKINS[si].name);
+    const selected = save.selectedSkin === SKINS[si].name;
+
+    ctx.fillStyle = selected ? 'rgba(255,100,255,0.3)' : (unlocked ? 'rgba(40,20,60,0.8)' : 'rgba(20,10,30,0.5)');
+    ctx.strokeStyle = selected ? '#ff66ff' : (unlocked ? '#664488' : '#333344');
+    ctx.lineWidth = selected ? 2 : 1;
+    roundRect(ctx, sx, sy, skinW, skinH, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    if (unlocked) {
+      // Mini hole preview
+      const skin = SKINS[si];
+      const mg = ctx.createRadialGradient(sx + skinW / 2, sy + 18, 0, sx + skinW / 2, sy + 18, 10);
+      mg.addColorStop(0, '#000');
+      mg.addColorStop(0.7, skin.c2);
+      mg.addColorStop(1, skin.c1);
+      ctx.fillStyle = mg;
+      ctx.beginPath();
+      ctx.arc(sx + skinW / 2, sy + 18, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '600 10px Inter';
+      ctx.textAlign = 'center';
+      ctx.fillText(SKINS[si].name, sx + skinW / 2, sy + 42);
+    } else {
+      ctx.fillStyle = '#555';
+      ctx.font = '10px Inter';
+      ctx.textAlign = 'center';
+      ctx.fillText('★' + SKINS[si].stars, sx + skinW / 2, sy + skinH / 2);
+    }
+  }
+
+  // Reset progress
+  const resetY = startY + 300;
+  drawButton(W / 2 - bw / 2, resetY, bw, bh, 'RESET PROGRESS', hoveredBtn === 'RESET PROGRESS');
+
+  // Credits
+  ctx.font = '400 12px Inter';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#775599';
+  ctx.fillText('Black Hole v1.0 — Built with ♥ by GameZipper', W / 2, H - 80);
+
+  // Back
+  drawButton(W / 2 - bw / 2, H - 60, bw, bh, 'BACK', hoveredBtn === 'BACK');
+}
+
+function renderNotifications() {
+  for (let i = notifications.length - 1; i >= 0; i--) {
+    const n = notifications[i];
+    n.timer -= dt;
+    if (n.timer <= 0) { notifications.splice(i, 1); continue; }
+
+    const alpha = Math.min(1, n.timer);
+    const ny = H * 0.1 + (notifications.length - 1 - i) * 50;
+    const nw = Math.min(W * 0.7, 260);
+    const nx = W / 2 - nw / 2;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(40,20,60,0.9)';
+    ctx.strokeStyle = '#ffdd44';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, nx, ny, nw, 40, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 13px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText(n.text, W / 2, ny + 16);
+    ctx.fillStyle = '#aa88cc';
+    ctx.font = '400 11px Inter';
+    ctx.fillText(n.sub || '', W / 2, ny + 32);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ==================== UI HELPERS ====================
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawButton(x, y, w, h, label, hovered) {
+  ctx.save();
+  const baseColor = hovered ? 'rgba(255,100,255,0.25)' : 'rgba(60,30,90,0.6)';
+  ctx.fillStyle = baseColor;
+  ctx.strokeStyle = hovered ? '#ff66ff' : '#8844aa';
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, x, y, w, h, 8);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = hovered ? '#ffffff' : '#ddccff';
+  ctx.font = '700 ' + Math.min(h * 0.45, 16) + 'px Inter';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, x + w / 2, y + h / 2);
+  ctx.restore();
+}
+
+// ==================== SCREEN MANAGEMENT ====================
+function showScreen(name) {
+  state = name;
+  if (name === 'TITLE') {
+    stopBGM();
+  }
+}
+
+function startLevel(n) {
+  currentLevel = n;
+  loadLevel(n);
+  levelActive = true;
+  state = 'PLAYING';
+  playBGM();
+}
+
+function resetConfirmShown() { return window._resetConfirm; }
+
+// ==================== INPUT HANDLING ====================
+function getCanvasPos(e) {
+  if (!canvas) return { x: 0, y: 0 };
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = W / rect.width;
+  const scaleY = H / rect.height;
+  let cx, cy;
+  if (e.touches) {
+    cx = (e.touches[0].clientX - rect.left) * scaleX;
+    cy = (e.touches[0].clientY - rect.top) * scaleY;
+  } else {
+    cx = (e.clientX - rect.left) * scaleX;
+    cy = (e.clientY - rect.top) * scaleY;
+  }
+  return { x: cx, y: cy };
+}
+
+function getArenaPos(canvasX, canvasY) {
+  const scaleX = W / ARENA_W;
+  const scaleY = H / ARENA_H;
+  const scale = Math.min(scaleX, scaleY);
+  const offX = (W - ARENA_W * scale) / 2;
+  const offY = (H - ARENA_H * scale) / 2;
+  return {
+    x: (canvasX - offX) / scale,
+    y: (canvasY - offY) / scale
+  };
+}
+
+let eventListeners = [];
+
+function addListener(target, type, fn) {
+  target.addEventListener(type, fn);
+  eventListeners.push({ target, type, fn });
+}
+
+function handlePointerMove(e) {
+  const pos = getCanvasPos(e);
+  mouseX = pos.x;
+  mouseY = pos.y;
+
+  // Convert to arena coords for game
+  if (state === 'PLAYING' || state === 'TUTORIAL') {
+    const ap = getArenaPos(pos.x, pos.y);
+    mouseX = ap.x;
+    mouseY = ap.y;
+  }
+
+  // Button hover detection
+  hoveredBtn = getHoveredButton(pos.x, pos.y);
+}
+
+function handlePointerDown(e) {
+  const pos = getCanvasPos(e);
+  hoveredBtn = getHoveredButton(pos.x, pos.y);
+  if (hoveredBtn) {
+    playSFX('click');
+    handleButtonClick(hoveredBtn);
+  }
+}
+
+function getHoveredButton(px, py) {
+  const bw = Math.min(W * 0.5, 200), bh = 48;
+
+  if (state === 'TITLE') {
+    const btns = [
+      { label: 'PLAY', y: H * 0.55 },
+      { label: 'LEVELS', y: H * 0.64 },
+      { label: 'SETTINGS', y: H * 0.73 }
+    ];
+    for (const b of btns) {
+      if (px >= W / 2 - bw / 2 && px <= W / 2 + bw / 2 && py >= b.y && py <= b.y + bh) return b.label;
+    }
+  }
+  else if (state === 'LEVELSELECT') {
+    // Back
+    const bbw = Math.min(W * 0.4, 160), bbh = 40;
+    if (px >= W / 2 - bbw / 2 && px <= W / 2 + bbw / 2 && py >= H - 60 && py <= H - 60 + bbh) return 'BACK';
+
+    // Level grid
+    const cols = 5;
+    const margin = 12;
+    const cellW = (W - margin * 2 - (cols - 1) * 8) / cols;
+    const cellH = cellW * 1.2;
+    for (let i = 0; i < 30; i++) {
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+      const cx = margin + col * (cellW + 8);
+      const cy = 70 + row * (cellH + 8);
+      const lvlNum = i + 1;
+      const isUnlocked = lvlNum === 1 || (save.levels[lvlNum - 1] && save.levels[lvlNum - 1].stars > 0);
+      if (isUnlocked && px >= cx && px <= cx + cellW && py >= cy && py <= cy + cellH) return 'LEVEL_' + lvlNum;
+    }
+  }
+  else if (state === 'PLAYING') {
+    const pbw = 70, pbh = 32;
+    if (px >= W / 2 - pbw / 2 && px <= W / 2 + pbw / 2 && py >= H - 44 && py <= H - 44 + pbh) return 'PAUSE';
+  }
+  else if (state === 'PAUSE') {
+    const bbw = Math.min(W * 0.5, 180), bbh = 42;
+    const btns = [
+      { label: 'RESUME', y: H * 0.38 },
+      { label: 'RESTART', y: H * 0.47 },
+      { label: 'SETTINGS', y: H * 0.56 },
+      { label: 'HOME', y: H * 0.65 }
+    ];
+    for (const b of btns) {
+      if (px >= W / 2 - bbw / 2 && px <= W / 2 + bbw / 2 && py >= b.y && py <= b.y + bbh) return b.label;
+    }
+  }
+  else if (state === 'COMPLETE') {
+    const bbw = Math.min(W * 0.45, 160), bbh = 42;
+    if (currentLevel < 30 && px >= W / 2 - bbw / 2 && px <= W / 2 + bbw / 2 && py >= H * 0.52 && py <= H * 0.52 + bbh) return 'NEXT';
+    if (px >= W / 2 - bbw / 2 && px <= W / 2 + bbw / 2 && py >= H * 0.6 && py <= H * 0.6 + bbh) return 'RETRY';
+    if (px >= W / 2 - bbw / 2 && px <= W / 2 + bbw / 2 && py >= H * 0.68 && py <= H * 0.68 + bbh) return 'HOME';
+  }
+  else if (state === 'FAIL') {
+    const bbw = Math.min(W * 0.45, 160), bbh = 42;
+    if (px >= W / 2 - bbw / 2 && px <= W / 2 + bbw / 2 && py >= H * 0.5 && py <= H * 0.5 + bbh) return 'TRY AGAIN';
+    if (px >= W / 2 - bbw / 2 && px <= W / 2 + bbw / 2 && py >= H * 0.58 && py <= H * 0.58 + bbh) return 'HOME';
+  }
+  else if (state === 'TUTORIAL') {
+    const bw2 = 120, bh2 = 36;
+    const boxH = 100;
+    const by = H * 0.35;
+    const btnY = by + boxH + 16;
+    if (px >= W / 2 - bw2 / 2 && px <= W / 2 + bw2 / 2 && py >= btnY && py <= btnY + bh2) {
+      return tutorialStep < 2 ? 'NEXT' : 'GOT IT';
+    }
+    if (px >= W / 2 - 20 && px <= W / 2 + 20 && py >= by + boxH + 56 && py <= by + boxH + 76) return 'SKIP';
+  }
+  else if (state === 'SETTINGS') {
+    const bbw = Math.min(W * 0.55, 220), bbh = 42;
+    const startY = 100;
+    const musicLabel = 'Music: ' + (save.musicOn ? 'ON' : 'OFF');
+    const sfxLabel = 'SFX: ' + (save.sfxOn ? 'ON' : 'OFF');
+
+    if (px >= W / 2 - bbw / 2 && px <= W / 2 + bbw / 2 && py >= startY && py <= startY + bbh) return musicLabel;
+    if (px >= W / 2 - bbw / 2 && px <= W / 2 + bbw / 2 && py >= startY + 52 && py <= startY + 52 + bbh) return sfxLabel;
+
+    // Skins
+    const skinCols = 3;
+    const skinW = Math.min((W - 40) / skinCols, 80);
+    const skinH = 50;
+    for (let i = 0; i < SKINS.length; i++) {
+      const col = i % skinCols;
+      const row = Math.floor(i / skinCols);
+      const sx = W / 2 - (skinCols * (skinW + 6)) / 2 + col * (skinW + 6);
+      const sy = startY + 130 + row * (skinH + 6);
+      if (px >= sx && px <= sx + skinW && py >= sy && py <= sy + skinH) {
+        if (save.skinsUnlocked.includes(SKINS[i].name)) return 'SKIN_' + SKINS[i].name;
+      }
+    }
+
+    // Reset
+    const resetY = startY + 300;
+    if (px >= W / 2 - bbw / 2 && px <= W / 2 + bbw / 2 && py >= resetY && py <= resetY + bbh) return 'RESET PROGRESS';
+
+    // Back
+    if (px >= W / 2 - bbw / 2 && px <= W / 2 + bbw / 2 && py >= H - 60 && py <= H - 60 + bbh) return 'BACK';
+  }
+  return null;
+}
+
+function handleButtonClick(label) {
+  if (state === 'TITLE') {
+    if (label === 'PLAY') {
+      if (!save.tutorialDone) {
+        tutorialStep = 0;
+        startLevel(1);
+        state = 'TUTORIAL';
+      } else {
+        startLevel(1);
+      }
+    }
+    else if (label === 'LEVELS') showScreen('LEVELSELECT');
+    else if (label === 'SETTINGS') showScreen('SETTINGS');
+  }
+  else if (state === 'LEVELSELECT') {
+    if (label === 'BACK') showScreen('TITLE');
+    else if (label.startsWith('LEVEL_')) {
+      const n = parseInt(label.split('_')[1]);
+      startLevel(n);
+    }
+  }
+  else if (state === 'PLAYING') {
+    if (label === 'PAUSE') {
+      levelActive = false;
+      state = 'PAUSE';
+    }
+  }
+  else if (state === 'PAUSE') {
+    if (label === 'RESUME') { levelActive = true; state = 'PLAYING'; }
+    else if (label === 'RESTART') startLevel(currentLevel);
+    else if (label === 'SETTINGS') showScreen('SETTINGS');
+    else if (label === 'HOME') { stopBGM(); showScreen('TITLE'); }
+  }
+  else if (state === 'COMPLETE') {
+    if (label === 'NEXT') startLevel(currentLevel + 1);
+    else if (label === 'RETRY') startLevel(currentLevel);
+    else if (label === 'HOME') { stopBGM(); showScreen('TITLE'); }
+  }
+  else if (state === 'FAIL') {
+    if (label === 'TRY AGAIN') startLevel(currentLevel);
+    else if (label === 'HOME') { stopBGM(); showScreen('TITLE'); }
+  }
+  else if (state === 'TUTORIAL') {
+    if (label === 'NEXT') {
+      tutorialStep++;
+      if (tutorialStep >= 3) finishTutorial();
+    }
+    else if (label === 'GOT IT') finishTutorial();
+    else if (label === 'SKIP') finishTutorial();
+  }
+  else if (state === 'SETTINGS') {
+    if (label.startsWith('Music:')) {
+      save.musicOn = !save.musicOn;
+      if (!save.musicOn) stopBGM();
+      saveGame();
+    }
+    else if (label.startsWith('SFX:')) {
+      save.sfxOn = !save.sfxOn;
+      saveGame();
+    }
+    else if (label.startsWith('SKIN_')) {
+      save.selectedSkin = label.slice(5);
+      saveGame();
+    }
+    else if (label === 'RESET PROGRESS') {
+      if (window._resetConfirm) {
+        save = { version: SAVE_VER, levels: {}, achievements: {}, totalStars: 0, skinsUnlocked: ['Cosmic'], selectedSkin: 'Cosmic', musicOn: true, sfxOn: true, tutorialDone: false, vortexTotal: 0 };
+        saveGame();
+        notifications.push({ text: '🔄 Progress Reset', sub: 'All data cleared', timer: 2 });
+        window._resetConfirm = false;
+      } else {
+        window._resetConfirm = true;
+        notifications.push({ text: '⚠️ Tap again to confirm reset', sub: 'This cannot be undone', timer: 3 });
+      }
+    }
+    else if (label === 'BACK') {
+      if (levelActive || state === 'PAUSE') showScreen('PAUSE');
+      else showScreen('TITLE');
+    }
+  }
+}
+
+function finishTutorial() {
+  save.tutorialDone = true;
+  saveGame();
+  tutorialStep = -1;
+  state = 'PLAYING';
+  levelActive = true;
+}
+
+// ==================== GAME LOOP ====================
+function gameLoop(timestamp) {
+  if (!running) return;
+  animId = requestAnimationFrame(gameLoop);
+
+  dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+  if (dt <= 0) dt = 0.016;
+
+  update(dt);
+  render(dt);
+}
+
+// ==================== INIT ====================
+function initGame() {
+  gameContainer = document.getElementById('gc');
+
+  // Size
+  const maxW = Math.min(window.innerWidth, 1280);
+  const maxH = Math.min(window.innerHeight, 720);
+  const aspect = 390 / 844;
+  let cw = maxW, ch = maxW / aspect;
+  if (ch > maxH) { ch = maxH; cw = maxH * aspect; }
+  // Use full screen
+  cw = window.innerWidth;
+  ch = window.innerHeight;
+
+  dpr = window.devicePixelRatio || 1;
+  W = cw;
+  H = ch;
+
+  // Remove old canvas if any
+  const oldCanvas = gameContainer.querySelector('canvas');
+  if (oldCanvas) oldCanvas.remove();
+
+  canvas = document.createElement('canvas');
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  gameContainer.appendChild(canvas);
+
+  ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  generateStars();
+  running = true;
+  lastTime = performance.now();
+  animId = requestAnimationFrame(gameLoop);
+}
+
+// ==================== EVENT SETUP ====================
+function setupEvents() {
+  addListener(window, 'mousemove', handlePointerMove);
+  addListener(window, 'mousedown', (e) => {
+    initAudio();
+    handlePointerDown(e);
+  });
+  addListener(window, 'touchstart', (e) => {
+    e.preventDefault();
+    initAudio();
+    if (e.touches.length > 0) {
+      handlePointerMove(e);
+      handlePointerDown(e);
+    }
+  }, { passive: false });
+  addListener(window, 'touchmove', (e) => {
+    e.preventDefault();
+    if (e.touches.length > 0) handlePointerMove(e);
+  }, { passive: false });
+  addListener(window, 'keydown', (e) => {
+    keysDown[e.code] = true;
+    initAudio();
+    if (e.code === 'Escape') {
+      if (state === 'PLAYING') handleButtonClick('PAUSE');
+      else if (state === 'PAUSE') handleButtonClick('RESUME');
+    }
+  });
+  addListener(window, 'keyup', (e) => { keysDown[e.code] = false; });
+  addListener(window, 'resize', () => {
+    if (!running) return;
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+  });
+}
+
+// ==================== CLEANUP ====================
+function cleanupGame() {
+  running = false;
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  stopBGM();
+  for (const { target, type, fn } of eventListeners) {
+    try { target.removeEventListener(type, fn); } catch(e) {}
+  }
+  eventListeners = [];
+  if (audioCtx) { try { audioCtx.close(); } catch(e) {} audioCtx = null; }
+  if (canvas && canvas.parentNode) canvas.parentNode.removeChild(canvas);
+  ctx = null;
+  canvas = null;
+  keysDown = {};
+}
+
+// ==================== START ====================
+setupEvents();
+initGame();
+
+// ==================== ANALYTICS ====================
+</script>
+<script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=black-hole"></script>
+</body>
+</html>
