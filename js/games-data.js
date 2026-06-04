@@ -268,7 +268,7 @@ const GAMES = [
 {name:"Tower Stacker 3D",emoji:"🗼",cat:"puzzle",tags:["Puzzle","3D","Stack","Tower","Isometric","Skill","Casual","Browser","Free","HTML5"],url:"/tower-stacker-3d/",desc:"Play Tower Stacker 3D free online! Stack the tallest tower in this 3D isometric puzzle game. 30 levels across 6 biomes, 6 unlockable tower skins, combo multipliers, and 3-star ratings. No download needed!",isNew:true,status:"live"},
 {name:"Black Hole",emoji:"🕳️",cat:"puzzle",tags:["Puzzle","Black Hole","Cosmic","Arcade","Physics","Skill","Casual","Browser","Free","HTML5"],url:"/black-hole/",desc:"Play Black Hole free online! Consume every object, grow your cosmic void, and rule the galaxy. 30 hand-crafted levels across 6 tiers, 6 unlockable hole skins, 12 achievements, 3 power-ups, and 3-star ratings. No download needed!",isNew:true,status:"live"},
 {name:"Knife Hit",emoji:"🗡",cat:"arcade",tags:["knife","throwing","tap","casual","hyper-casual"],url:"/knife-hit/",desc:"Throw knives at the rotating log, avoid hitting other knives. 30 levels, boss stages, knife skins, and satisfying physics. Play free online, no download needed.",isNew:true,status:"live"},
-  {name:"Tidy Up 3D",emoji:"🧹",cat:"puzzle",tags:["Puzzle","Sort","3D","Organize","Casual","Mobile","Browser","Free","HTML5"],url:"/tidy-up-3d/",desc:"Tidy Up 3D is a satisfying sorting puzzle game. Tap items to select, then tap zones to place them. Match 3+ of the same type to burst and clear. 30 levels of addictive fun!",isNew:true,status:"live"},
+  {name:"Tidy Up 3D",emoji:"🧩",cat:"puzzle",tags:["sorting","tidy","match","satisfying","cozy"],url:"/tidy-up-3d/",desc:"Sort and organize colorful items in this satisfying 3D-feel sorting puzzle. Match 3+ items to clear them. 30 levels across 6 themed tiers.",isNew:true,status:"live"},
 ];
 
 /**
@@ -292,4 +292,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Tidy Up 3D",emoji:"🧹",cat:"puzzle",tags:["sort","tidy","organize","match","casual"],url:"/tidy-up-3d/",desc:"Satisfying sorting puzzle game. Tap to select items and place them into matching zones. Match 3+ to burst and clear all 30 levels.",isNew:true,status:"live"},
