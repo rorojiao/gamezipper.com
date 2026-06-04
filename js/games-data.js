@@ -259,6 +259,7 @@ const GAMES = [
 {name:"Jelly Dye",emoji:"🎨",cat:"puzzle",tags:["color","flood","fill","puzzle","brain"],url:"/jelly-dye/",desc:"Color flood fill puzzle game. Fill the grid with one color in limited moves. 30 levels, 3-star ratings.",isNew:true,status:"live"},
   {name:"Save the Doge",emoji:"🐕",cat:"puzzle",tags:["Puzzle","Draw","Rescue","Dog","Bee","Fire","Physics","Barrier","Casual","Browser","Free","HTML5"],url:"/save-the-doge/",desc:"Draw lines to save the cute doge from bees, fire, and spikes! 30 levels of draw-to-rescue puzzle fun. No download needed!",isNew:true,status:"live"},
   {name:"Snake vs Block",emoji:"🐍",cat:"arcade",tags:["Arcade","Snake","Block","Hyper-Casual","Mobile","Swipe","Smash","Color","Browser","Free","HTML5"],url:"/snake-vs-block/",desc:"Play Snake vs Block free online! Smash numbered blocks, collect stars, dodge bombs. 30 challenging levels, combo system, and power-ups. No download needed!",isNew:true,status:"live"},
+  {name:"Monster Truck Madness",emoji:"🚗",cat:"racing",tags:["Racing","Driving","Physics","Truck","Monster Truck","Arcade","Casual","Balance","Obstacle","2D"],url:"/monster-truck-madness/",desc:"Play Monster Truck Madness free online! Drive a monster truck through 30 physics-based obstacle courses across 6 biomes. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
@@ -281,4 +282,5 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
-}
+},
+{name:"Monster Truck Madness",emoji:"🚛",cat:"puzzle",tags:["monster truck","physics","driving","balancing","levels","upgrades","garage","car","race","arcade"],url:"/monster-truck-madness/",desc:"Drive a monster truck through 30 physics-based obstacle courses across 6 biomes! Unlock 4 trucks, earn 3 stars per level, and conquer ramps, hills, valleys and lava pools. Free browser game, no download!",isNew:true,status:"live"},
