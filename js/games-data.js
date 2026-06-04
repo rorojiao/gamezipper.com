@@ -290,5 +290,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Knife Hit",emoji:"🗡️",cat:"arcade",tags:["knife","throw","skill","hyper-casual","aim"],url:"/knife-hit/",desc:"Sharpen your aim in this fast-paced knife throwing game! Stick the rotating log, dodge other knives, and beat 30 levels with 3 power-ups and 12 achievements.",isNew:true,status:"live"},
 {name:"Knife Hit",emoji:"\u{1F5E1}",cat:"arcade",tags:["knife","throwing","tap","casual","hyper-casual"],url:"/knife-hit/",desc:"Throw knives at the rotating log, avoid hitting other knives. 30 levels, boss stages, knife skins, and satisfying physics. Play free online, no download needed.",isNew:true,status:"live"},
