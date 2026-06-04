@@ -286,3 +286,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Paper.io",emoji:"📦",cat:"arcade",tags:["IO","Territory","Arcade","Capture","Multiplayer","Strategy","Browser","Casual"],url:"/paper-io/",desc:"Capture territory in Paper.io! Move your block, draw trails, and claim space in this addictive io-style game with 30 levels and smart AI opponents. Play free!",isNew:true,status:"live"},
