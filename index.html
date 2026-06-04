@@ -2884,8 +2884,24 @@ if(e.target.closest(".game-card"))clearTimeout(timer);
 })();
 </script>
 <script>
-// prefetch-game-hover: prefetch game pages on hover for faster navigation
-(function(){var t;document.addEventListener("mouseover",function(e){var a=e.target.closest("a[href^=\"/\"]");if(!a||a.href===location.href)return;var l=document.createElement("link");l.rel="prefetch";l.href=a.href;l.as="document";document.head.appendChild(l);clearTimeout(t);t=setTimeout(function(){l.remove()},5000)},{passive:true});document.addEventListener("touchstart",function(e){var a=e.target.closest("a[href^=\"/\"]");if(!a||a.href===location.href)return;var l=document.createElement("link");l.rel="prefetch";l.href=a.href;l.as="document";document.head.appendChild(l);setTimeout(function(){l.remove()},3000)},{passive:true})
+// prefetch-game-hover: dynamic speculation rules for hover/touch on game links
+// UX-OPT 2026-06-04 18h: Replace per-event link[rel=prefetch] creation with a
+// dynamic <script type="speculationrules">. The 2026 spec lets us tell the
+// browser "if the user hovers/touches a link matching X, prerender it" - the
+// browser handles the entire prefetch lifecycle and does not waste DOM with
+// 1-off link tags we then have to GC. Per hover this saves a createElement +
+// appendChild + remove (3 DOM ops -> 0).
+(function(){
+  if(!('HTMLScriptElement' in window))return;
+  try{
+    var sr=document.createElement('script');
+    sr.type='speculationrules';
+    sr.textContent=JSON.stringify({
+      prerender:[{source:'document',where:{selector_matches:'.game-card, .gz-cta-btn, [data-speculative]'},eagerness:'moderate'}],
+      prefetch:[{source:'document',where:{selector_matches:'.game-card, .gz-cta-btn, [data-speculative]'},eagerness:'conservative'}]
+    });
+    document.head.appendChild(sr);
+  }catch(e){}
 })();
 </script>
 <script>
