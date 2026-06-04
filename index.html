@@ -2297,15 +2297,36 @@ window.filter = function(cat, btn){
   }
 })();
 
-  // Favorite games (localStorage)
+  // Favorite games (localStorage) - 2026 INP optimization
+  // Build a Map for O(1) favorite lookup (was O(n²) per click with array.includes)
   var gzFavs=JSON.parse(localStorage.getItem('gz_favs')||'[]');
+  var gzFavsSet = new Set(gzFavs);
   function gzToggleFav(name){
-    var idx=gzFavs.indexOf(name);
-    if(idx>-1){gzFavs.splice(idx,1)}else{gzFavs.push(name)}
-    localStorage.setItem('gz_favs',JSON.stringify(gzFavs));
-    document.querySelectorAll('.gz-fav-btn').forEach(function(b){
-      b.classList.toggle('active',gzFavs.includes(b.dataset.game));
-    });
+    var nowActive;
+    if (gzFavsSet.has(name)) {
+      gzFavsSet.delete(name);
+      nowActive = false;
+    } else {
+      gzFavsSet.add(name);
+      nowActive = true;
+    }
+    // Sync the in-memory array (kept for backwards compat with gzFavs.length etc)
+    gzFavs = Array.from(gzFavsSet);
+    try { localStorage.setItem('gz_favs', JSON.stringify(gzFavs)); } catch(e){}
+    // Only update the button that was clicked - O(1) instead of O(n²)
+    var clicked = document.querySelector('.gz-fav-btn[data-game="' + name.replace(/"/g, '\\"') + '"]');
+    if (clicked) clicked.classList.toggle('active', nowActive);
+    // Lazy batch sync: if a re-render happened, the new buttons need their state.
+    // We use rAF to batch this so rapid toggles coalesce to a single sync pass.
+    if (!window._gzFavSyncScheduled) {
+      window._gzFavSyncScheduled = true;
+      requestAnimationFrame(function(){
+        window._gzFavSyncScheduled = false;
+        document.querySelectorAll('.gz-fav-btn').forEach(function(b){
+          b.classList.toggle('active', gzFavsSet.has(b.dataset.game));
+        });
+      });
+    }
   }
 
   // Keyboard shortcuts: "/" or Ctrl/Cmd+K to focus search
