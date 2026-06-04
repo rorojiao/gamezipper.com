@@ -267,6 +267,7 @@ const GAMES = [
 {name:"Paper.io",emoji:"📦",cat:"arcade",tags:["IO","Territory","Arcade","Capture","Multiplayer","Strategy","Browser","Casual"],url:"/paper-io/",desc:"Capture territory in Paper.io! Move your block, draw trails, and claim space in this addictive io-style game with 30 levels and smart AI opponents. Play free!",isNew:true,status:"live"},
 {name:"Tower Stacker 3D",emoji:"🗼",cat:"puzzle",tags:["Puzzle","3D","Stack","Tower","Isometric","Skill","Casual","Browser","Free","HTML5"],url:"/tower-stacker-3d/",desc:"Play Tower Stacker 3D free online! Stack the tallest tower in this 3D isometric puzzle game. 30 levels across 6 biomes, 6 unlockable tower skins, combo multipliers, and 3-star ratings. No download needed!",isNew:true,status:"live"},
 {name:"Black Hole",emoji:"🕳️",cat:"puzzle",tags:["Puzzle","Black Hole","Cosmic","Arcade","Physics","Skill","Casual","Browser","Free","HTML5"],url:"/black-hole/",desc:"Play Black Hole free online! Consume every object, grow your cosmic void, and rule the galaxy. 30 hand-crafted levels across 6 tiers, 6 unlockable hole skins, 12 achievements, 3 power-ups, and 3-star ratings. No download needed!",isNew:true,status:"live"},
+{name:"Knife Hit",emoji:"🗡",cat:"arcade",tags:["knife","throwing","tap","casual","hyper-casual"],url:"/knife-hit/",desc:"Throw knives at the rotating log, avoid hitting other knives. 30 levels, boss stages, knife skins, and satisfying physics. Play free online, no download needed.",isNew:true,status:"live"},
 ];
 
 /**
@@ -290,4 +291,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Knife Hit",emoji:"\u{1F5E1}",cat:"arcade",tags:["knife","throwing","tap","casual","hyper-casual"],url:"/knife-hit/",desc:"Throw knives at the rotating log, avoid hitting other knives. 30 levels, boss stages, knife skins, and satisfying physics. Play free online, no download needed.",isNew:true,status:"live"},
