@@ -986,9 +986,12 @@ function createCompleteScreen(){
     ctx.fillStyle=COLORS.text;
     ctx.font=`bold ${28*scale}px Arial`;
     ctx.fillText(`Score: ${state.completedScore||0}`,W/2,330*scale);
+    ctx.fillStyle='#FFD700';
+    ctx.font=`bold ${24*scale}px Arial`;
+    ctx.fillText(`◉ Coins Earned: +${state.completedCoins||0}`,W/2,365*scale);
     ctx.fillStyle=COLORS.textDim;
     ctx.font=`${20*scale}px Arial`;
-    ctx.fillText(`Best: ${state.completedBest||0}`,W/2,370*scale);
+    ctx.fillText(`Best: ${state.completedBest||0}`,W/2,400*scale);
     const btns=[
       {text:'RETRY',action:()=>startGame(state.completedLevel),color:COLORS.warning},
       {text:state.completedLevel<30?'NEXT':'MENU',action:()=>{if(state.completedLevel<30)startGame(state.completedLevel+1);else state.screen='menu'},color:COLORS.success},
@@ -1108,7 +1111,135 @@ function adjustColor(hex,amt){
   return`#${(1<<24|r<<16|g<<8|b).toString(16).slice(1)}`;
 }
 
+function createThemesScreen(){
+  const ui=createUI();
+  ui.draw=function(){
+    ctx.fillStyle=COLORS.text;ctx.font=`bold ${40*scale}px Arial`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowColor=COLORS.primary;ctx.shadowBlur=20;
+    ctx.fillText('THEMES',W/2,80*scale);ctx.shadowBlur=0;
+    ctx.fillStyle=COLORS.textDim;ctx.font=`${16*scale}px Arial`;
+    ctx.fillText(`Coins: ${getCoins()}`,W/2,120*scale);
+    const unlocked=getUnlockedThemes();
+    const cols=2;
+    const cardW=300*scale,cardH=120*scale;
+    const startX=(W-cols*cardW-(cols-1)*20*scale)/2;
+    const startY=160*scale;
+    THEMES.forEach((t,i)=>{
+      const col=i%cols,row=Math.floor(i/cols);
+      const x=startX+col*(cardW+20*scale);
+      const y=startY+row*(cardH+20*scale);
+      const isUnlocked=unlocked.includes(t.id);
+      const isActive=getCurrentTheme()===t.id;
+      ctx.save();
+      ctx.beginPath();ctx.roundRect(x,y,cardW,cardH,12*scale);
+      const grad=ctx.createLinearGradient(x,y,x,y+cardH);
+      grad.addColorStop(0,t.bg[0]);grad.addColorStop(1,t.bg[1]);
+      ctx.fillStyle=grad;ctx.fill();
+      ctx.strokeStyle=isActive?COLORS.success:'rgba(255,255,255,0.2)';
+      ctx.lineWidth=isActive?3:1;ctx.stroke();
+      ctx.fillStyle=isUnlocked?t.accent:'rgba(255,255,255,0.4)';
+      ctx.font=`bold ${24*scale}px Arial`;
+      ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText(t.name,x+15*scale,y+15*scale);
+      ctx.fillStyle=t.accent;
+      ctx.beginPath();ctx.arc(x+cardW-25*scale,y+25*scale,15*scale,0,Math.PI*2);
+      ctx.fill();
+      if(isActive){
+        ctx.fillStyle='#fff';ctx.font=`bold ${18*scale}px Arial`;
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText('✓',x+cardW-25*scale,y+25*scale);
+      }
+      if(!isUnlocked){
+        ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(x,y,cardW,cardH);
+        ctx.fillStyle='#FFD700';ctx.font=`bold ${22*scale}px Arial`;
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(`🔒 ${t.unlockCost}`,x+cardW/2,y+cardH/2);
+      }
+      ctx.restore();
+      ui.buttons[i]={x,y,w:cardW,h:cardH,action:()=>{
+        playSFX('click');
+        if(isUnlocked){
+          applyTheme(t.id);
+          playSFX('complete');
+        }else if(spendCoins(t.unlockCost)){
+          unlockTheme(t.id);
+          applyTheme(t.id);
+          playSFX('complete');
+        }else{
+          playSFX('warning');
+        }
+      }};
+    });
+    const backBtn={x:W/2-80*scale,y:H-80*scale,w:160*scale,h:50*scale,action:()=>{playSFX('click');state.screen='menu'}};
+    ctx.beginPath();ctx.roundRect(backBtn.x,backBtn.y,backBtn.w,backBtn.h,12*scale);
+    ctx.fillStyle='rgba(255,255,255,0.15)';ctx.fill();
+    ctx.fillStyle='#fff';ctx.font=`bold ${20*scale}px Arial`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('BACK',backBtn.x+backBtn.w/2,backBtn.y+backBtn.h/2);
+    ui.buttons[99]=backBtn;
+  };
+  ui.handleClick=function(x,y){
+    for(const k in ui.buttons){const b=ui.buttons[k];if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){b.action();return true}}
+    return false;
+  };
+  return ui;
+}
+
+function createAchievementsScreen(){
+  const ui=createUI();
+  ui.draw=function(){
+    ctx.fillStyle=COLORS.text;ctx.font=`bold ${40*scale}px Arial`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowColor=COLORS.primary;ctx.shadowBlur=20;
+    ctx.fillText('ACHIEVEMENTS',W/2,70*scale);ctx.shadowBlur=0;
+    const unlocked=JSON.parse(localStorage.getItem('tidyup3d_achievements')||'[]');
+    ctx.fillStyle=COLORS.textDim;ctx.font=`${16*scale}px Arial`;
+    ctx.fillText(`${unlocked.length}/${ACHIEVEMENTS.length} unlocked`,W/2,110*scale);
+    const cols=2;
+    const cardW=300*scale,cardH=80*scale;
+    const startX=(W-cols*cardW-(cols-1)*15*scale)/2;
+    const startY=150*scale;
+    ACHIEVEMENTS.forEach((a,i)=>{
+      const col=i%cols,row=Math.floor(i/cols);
+      const x=startX+col*(cardW+15*scale);
+      const y=startY+row*(cardH+12*scale);
+      const isUnlocked=unlocked.includes(a.id);
+      ctx.beginPath();ctx.roundRect(x,y,cardW,cardH,10*scale);
+      ctx.fillStyle=isUnlocked?'rgba(46,213,115,0.15)':'rgba(100,100,100,0.1)';
+      ctx.fill();
+      ctx.strokeStyle=isUnlocked?COLORS.success:'rgba(255,255,255,0.1)';
+      ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle=isUnlocked?COLORS.success:'rgba(255,255,255,0.3)';
+      ctx.font=`bold ${32*scale}px Arial`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(a.icon,x+30*scale,y+cardH/2);
+      ctx.fillStyle=isUnlocked?COLORS.text:'rgba(255,255,255,0.4)';
+      ctx.font=`bold ${18*scale}px Arial`;
+      ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText(a.name,x+60*scale,y+12*scale);
+      ctx.fillStyle='rgba(255,255,255,0.5)';
+      ctx.font=`${12*scale}px Arial`;
+      ctx.fillText(a.desc,x+60*scale,y+38*scale);
+    });
+    const backBtn={x:W/2-80*scale,y:H-80*scale,w:160*scale,h:50*scale,action:()=>{playSFX('click');state.screen='menu'}};
+    ctx.beginPath();ctx.roundRect(backBtn.x,backBtn.y,backBtn.w,backBtn.h,12*scale);
+    ctx.fillStyle='rgba(255,255,255,0.15)';ctx.fill();
+    ctx.fillStyle='#fff';ctx.font=`bold ${20*scale}px Arial`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('BACK',backBtn.x+backBtn.w/2,backBtn.y+backBtn.h/2);
+    ui.buttons[99]=backBtn;
+  };
+  ui.handleClick=function(x,y){
+    for(const k in ui.buttons){const b=ui.buttons[k];if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){b.action();return true}}
+    return false;
+  };
+  return ui;
+}
+
 state={screen:'menu',mouseX:0,mouseY:0,gameUI:null,completedLevel:null,completedStars:1,completedScore:0,completedBest:0};
+
+(function initTheme(){const tid=getCurrentTheme();const t=THEMES.find(x=>x.id===tid);if(t){COLORS.bg1=t.bg[0];COLORS.bg2=t.bg[1];COLORS.primary=t.accent;}})();
 
 function getScreen(name){
   switch(name){
@@ -1119,6 +1250,8 @@ function getScreen(name){
     case'complete':return createCompleteScreen();
     case'gameover':return createGameOverScreen();
     case'paused':return createPausedScreen();
+    case'themes':return createThemesScreen();
+    case'achievements':return createAchievementsScreen();
     default:return createMenuScreen();
   }
 }
@@ -1185,6 +1318,34 @@ function loop(ts){
 }
 
 rafId=requestAnimationFrame(loop);
+})();
+</script>
+
+<!-- QA Round 3: Tap to start hint -->
+<div id="gz-tap-start" role="button" tabindex="0" aria-label="Tap to start game" style="position:fixed;inset:0;z-index:99997;background:rgba(10,10,26,0.75);display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:system-ui,sans-serif;backdrop-filter:blur(2px)">
+  <div style="text-align:center;color:#fff">
+    <div style="font-size:3em;margin-bottom:8px">🎮</div>
+    <div style="font-size:1.4em;font-weight:700;letter-spacing:0.05em">TAP TO START</div>
+    <div style="font-size:0.85em;opacity:0.7;margin-top:6px">or press Space / Enter</div>
+  </div>
+</div>
+<script>
+(function(){
+  try{
+    var el=document.getElementById("gz-tap-start");
+    if(!el)return;
+    function dismiss(){
+      if(!el||el._dismissed)return;
+      el._dismissed=true;
+      el.style.transition="opacity 0.3s";
+      el.style.opacity="0";
+      setTimeout(function(){if(el&&el.parentNode)el.parentNode.removeChild(el);},350);
+    }
+    el.addEventListener("click",dismiss);
+    el.addEventListener("touchstart",dismiss);
+    el.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"||e.key==="Escape")dismiss();});
+    document.addEventListener("keydown",function(e){if(!el._dismissed&&(e.key===" "||e.key==="Enter"))dismiss();},{once:true});
+  }catch(e){console.warn("gz-tap-start init failed",e);}
 })();
 </script>
 </body>
