@@ -1590,5 +1590,56 @@ window.showLevelSelect = showLevelSelect;
 <div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
 <script src="/game-footer.js"></script>
 <img src='https://site-analytics.gamezipper.com/hit?s=gamezipper.com&p=jewel-crush' width='1' height='1' alt='' style='display:none'>
+
+
+<!-- QA Round 1: Generic Play Again overlay (hidden by default) -->
+<div id="gz-restart-overlay" role="dialog" aria-label="Game over" aria-modal="false" style="display:none;position:fixed;inset:0;background:rgba(10,10,26,0.85);z-index:99998;align-items:center;justify-content:center;flex-direction:column;gap:14px;font-family:system-ui,sans-serif">
+  <div style="background:linear-gradient(135deg,#1a1a3e,#2d1b69);color:#fff;padding:24px 32px;border-radius:16px;border:2px solid #4ecdc4;box-shadow:0 10px 40px rgba(0,0,0,0.6);text-align:center;max-width:90vw">
+    <div style="font-size:1.4em;font-weight:700;margin-bottom:8px">Game Over</div>
+    <div style="font-size:0.9em;opacity:0.85;margin-bottom:18px">Want to play again?</div>
+    <button id="gz-restart-btn" type="button" aria-label="Play again" style="background:#4ecdc4;color:#000;border:none;border-radius:50px;padding:12px 28px;font-weight:700;font-size:1em;cursor:pointer;font-family:inherit">🔁 Play Again</button>
+  </div>
+</div>
+<script>
+(function(){
+  try{
+    var overlay=document.getElementById("gz-restart-overlay");
+    var btn=document.getElementById("gz-restart-btn");
+    if(!overlay||!btn)return;
+    btn.addEventListener("click",function(){location.reload();});
+    function show(){overlay.style.display="flex";}
+    function hide(){overlay.style.display="none";}
+    window.gzShowRestart=show;
+    window.gzHideRestart=hide;
+    // Throttled game-over auto-detect: poll every 600ms, not MutationObserver
+    // (per-game rAF loops would otherwise fire 1000s of callbacks/sec)
+    var sels=["#game-over","#gameOver",".game-over",".gameover","[data-game-over]",".lose-screen",".win-screen",".defeat",".victory"];
+    function check(){
+      for(var i=0;i<sels.length;i++){
+        var el=document.querySelector(sels[i]);
+        if(el){
+          var s=el.getAttribute("data-gz-checked");
+          if(s==="1"){if(overlay.style.display==="none")show();return;}
+          var cs=getComputedStyle(el);
+          if(cs.display!=="none"&&cs.visibility!=="hidden"&&cs.opacity!=="0"){
+            el.setAttribute("data-gz-checked","1");
+            show();
+            return;
+          }
+        }
+      }
+    }
+    setInterval(check,600);
+    // Keyboard: R restarts
+    document.addEventListener("keydown",function(e){
+      if((e.key==="r"||e.key==="R")&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+        var tag=(document.activeElement&&document.activeElement.tagName)||"";
+        if(tag==="INPUT"||tag==="TEXTAREA")return;
+        location.reload();
+      }
+    });
+  }catch(e){console.warn("gz-restart overlay init failed",e);}
+})();
+</script>
 </body>
 </html>

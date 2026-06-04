@@ -3788,20 +3788,32 @@ if(d){d.style.display='block';setTimeout(function(){gzDismissOnboarding()},8000)
     if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
     else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
   }
+  // UX-OPT 2026-06-05: wire trapFocus to the dialog. Native showModal already traps
+  // focus in the top-layer, but inline display:flex and some legacy engines can leak.
+  // This is defense-in-depth so Tab/Shift+Tab cycle within the dialog while open
+  // (WCAG 2.4.3 Focus Order + 2.1.2 No Keyboard Trap).
+  overlay.addEventListener('keydown',trapFocus);
   function show(){
     // Close any conflicting exit overlay to prevent stacking dialogs
     var exit=document.getElementById('gz-exit-overlay');
     if(exit)exit.classList.remove('show');
     _kbPrevFocus=document.activeElement;
-    overlay.style.display='flex';
-    // Native <dialog>: showModal handles top-layer, focus, scroll lock, and Esc for free
-    try{overlay.showModal()}catch(e){/* already open or unsupported */}
+    // UX-OPT 2026-06-05: native <dialog>::showModal handles top-layer, focus trap,
+    // scroll lock, and Esc. Do NOT set overlay.style.display inline - that overrides
+    // the UA dialog display:block, leaks into the :closed state after .close(),
+    // and breaks ::backdrop rendering in some engines. Fall back to the [open]
+    // attribute only if showModal is unavailable.
+    if(typeof overlay.showModal==='function'){try{overlay.showModal()}catch(e){}}
+    else{overlay.setAttribute('open','')}
     if(closeBtn){try{closeBtn.focus({preventScroll:true})}catch(e){closeBtn.focus()}}
   }
   function hide(){
-    // Native <dialog>: close() fires the 'close' event which we use to restore focus
+    // UX-OPT 2026-06-05: native close() fires the 'close' event we use to restore focus.
+    // Never set overlay.style.display='none' inline - that would persist after reopen
+    // and override the UA's dialog display:block. Only the [open] attribute fallback
+    // needs removal for legacy engines.
     if(typeof overlay.open!=='undefined'&&overlay.open){overlay.close()}
-    else{/* legacy */ overlay.style.display='none'}
+    else{overlay.removeAttribute('open')}
     if(_kbPrevFocus&&_kbPrevFocus.focus){try{_kbPrevFocus.focus({preventScroll:true})}catch(e){_kbPrevFocus.focus()}}
   }
   function toggle(){if(overlay.open){hide()}else{show()}}
