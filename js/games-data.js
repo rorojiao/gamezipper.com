@@ -264,6 +264,7 @@ const GAMES = [
 
 {name:"Bottle Flip 3D",emoji:"🍾",cat:"arcade",tags:["Arcade","Physics","Flip","Casual","Skill","Timing","Bottle","3D","Browser","Free","HTML5"],url:"/bottle-flip-3d/",desc:"Play Bottle Flip 3D free online! Master physics-based bottle flipping across 30 handcrafted levels. Charge power, launch at the perfect angle, and land upright to earn 3 stars and unlock 6 bottle skins. No download needed!",isNew:true,status:"live"},
 {name:"Paper.io",emoji:"📦",cat:"arcade",tags:["IO","Territory","Arcade","Capture","Multiplayer","Strategy","Browser","Casual"],url:"/paper-io/",desc:"Capture territory in Paper.io! Move your block, draw trails, and claim space in this addictive io-style game with 30 levels and smart AI opponents. Play free!",isNew:true,status:"live"},
+{name:"Tower Stacker 3D",emoji:"🗼",cat:"puzzle",tags:["Puzzle","3D","Stack","Tower","Isometric","Skill","Casual","Browser","Free","HTML5"],url:"/tower-stacker-3d/",desc:"Play Tower Stacker 3D free online! Stack the tallest tower in this 3D isometric puzzle game. 30 levels across 6 biomes, 6 unlockable tower skins, combo multipliers, and 3-star ratings. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
@@ -287,4 +288,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Tower Stacker 3D",emoji:"🗼",cat:"puzzle",tags:["Puzzle","3D","Stack","Tower","Isometric","Skill","Casual","Browser","Free","HTML5"],url:"/tower-stacker-3d/",desc:"Play Tower Stacker 3D free online! Stack the tallest tower in this 3D isometric puzzle game. 30 levels across 6 biomes, 6 unlockable tower skins, combo multipliers, and 3-star ratings. No download needed!",isNew:true,status:"live"},
