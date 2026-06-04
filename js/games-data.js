@@ -262,6 +262,7 @@ const GAMES = [
   {name:"Monster Truck Madness",emoji:"🚗",cat:"racing",tags:["Racing","Driving","Physics","Truck","Monster Truck","Arcade","Casual","Balance","Obstacle","2D"],url:"/monster-truck-madness/",desc:"Play Monster Truck Madness free online! Drive a monster truck through 30 physics-based obstacle courses across 6 biomes. No download needed!",isNew:true,status:"live"},
 {name:"Color Cascade",emoji:"🎨",cat:"puzzle",tags:["Puzzle","Color","Shooter","Conveyor","Match","Hybrid-Casual","Casual","Brain","Strategy"],url:"/color-cascade/",desc:"Play Color Cascade free online! Tap to launch colorful shooters at matching pixel clusters in this fast-paced conveyor-shooter puzzle. 30 hand-crafted levels, combos, power-ups, and 3-star ratings. No download required!",isNew:true,status:"live"},
 
+{name:"Bottle Flip 3D",emoji:"🍾",cat:"arcade",tags:["Arcade","Physics","Flip","Casual","Skill","Timing","Bottle","3D","Browser","Free","HTML5"],url:"/bottle-flip-3d/",desc:"Play Bottle Flip 3D free online! Master physics-based bottle flipping across 30 handcrafted levels. Charge power, launch at the perfect angle, and land upright to earn 3 stars and unlock 6 bottle skins. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
