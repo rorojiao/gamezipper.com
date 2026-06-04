@@ -284,5 +284,4 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
-},
-{name:"Monster Truck Madness",emoji:"🚛",cat:"puzzle",tags:["monster truck","physics","driving","balancing","levels","upgrades","garage","car","race","arcade"],url:"/monster-truck-madness/",desc:"Drive a monster truck through 30 physics-based obstacle courses across 6 biomes! Unlock 4 trucks, earn 3 stars per level, and conquer ramps, hills, valleys and lava pools. Free browser game, no download!",isNew:true,status:"live"},
+}
