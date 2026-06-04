@@ -820,7 +820,7 @@ html{transition:background-color .3s,color .3s}
 <nav aria-label="Game navigation"><div class="gz-nav-sticky">
 <div class="gz-search-wrap" role="search" style="position:relative">
   <span class="gz-search-icon">🔍</span>
-  <input type="search" class="gz-search" id="gz-search" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="🔍 Search 19+ Games..." aria-label="Search games" inputmode="search" enterkeyhint="search" role="combobox" aria-expanded="false" aria-controls="gz-search-suggestions" aria-haspopup="listbox" aria-autocomplete="list" spellcheck="false"><div style="text-align:center;font-size:0.7em;color:#555;margin-top:2px;margin-bottom:4px">Press <kbd style="background:#333;padding:1px 5px;border-radius:3px;font-size:0.9em;border:1px solid #444">/</kbd> or <kbd style="background:#333;padding:1px 5px;border-radius:3px;font-size:0.9em;border:1px solid #444">Ctrl</kbd>+<kbd style="background:#333;padding:1px 5px;border-radius:3px;font-size:0.9em;border:1px solid #444">K</kbd> to search · <kbd style="background:#333;padding:1px 5px;border-radius:3px;font-size:0.9em;border:1px solid #444">Esc</kbd> to clear</div>
+  <input type="search" class="gz-search" id="gz-search" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="🔍 Search 19+ Games..." aria-label="Search games" inputmode="search" enterkeyhint="search" role="combobox" aria-expanded="false" aria-controls="gz-search-suggestions" aria-haspopup="listbox" aria-autocomplete="list" aria-activedescendant="" spellcheck="false"><div style="text-align:center;font-size:0.7em;color:#555;margin-top:2px;margin-bottom:4px">Press <kbd style="background:#333;padding:1px 5px;border-radius:3px;font-size:0.9em;border:1px solid #444">/</kbd> or <kbd style="background:#333;padding:1px 5px;border-radius:3px;font-size:0.9em;border:1px solid #444">Ctrl</kbd>+<kbd style="background:#333;padding:1px 5px;border-radius:3px;font-size:0.9em;border:1px solid #444">K</kbd> to search · <kbd style="background:#333;padding:1px 5px;border-radius:3px;font-size:0.9em;border:1px solid #444">Esc</kbd> to clear</div>
   <div id="gz-search-suggestions" role="listbox" aria-label="Search suggestions" style="position:absolute;top:100%;left:0;right:0;background:#1a1a2e;border:1px solid #333;border-radius:0 0 12px 12px;max-height:280px;overflow-y:auto;display:none;z-index:1001;box-shadow:0 8px 24px rgba(0,0,0,0.5)"></div>
   <button class="gz-search-clear" id="gz-search-clear" aria-label="Clear search">&times;</button>
 </div>
@@ -2078,30 +2078,31 @@ if(h&&p&&p.style.display==='none'){h.click();setTimeout(function(){el.scrollInto
       var re = new RegExp('(' + safeQ + ')', 'gi');
       results.slice(0, 8).forEach(function(g, i) {
         var name = g.name.replace(re, '<mark>$1</mark>');
-        var hotBadge = (g.name==='2048 Galaxy'||g.name==='Classic Snake'||g.name==='Brick Breaker'||g.name==='Tetris'||g.name==='Chess') ? ' <span class="sug-hot">🔥 HOT</span>' : ''; h += '<a href="' + g.url + '" class="gz-search-suggestion" role="option" data-index="' + i + '"><span class="sug-emoji">' + g.emoji + '</span>' + name + '<span class="sug-cat">' + (g.tags[0]||'') + '</span>' + hotBadge + '</a>';
+        var hotBadge = (g.name==='2048 Galaxy'||g.name==='Classic Snake'||g.name==='Brick Breaker'||g.name==='Tetris'||g.name==='Chess') ? ' <span class="sug-hot">🔥 HOT</span>' : ''; h += '<a id="gz-sug-' + i + '" href="' + g.url + '" class="gz-search-suggestion" role="option" data-index="' + i + '"><span class="sug-emoji">' + g.emoji + '</span>' + name + '<span class="sug-cat">' + (g.tags[0]||'') + '</span>' + hotBadge + '</a>';
       });
       sugBox.innerHTML = h;
       sugBox.style.display = 'block';
       input.setAttribute('aria-expanded', 'true');
       activeIdx = -1;
+      input.setAttribute('aria-activedescendant', '');
       sugBox.querySelectorAll('.gz-search-suggestion').forEach(function(el) {
-        el.addEventListener('click', function() { sugBox.style.display = 'none'; input.setAttribute('aria-expanded', 'false'); });
+        el.addEventListener('click', function() { sugBox.style.display = 'none'; input.setAttribute('aria-expanded', 'false'); input.setAttribute('aria-activedescendant', ''); });
       });
     }
     input.addEventListener('keydown', function(e) {
       var items = sugBox.querySelectorAll('.gz-search-suggestion');
       if (!items.length) return;
-      // UX-OPT-2026-06-04-16h: scrollIntoView on arrow nav — keep active suggestion visible on mobile + long lists
+      // UX-OPT-2026-06-04-16h: scrollIntoView on arrow nav + aria-activedescendant for screen readers
       var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       var scrollOpt = reducedMotion ? false : {block:'nearest'};
-      if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, items.length - 1); items.forEach(function(el,i){el.classList.toggle('active', i === activeIdx);}); items[activeIdx].scrollIntoView(scrollOpt); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); items.forEach(function(el,i){el.classList.toggle('active', i === activeIdx);}); items[activeIdx].scrollIntoView(scrollOpt); }
-      else if (e.key === 'Home') { e.preventDefault(); activeIdx = 0; items.forEach(function(el,i){el.classList.toggle('active', i === activeIdx);}); items[activeIdx].scrollIntoView(scrollOpt); }
-      else if (e.key === 'End') { e.preventDefault(); activeIdx = items.length - 1; items.forEach(function(el,i){el.classList.toggle('active', i === activeIdx);}); items[activeIdx].scrollIntoView(scrollOpt); }
-      else if (e.key === 'Escape') { sugBox.style.display = 'none'; input.setAttribute('aria-expanded', 'false'); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, items.length - 1); items.forEach(function(el,i){el.classList.toggle('active', i === activeIdx);}); items[activeIdx].scrollIntoView(scrollOpt); input.setAttribute('aria-activedescendant', items[activeIdx].id); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); items.forEach(function(el,i){el.classList.toggle('active', i === activeIdx);}); items[activeIdx].scrollIntoView(scrollOpt); input.setAttribute('aria-activedescendant', items[activeIdx].id); }
+      else if (e.key === 'Home') { e.preventDefault(); activeIdx = 0; items.forEach(function(el,i){el.classList.toggle('active', i === activeIdx);}); items[activeIdx].scrollIntoView(scrollOpt); input.setAttribute('aria-activedescendant', items[activeIdx].id); }
+      else if (e.key === 'End') { e.preventDefault(); activeIdx = items.length - 1; items.forEach(function(el,i){el.classList.toggle('active', i === activeIdx);}); items[activeIdx].scrollIntoView(scrollOpt); input.setAttribute('aria-activedescendant', items[activeIdx].id); }
+      else if (e.key === 'Escape') { sugBox.style.display = 'none'; input.setAttribute('aria-expanded', 'false'); input.setAttribute('aria-activedescendant', ''); }
       else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); items[activeIdx].click(); }
     });
-    document.addEventListener('click', function(e) { if (!e.target.closest('.gz-search-wrap')) { sugBox.style.display = 'none'; input.setAttribute('aria-expanded', 'false'); } });
+    document.addEventListener('click', function(e) { if (!e.target.closest('.gz-search-wrap')) { sugBox.style.display = 'none'; input.setAttribute('aria-expanded', 'false'); input.setAttribute('aria-activedescendant', ''); } });
     // UX-OPT: Show trending + recent searches on search focus (before typing)
     // Research: focus-triggered suggestions reduce search abandonment by 20-30%
     var TRENDING_GAMES = ['2048 Galaxy','Classic Snake','Sudoku','Chess','Tetris','Solitaire','Minesweeper','Color Sort'];
