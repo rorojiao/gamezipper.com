@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Play Tower Stacker 3D Online Free - Stack the Tallest Tower | GameZipper</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="Stack the tallest tower in this 3D isometric puzzle game. 30 levels, 6 biomes, 6 tower skins. Free browser play, no download.">
+<meta property="og:title" content="Play Tower Stacker 3D Online Free - Stack the Tallest Tower | GameZipper">
+<meta property="og:description" content="Stack the tallest tower in this 3D isometric puzzle game. 30 levels, 6 biomes, 6 tower skins. Free browser play, no download.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/tower-stacker-3d/">
+<link rel="canonical" href="https://gamezipper.com/tower-stacker-3d/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+[{"@context":"https://schema.org","@type":"VideoGame","name":"Tower Stacker 3D","description":"Stack the tallest tower in this 3D isometric puzzle game. 30 levels, 6 biomes, 6 tower skins.","genre":"Puzzle","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://gamezipper.com/tower-stacker-3d/","publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com/"},"numberOfLevels":"30","playMode":"SinglePlayer"},{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Tower Stacker 3D?","acceptedAnswer":{"@type":"Answer","text":"Tap or click to drop each floor as the crane swings left and right. Time your drops to perfectly align floors on the tower for maximum points and stars."}},{"@type":"Question","name":"How many levels are in Tower Stacker 3D?","acceptedAnswer":{"@type":"Answer","text":"There are 30 levels across 6 unique biomes: Workshop, Glass Atrium, Neon City, Sky Temple, Crystal Peak, and Aurora."}},{"@type":"Question","name":"Can I play Tower Stacker 3D on mobile?","acceptedAnswer":{"@type":"Answer","text":"Yes! Tower Stacker 3D is fully responsive and works on both desktop and mobile browsers with touch controls."}},{"@type":"Question","name":"How do I unlock tower skins?","acceptedAnswer":{"@type":"Answer","text":"Earn stars by completing levels with perfect drops. More stars unlock more tower skins like Crystal, Neon, Ice, and Gold."}}]},{"@context":"https://schema.org","@type":"HowTo","name":"How to Play Tower Stacker 3D","step":[{"@type":"HowToStep","position":1,"text":"Select a level from the level select screen or try the Daily Challenge."},{"@type":"HowToStep","position":2,"text":"Watch the crane swing left and right at the top of the screen."},{"@type":"HowToStep","position":3,"text":"Tap or click to drop the floor when it is aligned above the tower."},{"@type":"HowToStep","position":4,"text":"Aim for perfect alignment (over 95%) to earn maximum stars and combo multipliers."},{"@type":"HowToStep","position":5,"text":"Complete all floors to finish the level and earn up to 3 stars."}]},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Tower Stacker 3D","item":"https://gamezipper.com/tower-stacker-3d/"}]}]
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow-x:hidden;user-select:none;-webkit-user-select:none;background:#0a0a0a;font-family:'Inter',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;min-height:100dvh}
+canvas{display:block;touch-action:none;-webkit-touch-callout:none}
+#gc{position:relative;width:100%;height:100%}
+#gc canvas{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+</style>
+</head>
+<body>
+<div id="gc"></div>
+<script>
+'use strict';
+/* ================================================================
+   TOWER STACKER 3D — Complete Single-File Game
+   ================================================================ */
+
+// ==================== CONSTANTS ====================
+const SAVE_KEY = 'tower-stacker-3d-save';
+const SAVE_VER = '1';
+const ISO_W = 0.866;   // cos(30°) projection factor
+const ISO_H = 0.5;     // sin(30°) projection factor
+const FLOOR_HEIGHT = 20;
+const FLOOR_DEPTH = 80;
+const BASE_FLOOR_WIDTH = 80;
+const PERFECT_THRESHOLD = 0.95;
+const PARTIAL_THRESHOLD = 0.5;
+const CRANE_RANGE = 140;
+const GRAVITY = 900;
+const MAX_FLOOR_WIDTH = 80;
+
+// ==================== GAME GLOBALS ====================
+let canvas, ctx, W_S, H_S, dpr, gameContainer;
+let audioCtx = null, masterGain = null, bgmNodes = [], bgmIntervals = [];
+let running = false, animId = null;
+let state = 'MENU';
+let dt = 0, lastTime = 0;
+let scrollY = 0;
+let transitionAlpha = 0, transitioning = false, nextState = null;
+
+// ==================== BIOME DATA ====================
+const BIOMES = [
+  { name:'Workshop', skyTop:'#6a5030', skyBot:'#2a1f15', ground:'#4a3520', crane:'#9B8365',
+    ambient:[0.08,0.05,0.02], accent:'#d4a855' },
+  { name:'Glass Atrium', skyTop:'#1a4a5a', skyBot:'#0a2535', ground:'#2a6a7a', crane:'#6ac0d5',
+    ambient:[0.02,0.06,0.08], accent:'#5aeaff' },
+  { name:'Neon City', skyTop:'#3a0a5a', skyBot:'#1a0535', ground:'#5a1a6a', crane:'#dd55ff',
+    ambient:[0.06,0.01,0.08], accent:'#ff55ff' },
+  { name:'Sky Temple', skyTop:'#5a4a1a', skyBot:'#2a2515', ground:'#7a6a3a', crane:'#e4b44a',
+    ambient:[0.08,0.06,0.01], accent:'#ffe066' },
+  { name:'Crystal Peak', skyTop:'#1a4a5a', skyBot:'#0a2a3a', ground:'#4a7a9a', crane:'#98ddff',
+    ambient:[0.02,0.06,0.1], accent:'#aaeeff' },
+  { name:'Aurora', skyTop:'#0a5a2a', skyBot:'#2a0a4a', ground:'#2a6a4a', crane:'#55ee99',
+    ambient:[0.03,0.08,0.05], accent:'#66ffbb' }
+];
+
+// ==================== LEVEL DEFINITIONS ====================
+const LEVELS = [];
+for (let b = 0; b < 6; b++) {
+  for (let i = 0; i < 5; i++) {
+    const lvl = b * 5 + i + 1;
+    const baseTarget = [8, 9, 10, 11, 12][i] + b * 2;
+    const baseSpeed = [12, 13.5, 15, 16.5, 18][i] + b * 4;
+    LEVELS.push({ level: lvl, biome: b, target: Math.min(baseTarget, 25), craneSpeed: Math.min(baseSpeed, 40) });
+  }
+}
+
+// ==================== SKIN DATA ====================
+const SKINS = [
+  { name:'Wood', stars:0, top:'#C4A878', right:'#9A8862', left:'#7A6B4A', edge:'#B09870' },
+  { name:'Stone', stars:5, top:'#999999', right:'#707070', left:'#505050', edge:'#888888' },
+  { name:'Crystal', stars:15, top:'#99eeff', right:'#66bbdd', left:'#4499bb', edge:'#88ddee' },
+  { name:'Neon', stars:30, top:'#ff66ff', right:'#cc33cc', left:'#990099', edge:'#ee55ee' },
+  { name:'Ice', stars:50, top:'#ddeeff', right:'#aaccee', left:'#77aacc', edge:'#ccddff' },
+  { name:'Gold', stars:80, top:'#ffd700', right:'#ccaa00', left:'#997700', edge:'#eec800' }
+];
+
+// ==================== POWERUP DATA ====================
+const POWERUPS = [
+  { id:'slow', name:'Slow Crane', desc:'Halves crane speed for 5s', icon:'🐢' },
+  { id:'aim', name:'Perfect Aim', desc:'Auto-align next 2 drops', icon:'🎯' },
+  { id:'extra', name:'Extra Floor', desc:'Recover from one miss', icon:'🛡️' }
+];
+
+// ==================== ACHIEVEMENT DATA ====================
+const ACHIEVEMENTS = [
+  { id:'first_perfect', name:'First Perfect', desc:'Land your first perfect drop', icon:'⭐' },
+  { id:'ten_perfect', name:'Perfect Ten', desc:'Land 10 perfect drops total', icon:'🌟' },
+  { id:'thirty_perfect', name:'Perfectionist', desc:'Land 30 perfect drops total', icon:'💫' },
+  { id:'fifty_perfect', name:'Grand Master', desc:'Land 50 perfect drops total', icon:'👑' },
+  { id:'combo_x5', name:'Combo King', desc:'Reach a x5 combo multiplier', icon:'🔥' },
+  { id:'combo_x10', name:'Unstoppable', desc:'Reach a x10 combo multiplier', icon:'💥' },
+  { id:'stars_10', name:'Star Collector', desc:'Earn 10 total stars', icon:'⭐' },
+  { id:'stars_30', name:'Star Champion', desc:'Earn 30 total stars', icon:'🏆' },
+  { id:'stars_60', name:'Star Legend', desc:'Earn 60 total stars', icon:'🏅' },
+  { id:'biome_clear', name:'Biome Explorer', desc:'Complete a level in each biome', icon:'🌍' },
+  { id:'all_skins', name:'Fashionista', desc:'Unlock all 6 tower skins', icon:'🎨' },
+  { id:'daily_3', name:'Daily Devotee', desc:'Complete 3 daily challenges', icon:'📅' }
+];
+
+// ==================== SAVE STATE ====================
+let save = {
+  version: SAVE_VER,
+  stars: {},
+  selectedSkin: 'Wood',
+  achievements: [],
+  totalPerfects: 0,
+  dailyCompleted: [],
+  dailyBestScores: {},
+  settings: { sound: true, music: true, vibration: true },
+  powerups: { slow: 3, aim: 2, extra: 1 },
+  highScores: {}
+};
+
+function loadSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.version === SAVE_VER) {
+        save = { ...save, ...parsed };
+        if (!save.powerups) save.powerups = { slow:3, aim:2, extra:1 };
+        if (!save.dailyBestScores) save.dailyBestScores = {};
+        if (!save.highScores) save.highScores = {};
+      }
+    }
+  } catch(e) { /* ignore */ }
+}
+
+function writeSave() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch(e) { /* ignore */ }
+}
+
+loadSave();
+
+function calcTotalStars() {
+  let total = 0;
+  for (const k in save.stars) total += (save.stars[k] || 0);
+  return total;
+}
+
+// ==================== AUDIO ENGINE ====================
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = save.settings.sound ? 0.4 : 0;
+    masterGain.connect(audioCtx.destination);
+  } catch(e) { audioCtx = null; }
+}
+
+function stopBGM() {
+  bgmNodes.forEach(n => { try { n.stop(); } catch(e) {} });
+  bgmNodes = [];
+  bgmIntervals.forEach(id => clearInterval(id));
+  bgmIntervals = [];
+}
+
+function playBGM(biomeIdx) {
+  if (!audioCtx || !save.settings.music) return;
+  stopBGM();
+  const t = audioCtx.currentTime;
+  // Musical scales per biome (pentatonic-ish)
+  const scales = [
+    [130.8, 164.8, 196, 261.6, 329.6, 392],       // Workshop - C minor pentatonic
+    [146.8, 185, 220, 293.7, 370, 440],             // Glass Atrium - D minor pentatonic
+    [110, 138.6, 164.8, 220, 277.2, 329.6],         // Neon City - A minor
+    [164.8, 196, 246.9, 329.6, 392, 493.9],         // Sky Temple - E minor pentatonic
+    [174.6, 220, 261.6, 349.2, 440, 523.3],         // Crystal Peak - F major pentatonic
+    [130.8, 174.6, 220, 261.6, 349.2, 440, 523.3]   // Aurora - C major wide
+  ];
+  const sc = scales[biomeIdx] || scales[0];
+
+  // Layer 1: Sub bass drone
+  const bassOsc = audioCtx.createOscillator();
+  const bassGain = audioCtx.createGain();
+  const bassFilter = audioCtx.createBiquadFilter();
+  bassOsc.type = 'sine';
+  bassOsc.frequency.value = sc[0] / 2;
+  bassFilter.type = 'lowpass'; bassFilter.frequency.value = 120;
+  bassGain.gain.setValueAtTime(0.15, t);
+  bassOsc.connect(bassFilter).connect(bassGain).connect(masterGain);
+  bassOsc.start(t);
+  bgmNodes.push(bassOsc);
+
+  // Layer 2: Warm pad (detuned pair)
+  const padOsc1 = audioCtx.createOscillator();
+  const padOsc2 = audioCtx.createOscillator();
+  const padGain = audioCtx.createGain();
+  const padFilter = audioCtx.createBiquadFilter();
+  padOsc1.type = 'triangle'; padOsc1.frequency.value = sc[2];
+  padOsc2.type = 'triangle'; padOsc2.frequency.value = sc[2] * 1.003;
+  padFilter.type = 'lowpass'; padFilter.frequency.value = 600 + biomeIdx * 100;
+  padGain.gain.setValueAtTime(0.06, t);
+  padOsc1.connect(padFilter); padOsc2.connect(padFilter);
+  padFilter.connect(padGain).connect(masterGain);
+  padOsc1.start(t); padOsc2.start(t);
+  bgmNodes.push(padOsc1, padOsc2);
+
+  // LFO for pad filter sweep
+  const lfo = audioCtx.createOscillator();
+  const lfoGain = audioCtx.createGain();
+  lfo.type = 'sine'; lfo.frequency.value = 0.15;
+  lfoGain.gain.value = 200;
+  lfo.connect(lfoGain).connect(padFilter.frequency);
+  lfo.start(t);
+  bgmNodes.push(lfo);
+
+  // Layer 3: Arpeggiated melody
+  const melOsc = audioCtx.createOscillator();
+  const melGain = audioCtx.createGain();
+  const melFilter = audioCtx.createBiquadFilter();
+  melOsc.type = 'square';
+  melOsc.frequency.value = sc[4];
+  melFilter.type = 'lowpass'; melFilter.frequency.value = 1500;
+  melGain.gain.value = 0.025;
+  melOsc.connect(melFilter).connect(melGain).connect(masterGain);
+  melOsc.start(t);
+  bgmNodes.push(melOsc);
+
+  let noteIdx = 0;
+  const arpId = setInterval(() => {
+    if (!audioCtx || audioCtx.state === 'closed') { clearInterval(arpId); return; }
+    noteIdx = (noteIdx + 1) % sc.length;
+    const now = audioCtx.currentTime;
+    melOsc.frequency.setValueAtTime(sc[noteIdx] * 2, now);
+    melGain.gain.setValueAtTime(0.025, now);
+    melGain.gain.exponentialRampToValueAtTime(0.005, now + 0.35);
+  }, 600);
+  bgmIntervals.push(arpId);
+}
+
+function sfx(type) {
+  if (!audioCtx || !save.settings.sound) return;
+  const t = audioCtx.currentTime;
+  const g = audioCtx.createGain();
+  g.connect(masterGain);
+
+  if (type === 'drop') {
+    const o = audioCtx.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(440, t);
+    o.frequency.exponentialRampToValueAtTime(120, t + 0.18);
+    g.gain.setValueAtTime(0.25, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+    o.connect(g); o.start(t); o.stop(t + 0.18);
+  }
+  else if (type === 'perfect') {
+    [587.3, 740, 880].forEach((f, i) => {
+      const o = audioCtx.createOscillator();
+      const g2 = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g2.gain.setValueAtTime(0.001, t + i * 0.07);
+      g2.gain.linearRampToValueAtTime(0.22, t + i * 0.07 + 0.01);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.22);
+      o.connect(g2); g2.connect(masterGain);
+      o.start(t + i * 0.07); o.stop(t + i * 0.07 + 0.22);
+    });
+  }
+  else if (type === 'miss') {
+    const o = audioCtx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(220, t);
+    o.frequency.exponentialRampToValueAtTime(60, t + 0.35);
+    g.gain.setValueAtTime(0.18, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    o.connect(g); o.start(t); o.stop(t + 0.35);
+  }
+  else if (type === 'levelup') {
+    [523.3, 587.3, 659.3, 784, 880, 1047].forEach((f, i) => {
+      const o = audioCtx.createOscillator();
+      const g2 = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g2.gain.setValueAtTime(0.001, t + i * 0.08);
+      g2.gain.linearRampToValueAtTime(0.18, t + i * 0.08 + 0.01);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.2);
+      o.connect(g2); g2.connect(masterGain);
+      o.start(t + i * 0.08); o.stop(t + i * 0.08 + 0.2);
+    });
+  }
+  else if (type === 'star') {
+    const o = audioCtx.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(880, t);
+    o.frequency.exponentialRampToValueAtTime(1760, t + 0.12);
+    g.gain.setValueAtTime(0.18, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    o.connect(g); o.start(t); o.stop(t + 0.12);
+  }
+  else if (type === 'click') {
+    const o = audioCtx.createOscillator();
+    o.type = 'sine'; o.frequency.value = 900;
+    g.gain.setValueAtTime(0.08, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+    o.connect(g); o.start(t); o.stop(t + 0.03);
+  }
+  else if (type === 'fanfare') {
+    [523.3, 659.3, 784, 1047, 784, 1047].forEach((f, i) => {
+      const o = audioCtx.createOscillator();
+      const g2 = audioCtx.createGain();
+      const fl = audioCtx.createBiquadFilter();
+      o.type = 'square'; o.frequency.value = f;
+      fl.type = 'lowpass'; fl.frequency.value = 2200;
+      g2.gain.setValueAtTime(0.001, t + i * 0.12);
+      g2.gain.linearRampToValueAtTime(0.12, t + i * 0.12 + 0.01);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + i * 0.12 + 0.35);
+      o.connect(fl); fl.connect(g2); g2.connect(masterGain);
+      o.start(t + i * 0.12); o.stop(t + i * 0.12 + 0.35);
+    });
+  }
+  else if (type === 'whoosh') {
+    const bufLen = Math.floor(audioCtx.sampleRate * 0.18);
+    const buf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = (Math.random() * 2 - 1) * 0.4;
+    const src = audioCtx.createBufferSource(); src.buffer = buf;
+    const fl = audioCtx.createBiquadFilter(); fl.type = 'bandpass';
+    fl.frequency.setValueAtTime(300, t);
+    fl.frequency.exponentialRampToValueAtTime(3000, t + 0.12);
+    fl.Q.value = 2;
+    g.gain.setValueAtTime(0.12, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+    src.connect(fl); fl.connect(g);
+    src.start(t); src.stop(t + 0.18);
+  }
+}
+
+function vibrate(ms) {
+  if (save.settings.vibration && navigator.vibrate) {
+    try { navigator.vibrate(ms); } catch(e) {}
+  }
+}
+
+// ==================== PARTICLE SYSTEM ====================
+let particles = [];
+
+function spawnParticles(x, y, type, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 40 + Math.random() * 160;
+    let color, life, size, gravity = 300;
+    if (type === 'confetti') {
+      color = ['#ff4455','#44ff66','#4488ff','#ffee44','#ff44ff','#44ffff','#ffaa22','#ff88aa'][i % 8];
+      life = 1.8 + Math.random() * 0.8;
+      size = 3 + Math.random() * 4;
+      gravity = 200;
+    } else if (type === 'sparkle') {
+      color = ['#ffe888','#fff5cc','#ffd700','#ffee88'][i % 4];
+      life = 0.4 + Math.random() * 0.4;
+      size = 2 + Math.random() * 3;
+      gravity = -50;
+    } else { // dust
+      color = ['#bb9977','#aa8866','#997755'][i % 3];
+      life = 0.6 + Math.random() * 0.5;
+      size = 2 + Math.random() * 3;
+    }
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - (type === 'sparkle' ? 120 : 60),
+      life, maxLife: life, color, size, type, gravity,
+      rot: Math.random() * 6.28, rotSpeed: (Math.random() - 0.5) * 8
+    });
+  }
+}
+
+function updateParticles(delta) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * delta;
+    p.y += p.vy * delta;
+    p.vy += p.gravity * delta;
+    p.rot += p.rotSpeed * delta;
+    p.life -= delta;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    const alpha = Math.max(0, p.life / p.maxLife);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    if (p.type === 'confetti') {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillRect(-p.size * 0.6, -p.size * 0.25, p.size * 1.2, p.size * 0.5);
+      ctx.restore();
+    } else if (p.type === 'sparkle') {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * (0.5 + alpha * 0.5), 0, Math.PI * 2);
+      ctx.fill();
+      // Glow
+      ctx.globalAlpha = alpha * 0.3;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillRect(p.x - p.size * 0.5, p.y - p.size * 0.5, p.size, p.size);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ==================== ISOMETRIC PROJECTION ====================
+function isoProject(wx, wy, wz, cx, cy) {
+  return {
+    sx: cx + (wx - wy) * ISO_W,
+    sy: cy + (wx + wy) * ISO_H - wz
+  };
+}
+
+function drawIsoBox(cx, cy, wx, wy, wz, w, h, d, topColor, rightColor, leftColor, edgeColor) {
+  const h2 = h; // height in world units
+  // 8 corners
+  const t1 = isoProject(wx, wy, wz + h2, cx, cy);
+  const t2 = isoProject(wx + w, wy, wz + h2, cx, cy);
+  const t3 = isoProject(wx + w, wy + d, wz + h2, cx, cy);
+  const t4 = isoProject(wx, wy + d, wz + h2, cx, cy);
+  const b2 = isoProject(wx + w, wy, wz, cx, cy);
+  const b3 = isoProject(wx + w, wy + d, wz, cx, cy);
+  const b4 = isoProject(wx, wy + d, wz, cx, cy);
+
+  // Left face (wy+d side → wy side, from bottom to top)
+  ctx.beginPath();
+  ctx.moveTo(t4.sx, t4.sy);
+  ctx.lineTo(t1.sx, t1.sy);
+  ctx.lineTo(b2.sx, b2.sy);
+  ctx.lineTo(b3.sx, b3.sy);
+  ctx.closePath();
+  ctx.fillStyle = leftColor;
+  ctx.fill();
+  ctx.strokeStyle = edgeColor || 'rgba(0,0,0,0.2)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Right face (wx+w side)
+  ctx.beginPath();
+  ctx.moveTo(t2.sx, t2.sy);
+  ctx.lineTo(t3.sx, t3.sy);
+  ctx.lineTo(b3.sx, b3.sy);
+  ctx.lineTo(b2.sx, b2.sy);
+  ctx.closePath();
+  ctx.fillStyle = rightColor;
+  ctx.fill();
+  ctx.strokeStyle = edgeColor || 'rgba(0,0,0,0.2)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Top face (diamond)
+  ctx.beginPath();
+  ctx.moveTo(t1.sx, t1.sy);
+  ctx.lineTo(t2.sx, t2.sy);
+  ctx.lineTo(t3.sx, t3.sy);
+  ctx.lineTo(t4.sx, t4.sy);
+  ctx.closePath();
+  ctx.fillStyle = topColor;
+  ctx.fill();
+  ctx.strokeStyle = edgeColor || 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+// ==================== GAME STATE ====================
+let currentLevel = null;
+let gameData = null;
+
+function mulberry32(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function createGameData(biome, target, craneSpeed, isDaily) {
+  const skin = SKINS.find(s => s.name === save.selectedSkin) || SKINS[0];
+  return {
+    biome, target, craneSpeed,
+    towerFloors: [],     // placed floors
+    craneX: 0, craneDir: 1,
+    nextFloorWidth: BASE_FLOOR_WIDTH,
+    currentFloor: 0,
+    combo: 0, multiplier: 1, bestMultiplier: 1,
+    score: 0, perfects: 0, partials: 0, misses: 0,
+    dropping: false, dropY: 0, dropTargetZ: 0, dropSpeed: 0,
+    gameOver: false, levelComplete: false,
+    cameraY: 0, targetCameraY: 0,
+    skin,
+    activePowerups: {},
+    powerupTimers: {},
+    perfectAimCount: 0,
+    extraFloorUsed: false,
+    fallingPieces: [],
+    flashTimer: 0, flashColor: null,
+    comboText: '', comboTextTimer: 0,
+    tutorialStep: (!isDaily && currentLevel <= 3) ? 0 : -1,
+    isDaily: !!isDaily,
+    perfectThisLevel: 0,
+    // Background decoration positions (randomized per biome)
+    bgStars: Array.from({length: 30}, () => ({
+      x: Math.random(), y: Math.random() * 0.6,
+      size: 1 + Math.random() * 2, twinkle: Math.random() * 6.28
+    }))
+  };
+}
+
+function startLevel(lvl) {
+  initAudio();
+  currentLevel = lvl;
+  const L = LEVELS[lvl - 1];
+  gameData = createGameData(L.biome, L.target, L.craneSpeed, false);
+  state = 'PLAYING';
+  playBGM(L.biome);
+}
+
+function startDaily() {
+  initAudio();
+  currentLevel = -1;
+  const d = new Date();
+  const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  const rng = mulberry32(seed);
+  const biome = Math.floor(rng() * 6);
+  const target = 10 + Math.floor(rng() * 13);
+  const speed = 14 + Math.floor(rng() * 22);
+  gameData = createGameData(biome, target, speed, true);
+  state = 'PLAYING';
+  playBGM(biome);
+}
+
+// ==================== BUTTON SYSTEM ====================
+let buttons = [];
+
+function clearButtons() { buttons = []; }
+
+function addButton(x, y, w, h, label, cb, opts = {}) {
+  buttons.push({
+    x, y, w, h, label, cb,
+    color: opts.color || '#4a8aff',
+    textColor: opts.textColor || '#fff',
+    fontSize: opts.fontSize,
+    icon: opts.icon || '',
+    hover: false
+  });
+}
+
+function drawButton(b) {
+  ctx.save();
+  const r = Math.min(10, b.h / 3);
+  const isHover = b.hover;
+
+  // Shadow
+  ctx.shadowColor = 'rgba(0,0,0,0.3)';
+  ctx.shadowBlur = isHover ? 12 : 6;
+  ctx.shadowOffsetY = isHover ? 4 : 2;
+
+  // Background
+  ctx.beginPath();
+  ctx.roundRect(b.x, b.y, b.w, b.h, r);
+  const gradient = ctx.createLinearGradient(b.x, b.y, b.x, b.y + b.h);
+  gradient.addColorStop(0, b.color);
+  gradient.addColorStop(1, shadeColor(b.color, -20));
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  // Border
+  ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Text
+  const fs = b.fontSize || Math.min(b.h * 0.4, 18);
+  ctx.font = `bold ${fs}px Inter`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = b.textColor;
+  const fullLabel = b.icon ? b.icon + ' ' + b.label : b.label;
+  ctx.fillText(fullLabel, b.x + b.w / 2, b.y + b.h / 2);
+  ctx.restore();
+}
+
+function shadeColor(color, amount) {
+  let hex = color.replace('#', '');
+  if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  const num = parseInt(hex, 16);
+  let r = Math.min(255, Math.max(0, (num >> 16) + amount));
+  let g = Math.min(255, Math.max(0, ((num >> 8) & 0xFF) + amount));
+  let b = Math.min(255, Math.max(0, (num & 0xFF) + amount));
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+function drawStar(x, y, r, filled) {
+  ctx.save();
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + i * Math.PI * 2 / 5;
+    const a2 = a + Math.PI / 5;
+    ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+    ctx.lineTo(x + Math.cos(a2) * r * 0.4, y + Math.sin(a2) * r * 0.4);
+  }
+  ctx.closePath();
+  if (filled) {
+    const sg = ctx.createRadialGradient(x, y, 0, x, y, r);
+    sg.addColorStop(0, '#fff5aa');
+    sg.addColorStop(1, '#ffc800');
+    ctx.fillStyle = sg;
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  }
+  ctx.fill();
+  ctx.strokeStyle = filled ? '#cc9900' : 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function checkButtonClick(px, py) {
+  for (let i = buttons.length - 1; i >= 0; i--) {
+    const b = buttons[i];
+    if (px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) {
+      b.cb();
+      return true;
+    }
+  }
+  return false;
+}
+
+// ==================== BACKGROUND RENDERING ====================
+function drawBackground(biomeIdx, camOffset) {
+  const b = BIOMES[biomeIdx];
+
+  // Sky gradient
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, H_S);
+  skyGrad.addColorStop(0, b.skyTop);
+  skyGrad.addColorStop(0.7, b.skyBot);
+  skyGrad.addColorStop(1, b.ground);
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W_S, H_S);
+
+  // Stars for darker biomes
+  if (gameData && gameData.bgStars) {
+    const time = performance.now() / 1000;
+    for (const star of gameData.bgStars) {
+      const alpha = 0.3 + 0.3 * Math.sin(time * 1.5 + star.twinkle);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(star.x * W_S, star.y * H_S, star.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Ground plane with grid lines
+  const groundY = H_S * 0.78 + camOffset * 0.05;
+  if (groundY < H_S) {
+    ctx.fillStyle = b.ground;
+    ctx.globalAlpha = 0.4;
+    ctx.fillRect(0, groundY, W_S, H_S - groundY);
+    ctx.globalAlpha = 1;
+    // Grid lines for depth
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 8; i++) {
+      const gy = groundY + i * 15;
+      if (gy < H_S) {
+        ctx.beginPath();
+        ctx.moveTo(0, gy);
+        ctx.lineTo(W_S, gy);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Ambient glow
+  const glow = ctx.createRadialGradient(W_S * 0.5, H_S * 0.3, 0, W_S * 0.5, H_S * 0.3, W_S * 0.6);
+  const am = b.ambient;
+  glow.addColorStop(0, `rgba(${Math.floor(am[0]*255)},${Math.floor(am[1]*255)},${Math.floor(am[2]*255)},0.15)`);
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W_S, H_S);
+}
+
+// ==================== GAME RENDERING ====================
+function renderGame() {
+  const gd = gameData;
+  if (!gd) return;
+
+  drawBackground(gd.biome, gd.cameraY);
+
+  // Isometric projection center
+  const cx = W_S / 2;
+  const baseCy = H_S * 0.7;
+  const cy = baseCy + gd.cameraY;
+
+  // Draw tower base platform
+  drawIsoBox(cx, cy, -50, -50, -5, 100, 5, 100,
+    'rgba(80,80,80,0.5)', 'rgba(60,60,60,0.5)', 'rgba(40,40,40,0.5)', 'rgba(100,100,100,0.3)');
+
+  // Draw placed tower floors (bottom to top)
+  for (let i = 0; i < gd.towerFloors.length; i++) {
+    const floor = gd.towerFloors[i];
+    const z = i * FLOOR_HEIGHT;
+    const wx = floor.x - floor.width / 2;
+    const wy = -FLOOR_DEPTH / 2;
+    drawIsoBox(cx, cy, wx, wy, z, floor.width, FLOOR_HEIGHT, FLOOR_DEPTH,
+      gd.skin.top, gd.skin.right, gd.skin.left, gd.skin.edge);
+
+    // Floor edge highlight on top
+    if (i === gd.towerFloors.length - 1) {
+      const topP = isoProject(floor.x, 0, z + FLOOR_HEIGHT, cx, cy);
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.font = 'bold 9px Inter';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${i + 1}`, topP.sx, topP.sy - 2);
+    }
+  }
+
+  // Crane arm and cable
+  const topTowerZ = gd.towerFloors.length * FLOOR_HEIGHT;
+  const craneArmY = cy - gd.target * FLOOR_HEIGHT * 0.55 - 50;
+  const armLeft = cx - 180;
+  const armRight = cx + 180;
+
+  // Crane support pillars
+  ctx.strokeStyle = BIOMES[gd.biome].crane;
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(armLeft, craneArmY); ctx.lineTo(armLeft, craneArmY - 40); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(armRight, craneArmY); ctx.lineTo(armRight, craneArmY - 40); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(armLeft - 10, craneArmY - 40); ctx.lineTo(armRight + 10, craneArmY - 40); ctx.stroke();
+
+  // Crane arm
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = BIOMES[gd.biome].crane;
+  ctx.beginPath(); ctx.moveTo(armLeft, craneArmY); ctx.lineTo(armRight, craneArmY); ctx.stroke();
+
+  // Crane carriage position
+  const carriageX = cx + gd.craneX * ISO_W;
+  ctx.fillStyle = BIOMES[gd.biome].crane;
+  ctx.beginPath(); ctx.arc(carriageX, craneArmY, 6, 0, Math.PI * 2); ctx.fill();
+
+  // Cable
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(carriageX, craneArmY);
+  const cableEndY = gd.dropping ? cy - gd.target * FLOOR_HEIGHT * 0.55 + gd.dropY * ISO_H : craneArmY + 20;
+  ctx.lineTo(carriageX, cableEndY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Crane floor (the piece being swung/dropped)
+  if (!gd.levelComplete) {
+    const floor = { x: gd.craneX, width: gd.nextFloorWidth };
+    const dropZ = gd.dropping ? gd.dropY : topTowerZ + 15;
+    const wx = floor.x - floor.width / 2;
+    const wy = -FLOOR_DEPTH / 2;
+    // Slight transparency for crane piece
+    ctx.globalAlpha = gd.dropping ? 1 : 0.85;
+    drawIsoBox(cx, cy, wx, wy, dropZ, floor.width, FLOOR_HEIGHT, FLOOR_DEPTH,
+      gd.skin.top, gd.skin.right, gd.skin.left, gd.skin.edge);
+    ctx.globalAlpha = 1;
+  }
+
+  // Falling pieces
+  for (const fp of gd.fallingPieces) {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 1 - fp.age * 0.8);
+    const fpx = cx + fp.x * ISO_W;
+    const fpy = cy + fp.z * ISO_H - fp.age * 150;
+    ctx.translate(fpx, fpy);
+    ctx.rotate(fp.rot);
+    ctx.fillStyle = gd.skin.left;
+    ctx.fillRect(-fp.width * ISO_W * 0.5, -4, fp.width * ISO_W, 8);
+    ctx.restore();
+  }
+
+  // Particles
+  drawParticles();
+
+  // Flash overlay
+  if (gd.flashTimer > 0 && gd.flashColor) {
+    ctx.fillStyle = gd.flashColor;
+    ctx.fillRect(0, 0, W_S, H_S);
+  }
+
+  // Combo text
+  if (gd.comboTextTimer > 0) {
+    const alpha = Math.min(1, gd.comboTextTimer * 2);
+    const yOff = (1 - gd.comboTextTimer) * -30;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 28px Audiowide';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(gd.comboText, W_S / 2, H_S * 0.4 + yOff);
+    ctx.globalAlpha = 1;
+  }
+
+  // ---- HUD ----
+  // Score panel
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.beginPath(); ctx.roundRect(10, 10, 170, 80, 10); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1; ctx.stroke();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 15px Inter';
+  ctx.textAlign = 'left';
+  ctx.fillText(`Score: ${gd.score}`, 22, 32);
+  ctx.font = '13px Inter';
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.fillText(`Floor: ${gd.currentFloor} / ${gd.target}`, 22, 52);
+
+  // Multiplier
+  if (gd.multiplier > 1) {
+    const mColors = { 2:'#88ccff', 3:'#ffcc44', 5:'#ff8844', 10:'#ff4488' };
+    ctx.fillStyle = mColors[gd.multiplier] || '#ffd700';
+    ctx.font = 'bold 18px Audiowide';
+    ctx.fillText(`x${gd.multiplier}`, 22, 78);
+  }
+
+  // Combo indicator
+  if (gd.combo > 1) {
+    ctx.fillStyle = '#ff8800';
+    ctx.font = 'bold 13px Inter';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${gd.combo} combo 🔥`, W_S - 16, 28);
+  }
+
+  // Biome name
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '11px Inter';
+  ctx.textAlign = 'right';
+  ctx.fillText(BIOMES[gd.biome].name + (gd.isDaily ? ' (Daily)' : ''), W_S - 16, 46);
+
+  // Active powerups
+  let pY = 60;
+  if (gd.activePowerups.slow) {
+    ctx.fillStyle = 'rgba(100,200,255,0.85)';
+    ctx.font = 'bold 12px Inter'; ctx.textAlign = 'right';
+    ctx.fillText(`🐢 ${gd.powerupTimers.slow.toFixed(1)}s`, W_S - 16, pY); pY += 16;
+  }
+  if (gd.perfectAimCount > 0) {
+    ctx.fillStyle = 'rgba(255,200,100,0.85)';
+    ctx.font = 'bold 12px Inter'; ctx.textAlign = 'right';
+    ctx.fillText(`🎯 x${gd.perfectAimCount}`, W_S - 16, pY); pY += 16;
+  }
+  if (!gd.extraFloorUsed && save.powerups.extra > 0) {
+    ctx.fillStyle = 'rgba(100,255,150,0.7)';
+    ctx.font = 'bold 12px Inter'; ctx.textAlign = 'right';
+    ctx.fillText(`🛡️ Ready`, W_S - 16, pY);
+  }
+
+  // Pause button
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '22px Inter';
+  ctx.textAlign = 'center';
+  ctx.fillText('⏸', W_S - 28, H_S - 24);
+  addButton(W_S - 48, H_S - 44, 40, 40, '', () => { state = 'PAUSED'; sfx('click'); }, { color: 'transparent', textColor: 'transparent' });
+
+  // Tutorial overlay
+  if (gd.tutorialStep >= 0 && gd.tutorialStep < 3) {
+    const msgs = [
+      'Tap anywhere to drop the floor!',
+      'Align perfectly for bonus points!',
+      'Keep stacking to reach the top!'
+    ];
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    const tm = ctx.measureText(msgs[gd.tutorialStep]);
+    const tw = tm.width + 40;
+    ctx.beginPath(); ctx.roundRect(W_S / 2 - tw / 2, H_S * 0.83, tw, 36, 8); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 13px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText(msgs[gd.tutorialStep], W_S / 2, H_S * 0.83 + 22);
+  }
+}
+
+// ==================== GAME LOGIC ====================
+function updateGame() {
+  const gd = gameData;
+  if (!gd || gd.gameOver || gd.levelComplete) return;
+
+  // Powerup timers
+  for (const k in gd.powerupTimers) {
+    gd.powerupTimers[k] -= dt;
+    if (gd.powerupTimers[k] <= 0) {
+      delete gd.powerupTimers[k];
+      delete gd.activePowerups[k];
+    }
+  }
+
+  // Combo text timer
+  if (gd.comboTextTimer > 0) gd.comboTextTimer -= dt;
+
+  // Crane movement
+  if (!gd.dropping) {
+    let speed = gd.craneSpeed * (gd.activePowerups.slow ? 0.5 : 1);
+    gd.craneX += gd.craneDir * speed * 55 * dt;
+    if (gd.craneX > CRANE_RANGE) { gd.craneX = CRANE_RANGE; gd.craneDir = -1; }
+    if (gd.craneX < -CRANE_RANGE) { gd.craneX = -CRANE_RANGE; gd.craneDir = 1; }
+  }
+
+  // Dropping animation
+  if (gd.dropping) {
+    gd.dropSpeed += GRAVITY * dt;
+    gd.dropY += gd.dropSpeed * dt;
+    if (gd.dropY >= gd.dropTargetZ) {
+      gd.dropping = false;
+      gd.dropY = gd.dropTargetZ;
+      landFloor();
+    }
+  }
+
+  // Falling pieces
+  for (let i = gd.fallingPieces.length - 1; i >= 0; i--) {
+    const fp = gd.fallingPieces[i];
+    fp.age += dt;
+    fp.rot += fp.rotSpeed * dt;
+    if (fp.age > 1.5) gd.fallingPieces.splice(i, 1);
+  }
+
+  // Camera smooth follow
+  if (gd.towerFloors.length > 0) {
+    const topZ = gd.towerFloors.length * FLOOR_HEIGHT;
+    const towerScreenTop = H_S * 0.5 - topZ * ISO_H * 0.5 - gd.cameraY;
+    if (towerScreenTop < H_S * 0.25) {
+      gd.targetCameraY += (H_S * 0.25 - towerScreenTop) * 0.15;
+    }
+    gd.cameraY += (gd.targetCameraY - gd.cameraY) * 0.06;
+  }
+
+  // Flash fade
+  if (gd.flashTimer > 0) gd.flashTimer -= dt;
+
+  // Check level complete
+  if (gd.currentFloor >= gd.target && !gd.dropping && !gd.gameOver && !gd.levelComplete) {
+    gd.levelComplete = true;
+    sfx('fanfare');
+    // Award powerups for good performance
+    if (gd.perfectThisLevel >= 5) save.powerups.slow = Math.min(9, (save.powerups.slow || 0) + 1);
+    if (gd.perfectThisLevel >= gd.target) save.powerups.aim = Math.min(9, (save.powerups.aim || 0) + 1);
+    writeSave();
+    setTimeout(() => {
+      if (state === 'PLAYING' || state === 'DAILY') state = 'LEVELCOMPLETE';
+    }, 900);
+  }
+}
+
+function dropFloor() {
+  const gd = gameData;
+  if (!gd || gd.dropping || gd.gameOver || gd.levelComplete) return;
+  gd.dropping = true;
+  gd.dropSpeed = 0;
+  gd.dropY = (gd.towerFloors.length + 1) * FLOOR_HEIGHT + 40;
+  gd.dropTargetZ = gd.towerFloors.length * FLOOR_HEIGHT;
+  sfx('whoosh');
+}
+
+function landFloor() {
+  const gd = gameData;
+  const topWidth = gd.towerFloors.length > 0 ? gd.towerFloors[gd.towerFloors.length - 1].width : BASE_FLOOR_WIDTH;
+  const topX = gd.towerFloors.length > 0 ? gd.towerFloors[gd.towerFloors.length - 1].x : 0;
+  let craneX = gd.craneX;
+  let craneWidth = gd.nextFloorWidth;
+
+  // Perfect aim powerup
+  if (gd.perfectAimCount > 0) {
+    craneX = topX;
+    gd.perfectAimCount--;
+  }
+
+  const craneLeft = craneX - craneWidth / 2;
+  const craneRight = craneX + craneWidth / 2;
+  const topLeft = topX - topWidth / 2;
+  const topRight = topX + topWidth / 2;
+  const overlap = Math.min(craneRight, topRight) - Math.max(craneLeft, topLeft);
+  const overlapRatio = topWidth > 0 ? overlap / topWidth : 0;
+
+  // Screen positions for particles
+  const cx = W_S / 2;
+  const cy = H_S * 0.7 + gd.cameraY - gd.towerFloors.length * FLOOR_HEIGHT * ISO_H;
+
+  if (overlapRatio >= PERFECT_THRESHOLD) {
+    // === PERFECT ===
+    gd.combo++;
+    if (gd.combo >= 10) gd.multiplier = 10;
+    else if (gd.combo >= 5) gd.multiplier = 5;
+    else if (gd.combo >= 3) gd.multiplier = 3;
+    else if (gd.combo >= 2) gd.multiplier = 2;
+    else gd.multiplier = 1;
+    if (gd.multiplier > gd.bestMultiplier) gd.bestMultiplier = gd.multiplier;
+
+    gd.score += 100 * gd.multiplier;
+    gd.perfects++;
+    gd.perfectThisLevel++;
+    save.totalPerfects = (save.totalPerfects || 0) + 1;
+
+    // Achievement checks
+    if (gd.combo >= 5 && !save.achievements.includes('combo_x5')) {
+      save.achievements.push('combo_x5');
+    }
+    if (gd.combo >= 10 && !save.achievements.includes('combo_x10')) {
+      save.achievements.push('combo_x10');
+    }
+
+    // Place floor (no trim)
+    const newWidth = topWidth;
+    gd.towerFloors.push({ x: craneX, width: newWidth, depth: FLOOR_DEPTH });
+    gd.nextFloorWidth = newWidth;
+
+    sfx('perfect');
+    vibrate(30);
+    spawnParticles(cx + craneX * ISO_W, cy, 'sparkle', 10);
+    gd.flashTimer = 0.15;
+    gd.flashColor = 'rgba(255,255,100,0.2)';
+
+    // Combo text
+    if (gd.combo >= 2) {
+      gd.comboText = `${gd.combo}x COMBO!`;
+      gd.comboTextTimer = 1.0;
+    }
+    if (gd.combo >= 5) gd.comboText = `🔥 ${gd.combo}x COMBO!`;
+    if (gd.combo >= 10) gd.comboText = `💥 ${gd.combo}x COMBO!!`;
+
+  } else if (overlapRatio >= PARTIAL_THRESHOLD) {
+    // === PARTIAL ===
+    gd.combo = 0;
+    gd.multiplier = 1;
+    gd.score += 50;
+    gd.partials++;
+
+    const overlapLeft = Math.max(craneLeft, topLeft);
+    const overlapRight = Math.min(craneRight, topRight);
+    const newWidth = Math.max(10, overlapRight - overlapLeft);
+    const newX = (overlapLeft + overlapRight) / 2;
+
+    gd.towerFloors.push({ x: newX, width: newWidth, depth: FLOOR_DEPTH });
+    gd.nextFloorWidth = newWidth;
+
+    sfx('drop');
+    vibrate(15);
+
+    // Falling trim pieces
+    const leftTrimW = Math.max(0, topLeft - craneLeft);
+    const rightTrimW = Math.max(0, craneRight - topRight);
+    if (leftTrimW > 2) {
+      gd.fallingPieces.push({
+        x: craneLeft + leftTrimW / 2,
+        width: leftTrimW, z: gd.towerFloors.length * FLOOR_HEIGHT,
+        age: 0, rot: 0, rotSpeed: -3
+      });
+    }
+    if (rightTrimW > 2) {
+      gd.fallingPieces.push({
+        x: topRight + rightTrimW / 2,
+        width: rightTrimW, z: gd.towerFloors.length * FLOOR_HEIGHT,
+        age: 0, rot: 0, rotSpeed: 3
+      });
+    }
+
+    gd.flashTimer = 0.08;
+    gd.flashColor = 'rgba(255,255,255,0.1)';
+
+  } else {
+    // === MISS ===
+    gd.combo = 0;
+    gd.multiplier = 1;
+    gd.misses++;
+
+    sfx('miss');
+    vibrate(50);
+    spawnParticles(cx, cy, 'dust', 8);
+    gd.flashTimer = 0.12;
+    gd.flashColor = 'rgba(255,50,50,0.2)';
+
+    // Extra floor powerup
+    if (!gd.extraFloorUsed && (save.powerups.extra || 0) > 0) {
+      gd.extraFloorUsed = true;
+      // Skip penalty this time
+    } else {
+      // Remove top floor
+      if (gd.towerFloors.length > 0) {
+        const removed = gd.towerFloors.pop();
+        gd.fallingPieces.push({
+          x: craneX, width: craneWidth,
+          z: gd.towerFloors.length * FLOOR_HEIGHT,
+          age: 0, rot: 0, rotSpeed: (Math.random() - 0.5) * 6
+        });
+        // Restore previous width
+        if (gd.towerFloors.length > 0) {
+          gd.nextFloorWidth = gd.towerFloors[gd.towerFloors.length - 1].width;
+        } else {
+          gd.nextFloorWidth = BASE_FLOOR_WIDTH;
+        }
+      }
+      // Game over if tower is empty and we've attempted at least one floor
+      if (gd.towerFloors.length === 0 && gd.currentFloor > 0) {
+        gd.gameOver = true;
+        stopBGM();
+        setTimeout(() => { state = 'GAMEOVER'; }, 600);
+      }
+    }
+  }
+
+  gd.currentFloor++;
+
+  // Tutorial advance
+  if (gd.tutorialStep >= 0 && gd.tutorialStep < 3) {
+    gd.tutorialStep++;
+  }
+
+  checkAchievements();
+  writeSave();
+}
+
+// ==================== ACHIEVEMENTS ====================
+function checkAchievements() {
+  const tp = save.totalPerfects || 0;
+  const ts = calcTotalStars();
+
+  if (tp >= 1 && !save.achievements.includes('first_perfect')) { save.achievements.push('first_perfect'); }
+  if (tp >= 10 && !save.achievements.includes('ten_perfect')) { save.achievements.push('ten_perfect'); }
+  if (tp >= 30 && !save.achievements.includes('thirty_perfect')) { save.achievements.push('thirty_perfect'); }
+  if (tp >= 50 && !save.achievements.includes('fifty_perfect')) { save.achievements.push('fifty_perfect'); }
+  if (ts >= 10 && !save.achievements.includes('stars_10')) { save.achievements.push('stars_10'); }
+  if (ts >= 30 && !save.achievements.includes('stars_30')) { save.achievements.push('stars_30'); }
+  if (ts >= 60 && !save.achievements.includes('stars_60')) { save.achievements.push('stars_60'); }
+  if (SKINS.every(s => ts >= s.stars) && !save.achievements.includes('all_skins')) { save.achievements.push('all_skins'); }
+
+  // Biome clear check
+  const biomesCleared = new Set();
+  for (const k in save.stars) {
+    if (save.stars[k] > 0 && LEVELS[k - 1]) biomesCleared.add(LEVELS[k - 1].biome);
+  }
+  if (biomesCleared.size >= 6 && !save.achievements.includes('biome_clear')) { save.achievements.push('biome_clear'); }
+
+  // Daily challenges
+  if ((save.dailyCompleted || []).length >= 3 && !save.achievements.includes('daily_3')) { save.achievements.push('daily_3'); }
+
+  writeSave();
+}
+
+// ==================== UI SCREENS ====================
+
+function renderMenu() {
+  // Animated background with gentle crane
+  drawBackground(0, 0);
+
+  // Decorative mini tower
+  const dcx = W_S / 2;
+  const dcy = H_S * 0.55;
+  for (let i = 0; i < 5; i++) {
+    const w = 40 - i * 2;
+    drawIsoBox(dcx, dcy, -w/2, -30, i * 18, w, 18, 60,
+      '#A0896C', '#7A6B52', '#5C4F3B', '#B09870');
+  }
+
+  clearButtons();
+
+  // Title with shadow
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur = 20;
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 38px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Tower Stacker 3D', W_S / 2, H_S * 0.1);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '14px Inter';
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillText('Stack the tallest tower!', W_S / 2, H_S * 0.16);
+  ctx.restore();
+
+  // Menu buttons
+  const bw = Math.min(280, W_S * 0.65);
+  const bh = 50;
+  const gap = 12;
+  const sx = W_S / 2 - bw / 2;
+  const sy = H_S * 0.22;
+
+  addButton(sx, sy, bw, bh, 'Play', () => { state = 'LEVELS'; sfx('click'); }, { icon: '▶' });
+  addButton(sx, sy + bh + gap, bw, bh, 'Daily Challenge', () => { startDaily(); sfx('click'); }, { icon: '📅' });
+  addButton(sx, sy + (bh + gap) * 2, bw, bh, 'Skins', () => { state = 'SKINS'; sfx('click'); }, { icon: '🎨' });
+  addButton(sx, sy + (bh + gap) * 3, bw, bh, 'Achievements', () => { state = 'ACHIEVE'; sfx('click'); }, { icon: '🏆' });
+  addButton(sx, sy + (bh + gap) * 4, bw, bh, 'Settings', () => { state = 'SETTINGS'; sfx('click'); }, { icon: '⚙️' });
+
+  // Total stars display
+  const ts = calcTotalStars();
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 15px Inter';
+  ctx.textAlign = 'center';
+  ctx.fillText(`⭐ ${ts} Stars`, W_S / 2, H_S * 0.92);
+
+  // H1 for SEO
+  ctx.fillStyle = 'rgba(255,255,255,0)';
+  ctx.font = '1px Inter';
+  ctx.fillText('Tower Stacker 3D', -100, -100);
+
+  buttons.forEach(drawButton);
+}
+
+function renderLevelSelect() {
+  drawBackground(0, 0);
+  clearButtons();
+
+  // Title
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 26px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Select Level', W_S / 2, H_S * 0.04);
+
+  // Back button
+  addButton(10, 6, 80, 34, 'Back', () => { state = 'MENU'; sfx('click'); }, { icon: '←', color: 'rgba(255,255,255,0.15)' });
+
+  const cols = 5;
+  const pad = 8;
+  const gridW = Math.min(W_S * 0.92, 560);
+  const tileW = (gridW - (cols - 1) * pad) / cols;
+  const tileH = tileW * 1.15;
+  const startX = W_S / 2 - gridW / 2;
+  const startY = H_S * 0.09;
+
+  for (let i = 0; i < 30; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = startX + col * (tileW + pad);
+    const y = startY + row * (tileH + pad) + scrollY;
+    const lvl = i + 1;
+    const b = BIOMES[LEVELS[i].biome];
+    const unlocked = lvl === 1 || save.stars[lvl - 1] !== undefined;
+    const stars = save.stars[lvl] || 0;
+
+    if (y > H_S + 20 || y + tileH < -20) continue;
+
+    // Tile background
+    ctx.beginPath();
+    ctx.roundRect(x, y, tileW, tileH, 8);
+
+    if (unlocked) {
+      const tg = ctx.createLinearGradient(x, y, x, y + tileH);
+      tg.addColorStop(0, b.ground);
+      tg.addColorStop(1, shadeColor(b.ground, -20));
+      ctx.fillStyle = tg;
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    }
+    ctx.fill();
+
+    ctx.strokeStyle = unlocked ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = unlocked ? 1.5 : 1;
+    ctx.stroke();
+
+    if (!unlocked) {
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.font = `${tileW * 0.3}px Inter`;
+      ctx.textAlign = 'center';
+      ctx.fillText('🔒', x + tileW / 2, y + tileH * 0.45);
+    } else {
+      // Level number
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${tileW * 0.3}px Inter`;
+      ctx.textAlign = 'center';
+      ctx.fillText(lvl, x + tileW / 2, y + tileH * 0.35);
+
+      // Stars
+      const starR = Math.max(5, tileW * 0.09);
+      const starY = y + tileH * 0.62;
+      for (let s = 0; s < 3; s++) {
+        drawStar(x + tileW / 2 + (s - 1) * starR * 2.8, starY, starR, stars > s);
+      }
+
+      // Biome name
+      ctx.font = `${Math.max(8, tileW * 0.12)}px Inter`;
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.fillText(b.name, x + tileW / 2, y + tileH * 0.84);
+
+      // High score
+      const hs = save.highScores[lvl];
+      if (hs) {
+        ctx.font = `${Math.max(7, tileW * 0.1)}px Inter`;
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillText(`${hs}`, x + tileW / 2, y + tileH * 0.94);
+      }
+
+      addButton(x, y, tileW, tileH, '', () => { startLevel(lvl); sfx('click'); }, { color: 'transparent', textColor: 'transparent' });
+    }
+  }
+
+  buttons.forEach(drawButton);
+}
+
+function renderSkins() {
+  drawBackground(0, 0);
+  clearButtons();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 26px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Tower Skins', W_S / 2, H_S * 0.05);
+
+  const ts = calcTotalStars();
+  ctx.font = '13px Inter';
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.fillText(`⭐ ${ts} Stars collected`, W_S / 2, H_S * 0.1);
+
+  addButton(10, 6, 80, 34, 'Back', () => { state = 'MENU'; sfx('click'); }, { icon: '←', color: 'rgba(255,255,255,0.15)' });
+
+  const cols = 3;
+  const pad = 12;
+  const cardW = Math.min((W_S - pad * 4) / 3, 160);
+  const cardH = cardW * 1.5;
+  const totalW = cols * cardW + (cols - 1) * pad;
+  const sx = W_S / 2 - totalW / 2;
+  const sy = H_S * 0.15;
+
+  for (let i = 0; i < SKINS.length; i++) {
+    const s = SKINS[i];
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = sx + col * (cardW + pad);
+    const y = sy + row * (cardH + pad);
+    const unlocked = ts >= s.stars;
+    const selected = save.selectedSkin === s.name;
+
+    // Card background
+    ctx.beginPath();
+    ctx.roundRect(x, y, cardW, cardH, 12);
+    ctx.fillStyle = unlocked ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.3)';
+    ctx.fill();
+    ctx.strokeStyle = selected ? '#ffd700' : 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = selected ? 3 : 1;
+    ctx.stroke();
+
+    // Selected glow
+    if (selected) {
+      ctx.shadowColor = '#ffd700';
+      ctx.shadowBlur = 12;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    // Preview tower
+    const pcx = x + cardW / 2;
+    const pcy = y + cardH * 0.38;
+    if (unlocked) {
+      for (let j = 0; j < 3; j++) {
+        drawIsoBox(pcx, pcy, -12 + j * 2, -12, j * 14, 24 - j * 2, 14, 24,
+          s.top, s.right, s.left, s.edge);
+      }
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.font = `${cardW * 0.13}px Inter`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`🔒`, pcx, pcy - 8);
+      ctx.font = `bold ${cardW * 0.1}px Inter`;
+      ctx.fillText(`⭐ ${s.stars}`, pcx, pcy + 12);
+    }
+
+    // Name
+    ctx.fillStyle = unlocked ? '#fff' : 'rgba(255,255,255,0.35)';
+    ctx.font = `bold ${cardW * 0.1}px Inter`;
+    ctx.textAlign = 'center';
+    ctx.fillText(s.name, x + cardW / 2, y + cardH * 0.72);
+
+    // Status
+    if (selected) {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = `bold ${cardW * 0.09}px Inter`;
+      ctx.fillText('✓ Equipped', x + cardW / 2, y + cardH * 0.84);
+    } else if (unlocked) {
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font = `${cardW * 0.08}px Inter`;
+      ctx.fillText('Tap to equip', x + cardW / 2, y + cardH * 0.84);
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.font = `${cardW * 0.08}px Inter`;
+      ctx.fillText(`Need ${s.stars} stars`, x + cardW / 2, y + cardH * 0.84);
+    }
+
+    if (unlocked && !selected) {
+      addButton(x, y, cardW, cardH, '', () => {
+        save.selectedSkin = s.name;
+        writeSave();
+        sfx('click');
+      }, { color: 'transparent', textColor: 'transparent' });
+    }
+  }
+
+  buttons.forEach(drawButton);
+}
+
+function renderAchievements() {
+  drawBackground(0, 0);
+  clearButtons();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 26px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Achievements', W_S / 2, H_S * 0.05);
+
+  addButton(10, 6, 80, 34, 'Back', () => { state = 'MENU'; sfx('click'); }, { icon: '←', color: 'rgba(255,255,255,0.15)' });
+
+  const cardW = Math.min(W_S * 0.92, 520);
+  const cardH = 50;
+  const pad = 5;
+  const sx = W_S / 2 - cardW / 2;
+  const sy = H_S * 0.1;
+  let yOff = scrollY;
+
+  for (let i = 0; i < ACHIEVEMENTS.length; i++) {
+    const a = ACHIEVEMENTS[i];
+    const y = sy + i * (cardH + pad) + yOff;
+    if (y > H_S + 20 || y + cardH < -20) continue;
+
+    const unlocked = save.achievements.includes(a.id);
+
+    ctx.beginPath();
+    ctx.roundRect(sx, y, cardW, cardH, 8);
+    ctx.fillStyle = unlocked ? 'rgba(255,215,0,0.12)' : 'rgba(255,255,255,0.04)';
+    ctx.fill();
+    ctx.strokeStyle = unlocked ? 'rgba(255,215,0,0.35)' : 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Icon
+    ctx.font = '20px Inter';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = unlocked ? '#fff' : 'rgba(255,255,255,0.25)';
+    ctx.fillText(a.icon, sx + 12, y + cardH / 2);
+
+    // Text
+    ctx.font = 'bold 13px Inter';
+    ctx.fillStyle = unlocked ? '#fff' : 'rgba(255,255,255,0.35)';
+    ctx.fillText(a.name, sx + 44, y + cardH / 2 - 8);
+    ctx.font = '11px Inter';
+    ctx.fillStyle = unlocked ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.2)';
+    ctx.fillText(a.desc, sx + 44, y + cardH / 2 + 9);
+
+    // Check mark
+    if (unlocked) {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold 14px Inter';
+      ctx.textAlign = 'right';
+      ctx.fillText('✓', sx + cardW - 14, y + cardH / 2);
+      ctx.textAlign = 'left';
+    }
+  }
+
+  // Progress
+  const count = save.achievements.length;
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '12px Inter';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${count} / ${ACHIEVEMENTS.length} Unlocked`, W_S / 2, H_S * 0.96);
+
+  buttons.forEach(drawButton);
+}
+
+function renderSettings() {
+  drawBackground(0, 0);
+  clearButtons();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 26px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Settings', W_S / 2, H_S * 0.08);
+
+  addButton(10, 6, 80, 34, 'Back', () => { state = 'MENU'; sfx('click'); }, { icon: '←', color: 'rgba(255,255,255,0.15)' });
+
+  const bw = Math.min(300, W_S * 0.72);
+  const bh = 50;
+  const gap = 12;
+  const sx = W_S / 2 - bw / 2;
+  const sy = H_S * 0.18;
+
+  // Toggle buttons
+  const toggles = [
+    { key: 'sound', label: 'Sound Effects', icon: '🔊' },
+    { key: 'music', label: 'Music', icon: '🎵' },
+    { key: 'vibration', label: 'Vibration', icon: '📳' }
+  ];
+
+  toggles.forEach((t, i) => {
+    const y = sy + i * (bh + gap);
+    const on = save.settings[t.key];
+
+    ctx.beginPath();
+    ctx.roundRect(sx, y, bw, bh, 10);
+    ctx.fillStyle = on ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.2)';
+    ctx.fill();
+    ctx.strokeStyle = on ? 'rgba(100,200,100,0.4)' : 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Toggle label
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 15px Inter';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${t.icon}  ${t.label}`, sx + 16, y + bh / 2);
+
+    // Toggle switch visual
+    const switchX = sx + bw - 60;
+    const switchY = y + bh / 2;
+    ctx.beginPath();
+    ctx.roundRect(switchX, switchY - 10, 44, 20, 10);
+    ctx.fillStyle = on ? '#4a8aff' : 'rgba(255,255,255,0.15)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(on ? switchX + 33 : switchX + 11, switchY, 7, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+
+    addButton(sx, y, bw, bh, '', () => {
+      save.settings[t.key] = !save.settings[t.key];
+      if (masterGain) masterGain.gain.value = save.settings.sound ? 0.4 : 0;
+      if (!save.settings.music) stopBGM();
+      writeSave();
+      sfx('click');
+    }, { color: 'transparent', textColor: 'transparent' });
+  });
+
+  // Reset button
+  const ry = sy + 3 * (bh + gap) + 30;
+  addButton(sx, ry, bw, bh, 'Reset All Progress', () => {
+    const oldSettings = { ...save.settings };
+    save = {
+      version: SAVE_VER, stars: {}, selectedSkin: 'Wood', achievements: [],
+      totalPerfects: 0, dailyCompleted: [], dailyBestScores: {},
+      settings: oldSettings, powerups: { slow: 3, aim: 2, extra: 1 }, highScores: {}
+    };
+    writeSave();
+    sfx('click');
+  }, { color: '#993333' });
+
+  buttons.forEach(drawButton);
+}
+
+function renderPause() {
+  // Dim background (game still visible)
+  ctx.fillStyle = 'rgba(0,0,0,0.65)';
+  ctx.fillRect(0, 0, W_S, H_S);
+  clearButtons();
+
+  // Panel
+  const pw = Math.min(320, W_S * 0.8);
+  const ph = 420;
+  const px = W_S / 2 - pw / 2;
+  const py = H_S / 2 - ph / 2;
+
+  ctx.beginPath();
+  ctx.roundRect(px, py, pw, ph, 16);
+  ctx.fillStyle = 'rgba(20,20,30,0.92)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 28px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Paused', W_S / 2, py + 40);
+
+  const bw = pw - 60;
+  const bh = 44;
+  const gap = 10;
+  const sx = W_S / 2 - bw / 2;
+  const sy = py + 75;
+
+  addButton(sx, sy, bw, bh, 'Resume', () => { state = 'PLAYING'; sfx('click'); }, { icon: '▶' });
+  addButton(sx, sy + bh + gap, bw, bh, 'Restart', () => {
+    if (currentLevel > 0) startLevel(currentLevel);
+    else startDaily();
+    sfx('click');
+  }, { icon: '🔄' });
+  addButton(sx, sy + (bh + gap) * 2, bw, bh, 'Menu', () => { stopBGM(); state = 'MENU'; sfx('click'); }, { icon: '🏠' });
+
+  // Powerups section
+  const ppY = sy + (bh + gap) * 3 + 15;
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = 'bold 12px Inter';
+  ctx.textAlign = 'center';
+  ctx.fillText('Power-ups', W_S / 2, ppY);
+
+  const ppCardW = (bw - 20) / 3;
+  const ppCardH = 64;
+  const ppY2 = ppY + 14;
+  const keys = ['slow', 'aim', 'extra'];
+
+  keys.forEach((k, i) => {
+    const ppx = sx + i * (ppCardW + 10);
+    const count = save.powerups[k] || 0;
+    const pu = POWERUPS.find(p => p.id === k);
+
+    ctx.beginPath();
+    ctx.roundRect(ppx, ppY2, ppCardW, ppCardH, 8);
+    ctx.fillStyle = count > 0 ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.2)';
+    ctx.fill();
+    ctx.strokeStyle = count > 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = count > 0 ? '#fff' : 'rgba(255,255,255,0.25)';
+    ctx.font = '20px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText(pu.icon, ppx + ppCardW / 2, ppY2 + 22);
+    ctx.font = 'bold 10px Inter';
+    ctx.fillText(`x${count}`, ppx + ppCardW / 2, ppY2 + 42);
+    ctx.font = '8px Inter';
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.fillText(pu.name, ppx + ppCardW / 2, ppY2 + 56);
+
+    if (count > 0) {
+      addButton(ppx, ppY2, ppCardW, ppCardH, '', () => {
+        if (k === 'slow') {
+          gameData.activePowerups.slow = true;
+          gameData.powerupTimers.slow = 5;
+          save.powerups.slow--;
+        } else if (k === 'aim') {
+          gameData.perfectAimCount = 2;
+          save.powerups.aim--;
+        } else if (k === 'extra') {
+          gameData.extraFloorUsed = false;
+          save.powerups.extra--;
+        }
+        writeSave();
+        sfx('click');
+      }, { color: 'transparent', textColor: 'transparent' });
+    }
+  });
+
+  buttons.forEach(drawButton);
+}
+
+function renderGameOver() {
+  const gd = gameData;
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, 0, W_S, H_S);
+  clearButtons();
+
+  // Panel
+  const pw = Math.min(340, W_S * 0.85);
+  const ph = 300;
+  const px = W_S / 2 - pw / 2;
+  const py = H_S / 2 - ph / 2;
+  ctx.beginPath();
+  ctx.roundRect(px, py, pw, ph, 16);
+  ctx.fillStyle = 'rgba(30,15,15,0.92)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,80,80,0.3)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = '#ff5555';
+  ctx.font = 'bold 30px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Game Over', W_S / 2, py + 45);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 20px Inter';
+  ctx.fillText(`Score: ${gd.score}`, W_S / 2, py + 95);
+  ctx.font = '14px Inter';
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fillText(`Perfect: ${gd.perfects}  |  Partial: ${gd.partials}  |  Miss: ${gd.misses}`, W_S / 2, py + 125);
+
+  const bw = 220;
+  const bh = 44;
+  const gap = 12;
+  const sx = W_S / 2 - bw / 2;
+  const sy = py + 160;
+
+  addButton(sx, sy, bw, bh, 'Retry', () => {
+    if (currentLevel > 0) startLevel(currentLevel);
+    else startDaily();
+    sfx('click');
+  }, { icon: '🔄' });
+  addButton(sx, sy + bh + gap, bw, bh, 'Menu', () => { stopBGM(); state = 'MENU'; sfx('click'); }, { icon: '🏠' });
+
+  buttons.forEach(drawButton);
+}
+
+function renderLevelComplete() {
+  const gd = gameData;
+  if (!gd) return;
+
+  const totalFloors = gd.towerFloors.length;
+  let stars = 1;
+  if (gd.perfectThisLevel >= gd.target * 0.5) stars = 2;
+  if (gd.perfectThisLevel >= gd.target) stars = 3;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, 0, W_S, H_S);
+  clearButtons();
+
+  // Panel
+  const pw = Math.min(380, W_S * 0.88);
+  const ph = 380;
+  const px = W_S / 2 - pw / 2;
+  const py = H_S / 2 - ph / 2;
+  ctx.beginPath();
+  ctx.roundRect(px, py, pw, ph, 16);
+  ctx.fillStyle = 'rgba(15,25,15,0.92)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(100,255,150,0.3)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Title
+  ctx.fillStyle = '#55ff88';
+  ctx.font = 'bold 28px Audiowide';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const titleText = gd.isDaily ? 'Daily Complete!' : 'Level Complete!';
+  ctx.fillText(titleText, W_S / 2, py + 40);
+
+  // Stars animation
+  const time = performance.now() / 1000;
+  for (let i = 0; i < 3; i++) {
+    const filled = stars > i;
+    const bounce = filled ? Math.sin(time * 3 + i * 0.5) * 3 : 0;
+    drawStar(W_S / 2 + (i - 1) * 44, py + 85 + bounce, 18, filled);
+  }
+
+  // Confetti for 3-star
+  if (stars >= 3) {
+    spawnParticles(W_S / 2, py + 85, 'confetti', 2);
+  }
+
+  // Score details
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 22px Inter';
+  ctx.fillText(`Score: ${gd.score}`, W_S / 2, py + 130);
+  ctx.font = '13px Inter';
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.fillText(`Perfect: ${gd.perfects}  |  Best combo: x${gd.bestMultiplier}`, W_S / 2, py + 158);
+
+  // Save results
+  if (currentLevel > 0) {
+    const prev = save.stars[currentLevel] || 0;
+    if (stars > prev) {
+      save.stars[currentLevel] = stars;
+      if (stars > prev) sfx('star');
+    }
+    const prevHS = save.highScores[currentLevel] || 0;
+    if (gd.score > prevHS) save.highScores[currentLevel] = gd.score;
+  }
+  if (gd.isDaily) {
+    const today = new Date().toISOString().slice(0, 10);
+    if (!save.dailyCompleted) save.dailyCompleted = [];
+    if (!save.dailyCompleted.includes(today)) save.dailyCompleted.push(today);
+    const key = 'daily_' + today;
+    if (!save.dailyBestScores) save.dailyBestScores = {};
+    save.dailyBestScores[key] = Math.max(save.dailyBestScores[key] || 0, gd.score);
+  }
+  writeSave();
+  checkAchievements();
+
+  // Buttons
+  const bw = 220;
+  const bh = 44;
+  const gap = 12;
+  const sx = W_S / 2 - bw / 2;
+  const sy = py + 195;
+
+  if (currentLevel > 0 && currentLevel < 30) {
+    addButton(sx, sy, bw, bh, 'Next Level', () => { startLevel(currentLevel + 1); sfx('levelup'); }, { icon: '▶' });
+    addButton(sx, sy + bh + gap, bw, bh, 'Menu', () => { stopBGM(); state = 'MENU'; sfx('click'); }, { icon: '🏠' });
+  } else {
+    addButton(sx, sy, bw, bh, 'Menu', () => { stopBGM(); state = 'MENU'; sfx('click'); }, { icon: '🏠' });
+    if (currentLevel === 30) {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold 14px Inter';
+      ctx.fillText('🎉 All levels complete!', W_S / 2, sy + bh + gap + 30);
+    }
+  }
+
+  buttons.forEach(drawButton);
+}
+
+// ==================== MAIN RENDER DISPATCHER ====================
+function render() {
+  ctx.clearRect(0, 0, W_S, H_S);
+  clearButtons();
+
+  switch (state) {
+    case 'MENU': renderMenu(); break;
+    case 'LEVELS': renderLevelSelect(); break;
+    case 'SKINS': renderSkins(); break;
+    case 'ACHIEVE': renderAchievements(); break;
+    case 'SETTINGS': renderSettings(); break;
+    case 'PLAYING':
+    case 'DAILY':
+      renderGame();
+      break;
+    case 'PAUSED':
+      renderGame();
+      renderPause();
+      break;
+    case 'GAMEOVER':
+      renderGame();
+      renderGameOver();
+      break;
+    case 'LEVELCOMPLETE':
+      renderGame();
+      renderLevelComplete();
+      break;
+  }
+}
+
+function update() {
+  if (state === 'PLAYING' || state === 'DAILY') {
+    updateGame();
+  }
+  updateParticles(dt);
+}
+
+// ==================== INPUT HANDLING ====================
+let lastPointerX = 0, lastPointerY = 0;
+
+function getCanvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) * (W_S / rect.width),
+    y: (e.clientY - rect.top) * (H_S / rect.height)
+  };
+}
+
+function onPointerDown(e) {
+  e.preventDefault();
+  initAudio();
+  const pos = getCanvasPos(e);
+  lastPointerX = pos.x;
+  lastPointerY = pos.y;
+
+  // Check UI buttons first
+  if (checkButtonClick(pos.x, pos.y)) return;
+
+  // Game tap → drop floor
+  if (state === 'PLAYING' || state === 'DAILY') {
+    dropFloor();
+  }
+}
+
+function onPointerUp(e) {
+  // No-op needed currently
+}
+
+function onPointerMove(e) {
+  const pos = getCanvasPos(e);
+  lastPointerX = pos.x;
+  lastPointerY = pos.y;
+}
+
+function onWheel(e) {
+  if (state === 'LEVELS' || state === 'ACHIEVE') {
+    e.preventDefault();
+    scrollY -= e.deltaY * 0.5;
+    scrollY = Math.min(0, Math.max(-350, scrollY));
+  }
+}
+
+// ==================== RESIZE ====================
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  const isPortrait = window.innerHeight > window.innerWidth && window.innerWidth < 550;
+  if (isPortrait) {
+    W_S = 390; H_S = 844;
+  } else {
+    W_S = 1280; H_S = 720;
+  }
+
+  const scaleX = window.innerWidth / W_S;
+  const scaleY = window.innerHeight / H_S;
+  const scale = Math.min(scaleX, scaleY);
+
+  canvas.style.width = (W_S * scale) + 'px';
+  canvas.style.height = (H_S * scale) + 'px';
+  canvas.width = Math.floor(W_S * dpr);
+  canvas.height = Math.floor(H_S * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+// ==================== GAME LOOP ====================
+function loop(time) {
+  if (!running) return;
+  dt = Math.min((time - lastTime) / 1000, 0.05);
+  lastTime = time;
+  update();
+  render();
+  animId = requestAnimationFrame(loop);
+}
+
+// ==================== CLEANUP ====================
+function cleanup() {
+  running = false;
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  stopBGM();
+  if (audioCtx) { try { audioCtx.close(); } catch(e) {} }
+  audioCtx = null;
+  masterGain = null;
+  particles = [];
+  gameData = null;
+  currentLevel = null;
+  state = 'MENU';
+}
+
+// ==================== INITIALIZATION ====================
+function init() {
+  gameContainer = document.getElementById('gc');
+  canvas = document.createElement('canvas');
+  gameContainer.appendChild(canvas);
+  ctx = canvas.getContext('2d');
+
+  resize();
+  window.addEventListener('resize', resize);
+
+  canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('pointerup', onPointerUp);
+  canvas.addEventListener('pointermove', onPointerMove);
+  canvas.addEventListener('wheel', onWheel, { passive: false });
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+  // Keyboard support
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter') {
+      e.preventDefault();
+      initAudio();
+      if (state === 'PLAYING' || state === 'DAILY') {
+        dropFloor();
+      }
+    }
+    if (e.code === 'Escape') {
+      if (state === 'PLAYING' || state === 'DAILY') {
+        state = 'PAUSED';
+        sfx('click');
+      } else if (state === 'PAUSED') {
+        state = 'PLAYING';
+        sfx('click');
+      }
+    }
+  });
+
+  running = true;
+  lastTime = performance.now();
+  animId = requestAnimationFrame(loop);
+}
+
+init();
+</script>
+<h1 style="position:absolute;left:-9999px;top:-9999px">Tower Stacker 3D</h1>
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=tower-stacker-3d'></script>
+</body>
+</html>

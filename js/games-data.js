@@ -287,3 +287,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Tower Stacker 3D",emoji:"🗼",cat:"puzzle",tags:["Puzzle","3D","Stack","Tower","Isometric","Skill","Casual","Browser","Free","HTML5"],url:"/tower-stacker-3d/",desc:"Play Tower Stacker 3D free online! Stack the tallest tower in this 3D isometric puzzle game. 30 levels across 6 biomes, 6 unlockable tower skins, combo multipliers, and 3-star ratings. No download needed!",isNew:true,status:"live"},
