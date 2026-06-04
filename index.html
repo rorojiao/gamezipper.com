@@ -2640,6 +2640,62 @@ if('serviceWorker' in navigator){
 })();
 </script>
 <script>
+// UX-OPT-2026-06-04-14h: gzShareGame implementation — was referenced by .gz-card-share buttons
+// (lines ~1150) but never defined, causing ReferenceError on click. 2026 best practice:
+// prefer Web Share API on mobile (native UI, higher conversion) → fallback to clipboard.
+// Lazy-binds once DOM is ready; safe to call before page is fully loaded.
+function gzShareGame(name,url){
+  try{
+    var fullUrl='https://gamezipper.com'+(url&&url.charAt(0)==='/'?url:'/'+url);
+    var shareData={title:name+' — Play Free on GameZipper',text:'Check out '+name+' on GameZipper — 19+ free browser games, no downloads!',url:fullUrl};
+    if(navigator.share){
+      navigator.share(shareData).catch(function(e){
+        if(e&&e.name!=='AbortError')gzCopyToClipboard(fullUrl,name);
+      });
+    }else if(navigator.clipboard&&navigator.clipboard.writeText){
+      gzCopyToClipboard(fullUrl,name);
+    }else{
+      // Legacy fallback: prompt with URL selected
+      var ta=document.createElement('textarea');
+      ta.value=fullUrl;ta.style.position='fixed';ta.style.left='-9999px';
+      document.body.appendChild(ta);ta.select();
+      try{document.execCommand('copy');gzShowShareToast('✅ Link copied!')}catch(e){gzShowShareToast('Press Ctrl+C to copy')}
+      document.body.removeChild(ta);
+    }
+  }catch(e){console.warn('gzShareGame failed:',e)}
+}
+function gzCopyToClipboard(url,name){
+  navigator.clipboard.writeText(url).then(function(){
+    gzShowShareToast('✅ Link to '+name+' copied!');
+  }).catch(function(){
+    gzShowShareToast('Press Ctrl+C to copy: '+url);
+  });
+}
+function gzShowShareToast(msg){
+  // Remove any existing toast
+  var existing=document.getElementById('gz-share-toast');
+  if(existing)existing.remove();
+  var t=document.createElement('div');
+  t.id='gz-share-toast';
+  t.textContent=msg;
+  t.setAttribute('role','status');
+  t.setAttribute('aria-live','polite');
+  t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ecdc4,#45b7d1);color:#000;padding:12px 24px;border-radius:24px;font-weight:700;font-size:.9em;z-index:100002;box-shadow:0 8px 32px rgba(78,210,196,.4);font-family:-apple-system,BlinkMacSystemFont,sans-serif;animation:gz-share-toast-in .3s ease-out';
+  if(!document.getElementById('gz-share-toast-style')){
+    var s=document.createElement('style');
+    s.id='gz-share-toast-style';
+    s.textContent='@keyframes gz-share-toast-in{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes gz-share-toast-out{from{opacity:1}to{opacity:0;transform:translateX(-50%) translateY(20px)}}@media(prefers-reduced-motion:reduce){#gz-share-toast{animation:none!important}}';
+    document.head.appendChild(s);
+  }
+  document.body.appendChild(t);
+  setTimeout(function(){
+    t.style.animation='gz-share-toast-out .25s ease-in forwards';
+    setTimeout(function(){if(t.parentElement)t.remove()},260);
+  },2200);
+}
+</script>
+
+<script>
 // Web Share API + Copy Link for mobile engagement
 (function(){
   var shareBtn=document.getElementById('gz-native-share');
