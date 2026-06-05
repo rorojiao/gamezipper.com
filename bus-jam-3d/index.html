@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Play Bus Jam 3D Online Free - Color Sorting Puzzle | GameZipper</title>
+<meta name="description" content="Sort colored passengers onto the bus in the right order! 30 levels of addictive color-sorting puzzle. No download needed.">
+<meta name="keywords" content="bus jam, color sorting, puzzle, bus game, passenger sort, brain game">
+<link rel="canonical" href="https://gamezipper.com/bus-jam-3d/">
+<meta property="og:title" content="Bus Jam 3D - Color Sorting Puzzle">
+<meta property="og:description" content="Sort colored passengers onto the bus in the right order! Free online puzzle game.">
+<meta property="og:image" content="https://gamezipper.com/bus-jam-3d/icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/bus-jam-3d/">
+<script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=bus-jam-3d"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Bus Jam 3D","description":"Sort colored passengers onto the bus in the right order. 30 levels of color-sorting puzzle fun.","genre":"Puzzle","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"numberOfPlayers":{"@type":"QuantitativeValue","value":1},"screenshot":{"@type":"ImageObject","url":"https://gamezipper.com/bus-jam-3d/icon.png"},"playMode":"SinglePlayer","inLanguage":"en"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How to play Bus Jam 3D?","acceptedAnswer":{"@type":"Answer","text":"Tap passengers to board them onto the bus. Same-color passengers must sit together. Plan your order carefully to avoid getting stuck!"}},{"@type":"Question","name":"Is Bus Jam 3D free?","acceptedAnswer":{"@type":"Answer","text":"Yes! Bus Jam 3D is completely free to play in your browser, no download required."}},{"@type":"Question","name":"How many levels does Bus Jam 3D have?","acceptedAnswer":{"@type":"Answer","text":"Bus Jam 3D has 30 levels across 5 difficulty tiers, from Easy to Master."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"How to Play Bus Jam 3D","description":"Learn how to play Bus Jam 3D step by step","step":[{"@type":"HowToStep","name":"Observe","text":"Look at the waiting passengers and the bus seats"},{"@type":"HowToStep","name":"Plan","text":"Figure out which passengers should board first to form color groups"},{"@type":"HowToStep","name":"Tap","text":"Tap a passenger to send them onto the bus"},{"@type":"HowToStep","name":"Group","text":"Same-color passengers must sit in consecutive seats"},{"@type":"HowToStep","name":"Clear","text":"Clear all passengers from the platform to win!"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","url":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Bus Jam 3D","url":"https://gamezipper.com/bus-jam-3d/"}]}</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a1a;color:#e0e0ff;font-family:'Segoe UI',system-ui,sans-serif;overflow-x:hidden;user-select:none;touch-action:none;display:flex;justify-content:center;align-items:center;min-height:100vh}
+canvas{display:block;touch-action:none}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;z-index:10;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.active{opacity:1;pointer-events:auto}
+.modal{background:linear-gradient(135deg,#1a1a3e,#0d0d2b);border:1px solid rgba(100,100,255,0.2);border-radius:16px;padding:32px;max-width:400px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+.modal h2{font-size:24px;margin-bottom:12px;color:#fff;text-shadow:0 0 20px rgba(100,100,255,0.5)}
+.modal p{color:#a0a0cc;margin-bottom:8px;font-size:14px}
+.modal .stars{font-size:32px;margin:16px 0}
+.btn{background:linear-gradient(135deg,#4a4aff,#6a6aff);color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:16px;cursor:pointer;margin:6px;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:scale(1.05);box-shadow:0 0 16px rgba(100,100,255,0.4)}
+.btn.secondary{background:linear-gradient(135deg,#333,#555)}
+</style>
+</head>
+<body>
+<canvas id="gc"></canvas>
+<div class="overlay" id="ov-menu">
+<div class="modal">
+<h2>Bus Jam 3D</h2>
+<p>Sort passengers by color onto the bus!</p>
+<div style="margin:20px 0">
+<button class="btn" onclick="startGame()">Play</button>
+</div>
+<div style="margin-top:12px">
+<button class="btn secondary" onclick="showLevelSelect()">Levels</button>
+<button class="btn secondary" id="btn-sound" onclick="toggleSound()">Sound: ON</button>
+</div>
+</div>
+</div>
+<div class="overlay" id="ov-levels">
+<div class="modal">
+<h2>Select Level</h2>
+<div id="level-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:16px 0"></div>
+<button class="btn secondary" onclick="closeLevels()">Back</button>
+</div>
+</div>
+<div class="overlay" id="ov-win">
+<div class="modal">
+<h2 id="win-title">Level Complete!</h2>
+<div class="stars" id="win-stars"></div>
+<p id="win-moves"></p>
+<div style="margin-top:16px">
+<button class="btn" id="btn-next" onclick="nextLevel()">Next Level</button>
+<button class="btn secondary" onclick="restartLevel()">Replay</button>
+</div>
+</div>
+</div>
+<div class="overlay" id="ov-fail">
+<div class="modal">
+<h2>No Moves Left!</h2>
+<p>The passengers are stuck. Try a different order!</p>
+<div style="margin-top:16px">
+<button class="btn" onclick="restartLevel()">Retry</button>
+<button class="btn secondary" onclick="useUndo()">Undo Last</button>
+</div>
+</div>
+</div>
+<script>
+(function(){
+// ==================== CONSTANTS ====================
+const COLORS=['#ff4757','#2ed573','#1e90ff','#ffa502','#a855f7','#ff6b81'];
+const COLOR_NAMES=['Red','Green','Blue','Orange','Purple','Pink'];
+const SEAT_W=52,SEAT_H=48,BUS_COLS=6,BUS_ROWS_MAX=6;
+const PASS_SIZE=36,PASS_GAP=8;
+const BG1='#0a0a1a',BG2='#1a1a3e';
+
+// ==================== SEEDED RNG ====================
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+// ==================== LEVEL DATA ====================
+// Each level: {seed, colors, total, busRows, par, tutorial, obstacles, vip}
+function genLevel(seed,colors,total,busRows,par,tutorial,obstacles,vip){
+  const rng=mulberry32(seed);
+  const passengers=[];
+  // Distribute passengers across colors
+  const perColor=Math.floor(total/colors);
+  let remaining=total-perColor*colors;
+  for(let c=0;c<colors;c++){
+    let count=perColor+(c<remaining?1:0);
+    for(let i=0;i<count;i++) passengers.push(c);
+  }
+  // Shuffle
+  for(let i=passengers.length-1;i>0;i--){
+    const j=Math.floor(rng()*((i+1)));
+    [passengers[i],passengers[j]]=[passengers[j],passengers[i]];
+  }
+  return {seed,colors,total,busRows,par:par||total,tutorial:tutorial||false,
+    obstacles:obstacles||[],vip:vip||-1,passengers,boarded:[],moves:0,usedHint:false,usedShuffle:false,undoStack:[]};
+}
+const LEVELS=[];
+const levelDefs=[
+  // Tier 1: Easy (3 colors, basic)
+  {seed:1001,colors:3,total:6,busRows:2,par:8,tutorial:0},{seed:1002,colors:3,total:7,busRows:2,par:10},
+  {seed:1003,colors:3,total:8,busRows:3,par:11},{seed:1004,colors:3,total:8,busRows:3,par:11},
+  {seed:1005,colors:3,total:9,busRows:3,par:12},{seed:1006,colors:3,total:9,busRows:3,par:12},
+  // Tier 2: Medium (3-4 colors)
+  {seed:2001,colors:3,total:10,busRows:3,par:14},{seed:2002,colors:4,total:10,busRows:3,par:15},
+  {seed:2003,colors:4,total:11,busRows:3,par:16},{seed:2004,colors:4,total:12,busRows:4,par:17},
+  {seed:2005,colors:4,total:12,busRows:4,par:17},{seed:2006,colors:4,total:13,busRows:4,par:18},
+  // Tier 3: Hard (4 colors, obstacles)
+  {seed:3001,colors:4,total:14,busRows:4,par:20,obstacles:[3,8]},{seed:3002,colors:4,total:15,busRows:4,par:21,obstacles:[2,7,12]},
+  {seed:3003,colors:4,total:16,busRows:5,par:22,obstacles:[4,10]},{seed:3004,colors:4,total:16,busRows:5,par:22,obstacles:[1,9,14]},
+  {seed:3005,colors:5,total:17,busRows:5,par:24,obstacles:[5,11]},{seed:3006,colors:5,total:18,busRows:5,par:25,obstacles:[3,8,15]},
+  // Tier 4: Expert (4-5 colors, VIP)
+  {seed:4001,colors:5,total:18,busRows:5,par:26,vip:2},{seed:4002,colors:5,total:19,busRows:5,par:27,vip:1},
+  {seed:4003,colors:5,total:20,busRows:5,par:28,vip:4,obstacles:[7,14]},{seed:4004,colors:5,total:20,busRows:6,par:29,vip:3},
+  {seed:4005,colors:5,total:21,busRows:6,par:30,vip:0,obstacles:[5,12]},{seed:4006,colors:5,total:22,busRows:6,par:31,vip:6,obstacles:[3,10,18]},
+  // Tier 5: Master (5-6 colors, all mechanics)
+  {seed:5001,colors:6,total:22,busRows:6,par:32,vip:1,obstacles:[4,11,17]},{seed:5002,colors:6,total:23,busRows:6,par:33,vip:3,obstacles:[6,14]},
+  {seed:5003,colors:6,total:24,busRows:6,par:34,vip:0,obstacles:[2,9,16,21]},{seed:5004,colors:6,total:25,busRows:6,par:35,vip:5,obstacles:[7,15]},
+  {seed:5005,colors:6,total:26,busRows:6,par:36,vip:2,obstacles:[4,10,18,23]},{seed:5006,colors:6,total:28,busRows:6,par:38,vip:4,obstacles:[1,8,16,22]}
+];
+levelDefs.forEach(d=>LEVELS.push(genLevel(d.seed,d.colors,d.total,d.busRows,d.par,d.tutorial,d.obstacles,d.vip)));
+
+// ==================== STATE ====================
+let state='menu', currentLevel=0, level=null;
+let soundOn=true, musicOn=true;
+let audioCtx=null, bgmNodes=[];
+let rafId=null, timers=[];
+let W,H,dpr;
+let particles=[];
+let comboCount=0, comboTimer=0;
+let animPassenger=null; // {x,y,targetX,targetY,color,progress}
+let animBoardPassenger=null;
+let shakeTimer=0, shakeMag=0;
+let tutStep=0, tutText='';
+let freeUndo=true, freeHint=true;
+// Save data
+let saveData={v:1, level:1, stars:{}};
+
+// ==================== CANVAS ====================
+const canvas=document.getElementById('gc');
+const ctx=canvas.getContext('2d');
+
+function resize(){
+  dpr=window.devicePixelRatio||1;
+  W=window.innerWidth; H=window.innerHeight;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize',resize);
+resize();
+
+// ==================== SAVE/LOAD ====================
+function loadSave(){
+  try{const d=JSON.parse(localStorage.getItem('busjam3d'));if(d&&d.v)saveData=d}catch(e){}
+  if(saveData.level<1)saveData.level=1;
+}
+function writeSave(){
+  try{localStorage.setItem('busjam3d',JSON.stringify(saveData))}catch(e){}
+}
+loadSave();
+
+// ==================== AUDIO ====================
+function initAudio(){
+  if(audioCtx)return;
+  try{audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}
+}
+function playTone(freq,dur,type,vol){
+  if(!soundOn||!audioCtx)return;
+  try{
+    const o=audioCtx.createOscillator();
+    const g=audioCtx.createGain();
+    o.type=type||'sine';o.frequency.value=freq;
+    g.gain.value=vol||0.15;
+    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+    o.connect(g);g.connect(audioCtx.destination);
+    o.start();o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+function sfxBoard(){playTone(880,0.12,'sine',0.12);setTimeout(()=>playTone(1100,0.08,'sine',0.1),60)}
+function sfxCombo(){playTone(1200,0.1,'sine',0.15);setTimeout(()=>playTone(1500,0.1,'sine',0.12),80);setTimeout(()=>playTone(1800,0.15,'sine',0.1),160)}
+function sfxError(){playTone(200,0.3,'sawtooth',0.1)}
+function sfxWin(){
+  [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.25,'sine',0.15),i*120));
+}
+function sfxClick(){playTone(600,0.06,'sine',0.08)}
+
+function startBGM(){
+  if(!audioCtx||!musicOn||bgmNodes.length)return;
+  try{
+    const sr=audioCtx.sampleRate;const dur=16;const buf=audioCtx.createBuffer(1,sr*dur,sr);
+    const d=buf.getChannelData(0);
+    const chords=[[261.63,329.63,392],[293.66,369.99,440],[329.63,415.30,493.88],[293.66,369.99,440]];
+    const chordDur=dur/chords.length;
+    for(let i=0;i<sr*dur;i++){
+      const t=i/sr;const ci=Math.min(Math.floor(t/chordDur),3);const chord=chords[ci];
+      let s=0;
+      for(let n=0;n<chord.length;n++){s+=Math.sin(2*Math.PI*chord[n]*t)*.04;s+=Math.sin(2*Math.PI*chord[n]*2*t)*.01}
+      const fade=t%chordDur;const fi=Math.min(fade/.8,1);const fo=Math.min((chordDur-fade)/.8,1);
+      const lfo=Math.sin(2*Math.PI*0.2*t)*.1+1;d[i]=s*fi*fo*lfo*.4;
+    }
+    const src=audioCtx.createBufferSource();src.buffer=buf;src.loop=true;
+    const filt=audioCtx.createBiquadFilter();filt.type='lowpass';filt.frequency.value=600;filt.Q.value=1;
+    const g=audioCtx.createGain();g.gain.value=0.25;
+    src.connect(filt);filt.connect(g);g.connect(audioCtx.destination);src.start();bgmNodes=[src,filt,g];
+  }catch(e){}
+}
+function stopBGM(){bgmNodes.forEach(n=>{try{n.stop()}catch(e){}});bgmNodes=[]}
+
+// ==================== PARTICLES ====================
+function spawnParticles(x,y,color,count){
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2;const sp=1+Math.random()*3;
+    particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color,size:2+Math.random()*3});
+  }
+}
+function updateParticles(dt){
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=0.05;p.life-=dt*1.5;
+    if(p.life<=0)particles.splice(i,1);
+  }
+}
+function drawParticles(){
+  particles.forEach(p=>{
+    ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.color;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();
+  });ctx.globalAlpha=1;
+}
+
+// ==================== LAYOUT ====================
+function getLayout(){
+  const busW=Math.min(340,W*0.85);
+  const busX=(W-busW)/2;
+  const busY=H*0.08;
+  const busH=level.busRows*SEAT_H+40;
+  const platY=busY+busH+30;
+  const platH=H-platY-80;
+  const platW=Math.min(340,W*0.85);
+  const platX=(W-platW)/2;
+  const seatW=busW/BUS_COLS;
+  return {busX,busY,busW,busH,seatW,platX,platY,platW,platH};
+}
+
+// ==================== DRAWING ====================
+function drawBg(){
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#0a0a1a');grad.addColorStop(1,'#1a1a3e');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+  // Subtle grid
+  ctx.strokeStyle='rgba(100,100,255,0.03)';ctx.lineWidth=1;
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+}
+
+function drawBus(L){
+  const {busX,busY,busW,busH,seatW}=L;
+  // Bus body shadow
+  ctx.fillStyle='rgba(0,0,0,0.3)';roundRect(busX+4,busY+4,busW,busH,12,true);
+  // Bus body
+  const busGrad=ctx.createLinearGradient(busX,busY,busX,busY+busH);
+  busGrad.addColorStop(0,'#f0c030');busGrad.addColorStop(1,'#d4a017');
+  ctx.fillStyle=busGrad;roundRect(busX,busY,busW,busH,12,true);
+  // Bus roof highlight
+  ctx.fillStyle='rgba(255,255,255,0.15)';
+  roundRect(busX+4,busY+2,busW-8,12,6,true);
+  // Windows
+  ctx.fillStyle='rgba(135,206,250,0.6)';
+  roundRect(busX+8,busY+18,busW-16,8,3,true);
+  // Wheels
+  ctx.fillStyle='#333';
+  ctx.beginPath();ctx.arc(busX+25,busY+busH,8,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(busX+busW-25,busY+busH,8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#666';
+  ctx.beginPath();ctx.arc(busX+25,busY+busH,4,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(busX+busW-25,busY+busH,4,0,Math.PI*2);ctx.fill();
+
+  // "BUS JAM" text
+  ctx.fillStyle='rgba(0,0,0,0.5)';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('BUS JAM 3D',busX+busW/2,busY+36);
+
+  // Seats grid
+  const seatStartY=busY+42;
+  for(let r=0;r<level.busRows;r++){
+    for(let c=0;c<BUS_COLS;c++){
+      const sx=busX+c*seatW+(seatW-SEAT_W)/2;
+      const sy=seatStartY+r*SEAT_H+(SEAT_H-SEAT_H+8)/2;
+      // Seat
+      ctx.fillStyle='rgba(0,0,0,0.2)';roundRect(sx,sy,SEAT_W,SEAT_H-8,4,true);
+      // Backrest
+      ctx.fillStyle='rgba(0,0,0,0.15)';roundRect(sx+2,sy-2,SEAT_W-4,6,3,true);
+    }
+  }
+}
+
+function drawBoarded(L){
+  const {busX,busY,seatW}=L;
+  const seatStartY=busY+42;
+  level.boarded.forEach((color,i)=>{
+    if(animBoardPassenger&&animBoardPassenger.idx===i)return;
+    const col=i%BUS_COLS;const row=Math.floor(i/BUS_COLS);
+    const sx=busX+col*seatW+(seatW-SEAT_W)/2+SEAT_W/2;
+    const sy=seatStartY+row*SEAT_H+(SEAT_H-8)/2;
+    drawPassenger(sx,sy+4,color,false,false);
+  });
+  // Animated boarding passenger
+  if(animBoardPassenger){
+    const a=animBoardPassenger;
+    const t=a.progress;const ease=1-Math.pow(1-t,3);
+    const cx=a.fromX+(a.toX-a.fromX)*ease;
+    const cy=a.fromY+(a.toY-a.fromY)*ease-ease*40;
+    drawPassenger(cx,cy,a.color,false,false);
+  }
+}
+
+function drawPlatform(L){
+  const {platX,platY,platW,platH}=L;
+  // Platform
+  ctx.fillStyle='rgba(60,60,100,0.3)';roundRect(platX,platY,platW,platH,10,true);
+  ctx.strokeStyle='rgba(100,100,200,0.2)';ctx.lineWidth=1;roundRect(platX,platY,platW,platH,10,false,true);
+  // Platform label
+  ctx.fillStyle='rgba(200,200,255,0.4)';ctx.font='bold 10px sans-serif';ctx.textAlign='center';
+  ctx.fillText('WAITING PASSENGERS',platX+platW/2,platY+14);
+}
+
+function drawWaitingPassengers(L){
+  const {platX,platY,platW}=L;
+  const waiting=level.passengers.slice(level.boarded.length);
+  const cols=Math.min(BUS_COLS,waiting.length);
+  const rows=Math.ceil(waiting.length/cols);
+  const pw=PASS_SIZE+PASS_GAP;
+  const startX=platX+(platW-cols*pw)/2+pw/2;
+  const startY=platY+30+pw/2;
+  
+  waiting.forEach((color,i)=>{
+    if(animPassenger&&animPassenger.waitIdx===i)return;
+    const col=i%cols;const row=Math.floor(i/cols);
+    const px=startX+col*pw;
+    const py=startY+row*pw;
+    const isVIP=level.vip===level.boarded.length+i;
+    const isObstacle=level.obstacles.includes(level.boarded.length+i);
+    const isNext=i===0;
+    drawPassenger(px,py,color,isNext,isVIP,isObstacle);
+  });
+  // Animated departing passenger
+  if(animPassenger){
+    const a=animPassenger;const t=a.progress;const ease=t*t*(3-2*t);
+    const cx=a.fromX+(a.toX-a.fromX)*ease;
+    const cy=a.fromY+(a.toY-a.fromY)*ease;
+    ctx.globalAlpha=1-t*0.5;
+    drawPassenger(cx,cy,a.color,false,false);
+    ctx.globalAlpha=1;
+  }
+}
+
+function drawPassenger(x,y,color,highlight,vip,obstacle){
+  const r=PASS_SIZE/2;
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();ctx.ellipse(x,y+r+2,r,r*0.3,0,0,Math.PI*2);ctx.fill();
+  // Body
+  ctx.fillStyle=color;
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+  // Highlight ring
+  if(highlight){
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(x,y,r+3,0,Math.PI*2);ctx.stroke();
+    // Pulsing glow
+    ctx.strokeStyle='rgba(255,255,255,'+(0.3+Math.sin(Date.now()/300)*0.2)+')';
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(x,y,r+6,0,Math.PI*2);ctx.stroke();
+  }
+  // VIP crown
+  if(vip){
+    ctx.fillStyle='#ffd700';ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+    ctx.fillText('\u2605',x,y-r-4);
+  }
+  // Obstacle barrier
+  if(obstacle){
+    ctx.strokeStyle='rgba(255,0,0,0.6)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y+r);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x+r,y-r);ctx.lineTo(x-r,y+r);ctx.stroke();
+  }
+  // Face
+  ctx.fillStyle='rgba(0,0,0,0.4)';ctx.font='bold 12px sans-serif';ctx.textAlign='center';
+  ctx.fillText('\u25CF',x,y+4);
+}
+
+function drawHUD(L){
+  const {busX,busW}=L;
+  // Level info
+  ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';ctx.textAlign='left';
+  ctx.fillText('Level '+(currentLevel+1),16,30);
+  // Tier indicator
+  const tier=Math.floor(currentLevel/6);
+  const tierNames=['Easy','Medium','Hard','Expert','Master'];
+  ctx.fillStyle='rgba(200,200,255,0.5)';ctx.font='12px sans-serif';
+  ctx.fillText(tierNames[tier],16,48);
+  // Moves counter
+  ctx.textAlign='right';
+  ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';
+  ctx.fillText('Moves: '+level.moves+'/'+level.par,W-16,30);
+  // Combo display
+  if(comboCount>1&&comboTimer>0){
+    ctx.textAlign='center';ctx.font='bold 20px sans-serif';
+    ctx.fillStyle='rgba(255,200,50,'+Math.min(1,comboTimer)+')';
+    ctx.fillText('Combo x'+comboCount+'!',W/2,H*0.06);
+  }
+  // Power-up buttons
+  const btnY=H-50;const btnW=60;const btnH=32;const gap=12;
+  const totalBtnW=3*btnW+2*gap;
+  const btnStartX=(W-totalBtnW)/2;
+  // Undo
+  drawButton(btnStartX,btnY,btnW,btnH,'Undo',freeUndo?'rgba(100,100,255,0.8)':'rgba(100,100,255,0.3)');
+  // Hint
+  drawButton(btnStartX+btnW+gap,btnY,btnW,btnH,'Hint',freeHint?'rgba(100,200,100,0.8)':'rgba(100,200,100,0.3)');
+  // Shuffle
+  drawButton(btnStartX+2*(btnW+gap),btnY,btnW,btnH,'Shuffle',!level.usedShuffle?'rgba(200,100,100,0.8)':'rgba(200,100,100,0.3)');
+  // Sound button
+  drawButton(W-50,16,36,28,soundOn?'ON':'OFF','rgba(80,80,120,0.5)',12);
+}
+
+function drawButton(x,y,w,h,text,bg,fontSize){
+  ctx.fillStyle=bg;roundRect(x,y,w,h,6,true);
+  ctx.fillStyle='#fff';ctx.font=(fontSize||12)+'px sans-serif';ctx.textAlign='center';
+  ctx.fillText(text,x+w/2,y+h/2+4);
+}
+
+function drawTutorial(){
+  if(!level.tutorial&&tutStep===0)return;
+  const texts=['Tap the highlighted passenger to board them!','Same colors must sit together on the bus!'];
+  const t=texts[tutStep]||'';
+  ctx.fillStyle='rgba(0,0,0,0.7)';roundRect(W/2-140,H*0.48,280,44,8,true);
+  ctx.fillStyle='#fff';ctx.font='bold 13px sans-serif';ctx.textAlign='center';
+  ctx.fillText(t,W/2,H*0.48+26);
+  // Arrow pointing to first passenger
+  ctx.fillStyle='rgba(255,255,255,0.8)';ctx.font='20px sans-serif';
+  ctx.fillText('\u25BC',W/2,H*0.42);
+}
+
+function roundRect(x,y,w,h,r,fill,stroke){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+  if(fill)ctx.fill();if(stroke)ctx.stroke();
+}
+
+// ==================== GAME LOGIC ====================
+function canBoard(passengerIdx){
+  const color=level.passengers[level.boarded.length+passengerIdx];
+  // VIP check
+  if(level.vip>=0){
+    const vipIdx=level.vip-level.boarded.length;
+    if(vipIdx>=0&&vipIdx!==passengerIdx)return false;
+  }
+  // Obstacle check
+  if(level.obstacles.includes(level.boarded.length+passengerIdx))return false;
+  return true;
+}
+
+function isMoveLegal(colorIdx){
+  const color=level.passengers[colorIdx];
+  const boarded=level.boarded;
+  // If no passengers boarded, always legal
+  if(boarded.length===0)return true;
+  const lastColor=boarded[boarded.length-1];
+  return color===lastColor;
+}
+
+function boardPassenger(waitIdx){
+  if(animPassenger||animBoardPassenger)return;
+  const absIdx=level.boarded.length+waitIdx;
+  if(!canBoard(waitIdx)){
+    sfxError();shakeMag=5;shakeTimer=0.3;return;
+  }
+  const color=level.passengers[absIdx];
+  // Check if legal (same color as last grouped, or empty bus, or new group start)
+  if(!isMoveLegal(absIdx)){
+    // Find if this color exists in boarded
+    const colorExists=level.boarded.includes(color);
+    if(colorExists&&level.boarded[level.boarded.length-1]!==color){
+      // Illegal move - would break grouping
+      sfxError();shakeMag=5;shakeTimer=0.3;return;
+    }
+  }
+  // Save undo state
+  level.undoStack.push({boarded:[...level.boarded],moves:level.moves});
+  level.moves++;
+  freeUndo=false;
+  // Combo logic
+  if(level.boarded.length>0&&level.boarded[level.boarded.length-1]===color){
+    comboCount++;comboTimer=1;
+    if(comboCount>1){sfxCombo();spawnParticles(W/2,H*0.35,COLORS[color],5)}
+  }else{comboCount=1}
+  // Start animation
+  const L=getLayout();
+  const waiting=level.passengers.slice(level.boarded.length);
+  const cols=Math.min(BUS_COLS,waiting.length);
+  const pw=PASS_SIZE+PASS_GAP;
+  const startX=L.platX+(L.platW-cols*pw)/2+pw/2;
+  const startY=L.platY+30+pw/2;
+  const fromCol=waitIdx%cols;const fromRow=Math.floor(waitIdx/cols);
+  const fromX=startX+fromCol*pw;const fromY=startY+fromRow*pw;
+  const toCol=level.boarded.length%BUS_COLS;const toRow=Math.floor(level.boarded.length/BUS_COLS);
+  const toX=L.busX+toCol*L.seatW+(L.seatW-SEAT_W)/2+SEAT_W/2;
+  const toY=L.busY+42+toRow*SEAT_H+(SEAT_H-8)/2;
+  animPassenger={fromX,fromY,toX,toY,color,waitIdx,progress:0};
+  animBoardPassenger={idx:level.boarded.length,fromX,fromY,toX,toY,color,progress:0};
+  sfxBoard();
+  // Board after animation
+  setTimeout(()=>{
+    level.boarded.push(color);
+    animPassenger=null;animBoardPassenger=null;
+    checkWin();
+  },300);
+}
+
+function checkWin(){
+  if(level.boarded.length>=level.total){
+    setTimeout(()=>showWin(),400);
+    return;
+  }
+  // Check if any move is possible
+  const waiting=level.passengers.slice(level.boarded.length);
+  let anyMove=false;
+  for(let i=0;i<waiting.length;i++){
+    if(canBoard(i)){
+      const c=waiting[i];
+      if(level.boarded.length===0){anyMove=true;break}
+      const last=level.boarded[level.boarded.length-1];
+      if(c===last){anyMove=true;break}
+      // Can start new group if color not yet on bus
+      if(!level.boarded.includes(c)){anyMove=true;break}
+    }
+  }
+  if(!anyMove&&waiting.length>0){
+    setTimeout(()=>showFail(),400);
+  }
+}
+
+function doUndo(){
+  if(level.undoStack.length===0)return;
+  if(freeUndo){freeUndo=false}
+  const prev=level.undoStack.pop();
+  level.boarded=prev.boarded;level.moves=prev.moves;
+  comboCount=0;sfxClick();
+}
+
+function doHint(){
+  if(!freeHint)return;freeHint=false;level.usedHint=true;
+  // Find a valid next move
+  const waiting=level.passengers.slice(level.boarded.length);
+  for(let i=0;i<waiting.length;i++){
+    if(canBoard(i)&&isMoveLegal(level.boarded.length+i)){
+      // Highlight this passenger
+      const L=getLayout();
+      const cols=Math.min(BUS_COLS,waiting.length);
+      const pw=PASS_SIZE+PASS_GAP;
+      const startX=L.platX+(L.platW-cols*pw)/2+pw/2;
+      const startY=L.platY+30+pw/2;
+      spawnParticles(startX+i%cols*pw,startY+Math.floor(i/cols)*pw,'#ffff00',8);
+      break;
+    }
+  }
+  sfxClick();
+}
+
+function doShuffle(){
+  if(level.usedShuffle)return;level.usedShuffle=true;
+  // Shuffle remaining passengers
+  const start=level.boarded.length;
+  const remaining=level.passengers.slice(start);
+  for(let i=remaining.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*((i+1)));
+    [remaining[i],remaining[j]]=[remaining[j],remaining[i]];
+  }
+  // Keep VIP and obstacles in correct relative positions
+  for(let i=0;i<remaining.length;i++){
+    level.passengers[start+i]=remaining[i];
+  }
+  sfxClick();
+}
+
+function showWin(){
+  state='win';
+  sfxWin();spawnParticles(W/2,H/2,'#ffd700',20);
+  const moves=level.moves;const par=level.par;
+  let stars=1;
+  if(moves<=par)stars=3;
+  else if(moves<=Math.floor(par*1.3))stars=2;
+  // Save progress
+  const lvl=currentLevel+1;
+  if(lvl>=saveData.level)saveData.level=lvl+1;
+  if(!saveData.stars[lvl]||saveData.stars[lvl]<stars)saveData.stars[lvl]=stars;
+  writeSave();
+  // Show win modal
+  document.getElementById('win-title').textContent='Level '+(currentLevel+1)+' Complete!';
+  const starStr=Array(3).fill(0).map((_,i)=>i<stars?'\u2605':'\u2606').join(' ');
+  document.getElementById('win-stars').textContent=starStr;
+  document.getElementById('win-stars').style.color=stars===3?'#ffd700':stars===2?'#c0c0c0':'#888';
+  document.getElementById('win-moves').textContent='Moves: '+moves+' / Par: '+par;
+  document.getElementById('ov-win').classList.add('active');
+}
+
+function showFail(){
+  state='fail';
+  document.getElementById('ov-fail').classList.add('active');
+}
+
+// ==================== INPUT ====================
+function getTapTarget(mx,my){
+  const L=getLayout();
+  // Check power-up buttons
+  const btnY=H-50;const btnW=60;const btnH=32;const gap=12;
+  const totalBtnW=3*btnW+2*gap;const btnStartX=(W-totalBtnW)/2;
+  if(mx>=btnStartX&&mx<=btnStartX+btnW&&my>=btnY&&my<=btnY+btnH)return 'undo';
+  if(mx>=btnStartX+btnW+gap&&mx<=btnStartX+2*btnW+gap&&my>=btnY&&my<=btnY+btnH)return 'hint';
+  if(mx>=btnStartX+2*(btnW+gap)&&mx<=btnStartX+3*btnW+2*gap&&my>=btnY&&my<=btnY+btnH)return 'shuffle';
+  if(mx>=W-50&&mx<=W-14&&my>=16&&my<=44)return 'sound';
+  // Check waiting passengers
+  const waiting=level.passengers.slice(level.boarded.length);
+  if(waiting.length===0)return null;
+  const cols=Math.min(BUS_COLS,waiting.length);
+  const pw=PASS_SIZE+PASS_GAP;
+  const startX=L.platX+(L.platW-cols*pw)/2;
+  const startY=L.platY+30;
+  for(let i=0;i<waiting.length;i++){
+    const col=i%cols;const row=Math.floor(i/cols);
+    const px=startX+col*pw;const py=startY+row*pw;
+    if(mx>=px&&mx<=px+PASS_SIZE&&my>=py&&my<=py+PASS_SIZE)return {type:'passenger',idx:i};
+  }
+  return null;
+}
+
+canvas.addEventListener('pointerdown',function(e){
+  e.preventDefault();
+  if(state!=='game')return;
+  initAudio();
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left;const my=e.clientY-rect.top;
+  const target=getTapTarget(mx,my);
+  if(!target)return;
+  if(target==='undo'){doUndo();return}
+  if(target==='hint'){doHint();return}
+  if(target==='shuffle'){doShuffle();return}
+  if(target==='sound'){toggleSound();return}
+  if(target.type==='passenger'){
+    if(level.tutorial&&tutStep===0){
+      if(target.idx!==0)return; // Must tap first passenger in tutorial
+    }
+    boardPassenger(target.idx);
+    // Tutorial advancement
+    if(level.tutorial&&tutStep===0)tutStep=1;
+  }
+});
+canvas.addEventListener('pointercancel',function(e){e.preventDefault()});
+canvas.addEventListener('contextmenu',function(e){e.preventDefault()});
+
+// ==================== OVERLAY HANDLERS ====================
+window.startGame=function(){
+  initAudio();startBGM();
+  currentLevel=saveData.level-1;if(currentLevel<0)currentLevel=0;
+  if(currentLevel>=LEVELS.length)currentLevel=LEVELS.length-1;
+  loadLevel(currentLevel);
+  document.getElementById('ov-menu').classList.remove('active');
+};
+window.showLevelSelect=function(){
+  document.getElementById('ov-levels').classList.add('active');
+  const grid=document.getElementById('level-grid');
+  grid.innerHTML='';
+  for(let i=0;i<LEVELS.length;i++){
+    const unlocked=i<saveData.level;
+    const stars=saveData.stars[i+1]||0;
+    const btn=document.createElement('button');
+    btn.className='btn'+(i===currentLevel?' primary':'');
+    btn.style.cssText='width:48px;height:48px;padding:0;font-size:14px;'+(unlocked?'':'opacity:0.4');
+    btn.textContent=unlocked?(i+1):'\uD83D\uDD12';
+    if(unlocked){
+      btn.onclick=function(){selectLevel(i)};
+      if(stars>0){
+        btn.style.borderBottom='2px solid '+(stars===3?'#ffd700':stars===2?'#c0c0c0':'#888');
+      }
+    }
+    grid.appendChild(btn);
+  }
+};
+window.closeLevels=function(){document.getElementById('ov-levels').classList.remove('active')};
+window.selectLevel=function(i){
+  document.getElementById('ov-levels').classList.remove('active');
+  currentLevel=i;loadLevel(i);
+};
+window.nextLevel=function(){
+  document.getElementById('ov-win').classList.remove('active');
+  if(currentLevel+1<LEVELS.length){currentLevel++;loadLevel(currentLevel)}
+  else{document.getElementById('ov-menu').classList.add('active');state='menu'}
+};
+window.restartLevel=function(){
+  document.getElementById('ov-win').classList.remove('active');
+  document.getElementById('ov-fail').classList.remove('active');
+  loadLevel(currentLevel);
+};
+window.useUndo=function(){
+  document.getElementById('ov-fail').classList.remove('active');
+  doUndo();
+  state='game';
+};
+window.toggleSound=function(){
+  soundOn=!soundOn;
+  const btn=document.getElementById('btn-sound');
+  if(btn)btn.textContent='Sound: '+(soundOn?'ON':'OFF');
+};
+window.toggleMusic=function(){
+  musicOn=!musicOn;
+  if(musicOn)startBGM();else stopBGM();
+};
+
+function loadLevel(idx){
+  const def=levelDefs[idx];
+  level=genLevel(def.seed,def.colors,def.total,def.busRows,def.par,def.tutorial,def.obstacles,def.vip);
+  freeUndo=true;freeHint=true;
+  comboCount=0;comboTimer=0;
+  animPassenger=null;animBoardPassenger=null;
+  particles=[];shakeTimer=0;shakeMag=0;
+  tutStep=level.tutorial?0:-1;
+  state='game';
+}
+
+// ==================== MAIN LOOP ====================
+let lastTime=performance.now();
+
+function loop(now){
+  rafId=requestAnimationFrame(loop);
+  const dt=Math.min((now-lastTime)/1000,0.05);
+  lastTime=now;
+  // Update
+  if(animPassenger)animPassenger.progress=Math.min(1,animPassenger.progress+dt*4);
+  if(animBoardPassenger)animBoardPassenger.progress=Math.min(1,animBoardPassenger.progress+dt*4);
+  if(comboTimer>0)comboTimer-=dt;else comboCount=0;
+  if(shakeTimer>0)shakeTimer-=dt;else shakeMag=0;
+  updateParticles(dt);
+  // Draw
+  ctx.save();
+  if(shakeMag>0){
+    const sx=(Math.random()-0.5)*shakeMag*2;
+    const sy=(Math.random()-0.5)*shakeMag*2;
+    ctx.translate(sx,sy);
+  }
+  drawBg();
+  if(state==='game'||state==='win'||state==='fail'){
+    const L=getLayout();
+    drawBus(L);
+    drawBoarded(L);
+    drawPlatform(L);
+    drawWaitingPassengers(L);
+    drawHUD(L);
+    drawTutorial();
+    drawParticles();
+  }
+  ctx.restore();
+}
+rafId=requestAnimationFrame(loop);
+
+// ==================== CLEANUP ====================
+function cleanup(){
+  if(rafId){cancelAnimationFrame(rafId);rafId=null}
+  timers.forEach(id=>clearInterval(id));timers=[];
+  if(audioCtx){audioCtx.close().catch(()=>{});audioCtx=null}
+  bgmNodes=[];
+}
+window.addEventListener('beforeunload',cleanup);
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){if(rafId){cancelAnimationFrame(rafId);rafId=null}}
+  else if(state==='game'){lastTime=performance.now();rafId=requestAnimationFrame(loop)}
+});
+
+// Show menu on load
+document.getElementById('ov-menu').classList.add('active');
+})();
+</script>
+</body>
+</html>
