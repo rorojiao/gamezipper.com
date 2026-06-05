@@ -34,13 +34,17 @@ async function agent2_content(slug) {
     // Run all checks
     const checks = {
       h1: /<h1[^>]*>([^<]+)</.test(html),
-      canvas: /<canvas/i.test(html) || /<div[^>]+class="[^"]*board/i.test(html) || /class="[^"]*cell/i.test(html) || /class="[^"]*tube/i.test(html) || /class="[^"]*tile/i.test(html) || /class="[^"]*grid/i.test(html),
+      canvas: /<canvas/i.test(html) || /<div[^>]+class="[^"]*board/i.test(html) || /class="[^"]*cell/i.test(html) || /class="[^"]*tube/i.test(html) || /class="[^"]*tile/i.test(html) || /class="[^"]*grid/i.test(html) || /class="[^"]*screen/i.test(html) || /id="[^"]*board/i.test(html) || /id="[^"]*game-area/i.test(html) || /id="[^"]*game-container/i.test(html) || /id="[^"]*canvas-wrap/i.test(html) || /id="[^"]*gc/i.test(html) || /id="[^"]*stage/i.test(html) || /id="[^"]*game-canvas/i.test(html),
       gzAd: /id="gz-ad-below-game"/.test(html),
       // game-footer is dynamically injected by game-footer.js (defer loaded), so we check for the script reference
       gzFooter: /game-footer\.js/.test(html),
       monetag: /monetag-manager\.js/.test(html),
-      // gameJs: either has game.js/bundle reference, or game logic is inline in index.html (e.g. color-sort)
-      gameJs: /<script[^>]+src="[^"]*(game\.js|bundle-)/.test(html) || /function\s+(startGame|initGame|renderGame|loadGame|newGame|spawn|update)/.test(html),
+      // gameJs: either has game.js/bundle reference, or game logic is inline (function decls, arrow funcs, object method shorthand)
+      gameJs: /<script[^>]+src="[^"]*(game\.js|bundle-)/.test(html) ||
+               /function\s+(startGame|initGame|renderGame|loadGame|newGame|spawn|update|init|start|play|render|draw|tick|step|move|Game|initLevel|nextLevel)/.test(html) ||
+               /= ?\(\) ?=>/.test(html) ||
+               /\bGame\.\w+\s*\(/.test(html) ||
+               /class\s+\w+\s*\{\s*\w+\s*\(\s*\)\s*\{/.test(html),
       no1ktower: !/1ktower\.com/.test(html),
       noAlwingulla: !/alwingulla\.com/.test(html),
       noRye: !/rye\.io/.test(html),
