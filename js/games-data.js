@@ -269,6 +269,7 @@ const GAMES = [
 {name:"Black Hole",emoji:"🕳️",cat:"puzzle",tags:["Puzzle","Black Hole","Cosmic","Arcade","Physics","Skill","Casual","Browser","Free","HTML5"],url:"/black-hole/",desc:"Play Black Hole free online! Consume every object, grow your cosmic void, and rule the galaxy. 30 hand-crafted levels across 6 tiers, 6 unlockable hole skins, 12 achievements, 3 power-ups, and 3-star ratings. No download needed!",isNew:true,status:"live"},
 {name:"Knife Hit",emoji:"🗡",cat:"arcade",tags:["knife","throwing","tap","casual","hyper-casual"],url:"/knife-hit/",desc:"Throw knives at the rotating log, avoid hitting other knives. 30 levels, boss stages, knife skins, and satisfying physics. Play free online, no download needed.",isNew:true,status:"live"},
   {name:"Tidy Up 3D",emoji:"🧩",cat:"puzzle",tags:["sorting","tidy","match","satisfying","cozy"],url:"/tidy-up-3d/",desc:"Sort and organize colorful items in this satisfying 3D-feel sorting puzzle. Match 3+ items to clear them. 30 levels across 6 themed tiers.",isNew:true,status:"live"},
+  {name:"Lava Rising",emoji:"🌋",cat:"arcade",tags:["Arcade","Platformer","Survival","Climbing"],url:"/lava-rising/",desc:"Jump between platforms as lava rises! 30 challenge levels, endless mode, 6 characters, power-ups.",isNew:true,status:"live"},
 ];
 
 /**
@@ -292,4 +293,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Lava Rising",emoji:"🌋",cat:"arcade",tags:["Arcade","Platformer","Survival","Climbing"],url:"/lava-rising/",desc:"Jump between platforms as lava rises! 30 challenge levels, endless mode, 6 characters, power-ups.",isNew:true,status:"live"},
