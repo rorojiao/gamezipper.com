@@ -274,6 +274,7 @@ const GAMES = [
   {name:"Bus Jam 3D",emoji:"🚌",cat:"puzzle",tags:["puzzle","match","bus","sorting","3d","casual","hypercasual","passenger"],url:"/bus-jam-3d/",desc:"Sort colorful passengers to their matching buses in this hyper-casual 3D puzzle. Clear traffic, beat 30 levels, master the mega hub.",isNew:true,status:"live"},
   {name:"Tile Triple Master",emoji:"🧩",cat:"puzzle",tags:["puzzle","match","tile","3d","triple","casual","master","board"],url:"/tile-triple-master/",desc:"Match 3 identical 3D tiles to clear the board! 30 challenging levels across 5 tiers with combos, power-ups, and stunning visuals. Free to play online.",isNew:true,status:"live"},
   {name:"Color Hole 3D",emoji:"🎨",cat:"puzzle",tags:["puzzle","color","match","3d","arena","casual","hypercasual","swallow"],url:"/color-hole-3d/",desc:"Match the target color and swallow the world in this satisfying 3D color-match arena. 30 levels, 5 difficulty tiers, 6 unlockable skins, 12 achievements, 3 power-ups. Free online, no download.",isNew:true,status:"live"},
+  {name:"Slice It All",emoji:"🔪",cat:"puzzle",tags:["Knife","Slice","Obstacle","Timing","Hyper-Casual","Tap","Browser","Free","HTML5"],url:"/slice-it-all/",desc:"Tap to flip your knife and slice through obstacles! Master timing in this satisfying hyper-casual knife game. 30 levels across 5 tiers with spinning planks, moving barriers, and spikes.",isNew:true,status:"live"},
 ];
 
 /**
@@ -297,4 +298,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-{name:"Slice It All",emoji:"🔪",cat:"puzzle",tags:["Knife","Slice","Obstacle","Timing","Hyper-Casual","Tap","Browser","Free","HTML5"],url:"/slice-it-all/",desc:"Tap to flip your knife and slice through obstacles! Master timing in this satisfying hyper-casual knife game. 30 levels across 5 tiers with spinning planks, moving barriers, and spikes.",isNew:true,status:"live"},
