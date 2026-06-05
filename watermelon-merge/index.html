@@ -427,21 +427,24 @@ function updateScoreDisplay(){
 }
 
 function checkGameOver(dt){
-  if(dangerTimer > 0){
-    dangerTimer -= dt * 1000;
-    return;
-  }
+  // Check if any fruit is above the danger line
+  var anyAboveDanger = false;
   for(var i = 0; i < fruits.length; i++){
     var f = fruits[i];
     if(f.y - f.r < DANGER_LINE_Y){
-      dangerTimer += dt * 1000;
-      if(dangerTimer > GAME_OVER_GRACE){
-        endGame();
-        return;
-      }
+      anyAboveDanger = true;
+      break;
     }
   }
-  if(dangerTimer > 0) dangerTimer = Math.max(0, dangerTimer);
+  if(anyAboveDanger){
+    dangerTimer += dt * 1000;
+    if(dangerTimer > GAME_OVER_GRACE){
+      endGame();
+      return;
+    }
+  } else if(dangerTimer > 0){
+    dangerTimer = Math.max(0, dangerTimer - dt * 500);
+  }
 }
 
 function startGame(){
@@ -822,7 +825,7 @@ document.body.appendChild(s);
 <script>document.addEventListener("touchstart",function(e){var t=e.touches[0];var m=new MouseEvent("mousedown",{clientX:t.clientX,clientY:t.clientY});t.target.dispatchEvent(m);},{passive:true});document.addEventListener("touchend",function(e){var m=new MouseEvent("mouseup",{});e.target.dispatchEvent(m);},{passive:true});</script>
 
 <script>
-(function(){var _origRAF=window.requestAnimationFrame;var _rafId=null;window.requestAnimationFrame=function(cb){return _rafId=_origRAF.call(window,cb)};window.cancelAnimationFrame=function(id){if(id)_origRAF.call(window,clearTimeout,id);_rafId=null};window.addEventListener('beforeunload',function(){if(_rafId)window.cancelAnimationFrame(_rafId)});document.addEventListener('visibilitychange',function(){if(document.hidden&&_rafId)window.cancelAnimationFrame(_rafId)})})();
+(function(){var _origRAF=window.requestAnimationFrame;var _origCAF=window.cancelAnimationFrame;var _rafId=null;window.requestAnimationFrame=function(cb){return _rafId=_origRAF.call(window,cb)};window.cancelAnimationFrame=function(id){if(id)_origCAF.call(window,id);_rafId=null};window.addEventListener('beforeunload',function(){if(_rafId)window.cancelAnimationFrame(_rafId)});document.addEventListener('visibilitychange',function(){if(!document.hidden&&_rafId===null){_rafId=_origRAF.call(window,function(){_rafId=null})}})})();
 </script>
 <script src="/gz-analytics.js" defer></script>
 <script src="/monetag-manager.js"></script>
