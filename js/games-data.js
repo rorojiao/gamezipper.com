@@ -270,6 +270,7 @@ const GAMES = [
 {name:"Knife Hit",emoji:"🗡",cat:"arcade",tags:["knife","throwing","tap","casual","hyper-casual"],url:"/knife-hit/",desc:"Throw knives at the rotating log, avoid hitting other knives. 30 levels, boss stages, knife skins, and satisfying physics. Play free online, no download needed.",isNew:true,status:"live"},
   {name:"Tidy Up 3D",emoji:"🧩",cat:"puzzle",tags:["sorting","tidy","match","satisfying","cozy"],url:"/tidy-up-3d/",desc:"Sort and organize colorful items in this satisfying 3D-feel sorting puzzle. Match 3+ items to clear them. 30 levels across 6 themed tiers.",isNew:true,status:"live"},
   {name:"Lava Rising",emoji:"🌋",cat:"arcade",tags:["Arcade","Platformer","Survival","Climbing"],url:"/lava-rising/",desc:"Jump between platforms as lava rises! 30 challenge levels, endless mode, 6 characters, power-ups.",isNew:true,status:"live"},
+  {name:"Roll Rush",emoji:"🎯",cat:"arcade",tags:["roll","ball","runner","arcade","3d","casual","obstacle","endless"],url:"/roll-rush/",desc:"Roll, bounce, and smash through 30 obstacle courses in this hyper-casual 3D runner. Swipe to change lanes, jump over gaps, smash barriers, and collect gems to unlock ball skins.",isNew:true,status:"live"},
 ];
 
 /**
@@ -277,9 +278,7 @@ const GAMES = [
  */
 function getGameStatus(game) {
   const overrides = JSON.parse(localStorage.getItem('gz_status_overrides') || '{}');
-  return overrides[game.url  {name:"Roll Rush",emoji:"🎯",cat:"arcade",tags:["roll","ball","runner","arcade","3d","casual","obstacle","endless"],url:"/roll-rush/",desc:"Roll, bounce, and smash through 30 obstacle courses in this hyper-casual 3D runner. Swipe to change lanes, jump over gaps, smash barriers, and collect gems to unlock ball skins.",isNew:true,status:"live"},
-  {name:"Roll Rush",emoji:"🎯",cat:"arcade",tags:["roll","ball","runner","arcade","3d","casual","obstacle","endless"],url:"/roll-rush/",desc:"Roll, bounce, and smash through 30 obstacle courses in this hyper-casual 3D runner. Swipe to change lanes, jump over gaps, smash barriers, and collect gems to unlock ball skins.",isNew:true,status:"live"},
-] || game.status || 'live';
+  return overrides[game.url] || game.status || 'live';
 }
 
 /**
