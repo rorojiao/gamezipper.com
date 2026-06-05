@@ -297,3 +297,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Slice It All",emoji:"🔪",cat:"puzzle",tags:["Knife","Slice","Obstacle","Timing","Hyper-Casual","Tap","Browser","Free","HTML5"],url:"/slice-it-all/",desc:"Tap to flip your knife and slice through obstacles! Master timing in this satisfying hyper-casual knife game. 30 levels across 5 tiers with spinning planks, moving barriers, and spikes.",isNew:true,status:"live"},
