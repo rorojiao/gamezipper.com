@@ -273,6 +273,7 @@ const GAMES = [
   {name:"Roll Rush",emoji:"🎯",cat:"arcade",tags:["roll","ball","runner","arcade","3d","casual","obstacle","endless"],url:"/roll-rush/",desc:"Roll, bounce, and smash through 30 obstacle courses in this hyper-casual 3D runner. Swipe to change lanes, jump over gaps, smash barriers, and collect gems to unlock ball skins.",isNew:true,status:"live"},
   {name:"Bus Jam 3D",emoji:"🚌",cat:"puzzle",tags:["puzzle","match","bus","sorting","3d","casual","hypercasual","passenger"],url:"/bus-jam-3d/",desc:"Sort colorful passengers to their matching buses in this hyper-casual 3D puzzle. Clear traffic, beat 30 levels, master the mega hub.",isNew:true,status:"live"},
   {name:"Tile Triple Master",emoji:"🧩",cat:"puzzle",tags:["puzzle","match","tile","3d","triple","casual","master","board"],url:"/tile-triple-master/",desc:"Match 3 identical 3D tiles to clear the board! 30 challenging levels across 5 tiers with combos, power-ups, and stunning visuals. Free to play online.",isNew:true,status:"live"},
+  {name:"Color Hole 3D",emoji:"🎨",cat:"puzzle",tags:["puzzle","color","match","3d","arena","casual","hypercasual","swallow"],url:"/color-hole-3d/",desc:"Match the target color and swallow the world in this satisfying 3D color-match arena. 30 levels, 5 difficulty tiers, 6 unlockable skins, 12 achievements, 3 power-ups. Free online, no download.",isNew:true,status:"live"},
 ];
 
 /**
