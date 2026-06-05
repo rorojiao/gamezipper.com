@@ -1,9 +1,6 @@
 // Vercel Edge Function — gz-analytics proxy
-// Per Vercel 2026 docs: edge functions use export default handler(request)
-// Located at api/collect (NO .js suffix — Vercel routes /api/* to /api/*.{js,ts} as static)
-//
-// To force this to be a function, we use Node.js-style signature.
-// POST events array → forward to Python BI server.
+// Vercel 2026 syntax: use named method exports (GET, POST) + runtime at top level
+export const runtime = 'edge';
 
 const BI_SERVER_URL = 'https://earth-textbook-qualification-newark.trycloudflare.com/api/collect';
 
@@ -14,45 +11,34 @@ const CORS = {
   'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
 };
 
-export default async function handler(req) {
-  const method = (req.method || 'GET').toUpperCase();
+function json(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...CORS },
+  });
+}
 
-  if (method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: CORS });
-  }
+export async function GET() {
+  return json({ status: 'ok', endpoint: 'collect', method: 'GET' });
+}
 
-  if (method === 'GET') {
-    return new Response(
-      JSON.stringify({ status: 'ok', endpoint: 'collect', method: 'GET' }),
-      { status: 200, headers: { 'Content-Type': 'application/json', ...CORS } }
-    );
-  }
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS });
+}
 
-  if (method !== 'POST') {
-    return new Response(
-      JSON.stringify({ status: 'ok', method }),
-      { status: 200, headers: { 'Content-Type': 'application/json', ...CORS } }
-    );
-  }
-
+export async function POST(request) {
   let events;
   try {
-    const body = await req.json();
+    const body = await request.json();
     if (Array.isArray(body)) events = body;
     else if (body && Array.isArray(body.events)) events = body.events;
     else events = [body];
   } catch (e) {
-    return new Response(
-      JSON.stringify({ error: 'invalid_json' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...CORS } }
-    );
+    return json({ error: 'invalid_json' }, 400);
   }
 
   if (!events || events.length === 0) {
-    return new Response(
-      JSON.stringify({ status: 'ok', msg: 'no_events' }),
-      { status: 200, headers: { 'Content-Type': 'application/json', ...CORS } }
-    );
+    return json({ status: 'ok', msg: 'no_events' });
   }
 
   const transformed = events.map(ev => {
@@ -85,27 +71,11 @@ export default async function handler(req) {
           .catch(() => ({ status: 'forward_error' }))
       )
     );
-
     const allOk = results.every(
       r => r.status === 'fulfilled' && r.value && r.value.status !== 'forward_error'
     );
-
-    return new Response(
-      JSON.stringify({
-        status: allOk ? 'ok' : 'partial',
-        received: events.length,
-      }),
-      {
-        status: allOk ? 200 : 207,
-        headers: { 'Content-Type': 'application/json', ...CORS },
-      }
-    );
+    return json({ status: allOk ? 'ok' : 'partial', received: events.length }, allOk ? 200 : 207);
   } catch (err) {
-    return new Response(
-      JSON.stringify({ status: 'error', msg: 'forward_failed' }),
-      { status: 200, headers: { 'Content-Type': 'application/json', ...CORS } }
-    );
+    return json({ status: 'error', msg: 'forward_failed' });
   }
 }
-
-export const config = { runtime: 'edge' };
