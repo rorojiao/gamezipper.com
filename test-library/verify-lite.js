@@ -26,7 +26,11 @@ async function agent1_http(slug) {
 
 async function agent2_content(slug) {
   try {
-    const html = execSync(`curl -s "https://gamezipper.com/${slug}/"`, { timeout: 15000, encoding: 'utf8' });
+    // Use spawn with stdout to a file to avoid ENOBUFS for large HTML (>1MB)
+    const tmpfile = `/tmp/verify-${slug}-${Date.now()}.html`;
+    execSync(`curl -s "https://gamezipper.com/${slug}/" -o ${tmpfile}`, { timeout: 30000 });
+    const html = fs.readFileSync(tmpfile, 'utf8');
+    fs.unlinkSync(tmpfile);
     // Run all checks
     const checks = {
       h1: /<h1[^>]*>([^<]+)</.test(html),
