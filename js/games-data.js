@@ -277,7 +277,9 @@ const GAMES = [
  */
 function getGameStatus(game) {
   const overrides = JSON.parse(localStorage.getItem('gz_status_overrides') || '{}');
-  return overrides[game.url] || game.status || 'live';
+  return overrides[game.url  {name:"Roll Rush",emoji:"🎯",cat:"arcade",tags:["roll","ball","runner","arcade","3d","casual","obstacle","endless"],url:"/roll-rush/",desc:"Roll, bounce, and smash through 30 obstacle courses in this hyper-casual 3D runner. Swipe to change lanes, jump over gaps, smash barriers, and collect gems to unlock ball skins.",isNew:true,status:"live"},
+  {name:"Roll Rush",emoji:"🎯",cat:"arcade",tags:["roll","ball","runner","arcade","3d","casual","obstacle","endless"],url:"/roll-rush/",desc:"Roll, bounce, and smash through 30 obstacle courses in this hyper-casual 3D runner. Swipe to change lanes, jump over gaps, smash barriers, and collect gems to unlock ball skins.",isNew:true,status:"live"},
+] || game.status || 'live';
 }
 
 /**
