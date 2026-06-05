@@ -301,5 +301,5 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
-}
-
+},
+{name:"Teleport Jumper",emoji:"🌀",cat:"puzzle",tags:["teleport","portal","puzzle","logic"],url:"/teleport-jumper/",desc:"Teleport through walls with limited charges! A brain-teasing portal puzzle game with 80 levels.",isNew:true,status:"live"},;
