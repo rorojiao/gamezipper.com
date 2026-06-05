@@ -39,15 +39,23 @@
     // Use fetch with keepalive for reliable delivery on page unload
     fS(d);
   }
+  // Vercel Edge function state — auto-disable after first 405 to silence console
+  var EP_DISABLED = false;
   function fS(d) {
-    // keepalive: true ensures the request completes even if page unloads
+    if (EP_DISABLED) return;  // endpoint confirmed dead, stop trying
     fetch(EP, {
       method: 'POST',
       body: d,
       headers: { 'Content-Type': 'application/json' },
       keepalive: true
+    }).then(function(r) {
+      if (r.status === 405 || r.status === 404) {
+        // Vercel Edge function not deployed / not routing — disable to silence console
+        EP_DISABLED = true;
+        try { console.info('[gz-analytics] Endpoint ' + EP + ' unavailable (HTTP ' + r.status + '), switched to localStorage-only mode'); } catch(e) {}
+      }
     }).catch(function() {
-      // Silently fail — localStorage archive is the fallback
+      // Network error — silent (localStorage archive is fallback)
     });
   }
 
