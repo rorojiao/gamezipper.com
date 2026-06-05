@@ -275,6 +275,7 @@ const GAMES = [
   {name:"Tile Triple Master",emoji:"🧩",cat:"puzzle",tags:["puzzle","match","tile","3d","triple","casual","master","board"],url:"/tile-triple-master/",desc:"Match 3 identical 3D tiles to clear the board! 30 challenging levels across 5 tiers with combos, power-ups, and stunning visuals. Free to play online.",isNew:true,status:"live"},
   {name:"Color Hole 3D",emoji:"🎨",cat:"puzzle",tags:["puzzle","color","match","3d","arena","casual","hypercasual","swallow"],url:"/color-hole-3d/",desc:"Match the target color and swallow the world in this satisfying 3D color-match arena. 30 levels, 5 difficulty tiers, 6 unlockable skins, 12 achievements, 3 power-ups. Free online, no download.",isNew:true,status:"live"},
   {name:"Slice It All",emoji:"🔪",cat:"puzzle",tags:["Knife","Slice","Obstacle","Timing","Hyper-Casual","Tap","Browser","Free","HTML5"],url:"/slice-it-all/",desc:"Tap to flip your knife and slice through obstacles! Master timing in this satisfying hyper-casual knife game. 30 levels across 5 tiers with spinning planks, moving barriers, and spikes.",isNew:true,status:"live"},
+{name:"Duck Merge",emoji:"🐤",cat:"puzzle",tags:["Merge","Duck","Puzzle","Casual","Evolution","Strategy"],url:"/duck-merge/",desc:"Drag same ducks together to merge and evolve them through 7 tiers! 30 levels with increasing difficulty, combo scoring, power-ups, and 3-star ratings. Free browser game, no download.",isNew:true,status:"live"}
 ];
 
 /**
@@ -298,3 +299,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Glass Rush 3D",emoji:"",cat:"action",tags:["endless runner","3d","crystal","smash","casual"],url:"/glass-rush-3d/",desc:"Smash through crystal tunnels in a 3D first-person endless runner. Tap to tilt, dodge spikes, collect orbs across 30 levels.",isNew:true,status:"live"},
