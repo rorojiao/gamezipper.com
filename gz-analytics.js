@@ -4,7 +4,7 @@
    localStorage archive kept as fallback (gz_aa). */
 (function() {
   var SITE = 'gamezipper.com';
-  var EP = '/api/collect.js';  // Vercel serverless function (same origin, no CORS)
+  var EP = '/api/collect';  // Vercel Edge function (no .js suffix — Vercel routes to function)
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
