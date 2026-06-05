@@ -231,13 +231,11 @@
   var adsenseLoaded = false;
 
   function loadAdSenseScript() {
-    if (adsenseLoaded || window.adsbygoogle) { adsenseLoaded = true; return; }
-    adsenseLoaded = true;
-    var s = document.createElement('script');
-    s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353';
-    s.crossOrigin = 'anonymous';
-    s.async = true;
-    document.head.appendChild(s);
+    // DISABLED 2026-06-05: GameZipper uses Monetag exclusively. AdSense was causing
+    // 'adsbygoogle.push() error: No slot size for availableWidth=0' on every page
+    // (no AdSense slot defined) and risked Google policy violation warning.
+    // This is a no-op; loadAdSenseAd() resolves empty promise.
+    return;
   }
 
   function loadAdSenseAd(container, slotId) {
