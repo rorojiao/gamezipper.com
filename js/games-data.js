@@ -292,3 +292,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+{name:"Lava Rising",emoji:"🌋",cat:"arcade",tags:["Arcade","Platformer","Survival","Climbing"],url:"/lava-rising/",desc:"Jump between platforms as lava rises! 30 challenge levels, endless mode, 6 characters, power-ups.",isNew:true,status:"live"},
