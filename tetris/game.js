@@ -171,8 +171,10 @@ function spawnPiece() {
 
 // ─── COLLISION ────────────────────────────────────────────────────────────────
 // ─── PIECE OPERATIONS ─────────────────────────────────────────────────────────
-function moveLeft()  { if (validPos(currentPiece, currentPiece.x - 1, currentPiece.y)) { currentPiece.x--; sfxMove(); } }
-function moveRight() { if (validPos(currentPiece, currentPiece.x + 1, currentPiece.y)) { currentPiece.x++; sfxMove(); } }
+function moveLeft()  {
+  if (!currentPiece) return; if (validPos(currentPiece, currentPiece.x - 1, currentPiece.y)) { currentPiece.x--; sfxMove(); } }
+function moveRight() {
+  if (!currentPiece) return; if (validPos(currentPiece, currentPiece.x + 1, currentPiece.y)) { currentPiece.x++; sfxMove(); } }
 function moveDown()  {
   if (!gameRunning || gamePaused) return;
   if (validPos(currentPiece, currentPiece.x, currentPiece.y + 1)) {
@@ -184,6 +186,7 @@ function moveDown()  {
 }
 
 function rotate() {
+  if (!currentPiece) return;
   const newRot = (currentPiece.rot + 1) % 4;
   // Try basic rotation
   if (validPos(currentPiece, currentPiece.x, currentPiece.y, newRot)) {
@@ -211,6 +214,7 @@ function hardDrop() {
 }
 
 function validPos(piece, px, py, rotOverride) {
+  if (!piece) return false;
   const rot = rotOverride !== undefined ? rotOverride : piece.rot;
   const shape = getShape(piece.type, rot);
   for (let r = 0; r < shape.length; r++) {
@@ -224,7 +228,8 @@ function validPos(piece, px, py, rotOverride) {
   return true;
 }
 
-function ghostY() {
+function ghostY() {  if (!currentPiece) return 0;
+
   let gy = currentPiece.y;
   while (true) {
     let can = true;
