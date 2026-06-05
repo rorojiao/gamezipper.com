@@ -15,8 +15,24 @@
 const BI_SERVER_URL = 'https://earth-textbook-qualification-newark.trycloudflare.com/api/collect';
 
 export default async function handler(req) {
+  // CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }});
+  }
+  // Health check for GET (avoids 405 noise from browser preflight, monitoring, etc)
+  if (req.method === 'GET') {
+    return new Response(JSON.stringify({ status: 'ok', endpoint: 'collect', method: 'GET' }), {
+      status: 200, headers: { 'Content-Type': 'application/json' }
+    });
+  }
   if (req.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405 });
+    return new Response('Method Not Allowed', { status: 405, headers: {
+      'Access-Control-Allow-Origin': '*'
+    }});
   }
 
   let events;
