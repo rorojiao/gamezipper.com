@@ -1,12 +1,10 @@
 /* gz-analytics.js — lightweight behavioral tracking, no deps, <5KB
-   2026-06-02 fix: removed hardcoded internal IP 10.10.29.67:8090
-   (mixed-active-content blocked + LAN-only). All events now persist
-   to localStorage only (gz_aa = analytics archive, gz_ab = batch buffer).
-   When a real production endpoint is provisioned, change EP + uncomment
-   the sendBeacon/fetch calls in snd() and fS(). */
+   2026-06-05 fix: connected to Vercel /api/collect.js → BI server pipeline
+   Events flow: gz-analytics → Vercel /api/collect.js → Python BI server (10.10.29.67:8090)
+   localStorage archive kept as fallback (gz_aa). */
 (function() {
   var SITE = 'gamezipper.com';
-  // var EP = '';  // TODO: set production analytics endpoint (HTTPS only)
+  var EP = '/api/collect.js';  // Vercel serverless function (same origin, no CORS)
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
@@ -34,16 +32,24 @@
     sB(b);
   }
   function snd(p) {
-    // No remote endpoint configured — archive locally, keep buffer empty
+    // Send to Vercel serverless endpoint; archive locally as backup
     if (!p || !p.length) return;
-    archive(p);
-    // When EP is set, uncomment:
-    // var d = JSON.stringify(p);
-    // if (N.sendBeacon) { N.sendBeacon(EP, d); } else { fS(d); }
+    archive(p);  // always archive locally as fallback
+    var d = JSON.stringify(p);
+    // Use fetch with keepalive for reliable delivery on page unload
+    fS(d);
   }
-  // function fS(d) {
-  //   fetch(EP, { method: 'POST', body: d, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(function() {});
-  // }
+  function fS(d) {
+    // keepalive: true ensures the request completes even if page unloads
+    fetch(EP, {
+      method: 'POST',
+      body: d,
+      headers: { 'Content-Type': 'application/json' },
+      keepalive: true
+    }).catch(function() {
+      // Silently fail — localStorage archive is the fallback
+    });
+  }
 
   setInterval(function() {
     var b = gB();
