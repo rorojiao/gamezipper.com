@@ -299,5 +299,6 @@ function getGamesByStatus(status) {
  */
 function getAllGames() {
  return GAMES.map(g => ({...g, status: getGameStatus(g)}));
-}
+},
+{name:"Dunk Shot 3D",emoji:"🏀",cat:"puzzle",tags:["dunk","basketball","swish","arcade","timing"],url:"/dunk-shot-3d/",desc:"Swish perfect dunks in this one-tap basketball timing arcade. 30 levels, 6 ball skins, 6 court themes, combo streaks and 12 achievements.",isNew:true,status:"live"},
 
