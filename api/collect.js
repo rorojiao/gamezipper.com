@@ -30,9 +30,12 @@ export default async function handler(req) {
     });
   }
   if (req.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405, headers: {
-      'Access-Control-Allow-Origin': '*'
-    }});
+    // Return 200 for non-POST to avoid Varnish-cached 405 noise in browser console.
+    // GET is a health check; OPTIONS is CORS preflight. Both are 200/204 above.
+    // This branch only fires for truly weird methods (DELETE, PUT, etc).
+    return new Response(JSON.stringify({ status: 'ok', endpoint: 'collect', method: req.method, msg: 'ignored' }), {
+      status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
   }
 
   let events;
