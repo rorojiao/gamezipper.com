@@ -39,24 +39,12 @@
     // Use fetch with keepalive for reliable delivery on page unload
     fS(d);
   }
-  // Vercel Edge function state — auto-disable after first 405 to silence console
-  var EP_DISABLED = false;
+  // gz-analytics — localStorage-only mode (2026-06-06: /api/collect.js endpoint
+  // returns 405 due to Vercel 12月 2025 routing change; localStorage is the
+  // authoritative archive). Skip fetch entirely to silence console.
+  var EP_AVAILABLE = false;
   function fS(d) {
-    if (EP_DISABLED) return;  // endpoint confirmed dead, stop trying
-    fetch(EP, {
-      method: 'POST',
-      body: d,
-      headers: { 'Content-Type': 'application/json' },
-      keepalive: true
-    }).then(function(r) {
-      if (r.status === 405 || r.status === 404) {
-        // Vercel Edge function not deployed / not routing — disable to silence console
-        EP_DISABLED = true;
-        try { console.info('[gz-analytics] Endpoint ' + EP + ' unavailable (HTTP ' + r.status + '), switched to localStorage-only mode'); } catch(e) {}
-      }
-    }).catch(function() {
-      // Network error — silent (localStorage archive is fallback)
-    });
+    if (!EP_AVAILABLE) return;  // endpoint not available, localStorage-only mode
   }
 
   setInterval(function() {
