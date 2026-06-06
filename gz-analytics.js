@@ -4,7 +4,9 @@
    localStorage archive kept as fallback (gz_aa). */
 (function() {
   var SITE = 'gamezipper.com';
-  var EP = '/api/collect.js';  // Vercel Edge function (now explicit in vercel.json)
+  // Direct tunnel URL: browser → Cloudflare Tunnel → BI server (10.10.29.67:8090)
+  // Bypasses Vercel Edge Function POST 405 blocking issue
+  var EP = 'https://timeline-administrative-affiliation-taxi.trycloudflare.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
