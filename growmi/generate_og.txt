@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+import os
+import math
+from PIL import Image, ImageDraw, ImageFont
+
+W, H = 1200, 630
+img = Image.new('RGB', (W, H))
+draw = ImageDraw.Draw(img)
+
+for y in range(H):
+    r = int(10 + (26-10) * y/H)
+    g = int(10 + (26-10) * y/H)
+    b = int(26 + (62-26) * y/H)
+    draw.line([(0, y), (W, y)], fill=(r, g, b))
+
+for x in range(0, W, 40):
+    draw.line([(x, 0), (x, H)], fill=(255,255,255,8), width=1)
+for y in range(0, H, 40):
+    draw.line([(0, y), (W, y)], fill=(255,255,255,8), width=1)
+
+try:
+    font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 80)
+    font_sub = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 36)
+    font_watermark = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24)
+except:
+    font_title = ImageFont.load_default()
+    font_sub = font_title
+    font_watermark = font_title
+
+def draw_star(draw, cx, cy, size, color):
+    points = []
+    for i in range(10):
+        angle = math.pi * i / 5 - math.pi / 2
+        radius = size if i % 2 == 0 else size // 2
+        x = cx + radius * math.cos(angle)
+        y = cy + radius * math.sin(angle)
+        points.append((x, y))
+    draw.polygon(points, fill=color)
+
+worm_x, worm_y = 900, 350
+segments = [(worm_x + i*35, worm_y + int(20*math.sin(i*0.8))) for i in range(8)]
+for i, (sx, sy) in enumerate(reversed(segments)):
+    radius = 18 - i
+    color = (50 + i*15, 200 - i*10, 50 + i*10)
+    draw.ellipse([sx-radius, sy-radius, sx+radius, sy+radius], fill=color)
+
+head_x, head_y = segments[0]
+draw.ellipse([head_x-25, head_y-25, head_x+25, head_y+25], fill=(80, 220, 80))
+draw.ellipse([head_x-12, head_y-8, head_x-4, head_y+2], fill='white')
+draw.ellipse([head_x+4, head_y-8, head_x+12, head_y+2], fill='white')
+draw.ellipse([head_x-9, head_y-5, head_x-5, head_y+0], fill='black')
+draw.ellipse([head_x+7, head_y-5, head_x+11, head_y+0], fill='black')
+
+star_positions = [(200, 150), (500, 100), (800, 200), (350, 450), (650, 400), (1050, 150), (150, 350), (1000, 300)]
+for sx, sy in star_positions:
+    draw_star(draw, sx, sy, 20, '#fbbf24')
+
+title = "GROWMI"
+bbox = draw.textbbox((0,0), title, font=font_title)
+tw = bbox[2] - bbox[0]
+draw.text(((W-tw)//2, 80), title, fill='#f59e0b', font=font_title)
+
+sub = "Worm Puzzle Game"
+bbox2 = draw.textbbox((0,0), sub, font=font_sub)
+sw = bbox2[2] - bbox2[0]
+draw.text(((W-sw)//2, 180), sub, fill='#e0e0e0', font=font_sub)
+
+wm = "GameZipper.com"
+bbox3 = draw.textbbox((0,0), wm, font=font_watermark)
+ww = bbox3[2] - bbox3[0]
+draw.text(((W-ww)//2, H-50), wm, fill='#666666', font=font_watermark)
+
+output_path = '/home/msdn/gamezipper.com/og-images/growmi.png'
+img.save(output_path, quality=95)
+print("OG image saved:", output_path)
+print("File size:", os.path.getsize(output_path), "bytes")
