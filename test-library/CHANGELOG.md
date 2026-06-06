@@ -2,6 +2,43 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.2.0] - 2026-06-06 (R87 — Dynamic Test Intelligence cron evolution)
+
+### Added
+- 11 new test cases (175 → 186 total) from industry research + GDC 2026 GASIG + 2026-Q2 CVEs
+- **B-005 [P0]** Chrome OOB GPU Write CVE-2026-9967 (pre-148.0.7778.216) — WebGL/WebGPU/Canvas2D must verify Chrome version
+- **B-006 [P0]** Chrome iOS Uninitialized Use CVE-2026-9963 (pre-148.0.7778.216) — RCE risk on game page
+- **B-007 [P1]** Safari 26.0 WebGPU enabled — `navigator.gpu` must not error on iOS 26+/iPadOS 26+; WebGL fallback still required
+- **B-008 [P2]** Safari 26.0 new CSS primitives (Anchor Positioning, Scroll-driven Animations, HDR images, SVG icons)
+- **W-035 [P1]** Chrome 130+ Document Picture-in-Picture — gameplay canvas continues rendering under PiP
+- **W-036 [P1]** Chrome Performance Personalization (Memory Saver / Energy Saver) — playable under throttled background
+- **GX-010 [P2]** Vibration API haptic feedback — `navigator.vibrate(pattern)` on mobile; silent fallback on iOS/desktop
+- **A-001 [P1]** prefers-color-scheme: dark mode — listens to system theme change in real time
+- **A-002 [P2]** WCAG 2.2 color contrast ratio ≥ 4.5:1 for normal text, ≥ 3:1 for large text/UI
+- **A-003 [P1]** One-hand Thumb Zone: primary controls + CTA buttons within bottom 60% of viewport (375×667 / 414×896)
+- **A-004 [P2]** ARIA labels on canvas — `role="application"` or `role="img"` + `aria-label="<Game Name>"` for screen readers
+
+### New Category
+- **Category 7: Accessibility (WCAG 2.2 + GDC 2026 GASIG)** — 4 cases covering visual, motor, and screen reader accessibility
+
+### Sources
+- **CVE Search**: `https://stack.watch/browse/latest/` — CVE-2026-9963 (Chrome iOS Uninitialized Use / RCE) and CVE-2026-9967 (Chrome OOB GPU Write) both pre-148.0.7778.216
+- **Safari 26.0 Release Notes**: `https://webkit.org/blog/17333/webkit-features-in-safari-26-0` — 75 new features including WebGPU shipping, Anchor Positioning, Scroll-driven animations, SVG icons, HDR
+- **WebGPU Status 2026**: `https://webo360solutions.com/blog/webgpu-browser-support` — Chrome 113+, Firefox 147+, Safari 26+ all shipping WebGPU
+- **Chrome 130 Release Notes**: `https://developer.chrome.com/release-notes/130` — Document Picture-in-Picture, CSS Nested declarations, Performance Personalization (Memory Saver/Energy Saver)
+- **2026 Mobile Gaming UX (One-hand / Thumb Zone)**: `https://novatechbeacon.com/latest/why-2026-gaming-is-built-for-one-hand-play` and `https://connectioncafe.com/dark-mode-haptics-and-one-hand-play-the-new-ux-rules-for-gaming-apps-in-2026`
+- **Dark Mode Accessibility WCAG**: `https://accessibilitychecker.org/blog/dark-mode-accessibility` and `https://tech-rz.com/blog/dark-mode-design-best-practices-in-2026`
+- **GDC 2026 Accessibility Roundtable (IGDA-GASIG)**: `https://igda-gasig.org/2026/04/01/gdc-2026-accessibility-roundtable`
+- **Casual Mobile Gaming Accessibility**: `https://softwaretestingmagazine.com/knowledge/the-accessibility-audit-testing-for-inclusivity-in-casual-mobile-gaming`
+- **Safari 26.0 Apple Developer Notes**: `https://developer.apple.com/documentation/safari-release-notes/safari-26-release-notes` (Released Sep 15, 2025; iOS 26, iPadOS 26, visionOS 26, macOS 26)
+
+### Metrics
+- P0: 57 → 59 (+2: B-005, B-006 Chrome CVE-2026)
+- P1: 66 → 71 (+5: B-007 WebGPU, W-035 PiP, W-036 Memory Saver, A-001 dark mode, A-003 Thumb Zone)
+- P2: 41 → 45 (+4: B-008 Safari CSS, GX-010 haptic, A-002 WCAG contrast, A-004 ARIA)
+- P3: 11 → 11 (no new in v1.2.0)
+- Categories: 6 → 7 (added Category 7: Accessibility WCAG 2.2 + GDC 2026 GASIG)
+
 ## [v1.1.0] - 2026-06-06 (R2 + R3 complete)
 
 ### Verified
