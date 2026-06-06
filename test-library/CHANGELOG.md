@@ -2,6 +2,38 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.6.0] - 2026-06-06 (R90 — 3 P0 SEO + footer trio fixes for ragdoll-archers/block-blast/count-master)
+
+### Fixed (R90 site scan found, immediately patched)
+- **ragdoll-archers (R90 new S-grade 42KB game)**: missing ALL (H1 + footer trio + gz-ad-below-game div) — Pitfall 45 + 46
+  - Added `<h1 class="gz-sr-only">` SEO H1 outside splash
+  - Added `game-footer.js?v=461d4c4b` + `monetag-manager.js` scripts
+  - Added `gz-ad-below-game` div
+  - Added `h1.gz-sr-only{...}` CSS (visually hidden pattern)
+  - **5-dimension deep test PASS**: 1280x577 canvas, 10000/10000 pixels rendered, GZ state present (c/x/w/h/scale/state/raf/timers/time/dt), startLevel/checkArrowHits/enemyAI/levelComplete/drawArrowSelector/drawLevelComplete/handleArrowKey all defined, gameState="menu" with full 30-level S-grade progression
+- **block-blast (R45 H1 sync gap)**: H1 only in splash → 0 h1 after dismiss — Pitfall 45
+  - Added `<h1 class="gz-sr-only">` SEO H1 outside splash
+  - Verified: 2 h1s (1 SEO + 1 splash), 420x420 canvas visible, footer+ad+monetag present
+- **count-master (R45 H1 sync gap)**: H1 missing entirely — Pitfall 45
+  - Added `<h1 class="gz-sr-only">` SEO H1
+  - Added `h1.gz-sr-only{...}` CSS
+  - Verified: 1 h1, 480x577 canvas visible, footer+ad+monetag present
+
+### Verified (R90 site scan)
+- 257 live games (256 → 257, +1 ragdoll-archers)
+- 225 ✅ 100/100 perfect
+- 20 ⚠ 85/100 multi-screen splash (same list as R89)
+- 12 ❌ Python urllib SSL false positives (curl 双重验证 all HTTP 200) — pong/nonogram/number-match/tangram/tangram-puzzle/chocolate-bean-storm/tiny-fishing/hidden-object/doodle-jump/papas-freezeria/stack-ball/paper-fold
+- 0 real 1ktower / 0 alwingulla / 0 LAN IP / 0 site-analytics pixel
+- All 6-point verify grep = 0 output
+
+### New Pitfall 48 (本次发现)
+S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1ktower grep (注释里), (2) alwingulla grep, (3) H1 grep (splash 外), (4) footer trio, (5) `<title>` tag, (6) games-data.js 入口。**Pitfall 35/42/44/46 反复 6 轮**。强烈要求 pre-commit hook 自动跑 `bash scripts/6-point-verify.sh <slug>` 6 grep。R90 这条 commit (26fcc8a7) 修了所有缺项。
+
+### Library files
+- `games-list.json` 同步: 256 → 257 (Ragdoll Archers, cat: arcade)
+- 8 qa_v3 并发 batch × 32 游戏 = 257 全覆盖
+
 ## [v1.5.0] - 2026-06-06 (R91 — Dynamic Test Intelligence cron evolution, 11 new test cases)
 
 ### Added
