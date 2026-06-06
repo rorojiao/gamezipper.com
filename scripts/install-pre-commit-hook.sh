@@ -1,15 +1,18 @@
 #!/bin/bash
-# install-pre-commit-hook.sh — Hard Rule #17 enforcement
+# install-pre-commit-hook.sh — Hard Rule #17 + #21 + #22 enforcement
 # Installs .git/hooks/pre-commit that runs:
-#   1. node -c js/games-data.js  (catches all 6 orphan variants)
+#   1. node -c js/games-data.js  (catches orphan variants A-F)
 #   2. bash scripts/sync-game-counts.sh  (catches 3-place data drift)
 #   3. bash scripts/sync-user-visible-text.sh  (catches 14+ user-visible text sites)
-# Before allowing commit. Would have caught ALL 7 drift incidents in last 7 days
+#   4. node -c js/itemlist-schema.js  (catches orphan variant G — Hard Rule #21)
+#   5. python3 inline-JSON-LD parse check on index.html  (catches extra `}` — Hard Rule #22)
+# Before allowing commit. Would have caught ALL 10 drift incidents in last 8 days
 # at write-time instead of at 2h cron-time.
 #
 # Re-runnable: backs up existing non-gamezipper hooks to .git/hooks/pre-commit.bak.<timestamp>.
 # Run once per repo, or after pulling new sync scripts.
-# Created 2026-06-06 — Hard Rule #17.
+# Created 2026-06-06 12h — Hard Rule #17.
+# Updated 2026-06-06 14h — added Hard Rules #21 (itemlist-schema.js) + #22 (inline JSON-LD).
 
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
@@ -32,20 +35,26 @@ done
 # Back up existing hook (if any) and not one of ours
 if [ -f "$HOOK_PATH" ]; then
   if grep -q "GAMEZIPPER_PRE_COMMIT_HOOK" "$HOOK_PATH" 2>/dev/null; then
-    echo "GameZipper pre-commit hook already installed at $HOOK_PATH"
-    exit 0
+    if grep -q "GAMEZIPPER_PRE_COMMIT_HOOK_V2" "$HOOK_PATH" 2>/dev/null; then
+      echo "GameZipper pre-commit hook v2 already installed at $HOOK_PATH"
+      exit 0
+    fi
+    TS=$(date +%Y%m%d-%H%M%S)
+    cp "$HOOK_PATH" "$HOOK_PATH.bak.$TS"
+    echo "Upgrading existing hook (v1) to v2 — backed up v1 to $HOOK_PATH.bak.$TS"
+  else
+    TS=$(date +%Y%m%d-%H%M%S)
+    mv "$HOOK_PATH" "$HOOK_PATH.bak.$TS"
+    echo "Backed up existing non-gamezipper hook to $HOOK_PATH.bak.$TS"
   fi
-  TS=$(date +%Y%m%d-%H%M%S)
-  mv "$HOOK_PATH" "$HOOK_PATH.bak.$TS"
-  echo "Backed up existing hook to $HOOK_PATH.bak.$TS"
 fi
 
 cat > "$HOOK_PATH" <<'HOOK_EOF'
 #!/bin/bash
-# GAMEZIPPER_PRE_COMMIT_HOOK — Hard Rules #13, #15, #17
+# GAMEZIPPER_PRE_COMMIT_HOOK_V2 — Hard Rules #13, #15, #17, #21, #22
 # Auto-installed by scripts/install-pre-commit-hook.sh
-# Catches orphan object literals (Variants A-F) + 3-place data drift + user-visible text drift
-# at write-time, not at 2h cron-time.
+# Catches orphan object literals (Variants A-G) + 3-place data drift + user-visible text drift
+# + inline JSON-LD parse errors at write-time, not at 2h cron-time.
 
 set -e
 
@@ -80,6 +89,41 @@ if [ -f "scripts/sync-user-visible-text.sh" ]; then
     echo "❌ [gz-pre-commit] User-visible text is stale (H1 / META / placeholder / etc.)."
     echo "   bash scripts/sync-user-visible-text.sh  (shows what to fix)"
     bash scripts/sync-user-visible-text.sh
+    exit 1
+  fi
+fi
+
+# 4. itemlist-schema.js syntax (catches Orphan Variant G — Hard Rule #21)
+if [ -f "js/itemlist-schema.js" ]; then
+  if ! node -c js/itemlist-schema.js 2>/dev/null; then
+    echo "❌ [gz-pre-commit] js/itemlist-schema.js has a syntax error."
+    echo "   Likely Orphan Variant G (missing '}' inside compressed JSON array)."
+    echo "   node -c js/itemlist-schema.js"
+    node -c js/itemlist-schema.js
+    exit 1
+  fi
+fi
+
+# 5. Inline JSON-LD parse check (catches extra-`}` / parse errors — Hard Rule #22)
+if [ -f "index.html" ]; then
+  PARSE_ERR=$(python3 -c "
+import re, json, sys
+with open('index.html', 'r') as f: c = f.read()
+blocks = re.findall(r'<script type=\"application/ld\+json\">([\s\S]*?)</script>', c)
+errs = []
+for i, b in enumerate(blocks):
+    try:
+        json.loads(b)
+    except Exception as e:
+        errs.append(f'  block {i}: {e}')
+if errs:
+    print('JSON-LD parse errors in index.html:')
+    for e in errs: print(e)
+    sys.exit(1)
+" 2>&1)
+  if [ $? -ne 0 ]; then
+    echo "❌ [gz-pre-commit] Inline JSON-LD blocks failed to parse:"
+    echo "$PARSE_ERR"
     exit 1
   fi
 fi
