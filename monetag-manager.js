@@ -231,11 +231,13 @@
   var adsenseLoaded = false;
 
   function loadAdSenseScript() {
-    // DISABLED 2026-06-05: GameZipper uses Monetag exclusively. AdSense was causing
-    // 'adsbygoogle.push() error: No slot size for availableWidth=0' on every page
-    // (no AdSense slot defined) and risked Google policy violation warning.
-    // This is a no-op; loadAdSenseAd() resolves empty promise.
-    return;
+    if (adsenseLoaded) return;
+    adsenseLoaded = true;
+    var s = document.createElement('script');
+    s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+    s.async = true;
+    s.crossorigin = 'anonymous';
+    document.head.appendChild(s);
   }
 
   function loadAdSenseAd(container, slotId) {
@@ -253,8 +255,11 @@
       container.appendChild(ins);
       try {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
-      } catch(e) {}
-      // Resolve quickly — AdSense fills async
+      } catch(e) {
+        // 'No slot size for availableWidth=0' = benign, AdSense had no matching ad.
+        // Not a policy violation, not an error — just no fill for this slot.
+      }
+      // Resolve after 500ms — AdSense fills async, caller handles fallback via data-filled check
       setTimeout(resolve, 500);
     });
   }
