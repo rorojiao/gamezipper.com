@@ -2,6 +2,49 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.5.0] - 2026-06-06 (R91 — Dynamic Test Intelligence cron evolution, 11 new test cases)
+
+### Added
+- **11 new test cases** (200 → 211 total) from R91 May 2026 late-emerging threat research — DEF CON 33 clickjacking disclosure, Chrome 149 record 429-patch release + CVE-2026-11084, Safari 26.5 20 WebKit CVEs + new web platform features, Chrome I/O 2026 HTML-in-Canvas API, Unity WebGL Safari shader stall pattern
+- **Category 10: 2026-Q2 LATE-EMERGING THREATS + NEW PLATFORM (R91)**:
+  - **S-026 [P0]** No clickjacking-style UI manipulation (opacity/pointer-events tricks) — inspired by DEF CON 33 Marek Tóth disclosure showing 6 major password managers (1Password, Bitwarden, LastPass, Enpass, iCloud Passwords, LogMeOnce, ~40M users) vulnerable to autofill data exfiltration via invisible overlays
+  - **S-027 [P0]** X-Frame-Options / CSP frame-ancestors enforced — defense-in-depth against clickjacking iframe wrapping
+  - **B-017 [P0]** Chrome 149+ required (record 429 security patches + CVE-2026-11084 Password Manager cross-origin data leak)
+  - **B-018 [P0]** Safari 26.5+ required (20 WebKit CVEs CVE-2026-28905–28971 + WebRTC CVE-2026-28944 + CVE-2026-28847 process crash)
+  - **B-019 [P1]** Safari 26.5 `:open` pseudo-class — progressive enhancement for `<details>`/`<select>`/`<dialog>`/`<input>`
+  - **B-020 [P1]** Safari 26.5 `Origin` API — structured Origin object with `.scheme`/`.host`/`.port` (analytics code must handle both)
+  - **B-021 [P1]** Safari 26.5 `ToggleEvent.source` — popover invoker attribution
+  - **G-017 [P1]** HTML-in-Canvas API accessibility (Chrome I/O 2026) — embedded HTML in WebGL/WebGPU canvas remains in a11y tree
+  - **G-018 [P1]** First-draw shader warmup — Safari `webglPrepareUniformLocationsBeforeFirstDraw` is synchronous main-thread (~3s freeze per 200 uniforms); render all prefabs during splash
+  - **W-037 [P2]** Origin API opt-in / fallback — `String(window.location.origin || (window.origin && window.origin.toString()) || 'unknown')` pattern in gz-analytics.js
+  - **W-038 [P1]** No untrusted-input handling mirroring Chrome 149 CVE pattern — grep audit for `innerHTML\s*=|eval(|new Function(` in js/ + game HTML
+
+### Stats
+- 211 total test cases (was 200 in v1.4.0, +11)
+- P0: 62 → 66 (+4: S-026, S-027, B-017, B-018)
+- P1: 76 → 82 (+6: B-019, B-020, B-021, G-017, G-018, W-038)
+- P2: 51 → 52 (+1: W-037)
+- P3: 11 → 11 (no new)
+- Categories: 10 (added Category 10: 2026-Q2 Late-Emerging Threats R91)
+
+### Sources
+- **DEF CON 33 Password Manager Clickjacking** (Marek Tóth, Aug 2025 / Socket verification): https://dailysecurityreview.com/news/clickjacking-vulnerability-exposes-autofill-data-across-major-extensions — 6 password managers, ~40M users, autofill/2FA/CC data exfil via invisible overlays
+- **Chrome 149 = 429 security patches record** (May 2026 stable): https://pcworld.com/article/3158038/chrome-149-fixes-429-security-flaws-the-most-ever-in-one-update.html + https://securityweek.com/chrome-149-patches-429-vulnerabilities
+- **CVE-2026-11084 (Chrome Password Manager Cross-Origin Data Leak)**: https://cvefeed.io/vuln/detail/CVE-2026-11084
+- **Safari 26.5 = 20 WebKit CVEs** (CVE-2026-28905–28971): https://news.lavx.hu/article/safari-26-5-patches-20-webkit-flaws-and-a-webrtc-crash-bug-what-ios-ipados-and-macos-developers-need-to-know + https://apfelpatient.de/en/news/safari-26-5-security-update-closes-webkit-vulnerabilities
+- **CVE-2026-28847 (WebKit unexpected process crash)**: https://cvefeed.io/vuln/detail/CVE-2026-28847
+- **WebKit 26.5 Features for Safari 26.5**: https://webkit.org/blog/17938/webkit-features-for-safari-26-5 (`:open` pseudo-class, scoped `random()`, SVG `color-interpolation`, `ToggleEvent.source`, `Origin` API)
+- **Safari 26.5 Apple Developer Release Notes**: https://developer.apple.com/documentation/safari-release-notes/safari-26_5-release-notes
+- **HTML-in-Canvas API** (Chrome I/O 2026, Thomas Nattestad): https://webgpu.com
+- **Unity WebGL Safari First-Draw Shader Stall** (Richard Fu, May 2026 post-mortem): https://richardfu.net/unity-webgl-safari-hang-shader-warmup — `webglPrepareUniformLocationsBeforeFirstDraw` is WebKit-specific synchronous main-thread, ~3ms per uniform × 200 = 3s freeze; mitigation = render prefab into offscreen canvas during splash
+- **WebGPU + Three.js r170 + Babylon.js 7** (Apr–May 2026): https://dinogame.gg/blog/webgpu-and-browser-games + https://youngju.dev/blog/culture/2026-05-14-webgpu-compute-shaders-browser-gpu-computing-wgsl-hands-on-deep-dive-2026.en
+- **PortSwigger Clickjacking Testing Methodology**: https://portswigger.net/burp/documentation/desktop/testing-workflow/vulnerabilities/testing-for-clickjacking
+- **Playwright 1.59/1.60 AI-era testing** (May 2026 — context, not in library): https://scrolltest.com/playwright-1-59-release-breakdown + https://skakarh.com/blog/playwright-1-60-0-whats-new-for-qa-engineers
+
+### Coverage Delta
+- 7 user-policy dimensions + 2026-Q2 industry research + GDC 2026 GASIG + R89 June 2026 CVE wave + R91 May 2026 late-emerging threats (clickjacking, browser CVEs, HTML-in-Canvas, shader warmup)
+- Library now 211 cases; v1.0.0 → v1.5.0 = +117 cases (94 → 211) over 6 evolutions
+
 ## [v1.4.0] - 2026-06-06 (R89 — Dynamic Test Intelligence cron evolution, 14 new test cases)
 
 ### Added
