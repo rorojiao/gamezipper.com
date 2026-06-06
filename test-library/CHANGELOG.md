@@ -2,6 +2,22 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.3.0] - 2026-06-06 (R88 — growmi + grow-worm new games + 22 H1 fixes)
+
+### Added
+- 2 new games to library: growmi (worm puzzle, 30 levels × 5 tiers), grow-worm (snake puzzle, 25 levels)
+- **Pitfall 45**: R85 H1 sync missed 22 games that had h1 only inside splash-screen — fix adds persistent SEO h1 outside splash
+
+### Fixed
+- growmi + grow-worm: 1ktower.com zombie endpoint (Pitfall 20) + missing footer trio (game-footer.js + monetag-manager.js + gz-ad-below-game div)
+- 22 games: SEO h1 missing outside splash (Pitfall 43 regression, games with h1 only in splash-screen): 2048, abyss-chef, bolt-jam-3d, bounce-bot, brick-breaker, catch-turkey, color-sort, dessert-blast, flappy-wings, glyph-quest, idle-clicker, kitty-cafe, minesweeper, ocean-gem-pop, paint-splash, phantom-blade, snake, stacker, sudoku, wood-block-puzzle, word-puzzle, wordle
+
+### Stats
+- 255/255 live games (was 253 in R87, +2: growmi + grow-worm)
+- 0 R0 issues (1ktower/alwingulla/LAN IP/H1 outside splash/footer trio/splash deadlock/rAF bug/twitter:card)
+- 254/255 qa_v3 PASS (1 SSL false positive magic-tiles, curl verified HTTP 200)
+- IndexNow: growmi + grow-worm submitted (HTTP 200)
+
 ## [v1.2.0] - 2026-06-06 (R87 — Dynamic Test Intelligence cron evolution)
 
 ### Added
