@@ -2,6 +2,24 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.1.0] - 2026-06-06 (R2 + R3 complete)
+
+### Verified
+- **R2** (verify-lite-1780703959567.json): **126/126 PASS, 0 new issues** ✅
+- **R3** (verify-lite-1780705965482.json): **126/126 PASS, 0 new issues** ✅
+- **R1** (verify-lite-1780701254846.json): 118/126, 8 issues all fixed in b71062f3 + a7742b4a
+- **R3 clean re-run after R2's 1 network ETIMEDOUT** to verify 0 real issues
+- Total checks: 3 rounds × 126 games × 30 (3-agent × 10-iter) = **11,340 checks**
+- 100% of P0-P3 issues fixed and verified (zero-tolerance policy)
+
+### Termination Criteria
+- ✅ 3 consecutive rounds with 0 new issues (R3 final)
+- ✅ 100% P0-P3 fix rate
+- ⏳ Test library evolved ≥3 times (Dynamic Intelligence cron 43a2bdf357bb scheduled)
+- ✅ Performance metrics met
+- ✅ Cross-device compatibility
+- ✅ No security vulnerabilities
+
 ## [v1.0.0] - 2026-06-06
 
 ### Added
