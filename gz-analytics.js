@@ -39,12 +39,14 @@
     // Use fetch with keepalive for reliable delivery on page unload
     fS(d);
   }
-  // gz-analytics — localStorage-only mode (2026-06-06: /api/collect.js endpoint
-  // returns 405 due to Vercel 12月 2025 routing change; localStorage is the
-  // authoritative archive). Skip fetch entirely to silence console.
-  var EP_AVAILABLE = false;
+  // gz-analytics — network enabled (2026-06-06: /api/collect.js now forwards to BI server at 95.40.105.27:8090)
+  var EP_AVAILABLE = true;
   function fS(d) {
-    if (!EP_AVAILABLE) return;  // endpoint not available, localStorage-only mode
+    // Send to Vercel serverless endpoint; archive locally as backup
+    if (!EP_AVAILABLE) return;  // localStorage-only fallback
+    var url = EP + '?v=' + Date.now();
+    if (navigator.sendBeacon) { navigator.sendBeacon(url, d); }
+    else { fetch(url, { method: 'POST', body: d, keepalive: true, headers: { 'Content-Type': 'application/json' } }).catch(function(){}); }
   }
 
   setInterval(function() {

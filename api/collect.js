@@ -2,7 +2,7 @@
 // Vercel 2026 syntax: use named method exports (GET, POST) + runtime at top level
 export const runtime = 'edge';
 
-const BI_SERVER_URL = 'https://earth-textbook-qualification-newark.trycloudflare.com/api/collect';
+const BI_SERVER_URL = 'http://95.40.105.27:8090/api/collect';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
