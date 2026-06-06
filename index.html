@@ -73,7 +73,7 @@
 <link rel="preconnect" href="https://a.magsrv.com" crossorigin>
 <link rel="preload" href="/favicon.svg" as="image" type="image/svg+xml" fetchpriority="high">
 
-<link rel="preload" href="/js/games-data.js?v=2026-06-06-04h" as="script" fetchpriority="high" crossorigin>
+<link rel="preload" href="/js/games-data.js?v=2026-06-07-01h" as="script" fetchpriority="high" crossorigin>
 <!-- og-image preload removed: not LCP-critical, saves bandwidth for game cards -->
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
@@ -1197,7 +1197,7 @@ html{transition:background-color .3s,color .3s}
 (function(){var f=JSON.parse(localStorage.getItem('gz_favs')||'[]');if(!f.length)return;var stats=document.querySelector('.stats');if(!stats)return;var span=document.createElement('span');span.style.cssText='color:#ff6b6b';span.innerHTML='♥ <span>'+f.length+'</span> Favorites';stats.appendChild(span)})();
 </script>
 <script>if(!("scheduler" in window))window.scheduler={yield:function(){return new Promise(function(r){setTimeout(r,0)})}};</script>
-<script src="/js/games-data.js?v=2026-06-06-18h" defer></script>
+<script src="/js/games-data.js?v=2026-06-07-01h" defer></script>
 <script>
 // Wait for deferred games-data.js to load before rendering (FCP/LCP optimization)
 // The inline script below must execute after GAMES is defined
@@ -1302,9 +1302,17 @@ document.getElementById('games').addEventListener('click',function(e){var tag=e.
       if(next>=0&&next<cards.length){e.preventDefault();cards[next].focus()}
     });
   })();
-  // Ripple click effect on game cards
-  document.querySelectorAll('.game-card').forEach(function(card){
-    card.addEventListener('pointerdown',function(e){
+  // Ripple click effect on game cards — UX-OPT 2026-06-07 01h: event delegation (1 handler instead of 260)
+  // INP-OPT: per-card listeners create 260 closures on initial render; delegating to #games
+  // (which already hosts click + keydown + mouseover handlers) reduces handler count to 1.
+  // The 260 addEventListener calls themselves added ~1-2ms to render() — measurable on slow devices.
+  // IMPORTANT: attach ONCE (guard via _gzRippleBound) since render() is called repeatedly (initial,
+  // filter, show-more, bfcache restore) and a bare addEventListener would stack duplicates.
+  if(!window._gzRippleBound){
+    window._gzRippleBound=true;
+    document.getElementById('games').addEventListener('pointerdown',function(e){
+      var card=e.target.closest&&e.target.closest('.game-card');
+      if(!card||e.button!==undefined&&e.button!==0)return;
       var rect=card.getBoundingClientRect();
       var size=Math.max(rect.width,rect.height);
       var ripple=document.createElement('span');
@@ -1314,7 +1322,7 @@ document.getElementById('games').addEventListener('click',function(e){var tag=e.
       card.appendChild(ripple);
       setTimeout(function(){ripple.remove()},600);
     });
-  });
+  }
   // Insert mid-grid ad after 20th game card
   if(list.length > 20){
     var cards = document.getElementById('games').querySelectorAll('.game-card');
@@ -1404,7 +1412,7 @@ function gzUpdateShowMoreBtn(){var w=document.getElementById('gz-show-more-wrap'
 
 // Solution: detect bfcache restore, reload games-data.js, then re-render.
 (function() {
-  var GAMES_SCRIPT = '/js/games-data.js?v=2026-06-06-04h';
+  var GAMES_SCRIPT = '/js/games-data.js?v=2026-06-07-01h';
   var grid = document.getElementById('games');
   if (!grid) return;
   function needsRender() { return grid.querySelectorAll('.game-card').length === 0; }
