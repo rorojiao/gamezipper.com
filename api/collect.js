@@ -1,8 +1,6 @@
-// Vercel Edge Function — gz-analytics proxy
-// Vercel 2026 syntax: use named method exports (GET, POST) + runtime at top level
-export const runtime = 'edge';
-
-const BI_SERVER_URL = 'http://95.40.105.27:8090/api/collect';
+// Vercel Serverless Function — gz-analytics proxy (POST-safe, no edge runtime)
+// Remove 'runtime=edge' to avoid Vercel routing-layer POST blocking
+const BI_SERVER_URL = 'https://timeline-administrative-affiliation-taxi.trycloudflare.com/api/collect';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
