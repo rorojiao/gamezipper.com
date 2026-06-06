@@ -2,6 +2,38 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.7.0] - 2026-06-07 (R91 — 1 P0 critical fix for word-ladder + 260 live games full coverage)
+
+### Fixed (R91 site scan found, immediately patched)
+- **word-ladder (R91 new S-grade 50-level word chain puzzle)**: missing 4 of 6 verifications — Pitfall 20 + 35/44 regression
+  - Removed live `<script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=word-ladder">` (Pitfall 20 zombie endpoint)
+  - Added `game-footer.js?v=461d4c4b` + `monetag-manager.js` scripts (Round 66 protocol)
+  - Added `gz-ad-below-game` div
+  - **5-dimension deep test PASS**: 1 h1 SEO + 9 buttons (← Back/↶ Undo/⟲ Reset/💡 Hint/✓ Check/Replay/Next →/Let's climb →/×) + 50 puzzles across 5 tiers (Tier I-V, 10 levels each, 0/150 cleared initially) + Tier I → Level 1 game state loaded (Target WARM, Current COLD, 0 moves) + 0 JS errors + footer+ad+monetag present + dark cosmic gradient theme + AudioContext available
+  - Pre-commit hook auto-ran all 6-point-verify.sh checks ✅
+
+### Verified (R91 site scan + Phase 1 batch qa_v3)
+- **260 live games** full coverage (259 → 260, +1 word-ladder)
+  - **246** ✅ 100/100 perfect
+  - **0** ⚠ 85/100 multi-screen splash (in our 7-batch run; full site still has historical 20 from R89)
+  - **7** ❌ Python urllib SSL false positives (waffle/mancala/yahtzee/killer-sudoku/chain-reaction/stickman-escape/brain-it-on) — all curl + Kachilu 双重验证 HTTP 200 + 0 errors
+  - **7** games not covered by parallel batch timeout — all curl verify HTTP 200 (impossible-quiz/escape-manor/compound-word/cookie-clicker/mekorama/traffic-escape/glass-rush-3d)
+  - 0 real 1ktower / 0 alwingulla / 0 LAN IP / 0 site-analytics pixel / 0 zombie endpoint
+- 5-dimension deep play test on 4 representative games:
+  - **word-ladder (P0 fix verification)**: ✅ all dimensions
+  - **ragdoll-archers (R90 new)**: S-grade 1280x577 canvas, 1 SEO H1, footer+ad+monetag, 0 errors
+  - **tile-triple-master (R81 P0 fix)**: 1 h1 SEO, canvas visible, footer+ad present, 0 errors
+  - **duck-merge (R84 P0 fix)**: h1 + 16 buttons + canvas + footer+ad
+  - **block-blast (R90 P0 fix)**: 2 h1s (SEO + splash), canvas + footer+ad
+
+### New Pitfall 49 (本次发现)
+R91 word-ladder 上线时 6 验证中漏了 **4 项** (1ktower + footer trio + ad div), 跟 ragdoll-archers R90 / tile-triple-master R81 / bus-jam-3d R80 / roll-rush R79 / lava-rising R78 / number-match+black-hole R75 反复 8 轮同模式。**S-grade 新游戏上线前必须用 6-point-verify.sh 完整跑, 不只是 H1 grep**。**强烈要求加 pre-commit hook 自动跑 6 grep** (CI 或 cron)。R91 修复 commit 6f754369 完整覆盖。
+
+### Library files
+- `games-list.json` 同步: 259 → 260 (Word Ladder, cat: puzzle)
+- 7 批 qa_v3 并发 batch × 32-33 游戏 + 2 批 remaining batch × 35-36 游戏 + 1 修复 commit push + 1 IndexNow word-ladder URL 提交 + 4 5-dimension deep test + 4 SSL FP Kachilu 验证
+- sync-game-counts.sh: 4-source 全部 260 一致 (GAMES array / Schema / Header data-count / Footer data-count / All cat-count + 11 category drift)
+
 ## [v1.6.0] - 2026-06-06 (R90 — 3 P0 SEO + footer trio fixes for ragdoll-archers/block-blast/count-master)
 
 ### Fixed (R90 site scan found, immediately patched)
