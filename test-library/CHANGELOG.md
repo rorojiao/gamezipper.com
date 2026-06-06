@@ -2,6 +2,46 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.4.0] - 2026-06-06 (R89 — Dynamic Test Intelligence cron evolution, 14 new test cases)
+
+### Added
+- **14 new test cases** (186 → 200) from June 2026 CVE disclosure wave + Safari 26.4 release + AI visual regression research + PWA/SW coverage
+- **Category 8: 2026-Q2 EMERGING THREATS** (R89):
+  - **B-009 [P0]** Edge UXSS CVE-2026-45494 (CVSS 5.0, ZDI-26-330) — Universal XSS via navigation event mishandling
+  - **B-010 [P0]** Edge Directory Traversal RCE CVE-2026-45495 (CVSS 7.5, ZDI-26-331) — full RCE via cross-device sign-in
+  - **B-011 [P0]** Chrome V8 Type Confusion CVE-2026-6363 — OOB memory write, RCE on game page
+  - **B-012 [P1]** Edge Origin Validation Bypass CVE-2026-45492 (CVSS 4.3, ZDI-26-329) — chainable
+  - **B-013 [P1]** Safari 26.4 WebTransport support — low-latency UDP game server protocol
+  - **B-014 [P2]** Safari 26.4 CSS Grid Lanes (masonry layout)
+  - **B-015 [P1]** Safari 26.4 Keyboard Lock API for fullscreen games
+  - **P-016 [P1]** Canvas pixel-change visual regression (arXiv 2208.02335 methodology)
+  - **P-017 [P2]** Gameplay state diff (text + DOM + score, not just pixels)
+  - **B-016 [P2]** Interop 2026 cross-browser baseline (Chrome 149/Firefox 147/Edge 137/Safari 26.4)
+  - **PC-009 [P2]** Shift-Right live playtesting feedback button
+  - **PC-010 [P2]** AI-driven QA smoke test (≤ 60s Playwright run)
+- **Category 9: PWA / OFFLINE / SERVICE WORKER**:
+  - **PWA-001 [P1]** No stale service worker blocks new game load
+  - **PWA-002 [P2]** localStorage and IndexedDB persistence across reload
+
+### Stats
+- 200 total test cases (was 186 in v1.2.0, +14)
+- P0: 62 (was 59, +3 Edge/V8 CVEs)
+- P1: 75 (was 71, +4)
+- P2: 49 (was 45, +4)
+- P3: 11 (no new)
+- Categories: 9 (added Cat 8: 2026-Q2 Threats R89 + Cat 9: PWA/Offline)
+
+### Sources
+- **Edge Pwn2Own CVEs** (2026-06-04 disclosure): https://cyberpress.org/microsoft-edge-vulnerability — CVE-2026-45492/45494/45495
+- **ZDI Advisories**: https://www.zerodayinitiative.com/advisories/ZDI-26-329/ (CVE-2026-45492), /ZDI-26-330/ (CVE-2026-45494), /ZDI-26-331/ (CVE-2026-45495)
+- **Chrome V8 CVE-2026-6363**: https://windowsforum.com/threads/cve-2026-6363-v8-type-confusion-chrome-147-fix-and-edge-patch-timeline.413791 (Chrome 147+ fix timeline)
+- **Safari 26.4 (44 features + 191 fixes)**: https://developmentstoday.com/news/safari-26-4-new-features-bug-fixes-2026 — CSS Grid Lanes, WebTransport, Keyboard Lock API
+- **Interop 2026**: https://howtogeek.com/chrome-firefox-edge-and-safari-are-teaming-up-to-fix-common-web-problems (Chrome/Firefox 99%, Edge/Safari 98% baseline)
+- **Visual Bug Detection (arXiv 2208.02335)**: https://arxiv.org/abs/2208.02335 — 100% accuracy on 24 injected canvas bugs vs 44.6% for snapshot testing
+- **SnoopGame 2026 Trends**: https://snoopgame.com/blog/top-game-testing-trends-to-watch-in-2026 — AI-driven QA, accessibility, shift-right testing
+- **Chrome 149.0.7827.54 Stable** (May 2026 release — current stable)
+- **WebTransport API** (MDN): https://developer.mozilla.org/en-US/docs/Web/API/WebTransport
+
 ## [v1.3.0] - 2026-06-06 (R88 — growmi + grow-worm new games + 22 H1 fixes)
 
 ### Added
