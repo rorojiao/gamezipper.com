@@ -5,8 +5,9 @@
 (function() {
   var SITE = 'gamezipper.com';
   // Direct tunnel URL: browser → Cloudflare Tunnel → BI server (10.10.29.67:8090)
-  // Bypasses Vercel Edge Function POST 405 blocking issue
-  var EP = 'https://timeline-administrative-affiliation-taxi.trycloudflare.com/api/collect';
+  // Tunnel: cloudflared systemd service (auto-restart on failure)
+  // NOTE: If tunnel URL changes, update this and redeploy
+  var EP = 'https://san-seed-consortium-checklist.trycloudflare.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
