@@ -73,7 +73,7 @@
 <link rel="preconnect" href="https://a.magsrv.com" crossorigin>
 <link rel="preload" href="/favicon.svg" as="image" type="image/svg+xml" fetchpriority="high">
 
-<link rel="preload" href="/js/games-data.js?v=2026-06-07-01h" as="script" fetchpriority="high" crossorigin>
+<link rel="preload" href="/js/games-data.js?v=2026-06-07-03h" as="script" fetchpriority="high" crossorigin>
 <!-- og-image preload removed: not LCP-critical, saves bandwidth for game cards -->
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
@@ -1197,7 +1197,7 @@ html{transition:background-color .3s,color .3s}
 (function(){var f=JSON.parse(localStorage.getItem('gz_favs')||'[]');if(!f.length)return;var stats=document.querySelector('.stats');if(!stats)return;var span=document.createElement('span');span.style.cssText='color:#ff6b6b';span.innerHTML='♥ <span>'+f.length+'</span> Favorites';stats.appendChild(span)})();
 </script>
 <script>if(!("scheduler" in window))window.scheduler={yield:function(){return new Promise(function(r){setTimeout(r,0)})}};</script>
-<script src="/js/games-data.js?v=2026-06-07-01h" defer></script>
+<script src="/js/games-data.js?v=2026-06-07-03h" defer></script>
 <script>
 // Wait for deferred games-data.js to load before rendering (FCP/LCP optimization)
 // The inline script below must execute after GAMES is defined
@@ -1273,35 +1273,8 @@ function render(list){
   }else{
     document.querySelectorAll('.game-card').forEach(function(c){c.classList.add('visible')});
   }
-  // INP-OPT: Event delegation for tag clicks (1 handler instead of ~60 inline onclick)
-document.getElementById('games').addEventListener('click',function(e){var tag=e.target.closest('.tag[data-tag]');if(tag){e.preventDefault();e.stopPropagation();filter(tag.dataset.tag,tag.closest('.game-card'))}});
-// Keyboard arrow-key navigation for game grid
-  (function(){
-    var cards=document.querySelectorAll('.game-card');
-    if(!cards.length)return;
-    function getGridCols(){
-      var cs=getComputedStyle(cards[0].parentElement);
-      var gridCols=cs.getPropertyValue('grid-template-columns').split(' ').length;
-      return gridCols||4;
-    }
-    document.getElementById('games').addEventListener('keydown',function(e){
-      var focused=document.activeElement;
-      if(!focused||!focused.classList.contains('game-card'))return;
-      var cards=Array.from(document.querySelectorAll('.game-card'));
-      var idx=cards.indexOf(focused);
-      if(idx<0)return;
-      var cols=getGridCols();
-      var next=-1;
-      switch(e.key){
-        case'ArrowRight':next=idx+1;break;
-        case'ArrowLeft':next=idx-1;break;
-        case'ArrowDown':next=idx+cols;break;
-        case'ArrowUp':next=idx-cols;break;
-        default:return;
-      }
-      if(next>=0&&next<cards.length){e.preventDefault();cards[next].focus()}
-    });
-  })();
+  // INP-OPT: event delegations moved OUTSIDE render() to prevent handler stacking.
+  // (See 2026-06-07 03h fix — was re-binding click + keydown on every render() call.)
   // Ripple click effect on game cards — UX-OPT 2026-06-07 01h: event delegation (1 handler instead of 260)
   // INP-OPT: per-card listeners create 260 closures on initial render; delegating to #games
   // (which already hosts click + keydown + mouseover handlers) reduces handler count to 1.
@@ -1336,6 +1309,47 @@ document.getElementById('games').addEventListener('click',function(e){var tag=e.
     }
   }
 }
+
+// INP-OPT 2026-06-07 03h: Click + keydown delegations moved OUTSIDE render().
+// Previous implementation added `addEventListener('click')` and `addEventListener('keydown')`
+// on every render() call (initial load + filter + show-more + bfcache restore = 4+ calls).
+// After 5 filter() cycles: 5 click + 5 keydown listeners stacked on #games, so a single
+// tag click would invoke filter() 5 times → 5 render() calls → 5 more listeners → quadratic
+// degradation. Hard Rule #25 (per-render handler leak) extension. Both delegations attach
+// ONCE guarded by _gzTagClickBound + _gzKeyNavBound. Same fix pattern as _gzRippleBound.
+(function(){
+  if(window._gzTagClickBound)return;
+  window._gzTagClickBound=true;
+  var games=document.getElementById('games');
+  // Tag click delegation — clicking a `.tag[data-tag]` span filters by that tag.
+  games.addEventListener('click',function(e){
+    var tag=e.target.closest&&e.target.closest('.tag[data-tag]');
+    if(!tag)return;
+    e.preventDefault();e.stopPropagation();
+    filter(tag.dataset.tag,tag.closest('.game-card'));
+  });
+  // Arrow-key navigation for game grid — re-queries cards on each keydown so it stays
+  // correct after re-render (show-more appends new cards). Uses grid-template-columns
+  // computed value to determine cols, falls back to 4.
+  games.addEventListener('keydown',function(e){
+    var focused=document.activeElement;
+    if(!focused||!focused.classList.contains('game-card'))return;
+    var cards=Array.from(document.querySelectorAll('.game-card'));
+    var idx=cards.indexOf(focused);
+    if(idx<0)return;
+    var cs=getComputedStyle(games);
+    var cols=cs.getPropertyValue('grid-template-columns').split(' ').length||4;
+    var next=-1;
+    switch(e.key){
+      case'ArrowRight':next=idx+1;break;
+      case'ArrowLeft':next=idx-1;break;
+      case'ArrowDown':next=idx+cols;break;
+      case'ArrowUp':next=idx-cols;break;
+      default:return;
+    }
+    if(next>=0&&next<cards.length){e.preventDefault();cards[next].focus()}
+  });
+})();
 
 var _gzFT=null;function filter(cat,btn){if(_gzFT)clearTimeout(_gzFT);_gzFT=setTimeout(function(){_gzFDo(cat,btn)},80);return}function _gzFDo(cat,btn){
   document.querySelectorAll('.cat-btn').forEach(b=>{b.classList.remove('active');b.removeAttribute('aria-current')});
@@ -1412,7 +1426,7 @@ function gzUpdateShowMoreBtn(){var w=document.getElementById('gz-show-more-wrap'
 
 // Solution: detect bfcache restore, reload games-data.js, then re-render.
 (function() {
-  var GAMES_SCRIPT = '/js/games-data.js?v=2026-06-07-01h';
+  var GAMES_SCRIPT = '/js/games-data.js?v=2026-06-07-03h';
   var grid = document.getElementById('games');
   if (!grid) return;
   function needsRender() { return grid.querySelectorAll('.game-card').length === 0; }
