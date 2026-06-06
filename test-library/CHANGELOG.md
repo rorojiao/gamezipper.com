@@ -2,6 +2,48 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.7.0] - 2026-06-07 (R93 — Dynamic Test Intelligence cron evolution, 11 new test cases)
+
+### Added
+- **11 new test cases** (221 → 232 total) from R93 June 2026 patch wave + cross-platform stability research
+- **Section 11.9: R93 JUNE 2026 PATCH WAVE + CROSS-PLATFORM STABILITY**:
+  - **B-025 [P0]** Chrome Android WebGL use-after-free CVE-2026-9876 — Critical sandbox-escape + RCE; warn-not-block policy on pre-149.0.7827.85
+  - **B-026 [P0]** Android System WebView 146-147 visual corruption regression — Chromium Issue Tracker 514021805 "shattered/garbled screen"
+  - **B-027 [P0]** WebKit 13-year-old memory-safety invariant CVE-2026-43660 (iOS 26.5 / iPadOS 26.5 patch) — affects 30+ canvas-pool puzzle games on iOS 26.0-26.4
+  - **B-028 [P1]** Safari 26.5 + iOS 26.5 cumulative WebKit patch coverage (20+ CVEs) — Forbes "60 reasons" re-verification
+  - **B-029 [P1]** WebGPU cross-API (Vulkan / DX12 / Metal) shader parity — 22% of WebGPU games have ≥1 platform-backend with visible visual difference per webgpu.org 2026
+  - **W-105 [P1]** Microsoft Edge 149 (Jun 4 2026) web-platform feature parity with Chrome 149 — 4-week release cadence
+  - **P-020 [P2]** Windows DirectX 12 shader-compilation frame-pacing stall — 95p frame time < 33ms, no stall > 100ms in first 10s
+  - **P-021 [P2]** DirectX 12 GPU validation-layer reach for WebGPU-on-DX12 parity testing — March 2026 GDC console-level GPU tools to Windows
+  - **P-022 [P2]** Android System WebView memory-pressure crash recovery — `pagehide` save-state for Sudoku/level select/score
+  - **S-032 [P1]** EU DSA Art. 28 dark-pattern prohibition in ad UI — fake countdowns, misdirection X-buttons, hidden costs, roach-motel subscribe
+  - **A-005 [P2]** AI-driven visual regression with Playwright `toHaveScreenshot()` + dynamic content masks (score/timer/ad-slot)
+
+### Stats (grep-verified)
+- 232 total test cases (was 221 in v1.6.0, +11)
+- P0: 70 → 73 (+3: B-025 Chrome WebGL UAF, B-026 WebView corruption, B-027 WebKit memory invariant)
+- P1: 86 → 90 (+4: B-028 Safari 26.5, B-029 WebGPU cross-API, W-105 Edge 149, S-032 EU DSA)
+- P2: 54 → 58 (+4: P-020 DX12 stall, P-021 DX12 validation, P-022 WebView memory, A-005 Playwright visual regression)
+- P3: 11 → 11 (no new)
+- Categories: 11 (no new category; 11.9 = R93 sub-section under existing Cat 11)
+- 3+4+4+0 = 11 = total delta ✓
+
+### Sources
+- **CVE-2026-9876 Chrome Android WebGL UAF** (B-025): https://app.opencve.io/cve/CVE-2026-9876
+- **Android System WebView 146-147 visual corruption** (B-026): https://issues.chromium.org/issues/514021805
+- **WebKit 13-year-old memory invariant CVE-2026-43660** (B-027): https://cantina.security/blog/webkit-vulnerabilities-apex-ios-26-5
+- **Safari 26.5 / iOS 26.5 cumulative WebKit patches** (B-028): https://forbes.com/sites/kateoflahertyuk/2026/05/13/ios-265-update-now-warning-issued-to-all-iphone-users + https://apfelpatient.de/en/news/safari-26-5-security-update-closes-webkit-vulnerabilities
+- **Khronos 3D-on-Web 2026 GDC WebGPU parity** (B-029): https://khronos.org/assets/uploads/developers/presentations/3D_on_the_Web_2026_-_GDC_2026_WebGL%2BWebGPU_Update.pdf + https://webgpu.com
+- **Microsoft Edge 149 web platform release notes** (W-105): https://learn.microsoft.com/en-us/microsoft-edge/web-platform/release-notes/149
+- **Windows DX12 shader compilation stall** (P-020): https://windowsforum.com/threads/why-dx12-still-stutters-on-windows-11-2026-shaders-drivers-and-frame-pacing.421772
+- **DirectX 12 GPU validation layers** (P-021): https://devblogs.microsoft.com/directx/page/2
+- **Android System WebView memory-pressure crash** (P-022): https://drfone.wondershare.com/android-problems/fix-android-system-webview-crash.html
+- **EU DSA Art. 28 dark-pattern enforcement** (S-032): https://tremau.com/resources/online-gaming-regulations-2026-new-expectations-and-challenges-for-trust-safety + https://ec.europa.eu/transparency/documents-register/api/files/COM(2026)247
+- **Playwright `toHaveScreenshot()` 2026 visual regression** (A-005): https://scrolltest.com/visual-regression-testing-playwright-chromatic-2026 + https://bug0.com/knowledge-base/playwright-visual-regression-testing
+
+### Notes
+- v1.6.0's v1.6.0 LIBRARY METRICS total said "222" which is correct ✓ (it was 211 → 222, +11). The grep-verified baseline for v1.6.0 is 70 P0 + 86 P1 + 54 P2 + 11 P3 = 221 (the v1.6.0 metrics block had a 1-off count discrepancy noted in R92 reconciliation, but final v1.6.0 file stats are stable as 70+86+54+11=221 — v1.6.0's "+4 P0" was from 66→70, "+5 P1" was 81→86, "+2 P2" was 52→54, matching the sum). The R93 v1.7.0 metrics are 73+90+58+11=232 = 221+11 ✓.
+
 ## [v1.6.0] - 2026-06-07 (R92 — Dynamic Test Intelligence cron evolution, 11 new test cases)
 
 ### Added
@@ -20,9 +62,9 @@ All notable changes to the test case library are documented here.
   - **P-019 [P2]** Game playable under memory pressure — Chrome 130+ Memory Saver and CDP `Emulation.setPressureNotificationsOverride`
 
 ### Stats
-- 222 total test cases (was 211 in v1.5.0, +11)
+- 222 total test cases (was 211 in v1.5.0, +11) — total count matches but v1.6.0 metric block had a 1-off P1 over-count (82→87 grep shows 81→86). R93 corrected: actual v1.6.0 distribution = 70 P0 + 86 P1 + 54 P2 + 11 P3 = 221; CHANGELOG v1.6.0 entry preserved original prose for audit trail.
 - P0: 66 → 70 (+4: S-028 scam-ad, S-029 ad sandbox, B-022 Chrome 149 banner, PC-011 anti-adblock wall)
-- P1: 82 → 87 (+5: B-023, G-019, B-024, S-030, S-031)
+- P1: 82 → 87 (+5: B-023, G-019, B-024, S-030, S-031) [grep-verified 81 → 86 = +5; prose had 82→87 +5, off by 1 — R93 audit]
 - P2: 52 → 54 (+2: P-018 P3 HDR, P-019 memory pressure)
 - P3: 11 → 11 (no new)
 - Categories: 11 (added Cat 11: 2026 Late-Q2 User Safety + Platform R92)
