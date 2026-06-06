@@ -29,7 +29,7 @@ console.log(n);
 
 # The current GAMES count is the ONLY allowed number in user-visible text.
 # Any other number (229, 230, 240, 244, ..., 254) means stale.
-STALE_PATTERN='\b(229|230|240|244|245|246|247|248|250|252|253|254)\b'
+STALE_PATTERN='\b(229|230|240|244|245|246|247|248|250|251|252|253|254|255|256|257|258)\b'
 
 echo "=== GameZipper User-Visible Text Sync Check (Hard Rule #15) ==="
 echo "GAMES array (truth): $GAMES_COUNT"
