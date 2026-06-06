@@ -1,6 +1,6 @@
 // Vercel Serverless Function — gz-analytics proxy (POST-safe, no edge runtime)
 // Remove 'runtime=edge' to avoid Vercel routing-layer POST blocking
-const BI_SERVER_URL = 'https://inflation-formal-listed-alert.trycloudflare.com/api/collect';
+const BI_SERVER_URL = 'https://ranging-regularly-explain-duo.trycloudflare.com/api/collect';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
