@@ -2,6 +2,46 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.6.0] - 2026-06-07 (R92 — Dynamic Test Intelligence cron evolution, 11 new test cases)
+
+### Added
+- **11 new test cases** (211 → 222 total) from R92 June 2026 player-safety + platform-matrix research
+- **Category 11: 2026 LATE-Q2 USER SAFETY + PLATFORM (R92)**:
+  - **S-028 [P0]** Fake-system-alert creative IAB protection — inspired by Malwarebytes 2026-06 report of in-game ad creatives impersonating "Your device is infected!", "iCloud full", "8 viruses detected" scam popups
+  - **S-029 [P0]** Ad iframe sandboxed with `sandbox="allow-scripts allow-same-origin"` (no allow-top-navigation) — defense-in-depth against ad creative forcing parent navigation
+  - **B-022 [P0]** Chrome 149+ required with critical-CVE banner — Forbes 2026-06-05 confirms Chrome 149 patches 429 vulnerabilities including 22 critical; 3.5B users affected
+  - **B-023 [P1]** WebGPU games gracefully fall back to WebGL on pre-Chrome-146 or older-GPU devices — Chrome 146 (Feb 2026) ships `compatibilityMode: true` adapter request
+  - **G-019 [P1]** WebGPU adapter capability detection must include `compatibility-mode-capable` feature check
+  - **B-024 [P1]** Safari 26 Metal-based WebGPU produces ~8% different visual outcomes vs Chromium Dawn — must be Playwright-tested on real macOS M-series
+  - **P-018 [P2]** P3 HDR color-profile render verification — Safari 26 supports full P3 HDR (100/100); Chromium Mac only 85/100
+  - **PC-011 [P0]** No ad-blocker detection wall or anti-adblock full-page block — Reddit 2026-05 forced-app overlay backlash lesson
+  - **S-030 [P1]** IAB TCF v2.2 consent string on ad-call URLs — IAB Europe TCF v2.2 mandatory 2025-11; €20M+ GDPR fine risk
+  - **S-031 [P1]** Ad iframe + `referrerpolicy="no-referrer"` + `credentialless` — layered defense complementing S-027/S-029/S-026
+  - **P-019 [P2]** Game playable under memory pressure — Chrome 130+ Memory Saver and CDP `Emulation.setPressureNotificationsOverride`
+
+### Stats
+- 222 total test cases (was 211 in v1.5.0, +11)
+- P0: 66 → 70 (+4: S-028 scam-ad, S-029 ad sandbox, B-022 Chrome 149 banner, PC-011 anti-adblock wall)
+- P1: 82 → 87 (+5: B-023, G-019, B-024, S-030, S-031)
+- P2: 52 → 54 (+2: P-018 P3 HDR, P-019 memory pressure)
+- P3: 11 → 11 (no new)
+- Categories: 11 (added Cat 11: 2026 Late-Q2 User Safety + Platform R92)
+
+### Sources
+- **Malwarebytes Fake Virus Alerts in Mobile Games (2026-06)**: https://malwarebytes.com/blog/mobile/2026/06/fake-virus-alerts-are-invading-mobile-games — "Your device is infected!", "8 viruses detected" scam-ad creatives hijack mobile games
+- **Forbes Chrome 149 429-Patch Record (2026-06-05)**: https://forbes.com/sites/daveywinder/2026/06/05/google-chrome-149-new-update-fixes-429-security-flaws-22-critical — 3.5B users affected, 22 critical
+- **WebGPU Compatibility Mode (Chrome 146, Feb 2026)**: https://developer.chrome.com/blog/new-in-webgpu-146 + https://github.com/gpuweb/gpuweb/wiki/Implementation-Status
+- **Safari 26 WebGPU Compatibility Scorecard 2026 (Mac M4)**: https://macwww.com/en/blog/articles/2026-safari-compatibility-testing-playwright-remote-mac.html — Safari 26 100/100 vs Chromium 92/100 vs Firefox 88/100 shader parity
+- **Khronos 3D-on-Web 2026 GDC WebGL+WebGPU Update**: https://khronos.org/assets/uploads/developers/presentations/3D_on_the_Web_2026_-_GDC_2026_WebGL%2BWebGPU_Update.pdf — 15% rendering bugs miss on Windows/Linux cloud
+- **Reddit 2026-05 Forced App Overlay Backlash**: https://business20channel.tv/reddit-blocks-mobile-web-users-2026-forced-app-strategy-spar-10-may-2026 + https://futurism.com/future-society/how-to-get-rid-of-reddit-app-popup
+- **IAB TCF v2.2 (mandatory 2025-11)**: IAB Europe Transparency & Consent Framework v2.2 specification
+- **Chrome 130 Memory Saver + CDP Pressure Override**: https://developer.chrome.com/release-notes/130 + MDN `Performance.measureUserAgentSpecificMemory()`
+
+### Coverage Delta
+- 7 user-policy dimensions + 2026-Q2 industry research + GDC 2026 GASIG + R91 May 2026 late-emerging threats (clickjacking, browser CVEs, HTML-in-Canvas, shader warmup) + R92 June 2026 player-safety (scam-ad IAB, anti-adblock wall) + R92 platform-matrix (WebGPU compat mode, Safari 26 Metal vs Dawn, TCF v2.2, memory pressure CDP)
+- Library now 222 cases; v1.0.0 → v1.6.0 = +128 cases (94 → 222) over 7 evolutions
+- Dynamic Test Intelligence cron: 4h tick verified, library consistently evolving
+
 ## [v1.7.0] - 2026-06-07 (R91 — 1 P0 critical fix for word-ladder + 260 live games full coverage)
 
 ### Fixed (R91 site scan found, immediately patched)
