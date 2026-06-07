@@ -287,6 +287,7 @@ const GAMES = [
   {name:"Grow Worm",emoji:"🐛",cat:"puzzle",tags:["Puzzle","Snake","Grow","Logic","Brain","Worm","Magnet","Teleporter","Casual","Browser","Free","HTML5"],url:"/grow-worm/",desc:"Play Grow Worm free online! Slither through 25 hand-crafted puzzles across 5 worlds. Collect stars to grow, master magnets, teleporters, and spikes in this satisfying snake-puzzle. No download needed!",isNew:true,status:"live"},
   {name:"Ragdoll Archers",emoji:"\U0001f3f9",cat:"arcade",tags:["Archery","Ragdoll","Stickman","Bow","Arrow","Physics","Wave","Boss","Casual","Browser","Free","HTML5"],url:"/ragdoll-archers/",desc:"Play Ragdoll Archers online free! Stickman archery battle with ragdoll physics across 30 levels across 3 tiers. Shoot waves of enemies, collect apples, unlock 4 special arrows (fire, electric, ice, bomb) and defeat epic bosses. No download required.",isNew:true,status:"live"},
 {name:"Word Ladder",emoji:"W",cat:"puzzle",tags:["word","puzzle","letters","vocabulary","word-chain"],url:"/word-ladder/",desc:"Climb the word ladder. Mutate one letter at a time to morph one word into another across 50 hand-crafted puzzles.",isNew:true,status:"live"},
+{name:"Fill Glass",emoji:"",cat:"puzzle",tags:["water","drawing","physics","puzzle","casual"],url:"/fill-glass/",desc:"Draw lines to guide water into the glass! 30 levels of satisfying physics puzzles.",isNew:true,status:"live"},
 ];
 
 /**
