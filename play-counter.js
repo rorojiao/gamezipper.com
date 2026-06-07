@@ -1,7 +1,9 @@
 (function() {
   'use strict';
-  
-  const ANALYTICS_URL = 'https://site-analytics.gamezipper.com';
+
+  // R97 P0 fix: site-analytics.gamezipper.com endpoint returns HTTP 501 (dead).
+  // Disabled network fetch — play count badge feature is no-op until endpoint is restored.
+  const ANALYTICS_URL = ''; // empty = disabled
   const SITE = 'gamezipper.com';
   
   function formatCount(n) {
@@ -89,6 +91,8 @@
   }
   
   function init() {
+    // R97 P0 fix: skip network fetch when ANALYTICS_URL is empty (dead endpoint)
+    if (!ANALYTICS_URL) return;
     fetch(ANALYTICS_URL + '/stats', { mode: 'cors' })
       .then(r => r.json())
       .then(stats => {

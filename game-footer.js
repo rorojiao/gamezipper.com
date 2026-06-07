@@ -1,16 +1,13 @@
 (function(){
- // BI tracking â defer to requestIdleCallback so it never blocks page render
- function sendBI() {
-   try {
-     var img = new Image();
-     img.src = 'https://site-analytics.gamezipper.com/hit?s=' + encodeURIComponent(location.hostname || 'gamezipper.com') + '&p=' + encodeURIComponent(location.pathname || '/') + '&t=' + Date.now();
-   } catch (e) {}
- }
- if ('requestIdleCallback' in window) {
-   requestIdleCallback(sendBI);
- } else {
-   setTimeout(sendBI, 200);
- }
+ // BI tracking disabled — site-analytics.gamezipper.com endpoint returns HTTP 501 (dead).
+ // R97 P0 fix: removed dead 1x1 img pixel that was firing on every game page load.
+ // Will be re-enabled when a working BI endpoint is deployed.
+ function sendBI() { /* disabled - dead endpoint removed by R97 */ }
+ // if ('requestIdleCallback' in window) {
+ //   requestIdleCallback(sendBI);
+ // } else {
+ //   setTimeout(sendBI, 200);
+ // }
 
  // Respect user dismissal â use sessionStorage so it persists within the tab
  if (sessionStorage.getItem('gz-footer-dismissed')) return;
