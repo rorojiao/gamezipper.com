@@ -44,8 +44,14 @@ else
   echo "✅ H1: $H1_COUNT"
 fi
 
-# 3. META description
-META_DESC=$(grep -oE 'meta name="description"[^>]*content="[^"]*"' index.html | head -1 | grep -oE 'Play [0-9]+ free')
+# 3. META description (catches both attribute orderings: name=...content= and content=...name=)
+META_DESC=$(grep -oE '<meta[^>]*name="description"[^>]*>' index.html | head -1 | grep -oE 'Play [0-9]+ free')
+if [ -z "$META_DESC" ]; then
+  META_DESC=$(grep -oE '<meta[^>]*content="Play [0-9]+ free[^"]*"[^>]*name="description"[^>]*>' index.html | head -1 | grep -oE 'Play [0-9]+ free')
+fi
+if [ -z "$META_DESC" ]; then
+  META_DESC=$(grep -oE 'content="Play [0-9]+ free[^"]*"' index.html | head -1 | grep -oE 'Play [0-9]+ free')
+fi
 if [ -n "$META_DESC" ]; then
   META_NUM=$(echo "$META_DESC" | grep -oE '[0-9]+')
   if [ "$META_NUM" != "$GAMES_COUNT" ]; then
