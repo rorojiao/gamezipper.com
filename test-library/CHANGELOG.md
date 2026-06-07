@@ -3,6 +3,55 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.12.0] - 2026-06-07 (R95 — Dynamic Test Intelligence cron evolution, 10 new test cases)
+
+### Notes (R95 version label)
+- v1.10.0 (commit eca46c1b) and v1.11.0 (commit 11fad573) in CHANGELOG are R93/R95 sync-only entries (no master file on disk). R95 library evolution skips both to land at **v1.12.0**. Follows runbook Pitfall 23 (CHANGELOG label collision).
+
+### Added
+- **10 new test cases** (242 → 253 total — Note: 1 extra P1 (W-038) surfaced from R95 sed-clean of v1.4.0 `||` pipe-typo pollution in v1.9.0 history block, see Note below) from R95 June 2026 CVE wave + Chrome 149 baseline + WCAG 2.2 + iOS Safari research
+- **Section 11.11: R95 JUNE 2026 CVE WAVE + CHROME 149 BASELINE + WCAG 2.2 TITLE II DEADLINE + iOS SAFARI RENDERING**:
+  - 11.11.1 Critical Security CVEs (Chrome 149 — RECORD 429)
+    - **B-033 [P0]** Chrome 149.0.7827.53/54/59 (Jun 2 2026) RECORD 429 CVEs with 22 critical — 371 self-found via Google Big Sleep AI agent, $209K bounties to external researchers
+    - **B-034 [P0]** Chrome Android WebGL OOB memory access RCE CVE-2026-4439 — affects Chrome pre-146.0.7680.153
+    - **B-035 [P1]** WebGL UAF CVE-2026-11073 — Chrome pre-149.0.7827.53, Medium severity
+  - 11.11.2 Chrome 149 Baseline (Jun 2 2026) — New Platform APIs
+    - **W-109 [P1]** CSS gap decorations baseline — `column-rule` + `row-rule` for grid/flexbox/multi-column layouts (Chrome 149 + Edge 149, May 15 2026 stable)
+    - **W-110 [P1]** Disconnect WebSockets on bfcache entry opt-in — Chrome 149, enables bfcache eligibility for WebSocket-using games
+  - 11.11.3 AI Agent Pen-Testing Impact on Game Supply Chain
+    - **G-022 [P1]** AI autonomous pen-testing reality check — Big Sleep found 371/429 Chrome 149 CVEs, separate agent found 21 FFmpeg zero-days for ~$1,000. Implication: browser vendor refactor rate 5× higher, game monkey-patches need native-code guards
+  - 11.11.4 iOS Safari Cross-Browser Rendering Gap (100% iOS User Impact)
+    - **C-036 [P1]** iOS Safari `<a>`-button `cursor: pointer` silent click-fail — `<a>` without `href` doesn't fire click on iOS Safari; affects 57% of US mobile traffic per contextqa.com 2026
+  - 11.11.5 WCAG 2.2 Title II April 2026 Deadline (US Public Sector)
+    - **S-035 [P1]** WCAG 2.2 2.4.11 Focus Not Obscured (Minimum) — US DOJ April 2026 Title II deadline
+    - **A-006 [P1]** WCAG 2.2 2.5.7 Dragging Movements (no drag-only) + 2.5.8 Target Size (Minimum) 24×24 CSS pixels
+  - 11.11.6 bfcache (Back/Forward Cache) Compatibility Test
+    - **P-023 [P2]** bfcache compatibility for game state restoration — replace `unload` with `pagehide`+`persisted`; clean up `setInterval`/`setTimeout` on pagehide
+
+### Pitfall 10 v1.4.0 `||` pipe-typo cleanup (R95 bonus)
+- v1.9.0 file's `## Version History` block had 5 lines starting with `||-` (Pitfall 10 pollution from R89 commit). R95 ran `sed -i 's/^|- /- /g'` to clean the history block; this exposed W-038 to the python regex anchor for the first time. v1.9.0 visible metrics were 242; grep-anchored reality was 243. v1.12.0 = 242 + 10 new R95 + 1 surfaced = 253 total.
+
+### Metrics
+- P0: 75 → 77 (+2: B-033 Chrome 149 RECORD 429 CVEs, B-034 Chrome Android WebGL OOB RCE CVE-2026-4439)
+- P1: 94 → 102 (+8 visible: 7 R95 new + 1 surfaced by sed-clean. R95 new: B-035 WebGL UAF, W-109 CSS gap decorations, W-110 bfcache WebSocket, G-022 AI pen-test, C-036 iOS Safari `<a>`, S-035 WCAG 2.4.11, A-006 WCAG 2.5.7/2.5.8)
+- P2: 61 → 62 (+1: P-023 bfcache compatibility)
+- P3: 12 → 12 (no new P3)
+- Categories: 11 (no new category; 11.11 = R95 sub-section under existing Cat 11)
+- Total: 242 → 253 (+11; +10 R95 new + 1 sed-clean surfaced W-038)
+
+### Sources
+- **Chrome 149 RECORD 429 CVEs**: https://indianewsnetwork.com/en/chrome-149-update-addresses-record-429-security-vulnerabilities-20260606
+- **Chrome 429 + AI agent Big Sleep**: https://thenextweb.com/news/ai-agent-21-zero-days-ffmpeg-chrome-429
+- **CVE-2026-4439 Chrome Android WebGL OOB**: https://sentinelone.com/vulnerability-database/cve-2026-4439
+- **CVE-2026-11073 WebGL UAF**: https://cvefeed.io/vuln/detail/CVE-2026-11073
+- **CSS gap decorations baseline**: https://developer.chrome.com/blog/gap-decorations-stable
+- **New in Chrome 149**: https://developer.chrome.com/blog/new-in-chrome-149
+- **WCAG 2.2 2.4.11 Title II April 2026**: https://accessibility.arizona.edu/policies-governance/wcag-22-highlights
+- **WCAG 2.2 ISO standard 2026**: https://adaquickscan.com/blog/wcag-2-2-iso-standard-2025
+- **iOS Safari `<a>`-button click-fail (100% iOS user)**: https://contextqa.com/blog/cross-browser-rendering-bugs-testing-2026
+- **WCAG 2.5.7 Dragging + 2.5.8 Target Size 24×24**: https://adascanner.org/blog/wcag-2-2-vs-wcag-2-1
+- **bfcache compatibility (MDN)**: https://developer.mozilla.org/en-US/docs/Glossary/bfcache
+
 ## [v1.11.0] - 2026-06-07 (R93 — 1 new game + 1 P0 fix + 1 SEO fix)
 
 ### Library sync
