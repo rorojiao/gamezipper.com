@@ -3,6 +3,22 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.13.0] - 2026-06-07 (R94 — hitori 1ktower P0 fix + games-list sync 264→265)
+
+### Notes (R94 version label)
+- v1.12.0 (R95 Dynamic Intelligence), v1.11.0 (R93 sync), v1.10.0 (R95 sync) already in CHANGELOG.
+- v1.13.0 follows Pitfall 50 (R94 跟 R91 word-ladder / R93 futoshiki / R93 go 同类 bug).
+
+### Fixed
+- **hitori (R94 265th)**: 1ktower.com live script at line 348 → comment + 1ktower zombie endpoint cleared
+  - Pitfall 20 regression — S-grade new game 上线时漏掉 1ktower grep
+  - Pitfall 50 (R91/R93 重复 3rd round) — must use 6-point-verify.sh pre-commit
+  - 修复后: 1ktower=0, footer trio 完整, H1 + title 完整, 0 errors
+
+### Updated
+- **test-library/games-list.json**: 264 → 265 (R94 新增 hitori)
+- 32 SSL 假阳性游戏 全部 curl + Kachilu 二次验证 PASS
+
 ## [v1.12.0] - 2026-06-07 (R95 — Dynamic Test Intelligence cron evolution, 10 new test cases)
 
 ### Notes (R95 version label)
