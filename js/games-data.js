@@ -296,6 +296,7 @@ const GAMES = [
 
   {name:"Skyscrapers",emoji:"🏙️",cat:"puzzle",tags:["Puzzle","Logic","Latin","Skyscrapers","Towers","Brain","Visibility","Daily"],url:"/skyscrapers/",desc:"Play Skyscrapers online free! Build the city skyline across 4x4, 5x5 and 6x6 grids. Match border visibility clues, fill Latin squares, earn stars. 30 handcrafted levels plus daily challenge. No download needed.",isNew:true,status:"live"},
 {name:"Hidato",emoji:"🔢",cat:"puzzle",tags:["logic","number","nikoli","consecutive","snake"],url:"/hidato/",desc:"Play Hidato online free! Fill the grid with consecutive numbers 1 to N. Chain 8-direction adjacent cells. 30 handcrafted solvable puzzles plus daily challenge. No download needed.",isNew:true,status:"live"},
+{name:"Tapa",emoji:"\u2B1B",cat:"puzzle",tags:["puzzle","logic","nikoli","shade","grid","brain","strategy","japanese","daily","browser","free","html5"],url:"/tapa/",desc:"Play Tapa puzzle online free! Shade cells to form a connected sea around numbered clues. 30 handcrafted Japanese logic puzzles from 5x5 to 12x12 plus daily challenge. No download needed!",isNew:true,status:"live"},
 {name:"Nurikabe",emoji:"🏝️",cat:"puzzle",tags:["puzzle","logic","nikoli","islands","grid","brain","strategy","binary","shade","browser","free","html5"],url:"/nurikabe/",desc:"Play Nurikabe online free! Shade cells to form a connected sea while keeping numbered islands. 30 handcrafted solvable puzzles 5x5 to 12x12 plus daily challenge. No download needed!",isNew:true,status:"live"},
 ];
 
