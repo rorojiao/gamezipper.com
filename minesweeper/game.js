@@ -24,6 +24,36 @@ let cellSize = 32;
 let boardPixelW = 0, boardPixelH = 0;
 let particles = [];
 
+// ── Persistence (best time per difficulty) ───────────────────────────
+const SAVE_KEY = 'gz_minesweeper_v1';
+let bestTimes = { beginner: 0, intermediate: 0, expert: 0 };
+let bestWins = { beginner: 0, intermediate: 0, expert: 0 };
+let totalWins = 0;
+function loadSave() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
+    if (d.bt) bestTimes = Object.assign({ beginner: 0, intermediate: 0, expert: 0 }, d.bt);
+    if (d.bw) bestWins = Object.assign({ beginner: 0, intermediate: 0, expert: 0 }, d.bw);
+    totalWins = d.tw | 0;
+  } catch (e) {}
+}
+function writeSave() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ bt: bestTimes, bw: bestWins, tw: totalWins })); } catch (e) {}
+}
+function renderBestTimes() {
+  ['beginner', 'intermediate', 'expert'].forEach(function (d) {
+    var el = document.getElementById('ms-best-' + d);
+    if (!el) return;
+    var bt = bestTimes[d] | 0;
+    var bw = bestWins[d] | 0;
+    if (bt > 0) {
+      el.textContent = 'Best ' + bt + 's · ' + bw + ' win' + (bw === 1 ? '' : 's');
+    } else {
+      el.textContent = '—';
+    }
+  });
+}
+
 // ── DOM refs (initialized after DOMContentLoaded) ──────────────────
 let canvas, ctx;
 
@@ -273,6 +303,14 @@ function checkWin() {
     stopTimer();
     playWin();
     draw();
+    // Persist best time + win count
+    if (bestTimes[difficulty] === 0 || elapsedSeconds < bestTimes[difficulty]) {
+      bestTimes[difficulty] = elapsedSeconds;
+    }
+    bestWins[difficulty] = (bestWins[difficulty] | 0) + 1;
+    totalWins++;
+    writeSave();
+    renderBestTimes();
     showGameOverOverlay(true);
   }
 }
@@ -620,10 +658,12 @@ window.msGetDifficulty = getCurrentDifficulty;
 
 // ── Init ────────────────────────────────────────────────────────────
 function init() {
+  loadSave();
   canvas = document.getElementById('ms-canvas');
   if (!canvas) return;
   ctx = canvas.getContext('2d');
 
+  renderBestTimes();
   newGame('beginner');
   setupTouchHandlers();
   setupKeyboard();

@@ -75,6 +75,28 @@
   var round = 0;
   var roundSpeed = 1;
 
+  // ── Persistence (best score across reloads) ─────────────────────────────
+  var SAVE_KEY = 'gz_pong_v1';
+  var bestP1 = 0, bestP2 = 0, bestRound = 0, bestMargin = 0;
+  function loadSave() {
+    try {
+      var d = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
+      bestP1 = d.bp1 | 0;
+      bestP2 = d.bp2 | 0;
+      bestRound = d.br | 0;
+      bestMargin = d.bm | 0;
+    } catch (e) {}
+  }
+  function writeSave() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ bp1: bestP1, bp2: bestP2, br: bestRound, bm: bestMargin })); } catch (e) {}
+  }
+  function renderBestScores() {
+    var b1 = document.getElementById('p1-best');
+    var b2 = document.getElementById('p2-best');
+    if (b1) b1.textContent = '· ' + bestP1;
+    if (b2) b2.textContent = '· ' + bestP2;
+  }
+
   // Paddle dims (fraction of canvas height)
   var PAD_H_FRAC = 0.18;
   var PAD_W = 10;
@@ -460,6 +482,15 @@
     state = STATE.OVER;
     playSound(playerWon ? 'win' : 'lose');
 
+    // Update best scores (persisted)
+    var margin = Math.abs(p1Score - p2Score);
+    if (p1Score > bestP1) bestP1 = p1Score;
+    if (p2Score > bestP2) bestP2 = p2Score;
+    if (round > bestRound) bestRound = round;
+    if (margin > bestMargin) bestMargin = margin;
+    writeSave();
+    renderBestScores();
+
     // Monetag ad
     if (window.GZMonetagSafe) {
       window.GZMonetagSafe.maybeLoad();
@@ -492,8 +523,10 @@
 
   // ── Init ────────────────────────────────────────────────────────────────
   function init() {
+    loadSave();
     updateSize();
     initPositions();
+    renderBestScores();
     // Draw initial frame
     render();
 
