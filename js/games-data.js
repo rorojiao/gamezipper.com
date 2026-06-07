@@ -288,6 +288,7 @@ const GAMES = [
   {name:"Ragdoll Archers",emoji:"\U0001f3f9",cat:"arcade",tags:["Archery","Ragdoll","Stickman","Bow","Arrow","Physics","Wave","Boss","Casual","Browser","Free","HTML5"],url:"/ragdoll-archers/",desc:"Play Ragdoll Archers online free! Stickman archery battle with ragdoll physics across 30 levels across 3 tiers. Shoot waves of enemies, collect apples, unlock 4 special arrows (fire, electric, ice, bomb) and defeat epic bosses. No download required.",isNew:true,status:"live"},
 {name:"Word Ladder",emoji:"W",cat:"puzzle",tags:["word","puzzle","letters","vocabulary","word-chain"],url:"/word-ladder/",desc:"Climb the word ladder. Mutate one letter at a time to morph one word into another across 50 hand-crafted puzzles.",isNew:true,status:"live"},
 {name:"Fill Glass",emoji:"💧",cat:"puzzle",tags:["water","drawing","physics","puzzle","casual"],url:"/fill-glass/",desc:"Draw lines to guide water into the glass! 30 levels of satisfying physics puzzles.",isNew:true,status:"live"},
+  {name:"Wool Sort",emoji:"🧶",cat:"puzzle",tags:["Wool","Yarn","Sort","Color","Tube","Puzzle","Cozy","Casual","Brain","Logic","Strategy","Free","HTML5","Browser"],url:"/wool-sort/",desc:"Play Wool Sort free online! Drag and drop yarn balls into matching tubes across 30 cozy puzzle levels. Sort 6 colors of wool, earn 3 stars per level. No download needed.",isNew:true,status:"live"},
 ];
 
 /**
