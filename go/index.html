@@ -173,14 +173,20 @@ var canvas=document.getElementById("boardCanvas"),ctx=canvas.getContext("2d");
 var cellSize,padding,boardPixelSize;
 
 function resizeCanvas(){
-var wrap=canvas.parentElement,w=Math.min(wrap.clientWidth,560);
+try{
+var cv=document.getElementById("boardCanvas");if(!cv)return;
+var ct=cv.getContext("2d");if(!ct)return;
+var wr=cv.parentElement,w=Math.min(wr.clientWidth,560);
+if(w<50){w=560;}
 var dpr=window.devicePixelRatio||1;
-canvas.width=w*dpr;canvas.height=w*dpr;
-canvas.style.width=w+"px";canvas.style.height=w+"px";
-ctx.setTransform(dpr,0,0,dpr,0,0);
+cv.width=w*dpr;cv.height=w*dpr;
+cv.style.width=w+"px";cv.style.height=w+"px";
+ct.setTransform(dpr,0,0,dpr,0,0);
+ctx=ct;canvas=cv;
 padding=w*0.05;boardPixelSize=w-padding*2;
 cellSize=boardPixelSize/(boardSize-1);
 drawBoard();
+}catch(e){console.error("resizeCanvas error:",e);}
 }
 
 /* ===== BOARD LOGIC ===== */
@@ -443,13 +449,20 @@ return moves;
 
 /* ===== RENDERING ===== */
 function drawBoard(){
+try{
+if(!canvas||!ctx){canvas=document.getElementById("boardCanvas");ctx=canvas?canvas.getContext("2d"):null;if(!ctx)return;}
 var w=canvas.width/(window.devicePixelRatio||1),h=w;
 ctx.clearRect(0,0,w,h);
 /* Board background (wood texture via gradient) */
 var grad=ctx.createLinearGradient(0,0,w,h);
 grad.addColorStop(0,"#dcb35c");grad.addColorStop(0.5,"#c49a3c");grad.addColorStop(1,"#b8862e");
 ctx.fillStyle=grad;
-ctx.beginPath();ctx.roundRect(padding*0.3,padding*0.3,w-padding*0.6,h-padding*0.6,4);ctx.fill();
+ctx.beginPath();
+var bx=padding*0.3,by=padding*0.3,bw=w-padding*0.6,bh=h-padding*0.6,br=4;
+ctx.moveTo(bx+br,by);ctx.lineTo(bx+bw-br,by);ctx.quadraticCurveTo(bx+bw,by,bx+bw,by+br);
+ctx.lineTo(bx+bw,by+bh-br);ctx.quadraticCurveTo(bx+bw,by+bh,bx+bw-br,by+bh);
+ctx.lineTo(bx+br,by+bh);ctx.quadraticCurveTo(bx,by+bh,bx,by+bh-br);
+ctx.lineTo(bx,by+br);ctx.quadraticCurveTo(bx,by,bx+br,by);ctx.closePath();ctx.fill();
 /* Grid lines */
 ctx.strokeStyle="#4a3520";ctx.lineWidth=1;
 for(var i=0;i<boardSize;i++){
@@ -487,8 +500,8 @@ continue;}
 ctx.fillStyle="rgba(0,0,0,0.3)";ctx.beginPath();ctx.arc(cx+1,cy+1,r,0,Math.PI*2);ctx.fill();
 /* Stone */
 if(dispBoard[i][j]===BLACK){
-var sg=ctx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.1,cx,cy,r);sg.addColorStop(0","#666");sg.addColorStop(1","#111");ctx.fillStyle=sg;}
-else{var wg=ctx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.1,cx,cy,r);wg.addColorStop(0","#fff");wg.addColorStop(1,"#ccc");ctx.fillStyle=wg;}
+var sg=ctx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.1,cx,cy,r);sg.addColorStop(0,"#666");sg.addColorStop(1,"#111");ctx.fillStyle=sg;}
+else{var wg=ctx.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.1,cx,cy,r);wg.addColorStop(0,"#fff");wg.addColorStop(1,"#ccc");ctx.fillStyle=wg;}
 ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
 if(dispBoard[i][j]===WHITE){ctx.strokeStyle="#aaa";ctx.lineWidth=0.5;ctx.stroke();}}
 /* Last move marker */
@@ -511,6 +524,7 @@ if(hx>=0&&hx<boardSize&&hy>=0&&hy<boardSize&&board[hx][hy]===EMPTY){
 var hpx=padding+hx*cellSize,hpy=padding+hy*cellSize,hr=cellSize*0.44;
 ctx.globalAlpha=0.4;ctx.fillStyle=currentPlayer===BLACK?"#333":"#eee";
 ctx.beginPath();ctx.arc(hpx,hpy,hr,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}}
+}catch(e){console.error("drawBoard error:",e);}
 }
 
 function getStarPoints(){
@@ -694,8 +708,12 @@ if(document.hidden){stopBGM();}else{if(musicOn)startBGM();}});
 window.addEventListener("resize",function(){resizeCanvas();});
 
 /* ===== INIT ===== */
-loadSettings();newGame();
-if(musicOn)startBGM();
+loadSettings();
+window.addEventListener("load",function(){newGame();if(musicOn)startBGM();});
+/* Fallback: also run on DOMContentLoaded for file:// protocol */
+if(document.readyState==="complete"||document.readyState==="interactive"){newGame();if(musicOn)startBGM();}
+/* Timer fallback for sandboxed environments */
+timers.push(setInterval(function(){var c=document.getElementById("boardCanvas");if(c&&c.width<100&&c.parentElement.clientWidth>50){newGame();}},500));
 
 })();
 </script>
