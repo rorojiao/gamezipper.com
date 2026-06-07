@@ -3,6 +3,36 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.14.1] - 2026-06-08 (R98 — full-site qa_v3 acceptance + 1 P0 fix, 269 games)
+
+### R98 Notes
+- 269 live games 100% coverage + 100% pass acceptance
+- 247/269 100/100 perfect, 17/269 85/100 multi-screen splash (R91 known), 1/269 90/100 tile-dynasty 8.0s slow load (R91 known), 4/269 SSL false positive (R64 known, all curl+Kachilu double-verified PASS)
+- 0 real 1ktower / 0 alwingulla / 0 LAN IP / 0 site-analytics dead pixel / 0 splash deadlock / 0 H1 missing
+- 1 P0 fix: nurikabe (269th) launched with 1ktower zombie endpoint + multiplex-ads.website SDK + missing footer trio (Pitfall 20/49/50 regression, R97 commit 6367b7e9 skipped 6-point-verify pre-commit hook)
+- 6-point-verify.sh pre-commit hook: now passes (R98 commit msg showed `[gz-pre-commit] ✅ All checks passed`)
+- 5-dimension deep interaction: 7 games (nurikabe/hidato/2048/chess/sudoku/slope/tetris) all PASS
+
+### Metrics
+- Live games: 268 → 269 (+1: Nurikabe)
+- test-library/games-list.json: 268 → 269
+- H1 outside splash: 269/269 ✅
+- <title> tag: 269/269 ✅
+- footer trio: 269/269 ✅
+- 0 live 1ktower: 269/269 ✅
+- index.html data-count: 269 ✅ (R97 sync committed ff36dc7a)
+
+### New Pitfall (R98)
+- **Pitfall 54**: R97 commit 6367b7e9 nurikabe S-grade launch skipped 6-point-verify.sh pre-commit hook. R98 cron self-audit caught it. Even with pre-commit hook installed (R97 added), S-grade launches can bypass when author forgets to run 6 grep checks. **New policy: gz-pre-commit script auto-runs all 6 checks** (R98 verified, R98 commit msg shows `[gz-pre-commit] ✅ All checks passed`)
+
+### R98 Outcome
+- 0 R0 site-scan issues (7 R85-R87 pitfall classes all clean)
+- 1 P0 fix (nurikabe)
+- 0 P1+ issues
+- 7 5-dimension deep interaction PASS (hidato new + 5 core + 1 fixed nurikabe)
+- 0 false positives from sub-agents (no sub-agents delegated in R98 — main agent Kachilu primary)
+- Test duration: ~50 minutes (8 batches qa_v3 × 33 games concurrent ~25 min + 1 P0 fix + 6 SSL FP double-verify + 7 5-dim deep + test-library sync + commit + push)
+
 ## [v1.14.0] - 2026-06-07 (R96 — Dynamic Test Intelligence cron evolution, 8 new test cases)
 
 ### Notes (R96 version label)
