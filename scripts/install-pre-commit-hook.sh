@@ -1,11 +1,12 @@
 #!/bin/bash
-# install-pre-commit-hook.sh — Hard Rule #17 + #21 + #22 enforcement
+# install-pre-commit-hook.sh — Hard Rule #17 + #21 + #22 + #33 enforcement
 # Installs .git/hooks/pre-commit that runs:
 #   1. node -c js/games-data.js  (catches orphan variants A-F)
 #   2. bash scripts/sync-game-counts.sh  (catches 3-place data drift)
 #   3. bash scripts/sync-user-visible-text.sh  (catches 14+ user-visible text sites)
 #   4. node -c js/itemlist-schema.js  (catches orphan variant G — Hard Rule #21)
 #   5. python3 inline-JSON-LD parse check on index.html  (catches extra `}` — Hard Rule #22)
+#   6. bash scripts/wcag-contrast-audit.sh  (catches WCAG 2.1 AA contrast fails — Hard Rule #33)
 # Before allowing commit. Would have caught ALL 10 drift incidents in last 8 days
 # at write-time instead of at 2h cron-time.
 #
@@ -13,6 +14,7 @@
 # Run once per repo, or after pulling new sync scripts.
 # Created 2026-06-06 12h — Hard Rule #17.
 # Updated 2026-06-06 14h — added Hard Rules #21 (itemlist-schema.js) + #22 (inline JSON-LD).
+# Updated 2026-06-07 18h — added Hard Rule #33 (WCAG 2.1 AA contrast audit) — v3.
 
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
@@ -25,7 +27,7 @@ if [ ! -d ".git" ]; then
 fi
 
 # Verify required scripts exist
-for s in js/games-data.js scripts/sync-game-counts.sh scripts/sync-user-visible-text.sh; do
+for s in js/games-data.js scripts/sync-game-counts.sh scripts/sync-user-visible-text.sh scripts/wcag-contrast-audit.sh; do
   if [ ! -f "$s" ]; then
     echo "ERROR: missing required file $s"
     exit 1
@@ -51,10 +53,10 @@ fi
 
 cat > "$HOOK_PATH" <<'HOOK_EOF'
 #!/bin/bash
-# GAMEZIPPER_PRE_COMMIT_HOOK_V2 — Hard Rules #13, #15, #17, #21, #22
+# GAMEZIPPER_PRE_COMMIT_HOOK_V3 — Hard Rules #13, #15, #17, #21, #22, #33
 # Auto-installed by scripts/install-pre-commit-hook.sh
 # Catches orphan object literals (Variants A-G) + 3-place data drift + user-visible text drift
-# + inline JSON-LD parse errors at write-time, not at 2h cron-time.
+# + inline JSON-LD parse errors + WCAG 2.1 AA contrast fails at write-time, not at 2h cron-time.
 
 set -e
 
@@ -124,6 +126,16 @@ if errs:
   if [ $? -ne 0 ]; then
     echo "❌ [gz-pre-commit] Inline JSON-LD blocks failed to parse:"
     echo "$PARSE_ERR"
+    exit 1
+  fi
+fi
+
+# 6. WCAG 2.1 AA contrast audit (catches text color FAILs — Hard Rule #33)
+if [ -f "scripts/wcag-contrast-audit.sh" ]; then
+  WCAG_OUT=$(bash scripts/wcag-contrast-audit.sh 2>&1)
+  if [ $? -ne 0 ]; then
+    echo "❌ [gz-pre-commit] WCAG 2.1 AA contrast FAILs detected in index.html:"
+    echo "$WCAG_OUT" | head -30
     exit 1
   fi
 fi
