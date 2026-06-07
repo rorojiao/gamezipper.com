@@ -2,6 +2,49 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.9.0] - 2026-06-07 (R94 — Dynamic Test Intelligence cron evolution, 10 new test cases)
+
+### Added
+- **10 new test cases** (232 → 242 total) from R94 June 2026 CVE wave + Platform Baseline + EU AI Act research
+- **Section 11.10: R94 JUNE 2026 CVE WAVE + PLATFORM BASELINE + EU AI ACT + WEB MONETIZATION SUNSET**:
+  - **B-030 [P0]** Chrome 148.0.7778.216/217 22 critical CVEs (Forbes 2026-05-31 + SecurityWeek) — covers CVE-2026-9872/9873/9874/9875/9876 GPU/WebGL/Dawn + CVE-2026-9877/9878/9879/9882 ANGLE + CVE-2026-9883/9884/9885/9886/9887/9888/9889/9890/9891/9892/9893 WebView/Base/Proxy/Browser/UI/XR/Extensions/Skia
+  - **B-031 [P0]** Android 16 WebView 94% Samsung crash (Chromium Issue 499565269 + CVE-2026-3936 UAF) — game must apply aggressive memory-saver rules when `navigator.userAgent` matches `wv/.+Chrome/.+Android 16`
+  - **B-032 [P1]** WebGPU Baseline March 2026 + Chrome 146 `requestAdapter({compatibilityMode: true})` OpenGL ES 3.1 reach — 4.2B devices (vs 1.8B in 2025), opt-in for max reach on pre-2020 GPUs
+  - **G-020 [P2]** WebTransport Baseline March 2026 (Chrome/Firefox/Safari/Edge) — forward-looking test for leaderboard/online score submission, prefer WebTransport over WebSocket when both available
+  - **G-021 [P2]** WebGPU compute shader migration criteria (simplified.media 2026) — puzzle/match-3/card default to WebGL2, arcade/sim/canvas-heavy default to WebGPU with compatibilityMode probe
+  - **S-033 [P1]** EU AI Act Article 50 transparency disclosure (effective 2026-08) — any AI-generated content (procedural levels, AI hints, AI opponents) must disclose + opt-out + audit log; €15M or 3% global revenue penalty
+  - **S-034 [P1]** EU cookie consent dark-pattern prohibition (2026 enforcement) + 67% Consent Mode v2 fail rate (secureprivacy.ai 2026) — symmetric Accept/Reject buttons, no pre-ticked, CNIL fined Google €325M + Shein €150M in Sep 2025
+  - **W-106 [P1]** Chrome 150 stable release (Jun 3, 2026) — new HTML/CSS features (Document PiP enhancement, View Transitions, anchor positioning) baseline detection
+  - **W-107 [P2]** Chrome 151 Dev channel (Jun 4, 2026 desktop + Android) — track breaking changes 4-6 weeks before stable
+  - **W-108 [P3]** Web Monetization / Coil sunset final state (2023 shutdown, no replacement at scale) — scan GameZipper HTML/JS for any `monetization` `<meta>` or Coil-integration code; assert NONE present
+
+### Stats (grep-verified via python regex anchor, R91+ Pitfall 21)
+- 242 total test cases (was 232 in v1.7.0, +10)
+- P0: 73 → 75 (+2: B-030 Chrome 148 22-CVE wave, B-031 Android 16 WebView 94% Samsung crash)
+- P1: 90 → 94 (+4: B-032 WebGPU Baseline, S-033 EU AI Act Art. 50, S-034 EU cookie dark-pattern, W-106 Chrome 150)
+- P2: 58 → 61 (+3: G-020 WebTransport Baseline, G-021 WebGPU migration criteria, W-107 Chrome 151 Dev)
+- P3: 11 → 12 (+1: W-108 Web Monetization / Coil sunset)
+- Categories: 11 (no new category; 11.10 = R94 sub-section under existing Cat 11)
+- 2+4+3+1 = 10 = total delta ✓
+- **Note**: B-030 consolidates 22 individual CVEs into 1 test case (matches the runbook convention from R87 B-009 "Edge Pwn2Own CVE-2026-45492/45494/45495" which also bundled 3 CVEs into 1 case)
+
+### Sources
+- **Chrome 148 22 critical CVEs** (B-030): https://forbes.com/sites/daveywinder/2026/05/31/151-chrome-security-flaws-22-critical-fixed-in-new-google-update + https://securityweek.com/chrome-148-update-patches-151-vulnerabilities + https://nvd.nist.gov/vuln/detail/CVE-2026-9872
+- **Android 16 WebView 94% Samsung crash** (B-031): https://issues.chromium.org/issues/499565269 + https://sentinelone.com/vulnerability-database/cve-2026-3936
+- **WebGPU Baseline + Chrome 146 OpenGL ES 3.1 compat mode** (B-032): https://developer.chrome.com/blog/new-in-webgpu-146 + https://webo360solutions.com/blog/webgpu-browser-support + https://webgpu.com
+- **WebTransport Baseline March 2026** (G-020): https://anhtu.dev/webtransport-next-gen-realtime-protocol-2026-2228 + https://youngju.dev/blog/culture/2026-05-14-realtime-web-2026-webtransport-webrtc-server-sent-events-websocket-deep-dive.en + https://dl.acm.org/doi/full/10.1145/3744725.3744726
+- **WebGPU compute shader migration criteria** (G-021): https://simplified.media/guides/webgpu-browser-games
+- **EU AI Act Article 50 transparency** (S-033): https://digital-strategy.ec.europa.eu/en/faqs/guidelines-and-code-practice-transparent-ai-systems + https://artificialintelligenceact.eu/transparency-rules-article-50 + https://hoganlovells.com/en/publications/the-european-commission-issues-draft-guidelines-on-the-transparency-requirements-under-the-ai-act
+- **EU cookie dark-pattern enforcement** (S-034): https://secureprivacy.ai/blog/global-cookie-consent-trends-2026 + https://redacto.ai/en-in/blogs/dark-patterns-cookie-banners-compliance-2026 + https://consenteo.com/knowledge-hub/GDPR/gdpr_cookie_consent_2026
+- **Chrome 150 stable** (W-106): https://developer.chrome.com/new (Jun 3 2026 entry) + https://chromereleases.googleblog.com/2026
+- **Chrome 151 Dev** (W-107): https://chromereleases.googleblog.com/2026 (Jun 4 2026 "Chrome Dev for Desktop Update" + "Chrome Dev for Android Update")
+- **Web Monetization / Coil sunset** (W-108): https://hackernoon.com/sunsetting-our-coil-integration + https://oss.fund/coil + https://chriscoyier.net/2024/01/24/what-happened-with-the-web-monetization-api
+
+### Notes
+- **Why v1.9.0 and not v1.8.0**: CHANGELOG already has `[v1.8.0] - 2026-06-07 (R93 — fill-glass P0 fix + games-list sync 260→261)` for a sync-only update with no master file. Per runbook pitfall 5, library evolution skips the v1.8.0 label. Next true library evolution: v1.7.0 → v1.9.0.
+- **Sibling worker handoff prevention (R93+ Pitfall 20)**: wrote + staged `MASTER-TEST-CASES-v1.9.0.md` BEFORE CHANGELOG edit, so sibling cron worker can't steal the file via full-file commit.
+- **Pre-commit hook**: test-library .md-only commit will pass `gz-pre-commit` hook (hook checks `js/games-data.js` etc., not .md files).
+
 ## [v1.8.0] - 2026-06-07 (R93 — fill-glass P0 fix + games-list sync 260→261)
 
 ### Added
