@@ -73,7 +73,7 @@
 <link rel="preconnect" href="https://a.magsrv.com" crossorigin>
 <link rel="preload" href="/favicon.svg" as="image" type="image/svg+xml" fetchpriority="high">
 
-<link rel="preload" href="/js/games-data.js?v=2026-06-07-08h" as="script" fetchpriority="high" crossorigin>
+<link rel="preload" href="/js/games-data.js?v=2026-06-07-14h" as="script" fetchpriority="high" crossorigin>
 <!-- og-image preload removed: not LCP-critical, saves bandwidth for game cards -->
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
@@ -540,7 +540,7 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
-<script src="/js/itemlist-schema.js?v=2026-06-07-08h" defer fetchpriority="low"></script><script type="speculationrules">{
+<script src="/js/itemlist-schema.js?v=2026-06-07-14h" defer fetchpriority="low"></script><script type="speculationrules">{
   "prerender": [
     {
       "source": "document",
@@ -1206,7 +1206,7 @@ html{transition:background-color .3s,color .3s}
 (function(){var f=JSON.parse(localStorage.getItem('gz_favs')||'[]');if(!f.length)return;var stats=document.querySelector('.stats');if(!stats)return;var span=document.createElement('span');span.style.cssText='color:#ff6b6b';span.innerHTML='♥ <span>'+f.length+'</span> Favorites';stats.appendChild(span)})();
 </script>
 <script>if(!("scheduler" in window))window.scheduler={yield:function(){return new Promise(function(r){setTimeout(r,0)})}};</script>
-<script src="/js/games-data.js?v=2026-06-07-08h" defer></script>
+<script src="/js/games-data.js?v=2026-06-07-14h" defer></script>
 <script>
 // Wait for deferred games-data.js to load before rendering (FCP/LCP optimization)
 // The inline script below must execute after GAMES is defined
@@ -1434,7 +1434,7 @@ function gzUpdateShowMoreBtn(){var w=document.getElementById('gz-show-more-wrap'
 
 // Solution: detect bfcache restore, reload games-data.js, then re-render.
 (function() {
-  var GAMES_SCRIPT = '/js/games-data.js?v=2026-06-07-08h';
+  var GAMES_SCRIPT = '/js/games-data.js?v=2026-06-07-14h';
   var grid = document.getElementById('games');
   if (!grid) return;
   function needsRender() { return grid.querySelectorAll('.game-card').length === 0; }
@@ -2004,20 +2004,26 @@ h3.style.cursor='pointer';
 h3.setAttribute('role','button');
 h3.setAttribute('aria-expanded','false');
 h3.setAttribute('tabindex','0');
+// UX-OPT 2026-06-07 14h: BUG FIX — CSS at L369 uses .faq-item.open .faq-answer (max-height:200px;opacity:1)
+// selector, so the toggle must add/remove .open to .faq-item (the parent div), not set p.style.display
+// on the inner <p>. Previously, clicking h3 toggled the inner <p> display but the outer .faq-answer
+// div stayed max-height:0;overflow:hidden — the click appeared to do nothing and all answers
+// were permanently hidden. New approach: add/remove .open on the .faq-item div, also remove the
+// inner inline display:none (let the .faq-answer's max-height:0 do the hiding).
 var p=item.querySelector('p');
-if(p)p.style.display='none';
+if(p)p.style.display='';
+var isOpen=item.classList.contains('open');
 function toggle(){
-var open=p.style.display!=='none';
-p.style.display=open?'none':'block';
-h3.setAttribute('aria-expanded',String(!open));
-h3.querySelector('span')||(h3.innerHTML=h3.textContent+' <span style="float:right;font-size:.8em">'+(open?'▶':'▼')+'</span>');
+var open=item.classList.toggle('open');
+h3.setAttribute('aria-expanded',String(open));
 }
 h3.addEventListener('click',toggle);
 h3.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}});
 // Deep-link: clicking the h3 updates URL hash; loading with hash auto-opens
 h3.addEventListener('click',function(){
-var id=item.id;if(!id)return;var isOpen=p.style.display!=='none';
-if(isOpen){history.replaceState(null,'','#'+id)}else{history.replaceState(null,'',' ') }
+var id=item.id;if(!id)return;
+var isOpenNow=item.classList.contains('open');
+if(isOpenNow){history.replaceState(null,'','#'+id)}else{history.replaceState(null,'',' ') }
 });
 });
 // Auto-open FAQ item if URL hash matches
@@ -2026,8 +2032,8 @@ var hash=window.location.hash;
 if(!hash||hash.length<2)return;
 var el=document.querySelector(hash);
 if(!el||!el.classList.contains('faq-item'))return;
-var h=el.querySelector('h3');var p=el.querySelector('.faq-answer');
-if(h&&p&&p.style.display==='none'){h.click();setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'center'})},200)}
+var h=el.querySelector('h3');
+if(h&&!el.classList.contains('open')){h.click();setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'center'})},200)}
 })();
 })();
 </script>
