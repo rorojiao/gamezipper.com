@@ -3,6 +3,68 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.15.0] - 2026-06-08 (R98 — Dynamic Test Intelligence cron evolution, 8 new test cases, 261 → 269)
+
+### Notes (R98 version label)
+- v1.15.0 = R98 second real library evolution from disk v1.14.0 (R96 was first).
+- v1.14.1 (R98 sync) covered the live games count (268 → 269, +nurikabe) but did not add new categories.
+- R97 was a Pitfall-34 fix-only tick (no library evolution), so v1.15.0 is a direct minor bump from v1.14.0.
+- 8 new test cases added (5-10 target range hit at upper end). Total: 261 → 269 (+8).
+
+### Added
+- 8 new test cases from industry research (5-10 range target hit):
+  - **P-025 [P1]** Cloudflare Dallas data-center hardware fault (June 6 2026, 20-min HTTP 500) + recurring Let's Encrypt CA bundle TLS handshake bug (2nd mishap in 7 days)
+  - **S-037 [P0]** SalesLoft/Drift chatbot supply-chain attack (Aug 2025+) — Cloudflare Salesforce instance + 700+ orgs breached via OAuth-token exfil
+  - **C-038 [P1]** WebGPU Baseline 2026 — Chrome 113+/Edge/Firefox 147+/Safari 26+ all shipping by default + Chrome 146 OpenGL ES 3.1 compatibility mode
+  - **S-038 [P1]** Monetag malvertising scheme using BeMob for traffic source obfuscation (R96 deep pitfall — ad network integrity)
+  - **W-114 [P2]** 2026 mobile game UX standard — thumb-zone / dark-mode / haptic for 3.5B one-hand players + 70% mobile traffic
+  - **W-115 [P2]** Edge 149 (June 4 2026) — new web platform features shipped same day as Chrome 149 + 4-week cadence continues
+  - **B-037 [P0]** Chrome Manifest V3 fully enforced January 2025 — MV2 lost Chrome Web Store access + game-dev tool breakage (ad-blocker limits, anti-adblock detectability)
+  - **G-023 [P3]** 2026 dark-pattern research in mobile games (arXiv 2412.05039 — 1496 games analyzed) + EU DSA Art. 28 enforcement intersection
+
+### New Sub-Section
+- **11.13 R98 June 2026 Cloudflare Reliability + Supply Chain + WebGPU Baseline 2026 + Mobile UX Standard + MV3 Fully Enforced** — 8 cases covering: Cloudflare Dallas hardware + recurring TLS bundle bug (Jun 6-7 2026 weekend) + SalesLoft/Drift OAuth-token exfil supply-chain (700+ orgs) + WebGPU Baseline 2026 in all major browsers + Three.js + WebXR default + Chrome 146 OpenGL ES 3.1 compat mode + Monetag malvertising BeMob traffic-hiding + 2026 mobile game UX standard (thumb-zone / dark-mode / haptic) + Edge 149 (Jun 4) new web platform + Chrome Manifest V3 fully enforced Jan 2025 (game-dev tool impact) + arXiv 2412.05039 dark-pattern research in 1496 mobile games + EU DSA Art. 28 enforcement intersection
+
+### Sources
+- **TechTimes (2026-06-07)**: Cloudflare Dallas hardware fault + recurring Let's Encrypt CA bundle TLS handshake bug (https://techtimes.com/articles/317936/20260607/cloudflare-outage-dallas-hardware-fault-recurring-tls-bug-strike-one-weekend.htm)
+- **Daily Security Review**: SalesLoft/Drift chatbot supply-chain attack — Cloudflare Salesforce + 700+ orgs breached via OAuth-token exfil (https://dailysecurityreview.com/cyber-security/cloudflare-confirms-salesforce-breach-in-growing-supply-chain-attack) + Cybersecurity News confirmation (https://cybersecuritynews.com/cloudflare-confirms-data-breach)
+- **Cloudflare 2026 Threat Report**: AI weaponization + SaaS supply-chain attacks (https://cloudflare.com/lp/threat-report-2026)
+- **VideoCardz (Jan 2026)**: WebGPU Baseline 2026 — all major browsers shipping by default (https://videocardz.com/newz/webgpu-is-now-supported-by-all-major-browsers)
+- **vr.org (Jan 2026)**: Three.js + WebXR default to WebGPU in production (https://vr.org/articles/webgpu-baseline-2026-three-js-webxr-default)
+- **Chrome for Developers blog (2026-02-25)**: WebGPU Compatibility Mode on OpenGL ES 3.1 in Chrome 146 (https://developer.chrome.com/blog/new-in-webgpu-146)
+- **webo360solutions (2026)**: WebGPU browser support in 2026 — Chrome 113+/Firefox 147+/Safari 26+ (https://webo360solutions.com/blog/webgpu-browser-support)
+- **Rhyno cybersecurity news**: Monetag malvertising scheme with BeMob for traffic source obfuscation (https://rhyno.io/blogs/cybersecurity-news/new-malvertising-scheme-found-using-a-single-ad-network)
+- **Novatech Beacon (2026)**: 2026 mobile gaming is built for one-hand play — thumb zone UX (https://novatechbeacon.com/latest/why-2026-gaming-is-built-for-one-hand-play)
+- **Connection Cafe (2026)**: Dark mode + haptics + one-hand play — new UX rules for gaming apps in 2026 (https://connectioncafe.com/dark-mode-haptics-and-one-hand-play-the-new-ux-rules-for-gaming-apps-in-2026)
+- **SiteGrade (2026)**: Mobile CRO 2026 — thumb zones + EU DSA dark pattern enforcement (https://sitegrade.io/en/blog/mobile-cro-2026-thumb-zone-dark-patterns-eu-dsa)
+- **ejaw.net (March 2026)**: Mobile game UX — how interface design drives player retention in 2026 (https://ejaw.net/how-mobile-game-ux-interface-design-drives-player-retention-in-2026)
+- **socialscript.in (2026)**: Designing for thumb zones — mobile UX patterns that convert (https://socialscript.in/blog/designing-for-thumb-zones-mobile-ux-patterns-that-convert)
+- **Microsoft Learn (June 4 2026)**: Edge 149 web platform release notes (https://learn.microsoft.com/en-us/microsoft-edge/web-platform/release-notes/149) + Edge security updates (https://learn.microsoft.com/en-us/DeployEdge/microsoft-edge-relnotes-security)
+- **Chrome for Developers**: Manifest V3 migration guide (https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3)
+- **CWS Kit (2026)**: Complete guide to Manifest V3 in 2026 — MV2 lost CWS access (https://cwskit.khanakia.com/blog/complete-guide-to-manifest-v3-in-2026)
+- **orlandoascanio.com (May 3 2026)**: How Chrome extensions actually work in 2026 (Manifest V3 explained) (https://orlandoascanio.com/notes/chrome-extension-manifest-v3-2026)
+- **dev.to (2026)**: Building Chrome extensions in 2026 — a practical guide with Manifest V3 (https://dev.to/ryu0705/building-chrome-extensions-in-2026-a-practical-guide-with-manifest-v3-12h2)
+- **arXiv 2412.05039 (Dec 2024, still 2026's most-cited dark-pattern paper)**: Level Up or Game Over — exploring how dark patterns shape mobile games (1,496 games analyzed) (https://arxiv.org/html/2412.05039v1)
+
+### Metrics
+- P0: 80 → 82 (+2: S-037 SalesLoft/Drift supply-chain, B-037 MV3 fully enforced)
+- P1: 105 → 108 (+3: P-025 Cloudflare Dallas + TLS, C-038 WebGPU Baseline, S-038 Monetag malvertising)
+- P2: 64 → 66 (+2: W-114 mobile UX 2026, W-115 Edge 149)
+- P3: 12 → 13 (+1: G-023 arXiv dark-pattern + DSA Art. 28)
+- 2+3+2+1 = 8 = R98 added case IDs ✓
+- Total: 261 → 269 (+8)
+- Categories: 11 (no new category; 11.13 = R98 sub-section under existing Cat 11)
+
+### Quality Gate
+- [x] 5-15 new cases (8 — within 5-10 target range, hit upper end)
+- [x] Each case has source URL (TechTimes, Daily Security Review, VideoCardz, vr.org, webo360solutions, Rhyno, Novatech Beacon, ejaw.net, socialscript.in, Microsoft Learn, Chrome for Developers, CWS Kit, arXiv)
+- [x] Each case has unique ID (grep verified, no collisions with v1.14.0)
+- [x] Version bump correct (v1.14.0 → v1.15.0, direct minor bump since R97 was fix-only)
+- [x] Metrics grep-verified then filled in (4 dimensions sum to total: 82+108+66+13 = 269)
+- [x] LIBRARY METRICS block + CHANGELOG stats consistent (both 269 total, 2+3+2+1)
+- [x] CHANGELOG entry complete (Notes, Added, Sub-Section, Sources, Metrics, Quality Gate)
+- [x] Commit message will include version bump (v1.15.0)
+
 ## [v1.14.1] - 2026-06-08 (R98 — full-site qa_v3 acceptance + 1 P0 fix, 269 games)
 
 ### R98 Notes
