@@ -295,6 +295,7 @@ const GAMES = [
 {name:"Akari",emoji:"💡",cat:"puzzle",tags:["Puzzle","Logic","Japanese","Light","Bulb","Illumination","Brain","Daily","Grid"],url:"/akari/",desc:"Play Akari (Light Up) puzzle online free! Place light bulbs to illuminate every white cell in the grid. 30 handcrafted Japanese logic puzzles across 7x7 to 11x11 grids, daily challenge. No download needed.",isNew:true,status:"live"},
 
   {name:"Skyscrapers",emoji:"🏙️",cat:"puzzle",tags:["Puzzle","Logic","Latin","Skyscrapers","Towers","Brain","Visibility","Daily"],url:"/skyscrapers/",desc:"Play Skyscrapers online free! Build the city skyline across 4x4, 5x5 and 6x6 grids. Match border visibility clues, fill Latin squares, earn stars. 30 handcrafted levels plus daily challenge. No download needed.",isNew:true,status:"live"},
+{name:"Hidato",emoji:"🔢",cat:"puzzle",tags:["logic","number","nikoli","consecutive","snake"],url:"/hidato/",desc:"Play Hidato online free! Fill the grid with consecutive numbers 1 to N. Chain 8-direction adjacent cells. 30 handcrafted solvable puzzles plus daily challenge. No download needed.",isNew:true,status:"live"},
 ];
 
 /**
