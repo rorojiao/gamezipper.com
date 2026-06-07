@@ -3,6 +3,34 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.11.0] - 2026-06-07 (R93 — 1 new game + 1 P0 fix + 1 SEO fix)
+
+### Library sync
+- **games-list.json**: 263 → 264 (added Futoshiki, S-grade Japanese inequality logic puzzle, 30 levels × 4 tiers)
+- **Futoshiki (cat:puzzle)**: 4×4/5×5/6×6/7×7 boards, 30 hand-verified solvable levels, daily challenge
+
+### P0 critical fixes (R93-P0)
+- **futoshiki** (R92 new S-grade): live 1ktower.com endpoint (Pitfall 20 regression) + missing footer/ads trio (Round 66 violation)
+- **go** (R93 new S-grade): live 1ktower.com endpoint (Pitfall 20, R95 1ba3a049 missed the script)
+- **count-master** (R90 S-grade): missing twitter:card + twitter:title + twitter:description + twitter:image meta (Pitfall 47 R90 SEO sync miss)
+
+### Pitfall 49 reinforcement
+- 6-point-verify.sh: continues to enforce all 6 grep pre-commit
+- Pre-commit hook (gz-pre-commit) ran on commits 9bcd172a + ede653ab ✅
+- S-grade new games are STILL hitting Pitfall 49 — 3rd consecutive round (R91 word-ladder, R92 futoshiki, R93 go)
+- Recommendation: STRONGER pre-commit hook with `node -e "require('child_process').execSync(...)"` based
+  live grep test that fails the commit if 1ktower/alwingulla/LAN IP appear in HEAD's index.html
+
+### R93 Round Stats
+- 264/264 live games 100% covered
+- 243 × 100/100 perfect
+- 20 × 85/100 multi-screen splash (R91 known: connect-four/dominoes/farkle/gravity-drop/jelly-dye/jewel-coloring/knife-hit/magic-tiles/mahjong-dimensions/one-line-puzzle/plinko/pool/simon-says/slice-it-all/sudoku/tower-defense/tower-of-hanoi/traffic-escape/who-is/yahtzee)
+- 1 × 90/100 (magic-sort 11.1s slow load, known)
+- 0 SSL false positives (R91 7 FP all PASS, Python urllib stable)
+- 0 real 1ktower/alwingulla/LAN IP/site-analytics leftovers
+- 0 splash deadlocks / 0 missing h1 / 0 missing footer/ads trio
+- 3 commits pushed: 9bcd172a (P0 fix), ede653ab (SEO + sync), 3f0ef958 R91 (R91 sync)
+
 ## [v1.10.0] - 2026-06-07 (R95 — 2 new games + 2 P0 fixes)
 
 ### Library sync
