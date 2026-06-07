@@ -299,6 +299,7 @@ const GAMES = [
 {name:"Tapa",emoji:"\u2B1B",cat:"puzzle",tags:["puzzle","logic","nikoli","shade","grid","brain","strategy","japanese","daily","browser","free","html5"],url:"/tapa/",desc:"Play Tapa puzzle online free! Shade cells to form a connected sea around numbered clues. 30 handcrafted Japanese logic puzzles from 5x5 to 12x12 plus daily challenge. No download needed!",isNew:true,status:"live"},
 {name:"Nurikabe",emoji:"🏝️",cat:"puzzle",tags:["puzzle","logic","nikoli","islands","grid","brain","strategy","binary","shade","browser","free","html5"],url:"/nurikabe/",desc:"Play Nurikabe online free! Shade cells to form a connected sea while keeping numbered islands. 30 handcrafted solvable puzzles 5x5 to 12x12 plus daily challenge. No download needed!",isNew:true,status:"live"},
 {name:"Sugar Sugar",emoji:"🍬",cat:"puzzle",tags:["puzzle","physics","drawing","sugar","particles","candy","casual","brain","creative","browser","free","html5"],url:"/sugar-sugar/",desc:"Play Sugar Sugar online free! Draw lines to guide falling sugar particles into cups. 30 physics puzzle levels with colored sugar, obstacles and more. No download needed.",isNew:true,status:"live"},
+{name:"Yajilin",emoji:"🔄",cat:"puzzle",tags:["puzzle","logic","nikoli","loop","grid","brain","strategy","shade","arrow","browser","free","html5"],url:"/yajilin/",desc:"Play Yajilin online free! Shade cells to satisfy arrow clues and draw a single loop through every remaining cell. 30 logic puzzles 5x6 to 12x12 plus daily challenge. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
