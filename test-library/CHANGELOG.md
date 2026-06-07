@@ -2,6 +2,17 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.8.0] - 2026-06-07 (R93 — fill-glass P0 fix + games-list sync 260→261)
+
+### Added
+- **fill-glass** (S-grade 261st live game, 💧 puzzle water-physics) added to games-list.json
+- **Pitfall 50**: S-grade new game (fill-glass) shipped to games-data.js BEFORE going through 6-point-verify.sh, hit 4 of 6 critical P0 (1ktower + alwingulla zone 110120/110121/110122 + missing H1 + missing footer/ads trio). emoji field also empty string (Pitfall 36 risk). **R93 cron tick caught it; pre-commit hook `gz-pre-commit` ran ✓ on commit 6c83ecde** — but the bug was ALREADY in main before commit. **Stronger rule**: every commit to main on a new S-grade ≥50KB game must run `bash scripts/6-point-verify.sh <slug>` BEFORE `git push origin main`, not just before commit. Add to cron pre-push verification.
+
+### Stats
+- 261 total live games (was 260, +1)
+- Pitfalls documented: 50 (was 49, +1)
+- Library: 232 test cases (no new cases; 5 维度 deep test applied to fill-glass)
+
 ## [v1.7.0] - 2026-06-07 (R93 — Dynamic Test Intelligence cron evolution, 11 new test cases)
 
 ### Added
