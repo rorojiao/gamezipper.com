@@ -291,6 +291,7 @@ const GAMES = [
 {name:"Fill Glass",emoji:"💧",cat:"puzzle",tags:["water","drawing","physics","puzzle","casual"],url:"/fill-glass/",desc:"Draw lines to guide water into the glass! 30 levels of satisfying physics puzzles.",isNew:true,status:"live"},
   {name:"Wool Sort",emoji:"🧶",cat:"puzzle",tags:["Wool","Yarn","Sort","Color","Tube","Puzzle","Cozy","Casual","Brain","Logic","Strategy","Free","HTML5","Browser"],url:"/wool-sort/",desc:"Play Wool Sort free online! Drag and drop yarn balls into matching tubes across 30 cozy puzzle levels. Sort 6 colors of wool, earn 3 stars per level. No download needed.",isNew:true,status:"live"},
 {name:"Futoshiki",emoji:"🧩",cat:"puzzle",tags:["Puzzle","Logic","Latin","Inequality","Brain","Sudoku","Casual","Number","Daily"],url:"/futoshiki/",desc:"Play Futoshiki online free! Japanese inequality logic puzzle across 4x4, 5x5, 6x6 and 7x7 boards. Respect the less-than and greater-than signs, fill Latin squares, earn stars. 30 handcrafted levels plus daily challenge. No download needed.",isNew:true,status:"live"},
+{name:"Hitori",emoji:"🟦",cat:"puzzle",tags:["Puzzle","Logic","Japanese","Grid","Number","Daily","Brain"],url:"/hitori/",desc:"Play Hitori online free! Japanese logic puzzle — shade cells to eliminate duplicate numbers in rows and columns. 30 handcrafted puzzles, 4 grid sizes, daily challenge. No download.",isNew:true,status:"live"},
 ];
 
 /**
