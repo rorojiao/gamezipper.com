@@ -681,3 +681,24 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
   - 3 files: zombie endpoints (1ktower/alwingulla/rye.io)
   - Vercel Edge function 405: /api/collect.js POST (since 12月 2025 routing change)
 - All fixed in 8 commits during R1 mid-progress
+
+## [v1.16.0] - 2026-06-08 (R99 sync — +Tapa → 270 games)
+
+### Notes
+- v1.16.0 = R99 games-list sync (no library evolution, only count sync).
+- R99 self-audit discovered 2 P0 critical bugs:
+  1. **tapa (270th, S-grade)**: Missing 6 verifications at launch (1ktower live + footer trio + SEO H1 + twitter:meta). Same Pitfall 50/54 pattern as word-ladder/futoshiki/go/hitori/skyscrapers+akari/nurikabe (6th occurrence).
+  2. **nurikabe (269th, S-grade)**: 1ktower zombie endpoint REGRESSED after R98 fix (d8ba9e86), re-introduced by automated commit a4986e41 ("UX Bot" — commit message "add site-analytics pixel" misleadingly added the 1ktower script tag).
+- Both fixed in R99 commit 68e8402d, deployed + verified post-deploy.
+
+### New Pitfall
+- **Pitfall 56 (本次发现)**: Automated/agentic commits can regress previously-fixed P0 bugs. The "UX Bot" auto-commit a4986e41 added a live 1ktower script tag (the actual R97+ zombie endpoint, not a site-analytics pixel as the message claims) — re-introducing a P0 critical bug that R98 had just fixed. 
+- **Lesson**: 
+  - Commit messages can be actively misleading (the diff is the source of truth, not the message).
+  - Automated bots MUST run the same 6-point-verify.sh before commit, not just rely on title.
+  - R0 1ktower scanner must be re-run after EVERY merge, not just at scheduled QA.
+- **预防**: pre-commit hook (`gz-pre-commit` already active as of R99) is one defense, but is not enough — automated agents may bypass it. Need a cron-side 1ktower/dead-endpoint watcher that triggers on every push to main.
+
+### Metrics
+- Total test cases: 269 (unchanged from v1.15.0)
+- Live games: 269 → 270 (+Tapa)
