@@ -1,6 +1,27 @@
 # Test Case Library Changelog
 
+
 All notable changes to the test case library are documented here.
+
+## [v1.10.0] - 2026-06-07 (R95 — 2 new games + 2 P0 fixes)
+
+### Library sync
+- **games-list.json**: 261 → 263 (added Go + Wool Sort)
+- **Go (cat:board)**: 9x9/13x13/19x19 boards, MCTS AI, Chinese scoring, ko rule
+- **Wool Sort (cat:puzzle)**: 30 levels × 3 tiers (Beginner Knitter/Apprentice Weaver/Master Tailor), BFS-validated solvable
+
+### P0 critical fixes (R95-P0)
+- **wool-sort** (R94 new): live 1ktower.com endpoint (Pitfall 20 regression) + missing footer/ads trio (Round 66 violation)
+- **go** (R94 sync): live 1ktower.com endpoint (Pitfall 20) + live alwingulla zone 110120 (Pitfall 4-5) + missing footer/ads trio
+
+### Pitfall 49 reinforcement
+- 6-point-verify.sh: (1) 1ktower, (2) alwingulla, (3) H1-outside-splash, (4) footer-trio, (5) <title>, (6) games-data.js
+- Pre-commit hook (gz-pre-commit) ran on commit 1ba3a049 ✅
+
+### Validation results
+- 263/263 games pass qa_v3 (0 fail, 0 warn, 17 at 85/100 multi-screen confirmed Kachilu)
+- R0 site scan: 0 critical (1ktower/alwingulla/H1-outside-splash/splash-deadlock/missing-script/dead-pixel all 0)
+- 5-dimension deep tested: wool-sort, go, fill-glass, ragdoll-archers, sudoku
 
 ## [v1.9.0] - 2026-06-07 (R94 — Dynamic Test Intelligence cron evolution, 10 new test cases)
 
