@@ -3,11 +3,62 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.14.0] - 2026-06-07 (R96 — Dynamic Test Intelligence cron evolution, 8 new test cases)
+
+### Notes (R96 version label)
+- v1.13.0 is R94 sync hitori (no master file on disk per Pitfall 23). R96 library evolution skips v1.13.0 to land at v1.14.0.
+- This is the 2nd time we've applied the "skip sync-only v*.*.* label" pattern (first was v1.10.0/v1.11.0 in R95 → v1.12.0).
+- 8 new test cases added (5-10 target range). Total: 253 → 261 (+8).
+
+### Added
+- 8 new test cases from industry research (5-10 range target hit):
+  - **B-036 [P0]** WebGPU Dawn CVE-2026-5281 use-after-free 0Day (Chrome pre-146.0.7680.177, in-the-wild exploit April 2026)
+  - **W-111 [P0]** Chrome 154 (2026-10) default-on "Always Use Secure Connections" — HTTP warning popup
+  - **S-036 [P0]** 3rd-party JS endpoint supply-chain attack pattern (Canvas LMS ShinyHunters ransomware 2026-05-06/07, 2.75亿 users / 9000 schools)
+  - **C-037 [P1]** WebGL/GPU Linux hybrid AMD+NVIDIA driver crash (brave-browser Issue #52749, Feb 2026)
+  - **P-024 [P1]** Chrome 147 (2026-04) auto-enable "Always Use Secure Connections" for Enhanced Safe Browsing users (1B+ users globally)
+  - **W-112 [P1]** Chrome 153 (2026-09-08) release cadence shrinks to 2 weeks (from 4 weeks) — 2× faster API deprecation
+  - **A-007 [P2]** WCAG 3.0 March 2026 Working Draft — accessibility forward-compatibility audit
+  - **W-113 [P2]** 2-week Chrome cadence × GameZipper CDN cache-bust impact
+
+### New Sub-Section
+- **11.12 R96 June 2026 Late-Emerging Browser Security + Cadence + 3rd-Party Supply Chain** — 8 cases covering: Chrome 154 default Always-Use-Secure (Oct 2026) + Chrome 147 Enhanced Safe Browsing auto-enable (Apr 2026) + Chrome 153+ 2-week release cadence (Sept 2026) + 3rd-party SaaS ShinyHunters ransomware supply-chain attack (Canvas LMS May 2026) + WebGL/GPU Linux hybrid AMD+NVIDIA driver crash (Feb 2026) + WebGPU Dawn CVE-2026-5281 0Day UAF (Apr 2026) + WCAG 3.0 March 2026 Working Draft forward-compat + Chrome 2-week cadence × GameZipper CDN cache-bust
+
+### Sources
+- **BleepingComputer (2025-10-28)**: Chrome 154 default Always Use Secure Connections (via IT之家 https://new.qq.com/rain/a/20251029A02Y6K00) — 10-28 original BleepingComputer post
+- **TechCrunch (2026-03-03)**: Chrome 153 release cadence to 2 weeks from 4 weeks (https://techcrunch.com/2026/03/03/amid-new-competition-chrome-speeds-up-its-release-schedule/)
+- **CSDN safetybug (2026-05-13)**: Canvas LMS ShinyHunters ransomware 2.75亿 users (https://blog.csdn.net/safetybug/article/details/160876462) — 5-8 BleepingComputer original report
+- **brave/brave-browser Issue #52749 (2026-02-10)**: WebGL/GPU Linux hybrid AMD+NVIDIA driver crash (https://github.com/brave/brave-browser/issues/52749)
+- **CSDN qqpublic (2026-04-02)**: CVE-2026-5281 Dawn Chrome 0Day UAF in-the-wild (https://so.html5.qq.com/page/real/search_news?docid=70000021_35669cdc85492252)
+- **W3C WAI (2026-03-03)**: WCAG 3.0 Working Draft published (https://www.w3.org/standards/history/wcag-3.0/) + WCAG 3.0 Introduction (https://www.w3.org/WAI/standards-guidelines/wcag/wcag3-intro/)
+- **Chrome 147 Enhanced Safe Browsing rollout**: Same source as W-111 BleepingComputer via IT之家
+- **Chrome 153 2-week cadence (Chinese coverage)**: https://so.html5.qq.com/page/real/search_news?docid=70000021_64169a790a846552 (TechCrunch original 2026-03-03)
+
+### Metrics
+- P0: 77 → 80 (+3: B-036, S-036, W-111)
+- P1: 102 → 105 (+3: C-037, P-024, W-112)
+- P2: 62 → 64 (+2: A-007, W-113)
+- P3: 12 → 12 (no new P3)
+- 3+3+2+0 = 8 = R96 added case IDs ✓
+- Categories: 11 (no new category; 11.12 = R96 sub-section under existing Cat 11)
+- Total: 253 → 261 (+8 R96 new)
+
+### Quality Gate
+- [x] 5-15 new cases (8 — within 5-10 target range)
+- [x] Each case has source URL (BleepingComputer, TechCrunch, W3C, CSDN, brave-browser GitHub)
+- [x] Each case has unique ID (grep verified, no collisions with v1.12.0)
+- [x] Version bump correct (v1.12.0 → v1.14.0, skipped v1.13.0 per Pitfall 23)
+- [x] Metrics grep-verified then filled in (4 dimensions sum to total)
+- [x] LIBRARY METRICS block + CHANGELOG stats consistent (both 261 total, 3+3+2+0)
+- [x] CHANGELOG entry complete (Notes, Added, Sub-Section, Sources, Metrics, Quality Gate)
+- [x] Commit message will include version bump (v1.14.0)
+
 ## [v1.13.0] - 2026-06-07 (R94 — hitori 1ktower P0 fix + games-list sync 264→265)
 
-### Notes (R94 version label)
+### Notes (R94 version label — v1.13.0 is sync-only, no master file on disk per Pitfall 23)
 - v1.12.0 (R95 Dynamic Intelligence), v1.11.0 (R93 sync), v1.10.0 (R95 sync) already in CHANGELOG.
 - v1.13.0 follows Pitfall 50 (R94 跟 R91 word-ladder / R93 futoshiki / R93 go 同类 bug).
+- **R96 audit note**: v1.13.0 has no corresponding `MASTER-TEST-CASES-v1.13.0.md` on disk (R94 sync-only entry per Pitfall 23). R96 cron skipped v1.13.0 to land at v1.14.0.
 
 ### Fixed
 - **hitori (R94 265th)**: 1ktower.com live script at line 348 → comment + 1ktower zombie endpoint cleared
