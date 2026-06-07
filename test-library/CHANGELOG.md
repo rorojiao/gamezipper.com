@@ -3,6 +3,57 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.17.0] - 2026-06-08 (R100 — Dynamic Test Intelligence cron evolution, 8 new test cases, 269 → 277)
+
+### Notes (R100 version label)
+- v1.17.0 = R100 third real library evolution from disk v1.15.0 (R98 was second).
+- v1.16.0 (R99) was a sync-only tick (no library evolution) — skipped per Pitfall 23.
+- 8 new test cases added. Total: 269 → 277 (+8).
+
+### Added
+- 8 new test cases from June 2026 industry research:
+  - **B-038 [P0]** Edge Pwn2Own Berlin 2026 chained exploit — CVE-2026-45492/45494/45495 RCE chain ($175K, Orange Tsai / DEVCORE)
+  - **B-039 [P0]** Chrome ANGLE CVE-2026-10881 — critical OOB read+write (CVSS 9.6, $97K bounty, Chrome 149 record 429-CVE batch)
+  - **S-039 [P1]** Android Framework zero-day CVE-2025-48595 — actively exploited privilege escalation (Google June 2026 security update, 124 flaws)
+  - **W-116 [P2]** Chrome 150 last version for macOS 12 Monterey — permanently vulnerable user segment risk
+  - **G-024 [P2]** Google I/O 2026 WebMCP origin trial — agent-game interaction standard (Chrome 149)
+  - **G-025 [P2]** Agentic AI playtesting — RL + LLM-driven autonomous QA for HTML5 games (WeTest GDC 2026)
+  - **C-039 [P1]** p5.js WebGPU severe performance regression — 60fps→5-10fps on simple sketches (processing/p5.js#8471)
+  - **W-117 [P1]** Vivaldi 7.8 WebGL broken after Chromium upgrade — non-major browser compat (GPU driver bug list)
+
+### New Sub-Section
+- **11.14 R100 June 2026 Edge Pwn2Own Chained Exploit + Chrome ANGLE Critical CVE + Android Zero-Day + WebGPU Performance + Non-Major Browser WebGL Compat** — 8 cases covering: Edge Pwn2Own Berlin 2026 chained CVE (origin bypass → UXSS → directory traversal RCE) + Chrome ANGLE CVE-2026-10881 critical OOB read+write ($97K bounty) + Android Framework zero-day CVE-2025-48595 actively exploited + Chrome 150 last for macOS 12 Monterey (user fragmentation risk) + WebMCP origin trial for AI agent-to-website interaction + agentic AI playtesting (RL + LLM) + p5.js WebGPU severe perf regression + Vivaldi 7.8 WebGL broken after Chromium upgrade
+
+### Sources
+- **Cybersecurity Times (June 2026)**: Microsoft Edge Pwn2Own vulnerability — chained exploit CVE-2026-45492/45494/45495 (https://cybersecuritytimes.com/microsoft-edge-vulnerability)
+- **Cyberpress (June 2026)**: Microsoft Edge vulnerability — Orange Tsai DEVCORE (https://cyberpress.org/microsoft-edge-vulnerability)
+- **Forbes (June 5 2026)**: Google Chrome 149 fixes 429 security flaws, 22 critical — CVE-2026-10881 ANGLE OOB (https://forbes.com/sites/daveywinder/2026/06/05/google-chrome-149-new-update-fixes-429-security-flaws-22-critical)
+- **The Hacker News (June 2026)**: AI agent uncovers 21 zero-days — Chrome 149 security overview (https://thehackernews.com/2026/06/ai-agent-uncovers-21-zero-days-in.html)
+- **BleepingComputer (June 2026)**: Google fixes one actively exploited Android zero-day CVE-2025-48595, 124 flaws (https://bleepingcomputer.com/news/security/google-fixes-one-actively-exploited-android-zero-day-124-flaws)
+- **TechRepublic (June 2026)**: Google June 2026 Android security update (https://techrepublic.com/article/news/google-june-2026-android-security-update)
+- **Forbes (Jan 2026)**: Chrome 150 last version for macOS 12 Monterey (https://forbes.com/sites/zakdoffman/2026/01/26/googles-chrome-decision-updates-stop-for-millions-of-apple-users)
+- **Chrome for Developers (May 19 2026)**: Chrome at Google I/O 2026 — WebMCP origin trial (https://developer.chrome.com/blog/chrome-at-io26)
+- **The Coders Blog (2026)**: Agentic AI for game playtesting (https://thecodersblog.com/agentic-ai-for-game-playtesting-2026)
+- **WeTest GDC 2026**: AI Test Agent Platform (https://wetest.net/blog/wetest-at-gdc-2026-1186.html)
+- **GitHub p5.js#8471 (Jan 2026, still open)**: WebGPU severe performance regression (https://github.com/processing/p5.js/issues/8471)
+- **Vivaldi Forum topic 115268**: Vivaldi 7.8 WebGL broken after Chromium upgrade (https://forum.vivaldi.net/topic/115268/7.8.3925.56-trouble-with-webgl-due-to-upgrade-to-7.8)
+
+### Metrics
+- P0: 82 → 84 (+2: B-038 Edge Pwn2Own chain, B-039 Chrome ANGLE CVE-2026-10881)
+- P1: 108 → 111 (+3: S-039 Android zero-day, C-039 p5.js WebGPU regression, W-117 Vivaldi WebGL)
+- P2: 66 → 70 (+4: W-116 macOS 12 sunset, G-024 WebMCP, G-025 agentic AI, carried W-114/W-115)
+- P3: 13 (unchanged)
+- 2+3+3+0 = 8 = R100 added case IDs ✓
+- Total: 269 → 277 (+8)
+- Categories: 11 (no new category; 11.14 = R100 sub-section under existing Cat 11)
+
+### Quality Gate
+- [x] 5-10 new cases (8 — within target range)
+- [x] Each case has source URL (Cybersecurity Times, Cyberpress, Forbes, The Hacker News, BleepingComputer, TechRepublic, Chrome blog, The Coders Blog, WeTest, GitHub, Vivaldi Forum)
+- [x] No duplicate case IDs (verified via grep on Edge/Pwn2Own/Chrome 149/150/Android/Vivaldi terms)
+- [x] Each case has 3-4 specific test actions
+- [x] P0 cases have immediate action items (Edge version gate + iframe sandbox hardening, Chrome version gate + Monetag WebGL audit)
+
 ## [v1.15.0] - 2026-06-08 (R98 — Dynamic Test Intelligence cron evolution, 8 new test cases, 261 → 269)
 
 ### Notes (R98 version label)
