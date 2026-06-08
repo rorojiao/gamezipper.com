@@ -269,7 +269,7 @@
 {n:"Factory Balls",e:"ð¨",u:"/factory-balls/",c:"puzzle"},
 {n:"4 Pics 1 Word",e:"ð¼ï¸",u:"/picture-word-guessing/",c:"puzzle"},
 {n:"Antistress",e:"ð§¸",u:"/antistress/",c:"casual"},{n:"Monkey Mart",e:"ð",u:"/monkey-mart/",c:"casual"},{n:"Gravity Drop",e:"ð´",u:"/gravity-drop/",c:"puzzle"},{n:'Number Nexus',e:'ð¢',u:'/number-nexus/',c:'puzzle'},{n:'Poly Art 3D',e:'ð¨',u:'/poly-art-3d/',c:'puzzle'},{n:"Baba Is You",e:"ð§©",u:"/baba-is-you/",c:"puzzle"},{n:"Nut Sort",e:"ð©",u:"/nut-sort/",c:"puzzle"},
-{n:"Pop Them",e:"ð¥",u:"/pop-them/",c:"puzzle"}
+{n:"Pop Them",e:"ð¥",u:"/pop-them/",c:"puzzle"},{n:"Heyawake",e:"🔲",u:"/heyawake/",c:"puzzle"}
 ]; }
    }
    function getDateSeed() {
