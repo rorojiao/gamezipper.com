@@ -3,6 +3,32 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.20.0] - 2026-06-08 (R103 — Dynamic Test Intelligence cron evolution, 7 new test cases, 294 → 301)
+
+### Notes (R103 version label)
+- v1.20.0 = R103 sixth real library evolution from disk v1.19.0.
+- 7 new test cases added. Total: 294 → 301 (+7).
+
+### Added
+- [B-043] **[P0]** Edge Pwn2Own RCE CVE-2026-3910 actively exploited in wild — Verify Edge 146+ post-patch rendering; iframe sandbox enforcement; canvas data isolation from exploit vectors. Source: https://cyberpress.org/microsoft-edge-vulnerability
+- [S-043] **[P1]** Edge WebView Script Injection CVE-2026-0628 — Audit CSP headers blocking extension script injection; verify ad container iframe sandboxing; test extension interference with game pages. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_3736964790e40752
+- [B-044] **[P1]** Android June 2026 124-CVE bulletin with 1 actively exploited framework flaw — Test pre/post Android security patch; verify touch events + canvas rendering unaffected; check WebView performance. Source: https://source.android.com/docs/security/bulletin/2026/2026-06-01
+- [W-120] **[P2]** Edge Collections deprecated + macOS Edge support dropped — Remove Edge Collections API dependency; exclude Edge macOS from test matrix; verify Edge 146+ Windows no regression. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_63569b5745707752
+- [P-029] **[P2]** High-refresh-rate 120Hz game rendering smoothness — Verify canvas games smooth on 120Hz displays; rAF timing adapts to variable refresh; prefers-reduced-motion overrides. Source: 2026 gaming phone display tech report
+- [C-043] **[P2]** AI-assisted cross-terminal testing pipeline evaluation — Evaluate cloud real-device platforms (BrowserStack/Sauce Labs) for QA; automated cross-browser visual regression; AI script generation for game interactions. Source: https://cloud.tencent.com/developer/article/2636086
+- [C-044] **[P3]** HarmonyOS browser compatibility — Test on HarmonyOS browser (Huawei Mate/P); verify canvas rendering, touch events, CSS layouts; assess Chinese market expansion relevance. Source: https://cloud.tencent.com/developer/article/2636086
+
+### Sources
+- Search: "browser game security vulnerability June 2026" → Edge Pwn2Own RCE CVE-2026-3910 (actively exploited), Edge WebView CVE-2026-0628, Chrome 14 critical CVEs, Android June 2026 124-CVE bulletin
+- Search: "Chrome Edge Safari browser update June 8 2026" → Edge Collections deprecated, Edge macOS dropped, Safari 26.4 CSS Grid Lanes, Edge auto-remove extensions, Edge Windows Hello password manager
+- Search: "casual game UX design 2026 mobile" → 120Hz gaming phone display tech, screen-centric immersive experience, BOE hardware eye protection
+- Search: "HTML5 game testing 2026 new techniques" → AI-assisted cross-terminal testing, cloud real-device clusters, HarmonyOS H5 coverage
+- Search: "WebGPU WebGL performance browser game 2026" → WebGPU 3x render / 50x compute vs WebGL benchmarks, WebAssembly acceleration strategies
+
+### Metrics
+- Total test cases: 294 → 301 (+7)
+- P0: 33 → 34 (+1: B-043) | P1: 76 → 78 (+2: S-043, B-044) | P2: 77 → 80 (+3: W-120, P-029, C-043) | P3: 13 → 14 (+1: C-044)
+
 ## [v1.19.0] - 2026-06-08 (R102 — Dynamic Test Intelligence cron evolution, 9 new test cases, 285 → 294)
 
 ### Notes (R102 version label)
