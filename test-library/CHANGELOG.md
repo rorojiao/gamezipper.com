@@ -3,6 +3,51 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.23.0] - 2026-06-09 (R111 — Dynamic Test Intelligence cron evolution, 8 new test cases, 307 → 315)
+
+### Notes (R111 version label)
+- v1.23.0 = R111 library evolution from disk v1.22.0.
+- 8 new test cases added. Total: 307 → 315 (+8).
+- Disk latest was v1.22.0, CHANGELOG latest was v1.22.0 — no sync-only entries to skip (Pitfall 23 clear).
+- Single-commit pattern used (no sibling worker detected per Pitfall 28).
+
+### Added
+- 8 new test cases (307 → 315 total) from industry research
+- **B-048 [P0]** Chrome 148 GPU OOB write CVE-2026-9872 + Network UAF CVE-2026-9873 — critical RCE vector in 151-CVE batch ($43K bounties each)
+- **S-047 [P1]** Fake Chrome security alert social engineering — scam sites mimicking Chrome browser warnings targeting game players
+- **P-032 [P1]** WebGPU battery efficiency — 33% less battery drain than WebGL (lower CPU overhead, 2h WebGL → 3h WebGPU on mobile)
+- **C-048 [P2]** WebGPU cold-start vs warm-run frame pacing — first-frame shader compilation stall detection
+- **C-049 [P2]** WebGPU 82% global browser coverage + fallback testing — verify graceful WebGL 2 fallback
+- **C-050 [P2]** AI Test Agent platform for automated game QA — WeTest GDC 2026 AI Test Agent evaluation
+- **W-123 [P2]** Skeleton loading for game card grid — replace spinner with skeleton placeholders
+- **G-096 [P2]** Micro-interactions in game UI — button press feedback, success/error animations
+
+### Sources
+- **Chrome 148 CVEs**: https://forbes.com/sites/daveywinder/2026/05/31/151-chrome-security-flaws-22-critical-fixed-in-new-google-update
+- **WebGPU performance**: https://hardwaretimes.com/webgpu-vs-webgl-performance-for-browser-games-what-changes-and-how-to-test-it
+- **WebGPU battery**: https://dailydevpost.com/blog/webgpu-vs-webgl-performance-guide
+- **WebGPU coverage**: https://byteiota.com/webgpu-2026-70-browser-support-15x-performance-gains
+- **WebGPU next-gen**: https://programming-helper.com/tech/webgpu-2026-next-generation-browser-graphics-api
+- **Mobile UX 2026**: https://spawned.com/guides/mobile-app-ux-trends-2026
+- **Micro-interactions**: https://timgraf.com/ui/the-physics-of-digital-delight-why-micro-interactions-and-haptic-feedback-are-the-real-2026-saas-differentiators
+- **AI Test Agent**: https://wetest.net/blog/wetest-at-gdc-2026-1186.html
+- **Fake Chrome alerts**: Minimax search 2026-06-09 (javigd.com, hk603.hk scam sites)
+- **HTML5 games 2026**: https://docomogames.com/the-ultimate-guide-to-html5-games-in-2026
+
+### Metrics
+- P0: 88 → 89 (+1: B-048)
+- P1: 124 → 126 (+2: S-047, P-032)
+- P2: 81 → 86 (+5: C-048, C-049, C-050, W-123, G-096)
+- P3: 14 → 14 (no new)
+- 1+2+5+0 = 8 = R111 added case IDs ✓
+
+### Quality Gate
+- [x] 8 new case IDs verified unique (grep-confirmed)
+- [x] Metrics match: P0=89 P1=126 P2=86 P3=14 sum=315 ✓
+- [x] Version bump correct: v1.22.0 → v1.23.0 (library evolution)
+- [x] Each case has source URL
+- [x] 4-dimensional sum check: 89+126+86+14 = 315 ✓
+
 ## [v1.22.0] - 2026-06-09 (R108 — Dynamic Test Intelligence cron evolution, 8 new test cases, 299 → 307)
 
 ### Notes (R108 version label)
