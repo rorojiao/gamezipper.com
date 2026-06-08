@@ -241,9 +241,11 @@ function dealGame(seed){
 }
 
 function positionAllCards(){
+  if(!pyramid||!pyramid.length||!M||!M.cw) return;
   const{cw,ch,overlap,pyrY,stockX,stockY,wasteX}=M;
   const gap=2;
   for(let r=0;r<PYRAMID_ROWS;r++){
+    if(!pyramid[r]) continue;
     const rowW=(r+1)*(cw+gap);
     const startX=W/2-rowW/2+cw/2;
     for(let c=0;c<=r;c++){
@@ -832,15 +834,12 @@ function updateAnimations(dt){
 
 /* ── Game Loop ── */
 function gameLoop(timestamp){
-  if(cleanupDone){window.__gameLoopStopped=true;return;}
-  window.__gameLoopFrames=(window.__gameLoopFrames||0)+1;
-  try{
+  if(cleanupDone)return;
   const dt=Math.min((timestamp-lastFrameTime)/1000,.05);
   frameDt=dt;
   lastFrameTime=timestamp;
   updateAnimations(dt);
   render(dt);
-  }catch(e){window.__gameLoopError=e.message;return;}
   rafId=requestAnimationFrame(gameLoop);
 }
 
@@ -1220,28 +1219,21 @@ window.newGame=newGame;
 window.doUndo=doUndo;
 
 function init(){
-  try{
   window.addEventListener('resize',resize);
   canvas.addEventListener('pointerdown',onPointerDown);
   canvas.style.touchAction='none';
-  window.__initStep='before-resize';
   resize();
-  window.__initStep='before-newGame';
   newGame();
-  window.__initStep='before-raf';
   lastFrameTime=performance.now();
   rafId=requestAnimationFrame(gameLoop);
-  window.__initStep='done';
   // Cleanup on page hide
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden)clearInterval(gameTimerInterval);
     else if(gameState==='playing')startTimer();
   });
-  }catch(e){window.__initError=e.message+' step:'+window.__initStep;window.__initStep='error';}
 }
 
-try{init();}catch(e){window.__initError=e.message+' line:'+e.lineNumber;}
-window.__initDone=true;
+init();
 })();
 </script>
 <div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;text-align:center;"></div>
