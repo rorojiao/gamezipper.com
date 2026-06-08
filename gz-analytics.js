@@ -1,9 +1,11 @@
 /* gz-analytics.js — lightweight behavioral tracking, no deps, <5KB
    2026-06-05 fix: connected to Vercel /api/collect.js → BI server pipeline
+   2026-06-08 fix: attach vid/sid/device/screen/browser/os/referrer/site/path
+                   on every event so BI Server can compute UV/session/device split.
    Events flow: gz-analytics → Vercel /api/collect.js → Python BI server (10.10.29.67:8090)
    localStorage archive kept as fallback (gz_aa). */
 (function() {
-  var SITE = 'gamezipper.com';
+  var SITE = location.hostname;   // use real hostname so tools.gamezipper.com works too
   // Direct tunnel URL: browser → Cloudflare Tunnel → BI server (10.10.29.67:8090)
   // Tunnel: cloudflared systemd service (auto-restart on failure)
   // NOTE: If tunnel URL changes, update this and redeploy
@@ -13,6 +15,30 @@
   var T = 30000;
   var P = location.pathname;
   var N = navigator;
+
+  // Visitor/session/device metadata — generated once per page load, attached to every event
+  // (BI Server /api/collect reads these as top-level fields for UV/session/device split)
+  var VID_KEY = 'gz_vid';
+  var SID_KEY = 'gz_sid';
+  function uuidV4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+  var VID = '';
+  try { VID = localStorage.getItem(VID_KEY) || ''; } catch(e) {}
+  if (!VID) { VID = uuidV4(); try { localStorage.setItem(VID_KEY, VID); } catch(e) {} }
+  var SID = '';
+  try { SID = sessionStorage.getItem(SID_KEY) || ''; } catch(e) {}
+  if (!SID) { SID = Math.random().toString(36).slice(2, 12); try { sessionStorage.setItem(SID_KEY, SID); } catch(e) {} }
+  var UA = (N && N.userAgent) || '';
+  var DEVICE = /Mobi|Android|iPhone|iPad|iPod/i.test(UA) ? 'Mobile'
+              : /Tablet|iPad/i.test(UA) ? 'Tablet' : 'Desktop';
+  var SCREEN = (window.innerWidth || 0) + 'x' + (window.innerHeight || 0);
+  var BROWSER = UA;
+  var OS = (N && N.platform) || '';
+  var REFERRER = document.referrer || '';
 
   function gB() {
     try { return JSON.parse(localStorage.getItem(BK) || '[]'); } catch(e) { return []; }
@@ -29,9 +55,19 @@
       localStorage.setItem(AR, JSON.stringify(a));
     } catch(e) {}
   }
+  // Strip undefined values so JSON.stringify on the batch doesn't bloat with nulls
+  function base() {
+    return {
+      site: SITE, path: P,
+      vid: VID, sid: SID,
+      device: DEVICE, screen: SCREEN, browser: BROWSER, os: OS, referrer: REFERRER
+    };
+  }
   function ps(n, d) {
     var b = gB();
-    b.push({ s: SITE, e: n, d: d || {}, t: Date.now() });
+    var ev = base();
+    ev.e = n; ev.d = d || {}; ev.t = Date.now();
+    b.push(ev);
     sB(b);
   }
   function snd(p) {

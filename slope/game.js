@@ -180,7 +180,7 @@ function resetGame() {
   frameCount = 0;
   deathTimer = 0;
   slowMo = 0;
-  invincible = 0;
+  invincible = 90; // ~1.5s initial invincibility to avoid pre-spawned obstacle collision
   particles = [];
   trail = [];
   resetWorld();
