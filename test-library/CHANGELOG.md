@@ -3,6 +3,43 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.22.0] - 2026-06-09 (R108 — Dynamic Test Intelligence cron evolution, 8 new test cases, 299 → 307)
+
+### Notes (R108 version label)
+- v1.22.0 = R108 library evolution from disk v1.21.0.
+- 8 new test cases added. Total: 299 → 307 (+8).
+- Stale LIBRARY METRICS (v1.18.0) block marked as historical per Pitfall 37.
+
+### Added
+- [S-045] **[P1]** Firefox 151.0.3 MFSA2026-54 — Graphics boundary + JIT miscompilation — Two high-severity vulnerabilities: CVE-2026-10701 (Graphics: Text boundary error) and CVE-2026-10702 (JIT miscompilation). Verify game rendering on Firefox 151.0.3+; test canvas games for rendering artifacts; check localStorage integrity after update. Source: https://mozilla.org/en-US/security/advisories/mfsa2026-54
+- [B-046] **[P0]** Chrome Extensions UAF CVE-2026-11230 — sandbox RCE (CVSS 8.8) — Use-After-Free in Chrome Extensions component allows arbitrary code execution in sandbox via crafted HTML page. Affects Chrome <149.0.7827.53. Audit monetag-manager.js, game-footer.js for UAF patterns; verify ad iframe sandbox attributes. Source: https://cvefeed.io/vuln/detail/CVE-2026-11230
+- [B-047] **[P0]** Chrome 151 security update — 151 flaws, 22 critical — Chrome 151 patches 151 CVEs (CVE-2026-9872 GPU OOB write + 21 more critical). 2026 total Chrome CVEs: 625 (2.5x vs 2025). Test canvas/WebGL games for GPU OOB patterns; verify CSP headers; establish Chrome version monitoring. Source: https://forbes.com/sites/daveywinder/2026/05/31/151-chrome-security-flaws-22-critical-fixed-in-new-google-update
+- [C-046] **[P2]** Playwright 1.60.0 (May 2026) — HAR tracing, ARIA snapshots, drag-drop — Major release enables network-integrated debugging (HAR+trace), full-page ARIA snapshot accessibility validation, and realistic drag-drop simulation. Evaluate for deep-play-test.js upgrade. Source: https://skakarh.com/blog/playwright-1-60-0-whats-new-for-qa-engineers
+- [C-047] **[P2]** Playwright+Chromatic visual regression 8.5x adoption growth — @chromatic-com/playwright downloads grew 100K→854K/month in 16 months. 68% QA teams use toHaveScreenshot() in CI. Evaluate full-page visual regression vs current pixel-sampling for GameZipper games. Source: https://scrolltest.com/visual-regression-testing-playwright-chromatic-2026
+- [W-122] **[P1]** HTML-in-Canvas API origin trial (Chrome I/O 2026) — Live DOM rendering inside canvas via `layoutsubtree` + `drawElementImage()`. Eliminates html2canvas hacks. Revolutionary for canvas game accessibility: screen readers see content, find-in-page works, text selectable. Prototype on 5 games. Source: https://byteiota.com/html-in-canvas-api-draw-live-dom-inside-webgl-chrome-2026
+- [P-031] **[P2]** WebGPU battery efficiency — 20-30% less drain on mobile vs WebGL — Lower CPU overhead allows GPU to enter low-power states sooner. WebGL: 95% CPU for 15K cubes@30fps vs WebGPU: <5% CPU for 200K cubes@60fps. Benchmark mobile battery drain on GameZipper games. Source: https://dailydevpost.com/blog/webgpu-vs-webgl-performance-guide
+- [A-010] **[P1]** EU Accessibility Act 2026 enforcement — WCAG 2.2 AA mandatory for digital services serving EU — EAA enforcement intensifying throughout 2026. EN 301 549 V3.2.1 in force; V4 with WCAG 2.2 in drafting. Audit top 30 games for WCAG 2.2 AA: focus indicators, keyboard navigation, 24×24 CSS pixel targets, screen reader support. Source: https://adfirm.net/blog/eu-accessibility-act-compliance-2026 + https://popwebdesign.net/popart_blog/en/2026/06/wcag-2-2-checklist
+
+### Sources
+- Search: "browser security CVE June 2026 vulnerability Chrome Firefox Safari" → Chrome Extensions UAF CVE-2026-11230 (TheHackerWire + CVEFeed.io), Chrome 151 22 critical (Forbes), Firefox 151.0.3 MFSA2026-54 (Mozilla), Chrome 625 total 2026 CVEs (stack.watch)
+- Search: "WebGPU WebGL game rendering performance 2026" → WebGPU vs WebGL 15x performance + battery efficiency (DailyDevPost), HTML-in-Canvas API (ByteIOTA), WebGPU Godot comparison (IEEE), Three.js WebGPU default (weskill.org)
+- Search: "Playwright browser testing new feature June 2026 visual regression" → Playwright 1.60 HAR+ARIA+drag-drop (skakarh.com), Playwright+Chromatic 8.5x growth (ScrollTest), AI+Playwright guide (Autify)
+- Search: "WCAG 2.2 mobile game accessibility 2026 EU regulation ADA compliance" → EU Accessibility Act enforcement (Adfirm), WCAG 2.2 checklist (popwebdesign), WCAG2Mobile W3C MATF (w3c.github.io/matf)
+- Search: "HTML5 canvas game accessibility mobile touch 2026 best practice" → HTML-in-Canvas accessibility (ByteIOTA), Scrawl-canvas responsive (GitHub), mobile a11y design (AssistiveMedia)
+
+### Metrics
+- Total test cases: 299 → 307 (+8)
+- P0: 86 → 88 (+2: B-046, B-047) | P1: 121 → 124 (+3: S-045, W-122, A-010) | P2: 78 → 81 (+3: C-046, C-047, P-031) | P3: 14 (unchanged)
+- 2+3+3+0 = 8 = total new case IDs ✓
+
+### Quality Gate
+- [x] 8 new case IDs verified unique (grep-confirmed)
+- [x] Metrics match: P0=88 P1=124 P2=81 P3=14 sum=307 ✓
+- [x] No duplicate IDs (diff vs v1.21.0: exactly 8 new)
+- [x] Stale v1.18.0 metrics block marked as historical
+- [x] All sources cited with URLs
+- [x] Version bump: v1.21.0 → v1.22.0
+
 ## [v1.21.0] - 2026-06-08 (R105 — Dynamic Test Intelligence cron evolution, 7 new test cases, 292 → 299)
 
 ### Notes (R105 version label)
