@@ -1,9 +1,16 @@
 /**
  * GameZipper Ad Manager v5 — Poki-Style Adaptive Ad System
- * 
+ *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
- * 
+ *
+ * v5.2 Changes (2026-06-09 In-Game Banner Extension):
+ *   - 自动注入 in-game banner: canvas 上下各 1 个 AdSense slot
+ *   - 桌面 728x90 leaderboard / 移动 320x50 mobile banner
+ *   - 新 bannerAdCooldown: 5 分钟 (避免与 commercial break / container 重复)
+ *   - 完全不修改 HTML — 通过 injectInGameBanners() 自动定位 + 注入
+ *   - 优化广告密度: 283 游戏页统一升级, 无需逐页修改
+ *
  * v5.1 Changes (2026-06-09 优化):
  *   - AdSense + Monetag race 在 commercial break (游戏结束最高价值广告位)
  *   - loadZone() 增加实际 DOM fill 检测 (不再以 script load 为 fill 标准)
@@ -81,6 +88,7 @@
       dailyMaxAds: 60,                  // max 60 ads per day (对标 Poki 克制)
       homepageBannerCooldown: 10 * 60 * 1000, // 10 min between homepage banners
       containerAdCooldown: 3 * 60 * 1000,   // 3 min between container ads
+      bannerAdCooldown: 5 * 60 * 1000,  // v5.2: 5 min between in-game banner refresh
     },
     TIMING: {
       homepageBannerDelay: 1500,
@@ -91,10 +99,25 @@
       commercialBreakCooldown: 45 * 1000, // same as minBetweenAds
       gameOverDetectionDelay: 1500,      // wait 1.5s after overlay appears
       prerollDelay: 15 * 1000,           // 15s 无交互后触发 pre-roll
+      inGameBannerInjectDelay: 800,     // v5.2: inject after DOM ready
+      inGameBannerLoadDelay: 2500,      // v5.2: load ads 2.5s after injection
+      inGameBannerMaxFillMs: 5000,      // v5.2: 5s max wait for AdSense fill detection
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.1',
+    VERSION: '5.2',
+    // v5.2: in-game banner AdSense slot IDs (auto = AdSense picks responsive)
+    BANNERS: {
+      slotId: 'auto',                   // AdSense auto slot for above/below canvas
+      // We use 'auto' slot because we don't have dedicated in-game banner slots
+      // AdSense will choose 728x90 (desktop) or 320x50 (mobile) responsive
+      aboveClass: 'gz-injected-banner-above',
+      belowClass: 'gz-injected-banner-below',
+      desktopMaxWidth: 728,
+      desktopMinHeight: 90,
+      mobileMaxWidth: 320,
+      mobileMinHeight: 50,
+    },
   };
 
   // ==================== STATE ====================
@@ -117,6 +140,7 @@
     pendingCommercialBreak: false,
     prerollTriggered: false,   // v5: pre-roll 是否已触发
     firstInteraction: 0,       // v5: 首次用户交互时间
+    bannersInjected: false,    // v5.2: in-game banner 是否已注入
   };
 
   // ==================== UTILITIES ====================
@@ -176,6 +200,7 @@
     switch(type) {
       case 'homepage_banner': return CONFIG.FREQUENCY.homepageBannerCooldown;
       case 'container': return CONFIG.FREQUENCY.containerAdCooldown;
+      case 'banner': return CONFIG.FREQUENCY.bannerAdCooldown;  // v5.2
       case 'commercial_break': return CONFIG.FREQUENCY.commercialBreakCooldown;
       default: return CONFIG.FREQUENCY.minBetweenAds;
     }
@@ -1067,6 +1092,164 @@
     }, CONFIG.TIMING.containerAdDelay);
   }
 
+  // ==================== IN-GAME BANNER (v5.2) ====================
+  // 自动注入 canvas 上下各 1 个 AdSense banner slot — 不需修改 HTML
+  // 桌面 728x90 leaderboard / 移动 320x50 mobile banner
+  // 5min cooldown 避免与 commercial break / container 重复触发
+  // 注入策略: 找到 canvas-wrap / canvas / #wrap, 前后分别插入 banner
+  // 失败处理: 不填充时 display:none (无白框)
+  function injectInGameBanners() {
+    if (!state.isGamePage) return;
+    if (state.bannersInjected) return;
+    if (!canShowAd('banner')) return;
+
+    setTimeout(function() {
+      // Re-check cooldown (may have elapsed since init)
+      if (!canShowAd('banner')) return;
+      if (state.bannersInjected) return;
+
+      var injected = 0;
+      // Find canvas container — try multiple selectors (different games use different IDs)
+      var canvasWrap = $('#canvas-wrap') || $('#game-container') || $('#canvas-wrap-inner') ||
+                       $('canvas') || $('.game-canvas') || $('#wrap');
+      var wrap = $('#wrap');
+
+      var mobile = isMobile();
+      var maxW = mobile ? CONFIG.BANNERS.mobileMaxWidth : CONFIG.BANNERS.desktopMaxWidth;
+      var minH = mobile ? CONFIG.BANNERS.mobileMinHeight : CONFIG.BANNERS.desktopMinHeight;
+      var bannerCSS = 'max-width:' + maxW + 'px;min-height:' + minH + 'px;' +
+                      'margin:8px auto;text-align:center;overflow:hidden;display:none;';
+
+      // Helper to create banner div
+      function createBannerDiv(position) {
+        var div = document.createElement('div');
+        div.id = position === 'above' ? 'gz-ad-above-game' : 'gz-ad-below-canvas';
+        div.className = position === 'above' ? CONFIG.BANNERS.aboveClass : CONFIG.BANNERS.belowClass;
+        div.setAttribute('data-gz-banner-position', position);
+        div.setAttribute('data-gz-injected', '1');
+        div.style.cssText = bannerCSS;
+        return div;
+      }
+
+      // Inject above canvas (insertBefore canvas-wrap)
+      if (canvasWrap) {
+        var aboveBanner = createBannerDiv('above');
+        if (canvasWrap.parentNode) {
+          canvasWrap.parentNode.insertBefore(aboveBanner, canvasWrap);
+          fillInGameBanner(aboveBanner, 'above');
+          injected++;
+        }
+        // Inject below canvas (insertAfter canvas-wrap)
+        var belowBanner = createBannerDiv('below');
+        if (canvasWrap.nextSibling) {
+          canvasWrap.parentNode.insertBefore(belowBanner, canvasWrap.nextSibling);
+        } else {
+          canvasWrap.parentNode.appendChild(belowBanner);
+        }
+        fillInGameBanner(belowBanner, 'below');
+        injected++;
+      } else if (wrap) {
+        // No canvas-wrap but have wrap — inject at top + bottom of wrap
+        var topBanner = createBannerDiv('above');
+        wrap.insertBefore(topBanner, wrap.firstChild);
+        fillInGameBanner(topBanner, 'above');
+        var bottomBanner = createBannerDiv('below');
+        wrap.appendChild(bottomBanner);
+        fillInGameBanner(bottomBanner, 'below');
+        injected += 2;
+      } else {
+        // No wrap — inject at body top + before gz-ad-below-game (if exists)
+        var bodyBanner = createBannerDiv('above');
+        bodyBanner.id = 'gz-ad-above-game';
+        var belowGameAnchor = $('#gz-ad-below-game');
+        if (belowGameAnchor) {
+          // Insert above the existing below-game container
+          var refAbove = createBannerDiv('above');
+          belowGameAnchor.parentNode.insertBefore(refAbove, belowGameAnchor);
+          fillInGameBanner(refAbove, 'above');
+          injected++;
+        } else {
+          document.body.insertBefore(bodyBanner, document.body.firstChild);
+          fillInGameBanner(bodyBanner, 'above');
+          injected++;
+        }
+        // Bottom banner: append to body
+        var bottomBanner2 = createBannerDiv('below');
+        document.body.appendChild(bottomBanner2);
+        fillInGameBanner(bottomBanner2, 'below');
+        injected++;
+      }
+
+      if (injected > 0) {
+        state.bannersInjected = true;
+        trackAdEvent('banners_injected', { count: injected, mobile: mobile });
+      }
+    }, CONFIG.TIMING.inGameBannerInjectDelay);
+  }
+
+  // Fill a single injected banner slot with AdSense primary + Monetag fallback
+  function fillInGameBanner(container, position) {
+    if (!container) return;
+    if (!canShowAd('banner')) {
+      trackAdEvent('banner_cooldown_blocked', { position: position });
+      return;
+    }
+    var slotId = CONFIG.BANNERS.slotId;
+
+    setTimeout(function() {
+      if (container.getAttribute('data-filled')) return;
+      if (!canShowAd('banner')) return;
+      // Tier 1: AdSense (higher fill rate, currently 5-10% on game sites)
+      try { loadAdSenseAd(container, slotId); } catch(e) {
+        trackAdEvent('banner_adsense_error', { position: position, error: String(e) });
+      }
+      // AdSense fill detection (poll for iframe insertion, up to inGameBannerMaxFillMs)
+      var adsenseStart = Date.now();
+      var adsenseTimer = setInterval(function() {
+        if (container.getAttribute('data-filled')) { clearInterval(adsenseTimer); return; }
+        var ins = container.querySelector('ins.adsbygoogle');
+        var hasIframe = ins && ins.querySelector('iframe');
+        var hasContent = ins && ins.getAttribute('data-ad-status') === 'filled';
+        var hasSize = ins && ins.offsetHeight > 30;
+        if (hasIframe || hasContent || hasSize) {
+          container.setAttribute('data-filled', '1');
+          container.style.display = 'block';
+          markAdShown('banner');
+          trackAdEvent('banner_fill', { network: 'adsense', position: position });
+          clearInterval(adsenseTimer);
+          return;
+        }
+        if (Date.now() - adsenseStart > CONFIG.TIMING.inGameBannerMaxFillMs) {
+          clearInterval(adsenseTimer);
+        }
+      }, 500);
+
+      // Tier 2: Monetag Skillful fallback after 2s if AdSense hasn't filled
+      setTimeout(function() {
+        if (container.getAttribute('data-filled')) return;
+        if (!canShowAd('banner')) return;
+        loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
+          container.setAttribute('data-filled', '1');
+          container.style.display = 'block';
+          markAdShown('banner');
+          trackAdEvent('banner_fill', { network: 'monetag_skillful', position: position });
+        }).catch(function() {
+          // Tier 3: legacy Attractive zone
+          if (!canShowAd('banner')) return;
+          loadZone(CONFIG.ZONES.inpagePushLegacy, container).then(function() {
+            container.setAttribute('data-filled', '1');
+            container.style.display = 'block';
+            markAdShown('banner');
+            trackAdEvent('banner_fill', { network: 'monetag_legacy', position: position });
+          }).catch(function() {
+            // All 3 tiers failed — keep hidden (no white box)
+            trackAdEvent('banner_no_fill', { position: position });
+          });
+        });
+      }, 2000);
+    }, CONFIG.TIMING.inGameBannerLoadDelay);
+  }
+
   // ==================== INTER-GAME COMMERCIAL BREAK ====================
   // When user clicks a game link in game-footer, trigger commercial break
   function initGameFooterIntegration() {
@@ -1151,9 +1334,12 @@
       initOverlayDetection();
       initCustomEventListeners();
       initGameFooterIntegration();
-      
+
       // Auto-fill container ad
       autoFillContainer();
+
+      // v5.2: 自动注入 in-game banner (canvas 上下各 1 个 AdSense slot)
+      injectInGameBanners();
 
       // v5: Pre-roll 支持 — 15s 无交互后触发
       initPreroll();
