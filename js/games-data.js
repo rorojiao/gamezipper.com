@@ -13,8 +13,7 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#fccb90,#d57eeb)',
   'linear-gradient(135deg,#ff9a9e,#fecfef)',
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
-  'linear-gradient(135deg,#a1c4fd,#c2e9fb)',
-{name:"Suguru",emoji:"🧩",cat:"puzzle",tags:["puzzle","logic","nikoli","number","blocks","tectonic","grid","brain","strategy","browser","free","html5"],url:"/suguru/",desc:"Play Suguru online free! Fill colored regions with numbers 1-N so no identical numbers touch. 30 handcrafted logic puzzles 5x5 to 7x7 plus daily challenge. No download needed!",isNew:true,status:"live"},
+  'linear-gradient(135deg,#a1c4fd,#c2e9fb)'
 ];
 
 const GAMES = [
