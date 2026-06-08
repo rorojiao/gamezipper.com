@@ -1220,18 +1220,24 @@ window.newGame=newGame;
 window.doUndo=doUndo;
 
 function init(){
+  try{
   window.addEventListener('resize',resize);
   canvas.addEventListener('pointerdown',onPointerDown);
   canvas.style.touchAction='none';
+  window.__initStep='before-resize';
   resize();
+  window.__initStep='before-newGame';
   newGame();
+  window.__initStep='before-raf';
   lastFrameTime=performance.now();
   rafId=requestAnimationFrame(gameLoop);
+  window.__initStep='done';
   // Cleanup on page hide
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden)clearInterval(gameTimerInterval);
     else if(gameState==='playing')startTimer();
   });
+  }catch(e){window.__initError=e.message+' step:'+window.__initStep;window.__initStep='error';}
 }
 
 try{init();}catch(e){window.__initError=e.message+' line:'+e.lineNumber;}
