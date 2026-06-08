@@ -54,8 +54,13 @@
   // ==================== CONFIGURATION ====================
   var CONFIG = {
     ZONES: {
+      // Primary (Skillful tag, MultiTag v2 - deployed 2026-05-22)
       inpagePush: 11012002,
       vignette: 11012003,
+      // Legacy fallback (Attractive tag - was filling in March 2026)
+      // Re-activated 2026-06-08 after Skillful zones showed 0 imp for 14 days
+      inpagePushLegacy: 10687755,
+      vignetteLegacy: 10687756,
     },
     AD_PROVIDER: 'https://a.magsrv.com/ad-provider.js',
     // Preconnect for faster ad loading
@@ -723,14 +728,21 @@
       if (!canShowAd('homepage_banner')) return;
       // Try AdSense first (higher fill rate); use Monetag as fallback
       loadAdSenseAd(container, '1099212472');
-      // Fallback to Monetag after 2s if AdSense hasn't filled
+      // Fallback to Monetag primary (Skillful) after 2s if AdSense hasn't filled
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
         if (!canShowAd('homepage_banner')) return;
         loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
           container.setAttribute('data-filled', '1');
           markAdShown('homepage_banner');
-        }).catch(function() {});
+        }).catch(function() {
+          // 3rd tier: legacy Attractive zone (was filling in March 2026)
+          if (!canShowAd('homepage_banner')) return;
+          loadZone(CONFIG.ZONES.inpagePushLegacy, container).then(function() {
+            container.setAttribute('data-filled', '1');
+            markAdShown('homepage_banner');
+          }).catch(function() {});
+        });
       }, 2000);
     }, CONFIG.TIMING.homepageBannerDelay);
   }
@@ -759,7 +771,7 @@
     setTimeout(function() {
       if (container.getAttribute('data-filled')) return;
       if (!canShowAd('homepage_banner')) return;
-      // Try AdSense first; Monetag fallback after 2s
+      // Try AdSense first; Monetag Skillful fallback after 2s; legacy Attractive after 5s
       loadAdSenseAd(container, '1099212472');
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
@@ -767,7 +779,13 @@
         loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
           container.setAttribute('data-filled', '1');
           markAdShown('homepage_banner');
-        }).catch(function() {});
+        }).catch(function() {
+          if (!canShowAd('homepage_banner')) return;
+          loadZone(CONFIG.ZONES.inpagePushLegacy, container).then(function() {
+            container.setAttribute('data-filled', '1');
+            markAdShown('homepage_banner');
+          }).catch(function() {});
+        });
       }, 2000);
     }, CONFIG.TIMING.homepageBannerDelay + 5000); // 6.5s total delay
   }
@@ -794,7 +812,7 @@
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
         if (!canShowAd('homepage_banner')) return;
-        // Monetag fallback. Resolve on script load, reject on error/timeout.
+        // Monetag Skillful fallback. Resolve on script load, reject on error/timeout.
         loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
           // Monetag script loaded successfully — they injected an iframe/element
           container.setAttribute('data-filled', '1');
@@ -804,8 +822,19 @@
           container.style.textAlign = 'center';
           container.style.padding = '12px 0';
         }).catch(function() {
-          // Both AdSense and Monetag failed — keep container hidden (no white box)
-          container.style.display = 'none';
+          // 3rd tier: legacy Attractive zone fallback
+          if (!canShowAd('homepage_banner')) return;
+          loadZone(CONFIG.ZONES.inpagePushLegacy, container).then(function() {
+            container.setAttribute('data-filled', '1');
+            markAdShown('homepage_banner');
+            container.style.display = 'block';
+            container.style.minHeight = '100px';
+            container.style.textAlign = 'center';
+            container.style.padding = '12px 0';
+          }).catch(function() {
+            // All 3 tiers failed — keep container hidden (no white box)
+            container.style.display = 'none';
+          });
         });
       }, 2000);
 
@@ -848,7 +877,7 @@
     setTimeout(function() {
       if (container.getAttribute('data-filled')) return;
       if (!canShowAd('container')) return;
-      // Try AdSense first (higher fill); Monetag fallback after 2s
+      // Try AdSense first (higher fill); Monetag Skillful fallback after 2s; legacy Attractive after 4s
       try { loadAdSenseAd(container, '7373732357'); } catch(e) {}
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
@@ -858,8 +887,16 @@
           markAdShown('container');
           container.style.display = container.getAttribute('data-gz-orig-display') || 'block';
         }).catch(function() {
-          // Keep hidden — no white box
-          container.style.display = 'none';
+          // 3rd tier: legacy Attractive zone
+          if (!canShowAd('container')) return;
+          loadZone(CONFIG.ZONES.inpagePushLegacy, container).then(function() {
+            container.setAttribute('data-filled', '1');
+            markAdShown('container');
+            container.style.display = container.getAttribute('data-gz-orig-display') || 'block';
+          }).catch(function() {
+            // Keep hidden — no white box
+            container.style.display = 'none';
+          });
         });
       }, 2000);
 
