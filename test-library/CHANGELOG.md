@@ -3,6 +3,52 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.18.0] - 2026-06-08 (R101 — Dynamic Test Intelligence cron evolution, 8 new test cases, 277 → 285)
+
+### Notes (R101 version label)
+- v1.18.0 = R101 fourth real library evolution from disk v1.17.0.
+- 8 new test cases added. Total: 277 → 285 (+8).
+
+### Added
+- 8 new test cases from June 2026 industry research:
+  - **B-040 [P0]** Firefox 151 sandbox escape CVE-2026-8945 + WebGPU info disclosure CVE-2026-8967 — sandbox escape in Firefox for Android/Focus + WebGPU memory leak + WebRTC privilege escalation + multiple Audio/Video WebCodecs boundary bugs
+  - **B-041 [P1]** Chrome 149 Audio UAF CVE-2026-10933 + Canvas policy bypass CVE-2026-11081 — Audio use-after-free affects Web Audio API games; Canvas policy bypass allows cross-origin pixel data access from ad scripts; Canvas UAF CVE-2026-11136
+  - **B-042 [P1]** FFmpeg 21 zero-days (AI-discovered by depthfirst agent) — CVE-2026-39210+ in TS demuxer/VP9 decoder/SAT parsing; oldest bug 23 years; ~$1,000 discovery cost; browser media pipeline supply chain risk
+  - **W-118 [P1]** Chrome HTML-in-Canvas API (origin trial Chrome 149+) — integrate real DOM into Canvas/WebGL/WebGPU; biggest 2026 API for game accessibility; screen readers can read in-game HUD text
+  - **W-119 [P2]** Soft Navigations API brings Core Web Vitals to SPAs — measure LCP/INP/CLS on GameZipper category filter transitions; eliminates SPA performance monitoring blind spot
+  - **G-026 [P2]** 60-second FTUE churn window — casual players abandon if cognitive barrier hit in first 60 seconds; Day-1 retention benchmark 28-31% (Top 25%); invisible tutorial pattern is 2026 standard
+  - **A-008 [P1]** Neuro-inclusive design 2026 standard — reduced motion options + single-stick controls + cognitive assists + fully remappable inputs; now a standard not an option per Boundev guide
+  - **C-040 [P2]** Modl.ai AI bot playtesting + Figma AI text-to-UI — new QA tool evaluation; RL-based game exploration vs scripted deep-play-test.js; AI DevTools reduces manual analysis by 96-98%
+
+### New Sub-Section
+- **11.15 R101 June 2026 Firefox Sandbox Escape + Chrome Audio/Canvas CVEs + FFmpeg Zero-Days + HTML-in-Canvas API + Neuro-Inclusive Design** — 8 cases covering: Firefox 151 sandbox escape + WebGPU disclosure + WebRTC escalation + Chrome 149 Audio UAF + Canvas policy bypass + Canvas UAF + FFmpeg 21 AI-discovered zero-days (supply chain) + HTML-in-Canvas API (game accessibility revolution) + Soft Navigations API (SPA CWV) + 60-second FTUE churn window + neuro-inclusive design standard + Modl.ai AI playtesting tools
+
+### Sources
+- **Mozilla MFSA2026-54**: Firefox 151 security advisory — CVE-2026-8945/8946/8954/8967/8972 etc. (https://www.mozilla.org/en-US/security/advisories/mfsa2026-54/)
+- **Chrome Releases Blog**: Chrome 149 stable update — 429 CVEs, Audio/Canvas/Skia/Dawn/GPU fixes (https://chromereleases.googleblog.com/2026/06/stable-channel-update-for-desktop.html)
+- **Forbes (Davey Winder)**: Chrome 149 fixes 429 security flaws, 22 critical (https://forbes.com/sites/daveywinder/2026/06/05/google-chrome-149-new-update-fixes-429-security-flaws-22-critical)
+- **The Hacker News**: AI agent depthfirst uncovers 21 zero-days in FFmpeg (https://thehackernews.com/2026/06/ai-agent-uncovers-21-zero-days-in.html)
+- **Chrome Developers Blog (Google I/O 2026)**: 15 updates including HTML-in-Canvas API + Soft Navigations API + WebMCP (https://developer.chrome.com/blog/chrome-at-io26)
+- **Game Developers Org**: Mobile game genre breakdown 2026 — $92B market, 60-second churn window, FTUE benchmarks (https://www.game-developers.org/mobile-game-genre-breakdown-2026)
+- **Boundev**: Game UX design guide 2026 — neuro-inclusive design standard, Modl.ai, Figma AI (https://boundev.ai/blog/game-ux-design-guide-2026)
+- **BinkPlay**: Casual gaming trends 2026 — 3-second load benchmark, bite-sized sessions, cross-device continuity (https://binkplay.com/en/blog/casual-gaming-trends-what-players-want-in-2026)
+
+### Metrics
+- P0: 84 → 85 (+1: B-040 Firefox 151 sandbox escape + WebGPU info disclosure)
+- P1: 111 → 115 (+4: B-041 Chrome 149 Audio UAF + Canvas policy bypass, B-042 FFmpeg 21 zero-days, W-118 HTML-in-Canvas API, A-008 neuro-inclusive design 2026)
+- P2: 69 → 72 (+3: W-119 Soft Navigations API CWV, G-026 60-second FTUE churn, C-040 Modl.ai + Figma AI)
+- P3: 13 (unchanged)
+- 1+4+3+0 = 8 = R101 added case IDs ✓
+- Total: 277 → 285 (+8)
+- Categories: 11 (no new category; 11.15 = R101 sub-section under existing Cat 11)
+
+### Quality Gate
+- [x] 8 new case IDs verified unique (grep-confirmed)
+- [x] Metrics match: P0=85 P1=115 P2=72 P3=13 sum=285 ✓
+- [x] LIBRARY METRICS block + CHANGELOG stats consistent ✓
+- [x] All cases cite source URLs
+- [x] Version bump: v1.17.0 → v1.18.0
+
 ## [v1.17.0] - 2026-06-08 (R100 — Dynamic Test Intelligence cron evolution, 8 new test cases, 269 → 277)
 
 ### Notes (R100 version label)
