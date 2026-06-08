@@ -4,6 +4,12 @@
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
  * 
+ * v5.1 Changes (2026-06-09 优化):
+ *   - AdSense + Monetag race 在 commercial break (游戏结束最高价值广告位)
+ *   - loadZone() 增加实际 DOM fill 检测 (不再以 script load 为 fill 标准)
+ *   - 新增 ad events tracker (window.gzAdEvents + GTM dataLayer 推送)
+ *   - 修复: data-filled="1" 仅在实际 ad 渲染后才设置
+ *
  * v5 Changes (Poki 对标优化):
  *   - Commercial Break 视觉升级: 毛玻璃 + 品牌文案 + 进度条
  *   - Rewarded Break 视觉升级: 精致卡片设计
@@ -88,7 +94,7 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.0',
+    VERSION: '5.1',
   };
 
   // ==================== STATE ====================
@@ -269,12 +275,83 @@
     });
   }
 
+  // ==================== AD EVENTS TRACKER (v5.1) ====================
+  // Lightweight event log so we can see which network actually fires.
+  // Each event: { type, network, zoneId, slotId, containerId, ts, meta }
+  // Exposed as window.gzAdEvents for console inspection and external analytics.
+  var adEvents = [];
+  function trackAdEvent(type, data) {
+    var ev = { type: type, ts: Date.now() };
+    for (var k in data) { if (Object.prototype.hasOwnProperty.call(data, k)) ev[k] = data[k]; }
+    adEvents.push(ev);
+    // Cap at 200 events
+    if (adEvents.length > 200) adEvents.shift();
+    try {
+      // Fire dataLayer event for GTM if available
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push(Object.assign({ event: 'gz_ad_' + type }, ev));
+    } catch(e) {}
+    if (window.GZAdDebug) {
+      try { console.log('[gz-ad]', type, ev); } catch(e) {}
+    }
+  }
+  window.gzAdEvents = adEvents;
+
   // ==================== AD LOADER ====================
+  // v5.1: Returns promise that resolves ONLY when actual ad DOM is detected.
+  // - Resolves when ad-provider.js inserts visible content (iframe/img with size > 0)
+  // - Rejects on script load error or adLoadTimeout
+  // - Uses MutationObserver to track actual fill, not just script load
   function loadZone(zoneId, targetEl) {
     return new Promise(function(resolve, reject) {
       if (state.adBlockDetected) { reject(new Error('blocked')); return; }
 
-      var timeout = setTimeout(function() { reject(new Error('timeout')); }, CONFIG.TIMING.adLoadTimeout);
+      var timeout = setTimeout(function() {
+        reject(new Error('timeout'));
+      }, CONFIG.TIMING.adLoadTimeout);
+
+      // Observer to detect if Monetag actually injects content
+      var observer = null;
+      var resolved = false;
+      function checkFill() {
+        if (resolved) return;
+        // Look for any visible ad-like content in targetEl
+        if (targetEl) {
+          var iframes = targetEl.querySelectorAll('iframe');
+          for (var i = 0; i < iframes.length; i++) {
+            var f = iframes[i];
+            var w = f.offsetWidth || parseInt(f.getAttribute('width') || '0');
+            var h = f.offsetHeight || parseInt(f.getAttribute('height') || '0');
+            if (w >= 50 && h >= 50) {
+              resolved = true;
+              if (observer) observer.disconnect();
+              clearTimeout(timeout);
+              trackAdEvent('fill', { network: 'monetag', zoneId: zoneId, containerId: targetEl.id || '' });
+              resolve(true);
+              return;
+            }
+          }
+          // Check for any non-script children with non-zero size
+          var children = targetEl.children;
+          for (var j = 0; j < children.length; j++) {
+            var c = children[j];
+            if (c.tagName === 'SCRIPT') continue;
+            if (c.offsetWidth > 50 && c.offsetHeight > 30) {
+              resolved = true;
+              if (observer) observer.disconnect();
+              clearTimeout(timeout);
+              trackAdEvent('fill', { network: 'monetag', zoneId: zoneId, containerId: targetEl.id || '' });
+              resolve(true);
+              return;
+            }
+          }
+        }
+      }
+
+      if (targetEl && typeof MutationObserver !== 'undefined') {
+        observer = new MutationObserver(function() { checkFill(); });
+        observer.observe(targetEl, { childList: true, subtree: true, attributes: true });
+      }
 
       var s = document.createElement('script');
       s.src = CONFIG.AD_PROVIDER + '?zone=' + String(zoneId);
@@ -282,8 +359,34 @@
       s.setAttribute('data-zone', String(zoneId));
       s.setAttribute('data-cf-beacon', 'gz5_' + zoneId + '_' + Date.now());
       s.setAttribute('data-cf-async', 'false');
-      s.onload = function() { clearTimeout(timeout); resolve(true); };
-      s.onerror = function() { clearTimeout(timeout); state.adBlockDetected = true; reject(new Error('load_err')); };
+      s.onload = function() {
+        trackAdEvent('script_loaded', { network: 'monetag', zoneId: zoneId });
+        // Give Monetag 1.5s to inject content
+        setTimeout(function() {
+          if (resolved) return;
+          checkFill();
+          if (!resolved) {
+            // Check one more time after delay
+            setTimeout(function() {
+              if (resolved) return;
+              checkFill();
+              if (!resolved) {
+                if (observer) observer.disconnect();
+                clearTimeout(timeout);
+                trackAdEvent('no_fill', { network: 'monetag', zoneId: zoneId });
+                reject(new Error('no_visible_fill'));
+              }
+            }, 1500);
+          }
+        }, 800);
+      };
+      s.onerror = function() {
+        clearTimeout(timeout);
+        if (observer) observer.disconnect();
+        state.adBlockDetected = true;
+        trackAdEvent('load_error', { network: 'monetag', zoneId: zoneId });
+        reject(new Error('load_err'));
+      };
 
       if (targetEl) {
         targetEl.appendChild(s);
@@ -392,12 +495,57 @@
         }
       }, 1000);
 
-      // Load ad
-      loadZone(CONFIG.ZONES.vignette).then(function() {
-        // 广告加载成功，更新状态
-        var statusEl = document.getElementById('gz-cb-status');
-        if (statusEl) statusEl.textContent = 'Ad playing...';
-      }).catch(function() {});
+      // v5.1: AdSense + Monetag race — first to actually fill wins.
+      // AdSense often fills 5-10% on game sites; Monetag currently 0% but if it recovers, this races.
+      var statusEl = document.getElementById('gz-cb-status');
+      var adFilled = false;
+
+      function onAdFilled(network) {
+        if (adFilled) return;
+        adFilled = true;
+        if (statusEl) statusEl.textContent = 'Ad playing... (' + network + ')';
+        trackAdEvent('commercial_break_fill', { network: network });
+      }
+
+      // Tier 1: AdSense (higher fill rate for game sites)
+      try {
+        loadAdSenseAd(overlay, 'auto').then(function() {
+          // Wait for AdSense to actually fill - check iframe
+          var adsenseStart = Date.now();
+          var adsenseTimer = setInterval(function() {
+            if (adFilled) { clearInterval(adsenseTimer); return; }
+            var ins = overlay.querySelector('ins.adsbygoogle');
+            if (ins) {
+              var hasIframe = ins.querySelector('iframe');
+              var status = ins.getAttribute('data-ad-status');
+              if (hasIframe && (status === 'filled' || ins.offsetHeight > 60)) {
+                onAdFilled('adsense');
+                clearInterval(adsenseTimer);
+                return;
+              }
+            }
+            if (Date.now() - adsenseStart > 3500) { clearInterval(adsenseTimer); }
+          }, 250);
+        });
+      } catch(e) {
+        trackAdEvent('adsense_load_error', { error: String(e) });
+      }
+
+      // Tier 2: Monetag vignette (race with AdSense, 1.5s delay)
+      setTimeout(function() {
+        if (adFilled) return;
+        loadZone(CONFIG.ZONES.vignette).then(function() {
+          onAdFilled('monetag_vignette');
+        }).catch(function() {
+          // Tier 3: legacy Attractive zone
+          if (adFilled) return;
+          loadZone(CONFIG.ZONES.vignetteLegacy).then(function() {
+            onAdFilled('monetag_vignette_legacy');
+          }).catch(function() {
+            trackAdEvent('commercial_break_no_fill', {});
+          });
+        });
+      }, 1500);
 
       // Auto-complete after max duration
       var maxTimer = setTimeout(function() {
