@@ -3,6 +3,34 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.19.0] - 2026-06-08 (R102 — Dynamic Test Intelligence cron evolution, 9 new test cases, 285 → 294)
+
+### Notes (R102 version label)
+- v1.19.0 = R102 fifth real library evolution from disk v1.18.0.
+- 9 new test cases added. Total: 285 → 294 (+9).
+
+### Added
+- [S-040] **[P1]** Safari WebKit CSP Bypass CVE-2026-28962 — Verify CSP headers cannot be bypassed on Safari < 26.5
+- [S-041] **[P1]** WebKit Same-Origin Policy Bypass CVE-2026-20643 — Verify cross-origin game assets from CDN subdomains are isolated
+- [S-042] **[P2]** OWASP CVE Lite CLI dependency scanning — Scan all game JS/TS dependencies for known vulnerabilities
+- [C-041] **[P2]** Chrome 149 CSS Gap Decorations rendering — Verify game UI layouts with column-rule/row-rule CSS properties
+- [C-042] **[P2]** Safari 26.4 CSS Grid Lanes rendering — Verify game layouts after 191 SVG/CSS/MathML bug fixes
+- [P-026] **[P1]** WebGPU → WebGL fallback path — Verify all canvas games gracefully degrade when navigator.gpu is unavailable
+- [P-027] **[P2]** Chrome 148+ native lazy loading for game audio/video assets — Verify loading="lazy" attribute on audio/video elements
+- [P-028] **[P2]** WebGPU vs WebGL performance benchmark — Compare frame times across rendering backends (PlayCanvas ministats approach)
+- [G-027] **[P1]** Mobile touch control UX — Verify casual browser games have adequate touch interaction on 375×667 viewport
+
+### Sources
+- Search: "HTML5 game testing 2026 new techniques" → AI cross-terminal testing tools, Phaser rendering modes
+- Search: "browser game security vulnerability June 2026" → CVE-2026-28962 (WebKit CSP), CVE-2026-20643 (WebKit same-origin), CVE Lite CLI (OWASP)
+- Search: "Chrome Safari Edge browser update June 2026" → Chrome 149 CSS Gap Decorations, Safari 26.4 CSS Grid Lanes, Chrome 148 lazy loading
+- Search: "casual game UX mobile 2026" → PacoGames mobile touch UX report, hyper-casual 3.5B one-hand players
+- Search: "WebGPU WebGL browser game performance 2026" → PlayCanvas SuperSplat WebGPU + ministats, WebGPU→WebGL fallback
+
+### Metrics
+- Total test cases: 285 → 294 (+9)
+- P0: 33 (unchanged) | P1: 72 → 76 (+4) | P2: 72 → 77 (+5) | P3: 13 (unchanged)
+
 ## [v1.18.0] - 2026-06-08 (R101 — Dynamic Test Intelligence cron evolution, 8 new test cases, 277 → 285)
 
 ### Notes (R101 version label)
