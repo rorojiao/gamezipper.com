@@ -2,7 +2,7 @@
 // Pure game caching — Monetag push NOTIFICATIONS DISABLED per user request
 // Strategies: cache-first (static), stale-while-revalidate with 4h max-age (HTML), network-first (API)
 // v12: navigationPreload for faster TTFB on navigation requests
-const CACHE='gz-v20';
+const CACHE='gz-v21';
 const HTML_MAX_AGE=4*60*60*1000; // 4 hours in ms
 
 // === Install ===
@@ -45,8 +45,8 @@ self.addEventListener('install',e=>{
     '/crossword/',
     '/blackjack/',
     '/color-helix-smash/',
-    '/jelly-dye/'
-  ];
+    '/jelly-dye/',
+    '/tents/'];
   e.waitUntil(
     caches.open(CACHE).then(function(c){
       return Promise.allSettled(
