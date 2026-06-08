@@ -14,6 +14,7 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#ff9a9e,#fecfef)',
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
   'linear-gradient(135deg,#a1c4fd,#c2e9fb)',
+{name:"Suguru",emoji:"🧩",cat:"puzzle",tags:["puzzle","logic","nikoli","number","blocks","tectonic","grid","brain","strategy","browser","free","html5"],url:"/suguru/",desc:"Play Suguru online free! Fill colored regions with numbers 1-N so no identical numbers touch. 30 handcrafted logic puzzles 5x5 to 7x7 plus daily challenge. No download needed!",isNew:true,status:"live"},
 ];
 
 const GAMES = [
@@ -301,6 +302,7 @@ const GAMES = [
 {name:"Sugar Sugar",emoji:"🍬",cat:"puzzle",tags:["puzzle","physics","drawing","sugar","particles","candy","casual","brain","creative","browser","free","html5"],url:"/sugar-sugar/",desc:"Play Sugar Sugar online free! Draw lines to guide falling sugar particles into cups. 30 physics puzzle levels with colored sugar, obstacles and more. No download needed.",isNew:true,status:"live"},
 {name:"Yajilin",emoji:"🔄",cat:"puzzle",tags:["puzzle","logic","nikoli","loop","grid","brain","strategy","shade","arrow","browser","free","html5"],url:"/yajilin/",desc:"Play Yajilin online free! Shade cells to satisfy arrow clues and draw a single loop through every remaining cell. 30 logic puzzles 5x6 to 12x12 plus daily challenge. No download needed!",isNew:true,status:"live"},
 {name:"Heyawake",emoji:"🔲",cat:"puzzle",tags:["puzzle","logic","japanese","nikoli","room","shade","grid","brain","strategy","browser","free","html5"],url:"/heyawake/",desc:"Play Heyawake online free! Shade cells to create rooms in a grid following number clues. 30 handcrafted logic puzzles from 5x5 to 12x12 plus daily challenge. No download needed!",isNew:true,status:"live"},
+{name:"Suguru",emoji:"🧩",cat:"puzzle",tags:["puzzle","logic","nikoli","number","blocks","tectonic","grid","brain","strategy","browser","free","html5"],url:"/suguru/",desc:"Play Suguru online free! Fill colored regions with numbers 1-N so no identical numbers touch. 30 handcrafted logic puzzles 5x5 to 7x7 plus daily challenge. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
