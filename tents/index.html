@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Play Tents Puzzle Online Free - Place Tents Next to Trees | GameZipper</title>
+<meta name="description" content="Play Tents and Trees puzzle online free! Place tents next to trees in this classic Nikoli logic puzzle. 30 levels plus daily challenge. No download needed!">
+<link rel="canonical" href="https://gamezipper.com/tents/">
+<meta property="og:title" content="Play Tents Puzzle Online Free - Place Tents Next to Trees">
+<meta property="og:description" content="Place tents next to trees without touching! 30 levels of increasing difficulty. Classic Nikoli logic puzzle, free online.">
+<meta property="og:url" content="https://gamezipper.com/tents/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GameZipper">
+<meta name="robots" content="index, follow">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%231a1a3e' stroke='%232ecc71' stroke-width='6'/><polygon points='50,25 35,55 65,55' fill='%23e67e22'/><circle cx='50' cy='68' r='8' fill='%2327ae60'/></svg>">
+<script src='https://site-analytics.gamezipper.com/hit?s=gamezipper.com&p=tents'></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Tents Puzzle","description":"Place tents next to trees in this classic Nikoli logic puzzle. 30 hand-crafted levels from 5x5 to 14x14 plus daily challenges.","genre":"Puzzle","gamePlatform":"HTML5","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://gamezipper.com/tents/","aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","ratingCount":"150"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Tents puzzle?","acceptedAnswer":{"@type":"Answer","text":"Tents (also called Tents and Trees) is a Nikoli logic puzzle where you place tents on a grid so each tree has exactly one tent orthogonally adjacent to it, no tents touch each other, and row/column tent counts match given numbers."}},{"@type":"Question","name":"How do you solve Tents puzzles?","acceptedAnswer":{"@type":"Answer","text":"Start by marking rows/columns with 0 tents as grass. Find trees with only one possible tent position. Eliminate cells that would make tents touch. Use the row and column counts to narrow possibilities."}},{"@type":"Question","name":"Can tents touch diagonally?","acceptedAnswer":{"@type":"Answer","text":"No. Tents cannot touch each other in any direction, including diagonally. This is a key constraint used to solve puzzles."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"How to Play Tents Puzzle","step":[{"@type":"HowToStep","text":"Tap an empty cell to place a tent. Each tree needs exactly one tent next to it (up, down, left, or right)."},{"@type":"HowToStep","text":"No two tents can touch each other, even diagonally."},{"@type":"HowToStep","text":"Match the row and column tent counts shown on the edges of the grid."},{"@type":"HowToStep","text":"Right-click or long-press to mark cells as grass when you know no tent goes there."}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","url":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Puzzle Games","url":"https://gamezipper.com/#puzzle"},{"@type":"ListItem","position":3,"name":"Tents","url":"https://gamezipper.com/tents/"}]}</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a1a;color:#e0e0ff;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;overflow-x:hidden;overflow-y:hidden;user-select:none;-webkit-user-select:none;touch-action:none;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center}
+canvas{display:block;touch-action:none;width:100vw;height:100vh}
+</style>
+</head>
+<body>
+<h1 class="gz-sr-only">Tents Puzzle — Free Online Tents and Trees Logic Puzzle | GameZipper</h1>
+<style>h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}</style>
+<canvas id="c"></canvas>
+<script>
+(function(){
+'use strict';
+
+// ====== PRNG (mulberry32) ======
+function makeRng(s){s=s|0;return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+// ====== Hand-crafted Levels (30 levels) ======
+// Each level: {r:rows, c:cols, trees:[[r,c],...], tents:[[r,c],...]}
+// rowCounts/colCounts computed from tent positions
+var LEVELS=[
+{r:5,c:5,trees:[[4, 3], [3, 1], [4, 4], [1, 4], [0, 0], [1, 2]],tents:[[4, 2], [3, 0], [3, 4], [0, 4], [0, 1], [2, 2]]},
+{r:5,c:5,trees:[[3, 3], [1, 3], [2, 0], [3, 0], [0, 3], [3, 2]],tents:[[3, 4], [1, 4], [2, 1], [4, 0], [0, 2], [4, 2]]},
+{r:5,c:5,trees:[[2, 2], [2, 4], [2, 0], [4, 1], [3, 4], [1, 2]],tents:[[3, 2], [1, 4], [1, 0], [4, 0], [4, 4], [0, 2]]},
+{r:5,c:5,trees:[[1, 3], [1, 0], [3, 2], [1, 1], [3, 4], [0, 3]],tents:[[2, 3], [2, 0], [4, 2], [0, 1], [4, 4], [0, 4]]},
+{r:5,c:5,trees:[[0, 1], [2, 0], [3, 3], [2, 3], [4, 3], [0, 3]],tents:[[1, 1], [3, 0], [3, 2], [2, 4], [4, 4], [0, 4]]},
+{r:6,c:6,trees:[[5, 2], [1, 4], [2, 2], [2, 4], [4, 0], [5, 4], [0, 0], [0, 4]],tents:[[4, 2], [1, 3], [2, 1], [2, 5], [5, 0], [4, 4], [0, 1], [0, 5]]},
+{r:6,c:6,trees:[[2, 5], [4, 3], [2, 0], [3, 2], [5, 3], [0, 3], [0, 4], [4, 0]],tents:[[2, 4], [4, 4], [1, 0], [3, 1], [5, 2], [0, 2], [0, 5], [5, 0]]},
+{r:6,c:6,trees:[[3, 2], [4, 4], [3, 1], [1, 4], [4, 0], [3, 4], [3, 3], [0, 1]],tents:[[4, 2], [5, 4], [2, 1], [1, 5], [5, 0], [3, 5], [2, 3], [0, 2]]},
+{r:6,c:6,trees:[[1, 5], [3, 1], [0, 2], [0, 1], [5, 2], [2, 1], [3, 2], [4, 5]],tents:[[0, 5], [4, 1], [1, 2], [0, 0], [5, 3], [2, 0], [3, 3], [5, 5]]},
+{r:6,c:6,trees:[[1, 0], [1, 3], [2, 5], [3, 2], [3, 1], [4, 4], [4, 0], [4, 2]],tents:[[0, 0], [0, 3], [1, 5], [3, 3], [2, 1], [4, 5], [5, 0], [5, 2]]},
+{r:7,c:7,trees:[[4, 0], [5, 4], [5, 0], [4, 4], [1, 4], [1, 1], [1, 5], [3, 2], [3, 6], [5, 5]],tents:[[3, 0], [5, 3], [5, 1], [3, 4], [0, 4], [0, 1], [1, 6], [2, 2], [4, 6], [6, 5]]},
+{r:7,c:7,trees:[[2, 3], [6, 4], [3, 6], [1, 1], [0, 5], [3, 2], [6, 0], [6, 5], [3, 5], [1, 0]],tents:[[1, 3], [5, 4], [4, 6], [0, 1], [1, 5], [4, 2], [5, 0], [6, 6], [3, 4], [2, 0]]},
+{r:7,c:7,trees:[[1, 6], [4, 5], [3, 5], [1, 2], [1, 1], [0, 5], [5, 2], [6, 0], [3, 1], [6, 5]],tents:[[2, 6], [4, 6], [3, 4], [0, 2], [1, 0], [0, 4], [4, 2], [5, 0], [3, 0], [6, 6]]},
+{r:7,c:7,trees:[[4, 2], [0, 3], [0, 1], [4, 6], [5, 0], [3, 0], [4, 3], [3, 6], [0, 5], [6, 3]],tents:[[4, 1], [1, 3], [0, 0], [4, 5], [6, 0], [2, 0], [3, 3], [2, 6], [0, 6], [6, 2]]},
+{r:7,c:7,trees:[[0, 0], [0, 6], [5, 5], [1, 0], [0, 3], [4, 0], [5, 0], [5, 6], [5, 2], [1, 6]],tents:[[0, 1], [0, 5], [4, 5], [2, 0], [1, 3], [4, 1], [6, 0], [6, 6], [5, 3], [2, 6]]},
+{r:8,c:8,trees:[[4, 1], [1, 5], [5, 2], [4, 5], [3, 1], [7, 1], [6, 6], [3, 6], [3, 5], [7, 6], [0, 7], [1, 0]],tents:[[4, 0], [1, 4], [5, 3], [5, 5], [2, 1], [6, 1], [6, 7], [3, 7], [3, 4], [7, 5], [0, 6], [0, 0]]},
+{r:8,c:8,trees:[[1, 4], [2, 4], [5, 6], [6, 0], [5, 3], [6, 1], [6, 6], [3, 1], [6, 3], [4, 6], [0, 1], [2, 7]],tents:[[1, 5], [2, 3], [5, 5], [5, 0], [5, 2], [7, 1], [6, 7], [3, 0], [7, 3], [3, 6], [0, 2], [1, 7]]},
+{r:8,c:8,trees:[[3, 2], [2, 4], [5, 7], [2, 7], [3, 1], [7, 6], [0, 6], [2, 5], [7, 3], [0, 2], [5, 0], [6, 5]],tents:[[2, 2], [3, 4], [5, 6], [3, 7], [4, 1], [7, 7], [0, 7], [1, 5], [7, 2], [0, 3], [6, 0], [6, 4]]},
+{r:8,c:8,trees:[[7, 1], [7, 5], [0, 6], [3, 5], [1, 0], [0, 0], [5, 1], [6, 7], [3, 2], [7, 4], [0, 4], [7, 2]],tents:[[7, 0], [7, 6], [0, 7], [3, 6], [2, 0], [0, 1], [5, 0], [5, 7], [3, 3], [6, 4], [1, 4], [6, 2]]},
+{r:8,c:8,trees:[[2, 2], [7, 3], [6, 0], [4, 7], [0, 2], [0, 1], [1, 7], [7, 7], [5, 2], [4, 3], [7, 6], [1, 4]],tents:[[3, 2], [6, 3], [7, 0], [4, 6], [0, 3], [1, 1], [1, 6], [6, 7], [5, 1], [4, 4], [7, 5], [2, 4]]},
+{r:10,c:10,trees:[[1, 5], [4, 6], [6, 3], [8, 5], [0, 2], [1, 7], [2, 9], [7, 1], [9, 8], [5, 1], [8, 2], [4, 5], [7, 8], [8, 8], [5, 8], [3, 6]],tents:[[0, 5], [5, 6], [7, 3], [9, 5], [1, 2], [0, 7], [1, 9], [7, 0], [9, 9], [5, 0], [9, 2], [4, 4], [7, 9], [8, 7], [5, 9], [3, 7]]},
+{r:10,c:10,trees:[[6, 6], [0, 1], [4, 4], [8, 1], [7, 4], [3, 6], [9, 6], [2, 7], [5, 2], [0, 5], [9, 9], [8, 0], [9, 3], [4, 1], [3, 9], [3, 4]],tents:[[6, 7], [1, 1], [4, 3], [8, 2], [6, 4], [4, 6], [8, 6], [1, 7], [6, 2], [0, 4], [8, 9], [7, 0], [9, 4], [4, 0], [3, 8], [2, 4]]},
+{r:10,c:10,trees:[[8, 0], [3, 7], [4, 8], [4, 0], [8, 6], [2, 5], [6, 9], [5, 3], [4, 9], [2, 2], [0, 3], [5, 2], [0, 5], [9, 5], [1, 8], [6, 6]],tents:[[8, 1], [2, 7], [5, 8], [3, 0], [8, 7], [2, 4], [7, 9], [5, 4], [3, 9], [3, 2], [0, 2], [6, 2], [0, 6], [9, 4], [0, 8], [5, 6]]},
+{r:10,c:10,trees:[[3, 5], [1, 0], [3, 2], [3, 6], [4, 2], [1, 1], [5, 7], [4, 1], [9, 6], [7, 4], [8, 3], [7, 3], [3, 9], [8, 7], [0, 4], [0, 9]],tents:[[2, 5], [2, 0], [2, 2], [3, 7], [4, 3], [0, 1], [6, 7], [4, 0], [9, 5], [7, 5], [9, 3], [7, 2], [4, 9], [8, 8], [0, 5], [0, 8]]},
+{r:10,c:10,trees:[[3, 0], [4, 0], [7, 2], [5, 6], [6, 9], [3, 9], [1, 5], [1, 8], [2, 3], [9, 1], [9, 8], [4, 2], [8, 6], [0, 3], [8, 1], [0, 1]],tents:[[3, 1], [5, 0], [6, 2], [5, 7], [5, 9], [2, 9], [1, 6], [0, 8], [2, 4], [9, 2], [8, 8], [4, 3], [9, 6], [0, 4], [8, 0], [1, 1]]},
+{r:12,c:12,trees:[[3, 3], [4, 6], [11, 9], [0, 0], [2, 9], [10, 0], [5, 1], [7, 6], [11, 5], [8, 10], [7, 2], [1, 7], [1, 3], [10, 3], [5, 10], [2, 2], [11, 11], [8, 8], [4, 10], [9, 1]],tents:[[4, 3], [4, 5], [10, 9], [0, 1], [2, 8], [11, 0], [6, 1], [6, 6], [11, 6], [7, 10], [7, 3], [0, 7], [1, 4], [11, 3], [5, 9], [2, 1], [10, 11], [8, 7], [3, 10], [9, 2]]},
+{r:12,c:12,trees:[[3, 1], [2, 4], [4, 3], [10, 0], [3, 7], [11, 9], [9, 7], [6, 9], [6, 4], [0, 8], [4, 10], [2, 7], [11, 2], [7, 8], [7, 1], [9, 10], [10, 5], [2, 11], [7, 0], [0, 0]],tents:[[2, 1], [1, 4], [4, 4], [11, 0], [3, 8], [11, 10], [10, 7], [6, 10], [7, 4], [0, 9], [4, 11], [1, 7], [10, 2], [7, 7], [7, 2], [8, 10], [9, 5], [1, 11], [6, 0], [0, 1]]},
+{r:12,c:12,trees:[[11, 4], [6, 10], [10, 9], [7, 6], [2, 8], [8, 7], [2, 10], [10, 2], [5, 1], [0, 6], [5, 5], [3, 6], [2, 1], [6, 3], [10, 8], [1, 9], [7, 0], [6, 7], [9, 11], [8, 2]],tents:[[10, 4], [5, 10], [10, 10], [7, 5], [3, 8], [9, 7], [3, 10], [11, 2], [5, 0], [0, 7], [4, 5], [2, 6], [2, 2], [5, 3], [11, 8], [0, 9], [8, 0], [6, 8], [8, 11], [7, 2]]},
+{r:14,c:14,trees:[[1, 9], [5, 10], [7, 6], [12, 11], [9, 9], [12, 1], [9, 2], [5, 3], [1, 0], [3, 0], [9, 8], [13, 11], [4, 9], [10, 2], [4, 13], [9, 4], [4, 10], [12, 4], [9, 0], [10, 11], [3, 12], [1, 1], [7, 13], [0, 7]],tents:[[1, 8], [6, 10], [7, 7], [12, 12], [9, 10], [12, 0], [8, 2], [6, 3], [0, 0], [3, 1], [10, 8], [13, 10], [4, 8], [10, 3], [5, 13], [8, 4], [4, 11], [13, 4], [10, 0], [10, 12], [2, 12], [1, 2], [8, 13], [0, 6]]},
+{r:14,c:14,trees:[[4, 8], [10, 5], [0, 5], [3, 10], [1, 0], [12, 2], [6, 8], [1, 3], [13, 7], [11, 11], [7, 11], [8, 1], [3, 2], [13, 0], [4, 4], [12, 9], [9, 10], [6, 11], [1, 8], [12, 11], [6, 0], [1, 13], [11, 1], [4, 12]],tents:[[4, 7], [10, 6], [1, 5], [2, 10], [2, 0], [12, 3], [6, 9], [0, 3], [13, 6], [11, 10], [7, 12], [8, 2], [2, 2], [12, 0], [4, 5], [13, 9], [8, 10], [5, 11], [0, 8], [12, 12], [5, 0], [0, 13], [10, 1], [3, 12]]}
+];
+
+// Level metadata: name and difficulty tier
+var LEVEL_META=[
+{n:'Forest Clearing',d:'Easy'},{n:'Woodland Path',d:'Easy'},{n:'Pine Grove',d:'Easy'},{n:'Birch Stand',d:'Easy'},{n:'Maple Edge',d:'Easy'},
+{n:'Cedar Valley',d:'Medium'},{n:'Oak Hollow',d:'Medium'},{n:'Elm Trail',d:'Medium'},{n:'Spruce Ridge',d:'Medium'},{n:'Willow Bend',d:'Medium'},
+{n:'Redwood Gate',d:'Medium'},{n:'Aspen Rise',d:'Medium'},{n:'Juniper Pass',d:'Medium'},{n:'Cypress Way',d:'Medium'},{n:'Sequoia Path',d:'Medium'},
+{n:'Bristlecone',d:'Hard'},{n:'Douglas Fir',d:'Hard'},{n:'Hemlock Dell',d:'Hard'},{n:'Alder Thicket',d:'Hard'},{n:'Magnolia Bay',d:'Hard'},
+{n:'Ancient Forest',d:'Hard'},{n:'Deep Canopy',d:'Hard'},{n:'Whisper Wood',d:'Hard'},{n:'Shadow Glen',d:'Hard'},{n:'Storm Ridge',d:'Hard'},
+{n:'Titan Grove',d:'Expert'},{n:'Ironbark',d:'Expert'},{n:'Ebony Depths',d:'Expert'},
+{n:'Yggdrasil',d:'Master'},{n:'World Tree',d:'Master'}
+];
+
+// ====== Compute clues from level data ======
+function computeClues(level){
+  var rc=[],cc=[];
+  for(var r=0;r<level.r;r++){var cnt=0;for(var i=0;i<level.tents.length;i++){if(level.tents[i][0]===r)cnt++}rc.push(cnt)}
+  for(var c=0;c<level.c;c++){var cnt=0;for(var i=0;i<level.tents.length;i++){if(level.tents[i][1]===c)cnt++}cc.push(cnt)}
+  return{rowCounts:rc,colCounts:cc};
+}
+
+// ====== Validate level uniqueness ======
+function validateLevels(){
+  for(var li=0;li<LEVELS.length;li++){
+    var lv=LEVELS[li];
+    if(lv.trees.length!==lv.tents.length){console.error('Level '+li+': tree/tent count mismatch')}
+  }
+}
+validateLevels();
+
+// ====== State ======
+var state='title'; // title,select,play,settings,win,stats,daily
+var ROWS=0,COLS=0;
+var trees=[],tentSolution=[],rowCounts=[],colCounts=[];
+var playerGrid=[]; // 0=empty, 1=tent, 2=grass
+var undoStack=[],redoStack=[];
+var lvlIdx=0;
+var timerMs=0,startTime=0,paused=false;
+var won=false;
+var gridX=0,gridY=0,cellSz=0;
+var canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+var dpr=window.devicePixelRatio||1;
+var W=0,H=0;
+var hoverR=-1,hoverC=-1;
+var particles=[];
+var audioCtx=null,bgmNodes=[],soundOn=true,musicOn=true;
+var showTut=false,tutStep=0;
+var rafId=null,lastTime=0;
+var selectScroll=0;
+var errorCheckMode=false;
+var hintCells=[]; // cells highlighted as hints
+var hintTimer=0;
+var btnHover=-1; // which button is hovered
+var dailySeed=0;
+var statsData=null;
+var menuBtns=[];
+var playBtns=[];
+var settingsBtns=[];
+var winBtns=[];
+var statsBtns=[];
+
+// ====== Progress ======
+var SAVE_VER=2;
+var progress=loadProgress();
+function loadProgress(){try{var d=JSON.parse(localStorage.getItem('tents_progress'));if(d&&d.v===SAVE_VER)return d}catch(e){}return{v:SAVE_VER,done:{},stars:{},best:{},sound:true,music:true,tutDone:false,stats:{played:0,completed:0,totalTime:0}}}
+function saveProgress(){progress.sound=soundOn;progress.music=musicOn;localStorage.setItem('tents_progress',JSON.stringify(progress))}
+
+// ====== Audio ======
+function initAudio(){if(audioCtx)return;try{audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+function playTone(freq,dur,type,vol){
+  if(!audioCtx||!soundOn)return;
+  try{var o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=type||'sine';o.frequency.value=freq;g.gain.value=vol||0.1;
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+  o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur)}catch(e){}}
+
+function sfxPlace(){playTone(440,0.07,'sine',0.1);setTimeout(function(){playTone(554,0.06,'sine',0.08)},40)}
+function sfxGrass(){playTone(280,0.06,'triangle',0.07)}
+function sfxRemove(){playTone(220,0.06,'triangle',0.08)}
+function sfxError(){playTone(180,0.12,'sawtooth',0.06)}
+function sfxWin(){
+  playTone(523,0.12,'sine',0.13);
+  setTimeout(function(){playTone(659,0.12,'sine',0.13)},100);
+  setTimeout(function(){playTone(784,0.12,'sine',0.13)},200);
+  setTimeout(function(){playTone(1047,0.3,'sine',0.12)},300);
+  setTimeout(function(){playTone(1175,0.4,'sine',0.1)},450);
+}
+function sfxStar(){playTone(880,0.1,'sine',0.1);setTimeout(function(){playTone(1100,0.15,'sine',0.1)},80)}
+function sfxHint(){playTone(660,0.08,'sine',0.08);setTimeout(function(){playTone(880,0.12,'sine',0.08)},60)}
+function sfxClick(){playTone(500,0.04,'sine',0.06)}
+
+function startBGM(){
+  if(!audioCtx||!musicOn||bgmNodes.length)return;
+  try{
+    var sr=audioCtx.sampleRate,dur=24,bs=sr*dur;
+    var buf=audioCtx.createBuffer(1,bs,sr),d=buf.getChannelData(0);
+    // Ambient nature-inspired pad
+    var notes=[[130.81,196,261.63],[146.83,220,293.66],[164.81,246.94,329.63],[146.83,220,293.66],[130.81,196,261.63],[123.47,185,246.94]];
+    var nd=dur/notes.length;
+    for(var i=0;i<bs;i++){
+      var t=i/sr,ci=Math.min(Math.floor(t/nd),notes.length-1),ch=notes[ci],s=0;
+      // Pad oscillators
+      for(var n=0;n<ch.length;n++){var f=ch[n];s+=Math.sin(2*Math.PI*f*t)*0.035;s+=Math.sin(2*Math.PI*f*1.003*t)*0.02}
+      // Bird-like chirps (subtle)
+      var bt=t%8;if(bt>3.5&&bt<3.8){var bf=1200+Math.sin(2*Math.PI*20*(bt-3.5))*400;s+=Math.sin(2*Math.PI*bf*(bt-3.5))*0.008}
+      if(bt>5.2&&bt<5.4){var bf2=900+Math.sin(2*Math.PI*15*(bt-5.2))*300;s+=Math.sin(2*Math.PI*bf2*(bt-5.2))*0.006}
+      // Crossfade
+      var fd=t%nd,fi=Math.min(fd/1.2,1),fo=Math.min((nd-fd)/1.2,1);
+      s*=fi*fo;
+      // Gentle LFO
+      var lfo=Math.sin(2*Math.PI*0.15*t)*0.08+1;
+      d[i]=s*lfo*0.6;
+    }
+    var src=audioCtx.createBufferSource();src.buffer=buf;src.loop=true;
+    var flt=audioCtx.createBiquadFilter();flt.type='lowpass';flt.frequency.value=600;flt.Q.value=0.8;
+    var g=audioCtx.createGain();g.gain.value=0.15;
+    src.connect(flt);flt.connect(g);g.connect(audioCtx.destination);src.start();
+    bgmNodes=[src,flt,g];
+  }catch(e){}}
+function stopBGM(){bgmNodes.forEach(function(n){try{n.disconnect()}catch(e){}});bgmNodes=[]}
+function toggleBGM(){musicOn=!musicOn;if(musicOn)startBGM();else stopBGM();saveProgress()}
+
+// ====== Canvas Setup ======
+function resize(){
+  W=window.innerWidth;H=window.innerHeight;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  if(state==='play'||state==='win'||state==='daily')calcLayout();
+}
+window.addEventListener('resize',resize);
+
+function calcLayout(){
+  var clueW=30,clueH=30,pad=10,hudH=56;
+  var avW=W-pad*2-clueW,avH=H-hudH-pad*2-clueH;
+  var csz=Math.min(avW/COLS,avH/ROWS);
+  cellSz=Math.floor(csz);
+  if(cellSz<16)cellSz=16;
+  if(cellSz>80)cellSz=80;
+  gridX=Math.floor((W-COLS*cellSz)/2);
+  gridY=Math.floor(hudH+(avH-ROWS*cellSz)/2+pad);
+}
+
+// ====== Grid Helpers ======
+function cellCenter(r,c){return{x:gridX+c*cellSz+cellSz/2,y:gridY+r*cellSz+cellSz/2}}
+function cellFromPos(mx,my){
+  var c=Math.floor((mx-gridX)/cellSz),r=Math.floor((my-gridY)/cellSz);
+  if(r>=0&&r<ROWS&&c>=0&&c<COLS)return{r:r,c:c};
+  return null;
+}
+function isTree(r,c){for(var i=0;i<trees.length;i++){if(trees[i][0]===r&&trees[i][1]===c)return true}return false}
+function isAdjacent(r1,c1,r2,c2){return Math.abs(r1-r2)+Math.abs(c1-c2)===1}
+
+// ====== Validation ======
+function getCurrentTents(){
+  var t=[];
+  for(var r=0;r<ROWS;r++)for(var c=0;c<COLS;c++){if(playerGrid[r]&&playerGrid[r][c]===1)t.push([r,c])}
+  return t;
+}
+
+function countTentsInRow(r){var cnt=0;for(var c=0;c<COLS;c++){if(playerGrid[r]&&playerGrid[r][c]===1)cnt++}return cnt}
+function countTentsInCol(c){var cnt=0;for(var r=0;r<ROWS;r++){if(playerGrid[r]&&playerGrid[r][c]===1)cnt++}return cnt}
+
+function validate(){
+  var tents=getCurrentTents();
+  if(tents.length!==trees.length)return false;
+  // Check no tents touch (including diagonal)
+  for(var i=0;i<tents.length;i++){
+    for(var j=i+1;j<tents.length;j++){
+      var dr=Math.abs(tents[i][0]-tents[j][0]),dc=Math.abs(tents[i][1]-tents[j][1]);
+      if(dr<=1&&dc<=1&&!(dr===0&&dc===0))return false;
+    }
+  }
+  // Check row/col counts
+  for(var r=0;r<ROWS;r++){if(countTentsInRow(r)!==rowCounts[r])return false}
+  for(var c=0;c<COLS;c++){if(countTentsInCol(c)!==colCounts[c])return false}
+  // Check each tent is orthogonally adjacent to a tree
+  for(var i=0;i<tents.length;i++){
+    var hasTree=false;
+    for(var j=0;j<trees.length;j++){
+      if(isAdjacent(tents[i][0],tents[i][1],trees[j][0],trees[j][1])){hasTree=true;break}
+    }
+    if(!hasTree)return false;
+  }
+  return true;
+}
+
+// Check for errors to highlight
+function getErrors(){
+  var errs=[];
+  var tents=getCurrentTents();
+  // Touching tents
+  for(var i=0;i<tents.length;i++){
+    for(var j=i+1;j<tents.length;j++){
+      var dr=Math.abs(tents[i][0]-tents[j][0]),dc=Math.abs(tents[i][1]-tents[j][1]);
+      if(dr<=1&&dc<=1){errs.push(tents[i]);errs.push(tents[j])}
+    }
+  }
+  // Tents not adjacent to any tree
+  for(var i=0;i<tents.length;i++){
+    var hasTree=false;
+    for(var j=0;j<trees.length;j++){if(isAdjacent(tents[i][0],tents[i][1],trees[j][0],trees[j][1])){hasTree=true;break}}
+    if(!hasTree)errs.push(tents[i]);
+  }
+  return errs;
+}
+
+// ====== Hint System ======
+function generateHint(){
+  hintCells=[];
+  var tents=getCurrentTents();
+  // 1. Highlight incorrect tents (placed where solution doesn't have them)
+  for(var r=0;r<ROWS;r++){
+    for(var c=0;c<COLS;c++){
+      if(playerGrid[r]&&playerGrid[r][c]===1){
+        var isSol=false;
+        for(var i=0;i<tentSolution.length;i++){if(tentSolution[i][0]===r&&tentSolution[i][1]===c){isSol=true;break}}
+        if(!isSol)hintCells.push({r:r,c:c,type:'wrong'});
+      }
+    }
+  }
+  if(hintCells.length>0){sfxHint();hintTimer=2500;return}
+  // 2. Show a possible tent position
+  for(var i=0;i<tentSolution.length;i++){
+    var sr=tentSolution[i][0],sc=tentSolution[i][1];
+    if(playerGrid[sr]&&playerGrid[sr][sc]===0){
+      // Check if placing here is safe
+      hintCells.push({r:sr,c:sc,type:'hint'});
+      sfxHint();hintTimer=2500;return;
+    }
+  }
+}
+
+// ====== Procedural Generator (Daily Challenge) ======
+function generateDailyPuzzle(dateSeed){
+  var rng=makeRng(dateSeed);
+  // Pick grid size based on day of year
+  var doy=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/(86400000));
+  var sizes=[[6,6],[7,7],[8,8],[8,8],[9,9],[10,10]];
+  var si=doy%sizes.length;
+  var R=sizes[si][0],C=sizes[si][1];
+
+  // Generate tree positions
+  var numTrees=Math.max(4,Math.floor(R*C*0.18));
+  var attempts=0;
+  while(attempts<200){
+    attempts++;
+    var treeSet=[],used={};
+    for(var t=0;t<numTrees;t++){
+      var tr,tc,ok=false;
+      for(var a=0;a<50;a++){
+        tr=Math.floor(rng()*R);tc=Math.floor(rng()*C);
+        var k=tr+','+tc;
+        if(!used[k]){used[k]=true;treeSet.push([tr,tc]);ok=true;break}
+      }
+      if(!ok)break;
+    }
+    if(treeSet.length!==numTrees)continue;
+
+    // Try to find valid tent placement via backtracking
+    var tentResult=solveTents(R,C,treeSet,rng);
+    if(tentResult){
+      var clues=computeClues({r:R,c:C,trees:treeSet,tents:tentResult});
+      return{r:R,c:C,trees:treeSet,tents:tentResult,rowCounts:clues.rowCounts,colCounts:clues.colCounts};
+    }
+  }
+  // Fallback to level 6
+  var lv=LEVELS[5];var clues=computeClues(lv);
+  return{r:lv.r,c:lv.c,trees:lv.trees,tents:lv.tents,rowCounts:clues.rowCounts,colCounts:clues.colCounts};
+}
+
+function solveTents(R,C,treeList,rng){
+  var N=treeList.length;
+  // For each tree, find possible tent positions
+  var possible=[];
+  for(var i=0;i<N;i++){
+    var tr=treeList[i][0],tc=treeList[i][1];
+    var opts=[];
+    var dirs=[[-1,0],[1,0],[0,-1],[0,1]];
+    for(var d=0;d<4;d++){
+      var nr=tr+dirs[d][0],nc=tc+dirs[d][1];
+      if(nr>=0&&nr<R&&nc>=0&&nc<C){
+        var isOtherTree=false;
+        for(var j=0;j<N;j++){if(treeList[j][0]===nr&&treeList[j][1]===nc){isOtherTree=true;break}}
+        if(!isOtherTree)opts.push([nr,nc]);
+      }
+    }
+    // Shuffle
+    for(var j=opts.length-1;j>0;j--){var k=Math.floor(rng()*(j+1));var t=opts[j];opts[j]=opts[k];opts[k]=t}
+    possible.push(opts);
+  }
+
+  // Backtracking with ordering
+  var assignment=new Array(N);
+  var usedCells={};
+  var rowCounts=new Array(R);for(var i=0;i<R;i++)rowCounts[i]=0;
+
+  function bt(idx){
+    if(idx===N)return true;
+    // Pick tree with fewest remaining options (MRV)
+    var bestIdx=-1,bestCnt=999;
+    for(var i=0;i<N;i++){
+      if(assignment[i]!==undefined)continue;
+      var cnt=0;
+      for(var j=0;j<possible[i].length;j++){
+        var pr=possible[i][j][0],pc=possible[i][j][1];
+        var k=pr+','+pc;
+        if(!usedCells[k]){
+          // Check diagonal adjacency
+          var diagOk=true;
+          var diags=[[pr-1,pc-1],[pr-1,pc+1],[pr+1,pc-1],[pr+1,pc+1],[pr-1,pc],[pr+1,pc],[pr,pc-1],[pr,pc+1]];
+          for(var d=0;d<diags.length;d++){
+            var dk=diags[d][0]+','+diags[d][1];
+            if(usedCells[dk]){diagOk=false;break}
+          }
+          if(diagOk)cnt++;
+        }
+      }
+      if(cnt<bestCnt){bestCnt=cnt;bestIdx=i}
+    }
+    if(bestIdx===-1||bestCnt===0)return false;
+
+    var ti=bestIdx;
+    for(var j=0;j<possible[ti].length;j++){
+      var pr=possible[ti][j][0],pc=possible[ti][j][1];
+      var k=pr+','+pc;
+      if(usedCells[k])continue;
+      // Check adjacency with placed tents
+      var adjOk=true;
+      var diags=[[pr-1,pc-1],[pr-1,pc+1],[pr+1,pc-1],[pr+1,pc+1],[pr-1,pc],[pr+1,pc],[pr,pc-1],[pr,pc+1]];
+      for(var d=0;d<diags.length;d++){
+        var dk=diags[d][0]+','+diags[d][1];
+        if(usedCells[dk]){adjOk=false;break}
+      }
+      if(!adjOk)continue;
+
+      assignment[ti]=j;
+      usedCells[k]=true;
+      rowCounts[pr]++;
+
+      // Check row doesn't exceed a reasonable max (at most ceil(C/2))
+      if(rowCounts[pr]<=Math.ceil(C/2)){
+        if(bt(idx+1))return true;
+      }
+
+      assignment[ti]=undefined;
+      delete usedCells[k];
+      rowCounts[pr]--;
+    }
+    return false;
+  }
+
+  // Initialize
+  for(var i=0;i<N;i++)assignment[i]=undefined;
+
+  // Try multiple orderings
+  for(var attempt=0;attempt<5;attempt++){
+    // Shuffle tree ordering
+    var order=[];
+    for(var i=0;i<N;i++)order.push(i);
+    for(var i=order.length-1;i>0;i--){var j=Math.floor(rng()*(i+1));var t=order[i];order[i]=order[j];order[j]=t}
+
+    // Reset
+    assignment=new Array(N);usedCells={};
+    for(var i=0;i<R;i++)rowCounts[i]=0;
+
+    var newPossible=[];
+    for(var i=0;i<N;i++)newPossible.push(possible[order[i]]);
+
+    var tempPossible=possible;
+    possible=newPossible;
+
+    // Simple sequential backtrack
+    function btSeq(idx){
+      if(idx===N)return true;
+      for(var j=0;j<possible[idx].length;j++){
+        var pr=possible[idx][j][0],pc=possible[idx][j][1];
+        var k=pr+','+pc;
+        if(usedCells[k])continue;
+        var adjOk=true;
+        var checks=[[pr-1,pc-1],[pr-1,pc],[pr-1,pc+1],[pr,pc-1],[pr,pc+1],[pr+1,pc-1],[pr+1,pc],[pr+1,pc+1]];
+        for(var d=0;d<checks.length;d++){
+          if(usedCells[checks[d][0]+','+checks[d][1]]){adjOk=false;break}
+        }
+        if(!adjOk)continue;
+        assignment[idx]=j;usedCells[k]=true;
+        if(btSeq(idx+1))return true;
+        assignment[idx]=undefined;delete usedCells[k];
+      }
+      return false;
+    }
+
+    if(btSeq(0)){
+      // Build result in original tree order
+      var result=new Array(N);
+      for(var i=0;i<N;i++){
+        var oi=order[i];
+        result[oi]=possible[i][assignment[i]];
+      }
+      possible=tempPossible;
+      return result;
+    }
+    possible=tempPossible;
+  }
+  return null;
+}
+
+// ====== Game Logic ======
+function loadLevel(idx){
+  var lv=LEVELS[idx];var clues=computeClues(lv);
+  ROWS=lv.r;COLS=lv.c;trees=lv.trees;tentSolution=lv.tents;
+  rowCounts=clues.rowCounts;colCounts=clues.colCounts;
+  playerGrid=[];
+  for(var r=0;r<ROWS;r++){playerGrid[r]=[];for(var c=0;c<COLS;c++)playerGrid[r][c]=0}
+  undoStack=[];redoStack=[];won=false;timerMs=0;startTime=Date.now();
+  hintCells=[];hintTimer=0;errorCheckMode=false;
+  state='play';calcLayout();
+  if(!progress.tutDone&&idx<3){showTut=true;tutStep=0}else{showTut=false}
+  if(audioCtx&&musicOn&&!bgmNodes.length)startBGM();
+}
+
+function loadDaily(){
+  var today=new Date();
+  dailySeed=today.getFullYear()*10000+(today.getMonth()+1)*100+today.getDate();
+  var pz=generateDailyPuzzle(dailySeed);
+  ROWS=pz.r;COLS=pz.c;trees=pz.trees;tentSolution=pz.tents;
+  rowCounts=pz.rowCounts;colCounts=pz.colCounts;
+  playerGrid=[];
+  for(var r=0;r<ROWS;r++){playerGrid[r]=[];for(var c=0;c<COLS;c++)playerGrid[r][c]=0}
+  undoStack=[];redoStack=[];won=false;timerMs=0;startTime=Date.now();
+  hintCells=[];hintTimer=0;errorCheckMode=false;showTut=false;
+  state='play';calcLayout();
+  if(audioCtx&&musicOn&&!bgmNodes.length)startBGM();
+}
+
+function clickCell(r,c,markGrass){
+  if(won)return;
+  if(isTree(r,c))return;
+  var prev=playerGrid[r][c];
+  if(markGrass){
+    // Right click: toggle grass
+    if(prev===1){playerGrid[r][c]=2;undoStack.push({r:r,c:c,prev:1});sfxGrass()}
+    else if(prev===2){playerGrid[r][c]=0;undoStack.push({r:r,c:c,prev:2});sfxRemove()}
+    else{playerGrid[r][c]=2;undoStack.push({r:r,c:c,prev:0});sfxGrass()}
+  }else{
+    // Left click: cycle empty->tent->empty
+    if(prev===0){playerGrid[r][c]=1;undoStack.push({r:r,c:c,prev:0});sfxPlace()}
+    else if(prev===1){playerGrid[r][c]=0;undoStack.push({r:r,c:c,prev:1});sfxRemove()}
+    else if(prev===2){playerGrid[r][c]=1;undoStack.push({r:r,c:c,prev:2});sfxPlace()}
+  }
+  redoStack=[];
+  if(validate())winLevel();
+}
+
+function undo(){
+  if(!undoStack.length||won)return;
+  var act=undoStack.pop();
+  playerGrid[act.r][act.c]=act.prev;
+  redoStack.push(act);
+  sfxClick();
+}
+function redo(){
+  if(!redoStack.length||won)return;
+  var act=redoStack.pop();
+  playerGrid[act.r][act.c]=act.prev===0?1:act.prev===1?0:act.prev;
+  undoStack.push(act);
+  sfxClick();
+}
+
+function winLevel(){
+  won=true;timerMs=Date.now()-startTime;
+  sfxWin();
+  // Save progress
+  var key='L'+lvlIdx;
+  var isNew=!progress.done[key];
+  progress.done[key]=true;
+  progress.stats.played++;
+  progress.stats.completed++;
+  progress.stats.totalTime+=timerMs;
+
+  // Star rating
+  var sec=timerMs/1000;
+  var expected=LEVELS[lvlIdx].r*LEVELS[lvlIdx].c*2; // rough expected time in seconds
+  var stars=1;
+  if(sec<expected*0.6)stars=3;
+  else if(sec<expected*1.2)stars=2;
+  if(!progress.stars[key]||progress.stars[key]<stars){progress.stars[key]=stars;sfxStar()}
+  if(!progress.best[key]||timerMs<progress.best[key])progress.best[key]=timerMs;
+  saveProgress();
+
+  // Particles
+  for(var i=0;i<40;i++){
+    particles.push({
+      x:W/2+Math.random()*100-50,y:H/2,
+      vx:(Math.random()-0.5)*8,vy:-Math.random()*6-2,
+      life:1,decay:0.01+Math.random()*0.02,
+      color:'hsl('+(100+Math.random()*60)+',80%,60%)',
+      size:3+Math.random()*5
+    });
+  }
+  state='win';
+}
+
+function getStarRating(idx){
+  return progress.stars['L'+idx]||0;
+}
+function getBestTime(idx){
+  return progress.best['L'+idx]||0;
+}
+
+// ====== Particles ======
+function updateParticles(dt){
+  for(var i=particles.length-1;i>=0;i--){
+    var p=particles[i];
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life-=p.decay;
+    if(p.life<=0)particles.splice(i,1);
+  }
+}
+function drawParticles(){
+  for(var i=0;i<particles.length;i++){
+    var p=particles[i];
+    ctx.globalAlpha=p.life;
+    ctx.fillStyle=p.color;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+
+// ====== Drawing Helpers ======
+function drawTree(x,y,sz){
+  // Trunk
+  var tw=sz*0.12,th=sz*0.25;
+  ctx.fillStyle='#5D4037';
+  ctx.fillRect(x-tw/2,y+sz*0.05,tw,th);
+  // Canopy (circle)
+  ctx.fillStyle='#2E7D32';
+  ctx.beginPath();ctx.arc(x,y-sz*0.08,sz*0.28,0,Math.PI*2);ctx.fill();
+  // Darker inner
+  ctx.fillStyle='#1B5E20';
+  ctx.beginPath();ctx.arc(x-sz*0.04,y-sz*0.12,sz*0.15,0,Math.PI*2);ctx.fill();
+  // Highlight
+  ctx.fillStyle='rgba(76,175,80,0.4)';
+  ctx.beginPath();ctx.arc(x+sz*0.06,y-sz*0.16,sz*0.1,0,Math.PI*2);ctx.fill();
+}
+
+function drawTent(x,y,sz){
+  // Tent body (triangle)
+  var h=sz*0.35,w=sz*0.4;
+  ctx.fillStyle='#E67E22';
+  ctx.beginPath();
+  ctx.moveTo(x,y-h);
+  ctx.lineTo(x-w,y+sz*0.12);
+  ctx.lineTo(x+w,y+sz*0.12);
+  ctx.closePath();ctx.fill();
+  // Shadow side
+  ctx.fillStyle='#D35400';
+  ctx.beginPath();
+  ctx.moveTo(x,y-h);
+  ctx.lineTo(x+w,y+sz*0.12);
+  ctx.lineTo(x,y+sz*0.12);
+  ctx.closePath();ctx.fill();
+  // Door
+  ctx.fillStyle='#BF360C';
+  ctx.beginPath();
+  ctx.moveTo(x,y-sz*0.02);
+  ctx.lineTo(x-sz*0.06,y+sz*0.12);
+  ctx.lineTo(x+sz*0.06,y+sz*0.12);
+  ctx.closePath();ctx.fill();
+  // Peg
+  ctx.fillStyle='#795548';
+  ctx.beginPath();ctx.arc(x,y+sz*0.15,sz*0.03,0,Math.PI*2);ctx.fill();
+}
+
+function drawGrass(x,y,sz){
+  ctx.strokeStyle='#4CAF50';
+  ctx.lineWidth=Math.max(1,sz*0.03);
+  ctx.globalAlpha=0.5;
+  var cx=x,cy=y;
+  for(var i=0;i<3;i++){
+    var bx=cx+(i-1)*sz*0.12;
+    ctx.beginPath();
+    ctx.moveTo(bx,cy+sz*0.08);
+    ctx.quadraticCurveTo(bx+sz*0.02,cy-sz*0.06,bx+sz*0.04,cy-sz*0.12);
+    ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawBtn(x,y,w,h,text,hovered,accent){
+  var r=8;
+  ctx.fillStyle=hovered?'rgba(46,204,113,0.25)':'rgba(255,255,255,0.06)';
+  if(accent)ctx.fillStyle=hovered?'rgba(46,204,113,0.35)':'rgba(46,204,113,0.15)';
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle=hovered?'#2ecc71':'rgba(255,255,255,0.15)';
+  ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='#e0e0ff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font='bold '+Math.min(16,h*0.45)+'px system-ui,sans-serif';
+  ctx.fillText(text,x+w/2,y+h/2);
+}
+
+function drawStar(x,y,sz,filled){
+  ctx.fillStyle=filled?'#FFD700':'rgba(255,255,255,0.15)';
+  ctx.beginPath();
+  for(var i=0;i<5;i++){
+    var a=Math.PI/2+i*Math.PI*2/5;
+    var ax=x+Math.cos(a)*sz,ay=y-Math.sin(a)*sz;
+    if(i===0)ctx.moveTo(ax,ay);else ctx.lineTo(ax,ay);
+    var b=a+Math.PI/5;
+    ctx.lineTo(x+Math.cos(b)*sz*0.45,y-Math.sin(b)*sz*0.45);
+  }
+  ctx.closePath();ctx.fill();
+}
+
+function formatTime(ms){
+  var s=Math.floor(ms/1000),m=Math.floor(s/60);s%=60;
+  return(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+}
+
+// ====== Render Screens ======
+function drawBackground(){
+  var grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#0a0a1a');grad.addColorStop(1,'#1a1a3a');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+}
+
+// -- Title Screen --
+function drawTitle(){
+  drawBackground();
+  // Title
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='#2ecc71';
+  ctx.font='bold '+Math.min(56,W*0.07)+'px system-ui,sans-serif';
+  ctx.shadowColor='rgba(46,204,113,0.4)';ctx.shadowBlur=20;
+  ctx.fillText('TENTS',W/2,H*0.2);
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#8e8ea0';
+  ctx.font=Math.min(20,W*0.025)+'px system-ui,sans-serif';
+  ctx.fillText('Place tents next to trees',W/2,H*0.2+45);
+
+  // Draw decorative tree and tent
+  var decoSz=60;
+  drawTree(W/2-80,H*0.38,decoSz);
+  drawTent(W/2+80,H*0.38,decoSz);
+
+  // Buttons
+  var bw=220,bh=52,bx=W/2-bw/2;
+  menuBtns=[];
+  var by1=H*0.52;
+  menuBtns.push({x:bx,y:by1,w:bw,h:bh,action:'play',label:'Play'});
+  menuBtns.push({x:bx,y:by1+64,w:bw,h:bh,action:'daily',label:'Daily Challenge'});
+  menuBtns.push({x:bx,y:by1+128,w:bw,h:bh,action:'stats',label:'Statistics'});
+  menuBtns.push({x:bx,y:by1+192,w:bw,h:bh,action:'settings',label:'Settings'});
+
+  for(var i=0;i<menuBtns.length;i++){
+    var b=menuBtns[i];
+    drawBtn(b.x,b.y,b.w,b.h,b.label,btnHover===i,i===0);
+  }
+
+  // Version
+  ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='12px system-ui,sans-serif';
+  ctx.fillText('GameZipper.com',W/2,H-30);
+}
+
+// -- Level Select --
+function drawSelect(){
+  drawBackground();
+  // Header
+  ctx.textAlign='center';ctx.fillStyle='#2ecc71';
+  ctx.font='bold '+Math.min(28,W*0.04)+'px system-ui,sans-serif';
+  ctx.fillText('Select Level',W/2,36);
+
+  // Back button
+  menuBtns=[{x:10,y:10,w:60,h:32,action:'back',label:'Back'}];
+  drawBtn(10,10,60,32,'Back',false,false);
+
+  // Level grid
+  var cols=Math.min(5,Math.floor((W-40)/90));
+  if(cols<1)cols=1;
+  var cardW=80,cardH=80,gap=10;
+  var totalW=cols*cardW+(cols-1)*gap;
+  var startX=(W-totalW)/2;
+  var startY=70;
+
+  for(var i=0;i<LEVELS.length;i++){
+    var col=i%cols,row=Math.floor(i/cols);
+    var x=startX+col*(cardW+gap);
+    var y=startY+row*(cardH+gap)-selectScroll;
+    if(y+cardH<60||y>H)continue;
+    // Card
+    var done=progress.done['L'+i];
+    var stars=getStarRating(i);
+    ctx.fillStyle=done?'rgba(46,204,113,0.15)':'rgba(255,255,255,0.05)';
+    ctx.strokeStyle=done?'#2ecc71':'rgba(255,255,255,0.1)';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    var cr=8;
+    ctx.moveTo(x+cr,y);ctx.lineTo(x+cardW-cr,y);ctx.arcTo(x+cardW,y,x+cardW,y+cr,cr);
+    ctx.lineTo(x+cardW,y+cardH-cr);ctx.arcTo(x+cardW,y+cardH,x+cardW-cr,y+cardH,cr);
+    ctx.lineTo(x+cr,y+cardH);ctx.arcTo(x,y+cardH,x,y+cardH-cr,cr);
+    ctx.lineTo(x,y+cr);ctx.arcTo(x,y,x+cr,y,cr);
+    ctx.closePath();ctx.fill();ctx.stroke();
+
+    // Level number
+    ctx.fillStyle='#e0e0ff';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font='bold 16px system-ui,sans-serif';
+    ctx.fillText(''+(i+1),x+cardW/2,y+28);
+    // Name
+    ctx.fillStyle='#8e8ea0';ctx.font='10px system-ui,sans-serif';
+    ctx.fillText(LEVEL_META[i].n,x+cardW/2,y+48);
+    // Size
+    ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='9px system-ui,sans-serif';
+    ctx.fillText(LEVELS[i].r+'x'+LEVELS[i].c,x+cardW/2,y+62);
+    // Stars
+    var stx=x+cardW/2-16;
+    for(var s=0;s<3;s++){drawStar(stx+s*14,y+74,5,s<stars)}
+
+    menuBtns.push({x:x,y:y,w:cardW,h:cardH,action:'level_'+i,label:''});
+  }
+
+  // Scroll hint
+  var maxScroll=Math.max(0,Math.ceil(LEVELS.length/cols)*(cardH+gap)-H+100);
+  if(maxScroll>0){
+    ctx.fillStyle='rgba(255,255,255,0.15)';ctx.font='12px system-ui,sans-serif';ctx.textAlign='center';
+    ctx.fillText('Scroll to see more levels',W/2,H-20);
+  }
+}
+
+// -- Game Screen --
+function drawGame(){
+  drawBackground();
+  // HUD
+  var hudH=52;
+  ctx.fillStyle='rgba(0,0,0,0.3)';ctx.fillRect(0,0,W,hudH);
+
+  // Back
+  playBtns=[{x:8,y:10,w:50,h:32,action:'back',label:'< Back'}];
+  drawBtn(8,10,50,32,'< Back',false,false);
+
+  // Timer
+  var elapsed=won?timerMs:Date.now()-startTime;
+  ctx.fillStyle='#e0e0ff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font='bold 18px monospace';
+  ctx.fillText(formatTime(elapsed),W/2,26);
+
+  // Level name
+  var name=lvlIdx>=0?LEVEL_META[lvlIdx].n:'Daily';
+  ctx.fillStyle='#8e8ea0';ctx.font='12px system-ui,sans-serif';
+  ctx.fillText(name+' ('+ROWS+'x'+COLS+')',W/2,44);
+
+  // Right side buttons
+  var rbx=W-8;
+  playBtns.push({x:rbx-82,y:10,w:34,h:32,action:'hint',label:'H'});
+  playBtns.push({x:rbx-44,y:10,w:34,h:32,action:'undo',label:'U'});
+  playBtns.push({x:rbx-6,y:10,w:34,h:32,action:'settings',label:'S'});
+  drawBtn(rbx-82,10,34,32,'H',false,true);
+  drawBtn(rbx-44,10,34,32,'U',false,false);
+  drawBtn(rbx-6,10,34,32,'S',false,false);
+
+  // Bottom bar
+  var bbY=H-44;
+  ctx.fillStyle='rgba(0,0,0,0.3)';ctx.fillRect(0,bbY,W,44);
+  playBtns.push({x:W/2-130,y:bbY+6,w:120,h:32,action:'check',label:errorCheckMode?'Check: ON':'Check: OFF'});
+  playBtns.push({x:W/2+10,y:bbY+6,w:120,h:32,action:'mark',label:'Mark Mode'});
+  drawBtn(W/2-130,bbY+6,120,32,errorCheckMode?'Errors ON':'Errors OFF',errorCheckMode,true);
+  drawBtn(W/2+10,bbY+6,120,32,'Long-press: Grass',false,false);
+
+  // Grid background
+  ctx.fillStyle='rgba(0,0,0,0.2)';
+  ctx.fillRect(gridX-2,gridY-2,COLS*cellSz+4,ROWS*cellSz+4);
+
+  // Draw grid cells
+  var errorTents=errorCheckMode?getErrors():[];
+  for(var r=0;r<ROWS;r++){
+    for(var c=0;c<COLS;c++){
+      var x=gridX+c*cellSz,y=gridY+r*cellSz;
+      // Cell background
+      ctx.fillStyle='rgba(26,26,58,0.6)';
+      ctx.fillRect(x,y,cellSz,cellSz);
+
+      // Grid lines
+      ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;
+      ctx.strokeRect(x,y,cellSz,cellSz);
+
+      // Hover highlight
+      if(r===hoverR&&c===hoverC&&!won&&!isTree(r,c)){
+        ctx.fillStyle='rgba(46,204,113,0.1)';
+        ctx.fillRect(x,y,cellSz,cellSz);
+      }
+
+      var cx=x+cellSz/2,cy=y+cellSz/2;
+
+      if(isTree(r,c)){
+        drawTree(cx,cy,cellSz);
+      }else if(playerGrid[r]&&playerGrid[r][c]===1){
+        // Tent
+        // Error highlight
+        var isErr=false;
+        for(var e=0;e<errorTents.length;e++){if(errorTents[e][0]===r&&errorTents[e][1]===c){isErr=true;break}}
+        if(isErr){
+          ctx.fillStyle='rgba(231,76,60,0.2)';
+          ctx.fillRect(x,y,cellSz,cellSz);
+        }
+        drawTent(cx,cy,cellSz);
+      }else if(playerGrid[r]&&playerGrid[r][c]===2){
+        drawGrass(cx,cy,cellSz);
+      }
+
+      // Hint cells
+      if(hintTimer>0){
+        for(var h=0;h<hintCells.length;h++){
+          if(hintCells[h].r===r&&hintCells[h].c===c){
+            var pulse=0.15+Math.sin(Date.now()*0.008)*0.1;
+            ctx.fillStyle=hintCells[h].type==='wrong'?'rgba(231,76,60,'+pulse+')':'rgba(46,204,113,'+pulse+')';
+            ctx.fillRect(x,y,cellSz,cellSz);
+          }
+        }
+      }
+    }
+  }
+
+  // Row counts (right side)
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  for(var r=0;r<ROWS;r++){
+    var cnt=countTentsInRow(r);
+    var correct=cnt===rowCounts[r];
+    var y=gridY+r*cellSz+cellSz/2;
+    ctx.fillStyle=correct?'#2ecc71':'#e0e0ff';
+    ctx.font='bold '+Math.min(16,cellSz*0.45)+'px system-ui,sans-serif';
+    ctx.fillText(''+rowCounts[r],gridX+COLS*cellSz+16,y);
+  }
+
+  // Column counts (bottom)
+  for(var c=0;c<COLS;c++){
+    var cnt=countTentsInCol(c);
+    var correct=cnt===colCounts[c];
+    var x=gridX+c*cellSz+cellSz/2;
+    ctx.fillStyle=correct?'#2ecc71':'#e0e0ff';
+    ctx.font='bold '+Math.min(16,cellSz*0.45)+'px system-ui,sans-serif';
+    ctx.fillText(''+colCounts[c],x,gridY+ROWS*cellSz+16);
+  }
+
+  // Tutorial overlay
+  if(showTut&&!won){
+    drawTutorial();
+  }
+}
+
+// -- Tutorial --
+function drawTutorial(){
+  ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,W,H);
+  var texts=[
+    ['Welcome to Tents!','Place one tent next to each tree.','Tents must be orthogonally adjacent (up/down/left/right).'],
+    ['No Touching!','Tents cannot touch each other, even diagonally.','Mark cells as grass (long-press) when you know no tent goes there.'],
+    ['Count the Tents','Row and column numbers show how many tents to place.','Match all counts to win! Tap to continue.']
+  ];
+  var t=texts[Math.min(tutStep,texts.length-1)];
+  var bx=W/2-180,by=H/2-80,bw=360,bh=160;
+  if(W<400){bx=20;bw=W-40}
+  ctx.fillStyle='rgba(26,26,58,0.95)';
+  ctx.strokeStyle='#2ecc71';ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(bx+12,by);ctx.lineTo(bx+bw-12,by);ctx.arcTo(bx+bw,by,bx+bw,by+12,12);
+  ctx.lineTo(bx+bw,by+bh-12);ctx.arcTo(bx+bw,by+bh,bx+bw-12,by+bh,12);
+  ctx.lineTo(bx+12,by+bh);ctx.arcTo(bx,by+bh,bx,by+bh-12,12);
+  ctx.lineTo(bx,by+12);ctx.arcTo(bx,by,bx+12,by,12);
+  ctx.closePath();ctx.fill();ctx.stroke();
+
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='#2ecc71';ctx.font='bold 18px system-ui,sans-serif';
+  ctx.fillText(t[0],W/2,by+30);
+  ctx.fillStyle='#e0e0ff';ctx.font='14px system-ui,sans-serif';
+  ctx.fillText(t[1],W/2,by+65);
+  ctx.fillText(t[2],W/2,by+90);
+  ctx.fillStyle='#8e8ea0';ctx.font='12px system-ui,sans-serif';
+  var stepLabel='Step '+(tutStep+1)+'/'+texts.length+' - Tap to continue';
+  ctx.fillText(stepLabel,W/2,by+130);
+
+  menuBtns.push({x:bx,y:by,w:bw,h:bh,action:'tut_next',label:''});
+}
+
+// -- Win Screen --
+function drawWin(){
+  drawGame();
+  // Overlay
+  ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,0,W,H);
+  drawParticles();
+
+  // Panel
+  var pw=320,ph=300,px=(W-pw)/2,py=(H-ph)/2;
+  if(W<400){pw=W-40;px=20}
+  ctx.fillStyle='rgba(26,26,58,0.95)';
+  ctx.strokeStyle='#2ecc71';ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(px+16,py);ctx.lineTo(px+pw-16,py);ctx.arcTo(px+pw,py,px+pw,py+16,16);
+  ctx.lineTo(px+pw,py+ph-16);ctx.arcTo(px+pw,py+ph,px+pw-16,py+ph,16);
+  ctx.lineTo(px+16,py+ph);ctx.arcTo(px,py+ph,px,py+ph-16,16);
+  ctx.lineTo(px,py+16);ctx.arcTo(px,py,px+16,py,16);
+  ctx.closePath();ctx.fill();ctx.stroke();
+
+  // Title
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='#2ecc71';ctx.font='bold 24px system-ui,sans-serif';
+  ctx.shadowColor='rgba(46,204,113,0.3)';ctx.shadowBlur=10;
+  ctx.fillText('Puzzle Complete!',W/2,py+35);
+  ctx.shadowBlur=0;
+
+  // Stars
+  var stars=lvlIdx>=0?getStarRating(lvlIdx):1;
+  for(var s=0;s<3;s++){drawStar(W/2-30+s*30,py+80,14,s<stars)}
+
+  // Time
+  ctx.fillStyle='#e0e0ff';ctx.font='16px system-ui,sans-serif';
+  ctx.fillText('Time: '+formatTime(timerMs),W/2,py+115);
+  if(lvlIdx>=0){
+    var best=getBestTime(lvlIdx);
+    if(best){ctx.fillStyle='#8e8ea0';ctx.font='13px system-ui,sans-serif';ctx.fillText('Best: '+formatTime(best),W/2,py+140)}
+  }
+
+  // Buttons
+  winBtns=[];
+  var bw2=140,bh2=40;
+  winBtns.push({x:W/2-bw2-5,y:py+175,w:bw2,h:bh2,action:'next',label:'Next Level'});
+  winBtns.push({x:W/2+5,y:py+175,w:bw2,h:bh2,action:'select',label:'Level Select'});
+  winBtns.push({x:W/2-bw2/2,y:py+230,w:bw2,h:bh2,action:'replay',label:'Play Again'});
+  for(var i=0;i<winBtns.length;i++){
+    var b=winBtns[i];
+    drawBtn(b.x,b.y,b.w,b.h,b.label,false,i===0);
+  }
+}
+
+// -- Settings Screen --
+function drawSettings(){
+  drawBackground();
+  ctx.textAlign='center';ctx.fillStyle='#2ecc71';
+  ctx.font='bold 28px system-ui,sans-serif';
+  ctx.fillText('Settings',W/2,50);
+
+  settingsBtns=[{x:10,y:10,w:60,h:32,action:'back',label:'Back'}];
+  drawBtn(10,10,60,32,'Back',false,false);
+
+  var bw=240,bh=48,bx=(W-bw)/2;
+  settingsBtns.push({x:bx,y:100,w:bw,h:bh,action:'sound',label:soundOn?'Sound: ON':'Sound: OFF'});
+  settingsBtns.push({x:bx,y:160,w:bw,h:bh,action:'music',label:musicOn?'Music: ON':'Music: OFF'});
+  settingsBtns.push({x:bx,y:220,w:bw,h:bh,action:'reset',label:'Reset Progress'});
+
+  for(var i=0;i<settingsBtns.length;i++){
+    var b=settingsBtns[i];
+    if(b.action==='back')continue;
+    drawBtn(b.x,b.y,b.w,b.h,b.label,false,b.action==='reset');
+  }
+
+  // Controls help
+  ctx.fillStyle='#8e8ea0';ctx.font='14px system-ui,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Tap empty cell to place/remove a tent',W/2,320);
+  ctx.fillText('Long-press to mark as grass',W/2,345);
+  ctx.fillText('Right-click on desktop to mark grass',W/2,370);
+}
+
+// -- Stats Screen --
+function drawStats(){
+  drawBackground();
+  ctx.textAlign='center';ctx.fillStyle='#2ecc71';
+  ctx.font='bold 28px system-ui,sans-serif';
+  ctx.fillText('Statistics',W/2,50);
+
+  statsBtns=[{x:10,y:10,w:60,h:32,action:'back',label:'Back'}];
+  drawBtn(10,10,60,32,'Back',false,false);
+
+  var st=progress.stats;
+  var items=[
+    ['Games Played',''+st.played],
+    ['Puzzles Completed',''+st.completed],
+    ['Total Play Time',formatTime(st.totalTime)],
+    ['Levels Unlocked',''+Object.keys(progress.done).length+'/'+LEVELS.length],
+    ['Total Stars',''+Object.values(progress.stars).reduce(function(a,b){return a+b},0)+'/'+(LEVELS.length*3)],
+    ['Completion Rate',st.played>0?Math.round(st.completed/st.played*100)+'%':'0%']
+  ];
+
+  for(var i=0;i<items.length;i++){
+    var y=100+i*50;
+    ctx.fillStyle='rgba(255,255,255,0.05)';
+    ctx.fillRect(W/2-160,y,320,40);
+    ctx.fillStyle='#8e8ea0';ctx.font='14px system-ui,sans-serif';ctx.textAlign='left';
+    ctx.fillText(items[i][0],W/2-145,y+24);
+    ctx.fillStyle='#e0e0ff';ctx.font='bold 16px system-ui,sans-serif';ctx.textAlign='right';
+    ctx.fillText(items[i][1],W/2+145,y+24);
+  }
+}
+
+// ====== Input ======
+var touchStartTime=0,touchStartPos=null;
+var isLongPress=false;
+var LONG_PRESS_MS=400;
+
+function getPos(e){
+  var rect=canvas.getBoundingClientRect();
+  if(e.touches){return{x:e.touches[0].clientX-rect.left,y:e.touches[0].clientY-rect.top}}
+  return{x:e.clientX-rect.left,y:e.clientY-rect.top}
+}
+function getPosEnd(e){
+  var rect=canvas.getBoundingClientRect();
+  if(e.changedTouches){return{x:e.changedTouches[0].clientX-rect.left,y:e.changedTouches[0].clientY-rect.top}}
+  return{x:e.clientX-rect.left,y:e.clientY-rect.top}
+}
+
+function findBtn(btns,mx,my){
+  for(var i=0;i<btns.length;i++){var b=btns[i];if(mx>=b.x&&mx<=b.x+b.w&&my>=b.y&&my<=b.y+b.h)return i}
+  return-1;
+}
+
+function handleAction(action){
+  initAudio();
+  if(action==='play'){state='select';selectScroll=0;sfxClick()}
+  else if(action==='daily'){loadDaily();sfxClick()}
+  else if(action==='settings'){state='settings';sfxClick()}
+  else if(action==='stats'){state='stats';sfxClick()}
+  else if(action==='back'){if(audioCtx&&bgmNodes.length){}state='title';sfxClick()}
+  else if(action==='back_play'){state='select';sfxClick()}
+  else if(action==='sound'){soundOn=!soundOn;saveProgress();sfxClick()}
+  else if(action==='music'){toggleBGM();sfxClick()}
+  else if(action==='reset'){
+    if(confirm('Reset all progress? This cannot be undone.')){
+      localStorage.removeItem('tents_progress');progress=loadProgress();sfxClick();
+    }
+  }
+  else if(action==='hint'){generateHint()}
+  else if(action==='undo'){undo()}
+  else if(action==='check'){errorCheckMode=!errorCheckMode;sfxClick()}
+  else if(action==='next'){
+    var next=lvlIdx+1;if(next<LEVELS.length){loadLevel(next);sfxClick()}
+    else{state='select';sfxClick()}
+  }
+  else if(action==='select'){state='select';sfxClick()}
+  else if(action==='replay'){if(lvlIdx>=0)loadLevel(lvlIdx);else state='title';sfxClick()}
+  else if(action==='tut_next'){
+    tutStep++;if(tutStep>=3){showTut=false;progress.tutDone=true;saveProgress()}
+    sfxClick();
+  }
+  else if(action.startsWith('level_')){
+    var idx=parseInt(action.substring(6));
+    lvlIdx=idx;loadLevel(idx);sfxClick();
+  }
+}
+
+function handleGameClick(r,c,markGrass){
+  initAudio();
+  clickCell(r,c,markGrass);
+}
+
+// Mouse
+canvas.addEventListener('mousedown',function(e){
+  e.preventDefault();initAudio();
+  var p=getPos(e);
+  // Right click = grass
+  if(e.button===2){
+    var cell=cellFromPos(p.x,p.y);
+    if(cell&&state==='play'&&!won)handleGameClick(cell.r,cell.c,true);
+    return;
+  }
+  // Check buttons first
+  var btns=state==='title'?menuBtns:state==='select'?menuBtns:state==='play'?playBtns:state==='win'?winBtns:state==='settings'?settingsBtns:state==='stats'?statsBtns:[];
+  var bi=findBtn(btns,p.x,p.y);
+  if(bi>=0){handleAction(btns[bi].action);return}
+  // Game cell
+  if(state==='play'&&!won){
+    var cell=cellFromPos(p.x,p.y);
+    if(cell)handleGameClick(cell.r,cell.c,false);
+  }
+});
+
+canvas.addEventListener('contextmenu',function(e){e.preventDefault()});
+
+canvas.addEventListener('mousemove',function(e){
+  var p=getPos(e);
+  hoverR=-1;hoverC=-1;
+  if(state==='play'&&!won){
+    var cell=cellFromPos(p.x,p.y);
+    if(cell){hoverR=cell.r;hoverC=cell.c}
+  }
+  // Button hover
+  var btns=state==='title'?menuBtns:state==='select'?menuBtns:state==='play'?playBtns:state==='win'?winBtns:state==='settings'?settingsBtns:state==='stats'?statsBtns:[];
+  btnHover=findBtn(btns,p.x,p.y);
+});
+
+// Touch
+canvas.addEventListener('touchstart',function(e){
+  e.preventDefault();initAudio();
+  var p=getPos(e);
+  touchStartTime=Date.now();touchStartPos=p;isLongPress=false;
+
+  // Check buttons
+  var btns=state==='title'?menuBtns:state==='select'?menuBtns:state==='play'?playBtns:state==='win'?winBtns:state==='settings'?settingsBtns:state==='stats'?statsBtns:[];
+  var bi=findBtn(btns,p.x,p.y);
+  if(bi>=0){handleAction(btns[bi].action);return}
+
+  // Long press timer for grass marking
+  if(state==='play'&&!won){
+    var cell=cellFromPos(p.x,p.y);
+    if(cell){
+      var longTimer=setTimeout(function(){
+        isLongPress=true;
+        handleGameClick(cell.r,cell.c,true);
+      },LONG_PRESS_MS);
+      // Store timer for cancel
+      canvas._longTimer=longTimer;
+    }
+  }
+},{passive:false});
+
+canvas.addEventListener('touchmove',function(e){
+  e.preventDefault();
+  // Cancel long press if moved
+  if(canvas._longTimer){clearTimeout(canvas._longTimer);canvas._longTimer=null}
+},{passive:false});
+
+canvas.addEventListener('touchend',function(e){
+  e.preventDefault();
+  if(canvas._longTimer){clearTimeout(canvas._longTimer);canvas._longTimer=null}
+  var p=getPosEnd(e);
+  // If it was a long press, already handled
+  if(isLongPress){isLongPress=false;return}
+  // Don't process tap if touch was too long (was a long press attempt)
+  if(Date.now()-touchStartTime>LONG_PRESS_MS+50)return;
+  // Check buttons
+  var btns=state==='title'?menuBtns:state==='select'?menuBtns:state==='play'?playBtns:state==='win'?winBtns:state==='settings'?settingsBtns:state==='stats'?statsBtns:[];
+  var bi=findBtn(btns,p.x,p.y);
+  if(bi>=0){handleAction(btns[bi].action);return}
+  // Game cell
+  if(state==='play'&&!won){
+    var cell=cellFromPos(p.x,p.y);
+    if(cell)handleGameClick(cell.r,cell.c,false);
+  }
+},{passive:false});
+
+// Scroll for level select
+canvas.addEventListener('wheel',function(e){
+  if(state==='select'){
+    e.preventDefault();
+    selectScroll+=e.deltaY*0.5;
+    var cols=Math.min(5,Math.floor((W-40)/90));
+    if(cols<1)cols=1;
+    var maxScroll=Math.max(0,Math.ceil(LEVELS.length/cols)*90-H+100);
+    if(selectScroll<0)selectScroll=0;
+    if(selectScroll>maxScroll)selectScroll=maxScroll;
+  }
+},{passive:false});
+
+// Keyboard
+document.addEventListener('keydown',function(e){
+  if(e.key==='z'&&(e.ctrlKey||e.metaKey)){e.preventDefault();if(e.shiftKey)redo();else undo()}
+  if(e.key==='h'){if(state==='play')generateHint()}
+  if(e.key==='Escape'){state='title'}
+});
+
+// ====== Main Loop ======
+function update(dt){
+  if(hintTimer>0){hintTimer-=dt;if(hintTimer<=0)hintCells=[]}
+  updateParticles(dt);
+}
+
+function render(){
+  ctx.clearRect(0,0,W,H);
+  switch(state){
+    case'title':drawTitle();break;
+    case'select':drawSelect();break;
+    case'play':drawGame();break;
+    case'win':drawWin();break;
+    case'settings':drawSettings();break;
+    case'stats':drawStats();break;
+    default:drawTitle();
+  }
+}
+
+function gameLoop(ts){
+  var dt=ts-lastTime;if(dt>100)dt=16;lastTime=ts;
+  update(dt);
+  render();
+  rafId=requestAnimationFrame(gameLoop);
+}
+
+// ====== Init ======
+function init(){
+  soundOn=progress.sound!==false;
+  musicOn=progress.music!==false;
+  resize();
+  lastTime=performance.now();
+  rafId=requestAnimationFrame(gameLoop);
+}
+
+// Cleanup on page hide
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden&&state==='play'&&!won){timerMs=Date.now()-startTime;paused=true}
+  else if(!document.hidden&&paused){startTime=Date.now()-timerMs;paused=false}
+});
+
+init();
+})();
+
+window.addEventListener('beforeunload',function(){
+  if(typeof animId!=='undefined')cancelAnimationFrame(animId);
+  if(typeof bgmNode!=='undefined'&&bgmNode){try{bgmNode.stop();}catch(e){}}
+});
+</script>
+</body>
+</html>
