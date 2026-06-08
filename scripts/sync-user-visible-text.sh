@@ -29,7 +29,7 @@ console.log(n);
 
 # The current GAMES count is the ONLY allowed number in user-visible text.
 # Any other number (229, 230, 240, 244, ..., 254) means stale.
-STALE_PATTERN='\b(229|230|240|244|245|246|247|248|250|251|252|253|254|255|256|257|258)\b'
+STALE_PATTERN='\b(229|230|240|244|245|246|247|248|250|251|252|253|254|255|256|257|258|259|260|261|262|263|264|265|266|267|268|269|270|271)\b'
 
 echo "=== GameZipper User-Visible Text Sync Check (Hard Rule #15) ==="
 echo "GAMES array (truth): $GAMES_COUNT"
@@ -89,7 +89,7 @@ fi
 
 # 6. Wide-net stale scan: any line with a stale number that's NOT in a CSS/JS noise context
 STALE_HITS=$(grep -nE "$STALE_PATTERN" index.html 2>/dev/null | \
-  grep -vE 'data-count=|"position":|indexId|/\*.*\*/|rgba\(|on 244-card|timeout: [0-9]|grid (user|that)|isInputContinuous' | \
+  grep -vE 'data-count=|"position":|indexId|/\*.*\*/|rgba\(|on 244-card|timeout: [0-9]|grid (user|that)|isInputContinuous|setTimeout\(.*,[0-9]+\)' | \
   grep -vE '@keyframes|font-size|opacity:|animation:' | \
   grep -vE '^[0-9]+:[[:space:]]*//' | \
   head -10)

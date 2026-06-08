@@ -2,7 +2,7 @@
 // Pure game caching — Monetag push NOTIFICATIONS DISABLED per user request
 // Strategies: cache-first (static), stale-while-revalidate with 4h max-age (HTML), network-first (API)
 // v12: navigationPreload for faster TTFB on navigation requests
-const CACHE='gz-v16';
+const CACHE='gz-v17';
 const HTML_MAX_AGE=4*60*60*1000; // 4 hours in ms
 
 // === Install ===
@@ -22,6 +22,16 @@ self.addEventListener('install',e=>{
     '/sudoku/',
     '/solitaire/',
     '/chess/',
+    '/minesweeper/',
+    '/akari/',
+    '/basketball-shoot/',
+    '/circuit-logic/',
+    '/fruit-slash/',
+    '/hidato/',
+    '/neon-run/',
+    '/nurikabe/',
+    '/sugar-sugar/',
+    '/tapa/',
     '/cryptograms/',
     '/crossmath/',
     '/100-doors/',
@@ -29,7 +39,6 @@ self.addEventListener('install',e=>{
     '/brick-breaker/',
     '/color-sort/',
     '/magic-sort/',
-    '/minesweeper/',
     '/crossword/',
     '/blackjack/',
     '/color-helix-smash/',
