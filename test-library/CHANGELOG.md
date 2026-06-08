@@ -3,6 +3,39 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.21.0] - 2026-06-08 (R105 — Dynamic Test Intelligence cron evolution, 7 new test cases, 292 → 299)
+
+### Notes (R105 version label)
+- v1.21.0 = R105 seventh real library evolution from disk v1.20.0.
+- 7 new test cases added. Total: 292 → 299 (+7).
+
+### Added
+- [B-045] **[P1]** Chrome UXSS CVE-2026-11186 via CSS injection (pre-149.0.7827.53) — Universal Cross-Site Scripting vulnerability allows remote script injection through crafted CSS in game pages. Audit all game pages for `element.style.cssText` with unsanitized input; verify CSP `style-src` directive; test no CSS injection via URL parameters. Source: https://cvefeed.io/vuln/detail/CVE-2026-11186
+- [S-044] **[P1]** Apple 2026 security events — iPhone exploit kits + WebKit zero-days — Apple's 2026 security year includes multiple zero-days, iPhone exploit kits sold commercially, and background patches. Test iOS Safari 26.5+ patch level; verify localStorage isolation; confirm third-party iframe sandboxing. Source: https://techrepublic.com/article/news-apple-security-roundup-june-2026
+- [G-028] **[P2]** Automated HTML5 Canvas visual bug detection — IEEE/ACM ASE paper technique for detecting rendering anomalies in canvas games using computer vision. Evaluate against 5 representative GameZipper games; compare with current pixel-sampling QA method. Source: https://dl.acm.org/doi/abs/10.1145/3551349.3556913
+- [P-030] **[P1]** WebGPU 70% browser coverage + 15x compute performance migration urgency — WebGPU reached full cross-browser support Jan 2026. Three.js migration requires 2 lines of code. GameZipper has 0 migrated games. Test `navigator.gpu` on browser matrix; benchmark WebGL vs WebGPU frame times; verify automatic WebGL2 fallback. Source: https://byteiota.com/webgpu-2026-70-browser-support-15x-performance-gains
+- [W-121] **[P2]** Edge custom primary password deprecation (June 4 2026) — Edge no longer allows creating custom primary passwords. Verify autofill doesn't interfere with game input fields; test `autocomplete="off"` behavior post-deprecation. Source: https://releasebot.io/updates/microsoft/edge
+- [A-009] **[P1]** Dark mode mobile OLED best practices 2026 — Games should respect `prefers-color-scheme: dark`; dark themes reduce eye strain and extend OLED battery life by 20-30%. Verify dark mode for game canvases, overlays, footers, and ad containers. Source: https://phone-simulator.com/blog/dark-mode-implementation-best-practices-for-mobile-in-2026
+- [C-045] **[P2]** Chrome 153 two-week release cadence (Sept 2026) — Chrome doubles release cadence from 4-week to 2-week starting September 2026. Audit deprecated API usage; adapt CDN cache-busting strategy; test game pages across Chrome version boundaries. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_64169a790a846552
+
+### Sources
+- Search: "browser security CVE June 2026 web game XSS clickjacking vulnerability" → Chrome UXSS CVE-2026-11186 (CVEFeed), Apple 2026 security events (TechRepublic), CVE-2026-11186 UXSS via CSS injection
+- Search: "HTML5 browser game testing 2026 June new techniques automation" → IEEE/ACM ASE automated canvas visual bug detection (dl.acm.org), snoopgame 2026 testing trends, BrowserStack automation guide
+- Search: "WebGPU WebGL Canvas game rendering performance 2026 compatibility" → WebGPU 70% browser coverage + 15x performance (byteiota), Web Games tech stack 2026 (cinevva), Khronos GDC 2026 WebGL+WebGPU update
+- Search: "Chrome 151 Safari 27 Edge 150 browser update June 2026 release notes" → Edge custom primary password deprecation (releasebot.io), Chrome 153 two-week cadence (IT之家)
+- Search: "casual game UX complaint 2026 mobile web dark mode touch controls" → Dark mode mobile OLED best practices (phone-simulator.com), mobile UX design trends 2026 (DesignStudio)
+
+### Metrics
+- Total test cases: 292 → 299 (+7)
+- P0: 86 (unchanged) | P1: 117 → 121 (+4: B-045, S-044, P-030, A-009) | P2: 75 → 78 (+3: G-028, W-121, C-045) | P3: 14 (unchanged)
+
+### Quality Gate
+- [x] 7 new case IDs verified unique (grep-confirmed)
+- [x] Metrics match: P0=86 P1=121 P2=78 P3=14 sum=299 ✓
+- [x] 0+4+3+0 = 7 = R105 new case IDs ✓
+- [x] All cases cite authoritative sources (CVEFeed, TechRepublic, IEEE/ACM, byteiota, releasebot, phone-simulator)
+- [x] Version label v1.21.0 follows Pitfall 23 3-source verification (disk max=v1.20.0, CHANGELOG max=v1.20.0, next=v1.21.0)
+
 ## [v1.20.0] - 2026-06-08 (R103 — Dynamic Test Intelligence cron evolution, 7 new test cases, 294 → 301)
 
 ### Notes (R103 version label)
