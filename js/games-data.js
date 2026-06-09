@@ -312,6 +312,7 @@ const GAMES = [
   {name:"Veggie Merge",emoji:"🥕",cat:"puzzle",tags:["Merge","Physics","Vegetable","Farm","Drop","Casual","Puzzle","Brain","Browser","Free","HTML5"],url:"/veggie-merge/",desc:"Play Veggie Merge online free! Drop and merge vegetables to grow your farm harvest. Physics-based puzzle with 10 vegetable levels from seed to giant pumpkin. No download required.",isNew:true,status:"live"},
 {name:"Tentai Show",emoji:"\U0001f300",cat:"puzzle",tags:["symmetry","galaxies","nikoli","logic"],url:"/tentai-show/",desc:"Solve symmetry puzzles by dividing grids into rotationally symmetric regions around galaxy dots. 25 levels of increasing difficulty.",isNew:true,status:"live"},
 {name:"Star Battle",emoji:"⭐",cat:"puzzle",tags:["logic","stars","grid","brain-teaser"],url:"/star-battle/",desc:"Place stars in every row, column and region without touching. 30 logic puzzles.",isNew:true,status:"live"},
+{name:"Hex Minesweeper",emoji:"⬡",cat:"puzzle",tags:["logic","minesweeper","hex","brain-teaser"],url:"/hex-minesweeper/",desc:"Hexagonal minesweeper with logic-solvable puzzles. 30 levels across 6 worlds.",isNew:true,status:"live"},
 ];
 
 /**
