@@ -3,6 +3,48 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.25.0] - 2026-06-09 (R115 — Dynamic Test Intelligence cron evolution)
+
+### Added
+- 8 new test cases (332 → 340 total) from industry research: PixiJS WebGPU fallback + rendering inconsistency + WebGPU buffer overflow + EAA enforcement + WCAG dragging + gesture UX + Chrome sandbox escape + supply chain
+- **C-052 [P1]** PixiJS WebGPU fallback to WebGL fails — complete rendering black screen (PixiJS #10906) — test WebGPU null adapter + fallback to WebGL + Linux hybrid GPU
+- **C-053 [P2]** PixiJS WebGL vs WebGPU rendering inconsistency — Y-axis mask offset (PixiJS #11271) — visual regression test across renderers
+- **C-054 [P1]** WebGPU `createBuffer` size overflow with `mappedAtCreation` crash — test GPU memory limits + graceful degradation
+- **A-012 [P1]** EU EAA 2026 enforcement deadlines — public sector June 28, 2026 + private sector June 28, 2027 + fines €20K-€250K — EN 301 549 compliance
+- **A-013 [P1]** WCAG 2.2 SC 2.5.7 Dragging Movements — drag games must have tap-to-select + tap-to-place alternative — mobile-first accessibility
+- **UX-004 [P2]** Gesture-driven mobile game UX 2026 — swipe as primary input + thumb-zone layout + haptic feedback for 3.5B players
+- **W-124 [P2]** Chrome V8 5th zero-day sandbox escape pattern — ad iframe security model + CSP frame-src restriction + V8 stress test
+- **S-051 [P1]** WebGPU renderer library supply chain — PixiJS/p5.js WebGPU bugs propagate to all downstream games — library audit + monitoring
+
+### Metrics
+- P0: 90 (unchanged)
+- P1: 134 → 139 (+5: C-052, C-054, A-012, A-013, S-051)
+- P2: 94 → 97 (+3: C-053, UX-004, W-124)
+- P3: 14 (unchanged)
+- Categories: 11 (no new category; 11.21 = R115 sub-section)
+
+### Sources
+- **PixiJS WebGPU fallback failure**: https://github.com/pixijs/pixijs/issues/10906
+- **PixiJS WebGL vs WebGPU Y-axis offset**: https://github.com/pixijs/pixijs/issues/11271
+- **p5.js WebGPU severe performance issues**: https://github.com/processing/p5.js/issues/8471
+- **EU EAA compliance guide 2026**: https://altaudit.com/blog/european-accessibility-regulations-eaa-compliance-guide-2026
+- **EAA enforcement 2026**: https://plaintest.dev/blog/eu-accessibility-act-enforcement-2026
+- **EU accessibility requirements**: https://levelaccess.com/blog/eu-accessibility-requirements-and-eaa-compliance
+- **WCAG 2.2 complete guide**: https://z-ax.com/en/blog/web-accessibility-wcag-complete-guide-2026
+- **WCAG 2.2 checklist 2026**: https://line25.com/articles/web-accessibility-checklist-2026
+- **Mobile app UX trends 2026**: https://spawned.com/guides/mobile-app-ux-trends-2026
+- **One-hand gaming 2026**: https://novatechbeacon.com/latest/why-2026-gaming-is-built-for-one-hand-play
+- **Chrome 5th zero-day CVE-2026-11645**: https://bleepingcomputer.com/news/security/google-patches-fifth-chrome-zero-day-bug-exploited-in-attacks-this-year
+- **WebGPU 2026 API overview**: https://programming-helper.com/tech/webgpu-2026-next-generation-browser-graphics-api
+
+### Quality Gate
+- [x] 8 new case IDs verified unique (grep-confirmed via python regex anchor)
+- [x] Metrics match: P0=90 P1=139 P2=97 P3=14 sum=340 ✓
+- [x] 4-dimension sum = total: 90+139+97+14 = 340 ✓
+- [x] Version bump: v1.24.0 → v1.25.0 (minor bump, library evolution)
+- [x] CHANGELOG entry complete with all 8 case IDs + severity + sources
+- [x] 2-commit WIP-lock pattern applied (Pitfall 26/28)
+
 ## [v1.24.0] - 2026-06-09 (R113 — Dynamic Test Intelligence cron evolution)
 
 ### Added
