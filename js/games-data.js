@@ -307,8 +307,7 @@ const GAMES = [
   {name:"Fillomino",emoji:"🔷",cat:"puzzle",tags:["puzzle","logic","nikoli","grid","region","number","brain-teaser","strategy","browser","free","html5"],url:"/fillomino/",desc:"Play Fillomino online free! Fill every cell with a number so each number N forms a connected region of exactly N cells. 30 handcrafted logic puzzles from 5x5 to 10x10, daily challenge, hints, undo, and star ratings. No download needed!",isNew:true,status:"live"},
   {name:"Shakashaka",emoji:"△",cat:"puzzle",tags:["puzzle","logic","nikoli","triangle","grid","brain","strategy","japanese","browser","free","html5"],url:"/shakashaka/",desc:"Play Shakashaka online free! Place triangles to form rectangles in this elegant Nikoli logic puzzle. 30 handcrafted levels from 5x5 to 10x10 plus daily challenge. No download needed!",isNew:true,status:"live"},
   {name:"Shikaku",emoji:"🔲",cat:"puzzle",tags:["puzzle","logic","nikoli","rectangle","grid","brain","strategy","japanese","browser","free","html5"],url:"/shikaku/",desc:"Play Shikaku online free! Divide the grid into rectangles so each contains exactly one number equal to its area. 35 handcrafted logic puzzles from 4x4 to 15x15 plus daily challenge. No download needed!",isNew:true,status:"live"},
-
-
+{name:"Gokigen Naname",emoji:"◇",cat:"puzzle",tags:["logic","grid","nikoli","diagonal"],url:"/gokigen-naname/",desc:"Place diagonal lines in every cell so number clues at intersections are satisfied and no closed loops form. 30 hand-crafted levels from easy to expert.",isNew:true,status:"live"},
 ];
 
 /**
@@ -332,3 +331,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+
