@@ -315,6 +315,7 @@ const GAMES = [
 {name:"Hex Minesweeper",emoji:"⬡",cat:"puzzle",tags:["logic","minesweeper","hex","brain-teaser"],url:"/hex-minesweeper/",desc:"Hexagonal minesweeper with logic-solvable puzzles. 30 levels across 6 worlds.",isNew:true,status:"live"},
 {name:"Kuromasu",emoji:"🔲",cat:"puzzle",tags:["logic","nikoli","grid","shade","brain"],url:"/kuromasu/",desc:"Play Kuromasu free online. A Nikoli logic puzzle - shade cells to match number clues. 30+ levels, daily puzzles.",isNew:true,status:"live"},
 {name:"Strands",emoji:"🔗",cat:"puzzle",tags:["word","search","daily","spangram"," nyt"],url:"/strands/",desc:"Find themed words and the spangram in a 6x8 letter grid. Daily puzzles, hints, streaks. Play Strands free online.",isNew:true,status:"live"},
+{name:"Pips",emoji:"🎲",cat:"puzzle",tags:["logic","domino","brain-teaser","daily-puzzle"],url:"/pips/",desc:"Place dominoes on colored regions to satisfy math conditions in this addictive logic puzzle",isNew:true,status:"live"},
 ];
 
 /**
