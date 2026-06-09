@@ -317,6 +317,7 @@ const GAMES = [
 {name:"Strands",emoji:"🔗",cat:"puzzle",tags:["word","search","daily","spangram"," nyt"],url:"/strands/",desc:"Find themed words and the spangram in a 6x8 letter grid. Daily puzzles, hints, streaks. Play Strands free online.",isNew:true,status:"live"},
 {name:"Pips",emoji:"🎲",cat:"puzzle",tags:["logic","domino","brain-teaser","daily-puzzle"],url:"/pips/",desc:"Place dominoes on colored regions to satisfy math conditions in this addictive logic puzzle",isNew:true,status:"live"},
 {name:"Numberlink",emoji:"🔗",cat:"puzzle",tags:["logic","nikoli","grid","path","connect","brain"],url:"/numberlink/",desc:"Play Numberlink puzzle online free! Connect matching numbers by drawing paths. 30 levels plus daily challenge. No download needed.",isNew:true,status:"live"},
+{name:"Tatamibari",emoji:"🟠",cat:"puzzle",tags:["logic","nikoli","grid","partition","brain","tatami","rectangle"],url:"/tatamibari/",desc:"Play Tatamibari free online! A Nikoli grid-partition puzzle - divide the grid into rectangles matching +, -, | symbols. 30 levels.",isNew:true,status:"live"},
 ];
 
 /**
