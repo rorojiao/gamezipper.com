@@ -3,6 +3,37 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.28.0] - 2026-06-10 (R121 — Dynamic Test Intelligence cron evolution)
+
+### Added
+- 8 new test cases from industry research: Chrome Gamepad API UAF + AI-Adaptive Testing + WebGPU 70-82% coverage + AI fake vulnerability reports + WCAG 3.0 forward-compat + Chrome DevTools for Agents + Chrome/Edge AI sidebar interaction + PerfDog mobile metrics
+- **B-053 [P1]** Chrome Gamepad API UAF CVE-2026-11634 — critical UAF in Gamepad API directly impacting browser games with gamepad input. Patched Chrome 149.x+. Test gamepad games for crash-free operation post-patch.
+- **C-057 [P2]** AI-Adaptive Testing — plain-language test flows replacing rigid scripted automation (HeadSpin ACE 2026). Evaluate for GameZipper verify-lite pipeline to reduce flaky tests.
+- **P-035 [P1]** WebGPU 70-82% global browser coverage — all major browsers now ship WebGPU. Migration is two-line change for Three.js/Babylon.js with WebGL2 fallback. 15-30x compute gains.
+- **S-056 [P2]** AI-generated fake vulnerability reports flooding bounty programs — Google restructured VRP; Node.js/cURL paused programs. Establish triage criteria for real vs fake reports.
+- **A-017 [P2]** WCAG 3.0 outcomes-based scoring forward-compatibility — Working Draft March 2026 replaces A/AA/AAA with 0-4 point scoring. Prepare conversion matrix for existing A-001 to A-016 tests.
+- **C-058 [P2]** Chrome DevTools for Agents — Chrome I/O 2026 announcement provides agents access to console, network, a11y tree. LY Corporation reduced manual analysis 96-98%.
+- **W-125 [P1]** Chrome/Edge v148 AI sidebar (Mariner/Gemini) interaction with game content — AI overlays may interfere with game canvas interactions, similar to z-index topnav conflict pattern.
+- **P-036 [P2]** PerfDog 200+ mobile metrics — FPS, Jank, Smooth Index, battery drain, thermal throttling for casual games. Target <5% Jank, >95 Smooth Index, <2% battery per 5-min session.
+
+### Metrics
+- P0: 91 (unchanged)
+- P1: 143 → 146 (+3: B-053, P-035, W-125)
+- P2: 98 → 103 (+5: C-057, S-056, A-017, C-058, P-036)
+- P3: 14 (unchanged)
+- Total unique IDs: 367 (8 new: B-053, C-057, P-035, S-056, A-017, C-058, W-125, P-036)
+
+### Sources
+- **Chrome Gamepad API CVE-2026-11634**: https://chromereleases.googleblog.com/2026
+- **AI-Adaptive Testing HeadSpin**: https://headspin.io/blog/future-of-game-testing
+- **WebGPU 70-82% coverage + performance**: https://byteiota.com/webgpu-2026-70-browser-support-15x-performance-gains + https://programming-helper.com/tech/webgpu-2026-next-generation-browser-graphics-api
+- **AI fake vulnerability reports**: Google VRP restructuring May 2026
+- **WCAG 3.0 outcomes scoring**: https://thewcag.com/wcag-3-0
+- **Chrome DevTools for Agents**: https://developer.chrome.com/blog/chrome-at-io26
+- **Chrome/Edge v148 AI sidebar**: Chrome I/O 2026 + Edge v148 release notes
+- **PerfDog mobile metrics**: https://wetest.net/blog/mobile-game-performance-testing-2026-perfdog-guide-1189.html
+
+
 ## [v1.27.0] - 2026-06-10 (R119 — Dynamic Test Intelligence cron evolution)
 
 ### Added
