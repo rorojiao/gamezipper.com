@@ -311,6 +311,7 @@ const GAMES = [
 {name:"Gokigen Naname (Slant)",emoji:"◇",cat:"puzzle",tags:["logic","grid","nikoli","diagonal"],url:"/slant/",desc:"Place diagonal lines in every cell so number clues at intersections are satisfied and no closed loops form. 32 hand-crafted levels from easy to expert.",isNew:true,status:"live"},
   {name:"Veggie Merge",emoji:"🥕",cat:"puzzle",tags:["Merge","Physics","Vegetable","Farm","Drop","Casual","Puzzle","Brain","Browser","Free","HTML5"],url:"/veggie-merge/",desc:"Play Veggie Merge online free! Drop and merge vegetables to grow your farm harvest. Physics-based puzzle with 10 vegetable levels from seed to giant pumpkin. No download required.",isNew:true,status:"live"},
 {name:"Tentai Show",emoji:"\U0001f300",cat:"puzzle",tags:["symmetry","galaxies","nikoli","logic"],url:"/tentai-show/",desc:"Solve symmetry puzzles by dividing grids into rotationally symmetric regions around galaxy dots. 25 levels of increasing difficulty.",isNew:true,status:"live"},
+{name:"Star Battle",emoji:"⭐",cat:"puzzle",tags:["logic","stars","grid","brain-teaser"],url:"/star-battle/",desc:"Place stars in every row, column and region without touching. 30 logic puzzles.",isNew:true,status:"live"},
 ];
 
 /**
@@ -334,4 +335,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-
