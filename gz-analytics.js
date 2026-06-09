@@ -6,6 +6,10 @@
                    by cloudflared systemd as cursor-encourages-...) + emit
                    `page_view` event on load so /api/overview can compute PV/UV
                    (overview query filters on event='page_view', not 'u_enter').
+   2026-06-09 20:25 fix: tunnel URL rotated again (cursor-encourages-... also dead
+                   after 1h, retry pattern with cloudflared QUIC timeouts). Now
+                   pointing at nearest-region-beside-locks.... Watchdog pending
+                   (see kanban t_a62e9485).
    Events flow: gz-analytics → Cloudflare Tunnel → BI server (10.10.29.67:8090)
    localStorage archive kept as fallback (gz_aa). */
 (function() {
@@ -13,7 +17,7 @@
   // Direct tunnel URL: browser → Cloudflare Tunnel → BI server (10.10.29.67:8090)
   // Tunnel: cloudflared systemd service (auto-restart on failure)
   // NOTE: If tunnel URL changes, update this and redeploy
-  var EP = 'https://cursor-encourages-entering-machines.trycloudflare.com/api/collect';
+  var EP = 'https://nearest-region-beside-locks.trycloudflare.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
