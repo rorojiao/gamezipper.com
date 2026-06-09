@@ -49,7 +49,8 @@ self.addEventListener('install',e=>{
     '/tents/',
     '/masyu/',
     '/tentai-show/',
-    '/shikaku/'];
+    '/shikaku/',
+    '/star-battle/'];
   e.waitUntil(
     caches.open(CACHE).then(function(c){
       return Promise.allSettled(
