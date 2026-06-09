@@ -3,6 +3,50 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.24.0] - 2026-06-09 (R113 — Dynamic Test Intelligence cron evolution)
+
+### Added
+- 8 new test cases (315 → 323 total) from industry research: Chrome zero-day + AI ad fraud + Google scams advisory + fake virus game ads + WCAG 2.2 EAA + casual game revival + AI QA trends + dark mode
+- **B-049 [P0]** Chrome zero-day CVE-2026-11645 actively exploited in the wild — test version gate + crash-path regression + ad isolation
+- **S-048 [P1]** AI-driven ad fraud via game mods (TensorFlow.js hidden clickers on Android) — Monetag fraud monitoring + hidden-window detection
+- **S-049 [P1]** Google June 2026 Fraud & Scams Advisory — AITM bypasses MFA + Quishing + Calendar Phishing + fleeceware — session cookie protection
+- **S-050 [P1]** Malwarebytes: fake virus alerts invading mobile game ads — fleeceware/infostealer via in-game ad networks (CloudFront hosting)
+- **A-011 [P1]** WCAG 2.2 full 87-criteria checklist for browser games — EU EAA enforcement 2026 — comprehensive accessibility audit
+- **G-097 [P2]** 2026 casual browser game revival — QA implications from JayIsGames — CDN freshness + lightweight bundles + API churn
+- **C-051 [P2]** Game QA 2026 trends — AI-driven testing + Shift-Right (canary/RUM) + accessibility QA gate
+- **UX-003 [P2]** Dark mode as 2026 default — game-specific canvas contrast + OLED battery testing
+
+### Sub-Section
+- **11.20 R113 June 2026** — Chrome Zero-Day + AI Ad Fraud + Scams Advisory + EAA Compliance + Casual Revival + Dark Mode
+
+### Sources
+- **Chrome CVE-2026-11645**: https://chromereleases.googleblog.com + https://securityweek.com/exploited-zero-day-among-21-vulnerabilities-patched-in-chrome
+- **AI ad fraud (TensorFlow.js)**: https://hackread.com/phantom-malware-android-game-mods-ad-fraud + https://aviatrix.ai/threat-research-center/android-click-fraud-malware-2026-xiaomi-tensorflowjs
+- **Google Fraud Advisory**: https://blog.google/innovation-and-ai/technology/safety-security/fraud-scams-advisory-june-2026
+- **Malwarebytes fake virus**: https://malwarebytes.com/blog/mobile/2026/06/fake-virus-alerts-are-invading-mobile-games
+- **WCAG 2.2 EAA**: https://w3.org/TR/WCAG22 + https://web-accessibility-checker.com/en/blog/wcag-2-2-checklist-2026
+- **Casual game revival**: https://jayisgames.com/review/casual-browser-and-puzzle-games-in-2026-how-the-web-game-layer-g.php
+- **Game QA trends**: https://linkedin.com/pulse/future-play-trends-game-testing-2026-snoopgame-omrsf
+- **Dark mode standard**: https://tech-rz.com/blog/dark-mode-design-best-practices-in-2026
+
+### Metrics
+- P0: 89 → 90 (+1: B-049)
+- P1: 126 → 130 (+4: S-048, S-049, S-050, A-011)
+- P2: 86 → 89 (+3: G-097, C-051, UX-003)
+- P3: 14 → 14 (unchanged)
+- Total: 315 → 323 (+8)
+- 4D sum check: 90+130+89+14 = 323 ✓
+
+### Quality Gate
+- [x] 8 new case IDs verified unique (grep-confirmed against v1.23.0)
+- [x] Metrics match: P0=90 P1=130 P2=89 P3=14 sum=323 ✓
+- [x] 4D sum = total: 90+130+89+14 = 323 ✓
+- [x] No stale metrics blocks from prior versions (only v1.18.0 historical remains)
+- [x] Version bump: v1.23.0 → v1.24.0 (minor bump per library evolution rule)
+- [x] Sources cite Tier-1 authorities: Malwarebytes, Google Security Blog, W3C, Forbes/SecurityWeek
+
+
+
 ## [v1.23.0] - 2026-06-09 (R111 — Dynamic Test Intelligence cron evolution, 8 new test cases, 307 → 315)
 
 ### Notes (R111 version label)
