@@ -376,7 +376,12 @@
   window.gzAnalytics = {
     gameLoaded: function() { if (st.gL) return; st.gL = true; ps('g_loaded', { u: P }); },
     gameStart:  function() { if (st.gS) return; st.gS = true; ps('g_start',  { u: P }); },
-    gameEnd:    function(sc) { if (st.gE) return; st.gE = true; ps('g_end', { u: P, sc: sc || null }); }
+    gameEnd:    function(sc) { if (st.gE) return; st.gE = true; ps('g_end', { u: P, sc: sc || null }); },
+    // 2026-06-10: exposed for monetag-manager.js to push ad events to BI server.
+    // Each event becomes row with event='gz_ad_event' in BI; meta JSON includes type/network/zoneId/ab_variant.
+    sendAd: function(type, data) {
+      try { ps('gz_ad_event', Object.assign({ t: type }, data || {})); } catch(e) {}
+    }
   };
 
   if (requestIdleCallback) {

@@ -4,6 +4,13 @@
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
  *
+ * v5.2.1 Changes (2026-06-10 BI Server Pipeline Fix — Critical for 48h validation):
+ *   - trackAdEvent() now forwards to BI server via window.gzAnalytics.sendAd() (gz-analytics.js)
+ *   - Without this, ad events stayed in window.gzAdEvents array only and never reached BI
+ *   - Direct sendBeacon fallback if window.GZ_COLLECT_ENDPOINT is set (tools.site path)
+ *   - Effect: BI events table now gets event='gz_ad_event' with meta={t, type, network, zoneId, ...}
+ *   - Unblocks v5.1 → v5.3 cooldown A/B test validation (need actual fill rate data)
+ *
  * v5.2 Changes (2026-06-09 In-Game Banner Extension):
  *   - 自动注入 in-game banner: canvas 上下各 1 个 AdSense slot
  *   - 桌面 728x90 leaderboard / 移动 320x50 mobile banner
@@ -315,6 +322,21 @@
       // Fire dataLayer event for GTM if available
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push(Object.assign({ event: 'gz_ad_' + type }, ev));
+    } catch(e) {}
+    // 2026-06-10: forward to BI server via gz-analytics.js queue (becomes event='gz_ad_event' in BI).
+    // gzAnalytics is undefined on tools.gamezipper.com (no full tracker loaded) — direct fallback below.
+    try {
+      if (window.gzAnalytics && typeof window.gzAnalytics.sendAd === 'function') {
+        window.gzAnalytics.sendAd(type, ev);
+      } else if (window.GZ_COLLECT_ENDPOINT) {
+        // Direct sendBeacon fallback for sites without gz-analytics.js (tools.gamezipper.com).
+        var payload = JSON.stringify([{
+          site: location.hostname, path: location.pathname,
+          e: 'gz_ad_event', d: Object.assign({ t: type }, ev), t: Date.now(),
+          vid: '', sid: ''
+        }]);
+        if (navigator.sendBeacon) { navigator.sendBeacon(window.GZ_COLLECT_ENDPOINT, payload); }
+      }
     } catch(e) {}
     if (window.GZAdDebug) {
       try { console.log('[gz-ad]', type, ev); } catch(e) {}
