@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Play Kuromasu Online Free - Logic Shade Puzzle | GameZipper</title>
+<meta name="description" content="Play Kuromasu (Kurodoko) free online. A Nikoli logic puzzle - shade cells to satisfy number clues. 30+ levels, daily puzzles, hints & stats.">
+<meta property="og:title" content="Play Kuromasu Online Free - Logic Shade Puzzle | GameZipper">
+<meta property="og:description" content="Free Kuromasu puzzle game. Shade cells so numbers match visible black cells. 30+ levels, daily challenge, hints, undo/redo.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/kuromasu/">
+<meta property="og:image" content="https://gamezipper.com/kuromasu/icon.png">
+<link rel="canonical" href="https://gamezipper.com/kuromasu/">
+<meta name="robots" content="index,follow">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3a 50%,#0d0d2a 100%);color:#e0e0f0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;overflow-x:hidden;user-select:none;min-height:100vh}
+canvas{display:block;touch-action:none}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;z-index:100;background:rgba(5,5,20,0.85);backdrop-filter:blur(8px)}
+.panel{background:rgba(20,20,50,0.95);border:1px solid rgba(0,240,255,0.2);border-radius:16px;padding:32px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.5),0 0 60px rgba(0,240,255,0.1)}
+.panel h2{font-size:1.6em;margin-bottom:16px;text-shadow:0 0 20px rgba(0,240,255,0.5);color:#00f0ff}
+.panel h3{font-size:1.2em;margin:12px 0 8px;color:#b44aff}
+.panel p{line-height:1.6;margin:8px 0;color:#a0a0c0}
+.btn{display:inline-block;padding:12px 24px;border:1px solid rgba(0,240,255,0.3);border-radius:10px;background:rgba(0,240,255,0.1);color:#00f0ff;cursor:pointer;font-size:1em;transition:all 0.2s;text-align:center;margin:4px}
+.btn:hover{background:rgba(0,240,255,0.2);box-shadow:0 0 15px rgba(0,240,255,0.3);transform:translateY(-1px)}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:rgba(0,240,255,0.2);border-color:#00f0ff}
+.btn-secondary{background:rgba(180,74,255,0.1);border-color:rgba(180,74,255,0.4);color:#b44aff}
+.btn-secondary:hover{background:rgba(180,74,255,0.2);box-shadow:0 0 15px rgba(180,74,255,0.3)}
+.btn-success{background:rgba(0,255,136,0.1);border-color:rgba(0,255,136,0.4);color:#00ff88}
+.btn-danger{background:rgba(255,68,68,0.1);border-color:rgba(255,68,68,0.4);color:#ff4444}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0}
+.diff-tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;justify-content:center}
+.diff-tab{padding:8px 16px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);cursor:pointer;font-size:0.9em;transition:all 0.2s}
+.diff-tab.active{background:rgba(0,240,255,0.2);border-color:#00f0ff;color:#00f0ff}
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0}
+.level-btn{padding:12px 4px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);cursor:pointer;text-align:center;transition:all 0.2s;position:relative}
+.level-btn:hover{background:rgba(0,240,255,0.15);border-color:rgba(0,240,255,0.3)}
+.level-btn.completed{background:rgba(0,255,136,0.1);border-color:rgba(0,255,136,0.3)}
+.level-btn.locked{opacity:0.4;cursor:default}
+.level-btn .stars{font-size:0.7em;color:#ffaa00;margin-top:2px}
+.level-btn .lnum{font-size:1.1em;font-weight:600}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.stat-item{background:rgba(255,255,255,0.05);border-radius:8px;padding:12px;text-align:center}
+.stat-item .val{font-size:1.8em;font-weight:700;color:#00f0ff}
+.stat-item .lbl{font-size:0.8em;color:#8080a0;margin-top:4px}
+.hud{position:fixed;top:0;left:0;width:100%;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;z-index:50;background:rgba(10,10,26,0.9);backdrop-filter:blur(8px);border-bottom:1px solid rgba(0,240,255,0.15)}
+.hud-left,.hud-right{display:flex;align-items:center;gap:12px}
+.hud-btn{width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:#a0a0c0;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.1em;transition:all 0.2s}
+.hud-btn:hover{background:rgba(0,240,255,0.15);color:#00f0ff}
+.hud-btn.active{background:rgba(0,240,255,0.2);color:#00f0ff;border-color:rgba(0,240,255,0.3)}
+.hud-text{font-size:0.9em;color:#a0a0c0}
+.hud-text span{color:#00f0ff;font-weight:600}
+.hint-count{background:rgba(180,74,255,0.2);color:#b44aff;padding:2px 8px;border-radius:6px;font-size:0.85em}
+.tutorial-step{margin:16px 0;padding:16px;background:rgba(0,240,255,0.05);border-radius:10px;border:1px solid rgba(0,240,255,0.15)}
+.tutorial-step .step-num{display:inline-block;background:#00f0ff;color:#0a0a1a;border-radius:50%;width:28px;height:28px;text-align:center;line-height:28px;font-weight:700;font-size:0.9em;margin-right:8px}
+.stars-display{font-size:2em;margin:8px 0;letter-spacing:8px}
+.star-filled{color:#ffaa00;text-shadow:0 0 10px rgba(255,170,0,0.5)}
+.star-empty{color:#404060}
+.daily-banner{background:linear-gradient(135deg,rgba(180,74,255,0.2),rgba(0,240,255,0.2));border:1px solid rgba(180,74,255,0.3);border-radius:12px;padding:16px;margin:12px 0;text-align:center;cursor:pointer;transition:all 0.2s}
+.daily-banner:hover{box-shadow:0 0 20px rgba(180,74,255,0.3)}
+.daily-banner .streak{color:#ffaa00;font-size:1.2em;font-weight:700}
+.hidden{display:none!important}
+@keyframes fadeIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.fade-in{animation:fadeIn 0.3s ease}
+.pulse{animation:pulse 0.5s ease}
+.shake{animation:shake 0.3s ease}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[{"@type":"VideoGame","name":"Kuromasu","description":"Free online Kuromasu (Kurodoko) logic puzzle game. Shade cells to satisfy number clues with 30+ levels.","genre":"Puzzle","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://gamezipper.com/kuromasu/","publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Kuromasu?","acceptedAnswer":{"@type":"Answer","text":"Kuromasu is a logic puzzle where you shade cells black. Numbers indicate how many black cells are visible in all four orthogonal directions. All white cells must be connected and no 2x2 area can be all black."}},{"@type":"Question","name":"How do you play Kuromasu?","acceptedAnswer":{"@type":"Answer","text":"Click cells to shade them black. Each number shows the total black cells visible from that clue cell in four directions (up, down, left, right). Ensure all white cells form one connected region and no 2x2 block is entirely black."}},{"@type":"Question","name":"Is Kuromasu free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes, Kuromasu on GameZipper is completely free with 30+ levels, daily puzzles, hints, and statistics."}}]},{"@type":"HowTo","name":"How to Play Kuromasu","step":[{"@type":"HowToStep","name":"Read the Clues","text":"Each number tells you how many black cells are visible from that cell in all four orthogonal directions."},{"@type":"HowToStep","name":"Shade Cells","text":"Click or tap cells to shade them black. Click again to unshade."},{"@type":"HowToStep","name":"Keep Whites Connected","text":"All white (unshaded) cells must form one connected group."},{"@type":"HowToStep","name":"Avoid 2x2 Blocks","text":"No 2x2 area can be entirely black."}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Puzzle Games","item":"https://gamezipper.com/puzzle-games"},{"@type":"ListItem","position":3,"name":"Kuromasu","item":"https://gamezipper.com/kuromasu/"}]}]}
+</script>
+</head>
+<body>
+<canvas id="gc"></canvas>
+<div class="hud hidden" id="hud">
+<div class="hud-left">
+<div class="hud-btn" id="btnMenu" title="Menu">&#9776;</div>
+<div class="hud-btn" id="btnUndo" title="Undo">&#8630;</div>
+<div class="hud-btn" id="btnRedo" title="Redo">&#8631;</div>
+</div>
+<div class="hud-text" id="hudInfo">Level <span id="hudLevel">1</span> &middot; <span id="hudTimer">0:00</span></div>
+<div class="hud-right">
+<div class="hud-btn" id="btnHint" title="Hint">💡<span class="hint-count" id="hintCount">3</span></div>
+<div class="hud-btn" id="btnSound" title="Sound">🔊</div>
+</div>
+</div>
+<div class="overlay hidden" id="menuOverlay">
+<div class="panel fade-in" id="menuPanel">
+<h2>Kuromasu</h2>
+<p>Shade cells to satisfy the number clues. Each number shows how many black cells are visible in all four directions.</p>
+<div class="daily-banner" id="dailyBtn">
+<div style="font-size:1.1em;font-weight:600;color:#b44aff">Daily Puzzle</div>
+<div class="streak" id="dailyStreak">Streak: 0</div>
+</div>
+<div class="diff-tabs" id="diffTabs">
+<div class="diff-tab active" data-diff="easy">Easy</div>
+<div class="diff-tab" data-diff="medium">Medium</div>
+<div class="diff-tab" data-diff="hard">Hard</div>
+<div class="diff-tab" data-diff="expert">Expert</div>
+</div>
+<div class="level-grid" id="levelGrid"></div>
+<div class="btn-row">
+<div class="btn btn-secondary" id="btnStats">Statistics</div>
+<div class="btn btn-secondary" id="btnTutorial">How to Play</div>
+</div>
+</div>
+</div>
+<div class="overlay hidden" id="completeOverlay">
+<div class="panel fade-in">
+<h2>Puzzle Complete!</h2>
+<div class="stars-display" id="starsDisplay"></div>
+<div class="stat-grid">
+<div class="stat-item"><div class="val" id="compTime">0:00</div><div class="lbl">Time</div></div>
+<div class="stat-item"><div class="val" id="compMoves">0</div><div class="lbl">Moves</div></div>
+</div>
+<div class="btn-row">
+<div class="btn btn-primary" id="btnNext">Next Level</div>
+<div class="btn btn-secondary" id="btnLevels">Level Select</div>
+</div>
+</div>
+</div>
+<div class="overlay hidden" id="statsOverlay">
+<div class="panel fade-in">
+<h2>Statistics</h2>
+<div class="stat-grid">
+<div class="stat-item"><div class="val" id="statSolved">0</div><div class="lbl">Puzzles Solved</div></div>
+<div class="stat-item"><div class="val" id="statTime">0:00</div><div class="lbl">Total Time</div></div>
+<div class="stat-item"><div class="val" id="statStreak">0</div><div class="lbl">Best Streak</div></div>
+<div class="stat-item"><div class="val" id="statStars">0</div><div class="lbl">Total Stars</div></div>
+</div>
+<div class="btn-row"><div class="btn btn-primary" id="btnCloseStats">Close</div></div>
+</div>
+</div>
+<div class="overlay hidden" id="tutorialOverlay">
+<div class="panel fade-in">
+<h2>How to Play Kuromasu</h2>
+<div class="tutorial-step"><div class="step-num">1</div><strong>Read the Numbers</strong><p>Each number tells you how many black cells are visible from that cell, looking up, down, left, and right to the grid edge.</p></div>
+<div class="tutorial-step"><div class="step-num">2</div><strong>Shade Cells Black</strong><p>Click or tap a cell to shade it black. The number counts all black cells it can "see" in straight lines.</p></div>
+<div class="tutorial-step"><div class="step-num">3</div><strong>Keep Whites Connected</strong><p>All white (unshaded) cells must form one connected group. You cannot isolate white cells with black cells.</p></div>
+<div class="tutorial-step"><div class="step-num">4</div><strong>No 2x2 Black Blocks</strong><p>You cannot have a 2x2 square that is entirely black. At least one cell in every 2x2 area must be white.</p></div>
+<div class="tutorial-step"><div class="step-num">5</div><strong>Tips</strong><p>Use hints (3 per puzzle) when stuck. Right-click or long-press to mark cells as definitely white (dot). Use undo/redo freely.</p></div>
+<div class="btn-row"><div class="btn btn-primary" id="btnCloseTutorial">Got it!</div></div>
+</div>
+</div>
+<div class="overlay hidden" id="pauseOverlay">
+<div class="panel fade-in">
+<h2>Paused</h2>
+<div class="btn-row" style="flex-direction:column;gap:12px">
+<div class="btn btn-primary" id="btnResume" style="width:100%">Resume</div>
+<div class="btn btn-secondary" id="btnRestart" style="width:100%">Restart Level</div>
+<div class="btn btn-danger" id="btnQuit" style="width:100%">Quit to Menu</div>
+</div>
+</div>
+</div>
+<script>
+(function(){
+'use strict';
+var SAVE_VERSION=1;
+var LEVELS=[
+{id:1,size:5,clues:[[0,0,2],[0,4,1],[2,1,3],[2,3,3],[4,0,1],[4,2,2],[4,4,1]],difficulty:'easy'},
+{id:2,size:5,clues:[[0,1,2],[0,3,2],[1,0,3],[1,4,1],[3,0,2],[3,2,2],[4,1,3],[4,3,2]],difficulty:'easy'},
+{id:3,size:5,clues:[[0,0,1],[0,2,2],[1,4,2],[2,0,3],[3,3,2],[4,1,1],[4,4,2]],difficulty:'easy'},
+{id:4,size:5,clues:[[0,1,3],[0,3,1],[1,2,4],[2,0,2],[3,4,3],[4,1,2],[4,3,1]],difficulty:'easy'},
+{id:5,size:5,clues:[[0,0,2],[0,4,3],[1,2,1],[3,2,4],[4,0,1],[4,4,2]],difficulty:'easy'},
+{id:6,size:5,clues:[[0,2,1],[1,0,2],[1,4,3],[3,0,1],[3,4,2],[4,2,3]],difficulty:'easy'},
+{id:7,size:5,clues:[[0,1,2],[0,3,3],[2,0,1],[2,2,4],[2,4,2],[4,1,1],[4,3,2]],difficulty:'easy'},
+{id:8,size:5,clues:[[0,0,3],[0,4,2],[2,1,1],[2,3,3],[4,0,2],[4,2,1],[4,4,3]],difficulty:'easy'},
+{id:9,size:7,clues:[[0,0,2],[0,3,4],[0,6,1],[1,1,3],[1,5,2],[2,2,1],[3,0,3],[3,6,2],[4,4,3],[5,1,2],[5,5,4],[6,0,1],[6,3,3],[6,6,2]],difficulty:'medium'},
+{id:10,size:7,clues:[[0,1,3],[0,5,2],[1,0,1],[1,3,4],[1,6,2],[2,2,3],[3,4,1],[4,0,2],[4,6,3],[5,1,4],[5,5,1],[6,2,2],[6,4,3]],difficulty:'medium'},
+{id:11,size:7,clues:[[0,0,3],[0,3,1],[0,6,2],[1,2,4],[2,5,3],[3,1,2],[3,4,3],[4,0,1],[4,6,4],[5,3,2],[6,1,3],[6,5,1]],difficulty:'medium'},
+{id:12,size:7,clues:[[0,2,2],[0,4,3],[1,0,1],[1,6,4],[2,3,2],[3,1,3],[3,5,1],[4,0,2],[4,4,4],[5,2,1],[5,6,3],[6,0,2],[6,3,3],[6,6,1]],difficulty:'medium'},
+{id:13,size:7,clues:[[0,1,4],[0,5,1],[1,3,3],[2,0,2],[2,6,3],[3,2,1],[3,4,4],[4,0,3],[4,6,1],[5,3,2],[6,1,3],[6,5,2]],difficulty:'medium'},
+{id:14,size:7,clues:[[0,0,1],[0,4,2],[0,6,3],[1,2,4],[2,5,1],[3,0,3],[3,3,2],[4,6,4],[5,1,1],[5,4,3],[6,0,2],[6,2,3],[6,6,1]],difficulty:'medium'},
+{id:15,size:7,clues:[[0,3,4],[1,0,2],[1,6,1],[2,2,3],[2,4,2],[3,1,4],[3,5,3],[4,0,1],[4,6,2],[5,2,1],[5,4,4],[6,3,2]],difficulty:'medium'},
+{id:16,size:7,clues:[[0,0,2],[0,3,3],[0,6,1],[1,1,1],[1,5,4],[2,3,2],[3,0,3],[3,6,2],[4,2,4],[5,4,1],[6,0,1],[6,3,3],[6,6,2]],difficulty:'medium'},
+{id:17,size:9,clues:[[0,0,3],[0,4,2],[0,8,1],[1,2,4],[1,6,3],[2,1,2],[2,7,4],[3,3,1],[3,5,5],[4,0,2],[4,8,3],[5,3,3],[5,5,2],[6,1,4],[6,7,1],[7,2,3],[7,6,2],[8,0,1],[8,4,4],[8,8,2]],difficulty:'hard'},
+{id:18,size:9,clues:[[0,1,3],[0,7,2],[1,3,4],[1,5,1],[2,0,2],[2,8,3],[3,2,5],[3,6,2],[4,4,3],[5,2,1],[5,6,4],[6,0,3],[6,8,2],[7,3,2],[7,5,4],[8,1,1],[8,7,3]],difficulty:'hard'},
+{id:19,size:9,clues:[[0,0,2],[0,4,4],[0,8,1],[1,2,3],[1,6,2],[2,1,1],[2,7,3],[3,3,5],[3,5,2],[4,0,3],[4,4,1],[4,8,4],[5,3,2],[5,5,3],[6,1,4],[6,7,1],[7,2,2],[7,6,4],[8,0,1],[8,4,3],[8,8,2]],difficulty:'hard'},
+{id:20,size:9,clues:[[0,2,3],[0,6,4],[1,0,1],[1,4,2],[1,8,3],[2,3,4],[2,5,1],[3,1,3],[3,7,2],[4,0,2],[4,4,5],[4,8,1],[5,1,4],[5,7,3],[6,3,1],[6,5,4],[7,0,3],[7,4,2],[7,8,1],[8,2,2],[8,6,3]],difficulty:'hard'},
+{id:21,size:9,clues:[[0,0,4],[0,8,2],[1,3,3],[1,5,1],[2,1,2],[2,7,4],[3,4,5],[4,0,1],[4,2,3],[4,6,2],[4,8,3],[5,4,1],[6,1,3],[6,7,2],[7,3,4],[7,5,3],[8,0,2],[8,8,4]],difficulty:'hard'},
+{id:22,size:9,clues:[[0,1,2],[0,7,3],[1,4,4],[2,0,1],[2,2,3],[2,6,2],[2,8,4],[3,3,1],[3,5,3],[4,1,4],[4,7,1],[5,3,5],[5,5,2],[6,0,3],[6,2,1],[6,6,4],[6,8,2],[7,4,3],[8,1,2],[8,7,1]],difficulty:'hard'},
+{id:23,size:9,clues:[[0,0,1],[0,4,3],[0,8,2],[1,2,4],[1,6,1],[2,1,3],[2,3,2],[2,5,4],[2,7,1],[3,0,2],[3,8,3],[4,2,1],[4,4,5],[4,6,3],[5,0,4],[5,8,1],[6,1,2],[6,3,3],[6,5,1],[6,7,4],[7,2,3],[7,6,2],[8,0,1],[8,4,4],[8,8,3]],difficulty:'hard'},
+{id:24,size:9,clues:[[0,3,2],[0,5,4],[1,1,3],[1,7,1],[2,0,2],[2,4,3],[2,8,4],[3,2,1],[3,6,5],[4,0,3],[4,8,2],[5,2,4],[5,6,1],[6,0,1],[6,4,2],[6,8,3],[7,1,4],[7,7,3],[8,3,1],[8,5,3]],difficulty:'hard'},
+{id:25,size:12,clues:[[0,0,3],[0,5,2],[0,11,1],[1,3,4],[1,8,3],[2,1,2],[2,6,5],[2,10,4],[3,4,1],[3,7,3],[4,0,4],[4,11,2],[5,2,3],[5,9,1],[6,0,2],[6,11,3],[7,4,4],[7,7,2],[8,1,5],[8,5,1],[8,10,3],[9,3,2],[9,8,4],[10,0,1],[10,6,3],[10,11,2],[11,1,4],[11,5,3],[11,10,2]],difficulty:'expert'},
+{id:26,size:12,clues:[[0,2,4],[0,9,2],[1,0,1],[1,5,3],[1,11,4],[2,3,2],[2,8,5],[3,1,3],[3,6,1],[3,10,2],[4,4,4],[4,7,3],[5,0,2],[5,11,1],[6,0,3],[6,11,4],[7,4,2],[7,7,5],[8,1,1],[8,5,4],[8,10,3],[9,3,3],[9,8,1],[10,0,2],[10,6,4],[10,11,3],[11,2,1],[11,9,3]],difficulty:'expert'},
+{id:27,size:12,clues:[[0,0,2],[0,6,4],[0,11,3],[1,3,1],[1,8,3],[2,1,5],[2,5,2],[2,10,4],[3,4,3],[3,7,1],[4,0,1],[4,11,2],[5,2,4],[5,9,3],[6,0,3],[6,11,1],[7,4,5],[7,7,2],[8,1,3],[8,6,1],[8,10,2],[9,3,4],[9,8,5],[10,0,2],[10,5,3],[10,11,4],[11,2,1],[11,9,2]],difficulty:'expert'},
+{id:28,size:12,clues:[[0,1,3],[0,10,2],[1,4,5],[1,7,1],[2,0,4],[2,5,2],[2,11,3],[3,2,1],[3,9,4],[4,3,3],[4,8,2],[5,0,1],[5,6,5],[5,11,4],[6,0,3],[6,5,1],[6,11,2],[7,3,4],[7,8,3],[8,2,2],[8,9,5],[9,0,1],[9,5,3],[9,11,4],[10,4,2],[10,7,4],[11,1,3],[11,10,1]],difficulty:'expert'},
+{id:29,size:12,clues:[[0,0,4],[0,4,1],[0,8,3],[0,11,2],[1,2,2],[1,6,5],[1,10,1],[2,3,4],[2,7,2],[3,0,3],[3,5,1],[3,11,4],[4,1,5],[4,9,3],[5,4,2],[5,8,4],[6,3,1],[6,7,3],[7,0,2],[7,11,1],[8,2,4],[8,10,2],[9,0,3],[9,5,4],[9,11,5],[10,4,3],[10,8,1],[11,1,2],[11,6,3],[11,10,4]],difficulty:'expert'},
+{id:30,size:12,clues:[[0,1,2],[0,5,4],[0,9,1],[1,0,3],[1,6,2],[1,11,4],[2,3,5],[2,8,3],[3,1,1],[3,10,2],[4,4,3],[4,7,4],[5,0,2],[5,11,3],[6,0,4],[6,11,1],[7,4,2],[7,7,5],[8,1,3],[8,10,4],[9,3,1],[9,8,2],[10,0,5],[10,5,3],[10,11,2],[11,2,4],[11,6,1],[11,9,3]],difficulty:'expert'}
+];
+var canvas=document.getElementById('gc');
+var ctx=canvas.getContext('2d');
+var W,H,dpr;
+var state='menu';
+var currentLevel=null;
+var grid=[];
+var gridSolution=[];
+var clueMap={};
+var gridSize=0;
+var cellSize=0;
+var gridOffsetX=0,gridOffsetY=0;
+var moveHistory=[];
+var redoStack=[];
+var moveCount=0;
+var timerStart=0;
+var elapsedTime=0;
+var timerRunning=false;
+var hintsLeft=3;
+var soundEnabled=true;
+var audioCtx=null;
+var particles=[];
+var animFrame=0;
+var rafId=null;
+var selectedDiff='easy';
+var dragState=null;
+var markMode=false;
+var errorCells=new Set();
+var completedLevels={};
+var stats={solved:0,totalTime:0,bestStreak:0,totalStars:0,currentStreak:0,lastDaily:''};
+var dailyStreak=0;
+var dailyDate='';
+var dailyPuzzle=null;
+var tutorialShown=false;
+var hoverCell=null;
+
+function resize(){
+dpr=window.devicePixelRatio||1;
+W=window.innerWidth;H=window.innerHeight;
+canvas.width=W*dpr;canvas.height=H*dpr;
+canvas.style.width=W+'px';canvas.style.height=H+'px';
+ctx.setTransform(dpr,0,0,dpr,0,0);
+if(state==='playing')calcGridLayout();
+}
+function calcGridLayout(){
+if(!gridSize)return;
+var hudH=56;
+var availW=W-40;var availH=H-hudH-40;
+cellSize=Math.floor(Math.min(availW/gridSize,availH/gridSize));
+cellSize=Math.max(cellSize,24);cellSize=Math.min(cellSize,80);
+var gw=cellSize*gridSize;var gh=cellSize*gridSize;
+gridOffsetX=Math.floor((W-gw)/2);
+gridOffsetY=Math.floor(hudH+(H-hudH-gh)/2);
+}
+function initAudio(){
+if(!audioCtx){
+try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+}}
+function playTone(freq,dur,type,vol){
+if(!soundEnabled||!audioCtx)return;
+try{
+if(audioCtx.state==='suspended')audioCtx.resume();
+var o=audioCtx.createOscillator();
+var g=audioCtx.createGain();
+o.type=type||'sine';o.frequency.value=freq;
+g.gain.value=Math.max(0.001,vol||0.15);
+g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+(dur||0.1));
+o.connect(g);g.connect(audioCtx.destination);
+o.start();o.stop(audioCtx.currentTime+(dur||0.1));
+}catch(e){}}
+function playClick(){playTone(600,0.06,'square',0.1);}
+function playUnshade(){playTone(800,0.06,'square',0.1);}
+function playMark(){playTone(1000,0.04,'sine',0.08);}
+function playHint(){playTone(523,0.15,'sine',0.12);setTimeout(function(){playTone(659,0.15,'sine',0.12);},100);setTimeout(function(){playTone(784,0.2,'sine',0.12);},200);}
+function playError(){playTone(200,0.15,'sawtooth',0.15);setTimeout(function(){playTone(180,0.2,'sawtooth',0.1);},100);}
+function playComplete(){
+playTone(523,0.15,'sine',0.15);setTimeout(function(){playTone(659,0.15,'sine',0.15);},120);
+setTimeout(function(){playTone(784,0.15,'sine',0.15);},240);setTimeout(function(){playTone(1047,0.3,'sine',0.2);},360);
+}
+function playButtonHover(){playTone(1200,0.02,'sine',0.05);}
+function playButtonClick(){playTone(900,0.04,'square',0.08);}
+function saveProgress(){
+try{
+var data={v:SAVE_VERSION,completed:completedLevels,stats:stats,dailyStreak:dailyStreak,lastDaily:stats.lastDaily,tutorialShown:tutorialShown,soundEnabled:soundEnabled};
+localStorage.setItem('kuromasu_save',JSON.stringify(data));
+}catch(e){}}
+function loadProgress(){
+try{
+var raw=localStorage.getItem('kuromasu_save');
+if(!raw)return;
+var data=JSON.parse(raw);
+if(data.v!==SAVE_VERSION)return;
+completedLevels=data.completed||{};
+stats=Object.assign(stats,data.stats||{});
+dailyStreak=data.dailyStreak||0;
+tutorialShown=data.tutorialShown||false;
+soundEnabled=data.soundEnabled!==undefined?data.soundEnabled:true;
+}catch(e){}}
+function loadLevel(level){
+currentLevel=level;
+gridSize=level.size;
+grid=[];
+clueMap={};
+moveHistory=[];redoStack=[];moveCount=0;hintsLeft=3;errorCells=new Set();
+for(var r=0;r<gridSize;r++){grid[r]=[];for(var c=0;c<gridSize;c++)grid[r][c]=0;}
+level.clues.forEach(function(cl){var rr=cl[0],cc=cl[1],vv=cl[2];clueMap[rr+','+cc]=vv;grid[rr][cc]=-1;});
+calcGridLayout();
+timerStart=Date.now();timerRunning=true;elapsedTime=0;
+state='playing';
+document.getElementById('hud').classList.remove('hidden');
+document.getElementById('hudLevel').textContent=level.id;
+document.getElementById('hintCount').textContent=hintsLeft;
+hideAllOverlays();
+}
+function countVisible(r,c){
+var count=0;
+[[-1,0],[1,0],[0,-1],[0,1]].forEach(function(d){
+var nr=r+d[0],nc=c+d[1];
+while(nr>=0&&nr<gridSize&&nc>=0&&nc<gridSize){
+if(grid[nr][nc]===1)count++;
+nr+=d[0];nc+=d[1];
+}
+});
+return count;
+}
+function checkSolution(){
+var clueCells=Object.keys(clueMap);
+for(var i=0;i<clueCells.length;i++){
+var k=clueCells[i];var parts=k.split(',');var r=+parts[0],c=+parts[1];
+if(countVisible(r,c)!==clueMap[k])return false;
+}
+if(has2x2Black())return false;
+if(!whitesConnected())return false;
+return true;
+}
+function has2x2Black(){
+for(var r=0;r<gridSize-1;r++)for(var c=0;c<gridSize-1;c++){
+if(grid[r][c]===1&&grid[r+1][c]===1&&grid[r][c+1]===1&&grid[r+1][c+1]===1)return true;
+}
+return false;
+}
+function whitesConnected(){
+var whites=[];var first=null;
+for(var r=0;r<gridSize;r++)for(var c=0;c<gridSize;c++){
+if(grid[r][c]!==1){whites.push(r+','+c);if(!first)first=[r,c];}
+}
+if(!first)return true;
+var visited=new Set();var queue=[first];
+visited.add(first[0]+','+first[1]);
+while(queue.length>0){
+var cur=queue.shift();var cr=cur[0],cc=cur[1];
+[[-1,0],[1,0],[0,-1],[0,1]].forEach(function(d){
+var nr=cr+d[0],nc=cc+d[1];var k=nr+','+nc;
+if(nr>=0&&nr<gridSize&&nc>=0&&nc<gridSize&&!visited.has(k)&&grid[nr][nc]!==1){
+visited.add(k);queue.push([nr,nc]);
+}
+});
+}
+return visited.size===whites.length;
+}
+function updateErrors(){
+errorCells=new Set();
+var clueCells=Object.keys(clueMap);
+for(var i=0;i<clueCells.length;i++){
+var k=clueCells[i];var parts=k.split(',');var r=+parts[0],c=+parts[1];
+var expected=clueMap[k];var actual=countVisible(r,c);
+var unknowns=0;
+[[-1,0],[1,0],[0,-1],[0,1]].forEach(function(d){
+var nr=r+d[0],nc=c+d[1];
+while(nr>=0&&nr<gridSize&&nc>=0&&nc<gridSize){
+if(grid[nr][nc]===0)unknowns++;
+nr+=d[0];nc+=d[1];
+}
+});
+if(actual>expected)errorCells.add(k);
+}
+}
+function toggleCell(r,c){
+if(grid[r][c]===-1)return;
+if(grid[r][c]===1){
+moveHistory.push({r:r,c:c,prev:1});grid[r][c]=0;redoStack=[];moveCount++;
+playUnshade();
+}else if(grid[r][c]===0){
+moveHistory.push({r:r,c:c,prev:0});grid[r][c]=1;redoStack=[];moveCount++;
+playClick();
+}else if(grid[r][c]===2){
+moveHistory.push({r:r,c:c,prev:2});grid[r][c]=1;redoStack=[];moveCount++;
+playClick();
+}
+updateErrors();
+if(errorCells.size>0)playError();
+if(checkSolution())onComplete();
+}
+function markCell(r,c){
+if(grid[r][c]===-1||grid[r][c]===1)return;
+moveHistory.push({r:r,c:c,prev:grid[r][c]});
+grid[r][c]=grid[r][c]===2?0:2;
+redoStack=[];moveCount++;playMark();
+}
+function undo(){
+if(moveHistory.length===0)return;
+var move=moveHistory.pop();
+grid[move.r][move.c]=move.prev;
+redoStack.push(move);
+updateErrors();
+}
+function redo(){
+if(redoStack.length===0)return;
+var move=redoStack.pop();
+grid[move.r][move.c]=grid[move.r][move.c]===1?0:1;
+moveHistory.push(move);
+updateErrors();
+}
+function useHint(){
+if(hintsLeft<=0)return;
+hintsLeft--;
+document.getElementById('hintCount').textContent=hintsLeft;
+var candidates=[];
+for(var r=0;r<gridSize;r++)for(var c=0;c<gridSize;c++){
+if(grid[r][c]===0)candidates.push([r,c]);
+}
+if(candidates.length===0)return;
+var cell=candidates[Math.floor(Math.random()*candidates.length)];
+grid[cell[0]][cell[1]]=1;
+moveHistory.push({r:cell[0],c:cell[1],prev:0,hint:true});
+playHint();updateErrors();
+if(checkSolution())onComplete();
+}
+function getStarRating(time,level){
+var size=level.size;
+var baseTime=size*size*2;
+if(time<=baseTime)return 3;
+if(time<=baseTime*2)return 2;
+return 1;
+}
+function formatTime(s){var m=Math.floor(s/60);var sec=Math.floor(s%60);return m+':'+(sec<10?'0':'')+sec;}
+function onComplete(){
+timerRunning=false;
+var time=elapsedTime||((Date.now()-timerStart)/1000);
+var stars=getStarRating(time,currentLevel);
+playComplete();
+completedLevels[currentLevel.id]={stars:stars,time:time};
+stats.solved++;stats.totalTime+=time;stats.totalStars+=stars;
+if(stats.solved>stats.bestStreak)stats.bestStreak=stats.solved;
+saveProgress();
+document.getElementById('starsDisplay').innerHTML='';
+for(var i=0;i<3;i++){
+document.getElementById('starsDisplay').innerHTML+='<span class="'+(i<stars?'star-filled':'star-empty')+'">&#9733;</span>';
+}
+document.getElementById('compTime').textContent=formatTime(time);
+document.getElementById('compMoves').textContent=moveCount;
+state='complete';
+document.getElementById('completeOverlay').classList.remove('hidden');
+spawnCelebration();
+}
+function spawnCelebration(){
+var colors=['#00f0ff','#b44aff','#00ff88','#ffaa00','#ff4488'];
+for(var i=0;i<60;i++){
+particles.push({
+x:W/2+(Math.random()-0.5)*200,y:H/2,
+vx:(Math.random()-0.5)*8,vy:-Math.random()*8-2,
+life:1,color:colors[Math.floor(Math.random()*colors.length)],
+size:Math.random()*4+2
+});
+}
+}
+function updateParticles(dt){
+for(var i=particles.length-1;i>=0;i--){
+var p=particles[i];
+p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life-=dt*0.8;
+if(p.life<=0)particles.splice(i,1);
+}
+}
+function drawParticles(){
+particles.forEach(function(p){
+ctx.globalAlpha=Math.max(0,p.life);
+ctx.fillStyle=p.color;
+ctx.beginPath();
+ctx.arc(p.x,p.y,Math.max(0.5,p.size*p.life),0,Math.PI*2);
+ctx.fill();
+});
+ctx.globalAlpha=1;
+}
+function hideAllOverlays(){
+['menuOverlay','completeOverlay','statsOverlay','tutorialOverlay','pauseOverlay'].forEach(function(id){
+document.getElementById(id).classList.add('hidden');
+});
+}
+function showMenu(){
+state='menu';
+document.getElementById('hud').classList.add('hidden');
+hideAllOverlays();
+document.getElementById('menuOverlay').classList.remove('hidden');
+renderLevelGrid();
+document.getElementById('dailyStreak').textContent='Streak: '+dailyStreak;
+}
+function renderLevelGrid(){
+var grid_el=document.getElementById('levelGrid');
+grid_el.innerHTML='';
+LEVELS.forEach(function(lv){
+if(lv.difficulty!==selectedDiff)return;
+var btn=document.createElement('div');
+btn.className='level-btn';
+var comp=completedLevels[lv.id];
+if(comp)btn.classList.add('completed');
+var locked=false;
+if(lv.id>1&&!completedLevels[lv.id-1]&&lv.difficulty===selectedDiff){
+var prevSame=LEVELS.filter(function(l){return l.difficulty===selectedDiff&&l.id<lv.id;});
+if(prevSame.length>0&&!completedLevels[prevSame[prevSame.length-1].id])locked=true;
+}
+btn.innerHTML='<div class="lnum">'+lv.id+'</div>'+(comp?'<div class="stars">'+'&#9733;'.repeat(comp.stars)+'</div>':'');
+if(locked){btn.classList.add('locked');}
+else{
+btn.addEventListener('click',function(){initAudio();loadLevel(lv);});
+btn.addEventListener('mouseenter',function(){playButtonHover();});
+}
+grid_el.appendChild(btn);
+});
+}
+function generateDailyPuzzle(){
+var today=new Date();
+var seed=today.getFullYear()*10000+(today.getMonth()+1)*100+today.getDate();
+dailyDate=seed.toString();
+if(dailyDate===stats.lastDaily)return;
+var rng=mulberry32(seed);
+var size=7;
+var sol=[];
+var blacks=new Set();
+for(var r=0;r<size;r++){sol[r]=[];for(var c=0;c<size;c++){
+if(rng()<0.4){
+var ok=true;
+for(var dr=0;dr<=1&&ok;dr++)for(var dc=0;dc<=1&&ok;dc++){
+var rr=r-dr,cc=c-dc;
+if(rr>=0&&cc>=0&&rr+1<size&&cc+1<size){
+if(blacks.has(rr+','+cc)&&blacks.has((rr+1)+','+cc)&&blacks.has(rr+','+(cc+1)))ok=false;
+}
+}
+if(ok){sol[r][c]=1;blacks.add(r+','+c);}else sol[r][c]=0;
+}else sol[r][c]=0;
+}}
+var wlist=[];
+for(var r2=0;r2<size;r2++)for(var c2=0;c2<size;c2++){
+if(sol[r2][c2]===0){
+var cnt=0;
+[[-1,0],[1,0],[0,-1],[0,1]].forEach(function(d){
+var nr=r2+d[0],nc=c2+d[1];
+while(nr>=0&&nr<size&&nc>=0&&nc<size){if(sol[nr][nc]===1)cnt++;nr+=d[0];nc+=d[1];}
+});
+wlist.push([r2,c2,cnt]);
+}
+}
+rng.shuffle(wlist);
+var numClues=Math.min(wlist.length,Math.floor(size*size*0.25)+3);
+dailyPuzzle={id:0,size:size,clues:wlist.slice(0,numClues),difficulty:'daily'};
+}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function drawGrid(){
+if(!gridSize)return;
+var now=Date.now();
+ctx.fillStyle='#12122a';
+ctx.fillRect(0,0,W,H);
+var gw=cellSize*gridSize;var gh=cellSize*gridSize;
+ctx.fillStyle='rgba(0,240,255,0.03)';
+ctx.fillRect(gridOffsetX-4,gridOffsetY-4,gw+8,gh+8);
+for(var r=0;r<gridSize;r++)for(var c=0;c<gridSize;c++){
+var x=gridOffsetX+c*cellSize;
+var y=gridOffsetY+r*cellSize;
+var key=r+','+c;
+var isClue=clueMap[key]!==undefined;
+var isBlack=grid[r][c]===1;
+var isDot=grid[r][c]===2;
+var isError=errorCells.has(key);
+var isHover=hoverCell&&hoverCell[0]===r&&hoverCell[1]===c;
+if(isBlack){
+var grad=ctx.createLinearGradient(x,y,x+cellSize,y+cellSize);
+grad.addColorStop(0,'#1a1a2e');grad.addColorStop(1,'#2a2a4e');
+ctx.fillStyle=grad;
+ctx.fillRect(x,y,cellSize,cellSize);
+ctx.strokeStyle='rgba(0,0,0,0.5)';ctx.lineWidth=1;
+ctx.strokeRect(x,y,cellSize,cellSize);
+}else if(isClue){
+var cgrad=ctx.createLinearGradient(x,y,x+cellSize,y+cellSize);
+cgrad.addColorStop(0,'rgba(20,20,50,0.95)');cgrad.addColorStop(1,'rgba(30,30,70,0.95)');
+ctx.fillStyle=cgrad;
+ctx.fillRect(x,y,cellSize,cellSize);
+ctx.strokeStyle=isError?'rgba(255,68,68,0.6)':'rgba(0,240,255,0.2)';
+ctx.lineWidth=isError?2:1;
+ctx.strokeRect(x,y,cellSize,cellSize);
+ctx.fillStyle=isError?'#ff4444':'#00f0ff';
+ctx.font='bold '+Math.floor(cellSize*0.5)+'px "Segoe UI",system-ui,sans-serif';
+ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(clueMap[key],x+cellSize/2,y+cellSize/2);
+}else{
+ctx.fillStyle=isHover?'rgba(255,255,255,0.08)':'rgba(25,25,55,0.9)';
+ctx.fillRect(x,y,cellSize,cellSize);
+ctx.strokeStyle='rgba(100,100,160,0.3)';ctx.lineWidth=1;
+ctx.strokeRect(x,y,cellSize,cellSize);
+if(isDot){
+ctx.fillStyle='rgba(0,240,255,0.4)';
+ctx.beginPath();
+ctx.arc(x+cellSize/2,y+cellSize/2,Math.max(1,cellSize*0.08),0,Math.PI*2);
+ctx.fill();
+}
+}
+}
+ctx.strokeStyle='rgba(0,240,255,0.15)';ctx.lineWidth=2;
+ctx.strokeRect(gridOffsetX-1,gridOffsetY-1,gw+2,gh+2);
+}
+function getCellAt(px,py){
+var c=Math.floor((px-gridOffsetX)/cellSize);
+var r=Math.floor((py-gridOffsetY)/cellSize);
+if(r>=0&&r<gridSize&&c>=0&&c<gridSize)return[r,c];
+return null;
+}
+function getPointerPos(e){
+var rect=canvas.getBoundingClientRect();
+var t=e.touches?e.touches[0]:e;
+return[t.clientX-rect.left,t.clientY-rect.top];
+}
+var lastTouchEnd=0;
+canvas.addEventListener('pointerdown',function(e){
+e.preventDefault();initAudio();
+if(state!=='playing')return;
+var pos=getPointerPos(e);
+var cell=getCellAt(pos[0],pos[1]);
+if(!cell)return;
+if(e.button===2||markMode){markCell(cell[0],cell[1]);}
+else{toggleCell(cell[0],cell[1]);}
+});
+canvas.addEventListener('contextmenu',function(e){e.preventDefault();});
+canvas.addEventListener('pointermove',function(e){
+if(state!=='playing')return;
+var pos=getPointerPos(e);
+var cell=getCellAt(pos[0],pos[1]);
+hoverCell=cell;
+});
+canvas.addEventListener('pointerleave',function(){hoverCell=null;});
+document.getElementById('btnMenu').addEventListener('click',function(){
+if(state==='playing'){state='paused';document.getElementById('pauseOverlay').classList.remove('hidden');}
+});
+document.getElementById('btnUndo').addEventListener('click',function(){undo();playButtonClick();});
+document.getElementById('btnRedo').addEventListener('click',function(){redo();playButtonClick();});
+document.getElementById('btnHint').addEventListener('click',function(){useHint();});
+document.getElementById('btnSound').addEventListener('click',function(){
+soundEnabled=!soundEnabled;
+document.getElementById('btnSound').textContent=soundEnabled?'\uD83D\uDD0A':'\uD83D\uDD07';
+saveProgress();
+});
+document.getElementById('dailyBtn').addEventListener('click',function(){
+initAudio();generateDailyPuzzle();
+if(dailyPuzzle)loadLevel(dailyPuzzle);
+});
+document.querySelectorAll('.diff-tab').forEach(function(tab){
+tab.addEventListener('click',function(){
+document.querySelectorAll('.diff-tab').forEach(function(t){t.classList.remove('active');});
+tab.classList.add('active');
+selectedDiff=tab.dataset.diff;
+renderLevelGrid();
+playButtonClick();
+});
+});
+document.getElementById('btnNext').addEventListener('click',function(){
+var next=LEVELS.find(function(l){return l.id===currentLevel.id+1;});
+if(next){loadLevel(next);}else{showMenu();}
+});
+document.getElementById('btnLevels').addEventListener('click',function(){showMenu();});
+document.getElementById('btnStats').addEventListener('click',function(){
+document.getElementById('statSolved').textContent=stats.solved;
+document.getElementById('statTime').textContent=formatTime(stats.totalTime);
+document.getElementById('statStreak').textContent=stats.bestStreak;
+document.getElementById('statStars').textContent=stats.totalStars;
+document.getElementById('statsOverlay').classList.remove('hidden');
+});
+document.getElementById('btnCloseStats').addEventListener('click',function(){
+document.getElementById('statsOverlay').classList.add('hidden');
+});
+document.getElementById('btnTutorial').addEventListener('click',function(){
+document.getElementById('tutorialOverlay').classList.remove('hidden');
+playButtonClick();
+});
+document.getElementById('btnCloseTutorial').addEventListener('click',function(){
+tutorialShown=true;saveProgress();
+document.getElementById('tutorialOverlay').classList.add('hidden');
+});
+document.getElementById('btnResume').addEventListener('click',function(){
+state='playing';document.getElementById('pauseOverlay').classList.add('hidden');
+timerStart=Date.now()-elapsedTime*1000;timerRunning=true;
+});
+document.getElementById('btnRestart').addEventListener('click',function(){
+document.getElementById('pauseOverlay').classList.add('hidden');
+loadLevel(currentLevel);
+});
+document.getElementById('btnQuit').addEventListener('click',function(){
+document.getElementById('pauseOverlay').classList.add('hidden');
+showMenu();
+});
+document.addEventListener('keydown',function(e){
+if(state!=='playing')return;
+if(e.key==='z'&&(e.ctrlKey||e.metaKey)){e.preventDefault();if(e.shiftKey)redo();else undo();}
+if(e.key==='h')useHint();
+if(e.key==='m')markMode=!markMode;
+if(e.key==='Escape'){state='paused';document.getElementById('pauseOverlay').classList.remove('hidden');}
+});
+function gameLoop(ts){
+rafId=requestAnimationFrame(gameLoop);
+if(state==='playing'&&timerRunning){
+elapsedTime=(Date.now()-timerStart)/1000;
+document.getElementById('hudTimer').textContent=formatTime(elapsedTime);
+}
+if(state==='playing'||particles.length>0){
+updateParticles(0.016);
+drawGrid();
+drawParticles();
+}
+}
+function cleanup(){
+if(rafId)cancelAnimationFrame(rafId);
+if(audioCtx){try{audioCtx.close();}catch(e){}}
+}
+window.addEventListener('beforeunload',function(){cleanup();});
+window.addEventListener('resize',resize);
+loadProgress();
+resize();
+if(!tutorialShown){
+document.getElementById('tutorialOverlay').classList.remove('hidden');
+}
+showMenu();
+gameLoop(0);
+})();
+</script>
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=kuromasu'></script>
+</body>
+</html>
