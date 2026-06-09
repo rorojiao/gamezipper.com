@@ -1,3 +1,4 @@
+/* watchdog-set tunnel URL: https://yorkshire-contractors-cloudy-leone.trycloudflare.com -- auto-replaced by tunnel-watchdog.sh */
 /* gz-analytics.js — lightweight behavioral tracking, no deps, <5KB
    2026-06-05 fix: connected to Vercel /api/collect.js → BI server pipeline
    2026-06-08 fix: attach vid/sid/device/screen/browser/os/referrer/site/path
@@ -17,7 +18,7 @@
   // Direct tunnel URL: browser → Cloudflare Tunnel → BI server (10.10.29.67:8090)
   // Tunnel: cloudflared systemd service (auto-restart on failure)
   // NOTE: If tunnel URL changes, update this and redeploy
-  var EP = 'https://nearest-region-beside-locks.trycloudflare.com/api/collect';
+  var EP = 'https://yorkshire-contractors-cloudy-leone.trycloudflare.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
