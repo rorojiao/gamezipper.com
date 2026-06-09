@@ -310,6 +310,7 @@ const GAMES = [
   {name:"Shikaku",emoji:"🔲",cat:"puzzle",tags:["puzzle","logic","nikoli","rectangle","grid","brain","strategy","japanese","browser","free","html5"],url:"/shikaku/",desc:"Play Shikaku online free! Divide the grid into rectangles so each contains exactly one number equal to its area. 35 handcrafted logic puzzles from 4x4 to 15x15 plus daily challenge. No download needed!",isNew:true,status:"live"},
 {name:"Gokigen Naname (Slant)",emoji:"◇",cat:"puzzle",tags:["logic","grid","nikoli","diagonal"],url:"/slant/",desc:"Place diagonal lines in every cell so number clues at intersections are satisfied and no closed loops form. 32 hand-crafted levels from easy to expert.",isNew:true,status:"live"},
   {name:"Veggie Merge",emoji:"🥕",cat:"puzzle",tags:["Merge","Physics","Vegetable","Farm","Drop","Casual","Puzzle","Brain","Browser","Free","HTML5"],url:"/veggie-merge/",desc:"Play Veggie Merge online free! Drop and merge vegetables to grow your farm harvest. Physics-based puzzle with 10 vegetable levels from seed to giant pumpkin. No download required.",isNew:true,status:"live"},
+{name:"Tentai Show",emoji:"\U0001f300",cat:"puzzle",tags:["symmetry","galaxies","nikoli","logic"],url:"/tentai-show/",desc:"Solve symmetry puzzles by dividing grids into rotationally symmetric regions around galaxy dots. 25 levels of increasing difficulty.",isNew:true,status:"live"},
 ];
 
 /**
