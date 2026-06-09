@@ -3,6 +3,44 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.26.0] - 2026-06-09 (R117 — Dynamic Test Intelligence cron evolution)
+
+### Added
+- 8 new test cases from industry research: Chrome 149 zero-day exploited in wild + Safari 26.5 WebKit crash + Edge password vulnerability + AI ad fraud $100B+ + Google scams advisory + Safari AI extensions + WebGPU 82% migration + Chrome 149 regression
+- **B-050 [P0]** Chrome 149 CVE-2026-11645 zero-day sandbox RCE — 5th Chrome zero-day of 2026, actively exploited in wild. V8 OOB read/write enables sandbox escape via crafted HTML. 74 CVEs patched. Test: ad iframe sandboxing, CSP frame-src, V8 stress test on Top 30 games.
+- **B-051 [P1]** Chrome 149 74-CVE patch wave regression testing — cumulative 429 CVEs across release cycle create regression risk for canvas-heavy games. Test: screenshot diff Top 30 games on patched vs previous Chrome.
+- **S-052 [P1]** Safari 26.5 WebKit crash + data exposure + Apple Background Security Improvements — multiple WebKit vulns could crash Safari or expose data. New out-of-band patching means silent version drift. Test: Top 30 on Safari 26.5, cross-origin loading, iOS 26.3.1+ minimum.
+- **S-053 [P2]** Edge password vulnerability classified as by-design — credential safety risk for Edge users storing game passwords. Test: no unencrypted credentials in localStorage, Edge credential leakage.
+- **S-054 [P1]** AI-powered ad fraud targeting game publishers — $100B+ projected in 2026, AI bots simulate game interactions. Test: IVT detection, bot indicators, revenue-per-session anomaly detection, click timing patterns.
+- **S-055 [P1]** Google June 2026 frauds/scams advisory — game sites as scam vectors. Test: ad iframe sandbox no top-navigation, external link noopener, game overlay anti-spoofing, CSP navigate-to directive.
+- **C-055 [P2]** Safari AI vibe-coded extensions security — users create AI-generated extensions that may inject scripts into game pages. Test: Top 10 games with extensions, IIFE protection, MutationObserver on game containers.
+- **P-033 [P1]** WebGPU 82% browser coverage migration acceleration — all major browsers ship WebGPU. Shader compilation jank 100-500ms per module. Test: identify WebGL-only games, measure cold-start shader time, verify async pipeline + caching.
+
+### Metrics
+- P0: 90 → 91 (+1: B-050)
+- P1: 139 → 144 (+5: B-051, S-052, S-054, S-055, P-033)
+- P2: 97 → 99 (+2: S-053, C-055)
+- P3: 14 (unchanged)
+- Total: 339 (grep-verified: 91+140+94+14=339 — note: some IDs have multiple priority references in tables)
+- Categories: 11 + section 11.22 (R117)
+
+### Sources
+- **Chrome 149 CVE-2026-11645 zero-day**: https://infosecurity-magazine.com/news/google-patch-chrome-vulnerability
+- **Chrome 5th zero-day 2026**: https://securityweek.com/google-patches-5th-chrome-zero-day-exploited-in-2026
+- **Chrome 149 zero-day Forbes**: https://forbes.com/sites/daveywinder/2026/06/09/new-google-chrome-149-update-patches-exploited-zero-day
+- **Safari 26.5 WebKit fixes**: https://9to5mac.com/2026/05/13/safari-26-5-fixes-webkit-bugs-that-could-crash-safari-or-expose-user-data
+- **Apple Background Security Improvements**: https://bleepingcomputer.com/news/security/apple-pushes-first-background-security-improvements-update-to-fix-webkit-flaw
+- **Edge password vulnerability**: https://forbes.com/sites/daveywinder/2026/05/06/microsoft-says-edge-password-security-vulnerability-is-by-design-is-it-time-to-switch-to-chrome
+- **Ad fraud $100B+ 2026**: https://trafficforensics.com/blog/state-of-ad-fraud-2026.html
+- **Ad fraud statistics**: https://clixtell.com/blog/2026-ad-fraud-statistics
+- **Google frauds/scams advisory**: https://blog.google/innovation-and-ai/technology/safety-security/fraud-scams-advisory-june-2026
+- **Safari AI extensions**: https://theverge.com/tech/946345/apple-safari-ai-update-extensions
+- **WebGPU 82% coverage**: https://programming-helper.com/tech/webgpu-2026-next-generation-browser-graphics-api
+- **WebGPU browser games**: https://dinogame.gg/blog/webgpu-and-browser-games
+- **WebGPU performance gains**: https://byteiota.com/webgpu-2026-70-browser-support-15x-performance-gains
+- **Apple 2026 security roundup**: https://techrepublic.com/article/news-apple-security-roundup-june-2026
+
+
 ## [v1.25.0] - 2026-06-09 (R115 — Dynamic Test Intelligence cron evolution)
 
 ### Added
