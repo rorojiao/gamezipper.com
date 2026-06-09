@@ -48,6 +48,7 @@ self.addEventListener('install',e=>{
     '/jelly-dye/',
     '/tents/',
     '/masyu/',
+    '/tentai-show/',
     '/shikaku/'];
   e.waitUntil(
     caches.open(CACHE).then(function(c){
