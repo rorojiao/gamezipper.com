@@ -3,6 +3,37 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.27.0] - 2026-06-10 (R119 — Dynamic Test Intelligence cron evolution)
+
+### Added
+- 7 new test cases from industry research: Firefox 150 Mythos AI 271-vuln discovery + WCAG 2.2 SC 2.5.8 Target Size 24×24px + Game Accessibility 2026 launch expectations + WebGPU draw-call 189% perf gain + Agentic AI autonomous playtesting + WCAG 2.2 SC 2.4.11 Focus Not Obscured + HTML5 Canvas automated visual bug detection
+- **B-052 [P1]** Firefox 150 Mythos AI 271-vulnerability discovery regression — Anthropic Mythos Preview found 271 vulnerabilities (180 high-severity) in Firefox 148. All fixed in Firefox 150. Test: Top 30 games on Firefox 150+ for zero new console errors.
+- **A-014 [P1]** WCAG 2.2 SC 2.5.8 Target Size (Minimum) 24×24 CSS pixels — game UI buttons must meet minimum size or spacing. US Title II April 2026 + EU EAA 2026 enforcement.
+- **A-015 [P2]** Game Accessibility 2026 — screen reader + motor + cognitive accessibility expected at launch (GDC 2026 IGDA roundtable). Test: keyboard-only navigation, screen reader state, reduced-motion, alternative inputs.
+- **P-034 [P2]** WebGPU draw-call 189% higher frame rates for draw-call-heavy scenes (10K+ objects), 300%+ compute. Identify WebGL games as migration candidates.
+- **C-056 [P2]** Agentic AI autonomous playtesting — RL+LLM agents replacing manual QA (2026 industry shift). Evaluate integration with verify-lite pipeline.
+- **A-016 [P1]** WCAG 2.2 SC 2.4.11 Focus Not Obscured (Minimum) — game overlays must not hide focused element. US Title II April 2026 enforcement.
+- **G-098 [P2]** HTML5 Canvas automated visual bug detection — arXiv 2208.02335 achieves 100% accuracy vs 44.6% snapshot testing.
+
+### Metrics
+- P0: 91 (unchanged)
+- P1: 140 → 143 (+3: B-052, A-014, A-016)
+- P2: 94 → 98 (+4: A-015, P-034, C-056, G-098)
+- P3: 14 (unchanged)
+- Total unique IDs: 359 (7 new: B-052, A-014, A-015, P-034, C-056, A-016, G-098)
+
+### Sources
+- **Firefox 271 vulnerabilities Mythos AI**: https://so.html5.qq.com/page/real/search_news?docid=70000021_53769fd53ba77252
+- **Firefox Mythos nearly zero false positives**: https://so.html5.qq.com/page/real/search_news?docid=70000021_2506a044e8b78452
+- **WCAG 2.2 SC 2.5.8 Target Size**: https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html
+- **Game Accessibility 2026 GDC**: https://igda-gasig.org/2026/04/01/gdc-2026-accessibility-roundtable
+- **Game Accessibility 2026 StraySpark**: https://strayspark.studio/blog/game-accessibility-2026-unreal-engine
+- **WebGPU vs WebGL benchmark**: https://hardwaretimes.com/webgpu-vs-webgl-performance-for-browser-games-what-changes-and-how-to-test-it
+- **Agentic AI playtesting**: https://thecodersblog.com/agentic-ai-for-game-playtesting-2026
+- **WCAG 2.2 SC 2.4.11 Focus Not Obscured**: https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum.html
+- **Canvas visual bug detection**: https://arxiv.org/abs/2208.02335
+
+
 ## [v1.26.0] - 2026-06-09 (R117 — Dynamic Test Intelligence cron evolution)
 
 ### Added
