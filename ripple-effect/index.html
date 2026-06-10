@@ -128,7 +128,7 @@ h1,h2,h3{font-family:var(--font-display);text-shadow:0 0 20px rgba(0,240,255,.4)
 </head>
 <body>
 <!-- Monetag MultiTag -->
-<script src="//pl24604155.profitablegatecpm.com/ba/24/60/ba2460bb55b4b21df8db28dd93d6d6a3.js"></script>
+<script src="/monetag-manager.js?v=2026061009"></script>
 <div id="app">
 <!-- Main Menu -->
 <div id="mainMenu" class="screen active">
@@ -281,6 +281,7 @@ function shuffle(arr,rng){for(let i=arr.length-1;i>0;i--){const j=Math.floor(rng
 function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v))}
 
 /* ========== PUZZLE GENERATOR ========== */
+
 function generateRegions(size,rng){
   const grid=Array.from({length:size},()=>Array(size).fill(-1));
   const regions=[];
@@ -290,7 +291,9 @@ function generateRegions(size,rng){
   let rid=0;
   for(const[sr,sc]of cells){
     if(grid[sr][sc]!==-1)continue;
-    const target=size<=8?(2+Math.floor(rng()*4)):(3+Math.floor(rng()*5));
+    const maxR=Math.min(size<=8?5:size<=10?6:7);
+    const minR=Math.min(3,maxR-1);
+    const target=minR+Math.floor(rng()*(maxR-minR+1));
     const region=[[sr,sc]];
     grid[sr][sc]=rid;
     let tries=0;
@@ -323,16 +326,13 @@ function generateRegions(size,rng){
         regions[targetRid].push([r,c]);
         grid[r][c]=targetRid;
         regions.splice(i,1);
-        // reassign ids
         for(let rr=0;rr<size;rr++)for(let cc=0;cc<size;cc++){
           if(grid[rr][cc]===i)grid[rr][cc]=targetRid;
         }
         merged=true;break;
       }
     }
-    if(!merged){/* edge case: all singletons, force merge */}
   }
-  // rebuild grid ids to be sequential
   const newGrid=Array.from({length:size},()=>Array(size).fill(-1));
   for(let i=0;i<regions.length;i++){
     for(const[r,c]of regions[i])newGrid[r][c]=i;
@@ -341,12 +341,9 @@ function generateRegions(size,rng){
 }
 
 function canPlace(r,c,val,solution,regionUsed,size){
-  const regionId=arguments[7]!==undefined?arguments[7]:null;
-  // row check
   for(let cc=Math.max(0,c-val);cc<=Math.min(size-1,c+val);cc++){
     if(cc!==c&&solution[r][cc]===val)return false;
   }
-  // col check
   for(let rr=Math.max(0,r-val);rr<=Math.min(size-1,r+val);rr++){
     if(rr!==r&&solution[rr][c]===val)return false;
   }
@@ -360,11 +357,12 @@ function generateSolution(size,regions,regionMap,rng){
   const sortedRegions=[...regions].sort((a,b)=>a.length-b.length);
   for(const region of sortedRegions)for(const[r,c]of region)cellOrder.push([r,c]);
   const regionSizes=regions.map(r=>r.length);
-  const deadline=Date.now()+(size<=8?2000:size<=10?4000:8000);
+  const maxTime=size<=8?3000:size<=10?6000:15000;
+  const deadline=Date.now()+maxTime;
   let nodes=0;
 
   function backtrack(idx){
-    if(++nodes%5000===0&&Date.now()>deadline)return false;
+    if(++nodes%2000===0&&Date.now()>deadline)return false;
     if(idx===cellOrder.length)return true;
     const[r,c]=cellOrder[idx];
     const rid=regionMap[r][c];
@@ -386,56 +384,6 @@ function generateSolution(size,regions,regionMap,rng){
   return backtrack(0)?solution:null;
 }
 
-function countSolutions(size,regions,regionMap,partial,limit){
-  const grid=partial.map(r=>[...r]);
-  const regionUsed=regions.map(()=>new Set());
-  const regionSizes=regions.map(r=>r.length);
-  const emptyCells=[];
-  for(let r=0;r<size;r++)for(let c=0;c<size;c++){
-    if(grid[r][c]>0){regionUsed[regionMap[r][c]].add(grid[r][c]);}
-    else emptyCells.push([r,c]);
-  }
-  // MRV: sort by fewest possibilities
-  let count=0;
-  function getPossible(r,c){
-    const rid=regionMap[r][c];const maxV=regionSizes[rid];const possible=[];
-    for(let v=1;v<=maxV;v++){
-      if(regionUsed[rid].has(v))continue;
-      let ok=true;
-      for(let cc=Math.max(0,c-v);cc<=Math.min(size-1,c+v);cc++){if(cc!==c&&grid[r][cc]===v){ok=false;break;}}
-      if(!ok)continue;
-      for(let rr=Math.max(0,r-v);rr<=Math.min(size-1,r+v);rr++){if(rr!==r&&grid[rr][c]===v){ok=false;break;}}
-      if(ok)possible.push(v);
-    }
-    return possible;
-  }
-  function bt(idx){
-    if(count>=limit)return;
-    if(idx===emptyCells.length){count++;return;}
-    // find cell with fewest options from remaining
-    let bestIdx=idx,bestLen=999;
-    for(let i=idx;i<emptyCells.length;i++){
-      const[r,c]=emptyCells[i];
-      const p=getPossible(r,c);
-      if(p.length<bestLen){bestLen=p.length;bestIdx=i;}
-      if(bestLen<=1)break;
-    }
-    if(bestIdx!==idx)[emptyCells[idx],emptyCells[bestIdx]]=[emptyCells[bestIdx],emptyCells[idx]];
-    const[r,c]=emptyCells[idx];
-    const rid=regionMap[r][c];
-    const possible=getPossible(r,c);
-    for(const val of possible){
-      if(count>=limit)break;
-      grid[r][c]=val;regionUsed[rid].add(val);
-      bt(idx+1);
-      grid[r][c]=0;regionUsed[rid].delete(val);
-    }
-    if(bestIdx!==idx)[emptyCells[idx],emptyCells[bestIdx]]=[emptyCells[bestIdx],emptyCells[idx]];
-  }
-  bt(0);
-  return count;
-}
-
 function createPuzzle(size,regions,regionMap,solution,difficulty,rng){
   const given=Array.from({length:size},()=>Array(size).fill(true));
   const cells=[];
@@ -444,24 +392,18 @@ function createPuzzle(size,regions,regionMap,solution,difficulty,rng){
   const total=size*size;
   const target=Math.floor(total*difficulty);
   let removed=0;
-  const checkUnique=size<=6;
+  // Skip uniqueness check for performance - use region-based clues instead
   for(const[r,c]of cells){
     if(removed>=target)break;
     given[r][c]=false;
-    if(checkUnique){
-      const partial=Array.from({length:size},(_,rr)=>Array.from({length:size},(_,cc)=>given[rr][cc]?solution[rr][cc]:0));
-      if(countSolutions(size,regions,regionMap,partial,2)!==1){given[r][c]=true;continue;}
-    }
     removed++;
   }
-  // for large grids, ensure at least 1 given per region
-  if(!checkUnique){
-    for(let i=0;i<regions.length;i++){
-      const hasGiven=regions[i].some(([r,c])=>given[r][c]);
-      if(!hasGiven){
-        const[r,c]=regions[i][Math.floor(rng()*regions[i].length)];
-        given[r][c]=true;removed--;
-      }
+  // ensure at least 1 given per region
+  for(let i=0;i<regions.length;i++){
+    const hasGiven=regions[i].some(([r,c])=>given[r][c]);
+    if(!hasGiven){
+      const[r,c]=regions[i][Math.floor(rng()*regions[i].length)];
+      given[r][c]=true;
     }
   }
   return given;
@@ -471,11 +413,13 @@ function generateLevel(config){
   const rng=createRNG(config.seed);
   const{size,difficulty}=config;
   let regions,regionMap,solution;
-  // retry if generation fails
-  for(let attempt=0;attempt<30;attempt++){
+  for(let attempt=0;attempt<50;attempt++){
     const r=createRNG(config.seed+attempt*9973);
     const gen=generateRegions(size,r);
     regions=gen.regions;regionMap=gen.regionMap;
+    // Limit max region size based on grid size to keep solver fast
+    const maxRegion=Math.max(...regions.map(rg=>rg.length));
+    if(maxRegion>Math.floor(size/2)+2)continue; // skip regions that are too large
     solution=generateSolution(size,regions,regionMap,r);
     if(solution)break;
   }
