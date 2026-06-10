@@ -96,6 +96,14 @@ self.addEventListener('activate',e=>{
     }).catch(function(){})
   );
 
+  // Request persistent storage to protect precache from eviction
+  // Progressive enhancement: silently succeeds or fails
+  if(navigator.storage && navigator.storage.persist){
+    navigator.storage.persist().then(function(persisted){
+      if(persisted) console.log('[SW] Storage persisted: precache protected from eviction');
+    }).catch(function(){});
+  }
+
   // Notify all clients about the update
   e.waitUntil(
     self.clients.matchAll().then(function(clients){
