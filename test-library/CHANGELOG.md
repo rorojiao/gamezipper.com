@@ -3,6 +3,28 @@
 
 All notable changes to the test case library are documented here.
 
+
+## [v1.33.0] - 2026-06-11
+### Added
+- 8 new test cases from industry research (R131 Dynamic Test Intelligence cron)
+- S-065: Chrome Guest View UAF CVE-2026-11674 iframe sandbox escape
+- S-066: WebGL heap buffer overflow CVE-2026-4675 untrusted 3D asset rendering
+- S-067: ANGLE uninitialized use CVE-2026-11138 cross-origin data disclosure Windows
+- B-060: Microsoft June 2026 Patch Tuesday 200 flaws + 6 zero-days Edge WebView regression
+- A-020: HTML-in-Canvas API accessibility screen reader testing for canvas game UI
+- P-039: Sub-3-second game load baseline 2026 casual browser game speed standard
+- G-102: Cross-platform input mandatory keyboard+touch+gamepad simultaneous testing
+- C-064: Embedded game iframe context testing YouTube/Facebook/Discord scenarios
+### Sources
+- Chrome 149 Guest View CVE-2026-11674 (Chrome Releases blog)
+- WebGL CVE-2026-4675 heap overflow (TheHackerWire)
+- ANGLE CVE-2026-11138 uninitialized use (DailyCVE)
+- Microsoft June 2026 Patch Tuesday (BleepingComputer)
+- HTML-in-Canvas API (Google I/O 2026 / webgpu.com)
+- Casual gaming speed standard 2026 (ThinkComputers)
+- Cross-platform input 2026 UX (Hi3D)
+- Embedded iframe game testing (CoolGames / Playgama)
+- Web search queries: HTML5 game testing 2026, Chrome Safari Edge CVE vulnerability June 2026, casual game UX mobile browser 2026, WebGPU WebGL browser game performance 2026, browser accessibility game WCAG 2026
 ## [v1.32.0] - 2026-06-10 (R129 — Dynamic Test Intelligence cron evolution)
 
 ### Added
