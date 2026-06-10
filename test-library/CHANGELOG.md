@@ -4,6 +4,27 @@
 All notable changes to the test case library are documented here.
 
 
+## [v1.34.0] - 2026-06-11
+### Added
+- 8 new test cases from industry research (R133 Dynamic Test Intelligence cron)
+- B-061: iOS Safari WebGL completely broken on iOS 18.7.2 — all WebGL games fail rendering
+- S-068: Chrome integer overflow sandbox escape CVE-2026-11659 on Linux via crafted HTML page
+- PC-013: Android Advanced Protection Mode disabling WebGPU — game compatibility regression
+- C-065: iOS Safari fullscreen fixed-position canvas rendering lag — multi-scene WebGL stutter
+- A-021: WCAG 2.2 enforceable ISO standard — 9 new success criteria compliance for game pages
+- B-062: iOS Safari WebGL context immediately lost on creation — shader compilation failure
+- C-066: Hammer.js tap event crash on iPad Safari — gesture library compatibility
+- P-040: Offscreen canvas caching 60fps mobile optimization — cross-device rendering benchmark
+### Sources
+- iOS Safari WebGL broken iOS 18.7.2 (WebKit bug 301800, Google model-viewer #5100)
+- Chrome CVE-2026-11659 sandbox escape (CVEFeed.io)
+- Android Advanced Protection disabling WebGPU (AndroidAuthority)
+- iOS Safari fullscreen fixed canvas rendering lag (Stack Overflow 79674032)
+- WCAG 2.2 enforceable ISO standard 9 new criteria (z-ax.com, thewcag.com)
+- iOS Safari WebGL context immediately lost (Stack Overflow 79847768)
+- Hammer.js crash on iPad Safari (xjavascript.com)
+- Canvas performance optimization offscreen caching 60fps (bswen.com 2026-02-21)
+
 ## [v1.33.0] - 2026-06-11
 ### Added
 - 8 new test cases from industry research (R131 Dynamic Test Intelligence cron)
