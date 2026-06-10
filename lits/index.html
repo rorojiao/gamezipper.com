@@ -426,7 +426,7 @@ function generateRegions(rng,size,numRegions){
   }
   // Grow
   while(frontier.length>0){
-    // Pick a random frontier cell
+    // Pick a random frontier cell - bias toward smaller regions to balance sizes
     var idx=Math.floor(rng()*frontier.length);
     var item=frontier[idx];
     frontier.splice(idx,1);
@@ -463,6 +463,184 @@ function generateRegions(rng,size,numRegions){
       }
     }
   }
+  return grid;
+}
+
+// ===== Structured region generation for LITS-friendliness =====
+// Builds regions by partitioning a larger grid into N roughly-equal irregular regions
+// using random splits. Each region is connected and L-shaped / T-shaped / rectangular
+function generateStructuredRegions(rng,size,numRegions){
+  var grid=new Array(size*size);
+  for(var i=0;i<size*size;i++)grid[i]=-1;
+  var regionsCreated=0;
+  var regionSizes={};
+
+  function splitAndTrack(r1,c1,r2,c2,depth){
+    if(depth===0||(r2-r1+1)*(c2-c1+1)<=2){
+      var id=regionsCreated++;
+      for(var r=r1;r<=r2;r++){
+        for(var c=c1;c<=c2;c++){
+          grid[r*size+c]=id;
+        }
+      }
+      regionSizes[id]=(r2-r1+1)*(c2-c1+1);
+      return;
+    }
+    var h=r2-r1+1,w=c2-c1+1;
+    var splitH=h>w;
+    if(h===w)splitH=rng()<0.5;
+    if(splitH&&h>=2){
+      var cut=r1+1+Math.floor(rng()*(h-1));
+      splitAndTrack(r1,c1,cut-1,c2,depth-1);
+      splitAndTrack(cut,c1,r2,c2,depth-1);
+    }else if(w>=2){
+      var cut=c1+1+Math.floor(rng()*(w-1));
+      splitAndTrack(r1,c1,r2,cut-1,depth-1);
+      splitAndTrack(r1,cut,r2,c2,depth-1);
+    }else{
+      var id=regionsCreated++;
+      for(var r=r1;r<=r2;r++){
+        for(var c=c1;c<=c2;c++){
+          grid[r*size+c]=id;
+        }
+      }
+      regionSizes[id]=(r2-r1+1)*(c2-c1+1);
+    }
+  }
+
+  // Use depth that creates more regions than needed, then merge smallest into neighbors
+  // This produces more balanced sizes
+  var targetDepth=Math.ceil(Math.log2(numRegions))+1;
+  // Start with deeper split, then merge down
+  var startDepth=Math.min(7,targetDepth+1);
+  splitAndTrack(0,0,size-1,size-1,startDepth);
+
+  // If we got more regions than needed, merge smallest into neighbors
+  // Use a smarter merge: pick the smallest that has a neighbor of similar size
+  while(regionsCreated>numRegions){
+    // Find smallest region with at least one neighbor
+    var candidates=[];
+    for(var i=0;i<regionsCreated;i++){
+      if(regionSizes[i]>=1){
+        // Find a neighbor
+        var cellsOf=[];
+        for(var r=0;r<size;r++)for(var c=0;c<size;c++){
+          if(grid[r*size+c]===i)cellsOf.push([r,c]);
+        }
+        var hasNeighbor=false;
+        for(var j=0;j<cellsOf.length;j++){
+          var nbrs=neighbors4(cellsOf[j][0],cellsOf[j][1],size);
+          for(var k=0;k<nbrs.length;k++){
+            if(grid[nbrs[k][0]*size+nbrs[k][1]]!==i){hasNeighbor=true;break;}
+          }
+          if(hasNeighbor)break;
+        }
+        if(hasNeighbor)candidates.push(i);
+      }
+    }
+    if(candidates.length===0)break;
+    // Sort by size (smallest first)
+    candidates.sort(function(a,b){return regionSizes[a]-regionSizes[b];});
+    var minId=candidates[0];
+    // Find most common neighbor region
+    var cellsOf=[];
+    for(var r=0;r<size;r++)for(var c=0;c<size;c++){
+      if(grid[r*size+c]===minId)cellsOf.push([r,c]);
+    }
+    var neighborCount={};
+    for(var i=0;i<cellsOf.length;i++){
+      var nbrs=neighbors4(cellsOf[i][0],cellsOf[i][1],size);
+      for(var j=0;j<nbrs.length;j++){
+        var nid=grid[nbrs[j][0]*size+nbrs[j][1]];
+        if(nid!==minId){
+          neighborCount[nid]=(neighborCount[nid]||0)+1;
+        }
+      }
+    }
+    var targetMerge=-1,maxCount=-1;
+    for(var k in neighborCount){
+      if(neighborCount[k]>maxCount){maxCount=neighborCount[k];targetMerge=parseInt(k);}
+    }
+    if(targetMerge<0)break;
+    // Merge minId into targetMerge
+    for(var r=0;r<size;r++)for(var c=0;c<size;c++){
+      if(grid[r*size+c]===minId)grid[r*size+c]=targetMerge;
+    }
+    regionSizes[targetMerge]+=regionSizes[minId];
+    regionSizes[minId]=0;
+    // Renumber
+    var newId=0;
+    var idMap={};
+    for(var i=0;i<regionsCreated;i++){
+      if(regionSizes[i]>0){
+        idMap[i]=newId;
+        newId++;
+      }
+    }
+    for(var r=0;r<size;r++)for(var c=0;c<size;c++){
+      grid[r*size+c]=idMap[grid[r*size+c]];
+    }
+    var newSizes={};
+    for(var k in idMap){newSizes[idMap[k]]=regionSizes[parseInt(k)];}
+    regionSizes=newSizes;
+    regionsCreated=newId;
+  }
+
+  // Add irregularity: sometimes "eat into" a region from a neighbor to create L/T shapes
+  // For each region pair, randomly move boundary cells
+  for(var i=0;i<size*size/3;i++){
+    var r1=Math.floor(rng()*size);
+    var c1=Math.floor(rng()*size);
+    var id1=grid[r1*size+c1];
+    if(id1<0)continue;
+    var nbrs=neighbors4(r1,c1,size);
+    if(nbrs.length<2)continue;
+    var nb1=nbrs[Math.floor(rng()*nbrs.length)];
+    var id2=grid[nb1[0]*size+nb1[1]];
+    if(id2<0||id2===id1)continue;
+    // Check if the regions are roughly the same size
+    if(Math.abs(regionSizes[id1]-regionSizes[id2])>4)continue;
+    // Check moving won't disconnect either region
+    // Simple check: at least one other neighbor of r1,c1 is id1
+    var keepConnected=false;
+    var allNbrs=neighbors4(r1,c1,size);
+    for(var k=0;k<allNbrs.length;k++){
+      if(grid[allNbrs[k][0]*size+allNbrs[k][1]]===id1){
+        keepConnected=true;
+        break;
+      }
+    }
+    if(!keepConnected)continue;
+    // Check nb1,nb2 connection to id2
+    keepConnected=false;
+    allNbrs=neighbors4(nb1[0],nb1[1],size);
+    for(var k=0;k<allNbrs.length;k++){
+      if(grid[allNbrs[k][0]*size+allNbrs[k][1]]===id2){
+        keepConnected=true;
+        break;
+      }
+    }
+    if(!keepConnected)continue;
+    // Swap the two cells
+    grid[r1*size+c1]=id2;
+    grid[nb1[0]*size+nb1[1]]=id1;
+  }
+
+  // Verify all cells are assigned
+  for(var i=0;i<size*size;i++){
+    if(grid[i]<0){
+      var r=Math.floor(i/size),c=i%size;
+      var bestId=0,bestDist=9999;
+      for(var rr=0;rr<size;rr++)for(var cc=0;cc<size;cc++){
+        if(grid[rr*size+cc]>=0){
+          var d=Math.abs(rr-r)+Math.abs(cc-c);
+          if(d<bestDist){bestDist=d;bestId=grid[rr*size+cc];}
+        }
+      }
+      grid[i]=bestId;
+    }
+  }
+
   return grid;
 }
 function neighbors4(r,c,size){
@@ -554,6 +732,30 @@ function findAdjacentRegions(regions,size){
   return out;
 }
 
+// ===== 4-colorability check (graph coloring) =====
+// Returns true if region adjacency graph can be 4-colored (necessary for LITS)
+function isRegion4Colorable(regionAdj,numRegions){
+  var colors=new Array(numRegions);
+  for(var i=0;i<numRegions;i++)colors[i]=-1;
+  function tryColor(idx){
+    if(idx>=numRegions)return true;
+    var adj=regionAdj[idx]||[];
+    for(var c=0;c<4;c++){
+      var ok=true;
+      for(var a=0;a<adj.length;a++){
+        if(colors[adj[a]]===c){ok=false;break;}
+      }
+      if(ok){
+        colors[idx]=c;
+        if(tryColor(idx+1))return true;
+        colors[idx]=-1;
+      }
+    }
+    return false;
+  }
+  return tryColor(0);
+}
+
 // ===== Constraint checks =====
 function has22(shadedSet,size){
   // shadedSet: { 'r,c':true }
@@ -593,47 +795,89 @@ function solvePuzzle(regions,size,regionCells,regionAdj,attempts){
   for(var id in regionCells){
     candidates[id]=findPlacementsInRegion(regions,size,parseInt(id));
   }
-  // Sort regions: smallest candidate count first (MRV)
-  var regionOrder=Object.keys(regionCells).map(function(x){return parseInt(x);});
-  regionOrder.sort(function(a,b){return candidates[a].length-candidates[b].length;});
+  // Filter regions that have at least one valid candidate
+  var validRegions=Object.keys(regionCells).filter(function(x){return candidates[x].length>0;}).map(function(x){return parseInt(x);});
+  if(validRegions.length<Object.keys(regionCells).length)return null;
 
-  // For each region, track which shape categories are still available given neighbors
-  // (We'll compute this dynamically during backtrack)
+  // Pre-check: 4-colorability
+  if(!isRegion4Colorable(regionAdj,validRegions.length))return null;
 
-  function recurse(idx,shaded,placed){
-    if(idx>=regionOrder.length)return true;
-    var rid=regionOrder[idx];
-    var candList=candidates[rid];
-    // Shuffle candidates for variety
-    for(var i=candList.length-1;i>0;i--){
-      var j=Math.floor(Math.random()*(i+1));
-      var tmp=candList[i];candList[i]=candList[j];candList[j]=tmp;
+  // Group placements by category per region for faster neighbor-check
+  function getShuffledCandidates(rid,rngOffset){
+    var arr=candidates[rid].slice();
+    // Deterministic-ish shuffle using rngOffset
+    var r=mulberry32((rngOffset||1)*1009+rid*31);
+    for(var i=arr.length-1;i>0;i--){
+      var j=Math.floor(r()*(i+1));
+      var tmp=arr[i];arr[i]=arr[j];arr[j]=tmp;
     }
+    return arr;
+  }
+
+  // For each placement, precompute: which already-placed regions it touches
+  // (via the boundary). This is the "touch count" for connectivity-aware ordering.
+  // Actually compute it lazily for performance.
+
+  function recurse(order,idx,shaded,placed,attemptSeed){
+    if(idx>=order.length)return true;
+    var rid=order[idx];
+    var candList=getShuffledCandidates(rid,attemptSeed+idx*7);
+    var adj=regionAdj[rid]||[];
+
+    // Compute placed-region set and their cells for "touch" scoring
+    var placedShadedKeys={};
+    for(var pr in placed){
+      var pcells=placed[pr].cells;
+      for(var pi=0;pi<pcells.length;pi++){
+        placedShadedKeys[pcells[pi][0]+','+pcells[pi][1]]=true;
+      }
+    }
+
+    // Score each candidate by how many already-placed cells it touches (for connectivity)
+    var scored=[];
     for(var c=0;c<candList.length;c++){
       var p=candList[c];
       // Check: cat conflicts with placed neighbors?
-      var adj=regionAdj[rid]||[];
       var conflict=false;
       for(var a=0;a<adj.length;a++){
         if(placed[adj[a]]&&placed[adj[a]].cat===p.cat){conflict=true;break;}
       }
       if(conflict)continue;
+      // Count touches to placed regions
+      var touchCount=0;
+      for(var i=0;i<p.cells.length;i++){
+        var nbrs=neighbors4(p.cells[i][0],p.cells[i][1],1000);
+        for(var k=0;k<nbrs.length;k++){
+          var nk=nbrs[k][0]+','+nbrs[k][1];
+          if(placedShadedKeys[nk])touchCount++;
+        }
+      }
+      scored.push({p:p,touch:touchCount});
+    }
+    // Sort by touch count (descending) so we try more-connecting placements first
+    // This is critical for pruning disconnected branches early
+    scored.sort(function(a,b){return b.touch-a.touch;});
+
+    for(var c=0;c<scored.length;c++){
+      var p=scored[c].p;
       // Tentatively place
       var newCells={};
       for(var i=0;i<p.cells.length;i++){
-        shaded[p.cells[i][0]+','+p.cells[i][1]]=true;
-        newCells[p.cells[i][0]+','+p.cells[i][1]]=true;
+        var k=p.cells[i][0]+','+p.cells[i][1];
+        shaded[k]=true;
+        newCells[k]=true;
       }
-      // Quick check 2x2 inside this shape (shouldn't happen for tetrominoes, but safety)
+      // 2x2 check
       if(has22(shaded,size)){
-        // Undo
         for(var k in newCells)delete shaded[k];
         continue;
       }
       placed[rid]=p;
-      // Connectivity check (faster with small shapes)
+      // Connectivity check
       if(isConnected(shaded)){
-        if(recurse(idx+1,shaded,placed))return true;
+        if(recurse(order,idx+1,shaded,placed,attemptSeed)){
+          return true;
+        }
       }
       // Undo
       for(var k in newCells)delete shaded[k];
@@ -641,12 +885,58 @@ function solvePuzzle(regions,size,regionCells,regionAdj,attempts){
     }
     return false;
   }
-  // Try with attempts
+
+  // Build orderings: try BFS-from-smallest first (connectivity-friendly)
+  function buildBFSOrder(startRid){
+    var visited={};
+    visited[startRid]=true;
+    var order=[startRid];
+    var queue=[startRid];
+    while(queue.length>0&&order.length<validRegions.length){
+      var cur=queue.shift();
+      var adj=regionAdj[cur]||[];
+      // Sort adj by candidate count (MRV-ish)
+      var sorted=adj.slice().filter(function(x){return !visited[x];}).sort(function(a,b){
+        return candidates[a].length-candidates[b].length;
+      });
+      for(var i=0;i<sorted.length;i++){
+        var n=sorted[i];
+        if(!visited[n]){
+          visited[n]=true;
+          order.push(n);
+          queue.push(n);
+        }
+      }
+    }
+    // Add any remaining regions
+    for(var i=0;i<validRegions.length;i++){
+      if(!visited[validRegions[i]]){
+        visited[validRegions[i]]=true;
+        order.push(validRegions[i]);
+      }
+    }
+    return order;
+  }
+
+  // Try multiple starting regions (connectivity-friendly)
+  var startCandidates=validRegions.slice().sort(function(a,b){
+    return candidates[a].length-candidates[b].length;
+  });
+  var startsToTry=[];
+  for(var i=0;i<Math.min(3,startCandidates.length);i++){
+    startsToTry.push(startCandidates[i]);
+  }
+  for(var i=0;i<2&&i<validRegions.length;i++){
+    var randStart=validRegions[Math.floor(Math.random()*validRegions.length)];
+    if(startsToTry.indexOf(randStart)<0)startsToTry.push(randStart);
+  }
+
   for(var attempt=0;attempt<attempts;attempt++){
+    var startRid=startsToTry[attempt%startsToTry.length];
+    var order=buildBFSOrder(startRid);
     var shaded={};
     var placed={};
-    if(recurse(0,shaded,placed)){
-      // Build solution: list of placements
+    if(recurse(order,0,shaded,placed,attempt*13+1)){
       var sol=[];
       for(var k in placed)sol.push(placed[k]);
       return sol;
@@ -666,21 +956,30 @@ function getLevelConfig(idx){
 function generateLevel(idx){
   var cfg=getLevelConfig(idx);
   var seed=1337+idx*7919;
-  for(var attempt=0;attempt<20;attempt++){
-    var rng=mulberry32(seed+attempt*31);
-    var regions=generateRegions(rng,cfg.size,cfg.numRegions);
-    var regionCells=buildRegionCells(regions,cfg.size);
-    var regionAdj=findAdjacentRegions(regions,cfg.size);
-    // Skip if any region is too small for any tetromino
-    var skip=false;
-    for(var id in regionCells){
-      if(regionCells[id].length<4){skip=true;break;}
-    }
-    if(skip)continue;
-    // Try solve
-    var sol=solvePuzzle(regions,cfg.size,regionCells,regionAdj,30);
-    if(sol){
-      return{size:cfg.size,regions:regions,regionCells:regionCells,regionAdj:regionAdj,solution:sol,seed:seed+attempt*31};
+  // Try both random and structured region generation
+  var modes=['random','structured'];
+  for(var modeIdx=0;modeIdx<modes.length;modeIdx++){
+    var mode=modes[modeIdx];
+    var maxOuter=cfg.size<=6?15:cfg.size<=8?25:cfg.size<=10?30:50;
+    for(var attempt=0;attempt<maxOuter;attempt++){
+      var rng=mulberry32(seed+modeIdx*1009+attempt*31);
+      var regions=(mode==='random')?
+        generateRegions(rng,cfg.size,cfg.numRegions):
+        generateStructuredRegions(rng,cfg.size,cfg.numRegions);
+      var regionCells=buildRegionCells(regions,cfg.size);
+      var regionAdj=findAdjacentRegions(regions,cfg.size);
+      // Skip if any region is too small for any tetromino
+      var skip=false;
+      for(var id in regionCells){
+        if(regionCells[id].length<4){skip=true;break;}
+      }
+      if(skip)continue;
+      // Try solve with more attempts for larger grids
+      var solveAttempts=cfg.size<=8?80:cfg.size<=10?150:300;
+      var sol=solvePuzzle(regions,cfg.size,regionCells,regionAdj,solveAttempts);
+      if(sol){
+        return{size:cfg.size,regions:regions,regionCells:regionCells,regionAdj:regionAdj,solution:sol,seed:seed+modeIdx*1009+attempt*31};
+      }
     }
   }
   return null;
