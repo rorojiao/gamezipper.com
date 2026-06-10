@@ -3,6 +3,37 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.32.0] - 2026-06-10 (R129 — Dynamic Test Intelligence cron evolution)
+
+### Added
+- 8 new test cases from industry research: Chrome 149 Skia exploited zero-day + Chrome UI spoofing via crafted HTML + Safari 27 beta speechSynthesis + CSS Gap Decorations cross-browser + DBSC cookie theft prevention + casual game FTUE onboarding benchmark + ad frequency immersion break + Safari 27 Apple Intelligence tab auto-organize
+- **S-062 [P0]** Chrome 149 Skia CVE-2026-11024 stack buffer overflow — exploited zero-day (June 9, 2026 Forbes). Skia graphics library heap corruption via crafted HTML. Canvas/WebGL game pages at risk.
+- **S-063 [P1]** Chrome UI spoofing CVE-2026-9110 — compromised renderer can spoof UI via crafted HTML. Monetag ad iframe sandbox validation needed.
+- **B-059 [P1]** Safari 27 beta — speechSynthesis.cancel() fix (bug 46151521) + Apple Intelligence tab auto-organize. Game session state persistence during tab reorganization.
+- **C-063 [P2]** CSS Gap Decorations Chrome 149 — cross-browser rendering divergence. Gap decoration fallback graceful on Safari/Firefox.
+- **S-064 [P2]** Device Bound Session Credentials (DBSC) Chrome 146 — cookie theft prevention. Game session data and monetag cookie compatibility.
+- **G-100 [P1]** Casual game FTUE <3 tap onboarding benchmark 2026 — confusing tutorials are #1 retention killer. Measure tap count from page load to gameplay.
+- **G-101 [P2]** Ad frequency immersion break threshold — players tolerate 1 ad per 90-120s. Flag games with >1 ad per 60s. Natural breakpoint ad placement.
+- **W-129 [P2]** Safari 27 Apple Intelligence tab organization — auto-grouping game tabs may trigger visibility change events. rAF recovery testing.
+
+### Metrics
+- P0: 93 → 94 (+1: S-062)
+- P1: 162 → 165 (+3: S-063, B-059, G-100)
+- P2: 121 → 127 (+4: C-063, S-064, G-101, W-129 from v1.31.0 base, adjusted for v1.31.0 delta)
+- P3: 14 (unchanged)
+- Total unique IDs: 317 → 325 (+8: S-062, S-063, B-059, C-063, S-064, G-100, G-101, W-129)
+
+### Sources
+- **Chrome 149 exploited zero-day**: https://forbes.com/sites/daveywinder/2026/06/09/new-google-chrome-149-update-patches-exploited-zero-day
+- **Chrome UI spoofing CVE-2026-9110**: https://malwarebytes.com/blog/bugs/2026/05/update-chrome-now-critical-bugs-could-let-attackers-run-code
+- **Safari 27 beta release notes**: https://developer.apple.com/documentation/safari-release-notes/safari-27-release-notes
+- **Chrome 149 CSS Gap Decorations**: https://developer.chrome.com/release-notes/149
+- **DBSC Chrome 146**: https://thehackernews.com/search/label/Chrome
+- **Casual game UX benchmark 2026**: https://game-developers.org/mobile-game-genre-breakdown-2026
+- **Ad frequency UX study**: https://medium.com/@eduardozmievski/ux-mobile-casual-game-study-improving-feature-engagement-b3ff86b0d39e
+- **Agentic AI playtesting**: https://thecodersblog.com/agentic-ai-for-game-playtesting-2026
+
+
 ## [v1.31.0] - 2026-06-10 (R127 — Dynamic Test Intelligence cron evolution)
 
 ### Added
