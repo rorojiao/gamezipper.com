@@ -1,73 +1,118 @@
-# BENCHMARK.md — Letter Boxed (NYT-style daily word-chain puzzle)
+# BENCHMARK: Letter Boxed
 
-Slug: letter-boxed
-Category: puzzle / word
-Format: single-file HTML5 Canvas game
-Asset budget: zero images; one inline word-list only
-Authoritative sources cross-checked for this benchmark:
-- NYT Help Center, "Letter Boxed" article (help.nytimes.com/360011158491-.../28527193547028-Letter-Boxed)
-- Wikipedia, "Letter Boxed" (en.wikipedia.org/wiki/Letter_Boxed) — 2019 by Sam Ezersky, third NYT puzzle after Crossword and Spelling Bee
-- NYT Crosswords, "How to Beat Letter Boxed at Its Own Game" (nytimes.com/2022/01/19/crosswords/letter-boxed-tips-and-tricks.html) — #2solve culture
-- WordTips Letter Boxed daily solver (word.tips/letterboxed-todays-hints-answers/) — observed solver output for NYT #2744 (June 9 2026) and #2743 (June 8 2026)
-- Alex-Gberg/letter-boxed-solver on GitHub — reference Python greedy solver using a filtered word list
-- letter-boxed.com (MyArcadePlugin clone) and letterboxedgames.com (live playable clone)
-- Beebom "8 Best Letter Boxed Alternatives" (April 2026)
-- letterborder.com (free archive clone)
-- squaredle.me/letter-boxed-solver (input-by-side solver UI)
+## Game Overview
+- **Slug**: `letter-boxed`
+- **Genre**: Word Puzzle
+- **Core Mechanic**: 12 letters on 4 sides of a square box. Create words where consecutive letters come from different sides. Chain words by starting each with the last letter of the previous. Use all 12 letters in fewest words.
 
----
+## Competitors
 
-## 1. Target Game Overview
+### 1. NYT Letter Boxed (Original)
+- **Platform**: Web + Mobile App (iOS/Android)
+- **Creator**: Sam Ezersky
+- **Price**: Free daily, $25/yr subscription for archive
+- **Rating**: 4.5★, 131K reviews
+- **Features**:
+  - Hand-crafted daily puzzles
+  - Curated dictionary validation
+  - Stats tracking (streak, solve rate)
+  - Share results (emoji grid)
+  - Solution reveal (next day)
+  - Clean minimal UI with letter box visual
+  - Touch and keyboard input
+  - Color-coded sides (4 colors)
 
-### What is NYT Letter Boxed?
+### 2. Letter Boxed by Kuantark (Android)
+- **Platform**: Android
+- **Price**: Free + Ads
+- **Features**:
+  - 177K word offline dictionary
+  - Hint system (reveal letters)
+  - Daily puzzles + archive
+  - Offline-first mobile-native
+  - Dark/light theme
 
-NYT **Letter Boxed** is a daily word-chain puzzle published by The New York Times Games team. It was created by Sam Ezersky (the same editor who later created Spelling Bee's sibling mechanics) and soft-launched in 2018 before official release on February 1, 2019 — the third puzzle added to nytimes.com/games after the daily Crossword and Spelling Bee. The game is a subscription feature (NYT Games / All Access / Home Delivery).
+### 3. Stitch-uations by ChazWinter (Web)
+- **Platform**: Web (React + AWS)
+- **Price**: Free / Open Source
+- **Features**:
+  - Full NYT puzzle archive
+  - 15 language support
+  - Custom puzzle creation
+  - Solution generator (backtracking)
+  - Most feature-rich competitor
 
-### Board layout
+### 4. Letter Cubed (Web)
+- **Platform**: Web (single HTML file)
+- **Price**: Free
+- **Features**:
+  - 3D rotating cube variant
+  - Canvas rendering
+  - Minimal single-file implementation
 
-- A **square with 4 sides** (top, right, bottom, left)
-- **3 letters per side = 12 letters total** (letters may repeat across sides but are placed once each)
-- Letters sit on the four edges, drawn as colored dots or tile glyphs in the NYT color palette
-- The center of the square is empty and used to render the current word being typed
+### 5. Letterlike (iOS + Android)
+- **Platform**: iOS + Android
+- **Price**: Paid
+- **Features**:
+  - Roguelike + word game hybrid
+  - Procedural generation
+  - Progression system
 
-### Word-formation rules (verbatim from NYT Help Center)
+## Feature Comparison Matrix
 
-1. **Connect letters to spell words.** Pick any letter on the box to start; each next letter must come from the square (no off-board letters).
-2. **Words must be at least 3 letters long.**
-3. **Letters can be reused, but consecutive letters cannot be from the same side.** This is the defining constraint. It forbids words like "BRILLIANTLY", "FORMATTED", "DAZZLE" — any word whose two adjacent letters live on the same edge of the box.
-4. **The last letter of a word becomes the first letter of the next word.** Canonical NYT example: HERE > EVERY > YEAR (H starts on side A, lands on E from side B, then R must come from a different side from E, then E from a different side from R, etc.).
-5. **Select Enter after creating a word** to commit it to the bank and start the next word.
-6. **Words cannot be proper nouns or hyphenated; adjectives are accepted.**
-7. **Letter Boxed words are curated by editors — the game may not include all words present in a dictionary.** This is critical for our word-list strategy.
+| Feature | NYT | Kuantark | Stitch | Letter Cubed | Ours Target |
+|---------|-----|----------|--------|-------------|-------------|
+| Daily puzzle | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Puzzle archive | ✅ | ✅ | ✅ | ❌ | ✅ (30+) |
+| Hint system | ✅ | ✅ | ❌ | ❌ | ✅ |
+| Stats tracking | ✅ | ✅ | ❌ | ❌ | ✅ |
+| Share results | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Solution reveal | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Custom puzzles | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Multi-language | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Tutorial | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Sound effects | ❌ | ❌ | ❌ | ❌ | ✅ |
+| BGM | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Mobile responsive | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Animations | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Color-coded sides | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Word definitions | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Combo scoring | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Progression system | ❌ | ❌ | ❌ | ✅ | ✅ |
 
-### Win condition
+## Implementation Targets
 
-- **Use all 12 letters at least once**, in **as few words as possible**.
-- NYT publishes a daily **par score** ("try to solve in N words"). Most days par is **3, 4, 5, or 6**. A **2-solve** is the community's badge of honor (the #2solve hashtag on X/Twitter); a **1-solve is impossible** because a single word cannot contain all 12 distinct letters while staying ≥3 and respecting the side-switch rule.
-- NYT tracks a single in-game label at completion: "perfect" / "great" / "good" style descriptors keyed off whether you matched par. **NYT does NOT publish per-account statistics for Letter Boxed** as of June 2026 (per the official help article: "Letter Boxed does not have statistics at this time") — this is a major differentiator vs. Spelling Bee/Wordle/Connections and an opportunity for us.
+### Must-Have Systems (from all competitors)
+1. **Letter Box UI** — 12 letters arranged on 4 sides of a square, each side a different color
+2. **Word Validation** — Large embedded dictionary (top 50K English words)
+3. **Side Constraint** — Consecutive letters must come from different sides
+4. **Word Chaining** — Each word starts with the last letter of previous word
+5. **Win Condition** — Use all 12 unique letters across all words in a puzzle
+6. **Scoring** — Fewer words = better (2-word solutions = perfect, 3 = excellent, 4+ = good)
+7. **Daily Puzzle** — Date-seeded puzzle generation
+8. **Puzzle Archive** — 30+ hand-crafted puzzles with difficulty progression
+9. **Hint System** — Reveal one letter of the solution
+10. **Stats** — Streak, solve rate, best score, puzzles played
+11. **Share Results** — Copy emoji grid to clipboard
+12. **Tutorial** — Step-by-step interactive tutorial
 
-### Daily cadence
+### Nice-to-Have (differentiators)
+1. **Combo scoring** — Bonus points for longer words
+2. **Word definitions** — Show definition after each word
+3. **Particle effects** — Celebrations on solve
+4. **Sound design** — Procedural audio feedback
+5. **Star ratings** — 1-3 stars per puzzle based on word count
 
-- One puzzle published **daily at 3:00 a.m. EST**.
-- After completion, a "Yesterday" menu item reveals a **two-word solution for the previous day's puzzle** (a built-in spoiler-protected second chance).
+### Visual Style
+- Dark gradient background (GameZipper style)
+- 4 distinctly colored sides (neon colors: pink, cyan, lime, amber)
+- Smooth letter selection animations
+- Word chain visualization
+- Particle celebration on puzzle completion
 
-### Where it ships
-
-- Web: nytimes.com/puzzles/letter-boxed
-- iOS/Android: NYT Games app and News app
-- No public API; the daily puzzle is gated by NYT auth cookies and not exposed to third parties.
-
-### Aesthetic & feel
-
-- Cream / off-white background, NYT brand typography (Cheltenham serif headers + Franklin Gothic sans for UI)
-- Letters drawn as large rounded circles in the four signature colors (one color per side — typically red/yellow/blue/green or similar)
-- Subtle click on letter pick, soft chime on word commit, satisfying completion flourish
-- Dark theme toggle available in app; web is light-mode only
-
-### Cultural footprint
-
-- Cited by Harvard Crimson, Vanity Fair, Axios, and Press Gazette as one of the quiet revenue drivers behind the NYT's "casual games" subscription strategy (~300k net new digital subs in a single quarter, partly attributed to games).
-- Spawned an active Twitter/X community posting **2-solves** (often encoded in binary or emoji to avoid spoiling other players).
-- Featured in NYT Crosswords' own "How to Beat Letter Boxed" column (Jan 2022).
-
----
+### Scoring Formula
+- **Base**: 1000 points per puzzle
+- **Word bonus**: 100 × (6 - word_count) for solutions ≤ 5 words
+- **Length bonus**: word_length × 10 per word
+- **Time bonus**: max(0, 300 - seconds_elapsed)
+- **Stars**: 3★ ≤ 2 words, 2★ ≤ 3 words, 1★ ≤ 5 words
