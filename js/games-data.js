@@ -319,7 +319,7 @@ const GAMES = [
 {name:"Pips",emoji:"🎲",cat:"puzzle",tags:["logic","domino","brain-teaser","daily-puzzle"],url:"/pips/",desc:"Place dominoes on colored regions to satisfy math conditions in this addictive logic puzzle",isNew:true,status:"live"},
 {name:"Numberlink",emoji:"🔗",cat:"puzzle",tags:["logic","nikoli","grid","path","connect","brain"],url:"/numberlink/",desc:"Play Numberlink puzzle online free! Connect matching numbers by drawing paths. 30 levels plus daily challenge. No download needed.",isNew:true,status:"live"},
 {name:"Tatamibari",emoji:"🟠",cat:"puzzle",tags:["logic","nikoli","grid","partition","brain","tatami","rectangle"],url:"/tatamibari/",desc:"Play Tatamibari free online! A Nikoli grid-partition puzzle - divide the grid into rectangles matching +, -, | symbols. 30 levels.",isNew:true,status:"live"},
-{name:"4 Pics 1 Word",emoji:"🔤",cat:"puzzle",tags:["word","emoji","picture","brain","guess"],url:"/four-pics-one-word/",desc:"Guess the word from 4 emoji pictures in this addictive word puzzle game. Test your brain with 30 levels of increasing difficulty!",isNew:true,status:"live"},
+{name:"4 Pics 1 Word",emoji:"🔤",cat:"puzzle",tags:["word","emoji","picture","brain","guess"],url:"/four-pics-one-word/",desc:"Guess the word from 4 emoji pictures in this addictive word puzzle game. Test your brain with 80 levels of increasing difficulty!",isNew:true,status:"live"},
 ];
 
 /**
