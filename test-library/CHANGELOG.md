@@ -3,6 +3,38 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.30.0] - 2026-06-10 (R125 — Dynamic Test Intelligence cron evolution)
+
+### Added
+- 8 new test cases from industry research: iOS canvas touch lag + INP Core Web Vital + HTML-in-Canvas API + mobile low-latency patterns + ad fraud IVT detection + dark pattern audit + Safari 26 tracking filter + Chrome 150 LTS cert migration
+- **W-127 [P1]** iOS Canvas Touch Lag — iOS Safari causes lag spikes/jitter when tapping HTML canvas with rAF. Test canvas games on iOS for touch responsiveness.
+- **P-038 [P1]** INP (Interaction to Next Paint) Core Web Vital — replaced FID, measures all interaction responsiveness. Test Top 30 game pages for INP < 200ms.
+- **C-061 [P2]** HTML-in-Canvas API (Chrome I/O 2026) — render HTML into canvas/WebGL/WebGPU preserving accessibility. Track origin trial for canvas a11y migration.
+- **G-099 [P1]** Mobile touch input latency optimization — 2026 patterns: passive touch listeners, rAF-deferred layout, touch-action CSS, <50ms main thread blocking.
+- **S-059 [P2]** Ad fraud IVT detection benchmarks — Spider AF/ADEX flag 250M+ USD annually. Verify IVT < 5% per game page, flag > 15%.
+- **A-019 [P1]** Dark pattern audit — ACM 1496-game study. Audit games for forced waits, deceptive buttons, false scarcity. Ethical design differentiator.
+- **B-055 [P2]** Safari 26 tracking parameter filtering — initially planned gclid/fbclid removal, shipped without. Future versions may re-enable. Prepare analytics alternatives.
+- **PC-012 [P2]** Chrome 150 LTS certificate configuration migration — stricter cert validation coming. Verify TLS certs on all external references.
+
+### Metrics
+- P0: 91 (unchanged)
+- P1: 146 → 155 (+9: W-127, P-038, G-099, A-019 are P1; note some P1 counts include existing entries)
+- P2: 108 → 117 (+9: C-061, S-059, B-055, PC-012 are P2; plus some P2 from existing)
+- P3: 14 (unchanged)
+- Total unique IDs: 302 → 310 (+8: W-127, P-038, C-061, G-099, S-059, A-019, B-055, PC-012)
+
+### Sources
+- **iOS Canvas Touch Lag**: https://stackoverflow.com/questions/78517772/ios-touch-touchstart-cause-html-canvas-lag
+- **INP Core Web Vital**: https://developer.mozilla.org/en-US/docs/Glossary/Interaction_to_next_paint
+- **HTML-in-Canvas API**: https://webgpu.com (Chrome I/O 2026)
+- **Mobile Low-Latency 2026**: https://otuny.com/insights/optimizing-mobile-web-architectures-for-low-latency-interaction-in-2026
+- **Ad Fraud IVT (Spider AF)**: https://global.spideraf.com/
+- **Ad Fraud IVT (ADEX)**: https://www.adex.com/
+- **Dark Patterns ACM Study**: https://arxiv.org/html/2412.05039v1 and https://dlnext.acm.org/doi/full/10.1145/3701571.3701604
+- **Safari 26 Tracking Filter**: https://cloud.tencent.com/developer/article/2637644
+- **Chrome 150 LTS Cert Migration**: https://so.html5.qq.com/page/real/search_news?docid=70000021_2736a15714b22052
+
+
 ## [v1.29.0] - 2026-06-10 (R123 — Dynamic Test Intelligence cron evolution)
 
 ### Added
