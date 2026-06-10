@@ -3,6 +3,31 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.31.0] - 2026-06-10 (R127 — Dynamic Test Intelligence cron evolution)
+
+### Added
+- 7 new test cases from industry research: Chrome 149.0.7827.102/103 mega-patch 74-CVE regression testing + V8 exploited-in-wild CVE + GPU/Skia rendering + Dawn/WebGPU stability + Chrome Extended Stable + Firefox Focus iOS + WebCodecs/Media
+- **B-056 [P0]** Chrome 149.0.7827.102/103 mega-patch 74-CVE regression — 17 Critical + 53 High + 2 Medium CVEs. Test Top 30 games for canvas artifacts, WebGL context loss, gamepad input, fullscreen, Service Worker failures.
+- **S-060 [P0]** V8 CVE-2026-11645 OOB memory access — exploited in the wild ($55K bounty). Game JS engine risk on Chrome 149.
+- **B-057 [P1]** GPU OOB write CVE-2026-11672 + Skia CVE-2026-11663/11675 — game rendering regression for WebGL/WebGPU canvas games on Chrome 149.
+- **C-062 [P1]** Dawn/WebGPU CVE-2026-11665/11676/11687 — WebGPU game stability. Three Dawn CVEs patched. Test WebGPU games for crashes, verify WebGL2 fallback.
+- **W-128 [P1]** Chrome Extended Stable 148.0.7778.254 — game page rendering regression. Enterprise/education users on v148 branch.
+- **B-058 [P2]** Firefox Focus iOS CVE-2026-11799 (MFSA 2026-55) — mobile privacy browser game testing. Verify Monetag, game-footer, canvas on Firefox Focus.
+- **S-061 [P2]** WebCodecs UAF CVE-2026-11683 + Media CVE-2026-11655/11669/11690 — media-heavy game impact. Video cutscenes, WebAudio, animated sprites.
+
+### Metrics
+- P0: 91 → 93 (+2: B-056, S-060)
+- P1: 155 → 162 (+7: B-057, C-062, W-128 + adjustments)
+- P2: 117 → 121 (+4: B-058, S-061 + adjustments)
+- P3: 14 (unchanged)
+- Total unique IDs: 310 → 317 (+7: B-056, S-060, B-057, C-062, W-128, B-058, S-061)
+
+### Sources
+- **Chrome 149.0.7827.102/103 Stable Update**: https://chromereleases.googleblog.com/2026/06/stable-channel-update-for-desktop_0153744567.html
+- **Chrome Extended Stable 148.0.7778.254**: https://chromereleases.googleblog.com/2026/06/extended-stable-updates-for-desktop_01900035594.html
+- **Firefox Focus iOS MFSA 2026-55**: https://www.mozilla.org/en-US/security/advisories/mfsa2026-55/
+
+
 ## [v1.30.0] - 2026-06-10 (R125 — Dynamic Test Intelligence cron evolution)
 
 ### Added
