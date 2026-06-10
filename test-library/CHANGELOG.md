@@ -3,6 +3,37 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.29.0] - 2026-06-10 (R123 — Dynamic Test Intelligence cron evolution)
+
+### Added
+- 8 new test cases from industry research: Firefox 150 Nova + WebGPU benchmarks + Unity 6 Nginx black screen + Firefox ESR legacy + CVE weaponization + anti-detect fraud + MDN mobile accessibility + Phaser AUTO mode
+- **B-054 [P1]** Firefox 150 "Nova" major 5-year redesign — 9% speed improvement + AI kill switch + enhanced privacy. Test Top 30 games for rendering compatibility, localStorage persistence, and footer/ad script loading on Firefox 150+.
+- **P-037 [P1]** WebGPU 22% frame rate stability benchmark (IDC 2026 Q1) — 60fps stable vs WebGL 45fps + 18%+ mobile games in production. Establish GameZipper migration priority by game category (particle/physics-heavy → immediate benefit).
+- **C-059 [P2]** Unity 6 WebGPU export Nginx black screen — exports fail when served via Nginx (Cloudflare CDN). Firefox Nightly crashes on WebGPU. Verify WebGL2 fallback actually renders, not silent black canvas.
+- **W-126 [P2]** Firefox 115 ESR legacy browser support to August 2026 — Win7/8.1/macOS 10.12-10.14 users. Test Top 30 games on Firefox 115 ESR for zero console errors + no reliance on post-115 APIs.
+- **S-057 [P2]** Rapid CVE weaponization — Langflow CVE-2026-33017 exploited within 20h of disclosure. FIRST predicts 100K+ CVEs in 2026. Establish 24h dependency update SLA for critical (CVSS ≥9.0) vulnerabilities.
+- **S-058 [P2]** AI anti-detect browser fraud — ISO 27001 certified fingerprint browsers with AI agents. Evaluate Monetag IVT detection against anti-detect patterns. Flag games with >15% IVT rate.
+- **A-018 [P1]** MDN Mobile Accessibility Checklist March 2026 — contrast 4.5:1/3:1, ARIA roles for game controls, focus management, content visibility rules. W3C Mobile A11y TF actively maintained (147 commits).
+- **C-060 [P2]** Phaser.js AUTO rendering mode — WebGL+Canvas dual fallback as recommended HTML5 game compatibility pattern. Establish as standard for new game development template.
+
+### Metrics
+- P0: 91 (unchanged)
+- P1: 146 → 149 (+3: B-054, P-037, A-018)
+- P2: 103 → 108 (+5: C-059, W-126, S-057, S-058, C-060)
+- P3: 14 (unchanged)
+- Total unique IDs: 367 → 375 (8 new: B-054, P-037, C-059, W-126, S-057, S-058, A-018, C-060)
+
+### Sources
+- **Firefox 150 Nova redesign**: https://so.html5.qq.com/page/real/search_news?docid=70000021_2136a0fdb1134152
+- **WebGPU 22% stability + IDC benchmarks**: https://www.lcxw.cn/39@wiki/ZoCGH
+- **Unity 6 WebGPU Nginx black screen**: https://developer.unity.cn/ask/question/6778d29fedbc2a001efec7c3
+- **Firefox 115 ESR extended**: https://so.html5.qq.com/page/real/search_news?docid=70000021_66969b2122136352
+- **Rapid CVE weaponization (Docker + Langflow)**: https://so.html5.qq.com/page/real/search_news?docid=70000021_63969d701e048852
+- **AI anti-detect browsers**: https://so.html5.qq.com/page/real/search_news?docid=70000021_56569de3f5d87052 + https://so.html5.qq.com/page/real/search_news?docid=70000021_86369ddf17966652
+- **MDN Mobile Accessibility Checklist**: https://developer.mozilla.org/en-US/docs/Web/Accessibility/Guides/Mobile_accessibility_checklist
+- **W3C Mobile A11y Task Force**: https://w3c.github.io/Mobile-A11y-TF-Note/
+- **Phaser.js AUTO rendering**: https://cloud.tencent.com/developer/article/1467947
+
 ## [v1.28.0] - 2026-06-10 (R121 — Dynamic Test Intelligence cron evolution)
 
 ### Added
