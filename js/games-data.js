@@ -322,8 +322,7 @@ const GAMES = [
 {name:"4 Pics 1 Word",emoji:"🔤",cat:"puzzle",tags:["word","emoji","picture","brain","guess"],url:"/four-pics-one-word/",desc:"Guess the word from 4 emoji pictures in this addictive word puzzle game. Test your brain with 80 levels of increasing difficulty!",isNew:true,status:"live"},
 {name:"Zen Tiles",emoji:"🀄",cat:"puzzle",tags:["tile","match","zen","daily","chain"],url:"/nyt-tiles/",desc:"Match tiles by shared visual layers in this relaxing zen puzzle. 30 levels, daily puzzles, chain combos, and power-ups.",isNew:true,status:"live"},
 {name:"Ripple Effect",emoji:"🌊",cat:"puzzle",tags:["logic","nikoli","number","grid","brain","daily","hakyuu"],url:"/ripple-effect/",desc:"Play Ripple Effect puzzle online free! A Nikoli logic puzzle - fill numbered rooms where matching numbers must be spaced apart. 30 levels plus daily challenge.",isNew:true,status:"live"},{name:"LITS",emoji:"🧩",cat:"puzzle",tags:["lits","nuruomino","tetromino","logic","nikoli","grid"],url:"/lits/",desc:"Play LITS puzzle online - shade tetromino shapes in regions following logic rules. Free Nikoli-style brain teaser with 30 levels.",isNew:true,status:"live"},{name:"Hotaru Beam",emoji:"\xf0\x9f\x94\xa5",cat:"puzzle",tags:["hotaru beam","firefly","nikoli","logic","beam","path","grid","japanese"],url:"/hotaru-beam/",desc:"Play Hotaru Beam puzzle online free! A Nikoli logic puzzle - draw firefly beam paths connecting circles with bend count constraints. 30 handcrafted levels.",isNew:true,status:"live"},
-{name:"Country Road",emoji:"🛤️",cat:"puzzle",tags:["country road","nikoli","logic","loop","path","grid","japanese","brain"],url:"/country-road/",desc:"Play Country Road puzzle online free! A Nikoli logic loop puzzle - draw a single continuous loop through rooms matching number clues. 30 levels plus daily challenge.",isNew:true,status:"live"}
-
+{name:"Country Road",emoji:"🛤️",cat:"puzzle",tags:["country road","nikoli","logic","loop","path","grid","japanese","brain"],url:"/country-road/",desc:"Play Country Road puzzle online free! A Nikoli logic loop puzzle - draw a single continuous loop through rooms matching number clues. 30 levels plus daily challenge.",isNew:true,status:"live"},{name:"Bag Corral",emoji:"🔲",cat:"puzzle",tags:["Puzzle","Logic","Loop","Nikoli","Grid","Daily","Brain Teaser","Casual"],url:"/bag-puzzle/",desc:"Draw a single loop around numbered cells. Each number shows visible cells in that direction. 30 levels + daily puzzle. A Nikoli logic puzzle. Play free online!",isNew:true,status:"live"},
 ];
 
 /**
@@ -347,3 +346,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+
