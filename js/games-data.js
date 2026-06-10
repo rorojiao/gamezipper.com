@@ -320,6 +320,7 @@ const GAMES = [
 {name:"Numberlink",emoji:"🔗",cat:"puzzle",tags:["logic","nikoli","grid","path","connect","brain"],url:"/numberlink/",desc:"Play Numberlink puzzle online free! Connect matching numbers by drawing paths. 30 levels plus daily challenge. No download needed.",isNew:true,status:"live"},
 {name:"Tatamibari",emoji:"🟠",cat:"puzzle",tags:["logic","nikoli","grid","partition","brain","tatami","rectangle"],url:"/tatamibari/",desc:"Play Tatamibari free online! A Nikoli grid-partition puzzle - divide the grid into rectangles matching +, -, | symbols. 30 levels.",isNew:true,status:"live"},
 {name:"4 Pics 1 Word",emoji:"🔤",cat:"puzzle",tags:["word","emoji","picture","brain","guess"],url:"/four-pics-one-word/",desc:"Guess the word from 4 emoji pictures in this addictive word puzzle game. Test your brain with 80 levels of increasing difficulty!",isNew:true,status:"live"},
+{name:"Zen Tiles",emoji:"🀄",cat:"puzzle",tags:["tile","match","zen","daily","chain"],url:"/nyt-tiles/",desc:"Match tiles by shared visual layers in this relaxing zen puzzle. 30 levels, daily puzzles, chain combos, and power-ups.",isNew:true,status:"live"},
 ];
 
 /**

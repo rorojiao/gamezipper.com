@@ -1,0 +1,137 @@
+Build a complete, commercial-quality HTML5 game: NYT Tiles (nyt-tiles)
+
+## Game Overview
+NYT Tiles is a relaxing tile-matching puzzle game where players tap pairs of tiles that share visual elements to clear them. Key mechanic: select tile A, then select tile B - all visual elements common to BOTH tiles are cleared from both. Tiles do NOT need to be adjacent. Build chains to clear the entire board.
+
+## Core Gameplay Mechanics
+1. **4-Layer Grid System**: 45 tiles total (9+12+12+12), layered A1-A9 / B1-B12 / C1-C12 / D1-D12
+2. **Shared Element Wipe**: Select tile A, then tile B → all matching elements cleared from both tiles
+3. **Chain System**: Continue selecting pairs without breaking streak. Empty tiles don't break combo.
+4. **Perfect Clear Bonus**: Clear entire board without breaking the chain
+5. **Tile Elements**: Emoji/unicode symbols (4-6 elements per tile) in themed categories
+6. **Daily Puzzle**: Date-seeded puzzle rotation (refreshes at 12am EST)
+7. **Practice Mode**: 30+ practice levels with curated tile sets
+
+## Competitor Systems to Match
+From BENCHMARK.md analysis:
+- **Tile Club**: 100M+ downloads, 10K+ levels, 4.7★ rating
+- **Zen Tiles-Mahjong Match**: 1M+ downloads, Zen mode focus, 4.8★ rating
+- **Tiletopia**: 4.9★ rating, subscription model benchmark
+
+### Required Systems
+- **Scoring**: Chain multiplier (combo streak), perfect clear bonus, time bonus
+- **Hints**: Reveal a valid match (max 3 hints per puzzle)
+- **Shuffle**: Rearrange remaining tiles (max 2 per puzzle)
+- **Undo**: Go back one move (max 5 per puzzle)
+- **Progress Save**: localStorage with version field, track: wins, perfect clears, best streak, puzzles played
+- **Tutorial**: First-time overlay explaining the mechanics
+- **Stats Tracking**: Win rate, perfect clear rate, best streak, puzzles completed
+
+## Technical Requirements
+- Single file: nyt-tiles/index.html (self-contained, no external deps except CDN fonts)
+- Canvas-based rendering with smooth 60fps animations
+- Frame-rate independent logic (delta time)
+- Responsive: desktop (1280x720) and mobile (390x844)
+- Touch support: touch-action:none on canvas, pointer events
+- Mobile-first: large tap targets (min 44px)
+- Web Audio API: procedural BGM + SFX (click, match, chain, perfect clear, win, error)
+
+## Game Design (欧美用户口味)
+- Clean modern UI with gradient backgrounds (GameZipper dark style)
+- Satisfying feedback: particles on match, screen shake on chain break, combo animations
+- Progressive difficulty: easy starter levels → challenging multi-element tiles
+- Zen mode option: no timer, relaxed gameplay
+- Dark theme support (toggle)
+- Multiple tilesets: Animals, Nature, Food, Sports, Travel, Music
+
+## Level Design (30+ Practice Levels)
+- **Easy (Levels 1-10)**: 2-3 elements per tile, 12-16 tiles total, minimal overlapping
+- **Medium (Levels 11-20)**: 3-4 elements per tile, 20-24 tiles, moderate complexity
+- **Hard (Levels 21-30)**: 4-6 elements per tile, 28-32 tiles, deep overlapping chains
+- **Daily Puzzle**: 45 tiles (4 layers), date-seeded PRNG, rotates daily
+
+### Level Data Structure
+Each level defines: tile count, tileset theme, elements per tile, difficulty tier, solution path (for validation)
+Example:
+```javascript
+const LEVELS = [
+  { id: 1, tiles: 12, elements: 3, theme: 'animals', difficulty: 'easy' },
+  { id: 2, tiles: 16, elements: 3, theme: 'nature', difficulty: 'easy' },
+  // ...
+];
+```
+
+## Quality Standards
+- Single cleanup entry point for all exit paths
+- All timers tracked and cancelled on cleanup
+- No memory leaks: cleanup listeners, rAF, audio nodes
+- Duplicate-click prevention
+- Save state with version field: `{v:1, wins:0, perfectClears:0, bestStreak:0, played:0, lastDaily:null}`
+- ALL levels must be completable — validate level data integrity
+- Chain system: track combo streak, break on invalid move, visualize chain length
+
+## Visual Style
+- Dark gradient background (#0a0a1a to #1a1a2e)
+- Neon accent colors for chains (#00ff88 for active, #ff6b6b for break)
+- Smooth CSS transitions/animations for tile selection
+- Particles: small emoji fragments flying from matched tiles
+- Text shadows (NEVER -webkit-text-stroke)
+- Rounded corners, subtle shadows, glass-morphism on panels
+- Emoji-based tile elements (scalable, no external assets)
+- Title: "NYT Tiles" subtitle "Match Pairs. Build Chains."
+
+## Audio System (Web Audio API)
+- **BGM**: Ambient relaxing loop (slow tempo, soft pads, ethereal feel) - toggleable
+- **SFX**: 
+  - Tile click (short tap)
+  - Match success (chime)
+  - Chain increment (ascending tone)
+  - Chain break (downward slide)
+  - Perfect clear (fanfare)
+  - Win (celebration chord)
+  - Error (low buzz)
+  - Hint use (soft sparkle)
+  - Shuffle (whoosh)
+  - Undo (reverse swoosh)
+
+## Analytics & SEO
+- `<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=nyt-tiles'></script>`
+- JSON-LD structured data (VideoGame + FAQPage + HowTo + BreadcrumbList)
+- og:title, og:description, og:image
+- Canonical URL: https://gamezipper.com/nyt-tiles/
+- overflow-x:hidden and user-select:none on body
+- Title: "Play NYT Tiles Online Free - Relaxing Tile Matching Puzzle | GameZipper"
+
+## Game States
+- TITLE: Main menu with Play, Daily, Settings buttons
+- LEVEL_SELECT: Grid of 30 practice levels with star ratings
+- GAMEPLAY: Active tile matching
+- TUTORIAL: Overlay explaining mechanics (first visit)
+- WIN: Victory screen with score + stats
+- PAUSED: Pause menu (Resume, Restart, Quit)
+
+## Implementation Priority
+1. Core tile selection + matching logic (shared element detection)
+2. Grid rendering + layer system
+3. Chain tracking + scoring
+4. Level progression + win detection
+5. Audio system (BGM + SFX)
+6. Particle effects
+7. Tutorial overlay
+8. Progress save (localStorage)
+9. Daily puzzle (date-seeded PRNG)
+10. Power-ups (Hint, Shuffle, Undo)
+11. Stats tracking
+12. Zen mode + Dark theme toggles
+13. Responsive mobile optimization
+
+## Critical Implementation Details
+- **Shared Element Detection**: Use Set intersection - match = tileA.elements ∩ tileB.elements
+- **Chain Validation**: Empty tiles in path don't break streak (only invalid selections break)
+- **Tile Element Storage**: Array of emoji strings per tile, e.g., `['🌟', '🔥', '⭐']`
+- **Seeded PRNG for Daily**: Use mulberry32 or similar with YYYY-MM-DD seed
+- **Canvas Layers**: Draw tiles from bottom layer (D) to top (A) for correct z-order
+- **Touch Handling**: Use pointerdown/pointerup for unified touch + mouse support
+- **Performance**: Batch canvas redraws, use requestAnimationFrame with delta time
+
+Build the complete game now. Ensure all 30+ practice levels are solvable with at least one valid solution path. Include the daily puzzle system with date seeding.
