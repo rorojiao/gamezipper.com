@@ -3,6 +3,34 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.39.0] - 2026-06-12
+### Added
+- 8 new test cases from Dynamic Test Intelligence R143 cron research
+- S-079: Web Audio API autoplay policy first-load silence detection across 280+ games
+- S-080: Chrome V8 OOB zero-day CVE-2026-11645 actively exploited CISA KEV game JS resilience
+- C-071: Edge 149 Collections/Sidebar removal viewport calculation impact
+- G-107: Agentic AI autonomous playtesting pipeline evaluation
+- G-108: Mobile casual game ad immersion-break frequency threshold audit
+- G-109: AI adaptive difficulty badge/feature detection for game catalog
+- W-132: Web Audio autoplay navigator.getAutoplayPolicy() wrapper pattern for 280+ games
+- B-067: Android June 2026 security update touch/WebAudio regression testing
+
+### Sources
+- MDN getAutoplayPolicy API: https://developer.mozilla.org/en-US/docs/Web/API/Navigator/getAutoplayPolicy
+- Moonjump Web Audio autoplay bug: https://moonjump.com/forum/coding/web-audio-api-autoplay-policy-broke-my-game-on-first-load-anyone-got-a-clean-pattern-for-this-6227f0
+- Jamzo fix-web-audio-autoplay: https://jamzo.com/blog/fix-web-audio-autoplay
+- CISA CVE-2026-11645 Chrome V8 zero-day: https://cybersecuritynews.com/google-chromium-0-day-vulnerability-exploit/amp
+- SOCRadar CVE-2026-11645: https://socradar.io/blog/cve-2026-11645-chrome-v8-bug
+- Edge 149 Collections removal: https://windowslatest.com/2026/06/06/microsoft-just-killed-edges-collections-and-sidebar-for-more-copilot-after-years-of-pushing-both-features
+- Edge security release notes: https://learn.microsoft.com/en-us/DeployEdge/microsoft-edge-relnotes-security
+- Agentic AI playtesting: https://thecodersblog.com/agentic-ai-for-game-playtesting-2026
+- WeTest GDC 2026: https://wetest.net/blog/wetest-at-gdc-2026-1186.html
+- Casual game UX ad study: https://medium.com/@eduardozmievski/ux-mobile-casual-game-study-improving-feature-engagement-b3ff86b0d39e
+- Gaming UX design 2026: https://simcookie.com/2026/04/01/the-role-of-ux-design-in-online-gaming-platforms
+- BinkPlay casual gaming trends 2026: https://binkplay.com/en/blog/casual-gaming-trends-what-players-want-in-2026
+- Game UX guide 2026 AI adaptive difficulty: https://boundev.ai/blog/game-ux-design-guide-2026
+- Google Android June 2026 security update: https://techrepublic.com/article/news-google-june-2026-android-security-update
+
 ## [v1.38.0] - 2026-06-12
 ### Added
 - 9 new test cases from Dynamic Test Intelligence R141 cron research
