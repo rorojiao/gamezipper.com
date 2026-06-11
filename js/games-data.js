@@ -328,6 +328,7 @@ const GAMES = [
 {name:"Sandtrix",emoji:"🏖️",cat:"puzzle",tags:["sandtrix","sand","tetris","physics","block puzzle","falling sand","arcade"],url:"/sandtrix/",desc:"Play Sandtrix online free! Falling blocks crumble into colored sand particles. Sand physics simulation meets Tetris. Fill rows to clear them. Unique puzzle game, no download!",isNew:true,status:"live"},
 {name:"Meowdoku",emoji:"🐱",cat:"puzzle",tags:["logic","cats","sudoku","brain-teaser","star-battle"],url:"/meowdoku/",desc:"Place cats on the grid - one per row, column, and region. Pure logic puzzle with daily challenges and cat collection.",isNew:true,status:"live"},
 
+{name:"Sand Sort Puzzle",emoji:"🏜️",cat:"puzzle",tags:["sorting","sand","color","logic","relaxing"],url:"/sand-sort/",desc:"Sort colored sand between glass bottles in this satisfying puzzle game. 30 levels, daily challenges, and relaxing particle physics.",isNew:true,status:"live"},
 ];
 
 /**
@@ -351,4 +352,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-
