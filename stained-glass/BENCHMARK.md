@@ -1,249 +1,443 @@
-# Stained Glass 拼图游戏 — 竞品 Benchmark 报告
+# Stained Glass Puzzle Game — Competitive Benchmark Analysis
 
-调研日期：2026-06
-目标产品：Stained Glass（gamezipper.com 旗下）
-定位：以「图着色 + 数字约束」为核心的治愈系逻辑拼图游戏
+**Date:** June 11, 2026  
+**Analyst:** Hermes Agent  
+**Subject:** Grid-based coloring puzzle where players color cells in a grid so no two adjacent (edge-sharing) cells share the same color, with number clues restricting valid colors.
 
-==============================================================
-一、竞品列表（按相关性排序，至少 5 个核心竞品）
-==============================================================
+---
 
-## 1. The Artisan of Glimmith（最直接竞品，必看）
-- 平台：Steam（AppID 4160210），桌面 / Steam Deck 已验证
-- 价格：付费买断制（约 $9.99 USD）
-- 核心玩法：将染色玻璃网格中的每个区域涂上颜色，相邻区域颜色不同，
-  同时满足预设的数字约束（数字 = 区域必须使用的颜色编号）
-- 玩点：纯粹的"色彩 + 数字 + 邻接"逻辑题，画面极简治愈
-- 差异化卖点：手绘艺术风格、剧情驱动、放松型逻辑谜题
-- 营销表现：TikTok / YouTube Shorts 病毒式传播（#theartisanofglimmith，
-  单条视频百万播放量），被多家媒体评为 "satisfying puzzle"
-- 我们的差异：尚未发现同类型有数字约束规则的纯逻辑 App，
-  Artisan 是"解谜感"，我们要做"造景感 + 闯关结构"
+## Executive Summary
 
-## 2. Glass Masquerade 4: Constellations（艺术 jigsaw 竞品）
-- 平台：Steam（AppID 3845830），iOS/Android（早期系列移植）
-- 开发商：Onyx Lute
-- 价格：付费买断（约 $5–$7 USD）
-- 核心玩法：点击拖拽将彩色玻璃碎片放入对应轮廓，重现图案
-- 玩点：触摸玻璃时的 ASMR 反馈、星空/艺术主题
-- 与我们区别：是「拼贴」不是「着色 + 数字」，
-  无逻辑推演，本质是 jigsaw 的变种
-- Steam 评价：特别好评（"Beautiful! - Mici Reviews"）
+The "Stained Glass" grid coloring puzzle occupies a niche within the broader logic puzzle market. The core mechanic—coloring cells so no two adjacent cells share the same color, guided by number clues—is related to the **Four Color Theorem** and shares DNA with several Nikoli-style logic puzzles. We identified and analyzed **7 competing implementations** across web, mobile, and PC platforms, examining their game systems, visual design, mechanics, and monetization strategies.
 
-## 3. Leadlight（Steam 新作）
-- 平台：Steam（AppID 3421320）
-- 核心玩法：将光线路径穿过网格点亮玻璃窗，类 light-up 变体
-- 与我们区别：光路谜题，无区域数字约束
+---
 
-## 4. Glass Mosaic: Jigsaw Puzzle（移动端头部）
-- 平台：Google Play，App Store
-- 开发商：Absolutist Ltd
-- 评分：Google Play 4.2★
-- 核心玩法：传统马赛克拼图，每块玻璃碎片拖入正确位置
-- 与我们区别：完全无逻辑，无数字约束，纯图片还原
+## 1. Competitor Overview
 
-## 5. Glass Art Puzzle（HYPERLAB）
-- 平台：Google Play
-- 评分：3.3★
-- 核心玩法：色彩玻璃拼图，颜色匹配消除
-- 与我们区别：偏休闲三消，逻辑性弱
+### Competitor A: Puzzle-XXX Network (Simon Tatham-style Online Puzzles)
+**Representative sites:** puzzle-yin-yang.com, puzzle-lits.com, puzzle-norinori.com, puzzle-kurodoko.com, puzzle-aquarium.com, puzzle-loop.com
 
-## 6. Through the Glass: Mosaic Game
-- 平台：Google Play
-- 开发商：Absolutist Ltd
-- 评分：3.6★
-- 同 Glass Mosaic 系列，差异化程度低
+| Attribute | Details |
+|---|---|
+| **Platform** | Web (browser), iOS App, Android App |
+| **Developer** | Independent (community-driven, open web platform) |
+| **Puzzle Types** | 40+ puzzle types including Yin-Yang, LITS, Norinori, Kurodoko, Aquarium, Slitherlink, Hitori, etc. |
+| **Number of Puzzles** | Procedurally generated — unlimited supply per size/difficulty |
+| **Price** | Free (ad-supported); Patreon for ad removal |
+| **URL** | puzzle-yin-yang.com, puzzle-lits.com, etc. (one subdomain per puzzle type) |
 
-## 7. Stained Glass Coloring Book（TeachersParadise）
-- 平台：Google Play
-- 评分：3.7★
-- 核心玩法：自由涂色 + 模板（非拼图，无逻辑约束）
-- 与我们区别：完全自由绘画，无规则
+### Competitor B: Sagrada (Board Game / Digital Edition)
+| Attribute | Details |
+|---|---|
+| **Platform** | Board game (2017), Digital on Steam (2020 by Dire Wolf Digital), iOS, Android |
+| **Developer** | Floodgate Games (physical), Dire Wolf Digital (digital) |
+| **Designers** | Adrian Adamescu, Daryl Andrews |
+| **Players** | 1–4 players |
+| **Price** | ~$10.50 USD on Steam |
+| **URL** | store.steampowered.com (App ID: 1226200) |
 
-## 8. Window Puzzles（MWM）
-- 平台：iOS/Android
-- 核心玩法：拼图 + ASMR 玻璃碎片放置
-- 发行商 MWM（makeup/game）旗下，主打中度休闲变现
+### Competitor C: Glass Masquerade Series (Onyx Lute)
+| Attribute | Details |
+|---|---|
+| **Platform** | Steam (PC), iOS, Android |
+| **Developer** | Onyx Lute |
+| **Entries** | Glass Masquerade (2016), Glass Masquerade 2: Illusions (2019), Glass Masquerade 4: Constellations (2025) |
+| **Price** | ~$5.60 USD per entry; DLC packs ~$2.30 |
+| **URL** | store.steampowered.com |
 
-## 9. Color Glass: Mosaic Puzzle（FunWave Studio）
-- 平台：Google Play
-- 同类马赛克涂色游戏，评分未公开
+### Competitor D: Nonogram Color — Logic Puzzle (Easybrain)
+| Attribute | Details |
+|---|---|
+| **Platform** | Android, iOS |
+| **Developer** | Easybrain |
+| **Rating** | 4.6 stars, 90K+ reviews, 10M+ downloads |
+| **Price** | Free (ad-supported, in-app purchases) |
+| **Last Updated** | June 2026 |
+| **URL** | play.google.com (ID: com.easybrain.nonogram.color) |
 
-==============================================================
-二、Nikoli 派生的「图着色 + 数字约束」原型玩法
-==============================================================
+### Competitor E: Conceptis Puzzles
+| Attribute | Details |
+|---|---|
+| **Platform** | Web, iOS, Android |
+| **Developer** | Conceptis Ltd. |
+| **Puzzle Types** | 15+ types including Pic-a-Pix, Fill-a-Pix, Link-a-Pix, Sudoku, Nurikabe, Hitori, etc. |
+| **Number of Puzzles** | Weekly releases; hundreds of puzzles per type |
+| **Price** | Free weekly puzzles; subscription for full archive |
+| **URL** | conceptispuzzles.com |
 
-学术上与"染色玻璃邻接着色 + 数字约束"最接近的 Nikoli 谜题：
+### Competitor F: RoGlass
+| Attribute | Details |
+|---|---|
+| **Platform** | Steam (PC) |
+| **Developer** | Independent |
+| **Release** | September 2024 |
+| **Price** | ~$11.00 USD |
+| **URL** | store.steampowered.com |
 
-| 谜题 | 玩法 | 与 Stained Glass 的关系 |
-|------|------|-----------------------|
-| Tilepaint（タイルペイント） | 区域涂色，相同数字区域合并，邻接不同色 | ★★★★★ 最接近 |
-| Five Cells（ファイブセルズ） | 数字表示周围涂色数量 | ★★★★ |
-| Hitori（ひとりにしてくれ） | 灰格，相邻同数必灰 | ★★★ |
-| Nurikabe（ぬりかべ） | 黑白涂色 + 岛屿连通 | ★★★ |
-| Fillomino（フィルオミノ） | 同值区域合并，邻接不同 | ★★★★ |
-| Bijutsukan / Art Gallery（美術館） | 放灯照亮，邻接禁灯 | ★★★ |
-| Wataridori | 路径分割邻接块 | ★★★（2025 NP-Complete 证明） |
+### Competitor G: Simon Tatham's Portable Puzzle Collection
+| Attribute | Details |
+|---|---|
+| **Platform** | Web (JS/WASM), Windows, Linux (native binaries) |
+| **Developer** | Simon Tatham |
+| **Puzzle Types** | 40+ small desktop puzzle games |
+| **Number of Puzzles** | Procedurally generated — infinite |
+| **Price** | Free, open-source |
+| **URL** | chiark.greenend.org.uk/~sgtatham/puzzles/ |
 
-学术结论：Tilepaint、Five Cells、Wataridori 均已被证明是 NP-Complete，
-意味着我们的关卡生成器可借鉴"已知难解区域"算法来确保难度梯度。
+---
 
-==============================================================
-三、市场分析
-==============================================================
+## 2. Detailed Game Mechanics Comparison
 
-## 3.1 SEO 关键词（按搜索量与转化潜力排序）
+### 2.1 Most Directly Related Puzzle Types
 
-英文核心词（高搜索量）：
-- stained glass puzzle（主关键词）
-- mosaic puzzle game
-- glass art puzzle
-- color puzzle grid
-- relaxing puzzle / cozy puzzle
-- ASMR puzzle / satisfying puzzle
-- logic puzzle for adults
-- Nikoli puzzle / Fillomino / Nurikabe / Tilepaint
-- glass jigsaw
+| Puzzle Type | Source | Core Rule | Grid Sizes | Number of Colors |
+|---|---|---|---|---|
+| **Stained Glass** (our game) | — | Color cells; no adjacent same color; number clues restrict colors | TBD | Multiple |
+| **Yin-Yang** | Puzzle Network / Nikoli | Color all cells black or white; both colors must be orthogonally connected; no 2×2 same-color blocks | 6×6 to 25×25 | 2 (black/white) |
+| **LITS** | Puzzle Network / Nikoli | Place one tetromino per region; no matching adjacent tetrominoes; all shaded cells connected; no 2×2 blocks | 6×6 to 20×20 | 2 (shaded/unshaded) |
+| **Kurodoko** | Puzzle Network / Nikoli | Shade cells guided by number clues (visible count); no adjacent black cells; all white cells connected | 5×5 to 20×20 | 2 (black/white) |
+| **Norinori** | Puzzle Network / Nikoli | Exactly 2 shaded cells per region; shaded cells form dominoes; dominoes can't touch orthogonally | 6×6 to 20×20 | 2 (shaded/unshaded) |
+| **Aquarium** | Puzzle Network | Fill aquarium regions with water; numbers show row/column counts | 6×6 to 15×15 | 2 (water/empty) |
+| **Sagrada** | Floodgate Games | Place colored dice on 4×5 grid; no adjacent same color OR number; space restrictions on board | 4×5 (20 spaces) | 5 colors + 6 pip values |
+| **Four Color Theorem** | Mathematical concept | Color any planar map using at most 4 colors so no adjacent regions share a color | Variable | 4 |
 
-中文核心词：
-- 彩绘玻璃拼图
-- 玻璃拼图游戏
-- 涂色拼图
-- 逻辑填色
-- 解谜游戏
-- 治愈系游戏
-- 数独类游戏（流量入口）
+### 2.2 Key Mechanic Observations
 
-长尾词（竞争低、转化高）：
-- "stained glass puzzle game no ads"
-- "offline mosaic puzzle"
-- "stained glass logic puzzle"
+- **Binary vs. Multi-color:** Most Nikoli-style puzzles use only 2 "colors" (shaded/unshaded). The Stained Glass concept of using **3–5+ distinct colors** with adjacency constraints is a significant differentiator in the logic puzzle space.
+- **Clue Types Observed:**
+  - **Number clues in cells** (Kurodoko, Nurikabe) — numbers indicating visible cells or island sizes
+  - **Number clues outside grid** (Nonogram, Aquarium) — row/column counts
+  - **Region-based constraints** (LITS, Norinori) — rules applied per pre-defined region
+  - **Color/pip restrictions on cells** (Sagrada) — individual cells pre-marked with required color or number
+  - **Pre-placed starting cells** (Yin-Yang) — some cells pre-filled to seed the puzzle
+- **Adjacency Definitions:** All competitors define adjacency as **orthogonal** (sharing an edge), with some also restricting diagonal adjacency (Sagrada restricts orthogonal only for color/number matching but allows diagonal adjacency).
 
-## 3.2 目标用户画像
+---
 
-| 画像 | 占比估计 | 痛点 | 触达渠道 |
-|------|--------|------|---------|
-| 25–45 治愈系玩家 | 40% | 想要放松、无压力成就感 | TikTok / 小红书 / B站 |
-| 35–55 拼图爱好者 | 25% | 寻找新逻辑挑战 | Facebook / Steam 论坛 |
-| 18–30 解谜硬核玩家 | 20% | Nikoli / 数独玩家 | Reddit / Discord / App Store |
-| ASMR/解压用户 | 15% | 触觉反馈、画面治愈 | YouTube Shorts / TikTok |
+## 3. Game Systems Analysis
 
-## 3.3 市场规模（粗估）
-- 全球 Puzzle 类手游年收入约 $15B+（Business of Apps 2026）
-- Cozy/Relaxing Puzzle 细分赛道年增长 18%+
-- Steam 上"stained glass"标签下活跃产品 < 10 款，竞争空窗
+### 3.1 Puzzle Network Sites (puzzle-XXX.com)
 
-==============================================================
-四、差异化策略
-==============================================================
+| System | Implementation |
+|---|---|
+| **Scoring** | Timer-based (displayed as MM:SS); no explicit score formula |
+| **Hints** | None built-in; video tutorials available for learning techniques |
+| **Achievements** | Hall of Fame; Statistics page tracking solves |
+| **Tutorials** | Rules displayed on page; Video Tutorial links |
+| **Progress Saving** | Account-based login; puzzle state saved per browser session |
+| **Leaderboards** | Hall of Fame for fastest solvers |
+| **Difficulty Levels** | Easy / Normal / Hard per grid size |
+| **Daily/Weekly/Monthly** | Special puzzles at each cadence; Daily, Weekly, Monthly |
+| **Monetization** | Ad-supported; Patreon for ad removal; mobile apps on iOS/Android |
+| **Social** | Feedback form; Share button for specific puzzles |
+| **Undo/Redo** | Full undo/redo support with Ctrl+Z / Ctrl+Y |
+| **Tools** | Zoom, Rotate, Black/Cross/Blank/Color marking tools |
+| **Print** | Mass Print feature for offline solving |
 
-我们如何脱颖而出：
+### 3.2 Sagrada (Digital Edition)
 
-1. **明确「数字约束」差异化**
-   - 现有竞品（Glass Masquerade / Glass Mosaic）几乎都是纯拼贴或纯涂色
-   - 我们加入"数字 = 该区域必须使用的颜色编号"硬约束，
-     把产品从「艺术游戏」推向「逻辑游戏」，覆盖 Nikoli 硬核玩家
+| System | Implementation |
+|---|---|
+| **Scoring** | Points from public + private objective cards; deduction for empty spaces; bonus for favor tokens |
+| **Hints** | Tool cards allow rule-bending (paid with favor tokens) |
+| **Achievements** | Steam Achievements (34 tracked) |
+| **Tutorials** | In-game tutorial; rule book |
+| **Progress Saving** | Steam Cloud saves |
+| **Leaderboards** | Steam Leaderboards |
+| **Difficulty Levels** | Window complexity ratings 3–6 |
+| **Game Modes** | Solo, 2-player, 3-player, 4-player (AI opponents) |
+| **Expansions** | 3 expansions: Passion, Life, Glory |
+| **Art Style** | Stained glass art; colorful translucent dice representing glass pieces |
+| **Music** | Ambient, meditative soundtrack |
+| **Monetization** | Premium purchase (~$10.50); DLC available |
 
-2. **关卡叙事 + 视觉收藏**
-   - 每关完成解锁一件「彩绘玻璃艺术品」（教堂窗、玫瑰窗等真实历史图案）
-   - 区别于 Artisan 的"小清新"、Glass Masquerade 的"星空幻想"
+### 3.3 Glass Masquerade
 
-3. **零广告 / 一次性付费**
-   - Glass Art Puzzle、Stained Glass Coloring Book 等评分低（3.3–3.7）
-     的根本原因是广告干扰严重
-   - 我们采用 $4.99 一次性解锁 / 7 关免费试用，无广告、无内购
+| System | Implementation |
+|---|---|
+| **Scoring** | Time-based completion |
+| **Hints** | Visual preview of completed artwork |
+| **Achievements** | Steam Achievements |
+| **Tutorials** | Implicit (drag-and-drop jigsaw mechanics) |
+| **Progress Saving** | Steam Cloud |
+| **Gameplay** | Stained-glass-themed jigsaw puzzle — place glass pieces to complete artwork |
+| **Art Style** | Art deco stained glass illustrations; vibrant translucent colors |
+| **Music** | Relaxing ambient/jazz-influenced soundtrack |
+| **Entries** | 3 main games + 2 DLC packs |
+| **Puzzles per game** | ~25–30 unique stained glass artworks per entry |
+| **Monetization** | Premium purchase per entry; DLC packs |
 
-4. **关卡生成器 + 难度自适应**
-   - 提供无限关卡模式（借鉴 Nikoli Tilepaint 算法）
-   - Artisan 是手工关卡（30–60 关），我们做"无限流"
+### 3.4 Nonogram Color (Easybrain)
 
-5. **多端覆盖**
-   - Web（gamezipper.com 原生）→ iOS / Android → Steam 三步走
-   - 现有竞品要么只 Steam，要么只移动，跨端空缺
+| System | Implementation |
+|---|---|
+| **Scoring** | Completion tracking; lives for errors |
+| **Hints** | Purchasable hints (reveal cells); extra lives |
+| **Achievements** | Daily Challenge trophies; seasonal event postcards |
+| **Tutorials** | In-app interactive tutorial |
+| **Progress Saving** | Cloud sync; offline support |
+| **Difficulty Levels** | Progressive — puzzles increase in size and complexity |
+| **Daily Content** | Daily Challenges with unique awards |
+| **Seasonal Events** | Themed puzzles with animated postcards as rewards |
+| **Grid Sizes** | 5×5 up to 20×20+ |
+| **Colors** | Multi-color nonograms (2–10+ colors per puzzle) |
+| **Monetization** | Free-to-play with ads; in-app purchases for hints/lives/ad removal |
+| **Visual Style** | Clean, modern, colorful pixel art aesthetic |
+| **Rating** | 4.6★ (90K reviews), 10M+ downloads |
 
-6. **SEO 内容营销**
-   - 在 gamezipper.com 部署长尾词文章（"best stained glass puzzle",
-     "graph coloring puzzle"），抢占 organic 流量
+### 3.5 Conceptis Puzzles
 
-==============================================================
-五、技术实现要点
-==============================================================
+| System | Implementation |
+|---|---|
+| **Scoring** | Time tracked; no global leaderboard |
+| **Hints** | Step-by-step solving assistance |
+| **Achievements** | None |
+| **Tutorials** | Interactive rules and techniques pages |
+| **Progress Saving** | Account-based; progress synced across web and mobile |
+| **Difficulty Levels** | Varies by puzzle type; typically Easy/Medium/Hard/Weekly bonus |
+| **Content Cadence** | New puzzles released weekly (every Friday) |
+| **Monetization** | Free puzzles weekly; subscription ($2.99–$4.99/month) for archive access |
+| **Platforms** | Web, iOS apps (per puzzle type), Android apps |
+| **Visual Style** | Clean, professional, black-and-white grid style |
 
-## 5.1 核心算法：图着色 + 数字约束求解
+---
 
-数据结构：
-- 网格 G = (V, E)，V 为区域节点，E 为邻接关系
-- 每个区域有可选颜色集 C(v)，由数字约束缩小
-- 求解：回溯 + 约束传播（类似 Sudoku 求解器）
+## 4. Visual & Art Style Comparison
 
-难度梯度生成（基于 Tilepaint NP-Complete）：
-- 小尺寸 5x5 → 大尺寸 12x12
-- 数字提示覆盖率从 60% → 25%
-- 使用 SAT 求解器（可选）做唯一解校验
+| Competitor | Art Style | Color Palette | Theme |
+|---|---|---|---|
+| **Puzzle Network** | Minimal, functional grid | Black/white + accent colors for regions | Pure logic, no thematic dressing |
+| **Sagrada** | Stained glass cathedral windows | 5 vibrant translucent dice colors | Cathedral/stained glass art |
+| **Glass Masquerade** | Art deco stained glass illustrations | Rich jewel tones, translucent effects | Decorative glass art gallery |
+| **Nonogram Color** | Clean, modern, bright pixel art | Multi-color; vivid and cheerful | Casual mobile gaming aesthetic |
+| **Conceptis** | Professional, minimalist grids | Black/white, functional | Classic newspaper puzzle style |
+| **RoGlass** | Stained glass window crafting | Rich glass colors | Artisan glass-making theme |
+| **Simon Tatham** | Ultra-minimal, functional | Monochrome default; configurable | Pure puzzle, no decoration |
 
-## 5.2 渲染层（Web 优先）
+### Design Pattern Observation
+The most commercially successful logic puzzle apps use a **clean, modern, slightly playful aesthetic** with smooth animations. Stained glass-themed games (Sagrada, Glass Masquerade, RoGlass) all leverage **rich, saturated jewel tones** and **translucent glass effects** with ambient soundtracks, positioning themselves as relaxing, meditative experiences.
 
-技术栈建议：
-- 框架：React + Vite（或 Solid.js 以追求性能）
-- 渲染：Canvas 2D（关卡网格）+ SVG（玻璃质感）
-- 玻璃着色：CSS filter + 高斯模糊模拟透光感
-- 着色交互：drag-and-drop 颜色 + 点击区域循环换色
+---
 
-性能要求：
-- 单关首屏 < 1s
-- 着色反馈 < 50ms
+## 5. Music & Sound Style
 
-## 5.3 跨端策略
-- Web：PWA + IndexedStorage 存关卡进度
-- iOS/Android：React Native 或 Flutter 复用核心逻辑
-- Steam：Electron / Tauri 包裹 Web 版本
+| Competitor | Music | Sound Effects |
+|---|---|---|
+| **Puzzle Network** | None | Minimal click sounds |
+| **Sagrada** | Ambient, meditative, gentle | Dice placement sounds; glass click effects |
+| **Glass Masquerade** | Relaxing ambient/jazz; atmospheric | Glass clinking; satisfying placement sounds |
+| **Nonogram Color** | Optional gentle BGM | Cell fill sounds; completion chime |
+| **Conceptis** | None | Minimal |
+| **Simon Tatham** | None | None (pure silent puzzle) |
 
-## 5.4 关卡数据结构（建议）
-```json
-{
-  "grid": [[0,0,1,1],[0,2,2,3],...],
-  "hints": {"0":2,"3":1,...},
-  "palette": ["#c43e3e","#3e7fc4",...],
-  "size": 6,
-  "difficulty": "medium",
-  "artwork": "rose_window_assisi"
-}
+### Recommendation for Stained Glass
+Given the theme, **ambient, meditative music** with **glass-themed sound effects** (tapping, clicking, resonance) would align well with competitor norms. This is consistent across all stained glass-themed titles.
+
+---
+
+## 6. Difficulty Progression & Scoring Formulas
+
+### 6.1 Grid Size Progression (Puzzle Network Standard)
+
+```
+Level 1:  5×5 or 6×6    (Tutorial / Beginner)
+Level 2:  7×7 or 8×8    (Easy)
+Level 3:  10×10          (Normal)
+Level 4:  15×15          (Hard)
+Level 5:  20×20          (Expert)
+Level 6:  25×25–25×30    (Master)
 ```
 
-## 5.5 校验与提示系统
-- 实时检测：相邻同色高亮提示
-- 撤销 / 重做：基于 command pattern
-- 自动提示：使用 MRV（最小剩余值）算法给出下一步建议
-- 错误容忍：可继续玩，结算时统一判定
+### 6.2 Difficulty Tiers Per Size
 
-## 5.6 数据埋点（上线后）
-- 关卡完成率、平均尝试次数、卡关点
-- A/B 测试：颜色色板（治愈 vs 写实）
-- 分享率：通关后生成分享图（关键获客指标）
+Most competitors offer **Easy / Normal / Hard** variants at each grid size, typically by:
+- Adding/removing pre-filled clue cells
+- Increasing the constraint density
+- Reducing the number of given starting values
 
-==============================================================
-六、风险与建议
-==============================================================
+### 6.3 Scoring Patterns Observed
 
-风险：
-1. Artisan of Glimmith 可能在 2026 内移植移动端（Steam Deck 已验证）
-2. Nikoli 玩家群体偏小众，需要教育市场
-3. 美术成本：彩绘玻璃视觉需要高质量艺术素材
+| Competitor | Scoring Approach | Formula Pattern |
+|---|---|---|
+| **Puzzle Network** | Time-based | Display solve time; rank in Hall of Fame |
+| **Sagrada** | Objective-based | Sum of: public objectives + private objectives − empty spaces + favor tokens |
+| **Glass Masquerade** | Time-based | Faster completion = better |
+| **Nonogram Color** | Completion + streaks | Track daily streaks; error penalties via life system |
+| **Conceptis** | Time-based | Track time; no explicit score formula |
 
-建议：
-- 优先 Web 端 MVP（4 周内），验证核心循环
-- 与 gamezipper.com 主站流量互通，SEO 协同
-- 首批关卡 60 关手工 + 后续 1000+ 程序生成
-- 早期与 3–5 位 Nikoli 圈 KOL 合作，建立硬核口碑
+### Common Scoring Formula Elements
+1. **Base points** for puzzle completion
+2. **Time bonus** (faster = more points)
+3. **Error penalty** (wrong moves reduce score or cost lives)
+4. **Streak multiplier** (consecutive daily solves)
+5. **Hint penalty** (using hints reduces final score)
+6. **Size multiplier** (larger grids worth more)
 
-==============================================================
-附录：参考资料
-==============================================================
-- Steam: The Artisan of Glimmith (AppID 4160210)
-- Steam: Glass Masquerade 4: Constellations (AppID 3845830)
-- Steam: Leadlight (AppID 3421320)
-- Google Play: Glass Mosaic / Glass Art Puzzle / Stained Glass Coloring Book
-- 学术：Five Cells and Tilepaint are NP-Complete (ResearchGate, 2022)
-- 学术：Wataridori is NP-Complete (arXiv 2601.09345)
-- Wikipedia: Nikoli (publisher)
-- Business of Apps: Puzzle Games Market Report 2026
+---
+
+## 7. Monetization Models
+
+| Model | Used By | Revenue Potential |
+|---|---|---|
+| **Free + Ads + IAP** | Nonogram Color, Puzzle Network | High (10M+ downloads model) |
+| **Premium Purchase** | Sagrada, Glass Masquerade | Medium ($5–15 per sale) |
+| **Freemium + Subscription** | Conceptis | Recurring revenue |
+| **Free/Open Source** | Simon Tatham | None (community project) |
+| **Ad-supported + Patreon** | Puzzle Network | Low-medium |
+
+### IAP Price Points (from Easybrain/Nonogram):
+- **Hints:** ~$0.99–$2.99 for hint packs
+- **Ad removal:** ~$2.99–$4.99
+- **Extra lives:** ~$0.99 for bundles
+- **Season pass:** ~$4.99–$9.99
+
+---
+
+## 8. Feature Matrix
+
+| Feature | Puzzle Network | Sagrada | Glass Masquerade | Nonogram Color | Conceptis | Simon Tatham |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| Grid coloring | ✓ | ✓ | — | ✓ | ✓ | ✓ |
+| Adjacency constraint | ✓ | ✓ | — | — | ✓ | ✓ |
+| Number clues | ✓ | ✓ | — | ✓ | ✓ | ✓ |
+| Multiple colors | — | ✓ | — | ✓ | — | — |
+| Undo/Redo | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Hints | — | ✓ (tools) | ✓ | ✓ | ✓ | — |
+| Timer | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Daily puzzles | ✓ | — | — | ✓ | ✓ | — |
+| Leaderboards | ✓ | ✓ | — | — | — | — |
+| Achievements | — | ✓ (34) | ✓ | ✓ | — | — |
+| Progress saving | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Offline play | ✓ | ✓ | ✓ | ✓ | — | ✓ |
+| Mobile app | ✓ | ✓ | — | ✓ | ✓ | — |
+| Web version | ✓ | — | — | — | ✓ | ✓ |
+| Multiplayer | — | ✓ (1–4) | — | — | — | — |
+| Tutorials | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Print support | ✓ | — | — | — | ✓ | ✓ |
+
+---
+
+## 9. Key Differentiation Opportunities
+
+Based on this competitive analysis, the following opportunities exist for the Stained Glass puzzle game:
+
+### 9.1 Unique Mechanics (Under-served)
+- **Multi-color adjacency constraint** (3–5 colors) is very rare in competitors. Most Nikoli-style puzzles use only 2 states (shaded/unshaded). Sagrada uses 5 colors but is a dice-drafting game, not a pure logic puzzle.
+- **Number clues restricting specific colors** — this combines the clue-given constraint of Kurodoko/Nurikabe with multi-color mechanics. No direct competitor was found doing this exact combination.
+- **Pure logic approach** (no randomness) vs. Sagrada's dice-drafting — there is room for a purely deductive stained glass coloring puzzle.
+
+### 9.2 Feature Gaps to Fill
+| Gap | Details |
+|---|---|
+| **Stained glass theme + pure logic** | Glass Masquerade is jigsaw; Sagrada is dice-drafting; nobody does stained-glass-themed pure logic coloring |
+| **Progressive color count** | Start with 2–3 colors, increase to 5+ as difficulty rises |
+| **Rich visual feedback** | Stained glass visual effect when puzzle is complete (like a real stained glass window lighting up) |
+| **Mobile-first design** | Most Nikoli-style puzzle sites are desktop-first; mobile apps are often ports |
+
+### 9.3 Recommended Feature Set
+Based on competitor patterns:
+
+| Priority | Feature | Rationale |
+|---|---|---|
+| **P0** | Procedural puzzle generation | Unlimited content (Puzzle Network model) |
+| **P0** | Undo/Redo | Universal across all competitors |
+| **P0** | Timer + personal best tracking | Standard engagement driver |
+| **P0** | Progressive difficulty (grid size + color count) | Puzzle Network standard |
+| **P1** | Daily puzzles with streaks | Nonogram Color's most engaging feature |
+| **P1** | Hint system (with penalty) | Expected by mobile puzzle audiences |
+| **P1** | Error highlighting | Nonogram Color uses "lives"; Puzzle Network uses immediate validation |
+| **P1** | Stained glass visual completion effect | Unique differentiator |
+| **P2** | Achievements / badges | Sagada (34 achievements), Nonogram (trophies) |
+| **P2** | Leaderboards | Puzzle Network Hall of Fame model |
+| **P2** | Offline support | Nonogram Color, Sagrada, Simon Tatham all support this |
+| **P3** | Level editor / sharing | Conceptis has "Specific puzzle" feature |
+| **P3** | Print support | Puzzle Network and Conceptis both offer this |
+
+---
+
+## 10. Recommended Difficulty Progression
+
+Based on competitor patterns:
+
+| Level | Grid Size | Colors | Clue Density | Notes |
+|---|---|---|---|---|
+| 1 | 4×4 | 2 | High (60%+ given) | Tutorial |
+| 2 | 5×5 | 2–3 | Medium-High | Beginner |
+| 3 | 6×6 | 3 | Medium | Easy |
+| 4 | 8×8 | 3–4 | Medium | Normal |
+| 5 | 10×10 | 4 | Medium-Low | Hard |
+| 6 | 12×12 | 4–5 | Low | Expert |
+| 7 | 15×15 | 5 | Low | Master |
+| 8 | 20×20 | 5+ | Very Low | Grandmaster |
+
+---
+
+## 11. Recommended Scoring Formula
+
+Based on observed patterns across competitors:
+
+```
+Base Score = Grid Cells × 10
+Time Bonus = max(0, (Par Time − Actual Time)) × 5
+Error Penalty = Errors × 50
+Hint Penalty = Hints Used × 100
+Size Multiplier = Grid Size / 5 (e.g., 10×10 = 2.0x)
+
+Final Score = (Base Score + Time Bonus − Error Penalty − Hint Penalty) × Size Multiplier
+```
+
+### Star Rating
+- ⭐⭐⭐ (3 stars): No errors, no hints, under par time
+- ⭐⭐ (2 stars): ≤2 errors, no hints, or slightly over par time
+- ⭐ (1 star): Puzzle completed (any condition)
+
+---
+
+## 12. Market Positioning
+
+| Dimension | Our Position | Nearest Competitor |
+|---|---|---|
+| **Theme** | Stained glass window art | Glass Masquerade (jigsaw), Sagrada (dice) |
+| **Mechanic** | Pure logic coloring + number clues | Puzzle Network's Yin-Yang/LITS (binary only) |
+| **Platform** | Web (primary), mobile | Puzzle Network (web), Nonogram Color (mobile) |
+| **Content** | Procedurally generated | Puzzle Network, Simon Tatham |
+| **Monetization** | TBD (freemium recommended) | Nonogram Color model |
+| **Audience** | Casual puzzle fans, logic enthusiasts | Overlap with Nonogram, Sudoku, Nikoli audiences |
+
+### Competitive Advantage Summary
+The Stained Glass puzzle game fills a **specific gap** in the market: a **stained-glass-themed, multi-color grid coloring logic puzzle** with number clues. No existing product combines all three of:
+1. Stained glass visual theme
+2. Multi-color adjacency constraints (3–5+ colors)
+3. Pure logic/deduction gameplay with number clues
+
+---
+
+## Appendix A: Sources
+
+- Wikipedia: Four Color Theorem — https://en.wikipedia.org/wiki/Four_color_theorem
+- Wikipedia: Sagrada (board game) — https://en.wikipedia.org/wiki/Sagrada_(board_game)
+- Wikipedia: LITS — https://en.wikipedia.org/wiki/LITS
+- Wikipedia: Nikoli (publisher) — https://en.wikipedia.org/wiki/Nikoli_(publisher)
+- Puzzle Yin-Yang — https://www.puzzle-yin-yang.com/
+- Puzzle LITS — https://www.puzzle-lits.com/
+- Puzzle Norinori — https://www.puzzle-norinori.com/
+- Puzzle Kurodoko — https://www.puzzle-kurodoko.com/
+- Puzzle Aquarium — https://www.puzzle-aquarium.com/
+- Puzzle Slitherlink — https://www.puzzle-loop.com/
+- Simon Tatham's Puzzles — https://www.chiark.greenend.org.uk/~sgtatham/puzzles/
+- Conceptis Puzzles — https://www.conceptispuzzles.com/
+- Nikoli Puzzles — https://www.nikoli.co.jp/en/puzzles/
+- Steam Store Search (stained glass puzzle) — https://store.steampowered.com/search/?term=stained+glass+puzzle
+- Google Play: Nonogram Color — https://play.google.com/store/apps/details?id=com.easybrain.nonogram.color
+
+## Appendix B: Related Nikoli Puzzle Types with Grid Coloring
+
+| Puzzle | Mechanic | Colors | Clue Type |
+|---|---|---|---|
+| LITS | Place tetromino in regions; no matching adjacent | 2 | Region borders |
+| Yin-Yang | Color all cells; connectivity + no 2×2 | 2 | Pre-filled cells |
+| Kurodoko | Shade cells by visibility numbers | 2 | Number in cells |
+| Norinori | 2 shaded cells per region; domino rules | 2 | Region borders |
+| Nurikabe | Shade cells to form islands | 2 | Number in cells |
+| Hitori | Shade cells so no duplicate numbers in rows/columns | 2 | Number in cells |
+| Heyawake | Shade cells in rooms; row/column constraints | 2 | Number in rooms |
