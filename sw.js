@@ -2,7 +2,7 @@
 // Pure game caching — Monetag push NOTIFICATIONS DISABLED per user request
 // Strategies: cache-first (static), stale-while-revalidate with 4h max-age (HTML), network-first (API)
 // v12: navigationPreload for faster TTFB on navigation requests
-const CACHE='gz-v32';
+const CACHE='gz-v33';
 const HTML_MAX_AGE=4*60*60*1000; // 4 hours in ms
 
 // === Install ===
@@ -13,7 +13,7 @@ self.addEventListener('install',e=>{
   }
 
   // Precache top 5 game pages + offline fallback for instant access
-  var precacheURLs=['/100-doors/','/2048/','/akari/','/basketball-shoot/','/blackjack/','/brick-breaker/','/chess/','/circuit-logic/','/color-helix-smash/','/color-sort/','/crossmath/','/crossword/','/cryptograms/','/fruit-slash/','/hex-minesweeper/','/heyawake/','/hidato/','/hotaru-beam/','/jelly-dye/','/letter-boxed/','/magic-sort/','/masyu/','/minesweeper/','/neon-run/','/nurikabe/','/nyt-tiles/','/shikaku/','/snake/','/solitaire/','/star-battle/','/strands/','/sudoku/','/sugar-sugar/','/suguru/','/tapa/','/tentai-show/','/tents/','/tetris/','/who-is/','/yajilin/'];
+  var precacheURLs=['/100-doors/','/2048/','/akari/','/basketball-shoot/','/blackjack/','/brick-breaker/','/chess/','/circuit-logic/','/color-helix-smash/','/color-sort/','/crossmath/','/crossword/','/cryptograms/','/fruit-slash/','/hex-minesweeper/','/heyawake/','/hidato/','/hotaru-beam/','/jelly-dye/','/letter-boxed/','/magic-sort/','/masyu/','/minesweeper/','/neon-run/','/nurikabe/','/nyt-tiles/','/shikaku/','/snake/','/solitaire/','/star-battle/','/strands/','/sudoku/','/sugar-sugar/','/suguru/','/tapa/','/tentai-show/','/tents/','/tetris/','/who-is/','/yajilin/','/stained-glass/'];
   e.waitUntil(
     caches.open(CACHE).then(function(c){
       return Promise.allSettled(
