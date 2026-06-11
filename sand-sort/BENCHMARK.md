@@ -1,141 +1,58 @@
-# Sand Sort Puzzle — Competitive Benchmark
+# Sand Sort Puzzle — Competitor Benchmark
 
-Date: 2026-06-11
-Game: Sand Sort Puzzle
-Slug: sand-sort
-Category: puzzle
+**Date:** 2026-06-11  
+**Purpose:** Competitor benchmark for GameZipper.com Sand Sort Puzzle development
 
-## Market Overview
+## Top 3 Competitors
 
-Sand Sort Puzzle is a viral puzzle genre where players pour colored sand between glass bottles
-to sort each color into its own container. The sand flows realistically as particles, creating
-satisfying visual feedback. It's a variant of the water sort puzzle genre but with distinct
-particle physics that differentiates it.
+### 1. Sand Sort Puzzle (2Play / GameDistribution) — Web
+- **Platform:** Web HTML5, distributed on 50+ portals (Kizi, Agame, GamesGames, etc.)
+- **Mechanics:** Tap bottle to select, tap another to pour. Same-color-on-top rule. Goal: sort all sand into single-color bottles.
+- **Levels:** Progressive difficulty (3-4 colors → 10+ colors, fewer empties)
+- **Scoring:** Coins per level, shop for containers/backgrounds
+- **Power-ups:** Extra glass, restart
+- **Art:** Bright 2D, glass vases, flower growth on completed bottles, gradient backgrounds
+- **Sound:** Basic SFX
+- **Special:** Flower grows on completed container (satisfying feedback)
 
-## Top Competitors
+### 2. Sand Sort Puzzle (Mini Joy HK Limited) — Mobile
+- **Platform:** Android/iOS, 4.19★, 100K+ downloads
+- **Mechanics:** Standard tap-to-pour sand sorting
+- **Levels:** Hundreds + daily challenges + story mode
+- **Scoring:** Coins + rewards
+- **Power-ups:** Extra bottle, undo, hint, seasonal pass
+- **Art:** 3D rendered bottles, realistic sand physics, customizable themes
+- **Sound:** Granular SFX + relaxing BGM
+- **Special:** Mini story mode, jigsaw events, offline play
 
-### 1. Sand Sort Puzzle (by Gamovation / Homa)
-- **Platform:** iOS/Android
-- **Downloads:** 50M+
-- **Rating:** 4.5/5
-- **Key Features:**
-  - Particle-based sand simulation
-  - 1000+ levels
-  - Color sorting mechanics
-  - Hint system (limited, IAP)
-  - Undo button
-  - Daily challenges
-- **Monetization:** Interstitial ads between levels, rewarded ads for hints, IAP for ad-free
-- **UI/UX:** Bright colors, bottle containers at bottom, tap to select source then tap target
-- **Strengths:** Satisfying sand physics, huge level count, simple controls
-- **Weaknesses:** Ad-heavy, IAP gates on hints
+### 3. Magic Sand Sort — Mobile
+- **Platform:** Android
+- **Mechanics:** Pixel art pictures dissolve into colored sand streams, cauldrons on conveyor belt
+- **Levels:** Hundreds handcrafted, unique pixel art per level
+- **Art:** Pixel art + magical potion theme
+- **Special:** Timing-based twist on genre
 
-### 2. Water Sort Puzzle (by IEC Global / Guru Puzzle Game)
-- **Platform:** iOS/Android/Web
-- **Downloads:** 100M+ (Google Play)
-- **Rating:** 4.6/5
-- **Key Features:**
-  - Liquid-based (not sand) sort puzzle
-  - Tube-based containers
-  - Color sorting with overflow rules
-  - Hint and undo systems
-  - Level progression
-- **Monetization:** Interstitial ads, rewarded hints
-- **Relevance:** Same genre ancestor; sand sort is the physics evolution
+## Cross-Competitor Feature Matrix
 
-### 3. Sand Balls (by SayGames)
-- **Platform:** iOS/Android
-- **Downloads:** 100M+
-- **Key Features:**
-  - Swipe to dig through sand
-  - Guide balls to truck
-  - Particle sand physics
-  - NOT a sort puzzle (different mechanic)
-- **Relevance:** Shows sand physics appeal, but different game mechanic
+| Feature | 2Play (Web) | Mini Joy HK | Our Target |
+|---------|-------------|-------------|------------|
+| Pouring | Tap-to-pour | Tap-to-pour | Tap-to-pour ✓ |
+| Levels | Progressive | Hundreds+ | 30+ tiers (150+ configs) ✓ |
+| Scoring | Coins | Coins+rewards | Stars + Coins + Combos ✓ |
+| Power-ups | Extra glass | Extra/undo/hint | Undo + Extra + Hint ✓ |
+| Tutorial | Basic | Basic | Interactive tutorial ✓ |
+| Daily Challenge | ❌ | ✅ | Daily seed puzzle ✓ |
+| Star Rating | ❌ | ❌ | 1-3 stars per level ✓ |
+| Achievement | ❌ | ❌ | Badges + milestones ✓ |
+| Customization | Shop | Themes | Progression unlocks ✓ |
+| Flower Reward | ✅ | ❌ | Particle bloom ✓ |
+| Sound | Basic | Rich SFX+BGM | Web Audio procedural ✓ |
 
-### 4. Ball Sort Puzzle (by IEC Global)
-- **Platform:** iOS/Android/Web
-- **Downloads:** 100M+
-- **Key Features:**
-  - Sort colored balls between tubes
-  - One ball at a time
-  - Same rule: only same-color on top of same-color, or empty
-  - 5000+ levels
-- **Relevance:** Same rule set as sand sort, just different visual
-
-### 5. Browser clones on CrazyGames / Poki
-- Water Sort: Multiple browser versions available
-- Sand Sort: Very few browser clones with particle physics
-- **Gap:** No high-quality sand sort browser game with particle simulation
-
-## Game Mechanics Analysis
-
-### Core Rules (from analyzing multiple clones):
-1. Grid of bottles (typically 5-9 bottles)
-2. Each bottle holds N units of sand (typically 4 units)
-3. Sand is colored (4-6 colors)
-4. Player taps source bottle, then target bottle
-5. Sand pours from source to target until:
-   - Target is full, OR
-   - Color changes in source, OR
-   - Target has a different color on top
-6. Win condition: Each bottle contains only one color (or is empty)
-7. One or two empty bottles provided as buffer
-
-### Difficulty Progression:
-- Early: 3-4 colors, 2 extra bottles
-- Mid: 5-6 colors, 1-2 extra bottles
-- Late: 6+ colors, 1 extra bottle (very hard)
-
-### Sand Physics (what makes it unique vs water sort):
-- Sand flows as individual particles
-- Satisfying pour animation
-- Colors can briefly mix at boundary (visual only, logic stays pure)
-- Particles settle with gravity
-
-## Implementation Strategy
-
-### Sand Particle System:
-- Canvas-based particle simulation
-- Each "unit" of sand = ~20-30 small particles
-- Particles fall with gravity, collide with bottle walls
-- Pour animation: particles arc from source to target bottle
-- Color stacking is logical (pure color blocks), visual is particle-based
-
-### Level Design:
-- 30 levels, 5 tiers of 6 levels each
-- Tier 1: 3 colors, 5 bottles (2 extra), 4-unit capacity
-- Tier 2: 4 colors, 6 bottles (2 extra), 4-unit capacity
-- Tier 3: 4 colors, 6 bottles (1 extra), 4-unit capacity
-- Tier 4: 5 colors, 7 bottles (2 extra), 4-unit capacity
-- Tier 5: 5 colors, 7 bottles (1 extra), 4-unit capacity
-
-### Key Features:
-- Tap-to-select, tap-to-pour controls
-- Undo (full history)
-- Reset level
-- Hint (highlight next valid move)
-- Star rating (based on moves)
-- Progress saved to localStorage
-- Daily puzzle (seeded by date)
-
-### Monetization:
-- Monetag ads (banner + interstitial between levels)
-- No IAP (browser game)
-
-## Technical Architecture
-
-- Single HTML file, Canvas rendering
-- Sand particle system (~200-400 particles active)
-- Bottle collision boundaries (rectangular with rounded bottom)
-- Pour arc animation (parabolic trajectory)
-- State machine: idle -> selected -> pouring -> settling -> idle
-- Move history stack for undo
-- BFS solver for hints
-
-## Competitive Advantage
-- Only browser sand sort with particle physics
-- Smooth 60fps pour animations
-- 30 handcrafted levels + daily puzzle
-- Dark neon aesthetic (matching GameZipper theme)
-- Free, no IAP gates
+## Our Differentiation Strategy
+1. **Star rating system** (moves-based) — no web competitor does this
+2. **Daily challenge mode** — rare on web
+3. **Achievement/badge system** — adds meta-progression
+4. **Undo with full history** — underserved in web versions
+5. **Hint system** — show optimal next move
+6. **Satisfying particle sand physics** — better than basic 2Play version
+7. **Combo system** — chain same-color completions for bonus
