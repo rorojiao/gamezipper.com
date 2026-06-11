@@ -4,6 +4,18 @@
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
  *
+ * v5.3 Changes (2026-06-11 Monetag Zone Backoff — Fix for 14+ Day 0% Fill):
+ *   - Per-zone exponential backoff (10min → 30min → 60min) when loadZone returns no_fill.
+ *     Stops wasting 700+ useless script loads/day on broken Monetag zones.
+ *     Data: last 3 days showed 1325 attempts → 3 fills (0.23% fill rate).
+ *   - Persist backoff state in localStorage (cross-tab) + window.gzZoneBackoff (debug).
+ *   - Auto-clear backoff when a zone actually fills (zone just proved it's working).
+ *   - Disable demonstrably-dead legacy zones (10687755, 10687756 — 0/239 and 0/4
+ *     fills in 3 days; not worth the ad-provider.js bandwidth).
+ *   - Effect on commercialBreak(): Monetag fallback still runs after 1.5s race but
+ *     will short-circuit if zone is in backoff → cleaner overlay UX, fewer wasted CPU.
+ *   - Safe by default: re-enable legacy zones via CONFIG.ZONES.legacyEnabled=true.
+ *
  * v5.2.1 Changes (2026-06-10 BI Server Pipeline Fix — Critical for 48h validation):
  *   - trackAdEvent() now forwards to BI server via window.gzAnalytics.sendAd() (gz-analytics.js)
  *   - Without this, ad events stayed in window.gzAdEvents array only and never reached BI
@@ -78,9 +90,11 @@
       inpagePush: 11012002,
       vignette: 11012003,
       // Legacy fallback (Attractive tag - was filling in March 2026)
-      // Re-activated 2026-06-08 after Skillful zones showed 0 imp for 14 days
+      // DISABLED in v5.3 (2026-06-11): 0/239 fills in 3 days, no point retrying.
+      // Re-enable by setting legacyEnabled=true if Monetag account recovers.
       inpagePushLegacy: 10687755,
       vignetteLegacy: 10687756,
+      legacyEnabled: false,  // v5.3: kill switch for legacy zones (proven dead)
     },
     AD_PROVIDER: 'https://a.magsrv.com/ad-provider.js',
     // Preconnect for faster ad loading
@@ -112,7 +126,16 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.2',
+    VERSION: '5.3',
+    // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
+    ZONE_BACKOFF: {
+      enabled: true,                       // master kill switch
+      storageKey: 'gz5_zone_backoff_v1',   // bump v# if shape changes
+      // Exponential: 1st no_fill → 10min, 2nd → 30min, 3rd+ → 60min
+      backoffs: [10 * 60 * 1000, 30 * 60 * 1000, 60 * 60 * 1000],
+      // Min interval between backoff records (avoid burst-tracking on repeated attempts)
+      minRecordIntervalMs: 60 * 1000,
+    },
     // v5.2: in-game banner AdSense slot IDs (auto = AdSense picks responsive)
     BANNERS: {
       slotId: 'auto',                   // AdSense auto slot for above/below canvas
@@ -148,7 +171,90 @@
     prerollTriggered: false,   // v5: pre-roll 是否已触发
     firstInteraction: 0,       // v5: 首次用户交互时间
     bannersInjected: false,    // v5.2: in-game banner 是否已注入
+    zoneBackoff: {},          // v5.3: { zoneId: { until: timestamp, streak: count, lastAt: timestamp } }
   };
+
+  // ==================== ZONE BACKOFF (v5.3) ====================
+  // Skip Monetag zones that recently returned no_fill. Per-zone exponential backoff
+  // reduces wasted ad-provider.js loads (~700/day → much less) when fill rate is 0%.
+  // State persists in localStorage so cross-tab navigation shares the same backoff.
+  function loadZoneBackoff() {
+    try {
+      var raw = localStorage.getItem(CONFIG.ZONE_BACKOFF.storageKey);
+      if (!raw) return {};
+      var parsed = JSON.parse(raw);
+      // Drop expired entries on load (cheap cleanup)
+      var n = now();
+      var keep = {};
+      for (var zid in parsed) {
+        if (parsed[zid] && parsed[zid].until > n) keep[zid] = parsed[zid];
+      }
+      return keep;
+    } catch(e) { return {}; }
+  }
+
+  function saveZoneBackoff() {
+    try {
+      localStorage.setItem(CONFIG.ZONE_BACKOFF.storageKey, JSON.stringify(state.zoneBackoff));
+    } catch(e) {}
+  }
+
+  // Returns 0 if zone is allowed (not in backoff or backoff expired),
+  // otherwise ms until backoff expires.
+  function getZoneBackoffMs(zoneId) {
+    if (!CONFIG.ZONE_BACKOFF.enabled) return 0;
+    if (!state.zoneBackoff || !state.zoneBackoff[zoneId]) {
+      // Lazy load from storage if not in memory yet
+      state.zoneBackoff = loadZoneBackoff();
+    }
+    var entry = state.zoneBackoff[zoneId];
+    if (!entry) return 0;
+    var remaining = entry.until - now();
+    if (remaining <= 0) {
+      delete state.zoneBackoff[zoneId];
+      saveZoneBackoff();
+      return 0;
+    }
+    return remaining;
+  }
+
+  function isZoneInBackoff(zoneId) {
+    return getZoneBackoffMs(zoneId) > 0;
+  }
+
+  function recordZoneNoFill(zoneId) {
+    if (!CONFIG.ZONE_BACKOFF.enabled) return;
+    if (!state.zoneBackoff[zoneId]) {
+      state.zoneBackoff[zoneId] = { until: 0, streak: 0, lastAt: 0 };
+    }
+    var entry = state.zoneBackoff[zoneId];
+    var n = now();
+    // Avoid burst-tracking if multiple loadZone calls fail in quick succession
+    if (n - entry.lastAt < CONFIG.ZONE_BACKOFF.minRecordIntervalMs) return;
+    entry.streak = Math.min(entry.streak + 1, CONFIG.ZONE_BACKOFF.backoffs.length);
+    var backoffMs = CONFIG.ZONE_BACKOFF.backoffs[entry.streak - 1];
+    entry.until = n + backoffMs;
+    entry.lastAt = n;
+    saveZoneBackoff();
+    if (window.GZAdDebug) {
+      try { console.log('[gz-ad] zone backoff', zoneId, 'streak=' + entry.streak, 'until +' + Math.round(backoffMs/60000) + 'min'); } catch(e) {}
+    }
+    trackAdEvent('zone_backoff', { zoneId: zoneId, streak: entry.streak, minutes: Math.round(backoffMs/60000) });
+  }
+
+  function clearZoneBackoff(zoneId) {
+    if (state.zoneBackoff && state.zoneBackoff[zoneId]) {
+      delete state.zoneBackoff[zoneId];
+      saveZoneBackoff();
+    }
+  }
+
+  // Expose for console debugging: window.gzZoneBackoff = { 11012002: {until, streak, lastAt} }
+  function refreshDebugBackoff() {
+    try {
+      window.gzZoneBackoff = state.zoneBackoff;
+    } catch(e) {}
+  }
 
   // ==================== UTILITIES ====================
   function $(sel) { try { return document.querySelector(sel); } catch(e) { return null; } }
@@ -349,9 +455,32 @@
   // - Resolves when ad-provider.js inserts visible content (iframe/img with size > 0)
   // - Rejects on script load error or adLoadTimeout
   // - Uses MutationObserver to track actual fill, not just script load
+  // v5.3: legacy zones (Attractive tag) have shown 0% fill for weeks. The kill switch
+  // legacyEnabled in CONFIG.ZONES controls whether loadZone even attempts them.
+  // When false, the legacy zone is rejected immediately with 'legacy_disabled',
+  // which the calling waterfall treats as a no-op (same as backoff).
   function loadZone(zoneId, targetEl) {
     return new Promise(function(resolve, reject) {
       if (state.adBlockDetected) { reject(new Error('blocked')); return; }
+
+      // v5.3: skip disabled legacy zones (no script load, no event tracking).
+      if (!CONFIG.ZONES.legacyEnabled && (
+        zoneId === CONFIG.ZONES.inpagePushLegacy ||
+        zoneId === CONFIG.ZONES.vignetteLegacy)) {
+        trackAdEvent('zone_legacy_disabled_skip', { zoneId: zoneId });
+        reject(new Error('legacy_disabled'));
+        return;
+      }
+
+      // v5.3: short-circuit if zone is in backoff (skip wasted ad-provider.js load).
+      // The fill rate data shows 0.23% across 1325 attempts in 3 days — these zones
+      // are not filling right now, so don't waste CPU/bandwidth/IP reputation.
+      if (isZoneInBackoff(zoneId)) {
+        var remaining = getZoneBackoffMs(zoneId);
+        trackAdEvent('zone_backoff_skip', { zoneId: zoneId, remainingMs: remaining });
+        reject(new Error('zone_in_backoff'));
+        return;
+      }
 
       var timeout = setTimeout(function() {
         reject(new Error('timeout'));
@@ -373,6 +502,7 @@
               resolved = true;
               if (observer) observer.disconnect();
               clearTimeout(timeout);
+              clearZoneBackoff(zoneId);  // v5.3: zone just proved it fills
               trackAdEvent('fill', { network: 'monetag', zoneId: zoneId, containerId: targetEl.id || '' });
               resolve(true);
               return;
@@ -387,6 +517,7 @@
               resolved = true;
               if (observer) observer.disconnect();
               clearTimeout(timeout);
+              clearZoneBackoff(zoneId);  // v5.3: zone just proved it fills
               trackAdEvent('fill', { network: 'monetag', zoneId: zoneId, containerId: targetEl.id || '' });
               resolve(true);
               return;
@@ -420,6 +551,7 @@
               if (!resolved) {
                 if (observer) observer.disconnect();
                 clearTimeout(timeout);
+                recordZoneNoFill(zoneId);  // v5.3: exponential backoff
                 trackAdEvent('no_fill', { network: 'monetag', zoneId: zoneId });
                 reject(new Error('no_visible_fill'));
               }
@@ -431,6 +563,7 @@
         clearTimeout(timeout);
         if (observer) observer.disconnect();
         state.adBlockDetected = true;
+        recordZoneNoFill(zoneId);  // v5.3: backoff on load_error too
         trackAdEvent('load_error', { network: 'monetag', zoneId: zoneId });
         reject(new Error('load_err'));
       };
@@ -1316,6 +1449,10 @@
   function init() {
     if (state.initialized) return;
     state.initialized = true;
+
+    // v5.3: load Monetag zone backoff state (lazy cleanup of expired entries).
+    state.zoneBackoff = loadZoneBackoff();
+    refreshDebugBackoff();
 
     // Preconnect to ad provider for faster ad loading
     if (CONFIG.PRECONNECT) {
