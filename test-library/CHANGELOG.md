@@ -3,6 +3,32 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.38.0] - 2026-06-12
+### Added
+- 9 new test cases from Dynamic Test Intelligence R141 cron research
+- S-076: Chrome Payments UAF CVE-2026-11664 CVSS 8.8 heap corruption via crafted HTML
+- S-077: Chrome Guest View UI spoofing CVE-2026-11701 iframe game embedding
+- S-078: Chrome Tracing UAF CVE-2026-11700 long session stability
+- C-070: Safari WWDC 2026 iOS 27 / macOS 27 Golden Gate rendering engine update
+- G-104: Brain game 356s average session + mobile-first play rate benchmark
+- G-105: Casual game tutorial UX clarity sub-3-step onboarding 2026 benchmark
+- G-106: Hybrid-casual genre-blending mechanics testing
+- A-025: WCAG 3.0 March 2026 Working Draft 174 requirements forward-compat
+- B-066: Chrome 149 record 429 CVE regression full-game-library audit
+
+### Sources
+- Chrome 149 stable update (June 8-9, 2026): https://chromereleases.googleblog.com/2026/06/stable-channel-update-for-desktop_0153744567.html
+- CVE-2026-11664: https://cvefeed.io/vuln/detail/CVE-2026-11664
+- CVE-2026-11701: https://cvefeed.io/vuln/detail/CVE-2026-11701
+- Safari WWDC 2026: https://mashable.com/tech/apple-safari-update-wwdc-2026 + https://macrumors.com/2026/06/08/wwdc-2026-recap
+- Chrome 149 429 CVEs: https://forbes.com/sites/daveywinder/2026/06/05/google-chrome-149-new-update-fixes-429-security-flaws-22-critical
+- PlayBrain browser gaming 2026: https://playbrain.games/blog/browser-gaming-trends-2026
+- BinkPlay casual gaming 2026: https://binkplay.com/en/blog/casual-gaming-trends-what-players-want-in-2026
+- Game Developers mobile genre 2026: https://game-developers.org/mobile-game-genre-breakdown-2026
+- WCAG 3.0 Working Draft: https://w3.org/WAI/news/2026-03-03/wcag3
+- DOJ accessibility 2026: https://bbklaw.com/resources/new-digital-accessibility-requirements-in-2026
+
+
 ## [v1.37.0] - 2026-06-12
 ### Added
 - 9 new test cases from industry research (R139 Dynamic Test Intelligence cron)
