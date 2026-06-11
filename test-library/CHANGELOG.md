@@ -3,6 +3,26 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.35.0] - 2026-06-11
+### Added
+- 7 new test cases from industry research (R135 Dynamic Test Intelligence cron)
+- S-069: HTTP/2 Rapid Reset DoS CVE-2026-49160 — CDN/game page availability under attack
+- B-063: Microsoft June 2026 record-breaking 206 CVEs + 6 zero-days browser regression testing
+- C-067: Safari 27 AI tab auto-organize — game tab visibility deprioritization risk
+- G-099: Zero-download instant play UX — first-play benchmark 2026 casual browser games
+- W-130: Multi-platform game distribution — YouTube/Facebook/Discord iframe embed testing
+- P-041: WebGPU main-thread unblocking — UI responsiveness during heavy GPU rendering
+- S-070: Web game supply-chain security — framework CDN tampering detection via SRI
+### Sources
+- HTTP/2 Rapid Reset CVE-2026-49160 (CyberSixt, Qualys Blog, Hornet Security)
+- Microsoft Patch Tuesday June 2026 206 CVEs (BleepingComputer, Rapid7, The Hacker News)
+- Safari 27 AI tab auto-organize (PiunikaWeb, WindowsLatest)
+- Casual browser gaming zero-download UX (ThinkComputers, JayIsGames, Appnality)
+- Multi-platform game distribution (CoolGames hiring, Zco Corp)
+- WebGPU main-thread unblocking (DailyDevPost, Medium/Galante, CybermaXia)
+- Supply-chain CDN security (Google Project Zero VRP restructuring, Canvas LMS breach)
+- Web search queries: HTML5 game testing 2026 new techniques, browser game bug security vulnerability June 2026, Chrome Safari Edge browser update June 2026, casual game UX mobile browser 2026, WebGPU WebGL browser game performance June 2026
+
 
 ## [v1.34.0] - 2026-06-11
 ### Added
