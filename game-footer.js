@@ -269,7 +269,8 @@
 {n:"Factory Balls",e:"ð¨",u:"/factory-balls/",c:"puzzle"},
 {n:"4 Pics 1 Word",e:"ð¼ï¸",u:"/picture-word-guessing/",c:"puzzle"},
 {n:"Antistress",e:"ð§¸",u:"/antistress/",c:"casual"},{n:"Monkey Mart",e:"ð",u:"/monkey-mart/",c:"casual"},{n:"Gravity Drop",e:"ð´",u:"/gravity-drop/",c:"puzzle"},{n:'Number Nexus',e:'ð¢',u:'/number-nexus/',c:'puzzle'},{n:'Poly Art 3D',e:'ð¨',u:'/poly-art-3d/',c:'puzzle'},{n:"Baba Is You",e:"ð§©",u:"/baba-is-you/",c:"puzzle"},{n:"Nut Sort",e:"ð©",u:"/nut-sort/",c:"puzzle"},
-{n:"Pop Them",e:"\U0001f4a5",u:"/pop-them/",c:"puzzle"},{n:"Heyawake",e:"\u25a2",u:"/heyawake/",c:"puzzle"},{n:"Gokigen Naname",e:"\u25c7",u:"/gokigen-naname/",c:"puzzle"},{n:"Stained Glass",e:"0001F3A8",U:"/STAINED-GLASS/",C:"PUZZLE"},{N:"SANDTRIX",E:"0001F3D6",U:"/SANDTRIX/",C:"PUZZLE"},{n:"Sandtrix",e:"\U0001f3d6\ufe0f",u:"/sandtrix/",c:"puzzle"}
+{n:"Pop Them",e:"\U0001f4a5",u:"/pop-them/",c:"puzzle"},{n:"Heyawake",e:"\u25a2",u:"/heyawake/",c:"puzzle"},{n:"Gokigen Naname",e:"\u25c7",u:"/gokigen-naname/",c:"puzzle"},{n:"Stained Glass",e:"0001F3A8",U:"/STAINED-GLASS/",C:"PUZZLE"},{N:"SANDTRIX",E:"0001F3D6",U:"/SANDTRIX/",C:"PUZZLE"},{n:"Sandtrix",e:"\U0001f3d6\ufe0f",u:"/sandtrix/",c:"puzzle"},
+{n:"Solitaire Roguelite",e:"\U0001f3f0",u:"/solitaire-roguelite/",c:"card"}
 ]; }
    }
    function getDateSeed() {

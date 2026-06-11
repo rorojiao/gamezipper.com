@@ -329,6 +329,7 @@ const GAMES = [
 {name:"Meowdoku",emoji:"🐱",cat:"puzzle",tags:["logic","cats","sudoku","brain-teaser","star-battle"],url:"/meowdoku/",desc:"Place cats on the grid - one per row, column, and region. Pure logic puzzle with daily challenges and cat collection.",isNew:true,status:"live"},
 
 {name:"Sand Sort Puzzle",emoji:"🏜️",cat:"puzzle",tags:["sorting","sand","color","logic","relaxing"],url:"/sand-sort/",desc:"Sort colored sand between glass bottles in this satisfying puzzle game. 30 levels, daily challenges, and relaxing particle physics.",isNew:true,status:"live"},
+{name:"Solitaire Roguelite",emoji:"🏰",cat:"card",tags:["solitaire","roguelike","card","dungeon","klondike","strategy","rpg","permadeath"],url:"/solitaire-roguelite/",desc:"Play Solitaire Roguelite free online! Classic Klondike solitaire meets dungeon crawling. Fight 18 monsters, collect 12 powerful items, upgrade your deck. Permadeath runs with meta-progression. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
