@@ -13,8 +13,8 @@
 <meta property="og:description" content="Classic Klondike solitaire meets roguelike dungeon crawling. Defeat 18 monsters, collect 12 powerful items, and upgrade your deck with permadeath runs.">
 <meta property="og:url" content="https://gamezipper.com/solitaire-roguelite/">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://gamezipper.com/og-images/solitaire-roguelite.png">
-<meta name="twitter:image" content="https://gamezipper.com/og-images/solitaire-roguelite.png">
+<meta property="og:image" content="https://gamezipper.com/solitaire-roguelite/og-image.png">
+<meta name="twitter:image" content="https://gamezipper.com/solitaire-roguelite/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Play Solitaire Roguelite Online Free - Dungeon Card Game | GameZipper">
 <meta name="twitter:description" content="Classic Klondike solitaire meets roguelike dungeon crawling. Fight monsters, collect powerful items, upgrade your deck with permadeath runs.">
@@ -319,6 +319,7 @@ const SUIT_SYMBOLS = {H:'H', D:'D', C:'C', S:'S'};
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const RANK_VAL = {A:1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,J:11,Q:12,K:13};
 const FACE_DOWN_OFFSET = 8;
+const ENEMY_H = 56;
 
 // ---- Audio ----
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -401,6 +402,59 @@ function playSound(type) {
       o.connect(g); o.start(now); o.stop(now + 0.1);
     }
   } catch(e) {}
+}
+
+// ---- Procedural BGM ----
+let bgmNodes = null;
+let bgmInterval = null;
+function startBGM() {
+  if (bgmNodes) return;
+  try {
+    const ctx = getAudioCtx();
+    const master = ctx.createGain();
+    master.gain.value = 0.06;
+    master.connect(ctx.destination);
+    const pad = ctx.createOscillator(); pad.type = 'sine'; pad.frequency.value = 110;
+    const padGain = ctx.createGain(); padGain.gain.value = 0.3;
+    pad.connect(padGain); padGain.connect(master); pad.start();
+    const pad2 = ctx.createOscillator(); pad2.type = 'triangle'; pad2.frequency.value = 165;
+    const padGain2 = ctx.createGain(); padGain2.gain.value = 0.15;
+    pad2.connect(padGain2); padGain2.connect(master); pad2.start();
+    const pad3 = ctx.createOscillator(); pad3.type = 'sine'; pad3.frequency.value = 220;
+    const padGain3 = ctx.createGain(); padGain3.gain.value = 0.1;
+    pad3.connect(padGain3); padGain3.connect(master); pad3.start();
+    const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.1;
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = 5;
+    lfo.connect(lfoGain); lfoGain.connect(pad.frequency); lfo.start();
+    const lfo2 = ctx.createOscillator(); lfo2.type = 'sine'; lfo2.frequency.value = 0.07;
+    const lfoGain2 = ctx.createGain(); lfoGain2.gain.value = 3;
+    lfo2.connect(lfoGain2); lfoGain2.connect(pad2.frequency); lfo2.start();
+    bgmNodes = {master, pad, pad2, pad3, padGain, padGain2, padGain3, lfo, lfo2, lfoGain, lfoGain2};
+    const notes = [261.6, 293.7, 329.6, 349.2, 392, 440, 493.9, 523.3];
+    let ni = 0;
+    bgmInterval = setInterval(() => {
+      if (!bgmNodes) return;
+      const freq = notes[ni % notes.length];
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.04, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+      o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime + 1.5);
+      ni++;
+    }, 2000);
+  } catch(e) { console.warn('BGM failed', e); }
+}
+function stopBGM() {
+  if (bgmInterval) { clearInterval(bgmInterval); bgmInterval = null; }
+  if (bgmNodes) {
+    try {
+      bgmNodes.master.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+      setTimeout(() => {
+        try { bgmNodes.pad.stop(); bgmNodes.pad2.stop(); bgmNodes.pad3.stop();
+              bgmNodes.lfo.stop(); bgmNodes.lfo2.stop(); } catch(e){}
+        bgmNodes = null;
+      }, 600);
+    } catch(e) { bgmNodes = null; }
+  }
 }
 
 // ---- Seeded PRNG (Mulberry32) ----
@@ -681,7 +735,7 @@ function layoutCanvas() {
   if (!wrap) return;
   const w = Math.min(wrap.clientWidth, 560);
   canvasW = w;
-  canvasH = Math.min(window.innerHeight * 0.78, w * 1.4);
+  canvasH = Math.min(window.innerHeight * 0.85, w * 1.55);
   cardW = (canvasW - 24 - 6 * 8) / 7;
   cardH = cardW * 1.4;
   gap = 8;
@@ -692,15 +746,15 @@ function layoutCanvas() {
   ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
 }
 function colX(c) { return 12 + c * (cardW + gap); }
-function tableauY(i) { return 80 + (i * FACE_DOWN_OFFSET); }
+function tableauY(i) { return ENEMY_H + 12 + (i * FACE_DOWN_OFFSET); }
 function stockX() { return 12; }
-function stockY() { return 8; }
+function stockY() { return ENEMY_H + 12; }
 function wasteX() { return 12 + cardW + gap; }
-function wasteY() { return 8; }
+function wasteY() { return ENEMY_H + 12; }
 function foundationX(i) { return 12 + (3 + i) * (cardW + gap); }
-function foundationY() { return 8; }
-function enemyX() { return 12 + (3 + 4) * (cardW + gap) + cardW + gap; }
-function enemyY() { return 8; }
+function foundationY() { return ENEMY_H + 12; }
+function enemyX() { return canvasW - cardW - 12; }
+function enemyY() { return 4; }
 
 // ---- Drawing ----
 function drawSuit(ctx, x, y, suit, size, color) {
@@ -846,50 +900,46 @@ function drawHpBar(x, y, w, h, cur, max, color) {
 
 function drawEnemy(enemy, x, y, w, h) {
   ctx.save();
-  // Body
   const isBoss = !!enemy.boss;
-  const grad = ctx.createRadialGradient(x + w/2, y + h/2, 0, x + w/2, y + h/2, w * 0.6);
+  // Compact banner
+  const grad = ctx.createLinearGradient(x, y, x + w, y + h);
   grad.addColorStop(0, isBoss ? '#f1c40f' : '#9b59b6');
   grad.addColorStop(1, isBoss ? '#c0392b' : '#4a1a6a');
   ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.arc(x + w/2, y + h/2, w * 0.42, 0, Math.PI * 2);
+  ctx.arc(x + h/2, y + h/2, h * 0.42, 0, Math.PI * 2);
   ctx.fill();
   // Spikes for boss
   if (isBoss) {
     ctx.strokeStyle = '#f1c40f';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
     for (let i = 0; i < 6; i++) {
       const a = i * Math.PI / 3;
       ctx.beginPath();
-      ctx.moveTo(x + w/2, y + h/2);
-      ctx.lineTo(x + w/2 + Math.cos(a) * w * 0.5, y + h/2 + Math.sin(a) * w * 0.5);
+      ctx.moveTo(x + h/2, y + h/2);
+      ctx.lineTo(x + h/2 + Math.cos(a) * h * 0.55, y + h/2 + Math.sin(a) * h * 0.55);
       ctx.stroke();
     }
   }
   // Eyes
   ctx.fillStyle = '#fff';
   ctx.beginPath();
-  ctx.arc(x + w * 0.35, y + h * 0.42, w * 0.08, 0, Math.PI * 2);
-  ctx.arc(x + w * 0.65, y + h * 0.42, w * 0.08, 0, Math.PI * 2);
+  ctx.arc(x + h * 0.4, y + h * 0.42, h * 0.12, 0, Math.PI * 2);
+  ctx.arc(x + h * 0.65, y + h * 0.42, h * 0.12, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = '#000';
   ctx.beginPath();
-  ctx.arc(x + w * 0.35, y + h * 0.42, w * 0.04, 0, Math.PI * 2);
-  ctx.arc(x + w * 0.65, y + h * 0.42, w * 0.04, 0, Math.PI * 2);
+  ctx.arc(x + h * 0.4, y + h * 0.42, h * 0.06, 0, Math.PI * 2);
+  ctx.arc(x + h * 0.65, y + h * 0.42, h * 0.06, 0, Math.PI * 2);
   ctx.fill();
-  // Mouth
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(x + w/2, y + h * 0.6, w * 0.15, 0, Math.PI);
-  ctx.stroke();
   // Name
   ctx.fillStyle = '#fff';
-  ctx.font = 'bold ' + (w * 0.13) + 'px Inter';
-  ctx.textAlign = 'center';
+  ctx.font = 'bold ' + (h * 0.28) + 'px Inter';
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.fillText(enemy.name, x + w/2, y + h - 14);
+  ctx.fillText((enemy.boss ? '[BOSS] ' : '') + enemy.name, x + h + 6, y + 4);
+  // HP bar
+  drawHpBar(x + h + 6, y + h * 0.55, w - h - 12, h * 0.28, enemy.hpCur, enemy.hpMax, '#e74c3c');
   ctx.restore();
 }
 
@@ -1027,12 +1077,10 @@ function drawBoard() {
   if (!ctx) return;
   ctx.clearRect(0, 0, canvasW, canvasH);
   if (!battle) return;
-  // Draw enemy on top
+  // Draw enemy as banner at top right
   if (battle.enemy) {
-    const ex = 12, ey = 8, ew = cardW, eh = cardH;
+    const ex = canvasW - cardW - 12, ey = 4, ew = cardW, eh = 48;
     drawEnemy(battle.enemy, ex, ey, ew, eh);
-    // HP bar
-    drawHpBar(ex, ey + eh + 4, ew, 8, battle.enemy.hpCur, battle.enemy.hpMax, '#e74c3c');
   }
   // Foundations
   for (let i = 0; i < 4; i++) {
@@ -1200,6 +1248,7 @@ function continueRun() {
 // ---- Map ----
 function showMap() {
   hideAll();
+  stopBGM();
   document.getElementById('map-screen').style.display = 'flex';
   document.getElementById('map-title').textContent = run.daily ? 'DAILY CHALLENGE' : 'DUNGEON MAP';
   document.getElementById('map-biome').textContent = 'Biome ' + (run.biome + 1) + ': ' + BIOMES[run.biome].name;
@@ -1292,6 +1341,7 @@ function startEncounter() {
 
 function showGame() {
   hideAll();
+  if (settings.sound) startBGM();
   document.getElementById('game-screen').style.display = 'flex';
   document.getElementById('biome-name').textContent = BIOMES[run.biome].name.toUpperCase();
   document.getElementById('hp-val').textContent = run.hp;
@@ -1827,7 +1877,7 @@ function getMousePos(e) {
 
 function getClickTarget(p) {
   // Check enemy
-  if (p.x >= 12 && p.x < 12 + cardW && p.y >= 8 && p.y < 8 + cardH) {
+  if (p.x >= canvasW - cardW - 12 && p.x < canvasW - 12 && p.y >= 4 && p.y < 52) {
     return {type: 'enemy'};
   }
   // Check foundations
@@ -2106,6 +2156,7 @@ function hideAll() {
 
 function showMenu() {
   if (settings.sound) playSound('click');
+  stopBGM();
   hideAll();
   document.getElementById('menu-screen').style.display = 'flex';
   updateMenuStats();
