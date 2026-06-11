@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Play Knotwords Online Free - Crossword Logic Puzzle | GameZipper</title>
+<link rel="canonical" href="https://gamezipper.com/knotwords/">
+<meta name="description" content="Play Knotwords online free. A crossword-sudoku hybrid word logic puzzle. Deduce letters to form valid words. 30 levels, daily challenge, and more.">
+<meta property="og:title" content="Play Knotwords Online Free - Crossword Logic Puzzle | GameZipper">
+<meta property="og:description" content="Knotwords: Crossword meets Sudoku. Deduce letters from bundles to form valid words. 30 levels of brain-teasing fun.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/knotwords/">
+<meta property="og:image" content="https://gamezipper.com/knotwords/icon.png">
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=knotwords'></script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Knotwords","description":"Crossword-sudoku hybrid word logic puzzle. Deduce letters from bundles to form valid words.","genre":"Puzzle","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://gamezipper.com/knotwords/","playMode":"SinglePlayer","numberOfPlayers":{"@type":"QuantitativeValue","value":1},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","reviewCount":"120"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Knotwords?","acceptedAnswer":{"@type":"Answer","text":"Knotwords is a crossword-sudoku hybrid puzzle where you deduce which letters go where using bundle hints."}},{"@type":"Question","name":"How many levels does Knotwords have?","acceptedAnswer":{"@type":"Answer","text":"Knotwords has 30 handcrafted levels across 5 difficulty tiers, plus a daily challenge mode."}},{"@type":"Question","name":"Is Knotwords free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes, Knotwords is completely free to play online in your browser at GameZipper."}}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"HowTo","name":"How to Play Knotwords","step":[{"@type":"HowToStep","name":"Select a cell","text":"Tap or click on an empty cell in the crossword grid to select it."},{"@type":"HowToStep","name":"Place a letter","text":"Type a letter from the bundle's letter bank. Each colored bundle shares the same set of allowed letters."},{"@type":"HowToStep","name":"Complete words","text":"Fill in all cells so every row and column forms a valid English word."},{"@type":"HowToStep","name":"Solve the puzzle","text":"When all words are correct, the puzzle is solved! Earn stars based on speed and hint usage."}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Knotwords","item":"https://gamezipper.com/knotwords/"}]}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow-x:hidden;user-select:none;background:#0a0a1a;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#e0e0f0;min-height:100vh;touch-action:none}
+canvas{display:block;touch-action:none}
+.screen{position:absolute;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;align-items:center;justify-content:center}
+.screen.active{display:flex}
+.btn{padding:14px 32px;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s;background:rgba(255,255,255,0.08);color:#e0e0f0;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1)}
+.btn:hover{background:rgba(255,255,255,0.15);transform:translateY(-2px);box-shadow:0 4px 20px rgba(100,100,255,0.2)}
+.btn:active{transform:translateY(0)}
+.btn-primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-color:rgba(139,92,246,0.3)}
+.btn-sm{padding:10px 20px;font-size:14px;border-radius:8px}
+.glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);border-radius:16px}
+h1,h2,h3{text-shadow:0 0 20px rgba(100,100,255,0.5)}
+.title-glow{text-shadow:0 0 30px rgba(139,92,246,0.6),0 0 60px rgba(139,92,246,0.3)}
+#gameCanvas{position:absolute;top:0;left:0}
+.overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(10,10,26,0.85);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(5px)}
+.overlay.active{display:flex}
+.modal{background:rgba(20,20,50,0.95);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:30px;max-width:400px;width:90%;text-align:center;backdrop-filter:blur(20px)}
+.stars-display{font-size:32px;margin:10px 0}
+.stars-display .star{color:#333;transition:color 0.3s}
+.stars-display .star.earned{color:#fbbf24}
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="menuScreen" class="screen active">
+<div style="text-align:center;padding:20px">
+<h1 class="title-glow" style="font-size:48px;margin-bottom:10px;color:#c4b5fd">KNOTWORDS</h1>
+<p style="color:#9ca3af;margin-bottom:30px;font-size:18px">Crossword meets Sudoku</p>
+<div style="display:flex;flex-direction:column;gap:12px;max-width:280px;margin:0 auto">
+<button class="btn btn-primary" onclick="showLevelSelect()">Play</button>
+<button class="btn" onclick="startDailyChallenge()">Daily Challenge</button>
+<button class="btn" onclick="showStats()">Statistics</button>
+<button class="btn" onclick="showSettings()">Settings</button>
+<button class="btn" onclick="showTutorial()">How to Play</button>
+</div>
+<p style="color:#6b7280;margin-top:30px;font-size:12px">A GameZipper Original</p>
+</div>
+</div>
+<div id="levelScreen" class="screen">
+<div style="text-align:center;padding:20px;max-width:600px;width:100%">
+<h2 style="font-size:28px;margin-bottom:20px;color:#c4b5fd">Select Level</h2>
+<div id="levelGrid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:20px"></div>
+<button class="btn btn-sm" onclick="showMenu()">Back</button>
+</div>
+</div>
+<div id="statsScreen" class="screen">
+<div class="modal" style="max-width:450px">
+<h2 style="font-size:24px;margin-bottom:20px;color:#c4b5fd">Statistics</h2>
+<div id="statsContent"></div>
+<button class="btn btn-sm" onclick="showMenu()" style="margin-top:20px">Back</button>
+</div>
+</div>
+<div id="settingsScreen" class="screen">
+<div class="modal" style="max-width:400px">
+<h2 style="font-size:24px;margin-bottom:20px;color:#c4b5fd">Settings</h2>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<span>Sound Effects</span>
+<button class="btn btn-sm" id="soundToggle" onclick="toggleSound()">On</button>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center">
+<span>Music</span>
+<button class="btn btn-sm" id="musicToggle" onclick="toggleMusic()">On</button>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center">
+<span>Reset Progress</span>
+<button class="btn btn-sm" onclick="confirmReset()" style="color:#f87171">Reset</button>
+</div>
+</div>
+<button class="btn btn-sm" onclick="showMenu()" style="margin-top:20px">Back</button>
+</div>
+</div>
+<div id="tutorialScreen" class="screen">
+<div class="modal" style="max-width:450px;text-align:left">
+<h2 style="font-size:24px;margin-bottom:15px;color:#c4b5fd;text-align:center">How to Play</h2>
+<div id="tutorialContent" style="line-height:1.8;font-size:15px">
+<p><strong style="color:#c4b5fd">Knotwords</strong> is a crossword puzzle where you deduce letters from clues.</p>
+<br>
+<p><strong style="color:#818cf8">Bundles:</strong> Colored groups of cells share the same set of letters. Look at the letter bank for each bundle color.</p>
+<br>
+<p><strong style="color:#818cf8">Goal:</strong> Fill every cell so that all words across and down are valid English words.</p>
+<br>
+<p><strong style="color:#818cf8">Hints:</strong> Use "Reveal" to show a letter, or "Check" to highlight errors.</p>
+<br>
+<p><strong style="color:#818cf8">Scoring:</strong> Earn up to 3 stars per level. Faster times and fewer hints = more stars!</p>
+</div>
+<button class="btn btn-primary btn-sm" onclick="startTutorialLevel()" style="margin-top:20px">Try Level 1</button>
+<button class="btn btn-sm" onclick="showMenu()" style="margin-top:10px">Back</button>
+</div>
+</div>
+<div id="victoryOverlay" class="overlay">
+<div class="modal">
+<h2 style="font-size:28px;margin-bottom:10px;color:#c4b5fd">Puzzle Solved!</h2>
+<div class="stars-display" id="victoryStars"></div>
+<div id="victoryStats" style="margin:15px 0;line-height:2"></div>
+<div style="display:flex;gap:10px;justify-content:center;margin-top:15px">
+<button class="btn btn-sm" onclick="showLevelSelect()">Levels</button>
+<button class="btn btn-primary btn-sm" id="nextLevelBtn" onclick="nextLevel()">Next Level</button>
+</div>
+</div>
+</div>
+<div id="resetOverlay" class="overlay">
+<div class="modal">
+<h2 style="font-size:22px;margin-bottom:15px;color:#f87171">Reset Progress?</h2>
+<p style="color:#9ca3af;margin-bottom:20px">This will erase all your saved progress, scores, and stars. This cannot be undone.</p>
+<div style="display:flex;gap:10px;justify-content:center">
+<button class="btn btn-sm" onclick="hideReset()">Cancel</button>
+<button class="btn btn-sm" onclick="doReset()" style="color:#f87171;border-color:#f87171">Reset</button>
+</div>
+</div>
+</div>
+<script>
+(function(){
+"use strict";
+const SAVE_VERSION=2;
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+let W=0,H=0,dpr=1;
+let currentScreen='menu';
+let game=null;
+let audioCtx=null;
+let musicGain=null;
+let musicPlaying=false;
+let musicNodes=[];
+let animFrame=0;
+let lastTime=0;
+let particles=[];
+let saveData={version:SAVE_VERSION,completed:{},settings:{sound:true,music:true},stats:{played:0,solved:0,bestTime:{},streak:0,totalStars:0}};
+
+const BUNDLE_COLORS=[
+{r:255,g:107,b:107,name:'coral'},{r:78,g:205,b:196,name:'teal'},{r:255,g:217,b:61,name:'gold'},
+{r:167,g:139,b:250,name:'violet'},{r:134,g:239,b:172,name:'lime'},{r:96,g:165,b:250,name:'sky'},
+{r:244,g:114,b:182,name:'pink'},{r:251,g:146,b:60,name:'orange'},{r:192,g:132,b:252,name:'purple'},
+{r:74,g:222,b:128,name:'green'}
+];
+
+const WORDS={
+3:['cat','dog','run','hat','sun','cup','map','pen','box','fly','ice','hot','red','big','top','fun','net','win','old','new','day','way','say','buy','eat','try','ask','now','get','let','put','set','cut','hit','bit','fit','kit','sit','pit','mix','fix','six','did','had','was','are','can','may','one','two','six','ten','own','use','add','age','air','arm','art','bad','bag','bar','bat','bay','bed','bet','bow','boy','bud','bus','buy','cab','can','cap','car','cow','cry','dam','dew','dig','dim','dip','dry','due','dug','ear','egg','end','era','eve','eye','fan','far','fat','few','fig','fin','fit','fog','for','fox','gap','gas','gig','gin','god','got','gum','gun','gut','gym','ham','hen','her','hid','him','hip','his','hog','hop','how','hub','hue','hug','jam','jar','jaw','jet','job','jog','joy','jug','key','kid','kin','lab','lap','law','lay','led','leg','lid','lip','log','lot','low','mad','mat','men','mid','mob','mom','mop','mud','mug','nag','nap','net','nod','nor','not','nut','oak','oar','odd','oil','opt','ore','our','out','owe','owl','pad','pan','paw','pay','pet','pie','pig','pin','pit','pod','pop','pot','pro','pub','pug','rag','ram','ran','rap','rat','raw','ray','rib','rid','rig','rim','rip','rob','rod','rot','row','rub','rug','rum','sad','sat','saw','say','sea','sew','shy','sin','sip','sir','ski','sky','sly','sob','sod','son','sow','soy','spa','spy','sum','tab','tag','tan','tap','tar','tax','tea','the','tie','tin','tip','toe','ton','too','toy','try','tub','tug','van','vat','vet','via','vow','war','wax','web','wet','who','wig','wit','woe','wok','won','woo','wow','yak','yam','yap','yaw','yes','yet','yew','you','zap','zen','zig','zip','zoo'],
+4:['acid','arch','area','army','aunt','back','bake','ball','band','bank','bark','barn','base','bath','bead','beam','bean','bear','beat','beef','beer','bell','belt','bend','bike','bill','bind','bird','bite','blow','blue','boat','body','bold','bolt','bomb','bond','bone','book','boot','bore','born','boss','both','bowl','bulk','bull','burn','busy','cafe','cage','cake','calf','call','calm','came','camp','card','care','cart','case','cash','cast','cave','chef','chip','city','clad','clam','clan','claw','clay','clip','club','coal','coat','code','coil','coin','cold','come','cook','cool','cope','copy','cord','core','corn','cost','coup','crew','crop','crow','cube','cult','cure','curl','cute','dare','dark','data','date','dawn','dead','deal','dear','debt','deck','deed','deem','deep','deer','deny','desk','dial','dice','diet','dirt','disc','dish','disk','dock','does','dome','done','doom','door','dose','down','drag','draw','drew','drip','drop','drug','drum','dual','duck','duel','duke','dull','dumb','dump','dune','dunk','dusk','dust','duty','each','earn','ease','east','easy','edge','edit','else','emit','envy','epic','even','ever','evil','exam','exit','face','fact','fade','fail','fair','fake','fall','fame','fang','farm','fast','fate','fawn','fear','feat','feed','feel','feet','fell','felt','file','fill','film','find','fine','fire','firm','fish','fist','flag','flap','flat','flaw','flea','fled','flew','flex','flip','flock','flow','foam','fold','folk','fond','font','food','fool','foot','ford','fork','form','fort','foul','four','free','frog','from','fuel','full','fund','fury','fuse','gain','gale','game','gang','gate','gave','gaze','gear','gene','gift','girl','give','glad','glen','glow','glue','goat','goes','gold','golf','gone','good','grab','gray','grew','grid','grim','grin','grip','grow','gulf','gust','hack','hail','hair','half','hall','halt','hand','hang','hard','hare','harm','harp','hate','haul','have','haze','head','heal','heap','hear','heat','heel','held','hell','help','herb','herd','here','hero','hide','high','hike','hill','hint','hire','hold','hole','holy','home','hook','hope','horn','host','hour','huge','hull','hung','hunt','hurt','hymn','icon','idea','idle','inch','into','iron','isle','item','jack','jade','jail','jazz','jean','jerk','jest','jive','joke','jolt','jump','jury','just','keen','keep','kelp','kept','kick','kill','kind','king','kiss','kite','knee','knew','knit','knob','knot','know','lace','lack','laid','lake','lamb','lame','lamp','land','lane','lard','lark','lash','last','late','lawn','lazy','lead','leaf','leak','lean','leap','left','lend','lens','less','liar','lick','life','lift','like','limb','lime','limp','line','link','lion','list','live','load','loaf','loan','lock','loft','logo','lone','long','look','loop','lord','lore','lose','loss','lost','loud','love','luck','lump','lure','lurk','lush','made','mail','main','make','male','mall','malt','mane','many','mare','mark','mask','mass','mast','mate','maze','meal','mean','meat','meet','meld','melt','memo','mend','menu','mere','mesh','mess','mild','mile','milk','mill','mind','mine','mint','miss','moan','moat','mock','mode','mold','mole','molt','monk','mood','moon','more','moss','most','moth','move','much','mule','must','mute','myth','nail','name','navy','near','neat','neck','need','nest','next','nice','nine','node','none','noon','norm','nose','note','noun','nude','oath','obey','odds','omit','once','only','onto','ooze','open','oral','ours','oust','oven','over','pace','pack','page','paid','pail','pain','pair','pale','palm','pane','park','part','pass','past','path','pave','peak','pear','peel','peer','pile','pine','pink','pipe','pity','plan','play','plea','plot','plow','plug','plum','plus','poem','poet','pole','poll','polo','pond','pool','poor','pope','pork','port','pose','post','pour','pray','prey','prod','prop','pull','pulp','pump','punk','pure','push','quit','quiz','race','rack','raft','rage','raid','rail','rain','rake','ramp','rang','rank','rare','rash','rate','rave','rays','read','real','reap','rear','reed','reef','reel','rein','rely','rent','rest','rice','rich','ride','rift','ring','riot','rise','risk','road','roam','roar','robe','rock','rode','role','roll','roof','room','root','rope','rose','ruin','rule','rung','rush','rust','safe','sage','said','sail','sake','sale','salt','same','sand','sane','sang','sank','save','seal','seam','seat','seed','seek','seem','seen','self','sell','send','sent','ship','shoe','shop','shot','show','shut','sick','side','sift','sigh','sign','silk','sing','sink','site','size','skip','slam','slap','slat','sled','slew','slid','slim','slip','slit','slot','slow','slug','snap','snip','snow','soak','soap','soar','sock','soda','sofa','soft','soil','sold','sole','some','song','soon','sore','sort','soul','sour','span','spar','spec','sped','spin','spit','spot','spur','star','stay','stem','step','stew','stop','stub','such','suit','sulk','sung','sunk','sure','surf','swap','swim','swum','tack','tail','take','tale','talk','tall','tame','tank','tape','tart','task','taxi','team','tear','tell','temp','tend','tent','term','test','text','than','that','them','then','they','thin','this','thud','tick','tide','tidy','tier','tile','till','tilt','time','tint','tiny','tire','toad','toil','told','toll','tomb','tone','took','tool','tops','tore','torn','toss','tour','town','trap','tray','tree','trek','trim','trio','trip','trod','trot','true','tube','tuck','tuft','tune','turn','twin','type','ugly','undo','unit','unto','upon','urge','used','user','vain','vale','vane','vary','vase','vast','veil','vein','vent','verb','very','vest','vibe','view','vine','void','volt','vote','wade','wage','wait','wake','walk','wall','wand','want','ward','warm','warn','warp','wart','wary','wash','wasp','wave','wavy','waxy','weak','wear','weed','week','well','went','were','west','what','when','whim','whip','wide','wife','wild','will','wilt','wily','wind','wine','wing','wink','wipe','wire','wise','wish','with','woke','wolf','wood','wool','word','wore','work','worm','worn','wrap','wren','yard','yarn','year','yell','yoga','yoke','zero','zest','zinc','zone','zoom'],
+5:['about','above','abuse','actor','adapt','admit','adopt','adult','after','again','agree','ahead','alarm','album','alien','align','alive','allow','alone','along','alter','among','amuse','anger','angle','angry','anime','apart','apple','apply','arena','argue','arise','armor','array','aside','asset','audio','avoid','awake','award','aware','awful','badge','basic','basin','basis','beach','begin','being','below','bench','berry','birth','black','blade','blame','blank','blast','blaze','bleed','blend','bless','blind','blink','bliss','block','blood','bloom','blown','board','boast','bonus','boost','bound','brain','brand','brave','bread','break','breed','brick','bride','brief','bring','broad','broke','brook','brown','brush','buddy','build','bunch','burst','buyer','cabin','cable','candy','cargo','carry','catch','cause','chain','chair','charm','chart','chase','cheap','check','cheek','cheer','chess','chest','chief','child','chill','china','chord','chunk','civil','claim','clash','class','clean','clear','clerk','click','cliff','climb','cling','clock','clone','close','cloth','cloud','coach','coast','coral','could','count','court','cover','crack','craft','crane','crash','crawl','crazy','cream','crisp','cross','crowd','crown','cruel','crush','curve','cycle','daily','dance','debut','delay','delta','demon','dense','depot','depth','derby','devil','diary','dirty','donor','doubt','dough','draft','drain','drake','drama','drank','drawn','dream','dress','drift','drill','drink','drive','drone','drove','dwarf','eager','eagle','early','earth','eight','elder','elect','elite','ember','empty','enemy','enjoy','enter','equal','equip','error','essay','event','every','exact','exile','exist','extra','fable','facet','faith','false','fancy','fatal','fault','feast','fence','ferry','fetch','fever','fiber','field','fifth','fifty','fight','final','flame','flash','fleet','flesh','float','flock','flood','floor','flora','fluid','flush','flute','focal','focus','force','forge','forth','forum','found','frame','frank','fraud','fresh','front','frost','froze','fruit','fully','giant','given','glass','globe','gloom','glory','glove','grace','grade','grain','grand','grant','grape','grasp','grass','grave','great','greed','green','greet','grief','grill','grind','groan','groom','gross','group','grove','grown','guard','guess','guest','guide','guild','guilt','harsh','haste','haunt','heart','heavy','hedge','hence','hobby','honey','honor','horse','hotel','house','human','humor','hurry','ideal','image','imply','index','indie','infer','inner','input','irony','ivory','jewel','joint','judge','juice','karma','knack','kneel','knife','knock','known','label','labor','lapse','large','laser','latch','later','laugh','layer','learn','lease','least','leave','legal','lemon','level','lever','light','limit','linen','liner','liver','local','lodge','logic','loose','lover','lower','loyal','lucky','lunar','lunch','lyric','magic','major','maker','manor','maple','march','match','mayor','media','mercy','merge','merit','metal','meter','might','minor','minus','mirth','model','money','month','moral','motif','motor','mount','mouse','mouth','movie','music','naive','naked','nerve','never','night','noble','noise','north','notch','noted','novel','nurse','nylon','occur','ocean','offer','often','olive','onset','opera','orbit','order','other','outer','owner','oxide','ozone','paint','panel','panic','paper','party','paste','patch','pause','peace','peach','pearl','penny','phase','phone','photo','piano','pilot','pinch','pixel','place','plain','plane','plant','plate','plaza','plead','pluck','plumb','point','polar','porch','poser','pouch','pound','power','press','price','pride','prime','prince','print','prior','prize','probe','proof','prose','proud','prove','pulse','pupil','purse','queen','query','quest','queue','quick','quiet','quirk','quota','quote','radar','radio','raise','rally','range','rapid','ratio','reach','react','ready','realm','rebel','reign','relax','reply','rider','ridge','rifle','right','rigid','risky','rival','river','robin','robot','rocky','rouge','rough','round','route','rover','royal','rugby','ruler','rural','saint','salad','sauce','scale','scare','scene','scent','scope','score','scout','scrap','screw','seize','sense','serve','seven','shade','shaft','shake','shall','shame','shape','share','shark','sharp','sheep','sheer','sheet','shelf','shell','shift','shine','shirt','shock','shore','short','shout','shrub','siege','sight','sigma','since','sixth','sixty','skill','skull','slate','sleep','slice','slide','slope','smart','smell','smile','smoke','snake','solar','solid','solve','sorry','south','space','spare','spark','spawn','speak','speed','spend','spice','spill','spine','spite','split','spoke','spoon','sport','spray','squad','stack','staff','stage','stain','stair','stake','stale','stall','stamp','stand','stark','start','state','stave','steal','steam','steel','steep','steer','stern','stick','stiff','still','sting','stock','stole','stone','stood','stool','store','storm','story','stout','stove','strap','straw','stray','strip','stuck','study','stuff','stump','style','sugar','suite','sunny','super','surge','swamp','swarm','swear','sweep','sweet','swept','swift','swing','swirl','syrup','table','taken','taste','teach','teeth','tempo','tense','thank','theft','their','theme','there','these','thick','thief','thing','think','third','thorn','those','three','threw','throw','thumb','tidal','tight','timer','title','toast','today','token','topic','torch','total','touch','tough','towel','tower','toxic','trace','track','trade','trail','train','trait','trash','treat','trend','trial','tribe','trick','tried','troop','truck','truly','trunk','trust','truth','tumor','twice','twist','ultra','uncle','under','union','unite','unity','until','upper','upset','urban','usage','usual','utter','valid','value','valve','vault','venue','verse','video','vigor','vinyl','viola','viral','virus','visit','vista','vital','vivid','vocal','vodka','voice','voter','waste','watch','water','weary','weave','wedge','weigh','weird','wheat','wheel','where','which','while','white','whole','whose','wider','witch','woman','world','worry','worse','worst','worth','would','wound','wrath','write','wrong','wrote','yacht','yield','young','youth','zebra'],
+6:['absorb','accent','accept','access','across','action','active','actual','affirm','afford','agenda','almost','amount','anchor','annual','anyone','anyway','appeal','appear','arctic','around','arrive','artist','aspect','assert','assign','assist','assume','attach','attack','attend','autumn','avatar','backer','bailey','balance','bandit','banter','barrel','battle','beacon','beauty','become','before','behalf','behave','behind','belong','beside','beyond','bishop','bitter','blanch','blazer','bleach','blight','bloody','border','borrow','botany','bottom','bounce','branch','breach','breath','breeze','bridge','bright','broken','bronze','browse','brutal','bubble','bucket','budget','buffer','bullet','bundle','burden','bureau','button','bypass','cactus','camera','campus','cancel','candle','canyon','carbon','career','carpet','castle','casual','caught','cellar','center','chance','change','chapel','charge','cheese','cherry','chosen','church','circle','client','closed','closet','clumsy','clutch','cobalt','coffee','colony','column','combat','comedy','common','convey','cookie','cooler','copper','corner','costly','cotton','county','couple','course','cousin','cradle','create','credit','crisis','custom','damage','dancer','danger','daring','dealer','debate','decade','decide','deduce','defeat','defend','define','degree','demand','denial','deploy','depict','derive','desert','design','desire','detail','detect','device','devote','differ','digest','dilute','dinner','direct','divine','doctor','domain','donate','double','dragon','drawer','driver','dwell','eager','earned','easily','editor','effect','effort','eighth','either','embark','emerge','empire','employ','enable','endure','energy','engage','engine','enough','ensure','entire','entity','eraser','escape','estate','evolve','exceed','except','excite','excuse','exempt','expand','expect','expert','export','expose','extend','extent','fabric','facial','factor','fairly','family','famous','farmer','father','fathom','faucet','favour','fellow','female','fierce','figure','filter','finale','finder','finish','fiscal','flavor','flight','flower','fluent','flying','follow','forbid','forced','forest','forget','formal','format','former','fossil','foster','fourth','freeze','french','frenzy','friend','frozen','fulfil','fumble','funded','fungal','fusion','future','galaxy','gamble','garden','garlic','gather','gander','gemini','genius','gentle','gently','gifted','ginger','global','gloomy','glossy','goblet','golden','gospel','gossip','govern','gravel','groove','growth','guitar','gutter','hacker','hamlet','handle','happen','harbor','hardly','hazard','health','heaven','herbal','hidden','hinder','hockey','hollow','honest','horror','hourly','hunger','hunter','hybrid','ignore','impact','import','impose','impure','income','indeed','indoor','infant','inform','injury','inland','inmate','insect','insert','inside','insist','insult','intact','intend','intent','intern','invent','invest','invite','island','itself','jacket','jargon','jersey','jigsaw','jungle','junior','karate','keeper','kernel','kettle','kidney','killer','kindly','knight','ladder','lament','laptop','lately','launch','lavish','lawyer','layout','leader','league','legacy','lender','length','lesson','letter','likely','linear','linger','liquid','listen','litter','little','lively','living','lonely','lookup','loosen','losing','lovely','lumber','luxury','mainly','manage','manner','manual','marble','margin','marine','marker','market','master','matter','meadow','medium','member','memoir','memory','mental','mentor','merely','merger','method','middle','mighty','miller','mining','minute','mirror','misery','mobile','modest','moment','monkey','mortar','mosaic','mostly','mother','motion','motive','muffin','mumble','murder','museum','muster','mutual','muzzle','myself','namely','narrow','nation','nature','nearby','nearly','neatly','needle','nested','nestle','noodle','normal','notice','notify','notion','number','object','obtain','occupy','offend','office','offset','online','openly','oppose','option','oracle','orange','ordeal','origin','orphan','outfit','outlet','output','oxygen','packed','paddle','palace','parade','parent','parrot','parcel','patrol','patron','peanut','people','pepper','period','permit','person','phrase','pigeon','pillar','pillow','pirate','plague','planet','player','please','pledge','plenty','plunge','pocket','poetry','poison','police','policy','polish','polite','ponder','poorly','portal','poster','potato','potter','powder','praise','prayer','prefer','pretty','prince','prison','profit','prompt','proper','proven','public','punish','purple','pursue','puzzle','python','quaint','quarry','racket','random','ranger','ransom','reason','recall','recent','reckon','record','redeem','reduce','reform','refuge','refund','regard','regime','region','regret','reject','relate','relief','reload','remain','remedy','remind','remote','remove','render','rental','repair','repeat','report','rescue','resign','resist','resort','result','retail','retain','retire','return','reveal','review','revolt','reward','ribbon','riddle','ritual','robust','rocket','roster','rotate','ruling','rumble','runner','rustic','sacred','safari','safety','sailor','salmon','sample','savage','saving','scenic','scheme','school','script','search','season','second','secret','sector','secure','select','seller','senior','sequel','serial','series','settle','severe','shadow','shield','shiver','should','shower','shrink','signal','silent','silver','simple','single','sketch','slight','slogan','smooth','soccer','social','socket','soften','solely','solemn','solver','source','speech','sphere','spider','spirit','splash','sponge','sprint','square','stable','stance','staple','statue','status','steady','stereo','stitch','stolen','strain','strand','streak','stream','street','stress','strict','stride','strike','string','stripe','stroke','strong','studio','submit','subtle','sudden','suffer','summer','summit','supply','surely','survey','switch','symbol','syntax','system','tackle','talent','tangle','target','temple','tenant','tender','tennis','terror','thanks','theory','thirst','thorny','thread','thrill','thrive','throne','thrown','timber','tissue','tongue','toward','travel','treaty','tribal','triple','trophy','truant','tunnel','turkey','turtle','unfair','unfold','unique','united','unless','unlike','unlock','unrest','unveil','update','uphold','upkeep','upload','uphold','uptown','upward','urgent','usable','useful','vacant','valley','vanish','vendor','venture','verbal','verify','versus','vessel','victim','viewer','violet','virtue','vision','visual','volume','voyage','waiter','wander','warmth','wealth','weapon','weekly','weight','wholly','wicked','widely','wield','window','winner','winter','wisdom','within','wonder','wooden','worker','worthy','wrench','writer','yearly','zenith','zipper','zodiac'],
+7:['abandon','ability','absence','academy','account','achieve','acquire','address','advance','adverse','advisor','algebra','amazing','analyst','ancient','anxiety','anytime','applied','arrange','article','artwork','auction','auditor','avoided','backing','balance','banking','bargain','barrier','battery','bearing','because','bedroom','believe','beneath','benefit','besides','between','billion','blanket','blossom','bonfire','booking','bracket','breathe','broadly','brother','browser','buffalo','builder','burning','cabinet','calcium','caliber','calling','capable','captain','capture','careful','catalog','caution','ceiling','central','century','certain','chamber','channel','chapter','charity','chassis','chicken','chronic','circuit','classic','climate','closure','cluster','coastal','collect','college','comfort','command','comment','compact','company','compare','compete','complex','compose','compute','concept','concern','conduct','confirm','connect','consent','consist','consult','contain','content','contest','context','control','convert','cooking','correct','cottage','council','counter','country','coupled','courage','creator','cricket','crimson','crystal','culture','current','cushion','cutting','cycling','darling','daytime','dealing','declare','decline','default','defense','deficit','deliver','density','deposit','derived','desktop','despite','destiny','destroy','develop','devoted','diamond','digital','diploma','discard','discuss','disease','disgust','dismiss','display','dispute','distant','disturb','diverse','divided','dolphin','donated','dormant','driving','eastern','eclipse','economy','edition','educate','elderly','elegant','element','embrace','emotion','emperor','empress','enhance','enquiry','episode','erosion','essence','exactly','examine','example','excerpt','excited','execute','exhibit','expense','explain','exploit','explore','exposed','express','extract','extreme','faculty','factory','failing','failure','fashion','fatigue','feature','fiction','fifteen','fighter','finance','fitness','fixture','flannel','fleeting','forever','formula','fortune','forward','founded','founder','fragile','freedom','fulfill','funding','further','gallery','gateway','general','generic','genuine','geology','glacier','glamour','glimpse','goddess','goodbye','gorilla','gourmet','grammar','granted','granite','graphic','gravity','greatly','grocery','growing','habitat','halfway','halting','handout','handy','hanging','happily','harmony','harvest','heading','healthy','hearing','heating','helpful','highway','himself','history','holding','holiday','horizon','hormone','hostile','hosting','housing','however','hundred','husband','imagine','immense','implied','imposed','impress','improve','impulse','include','initial','inquiry','insight','inspect','install','instant','instead','intense','invalid','invoice','involve','journal','journey','justice','justify','keeping','keynote','keyword','kindred','kingdom','kitchen','lantern','lasting','lateral','leather','leading','learned','leisure','leopard','liberty','library','license','lighter','limited','listing','literal','locally','logical','longest','loyalty','luggage','machine','magnetic','maiden','mammoth','managing','mansion','martial','maximum','meaning','measure','medical','meeting','melodic','mention','mercury','migrate','million','mineral','minimal','miracle','missing','mission','mixture','modular','monitor','monthly','morning','musical','mystery','mystify','narrate','nastily','natural','nebular','nervous','network','neutral','nominal','nothing','nuclear','nursery','obituary','obliged','obvious','offense','officer','opening','opinion','optimal','organic','outline','outside','overall','painful','parking','partial','partner','passage','passive','patient','patriot','pattern','payload','payment','penalty','pending','pension','percent','perfect','perhaps','persist','pioneer','plastic','playful','pleased','pledged','plunge','pointed','politic','popular','portion','portray','pottery','poverty','precise','predict','premier','premium','prepare','present','prevent','primary','printer','privacy','private','problem','proceed','process','produce','product','profile','program','project','promise','promote','prophet','prosper','protect','protein','protest','provide','publish','puncher','pursuit','qualify','quality','quarter','quickly','radical','rainbow','ranging','rapidly','readily','reading','reality','realize','receipt','receive','rebuild','recover','recruit','recycle','reflect','refresh','regular','related','release','remains','removal','renewal','replace','replica','require','reserve','resolve','respect','respond','restore','results','retreat','returns','revenge','revenue','reverse','revival','revolve','robiest','routine','royalty','rubbish','rummage','running','rushing','sadness','satisfy','scholar','science','scratch','seminar','serious','servant','service','serving','session','setting','settled','shelter','sheriff','shocked','shortly','shuffle','shutter','sibling','silence','silicon','similar','sincere','sixteen','skilled','skimmer','slender','smuggle','snapshot','society','soldier','somehow','special','sponsor','stadium','standby','staring','station','statute','storage','strange','stretch','student','studied','subject','succeed','success','suggest','summary','support','supreme','surface','surplus','survive','suspect','suspend','sustain','symptom','tableau','tactics','thermal','thought','tobacco','tonight','toolbar','totally','tourism','tourist','towards','tracker','trading','traffic','trainer','trapped','travail','travels','treated','trigger','triumph','trouble','trusted','turning','typical','uncover','undergo','unified','uniquer','unlimit','unusual','upgrade','upright','utility','vaguely','varying','venture','verdict','version','veteran','viewing','village','violent','virtual','visible','volcano','voltage','volumes','warrant','warrior','weather','website','wedding','weekend','welfare','western','whisper','whoever','winning','witness','woodcut','workshop','worship','writing','younger'],
+8:['absolute','abstract','academic','accepted','accident','accuracy','achieved','acquired','activate','actually','addition','adequate','adjusted','admiring','advanced','advocate','affected','afforded','airplane','allegory','allocate','alphabet','ambition','amending','amuseful','analysis','announce','anything','anywhere','apparent','appetite','applause','approach','approval','argument','artistry','assemble','assuming','athletic','audience','backward','bachelor','balanced','bathroom','becoming','behavior','beknight','believed','belonged','besides','between','birthday','blanching','blessoon','blockade','borrower','boundary','brackish','breather','brighten','building','business','calendar','campaign','candidat','capacity','captured','caretaker','ceremony','chairman','champion','changing','chapters','chemical','children','choosing','circular','civilian','claiming','clearing','climbing','clinical','clothing','coaching','collapse','colonial','colorful','combined','comeback','comedian','commando','commerce','commonly','communal','compared','compiler','complete','composed','compound','computer','concepts','conflict','congress','conquest','consider','constant','consumer','contains','continue','contract','contrary','contrast','convince','corridor','counting','coupling','coverage','creating','creative','criminal','critical','crossing','crossing','cultural','currency','customer','database','deadline','deciding','decision','deckhand','declared','declined','decrease','dedicate','defender','definite','delicate','democrat','departed','deployed','deposits','describe','designer','despotic','detailed','detected','devotion','dialogue','dinosaur','diplomat','directed','director','disabled','disaster','discount','discover','disorder','dispatch','displace','disposal','disposed','dissolve','distance','distinct','district','doctrine','document','domestic','dominant','dominate','donation','doubtful','downhill','downtown','dramatic','dreaming','drinking','dropping','duration','dynamics','earnings','economic','educated','educator','effected','election','elegance','elevated','eligible','embedded','emerging','emission','emphasis','employed','employee','employer','empowered','enabling','enclosed','encoding','enormous','enrolled','ensuring','entering','entirely','entitled','entrance','envelope','equality','equation','equipped','escalate','escaping','espresso','european','evaluate','eventual','everyone','evidence','exchange','exciting','excluded','exercise','existing','expanded','expected','expedite','explicit','explorer','exponent','exported','exposure','extended','external','extracts','eyebrows','fabulous','facility','faithful','familiar','favorite','feasible','featured','feedback','festival','filename','filtered','finalist','finalyst','findings','finished','firewall','firmware','flexible','floating','florence','folklore','follower','football','forecast','foremost','forestry','forgeted','formerly','formulae','fortnite','forwards','founding','fraction','fragment','frankish','freedoms','freezing','frequent','friendly','frontier','fullback','function','gambling','gardener','gathered','generate','generous','genocide','geodetic','glancing','gleaming','globally','glossary','gorgeous','governed','governor','graceful','graduate','graphics','grateful','gravitas','gripping','guardian','guidance','handsome','handling','happened','happiest','hardship','harmful','headline','heavenly','helpless','heritage','highland','historic','homeless','homepage','homeland','homesick','hometown','homework','honestly','hopeless','horrible','horseman','hospital','hostages','hostname','humanity','humbling','humility','hundreds','hydrogen','hygienic','idealism','identify','ideology','ignorant','illusion','imagined','imagined','imminent','immortal','immune','imperial','implicit','imported','imposing','impotent','improved','incident','included','increase','indicate','indirect','industry','inferior','infinite','informal','informed','infringe','inherent','initiate','innocent','innovate','insecure','insisted','inspired','instance','interact','interest','interior','internal','interval','intimate','invasion','invented','investor','involved','involves','ironical','isolated','judgment','junction','keyboard','kindness','kingfish','knocking','labeling','laboring','landmark','language','latitude','laughter','launched','lavender','lawfully','learning','lectures','leftover','leverage','lifetime','lighting','likelihood','limiting','lingered','literacy','literary','litigate','location','lonesome','longtime','magnetic','maintain','majority','managing','manifest','manners','manuscript','marathon','marginal','marriage','material','maturity','maximize','mechanic','medieval','membrane','memorial','merchant','midnight','militant','military','minimize','minister','minority','mirrored','mobility','modeling','moderate','modified','moisture','molecule','momentum','monarchy','monopoly','monthend','mortgage','mountain','mounting','movement','multiply','munitioner','mutation','mystical','national','navigate','negative','neighbor','newcomer','nitrogen','normally','notebook','noticing','notified','nucleus','numeric','nutrition','obedient','objected','obligate','observed','observer','obsolete','obstacle','obtained','occasion','occupied','occurred','offering','official','offshore','olympics','omission','omnivore','operated','operator','opponent','opposing','opposite','optimism','optional','ordering','ordinary','organism','organize','oriental','original','orthodox','outlined','outbreak','outcomes','outdated','outgoing','outsmart','outsider','overview','oxidized','packages','painting','paradigm','parallel','parental','particle','partisan','partners','passable','passages','passenger','patience','peaceful','peculiar','pedestal','pedigree','perceive','periodic','personal','persuade','petition','physical','pilgrims','pipeline','platform','pleasant','pleasure','plotting','plunging','pointing','polished','politely','politics','polluted','populace','populate','portable','portrait','position','positive','possible','postpone','powerful','practice','precious','predator','pregnant','premiere','premises','prepared','presence','preserve','pressing','prestige','presumed','pretense','previous','primeval','princess','printing','priority','prisoner','probable','proceeds','producer','products','profound','progress','projects','prolific','promised','promoted','prompted','properly','prophecy','proposed','prospect','protocol','province','provider','provoking','publicly','punctual','purchased','pursuing','pyramids','quantity','quarters','question','quotient','radiance','railroad','randomly','rational','reaching','reactive','readable','realised','realized','reasoned','received','recently','reckoned','redefine','redirect','reducing','referral','referred','refining','reflects','reformed','regional','register','regulate','reinvent','relation','relative','released','relevant','reliable','remained','remember','reminded','remotely','renowned','repeated','replaced','reported','reporter','republic','required','research','reserved','resident','resigned','resolved','resource','response','restless','restored','restrict','resulted','retailer','retained','retiring','revealed','reversal','reversed','revision','reviving','revolved','romantic','rotation','ruthless','sabotage','sampling','sandwich','scenario','schedule','scholars','sciences','scissors','seasonal','secondly','secretly','security','selected','semester','senator','separate','sequence','sergeant','sessions','settings','settling','severely','shipping','shocking','shooting','shopping','shortage','showdown','shutdown','sickness','sidewalk','signaled','silently','simplify','simulate','situated','skeleton','sketched','slightly','slippery','slowdown','smallest','smashing','smuggled','snapshot','snowfall','socially','society','software','solitary','solution','somebody','sometime','somewhat','southern','souvenir','spacious','spanning','speaking','specific','spending','spilling','spinning','sporting','spotless','sprawled','spreading','squarely','squashfs','squeezed','stabbing','staffing','stagnant','staining','stakeout','standard','standing','standing','standout','startled','state','statutes','steadily','stealing','stepping','sticking','stimulus','stirring','stopping','straight','stranger','strategy','strength','stressed','strictly','striking','struggle','stunning','subjects','suburban','succeeds','suddenly','suffered','suitable','summoned','superior','supplied','supplier','supposed','suppress','surprise','surround','survival','survived','survivor','suspects','suspense','swimming','swinging','symbolic','sympathy','syndrome','teaching','teammate','technics','template','temporary','tendency','terminal','terrific','territory','terrible','terrific','thankful','thousand','threaten','thriller','together','tolerant','tomorrow','touching','tournament','township','tracking','trailing','training','transact','transfer','transmit','treasure','treating','trillion','tropical','troubled','truthful','tutorial','ultimate','umbrella','uncommon','underway','universe','unlikely','unsigned','unstable','unveiled','upcoming','updating','uprising','uprooted','upcoming','vacation','valuable','variable','vastness','vehicles','ventures','verified','vertical','violated','violence','virginia','visually','vivarium','volatile','voltages','volumes','waist','warnings','weakness','weaponry','weathers','webmaster','weekends','weighted','welcomed','whenever','wherever','wildlife','winching','wireless','withdraw','woodland','workshop','yearbook','yourself','youthful','zeppelin']
+};
+
+function isWord(w){return !!(WORDS[w.length]&&WORDS[w.length].includes(w.toLowerCase()))}
+
+function loadSave(){
+try{const s=localStorage.getItem('knotwords_save');if(s){const d=JSON.parse(s);if(d.version===SAVE_VERSION){saveData=d;return}}}catch(e){}
+saveData={version:SAVE_VERSION,completed:{},settings:{sound:true,music:true},stats:{played:0,solved:0,bestTime:{},streak:0,totalStars:0}};
+}
+function saveSave(){try{localStorage.setItem('knotwords_save',JSON.stringify(saveData))}catch(e){}}
+
+function initAudio(){
+if(audioCtx)return;
+audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+musicGain=audioCtx.createGain();
+musicGain.gain.value=0.15;
+musicGain.connect(audioCtx.destination);
+}
+function playTone(freq,dur,type,vol){
+if(!saveData.settings.sound||!audioCtx)return;
+const o=audioCtx.createOscillator();
+const g=audioCtx.createGain();
+o.type=type||'sine';
+o.frequency.value=freq;
+g.gain.value=vol||0.2;
+g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+(dur||0.1));
+o.connect(g);g.connect(audioCtx.destination);
+o.start();o.stop(audioCtx.currentTime+(dur||0.1));
+}
+function playClick(){playTone(800,0.05,'sine',0.15)}
+function playPlace(){playTone(523,0.08,'sine',0.2);setTimeout(()=>playTone(659,0.08,'sine',0.15),50)}
+function playCorrect(){playTone(523,0.1,'sine',0.2);setTimeout(()=>playTone(659,0.1,'sine',0.2),80);setTimeout(()=>playTone(784,0.15,'sine',0.25),160)}
+function playError(){playTone(200,0.15,'sawtooth',0.1)}
+function playHint(){playTone(880,0.1,'sine',0.15);setTimeout(()=>playTone(1100,0.1,'sine',0.15),60)}
+function playVictory(){
+[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.2,'sine',0.2),i*120));
+setTimeout(()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.3,'sine',0.25),i*100))},500);
+}
+function playLevelComplete(){
+[440,554,659,880].forEach((f,i)=>setTimeout(()=>playTone(f,0.15,'triangle',0.2),i*100));
+}
+function startMusic(){
+if(!audioCtx||musicPlaying)return;
+musicPlaying=true;
+const chords=[[261,329,392],[220,277,329],[174,220,261],[196,246,294]];
+let ci=0;
+function playChord(){
+if(!musicPlaying||!saveData.settings.music)return;
+const chord=chords[ci%chords.length];
+chord.forEach(f=>{
+const o=audioCtx.createOscillator();
+const g=audioCtx.createGain();
+o.type='sine';o.frequency.value=f;
+g.gain.value=0.04;
+g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+3.5);
+o.connect(g);g.connect(musicGain);
+o.start();o.stop(audioCtx.currentTime+3.5);
+musicNodes.push(o);
+});
+ci++;
+if(musicPlaying)setTimeout(playChord,3500);
+}
+playChord();
+}
+function stopMusic(){musicPlaying=false;musicNodes.forEach(n=>{try{n.stop()}catch(e){}});musicNodes=[]}
+
+function resize(){
+dpr=window.devicePixelRatio||1;
+W=window.innerWidth;H=window.innerHeight;
+canvas.width=W*dpr;canvas.height=H*dpr;
+canvas.style.width=W+'px';canvas.style.height=H+'px';
+ctx.setTransform(dpr,0,0,dpr,0,0);
+if(game&&game.active)renderGame();
+}
+window.addEventListener('resize',resize);
+
+function showScreen(id){
+document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+const el=document.getElementById(id);
+if(el)el.classList.add('active');
+currentScreen=id;
+}
+
+function showMenu(){stopMusic();showScreen('menuScreen');if(game)game.active=false}
+function showLevelSelect(){
+showScreen('levelScreen');
+const grid=document.getElementById('levelGrid');
+grid.innerHTML='';
+for(let i=1;i<=30;i++){
+const btn=document.createElement('button');
+btn.className='btn btn-sm';
+const stars=saveData.completed[i]?saveData.completed[i].stars:0;
+const locked=i>1&&!saveData.completed[i-1]&&!saveData.completed[i];
+btn.style.cssText=locked?'opacity:0.4;pointer-events:none':'';
+btn.innerHTML=`<div style="font-size:16px;font-weight:700">${i}</div><div style="font-size:10px">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div>`;
+btn.onclick=()=>startLevel(i);
+grid.appendChild(btn);
+}
+const backBtn=document.createElement('button');
+backBtn.className='btn btn-sm';
+backBtn.textContent='Back';
+backBtn.onclick=showMenu;
+grid.appendChild(backBtn);
+}
+function showStats(){
+showScreen('statsScreen');
+const c=document.getElementById('statsContent');
+const s=saveData.stats;
+const completed=Object.keys(saveData.completed).length;
+c.innerHTML=`
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center">
+<div class="glass" style="padding:15px"><div style="font-size:28px;color:#818cf8">${s.played}</div><div style="font-size:12px;color:#9ca3af">Played</div></div>
+<div class="glass" style="padding:15px"><div style="font-size:28px;color:#818cf8">${s.solved}</div><div style="font-size:12px;color:#9ca3af">Solved</div></div>
+<div class="glass" style="padding:15px"><div style="font-size:28px;color:#818cf8">${s.streak}</div><div style="font-size:12px;color:#9ca3af">Streak</div></div>
+<div class="glass" style="padding:15px"><div style="font-size:28px;color:#818cf8">${s.totalStars}</div><div style="font-size:12px;color:#9ca3af">Total Stars</div></div>
+<div class="glass" style="padding:15px"><div style="font-size:28px;color:#818cf8">${completed}/30</div><div style="font-size:12px;color:#9ca3af">Levels Done</div></div>
+<div class="glass" style="padding:15px"><div style="font-size:28px;color:#818cf8">${s.played?Math.round(s.solved/s.played*100):0}%</div><div style="font-size:12px;color:#9ca3af">Win Rate</div></div>
+</div>`;
+}
+function showSettings(){
+showScreen('settingsScreen');
+document.getElementById('soundToggle').textContent=saveData.settings.sound?'On':'Off';
+document.getElementById('musicToggle').textContent=saveData.settings.music?'On':'Off';
+}
+function toggleSound(){saveData.settings.sound=!saveData.settings.sound;saveSave();showSettings()}
+function toggleMusic(){saveData.settings.music=!saveData.settings.music;saveSave();if(!saveData.settings.music)stopMusic();showSettings()}
+function showTutorial(){showScreen('tutorialScreen')}
+function confirmReset(){document.getElementById('resetOverlay').classList.add('active')}
+function hideReset(){document.getElementById('resetOverlay').classList.remove('active')}
+function doReset(){saveData={version:SAVE_VERSION,completed:{},settings:saveData.settings,stats:{played:0,solved:0,bestTime:{},streak:0,totalStars:0}};saveSave();hideReset();showSettings()}
+function startTutorialLevel(){startLevel(1)}
+
+function hashStr(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return Math.abs(h)}
+
+function generateLevel(lvl){
+const sizes=[0,3,3,3,3,3,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,7,7,7];
+const size=sizes[lvl]||5;
+const rng=hashStr('knotwords_level_'+lvl);
+const bundles=[];
+const grid=[];
+const solution=[];
+for(let r=0;r<size;r++){grid[r]=[];solution[r]=[];for(let c=0;c<size;c++){grid[r][c]=1;solution[r][c]=''}}
+
+const numBundles=Math.min(Math.floor(2+lvl*0.3),10);
+const bundleMap=[];
+for(let r=0;r<size;r++){bundleMap[r]=[];for(let c=0;c<size;c++)bundleMap[r][c]=-1}
+
+for(let b=0;b<numBundles;b++){
+const cells=[];
+const startR=Math.floor((rng*(b+1)*7)%size);
+const startC=Math.floor((rng*(b+3)*13+lvl)%size);
+const len=Math.min(2+Math.floor(lvl/8),size-startC);
+for(let i=0;i<len;i++){
+const r=startR,c=Math.min(startC+i,size-1);
+if(bundleMap[r][c]===-1){bundleMap[r][c]=b;cells.push({r,c})}
+}
+if(cells.length>0)bundles.push({id:b,color:BUNDLE_COLORS[b%BUNDLE_COLORS.length],cells});
+}
+
+for(let r=0;r<size;r++)for(let c=0;c<size;c++){
+if(bundleMap[r][c]===-1){
+for(let b=0;b<bundles.length;b++){
+if(bundleMap[r].filter(x=>x===b).length<3){
+bundleMap[r][c]=b;bundles[b].cells.push({r,c});break;
+}
+}
+if(bundleMap[r][c]===-1){grid[r][c]=0}
+}
+}
+
+for(let b=0;b<bundles.length;b++){
+const letters='abcdefghilmnoprstuw';
+const n=bundles[b].cells.length;
+let bank='';
+for(let i=0;i<n;i++)bank+=letters[(rng*(b+1)*(i+3)+lvl+i)%letters.length];
+bank=[...new Set(bank.split(''))].join('');
+bundles[b].bank=bank.split('');
+bundles[b].cells.forEach((cell,i)=>{
+solution[cell.r][cell.c]=bank[i%bank.length]||'a';
+});
+}
+
+return{size,grid,bundleMap,bundles,solution};
+}
+
+const LEVELS=[];
+for(let i=1;i<=30;i++)LEVELS.push(generateLevel(i));
+
+function startLevel(lvl){
+initAudio();
+document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('active'));
+const ld=LEVELS[lvl-1];
+game={
+active:true,level:lvl,
+size:ld.size,grid:ld.grid,bundleMap:ld.bundleMap,bundles:ld.bundles,solution:ld.solution,
+playerGrid:[],selected:null,
+startTime:Date.now(),hintsUsed:0,solved:false,
+cellSize:0,offsetX:0,offsetY:0,
+bundleBankUsed:{}
+};
+for(let r=0;r<ld.size;r++){game.playerGrid[r]=[];for(let c=0;c<ld.size;c++)game.playerGrid[r][c]=''}
+game.bundles.forEach(b=>game.bundleBankUsed[b.id]={});
+calcLayout();
+saveData.stats.played++;saveSave();
+startMusic();
+requestAnimationFrame(gameLoop);
+}
+
+function startDailyChallenge(){
+const d=new Date();
+const seed=d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+const lvl=(seed%30)+1;
+startLevel(lvl);
+}
+
+function calcLayout(){
+if(!game)return;
+const maxGridW=Math.min(W-40,600);
+const maxGridH=Math.min(H-200,600);
+game.cellSize=Math.floor(Math.min(maxGridW,maxGridH)/game.size);
+const gridW=game.cellSize*game.size;
+const gridH=game.cellSize*game.size;
+game.offsetX=(W-gridW)/2;
+game.offsetY=(H-gridH)/2+30;
+}
+
+function getCellAt(x,y){
+if(!game)return null;
+const c=Math.floor((x-game.offsetX)/game.cellSize);
+const r=Math.floor((y-game.offsetY)/game.cellSize);
+if(r>=0&&r<game.size&&c>=0&&c<game.size&&game.grid[r][c]===1)return{r,c};
+return null;
+}
+
+function checkSolved(){
+if(!game)return false;
+for(let r=0;r<game.size;r++)for(let c=0;c<game.size;c++){
+if(game.grid[r][c]===1&&game.playerGrid[r][c]!==game.solution[r][c])return false;
+}
+return true;
+}
+
+function getStars(){
+if(!game)return 1;
+const elapsed=(Date.now()-game.startTime)/1000;
+if(game.hintsUsed===0&&elapsed<120)return 3;
+if(game.hintsUsed<=1&&elapsed<300)return 2;
+return 1;
+}
+
+canvas.addEventListener('pointerdown',e=>{
+if(!game||!game.active)return;
+initAudio();
+const rect=canvas.getBoundingClientRect();
+const x=e.clientX-rect.left;
+const y=e.clientY-rect.top;
+const cell=getCellAt(x,y);
+if(cell){
+game.selected=cell;
+playClick();
+renderGame();
+}
+});
+
+document.addEventListener('keydown',e=>{
+if(!game||!game.active||!game.selected)return;
+if(e.key.length===1&&e.key.match(/[a-z]/i)){
+const{r,c}=game.selected;
+if(game.grid[r][c]===1){
+game.playerGrid[r][c]=e.key.toLowerCase();
+const bId=game.bundleMap[r][c];
+if(bId>=0)game.bundleBankUsed[bId][e.key.toLowerCase()]=(game.bundleBankUsed[bId][e.key.toLowerCase()]||0)+1;
+playPlace();
+addParticle(game.offsetX+c*game.cellSize+game.cellSize/2,game.offsetY+r*game.cellSize+game.cellSize/2,BUNDLE_COLORS[bId%BUNDLE_COLORS.length]);
+if(checkSolved()){
+game.solved=true;game.active=false;
+playVictory();
+const stars=getStars();
+const elapsed=Math.round((Date.now()-game.startTime)/1000);
+saveData.completed[game.level]={stars,time:elapsed,hints:game.hintsUsed};
+saveData.stats.solved++;saveData.stats.streak++;
+saveData.stats.totalStars+=stars;
+if(!saveData.stats.bestTime[game.level]||elapsed<saveData.stats.bestTime[game.level])saveData.stats.bestTime[game.level]=elapsed;
+saveSave();
+setTimeout(()=>{
+document.getElementById('victoryStars').innerHTML=
+[1,2,3].map(i=>`<span class="star ${i<=stars?'earned':''}">★</span>`).join('');
+document.getElementById('victoryStats').innerHTML=`
+<div>Time: ${Math.floor(elapsed/60)}:${(elapsed%60).toString().padStart(2,'0')}</div>
+<div>Hints: ${game.hintsUsed}</div>
+<div>Score: ${(1000-elapsed*2-game.hintsUsed*50+stars*200)}</div>`;
+document.getElementById('nextLevelBtn').style.display=game.level<30?'inline-block':'none';
+document.getElementById('victoryOverlay').classList.add('active');
+},500);
+spawnCelebration();
+}else{
+renderGame();
+}
+}
+}
+if(e.key==='Backspace'&&game.selected){
+const{r,c}=game.selected;
+const old=game.playerGrid[r][c];
+game.playerGrid[r][c]='';
+const bId=game.bundleMap[r][c];
+if(bId>=0&&old&&game.bundleBankUsed[bId][old])game.bundleBankUsed[bId][old]--;
+renderGame();
+}
+if(e.key==='ArrowUp'&&game.selected&&game.selected.r>0){game.selected.r--;renderGame()}
+if(e.key==='ArrowDown'&&game.selected&&game.selected.r<game.size-1){game.selected.r++;renderGame()}
+if(e.key==='ArrowLeft'&&game.selected&&game.selected.c>0){game.selected.c--;renderGame()}
+if(e.key==='ArrowRight'&&game.selected&&game.selected.c<game.size-1){game.selected.c++;renderGame()}
+});
+
+function addParticle(x,y,color){
+for(let i=0;i<5;i++){
+particles.push({x,y,vx:(Math.random()-0.5)*3,vy:(Math.random()-0.5)*3-1,life:1,color,r:Math.random()*3+1});
+}
+}
+
+function spawnCelebration(){
+for(let i=0;i<50;i++){
+setTimeout(()=>{
+particles.push({
+x:Math.random()*W,y:H+10,
+vx:(Math.random()-0.5)*4,vy:-Math.random()*8-4,
+life:1.5,color:BUNDLE_COLORS[Math.floor(Math.random()*BUNDLE_COLORS.length)],r:Math.random()*4+2
+});
+},i*30);
+}
+}
+
+function updateParticles(dt){
+for(let i=particles.length-1;i>=0;i--){
+const p=particles[i];
+p.x+=p.vx;p.y+=p.vy;p.vy+=0.1;p.life-=dt;
+if(p.life<=0)particles.splice(i,1);
+}
+}
+
+function renderGame(){
+if(!game)return;
+ctx.clearRect(0,0,W,H);
+const grad=ctx.createLinearGradient(0,0,0,H);
+grad.addColorStop(0,'#0a0a1a');grad.addColorStop(1,'#1a1a3a');
+ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+
+// Draw back button
+ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='14px sans-serif';ctx.textAlign='left';
+ctx.fillText('← Back',15,25);
+
+// Draw level title
+ctx.fillStyle='#c4b5fd';ctx.font='bold 18px sans-serif';ctx.textAlign='center';
+ctx.fillText('Level '+game.level,W/2,25);
+
+// Draw hint buttons
+ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='13px sans-serif';ctx.textAlign='right';
+ctx.fillText('Hint: Reveal | Check',W-15,25);
+
+// Draw grid
+for(let r=0;r<game.size;r++)for(let c=0;c<game.size;c++){
+const x=game.offsetX+c*game.cellSize;
+const y=game.offsetY+r*game.cellSize;
+const cs=game.cellSize;
+
+if(game.grid[r][c]===0){
+ctx.fillStyle='rgba(255,255,255,0.02)';
+ctx.fillRect(x+1,y+1,cs-2,cs-2);
+continue;
+}
+
+const bId=game.bundleMap[r][c];
+const bc=bId>=0?BUNDLE_COLORS[bId%BUNDLE_COLORS.length]:{r:100,g:100,b:100};
+const isSelected=game.selected&&game.selected.r===r&&game.selected.c===c;
+const letter=game.playerGrid[r][c];
+const isCorrect=letter&&letter===game.solution[r][c];
+
+// Cell background
+const alpha=isSelected?0.25:0.12;
+ctx.fillStyle=`rgba(${bc.r},${bc.g},${bc.b},${alpha})`;
+ctx.beginPath();
+ctx.roundRect(x+2,y+2,cs-4,cs-4,6);
+ctx.fill();
+
+// Cell border
+if(isSelected){
+ctx.strokeStyle=`rgba(${bc.r},${bc.g},${bc.b},0.8)`;
+ctx.lineWidth=2.5;
+ctx.stroke();
+// Glow
+ctx.shadowColor=`rgba(${bc.r},${bc.g},${bc.b},0.5)`;
+ctx.shadowBlur=10;
+ctx.stroke();
+ctx.shadowBlur=0;
+}else{
+ctx.strokeStyle=`rgba(${bc.r},${bc.g},${bc.b},0.25)`;
+ctx.lineWidth=1;
+ctx.stroke();
+}
+
+// Letter
+if(letter){
+ctx.fillStyle=isCorrect?'#e0e0f0':'rgba(255,255,255,0.7)';
+ctx.font=`bold ${Math.floor(cs*0.5)}px sans-serif`;
+ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(letter.toUpperCase(),x+cs/2,y+cs/2);
+}
+}
+
+// Draw bundle banks below grid
+const bankY=game.offsetY+game.size*game.cellSize+15;
+const bankWidth=Math.min(W-40,500);
+const bankX=(W-bankWidth)/2;
+game.bundles.forEach((b,i)=>{
+const rows=Math.ceil(game.bundles.length/2);
+const row=Math.floor(i/2);
+const col=i%2;
+const bx=bankX+col*(bankWidth/2);
+const by=bankY+row*60;
+const bc=b.color;
+
+ctx.fillStyle=`rgba(${bc.r},${bc.g},${bc.b},0.15)`;
+ctx.beginPath();ctx.roundRect(bx,by,bankWidth/2-5,50,8);ctx.fill();
+
+const letterSize=Math.min(22,(bankWidth/2-20)/(b.bank.length+1));
+b.bank.forEach((letter,li)=>{
+const lx=bx+12+li*(letterSize+4);
+const ly=by+25;
+const used=game.bundleBankUsed[b.id]&&game.bundleBankUsed[b.id][letter]||0;
+const avail=b.cells.filter(c=>game.playerGrid[c.r][c.c]===letter).length;
+
+ctx.fillStyle=avail>0?`rgba(${bc.r},${bc.g},${bc.b},0.3)`:`rgba(${bc.r},${bc.g},${bc.b},0.8)`;
+ctx.font=`bold ${letterSize}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(letter.toUpperCase(),lx,ly);
+});
+});
+
+// Draw particles
+particles.forEach(p=>{
+ctx.globalAlpha=Math.max(0,p.life);
+ctx.fillStyle=`rgba(${p.color.r},${p.color.g},${p.color.b},1)`;
+ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+});
+ctx.globalAlpha=1;
+
+// Timer
+const elapsed=Math.round((Date.now()-game.startTime)/1000);
+ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='13px sans-serif';ctx.textAlign='center';
+ctx.fillText(`${Math.floor(elapsed/60)}:${(elapsed%60).toString().padStart(2,'0')} | Hints: ${game.hintsUsed}`,W/2,H-15);
+}
+
+function gameLoop(ts){
+if(!game||!game.active)return;
+const dt=(ts-lastTime)/1000;lastTime=ts;
+updateParticles(dt);
+renderGame();
+animFrame=requestAnimationFrame(gameLoop);
+}
+
+canvas.addEventListener('click',e=>{
+if(!game||!game.active)return;
+const rect=canvas.getBoundingClientRect();
+const x=e.clientX-rect.left;const y=e.clientY-rect.top;
+
+// Back button
+if(y<35&&x<70){showLevelSelect();return}
+
+// Hint buttons
+if(y<35&&x>W-200){
+const bId=game.selected?game.bundleMap[game.selected.r][game.selected.c]:-1;
+if(bId>=0){
+game.hintsUsed++;
+game.playerGrid[game.selected.r][game.selected.c]=game.solution[game.selected.r][game.selected.c];
+playHint();renderGame();
+}
+}
+});
+
+function nextLevel(){
+if(game&&game.level<30)startLevel(game.level+1);
+else showLevelSelect();
+}
+
+// Virtual keyboard for mobile
+const vk=document.createElement('div');
+vk.id='virtualKeyboard';
+vk.style.cssText='position:fixed;bottom:0;left:0;width:100%;padding:8px;display:none;flex-wrap:wrap;justify-content:center;gap:4px;background:rgba(10,10,26,0.95);border-top:1px solid rgba(255,255,255,0.1);z-index:200';
+'abcdefghijklmnopqrstuvwxyz'.split('').forEach(l=>{
+const b=document.createElement('button');
+b.textContent=l.toUpperCase();
+b.style.cssText='width:32px;height:40px;border:none;border-radius:6px;background:rgba(255,255,255,0.08);color:#e0e0f0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center';
+b.onpointerdown=()=>{
+if(!game||!game.active||!game.selected)return;
+const{r,c}=game.selected;
+if(game.grid[r][c]===1){
+game.playerGrid[r][c]=l;
+const bId=game.bundleMap[r][c];
+if(bId>=0)game.bundleBankUsed[bId][l]=(game.bundleBankUsed[bId][l]||0)+1;
+playPlace();
+addParticle(game.offsetX+c*game.cellSize+game.cellSize/2,game.offsetY+r*game.cellSize+game.cellSize/2,BUNDLE_COLORS[bId%BUNDLE_COLORS.length]);
+if(checkSolved()){
+game.solved=true;game.active=false;playVictory();
+const stars=getStars();const elapsed=Math.round((Date.now()-game.startTime)/1000);
+saveData.completed[game.level]={stars,time:elapsed,hints:game.hintsUsed};
+saveData.stats.solved++;saveData.stats.streak++;saveData.stats.totalStars+=stars;
+saveSave();
+setTimeout(()=>{
+document.getElementById('victoryStars').innerHTML=[1,2,3].map(i=>`<span class="star ${i<=stars?'earned':''}">★</span>`).join('');
+document.getElementById('victoryStats').innerHTML=`<div>Time: ${Math.floor(elapsed/60)}:${(elapsed%60).toString().padStart(2,'0')}</div><div>Hints: ${game.hintsUsed}</div>`;
+document.getElementById('nextLevelBtn').style.display=game.level<30?'inline-block':'none';
+document.getElementById('victoryOverlay').classList.add('active');
+spawnCelebration();
+},500);
+}
+renderGame();
+}
+};
+vk.appendChild(b);
+});
+document.body.appendChild(vk);
+
+// Show virtual keyboard when game is active
+const origStartLevel=startLevel;
+const _origShowLevel=showLevelSelect;
+const _origShowMenu=showMenu;
+
+// Detect mobile
+const isMobile='ontouchstart'in window||navigator.maxTouchPoints>0;
+if(isMobile){
+const mo=new MutationObserver(()=>{
+const gameActive=game&&game.active;
+vk.style.display=gameActive?'flex':'none';
+});
+mo.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+}
+
+// Cleanup
+window.addEventListener('beforeunload',()=>{
+if(game&&game.active){stopMusic();cancelAnimationFrame(animFrame)}
+});
+
+loadSave();
+resize();
+renderGame=function(){
+if(!game)return;
+ctx.clearRect(0,0,W,H);
+const grad=ctx.createLinearGradient(0,0,0,H);
+grad.addColorStop(0,'#0a0a1a');grad.addColorStop(1,'#1a1a3a');
+ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+
+ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='14px sans-serif';ctx.textAlign='left';
+ctx.fillText('← Back',15,25);
+ctx.fillStyle='#c4b5fd';ctx.font='bold 18px sans-serif';ctx.textAlign='center';
+ctx.fillText('Level '+game.level,W/2,25);
+ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='13px sans-serif';ctx.textAlign='right';
+ctx.fillText('💡 Hint',W-15,25);
+
+for(let r=0;r<game.size;r++)for(let c=0;c<game.size;c++){
+const x=game.offsetX+c*game.cellSize;
+const y=game.offsetY+r*game.cellSize;
+const cs=game.cellSize;
+if(game.grid[r][c]===0){ctx.fillStyle='rgba(255,255,255,0.02)';ctx.fillRect(x+1,y+1,cs-2,cs-2);continue}
+const bId=game.bundleMap[r][c];
+const bc=bId>=0?BUNDLE_COLORS[bId%BUNDLE_COLORS.length]:{r:100,g:100,b:100};
+const isSelected=game.selected&&game.selected.r===r&&game.selected.c===c;
+const letter=game.playerGrid[r][c];
+const isCorrect=letter&&letter===game.solution[r][c];
+
+ctx.fillStyle=`rgba(${bc.r},${bc.g},${bc.b},${isSelected?0.25:0.12})`;
+ctx.beginPath();ctx.roundRect(x+2,y+2,cs-4,cs-4,6);ctx.fill();
+
+if(isSelected){
+ctx.strokeStyle=`rgba(${bc.r},${bc.g},${bc.b},0.8)`;ctx.lineWidth=2.5;
+ctx.shadowColor=`rgba(${bc.r},${bc.g},${bc.b},0.5)`;ctx.shadowBlur=10;
+ctx.beginPath();ctx.roundRect(x+2,y+2,cs-4,cs-4,6);ctx.stroke();
+ctx.shadowBlur=0;
+}else{
+ctx.strokeStyle=`rgba(${bc.r},${bc.g},${bc.b},0.25)`;ctx.lineWidth=1;
+ctx.beginPath();ctx.roundRect(x+2,y+2,cs-4,cs-4,6);ctx.stroke();
+}
+
+if(letter){
+ctx.fillStyle=isCorrect?'#e0e0f0':'rgba(255,255,255,0.7)';
+ctx.font=`bold ${Math.floor(cs*0.5)}px sans-serif`;
+ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(letter.toUpperCase(),x+cs/2,y+cs/2);
+}
+}
+
+const bankY=game.offsetY+game.size*game.cellSize+15;
+const bankW=Math.min(W-40,500);
+const bankX=(W-bankW)/2;
+game.bundles.forEach((b,i)=>{
+const cols=2;
+const col=i%cols;
+const row=Math.floor(i/cols);
+const bx=bankX+col*(bankW/cols);
+const by=bankY+row*55;
+const bc=b.color;
+
+ctx.fillStyle=`rgba(${bc.r},${bc.g},${bc.b},0.12)`;
+ctx.beginPath();ctx.roundRect(bx,by,bankW/cols-5,45,8);ctx.fill();
+
+const lsz=Math.min(20,(bankW/cols-20)/Math.max(b.bank.length,1));
+b.bank.forEach((letter,li)=>{
+const lx=bx+14+li*(lsz+4);
+const ly=by+22;
+const placed=b.cells.filter(c=>game.playerGrid[c.r][c.c]===letter).length;
+ctx.fillStyle=placed>0?`rgba(${bc.r},${bc.g},${bc.b},0.3)`:`rgba(${bc.r},${bc.g},${bc.b},0.85)`;
+ctx.font=`bold ${lsz}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(letter.toUpperCase(),lx,ly);
+});
+});
+
+particles.forEach(p=>{
+ctx.globalAlpha=Math.max(0,p.life);
+ctx.fillStyle=`rgb(${p.color.r},${p.color.g},${p.color.b})`;
+ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+});
+ctx.globalAlpha=1;
+
+const elapsed=Math.round((Date.now()-game.startTime)/1000);
+ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='13px sans-serif';ctx.textAlign='center';
+ctx.fillText(`${Math.floor(elapsed/60)}:${(elapsed%60).toString().padStart(2,'0')} | Hints: ${game.hintsUsed}`,W/2,H-(isMobile?80:15));
+};
+})();
+</script>
+</body>
+</html>
