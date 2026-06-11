@@ -14,6 +14,7 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#ff9a9e,#fecfef)',
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
   'linear-gradient(135deg,#a1c4fd,#c2e9fb)'
+
 ];
 
 const GAMES = [
@@ -325,6 +326,8 @@ const GAMES = [
 {name:"Country Road",emoji:"🛤️",cat:"puzzle",tags:["country road","nikoli","logic","loop","path","grid","japanese","brain"],url:"/country-road/",desc:"Play Country Road puzzle online free! A Nikoli logic loop puzzle - draw a single continuous loop through rooms matching number clues. 30 levels plus daily challenge.",isNew:true,status:"live"},{name:"Bag Corral",emoji:"🔲",cat:"puzzle",tags:["Puzzle","Logic","Loop","Nikoli","Grid","Daily","Brain Teaser","Casual"],url:"/bag-puzzle/",desc:"Draw a single loop around numbered cells. Each number shows visible cells in that direction. 30 levels + daily puzzle. A Nikoli logic puzzle. Play free online!",isNew:true,status:"live"},
 {name:"Stained Glass",emoji:"🎨",cat:"puzzle",tags:["stained glass","color","logic","graph coloring","grid","brain","puzzle","nikoli","daily"],url:"/stained-glass/",desc:"Play Stained Glass Puzzle online free! Color cells so no adjacent cells share the same color. A beautiful graph coloring logic puzzle with 30 levels. No download needed!",isNew:true,status:"live"},
 {name:"Sandtrix",emoji:"🏖️",cat:"puzzle",tags:["sandtrix","sand","tetris","physics","block puzzle","falling sand","arcade"],url:"/sandtrix/",desc:"Play Sandtrix online free! Falling blocks crumble into colored sand particles. Sand physics simulation meets Tetris. Fill rows to clear them. Unique puzzle game, no download!",isNew:true,status:"live"},
+{name:"Meowdoku",emoji:"🐱",cat:"puzzle",tags:["logic","cats","sudoku","brain-teaser","star-battle"],url:"/meowdoku/",desc:"Place cats on the grid - one per row, column, and region. Pure logic puzzle with daily challenges and cat collection.",isNew:true,status:"live"},
+
 ];
 
 /**
