@@ -330,6 +330,7 @@ const GAMES = [
 
 {name:"Sand Sort Puzzle",emoji:"🏜️",cat:"puzzle",tags:["sorting","sand","color","logic","relaxing"],url:"/sand-sort/",desc:"Sort colored sand between glass bottles in this satisfying puzzle game. 30 levels, daily challenges, and relaxing particle physics.",isNew:true,status:"live"},
 {name:"Solitaire Roguelite",emoji:"🏰",cat:"card",tags:["solitaire","roguelike","card","dungeon","klondike","strategy","rpg","permadeath"],url:"/solitaire-roguelite/",desc:"Play Solitaire Roguelite free online! Classic Klondike solitaire meets dungeon crawling. Fight 18 monsters, collect 12 powerful items, upgrade your deck. Permadeath runs with meta-progression. No download needed!",isNew:true,status:"live"},
+{name:"Tidy Organizer",emoji:"📚",cat:"puzzle",tags:["organizing","sorting","cozy","tidy","casual","drag"],url:"/tidy-organize/",desc:"Sort everyday objects into satisfying arrangements in this cozy tidying puzzle. 30 levels across 5 themed tiers with drag-and-drop organizing fun!",isNew:true,status:"live"},
 ];
 
 /**
