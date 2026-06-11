@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>Growth Dashboard — GameZipper</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh;padding:20px}
+.wrap{max-width:1200px;margin:0 auto}
+h1{font-size:1.8em;color:#4ecdc4;margin-bottom:6px}
+h2{font-size:1.3em;color:#4ecdc4;margin:24px 0 12px;border-bottom:1px solid #2a2d3a;padding-bottom:6px}
+.sub{color:#888;margin-bottom:24px;font-size:0.9em}
+.card{background:#1a1d2e;border:1px solid #2a2d3a;border-radius:12px;padding:18px;margin-bottom:14px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px}
+.kpi{background:#1a1d2e;border:1px solid #2a2d3a;border-radius:10px;padding:16px;text-align:center}
+.kpi-label{font-size:0.78em;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em}
+.kpi-value{font-size:1.8em;font-weight:700;color:#4ecdc4;margin:6px 0}
+.kpi-sub{font-size:0.78em;color:#64748b}
+table{width:100%;border-collapse:collapse;font-size:0.9em}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #2a2d3a}
+th{color:#94a3b8;font-weight:600;font-size:0.82em;text-transform:uppercase;letter-spacing:0.04em}
+tr:hover td{background:#1f2236}
+.muted{color:#64748b;font-style:italic}
+.warn{color:#f59e0b}
+.error{color:#ef4444}
+.ok{color:#10b981}
+.login-form{max-width:340px;margin:60px auto;background:#1a1d2e;padding:32px;border-radius:14px;border:1px solid #2a2d3a}
+.btn{padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:0.9em;font-weight:600;background:#4ecdc4;color:#0f1117;transition:all 0.2s}
+.btn:hover{background:#3da89f}
+.input{width:100%;padding:10px 12px;background:#0f1117;border:1px solid #2a2d3a;border-radius:8px;color:#e2e8f0;font-size:0.95em;margin-bottom:14px}
+.input:focus{outline:none;border-color:#4ecdc4}
+.trend-bar{height:32px;background:#0f1117;border-radius:6px;overflow:hidden;position:relative}
+.trend-fill{height:100%;background:linear-gradient(90deg,#4ecdc4,#10b981);display:flex;align-items:center;justify-content:flex-end;padding:0 8px;color:#0f1117;font-weight:700;font-size:0.8em}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+select{background:#1a1d2e;border:1px solid #2a2d3a;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:0.88em}
+.refresh-btn{background:#4ecdc4;color:#0f1117}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #4ecdc4;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.banner{padding:14px 18px;border-radius:10px;margin-bottom:18px;font-size:0.9em;line-height:1.6}
+.banner-error{background:#7f1d1d;border:1px solid #b91c1c;color:#fecaca}
+.banner-warn{background:#78350f;border:1px solid #d97706;color:#fde68a}
+.banner-info{background:#0c4a6e;border:1px solid #0284c7;color:#bae6fd}
+code{background:#0f1117;padding:2px 6px;border-radius:4px;font-size:0.85em;color:#fbbf24}
+a{color:#4ecdc4;text-decoration:none}
+a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+<h1>📊 Growth Dashboard</h1>
+<p class="sub">GameZipper 有机搜索 + 站点流量统一视图</p>
+
+<div id="login-pane" class="login-form" style="display:none">
+<h2 style="border:none;margin-bottom:14px">🔐 登录</h2>
+<input id="pw" class="input" type="password" placeholder="BI password" autofocus/>
+<button id="login-btn" class="btn" onclick="doLogin()">登录</button>
+<div id="login-err" style="color:#ef4444;margin-top:10px;font-size:0.9em"></div>
+</div>
+
+<div id="dash-pane" style="display:none">
+<div class="toolbar">
+<span class="muted" style="font-size:0.85em">窗口:</span>
+<select id="days-sel" onchange="loadAll()">
+  <option value="7">近7天</option>
+  <option value="14">近14天</option>
+  <option value="30">近30天</option>
+  <option value="90">近90天</option>
+</select>
+<span class="muted" style="font-size:0.85em">站点:</span>
+<select id="site-sel" onchange="loadAll()">
+  <option value="">全部</option>
+  <option value="gamezipper.com">gamezipper.com</option>
+  <option value="tools.gamezipper.com">tools.gamezipper.com</option>
+</select>
+<button class="btn refresh-btn" onclick="loadAll()">🔄 刷新</button>
+<span id="updated" class="muted" style="font-size:0.78em;margin-left:auto"></span>
+</div>
+
+<div id="banner"></div>
+
+<h2>🔍 GSC organic 流量</h2>
+<div class="kpi-grid" id="gsc-kpis"></div>
+<div class="card">
+<h3 style="font-size:1em;color:#94a3b8;margin-bottom:10px">每日趋势（clicks + impressions）</h3>
+<div id="gsc-trend"></div>
+</div>
+
+<h2>🌐 站点流量 (events 表)</h2>
+<div class="kpi-grid" id="bi-kpis"></div>
+
+<div class="card">
+<h3 style="font-size:1em;color:#94a3b8;margin-bottom:10px">热门页面</h3>
+<table id="bi-top-pages"><thead><tr><th>Path</th><th>PV</th><th>UV</th></tr></thead><tbody></tbody></table>
+</div>
+
+<h2>🔎 Top 查询 (GSC)</h2>
+<div class="card">
+<table id="gsc-queries"><thead><tr><th>Query</th><th>Clicks</th><th>Impressions</th><th>CTR</th><th>Pos</th></tr></thead><tbody></tbody></table>
+</div>
+
+<h2>📄 Top 页面 (GSC)</h2>
+<div class="card">
+<table id="gsc-pages"><thead><tr><th>Page</th><th>Site</th><th>Clicks</th><th>Impressions</th><th>CTR</th><th>Pos</th></tr></thead><tbody></tbody></table>
+</div>
+</div>
+</div>
+
+<script>
+const BI_BASE = "";  // same origin
+let cookie = "";
+
+function setErr(msg) {
+  document.getElementById("login-err").textContent = msg || "";
+}
+
+async function doLogin() {
+  const pw = document.getElementById("pw").value;
+  setErr("");
+  const fd = new FormData();
+  fd.append("password", pw);
+  const r = await fetch(BI_BASE + "/api/login", { method: "POST", body: fd, credentials: "include" });
+  if (r.ok) {
+    document.getElementById("login-pane").style.display = "none";
+    document.getElementById("dash-pane").style.display = "block";
+    loadAll();
+  } else {
+    setErr("密码错误");
+  }
+}
+
+async function api(path) {
+  const r = await fetch(BI_BASE + path, { credentials: "include" });
+  if (r.status === 401) {
+    document.getElementById("dash-pane").style.display = "none";
+    document.getElementById("login-pane").style.display = "block";
+    throw new Error("auth_required");
+  }
+  return r.json();
+}
+
+function fmt(n) { return n == null ? "0" : Number(n).toLocaleString(); }
+function pct(n) { return (n == null ? 0 : n).toFixed(2) + "%"; }
+
+function renderBanner(status, error) {
+  const el = document.getElementById("banner");
+  if (status === "ok") {
+    el.innerHTML = "";
+  } else if (status === "auth_required") {
+    el.innerHTML = `<div class="banner banner-error">
+      <strong>❌ GSC 凭据缺失</strong> — organic 数据需先配 OAuth / service account。<br/>
+      <code>/home/msdn/.openclaw/secrets/gsc.json</code> (OAuth) 或
+      <code>/home/msdn/.openclaw/secrets/gsc-sa.json</code> (service account)。<br/>
+      详见 <a href="/admin/">admin panel</a> 或 bi-report.py 输出。<br/>
+      <small>last error: ${error || "(无)"}</small>
+    </div>`;
+  } else if (status === "error") {
+    el.innerHTML = `<div class="banner banner-warn">
+      <strong>⚠️ GSC 上次 fetch 失败:</strong> ${error || "(无)"}
+    </div>`;
+  } else if (status === "never_run") {
+    el.innerHTML = `<div class="banner banner-info">
+      ⏭️ GSC 尚未抓取（gsc_fetch.py 应在 6am cron 触发过）。
+    </div>`;
+  } else {
+    el.innerHTML = `<div class="banner banner-warn">GSC 状态未知: ${status}</div>`;
+  }
+}
+
+async function loadAll() {
+  const days = document.getElementById("days-sel").value;
+  const site = document.getElementById("site-sel").value;
+  document.getElementById("updated").innerHTML = '<span class="spinner"></span>加载中…';
+
+  try {
+    const [gscStatus, gscOverview, gscQueries, gscPages, biOverview, biVisitors] = await Promise.all([
+      api("/api/gsc/status"),
+      api(`/api/gsc/overview?days=${days}${site ? "&site=" + encodeURIComponent(site) : ""}`),
+      api(`/api/gsc/queries?limit=20&days=${days}${site ? "&site=" + encodeURIComponent(site) : ""}`),
+      api(`/api/gsc/pages?limit=20&days=${days}${site ? "&site=" + encodeURIComponent(site) : ""}`),
+      api(`/api/overview?period=${days}d`),
+      api(`/api/visitors?period=${days}d`),
+    ]);
+
+    renderBanner(gscStatus.last_status || "never_run", gscStatus.error);
+
+    // GSC KPIs
+    const totals = gscOverview.totals || {};
+    document.getElementById("gsc-kpis").innerHTML = `
+      <div class="kpi"><div class="kpi-label">展示 (impressions)</div><div class="kpi-value">${fmt(totals.impressions)}</div></div>
+      <div class="kpi"><div class="kpi-label">点击 (clicks)</div><div class="kpi-value">${fmt(totals.clicks)}</div></div>
+      <div class="kpi"><div class="kpi-label">CTR</div><div class="kpi-value">${pct(totals.ctr)}</div></div>
+      <div class="kpi"><div class="kpi-label">均位 (avg position)</div><div class="kpi-value">${(totals.position || 0).toFixed(1)}</div></div>
+    `;
+
+    // GSC trend
+    const trend = gscOverview.trend || [];
+    const maxClicks = Math.max(1, ...trend.map(d => d.clicks + d.impressions * 0.001));
+    document.getElementById("gsc-trend").innerHTML = trend.length === 0
+      ? '<div class="muted">无数据</div>'
+      : trend.map(d => {
+          const w = Math.round((d.clicks + d.impressions * 0.001) / maxClicks * 100);
+          return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span style="width:90px;font-size:0.85em;color:#94a3b8">${d.date}</span>
+            <div class="trend-bar" style="flex:1">
+              <div class="trend-fill" style="width:${w}%">${fmt(d.clicks)} clicks · ${fmt(d.impressions)} imp</div>
+            </div>
+          </div>`;
+        }).join("");
+
+    // GSC queries
+    document.querySelector("#gsc-queries tbody").innerHTML = (gscQueries.queries || []).length === 0
+      ? '<tr><td colspan="5" class="muted">无数据 — 可能凭据未设或新 property 暂无数据</td></tr>'
+      : (gscQueries.queries || []).map(q =>
+          `<tr><td>${escape(q.query)}</td><td>${fmt(q.clicks)}</td><td>${fmt(q.impressions)}</td><td>${pct(q.ctr)}</td><td>${q.position.toFixed(1)}</td></tr>`
+        ).join("");
+
+    // GSC pages
+    document.querySelector("#gsc-pages tbody").innerHTML = (gscPages.pages || []).length === 0
+      ? '<tr><td colspan="6" class="muted">无数据</td></tr>'
+      : (gscPages.pages || []).map(p =>
+          `<tr><td>${escape(p.page)}</td><td><code>${p.site}</code></td><td>${fmt(p.clicks)}</td><td>${fmt(p.impressions)}</td><td>${p.ctr.toFixed(2)}%</td><td>${p.position.toFixed(1)}</td></tr>`
+        ).join("");
+
+    // BI KPIs (events-based)
+    document.getElementById("bi-kpis").innerHTML = `
+      <div class="kpi"><div class="kpi-label">PV (page views)</div><div class="kpi-value">${fmt(biOverview.pv)}</div></div>
+      <div class="kpi"><div class="kpi-label">UV (unique visitors)</div><div class="kpi-value">${fmt(biOverview.uv)}</div></div>
+      <div class="kpi"><div class="kpi-label">今日 PV</div><div class="kpi-value">${fmt(biOverview.today_pv)}</div><div class="kpi-sub">UV ${fmt(biOverview.today_uv)}</div></div>
+      <div class="kpi"><div class="kpi-label">跳出率</div><div class="kpi-value">${(biOverview.bounce_rate || 0).toFixed(1)}%</div></div>
+    `;
+
+    // BI top pages
+    document.querySelector("#bi-top-pages tbody").innerHTML = (biOverview.top_pages || []).length === 0
+      ? '<tr><td colspan="3" class="muted">无数据</td></tr>'
+      : (biOverview.top_pages || []).map(p =>
+          `<tr><td>${escape(p.path)}</td><td>${fmt(p.pv)}</td><td>${fmt(p.uv)}</td></tr>`
+        ).join("");
+
+    document.getElementById("updated").textContent = "Updated: " + new Date().toLocaleTimeString();
+  } catch (e) {
+    document.getElementById("updated").textContent = "Error: " + e.message;
+  }
+}
+
+function escape(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]); }
+
+// Auto-show login pane on load; if already authenticated, try loadAll
+(async () => {
+  try {
+    await api("/api/health");
+    document.getElementById("login-pane").style.display = "none";
+    document.getElementById("dash-pane").style.display = "block";
+    loadAll();
+  } catch {
+    document.getElementById("login-pane").style.display = "block";
+  }
+})();
+
+document.getElementById("pw").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+</script>
+</body>
+</html>
