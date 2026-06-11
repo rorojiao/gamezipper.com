@@ -172,10 +172,38 @@ canvas{display:block;touch-action:none}
 <span>Music</span>
 <input type="checkbox" id="opt-music" checked style="width:48px;height:28px">
 </label>
+<button class="btn btn-secondary btn-small" id="btn-reset-progress" style="margin-top:1em">Reset Progress</button>
 </div>
 <button class="btn btn-primary" id="btn-close-settings">Close</button>
 </div>
 </div>
+
+<!-- BANNER + NATIVE AD CONTAINERS -->
+<div id="gz-ad-banner" style="position:fixed;left:0;right:0;bottom:0;min-height:50px;z-index:5;display:flex;justify-content:center;pointer-events:none"></div>
+<div id="gz-ad-native" style="position:fixed;left:0;right:0;top:0;min-height:50px;z-index:5;display:flex;justify-content:center;pointer-events:none"></div>
+
+<!-- Monetag MultiTag: banner (110120) + native (110121) -->
+<script async src="https://alwingulla.com/88/tag.min.js" data-zone="110120"></script>
+<script async src="https://alwingulla.com/88/tag.min.js" data-zone="110121"></script>
+
+<!-- Interstitial trigger: call on level complete (110122) -->
+<script>
+function showInterstitial(){
+  try {
+    if (window.Monetag && window.Monetag.show) {
+      window.Monetag.show(110122);
+    } else {
+      // Fallback: inject tag script for 110122
+      var s = document.createElement('script');
+      s.src = 'https://alwingulla.com/88/tag.min.js';
+      s.setAttribute('data-zone', '110122');
+      s.async = true;
+      document.body.appendChild(s);
+    }
+  } catch(e){}
+}
+window.showInterstitial = showInterstitial;
+</script>
 
 <script>
 /* ================================================================
@@ -207,11 +235,21 @@ const CFG = {
   CAR_ENGINE: 180,
   DAMAGE_THRESHOLD: 200,
   MAX_DAMAGE: 100,
-  STAR_THRESHOLDS: [0.4, 0.7, 1.0], // ink ratio: <40% = 3star, <70% = 2star, else 1star
+  STAR_THRESHOLDS: [0.4, 0.7, 1.0],
   HINT_COST: 1, INITIAL_HINTS: 5,
   SAVE_VERSION: 2,
   TOTAL_LEVELS: 30,
 };
+
+// ─── THEMES (per-tier visual) ───
+const THEMES = {
+  forest: { bg1: '#0a1a0f', bg2: '#0f2918', sky: '#1a3a25', platform: '#3a7d4a', platformEdge: '#4ecdc4', obstacle: '#6b3a1a', star: '#88ff88' },
+  desert: { bg1: '#1a0f05', bg2: '#3a2010', sky: '#5a3010', platform: '#b8835a', platformEdge: '#ffd993', obstacle: '#8b3a1a', star: '#ffaa55' },
+  ice:    { bg1: '#050a1a', bg2: '#0f1f3a', sky: '#1a3a5a', platform: '#7ab8d9', platformEdge: '#a0e0ff', obstacle: '#3a5a8a', star: '#aaeeff' },
+  lava:   { bg1: '#1a0500', bg2: '#3a0a05', sky: '#5a1a10', platform: '#6a2a1a', platformEdge: '#ff6b35', obstacle: '#aa3a10', star: '#ffdd44' },
+  space:  { bg1: '#050010', bg2: '#0a0525', sky: '#1a0a3a', platform: '#5a4a7a', platformEdge: '#9b7eff', obstacle: '#3a2a5a', star: '#ff77ff' }
+};
+function tierTheme(tier){return ['forest','desert','ice','lava','space'][Math.max(0,Math.min(4,tier-1))];}
 
 // ─── AUDIO MANAGER ───
 class AudioManager {
@@ -376,7 +414,7 @@ function makeGround(x1, x2, y = GROUND_Y) { return { x1, y1: y, x2, y2: y }; }
 function makeWall(x, y1, y2) { return { x1: x, y1, x2: x, y2 }; }
 
 const LEVELS = [
-  // ── Tier 1: Tutorial (1-5) ──
+  // ── Tier 1: Forest (1-6) — Simple gaps, learning levels ──
   {
     terrain: [makeGround(0, 500), makeGround(620, 1280)],
     start: { x: 80, y: GROUND_Y },
@@ -417,7 +455,7 @@ const LEVELS = [
     inkMax: 450, parInk: [200, 300, 400],
     tutorialText: 'A bump before the gap! Keep it smooth.'
   },
-  // ── Tier 2: Wider Gaps & Elevation (6-12) ──
+  // ── Tier 2: Desert (7-12) — Wider gaps, obstacles mid-air ──
   {
     terrain: [makeGround(0, 350), makeGround(650, 1280)],
     start: { x: 80, y: GROUND_Y },
@@ -468,7 +506,7 @@ const LEVELS = [
     obstacles: [], movingObstacles: [],
     inkMax: 550, parInk: [300, 400, 500]
   },
-  // ── Tier 3: Multiple Gaps & Obstacles (13-20) ──
+  // ── Tier 3: Ice (13-18) — Moving platforms ──
   {
     terrain: [makeGround(0, 220), makeGround(320, 440), makeGround(540, 660), makeGround(760, 1280)],
     start: { x: 80, y: GROUND_Y },
@@ -529,7 +567,7 @@ const LEVELS = [
     obstacles: [], movingObstacles: [],
     inkMax: 600, parInk: [340, 460, 560]
   },
-  // ── Tier 4: Complex (21-25) ──
+  // ── Tier 4: Lava (19-24) — Breakable platforms & spikes ──
   {
     terrain: [makeGround(0, 350), makeGround(550, 1280)],
     start: { x: 80, y: GROUND_Y },
@@ -579,7 +617,7 @@ const LEVELS = [
     movingObstacles: [{ x: 340, y: GROUND_Y - 90, w: 40, h: 40, range: 90, speed: 80, axis: 'y' }],
     inkMax: 800, parInk: [440, 600, 750]
   },
-  // ── Tier 5: Extreme (26-30) ──
+  // ── Tier 5: Space (25-30) — Wind force & combined mechanics ──
   {
     terrain: [makeGround(0, 250, 500), makeGround(450, 650, 460), makeGround(850, 1280, 500)],
     start: { x: 80, y: 500 },
@@ -761,7 +799,7 @@ class Car {
       { x: this.x - hw*cos + hh*sin, y: this.y - hw*sin - hh*cos }   // bottom-left
     ];
   }
-  update(dt, segments) {
+  update(dt, segments, wind = 0) {
     if (this.dead || this.finished) return;
     this.engineTime += dt;
     this.prevVy = this.vy;
@@ -770,6 +808,13 @@ class Car {
     // Engine force (forward along x)
     this.vx += CFG.CAR_ENGINE * dt;
     this.vx = clamp(this.vx, 0, CFG.MAX_SPEED);
+    // Wind force (lateral, pushing in +x direction)
+    if (wind) {
+      this.vx += wind * dt;
+      this.vx = clamp(this.vx, -CFG.MAX_SPEED * 1.2, CFG.MAX_SPEED * 1.2);
+      // Also slight vertical air drag
+      this.vy *= (1 - 0.02 * dt);
+    }
     // Move
     this.x += this.vx * dt;
     this.y += this.vy * dt;
@@ -1006,6 +1051,14 @@ class Game {
     // Settings
     document.getElementById('opt-sfx').addEventListener('change', (e) => { this.audio.toggleSfx(e.target.checked); });
     document.getElementById('opt-music').addEventListener('change', (e) => { this.audio.toggleMusic(e.target.checked); });
+    document.getElementById('btn-reset-progress').addEventListener('click', () => {
+      this.audio.playClick();
+      if (confirm('Reset all progress? This cannot be undone.')) {
+        this.save.reset();
+        this._buildLevelGrid();
+        this._hideModal('settings');
+      }
+    });
     // Canvas input
     this.canvas.addEventListener('pointerdown', (e) => this._onPointerDown(e));
     this.canvas.addEventListener('pointermove', (e) => this._onPointerMove(e));
@@ -1097,6 +1150,10 @@ class Game {
 
   _startLevel(num) {
     this.currentLevel = num;
+    this.tier = Math.ceil(num / 6);
+    this.theme = tierTheme(this.tier);
+    // Wind force: only in space tier (5) and growing with level
+    this.wind = this.tier === 5 ? (40 + (num - 25) * 8) : 0;
     this.level = LEVELS[num - 1];
     this.car = new Car(this.level.start.x, this.level.start.y);
     this.drawnLines = [];
@@ -1119,7 +1176,7 @@ class Game {
     this._showScreen('game');
     this._resize();
     this.state = 'playing';
-    document.getElementById('level-label').textContent = `Level ${num}`;
+    document.getElementById('level-label').textContent = `L${num} · ${this.theme.charAt(0).toUpperCase() + this.theme.slice(1)}`;
     this._updateHUD();
     this.audio.startMusic();
     // Show tutorial
@@ -1391,6 +1448,8 @@ class Game {
       document.getElementById('score-text').textContent = `Ink used: ${Math.round(this.totalInk)}`;
       this._showModal('complete');
       this._spawnConfetti(30 + stars * 15);
+      // Monetag interstitial (110122) - shown only on level complete, not during gameplay
+      try { showInterstitial(); } catch(e) {}
     }, 600);
   }
 
@@ -1427,7 +1486,7 @@ class Game {
 
     // Update car
     if (!this.car.dead && !this.car.finished) {
-      this.car.update(dt, this.allSegments);
+      this.car.update(dt, this.allSegments, this.wind);
       this._startEngine();
       this._updateEngineSound();
 
@@ -1522,11 +1581,12 @@ class Game {
     ctx.scale(s, s);
     ctx.translate(-this.camera.x, 0);
 
-    // Background gradient
+    // Background gradient (tier theme)
+    const T = THEMES[this.theme] || THEMES.forest;
     const grad = ctx.createLinearGradient(0, 0, 0, CFG.H);
-    grad.addColorStop(0, '#0a0a1a');
-    grad.addColorStop(0.5, '#0f0f2e');
-    grad.addColorStop(1, '#1a1a3e');
+    grad.addColorStop(0, T.bg1);
+    grad.addColorStop(0.5, T.bg2);
+    grad.addColorStop(1, T.sky);
     ctx.fillStyle = grad;
     ctx.fillRect(this.camera.x, 0, CFG.W, CFG.H);
 
@@ -1546,8 +1606,8 @@ class Game {
     // Draw terrain fill (below ground line)
     for (const seg of this.level.terrain) {
       const gFill = ctx.createLinearGradient(seg.x1, seg.y1, seg.x1, seg.y1 + GROUND_H);
-      gFill.addColorStop(0, '#2a2a4a');
-      gFill.addColorStop(1, '#0a0a1a');
+      gFill.addColorStop(0, T.platform);
+      gFill.addColorStop(1, T.bg1);
       ctx.fillStyle = gFill;
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
@@ -1557,14 +1617,16 @@ class Game {
       ctx.closePath();
       ctx.fill();
       // Surface line
-      ctx.strokeStyle = '#4ecdc4';
+      ctx.strokeStyle = T.platformEdge;
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
       ctx.lineTo(seg.x2, seg.y2);
       ctx.stroke();
       // Surface glow
-      ctx.strokeStyle = 'rgba(78,205,196,0.3)';
+      const glowColor = T.platformEdge;
+      ctx.strokeStyle = glowColor.startsWith('#') ? glowColor + '4d' : glowColor;
+      if (!glowColor.startsWith('#')) ctx.strokeStyle = 'rgba(155,126,255,0.3)';
       ctx.lineWidth = 8;
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
@@ -1878,6 +1940,13 @@ if (document.readyState === 'loading') {
 // Cleanup on page hide
 window.addEventListener('pagehide', () => { if (game) game.cleanup(); });
 window.addEventListener('beforeunload', () => { if (game) game.cleanup(); });
+window.addEventListener('visibilitychange', () => {
+  if (document.hidden && game) {
+    game.audio.stopMusic();
+  } else if (!document.hidden && game && game.state === 'playing') {
+    game.audio.startMusic();
+  }
+});
 </script>
 <script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=draw-bridge'></script>
 </body>
