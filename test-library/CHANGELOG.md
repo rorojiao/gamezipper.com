@@ -3,6 +3,30 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.36.0] - 2026-06-11
+### Added
+- 8 new test cases from industry research (R137 Dynamic Test Intelligence cron)
+- B-064: Cross-browser rendering consistency Blink/WebKit/Gecko canvas animation z-index stacking
+- S-071: Chrome V8 OOB zero-day CVE-2026-11645 crafted input resilience game save data
+- S-072: Safari WebKit Navigation API cross-origin spoofing CVE-2026-20643 iframe embedding
+- S-073: Chrome UI spoofing clickjacking CVE-2026-9110 fullscreen API overlay abuse
+- B-065: Safari WebKit crash resilience under heavy canvas/WebGL long sessions CVE-2026-20636 CVE-2026-28962
+- A-022: Mobile touch target 48x48px minimum + Vibration API haptic feedback accessibility
+- A-023: WCAG 2.2 ADA Title II enforcement audit keyboard+screen reader+APCA contrast
+- P-042: WebSocket load testing k6 real-browser mode multiplayer game connection scaling
+### Sources
+- Chrome V8 zero-day CVE-2026-11645 5th exploited in 2026 (securityweek.com, bleepingcomputer.com, thehackernews.com)
+- Safari WebKit CVE-2026-20636 crash, CVE-2026-20643 cross-origin spoofing, CVE-2026-28962 crash+data exposure (stack.watch, support.apple.com, 9to5mac.com, securityboulevard.com)
+- Chrome UI spoofing CVE-2026-9110 (malwarebytes.com)
+- Cross-browser rendering bugs 85% browser-specific (contextqa.com, oneuptime.com)
+- Mobile touch target UX 48x48px minimum (gdevelop.io, HaptiPlay github.com/iacoposk8)
+- WCAG 2.2 ADA Title II enforcement + WCAG 3.0 APCA (vervali.com, creativealive.com, d2itechnology.com)
+- WebSocket load testing k6 real-browser mode (youngju.dev k6 comparison 2026)
+- 2026 mobile game UX retention trends (ejaw.net, medium.com, boundev.ai)
+- Web games tech stack WebGL2 vs WebGPU vs WASM 2026 (app.cinevva.com)
+- PerfDog 200+ mobile game metrics Jank/SmoothIndex/FPower (wetest.net)
+- Search queries: HTML5 game testing 2026 new techniques, browser game bug report 2026, new browser security vulnerability 2026 June, casual game UX complaint 2026, Chrome Edge Safari update June 2026
+
 ## [v1.35.0] - 2026-06-11
 ### Added
 - 7 new test cases from industry research (R135 Dynamic Test Intelligence cron)
