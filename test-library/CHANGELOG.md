@@ -3,6 +3,30 @@
 
 All notable changes to the test case library are documented here.
 
+## [v1.37.0] - 2026-06-12
+### Added
+- 9 new test cases from industry research (R139 Dynamic Test Intelligence cron)
+- S-074: Chrome 149 post-patch regression — CSP enforcement tightening breaks inline game scripts
+- S-075: Edge mobile Copilot AI sidebar — game content interaction interference
+- C-068: Edge 149 cross-browser parity — same Chromium base different rendering
+- C-069: Safari AI tab organizer — game tab backgrounding behavior change
+- P-043: WebGL still faster for small/casual games — benchmark before WebGPU migration
+- P-044: Babylon.js v9.0 / Three.js WebGPU default — engine version migration testing
+- G-103: Zero-friction first-contentful-paint — sub-2s game canvas rendering benchmark 2026
+- A-024: Diverse game input methods testing — drag, swipe, multi-touch, keyboard-only
+- W-131: Browser user-agent detection update — June 2026 UA string changes
+### Sources
+- Chrome 149 record 429-vulnerability patch + CISA KEV CVE-2026-11645 (forbes.com/daveywinder, cvereports.com, cyberpress.org, rescana.com)
+- Edge 149 release notes + Edge mobile Copilot upgrade (learn.microsoft.com, digitaltrends.com)
+- Safari 27 AI tab organizer (windowslatest.com, piunikaweb.com)
+- ACM IMC WebGL vs WebGPU performance paper (dl.acm.org)
+- Babylon.js v9.0 WebGPU default + Three.js migration (weskill.org, strayspark.studio, cinevva.com)
+- Browser game UX zero-friction FCP (fgl.com, msn.com/crazygames, docomogames.com)
+- Casual game input diversity (jayisgames.com, binkplay.com)
+- Browser UA string updates June 2026 (geekflare.com, browsers.fyi, browsercalendar.com)
+- Search queries: HTML5 game testing 2026 new techniques, browser security vulnerability June 2026, Chrome Edge Safari update June 2026, casual game UX mobile browser 2026, WebGPU WebGL browser game performance June 2026
+
+
 ## [v1.36.0] - 2026-06-11
 ### Added
 - 8 new test cases from industry research (R137 Dynamic Test Intelligence cron)
