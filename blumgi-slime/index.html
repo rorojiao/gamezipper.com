@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,maximum-scale=1.0">
+<title>Play Slime Bounce Online Free - Jelly Physics Platformer | GameZipper</title>
+<link rel="canonical" href="https://gamezipper.com/blumgi-slime/">
+<meta name="description" content="Play Slime Bounce online for free! Launch your jelly slime across platforms with slingshot mechanics. 30 levels of physics-based platforming fun.">
+<meta property="og:title" content="Play Slime Bounce Online Free - Jelly Physics Platformer | GameZipper">
+<meta property="og:description" content="Launch your jelly slime across platforms! 30 levels of physics-based platforming with slingshot mechanics, jelly physics, and star ratings.">
+<meta property="og:image" content="https://gamezipper.com/blumgi-slime/og-image.png">
+<meta property="og:url" content="https://gamezipper.com/blumgi-slime/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[{"@type":"VideoGame","name":"Slime Bounce","description":"A physics-based platformer where you slingshot a jelly slime across platforms to reach the goal.","genre":"Platformer","gamePlatform":"HTML5","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://gamezipper.com/blumgi-slime/"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Slime Bounce?","acceptedAnswer":{"@type":"Answer","text":"Drag back on the slime to aim, then release to launch it across platforms. Land on the goal flag to complete each level."}},{"@type":"Question","name":"How many levels are in Slime Bounce?","acceptedAnswer":{"@type":"Answer","text":"There are 30 levels across 3 difficulty tiers, from basic launch mechanics to precision targeting challenges."}},{"@type":"Question","name":"How does the star rating work?","acceptedAnswer":{"@type":"Answer","text":"Complete a level for 1 star. Use fewer shots than par for 2 stars. Use well under par for 3 stars."}}]},{"@type":"HowTo","name":"How to Play Slime Bounce","step":[{"@type":"HowToStep","text":"Click or tap and drag backward on the slime"},{"@type":"HowToStep","text":"Aim using the dotted trajectory preview"},{"@type":"HowToStep","text":"Release to launch the slime"},{"@type":"HowToStep","text":"Bounce off platforms and walls to reach the goal flag"}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Slime Bounce","item":"https://gamezipper.com/blumgi-slime/"}]}]}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow-x:hidden;user-select:none;-webkit-user-select:none;background:#0a0a2e;font-family:'Inter',sans-serif;touch-action:none}
+canvas{display:block;touch-action:none}
+</style>
+</head>
+<body>
+<canvas id="gc"></canvas>
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=blumgi-slime'></script>
+<script>
+"use strict";
+// ============================================================
+// SLIME BOUNCE — Complete Jelly Physics Platformer
+// ============================================================
+
+const canvas = document.getElementById('gc');
+const ctx = canvas.getContext('2d');
+const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+// --- Design Constants ---
+const COL = {
+  bg1:'#0a0a2e', bg2:'#1a1a4e',
+  slime:'#39ff14', slimeLight:'#7dff6b', slimeDark:'#1fa80e', slimeGlow:'rgba(57,255,20,0.35)',
+  accent:'#00e5ff', accentDark:'#0097a7',
+  platform:'#2a2a6e', platformTop:'#4a4a9e', platformBorder:'#6a6abe',
+  wall:'#3a3a7e', wallBorder:'#5a5aae',
+  goal:'#ffd700', goalGlow:'rgba(255,215,0,0.4)',
+  spike:'#ff3355',
+  text:'#ffffff', textDim:'rgba(255,255,255,0.6)',
+  panel:'rgba(20,20,60,0.92)', panelBorder:'rgba(100,100,200,0.3)',
+  star:'#ffd700', starEmpty:'rgba(255,255,255,0.15)',
+  btn:'#00e5ff', btnHover:'#33ebff', btnText:'#0a0a2e',
+  danger:'#ff3355',
+  particle1:'#39ff14', particle2:'#00e5ff', particle3:'#ffd700', particle4:'#ff69b4',
+};
+
+// --- Responsive Sizing ---
+let W, H, scale;
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  scale = Math.min(W / 1280, H / 720);
+}
+resize();
+window.addEventListener('resize', resize);
+
+// --- Save System ---
+const SAVE_VER = 2;
+function loadSave() {
+  try {
+    const d = JSON.parse(localStorage.getItem('slimeBounceSave'));
+    if (d && d.v === SAVE_VER) return d;
+  } catch(e) {}
+  return { v: SAVE_VER, stars: {}, bestScores: {}, soundOn: true, unlocked: 1 };
+}
+function writeSave() { try { localStorage.setItem('slimeBounceSave', JSON.stringify(save)); } catch(e) {} }
+let save = loadSave();
+
+// --- Audio System (Web Audio API, procedural) ---
+let audioCtx = null;
+let masterGain = null;
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = save.soundOn ? 0.3 : 0;
+  masterGain.connect(audioCtx.destination);
+}
+function playSound(type) {
+  if (!audioCtx || !save.soundOn) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const g = audioCtx.createGain();
+  g.connect(masterGain);
+  if (type === 'launch') {
+    const o = audioCtx.createOscillator();
+    o.type = 'sine'; o.frequency.setValueAtTime(300, now);
+    o.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+    g.gain.setValueAtTime(0.3, now); g.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+    o.connect(g); o.start(now); o.stop(now + 0.2);
+  } else if (type === 'bounce') {
+    const o = audioCtx.createOscillator();
+    o.type = 'sine'; o.frequency.setValueAtTime(400, now);
+    o.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+    g.gain.setValueAtTime(0.2, now); g.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+    o.connect(g); o.start(now); o.stop(now + 0.12);
+  } else if (type === 'star') {
+    const o = audioCtx.createOscillator();
+    o.type = 'triangle'; o.frequency.setValueAtTime(800, now);
+    o.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+    g.gain.setValueAtTime(0.25, now); g.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    o.connect(g); o.start(now); o.stop(now + 0.15);
+  } else if (type === 'complete') {
+    [0, 0.1, 0.2, 0.35].forEach((t, i) => {
+      const o = audioCtx.createOscillator();
+      const gg = audioCtx.createGain();
+      o.type = i < 3 ? 'sine' : 'triangle';
+      o.frequency.setValueAtTime([523, 659, 784, 1047][i], now + t);
+      gg.gain.setValueAtTime(0.25, now + t); gg.gain.exponentialRampToValueAtTime(0.01, now + t + 0.2);
+      o.connect(gg); gg.connect(masterGain); o.start(now + t); o.stop(now + t + 0.2);
+    });
+  } else if (type === 'fail') {
+    const o = audioCtx.createOscillator();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(300, now);
+    o.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+    g.gain.setValueAtTime(0.15, now); g.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+    o.connect(g); o.start(now); o.stop(now + 0.35);
+  } else if (type === 'click') {
+    const o = audioCtx.createOscillator();
+    o.type = 'sine'; o.frequency.setValueAtTime(660, now);
+    g.gain.setValueAtTime(0.15, now); g.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+    o.connect(g); o.start(now); o.stop(now + 0.05);
+  }
+}
+
+// --- Particle System ---
+const particles = [];
+function spawnParticles(x, y, count, colorArr, opts = {}) {
+  const { speedMin = 40, speedMax = 180, lifeMin = 0.3, lifeMax = 0.8, sizeMin = 2, sizeMax = 5, gravity = 200 } = opts;
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = speedMin + Math.random() * (speedMax - speedMin);
+    const lifetime = lifeMin + Math.random() * (lifeMax - lifeMin);
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - (opts.upBias || 0),
+      life: lifetime,
+      maxLife: lifetime,
+      size: sizeMin + Math.random() * (sizeMax - sizeMin),
+      color: colorArr[Math.floor(Math.random() * colorArr.length)],
+      gravity
+    });
+  }
+}
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += p.gravity * dt;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+function drawParticles(cx, cy) {
+  for (const p of particles) {
+    const a = Math.max(0, p.life / p.maxLife);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x - cx, p.y - cy, p.size * a, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// --- Screen Shake ---
+let shakeAmount = 0, shakeDuration = 0, shakeOffX = 0, shakeOffY = 0;
+function triggerShake(amount, dur) { shakeAmount = amount; shakeDuration = dur; }
+function updateShake(dt) {
+  if (shakeDuration > 0) {
+    shakeDuration -= dt;
+    shakeOffX = (Math.random() - 0.5) * shakeAmount * 2;
+    shakeOffY = (Math.random() - 0.5) * shakeAmount * 2;
+    shakeAmount *= 0.95;
+  } else { shakeOffX = 0; shakeOffY = 0; }
+}
+
+// ============================================================
+// LEVEL DATA — 30 levels, 3 tiers
+// ============================================================
+// Platform: {x, y, w, h, type:'static'|'moving'|'bounce'|'spike', ...}
+// Goal: {x, y, w, h}
+// Slime start: {x, y}
+// par: target shots for 3 stars
+// maxShots: max allowed shots
+const LEVELS = [];
+
+// Helper to create level
+function mkLevel(par, maxShots, slimeStart, platforms, goal, extra = {}) {
+  return { par, maxShots, slime: { ...slimeStart }, platforms, goal: { ...goal }, ...extra };
+}
+
+// Tier 1: Levels 1-10 — Simple platforms
+LEVELS[0] = mkLevel(1, 5, {x:120,y:500}, [{x:60,y:560,w:140,h:30},{x:400,y:480,w:140,h:30},{x:650,y:400,w:140,h:30}], {x:680,y:340,w:80,h:60}, {hint:'Drag back on the slime and release to launch!'});
+
+LEVELS[1] = mkLevel(1, 5, {x:100,y:520}, [{x:60,y:580,w:120,h:30},{x:350,y:480,w:120,h:30},{x:600,y:400,w:120,h:30},{x:850,y:320,w:140,h:30}], {x:880,y:260,w:80,h:60}, {hint:'Aim for the platforms! Use the trajectory preview.'});
+
+LEVELS[2] = mkLevel(2, 5, {x:100,y:500}, [{x:60,y:560,w:120,h:30},{x:400,y:500,w:100,h:30},{x:550,y:400,w:100,h:30},{x:750,y:300,w:140,h:30}], {x:780,y:240,w:80,h:60}, {hint:'You can bounce off walls!'});
+
+LEVELS[3] = mkLevel(2, 5, {x:100,y:400}, [{x:60,y:460,w:130,h:30},{x:500,y:460,w:130,h:30},{x:300,y:340,w:100,h:30},{x:700,y:280,w:140,h:30}], {x:730,y:220,w:80,h:60});
+
+LEVELS[4] = mkLevel(2, 6, {x:100,y:500}, [{x:60,y:560,w:120,h:30},{x:350,y:480,w:80,h:30},{x:550,y:400,w:80,h:30},{x:750,y:340,w:80,h:30},{x:950,y:280,w:140,h:30}], {x:980,y:220,w:80,h:60});
+
+LEVELS[5] = mkLevel(2, 6, {x:100,y:300}, [{x:60,y:360,w:130,h:30},{x:300,y:440,w:100,h:30},{x:600,y:520,w:100,h:30},{x:850,y:440,w:100,h:30},{x:1050,y:350,w:140,h:30}], {x:1080,y:290,w:80,h:60});
+
+LEVELS[6] = mkLevel(3, 6, {x:100,y:550}, [{x:60,y:610,w:120,h:30},{x:300,y:520,w:80,h:30},{x:500,y:430,w:80,h:30},{x:350,y:320,w:80,h:30},{x:600,y:250,w:140,h:30}], {x:630,y:190,w:80,h:60});
+
+LEVELS[7] = mkLevel(2, 6, {x:100,y:450}, [{x:60,y:510,w:130,h:30},{x:400,y:510,w:100,h:30},{x:650,y:400,w:80,h:30},{x:900,y:320,w:80,h:30},{x:1100,y:250,w:140,h:30}], {x:1130,y:190,w:80,h:60});
+
+LEVELS[8] = mkLevel(3, 6, {x:100,y:350}, [{x:60,y:410,w:120,h:30},{x:250,y:500,w:70,h:30},{x:450,y:420,w:70,h:30},{x:650,y:340,w:70,h:30},{x:850,y:280,w:70,h:30},{x:1050,y:220,w:140,h:30}], {x:1080,y:160,w:80,h:60});
+
+LEVELS[9] = mkLevel(3, 7, {x:100,y:500}, [{x:60,y:560,w:120,h:30},{x:300,y:480,w:70,h:30},{x:500,y:420,w:70,h:30},{x:700,y:360,w:70,h:30},{x:900,y:300,w:70,h:30},{x:1100,y:240,w:70,h:30},{x:1250,y:180,w:140,h:30}], {x:1280,y:120,w:80,h:60});
+
+// Tier 2: Levels 11-20 — Bounce walls, moving platforms, obstacles
+LEVELS[10] = mkLevel(3, 6, {x:100,y:500}, [{x:60,y:560,w:120,h:30},{x:400,y:480,w:100,h:30},{x:650,y:400,w:100,h:30,type:'bounce'},{x:900,y:320,w:140,h:30}], {x:930,y:260,w:80,h:60});
+
+LEVELS[11] = mkLevel(3, 6, {x:100,y:400}, [{x:60,y:460,w:130,h:30},{x:400,y:460,w:100,h:30,type:'moving',moveX:150,moveSpeed:1.5},{x:700,y:380,w:120,h:30},{x:950,y:300,w:140,h:30}], {x:980,y:240,w:80,h:60});
+
+LEVELS[12] = mkLevel(3, 7, {x:100,y:550}, [{x:60,y:610,w:120,h:30},{x:350,y:550,w:80,h:30},{x:350,y:550,w:80,h:30},{x:600,y:470,w:100,h:30,type:'spike',spikeX:640,spikeY:450},{x:850,y:400,w:100,h:30},{x:1050,y:320,w:140,h:30}], {x:1080,y:260,w:80,h:60});
+
+LEVELS[13] = mkLevel(3, 7, {x:100,y:350}, [{x:60,y:410,w:130,h:30},{x:350,y:410,w:80,h:30,type:'bounce'},{x:600,y:350,w:80,h:30},{x:800,y:280,w:80,h:30,type:'moving',moveY:100,moveSpeed:1.2},{x:1050,y:220,w:140,h:30}], {x:1080,y:160,w:80,h:60});
+
+LEVELS[14] = mkLevel(4, 7, {x:100,y:500}, [{x:60,y:560,w:120,h:30},{x:300,y:500,w:80,h:30},{x:500,y:440,w:80,h:30,type:'bounce'},{x:700,y:380,w:80,h:30},{x:900,y:320,w:80,h:30,type:'moving',moveX:120,moveSpeed:1.8},{x:1150,y:260,w:140,h:30}], {x:1180,y:200,w:80,h:60});
+
+LEVELS[15] = mkLevel(4, 7, {x:100,y:450}, [{x:60,y:510,w:130,h:30},{x:400,y:510,w:100,h:30,type:'spike',spikeX:430,spikeY:490},{x:650,y:440,w:80,h:30},{x:850,y:370,w:80,h:30,type:'bounce'},{x:1050,y:300,w:80,h:30},{x:1200,y:230,w:140,h:30}], {x:1230,y:170,w:80,h:60});
+
+LEVELS[16] = mkLevel(4, 8, {x:100,y:300}, [{x:60,y:360,w:130,h:30},{x:350,y:360,w:70,h:30,type:'moving',moveY:120,moveSpeed:1.5},{x:550,y:300,w:70,h:30},{x:750,y:250,w:70,h:30,type:'bounce'},{x:950,y:200,w:70,h:30},{x:1150,y:160,w:140,h:30}], {x:1180,y:100,w:80,h:60});
+
+LEVELS[17] = mkLevel(4, 8, {x:100,y:550}, [{x:60,y:610,w:120,h:30},{x:300,y:560,w:80,h:30,type:'spike',spikeX:330,spikeY:540},{x:500,y:500,w:80,h:30,type:'moving',moveX:100,moveSpeed:2},{x:750,y:440,w:80,h:30},{x:950,y:380,w:80,h:30,type:'bounce'},{x:1150,y:320,w:80,h:30},{x:1300,y:260,w:140,h:30}], {x:1330,y:200,w:80,h:60});
+
+LEVELS[18] = mkLevel(4, 8, {x:100,y:400}, [{x:60,y:460,w:120,h:30},{x:300,y:460,w:70,h:30,type:'bounce'},{x:500,y:400,w:70,h:30,type:'moving',moveY:80,moveSpeed:1.8},{x:700,y:350,w:70,h:30},{x:900,y:300,w:70,h:30,type:'bounce'},{x:1100,y:260,w:70,h:30},{x:1300,y:220,w:140,h:30}], {x:1330,y:160,w:80,h:60});
+
+LEVELS[19] = mkLevel(5, 8, {x:100,y:500}, [{x:60,y:560,w:120,h:30},{x:350,y:500,w:70,h:30,type:'moving',moveX:80,moveSpeed:2.2},{x:550,y:440,w:70,h:30,type:'bounce'},{x:750,y:380,w:70,h:30,type:'spike',spikeX:780,spikeY:360},{x:950,y:320,w:70,h:30,type:'moving',moveY:100,moveSpeed:1.5},{x:1150,y:260,w:70,h:30},{x:1350,y:200,w:140,h:30}], {x:1380,y:140,w:80,h:60});
+
+// Tier 3: Levels 21-30 — Multi-launch, precision, moving targets
+LEVELS[20] = mkLevel(4, 7, {x:100,y:500}, [{x:60,y:560,w:100,h:30},{x:400,y:500,w:60,h:30},{x:600,y:440,w:60,h:30},{x:800,y:380,w:60,h:30},{x:1000,y:320,w:60,h:30},{x:1200,y:260,w:100,h:30}], {x:1220,y:200,w:80,h:60,type:'moving',moveX:80,moveSpeed:1});
+
+LEVELS[21] = mkLevel(4, 7, {x:100,y:400}, [{x:60,y:460,w:100,h:30},{x:350,y:400,w:60,h:30,type:'bounce'},{x:550,y:350,w:60,h:30,type:'bounce'},{x:750,y:300,w:60,h:30},{x:950,y:250,w:60,h:30,type:'moving',moveY:80,moveSpeed:2},{x:1150,y:200,w:100,h:30}], {x:1170,y:140,w:80,h:60});
+
+LEVELS[22] = mkLevel(5, 8, {x:100,y:550}, [{x:60,y:610,w:100,h:30},{x:350,y:560,w:60,h:30,type:'spike',spikeX:370,spikeY:540},{x:500,y:500,w:60,h:30},{x:700,y:440,w:60,h:30,type:'bounce'},{x:900,y:380,w:60,h:30,type:'moving',moveX:100,moveSpeed:2.5},{x:1100,y:320,w:60,h:30},{x:1300,y:260,w:100,h:30}], {x:1320,y:200,w:80,h:60});
+
+LEVELS[23] = mkLevel(5, 8, {x:100,y:300}, [{x:60,y:360,w:100,h:30},{x:300,y:360,w:60,h:30,type:'moving',moveY:150,moveSpeed:1.8},{x:500,y:300,w:60,h:30},{x:700,y:250,w:60,h:30,type:'bounce'},{x:900,y:200,w:60,h:30,type:'spike',spikeX:920,spikeY:180},{x:1100,y:160,w:60,h:30},{x:1300,y:120,w:100,h:30}], {x:1320,y:60,w:80,h:60});
+
+LEVELS[24] = mkLevel(5, 8, {x:100,y:500}, [{x:60,y:560,w:100,h:30},{x:300,y:520,w:50,h:30,type:'bounce'},{x:450,y:460,w:50,h:30},{x:600,y:400,w:50,h:30,type:'moving',moveY:60,moveSpeed:2},{x:750,y:340,w:50,h:30},{x:900,y:280,w:50,h:30,type:'bounce'},{x:1050,y:230,w:50,h:30},{x:1200,y:180,w:100,h:30}], {x:1220,y:120,w:80,h:60});
+
+LEVELS[25] = mkLevel(5, 8, {x:100,y:450}, [{x:60,y:510,w:100,h:30},{x:350,y:480,w:50,h:30,type:'spike',spikeX:365,spikeY:460},{x:500,y:420,w:50,h:30,type:'moving',moveX:80,moveSpeed:2.2},{x:700,y:370,w:50,h:30,type:'bounce'},{x:850,y:310,w:50,h:30},{x:1000,y:260,w:50,h:30,type:'moving',moveY:80,moveSpeed:1.8},{x:1200,y:210,w:100,h:30}], {x:1220,y:150,w:80,h:60,type:'moving',moveX:60,moveSpeed:1.5});
+
+LEVELS[26] = mkLevel(6, 9, {x:100,y:550}, [{x:60,y:610,w:100,h:30},{x:300,y:570,w:50,h:30},{x:450,y:510,w:50,h:30,type:'bounce'},{x:600,y:450,w:50,h:30},{x:750,y:400,w:50,h:30,type:'spike',spikeX:765,spikeY:380},{x:900,y:350,w:50,h:30,type:'moving',moveX:60,moveSpeed:2.5},{x:1050,y:300,w:50,h:30},{x:1200,y:250,w:50,h:30,type:'bounce'},{x:1350,y:200,w:100,h:30}], {x:1370,y:140,w:80,h:60});
+
+LEVELS[27] = mkLevel(6, 9, {x:100,y:350}, [{x:60,y:410,w:100,h:30},{x:280,y:400,w:50,h:30,type:'moving',moveY:100,moveSpeed:2},{x:440,y:350,w:50,h:30,type:'bounce'},{x:600,y:300,w:50,h:30},{x:750,y:260,w:50,h:30,type:'spike',spikeX:765,spikeY:240},{x:900,y:220,w:50,h:30,type:'moving',moveX:70,moveSpeed:2.3},{x:1050,y:180,w:50,h:30},{x:1200,y:150,w:50,h:30,type:'bounce'},{x:1400,y:120,w:100,h:30}], {x:1420,y:60,w:80,h:60});
+
+LEVELS[28] = mkLevel(6, 9, {x:100,y:500}, [{x:60,y:560,w:80,h:30},{x:250,y:520,w:45,h:30,type:'bounce'},{x:400,y:470,w:45,h:30},{x:550,y:420,w:45,h:30,type:'moving',moveY:60,moveSpeed:2.5},{x:700,y:370,w:45,h:30},{x:850,y:320,w:45,h:30,type:'spike',spikeX:862,spikeY:300},{x:1000,y:270,w:45,h:30,type:'bounce'},{x:1150,y:220,w:45,h:30,type:'moving',moveX:60,moveSpeed:2},{x:1300,y:180,w:45,h:30},{x:1450,y:140,w:100,h:30}], {x:1470,y:80,w:80,h:60,type:'moving',moveX:50,moveSpeed:1.5});
+
+LEVELS[29] = mkLevel(6, 10, {x:100,y:550}, [{x:60,y:610,w:80,h:30},{x:250,y:570,w:40,h:30},{x:400,y:520,w:40,h:30,type:'bounce'},{x:550,y:470,w:40,h:30,type:'spike',spikeX:562,spikeY:450},{x:700,y:420,w:40,h:30,type:'moving',moveY:80,moveSpeed:2.5},{x:850,y:370,w:40,h:30},{x:1000,y:320,w:40,h:30,type:'bounce'},{x:1150,y:270,w:40,h:30,type:'moving',moveX:60,moveSpeed:2.8},{x:1300,y:220,w:40,h:30},{x:1450,y:170,w:40,h:30},{x:1600,y:120,w:100,h:30}], {x:1620,y:60,w:80,h:60,type:'moving',moveX:60,moveSpeed:2});
+
+// Validate all levels present
+for (let i = 0; i < 30; i++) {
+  if (!LEVELS[i]) { console.error('Missing level', i); }
+}
+
+// ============================================================
+// GAME STATES
+// ============================================================
+const STATE = { MENU: 0, LEVELS: 1, PLAYING: 2, COMPLETE: 3, SETTINGS: 4 };
+let gameState = STATE.MENU;
+let currentLevel = 0;
+let shotsUsed = 0;
+let levelTime = 0;
+
+// --- Slime Physics State ---
+const slime = {
+  x: 0, y: 0,
+  vx: 0, vy: 0,
+  radius: 18,
+  squashX: 1, squashY: 1, // jelly deformation
+  squashVelX: 0, squashVelY: 0,
+  onGround: false,
+  idle: 0, // idle animation timer
+  resting: true, // not launched yet
+  launched: false,
+  stopped: true,
+  trail: [],
+};
+
+// --- Drag State ---
+const drag = { active: false, startX: 0, startY: 0, curX: 0, curY: 0 };
+
+// --- Camera ---
+const cam = { x: 0, y: 0, targetX: 0, targetY: 0, shake: 0 };
+
+// --- Moving Platform State ---
+const platState = []; // runtime positions for moving platforms
+
+// --- UI Buttons (screenspace) ---
+let uiButtons = [];
+
+// --- Level Complete Animation ---
+let completeAnim = { active: false, timer: 0, stars: 0, score: 0, confetti: [] };
+
+// --- Tutorial Hint ---
+let hintTimer = 0;
+let hintFade = 0;
+
+// ============================================================
+// GAME LOGIC
+// ============================================================
+function loadLevel(idx) {
+  currentLevel = idx;
+  const lv = LEVELS[idx];
+  slime.x = lv.slime.x;
+  slime.y = lv.slime.y;
+  slime.vx = 0; slime.vy = 0;
+  slime.squashX = 1; slime.squashY = 1;
+  slime.squashVelX = 0; slime.squashVelY = 0;
+  slime.onGround = false;
+  slime.resting = true;
+  slime.launched = false;
+  slime.stopped = true;
+  slime.trail = [];
+  slime.idle = 0;
+  shotsUsed = 0;
+  levelTime = 0;
+  drag.active = false;
+  completeAnim = { active: false, timer: 0, stars: 0, score: 0, confetti: [] };
+  particles.length = 0;
+  hintTimer = lv.hint ? 5 : 0;
+  hintFade = lv.hint ? 1 : 0;
+
+  // Init moving platforms
+  platState.length = 0;
+  for (const p of lv.platforms) {
+    platState.push({
+      x: p.x, y: p.y, origX: p.x, origY: p.y, phase: Math.random() * Math.PI * 2
+    });
+  }
+
+  // Camera
+  cam.targetX = slime.x - W / 2;
+  cam.targetY = slime.y - H / 2;
+  cam.x = cam.targetX;
+  cam.y = cam.targetY;
+
+  gameState = STATE.PLAYING;
+}
+
+function resetSlime() {
+  const lv = LEVELS[currentLevel];
+  slime.x = lv.slime.x;
+  slime.y = lv.slime.y;
+  slime.vx = 0; slime.vy = 0;
+  slime.squashX = 1; slime.squashY = 1;
+  slime.squashVelX = 0; slime.squashVelY = 0;
+  slime.onGround = false;
+  slime.resting = true;
+  slime.launched = false;
+  slime.stopped = true;
+  slime.trail = [];
+  slime.idle = 0;
+}
+
+function getStarCount(lvIdx, shots) {
+  const lv = LEVELS[lvIdx];
+  if (shots > lv.maxShots) return 0;
+  if (shots <= lv.par) return 3;
+  if (shots <= lv.par + 1) return 2;
+  return 1;
+}
+
+function completeLevel() {
+  const stars = getStarCount(currentLevel, shotsUsed);
+  const lv = LEVELS[currentLevel];
+  const score = 100 + Math.max(0, lv.maxShots - shotsUsed) * 50;
+
+  // Save progress
+  const prev = save.stars[currentLevel] || 0;
+  if (stars > prev) save.stars[currentLevel] = stars;
+  const prevScore = save.bestScores[currentLevel] || 0;
+  if (score > prevScore) save.bestScores[currentLevel] = score;
+  if (currentLevel + 2 > save.unlocked) save.unlocked = Math.min(30, currentLevel + 2);
+  writeSave();
+
+  completeAnim = {
+    active: true, timer: 0, stars, score, confetti: [],
+  };
+
+  // Confetti
+  for (let i = 0; i < 50; i++) {
+    completeAnim.confetti.push({
+      x: W / 2, y: H / 2,
+      vx: (Math.random() - 0.5) * 600,
+      vy: -200 - Math.random() * 400,
+      color: [COL.particle1, COL.particle2, COL.particle3, COL.particle4][Math.floor(Math.random() * 4)],
+      rot: Math.random() * 360, rotV: (Math.random() - 0.5) * 500,
+      size: 4 + Math.random() * 6,
+      life: 2 + Math.random() * 1.5
+    });
+  }
+
+  playSound('complete');
+  triggerShake(6, 0.3);
+  spawnParticles(slime.x, slime.y, 30, [COL.particle1, COL.particle2, COL.particle3], { speedMax: 250, lifeMax: 1.2, sizeMax: 6 });
+}
+
+// ============================================================
+// PHYSICS UPDATE
+// ============================================================
+const GRAVITY = 800;
+const FRICTION = 0.98;
+const BOUNCE = 0.55;
+const WALL_BOUNCE = 0.7;
+const AIR_DRAG = 0.999;
+const STOP_THRESHOLD = 15;
+const REST_THRESHOLD = 5;
+
+function updatePhysics(dt) {
+  if (completeAnim.active) return;
+
+  const lv = LEVELS[currentLevel];
+  slime.idle += dt;
+
+  if (!slime.launched) {
+    // Idle wobble
+    slime.squashX = 1 + Math.sin(slime.idle * 2) * 0.04;
+    slime.squashY = 1 + Math.cos(slime.idle * 2.5) * 0.04;
+    return;
+  }
+
+  // Gravity
+  slime.vy += GRAVITY * dt;
+
+  // Air drag
+  slime.vx *= AIR_DRAG;
+  slime.vy *= AIR_DRAG;
+
+  // Update position
+  slime.x += slime.vx * dt;
+  slime.y += slime.vy * dt;
+
+  // Trail
+  if (Math.abs(slime.vx) > 20 || Math.abs(slime.vy) > 20) {
+    slime.trail.push({ x: slime.x, y: slime.y, life: 0.3 });
+    if (slime.trail.length > 30) slime.trail.shift();
+  }
+
+  // Update trail
+  for (let i = slime.trail.length - 1; i >= 0; i--) {
+    slime.trail[i].life -= dt;
+    if (slime.trail[i].life <= 0) slime.trail.splice(i, 1);
+  }
+
+  slime.onGround = false;
+
+  // Platform collision
+  for (let i = 0; i < lv.platforms.length; i++) {
+    const p = lv.platforms[i];
+    const ps = platState[i];
+    const px = ps.x, py = ps.y;
+
+    // Spike check
+    if (p.type === 'spike' && p.spikeX && p.spikeY) {
+      const sdx = slime.x - p.spikeX;
+      const sdy = slime.y - p.spikeY;
+      if (Math.abs(sdx) < 15 + slime.radius && Math.abs(sdy) < 15 + slime.radius) {
+        // Hit spike — reset slime
+        playSound('fail');
+        spawnParticles(slime.x, slime.y, 15, [COL.danger, '#ff6666'], { speedMax: 150 });
+        triggerShake(4, 0.2);
+        resetSlime();
+        return;
+      }
+    }
+
+    // AABB collision with platform
+    const pLeft = px;
+    const pRight = px + p.w;
+    const pTop = py;
+    const pBot = py + p.h;
+
+    if (slime.x + slime.radius > pLeft && slime.x - slime.radius < pRight &&
+        slime.y + slime.radius > pTop && slime.y - slime.radius < pBot) {
+
+      const overlapLeft = (slime.x + slime.radius) - pLeft;
+      const overlapRight = pRight - (slime.x - slime.radius);
+      const overlapTop = (slime.y + slime.radius) - pTop;
+      const overlapBot = pBot - (slime.y - slime.radius);
+
+      const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBot);
+
+      const bounceFactor = p.type === 'bounce' ? 0.85 : BOUNCE;
+
+      if (minOverlap === overlapTop) {
+        // Land on top
+        slime.y = pTop - slime.radius;
+        const impactVel = Math.abs(slime.vy);
+        slime.vy = -Math.abs(slime.vy) * bounceFactor;
+        slime.onGround = true;
+        // Squish — use pre-bounce velocity for satisfying deformation
+        const impact = Math.min(1, impactVel / 400 + 0.1);
+        slime.squashVelY += impact * 0.3;
+        slime.squashVelX -= impact * 0.15;
+        if (impactVel > 20) {
+          playSound('bounce');
+          spawnParticles(slime.x, slime.y + slime.radius, 5, [COL.particle1, COL.particle2], { speedMax: 80, upBias: 30, gravity: 300 });
+        }
+      } else if (minOverlap === overlapBot) {
+        slime.y = pBot + slime.radius;
+        const impactVel = Math.abs(slime.vy);
+        slime.vy = Math.abs(slime.vy) * bounceFactor;
+        slime.squashVelY -= Math.min(0.2, impactVel / 500);
+        if (impactVel > 20) playSound('bounce');
+      } else if (minOverlap === overlapLeft) {
+        slime.x = pLeft - slime.radius;
+        const impactVel = Math.abs(slime.vx);
+        slime.vx = -Math.abs(slime.vx) * WALL_BOUNCE;
+        slime.squashVelX -= Math.min(0.25, impactVel / 400);
+        if (impactVel > 20) playSound('bounce');
+      } else if (minOverlap === overlapRight) {
+        slime.x = pRight + slime.radius;
+        const impactVel = Math.abs(slime.vx);
+        slime.vx = Math.abs(slime.vx) * WALL_BOUNCE;
+        slime.squashVelX += Math.min(0.25, impactVel / 400);
+        if (impactVel > 20) playSound('bounce');
+      }
+    }
+  }
+
+  // World bounds (horizontal walls)
+  // Left wall
+  if (slime.x - slime.radius < 0) {
+    slime.x = slime.radius;
+    slime.vx = Math.abs(slime.vx) * WALL_BOUNCE;
+    slime.squashVelX += 0.15;
+    playSound('bounce');
+  }
+
+  // Fell off bottom
+  if (slime.y > 1000) {
+    playSound('fail');
+    spawnParticles(slime.x, 900, 10, [COL.danger, '#ff6666'], { speedMax: 120 });
+    resetSlime();
+    return;
+  }
+
+  // Stop detection
+  const speed = Math.sqrt(slime.vx * slime.vx + slime.vy * slime.vy);
+  if (speed < STOP_THRESHOLD && slime.onGround) {
+    slime.vx *= 0.9;
+    slime.vy *= 0.9;
+  }
+  if (speed < REST_THRESHOLD && slime.onGround) {
+    slime.vx = 0;
+    slime.vy = 0;
+    slime.launched = false;
+    slime.stopped = true;
+    slime.resting = true;
+  }
+
+  // Squish spring physics
+  const springK = 18;
+  const damping = 0.7;
+  slime.squashVelX += (1 - slime.squashX) * springK * dt;
+  slime.squashVelY += (1 - slime.squashY) * springK * dt;
+  slime.squashVelX *= Math.pow(damping, dt * 60);
+  slime.squashVelY *= Math.pow(damping, dt * 60);
+  slime.squashX += slime.squashVelX;
+  slime.squashY += slime.squashVelY;
+}
+
+function updateMovingPlatforms(dt) {
+  const lv = LEVELS[currentLevel];
+  levelTime += dt;
+  for (let i = 0; i < lv.platforms.length; i++) {
+    const p = lv.platforms[i];
+    const ps = platState[i];
+    if (p.type === 'moving') {
+      if (p.moveX) {
+        ps.x = ps.origX + Math.sin(levelTime * p.moveSpeed + ps.phase) * p.moveX;
+      }
+      if (p.moveY) {
+        ps.y = ps.origY + Math.sin(levelTime * p.moveSpeed + ps.phase) * p.moveY;
+      }
+    }
+  }
+  // Moving goal
+  if (lv.goal.type === 'moving') {
+    const g = lv.goal;
+    if (g.moveX) {
+      // We'll handle this in rendering
+    }
+  }
+}
+
+function getGoalPos() {
+  const lv = LEVELS[currentLevel];
+  const g = { ...lv.goal };
+  if (g.type === 'moving') {
+    if (g.moveX) g.x += Math.sin(levelTime * (g.moveSpeed || 1)) * (g.moveX || 0);
+    if (g.moveY) g.y += Math.sin(levelTime * (g.moveSpeed || 1)) * (g.moveY || 0);
+  }
+  return g;
+}
+
+// ============================================================
+// CAMERA
+// ============================================================
+function updateCamera(dt) {
+  cam.targetX = slime.x - W / 2;
+  cam.targetY = slime.y - H / 2;
+  const lerp = 1 - Math.pow(0.05, dt);
+  cam.x += (cam.targetX - cam.x) * lerp;
+  cam.y += (cam.targetY - cam.y) * lerp;
+  // Clamp
+  cam.x = Math.max(-100, cam.x);
+  cam.y = Math.max(-200, cam.y);
+}
+
+// ============================================================
+// INPUT HANDLING
+// ============================================================
+function getInputPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  if (e.touches) {
+    return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+  }
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function handlePointerDown(e) {
+  e.preventDefault();
+  initAudio();
+  const pos = getInputPos(e);
+  const worldX = pos.x + cam.x;
+  const worldY = pos.y + cam.y;
+
+  // Check UI buttons first
+  for (const btn of uiButtons) {
+    if (pos.x >= btn.x && pos.x <= btn.x + btn.w && pos.y >= btn.y && pos.y <= btn.y + btn.h) {
+      btn.action();
+      playSound('click');
+      return;
+    }
+  }
+
+  if (gameState === STATE.PLAYING && !completeAnim.active && slime.resting) {
+    const dx = worldX - slime.x;
+    const dy = worldY - slime.y;
+    if (Math.sqrt(dx * dx + dy * dy) < 80) {
+      drag.active = true;
+      drag.startX = slime.x;
+      drag.startY = slime.y;
+      drag.curX = worldX;
+      drag.curY = worldY;
+    }
+  }
+}
+
+function handlePointerMove(e) {
+  e.preventDefault();
+  if (!drag.active) return;
+  const pos = getInputPos(e);
+  drag.curX = pos.x + cam.x;
+  drag.curY = pos.y + cam.y;
+}
+
+function handlePointerUp(e) {
+  e.preventDefault();
+  if (!drag.active) return;
+  drag.active = false;
+
+  const dx = drag.startX - drag.curX;
+  const dy = drag.startY - drag.curY;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  if (dist < 10) return; // too small
+
+  const maxPower = 600;
+  const power = Math.min(dist * 3, maxPower);
+  const angle = Math.atan2(dy, dx);
+
+  slime.vx = Math.cos(angle) * power;
+  slime.vy = Math.sin(angle) * power;
+  slime.launched = true;
+  slime.resting = false;
+  slime.stopped = false;
+  shotsUsed++;
+
+  // Stretch squish on launch
+  const stretchAmt = Math.min(0.4, power / maxPower * 0.4);
+  slime.squashX = 1 + stretchAmt;
+  slime.squashY = 1 - stretchAmt * 0.5;
+
+  playSound('launch');
+  spawnParticles(slime.x, slime.y, 12, [COL.particle1, COL.particle2], { speedMax: 200, lifeMax: 0.6, sizeMax: 4, upBias: 50 });
+}
+
+canvas.addEventListener('pointerdown', handlePointerDown);
+canvas.addEventListener('pointermove', handlePointerMove);
+canvas.addEventListener('pointerup', handlePointerUp);
+canvas.addEventListener('pointercancel', handlePointerUp);
+canvas.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+
+// ============================================================
+// RENDERING
+// ============================================================
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, COL.bg1);
+  grad.addColorStop(1, COL.bg2);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.02)';
+  ctx.lineWidth = 1;
+  const gridSize = 60;
+  const offX = -(cam.x * 0.3) % gridSize;
+  const offY = -(cam.y * 0.3) % gridSize;
+  for (let x = offX; x < W; x += gridSize) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = offY; y < H; y += gridSize) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+}
+
+function drawPlatform(p, ps) {
+  const x = ps.x - cam.x + shakeOffX;
+  const y = ps.y - cam.y + shakeOffY;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.roundRect(x + 3, y + 3, p.w, p.h, 6);
+  ctx.fill();
+
+  // Main body
+  let topCol = COL.platformTop;
+  let bodyCol = COL.platform;
+  if (p.type === 'bounce') {
+    topCol = '#ff69b4';
+    bodyCol = '#cc3377';
+  }
+
+  const grad = ctx.createLinearGradient(x, y, x, y + p.h);
+  grad.addColorStop(0, topCol);
+  grad.addColorStop(1, bodyCol);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.roundRect(x, y, p.w, p.h, 6);
+  ctx.fill();
+
+  // Top highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.fillRect(x + 2, y, p.w - 4, 3);
+
+  // Bounce platform indicators
+  if (p.type === 'bounce') {
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.arc(x + p.w / 4 + i * p.w / 4, y + p.h / 2, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+function drawSpike(p, ps) {
+  if (!p.spikeX || !p.spikeY) return;
+  const x = p.spikeX - cam.x + shakeOffX;
+  const y = p.spikeY - cam.y + shakeOffY;
+
+  ctx.fillStyle = COL.danger;
+  ctx.beginPath();
+  ctx.moveTo(x - 10, y + 10);
+  ctx.lineTo(x, y - 12);
+  ctx.lineTo(x + 10, y + 10);
+  ctx.closePath();
+  ctx.fill();
+
+  // Glow
+  ctx.shadowColor = COL.danger;
+  ctx.shadowBlur = 8;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+function drawGoal(g) {
+  const x = g.x - cam.x + shakeOffX;
+  const y = g.y - cam.y + shakeOffY;
+
+  // Glow
+  ctx.fillStyle = COL.goalGlow;
+  ctx.beginPath();
+  ctx.arc(x + g.w / 2, y + g.h / 2, g.w * 0.8 + Math.sin(levelTime * 3) * 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Flag pole
+  ctx.fillStyle = '#ddd';
+  ctx.fillRect(x + 5, y - 10, 3, g.h + 10);
+
+  // Flag
+  ctx.fillStyle = COL.goal;
+  ctx.beginPath();
+  ctx.moveTo(x + 8, y - 8);
+  ctx.lineTo(x + 35, y + 5);
+  ctx.lineTo(x + 8, y + 18);
+  ctx.closePath();
+  ctx.fill();
+
+  // Flag text
+  ctx.fillStyle = '#000';
+  ctx.font = `bold ${12}px 'Fredoka', sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('★', x + 20, y + 10);
+
+  // Base
+  ctx.fillStyle = COL.goal;
+  ctx.beginPath();
+  ctx.roundRect(x, y + g.h - 5, g.w, 5, 3);
+  ctx.fill();
+}
+
+function drawSlime() {
+  const x = slime.x - cam.x + shakeOffX;
+  const y = slime.y - cam.y + shakeOffY;
+  const r = slime.radius;
+
+  // Trail
+  for (const t of slime.trail) {
+    const tx = t.x - cam.x + shakeOffX;
+    const ty = t.y - cam.y + shakeOffY;
+    const a = Math.max(0, t.life / 0.3) * 0.3;
+    ctx.globalAlpha = a;
+    ctx.fillStyle = COL.slime;
+    ctx.beginPath();
+    ctx.arc(tx, ty, r * 0.4 * a, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.save();
+  ctx.translate(x, y);
+
+  // Stretch direction during drag
+  let stretchAngle = 0;
+  if (drag.active) {
+    stretchAngle = Math.atan2(drag.curY - drag.startY, drag.curX - drag.startX);
+  }
+
+  // Apply squash/stretch
+  ctx.scale(slime.squashX, slime.squashY);
+
+  // Glow
+  const glowR = r * 1.8 + Math.sin(slime.idle * 3) * 3;
+  const glow = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, glowR);
+  glow.addColorStop(0, 'rgba(57,255,20,0.2)');
+  glow.addColorStop(1, 'rgba(57,255,20,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  const bodyGrad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
+  bodyGrad.addColorStop(0, COL.slimeLight);
+  bodyGrad.addColorStop(0.6, COL.slime);
+  bodyGrad.addColorStop(1, COL.slimeDark);
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(-r * 0.25, -r * 0.3, r * 0.35, r * 0.2, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eyes
+  const eyeOff = r * 0.3;
+  const eyeR = r * 0.22;
+  const pupilR = r * 0.12;
+
+  // Eye whites
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.ellipse(-eyeOff, -r * 0.15, eyeR, eyeR * 1.1, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(eyeOff, -r * 0.15, eyeR, eyeR * 1.1, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Pupils (look toward drag direction or velocity)
+  let lookX = 0, lookY = 0;
+  if (drag.active) {
+    const dx = drag.curX - drag.startX;
+    const dy = drag.curY - drag.startY;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d > 1) { lookX = dx / d; lookY = dy / d; }
+  } else if (slime.launched) {
+    const spd = Math.sqrt(slime.vx * slime.vx + slime.vy * slime.vy);
+    if (spd > 1) { lookX = slime.vx / spd; lookY = slime.vy / spd; }
+  }
+  const pOff = eyeR * 0.4;
+
+  ctx.fillStyle = '#1a1a2e';
+  ctx.beginPath();
+  ctx.arc(-eyeOff + lookX * pOff, -r * 0.15 + lookY * pOff, pupilR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(eyeOff + lookX * pOff, -r * 0.15 + lookY * pOff, pupilR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mouth
+  ctx.strokeStyle = COL.slimeDark;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  if (drag.active || slime.launched) {
+    // Excited
+    ctx.arc(0, r * 0.2, r * 0.2, 0, Math.PI);
+  } else {
+    // Smile
+    ctx.arc(0, r * 0.15, r * 0.15, 0.1, Math.PI - 0.1);
+  }
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawDragLine() {
+  if (!drag.active) return;
+
+  const sx = slime.x - cam.x + shakeOffX;
+  const sy = slime.y - cam.y + shakeOffY;
+  const cx = drag.curX - cam.x + shakeOffX;
+  const cy = drag.curY - cam.y + shakeOffY;
+
+  const dx = drag.startX - drag.curX;
+  const dy = drag.startY - drag.curY;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const power = Math.min(dist * 3, 600);
+  const angle = Math.atan2(dy, dx);
+
+  // Power line (slime to drag point)
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 6]);
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(cx, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Power indicator
+  const powerPct = power / 600;
+  ctx.fillStyle = powerPct > 0.7 ? COL.danger : powerPct > 0.4 ? COL.goal : COL.accent;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Trajectory preview (dotted arc)
+  if (dist > 10) {
+    const vx = Math.cos(angle) * power;
+    const vy = Math.sin(angle) * power;
+    const steps = 40;
+    const stepDt = 0.02;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    for (let i = 1; i <= steps; i++) {
+      const t = i * stepDt;
+      const px = slime.x + vx * t;
+      const py = slime.y + vy * t + 0.5 * GRAVITY * t * t;
+      const screenX = px - cam.x + shakeOffX;
+      const screenY = py - cam.y + shakeOffY;
+      const alpha = 1 - i / steps;
+      ctx.globalAlpha = alpha * 0.6;
+      ctx.beginPath();
+      ctx.arc(screenX, screenY, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ============================================================
+// UI RENDERING
+// ============================================================
+function drawButton(x, y, w, h, text, action, opts = {}) {
+  const { color = COL.btn, textColor = COL.btnText, fontSize = 16, rounded = 12 } = opts;
+  // Store for hit testing
+  uiButtons.push({ x, y, w, h, action });
+
+  // Hover glow
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 10;
+
+  const grad = ctx.createLinearGradient(x, y, x, y + h);
+  grad.addColorStop(0, color);
+  grad.addColorStop(1, opts.colorDark || COL.accentDark);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, rounded);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = textColor;
+  ctx.font = `600 ${fontSize}px 'Fredoka', sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x + w / 2, y + h / 2);
+}
+
+function drawStar(x, y, r, filled) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+    const method = i === 0 ? 'moveTo' : 'lineTo';
+    ctx[method](Math.cos(angle) * r, Math.sin(angle) * r);
+  }
+  ctx.closePath();
+  ctx.fillStyle = filled ? COL.star : COL.starEmpty;
+  ctx.fill();
+  if (filled) {
+    ctx.shadowColor = COL.star;
+    ctx.shadowBlur = 6;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  ctx.restore();
+}
+
+function drawPanel(x, y, w, h) {
+  ctx.fillStyle = COL.panel;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 16);
+  ctx.fill();
+  ctx.strokeStyle = COL.panelBorder;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+// ============================================================
+// SCREEN RENDERERS
+// ============================================================
+function renderMenu() {
+  drawBackground();
+
+  // Title
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Title glow
+  ctx.shadowColor = COL.slime;
+  ctx.shadowBlur = 20;
+  ctx.fillStyle = COL.slime;
+  ctx.font = `700 ${48 * Math.max(0.8, scale)}px 'Fredoka', sans-serif`;
+  ctx.fillText('Slime Bounce', W / 2, H * 0.25);
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = COL.textDim;
+  ctx.font = `400 ${16 * Math.max(0.8, scale)}px 'Inter', sans-serif`;
+  ctx.fillText('A Jelly Physics Platformer', W / 2, H * 0.32);
+
+  // Decorative slime
+  const slimeY = H * 0.5;
+  const bounce = Math.sin(Date.now() / 400) * 10;
+  ctx.save();
+  ctx.translate(W / 2, slimeY + bounce);
+  ctx.scale(2.5, 2.5);
+
+  // Simple slime
+  const r = 18;
+  const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
+  grad.addColorStop(0, COL.slimeLight);
+  grad.addColorStop(0.6, COL.slime);
+  grad.addColorStop(1, COL.slimeDark);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(-5, -3, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(5, -3, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#1a1a2e';
+  ctx.beginPath(); ctx.arc(-4, -3, 2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(6, -3, 2, 0, Math.PI * 2); ctx.fill();
+  // Smile
+  ctx.strokeStyle = COL.slimeDark; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(0, 3, 4, 0.1, Math.PI - 0.1); ctx.stroke();
+
+  ctx.restore();
+
+  // Buttons
+  const btnW = 220, btnH = 52;
+  const btnX = W / 2 - btnW / 2;
+  drawButton(btnX, H * 0.68, btnW, btnH, 'Play', () => { gameState = STATE.LEVELS; });
+  drawButton(btnX, H * 0.78, btnW, btnH, 'Settings', () => { gameState = STATE.SETTINGS; }, { color: '#6a6abe' });
+}
+
+function renderLevelSelect() {
+  drawBackground();
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = COL.text;
+  ctx.font = `700 ${32 * Math.max(0.7, scale)}px 'Fredoka', sans-serif`;
+  ctx.fillText('Select Level', W / 2, H * 0.07);
+
+  // Back button
+  drawButton(16, 16, 80, 40, 'Back', () => { gameState = STATE.MENU; }, { fontSize: 14 });
+
+  // Level grid
+  const cols = Math.min(6, Math.floor(W / 100));
+  const rows = 5;
+  const cellW = Math.min(90, (W - 40) / cols);
+  const cellH = 80;
+  const totalW = cols * cellW;
+  const startX = (W - totalW) / 2;
+  const startY = H * 0.14;
+
+  const tierColors = ['#39ff14', COL.accent, COL.goal];
+  const tierLabels = ['Beginner', 'Intermediate', 'Expert'];
+
+  for (let tier = 0; tier < 3; tier++) {
+    const tierY = startY + tier * (rows * cellH * 0.35 + 40);
+    ctx.fillStyle = COL.textDim;
+    ctx.font = `600 ${13 * Math.max(0.7, scale)}px 'Fredoka', sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText(tierLabels[tier], startX, tierY - 6);
+    ctx.textAlign = 'center';
+
+    for (let i = 0; i < 10; i++) {
+      const lvl = tier * 10 + i;
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = startX + col * cellW;
+      const y = tierY + row * cellH * 0.35;
+      const unlocked = lvl < save.unlocked;
+
+      drawButton(x + 4, y, cellW - 8, cellH * 0.3, unlocked ? `${lvl + 1}` : '🔒', () => {
+        if (unlocked) loadLevel(lvl);
+      }, {
+        color: unlocked ? tierColors[tier] : '#333',
+        textColor: unlocked ? '#0a0a2e' : '#666',
+        fontSize: 15,
+        rounded: 8
+      });
+
+      // Stars
+      if (unlocked) {
+        const stars = save.stars[lvl] || 0;
+        const starY = y + cellH * 0.3 + 2;
+        for (let s = 0; s < 3; s++) {
+          drawStar(x + cellW / 2 - 12 + s * 12, starY + 5, 4, s < stars);
+        }
+      }
+    }
+  }
+}
+
+function renderPlaying() {
+  drawBackground();
+
+  const lv = LEVELS[currentLevel];
+
+  // Draw platforms
+  for (let i = 0; i < lv.platforms.length; i++) {
+    drawPlatform(lv.platforms[i], platState[i]);
+    drawSpike(lv.platforms[i], platState[i]);
+  }
+
+  // Draw goal
+  drawGoal(getGoalPos());
+
+  // Draw slime
+  drawSlime();
+
+  // Draw drag line & trajectory
+  drawDragLine();
+
+  // Draw particles
+  drawParticles(cam.x - shakeOffX, cam.y - shakeOffY);
+
+  // HUD
+  // Level info
+  ctx.fillStyle = COL.panel;
+  ctx.beginPath();
+  ctx.roundRect(10, 10, 160, 44, 10);
+  ctx.fill();
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = COL.text;
+  ctx.font = `600 14px 'Fredoka', sans-serif`;
+  ctx.fillText(`Level ${currentLevel + 1}`, 20, 26);
+
+  ctx.fillStyle = COL.textDim;
+  ctx.font = `400 12px 'Inter', sans-serif`;
+  ctx.fillText(`Shots: ${shotsUsed} / ${lv.maxShots}`, 20, 42);
+
+  // Star indicators
+  const parStars = getStarCount(currentLevel, shotsUsed);
+  for (let s = 0; s < 3; s++) {
+    drawStar(140 + s * 14, 32, 6, s < (3 - Math.min(2, Math.max(0, shotsUsed - lv.par))));
+  }
+
+  // Buttons
+  drawButton(W - 52, 10, 42, 42, '☰', () => { gameState = STATE.LEVELS; }, { fontSize: 18, rounded: 10 });
+  drawButton(W - 100, 10, 42, 42, '↺', () => { resetSlime(); shotsUsed = 0; }, { fontSize: 18, rounded: 10 });
+
+  // Hint
+  if (hintTimer > 0 && lv.hint) {
+    hintFade = Math.min(1, hintTimer);
+    ctx.globalAlpha = hintFade;
+    ctx.fillStyle = COL.panel;
+    const hintW = Math.min(400, W - 40);
+    ctx.beginPath();
+    ctx.roundRect(W / 2 - hintW / 2, H * 0.85, hintW, 44, 10);
+    ctx.fill();
+    ctx.fillStyle = COL.text;
+    ctx.font = `400 ${13}px 'Inter', sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(lv.hint, W / 2, H * 0.85 + 22);
+    ctx.globalAlpha = 1;
+  }
+
+  // Level complete overlay
+  if (completeAnim.active) {
+    renderComplete();
+  }
+}
+
+function renderComplete() {
+  completeAnim.timer += 1 / 60;
+
+  // Overlay
+  ctx.fillStyle = 'rgba(10,10,46,0.7)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Confetti
+  for (const c of completeAnim.confetti) {
+    c.x += c.vx / 60;
+    c.y += c.vy / 60;
+    c.vy += 400 / 60;
+    c.rot += c.rotV / 60;
+    c.life -= 1 / 60;
+    if (c.life > 0) {
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rot * Math.PI / 180);
+      ctx.fillStyle = c.color;
+      ctx.globalAlpha = Math.min(1, c.life);
+      ctx.fillRect(-c.size / 2, -c.size / 4, c.size, c.size / 2);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Panel
+  const panelW = Math.min(340, W - 40);
+  const panelH = 280;
+  const panelX = W / 2 - panelW / 2;
+  const panelY = H / 2 - panelH / 2;
+  drawPanel(panelX, panelY, panelW, panelH);
+
+  // Title
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = COL.star;
+  ctx.shadowBlur = 15;
+  ctx.fillStyle = COL.star;
+  ctx.font = `700 28px 'Fredoka', sans-serif`;
+  ctx.fillText('Level Complete!', W / 2, panelY + 40);
+  ctx.shadowBlur = 0;
+
+  // Stars
+  for (let i = 0; i < 3; i++) {
+    const starScale = completeAnim.timer > 0.3 + i * 0.2 ? 1 : 0;
+    if (starScale) {
+      drawStar(W / 2 - 40 + i * 40, panelY + 85, 16, i < completeAnim.stars);
+      if (i < completeAnim.stars && completeAnim.timer < 0.5 + i * 0.2) {
+        playSound('star');
+      }
+    }
+  }
+
+  // Score
+  ctx.fillStyle = COL.text;
+  ctx.font = `600 18px 'Fredoka', sans-serif`;
+  ctx.fillText(`Score: ${completeAnim.score}`, W / 2, panelY + 130);
+
+  ctx.fillStyle = COL.textDim;
+  ctx.font = `400 14px 'Inter', sans-serif`;
+  ctx.fillText(`Shots used: ${shotsUsed} (Par: ${LEVELS[currentLevel].par})`, W / 2, panelY + 155);
+
+  // Buttons
+  const btnW = 130, btnH = 44;
+  if (currentLevel < 29) {
+    drawButton(W / 2 - btnW - 10, panelY + panelH - 65, btnW, btnH, 'Next Level', () => {
+      loadLevel(currentLevel + 1);
+    });
+    drawButton(W / 2 + 10, panelY + panelH - 65, btnW, btnH, 'Retry', () => {
+      loadLevel(currentLevel);
+    }, { color: '#6a6abe' });
+  } else {
+    drawButton(W / 2 - btnW / 2, panelY + panelH - 65, btnW, btnH, 'All Clear!', () => {
+      gameState = STATE.LEVELS;
+    }, { color: COL.goal });
+  }
+
+  drawButton(W / 2 - 55, panelY + panelH - 65 + (currentLevel < 29 ? 0 : 0), 110, 36, 'Levels', () => {
+    gameState = STATE.LEVELS;
+  }, { fontSize: 13, color: '#555', rounded: 8 });
+}
+
+function renderSettings() {
+  drawBackground();
+
+  const panelW = Math.min(360, W - 40);
+  const panelH = 280;
+  const panelX = W / 2 - panelW / 2;
+  const panelY = H / 2 - panelH / 2;
+  drawPanel(panelX, panelY, panelW, panelH);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = COL.text;
+  ctx.font = `700 24px 'Fredoka', sans-serif`;
+  ctx.fillText('Settings', W / 2, panelY + 40);
+
+  // Sound toggle
+  ctx.fillStyle = COL.textDim;
+  ctx.font = `400 16px 'Inter', sans-serif`;
+  ctx.fillText('Sound', W / 2, panelY + 90);
+  drawButton(W / 2 - 50, panelY + 105, 100, 40, save.soundOn ? 'ON' : 'OFF', () => {
+    save.soundOn = !save.soundOn;
+    writeSave();
+    if (masterGain) masterGain.gain.value = save.soundOn ? 0.3 : 0;
+  }, { color: save.soundOn ? COL.slime : '#666' });
+
+  // Reset progress
+  drawButton(W / 2 - 80, panelY + 175, 160, 40, 'Reset Progress', () => {
+    save = { v: SAVE_VER, stars: {}, bestScores: {}, soundOn: save.soundOn, unlocked: 1 };
+    writeSave();
+  }, { color: COL.danger, fontSize: 14 });
+
+  // Back
+  drawButton(W / 2 - 60, panelY + panelH - 55, 120, 40, 'Back', () => {
+    gameState = STATE.MENU;
+  });
+}
+
+// ============================================================
+// MAIN LOOP
+// ============================================================
+let lastTime = 0;
+let rafId = null;
+let running = true;
+
+function gameLoop(timestamp) {
+  if (!running) return;
+  rafId = requestAnimationFrame(gameLoop);
+
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+
+  uiButtons = [];
+
+  if (gameState === STATE.PLAYING) {
+    updateMovingPlatforms(dt);
+    updatePhysics(dt);
+    updateCamera(dt);
+    updateParticles(dt);
+    updateShake(dt);
+    if (hintTimer > 0) hintTimer -= dt;
+
+    // Update goal position for moving goals
+    const g = getGoalPos();
+    checkGoalDynamic(g);
+  }
+
+  switch (gameState) {
+    case STATE.MENU: renderMenu(); break;
+    case STATE.LEVELS: renderLevelSelect(); break;
+    case STATE.PLAYING: renderPlaying(); break;
+    case STATE.SETTINGS: renderSettings(); break;
+  }
+}
+
+function checkGoalDynamic(g) {
+  if (!slime.launched || completeAnim.active) return;
+  const dx = slime.x - (g.x + g.w / 2);
+  const dy = slime.y - (g.y + g.h / 2);
+  if (Math.abs(dx) < g.w / 2 + slime.radius * 0.5 && Math.abs(dy) < g.h / 2 + slime.radius * 0.5) {
+    completeLevel();
+  }
+}
+
+// Start
+rafId = requestAnimationFrame(gameLoop);
+
+// Cleanup
+window.addEventListener('beforeunload', () => {
+  running = false;
+  if (rafId) cancelAnimationFrame(rafId);
+});
+</script>
+</body>
+</html>

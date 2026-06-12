@@ -335,6 +335,7 @@ const GAMES = [
   {name:"Draw Bridge Puzzle",emoji:"\U0001f309",cat:"puzzle",tags:["drawing","physics","bridge","casual"],url:"/draw-bridge/",desc:"Draw bridges to guide a fragile car across dangerous terrain. 30+ physics puzzles with 3-star scoring.",isNew:true,status:"live"},
   {name:"Gobble",emoji:"\U0001f573\ufe0f",cat:"arcade",tags:["io","eat","grow","arcade","action","hole"],url:"/gobble/",desc:"Control a growing black hole and eat everything in your path! Compete against AI bots in 75-second timed rounds across 4 unique maps. Unlock 6 colorful skins.",isNew:true,status:"live"},
 {name:"Block Out",emoji:"🧱",cat:"puzzle",tags:["3d","tetris","blocks","falling","isometric"],url:"/block-out/",desc:"3D falling block puzzle game. Rotate 3D blocks, clear layers. 30 levels across 3 tiers.",isNew:true,status:"live"},
+{name:"Slime Bounce",emoji:"🟢",cat:"puzzle",tags:["platformer","physics","slingshot","jelly"],url:"/blumgi-slime/",desc:"Launch your jelly slime across platforms! 30 levels of physics-based platforming with slingshot mechanics.",isNew:true,status:"live"},
 ];
 
 /**
@@ -358,4 +359,5 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+
 
