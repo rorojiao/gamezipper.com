@@ -337,6 +337,7 @@ const GAMES = [
 {name:"Block Out",emoji:"🧱",cat:"puzzle",tags:["3d","tetris","blocks","falling","isometric"],url:"/block-out/",desc:"3D falling block puzzle game. Rotate 3D blocks, clear layers. 30 levels across 3 tiers.",isNew:true,status:"live"},
 {name:"Slime Bounce",emoji:"🟢",cat:"puzzle",tags:["platformer","physics","slingshot","jelly"],url:"/blumgi-slime/",desc:"Launch your jelly slime across platforms! 30 levels of physics-based platforming with slingshot mechanics.",isNew:true,status:"live"},
 {name:"Color Block Jam",emoji:"🎨",cat:"puzzle",tags:["slide","color","block","logic","sorting","brain teaser"],url:"/color-block-jam/",desc:"Slide colored blocks along tracks to their matching gates! 30 brain-teasing levels of pure logic puzzle fun. No download needed!",isNew:true,status:"live"},
+{name:"Screw Master",emoji:"\U0001f529",cat:"puzzle",tags:["screw","unscrew","bolts","logic","sorting"],url:"/screw-master/",desc:"Free online screw puzzle game. Tap bolts, free plates, solve 25 levels of satisfying unscrew puzzles. Play instantly in your browser!",isNew:true,status:"live"},
 ];
 
 /**
@@ -360,5 +361,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-
-
