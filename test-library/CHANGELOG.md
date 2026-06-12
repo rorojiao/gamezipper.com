@@ -2,6 +2,28 @@
 
 
 All notable changes to the test case library are documented here.
+## [v1.42.0] - 2026-06-12
+### Added
+- 7 new test cases from industry research (R149 Dynamic Test Intelligence cron)
+- B-071: WebGPU 86.2% browser coverage — WebGL2 fallback mandatory for 13.8% mobile users
+- P-047: WebGPU 8.5x draw calls + 4.5x memory bandwidth casual game migration benchmark
+- P-048: Mobile 73.6% browser gaming — entry-tier Mali-G57/Adreno GPU baseline performance
+- G-114: GL2GPU live WebGL-to-WebGPU transpiler — migration-priority game identification
+- G-115: Casual game flow-theory UX — micro-interactions, difficulty curves, touch-first controls
+- S-083: Game embed iframe postMessage/XSS supply-chain hardening audit
+- W-134: WCAG 2.2 accessibility compliance — keyboard nav, contrast, ARIA, focus indicators
+### Sources
+- volumeshader.dev/en/blog/browser-gpu-benchmark-report-2026 — 32,604 GPU benchmark submissions, WebGPU 86.2% coverage, mobile 73.6%
+- volumeshader.dev/en/blog/webgl-vs-webgpu — WebGPU 8.5x draw calls, 4.5x memory bandwidth
+- dailydevpost.com/blog/webgpu-vs-webgl-performance-guide — WebGPU vs WebGL performance benchmarks, battery drain comparison
+- gl2gpu.hanyd.site — GL2GPU live WebGL-to-WebGPU transpiler tool
+- medium.com/@taraneyarahmadi — Casual game UX Flow Theory micro-interactions 2026
+- gameindustry.com — Design patterns for player engagement in modern game UX
+- procreator.design/blog/best-practices-for-game-ui-design — Game UI design best practices 2026
+- whimsygames.co/blog/top-game-testing-companies — Game QA companies WCAG 2.2 compliance standards Feb 2026
+- Microsoft Build 2026 MDASH announcement — AI-driven vulnerability scanning for web apps
+- wetest.net/blog/wetest-at-gdc-2026 — WeTest AI Test Agent platform for automated playtesting
+
 ## [v1.41.0] - 2026-06-12
 ### Added
 - 7 new test cases from industry research (R147 Dynamic Test Intelligence cron)
