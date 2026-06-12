@@ -344,6 +344,8 @@ const GAMES = [
 {name:"Build A Queen",emoji:"👗",cat:"casual",tags:["dress-up","runner","fashion"],url:"/build-a-queen/",desc:"Play Build A Queen free online! Guide your model through the runway, choose the best outfits at every gate and dominate the catwalk in this stylish fashion runner.",isNew:true,status:"live"},
 {name:"Merge Arena",emoji:"⚔",cat:"puzzle",tags:["merge","strategy","battle","defense","units","waves"],url:"/merge-arena/",desc:"Merge identical units to create stronger warriors, deploy them on the battlefield, and defend against waves of monsters! 30 levels, 6 unit types, boss fights, and upgrades. Play free!",isNew:true,status:"live"},
 {name:"Crazy Drive",emoji:"🏎",cat:"arcade",tags:["driving","car","physics","stunt","3d","obstacle"],url:"/drive-mad/",desc:"Master the art of balance in this thrilling 3D car stunt game! Race through 30 challenging levels across Desert, City, and Space worlds. Unlock 5 unique vehicles, collect coins, and earn gold medals. No download needed!",isNew:true,status:"live"},
+
+  {name:"Grass Master",emoji:"🌿",cat:"puzzle",tags:["grass","lawn","mower","puzzle","slide","cutting","logic"],url:"/grass-master/",desc:"Swipe to mow lawns in this satisfying grass cutting puzzle! Cut all grass within limited moves. 30 levels, 5 tiers, 3-star ratings. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
