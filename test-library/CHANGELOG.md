@@ -2,6 +2,25 @@
 
 
 All notable changes to the test case library are documented here.
+## [v1.41.0] - 2026-06-12
+### Added
+- 7 new test cases from industry research (R147 Dynamic Test Intelligence cron)
+- [B-070] Chrome 149 record 429 CVE wave — full-catalog game page regression audit
+- [S-082] Chrome 149 Payment Request UAF CVE-2026-11664 CVSS 8.8 — game checkout disruption
+- [C-073] Foldable display viewport resize — mid-game state preservation during fold/unfold
+- [G-112] Agentic AI autonomous playtesting — pipeline evaluation for 280+ game catalog
+- [G-113] Casual game content treadmill — weekly update testing cadence benchmark
+- [W-133] Localization QA — automated translation mismatch detection across 280+ game pages
+- [P-046] WebGPU migration performance benchmark — WebGL vs WebGPU side-by-side 15x gain validation
+
+### Sources
+- "HTML5 game testing 2026 new techniques" — PlayGama comprehensive guide, Galaxy4Games HTML5 dev guide
+- "browser game bug report June 2026" — Age of Empires II performance regression (frame-time spike pattern)
+- "Chrome Safari Edge browser update security vulnerability June 2026" — PCWorld Chrome 149 429 CVE, SecurityWeek Chrome 148 151 CVE, Edge security update
+- "casual game UX complaint mobile 2026" — Medium UX study immersion break, Game Developers org genre breakdown 2026
+- "WebGL WebGPU browser compatibility 2026" — ByteIOTA WebGPU 82% coverage, Programming-Helper WebGPU 15x perf, Khronos GDC 2026
+- Key URLs: https://pcworld.com/article/3158038/chrome-149-fixes-429-security-flaws-the-most-ever-in-one-update.html, https://thecodersblog.com/agentic-ai-for-game-playtesting-2026, https://game-developers.org/mobile-game-genre-breakdown-2026, https://artlangs.com/news-detail/Mobile-Game-UI-Translation---Localization--Enhancing-Global-Player-UX, https://byteiota.com/webgpu-2026-70-browser-support-15x-performance-gains
+
 ## [v1.40.0] - 2026-06-12
 ### Added
 - 8 new test cases from Dynamic Test Intelligence R145 cron research
