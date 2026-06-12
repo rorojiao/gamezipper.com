@@ -1,60 +1,95 @@
-# Blumgi Slime — 竞品对标文档 (BENCHMARK.md)
+# Blumgi Slime — Game Benchmark Report
 
-## 游戏概述
-Blumgi Slime 是一款弹跳物理平台游戏。玩家控制一个果冻史莱姆角色，通过拉伸并释放来弹跳穿越障碍物，到达终点旗帜。
+## 1. Overview
 
-## 核心竞品
+Blumgi Slime is a casual one-button physics platformer developed by Blumgi, an independent game studio based in France. Originally released in February 2023 and last updated in July 2024 (mobile: June 2025), the game features a cute slime character that can only move by jumping. The player charges a jump by holding down a button, then releases to launch — the longer the hold, the higher and farther the slime flies. The goal is to reach a checkered flag platform at the end of each level while dodging spikes, pits, moving obstacles, springs, portals, and reverse-gravity sections.
 
-### 1. Blumgi Slime (原版 - Poki)
-- **核心玩法**: 拖拽拉伸果冻史莱姆，释放弹射到目标位置
-- **关卡数**: 100+ 关卡
-- **难度曲线**: 前10关教学 → 逐步引入障碍 → 后期高难度
-- **系统**:
-  - 拖拽瞄准 + 力度控制
-  - 物理弹跳（果冻物理）
-  - 星级评分（1-3星）
-  - 关卡选择界面
-  - 皮肤解锁系统
-  - 粒子效果 + 弹跳动画
-- **美术**: 可爱卡通风格，鲜艳色彩，果冻弹性动画
-- **音乐**: 欢快轻松的背景音乐
+Key facts:
+- Genre: Arcade / Skill / Platform
+- Platforms: Browser (Poki), Android, iOS, Windows
+- Poki rating: 4.3 / 5 across 970,211 votes
+- Likes: 791.3K, Dislikes: 178.9K
+- Google Play: 4.5 stars from 259 reviews, 50K+ downloads
+- Levels: 150 levels across 15 themed worlds (10 levels/world)
+- Two-player local multiplayer mode (added in a later update)
+- Free-to-play with ads; no paid IAP confirmed
 
-### 2. Slime Laboratory / Slime Games
-- **核心玩法**: 史莱姆角色跑酷/平台跳跃
-- **系统**: 关卡系统、收集品、评分
-- **美术**: 像素风/卡通风
+## 2. Primary Competitors (Top 3)
 
-### 3. Stretchy Slime / Bounce游戏类
-- **核心玩法**: 弹性物理 + 轨迹预测
-- **系统**: 弹射角度控制、反弹物理、障碍物
+### A. Stickman Hook (Madbox)
+- Developer: Madbox (Poki exclusive)
+- Release: December 2018; latest update September 2025
+- Poki rating: 4.4 / 5 across 7,753,435 votes
+- Levels: Hundreds (Classic mode) + Grapplehook mode unlocks after 30 levels
+- Mechanics: Tap/hold to attach a grappling hook to anchor points; release to swing and chain momentum
+- Skins: 23 total — 9 progression skins (8 unlocked via play), 14 watch-ad skins
+- Monetization: Ad-supported; skins unlocked via watching ads
+- Art style: Minimalist black stickman on white/colorful backgrounds
+- Why a competitor: Single-button skill-based arcade with momentum-and-timing mastery
 
-## 我们的实现计划
+### B. Red Ball 4 (Yohoho Games)
+- Poki rating: 4.5 / 5 across 1,150,727 votes
+- Levels: 70 levels across themed worlds (regular + moon world)
+- Mechanics: Two-button control (arrows to roll, Up/Space to jump). Physics-based rolling ball that can push boxes to solve puzzles. Enemy monster cubes defeated by jumping on them.
+- Collectibles: Stars scattered per level — collecting all earns a gold medal
+- Art style: Bright 2D cartoon, friendly red-ball protagonist, varied themed worlds
+- Why a competitor: Long-running Poki platformer with similar level-based progression
 
-### 核心系统清单
-1. ✅ 弹射物理系统（拖拽释放弹射）
-2. ✅ 果冻变形动画（拉伸时变形）
-3. ✅ 关卡系统（30关，3个难度层）
-4. ✅ 星级评分系统（1-3星）
-5. ✅ 关卡选择界面
-6. ✅ 进度保存（localStorage）
-7. ✅ 计分系统（分数+最佳分数）
-8. ✅ 粒子效果系统
-9. ✅ Web Audio 音效（弹射、弹跳、通关、星级）
-10. ✅ 新手引导教程（前3关）
-11. ✅ 移动端触摸支持
-12. ✅ 响应式设计
+### C. Slime Laboratory
+- Genre: Slime-themed casual platformer / puzzle
+- Mechanics: Slime avatar with physics-based movement through obstacle-filled lab environments (acid pits, spikes, conveyers)
+- Art style: Bright, gooey slime aesthetic, cartoonish
+- Why a competitor: Direct thematic overlap — also a slime hero platformer on Poki
 
-### 关卡设计
-- Tier 1 (Lv 1-10): 基础弹射，简单平台
-- Tier 2 (Lv 11-20): 引入障碍物、反弹墙
-- Tier 3 (Lv 21-30): 移动平台、多段弹射、精确控制
+## 3. Feature Comparison Matrix
 
-### 美术风格
-- 暗色渐变背景（GameZipper 风格）
-- 霓虹色果冻史莱姆
-- 粒子效果 + 发光特效
+| Feature | Blumgi Slime | Stickman Hook | Red Ball 4 | Slime Lab |
+|---|---|---|---|---|
+| One-button control | Yes | Yes | No (4 keys) | Yes |
+| Total levels | 150 | Hundreds | 70 | Many |
+| Worlds / themes | 15 themed worlds | Linear color sets | Multiple themed worlds | Lab levels |
+| Skins / cosmetics | Unlockable via coins | 23 (progression + ad) | Limited | Limited |
+| Two-player mode | Yes (local) | No | No | No |
+| Physics puzzle elements | Springs, portals, reverse gravity | Springs, momentum | Boxes, enemies | Acid, conveyers |
+| Coins/collectibles | Yes | N/A | Stars per level | Per-level pickups |
+| Time-based scoring | Yes | N/A | N/A | N/A |
+| Mobile + desktop | Yes | Yes | Yes | Yes |
+| Ad-supported | Yes | Yes | Yes | Yes |
+| Rating (Poki) | 4.3 | 4.4 | 4.5 | ~4.2-4.4 |
 
-### 数值设计
-- 基础分: 100 per level
-- 星级: 完成得1星, 少弹射次数得2星, 最少弹射得3星
-- 分数公式: base + (shotsRemaining * 50) + timeBonus
+## 4. Game Mechanics Analysis
+
+Blumgi Slime uses a charge-and-release jump mechanic. The slime has no walking; the only motion is a parabolic arc whose power scales with hold duration. This produces:
+- High skill ceiling: players develop muscle memory for partial vs full charges
+- Touch-friendly: works equally on mouse, touch, and stylus
+- Predictable physics: single input simplifies state space
+
+Variety comes from environmental additions:
+- Spikes, pits, lava — instant-fail hazards
+- Moving platforms — rhythm-based timing
+- Springs — amplify jump power
+- Portals — teleport between locations
+- Reverse gravity — flips orientation in later levels
+- Checkered platforms / flags — level endpoint
+
+## 5. Monetization Analysis
+
+All competitors use the ad-supported free-to-play model on Poki. Blumgi Slime's ad timing (after death/level end) follows best practice. Stickman Hook's watch-an-ad-to-unlock-skin system is the most elegant monetization loop.
+
+## 6. Art & Audio Style
+
+- 2D vector-style with soft pastel palette
+- Cute rounded slime character with expressive squash-and-stretch animation
+- Each world has distinct color theme and background motif
+- Bouncy, light SFX (boing, pop, success chime)
+
+## 7. Recommendations for Our Version
+
+1. Keep single-button charge-jump core — key reason for broad mobile appeal
+2. Target 80-150 hand-tuned levels in 8-15 themed worlds
+3. Add coins + cosmetic skins as long-tail progression
+4. Place ads only after death or level completion
+5. Add charge meter / visual feedback for jump power
+6. Ship mobile-first with responsive desktop
+7. Distinctive visual identity — avoid generic green slime
+8. Retention hooks: best scores, star ratings per level
