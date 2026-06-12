@@ -2,6 +2,27 @@
 
 
 All notable changes to the test case library are documented here.
+## [v1.43.0] - 2026-06-13
+### Added
+- 7 new test cases from industry research (R151 Dynamic Test Intelligence cron)
+- S-084: CSS-only data exfiltration CVE-2026-2441 — no-JS credential theft via CSS @import redirects
+- S-085: WebRTC UAF RCE CVE-2026-9111 — Linux browser game crash via crafted HTML
+- S-086: NGINX heap buffer overflow CVE-2026-42945 — server-side CDN/game availability
+- B-072: Chrome UI spoofing CVE-2026-9110 — fake password dialog post-renderer compromise
+- G-116: AI predictive QA — self-healing test scripts + predictive bug localization
+- G-117: Customizable HUD — repositionable game controls 2026 UX standard
+- C-074: Community-driven gamified playtesting — crowdsourced bug discovery pipeline
+### Sources
+- https://www.sitepoint.com/zero-day-css-cve-2026-2441-security-vulnerability/ — CSS-only CVE-2026-2441 data exfiltration, no JS needed
+- https://malwarebytes.com/blog/bugs/2026/05/update-chrome-now-critical-bugs-could-let-attackers-run-code — Chrome CVE-2026-9111 WebRTC UAF + CVE-2026-9110 UI spoofing
+- NGINX security advisory + CISA + BleepingComputer — CVE-2026-42945 heap buffer overflow in ngx_http_rewrite_module
+- https://snoopgame.com/blog/top-game-testing-trends-to-watch-in-2026 — 2026 game testing trends: predictive QA, community testing
+- https://headspin.io/blog/future-of-game-testing — Future of game testing: AI-driven predictive and self-healing
+- https://pixune.com/blog/best-examples-mobile-game-ui-design — 2026 best mobile game UI design: customizable HUDs
+- https://testers-hub.com/playtesting-casual-mobile-games-ux-testing — UX playtesting for casual mobile games
+- https://linkedin.com/pulse/future-play-trends-game-testing-2026-snoopgame-omrsf — Community-driven gamified playtesting
+
+
 ## [v1.42.0] - 2026-06-12
 ### Added
 - 7 new test cases from industry research (R149 Dynamic Test Intelligence cron)
