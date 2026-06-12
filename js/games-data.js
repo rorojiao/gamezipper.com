@@ -332,9 +332,10 @@ const GAMES = [
 {name:"Solitaire Roguelite",emoji:"🏰",cat:"card",tags:["solitaire","roguelike","card","dungeon","klondike","strategy","rpg","permadeath"],url:"/solitaire-roguelite/",desc:"Play Solitaire Roguelite free online! Classic Klondike solitaire meets dungeon crawling. Fight 18 monsters, collect 12 powerful items, upgrade your deck. Permadeath runs with meta-progression. No download needed!",isNew:true,status:"live"},
 {name:"Tidy Organizer",emoji:"📚",cat:"puzzle",tags:["organizing","sorting","cozy","tidy","casual","drag"],url:"/tidy-organize/",desc:"Sort everyday objects into satisfying arrangements in this cozy tidying puzzle. 30 levels across 5 themed tiers with drag-and-drop organizing fun!",isNew:true,status:"live"},
 {name:"Knotwords",emoji:"\U0001f524",cat:"puzzle",tags:["word","logic","crossword","sudoku"],url:"/knotwords/",desc:"Crossword meets Sudoku in this word logic puzzle. Deduce letters from colored bundles to form valid words. 30 levels.",isNew:true,status:"live"},
-,
   {name:"Draw Bridge Puzzle",emoji:"\U0001f309",cat:"puzzle",tags:["drawing","physics","bridge","casual"],url:"/draw-bridge/",desc:"Draw bridges to guide a fragile car across dangerous terrain. 30+ physics puzzles with 3-star scoring.",isNew:true,status:"live"},
-  {name:"Gobble",emoji:"\U0001f573\ufe0f",cat:"arcade",tags:["io","eat","grow","arcade","action","hole"],url:"/gobble/",desc:"Control a growing black hole and eat everything in your path! Compete against AI bots in 75-second timed rounds across 4 unique maps. Unlock 6 colorful skins.",isNew:true,status:"live"}];
+  {name:"Gobble",emoji:"\U0001f573\ufe0f",cat:"arcade",tags:["io","eat","grow","arcade","action","hole"],url:"/gobble/",desc:"Control a growing black hole and eat everything in your path! Compete against AI bots in 75-second timed rounds across 4 unique maps. Unlock 6 colorful skins.",isNew:true,status:"live"},
+{name:"Block Out",emoji:"🧱",cat:"puzzle",tags:["3d","tetris","blocks","falling","isometric"],url:"/block-out/",desc:"3D falling block puzzle game. Rotate 3D blocks, clear layers. 30 levels across 3 tiers.",isNew:true,status:"live"},
+];
 
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
@@ -357,3 +358,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+
