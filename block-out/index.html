@@ -17,7 +17,7 @@
 <meta name="twitter:title" content="Block Out - 3D Block Puzzle Game | GameZipper">
 <meta name="twitter:description" content="Play Block Out online free. Place 3D blocks, clear layers, master 30 levels.">
 <meta name="twitter:image" content="https://gamezipper.com/block-out/og.png">
-<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=block-out'></script>
+<script async src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=block-out'></script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"VideoGame","name":"Block Out","description":"A 3D block puzzle game where you place 3D blocks into a 3D well viewed from above. Clear horizontal layers by filling them completely.","genre":["Puzzle","Block Puzzle","3D"],"gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://gamezipper.com/block-out/","image":"https://gamezipper.com/block-out/og.png","aggregateRating":{"@type":"AggregateRating","ratingValue":"4.6","ratingCount":"320"},"publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com"}}
 </script>
@@ -389,12 +389,9 @@ resize();
 
 // ==================== 3D ISO PROJECTION ====================
 // World: x right, y up, z toward camera (so smaller z = "back")
-// We view from front-top: rotate around X axis ~30deg, then around Y axis ~45deg
-// For our purposes we use a fixed isometric projection
-var cam={angX:0.5,angY:0.6,scale:1,ox:0,oy:0};
+// Classic Block Out view: top-down isometric, see top opening + two side walls
+var cam={angX:0.75,angY:0.6,scale:1,ox:0,oy:0};
 function project(p){
-// p = {x,y,z} world coords
-// Simple isometric: rotate Y then tilt
 var x=p.x,y=p.y,z=p.z;
 // Tilt: rotate around X axis
 var yt=y*Math.cos(cam.angX)-z*Math.sin(cam.angX);
@@ -497,27 +494,45 @@ return{top:c.top,side:c.c,dark:c.side};
 function drawWell(){
 if(!G.well)return;
 var w=G.well.w, h=G.well.h;
-// Draw well frame
-X.strokeStyle="rgba(0,240,255,0.4)";
-X.lineWidth=1.5;
-// 4 vertical edges
-var e1=project({x:0,y:0,z:0});
-var e2=project({x:w,y:0,z:0});
-var e3=project({x:w,y:0,z:w});
-var e4=project({x:0,y:0,z:w});
-var e1t=project({x:0,y:h,z:0});
-var e2t=project({x:w,y:h,z:0});
-var e3t=project({x:w,y:h,z:w});
-var e4t=project({x:0,y:h,z:w});
 function pt(p){return[cam.ox+p.x*cam.scale,cam.oy-p.y*cam.scale];}
-function line(a,b){X.beginPath();X.moveTo(a[0],a[1]);X.lineTo(b[0],b[1]);X.stroke();}
-line(pt(e1),pt(e2));line(pt(e2),pt(e3));line(pt(e3),pt(e4));line(pt(e4),pt(e1));
-line(pt(e1t),pt(e2t));line(pt(e2t),pt(e3t));line(pt(e3t),pt(e4t));line(pt(e4t),pt(e1t));
-line(pt(e1),pt(e1t));line(pt(e2),pt(e2t));line(pt(e3),pt(e3t));line(pt(e4),pt(e4t));
+function line(a,b,color,lw){X.beginPath();X.moveTo(a[0],a[1]);X.lineTo(b[0],b[1]);X.strokeStyle=color;X.lineWidth=lw||1;X.stroke();}
 
-// Draw back/floor grid on inside
-X.strokeStyle="rgba(0,240,255,0.08)";
-X.lineWidth=0.5;
+// Draw floor (bottom) - solid darker
+X.fillStyle="rgba(15,15,40,0.4)";
+var fA=project({x:0,y:0,z:0});
+var fB=project({x:w,y:0,z:0});
+var fC=project({x:w,y:0,z:w});
+var fD=project({x:0,y:0,z:w});
+X.beginPath();
+var p=pt(fA);X.moveTo(p[0],p[1]);
+p=pt(fB);X.lineTo(p[0],p[1]);
+p=pt(fC);X.lineTo(p[0],p[1]);
+p=pt(fD);X.lineTo(p[0],p[1]);
+X.closePath();X.fill();
+
+// Draw back walls (semi-transparent) so the well has volume
+// Back wall (z=w)
+var bA=project({x:0,y:0,z:w}),bB=project({x:w,y:0,z:w}),bC=project({x:w,y:h,z:w}),bD=project({x:0,y:h,z:w});
+X.fillStyle="rgba(20,20,60,0.4)";
+X.beginPath();
+p=pt(bA);X.moveTo(p[0],p[1]);
+p=pt(bB);X.lineTo(p[0],p[1]);
+p=pt(bC);X.lineTo(p[0],p[1]);
+p=pt(bD);X.lineTo(p[0],p[1]);
+X.closePath();X.fill();
+// Right wall (x=w)
+var rA=project({x:w,y:0,z:0}),rB=project({x:w,y:0,z:w}),rC=project({x:w,y:h,z:w}),rD=project({x:w,y:h,z:0});
+X.fillStyle="rgba(15,15,50,0.3)";
+X.beginPath();
+p=pt(rA);X.moveTo(p[0],p[1]);
+p=pt(rB);X.lineTo(p[0],p[1]);
+p=pt(rC);X.lineTo(p[0],p[1]);
+p=pt(rD);X.lineTo(p[0],p[1]);
+X.closePath();X.fill();
+
+// Draw floor grid (brighter)
+X.strokeStyle="rgba(0,240,255,0.25)";
+X.lineWidth=0.8;
 for(var i=0;i<=w;i++){
 var a=project({x:i,y:0,z:0}),b=project({x:i,y:0,z:w});
 line(pt(a),pt(b));
@@ -526,18 +541,41 @@ for(var j=0;j<=w;j++){
 var a=project({x:0,y:0,z:j}),b=project({x:w,y:0,z:j});
 line(pt(a),pt(b));
 }
-// Wall grid
-X.strokeStyle="rgba(0,240,255,0.05)";
+
+// Wall grid (subtle, horizontal lines at each level)
+X.strokeStyle="rgba(0,240,255,0.1)";
+X.lineWidth=0.5;
 for(var y=1;y<h;y++){
 for(var i=0;i<=w;i++){
 var a=project({x:i,y:y,z:0}),b=project({x:i,y:y,z:w});
 line(pt(a),pt(b));
 }
-for(var j=0;j<=w;j++){
+for(var j=1;j<w;j++){
 var a=project({x:0,y:y,z:j}),b=project({x:w,y:y,z:j});
 line(pt(a),pt(b));
 }
 }
+// Vertical lines on walls
+for(var i=0;i<=w;i++){
+var a=project({x:i,y:0,z:w}),b=project({x:i,y:h,z:w});
+line(pt(a),pt(b));
+}
+for(var j=0;j<=w;j++){
+var a=project({x:w,y:0,z:j}),b=project({x:w,y:h,z:j});
+line(pt(a),pt(b));
+}
+
+// Draw well frame - bright cyan edges
+X.strokeStyle="rgba(0,240,255,0.85)";
+X.lineWidth=2;
+// 4 vertical edges
+var e1=project({x:0,y:0,z:0}),e2=project({x:w,y:0,z:0}),e3=project({x:w,y:0,z:w}),e4=project({x:0,y:0,z:w});
+var e1t=project({x:0,y:h,z:0}),e2t=project({x:w,y:h,z:0}),e3t=project({x:w,y:h,z:w}),e4t=project({x:0,y:h,z:w});
+line(pt(e1),pt(e1t));line(pt(e2),pt(e2t));line(pt(e3),pt(e3t));line(pt(e4),pt(e4t));
+// Bottom edges (only the visible front-facing ones)
+line(pt(e1),pt(e2));line(pt(e2),pt(e3));line(pt(e3),pt(e4));
+// Top edges (the opening of the well)
+line(pt(e1t),pt(e2t));line(pt(e2t),pt(e3t));line(pt(e3t),pt(e4t));line(pt(e4t),pt(e1t));
 
 // Draw placed blocks
 for(var y=0;y<h;y++){
@@ -679,18 +717,10 @@ G.holdUsed=false;
 var b=shapeBounds(G.cur.voxels);
 G.cur.pos.x=Math.floor((G.well.w-(b.maxX+1))/2);
 G.cur.pos.z=Math.floor((G.well.w-(b.maxZ+1))/2);
-G.cur.pos.y=G.well.h-1;// top
-// Drop until resting
-var cur=shapeBounds(G.cur.voxels);
-var maxDrop=G.well.h-1;
-for(var y=G.well.h-1;y>=0;y--){
-if(canPlace(G.cur.voxels,{x:G.cur.pos.x,y:y,z:G.cur.pos.z})){
-maxDrop=y;break;
-}
-}
-G.cur.pos.y=maxDrop;
-G.targetY=maxDrop;
-G.animY=maxDrop;
+// Start at top
+G.cur.pos.y=G.well.h-1-b.maxY;
+G.targetY=G.cur.pos.y;
+G.animY=G.cur.pos.y;
 G.hintCells=null;
 }
 
@@ -1238,6 +1268,7 @@ function loop(t){
 rafId=requestAnimationFrame(loop);
 var dt=t-lastFrame;
 lastFrame=t;
+window._G=G;// debug
 if(G.screen!=="game"||G.paused||G.gameOver||G.won){
 X.fillStyle="#0a0a1a";
 X.fillRect(0,0,W,H);
@@ -1477,15 +1508,24 @@ if('ontouchstart' in window||navigator.maxTouchPoints>0){
 document.getElementById("touchCtrl").classList.add("show");
 }
 
+// Cleanup function for memory leak prevention
+function cleanup(){
+if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+if(bgmOsc){clearInterval(bgmOsc);bgmOsc=null;}
+if(audioCtx){try{audioCtx.close();}catch(e){}audioCtx=null;}
+if(musicGain){musicGain=null;}
+document.removeEventListener("visibilitychange",onVisChange);
+window.removeEventListener("beforeunload",onBeforeUnload);
+}
+
 // Lifecycle
-document.addEventListener("visibilitychange",function(){
+function onVisChange(){
 if(document.hidden){cancelAnimationFrame(rafId);if(musicGain)musicGain.gain.value=0;}
 else{musicGain&&(musicGain.gain.value=G.settings.music?0.18:0);rafId=requestAnimationFrame(loop);}
-});
-window.addEventListener("beforeunload",function(){
-cancelAnimationFrame(rafId);
-try{audioCtx&&audioCtx.close();}catch(e){}
-});
+}
+function onBeforeUnload(){cleanup();}
+document.addEventListener("visibilitychange",onVisChange);
+window.addEventListener("beforeunload",onBeforeUnload);
 
 // Init loop
 rafId=requestAnimationFrame(loop);
