@@ -19,6 +19,7 @@
      {n:'Snake',e:'ð',u:'/snake/',c:'arcade'},
      {n:'Flappy Wings',e:'ð¦',u:'/flappy-wings/',c:'arcade'},
      {n:'Color Sort',e:'ð¨',u:'/color-sort/',c:'puzzle'},
+     {n:'Goods Sort',e:'📦',u:'/goods-sort/',c:'puzzle'},
      {n:'Word Puzzle',e:'ð',u:'/word-puzzle/',c:'puzzle'},
      {n:'Circuit Logic',e:'â¡',u:'/circuit-logic/',c:'puzzle'},
      {n:'Whack-a-Mole',e:'ð¨',u:'/whack-a-mole/',c:'arcade'},
