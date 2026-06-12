@@ -340,6 +340,7 @@ const GAMES = [
 {name:"Screw Master",emoji:"\U0001f529",cat:"puzzle",tags:["screw","unscrew","bolts","logic","sorting"],url:"/screw-master/",desc:"Free online screw puzzle game. Tap bolts, free plates, solve 25 levels of satisfying unscrew puzzles. Play instantly in your browser!",isNew:true,status:"live"},
 {name:"Tomb of the Mask",emoji:"🎭",cat:"puzzle",tags:["arcade","maze","retro","neon"],url:"/tomb-of-the-mask/",desc:"Swipe through neon mazes, dodge rising lava, collect coins and power-ups in this fast-paced arcade puzzle game.",isNew:true,status:"live"},
 {name:"Goods Sort",emoji:"📦",cat:"puzzle",tags:["sorting","match-3","triple-match","shelves","casual"],url:"/goods-sort/",desc:"Sort colorful goods on shelves by matching 3 identical items in this addictive puzzle game",isNew:true,status:"live"},
+{name:"Going Balls",emoji:"⚽",cat:"arcade",tags:["ball","runner","obstacle","3d"],url:"/going-balls/",desc:"Roll your ball through 25 challenging obstacle courses. Collect coins unlock skins and master powerups in this addictive ball runner game.",isNew:true,status:"live"},
 ];
 
 /**
@@ -363,3 +364,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+
