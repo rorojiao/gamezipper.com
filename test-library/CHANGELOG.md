@@ -1,5 +1,24 @@
 # Test Case Library Changelog
 
+## [v1.45.0] - 2026-06-13
+### Added
+- 6 new test cases from industry research (R155 Dynamic Test Intelligence cron)
+- B-074: Chrome 150 Beta (150.0.7871.14) rendering/audio/input regression for 317 games
+- B-075: Chromium ecosystem MV2 extension removal — Edge + Brave ad-blocker compatibility
+- S-088: AI-discovered CVE acceleration — testing cadence must match 200+/month new normal
+- C-076: Android June 2026 security update — WebView touch/audio regression pre-vs-post patch
+- W-135: MV3 ad-blocker disruption — declarativeNetRequest limitations on ad-funded game sites
+- G-120: Canvas pixel-diff CI pipeline — golden screenshot baselines for automated visual regression
+### Sources
+- https://pcworld.com/article/3160794/the-last-lifeline-for-ublock-origin-in-chrome-is-almost-gone-for-good.html — Chrome 150 MV2 final removal
+- https://chromereleases.googleblog.com/2026/06 — Chrome 150 Beta release notes
+- https://piunikaweb.com/2026/06/08/chrome-manifest-v2-unpacked-extensions-mac-windows — MV2 removal across Chromium browsers
+- https://techspot.com/news/112722-end-ublock-origin-chrome-now-weeks-away-not.html — MV3 ad-blocker limitations
+- https://csoonline.com/article/4183632/june-patch-tuesday-marks-a-new-normal-with-over-200-cves-32-rated-critical.html — AI CVE acceleration new normal
+- https://memeburn.com/10-000-bugs-anthropic-mythos-ai-shakes-safety-in-2026 — Mythos AI 10000+ bugs
+- https://techrepublic.com/article/news-google-june-2026-android-security-update — Android June 2026 security update
+- https://arxiv.org/abs/2208.02335 — HTML5 Canvas automated visual bug detection
+- https://playgama.com/blog/uncategorized/comprehensive-guide-to-testing-methods-for-html5-games — HTML5 game testing methods guide
 
 All notable changes to the test case library are documented here.
 
