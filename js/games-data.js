@@ -341,6 +341,7 @@ const GAMES = [
 {name:"Tomb of the Mask",emoji:"🎭",cat:"puzzle",tags:["arcade","maze","retro","neon"],url:"/tomb-of-the-mask/",desc:"Swipe through neon mazes, dodge rising lava, collect coins and power-ups in this fast-paced arcade puzzle game.",isNew:true,status:"live"},
 {name:"Goods Sort",emoji:"📦",cat:"puzzle",tags:["sorting","match-3","triple-match","shelves","casual"],url:"/goods-sort/",desc:"Sort colorful goods on shelves by matching 3 identical items in this addictive puzzle game",isNew:true,status:"live"},
 {name:"Going Balls",emoji:"⚽",cat:"arcade",tags:["ball","runner","obstacle","3d"],url:"/going-balls/",desc:"Roll your ball through 25 challenging obstacle courses. Collect coins unlock skins and master powerups in this addictive ball runner game.",isNew:true,status:"live"},
+{name:"Build A Queen",emoji:"👗",cat:"casual",tags:["dress-up","runner","fashion"],url:"/build-a-queen/",desc:"Play Build A Queen free online! Guide your model through the runway, choose the best outfits at every gate and dominate the catwalk in this stylish fashion runner.",isNew:true,status:"live"},
 ];
 
 /**
@@ -364,4 +365,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-
