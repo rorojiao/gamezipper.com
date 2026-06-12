@@ -2,6 +2,29 @@
 
 
 All notable changes to the test case library are documented here.
+## [v1.40.0] - 2026-06-12
+### Added
+- 8 new test cases from Dynamic Test Intelligence R145 cron research
+- S-081: Safari 27 WebKit deprecations — feature removal impact on game functionality
+- B-068: macOS 27 Golden Gate drops Intel Mac support — WASM game binary compatibility
+- B-069: Firefox 151 WebGL context loss recovery — long gaming session stability
+- C-072: CSS Gap Decorations (Chrome 149) — game UI grid layout rendering consistency
+- P-045: WebGPU shader compilation cold-start stutter — first 5-second frame drop benchmark
+- G-110: HTML5 game feature compatibility matrix — WebGPU + WASM + ES2026 capability detection
+- G-111: AI adaptive difficulty fairness — rubber-banding and punishment pattern detection
+- A-026: Game UI color-blindness simulation + APCA contrast ratio audit
+- PC-014: WebGPU + WebNN dual API detection — AI-powered game feature readiness
+### Sources
+- Safari 27 beta WebKit 58 features 525 fixes 4 deprecations: https://webkit.org/blog/17967/news-from-wwdc26-webkit-in-safari-27-beta
+- macOS 27 Golden Gate Intel drop: https://macworld.com/article/3139330/macos-27-mac-features-release-date-compatibility.html
+- Firefox 151 MFSA2026-54: https://mozilla.org/en-US/security/advisories/mfsa2026-54
+- Chrome 149 CSS Gap Decorations: https://developer.chrome.com/blog/chrome-149
+- WebGPU shader compilation: https://anhtu.dev/webgpu-the-new-era-of-gpu-computing-in-the-browser-2026-2175
+- HTML5 game testing PlayGama 2026: https://playgama.com/blog/uncategorized/comprehensive-guide-to-testing-methods-for-html5-games
+- AI adaptive difficulty BounDev: https://boundev.ai/blog/game-ux-design-guide-2026
+- Game accessibility color-blindness: https://softwaretestingmagazine.com/knowledgebase/the-accessibility-audit-testing-for-inclusivity-in-casual-mobile-gaming
+- WebGPU+WebNN browser AI: https://ddevtools.com/updates/2026-01-webgpu-webnn-browser-ai
+
 
 ## [v1.39.0] - 2026-06-12
 ### Added
