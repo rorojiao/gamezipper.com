@@ -338,6 +338,7 @@ const GAMES = [
 {name:"Slime Bounce",emoji:"🟢",cat:"puzzle",tags:["platformer","physics","slingshot","jelly"],url:"/blumgi-slime/",desc:"Launch your jelly slime across platforms! 30 levels of physics-based platforming with slingshot mechanics.",isNew:true,status:"live"},
 {name:"Color Block Jam",emoji:"🎨",cat:"puzzle",tags:["slide","color","block","logic","sorting","brain teaser"],url:"/color-block-jam/",desc:"Slide colored blocks along tracks to their matching gates! 30 brain-teasing levels of pure logic puzzle fun. No download needed!",isNew:true,status:"live"},
 {name:"Screw Master",emoji:"\U0001f529",cat:"puzzle",tags:["screw","unscrew","bolts","logic","sorting"],url:"/screw-master/",desc:"Free online screw puzzle game. Tap bolts, free plates, solve 25 levels of satisfying unscrew puzzles. Play instantly in your browser!",isNew:true,status:"live"},
+{name:"Tomb of the Mask",emoji:"🎭",cat:"puzzle",tags:["arcade","maze","retro","neon"],url:"/tomb-of-the-mask/",desc:"Swipe through neon mazes, dodge rising lava, collect coins and power-ups in this fast-paced arcade puzzle game.",isNew:true,status:"live"},
 ];
 
 /**
