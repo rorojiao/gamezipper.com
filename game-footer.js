@@ -156,7 +156,7 @@
       {n:'Euchre',e:'â ï¸',u:'/euchre/',c:'card'},
       {n:'Wordle',e:'ð¤',u:'/wordle/',c:'puzzle'},
       {n:'Hidden Object',e:'ð',u:'/hidden-object/',c:'puzzle'},
-      {n:'Tiny Fishing',e:'ð£',u:'/tiny-fishing/',c:'casual'},{n:"Threes!",e:"ð¢",u:"/threes/",c:"puzzle"},
+      {n:'Tiny Fishing',e:'🎣',u:'/tiny-fishing/',c:'casual'},{n:"Build A Queen",e:"👗",u:"/build-a-queen/",c:"casual"},{n:"Threes!",e:"🀄",u:"/threes/",c:"puzzle"},
       {n:'Doodle Jump',e:'ð¸',u:'/doodle-jump/',c:'arcade'},
       {n:'Papas Freezeria',e:'ð¦',u:'/papas-freezeria/',c:'simulation'},
       {n:'Gravity Run',e:'ð',u:'/gravity-run/',c:'arcade'},
