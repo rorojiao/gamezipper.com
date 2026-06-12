@@ -342,6 +342,7 @@ const GAMES = [
 {name:"Goods Sort",emoji:"📦",cat:"puzzle",tags:["sorting","match-3","triple-match","shelves","casual"],url:"/goods-sort/",desc:"Sort colorful goods on shelves by matching 3 identical items in this addictive puzzle game",isNew:true,status:"live"},
 {name:"Going Balls",emoji:"⚽",cat:"arcade",tags:["ball","runner","obstacle","3d"],url:"/going-balls/",desc:"Roll your ball through 25 challenging obstacle courses. Collect coins unlock skins and master powerups in this addictive ball runner game.",isNew:true,status:"live"},
 {name:"Build A Queen",emoji:"👗",cat:"casual",tags:["dress-up","runner","fashion"],url:"/build-a-queen/",desc:"Play Build A Queen free online! Guide your model through the runway, choose the best outfits at every gate and dominate the catwalk in this stylish fashion runner.",isNew:true,status:"live"},
+{name:"Merge Arena",emoji:"⚔",cat:"puzzle",tags:["merge","strategy","battle","defense","units","waves"],url:"/merge-arena/",desc:"Merge identical units to create stronger warriors, deploy them on the battlefield, and defend against waves of monsters! 30 levels, 6 unit types, boss fights, and upgrades. Play free!",isNew:true,status:"live"},
 ];
 
 /**
