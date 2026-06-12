@@ -89,7 +89,7 @@ fi
 
 # 6. Wide-net stale scan: any line with a stale number that's NOT in a CSS/JS noise context
 STALE_HITS=$(grep -nE "$STALE_PATTERN" index.html 2>/dev/null | \
-  grep -vE 'data-count=|"position":|indexId|/\*.*\*/|rgba\(|on 244-card|timeout: [0-9]|grid (user|that)|isInputContinuous|setTimeout\(.*,[0-9]+\)' | \
+  grep -vE 'data-count=|cat-count|"position":|indexId|/\*.*\*/|rgba\(|on 244-card|timeout: [0-9]|grid (user|that)|isInputContinuous|setTimeout\(.*,[0-9]+\)' | \
   grep -vE '@keyframes|font-size|opacity:|animation:' | \
   grep -vE '^[0-9]+:[[:space:]]*//' | \
   head -10)
