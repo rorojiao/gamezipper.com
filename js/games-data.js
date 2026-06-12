@@ -343,6 +343,7 @@ const GAMES = [
 {name:"Going Balls",emoji:"⚽",cat:"arcade",tags:["ball","runner","obstacle","3d"],url:"/going-balls/",desc:"Roll your ball through 25 challenging obstacle courses. Collect coins unlock skins and master powerups in this addictive ball runner game.",isNew:true,status:"live"},
 {name:"Build A Queen",emoji:"👗",cat:"casual",tags:["dress-up","runner","fashion"],url:"/build-a-queen/",desc:"Play Build A Queen free online! Guide your model through the runway, choose the best outfits at every gate and dominate the catwalk in this stylish fashion runner.",isNew:true,status:"live"},
 {name:"Merge Arena",emoji:"⚔",cat:"puzzle",tags:["merge","strategy","battle","defense","units","waves"],url:"/merge-arena/",desc:"Merge identical units to create stronger warriors, deploy them on the battlefield, and defend against waves of monsters! 30 levels, 6 unit types, boss fights, and upgrades. Play free!",isNew:true,status:"live"},
+{name:"Crazy Drive",emoji:"🏎",cat:"arcade",tags:["driving","car","physics","stunt","3d","obstacle"],url:"/drive-mad/",desc:"Master the art of balance in this thrilling 3D car stunt game! Race through 30 challenging levels across Desert, City, and Space worlds. Unlock 5 unique vehicles, collect coins, and earn gold medals. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
@@ -366,3 +367,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+
