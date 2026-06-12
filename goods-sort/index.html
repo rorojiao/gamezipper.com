@@ -1429,7 +1429,8 @@ function drawHUD() {
       ctx.fillStyle = '#88ccff';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
-      ctx.fillText('❄️ FROZEN', L.W - 60*DPR, L.hudH/2 + fontSize);
+      // Draw snowflake icon
+      ctx.fillText('FROZEN', L.W - 60*DPR, L.hudH/2 + fontSize);
       ctx.restore();
     }
   }
@@ -1443,11 +1444,12 @@ function drawHUD() {
   ctx.beginPath();
   ctx.roundRect(bx, by, btnSize, btnSize, 8*DPR);
   ctx.fill();
+  // Pause icon (two vertical bars)
   ctx.fillStyle = '#fff';
-  ctx.font = `${btnSize * 0.5}px sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('⏸', bx + btnSize/2, by + btnSize/2);
+  var barW = btnSize * 0.1;
+  var barH = btnSize * 0.35;
+  ctx.fillRect(bx + btnSize*0.35, by + btnSize*0.3, barW, barH);
+  ctx.fillRect(bx + btnSize*0.55, by + btnSize*0.3, barW, barH);
   ctx.restore();
 }
 
@@ -1759,7 +1761,27 @@ function init() {
 }
 
 init();
+
+// ==================== CLEANUP ====================
+let timers = [];
+window.addEventListener('beforeunload', function(){
+  if(G.rafId){cancelAnimationFrame(G.rafId);G.rafId=null;}
+  timers.forEach(function(id){clearInterval(id);clearTimeout(id);});
+  timers=[];
+  if(Audio.ctx){Audio.ctx.close().catch(function(){});}
+});
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){
+    if(G.rafId){cancelAnimationFrame(G.rafId);G.rafId=null;}
+  } else if(G.screen==='playing'){
+    G.lastTickTime=performance.now();
+    G.rafId=requestAnimationFrame(gameLoop);
+  }
+});
 </script>
-<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=goods-sort'></script>
+<!-- removed: 1ktower analytics -->
+<div id="gz-ad-below-game" style="text-align:center;margin:10px auto;max-width:728px;"></div>
+<script src="/game-footer.js"></script>
+<script src="/monetag-manager.js"></script>
 </body>
 </html>
