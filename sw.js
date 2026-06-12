@@ -14,7 +14,8 @@ self.addEventListener('install',e=>{
 
   // Precache top 5 game pages + offline fallback for instant access
   var precacheURLs=[
-    '/goods-sort/','/100-doors/','/2048/','/akari/','/basketball-shoot/','/blackjack/','/brick-breaker/','/chess/','/circuit-logic/','/color-helix-smash/','/color-sort/','/crossmath/','/crossword/','/cryptograms/','/fruit-slash/','/hex-minesweeper/','/heyawake/','/hidato/','/hotaru-beam/','/jelly-dye/','/letter-boxed/','/magic-sort/','/masyu/','/minesweeper/','/neon-run/','/nurikabe/','/nyt-tiles/','/shikaku/','/snake/','/solitaire/','/star-battle/','/strands/','/sudoku/','/sugar-sugar/','/suguru/','/tapa/','/tentai-show/','/tents/','/tetris/','/who-is/','/yajilin/','/stained-glass/','/meowdoku/','/sandtrix/',
+    '/goods-sort/','/100-doors/','/2048/','/akari/','/basketball-shoot/','/blackjack/','/brick-breaker/',
+    '/build-a-queen/','/chess/','/circuit-logic/','/color-helix-smash/','/color-sort/','/crossmath/','/crossword/','/cryptograms/','/fruit-slash/','/hex-minesweeper/','/heyawake/','/hidato/','/hotaru-beam/','/jelly-dye/','/letter-boxed/','/magic-sort/','/masyu/','/minesweeper/','/neon-run/','/nurikabe/','/nyt-tiles/','/shikaku/','/snake/','/solitaire/','/star-battle/','/strands/','/sudoku/','/sugar-sugar/','/suguru/','/tapa/','/tentai-show/','/tents/','/tetris/','/who-is/','/yajilin/','/stained-glass/','/meowdoku/','/sandtrix/',
     '/solitaire-roguelite/',
     '/knotwords/',
     '/draw-bridge/',
