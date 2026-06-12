@@ -25,6 +25,7 @@
      {n:'Memory Match',e:'ð§ ',u:'/memory-match/',c:'card'},
      {n:'Sushi Stack',e:'ð£',u:'/sushi-stack/',c:'puzzle'},
      {n:'Ocean Gem Pop',e:'ð',u:'/ocean-gem-pop/',c:'puzzle'},
+     {n:'Color Block Jam',e:'🎨',u:'/color-block-jam/',c:'puzzle'},
      {n:'Typing Speed',e:'â¨ï¸',u:'/typing-speed/',c:'skill'},
      {n:'Brick Breaker',e:'ð§±',u:'/brick-breaker/',c:'arcade'},
      {n:'Dessert Blast',e:'ð°',u:'/dessert-blast/',c:'puzzle'},

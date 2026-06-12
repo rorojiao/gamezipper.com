@@ -336,6 +336,7 @@ const GAMES = [
   {name:"Gobble",emoji:"\U0001f573\ufe0f",cat:"arcade",tags:["io","eat","grow","arcade","action","hole"],url:"/gobble/",desc:"Control a growing black hole and eat everything in your path! Compete against AI bots in 75-second timed rounds across 4 unique maps. Unlock 6 colorful skins.",isNew:true,status:"live"},
 {name:"Block Out",emoji:"🧱",cat:"puzzle",tags:["3d","tetris","blocks","falling","isometric"],url:"/block-out/",desc:"3D falling block puzzle game. Rotate 3D blocks, clear layers. 30 levels across 3 tiers.",isNew:true,status:"live"},
 {name:"Slime Bounce",emoji:"🟢",cat:"puzzle",tags:["platformer","physics","slingshot","jelly"],url:"/blumgi-slime/",desc:"Launch your jelly slime across platforms! 30 levels of physics-based platforming with slingshot mechanics.",isNew:true,status:"live"},
+{name:"Color Block Jam",emoji:"🎨",cat:"puzzle",tags:["slide","color","block","logic","sorting","brain teaser"],url:"/color-block-jam/",desc:"Slide colored blocks along tracks to their matching gates! 30 brain-teasing levels of pure logic puzzle fun. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
