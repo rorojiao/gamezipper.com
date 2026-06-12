@@ -2,6 +2,37 @@
 
 
 All notable changes to the test case library are documented here.
+
+## [v1.44.0] - 2026-06-13
+### Added
+- 8 new test cases from industry research (R153 Dynamic Test Intelligence cron)
+- S-087: COOP/COEP SharedArrayBuffer cross-origin isolation — WASM thread game failure detection for Godot/Unity web exports
+- B-073: Chrome 149.0.7827.114 additional 74-CVE patch batch — post-mega-patch regression audit
+- P-049: WebGPU resource lifecycle stress test — rapid create/destroy texture buffer pattern (Dawn UAF CVE-2026-5281)
+- P-050: WebGPU console-quality 60fps high-polygon benchmark — 1M+ triangle scene performance baseline
+- G-118: Social play features — baseline browser game expectation 2026 (leaderboards, real-time sync, friend systems)
+- G-119: Hybrid-casual meta-layer progression system — state persistence testing for unlock trees, daily rewards, collections
+- A-027: WCAG 2.2 87 success criteria — 9 new criteria EAA enforcement specifics (Focus Not Obscured, Dragging Movements, Target Size)
+- C-075: Poki automated playtesting platform integration — browser game QA pipeline evaluation
+### Sources
+- https://bugnet.io/blog/fix-godot-export-html5-cross-origin-isolation-fail — Godot HTML5 COOP/COEP cross-origin isolation failure guide
+- https://app.cinevva.com/tutorials/coop-coep-sharedarraybuffer.html — COOP/COEP SharedArrayBuffer tutorial
+- https://reintech.io/blog/webassembly-browser-support-2026-compatibility-guide — WebAssembly browser support 2026
+- https://securityweek.com/google-patches-5th-chrome-zero-day-exploited-in-2026 — Chrome 149 additional 74-CVE patch batch
+- https://cvereports.com/reports/CVE-2026-11645 — CVE-2026-11645 V8 OOB zero-day details
+- https://cybersecuritynews.com/chrome-zero-day-vulnerability-exploited — Chrome Dawn/WebGPU CVE-2026-5281 UAF
+- https://nvd.nist.gov/vuln/detail/CVE-2026-5281 — NVD CVE-2026-5281 Dawn WebGPU use-after-free
+- https://strayspark.studio/blog/webgpu-browser-indie-games-2026 — WebGPU browser indie games console quality
+- https://cybermaxia.com/en/blog/webgpu-vs-webgl-browser-2026-render-game-konsol — WebGPU vs WebGL 2026 rendering benchmark
+- https://byteiota.com/webgpu-2026-70-browser-support-15x-performance-gains — WebGPU 15x performance gains
+- https://binkplay.com/en/blog/casual-gaming-trends-what-players-want-in-2026 — 2026 casual gaming social play expectations
+- https://game-developers.org/mobile-game-genre-breakdown-2026 — Mobile game genre $92B market breakdown
+- https://gamegrowthadvisor.com/blog/2026-04-16-hybrid-casual-game-design-strategy-2026 — Hybrid-casual meta-layer strategy 2026
+- https://boundev.ai/blog/game-ux-design-guide-2026 — AI adaptive difficulty UX guide
+- https://web-accessibility-checker.com/en/blog/wcag-2-2-checklist-2026 — WCAG 2.2 87 success criteria checklist
+- https://z-ax.com/en/blog/web-accessibility-wcag-complete-guide-2026 — WCAG complete guide 2026 with EAA enforcement
+- https://roboticsandautomationnews.com/2026/04/21/how-web-gaming-platforms-use-automated-playtesting-to-scale-quality-control/100793 — Poki automated playtesting platform
+
 ## [v1.43.0] - 2026-06-13
 ### Added
 - 7 new test cases from industry research (R151 Dynamic Test Intelligence cron)
