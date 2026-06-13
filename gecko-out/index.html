@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Play Gecko Out Online Free - Pin Pull Puzzle Game | GameZipper</title>
+<meta name="description" content="Play Gecko Out free online! Pull pins in the right order to guide a cute gecko to safety. 30 brain-teasing puzzle levels with stars, coins and achievements.">
+<link rel="canonical" href="https://gamezipper.com/gecko-out/">
+<meta property="og:title" content="Play Gecko Out Online Free - Pin Pull Puzzle Game">
+<meta property="og:image" content="https://gamezipper.com/gecko-out/icon.png"
+><meta property="og:description" content="Pull pins in the right order to free the gecko! 30 puzzle levels with hazards, gems and stars.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/gecko-out/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Gecko Out - Pin Pull Puzzle Game">
+<meta name="twitter:description" content="Free online pin-pull puzzle game. Guide the gecko to safety!">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[{"@type":"VideoGame","name":"Gecko Out","description":"A pin-pull puzzle game where players pull pins in the correct order to guide a cute gecko to the exit.","genre":"Puzzle","gamePlatform":"HTML5","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://gamezipper.com/gecko-out/","playMode":"SinglePlayer","numberOfPlayers":{"@type":"QuantitativeValue","value":1}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Gecko Out?","acceptedAnswer":{"@type":"Answer","text":"Click or tap on pins to pull them out. The gecko and other elements will fall with gravity. Guide the gecko to the green exit while avoiding bombs and hazards."}},{"@type":"Question","name":"How many levels does Gecko Out have?","acceptedAnswer":{"@type":"Answer","text":"Gecko Out has 30 levels across 5 chapters, from tutorial to expert difficulty."}},{"@type":"Question","name":"How do you earn stars?","acceptedAnswer":{"@type":"Answer","text":"1 star for completing the level, 2 stars for completing under par moves, 3 stars for collecting all gems and completing under par."}}]},{"@type":"HowTo","name":"How to Play Gecko Out","step":[{"@type":"HowToStep","name":"Identify the gecko","text":"Look for the green gecko character on the board."},{"@type":"HowToStep","name":"Find the exit","text":"Locate the glowing green exit at the bottom of the board."},{"@type":"HowToStep","name":"Pull pins","text":"Click or tap pins to remove barriers. Elements will fall with gravity."},{"@type":"HowToStep","name":"Avoid hazards","text":"Keep the gecko away from bombs and lava by pulling pins in the right order."},{"@type":"HowToStep","name":"Collect gems","text":"Try to collect all gems for a perfect 3-star rating."}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Gecko Out","item":"https://gamezipper.com/gecko-out/"}]}]}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:linear-gradient(180deg,#0a0a1a 0%,#1a1a3a 100%);overflow-x:hidden;user-select:none;-webkit-user-select:none;min-height:100vh;display:flex;flex-direction:column;align-items:center;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+canvas{display:block;touch-action:none;image-rendering:auto}
+.gz-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+</head>
+<body>
+<h1 class="gz-sr-only">Gecko Out - Free Online Pin Pull Puzzle Game</h1>
+<canvas id="gc"></canvas>
+<script>
+"use strict";
+(function(){
+/* ─── Constants ─── */
+const CELL=60,COLS=7,ROWS=9,GRAVITY=420,PULL_SPEED=300,STAR_COIN=10,PERFECT_BONUS=50,HINT_COST=25,UNDO_COST=1;
+const SAVE_KEY='gecko_out_v1',SETTINGS_KEY='gecko_out_settings_v1';
+const C={bg1:'#0a0a1a',bg2:'#1a1a3a',gecko:'#4CAF50',geckoDk:'#388E3C',pin:'#FFD700',pinDk:'#B8860B',bomb:'#555',fuse:'#FF3D00',gemB:'#2196F3',gemP:'#9C27B0',exit:'#00E676',wall:'#2a2a3a',wallBd:'#3a3a4a',lava:'#FF5722',lavaLt:'#FF8A65',water:'#03A9F4',waterLt:'#4FC3F7',white:'#fff',gold:'#FFD700',star:'#FFD700',starE:'#555',txt:'#e0e0e0',txtDim:'#888',overlay:'rgba(0,0,0,0.7)',btn:'#4CAF50',btnHov:'#66BB6A',btnTxt:'#fff',panel:'#1a1a2e',panelBd:'#2a2a4e'};
+
+/* ─── Level Data ─── */
+/* Grid: 0=empty,1=wall,2=pin slot,3=gecko start,4=exit,5=bomb,6=gem,7=lava,8=water */
+const LEVELS=[
+// Ch1 Tutorial (1-6)
+{id:1,ch:1,par:1,grid:[
+[1,1,1,1,1,1,1],
+[1,1,1,3,1,1,1],
+[1,1,1,2,1,1,1],
+[1,1,1,0,1,1,1],
+[1,1,1,2,1,1,1],
+[1,1,1,0,1,1,1],
+[1,1,1,0,1,1,1],
+[1,1,1,4,1,1,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:4,c:3}],tutorial:0},
+{id:2,ch:1,par:2,grid:[
+[1,1,1,1,1,1,1],
+[1,0,0,3,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,0,0,0,1],
+[1,0,1,2,1,0,1],
+[1,0,1,0,1,0,1],
+[1,0,1,0,1,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:4,c:3}],tutorial:1},
+{id:3,ch:1,par:2,grid:[
+[1,1,1,1,1,1,1],
+[1,0,0,3,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,6,0,6,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,0,0,0,1],
+[1,0,0,0,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:4,c:3}],tutorial:2},
+{id:4,ch:1,par:2,grid:[
+[1,1,1,1,1,1,1],
+[1,3,0,0,0,0,1],
+[1,2,0,0,0,0,1],
+[1,0,0,1,0,0,1],
+[1,0,0,1,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,0,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:1},{r:5,c:3}]},
+{id:5,ch:1,par:3,grid:[
+[1,1,1,1,1,1,1],
+[1,0,0,3,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,6,0,6,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,0,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:4,c:3},{r:6,c:3}]},
+{id:6,ch:1,par:3,grid:[
+[1,1,1,1,1,1,1],
+[1,3,0,0,0,0,1],
+[1,2,0,0,0,0,1],
+[1,0,0,0,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,0,6,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:1},{r:4,c:3},{r:6,c:3}]},
+// Ch2 Easy (7-12) - bombs
+{id:7,ch:2,par:2,grid:[
+[1,1,1,1,1,1,1],
+[1,0,0,3,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,5,0,0,1],
+[1,0,1,2,1,0,1],
+[1,0,1,0,1,0,1],
+[1,0,1,0,1,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:4,c:3}]},
+{id:8,ch:2,par:3,grid:[
+[1,1,1,1,1,1,1],
+[1,0,3,0,0,0,1],
+[1,0,2,0,0,0,1],
+[1,0,5,0,6,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,0,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:2},{r:4,c:2},{r:6,c:3}]},
+{id:9,ch:2,par:2,grid:[
+[1,1,1,1,1,1,1],
+[1,0,0,3,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,5,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,0,0,0,1],
+[1,0,6,0,6,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:4,c:3}]},
+{id:10,ch:2,par:3,grid:[
+[1,1,1,1,1,1,1],
+[1,3,0,0,0,0,1],
+[1,2,0,5,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,0,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,6,0,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:1},{r:3,c:3},{r:5,c:3}]},
+{id:11,ch:2,par:3,grid:[
+[1,1,1,1,1,1,1],
+[1,0,0,3,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,5,2,5,0,1],
+[1,0,0,0,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,6,0,6,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:3,c:3},{r:5,c:3}]},
+{id:12,ch:2,par:4,grid:[
+[1,1,1,1,1,1,1],
+[1,3,0,0,0,0,1],
+[1,2,0,0,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,5,0,6,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:1},{r:3,c:3},{r:5,c:2},{r:6,c:3}]},
+// Ch3 Medium (13-18) - 4-5 pins, colored balls
+{id:13,ch:3,par:4,grid:[
+[1,1,1,1,1,1,1],
+[1,0,0,3,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,5,0,0,1],
+[1,0,1,2,1,0,1],
+[1,0,0,0,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,6,4,6,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:4,c:3},{r:6,c:3}]},
+{id:14,ch:3,par:4,grid:[
+[1,1,1,1,1,1,1],
+[1,3,0,0,0,0,1],
+[1,2,0,0,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,5,0,5,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,0,0,0,1],
+[1,0,6,4,6,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:1},{r:3,c:3},{r:5,c:2}]},
+{id:15,ch:3,par:5,grid:[
+[1,1,1,1,1,1,1],
+[1,0,0,3,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,5,0,6,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,0,5,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:4,c:2},{r:6,c:3}]},
+{id:16,ch:3,par:5,grid:[
+[1,1,1,1,1,1,1],
+[1,3,0,0,0,0,1],
+[1,2,0,0,6,0,1],
+[1,0,0,2,0,0,1],
+[1,0,5,0,0,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:1},{r:3,c:3},{r:5,c:2},{r:6,c:3}]},
+{id:17,ch:3,par:5,grid:[
+[1,1,1,1,1,1,1],
+[1,0,3,0,0,0,1],
+[1,0,2,0,0,0,1],
+[1,0,5,0,6,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,0,5,0,1],
+[1,0,0,2,0,0,1],
+[1,0,6,4,6,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:2},{r:4,c:2},{r:6,c:3}]},
+{id:18,ch:3,par:5,grid:[
+[1,1,1,1,1,1,1],
+[1,3,0,0,0,0,1],
+[1,2,0,6,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,5,0,5,0,1],
+[1,0,2,0,2,0,1],
+[1,0,0,0,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:1},{r:3,c:3},{r:5,c:2},{r:5,c:4}]},
+// Ch4 Hard (19-24) - 5-7 pins, lava/water
+{id:19,ch:4,par:5,grid:[
+[1,1,1,1,1,1,1],
+[1,0,0,3,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,7,0,6,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,0,7,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:4,c:2},{r:6,c:3}]},
+{id:20,ch:4,par:5,grid:[
+[1,1,1,1,1,1,1],
+[1,3,0,0,0,0,1],
+[1,2,0,7,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,6,0,5,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,0,7,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:1},{r:3,c:3},{r:5,c:2}]},
+{id:21,ch:4,par:6,grid:[
+[1,1,1,1,1,1,1],
+[1,0,0,3,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,7,0,6,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,2,7,0,1],
+[1,0,0,0,0,0,1],
+[1,0,6,4,6,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:4,c:2},{r:5,c:3}]},
+{id:22,ch:4,par:6,grid:[
+[1,1,1,1,1,1,1],
+[1,3,0,0,0,0,1],
+[1,2,0,7,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,5,0,7,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,6,4,6,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:1},{r:3,c:3},{r:5,c:2},{r:6,c:3}]},
+{id:23,ch:4,par:6,grid:[
+[1,1,1,1,1,1,1],
+[1,0,3,0,0,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,7,0,0,1],
+[1,0,2,0,6,0,1],
+[1,0,0,5,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:2},{r:4,c:2},{r:6,c:3}]},
+{id:24,ch:4,par:7,grid:[
+[1,1,1,1,1,1,1],
+[1,3,0,0,6,0,1],
+[1,2,0,7,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,7,0,5,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,2,7,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:1},{r:3,c:3},{r:5,c:2},{r:6,c:3}]},
+// Ch5 Expert (25-30) - 7+ pins, multi-step
+{id:25,ch:5,par:6,grid:[
+[1,1,1,1,1,1,1],
+[1,0,0,3,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,7,0,6,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,2,5,0,1],
+[1,0,7,0,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:4,c:2},{r:5,c:3}]},
+{id:26,ch:5,par:7,grid:[
+[1,1,1,1,1,1,1],
+[1,3,0,0,0,0,1],
+[1,2,0,7,0,0,1],
+[1,0,0,2,6,0,1],
+[1,0,5,0,0,0,1],
+[1,0,2,0,7,0,1],
+[1,0,0,2,0,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:1},{r:3,c:3},{r:5,c:2},{r:6,c:3}]},
+{id:27,ch:5,par:7,grid:[
+[1,1,1,1,1,1,1],
+[1,0,0,3,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,7,0,6,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,2,5,0,1],
+[1,0,7,0,2,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:4,c:2},{r:5,c:3},{r:6,c:4}]},
+{id:28,ch:5,par:7,grid:[
+[1,1,1,1,1,1,1],
+[1,3,0,0,6,0,1],
+[1,2,0,7,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,5,0,7,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,2,5,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:1},{r:3,c:3},{r:5,c:2},{r:6,c:3}]},
+{id:29,ch:5,par:8,grid:[
+[1,1,1,1,1,1,1],
+[1,0,0,3,0,0,1],
+[1,0,0,2,0,0,1],
+[1,0,5,0,7,0,1],
+[1,0,2,0,0,0,1],
+[1,0,0,2,6,0,1],
+[1,0,7,0,2,0,1],
+[1,0,0,4,0,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:3},{r:4,c:2},{r:5,c:3},{r:6,c:4}]},
+{id:30,ch:5,par:8,grid:[
+[1,1,1,1,1,1,1],
+[1,3,0,0,6,0,1],
+[1,2,0,7,0,0,1],
+[1,0,0,2,5,0,1],
+[1,0,7,0,0,0,1],
+[1,0,2,0,7,0,1],
+[1,0,0,2,0,0,1],
+[1,0,6,4,6,0,1],
+[1,1,1,1,1,1,1]],
+pins:[{r:2,c:1},{r:3,c:3},{r:5,c:2},{r:6,c:3}]}
+];
+
+/* ─── Audio System ─── */
+let audioCtx=null,masterGain=null,musicGain=null,sfxGain=null,musicPlaying=false;
+function initAudio(){
+if(audioCtx)return;
+audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+masterGain=audioCtx.createGain();masterGain.gain.value=0.5;masterGain.connect(audioCtx.destination);
+musicGain=audioCtx.createGain();musicGain.gain.value=0.3;musicGain.connect(masterGain);
+sfxGain=audioCtx.createGain();sfxGain.gain.value=0.6;sfxGain.connect(masterGain);
+}
+function playTone(freq,dur,type,dest,vol){
+if(!audioCtx||!G.settings.sfx)return;
+const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+o.type=type||'sine';o.frequency.value=freq;
+g.gain.setValueAtTime(vol||0.3,audioCtx.currentTime);
+g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+o.connect(g);g.connect(dest||sfxGain);
+o.start();o.stop(audioCtx.currentTime+dur);
+}
+function sfxPull(){playTone(880,0.15,'sine',sfxGain,0.4);playTone(1100,0.1,'sine',sfxGain,0.2)}
+function sfxStar(){playTone(1047,0.1,'sine',sfxGain,0.3);setTimeout(()=>playTone(1319,0.1,'sine',sfxGain,0.3),80);setTimeout(()=>playTone(1568,0.15,'sine',sfxGain,0.4),160)}
+function sfxFail(){playTone(200,0.3,'sawtooth',sfxGain,0.3);playTone(150,0.4,'sawtooth',sfxGain,0.2)}
+function sfxGem(){playTone(1200,0.1,'sine',sfxGain,0.3);playTone(1500,0.12,'sine',sfxGain,0.2)}
+function sfxClick(){playTone(600,0.05,'square',sfxGain,0.15)}
+function sfxBomb(){playTone(80,0.5,'sawtooth',sfxGain,0.5);playTone(60,0.6,'square',sfxGain,0.3)}
+function sfxWin(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.2,'sine',sfxGain,0.35),i*120))}
+function sfxUndo(){playTone(400,0.08,'triangle',sfxGain,0.2);playTone(300,0.08,'triangle',sfxGain,0.15)}
+
+let musicNodes=[];
+function startMusic(){
+if(!audioCtx||!G.settings.music||musicPlaying)return;musicPlaying=true;
+const notes=[262,294,330,349,392,349,330,294];let t=audioCtx.currentTime;
+const loop=()=>{
+if(!G.settings.music||!musicPlaying)return;
+const now=audioCtx.currentTime;
+[262,294,330,349,392,440,392,349,330,294,262,294,330,392,349,294].forEach((f,i)=>{
+const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+o.type='triangle';o.frequency.value=f;
+g.gain.setValueAtTime(0,now+i*0.28);
+g.gain.linearRampToValueAtTime(0.12,now+i*0.28+0.05);
+g.gain.linearRampToValueAtTime(0,now+i*0.28+0.25);
+o.connect(g);g.connect(musicGain);
+o.start(now+i*0.28);o.stop(now+i*0.28+0.3);
+musicNodes.push(o);
+});
+setTimeout(loop,16*0.28*1000);
+};loop();
+}
+function stopMusic(){musicPlaying=false;musicNodes.forEach(n=>{try{n.stop()}catch(e){}});musicNodes=[]}
+
+/* ─── Particle System ─── */
+const particles=[];
+function addParticle(x,y,vx,vy,life,color,size){
+particles.push({x,y,vx,vy,life,maxLife:life,color,size:size||3});
+}
+function burstParticles(x,y,count,color,size,spread){
+for(let i=0;i<count;i++){
+const a=Math.random()*Math.PI*2,s=Math.random()*(spread||120)+30;
+addParticle(x+Math.random()*6-3,y+Math.random()*6-3,Math.cos(a)*s,Math.sin(a)*s-40,0.6+Math.random()*0.6,color,size||2+Math.random()*2);
+}}
+function confettiBurst(x,y){
+const colors=['#FFD700','#FF5722','#2196F3','#4CAF50','#9C27B0','#E91E63'];
+for(let i=0;i<40;i++){
+const a=Math.random()*Math.PI*2,s=Math.random()*200+80;
+addParticle(x,y,Math.cos(a)*s,Math.sin(a)*s-120,1.2+Math.random()*0.8,colors[i%colors.length],3+Math.random()*3);
+}}
+function updateParticles(dt){
+for(let i=particles.length-1;i>=0;i--){
+const p=particles[i];
+p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=300*dt;p.life-=dt;
+if(p.life<=0)particles.splice(i,1);
+}}
+function drawParticles(ctx){
+particles.forEach(p=>{
+const a=Math.max(0,p.life/p.maxLife);
+ctx.globalAlpha=a;ctx.fillStyle=p.color;
+ctx.beginPath();ctx.arc(p.x,p.y,p.size*a,0,Math.PI*2);ctx.fill();
+});ctx.globalAlpha=1;
+}
+
+/* ─── Screen Shake ─── */
+let shakeAmount=0,shakeDecay=8;
+function addShake(v){shakeAmount=Math.max(shakeAmount,v)}
+function getShake(dt){
+if(shakeAmount<0.5)return{x:0,y:0};
+const sx=(Math.random()-0.5)*shakeAmount*2,sy=(Math.random()-0.5)*shakeAmount*2;
+shakeAmount=Math.max(0,shakeAmount-shakeDecay*dt*60);
+return{x:sx,y:sy};
+}
+
+/* ─── Save/Load ─── */
+function defaultSave(){return{version:1,levels:{},coins:0,totalStars:0}}
+function loadSave(){try{const d=JSON.parse(localStorage.getItem(SAVE_KEY));return d&&d.version===1?d:defaultSave()}catch(e){return defaultSave()}}
+function writeSave(){localStorage.setItem(SAVE_KEY,JSON.stringify(G.save))}
+function loadSettings(){try{const d=JSON.parse(localStorage.getItem(SETTINGS_KEY));if(d)return d}catch(e){}return{sfx:true,music:true}}
+function writeSettings(){localStorage.setItem(SETTINGS_KEY,JSON.stringify(G.settings))}
+
+/* ─── Game State ─── */
+const G={
+state:'menu', // menu, select, play, win, fail, settings
+currentLevel:0,
+save:loadSave(),
+settings:loadSettings(),
+board:null,
+gecko:null,
+pins:[],
+pulledPins:[],
+moveCount:0,
+gemsCollected:0,
+totalGems:0,
+animating:false,
+animations:[],
+tutorialStep:0,
+tutorialActive:false,
+hintPin:-1,
+hintTimer:0,
+undoStack:[],
+selectedBtn:-1,
+hoverBtn:-1,
+time:0,
+transitionAlpha:0,
+transitionTarget:null,
+transitionCallback:null,
+levelScrollY:0,
+bgStars:[]
+};
+
+// Init background stars
+for(let i=0;i<60;i++)G.bgStars.push({x:Math.random(),y:Math.random(),s:Math.random()*2+0.5,b:Math.random()*0.4+0.2});
+
+/* ─── Canvas Setup ─── */
+const canvas=document.getElementById('gc');
+const ctx=canvas.getContext('2d');
+let W=0,H=0,boardX=0,boardY=0,boardScale=1;
+
+function resize(){
+const dpr=window.devicePixelRatio||1;
+W=window.innerWidth;H=window.innerHeight;
+canvas.style.width=W+'px';canvas.style.height=H+'px';
+canvas.width=W*dpr;canvas.height=H*dpr;
+ctx.setTransform(dpr,0,0,dpr,0,0);
+const bw=COLS*CELL,bh=ROWS*CELL;
+const maxW=W*0.92,maxH=H*0.65;
+boardScale=Math.min(maxW/bw,maxH/bh);
+boardX=(W-bw*boardScale)/2;
+boardY=H*0.22;
+}
+window.addEventListener('resize',resize);resize();
+
+/* ─── Board Init ─── */
+function initLevel(idx){
+const lv=LEVELS[idx];if(!lv)return;
+G.currentLevel=idx;G.moveCount=0;G.gemsCollected=0;G.totalGems=0;
+G.pulledPins=[];G.undoStack=[];G.hintPin=-1;G.hintTimer=0;
+G.animating=false;G.animations=[];
+particles.length=0;shakeAmount=0;
+
+const grid=lv.grid.map(r=>[...r]);
+G.pins=lv.pins.map((p,i)=>({...p,id:i,pulled:false,animProgress:0,highlight:false}));
+
+// Find gecko start, exit, count gems
+let geckoR=0,geckoC=0,exitR=0,exitC=0;
+for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+const v=grid[r][c];
+if(v===3){geckoR=r;geckoC=c;grid[r][c]=0}
+if(v===4){exitR=r;exitC=c}
+if(v===6)G.totalGems++;
+}
+G.board=grid;
+G.gecko={r:geckoR,c:geckoC,vr:geckoR,vc:geckoC,px:geckoC*CELL+CELL/2,py:geckoR*CELL+CELL/2,alive:true,exiting:false,exitProgress:0,segments:[{x:0,y:0},{x:-8,y:-4},{x:-14,y:-2},{x:-18,y:0}]};
+G.exitPos={r:exitR,c:exitC};
+
+// Tutorial
+G.tutorialActive=lv.tutorial!==undefined;
+G.tutorialStep=0;
+
+// Place objects on board for tracking
+G.objects=[];
+for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+if(grid[r][c]===5)G.objects.push({type:'bomb',r,c,vy:0,alive:true});
+if(grid[r][c]===6)G.objects.push({type:'gem',r,c,vy:0,alive:true,collected:false});
+if(grid[r][c]===7)G.objects.push({type:'lava',r,c,vy:0,alive:true});
+if(grid[r][c]===8)G.objects.push({type:'water',r,c,vy:0,alive:true});
+}
+}
+
+/* ─── Physics ─── */
+function isBlocked(r,c){
+if(r<0||r>=ROWS||c<0||c>=COLS)return true;
+if(G.board[r][c]===1)return true;
+// Check if pin is blocking this row
+for(const p of G.pins){
+if(!p.pulled&&p.r===r&&p.c===c)return true;
+}
+return false;
+}
+
+function applyGravity(){
+let moved=true,iterations=0;
+while(moved&&iterations<50){
+moved=false;iterations++;
+// Move gecko down
+if(G.gecko.alive&&!G.gecko.exiting){
+const nr=G.gecko.r+1;
+if(!isBlocked(nr,G.gecko.c)&&!isOccupiedByHazard(nr,G.gecko.c)){
+G.gecko.r=nr;moved=true;
+}
+}
+// Move objects down
+for(const obj of G.objects){
+if(!obj.alive||obj.type==='gem'&&obj.collected)continue;
+const nr=obj.r+1;
+if(!isBlocked(nr,obj.c)){
+obj.r=nr;moved=true;
+}
+}
+}
+// Check hazards after gravity settles
+checkCollisions();
+}
+
+function isOccupiedByHazard(r,c){
+return G.objects.some(o=>o.alive&&(o.type==='bomb'||o.type==='lava'||o.type==='water')&&o.r===r&&o.c===c);
+}
+
+function checkCollisions(){
+if(!G.gecko.alive)return;
+const gr=G.gecko.r,gc=G.gecko.c;
+for(const obj of G.objects){
+if(!obj.alive)continue;
+if(obj.r===gr&&obj.c===gc){
+if(obj.type==='bomb'){
+G.gecko.alive=false;
+sfxBomb();addShake(12);
+burstParticles(gc*CELL+CELL/2,gr*CELL+CELL/2,20,'#FF5722',3,100);
+burstParticles(gc*CELL+CELL/2,gr*CELL+CELL/2,15,'#FF9800',2,80);
+G.animating=false;
+setTimeout(()=>{if(G.state==='play')G.state='fail'},600);
+return;
+}
+if(obj.type==='lava'||obj.type==='water'){
+G.gecko.alive=false;
+sfxFail();addShake(8);
+burstParticles(gc*CELL+CELL/2,gr*CELL+CELL/2,15,obj.type==='lava'?'#FF5722':'#03A9F4',3,80);
+G.animating=false;
+setTimeout(()=>{if(G.state==='play')G.state='fail'},500);
+return;
+}
+if(obj.type==='gem'&&!obj.collected){
+obj.collected=true;G.gemsCollected++;
+G.board[obj.r][obj.c]=0;
+sfxGem();
+burstParticles(gc*CELL+CELL/2,gr*CELL+CELL/2,8,'#9C27B0',2,60);
+burstParticles(gc*CELL+CELL/2,gr*CELL+CELL/2,8,'#2196F3',2,60);
+}
+}
+}
+// Check exit
+if(G.gecko.r===G.exitPos.r&&G.gecko.c===G.exitPos.c){
+winLevel();
+}
+}
+
+function winLevel(){
+G.animating=false;
+const lv=LEVELS[G.currentLevel];
+let stars=1;
+if(G.moveCount<=lv.par)stars=2;
+if(G.moveCount<=lv.par&&G.gemsCollected>=G.totalGems)stars=3;
+
+const prev=G.save.levels[G.currentLevel]||{stars:0};
+const newStars=Math.max(prev.stars,stars);
+const starGain=newStars-prev.stars;
+const coinGain=starGain*STAR_COIN+(stars===3?PERFECT_BONUS:0);
+
+G.save.levels[G.currentLevel]={stars:newStars,bestMoves:prev.bestMoves?Math.min(prev.bestMoves,G.moveCount):G.moveCount};
+G.save.coins+=coinGain;
+G.save.totalStars=Object.values(G.save.levels).reduce((s,l)=>s+l.stars,0);
+writeSave();
+
+sfxWin();
+setTimeout(()=>{
+confettiBurst(W/2,H/3);
+G.state='win';G.winStars=stars;G.winCoins=coinGain;
+},300);
+}
+
+function pullPin(pinIdx){
+if(G.animating)return;
+const pin=G.pins[pinIdx];
+if(!pin||pin.pulled)return;
+
+// Save undo state
+G.undoStack.push({
+pinIdx,
+geckoR:G.gecko.r,geckoC:G.gecko.c,
+objects:G.objects.map(o=>({...o})),
+gemsCollected:G.gemsCollected,
+board:G.board.map(r=>[...r])
+});
+
+pin.pulled=true;G.moveCount++;
+G.pulledPins.push(pinIdx);
+sfxPull();
+burstParticles(pin.c*CELL+CELL/2,pin.r*CELL+CELL/2,6,C.pin,2,50);
+
+// Animate gravity
+G.animating=true;
+applyGravity();
+// Animate gecko visual position
+G.animations=[];
+animatePositions();
+}
+
+function animatePositions(){
+const geckoTarget={x:G.gecko.c*CELL+CELL/2,y:G.gecko.r*CELL+CELL/2};
+const objTargets=G.objects.filter(o=>o.alive).map(o=>({x:o.c*CELL+CELL/2,y:o.r*CELL+CELL/2,obj:o}));
+let t=0;const dur=0.25;
+const gStart={x:G.gecko.px,y:G.gecko.py};
+const oStarts=objTargets.map(ot=>({x:ot.obj.c*CELL+CELL/2,y:ot.obj.r*CELL+CELL/2}));
+// update vr/vc
+G.gecko.vr=G.gecko.r;G.gecko.vc=G.gecko.c;
+
+function step(){
+t+=1/60;const p=Math.min(t/dur,1);const e=1-(1-p)*(1-p);
+G.gecko.px=gStart.x+(geckoTarget.x-gStart.x)*e;
+G.gecko.py=gStart.y+(geckoTarget.y-gStart.y)*e;
+objTargets.forEach((ot,i)=>{
+if(oStarts[i]){
+ot.obj._drawX=oStarts[i].x+(ot.x-oStarts[i].x)*e;
+ot.obj._drawY=oStarts[i].y+(ot.y-oStarts[i].y)*e;
+}});
+if(p<1){requestAnimationFrame(step)}
+else{
+G.gecko.px=geckoTarget.x;G.gecko.py=geckoTarget.y;
+objTargets.forEach(ot=>{ot.obj._drawX=undefined;ot.obj._drawY=undefined});
+G.animating=false;
+// Check tutorial
+if(G.tutorialActive){
+G.tutorialStep++;
+}
+}
+}
+step();
+}
+
+function undoMove(){
+if(G.undoStack.length===0)return;
+if(G.save.coins<UNDO_COST&&UNDO_COST>0){return}
+const snap=G.undoStack.pop();
+G.save.coins-=UNDO_COST;writeSave();
+sfxUndo();
+const pin=G.pins[snap.pinIdx];
+pin.pulled=false;
+G.pulledPins.pop();
+G.gecko.r=snap.geckoR;G.gecko.c=snap.geckoC;
+G.gecko.px=snap.geckoC*CELL+CELL/2;G.gecko.py=snap.geckoR*CELL+CELL/2;
+G.gecko.vr=snap.geckoR;G.gecko.vc=snap.geckoC;
+G.gecko.alive=true;
+G.objects=snap.objects;
+G.gemsCollected=snap.gemsCollected;
+G.board=snap.board;
+G.moveCount--;
+}
+
+function showHint(){
+if(G.save.coins<HINT_COST)return;
+G.save.coins-=HINT_COST;writeSave();
+// Find next unpulled pin - simple heuristic: try each pin
+for(let i=0;i<G.pins.length;i++){
+if(!G.pins[i].pulled){
+G.hintPin=i;G.hintTimer=2;
+return;
+}
+}
+}
+
+/* ─── Drawing Helpers ─── */
+function roundRect(x,y,w,h,r){
+ctx.beginPath();
+ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+ctx.closePath();
+}
+function drawStarShape(cx,cy,outerR,innerR,fill){
+ctx.beginPath();
+for(let i=0;i<5;i++){
+const aO=Math.PI*2*i/5-Math.PI/2;
+const aI=aO+Math.PI/5;
+ctx.lineTo(cx+Math.cos(aO)*outerR,cy+Math.sin(aO)*outerR);
+ctx.lineTo(cx+Math.cos(aI)*innerR,cy+Math.sin(aI)*innerR);
+}ctx.closePath();
+ctx.fillStyle=fill;ctx.fill();
+}
+function drawDiamond(cx,cy,size,fill){
+ctx.beginPath();
+ctx.moveTo(cx,cy-size);ctx.lineTo(cx+size*0.6,cy);
+ctx.lineTo(cx,cy+size*0.7);ctx.lineTo(cx-size*0.6,cy);ctx.closePath();
+ctx.fillStyle=fill;ctx.fill();
+ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=1;ctx.stroke();
+}
+
+/* ─── Draw Gecko ─── */
+function drawGecko(cx,cy,scale){
+const s=scale||1;
+ctx.save();ctx.translate(cx,cy);
+// Body segments
+const segColors=[C.gecko,C.gecko,C.geckoDk,C.geckoDk];
+const segSizes=[10,8,6,5];
+// Tail first
+ctx.fillStyle=C.geckoDk;
+ctx.beginPath();ctx.ellipse(-8*s,4*s,7*s,3*s,0.3,0,Math.PI*2);ctx.fill();
+// Body segments
+for(let i=0;i<4;i++){
+ctx.fillStyle=segColors[i];
+ctx.beginPath();ctx.arc((-3+i*4)*s,(2-i*1.5)*s,segSizes[i]*s,0,Math.PI*2);ctx.fill();
+}
+// Head
+ctx.fillStyle=C.gecko;
+ctx.beginPath();ctx.ellipse(14*s,-4*s,9*s,8*s,0,0,Math.PI*2);ctx.fill();
+// Eyes
+ctx.fillStyle='#fff';
+ctx.beginPath();ctx.arc(16*s,-7*s,4*s,0,Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.arc(12*s,-7*s,3.5*s,0,Math.PI*2);ctx.fill();
+// Pupils
+ctx.fillStyle='#222';
+ctx.beginPath();ctx.arc(17*s,-7*s,2*s,0,Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.arc(13*s,-7*s,1.8*s,0,Math.PI*2);ctx.fill();
+// Eye highlights
+ctx.fillStyle='#fff';
+ctx.beginPath();ctx.arc(17.5*s,-8*s,0.8*s,0,Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.arc(13.5*s,-8*s,0.7*s,0,Math.PI*2);ctx.fill();
+// Smile
+ctx.strokeStyle='#2E7D32';ctx.lineWidth=1.2*s;
+ctx.beginPath();ctx.arc(15*s,-3*s,4*s,0.1,Math.PI-0.1);ctx.stroke();
+// Legs
+ctx.fillStyle=C.gecko;
+const legPts=[[-2,8],[6,8],[-6,2],[2,0]];
+legPts.forEach(([lx,ly])=>{
+ctx.beginPath();ctx.ellipse(lx*s,ly*s,3*s,2*s,ly>4?0.2:-0.2,0,Math.PI*2);ctx.fill();
+});
+// Feet
+ctx.fillStyle=C.geckoDk;
+[[-2,10],[6,10]].forEach(([fx,fy])=>{
+for(let t=0;t<3;t++){
+ctx.beginPath();ctx.arc((fx+t*2-2)*s,fy*s,1.2*s,0,Math.PI*2);ctx.fill();
+}});
+ctx.restore();
+}
+
+/* ─── Draw Pin ─── */
+function drawPin(cx,cy,pulled,highlight,hintPulse){
+if(pulled)return;
+ctx.save();ctx.translate(cx,cy);
+const pw=CELL*0.8,ph=8;
+// Glow for hint
+if(highlight||hintPulse>0){
+ctx.shadowColor=C.pin;ctx.shadowBlur=10+Math.sin(G.time*6)*4;
+}
+// Pin body
+const grad=ctx.createLinearGradient(0,-ph/2,0,ph/2);
+grad.addColorStop(0,'#FFE082');grad.addColorStop(0.5,C.pin);grad.addColorStop(1,C.pinDk);
+ctx.fillStyle=grad;
+roundRect(-pw/2,-ph/2,pw,ph,4);ctx.fill();
+// Caps
+ctx.fillStyle=C.pinDk;
+ctx.beginPath();ctx.arc(-pw/2,0,6,0,Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.arc(pw/2,0,6,0,Math.PI*2);ctx.fill();
+// Cap highlights
+ctx.fillStyle='#FFE082';
+ctx.beginPath();ctx.arc(-pw/2,-1,3,0,Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.arc(pw/2,-1,3,0,Math.PI*2);ctx.fill();
+// Pull indicator
+ctx.fillStyle='rgba(255,255,255,0.6)';
+ctx.beginPath();ctx.moveTo(pw/2-2,0);ctx.lineTo(pw/2+5,-4);ctx.lineTo(pw/2+5,4);ctx.closePath();ctx.fill();
+ctx.shadowBlur=0;
+ctx.restore();
+}
+
+/* ─── Draw Bomb ─── */
+function drawBomb(cx,cy){
+ctx.save();ctx.translate(cx,cy);
+// Body
+ctx.fillStyle=C.bomb;
+ctx.beginPath();ctx.arc(0,2,12,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#777';
+ctx.beginPath();ctx.arc(-3,-1,4,0,Math.PI*2);ctx.fill();
+// Fuse
+ctx.strokeStyle='#8D6E63';ctx.lineWidth=2;
+ctx.beginPath();ctx.moveTo(0,-10);ctx.quadraticCurveTo(5,-16,3,-20);ctx.stroke();
+// Spark
+const sparkT=G.time*8;
+ctx.fillStyle=`rgba(255,${100+Math.sin(sparkT)*100|0},0,${0.6+Math.sin(sparkT*1.3)*0.4})`;
+ctx.beginPath();ctx.arc(3+Math.sin(sparkT)*2,-20+Math.cos(sparkT)*2,3+Math.sin(sparkT),0,Math.PI*2);ctx.fill();
+ctx.restore();
+}
+
+/* ─── Draw Board ─── */
+function drawBoard(){
+const lv=LEVELS[G.currentLevel];if(!lv||!G.board)return;
+ctx.save();
+ctx.translate(boardX,boardY);
+ctx.scale(boardScale,boardScale);
+
+// Board background
+ctx.fillStyle='rgba(255,255,255,0.03)';
+roundRect(-4,-4,COLS*CELL+8,ROWS*CELL+8,8);ctx.fill();
+
+for(let r=0;r<ROWS;r++){
+for(let c=0;c<COLS;c++){
+const x=c*CELL,y=r*CELL,v=G.board[r][c];
+// Empty cell bg
+if(v!==1){
+ctx.fillStyle='rgba(255,255,255,0.02)';
+ctx.fillRect(x+1,y+1,CELL-2,CELL-2);
+}
+// Wall
+if(v===1){
+const grad=ctx.createLinearGradient(x,y,x,y+CELL);
+grad.addColorStop(0,'#3a3a4a');grad.addColorStop(1,C.wall);
+ctx.fillStyle=grad;
+ctx.fillRect(x,y,CELL,CELL);
+ctx.strokeStyle=C.wallBd;ctx.lineWidth=1;
+ctx.strokeRect(x+0.5,y+0.5,CELL-1,CELL-1);
+// Brick pattern
+ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=0.5;
+ctx.beginPath();ctx.moveTo(x,y+CELL/2);ctx.lineTo(x+CELL,y+CELL/2);ctx.stroke();
+if(r%2===0){ctx.beginPath();ctx.moveTo(x+CELL/2,y);ctx.lineTo(x+CELL/2,y+CELL/2);ctx.stroke();}
+else{ctx.beginPath();ctx.moveTo(x+CELL/2,y+CELL/2);ctx.lineTo(x+CELL/2,y+CELL);ctx.stroke();}
+}
+}
+}
+
+// Draw exit
+{
+const ex=G.exitPos.c*CELL+CELL/2,ey=G.exitPos.r*CELL+CELL/2;
+const pulse=0.8+Math.sin(G.time*3)*0.2;
+ctx.shadowColor=C.exit;ctx.shadowBlur=15*pulse;
+ctx.fillStyle=C.exit;ctx.globalAlpha=0.3*pulse;
+ctx.beginPath();ctx.arc(ex,ey,CELL*0.4,0,Math.PI*2);ctx.fill();
+ctx.globalAlpha=1;ctx.shadowBlur=0;
+// Arrow
+ctx.fillStyle=C.exit;ctx.font='bold 20px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText('▼',ex,ey);
+}
+
+// Draw objects
+for(const obj of G.objects){
+if(!obj.alive)continue;
+const ox=obj._drawX!==undefined?obj._drawX:obj.c*CELL+CELL/2;
+const oy=obj._drawY!==undefined?obj._drawY:obj.r*CELL+CELL/2;
+if(obj.type==='gem'&&!obj.collected){
+drawDiamond(ox,oy,10,obj.r%2===0?C.gemB:C.gemP);
+}
+if(obj.type==='bomb')drawBomb(ox,oy);
+if(obj.type==='lava'){
+ctx.fillStyle=C.lava;
+const lx=obj.c*CELL+1,ly=obj.r*CELL+CELL*0.3;
+ctx.fillRect(lx,ly,CELL-2,CELL*0.7);
+ctx.fillStyle=C.lavaLt;
+for(let i=0;i<3;i++){
+const bx=lx+10+i*16+Math.sin(G.time*4+i)*3;
+ctx.beginPath();ctx.arc(bx,ly+2,3+Math.sin(G.time*5+i*2)*2,0,Math.PI*2);ctx.fill();
+}
+}
+if(obj.type==='water'){
+ctx.fillStyle=C.water;
+const wx=obj.c*CELL+1,wy=obj.r*CELL+CELL*0.3;
+ctx.fillRect(wx,wy,CELL-2,CELL*0.7);
+ctx.fillStyle=C.waterLt;
+for(let i=0;i<3;i++){
+const bx=wx+10+i*16+Math.sin(G.time*3+i)*3;
+ctx.beginPath();ctx.arc(bx,wy+2,3+Math.sin(G.time*4+i*2)*2,0,Math.PI*2);ctx.fill();
+}
+}
+}
+
+// Draw pins
+for(const pin of G.pins){
+const px=pin.c*CELL+CELL/2,py=pin.r*CELL+CELL/2;
+const isHint=G.hintPin===pin.id&&G.hintTimer>0;
+drawPin(px,py,pin.pulled,pin.highlight,isHint?1:0);
+}
+
+// Draw gecko
+if(G.gecko.alive||G.state==='play'){
+drawGecko(G.gecko.px,G.gecko.py,1.1);
+}
+
+// Draw pulled pin particles
+for(const pin of G.pulledPins){
+const p=G.pins[pin];
+if(p&&p.animProgress<1){
+p.animProgress=Math.min(1,p.animProgress+0.05);
+const px=p.c*CELL+CELL/2,py=p.r*CELL+CELL/2-p.animProgress*30;
+ctx.globalAlpha=1-p.animProgress;
+drawPin(px,py,false,false,0);
+ctx.globalAlpha=1;
+}
+}
+
+ctx.restore();
+
+// Particles (in screen space)
+drawParticles(ctx);
+}
+
+/* ─── Tutorial Overlay ─── */
+function drawTutorial(){
+if(!G.tutorialActive)return;
+const lv=LEVELS[G.currentLevel];
+const step=G.tutorialStep;
+const tutSteps=lv.tutorial!==undefined?[
+{text:'Tap the pin to pull it!',pinIdx:0},
+{text:'Great! Now pull the next pin!',pinIdx:1},
+]:[];
+
+if(step>=tutSteps.length){G.tutorialActive=false;return}
+
+const tut=tutSteps[step];
+if(!tut)return;
+const pin=G.pins[tut.pinIdx];
+if(!pin||pin.pulled){G.tutorialStep++;return}
+
+// Draw hand pointer
+const px=boardX+(pin.c*CELL+CELL/2)*boardScale;
+const py=boardY+(pin.r*CELL+CELL/2)*boardScale;
+const bobY=Math.sin(G.time*3)*8;
+
+ctx.save();
+ctx.fillStyle='rgba(0,0,0,0.5)';
+roundRect(px-80,py+20+bobY,160,30,6);ctx.fill();
+ctx.fillStyle=C.txt;ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(tut.text,px,py+35+bobY);
+
+// Hand icon
+ctx.fillStyle='#fff';ctx.font='24px sans-serif';ctx.textAlign='center';
+ctx.fillText('👆',px,py-10+bobY);
+ctx.restore();
+}
+
+/* ─── UI Screens ─── */
+function drawBg(){
+const grad=ctx.createLinearGradient(0,0,0,H);
+grad.addColorStop(0,C.bg1);grad.addColorStop(1,C.bg2);
+ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+// Stars
+G.bgStars.forEach(s=>{
+ctx.fillStyle=`rgba(255,255,255,${s.b*(0.5+Math.sin(G.time*2+s.x*10)*0.5)})`;
+ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.s,0,Math.PI*2);ctx.fill();
+});
+}
+
+function drawHUD(){
+const lv=LEVELS[G.currentLevel];
+if(!lv)return;
+// Top bar
+ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(0,0,W,boardY-10);
+
+// Level title
+ctx.fillStyle=C.txt;ctx.font='bold 16px sans-serif';ctx.textAlign='center';
+ctx.fillText('Level '+(G.currentLevel+1),W/2,22);
+
+// Stars preview
+const starY=42;
+for(let i=0;i<3;i++){
+const sx=W/2-30+i*30;
+drawStarShape(sx,starY,10,4,G.moveCount<=lv.par&&(i<1||(i<2))||(i===0)?C.star:C.starE);
+}
+
+// Move counter
+ctx.fillStyle=C.txtDim;ctx.font='13px sans-serif';
+ctx.textAlign='left';ctx.fillText('Moves: '+G.moveCount+'/'+lv.par,20,70);
+
+// Coins
+ctx.fillStyle=C.gold;ctx.textAlign='right';
+ctx.fillText('⭐ '+G.save.coins,W-20,70);
+
+// Buttons
+const btnY=boardY+(ROWS*CELL*boardScale)+15;
+const btnW=70,btnH=36,gap=12;
+const totalW=btnW*4+gap*3;
+const startX=(W-totalW)/2;
+
+const btns=[
+{label:'Undo',action:'undo'},
+{label:'Hint',action:'hint'},
+{label:'Restart',action:'restart'},
+{label:'Menu',action:'menu'}
+];
+btns.forEach((b,i)=>{
+const bx=startX+i*(btnW+gap);
+b._x=bx;b._y=btnY;b._w=btnW;b._h=btnH;
+ctx.fillStyle=i===G.hoverBtn?C.btnHov:C.btn;
+roundRect(bx,btnY,btnW,btnH,8);ctx.fill();
+ctx.fillStyle=C.btnTxt;ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(b.label,bx+btnW/2,btnY+btnH/2);
+});
+
+G._hudBtns=btns;
+}
+
+function drawMenu(){
+drawBg();
+// Title
+const titleY=H*0.18;
+ctx.save();
+ctx.fillStyle=C.gecko;ctx.font='bold 42px sans-serif';ctx.textAlign='center';
+ctx.textBaseline='middle';
+ctx.shadowColor=C.gecko;ctx.shadowBlur=20;
+ctx.fillText('GECKO OUT',W/2,titleY);
+ctx.shadowBlur=0;
+ctx.fillStyle=C.txtDim;ctx.font='14px sans-serif';
+ctx.fillText('Pin Pull Puzzle',W/2,titleY+30);
+
+// Gecko mascot
+drawGecko(W/2,titleY+80,2);
+
+// Buttons
+const btnW=200,btnH=50;
+const btns=[
+{label:'PLAY',y:titleY+160,action:'play'},
+{label:'SETTINGS',y:titleY+225,action:'settings'}
+];
+btns.forEach((b,i)=>{
+const bx=(W-btnW)/2;
+b._x=bx;b._y=b.y;b._w=btnW;b._h=btnH;
+ctx.fillStyle=i===G.hoverBtn?C.btnHov:C.btn;
+roundRect(bx,b.y,btnW,btnH,12);ctx.fill();
+ctx.fillStyle=C.btnTxt;ctx.font='bold 18px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(b.label,W/2,b.y+btnH/2);
+});
+G._menuBtns=btns;
+
+// Total stars
+ctx.fillStyle=C.star;ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+ctx.fillText('Total Stars: '+G.save.totalStars+' / 90',W/2,btns[1].y+btnH+30);
+ctx.fillStyle=C.gold;
+ctx.fillText('Coins: '+G.save.coins,W/2,btns[1].y+btnH+55);
+
+ctx.restore();
+}
+
+function drawLevelSelect(){
+drawBg();
+ctx.fillStyle=C.txt;ctx.font='bold 22px sans-serif';ctx.textAlign='center';
+ctx.fillText('Select Level',W/2,35);
+
+// Chapter tabs
+const chNames=['Tutorial','Easy','Medium','Hard','Expert'];
+const tabW=W/5;
+for(let i=0;i<5;i++){
+const tx=i*tabW;
+ctx.fillStyle=C.txtDim;ctx.font='11px sans-serif';ctx.textAlign='center';
+ctx.fillText('Ch.'+(i+1),tx+tabW/2,60);
+}
+
+// Level grid
+const cols=5,cellW=60,cellH=65;
+const gridW=cols*cellW;
+const startX=(W-gridW)/2;
+const startY=80;
+
+G._levelBtns=[];
+for(let i=0;i<30;i++){
+const col=i%cols,row=Math.floor(i/cols);
+const bx=startX+col*cellW+5;
+const by=startY+row*cellH+5;
+const bw=cellW-10,bh=cellH-10;
+const unlocked=i===0||(G.save.levels[i-1]&&G.save.levels[i-1].stars>0);
+const data=G.save.levels[i];
+
+G._levelBtns.push({x:bx,y:by,w:bw,h:bh,level:i,unlocked});
+
+if(!unlocked){
+ctx.fillStyle='rgba(255,255,255,0.05)';
+roundRect(bx,by,bw,bh,6);ctx.fill();
+ctx.fillStyle='rgba(255,255,255,0.15)';ctx.font='16px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText('🔒',bx+bw/2,by+bh/2);
+}else{
+ctx.fillStyle=i===G.hoverBtn?'rgba(76,175,80,0.3)':'rgba(255,255,255,0.08)';
+roundRect(bx,by,bw,bh,6);ctx.fill();
+ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;
+roundRect(bx,by,bw,bh,6);ctx.stroke();
+
+ctx.fillStyle=C.txt;ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(''+(i+1),bx+bw/2,by+18);
+
+if(data){
+for(let s=0;s<3;s++){
+drawStarShape(bx+bw/2-14+s*14,by+bh-10,5,2,data.stars>s?C.star:C.starE);
+}
+}
+}
+}
+
+// Back button
+const bbx=10,bby=H-50,bbw=80,bbh=40;
+ctx.fillStyle=G.hoverBtn===-1?C.btnHov:C.btn;
+roundRect(bbx,bby,bbw,bbh,8);ctx.fill();
+ctx.fillStyle=C.btnTxt;ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText('Back',bbx+bbw/2,bby+bbh/2);
+G._backBtn={x:bbx,y:bby,w:bbw,h:bbh};
+}
+
+function drawSettings(){
+drawBg();
+ctx.fillStyle=C.txt;ctx.font='bold 22px sans-serif';ctx.textAlign='center';
+ctx.fillText('Settings',W/2,50);
+
+const optY=120;
+const opts=[
+{label:'Sound Effects',on:G.settings.sfx,action:'sfx'},
+{label:'Music',on:G.settings.music,action:'music'}
+];
+G._settingsBtns=[];
+opts.forEach((o,i)=>{
+const by=optY+i*70;
+const bw=250,bh=45;
+const bx=(W-bw)/2;
+G._settingsBtns.push({x:bx,y:by,w:bw,h:bh,...o});
+
+ctx.fillStyle='rgba(255,255,255,0.06)';
+roundRect(bx,by,bw,bh,10);ctx.fill();
+ctx.fillStyle=C.txt;ctx.font='16px sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+ctx.fillText(o.label,bx+20,by+bh/2);
+
+// Toggle
+const tx=bx+bw-55,ty=by+bh/2-12;
+ctx.fillStyle=o.on?C.gecko:'rgba(255,255,255,0.15)';
+roundRect(tx,ty,44,24,12);ctx.fill();
+ctx.fillStyle='#fff';
+ctx.beginPath();ctx.arc(o.on?tx+32:tx+12,ty+12,9,0,Math.PI*2);ctx.fill();
+});
+
+// Reset button
+const rby=optY+180,rbw=200,rbh=44;
+const rbx=(W-rbw)/2;
+G._resetBtn={x:rbx,y:rby,w:rbw,h:rbh};
+ctx.fillStyle='#c62828';
+roundRect(rbx,rby,rbw,rbh,10);ctx.fill();
+ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText('Reset Progress',rbx+rbw/2,rby+rbh/2);
+
+// Back
+const bby=rby+70,bbw=200,bbh=44;
+const bbx=(W-bbw)/2;
+G._settingsBack={x:bbx,y:bby,w:bbw,h:bbh};
+ctx.fillStyle=C.btn;
+roundRect(bbx,bby,bbw,bbh,10);ctx.fill();
+ctx.fillStyle=C.btnTxt;ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText('Back',bbx+bbw/2,bby+bbh/2);
+}
+
+function drawWin(){
+drawBg();
+const panelW=Math.min(320,W*0.85),panelH=320;
+const px=(W-panelW)/2,py=(H-panelH)/2-20;
+
+ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,0,W,H);
+ctx.fillStyle=C.panel;
+roundRect(px,py,panelW,panelH,16);ctx.fill();
+ctx.strokeStyle=C.panelBd;ctx.lineWidth=2;
+roundRect(px,py,panelW,panelH,16);ctx.stroke();
+
+ctx.fillStyle=C.txt;ctx.font='bold 24px sans-serif';ctx.textAlign='center';
+ctx.fillText('Level Complete!',W/2,py+40);
+
+// Stars
+const lv=LEVELS[G.currentLevel];
+for(let i=0;i<3;i++){
+drawStarShape(W/2-40+i*40,py+80,18,7,i<G.winStars?C.star:C.starE);
+}
+
+ctx.fillStyle=C.txtDim;ctx.font='14px sans-serif';
+ctx.fillText('Moves: '+G.moveCount+' / Par: '+lv.par,W/2,py+115);
+ctx.fillStyle=C.gold;
+ctx.fillText('+'+G.winCoins+' coins',W/2,py+140);
+
+// Buttons
+const btnW=120,btnH=44,gap=15;
+const hasNext=G.currentLevel<29;
+const btnCount=hasNext?3:2;
+const totalBW=btnCount*btnW+(btnCount-1)*gap;
+const bsx=(W-totalBW)/2;
+const btns=[];
+
+if(hasNext)btns.push({label:'Next',x:bsx,y:py+170,w:btnW,h:btnH,action:'next'});
+btns.push({label:'Retry',x:bsx+(btns.length)*(btnW+gap),y:py+170,w:btnW,h:btnH,action:'retry'});
+btns.push({label:'Levels',x:bsx+(btns.length)*(btnW+gap),y:py+170,w:btnW,h:btnH,action:'levels'});
+
+btns.forEach((b,i)=>{
+ctx.fillStyle=i===G.hoverBtn?C.btnHov:C.btn;
+roundRect(b.x,b.y,b.w,b.h,10);ctx.fill();
+ctx.fillStyle=C.btnTxt;ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2);
+});
+G._winBtns=btns;
+
+drawParticles(ctx);
+}
+
+function drawFail(){
+drawBg();
+const panelW=Math.min(300,W*0.85),panelH=220;
+const px=(W-panelW)/2,py=(H-panelH)/2-20;
+
+ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,0,W,H);
+ctx.fillStyle=C.panel;
+roundRect(px,py,panelW,panelH,16);ctx.fill();
+ctx.strokeStyle=C.panelBd;ctx.lineWidth=2;
+roundRect(px,py,panelW,panelH,16);ctx.stroke();
+
+ctx.fillStyle='#EF5350';ctx.font='bold 22px sans-serif';ctx.textAlign='center';
+ctx.fillText('Try Again!',W/2,py+45);
+
+ctx.fillStyle=C.txtDim;ctx.font='14px sans-serif';
+ctx.fillText('The gecko didn\'t make it...',W/2,py+80);
+
+const btnW=120,btnH=44,gap=15;
+const bsx=(W-btnW*2-gap)/2;
+const btns=[
+{label:'Retry',x:bsx,y:py+120,w:btnW,h:btnH,action:'retry'},
+{label:'Undo',x:bsx+btnW+gap,y:py+120,w:btnW,h:btnH,action:'failUndo'}
+];
+btns.forEach((b,i)=>{
+ctx.fillStyle=i===G.hoverBtn?C.btnHov:C.btn;
+roundRect(b.x,b.y,b.w,b.h,10);ctx.fill();
+ctx.fillStyle=C.btnTxt;ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2);
+});
+G._failBtns=btns;
+}
+
+/* ─── Main Render ─── */
+function render(dt){
+ctx.clearRect(0,0,W,H);
+G.time+=dt;
+if(G.hintTimer>0)G.hintTimer-=dt;
+updateParticles(dt);
+const shake=getShake(dt);
+
+switch(G.state){
+case 'menu':drawMenu();break;
+case 'select':drawLevelSelect();break;
+case 'settings':drawSettings();break;
+case 'play':
+ctx.save();ctx.translate(shake.x,shake.y);
+drawBg();drawBoard();drawHUD();drawTutorial();
+ctx.restore();
+break;
+case 'win':drawWin();break;
+case 'fail':drawFail();break;
+}
+}
+
+/* ─── Input Handling ─── */
+function getPos(e){
+const r=canvas.getBoundingClientRect();
+const t=e.touches?e.touches[0]:e;
+return{x:t.clientX-r.left,y:t.clientY-r.top};
+}
+
+function hitBtn(px,py,btns){
+for(let i=0;i<btns.length;i++){
+const b=btns[i];
+if(px>=b.x&&px<=b.x+b.w&&py>=b.y&&py<=b.y+b.h)return i;
+}return-1;
+}
+
+function handleTap(px,py){
+initAudio();
+if(G.state==='menu'){
+const bi=hitBtn(px,py,G._menuBtns||[]);
+if(bi>=0){
+sfxClick();
+const a=G._menuBtns[bi].action;
+if(a==='play'){G.state='select';startMusic()}
+if(a==='settings')G.state='settings';
+}
+}else if(G.state==='select'){
+const bi=hitBtn(px,py,G._levelBtns||[]);
+if(bi>=0){
+const lb=G._levelBtns[bi];
+if(lb.unlocked){sfxClick();initLevel(lb.level);G.state='play'}
+}
+if(G._backBtn&&px>=G._backBtn.x&&px<=G._backBtn.x+G._backBtn.w&&py>=G._backBtn.y&&py<=G._backBtn.y+G._backBtn.h){
+sfxClick();G.state='menu';
+}
+}else if(G.state==='play'){
+// Check HUD buttons first
+if(G._hudBtns){
+const bi=hitBtn(px,py,G._hudBtns);
+if(bi>=0){
+sfxClick();
+const a=G._hudBtns[bi].action;
+if(a==='undo')undoMove();
+if(a==='hint')showHint();
+if(a==='restart'){initLevel(G.currentLevel)}
+if(a==='menu'){stopMusic();G.state='menu'}
+return;
+}
+}
+// Check pin taps
+if(!G.animating){
+const bx=(px-boardX)/boardScale;
+const by=(py-boardY)/boardScale;
+for(const pin of G.pins){
+if(pin.pulled)continue;
+const pcx=pin.c*CELL+CELL/2;
+const pcy=pin.r*CELL+CELL/2;
+const dx=bx-pcx,dy=by-pcy;
+if(Math.abs(dx)<CELL*0.6&&Math.abs(dy)<CELL*0.4){
+pullPin(pin.id);return;
+}
+}
+}
+}else if(G.state==='win'){
+const bi=hitBtn(px,py,G._winBtns||[]);
+if(bi>=0){
+sfxClick();
+const a=G._winBtns[bi].action;
+if(a==='next'){initLevel(G.currentLevel+1);G.state='play'}
+if(a==='retry'){initLevel(G.currentLevel);G.state='play'}
+if(a==='levels'){G.state='select'}
+}
+}else if(G.state==='fail'){
+const bi=hitBtn(px,py,G._failBtns||[]);
+if(bi>=0){
+sfxClick();
+const a=G._failBtns[bi].action;
+if(a==='retry'){initLevel(G.currentLevel);G.state='play'}
+if(a==='failUndo'){
+if(G.undoStack.length>0){
+G.state='play';
+undoMove();
+G.gecko.alive=true;
+}else{
+initLevel(G.currentLevel);G.state='play';
+}
+}
+}
+}else if(G.state==='settings'){
+// Toggle buttons
+const sb=G._settingsBtns||[];
+for(let i=0;i<sb.length;i++){
+const b=sb[i];
+if(px>=b.x&&px<=b.x+b.w&&py>=b.y&&py<=b.y+b.h){
+sfxClick();
+if(b.action==='sfx'){G.settings.sfx=!G.settings.sfx;writeSettings()}
+if(b.action==='music'){G.settings.music=!G.settings.music;writeSettings();if(G.settings.music)startMusic();else stopMusic()}
+}
+}
+// Reset
+if(G._resetBtn&&px>=G._resetBtn.x&&px<=G._resetBtn.x+G._resetBtn.w&&py>=G._resetBtn.y&&py<=G._resetBtn.y+G._resetBtn.h){
+sfxClick();G.save=defaultSave();writeSave();
+}
+// Back
+if(G._settingsBack&&px>=G._settingsBack.x&&px<=G._settingsBack.x+G._settingsBack.w&&py>=G._settingsBack.y&&py<=G._settingsBack.y+G._settingsBack.h){
+sfxClick();G.state='menu';
+}
+}
+}
+
+/* ─── Cleanup & Resource Management ─── */
+let _rafId=0;
+const _handlers={};
+function cleanup(){
+  cancelAnimationFrame(_rafId);
+  canvas.removeEventListener('pointerdown',_handlers.down);
+  canvas.removeEventListener('pointermove',_handlers.move);
+  canvas.removeEventListener('pointerup',_handlers.up);
+  canvas.removeEventListener('pointercancel',_handlers.cancel);
+  if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.state!=='closed'){try{audioCtx.close()}catch(e){}}
+  console.log('Gecko Out: cleaned up');
+}
+
+canvas.addEventListener('pointerdown',_handlers.down=function(e){
+e.preventDefault();
+const p=getPos(e);
+G._lastPointer={x:p.x,y:p.y};
+handleTap(p.x,p.y);
+});
+
+canvas.addEventListener('pointermove',_handlers.move=function(e){
+e.preventDefault();
+const p=getPos(e);
+// Update hover
+G.hoverBtn=-1;
+const btns=G.state==='menu'?G._menuBtns:
+G.state==='play'?G._hudBtns:
+G.state==='win'?G._winBtns:
+G.state==='fail'?G._failBtns:
+G.state==='select'?G._levelBtns:[];
+if(btns)G.hoverBtn=hitBtn(p.x,p.y,btns);
+});
+
+canvas.addEventListener('pointerup',_handlers.up=function(e){e.preventDefault()});
+canvas.addEventListener('pointercancel',_handlers.cancel=function(e){e.preventDefault()});
+
+/* ─── Game Loop ─── */
+let lastTime=0;
+function gameLoop(timestamp){
+_rafId=requestAnimationFrame(gameLoop);
+const dt=Math.min((timestamp-lastTime)/1000,0.05);
+lastTime=timestamp;
+render(dt);
+}
+_rafId=requestAnimationFrame(gameLoop);
+
+})();
+</script>
+</body>
+</html>

@@ -1,5 +1,31 @@
 # Test Case Library Changelog
 
+## [v1.47.0] - 2026-06-13
+### Added
+- 10 new test cases from industry research (R160 Dynamic Test Intelligence cron)
+- S-091: CVE-2026-9880 WebGL insufficient input validation — shader/buffer fuzz testing (P0)
+- S-092: WebAssembly memory safety for Unity/Unreal WebGL exports (P1)
+- S-093: HTTP/2 and HTTP/3 DoS resilience for CDN and multiplayer games (P2)
+- B-079: Interop 2026 CSS contrast-color() cross-browser feature parity (P1)
+- G-122: 10-second hook rule time-to-fun UX benchmark (P1)
+- G-123: Mini-game permanent mode switching UX flow (P2)
+- P-051: WebGPU main-thread responsiveness vs WebGL benchmark (P1)
+- P-052: WebGPU framebuffer configuration correctness migration test (P2)
+- C-079: Agentic AI autonomous exploit-finding QA pipeline evaluation (P2)
+- W-136: Shift-Right live telemetry QA production monitoring integration (P2)
+
+### Sources
+- WebGL CVE-2026-9880: https://forbes.com/sites/daveywinder/2026/05/31/151-chrome-security-flaws-22-critical-fixed-in-new-google-update
+- WASM memory safety: https://idw-online.de/en/news871992
+- HTTP/2/3 DoS: https://cyberdaily.au/security/13729-op-ed-microsoft-june-patch-tuesday-reveals-200-vulnerabilities
+- Interop 2026 CSS: https://howtogeek.com/chrome-firefox-edge-and-safari-are-teaming-up-to-fix-common-web-problems
+- 10-second hook: https://gamegrowthadvisor.com/blog/2026-04-16-hybrid-casual-game-design-strategy-2026
+- Mini-game modes: https://game-developers.org/mobile-game-genre-breakdown-2026
+- WebGPU main-thread: https://gjgalante.medium.com/webgl-vs-webgpu-the-performance-gap-fbd121fb221a
+- WebGPU framebuffer: https://toji.dev/webgpu-best-practices/webgpu-performance-comparison.html
+- Agentic AI playtesting: https://thecodersblog.com/agentic-ai-for-game-playtesting-2026
+- Shift-Right telemetry: https://snoopgame.com/blog/top-game-testing-trends-to-watch-in-2026
+
 ## [v1.46.0] - 2026-06-13
 ### Added
 - 8 new test cases from industry research (R157 Dynamic Test Intelligence cron)

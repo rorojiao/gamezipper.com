@@ -349,7 +349,8 @@ const GAMES = [
   {name:"Beads Out",emoji:"🔴",cat:"puzzle",tags:["beads","string","logic","tap","constraint"],url:"/beads-out/",desc:"Beads Out - Tap colored beads in sequence to clear strings. A constraint-satisfaction puzzle with 30 levels, star ratings and satisfying mechanics.",isNew:true,status:"live"},
   {name:"Pocket Sort",emoji:"🪙",cat:"puzzle",tags:["sort","merge","coin","color","puzzle","logic"],url:"/pocket-sort/",desc:"Sort coins by color into slots, fill slots to merge them into higher tiers! A satisfying merge+sort puzzle with 30 levels, star ratings and power-ups. Free online.",isNew:true,status:"live"},
 
-];
+
+{name:"Gecko Out",emoji:"🦎",cat:"puzzle",tags:["pin-pull","logic","casual"],url:"/gecko-out/",desc:"Pull pins in the right order to free the gecko in this brain-teasing puzzle adventure",isNew:true,status:"live"},];
 
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
@@ -372,4 +373,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-
