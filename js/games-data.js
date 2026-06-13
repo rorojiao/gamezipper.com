@@ -354,7 +354,9 @@ const GAMES = [
 {name:"Emoji Merge",emoji:"🧩",cat:"puzzle",tags:["merge","puzzle","emoji","casual"],url:"/emoji-merge/",desc:"Drag identical emojis together to merge and evolve them through 13 stages across 30 addictive puzzle levels.",isNew:true,status:"live"},
 {name:"Bus Traffic Fever",emoji:"🚌",cat:"puzzle",tags:["puzzle","parking","bus","traffic","escape","brain","strategy","logic"],url:"/bus-traffic-fever/",desc:"Tap buses to slide them out of the parking lot! Plan your exit order across 30 brain-teasing levels from tutorial to expert.",isNew:true,status:"live"},
 {name:"Brainrot Blocks",emoji:"🧩",cat:"puzzle",tags:["Block","Puzzle","Brainrot","Neon","Grid","Casual","Combo","Strategy","Brain","Free","HTML5","Browser"],url:"/brainrot-blocks/",desc:"Drag neon blocks onto the grid and clear lines for combo bonuses in this addictive brainrot-themed block puzzle game with 30 levels.",isNew:true,status:"live"},{name:"Aqua Digger",emoji:"💧",cat:"puzzle",tags:["water","dig","logic","physics"],url:"/aqua-digger/",desc:"Dig through dirt to route water to the goal in this satisfying puzzle game with 30 levels",isNew:true,status:"live"},
-{name:"Maze Paint",emoji:"🎨",cat:"puzzle",tags:["maze","puzzle","swipe","paint","logic","sliding","ball"],url:"/maze-paint/",desc:"Slide your paint ball through maze corridors and fill every cell! 30 levels from tutorial to expert with star ratings and hints.",isNew:true,status:"live"},];
+{name:"Maze Paint",emoji:"🎨",cat:"puzzle",tags:["maze","puzzle","swipe","paint","logic","sliding","ball"],url:"/maze-paint/",desc:"Slide your paint ball through maze corridors and fill every cell! 30 levels from tutorial to expert with star ratings and hints.",isNew:true,status:"live"},
+{name:"Triple Match 3D",emoji:"🎯",cat:"puzzle",tags:["Puzzle","Match","3D","Objects","Brain","Sort","Casual","Free","HTML5","Browser"],url:"/triple-match-3d/",desc:"Find and tap 3 identical objects to clear them! 25 addictive levels of 3D matching puzzle fun. Tray management, combos, power-ups!",isNew:true,status:"live"},
+];
 
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
