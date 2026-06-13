@@ -1,592 +1,167 @@
-# Rope Rescue Puzzle Game - Competitive Benchmark
+# Rope Rescue - Competitive Benchmark
 
-**Version:** 1.0  
-**Date:** May 2026  
-**Purpose:** Guide development of a complete HTML5 Canvas rope rescue puzzle game
-
----
-
-## Executive Summary
-
-The rope-cutting/rescue puzzle genre has produced multiple hit games with 100M+ combined downloads. Core appeal: simple swipe-to-cut mechanics with physics-based problem solving. Key differentiators in successful titles include level variety, difficulty progression, and satisfying physics feedback.
-
-**Target Game Specs:**
-- 30+ levels across 5 tiers
-- Verlet integration rope physics
-- Swipe/draw rope cutting
-- Physics obstacles (swings, bounces, gravity)
-- 3-star rating system
-- Hint system
-- Undo/restart
-- Guided tutorial (first 3 levels)
-- Web Audio BGM + SFX
-- Canvas procedural art (colorful, cartoon)
-- Responsive (desktop + mobile)
+## Date: 2026-06-14
+## Candidate: Rope Rescue (rope-rescue)
+## Status: SELECTED (24/25 score)
 
 ---
 
-## 1. Competitor Analysis
+## Competitive Analysis
 
-### 1.1 Rescue Cut - Rope Puzzle
+### 1. Rope Rescue (Supersonic Studios)
+- **Downloads/Rating**: 90M+, 4.5★
+- **Levels**: 500+ levels
+- **Core Mechanic**: Drag rope ends to tie ropes around pegs, stretch to rescue targets
+- **Interaction**: Touch-drag to pull rope ends, rope wraps around obstacles
+- **Victory Condition**: Guide rescue object (hero/animal) to goal zone
+- **Scoring**: 1-3 stars based on rope length, time, attempts
+- **Progression**: 5-6 chapters with difficulty curve
+- **Hints**: Watch video or spend currency for hint
+- **Save**: Local save with level progress and best stars
+- **Monetization**: Interstitial on level complete, rewarded video for hints, no major IAP
 
-**Overview:**
-- **Developer:** ITI inc.
-- **Downloads:** 100M+
-- **Rating:** 4.0 (486K reviews)
-- **Platforms:** Android, Windows
-- **Genre:** Rope-cutting physics puzzle
-
-**Core Mechanics:**
-- Simple swipe gesture cuts ropes
-- Character (man) tied up in room, must be rescued
-- Physics-based rope simulation with gravity
-- Single-finger swipe control for cutting
-- Multiple ropes per level with strategic cutting order required
-
-**Level Structure:**
-- 400+ levels (based on YouTube walkthrough content showing levels 351-400)
-- Levels increase in complexity through combination of:
-  - Multiple ropes with different tension states
-  - Swinging obstacles (blades, spikes)
-  - Multiple characters to rescue
-  - Moving platforms
-  - Limited cuts (sometimes restricted to 1-2 cuts)
-
-**Systems:**
-- No explicit star system visible
-- No hint system identified
-- No tutorial - immediate gameplay
-- Progress saves automatically
-- Heavy ad integration (major complaint)
-- In-app purchases for ad removal
-
-**Art Style:**
-- 2D stylized cartoon graphics
-- Simple character designs
-- Room-based level backgrounds
-- Clean, minimalist visual approach
-- Animated reactions when character is saved or fails
-
-**Sound:**
-- Basic sound effects for cutting
-- Character vocalizations
-- No persistent BGM identified
-
-**Key Differentiators:**
-- Massive level count (400+)
-- "Room escape" visual theme
-- One-cut puzzles in early levels
-- Blade/spike hazards add danger element
-- Simple, accessible controls
-
-**Weaknesses (from user reviews):**
-- Excessive ads (most common complaint)
-- Levels become repetitive after 800+
-- Too easy - lack of difficulty curve
-- Level recycling/repetition noted
+### 2. Cut the Rope (ZeptoLab)
+- **Downloads/Rating**: 1B+, 4.7★
+- **Levels**: 200+ levels (original game)
+- **Core Mechanic**: Cut ropes to let candy fall to Om Nom, physics-based
+- **Interaction**: Swipe to cut ropes, tap to pop bubbles, drag sliding
+- **Victory Condition**: Get candy to Om Nom mouth
+- **Scoring**: 1-3 stars based on time, stars collected (0-3 per level)
+- **Progression**: Multiple boxes (chapters) with new mechanics
+- **Hints**: Purchase with coins or watch video
+- **Save**: Save level progress, star collection, achievements
+- **Monetization**: Rewarded videos for hints, interstitial between chapters
 
 ---
 
-### 1.2 Love Pins
+## Key Mechanic Differences
 
-**Overview:**
-- **Developer:** Supersonic Studios LTD
-- **Downloads:** 50M+
-- **Rating:** 4.2 (69K reviews)
-- **Platforms:** Android, Windows
-- **Genre:** Pin-pulling puzzle (similar mechanic, different theme)
-
-**Core Mechanics:**
-- Pull pins in correct order to solve puzzle
-- Bring boy and girl characters together
-- Physics-based pin removal triggers chain reactions
-- Strategic pin order is key - wrong order causes failure
-
-**Level Structure:**
-- 200+ levels noted
-- Difficulty increases through:
-  - More pins to manage
-  - Hazards (spikes, gaps)
-  - Multiple characters
-  - Timing-sensitive solutions
-- User complaint: levels repeat after ~100-150
-
-**Systems:**
-- No explicit star rating system
-- No hint system
-- Progress auto-saves
-- In-app purchases available
-- "Offline" labeled capability
-
-**Art Style:**
-- Colorful 2D cartoon graphics
-- Distinct boy/girl characters with animations
-- Cute character reactions
-- Simple backgrounds
-- Character "dances" when reunited (noted in reviews)
-
-**Sound:**
-- Basic SFX
-- No persistent BGM mentioned
-
-**Key Differentiators:**
-- Pin-pulling vs rope-cutting (different input)
-- Romance theme (boy meets girl)
-- Character animations and reactions
-- Supersonic's polish and production values
-
-**Weaknesses:**
-- Levels repeat after ~100-150
-- Too easy - 2-5 seconds per level
-- Excessive ads
-- Limited challenge
+| Aspect | Rope Rescue | Cut the Rope | Our Game (Rope Rescue GZ) |
+|--------|-------------|--------------|---------------------------|
+| Core Action | TIE/WRAP ropes | CUT ropes | TIE/WRAP ropes |
+| Rope Physics | Stretch, tension, weight | Swing, gravity, cut | Stretch + gravity |
+| Win Condition | Guide target to safety | Get candy to Om Nom | Rescue hero to goal |
+| Obstacles | Spikes, falling, moving | Spikes, bubbles, bumpers | Spikes, moving, cutting |
+| Difficulty | Moderate (rope planning) | Moderate-High (timing) | Moderate (tactical) |
 
 ---
 
-### 1.3 Save the Boy: Rescue Puzzle
+## Feature Requirements (Must Have)
 
-**Overview:**
-- **Developer:** Game District IT Solutions
-- **Downloads:** 1M+
-- **Rating:** 4.4 (1.6K reviews)
-- **Platforms:** Android
-- **Genre:** Rope-cutting physics puzzle
+### Core Mechanics
+- [x] Verlet physics engine (reuse Cut the Rope code)
+- [ ] Rope stretching with tension visualization
+- [ ] Rope wrapping around pegs/obstacles
+- [ ] Weight distribution (heavy target pulls rope taut)
+- [ ] Goal zone detection (rescue target reaches goal)
+- [ ] Collision detection with spikes/hazards
 
-**Core Mechanics:**
-- Cut ropes to release boy character
-- Guide character to exit door
-- Physics-based movement after cutting
-- Strategic rope-cutting order required
+### Input System
+- [ ] Touch-drag rope ends
+- [ ] Rope auto-anchors to pegs when near
+- [ ] Visual feedback (rope tension color)
+- [ ] Pointer events for desktop/mobile
 
-**Level Structure:**
-- Multiple levels with increasing difficulty
-- Each level requires different strategy
-- Obstacles and hazards introduced progressively
+### Level System
+- [ ] Minimum 30 levels (5 chapters × 6 levels)
+- [ ] Progressive difficulty: simple → multi-peg → moving obstacles
+- [ ] Obstacle types: static pegs, moving pegs, spike zones, rope-cut zones
+- [ ] Level metadata: par rope length, hint count, star thresholds
 
-**Systems:**
-- Finger swipe/touch controls
-- Progress saving
-- In-app purchases
-- Ads integration
+### Scoring & Stars
+- [ ] 1-3 stars based on: rope length used (shorter = better), time (optional), attempts
+- [ ] Star thresholds: Bronze (1★, 200% rope), Silver (2★, 150% rope), Gold (3★, 100% rope)
+- [ ] Best score per level (localStorage)
+- [ ] Progress save with version field
 
-**Art Style:**
-- Cartoon-style graphics
-- Boy character design
-- Room/exit door objectives
-- Clean visual style
+### UI Systems
+- [ ] Level select screen (chapter-based)
+- [ ] In-game UI: restart, hint, back, menu
+- [ ] Tutorial overlay (first 3 levels)
+- [ ] Victory modal with stars + next level button
+- [ ] Settings modal: sound, music, reset progress
 
-**Sound:**
-- Basic sound effects
-- No major BGM noted
+### Feedback & Polish
+- [ ] Particles on rope tie/stretch
+- [ ] Screen shake on hazard hit
+- [ ] Smooth rope rendering (quadratic curves)
+- [ ] Rope tension visualization (color gradient: green → red)
+- [ ] Confetti on 3-star completion
 
-**Key Differentiators:**
-- Exit door as objective (different win condition visualization)
-- "Bear" enemy character noted in reviews
-- Less polished than Rescue Cut
-
----
-
-### 1.4 Cut the Rope (Reference/Ancestor)
-
-**Overview:**
-- **Original Release:** 2010 (ZeptoLab)
-- **Downloads:** 100M+ historically
-- **Genre:** Physics puzzle with rope/constraint mechanics
-- **Mechanic:** Cut rope to drop candy to Om Nom character
-
-**Key Contributions to Genre:**
-- Popularized physics-based rope/constraint puzzles
-- Star rating system (3 stars based on score)
-- Sequential level unlocks
-- Collectible elements (stars)
-- Tutorial integration
-
-**Why It's Relevant:**
-- Established core mechanics that inspired Rescue Cut/Love Pins
-- Proved physics puzzle genre viability
-- Star rating became industry standard
+### Audio
+- [ ] BGM: Ambient tension-building (Web Audio)
+- [ ] SFX: rope stretch, rope tie, win, fail, hint, button click
+- [ ] Sound toggle button
 
 ---
 
-## 2. Genre Comparison
+## Level Difficulty Progression
 
-| Feature | Rescue Cut | Love Pins | Save the Boy | Target Game |
-|---------|-----------|-----------|--------------|-------------|
-| **Core Mechanic** | Cut rope | Pull pin | Cut rope | Cut rope |
-| **Downloads** | 100M+ | 50M+ | 1M+ | - |
-| **Levels** | 400+ | 200+ | 100+ | 30+ |
-| **Star Rating** | No | No | No | Yes (3-star) |
-| **Hint System** | No | No | No | Yes |
-| **Undo/Restart** | Implicit (restart) | Implicit | Implicit | Yes |
-| **Tutorial** | None | None | None | First 3 levels |
-| **Physics System** | Verlet-like | Simplified | Basic | Verlet integration |
-| **Obstacles** | Blades, spikes | Spikes | Various | Swings, bounces, spikes |
-| **Art Style** | Stylized 2D | Cartoon 2D | Cartoon 2D | Procedural Canvas |
-| **BGM** | None | Minimal | Minimal | Web Audio BGM |
-| **Responsive** | Mobile-first | Mobile-first | Mobile-first | Desktop + Mobile |
+| Chapter | Levels | Mechanics Introduced | Difficulty |
+|---------|--------|----------------------|------------|
+| 1 | 1-6 | Basic rope stretching, static pegs | Easy |
+| 2 | 7-12 | Multi-peg wrapping, weight distribution | Easy-Medium |
+| 3 | 13-18 | Moving pegs, spike zones | Medium |
+| 4 | 19-24 | Rope-cut hazards, timing | Medium-Hard |
+| 5 | 25-30 | Complex obstacle combos, optimal rope length | Hard |
 
 ---
 
-## 3. Monetization Patterns in Genre
+## Technical Constraints
 
-### 3.1 Ad-Based Monetization (Primary)
-
-**Interstitial Ads:**
-- Displayed between levels
-- Most common complaint in all competitor reviews
-- Users tolerate if gameplay is strong
-- "Play in airplane mode" workaround commonly suggested
-
-**Rewarded Ads:**
-- Extra hints
-- Skip difficult levels
-- Currency/rewards
-- Less intrusive than interstitials
-
-**Ad Frequency Impact:**
-- Heavy ads = negative reviews
-- Players suggest ad removal IAP
-- Balance needed: ads necessary for F2P but excessive alienates
-
-### 3.2 In-App Purchases
-
-**Common IAP Tiers:**
-- Ad removal ($1-5 typical)
-- Hint packs
-- Level skip passes
-- Cosmetic packs
-
-### 3.3 Session Length Patterns
-
-**Short Sessions (30 sec - 2 min):**
-- One-cut puzzles complete in seconds
-- Players progress rapidly
-- Good for mobile commute use case
-- Challenge: monetization windows are brief
-
-**Retention Concern:**
-- Players blast through levels quickly
-- Without content depth, churn fast
-- Level recycling (Love Pins, Rescue Cut) is a band-aid
-
-### 3.4 Retention Mechanics
-
-**What Works:**
-1. **Level unlock progression** - dopamine from new content
-2. **Star rating** - replayability for better score
-3. **Hint system** - prevents hard-stuck abandonment
-4. **Difficulty curve** - easy start, gradual challenge
-5. **Novel obstacles** - new mechanics keep interest
-
-**What Fails:**
-1. **Level repetition** - kills long-term engagement
-2. **Excessive difficulty without help** - players abandon
-3. **No progress feeling** - need visible advancement
-4. **Excessive ads** - primary churn driver
+- Single file HTML: rope-rescue/index.html
+- No external deps (except fonts)
+- Canvas rendering (60fps)
+- Responsive: desktop (1280×720) + mobile (390×844)
+- Touch-action:none on canvas
+- No emoji in game (Canvas-drawn graphics only)
+- English UI only
 
 ---
 
-## 4. Addictive Design Patterns
+## Core Systems to Implement
 
-### 4.1 Session Rhythm
+### 1. Physics Engine
+- Verlet integration for rope simulation
+- Rope segments with mass and constraints
+- Gravity and collision detection
+- Peg wrapping logic (rope bends around pegs)
 
-**Ideal Session Structure:**
-- Level selection (3-5 level chunk)
-- 30-90 second play per level
-- Interstitial ad every 3-5 levels
-- Completion celebration/feedback
+### 2. Game State Management
+- Menu → Level Select → Gameplay → Victory/Defeat
+- Level progression unlock system
+- Star progress tracking
+- LocalStorage save/load
 
-### 4.2 Progression Systems
-
-**Unlock Tiers:**
-- Tier 1: Tutorial (Levels 1-3)
-- Tier 2: Basic mechanics (Levels 4-9)
-- Tier 3: Intermediate (Levels 10-18)
-- Tier 4: Advanced (Levels 19-26)
-- Tier 5: Expert (Levels 27-33)
-
-**Star Thresholds:**
-- 1 Star: Complete level (reach goal)
-- 2 Stars: Complete + efficiency (fewer cuts/less time)
-- 3 Stars: Optimal solution (defined criteria)
-
-### 4.3 Difficulty Escalation
-
-**Tier 1 (Tutorial):**
-- Single rope, direct cut
-- No hazards
-- Guaranteed success with any cut
-
-**Tier 2 (Basic):**
-- 2-3 ropes
-- Simple obstacle avoidance
-- One correct solution
-
-**Tier 3 (Intermediate):**
-- Multiple ropes with dependencies
-- Swinging obstacles
-- Timing-based elements
-
-**Tier 4 (Advanced):**
-- Complex multi-rope setups
-- Moving hazards
-- Limited cuts (strategic planning required)
-
-**Tier 5 (Expert):**
-- All mechanics combined
-- Precise timing required
-- Multiple-step solutions
-
----
-
-## 5. Technical Implementation Guide
-
-### 5.1 Rope Physics (Verlet Integration)
-
-**Point Mass System:**
-- Rope represented as chain of point masses
-- Each point has position, previous position (velocity implicit)
-- Constraint distances between adjacent points
-
-**Update Loop:**
-```
-for each point:
-  velocity = position - previousPosition
-  previousPosition = position
-  position = position + velocity + gravity * dt * dt
-```
-
-**Constraint Solving:**
-- Iterate multiple times per frame
-- Move points to satisfy distance constraints
-- Keep anchor points fixed
-
-### 5.2 Cutting Mechanic
-
-**Line-Segment Intersection:**
-- Track swipe as line segment
-- For each rope segment, check intersection
-- On intersection: split rope at that point
-
-**Swipe Detection:**
-- Touch/mouse down: record start point
-- Touch/mouse move: draw line, check intersections
-- Touch/mouse up: finalize cut
-
-### 5.3 Collision Detection
-
-**Circle-Based Collision:**
-- Characters and obstacles as circles
-- Rope points vs circle distance check
-- Resolve by pushing point out + velocity response
-
-**Hazard Types:**
-- Static spikes (instant fail on contact)
-- Swinging blades (arc motion)
-- Bouncy surfaces (velocity reflection)
-- Moving platforms (animated position offset)
-
-### 5.4 Win/Lose Conditions
-
-**Win:**
-- Character reaches goal zone (exit door)
-- Physics body enters trigger area
-
-**Lose:**
-- Character hits hazard
-- Character falls off screen
-- Timeout (optional)
-
-### 5.5 Level Data Structure
-
+### 3. Level Data Structure
 ```javascript
-level = {
-  id: 1,
-  tier: 1,
-  stars: { one: 0, two: 1, three: 2 }, // cuts needed for stars
-  anchors: [{ x, y }],
-  ropes: [
-    { points: [{x,y}...], attachedTo: [0, 5] },
-  ],
-  characters: [{ x, y, radius }],
-  hazards: [{ type: 'spike'|'blade'|'bouncer', x, y, ... }],
-  goal: { x, y, width, height },
-  hint: 'Cut the rope when it swings left'
+{
+  chapter: 1,
+  level: 1,
+  parRopeLength: 300,
+  starThresholds: { bronze: 200, silver: 150, gold: 100 },
+  target: { x: 400, y: 300 },
+  goal: { x: 600, y: 500 },
+  pegs: [{ x: 400, y: 200, radius: 15 }],
+  spikes: [],
+  movingPegs: [],
+  cutZones: []
 }
 ```
 
----
+### 4. Rope Mechanics
+- Two rope ends that player drags
+- Rope auto-anchors to pegs when within radius
+- Rope segments stretch under weight
+- Rope tension visualization (color: green → yellow → red)
+- Rope length calculation for scoring
 
-## 6. Audio Design
-
-### 6.1 BGM (Background Music)
-
-**Style:** Upbeat, casual, loopable
-**Tempo:** 100-120 BPM
-**Characteristics:**
-- Short loop (8-16 bars)
-- Play continuously during gameplay
-- Mute option for mobile users
-- Generated via Web Audio oscillators (no external files)
-
-**Implementation:**
-- Simple oscillator-based melody
-- Layered pads for atmosphere
-- Low CPU impact
-
-### 6.2 SFX (Sound Effects)
-
-**Essential SFX:**
-- Rope cut: Quick "snap" sound (noise burst + filter)
-- Character saved: Positive chime/celebration
-- Character hurt: Brief negative sound
-- Level complete: Success jingle
-- Button press: UI click
-- Hint activated: Sparkle/magic sound
-
-**Implementation:**
-- Web Audio API generated sounds
-- No external audio files needed
-- Procedural synthesis for all effects
+### 5. Win/Lose Conditions
+- WIN: Target reaches goal zone (inside goal radius)
+- LOSE: Target hits spike or falls off screen
+- WIN timing: Delay before victory modal
 
 ---
 
-## 7. UI/UX Requirements
-
-### 7.1 Screen Flow
-
-```
-Title Screen
-    |
-    v
-Level Select (Tier-based)
-    |
-    v
-Gameplay (per level)
-    |
-    v
-Win/Lose Modal --> Level Select or Retry
-```
-
-### 7.2 Level Select UI
-
-**Grid Layout:**
-- 5 tiers with visual separation
-- Level numbers in cells
-- Star display (0-3) per level
-- Lock icon for unplayed tiers
-- Current progress highlighted
-
-### 7.3 In-Game HUD
-
-**Minimal Overlay:**
-- Level number (top-left)
-- Cut counter (if limited)
-- Hint button (top-right)
-- Pause/menu button (top-right)
-- Undo button (bottom-left)
-- Restart button (bottom-right)
-
-### 7.4 Responsive Design
-
-**Mobile:**
-- Touch swipe to cut
-- Full-screen canvas
-- Large touch targets for UI
-
-**Desktop:**
-- Mouse drag to cut
-- Keyboard shortcuts (R=restart, U=undo, H=hint)
-- Resizable window
-
----
-
-## 8. Key Differentiators for Target Game
-
-### 8.1 Advantages Over Competitors
-
-1. **Star Rating System** - Adds replayability (competitors lack this)
-2. **Hint System** - Prevents hard-stuck abandonment
-3. **Undo Function** - Reduces frustration, allows experimentation
-4. **Guided Tutorial** - Smoother onboarding than competitors
-5. **Verlet Physics** - More realistic rope behavior than simplified physics
-6. **No Ads in Core Loop** - Clean experience (can monitize differently)
-
-### 8.2 Content Strategy
-
-**30+ Levels Breakdown:**
-- Tier 1 (Tutorial): Levels 1-3 (guided, simple)
-- Tier 2 (Easy): Levels 4-9 (6 levels)
-- Tier 3 (Medium): Levels 10-18 (9 levels)
-- Tier 4 (Hard): Levels 19-26 (8 levels)
-- Tier 5 (Expert): Levels 27-33 (7 levels)
-
-**New Mechanic Introduction:**
-- Levels 1-3: Basic cutting
-- Level 4-6: Multiple ropes
-- Level 7-9: Swinging obstacles introduced
-- Level 10-12: Bouncy surfaces
-- Level 13-15: Moving platforms
-- Level 16+: All mechanics combined with increasing complexity
-
----
-
-## 9. Success Metrics (参考指标)
-
-### 9.1 Engagement Targets
-
-- Average session length: 5-10 minutes
-- Levels completed per session: 5-15
-- Day 1 retention: >60%
-- Day 7 retention: >30%
-- Day 30 retention: >10%
-
-### 9.2 Quality Indicators
-
-- Crash-free rate: >99.5%
-- Load time: <3 seconds
-- 60 FPS on mid-range devices
-- Touch response: <16ms
-
----
-
-## 10. Risk Factors
-
-### 10.1 Market Saturation
-
-- Many rope-cutting clones exist
-- Need visual polish and feel to stand out
-- Physics must feel "right" - cheap physics kills immersion
-
-### 10.2 Content Depth
-
-- 30 levels is minimal for retention
-- Consider 100+ levels for full release
-- Level recycling (like competitors) damages reputation
-
-### 10.3 Monetization Balance
-
-- Ads are primary F2P revenue but damage experience
-- Consider premium positioning or cosmetic-only IAP
-- Player-first monetization builds goodwill
-
----
-
-## Appendix A: Competitor App IDs
-
-| Game | Package ID | App Store |
-|------|-----------|-----------|
-| Rescue Cut | com.app.rescuecut | Google Play |
-| Love Pins | jp.icepop.steppuzzle | Google Play |
-| Save the Boy | com.playspare.save.the.boy.rescue | Google Play |
-
-## Appendix B: Reference Resources
-
-- Adjust: Puzzle Game Strategies (adjust.com/blog/puzzle-games-trends-strategies)
-- Mobile Game Monetization Models (adapty.io, superscale.com)
-- Retention Benchmarks (segwise.ai)
-- Verlet Integration Physics (classic gamedev techniques)
-
----
-
-*Document prepared for GameZipper automated game pipeline - Phase 2 competitive benchmark*
+## Next Phase: Game Development
+Generate complete single-file HTML5 game with above features using Claude Code.
