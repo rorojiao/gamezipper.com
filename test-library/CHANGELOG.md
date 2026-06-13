@@ -1,5 +1,29 @@
 # Test Case Library Changelog
 
+## [v1.48.0] - 2026-06-13
+### Added
+- 9 new test cases from industry research (R161 Dynamic Test Intelligence cron)
+- W-137: Chrome 145 JPEG-XL re-enabled — game image format compatibility (P1)
+- W-138: ChromeOS 148 → Chrome 150 LTS enterprise/school Chromebook channel (P2)
+- B-080: CVE-2026-32202 Windows Shell spoofing — CISA KEV incomplete patch variant (P0)
+- C-080: Firefox 149 built-in VPN + split-screen tabs — game rendering context change (P2)
+- G-124: WebAssembly Component Model + WASI 1.0 (Wasm 3.0) — game engine compilation target (P1)
+- G-125: Tencent Cloud 2026 bounce-rate benchmark — concrete FCP/LCP performance budget (P1)
+- P-053: WebGPU compute shader 5-8x faster than WASM SIMD for matrix math >256x256 (P1)
+- S-094: Playwright 1.60 HAR+Trace integration — session token leakage in test artifacts (P2)
+- C-081: Playwright CLI token-efficient AI agent browser automation (P2)
+
+### Sources
+- Chrome 145 JPEG-XL: https://new.qq.com/rain/a/20260211A01X9H00
+- ChromeOS 148 LTS: https://so.html5.qq.com/page/real/search_news?docid=70000021_2736a15714b22052
+- CVE-2026-32202 Windows Shell: https://so.html5.qq.com/page/real/search_news?docid=70000021_06669fd7ea842752
+- Firefox 149 VPN: https://new.qq.com/rain/a/20260211A01X9H00
+- WASI 1.0 Component Model: https://so.html5.qq.com/page/real/search_news?docid=70000021_3686969bd4296552
+- Tencent bounce-rate benchmark: https://cloud.tencent.com/developer/article/2581810
+- WebGPU compute vs WASM SIMD: https://blog.csdn.net/m0_55049655/article/details/145379038
+- Playwright 1.60 HAR+Trace: https://cloud.tencent.com/developer/article/2683110
+- Playwright CLI AI agent: https://cloud.tencent.com/developer/article/2631860
+
 ## [v1.47.0] - 2026-06-13
 ### Added
 - 10 new test cases from industry research (R160 Dynamic Test Intelligence cron)
