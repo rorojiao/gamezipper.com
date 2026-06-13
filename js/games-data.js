@@ -347,6 +347,8 @@ const GAMES = [
 
   {name:"Grass Master",emoji:"🌿",cat:"puzzle",tags:["grass","lawn","mower","puzzle","slide","cutting","logic"],url:"/grass-master/",desc:"Swipe to mow lawns in this satisfying grass cutting puzzle! Cut all grass within limited moves. 30 levels, 5 tiers, 3-star ratings. No download needed!",isNew:true,status:"live"},
   {name:"Beads Out",emoji:"🔴",cat:"puzzle",tags:["beads","string","logic","tap","constraint"],url:"/beads-out/",desc:"Beads Out - Tap colored beads in sequence to clear strings. A constraint-satisfaction puzzle with 30 levels, star ratings and satisfying mechanics.",isNew:true,status:"live"},
+  {name:"Pocket Sort",emoji:"🪙",cat:"puzzle",tags:["sort","merge","coin","color","puzzle","logic"],url:"/pocket-sort/",desc:"Sort coins by color into slots, fill slots to merge them into higher tiers! A satisfying merge+sort puzzle with 30 levels, star ratings and power-ups. Free online.",isNew:true,status:"live"},
+
 ];
 
 /**
