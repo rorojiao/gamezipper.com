@@ -351,7 +351,9 @@ const GAMES = [
 
 
 {name:"Gecko Out",emoji:"🦎",cat:"puzzle",tags:["pin-pull","logic","casual"],url:"/gecko-out/",desc:"Pull pins in the right order to free the gecko in this brain-teasing puzzle adventure",isNew:true,status:"live"},
-{name:"Emoji Merge",emoji:"🧩",cat:"puzzle",tags:["merge","puzzle","emoji","casual"],url:"/emoji-merge/",desc:"Drag identical emojis together to merge and evolve them through 13 stages across 30 addictive puzzle levels.",isNew:true,status:"live"}];
+{name:"Emoji Merge",emoji:"🧩",cat:"puzzle",tags:["merge","puzzle","emoji","casual"],url:"/emoji-merge/",desc:"Drag identical emojis together to merge and evolve them through 13 stages across 30 addictive puzzle levels.",isNew:true,status:"live"},
+{name:"Bus Traffic Fever",emoji:"\u{1F68C}",cat:"puzzle",tags:["bus","parking","escape","traffic","puzzle","logic","unblock"],url:"/bus-traffic-fever/",desc:"Tap color-coded buses to slide them out through matching gates in this addictive parking escape puzzle. 30 brain-teasing levels with power-ups and star ratings. Free online.",isNew:true,status:"live"}
+];
 
 /**
  * Get effective game status (checks localStorage overrides from admin panel)

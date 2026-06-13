@@ -302,22 +302,25 @@ var LEVELS=[
 ];
 
 // Convert compact level format to game format
-// v:[[r,c,len,dir,color],...] where dir:0=right,1=down, color:0-5
+// v:[[x,y,len,horiz,dir],...] horiz:0=vert,1=horiz; dir:0=up,1=right,2=down,3=left
+var DIR_MAP=['u','r','d','l'];
 var COLOR_NAMES=['red','blue','yellow','green','orange','purple'];
 LEVELS.forEach(function(lvl,i){
   lvl.cols=lvl.w;lvl.rows=lvl.h;
-  lvl.par=Math.ceil(lvl.v.length*1.2);
-  lvl.buses=[];
-  lvl.gates=[];
-  lvl.walls=[];
-  lvl.v.forEach(function(v){
-    var r=v[0]+1,c=v[1]+1,len=v[2],dir=v[3]===0?'r':'d',color=COLOR_NAMES[v[4]]||'red';
-    lvl.buses.push({r:r,c:c,color:color,dir:dir,len:len});
-    // Each bus gets its own gate at its exit position on the edge
+  lvl.par=lvl.v.length;
+  lvl.buses=[];lvl.gates=[];lvl.walls=[];
+  lvl.v.forEach(function(v,idx){
+    var x=v[0],y=v[1],len=v[2],dirStr=DIR_MAP[v[4]];
+    var r=y+1,c=x+1;
+    if(dirStr==='l')c=x+len;
+    if(dirStr==='u')r=y+len;
+    var color=COLOR_NAMES[idx%COLOR_NAMES.length];
+    lvl.buses.push({r:r,c:c,color:color,dir:dirStr,len:len});
     var gr,gc;
-    if(dir==='r'){gr=r;gc=lvl.cols+1;}
-    else{gr=lvl.rows+1;gc=c;}
-    // Check if a gate already exists at this exact position+color
+    if(dirStr==='r'){gr=r;gc=lvl.cols+1;}
+    else if(dirStr==='l'){gr=r;gc=0;}
+    else if(dirStr==='d'){gr=lvl.rows+1;gc=c;}
+    else{gr=0;gc=c;}
     var exists=lvl.gates.some(function(g){return g.r===gr&&g.c===gc&&g.color===color;});
     if(!exists)lvl.gates.push({r:gr,c:gc,color:color});
   });
@@ -502,14 +505,14 @@ function tryMoveBus(bus){
     G.comboCount++;G.comboTimer=60;
     if(G.comboCount>1)showCombo(bus);
     updateHUD();
-  }else if(!blocked&&steps>0&&newHeadR!==headR||newHeadC!==headC){
+  }else if(!blocked&&(newHeadR!==headR||newHeadC!==headC)){
     // Bus slides to new position (no exit)
     saveUndoState();
     G.moves++;
-    bus.r=newHeadR-bus.len+1; // adjust for direction
-    if(bus.dir==='d')bus.r=newHeadR-bus.len+1;
-    else if(bus.dir==='r')bus.c=newHeadC-bus.len+1;
-    else{bus.r=newHeadR;bus.c=newHeadC;}
+    if(bus.dir==='r'){bus.c=newHeadC-bus.len+1;}
+    else if(bus.dir==='d'){bus.r=newHeadR-bus.len+1;}
+    else if(bus.dir==='l'){bus.c=newHeadC;}
+    else{bus.r=newHeadR;}
     bus.targetPx=bus.c*G.cellSize;bus.targetPy=bus.r*G.cellSize;
     G.animating=true;
     playSfx('slide');
