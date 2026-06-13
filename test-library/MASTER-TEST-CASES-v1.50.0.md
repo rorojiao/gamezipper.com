@@ -874,26 +874,44 @@
 
 - [B-082] **[P2] Safari 26.4 Compact Tab Layout Option — Viewport Dimension Change Mid-Game** — Safari 26.4 (March 2026) restored the "compact tab layout" option (tabs shrunk to favicons), reducing the browser chrome height by ~40px and increasing the viewport. Users who toggle this mid-game-session trigger a `resize` event. Games using `100vh`, `window.innerHeight`, or fixed-position HUD elements near viewport edges may render incorrectly or clip. For testing: (1) test game canvas resize when user toggles compact↔standard tab layout mid-game — verify no crash, no lost state; (2) verify HUD elements (score, pause button) remain visible and not clipped after viewport height change; (3) test `position: fixed` overlays (game-over, settings) still cover full viewport after resize; (4) verify WebGL/WebGPU canvas re-allocates framebuffer on resize without context loss; (5) test on Safari macOS 26.4+ with compact tabs ON vs OFF — compare screenshot layouts. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752
 
+### v1.50.0 Additions (2026-06-14 Industry Research — R165)
+
+- [B-083] **[P1] Chrome ARM64 Linux Support Arriving Q2 2026 — New Testing Platform (Raspberry Pi, ARM Laptops, Snapdragon X)** — Google confirmed Chrome is finally landing on ARM64 Linux devices in Q2 2026, years after macOS ARM and Windows on ARM. This opens a new browser platform with ARM Mali/Adreno/PowerVR GPUs, different shader compilation paths (Mali uses Bifrost/Valhall, Adreno uses proprietary drivers), and lower memory bandwidth than x86 discrete GPUs. ARM64 Linux Chromebooks, Raspberry Pi 5, and Snapdragon X laptops are all affected. For testing: (1) add ARM64 Linux Chrome to the cross-browser test matrix — verify canvas 2D and WebGL rendering produce correct output; (2) test WebGL shader compilation on ARM Mali GPU — verify no GLSL ES precision qualifier issues or driver-specific crashes; (3) benchmark game frame rate on ARM64 Linux (Raspberry Pi 5 level hardware: Cortex-A76 + VideoCore VII GPU) — target ≥30fps for lightweight puzzle games; (4) test that pointer/touch events work with ARM64 Linux input stack (some SBCs lack multitouch); (5) verify no architecture-specific JS engine (V8) JIT issues on ARM64 Linux. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_37769b7830788552
+
+- [S-096] **[P1] Safari 27 Beta (WWDC26 June 2026) — WebKit New Features Regression Test** — Apple released Safari 27 beta at WWDC26 (June 9-13 2026) with new WebKit features including CSS Grid Lanes, MapKit JS 6, Web Inspector improvements, and iOS 27/macOS 27 platform changes. Safari 27 beta is available to Apple Developer Program members. New CSS features and rendering engine changes can break game canvas layout, grid-based UI, and CSS animations. For testing: (1) test all 292+ game pages on Safari 27 beta (iOS 27 / macOS 27 beta) — verify canvas renders correctly and no layout regressions; (2) verify CSS Grid Lanes rendering (if game card grid uses grid) doesn't shift card positions; (3) test Web Inspector extensions don't interfere with game scripts; (4) verify Safari 27 beta's new privacy features don't block Monetag/AdSense ad scripts; (5) check that any new WebKit experimental feature flags (Safari → Develop → Experimental Features) don't break game rendering when toggled. Source: https://webkit.org/blog/17967/news-from-wwdc26-webkit-in-safari-27-beta/ ; https://github.com/Fyrd/caniuse/issues/7531
+
+- [W-140] **[P1] 2026 CVE Volume Projected to Exceed 100,000 — Accelerated Regression Testing Cadence** — FIRST (Forum of Incident Response and Security Teams) annual vulnerability report (Feb 2026) projects 2026 CVE disclosures will likely exceed 50,000 and may reach 6 digits (100,000+) for the first time, with 90% confidence interval upper bound at 118,000. Combined with AI-accelerated vulnerability discovery (Google Big Sleep, Mythos AI), browser vendors are patching faster than ever — Chrome 149 alone shipped 429 CVEs. This demands a faster regression testing cadence: the 4-hour Dynamic Test Intelligence cycle must keep up. For testing: (1) monitor CVE feeds (NVD, CISA KEV, Chrome/Safari/Firefox security blogs) every 4h and auto-flag browser CVEs affecting canvas/WebGL/WebGPU/Audio; (2) for each new critical CVE (CVSS ≥ 8.0) affecting the game stack, run a targeted regression on top 30 games within 4h of patch release; (3) maintain a CVE→test-case mapping (e.g., CVE-2026-11645 V8 OOB → test all games for JS engine crash resilience); (4) track patch-to-test SLA: target ≤4h from browser stable patch release to GameZipper regression complete; (5) document the 20h exploit weaponization window (from S-057) — every hour of delay increases risk. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_569698da76e17252
+
+- [C-083] **[P2] Chrome 149 WebMCP DevTools AI Debugging Assistant — MCP Protocol Integration for Game QA** — Chrome 149 stable (June 2 2026) added WebMCP (Web Model Context Protocol) debugging assistant to DevTools, enabling AI agents to directly inspect and interact with the browser debugging surface. This is a new testing technique: AI coding agents can use Chrome DevTools via MCP protocol to autonomously detect game bugs (canvas not rendering, JS errors, ad fill failures) without manual screenshot analysis. For GameZipper: (1) evaluate WebMCP DevTools integration vs current Kachilu/browser_snapshot approach — measure bug detection accuracy on 10 games with known issues; (2) test WebMCP on games with the 14 documented bug patterns (rAF cancel, splash deadlock, input handler missing) — verify it can identify them; (3) benchmark WebMCP token efficiency vs Hermes browser_snapshot for identical game QA tasks; (4) test WebMCP with multiplayer/WebSocket games — verify it can detect connection state issues; (5) evaluate WebMCP for continuous monitoring: auto-detect new JS errors after game updates without manual QA. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_3076a1fbf5420452
+
+- [G-127] **[P2] Chrome 149 bfcache WebSocket Connection Management — Ad/Multiplayer WebSocket Survives Back-Forward Navigation** — Chrome 149 (June 2026) strengthened bfcache (Back/Forward Cache) support for WebSocket connections. Previously, navigating away from a game page and pressing Back would kill all WebSocket connections (Monetag real-time bidding, analytics beacons, multiplayer game sync). Chrome 149's improved management means WebSocket connections can survive bfcache restoration — but only if the game code properly handles the `pageshow` event with `event.persisted === true`. For testing: (1) open a game page, let Monetag/ad WebSocket connect, navigate to another page, press Back — verify the ad WebSocket reconnects or resumes correctly; (2) test that game state (score, level) is restored from bfcache without duplicate rAF loops or doubled event listeners; (3) verify no "WebSocket already connected" error after bfcache restore; (4) test that analytics beacons (gz-analytics.js) don't double-fire after bfcache restore; (5) verify `pageshow` event handler properly re-initializes any closed WebSocket connections. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_3076a1fbf5420452
+
+- [P-055] **[P2] 120Hz Variable Refresh Rate (VRR) Game Phone Smart Scheduling — rAF Must Adapt Without Frame Doubling/Tearing** — 2026 flagship game phones (京东方 display tech, OnePlus, Snapdragon X devices) feature 120Hz/144Hz LTPO panels with smart refresh-rate scheduling — the display dynamically switches between 1Hz and 120Hz based on content. When a game's rAF loop runs at 60fps but the display is at 120Hz, the browser may double-frame (showing each frame twice) or cause visual judder. Conversely, if the display drops to 10Hz (static content), rAF callbacks may be throttled. For testing: (1) test games on 120Hz LTPO display devices — verify no frame doubling or judder artifacts in canvas animations; (2) measure actual `requestAnimationFrame` callback rate on 120Hz display — verify it matches display refresh rate (120fps) or is properly capped at 60fps via `setTimeout`; (3) test that VRR smart scheduling (display drops to low Hz when game is idle) doesn't cause rAF to stall — verify `visibilitychange` resume logic; (4) verify physics simulations don't break when delta-time changes dramatically (60Hz→120Hz→10Hz transitions); (5) test battery drain: game at 120fps vs capped 60fps on VRR display — document battery impact for mobile-first UX. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_3686a19436b85752 ; https://so.html5.qq.com/page/real/search_news?docid=70000021_21669a024ac50352
+
+- [C-084] **[P2] 2026 Web Automation Testing Platform Intelligent Element Recognition — Game UI Testing Modernization** — 2026 web automation testing platforms (IT之家 June 11 2026 report) now feature intelligent HTML/JavaScript control recognition, dynamic element detection, hidden element handling, smart wait and auto-retry mechanisms, iframe switching, popup handling, and low-code script generation via recording/drag-drop. These platforms reduce element-location failures that plague traditional Selenium/Playwright scripts on dynamic game UIs (canvas-rendered buttons, SPA-style overlays). For GameZipper: (1) evaluate modern automation platforms vs current Playwright+browser_snapshot — measure script stability across 30 games; (2) test intelligent element recognition on canvas-based game UIs — verify it can detect clickable areas inside `<canvas>` (not just DOM elements); (3) test auto-retry mechanism on games with slow async loading (defer scripts, lazy ad fill); (4) evaluate low-code recording mode for generating game regression tests — compare coverage vs hand-written test cases; (5) test iframe switching support for Monetag ad iframe inspection during QA. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_9536a2a73b929452
+
+- [G-128] **[P2] WebKit CSS Grid Lanes (Safari 27 Beta) — Game Card Grid Layout Regression** — WebKit launched the "Field Guide to Grid Lanes" (gridlanes.webkit.org) with Safari 27 beta at WWDC26 (June 2026). Grid Lanes is a new CSS Grid enhancement that allows more complex grid track sizing and alignment rules. If GameZipper's homepage game card grid (`.game-grid` / CSS Grid) uses grid-template-columns with auto-fill/minmax patterns, Grid Lanes rendering changes may cause card width shifts, misaligned thumbnails, or broken responsive breakpoints. For testing: (1) test homepage game card grid on Safari 27 beta — verify card layout matches Safari 26.x reference screenshot; (2) test category filter layout after Grid Lanes change — verify no horizontal overflow on 375px mobile; (3) verify `grid-template-columns: repeat(auto-fill, minmax(...))` behaves identically in Safari 27 vs Chrome 149; (4) test infinite scroll (new cards appended to grid) — verify Grid Lanes doesn't cause reflow jitter; (5) check that NEW badge overlay positioning relative to grid card isn't shifted by new Grid Lanes track sizing. Source: https://webkit.org/blog/17967/news-from-wwdc26-webkit-in-safari-27-beta/ ; http://webkit.org/
+
 ## LIBRARY METRICS
-**Total Test Cases**: 371
-**Last Updated**: 2026-06-13
-**Version**: 1.49.0
+**Total Test Cases**: 379
+**Last Updated**: 2026-06-14
+**Version**: 1.50.0
 
 ### By Priority
 | Priority | Count |
 |----------|-------|
 | P0 (Critical) | 94 |
-| P1 (High) | 152 |
-| P2 (Medium) | 111 |
+| P1 (High) | 155 |
+| P2 (Medium) | 116 |
 | P3 (Low) | 14 |
 
 ### By Category
 | Category | Count |
 |----------|-------|
 | A | 15 |
-| B | 58 |
-| C | 42 |
-| G | 37 |
+| B | 59 |
+| C | 44 |
+| G | 39 |
 | GA | 8 |
 | GB | 6 |
 | GC | 6 |
@@ -901,8 +919,8 @@
 | GM | 13 |
 | GP | 16 |
 | GX | 10 |
-| P | 36 |
+| P | 37 |
 | PC | 12 |
 | PWA | 2 |
-| S | 46 |
-| W | 56 |
+| S | 47 |
+| W | 57 |

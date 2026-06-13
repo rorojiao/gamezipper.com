@@ -1,5 +1,29 @@
 # Test Case Library Changelog
 
+## [v1.50.0] - 2026-06-14
+### Added
+- 8 new test cases from industry research (R165 Dynamic Test Intelligence cron)
+- B-083: Chrome ARM64 Linux support arriving Q2 2026 — new platform (Raspberry Pi, ARM laptops) (P1)
+- S-096: Safari 27 beta (WWDC26 June 2026) WebKit new features regression (P1)
+- W-140: 2026 CVE volume projected to exceed 100K — accelerated regression testing cadence (P1)
+- C-083: Chrome 149 WebMCP DevTools AI debugging assistant — MCP protocol for game QA (P2)
+- G-127: Chrome 149 bfcache WebSocket connection management — ad/multiplayer survives back-forward (P2)
+- P-055: 120Hz variable refresh rate (VRR) game phone smart scheduling rendering (P2)
+- C-084: 2026 web automation testing platform intelligent element recognition (P2)
+- G-128: WebKit CSS Grid Lanes (Safari 27 beta) — game card grid layout regression (P2)
+
+### Sources
+- Chrome ARM64 Linux: https://so.html5.qq.com/page/real/search_news?docid=70000021_37769b7830788552
+- Safari 27 beta WWDC26: https://webkit.org/blog/17967/news-from-wwdc26-webkit-in-safari-27-beta/
+- 2026 CVE >100K FIRST report: https://so.html5.qq.com/page/real/search_news?docid=70000021_569698da76e17252
+- Chrome 149 stable WebMCP + bfcache WebSocket: https://so.html5.qq.com/page/real/search_news?docid=70000021_3076a1fbf5420452
+- Chrome 153 two-week cadence: https://so.html5.qq.com/page/real/search_news?docid=70000021_64169a790a846552
+- 120Hz VRR game phone displays: https://so.html5.qq.com/page/real/search_news?docid=70000021_3686a19436b85752
+- 2026 web automation platform: https://so.html5.qq.com/page/real/search_news?docid=70000021_9536a2a73b929452
+- WebKit Grid Lanes: http://webkit.org/
+- Search queries: "Chrome 150 stable release 2026 new features", "Safari 27 WWDC 2026 WebKit", "browser CVE security vulnerability June 2026", "HTML5 web game performance testing 2026", "casual mobile game UX 2026 accessibility", "WebGPU WebGL 2026 deprecation migration"
+
+
 ## [v1.49.0] - 2026-06-13
 ### Added
 - 7 new test cases from industry research (R163 Dynamic Test Intelligence cron)
