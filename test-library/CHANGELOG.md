@@ -1,5 +1,27 @@
 # Test Case Library Changelog
 
+## [v1.49.0] - 2026-06-13
+### Added
+- 7 new test cases from industry research (R163 Dynamic Test Intelligence cron)
+- W-139: Google third-party cookie U-turn user-choice-prompt impact on Monetag/AdSense ad serving (P1)
+- P-054: INP (Interaction to Next Paint) replaces FID as Core Web Vital — game rAF loop responsiveness (P0)
+- S-095: Apple background Rapid Security Response silent WebKit update changes game behavior mid-session (P1)
+- B-081: Chrome storage partitioning isolates cross-site iframe cookies — Monetag ad state loss (P1)
+- C-082: Missing X-Frame-Options/CSP frame-ancestors headers — clickjacking risk on static GitHub Pages site (P1)
+- G-126: HTTP/3 (QUIC) CDN asset delivery regression — Chrome 148 expanded HTTP/3 (P2)
+- B-082: Safari 26.4 compact tab layout option — viewport dimension change mid-game (P2)
+
+### Sources
+- Google cookie U-turn / Privacy Sandbox: https://net.zhiding.cn/network_security_zone/2025/0424/3165721.shtml ; https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox
+- Core Web Vitals 2026 INP/LCP/CLS: https://www.digitalapplied.com/blog/core-web-vitals-2026-inp-lcp-cls-optimization-guide
+- Apple background RSR CVE-2026-20643: https://so.html5.qq.com/page/real/search_news?docid=70000021_65569bcad1337152
+- Safari 26.5 WebKit security: https://so.html5.qq.com/page/real/search_news?docid=70000021_0236a054d4370952
+- Storage partitioning: https://github.com/WordPress/wordpress-playground/issues/586
+- Clickjacking labs: https://portswigger.net/web-security/clickjacking/lab-basic-csrf-protected
+- Chrome 148 HTTP/3 expansion: https://so.html5.qq.com/page/real/search_news?docid=70000021_83069fc56b987652
+- Safari 26.4 compact tabs: https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752
+- Search queries: "HTML5 game testing 2026 new techniques", "browser security vulnerability 2026 XSS clickjacking", "Chrome 138-140 breaking changes", "Safari WebKit iOS 2026", "web game accessibility WCAG 2.2 2026", "web game performance LCP INP Core Web Vitals 2026", "Chrome Privacy Sandbox third-party cookie 2026"
+
 ## [v1.48.0] - 2026-06-13
 ### Added
 - 9 new test cases from industry research (R161 Dynamic Test Intelligence cron)
