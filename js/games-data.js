@@ -351,7 +351,7 @@ const GAMES = [
 
 
 {name:"Gecko Out",emoji:"🦎",cat:"puzzle",tags:["pin-pull","logic","casual"],url:"/gecko-out/",desc:"Pull pins in the right order to free the gecko in this brain-teasing puzzle adventure",isNew:true,status:"live"},
-{name:"Emoji Merge",emoji:"😀",cat:"puzzle",tags:["merge","physics","casual","drop"],url:"/emoji-merge/",desc:"Drop emoji faces into a container and merge identical ones to evolve through 11 tiers. 30 levels plus endless mode.",isNew:true,status:"live"},];
+{name:"Emoji Merge",emoji:"🧩",cat:"puzzle",tags:["merge","puzzle","emoji","casual"],url:"/emoji-merge/",desc:"Drag identical emojis together to merge and evolve them through 13 stages across 30 addictive puzzle levels.",isNew:true,status:"live"}];
 
 /**
  * Get effective game status (checks localStorage overrides from admin panel)

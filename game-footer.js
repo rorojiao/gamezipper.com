@@ -50,6 +50,7 @@
      {n:'Gecko Out',e:'🦎',u:'/gecko-out/',c:'puzzle'},
      {n:'Beads Out',e:'📿',u:'/beads-out/',c:'puzzle'},
      {n:'Pocket Sort',e:'🪙',u:'/pocket-sort/',c:'puzzle'},
+     {n:'Emoji Merge',e:'🧩',u:'/emoji-merge/',c:'puzzle'},
      {n:'Slope',e:'â·ï¸',u:'/slope/',c:'arcade'},
      {n:'Bounce Bot',e:'ð¤',u:'/bounce-bot/',c:'arcade'},
      {n:'Alien Whack',e:'ð¾',u:'/alien-whack/',c:'arcade'},
