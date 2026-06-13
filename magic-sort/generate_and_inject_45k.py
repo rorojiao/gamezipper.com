@@ -254,13 +254,13 @@ def main():
 
     # Step 6: Update meta tags
     print("\n[Step 6] Updating meta tags...", flush=True)
+    # NOTE: Do NOT use blanket 'X,000 levels' -> 'Y,000 levels' replacements.
+    # They cascade into achievement descriptions (e.g. forty_k "Complete all 40,000 levels"
+    # gets wrongly overwritten to 45,000). Only replace in <meta> tags and title, not in JS.
+    # Manual fixes applied for thirtyfive_k and forty_k achievement descriptions.
     meta_replacements = [
         ('40,000+', '45,000'),
-        ('40,000 Levels', '45,000 Levels'),
-        ('40000 levels', '45000 levels'),
-        ('40000 hand-crafted', '45000 hand-crafted'),
         ('218+ difficulty', '243+ difficulty'),
-        ('40,000 levels', '45,000 levels'),
         ('Play Magic Sort Online Free - 40,000 Levels', 'Play Magic Sort Online Free - 45,000 Levels'),
     ]
     for old, new in meta_replacements:
@@ -268,6 +268,18 @@ def main():
         if count > 0:
             content = content.replace(old, new)
             print(f"  {old} -> {new} ({count} occurrences)", flush=True)
+
+    # Targeted meta description update only (not JS achievement text)
+    content = content.replace(
+        '45,000 levels, 243+ difficulty tiers',
+        '45,000 levels, 243+ difficulty tiers'  # already correct if previous run updated
+    )
+    # Fix the main meta description specifically
+    old_meta_desc = 'relaxing puzzle game! 40,000 levels,'
+    new_meta_desc = 'relaxing puzzle game! 45,000 levels,'
+    if old_meta_desc in content:
+        content = content.replace(old_meta_desc, new_meta_desc)
+        print(f"  Meta description updated", flush=True)
 
     # Step 7: Add milestone emojis
     print("\n[Step 7] Adding milestones...", flush=True)
