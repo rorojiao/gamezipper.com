@@ -350,7 +350,8 @@ const GAMES = [
   {name:"Pocket Sort",emoji:"🪙",cat:"puzzle",tags:["sort","merge","coin","color","puzzle","logic"],url:"/pocket-sort/",desc:"Sort coins by color into slots, fill slots to merge them into higher tiers! A satisfying merge+sort puzzle with 30 levels, star ratings and power-ups. Free online.",isNew:true,status:"live"},
 
 
-{name:"Gecko Out",emoji:"🦎",cat:"puzzle",tags:["pin-pull","logic","casual"],url:"/gecko-out/",desc:"Pull pins in the right order to free the gecko in this brain-teasing puzzle adventure",isNew:true,status:"live"},];
+{name:"Gecko Out",emoji:"🦎",cat:"puzzle",tags:["pin-pull","logic","casual"],url:"/gecko-out/",desc:"Pull pins in the right order to free the gecko in this brain-teasing puzzle adventure",isNew:true,status:"live"},
+{name:"Emoji Merge",emoji:"😀",cat:"puzzle",tags:["merge","physics","casual","drop"],url:"/emoji-merge/",desc:"Drop emoji faces into a container and merge identical ones to evolve through 11 tiers. 30 levels plus endless mode.",isNew:true,status:"live"},];
 
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
