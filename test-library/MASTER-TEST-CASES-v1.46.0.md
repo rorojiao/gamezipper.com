@@ -1,5 +1,5 @@
 # GameZipper 100% Master Test Case Library
-**Version**: 1.45.0
+**Version**: 1.46.0
 **Effective Date**: 2026-06-13
 **Build**: R158 (Dynamic Test Intelligence 4h cron evolution)
 **Library Owner**: Lead Test Engineer
@@ -794,13 +794,35 @@
 - [G-121] **[P2] Playwright 1.61 AI Test Agents (Planner/Generator/Healer) — Autonomous Game QA Pipeline** — Playwright Core 1.61.0-alpha released June 11, 2026 with three AI-powered Test Agents: **Planner** (explores app and generates test plan), **Generator** (writes spec files from test plan), **Healer** (auto-repairs flaky tests on CI via MCP and Claude). Also, Playwright MCP for AI agent browser automation (33.6k GitHub stars) enables coding agents to interact with web interfaces without visual understanding. For GameZipper: (1) evaluate Playwright 1.61 AI Healer for GameZipper's flaky game rendering tests — specifically the `deep-play-test.js` tests that fail intermittently due to Monetag popunders and CDN timing; (2) test the Planner agent against GameZipper homepage — does it discover all game categories and interaction patterns autonomously?; (3) evaluate MCP-based autonomous game UI testing — can an AI agent navigate game menus, start games, and verify gameplay without pre-scripted selectors?; (4) benchmark: run existing verify-lite.js (30 checks/game) vs AI Healer-enhanced version on 30 Top games — measure false-positive reduction rate; (5) assess security implications of MCP-based browser automation — ensure AI agents cannot modify game state or trigger real ad clicks during testing. Source: https://libraries.io/npm/playwright-core + https://qaskills.sh/blog/playwright-test-agents-planner-generator-healer-official-2026 + https://testdino.com/blog/fixing-playwright-tests-with-ai
 
 
-## LIBRARY METRICS (v1.46.0)
-- P0: 89
-- P1: 127
-- P2: 92
-- P3: 16
-- Total test cases: 324
-- Categories: 17 (W, G, C, P, S, B, PC, PWA, A, GA, GB, GC, GI, GM, GP, GX, UX)
-- Coverage: Browser Security, Game Rendering, Cross-Device, Performance, Accessibility, Security, Website-Level, Progressive Web App, Game Analytics, Game Board, Game Card, Game Idle, Game Multiplayer, Game Puzzle, Game XO, UX, Industry Standards
-- **Last updated**: 2026-06-13 (R158 Dynamic Test Intelligence cron)
-- **Version Note**: v1.46.0 = R158 Dynamic Test Intelligence cron — 8 new test cases from Chrome 149.0.7827.115 emergency CVE wave + Firefox WebGL sandbox escape + Three.js WebGPU occlusion crash + Playwright 1.61 AI agents.
+## LIBRARY METRICS
+**Total Test Cases**: 345
+**Last Updated**: 2026-06-13
+**Version**: 1.46.0
+
+### By Priority
+| Priority | Count |
+|----------|-------|
+| P0 (Critical) | 91 |
+| P1 (High) | 140 |
+| P2 (Medium) | 100 |
+| P3 (Low) | 14 |
+
+### By Category
+| Category | Count |
+|----------|-------|
+| A | 15 |
+| B | 54 |
+| C | 38 |
+| G | 32 |
+| GA | 8 |
+| GB | 6 |
+| GC | 6 |
+| GI | 6 |
+| GM | 13 |
+| GP | 16 |
+| GX | 10 |
+| P | 32 |
+| PC | 12 |
+| PWA | 2 |
+| S | 41 |
+| W | 54 |

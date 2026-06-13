@@ -1,5 +1,29 @@
 # Test Case Library Changelog
 
+## [v1.46.0] - 2026-06-13
+### Added
+- 8 new test cases from industry research (R157 Dynamic Test Intelligence cron)
+- B-076: CVE-2026-12009 Chrome Mac Accessibility sandbox escape — critical macOS game page exploit vector
+- B-077: CVE-2026-12010 Chrome Android GPU heap buffer overflow sandbox escape — WebGL/WebGPU game exploit
+- B-078: CVE-2026-12007 Chrome renderer use-after-free — canvas rendering exploit via tab switch
+- S-089: CVE-2026-0878 Firefox CanvasWebGL sandbox escape — WebGL game buffer boundary violation
+- S-090: CVE-2026-11045 Chrome GPU renderer memory disclosure — canvas readback information leak
+- C-077: Three.js WebGPU occlusion query crash (Issue #33759) — multi-object scene counter desync
+- C-078: Chrome 149 DevTools Gemini 3 AI upgrade — console error parsing regression risk
+- G-121: Playwright 1.61 AI test agents (Planner/Generator/Healer) — autonomous game QA pipeline
+### Sources
+- https://tenable.com/cve/CVE-2026-12009 — Chrome Mac Accessibility sandbox escape
+- https://cvefeed.io/vuln/detail/CVE-2026-12010 — Chrome Android GPU heap buffer overflow
+- https://cybersixt.com/incidents/chrome-149-patches-28-flaws-five-critical-amid-rising-bug-count-7da88a2e — Chrome 149 28-vulnerability patch batch
+- https://sentinelone.com/vulnerability-database/cve-2026-0878 — Firefox CanvasWebGL sandbox escape
+- https://windowsforum.com/threads/cve-2026-11045-chrome-gpu-bug-patch-to-149-to-stop-renderer-memory-disclosure.424543 — Chrome GPU renderer memory disclosure
+- https://github.com/mrdoob/three.js/issues/33759 — Three.js WebGPU occlusion query crash
+- https://piunikaweb.com/2026/06/09/chrome-149-devtools-ai-upgrade — Chrome 149 DevTools Gemini 3 AI
+- https://libraries.io/npm/playwright-core — Playwright 1.61 AI test agents
+- https://qaskills.sh/blog/playwright-test-agents-planner-generator-healer-official-2026 — Playwright AI Healer/Planner/Generator
+- https://testdino.com/blog/fixing-playwright-tests-with-ai — AI test fixing
+
+
 ## [v1.45.0] - 2026-06-13
 ### Added
 - 6 new test cases from industry research (R155 Dynamic Test Intelligence cron)
