@@ -346,6 +346,7 @@ const GAMES = [
 {name:"Crazy Drive",emoji:"🏎",cat:"arcade",tags:["driving","car","physics","stunt","3d","obstacle"],url:"/drive-mad/",desc:"Master the art of balance in this thrilling 3D car stunt game! Race through 30 challenging levels across Desert, City, and Space worlds. Unlock 5 unique vehicles, collect coins, and earn gold medals. No download needed!",isNew:true,status:"live"},
 
   {name:"Grass Master",emoji:"🌿",cat:"puzzle",tags:["grass","lawn","mower","puzzle","slide","cutting","logic"],url:"/grass-master/",desc:"Swipe to mow lawns in this satisfying grass cutting puzzle! Cut all grass within limited moves. 30 levels, 5 tiers, 3-star ratings. No download needed!",isNew:true,status:"live"},
+  {name:"Beads Out",emoji:"🔴",cat:"puzzle",tags:["beads","string","logic","tap","constraint"],url:"/beads-out/",desc:"Beads Out - Tap colored beads in sequence to clear strings. A constraint-satisfaction puzzle with 30 levels, star ratings and satisfying mechanics.",isNew:true,status:"live"},
 ];
 
 /**
