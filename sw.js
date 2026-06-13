@@ -19,7 +19,7 @@ self.addEventListener('install',e=>{
     '/solitaire-roguelite/',
     '/knotwords/',
     '/draw-bridge/',
-    '/gobble/'
+    '/gobble/',
       '/screw-master/',
     '/tomb-of-the-mask/',
 ];
