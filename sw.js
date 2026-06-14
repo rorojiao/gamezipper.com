@@ -1,8 +1,10 @@
-// GameZipper Service Worker v16
+// GameZipper Service Worker v17
 // Pure game caching — Monetag push NOTIFICATIONS DISABLED per user request
 // Strategies: cache-first (static), stale-while-revalidate with 4h max-age (HTML), network-first (API)
 // v12: navigationPreload for faster TTFB on navigation requests
-const CACHE='gz-v47';
+// v17: bypass browser cache for /gz-analytics.js so EP rotation propagates immediately
+//      (tunnel rotates every ~5min; SW would otherwise hold stale EP for the lifetime of the SW)
+const CACHE='gz-v48';
 const HTML_MAX_AGE=4*60*60*1000; // 4 hours in ms
 
 // === Install ===
@@ -99,6 +101,14 @@ self.addEventListener('fetch',e=>{
 
   // Skip third-party requests (ads, analytics) — let browser handle
   if(url.origin!==self.location.origin)return;
+
+  // v17: Network-only for /gz-analytics.js — bypass SW cache + browser HTTP cache.
+  // CDN cache still applies but `?v=` bumping in HTML references busts it on every tunnel rotation.
+  // Without this, SW would return stale EP from local cache for the lifetime of the SW (until CACHE bump).
+  if(url.pathname==='/gz-analytics.js'||url.pathname.startsWith('/gz-analytics.')){
+    e.respondWith(fetch(e.request,{cache:'no-store'}).catch(function(){return fetch(e.request);}));
+    return;
+  }
 
   // Cache-first for static assets (js, css, images, fonts, audio)
   if(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|mp3|ogg|wav|webp)$/i.test(url.pathname)){
