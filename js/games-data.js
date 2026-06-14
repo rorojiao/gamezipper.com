@@ -357,6 +357,7 @@ const GAMES = [
 {name:"Maze Paint",emoji:"🎨",cat:"puzzle",tags:["maze","puzzle","swipe","paint","logic","sliding","ball"],url:"/maze-paint/",desc:"Slide your paint ball through maze corridors and fill every cell! 30 levels from tutorial to expert with star ratings and hints.",isNew:true,status:"live"},
 {name:"Triple Match 3D",emoji:"🎯",cat:"puzzle",tags:["Puzzle","Match","3D","Objects","Brain","Sort","Casual","Free","HTML5","Browser"],url:"/triple-match-3d/",desc:"Find and tap 3 identical objects to clear them! 25 addictive levels of 3D matching puzzle fun. Tray management, combos, power-ups!",isNew:true,status:"live"},
 {name:"Love Balls",emoji:"💕",cat:"puzzle",tags:["physics","drawing","love","balls","line-draw","connect"],url:"/love-balls/",desc:"Draw lines to bounce and guide two balls together in this addictive physics puzzle. 30 levels with star ratings.",isNew:true,status:"live"},
+{name:"Arrow Puzzle",emoji:"🧭",cat:"puzzle",tags:["Puzzle","Arrow","Spin","Rotate","Logic","Brain","Grid","Lights Out","Casual","Free"],url:"/arrow-puzzle/",desc:"Play Arrow Puzzle free online! Tap a tile to spin it and its neighbors clockwise. Align every arrow UP to win across 30 brain-teasing levels. A neon logic puzzle. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
