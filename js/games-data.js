@@ -14,7 +14,6 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#ff9a9e,#fecfef)',
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
   'linear-gradient(135deg,#a1c4fd,#c2e9fb)'
-
 ];
 
 const GAMES = [
@@ -364,6 +363,7 @@ const GAMES = [
 {name:"Virus Buster",emoji:"💊",cat:"puzzle",tags:["virus","pill","match","dr-mario","capsule"],url:"/virus-buster/",desc:"Drop colored pills to match 4+ and eliminate viruses. 20 levels of cascading combo puzzle action. Play free online.",isNew:true,status:"live"},
 {name:"Spin Rings",emoji:"🎯",cat:"puzzle",tags:["spin","rings","rotation","color","align","concentric","puzzle","logic","brain","casual","free","html5","browser"],url:"/spin-rings/",desc:"Play Spin Rings online free. Rotate concentric rings to align colored segments into matching columns. 30 levels across 5 difficulty tiers plus daily challenge. No download needed!",isNew:true,status:"live"},
 {name:"Family Tree",emoji:"🌳",cat:"puzzle",tags:["puzzle","logic","deduction","family","tree","genealogy","brain","clue","casual","free","html5","browser"],url:"/family-tree/",desc:"Play Family Tree online free! A deductive logic puzzle — read clues and place family members into the genealogy tree. 40 brain-teasing levels across 4 difficulties. No download!",isNew:true,status:"live"},
+{name:"Flag Paint",emoji:"🏳️",cat:"puzzle",tags:["flag","paint","color","world","geography","educational","puzzle","brain"],url:"/flag-paint/",desc:"Paint world flags from memory! Select colors and fill each region to recreate 30 national flags across 5 continents. Star ratings, hints, and educational facts. Free online flag painting puzzle!",isNew:true,status:"live"}
 ];
 
 /**
