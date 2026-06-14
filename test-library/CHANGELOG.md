@@ -1,5 +1,33 @@
 # Test Case Library Changelog
 
+## [v1.51.0] - 2026-06-14
+### Added
+- 9 new test cases from industry research (R167 Dynamic Test Intelligence cron)
+- S-097: CVE-2026-0628 "Glic Jack" Chrome Gemini Live AI side panel hijack — browser-AI attack surface (P1)
+- B-084: Chrome 149.0.7827.114 emergency update — 5th Chrome zero-day 2026 actively exploited (P0)
+- B-085: Microsoft Defender false positives quarantining game JS files (P2)
+- S-098: Push Security 2026 Browser Attack Techniques — TTPs targeting game players (P2)
+- C-085: Apple AI-powered Safari extensions overhaul — extension interference testing (P2)
+- A-028: Casual mobile game card/tile contrast readability — WCAG color-blind audit (P2)
+- G-129: 2026 spatial UI + diegetic HUD convergence — canvas overlay + DOM hybrid (P2)
+- P-056: Accessibility features increase D7 retention 2.5× — quantified accessibility debt (P1)
+- PC-015: Browser session hijacking + OAuth/cookie theft targeting game players (P2)
+
+### Sources
+- CVE-2026-0628 Glic Jack (CSA Labs): https://labs.cloudsecurityalliance.org/research/csa-research-note-browser-ai-panel-hijack-cve-2026-0628-2026
+- Chrome 5th zero-day 2026 (BleepingComputer): https://bleepingcomputer.com/news/security/google-patches-fifth-chrome-zero-day-bug-exploited-in-attacks-this-year
+- Chrome V8 CVE-2026-11645 (InfoSecurity Magazine): https://infosecurity-magazine.com/news/google-patch-chrome-vulnerability
+- Push Security 2026 Browser Attacks: https://pushsecurity.com/resources/browser-attacks-report
+- Microsoft Defender zero-days (Forbes): https://forbes.com/sites/daveywinder/2026/05/21/2-new-microsoft-defender-zero-days-exploited-patch-now-rolling-out
+- Apple AI Safari extensions (The Verge): https://theverge.com/tech/946345/apple-safari-ai-update-extensions
+- Casual game accessibility audit (Software Testing Magazine): https://softwaretestingmagazine.com/knowledge/the-accessibility-audit-testing-for-inclusivity-in-casual-mobile-gaming
+- Game UX Design 2026 (Boundev): https://boundev.ai/blog/game-ux-design-guide-2026
+- Accessibility retention impact (MoldStud): https://moldstud.com/articles/p-the-impact-of-accessibility-on-player-engagement-and-retention-in-mobile-games-boosting-inclusivity-for-better-gameplay
+- Game accessibility $25B market (developers.dev): https://developers.dev/tech-talk/accessibility-in-game-design-meaning.html
+- Microsoft June 2026 Patch Tuesday (BleepingComputer): https://bleepingcomputer.com/news/microsoft/microsoft-june-2026-patch-tuesday-fixes-6-zero-days-200-flaws
+- Search queries: "HTML5 game testing 2026 new techniques June browser security vulnerability", "casual browser game bug report 2026 June performance WebGL WebGPU", "Chrome Edge Safari update 2026 June breaking changes web platform", "browser security vulnerability CVE 2026 June Chrome Safari WebGL", "casual game UX complaint accessibility 2026 mobile web game", "Chrome zero-day June 2026 CVE-2026-11645 exploit patch", "Safari 27 WWDC26 2026 WebKit new features deprecation", "WebGPU WebNN AI browser game 2026 June neural network", "Microsoft June 2026 Patch Tuesday CVE Edge browser exploit", "Playwright 1.60 1.61 June 2026 AI agent browser automation testing"
+
+
 ## [v1.50.0] - 2026-06-14
 ### Added
 - 8 new test cases from industry research (R165 Dynamic Test Intelligence cron)
