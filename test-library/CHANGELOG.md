@@ -1,6 +1,27 @@
 # Test Case Library Changelog
 
-## [v1.54.0] - 2026-06-14
+## [v1.55.0] - 2026-06-15
+### Added
+- 9 new test cases from industry research (R175 Dynamic Test Intelligence cron)
+- B-090: Safari 27 / WebKit WWDC26 record 525-fix + 58-feature full-library regression sweep (module-loader rewrite top-level await, appearance:base, Customizable Select, Immersive Environments)
+- G-134: Safari 27 `<model>` HTML Model element for interactive 3D models in game previews/cards (stagemode=orbit, environmentmap, source)
+- B-091: Chrome 150 stable (June 29 2026) quiet release — 0 new enabled features, AccentColor/AccentColorText system-color audit on frozen 149 baseline
+- C-093: Enterprise agentic AI playtesting production deployment (Capcom+Google Cloud April 2026, EA RL FIFA agents, Google Cloud Living Games, MARL multiplayer)
+- C-094: Browser-regression attribution diagnostic methodology — distinguish app bug from browser bug (maproom.net Chrome-Mac mapping torpedo case)
+- W-143: US game-addiction + child-targeting dark-pattern lawsuit exposure (Budge Studios Gwinn v. Paw Patrol/Bluey class action + 2026 litigation wave)
+- W-144: Asian-market CN/JP F2P dark-pattern audit for localized game compliance (arXiv 2511.17512 — Pay-to-Skip, Pay-Wall, red-beacon)
+- G-135: Hybrid-casual 2026 monetization-design integration audit (ads/rewarded-video woven into core loop, not bolted on)
+- S-102: Chromium June 2026 monthly vulnerability bulletin PAN-SA-2026-0008 (severity 8.4 HIGH, network vector, no user interaction) regression sweep
+### Sources
+- Search: "HTML5 game testing 2026 new techniques browser game QA" — roboticsandautomationnews.com/2026/04/21, snoopgame.com/blog/top-game-testing-trends-to-watch-in-2026, thecodersblog.com/agentic-ai-for-game-playtesting-2026
+- Search: "WebKit Safari 26 regression bug 2026 canvas WebGL game" — webkit.org/blog/17967/news-from-wwdc26-webkit-in-safari-27-beta, blakecrosley.com/blog/webkit-lab-how-safari-ships, webkit.org/blog/17974/web-technology-sessions-at-wwdc26, developer.apple.com/documentation/safari-release-notes/safari-27-release-notes
+- Search: "Chrome Edge Safari update 2026 June browser release regression" — chrome-status-lite.deno.dev, developer.chrome.com/blog/chrome-150-beta, browsercalendar.com/browsers/chrome, chromereleases.googleblog.com/2026
+- Search: "casual game UX complaint 2026 mobile dark pattern monetization" — gamegrowthadvisor.com/blog/2026-04-16-hybrid-casual-game-design-strategy-2026, meliorgames.com/game-development/game-monetization-in-2026, arxiv.org/html/2412.05039v1
+- Search: "Agentic AI reinforcement learning game playtesting exploit discovery 2026" — googlecloudpresscorner.com/2026-04-22-How-Capcom-Is-Leading-the-Way, digitaldefynd.com/IQ/ai-in-video-game-testing, games.gg/news/google-cloud-launches-ai-agents-for-game-development, blog.stackademic.com/unlocking-multi-agent-reinforcement-learning
+- Search: "Dark Pattern monetization mobile game lawsuit 2026 Budge Studios children" — lawfold.com/game-addiction-lawsuit, classaction.org/news/developer-of-paw-patrol-bluey-apps, rainintelligence.com/blog/dark-patterns-in-gaming-lawsuits, law360.com/articles/1881450
+- Search: "browser security vulnerability June 2026 Chrome CVE critical patch zero-day" — security.paloaltonetworks.com/PAN-SA-2026-0008
+- Search: "Chrome 150 stable June 29 2026 AccentColor system color new features" — developer.chrome.com/blog/chrome-150-beta, chrome-status-lite.deno.dev, maproom.net/the-chrome-update-that-torpedoed-interactive-mapping-on-apple-macs
+
 ### Added
 - 8 new test cases from industry research (R173 Dynamic Test Intelligence cron)
 - C-090: Crashbox local-first crash black box for browser games — pre-crash heartbeat + sessionStorage recovery captures hard-crash telemetry when WebGPU device-lost / WASM OOM / unresponsive-tab kill terminates JS at crash moment (P2)
