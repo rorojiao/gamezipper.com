@@ -1,5 +1,39 @@
 # Test Case Library Changelog
 
+## [v1.53.0] - 2026-06-14
+### Added
+- 9 new test cases from industry research (R171 Dynamic Test Intelligence cron)
+- S-100: SandboxJS four CVSS 10.0 sandbox-escape vulnerabilities CVE-2026-25520/25586/25587/25641 — host compromise via untrusted-JS sandbox library (P1)
+- S-101: AI-assistant browser extension zero-click prompt injection from arbitrary websites — Claude extension CVE, generalizes to Gemini/Copilot/Apple-Intelligence extensions; game-page-as-injection-vector threat model (P2)
+- C-088: Vision Language Model (VLM) agents for autonomous game playtesting 2026→2027 — pixel-level visual bug detection vs DOM-based agents (P2)
+- P-059: Browser per-tab hard memory caps + dynamic GPU allocation inefficiency → progressive slowdown then OOM crash in long sessions — Llamas on the Web arXiv 2605.20706 (P1)
+- P-060: WebGPU memory-safety data races — SafeRace research paper, concurrent render+compute undefined behavior / device-lost crash (P2)
+- G-131: 2026 player complaints cluttered/obstructive game UI audit — GameHelper investigative report + UXPin guide (P2)
+- G-132: Bottom-navigation + thumb-zone as 2026 mobile UI standard migration — emergingtechs/connectioncafe/novatechbeacon (P2)
+- B-088: Firefox 150+ local network access restriction extended to ALL users — LAN/WebRTC/mDNS permission prompts affect multiplayer games (P2)
+- C-089: Agent-driven browser automation tools (Browser Harness + Microsoft Foundry) as Playwright alternatives for AI game QA (P3)
+
+### Sources
+- SandboxJS CVSS 10.0 sandbox escape (qq.com red alert): https://so.html5.qq.com/page/real/search_news?docid=70000021_527698a8ac736552
+- Claude browser extension zero-click prompt injection (qq.com): https://so.html5.qq.com/page/real/search_news?docid=70000021_26069c5df2970152
+- VLM agents for game testing (unrealsolutions): https://unrealsolutions.com/insights/ai-game-testing-vlm-agents.html
+- AI in automated game testing (talkdev): https://talkdev.com/featured/ai-in-automated-game-testing-the-new-standard-for-next-gen-quality-assurance
+- Agentic AI for game playtesting 2026 (thecodersblog): https://thecodersblog.com/agentic-ai-for-game-playtesting-2026
+- Llamas on the Web — browser memory caps (arXiv 2605.20706): https://arxiv.org/html/2605.20706v1
+- SafeRace — WebGPU memory safety data races (paper): https://reeselevine.github.io/assets/pdf/saferace.pdf
+- Why Video Game UIs Are So Bad in 2026 (GameHelper): https://gamehelper.io/games/squad/articles/why-are-video-game-uis-getting-worse-an-investigative-report
+- Game UX Design Guide 2026 (UXPin): https://uxpin.com/studio/blog/game-ux
+- Player-First Evolution 2026 (emergingtechs): https://emergingtechs.net/why-player-voices-govern-the-2026-casino-floor
+- One-Hand Play Wins Players 2026 (connectioncafe): https://connectioncafe.com/dark-mode-haptics-and-one-hand-play-the-new-ux-rules-for-gaming-apps-in-2026
+- 2026 One-Hand Gaming thumb-zone (novatechbeacon): https://novatechbeacon.com/latest/why-2026-gaming-is-built-for-one-hand-play
+- Firefox 150 local network access restriction (qq.com): https://so.html5.qq.com/page/real/search_news?docid=70000021_15669e6c60a26052
+- Browser Harness agent browser automation (qq.com): https://so.html5.qq.com/page/real/search_news?docid=70000021_92669ef2db811252
+- Microsoft Foundry browser automation (Redmond Magazine): https://redmondmag.com/blogs/redmond-dispatch/2026/06/microsoft-adds-browser-automation-tool.aspx
+- WebGPU vs WebAssembly browser benchmarks (SitePoint): https://sitepoint.com/webgpu-vs-webasm-transformers-js
+- WebGPU + WebNN browser AI (ddevtools): https://ddevtools.com/updates/2026-01-webgpu-webnn-browser-ai
+- Search queries: "HTML5 browser game testing automation 2026 new technique bug", "casual game UX complaint 2026 mobile player feedback dark mode haptic", "WebGPU WebAssembly WebNN 2026 performance memory leak game benchmark", "Chrome 151 152 stable release June 2026 CVE security patch", "Safari 27 WebKit iOS 26 bug regression 2026 WebGL canvas memory", "browser iframe sandbox XSS clickjacking CVE 2026 exploit", "Firefox 152 release notes security 2026"
+
+
 ## [v1.52.0] - 2026-06-14
 ### Added
 - 9 new test cases from industry research (R169 Dynamic Test Intelligence cron)
