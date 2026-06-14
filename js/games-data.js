@@ -359,6 +359,7 @@ const GAMES = [
 {name:"Love Balls",emoji:"💕",cat:"puzzle",tags:["physics","drawing","love","balls","line-draw","connect"],url:"/love-balls/",desc:"Draw lines to bounce and guide two balls together in this addictive physics puzzle. 30 levels with star ratings.",isNew:true,status:"live"},
 {name:"Arrow Puzzle",emoji:"🧭",cat:"puzzle",tags:["Puzzle","Arrow","Spin","Rotate","Logic","Brain","Grid","Lights Out","Casual","Free"],url:"/arrow-puzzle/",desc:"Play Arrow Puzzle free online! Tap a tile to spin it and its neighbors clockwise. Align every arrow UP to win across 30 brain-teasing levels. A neon logic puzzle. No download needed!",isNew:true,status:"live"},
 {name:"Seating Puzzle",emoji:"🪑",cat:"puzzle",tags:["puzzle","seating","logic","constraint","arrangement","cozy","brain","casual"],url:"/seating-puzzle/",desc:"Arrange dinner guests at tables to satisfy all their preferences! 25 cozy constraint-satisfaction logic puzzles with hints, stars, and daily challenges. No download needed.",isNew:true,status:"live"},
+{name:"Rule Rewrite",emoji:"🧩",cat:"puzzle",tags:["puzzle","logic","brain-teaser","word-puzzle","baba","rules","strategy","logic","brain","casual","free","html5","browser"],url:"/rule-rewrite/",desc:"Push word blocks to rewrite the rules! 25 mind-bending logic puzzles where the laws of the game are yours to change. No download needed.",isNew:true,status:"live"},
 ];
 
 /**
