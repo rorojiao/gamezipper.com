@@ -363,6 +363,7 @@ const GAMES = [
 {name:"Metro Lines",emoji:"🚇",cat:"puzzle",tags:["metro","subway","transit","mini metro","strategy","simulation","lines","trains","puzzle","logic","management","html5","free","browser"],url:"/metro-lines/",desc:"Play Metro Lines online free. Design your city subway network — draw colored metro lines connecting shape-coded stations, route trains to deliver passengers before overcrowding. 22 levels plus endless mode. No download!",isNew:true,status:"live"},
 {name:"Virus Buster",emoji:"💊",cat:"puzzle",tags:["virus","pill","match","dr-mario","capsule"],url:"/virus-buster/",desc:"Drop colored pills to match 4+ and eliminate viruses. 20 levels of cascading combo puzzle action. Play free online.",isNew:true,status:"live"},
 {name:"Spin Rings",emoji:"🎯",cat:"puzzle",tags:["spin","rings","rotation","color","align","concentric","puzzle","logic","brain","casual","free","html5","browser"],url:"/spin-rings/",desc:"Play Spin Rings online free. Rotate concentric rings to align colored segments into matching columns. 30 levels across 5 difficulty tiers plus daily challenge. No download needed!",isNew:true,status:"live"},
+{name:"Family Tree",emoji:"🌳",cat:"puzzle",tags:["puzzle","logic","deduction","family","tree","genealogy","brain","clue","casual","free","html5","browser"],url:"/family-tree/",desc:"Play Family Tree online free! A deductive logic puzzle — read clues and place family members into the genealogy tree. 40 brain-teasing levels across 4 difficulties. No download!",isNew:true,status:"live"},
 ];
 
 /**
