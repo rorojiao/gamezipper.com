@@ -1,5 +1,38 @@
 # Test Case Library Changelog
 
+## [v1.54.0] - 2026-06-14
+### Added
+- 8 new test cases from industry research (R173 Dynamic Test Intelligence cron)
+- C-090: Crashbox local-first crash black box for browser games — pre-crash heartbeat + sessionStorage recovery captures hard-crash telemetry when WebGPU device-lost / WASM OOM / unresponsive-tab kill terminates JS at crash moment (P2)
+- C-091: GameEval autonomous AI game testing & quality-scoring platform — serverless browser automation + computer vision + LLM evaluates browser games without human intervention (P2)
+- C-092: Codex CLI + Playwright MCP agent-driven E2E test-generation loop — agent delegates to MCP for exploration, native agents for codegen, headless verification feeds back into reasoning (P3)
+- B-089: Safari/WebKit 26 ONNX Runtime JSEP mode severe CPU/memory regression for on-device AI inference — microsoft/onnxruntime#26827, reproducible minimal test project exists (P1)
+- P-061: WebGPU game crash reporting pipeline — GPUDevice.lost handler + adapter fallback + validation-error capture; try/catch is blind to graphics failures, wide browser variance (P2)
+- W-142: EU Digital Fairness Act (DFA) + DSA Article 25 dark-pattern prohibition for game monetization UX — deception/manipulation/distortion ban; DFA expands to addictive design + influencer marketing + profiling (P1)
+- G-133: WASM-compiled native game engine (C++/C#/Rust → WASM) integration testing — five-surface parity (render/audio/input/network/storage) vs native; near-native hot path replaces JS runtime (P2)
+- P-062: WebGPU three-domain memory leak detection (mapped-buffer + texture + pipeline-layout) — each domain requires domain-specific handling; per-frame resource census methodology (P2)
+
+### Sources
+- Crashbox local-first crash black box (nearform/crashbox): https://github.com/nearform/crashbox
+- Crashbox API docs: https://github.com/nearform/crashbox/blob/main/docs/API.md
+- GameEval autonomous AI game testing (GitHub): https://github.com/adam0white/GameEval
+- Codex CLI + Playwright MCP agent-driven test generation: https://codex.danielvaughan.com/2026/04/20/codex-cli-playwright-e2e-testing-agent-driven-test-generation
+- Safari/WebKit 26 ONNX Runtime JSEP regression: https://github.com/microsoft/onnxruntime/issues/26827
+- ONNX Runtime JSEP repro project: https://github.com/theopolis/onnxtest
+- Crash Reporting for WebGPU Games (bugnet.io): https://bugnet.io/blog/crash-reporting-for-webgpu-games
+- GPUDevice.lost property (MDN): https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/lost
+- Dark Patterns and the EU Digital Services Act (ACM CHI 2026): https://dl.acm.org/doi/full/10.1145/3772318.3791479
+- Regulating dark patterns in the EU (European Parliament EPRS): https://europarl.europa.eu/RegData/etudes/ATAG/2025/767191/EPRS_ATA(2025)767191_EN.pdf
+- From Dark Patterns to Fair Play / Digital Fairness Act (Goodwin): https://goodwinlaw.com/en/insights/publications/2025/11/alerts-practices-antc-from-dark-patterns-to-fair-play
+- Dark Patterns Are Now Illegal in the EU (CBTW): https://cbtw.tech/insights/illegal-dark-patterns-europe
+- WebAssembly Game Engines (simplified.media): https://simplified.media/guides/wasm-game-engines
+- Build Browser Games with WASM, WebGPU, and Rust (techbytes.app): https://techbytes.app/posts/build-browser-games-wasm-webgpu-rust-2026
+- Fix WebGPU Memory Leaks in Browser Games (DrCodes): https://drcodes.com/posts/fix-webgpu-memory-leaks-in-browser-games-complete-guide
+- Playwright MCP accessibility tree guide (qaskills): https://qaskills.sh/blog/playwright-mcp-accessibility-tree-guide-2026
+- Playwright Test Agents & MCP architecture (testquality): https://testquality.com/playwright-test-agents-mcp-architecture-2026
+- Search queries: "nearform crashbox github browser tab crash recovery WebGPU device lost", "GameEval autonomous AI game testing computer vision quality scoring", "Playwright MCP 2026 accessibility tree AI agent test generation", "2026 web game dark pattern monetization ad fraud regulation EU DSA", "WebGPU WebAssembly WASM memory leak OOM crash 2026 browser game benchmark", "Codex CLI Playwright agent-driven E2E test generation 2026", "Safari WebKit 26 ONNX runtime JSEP CPU memory regression", "EU Digital Fairness Act dark pattern prohibition game monetization 2026"
+
+
 ## [v1.53.0] - 2026-06-14
 ### Added
 - 9 new test cases from industry research (R171 Dynamic Test Intelligence cron)
