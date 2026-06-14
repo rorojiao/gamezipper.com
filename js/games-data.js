@@ -361,6 +361,7 @@ const GAMES = [
 {name:"Seating Puzzle",emoji:"🪑",cat:"puzzle",tags:["puzzle","seating","logic","constraint","arrangement","cozy","brain","casual"],url:"/seating-puzzle/",desc:"Arrange dinner guests at tables to satisfy all their preferences! 25 cozy constraint-satisfaction logic puzzles with hints, stars, and daily challenges. No download needed.",isNew:true,status:"live"},
 {name:"Rule Rewrite",emoji:"🧩",cat:"puzzle",tags:["puzzle","logic","brain-teaser","word-puzzle","baba","rules","strategy","logic","brain","casual","free","html5","browser"],url:"/rule-rewrite/",desc:"Push word blocks to rewrite the rules! 25 mind-bending logic puzzles where the laws of the game are yours to change. No download needed.",isNew:true,status:"live"},
 {name:"Metro Lines",emoji:"🚇",cat:"puzzle",tags:["metro","subway","transit","mini metro","strategy","simulation","lines","trains","puzzle","logic","management","html5","free","browser"],url:"/metro-lines/",desc:"Play Metro Lines online free. Design your city subway network — draw colored metro lines connecting shape-coded stations, route trains to deliver passengers before overcrowding. 22 levels plus endless mode. No download!",isNew:true,status:"live"},
+{name:"Virus Buster",emoji:"💊",cat:"puzzle",tags:["virus","pill","match","dr-mario","capsule"],url:"/virus-buster/",desc:"Drop colored pills to match 4+ and eliminate viruses. 20 levels of cascading combo puzzle action. Play free online.",isNew:true,status:"live"},
 ];
 
 /**
