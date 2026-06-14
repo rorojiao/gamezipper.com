@@ -1,5 +1,38 @@
 # Test Case Library Changelog
 
+## [v1.52.0] - 2026-06-14
+### Added
+- 9 new test cases from industry research (R169 Dynamic Test Intelligence cron)
+- B-086: Firefox 151 MFSA2026-46 sandbox escape batch — 30+ flaws, 4 high-risk sandbox escapes, CVE-2026-8974 memory safety, 14-day cookie isolation (P1)
+- S-099: CVE-2026-5733 Firefox WebGPU buffer overflow — distinct from CVE-2026-8967 info disclosure (P1)
+- C-086: iOS Safari WebGL context lost when backgrounding Safari — WebKit bug 261331 iPadOS 17+ regression, permanent black canvas (P1)
+- B-087: iOS 26 WebKit 26 WebGPU memory limits regression — home-assistant #28367, stricter than iOS 17 WebGL backend (P1)
+- P-057: WASM linear memory fragmentation OOM in long sessions — loke.dev, heap fragments even at low data density (P1)
+- G-130: Godot 4.5 web export WASM memory ceiling + threaded loader caveats — gamineai.com 2026 H2 playbook (P2)
+- P-058: WASM image loader memory leak pattern — cat-o-licious GitHub #15, common JS↔WASM boundary bug (P2)
+- W-141: ChromeOS 150 LTC (July 21 2026) — enterprise/school Chromium version lag, 6-month pin (P2)
+- C-087: Playwright MCP accessibility-tree-first AI QA — structured semantic view vs fragile selectors (P2)
+
+### Sources
+- Firefox 151 MFSA2026-46 (Mozilla): https://mozilla.org/security/advisories/mfsa2026-46
+- Firefox 151 privacy + 30 flaws (PCWorld): https://pcworld.com/article/3144596/firefox-151-brings-a-big-privacy-boost-and-fixes-30-security-flaws.html
+- CVE-2026-5733 Firefox WebGPU buffer overflow (SentinelOne): https://sentinelone.com/vulnerability-database/cve-2026-5733
+- CVE-2026-8967 Firefox WebGPU info disclosure (CVEFeed): https://cvefeed.io/vuln/detail/CVE-2026-8967
+- iOS Safari WebGL context lost on background (WebKit Bugzilla): https://bugs.webkit.org/show_bug.cgi?id=261331
+- iOS 26 WebKit 26 WebGPU memory regression (home-assistant): https://github.com/home-assistant/frontend/issues/28367
+- WASM linear memory fragmentation OOM (loke.dev): https://loke.dev/blog/wasm-linear-memory-fragmentation-oom
+- Godot 4.5 web export WASM ceiling (gamineai): https://gamineai.com/blog/godot-4-5-web-export-wasm-memory-ceiling-h2-2026-browser-demo-trend-playbook
+- Godot web export docs: https://docs.godotengine.org/en/4.5/tutorials/export/exporting_for_web.html
+- WASM image loader memory leak (cat-o-licious #15): https://github.com/fiorix/cat-o-licious/issues/15
+- ChromeOS 150 LTC (Google support): https://support.google.com/chrome/a/answer/7679408
+- Playwright MCP AI QA (autify): https://autify.com/blog/playwright-ai
+- Playwright 2026 MCP guide (anhtu.dev): https://anhtu.dev/playwright-2026-e2e-testing-mcp-ai-assisted-browser-automation-1116
+- Playwright AI test generation 2026 (buildbetter): https://blog.buildbetter.ai/playwright-test-generation-with-ai-complete-2026-guide
+- Microsoft Foundry browser automation (Redmondmag): https://redmondmag.com/blogs/redmond-dispatch/2026/06/microsoft-adds-browser-automation-tool.aspx
+- Chrome 150 beta (Chrome for Developers): https://developer.chrome.com/blog/chrome-150-beta
+- Search queries: "Chrome 149 150 151 CVE vulnerability June 2026 zero-day exploit browser", "Safari 27 iOS 26 WebKit bug WebGL canvas regression June 2026", "HTML5 browser game testing automation AI agent Playwright 2026", "WebGPU WebNN WASM performance 2026 casual game migration", "Chrome 150 beta features CSS HTML web platform", "Firefox 151 152 security update CVE 2026 WebGL WebGPU crash", "browser game memory leak WASM Garbage Collection 2026 OOM crash", "Godot 4.5 web export WASM memory ceiling browser 2026"
+
+
 ## [v1.51.0] - 2026-06-14
 ### Added
 - 9 new test cases from industry research (R167 Dynamic Test Intelligence cron)
