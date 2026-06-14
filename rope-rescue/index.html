@@ -182,6 +182,7 @@ body::before {
 h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}</style>
 <h1 class="gz-sr-only">Rope Rescue - Free Online Puzzle Game</h1>
 <script src="/gz-analytics.js?v=202606140b" defer></script>
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=rope-rescue'></script>
 </head>
 <body>
 <nav id="gz-topnav" style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:8px 16px;display:flex;justify-content:center;align-items:center;position:sticky;top:0;z-index:9999"><a href="https://gamezipper.com/" style="color:#fff;text-decoration:none;font-weight:bold;font-size:14px;animation:pulse-glow 2.5s ease-in-out infinite;display:inline-flex;align-items:center;gap:6px">&#x1F3AE; GameZipper — More Free Games</a></nav>
@@ -463,28 +464,49 @@ function updatePhysics(dt) {
  const subSteps = 4;
  const sdt = Math.min(dt, 0.033) / subSteps;
  for (let s = 0; s < subSteps; s++) {
-  // Apply gravity to character
-  if (!character.attached) {
-   character.vy += GRAVITY * 60 * sdt;
-   character.vx *= FRICTION;
-   character.vy *= FRICTION;
-   character.x += character.vx * 60 * sdt;
-   character.y += character.vy * 60 * sdt;
-   // Bouncer collision
-   const lv = LEVELS[currentLevel];
-   const d = denorm(lv);
-   d.bouncers.forEach(b => {
-    if (character.x > b.x - CHAR_RADIUS && character.x < b.x + b.w + CHAR_RADIUS &&
-        character.y + CHAR_RADIUS > b.y && character.y + CHAR_RADIUS < b.y + b.h + 10) {
-     character.y = b.y - CHAR_RADIUS;
-     character.vy = -Math.abs(character.vy) * BOUNCE - 8;
-     spawnParticles(character.x, b.y, '#ff8844', 5);
+  // Apply gravity to character (always — enables pendulum swing on ropes)
+  character.vy += GRAVITY * 60 * sdt;
+  character.vx *= FRICTION;
+  character.vy *= FRICTION;
+  character.x += character.vx * 60 * sdt;
+  character.y += character.vy * 60 * sdt;
+  // Enforce rope distance constraints (creates pendulum physics)
+  if (character.attached) {
+   const lv0 = LEVELS[currentLevel];
+   const d0 = denorm(lv0);
+   ropes.forEach(rp => {
+    if (rp.cut || rp.b !== 'char') return;
+    const anchor = typeof rp.a === 'number' ? d0.anchors[rp.a] : null;
+    if (!anchor) return;
+    const dx = character.x - anchor.x;
+    const dy = character.y - anchor.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > rp.len && dist > 0.001) {
+     const ratio = rp.len / dist;
+     character.x = anchor.x + dx * ratio;
+     character.y = anchor.y + dy * ratio;
+     // Remove outward radial velocity, preserve tangential (swing)
+     const nx = dx / dist;
+     const ny = dy / dist;
+     const radialV = character.vx * nx + character.vy * ny;
+     if (radialV > 0) { character.vx -= radialV * nx; character.vy -= radialV * ny; }
     }
    });
-   // Wall bounce
-   if (character.x < CHAR_RADIUS) { character.x = CHAR_RADIUS; character.vx = Math.abs(character.vx) * 0.5; }
-   if (character.x > W - CHAR_RADIUS) { character.x = W - CHAR_RADIUS; character.vx = -Math.abs(character.vx) * 0.5; }
   }
+  // Bouncer collision (always active)
+  const lv = LEVELS[currentLevel];
+  const d = denorm(lv);
+  d.bouncers.forEach(b => {
+   if (character.x > b.x - CHAR_RADIUS && character.x < b.x + b.w + CHAR_RADIUS &&
+       character.y + CHAR_RADIUS > b.y && character.y + CHAR_RADIUS < b.y + b.h + 10) {
+    character.y = b.y - CHAR_RADIUS;
+    character.vy = -Math.abs(character.vy) * BOUNCE - 8;
+    spawnParticles(character.x, b.y, '#ff8844', 5);
+   }
+  });
+  // Wall bounce (always active)
+  if (character.x < CHAR_RADIUS) { character.x = CHAR_RADIUS; character.vx = Math.abs(character.vx) * 0.5; }
+  if (character.x > W - CHAR_RADIUS) { character.x = W - CHAR_RADIUS; character.vx = -Math.abs(character.vx) * 0.5; }
   // Update ropes
   ropes.forEach(rp => {
    if (rp.cut) return;
