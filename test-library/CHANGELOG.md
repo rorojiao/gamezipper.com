@@ -1,5 +1,50 @@
 # Test Case Library Changelog
 
+## [v1.56.0] - 2026-06-15
+### Added
+- 10 new test cases from industry research (R176 Dynamic Test Intelligence cron)
+- **B-092** [P0] Chrome V8 Zero-Day CVE-2026-11645 (June 9 2026) emergency-patch regression sweep — 5th actively-exploited Chrome zero-day of 2026
+- **B-093** [P1] Chrome 153 (Sept 2026) 2-week release cycle migration — accelerated CI/regression pipeline (4-week → 2-week)
+- **B-094** [P2] Microsoft Edge Custom Primary Password removal (June 4 2026) — auth-vault migration
+- **C-095** [P1] Google I/O 2026 HTML-in-Canvas API (Thomas Nattestad) — render HTML into canvas/WebGL/WebGPU preserving accessibility; canvas-only games a11y unlock
+- **P-063** [P0] INP (Interaction to Next Paint) firm gate — HTML5 game-loop 200ms p75 responsiveness (replaced FID March 2024)
+- **A-029** [P0] WCAG 2.2 SC 3.3.9 Accessible Authentication (No-Learning) — game login/rewards must NOT require cognitive-function test, allow paste + WebAuthn
+- **S-103** [P0] Privacy Sandbox killed Oct 2025 + 3P cookies now opt-in — explicit user consent for cross-site tracking (Topics API + PAAPI pulled)
+- **G-136** [P1] WebGL → WebGPU migration graceful-fallback audit — navigator.gpu undefined no-crash WebGL2 fallback
+- **W-145** [P2] Safari 27 box-shadow on table-row regression sweep — WebKit blog WWDC26 fix verification (leaderboards/scoreboards)
+- **GP-107** [P2] Mobile haptic feedback navigator.vibrate() — 2026 game UX standard (Android Chrome active + iOS Safari silent no-op)
+
+### Sources
+- Web search batch (5 queries, `topic: "general"` for stability per Pitfall 2) + 4-query follow-up batch:
+  - "HTML5 game testing June 2026 new techniques browser canvas WebGL WebGPU"
+  - "browser security vulnerability June 2026 Chrome CVE critical patch zero-day"
+  - "Chrome 151 152 Safari 27 Edge breaking changes 2026 web API deprecated"
+  - "web game performance LCP INP Core Web Vitals 2026 optimization measurement"
+  - "web game accessibility WCAG 2.2 2026 keyboard screen reader INP cognitive"
+  - "WebGPU 2026 game engine migration security sandboxing canvas fallback"
+  - "casual mobile game UX 2026 haptic feedback dark mode player retention complaint"
+  - "Chrome Privacy Sandbox third-party cookie deprecation 2026 Topics API ad impact"
+  - "iOS Safari 27 WebKit June 2026 release notes new features bugs"
+- Key URLs:
+  - https://thehackernews.com/2026/06/chrome-v8-zero-day-cve-2026-11645.html (Chrome V8 zero-day, 5th of 2026)
+  - https://securityarsenal.com/blog/chrome-zero-day-patch-google-fixes-actively-exploited-flaw-in-june-2026-update
+  - https://support.google.com/chrome/a/answer/10314655 (Chrome 153 → 2-week cycle)
+  - https://ghacks.net/category/browsers (Edge Custom Primary Password removed June 4 2026)
+  - https://webgpu.com/news/google-html-in-canvas-webgl-webgpu (HTML-in-Canvas, Google I/O 2026, Thomas Nattestad)
+  - https://digitalapplied.com/blog/core-web-vitals-2026-inp-lcp-cls-optimization-guide (INP gate)
+  - https://farooxium.dev/blog/core-web-vitals-performance-2026
+  - https://dequeuniversity.com/resources/wcag-2.2 (SC 3.3.9 Accessible Authentication No-Learning)
+  - https://w3.org/TR/WCAG22
+  - https://abilitynet.org.uk/factsheets/what-you-need-know-about-wcag-22
+  - https://adexchanger.com/privacy/google-pulls-the-plug-on-topics-paapi (Privacy Sandbox killed Oct 2025)
+  - https://groas.com/post/chrome-third-party-cookies-google-ads-2026-targeting-measurement-protection
+  - https://playcanvas.com (WebGL/WebGPU engine 2026)
+  - https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API
+  - https://webkit.org/blog/17967/news-from-wwdc26-webkit-in-safari-27-beta (Safari 27 box-shadow on table-row fix)
+  - https://hi3d.ai/blog/en-The-Future-of-Game-Design-10-Trends (mobile haptics 2026)
+  - https://uxpin.com/studio/blog/game-ux
+  - https://vrunik.com/ux-for-gaming-designing-immersive-user-experiences-in-mobile-and-console-games
+
 ## [v1.55.0] - 2026-06-15
 ### Added
 - 9 new test cases from industry research (R175 Dynamic Test Intelligence cron)
