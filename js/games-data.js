@@ -362,6 +362,7 @@ const GAMES = [
 {name:"Rule Rewrite",emoji:"🧩",cat:"puzzle",tags:["puzzle","logic","brain-teaser","word-puzzle","baba","rules","strategy","logic","brain","casual","free","html5","browser"],url:"/rule-rewrite/",desc:"Push word blocks to rewrite the rules! 25 mind-bending logic puzzles where the laws of the game are yours to change. No download needed.",isNew:true,status:"live"},
 {name:"Metro Lines",emoji:"🚇",cat:"puzzle",tags:["metro","subway","transit","mini metro","strategy","simulation","lines","trains","puzzle","logic","management","html5","free","browser"],url:"/metro-lines/",desc:"Play Metro Lines online free. Design your city subway network — draw colored metro lines connecting shape-coded stations, route trains to deliver passengers before overcrowding. 22 levels plus endless mode. No download!",isNew:true,status:"live"},
 {name:"Virus Buster",emoji:"💊",cat:"puzzle",tags:["virus","pill","match","dr-mario","capsule"],url:"/virus-buster/",desc:"Drop colored pills to match 4+ and eliminate viruses. 20 levels of cascading combo puzzle action. Play free online.",isNew:true,status:"live"},
+{name:"Spin Rings",emoji:"🎯",cat:"puzzle",tags:["spin","rings","rotation","color","align","concentric","puzzle","logic","brain","casual","free","html5","browser"],url:"/spin-rings/",desc:"Play Spin Rings online free. Rotate concentric rings to align colored segments into matching columns. 30 levels across 5 difficulty tiers plus daily challenge. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
