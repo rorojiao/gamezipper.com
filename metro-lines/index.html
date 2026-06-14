@@ -212,7 +212,7 @@ const state={
   score:0, combo:0, comboTimer:0,
   spawnTimer:0, weekTimer:0, week:0,
   elapsed:0, timeLimit:0,
-  running:false, paused:false, gameOver:false, completed:false,
+  running:true, paused:false, gameOver:false, completed:false,
   rafId:null, lastTs:0,
   // interaction
   dragging:null, // {fromStation, lineIdx, color, fromEnd, path:[{x,y}], hoverStation}
@@ -349,6 +349,7 @@ function startLevel(idx,endless){
   state.gameOver=false; state.completed=false; state.paused=false;
   state.particles=[]; state.upgradeChoices=[]; state.pendingUpgrade=false;
   state.hintTimer=4;
+  state.lastTs=performance.now();
   // river
   state.river = lvl.rivers ? {y: H/2 + (Math.random()*100-50), band: 70} : null;
   // place starting stations
@@ -356,11 +357,8 @@ function startLevel(idx,endless){
     state.stations.push({id:state.stations.length, x:ss.x, y:ss.y, shape:ss.shape, queue:[], overcrowd:-1, spawnAnim:1});
   }
   state.screen='game';
-  state.running=true;
-  state.lastTs=performance.now();
   resumeAudio();
   startBGM();
-  if(!state.rafId) state.rafId=requestAnimationFrame(loop);
 }
 function makeEndlessLevel(){
   const shapeCount = 3 + Math.floor(Math.random()*3); // 3-5 shapes
@@ -479,10 +477,10 @@ function applyUpgrade(choice){
 
 // ===== Game loop =====
 function loop(ts){
-  if(!state.running){ state.rafId=null; return; }
+  if(!state.running){ return; }
   const dt=Math.min(0.05,(ts-state.lastTs)/1000);
   state.lastTs=ts;
-  if(!state.paused && !state.gameOver && !state.completed){
+  if(state.screen==='game' && !state.paused && !state.gameOver && !state.completed){
     update(dt);
   }
   draw();
@@ -1311,8 +1309,7 @@ function quitToMenu(){ cleanupGame(); state.screen='title'; }
 
 // ===== Cleanup =====
 function cleanupGame(){
-  state.running=false;
-  if(state.rafId){cancelAnimationFrame(state.rafId);state.rafId=null;}
+  // stop simulation but keep render loop alive
   state.stations=[];state.lines=[];state.trains=[];state.passengers=[];
   state.dragging=null;state.particles=[];state.upgradeChoices=[];state.pendingUpgrade=false;
   state.paused=false;state.gameOver=false;state.completed=false;
@@ -1328,6 +1325,7 @@ document.addEventListener('visibilitychange',()=>{
 // ===== Init =====
 resize();
 state.screen='title';
+state.lastTs=performance.now();
 state.rafId=requestAnimationFrame(loop);
 })();
 </script>
