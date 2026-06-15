@@ -1,3 +1,48 @@
+## [v1.58.0] - 2026-06-15
+### Added
+- 10 new test cases from industry research (R178 Dynamic Test Intelligence cron)
+- **S-104** [P1] npm supply chain 2026 escalation — credential theft → cloud-infra persistence + production breach (425-500 npm packages infected Nov 2025, 25K+ GitHub repos, dev creds leaked 1000/hr; Rspack/Vant crypto-miner postinstall compromise)
+- **A-030** [P0] WCAG 2.2 SC 3.3.7 Accessible Authentication (Enhanced / Level AAA) — game login/rewards/IAP must NOT require cognitive-function test + AAA requires no re-authentication (distinct from SC 3.3.9 No-Learning A-029)
+- **A-031** [P1] WCAG 2.2 designer failure patterns — placeholders-as-labels (screen-reader inconsistent) + icons-without-text/aria-label (invisible to screen reader) — practical audit catching what axe/WAVE automated tools miss (30-40% catch rate)
+- **C-099** [P1] gfx-rs/wgpu WebGPU→WebGL fallback browser-specific bug — `Backends::all()` fails to fall back on Chrome Linux/Win while Firefox works (framework-level bug distinct from app-level fallback audit G-136)
+- **B-095** [P2] GPUAdapter.isFallbackAdapter property REMOVED from web platform (Oct 2025 MDN update) — migration required to GPUAdapterInfo.isFallbackAdapter (now async)
+- **G-138** [P2] Three.js WebGPU migration 2026 — official import path `three/webgpu` with automatic WebGL2 fallback + react-three-fiber async gl prop factory (distinct from GL2GPU transpiler G-114)
+- **W-148** [P1] Dark Patterns in Gaming 2026 lawsuit wave tracker — loot boxes + hard-to-cancel subscriptions + manipulative monetization litigation (Rain Intelligence comprehensive tracker distinct from FTC Honda precedent W-146)
+- **W-149** [P2] Dark Patterns Empirical Study of Harmfulness — 174-game harm taxonomy mapping pattern characteristics to user decision-making harm (ResearchGate March 2025; distinct from arXiv 2412.05039 prevalence study W-144)
+- **G-139** [P2] Mobile UX 2026 concrete benchmarks — onboarding <5 screens + minimize input friction + respect system back gestures + treat performance as UX + actionable error copy (UXCam/Bluespace broader baseline distinct from FTUE <3 tap G-100)
+- **GP-108** [P2] Android Haptics 2026 clear/rich/buzzy classification + design principles — Android HapticFeedbackConstants taxonomy (clear=sharp confirmations, rich=textures/patterns, buzzy=legacy rumble; distinct from cross-platform navigator.vibrate() GP-107)
+
+### Sources
+- Web search batch (2 parallel batches via web-search-prime + 2 minimax search follow-ups; 5 queries aborted/retried):
+  - "HTML5 browser game testing 2026 June new technique canvas WebGL WebGPU automation"
+  - "browser game UX complaint 2026 June dark pattern kid regulation mobile player retention"
+  - "WebGPU WASM WebNN AI game benchmark 2026 migration performance accessibility"
+  - "Playwright 1.61 1.62 test automation 2026 AI agent self healing browser MCP"
+  - "WCAG 2.2 accessibility 2026 June cognitive motor screen reader browser game audit"
+  - "casual mobile game UX 2026 thumb zone haptic dark mode onboarding friction"
+  - "WebGPU adapter validation error 2026 browser game fallback recovery"
+  - "Chrome security update June 2026 zero day CVE patch emergency" (minimax)
+  - "npm package supply chain attack 2026 typosquatting malicious" (minimax)
+- Key URLs:
+  - https://blog.csdn.net/weixin_42376192/article/details/160780907 (npm supply chain worm 2026 deep report — credential theft → cloud-infra persistence)
+  - https://www.kaspersky.com/blog/tag/supply-chain-attack/ (supply-chain attack tag — IndonesianFoods spam + Rspack/Vant compromise)
+  - https://www.infosecurity-magazine.com/news/npm-malware-exposes-developer-data/ (stealthy npm malware exfiltrating developer data)
+  - https://web-accessibility-checker.com/en/blog/wcag-2-2-checklist-2026 (WCAG 2.2 checklist 2026 — 87 SC including SC 3.3.7 Enhanced AAA)
+  - https://getwcag.com/en/blog/wcag-2-2-checklist (WCAG 2.2 16 SC explained — SC 3.3.7 vs 3.3.8 vs 3.3.9 hierarchy)
+  - https://courseux.com/wcag-2-2-guidelines-designers-guide (Practical WCAG 2.2 guide for designers — placeholders-as-labels + icons-without-text top failures)
+  - https://accessibilityinnovations.com/blogs/wcag-2-2 (WCAG 2.2 audit tools axe DevTools + WAVE + Lighthouse — automated catches 30-40%)
+  - https://assist-software.net/business-insights/web-accessibility-2026-complete-guide-wcag-compliance (Web Accessibility 2026 — manual keyboard + screen reader testing required)
+  - https://github.com/gfx-rs/wgpu/issues/6166 (wgpu WebGPU→WebGL fallback fails on Chrome Linux/Win, works on Firefox)
+  - https://developer.mozilla.org/en-US/docs/Web/API/GPUAdapter/isFallbackAdapter (GPUAdapter.isFallbackAdapter REMOVED — use GPUAdapterInfo.isFallbackAdapter)
+  - https://utsubo.com/blog/webgpu-threejs-migration-guide (Three.js WebGPU migration 2026 — three/webgpu import path + R3F async gl factory)
+  - https://rainintelligence.com/blog/dark-patterns-in-gaming-lawsuits-target-manipulative-monetization-tactics (Dark Patterns in Gaming lawsuits tracker — loot boxes + hard-to-cancel subscriptions)
+  - https://researchgate.net/publication/390235729_Dark_Patterns_in_Games_An_Empirical_Study_of_Their_Harmfulness (Dark Patterns Empirical Study — 174-game harm taxonomy)
+  - https://dl.acm.org/doi/fullHtml/10.1145/3491101.3519837 (A Game of Dark Patterns — designing healthy mobile games)
+  - https://uxcam.com/blog/mobile-ux (Mobile UX Design Complete Guide 2026 — onboarding <5 screens + input friction + back gestures)
+  - https://novatechbeacon.com/latest/why-2026-gaming-is-built-for-one-hand-play (2026 One-Hand Gaming — thumb zone + portrait + haptic)
+  - https://developer.android.com/develop/ui/views/haptics/haptics-principles (Android Haptics design principles — clear/rich/buzzy classification)
+  - https://parachutedesign.ca/blog/thumb-zone-ux (Thumb zone UX — swipe gesture design)
+
 ## [v1.57.0] - 2026-06-15
 ### Added
 - 9 new test cases from industry research (R177 Dynamic Test Intelligence cron)
