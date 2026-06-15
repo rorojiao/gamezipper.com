@@ -324,7 +324,7 @@ body{{background:#0a1628;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemF
 .back-link{{display:inline-block;margin:20px;color:#00ff88;text-decoration:none;font-size:14px}}
 .back-link:hover{{text-decoration:underline}}
 .article-text{{color:#a9b8c8;font-size:15px;margin:20px 0}}
-.article-text h2{{color:#fff;font-size:20px;margin:30px 0 12px}}
+|.article-text h2{{color:#fff;font-size:20px;margin:30px 0 12px}}
 .article-text ul{{padding-left:20px;margin:10px 0}}
 .article-text li{{margin:6px 0}}
 .tag{{display:inline-block;padding:4px 10px;background:#1a2540;border-radius:999px;font-size:12px;color:#8aa8c8;margin:2px}}
@@ -369,6 +369,9 @@ body{{background:#0a1628;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemF
 </div>
 
 </div>
+<!-- GameZipper ad slot: auto-filled by monetag-manager.js (AdSense + Monetag) -->
+<div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
+<script src="https://gamezipper.com/monetag-manager.js?v=20260611v5"></script>
 <script src="https://gamezipper.com/gz-analytics.js"></script>
 </body>
 </html>'''
