@@ -18,7 +18,7 @@
   // Direct tunnel URL: browser → Cloudflare Tunnel → BI server (10.10.29.67:8090)
   // Tunnel: cloudflared systemd service (auto-restart on failure)
   // NOTE: If tunnel URL changes, update this and redeploy
-  var EP = 'https://constitutes-possibilities-subjects-soa.trycloudflare.com/api/collect';
+  var EP = 'https://nominated-expenditures-provides-deborah.trycloudflare.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
