@@ -1,3 +1,59 @@
+## [v1.59.0] - 2026-06-15
+### Added
+- 10 new test cases from industry research (R179 Dynamic Test Intelligence cron)
+- **S-105** [P1] Miasma Wave 2 Phantom Gyp npm supply chain attack via `binding.gyp` lifecycle-script bypass (June 3 2026, 57 packages/286 versions in <2h, defeats postinstall scanners via gyp command substitution, includes @vapi-ai/server-sdk 408K monthly; distinct from S-104 general escalation — this is the SPECIFIC bypass vector that defeats S-104 mitigation #1)
+- **S-106** [P1] IronWorm npm attack — Rust-based infostealer + eBPF kernel rootkit + persistent IDE backdoor targeting AI assistant credentials (Claude/Copilot/OpenAI/Cursor tokens); self-replicating via trojanized npm packages (June 6 2026; distinct from S-104/S-105 — PERSISTENCE + AI-CREDENTIAL-TARGETING dimension)
+- **S-107** [P2] Red Hat Miasma worm — compromised-vendor-namespace pattern (June 1 2026, single stolen GitHub account → 32 official @redhat-cloud-services packages → self-propagating worm, ~80K weekly downloads; demonstrates TRUSTED-VENDOR NAMESPACES ARE NOT SAFE; RHSB-2026-006)
+- **S-108** [P2] @antv/g-webgpu-engine npm malware (GMS-2026-193, May 19 2026) — WebGPU-specific rendering engine package compromised in Mini Shai-Hulud campaign; SPECIFICALLY relevant to browser games because g-webgpu-engine is literally a WebGPU rendering engine game devs npm-install
+- **C-100** [P2] Self-Healing Test Automation — Hype vs Reality (QATechTools June 2 2026) — self-healing locators introduce SILENT WRONG-ELEMENT MATCHES + ACTION DRIFT masking real regressions in canvas-heavy games; critical evaluation of C-096/C-097 agentic tools
+- **A-032** [P0] W3C MATF WCAG2Mobile — official mobile-specific WCAG 2.2 application guidance (w3c.github.io/matf) — authoritative W3C Mobile Accessibility Task Force mapping of WCAG 2.2 SCs to mobile behavior (touch target 44×44 / gesture alternatives / orientation / reflow / dragging alternatives); GameZipper is 70% mobile
+- **A-033** [P2] WCAG Accessibility Auditor MCP server (mcpize.com) — MCP server audits any URL for WCAG 2.2 via axe-core + generates ADA + EU Accessibility Act legal-risk scores; pipeline integration for continuous compliance
+- **W-150** [P2] WASM 3.0 stable features — WasmGC + Memory64 + Relaxed SIMD + Tail Calls + Typed References (Chrome 119+/Firefox 120+/Safari 18.2+) — Memory64 critical for >4GB game engines (default WASM is 32-bit/4GB cap); distinct from G-124 WASM Component Model these are LANGUAGE-FEATURE flags
+- **G-140** [P2] UX as the Boss Fight 2026 (ContextSDK) — UX determines product viability not feature set; 70% abandon in first hour + 80% mobile loss in 3 days due to onboarding/interface friction; distinct from G-100 FTUE <3 tap this is the BROADER UX-as-product-viability philosophy
+- **B-096** [P2] CISA KEV enforcement dimension — CVE-2026-11645 added June 9 2026 with 14-day federal patch-by-June-23 SLA + 3 new KEV adds (CVE-2026-20245 Cisco / CVE-2026-7473 Arista / CVE-2026-11645 Chromium); distinct from B-050/B-056/B-092 regression tests this is REGULATORY-ENFORCEMENT + PATCH-SLA mirror for gamezipper
+
+### Sources
+- Web search batch (8 queries via web-search-prime single-search; 1 batch of 5 aborted and retried individually):
+  - "HTML5 game testing 2026 new techniques browser game QA"
+  - "browser security vulnerability June 2026 Chrome Firefox Safari zero day CVE"
+  - "casual game UX complaint 2026 mobile players frustration"
+  - "Chrome Edge Safari update June 2026 WebGPU WASM regression features"
+  - "npm supply chain attack 2026 WebGPU Three.js browser game security"
+  - "self-healing test automation 2026 Healenium Playwright AI locators game QA"
+  - "WebGPU 2026 Three.js binding.gyp IronWorm Miasma Wave 2 npm"
+  - "WCAG 2.2 2026 accessibility audit WebGPU mobile casual game"
+  - "CISA Known Exploited Vulnerabilities catalog Chrome June 2026 federal patch SLA"
+  - "iOS Safari WebKit bug 2026 mobile game canvas touch regression"
+- Key URLs:
+  - https://cybersecuritynews.com/binding-gyp-supply-chain-attack-compromises-dozens-of-npm-packages (Phantom Gyp binding.gyp bypass — 57 packages/286 versions)
+  - https://cyberpress.org/binding-gyp-targets-npm-maintainers (June 3 2026 coordinated attack — @vapi-ai/server-sdk hit)
+  - https://pulse.adyog.com/insights/npm-worm-wave-2026 (Miasma Wave 2 introduces Phantom Gyp — 157-byte binding.gyp command substitution)
+  - https://chainguard.dev/unchained/chainguard-artifacts-safe-from-miasma-phantom-gyp-npm-attack (Chainguard safe-by-design mitigation)
+  - https://cipherssecurity.com/ironworm-miasma-npm-rust-ebpf-rootkit-supply (IronWorm Rust infostealer + eBPF rootkit + IDE backdoor)
+  - https://cyberse.ai/news/191 (IronWorm + Miasma variant — JFrog/StepSecurity analysis)
+  - https://thehackernews.com/2026/06/ironworm-and-new-miasma-worm-variant.html (IronWorm codename + AI credential targeting)
+  - https://labs.cloudsecurityalliance.org/research/csa-research-note-miasma-npm-supply-chain-redhat-20260603-cs (Red Hat Miasma worm — RHSB-2026-006)
+  - https://techtimes.com/articles/317832/20260605/red-hat-npm-packages-compromised-57-more-follow-signed-attestations-cannot-block-pipeline-hijack.htm (32 Red Hat packages + 57 more — signed attestations insufficient)
+  - https://unit42.paloaltonetworks.com/monitoring-npm-supply-chain-attacks (Palo Alto Unit42 — Mini Shai-Hulud spreads the Blight June 1 2026)
+  - https://advisories.gitlab.com/npm/@antv/g-webgpu-engine/GMS-2026-193 (@antv/g-webgpu-engine malware advisory — Mini Shai-Hulud May 19 2026)
+  - https://qatechtools.com/2026/06/02/self-healing-locators-hype-vs-reality (Self-healing locators hype vs reality — silent wrong-element matches)
+  - https://vericence.com/vericence-insight/ai-test-healing-in-playwright-a-practical-strategy-for-resilient-test-suites (AI test healing practical strategy — controlled fallback)
+  - https://scrolltest.com/self-healing-test-selectors-ai-agents (Self-healing test selectors — 80% maintenance reduction claim)
+  - https://w3c.github.io/matf (W3C MATF WCAG2Mobile — official mobile-specific WCAG 2.2 application guidance)
+  - https://webability.io/blog/wcag-2-2-accessibility-standards-complete-2026-compliance-guide (WCAG 2.2 complete 2026 compliance guide — 9 new SC)
+  - https://digitalapplied.com/blog/wcag-2-2-accessibility-audit-checklist-2026-reference (WCAG 2.2 audit checklist 2026 — axe + Lighthouse tooling)
+  - https://mcpize.com/mcp/wcag-accessibility-auditor-mcp (WCAG Accessibility Auditor MCP server — axe-core + legal-risk scores)
+  - https://github.com/creativeprofit22/wcag-audit-command (wcag-audit-command for AI coding agents)
+  - https://alldevtoolshub.com/blog/webassembly-browser-tools-2026-simd-threads-wasm-3 (WASM 2026 — SIMD, Threads, Wasm 3.0, browser-first toolkit)
+  - https://dev.to/zny10289/webassembly-in-2026-the-quiet-revolution-that-finally-delivered-5bpl (WASM 2026 — Component Model + WasmGC + Memory64 shipped)
+  - https://contextsdk.com/blogposts/why-ux-is-the-boss-fight---and-what-that-really-means-in-2026 (UX is the Boss Fight 2026 — 70%/80% abandonment)
+  - https://pocketpixel.us/post/the-role-of-ui-ux-in-game-development (UI/UX in game development — 70% first-hour abandonment stat)
+  - https://maze.co/blog/ux-statistics (40+ key UX stats for 2026)
+  - https://thehackernews.com/2026/06/cisa-adds-cisco-chrome-and-arista-flaws.html (CISA adds Cisco/Chrome/Arista to KEV June 9 2026)
+  - https://cybersecuritynews.com/google-chromium-0-day-vulnerability-exploit (CISA KEV CVE-2026-11645 — sandbox escape chaining risk)
+  - https://digitalwarfare.com/google-chromium-zero-day-cve-2026-11645-cisa-warning (FCEB patch-by-June-23 2026 — 14-day SLA)
+  - https://aviatrix.ai/threat-research-center/cisa-adds-three-known-exploited-vulnerabilities-to-catalog-2026-06-09 (3 KEV adds June 9 — CVE-2026-20245/7473/11645)
+
 ## [v1.58.0] - 2026-06-15
 ### Added
 - 10 new test cases from industry research (R178 Dynamic Test Intelligence cron)
