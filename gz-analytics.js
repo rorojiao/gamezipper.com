@@ -1,4 +1,4 @@
-/* watchdog-set tunnel URL: https://yorkshire-contractors-cloudy-leone.trycloudflare.com -- auto-replaced by tunnel-watchdog.sh */
+/* watchdog-set tunnel URL: https://sustainable-spies-hormone-framing.trycloudflare.com -- auto-replaced by tunnel-watchdog.sh */
 /* gz-analytics.js — lightweight behavioral tracking, no deps, <5KB
    2026-06-05 fix: connected to Vercel /api/collect.js → BI server pipeline
    2026-06-08 fix: attach vid/sid/device/screen/browser/os/referrer/site/path
@@ -11,6 +11,12 @@
                    after 1h, retry pattern with cloudflared QUIC timeouts). Now
                    pointing at nearest-region-beside-locks.... Watchdog pending
                    (see kanban t_a62e9485).
+   2026-06-15 19:55 fix: P0 stale CDN cache (4h TTL) — tunnel URL committed
+                   pointing at dead knew-futures-... while live working tree
+                   already had sustainable-spies-... (the current live URL).
+                   cache v=202606159ZR bumps to never-before-seen value to
+                   force GitHub Pages + Cloudflare to serve the corrected JS.
+                   see kanban t_1b9df8de.
    Events flow: gz-analytics → Cloudflare Tunnel → BI server (10.10.29.67:8090)
    localStorage archive kept as fallback (gz_aa). */
 (function() {
@@ -18,7 +24,7 @@
   // Direct tunnel URL: browser → Cloudflare Tunnel → BI server (10.10.29.67:8090)
   // Tunnel: cloudflared systemd service (auto-restart on failure)
   // NOTE: If tunnel URL changes, update this and redeploy
-  var EP = 'https://knew-futures-surrounding-sales.trycloudflare.com/api/collect';
+  var EP = 'https://sustainable-spies-hormone-framing.trycloudflare.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;

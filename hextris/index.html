@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Play Hextris Online Free - Hexagonal Tetris Puzzle | GameZipper</title>
+<meta name="description" content="Play Hextris free online — a fast-paced hexagonal Tetris puzzle game. Rotate the hexagon, match 3+ colors, chain combos across 20 levels and endless mode. No download required.">
+<link rel="canonical" href="https://gamezipper.com/hextris/">
+<meta property="og:title" content="Play Hextris Online Free - Hexagonal Tetris Puzzle">
+<meta property="og:description" content="Rotate the hexagon, match colors, and chain massive combos in this addictive hexagonal Tetris. 20 levels + endless mode.">
+<meta property="og:image" content="https://gamezipper.com/hextris/icon.png">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0a0a1a">
+<!-- Analytics: 1ktower zombie endpoint disabled per repo Pitfall 20 (R181). Kept commented to match sibling games. -->
+<!-- <script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=hextris"></script> -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Hextris","description":"A hexagonal twist on Tetris. Rotate the hexagon, align falling colors, and chain massive combos across 20 levels and endless mode.","genre":"Puzzle","gamePlatform":"HTML5","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.7","ratingCount":"1280"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"How do I play Hextris?","acceptedAnswer":{"@type":"Answer","text":"Colored blocks fall from the outer edge toward the center hexagon. Rotate the hexagon left or right with A/D, the arrow keys, or by holding the left/right half of the screen so the falling block lands on a stack of the same color. Connect 3 or more same-colored blocks in a line to clear them."}},
+{"@type":"Question","name":"What are the controls for Hextris?","acceptedAnswer":{"@type":"Answer","text":"On desktop use A/D or the Left/Right arrow keys to rotate the hexagon and Space to pause. On mobile, press and hold the left half of the screen to rotate left and the right half to rotate right. Tap the buttons for menus."}},
+{"@type":"Question","name":"How do combos and chain reactions work?","acceptedAnswer":{"@type":"Answer","text":"Clearing blocks within 3 seconds of a previous clear builds a combo multiplier (x2, x3, x4 and higher). When cleared blocks cause other blocks to fall and clear again, you trigger a chain reaction that multiplies your score even further."}},
+{"@type":"Question","name":"What do the bomb and rainbow blocks do?","acceptedAnswer":{"@type":"Answer","text":"A bomb block clears every block of its own color across all six columns when it lands. A rainbow block matches any color, so it helps complete lines of any color you place it next to."}},
+{"@type":"Question","name":"How do I unlock endless mode and earn stars?","acceptedAnswer":{"@type":"Answer","text":"Complete Level 5 to unlock endless survival mode. Each of the 20 levels awards 1 to 3 stars based on your score. Earn stars to track your mastery and beat your best score on every level."}}
+]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+{"@type":"ListItem","position":1,"name":"Home","item":"https://gamezipper.com/"},
+{"@type":"ListItem","position":2,"name":"Puzzle Games","item":"https://gamezipper.com/#puzzle"},
+{"@type":"ListItem","position":3,"name":"Hextris","item":"https://gamezipper.com/hextris/"}
+]}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Orbitron','Rajdhani',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  background:radial-gradient(circle at 50% 45%,#1a1a3a 0%,#0a0a1a 70%,#05050f 100%);
+  color:#eaf6ff;overflow-x:hidden;user-select:none;-webkit-user-select:none;touch-action:none;min-height:100vh;
+}
+#app{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden}
+canvas{display:block;position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+
+/* ---------- Generic screens / overlays ---------- */
+.screen,.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;z-index:20}
+.hidden{display:none!important}
+.panel{
+  background:rgba(18,20,48,0.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(120,160,255,0.22);border-radius:22px;
+  box-shadow:0 18px 60px rgba(0,0,0,0.55),inset 0 1px 0 rgba(255,255,255,0.06);
+  padding:30px 28px;width:100%;max-width:440px;
+}
+.panel.wide{max-width:560px}
+
+/* ---------- Titles ---------- */
+.title{
+  font-weight:900;letter-spacing:6px;line-height:1;
+  font-size:clamp(46px,11vw,92px);
+  color:#eaf6ff;
+  text-shadow:0 0 14px rgba(0,229,255,0.85),0 0 34px rgba(255,0,170,0.55),0 0 60px rgba(0,229,255,0.35);
+}
+.subtitle{margin-top:14px;font-size:clamp(13px,3.4vw,16px);letter-spacing:2px;color:#8fb6e6;text-transform:uppercase}
+h2.section{font-size:clamp(24px,6vw,34px);font-weight:800;letter-spacing:3px;margin-bottom:18px;color:#fff;
+  text-shadow:0 0 16px rgba(0,229,255,0.7),0 0 30px rgba(255,0,170,0.4)}
+
+/* ---------- Buttons ---------- */
+.btn{
+  position:relative;display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;min-height:52px;padding:14px 22px;margin:8px 0;
+  border:1px solid rgba(120,160,255,0.35);border-radius:14px;cursor:pointer;
+  font-family:inherit;font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:#eaf6ff;background:linear-gradient(135deg,rgba(0,229,255,0.16),rgba(255,0,170,0.16));
+  box-shadow:0 6px 22px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.08);
+  transition:transform .14s ease,box-shadow .14s ease,background .14s ease,border-color .14s ease;
+}
+.btn:hover{transform:translateY(-2px);border-color:rgba(0,229,255,0.8);
+  box-shadow:0 10px 30px rgba(0,229,255,0.28),inset 0 1px 0 rgba(255,255,255,0.12);
+  background:linear-gradient(135deg,rgba(0,229,255,0.30),rgba(255,0,170,0.24))}
+.btn:active{transform:translateY(1px) scale(0.99)}
+.btn.primary{background:linear-gradient(135deg,#00e5ff,#0096c7);color:#04121a;border-color:rgba(0,229,255,0.9);
+  text-shadow:0 0 8px rgba(255,255,255,0.4)}
+.btn.primary:hover{background:linear-gradient(135deg,#5af2ff,#00b4d8)}
+.btn.danger{background:linear-gradient(135deg,rgba(255,40,90,0.25),rgba(255,0,170,0.2));border-color:rgba(255,80,130,0.5)}
+.btn.ghost{background:rgba(255,255,255,0.05)}
+.btn.small{min-height:44px;font-size:13px;padding:10px 16px;width:auto;min-width:120px}
+.btn[disabled]{opacity:0.4;cursor:not-allowed;filter:grayscale(0.5)}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.btn-row .btn{margin:0}
+
+/* ---------- Menu ---------- */
+#menu .panel{display:flex;flex-direction:column;align-items:center}
+.menu-hint{margin-top:10px;font-size:13px;color:#7fa6d6;letter-spacing:1px}
+
+/* ---------- Level select ---------- */
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;width:100%;margin:6px 0 14px}
+.lvl{
+  position:relative;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;border-radius:12px;cursor:pointer;font-weight:800;
+  background:rgba(30,34,74,0.7);border:1px solid rgba(120,160,255,0.25);
+  transition:transform .14s,box-shadow .14s,border-color .14s;color:#cfe6ff;
+}
+.lvl .ln{font-size:clamp(15px,4vw,20px);text-shadow:0 0 8px rgba(0,229,255,0.5)}
+.lvl .ls{font-size:11px;letter-spacing:1px;color:#ffd84d;height:14px}
+.lvl:not(.locked):hover{transform:translateY(-2px);border-color:#00e5ff;box-shadow:0 8px 22px rgba(0,229,255,0.3)}
+.lvl.locked{opacity:0.45;cursor:not-allowed;filter:saturate(0.4)}
+.lvl.locked .ln{color:#6f86b0}
+.lvl .lock{position:absolute;top:4px;right:6px;font-size:11px;color:#7d93bd}
+.tier-label{grid-column:1/-1;text-align:left;font-size:11px;letter-spacing:2px;color:#6f86b0;text-transform:uppercase;margin:6px 0 2px;padding-left:2px}
+
+/* ---------- Settings ---------- */
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:14px 4px;border-bottom:1px solid rgba(120,160,255,0.14)}
+.set-row:last-child{border-bottom:none}
+.set-row .lbl{font-size:15px;letter-spacing:1px}
+.switch{width:54px;height:30px;border-radius:16px;background:rgba(255,255,255,0.14);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.switch.on{background:linear-gradient(135deg,#00e5ff,#0096c7)}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 2px 6px rgba(0,0,0,0.4)}
+.switch.on::after{left:27px}
+
+/* ---------- How to play ---------- */
+.howto-list{text-align:left;width:100%;margin:6px 0 14px}
+.howto-item{display:flex;gap:12px;align-items:flex-start;padding:10px 4px;border-bottom:1px solid rgba(120,160,255,0.12)}
+.howto-item:last-child{border-bottom:none}
+.howto-key{
+  flex-shrink:0;min-width:62px;text-align:center;padding:6px 8px;border-radius:8px;font-weight:800;font-size:12px;
+  background:rgba(0,229,255,0.16);border:1px solid rgba(0,229,255,0.4);color:#9beaff;letter-spacing:1px
+}
+.howto-txt{font-size:14px;line-height:1.45;color:#cfe0f5}
+
+/* ---------- HUD ---------- */
+#hud{position:absolute;inset:0;z-index:10;pointer-events:none;display:flex;flex-direction:column}
+.hud-top{display:flex;align-items:flex-start;justify-content:space-between;padding:max(12px,env(safe-area-inset-top)) 14px 8px;gap:10px}
+.hud-chip{
+  pointer-events:auto;background:rgba(12,14,38,0.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(120,160,255,0.22);border-radius:12px;padding:8px 12px;min-width:84px;text-align:center
+}
+.hud-chip .k{font-size:10px;letter-spacing:2px;color:#7fa6d6;text-transform:uppercase}
+.hud-chip .v{font-size:20px;font-weight:800;color:#fff;text-shadow:0 0 10px rgba(0,229,255,0.5);line-height:1.1}
+.hud-chip .v.small{font-size:14px}
+#pauseBtn{pointer-events:auto;min-height:44px;min-width:44px;width:44px;border-radius:12px;font-size:18px;padding:0;letter-spacing:1px}
+.hud-mid{flex:1}
+.combo-display{
+  position:absolute;top:44%;left:50%;transform:translate(-50%,-50%) scale(1);
+  font-weight:900;letter-spacing:2px;font-size:clamp(26px,7vw,48px);color:#fff;
+  text-shadow:0 0 18px rgba(255,221,0,0.9),0 0 38px rgba(255,136,0,0.7);
+  opacity:0;transition:opacity .2s;pointer-events:none;text-align:center
+}
+.combo-display.show{opacity:1;animation:comboPulse .35s ease}
+@keyframes comboPulse{0%{transform:translate(-50%,-50%) scale(0.6)}60%{transform:translate(-50%,-50%) scale(1.18)}100%{transform:translate(-50%,-50%) scale(1)}}
+.progress-wrap{padding:6px 16px max(12px,env(safe-area-inset-bottom))}
+.progress-label{display:flex;justify-content:space-between;font-size:11px;letter-spacing:1px;color:#8fb6e6;margin-bottom:5px;text-transform:uppercase}
+.progress-bar{height:9px;border-radius:6px;background:rgba(255,255,255,0.1);overflow:hidden;border:1px solid rgba(120,160,255,0.2)}
+.progress-fill{height:100%;width:0%;border-radius:6px;background:linear-gradient(90deg,#00e5ff,#00ff88,#ffdd00);box-shadow:0 0 12px rgba(0,229,255,0.7);transition:width .25s ease}
+
+/* ---------- Overlays (pause/win/gameover/tutorial) ---------- */
+.overlay{background:rgba(5,6,18,0.74);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.overlay .panel{max-width:380px}
+.star-row{font-size:46px;letter-spacing:10px;margin:8px 0 14px;line-height:1}
+.star-row .s{color:#3a3f5c}
+.star-row .s.on{color:#ffd84d;text-shadow:0 0 16px rgba(255,216,77,0.8)}
+.stat-line{display:flex;justify-content:space-between;padding:9px 12px;margin:5px 0;border-radius:10px;background:rgba(255,255,255,0.05);font-size:14px;letter-spacing:1px}
+.stat-line .b{color:#9beaff;font-weight:700}
+.big-stat{font-size:34px;font-weight:900;margin:6px 0;color:#fff;text-shadow:0 0 16px rgba(0,229,255,0.6)}
+.result-title{font-size:clamp(26px,7vw,38px);font-weight:900;letter-spacing:3px;margin-bottom:8px}
+.result-title.win{color:#7CFFB2;text-shadow:0 0 18px rgba(0,255,136,0.7)}
+.result-title.lose{color:#ff5e7a;text-shadow:0 0 18px rgba(255,40,90,0.7)}
+
+/* ---------- Tutorial ---------- */
+#tutorial .panel{max-width:420px}
+.tut-step{font-size:15px;line-height:1.5;color:#d6e6ff;margin:10px 0}
+.tut-diagram{font-size:28px;margin:6px 0 10px;letter-spacing:6px;color:#00e5ff;text-shadow:0 0 14px rgba(0,229,255,0.7)}
+
+/* ---------- Toast / achievement ---------- */
+#toast{
+  position:absolute;top:14%;left:50%;transform:translate(-50%,-30px);z-index:40;
+  padding:12px 22px;border-radius:30px;font-weight:800;letter-spacing:2px;font-size:15px;text-transform:uppercase;
+  background:linear-gradient(135deg,rgba(255,221,0,0.95),rgba(255,136,0,0.95));color:#241200;
+  box-shadow:0 10px 30px rgba(255,136,0,0.5);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+.back-link{position:absolute;top:max(14px,env(safe-area-inset-top));left:14px;z-index:25;
+  min-height:44px;min-width:44px;padding:0 14px;display:flex;align-items:center;justify-content:center;
+  border-radius:12px;background:rgba(12,14,38,0.6);border:1px solid rgba(120,160,255,0.25);color:#cfe6ff;
+  cursor:pointer;font-size:20px;pointer-events:auto}
+.back-link:active{transform:scale(0.95)}
+
+.footnote{margin-top:14px;font-size:11px;color:#5f7fb3;letter-spacing:1px}
+.color-key{display:flex;gap:8px;justify-content:center;margin:8px 0 4px}
+.ck{width:18px;height:18px;border-radius:5px;box-shadow:0 0 10px currentColor}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="game" aria-label="Hextris game board"></canvas>
+
+  <!-- ===================== HUD ===================== -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <div class="hud-chip"><div class="k">Score</div><div class="v" id="hudScore">0</div></div>
+      <div class="hud-chip"><div class="k" id="hudLevelLabel">Level 1</div><div class="v small" id="hudCleared">0 / 15</div></div>
+      <button class="btn ghost small" id="pauseBtn" aria-label="Pause">II</button>
+    </div>
+    <div class="hud-mid"></div>
+    <div class="combo-display" id="comboDisplay"></div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span id="progLeft">Progress</span><span id="progRight">0%</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+    </div>
+  </div>
+
+  <!-- ===================== MAIN MENU ===================== -->
+  <div id="menu" class="screen">
+    <div class="panel">
+      <div class="title">HEXTRIS</div>
+      <div class="subtitle">Hexagonal Tetris Puzzle</div>
+      <div style="margin:22px 0 6px;width:100%">
+        <button class="btn primary" data-action="play">Play</button>
+        <button class="btn" data-action="levelselect">Level Select</button>
+        <button class="btn" data-action="endless">Endless Mode</button>
+        <div class="btn-row">
+          <button class="btn small ghost" data-action="howto">How to Play</button>
+          <button class="btn small ghost" data-action="settings">Settings</button>
+        </div>
+      </div>
+      <div class="menu-hint">Rotate the hexagon. Match 3+ colors. Chain combos.</div>
+      <div class="footnote">A GameZipper neon arcade game</div>
+    </div>
+  </div>
+
+  <!-- ===================== LEVEL SELECT ===================== -->
+  <div id="levelselect" class="screen hidden">
+    <div class="back-link" data-back="menu">&#8249;</div>
+    <div class="panel wide">
+      <h2 class="section">Select Level</h2>
+      <div class="level-grid" id="levelGrid"></div>
+      <button class="btn" id="endlessBtn" data-action="endless">Endless Mode</button>
+      <button class="btn ghost small" data-back="menu" style="margin-top:8px">Back to Menu</button>
+    </div>
+  </div>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <div id="settings" class="screen hidden">
+    <div class="back-link" data-back="menu">&#8249;</div>
+    <div class="panel">
+      <h2 class="section">Settings</h2>
+      <div class="set-row"><span class="lbl">Sound Effects</span><div class="switch" id="sfxSwitch"></div></div>
+      <div class="set-row"><span class="lbl">Background Music</span><div class="switch" id="musicSwitch"></div></div>
+      <div class="set-row"><span class="lbl">Screen Shake</span><div class="switch" id="shakeSwitch"></div></div>
+      <div style="margin-top:16px">
+        <button class="btn danger small" id="resetProgress">Reset Progress</button>
+      </div>
+      <button class="btn ghost small" data-back="menu" style="margin-top:10px">Back</button>
+    </div>
+  </div>
+
+  <!-- ===================== HOW TO PLAY ===================== -->
+  <div id="howto" class="screen hidden">
+    <div class="back-link" data-back="menu">&#8249;</div>
+    <div class="panel wide">
+      <h2 class="section">How to Play</h2>
+      <div class="color-key">
+        <span class="ck" style="background:#00e5ff;color:#00e5ff"></span>
+        <span class="ck" style="background:#ff00aa;color:#ff00aa"></span>
+        <span class="ck" style="background:#ffdd00;color:#ffdd00"></span>
+        <span class="ck" style="background:#00ff88;color:#00ff88"></span>
+        <span class="ck" style="background:#ff8800;color:#ff8800"></span>
+      </div>
+      <div class="howto-list">
+        <div class="howto-item"><div class="howto-key">A / D</div><div class="howto-txt">Or Left / Right arrows — rotate the hexagon to slide columns beneath the falling block.</div></div>
+        <div class="howto-item"><div class="howto-key">HOLD</div><div class="howto-txt">On mobile, hold the left half to rotate left, right half to rotate right.</div></div>
+        <div class="howto-item"><div class="howto-key">SPACE</div><div class="howto-txt">Pause the game at any time.</div></div>
+        <div class="howto-item"><div class="howto-key">x3</div><div class="howto-txt">Line up 3 or more same-colored blocks in a column or around a ring to clear them.</div></div>
+        <div class="howto-item"><div class="howto-key">COMBO</div><div class="howto-txt">Clear within 3 seconds to raise the multiplier. Cascading clears build chain bonuses.</div></div>
+        <div class="howto-item"><div class="howto-key">BOMB</div><div class="howto-txt">A bomb wipes out every block of its color across all columns when it lands.</div></div>
+        <div class="howto-item"><div class="howto-key">RAIN</div><div class="howto-txt">Rainbow blocks match any color — perfect for completing tricky lines.</div></div>
+      </div>
+      <button class="btn primary" data-back="menu">Got it</button>
+    </div>
+  </div>
+
+  <!-- ===================== PAUSE ===================== -->
+  <div id="pause" class="overlay hidden">
+    <div class="panel">
+      <h2 class="section">Paused</h2>
+      <button class="btn primary" id="resumeBtn">Resume</button>
+      <button class="btn" id="restartBtn">Restart</button>
+      <button class="btn ghost" id="quitBtn">Quit to Menu</button>
+    </div>
+  </div>
+
+  <!-- ===================== WIN ===================== -->
+  <div id="win" class="overlay hidden">
+    <div class="panel">
+      <div class="result-title win">Level Complete</div>
+      <div class="star-row" id="winStars"><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span></div>
+      <div class="big-stat" id="winScore">0</div>
+      <div class="stat-line"><span>Best Score</span><span class="b" id="winBest">0</span></div>
+      <div class="stat-line"><span>Blocks Cleared</span><span class="b" id="winCleared">0</span></div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn primary" id="winNext">Next Level</button>
+        <button class="btn" id="winReplay">Replay</button>
+      </div>
+      <button class="btn ghost small" id="winMenu" style="margin-top:8px">Menu</button>
+    </div>
+  </div>
+
+  <!-- ===================== GAME OVER ===================== -->
+  <div id="gameover" class="overlay hidden">
+    <div class="panel">
+      <div class="result-title lose">Game Over</div>
+      <div class="big-stat" id="overScore">0</div>
+      <div class="stat-line"><span>Best Score</span><span class="b" id="overBest">0</span></div>
+      <div class="stat-line"><span>Blocks Cleared</span><span class="b" id="overCleared">0</span></div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn primary" id="overRetry">Retry</button>
+        <button class="btn" id="overMenu">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TUTORIAL ===================== -->
+  <div id="tutorial" class="overlay hidden">
+    <div class="panel">
+      <h2 class="section" style="font-size:24px">Welcome</h2>
+      <div class="tut-diagram">&#11015; &#11015; &#11015;</div>
+      <div class="tut-step">Colored blocks fall toward the center. <b>Rotate</b> the hexagon so each block lands on a stack of the <b>same color</b>.</div>
+      <div class="tut-step">Match <b>3 or more</b> in a line to clear them and score points. Don't let any column fill to the center!</div>
+      <div class="tut-step" id="tutCtrl">Use <b>A / D</b> or <b>arrow keys</b> to rotate.</div>
+      <button class="btn primary" id="tutStart">Start Playing</button>
+    </div>
+  </div>
+
+  <!-- ===================== TOAST ===================== -->
+  <div id="toast"></div>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================================
+   HEXTRIS — Hexagonal Tetris (GameZipper, single-file build)
+   - 6-column hexagonal ring; blocks fall toward center; rotate to align colors
+   - radial + angular match-3 with rainbow wildcards, bomb blocks, chain + combo scoring
+   - 20 hand-tuned levels + endless mode, stars, localStorage save, procedural Web Audio
+   ===================================================================================== */
+
+/* ----------------------------- Constants ----------------------------- */
+const COLS = 6;                 // 6 sides of the hexagon
+const SLOTS = 9;                // blocks per column before reaching center (game over)
+const CLEAR_LEN = 3;            // 3+ to clear
+const COMBO_WINDOW = 3.0;       // seconds for combo stacking
+const DEG = Math.PI / 180;
+
+// 5 neon colors
+const COLORS = ['#00e5ff', '#ff00aa', '#ffdd00', '#00ff88', '#ff8800'];
+const COLOR_LIGHT = ['#7df6ff', '#ff7ed4', '#fff07a', '#7dffbe', '#ffc24d'];
+const BOMB_COLOR = '#ff2b4e';
+
+/* ----------------------------- Levels (20 + endless) ----------------------------- */
+// fields: id, name, tier, targetBlocks, startSpeed(rings/sec), speedIncrease(sec between bumps; 0=none),
+//         numColors, specialBlockRate(0..1), starThresholds [1,2,3] (score)
+const LEVELS = [
+  {id:1,  name:'First Steps',    tier:1, targetBlocks:15, startSpeed:1.7, speedIncrease:0,   numColors:3, specialBlockRate:0,    starThresholds:[160, 320, 520]},
+  {id:2,  name:'Warm Up',        tier:1, targetBlocks:15, startSpeed:1.8, speedIncrease:0,   numColors:3, specialBlockRate:0,    starThresholds:[200, 380, 620]},
+  {id:3,  name:'Find the Line',  tier:1, targetBlocks:20, startSpeed:1.9, speedIncrease:0,   numColors:3, specialBlockRate:0,    starThresholds:[280, 520, 820]},
+  {id:4,  name:'Stack Up',       tier:1, targetBlocks:20, startSpeed:2.0, speedIncrease:0,   numColors:3, specialBlockRate:0,    starThresholds:[340, 640, 1000]},
+  {id:5,  name:'Graduation',     tier:1, targetBlocks:25, startSpeed:2.15,speedIncrease:0,   numColors:3, specialBlockRate:0,    starThresholds:[440, 820, 1280]},
+  {id:6,  name:'Four Colors',    tier:2, targetBlocks:25, startSpeed:2.3, speedIncrease:45,  numColors:4, specialBlockRate:0.20, starThresholds:[520, 980, 1560]},
+  {id:7,  name:'Combo Flow',     tier:2, targetBlocks:25, startSpeed:2.4, speedIncrease:45,  numColors:4, specialBlockRate:0.20, starThresholds:[600, 1120, 1800]},
+  {id:8,  name:'Pressure',       tier:2, targetBlocks:30, startSpeed:2.5, speedIncrease:45,  numColors:4, specialBlockRate:0.22, starThresholds:[720, 1340, 2160]},
+  {id:9,  name:'Chain Gang',     tier:2, targetBlocks:30, startSpeed:2.6, speedIncrease:45,  numColors:4, specialBlockRate:0.22, starThresholds:[840, 1560, 2520]},
+  {id:10, name:'Halfway Hero',   tier:2, targetBlocks:35, startSpeed:2.75,speedIncrease:45,  numColors:4, specialBlockRate:0.25, starThresholds:[1000,1880, 3040]},
+  {id:11, name:'Full Spectrum',  tier:3, targetBlocks:35, startSpeed:2.95,speedIncrease:30,  numColors:5, specialBlockRate:0.30, starThresholds:[1200,2200, 3520]},
+  {id:12, name:'Prismatic',      tier:3, targetBlocks:35, startSpeed:3.05,speedIncrease:30,  numColors:5, specialBlockRate:0.30, starThresholds:[1380,2520, 4040]},
+  {id:13, name:'Velocity',       tier:3, targetBlocks:40, startSpeed:3.15,speedIncrease:30,  numColors:5, specialBlockRate:0.32, starThresholds:[1620,2960, 4760]},
+  {id:14, name:'Cascade',        tier:3, targetBlocks:40, startSpeed:3.25,speedIncrease:30,  numColors:5, specialBlockRate:0.32, starThresholds:[1880,3420, 5500]},
+  {id:15, name:'Spectrum Master',tier:3, targetBlocks:45, startSpeed:3.4, speedIncrease:30,  numColors:5, specialBlockRate:0.35, starThresholds:[2200,4000, 6400]},
+  {id:16, name:'Expert Lane',    tier:4, targetBlocks:50, startSpeed:3.6, speedIncrease:20,  numColors:5, specialBlockRate:0.40, starThresholds:[2600,4700, 7600]},
+  {id:17, name:'Overdrive',      tier:4, targetBlocks:50, startSpeed:3.75,speedIncrease:20,  numColors:5, specialBlockRate:0.42, starThresholds:[3000,5400, 8800]},
+  {id:18, name:'Maelstrom',      tier:4, targetBlocks:55, startSpeed:3.9, speedIncrease:20,  numColors:5, specialBlockRate:0.44, starThresholds:[3500,6300,10200]},
+  {id:19, name:'Inferno',        tier:4, targetBlocks:55, startSpeed:4.05,speedIncrease:20,  numColors:5, specialBlockRate:0.46, starThresholds:[4100,7400,12000]},
+  {id:20, name:'Hextris Master', tier:4, targetBlocks:60, startSpeed:4.25,speedIncrease:20,  numColors:5, specialBlockRate:0.50, starThresholds:[4900,8800,14200]}
+];
+const ENDLESS = {id:'endless', name:'Endless', tier:0, targetBlocks:Infinity, startSpeed:3.0, speedIncrease:18, numColors:5, specialBlockRate:0.4, starThresholds:[0,0,0]};
+const TIER_NAMES = {1:'Tutorial', 2:'Intermediate', 3:'Advanced', 4:'Expert', 0:'Endless'};
+
+/* ----------------------------- Save Manager ----------------------------- */
+const SAVE_KEY = 'hextris_save_v1';
+const Save = {
+  data: null,
+  defaults(){ return {
+    version: 1,
+    unlocked: 1,
+    endlessUnlocked: false,
+    stars: {},
+    best: {},
+    bestEndless: 0,
+    settings: { sfx:true, music:true, shake:true },
+    tutorialSeen: false
+  };},
+  load(){
+    try{
+      const raw = localStorage.getItem(SAVE_KEY);
+      this.data = raw ? Object.assign(this.defaults(), JSON.parse(raw)) : this.defaults();
+    }catch(e){ this.data = this.defaults(); }
+    if(!this.data.settings) this.data.settings = {sfx:true,music:true,shake:true};
+    if(typeof this.data.unlocked!=='number'||this.data.unlocked<1) this.data.unlocked=1;
+    if(!this.data.stars) this.data.stars={};
+    if(!this.data.best) this.data.best={};
+    return this.data;
+  },
+  save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(this.data)); }catch(e){} },
+  recordResult(level, score, stars){
+    if(level.id==='endless'){
+      if(score > this.data.bestEndless) this.data.bestEndless = score;
+    }else{
+      const id = level.id;
+      this.data.best[id] = Math.max(this.data.best[id]||0, score);
+      this.data.stars[id] = Math.max(this.data.stars[id]||0, stars);
+      if(stars>0 && id>=this.data.unlocked && id<20) this.data.unlocked = Math.max(this.data.unlocked, id+1);
+      if(id>=5) this.data.endlessUnlocked = true;
+    }
+    this.save();
+  },
+  reset(){ this.data = this.defaults(); this.save(); }
+};
+
+/* ----------------------------- Sound Manager (Web Audio, procedural) ----------------------------- */
+const Sound = {
+  ctx:null, master:null, sfxGain:null, musicGain:null,
+  bgmNodes:null, enabled:{sfx:true,music:true},
+
+  init(){
+    if(this.ctx) return;
+    try{
+      const AC = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AC();
+      this.master = this.ctx.createGain(); this.master.gain.value = 0.9; this.master.connect(this.ctx.destination);
+      this.sfxGain = this.ctx.createGain(); this.sfxGain.gain.value = 0.6; this.sfxGain.connect(this.master);
+      this.musicGain = this.ctx.createGain(); this.musicGain.gain.value = 0.0; this.musicGain.connect(this.master);
+    }catch(e){ this.ctx = null; }
+  },
+  resume(){ if(this.ctx && this.ctx.state==='suspended') this.ctx.resume(); },
+  setSfx(on){ this.enabled.sfx = on; },
+  setMusic(on){ this.enabled.music = on; if(on) this.startBgm(); else this.stopBgm(); },
+
+  tone(freq, dur, type, gainPeak, glideTo){
+    if(!this.ctx || !this.enabled.sfx) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = type||'sine';
+    o.frequency.setValueAtTime(freq, t);
+    if(glideTo) o.frequency.exponentialRampToValueAtTime(Math.max(20,glideTo), t+dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gainPeak||0.3, t+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    o.connect(g); g.connect(this.sfxGain);
+    o.start(t); o.stop(t+dur+0.04);
+  },
+  noise(dur, gainPeak, filterFreq){
+    if(!this.ctx || !this.enabled.sfx) return;
+    const t = this.ctx.currentTime;
+    const len = Math.max(1, Math.floor(this.ctx.sampleRate*dur));
+    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<len;i++){ d[i] = (Math.random()*2-1) * (1 - i/len); }
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const filt = this.ctx.createBiquadFilter(); filt.type='lowpass'; filt.frequency.value = filterFreq||1200;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(gainPeak||0.4, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    src.connect(filt); filt.connect(g); g.connect(this.sfxGain);
+    src.start(t); src.stop(t+dur);
+  },
+  place(colorIdx){
+    const pitches=[330,392,440,494,587]; // 5 pitches for 5 colors
+    this.tone(pitches[colorIdx%pitches.length], 0.12, 'triangle', 0.22);
+  },
+  clear(count){
+    if(!this.ctx || !this.enabled.sfx) return;
+    const notes=[523,659,784,988,1175,1397];
+    const n = Math.min(notes.length, 2+Math.floor(count/2));
+    for(let i=0;i<n;i++){
+      const f = notes[i];
+      const t = this.ctx.currentTime + i*0.05;
+      const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+      o.type='sine'; o.frequency.setValueAtTime(f,t);
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
+      o.connect(g); g.connect(this.sfxGain); o.start(t); o.stop(t+0.26);
+    }
+  },
+  combo(step){ this.tone(440 + step*90, 0.16, 'square', 0.18); },
+  chain(){
+    if(!this.ctx || !this.enabled.sfx) return;
+    for(let i=0;i<4;i++){ const f=600+i*160; const t=this.ctx.currentTime+i*0.045;
+      const o=this.ctx.createOscillator(),g=this.ctx.createGain(); o.type='triangle'; o.frequency.setValueAtTime(f,t);
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.2,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+0.14);
+      o.connect(g); g.connect(this.sfxGain); o.start(t); o.stop(t+0.17); }
+  },
+  bomb(){ this.noise(0.5, 0.55, 900); this.tone(120, 0.5, 'sawtooth', 0.3, 40); },
+  rainbow(){
+    if(!this.ctx || !this.enabled.sfx) return;
+    const n=[523,659,784,1047];
+    for(let i=0;i<n.length;i++){ const f=n[i]; const t=this.ctx.currentTime+i*0.04;
+      const o=this.ctx.createOscillator(),g=this.ctx.createGain(); o.type='sine'; o.frequency.setValueAtTime(f,t);
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.22,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+0.3);
+      o.connect(g); g.connect(this.sfxGain); o.start(t); o.stop(t+0.33); }
+  },
+  gameOver(){
+    if(!this.ctx || !this.enabled.sfx) return;
+    const seq=[440,392,330,262,196];
+    seq.forEach((f,i)=>{ const t=this.ctx.currentTime+i*0.16;
+      const o=this.ctx.createOscillator(),g=this.ctx.createGain(); o.type='sawtooth'; o.frequency.setValueAtTime(f,t);
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.3);
+      o.connect(g); g.connect(this.sfxGain); o.start(t); o.stop(t+0.33); });
+  },
+  levelComplete(){
+    if(!this.ctx || !this.enabled.sfx) return;
+    const seq=[523,659,784,1047,1319,1568];
+    seq.forEach((f,i)=>{ const t=this.ctx.currentTime+i*0.12;
+      const o=this.ctx.createOscillator(),g=this.ctx.createGain(); o.type='triangle'; o.frequency.setValueAtTime(f,t);
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.28,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.35);
+      o.connect(g); g.connect(this.sfxGain); o.start(t); o.stop(t+0.38); });
+  },
+  click(){ this.tone(660, 0.05, 'square', 0.14); },
+  hover(){ this.tone(880, 0.03, 'sine', 0.06); },
+
+  // continuous pad BGM (no timers — oscillators run continuously, LFO modulates the filter)
+  startBgm(){
+    if(!this.ctx) return;
+    if(this.bgmNodes){ this.musicGain.gain.linearRampToValueAtTime(0.05, this.ctx.currentTime+0.6); return; }
+    if(!this.enabled.music) return;
+    const pad=[110,164.81,220]; // A2 + E3 + A3 (root/fifth/octave)
+    const filt = this.ctx.createBiquadFilter(); filt.type='lowpass'; filt.frequency.value=720; filt.Q.value=0.7;
+    filt.connect(this.musicGain);
+    this.bgmNodes = {osc:[], filt:filt};
+    pad.forEach((f,i)=>{ const o=this.ctx.createOscillator(); o.type='sine'; o.frequency.value=f; o.detune.value=(i-1)*4;
+      const g=this.ctx.createGain(); g.gain.value=0.5; o.connect(g); g.connect(filt); o.start(); this.bgmNodes.osc.push({o:o,g:g}); });
+    const lfo=this.ctx.createOscillator(); lfo.type='sine'; lfo.frequency.value=0.07;
+    const lfoG=this.ctx.createGain(); lfoG.gain.value=260; lfo.connect(lfoG); lfoG.connect(filt.frequency); lfo.start();
+    this.bgmNodes.lfo=lfo;
+    this.musicGain.gain.cancelScheduledValues(this.ctx.currentTime);
+    this.musicGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
+    this.musicGain.gain.linearRampToValueAtTime(0.05, this.ctx.currentTime+1.2);
+  },
+  stopBgm(){
+    if(!this.ctx || !this.bgmNodes) return;
+    const t=this.ctx.currentTime;
+    this.musicGain.gain.cancelScheduledValues(t);
+    this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, t);
+    this.musicGain.gain.linearRampToValueAtTime(0.0001, t+0.4);
+    const nodes=this.bgmNodes; this.bgmNodes=null;
+    setTimeout(()=>{ try{ nodes.osc.forEach(n=>{ try{n.o.stop();}catch(e){} }); try{nodes.lfo.stop();}catch(e){} }catch(e){} }, 500);
+  },
+  shutdown(){ this.stopBgm(); if(this.ctx){ try{ this.ctx.close(); }catch(e){} this.ctx=null; } }
+};
+
+/* ----------------------------- DOM refs ----------------------------- */
+const $ = id => document.getElementById(id);
+const canvas = $('game');
+const ctx = canvas.getContext('2d');
+const screens = { menu:$('menu'), levelselect:$('levelselect'), settings:$('settings'), howto:$('howto') };
+const overlays = { pause:$('pause'), win:$('win'), gameover:$('gameover'), tutorial:$('tutorial') };
+const hud = $('hud');
+const comboDisplay = $('comboDisplay');
+const toast = $('toast');
+
+/* ----------------------------- Game state ----------------------------- */
+let W=0, H=0, DPR=1, cx=0, cy=0, hexR=0, outerR=0, ringSize=0;
+let columns = [];          // columns[c] = array of block {color, type, rr}
+let falling = null;        // {color, type, rr} the current falling block
+let particles = [];
+let popups = [];           // {x,y,vy,life,max,text,color,size}
+let bgStars = [];          // menu background dots
+let rotationOffset = 0;    // visual rotation easing back to 0 (degrees)
+let shake = 0;
+let screen = 'menu';
+let gameState = null;      // 'playing' | 'paused' | 'won' | 'over' | null
+let level = null;
+let isEndless = false;
+let score = 0, blocksPlaced = 0, blocksCleared = 0;
+let comboMult = 1, lastClearTime = -999;
+let fallSpeed = 2;         // rings per second
+let speedTimer = 0;
+let gameTime = 0;
+let lastTs = 0;
+let rafId = null;
+let input = { left:false, right:false, rotCooldown:0 };
+let pulseT = 0;
+
+/* ----------------------------- Geometry ----------------------------- */
+function resize(){
+  W = window.innerWidth; H = window.innerHeight;
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  canvas.width = Math.max(1, Math.floor(W*DPR)); canvas.height = Math.max(1, Math.floor(H*DPR));
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  cx = W/2; cy = H/2;
+  const m = Math.min(W,H);
+  hexR = m*0.115;
+  outerR = m*0.45;
+  ringSize = (outerR - hexR)/SLOTS;
+}
+function renderAngle(c){ return (-90 + c*60 + rotationOffset) * DEG; }
+function slotCenterR(k){ return outerR - (k+0.5)*ringSize; }   // k=0 outermost
+function worldFromColSlot(c, s){
+  const a = renderAngle(c);
+  const r = (columns[c] && columns[c][s]) ? columns[c][s].rr : slotCenterR(s);
+  return { x: cx + r*Math.cos(a), y: cy + r*Math.sin(a), a:a, r:r };
+}
+
+/* ----------------------------- Background stars ----------------------------- */
+function initBgStars(){
+  bgStars = [];
+  for(let i=0;i<70;i++){
+    bgStars.push({ x:Math.random(), y:Math.random(), r:Math.random()*1.6+0.3, s:Math.random()*0.5+0.1, p:Math.random()*Math.PI*2 });
+  }
+}
+
+/* ----------------------------- Block factory ----------------------------- */
+function makeBlock(colors, specialRate){
+  let type='normal', color = colors[Math.floor(Math.random()*colors.length)];
+  if(specialRate>0 && Math.random()<specialRate){
+    type = Math.random()<0.55 ? 'bomb' : 'rainbow';
+  }
+  return { color:color, type:type, rr: outerR + ringSize*0.6 };
+}
+function activeColors(){ return COLORS.slice(0, level.numColors); }
+function spawnFalling(){
+  if(!columns[0]) columns[0]=[];
+  if(columns[0].length >= SLOTS){ triggerGameOver(); return; }
+  falling = makeBlock(activeColors(), level.specialBlockRate);
+}
+
+/* ----------------------------- Rotation ----------------------------- */
+function rotate(dir){   // dir: -1 left (CCW), +1 right (CW)
+  if(gameState!=='playing') return;
+  if(dir>0){ columns.unshift(columns.pop()); rotationOffset += 60; }
+  else     { columns.push(columns.shift());  rotationOffset -= 60; }
+  Sound.click();
+}
+function tryRotateFromInput(dt){
+  if(input.rotCooldown>0) input.rotCooldown -= dt;
+  if(input.rotCooldown<=0 && (input.left||input.right)){
+    rotate(input.left?-1:1);
+    input.rotCooldown = 0.11;
+  }
+}
+
+/* ----------------------------- Match detection ----------------------------- */
+function compatible(a,b){
+  if(!a||!b) return false;
+  if(a.color===b.color) return true;
+  if(a.type==='rainbow'||b.type==='rainbow') return true;
+  return false;
+}
+function findMatches(){
+  const toClear = new Set();
+  const key=(c,s)=>c+','+s;
+  // radial runs (within a column, outward->inward)
+  for(let c=0;c<COLS;c++){
+    const col = columns[c]; if(!col||col.length===0) continue;
+    let start=0;
+    for(let s=1;s<=col.length;s++){
+      const prev=col[s-1], cur=s<col.length?col[s]:null;
+      if(cur && compatible(prev,cur)) continue;
+      if(s-start>=CLEAR_LEN){ for(let k=start;k<s;k++) toClear.add(key(c,k)); }
+      start=s;
+    }
+  }
+  // angular runs (around a ring at fixed slot)
+  const maxLen = Math.max(0, ...columns.map(c=>c?c.length:0));
+  for(let s=0;s<maxLen;s++){
+    const seq=[];
+    for(let k=0;k<COLS*2;k++){ const c=k%COLS; seq.push(columns[c][s]?c:-1); }
+    let i=0;
+    while(i<seq.length){
+      if(seq[i]===-1){ i++; continue; }
+      let j=i+1;
+      while(j<seq.length && seq[j]!==-1 && compatible(columns[seq[i]][s], columns[seq[j]][s])) j++;
+      if(j-i>=CLEAR_LEN){ for(let k=i;k<j;k++) toClear.add(key(seq[k],s)); }
+      i = j>i+1 ? j : i+1;
+    }
+  }
+  return toClear;
+}
+function applyClears(toClear){
+  for(let c=0;c<COLS;c++){
+    if(!columns[c]) continue;
+    for(let s=0;s<columns[c].length;s++){
+      if(toClear.has(c+','+s)){
+        const blk=columns[c][s];
+        const wp=worldFromColSlot(c,s);
+        spawnParticles(wp.x,wp.y, blk.type==='rainbow'?'#ffffff':blk.color, blk.type==='bomb'?22:11);
+      }
+    }
+    columns[c] = columns[c].filter((blk,s)=>!toClear.has(c+','+s));
+  }
+}
+function detonate(color){
+  for(let c=0;c<COLS;c++){
+    if(!columns[c]) continue;
+    for(let s=0;s<columns[c].length;s++){
+      const blk=columns[c][s];
+      if(blk && (blk.color===color || blk.type==='rainbow')){
+        const wp=worldFromColSlot(c,s);
+        spawnParticles(wp.x,wp.y,'#ff8a3a',16);
+      }
+    }
+    columns[c]=columns[c].filter(blk=> !(blk.color===color || blk.type==='rainbow'));
+  }
+}
+
+/* ----------------------------- Particles & popups ----------------------------- */
+function spawnParticles(x,y,color,count){
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2, sp=Math.random()*180+40;
+    particles.push({ x:x,y:y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:0.6+Math.random()*0.4, max:1, color:color, size:Math.random()*3+1.5 });
+  }
+}
+function spawnPopup(x,y,text,color,size){
+  popups.push({ x:x,y:y, vy:-46, life:1.1, max:1.1, text:text, color:color||'#fff', size:size||20 });
+}
+function addShake(v){ if(Save.data.settings.shake) shake = Math.min(26, shake+v); }
+function showToast(text){
+  toast.textContent = text;
+  toast.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>toast.classList.remove('show'), 1300);
+}
+function flashCombo(mult, chain){
+  if(mult<2 && chain<2) return;
+  const txt = mult>=2 ? ('COMBO x'+mult) : ('CHAIN x'+chain);
+  comboDisplay.textContent = txt;
+  comboDisplay.classList.remove('show'); void comboDisplay.offsetWidth; comboDisplay.classList.add('show');
+  clearTimeout(comboDisplay._t);
+  comboDisplay._t = setTimeout(()=>comboDisplay.classList.remove('show'), 700);
+}
+
+/* ----------------------------- Landing / clears / combos ----------------------------- */
+function comboBump(){
+  if(gameTime - lastClearTime <= COMBO_WINDOW) comboMult = Math.min(12, comboMult+1);
+  else comboMult = 1;
+  lastClearTime = gameTime;
+}
+function totalBlocks(){ let n=0; for(let c=0;c<COLS;c++) n+=columns[c].length; return n; }
+function landBlock(){
+  if(!falling) return;
+  const blk = falling;
+  columns[0].push(blk);
+  blk.rr = falling.rr;
+  falling = null;
+  score += 10; blocksPlaced++;
+  Sound.place(COLORS.indexOf(blk.color));
+  const pg = worldFromColSlot(0, columns[0].length-1);
+  spawnPopup(pg.x, pg.y, '+10', '#9beaff', 16);
+  updateHud();
+
+  // bomb detonation on land
+  if(blk.type==='bomb'){
+    Sound.bomb(); addShake(14); showToast('BOMB!');
+    detonate(blk.color);
+    comboBump();
+    const bombBonus = 80;
+    score += bombBonus;
+    spawnPopup(cx, cy-hexR-ringSize*1.6, '+'+bombBonus+' BOMB', '#ff8a3a', 22);
+    updateHud();
+  }
+
+  // run chain of matches
+  let chainStep = 0;
+  let matches = findMatches();
+  while(matches.size>0){
+    chainStep++;
+    const before = totalBlocks();
+    applyClears(matches);
+    const cleared = before - totalBlocks();
+    blocksCleared += cleared;
+    comboBump();
+    const mult = comboMult;
+    const gained = 50 * cleared * mult * chainStep;
+    score += gained;
+    Sound.clear(cleared);
+    if(mult>1) Sound.combo(mult);
+    if(chainStep>1) Sound.chain();
+    const popColor = mult>1 ? '#ffd84d' : (chainStep>1?'#ff8a3a':'#7CFFB2');
+    spawnPopup(cx + (Math.random()-0.5)*60, cy - hexR - ringSize*2.2, chainStep>1?('CHAIN x'+chainStep+'  +'+gained):('+'+gained), popColor, chainStep>1?22:18);
+    if(mult>=3) showToast('COMBO x'+mult+'!');
+    if(chainStep>=3){ showToast('CHAIN REACTION!'); addShake(10); }
+    if(cleared>=5) addShake(6);
+    if(mult>=2 || chainStep>=2) addShake(4);
+    flashCombo(mult, chainStep);
+    updateHud();
+    if(!isEndless && blocksCleared >= level.targetBlocks){ triggerWin(); return; }
+    matches = findMatches();
+  }
+
+  // game over if any column reached center after clears
+  for(let c=0;c<COLS;c++){ if(columns[c].length >= SLOTS){ triggerGameOver(); return; } }
+  spawnFalling();
+}
+
+/* ----------------------------- Win / Lose ----------------------------- */
+function triggerWin(){
+  gameState='won';
+  falling=null;
+  Sound.levelComplete();
+  const t=level.starThresholds;
+  let stars = score>=t[2] ? 3 : (score>=t[1] ? 2 : 1);
+  Save.recordResult(level, score, stars);
+  $('winScore').textContent = score.toLocaleString();
+  $('winBest').textContent = (Save.data.best[level.id]||0).toLocaleString();
+  $('winCleared').textContent = blocksCleared;
+  const sc=$('winStars').children;
+  for(let i=0;i<3;i++){ sc[i].classList.toggle('on', i<stars); }
+  $('winNext').classList.toggle('hidden', !(level.id!=='endless' && level.id<20));
+  overlays.win.classList.remove('hidden');
+  hud.classList.add('hidden');
+  comboDisplay.classList.remove('show');
+}
+function triggerGameOver(){
+  if(gameState==='over') return;
+  gameState='over';
+  falling=null;
+  Sound.gameOver();
+  addShake(18);
+  Save.recordResult(level, score, 0);
+  $('overScore').textContent = score.toLocaleString();
+  $('overBest').textContent = (isEndless? Save.data.bestEndless : (Save.data.best[level.id]||0)).toLocaleString();
+  $('overCleared').textContent = blocksCleared;
+  overlays.gameover.classList.remove('hidden');
+  hud.classList.add('hidden');
+  comboDisplay.classList.remove('show');
+}
+
+/* ----------------------------- Update ----------------------------- */
+function update(dt){
+  gameTime += dt;
+  pulseT += dt;
+  if(Math.abs(rotationOffset)>0.05){ rotationOffset -= rotationOffset * Math.min(1, dt*16); } else { rotationOffset=0; }
+  for(let c=0;c<COLS;c++){
+    const col=columns[c]; if(!col) continue;
+    for(let k=0;k<col.length;k++){
+      const target=slotCenterR(k);
+      col[k].rr += (target-col[k].rr)*Math.min(1, dt*16);
+    }
+  }
+  if(shake>0.05) shake -= shake*Math.min(1,dt*8); else shake=0;
+
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.life-=dt; if(p.life<=0){ particles.splice(i,1); continue; }
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=240*dt; p.vx*=0.96;
+  }
+  for(let i=popups.length-1;i>=0;i--){
+    const p=popups[i]; p.life-=dt; if(p.life<=0){ popups.splice(i,1); continue; }
+    p.y+=p.vy*dt; p.vy*=0.94;
+  }
+
+  if(gameState!=='playing') return;
+
+  tryRotateFromInput(dt);
+
+  if(level.speedIncrease>0){
+    speedTimer += dt;
+    if(speedTimer >= level.speedIncrease){
+      speedTimer = 0;
+      fallSpeed = Math.min(7.5, fallSpeed + (isEndless?0.35:0.3));
+    }
+  }
+  if(isEndless){ fallSpeed = Math.min(7.5, fallSpeed + dt*0.015); }
+
+  if(falling){
+    falling.rr -= fallSpeed*ringSize*dt;
+    const landK = columns[0].length;
+    const landR = slotCenterR(landK);
+    if(falling.rr <= landR){
+      falling.rr = landR;
+      landBlock();
+    }
+  } else {
+    spawnFalling();
+  }
+}
+
+/* ----------------------------- Render ----------------------------- */
+function drawSector(rIn, rOut, a0, a1, fillStyle, glow, lineW){
+  ctx.beginPath();
+  ctx.arc(cx,cy,rOut,a0,a1);
+  ctx.arc(cx,cy,rIn,a1,a0,true);
+  ctx.closePath();
+  if(glow){ ctx.shadowColor=glow; ctx.shadowBlur=16; }
+  ctx.fillStyle=fillStyle; ctx.fill();
+  ctx.shadowBlur=0;
+  if(lineW){ ctx.lineWidth=lineW; ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.stroke(); }
+}
+function drawHexagonPath(r, rot){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){
+    const a = rot + i*60*DEG - 90*DEG;
+    const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+}
+function drawBlock(blk, c, k){
+  const a = renderAngle(c);
+  const half=30*DEG;
+  const a0=a-half, a1=a+half;
+  const rr = blk.rr;
+  const rOut=rr+ringSize/2-1.5, rIn=Math.max(hexR*0.2, rr-ringSize/2+1.5);
+  if(blk.type==='rainbow'){
+    const g=ctx.createLinearGradient(cx+rIn*Math.cos(a),cy+rIn*Math.sin(a),cx+rOut*Math.cos(a),cy+rOut*Math.sin(a));
+    g.addColorStop(0,'#ff00aa'); g.addColorStop(0.33,'#ffdd00'); g.addColorStop(0.66,'#00ff88'); g.addColorStop(1,'#00e5ff');
+    drawSector(rIn,rOut,a0,a1,g,'#ffffff',2);
+    ctx.save();
+    ctx.font='bold '+(ringSize*0.5)+'px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='rgba(255,255,255,0.95)'; ctx.shadowColor='#fff'; ctx.shadowBlur=8;
+    ctx.fillText('✦', cx+rr*Math.cos(a), cy+rr*Math.sin(a));
+    ctx.restore();
+  } else if(blk.type==='bomb'){
+    const p=0.5+0.5*Math.sin(pulseT*8);
+    drawSector(rIn,rOut,a0,a1,'#2a0a12', BOMB_COLOR, 2);
+    ctx.save();
+    ctx.translate(cx+rr*Math.cos(a), cy+rr*Math.sin(a));
+    ctx.shadowColor=BOMB_COLOR; ctx.shadowBlur=10+p*12;
+    ctx.beginPath(); ctx.arc(0,0, ringSize*0.28, 0, Math.PI*2); ctx.fillStyle=BOMB_COLOR; ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.strokeStyle='#ffd84d'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,-ringSize*0.28); ctx.lineTo(ringSize*0.12,-ringSize*0.5); ctx.stroke();
+    ctx.beginPath(); ctx.arc(ringSize*0.16,-ringSize*0.54, 2+p*1.5, 0, Math.PI*2); ctx.fillStyle='#ffd84d'; ctx.fill();
+    ctx.restore();
+  } else {
+    const idx = COLORS.indexOf(blk.color);
+    const light = COLOR_LIGHT[idx]||'#fff';
+    const g=ctx.createRadialGradient(cx+rr*0.7*Math.cos(a), cy+rr*0.7*Math.sin(a), Math.max(1,ringSize*0.1), cx+rr*Math.cos(a), cy+rr*Math.sin(a), Math.max(2,ringSize*0.8));
+    g.addColorStop(0, light); g.addColorStop(1, blk.color);
+    drawSector(rIn,rOut,a0,a1,g, blk.color, 1.5);
+  }
+}
+function renderGame(){
+  ctx.save();
+  if(shake>0.1){ ctx.translate((Math.random()-0.5)*shake, (Math.random()-0.5)*shake); }
+  // guide rings
+  ctx.lineWidth=1;
+  for(let s=0;s<=SLOTS;s++){
+    const r = outerR - s*ringSize;
+    ctx.beginPath(); ctx.strokeStyle='rgba(120,160,255,0.06)'; ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+  }
+  // lane dividers
+  ctx.strokeStyle='rgba(120,160,255,0.08)'; ctx.lineWidth=1;
+  for(let c=0;c<COLS;c++){
+    const a=renderAngle(c)+30*DEG;
+    ctx.beginPath(); ctx.moveTo(cx+hexR*Math.cos(a), cy+hexR*Math.sin(a)); ctx.lineTo(cx+outerR*Math.cos(a), cy+outerR*Math.sin(a)); ctx.stroke();
+  }
+  // blocks
+  for(let c=0;c<COLS;c++){
+    const col=columns[c]; if(!col) continue;
+    for(let k=0;k<col.length;k++){ drawBlock(col[k], c, k); }
+  }
+  // falling block + drop guide
+  if(falling && gameState==='playing'){
+    const a=renderAngle(0);
+    ctx.beginPath(); ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=Math.max(1,ringSize-3);
+    ctx.moveTo(cx+outerR*Math.cos(a), cy+outerR*Math.sin(a)); ctx.lineTo(cx+hexR*Math.cos(a), cy+hexR*Math.sin(a)); ctx.stroke();
+    drawBlock(falling, 0, -1);
+  }
+  // central hexagon
+  const hg=ctx.createRadialGradient(cx,cy,2,cx,cy,hexR);
+  hg.addColorStop(0,'#2a2f66'); hg.addColorStop(1,'#12152e');
+  drawHexagonPath(hexR, rotationOffset*DEG);
+  ctx.shadowColor='#00e5ff'; ctx.shadowBlur=22; ctx.fillStyle=hg; ctx.fill();
+  ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle='rgba(0,229,255,0.7)'; ctx.stroke();
+  drawHexagonPath(hexR*0.62, rotationOffset*DEG); ctx.lineWidth=1.5; ctx.strokeStyle='rgba(255,0,170,0.45)'; ctx.stroke();
+  // particles
+  for(const p of particles){
+    ctx.globalAlpha=Math.max(0,p.life/p.max);
+    ctx.fillStyle=p.color; ctx.shadowColor=p.color; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha=1; ctx.shadowBlur=0;
+  // popups
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  for(const p of popups){
+    ctx.globalAlpha=Math.max(0,Math.min(1,p.life/0.5));
+    ctx.fillStyle=p.color; ctx.shadowColor=p.color; ctx.shadowBlur=10;
+    ctx.font='800 '+p.size+'px Orbitron, sans-serif';
+    ctx.fillText(p.text, p.x, p.y);
+  }
+  ctx.globalAlpha=1; ctx.shadowBlur=0;
+  ctx.restore();
+}
+function renderMenuBg(){
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(pulseT*0.08);
+  drawHexagonPath(Math.min(W,H)*0.32, 0); ctx.lineWidth=1.5; ctx.strokeStyle='rgba(0,229,255,0.10)'; ctx.stroke();
+  drawHexagonPath(Math.min(W,H)*0.22, 0); ctx.strokeStyle='rgba(255,0,170,0.10)'; ctx.stroke();
+  ctx.restore();
+  for(const s of bgStars){
+    s.y += s.s*0.0006; if(s.y>1) s.y-=1;
+    const tw=0.4+0.6*Math.abs(Math.sin(pulseT*0.6+s.p));
+    ctx.globalAlpha=tw*0.5; ctx.fillStyle='#8fb6e6';
+    ctx.beginPath(); ctx.arc(s.x*W, s.y*H, s.r, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+function render(){
+  ctx.clearRect(0,0,W,H);
+  if(screen==='game'){ renderGame(); } else { renderMenuBg(); }
+}
+
+/* ----------------------------- HUD ----------------------------- */
+function updateHud(){
+  $('hudScore').textContent = score.toLocaleString();
+  $('hudLevelLabel').textContent = isEndless ? 'Endless' : ('Level '+level.id);
+  if(isEndless){
+    $('hudCleared').textContent = blocksCleared+' cleared';
+    $('progLeft').textContent = 'Survival';
+    $('progFill').style.width = Math.min(100, (blocksCleared%25)/25*100)+'%';
+    $('progRight').textContent = blocksCleared+' run';
+  } else {
+    $('hudCleared').textContent = Math.min(blocksCleared,level.targetBlocks)+' / '+level.targetBlocks;
+    const pct = Math.min(100, blocksCleared/level.targetBlocks*100);
+    $('progFill').style.width = pct+'%';
+    $('progRight').textContent = Math.floor(pct)+'%';
+    $('progLeft').textContent = level.name;
+  }
+}
+
+/* ----------------------------- Main loop ----------------------------- */
+function loop(ts){
+  if(!lastTs) lastTs=ts;
+  let dt=(ts-lastTs)/1000; lastTs=ts;
+  if(dt>0.05) dt=0.05;
+  update(dt);
+  render();
+  rafId = requestAnimationFrame(loop);
+}
+
+/* ----------------------------- Screen navigation ----------------------------- */
+function showScreen(name){
+  screen=name;
+  Object.keys(screens).forEach(k=>screens[k].classList.toggle('hidden', k!==name));
+  Object.keys(overlays).forEach(k=>overlays[k].classList.add('hidden'));
+  hud.classList.add('hidden');
+  if(name==='levelselect') buildLevelGrid();
+  if(name==='settings') syncSettings();
+}
+function hideAllOverlays(){ Object.keys(overlays).forEach(k=>overlays[k].classList.add('hidden')); }
+
+function buildLevelGrid(){
+  const grid=$('levelGrid'); grid.innerHTML='';
+  let lastTier=0;
+  LEVELS.forEach(lv=>{
+    if(lv.tier!==lastTier){ lastTier=lv.tier;
+      const tl=document.createElement('div'); tl.className='tier-label'; tl.textContent=TIER_NAMES[lv.tier]; grid.appendChild(tl);
+    }
+    const unlocked = lv.id <= Save.data.unlocked;
+    const stars = Save.data.stars[lv.id]||0;
+    const cell=document.createElement('div');
+    cell.className='lvl'+(unlocked?'':' locked');
+    cell.innerHTML='<span class="ln">'+lv.id+'</span><span class="ls">'+(unlocked?('★'.repeat(stars)+'☆'.repeat(3-stars)):'')+'</span>'+(unlocked?'':'<span class="lock">LOCK</span>');
+    if(unlocked){ cell.addEventListener('click',()=>{ Sound.click(); startLevel(lv.id); }); }
+    else { cell.addEventListener('click',()=>{ Sound.click(); showToast('Locked'); }); }
+    grid.appendChild(cell);
+  });
+  const eb=$('endlessBtn');
+  if(Save.data.endlessUnlocked){ eb.disabled=false; eb.textContent='Endless Mode'; }
+  else { eb.disabled=true; eb.textContent='Endless (finish Level 5)'; }
+}
+function syncSettings(){
+  $('sfxSwitch').classList.toggle('on', Save.data.settings.sfx);
+  $('musicSwitch').classList.toggle('on', Save.data.settings.music);
+  $('shakeSwitch').classList.toggle('on', Save.data.settings.shake);
+}
+
+/* ----------------------------- Start / end sessions ----------------------------- */
+function startLevel(id){
+  level = (id==='endless') ? ENDLESS : LEVELS.find(l=>l.id===id);
+  if(!level) return;
+  isEndless = (id==='endless');
+  resetSession();
+  screen='game';
+  Object.keys(screens).forEach(k=>screens[k].classList.add('hidden'));
+  hideAllOverlays();
+  hud.classList.remove('hidden');
+  gameState='playing';
+  Sound.resume();
+  if(Save.data.settings.music) Sound.startBgm();
+  updateHud();
+  spawnFalling();
+  if(!Save.data.tutorialSeen){ Save.data.tutorialSeen=true; Save.save(); showTutorial(); }
+}
+function showTutorial(){
+  gameState='paused';
+  $('tutCtrl').innerHTML = (matchMedia('(hover: none)').matches)
+    ? 'Hold the <b>left</b> half to rotate left, <b>right</b> half to rotate right.'
+    : 'Use <b>A / D</b> or <b>arrow keys</b> to rotate.';
+  overlays.tutorial.classList.remove('hidden');
+}
+function resetSession(){
+  columns=[]; for(let c=0;c<COLS;c++) columns.push([]);
+  falling=null; particles=[]; popups=[];
+  rotationOffset=0; shake=0;
+  score=0; blocksPlaced=0; blocksCleared=0;
+  comboMult=1; lastClearTime=-999;
+  fallSpeed = level.startSpeed; speedTimer=0; gameTime=0;
+  input.left=false; input.right=false; input.rotCooldown=0;
+  comboDisplay.classList.remove('show');
+}
+// single cleanup entry point for ALL exit paths (quit, win->menu, gameover->menu)
+function endSession(toMenu){
+  gameState=null;
+  falling=null; particles=[]; popups=[]; columns=[];
+  comboMult=1;
+  input.left=false; input.right=false;
+  Sound.stopBgm();
+  hideAllOverlays();
+  if(toMenu) showScreen('menu');
+}
+function pauseGame(){
+  if(gameState!=='playing') return;
+  gameState='paused';
+  overlays.pause.classList.remove('hidden');
+}
+function resumeGame(){
+  if(gameState!=='paused') return;
+  overlays.pause.classList.add('hidden');
+  if(!overlays.tutorial.classList.contains('hidden')) overlays.tutorial.classList.add('hidden');
+  gameState='playing';
+  lastTs=0;
+  Sound.resume();
+}
+
+/* ----------------------------- Input wiring ----------------------------- */
+function bindUI(){
+  document.querySelectorAll('[data-action]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      Sound.resume(); Sound.click();
+      const a=el.dataset.action;
+      if(a==='play'){ startLevel(Save.data.unlocked); }
+      else if(a==='levelselect'){ showScreen('levelselect'); }
+      else if(a==='endless'){ if(Save.data.endlessUnlocked) startLevel('endless'); else showToast('Finish Level 5 first'); }
+      else if(a==='howto'){ showScreen('howto'); }
+      else if(a==='settings'){ showScreen('settings'); }
+    });
+  });
+  document.querySelectorAll('[data-back]').forEach(el=>{
+    el.addEventListener('click', ()=>{ Sound.click(); showScreen(el.dataset.back); });
+  });
+  function bindSwitch(id, key, onChange){
+    const sw=$(id);
+    sw.addEventListener('click', ()=>{
+      Sound.click();
+      Save.data.settings[key]=!Save.data.settings[key]; Save.save();
+      sw.classList.toggle('on', Save.data.settings[key]);
+      if(onChange) onChange(Save.data.settings[key]);
+    });
+  }
+  bindSwitch('sfxSwitch','sfx', v=>Sound.setSfx(v));
+  bindSwitch('musicSwitch','music', v=>Sound.setMusic(v));
+  bindSwitch('shakeSwitch','shake');
+  $('resetProgress').addEventListener('click', ()=>{ Sound.click(); Save.reset(); syncSettings(); showToast('Progress reset'); buildLevelGrid(); });
+
+  $('pauseBtn').addEventListener('click', ()=>{ Sound.click(); pauseGame(); });
+  $('resumeBtn').addEventListener('click', ()=>{ Sound.click(); resumeGame(); });
+  $('restartBtn').addEventListener('click', ()=>{ Sound.click(); startLevel(isEndless?'endless':level.id); });
+  $('quitBtn').addEventListener('click', ()=>{ Sound.click(); endSession(true); });
+  $('winNext').addEventListener('click', ()=>{ Sound.click(); const nid=level.id+1; startLevel(nid<=20?nid:level.id); });
+  $('winReplay').addEventListener('click', ()=>{ Sound.click(); startLevel(isEndless?'endless':level.id); });
+  $('winMenu').addEventListener('click', ()=>{ Sound.click(); endSession(true); });
+  $('overRetry').addEventListener('click', ()=>{ Sound.click(); startLevel(isEndless?'endless':level.id); });
+  $('overMenu').addEventListener('click', ()=>{ Sound.click(); endSession(true); });
+  $('tutStart').addEventListener('click', ()=>{ Sound.click(); overlays.tutorial.classList.add('hidden'); gameState='playing'; lastTs=0; Sound.resume(); if(Save.data.settings.music) Sound.startBgm(); });
+
+  document.querySelectorAll('.btn, .lvl').forEach(el=>{
+    el.addEventListener('mouseenter', ()=>{ if(!matchMedia('(hover: none)').matches) Sound.hover(); });
+  });
+}
+
+/* ----------------------------- Keyboard ----------------------------- */
+function bindKeys(){
+  window.addEventListener('keydown', e=>{
+    if(screen!=='game') return;
+    const k=e.key.toLowerCase();
+    if(k==='a'||k==='arrowleft'){ if(!e.repeat){ rotate(-1); } input.left=true; e.preventDefault(); }
+    else if(k==='d'||k==='arrowright'){ if(!e.repeat){ rotate(1); } input.right=true; e.preventDefault(); }
+    else if(k===' '||k==='p'){ e.preventDefault(); if(gameState==='playing') pauseGame(); else if(gameState==='paused') resumeGame(); }
+  });
+  window.addEventListener('keyup', e=>{
+    const k=e.key.toLowerCase();
+    if(k==='a'||k==='arrowleft') input.left=false;
+    else if(k==='d'||k==='arrowright') input.right=false;
+  });
+}
+
+/* ----------------------------- Pointer (touch + mouse) ----------------------------- */
+function bindPointer(){
+  let lastDown=0;
+  function onDown(e){
+    if(screen!=='game' || gameState!=='playing') return;
+    if(e.button!==undefined && e.button!==0) return;          // primary press only
+    const target=e.target;
+    if(target && target.closest && target.closest('button,.panel,.switch,.back-link')) return;
+    const now=performance.now();
+    if(now-lastDown < 80) return;                              // dedup stray double-fire
+    lastDown=now;
+    Sound.resume();
+    const x=e.clientX;                                          // pointer events carry clientX
+    const side = x < W/2 ? -1 : 1;
+    if(side<0){ input.left=true; rotate(-1); } else { input.right=true; rotate(1); }
+    input.rotCooldown=0.11;
+    e.preventDefault();
+  }
+  function onUp(){ input.left=false; input.right=false; }
+  // Pointer events cover mouse, touch, and pen — no separate touch listeners (avoids double-fire).
+  canvas.addEventListener('pointerdown', onDown);
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onUp);
+}
+
+/* ----------------------------- Init ----------------------------- */
+function init(){
+  Save.load();
+  Sound.enabled.sfx = Save.data.settings.sfx;
+  Sound.enabled.music = Save.data.settings.music;
+  resize(); initBgStars();
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', ()=>setTimeout(resize,200));
+  const unlock=()=>{ Sound.init(); Sound.resume(); if(Save.data.settings.music && screen!=='game') Sound.startBgm(); window.removeEventListener('pointerdown',unlock); window.removeEventListener('keydown',unlock); };
+  window.addEventListener('pointerdown',unlock);
+  window.addEventListener('keydown',unlock);
+  bindUI(); bindKeys(); bindPointer();
+  showScreen('menu');
+  rafId = requestAnimationFrame(loop);
+}
+window.addEventListener('beforeunload', ()=>{ if(rafId) cancelAnimationFrame(rafId); Sound.shutdown(); });
+init();
+</script>
+<div id="gz-ad-below-game"></div>
+<script src="/monetag-manager.js"></script>
+<script src="/game-footer.js"></script>
+</body>
+</html>
