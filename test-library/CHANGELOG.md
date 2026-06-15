@@ -1,3 +1,61 @@
+## [v1.60.0] - 2026-06-16
+### Added
+- 10 new test cases from industry research (R180 Dynamic Test Intelligence cron)
+- **S-109** [P1] GitHub npm v12 platform-level mitigation — disables install scripts + git deps + remote URL sources by default (July 2026 hard CI migration deadline; platform RESPONSE to S-104/S-105/S-106/S-107/S-108 attacks — distinct because it changes the BUILD contract, not the attack surface; CI/CD pipelines depending on postinstall scripts BREAK without explicit `--allow-scripts`)
+- **S-110** [P2] Typosquatted npm packages stealing CI/CD secrets (cybersecuritynews.com May 28 2026 — distinct from Miasma/IronWorm worm-propagation because this is the TYPO-VECTOR targeting dev machines + cloud credentials + CI tokens, including the LLM-poisoning variant where attackers seed poisoned docs that AI coding assistants suggest verbatim)
+- **B-097** [P1] iOS 26.5 full security advisory — 80+ vulnerabilities + 2 actively-researched zero-days + M5 chip hardware-level memory-safety bypass (cantina.security x Swif May 2026 — distinct from S-052 Safari 26.5 WebKit 20-CVE subset because this is the FULL iOS 26.5 advisory covering kernel/WebKit/M5-silicon across iPhone+iPad+Mac fleet)
+- **B-098** [P2] Apple retroactive months-old security-fix disclosure pattern (webpronews.com June 2026 — silent WebKit/iOS patches ship with vague changelogs then get documented weeks-to-months later; affects GameZipper users on Apple platforms who can't know what was patched during the gap)
+- **B-099** [P1] Android June 2026 Security Bulletin — 124 vulnerabilities + actively-exploited Framework zero-day under limited targeted exploitation (bleepingcomputer.com/forbes.com/securityarsenal.com June 2026 — distinct from B-067 general functional regression because this is the SECURITY-BULLETIN-CVE dimension with active exploitation confirmed + OEM-patch-lag dimension)
+- **B-100** [P2] Samsung June 2026 Security Patch — 45 vendor-specific vulnerabilities (androidheadlines.com — Samsung-specific layer over Google's baseline Android bulletin; Samsung is the largest Android OEM by GameZipper mobile traffic share; Samsung Internet browser patched separately from Chrome)
+- **W-151** [P0] Manifest V2 final hard kill — Chrome 150/151 June 30 2026 removes last `chrome://flags` override flag → uBlock Origin dynamic filtering permanently disabled, no workaround remains (techtimes.com June 15 2026 + pcworld + 9to5google — distinct from W-135 general MV3 disruption because this is the SPECIFIC June-30-2026 deadline + permanent flag-removal + zero-workaround-remains dimension)
+- **G-141** [P2] Mobile game monetization benchmark report 2026 — Tenjin Ad Monetization Benchmark + Hyper Casual Market $17.11B-2026→$34.82B-2035 + 38% week-1 uninstall rate + 72% Android + 41% ad-based (tenjin.com/businessresearchinsights.com — concrete market/revenue numbers for benchmarking GameZipper monetization performance, distinct from G-135 integration-quality audit)
+- **G-142** [P2] Hybrid monetization tri-model 2026 — IAP + Ads + Subscriptions balance guide with concrete revenue-split targets (50-60% ads / 30-40% IAP / 5-15% subscriptions) (gamegrowthadvisor.com June 2 2026 — distinct from G-135 integration audit and G-141 benchmark data, this is the STRATEGIC ARCHITECTURE test)
+- **A-034** [P1] ADA accessibility-lawsuit surge 23% 2026 + WCAG 2.2 AA Section 508 federal-contractor mandate (wcagpros.com — distinct from A-027 WCAG 2.2 general compliance because this is the LITIGATION-RISK + MANDATE dimension that elevates accessibility from compliance to legal exposure requiring board-level attention)
+
+### Sources
+- Web search batch via web-search-prime (4 parallel single-search calls + 4 sequential follow-ups; 1 batch of 5 aborted and retried individually):
+  - "Chrome security update June 2026 zero day CVE exploit patch"
+  - "Safari 27 WebKit bug 2026 canvas WebGL WebGPU regression"
+  - "Android June 2026 security update Framework zero day Pixel Samsung WebView game"
+  - "Microsoft Patch Tuesday June 2026 record CVE critical zero-day exploited"
+  - "WebGPU WebNN 2026 Three.js Babylon.js game engine migration performance shader"
+  - "mobile game UX 2026 thumb zone haptic onboarding retention App Store complaint"
+  - "WCAG 2.2 accessibility audit 2026 June mobile cognitive motor screen reader"
+  - "npm supply chain 2026 June malicious package typosquatting installer postinstall crypto miner"
+  - "iOS 26.5 Safari WebKit 2026 vulnerability bug patch June"
+  - "Chrome 151 release notes 2026 features deprecation WebGPU"
+  - "casual mobile game revenue 2026 hyper-casual hybrid monetization rewarded video AdSense"
+- Key URLs:
+  - https://thehackernews.com/2026/06/github-to-disable-npm-install-scripts.html (GitHub npm v12 install scripts disabled by default — July 2026)
+  - https://securityweek.com/npm-12-will-change-script-execution-behavior-to-prevent-supply-chain-attacks (npm 12 script execution behavior change)
+  - https://bleepingcomputer.com/news/security/github-announces-npm-security-changes-to-tackle-supply-chain-attacks (GitHub npm security changes)
+  - https://techtimes.com/articles/318328/20260613/npm-v12-security-overhaul-blocks-install-scripts-default-july-deadline-ci-migration.htm (npm v12 July CI migration deadline)
+  - https://cybersecuritynews.com/typosquatted-npm-packages-steal-cloud-and-ci-cd-secrets (Typosquatted npm packages CI/CD secrets theft — May 28 2026)
+  - https://snyk.io/blog/node-gyp-supply-chain-compromise-self-propagating-npm-worm-binding-gyp (node-gyp binding.gyp compromise + self-propagating worm)
+  - https://wiz.io/blog/miasma-supply-chain-attack-targeting-redhat-npm-packages (Wiz Miasma Red Hat npm analysis)
+  - https://unit42.paloaltonetworks.com/monitoring-npm-supply-chain-attacks (Palo Alto Unit42 — June 2026 Mini Shai-Hulud spreads the Blight)
+  - https://cantina.security/blog/ios-26-5-security-guide-apple-fleets (iOS 26.5 Security Guide — 80+ vulns + 2 zero-days + M5 hardware bypass)
+  - https://webpronews.com/apple-lifts-the-veil-on-months-old-security-fixes-across-ios-macos-and-older-devices (Apple retroactive months-old security-fix disclosure pattern)
+  - https://support.apple.com/en-us/100100 (Apple security releases — iOS 26.5.1 / macOS 26.5.1)
+  - https://forums.macrumors.com/threads/ios-26-5-1-bug-fixes-changes-and-improvements.2483157 (iOS 26.5.1 release notes)
+  - https://bleepingcomputer.com/news/security/google-fixes-one-actively-exploited-android-zero-day-124-flaws (Android June 2026 — 124 flaws + 1 actively-exploited zero-day)
+  - https://forbes.com/sites/daveywinder/2026/06/02/new-android-14-15-and-16-update-fixes-actively-exploited-security-flaw (Forbes — Android 14/15/16 actively-exploited flaw)
+  - https://securityarsenal.com/blog/june-2026-android-security-bulletin-zero-day-exploitation-and-remediation (Security Arsenal — June 2026 Android Bulletin analysis)
+  - https://source.android.com/docs/security/bulletin/2026/2026-06-01 (Official Android Security Bulletin June 2026)
+  - https://cyberinsider.com/android-june-2026-update-patches-actively-exploited-zero-day (CyberInsider — Android June 2026 zero-day)
+  - https://androidheadlines.com/2026/06/samsungs-june-2026-security-patch-is-coming-and-it-fixes-45-vulnerabilities.html (Samsung June 2026 Security Patch — 45 vulnerabilities)
+  - https://techtimes.com/articles/318370/20260615/google-kills-ublock-origin-chrome-june-30-dynamic-filtering-ends-no-workaround-remains.htm (Google kills uBlock Origin in Chrome June 30)
+  - https://pcworld.com/article/3160794/the-last-lifeline-for-ublock-origin-in-chrome-is-almost-gone-for-good.html (Last lifeline for uBlock Origin in Chrome gone)
+  - https://9to5google.com/2026/06/15/google-chromes-next-update-will-mark-the-end-of-popular-ad-blockers (End of popular ad blockers — MV2 final kill)
+  - https://tenjin.com/blog/ad-mon-gaming-2026 (Tenjin Ad Monetization Benchmark Report 2026)
+  - https://businessresearchinsights.com/market-reports/hyper-casual-gaming-market-103060 (Hyper Casual Gaming Market 2026-2035 — $17.11B → $34.82B)
+  - https://gamegrowthadvisor.com/blog/2026-06-02-hybrid-monetization-mobile-games-iap-ads-guide-2026 (Hybrid monetization tri-model IAP + Ads Guide 2026)
+  - https://eastondev.com/blog/en/posts/media/20260524-mini-game-monetization (Mini game monetization path analysis)
+  - https://asoworld.com/en/blog/q2-2026-mobile-gaming-revenue-breakdown-what-the-numbers-mean-for-your-growth-strategy (Q2 2026 Mobile Gaming Revenue Breakdown)
+  - https://wcagpros.com/wcag-articles/audit-ing-for-all-understanding-digital-accessibility (Accessibility audit — 23% ADA lawsuit surge 2026)
+  - https://discoverinai.com/wcag-2-2-ensuring-accessible-tech-by-2026 (WCAG 2.2 — Section 508 federal-contractor mandate)
+  - https://mobileproductstudio.com/mobile-products-wcag-2-2-aa-is-key-for-2026 (WCAG 2.2 AA — Section 508 / mobile products 2026)
+
 ## [v1.59.0] - 2026-06-15
 ### Added
 - 10 new test cases from industry research (R179 Dynamic Test Intelligence cron)
