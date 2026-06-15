@@ -1,3 +1,47 @@
+## [v1.57.0] - 2026-06-15
+### Added
+- 9 new test cases from industry research (R177 Dynamic Test Intelligence cron)
+- **C-096** [P2] Playwright Test Agents (planner/generator/healer) — official native self-healing loop shipped with `npx playwright` (replaces brittle selector maintenance with explore-plan-generate-heal agent loop)
+- **P-064** [P2] RAMpage browser stress suite — 5-vector (RAM/CPU/GPU/Storage/Network) per-tab hard-limit reproduction tool (Web Workers + WebGL shaders + IndexedDB)
+- **P-065** [P1] WebGPU Device Lost specifically from background-tab GPU memory exhaustion — distinct root cause (background tabs competing for VRAM trigger `GPUDevice.lost` that foreground-game tab cannot recover from)
+- **W-146** [P1] FTC Honda non-tech dark-pattern precedent (first major non-tech ruling, expanding doctrine) + Epic Games $245M settlement enforcement benchmark (concrete penalty threshold for deceptive UX in games)
+- **C-097** [P3] Google Chrome team WebAI Compute Benchmark — official cross-browser WebGPU/WASM/WebNN performance baselining for AI-enabled games (github.com/GoogleChrome/webai-compute-benchmark)
+- **PC-016** [P2] WebNN NPU acceleration — 50x speedup vs CPU on dedicated NPU (Windows 11 24H2+ required) — game AI features (NPC/voice/image) can reach NPU-accelerated path distinct from WebGPU-only
+- **C-098** [P3] WebGPU "break on error" DevTools option — standard debug protocol per official gpuweb/design/ErrorHandling.md (implementations MUST provide synchronous validation breakpoint)
+- **G-137** [P3] 2026 web-game tech-stack decision matrix — WebGL vs WebGPU vs WASM per-genre pick (Cinevva decision flowchart for new projects)
+- **W-147** [P2] 2026 Dark Pattern Avoidance Checklist — practical UX audit guide for regulatory compliance (secureprivacy.ai operational checklist mapping 8 dark-pattern categories to GDPR/CPRA/DSA/FTC prohibitions)
+
+### Sources
+- Web search batch (9 queries across 2 parallel batches; `topic: "general"` per Pitfall 2):
+  - "HTML5 browser game testing 2026 June new technique canvas WebGL WebGPU"
+  - "browser game UX 2026 complaint dark pattern kid regulation law"
+  - "WebGPU WASM WebNN performance benchmark 2026 migration"
+  - "WCAG 2.2 accessibility 2026 web game cognitive screen reader"
+  - "browser game memory leak GPU stress test 2026 long session"
+  - "WebGPU Validation error GPUDevice.lost crash reporting browser game 2026"
+  - "Playwright AI agent MCP browser automation 2026 self healing test"
+- Key URLs:
+  - https://playwright.dev/docs/test-agents (Playwright official Test Agents — planner/generator/healer)
+  - https://testdino.com/blog/playwright-ai-ecosystem (Playwright AI ecosystem 2026 — MCP, agents, self-healing)
+  - https://testleaf.com/blog/playwright-mcp-ai-test-automation-2026 (Playwright MCP plus AI self-healing)
+  - https://github.com/thecapibara/RAMpage (5-vector browser stress suite — RAM/CPU/GPU/Storage/Network)
+  - https://superchargebrowser.com/library/fix-webgpu-device-lost-chrome (WebGPU Device-Lost from background-tab VRAM exhaustion)
+  - https://github.com/gpuweb/gpuweb/blob/main/design/ErrorHandling.md (WebGPU break-on-error DevTools option — official design)
+  - https://developer.mozilla.org/en-US/docs/Web/API/GPUValidationError (GPUValidationError — MDN)
+  - https://ketch.com/blog/posts/dark-patterns-are-they-illegal (Honda non-tech dark-pattern precedent plus Epic 245M USD)
+  - https://cybersecasia.net/newsletter/us-ftc-targets-dark-patterns-in-tech-firms-deceptive-online-practices (FTC enforcement on dark patterns)
+  - https://pandectes.io/blog/dark-patterns-in-2026-what-the-ftcs-new-rules-mean (FTC 2026 dark-pattern rules)
+  - https://reedsmith.com/articles/dark-patterns-lead-to-enforcement-spotlight-key-compliance-steps-for-businesses (Dark-pattern compliance steps)
+  - https://secureprivacy.ai/blog/dark-pattern-avoidance-2026-checklist (Practical 2026 dark-pattern audit checklist)
+  - https://lexology.com/library/detail.aspx?g=6820be01-2cd9-4554-b250-143b9537f9b9 (Regulation of dark patterns — Lexology)
+  - https://lkslaw.com/insights/articles/regulation-of-dark-patterns (Regulation of dark patterns — LKS Attorneys)
+  - https://github.com/GoogleChrome/webai-compute-benchmark (Official Chrome team WebAI Compute Benchmark — WebGPU/WASM/WebNN)
+  - https://ddevtools.com/updates/2026-01-webgpu-webnn-browser-ai (WebNN NPU 50x vs CPU; Windows 11 24H2+ compatibility matrix)
+  - https://letket.com/high-performance-web-apps-in-2026-webassembly-webgpu-and-edge-architectures (WASM plus WebGPU plus Edge 2026 architecture patterns)
+  - https://app.cinevva.com/guides/web-games-stack-2026.html (WebGL vs WebGPU vs WASM decision matrix)
+  - https://sarkarishivam.com/blog/html5-vs-flash-vs-webgl (HTML5/Flash/WebGL performance comparison)
+  - https://dinogame.gg/blog/webgpu-and-browser-games (WebGPU plus browser games 2026)
+
 # Test Case Library Changelog
 
 ## [v1.56.0] - 2026-06-15
