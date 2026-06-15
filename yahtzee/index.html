@@ -740,6 +740,14 @@ function initDiceCanvas(){
   const canvas=$('dice-canvas');
   const dpr=window.devicePixelRatio||1;
   const rect=canvas.getBoundingClientRect();
+  // R1 fix: If #game-screen is still display:none at init time, getBoundingClientRect
+  // returns {width:0,height:0}. Caching that zero-size state permanently freezes the dice
+  // canvas at 0×0 (the rAF loop never re-measures because diceState.canvas is truthy).
+  // Guard: skip caching and return null so drawDice() retries on the next frame once
+  // the screen becomes visible.
+  if(rect.width===0||rect.height===0){
+    return {canvas:null,ctx:null,w:0,h:0};
+  }
   canvas.width=rect.width*dpr;
   canvas.height=rect.height*dpr;
   const ctx=canvas.getContext('2d');
@@ -749,7 +757,20 @@ function initDiceCanvas(){
 
 let diceState={};
 function drawDice(ts){
-  if(!diceState.canvas)diceState=initDiceCanvas();
+  // Re-init if canvas not yet set OR if it was cached at 0×0 (game-screen was hidden).
+  if(!diceState.canvas||diceState.w===0||diceState.h===0){
+    const next=initDiceCanvas();
+    if(!next.canvas){
+      // Screen still hidden — bail out this frame, retry next frame.
+      return;
+    }
+    // Preserve dice/held/anim state across re-init.
+    next.dice=diceState.dice;
+    next.held=diceState.held;
+    next.isAnimating=diceState.isAnimating;
+    next.animDice=diceState.animDice;
+    diceState=next;
+  }
   const{ctx,w,h}=diceState;
   const{dice:dd,held:hd,isAnimating:anim,animDice:ad}=diceState;
   ctx.clearRect(0,0,w,h);
