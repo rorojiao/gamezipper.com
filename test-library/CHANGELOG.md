@@ -1,3 +1,65 @@
+## [v1.61.0] - 2026-06-16
+### Added
+- 8 new test cases from industry research (R181 Dynamic Test Intelligence cron)
+- **S-111** [P1] TrapDoor coordinated cross-ecosystem supply chain attack — 34 malicious packages / 384+ versions across npm + PyPI + Crates.io simultaneously since May 19-22 2026, separately engineered per-ecosystem install hooks (postinstall/setup.py/build.rs) + AI-coding-assistant poisoning via documentation ingestion; distinct from S-105/S-106/S-107 single-registry worm-propagation because this is the CROSS-ECOSYSTEM-COORDINATION + AI-RAG-POISONING dimension (thecybersecguru.com / phoenix.security / thehackernews.com May 25 2026 / labs.cloudsecurityalliance.org / cybersecuritynews.com)
+- **S-112** [P2] Microsoft 33-package dependency-confusion campaign profiling dev/build environments (Microsoft Security Blog May 29 2026) — recon collection focus (not exfiltration); distinct from S-110 typosquatting because this abuses INTERNAL-LOOKING package names so installs resolve to attacker registry when CI is mis-configured; distinct from S-111 TrapDoor exfiltration because this campaign profiles the environment to enable a future targeted attack
+- **S-113** [P1] Anthropic Mythos AI — 100 Chromium zero-days in 15 days (June 15 2026), reduced average browser-vulnerability discovery time from 40hr (human) to 12min per bug; AI-accelerated CVE disclosure rewrites patch-SLA expectations; 99%+ of Mythos-found bugs remain unpatched at disclosure time; distinct from S-080/S-088 AI-discovered-CVE-cadence tests because this is the CONCRETE-100-CHROMIUM-ZERO-DAYS-FOUND + GAMEZIPPER-PATCH-CADENCE-MUST-ACCELERATE dimension (kucoin.com / nationalcybersecurity.com / hitechies.com / venturebeat.com / techcrunch.com May 7 2026 / tomshardware.com / singularityhub.com April 10 2026)
+- **B-101** [P2] Firefox 151.0.4 (released June 9 2026) Windows back/forward buttons hang (Mozilla Bug 2039866) + older-GPU software-rendering fallback regression (Mozilla Bug 2043249); functional regression not security; distinct from B-086 Firefox 151 sandbox escape CVE-2026-8945 + WebGPU info disclosure (firefox.com/en-US/firefox/notes; askvg.com; malwarebytes.com; developer.mozilla.org)
+- **G-143** [P2] Mobile game retention benchmarks 2026 — D1 retention 38% / D7 retention 15% / D30 declining trend / LTV $45 per paying user / US CPI $1.80 for casual; concrete FTUE/regression thresholds; distinct from G-141 revenue benchmarks and G-105 FTUE-less-than-3-tap qualitative test (gameinsights.ai / gameindustrylibrary.com GameAnalytics / gamebizconsulting.com Sensor Tower State of Mobile 2026)
+- **A-035** [P1] Post-ADA-Title-II plaintiffs-lawyer expansion to public entities + 37% H1-2025 lawsuit-surge prediction — the April 2026 Title II compliance deadline creates a NEW-WAVE of enforcement against public-entity websites + AI tools now play a role on both sides; distinct from A-034 general surge because this is the POST-DEADLINE-ENFORCEMENT-WAVE + STATE-EXPANSION + AI-TOOLING-ON-BOTH-SIDES dimension (accessible.org 2026 predictions / accessibility.build Lawsuit Tracker / d2itechnology.com / webability.io)
+- **W-152** [P2] Edge 149 Collections + Sidebar final removal June 4 2026 — user-data export-before-upgrade deadline (data-loss risk for GameZipper users who used Collections to save game research notes) + lost Sidebar multitasking for game + walkthrough workflow; distinct from C-070 mobile Sidebar and C-071 viewport-change because this is the DATA-LOSS + WORKFLOW-DISRUPTION dimension (windowslatest.com / digitaltrends.com / yourwindowsguide.com / overcentral.com / blogs.windows.com/msedgedev)
+- **C-101** [P2] Multi-registry CI/CD scanner coverage gap — TrapDoor proved single-registry scanners miss ~⅔ of multi-registry attack surface (each scanner is registry-specific); distinct from S-111 specific-attack-test and S-087 COOP/COEP per-language flag because this is the METHODOLOGY / SCANNER-COVERAGE-MATRIX dimension (thecybersecguru.com / phoenix.security / labs.cloudsecurityalliance.org)
+
+### Sources
+- Web search batch via web-search-prime (4 parallel single-search calls; 1 batch of 5 aborted and retried individually):
+  - "browser security vulnerability June 16 2026 Chrome Firefox Safari zero day CVE patch"
+  - "HTML5 game testing 2026 new techniques browser game QA automated"
+  - "casual mobile game UX 2026 June player frustration retention"
+  - "WebGPU WebNN 2026 browser game engine migration shader performance"
+  - "iOS Safari 27 WebKit WWDC26 regression bug canvas WebGL"
+  - "npm supply chain June 2026 malicious package postinstall crypto miner attack"
+  - "WCAG accessibility 2026 lawsuit ADA Section 508 mobile cognitive"
+  - "Edge browser June 2026 update Copilot AI sidebar WebGPU"
+  - "Manifest V3 ad blocker Chrome June 2026 declarativeNetRequest alternative"
+  - "Anthropic Mythos AI finds 100 browser security bugs June 2026"
+  - "TrapDoor multi-registry npm PyPI Crates.io supply chain attack June 2026 cloud keys"
+  - "Firefox 151 release notes features WebGPU WASM security patch June 2026"
+  - "browser game developer June 2026 bug report new"
+- Key URLs:
+  - https://thecybersecguru.com/news/trapdoor-supply-chain-attack (TrapDoor multi-registry attack — npm + PyPI + Crates.io simultaneously)
+  - https://phoenix.security/trapdoor-supply-chain-ai-poisoning-npm-pypi-crates (TrapDoor AI poisoning via documentation ingestion)
+  - https://thehackernews.com/2026/05/trapdoor-supply-chain-attack-spreads.html (TrapDoor — 34 packages / 384 versions)
+  - https://securitytoday.de/en/2026/05/25/trapdoor-coordinated-supply-chain-attack-on-npm-pypi-and-crates-what-ci-cd (TrapDoor CI/CD impact analysis)
+  - https://labs.cloudsecurityalliance.org/research/csa-research-note-trapdoor-multi-ecosystem-supply-chain-ai-t (CSA TrapDoor research note — multi-ecosystem AI-targeting)
+  - https://cybersecuritynews.com/supply-chain-trapdoor-malware (CybersecurityNews — TrapDoor credential-stealing)
+  - https://blog.rankiteo.com/npmpypsoc1780388789-npm-pypi-cratesio-cyber-attack-june-2026 (Rankiteo — TrapDoor across npm/PyPI/Crates.io)
+  - https://microsoft.com/en-us/security/blog/2026/05/29/33-malicious-npm-packages-abuse-dependency-confusion-profile-developer-environments (Microsoft 33-package dependency-confusion campaign — May 29 2026)
+  - https://kucoin.com/blog/in-Anthropic-mythos-finds-100-browser-security-bugs-in-June-2026 (Anthropic Mythos 100 Chromium zero-days — June 15 2026)
+  - https://nationalcybersecurity.com/anthropic-mythos-finds-100-browser-security-bugs-in-june-2026-kucoin-ai (National Cyber Security — Mythos 100 bugs)
+  - https://hitechies.com/anthropic-claude-mythos-zero-day-exploits-2026 (Hitechies — Claude Mythos detailed technical breakdown)
+  - https://venturebeat.com/security/mythos-detection-ceiling-security-teams-new-playbook (VentureBeat — Mythos detection ceiling)
+  - https://techcrunch.com/2026/05/07/how-anthropics-mythos-has-rewritten-firefoxs-approach-to-cybersecurity (TechCrunch — Mythos rewrites Firefox security)
+  - https://tomshardware.com/tech-industry/artificial-intelligence/anthropics-latest-ai-model-identifies-thousands-of-zero-day-vulnerabilities (Tom's Hardware — Mythos thousands of zero-days)
+  - https://singularityhub.com/2026/04/10/anthropics-mythos-ai-uncovered-serious-security-holes-in-every-major-os-and-browser (Singularity Hub — Mythos across every major OS/browser)
+  - https://tech-insider.org/anthropic-claude-mythos-zero-day-project-glasswing-2026 (Tech Insider — Project Glasswing)
+  - https://firefox.com/en-US/firefox/notes (Firefox 151.0.4 release notes — June 9 2026)
+  - https://askvg.com/mozilla-firefox-150-and-later-versions-changelog (Firefox 150+ changelog — back/forward buttons hang + GPU fallback)
+  - https://malwarebytes.com/blog/privacy/2026/05/firefox-151-packs-big-privacy-upgrades-into-a-small-update (Malwarebytes — Firefox 151 privacy upgrades)
+  - https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/151 (MDN — Firefox 151 developer release notes)
+  - https://gameinsights.ai/research/mobile-game-benchmarks-2026 (GameInsights — D1 38% / D7 15% / LTV $45 / US CPI $1.80)
+  - https://gameindustrylibrary.com/documents/gameanalytics-mobile-retention-benchmarks-2026 (GameAnalytics — D1/D7/D30 declining trend)
+  - https://gamebizconsulting.com/blog/mobile-game-user-acquisition-stats-trends-2026 (GameBiz — Sensor Tower State of Mobile 2026 UA trends)
+  - https://accessible.org/2026-ada-website-compliance-lawsuits-ai (Accessible.org — 2026 ADA lawsuit predictions, 37% H1-2025 surge)
+  - https://accessibility.build/research/accessibility-lawsuits (Accessibility Lawsuit Tracker 2026)
+  - https://d2itechnology.com/blogs/accessibility-testing-2026-wcag-3-ada-ai-compliance (D2i — WCAG 3.0 + ADA deadlines + AI-driven compliance)
+  - https://webability.io/blog/wcag-2-2-accessibility-standards-complete-2026-compliance-guide (WebAbility — WCAG 2.2 complete 2026 compliance guide)
+  - https://windowslatest.com/2026/06/06/microsoft-just-killed-edges-collections-and-sidebar-for-more-copilot-after-years-of-pushing-both-features (WindowsLatest — Edge Collections + Sidebar removed June 4 2026)
+  - https://digitaltrends.com/computing/microsoft-just-killed-one-of-the-coolest-features-of-its-edge-browser-to-favor-more-ai (DigitalTrends — Edge Collections killed for AI focus)
+  - https://yourwindowsguide.com/2026/06/microsoft-edge-sidebar-missing.html (YourWindowsGuide — Edge Sidebar missing after latest update)
+  - https://overcentral.com/en/microsoft-edge-removes-collections-sidebar (Overcentral — Edge Collections data export before upgrade)
+  - https://blogs.windows.com/msedgedev/2026/05/13/new-updates-to-edge-across-desktop-and-mobile (Windows Blog — Edge updates across desktop and mobile)
+  - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-relnote-stable-channel (Microsoft Learn — Edge stable channel release notes)
+
 ## [v1.60.0] - 2026-06-16
 ### Added
 - 10 new test cases from industry research (R180 Dynamic Test Intelligence cron)
