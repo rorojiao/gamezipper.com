@@ -355,11 +355,9 @@ body{margin:0;padding:0;overflow:hidden}h1.gz-sr-only{position:absolute;width:1p
  </div>
 </div>
 
+<!-- GameZipper Analytics -->
+<script async src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=hex-haven"></script>
 <!-- Monetag MultiTag Scripts -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-<script>
- window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');
-</script>
 <script>
  // Monetag MultiTag Configuration
  window.MonetagSettings={zones:[110120,110121,110122],excludeDomains:['localhost','127.0.0.1']};
@@ -1255,7 +1253,7 @@ function startBGM() {
   const melody = [220, 261.63, 293.66, 329.63, 293.66, 261.63, 220, 196];
   let noteIndex = 0;
   
-  setInterval(() => {
+  bgmIntervalId = setInterval(() => {
     if (bgmOscillator && !isMuted) {
       bgmOscillator.frequency.value = melody[noteIndex];
       noteIndex = (noteIndex + 1) % melody.length;
@@ -1264,11 +1262,50 @@ function startBGM() {
 }
 
 function stopBGM() {
+  if (bgmIntervalId !== null) {
+    clearInterval(bgmIntervalId);
+    bgmIntervalId = null;
+  }
   if (bgmOscillator) {
-    bgmOscillator.stop();
+    try { bgmOscillator.stop(); } catch(e) {}
+    try { bgmOscillator.disconnect(); } catch(e) {}
     bgmOscillator = null;
   }
+  if (bgmGain) {
+    try { bgmGain.disconnect(); } catch(e) {}
+    bgmGain = null;
+  }
 }
+
+// Unified cleanup — call on level change, mode change, page unload.
+// Cancels all timers, stops audio, removes transient listeners.
+const __pendingTimers = new Set();
+const __originalSetTimeout = window.setTimeout;
+const __originalSetInterval = window.setInterval;
+// Track setTimeout return values so cleanup can cancel pending UI animations
+window.setTimeout = function(fn, delay, ...args) {
+  const id = __originalSetTimeout.call(window, fn, delay, ...args);
+  __pendingTimers.add(id);
+  __originalSetTimeout.call(window, () => __pendingTimers.delete(id), delay + 50);
+  return id;
+};
+function cleanupTimers() {
+  __pendingTimers.forEach(id => clearTimeout(id));
+  __pendingTimers.clear();
+  if (bgmIntervalId !== null) {
+    clearInterval(bgmIntervalId);
+    bgmIntervalId = null;
+  }
+}
+let bgmIntervalId = null;
+
+window.addEventListener('beforeunload', () => {
+  cleanupTimers();
+  stopBGM();
+  if (window.audioContext) {
+    try { window.audioContext.close(); } catch(e) {}
+  }
+});
 
 // ==================== EVENT HANDLERS ====================
 
