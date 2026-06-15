@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Play Spin Rogue Online Free - Slot Machine Roguelike | GameZipper</title>
+<meta name="description" content="Spin Rogue — a free slot machine roguelike. Build synergies, beat the rent, climb 15 floors. No download, play instantly in your browser.">
+<meta name="keywords" content="slot roguelike, spin game, symbol puzzle, casino puzzle, luck be a landlord clone, free slot game">
+<link rel="canonical" href="https://gamezipper.com/spin-rogue/">
+<meta property="og:title" content="Spin Rogue - Slot Machine Roguelike">
+<meta property="og:description" content="Build synergies, beat the rent, climb 15 floors. A free slot machine roguelike you can play instantly in your browser.">
+<meta property="og:image" content="https://gamezipper.com/spin-rogue/icon.png">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#1a1140">
+<script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=spin-rogue"></script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Spin Rogue","description":"Spin Rogue is a free slot machine roguelike. Build symbol synergies, beat escalating rent across 15 floors, and defeat the Landlord. Play instantly in your browser, no download.","genre":"Roguelike","gamePlatform":"HTML5","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.6","ratingCount":"1280"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"How do I play Spin Rogue?","acceptedAnswer":{"@type":"Answer","text":"Tap SPIN to spin your 3x3 grid of symbols. Every symbol has an effect rule that earns (or costs) coins based on its neighbors and the rest of the board. After your spins for the floor run out, you must have earned at least the rent or the run ends."}},
+{"@type":"Question","name":"How does the shop work?","acceptedAnswer":{"@type":"Answer","text":"Between floors you spend earned coins in the shop to add new symbols, remove symbols, reroll the offered symbols, or lock symbols so they stop spinning. Buying symbols that synergize with your board is the key to beating higher rent."}},
+{"@type":"Question","name":"What is the Daily Challenge?","acceptedAnswer":{"@type":"Answer","text":"The Daily Challenge is a seeded run: the same date produces the exact same symbol pool, shop offers, and spin luck for every player, so you can compare your best floor against friends. It uses a separate save slot."}}
+]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+{"@type":"ListItem","position":1,"name":"Home","item":"https://gamezipper.com/"},
+{"@type":"ListItem","position":2,"name":"Roguelike Games","item":"https://gamezipper.com/#roguelike"},
+{"@type":"ListItem","position":3,"name":"Spin Rogue","item":"https://gamezipper.com/spin-rogue/"}
+]}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --gold:#FFD700;--gold-d:#c9a227;--cyan:#00E5FF;--bg1:#1a1140;--bg2:#0a0618;
+  --glass:rgba(255,255,255,0.06);--glass-b:rgba(255,255,255,0.12);
+  --danger:#ff4d5e;--good:#5dff8f;
+}
+html,body{height:100%}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',sans-serif;
+  background:radial-gradient(120% 120% at 50% 0%,var(--bg1) 0%,#0d0826 45%,var(--bg2) 100%);
+  color:#fff;overflow-x:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation;min-height:100vh;
+}
+/* faint starfield */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    radial-gradient(1px 1px at 12% 22%,rgba(255,255,255,.5),transparent),
+    radial-gradient(1px 1px at 78% 64%,rgba(0,229,255,.4),transparent),
+    radial-gradient(1px 1px at 44% 88%,rgba(255,215,0,.4),transparent),
+    radial-gradient(1px 1px at 88% 14%,rgba(255,255,255,.35),transparent);
+}
+#app{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:760px;margin:0 auto;padding:8px 10px;gap:6px}
+canvas{touch-action:none;display:block}
+
+/* ---- HUD ---- */
+#hud{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:0 0 auto}
+.hud-left,.hud-right{display:flex;align-items:center;gap:6px;min-width:0}
+.hud-center{flex:1;text-align:center;min-width:0}
+#floorLabel{font-size:.78rem;font-weight:700;letter-spacing:.04em;color:#cdbef5;background:var(--glass);border:1px solid var(--glass-b);padding:5px 10px;border-radius:20px;backdrop-filter:blur(8px);white-space:nowrap}
+#floorLabel.boss{color:#fff;background:linear-gradient(90deg,#7a1130,#b51f3f);border-color:#ff6b8a;box-shadow:0 0 14px rgba(255,77,94,.6)}
+#coinCounter{font-size:2rem;font-weight:900;color:var(--gold);text-shadow:0 0 14px rgba(255,215,0,.65),0 2px 0 #6b4e00;line-height:1;letter-spacing:.02em;white-space:nowrap}
+#coinCounter .ico{filter:drop-shadow(0 0 6px rgba(255,215,0,.7))}
+.icon-btn{min-width:44px;min-height:44px;border:1px solid var(--glass-b);background:var(--glass);color:#fff;font-size:1.15rem;border-radius:12px;cursor:pointer;backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;transition:transform .12s,background .2s}
+.icon-btn:hover{background:rgba(255,255,255,.14)}
+.icon-btn:active{transform:scale(.92)}
+.icon-btn.off{opacity:.4}
+
+/* ---- rent bar ---- */
+#rentWrap{flex:0 0 auto;display:flex;flex-direction:column;gap:4px}
+#rentMeta{display:flex;justify-content:space-between;align-items:baseline;font-size:.74rem;color:#b9a9e6;font-weight:600}
+#rentMeta b{color:#fff}
+#rentBar{height:14px;border-radius:8px;background:rgba(0,0,0,.4);border:1px solid var(--glass-b);overflow:hidden;position:relative}
+#rentFill{height:100%;width:0%;border-radius:8px;background:linear-gradient(90deg,#ff7a18,#ff2d55,#c4002a);box-shadow:0 0 10px rgba(255,77,94,.5) inset;transition:width .35s cubic-bezier(.2,.8,.2,1)}
+#rentBar.pulse #rentFill{animation:pulseRent .7s ease-in-out infinite}
+#rentBar.pulse{animation:pulseBorder .7s ease-in-out infinite}
+@keyframes pulseRent{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}
+@keyframes pulseBorder{0%,100%{box-shadow:0 0 0 rgba(255,77,94,0)}50%{box-shadow:0 0 16px rgba(255,77,94,.8)}}
+#spinsDots{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:2px}
+.spin-dot{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.14);border:1px solid var(--glass-b)}
+.spin-dot.on{background:radial-gradient(circle,var(--cyan),#00617a);box-shadow:0 0 8px rgba(0,229,255,.8)}
+
+/* ---- board ---- */
+#boardWrap{flex:1 1 auto;display:flex;align-items:center;justify-content:center;min-height:0;position:relative}
+#board{border-radius:18px;background:rgba(0,0,0,.18);box-shadow:0 10px 40px rgba(0,0,0,.45),0 0 0 1px var(--glass-b) inset}
+
+/* ---- spin button ---- */
+#spinWrap{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px}
+#spinBtn{min-width:200px;min-height:58px;padding:0 46px;border:none;border-radius:40px;font-size:1.5rem;font-weight:900;letter-spacing:.12em;color:#3a2a00;cursor:pointer;
+  background:linear-gradient(180deg,#ffe14d,var(--gold) 55%,var(--gold-d));
+  box-shadow:0 6px 0 #8a6a00,0 10px 24px rgba(255,215,0,.45),0 0 24px rgba(255,215,0,.35) inset;
+  transition:transform .08s,box-shadow .08s,filter .2s;text-shadow:0 1px 0 rgba(255,255,255,.4)}
+#spinBtn:hover{filter:brightness(1.06)}
+#spinBtn:active{transform:translateY(4px);box-shadow:0 2px 0 #8a6a00,0 4px 12px rgba(255,215,0,.35)}
+#spinBtn:disabled{filter:grayscale(.5) brightness(.7);cursor:not-allowed;box-shadow:0 4px 0 #5a4700}
+#hintBar{min-height:20px;font-size:.8rem;color:#9ad6ff;text-align:center;font-weight:600;max-width:100%;padding:0 6px}
+#hintBar.warn{color:#ffb347}
+#hintBar.err{color:#ff7a8a}
+
+/* ---- overlays ---- */
+.overlay{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(6,3,18,.78);backdrop-filter:blur(6px)}
+.overlay.show{display:flex}
+.panel{width:100%;max-width:460px;max-height:92vh;overflow-y:auto;background:linear-gradient(180deg,rgba(38,26,78,.96),rgba(18,10,42,.96));border:1px solid var(--glass-b);border-radius:22px;padding:22px;box-shadow:0 18px 60px rgba(0,0,0,.6)}
+.panel h2{font-size:1.5rem;margin-bottom:6px;text-align:center}
+.panel p.sub{color:#b9a9e6;text-align:center;font-size:.86rem;margin-bottom:16px}
+.btn{min-height:48px;width:100%;border:none;border-radius:14px;font-size:1rem;font-weight:800;cursor:pointer;color:#fff;background:linear-gradient(180deg,#5b3fd1,#3a258f);box-shadow:0 4px 0 #241462,0 6px 16px rgba(0,0,0,.4);transition:transform .08s,filter .2s;padding:10px 16px;margin-top:10px}
+.btn:hover{filter:brightness(1.1)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #241462}
+.btn.gold{background:linear-gradient(180deg,#ffe14d,var(--gold) 55%,var(--gold-d));color:#3a2a00;box-shadow:0 4px 0 #8a6a00}
+.btn.ghost{background:rgba(255,255,255,.08);box-shadow:0 4px 0 rgba(0,0,0,.3)}
+.btn.small{min-height:42px;font-size:.86rem;width:auto;padding:8px 14px;margin-top:0}
+.btn:disabled{filter:grayscale(.5) brightness(.65);cursor:not-allowed}
+
+/* title */
+#titleScreen .panel{text-align:center}
+.gameTitle{font-size:2.7rem;font-weight:900;letter-spacing:.06em;line-height:1;margin-bottom:4px;
+  background:linear-gradient(180deg,#fff,#ffe14d 60%,var(--gold-d));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  text-shadow:0 0 26px rgba(255,215,0,.45)}
+.tagline{color:var(--cyan);font-weight:700;letter-spacing:.18em;font-size:.82rem;margin-bottom:18px;text-shadow:0 0 10px rgba(0,229,255,.5)}
+.titleArt{font-size:3.2rem;margin-bottom:6px;filter:drop-shadow(0 0 12px rgba(0,229,255,.4))}
+.menuStats{display:flex;justify-content:space-around;gap:8px;margin:10px 0 16px;font-size:.8rem;color:#cdbef5}
+.menuStats b{display:block;font-size:1.15rem;color:#fff}
+
+/* tutorial */
+.tut-step{font-size:1.05rem;line-height:1.5;margin:14px 0;text-align:center;color:#e7deff}
+.tut-emoji{font-size:3rem;display:block;margin-bottom:8px}
+.tut-dots{display:flex;gap:8px;justify-content:center;margin:10px 0}
+.tut-dots span{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.25)}
+.tut-dots span.on{background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+
+/* shop */
+#shopScreen .panel{max-width:560px}
+.shop-coins{font-size:1.3rem;font-weight:900;color:var(--gold);text-align:center;margin-bottom:10px;text-shadow:0 0 10px rgba(255,215,0,.5)}
+.offers{display:flex;gap:8px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+.offer{flex:1 1 0;min-width:96px;min-height:44px;background:var(--glass);border:1px solid var(--glass-b);border-radius:14px;padding:10px 6px;text-align:center;cursor:pointer;backdrop-filter:blur(8px);transition:transform .1s,box-shadow .2s;position:relative}
+.offer:hover{transform:translateY(-3px)}
+.offer .em{font-size:2rem;display:block;line-height:1}
+.offer .nm{font-size:.74rem;font-weight:700;margin-top:2px}
+.offer . rarity{display:block}
+.offer .cost{font-size:.78rem;font-weight:900;color:var(--gold);margin-top:4px}
+.offer .rarity{font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+.offer.r-common{border-color:#9aa0b4}.offer.r-uncommon{border-color:#5dff8f;box-shadow:0 0 10px rgba(93,255,143,.25)}
+.offer.r-rare{border-color:#4da6ff;box-shadow:0 0 12px rgba(77,166,255,.3)}.offer.r-veryrare{border-color:#b06bff;box-shadow:0 0 14px rgba(176,107,255,.35)}
+.offer.r-ultrarare{border-color:var(--gold);box-shadow:0 0 16px rgba(255,215,0,.45)}
+.offer.spyglass::after{content:'🔭';position:absolute;top:-6px;right:-4px;font-size:1rem;filter:drop-shadow(0 0 4px var(--cyan))}
+.shop-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.shop-actions .btn{margin-top:0}
+.shop-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.shop-hint{font-size:.82rem;color:#9ad6ff;text-align:center;min-height:20px;font-weight:600;margin-bottom:6px}
+
+/* reward */
+.reward-cards{display:flex;gap:8px;margin:14px 0}
+.reward-card{flex:1;background:var(--glass);border:1px solid var(--glass-b);border-radius:14px;padding:12px 8px;text-align:center;cursor:pointer;transition:transform .1s}
+.reward-card:hover{transform:translateY(-3px)}
+.reward-card .em{font-size:2.2rem}
+.reward-card .nm{font-weight:800;margin-top:2px}
+.reward-card .ds{font-size:.72rem;color:#cdbef5;margin-top:4px;line-height:1.3}
+
+/* end screens */
+.endArt{font-size:4rem;text-align:center;margin-bottom:6px}
+.endStats{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.endStats .row{display:flex;justify-content:space-between;background:rgba(255,255,255,.05);padding:8px 12px;border-radius:10px;font-size:.92rem}
+.endStats .row b{color:var(--gold)}
+
+/* pause */
+.pause-row{display:flex;gap:8px;flex-direction:column}
+
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(20px);background:rgba(20,12,44,.96);border:1px solid var(--glass-b);color:#fff;padding:10px 18px;border-radius:14px;font-size:.86rem;font-weight:700;z-index:80;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* mobile */
+@media (max-width:480px){
+  #app{padding:6px 8px;gap:5px}
+  #coinCounter{font-size:1.7rem}
+  .gameTitle{font-size:2.2rem}
+  .panel{padding:18px}
+  #spinBtn{font-size:1.3rem;min-height:54px;padding:0 36px}
+  .offers{gap:6px}
+  .offer{min-width:84px;padding:8px 4px}
+}
+@media (max-height:680px){
+  #coinCounter{font-size:1.5rem}
+  #spinBtn{min-height:50px;font-size:1.2rem}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="hud">
+    <div class="hud-left">
+      <button id="pauseBtn" class="icon-btn" title="Pause / Menu" aria-label="Pause">⏸</button>
+      <span id="floorLabel">Floor 1</span>
+    </div>
+    <div class="hud-center">
+      <div id="coinCounter"><span class="ico">🪙</span> <span id="coinNum">0</span></div>
+    </div>
+    <div class="hud-right">
+      <button id="musicBtn" class="icon-btn off" title="Music" aria-label="Music">🎵</button>
+      <button id="muteBtn" class="icon-btn" title="Sound" aria-label="Sound">🔊</button>
+    </div>
+  </header>
+
+  <div id="rentWrap">
+    <div id="rentMeta"><span>Rent <b id="rentNum">6</b></span><span>Earned <b id="earnedNum">0</b></span></div>
+    <div id="rentBar"><div id="rentFill"></div></div>
+    <div id="spinsDots"></div>
+  </div>
+
+  <div id="boardWrap"><canvas id="board" aria-label="Spin Rogue board"></canvas></div>
+
+  <div id="spinWrap">
+    <button id="spinBtn" aria-label="Spin">SPIN</button>
+    <div id="hintBar">Tap SPIN to roll your symbols.</div>
+  </div>
+</div>
+
+<!-- TITLE -->
+<div id="titleScreen" class="overlay show">
+  <div class="panel">
+    <div class="titleArt">🎰🪙🐉</div>
+    <h1 class="gameTitle">SPIN ROGUE</h1>
+    <div class="tagline">SLOT MACHINE ROGUELIKE</div>
+    <p class="sub">Build synergies. Beat the rent. Climb 15 floors and dethrone the Landlord.</p>
+    <div class="menuStats">
+      <div>Best Floor<b id="msBest">0</b></div>
+      <div>Wins<b id="msWins">0</b></div>
+      <div>Runs<b id="msRuns">0</b></div>
+    </div>
+    <button class="btn gold" id="btnNewRun">NEW RUN</button>
+    <button class="btn ghost" id="btnContinue" style="display:none">CONTINUE RUN — F<span id="contFloor">1</span></button>
+    <button class="btn" id="btnDaily">DAILY CHALLENGE</button>
+    <button class="btn ghost" id="btnHowTo">HOW TO PLAY</button>
+  </div>
+</div>
+
+<!-- TUTORIAL -->
+<div id="tutorialScreen" class="overlay">
+  <div class="panel">
+    <div id="tutEmoji" class="tut-emoji">🎰</div>
+    <div id="tutText" class="tut-step"></div>
+    <div class="tut-dots"><span></span><span></span><span></span></div>
+    <button class="btn gold" id="tutNext">NEXT</button>
+    <button class="btn ghost small" id="tutSkip" style="width:100%">SKIP TUTORIAL</button>
+  </div>
+</div>
+
+<!-- SHOP -->
+<div id="shopScreen" class="overlay">
+  <div class="panel">
+    <h2 id="shopTitle">SHOP</h2>
+    <div class="shop-coins">🪙 <span id="shopCoins">0</span> coins</div>
+    <div class="shop-hint" id="shopHint">Buy symbols to grow your board.</div>
+    <div class="offers" id="offers"></div>
+    <div class="shop-actions">
+      <button class="btn ghost" id="btnRemove">REMOVE (3)</button>
+      <button class="btn ghost" id="btnReroll">REROLL (<span id="rerollCost">1</span>)</button>
+    </div>
+    <div class="shop-row2">
+      <button class="btn ghost" id="btnLock">LOCK (free)</button>
+      <button class="btn gold" id="btnContinueShop">CONTINUE ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- REWARD -->
+<div id="rewardScreen" class="overlay">
+  <div class="panel">
+    <h2>CHOOSE A REWARD</h2>
+    <p class="sub">Pick one passive item to empower your run.</p>
+    <div class="reward-cards" id="rewardCards"></div>
+  </div>
+</div>
+
+<!-- PAUSE -->
+<div id="pauseScreen" class="overlay">
+  <div class="panel">
+    <h2>PAUSED</h2>
+    <div class="pause-row">
+      <button class="btn gold" id="btnResume">RESUME</button>
+      <button class="btn ghost" id="btnRestart">RESTART RUN</button>
+      <button class="btn ghost" id="btnQuitMenu">QUIT TO MENU</button>
+    </div>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div id="overScreen" class="overlay">
+  <div class="panel">
+    <div class="endArt">💀</div>
+    <h2 style="color:#ff6b8a">EVICTED!</h2>
+    <p class="sub">You couldn't make the rent.</p>
+    <div class="endStats" id="overStats"></div>
+    <button class="btn gold" id="btnOverMenu">BACK TO MENU</button>
+  </div>
+</div>
+
+<!-- VICTORY -->
+<div id="winScreen" class="overlay">
+  <div class="panel">
+    <div class="endArt">🏆</div>
+    <h2 style="color:var(--gold)">VICTORY!</h2>
+    <p class="sub">You defeated the Landlord and cleared all 15 floors!</p>
+    <div class="endStats" id="winStats"></div>
+    <button class="btn gold" id="btnWinMenu">BACK TO MENU</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div id="gz-ad-below-game"></div>
+<script src="/monetag-manager.js"></script>
+<script src="/game-footer.js"></script>
+
+<script>
+"use strict";
+/* ============================================================
+   SPIN ROGUE — single-file slot-machine roguelike
+   ============================================================ */
+(function(){
+/* ---------- DOM ---------- */
+const $=id=>document.getElementById(id);
+const app=$('app'),canvas=$('board'),ctx=canvas.getContext('2d');
+const coinNum=$('coinNum'),rentNum=$('rentNum'),earnedNum=$('earnedNum');
+const rentFill=$('rentFill'),rentBar=$('rentBar'),spinsDots=$('spinsDots');
+const floorLabel=$('floorLabel'),spinBtn=$('spinBtn'),hintBar=$('hintBar');
+const overlays={
+  title:$('titleScreen'),tutorial:$('tutorialScreen'),shop:$('shopScreen'),
+  reward:$('rewardScreen'),pause:$('pauseScreen'),over:$('overScreen'),win:$('winScreen')
+};
+
+/* ---------- Constants / Symbol table ---------- */
+const RARITY_RANK={common:0,uncommon:1,rare:2,veryrare:3,ultrarare:4};
+const RARITY_NAME={common:'Common',uncommon:'Uncommon',rare:'Rare',veryrare:'Very Rare',ultrarare:'Ultra Rare'};
+const RARITY_WEIGHT={common:50,uncommon:28,rare:14,veryrare:6,ultrarare:2};
+const SYMBOL_COST={common:3,uncommon:6,rare:10,veryrare:16,ultrarare:25};
+const RARITY_COLOR={common:'#9aa0b4',uncommon:'#5dff8f',rare:'#4da6ff',veryrare:'#b06bff',ultrarare:'#FFD700'};
+
+// 27 symbols. desc = short rule text (deterministic payout engine below).
+const SYMBOLS={
+ coin:    {name:'Coin',     emoji:'🪙', rarity:'common',    desc:'+1 coin.'},
+ flower:  {name:'Flower',   emoji:'🌸', rarity:'common',    desc:'+1 for each adjacent Bee.'},
+ ore:     {name:'Ore',      emoji:'⛏️', rarity:'common',    desc:'+1, and +1 if any Diver on board.'},
+ apple:   {name:'Apple',    emoji:'🍎', rarity:'common',    desc:'+1, and +1 if adjacent to Fruit.'},
+ cherry:  {name:'Cherry',   emoji:'🍒', rarity:'common',    desc:'+1, and +1 if adjacent to Apple.'},
+ peach:   {name:'Peach',    emoji:'🍑', rarity:'common',    desc:'+1, and +2 if adjacent to Cherry & Apple.'},
+ bee:     {name:'Bee',      emoji:'🐝', rarity:'uncommon',  desc:'+1 for each adjacent Flower.'},
+ butterfly:{name:'Butterfly',emoji:'🦋', rarity:'uncommon',  desc:'+1 per adjacent Flower, +1 per adjacent Fruit.'},
+ mushroom:{name:'Mushroom', emoji:'🍄', rarity:'uncommon',  desc:'+1, and +1 per adjacent Mushroom.'},
+ miner:   {name:'Miner',    emoji:'⚒️', rarity:'uncommon',  desc:'+1 for each Ore on the board.'},
+ diver:   {name:'Diver',    emoji:'🤿', rarity:'uncommon',  desc:'+2 for each Ore on the board.'},
+ farmer:  {name:'Farmer',   emoji:'🧑‍🌾',rarity:'uncommon',  desc:'+1 for each Fruit on the board.'},
+ hex:     {name:'Hex',      emoji:'🟪', rarity:'rare',      desc:'-1 to each adjacent symbol (min 0).'},
+ curse:   {name:'Curse',    emoji:'💀', rarity:'rare',      desc:'Adjacent symbols pay 0 this spin.'},
+ knight:  {name:'Knight',   emoji:'⚔️', rarity:'rare',      desc:'+2, and +2 if adjacent to Hex/Curse.'},
+ wizard:  {name:'Wizard',   emoji:'🧙', rarity:'rare',      desc:'+1, and +1 per Rare+ on board.'},
+ dragon:  {name:'Dragon',   emoji:'🐉', rarity:'rare',      desc:'+3, and -1 to each adjacent payout.'},
+ crown:   {name:'Crown',    emoji:'👑', rarity:'rare',      desc:'+2, doubled (x2) on the center cell.'},
+ diamond: {name:'Diamond',  emoji:'💎', rarity:'veryrare',  desc:'+3, and +1 per VeryRare+ on board.'},
+ phoenix: {name:'Phoenix',  emoji:'🔥', rarity:'veryrare',  desc:'+4, and +2 per Diamond on board.'},
+ unicorn: {name:'Unicorn',  emoji:'🦄', rarity:'veryrare',  desc:'+3, and +3 if adjacent to Crown.'},
+ rainbow: {name:'Rainbow',  emoji:'🌈', rarity:'veryrare',  desc:'+2 per different rarity type on board.'},
+ wildcard:{name:'Wildcard', emoji:'❓', rarity:'veryrare',  desc:'Copies the highest-paying neighbor.'},
+ treasure:{name:'Treasure', emoji:'💰', rarity:'ultrarare', desc:'+5 coins.'},
+ genie:   {name:'Genie',    emoji:'🧞', rarity:'ultrarare', desc:'+1 for every symbol on the board.'},
+ galaxy:  {name:'Galaxy',   emoji:'🌌', rarity:'ultrarare', desc:'+3, and +1 per UltraRare on board.'},
+ star:    {name:'Star',     emoji:'⭐', rarity:'ultrarare', desc:'+4, and +4 if no Hex/Curse on board.'}
+};
+const SYM_IDS=Object.keys(SYMBOLS);
+const RARITY_BUCKETS={};
+SYM_IDS.forEach(id=>{(RARITY_BUCKETS[SYMBOLS[id].rarity]=RARITY_BUCKETS[SYMBOLS[id].rarity]||[]).push(id);});
+
+const ITEMS={
+ lucky:    {name:'Lucky Charm', emoji:'🍀', desc:'Common symbols pay +1 more.'},
+ magnet:   {name:'Magnet',      emoji:'🧲', desc:'First shop reroll each visit is free.'},
+ insurance:{name:'Rent Insurance',emoji:'📜',desc:'Rent is reduced by 10%.'},
+ golden:   {name:'Golden Touch', emoji:'✨', desc:'All coin payouts +20%.'},
+ beekeeper:{name:'Beekeeper',    emoji:'🐝', desc:'Bees also count every Flower on the board.'},
+ spyglass: {name:'Spyglass',     emoji:'🔭', desc:'The first shop symbol is always Rare+.'},
+ spare:    {name:'Spare Reel',   emoji:'🎰', desc:'+1 spin on every floor.'},
+ hexward:  {name:'Hex Ward',     emoji:'🛡', desc:'Hex & Curse effects are halved.'}
+};
+
+const TOTAL_FLOORS=15;
+const BOSS_FLOOR=15;
+function rentFor(floor){return Math.round(5*Math.pow(1.18,floor));}
+
+/* ---------- Utils ---------- */
+function clamp(v,a,b){return v<a?a:v>b?b:v;}
+function hashStr(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return h>>>0;}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function easeOutCubic(t){return 1-Math.pow(1-t,3);}
+
+/* ---------- Audio (procedural Web Audio) ---------- */
+const Audio={
+  ctx:null,master:null,musicGain:null,muted:false,musicOn:false,musicTimer:null,
+  init(){
+    if(this.ctx)return;
+    try{
+      const AC=window.AudioContext||window.webkitAudioContext;
+      this.ctx=new AC();
+      this.master=this.ctx.createGain();this.master.gain.value=0.5;this.master.connect(this.ctx.destination);
+      this.musicGain=this.ctx.createGain();this.musicGain.gain.value=0;this.musicGain.connect(this.master);
+    }catch(e){this.ctx=null;}
+  },
+  resume(){if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume();},
+  tone(freq,dur,type,vol,dest,slideTo){
+    if(!this.ctx||this.muted)return;
+    const t=this.ctx.currentTime,o=this.ctx.createOscillator(),g=this.ctx.createGain();
+    o.type=type||'sine';o.frequency.setValueAtTime(freq,t);
+    if(slideTo)o.frequency.exponentialRampToValueAtTime(slideTo,t+dur);
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol||0.2,t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g);g.connect(dest||this.master);o.start(t);o.stop(t+dur+0.02);
+  },
+  noise(dur,vol,filt){
+    if(!this.ctx||this.muted)return;
+    const t=this.ctx.currentTime,len=Math.floor(this.ctx.sampleRate*dur);
+    const buf=this.ctx.createBuffer(1,len,this.ctx.sampleRate),d=buf.getChannelData(0);
+    for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);
+    const src=this.ctx.createBufferSource();src.buffer=buf;
+    const g=this.ctx.createGain();g.gain.value=vol||0.15;
+    const f=this.ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=filt||1200;f.Q.value=0.8;
+    src.connect(f);f.connect(g);g.connect(this.master);src.start(t);src.stop(t+dur);
+  },
+  playSpin(){this.noise(0.5,0.12,900);this.tone(220,0.5,'sawtooth',0.05,null,520);},
+  playCoin(p){this.tone(660+p*40,0.16,'triangle',0.18);this.tone(990+p*40,0.12,'sine',0.10);},
+  playSynergy(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>this.tone(f,0.3,'triangle',0.16),i*60));},
+  playRent(){this.tone(180,0.18,'square',0.18,null,120);this.tone(140,0.25,'square',0.14,null,90);},
+  playShop(){this.tone(520,0.07,'square',0.12);this.tone(700,0.07,'square',0.10);},
+  playWin(){[523,659,784,1046,1318].forEach((f,i)=>setTimeout(()=>this.tone(f,0.5,'triangle',0.2),i*110));},
+  playLose(){[400,330,260,180].forEach((f,i)=>setTimeout(()=>this.tone(f,0.4,'sawtooth',0.18),i*120));},
+  playHover(){this.tone(880,0.04,'sine',0.06);},
+  toggleMute(){this.muted=!this.muted;if(this.master)this.master.gain.value=this.muted?0:0.5;return this.muted;},
+  startMusic(){
+    if(!this.ctx||this.musicOn)return;this.musicOn=true;
+    this.musicGain.gain.setTargetAtTime(this.muted?0:0.08,this.ctx.currentTime,1.5);
+    const chord=[130.81,164.81,196.00,246.94];let step=0;
+    const pad=(freqs,dur)=>{freqs.forEach(fr=>this.tone(fr,dur,'sine',0.05,this.musicGain));};
+    const loop=()=>{
+      if(!this.musicOn)return;
+      const prog=[[0,2],[1,3],[2,3],[1,2]];
+      const set=prog[step%prog.length].map(i=>chord[i]);
+      pad(set,2.0);
+      step++;this.musicTimer=setTimeout(loop,2000);
+    };loop();
+  },
+  stopMusic(){this.musicOn=false;if(this.musicTimer){clearTimeout(this.musicTimer);this.musicTimer=null;}if(this.musicGain)this.musicGain.gain.setTargetAtTime(0,this.ctx.currentTime,0.5);}
+};
+
+/* ---------- Save / Load ---------- */
+const SAVE_KEY='spin-rogue-save-v1';
+function defaultMeta(){return{version:1,bestFloor:0,totalWins:0,runsPlayed:0,dailyDay:'',dailyBestFloor:0,hasSeenTutorial:false};}
+function loadSave(){
+  try{const raw=localStorage.getItem(SAVE_KEY);if(raw){const o=JSON.parse(raw);if(o&&o.version===1)return o;}}catch(e){}
+  return{version:1,run:null,dailyRun:null,meta:defaultMeta(),settings:{mute:false,music:false}};
+}
+function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(state.save));}catch(e){}}
+
+/* ---------- Game state ---------- */
+const state={
+  save:loadSave(),
+  mode:'normal',          // 'normal' | 'daily'
+  rng:Math.random,
+  run:null,
+  phase:'title',          // title|playing|shop|reward|over|win|paused
+  interactMode:'idle',    // idle|place|remove|lock
+  pending:null,           // pending purchase {id,cost}
+  rerollUses:0,
+  offers:[],
+  // animation
+  spinning:false,spinStart:0,spinDur:820,assigned:false,
+  cellTick:0,dispCoins:0,evalResult:null,popups:[],particles:[],shake:0,
+  boardSize:360,dpr:1,lastT:0,
+  tutorialStep:0
+};
+
+/* ---------- Board / run helpers ---------- */
+function newBoard(){
+  // 3 Coins + 1 Flower placed in a plus pattern, 5 empty
+  const b=new Array(9).fill(null).map(()=>({id:null,locked:false}));
+  b[1]={id:'coin',locked:false};
+  b[3]={id:'flower',locked:false};
+  b[5]={id:'coin',locked:false};
+  b[7]={id:'coin',locked:false};
+  return b;
+}
+function startRun(mode){
+  state.mode=mode;
+  state.rng = mode==='daily' ? mulberry32(hashStr(todayStr())) : Math.random;
+  const r={
+    mode, currentFloor:1, coins:0, coinsEarnedThisFloor:0,
+    spinsLeft:(1===BOSS_FLOOR?1:3), rent:rentFor(1),
+    board:newBoard(), inventory:[], rerollUses:0, phase:'playing'
+  };
+  r.spinsLeft=spinsFor(1,r.inventory);
+  state.run=r;
+  if(mode==='daily'){state.save.dailyRun=r;state.save.meta.dailyDay=todayStr();}else{state.save.run=r;}
+  state.rerollUses=0;state.offers=[];state.pending=null;state.interactMode='idle';
+  state.dispCoins=0;state.popups=[];state.particles=[];state.evalResult=null;
+  state.save.meta.runsPlayed++;
+  enterFloor();
+  persist();
+}
+function spinsFor(floor,inv){
+  let s = floor===BOSS_FLOOR?1:3;
+  if(inv.indexOf('spare')>=0)s++;
+  return s;
+}
+function rentForRun(floor,inv){
+  let r=rentFor(floor);
+  if(inv.indexOf('insurance')>=0)r=Math.round(r*0.9);
+  return r;
+}
+function enterFloor(){
+  const r=state.run;
+  r.coinsEarnedThisFloor=0;
+  r.rent=rentForRun(r.currentFloor,r.inventory);
+  r.spinsLeft=spinsFor(r.currentFloor,r.inventory);
+  r.rerollUses=0;
+  state.phase='playing';state.interactMode='idle';
+  state.evalResult=null;
+  hideAllOverlays();
+  updateHUD();
+  setHint(r.currentFloor===BOSS_FLOOR?'LANDLORD! 1 spin — earn '+r.rent+' or be evicted.':'Tap SPIN to roll your symbols.');
+  if(r.currentFloor===BOSS_FLOOR||r.spinsLeft===1){Audio.playRent();}
+}
+
+/* ---------- Evaluation engine (deterministic) ---------- */
+function neighbors(i){const row=Math.floor(i/3),col=i%3,out=[];if(row>0)out.push(i-3);if(row<2)out.push(i+3);if(col>0)out.push(i-1);if(col<2)out.push(i+1);return out;}
+function isFruit(id){return id==='apple'||id==='cherry'||id==='peach';}
+
+function evaluateBoard(board,inventory){
+  const cells=board.map(c=>c?c.id:null);
+  const inv=inventory||[];
+  const has=(k)=>inv.indexOf(k)>=0;
+  const countId=id=>{let n=0;for(let i=0;i<9;i++)if(cells[i]===id)n++;return n;};
+  const countFn=fn=>{let n=0;for(let i=0;i<9;i++)if(cells[i]!==null&&fn(cells[i]))n++;return n;};
+  const anyAdj=(i,pred)=>neighbors(i).some(j=>cells[j]!==null&&pred(cells[j]));
+  const cntAdj=(i,pred)=>neighbors(i).filter(j=>cells[j]!==null&&pred(cells[j])).length;
+  const rank=id=>RARITY_RANK[SYMBOLS[id].rarity];
+
+  const val=new Array(9).fill(0);
+  for(let i=0;i<9;i++){
+    const id=cells[i];if(!id){val[i]=0;continue;}
+    switch(id){
+      case 'coin':val[i]=1;break;
+      case 'flower':val[i]=cntAdj(i,x=>x==='bee');break;
+      case 'ore':val[i]=1+(countId('diver')>0?1:0);break;
+      case 'apple':val[i]=1+(anyAdj(i,x=>isFruit(x))?1:0);break;
+      case 'cherry':val[i]=1+(anyAdj(i,x=>x==='apple')?1:0);break;
+      case 'peach':val[i]=1+((anyAdj(i,x=>x==='cherry')&&anyAdj(i,x=>x==='apple'))?2:0);break;
+      case 'bee':val[i]=cntAdj(i,x=>x==='flower')+(has('beekeeper')?countId('flower'):0);break;
+      case 'butterfly':val[i]=cntAdj(i,x=>x==='flower')+cntAdj(i,x=>isFruit(x));break;
+      case 'mushroom':val[i]=1+cntAdj(i,x=>x==='mushroom');break;
+      case 'miner':val[i]=countId('ore');break;
+      case 'diver':val[i]=2*countId('ore');break;
+      case 'farmer':val[i]=countFn(x=>isFruit(x));break;
+      case 'hex':val[i]=0;break;
+      case 'curse':val[i]=0;break;
+      case 'knight':val[i]=2+(anyAdj(i,x=>x==='hex'||x==='curse')?2:0);break;
+      case 'wizard':val[i]=1+countFn(x=>rank(x)>=2);break;
+      case 'dragon':val[i]=3;break;
+      case 'crown':val[i]=2*(i===4?2:1);break;
+      case 'diamond':val[i]=3+countFn(x=>rank(x)>=3);break;
+      case 'phoenix':val[i]=4+2*countId('diamond');break;
+      case 'unicorn':val[i]=3+(anyAdj(i,x=>x==='crown')?3:0);break;
+      case 'rainbow':{const set=new Set();for(let k=0;k<9;k++)if(cells[k])set.add(rank(cells[k]));val[i]=2*set.size;break;}
+      case 'treasure':val[i]=5;break;
+      case 'genie':val[i]=countFn(x=>x!==null);break;
+      case 'galaxy':val[i]=3+countFn(x=>rank(x)===4);break;
+      case 'star':val[i]=4+((countId('hex')===0&&countId('curse')===0)?4:0);break;
+      case 'wildcard':val[i]=0;break;
+      default:val[i]=0;
+    }
+  }
+  // Lucky Charm: +1 to each Common
+  if(has('lucky')){for(let i=0;i<9;i++)if(cells[i]&&rank(cells[i])===0)val[i]+=1;}
+
+  // Modifier accumulators
+  const add=new Array(9).fill(0);
+  const forceZero=new Array(9).fill(false);
+  const curseHalf=new Array(9).fill(false);
+  const hw=has('hexward');
+  for(let i=0;i<9;i++){
+    const id=cells[i];if(!id)continue;
+    if(id==='hex'){neighbors(i).forEach(j=>{add[j]-=hw?0.5:1;});}
+    else if(id==='dragon'){neighbors(i).forEach(j=>{add[j]-=hw?0.5:1;});}
+    else if(id==='curse'){neighbors(i).forEach(j=>{if(hw)curseHalf[j]=true;else forceZero[j]=true;});}
+  }
+
+  const final=new Array(9).fill(0);
+  const isWild=new Array(9).fill(false);
+  for(let i=0;i<9;i++){isWild[i]=cells[i]==='wildcard';}
+  // Resolve non-wildcard finals
+  for(let i=0;i<9;i++){
+    if(isWild[i])continue;
+    let v=val[i]+add[i];v=Math.max(0,v);
+    if(forceZero[i])v=0;
+    else if(curseHalf[i])v=v*0.5;
+    final[i]=v;
+  }
+  // Resolve wildcard (2 passes to let a wildcard copy a wildcard neighbor)
+  for(let pass=0;pass<2;pass++){
+    for(let i=0;i<9;i++){
+      if(!isWild[i])continue;
+      let best=0;
+      neighbors(i).forEach(j=>{if(cells[j]&&final[j]>best)best=final[j];});
+      let w=best+add[i];w=Math.max(0,w);
+      if(forceZero[i])w=0;else if(curseHalf[i])w=w*0.5;
+      final[i]=w;
+    }
+  }
+
+  // Build result
+  let total=0;const per=[];
+  for(let i=0;i<9;i++){
+    const v=final[i];
+    per.push({idx:i,id:cells[i],value:v,
+      kind:cells[i]==='hex'||cells[i]==='curse'||cells[i]==='dragon'?'mod':(v>0?'gain':'none')});
+    total+=v;
+  }
+  if(has('golden'))total=total*1.2;
+  return{per,total:Math.floor(total)};
+}
+
+/* ---------- Spin ---------- */
+function doSpin(){
+  const r=state.run;
+  if(state.phase!=='playing'||state.spinning||r.spinsLeft<=0)return;
+  const filled=[];
+  for(let i=0;i<9;i++)if(r.board[i].id)filled.push(i);
+  if(filled.length===0){toast('Add symbols in the shop first!');return;}
+  // pool = multiset of placed symbol ids (locked included)
+  const pool=[];r.board.forEach(c=>{if(c&&c.id)pool.push(c.id);});
+  state.pendingFinal={};
+  for(const i of filled){if(r.board[i].locked)continue;state.pendingFinal[i]=pool[Math.floor(state.rng()*pool.length)];}
+  state.spinning=true;state.assigned=false;state.spinStart=performance.now();
+  spinBtn.disabled=true;
+  setHint('Spinning…');
+  Audio.playSpin();
+}
+function finalizeSpin(){
+  const r=state.run;
+  state.spinning=false;
+  const res=evaluateBoard(r.board,r.inventory);
+  state.evalResult=res;
+  r.coinsEarnedThisFloor+=res.total;
+  r.coins+=res.total;
+  r.spinsLeft--;
+  // payouts popup + sounds
+  let coinSounds=0;
+  res.per.forEach(p=>{if(p.value>0){addPopup(p.idx,p.value);if(coinSounds<6){Audio.playCoin(coinSounds);coinSounds++;}}});
+  if(res.total>=10)Audio.playSynergy();
+  if(res.total>=10)spawnParticles(20);
+  if(res.total>=15)state.shake=200;
+  updateHUD();
+  persist();
+  // resolve floor outcome
+  if(r.spinsLeft<=0){
+    setTimeout(()=>resolveFloor(),650);
+  }else{
+    spinBtn.disabled=false;
+    if(r.spinsLeft===1&&r.currentFloor!==BOSS_FLOOR){Audio.playRent();setHint('Last spin! Earn '+(r.rent-r.coinsEarnedThisFloor)+' more to pay rent.');}
+    else setHint('Earned '+res.total+'! '+r.spinsLeft+' spin'+(r.spinsLeft>1?'s':'')+' left.');
+  }
+}
+function resolveFloor(){
+  const r=state.run;
+  if(r.coinsEarnedThisFloor>=r.rent){
+    // cleared
+    if(r.currentFloor>=BOSS_FLOOR){winRun();return;}
+    if(r.currentFloor>state.save.meta.bestFloor)state.save.meta.bestFloor=r.currentFloor;
+    persist();
+    openShop();
+  }else{
+    loseRun();
+  }
+}
+function winRun(){
+  const r=state.run;
+  if(BOSS_FLOOR>state.save.meta.bestFloor)state.save.meta.bestFloor=BOSS_FLOOR;
+  state.save.meta.totalWins++;
+  if(r.mode==='daily'){state.save.meta.dailyBestFloor=Math.max(state.save.meta.dailyBestFloor||0,BOSS_FLOOR);}
+  persist();
+  state.phase='win';Audio.playWin();
+  $('winStats').innerHTML=
+    '<div class="row"><span>Floors Cleared</span><b>'+BOSS_FLOOR+'/'+BOSS_FLOOR+'</b></div>'+
+    '<div class="row"><span>Final Coins</span><b>'+r.coins+'</b></div>'+
+    '<div class="row"><span>Total Wins</span><b>'+state.save.meta.totalWins+'</b></div>'+
+    '<div class="row"><span>Best Floor Ever</span><b>'+state.save.meta.bestFloor+'</b></div>';
+  clearActiveRun();
+  show('win');
+}
+function loseRun(){
+  const r=state.run;
+  if(r.currentFloor>state.save.meta.bestFloor)state.save.meta.bestFloor=r.currentFloor;
+  if(r.mode==='daily')state.save.meta.dailyBestFloor=Math.max(state.save.meta.dailyBestBestFloor||0,r.currentFloor);
+  persist();
+  state.phase='over';Audio.playLose();
+  $('overStats').innerHTML=
+    '<div class="row"><span>You Reached</span><b>Floor '+r.currentFloor+'</b></div>'+
+    '<div class="row"><span>Rent Needed</span><b>'+r.rent+'</b></div>'+
+    '<div class="row"><span>You Earned</span><b>'+r.coinsEarnedThisFloor+'</b></div>'+
+    '<div class="row"><span>Best Floor Ever</span><b>'+state.save.meta.bestFloor+'</b></div>';
+  clearActiveRun();
+  show('over');
+}
+function clearActiveRun(){
+  if(state.run&&state.run.mode==='daily'){state.save.dailyRun=null;}
+  else{state.save.run=null;}
+  state.run=null;persist();
+}
+
+/* ---------- Shop ---------- */
+function rollOffer(forceRare){
+  const rarities=['common','uncommon','rare','veryrare','ultrarare'];
+  let pick;
+  if(forceRare){pick=rarities[Math.floor(state.rng()*3)+2];} // rare/veryrare/ultrarare
+  else{
+    let total=0;rarities.forEach(r=>total+=RARITY_WEIGHT[r]);
+    let roll=state.rng()*total;
+    for(const r of rarities){roll-=RARITY_WEIGHT[r];if(roll<=0){pick=r;break;}}
+    if(!pick)pick='common';
+  }
+  const bucket=RARITY_BUCKETS[pick];
+  const id=bucket[Math.floor(state.rng()*bucket.length)];
+  return{id,cost:SYMBOL_COST[pick],rarity:pick};
+}
+function rollOffers(){
+  const hasSpy=state.run.inventory.indexOf('spyglass')>=0;
+  state.offers=[rollOffer(hasSpy),rollOffer(false),rollOffer(false)];
+  // guarantee distinct when possible
+  if(state.offers[1].id===state.offers[0].id&&RARITY_BUCKETS[state.offers[1].rarity].length>1){
+    let alt=rollOffer(false);let guard=0;while(alt.id===state.offers[0].id&&guard++<5)alt=rollOffer(false);state.offers[1]=alt;
+  }
+}
+function openShop(){
+  const r=state.run;
+  state.phase='shop';state.interactMode='idle';state.pending=null;
+  rollOffers();
+  $('shopTitle').textContent='SHOP — Floor '+r.currentFloor+' Cleared!';
+  setShopHint('Buy a symbol, then tap a board slot to place or replace it.');
+  renderShop();updateHUD();
+  show('shop');
+}
+function rerollCost(){
+  const base=1+state.rerollUses;
+  const hasMag=state.run.inventory.indexOf('magnet')>=0;
+  return Math.max(0,base-(hasMag?1:0));
+}
+function renderShop(){
+  const r=state.run;
+  $('shopCoins').textContent=Math.floor(state.dispCoins);
+  $('rerollCost').textContent=rerollCost();
+  const wrap=$('offers');wrap.innerHTML='';
+  state.offers.forEach((of,idx)=>{
+    const el=document.createElement('div');
+    el.className='offer r-'+of.rarity+(state.run.inventory.indexOf('spyglass')>=0&&idx===0?' spyglass':'');
+    el.innerHTML='<span class="em">'+SYMBOLS[of.id].emoji+'</span>'+
+      '<span class="nm">'+SYMBOLS[of.id].name+'</span>'+
+      '<span class="rarity" style="color:'+RARITY_COLOR[of.rarity]+'">'+RARITY_NAME[of.rarity]+'</span>'+
+      '<span class="cost">🪙 '+of.cost+'</span>';
+    el.addEventListener('pointerdown',e=>{e.preventDefault();buyOffer(idx);});
+    wrap.appendChild(el);
+  });
+  $('btnReroll').disabled = r.coins<rerollCost();
+  $('btnRemove').disabled = r.coins<3 || !r.board.some(c=>c.id);
+}
+function setShopHint(t){$('shopHint').textContent=t;}
+function buyOffer(idx){
+  const r=state.run;const of=state.offers[idx];
+  if(state.interactMode==='place'){state.interactMode='idle';setShopHint('Buy a symbol, then tap a board slot to place or replace it.');return;}
+  if(r.coins<of.cost){toast('Not enough coins.');return;}
+  state.interactMode='place';state.pending={id:of.id,cost:of.cost,idx};
+  setShopHint('Tap an EMPTY slot to place '+SYMBOLS[of.id].name+', or any symbol to REPLACE it.');
+  Audio.playShop();
+}
+function doReroll(){
+  const r=state.run;const c=rerollCost();
+  if(r.coins<c){toast('Not enough coins to reroll.');return;}
+  r.coins-=c;state.rerollUses++;rollOffers();renderShop();updateHUD();Audio.playShop();persist();
+}
+function enterRemove(){
+  if(state.run.coins<3){toast('Need 3 coins to remove.');return;}
+  if(!state.run.board.some(c=>c.id)){toast('No symbols to remove.');return;}
+  state.interactMode=state.interactMode==='remove'?'idle':'remove';
+  setShopHint(state.interactMode==='remove'?'Tap a symbol to REMOVE it (3 coins).':'Buy a symbol, then tap a board slot to place or replace it.');
+  Audio.playShop();
+}
+function enterLock(){
+  state.interactMode=state.interactMode==='lock'?'idle':'lock';
+  setShopHint(state.interactMode==='lock'?'Tap symbols to LOCK/UNLOCK. Locked symbols never reroll.':'Buy a symbol, then tap a board slot to place or replace it.');
+  Audio.playShop();
+}
+function continueShop(){
+  const r=state.run;
+  // assign run back to correct slot then advance
+  if(r.mode==='daily')state.save.dailyRun=r;else state.save.run=r;
+  persist();
+  if(r.currentFloor%3===0){openReward();return;}
+  nextFloor();
+}
+function nextFloor(){
+  const r=state.run;r.currentFloor++;
+  if(r.mode==='daily')state.save.dailyRun=r;else state.save.run=r;
+  persist();
+  enterFloor();
+}
+
+/* ---------- Reward (items) ---------- */
+function openReward(){
+  state.phase='reward';
+  const owned=state.run.inventory;
+  const pool=Object.keys(ITEMS).filter(k=>owned.indexOf(k)<0);
+  const picks=[];const tmp=pool.slice();
+  for(let i=0;i<3&&tmp.length;i++){picks.push(tmp.splice(Math.floor(state.rng()*tmp.length),1)[0]);}
+  const wrap=$('rewardCards');wrap.innerHTML='';
+  picks.forEach(k=>{
+    const it=ITEMS[k];
+    const el=document.createElement('div');el.className='reward-card';
+    el.innerHTML='<div class="em">'+it.emoji+'</div><div class="nm">'+it.name+'</div><div class="ds">'+it.desc+'</div>';
+    el.addEventListener('pointerdown',e=>{e.preventDefault();pickReward(k);});
+    wrap.appendChild(el);
+  });
+  show('reward');
+}
+function pickReward(k){
+  state.run.inventory.push(k);
+  if(state.run.mode==='daily')state.save.dailyRun=state.run;else state.save.run=state.run;
+  persist();Audio.playSynergy();
+  nextFloor();
+}
+
+/* ---------- Board interaction ---------- */
+function tapCell(i){
+  const r=state.run;if(!r)return;
+  const cell=r.board[i];
+  if(state.interactMode==='place'){
+    if(!state.pending)return;
+    if(cell.id===null){
+      cell.id=state.pending.id;cell.locked=false;
+    }else{
+      cell.id=state.pending.id;
+    }
+    r.coins-=state.pending.cost;
+    // consume offer
+    state.offers.splice(state.pending.idx,1);
+    if(state.offers.length===0)rollOffers();
+    state.pending=null;state.interactMode='idle';
+    setShopHint('Placed! Buy another symbol or CONTINUE.');
+    renderShop();updateHUD();Audio.playCoin(2);persist();
+  }else if(state.interactMode==='remove'){
+    if(!cell.id)return;
+    if(r.coins<3){toast('Need 3 coins.');return;}
+    cell.id=null;cell.locked=false;r.coins-=3;
+    setShopHint('Removed! (-3 coins)');
+    renderShop();updateHUD();Audio.playShop();persist();
+  }else if(state.interactMode==='lock'){
+    if(!cell.id)return;
+    cell.locked=!cell.locked;
+    Audio.playHover();persist();
+  }else{
+    // info tooltip
+    if(cell.id){
+      setHint(SYMBOLS[cell.id].name+': '+SYMBOLS[cell.id].desc+(cell.locked?' (LOCKED)':''));
+    }
+  }
+}
+
+/* ---------- HUD / overlays ---------- */
+function show(name){hideAllOverlays();if(overlays[name])overlays[name].classList.add('show');}
+function hideAllOverlays(){Object.values(overlays).forEach(o=>o.classList.remove('show'));}
+let toastTimer=null;
+function toast(msg){
+  const t=$('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1600);
+}
+function setHint(t,cls){hintBar.textContent=t;hintBar.className=cls||'';}
+function updateHUD(){
+  const r=state.run;
+  if(!r){return;}
+  floorLabel.textContent='Floor '+r.currentFloor+(r.currentFloor===BOSS_FLOOR?' 🏢':'');
+  floorLabel.className=r.currentFloor===BOSS_FLOOR?'boss':'';
+  coinNum.textContent=Math.floor(state.dispCoins);
+  rentNum.textContent=r.rent;
+  earnedNum.textContent=Math.floor(r.coinsEarnedThisFloor);
+  const pct=clamp((r.coinsEarnedThisFloor/r.rent)*100,0,100);
+  rentFill.style.width=pct+'%';
+  rentBar.classList.toggle('pulse',pct>=80);
+  // spins dots
+  const max=spinsFor(r.currentFloor,r.inventory);
+  let html='';for(let i=0;i<max;i++){html+='<span class="spin-dot'+(i<r.spinsLeft?' on':'')+'"></span>';}
+  spinsDots.innerHTML=html;
+  spinBtn.disabled=state.spinning||state.phase!=='playing'||r.spinsLeft<=0;
+}
+
+/* ---------- particles / popups ---------- */
+function addPopup(i,value){
+  state.popups.push({i,value,life:1,vy:-0.4});
+}
+function spawnParticles(n){
+  const cx=state.boardSize/2,cy=state.boardSize/2;
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2,sp=1+Math.random()*3;
+    state.particles.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,life:1,size:2+Math.random()*4,hue:Math.random()<0.5?'gold':'cyan'});
+  }
+}
+
+/* ---------- Rendering ---------- */
+function resize(){
+  const wrap=$('boardWrap');
+  const w=wrap.clientWidth,h=wrap.clientHeight;
+  let size=Math.floor(Math.min(w,h,560));
+  size=Math.max(size,260);
+  state.dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=size*state.dpr;canvas.height=size*state.dpr;
+  canvas.style.width=size+'px';canvas.style.height=size+'px';
+  ctx.setTransform(state.dpr,0,0,state.dpr,0,0);
+  state.boardSize=size;
+}
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+}
+function drawTile(cx,cy,tile,cell){
+  // glass tile
+  const g=ctx.createLinearGradient(cx,cy,cx,cy+tile);
+  g.addColorStop(0,'rgba(255,255,255,0.10)');
+  g.addColorStop(1,'rgba(255,255,255,0.03)');
+  ctx.fillStyle=cell.id?g:'rgba(255,255,255,0.025)';
+  roundRect(cx,cy,tile,tile,tile*0.12);ctx.fill();
+  // border / glow
+  ctx.lineWidth=1.5;
+  if(cell.locked){ctx.strokeStyle='rgba(255,215,0,0.9)';ctx.shadowColor='rgba(255,215,0,0.6)';ctx.shadowBlur=14;}
+  else{ctx.strokeStyle='rgba(255,255,255,0.14)';ctx.shadowBlur=0;}
+  roundRect(cx,cy,tile,tile,tile*0.12);ctx.stroke();
+  ctx.shadowBlur=0;
+}
+function drawSymbol(emoji,cx,cy,size,dy){
+  ctx.save();
+  ctx.font=size+'px "Segoe UI Emoji","Apple Color Emoji",system-ui,sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.shadowColor='rgba(0,0,0,0.55)';ctx.shadowBlur=8;ctx.shadowOffsetY=3;
+  if(dy)ctx.translate(0,dy);
+  ctx.fillText(emoji,cx,cy);
+  ctx.restore();
+}
+let renderRequested=true;
+function render(now){
+  const dt=Math.min(50,now-state.lastT||16);state.lastT=now;
+  const size=state.boardSize;
+  // ease display coins
+  const r=state.run;
+  if(r){state.dispCoins+=(r.coins-state.dispCoins)*0.18;if(Math.abs(state.dispCoins-r.coins)<0.5)state.dispCoins=r.coins;}
+  if(state.phase==='shop'){const sc=$('shopCoins');if(sc)sc.textContent=Math.floor(state.dispCoins);}
+
+  // spin timing
+  let spinT=0;
+  if(state.spinning){
+    spinT=now-state.spinStart;
+    if(!state.assigned&&spinT>=state.spinDur*0.62){
+      // assign finals
+      const rr=state.run;
+      for(const k in state.pendingFinal){rr.board[+k].id=state.pendingFinal[k];}
+      state.assigned=true;state.assignTime=now;
+    }
+    if(spinT>=state.spinDur){finalizeSpin();}
+  }
+
+  ctx.clearRect(0,0,size,size);
+
+  // screen shake
+  ctx.save();
+  if(state.shake>0){
+    const mag=(state.shake/200)*4;
+    ctx.translate((Math.random()*2-1)*mag,(Math.random()*2-1)*mag);
+    state.shake-=dt;if(state.shake<0)state.shake=0;
+  }
+
+  const gap=size*0.025;const tile=(size-gap*4)/3;
+  // evaluate glow per cell from last result
+  const glows={};
+  if(state.evalResult){state.evalResult.per.forEach(p=>{if(p.value>0)glows[p.idx]=p.value;if(p.kind==='mod')glows[p.idx]=-1;});}
+
+  for(let i=0;i<9;i++){
+    const row=Math.floor(i/3),col=i%3;
+    const cx=gap+col*(tile+gap),cy=gap+row*(tile+gap);
+    const cell=r?r.board[i]:{id:null};
+    drawTile(cx,cy,tile,cell);
+    const isSpinning = state.spinning && !r.board[i].locked && state.pendingFinal && (i in state.pendingFinal);
+    if(cell.id && !isSpinning){
+      // glow if paid
+      if(glows[i]>0){ctx.save();ctx.shadowColor='rgba(255,215,0,0.9)';ctx.shadowBlur=18;ctx.strokeStyle='rgba(255,215,0,0.7)';ctx.lineWidth=2.5;roundRect(cx,cy,tile,tile,tile*0.12);ctx.stroke();ctx.restore();}
+      else if(glows[i]===-1){ctx.save();ctx.strokeStyle='rgba(255,90,120,0.6)';ctx.lineWidth=2;roundRect(cx,cy,tile,tile,tile*0.12);ctx.stroke();ctx.restore();}
+      let dy=0;
+      if(state.spinning&&state.assigned&&state.pendingFinal&&(i in state.pendingFinal)){
+        const bt=(now-state.assignTime)/ (state.spinDur*0.38);
+        if(bt<1){dy=16*Math.sin(Math.min(bt,1)*Math.PI*2)*Math.exp(-4*bt);}
+      }
+      drawSymbol(SYMBOLS[cell.id].emoji,cx+tile/2,cy+tile/2,tile*0.52,dy);
+      // value badge
+      if(state.evalResult){const pv=state.evalResult.per[i].value;if(pv>0){
+        ctx.save();ctx.font='700 '+Math.round(tile*0.2)+'px system-ui';ctx.textAlign='right';ctx.textBaseline='bottom';
+        ctx.fillStyle='#FFD700';ctx.shadowColor='rgba(0,0,0,0.6)';ctx.shadowBlur=4;
+        ctx.fillText('+'+Math.round(pv),cx+tile-6,cy+tile-4);ctx.restore();
+      }}
+      // lock badge
+      if(cell.locked){ctx.save();ctx.font=Math.round(tile*0.2)+'px system-ui';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('🔒',cx+6,cy+4);ctx.restore();}
+    }else if(isSpinning){
+      // reel scroll
+      ctx.save();roundRect(cx,cy,tile,tile,tile*0.12);ctx.clip();
+      const speed=spinT*0.9;
+      const ph=(speed%(tile*0.8));
+      const tickerIdx=Math.floor(spinT/70)%SYM_IDS.length;
+      for(let k=-1;k<=2;k++){
+        const eid = (k===1)?SYM_IDS[tickerIdx]:SYM_IDS[(tickerIdx+k+SYM_IDS.length)%SYM_IDS.length];
+        const yy=cy+tile/2 + k*tile*0.8 - ph + tile*0.8;
+        ctx.globalAlpha = k===1?0.95:0.4;
+        drawSymbol(SYMBOLS[eid].emoji,cx+tile/2,yy,tile*0.5,0);
+      }
+      // motion streak
+      ctx.globalAlpha=0.5;ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fillRect(cx,cy+tile*0.35,tile,tile*0.3);
+      ctx.globalAlpha=1;ctx.restore();
+    }else if(!cell.id){
+      // empty slot faint dot
+      ctx.save();ctx.globalAlpha=0.18;ctx.fillStyle='#9ad6ff';
+      ctx.beginPath();ctx.arc(cx+tile/2,cy+tile/2,tile*0.06,0,Math.PI*2);ctx.fill();ctx.restore();
+      if(state.interactMode==='place'){ctx.save();ctx.globalAlpha=0.4;ctx.strokeStyle='#5dff8f';ctx.setLineDash([6,6]);ctx.lineWidth=2;roundRect(cx+2,cy+2,tile-4,tile-4,tile*0.1);ctx.stroke();ctx.restore();}
+    }
+  }
+
+  // popups
+  for(let p=state.popups.length-1;p>=0;p--){
+    const pu=state.popups[p];pu.life-=dt/900;pu.vy-=0.0008*dt;
+    if(pu.life<=0){state.popups.splice(p,1);continue;}
+    const row=Math.floor(pu.i/3),col=pu.i%3;
+    const cx=gap+col*(tile+gap)+tile/2,cy=gap+row*(tile+gap)+tile/2-(1-pu.life)*40;
+    ctx.save();ctx.globalAlpha=clamp(pu.life,0,1);ctx.font='900 '+Math.round(tile*0.3)+'px system-ui';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#FFD700';
+    ctx.shadowColor='rgba(255,215,0,0.8)';ctx.shadowBlur=12;ctx.fillText('+'+pu.value,cx,cy);ctx.restore();
+  }
+
+  // particles
+  for(let p=state.particles.length-1;p>=0;p--){
+    const pa=state.particles[p];pa.x+=pa.vx*dt*0.06;pa.y+=pa.vy*dt*0.06;pa.vy+=0.04;pa.life-=dt/900;
+    if(pa.life<=0){state.particles.splice(p,1);continue;}
+    ctx.save();ctx.globalAlpha=clamp(pa.life,0,1);
+    ctx.fillStyle=pa.hue==='gold'?'#FFD700':'#00E5FF';
+    ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=8;
+    ctx.beginPath();ctx.arc(pa.x,pa.y,pa.size,0,Math.PI*2);ctx.fill();ctx.restore();
+  }
+
+  ctx.restore();
+  // update coin num display
+  if(r){coinNum.textContent=Math.floor(state.dispCoins);}
+  state._raf=requestAnimationFrame(render);
+}
+
+/* ---------- Tutorial ---------- */
+const TUT=[
+  {e:'🎰',t:'Tap SPIN to roll your 3×3 grid. Each symbol pays coins by its own rule — neighbors, rarities, and combos all matter.'},
+  {e:'📈',t:'Every floor you must earn at least the RENT before your spins run out. The red bar tracks your progress; earn more rent as you climb.'},
+  {e:'🛒',t:'Between floors, spend coins in the SHOP to add symbols, build synergies, lock your favourites, and choose powerful items. Clear Floor 15 to win!'}
+];
+function showTutorial(){
+  state.tutorialStep=0;renderTutorial();show('tutorial');
+}
+function renderTutorial(){
+  const s=state.tutorialStep;$('tutEmoji').textContent=TUT[s].e;$('tutText').textContent=TUT[s].t;
+  const dots=document.querySelectorAll('.tut-dots span');dots.forEach((d,i)=>d.className=i===s?'on':'');
+  $('tutNext').textContent=s===TUT.length-1?'PLAY':'NEXT';
+}
+function tutNext(){
+  if(state.tutorialStep<TUT.length-1){state.tutorialStep++;renderTutorial();Audio.playHover();}
+  else{state.save.meta.hasSeenTutorial=true;persist();beginRun(false);}
+}
+
+/* ---------- Title / menu ---------- */
+function refreshMenu(){
+  const m=state.save.meta;
+  $('msBest').textContent=m.bestFloor;
+  $('msWins').textContent=m.totalWins;
+  $('msRuns').textContent=m.runsPlayed;
+  const cont=$('btnContinue');
+  if(state.save.run){cont.style.display='block';$('contFloor').textContent=state.save.run.currentFloor;}
+  else cont.style.display='none';
+  // daily button label
+  const dailyReady = state.save.meta.dailyDay!==todayStr() || !state.save.dailyRun;
+  $('btnDaily').textContent = (state.save.dailyRun&&state.save.meta.dailyDay===todayStr())?'CONTINUE DAILY':'DAILY CHALLENGE';
+}
+function beginRun(isDaily){
+  Audio.init();Audio.resume();
+  startRun(isDaily?'daily':'normal');
+  if(!state.save.settings.music&&Audio.musicOn===false){/* off */}
+}
+
+/* ---------- Event wiring ---------- */
+function addP(el,type,fn){el.addEventListener(type,fn);}
+// canvas interaction
+function canvasPointer(e){
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect();
+  const x=e.clientX-rect.left,y=e.clientY-rect.top;
+  const c=Math.floor(x/(rect.width/3)),row=Math.floor(y/(rect.height/3));
+  if(c<0||c>2||row<0||row>2)return;
+  tapCell(row*3+c);
+}
+addP(canvas,'pointerdown',canvasPointer);
+addP(canvas,'touchstart',e=>{e.preventDefault();},{passive:false});
+
+// spin
+let spinDebounce=false;
+addP(spinBtn,'pointerdown',e=>{
+  e.preventDefault();
+  if(spinDebounce||state.phase!=='playing')return;
+  spinDebounce=true;setTimeout(()=>spinDebounce=false,250);
+  Audio.init();Audio.resume();doSpin();
+});
+// keyboard
+addP(window,'keydown',e=>{
+  if(state.phase==='playing'&&(e.key===' '||e.key==='Enter')){e.preventDefault();
+    if(spinDebounce)return;spinDebounce=true;setTimeout(()=>spinDebounce=false,250);Audio.init();Audio.resume();doSpin();}
+  if(e.key==='Escape'){if(state.phase==='playing')openPause();else if(state.phase==='paused')resumeGame();}
+});
+// hud buttons
+addP($('pauseBtn'),'pointerdown',e=>{e.preventDefault();Audio.playHover();if(state.phase==='playing'||state.phase==='shop'||state.phase==='reward')openPause();});
+addP($('muteBtn'),'pointerdown',e=>{e.preventDefault();Audio.init();const m=Audio.toggleMute();$('muteBtn').textContent=m?'🔇':'🔊';$('muteBtn').classList.toggle('off',m);state.save.settings.mute=m;persist();});
+addP($('musicBtn'),'pointerdown',e=>{e.preventDefault();Audio.init();Audio.resume();if(Audio.musicOn){Audio.stopMusic();$('musicBtn').classList.add('off');state.save.settings.music=false;}else{Audio.startMusic();$('musicBtn').classList.remove('off');state.save.settings.music=true;}persist();});
+
+// menu buttons
+addP($('btnNewRun'),'pointerdown',e=>{e.preventDefault();Audio.init();Audio.resume();if(!state.save.meta.hasSeenTutorial){showTutorial();}else{beginRun(false);}});
+addP($('btnContinue'),'pointerdown',e=>{e.preventDefault();if(!state.save.run)return;Audio.init();Audio.resume();resumeRun(state.save.run,'normal');});
+addP($('btnDaily'),'pointerdown',e=>{e.preventDefault();Audio.init();Audio.resume();
+  if(state.save.dailyRun&&state.save.meta.dailyDay===todayStr()){resumeRun(state.save.dailyRun,'daily');}
+  else{state.save.meta.dailyDay=todayStr();state.save.dailyRun=null;startRun('daily');}});
+addP($('btnHowTo'),'pointerdown',e=>{e.preventDefault();showTutorial();});
+
+// tutorial
+addP($('tutNext'),'pointerdown',e=>{e.preventDefault();tutNext();});
+addP($('tutSkip'),'pointerdown',e=>{e.preventDefault();state.save.meta.hasSeenTutorial=true;persist();beginRun(false);});
+
+// shop buttons
+addP($('btnRemove'),'pointerdown',e=>{e.preventDefault();enterRemove();});
+addP($('btnReroll'),'pointerdown',e=>{e.preventDefault();doReroll();});
+addP($('btnLock'),'pointerdown',e=>{e.preventDefault();enterLock();});
+addP($('btnContinueShop'),'pointerdown',e=>{e.preventDefault();Audio.playHover();continueShop();});
+
+// pause
+addP($('btnResume'),'pointerdown',e=>{e.preventDefault();resumeGame();});
+addP($('btnRestart'),'pointerdown',e=>{e.preventDefault();clearActiveRun();startRun(state.mode);});
+addP($('btnQuitMenu'),'pointerdown',e=>{e.preventDefault();clearActiveRun();goTitle();});
+
+// end screens
+addP($('btnOverMenu'),'pointerdown',e=>{e.preventDefault();goTitle();});
+addP($('btnWinMenu'),'pointerdown',e=>{e.preventDefault();goTitle();});
+
+// hover sounds
+document.querySelectorAll('.btn,.offer,.reward-card,.icon-btn').forEach(el=>{
+  addP(el,'pointerenter',()=>{if(!state.spinning)Audio.playHover();});
+});
+
+window.addEventListener('resize',()=>{clearTimeout(state._rt);state._rt=setTimeout(resize,100);});
+window.addEventListener('orientationchange',()=>setTimeout(resize,200));
+window.addEventListener('beforeunload',cleanup);
+
+function resumeRun(saved,mode){
+  state.mode=mode;
+  state.rng = mode==='daily'?mulberry32(hashStr(todayStr())):Math.random;
+  state.run=saved;
+  state.dispCoins=saved.coins;
+  state.popups=[];state.particles=[];state.evalResult=null;
+  state.interactMode='idle';state.pending=null;
+  // restore phase
+  if(saved.phase==='shop'){state.phase='playing';rollOffers();hideAllOverlays();updateHUD();openShop();}
+  else if(saved.phase==='reward'){state.phase='playing';hideAllOverlays();updateHUD();openReward();}
+  else{enterFloor();}
+}
+function openPause(){
+  if(state.phase==='paused')return;
+  state._prevPhase=state.phase;state.phase='paused';show('pause');
+}
+function resumeGame(){
+  state.phase=state._prevPhase||'playing';hideAllOverlays();updateHUD();
+}
+function goTitle(){
+  state.phase='title';state.run=null;refreshMenu();show('title');
+}
+
+/* ---------- Cleanup (single entry) ---------- */
+const _timers=[];
+function cleanup(){
+  try{
+    if(state._raf)cancelAnimationFrame(state._raf);
+    _timers.forEach(t=>clearTimeout(t));
+    Audio.stopMusic();
+    if(Audio.ctx){Audio.ctx.close().catch(()=>{});Audio.ctx=null;}
+  }catch(e){}
+}
+
+/* ---------- Boot ---------- */
+function boot(){
+  // apply saved settings
+  if(state.save.settings.mute){Audio.muted=true;$('muteBtn').textContent='🔇';$('muteBtn').classList.add('off');}
+  if(state.save.settings.music){/* will start on first gesture */}
+  resize();
+  state.lastT=performance.now();
+  state._raf=requestAnimationFrame(render);
+  refreshMenu();
+  show('title');
+}
+boot();
+})();
+</script>
+</body>
+</html>
