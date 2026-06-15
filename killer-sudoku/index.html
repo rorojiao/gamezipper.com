@@ -376,7 +376,7 @@ function doUndo(){
     G.notes[action.row][action.col]=action.prevNotes.slice();
   }
   document.getElementById('mistake-count').textContent=G.mistakes;
-  sfxUndo();render();
+  sfxUndo();render();saveBoard();
 }
 
 function placeNumber(n){
@@ -409,7 +409,7 @@ function placeNumber(n){
     }
     G.undoStack.push({type:'place',row:r,col:c,prevVal:prevVal,prevNotes:prevNotes,wasWrong:wasWrong});
   }
-  render();
+  render();saveBoard();
 }
 
 function eraseCell(){
@@ -420,7 +420,7 @@ function eraseCell(){
   var prevNotes=G.notes[r][c].slice();
   G.cells[r][c]=0;
   G.undoStack.push({type:'erase',row:r,col:c,prevVal:prevVal,prevNotes:prevNotes});
-  sfxUndo();render();
+  sfxUndo();render();saveBoard();
 }
 
 function giveHint(){
@@ -437,7 +437,7 @@ function giveHint(){
   G.notes[r][c]=Array(9).fill(false);
   G.hintsUsed++;
   G.selectedRow=r;G.selectedCol=c;
-  sfxHint();render();
+  sfxHint();render();saveBoard();
 }
 
 function checkWin(){
@@ -448,6 +448,7 @@ function checkWin(){
 }
 
 function endGame(won){
+  clearBoard();
   G.gameOver=true;G.won=won;
   stopTimer();
   if(won){
@@ -477,6 +478,32 @@ function showWinOverlay(){
     '<div class="stat-card"><div class="stat-val">'+G.hintsUsed+'</div><div class="stat-label">Hints Used</div></div>';
   document.getElementById('win-stats').innerHTML=statsHtml;
 }
+
+// === BOARD PERSISTENCE ===
+// Fix GP-100/PC-006: save in-progress board state so reloads don't lose progress.
+// ks-board holds the full game state; ks-last is a lightweight resume hint consumed
+// by the existing auto-start-on-return code (line ~828).
+function saveBoard(){
+  if(G.gameOver||!G.puzzle)return;
+  try{
+    var data={
+      diff:G.currentDiff,
+      idx:G.currentPuzzle,
+      cells:G.cells,
+      notes:G.notes,
+      given:G.given,
+      mistakes:G.mistakes,
+      hintsUsed:G.hintsUsed,
+      timerSec:G.timerSec,
+      undoStack:G.undoStack,
+      puzzleIndex:G.puzzle.puzzleIndex,
+      ts:Date.now()
+    };
+    localStorage.setItem('ks-board',JSON.stringify(data));
+    localStorage.setItem('ks-last',JSON.stringify({diff:G.currentDiff,idx:G.currentPuzzle}));
+  }catch(e){}
+}
+function clearBoard(){try{localStorage.removeItem('ks-board');localStorage.removeItem('ks-last')}catch(e){}}
 
 // === STATS ===
 function formatTime(s){var m=Math.floor(s/60);return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
@@ -823,15 +850,42 @@ resizeCanvas();
 canvas.addEventListener('touchstart',function(e){e.preventDefault()},{passive:false});
 canvas.addEventListener('touchmove',function(e){e.preventDefault()},{passive:false});
 
-// Auto-start daily if returning
+// Auto-resume in-progress board (full state) or puzzle-select (lightweight hint)
 (function(){
+  var saved=localStorage.getItem('ks-board');
+  if(saved){
+    try{
+      var d=JSON.parse(saved);
+      // Look up the puzzle definition by difficulty + puzzleIndex
+      var p=null;
+      if(d.diff==='daily'){p=puzzles.daily}
+      else{p=puzzles[d.diff][d.puzzleIndex]}
+      if(p){
+        startGame(p);
+        // Restore in-progress state on top of the freshly-started puzzle
+        if(d.cells)G.cells=d.cells;
+        if(d.notes)G.notes=d.notes;
+        if(d.given)G.given=d.given;
+        if(d.mistakes!==undefined)G.mistakes=d.mistakes;
+        if(d.hintsUsed!==undefined)G.hintsUsed=d.hintsUsed;
+        if(d.undoStack)G.undoStack=d.undoStack;
+        if(d.timerSec){G.timerSec=d.timerSec;
+          var m=Math.floor(d.timerSec/60),s=d.timerSec%60;
+          document.getElementById('timer').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+        if(d.mistakes!==undefined)document.getElementById('mistake-count').textContent=G.mistakes;
+        render();
+        return;
+      }
+    }catch(e){clearBoard();}
+  }
+  // Fall back to lightweight ks-last resume (puzzle-select screen)
   var last=localStorage.getItem('ks-last');
   if(last){
     try{
-      var d=JSON.parse(last);
-      if(d.diff!==undefined){
-        G.currentDiff=d.diff;G.currentPuzzle=d.idx;
-        showPuzzleSelect(d.diff);
+      var dl=JSON.parse(last);
+      if(dl.diff!==undefined){
+        G.currentDiff=dl.diff;G.currentPuzzle=dl.idx;
+        showPuzzleSelect(dl.diff);
         return;
       }
     }catch(e){}
@@ -839,8 +893,8 @@ canvas.addEventListener('touchmove',function(e){e.preventDefault()},{passive:fal
 })();
 
 // Cleanup / destroy function
-var _onVisChange=function(){if(document.visibilityState==='hidden'){stopTimer();if(audioCtx){try{audioCtx.close()}catch(e){}}audioCtx=null}};
-var _onBeforeUnload=function(){stopTimer()};
+var _onVisChange=function(){if(document.visibilityState==='hidden'){stopTimer();saveBoard();if(audioCtx){try{audioCtx.close()}catch(e){}}audioCtx=null}};
+var _onBeforeUnload=function(){stopTimer();saveBoard()};
 document.addEventListener('visibilitychange',_onVisChange);
 window.addEventListener('beforeunload',_onBeforeUnload);
 window.cleanupGame=function(){
