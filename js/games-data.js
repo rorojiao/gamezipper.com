@@ -384,6 +384,7 @@ const GAMES = [
   {name:"Speed Math Race",emoji:"⏱",cat:"puzzle",tags:["math","arithmetic","brain-training","educational","speed"],url:"/speed-math/",desc:"Solve math problems against the clock. Build combos, use power-ups, beat your best score in this fast-paced mental arithmetic brain game.",isNew:true,status:"live"},
 
 {name:"Hotel Rush",emoji:"🏨",cat:"puzzle",tags:["hotel","management","time management","tycoon","idle","simulation"],url:"/hotel-rush/",desc:"Play Hotel Rush free online! Build your dream hotel empire in this addictive time management puzzle. Assign guests, clean rooms, hire staff, expand floors. 30 levels, VIP guests, idle income!",isNew:true,status:"live"},
+{name:"Mahjong Connect",emoji:"🀄",cat:"puzzle",tags:["mahjong","shisen-sho","liananliankan","tile-matching","connect","puzzle","strategy","casual","free","html5"],url:"/mahjong-connect/",desc:"Play Mahjong Connect (Shisen-Sho) free online! Match identical tiles with a path of up to 2 turns. 30 levels across 5 tiers, daily challenge, hint and shuffle power-ups. No download.",isNew:true,status:"live"},
 ];
 
 /**
