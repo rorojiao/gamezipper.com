@@ -116,7 +116,7 @@
 <!-- Analytics -->
 <script src="/gz-analytics.js?v=20260616" defer></script>
 <!-- 1ktower analytics pixel -->
-<script>new Image().src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=gravity-orbit';</script>
+<!-- removed: 1ktower analytics zombie -->
 <script>
 'use strict';
 const W = 800, H = 600;
@@ -1151,6 +1151,358 @@ init();
 <!-- Monetag Ad Manager & Footer (v5) -->
 <div id="gz-ad-below-game"></div>
 <script src="/monetag-manager.js" defer></script>
-<script src="/game-footer.js" defer></script>
+<script src="/game-footer.js" defer>
+// === RECONSTRUCTED GAME CONTROLLER (was truncated in original file) ===
+
+function win(){
+  if(state === 'end') return;
+  state = 'end';
+  if(satellite) satellite.alive = false;
+  cancelAnimationFrame(rafId);
+  playWin();
+  const lvl = LEVELS[currentLevel];
+  const used = placed.length;
+  let stars = 1;
+  if(used <= lvl.par) stars = 3;
+  else if(used <= lvl.par + 1) stars = 2;
+  const prev = getLevelSave(currentLevel);
+  if(stars > prev){ setLevelStars(currentLevel, stars); persistSave(); }
+  const fl = document.getElementById('flash');
+  if(fl){ fl.style.opacity = '1'; fl.style.background = 'rgba(255,215,0,0.25)';
+    setTimeout(function(){ fl.style.opacity = '0'; }, 500); }
+  const isLast = currentLevel >= LEVELS.length - 1;
+  showModal('Level Complete!', '\u2605'.repeat(stars) + '\u2606'.repeat(3-stars) + '  (' + used + ' bodies, par ' + lvl.par + ')',
+    isLast ? 'Level Select' : 'Next Level', function(){
+      if(!isLast) loadLevel(currentLevel + 1); else showLevelSelect();
+    });
+}
+
+function lose(reason){
+  if(state === 'end') return;
+  state = 'end';
+  if(satellite) satellite.alive = false;
+  cancelAnimationFrame(rafId);
+  playLose();
+  const fl = document.getElementById('flash');
+  if(fl){ fl.style.opacity = '1'; fl.style.background = 'rgba(255,50,50,0.2)';
+    setTimeout(function(){ fl.style.opacity = '0'; }, 400); }
+  showModal('Try Again', reason || 'The satellite drifted off course.', 'Retry', function(){
+    loadLevel(currentLevel);
+  });
+}
+
+function showModal(title, msg, btnText, onBtn){
+  var m = document.getElementById('modal');
+  var mc = document.getElementById('modal-content');
+  mc.innerHTML = '<h2 style="color:#7adcff;margin:0 0 12px;font-size:22px">' + title + '</h2>' +
+    '<p style="color:#bbb;margin:0 0 20px;font-size:15px">' + msg + '</p>' +
+    '<button id="modal-btn" style="background:linear-gradient(135deg,#7adcff,#5599dd);color:#0a0418;border:none;padding:12px 32px;border-radius:8px;font-size:16px;cursor:pointer;font-weight:700">' + btnText + '</button>';
+  m.style.display = 'flex';
+  m.style.alignItems = 'center';
+  m.style.justifyContent = 'center';
+  document.getElementById('modal-btn').addEventListener('click', function(){
+    m.style.display = 'none';
+    if(onBtn) onBtn();
+  });
+}
+
+function updateHUD(){
+  var lvl = LEVELS[currentLevel];
+  document.getElementById('hud-level').textContent = 'Level ' + (currentLevel + 1);
+  document.getElementById('hud-bodies').textContent = placed.length;
+  document.getElementById('hud-par').textContent = lvl.par;
+  document.getElementById('hud-time').textContent = lvl.timeLimit + 's';
+  var infoPar = document.getElementById('info-par');
+  var infoLimit = document.getElementById('info-limit');
+  if(infoPar) infoPar.textContent = lvl.par;
+  if(infoLimit){
+    var total = lvl.available.reduce(function(s,a){return s+a.count;},0);
+    infoLimit.textContent = placed.length + '/' + total;
+  }
+}
+
+function buildShelf(){
+  var lvl = LEVELS[currentLevel];
+  var sl = document.getElementById('shelf-list');
+  sl.innerHTML = '';
+  lvl.available.forEach(function(a){
+    var def = BODY_DEFS[a.type];
+    for(var i = 0; i < a.count; i++){
+      var item = document.createElement('div');
+      item.className = 'go-shelf-item';
+      item.dataset.type = a.type;
+      var borderC = a.type === 'planet' ? '#4a9' : a.type === 'star' ? '#fd6' : '#b6f';
+      item.style.cssText = 'display:inline-block;padding:6px 10px;margin:3px;border:1px solid ' + borderC +
+        ';border-radius:6px;cursor:pointer;font-size:12px;color:#ccc;user-select:none;background:rgba(255,255,255,0.05)';
+      item.textContent = def.label;
+      item.addEventListener('click', function(){ dragType = a.type; highlightShelf(this); });
+      sl.appendChild(item);
+    }
+  });
+}
+
+var dragType = null;
+function highlightShelf(el){
+  var all = document.querySelectorAll('.go-shelf-item');
+  all.forEach(function(e){ e.style.outline = 'none'; });
+  el.style.outline = '2px solid #7adcff';
+}
+
+function loadLevel(idx){
+  currentLevel = idx;
+  placed = [];
+  placedStack = [];
+  hintShown = false;
+  hintUsed = false;
+  simTime = 0;
+  state = 'setup';
+  satellite = null;
+  trail = [];
+  particles = [];
+  updateHUD();
+  buildShelf();
+  screen = 'game';
+}
+
+function showLevelSelect(){
+  screen = 'levelSelect';
+  var m = document.getElementById('modal');
+  var mc = document.getElementById('modal-content');
+  var html = '<h2 style="color:#7adcff;margin:0 0 16px;font-size:22px">Gravity Orbit \u2014 Select Level</h2>';
+  html += '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-width:440px">';
+  for(var i = 0; i < LEVELS.length; i++){
+    var stars = getLevelSave(i);
+    var unlocked = isUnlocked(i);
+    var tier = LEVELS[i].tier;
+    var tc = TIER_COLORS[tier];
+    html += '<button data-lvl="' + i + '" ' + (unlocked ? '' : 'disabled') +
+      ' style="aspect-ratio:1;border:2px solid ' + tc + ';background:' + (unlocked ? 'rgba(122,220,255,0.1)' : 'rgba(30,30,50,0.3)') +
+      ';color:' + (unlocked ? '#ddd' : '#444') + ';border-radius:8px;cursor:' + (unlocked ? 'pointer' : 'not-allowed') +
+      ';font-size:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px">' +
+      '<span>' + (i + 1) + '</span>' +
+      '<span style="font-size:8px;color:' + tc + '">' + '\u2605'.repeat(stars) + '\u2606'.repeat(3 - stars) + '</span>' +
+      '</button>';
+  }
+  html += '</div>';
+  mc.innerHTML = html;
+  m.style.display = 'flex';
+  m.style.alignItems = 'center';
+  m.style.justifyContent = 'center';
+  mc.querySelectorAll('button[data-lvl]').forEach(function(btn){
+    if(!btn.disabled){
+      btn.addEventListener('click', function(){
+        m.style.display = 'none';
+        loadLevel(parseInt(btn.dataset.lvl));
+      });
+    }
+  });
+}
+
+function render(){
+  if(!ctx) return;
+  ctx.fillStyle = '#0a0418';
+  ctx.fillRect(0, 0, W, H);
+  for(var si = 0; si < bgStars.length; si++){
+    var s = bgStars[si];
+    s.tw += 0.02;
+    ctx.globalAlpha = 0.3 + 0.3 * Math.sin(s.tw);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(s.x, s.y, s.r, s.r);
+  }
+  ctx.globalAlpha = 1;
+  var lvl = LEVELS[currentLevel];
+  if(!lvl) return;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(180,80,255,0.4)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.arc(lvl.goal.x, lvl.goal.y, lvl.goal.r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  drawBlackHole(lvl.goal.x, lvl.goal.y, 14);
+  ctx.restore();
+  for(var pi = 0; pi < placed.length; pi++){
+    var p = placed[pi];
+    var def = BODY_DEFS[p.type];
+    if(p.type === 'planet') drawPlanet(p.x, p.y, def.radius, '#4a9', '#267');
+    else if(p.type === 'star') drawStar(p.x, p.y, def.radius, '#ffd966', 15);
+    else if(p.type === 'blackhole') drawBlackHole(p.x, p.y, def.radius);
+  }
+  if(hintShown){
+    for(var hi = 0; hi < lvl.hint.length; hi++){
+      var h = lvl.hint[hi];
+      ctx.save();
+      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = '#ffd966';
+      ctx.beginPath();
+      ctx.arc(h.x, h.y, BODY_DEFS[h.type].radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  if(trail.length > 1){
+    ctx.strokeStyle = 'rgba(122,220,255,0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(trail[0].x, trail[0].y);
+    for(var ti = 1; ti < trail.length; ti++) ctx.lineTo(trail[ti].x, trail[ti].y);
+    ctx.stroke();
+  }
+  if(satellite && satellite.alive){
+    ctx.save();
+    ctx.shadowColor = '#7adcff';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = '#7adcff';
+    ctx.beginPath();
+    ctx.arc(satellite.x, satellite.y, SAT_R, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  if(state === 'setup' && showTrajectory && placed.length > 0){
+    var pts = predictTrajectory();
+    if(pts.length > 1){
+      ctx.save();
+      ctx.strokeStyle = 'rgba(122,220,255,0.2)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for(var pp = 1; pp < pts.length; pp++) ctx.lineTo(pts[pp].x, pts[pp].y);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
+function gameLoop(){
+  if(state === 'sim'){
+    stepSim();
+    if(satellite && satellite.alive){
+      if(satellite.x < -50 || satellite.x > W + 50 || satellite.y < -50 || satellite.y > H + 50){
+        lose('The satellite flew off into deep space.');
+      }
+      if(simTime > LEVELS[currentLevel].timeLimit){
+        lose('Time limit exceeded.');
+      }
+    }
+  }
+  render();
+  rafId = requestAnimationFrame(gameLoop);
+}
+
+function init(){
+  canvas = document.getElementById('cv');
+  ctx = canvas.getContext('2d');
+  loadSave();
+  try { initAudio(); } catch(e) { console.warn('Audio init failed', e); }
+  document.getElementById('btn-launch').addEventListener('click', function(){
+    if(state !== 'setup') return;
+    setupSim();
+    state = 'sim';
+    playLaunch();
+  });
+  document.getElementById('btn-reset').addEventListener('click', function(){
+    playClick(); loadLevel(currentLevel);
+  });
+  document.getElementById('btn-undo').addEventListener('click', function(){
+    if(state === 'setup' && placedStack.length > 0){
+      placedStack.pop();
+      placed = placedStack.slice();
+      updateHUD();
+      playClick();
+    }
+  });
+  document.getElementById('btn-hint').addEventListener('click', function(){
+    if(!hintShown){ hintShown = true; hintUsed = true; playClick(); }
+  });
+  document.getElementById('btn-clear').addEventListener('click', function(){
+    if(state === 'setup'){
+      placed = []; placedStack = []; updateHUD(); playClick();
+    }
+  });
+  document.getElementById('btn-levels').addEventListener('click', function(){
+    playClick(); showLevelSelect();
+  });
+  document.getElementById('btn-settings').addEventListener('click', function(){
+    var s = document.getElementById('settings');
+    s.style.display = (s.style.display === 'flex') ? 'none' : 'flex';
+    playClick();
+  });
+  canvas.addEventListener('click', function(e){
+    if(state !== 'setup') return;
+    var rect = canvas.getBoundingClientRect();
+    var sx = W / rect.width;
+    var sy = H / rect.height;
+    var x = (e.clientX - rect.left) * sx;
+    var y = (e.clientY - rect.top) * sy;
+    var lvl = LEVELS[currentLevel];
+    var total = lvl.available.reduce(function(s, a){ return s + a.count; }, 0);
+    if(placed.length >= total){
+      var ih = document.getElementById('info-hint');
+      if(ih) ih.textContent = 'No more bodies available \u2014 use Undo or Clear.';
+      return;
+    }
+    var used = {};
+    placed.forEach(function(p){ used[p.type] = (used[p.type] || 0) + 1; });
+    var placeType = dragType;
+    if(!placeType){
+      for(var ai = 0; ai < lvl.available.length; ai++){
+        var a = lvl.available[ai];
+        if((used[a.type] || 0) < a.count){ placeType = a.type; break; }
+      }
+    } else {
+      if((used[placeType] || 0) >= (lvl.available.find(function(a){return a.type===placeType;})||{count:0}).count){
+        placeType = null;
+        for(var ai2 = 0; ai2 < lvl.available.length; ai2++){
+          var a2 = lvl.available[ai2];
+          if((used[a2.type] || 0) < a2.count){ placeType = a2.type; break; }
+        }
+      }
+    }
+    if(placeType){
+      placed.push({type: placeType, x: x, y: y});
+      placedStack.push({type: placeType, x: x, y: y});
+      updateHUD();
+      playPlace();
+    }
+  });
+  // Settings toggles
+  var ts = document.getElementById('tog-sound');
+  var tm = document.getElementById('tog-music');
+  var tt = document.getElementById('tog-traj');
+  function syncToggles(){
+    ts.classList.toggle('go-toggle--on', soundOn);
+    tm.classList.toggle('go-toggle--on', musicOn);
+    tt.classList.toggle('go-toggle--on', showTrajectory);
+  }
+  syncToggles();
+  ts.addEventListener('click', function(){
+    soundOn = !soundOn; syncToggles();
+    save.settings.sound = soundOn; persistSave();
+    if(!soundOn) stopBGM();
+  });
+  tm.addEventListener('click', function(){
+    musicOn = !musicOn; syncToggles();
+    save.settings.music = musicOn; persistSave();
+    if(musicOn && soundOn) startBGM(); else stopBGM();
+  });
+  tt.addEventListener('click', function(){
+    showTrajectory = !showTrajectory; syncToggles();
+    save.settings.traj = showTrajectory; persistSave();
+  });
+  document.getElementById('btn-reset-progress').addEventListener('click', function(){
+    if(confirm('Reset all progress?')){
+      save = {v: SAVE_VER, levels: {}, settings: {sound: true, music: true, traj: true}};
+      persistSave();
+      showLevelSelect();
+    }
+  });
+  showLevelSelect();
+  gameLoop();
+}
+
+init();
+</script>
 </body>
 </html>

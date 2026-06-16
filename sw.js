@@ -4,7 +4,7 @@
 // v12: navigationPreload for faster TTFB on navigation requests
 // v17: bypass browser cache for /gz-analytics.js so EP rotation propagates immediately
 //      (tunnel rotates every ~5min; SW would otherwise hold stale EP for the lifetime of the SW)
-const CACHE='gz-v54';
+const CACHE='gz-v55';
 const HTML_MAX_AGE=4*60*60*1000; // 4 hours in ms
 
 // === Install ===
@@ -39,7 +39,9 @@ self.addEventListener('install',e=>{
       '/metro-lines/',
       '/virus-buster/',
     '/spin-rings/',
-    '/family-tree/'
+    '/family-tree/',
+    '/gear-logic/',
+    '/gravity-orbit/'
 ];
   e.waitUntil(
     caches.open(CACHE).then(function(c){
