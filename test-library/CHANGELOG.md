@@ -1,3 +1,52 @@
+## [v1.62.0] - 2026-06-16
+### Added
+- 8 new test cases from industry research (R182 Dynamic Test Intelligence cron)
+- **S-114** [P1] npm Sigstore provenance BYPASS via compromised maintainer account — 633 malicious npm package versions across 323 unique packages passed cryptographic provenance verification using valid Fulcio-issued signing certificates generated from a stolen GitHub maintainer account (May 19 2026, 48-hour window); defeats the "signed attestation = safe" assumption that S-105/S-107/S-109 mitigations rely on; the bypass was not a Sigstore protocol flaw but a maintainer-identity-trust flaw — a stolen GitHub account IS a valid GitHub Actions identity; distinct from S-111 TrapDoor cross-ecosystem coordination because this is the SIGNATURE-INFRASTRUCTURE-DEFEAT dimension (saassentinel.com May 23 2026 / ruberli.com May 22 2026 / venturebeat.com May 25 2026 / endorlabs.com / techbuddies.io / decryptiondigest.com)
+- **S-115** [P2] Chrome 150 DevTools drawElementImage blank-canvas visual-regression-test bug — CDP Page.captureScreenshot / drawElementImage returns frozen/blank pixels for any WebGL/WebGPU/2D-canvas content that re-renders via requestAnimationFrame; breaks Playwright toHaveScreenshot / Percy / Chromatic / Applitools for canvas-heavy games; games render correctly on screen but CDP screenshots are blank → false-negative visual-regression tests; distinct from C-095 HTML-in-Canvas API introduction and C-098 WebGPU error handling because this is the TESTING-TOOL-DEPENDENCY dimension (github.com/WICG/html-in-canvas/issues/120 + issues.chromium.org/issues/522845799)
+- **W-153** [P2] Chrome 150 (stable June 30 2026) is the FINAL Chrome version supporting macOS 12 Monterey; Chrome 151 (stable July 28 2026) requires macOS 13 Ventura — millions of older Intel/Apple-silicon Macs frozen on Chrome 150 indefinitely without security patches or new features; long-tail unsupported browser population; distinct from W-138/W-141 ChromeOS enterprise releases because this is CONSUMER macOS (9to5google.com / macrumors.com / support.google.com/chrome / forbes.com/zakdoffman / appleinsider.com / superchargebrowser.com Jan 2026)
+- **W-154** [P2] Chrome 150.0.7869.0+ HTML-in-Canvas WebGL/WebGPU BREAKING API CHANGE per WICG working-group feedback — migration guide required for any code using drawElementImage() with WebGL/WebGPU target contexts; old API shape removed not deprecated; affects code adopted during the Chrome 149 origin-trial window (W-122, C-095); distinct from W-122/C-095 origin-trial introduction because this is the POST-STABLE BREAKING-API-CHANGE migration dimension (github.com/WICG/html-in-canvas/issues/132)
+- **B-102** [P1] Chrome Android WebGL security regression pair — CVE-2026-9921 uninitialized-use cross-origin information disclosure + CVE-2026-9880 Critical-severity sandbox escape (both pre-148.0.7778.216); Android-specific (desktop Chrome WebGL NOT affected); exploit chain: malicious ad creative → CVE-2026-9921 renderer compromise reading GameZipper origin data → CVE-2026-9880 sandbox escape → device takeover; ~70% of GameZipper mobile traffic on Android bears full exposure; distinct from B-073/B-083 because this is ANDROID-PLATFORM + WEBGL-SPECIFIC (bugzilla.redhat.com/show_bug.cgi?id=2483084 + cvefeed.io/vuln/detail/CVE-2026-9880)
+- **C-102** [P2] AI-discovered-CVE acceleration concrete QA-cadence impact — S-113 documented Mythos found 100 Chromium zero-days in 15 days; this C-102 test is the METHODOLOGY/CADENCE-RESPONSE: when Mythos-class tools drop 10+ Chromium CVEs in a day, the GameZipper test library must add regression tests within HOURS not the traditional week-long cycle; requires a rapid-CVE-response runbook + pre-built regression-test templates for common Chromium-bug patterns + cadence upgrade from 4h to 1h during active disclosure windows; distinct from S-113 discovery event because this is the PROCESS/PLAYBOOK dimension
+- **A-036** [P1] Cognitive accessibility missing from self-managed audits — ADA Title II April 2026 deadline + 27% 2026 ADA-lawsuit surge + self-managed WCAG remediation systematically misses cognitive accessibility (instructions clarity / time-pressure relief / error recovery / complex-decision-flow documentation / working-memory load); automated scanners (axe/WAVE/Lighthouse) cover visual/motor/screen-reader but NOT cognitive; the 5 highest-impact ADA fixes per solid-web.com include cognitive-load reduction as the one self-managed audits miss; distinct from A-030/A-031 specific WCAG SCs and A-034/A-035 lawsuit surge because this is the COGNITIVE-DIMENSION + SELF-AUDIT-GAP angle (testparty.ai / solid-web.com / mantlr.com / levelaccess.com / wcagpros.com / webability.io)
+- **G-144** [P2] Nordcurrent data-driven player drop-off per-level retention-curve analysis methodology — instrument per-level completion events + compute per-level retention curves + identify cliffs (levels with retention <80% of game median) + root-cause each cliff (difficulty spike / UX friction / tutorial gap / performance / monotony); Nordcurrent data shows first 5 levels account for ~60% of total drop-off; finds specific fixable friction points beyond aggregate D1/D7/D30 metrics; distinct from G-100/G-105 FTUE <3-tap and G-143 D1/D7/D30 benchmarks because this is the PER-LEVEL-GRANULARITY FRICTION-POINT-IDENTIFICATION methodology (80.lv Nordcurrent interview June 2026 / ejaw.net / gamegrowthadvisor.com)
+
+### Sources
+- Web search via web-search-prime (5 single-search calls; 1 batch of 5 aborted and retried individually) + minimax search (1 call):
+  - "browser security CVE vulnerability June 2026 Chrome Firefox Safari" (week range)
+  - "Chrome 150 stable release notes June 2026 features deprecation"
+  - "iOS Safari WebKit bug 2026 regression WebGL WebGPU" (month range)
+  - "npm package malware June 2026 worm spreading" (week range)
+  - "WebGPU regression Chrome 150 WebGL bug 2026" (month range)
+  - "signed attestation npm sigstore supply chain limitation bypass 2026" (month range)
+  - "browser game accessibility WCAG 2.2 cognitive disability 2026 lawsuit" (month range)
+  - "drawElementImage Chrome DevTools blank canvas visual regression test bug"
+  - "mobile game UX 2026 tutorial onboarding drop-off retention benchmark"
+  - "Chrome 150 macOS Monterey end support Chrome 151 Ventura minimum"
+  - "HTML5 browser game testing June 2026 vulnerability new CVE" (minimax)
+- Key URLs:
+  - https://saassentinel.com/2026/05/23/attackers-bypass-npms-sigstore-provenance-compromise-639-package-versions-in-48-hour-supply-chain-breach (Sigstore provenance BYPASS — 633 malicious packages passed cryptographic verification)
+  - https://venturebeat.com/security/npm-sigstore-provenance-stolen-identity-audit-grid-2026 (Valid certificates, stolen accounts — npm's last trust signal defeated)
+  - https://ruberli.com/2026/05/22/npm-sigstore-provenance-stolen-identity-audit-grid-2026 (Technical analysis of the Sigstore bypass)
+  - https://endorlabs.com/learn/mini-shai-hulud-returns-42-malicious-npm-packages-fake-sigstore-badges-in-antv-ecosystem-attack (Mini Shai-Hulud antv ecosystem — fake-but-valid Sigstore badges)
+  - https://decryptiondigest.com/blog/sigstore-cosign-npm-supply-chain-verification (Sigstore is detectable not preventive — principle reframing)
+  - https://github.com/WICG/html-in-canvas/issues/120 (drawElementImage regression with nested canvases — Chrome 150 blank WebGL/WebGPU/2D)
+  - https://issues.chromium.org/issues/522845799 (drawElementImage never reflects canvas re-renders — Chromium tracker)
+  - https://9to5google.com/2026/01/23/google-chrome-ending-support-for-macos-monterey-in-july-2026 (Chrome 150 last macOS 12 Monterey release)
+  - https://support.google.com/chrome/thread/404150391/sunsetting-support-for-macos-12-monterey-in-mid-2026 (Official Google Chrome support thread — Monterey sunset)
+  - https://macrumors.com/2026/01/12/google-chrome-150-last-version-support-macos-12 (Chrome 150 last version for Monterey)
+  - https://forbes.com/sites/zakdoffman/2026/01/26/googles-chrome-decision-updates-stop-for-millions-of-apple-users (Forbes — millions of Apple users affected)
+  - https://superchargebrowser.com/library/chrome-150-macos-monterey-end-support-2026 (Chrome 150 Monterey end-support library entry)
+  - https://github.com/WICG/html-in-canvas/issues/132 (HTML-in-Canvas WebGL/WebGPU BREAKING API CHANGE — Chrome 150.0.7869.0+)
+  - https://bugzilla.redhat.com/show_bug.cgi?id=2483084 (CVE-2026-9921 Chrome Android WebGL uninitialized use — cross-origin info leak)
+  - https://cvefeed.io/vuln/detail/CVE-2026-9880 (CVE-2026-9880 Chrome WebGL Sandbox Escape — Critical)
+  - https://nationalcybersecurity.com/anthropic-mythos-finds-100-browser-security-bugs-june-2026 (Mythos 100 Chromium zero-days — basis for C-102 cadence-response methodology)
+  - https://testparty.ai/blog/what-triggers-ada-website-lawsuit-2026-patterns (ADA lawsuit pattern analysis — cognitive accessibility gap in self-managed audits)
+  - https://solid-web.com/web-accessibility-developers-guide-2026 (5 fixes that cover 80% of ADA lawsuits — cognitive-load reduction included)
+  - https://mantlr.com/blog/accessibility-lawsuit (ADA Website Compliance 2026 — 27% lawsuit surge, 3117 federal cases 2025)
+  - https://levelaccess.com/blog/2024-u-s-web-accessibility-litigation-key-trends-and-strategies-for-mitigating-risk (Web Accessibility Lawsuits 2026 Trends)
+  - https://80.lv/articles/how-to-solve-player-drop-off-in-modern-mobile-game-design (Nordcurrent data-driven drop-off methodology — per-level retention curves)
+  - https://ejaw.net/how-mobile-game-ux-interface-design-drives-player-retention-in-2026 (Mobile game UX retention methodology March 2026)
+
 ## [v1.61.0] - 2026-06-16
 ### Added
 - 8 new test cases from industry research (R181 Dynamic Test Intelligence cron)
