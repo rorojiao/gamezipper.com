@@ -355,19 +355,19 @@ function isWater(t){return TILE_DEF[t]&&TILE_DEF[t].water;}
 
 /* ---- TOOLS ---- */
 const TOOLS=[
-  {id:"purify",name:"Purifier",cost:3,refund:0,color:"#b89466",desc:"Barren/Toxic → Soil",
+  {id:"purify",name:"Purifier",cost:1,refund:0,color:"#b89466",desc:"Barren/Toxic → Soil",
    glyph:'<path d="M13 4 L19 4 L17 12 L21 12 L13 22 L15 14 L11 14 Z" fill="#fbbf24"/>'},
-  {id:"excavate",name:"Excavator",cost:5,refund:0,color:"#2f86c4",desc:"Soil → River",
+  {id:"excavate",name:"Excavator",cost:1,refund:0,color:"#2f86c4",desc:"Soil → River",
    glyph:'<path d="M4 16 Q12 10 20 16 L20 18 Q12 12 4 18 Z" fill="#3a9bc4"/><path d="M4 14 Q12 8 20 14" stroke="#9fe0ff" stroke-width="1.5" fill="none"/>'},
-  {id:"irrigate",name:"Irrigator",cost:2,refund:1,color:"#22d3ee",desc:"Soil(adj water) → Wetland",
+  {id:"irrigate",name:"Irrigator",cost:1,refund:2,color:"#22d3ee",desc:"Soil(adj water) → Wetland",
    glyph:'<path d="M12 3 C12 3 5 11 5 16 A7 7 0 0 0 19 16 C19 11 12 3 12 3 Z" fill="#22d3ee"/>'},
-  {id:"cultivate",name:"Cultivator",cost:2,refund:2,color:"#4ade80",desc:"Soil → Grassland (spreads)",
+  {id:"cultivate",name:"Cultivator",cost:1,refund:2,color:"#4ade80",desc:"Soil → Grassland (spreads)",
    glyph:'<path d="M4 20 Q8 12 12 20 Q16 12 20 20" stroke="#4ade80" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M12 20 L12 8" stroke="#4ade80" stroke-width="2" stroke-linecap="round"/>'},
-  {id:"arboretum",name:"Arboretum",cost:3,refund:3,color:"#2f8a3e",desc:"Grassland → Forest (spreads)",
+  {id:"arboretum",name:"Arboretum",cost:1,refund:2,color:"#2f8a3e",desc:"Grassland → Forest (spreads)",
    glyph:'<path d="M12 2 L4 14 L8 14 L6 20 L18 20 L16 14 L20 14 Z" fill="#2f8a3e"/><rect x="11" y="20" width="2" height="3" fill="#6b4423"/>'},
-  {id:"coastal",name:"Coastal",cost:2,refund:1,color:"#e0c987",desc:"Soil(adj river) → Beach",
+  {id:"coastal",name:"Coastal",cost:1,refund:2,color:"#e0c987",desc:"Soil(adj water) → Beach",
    glyph:'<circle cx="12" cy="12" r="6" fill="#e0c987"/><path d="M12 8 L12 12 L15 14" stroke="#6b4423" stroke-width="1.6" fill="none" stroke-linecap="round"/>'},
-  {id:"fynbos",name:"Fynbos Seed",cost:2,refund:1,color:"#e8923a",desc:"Grassland → Fynbos",
+  {id:"fynbos",name:"Fynbos Seed",cost:1,refund:2,color:"#e8923a",desc:"Grassland → Fynbos",
    glyph:'<circle cx="12" cy="12" r="3" fill="#e8923a"/><circle cx="7" cy="9" r="2" fill="#fbbf24"/><circle cx="17" cy="10" r="2" fill="#fbbf24"/><circle cx="8" cy="16" r="2" fill="#fbbf24"/><circle cx="16" cy="16" r="2" fill="#fbbf24"/>'}
 ];
 const TOOL_BY_ID={};TOOLS.forEach(t=>TOOL_BY_ID[t.id]=t);
@@ -546,7 +546,7 @@ function applyTool(r,c){
     case"irrigate":ok=(t===T.SOIL)&&nb.some(x=>x===T.RIVER||x===T.WETLAND);newType=T.WETLAND;break;
     case"cultivate":ok=(t===T.SOIL);newType=T.GRASS;spreadType=T.GRASS;break;
     case"arboretum":ok=(t===T.GRASS);newType=T.FOREST;spreadType=T.FOREST;break;
-    case"coastal":ok=(t===T.SOIL)&&nb.some(x=>x===T.RIVER);newType=T.BEACH;break;
+    case"coastal":ok=(t===T.SOIL)&&nb.some(x=>x===T.RIVER||x===T.WETLAND);newType=T.BEACH;break;
     case"fynbos":ok=(t===T.GRASS);newType=T.FYNBOS;break;
   }
   if(!ok){AudioManager.play("fail");flashTile(r,c,"#f87171");return false;}
@@ -570,28 +570,18 @@ function applyTool(r,c){
 }
 /* auto-spread: grass to adj soil, forest to adj grass */
 function doSpread(r,c,type,srcTool){
+  // LIMITED spread (Terra Nil-style gradual growth): converts up to MAX adjacent
+  // target tiles per action, each granting +1 Core refund (positive feedback).
   const target=(type===T.GRASS)?T.SOIL:(type===T.FOREST)?T.GRASS:null;
   if(target===null)return;
-  const g=Game.grid,seen=new Set([r+"_"+c]),frontier=[[r,c]];
-  let steps=0;
-  while(frontier.length&&steps<60){
-    const[cr,cc]=frontier.shift();
-    const adj=[[cr-1,cc],[cr+1,cc],[cr,cc-1],[cr,cc+1]];
-    for(const[nr,nc]of adj){
-      if(nr<0||nr>=Game.H||nc<0||nc>=Game.W)continue;
-      const k=nr+"_"+nc;if(seen.has(k))continue;seen.add(k);
-      if(g[nr][nc]===target){
-        const h=Game.history[Game.history.length-1];
-        h.spreads.push({r:nr,c:nc,prev:target});
-        g[nr][nc]=type;
-        addAnim(nr,nc);
-        spawnParticles(nr,nc,type);
-        frontier.push([nr,nc]);
-        steps++;
-      }
-    }
-  }
-  if(steps>0){AudioManager.play("spread");}
+  const g=Game.grid;const MAX=2;let spread=0;
+  const cands=[];
+  const adj=[[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
+  for(const[nr,nc]of adj){if(nr>=0&&nr<Game.H&&nc>=0&&nc<Game.W&&g[nr][nc]===target)cands.push([nr,nc]);}
+  for(let i=cands.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cands[i],cands[j]]=[cands[j],cands[i]];}
+  const h=Game.history[Game.history.length-1];
+  for(let i=0;i<cands.length&&spread<MAX;i++){const[nr,nc]=cands[i];g[nr][nc]=type;h.spreads.push({r:nr,c:nc,prev:target});addAnim(nr,nc);spawnParticles(nr,nc,type);Game.cores+=1;spread++;}
+  if(spread>0){AudioManager.play("spread");}
 }
 function undo(){
   if(!Game||!Game.history.length)return;
@@ -650,7 +640,7 @@ function checkState(){
   }else{
     document.getElementById("btnPack").disabled=true;
   }
-  if(Game.cores<2&&!goalsMet()&&Game.history.length>3){
+  if(Game.cores<1&&!goalsMet()&&Game.history.length>4){
     // soft-fail: no tool affordable
     const minCost=Math.min(...TOOLS.map(t=>t.cost));
     if(Game.cores<minCost){Game.finished=true;setTimeout(showFail,400);}
@@ -764,7 +754,7 @@ function toolValid(r,c){
     case"irrigate":return t===T.SOIL&&nb.some(x=>x===T.RIVER||x===T.WETLAND);
     case"cultivate":return t===T.SOIL;
     case"arboretum":return t===T.GRASS;
-    case"coastal":return t===T.SOIL&&nb.some(x=>x===T.RIVER);
+    case"coastal":return t===T.SOIL&&nb.some(x=>x===T.RIVER||x===T.WETLAND);
     case"fynbos":return t===T.GRASS;
   }return false;
 }
