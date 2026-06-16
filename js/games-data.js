@@ -382,6 +382,8 @@ const GAMES = [
   {name:"Potion Lab",emoji:"🧪",cat:"puzzle",tags:["Puzzle","Craft","Brew","Time Management","Magic","Casual","Free","HTML5"],url:"/potion-lab/",desc:"Brew magic potions by chopping, grinding and heating ingredients, then serve customer orders before their patience runs out! 24 levels of addictive recipe-brewing puzzle fun.",isNew:true,status:"live"},
   {name:"Balloon Pop Master",emoji:"🎈",cat:"puzzle",tags:["Puzzle","Arcade","Dart","Aim","Throw","Combo","Casual","Free","HTML5"],url:"/balloon-pop/",desc:"Aim darts to pop balloons, build combos, and dodge bombs across 30 levels of satisfying dart-throwing puzzle fun! Free online, no download required.",isNew:true,status:"live"},
   {name:"Speed Math Race",emoji:"⏱",cat:"puzzle",tags:["math","arithmetic","brain-training","educational","speed"],url:"/speed-math/",desc:"Solve math problems against the clock. Build combos, use power-ups, beat your best score in this fast-paced mental arithmetic brain game.",isNew:true,status:"live"},
+
+{name:"Hotel Rush",emoji:"🏨",cat:"puzzle",tags:["hotel","management","time management","tycoon","idle","simulation"],url:"/hotel-rush/",desc:"Play Hotel Rush free online! Build your dream hotel empire in this addictive time management puzzle. Assign guests, clean rooms, hire staff, expand floors. 30 levels, VIP guests, idle income!",isNew:true,status:"live"},
 ];
 
 /**
@@ -405,4 +407,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-

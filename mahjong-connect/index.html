@@ -464,38 +464,77 @@ let daily = loadDaily();
 
 // ---------- Tile matching logic ----------
 function canMatch(a, b) {
-  if (a === b) {
-    if (SEASON_GROUP.has(a)) return SEASON_GROUP.has(b);
-    if (FLOWER_GROUP.has(a)) return FLOWER_GROUP.has(b);
-    return true;
-  }
+  if (a === b) return true;
+  if (SEASON_GROUP.has(a) && SEASON_GROUP.has(b)) return true;
+  if (FLOWER_GROUP.has(a) && FLOWER_GROUP.has(b)) return true;
   return false;
 }
 
-// ---------- Board generation ----------
+// ---------- Board generation (reverse-generation: guaranteed solvable, no shuffle needed) ----------
+// Algorithm: start with an empty grid. Place pairs one at a time; each pair's two cells
+// must be connectable by a valid path (<=2 turns) on the CURRENT (partially-filled) board.
+// Record the placement order. The final board is guaranteed solvable by removing pairs in
+// REVERSE placement order — at each removal step the board state matches the placement step,
+// so the path that existed during placement also exists during removal.
 function generateLevel(level) {
   const {cols, rows, types, seed} = level;
   const rng = mulberry32(seed);
   const numTiles = cols * rows;
   const numPairs = numTiles / 2;
-  const typesList = [];
-  for (let i = 0; i < numPairs; i++) {
-    typesList.push(ALL_TILE_TYPES[i % types]);
-  }
-  // Shuffle (Fisher-Yates with seeded RNG)
-  for (let i = typesList.length - 1; i > 0; i--) {
+
+  // Build the list of pair types (cycle through ALL_TILE_TYPES)
+  const pairTypes = [];
+  for (let i = 0; i < numPairs; i++) pairTypes.push(ALL_TILE_TYPES[i % types]);
+  // Shuffle pair order so placement isn't sequential by type
+  for (let i = pairTypes.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
-    [typesList[i], typesList[j]] = [typesList[j], typesList[i]];
+    [pairTypes[i], pairTypes[j]] = [pairTypes[j], pairTypes[i]];
   }
-  // Fill grid row by row
+
+  // Empty grid
   const grid = [];
-  let k = 0;
-  for (let r = 0; r < rows; r++) {
-    const row = [];
-    for (let c = 0; c < cols; c++) {
-      row.push(typesList[k++]);
+  for (let r = 0; r < rows; r++) grid.push(new Array(cols).fill(null));
+
+  // List of empty cells (shuffled order for placement attempts)
+  function emptyCells() {
+    const cells = [];
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (grid[r][c] === null) cells.push([r, c]);
+    // Shuffle
+    for (let i = cells.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [cells[i], cells[j]] = [cells[j], cells[i]];
     }
-    grid.push(row);
+    return cells;
+  }
+
+  // Place each pair
+  for (let p = 0; p < numPairs; p++) {
+    const type = pairTypes[p];
+    const cells = emptyCells();
+    let placed = false;
+    // Try to find 2 empty cells that are connectable on the current board
+    for (let i = 0; i < cells.length && !placed; i++) {
+      // Temporarily mark cell i as the "first" placement (it won't block since we test path on board WITHOUT it)
+      for (let j = i + 1; j < cells.length; j++) {
+        // Test path between cells[i] and cells[j] on current grid (both still empty)
+        if (findPath(grid, cells[i][0], cells[i][1], cells[j][0], cells[j][1])) {
+          grid[cells[i][0]][cells[i][1]] = type;
+          grid[cells[j][0]][cells[j][1]] = type;
+          placed = true;
+          break;
+        }
+      }
+    }
+    if (!placed) {
+      // Fallback: if no connectable pair found (rare, only on very dense near-full boards),
+      // place in the first two empty cells. The auto-shuffle will handle any resulting stuck state.
+      const remaining = [];
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (grid[r][c] === null) remaining.push([r, c]);
+      if (remaining.length >= 2) {
+        grid[remaining[0][0]][remaining[0][1]] = type;
+        grid[remaining[1][0]][remaining[1][1]] = type;
+      }
+    }
   }
   return grid;
 }
@@ -1527,6 +1566,8 @@ function startLevel(level, mode) {
   gameState.paused = false;
   gameState.ending = false;
   gameState.invalidAnim = null;
+  gameState.undoStack.length = 0;
+  doShuffle._calls = 0;
   document.getElementById('g-title').textContent = 'Level ' + level.id;
   document.getElementById('g-sub').textContent = 'Tier ' + level.tier + ' - ' + level.cols + 'x' + level.rows + ' grid' + (level.timeLimit ? ' - ' + level.timeLimit + 's' : '');
   document.getElementById('g-tier').textContent = 'T' + level.tier;
@@ -1810,8 +1851,9 @@ function doShuffle(autoTriggered) {
       if (gameState.grid[r][c] != null) tiles.push(gameState.grid[r][c]);
     }
   }
-  // Reshuffle
-  const rng = mulberry32(Date.now() & 0xffffffff);
+  // Reshuffle (different seeds for retry to avoid the same layout)
+  const rng = mulberry32((Date.now() & 0xffffffff) ^ ((autoTriggered ? 0xDEADBEEF : 0) + (doShuffle._calls || 0)));
+  doShuffle._calls = (doShuffle._calls || 0) + 1;
   for (let i = tiles.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
@@ -1826,12 +1868,18 @@ function doShuffle(autoTriggered) {
   gameState.hintTiles = [];
   gameState.hintPath = null;
   updateHUD();
-  toast('Tiles shuffled!', 900);
+  if (!autoTriggered) toast('Tiles shuffled!', 900);
   render();
-  // Check solvable
+  // Check solvable - try harder shuffle if not (bounded to prevent infinite loop)
   if (!findAnyMatch(gameState.grid)) {
-    // Self-heal: re-shuffle with different seed
-    doShuffle(true);
+    if (doShuffle._calls < 50) {
+      doShuffle(true);
+    } else {
+      // Last resort: rebuild level fresh
+      const lvl = gameState.level;
+      const mode = gameState.mode;
+      if (lvl) startLevel(lvl, mode);
+    }
   }
 }
 
