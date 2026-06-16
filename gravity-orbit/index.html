@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Play Gravity Orbit Online Free - Guide planets through gravity puzzles | GameZipper</title>
+  <meta name="description" content="Tap-and-drag slingshot planets around gravity wells. 30 handcrafted levels, daily challenges, power-ups, 3-star ratings. Free browser game!">
+  <meta property="og:title" content="Play Gravity Orbit Online Free - Guide planets through gravity puzzles | GameZipper">
+  <meta property="og:description" content="Tap-and-drag slingshot planets around gravity wells. 30 handcrafted levels, daily challenges, power-ups, 3-star ratings. Free browser game!">
+  <meta property="og:image" content="/gravity-orbit/icon.png">
+  <link rel="canonical" href="https://gamezipper.com/gravity-orbit/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Gravity Orbit",
+    "url": "https://gamezipper.com/gravity-orbit/",
+    "genre": "Puzzle",
+    "playMode": "SinglePlayer",
+    "applicationCategory": "Game"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [{
+      "@type": "Question",
+      "name": "How do I play?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Tap and drag to launch a planet. Guide it to collect stars and reach the target zone. Use par launches for 3 stars."}
+    }]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to play Gravity Orbit",
+    "step": [{
+      "@type": "HowToStep",
+      "text": "Tap and drag to aim your slingshot launch."
+    },{
+      "@type": "HowToStep",
+      "text": "Release to launch the planet into orbit."
+    },{
+      "@type": "HowToStep",
+      "text": "Collect stars and reach the target zone to win."
+    }]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [{
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Games",
+      "item": "https://gamezipper.com/"
+    },{
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Gravity Orbit",
+      "item": "https://gamezipper.com/gravity-orbit/"
+    }]
+  }
+  </script>
+  <script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=gravity-orbit"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{overflow-x:hidden;user-select:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0a0a1a,#1a1a2e);color:#fff;min-height:100vh;display:flex;flex-direction:column}
+    #game-container{position:relative;width:100%;max-width:1280px;height:720px;margin:auto;touch-action:none}
+    canvas{display:block;width:100%;height:100%;border-radius:12px;box-shadow:0 0 40px rgba(0,255,255,0.1)}
+    #ui-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+    .hud{position:absolute;top:16px;left:16px;display:flex;gap:20px;font-size:16px;text-shadow:0 2px 4px rgba(0,0,0,0.8)}
+    .hud div{display:flex;align-items:center;gap:8px}
+    .btn{pointer-events:auto;cursor:pointer;padding:10px 20px;border-radius:8px;border:none;background:linear-gradient(135deg,#00ffff,#00bfff);color:#000;font-weight:bold;font-size:14px;transition:transform 0.1s,box-shadow 0.2s;text-shadow:none}
+    .btn:hover{transform:scale(1.05);box-shadow:0 0 20px rgba(0,255,255,0.4)}
+    .btn:active{transform:scale(0.95)}
+    .btn.secondary{background:linear-gradient(135deg,#ff00ff,#ff66ff);color:#fff}
+    #pause-btn{position:absolute;top:16px;right:16px}
+    #modal-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;pointer-events:auto;z-index:100}
+    .modal{background:linear-gradient(135deg,#1a1a2e,#2a2a4e);border-radius:16px;padding:32px;max-width:400px;text-align:center;box-shadow:0 0 40px rgba(0,255,255,0.2)}
+    .modal h2{margin-bottom:16px;font-size:28px;text-shadow:0 0 10px rgba(0,255,255,0.5)}
+    .modal p{margin-bottom:24px;font-size:16px;color:#aaa}
+    .modal-actions{display:flex;gap:12px;justify-content:center}
+    .power-up-btn{width:80px;height:80px;border-radius:12px;border:none;background:linear-gradient(135deg,#ffff00,#ffcc00);color:#000;font-size:12px;font-weight:bold;cursor:pointer;transition:transform 0.1s}
+    .power-up-btn:hover{transform:scale(1.1)}
+    .power-up-btn:disabled{opacity:0.5;cursor:not-allowed}
+    .star-rating{display:flex;gap:8px;margin:20px 0;justify-content:center}
+    .star{width:32px;height:32px;border-radius:50%;background:#333}
+    .star.earned{background:#ffff00;box-shadow:0 0 10px #ffff00}
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game"></canvas>
+    <div id="ui-layer">
+      <div class="hud">
+        <div>Launches: <span id="launch-count">0</span> / <span id="par-count">1</span></div>
+        <div>Stars: <span id="star-count">0</span></div>
+        <div>Coins: <span id="coin-count">0</span></div>
+      </div>
+      <button id="pause-btn" class="btn secondary">Pause</button>
+    </div>
+    <div id="modal-overlay">
+      <div class="modal">
+        <h2 id="modal-title">Paused</h2>
+        <p id="modal-message"></p>
+        <div class="modal-actions" id="modal-actions"></div>
+      </div>
+    </div>
+  </div>
+<script>
+(function(){
+  const canvas=document.getElementById('game');
+  const ctx=canvas.getContext('2d');
+  let width,height,dpr=window.devicePixelRatio||1;
+
+  function resize(){
+    const container=document.getElementById('game-container');
+    width=container.clientWidth;
+    height=container.clientHeight;
+    canvas.width=width*dpr;
+    canvas.height=height*dpr;
+    ctx.scale(dpr,dpr);
+  }
+  resize();
+  window.addEventListener('resize',resize);
+
+  const state={screen:'title',level:0,launches:0,stars:0,coins:0,soundOn:true,musicOn:true,powerups:{},save:{v:1,levels:[],stars:[],coins:0,powerups:{}}};
+  let rafId=null,timers=[],audioCtx=null,bgmNodes=[];
+
+  function startBGM(){
+    if(!audioCtx||state.musicOn===false||bgmNodes.length)return;
+    try{
+      const sr=audioCtx.sampleRate;const dur=16;const bufSize=sr*dur;
+      const buf=audioCtx.createBuffer(1,bufSize,sr);const d=buf.getChannelData(0);
+      const chords=[[261.63,329.63,392.00],[293.66,369.99,440.00],[329.63,415.30,493.88],[293.66,369.99,440.00]];
+      const chordDur=dur/chords.length;
+      for(let i=0;i<bufSize;i++){
+        const t=i/sr;const ci=Math.min(Math.floor(t/chordDur),chords.length-1);const chord=chords[ci];
+        let s=0;
+        for(let n=0;n<chord.length;n++){const f=chord[n];s+=Math.sin(2*Math.PI*f*t)*.06;s+=Math.sin(2*Math.PI*f*2*t)*.015;s+=Math.sin(2*Math.PI*f*0.5*t)*.03;}
+        const fade=t%chordDur;const fadeIn=Math.min(fade/0.8,1);const fadeOut=Math.min((chordDur-fade)/0.8,1);
+        s*=fadeIn*fadeOut;const lfo=Math.sin(2*Math.PI*0.25*t)*0.15+1;d[i]=s*lfo*0.5;}
+      const src=audioCtx.createBufferSource();src.buffer=buf;src.loop=true;
+      const filt=audioCtx.createBiquadFilter();filt.type='lowpass';filt.frequency.value=800;filt.Q.value=1;
+      const g=audioCtx.createGain();g.gain.value=state.musicOn?.25:0;
+      src.connect(filt);filt.connect(g);g.connect(audioCtx.destination);
+      src.start();bgmNodes=[src,filt,g];
+    }catch(e){}
+  }
+  function stopBGM(){
+    bgmNodes.forEach(n=>{try{n.disconnect()}catch(e){}});bgmNodes=[];
+  }
+  function playTone(freq,dur,type='sine'){
+    if(!audioCtx||!state.soundOn)return;
+    const osc=audioCtx.createOscillator();
+    const g=audioCtx.createGain();
+    osc.frequency.value=freq;
+    osc.type=type;
+    g.gain.setValueAtTime(0.1,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+dur);
+    osc.connect(g);g.connect(audioCtx.destination);
+    osc.start();osc.stop(audioCtx.currentTime+dur);
+  }
+
+  const levels=[
+    {name:"Launch Basics",par:1,stars:[],gravityWells:[],obstacles:[],target:{x:600,y:360,radius:50},launch:{x:200,y:360},dailies:3},
+    {name:"Orbit Well",par:2,stars:[{x:400,y:300},{x:500,y:450}],gravityWells:[{x:500,y:360,mass:800}],obstacles:[],target:{x:700,y:360,radius:50},launch:{x:150,y:360},dailies:3},
+    {name:"Bounce Deflector",par:2,stars:[{x:300,y:250},{x:450,y:350}],gravityWells:[],obstacles:[{x:500,y:360,radius:40,type:'bounce'}],target:{x:650,y:400,radius:50},launch:{x:150,y:360},dailies:2},
+    {name:"Twin Wells",par:2,stars:[{x:350,y:280},{x:450,y:440},{x:550,y:360}],gravityWells:[{x:400,y:280,mass:600},{x:500,y:440,mass:600}],obstacles:[],target:{x:700,y:360,radius:50},launch:{x:150,y:360},dailies:3},
+    {name:"Black Hole Avoid",par:2,stars:[{x:300,y:300},{x:500,y:420}],gravityWells:[{x:400,y:360,mass:800}],obstacles:[{x:600,y:360,radius:30,type:'blackhole'}],target:{x:750,y:360,radius:50},launch:{x:150,y:360},dailies:2},
+    {name:"Triple Orbit",par:3,stars:[{x:250,y:250},{x:400,y:360},{x:550,y:470},{x:700,y:360}],gravityWells:[{x:300,y:250,mass:500},{x:500,y:360,mass:600},{x:600,y:470,mass:500}],obstacles:[],target:{x:800,y:360,radius:50},launch:{x:120,y:360},dailies:3},
+    {name:"Deflector Field",par:3,stars:[{x:320,y:260},{x:480,y:320},{x:400,y:450}],gravityWells:[{x:400,y:360,mass:700}],obstacles:[{x:300,y:360,radius:35,type:'bounce'},{x:500,y:360,radius:35,type:'bounce'}],target:{x:650,y:360,radius:50},launch:{x:120,y:360},dailies:3},
+    {name:"Narrow Escape",par:3,stars:[{x:350,y:320},{x:450,y:400}],gravityWells:[{x:400,y:360,mass:900}],obstacles:[{x:350,y:300,radius:25,type:'blackhole'},{x:450,y:420,radius:25,type:'blackhole'}],target:{x:700,y:360,radius:50},launch:{x:120,y:360},dailies:2},
+    {name:"Power-Up Intro",par:2,stars:[{x:300,y:300},{x:500,y:420}],gravityWells:[{x:400,y:360,mass:800}],obstacles:[],powerups:[{x:350,y:360,type:'speed'}],target:{x:650,y:360,radius:50},launch:{x:120,y:360},dailies:2},
+    {name":"Tutorial Complete",par:2,stars:[{x:300,y:300},{x:400,y:360},{x:500,y:420}],gravityWells:[{x:400,y:360,mass:800}],obstacles:[],target:{x:700,y:360,radius:50},launch:{x:120,y:360},dailies:2}
+  ];
+  for(let i=10;i<30;i++){
+    levels.push({
+      name:`Level ${i+1}`,
+      par:2+(i>=20?1:0)+(i>=25?1:0),
+      stars:Array(2+(i>=15?1:0)+(i>=22?1:0)).fill(0).map((_,j)=>({x:200+Math.random()*400,y:200+Math.random()*320})),
+      gravityWells:Array(1+(i>=12?1:0)+(i>=20?1:0)).fill(0).map(()=>({x:300+Math.random()*300,y:250+Math.random()*220,mass:600+Math.random()*400})),
+      obstacles:Array(i>=18?1:0+(i>=24?1:0)).fill(0).map(()=>({x:350+Math.random()*250,y:300+Math.random()*120,radius:30+Math.random()*20,type:Math.random()>0.5?'bounce':'blackhole'})),
+      target:{x:650+Math.random()*80,y:320+Math.random()*80,radius:50},
+      launch:{x:100+Math.random()*50,y:320+Math.random()*80},
+      dailies:2
+    });
+  }
+  for(let i=0;i<10;i++){
+    levels.push({
+      name:`Daily ${i+1}`,
+      par:2+Math.floor(Math.random()*2),
+      stars:Array(2+Math.floor(Math.random()*2)).fill(0).map(()=>({x:200+Math.random()*400,y:200+Math.random()*320})),
+      gravityWells:Array(1+Math.floor(Math.random()*2)).fill(0).map(()=>({x:300+Math.random()*300,y:250+Math.random()*220,mass:600+Math.random()*400})),
+      obstacles:Array(Math.floor(Math.random()*2)).fill(0).map(()=>({x:350+Math.random()*250,y:300+Math.random()*120,radius:30+Math.random()*20,type:Math.random()>0.5?'bounce':'blackhole'})),
+      target:{x:650+Math.random()*80,y:320+Math.random()*80,radius:50},
+      launch:{x:100+Math.random()*50,y:320+Math.random()*80},
+      dailySeed:new Date().toISOString().slice(0,10).replace(/-/g,'')+i,
+      dailies:2
+    });
+  }
+
+  let planet={x:0,y:0,vx:0,vy:0,radius:15,active:false},dragStart=null,trajectory=[],particles=[],collectedStars=[];
+  const G=200;
+
+  function initLevel(idx){
+    const lvl=levels[idx];
+    planet={x:lvl.launch.x,y:lvl.launch.y,vx:0,vy:0,radius:15,active:false};
+    state.launches=0;
+    state.stars=0;
+    collectedStars=[];
+    particles=[];
+    dragStart=null;
+    trajectory=[];
+    document.getElementById('launch-count').textContent='0';
+    document.getElementById('par-count').textContent=lvl.par;
+    document.getElementById('star-count').textContent='0';
+  }
+
+  function update(dt){
+    if(!planet.active)return;
+    const lvl=levels[state.level];
+    planet.vx+=lvl.gravityWells.reduce((s,w)=>{const dx=w.x-planet.x,dy=w.y-planet.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<10)return s;return s+G*w.mass/(dist*dist*dist)*dx},0)*dt;
+    planet.vy+=lvl.gravityWells.reduce((s,w)=>{const dx=w.x-planet.x,dy=w.y-planet.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<10)return s;return s+G*w.mass/(dist*dist*dist)*dy},0)*dt;
+    planet.x+=planet.vx*dt;
+    planet.y+=planet.vy*dt;
+
+    for(const obs of lvl.obstacles){
+      const dx=planet.x-obs.x,dy=planet.y-obs.y,dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<planet.radius+obs.radius){
+        if(obs.type==='bounce'){
+          const nx=dx/dist,ny=dy/dist;const dot=planet.vx*nx+planet.vy*ny;
+          planet.vx-=2*dot*nx;planet.vy-=2*dot*ny;
+          planet.x=obs.x+(obs.radius+planet.radius+1)*nx;planet.y=obs.y+(obs.radius+planet.radius+1)*ny;
+          playTone(600,0.1);particles.push({x:planet.x,y:planet.y,life:1});
+        }else if(obs.type==='blackhole'){
+          planet.active=false;showModal('Lost','Planet fell into a black hole!','Retry',()=>initLevel(state.level));playTone(100,0.5);return;
+        }
+      }
+    }
+    if(planet.x<0||planet.x>width||planet.y<0||planet.y>height){
+      planet.active=false;showModal('Lost','Planet flew off into space!','Retry',()=>initLevel(state.level));return;
+    }
+    for(let i=lvl.stars.length-1;i>=0;i--){
+      const s=lvl.stars[i];
+      const dx=planet.x-s.x,dy=planet.y-s.y,dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<planet.radius+15){
+        lvl.stars.splice(i,1);state.stars++;collectedStars.push(s);
+        document.getElementById('star-count').textContent=state.stars;
+        playTone(800+state.stars*100,0.15);
+        for(let j=0;j<10;j++)particles.push({x:s.x,y:s.y,vx:(Math.random()-0.5)*100,vy:(Math.random()-0.5)*100,life:1});
+      }
+    }
+    const dtg=Math.sqrt((planet.x-lvl.target.x)**2+(planet.y-lvl.target.y)**2);
+    if(dtg<lvl.target.radius){
+      planet.active=false;
+      const starsEarned=Math.min(3,Math.max(1,3-(state.launches-lvl.par)));
+      state.coins+=starsEarned*100;document.getElementById('coin-count').textContent=state.coins;
+      saveProgress();
+      showModal('Victory!',`Stars: ${starsEarned}/3 (Launches: ${state.launches}/${lvl.par})`,state.level<levels.length-1?'Next Level':'Level Select',()=>{if(state.level<levels.length-1)state.level++;initLevel(state.level);state.screen='game';hideModal();},state.level<levels.length-1?null:'Level Select',()=>state.screen='levelselect');
+      playTone(523,0.1);setTimeout(()=>playTone(659,0.1),100);setTimeout(()=>playTone(784,0.2),200);
+      for(let j=0;j<30;j++)particles.push({x:planet.x,y:planet.y,vx:(Math.random()-0.5)*150,vy:(Math.random()-0.5)*150,life:1,color:'#ffff00'});
+    }
+  }
+
+  function draw(){
+    ctx.fillStyle='#0a0a1a';
+    ctx.fillRect(0,0,width,height);
+    for(let i=0;i<50;i++)ctx.beginPath(),ctx.arc((Date.now()/50+i*37)%width,(i*73+Date.now()/80)%height,1,0,Math.PI*2),ctx.fillStyle=`rgba(255,255,255,${0.3+0.3*Math.sin(Date.now()/1000+i)})`,ctx.fill();
+    const lvl=levels[state.level];
+    lvl.gravityWells.forEach(w=>{ctx.beginPath();ctx.arc(w.x,w.y,30,0,Math.PI*2);ctx.fillStyle='#0066ff';ctx.fill();ctx.strokeStyle='#00ffff';ctx.lineWidth=2;ctx.stroke();});
+    lvl.obstacles.forEach(o=>{ctx.beginPath();ctx.arc(o.x,o.y,o.radius,0,Math.PI*2);ctx.fillStyle=o.type==='bounce'?'#ff6600':'#330000';ctx.fill();ctx.strokeStyle=o.type==='bounce'?'#ff9900':'#ff0000';ctx.lineWidth=2;ctx.stroke();});
+    lvl.stars.forEach(s=>{ctx.beginPath();ctx.arc(s.x,s.y,10,0,Math.PI*2);ctx.fillStyle='#ffff00';ctx.fill();ctx.shadowColor='#ffff00';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;});
+    ctx.beginPath();ctx.arc(lvl.target.x,lvl.target.y,lvl.target.radius,0,Math.PI*2);ctx.fillStyle='rgba(0,255,0,0.2)';ctx.fill();ctx.strokeStyle='#00ff00';ctx.lineWidth=3;ctx.stroke();
+    ctx.beginPath();ctx.arc(lvl.launch.x,lvl.launch.y,10,0,Math.PI*2);ctx.fillStyle='#00ffff';ctx.fill();
+    if(dragStart){
+      ctx.beginPath();ctx.moveTo(planet.x,planet.y);ctx.lineTo(dragStart.x,dragStart.y);ctx.strokeStyle='#00ffff';ctx.lineWidth=2;ctx.setLineDash([5,5]);ctx.stroke();ctx.setLineDash([]);
+      for(let t=0;t<20;t++){const time=t*0.1;let tx=planet.x+(planet.x-dragStart.x)*time*5,ty=planet.y+(planet.y-dragStart.y)*time*5;ctx.beginPath();ctx.arc(tx,ty,3,0,Math.PI*2);ctx.fillStyle='rgba(0,255,255,0.5)';ctx.fill();}
+    }
+    ctx.beginPath();ctx.arc(planet.x,planet.y,planet.radius,0,Math.PI*2);ctx.fillStyle='#ffffff';ctx.fill();ctx.shadowColor='#00ffff';ctx.shadowBlur=15;ctx.stroke();ctx.shadowBlur=0;
+    particles.forEach(p=>{p.x+=p.vx*0.016;p.y+=p.vy*0.016;p.life-=0.02;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle=p.color||`rgba(255,255,0,${p.life})`;ctx.fill();});
+    particles=particles.filter(p=>p.life>0);
+    if(state.screen==='title'){
+      ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillRect(0,0,width,height);
+      ctx.font='bold 48px -apple-system,BlinkMacSystemFont,Roboto,sans-serif';ctx.fillStyle='#00ffff';ctx.textAlign='center';ctx.fillText('Gravity Orbit',width/2,height/2-60);
+      ctx.font='24px -apple-system,BlinkMacSystemFont,Roboto,sans-serif';ctx.fillStyle='#fff';ctx.fillText('Tap-and-drag slingshot planets through gravity puzzles',width/2,height/2);
+      ctx.font='20px -apple-system,BlinkMacSystemFont,Roboto,sans-serif';ctx.fillStyle='#aaa';ctx.fillText('30 handcrafted levels • Daily challenges • 3-star ratings',width/2,height/2+40);
+    }
+    if(state.screen==='levelselect'){
+      ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillRect(0,0,width,height);
+      ctx.font='bold 32px -apple-system,BlinkMacSystemFont,Roboto,sans-serif';ctx.fillStyle='#00ffff';ctx.textAlign='center';ctx.fillText('Level Select',width/2,60);
+      const cols=6;for(let i=0;i<levels.length;i++){const col=i%cols,row=Math.floor(i/cols);const x=100+col*180,y=120+row*120;ctx.beginPath();ctx.arc(x,y,40,0,Math.PI*2);ctx.fillStyle=i<=state.level?'#0066ff':'#333';ctx.fill();ctx.strokeStyle=i<=state.level?'#00ffff':'#666';ctx.lineWidth=2;ctx.stroke();ctx.font='bold 20px -apple-system,BlinkMacSystemFont,Roboto,sans-serif';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText(i+1,x,y+8);}
+    }
+  }
+
+  let lastTime=0;
+  function loop(time){
+    const dt=Math.min((time-lastTime)/1000,0.05);
+    lastTime=time;
+    update(dt);
+    draw();
+    rafId=requestAnimationFrame(loop);
+  }
+
+  function showModal(title,msg,btnText,callback,btn2Text,callback2){
+    document.getElementById('modal-title').textContent=title;
+    document.getElementById('modal-message').textContent=msg;
+    const actions=document.getElementById('modal-actions');
+    actions.innerHTML='';
+    if(btnText){
+      const b=document.createElement('button');b.className='btn';b.textContent=btnText;b.onclick=()=>{hideModal();if(callback)callback();};actions.appendChild(b);
+    }
+    if(btn2Text){
+      const b2=document.createElement('button');b2.className='btn secondary';b2.textContent=btn2Text;b2.onclick=()=>{hideModal();if(callback2)callback2();};actions.appendChild(b2);
+    }
+    document.getElementById('modal-overlay').style.display='flex';
+  }
+  function hideModal(){document.getElementById('modal-overlay').style.display='none';}
+
+  function saveProgress(){
+    state.save.levels[state.level]=state.level;
+    state.save.stars[state.level]=Math.max(state.save.stars[state.level]||0,state.stars);
+    state.save.coins=state.coins;
+    state.save.powerups=state.powerups;
+    localStorage.setItem('gravity-orbit',JSON.stringify(state.save));
+  }
+
+  function loadProgress(){
+    const saved=localStorage.getItem('gravity-orbit');
+    if(saved){try{state.save=JSON.parse(saved);if(state.save.v!==1)return;state.level=state.save.levels.length||0;state.coins=state.save.coins||0;state.powerups=state.save.powerups||{};document.getElementById('coin-count').textContent=state.coins;}catch(e){}}
+  }
+
+  canvas.addEventListener('pointerdown',e=>{if(state.screen!=='game'||planet.active)return;const rect=canvas.getBoundingClientRect();const x=(e.clientX-rect.left)*(width/rect.width);const y=(e.clientY-rect.top)*(height/rect.height);const dist=Math.sqrt((x-planet.x)**2+(y-planet.y)**2);if(dist<50)dragStart={x,y};});
+  canvas.addEventListener('pointermove',e=>{if(!dragStart)return;const rect=canvas.getBoundingClientRect();dragStart.x=(e.clientX-rect.left)*(width/rect.width);dragStart.y=(e.clientY-rect.top)*(height/rect.height);});
+  canvas.addEventListener('pointerup',e=>{if(!dragStart||planet.active)return;const dx=planet.x-dragStart.x,dy=planet.y-dragStart.y;const dist=Math.sqrt(dx*dx+dy*dy);if(dist>10){planet.vx=dx*5;planet.vy=dy*5;planet.active=true;state.launches++;document.getElementById('launch-count').textContent=state.launches;playTone(440,0.1);for(let i=0;i<5;i++)particles.push({x:planet.x,y:planet.y,vx:dx*i/2,vy:dy*i/2,life:0.5});}dragStart=null;});
+  document.getElementById('pause-btn').addEventListener('click',()=>{if(state.screen==='game'){state.screen='pause';showModal('Paused','','Resume',()=>{state.screen='game';hideModal();},'Level Select',()=>{state.screen='levelselect';hideModal();});}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.screen==='game'){state.screen='pause';showModal('Paused','','Resume',()=>{state.screen='game';hideModal();},'Level Select',()=>{state.screen='levelselect';hideModal();});}});
+
+  document.addEventListener('click',e=>{
+    if(state.screen==='title'){
+      state.screen='levelselect';loadProgress();
+    }else if(state.screen==='levelselect'){
+      const rect=canvas.getBoundingClientRect();const x=(e.clientX-rect.left)*(width/rect.width);const y=(e.clientY-rect.top)*(height/rect.height);
+      const cols=6;for(let i=0;i<levels.length;i++){const col=i%cols,row=Math.floor(i/cols);const cx=100+col*180,cy=120+row*120;if(Math.sqrt((x-cx)**2+(y-cy)**2)<40&&i<=state.level){state.level=i;initLevel(i);state.screen='game';break;}}
+    }
+  });
+
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){stopBGM();if(rafId){cancelAnimationFrame(rafId);rafId=null;}}else{if(state.screen==='game'){lastTime=performance.now();rafId=requestAnimationFrame(loop);}}});
+  window.addEventListener('beforeunload',cleanup);
+
+  function cleanup(){
+    if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+    timers.forEach(id=>clearInterval(id));timers=[];
+    if(audioCtx){audioCtx.close().catch(()=>{});audioCtx=null;}
+    stopBGM();
+  }
+
+  loadProgress();
+  lastTime=performance.now();
+  rafId=requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
