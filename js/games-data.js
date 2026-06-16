@@ -380,6 +380,7 @@ const GAMES = [
 {name:"Gear Logic",emoji:"⚙",cat:"puzzle",tags:["Puzzle","Logic","Brain","Gear","Mechanical","Grid","Strategy","Brain Teaser","Browser","Free","HTML5"],url:"/gear-logic/",desc:"Place gears on the grid to connect the spinning motor to all targets! A mechanical brain teaser with 24 challenging levels of progressive difficulty. Free online, no download!",isNew:true,status:"live"},
 {name:"Color Blend Studio",emoji:"🎨",cat:"puzzle",tags:["Puzzle","Color","RGB","Mix","Brain","Logic","Educational","Free","HTML5"],url:"/color-blend/",desc:"Mix RGB colors to match the target! 27 levels of color theory puzzle fun. Tap wells to blend, check accuracy, earn stars. Free online!",isNew:true,status:"live"},
   {name:"Potion Lab",emoji:"🧪",cat:"puzzle",tags:["Puzzle","Craft","Brew","Time Management","Magic","Casual","Free","HTML5"],url:"/potion-lab/",desc:"Brew magic potions by chopping, grinding and heating ingredients, then serve customer orders before their patience runs out! 24 levels of addictive recipe-brewing puzzle fun.",isNew:true,status:"live"},
+  {name:"Balloon Pop Master",emoji:"🎈",cat:"puzzle",tags:["Puzzle","Arcade","Dart","Aim","Throw","Combo","Casual","Free","HTML5"],url:"/balloon-pop/",desc:"Aim darts to pop balloons, build combos, and dodge bombs across 30 levels of satisfying dart-throwing puzzle fun! Free online, no download required.",isNew:true,status:"live"},
 ];
 
 /**
