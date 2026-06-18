@@ -229,7 +229,7 @@
   var current = games.find(function(g){ return g.u === cur; });
 
   // SAVE current game to localStorage for homepage "Continue Playing" feature
-  // This was missing â caused gz_recent_games to never be populated
+  // This was missing — caused gz_recent_games to never be populated
   if (current) {
     try {
       var recentList = JSON.parse(localStorage.getItem('gz_recent_games') || '[]');
@@ -248,7 +248,7 @@
    // Deterministic sort: use localStorage recent-play data, fallback to date-hash seed
    function getRecentGames() {
      try {
-       var raw = localStorage.getItem('gz-recent-games');
+       var raw = localStorage.getItem('gz_recent_games');
        return raw ? JSON.parse(raw) : [];
      } catch (e) { return [{name:'Compound Word',e:'🔗',u:'/compound-word/',c:'puzzle'},
 {name:'Quordle',e:'🔤',u:'/quordle/',c:'puzzle'},
@@ -268,16 +268,16 @@
       {n:'Jewel Crush',e:'💎',u:'/jewel-crush/',c:'puzzle'},
       {n:'Go Fish',e:'🐟',u:'/go-fish/',c:'card'},
       {n:'Guess The Emoji',e:'🤔',u:'/guess-the-emoji/',c:'puzzle'},
-      {n:'Trivia Crack',e:'â',u:'/trivia-crack/',c:'puzzle'},
+      {n:'Trivia Crack',e:'❓',u:'/trivia-crack/',c:'puzzle'},
       {n:'Fireboy & Watergirl',e:'🔥',u:'/fireboy-watergirl/',c:'puzzle'},
-      {n:'Plinko',e:'âª',u:'/plinko/',c:'arcade'},
+      {n:'Plinko',e:'⚪',u:'/plinko/',c:'arcade'},
       {n:'Mahjong Dimensions',e:'🀄',u:'/mahjong-dimensions/',c:'puzzle'},
       {n:'Pattern Palace',e:'🔮',u:'/pattern-palace/',c:'puzzle'},
       {n:'Liquid Sort',e:'🧪',u:'/liquid-sort/',c:'puzzle'},
 {n:"Factory Balls",e:"🎨",u:"/factory-balls/",c:"puzzle"},
-{n:"4 Pics 1 Word",e:"🖼ï¸",u:"/picture-word-guessing/",c:"puzzle"},
+{n:"4 Pics 1 Word",e:"🖼️",u:"/picture-word-guessing/",c:"puzzle"},
 {n:"Antistress",e:"🧸",u:"/antistress/",c:"casual"},{n:"Monkey Mart",e:"🐒",u:"/monkey-mart/",c:"casual"},{n:"Gravity Drop",e:"🔴",u:"/gravity-drop/",c:"puzzle"},{n:'Number Nexus',e:'🔢',u:'/number-nexus/',c:'puzzle'},{n:'Poly Art 3D',e:'🎨',u:'/poly-art-3d/',c:'puzzle'},{n:"Baba Is You",e:"🧩",u:"/baba-is-you/",c:"puzzle"},{n:"Nut Sort",e:"🔩",u:"/nut-sort/",c:"puzzle"},
-{n:"Pop Them",e:"\U0001f4a5",u:"/pop-them/",c:"puzzle"},{n:"Heyawake",e:"\u25a2",u:"/heyawake/",c:"puzzle"},{n:"Gokigen Naname",e:"\u25c7",u:"/gokigen-naname/",c:"puzzle"},{n:"Stained Glass",e:"0001F3A8",U:"/STAINED-GLASS/",C:"PUZZLE"},{N:"SANDTRIX",E:"0001F3D6",U:"/SANDTRIX/",C:"PUZZLE"},{n:"Sandtrix",e:"\U0001f3d6\ufe0f",u:"/sandtrix/",c:"puzzle"},
+{n:"Pop Them",e:"💥",u:"/pop-them/",c:"puzzle"},{n:"Heyawake",e:"\u25a2",u:"/heyawake/",c:"puzzle"},{n:"Gokigen Naname",e:"\u25c7",u:"/gokigen-naname/",c:"puzzle"},{n:"Stained Glass",e:"🎨",u:"/stained-glass/",c:"puzzle"},{n:"Sandtrix Classic",e:"🏖",u:"/sandtrix-classic/",c:"puzzle"},{n:"Sandtrix",e:"🏖️",u:"/sandtrix/",c:"puzzle"},
 {n:"Solitaire Roguelite",e:"\U0001f3f0",u:"/solitaire-roguelite/",c:"card"}
 ]; }
    }
