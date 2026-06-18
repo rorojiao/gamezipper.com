@@ -344,7 +344,16 @@ function handleCellTap(cell){if(G.completed)return;const r=+cell.dataset.r,c=+ce
 
 function actHint(){if(G.completed)return;if(G.hintsLeft<=0){toast('No hints left','warn');return}const n=G.size;let target=null;for(let r=0;r<n&&!target;r++)for(let c=0;c<n&&!target;c++){if(G.locked[r][c])continue;if(G.grid[r][c]!==G.level.solution[r][c])target=[r,c]}if(!target){toast('No hints needed — looking good!','success');return}const [r,c]=target;G.history.push({r,c,prev:G.grid[r][c]});G.grid[r][c]=G.level.solution[r][c];G.hintsLeft--;G.hintsUsed++;Audio.sfxHint();refreshCellVisuals();const cell=$('board').children[r*n+c];if(cell){cell.classList.add('hint-glow');setTimeout(()=>cell.classList.remove('hint-glow'),1000)}toast('Hint revealed','success');if(isComplete(G.grid,n))onLevelComplete()}
 function actUndo(){if(G.completed)return;if(G.history.length===0){toast('Nothing to undo','warn');return}const last=G.history.pop();G.grid[last.r][last.c]=last.prev;Audio.sfxClear();refreshCellVisuals()}
-function actReset(){if(G.completed)return;if(!confirm('Clear all your stones? Clues will remain.'))return;const n=G.size;for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(!G.locked[r][c])G.grid[r][c]=null;G.history=[];Audio.sfxClear();refreshCellVisuals();toast('Garden reset')}
+function actReset(){
+  if(G.completed)return;
+  // Two-tap confirmation: first tap arms, second tap within 3s confirms
+  if(!G._resetArmed){
+    G._resetArmed=true;toast('Tap Reset again to confirm','warn');
+    setTimeout(()=>{G._resetArmed=false},3000);return;
+  }
+  G._resetArmed=false;
+  const n=G.size;for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(!G.locked[r][c])G.grid[r][c]=null;G.history=[];Audio.sfxClear();refreshCellVisuals();toast('Garden reset')
+}
 function actCheck(){if(G.completed)return;const n=G.size,bad=findViolations(G.grid,n);if(bad.size===0){let allFilled=true;for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(G.grid[r][c]===null)allFilled=false;if(allFilled){Audio.sfxCheckOk();toast('Perfect harmony!','success')}else{Audio.sfxCheckOk();toast('No conflicts — keep going','success')}}else{Audio.sfxWrong();toast(bad.size+' conflicts found','warn')}}
 
 function onLevelComplete(){
@@ -393,7 +402,11 @@ function init(){
   $('how-btn').addEventListener('click',()=>{Screens.show('howto')});
   $('howto-close').addEventListener('click',()=>{G.save.tutorialSeen=true;persistSave();Screens.show('splash')});
   $('back-splash').addEventListener('click',()=>{Screens.show('splash')});
-  $('game-menu').addEventListener('click',()=>{if(confirm('Return to menu? Progress on this garden will be lost.')){cleanup();buildLevelSelect();Screens.show('select')}});
+  $('game-menu').addEventListener('click',()=>{
+    // Two-tap back confirmation: first tap arms, second tap within 3s confirms
+    if(!G._menuArmed){G._menuArmed=true;toast('Tap Menu again to return to levels','warn');setTimeout(()=>{G._menuArmed=false},3000);return}
+    G._menuArmed=false;cleanup();buildLevelSelect();Screens.show('select')
+  });
   $('game-sound').addEventListener('click',()=>{const next=!G.soundOn;Audio.setSound(next);G.save.soundOn=next;persistSave();$('game-sound').innerHTML=next?'&#128266;':'&#128263;'});
   $('btn-hint').addEventListener('click',actHint);
   $('btn-undo').addEventListener('click',actUndo);
@@ -405,7 +418,7 @@ function init(){
   const resumeOnce=()=>{Audio.init();Audio.resume();document.removeEventListener('pointerdown',resumeOnce);document.removeEventListener('keydown',resumeOnce)};document.addEventListener('pointerdown',resumeOnce);document.addEventListener('keydown',resumeOnce);
   document.addEventListener('keydown',(e)=>{if(e.key==='z'&&(e.ctrlKey||e.metaKey)){e.preventDefault();actUndo()}});
   window.addEventListener('beforeunload',cleanup);
-  if(!G.save.tutorialSeen){setTimeout(()=>{if(confirm('Welcome to Zen Garden! Would you like to see the rules?')){Screens.show('howto')}else{G.save.tutorialSeen=true;persistSave()}},400)}
+  if(!G.save.tutorialSeen){setTimeout(()=>{toast('New here? Tap "How to Play" to learn the 3 rules','success');G.save.tutorialSeen=true;persistSave()},800)}
   console.log('[ZenGarden] init OK — 30 levels, daily challenge ready')
 }
 
