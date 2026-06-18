@@ -393,7 +393,7 @@ const GAMES = [
 {name:"Burger Stack",emoji:"🍔",cat:"puzzle",tags:["burger", "cooking", "restaurant", "time management", "puzzle", "stacking", "food"],url:"/burger-stack/",desc:"Build delicious burgers by stacking ingredients in the right order before customers lose patience! 25 levels, combo bonuses, VIP orders, star ratings. Free online, no download!",isNew:true,status:"live"},
 {name:"Logo Quiz",emoji:"🏷️",cat:"puzzle",tags:["logo","brand","trivia","quiz","guess","brand recognition"],url:"/logo-quiz/",desc:"Play Logo Quiz free online! Guess famous brands from partial logos. 30 brain-teasing levels across 5 categories, hint system, star ratings. No download.",isNew:true,status:"live"},
   {name:"Domino Chain",emoji:"🁣",cat:"puzzle",tags:["Puzzle", "Chain", "Domino", "Physics", "Brain", "Logic", "Spatial", "Casual"],url:"/domino-chain/",desc:"Play Domino Chain online free! Place dominoes on the grid, trigger epic chain reactions, and solve 20 brain-teasing levels. A satisfying spatial puzzle game.",isNew:true,status:"live"},
-  {name:"Zen Garden",emoji:"禅",cat:"puzzle",tags:["Puzzle","Zen","Harmony","Placement","Relaxing","Mindful","Soothing","Casual"],url:"/zen-garden/",desc:"Play Zen Garden free online! Place stones, water, moss, bamboo and lanterns to create harmony. 25 relaxing levels, star ratings, mindful placement puzzle. No download.",isNew:true,status:"live"},
+  {name:"Zen Garden",emoji:"🪨",cat:"puzzle",tags:["Puzzle","Logic","Binairo","Takuzu","Binary","Brain","Zen","Stone"],url:"/zen-garden/",desc:"Play Zen Garden free online! A calming Binairo logic puzzle. Place black and white stones to balance every row and column. 30 handcrafted levels plus daily challenge. No download needed!",isNew:true,status:"live"},
 ,
 ];
 
