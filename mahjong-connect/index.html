@@ -1573,14 +1573,18 @@ function startLevel(level, mode) {
   document.getElementById('g-tier').textContent = 'T' + level.tier;
   document.getElementById('time-label').textContent = level.timeLimit ? 'Time' : 'Timer';
   updateHUD();
-  // Resize after screen transition
+  // Resize after screen transition — show screen FIRST, then resize on next paint
+  // (R183 QA fix: previously resizeCanvas() ran while .board-wrap was still
+  //  display:none, returning width=0 → canvas stuck at 0×0 → unplayable.)
   setTimeout(() => {
-    resizeCanvas();
     showScreen('game');
-    gameState.active = true;
-    lastFrame = performance.now();
-    if (!gameState.rafId) gameState.rafId = requestAnimationFrame(loop);
-    if (save.settings.music) startBGM();
+    requestAnimationFrame(() => {
+      resizeCanvas();
+      gameState.active = true;
+      lastFrame = performance.now();
+      if (!gameState.rafId) gameState.rafId = requestAnimationFrame(loop);
+      if (save.settings.music) startBGM();
+    });
   }, 50);
 }
 
