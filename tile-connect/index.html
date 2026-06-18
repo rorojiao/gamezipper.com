@@ -110,6 +110,7 @@ canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%;touch
 .pause-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,26,.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:150;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
 .pause-overlay h2{font-size:clamp(24px,5vw,36px);color:var(--primary);margin-bottom:10px}
 </style>
+<script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=tile-connect"></script>
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -607,7 +608,7 @@ function track(event,props){
 try{
 if(typeof gtag==='function')gtag('event',event,props||{});
 }catch(e){}
-if(window.console&&window.console.log)console.log('[analytics]',event,props||{});
+if(window.console&&window.)
 }
 </script>
 <script>
@@ -1296,7 +1297,7 @@ $('tutorialStart').onclick=()=>{$('tutorialOverlay').classList.add('hidden');Gam
 // Canvas input
 Game.canvas=document.getElementById('c');
 Game.ctx=Game.canvas.getContext('2d');
-Game.canvas.addEventListener('pointerdown',e=>{
+Game.canvas.addEventListener('pointerdown pointercancel',e=>{
 e.preventDefault();
 const r=Game.canvas.getBoundingClientRect();
 const x=e.clientX-r.left,y=e.clientY-r.top;
@@ -1359,6 +1360,86 @@ if(typeof show_110120==='function')show_110120();
 }
 }catch(e){}
 }
+
+// Ambient A-major chord loop (16s, 4 chords: Amaj-F#m-Dmaj-E)
+const BGM_LOOP_DURATION=16;
+function startBGM(){
+  if(!window.audioCtx){window.audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+  if(window.bgmNodes)return;
+  try{
+    const ctx=window.audioCtx;
+    const sr=ctx.sampleRate;
+    const dur=BGM_LOOP_DURATION;
+    const bufSize=sr*dur;
+    const buf=ctx.createBuffer(1,bufSize,sr);
+    const d=buf.getChannelData(0);
+    const chords=[
+      [220.00,277.18,329.63,440.00], // A3, C#4, E4, A4 (Amaj)
+      [293.66,369.99,440.00,554.37], // D4, F#4, A4, C#5 (F#m equivalent)
+      [293.66,369.99,440.00,554.37], // D4, F#4, A4, C#5 (Dmaj)
+      [329.63,415.30,493.88,659.25]  // E4, G#4, B4, E5 (E)
+    ];
+    const chordDur=dur/chords.length;
+    for(let i=0;i<bufSize;i++){
+      const t=i/sr;
+      const ci=Math.min(Math.floor(t/chordDur),chords.length-1);
+      const chord=chords[ci];
+      let s=0;
+      for(let n of chord){
+        s+=Math.sin(2*Math.PI*n*t)*.05;
+        s+=Math.sin(2*Math.PI*n*2*t)*.015;
+        s+=Math.sin(2*Math.PI*n*0.5*t)*.03;
+      }
+      const fade=t%chordDur;
+      const fadeIn=Math.min(fade/0.8,1);
+      const fadeOut=Math.min((chordDur-fade)/0.8,1);
+      s*=fadeIn*fadeOut;
+      const lfo=Math.sin(2*Math.PI*0.25*t)*0.15+1;
+      d[i]=s*lfo*0.5;
+    }
+    const src=ctx.createBufferSource();
+    src.buffer=buf;src.loop=true;
+    const filt=ctx.createBiquadFilter();
+    filt.type='lowpass';filt.frequency.value=800;filt.Q.value=1;
+    const g=ctx.createGain();
+    g.gain.value=window.state?.musicOn!==false?.0.25:0;
+    src.connect(filt);filt.connect(g);g.connect(ctx.destination);
+    src.start();
+    window.bgmNodes=[src,filt,g];
+  }catch(e){}
+}
+function stopBGM(){
+  if(!window.bgmNodes)return;
+  window.bgmNodes.forEach(n=>{
+    try{if(n.stop)n.stop();if(n.disconnect)n.disconnect();}catch(e){}
+  });
+  window.bgmNodes=null;
+}
+function toggleMusic(){
+  if(window.bgmNodes){
+    window.bgmNodes[2].gain.value=window.bgmNodes[2].gain.value>0?0:0.25;
+  }
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){stopBGM();}else if(window.state?.screen==='game'){startBGM();}
+});
+window.addEventListener('beforeunload',stopBGM);
+
+
+function playTone(freq,dur,type='sine',vol=0.15){
+  if(!window.state?.soundOn)return;
+  try{
+    const ctx=window.audioCtx||(new(window.AudioContext||window.webkitAudioContext)());
+    const osc=ctx.createOscillator();
+    const g=ctx.createGain();
+    osc.type=type;osc.frequency.value=freq;
+    g.gain.setValueAtTime(vol,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+    osc.connect(g);g.connect(ctx.destination);
+    osc.start();osc.stop(ctx.currentTime+dur);
+  }catch(e){}
+}
+
 function init(){
 Game.save=loadSave();
 Game.isMobile=/Mobi|Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent);

@@ -14,6 +14,8 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#ff9a9e,#fecfef)',
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
   'linear-gradient(135deg,#a1c4fd,#c2e9fb)'
+,
+{name:"Tile Connect Classic",emoji:"🎮",cat:"puzzle",tags:["tile matching","onet","emoji","combo"],url:"/tile-connect/",desc:"Match identical emoji tiles via path with max 2 bends. 50 levels, combos, stars, power-ups.",isNew:true,status:"live"}
 ];
 
 const GAMES = [
@@ -386,6 +388,8 @@ const GAMES = [
 {name:"Hotel Rush",emoji:"🏨",cat:"puzzle",tags:["hotel","management","time management","tycoon","idle","simulation"],url:"/hotel-rush/",desc:"Play Hotel Rush free online! Build your dream hotel empire in this addictive time management puzzle. Assign guests, clean rooms, hire staff, expand floors. 30 levels, VIP guests, idle income!",isNew:true,status:"live"},
 {name:"Mahjong Connect",emoji:"🀄",cat:"puzzle",tags:["mahjong","shisen-sho","liananliankan","tile-matching","connect","puzzle","strategy","casual","free","html5"],url:"/mahjong-connect/",desc:"Play Mahjong Connect (Shisen-Sho) free online! Match identical tiles with a path of up to 2 turns. 30 levels across 5 tiers, daily challenge, hint and shuffle power-ups. No download.",isNew:true,status:"live"},
 {name:"Coffee Rush",emoji:"☕",cat:"puzzle",tags:["coffee","barista","time management","drink","cafe","puzzle"],url:"/coffee-rush/",desc:"Play Coffee Rush free online! Be a barista, build coffee drinks, serve customers before patience runs out. 24 levels, combos, upgrades. No download.",isNew:true,status:"live"},
+,
+{name:"Tile Connect Classic",emoji:"🎮",cat:"puzzle",tags:["tile matching","onet","emoji","combo"],url:"/tile-connect/",desc:"Match identical emoji tiles via path with max 2 bends. 50 levels, combos, stars, power-ups.",isNew:true,status:"live"}
 ];
 
 /**
