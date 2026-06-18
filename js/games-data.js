@@ -14,8 +14,7 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#ff9a9e,#fecfef)',
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
   'linear-gradient(135deg,#a1c4fd,#c2e9fb)'
-,
-{name:"Tile Connect Classic",emoji:"🎮",cat:"puzzle",tags:["tile matching","onet","emoji","combo"],url:"/tile-connect/",desc:"Match identical emoji tiles via path with max 2 bends. 50 levels, combos, stars, power-ups.",isNew:true,status:"live"}
+
 ];
 
 const GAMES = [
