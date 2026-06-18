@@ -392,6 +392,8 @@ const GAMES = [
 {name:"Hospital Hero",emoji:"🏥",cat:"puzzle",tags:["hospital","doctor","time management","medical","puzzle","papa games"],url:"/hospital-hero/",desc:"Play Hospital Hero free online! Run a busy hospital, treat patients across 3 departments, manage beds and beat 26 days. Doctor time management puzzle. No download.",isNew:true,status:"live"},
 {name:"Burger Stack",emoji:"🍔",cat:"puzzle",tags:["burger", "cooking", "restaurant", "time management", "puzzle", "stacking", "food"],url:"/burger-stack/",desc:"Build delicious burgers by stacking ingredients in the right order before customers lose patience! 25 levels, combo bonuses, VIP orders, star ratings. Free online, no download!",isNew:true,status:"live"},
 {name:"Logo Quiz",emoji:"🏷️",cat:"puzzle",tags:["logo","brand","trivia","quiz","guess","brand recognition"],url:"/logo-quiz/",desc:"Play Logo Quiz free online! Guess famous brands from partial logos. 30 brain-teasing levels across 5 categories, hint system, star ratings. No download.",isNew:true,status:"live"},
+  {name:"Domino Chain",emoji:"🁣",cat:"puzzle",tags:["Puzzle", "Chain", "Domino", "Physics", "Brain", "Logic", "Spatial", "Casual"],url:"/domino-chain/",desc:"Play Domino Chain online free! Place dominoes on the grid, trigger epic chain reactions, and solve 20 brain-teasing levels. A satisfying spatial puzzle game.",isNew:true,status:"live"},
+,
 ];
 
 /**
