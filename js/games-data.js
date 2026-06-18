@@ -390,6 +390,7 @@ const GAMES = [
 {name:"Tile Connect Classic",emoji:"🎮",cat:"puzzle",tags:["tile matching","onet","emoji","combo"],url:"/tile-connect/",desc:"Match identical emoji tiles via path with max 2 bends. 50 levels, combos, stars, power-ups.",isNew:true,status:"live"},
 {name:"Pack Master",emoji:"📦",cat:"puzzle",tags:["packing","spatial","polyomino","puzzle","brain teaser","fit"],url:"/pack-master/",desc:"Play Pack Master free online! Drag and fit polyomino puzzle pieces into the grid. 36 brain-teasing levels across 6 worlds, star ratings, hints. No download.",isNew:true,status:"live"},
 {name:"Hospital Hero",emoji:"🏥",cat:"puzzle",tags:["hospital","doctor","time management","medical","puzzle","papa games"],url:"/hospital-hero/",desc:"Play Hospital Hero free online! Run a busy hospital, treat patients across 3 departments, manage beds and beat 26 days. Doctor time management puzzle. No download.",isNew:true,status:"live"},
+{name:"Burger Stack",emoji:"🍔",cat:"puzzle",tags:["burger", "cooking", "restaurant", "time management", "puzzle", "stacking", "food"],url:"/burger-stack/",desc:"Build delicious burgers by stacking ingredients in the right order before customers lose patience! 25 levels, combo bonuses, VIP orders, star ratings. Free online, no download!",isNew:true,status:"live"},
 ];
 
 /**
