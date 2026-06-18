@@ -95,10 +95,27 @@
       inpagePushLegacy: 10687755,
       vignetteLegacy: 10687756,
       legacyEnabled: false,  // v5.3: kill switch for legacy zones (proven dead)
+      // v6.5 Adsterra tier — placeholders until user signs up + runs setup-adsterra.sh
+      // See ADSTERRA_SETUP.md for signup → enable flow. zoneId=0 = no-op (no script load).
+      adsterraInpagePush: 0,    // In-Page Push zone id
+      adsterraVignette: 0,      // Vignette / interstitial zone id
+      adsterraPopunder: 0,      // Popunder zone id (onclick-triggered only)
     },
     AD_PROVIDER: 'https://a.magsrv.com/ad-provider.js',
     // Preconnect for faster ad loading
     PRECONNECT: ['https://a.magsrv.com', 'https://static.magsrv.com'],
+    // v6.5 Adsterra config — fail-safe: zoneId=0 / enabled=false / no pub key → no script load
+    // Branched off v5.3 (NOT v6): keeps gz5_ STORAGE_PREFIX + ZONE_BACKOFF (proven 1.3% fill wins).
+    // Activation: window.GZ_ADSTERRA_ENABLED = true + set adsterraInpagePush/Vignette zone ids.
+    ADSTERRA: {
+      enabled: (typeof window.GZ_ADSTERRA_ENABLED === 'boolean' ? window.GZ_ADSTERRA_ENABLED : false),
+      publisherKey: (window.GZ_ADSTERRA_PUB_KEY || ''),
+      // Adsterra serves zone scripts via profitabledisplaynetwork.com/{zoneId}.js
+      providerUrl: 'https://www.profitabledisplaynetwork.com/',
+      fallbackUrl: 'https://adsterra.com/ads.php',
+      // Preconnect for adsterra CDN subdomains
+      PRECONNECT: ['https://www.profitabledisplaynetwork.com', 'https://www.adsterra.com', 'https://pl.pub-pc.com'],
+    },
     // 频率控制 — 对标 Poki 克制策略
     FREQUENCY: {
       minBetweenAds: 45 * 1000,        // 45s minimum between any two ads (对标 Poki)
@@ -450,6 +467,112 @@
   }
   window.gzAdEvents = adEvents;
 
+  // ==================== ADSTERRA LOADER (v6.5 — Tier 4 fallback) ====================
+  // Cherry-picked from v6-adsterra-tier onto v5.3 base. Mirrors loadZone() but for
+  // Adsterra zones (profitabledisplaynetwork.com/{zoneId}.js).
+  // Fail-safe: rejects immediately if not enabled or zoneId=0 — zero resource cost when off.
+  // When CONFIG.ADSTERRA.enabled && zoneId > 0:
+  //   - Loads script via providerUrl/{zoneId}.js (profitabledisplaynetwork.com)
+  //   - MutationObserver watches targetEl for visible iframes / Adsterra class
+  //   - Resolves on real fill detection (>50x50 iframe or visible adsterra element)
+  //   - Rejects on timeout (5s default) or load error
+  // Network labels emitted via trackAdEvent:
+  //   - "adsterra_inpage" / "adsterra_vignette" / "adsterra_popunder"
+  function loadAdsterraZone(zoneId, targetEl, zoneType) {
+    return new Promise(function(resolve, reject) {
+      if (!CONFIG.ADSTERRA.enabled) { reject(new Error('adsterra_disabled')); return; }
+      if (!zoneId || zoneId === 0) { reject(new Error('adsterra_no_zone')); return; }
+      if (state.adBlockDetected) { reject(new Error('blocked')); return; }
+
+      zoneType = zoneType || 'inpage';  // 'inpage' | 'vignette' | 'popunder'
+      var networkName = 'adsterra_' + zoneType;
+
+      var timeout = setTimeout(function() {
+        if (observer) observer.disconnect();
+        trackAdEvent('no_fill', { network: networkName, zoneId: zoneId, containerId: (targetEl && targetEl.id) || '' });
+        reject(new Error('timeout'));
+      }, CONFIG.TIMING.adLoadTimeout);
+
+      var observer = null;
+      var resolved = false;
+      function checkFill() {
+        if (resolved) return;
+        if (targetEl) {
+          // Check for visible iframes (Adsterra injects standard ad iframes)
+          var iframes = targetEl.querySelectorAll('iframe');
+          for (var i = 0; i < iframes.length; i++) {
+            var f = iframes[i];
+            var w = f.offsetWidth || parseInt(f.getAttribute('width') || '0');
+            var h = f.offsetHeight || parseInt(f.getAttribute('height') || '0');
+            if (w >= 50 && h >= 50) {
+              resolved = true;
+              if (observer) observer.disconnect();
+              clearTimeout(timeout);
+              trackAdEvent('fill', { network: networkName, zoneId: zoneId, containerId: targetEl.id || '' });
+              resolve(true);
+              return;
+            }
+          }
+          // Check for Adsterra-named containers (id or class containing "adsterra")
+          var ads = targetEl.querySelectorAll('[id*="adsterra"], [class*="adsterra"]');
+          for (var k = 0; k < ads.length; k++) {
+            var a = ads[k];
+            if (a.offsetWidth > 50 && a.offsetHeight > 30 && a !== targetEl) {
+              resolved = true;
+              if (observer) observer.disconnect();
+              clearTimeout(timeout);
+              trackAdEvent('fill', { network: networkName, zoneId: zoneId, containerId: targetEl.id || '' });
+              resolve(true);
+              return;
+            }
+          }
+        }
+      }
+
+      if (targetEl && typeof MutationObserver !== 'undefined') {
+        observer = new MutationObserver(function() { checkFill(); });
+        observer.observe(targetEl, { childList: true, subtree: true, attributes: true });
+      }
+
+      // Adsterra modern loader: profitabledisplaynetwork.com/{zoneId}.js
+      var s = document.createElement('script');
+      s.src = CONFIG.ADSTERRA.providerUrl + String(zoneId) + '.js';
+      s.async = true;
+      s.setAttribute('data-zone', String(zoneId));
+      s.setAttribute('data-network', 'adsterra');
+      s.setAttribute('data-cf-beacon', 'gz65_adsterra_' + zoneId + '_' + Date.now());
+      s.setAttribute('data-cf-async', 'false');
+      s.onload = function() {
+        trackAdEvent('script_loaded', { network: networkName, zoneId: zoneId });
+        setTimeout(function() {
+          if (resolved) return;
+          checkFill();
+          if (!resolved) {
+            setTimeout(function() {
+              if (resolved) return;
+              checkFill();
+              if (!resolved) {
+                if (observer) observer.disconnect();
+                clearTimeout(timeout);
+                trackAdEvent('no_fill', { network: networkName, zoneId: zoneId });
+                reject(new Error('no_visible_fill'));
+              }
+            }, 1500);
+          }
+        }, 800);
+      };
+      s.onerror = function() {
+        clearTimeout(timeout);
+        if (observer) observer.disconnect();
+        // Do NOT set adBlockDetected — Monetag may still work even if Adsterra CDN fails
+        trackAdEvent('load_error', { network: networkName, zoneId: zoneId });
+        reject(new Error('load_err'));
+      };
+
+      if (targetEl) { targetEl.appendChild(s); } else { document.head.appendChild(s); }
+    });
+  }
+
   // ==================== AD LOADER ====================
   // v5.1: Returns promise that resolves ONLY when actual ad DOM is detected.
   // - Resolves when ad-provider.js inserts visible content (iframe/img with size > 0)
@@ -722,7 +845,21 @@
           loadZone(CONFIG.ZONES.vignetteLegacy).then(function() {
             onAdFilled('monetag_vignette_legacy');
           }).catch(function() {
-            trackAdEvent('commercial_break_no_fill', {});
+            // v6.5 Tier 4: Adsterra vignette — bypass Monetag 14-day 0% fill.
+            // Only fires when CONFIG.ADSTERRA.enabled + zoneId configured.
+            // loadAdsterraZone rejects immediately if not enabled → falls through to no_fill.
+            if (adFilled) return;
+            loadAdsterraZone(CONFIG.ZONES.adsterraVignette, null, 'vignette').then(function() {
+              onAdFilled('adsterra_vignette');
+            }).catch(function() {
+              // v6.5 Tier 4b: Adsterra in-page push (last resort before user sees blank break)
+              if (adFilled) return;
+              loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, null, 'inpage').then(function() {
+                onAdFilled('adsterra_inpage');
+              }).catch(function() {
+                trackAdEvent('commercial_break_no_fill', {});
+              });
+            });
           });
         });
       }, 1500);
@@ -1069,7 +1206,14 @@
           loadZone(CONFIG.ZONES.inpagePushLegacy, container).then(function() {
             container.setAttribute('data-filled', '1');
             markAdShown('homepage_banner');
-          }).catch(function() {});
+          }).catch(function() {
+            // v6.5 Tier 4: Adsterra in-page push (no-op if not enabled or zoneId=0)
+            if (!canShowAd('homepage_banner')) return;
+            loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, container, 'inpage').then(function() {
+              container.setAttribute('data-filled', '1');
+              markAdShown('homepage_banner');
+            }).catch(function() {});
+          });
         });
       }, 2000);
     }, CONFIG.TIMING.homepageBannerDelay);
@@ -1112,7 +1256,14 @@
           loadZone(CONFIG.ZONES.inpagePushLegacy, container).then(function() {
             container.setAttribute('data-filled', '1');
             markAdShown('homepage_banner');
-          }).catch(function() {});
+          }).catch(function() {
+            // v6.5 Tier 4: Adsterra in-page push (no-op if not enabled or zoneId=0)
+            if (!canShowAd('homepage_banner')) return;
+            loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, container, 'inpage').then(function() {
+              container.setAttribute('data-filled', '1');
+              markAdShown('homepage_banner');
+            }).catch(function() {});
+          });
         });
       }, 2000);
     }, CONFIG.TIMING.homepageBannerDelay + 5000); // 6.5s total delay
@@ -1160,8 +1311,19 @@
             container.style.textAlign = 'center';
             container.style.padding = '12px 0';
           }).catch(function() {
-            // All 3 tiers failed — keep container hidden (no white box)
-            container.style.display = 'none';
+            // v6.5 Tier 4: Adsterra in-page push (no-op if not enabled or zoneId=0)
+            if (!canShowAd('homepage_banner')) return;
+            loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, container, 'inpage').then(function() {
+              container.setAttribute('data-filled', '1');
+              markAdShown('homepage_banner');
+              container.style.display = 'block';
+              container.style.minHeight = '100px';
+              container.style.textAlign = 'center';
+              container.style.padding = '12px 0';
+            }).catch(function() {
+              // All 4 tiers failed — keep container hidden (no white box)
+              container.style.display = 'none';
+            });
           });
         });
       }, 2000);
@@ -1222,8 +1384,16 @@
             markAdShown('container');
             container.style.display = container.getAttribute('data-gz-orig-display') || 'block';
           }).catch(function() {
-            // Keep hidden — no white box
-            container.style.display = 'none';
+            // v6.5 Tier 4: Adsterra in-page push (no-op if not enabled or zoneId=0)
+            if (!canShowAd('container')) return;
+            loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, container, 'inpage').then(function() {
+              container.setAttribute('data-filled', '1');
+              markAdShown('container');
+              container.style.display = container.getAttribute('data-gz-orig-display') || 'block';
+            }).catch(function() {
+              // Keep hidden — no white box
+              container.style.display = 'none';
+            });
           });
         });
       }, 2000);
