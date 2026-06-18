@@ -383,10 +383,19 @@ function buildLevelSelect(){
 }
 
 function startDaily(){
-  const today=new Date();const seed=parseInt(today.toISOString().slice(0,10).replace(/-/g,''));
-  const sizes=[6,8,8,10];const n=sizes[seed%sizes.length];
+  const today=new Date();const baseSeed=parseInt(today.toISOString().slice(0,10).replace(/-/g,''));
+  const sizes=[6,8,8,10];const n=sizes[baseSeed%sizes.length];
   toast('Generating today\'s garden...');
-  setTimeout(()=>{const lvl=genDailyLevel(seed,n);if(!lvl){toast('Could not generate daily, try again','warn');return}const parsed={id:'daily',n:lvl.n,clues:lvl.p,solution:lvl.s};startLevel(parsed,true)},30)
+  setTimeout(()=>{
+    // Retry with multiple seeds — genDailyLevel's randomized backtracking
+    // fails for some seeds (~50%), so try several until one succeeds.
+    let lvl=null;
+    for(let offset=0;offset<40 && !lvl;offset++){
+      lvl=genDailyLevel(baseSeed+offset*7919,n);
+    }
+    if(!lvl){toast('Could not generate daily, try again','warn');return}
+    const parsed={id:'daily',n:lvl.n,clues:lvl.p,solution:lvl.s};startLevel(parsed,true)
+  },30)
 }
 
 function cleanup(){
