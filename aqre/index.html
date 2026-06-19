@@ -268,7 +268,7 @@ function buildRoomGrid(){var rg=[];for(var r=0;r<G.R;r++){var row=[];for(var c=0
 // ===== RENDERING =====
 function layoutCanvas(){var wrapW=canvas.parentElement.clientWidth-28;var avail=Math.min(wrapW,460);var cs=Math.floor(avail/G.C);cs=Math.max(cs,30);var W=cs*G.C;canvas.width=W;canvas.height=cs*G.R;canvas.style.width=W+'px';canvas.style.height=(cs*G.R)+'px';G.cs=cs;G.W=W;}
 function sameRoom(r1,c1,r2,c2){if(r2<0||r2>=G.R||c2<0||c2>=G.C)return false;return G.roomGrid[r1][c1]===G.roomGrid[r2][c2];}
-function draw(){if(!G.lvl)return;var cs=G.cs,W=G.W;ctx.save();ctx.clearRect(0,0,canvas.width,canvas.height);if(G.shake>0){ctx.translate((Math.random()-0.5)*G.shake,(Math.random()-0.5)*G.shake);G.shake*=0.85;if(G.shake<0.3)G.shake=0;}
+function draw(){if(!G.lvl||!G.cs)return;var cs=G.cs,W=G.W;ctx.save();ctx.clearRect(0,0,canvas.width,canvas.height);if(G.shake>0){ctx.translate((Math.random()-0.5)*G.shake,(Math.random()-0.5)*G.shake);G.shake*=0.85;if(G.shake<0.3)G.shake=0;}
  // background fill
  ctx.fillStyle='#0e0e1c';ctx.fillRect(0,0,W,canvas.height);
  var viol=new Set();G.violations.forEach(function(v){viol.add(v);});
@@ -329,7 +329,7 @@ function onPointer(e){if(G.won)return;e.preventDefault();initAudio();var idx=cel
 }
 
 // ===== LEVEL FLOW =====
-function startLevel(idx){G.idx=idx;G.lvl=LEVELS[idx];G.R=G.lvl.rows;G.C=G.lvl.cols;G.states=new Array(G.R*G.C).fill(0);buildRoomGrid();G.history=[];G.hintsLeft=3;G.hintsUsed=0;G.won=false;G.elapsed=0;G.startTime=Date.now();G.animParticles=[];G.shake=0;G.violations=[];G.mode='shade';updateModeUI();$('hintCount').textContent='3';$('gmLevelTitle').textContent='Level '+(idx+1);$('gmLevelMeta').textContent=G.lvl.tier+' · '+G.R+'×'+G.C;layoutCanvas();computeViolations();draw();showScreen('game');startTimer();initAudio();startBGM();}
+function startLevel(idx){G.idx=idx;G.lvl=LEVELS[idx];G.R=G.lvl.rows;G.C=G.lvl.cols;G.states=new Array(G.R*G.C).fill(0);buildRoomGrid();G.history=[];G.hintsLeft=3;G.hintsUsed=0;G.won=false;G.elapsed=0;G.startTime=Date.now();G.animParticles=[];G.shake=0;G.violations=[];G.mode='shade';updateModeUI();$('hintCount').textContent='3';$('gmLevelTitle').textContent='Level '+(idx+1);$('gmLevelMeta').textContent=G.lvl.tier+' · '+G.R+'×'+G.C;showScreen('game');startTimer();initAudio();startBGM();requestAnimationFrame(function(){layoutCanvas();computeViolations();draw();});}
 function startTimer(){stopTimer();G.timerInt=setInterval(function(){G.elapsed=Math.floor((Date.now()-G.startTime)/1000);var m=Math.floor(G.elapsed/60),s=G.elapsed%60;$('gmTime').textContent=m+':'+(s<10?'0':'')+s;},500);}
 function stopTimer(){if(G.timerInt){clearInterval(G.timerInt);G.timerInt=null;}}
 function cleanupGame(){stopTimer();stopBGM();if(G.raf){cancelAnimationFrame(G.raf);G.raf=null;}}
