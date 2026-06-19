@@ -748,7 +748,7 @@ function fmtTime(s){
 
 /* ----------------- BOARD RENDER ----------------- */
 function buildBoard(level){
-  const n = level.n;
+  const n = level.size;
   const board = document.getElementById("board");
   board.innerHTML = "";
   // compute cell size
@@ -871,7 +871,7 @@ function renderBoard(){
 }
 
 function buildNumpad(level){
-  const n = level.n;
+  const n = level.size;
   const pad = document.getElementById("numpad");
   pad.innerHTML = "";
   pad.style.gridTemplateColumns = `repeat(${Math.min(n, 7)}, 1fr)`;
