@@ -21,6 +21,23 @@ function segType(cells) {
   return dirs.size === 1 ? 'moon' : 'sun';
 }
 
+function classifyRoomByPath(cells, fullPath) {
+  if (cells.length === 0) return 'moon';
+  if (cells.length === 1) {
+    const c = cells[0];
+    let idx = -1;
+    for (let i = 0; i < fullPath.length; i++) {
+      if (fullPath[i][0] === c[0] && fullPath[i][1] === c[1]) { idx = i; break; }
+    }
+    if (idx === -1) return 'moon';
+    const prevDir = idx > 0 ? `${c[0]-fullPath[idx-1][0]},${c[1]-fullPath[idx-1][1]}` : null;
+    const nextDir = idx < fullPath.length-1 ? `${fullPath[idx+1][0]-c[0]},${fullPath[idx+1][1]-c[1]}` : null;
+    if (!prevDir || !nextDir) return 'moon';
+    return prevDir === nextDir ? 'moon' : 'sun';
+  }
+  return segType(cells);
+}
+
 let pass = 0, fail = 0;
 for (const L of LEVELS) {
   const errors = [];
@@ -61,8 +78,8 @@ for (const L of LEVELS) {
         errors.push(`room ${ri} cell ${j} not consecutive`); break;
       }
     }
-    // Type check
-    const actualType = segType(room.cells);
+    // Type check (path-based)
+    const actualType = classifyRoomByPath(room.cells, L.solution);
     if (actualType !== room.type) {
       errors.push(`room ${ri} type ${room.type} != actual ${actualType}`);
     }
