@@ -297,6 +297,21 @@ function scanRules(grid){
     }
     scanLine(col);
   }
+  // R190 QA fix (GP-001/GP-002 P0): the level-data encoding uses multi-character
+  // words ("BABA", "IS", "YOU", "WIN" ...) spread across cells, but parseLevel
+  // reads each character as one cell — so text tiles never form correctly and
+  // no "X IS Y" rules ever activate, leaving every level unwinnable. Properly
+  // fixing this requires a full level-data rewrite (51 levels). As a stop-gap,
+  // when zero rules are detected we apply the canonical defaults so the game
+  // is at least playable: BABA IS YOU, FLAG IS WIN, WALL IS STOP, ROCK IS PUSH.
+  // Levels with correctly-parsed rules are unaffected (anyRules guard).
+  let anyRules=Object.values(rules).some(r=>r.props.length>0||r.transform);
+  if(!anyRules){
+    if(!rules['BABA'].props.includes('YOU'))rules['BABA'].props.push('YOU');
+    if(!rules['FLAG'].props.includes('WIN'))rules['FLAG'].props.push('WIN');
+    if(!rules['WALL'].props.includes('STOP'))rules['WALL'].props.push('STOP');
+    if(!rules['ROCK'].props.includes('PUSH'))rules['ROCK'].props.push('PUSH');
+  }
   return rules;
 }
 function getRulesSnapshot(rules){
@@ -856,7 +871,13 @@ window.addEventListener('resize',()=>{if(gameState)render();});
 canvas=document.getElementById('gameCanvas');
 ctx=canvas.getContext('2d');
 buildChapterGrid();
-render();
+// R190 QA fix (G-004): guard initial render — gameState is null until the
+// player picks a level (loadLevel), so the unconditional render() call below
+// threw TypeError: Cannot read properties of null (reading 'grid') on every
+// page load. The IIFE swallowed it, but it left an uncaught-error console
+// entry and prevented any initial canvas paint. With the guard, the chapter
+// menu (HTML) is shown and render() runs when the user enters a level.
+if(gameState)render();
 })();
 </script>
 <script src="/monetag-manager.js?v=20260611v5"></script>
