@@ -282,6 +282,10 @@ let floatingTexts = [];
 let lastTime = 0;
 let pointerState = {active:false};
 let guideSlots = [];
+// R-verify P1 fix: _timers was USED in cleanup() (L576) but never declared → ReferenceError on every
+// beforeunload. Declared here so the cleanup contract is intact (intervals are still platform-level
+// game-over detectors not pushed here, but the function no longer throws).
+let _timers = [];
 window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight - 40; });
 
 function buildWave(w){
@@ -584,6 +588,15 @@ function startGame(){
   towers.length=0;bosses.length=0;coinDrops.length=0;bullets.length=0;
   player.x=120;player.y=canvas.height/2;
   selectedTower=null;
+  // R-verify P0 fix: guideSlots was declared empty (L284) but NEVER populated → buildMode tap-to-build
+  // threw TypeError at handleCanvasTap (slot=undefined → slot.x throws) → game unplayable on mobile
+  // (no keyboard workaround). Grid of 40x40 build slots spaced 60px apart across playable area.
+  guideSlots = [];
+  for(let gx=80; gx<canvas.width-80; gx+=60){
+    for(let gy=80; gy<canvas.height-80; gy+=60){
+      guideSlots.push({x:gx, y:gy});
+    }
+  }
   buildWave(1);
   document.getElementById('overlay').style.display='none';
   document.getElementById('btnSpeed').textContent='Speed ×2';

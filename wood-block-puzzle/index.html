@@ -260,6 +260,12 @@ const WOOD_COLORS = ['#DEB887','#D2691E','#8B4513','#A0522D','#CD853F','#F4A460'
 const canvas = document.getElementById('c');
 const scoreEl = document.getElementById('score');
 const comboEl = document.getElementById('combo');
+// R-verify P0 fix: bestScore/bestEl/SAVE_KEY were USED (L393/395/396/469) but never declared →
+// ReferenceError on first line-clear aborted checkAndClearLines → puzzle unplayable past 1 line +
+// GP-100/101 persistence broken (setItem(undefined,...) wrote wrong key). Declared here + load on start.
+const SAVE_KEY = 'gz_wood-block-puzzle_v1';
+let bestScore = 0;
+const bestEl = document.getElementById('best');
 const ctx = canvas.getContext('2d');
 let W = canvas.width = window.innerWidth;
 let H = canvas.height = window.innerHeight - 30;
@@ -476,6 +482,8 @@ function startGame() {
   scoreEl.textContent = '0'; comboEl.textContent = 'x1';
   dragging = null; floats = []; particles = []; flashCells = {};
   shakeTime = 0;
+  // R-verify P0 fix: load best score from localStorage so GP-100/101 persistence works.
+  try { bestScore = parseInt(localStorage.getItem(SAVE_KEY)) || 0; bestEl.textContent = bestScore; } catch(e){}
   initGrid();
   spawnPieces();
   gameActive = true;
