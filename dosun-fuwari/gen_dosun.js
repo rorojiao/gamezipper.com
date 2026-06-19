@@ -352,4 +352,4 @@ function main(){
 }
 
 if(require.main===module) main();
-module.exports={solve:solve, verify:verify, genLevel:genLevel, makeRng:makeRng};
+module.exports={solve:solve, verify:verify, genLevel:genLevel, makeRng:makeRng, genRegions:genRegions, nonWallIsolated:nonWallIsolated, neighbors:neighbors};
