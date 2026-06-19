@@ -575,6 +575,17 @@ document.addEventListener('keydown',(e)=>{
   if(e.key==='r'){resetLevel();}
 });
 
+// ==================== CLEANUP (no leaks: stop music, clear timers, remove listeners) ====================
+function cleanup(){
+  stopMusic();
+  won = true; // halt render-dependent win timers
+  particles = [];
+  placeAnim = {};
+  if(masterGain && audioCtx){ try{ masterGain.gain.cancelScheduledValues(audioCtx.currentTime); masterGain.gain.value=0; }catch(e){} }
+}
+window.addEventListener('beforeunload', cleanup);
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ stopMusic(); } else if(sett.music){ startMusic(); } });
+
 // ==================== STARTUP SELF-CHECK (uniqueness) ====================
 (function selfCheck(){
   // light sanity: every level has regions + walls arrays + solution
