@@ -868,23 +868,22 @@ function check(){
 }
 
 function checkRoom(rm, path){
-  // Path passes through every cell of the room consecutively (because path is one line and cells of room are path-consecutive)
-  // Find start index in path
-  let startIdx = -1;
+  // Path passes through every cell of the room consecutively (because path is one line and cells of room are path-consecutive).
+  // Player may trace in either direction, so find indices of all room cells and verify they form a contiguous block.
+  const cellSet = new Set(rm.cells.map(c => c[0]+','+c[1]));
+  const indices = [];
   for (let i = 0; i < path.length; i++) {
-    if (path[i][0] === rm.cells[0][0] && path[i][1] === rm.cells[0][1]) { startIdx = i; break; }
+    if (cellSet.has(path[i][0]+','+path[i][1])) indices.push(i);
   }
-  if (startIdx === -1) return {ok:false, msg:'not on path'};
-  // Verify all cells of room are path-consecutive
-  for (let j = 0; j < rm.cells.length; j++) {
-    const want = rm.cells[j], got = path[startIdx + j];
-    if (!got || got[0] !== want[0] || got[1] !== want[1]) return {ok:false, msg:'cells not consecutive on path'};
+  if (indices.length !== rm.cells.length) return {ok:false, msg:'not all cells on path'};
+  for (let i = 1; i < indices.length; i++) {
+    if (indices[i] !== indices[i-1] + 1) return {ok:false, msg:'cells not consecutive on path'};
   }
-  // Classify room based on path
-  const cells = rm.cells;
+  // Get cells in player's path order at these indices
+  const cells = indices.map(i => path[i]);
   if (cells.length === 1) {
     const c = cells[0];
-    const idx = startIdx;
+    const idx = indices[0];
     const prevDir = idx > 0 ? dirStr(path[idx-1], c) : null;
     const nextDir = idx < path.length-1 ? dirStr(c, path[idx+1]) : null;
     if (!prevDir || !nextDir) return {ok:true}; // endpoint
@@ -893,7 +892,7 @@ function checkRoom(rm, path){
     if (rm.type === 'sun' && !turn) return {ok:false, msg:'must turn'};
     return {ok:true};
   }
-  // Multi-cell: check directions within room
+  // Multi-cell: check directions within room (in player's traversal order)
   const dirs = new Set();
   for (let i = 0; i < cells.length - 1; i++) {
     dirs.add(dirStr(cells[i], cells[i+1]));
