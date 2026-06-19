@@ -275,6 +275,9 @@ window.addEventListener('resize',initStarfield);
 /* ============ LEVEL LOAD ============ */
 function loadLevel(i){cur=i;var L=LEVELS[i];R=L.rows;C=L.cols;dots=L.dots.map(function(d){return [d[0],d[1]];});
   owner=[];for(var r=0;r<R;r++){owner.push(new Array(C).fill(-1));}
+  // Pre-assign each dot to its own galaxy (the dot IS the galaxy center — its own
+  // 180deg mirror). Player grows regions outward from these seeds.
+  for(var d=0;d<dots.length;d++){owner[dots[d][0]][dots[d][1]]=d;}
   selectedDot=-1;history=[];hintsLeft=3;solved=false;particles=[];elapsed=0;startTs=performance.now();
   layoutBoard();
   elLevel.textContent=i+1;elTier.textContent=L.tier;elTier.style.color=TIER_COLORS[L.tier];
@@ -421,7 +424,9 @@ function onWin(){var secs=Math.floor(elapsed);
 /* ============ ACTIONS ============ */
 function undo(){if(!history.length||solved)return;var h=history.pop();
   owner[h.r][h.c]=h.prev;if(h.mr>=0)owner[h.mr][h.mc]=h.mprev;sfx('click');updateHud();}
-function resetLevel(){for(var r=0;r<R;r++)for(var c=0;c<C;c++)owner[r][c]=-1;history=[];hintsLeft=3;solved=false;selectedDot=-1;startTs=performance.now();elapsed=0;sfx('click');updateHud();updateSelInfo();}
+function resetLevel(){for(var r=0;r<R;r++)for(var c=0;c<C;c++)owner[r][c]=-1;
+  for(var d=0;d<dots.length;d++)owner[dots[d][0]][dots[d][1]]=d; // re-seed dots as galaxy centers
+  history=[];hintsLeft=3;solved=false;selectedDot=-1;startTs=performance.now();elapsed=0;sfx('click');updateHud();updateSelInfo();}
 function hint(){if(solved||hintsLeft<=0){sfx('error');return;}
   // find an empty cell whose solution owner (by reconstruction) we can reveal.
   // We reveal one symmetric pair for a dot that's currently incomplete: pick a dot,
