@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Kurodoko Puzzle - 在线免费逻辑解谜游戏 | GameZipper</title>
+  <meta name="description" content="玩 Kurodoko 逻辑解谜游戏：根据行列提示将部分格子涂黑，确保每行/列可见的白格数准确。多难度、手机适配、完全免费。">
+  <meta name="keywords" content="Kurodoko, 逻辑解谜, puzzle, Nikoli, 免费游戏, 手机游戏">
+  <link rel="canonical" href="https://gamezipper.com/kurodoko/">
+  <meta property="og:title" content="Kurodoko Puzzle - 在线免费逻辑解谜游戏 | GameZipper">
+  <meta property="og:description" content="玩 Kurodoko 逻辑解谜游戏：根据行列提示将部分格子涂黑，确保每行/列可见的白格数准确。多难度、手机适配、完全免费。">
+  <meta property="og:url" content="https://gamezipper.com/kurodoko/">
+  <meta property="og:type" content="website">
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"WebApplication",
+    "name":"Kurodoko Puzzle",
+    "url":"https://gamezipper.com/kurodoko/",
+    "description":"玩 Kurodoko 逻辑解谜游戏：根据行列提示将部分格子涂黑，确保每行/列可见的白格数准确。多难度、手机适配、完全免费。",
+    "applicationCategory":"Game",
+    "operatingSystem":"Any",
+    "browserRequirements":"HTML5",
+    "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+    "author":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com"},
+    "publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com"},
+    "image":"https://gamezipper.com/kurodoko/images/icon.svg"
+  }
+  </script>
+  <style>
+    :root {
+      --bg: #fdfbf7;
+      --board-bg: #fff;
+      --grid-line: #e0e0e0;
+      --black: #111;
+      --white: #fff;
+      --hint-text: #d32f2f;
+      --highlight: #ffd700;
+      --accent: #2196f3;
+      --text: #333;
+      --ad-banner-bg: #f5f5f5;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    body { margin:0; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; align-items:center; min-height:100vh; overflow-x:hidden; }
+    header { width:100%; max-width:600px; padding:12px 8px; text-align:center; border-bottom:1px solid #ddd; background:#fff; }
+    h1 { margin:0; font-size:1.3rem; font-weight:700; color:#222; }
+    .rules { margin:6px 0; font-size:0.85rem; color:#666; line-height:1.4; }
+    .controls { width:100%; max-width:600px; padding:10px 8px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; background:#fff; border-bottom:1px solid #eee; }
+    .btn { padding:8px 12px; font-size:0.9rem; border-radius:4px; border:none; cursor:pointer; font-weight:600; background:#eee; color:#333; transition:background 0.2s; user-select:none; }
+    .btn:hover { background:#ddd; }
+    .btn.primary { background:var(--accent); color:#fff; }
+    .btn.primary:hover { background:#1976d2; }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .select-wrap { display:flex; align-items:center; gap:6px; }
+    select { padding:6px; font-size:0.9rem; border-radius:4px; border:1px solid #ccc; background:#fff; }
+    .game-container { width:100%; max-width:600px; padding:12px 8px; display:flex; flex-direction:column; align-items:center; }
+    .board { display:grid; background:var(--board-bg); border:2px solid #333; box-shadow:0 4px 12px rgba(0,0,0,0.1); touch-action:none; user-select:none; }
+    .cell { border:1px solid var(--grid-line); position:relative; cursor:pointer; transition:background 0.15s; display:flex; justify-content:center; align-items:center; font-size:0.75rem; color:#555; }
+    .cell.black { background:var(--black); border-color:#000; }
+    .cell.white { background:var(--white); }
+    .cell.marked { background:#ffd54f; }
+    .cell.error { background:#ffcdd2; }
+    .cell .hint { position:absolute; top:2px; left:2px; font-size:0.65rem; color:#aaa; pointer-events:none; }
+    .row-hint, .col-hint { font-weight:700; color:var(--hint-text); font-size:0.75rem; }
+    .row-hint { position:absolute; left:-22px; top:50%; transform:translateY(-50%); }
+    .col-hint { position:absolute; top:-22px; left:50%; transform:translateX(-50%); }
+    .status { margin-top:10px; font-size:0.9rem; color:#444; font-weight:500; }
+    .timer { margin-top:6px; font-size:0.85rem; color:#666; }
+    .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:1000; }
+    .modal { background:#fff; padding:24px; border-radius:8px; max-width:400px; width:90%; box-shadow:0 10px 30px rgba(0,0,0,0.2); text-align:center; }
+    .modal h2 { margin:0 0 12px; font-size:1.4rem; }
+    .modal p { margin:0 0 16px; font-size:0.95rem; color:#555; line-height:1.5; }
+    .modal .btn-group { display:flex; justify-content:center; gap:12px; }
+    .hidden { display:none !important; }
+    .ad-banner { width:100%; max-width:600px; height:90px; margin:12px auto; background:var(--ad-banner-bg); display:flex; justify-content:center; align-items:center; font-size:0.85rem; color:#888; overflow:hidden; }
+    .ad-banner iframe { width:100%; height:100%; border:none; }
+    footer { margin-top:auto; width:100%; max-width:600px; padding:10px 8px; font-size:0.75rem; color:#999; text-align:center; background:#f9f9f9; }
+    @media (max-width:480px) {
+      .cell { font-size:0.7rem; }
+      .row-hint { left:-18px; font-size:0.65rem; }
+      .col-hint { top:-18px; font-size:0.65rem; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Kurodoko Puzzle</h1>
+  <div class="rules">
+    根据行列提示涂黑部分格子，确保每行/列可见白格数准确，且黑色不形成 2x2 区域，白色必须连通。
+  </div>
+</header>
+<div class="ad-banner" id="ad-banner-110120"></div>
+<div class="controls">
+  <div class="select-wrap">
+    <label for="level-select">关卡</label>
+    <select id="level-select"></select>
+  </div>
+  <button id="btn-reset" class="btn">重置</button>
+  <button id="btn-check" class="btn primary">检查</button>
+  <button id="btn-undo" class="btn">撤销</button>
+</div>
+<div class="game-container">
+  <div id="board" class="board"></div>
+  <div class="status" id="status"></div>
+  <div class="timer" id="timer"></div>
+</div>
+<div class="ad-banner" id="ad-banner-110121"></div>
+<footer>
+  <a href="https://gamezipper.com" target="_blank" rel="noopener">GameZipper</a> | 免费在线游戏
+</footer>
+<script>
+(function(){
+  const LEVELS = [
+    {id:"6x6_sample1",rows:6,cols:6,row_hints:[4,5,3,5,4,5],col_hints:[5,4,5,5,4,3]},
+    {id:"6x6_sample2",rows:6,cols:6,row_hints:[3,4,4,5,3,4],col_hints:[4,3,4,5,4,3]},
+    {id:"8x8_sample1",rows:8,cols:8,row_hints:[6,5,7,4,6,5,6,5],col_hints:[6,5,6,6,5,5,6,4]},
+    {id:"8x8_sample2",rows:8,cols:8,row_hints:[5,6,5,6,7,4,5,6],col_hints:[5,6,5,6,5,6,5,6]}
+  ];
+  const MONETAG = {banner:110120,native:110121,interstitial:110122};
+
+  let currentLevel = LEVELS[0];
+  let grid = [];
+  let marks = [];
+  let history = [];
+  let startTime = 0;
+  let timerInterval = null;
+  let isPaused = false;
+  let interstitialShownOnPause = false;
+
+  const board = document.getElementById("board");
+  const status = document.getElementById("status");
+  const timer = document.getElementById("timer");
+  const levelSelect = document.getElementById("level-select");
+
+  function initLevel(lvl){
+    currentLevel = lvl;
+    grid = Array(lvl.rows).fill(null).map(()=>Array(lvl.cols).fill(false));
+    marks = Array(lvl.rows).fill(null).map(()=>Array(lvl.cols).fill(false));
+    history = [];
+    renderBoard();
+    startTimer();
+    status.textContent = "";
+  }
+
+  function renderBoard(){
+    board.innerHTML = "";
+    board.style.gridTemplateColumns = `repeat(${currentLevel.cols}, 36px)`;
+    board.style.gridTemplateRows = `repeat(${currentLevel.rows}, 36px)`;
+    for(let r=0;r<currentLevel.rows;r++){
+      for(let c=0;c<currentLevel.cols;c++){
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.dataset.r = r;
+        cell.dataset.c = c;
+        if(grid[r][c]) cell.classList.add("black");
+        if(marks[r][c]) cell.classList.add("marked");
+        cell.addEventListener("click", e=>handleClick(r,c));
+        board.appendChild(cell);
+      }
+    }
+    const cells = Array.from(board.children);
+    for(let r=0;r<currentLevel.rows;r++){
+      cells[r*currentLevel.cols].innerHTML += `<span class="row-hint">${currentLevel.row_hints[r]}</span>`;
+    }
+    for(let c=0;c<currentLevel.cols;c++){
+      cells[c].innerHTML += `<span class="col-hint">${currentLevel.col_hints[c]}</span>`;
+    }
+  }
+
+  function handleClick(r,c){
+    if(isPaused) return;
+    const prev = {r,c,val:grid[r][c],mark:marks[r][c]};
+    if(grid[r][c]){
+      grid[r][c]=false;
+    }else{
+      grid[r][c]=true;
+    }
+    history.push(prev);
+    updateCellVisual(r,c);
+  }
+
+  function updateCellVisual(r,c){
+    const cell = board.children[r*currentLevel.cols+c];
+    cell.className = "cell";
+    if(grid[r][c]) cell.classList.add("black");
+    if(marks[r][c]) cell.classList.add("marked");
+  }
+
+  function resetLevel(){
+    if(confirm("确定重置当前关卡吗？")) initLevel(currentLevel);
+  }
+
+  function undo(){
+    if(!history.length) return;
+    const last = history.pop();
+    grid[last.r][last.c] = last.val;
+    marks[last.r][last.c] = last.mark;
+    updateCellVisual(last.r,last.c);
+  }
+
+  function checkSolution(){
+    const rows=currentLevel.rows, cols=currentLevel.cols;
+    const whiteCountRow = Array(rows).fill(0);
+    const whiteCountCol = Array(cols).fill(0);
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        if(!grid[r][c]){
+          whiteCountRow[r]++;
+          whiteCountCol[c]++;
+        }
+      }
+    }
+    let ok = whiteCountRow.join(',')===currentLevel.row_hints.join(',') &&
+             whiteCountCol.join(',')===currentLevel.col_hints.join(',');
+    if(!ok){
+      status.textContent = "行列白格数不匹配，请检查。";
+      status.style.color = "#d32f2f";
+      return;
+    }
+    const visited = Array(rows).fill(null).map(()=>Array(cols).fill(false));
+    let start=null;
+    outer:for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        if(!grid[r][c]){ start=[r,c]; break outer; }
+      }
+    }
+    if(start){
+      const stack=[start];
+      visited[start[0]][start[1]]=true;
+      while(stack.length){
+        const [rr,cc]=stack.pop();
+        for(const[dr,dc]of [[-1,0],[1,0],[0,-1],[0,1]]){
+          const nr=rr+dr, nc=cc+dc;
+          if(nr>=0&&nr<rows&&nc>=0&&nc<cols&&!grid[nr][nc]&&!visited[nr][nc]){
+            visited[nr][nc]=true;
+            stack.push([nr,nc]);
+          }
+        }
+      }
+    }
+    let allWhiteVisited = true;
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        if(!grid[r][c]&&!visited[r][c]){ allWhiteVisited=false; break; }
+      }
+    }
+    if(!allWhiteVisited){
+      status.textContent = "白色区域必须全部连通。";
+      status.style.color = "#d32f2f";
+      return;
+    }
+    for(let r=0;r<rows-1;r++){
+      for(let c=0;c<cols-1;c++){
+        if(grid[r][c]&&grid[r+1][c]&&grid[r][c+1]&&grid[r+1][c+1]){
+          status.textContent = "不能形成 2x2 黑色区域。";
+          status.style.color = "#d32f2f";
+          return;
+        }
+      }
+    }
+    stopTimer();
+    status.textContent = "恭喜！解答正确！";
+    status.style.color = "#2e7d32";
+    setTimeout(()=>showModal("胜利！", "你完成了这关 Kurodoko。"),200);
+  }
+
+  function startTimer(){
+    startTime = Date.now();
+    if(timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(()=>{
+      const diff = Math.floor((Date.now()-startTime)/1000);
+      const m = Math.floor(diff/60).toString().padStart(2,'0');
+      const s = (diff%60).toString().padStart(2,'0');
+      timer.textContent = `时间: ${m}:${s}`;
+    },1000);
+  }
+
+  function stopTimer(){
+    clearInterval(timerInterval);
+    timerInterval=null;
+  }
+
+  function showModal(title,msg){
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.innerHTML = `<h2>${title}</h2><p>${msg}</p><div class="btn-group"><button class="btn primary" id="modal-ok">确定</button></div>`;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    const btn = modal.querySelector("#modal-ok");
+    btn.onclick = ()=>{
+      overlay.remove();
+    };
+  }
+
+  function loadAds(){
+    const bannerUrl = `https://go.monetag.com/xxx/${MONETAG.banner}`;
+    const nativeUrl = `https://go.monetag.com/xxx/${MONETAG.native}`;
+    const bannerDiv = document.getElementById("ad-banner-110120");
+    const nativeDiv = document.getElementById("ad-banner-110121");
+    if(bannerDiv) bannerDiv.innerHTML = `<iframe src="${bannerUrl}" sandbox="allow-scripts allow-same-origin"></iframe>`;
+    if(nativeDiv) nativeDiv.innerHTML = `<iframe src="${nativeUrl}" sandbox="allow-scripts allow-same-origin"></iframe>`;
+  }
+
+  function initSelect(){
+    levelSelect.innerHTML = LEVELS.map((l,i)=>`<option value="${i}">${l.id}</option>`).join('');
+    levelSelect.onchange = ()=>{
+      initLevel(LEVELS[levelSelect.value]);
+    };
+  }
+
+  document.getElementById("btn-reset").onclick = resetLevel;
+  document.getElementById("btn-check").onclick = checkSolution;
+  document.getElementById("btn-undo").onclick = undo;
+
+  initSelect();
+  initLevel(currentLevel);
+  loadAds();
+<script>
+document.addEventListener("touchstart",function(e){var t=e.touches[0];var m=new MouseEvent("mousedown",{clientX:t.clientX,clientY:t.clientY});t.target.dispatchEvent(m)},{passive:true});document.addEventListener("touchend",function(e){var m=new MouseEvent("mouseup",{});e.target.dispatchEvent(m)},{passive:true});
+</script>
+<script>
+function gzToast(msg,dur){dur=dur||2500;var t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:10000;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center';t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1'});setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove()},300)},dur)}
+</script>
+<script>
+(function(){var _origRAF=window.requestAnimationFrame;var _origCAF=window.cancelAnimationFrame;var _rafId=null;window.requestAnimationFrame=function(cb){return _rafId=_origRAF.call(window,cb)};window.cancelAnimationFrame=function(id){if(id)_origCAF.call(window,id);_rafId=null};window.addEventListener('beforeunload',function(){if(_rafId)window.cancelAnimationFrame(_rafId)});document.addEventListener('visibilitychange',function(){if(!document.hidden&&_rafId===null){_rafId=_origRAF.call(window,function(){_rafId=null})}})})();
+</script>
+<script src="/gz-analytics.js?v=202606207d" defer></script>
+<script src="/monetag-manager.js?v=20260611v5"></script>
+<div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
+</body>
+</html>
