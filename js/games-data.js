@@ -398,6 +398,7 @@ const GAMES = [
 {name:"Spiral Galaxy",emoji:"🌌",cat:"puzzle",tags:["puzzle", "logic", "symmetry", "tentaisho"],url:"/spiral-galaxy/",desc:"Draw 180-degree symmetric galaxies in this free tentaisho symmetry puzzle. 29 cosmic levels, beginner to expert.",isNew:true,status:"live"},
 {name:"Kropki",emoji:"🔴",cat:"puzzle",tags:["logic","latin-square","sudoku","dots","brain-teaser","pencil-mark"],url:"/kropki/",desc:"A pure-logic dots puzzle: fill the grid so black dots mark doubles and white dots mark consecutive numbers. 29 hand-crafted levels across 5 difficulty tiers, each with a unique solution.",isNew:true,status:"live"},
 {name:"Norinori",emoji:"🧩",cat:"puzzle",tags:["logic","grid","japanese-puzzle"],url:"/norinori/",desc:"Play Norinori online free! Shade cells to form dominoes that satisfy each numbered region. 25 hand-crafted logic puzzles from Beginner to Expert. No download needed!",isNew:true,status:"live"},
+{name:"Color Sudoku",emoji:"🎨",cat:"puzzle",tags:["color","sudoku","latin square","logic","brain teaser","grid puzzle"],url:"/color-sudoku/",desc:"Play Color Sudoku free online! Fill the grid with vibrant colors so every row, column, and box contains each color exactly once. 25 hand-crafted levels from Beginner 4x4 to Expert 9x9. Each puzzle is verified to have a unique solution.",isNew:true,status:"live"}
 ];
 
 /**
