@@ -397,7 +397,7 @@ const GAMES = [
   {name:"Penalty Shootout",emoji:"\u26bd",cat:"sports",tags:["soccer","penalty","football","sports","shootout","goalkeeper","tournament","free","online","browser"],url:"/penalty-shootout/",desc:"Play Penalty Shootout free online! Aim, curve and blast penalties past the goalkeeper, then dive to save shots. Tournament mode with 8 national teams. No download needed.",isNew:true,status:"live"},
 {name:"Spiral Galaxy",emoji:"🌌",cat:"puzzle",tags:["puzzle", "logic", "symmetry", "tentaisho"],url:"/spiral-galaxy/",desc:"Draw 180-degree symmetric galaxies in this free tentaisho symmetry puzzle. 29 cosmic levels, beginner to expert.",isNew:true,status:"live"},
 {name:"Kropki",emoji:"🔴",cat:"puzzle",tags:["logic","latin-square","sudoku","dots","brain-teaser","pencil-mark"],url:"/kropki/",desc:"A pure-logic dots puzzle: fill the grid so black dots mark doubles and white dots mark consecutive numbers. 29 hand-crafted levels across 5 difficulty tiers, each with a unique solution.",isNew:true,status:"live"},
-{name:"Norinori",emoji:"🧩",cat:"puzzle",tags:["logic","grid","japanese-puzzle"],url:"/norinori/",desc:"Shade exactly 2 cells per region. Ensure all shaded cells connect. 29 levels across 5 tiers.",isNew:true,status:"live"},
+{name:"Norinori",emoji:"🧩",cat:"puzzle",tags:["logic","grid","japanese-puzzle"],url:"/norinori/",desc:"Play Norinori online free! Shade cells to form dominoes that satisfy each numbered region. 25 hand-crafted logic puzzles from Beginner to Expert. No download needed!",isNew:true,status:"live"},
 ];
 
 /**
