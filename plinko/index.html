@@ -1299,8 +1299,13 @@ function startLevel(mode, levelIndex) {
   document.getElementById('level-modal').classList.remove('show');
   document.getElementById('game-over').classList.remove('show');
 
-  // Resize canvas after showing game screen (was 0×0 when hidden)
-  resizeCanvas();
+  // Resize canvas AFTER CSS layout settles (display:none→flex needs rAF defer, R118 pool-case pattern)
+  // Otherwise getBoundingClientRect returns 0×0 → canvas stuck at 0×0 → game unplayable
+  requestAnimationFrame(function() {
+    resizeCanvas();
+    dropX = W / 2;  // re-center drop position with new W
+    updateUI();
+  });
 
   updateUI();
   startBGM();
