@@ -48,13 +48,13 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 100%);font-family:'Seg
 const canvas=document.getElementById('gameCanvas');
 const ctx=canvas.getContext('2d');
 const GRID_SIZE=8;
-const CELL_SIZE=52;
-const GRID_PADDING=8;
-const BLOCK_AREA_CELL_W=6;
-const BLOCK_AREA_CELL_H=5;
-const BLOCK_CELL_SIZE=32;
-const UI_TOP_H=70;
-const UI_BOTTOM_H=180;
+let CELL_SIZE=52;
+let GRID_PADDING=2;
+let BLOCK_AREA_CELL_W=6;
+let BLOCK_AREA_CELL_H=5;
+let BLOCK_CELL_SIZE=32;
+let UI_TOP_H=70;
+let UI_BOTTOM_H=180;
 const SAVE_KEY='blocky-blast-save';
 const COLORS=['#ff4757','#ff9f43','#feca57','#2ed573','#3742fa','#8854d0','#fc5c65','#45aaf2','#a3cb38','#0fb9b1','#e056a0','#f39c12'];
 const SHAPES=[
@@ -957,23 +957,25 @@ function handlePointerCancel(e){
 function resize(){
   clearTimeout(resizeTimer);
   resizeTimer=setTimeout(()=>{
-    const cont=document.getElementById('gameContainer');
     const w=Math.min(520,window.innerWidth);
     const h=Math.min(900,window.innerHeight);
-    canvas.width=w*window.devicePixelRatio;
-    canvas.height=h*window.devicePixelRatio;
+    const dpr=window.devicePixelRatio||1;
+    canvas.width=w*dpr;
+    canvas.height=h*dpr;
     canvas.style.width=w+'px';
     canvas.style.height=h+'px';
-    ctx.scale(window.devicePixelRatio,window.devicePixelRatio);
-    const dpr=window.devicePixelRatio||1;
-    const cw=w*dpr;
-    const ch=h*dpr;
-    const cellScale=cw/520;
-    CELL_SIZE=Math.max(36,Math.floor(52*cellScale));
-    BLOCK_CELL_SIZE=Math.max(24,Math.floor(32*cellScale));
-    GRID_PADDING=Math.max(5,Math.floor(8*cellScale));
-    UI_TOP_H=Math.max(55,Math.floor(70*cellScale));
-    UI_BOTTOM_H=Math.max(140,Math.floor(180*cellScale));
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    // Scale layout to fit available canvas: grid needs (2*pad + GRID_SIZE)*base_cell wide,
+    // UI_TOP_H + (2*pad + GRID_SIZE)*base_cell + UI_BOTTOM_H tall
+    const baseCell=52,basePad=2;
+    const reqW=(2*basePad+GRID_SIZE)*baseCell;        // 624
+    const reqH=70+(2*basePad+GRID_SIZE)*baseCell+180;   // 874
+    const scale=Math.min(w/reqW,h/reqH,1);
+    CELL_SIZE=Math.max(28,Math.floor(52*scale));
+    GRID_PADDING=Math.max(1,Math.floor(basePad*scale));
+    BLOCK_CELL_SIZE=Math.max(20,Math.floor(32*scale));
+    UI_TOP_H=Math.max(50,Math.floor(70*scale));
+    UI_BOTTOM_H=Math.max(120,Math.floor(180*scale));
     BLOCK_AREA_CELL_W=6;
     BLOCK_AREA_CELL_H=5;
   },100);
