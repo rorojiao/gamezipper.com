@@ -115,12 +115,14 @@ function makeFilled(N,rng,peers){
   return grid;
 }
 
-// ---- solution counter (stop at `limit`) — simple MRV DFS ----
-function countSolutions(grid,N,peers,limit){
+// ---- solution counter (stop at `limit`) — simple MRV DFS with optional deadline ----
+function countSolutions(grid,N,peers,limit,deadline){
   const g=new Int8Array(grid);
   let count=0;
+  let aborted=false;
   function dfs(){
-    if(count>=limit)return;
+    if(count>=limit||aborted)return;
+    if(deadline && Date.now() > deadline){ aborted=true; return; }
     let best=-1,bestCand=null;
     for(let i=0;i<N*N;i++){
       if(g[i]!==0)continue;
@@ -130,10 +132,10 @@ function countSolutions(grid,N,peers,limit){
       if(bestCand===null||cand.length<bestCand.length){ bestCand=cand; best=i; if(cand.length===1)break; }
     }
     if(best===-1){ count++; return; }
-    for(const v of bestCand){ g[best]=v; dfs(); g[best]=0; if(count>=limit)return; }
+    for(const v of bestCand){ g[best]=v; dfs(); g[best]=0; if(count>=limit||aborted)return; }
   }
   dfs();
-  return count;
+  return aborted ? -1 : count;
 }
 
 // ---- dig holes to reach target clue count, keeping uniqueness ----
@@ -148,11 +150,11 @@ function digHoles(solution,N,rng,peers,targetClues,maxMs){
       if(clues<=targetClues)break;
       if(Date.now()-t0>maxMs)break;
       puzzle[idx]=0;
-      const cnt=countSolutions(puzzle,N,peers,2);
-      if(cnt!==1){ puzzle[idx]=solution[idx]; }
+      const cnt=countSolutions(puzzle,N,peers,2,Date.now()+3000); // 3s max per check
+      if(cnt!==1){ puzzle[idx]=solution[idx]; } // restore on non-unique OR timeout
       else clues--;
     }
-    const finalCnt=countSolutions(puzzle,N,peers,2);
+    const finalCnt=countSolutions(puzzle,N,peers,2,Date.now()+5000);
     if(finalCnt===1 && clues<bestClues){ bestPuzzle=puzzle; bestClues=clues; }
     if(bestClues<=targetClues) break;
   }
@@ -182,7 +184,7 @@ function genOneLevel(tier, rng){
     if(!sol) continue;
     if(!checkFull(sol, tier.N, peers)) continue;
     const { puzzle, clues } = digHoles(sol, tier.N, rng, peers, tier.clues, tier.maxMs);
-    const chk = countSolutions(puzzle, tier.N, peers, 2);
+    const chk = countSolutions(puzzle, tier.N, peers, 2, Date.now()+5000);
     if(chk !== 1) continue;
     // Build region cells
     const regionCells = []; for(let i=0;i<tier.N;i++) regionCells.push([]);
