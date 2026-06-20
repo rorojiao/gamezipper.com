@@ -408,6 +408,7 @@ const GAMES = [
 
 ,{name:"Dosun-Fuwari",emoji:"🎈",cat:"puzzle",tags:["logic","nikoli","gravity","balloon","iron","japanese","daily","brain","grid"],url:"/dosun-fuwari/",desc:"Play Dosun-Fuwari online free! A Nikoli Japanese gravity logic puzzle - place balloons that float up and iron balls that sink down in every region. 48 handcrafted levels plus daily challenge. No download.",isNew:true,status:"live"},
 {name:"Thermo Sudoku",emoji:"🔥",cat:"puzzle",tags:["sudoku","logic","number","thermo","puzzle"],url:"/thermo-sudoku/",desc:"Play Thermo Sudoku free online. Solve 23 hand-crafted thermo puzzles where digits rise along each thermometer. Beginner to Master tiers, no download.",isNew:true,status:"live"},
+{name:"X-Sudoku",emoji:"✖️",cat:"puzzle",tags:["x-sudoku","diagonal sudoku","sudoku","logic","number","puzzle","latin square"],url:"/x-sudoku/",desc:"Play X-Sudoku (Diagonal Sudoku) free online. Standard Sudoku plus both diagonals must contain 1-9. 27 hand-crafted levels across 6 tiers from Beginner to Master. No download.",isNew:true,status:"live"},
 {name:"Sashigane",emoji:"🧩",cat:"puzzle",tags:["sashigane","tromino","logic","nikoli","grid puzzle","brain teaser","region"],url:"/sashigane/",desc:"Play Sashigane free online! Divide the grid into L-shaped trominoes. Each L contains exactly one circle - black for corners, white for tips. 20 levels from Tutorial to Expert.",isNew:true,status:"live"}
 ];
 
