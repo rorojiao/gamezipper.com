@@ -311,16 +311,20 @@ function setupCanvas(){
   // Dynamic height-aware sizing: measure actual chrome above+below the board
   // at runtime so the numpad is always visible on any viewport.
   const maxByW=Math.min(wrapW, 460);
-  // Measure top offset of the board wrapper + everything below it (toolbar+numpad+foot)
   const boardWrap=canvas.parentElement;
   const numpadEl=document.getElementById('numpad');
-  const topOfBoard=boardWrap.getBoundingClientRect().top;
-  const belowBoard = numpadEl ? (numpadEl.getBoundingClientRect().height) : 200;
-  // reserve = top space + toolbar gap + numpad + foot + small margin
-  const measuredReserve = topOfBoard + belowBoard + 90;
-  const staticReserve = window.innerHeight <= 560 ? 250 : (window.innerHeight <= 700 ? 320 : 380);
-  const reserve = Math.max(staticReserve, Math.min(measuredReserve, window.innerHeight - 200));
-  const availH=Math.max(180, window.innerHeight-reserve);
+  const toolbarEl=document.querySelector('#gameScreen .toolbar');
+  const footEl=document.querySelector('#gameScreen .foot');
+  // Space above board (header+title+legend+HUD) — fixed, independent of canvas
+  const topOfBoard=boardWrap.getBoundingClientRect().top + window.scrollY;
+  // Space below board (toolbar+numpad+foot+margins) — fixed, independent of canvas
+  const belowSpace = (toolbarEl?toolbarEl.offsetHeight:60) + (numpadEl?numpadEl.offsetHeight:170) + (footEl?footEl.offsetHeight:30) + 30;
+  const measuredReserve = topOfBoard + belowSpace;
+  // Fallback static reserve if measurement fails (very short viewports)
+  const vh=window.innerHeight;
+  const staticReserve = vh<=560 ? 280 : (vh<=700 ? 350 : 450);
+  const reserve = Math.max(staticReserve, Math.min(measuredReserve, vh - 180));
+  const availH=Math.max(180, vh-reserve);
   const maxBoard=Math.min(maxByW, availH);
   cellSize=Math.max(20, Math.floor(maxBoard/N));
   boardPx=cellSize*N;
@@ -421,7 +425,7 @@ function startLevel(idx, isDaily){
   document.getElementById('hudLvl').textContent=(idx+1);
   document.getElementById('notesBtn').classList.remove('active');
   showScreen('game');
-  setupCanvas(); drawBoard(0); buildNumpad();
+  buildNumpad(); setupCanvas(); drawBoard(0);
   startTimer(); startBGM();
   if(!rafId){ lastTs=performance.now(); rafId=requestAnimationFrame(loop); }
 }
