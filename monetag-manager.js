@@ -20,6 +20,21 @@
  *   - Reduced minBetweenAds 45s → 35s. Session max stays 20, daily stays 60
  *     (caps protect against accidental over-frequency from auto-detection).
  *
+ * v5.5 Changes (2026-06-20 — AdSense Auto-Ads Page-Level Integration):
+ *   - Detects page-level AdSense Auto Ads tag (injected 2026-06-20 in index.html
+ *     + 400 game pages (slug index.html)) and skips dynamic loadAdSenseScript() to
+ *     avoid loading adsbygoogle.js twice. Browser executes both scripts without
+ *     errors, but wastes ~30KB bandwidth and can confuse AdSense internal state.
+ *   - Added ADSENSE_PUB_ID const and switched the dynamic script URL to include
+ *     ?client=ca-pub-8346383990981353 (Google migrated to this format in 2024;
+ *     matches tools.gamezipper.com page-level tag). Without ?client=, the
+ *     AdSense bot cannot attribute the ad request to the right account and
+ *     shows 0 fill on Auto Ads requests.
+ *   - Net effect: AdSense crawler sees gamezipper.com as Auto Ads site
+ *     immediately on first crawl (3 ca-pub refs in HTML vs previous 0) and
+ *     places native ads wherever it sees fit. Manual ins.adsbygoogle placements
+ *     by loadAdSenseAd() continue to work as before.
+ *
  * v5.3 Changes (2026-06-11 Monetag Zone Backoff — Fix for 14+ Day 0% Fill):
  *   - Per-zone exponential backoff (10min → 30min → 60min) when loadZone returns no_fill.
  *     Stops wasting 700+ useless script loads/day on broken Monetag zones.
@@ -159,7 +174,7 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.4',
+    VERSION: '5.5',
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -412,11 +427,29 @@
   // ==================== ADSENSE LOADER ====================
   var adsenseLoaded = false;
 
+  // v5.5: AdSense pub ID — required for new-style adsbygoogle.js?client=ca-pub-... URL
+  // (Google migrated the script in 2024; ?client= param is now how the bot knows
+  //  which account the request is for. Without it, AdSense may still load but
+  //  shows 0 fill on Auto Ads requests because the ad request is un-attributed.)
+  var ADSENSE_PUB_ID = 'ca-pub-8346383990981353';
+
   function loadAdSenseScript() {
     if (adsenseLoaded) return;
+    // v5.5: Detect page-level AdSense Auto Ads tag (injected 2026-06-20 in
+    // index.html + slug/*/index.html). If present, skip the dynamic injection
+    // to avoid loading adsbygoogle.js twice (browser executes both — harmless
+    // but wastes 30KB bandwidth + can confuse AdSense's internal state).
+    try {
+      if (document.querySelector('script[src*="adsbygoogle.js"]')) {
+        adsenseLoaded = true;
+        return;
+      }
+    } catch(e) {}
     adsenseLoaded = true;
     var s = document.createElement('script');
-    s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+    // v5.5: include ?client=ca-pub-... so AdSense bot sees the matching account
+    // for the ad request (matches tools.gamezipper.com page-level tag).
+    s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + ADSENSE_PUB_ID;
     s.async = true;
     s.crossorigin = 'anonymous';
     document.head.appendChild(s);
