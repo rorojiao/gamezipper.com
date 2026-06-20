@@ -94,10 +94,13 @@ function checkFull(grid,N,peers){
   return true;
 }
 
-// ---- MRV backtracking fill of EMPTY grid -> full solution ----
-function makeFilled(N,rng,peers){
+// ---- MRV backtracking fill of EMPTY grid -> full solution (with deadline) ----
+function makeFilled(N,rng,peers,deadline){
   const grid=new Int8Array(N*N);
+  let aborted=false;
   function bt(){
+    if(aborted)return false;
+    if(deadline && Date.now() > deadline){ aborted=true; return false; }
     let best=-1,bestCand=null;
     for(let i=0;i<N*N;i++){
       if(grid[i]!==0)continue;
@@ -108,11 +111,11 @@ function makeFilled(N,rng,peers){
     }
     if(best===-1)return true;
     shuffle(bestCand,rng);
-    for(const v of bestCand){ grid[best]=v; if(bt())return true; grid[best]=0; }
+    for(const v of bestCand){ grid[best]=v; if(bt())return true; grid[best]=0; if(aborted)return false; }
     return false;
   }
   if(!bt()) return null;
-  return grid;
+  return aborted ? null : grid;
 }
 
 // ---- solution counter (stop at `limit`) — simple MRV DFS with optional deadline ----
@@ -175,12 +178,14 @@ const TIERS=[
 function gridToArr(g,N){ const a=[]; for(let r=0;r<N;r++) a.push(Array.from(g.slice(r*N,(r+1)*N))); return a; }
 
 function genOneLevel(tier, rng){
-  for(let attempt=0; attempt<20; attempt++){
+  const levelDeadline = Date.now() + 60000; // 60s max per level
+  for(let attempt=0; attempt<15; attempt++){
+    if(Date.now() > levelDeadline) break;
     let regionGrid = null;
     for(let t=0; t<15; t++){ regionGrid = generateRegions(tier.N, rng); if(regionGrid) break; }
     if(!regionGrid) continue;
     const peers = buildPeers(tier.N, regionGrid);
-    const sol = makeFilled(tier.N, rng, peers);
+    const sol = makeFilled(tier.N, rng, peers, Date.now()+8000); // 8s max for solution
     if(!sol) continue;
     if(!checkFull(sol, tier.N, peers)) continue;
     const { puzzle, clues } = digHoles(sol, tier.N, rng, peers, tier.clues, tier.maxMs);
