@@ -273,6 +273,13 @@ function saveSave(){
 
 function resize(){
  var w=window.innerWidth,h=window.innerHeight;
+ // R199 P0 fix: subtract footer height (44px) so glass/level content at canvas bottom
+ // is not covered by the fixed game-footer.js bar.
+ var footerH=0;
+ var fe=document.getElementById('game-footer');
+ if(fe&&fe.offsetHeight>0){footerH=fe.offsetHeight;}
+ else{footerH=44;} // footer may not have loaded yet; reserve default
+ h=h-footerH;
  var ar=GW/GH;
  var nah=w/h;
  if(nah>ar){SCALE=h/GH}else{SCALE=w/GW}
@@ -1134,6 +1141,12 @@ function init(){
  loadSave();
  resize();
  window.addEventListener("resize",resize);
+ // R199: re-resize after footer appears (game-footer.js loads after this script)
+ var _fchk=setInterval(function(){
+  var fe=document.getElementById('game-footer');
+  if(fe&&fe.offsetHeight>0){resize();clearInterval(_fchk);}
+ },1000);
+ setTimeout(function(){clearInterval(_fchk);},20000);
  renderUI();
  lastTime=performance.now();
  RAF=requestAnimationFrame(gameLoop);

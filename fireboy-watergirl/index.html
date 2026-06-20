@@ -369,13 +369,37 @@ function checkMobile(){
 function resizeCanvas(){
   checkMobile();
   const container=document.getElementById('gc');
-  const cw=container.clientWidth;
-  const ch=cw*9/16;
+  // R199 P0 fix: account for fixed game-footer.js bar (44px) so characters/floor at
+  // canvas bottom are not hidden behind the footer.
+  var footerH=0;
+  var fe=document.getElementById('game-footer');
+  if(fe&&fe.offsetHeight>0){footerH=fe.offsetHeight;}
+  else{footerH=44;}
+  var maxH=window.innerHeight-footerH;
+  var maxW=container.clientWidth;
+  // Fit 16:9 canvas within both width and (height - footer) constraints
+  var chByW=maxW*9/16;
+  var ch, cw;
+  if(chByW<=maxH){
+    // width-constrained
+    cw=maxW;
+    ch=chByW;
+  } else {
+    // height-constrained
+    ch=maxH;
+    cw=maxH*16/9;
+  }
   canvas.style.width=cw+'px';
   canvas.style.height=ch+'px';
 }
 window.addEventListener('resize',resizeCanvas);
 resizeCanvas();
+// R199: re-resize after footer appears (game-footer.js loads after this script)
+var _fbw_fchk=setInterval(function(){
+  var fe=document.getElementById('game-footer');
+  if(fe&&fe.offsetHeight>0){resizeCanvas();clearInterval(_fbw_fchk);}
+},1000);
+setTimeout(function(){clearInterval(_fbw_fchk);},20000);
 
 // Show/hide overlays
 function showOv(id){document.getElementById(id).classList.remove('hd');document.getElementById(id).classList.add('act');}

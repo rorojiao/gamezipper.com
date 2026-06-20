@@ -592,12 +592,24 @@ function setupCanvas(){
   ctx = canvas.getContext('2d');
   resizeCanvas();
   window.addEventListener('resize',resizeCanvas);
+  // R199: re-resize after footer appears (game-footer.js loads after this script)
+  var _fchk=setInterval(function(){
+    var fe=document.getElementById('game-footer');
+    if(fe&&fe.offsetHeight>0){resizeCanvas();clearInterval(_fchk);}
+  },1000);
+  setTimeout(function(){clearInterval(_fchk);},20000);
 }
 
 function resizeCanvas(){
   var container = document.getElementById('game-container');
   var w = container.clientWidth - 20;
-  var h = window.innerHeight - 20;
+  // R199 P0 fix: subtract footer height (44px) so bottom of square board is not
+  // covered by the fixed game-footer.js bar (items at bottom were hidden).
+  var footerH = 0;
+  var fe = document.getElementById('game-footer');
+  if(fe && fe.offsetHeight > 0){ footerH = fe.offsetHeight; }
+  else { footerH = 44; }
+  var h = window.innerHeight - 20 - footerH;
   var size = Math.min(w, h, 800);
   canvas.width = size;
   canvas.height = size;
