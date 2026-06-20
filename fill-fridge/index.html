@@ -515,15 +515,33 @@ function setupCanvas(){
 function resizeCanvas(){
   const wrap=$('canvas-wrap');
   const maxW=Math.min(wrap.clientWidth,520);
-  // Calculate needed height: fridge grid + gap + staging area
-  const fridgeRatio=fridgeRows/fridgeCols;
-  const stagingRows=Math.max(2,Math.ceil(items.filter(it=>!it.placed).length/4));
-  const totalRatio=(fridgeRatio+.6+stagingRows/fridgeCols*.5);
-  // R199 P0 fix: previous cap of innerHeight*.7 was too small — fridge (cellSize*rows) + staging area
-  // often exceeded the cap, causing staging items to be drawn off-canvas (unplayable).
-  // Let canvas height fit the content; page scrolls if needed. Footer is position:fixed.
-  const h=maxW*totalRatio;
+  // R199 P0 fix: compute cellSize from BOTH width and height constraints.
+  // Original bug: cellSize was only width-constrained (floor((W-24)/cols)),
+  // making fridge too tall on short viewports — staging items drawn off-canvas.
+  // Now: also compute max cellSize from available height (viewport - footer - header),
+  // then use the smaller of the two so fridge + staging both fit.
+  const footerReserve=60; // 44px footer + padding
+  const headerReserve=100; // game-header (level/items) + controls row + gaps
+  const availH=Math.max(300,window.innerHeight-footerReserve-headerReserve);
+  // staging needs ~2 rows of items, each item is ~0.55*cellSize tall, plus gaps
+  // staging height ≈ 2 * (cellSize*1.5) = 3*cellSize
+  // total height = fridgeY(10) + fridgeH(cellSize*rows) + gap(20) + stagingH(3*cellSize) + padding(10)
+  // = cellSize*(rows+3) + 40
+  // Solve: cellSize = (availH - 40) / (rows+3)
+  const cellSizeByH=Math.floor((availH-40)/(fridgeRows+3));
+  const cellSizeByW=Math.floor((maxW-24)/fridgeCols);
+  cellSize=Math.min(cellSizeByW,cellSizeByH,100); // cap at 100px for very large screens
   const w=maxW;
+  // Compute canvas height from cellSize
+  const padding=12;
+  fridgeW=cellSize*fridgeCols;
+  fridgeH=cellSize*fridgeRows;
+  fridgeX=(canvasW-fridgeW)/2;
+  fridgeY=10;
+  stagingY=fridgeY+fridgeH+20;
+  const stagingRows=Math.max(2,Math.ceil(items.filter(it=>!it.placed).length/4));
+  const stagingHeight=stagingRows*(cellSize*1.5)+20;
+  const h=stagingY+stagingHeight+10;
 
   canvasW=w;
   canvasH=h;
@@ -533,16 +551,8 @@ function resizeCanvas(){
   gameCanvas.style.height=h+'px';
   gameCtx.setTransform(dpr,0,0,dpr,0,0);
 
-  // Compute cell size to fit fridge
-  const padding=12;
-  fridgeW=canvasW-padding*2;
-  cellSize=Math.floor(fridgeW/fridgeCols);
-  fridgeW=cellSize*fridgeCols;
-  fridgeH=cellSize*fridgeRows;
+  // Recompute fridge position (in case canvasW changed from earlier assignment)
   fridgeX=(canvasW-fridgeW)/2;
-  fridgeY=10;
-
-  stagingY=fridgeY+fridgeH+20;
   stagingH=canvasH-stagingY-10;
 }
 
