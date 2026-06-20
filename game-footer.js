@@ -9,7 +9,7 @@
  //   setTimeout(sendBI, 200);
  // }
 
- // Respect user dismissal â use sessionStorage so it persists within the tab
+ // Respect user dismissal — use sessionStorage so it persists within the tab
  if (sessionStorage.getItem('gz-footer-dismissed')) return;
 
  // Defer all DOM work to after DOMContentLoaded + requestIdleCallback
@@ -21,19 +21,19 @@
      {n:'Color Sort',e:'🎨',u:'/color-sort/',c:'puzzle'},
      {n:'Goods Sort',e:'📦',u:'/goods-sort/',c:'puzzle'},
      {n:'Word Puzzle',e:'📝',u:'/word-puzzle/',c:'puzzle'},
-     {n:'Circuit Logic',e:'â¡',u:'/circuit-logic/',c:'puzzle'},
+     {n:'Circuit Logic',e:'⚡',u:'/circuit-logic/',c:'puzzle'},
      {n:'Whack-a-Mole',e:'🔨',u:'/whack-a-mole/',c:'arcade'},
      {n:'Memory Match',e:'🧠',u:'/memory-match/',c:'card'},
      {n:'Sushi Stack',e:'🍣',u:'/sushi-stack/',c:'puzzle'},
      {n:'Ocean Gem Pop',e:'💎',u:'/ocean-gem-pop/',c:'puzzle'},
      {n:'Color Block Jam',e:'🎨',u:'/color-block-jam/',c:'puzzle'},
      {n:'Bonsai Prune',e:'🌳',u:'/bonsai-prune/',c:'puzzle'},
-     {n:'Typing Speed',e:'â¨ï¸',u:'/typing-speed/',c:'skill'},
+     {n:'Typing Speed',e:'⌨️',u:'/typing-speed/',c:'skill'},
      {n:'Brick Breaker',e:'🧱',u:'/brick-breaker/',c:'arcade'},
      {n:'Dessert Blast',e:'🍰',u:'/dessert-blast/',c:'puzzle'},
      {n:'Catch Turkey',e:'🦃',u:'/catch-turkey/',c:'arcade'},
      {n:'Paint Splash',e:'🎨',u:'/paint-splash/',c:'puzzle'},
-     {n:'Phantom Blade',e:'âï¸',u:'/phantom-blade/',c:'arcade'},
+     {n:'Phantom Blade',e:'⚔️',u:'/phantom-blade/',c:'arcade'},
      {n:'Kitty Cafe',e:'🐱',u:'/kitty-cafe/',c:'puzzle'},
      {n:'Idle Clicker',e:'👆',u:'/idle-clicker/',c:'idle'},
      {n:'Stacker',e:'📦',u:'/stacker/',c:'arcade'},
@@ -43,63 +43,63 @@
      {n:'Mo Yu Fayu',e:'🐟',u:'/mo-yu-fayu/',c:'idle'},
      {n:'Tetris',e:'🧱',u:'/tetris/',c:'puzzle'},
      {n:'Sudoku',e:'🔢',u:'/sudoku/',c:'puzzle'},
-     {n:'Chess',e:'âï¸',u:'/chess/',c:'strategy'},
+     {n:'Chess',e:'♟️',u:'/chess/',c:'strategy'},
      {n:'Pong',e:'🏓',u:'/pong/',c:'arcade'},
-     {n:'Crossword',e:'âï¸',u:'/crossword/',c:'puzzle'},
+     {n:'Crossword',e:'✏️',u:'/crossword/',c:'puzzle'},
      {n:'Minesweeper',e:'💣',u:'/minesweeper/',c:'puzzle'},
      {n:'Grass Master',e:'🌿',u:'/grass-master/',c:'puzzle'},
      {n:'Gecko Out',e:'🦎',u:'/gecko-out/',c:'puzzle'},
      {n:'Beads Out',e:'📿',u:'/beads-out/',c:'puzzle'},
      {n:'Pocket Sort',e:'🪙',u:'/pocket-sort/',c:'puzzle'},
      {n:'Emoji Merge',e:'🧩',u:'/emoji-merge/',c:'puzzle'},
-     {n:'Slope',e:'â·ï¸',u:'/slope/',c:'arcade'},
+     {n:'Slope',e:'⛷️',u:'/slope/',c:'arcade'},
      {n:'Bounce Bot',e:'🤖',u:'/bounce-bot/',c:'arcade'},
      {n:'Alien Whack',e:'👾',u:'/alien-whack/',c:'arcade'},
-     {n:'Reaction Time',e:'â¡',u:'/reaction-time/',c:'skill'},
-     {n:'Cloud Sheep',e:'âï¸',u:'/cloud-sheep/',c:'puzzle'},
-     {n:'Ball Catch',e:'â¾',u:'/ball-catch/',c:'arcade'},
+     {n:'Reaction Time',e:'⚡',u:'/reaction-time/',c:'skill'},
+     {n:'Cloud Sheep',e:'☁️',u:'/cloud-sheep/',c:'puzzle'},
+     {n:'Ball Catch',e:'⚾',u:'/ball-catch/',c:'arcade'},
      {n:'Abyss Chef',e:'🍳',u:'/abyss-chef/',c:'puzzle'},
-     {n:'Neon Run',e:'â¡',u:'/neon-run/',c:'arcade'},
+     {n:'Neon Run',e:'⚡',u:'/neon-run/',c:'arcade'},
      {n:'Basketball Shoot',e:'🏀',u:'/basketball-shoot/',c:'arcade'},
      {n:'Glyph Quest',e:'🔤',u:'/glyph-quest/',c:'puzzle'},
      {n:'Fruit Slash',e:'🍉',u:'/fruit-slash/',c:'arcade'},
-     {n:'Magic Sort',e:'â¨',u:'/magic-sort/',c:'puzzle'},
+     {n:'Magic Sort',e:'✨',u:'/magic-sort/',c:'puzzle'},
      {n:'T-Rex',e:'🦖',u:'/t-rex/',c:'arcade'},
      {n:'Bubble Pop',e:'🫧',u:'/bubble-pop/',c:'puzzle'},
      {n:'Pixel Logic',e:'🧩',u:'/pixel-logic/',c:'puzzle'},
      {n:'Tile Dynasty',e:'🏮',u:'/tile-dynasty/',c:'puzzle'},
      {n:'Arrow Escape',e:'🚀',u:'/arrow-escape/',c:'puzzle'},
      {n:'Bubble Shooter',e:'🫧',u:'/bubble-shooter/',c:'puzzle'},
-     {n:'Tic Tac Toe',e:'â­',u:'/tic-tac-toe/',c:'puzzle'},
+     {n:'Tic Tac Toe',e:'⭕',u:'/tic-tac-toe/',c:'puzzle'},
      {n:'One Line Connect',e:'🔗',u:'/one-line-connect/',c:'puzzle'},
-     {n:'Physics Draw Puzzle',e:'âï¸',u:'/physics-draw-puzzle/',c:'puzzle'},
-     {n:'Dots and Boxes',e:'â¬',u:'/dots-and-boxes/',c:'puzzle'},
+     {n:'Physics Draw Puzzle',e:'✏️',u:'/physics-draw-puzzle/',c:'puzzle'},
+     {n:'Dots and Boxes',e:'⬜',u:'/dots-and-boxes/',c:'puzzle'},
      {n:'Sliding Puzzle',e:'🔢',u:'/sliding-puzzle/',c:'puzzle'},
-     {n:'Reversi',e:'â«',u:'/reversi/',c:'puzzle'},
+     {n:'Reversi',e:'⚫',u:'/reversi/',c:'puzzle'},
      {n:'Match Ninja',e:'🧊',u:'/match-ninja/',c:'puzzle'},
      {n:'Jewel Coloring',e:'💎',u:'/jewel-coloring/',c:'puzzle'},
 
       {n:'Brain Out',e:'🧠',u:'/brain-out/',c:'puzzle'},
       {n:'Bridge Builder',e:'🌉',u:'/bridge-builder/',c:'puzzle'},
-      {n:'Checkers',e:'â¬¤',u:'/checkers/',c:'puzzle'},
-      {n:'Gomoku',e:'â«',u:'/gomoku/',c:'puzzle'},
+      {n:'Checkers',e:'⬤',u:'/checkers/',c:'puzzle'},
+      {n:'Gomoku',e:'⚫',u:'/gomoku/',c:'puzzle'},
       {n:'Cut the Rope',e:'🍬',u:'/cut-the-rope/',c:'puzzle'},
-      {n:'Drive Fury',e:'🏎ï¸',u:'/drive-fury/',c:'arcade'},
-      {n:'Escape Manor',e:'🏚ï¸',u:'/escape-manor/',c:'puzzle'},
+      {n:'Drive Fury',e:'🏎️',u:'/drive-fury/',c:'arcade'},
+      {n:'Escape Manor',e:'🏚️',u:'/escape-manor/',c:'puzzle'},
       {n:'Fill The Fridge',e:'🧊',u:'/fill-fridge/',c:'puzzle'},
       {n:'Flow Connect',e:'🔗',u:'/flow-connect/',c:'puzzle'},
-      {n:'Hex Block Puzzle',e:'â¬¡',u:'/hex-block/',c:'puzzle'},
+      {n:'Hex Block Puzzle',e:'⬡',u:'/hex-block/',c:'puzzle'},
       {n:'The Impossible Quiz',e:'🧠',u:'/impossible-quiz/',c:'puzzle'},
       {n:'Jigsaw Puzzle',e:'🧩',u:'/jigsaw-puzzle/',c:'puzzle'},
       {n:'Kitchen Rush',e:'🍳',u:'/kitchen-rush/',c:'casual'},
       {n:'Level Devil',e:'😈',u:'/level-devil/',c:'arcade'},
-      {n:'Little Alchemy',e:'âï¸',u:'/little-alchemy/',c:'puzzle'},
+      {n:'Little Alchemy',e:'⚗️',u:'/little-alchemy/',c:'puzzle'},
       {n:'Mahjong Solitaire',e:'🀄',u:'/mahjong-solitaire/',c:'puzzle'},
       {n:'Marble Run',e:'🔮',u:'/marble-run/',c:'puzzle'},
      {n:'Zuma Marble Shooter',e:'🔮',u:'/zuma/',c:'puzzle'},
       {n:'Marble Shooter',e:'🔮',u:'/marble-shooter/',c:'puzzle'},
       {n:'Nonogram Puzzle',e:'🔲',u:'/nonogram/',c:'puzzle'},
-      {n:'One Line Puzzle',e:'âï¸',u:'/one-line-puzzle/',c:'puzzle'},
+      {n:'One Line Puzzle',e:'✏️',u:'/one-line-puzzle/',c:'puzzle'},
       {n:'Parking Jam',e:'🚗',u:'/parking-jam/',c:'puzzle'},
       {n:'Pipe Connect',e:'🔧',u:'/pipe-connect/',c:'puzzle'},
       {n:'Pull the Pin',e:'📌',u:'/pull-the-pin/',c:'puzzle'},
@@ -147,11 +147,11 @@
       {n:'Mancala',e:'🫘',u:'/mancala/',c:'board'},
 
       {n:'Merge Kingdom',e:'👑',u:'/merge-kingdom/',c:'puzzle'},
-      {n:'Spider Solitaire',e:'🕷ï¸',u:'/spider-solitaire/',c:'card'},
+      {n:'Spider Solitaire',e:'🕷️',u:'/spider-solitaire/',c:'card'},
       {n:'FreeCell Solitaire',e:'🃏',u:'/freecell/',c:'card'},
-      {n:'Chinese Checkers',e:'â­',u:'/chinese-checkers/',c:'board'},
+      {n:'Chinese Checkers',e:'⭐',u:'/chinese-checkers/',c:'board'},
       {n:'Chinese Chess',e:'🐉',u:'/chinese-chess/',c:'puzzle'},
-      {n:'Hearts',e:'â¥ï¸',u:'/hearts/',c:'card'},{n:'Pool',e:'🎱',u:'/pool/',c:'classic'},{n:'Pyramid Solitaire',e:'🃏',u:'/pyramid-solitaire/',c:'card'},{n:'Spades',e:'â ï¸',u:'/spades/',c:'card'},{n:'Tripeaks',e:'🏔ï¸',u:'/tripeaks/',c:'card'},{n:'Golf Solitaire',e:'â³',u:'/golf-solitaire/',c:'card'},
+      {n:'Hearts',e:'♥️',u:'/hearts/',c:'card'},{n:'Pool',e:'🎱',u:'/pool/',c:'classic'},{n:'Pyramid Solitaire',e:'🃏',u:'/pyramid-solitaire/',c:'card'},{n:'Spades',e:'♠️',u:'/spades/',c:'card'},{n:'Tripeaks',e:'🏔️',u:'/tripeaks/',c:'card'},{n:'Golf Solitaire',e:'⛳',u:'/golf-solitaire/',c:'card'},
       {n:'Rummy',e:'🃏',u:'/rummy/',c:'card'},
       {n:'Bejeweled',e:'💎',u:'/bejeweled/',c:'puzzle'},
     {n:'Crazy Eights',e:'🃏',u:'/crazy-eights/',c:'card'},
@@ -159,7 +159,7 @@
       {n:'Happy Glass',e:'🥛',u:'/happy-glass/',c:'puzzle'},
       {n:'Farkle',e:'🎲',u:'/farkle/',c:'board'},
       {n:'Cribbage',e:'🃏',u:'/cribbage/',c:'card'},
-      {n:'Euchre',e:'â ï¸',u:'/euchre/',c:'card'},
+      {n:'Euchre',e:'♠️',u:'/euchre/',c:'card'},
       {n:'Wordle',e:'🔤',u:'/wordle/',c:'puzzle'},
       {n:'Hidden Object',e:'🔍',u:'/hidden-object/',c:'puzzle'},
       {n:'Tiny Fishing',e:'🎣',u:'/tiny-fishing/',c:'casual'},{n:"Build A Queen",e:"👗",u:"/build-a-queen/",c:"casual"},{n:"Threes!",e:"🀄",u:"/threes/",c:"puzzle"},
@@ -167,7 +167,7 @@
       {n:'Papas Freezeria',e:'🍦',u:'/papas-freezeria/',c:'simulation'},
       {n:'Gravity Run',e:'🏃',u:'/gravity-run/',c:'arcade'},
       {n:'Cookie Clicker',e:'🍪',u:'/cookie-clicker/',c:'idle'},
-      {n:'Moto X3M',e:'🏍ï¸',u:'/moto-x3m/',c:'racing'},
+      {n:'Moto X3M',e:'🏍️',u:'/moto-x3m/',c:'racing'},
       {n:'Math 24',e:'🔢',u:'/math-24/',c:'puzzle'},
       {n:'Mind Reader',e:'🔮',u:'/akinator/',c:'puzzle'},
       {n:'Blocky Blast',e:'🧱',u:'/blocky-blast/',c:'puzzle'},
@@ -177,15 +177,15 @@
       {n:'Bloxorz',e:'🔲',u:'/bloxorz/',c:'puzzle'},
       {n:'Draw To Home',e:'🏠',u:'/draw-to-home/',c:'puzzle'},
       {n:'Duck Life',e:'🦆',u:'/duck-life/',c:'puzzle'},
-      {n:'Type Racer',e:'â¨ï¸',u:'/type-racer/',c:'skill'},
-      {n:'Drift Boss',e:'🏎ï¸',u:'/drift-boss/',c:'racing'},
+      {n:'Type Racer',e:'⌨️',u:'/type-racer/',c:'skill'},
+      {n:'Drift Boss',e:'🏎️',u:'/drift-boss/',c:'racing'},
       {n:'Blockudoku',e:'🧩',u:'/blockudoku/',c:'puzzle'},
       {n:'Thief Puzzle',e:'🦝',u:'/thief-puzzle/',c:'puzzle'},
       {n:'Text Twist',e:'🔤',u:'/text-twist/',c:'puzzle'},
       {n:'Onet Connect',e:'🔗',u:'/onet/',c:'puzzle'},
-      {n:'Neon Dash',e:'â¡',u:'/neon-dash/',c:'arcade'},
+      {n:'Neon Dash',e:'⚡',u:'/neon-dash/',c:'arcade'},
       {n:'Knit Off',e:'🧶',u:'/knit-off/',c:'puzzle'},
-      {n:'Infinity Loop',e:'â¾ï¸',u:'/infinity-loop/',c:'puzzle'},
+      {n:'Infinity Loop',e:'♾️',u:'/infinity-loop/',c:'puzzle'},
       {n:'Tens',e:'🔢',u:'/tens-game/',c:'puzzle'},
       {n:'Pinball',e:'🎱',u:'/pinball/',c:'arcade'},
       {n:'Word Card Sort',e:'🃏',u:'/word-card-sort/',c:'puzzle'},
@@ -213,7 +213,7 @@
       {n:'IQ Ball',e:'🎯',u:'/iq-ball/',c:'puzzle'},
       {n:'Color Cars Parking',e:'🚗',u:'/color-cars-parking/',c:'puzzle'},
       {n:'Cryptograms',e:'🔐',u:'/cryptograms/',c:'puzzle'},
-      {n:'Threes',e:'3ï¸â£',u:'/threes/',c:'puzzle'},
+      {n:'Threes',e:'3️⃣',u:'/threes/',c:'puzzle'},
       {n:'Paper Fold Puzzle',e:'📄',u:'/paper-fold/',c:'puzzle'},
       {n:'Eggy Car',e:'🥚',u:'/eggy-car/',c:'driving'},
       {n:'Unpacking',e:'📦',u:'/unpacking/',c:'puzzle'},
@@ -319,11 +319,11 @@
 
    var categoryLinks = {
      puzzle: {t:'🧩 More Puzzle', u:'/puzzle-games.html'},
-     arcade: {t:'🕹ï¸ More Arcade', u:'/arcade-games.html'},
-     idle: {t:'â° More Idle', u:'/idle-games.html'},
+     arcade: {t:'🕹️ More Arcade', u:'/arcade-games.html'},
+     idle: {t:'⏰ More Idle', u:'/idle-games.html'},
      card: {t:'🃏 More Card', u:'/card-games.html'},
-      strategy: {t:'âï¸ More Strategy', u:'/simulation-games.html'},
-      skill: {t:'â¡ More Skill', u:'/word-typing-games.html'}
+      strategy: {t:'♟️ More Strategy', u:'/simulation-games.html'},
+      skill: {t:'⚡ More Skill', u:'/word-typing-games.html'}
    };
 
    var d = document.createElement('section');
@@ -353,7 +353,7 @@
     if (!link) return;
     var href = link.getAttribute('href');
     if (!href || href.indexOf('/') !== 0) return; // only internal game links
-    // Trigger commercialBreak asynchronously â don't block navigation
+    // Trigger commercialBreak asynchronously — don't block navigation
     try {
       if (window.GZAds && window.GZAds.commercialBreak) {
         window.GZAds.commercialBreak();
@@ -385,7 +385,7 @@
      }
    });
  } else {
-   // DOM already ready â still defer to requestIdleCallback with hard timeout fallback.
+   // DOM already ready — still defer to requestIdleCallback with hard timeout fallback.
    // RIC may never fire on idle headless browsers (Kachilu, Lighthouse), so always
    // schedule a setTimeout fallback that runs init() within 2s regardless.
    if ('requestIdleCallback' in window) {
