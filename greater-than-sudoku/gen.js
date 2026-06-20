@@ -180,7 +180,7 @@ function relabel(grid,N,rng){
 function digGivens(solution,N,rng,peers,cons,targetGivens,maxMs){
   const t0=Date.now();
   let bestPuzzle=null, bestClues=N*N+1;
-  for(let attempt=0; attempt<8; attempt++){
+  for(let attempt=0; attempt<14; attempt++){
     const puzzle=new Int8Array(solution);
     const order=shuffle([...Array(N*N)].map((_,i)=>i),rng);
     let clues=N*N;
@@ -203,14 +203,16 @@ function digGivens(solution,N,rng,peers,cons,targetGivens,maxMs){
 }
 
 // ---- tier config (6x6 tiers 1-3, 9x9 tiers 4-6). targetGivens sets difficulty:
-//      more givens = easier. Master aims for near-pure (very few givens). ----
+//      more givens = easier. Because every adjacent pair carries an inequality
+//      (complete comparison grid), puzzles stay unique with VERY few givens —
+//      this is the genre's signature: solve almost entirely from the signs. ----
 const TIERS=[
-  {name:'Beginner', N:6, count:4, targetGivens:18, maxMs:6000},
-  {name:'Easy',     N:6, count:4, targetGivens:12, maxMs:8000},
-  {name:'Medium',   N:6, count:4, targetGivens:6,  maxMs:10000},
-  {name:'Hard',     N:9, count:6, targetGivens:35, maxMs:25000},
-  {name:'Expert',   N:9, count:5, targetGivens:20, maxMs:35000},
-  {name:'Master',   N:9, count:4, targetGivens:8,  maxMs:50000},
+  {name:'Beginner', N:6, count:4, targetGivens:7,  maxMs:8000},
+  {name:'Easy',     N:6, count:4, targetGivens:5,  maxMs:10000},
+  {name:'Medium',   N:6, count:4, targetGivens:3,  maxMs:12000},
+  {name:'Hard',     N:9, count:6, targetGivens:12, maxMs:30000},
+  {name:'Expert',   N:9, count:5, targetGivens:7,  maxMs:40000},
+  {name:'Master',   N:9, count:4, targetGivens:3,  maxMs:60000},
 ];
 
 function gridToArr(g,N){ const a=[]; for(let r=0;r<N;r++) a.push(Array.from(g.slice(r*N,(r+1)*N))); return a; }
