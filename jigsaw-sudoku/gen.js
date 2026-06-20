@@ -1,17 +1,9 @@
 #!/usr/bin/env node
-// Jigsaw Sudoku (Irregular Sudoku) — region-tiling generator + solution generator +
-// uniqueness-verified puzzle digger.  Output: jigsaw-sudoku/levels.json
+// Jigsaw Sudoku (Irregular Sudoku) — generator.
+// Pattern adapted from anti-knight-sudoku/gen.js (proven fast V8 solver).
+// Regions replace boxes+knight as the third constraint.
 //
-// Rules: fill N×N grid with 1..N; each row, column, AND irregular region (N regions
-// of N cells each, shapes vary per puzzle) must contain 1..N exactly once.
-//
-// Strategy:
-//   1. Generate a connected region tiling (N regions × N cells) via multi-seed growth.
-//   2. Build a full valid solution via MRV backtracking with unified peer set
-//      (row + col + region).
-//   3. Dig holes in random order, re-checking uniqueness with an independent
-//      region-aware solution counter (stop at 2), until target clue count reached.
-//   4. Emit levels.json.
+// Output: jigsaw-sudoku/levels.json  {p:puzzle, s:solution, regions, regionCells}
 
 const fs = require('fs');
 
@@ -23,57 +15,53 @@ function shuffle(arr,rng){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(r
 function generateRegions(N, rng){
   const grid = new Int8Array(N*N).fill(-1);
   const cells = shuffle([...Array(N*N).keys()], rng);
-  // Pick N well-spread seeds
   const seeds = [];
   for(const idx of cells){
     if(seeds.length >= N) break;
-    const r = Math.floor(idx/N), c = idx%N;
+    const r = (idx/N)|0, c = idx%N;
     let ok = true;
     for(const s of seeds){
-      const sr = Math.floor(s/N), sc = s%N;
-      if(Math.abs(r-sr)+Math.abs(c-sc) < Math.max(2, Math.floor(N/3))){ ok=false; break; }
+      const sr = (s/N)|0, sc = s%N;
+      if(Math.abs(r-sr)+Math.abs(c-sc) < Math.max(2, (N/3)|0)){ ok=false; break; }
     }
     if(ok) seeds.push(idx);
   }
   while(seeds.length < N){ for(const idx of cells){ if(!seeds.includes(idx)){ seeds.push(idx); if(seeds.length>=N) break; } } }
-  const regionList = Array.from({length:N}, ()=>[]);
+  const regionList = []; for(let i=0;i<N;i++) regionList.push([]);
   const sizes = new Array(N).fill(0);
   for(let rid=0; rid<N; rid++){ grid[seeds[rid]]=rid; regionList[rid].push(seeds[rid]); sizes[rid]=1; }
   let claimed = N;
   const order = shuffle([...Array(N).keys()], rng);
   let safety = 0;
-  while(claimed < N*N && safety < N*N*6){
+  while(claimed < N*N && safety < N*N*8){
     safety++;
     shuffle(order, rng);
     let progressed = false;
     for(const rid of order){
       if(sizes[rid] >= N) continue;
-      // Find frontier: unclaimed cells adjacent to this region
       const frontier = [];
       for(const cell of regionList[rid]){
-        const r = Math.floor(cell/N), c = cell%N;
-        for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
-          const nr=r+dr, nc=c+dc;
-          if(nr>=0&&nr<N&&nc>=0&&nc<N){ const ni=nr*N+nc; if(grid[ni]===-1) frontier.push(ni); }
-        }
+        const r = (cell/N)|0, c = cell%N;
+        if(r>0){ const ni=(r-1)*N+c; if(grid[ni]===-1) frontier.push(ni); }
+        if(r<N-1){ const ni=(r+1)*N+c; if(grid[ni]===-1) frontier.push(ni); }
+        if(c>0){ const ni=r*N+(c-1); if(grid[ni]===-1) frontier.push(ni); }
+        if(c<N-1){ const ni=r*N+(c+1); if(grid[ni]===-1) frontier.push(ni); }
       }
       if(frontier.length === 0) continue;
-      const pick = frontier[Math.floor(rng()*frontier.length)];
+      const pick = frontier[(rng()*frontier.length)|0];
       grid[pick] = rid; regionList[rid].push(pick); sizes[rid]++; claimed++; progressed = true;
       if(claimed >= N*N) break;
     }
     if(!progressed){
-      // Assign remaining unclaimed cells to any adjacent region with capacity
       for(let i=0; i<N*N; i++){
         if(grid[i] === -1){
-          const r = Math.floor(i/N), c = i%N;
-          let best = -1;
-          for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
-            const nr=r+dr, nc=c+dc;
-            if(nr>=0&&nr<N&&nc>=0&&nc<N){ const rid2=grid[nr*N+nc]; if(rid2>=0 && sizes[rid2]<N){ best=rid2; break; } }
-          }
-          if(best === -1){ for(let rid2=0; rid2<N; rid2++){ if(sizes[rid2]<N){ best=rid2; break; } } }
-          grid[i] = best; regionList[best].push(i); sizes[best]++; claimed++;
+          const r=(i/N)|0, c=i%N; let best=-1;
+          if(r>0){const rid2=grid[(r-1)*N+c]; if(rid2>=0&&sizes[rid2]<N)best=rid2;}
+          if(best===-1&&r<N-1){const rid2=grid[(r+1)*N+c]; if(rid2>=0&&sizes[rid2]<N)best=rid2;}
+          if(best===-1&&c>0){const rid2=grid[r*N+(c-1)]; if(rid2>=0&&sizes[rid2]<N)best=rid2;}
+          if(best===-1&&c<N-1){const rid2=grid[r*N+(c+1)]; if(rid2>=0&&sizes[rid2]<N)best=rid2;}
+          if(best===-1){for(let rid2=0;rid2<N;rid2++){if(sizes[rid2]<N){best=rid2;break;}}}
+          grid[i]=best; regionList[best].push(i); sizes[best]++; claimed++;
         }
       }
       break;
@@ -83,232 +71,153 @@ function generateRegions(N, rng){
   return grid;
 }
 
-// ---- Build peer list: every cell conflicting with a given cell (row + col + region) ----
+// ---- Build peer list: row + col + region ----
 function buildPeers(N, regionGrid){
   const peers = new Array(N*N);
   for(let r=0; r<N; r++) for(let c=0; c<N; c++){
     const idx = r*N+c;
     const s = new Set();
-    for(let i=0; i<N; i++){ if(i!==c) s.add(r*N+i); if(i!==r) s.add(i*N+c); }
+    for(let i=0;i<N;i++){ if(i!==c)s.add(r*N+i); if(i!==r)s.add(i*N+c); }
     const rid = regionGrid[idx];
-    for(let i=0; i<N*N; i++){ if(regionGrid[i]===rid && i!==idx) s.add(i); }
+    for(let i=0;i<N*N;i++){ if(regionGrid[i]===rid && i!==idx) s.add(i); }
     peers[idx] = [...s];
   }
   return peers;
 }
 
-// ---- Count solutions up to `limit` with constraint propagation + MRV ----
-function countSolutions(grid, N, peers, limit){
-  const g = Int8Array.from(grid); // copy
-  const rows = new Int32Array(N), cols = new Int32Array(N), regs = new Int32Array(N);
-  const empties = [];
-  const FULL = (1<<N) - 1;
-  for(let i=0; i<N*N; i++){
-    const v = g[i];
-    if(v){ const bit=1<<(v-1); const r=Math.floor(i/N),c=i%N; rows[r]|=bit; cols[c]|=bit; regs[regionGrid[i]]|=bit; }
-    else empties.push(i);
+// ---- verify full grid satisfies all constraints ----
+function checkFull(grid,N,peers){
+  for(let i=0;i<N*N;i++){
+    const v=grid[i]; if(v<1||v>N)return false;
+    for(const p of peers[i]) if(grid[p]===v) return false;
   }
-  // WAIT — regionGrid is not in scope here. Fix: pass it or capture.
+  return true;
 }
 
-// Proper solver with regionGrid captured via closure
-function makeCounter(N, regionGrid, peers){
-  const FULL = (1<<N) - 1;
-  return function countSolutions(grid, limit){
-    const g = Int8Array.from(grid);
-    const rows = new Int32Array(N), cols = new Int32Array(N), regs = new Int32Array(N);
-    const empties = [];
-    for(let i=0; i<N*N; i++){
-      const v = g[i];
-      if(v){ const bit=1<<(v-1); const r=Math.floor(i/N),c=i%N; rows[r]|=bit; cols[c]|=bit; regs[regionGrid[i]]|=bit; }
-      else empties.push(i);
+// ---- MRV backtracking fill of EMPTY grid -> full solution ----
+function makeFilled(N,rng,peers){
+  const grid=new Int8Array(N*N);
+  function bt(){
+    let best=-1,bestCand=null;
+    for(let i=0;i<N*N;i++){
+      if(grid[i]!==0)continue;
+      const cand=[];
+      for(let v=1;v<=N;v++){ let ok=true; const ps=peers[i]; for(let k=0;k<ps.length;k++){ if(grid[ps[k]]===v){ok=false;break;} } if(ok)cand.push(v); }
+      if(cand.length===0)return false;
+      if(bestCand===null||cand.length<bestCand.length){ bestCand=cand; best=i; if(cand.length===1)break; }
     }
-    let count = 0;
-    function candMask(idx){
-      const r=Math.floor(idx/N), c=idx%N;
-      return FULL & ~(rows[r] | cols[c] | regs[regionGrid[idx]]);
-    }
-    function propagate(){
-      // Fill naked singles. Returns filled list for undo, or null on contradiction.
-      const filled = [];
-      let changed = true;
-      while(changed){
-        changed = false;
-        for(let k=0; k<empties.length; k++){
-          const idx = empties[k];
-          const m = candMask(idx);
-          if(m === 0){ for(const f of filled) unfill(f); return null; }
-          if((m & (m-1)) === 0){
-            const d = Math.log2(m) + 1; // digit
-            g[idx] = d;
-            const r=Math.floor(idx/N), c=idx%N; const bit=m;
-            rows[r]|=bit; cols[c]|=bit; regs[regionGrid[idx]]|=bit;
-            empties.splice(k,1); k--;
-            filled.push(idx);
-            changed = true;
-          }
-        }
-      }
-      return filled;
-    }
-    function fill(idx, d){
-      const bit = 1<<(d-1);
-      g[idx] = d;
-      const r=Math.floor(idx/N), c=idx%N;
-      rows[r]|=bit; cols[c]|=bit; regs[regionGrid[idx]]|=bit;
-      const k = empties.indexOf(idx); if(k>=0) empties.splice(k,1);
-    }
-    function unfill(idx){
-      const d = g[idx]; const bit = 1<<(d-1);
-      g[idx] = 0;
-      const r=Math.floor(idx/N), c=idx%N;
-      rows[r]&=~bit; cols[c]&=~bit; regs[regionGrid[idx]]&=~bit;
-      empties.push(idx);
-    }
-    function backtrack(){
-      if(count >= limit) return;
-      const prop = propagate();
-      if(prop === null) return;
-      if(empties.length === 0){ count++; for(let i=prop.length-1;i>=0;i--) unfill(prop[i]); return; }
-      // MRV
-      let bestK=-1, bestMask=0, bestCnt=N+1;
-      for(let k=0; k<empties.length; k++){
-        const m = candMask(empties[k]);
-        const cnt = popcount(m);
-        if(cnt < bestCnt){ bestCnt=cnt; bestK=k; bestMask=m; if(cnt<=2) break; }
-      }
-      const idx = empties[bestK];
-      let m = bestMask, d = 1;
-      while(m){
-        if(m & 1){
-          fill(idx, d);
-          backtrack();
-          unfill(idx);
-          if(count >= limit) break;
-        }
-        m >>= 1; d++;
-      }
-      for(let i=prop.length-1;i>=0;i--) unfill(prop[i]);
-    }
-    backtrack();
-    return count;
-  };
-}
-function popcount(x){ let c=0; while(x){ c+=x&1; x>>=1; } return c; }
-
-// ---- Generate full solution via MRV backtracking ----
-function makeSolution(N, regionGrid, peers, rng){
-  const FULL = (1<<N) - 1;
-  const g = new Int8Array(N*N);
-  const rows = new Int32Array(N), cols = new Int32Array(N), regs = new Int32Array(N);
-  const order = shuffle([...Array(N*N).keys()], rng);
-  function candMask(idx){
-    const r=Math.floor(idx/N), c=idx%N;
-    return FULL & ~(rows[r] | cols[c] | regs[regionGrid[idx]]);
-  }
-  function bt(pos){
-    if(pos === order.length) return true;
-    const idx = order[pos];
-    if(g[idx] !== 0) return bt(pos+1);
-    const r=Math.floor(idx/N), c=idx%N;
-    let m = candMask(idx);
-    const digits = [];
-    let d=1;
-    while(m){ if(m&1) digits.push(d); m>>=1; d++; }
-    shuffle(digits, rng);
-    for(const dgt of digits){
-      const bit = 1<<(dgt-1);
-      g[idx]=dgt; rows[r]|=bit; cols[c]|=bit; regs[regionGrid[idx]]|=bit;
-      if(bt(pos+1)) return true;
-      rows[r]&=~bit; cols[c]&=~bit; regs[regionGrid[idx]]&=~bit; g[idx]=0;
-    }
+    if(best===-1)return true;
+    shuffle(bestCand,rng);
+    for(const v of bestCand){ grid[best]=v; if(bt())return true; grid[best]=0; }
     return false;
   }
-  return bt(0) ? Array.from(g) : null;
+  if(!bt()) return null;
+  return grid;
 }
 
-// ---- Dig holes: remove cells while maintaining uniqueness ----
-function makePuzzle(solution, N, regionGrid, peers, targetGivens, rng, counter){
-  const puzzle = Int8Array.from(solution);
-  const cells = shuffle([...Array(N*N).keys()], rng);
-  let givens = N*N;
-  for(const idx of cells){
-    if(givens <= targetGivens) break;
-    const saved = puzzle[idx];
-    puzzle[idx] = 0;
-    const cnt = counter(puzzle, 2);
-    if(cnt === 1) givens--;
-    else puzzle[idx] = saved; // restore
+// ---- solution counter (stop at `limit`) — simple MRV DFS ----
+function countSolutions(grid,N,peers,limit){
+  const g=new Int8Array(grid);
+  let count=0;
+  function dfs(){
+    if(count>=limit)return;
+    let best=-1,bestCand=null;
+    for(let i=0;i<N*N;i++){
+      if(g[i]!==0)continue;
+      const cand=[]; const ps=peers[i];
+      for(let v=1;v<=N;v++){ let ok=true; for(let k=0;k<ps.length;k++){ if(g[ps[k]]===v){ok=false;break;} } if(ok)cand.push(v); }
+      if(cand.length===0)return;
+      if(bestCand===null||cand.length<bestCand.length){ bestCand=cand; best=i; if(cand.length===1)break; }
+    }
+    if(best===-1){ count++; return; }
+    for(const v of bestCand){ g[best]=v; dfs(); g[best]=0; if(count>=limit)return; }
   }
-  return { puzzle: Array.from(puzzle), givens };
+  dfs();
+  return count;
 }
 
-// ---- Main pipeline ----
-const TIERS = [
-  { name:"Beginner", count:4, N:6, givens:[20,24] },
-  { name:"Easy",     count:4, N:6, givens:[14,18] },
-  { name:"Medium",   count:4, N:6, givens:[10,13] },
-  { name:"Hard",     count:6, N:9, givens:[32,38] },
-  { name:"Expert",   count:5, N:9, givens:[26,31] },
-  { name:"Master",   count:4, N:9, givens:[22,25] },
+// ---- dig holes to reach target clue count, keeping uniqueness ----
+function digHoles(solution,N,rng,peers,targetClues,maxMs){
+  const t0=Date.now();
+  let bestPuzzle=null, bestClues=N*N+1;
+  for(let attempt=0; attempt<6; attempt++){
+    const puzzle=new Int8Array(solution);
+    const order=shuffle([...Array(N*N).keys()],rng);
+    let clues=N*N;
+    for(const idx of order){
+      if(clues<=targetClues)break;
+      if(Date.now()-t0>maxMs)break;
+      puzzle[idx]=0;
+      const cnt=countSolutions(puzzle,N,peers,2);
+      if(cnt!==1){ puzzle[idx]=solution[idx]; }
+      else clues--;
+    }
+    const finalCnt=countSolutions(puzzle,N,peers,2);
+    if(finalCnt===1 && clues<bestClues){ bestPuzzle=puzzle; bestClues=clues; }
+    if(bestClues<=targetClues) break;
+  }
+  if(!bestPuzzle){ bestPuzzle=new Int8Array(solution); bestClues=N*N; }
+  return { puzzle:bestPuzzle, clues:bestClues };
+}
+
+// ---- tier config ----
+const TIERS=[
+  {name:'Beginner', N:6, count:4, clues:22, maxMs:5000},
+  {name:'Easy',     N:6, count:4, clues:15, maxMs:6000},
+  {name:'Medium',   N:6, count:4, clues:12, maxMs:8000},
+  {name:'Hard',     N:9, count:6, clues:34, maxMs:20000},
+  {name:'Expert',   N:9, count:5, clues:26, maxMs:30000},
+  {name:'Master',   N:9, count:4, clues:22, maxMs:45000},
 ];
 
-function genLevel(tier, N, givensRange, levelNum, rng){
-  for(let attempt=0; attempt<25; attempt++){
-    // Regions
+function gridToArr(g,N){ const a=[]; for(let r=0;r<N;r++) a.push(Array.from(g.slice(r*N,(r+1)*N))); return a; }
+
+function genOneLevel(tier, rng){
+  for(let attempt=0; attempt<20; attempt++){
     let regionGrid = null;
-    for(let t=0; t<15; t++){ regionGrid = generateRegions(N, rng); if(regionGrid) break; }
+    for(let t=0; t<15; t++){ regionGrid = generateRegions(tier.N, rng); if(regionGrid) break; }
     if(!regionGrid) continue;
-    const peers = buildPeers(N, regionGrid);
-    const counter = makeCounter(N, regionGrid, peers);
-    // Solution
-    const solution = makeSolution(N, regionGrid, peers, rng);
-    if(!solution) continue;
-    // Puzzle
-    const target = givensRange[0] + Math.floor(rng() * (givensRange[1]-givensRange[0]+1));
-    const { puzzle, givens } = makePuzzle(solution, N, regionGrid, peers, target, rng, counter);
-    if(givens > givensRange[1] + 3) continue;
-    // Final uniqueness check
-    const cnt = counter(Int8Array.from(puzzle), 2);
-    if(cnt !== 1) continue;
-    // Build regionCells
-    const regionCells = Array.from({length:N}, ()=>[]);
-    for(let i=0; i<N*N; i++) regionCells[regionGrid[i]].push([Math.floor(i/N), i%N]);
+    const peers = buildPeers(tier.N, regionGrid);
+    const sol = makeFilled(tier.N, rng, peers);
+    if(!sol) continue;
+    if(!checkFull(sol, tier.N, peers)) continue;
+    const { puzzle, clues } = digHoles(sol, tier.N, rng, peers, tier.clues, tier.maxMs);
+    const chk = countSolutions(puzzle, tier.N, peers, 2);
+    if(chk !== 1) continue;
+    // Build region cells
+    const regionCells = []; for(let i=0;i<tier.N;i++) regionCells.push([]);
+    for(let i=0;i<tier.N*tier.N;i++) regionCells[regionGrid[i]].push([(i/tier.N)|0, i%tier.N]);
     return {
-      n: N,
+      tier: tier.name, N: tier.N,
       regions: Array.from(regionGrid),
       regionCells,
-      solution: chunk(solution, N),
-      puzzle: chunk(puzzle, N),
-      givens,
-      tier: tier,
-      level: levelNum,
+      p: gridToArr(puzzle, tier.N),
+      s: gridToArr(sol, tier.N),
+      clues, unique: true,
     };
   }
   return null;
 }
-function chunk(arr, N){ const out=[]; for(let i=0;i<arr.length;i+=N) out.push(arr.slice(i,i+N)); return out; }
 
 function main(){
-  const seed = parseInt(process.argv[2]) || 391;
+  const seed = parseInt(process.argv[2]) || (Date.now() % 1000000);
   const rng = mulberry32(seed);
-  const levels = [];
-  let levelNum = 0;
-  const t0 = Date.now();
+  process.stderr.write(`Seed: ${seed}\n`);
+  const levels=[]; let id=1;
+  const t0=Date.now();
   for(const tier of TIERS){
-    for(let i=0; i<tier.count; i++){
-      levelNum++;
-      let lv = null;
-      for(let retry=0; retry<5; retry++){
-        lv = genLevel(tier.name, tier.N, tier.givens, levelNum, rng);
-        if(lv) break;
-      }
-      if(!lv){ console.error(`FAILED level ${levelNum} (${tier.name})`); process.exit(1); }
+    for(let i=0;i<tier.count;i++){
+      process.stderr.write(`  L${String(id).padStart(2)} ${tier.name.padEnd(10)} N=${tier.N} target=${tier.clues}... `);
+      const lt0=Date.now();
+      const lv = genOneLevel(tier, rng);
+      if(!lv){ console.error(`FAILED level ${id} (${tier.name})`); process.exit(1); }
+      lv.id = id;
       levels.push(lv);
-      process.stderr.write(`  L${String(levelNum).padStart(2)} ${tier.name.padEnd(9)} ${tier.N}x${tier.N}  givens=${lv.givens}  [${((Date.now()-t0)/1000).toFixed(1)}s]\n`);
-      fs.writeFileSync('/home/msdn/gamezipper.com/jigsaw-sudoku/levels.json', JSON.stringify(levels));
+      process.stderr.write(`${lv.clues} clues, ${((Date.now()-lt0)/1000).toFixed(1)}s, UNIQUE [${((Date.now()-t0)/1000).toFixed(1)}s total]\n`);
+      fs.writeFileSync(__dirname+'/levels.json', JSON.stringify({version:1,game:'jigsaw-sudoku',levels,allUnique:true,count:levels.length}));
+      id++;
     }
   }
-  process.stderr.write(`\nGenerated ${levels.length} levels in ${((Date.now()-t0)/1000).toFixed(1)}s\n`);
+  console.log(`\n=== JIGSAW SUDOKU — ${levels.length} levels generated in ${((Date.now()-t0)/1000).toFixed(1)}s ===`);
 }
 main();
