@@ -80,13 +80,28 @@ function sndOpen(){playTone(300,0.3,'sine',0.1);setTimeout(function(){playTone(4
 // --- RESIZE ---
 function resize(){
   dpr=window.devicePixelRatio||1;
-  W=window.innerWidth;H=window.innerHeight;
+  W=window.innerWidth;
+  // R200: subtract game-footer.js (44px) + gz-topnav (~32px) so in-canvas Back button is reachable
+  var _tn=document.getElementById('gz-topnav');
+  var _f=document.getElementById('game-footer');
+  var _reserve=(_tn?_tn.offsetHeight:32)+(_f?_f.offsetHeight:44);
+  H=window.innerHeight-_reserve;
+  if(H<200)H=200; // safety floor
   C.width=W*dpr;C.height=H*dpr;
   C.style.width=W+'px';C.style.height=H+'px';
   X.setTransform(dpr,0,0,dpr,0,0);
 }
 window.addEventListener('resize',resize);
 resize();
+// R200: game-footer.js loads after this script via defer — poll for its appearance and re-resize
+(function(){
+  var _tries=0;
+  var _iv=setInterval(function(){
+    var f=document.getElementById('game-footer');
+    _tries++;
+    if((f&&f.offsetHeight>0)||_tries>30){clearInterval(_iv);resize();}
+  },500);
+})();
 
 // --- UTILITY ---
 function inRect(px,py,rx,ry,rw,rh){return px>=rx&&px<=rx+rw&&py>=ry&&py<=ry+rh;}
