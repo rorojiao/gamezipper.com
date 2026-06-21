@@ -254,7 +254,22 @@ let CELL=32;
 function resizeCanvas(){
   const wrap=canvas.parentElement;
   const maxW=Math.min(wrap.clientWidth-20,620);
-  CELL=Math.floor(maxW/N);
+  // R205 P2 fix: also constrain by available viewport height so the board
+  // and digit palette remain visible without scrolling on shorter screens.
+  // Subtract header + toolbar + palette + footer + wrap padding + margins.
+  const footerEl=document.getElementById('game-footer');
+  const footerH=(footerEl&&footerEl.offsetHeight>0)?footerEl.offsetHeight:0;
+  const headerEl=document.querySelector('header');
+  const headerH=headerEl?headerEl.offsetHeight:0;
+  const toolbarEl=document.querySelector('.toolbar');
+  const toolbarH=toolbarEl?toolbarEl.offsetHeight:0;
+  const paletteEl=document.querySelector('.palette');
+  const paletteH=paletteEl?paletteEl.offsetHeight:0;
+  const reservedV=headerH+toolbarH+paletteH+footerH+60; // 60 = wrap padding + gaps
+  const maxH=Math.max(180, window.innerHeight-reservedV);
+  const cellFromW=Math.floor(maxW/N);
+  const cellFromH=Math.floor(maxH/N);
+  CELL=Math.min(cellFromW,cellFromH);
   if(CELL<18)CELL=18;
   const size=CELL*N;
   const dpr=window.devicePixelRatio||1;
@@ -579,6 +594,23 @@ loadProgress();
 buildPalette();
 loadLevel(curLevel);
 resizeCanvas();
+
+// R205 P2 fix: re-resize when game-footer.js dynamically injects the footer
+// (footer height affects available board height). Poll for up to 30s.
+(function(){
+  var prevFooterH=0;
+  var checks=0;
+  var t=setInterval(function(){
+    checks++;
+    var f=document.getElementById('game-footer');
+    var h=(f&&f.offsetHeight>0)?f.offsetHeight:0;
+    if(h!==prevFooterH){
+      prevFooterH=h;
+      resizeCanvas();
+    }
+    if(checks>15){clearInterval(t);} // ~30s at 2s interval
+  },2000);
+})();
 
 // First interaction starts audio
 document.addEventListener('click',()=>{initAudio();if(soundOn)startBGM();},{once:true});
