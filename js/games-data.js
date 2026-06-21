@@ -48,6 +48,7 @@ const GAMES = [
   {name:"Sushi Stack",emoji:"🍣",cat:"puzzle",tags:["Sort","Puzzle"],url:"/sushi-stack/",desc:"Stack matching sushi rolls on chopsticks to clear the board! Japanese-themed 3D color sort puzzle!",isNew:true,status:"live"},
   {name:"Bolt Jam 3D",emoji:"🔩",cat:"puzzle",tags:["Puzzle","3D"],url:"/bolt-jam-3d/",desc:"Unscrew bolts and untangle rings in this mind-bending 3D screw puzzle game!",isNew:true,status:"live"},
   {name:"Brick Breaker",emoji:"🧱",cat:"arcade",tags:["Arcade","Classic"],url:"/brick-breaker/",desc:"Break all the bricks with your paddle! Classic breakout arcade action with power-ups!",status:"live"},
+  {name:"Twodoku",emoji:"🔗",cat:"puzzle",tags:["Puzzle","Number","Logic","Sudoku","Multi-grid","Brain","Strategy","Overlap","Twin","Difficult"],url:"/twodoku/",desc:"Play Twodoku - twin overlapping 9×9 Sudoku grids sharing a 3-column stack. 27 hand-crafted puzzles from Beginner to Master. Unique double-grid challenge!",isNew:true,status:"live"},
   {name:"Classic Snake",emoji:"🐍",cat:"arcade",tags:["Arcade","Retro"],url:"/snake/",desc:"Guide the snake to eat food and grow longer! The timeless retro arcade classic!",status:"live"},
   {name:"Chess",emoji:"♔",cat:"puzzle",tags:["Board","Strategy","Classic"],url:"/chess/",desc:"Classic chess against a friend on the same device! Full rules: castling, en passant, promotion, checkmate. No download needed.",status:"live"},
   {name:"Checkers",emoji:"⬤",cat:"puzzle",tags:["Board","Strategy","Classic","Draughts"],url:"/checkers/",desc:"Play Checkers online free! Classic American Draughts with AI opponent, mandatory captures, multi-jumps, king promotion. 3 difficulty levels!",isNew:true,status:"live"},
@@ -448,4 +449,3 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
-
