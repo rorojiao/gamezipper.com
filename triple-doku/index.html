@@ -717,20 +717,24 @@ function resizeCanvas() {
   const wrap = canvas.parentElement;
   const availW = Math.max(360, wrap.clientWidth - 24);
   const targetByWidth = Math.floor((availW - CANVAS_PAD * 2) / BOARD_W);
-  // R205 P2 fix: also constrain by available viewport height so the board
-  // and digit palette remain visible without scrolling on shorter screens.
+  // R205 P2 fix: constrain by available viewport height.
+  // Account for header + toolbar + palette + footer + any AdSense ad above the board.
   const footerEl = document.getElementById('game-footer');
   const footerH = (footerEl && footerEl.offsetHeight > 0) ? footerEl.offsetHeight : 0;
-  const headerEl = document.querySelector('header');
-  const headerH = headerEl ? headerEl.offsetHeight : 0;
-  const toolbarEl = document.querySelector('.toolbar, .controls, .bar');
-  const toolbarH = toolbarEl ? toolbarEl.offsetHeight : 0;
+  // Sum heights of all siblings BEFORE the canvas inside the wrap parent
+  let siblingAboveH = 0;
+  const wrapChildren = wrap.parentElement ? Array.from(wrap.parentElement.children) : [];
+  for (const sib of wrapChildren) {
+    if (sib === wrap || sib.contains(wrap)) break;
+    siblingAboveH += sib.offsetHeight || 0;
+  }
+  // Also account for palette and help-card BELOW canvas (so they're reachable)
   const paletteEl = document.querySelector('.palette, .digits, .numpad');
   const paletteH = paletteEl ? paletteEl.offsetHeight : 0;
-  const reservedV = headerH + toolbarH + paletteH + footerH + 80;
-  const availH = Math.max(160, window.innerHeight - reservedV);
+  const reservedV = siblingAboveH + paletteH + footerH + 60;
+  const availH = Math.max(140, window.innerHeight - reservedV);
   const targetByHeight = Math.floor((availH - CANVAS_PAD * 2) / BOARD_H);
-  CANVAS_CELL = Math.max(20, Math.min(46, targetByWidth, targetByHeight));
+  CANVAS_CELL = Math.max(18, Math.min(46, targetByWidth, targetByHeight));
   const w = CANVAS_PAD * 2 + BOARD_W * CANVAS_CELL;
   const h = CANVAS_PAD * 2 + BOARD_H * CANVAS_CELL;
   if (canvas.width !== w || canvas.height !== h) {
