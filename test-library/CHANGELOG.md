@@ -1,3 +1,40 @@
+## [v1.85.0] - 2026-06-22
+
+### Added
+- 10 new test cases from R205 Dynamic Test Intelligence cron industry research:
+  - **[B-121] [P1]** Safari 26.4 WebKit regression sweep — 191 bugs fixed + 44 new features + 1 feature deprecation (March 24 2026). At this scale Safari 26.4 is functionally a new browser engine; load-bearing "bugs" Apple fixed may break games that depended on the old behavior. SAFARI-26.4-MAJOR-RELEASE-REGRESSION-SWEEP dimension requiring visual-regression baselines captured on 26.3 vs 26.4
+  - **[P-080] [P1]** iOS WebKit engine monopoly performance penalty 28.6% — Microsoft Speedometer 3.1 benchmark (June 18 2026) shows Chromium-with-Microsoft-engine scores 28.6% higher than Safari on iOS; all iOS browsers forced to use Apple WebKit per App Store policy. IOS-WEBKIT-ENGINE-MONOPOLY-PERFORMANCE-PENALTY dimension — GameZipper iOS users hit a 28.6% lower performance ceiling than equivalent Android hardware
+  - **[W-190] [P2]** Chrome 149 CSS Gap Decorations (column-rule / row-rule / column-rule-inset / row-rule-inset / column-rule-visibility-items / row-rule-visibility-items) shipped June 2 2026 — CHROME-149-CSS-GAP-DECORATIONS-NEW-FEATURE-ADOPTION dimension; progressive enhancement required (only Chrome 149+ supports it as of June 2026) with border/pseudo-element fallback for Firefox/Safari
+  - **[W-191] [P2]** Chrome 148 AI-driven autofill + broader HTTP/3 support (May 7 2026) — CHROME-148-AI-AUTOFILL-HTTP3-WIDER-SUPPORT dimension; AI autofill must not mis-trigger on game text-input fields; HTTP/3 connection migration benefits mobile users switching WiFi/cellular mid-game
+  - **[S-172] [P1]** AI-driven API-scale attack + AI Agent identity impersonation 2026 — IBM X-Force Threat Intelligence Index 2026 (March 3) + Check Point 2026 Cybersecurity Report (March 26) document 70% of orgs using compound AI, ~2000 attacks/org/week, AI Agent identity spoofing, API-scale attacks, AI browser black-box risks; security paradigm shifts from boundary defense to trust reconstruction. AI-DRIVEN-ATTACK-AGENT-IMPERSONATION-API-SCALE-2026 dimension
+  - **[S-173] [P2]** Browser fingerprinting evolution 2026 — Canvas/WebGL/Audio/font multi-dimensional identity system replacing cookies under privacy regulations; users remain identifiable even after clearing all cookies + incognito. BROWSER-FINGERPRINTING-MULTI-DIMENSIONAL-2026-EVOLUTION dimension; GameZipper canvas/audio analytics would become fingerprint vectors; EU ePrivacy may classify fingerprinting as cookie-equivalent requiring consent
+  - **[P-081] [P3]** BrowserQuest Canvas optimization pattern — dirty-rectangle + layered (3-canvas) rendering reference (March 23 2026 CSDN). CANVAS-DIRTY-RECTANGLE-LAYERED-RENDERING-OPTIMIZATION-PATTERN dimension; highest-impact optimization for Canvas 2D games targeting the iOS WebKit engine (recovers the P-080 28.6% penalty by reducing per-frame work 10x)
+  - **[C-125] [P2]** WebGL/Canvas cross-browser compatibility tracking via MDN Browser Compatibility Data (BCD) open-source project (May 24 2026 CSDN). BCD-COMPATIBILITY-TRACKING-AUTOMATION dimension; integrate BCD into build pipeline to auto-flag unsupported-API usage before runtime QA; weekly BCD-diff CI job alerts when APIs change status
+  - **[W-192] [P2]** ChromeOS 148 certificate configuration system migration (May 26 2026) — preparing for ChromeOS 150 LTS; changes which root CAs are trusted and how revocation is checked. CHROMEOS-148-CERTIFICATE-CONFIG-MIGRATION dimension; GameZipper TLS cert (Let's Encrypt/Cloudflare) must still chain to a ChromeOS-148-trusted root; education-sector Chromebook users disproportionately affected
+  - **[G-153] [P3]** GameDev.Land adaptive layout for Poki HTML5 games workshop (May 13 2026) — mobile-first responsive reference: viewport user-scalable=no, CSS aspect-ratio, orientationchange debounce, env(safe-area-inset-*), 44x44px touch targets, Poki SDK pattern. POKI-ADAPTIVE-LAYOUT-MOBILE-FIRST-RESPONSIVE-REFERENCE dimension; industry best practice for mobile HTML5 game layout + prerequisite for portal syndication
+
+### Sources
+- Search queries executed (5 parallel MiniMax searches — web-search-prime SearXNG was down with 404):
+  - "HTML5 game testing techniques 2026 new browser bugs Safari iOS Chrome"
+  - "browser game bug 2026 canvas WebGL performance issues"
+  - "new browser security vulnerability 2026 XSS clickjacking CSP"
+  - "casual game UX 2026 haptic feedback dark mode accessibility WCAG"
+  - "Chrome 138 139 140 2026 web API deprecated new features"
+- Key URLs cited in new test cases:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Safari 26.4 — 191 bugs + 44 features, March 25 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8006a3327f492452 (Microsoft iOS WebKit 28.6% penalty benchmark, June 18 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0366a33aef571652 (Microsoft iOS WebKit Speedometer 3.1 4673.68 vs Safari, June 18 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_3076a1fbf5420452 (Chrome 149 CSS Gap Decorations, June 3 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_83069fc56b987652 (Chrome 148 AI autofill + HTTP/3, May 7 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_94569a6d0d301752 (IBM X-Force 2026 threat intelligence, March 3 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_94969c4f2d862352 (Check Point 2026 cybersecurity report, March 26 2026)
+  - https://new.qq.com/rain/a/20251224A02X1V00 (2026 cybersecurity trends AI reconstruction, Dec 24 2025)
+  - https://blog.csdn.net/shanwei_spider/article/details/160390135 (2026 browser fingerprinting evolution, April 24 2026)
+  - https://blog.csdn.net/gitblog_01057/article/details/153719449 (BrowserQuest Canvas dirty-rect optimization, March 23 2026)
+  - https://blog.csdn.net/gitblog_00859/article/details/153553036 (BCD WebGL/Canvas compatibility tracking, May 24 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2736a15714b22052 (ChromeOS 148 cert migration, May 26 2026)
+  - https://www.gamedev.land/ (GameDev.Land Poki adaptive layout workshop, May 13 2026)
+
 ## [v1.84.0] - 2026-06-22
 
 ### Added
