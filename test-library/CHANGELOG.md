@@ -1,3 +1,46 @@
+## [v1.83.0] - 2026-06-21
+
+### Added
+- 8 new test cases from R203 Dynamic Test Intelligence cron industry research:
+  - **[W-187] [P2]** ISP-level DNS/network filtering affecting GameZipper CDN reachability — 2026 Steam China outage pattern (5 articles document 互联网服务供应商(ISP)的节点策略 as primary cause of Steam inaccessible to users in China; same pattern applies to GameZipper via Cloudflare Pages origin) — NETWORK-FILTERING-CDN-REACHABILITY dimension
+  - **[W-188] [P2]** Android device fragmentation expansion (MediaTek vs Snapdragon vs Exynos GPU rendering divergence) + HarmonyOS NEXT native browser (non-Chromium ArkWeb engine, 800M+ devices) — 2026 Tencent Cloud game-adaptation-testing article (cloud.tencent.com/developer/article/2635027) — ANDROID-FRAGMENTATION-AND-HARMONYOS-NEXT-DUAL-DIMENSION
+  - **[P-078] [P2]** iQOO Neo11 LTPO dynamic 1-144Hz refresh rate mobile-display variable rAF timing — game loop must respect dynamic refresh rate; `requestAnimationFrame` may fire at 1Hz on static screens or 144Hz on active gameplay, breaking `dt = now - lastTime` physics integration — LTPO-VARIABLE-REFRESH-RATE-GAME-LOOP-SYNC dimension
+  - **[P-079] [P2]** ColorOS 16 Aurora/Tidal OS-level dynamic frame-catch scheduler intervention on game canvas rendering — Aurora Engine 40% click-response + 52% scroll-frame-rate stability; Tidal Engine pre-predicts stutter + boosts compute (37% stability, 4.1°C thermal, 13% power) — OS-LEVEL-FRAME-INTERVENTION-SCHEDULER dimension
+  - **[B-119] [P1]** iOS 26 broad bug regression sweep — 24 most-reported issues from 2026 tenorshare.tw field reports covering "无法检查更新" hang (traps users on stale iOS versions → known WebKit CVEs unrepaired) + Control Center over-transparency + native-app faults (Mail/Photos/App Store) — IOS-26-BROAD-BUG-REGRESSION-SWEEP-FIELD-REPORTS dimension
+  - **[G-151] [P2]** Safari Web Audio API StereoPannerNode positional-audio silent-fail (nodefony-client#1 ongoing since 2021) — games using StereoPannerNode for 3D audio positioning silently play centered audio on Safari (especially with ChannelMergerNode/ConvolverNode in chain) — SAFARI-WEB-AUDIO-STEREOPANNERNODE-POSITIONAL-FAIL dimension
+  - **[A-042] [P3]** WCAG 2.2 Level AAA Conformance (W3C WAI Feb 20 2026 publication) for premium/featured GameZipper games — highest accessibility tier above AA baseline; 7:1 contrast, zero >3Hz flashing, no timing, user override of text/spacing/font/color — WCAG-2.2-AAA-CONFORMANCE-PREMIUM-TIER dimension
+  - **[A-043] [P2]** Hardware eye-protection display features — iQOO Neo11 2592Hz PWM dimming + circular polarizer + SVM<0.03 (IEEE 1789-2015) require long-session games to avoid aggressive strobing effects that conflict with hardware eye-comfort expectations — HARDWARE-EYE-PROTECTION-DISPLAY-CONFLICT dimension
+
+### Sources
+- Search queries executed (5 parallel + 3 follow-up):
+  - "HTML5 game testing 2026 new techniques browser bug"
+  - "browser game bug report 2026 Safari Chrome Edge"
+  - "new browser security vulnerability 2026 XSS clickjacking"
+  - "casual game UX complaint 2026 mobile user feedback"
+  - "Chrome Edge Safari update 2026 breaking changes web"
+  - "HTML5 game testing techniques 2026 browser compatibility"
+  - "Chrome 2026 breaking changes web developer new features"
+  - "web game accessibility WCAG 2026 screen reader ARIA"
+- Key URLs cited in new test cases:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_57769fae77136952 (Steam China ISP 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_3686a19436b85752 (iQOO Neo11 LTPO 144Hz + eye-protection)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_14069a01a4441052 (ColorOS 16 Aurora/Tidal)
+  - https://cloud.tencent.com/developer/article/2635027 (2026 game adaptation testing matrix)
+  - https://www.tenorshare.tw/ios-update-problems.html (iOS 26 24 bug field reports)
+  - https://github.com/nodefony/nodefony-client/issues/1 (Safari StereoPannerNode bug)
+  - https://www.w3.org/WAI/WCAG2AAA-Conformance (WCAG 2.2 AAA conformance)
+
+### Removed
+- None (additive-only release)
+
+### Changed
+- Bumped Build R202 → R203 (Dynamic Test Intelligence 4h cron evolution)
+- Bumped Version 1.82.0 → 1.83.0
+- Master test file line count: 1860 → 1898 (+38 lines for 8 new test cases + new section header)
+- Total cumulative test cases in library: 652 (was 644 in v1.82.0)
+
+---
+
 ## [v1.82.0] - 2026-06-21
 
 ### Added
