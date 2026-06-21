@@ -1124,15 +1124,20 @@ window.addEventListener('resize', () => {
   _resizeT = setTimeout(() => { resizeCanvas(); draw(); }, 120);
 });
 
-// R205 P2 fix: re-resize when game-footer.js dynamically injects the footer
+// R205 P2 fix: re-resize when game-footer.js injects footer OR when AdSense
+// ad renders (ad loads async and pushes layout down, invalidating size calc).
 (function(){
   let prevH = 0; let checks = 0;
   const t = setInterval(() => {
     checks++;
     const f = document.getElementById('game-footer');
-    const h = (f && f.offsetHeight > 0) ? f.offsetHeight : 0;
-    if (h !== prevH) { prevH = h; resizeCanvas(); draw(); }
-    if (checks > 15) clearInterval(t);
+    const footerH = (f && f.offsetHeight > 0) ? f.offsetHeight : 0;
+    // Also check ad height (adsbygoogle ins element)
+    const ad = document.querySelector('ins.adsbygoogle');
+    const adH = ad ? ad.offsetHeight : 0;
+    const totalH = footerH + adH;
+    if (totalH !== prevH) { prevH = totalH; resizeCanvas(); draw(); }
+    if (checks > 20) clearInterval(t); // ~40s
   }, 2000);
 })();
 
