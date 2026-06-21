@@ -1,8 +1,20 @@
 /**
- * GameZipper Ad Manager v5 — Poki-Style Adaptive Ad System
+ * GameZipper Ad Manager v5.6 — Poki-Style Adaptive Ad System
  *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ *
+ * v5.6 Changes (2026-06-21 — Commercial Break Monetag In-Page Push Tier):
+ *   - Commercial break Tier 3 now tries inpagePush (11012002) BEFORE legacy zones.
+ *     Reasoning (BI data, 7d window 2026-06-14~06-21):
+ *       - vignette (11012003): 11 loads / 0 fills = 0%
+ *       - vignetteLegacy (10687756): disabled in v5.3 (0% fill)
+ *       - inpagePush (11012002): 2748 loads / 48 fills = 1.75% — ONLY working Monetag zone
+ *     Before v5.6, commercial break always ended in commercial_break_no_fill because
+ *     Tier 1 AdSense fills ~21% of breaks (162/768 sessions 24h) and Tier 2-5 are all
+ *     dead Monetag zones + disabled Adsterra. With Tier 3 now trying inpagePush, we
+ *     get a chance at the working zone during breaks where AdSense missed.
+ *   - Version bumped 5.5 → 5.6 to track on BI server.
  *
  * v5.4 Changes (2026-06-20 — AdSense Auto-Ads Preload + Frequency Tuning):
  *   - Preload AdSense auto-ads script in init() so AdSense can place native ads
@@ -174,7 +186,7 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.5',
+    VERSION: '5.6-gz-commercial-inpagePush',  // 2026-06-21: add inpagePush (11012002, 1.75% fill) as Tier 3 in commercial break (was vignetteLegacy only)
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -889,24 +901,32 @@
         loadZone(CONFIG.ZONES.vignette).then(function() {
           onAdFilled('monetag_vignette');
         }).catch(function() {
-          // Tier 3: legacy Attractive zone
+          // Tier 3: inpagePush (11012002) — the only working Monetag zone (1.75% fill rate 7d).
+          //   Vignette 11012003 has been at 0% fill for 7d (11 loads, 0 fills). In-page push
+          //   is the proven winner — try it before falling through to dead legacy zones.
           if (adFilled) return;
-          loadZone(CONFIG.ZONES.vignetteLegacy).then(function() {
-            onAdFilled('monetag_vignette_legacy');
+          loadZone(CONFIG.ZONES.inpagePush, null).then(function() {
+            onAdFilled('monetag_inpagePush');
           }).catch(function() {
-            // v6.5 Tier 4: Adsterra vignette — bypass Monetag 14-day 0% fill.
-            // Only fires when CONFIG.ADSTERRA.enabled + zoneId configured.
-            // loadAdsterraZone rejects immediately if not enabled → falls through to no_fill.
+            // Tier 4: legacy Attractive zone
             if (adFilled) return;
-            loadAdsterraZone(CONFIG.ZONES.adsterraVignette, null, 'vignette').then(function() {
-              onAdFilled('adsterra_vignette');
+            loadZone(CONFIG.ZONES.vignetteLegacy).then(function() {
+              onAdFilled('monetag_vignette_legacy');
             }).catch(function() {
-              // v6.5 Tier 4b: Adsterra in-page push (last resort before user sees blank break)
+              // v6.5 Tier 5: Adsterra vignette — bypass Monetag 14-day 0% fill.
+              // Only fires when CONFIG.ADSTERRA.enabled + zoneId configured.
+              // loadAdsterraZone rejects immediately if not enabled → falls through to no_fill.
               if (adFilled) return;
-              loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, null, 'inpage').then(function() {
-                onAdFilled('adsterra_inpage');
+              loadAdsterraZone(CONFIG.ZONES.adsterraVignette, null, 'vignette').then(function() {
+                onAdFilled('adsterra_vignette');
               }).catch(function() {
-                trackAdEvent('commercial_break_no_fill', {});
+                // v6.5 Tier 5b: Adsterra in-page push (last resort before user sees blank break)
+                if (adFilled) return;
+                loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, null, 'inpage').then(function() {
+                  onAdFilled('adsterra_inpage');
+                }).catch(function() {
+                  trackAdEvent('commercial_break_no_fill', {});
+                });
               });
             });
           });
