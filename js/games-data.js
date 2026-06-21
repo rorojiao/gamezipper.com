@@ -424,7 +424,8 @@ const GAMES = [
 {name:"Marginal Sudoku",emoji:"🔢",cat:"puzzle",tags:["sudoku","logic","variant","outside-clues","marginal"],url:"/marginal-sudoku/",desc:"Play Marginal Sudoku free online! Outside-clue Sudoku variant where digits next to the grid tell you which cells must contain that digit in the first three cells of each row and column. 27 unique-solution puzzles from Beginner to Master.",isNew:true,status:"live"},
 {name:"Search-9 Sudoku",emoji:"🔍",cat:"puzzle",tags:["search 9 sudoku","position sudoku","find the nine","sudoku variant","outside clues","logic","number puzzle","brain teaser"],url:"/search-9-sudoku/",desc:"Play Search-9 Sudoku free online! Standard Sudoku plus outside position clues that tell you where the digit 9 is in each row and column. 27 unique-solution puzzles from Beginner to Master. No download needed.",isNew:true,status:"live"},
 {name:"Little Killer Sudoku",emoji:"🗡️",cat:"puzzle",tags:["little killer sudoku","diagonal sum sudoku","sudoku variant","sudoku","logic","number puzzle","diagonal sum","outside clues","brain teaser","cracking the cryptic","latin square"],url:"/little-killer-sudoku/",desc:"Play Little Killer Sudoku free online! Standard Sudoku rules plus diagonal sum clues: numbers outside the grid show the sum of all digits along each diagonal. 27 unique-solution puzzles across 6 tiers from Beginner to Master, including both 6x6 and 9x9 grids. No download needed.",isNew:true,status:"live"},
-{name:"Binairo",emoji:"🔵",cat:"puzzle",tags:["binairo","binary puzzle","binary sudoku","takuzu","logic"],url:"/binairo/",desc:"Play Binairo (Binary Puzzle) free online! Fill the grid with 0s and 1s using logic. 27 levels from Beginner to Master. No download required.",isNew:true,status:"live"}
+{name:"Binairo",emoji:"🔵",cat:"puzzle",tags:["binairo","binary puzzle","binary sudoku","takuzu","logic"],url:"/binairo/",desc:"Play Binairo (Binary Puzzle) free online! Fill the grid with 0s and 1s using logic. 27 levels from Beginner to Master. No download required.",isNew:true,status:"live"},
+{name:"Samurai Sudoku",emoji:"⚔️",cat:"puzzle",tags:["sudoku","logic","samurai","overlapping","multi-grid"],url:"/samurai-sudoku/",desc:"Play 27 free Samurai Sudoku puzzles online. Five overlapping 9x9 grids in classic cross layout. Beginner to Master difficulty. Notes, hints, undo, mobile-friendly.",isNew:true,status:"live"}
 ];
 
 /**
@@ -448,3 +449,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+
