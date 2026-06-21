@@ -6,7 +6,7 @@
 > - `daily_seo_analysis.py` v3.0 (Kachilu Browser + mihomo) → 竞品缺口分析 (37 games)
 > - `data/longtail_scan.py` v1.0 (Google Suggest 67 seeds) → 612 unique suggestions
 > **对比基线**: 2026-06-20 11:00 (gap 26 / new 1 Murder / longtail 631 sug) → **2026-06-21 10:08 (gap 25 / new 2 / longtail 612 sug)**
-> **站点状态**: **393 游戏** (gz.com, +13 vs 06-20 11:00) + 2407 tools · sitemap gz.com **720 URLs** (+13 vs 06-20 11:00, +16 vs 06-19) · tools 2407 (+158 vs 2249) · 9/9 endpoints ✅
+> **站点状态**: **393 游戏** (gz.com, +13 vs 06-20 11:00) + 2407 tools · sitemap gz.com **721 URLs** (+14 vs 06-20 11:00, 100% lastmod ✅ post-regen commit fc1fe185bf) · tools 2407 (+158 vs 2249) · 9/9 endpoints ✅
 
 ---
 
@@ -39,7 +39,7 @@
 | Endpoint | HTTP | 状态 | 备注 |
 |----------|------|------|------|
 | gamezipper.com/robots.txt | 200 | ✅ | 14 UA + sitemap 引用 + AI bot 策略 |
-| gamezipper.com/sitemap.xml | 200 | ✅ | **720 <loc>**, 720 unique, **717 lastmod (99.58%, ⚠️ 3 missing)** |
+| gamezipper.com/sitemap.xml | 200 | ✅ | **721 <loc>**, 721 unique, **721 lastmod (100% ✅)** — post-regen commit fc1fe185bf 修复了 3 个 sudoku variants 缺失 |
 | gamezipper.com/indexnowkey.txt | 200 | ✅ | `gamezipper2026indexnow` |
 | gamezipper.com/ | 200 | ✅ | TTFB 0.58s |
 | gamezipper.com/2048/ | 200 | ✅ | TTFB 0.74s |
@@ -52,26 +52,22 @@
 
 | Host | Sitemap | Tracked | New | Submitted | Last OK |
 |------|---------|---------|-----|-----------|---------|
-| gamezipper.com | 720 | 720 | **2** | **2** | 2026-06-21T10:04:04 |
+| gamezipper.com | 721 | 721 | **2** | **2** | 2026-06-21T10:04:04 |
 | tools.gamezipper.com | 2407 | 2407 | 0 | 0 | 2026-06-21T03:00:05 |
 
-**结论**: gz.com sitemap 与 tracked 完全同步 (720=720), 本轮 2 URLs 已成功提交 (Bing API 返回 200). tools 站保持同步, 03:00 cron regen +158 URLs 已 tracked. v5.8 curl_cffi+DIRECT 修复仍稳定.
+**结论**: gz.com sitemap 与 tracked 完全同步 (721=721), 本轮 2 URLs 已成功提交 (Bing API 返回 200). tools 站保持同步, 03:00 cron regen +158 URLs 已 tracked. v5.8 curl_cffi+DIRECT 修复仍稳定.
 
-### 1.3 ⚠️ 3 个 URL 缺 lastmod (06-21 vs 06-20: 1→3, net +2 ⚠️)
+### 1.3 ✅ sitemap 100% lastmod (06-21 10:08: 721/721 ✅ post-regen)
 
-- **gz.com sitemap.xml**: 720/720 unique ✅, 但 **3/720 缺 lastmod** (99.58% 覆盖率)
-- **当前缺失 URL** (与 06-20 不重叠):
-  - https://gamezipper.com/anti-king-sudoku/
-  - https://gamezipper.com/girandola-sudoku/
-  - https://gamezipper.com/marginal-sudoku/
-- **修复进展 vs 06-20**:
-  - ✅ thermo-sudoku 已被期间 regen 修复 (06-20 是 1 个缺失)
-  - 🆕 3 个新 sudoku variants 直接 commit 绕过 regen, 触发同症状
-  - 净变化: 1 → 3 (+2 ⚠️)
-- **影响**: Google/Bing 拿到 lastmod 缺失 URL 时优先级降权, IndexNow 不受影响
-- **原因**: dev-gamezipper 任务持续直接 `<url><loc>...</loc></url>` commit 绕过 gen_sitemap.py
-- **修复** (P3): 跑 `gen_sitemap.py` regen
-- **根治方案** (待做, 第 3 次发现此问题): 在 `gen_sitemap.py` 加 `assert_no_missing_lastmod()` check + 给 dev-gamezipper 任务模板加 "commit 前必须跑 gen_sitemap.py" 强制步骤
+- **gz.com sitemap.xml**: **721/721 unique, 721/721 lastmod (100% ✅)** — 已完美健康
+- **修复时间线 vs 06-20**:
+  - 06-20 11:00: 707/707 unique, 706/707 lastmod (99.86%, **1 missing: thermo-sudoku**)
+  - 06-21 10:01 (daily_seo_analysis): 720/720 unique, 717/720 lastmod (99.58%, **3 missing**: anti-king-sudoku / girandola-sudoku / marginal-sudoku) — thermo-sudoku 已被期间 regen 修复 ✅
+  - 06-21 10:07 (commit fc1fe185bf): 跑 gen_sitemap.py regen, 修复 3 个 sudoku variants, 计数 720→721 (dedup/添加一个 URL)
+  - 06-21 10:08 (本报告): 721/721 unique, 721/721 lastmod ✅✅✅
+- **净变化**: 06-20 1 个 missing → 06-21 10:08 0 个 missing ✅✅✅
+- **影响**: Google/Bing 拿到 lastmod 完整 URL 列表, 索引优先级不受影响
+- **第 3 次复发已修复**: 但根治方案仍未实施 (assert + 任务模板), 下一个 dev-gamezipper 直接 commit 仍会复发
 
 ---
 
