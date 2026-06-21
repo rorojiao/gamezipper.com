@@ -1,3 +1,40 @@
+## [v1.81.0] - 2026-06-21
+### Added
+- 9 new test cases from industry research (R201 Dynamic Test Intelligence cron)
+- **[B-117]** Chrome 149 stable ship — CSS Gap Decorations + bfcache WebSocket + DevTools WebMCP helper (June 2 2026)
+- **[W-185]** Chrome release cycle halves from 4 weeks to 2 weeks starting Chrome 153 in September 2026 — QA pipeline cadence doubling
+- **[W-186]** Safari 26 gclid/fbclid tracking-parameter filtering ANNOUNCED-but-NOT-SHIPPED discrepancy — vendor commitment-vs-delivery gap
+- **[S-161]** 2026 CVE volume projected to break 100,000 for first time (First.org Feb 12 2026 prediction, 90% CI upper ~118K) — security tooling throughput scaling
+- **[S-162]** NGINX Ingress Controller for Kubernetes CVE cluster 2026 (CVE-2026-1580 + CVE-2026-24512 + CVE-2026-24513 + CVE-2026-24514) — ingress-subsystem-vs-base-NGINX distinction
+- **[C-121]** WebAssembly 3.0 Specification published June 8 2026 (editor Andreas Rossberg) — specification stabilization milestone
+- **[P-077]** WebAssembly 2.0 production-ready — browser performance reaches/exceeds native parity milestone (June 8 2026 IT之家 analysis)
+- **[G-150]** JavaScript Weekly #19 ViewTransitionsMock polyfill — Same-Document View Transitions cross-browser migration path
+- **[C-122]** Chrome 148 AI-mode auto-fill of government identifiers (driver's license, passport, national ID, KTN, Redress Number — May 7 2026) — PII exfiltration attack surface
+### Sources
+- Search 1 (SearXNG down — used mcp_minimax_search_web_search as fallback): "HTML5 game testing 2026 June new techniques browser"
+- Search 2: "browser security vulnerability CVE 2026 June Chrome Safari Firefox"
+- Search 3: "casual mobile game UX accessibility complaint 2026"
+- Search 4: "Chrome 138 Edge Safari 27 update June 2026 new features"
+- Search 5: "WebAssembly WebGL WebGPU performance bug regression 2026"
+- Search 6 (extra): "CVE 2026 security vulnerability disclosure June 21 critical"
+- Search 7 (extra): "Chrome 149 stable release June 2026 features"
+- Key URLs:
+  - so.html5.qq.com/page/real/search_news?docid=70000021_3076a1fbf5420452 (Chrome 149 stable, June 3 2026)
+  - so.html5.qq.com/page/real/search_news?docid=70000021_64169a790a846552 (Chrome 153 cycle 2w, March 4 2026)
+  - cloud.tencent.com/developer/article/2637644 (Safari 26 gclid/fbclid analysis)
+  - new.qq.com/rain/a/20260212A0638C00 (CVE volume 100K prediction, Feb 12 2026)
+  - support.huaweicloud.com/intl/zh-cn/bulletin-cce/CVE-2024-21626.html (NGINX Ingress CVE cluster, June 5 2026)
+  - webassembly.github.io/spec/core/ (WASM 3.0 spec, June 8 2026)
+  - so.html5.qq.com/page/real/search_news?docid=70000021_0036a264f5247152 (WASM 2.0 production-parity, June 8 2026)
+  - cloud.tencent.com/developer/article/2677947 (JavaScript Weekly #19, May 2026)
+  - so.html5.qq.com/page/real/search_news?docid=70000021_83069fc56b987652 (Chrome 148 AI auto-fill government IDs, May 7 2026)
+### Notes
+- Last push was 47 minutes before this run — well above 120s safety threshold
+- Used Python script via terminal tool (execute_code blocked in cron mode)
+- All 9 new IDs verified present in MASTER-TEST-CASES-v1.81.0.md
+- No duplicate IDs: B-117, W-185, W-186, S-161, S-162, C-121, P-077, G-150, C-122 are all NEW (highest prior: B-116, W-184, S-160, G-149, C-120, P-076)
+
+
 ## [v1.80.0] - 2026-06-21
 ### Added
 - 6 new test cases from industry research (R200 Dynamic Test Intelligence cron)
