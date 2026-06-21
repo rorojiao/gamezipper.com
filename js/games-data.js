@@ -15,6 +15,7 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
   'linear-gradient(135deg,#a1c4fd,#c2e9fb)'
 
+,{name:"Codewords",emoji:"🔐",cat:"puzzle",tags:["codewords","codebreaker","cipher crossword","cipher puzzle","code word puzzle","word puzzle","logic puzzle","brain game","number puzzle","deduction"],url:"/codewords/",desc:"Play Codewords (Codebreaker) free online! Crack the cipher crossword — each number represents a hidden letter. 27 unique-solution puzzles across 6 difficulty tiers from Beginner to Master. Use logic and word patterns to decode the grid. No download required.",isNew:true,status:"live"}
 ];
 
 const GAMES = [
