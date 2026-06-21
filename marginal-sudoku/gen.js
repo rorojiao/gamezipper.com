@@ -90,8 +90,8 @@ function patternSolution(N, rng){
     }
     for(let r=0;r<N;r++) for(let c=0;c<N;c++) g[r*N+c]=copy[r*N+colPerm[c]];
   }
-  // 5. transpose (50%)
-  if(rng()<0.5){
+  // 5. transpose (50%) — only when box is square (br===bc), else transpose breaks boxes
+  if(br===bc && rng()<0.5){
     const t=new Int8Array(N*N);
     for(let r=0;r<N;r++) for(let c=0;c<N;c++) t[c*N+r]=g[r*N+c];
     g.set(t);
