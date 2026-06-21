@@ -722,10 +722,18 @@ hintsUsed=0;
 hintDot=-1;
 dragging=false;
 particles.length=0;
-calcPositions();
 updateHUD();
 showScreen('game');
 Audio.startBGM();
+// R201 P0 FIX (Bug #9 variant — calcPositions timing): originally calcPositions() ran
+// BEFORE showScreen('game') made the canvas visible, so canvas.width/height were still 0
+// → cellSize=NaN → gridOffset=NaN → render() drew nothing. Per R118 lesson, CSS display
+// change from none→flex needs a rAF defer before clientWidth is correct.
+requestAnimationFrame(function(){
+resize();
+calcPositions();
+updateHUD();
+});
 }
 
 function replayLevel(){
