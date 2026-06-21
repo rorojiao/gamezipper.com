@@ -1,3 +1,42 @@
+## [v1.82.0] - 2026-06-21
+
+### Added
+- 8 new test cases from R202 Dynamic Test Intelligence cron industry research:
+  - **[S-163] [P1]** CVE-2026-5760 SGLang LLM-serving-framework Jinja2 SSTI RCE CVSS 9.8 via malicious GGUF `tokenizer.chat_template` metadata (April 20 2026 disclosure, no patched version at disclosure; 3rd CVSS-9.8 RCE in SGLang during 2026) — AI-INFERENCE-FRAMEWORK-MALICIOUS-MODEL-METADATA-RCE dimension
+  - **[S-164] [P1]** CVE-2026-42897 Microsoft Exchange Server OWA stored XSS CVSS 8.1 (May 14 2026 — single-email session-hijack; EEMS M2.1.x mitigation pending official patch) — EMAIL-MEDIATED-STORED-XSS-OWA dimension
+  - **[S-165] [P2]** CVE-2026-6476 PostgreSQL `pg_createsubscriber` SQL injection → SUPERUSER LPE CVSS 7.2 (May 14 2026 — affects PG 18 <18.4 and 17 <17.10) — DATABASE-REPLICATION-CLIENT-SQL-INJECTION-TO-SUPERUSER dimension
+  - **[S-166] [P1]** CVE-2026-45185 Exim SMTP server remote memory corruption (May 18 2026 — unauthenticated + public-reachable + possible RCE) — SMTP-MTA-UNAUTHENTICATED-REMOTE-MEMORY-CORRUPTION dimension
+  - **[S-167] [P1]** CVE-2026-20127 Cisco Catalyst SD-WAN Controller/Manager CVSS 10.0 unauthenticated auth bypass (Feb 27 2026 — in-wild exploited since 2023, ~2+ year undetected window) — NETWORKING-INFRASTRUCTURE-CVSS-10-AUTH-BYPASS-LONG-DETECTION-LATENCY dimension
+  - **[S-168] [P1]** CVE-2026-43284 + CVE-2026-43500 Linux kernel LPE pair (March 24 2026 Huawei Cloud advisory — netfilter/conntrack shared-fragment reuse + RxRPC shared-page-fragment logic flaw; dual-path for patch-evasion redundancy) — DUAL-PATH-LINUX-KERNEL-LPE-AFFECTS-HOSTING-INFRA dimension
+  - **[B-118] [P1]** CVE-2026-20045 Cisco Unified Communications + Webex Calling CVSS 8.2 unauthenticated remote OS command execution zero-day (Jan 22 2026 — actively exploited before patch) — VOIP-AND-COLLABORATION-PLATFORM-OS-COMMAND-EXECUTION dimension
+  - **[C-123] [P1]** CVE-2026-21509 Microsoft Office 0-Day actively exploited (Jan 27 2026 — out-of-band emergency patch ahead of Patch Tuesday) — OFFICE-DOCUMENT-ZERO-DAY-AS-PHISHING-PAYLOAD dimension
+
+### Maintenance
+- **Legacy-note cleanup**: v1.82.0 source file had 17 accumulated `**Version Note` lines (TOP-3-TRAP #1 hit again). Per cleanup regex, dropped 16 older notes, kept only immediately-prior v1.81.0 as `(legacy v1.81.0)`. Output verified to contain exactly 2 Version Note lines.
+- **Retroactively added v1.81.0 version-history line**: R201 omitted the v1.81.0 entry from the Version History block; R202 added it back alongside the new v1.82.0 entry.
+
+### Sources
+- minimax search: `CVE-2026 Chrome Safari Firefox zero-day browser security patch June 18-21` — surfaced CVE-2026-5281 (already covered B-036), CVE-2026-2441 (already covered S-084), CVE-2026-3910/3909 (already covered S-140), CVE-2026-0628 (already covered S-097), CVE-2026-34926 (already covered S-155), CVE-2026-42897 (NEW S-164)
+- minimax search: `npm supply chain attack June 2026 typosquatting malicious package Claude` — surfaced OpenClaw ClawHub (already covered S-128), Ghost campaign (already covered S-121), IndonesianFoods (no fresh test-case angle beyond prior coverage)
+- minimax search: `Chrome 156 Safari 27 Edge stable release June 2026 breaking changes WebGPU` — surfaced Chrome 149 (already covered B-117), Safari 26 (already covered W-186), Chrome 153 cadence (already covered W-185) — no fresh angle
+- minimax search: `CVE-2026-5281 Chrome WebGPU Dawn use-after-free zero-day detail exploit` — confirmed already covered B-036/P-049
+- minimax search: `CVE-2026-2441 CSS @property paint worklet exfiltration sandbox escape Chrome` — confirmed already covered S-084
+- minimax search: `CVE-2026-42897 Exchange OWA stored XSS exploit credential theft` — NEW S-164 (May 14 2026)
+- minimax search: `CVE-2026 June 18 19 20 21 2026 zero-day patch WebRTC WebGPU clickjacking XSS` — surfaced CVE-2026-21509 (NEW C-123), CVE-2026-43284/43500 Linux kernel pair (NEW S-168), CVE-2026-20127 Cisco SD-WAN (NEW S-167), CVE-2026-20045 Cisco UC (NEW B-118)
+- minimax search: `SGLang CVE-2026-5760 GGUF model RCE CVSS 9.8 detail AI inference exploit` — NEW S-163
+- minimax search: `iOS 27 WWDC 2026 Safari 27 Liquid Glass WebXR Apple Intelligence June 2026` — surfaced iOS 27 Liquid Glass (already covered A-041), WWDC26 (already covered W-179), iOS 27 (already covered B-108/111/114) — no fresh angle
+- Key URLs:
+  - https://blog.csdn.net/weixin_42376192/article/details/160391611 (SGLang CVE-2026-5760 deep analysis)
+  - https://www.cnblogs.com/TSLOMD/p/19962355 (SGLang Jinja2 SSTI technical deep-dive)
+  - https://blog.csdn.net/weixin_42376192/article/details/161153771 (Exchange OWA CVE-2026-42897)
+  - https://www.postgresql.org/support/security/CVE-2026-6476/ (PostgreSQL official advisory)
+  - https://www.51cto.com/loophole/p1 (Exim CVE-2026-45185 + SGLang coverage)
+  - https://new.qq.com/rain/a/20260227A02NOP00 (Cisco SD-WAN CVE-2026-20127 CVSS 10.0)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_22569a0fda957852 (Cisco SD-WAN in-wild since 2023)
+  - https://support.huaweicloud.com/topic/1374027-3-C (Linux kernel CVE-2026-43284 + CVE-2026-43500)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4116971f7d375852 (Cisco UC CVE-2026-20045)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_51169781c0880852 (Office CVE-2026-21509 out-of-band)
+
 ## [v1.81.0] - 2026-06-21
 ### Added
 - 9 new test cases from industry research (R201 Dynamic Test Intelligence cron)
