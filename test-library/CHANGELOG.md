@@ -1,3 +1,33 @@
+## [v1.84.0] - 2026-06-22
+
+### Added
+- 7 new test cases from R204 Dynamic Test Intelligence cron industry research:
+  - **[W-189] [P2]** Microsoft Edge Google account login support (announced June 18 2026 for July 2026 rollout) — CROSS-VENDOR-IDENTITY-PROVIDER-FEDERATION dimension where Microsoft Edge will accept Google OAuth credentials, creating a new account-federation attack surface and requiring the QA test matrix to expand with Edge-with-Google-account as a distinct auth-context row
+  - **[S-169] [P1]** ClickFix attack variant using cmdkey + regsvr32 fileless LOLBINs (April 29 2026) — SOCIAL-ENGINEERING-LOLBIN-FILELESS-BYPASS dimension where attackers chain two Microsoft-signed Windows-native binaries to drop remote payloads without writing any file to disk, bypassing PowerShell-centric EDR; distinct from S-123 (Win+R PowerShell self-typed)
+  - **[S-170] [P1]** Microsoft threat-intel-reported ClickFix variant targeting Windows Terminal paste-and-run with Lumma credential stealer (surfaced Feb 2026, reported March 9 2026) — SOCIAL-ENGINEERING-TERMINAL-PASTE-EXECUTION dimension distinct from S-123/S-169 because it targets Windows Terminal, a developer-oriented app whose paste-and-run UX is not yet covered by general-purpose EDR policies
+  - **[B-120] [P2]** Apple first-ever PRODUCTION DEPLOYMENT of background silent (Rapid Security Response) WebKit update for CVE-2026-20643 (March 20 2026, Thomas Espach discovery) — SILENT-UPDATE-MECHANISM-FIRST-PRODUCTION-USE dimension distinct from S-095 (capability announcement) because B-120 documents the first ever actual mass deployment, proving the mechanism silently changes Safari WebKit version UNDER users mid-session
+  - **[S-171] [P2]** .xor ransomware family 2026 consumer-endpoint attack chain (May 14 2026 deep-dive) — CONSUMER-ENDPOINT-RANSOMWARE-FAMILY-TTP-2026 dimension distinct from past ransomware entries because S-171 targets consumer game-players via malicious game cracks/cheats/mods (the same download channels GameZipper users use for legitimate extensions)
+  - **[C-124] [P3]** Playwright cross-browser (Chromium + Firefox + WebKit) parallel testing methodology baseline from Tencent Cloud June 22 2026 guide — PLAYWRIGHT-CROSS-BROWSER-QA-METHODOLOGY-BASELINE dimension; explicit three-browser parallel matrix closes the GameZipper Safari/Firefox automated-regression gap by running Safari-equivalent WebKit tests on Linux CI without macOS hardware
+  - **[G-152] [P3]** 2026 office-worker fragmented-session casual game design pattern (June 10 2026 上班族手游 research) — FRAGMENTED-SESSION-OFFICE-WORKER-CASUAL-DESIGN-PATTERN dimension requiring sub-second state-preservation across arbitrary interruption points so users can close the tab when a meeting starts and resume the exact game state 1-2 hours later
+
+### Sources
+- Search queries executed (5 parallel + 3 follow-up):
+  - "HTML5 game testing 2026 new techniques browser Safari Chrome"
+  - "browser game bug report 2026 WebKit Safari iOS mobile"
+  - "new browser security vulnerability 2026 clickjacking XSS WebGL"
+  - "casual mobile game UX complaint 2026 haptic feedback dark mode accessibility"
+  - "Chrome 138 139 Safari 26 Edge 2026 WebGPU pointer events breaking change"
+  - "HTML5 canvas WebGL memory leak game bug mobile Safari 2026"
+  - "CVE 2026 June Apple iOS Safari Chrome critical vulnerability disclosure"
+- Key URLs cited in new test cases:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0076a33a7fb08452 (Edge Google account login July 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_95169f1600f36952 (ClickFix cmdkey+regsvr32 variant April 29 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_09969ae48f822052 (ClickFix Windows Terminal Lumma March 9 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_65569bcad1337152 (Apple first background silent WebKit update March 20 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8016a05efd112652 (.xor ransomware family 2026 May 14)
+  - https://cloud.tencent.com/developer/article/2609141 (Playwright cross-browser guide June 22 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8716a2902b367452 (上班族手游 2026 office-worker fragmented-session)
+
 ## [v1.83.0] - 2026-06-21
 
 ### Added
