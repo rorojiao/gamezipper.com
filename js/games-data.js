@@ -426,7 +426,7 @@ const GAMES = [
 {name:"Little Killer Sudoku",emoji:"🗡️",cat:"puzzle",tags:["little killer sudoku","diagonal sum sudoku","sudoku variant","sudoku","logic","number puzzle","diagonal sum","outside clues","brain teaser","cracking the cryptic","latin square"],url:"/little-killer-sudoku/",desc:"Play Little Killer Sudoku free online! Standard Sudoku rules plus diagonal sum clues: numbers outside the grid show the sum of all digits along each diagonal. 27 unique-solution puzzles across 6 tiers from Beginner to Master, including both 6x6 and 9x9 grids. No download needed.",isNew:true,status:"live"},
 {name:"Binairo",emoji:"🔵",cat:"puzzle",tags:["binairo","binary puzzle","binary sudoku","takuzu","logic"],url:"/binairo/",desc:"Play Binairo (Binary Puzzle) free online! Fill the grid with 0s and 1s using logic. 27 levels from Beginner to Master. No download required.",isNew:true,status:"live"},
 {name:"Samurai Sudoku",emoji:"⚔️",cat:"puzzle",tags:["sudoku","logic","samurai","overlapping","multi-grid"],url:"/samurai-sudoku/",desc:"Play 27 free Samurai Sudoku puzzles online. Five overlapping 9x9 grids in classic cross layout. Beginner to Master difficulty. Notes, hints, undo, mobile-friendly.",isNew:true,status:"live"}
-,{name:"Codewords",emoji:"🔐",cat:"puzzle",tags:["codewords","codebreaker","cipher crossword","cipher puzzle","code word puzzle","word puzzle","logic puzzle","brain game","number puzzle","deduction"],url:"/codewords/",desc:"Play Codewords (Codebreaker) free online! Crack the cipher crossword — each number represents a hidden letter. 27 unique-solution puzzles across 6 difficulty tiers from Beginner to Master. Use logic and word patterns to decode the grid. No download required.",isNew:true,status:"live"}];
+,{name:"Codewords",emoji:"🔐",cat:"puzzle",tags:["codewords","codebreaker","cipher crossword","cipher puzzle","code word puzzle","word puzzle","logic puzzle","brain game","number puzzle","deduction"],url:"/codewords/",desc:"Play Codewords (Codebreaker) free online! Crack the cipher crossword — each number represents a hidden letter. 27 unique-solution puzzles across 6 difficulty tiers from Beginner to Master. Use logic and word patterns to decode the grid. No download required.",isNew:true,status:"live"},{name:"Butterfly Sudoku",emoji:"🦋",cat:"puzzle",tags:["sudoku","logic","multi-grid"],url:"/butterfly-sudoku/",desc:"Free online Butterfly Sudoku with four overlapping 9x9 grids in a 2x2 pattern. 27 puzzles across 6 difficulty tiers from Beginner to Master.",isNew:true,status:"live"}];
 
 /**
  * Get effective game status (checks localStorage overrides from admin panel)
@@ -449,3 +449,4 @@ function getGamesByStatus(status) {
 function getAllGames() {
   return GAMES.map(g => ({...g, status: getGameStatus(g)}));
 }
+
