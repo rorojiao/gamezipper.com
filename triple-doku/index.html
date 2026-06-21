@@ -73,7 +73,7 @@ body::before{content:"";position:fixed;inset:0;background:radial-gradient(circle
 header{position:relative;z-index:1;padding:16px 20px 8px;text-align:center}
 header h1{margin:0;font-size:clamp(24px,5vw,34px);font-weight:800;letter-spacing:-0.02em;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 60%,var(--grid-C) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 30px rgba(45,212,191,0.30)}
 header p{margin:4px 0 0;color:var(--text-dim);font-size:13px}
-.game-shell{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:8px 12px 40px}
+.game-shell{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:8px 12px 80px}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;padding:8px;margin-bottom:8px;background:var(--panel);border:1px solid var(--panel-border);border-radius:14px;backdrop-filter:blur(8px)}
 .toolbar .info{display:flex;gap:14px;align-items:center;font-size:13px;color:var(--text-dim);padding:0 6px;flex-wrap:wrap;justify-content:center}
 .toolbar .info b{color:var(--accent2);font-weight:700}
@@ -717,7 +717,20 @@ function resizeCanvas() {
   const wrap = canvas.parentElement;
   const availW = Math.max(360, wrap.clientWidth - 24);
   const targetByWidth = Math.floor((availW - CANVAS_PAD * 2) / BOARD_W);
-  CANVAS_CELL = Math.max(24, Math.min(46, targetByWidth));
+  // R205 P2 fix: also constrain by available viewport height so the board
+  // and digit palette remain visible without scrolling on shorter screens.
+  const footerEl = document.getElementById('game-footer');
+  const footerH = (footerEl && footerEl.offsetHeight > 0) ? footerEl.offsetHeight : 0;
+  const headerEl = document.querySelector('header');
+  const headerH = headerEl ? headerEl.offsetHeight : 0;
+  const toolbarEl = document.querySelector('.toolbar, .controls, .bar');
+  const toolbarH = toolbarEl ? toolbarEl.offsetHeight : 0;
+  const paletteEl = document.querySelector('.palette, .digits, .numpad');
+  const paletteH = paletteEl ? paletteEl.offsetHeight : 0;
+  const reservedV = headerH + toolbarH + paletteH + footerH + 80;
+  const availH = Math.max(160, window.innerHeight - reservedV);
+  const targetByHeight = Math.floor((availH - CANVAS_PAD * 2) / BOARD_H);
+  CANVAS_CELL = Math.max(20, Math.min(46, targetByWidth, targetByHeight));
   const w = CANVAS_PAD * 2 + BOARD_W * CANVAS_CELL;
   const h = CANVAS_PAD * 2 + BOARD_H * CANVAS_CELL;
   if (canvas.width !== w || canvas.height !== h) {
@@ -1106,6 +1119,18 @@ window.addEventListener('resize', () => {
   clearTimeout(_resizeT);
   _resizeT = setTimeout(() => { resizeCanvas(); draw(); }, 120);
 });
+
+// R205 P2 fix: re-resize when game-footer.js dynamically injects the footer
+(function(){
+  let prevH = 0; let checks = 0;
+  const t = setInterval(() => {
+    checks++;
+    const f = document.getElementById('game-footer');
+    const h = (f && f.offsetHeight > 0) ? f.offsetHeight : 0;
+    if (h !== prevH) { prevH = h; resizeCanvas(); draw(); }
+    if (checks > 15) clearInterval(t);
+  }, 2000);
+})();
 
 // ---------- Main loop (60fps w/ delta time) ----------
 let _lastFrame = performance.now();
