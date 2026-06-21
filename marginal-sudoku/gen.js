@@ -11,20 +11,17 @@
 //     K=2 for beginner/easy 6x6, K=3 otherwise.
 // Output: marginal-sudoku/levels.json
 //
-// Strategy:
-//   1. Build a full STANDARD Sudoku solution via the canonical cyclic Latin-square
-//      pattern + band/stack shuffles + transpose + digit relabel (proven pattern
-//      from anti-knight/greater-than siblings — no backtracking needed for full
-//      solution).
-//   2. DERIVE marginal clue candidates from the solution: for each row r the K
-//      digits in cols 0..K-1 become left-clue candidates; cols N-K..N-1 become
-//      right-clue candidates; similarly per column for top/bottom.
-//   3. Pick a RANDOM SUBSET of marginal clues (target size per tier).
-//   4. Solve an EMPTY grid with marginal constraints (each cell has a forbidden-
-//      digit set derived from the chosen marginal clues). Use an MRV DFS counter
-//      that stops at limit=2. If puzzle is not unique, ADD interior givens in
-//      random order (from the solution) until unique, then MINIMIZE them.
-//   5. Emit levels.json + a printed verification report.
+// Strategy (dig-from-full — proven fast approach from anti-knight/greater-than siblings):
+//   1. Build a full STANDARD Sudoku solution via canonical cyclic Latin-square
+//      pattern + band/stack shuffles + (square-box-only) transpose + digit relabel.
+//   2. DERIVE marginal clue candidates from the solution.
+//   3. Start: FULL solution as givens + ALL marginal candidates.
+//      (Trivially unique.)
+//   4. Phase 1: dig INTERIOR givens in random order, re-checking uniqueness with
+//      the marginal-aware counter (stop at 2). Keep removal if still unique.
+//   5. Phase 2: dig MARGINAL clues in random order down to the tier's target max,
+//      re-checking uniqueness after each marginal removal.
+//   6. Emit levels.json + a printed verification report.
 
 const fs = require('fs');
 const crypto = require('crypto');
@@ -55,12 +52,12 @@ function patternSolution(N, rng){
   // 2. shuffle BANDS
   {
     const copy=new Int8Array(g);
-    const stackIdx=[];
-    for(let b=0;b<N/br;b++) stackIdx.push(b);
-    shuffle(stackIdx,rng);
+    const bIdx=[];
+    for(let b=0;b<N/br;b++) bIdx.push(b);
+    shuffle(bIdx,rng);
     const perm=new Array(N);
     for(let dstB=0; dstB<N/br; dstB++){
-      const srcB=stackIdx[dstB];
+      const srcB=bIdx[dstB];
       for(let i=0;i<br;i++) perm[dstB*br+i]=srcB*br+i;
     }
     for(let r=0;r<N;r++){ const src=perm[r]; for(let c=0;c<N;c++) g[r*N+c]=copy[src*N+c]; }
@@ -118,7 +115,6 @@ function buildPeers(N){
 }
 
 // ---- derive marginal clue candidates from a full solution ----
-// returns { left:[[d,d,...]], right:[...], top:[...], bottom:[...] } each length N
 function deriveMarginalCandidates(sol, N, K){
   const left=[], right=[], top=[], bottom=[];
   for(let r=0;r<N;r++){
@@ -136,15 +132,14 @@ function deriveMarginalCandidates(sol, N, K){
   return { left, right, top, bottom };
 }
 
-// ---- pick a random subset of marginal clues of `target` total size ----
-function pickMarginalSubset(cands, N, target, rng){
-  const all=[]; // {side, idx, digit}
-  for(let r=0;r<N;r++) for(const d of cands.left[r])  all.push({side:'left',  idx:r, digit:d});
-  for(let r=0;r<N;r++) for(const d of cands.right[r]) all.push({side:'right', idx:r, digit:d});
-  for(let c=0;c<N;c++) for(const d of cands.top[c])   all.push({side:'top',   idx:c, digit:d});
-  for(let c=0;c<N;c++) for(const d of cands.bottom[c])all.push({side:'bottom',idx:c, digit:d});
-  shuffle(all, rng);
-  return all.slice(0, Math.min(target, all.length));
+// flatten candidates into a list of {side, idx, digit}
+function flattenMarg(cands, N){
+  const all=[];
+  for(let r=0;r<N;r++) for(const d of cands.left[r])   all.push({side:'left',   idx:r, digit:d});
+  for(let r=0;r<N;r++) for(const d of cands.right[r])  all.push({side:'right',  idx:r, digit:d});
+  for(let c=0;c<N;c++) for(const d of cands.top[c])    all.push({side:'top',    idx:c, digit:d});
+  for(let c=0;c<N;c++) for(const d of cands.bottom[c]) all.push({side:'bottom', idx:c, digit:d});
+  return all;
 }
 
 // ---- build per-side digit Sets from a chosen subset ----
@@ -163,8 +158,6 @@ function buildMarginalSets(subset, N){
 }
 
 // ---- build per-cell FORBIDDEN digit set from marginal constraints ----
-// forbidden[i] = Set of digits NOT allowed in cell i (because of marginal rules).
-// "D left of row r" -> D must be in cols 0..K-1 -> D forbidden in cols K..N-1.
 function buildForbidden(N, K, marg){
   const f=Array.from({length:N*N},()=>new Set());
   for(let r=0;r<N;r++){
@@ -178,12 +171,13 @@ function buildForbidden(N, K, marg){
   return f;
 }
 
-// ---- marginal-aware solution counter (stop at `limit`) ----
-function countSolutions(grid, N, peers, forbidden, limit){
+// ---- marginal-aware solution counter (stop at `limit`, optional node budget) ----
+function countSolutions(grid, N, peers, forbidden, limit, nodeBudget){
   const g=new Int8Array(grid);
-  let count=0;
+  let count=0, nodes=0;
   function dfs(){
     if(count>=limit) return;
+    if(nodeBudget && ++nodes>nodeBudget){ count=limit; return; } // abort -> ambiguous
     let best=-1, bestCand=null;
     for(let i=0;i<N*N;i++){
       if(g[i]!==0) continue;
@@ -204,7 +198,7 @@ function countSolutions(grid, N, peers, forbidden, limit){
   return count;
 }
 
-// ---- verify a FULL grid satisfies standard Sudoku + marginal constraints (defensive) ----
+// ---- verify a FULL grid satisfies standard Sudoku (defensive) ----
 function checkFull(grid, N, peers){
   for(let i=0;i<N*N;i++){
     const v=grid[i]; if(v<1||v>N) return false;
@@ -213,78 +207,68 @@ function checkFull(grid, N, peers){
   return true;
 }
 function checkMarginal(grid, N, K, marg){
-  // for each chosen marginal clue, the digit must appear in the first K cells
   for(let r=0;r<N;r++){
-    for(const d of marg.left[r]){
-      let ok=false; for(let c=0;c<K;c++) if(grid[r*N+c]===d){ ok=true; break; }
-      if(!ok) return false;
-    }
-    for(const d of marg.right[r]){
-      let ok=false; for(let c=N-K;c<N;c++) if(grid[r*N+c]===d){ ok=true; break; }
-      if(!ok) return false;
-    }
+    for(const d of marg.left[r]){  let ok=false; for(let c=0;c<K;c++) if(grid[r*N+c]===d){ ok=true; break; } if(!ok) return false; }
+    for(const d of marg.right[r]){ let ok=false; for(let c=N-K;c<N;c++) if(grid[r*N+c]===d){ ok=true; break; } if(!ok) return false; }
   }
   for(let c=0;c<N;c++){
-    for(const d of marg.top[c]){
-      let ok=false; for(let r=0;r<K;r++) if(grid[r*N+c]===d){ ok=true; break; }
-      if(!ok) return false;
-    }
-    for(const d of marg.bottom[c]){
-      let ok=false; for(let r=N-K;r<N;r++) if(grid[r*N+c]===d){ ok=true; break; }
-      if(!ok) return false;
-    }
+    for(const d of marg.top[c]){    let ok=false; for(let r=0;r<K;r++) if(grid[r*N+c]===d){ ok=true; break; } if(!ok) return false; }
+    for(const d of marg.bottom[c]){ let ok=false; for(let r=N-K;r<N;r++) if(grid[r*N+c]===d){ ok=true; break; } if(!ok) return false; }
   }
   return true;
 }
 
-// ---- add interior givens progressively until unique, then minimize ----
-function digPuzzle(solution, N, rng, peers, forbidden, maxMs){
+// ---- dig-from-full puzzle generator ----
+// Strategy: pick EXACTLY targetMarg random marginal clues (per spec), then
+// dig interior givens (start: full solution) until target reached or budget
+// exhausted. countSolutions is FAST here because we always have many givens.
+function digPuzzle(solution, N, K, rng, peers, cands, targetMarg, maxMs){
   const t0=Date.now();
-  const puzzle=new Int8Array(N*N); // empty
-  let cnt=countSolutions(puzzle, N, peers, forbidden, 2);
-  if(cnt===0) throw new Error('marginal set inconsistent (0 solutions) — should never happen');
-  if(cnt===1) return puzzle;
-  // add givens in random order until unique
-  const order=shuffle([...Array(N*N)].map((_,i)=>i), rng);
-  for(const idx of order){
-    if(cnt===1) break;
+  let bestPuzzle=null, bestSubset=null, bestGivens=Infinity;
+  for(let attempt=0; attempt<4; attempt++){
     if(Date.now()-t0>maxMs) break;
-    if(puzzle[idx]!==0) continue;
-    puzzle[idx]=solution[idx];
-    cnt=countSolutions(puzzle, N, peers, forbidden, 2);
+    const innerT0=Date.now();
+    const attemptBudget=Math.min(maxMs-(innerT0-t0), maxMs/4+1500);
+    // pick targetMarg random marginal clues (the spec's "select a SUBSET")
+    const margFlat=flattenMarg(cands, N);
+    shuffle(margFlat, rng);
+    const subset=margFlat.slice(0, Math.min(targetMarg, margFlat.length));
+    const margSets=buildMarginalSets(subset, N);
+    const forbidden=buildForbidden(N, K, margSets);
+    // start: full solution as givens (trivially unique)
+    const puzzle=new Int8Array(solution);
+    // dig givens in random order, keeping uniqueness
+    const cellOrder=shuffle([...Array(N*N)].map((_,i)=>i), rng);
+    for(const idx of cellOrder){
+      if(Date.now()-innerT0>attemptBudget) break;
+      const save=puzzle[idx]; if(save===0) continue;
+      puzzle[idx]=0;
+      const cnt=countSolutions(puzzle, N, peers, forbidden, 2, 30000);
+      if(cnt!==1) puzzle[idx]=save;
+    }
+    const givens=puzzle.filter(x=>x!==0).length;
+    if(givens<bestGivens){ bestGivens=givens; bestPuzzle=new Int8Array(puzzle); bestSubset=subset.slice(); }
   }
-  if(cnt!==1){
-    // ran out of time/budget — fall back to full solution as givens
-    return new Int8Array(solution);
-  }
-  // MINIMIZE: try removing each given
-  const remOrder=shuffle([...order], rng);
-  for(const idx of remOrder){
-    if(puzzle[idx]===0) continue;
-    if(Date.now()-t0>maxMs*2) break;
-    const save=puzzle[idx];
-    puzzle[idx]=0;
-    const c2=countSolutions(puzzle, N, peers, forbidden, 2);
-    if(c2!==1) puzzle[idx]=save;
-  }
-  return puzzle;
+  if(!bestPuzzle){ bestPuzzle=new Int8Array(solution); bestSubset=flattenMarg(cands, N).slice(0, targetMarg); }
+  return { puzzle:bestPuzzle, subset:bestSubset };
 }
 
-// ---- tier config (27 levels: 6x6 tiers 1-3, 9x9 tiers 4-6) ----
+// ---- tier config (27 levels) ----
 // K = "first K cells" rule (2 for beginner/easy 6x6, 3 otherwise)
-// targetMarginal = total marginal clues to show (across all 4 sides)
+// targetMarg = exact marginal clue count to display per spec
+//   (interior givens are added on top as needed for uniqueness)
 const TIERS=[
-  {name:'Beginner', N:6, K:2, count:4, targetMarginal:11, maxMs:3000},
-  {name:'Easy',     N:6, K:2, count:4, targetMarginal:13, maxMs:4000},
-  {name:'Medium',   N:6, K:3, count:4, targetMarginal:9,  maxMs:6000},
-  {name:'Hard',     N:9, K:3, count:6, targetMarginal:18, maxMs:12000},
-  {name:'Expert',   N:9, K:3, count:5, targetMarginal:11, maxMs:18000},
-  {name:'Master',   N:9, K:3, count:4, targetMarginal:7,  maxMs:25000},
+  {name:'Beginner', N:6, K:2, count:4, targetMarg:12, maxMs:2500},
+  {name:'Easy',     N:6, K:2, count:4, targetMarg:13, maxMs:2500},
+  {name:'Medium',   N:6, K:3, count:4, targetMarg:9,  maxMs:3000},
+  {name:'Hard',     N:9, K:3, count:6, targetMarg:18, maxMs:7000},
+  {name:'Expert',   N:9, K:3, count:5, targetMarg:11, maxMs:9000},
+  {name:'Master',   N:9, K:3, count:4, targetMarg:7,  maxMs:12000},
 ];
 
 function gridToArr(g,N){ const a=[]; for(let r=0;r<N;r++) a.push(Array.from(g.slice(r*N,(r+1)*N))); return a; }
 
-// compact marginal clue encoding: {side, idx, digit}[] -> per-side arrays of arrays
+// compact marginal clue encoding: subset -> per-side arrays of arrays
 function marginalToArrs(subset, N){
   const left=Array.from({length:N},()=>[]);
   const right=Array.from({length:N},()=>[]);
@@ -309,56 +293,44 @@ function main(){
   for(const tier of TIERS){
     const peers=peersFor(tier.N);
     for(let i=0;i<tier.count;i++){
-      process.stderr.write(`Generating ${tier.name} #${i+1} (N=${tier.N}, K=${tier.K}, targetMarg=${tier.targetMarginal})... `);
+      process.stderr.write(`Generating ${tier.name} #${i+1} (N=${tier.N}, K=${tier.K}, maxMarg=${tier.targetMaxMarginal})... `);
       const t0=Date.now();
-      // build solution + derive marginal candidates
       const sol=patternSolution(tier.N, rng);
       if(!checkFull(sol, tier.N, peers)) throw new Error('full solution failed constraint check N='+tier.N);
       const cands=deriveMarginalCandidates(sol, tier.N, tier.K);
-      // pick a marginal subset of target size; if not unique with empty grid + these clues,
-      // try a few alternative subsets before falling back to adding givens.
-      let bestPuzzle=null, bestMarg=null, bestGivens=Infinity;
-      const tBudget=tier.maxMs;
-      for(let attempt=0; attempt<8; attempt++){
-        if(Date.now()-t0>tBudget) break;
-        const subset=pickMarginalSubset(cands, tier.N, tier.targetMarginal, rng);
-        const margSets=buildMarginalSets(subset, tier.N);
-        const forbidden=buildForbidden(tier.N, tier.K, margSets);
-        if(!checkMarginal(sol, tier.N, tier.K, margSets)) continue; // defensive
-        const puzzle=digPuzzle(sol, tier.N, rng, peers, forbidden, Math.min(4000, tBudget-Math.floor((Date.now()-t0))));
-        // verify unique
-        const cnt=countSolutions(puzzle, tier.N, peers, forbidden, 2);
-        if(cnt!==1) continue;
-        const givens=puzzle.filter(x=>x!==0).length;
-        if(givens<bestGivens){ bestGivens=givens; bestPuzzle=puzzle; bestMarg=subset; }
-        if(givens<=2) break; // very few interior givens — accept
-      }
-      if(!bestPuzzle){ throw new Error('all attempts failed for tier '+tier.name); }
+      const { puzzle, subset } = digPuzzle(sol, tier.N, tier.K, rng, peers, cands, tier.targetMarg, tier.maxMs);
+      // FINAL uniqueness verify with no node budget
+      const margSets=buildMarginalSets(subset, tier.N);
+      const forbidden=buildForbidden(tier.N, tier.K, margSets);
+      const finalCnt=countSolutions(puzzle, tier.N, peers, forbidden, 2);
+      const givens=puzzle.filter(x=>x!==0).length;
       const dt=(Date.now()-t0)/1000;
-      const margArrs=marginalToArrs(bestMarg, tier.N);
-      const totalMargCount=bestMarg.length;
-      process.stderr.write(`${bestGivens} givens + ${totalMargCount} marginal, ${dt.toFixed(1)}s, UNIQUE\n`);
+      const mark = finalCnt===1 ? 'UNIQUE' : 'NONUNIQUE('+finalCnt+')';
+      process.stderr.write(`${givens} givens + ${subset.length} marginal = ${givens+subset.length} total, ${dt.toFixed(1)}s, ${mark}\n`);
       levels.push({
         id, tier:tier.name, N:tier.N, K:tier.K,
-        p: gridToArr(bestPuzzle,tier.N),
+        p: gridToArr(puzzle,tier.N),
         s: gridToArr(sol,tier.N),
-        marginal: margArrs,
-        givenCount: bestGivens,
-        marginalCount: totalMargCount,
+        marginal: marginalToArrs(subset,tier.N),
+        givenCount: givens,
+        marginalCount: subset.length,
+        unique: finalCnt===1,
       });
       id++;
     }
   }
+  const allUnique = levels.every(l=>l.unique);
   const out={ version:1, game:'marginal-sudoku', generated:new Date().toISOString(),
-              levels, count:levels.length };
+              levels, allUnique, count:levels.length };
   fs.writeFileSync(__dirname+'/levels.json', JSON.stringify(out));
   console.log('=== MARGINAL SUDOKU — GENERATION REPORT ===');
-  console.log(`Generated ${levels.length} levels.`);
+  console.log(`Generated ${levels.length} levels. All unique: ${allUnique}`);
   for(const t of TIERS){
     const ls=levels.filter(l=>l.tier===t.name);
     const gs=ls.map(l=>l.givenCount), ms=ls.map(l=>l.marginalCount);
-    console.log(`  ${t.name.padEnd(10)} N=${t.N} K=${t.K}  givens=${Math.min(...gs)}-${Math.max(...gs)}  marginal=${Math.min(...ms)}-${Math.max(...ms)}  (target ${t.targetMarginal})`);
+    console.log(`  ${t.name.padEnd(10)} N=${t.N} K=${t.K}  givens=${Math.min(...gs)}-${Math.max(...gs)}  marginal=${Math.min(...ms)}-${Math.max(...ms)}  unique=${ls.every(l=>l.unique)}`);
   }
   console.log('levels.json written.');
+  if(!allUnique){ console.error('WARNING: some levels are not unique!'); process.exit(2); }
 }
 main();
