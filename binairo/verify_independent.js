@@ -1,175 +1,152 @@
-#!/usr/bin/env node
-'use strict';
-/* verify_independent.js — INDEPENDENT uniqueness verifier for Binairo levels.
- *
- * Uses a deliberately different implementation from gen.js:
- *   - Column-major traversal instead of row-major
- *   - Different variable names and data structures
- *   - Recursive backtracking with forced-cell propagation
- *
- * Reads binairo/levels.json, asserts each puzzle has exactly ONE solution
- * and that it matches the stored "solution" field.
- */
+// Independent Binairo level verifier — checks ALL 4 rules + uniqueness
 const fs = require('fs');
 const path = require('path');
 
-const dataPath = path.join(__dirname, 'levels.json');
-const RAW = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+const levelsPath = path.join(__dirname, 'levels.json');
+const levels = JSON.parse(fs.readFileSync(levelsPath, 'utf8'));
 
-// ---- Build a grid (2-D array, -1 = empty) from givens list ----
-function buildGrid(rec) {
-  const N = rec.size;
-  const g = Array.from({ length: N }, () => new Array(N).fill(-1));
-  for (const triple of rec.givens) {
-    g[triple[0]][triple[1]] = triple[2];
-  }
-  return g;
-}
+// Fresh solver — column-major traversal (different from gen.js's row-major)
+function countSolutionsColMajor(puzzle, N, limit) {
+  // Work on a copy
+  const g = puzzle.map(r => [...r]);
+  let solutions = 0;
 
-// ---- Constraint predicates (column-major naming convention) ----
-function valueOk(field, dim, mid, row, col, bit) {
-  // count prune
-  let rowCount = 0, colCount = 0;
-  for (let x = 0; x < dim; x++) {
-    if (field[row][x] === bit) rowCount++;
-    if (field[x][col] === bit) colCount++;
-  }
-  if (rowCount >= mid || colCount >= mid) return false;
-  // triplet prune — scan every length-3 window touching (row, col)
-  for (let s = col - 2; s <= col; s++) {
-    if (s < 0 || s + 2 >= dim) continue;
-    if (field[row][s] === bit && field[row][s + 1] === bit && field[row][s + 2] === bit) return false;
-  }
-  for (let s = row - 2; s <= row; s++) {
-    if (s < 0 || s + 2 >= dim) continue;
-    if (field[s][col] === bit && field[s + 1][col] === bit && field[s + 2][col] === bit) return false;
-  }
-  return true;
-}
-
-function allRowsDistinct(field, dim) {
-  const mem = new Set();
-  for (let x = 0; x < dim; x++) {
-    const key = field[x].join('');
-    if (mem.has(key)) return false;
-    mem.add(key);
-  }
-  return true;
-}
-function allColsDistinct(field, dim) {
-  const mem = new Set();
-  for (let y = 0; y < dim; y++) {
-    let key = '';
-    for (let x = 0; x < dim; x++) key += field[x][y];
-    if (mem.has(key)) return false;
-    mem.add(key);
-  }
-  return true;
-}
-
-// ---- Solver: returns array of solution grids (capped at 2) ----
-function enumerateSolutions(puzzle, dim, cap) {
-  cap = cap || 2;
-  const mid = dim / 2;
-  const answers = [];
-
-  function deduce(field) {
-    // Fill every forced cell; return 'bad' | 'done' | 'open'
-    let progress = true;
-    while (progress) {
-      progress = false;
-      for (let r = 0; r < dim; r++) {
-        for (let c = 0; c < dim; c++) {
-          if (field[r][c] !== -1) continue;
-          let opts = 0, only = -1;
-          for (const b of [0, 1]) {
-            if (valueOk(field, dim, mid, r, c, b)) { opts++; only = b; }
-          }
-          if (opts === 0) return 'bad';
-          if (opts === 1) { field[r][c] = only; progress = true; }
-        }
+  function check(row, col, val) {
+    g[row][col] = val;
+    // Rule 2: no 3-consecutive horizontally
+    for (let c = Math.max(0, col - 2); c <= Math.min(N - 3, col); c++) {
+      if (g[row][c] >= 0 && g[row][c+1] >= 0 && g[row][c+2] >= 0 &&
+          g[row][c] === g[row][c+1] && g[row][c+1] === g[row][c+2]) {
+        g[row][col] = -1; return false;
       }
     }
-    for (let r = 0; r < dim; r++)
-      for (let c = 0; c < dim; c++)
-        if (field[r][c] === -1) return 'open';
-    return 'done';
+    // Rule 2: no 3-consecutive vertically
+    for (let r = Math.max(0, row - 2); r <= Math.min(N - 3, row); r++) {
+      if (g[r][col] >= 0 && g[r+1][col] >= 0 && g[r+2][col] >= 0 &&
+          g[r][col] === g[r+1][col] && g[r+1][col] === g[r+2][col]) {
+        g[row][col] = -1; return false;
+      }
+    }
+    // Rule 3: equal count feasibility per row
+    let zc = 0, oc = 0;
+    for (let c = 0; c < N; c++) { if (g[row][c]===0) zc++; else if (g[row][c]===1) oc++; }
+    if (zc > N/2 || oc > N/2) { g[row][col] = -1; return false; }
+    // Rule 3: equal count feasibility per col
+    zc = 0; oc = 0;
+    for (let r = 0; r < N; r++) { if (g[r][col]===0) zc++; else if (g[r][col]===1) oc++; }
+    if (zc > N/2 || oc > N/2) { g[row][col] = -1; return false; }
+    g[row][col] = -1;
+    return true;
   }
 
-  function recurse(field) {
-    if (answers.length >= cap) return;
-    const verdict = deduce(field);
-    if (verdict === 'bad') return;
-    if (verdict === 'done') {
-      if (allRowsDistinct(field, dim) && allColsDistinct(field, dim)) {
-        answers.push(field.map(row => row.slice()));
+  // Traverse column-major: index = col * N + row
+  function solve(idx) {
+    if (solutions >= limit) return;
+    if (idx === N * N) {
+      // Rule 4: unique rows
+      const rset = new Set();
+      for (let r = 0; r < N; r++) rset.add(g[r].join(''));
+      if (rset.size !== N) return;
+      // Rule 4: unique cols
+      const cset = new Set();
+      for (let c = 0; c < N; c++) {
+        let s = ''; for (let r = 0; r < N; r++) s += g[r][c];
+        cset.add(s);
       }
+      if (cset.size !== N) return;
+      solutions++;
       return;
     }
-    // COLUMN-MAJOR next-cell selection (deliberately different from gen.js)
-    // Find the first empty cell scanning column-first.
-    let targetRow = -1, targetCol = -1;
-    outer:
-    for (let c = 0; c < dim; c++) {
-      for (let r = 0; r < dim; r++) {
-        if (field[r][c] === -1) { targetRow = r; targetCol = c; break outer; }
+    const col = Math.floor(idx / N);
+    const row = idx % N;
+    if (g[row][col] !== -1) { solve(idx + 1); return; }
+    for (const v of [1, 0]) { // try 1 first (different order from gen.js)
+      if (check(row, col, v)) {
+        g[row][col] = v;
+        solve(idx + 1);
+        g[row][col] = -1;
       }
-    }
-    if (targetRow === -1) return;
-    for (const b of [0, 1]) {
-      if (valueOk(field, dim, mid, targetRow, targetCol, b)) {
-        const snap = field.map(row => row.slice());
-        snap[targetRow][targetCol] = b;
-        recurse(snap);
-        if (answers.length >= cap) return;
-      }
+      if (solutions >= limit) return;
     }
   }
 
-  recurse(puzzle.map(row => row.slice()));
-  return answers;
+  solve(0);
+  return solutions;
 }
 
-// ---- Main verification loop ----
-let passCount = 0;
-let failCount = 0;
-
-for (const rec of RAW) {
-  const N = rec.size;
-  const grid = buildGrid(rec);
-  const sols = enumerateSolutions(grid, N, 2);
-
-  let ok = true;
-  let detail = '';
-
-  if (sols.length !== 1) {
-    ok = false;
-    detail = 'expected 1 solution, found ' + sols.length;
-  } else {
-    // Verify the unique solution matches the stored one
-    const found = sols[0];
-    for (let r = 0; r < N && ok; r++) {
-      for (let c = 0; c < N && ok; c++) {
-        if (found[r][c] !== rec.solution[r][c]) {
-          ok = false;
-          detail = 'solution mismatch at (' + r + ',' + c + '): got ' + found[r][c] + ' expected ' + rec.solution[r][c];
-        }
-      }
+// Verify ALL 4 rules on a complete solution
+function verifySolutionRules(sol, N) {
+  // Rule 2: no 3-consecutive in rows
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N - 2; c++) {
+      if (sol[r][c] === sol[r][c+1] && sol[r][c+1] === sol[r][c+2]) return '3-consecutive in row ' + r;
     }
   }
+  // Rule 2: no 3-consecutive in cols
+  for (let c = 0; c < N; c++) {
+    for (let r = 0; r < N - 2; r++) {
+      if (sol[r][c] === sol[r+1][c] && sol[r+1][c] === sol[r+2][c]) return '3-consecutive in col ' + c;
+    }
+  }
+  // Rule 3: equal count per row
+  for (let r = 0; r < N; r++) {
+    if (sol[r].filter(v => v === 0).length !== N/2) return 'unbalanced row ' + r;
+  }
+  // Rule 3: equal count per col
+  for (let c = 0; c < N; c++) {
+    let z = 0; for (let r = 0; r < N; r++) if (sol[r][c] === 0) z++;
+    if (z !== N/2) return 'unbalanced col ' + c;
+  }
+  // Rule 4: unique rows
+  const rset = new Set();
+  for (let r = 0; r < N; r++) rset.add(sol[r].join(''));
+  if (rset.size !== N) return 'duplicate rows';
+  // Rule 4: unique cols
+  const cset = new Set();
+  for (let c = 0; c < N; c++) {
+    let s = ''; for (let r = 0; r < N; r++) s += sol[r][c];
+    cset.add(s);
+  }
+  if (cset.size !== N) return 'duplicate cols';
+  return null; // valid
+}
 
-  if (ok) {
-    passCount++;
-    console.log('#' + String(rec.id).padStart(2, '0') + ' ' + rec.tier.padEnd(9) + ' ' + N + 'x' + N + '  UNIQUE + VALID');
+let allPass = true;
+for (const lvl of levels) {
+  const N = lvl.size;
+  // 1. Verify stored solution satisfies ALL rules
+  const ruleErr = verifySolutionRules(lvl.solution, N);
+  if (ruleErr) {
+    console.log(`#${String(lvl.id).padStart(2,'0')} ${lvl.tier.padEnd(8)} ${N}x${N}  RULE VIOLATION: ${ruleErr}`);
+    allPass = false;
+    continue;
+  }
+  // 2. Build puzzle from givens
+  const puzzle = Array.from({length: N}, () => Array(N).fill(-1));
+  for (const [r, c, v] of lvl.givens) puzzle[r][c] = v;
+  // 3. Verify givens are consistent with solution
+  for (const [r, c, v] of lvl.givens) {
+    if (lvl.solution[r][c] !== v) {
+      console.log(`#${String(lvl.id).padStart(2,'0')} ${lvl.tier.padEnd(8)} ${N}x${N}  GIVEN MISMATCH at (${r},${c}): given=${v} sol=${lvl.solution[r][c]}`);
+      allPass = false;
+      continue;
+    }
+  }
+  // 4. Count solutions (up to 2)
+  const numSol = countSolutionsColMajor(puzzle, N, 2);
+  if (numSol === 1) {
+    console.log(`#${String(lvl.id).padStart(2,'0')} ${lvl.tier.padEnd(8)} ${N}x${N}  UNIQUE + VALID`);
   } else {
-    failCount++;
-    console.error('#' + String(rec.id).padStart(2, '0') + ' ' + rec.tier + ' ' + N + 'x' + N + '  FAIL: ' + detail);
+    console.log(`#${String(lvl.id).padStart(2,'0')} ${lvl.tier.padEnd(8)} ${N}x${N}  ${numSol} SOLUTIONS (NOT UNIQUE)`);
+    allPass = false;
   }
 }
 
-console.log('\n' + passCount + '/' + (passCount + failCount) + ' UNIQUE + VALID');
-if (failCount > 0) {
-  console.error('\n*** ' + failCount + ' level(s) FAILED verification ***');
+console.log('');
+if (allPass) {
+  console.log(`${levels.length}/${levels.length} UNIQUE + VALID`);
+  process.exit(0);
+} else {
+  console.log(`FAILURES DETECTED`);
   process.exit(1);
 }
-process.exit(0);
