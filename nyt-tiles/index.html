@@ -626,16 +626,20 @@ var validHintPair=null;
 
 /* ---------- SCREEN MANAGEMENT ---------- */
 function showScreen(id){
-['titleScreen','levelsScreen','gameScreen'].forEach(function(s){
-var el=document.getElementById(s);
+['title','levels','game'].forEach(function(s){
+var el=document.getElementById(s+'Screen');
 if(el)el.classList.toggle('hidden',s!==id);
 });
 if(id==='title'){currentMode='title';stopRenderLoop();}
-else if(id==='levels'){currentMode='levels';stopRenderLoop();showLevels();}
+// R201 P0 FIX: original code had two bugs — (1) screen IDs array used full 'titleScreen' names
+// but callers pass short 'title'/'levels'/'game' → toggle 's!==id' was ALWAYS true → all screens
+// stayed hidden. (2) else-if branch called showLevels() which called showScreen('levels') back →
+// infinite recursion / stack overflow on Play Levels click. Both fixed below.
+else if(id==='levels'){currentMode='levels';stopRenderLoop();renderLevelsGrid();}
 else if(id==='game'){currentMode='game';}
 }
 function showTitle(){showScreen('title');stopBGM();updateDailyBanner();}
-function showLevels(){currentMode='levels';renderLevelsGrid();showScreen('levels');}
+function showLevels(){showScreen('levels');}
 function showStats(){renderStats();openModal(buildStatsHTML(),'Statistics');}
 function showTutorial(){openModal(buildTutorialHTML(),'How to Play');if(!save.tutorialDone){save.tutorialDone=true;writeSave();}}
 function showSettings(){openModal(buildSettingsHTML(),'Settings');}
