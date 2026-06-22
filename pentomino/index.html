@@ -723,6 +723,10 @@ function tryPlacement(letter, rot, flip, clickR, clickC){
     if(L === letter) continue;
     for(const [r,c] of info.cells) occupied.add(r+','+c);
   }
+  if(window.__DBG){
+    window.__dbg_log = window.__dbg_log || [];
+    window.__dbg_log.push('tryPlacement '+letter+' rot'+rot+' flip'+flip+' click'+clickR+','+clickC+' cells='+JSON.stringify(cells)+' occupied='+JSON.stringify([...occupied]));
+  }
   // Try each offset
   for(const [dr, dc] of cells){
     const anchorR = clickR - dr;
@@ -730,11 +734,13 @@ function tryPlacement(letter, rot, flip, clickR, clickC){
     const placed_cells = cells.map(([r,c])=>[anchorR+r, anchorC+c]);
     // Check all on-board, not blocked, not occupied
     let ok = true;
+    let failReason = '';
     for(const [r,c] of placed_cells){
-      if(r<0||r>=lvl.rows||c<0||c>=lvl.cols){ ok=false; break; }
-      if(blockSet.has(r+','+c)){ ok=false; break; }
-      if(occupied.has(r+','+c)){ ok=false; break; }
+      if(r<0||r>=lvl.rows||c<0||c>=lvl.cols){ ok=false; failReason='offboard '+r+','+c; break; }
+      if(blockSet.has(r+','+c)){ ok=false; failReason='block '+r+','+c; break; }
+      if(occupied.has(r+','+c)){ ok=false; failReason='occupied '+r+','+c; break; }
     }
+    if(window.__DBG){ window.__dbg_log = window.__dbg_log || []; window.__dbg_log.push('  anchor '+anchorR+','+anchorC+' -> '+(ok?'OK':'fail:'+failReason)); }
     if(ok) return placed_cells;
   }
   return null;
