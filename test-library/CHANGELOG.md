@@ -1,3 +1,33 @@
+## [v1.89.0] - 2026-06-23
+
+### Added
+- 7 new test cases from R208 Dynamic Test Intelligence cron industry research (June 23 2026):
+  - **[S-181] [P1]** CVE-2026-20805 Microsoft Desktop Window Manager (DWM) zero-day information-disclosure via remote ALPC interprocess channels exposing user-mode memory section addresses; patched Jan 13 2026 Patch Tuesday after in-the-wild exploitation (cybersecuritynews.com Jan 14 2026). OS-LEVEL-INFO-DISCLOSURE-VIA-INTERPROCESS-CHANNEL dimension; a compromised Windows host can escalate OUTSIDE the browser sandbox to read browser-process memory (cookies, localStorage gzFavs, session tokens). Distinct from B-115 (csc.sys filesystem-cache driver) and S-167 (Linux netfilter kernel).
+  - **[S-182] [P2]** RoguePlanet Windows kernel zero-day bypassing Microsoft Defender, disclosed by researcher Nightmare Eclipse within HOURS of the June 10 2026 Patch Tuesday; "works against Windows systems that are already up to date" at disclosure time; emergency patch KB5026026 released (blog.marcfredericgomez.com / iamtzar.com June 10-11 2026). POST-PATCH-TUESDAY-RAPID-WEAPONIZATION-CADENCE dimension; the patch-vs-weaponization race means Defender-only shops are at peak risk same-day. Distinct from S-161 (CVE volume) and S-057 (20h exploit window).
+  - **[S-183] [P1]** CVE-2026-5873 V8 Turboshaft compiler WebAssembly out-of-bounds read/write (fixed in Chrome 147) PLUS the proven Claude Opus AI-constructed END-TO-END exploit chain that CHAINED CVE-2026-5873 with a second V8 bug to achieve full RCE (so.html5.qq.com/page/real/search_news?docid=70000021_67169e5e87f91652 April 20 2026). AI-CONSTRUCTED-END-TO-END-EXPLOIT-CHAIN dimension proving AI can build WORKING multi-stage browser exploit chains, not just find individual bugs. Distinct from S-113 (Mythos discovery count) and C-102 (AI-discovered CVE cadence).
+  - **[S-184] [P2]** CrowdStrike 2026 Global Threat Landscape Report — Chinese-nexus state-sponsored groups are 58% of all state intrusions against technology companies, specifically targeting AI intellectual property (iamtzar.com June 11 2026). NATION-STATE-AI-IP-THEFT-TARGETING-GAME-COMPANIES dimension; any GameZipper AI asset (models, prompts, training data) is a state-espionage target. Distinct from S-174 (TA4922 cybercrime) and G-155 (domestic grey-market).
+  - **[B-126] [P2]** Chrome V8/WASM out-of-bounds exploit delivery via in-browser WebAssembly-compiled game pages — the CVE-2026-5873 attack-vector class where WASM games (Godot/Unity exports, Rust→WASM compute) are the primary JIT-attack surface. WASM-GAME-PAGE-AS-V8-OOB-EXPLOIT-VECTOR dimension. Distinct from B-066 (bulk CVE audit) and S-176 (video codec).
+  - **[W-198] [P3]** Gartner 2026 cybersecurity trends flagging post-quantum cryptography (PQC) migration and agentic-AI regulation as board priorities (so.html5.qq.com/page/real/search_news?docid=70000021_358698bf73e56752 Feb 11 2026). POST-QUANTUM-CRYPTO-MIGRATION-PREPAREDNESS dimension; Cloudflare is rolling out hybrid-PQC TLS (X25519Kyber768); GameZipper should verify forward-compatible TLS + AI-feature disclosure (EU AI Act Art 50). Distinct from S-095 (patch mechanism) and W-166 (AI-content regulation).
+  - **[W-199] [P3]** AV-Comparatives 2026 Security Survey of 1,328 participants across 87 countries (so.html5.qq.com/page/real/search_news?docid=70000021_032698bb19895052 Feb 11 2026). REAL-WORLD-USER-SECURITY-BEHAVIOR-BASELINE dimension; empirical user dismissal/update-ignoring/phish-click rates mean GameZipper security UX must be "safe by default" and rely on server-side integrity (SRI/CSP/HSTS), not user vigilance. Distinct from A-029/A-030 (normative accessibility) and W-147 (normative dark-pattern checklist).
+
+### Sources
+- Search queries executed (4 parallel MiniMax web searches; web-search-prime SearXNG returned 404 again this cycle):
+  - "HTML5 game testing 2026 new techniques browser game QA June"
+  - "Chrome 150 151 update June 2026 web API deprecation game bug"
+  - "new browser security vulnerability 2026 CVE in the wild exploited"
+  - "casual mobile game UX design 2026 haptic feedback dark mode complaint"
+  - "June 2026 Safari WebKit CVE zero-day patch iOS"
+  - "WebGPU WebGame performance benchmark 2026 new technique"
+  - "npm supply chain attack 2026 June malicious package"
+- Key URLs cited in new test cases:
+  - https://cybersecuritynews.com/desktop-window-manager-0-day-vulnerability/ (Jan 14 2026 — CVE-2026-20805 Microsoft DWM ALPC info-disclosure 0-day in-the-wild)
+  - https://blog.marcfredericgomez.com/ (June 10 2026 — RoguePlanet Microsoft Defender 0-day post-Patch-Tuesday disclosure by Nightmare Eclipse)
+  - https://iamtzar.com/ (June 11 2026 — RoguePlanet context + CrowdStrike 2026 Global Threat Landscape Chinese-nexus 58% state intrusions targeting AI IP)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_67169e5e87f91652 (April 20 2026 — Claude Opus AI-constructed CVE-2026-5873 V8 Turboshaft WASM OOB exploit chain)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_358698bf73e56752 (Feb 11 2026 — Gartner 2026 cybersecurity trends post-quantum crypto + agentic AI)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_032698bb19895052 (Feb 11 2026 — AV-Comparatives 2026 Security Survey 87 countries 1328 participants)
+- Additional context from searches: Chrome 146 8-high-CVE patch March 25 2026; CVE-2026-2441 Chrome CSS sandbox execution CVSS 8.8 in-wild Feb 2026 (already covered); CVE-2026-1861 libvpx (already S-176); CVE-2026-5281 Dawn WebGPU (already S-177); npm Ghost campaign fake-install-log RAT ReversingLabs Feb 2026 (already S-121); CVE-2026-32202 Windows Shell spoofing CISA KEV (already B-080); 2026 CVE projected >100K (already S-161); Basemark→web.gpuscore.com migration (already B-103); ColorOS 16 Aurora/Tidal engine (already P-079); Anthropic Mythos (heavily covered).
+
 ## [v1.88.0] - 2026-06-22
 
 ### Added
