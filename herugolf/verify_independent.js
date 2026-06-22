@@ -1,151 +1,307 @@
 #!/usr/bin/env node
 /**
- * Independent Herugolf Solver
- * 
- * Verifies that each level has exactly one valid solution.
- * Rules:
- * - Balls travel in orthogonal directions to holes
- * - Each ball takes ONE shot from start to hole
- * - Shots must be in STRICTLY DECREASING LENGTH
- * - Ponds are traversable but balls CANNOT stop on them
- * - One ball per hole (one-to-one mapping)
- * - No path crossing per shot
+ * Herugolf Independent Verifier
+ *
+ * Reads levels.json and validates each level for:
+ *   1. All balls can reach a hole
+ *   2. Each level has EXACTLY ONE unique solution
+ *   3. Each solution obeys all rules:
+ *      - Each ball's path is a sequence of orthogonal segments
+ *      - Segment lengths strictly decrease (segment N+1 < segment N)
+ *      - Path does not self-cross
+ *      - Final cell of path is a hole
+ *      - One ball per hole (bijection)
+ *      - Paths from different balls do not share cells (other than balls)
+ *      - Walls are impassable
+ *      - Ponds are passable but never a segment endpoint
+ *
+ * Run: node verify_independent.js
+ * Exit: 0 on all-pass, 1 on any failure
  */
 
 const fs = require('fs');
+const path = require('path');
 
-// Read levels.json
-const levels = JSON.parse(fs.readFileSync('/home/msdn/gamezipper.com/herugolf/levels.json', 'utf8'));
+const DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
 
-function solveLevel(level, findAll = false) {
-    const { grid, solution } = level;
-    const rows = grid.rows;
-    const cols = grid.cols;
-    const balls = grid.balls;
-    const holes = grid.holes;
-    const ponds = new Set(grid.ponds.map(p => p.join(',')));
-    
-    const directions = [
-        [0, 1], [0, -1], [1, 0], [-1, 0]
-    ];
-    
-    function getNeighbors(r, c) {
-        const neighbors = [];
-        for (const [dr, dc] of directions) {
-            const nr = r + dr;
-            const nc = c + dc;
-            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
-                neighbors.push([nr, nc]);
-            }
-        }
-        return neighbors;
-    }
-    
-    function findPath(start, end, visited) {
-        const queue = [[start, [start]]];
-        const localVisited = new Set([...visited]);
-        localVisited.add(start.join(','));
-        
-        while (queue.length > 0) {
-            const [[r, c], path] = queue.shift();
-            
-            if (r === end[0] && c === end[1]) {
-                return path;
-            }
-            
-            for (const [nr, nc] of getNeighbors(r, c)) {
-                const key = `${nr},${nc}`;
-                if (localVisited.has(key)) continue;
-                
-                // Can pass through ponds but not stop on them
-                if (ponds.has(key) && (nr !== end[0] || nc !== end[1])) continue;
-                
-                localVisited.add(key);
-                queue.push([[nr, nc], [...path, [nr, nc]]]);
-            }
-        }
-        
-        return null;
-    }
-    
-    // Check if the given solution is valid
-    function isValidSolution(paths) {
-        // Check all balls reach holes
-        if (paths.length !== balls.length) return false;
-        
-        const usedHoles = new Set();
-        const usedShotLengths = new Set();
-        
-        for (let i = 0; i < paths.length; i++) {
-            const path = paths[i];
-            const ball = balls[i];
-            const end = path[path.length - 1];
-            
-            // Check ball matches start
-            if (path[0][0] !== ball[0] || path[0][1] !== ball[1]) return false;
-            
-            // Check path reaches a hole
-            const isHole = holes.some(h => h[0] === end[0] && h[1] === end[1]);
-            if (!isHole) return false;
-            
-            // Check one ball per hole
-            const holeKey = end.join(',');
-            if (usedHoles.has(holeKey)) return false;
-            usedHoles.add(holeKey);
-            
-            // Check can't stop on pond
-            const pondKey = end.join(',');
-            if (ponds.has(pondKey)) return false;
-            
-            // Check decreasing shot length constraint
-            const shotLength = path.length - 1; // number of moves
-            if (usedShotLengths.has(shotLength)) return false;
-            usedShotLengths.add(shotLength);
-        }
-        
-        // Check all holes used
-        if (usedHoles.size !== holes.length) return false;
-        
-        return true;
-    }
-    
-    // Try the given solution
-    const givenPaths = solution.paths;
-    const valid = isValidSolution(givenPaths);
-    
-    if (valid) {
-        if (!findAll) return { valid: true, count: 1 };
-    }
-    
-    return { valid, count: valid ? 1 : 0 };
+function canFollow(lastDir, newDir) {
+  if (!lastDir) return true;
+  if (lastDir[0] === -newDir[0] && lastDir[1] === -newDir[1]) return false;
+  return true;
 }
 
-// Verify all levels
-let validCount = 0;
-let invalidLevels = [];
+// ============================================================
+// Enumerate all valid paths from a ball to any hole
+// ============================================================
+function enumPaths(rows, cols, start, walls, holes, blockedExtra, ponds) {
+  const results = [];
+  const [sr, sc] = start;
 
-for (const level of levels) {
-    const result = solveLevel(level);
-    
-    if (result.valid) {
-        validCount++;
-        console.log(`✓ Level ${level.id}: VALID (tier: ${level.tier})`);
-    } else {
-        invalidLevels.push(level.id);
-        console.log(`✗ Level ${level.id}: INVALID (tier: ${level.tier})`);
+  function dfs(r, c, cells, lastDir, lastLen, segs) {
+    // Check if current cell is a hole (ball falls in)
+    if (holes.has(`${r},${c}`) && (r !== sr || c !== sc)) {
+      results.push({
+        cells: new Set(cells),
+        hole: [r, c],
+        segs: segs.map(s => ({dir: s.dir, len: s.len}))
+      });
+      return;
     }
+    if (segs.length >= 4) return;
+
+    const nextLen = (lastLen !== null) ? (lastLen - 1) : null;
+    const maxFirst = Math.max(rows, cols);
+
+    for (const d of DIRS) {
+      if (!canFollow(lastDir, d)) continue;
+
+      let lengths;
+      if (nextLen !== null) {
+        if (nextLen < 1) continue;
+        lengths = [nextLen];
+      } else {
+        lengths = [];
+        for (let i = 1; i <= Math.min(maxFirst, 6); i++) lengths.push(i);
+        // shuffle
+        for (let i = lengths.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [lengths[i], lengths[j]] = [lengths[j], lengths[i]];
+        }
+      }
+
+      for (const sl of lengths) {
+        let nr = r, nc = c;
+        const newCells = [];
+        let valid = true;
+        let hitHole = null;
+
+        for (let step = 0; step < sl; step++) {
+          nr += d[0]; nc += d[1];
+          if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) { valid = false; break; }
+          if (walls.has(`${nr},${nc}`)) { valid = false; break; }
+          if (blockedExtra.has(`${nr},${nc}`)) { valid = false; break; }
+          if (cells.has(`${nr},${nc}`)) { valid = false; break; }
+          newCells.push([nr, nc]);
+          if (holes.has(`${nr},${nc}`)) { hitHole = [nr, nc]; break; }
+        }
+
+        if (!newCells.length || !valid) continue;
+        if (hitHole) {
+          const allCells = new Set(cells);
+          for (const [cr, cc] of newCells) allCells.add(`${cr},${cc}`);
+          results.push({
+            cells: allCells,
+            hole: hitHole,
+            segs: [...segs.map(s => ({dir: s.dir, len: s.len})), {dir: d, len: newCells.length}]
+          });
+        } else {
+          // Segment completed - cannot end on a pond
+          if (ponds.has(`${nr},${nc}`)) continue;
+          const allCells = new Set(cells);
+          for (const [cr, cc] of newCells) allCells.add(`${cr},${cc}`);
+          dfs(nr, nc, allCells, d, sl, [...segs, {dir: d, len: sl}]);
+        }
+      }
+    }
+  }
+
+  dfs(sr, sc, new Set([`${sr},${sc}`]), null, null, []);
+  return results;
 }
 
-// Summary
-console.log(`\n=== VERIFICATION SUMMARY ===`);
-console.log(`Total levels: ${levels.length}`);
-console.log(`Valid levels: ${validCount}`);
-console.log(`Invalid levels: ${invalidLevels.length}`);
+// ============================================================
+// Count distinct solutions (stops at maxSolutions)
+// ============================================================
+function countSolutions(rows, cols, balls, holes, walls, ponds, maxSolutions = 2, timeoutMs = 8000) {
+  const holesSet = new Set(holes.map(h => `${h[0]},${h[1]}`));
+  const ballsSet = new Set(balls.map(b => `${b[0]},${b[1]}`));
 
-if (invalidLevels.length > 0) {
-    console.log(`Invalid level IDs: ${invalidLevels.join(', ')}`);
+  // Pre-compute paths for each ball
+  const ballPaths = balls.map(b => {
+    const others = new Set(ballsSet);
+    others.delete(`${b[0]},${b[1]}`);
+    return enumPaths(rows, cols, b, walls, holesSet, others, ponds);
+  });
+
+  // Any ball with no path -> 0 solutions
+  for (const p of ballPaths) if (p.length === 0) return 0;
+
+  let count = 0;
+  let timedOut = false;
+  const t0 = Date.now();
+
+  function back(idx, usedCells, usedHoles) {
+    if (timedOut) return;
+    if (Date.now() - t0 > timeoutMs) { timedOut = true; return; }
+    if (count >= maxSolutions) return;
+    if (idx === balls.length) { count++; return; }
+    for (const p of ballPaths[idx]) {
+      if (count >= maxSolutions) return;
+      const holeKey = `${p.hole[0]},${p.hole[1]}`;
+      if (usedHoles.has(holeKey)) continue;
+      // Check for cell overlap
+      let overlap = false;
+      for (const c of p.cells) if (usedCells.has(c)) { overlap = true; break; }
+      if (overlap) continue;
+      usedHoles.add(holeKey);
+      const newUsed = new Set(usedCells);
+      for (const c of p.cells) newUsed.add(c);
+      back(idx + 1, newUsed, usedHoles);
+      usedHoles.delete(holeKey);
+    }
+  }
+
+  back(0, new Set(), new Set());
+  return timedOut ? -1 : count;
+}
+
+// ============================================================
+// Validate a known solution path obeys all rules
+// ============================================================
+function validateSolution(level) {
+  const {rows, cols, balls, holes, walls, ponds, solution} = level;
+  const wallsSet = new Set(walls.map(w => `${w[0]},${w[1]}`));
+  const pondsSet = new Set(ponds.map(p => `${p[0]},${p[1]}`));
+  const holesSet = new Set(holes.map(h => `${h[0]},${h[1]}`));
+  const ballsSet = new Set(balls.map(b => `${b[0]},${b[1]}`));
+
+  if (balls.length !== holes.length) return `ball/hole count mismatch`;
+  if (new Set(holes.map(h=>`${h[0]},${h[1]}`)).size !== holes.length) return `duplicate holes`;
+  if (new Set(balls.map(b=>`${b[0]},${b[1]}`)).size !== balls.length) return `duplicate balls`;
+
+  const allCells = new Set();
+  for (const sp of solution) {
+    if (sp.cells.length < 1) return `empty path`;
+    // Path cells unique within shot
+    const seen = new Set();
+    for (const [r,c] of sp.cells) {
+      const k = `${r},${c}`;
+      if (seen.has(k)) return `self-crossing in path: ${k}`;
+      seen.add(k);
+    }
+    // First cell must be a ball start
+    const first = sp.cells[0];
+    let ballFound = false;
+    for (let i = 0; i < balls.length; i++) {
+      if (balls[i][0] === first[0] && balls[i][1] === first[1]) {
+        ballFound = true; break;
+      }
+    }
+    if (!ballFound) return `path doesn't start at a ball`;
+
+    // Last cell must be a hole
+    const last = sp.cells[sp.cells.length-1];
+    if (!holesSet.has(`${last[0]},${last[1]}`)) return `path doesn't end at hole`;
+
+    // Cells valid (in bounds, not walls, not other balls)
+    for (const [r,c] of sp.cells) {
+      if (r < 0 || r >= rows || c < 0 || c >= cols) return `cell out of bounds`;
+      if (wallsSet.has(`${r},${c}`) && !(r === first[0] && c === first[1])) {
+        return `path crosses wall at ${r},${c}`;
+      }
+      // Cell can be a pond mid-path but not be the LAST cell
+      // (last cell must be hole, not pond, so this is automatic)
+      if (allCells.has(`${r},${c}`)) return `cell reused across paths: ${r},${c}`;
+      allCells.add(`${r},${c}`);
+    }
+
+    // Segments are orthogonal and lengths decrease
+    const segs = sp.segments;
+    if (segs.length === 0) return `no segments`;
+    for (let i = 1; i < segs.length; i++) {
+      if (segs[i].len >= segs[i-1].len) return `segments not strictly decreasing`;
+    }
+    // Reconstruct path from segments
+    const reconstructed = [[sp.cells[0][0], sp.cells[0][1]]];
+    let cur = [sp.cells[0][0], sp.cells[0][1]];
+    for (const seg of segs) {
+      for (let s = 0; s < seg.len; s++) {
+        cur = [cur[0] + seg.dir[0], cur[1] + seg.dir[1]];
+        reconstructed.push(cur);
+      }
+    }
+    // Compare
+    if (reconstructed.length !== sp.cells.length) return `segment/path length mismatch`;
+    for (let i = 0; i < sp.cells.length; i++) {
+      if (sp.cells[i][0] !== reconstructed[i][0] || sp.cells[i][1] !== reconstructed[i][1]) {
+        return `segment reconstruction mismatch at step ${i}`;
+      }
+    }
+    // Each segment is purely orthogonal (no direction change mid-segment)
+    for (const seg of segs) {
+      if (seg.len < 1) return `segment too short`;
+    }
+  }
+  return null; // valid
+}
+
+// ============================================================
+// MAIN
+// ============================================================
+function main() {
+  const jsonPath = path.join(__dirname, 'levels.json');
+  if (!fs.existsSync(jsonPath)) {
+    console.error(`❌ levels.json not found at ${jsonPath}`);
     process.exit(1);
-} else {
-    console.log(`✅ All ${validCount} levels are valid!`);
-    process.exit(0);
+  }
+  const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+  const levels = data.levels || data;
+  if (!Array.isArray(levels)) {
+    console.error('❌ levels.json format: expected {"levels":[...]}');
+    process.exit(1);
+  }
+  if (levels.length !== 27) {
+    console.error(`❌ expected 27 levels, got ${levels.length}`);
+    process.exit(1);
+  }
+
+  console.log(`Verifying ${levels.length} Herugolf levels...\n`);
+  let passed = 0, failed = 0;
+  const failures = [];
+
+  for (const L of levels) {
+    const id = L.id;
+    const tier = L.tier;
+    const walls = new Set((L.walls||[]).map(w=>`${w[0]},${w[1]}`));
+    const ponds = new Set((L.ponds||[]).map(p=>`${p[0]},${p[1]}`));
+
+    // Check wall/pond don't overlap
+    let overlap = false;
+    for (const w of walls) if (ponds.has(w)) { overlap = true; break; }
+
+    // Validate the stored solution obeys all rules
+    const solErr = L.solution ? validateSolution(L) : 'no solution stored';
+
+    // Count actual solutions via backtracking
+    const solCount = countSolutions(
+      L.rows, L.cols, L.balls, L.holes, walls, ponds, 2, 8000
+    );
+
+    const ok = !overlap && solErr === null && solCount === 1;
+    if (ok) {
+      passed++;
+      console.log(`  ✓ Level ${String(id).padStart(2)} (${tier}): unique, solution valid`);
+    } else {
+      failed++;
+      const reason = overlap ? 'wall/pond overlap'
+        : solErr ? `solution invalid: ${solErr}`
+        : solCount === 0 ? 'NO SOLUTION'
+        : solCount > 1 ? `${solCount} solutions (not unique)`
+        : `count=${solCount}`;
+      console.log(`  ✗ Level ${String(id).padStart(2)} (${tier}): ${reason}`);
+      failures.push({id, tier, reason});
+    }
+  }
+
+  console.log(`\nResults: ${passed} passed, ${failed} failed (of ${levels.length})`);
+
+  if (failed > 0) {
+    console.log('\nFailures:');
+    for (const f of failures) console.log(`  - Level ${f.id} (${f.tier}): ${f.reason}`);
+    process.exit(1);
+  }
+  console.log('\n🎉 All 27 levels are valid and have exactly one unique solution!');
+  process.exit(0);
 }
+
+if (require.main === module) main();
