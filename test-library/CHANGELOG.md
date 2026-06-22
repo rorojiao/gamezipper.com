@@ -1,3 +1,35 @@
+## [v1.86.0] - 2026-06-22
+
+### Added
+- 9 new test cases from R205 Dynamic Test Intelligence cron industry research:
+  - **[B-122] [P1]** Safari 26.5 WebKit CVE-2026-28962 — Content Security Policy bypass + sensitive user information leak (May 14 2026). SAFARI-26.5-CSP-BYPASS-SENSITIVE-INFO-LEAK dimension; an attacker-crafted page content defeats a correctly-deployed GameZipper CSP on unpatched Safari 26.4 and earlier — ad iframes (gz-ad-below-game) could read parent DOM state including gzFavs localStorage favorites and the ?issue=1 bug-report form
+  - **[W-193] [P2]** iOS 27 / macOS 27 Safari Apple Intelligence — natural-language browser commands + AI auto-tab detection + content-change notifications + cross-device tab themes (WWDC26 June 9 2026). AI-NATIVE-BROWSER-NATURAL-LANGUAGE-NAVIGATION dimension; new re-engagement channel (user says "notify me when GameZipper adds new puzzle games" → OS notification); AI tab-grouping requires descriptive <title> tags; cross-device handoff requires instant-save/resume (G-152) to work across iPhone→Mac
+  - **[C-126] [P2]** Interop 2025 cross-browser compatibility milestone — Apple WebKit team annual review (Feb 6 2026) shows Safari achieved the LARGEST compatibility gain of any browser. INTEROP-2025-CROSS-BROWSER-COMPATIBILITY-MILESTONE dimension; the multi-vendor (Apple/Google/Microsoft/Mozilla) joint initiative defines the canonical cross-browser test matrix GameZipper QA must align with; 2025 focus areas (iframes, URL APIs, WebSocket, WebRTC) overlap GameZipper stack — convergence lets GameZipper drop polyfills
+  - **[S-174] [P1]** TA4922 Chinese cybercrime group European expansion — Proofpoint June 4 2026 reports TA4922 now conducts more unique campaigns than any other cybercrime actor and expanded into Europe with new malware. CYBERCRIME-ACTOR-EUROPEAN-EXPANSION-2026 dimension; TA4922 lures use game-crack/cheat/mod themes — same channels game players use legitimately; GameZipper EU users now in direct blast radius; reputational risk if TA4922 impersonates GameZipper
+  - **[S-175] [P1]** AI-powered ransomware toolkit automation (cybersecurity-help.cz June 3 2026) — ransomware kits now use AI for target selection (LinkedIn scraping), payload customization, AI-negotiated ransom. AI-AUTOMATED-RANSOMWARE-AS-A-SERVICE-2026 dimension; lowered attacker skill floor; GameZipper CI/CD pipeline (GitHub Actions + Cloudflare) is a higher-value target than user endpoints; git history + CDN cache provide ransomware-resistant backup posture
+  - **[C-127] [P3]** Syncpack monorepo dependency-version consistency tool (JavaScript Weekly #16, ~April 2026) — used by Electron/Cloudflare/Vercel. MONOREPO-DEPENDENCY-VERSION-CONSISTENCY-AUTOMATION dimension; validates the "version drift = bug source" principle for GameZipper's 280+ game "monorepo" where each game includes shared scripts (monetag-manager.js, game-footer.js, games-data.js); inspires a GameZipper-specific shared-script-cache-bust drift checker
+  - **[P-082] [P3]** Rolldown 1.0 Rust-based JS bundler — 10-30x faster than Rollup, becomes Vite 8 backbone (JavaScript Weekly #20, ~May 2026). RUST-NATIVE-BUNDLER-PERFORMANCE-10X-30X dimension; BUILD-PIPELINE-PERF dimension (distinct from P-077 runtime / P-081 render); future GameZipper build pipeline can adopt Vite 8 + Rolldown for 10x faster dev iteration on a 280-game monorepo
+  - **[W-194] [P2]** Node.js 26.0.0 ships Temporal API enabled by default + V8 14.6 + Undici 8 (JavaScript Weekly #19, ~May 2026). TEMPORAL-API-DEFAULT-ENABLED dimension; SERVER-SIDE date-time API (distinct from past W entries which are browser-side); replaces bug-prone Date object; GameZipper server-side tooling (cron jobs, BI dashboard, analytics ETL) using new Date() at risk of timezone/DST bugs that Temporal fixes; the Dynamic Test Intelligence cron's 4-hour cadence must be computed in UTC (Temporal.Instant) to survive DST transitions
+  - **[W-195] **[P3]** Safari Technology Preview 10-year anniversary (March 31 2026). APPLE-TECHNICAL-PREVIEW-10-YEAR-META-TESTING-PROCESS dimension; STP is the 2-week-cadence pre-release Safari channel that ships WebKit features 6-12 months before stable — GameZipper QA subscribing to STP catches Safari regressions early; STP is Mac-only (iOS Safari regressions need TestFlight); 10-year continuity proves Apple's commitment to the channel
+
+### Sources
+- Search queries executed (5 parallel MiniMax web searches — web-search-prime SearXNG returned 404 again this cycle):
+  - "HTML5 game testing techniques June 2026"
+  - "browser security vulnerability June 2026 Chrome Safari CVE"
+  - "casual mobile game UX complaints 2026 haptic feedback dark mode"
+  - "Chrome 150 Safari 27 new features breaking changes 2026"
+  - "browser game performance WebAssembly WebGL bug 2026"
+- Key URLs cited in new test cases:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0236a054d4370952 (Safari 26.5 CVE-2026-28962 CSP bypass, May 14 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2846a27048114952 (iOS 27/macOS 27 Safari Apple Intelligence, June 9 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6676a2cb3ca28552 (iOS 27 Safari AI tabs deep-dive, June 13 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8876986781b34152 (Interop 2025 Safari biggest compatibility gain, Feb 7 2026)
+  - https://cybersecurity-help.cz/ (TA4922 European expansion June 4 + AI ransomware June 3 + 970 zero-days 2026)
+  - https://cloud.tencent.com/developer/article/2672214 (JavaScript Weekly #16 — Syncpack, Boneyard, Ink7, Bun)
+  - https://cloud.tencent.com/developer/article/2679559 (JavaScript Weekly #20 — Rolldown 1.0, Astro 6.3)
+  - https://cloud.tencent.com/developer/article/2677947 (JavaScript Weekly #19 — Node 26 Temporal API, ViewTransitionsMock)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_22669cb0bda13252 (Safari Technology Preview 10-year anniversary, March 31 2026)
+
 ## [v1.85.0] - 2026-06-22
 
 ### Added
