@@ -1,3 +1,23 @@
+## [v1.90.0] - 2026-06-23
+### Added
+- 7 new test cases from late-June 2026 industry research (R209 Dynamic Test Intelligence cron)
+- [B-127] **[P2]** Safari 27 Beta at WWDC26 - WebKit Feature Preview Regression Testing (webkit.org June 12 2026)
+- [C-131] **[P2]** WebKit Field Guide to Grid Lanes - CSS Grid Lanes Layout Compatibility (gridlanes.webkit.org June 2026)
+- [W-200] **[P1]** Chrome 153 Two-Week Release Cadence (September 2026) - QA Frequency Doubling + Security Patch Velocity (IT之家 March 3 2026)
+- [B-128] **[P3]** iOS 26 "Liquid Glass" Control Center Transparency Bug - UI Legibility (tenorshare.tw June 8 2026)
+- [P-086] **[P3]** Browser GPU Stress Test "Burn + Measure" Benchmark Tooling (ruanyf/weekly Issue #8000 June 20 2026)
+- [C-132] **[P3]** MapKit JS 6 Rebuilt for Web Developers - Future Geo-Feature Compatibility (WWDC26 webkit.org June 12 2026)
+- [W-201] **[P2]** Firefox 141 WebGPU for Windows 10/11 - Major-Browser WebGPU Coverage Matrix Complete (Mozilla/IT之家 July 17 2025 rolling into 2026 baseline)
+### Sources
+- Search queries used: HTML5 game testing 2026 new techniques browser; Chrome Safari Edge security vulnerability CVE 2026 June browser zero-day; WebGL WebGPU browser bug 2026 June mobile game performance regression; casual mobile game UX complaint 2026 dark mode haptic accessibility; Chrome 150 151 152 stable release June 2026 CVE security patch; iOS Safari 26 27 WebKit bug 2026 canvas audio regression; Playwright 2026 June new version feature release
+- Key URLs:
+  - https://www.webkit.org/ (Safari 27 beta plus WWDC26 web sessions plus MapKit JS 6 plus Field Guide to Grid Lanes - June 12 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_64169a790a846552 (Chrome 153 two-week cadence - IT之家 March 3 2026 republished June 2026)
+  - https://www.tenorshare.tw/ios-update-problems.html (iOS 26 Liquid Glass Control Center transparency bug - June 8 2026)
+  - https://github.com/ruanyf/weekly/issues/8000 (Burn + Measure GPU stress test benchmark - June 20 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4486879ce3110852 (Firefox 141 WebGPU Win10/11 - Mozilla July 17 2025 rolling into 2026 baseline)
+  - https://github.com/Tsok-XYZ/webgl-gpu-test (complementary WebGL GPU test package - May 20 2026)
+
 ## [v1.89.0] - 2026-06-23
 
 ### Added
@@ -27,7 +47,6 @@
   - https://so.html5.qq.com/page/real/search_news?docid=70000021_358698bf73e56752 (Feb 11 2026 — Gartner 2026 cybersecurity trends post-quantum crypto + agentic AI)
   - https://so.html5.qq.com/page/real/search_news?docid=70000021_032698bb19895052 (Feb 11 2026 — AV-Comparatives 2026 Security Survey 87 countries 1328 participants)
 - Additional context from searches: Chrome 146 8-high-CVE patch March 25 2026; CVE-2026-2441 Chrome CSS sandbox execution CVSS 8.8 in-wild Feb 2026 (already covered); CVE-2026-1861 libvpx (already S-176); CVE-2026-5281 Dawn WebGPU (already S-177); npm Ghost campaign fake-install-log RAT ReversingLabs Feb 2026 (already S-121); CVE-2026-32202 Windows Shell spoofing CISA KEV (already B-080); 2026 CVE projected >100K (already S-161); Basemark→web.gpuscore.com migration (already B-103); ColorOS 16 Aurora/Tidal engine (already P-079); Anthropic Mythos (heavily covered).
-
 ## [v1.88.0] - 2026-06-22
 
 ### Added
