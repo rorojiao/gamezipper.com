@@ -1,882 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Herugolf - A Nikoli Logic Puzzle Game</title>
-    <meta name="description" content="Guide all golf balls into their holes in this challenging logic puzzle! Each shot must be shorter than the previous one.">
-    <meta property="og:title" content="Herugolf - Logic Puzzle Game">
-    <meta property="og:description" content="Guide balls into holes with strictly decreasing shot lengths. Can you solve all 11 levels?">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://gamezipper.com/herugolf/">
-    <meta property="og:image" content="https://gamezipper.com/herugolf/og-image.png">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Herugolf - Logic Puzzle">
-    <meta name="twitter:description" content="Guide balls into holes with strictly decreasing shot lengths!">
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "VideoGame",
-        "name": "Herugolf",
-        "description": "A logic puzzle where you guide golf balls into holes with strictly decreasing shot lengths",
-        "genre": ["Puzzle", "Logic"],
-        "gamePlatform": ["Web Browser"],
-        "applicationCategory": "Game",
-        "operatingSystem": "Any",
-        "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD"
-        }
-    }
-    </script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            color: white;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .subtitle {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .game-container {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 800px;
-            width: 100%;
-        }
-
-        .game-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-
-        .info-item {
-            text-align: center;
-        }
-
-        .info-label {
-            font-size: 0.85em;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .info-value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #333;
-        }
-
-        #gameCanvas {
-            display: block;
-            margin: 20px auto;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            cursor: pointer;
-        }
-
-        .controls {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        button {
-            padding: 12px 24px;
-            font-size: 1em;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .level-select {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-            gap: 8px;
-            margin-top: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-
-        .level-btn {
-            padding: 10px;
-            font-size: 0.9em;
-            background: white;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .level-btn:hover {
-            border-color: #667eea;
-            background: #f0f0ff;
-        }
-
-        .level-btn.completed {
-            background: #d4edda;
-            border-color: #28a745;
-        }
-
-        .level-btn.current {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .instructions {
-            margin-top: 20px;
-            padding: 15px;
-            background: #e9ecef;
-            border-radius: 10px;
-        }
-
-        .instructions h3 {
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .instructions ul {
-            padding-left: 20px;
-            color: #555;
-        }
-
-        .instructions li {
-            margin-bottom: 5px;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 400px;
-            animation: modalPop 0.3s ease;
-        }
-
-        @keyframes modalPop {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .modal h2 {
-            margin-bottom: 20px;
-            color: #28a745;
-        }
-
-        .modal p {
-            margin-bottom: 20px;
-            color: #666;
-        }
-
-        .ad-container {
-            margin: 20px 0;
-            min-height: 100px;
-            background: #f0f0f0;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Play Herugolf Online Free - Nikoli Golf Logic Puzzle | GameZipper</title>
+<meta name="description" content="Play Herugolf online free. Guide golf balls into holes with decreasing-length shots in this Nikoli logic puzzle. 27 levels, no download.">
+<link rel="canonical" href="https://gamezipper.com/herugolf/">
+<meta property="og:title" content="Herugolf - Nikoli Golf Logic Puzzle | GameZipper">
+<meta property="og:description" content="Guide golf balls into holes with decreasing-length shots. 27 levels of Nikoli Herugolf.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/herugolf/">
+<meta property="og:image" content="https://gamezipper.com/herugolf/icon.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%2300e5ff'/></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{background:#050a10;overflow-x:hidden;user-select:none;-webkit-user-select:none;font-family:'Segoe UI',system-ui,sans-serif;color:#e0f7fa;display:flex;flex-direction:column;align-items:center;min-height:100vh}#wrap{max-width:720px;width:100%;padding:8px}.header{text-align:center;padding:8px 0}.header h1{font-size:1.8em;color:#00e5ff;text-shadow:0 0 20px rgba(0,229,255,.5);letter-spacing:2px}.header .sub{font-size:.7em;color:#4fc3f7;letter-spacing:3px;text-transform:uppercase;margin-top:2px}.info-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin:6px 0;background:rgba(0,30,50,.6);border-radius:10px;backdrop-filter:blur(8px);border:1px solid rgba(0,229,255,.15)}.tier-badge{padding:2px 10px;border-radius:12px;font-size:.7em;font-weight:700;text-transform:uppercase}.tier-Beginner{background:#1b5e20;color:#a5d6a7}.tier-Easy{background:#0d47a1;color:#90caf9}.tier-Medium{background:#4a148c;color:#ce93d8}.tier-Hard{background:#bf360c;color:#ffab91}.tier-Expert{background:#827717;color:#fff59d}.tier-Master{background:#3e2723;color:#bcaaa4}.info-right{display:flex;gap:10px;align-items:center;font-size:.8em}.stars{color:#ffd54f;letter-spacing:2px}#timer{color:#80deea;font-variant-numeric:tabular-nums}#canvasWrap{display:flex;justify-content:center;margin:4px 0}canvas{touch-action:none;max-width:100%;border-radius:12px;background:#0a1520;box-shadow:0 0 30px rgba(0,229,255,.1)}.controls{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:8px 0}.btn{padding:8px 14px;border:none;border-radius:8px;background:rgba(0,80,120,.5);color:#80deea;font-size:.85em;cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);border:1px solid rgba(0,229,255,.2);min-height:44px}.btn:hover{background:rgba(0,120,160,.6);border-color:rgba(0,229,255,.4)}.btn:active{transform:scale(.95)}.btn:disabled{opacity:.4;cursor:default}.btn.primary{background:linear-gradient(135deg,#006064,#00838f);color:#fff;border-color:#00bcd4}.btn.danger{background:rgba(120,20,20,.4);color:#ef9a9a;border-color:rgba(255,100,100,.3)}.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:12px 24px;border-radius:10px;font-size:1em;font-weight:600;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;backdrop-filter:blur(10px)}.toast.show{opacity:1}.toast.ok{background:rgba(0,100,50,.9);color:#a5d6a7}.toast.err{background:rgba(100,20,20,.9);color:#ef9a9a}.toast.info{background:rgba(0,50,80,.9);color:#80deea}.overlay{position:fixed;inset:0;background:rgba(0,5,15,.85);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(5px)}.overlay.hidden{display:none}.overlay-content{background:#0a1520;border:1px solid rgba(0,229,255,.2);border-radius:16px;padding:24px;max-width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 0 40px rgba(0,229,255,.15)}.overlay-content h2{color:#00e5ff;text-align:center;margin-bottom:12px}.tut-item{display:flex;gap:10px;align-items:flex-start;margin:10px 0;padding:10px;background:rgba(0,40,60,.4);border-radius:8px}.tut-num{background:#00838f;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8em;flex-shrink:0}.lvl-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px}.lvl-btn{aspect-ratio:1;border-radius:8px;border:1px solid rgba(0,229,255,.2);background:rgba(0,40,60,.4);color:#80deea;font-size:.9em;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .2s}.lvl-btn:hover{background:rgba(0,80,100,.5)}.lvl-btn.done{background:rgba(0,80,40,.4);border-color:#4caf50;color:#a5d6a7}.lvl-btn.locked{opacity:.3;cursor:not-allowed}.lvl-btn .stars-mini{font-size:.6em;color:#ffd54f}@media(max-width:480px){.header h1{font-size:1.4em}.btn{padding:6px 10px;font-size:.75em}}
+</style>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Herugolf","description":"Nikoli golf logic puzzle. Guide balls into holes with decreasing-length shots.","genre":["Puzzle","Logic"],"gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","url":"https://gamezipper.com/herugolf/","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","ratingCount":"100"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Herugolf?","acceptedAnswer":{"@type":"Answer","text":"Herugolf is a Nikoli logic puzzle where you guide golf balls into holes using orthogonal shots with strictly decreasing lengths."}},{"@type":"Question","name":"How many levels does Herugolf have?","acceptedAnswer":{"@type":"Answer","text":"27 levels across 6 difficulty tiers from Beginner to Master."}},{"@type":"Question","name":"Is Herugolf free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes, Herugolf is completely free to play online with no download required."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"How to Play Herugolf","step":[{"@type":"HowToStep","name":"Select a ball","text":"Tap a ball to select it."},{"@type":"HowToStep","name":"Draw the first shot","text":"Tap adjacent cells to extend the path."},{"@type":"HowToStep","name":"Turn and shrink","text":"Tap perpendicular to turn. Each segment is one cell shorter."},{"@type":"HowToStep","name":"Sink the ball","text":"End on a hole. Press Check to verify."}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Herugolf","item":"https://gamezipper.com/herugolf/"}]}</script>
+<script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=herugolf"></script>
 </head>
 <body>
-    <header>
-        <h1>⛳ Herugolf</h1>
-        <p class="subtitle">Guide all balls into holes with strictly decreasing shot lengths</p>
-    </header>
-
-    <div class="game-container">
-        <div class="game-info">
-            <div class="info-item">
-                <div class="info-label">Level</div>
-                <div class="info-value" id="levelDisplay">1/11</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Moves</div>
-                <div class="info-value" id="movesDisplay">0</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Last Shot</div>
-                <div class="info-value" id="lastShotDisplay">-</div>
-            </div>
-        </div>
-
-        <canvas id="gameCanvas"></canvas>
-
-        <div class="controls">
-            <button class="btn-secondary" onclick="undoMove()">↩ Undo</button>
-            <button class="btn-primary" onclick="resetLevel()">🔄 Reset</button>
-            <button class="btn-success" onclick="showLevelSelect()">📋 Levels</button>
-        </div>
-
-        <div class="level-select" id="levelSelect" style="display: none;">
-        </div>
-
-        <div class="instructions">
-            <h3>How to Play</h3>
-            <ul>
-                <li>Click on a ball to select it</li>
-                <li>Click an adjacent cell to move the ball</li>
-                <li>Balls continue until they hit a wall, pond, or edge</li>
-                <li>Each subsequent shot must be SHORTER than the previous one</li>
-                <li>Guide all balls into their holes to win!</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="modal" id="winModal">
-        <div class="modal-content">
-            <h2>🎉 Level Complete!</h2>
-            <p>Great job! Ready for the next challenge?</p>
-            <button class="btn-success" onclick="nextLevel()">Next Level</button>
-        </div>
-    </div>
-
-    <div class="modal" id="completeModal">
-        <div class="modal-content">
-            <h2>🏆 Congratulations!</h2>
-            <p>You've completed all Herugolf levels!</p>
-            <button class="btn-success" onclick="restartGame()">Play Again</button>
-        </div>
-    </div>
-
-    <script>
-        const LEVELS = [
-            {
-                "id": 1,
-                "name": "Beginner 1",
-                "tier": "Beginner",
-                "rows": 5,
-                "cols": 5,
-                "balls": [[0, 1], [3, 0]],
-                "holes": [[0, 2], [4, 0]],
-                "walls": [],
-                "ponds": [[1, 3]],
-                "solution": {
-                    "paths": [[[0, 1], [0, 2], [0, 3], [0, 4]], [[3, 0], [4, 0]]],
-                    "shotLengths": [3, 1]
-                }
-            },
-            {
-                "id": 2,
-                "name": "Beginner 2",
-                "tier": "Beginner",
-                "rows": 5,
-                "cols": 5,
-                "balls": [[4, 4], [0, 0]],
-                "holes": [[0, 4], [4, 2]],
-                "walls": [[2, 3]],
-                "ponds": [[1, 3]],
-                "solution": {
-                    "paths": [[[4, 4], [4, 3], [4, 2]], [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]]],
-                    "shotLengths": [2, 4]
-                }
-            },
-            {
-                "id": 3,
-                "name": "Beginner 3",
-                "tier": "Beginner",
-                "rows": 5,
-                "cols": 5,
-                "balls": [[4, 4], [0, 0]],
-                "holes": [[0, 3], [4, 0]],
-                "walls": [],
-                "ponds": [[2, 3]],
-                "solution": {
-                    "paths": [[[4, 4], [4, 3], [3, 3]], [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]]],
-                    "shotLengths": [2, 4]
-                }
-            },
-            {
-                "id": 4,
-                "name": "Easy 1",
-                "tier": "Easy",
-                "rows": 6,
-                "cols": 6,
-                "balls": [[5, 5], [0, 0]],
-                "holes": [[5, 0], [1, 5]],
-                "walls": [],
-                "ponds": [[2, 2], [3, 3], [4, 1]],
-                "solution": {
-                    "paths": [[[5, 5], [5, 4], [5, 3], [5, 2], [5, 1], [5, 0]], [[0, 0], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5]]],
-                    "shotLengths": [5, 6]
-                }
-            },
-            {
-                "id": 5,
-                "name": "Easy 2",
-                "tier": "Easy",
-                "rows": 6,
-                "cols": 6,
-                "balls": [[5, 5], [0, 0]],
-                "holes": [[5, 0], [0, 5]],
-                "walls": [],
-                "ponds": [[2, 2], [2, 3], [4, 2]],
-                "solution": {
-                    "paths": [[[5, 5], [5, 4], [5, 3], [5, 2], [5, 1], [5, 0]], [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5]]],
-                    "shotLengths": [5, 5]
-                }
-            },
-            {
-                "id": 6,
-                "name": "Medium 1",
-                "tier": "Medium",
-                "rows": 7,
-                "cols": 7,
-                "balls": [[6, 6], [0, 0]],
-                "holes": [[6, 0], [0, 6]],
-                "walls": [],
-                "ponds": [[3, 3]],
-                "solution": {
-                    "paths": [[[6, 6], [6, 5], [6, 4], [6, 3], [6, 2], [6, 1], [6, 0]], [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0]]],
-                    "shotLengths": [6, 6]
-                }
-            },
-            {
-                "id": 7,
-                "name": "Medium 2",
-                "tier": "Medium",
-                "rows": 7,
-                "cols": 7,
-                "balls": [[6, 6], [0, 0]],
-                "holes": [[6, 0], [1, 6]],
-                "walls": [[2, 3]],
-                "ponds": [[3, 3]],
-                "solution": {
-                    "paths": [[[6, 6], [6, 5], [6, 4], [6, 3], [6, 2], [6, 1], [6, 0]], [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [1, 6]]],
-                    "shotLengths": [6, 7]
-                }
-            },
-            {
-                "id": 8,
-                "name": "Medium 3",
-                "tier": "Medium",
-                "rows": 7,
-                "cols": 7,
-                "balls": [[6, 6], [0, 0]],
-                "holes": [[6, 0], [0, 6]],
-                "walls": [],
-                "ponds": [[3, 3]],
-                "solution": {
-                    "paths": [[[6, 6], [6, 5], [6, 4], [6, 3], [6, 2], [6, 1], [6, 0]], [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0]]],
-                    "shotLengths": [6, 6]
-                }
-            },
-            {
-                "id": 9,
-                "name": "Medium 4",
-                "tier": "Medium",
-                "rows": 7,
-                "cols": 7,
-                "balls": [[6, 6], [0, 0]],
-                "holes": [[6, 0], [0, 6]],
-                "walls": [],
-                "ponds": [[3, 3]],
-                "solution": {
-                    "paths": [[[6, 6], [6, 5], [6, 4], [6, 3], [6, 2], [6, 1], [6, 0]], [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0]]],
-                    "shotLengths": [6, 6]
-                }
-            },
-            {
-                "id": 10,
-                "name": "Medium 5",
-                "tier": "Medium",
-                "rows": 7,
-                "cols": 7,
-                "balls": [[6, 6], [0, 0]],
-                "holes": [[6, 0], [0, 6]],
-                "walls": [],
-                "ponds": [[3, 3]],
-                "solution": {
-                    "paths": [[[6, 6], [6, 5], [6, 4], [6, 3], [6, 2], [6, 1], [6, 0]], [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0]]],
-                    "shotLengths": [6, 6]
-                }
-            },
-            {
-                "id": 11,
-                "name": "Expert 1",
-                "tier": "Expert",
-                "rows": 9,
-                "cols": 9,
-                "balls": [[8, 8], [0, 0], [4, 4]],
-                "holes": [[8, 0], [0, 8], [8, 8]],
-                "walls": [[3, 3]],
-                "ponds": [[2, 2], [6, 6], [1, 6], [6, 1]],
-                "solution": {
-                    "paths": [[[8, 8], [8, 7], [8, 6], [8, 5], [8, 4], [8, 3], [8, 2], [8, 1], [8, 0]], [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [8, 0]]],
-                    "shotLengths": [8, 8]
-                }
-            }
-        ];
-
-        // Game state
-        let currentLevel = 0;
-        let balls = [];
-        let holes = [];
-        let walls = [];
-        let ponds = [];
-        let selectedBall = null;
-        let moves = 0;
-        let lastShotLength = null;
-        let history = [];
-        let completedLevels = JSON.parse(localStorage.getItem('herugolf_completed') || '[]');
-
-        // Canvas setup
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const CELL_SIZE = 60;
-        const PADDING = 40;
-
-        function initGame() {
-            loadLevel(currentLevel);
-            renderLevelSelect();
-        }
-
-        function loadLevel(index) {
-            const level = LEVELS[index];
-            balls = level.balls.map(b => ({...b}));
-            holes = level.holes;
-            walls = level.walls;
-            ponds = level.ponds;
-            selectedBall = null;
-            moves = 0;
-            lastShotLength = null;
-            history = [];
-            
-            canvas.width = level.cols * CELL_SIZE + PADDING * 2;
-            canvas.height = level.rows * CELL_SIZE + PADDING * 2;
-            
-            updateDisplay();
-            render();
-        }
-
-        function updateDisplay() {
-            document.getElementById('levelDisplay').textContent = `${currentLevel + 1}/${LEVELS.length}`;
-            document.getElementById('movesDisplay').textContent = moves;
-            document.getElementById('lastShotDisplay').textContent = lastShotLength ? lastShotLength : '-';
-        }
-
-        function render() {
-            const level = LEVELS[currentLevel];
-            
-            // Clear canvas
-            ctx.fillStyle = '#f8f9fa';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw grid
-            ctx.strokeStyle = '#e0e0e0';
-            ctx.lineWidth = 1;
-            for (let r = 0; r <= level.rows; r++) {
-                ctx.beginPath();
-                ctx.moveTo(PADDING, PADDING + r * CELL_SIZE);
-                ctx.lineTo(PADDING + level.cols * CELL_SIZE, PADDING + r * CELL_SIZE);
-                ctx.stroke();
-            }
-            for (let c = 0; c <= level.cols; c++) {
-                ctx.beginPath();
-                ctx.moveTo(PADDING + c * CELL_SIZE, PADDING);
-                ctx.lineTo(PADDING + c * CELL_SIZE, PADDING + level.rows * CELL_SIZE);
-                ctx.stroke();
-            }
-            
-            // Draw ponds
-            ponds.forEach(pond => {
-                const x = PADDING + pond[1] * CELL_SIZE + CELL_SIZE / 2;
-                const y = PADDING + pond[0] * CELL_SIZE + CELL_SIZE / 2;
-                
-                ctx.fillStyle = '#a8dadc';
-                ctx.beginPath();
-                ctx.ellipse(x, y, CELL_SIZE / 3, CELL_SIZE / 4, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.strokeStyle = '#457b9d';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            });
-            
-            // Draw walls
-            ctx.fillStyle = '#6c757d';
-            walls.forEach(wall => {
-                ctx.fillRect(
-                    PADDING + wall[1] * CELL_SIZE + 2,
-                    PADDING + wall[0] * CELL_SIZE + 2,
-                    CELL_SIZE - 4,
-                    CELL_SIZE - 4
-                );
-            });
-            
-            // Draw holes
-            holes.forEach(hole => {
-                const x = PADDING + hole[1] * CELL_SIZE + CELL_SIZE / 2;
-                const y = PADDING + hole[0] * CELL_SIZE + CELL_SIZE / 2;
-                
-                ctx.fillStyle = '#1d3557';
-                ctx.beginPath();
-                ctx.arc(x, y, CELL_SIZE / 6, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            
-            // Draw balls
-            balls.forEach((ball, index) => {
-                const x = PADDING + ball[1] * CELL_SIZE + CELL_SIZE / 2;
-                const y = PADDING + ball[0] * CELL_SIZE + CELL_SIZE / 2;
-                
-                // Ball shadow
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-                ctx.beginPath();
-                ctx.arc(x + 3, y + 3, CELL_SIZE / 5, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Ball
-                const gradient = ctx.createRadialGradient(x - 5, y - 5, 0, x, y, CELL_SIZE / 4);
-                gradient.addColorStop(0, '#ffffff');
-                gradient.addColorStop(0.5, '#f8f9fa');
-                gradient.addColorStop(1, '#dee2e6');
-                
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(x, y, CELL_SIZE / 4, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Ball outline
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                
-                // Highlight selected ball
-                if (selectedBall === index) {
-                    ctx.strokeStyle = '#667eea';
-                    ctx.lineWidth = 4;
-                    ctx.stroke();
-                }
-            });
-        }
-
-        canvas.addEventListener('click', handleClick);
-
-        function handleClick(e) {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left - PADDING;
-            const y = e.clientY - rect.top - PADDING;
-            
-            const col = Math.floor(x / CELL_SIZE);
-            const row = Math.floor(y / CELL_SIZE);
-            
-            const level = LEVELS[currentLevel];
-            
-            if (row < 0 || row >= level.rows || col < 0 || col >= level.cols) {
-                return;
-            }
-            
-            // Check if clicking on a ball
-            const ballIndex = balls.findIndex(b => b[0] === row && b[1] === col);
-            if (ballIndex !== -1) {
-                selectedBall = selectedBall === ballIndex ? null : ballIndex;
-                render();
-                return;
-            }
-            
-            // Check if clicking on adjacent cell to selected ball
-            if (selectedBall !== null) {
-                const ball = balls[selectedBall];
-                const dr = Math.abs(row - ball[0]);
-                const dc = Math.abs(col - ball[1]);
-                
-                if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) {
-                    moveBall(selectedBall, row - ball[0], col - ball[1]);
-                }
-            }
-        }
-
-        function moveBall(ballIndex, dr, dc) {
-            const ball = balls[ballIndex];
-            const level = LEVELS[currentLevel];
-            
-            let path = [ball];
-            let r = ball[0];
-            let c = ball[1];
-            let steps = 0;
-            
-            // Ball slides until it hits a wall, pond, or edge
-            while (true) {
-                r += dr;
-                c += dc;
-                steps++;
-                
-                // Check boundaries
-                if (r < 0 || r >= level.rows || c < 0 || c >= level.cols) {
-                    r -= dr;
-                    c -= dc;
-                    steps--;
-                    break;
-                }
-                
-                // Check walls
-                if (walls.some(w => w[0] === r && w[1] === c)) {
-                    r -= dr;
-                    c -= dc;
-                    steps--;
-                    break;
-                }
-                
-                // Check ponds
-                if (ponds.some(p => p[0] === r && p[1] === c)) {
-                    r -= dr;
-                    c -= dc;
-                    steps--;
-                    break;
-                }
-            }
-            
-            if (steps === 0) return;
-            
-            // Check if move is valid (decreasing shot length)
-            if (lastShotLength !== null && steps >= lastShotLength) {
-                // Invalid move - shot not shorter
-                return;
-            }
-            
-            // Save state for undo
-            history.push({
-                balls: balls.map(b => ({...b})),
-                moves: moves,
-                lastShotLength: lastShotLength
-            });
-            
-            // Move ball
-            balls[ballIndex] = [r, c];
-            moves++;
-            lastShotLength = steps;
-            selectedBall = null;
-            
-            updateDisplay();
-            render();
-            
-            // Check if ball fell in a hole
-            const holeIndex = holes.findIndex(h => h[0] === r && h[1] === c);
-            if (holeIndex !== -1) {
-                // Ball fell in hole - remove ball
-                balls.splice(ballIndex, 1);
-            }
-            
-            // Check win condition
-            if (balls.length === 0) {
-                setTimeout(() => {
-                    if (currentLevel < LEVELS.length - 1) {
-                        document.getElementById('winModal').classList.add('active');
-                    } else {
-                        document.getElementById('completeModal').classList.add('active');
-                    }
-                }, 300);
-            }
-        }
-
-        function undoMove() {
-            if (history.length === 0) return;
-            
-            const state = history.pop();
-            balls = state.balls;
-            moves = state.moves;
-            lastShotLength = state.lastShotLength;
-            selectedBall = null;
-            
-            updateDisplay();
-            render();
-        }
-
-        function resetLevel() {
-            loadLevel(currentLevel);
-        }
-
-        function showLevelSelect() {
-            const levelSelect = document.getElementById('levelSelect');
-            levelSelect.innerHTML = '';
-            
-            LEVELS.forEach((level, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'level-btn';
-                btn.textContent = level.id;
-                
-                if (index === currentLevel) {
-                    btn.classList.add('current');
-                }
-                if (completedLevels.includes(level.id)) {
-                    btn.classList.add('completed');
-                }
-                
-                btn.onclick = () => {
-                    currentLevel = index;
-                    loadLevel(currentLevel);
-                    renderLevelSelect();
-                    levelSelect.style.display = 'none';
-                };
-                
-                levelSelect.appendChild(btn);
-            });
-            
-            levelSelect.style.display = levelSelect.style.display === 'none' ? 'grid' : 'none';
-        }
-
-        function renderLevelSelect() {
-            // Update level select buttons
-            const levelSelect = document.getElementById('levelSelect');
-            const buttons = levelSelect.querySelectorAll('.level-btn');
-            
-            buttons.forEach((btn, index) => {
-                btn.classList.remove('current', 'completed');
-                
-                if (index === currentLevel) {
-                    btn.classList.add('current');
-                }
-                if (completedLevels.includes(LEVELS[index].id)) {
-                    btn.classList.add('completed');
-                }
-            });
-        }
-
-        function nextLevel() {
-            document.getElementById('winModal').classList.remove('active');
-            
-            // Mark current level as completed
-            if (!completedLevels.includes(LEVELS[currentLevel].id)) {
-                completedLevels.push(LEVELS[currentLevel].id);
-                localStorage.setItem('herugolf_completed', JSON.stringify(completedLevels));
-            }
-            
-            if (currentLevel < LEVELS.length - 1) {
-                currentLevel++;
-                loadLevel(currentLevel);
-                renderLevelSelect();
-            }
-        }
-
-        function restartGame() {
-            document.getElementById('completeModal').classList.remove('active');
-            currentLevel = 0;
-            loadLevel(currentLevel);
-        }
-
-        // Touch support for mobile
-        canvas.addEventListener('touchstart', handleTouch, {passive: false});
-
-        function handleTouch(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            
-            const x = touch.clientX - rect.left - PADDING;
-            const y = touch.clientY - rect.top - PADDING;
-            
-            const col = Math.floor(x / CELL_SIZE);
-            const row = Math.floor(y / CELL_SIZE);
-            
-            const level = LEVELS[currentLevel];
-            
-            if (row < 0 || row >= level.rows || col < 0 || col >= level.cols) {
-                return;
-            }
-            
-            const ballIndex = balls.findIndex(b => b[0] === row && b[1] === col);
-            if (ballIndex !== -1) {
-                selectedBall = selectedBall === ballIndex ? null : ballIndex;
-                render();
-                return;
-            }
-            
-            if (selectedBall !== null) {
-                const ball = balls[selectedBall];
-                const dr = row - ball[0];
-                const dc = col - ball[1];
-                
-                if (Math.abs(dr) <= 1 && Math.abs(dc) <= 1 && (dr !== 0 || dc !== 0)) {
-                    moveBall(selectedBall, Math.sign(dr), Math.sign(dc));
-                }
-            }
-        }
-
-        // Initialize game
-        initGame();
-    </script>
+<div id="wrap">
+<div class="header"><h1>HERUGOLF</h1><div class="sub">Nikoli Golf Logic Puzzle</div></div>
+<div class="info-bar"><div><span class="tier-badge" id="tierBadge">Beginner</span></div><div class="info-right"><span id="levelNum">1/27</span><span id="timer">0:00</span><span class="stars" id="stars"></span></div></div>
+<div id="canvasWrap"><canvas id="game"></canvas></div>
+<div class="controls">
+<button class="btn" id="prevBtn">Prev</button>
+<button class="btn" id="undoBtn">Undo</button>
+<button class="btn danger" id="resetBtn">Reset</button>
+<button class="btn" id="hintBtn">Hint</button>
+<button class="btn primary" id="checkBtn">Check</button>
+<button class="btn" id="nextBtn">Next</button>
+<button class="btn" id="levelsBtn">Levels</button>
+<button class="btn" id="muteBtn">Sound</button>
+</div></div>
+<div class="toast" id="toast"></div>
+<div class="overlay" id="tutOverlay"><div class="overlay-content"><h2>How to Play Herugolf</h2>
+<div class="tut-item"><div class="tut-num">1</div><div><b>Select a ball</b><br>Tap a ball to select it. It glows when active.</div></div>
+<div class="tut-item"><div class="tut-num">2</div><div><b>Draw the first shot</b><br>Tap adjacent cells to extend the path. First segment: any length.</div></div>
+<div class="tut-item"><div class="tut-num">3</div><div><b>Turn and shrink</b><br>Tap perpendicular to turn. Each following segment is capped one cell shorter.</div></div>
+<div class="tut-item"><div class="tut-num">4</div><div><b>Sink the ball</b><br>End on a hole. Press Check to verify all balls.</div></div>
+<p style="text-align:center;margin-top:12px;color:#4fc3f7;font-size:.85em">Paths cannot cross walls or share cells with other balls.</p>
+<div style="text-align:center;margin-top:12px"><button class="btn primary" id="tutClose">Start Playing</button></div>
+</div></div>
+<div class="overlay hidden" id="levelsOverlay"><div class="overlay-content"><h2>Select Level</h2><div class="lvl-grid" id="lvlGrid"></div><div style="text-align:center;margin-top:12px"><button class="btn" id="levelsClose">Close</button></div></div></div>
+<div class="overlay hidden" id="doneOverlay"><div class="overlay-content" style="text-align:center"><h2 id="doneTitle">Level Complete!</h2><div id="doneStars" style="font-size:2em;color:#ffd54f;margin:10px 0"></div><p id="doneTime" style="color:#80deea;margin:8px 0"></p><div style="display:flex;gap:8px;justify-content:center;margin-top:16px"><button class="btn" id="doneReplay">Replay</button><button class="btn primary" id="doneNext">Next Level</button></div></div></div>
+<script>
+const LEVELS=[{"id":1,"tier":"Beginner","rows":5,"cols":5,"balls":[[0,2]],"holes":[[1,4]],"walls":[[0,0],[0,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3],[2,4],[3,1],[3,2],[3,3],[3,4],[4,1],[4,3],[4,4]],"ponds":[],"solution":[{"ball":[0,2],"hole":[1,4],"cells":[[0,2],[0,3],[0,4],[1,4]],"segments":[{"dir":[0,1],"len":2},{"dir":[1,0],"len":1}]}]},{"id":2,"tier":"Beginner","rows":5,"cols":5,"balls":[[2,2]],"holes":[[3,4]],"walls":[[0,1],[0,2],[0,3],[0,4],[1,0],[1,1],[1,2],[1,4],[2,0],[2,1],[3,1],[3,2],[3,3],[4,1],[4,2],[4,4]],"ponds":[],"solution":[{"ball":[2,2],"hole":[3,4],"cells":[[2,2],[2,3],[2,4],[3,4]],"segments":[{"dir":[0,1],"len":2},{"dir":[1,0],"len":1}]}]},{"id":3,"tier":"Beginner","rows":5,"cols":5,"balls":[[4,2]],"holes":[[3,0]],"walls":[[0,0],[0,1],[0,3],[0,4],[1,0],[1,3],[1,4],[2,1],[2,2],[2,3],[2,4],[3,2],[3,3],[3,4],[4,3],[4,4]],"ponds":[],"solution":[{"ball":[4,2],"hole":[3,0],"cells":[[3,0],[4,0],[4,1],[4,2]],"segments":[{"dir":[0,-1],"len":2},{"dir":[-1,0],"len":1}]}]},{"id":4,"tier":"Beginner","rows":5,"cols":5,"balls":[[3,2]],"holes":[[4,4]],"walls":[[0,0],[0,2],[0,3],[1,0],[1,1],[1,2],[1,3],[1,4],[2,0],[2,1],[2,2],[2,3],[2,4],[3,0],[3,1],[4,1]],"ponds":[],"solution":[{"ball":[3,2],"hole":[4,4],"cells":[[3,2],[3,3],[3,4],[4,4]],"segments":[{"dir":[0,1],"len":2},{"dir":[1,0],"len":1}]}]},{"id":5,"tier":"Beginner","rows":5,"cols":5,"balls":[[4,2]],"holes":[[2,3]],"walls":[[0,1],[0,2],[0,3],[1,0],[1,1],[1,2],[1,3],[1,4],[2,0],[2,4],[3,0],[3,1],[3,3],[4,0],[4,1],[4,3]],"ponds":[],"solution":[{"ball":[4,2],"hole":[2,3],"cells":[[2,2],[2,3],[3,2],[4,2]],"segments":[{"dir":[-1,0],"len":2},{"dir":[0,1],"len":1}]}]},{"id":6,"tier":"Easy","rows":6,"cols":6,"balls":[[3,1]],"holes":[[5,0]],"walls":[[0,3],[0,5],[1,0],[1,1],[1,2],[1,4],[1,5],[2,0],[2,3],[2,4],[2,5],[3,2],[3,3],[3,4],[3,5],[4,0],[4,2],[4,5],[5,2],[5,3],[5,4],[5,5]],"ponds":[],"solution":[{"ball":[3,1],"hole":[5,0],"cells":[[3,1],[4,1],[5,0],[5,1]],"segments":[{"dir":[1,0],"len":2},{"dir":[0,-1],"len":1}]}]},{"id":7,"tier":"Easy","rows":6,"cols":6,"balls":[[2,3]],"holes":[[4,4]],"walls":[[0,0],[0,1],[0,3],[0,4],[0,5],[1,1],[1,3],[1,4],[1,5],[2,0],[2,1],[2,5],[3,0],[3,1],[3,2],[3,5],[4,1],[4,5],[5,0],[5,1],[5,3],[5,4]],"ponds":[],"solution":[{"ball":[2,3],"hole":[4,4],"cells":[[2,3],[3,3],[4,3],[4,4]],"segments":[{"dir":[1,0],"len":2},{"dir":[0,1],"len":1}]}]},{"id":8,"tier":"Easy","rows":6,"cols":6,"balls":[[0,1]],"holes":[[2,2]],"walls":[[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,0],[2,3],[3,0],[3,1],[3,2],[3,3],[3,4],[3,5],[4,0],[4,1],[4,3],[4,5],[5,1],[5,2],[5,3],[5,4]],"ponds":[],"solution":[{"ball":[0,1],"hole":[2,2],"cells":[[0,1],[1,1],[2,1],[2,2]],"segments":[{"dir":[1,0],"len":2},{"dir":[0,1],"len":1}]}]},{"id":9,"tier":"Easy","rows":6,"cols":6,"balls":[[0,4]],"holes":[[1,2]],"walls":[[0,0],[0,5],[1,0],[1,1],[1,4],[2,0],[2,1],[2,4],[2,5],[3,0],[3,2],[3,4],[3,5],[4,0],[4,1],[4,2],[4,4],[4,5],[5,0],[5,2],[5,3],[5,5]],"ponds":[],"solution":[{"ball":[0,4],"hole":[1,2],"cells":[[0,2],[0,3],[0,4],[1,2]],"segments":[{"dir":[0,-1],"len":2},{"dir":[1,0],"len":1}]}]},{"id":10,"tier":"Easy","rows":6,"cols":6,"balls":[[2,1]],"holes":[[3,3]],"walls":[[0,3],[0,4],[0,5],[1,0],[1,1],[1,2],[1,3],[1,5],[2,4],[2,5],[3,0],[3,1],[3,2],[3,4],[4,1],[4,2],[4,3],[4,5],[5,0],[5,1],[5,2],[5,5]],"ponds":[],"solution":[{"ball":[2,1],"hole":[3,3],"cells":[[2,1],[2,2],[2,3],[3,3]],"segments":[{"dir":[0,1],"len":2},{"dir":[1,0],"len":1}]}]},{"id":11,"tier":"Medium","rows":7,"cols":7,"balls":[[3,5],[6,2]],"holes":[[5,2],[5,4]],"walls":[[0,0],[0,1],[0,5],[0,6],[1,2],[1,5],[1,6],[2,1],[2,2],[2,3],[2,4],[2,5],[2,6],[3,0],[3,1],[3,6],[4,0],[4,1],[4,4],[4,5],[4,6],[5,0],[5,1],[5,6],[6,0]],"ponds":[],"solution":[{"ball":[3,5],"hole":[5,2],"cells":[[3,2],[3,3],[3,4],[3,5],[4,2],[5,2]],"segments":[{"dir":[0,-1],"len":3},{"dir":[1,0],"len":2}]},{"ball":[6,2],"hole":[5,4],"cells":[[5,4],[6,2],[6,3],[6,4]],"segments":[{"dir":[0,1],"len":2},{"dir":[-1,0],"len":1}]}]},{"id":12,"tier":"Medium","rows":7,"cols":7,"balls":[[3,2],[0,2]],"holes":[[1,1],[1,4]],"walls":[[0,1],[0,5],[0,6],[1,0],[1,3],[1,6],[2,0],[2,1],[2,3],[2,4],[2,6],[3,0],[3,1],[3,4],[3,6],[4,1],[4,5],[5,0],[5,1],[5,3],[5,4],[5,6],[6,1],[6,3],[6,4],[6,5],[6,6]],"ponds":[],"solution":[{"ball":[3,2],"hole":[1,1],"cells":[[1,1],[1,2],[2,2],[3,2]],"segments":[{"dir":[-1,0],"len":2},{"dir":[0,-1],"len":1}]},{"ball":[0,2],"hole":[1,4],"cells":[[0,2],[0,3],[0,4],[1,4]],"segments":[{"dir":[0,1],"len":2},{"dir":[1,0],"len":1}]}]},{"id":13,"tier":"Medium","rows":7,"cols":7,"balls":[[0,0],[2,4]],"holes":[[1,2],[3,6]],"walls":[[0,3],[0,6],[1,0],[1,3],[1,4],[1,5],[2,1],[2,2],[2,3],[3,2],[3,3],[3,4],[3,5],[4,1],[4,2],[4,3],[4,4],[4,5],[5,0],[5,3],[5,4],[5,6],[6,0],[6,1],[6,3],[6,4],[6,6]],"ponds":[],"solution":[{"ball":[0,0],"hole":[1,2],"cells":[[0,0],[0,1],[0,2],[1,2]],"segments":[{"dir":[0,1],"len":2},{"dir":[1,0],"len":1}]},{"ball":[2,4],"hole":[3,6],"cells":[[2,4],[2,5],[2,6],[3,6]],"segments":[{"dir":[0,1],"len":2},{"dir":[1,0],"len":1}]}]},{"id":14,"tier":"Medium","rows":7,"cols":7,"balls":[[3,4],[0,0]],"holes":[[4,6],[1,2]],"walls":[[0,5],[1,0],[1,1],[1,3],[1,4],[1,6],[2,0],[2,1],[2,2],[2,3],[2,4],[2,5],[3,1],[3,2],[3,3],[4,1],[4,3],[5,0],[5,1],[5,2],[5,3],[5,4],[5,5],[5,6],[6,0],[6,3],[6,4]],"ponds":[],"solution":[{"ball":[3,4],"hole":[4,6],"cells":[[3,4],[3,5],[3,6],[4,6]],"segments":[{"dir":[0,1],"len":2},{"dir":[1,0],"len":1}]},{"ball":[0,0],"hole":[1,2],"cells":[[0,0],[0,1],[0,2],[1,2]],"segments":[{"dir":[0,1],"len":2},{"dir":[1,0],"len":1}]}]},{"id":15,"tier":"Medium","rows":7,"cols":7,"balls":[[4,5],[2,2]],"holes":[[6,4],[4,3]],"walls":[[0,0],[0,3],[1,0],[1,2],[1,3],[1,4],[1,5],[2,0],[2,1],[2,3],[2,5],[2,6],[3,1],[3,3],[3,4],[3,5],[3,6],[4,1],[5,0],[5,1],[5,2],[5,3],[5,4],[5,6],[6,0],[6,2],[6,6]],"ponds":[],"solution":[{"ball":[4,5],"hole":[6,4],"cells":[[4,5],[5,5],[6,4],[6,5]],"segments":[{"dir":[1,0],"len":2},{"dir":[0,-1],"len":1}]},{"ball":[2,2],"hole":[4,3],"cells":[[2,2],[3,2],[4,2],[4,3]],"segments":[{"dir":[1,0],"len":2},{"dir":[0,1],"len":1}]}]},{"id":16,"tier":"Hard","rows":8,"cols":8,"balls":[[3,3],[5,3]],"holes":[[5,6],[6,1]],"walls":[[0,1],[0,4],[0,5],[0,6],[1,0],[1,1],[1,3],[1,5],[1,6],[2,0],[2,2],[2,5],[2,6],[2,7],[3,0],[3,1],[4,0],[4,3],[4,5],[5,0],[5,5],[5,7],[6,0],[6,3],[6,6],[6,7],[7,0],[7,1],[7,3],[7,4],[7,5],[7,6],[7,7]],"ponds":[],"solution":[{"ball":[3,3],"hole":[5,6],"cells":[[3,3],[3,4],[3,5],[3,6],[4,6],[5,6]],"segments":[{"dir":[0,1],"len":3},{"dir":[1,0],"len":2}]},{"ball":[5,3],"hole":[6,1],"cells":[[5,1],[5,2],[5,3],[6,1]],"segments":[{"dir":[0,-1],"len":2},{"dir":[1,0],"len":1}]}]},{"id":17,"tier":"Hard","rows":8,"cols":8,"balls":[[4,1],[2,3]],"holes":[[6,4],[1,1]],"walls":[[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[1,3],[1,4],[2,0],[2,5],[2,6],[3,1],[3,2],[3,3],[3,4],[3,5],[3,6],[3,7],[4,0],[4,5],[4,7],[5,0],[5,5],[6,1],[6,2],[6,3],[6,5],[6,6],[7,0],[7,1],[7,2],[7,5],[7,6]],"ponds":[],"solution":[{"ball":[4,1],"hole":[6,4],"cells":[[4,1],[4,2],[4,3],[4,4],[5,4],[6,4]],"segments":[{"dir":[0,1],"len":3},{"dir":[1,0],"len":2}]},{"ball":[2,3],"hole":[1,1],"cells":[[1,1],[2,1],[2,2],[2,3]],"segments":[{"dir":[0,-1],"len":2},{"dir":[-1,0],"len":1}]}]},{"id":18,"tier":"Hard","rows":8,"cols":8,"balls":[[3,1],[2,3]],"holes":[[1,2],[0,6]],"walls":[[0,0],[0,1],[0,2],[0,4],[1,0],[1,3],[1,5],[1,7],[2,2],[2,7],[3,0],[3,3],[3,5],[3,6],[3,7],[4,0],[4,4],[5,1],[5,2],[5,3],[5,4],[5,5],[5,6],[5,7],[6,0],[6,1],[6,3],[6,4],[6,5],[6,6],[7,1],[7,2],[7,5]],"ponds":[],"solution":[{"ball":[3,1],"hole":[1,2],"cells":[[1,1],[1,2],[2,1],[3,1]],"segments":[{"dir":[-1,0],"len":2},{"dir":[0,1],"len":1}]},{"ball":[2,3],"hole":[0,6],"cells":[[0,6],[1,6],[2,3],[2,4],[2,5],[2,6]],"segments":[{"dir":[0,1],"len":3},{"dir":[-1,0],"len":2}]}]},{"id":19,"tier":"Hard","rows":8,"cols":8,"balls":[[2,0],[7,0]],"holes":[[0,1],[5,1]],"walls":[[0,2],[0,3],[0,6],[0,7],[1,1],[1,2],[1,3],[1,4],[2,1],[2,2],[2,3],[2,6],[3,1],[3,2],[3,3],[3,7],[4,0],[4,1],[4,3],[4,4],[4,5],[4,6],[5,2],[5,6],[5,7],[6,1],[6,2],[6,3],[6,4],[6,5],[6,6],[7,3],[7,4],[7,5]],"ponds":[],"solution":[{"ball":[2,0],"hole":[0,1],"cells":[[0,0],[0,1],[1,0],[2,0]],"segments":[{"dir":[-1,0],"len":2},{"dir":[0,1],"len":1}]},{"ball":[7,0],"hole":[5,1],"cells":[[5,0],[5,1],[6,0],[7,0]],"segments":[{"dir":[-1,0],"len":2},{"dir":[0,1],"len":1}]}]},{"id":20,"tier":"Hard","rows":8,"cols":8,"balls":[[3,7],[4,6]],"holes":[[2,5],[7,4]],"walls":[[0,0],[0,4],[0,5],[1,0],[1,1],[1,4],[1,5],[2,1],[2,2],[2,4],[2,6],[2,7],[3,1],[3,3],[4,0],[4,1],[4,2],[4,3],[4,5],[4,7],[5,0],[5,1],[5,2],[5,3],[5,4],[5,5],[6,0],[6,1],[6,2],[6,5],[6,7],[7,1],[7,3]],"ponds":[],"solution":[{"ball":[3,7],"hole":[2,5],"cells":[[2,5],[3,5],[3,6],[3,7]],"segments":[{"dir":[0,-1],"len":2},{"dir":[-1,0],"len":1}]},{"ball":[4,6],"hole":[7,4],"cells":[[4,6],[5,6],[6,6],[7,4],[7,5],[7,6]],"segments":[{"dir":[1,0],"len":3},{"dir":[0,-1],"len":2}]}]},{"id":21,"tier":"Expert","rows":8,"cols":8,"balls":[[2,0],[1,5],[1,7]],"holes":[[7,4],[3,2],[6,3]],"walls":[[0,1],[0,2],[0,3],[0,4],[0,5],[0,7],[1,0],[1,6],[2,1],[2,2],[2,4],[3,1],[4,1],[4,3],[4,4],[4,6],[5,6],[6,1],[6,2],[7,7]],"ponds":[],"solution":[{"ball":[2,0],"hole":[7,4],"cells":[[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[7,1],[7,2],[7,3],[7,4]],"segments":[{"dir":[1,0],"len":5},{"dir":[0,1],"len":4}]},{"ball":[1,5],"hole":[3,2],"cells":[[1,5],[2,5],[3,2],[3,5],[4,2],[4,5],[5,2],[5,3],[5,4],[5,5]],"segments":[{"dir":[1,0],"len":4},{"dir":[0,-1],"len":3},{"dir":[-1,0],"len":2}]},{"ball":[1,7],"hole":[6,3],"cells":[[1,7],[2,7],[3,7],[4,7],[5,7],[6,3],[6,4],[6,5],[6,6],[6,7]],"segments":[{"dir":[1,0],"len":5},{"dir":[0,-1],"len":4}]}]},{"id":22,"tier":"Expert","rows":8,"cols":8,"balls":[[1,5],[7,2],[4,1]],"holes":[[6,1],[4,6],[2,3]],"walls":[[0,0],[0,3],[0,5],[1,2],[1,3],[1,4],[1,6],[2,1],[2,6],[2,7],[3,0],[3,1],[3,3],[4,0],[4,7],[5,0],[5,1],[5,3],[5,7],[6,0],[6,7],[7,0]],"ponds":[],"solution":[{"ball":[1,5],"hole":[6,1],"cells":[[1,5],[2,5],[3,5],[4,5],[5,5],[6,1],[6,2],[6,3],[6,4],[6,5]],"segments":[{"dir":[1,0],"len":5},{"dir":[0,-1],"len":4}]},{"ball":[7,2],"hole":[4,6],"cells":[[4,6],[5,6],[6,6],[7,2],[7,3],[7,4],[7,5],[7,6]],"segments":[{"dir":[0,1],"len":4},{"dir":[-1,0],"len":3}]},{"ball":[4,1],"hole":[2,3],"cells":[[2,3],[2,4],[3,4],[4,1],[4,2],[4,3],[4,4]],"segments":[{"dir":[0,1],"len":3},{"dir":[-1,0],"len":2},{"dir":[0,-1],"len":1}]}]},{"id":23,"tier":"Expert","rows":8,"cols":8,"balls":[[5,6],[1,1],[4,3]],"holes":[[1,4],[5,4],[2,0]],"walls":[[0,4],[0,6],[0,7],[1,5],[1,6],[2,7],[3,7],[4,0],[4,2],[4,5],[5,0],[5,7],[6,0],[6,1],[6,2],[6,4],[6,5],[6,6],[7,1],[7,3],[7,5],[7,7]],"ponds":[],"solution":[{"ball":[5,6],"hole":[1,4],"cells":[[1,4],[2,4],[2,5],[2,6],[3,6],[4,6],[5,6]],"segments":[{"dir":[-1,0],"len":3},{"dir":[0,-1],"len":2},{"dir":[-1,0],"len":1}]},{"ball":[1,1],"hole":[5,4],"cells":[[1,1],[2,1],[3,1],[4,1],[5,1],[5,2],[5,3],[5,4]],"segments":[{"dir":[1,0],"len":4},{"dir":[0,1],"len":3}]},{"ball":[4,3],"hole":[2,0],"cells":[[0,0],[0,1],[0,2],[0,3],[1,0],[1,3],[2,0],[2,3],[3,3],[4,3]],"segments":[{"dir":[-1,0],"len":4},{"dir":[0,-1],"len":3},{"dir":[1,0],"len":2}]}]},{"id":24,"tier":"Expert","rows":8,"cols":8,"balls":[[1,2],[2,4],[3,7]],"holes":[[4,4],[5,0],[5,5]],"walls":[[0,1],[0,2],[0,4],[0,5],[0,6],[0,7],[1,7],[2,5],[3,2],[4,1],[4,2],[5,2],[5,3],[5,6],[6,0],[6,1],[6,3],[6,4],[7,1],[7,3],[7,4],[7,7]],"ponds":[],"solution":[{"ball":[1,2],"hole":[4,4],"cells":[[1,2],[1,3],[1,4],[1,5],[1,6],[2,6],[3,6],[4,4],[4,5],[4,6]],"segments":[{"dir":[0,1],"len":4},{"dir":[1,0],"len":3},{"dir":[0,-1],"len":2}]},{"ball":[2,4],"hole":[5,0],"cells":[[2,0],[2,1],[2,2],[2,3],[2,4],[3,0],[4,0],[5,0]],"segments":[{"dir":[0,-1],"len":4},{"dir":[1,0],"len":3}]},{"ball":[3,7],"hole":[5,5],"cells":[[3,7],[4,7],[5,5],[5,7],[6,5],[6,6],[6,7]],"segments":[{"dir":[1,0],"len":3},{"dir":[0,-1],"len":2},{"dir":[-1,0],"len":1}]}]},{"id":25,"tier":"Master","rows":9,"cols":9,"balls":[[4,0],[2,1],[8,4]],"holes":[[2,3],[4,4],[6,6]],"walls":[[0,4],[0,5],[0,6],[1,2],[1,5],[2,2],[2,6],[2,8],[3,2],[3,7],[4,3],[4,5],[4,6],[5,0],[5,3],[5,5],[5,6],[5,7],[5,8],[6,5],[6,8],[7,0],[7,3],[7,6],[7,8],[8,1],[8,2],[8,3],[8,8]],"ponds":[],"solution":[{"ball":[4,0],"hole":[2,3],"cells":[[0,0],[0,1],[0,2],[0,3],[1,0],[1,3],[2,0],[2,3],[3,0],[4,0]],"segments":[{"dir":[-1,0],"len":4},{"dir":[0,1],"len":3},{"dir":[1,0],"len":2}]},{"ball":[2,1],"hole":[4,4],"cells":[[2,1],[3,1],[4,1],[4,4],[5,1],[5,4],[6,1],[6,2],[6,3],[6,4]],"segments":[{"dir":[1,0],"len":4},{"dir":[0,1],"len":3},{"dir":[-1,0],"len":2}]},{"ball":[8,4],"hole":[6,6],"cells":[[6,6],[6,7],[7,7],[8,4],[8,5],[8,6],[8,7]],"segments":[{"dir":[0,1],"len":3},{"dir":[-1,0],"len":2},{"dir":[0,-1],"len":1}]}]},{"id":26,"tier":"Master","rows":9,"cols":9,"balls":[[0,1],[7,3],[1,6]],"holes":[[2,5],[4,7],[4,4]],"walls":[[0,6],[0,7],[1,7],[1,8],[2,6],[3,0],[3,7],[3,8],[4,0],[4,6],[4,8],[5,8],[6,0],[6,1],[6,2],[6,3],[6,5],[6,6],[6,8],[7,0],[7,8],[8,0],[8,1],[8,3],[8,5],[8,7]],"ponds":[],"solution":[{"ball":[0,1],"hole":[2,5],"cells":[[0,1],[1,1],[2,1],[2,5],[3,1],[3,5],[4,1],[4,5],[5,1],[5,2],[5,3],[5,4],[5,5]],"segments":[{"dir":[1,0],"len":5},{"dir":[0,1],"len":4},{"dir":[-1,0],"len":3}]},{"ball":[7,3],"hole":[4,7],"cells":[[4,7],[5,7],[6,7],[7,3],[7,4],[7,5],[7,6],[7,7]],"segments":[{"dir":[0,1],"len":4},{"dir":[-1,0],"len":3}]},{"ball":[1,6],"hole":[4,4],"cells":[[1,2],[1,3],[1,4],[1,5],[1,6],[2,2],[3,2],[4,2],[4,3],[4,4]],"segments":[{"dir":[0,-1],"len":4},{"dir":[1,0],"len":3},{"dir":[0,1],"len":2}]}]},{"id":27,"tier":"Master","rows":9,"cols":9,"balls":[[4,6],[7,3],[5,5]],"holes":[[7,0],[3,5],[6,3]],"walls":[[0,0],[0,1],[0,2],[0,8],[1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[2,2],[2,3],[2,4],[2,7],[3,1],[3,3],[3,4],[4,0],[4,1],[5,0],[5,1],[5,6],[6,0],[6,7],[8,0],[8,2],[8,3],[8,4]],"ponds":[],"solution":[{"ball":[4,6],"hole":[7,0],"cells":[[4,2],[4,3],[4,4],[4,5],[4,6],[5,2],[6,2],[7,0],[7,1],[7,2]],"segments":[{"dir":[0,-1],"len":4},{"dir":[1,0],"len":3},{"dir":[0,-1],"len":2}]},{"ball":[7,3],"hole":[3,5],"cells":[[3,5],[3,6],[3,7],[3,8],[4,8],[5,8],[6,8],[7,3],[7,4],[7,5],[7,6],[7,7],[7,8]],"segments":[{"dir":[0,1],"len":5},{"dir":[-1,0],"len":4},{"dir":[0,-1],"len":3}]},{"ball":[5,5],"hole":[6,3],"cells":[[5,3],[5,4],[5,5],[6,3]],"segments":[{"dir":[0,-1],"len":2},{"dir":[1,0],"len":1}]}]}];
+let level,levelIdx=0,ballPath=[],selectedBall=null,hintCell=null,levelDone=false;
+let timerStart=0,timerElapsed=0,timerInterval=null,hintsUsed=0;
+let particles=[],confetti=[],rafId=null,lastTs=0;
+const SK='herugolf_v1';
+let progress={completed:{},bestTimes:{},stars:{},tutorialSeen:false,muted:false};
+function loadProgress(){try{const d=localStorage.getItem(SK);if(d)progress=JSON.parse(d);}catch(e){}}
+function saveProgress(){try{localStorage.setItem(SK,JSON.stringify(progress));}catch(e){}}
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+let CELL=60;
+function resize(){if(!level)return;const w=document.getElementById('canvasWrap').clientWidth;const h=window.innerHeight-280;const s=Math.min(w,h,500);CELL=Math.floor(s/Math.max(level.rows,level.cols));canvas.width=CELL*level.cols;canvas.height=CELL*level.rows;canvas.style.width=canvas.width+'px';canvas.style.height=canvas.height+'px';}
+let audioCtx=null;
+function initAudio(){if(!audioCtx){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
+function tone(f,d,t='sine',v=.12){if(!audioCtx||progress.muted)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=t;o.frequency.value=f;o.connect(g);g.connect(audioCtx.destination);g.gain.setValueAtTime(v,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+d);o.start();o.stop(audioCtx.currentTime+d);}
+const SFX={tap:()=>tone(440,.08,'square',.08),chime:()=>{tone(523,.1);setTimeout(()=>tone(659,.1),60);},hole:()=>{tone(523,.1);setTimeout(()=>tone(659,.1),60);setTimeout(()=>tone(784,.15),120);},error:()=>tone(150,.15,'sawtooth',.1),select:()=>tone(330,.05,'sine',.08),win:()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.15,'triangle'),i*80));},click:()=>tone(600,.03,'square',.05)};
+const key=(r,c)=>r+','+c;
+function makeSet(a){const s=new Set();a.forEach(v=>s.add(key(v[0],v[1])));return s;}
+function pathSegs(cells){if(cells.length<2)return[];const s=[];let d=null,l=0;for(let i=1;i<cells.length;i++){const dr=cells[i][0]-cells[i-1][0],dc=cells[i][1]-cells[i-1][1],nd=[dr,dc];if(!d||nd[0]!==d[0]||nd[1]!==d[1]){if(d)s.push({dir:d,len:l});d=nd;l=1;}else l++;}if(d)s.push({dir:d,len:l});return s;}
+function validatePath(cells){if(cells.length<2)return{ok:false,reason:'Too short'};const s=pathSegs(cells);for(let i=1;i<s.length;i++){if(s[i-1].dir[0]*s[i].dir[0]+s[i-1].dir[1]*s[i].dir[1]!==0)return{ok:false,reason:'Must turn 90 degrees'};}for(let i=1;i<s.length;i++){const req=s[i-1].len-1;if(req<1)return{ok:false,reason:'Segment too short'};if(s[i].len>req)return{ok:false,reason:'Max '+req+' cells'};}return{ok:true,segs:s};}
+function loadLevel(idx){cleanup();levelIdx=idx;level=LEVELS[idx];levelDone=false;hintsUsed=0;selectedBall=null;hintCell=null;particles=[];confetti=[];ballPath=level.balls.map(b=>[[b[0],b[1]]]);timerStart=performance.now();timerElapsed=0;resize();updateUI();if(rafId===null){lastTs=performance.now();rafId=requestAnimationFrame(loop);}if(timerInterval)clearInterval(timerInterval);timerInterval=setInterval(()=>{if(!levelDone){timerElapsed=(performance.now()-timerStart)/1000;document.getElementById('timer').textContent=fmt(timerElapsed);}},200);}
+function cleanup(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}
+function fmt(s){return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');}
+function updateUI(){const tb=document.getElementById('tierBadge');tb.textContent=level.tier;tb.className='tier-badge tier-'+level.tier;document.getElementById('levelNum').textContent=(levelIdx+1)+'/'+LEVELS.length;const st=progress.stars[level.id]||0;document.getElementById('stars').innerHTML='&#9733;'.repeat(st)+'&#9734;'.repeat(3-st);document.getElementById('prevBtn').disabled=levelIdx===0;document.getElementById('nextBtn').disabled=levelIdx>=LEVELS.length-1;}
+function loop(ts){const dt=(ts-lastTs)/1000;lastTs=ts;render(dt);rafId=requestAnimationFrame(loop);}
+function render(dt){if(!level)return;ctx.fillStyle='#0a1520';ctx.fillRect(0,0,canvas.width,canvas.height);const ws=makeSet(level.walls);for(let r=0;r<level.rows;r++)for(let c=0;c<level.cols;c++){const x=c*CELL,y=r*CELL;if(ws.has(key(r,c))){ctx.fillStyle='#1a2530';ctx.fillRect(x+1,y+1,CELL-2,CELL-2);}else{ctx.fillStyle='#0d1a26';ctx.fillRect(x+1,y+1,CELL-2,CELL-2);}ctx.strokeStyle='rgba(0,80,100,.15)';ctx.lineWidth=.5;ctx.strokeRect(x,y,CELL,CELL);}for(let b=0;b<ballPath.length;b++)drawPath(b);for(const h of level.holes)drawHole(h[0],h[1]);for(let b=0;b<level.balls.length;b++)drawBall(b);if(hintCell){const x=hintCell[1]*CELL+CELL/2,y=hintCell[0]*CELL+CELL/2;ctx.strokeStyle='rgba(255,235,59,.8)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,CELL*.35,0,Math.PI*2);ctx.stroke();}updateParticles(dt);updateConfetti(dt);}
+const BCOL=['#00e5ff','#ff6e40','#76ff03','#e040fb','#ffeb3b'];
+function drawPath(b){const p=ballPath[b];if(p.length<2)return;const col=BCOL[b%5];ctx.strokeStyle=col;ctx.lineWidth=CELL*.16;ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=.65;ctx.beginPath();ctx.moveTo(p[0][1]*CELL+CELL/2,p[0][0]*CELL+CELL/2);for(let i=1;i<p.length;i++)ctx.lineTo(p[i][1]*CELL+CELL/2,p[i][0]*CELL+CELL/2);ctx.stroke();ctx.globalAlpha=1;const s=pathSegs(p);if(s.length>0){let r=p[0][0],c=p[0][1];for(let si=0;si<s.length;si++){const sg=s[si];for(let i=0;i<sg.len;i++){r+=sg.dir[0];c+=sg.dir[1];}const isHole=level.holes.some(h=>h[0]===r&&h[1]===c);const isLast=si===s.length-1;if(!(isHole&&isLast)){const bx=c*CELL+CELL/2,by=r*CELL+CELL/2;ctx.fillStyle='rgba(0,5,15,.85)';ctx.beginPath();ctx.arc(bx,by,CELL*.15,0,Math.PI*2);ctx.fill();ctx.fillStyle=col;ctx.font='bold '+Math.floor(CELL*.24)+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(sg.len,bx,by);}}}}
+function drawBall(b){const pos=ballPath[b][ballPath[b].length-1];const x=pos[1]*CELL+CELL/2,y=pos[0]*CELL+CELL/2;const col=BCOL[b%5];const rad=CELL*.3;if(selectedBall===b){ctx.shadowColor=col;ctx.shadowBlur=20+Math.sin(performance.now()/300)*5;}const g=ctx.createRadialGradient(x-rad*.3,y-rad*.3,rad*.1,x,y,rad);g.addColorStop(0,col);g.addColorStop(1,'rgba(0,30,40,.8)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='rgba(255,255,255,.3)';ctx.beginPath();ctx.arc(x-rad*.3,y-rad*.3,rad*.3,0,Math.PI*2);ctx.fill();}
+function drawHole(r,c){const x=c*CELL+CELL/2,y=r*CELL+CELL/2;const rad=CELL*.26;ctx.strokeStyle='#ffab00';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#1a1000';ctx.beginPath();ctx.arc(x,y,rad*.7,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ffab00';ctx.font=Math.floor(CELL*.28)+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('○',x,y+1);}
+canvas.addEventListener('pointerdown',function(e){e.preventDefault();initAudio();const rect=canvas.getBoundingClientRect();const x=(e.clientX-rect.left)*(canvas.width/rect.width);const y=(e.clientY-rect.top)*(canvas.height/rect.height);const c=Math.floor(x/CELL),r=Math.floor(y/CELL);if(r<0||r>=level.rows||c<0||c>=level.cols)return;handleTap(r,c);});
+function handleTap(r,c){if(levelDone)return;for(let i=0;i<ballPath.length;i++){const h=ballPath[i][ballPath[i].length-1];if(h[0]===r&&h[1]===c){if(selectedBall===i){if(ballPath[i].length>1){ballPath[i].pop();SFX.tap();}else{selectedBall=null;SFX.select();}}else{selectedBall=i;SFX.select();}hintCell=null;return;}}if(selectedBall===null){toast('Tap a ball first','err');SFX.error();return;}const b=selectedBall;const h=ballPath[b][ballPath[b].length-1];if(Math.abs(r-h[0])+Math.abs(c-h[1])!==1)return;if(level.walls.some(w=>w[0]===r&&w[1]===c)){toast('Blocked by wall','err');SFX.error();return;}for(let i=0;i<ballPath.length;i++){if(i===b)continue;if(ballPath[i].some(p=>p[0]===r&&p[1]===c)){toast('Cell used','err');SFX.error();return;}}const prop=ballPath[b].concat([[r,c]]);const v=validatePath(prop);if(!v.ok){toast(v.reason,'err');SFX.error();return;}const ps=pathSegs(ballPath[b]);ballPath[b]=prop;hintCell=null;if(v.segs.length>ps.length&&v.segs.length>=2)SFX.chime();else SFX.tap();if(level.holes.some(hh=>hh[0]===r&&hh[1]===c)){SFX.hole();const p=ballPath[b][ballPath[b].length-1];spawnBurst(p[1]*CELL+CELL/2,p[0]*CELL+CELL/2);selectedBall=null;if(ballPath.every((bp,i)=>{const l=bp[bp.length-1];return level.holes.some(hh=>hh[0]===l[0]&&hh[1]===l[1]);}))toast('All sunk! Press Check','ok');}}
+function spawnBurst(x,y){const cs=BCOL;for(let i=0;i<20;i++){const a=Math.random()*Math.PI*2,sp=50+Math.random()*100;particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color:cs[i%5],size:3+Math.random()*4});}}
+function updateParticles(dt){particles=particles.filter(p=>p.life>0);particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=200*dt;p.life-=dt*1.5;ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;}
+function spawnConfetti(){const cs=['#00e5ff','#ffab00','#76ff03','#e040fb','#ffeb3b','#ff6e40'];for(let i=0;i<60;i++)confetti.push({x:Math.random()*canvas.width,y:-10,vx:(Math.random()-.5)*100,vy:50+Math.random()*100,color:cs[i%6],size:4+Math.random()*6,rot:Math.random()*6.28,vrot:(Math.random()-.5)*5,life:3});}
+function updateConfetti(dt){confetti=confetti.filter(c=>c.life>0&&c.y<canvas.height+20);confetti.forEach(c=>{c.x+=c.vx*dt;c.y+=c.vy*dt;c.rot+=c.vrot*dt;c.life-=dt;ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.rot);ctx.fillStyle=c.color;ctx.globalAlpha=Math.min(1,c.life);ctx.fillRect(-c.size/2,-c.size/2,c.size,c.size*.6);ctx.restore();});ctx.globalAlpha=1;}
+let toastTimer=null;
+function toast(m,t){const el=document.getElementById('toast');el.textContent=m;el.className='toast show '+t;if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>{el.className='toast '+t;},1500);}
+function actUndo(){if(selectedBall!==null&&ballPath[selectedBall].length>1){ballPath[selectedBall].pop();SFX.tap();hintCell=null;}else if(selectedBall!==null){selectedBall=null;SFX.select();}else{for(let i=ballPath.length-1;i>=0;i--)if(ballPath[i].length>1){selectedBall=i;ballPath[i].pop();SFX.tap();hintCell=null;break;}}}
+function actReset(){if(selectedBall!==null){ballPath[selectedBall]=[[level.balls[selectedBall][0],level.balls[selectedBall][1]]];SFX.click();hintCell=null;}}
+function actHint(){if(selectedBall===null){toast('Select a ball','err');return;}const b=selectedBall;const sol=level.solution.find(s=>s.ball[0]===level.balls[b][0]&&s.ball[1]===level.balls[b][1]);if(!sol)return;const drawn=ballPath[b].length;if(drawn>=sol.cells.length){toast('Complete','info');return;}hintCell=sol.cells[drawn];hintsUsed++;SFX.chime();}
+function actCheck(){let ok=true;for(let i=0;i<level.balls.length;i++){const sol=level.solution.find(s=>s.ball[0]===level.balls[i][0]&&s.ball[1]===level.balls[i][1]);if(!sol){ok=false;break;}const ps=new Set(ballPath[i].map(c=>key(c[0],c[1])));const ss=new Set(sol.cells.map(c=>key(c[0],c[1])));if(ps.size!==ss.size){ok=false;break;}for(const k of ps)if(!ss.has(k)){ok=false;break;}}if(ok){levelDone=true;SFX.win();spawnConfetti();const t=timerElapsed;let st=3;if(hintsUsed>0)st--;if(t>120)st--;if(t>240)st--;st=Math.max(1,st);const id=level.id;if(!progress.completed[id]||(progress.stars[id]||0)<st){progress.completed[id]=true;progress.stars[id]=Math.max(progress.stars[id]||0,st);if(!progress.bestTimes[id]||t<progress.bestTimes[id])progress.bestTimes[id]=t;saveProgress();}setTimeout(()=>{document.getElementById('doneStars').innerHTML='&#9733;'.repeat(st)+'&#9734;'.repeat(3-st);document.getElementById('doneTime').textContent='Time: '+fmt(t);document.getElementById('doneNext').style.display=levelIdx<LEVELS.length-1?'':'none';document.getElementById('doneOverlay').classList.remove('hidden');},800);}else{toast('Not correct yet','err');SFX.error();}}
+function buildLevelsUI(){const g=document.getElementById('lvlGrid');g.innerHTML='';LEVELS.forEach((lv,i)=>{const btn=document.createElement('button');const done=progress.completed[lv.id];const unl=i===0||progress.completed[LEVELS[i-1].id];btn.className='lvl-btn'+(done?' done':'')+(unl?'':' locked');const st=progress.stars[lv.id]||0;btn.innerHTML='<span>'+(i+1)+'</span>'+(done?'<span class="stars-mini">'+'&#9733;'.repeat(st)+'</span>':'');if(unl)btn.onclick=()=>{document.getElementById('levelsOverlay').classList.add('hidden');loadLevel(i);};g.appendChild(btn);});}
+document.getElementById('prevBtn').addEventListener('click',()=>{SFX.click();if(levelIdx>0)loadLevel(levelIdx-1);});
+document.getElementById('nextBtn').addEventListener('click',()=>{SFX.click();if(levelIdx<LEVELS.length-1)loadLevel(levelIdx+1);});
+document.getElementById('undoBtn').addEventListener('click',()=>{initAudio();actUndo();});
+document.getElementById('resetBtn').addEventListener('click',()=>{initAudio();actReset();});
+document.getElementById('hintBtn').addEventListener('click',()=>{initAudio();actHint();});
+document.getElementById('checkBtn').addEventListener('click',()=>{initAudio();actCheck();});
+document.getElementById('levelsBtn').addEventListener('click',()=>{SFX.click();buildLevelsUI();document.getElementById('levelsOverlay').classList.remove('hidden');});
+document.getElementById('muteBtn').addEventListener('click',()=>{initAudio();progress.muted=!progress.muted;saveProgress();});
+document.getElementById('tutClose').addEventListener('click',()=>{progress.tutorialSeen=true;saveProgress();document.getElementById('tutOverlay').classList.add('hidden');});
+document.getElementById('levelsClose').addEventListener('click',()=>{document.getElementById('levelsOverlay').classList.add('hidden');});
+document.getElementById('doneReplay').addEventListener('click',()=>{document.getElementById('doneOverlay').classList.add('hidden');loadLevel(levelIdx);});
+document.getElementById('doneNext').addEventListener('click',()=>{document.getElementById('doneOverlay').classList.add('hidden');if(levelIdx<LEVELS.length-1)loadLevel(levelIdx+1);});
+window.addEventListener('resize',resize);
+window.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay').forEach(o=>{if(o.id!=='tutOverlay')o.classList.add('hidden');});if(e.key==='u'||e.key==='U')actUndo();if(e.key==='r'||e.key==='R')actReset();if(e.key==='h'||e.key==='H')actHint();if(e.key==='c'||e.key==='C')actCheck();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}else if(!levelDone&&level){timerStart=performance.now()-timerElapsed*1000;timerInterval=setInterval(()=>{timerElapsed=(performance.now()-timerStart)/1000;document.getElementById('timer').textContent=fmt(timerElapsed);},200);}});
+loadProgress();loadLevel(0);
+if(!progress.tutorialSeen)document.getElementById('tutOverlay').classList.remove('hidden');
+else document.getElementById('tutOverlay').classList.add('hidden');
+</script>
 </body>
 </html>

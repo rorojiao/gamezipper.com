@@ -431,6 +431,7 @@ const GAMES = [
 {name:"Cave",emoji:"🕳️",cat:"puzzle",tags:["cave","corral","nikoli","visibility","logic puzzle","number puzzle","brain teaser","spatial reasoning","grid puzzle","shade puzzle"],url:"/cave/",desc:"Play Cave (Corral) free online! Solve 26 hand-crafted Nikoli Cave puzzles. Shade cells to reveal the hidden cave where each number tells how many cells are visible in 4 directions. No download needed.",isNew:true,status:"live"},
 {name:"Makaro",emoji:"🔢",cat:"puzzle",tags:["nikoli","logic","numbers","rooms"],url:"/makaro/",desc:"Play Makaro, the classic Nikoli room-number puzzle, free online. Fill each room with 1 to N and follow the arrows to find the largest neighbor. 24+ levels from Beginner to Master.",isNew:true,status:"live"},
   {name:"Nondango",emoji:"⚫",cat:"puzzle",tags:["nondango","nikoli","logic puzzle","binary puzzle","circle puzzle","no three in a line","brain teaser","grid puzzle","japanese puzzle","coloring puzzle"],url:"/nondango/",desc:"Play Nondango free online! A Nikoli logic puzzle: color each circle black or white so every region has exactly one black circle and no three same-color circles line up. 27 unique levels from Beginner to Master.",isNew:true,status:"live"},
+  {name:"Herugolf",emoji:"⛱",cat:"puzzle",tags:["nikoli","logic","golf","path"],url:"/herugolf/",desc:"Guide golf balls into holes with decreasing-length shots in this Nikoli logic puzzle. 27 levels.",isNew:true,status:"live"},
 ];
 
 /**
