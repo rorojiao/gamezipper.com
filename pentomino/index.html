@@ -880,26 +880,27 @@ function loadLevel(idx){
   timeStart = Date.now();
   if(timerInterval) clearInterval(timerInterval);
   timerInterval = setInterval(updateTimer, 250);
-  setupCanvas();
+  // Show screens first so layout settles before we measure
+  tierScreen.classList.remove('active');
+  gameScreen.classList.add('active');
   $('curTier').textContent = curLevel.tier;
   $('curTier').style.background = TIER_INFO[curLevel.tier].color + '40';
   $('curTier').style.borderColor = TIER_INFO[curLevel.tier].color + '70';
   $('curLevel').textContent = 'Level ' + curLevel.id;
   $('curName').textContent = curLevel.name;
-  renderTray();
-  updateHeldInfo();
-  drawBoard();
-  // Show screens
-  tierScreen.classList.remove('active');
-  gameScreen.classList.add('active');
-  startBGM();
-  // First-time tutorial
-  if(!SAVE.tutorialSeen){
-    tutOverlay.classList.add('active');
-  }
+  // Defer canvas setup so DOM has layout
+  requestAnimationFrame(()=>{
+    setupCanvas();
+    renderTray();
+    updateHeldInfo();
+    drawBoard();
+    startBGM();
+    if(!SAVE.tutorialSeen){
+      tutOverlay.classList.add('active');
+    }
+    if(!rafId) rafId = requestAnimationFrame(tick);
+  });
   updateTimer();
-  // Start render loop
-  if(!rafId) rafId = requestAnimationFrame(tick);
 }
 function updateTimer(){
   const elapsed = Math.floor((Date.now() - timeStart)/1000);
