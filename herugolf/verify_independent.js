@@ -9,9 +9,10 @@
  *      - Each ball's path is a sequence of orthogonal segments
  *      - Segment lengths strictly decrease (segment N+1 < segment N)
  *      - Path does not self-cross
+ *      - First cell of path is the ball start
  *      - Final cell of path is a hole
  *      - One ball per hole (bijection)
- *      - Paths from different balls do not share cells (other than balls)
+ *      - Paths from different balls do not share cells
  *      - Walls are impassable
  *      - Ponds are passable but never a segment endpoint
  *
@@ -32,16 +33,18 @@ function canFollow(lastDir, newDir) {
 
 // ============================================================
 // Enumerate all valid paths from a ball to any hole
+// Path = sequence of orthogonal segments with strictly decreasing lengths
 // ============================================================
 function enumPaths(rows, cols, start, walls, holes, blockedExtra, ponds) {
   const results = [];
   const [sr, sc] = start;
 
-  function dfs(r, c, cells, lastDir, lastLen, segs) {
+  function dfs(r, c, cells, ordered, lastDir, lastLen, segs) {
     // Check if current cell is a hole (ball falls in)
     if (holes.has(`${r},${c}`) && (r !== sr || c !== sc)) {
       results.push({
         cells: new Set(cells),
+        ordered: ordered.slice(),
         hole: [r, c],
         segs: segs.map(s => ({dir: s.dir, len: s.len}))
       });
@@ -50,7 +53,7 @@ function enumPaths(rows, cols, start, walls, holes, blockedExtra, ponds) {
     if (segs.length >= 4) return;
 
     const nextLen = (lastLen !== null) ? (lastLen - 1) : null;
-    const maxFirst = Math.max(rows, cols);
+    const maxFirst = Math.min(6, Math.max(rows, cols));
 
     for (const d of DIRS) {
       if (!canFollow(lastDir, d)) continue;
@@ -61,7 +64,7 @@ function enumPaths(rows, cols, start, walls, holes, blockedExtra, ponds) {
         lengths = [nextLen];
       } else {
         lengths = [];
-        for (let i = 1; i <= Math.min(maxFirst, 6); i++) lengths.push(i);
+        for (let i = 1; i <= maxFirst; i++) lengths.push(i);
         // shuffle
         for (let i = lengths.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -91,6 +94,7 @@ function enumPaths(rows, cols, start, walls, holes, blockedExtra, ponds) {
           for (const [cr, cc] of newCells) allCells.add(`${cr},${cc}`);
           results.push({
             cells: allCells,
+            ordered: ordered.concat(newCells),
             hole: hitHole,
             segs: [...segs.map(s => ({dir: s.dir, len: s.len})), {dir: d, len: newCells.length}]
           });
@@ -99,13 +103,15 @@ function enumPaths(rows, cols, start, walls, holes, blockedExtra, ponds) {
           if (ponds.has(`${nr},${nc}`)) continue;
           const allCells = new Set(cells);
           for (const [cr, cc] of newCells) allCells.add(`${cr},${cc}`);
-          dfs(nr, nc, allCells, d, sl, [...segs, {dir: d, len: sl}]);
+          dfs(nr, nc, allCells,
+              ordered.concat(newCells),
+              d, sl, [...segs, {dir: d, len: sl}]);
         }
       }
     }
   }
 
-  dfs(sr, sc, new Set([`${sr},${sc}`]), null, null, []);
+  dfs(sr, sc, new Set([`${sr},${sc}`]), [[sr, sc]], null, null, []);
   return results;
 }
 
@@ -120,7 +126,21 @@ function countSolutions(rows, cols, balls, holes, walls, ponds, maxSolutions = 2
   const ballPaths = balls.map(b => {
     const others = new Set(ballsSet);
     others.delete(`${b[0]},${b[1]}`);
-    return enumPaths(rows, cols, b, walls, holesSet, others, ponds);
+
+    const pathList = enumPaths(rows, cols, b, walls, holesSet, others, ponds);
+
+    // Deduplicate by (hole, segs hash) - same path with different segment boundaries
+    // is the same physical path
+    const seen = new Set();
+    const dedup = [];
+    for (const p of pathList) {
+      const sig = `${p.hole[0]},${p.hole[1]}|` +
+        p.ordered.map(c => `${c[0]},${c[1]}`).join(';');
+      if (seen.has(sig)) continue;
+      seen.add(sig);
+      dedup.push(p);
+    }
+    return dedup;
   });
 
   // Any ball with no path -> 0 solutions
@@ -156,7 +176,22 @@ function countSolutions(rows, cols, balls, holes, walls, ponds, maxSolutions = 2
 }
 
 // ============================================================
-// Validate a known solution path obeys all rules
+// Reconstruct ordered path from segments
+// ============================================================
+function reconstructPath(ball, segments) {
+  const path = [[ball[0], ball[1]]];
+  let cur = [ball[0], ball[1]];
+  for (const seg of segments) {
+    for (let s = 0; s < seg.len; s++) {
+      cur = [cur[0] + seg.dir[0], cur[1] + seg.dir[1]];
+      path.push(cur);
+    }
+  }
+  return path;
+}
+
+// ============================================================
+// Validate a stored solution obeys all rules
 // ============================================================
 function validateSolution(level) {
   const {rows, cols, balls, holes, walls, ponds, solution} = level;
@@ -168,70 +203,71 @@ function validateSolution(level) {
   if (balls.length !== holes.length) return `ball/hole count mismatch`;
   if (new Set(holes.map(h=>`${h[0]},${h[1]}`)).size !== holes.length) return `duplicate holes`;
   if (new Set(balls.map(b=>`${b[0]},${b[1]}`)).size !== balls.length) return `duplicate balls`;
+  if (new Set([...wallsSet].filter(w => pondsSet.has(w))).size > 0) return `wall/pond overlap`;
+
+  // Map ball index to its path
+  if (solution.length !== balls.length) return `solution count mismatch`;
 
   const allCells = new Set();
-  for (const sp of solution) {
-    if (sp.cells.length < 1) return `empty path`;
-    // Path cells unique within shot
-    const seen = new Set();
-    for (const [r,c] of sp.cells) {
-      const k = `${r},${c}`;
-      if (seen.has(k)) return `self-crossing in path: ${k}`;
-      seen.add(k);
-    }
-    // First cell must be a ball start
-    const first = sp.cells[0];
-    let ballFound = false;
-    for (let i = 0; i < balls.length; i++) {
-      if (balls[i][0] === first[0] && balls[i][1] === first[1]) {
-        ballFound = true; break;
+  for (let i = 0; i < solution.length; i++) {
+    const sp = solution[i];
+    const ball = balls[i];
+    const hole = holes[i];
+
+    // Reconstruct path from segments (cells may be sorted in JSON)
+    if (!sp.segments || sp.segments.length === 0) return `no segments for ball ${i}`;
+
+    // Segments strictly decreasing
+    for (let j = 1; j < sp.segments.length; j++) {
+      if (sp.segments[j].len >= sp.segments[j-1].len) {
+        return `segments not strictly decreasing for ball ${i}`;
       }
     }
-    if (!ballFound) return `path doesn't start at a ball`;
 
-    // Last cell must be a hole
-    const last = sp.cells[sp.cells.length-1];
-    if (!holesSet.has(`${last[0]},${last[1]}`)) return `path doesn't end at hole`;
+    const path = reconstructPath(ball, sp.segments);
+    if (path.length < 2) return `path too short for ball ${i}`;
 
-    // Cells valid (in bounds, not walls, not other balls)
-    for (const [r,c] of sp.cells) {
+    // Start at ball
+    if (path[0][0] !== ball[0] || path[0][1] !== ball[1]) {
+      return `path ${i} doesn't start at ball`;
+    }
+    // End at hole
+    if (path[path.length-1][0] !== hole[0] || path[path.length-1][1] !== hole[1]) {
+      return `path ${i} doesn't end at hole`;
+    }
+
+    // Check path is valid
+    const seenCells = new Set();
+    for (let k = 0; k < path.length; k++) {
+      const [r, c] = path[k];
+      const kk = `${r},${c}`;
       if (r < 0 || r >= rows || c < 0 || c >= cols) return `cell out of bounds`;
-      if (wallsSet.has(`${r},${c}`) && !(r === first[0] && c === first[1])) {
-        return `path crosses wall at ${r},${c}`;
-      }
-      // Cell can be a pond mid-path but not be the LAST cell
-      // (last cell must be hole, not pond, so this is automatic)
-      if (allCells.has(`${r},${c}`)) return `cell reused across paths: ${r},${c}`;
-      allCells.add(`${r},${c}`);
+      if (seenCells.has(kk)) return `self-crossing at step ${k}`;
+      seenCells.add(kk);
+      // Walls (except ball start) impassable
+      if (wallsSet.has(kk) && k > 0) return `crosses wall at ${kk}`;
+      // No two balls' paths share cells (except that two paths can both have
+      // a ball start, but ball starts are at different cells)
+      if (allCells.has(kk)) return `cell ${kk} shared between paths`;
+      allCells.add(kk);
     }
 
-    // Segments are orthogonal and lengths decrease
-    const segs = sp.segments;
-    if (segs.length === 0) return `no segments`;
-    for (let i = 1; i < segs.length; i++) {
-      if (segs[i].len >= segs[i-1].len) return `segments not strictly decreasing`;
-    }
-    // Reconstruct path from segments
-    const reconstructed = [[sp.cells[0][0], sp.cells[0][1]]];
-    let cur = [sp.cells[0][0], sp.cells[0][1]];
-    for (const seg of segs) {
+    // Ponds: crossable but cannot end a segment (except for hole endpoint)
+    let cur = [ball[0], ball[1]];
+    for (const seg of sp.segments) {
+      let segEnd = null;
       for (let s = 0; s < seg.len; s++) {
         cur = [cur[0] + seg.dir[0], cur[1] + seg.dir[1]];
-        reconstructed.push(cur);
+        segEnd = cur;
       }
-    }
-    // Compare
-    if (reconstructed.length !== sp.cells.length) return `segment/path length mismatch`;
-    for (let i = 0; i < sp.cells.length; i++) {
-      if (sp.cells[i][0] !== reconstructed[i][0] || sp.cells[i][1] !== reconstructed[i][1]) {
-        return `segment reconstruction mismatch at step ${i}`;
+      // If segment doesn't end at hole, it can't end at a pond
+      const segEndKey = `${segEnd[0]},${segEnd[1]}`;
+      if (segEndKey !== `${hole[0]},${hole[1]}` && pondsSet.has(segEndKey)) {
+        return `segment ends on pond at ${segEndKey}`;
       }
-    }
-    // Each segment is purely orthogonal (no direction change mid-segment)
-    for (const seg of segs) {
-      if (seg.len < 1) return `segment too short`;
     }
   }
+
   return null; // valid
 }
 
@@ -265,35 +301,39 @@ function main() {
     const walls = new Set((L.walls||[]).map(w=>`${w[0]},${w[1]}`));
     const ponds = new Set((L.ponds||[]).map(p=>`${p[0]},${p[1]}`));
 
-    // Check wall/pond don't overlap
-    let overlap = false;
-    for (const w of walls) if (ponds.has(w)) { overlap = true; break; }
-
-    // Validate the stored solution obeys all rules
+    // Validate stored solution
     const solErr = L.solution ? validateSolution(L) : 'no solution stored';
 
-    // Count actual solutions via backtracking
-    const solCount = countSolutions(
-      L.rows, L.cols, L.balls, L.holes, walls, ponds, 2, 8000
-    );
+    // Count actual solutions via independent backtracking
+    let solCount;
+    try {
+      solCount = countSolutions(
+        L.rows, L.cols, L.balls, L.holes, walls, ponds, 2, 6000
+      );
+    } catch (e) {
+      solCount = -2;  // error
+    }
 
-    const ok = !overlap && solErr === null && solCount === 1;
+    const ok = solErr === null && solCount === 1;
     if (ok) {
       passed++;
-      console.log(`  ✓ Level ${String(id).padStart(2)} (${tier}): unique, solution valid`);
+      console.log(`  ✓ Level ${String(id).padStart(2)} (${tier.padEnd(9)}): unique, solution valid`);
     } else {
       failed++;
-      const reason = overlap ? 'wall/pond overlap'
-        : solErr ? `solution invalid: ${solErr}`
+      const reason = solErr
+        ? `solution invalid: ${solErr}`
         : solCount === 0 ? 'NO SOLUTION'
+        : solCount === -1 ? 'TIMEOUT'
+        : solCount === -2 ? 'ERROR'
         : solCount > 1 ? `${solCount} solutions (not unique)`
         : `count=${solCount}`;
-      console.log(`  ✗ Level ${String(id).padStart(2)} (${tier}): ${reason}`);
+      console.log(`  ✗ Level ${String(id).padStart(2)} (${tier.padEnd(9)}): ${reason}`);
       failures.push({id, tier, reason});
     }
   }
 
-  console.log(`\nResults: ${passed} passed, ${failed} failed (of ${levels.length})`);
+  console.log(`\n${'='.repeat(50)}`);
+  console.log(`Results: ${passed} passed, ${failed} failed (of ${levels.length})`);
 
   if (failed > 0) {
     console.log('\nFailures:');

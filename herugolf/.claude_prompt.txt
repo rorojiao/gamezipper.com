@@ -1,0 +1,122 @@
+Build a complete, commercial-quality HTML5 Herugolf puzzle game at herugolf/index.html.
+
+## GAME RULES (Herugolf / Nikoli Golf Puzzle)
+- Grid contains BALLS (●), HOLES (○), WALLS (■), and EMPTY cells.
+- Guide each ball into a hole using orthogonal (up/down/left/right) shots.
+- Each ball's path consists of SEGMENTS. The first segment can be any length L.
+  Each subsequent segment must be EXACTLY 1 cell shorter (L-1, L-2, ...).
+- Consecutive segments must be PERPENDICULAR (90° turn — can't continue same direction or reverse).
+- No cell can be used by more than one ball's path (shared cell constraint).
+- Walls block movement — paths can't cross walls.
+- A ball falls into the first hole it encounters on its path.
+
+## PLAYER INTERACTION (Cell-by-cell tap)
+1. Player TAPS a ball → ball is selected (highlighted with glow).
+2. Player TAPS an orthogonally adjacent cell → path extends one cell in that direction.
+3. Tapping cells in the SAME direction extends the current segment.
+4. Tapping a cell in a PERPENDICULAR direction finalizes the current segment and starts a new one.
+5. The game enforces:
+   - First segment: any length (player decides)
+   - Subsequent segments: max length = previous segment length - 1
+   - Can't extend a segment beyond its max length (block the tap)
+   - Can't tap in same/opposite direction as current segment (merge/backtrack impossible)
+   - Can't cross walls or other balls' paths
+6. When path reaches a HOLE → ball is complete (show celebration).
+7. TAP the selected ball → deselect (or undo last cell).
+8. UNDO button → retract last cell of current ball's path.
+9. RESET button → clear current ball's path.
+10. HINT button → reveal next cell of the solution path for the current ball.
+11. CHECK button → validate all balls' paths against the solution.
+
+## LEVELS DATA
+Read the file herugolf/levels_compact.js and embed its content as:
+```javascript
+const LEVELS = [/* ... the compact JSON from the file ... */];
+```
+Each level has: id, tier, rows, cols, balls (array of [r,c]), holes (array of [r,c]),
+walls (array of [r,c]), ponds (array, empty for now), solution (array of
+{ball:[r,c], hole:[r,c], cells:[[r,c],...], segments:[{dir:[dr,dc],len:N},...]}).
+
+## VISUAL DESIGN
+- Dark gradient background (deep teal #0a1a2a → near-black #050a10)
+- Canvas-based grid rendering
+- Balls: neon cyan circles with glow (radial gradient + shadow)
+- Holes: amber/gold circles with inner shadow (look like depressions)
+- Walls: dark grey rounded rectangles with subtle texture
+- Paths: drawn as thick lines in the ball's color with rounded caps
+- Segment length badges: small circles at each turn point showing the number
+- Selected ball: pulsing glow animation
+- Completed ball: green checkmark overlay
+- Glass-morphism control panel at bottom (backdrop-filter: blur)
+- Large buttons with rounded corners, subtle hover effects
+- Title with text-shadow (NEVER use -webkit-text-stroke)
+- Responsive: scales for desktop (1280x720) and mobile (390x844)
+
+## GAME SYSTEMS (must implement ALL)
+1. **Level progression**: 27 levels across 6 tiers (Beginner→Master). Show tier badges.
+2. **Timer**: count-up timer per level, save best time in localStorage.
+3. **Star rating**: 3 stars based on time + hints used. Save in localStorage.
+4. **Undo**: retract last cell of selected ball's path.
+5. **Hint**: reveal next cell of solution for selected ball (costs a star).
+6. **Check**: validate all paths. Show ✅ for correct, ❌ for incorrect.
+7. **Reset**: clear selected ball's path.
+8. **Level selector**: grid of 27 levels with completion stars and lock/unlock.
+9. **Tutorial overlay**: first-time instructions (how to draw paths). Dismissible.
+10. **Progress save**: localStorage with version field. Track completed levels + stars.
+11. **Procedural audio**: Web Audio API — tap sound, segment-complete chime, hole-in fanfare,
+    error buzz, level-complete celebration, button clicks. Include mute toggle.
+12. **Prev/Next level navigation**.
+13. **Particle effects** on hole-in (burst of particles from the hole).
+14. **Confetti** on level complete.
+
+## TECHNICAL REQUIREMENTS
+- SINGLE FILE: herugolf/index.html (self-contained, no external deps except Google Fonts)
+- Canvas-based rendering at 60fps using requestAnimationFrame
+- Frame-rate independent logic (delta time)
+- Responsive: works on desktop and mobile
+- Touch support: touch-action:none on canvas, pointer events
+- Mobile-first: large tap targets (min 44px)
+- ALL English UI, NO Chinese text
+- Emoji-free title
+- Clean up all timers/listeners/animation frames on level change
+- Duplicate-click prevention
+
+## ANALYTICS & SEO
+- Analytics script: <script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=herugolf'></script>
+- JSON-LD structured data: VideoGame + FAQPage + HowTo + BreadcrumbList (4 schemas)
+- Meta: og:title, og:description, og:image
+- Canonical: https://gamezipper.com/herugolf/
+- body { overflow-x:hidden; user-select:none; }
+- Title: Play Herugolf Online Free - Nikoli Golf Logic Puzzle | GameZipper
+- Meta description: "Play Herugolf online free — guide golf balls into holes with decreasing-length shots in this Nikoli logic puzzle. 27 levels, no download."
+
+## QUALITY GATES
+- All 27 levels must be playable (path drawing works, check validates correctly)
+- All segment lengths correctly enforced (decreasing by 1)
+- No Chinese text anywhere
+- No -webkit-text-stroke
+- File must be at least 25KB
+- HTML structure complete (has </html>)
+- Canvas renders grid, balls, holes, walls
+- Path drawing works (tap to extend)
+- Check button validates correctly
+- Undo/Reset/Hint work
+- Level navigation works
+- Timer runs
+- localStorage saves progress
+- Audio plays (Web Audio API)
+
+## IMPLEMENTATION NOTES
+- The path validation logic is the most critical part. For each ball's path:
+  1. Split the tapped cells into segments (direction changes = segment boundaries)
+  2. First segment: any length ≥ 1
+  3. Each subsequent segment: length must equal previous_segment_length - 1
+  4. Consecutive segments must be perpendicular
+  5. No cell reused within or between paths
+  6. No walls crossed
+  7. Path must end at a hole
+- For the CHECK function: compare player's paths against level.solution.
+  A ball is correct if its path cells match one of the solution paths (same set of cells).
+- For HINT: find the selected ball's solution path, show the next un-drawn cell.
+- Grid cell size: calculate dynamically based on canvas size and grid dimensions.
+- Use devicePixelRatio for crisp rendering on retina displays.

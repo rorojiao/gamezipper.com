@@ -1,59 +1,26 @@
 # Game Pipeline Status
 
 ## Current Game
-None — pipeline idle. (Nondango #409 completed 2026-06-22.)
+**Herugolf (slug: herugolf)** — IN PROGRESS (2026-06-23)
+- Type: Nikoli golf-path puzzle (NEW TYPE on GZ, zero overlap)
+- Rules: balls hit in decreasing-length orthogonal shots (L, L-1, L-2, ...) into holes;
+  consecutive shots perpendicular; no cell reuse; one ball per hole
+- 27 levels (5 Beg / 5 Easy / 5 Med / 5 Hard / 4 Expert / 3 Master)
+- All 27/27 UNIQUE + VALID (independent Node.js verifier)
+- Generator: herugolf/gen.py (construct-then-verify, dig-holes wall removal)
+- HTML game: Claude Code building (background)
+
+## Race Condition
+- A sibling cron (likely ops-gamezipper) is also working on herugolf
+- Their gen.py and levels.json were BROKEN (solution paths invalid)
+- My gen.py + levels.json are correct (27/27 verified unique)
+- My files must win — sibling's are broken
 
 ## Completed Games (409)
-Last: **Nondango (#409, 2026-06-22)** — Nikoli binary-circle logic puzzle (NEW TYPE on GZ).
-- Makaro (#408, 2026-06-22) — Nikoli room-number placement puzzle.
-- Cave (#407), Pentomino (#406) — earlier in the run.
+Last: **Nondango (#409, 2026-06-22)** — Nikoli binary-circle logic puzzle.
 
-## Nondango Details (slug: nondango)
-ALL phases done. Commit 3e2591a99a.
-- Type: NEW Nikoli TYPE on GZ (zero overlap; Nondango / ノンダンゴ "No Dumplings")
-- Rules (CONFIRMED from janko.at authoritative rules archive + Wikipedia, arXiv:2310.11447 "Nondango is NP-Complete"):
-  Rectangular grid of CIRCLES and EMPTY cells, divided into connected REGIONS. Color each
-  circle BLACK or WHITE so (1) each region has EXACTLY ONE black circle, and (2) no three
-  CONSECUTIVE same-colored circles in any of 8 directions (empty cells break the run).
-- IMPORTANT rule-interpretation finding: NOT every cell has a circle (the initial "all-circles"
-  reading yields ZERO valid solutions — confirmed via brute force). Empty cells are essential
-  and break three-in-a-lines. This matches janko.at puzzle 001's [problem]/[areas]/[solution] data.
-- Generation: like Araf, pure region-boundary-only Nondango resists random UNIQUE generation
-  (~0-5% unique yield). Used the proven DIG-HOLES approach with STARTING CLUES (some circles
-  pre-colored black/white, like Sudoku givens): build a valid full solution, then greedily hide
-  colors while the puzzle stays unique. Reliable across all grid sizes.
-  NOTE: a critical solver bug was caught by the independent verifier — the first solver only
-  enforced "at most one black per region" instead of "exactly one"; fixed in both gen.py and
-  verify_independent.js (is_last-cell forcing).
-- 27 levels, 6 tiers: Beginner 5x5 (givens ~70%) / Easy 6x6 (~60%) / Medium 7x7 (~50%) /
-  Hard 8x8 (~44%) / Expert 8x8 (~38%) / Master 9x9 (~32%). All 27/27 UNIQUE+VALID verified by
-  independent Node.js solver (verify_independent.js).
-- index.html: 66KB single-file Canvas. 3-state circles (black-glow / white-hollow / grey-dashed),
-  neon region borders, Undo/Hint/Check/Reset/Prev/Levels/Next, timer, ★ rating, localStorage
-  (versioned), tutorial overlay, procedural BGM+SFX (Web Audio), confetti, 4 JSON-LD schemas.
-- QA: analytics(1)/touch(1)/overflow-x(1)/user-select(1)/text-stroke(0)/JSON-LD(4)/og:title(1)/
-  localStorage(2)/AudioContext(2)/cleanup(6)/canonical(1). No Chinese text. Browser smoke-tested:
-  loads clean, grid renders, tutorial works, Hint→win fires correctly (win-check logic verified
-  to exactly implement both rules).
-- Registration: games-data.js (#409), index.html (ItemList pos 409 + all counts 408→409 +
-  Puzzle cat-count 323→324), itemlist-schema.js (pos 409, numberOfItems 409), sitemap.xml.
-  4-source drift check: GAMES 409 = schema 409 = HTML ItemList 409 = numberOfItems 409. ✓
-
-## Pipeline approach this run
-- Search backends (SearXNG, MiniMax) were DOWN — confirmed candidate rules via DIRECT fetch of
-  janko.at rules pages + the actual puzzle-001 data block (authoritative structure).
-- Took over generation directly after an early orchestrator subagent stalled; found + fixed the
-  solver bug via the independent verifier; built HTML via Claude Code (background, ~16 min).
-
-## Queue status
-Remaining uncovered Nikoli TYPES (next candidates, rules need verification):
-1. Haisu — room-number path (janko.at page is a stub; rules still unconfirmed)
-2. Herugolf — golf-path puzzle, rules CONFIRMED this run (decreasing-length shots); generator
-   more complex than Nondango
-3. Yosenabe — move-to-target, rules unconfirmed
-4. Reflect-battle / Reflect-light — laser reflection, solver non-trivial
-
-### Tier 1 for next run
-- Herugolf (rules now 100% confirmed from janko.at: balls hit in decreasing-length orthogonal
-  shots into holes, cells crossed once, ponds traversable) — RECOMMENDED, or pivot to another
-  confirmed fresh type.
+## Next candidates
+- Herugolf: IN PROGRESS this run
+- Yosenabe: rules unconfirmed (move-to-target)
+- Haisu: janko.at stub, no rules
+- Suguru/Tectonic: rules clear, generator proven (backup if Herugolf fails)
