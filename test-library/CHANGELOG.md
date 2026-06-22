@@ -1,3 +1,38 @@
+## [v1.88.0] - 2026-06-22
+
+### Added
+- 8 new test cases from R207 Dynamic Test Intelligence cron industry research:
+  - **[B-125] [P2]** iOS Safari 26.x `position: fixed` bottom-gap (~10px above address bar) + top-fixed elements pushed under status bar during page scroll + address-bar auto-shrink (cloud.tencent.com/developer/article/2591937, current June 2026). BROWSER-FIXED-POSITION-SCROLL-ADDRESS-BAR-GAP dimension; affects GameZipper bottom-fixed `gz-ad-below-game` container, game-footer, and any `position: fixed; bottom: 0` HUD; workaround is `env(safe-area-inset-bottom)` + `dvh` units or inner-scroll-container restructure. Distinct from B-124 (Chrome desktop bookmark bar — different vendor/layer).
+  - **[S-178] [P1]** Chrome weekly in-the-wild zero-day cadence — Infosecurity Magazine June 9 2026 reported another Chrome vulnerability exploited in the wild; 2025 retrospective (new.qq.com) documents 8 actively-exploited Chrome 0days averaging CVSS 8.5, all in CISA KEV. CHROME-WEEKLY-IN-WILD-ZERO-DAY-CADENCE-2026 dimension; GameZipper's "is current Chrome safe?" check must run WEEKLY; malicious ad iframe is the most likely delivery vector. Distinct from S-177 (single CVE) and W-185 (release schedule).
+  - **[S-179] [P1]** Check Point critical auth-bypass bug exploited in-the-wild June 9 2026 (Infosecurity Magazine) — Check Point security gateways/firewalls widely deployed in corporate/school networks; a compromised gateway with an enterprise-trusted CA can MITM GameZipper HTTPS traffic and inject malicious JS without browser detection. NETWORK-SECURITY-GATEWAY-AUTH-BYPASS-IN-WILD-MITM-RISK dimension; GameZipper HTTPS+HSTS does NOT protect against enterprise-CA MITM; requires SRI hashes + CSP nonces + runtime integrity checks. Distinct from S-178 (browser-client) and W-187 (reachability).
+  - **[S-180] [P2]** GlassWorm malware infrastructure takedown May 27 2026 (CrowdStrike + Google + Shadowserver, The Hacker News) — disrupts active infrastructure but triggers a 30-90 day COPYCAT SURGE as smaller actors replicate the now-public attack playbook (invisible-Unicode source-code hiding per S-124). SUPPLY-CHAIN-ATTACK-INFRASTRUCTURE-TAKEDOWN-RESIDUAL-COPYCAT-SURGE dimension; GameZipper npm/PyPI dependency scanning must increase to DAILY for 90 days post-takedown; residual IOCs persist on already-infected dev machines. Distinct from S-124 (malware discovery) and S-105 (bypass variant).
+  - **[W-196] [P3]** iOS 26.3 / iPadOS 26.3 beta Continuity Camera + Sidecar regression (Jan 29 2026, IT之家) — wireless iPhone camera and Mac→iPad screen extension both broken in beta; CROSS-DEVICE-FEATURE-REGRESSION-DURING-OS-BETA-CYCLE dimension; GameZipper QA relying on Continuity Camera (screenshots, QuickTime capture) will fail during iOS beta cycles; WebRTC `getUserMedia` camera games may show "camera unavailable" on Mac via the broken Continuity bridge. Distinct from B-119 (stable release) and B-111 (new feature).
+  - **[W-197] [P3]** phpBB critical flaw June 9 2026 (Infosecurity Magazine) — legacy PHP forum software still powering thousands of gaming communities; LEGACY-FORUM-SOFTWARE-CRITICAL-FLAW-2026 dimension; credential-theft from compromised forums enables account-takeover via password reuse on GameZipper (if accounts are added); if GameZipper adds a forum, use Discourse/Flarum not phpBB; enforce HaveIBeenPwned password checks. Distinct from S-164 (enterprise email) and S-166 (web server).
+  - **[G-155] [P2]** 2025 China game grey-industry / black-market scaling parallel to legitimate market — FairGuard annual report Jan 8 2026: market hit 350.789B RMB (+7.68% YoY) / 683M users (+1.35% YoY) historic highs while grey-industry (cheats, bots, account trading, fake-charge scams) scaled in parallel with AI-assisted cheat generation. EMERGING-MARKET-GREY-INDUSTRY-SCALING-PARALLEL-TO-LEGITIMATE-GAMES dimension; GameZipper must validate scores server-side, rate-limit rewarded-ad rewards against bot-farming, and assume adversarial users. Distinct from S-058 (ad-fraud bots) and G-145 (retention).
+  - **[C-130] [P3]** iOS App Store IAP payment-failure investigation pattern 2026 (April 28 2026, CN article) — "拉起苹果支付失败"/"支付受限" errors cluster into three root causes: network environment (unstable Wi-Fi, cellular, regional Apple-gateway restrictions), account information (outdated payment method, region mismatch, account flags), and payment method (expired cards, insufficient funds, bank declines). MONETIZATION-IAP-PAYMENT-FAILURE-INVESTIGATION-PATTERN dimension; defines the customer-support playbook for any future GameZipper IAP and the diagnostic flow for rewarded-ad load/callback failures; "known payment issues by region" help page needed for sanctioned/unreliable regions. Distinct from S-037 (publisher ad payment) and G-142 (monetization model).
+
+### Sources
+- Search queries executed (5 parallel MiniMax web searches — web-search-prime SearXNG returned 404 again this cycle):
+  - "HTML5 game testing new techniques 2026 browser automation"
+  - "browser security vulnerability June 2026 Chrome Safari Edge CVE"
+  - "casual mobile game UX complaint 2026 dark mode haptic"
+  - "WebGPU WebGL 2026 browser game regression bug"
+  - "Chrome Safari update June 2026 new web API feature"
+  - "Chrome 150 stable release June 2026 new features security"
+  - "WebKit Safari 27 CVE 2026 vulnerability RCE in the wild"
+  - "npm supply chain attack 2026 June malware campaign"
+  - "WCAG accessibility 2026 web game lawsuit ADA Title II enforcement"
+  - "HTML5 canvas WebGL game bug iOS Safari 2026 touch input"
+- Key URLs cited in new test cases:
+  - https://cloud.tencent.com/developer/article/2591937 (iOS Safari 26.x position:fixed bottom-gap bug, June 2026)
+  - https://www.infosecurity-magazine.com/ (June 9 2026 — Chrome in-wild zero-day + Check Point auth-bypass + phpBB critical flaw news ticker)
+  - https://new.qq.com/rain/a/20251218A03NUF00 (Dec 19 2025 — 2025 Chrome 0Day retrospective, 8 in-wild, avg CVSS 8.5, CISA KEV)
+  - https://thehackernews.com/search/label/Python (May 27 2026 — GlassWorm takedown CrowdStrike+Google+Shadowserver)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_558697a9dc047852 (Jan 29 2026 — iOS 26.3/iPadOS 26.3 beta Continuity Camera + Sidecar regression)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_470695f73af64752 (Jan 8 2026 — FairGuard 2025 annual game security report, 350.789B RMB market + grey-industry scaling)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_75569f0603c31052 (April 28 2026 — iOS App Store IAP payment-failure 3-cause investigation pattern)
+- Additional context from searches: Chrome 146 8-high-CVE patch March 25 2026 (CVE-2026-0628 Edge WebView injection Jan 12 2026 already covered); npm "Ghost campaign" fake-install-log RAT (ReversingLabs Feb 2026, already covered by S-121); WebGPU not-supported mobile Safari/iOS compatibility (reaffirms P-026/P-050); WebLLM iOS Safari 0.2.47 optimization (WebGPU compat evolution).
+
 ## [v1.87.0] - 2026-06-22
 
 ### Added
