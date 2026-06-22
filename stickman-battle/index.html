@@ -236,10 +236,10 @@ canvas{display:block;background:linear-gradient(180deg,#1a1a2e 0%,#2d2d5a 100%)}
 <script src="/monetag-manager.js?v=20260622v56clean"></script>
 <script>
 (function(){
-const audioCtx=window.AudioContext||window.webkitAudioContext;
+let _AudioCtx=window.AudioContext||window.webkitAudioContext;let audioCtx=null;function ensureAudio(){if(!audioCtx&&_AudioCtx){try{audioCtx=new _AudioCtx();}catch(e){audioCtx=null;}}return audioCtx;}
 const canvas=document.getElementById('game-canvas');
 const ctx=canvas.getContext('2d');
-letrafId=null,timers=[],state='menu';
+let rafId=null,timers=[],state='menu';
 
 const GRAVITY=0.6,FRICTION=0.85,JUMP_FORCE=-14,MOVE_SPEED=5;
 const GROUND_Y=0;
@@ -252,8 +252,8 @@ const KEYS={left:false,right:false,up:false,punch:false,kick:false,special:false
 
 function resize(){
   const container=document.getElementById('canvas-container');
-  const maxWidth=min(window.innerWidth-24,600);
-  const maxHeight=min(window.innerHeight*0.55,450);
+  const maxWidth=Math.min(window.innerWidth-24,600);
+  const maxHeight=Math.min(window.innerHeight*0.55,450);
   canvas.width=maxWidth;
   canvas.height=maxHeight;
   canvas.style.width=maxWidth+'px';
@@ -284,7 +284,7 @@ function stickman(x,y,color,isEnemy){
       }
       
       this.vy+=GRAVITY;
-      this.vy=min(this.vy,15);
+      this.vy=Math.min(this.vy,15);
       
       if(this.isEnemy){
         this.updateAI(dt,enemyObj);
@@ -300,7 +300,7 @@ function stickman(x,y,color,isEnemy){
         this.vy=0;
       }
       
-      this.x=max(0,min(canvas.width-this.width,this.x));
+      this.x=Math.max(0,Math.min(canvas.width-this.width,this.x));
       
       if(this.attackTimer>0){
         this.attackTimer-=dt;
@@ -311,7 +311,7 @@ function stickman(x,y,color,isEnemy){
         }
       }
       
-      if(abs(this.vx)>0.1&&this.y+this.height>=groundY-1){
+      if(Math.abs(this.vx)>0.1&&this.y+this.height>=groundY-1){
         this.state='run';
       }else if(this.state==='run'){
         this.state='idle';
@@ -326,7 +326,7 @@ function stickman(x,y,color,isEnemy){
       const dist=target.x-this.x;
       this.facing=dist>0?1:-1;
       
-      const range=abs(dist);
+      const range=Math.abs(dist);
       
       if(range>100){
         this.vx=this.facing*MOVE_SPEED*0.8;
@@ -404,9 +404,9 @@ function stickman(x,y,color,isEnemy){
         if(this.hitBox&&enemyCenter.x>this.hitBox.x&&enemyCenter.x<this.hitBox.x+this.hitBox.width&&
            enemyCenter.y>this.hitBox.y&&enemyCenter.y<this.hitBox.y+this.hitBox.height){
           enemyObj.takeHit(damage,this);
-          this.energy=min(this.energy+10,this.maxEnergy);
+          this.energy=Math.min(this.energy+10,this.maxEnergy);
           this.combo++;
-          if(this.combo>=3)this.energy=min(this.energy+20,this.maxEnergy);
+          if(this.combo>=3)this.energy=Math.min(this.energy+20,this.maxEnergy);
         }
       },50);
     },
@@ -613,7 +613,7 @@ function updateUI(){
 function loop(timestamp){
   if(state!=='game')return;
   
-  dt=min((timestamp-lastTime)/1000,0.05);
+  dt=Math.min((timestamp-lastTime)/1000,0.05);
   lastTime=timestamp;
   
   update(dt);
@@ -663,7 +663,7 @@ function endLevel(victory){
     endStars.textContent='★'.repeat(stars)+'☆'.repeat(3-stars);
     score+=100*currentLevel*stars;
     endStats.textContent=`Score: ${score} | Level ${currentLevel} complete!`;
-    currentLevel=min(currentLevel+1,totalLevels);
+    currentLevel=Math.min(currentLevel+1,totalLevels);
     saveProgress();
     if(window.gzAdEvents)window.gzAdEvents.push({type:'level_complete',level:currentLevel-1,stars});
   }else{
@@ -769,7 +769,7 @@ resize();
 window.addEventListener('resize',resize);
 
 function playSFX(type){
-  if(!audioCtx)return;
+  if(!ensureAudio())return;
   const osc=audioCtx.createOscillator();
   const gain=audioCtx.createGain();
   osc.connect(gain);
