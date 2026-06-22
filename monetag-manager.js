@@ -299,7 +299,7 @@
     if (window.GZAdDebug) {
       try { console.log('[gz-ad] zone backoff', zoneId, 'streak=' + entry.streak, 'until +' + Math.round(backoffMs/60000) + 'min'); } catch(e) {}
     }
-    trackAdEvent('zone_backoff', { zoneId: zoneId, streak: entry.streak, minutes: Math.round(backoffMs/60000) });
+    trackAdEvent('zone_backoff', { network: 'monetag', zoneId: zoneId, streak: entry.streak, minutes: Math.round(backoffMs/60000) });
   }
 
   function clearZoneBackoff(zoneId) {
@@ -651,7 +651,7 @@
       if (!CONFIG.ZONES.legacyEnabled && (
         zoneId === CONFIG.ZONES.inpagePushLegacy ||
         zoneId === CONFIG.ZONES.vignetteLegacy)) {
-        trackAdEvent('zone_legacy_disabled_skip', { zoneId: zoneId });
+        trackAdEvent('zone_legacy_disabled_skip', { network: 'monetag', zoneId: zoneId });
         reject(new Error('legacy_disabled'));
         return;
       }
@@ -661,7 +661,7 @@
       // are not filling right now, so don't waste CPU/bandwidth/IP reputation.
       if (isZoneInBackoff(zoneId)) {
         var remaining = getZoneBackoffMs(zoneId);
-        trackAdEvent('zone_backoff_skip', { zoneId: zoneId, remainingMs: remaining });
+        trackAdEvent('zone_backoff_skip', { network: 'monetag', zoneId: zoneId, remainingMs: remaining });
         reject(new Error('zone_in_backoff'));
         return;
       }
@@ -892,7 +892,7 @@
           }, 250);
         });
       } catch(e) {
-        trackAdEvent('adsense_load_error', { error: String(e) });
+        trackAdEvent('adsense_load_error', { network: 'adsense', error: String(e) });
       }
 
       // Tier 2: Monetag vignette (race with AdSense, 1.5s delay)
@@ -1595,7 +1595,7 @@
       if (!canShowAd('banner')) return;
       // Tier 1: AdSense (higher fill rate, currently 5-10% on game sites)
       try { loadAdSenseAd(container, slotId); } catch(e) {
-        trackAdEvent('banner_adsense_error', { position: position, error: String(e) });
+        trackAdEvent('banner_adsense_error', { network: 'adsense', position: position, error: String(e) });
       }
       // AdSense fill detection (poll for iframe insertion, up to inGameBannerMaxFillMs)
       var adsenseStart = Date.now();
