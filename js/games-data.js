@@ -435,6 +435,7 @@ const GAMES = [
 {name:"Kakurasu",emoji:"🔲",cat:"puzzle",tags:["kakurasu","sum puzzle","logic","grid","nikoli","number puzzle","brain teaser","reasoning","japanese puzzle","casual"],url:"/kakurasu/",desc:"Play Kakurasu free online! A Nikoli sum-position logic puzzle: shade cells so each row and column sum clue matches. 27 unique puzzles across 6 tiers from Beginner to Master. No download required.",isNew:true,status:"live"},
 {name:"Slalom",emoji:"🎯",cat:"puzzle",tags:["logic","loop","pathfinding"],url:"/slalom/",desc:"Draw a continuous loop through all checkpoints following arrow directions. A challenging Nikoli puzzle game with 30 levels from Easy to Master.",isNew:true,status:"live"},
 {name:"Shimaguni",emoji:"🏝️",cat:"puzzle",tags:["shimaguni","nikoli","island shading","logic","grid","region","shading puzzle","brain teaser","japanese puzzle"],url:"/shimaguni/",desc:"Play Shimaguni free online! A Nikoli island-shading logic puzzle: shade cells in regions following 5 elegant rules. 27 unique puzzles from Beginner to Master. No download required.",isNew:true,status:"live"},
+{name:"Stostone",emoji:"🪨",cat:"puzzle",tags:["stostone","nikoli","gravity","logic","stone","shading","grid","region","brain teaser","japanese puzzle"],url:"/stostone/",desc:"Play Stostone free online! A Nikoli stone gravity logic puzzle: shade connected stones in each region so they fill the bottom half when they fall. 26 unique puzzles from Beginner to Master. No download required.",isNew:true,status:"live"},
 ];
 
 /**
