@@ -437,6 +437,7 @@ const GAMES = [
 {name:"Shimaguni",emoji:"🏝️",cat:"puzzle",tags:["shimaguni","nikoli","island shading","logic","grid","region","shading puzzle","brain teaser","japanese puzzle"],url:"/shimaguni/",desc:"Play Shimaguni free online! A Nikoli island-shading logic puzzle: shade cells in regions following 5 elegant rules. 27 unique puzzles from Beginner to Master. No download required.",isNew:true,status:"live"},
 {name:"Stostone",emoji:"🪨",cat:"puzzle",tags:["stostone","nikoli","gravity","logic","stone","shading","grid","region","brain teaser","japanese puzzle"],url:"/stostone/",desc:"Play Stostone free online! A Nikoli stone gravity logic puzzle: shade connected stones in each region so they fill the bottom half when they fall. 26 unique puzzles from Beginner to Master. No download required.",isNew:true,status:"live"},
 {name:"Creek",emoji:"🔶",cat:"puzzle",tags:["logic","shading","nikoli"],url:"/creek/",desc:"Shade cells to satisfy intersection clue numbers in this pure-logic grid puzzle.",isNew:true,status:"live"},
+{name:"Roll the Ball",emoji:"🔵",cat:"puzzle",tags:["roll the ball","slide puzzle","path puzzle","tile puzzle","ball game","brain teaser","logic","pipe","connect","html5","free","browser"],url:"/roll-the-ball/",desc:"Play Roll the Ball free online! Slide pipe tiles to build a path and guide the steel ball to the exit. 27 unique puzzles across 6 tiers from Beginner to Master. No download required.",isNew:true,status:"live"},
 ];
 
 /**
