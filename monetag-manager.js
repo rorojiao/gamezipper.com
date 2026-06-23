@@ -1,8 +1,26 @@
 /**
- * GameZipper Ad Manager v5.7 — Poki-Style Adaptive Ad System
+ * GameZipper Ad Manager v5.8 — Poki-Style Adaptive Ad System
  *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ *
+ * v5.8 Changes (2026-06-24 — Exit-Intent Commercial Break + Banner Fill Detection):
+ *   - 🚀 New: initExitIntent() — detects user mouse moving to top of viewport
+ *     (the "I want to leave the page" gesture that 380 exit_mouse events/46
+ *     visitors = 8.3x/visitor were silently wasting). On game pages only,
+ *     fires commercialBreak() when the mouse leaves toward the top edge.
+ *     Smart guards: 30s minimum time-on-page (avoid punishing quick bounces),
+ *     5-min cooldown between exit-intent breaks (avoid ad-bombing on
+ *     navigation hovers), suppressed when AdBlock detected, suppressed when
+ *     gameplayActive (don't break mid-game).
+ *   - 📈 Banner fill detection tightened: poll 500ms → 300ms, inGameBannerMaxFillMs
+ *     5s → 8s. BI data 7d showed 1101 banner_inject vs 4 banner_fill (0.4%) —
+ *     AdSense auto-ads often fill at 6-7s for game vertical. The 5s window
+ *     was killing detections 1-2s before the iframe insertion completes.
+ *   - 🎯 Banner detection now also checks for `data-adsbygoogle-status="done"`
+ *     attribute (newer AdSense API) plus `data-ad-status="filled"`. Some
+ *     fill events only set one of the two — checking both halves false negatives.
+ *   - Version bumped 5.7 → 5.8 to track on BI server.
  *
  * v5.7 Changes (2026-06-23 — AdBlock kill switch no longer triggered by load_error):
  *   - Bug fix: loadZone()'s s.onerror was setting state.adBlockDetected=true.
@@ -193,11 +211,13 @@
       prerollDelay: 15 * 1000,           // 15s 无交互后触发 pre-roll
       inGameBannerInjectDelay: 800,     // v5.2: inject after DOM ready
       inGameBannerLoadDelay: 2500,      // v5.2: load ads 2.5s after injection
-      inGameBannerMaxFillMs: 5000,      // v5.2: 5s max wait for AdSense fill detection
+      inGameBannerMaxFillMs: 8000,      // v5.8: 8s max wait for AdSense fill detection (was 5000, 0.4% fill)
+      exitIntentMinDwellMs: 30000,      // v5.8: 30s minimum on page before exit-intent fires
+      exitIntentCooldownMs: 5*60*1000,  // v5.8: 5min between exit-intent commercial breaks
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.7-gz-load-error-no-killswitch',  // 2026-06-23: remove adBlockDetected=true from loadZone s.onerror (lost ~5-10 follow-up ad calls per session)
+    VERSION: '5.8-gz-exit-intent-banner-fill',  // 2026-06-24: exit-intent commercial break + banner fill detection (8s, status="done")
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -1618,12 +1638,15 @@
         trackAdEvent('banner_adsense_error', { network: 'adsense', position: position, error: String(e) });
       }
       // AdSense fill detection (poll for iframe insertion, up to inGameBannerMaxFillMs)
+      // v5.8: poll 500ms→300ms + extended timeout 5s→8s + check both data-ad-status
+      //   AND data-adsbygoogle-status (newer AdSense API). 7d data showed 0.4% fill
+      //   rate, mostly from detections firing just before iframe insertion completes.
       var adsenseStart = Date.now();
       var adsenseTimer = setInterval(function() {
         if (container.getAttribute('data-filled')) { clearInterval(adsenseTimer); return; }
         var ins = container.querySelector('ins.adsbygoogle');
         var hasIframe = ins && ins.querySelector('iframe');
-        var hasContent = ins && ins.getAttribute('data-ad-status') === 'filled';
+        var hasContent = ins && (ins.getAttribute('data-ad-status') === 'filled' || ins.getAttribute('data-adsbygoogle-status') === 'done');
         var hasSize = ins && ins.offsetHeight > 30;
         if (hasIframe || hasContent || hasSize) {
           container.setAttribute('data-filled', '1');
@@ -1636,7 +1659,7 @@
         if (Date.now() - adsenseStart > CONFIG.TIMING.inGameBannerMaxFillMs) {
           clearInterval(adsenseTimer);
         }
-      }, 500);
+      }, 300);
 
       // Tier 2: Monetag Skillful fallback after 2s if AdSense hasn't filled
       setTimeout(function() {
@@ -1662,6 +1685,64 @@
         });
       }, 2000);
     }, CONFIG.TIMING.inGameBannerLoadDelay);
+  }
+
+  // ==================== EXIT-INTENT COMMERCIAL BREAK (v5.8) ====================
+  // Listens for the "I'm about to leave" gesture — mouse moving toward top
+  // of viewport (toward the back/close tab buttons). On game pages only,
+  // fires commercialBreak() so we capture one more high-CTR impression
+  // before the user navigates away.
+  //
+  // BI signal (7d, 2026-06-17~06-24): gz.com sees 380 exit_mouse events
+  // from 46 unique visitors = 8.3 events/visitor. Those users were leaving
+  // the page without ever seeing a commercial break — pure lost revenue.
+  // AdSense commercial break fill rate is ~22% (628 fills / 2807 script
+  // loads in 7d), so each exit-intent break is worth ~$X in recovered
+  // impressions at AdSense eCPM.
+  //
+  // Smart guards to avoid annoying users:
+  //   - 30s minimum on-page dwell (don't punish quick bounces)
+  //   - 5-min cooldown between exit-intent breaks
+  //   - Skip on homepage (no game engagement to interrupt)
+  //   - Skip when gameplayActive (don't break mid-game)
+  //   - Skip when AdBlock detected
+  //   - Debounced via onNaturalBreak (10s global debounce)
+  function initExitIntent() {
+    if (!state.isGamePage) return;
+
+    var pageLoadTime = now();
+    var lastExitIntentAt = 0;
+
+    document.addEventListener('mouseout', function(e) {
+      // Standard exit-intent heuristic: mouse leaves viewport (relatedTarget=null)
+      // toward the top edge (clientY < 10). On most browsers this fires when the
+      // user moves the mouse up to click the back button, URL bar, or close tab.
+      if (e.relatedTarget !== null && e.relatedTarget !== undefined) return;
+      if (typeof e.clientY !== 'number' || e.clientY > 10) return;
+      // Also check the top region via movementY (browsers report different things
+      // for mouse leaving the window vs leaving the document). Firefox fires
+      // relatedTarget=null with negative clientY when mouse leaves the top.
+      if (e.clientY < 0) return; // already left the viewport, too late
+
+      // Guard 1: minimum dwell time
+      if (now() - pageLoadTime < CONFIG.TIMING.exitIntentMinDwellMs) return;
+
+      // Guard 2: cooldown since last exit-intent break
+      if (now() - lastExitIntentAt < CONFIG.TIMING.exitIntentCooldownMs) return;
+
+      // Guard 3: AdBlock detected
+      if (state.adBlockDetected) return;
+
+      // Guard 4: gameplay active (don't break mid-game)
+      if (state.gameplayActive) return;
+
+      // Guard 5: respect commercial_break cooldown
+      if (!canShowAd('commercial_break')) return;
+
+      lastExitIntentAt = now();
+      trackAdEvent('exit_intent_detected', {});
+      onNaturalBreak('exit_intent');
+    }, { passive: true });
   }
 
   // ==================== INTER-GAME COMMERCIAL BREAK ====================
@@ -1771,6 +1852,8 @@
       initOverlayDetection();
       initCustomEventListeners();
       initGameFooterIntegration();
+      // v5.8: Exit-intent commercial break (revenue recovery on user navigation)
+      initExitIntent();
 
       // Auto-fill container ad
       autoFillContainer();
