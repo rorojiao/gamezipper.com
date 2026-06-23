@@ -441,6 +441,7 @@ const GAMES = [
 {name:"Roll the Ball",emoji:"🔵",cat:"puzzle",tags:["roll the ball","slide puzzle","path puzzle","tile puzzle","ball game","brain teaser","logic","pipe","connect","html5","free","browser"],url:"/roll-the-ball/",desc:"Play Roll the Ball free online! Slide pipe tiles to build a path and guide the steel ball to the exit. 27 unique puzzles across 6 tiers from Beginner to Master. No download required.",isNew:true,status:"live"},
 
 {name:"Yosenabe",emoji:"⚖",cat:"puzzle",tags:["nikoli","logic","yosenabe","pot","japanese","brain teaser","grid puzzle","path","sum"],url:"/yosenabe/",desc:"Play Yosenabe free online! Move numbered circles into pots in this Japanese Nikoli logic puzzle. 27 levels from Beginner to Master. No download required.",isNew:true,status:"live"},
+{name:"Signpost",emoji:"🧭",cat:"puzzle",tags:["signpost", "arrow path", "pfeilpfad", "logic", "number path", "directional", "brain teaser", "grid puzzle", "html5", "free", "browser"],url:"/signpost/",desc:"Play Signpost free online! Follow the arrows to build one unbroken number chain 1 to N across the grid. 27 unique arrow-path puzzles from Beginner to Master. No download required.",isNew:true,status:"live"},
 ];
 
 /**
