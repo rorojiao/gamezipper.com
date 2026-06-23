@@ -1,8 +1,19 @@
 /**
- * GameZipper Ad Manager v5.6 — Poki-Style Adaptive Ad System
+ * GameZipper Ad Manager v5.7 — Poki-Style Adaptive Ad System
  *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ *
+ * v5.7 Changes (2026-06-23 — AdBlock kill switch no longer triggered by load_error):
+ *   - Bug fix: loadZone()'s s.onerror was setting state.adBlockDetected=true.
+ *     A single zone load_error (CDN hiccup) permanently killed ALL future ads
+ *     in that session. BI data 7d showed 16 sessions with load_error → those
+ *     sessions saw 0 more ad calls after the error. At 5-10 lost ad calls per
+ *     session and 1.66% Monetag fill rate, that's 1-3 lost Monetag fills/week.
+ *   - Fix: removed state.adBlockDetected=true from loadZone's onerror. detectAdBlock()
+ *     runs its own probe at init and is the proper place to set this state.
+ *   - Zone backoff + load_error tracking unchanged — failing zone still gets backoff,
+ *     event still tracked, but other zones still get to try in the same session.
  *
  * v5.6 Changes (2026-06-21 — Commercial Break Monetag In-Page Push Tier):
  *   - Commercial break Tier 3 now tries inpagePush (11012002) BEFORE legacy zones.
@@ -186,7 +197,7 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.6-gz-commercial-inpagePush',  // 2026-06-21: add inpagePush (11012002, 1.75% fill) as Tier 3 in commercial break (was vignetteLegacy only)
+    VERSION: '5.7-gz-load-error-no-killswitch',  // 2026-06-23: remove adBlockDetected=true from loadZone s.onerror (lost ~5-10 follow-up ad calls per session)
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -746,7 +757,16 @@
       s.onerror = function() {
         clearTimeout(timeout);
         if (observer) observer.disconnect();
-        state.adBlockDetected = true;
+        // v5.7 (2026-06-23): Do NOT set state.adBlockDetected here. A single zone
+        // load_error (transient CDN hiccup, single-zone issue) shouldn't permanently
+        // kill ALL future ads in this session — we lose 5-10 future impressions
+        // that could have filled. detectAdBlock() runs a dedicated probe at init
+        // and is the right place to set this state. Here we just record the error
+        // + backoff the failing zone so the waterfall skips it next time.
+        // BI data 7d (2026-06-16~06-23): gz.com 11012002 had 16 load_errors /
+        // 2892 script_loaded = 0.55%. Those 16 sessions each lost ~5-10 follow-up
+        // ad calls because adBlockDetected=true. Expected lift: 80-160 extra
+        // script_loaded/week → 1-3 extra Monetag fills/week.
         recordZoneNoFill(zoneId);  // v5.3: backoff on load_error too
         trackAdEvent('load_error', { network: 'monetag', zoneId: zoneId });
         reject(new Error('load_err'));
