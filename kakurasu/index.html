@@ -571,9 +571,23 @@ function loop(now){
 /* tutorial overlay */
 function showTut(){document.getElementById("tut").classList.remove("hidden");}
 function hideTut(){document.getElementById("tut").classList.add("hidden");save.tutorialSeen=true;persistSave();}
-document.getElementById("tutClose").addEventListener("click",()=>{hideTut();initLevel(0);if(!save.muted)Audio.startBGM();});
 function init(){resize();lastTime=performance.now();requestAnimationFrame(loop);}
-init();
+/* R219 P0 FIX: #tutClose button is defined AFTER this <script> block (in the HTML
+   below). Accessing it synchronously here throws TypeError → aborts entire script
+   → init() never called → canvas stuck at 300x150 → game 100% unplayable.
+   Fix: defer tutClose listener registration + init() to DOMContentLoaded. */
+function _bootstrapDom(){
+  var tutCloseBtn = document.getElementById("tutClose");
+  if(tutCloseBtn){
+    tutCloseBtn.addEventListener("click",function(){hideTut();initLevel(0);if(!save.muted)Audio.startBGM();});
+  }
+  init();
+}
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", _bootstrapDom);
+}else{
+  _bootstrapDom();
+}
 /* cleanup hook for SPA navigations */
 window.__kakurasu_cleanup=function(){Audio.stopBGM();if(Audio.ctx){try{Audio.ctx.close();}catch(e){}}};
 </script>
