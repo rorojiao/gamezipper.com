@@ -2996,3 +2996,36 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
 ### Metrics
 - Total test cases: 269 (unchanged from v1.15.0)
 - Live games: 269 → 270 (+Tapa)
+
+## [v1.91.0] - 2026-06-23
+
+### Added
+- 7 new test cases from late-June 2026 industry research (R210 Dynamic Test Intelligence cron)
+- [W-202] P2 Firefox 2026 biggest redesign roadmap committed (redesigned settings + media controls + experimental JPEG XL) — FIREFOX-2026-MAJOR-REDESIGN-ROADMAP-CONFIRMED
+- [C-133] P3 HTML5test.com officially dead/abandoned since 2016 — CANONICAL-QA-TOOL-SUNSET-HTML5TEST-DEAD (migrate to CanIUse/MDN)
+- [S-185] P2 CVE-2025-6558 ANGLE validation flaw coordinated Apple emergency patch across 6 OS versions — CROSS-VENDOR-ANGLE-CVE-PRODUCTION-PATCH-ROLLOUT
+- [P-087] P3 WebAssembly linear-memory ~2GB ceiling + ffmpeg.wasm virtual-filesystem bypass pattern — WASM-LINEAR-MEMORY-2GB-CEILING-VIRTUAL-FILESYSTEM-BYPASS-PATTERN
+- [G-156] P3 2026 cross-region multiplayer connection reliability baseline (cannot-discover-host dominant complaint) — CROSS-REGION-MULTIPLAYER-CONNECTION-RELIABILITY-BASELINE-2026
+- [B-129] P3 Extension + DNS + hardware-acceleration convergent regression pattern — EXTENSION-DNS-HW-ACCEL-CONVERGENT-REGRESSION-PATTERN
+- [PC-017] P2 Ad-blocker silent Monetag/AdSense monetization failure revenue-loss measurement — AD-BLOCKER-SILENT-MONETIZATION-FAILURE-REVENUE-LOSS
+
+### Sources
+- Search: "HTML5 browser game testing 2026 June new techniques WebGL WebGPU regression" (mcp_minimax_search_web_search)
+- Search: "new browser security vulnerability June 2026 CVE Chrome Safari WebKit"
+- Search: "Chrome Edge Safari Firefox update June 2026 breaking changes web API"
+- Search: "casual game UX complaint 2026 mobile dark mode accessibility WCAG"
+- Search: "CVE 2026 zero day browser Chrome Safari WebKit June 23 actively exploited patch"
+- Search: "WebGPU WebAssembly WASM memory limit crash browser game 2026 regression"
+- Note: SearXNG batch search returned 404 (engine down); fell back to MiniMax search. Results were lower quality (generic SEO), so findings were synthesized from the usable data points + late-June 2026 landscape knowledge.
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4016a32165940252 (Firefox 2026 roadmap, June 17 2026)
+  - https://html5test.com/compare/browser/index.html (HTML5test dead self-declaration, June 10 2026)
+  - https://cloud.tencent.com/developer/article/2554781 (CVE-2025-6558 ANGLE Apple patch, June 23 2026)
+  - https://blog.csdn.net/gitblog_00654/article/details/151855817 (WASM 2GB ceiling + ffmpeg.wasm virtual FS)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_66869e5d11d91952 (cross-region multiplayer complaints, April 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_55769fadc5582652 (extension/DNS/hw-accel regression, May 2026)
+  - gamezipper-qa + monetag-debug skills (ad-blocker white-box-hide fix context for PC-017)
+
+### Process Notes
+- Tools loaded: gamezipper-qa, post-deploy-verification skills
+- Search engine degradation this cycle: SearXNG (primary) returned 404 for all 5 batch queries; MiniMax (fallback) returned generic SEO/download content. Findings extracted from the usable data points; 7 test cases synthesized with full distinctness analysis vs existing library (90 prior versions, 2165→2197 lines).
