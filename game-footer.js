@@ -130,6 +130,7 @@
       {n:'Mastermind',e:'🔐',u:'/mastermind/',c:'puzzle'},
       {n:'Simon Says',e:'🧠',u:'/simon-says/',c:'puzzle'},
       {n:'Maze Runner',e:'🏃',u:'/maze-runner/',c:'puzzle'},
+      {n:'Labyrinth Maze',e:'🌀',u:'/labyrinth/',c:'puzzle'},
       {n:'Slitherlink',e:'🔗',u:'/slitherlink/',c:'puzzle'},
       {n:'Battleship',e:'🚢',u:'/battleship/',c:'puzzle'},
       {n:'Lights Out',e:'💡',u:'/lights-out/',c:'puzzle'},
