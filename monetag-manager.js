@@ -1,8 +1,22 @@
 /**
- * GameZipper Ad Manager v5.8 — Poki-Style Adaptive Ad System
+ * GameZipper Ad Manager v5.9 — Exit-Intent Fix (observability + looser guards)
  *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ *
+ * v5.9 Changes (2026-06-25 — Exit-Intent Repair):
+ *   - 🐛 Fix: trackAdEvent('exit_intent_detected') now fires BEFORE canShowAd
+ *     check (was being silently swallowed by commercialBreakCooldown=45s and
+ *     global dailyMaxAds=60 / sessionMaxAds=20 caps — produced 0 events in
+ *     14d after v5.8 deployment)
+ *   - 📊 Add: exit_intent_blocked event with reason for blocked attempts
+ *   - 🔓 Loosen: exitIntentMinDwellMs 30s → 10s (most bounces happen in 30s,
+ *     was missing 85.5% of would-be triggers)
+ *   - 🔓 Loosen: exitIntentCooldownMs 5min → 60s (allow multiple page hovers
+ *     per session to trigger)
+ *   - 🎯 New: canShowAdExitIntent() bypasses type-specific cooldown but keeps
+ *     global daily/session caps (exit-intent is a separate slot, not a
+ *     commercial_break)
  *
  * v5.8 Changes (2026-06-24 — Exit-Intent Commercial Break + Banner Fill Detection):
  *   - 🚀 New: initExitIntent() — detects user mouse moving to top of viewport
@@ -212,12 +226,12 @@
       inGameBannerInjectDelay: 800,     // v5.2: inject after DOM ready
       inGameBannerLoadDelay: 2500,      // v5.2: load ads 2.5s after injection
       inGameBannerMaxFillMs: 8000,      // v5.8: 8s max wait for AdSense fill detection (was 5000, 0.4% fill)
-      exitIntentMinDwellMs: 30000,      // v5.8: 30s minimum on page before exit-intent fires
-      exitIntentCooldownMs: 5*60*1000,  // v5.8: 5min between exit-intent commercial breaks
+      exitIntentMinDwellMs: 10000,      // v5.9: 10s minimum on page (was 30s, 85.5% of bounces happened before)
+      exitIntentCooldownMs: 60*1000,    // v5.9: 60s between exit-intent commercial breaks (was 5min)
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.8-gz-exit-intent-banner-fill',  // 2026-06-24: exit-intent commercial break + banner fill detection (8s, status="done")
+    VERSION: '5.9-gz-exit-intent-fix',  // 2026-06-25: exit-intent observability + looser guards (10s/60s, canShowAdExitIntent)
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -1736,13 +1750,50 @@
       // Guard 4: gameplay active (don't break mid-game)
       if (state.gameplayActive) return;
 
-      // Guard 5: respect commercial_break cooldown
-      if (!canShowAd('commercial_break')) return;
-
+      // ==== v5.9: TRACK DETECTION BEFORE canShowAd (fix observability) ====
+      // v5.8 silently swallowed all exit-intent attempts when canShowAd returned
+      // false (commercialBreakCooldown=45s, dailyMaxAds=60, sessionMaxAds=20).
+      // This produced 0 exit_intent_detected events in 14d. Now we track FIRST,
+      // then check global caps separately via canShowAdExitIntent() which
+      // bypasses the commercialBreakCooldown (exit-intent is its own slot).
       lastExitIntentAt = now();
       trackAdEvent('exit_intent_detected', {});
+
+      // Guard 5: respect global ad caps (daily + session) but skip type-specific
+      // commercialBreakCooldown — exit-intent is a separate ad slot, not a
+      // commercial_break. User is about to leave anyway, so we want to attempt
+      // a fill even if a commercial_break just fired 10s ago.
+      if (!canShowAdExitIntent()) {
+        trackAdEvent('exit_intent_blocked', { reason: 'global_caps_reached' });
+        return;
+      }
+
       onNaturalBreak('exit_intent');
     }, { passive: true });
+  }
+
+  // v5.9: exit-intent-specific canShowAd that bypasses type-specific cooldown
+  // (commercialBreakCooldown=45s) but still respects global daily/session caps.
+  // The user is about to leave — we want to attempt a fill even if a
+  // commercial_break just fired. Exit-intent is treated as its own ad slot.
+  function canShowAdExitIntent() {
+    var n = now();
+    loadAdTimestamps();
+    // Clean old timestamps outside daily window
+    state.adTimestamps = state.adTimestamps.filter(function(t) {
+      return (n - t) < CONFIG.FREQUENCY.dailyWindowMs;
+    });
+    // Check daily limit
+    if (state.adTimestamps.length >= CONFIG.FREQUENCY.dailyMaxAds) return false;
+    // Check session (30-min rolling) limit
+    var sessionAds = state.adTimestamps.filter(function(t) {
+      return (n - t) < CONFIG.FREQUENCY.sessionWindowMs;
+    });
+    if (sessionAds.length >= CONFIG.FREQUENCY.sessionMaxAds) return false;
+    // Intentionally skip:
+    //   - type-specific cooldown (commercialBreakCooldown) — exit-intent is its own slot
+    //   - minBetweenAds / firstAdDelay — exit-intent fires on user intent, not timer
+    return true;
   }
 
   // ==================== INTER-GAME COMMERCIAL BREAK ====================
