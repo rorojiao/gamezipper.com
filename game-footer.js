@@ -223,7 +223,8 @@
       {n:'Ball Sort',e:'🎱',u:'/ball-sort/',c:'puzzle'},
       {n:'Slice Master',e:'🔪',u:'/slice-master/',c:'puzzle'},
       {n:'TriPeaks Solitaire',e:'🃏',u:'/tripeaks-solitaire/',c:'card'},
-      {n:'Magic Tiles',e:'🎹',u:'/magic-tiles/',c:'puzzle'}
+      {n:'Magic Tiles',e:'🎹',u:'/magic-tiles/',c:'puzzle'},
+      {n:'Stick Hero',e:'🦸',u:'/stick-hero/',c:'skill'}
    ];
 
   var cur = location.pathname;
