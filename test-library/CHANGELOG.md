@@ -1,3 +1,28 @@
+## [v1.94.0] - 2026-06-25
+### Added
+- 8 new test cases from late-June 2026 industry research (R213 Dynamic Test Intelligence cron)
+- [W-204] **[P2]** Chrome "Skills" browser-native AI prompt store — users SAVE arbitrary AI prompts invokable on ANY webpage via the browser UI; a BROWSER-NATIVE-AI-PROMPT-STORE-RUNNABLE-ON-ANY-PAGE dimension creating new scrape/prompt-injection surfaces (so.html5.qq.com April 15 2026 — documents April 14 2026 Google launch)
+- [W-205] **[P2]** OpenAI Atlas AI-native browser launched macOS April 14 2026 — the FOURTH major AI-augmented browser in market after Safari Apple Intelligence, Edge Copilot, Chrome Gemini/Skills; expands the cross-browser AI-interference matrix to 4 vendors (so.html5.qq.com April 15 2026)
+- [C-138] **[P2]** Edge Copilot "Actions in Edge" — multi-step web-task AUTOMATION (form filling, navigation, button clicking); functionally a first-party browser bot Cloudflare may struggle to distinguish from human; reward-farming/ad-fraud abuse surface (so.html5.qq.com April 15 2026)
+- [S-190] **[P3]** IBM X-Force 2026 Threat Intelligence Index — THIRD independent vendor dataset (after CrowdStrike S-184 + Check Point W-203) corroborating AI-driven attack escalation; "legacy unpatched infrastructure + AI-automated attacker tooling" is the dominant 2026 pattern (so.html5.qq.com March 3 2026)
+- [G-158] **[P2]** Mobile-vs-desktop Core Web Vitals differential — sites passing DESKTOP QA routinely FAIL MOBILE thresholds (slower network/CPU/GPU); GameZipper Playwright QA is desktop-only so mobile-failures are invisible (blog.csdn.net/web_geek May 20 2026)
+- [P-088] **[P2]** Lighthouse CI automated performance regression pre-merge gate — canonical pattern for catching perf regressions BEFORE production via CI/CD Lighthouse audit on every build (blog.csdn.net/web_geek May 20 2026)
+- [B-134] **[P2]** INP Long-Task 50ms ceiling root-cause diagnostic — any main-thread task >50ms is the #1 INP killer; Chrome DevTools Performance panel flags these red; GameZipper games with heavy asset-decode/WASM-compile/SDK-init at risk (blog.csdn.net/Vivien_pan Dec 26 2025)
+- [A-045] **[P2]** AI-native browser natural-language game discovery — users increasingly ask browser AI "find me a relaxing puzzle game" rather than typing into Google; shifts GameZipper SEO from keyword-matching to AI-LLM-mention optimization; zero-click attribution risk (so.html5.qq.com April 15 2026)
+### Sources
+- Search queries executed (mcp_minimax_search_web_search; web-search-prime SearXNG returned 404 again this cycle):
+  - "HTML5 browser game testing 2026 new techniques"
+  - "browser security vulnerability 2026 XSS clickjacking"
+  - "Chrome 140 2026 WebGPU WebPlatform breaking change canvas"
+  - "iOS Safari WebKit 2026 privacy update third party cookie"
+  - "Core Web Vitals INP 2026 interaction delay mobile game"
+- Key URLs cited in new test cases:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_02569df582c01752 (April 15 2026 — Chrome Skills + OpenAI Atlas macOS launch + Edge Copilot Actions all same week)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_94569a6d0d301752 (March 3 2026 — IBM X-Force 2026 Threat Intelligence Index)
+  - https://blog.csdn.net/web_geek/article/details/160890610 (May 20 2026 — "独立开发者必读: 2026年Core Web Vitals实战优化指南" — mobile-vs-desktop CWV differential + Lighthouse CI recommendation)
+  - https://blog.csdn.net/Vivien_pan/article/details/156304467 (Dec 26 2025 — "Core Web Vitals: INP 优化技术指南" — Long-Task 50ms ceiling diagnostic)
+- Additional context from searches (already covered, not re-added): CVE-2026-28962 Safari 26.5 CSP bypass (existing S-150/S-187); Chrome 140 Fontations crash (existing B-130); Chrome 140 Incognito IP anonymization (existing PC-018); INP replaced FID March 2024 (existing P-054); WebGPU coverage matrix (existing W-201); HTML5test dead (existing C-133); Chrome 153 two-week cadence (existing W-200/B-093).
+
 ## [v1.92.0] - 2026-06-24
 ### Added
 - 7 new test cases from late-June 2026 industry research (R211 Dynamic Test Intelligence cron)
