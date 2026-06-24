@@ -3059,3 +3059,35 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
 ### Process Notes
 - Tools loaded: gamezipper-qa, post-deploy-verification skills
 - Search engine degradation this cycle: SearXNG (primary) returned 404 for all 5 batch queries; MiniMax (fallback) returned generic SEO/download content. Findings extracted from the usable data points; 7 test cases synthesized with full distinctness analysis vs existing library (90 prior versions, 2165→2197 lines).
+
+## [v1.93.0] - 2026-06-24
+### Added
+- 9 new test cases from R212 Dynamic Test Intelligence industry research (June 24 2026, Cycle 2)
+- [S-187] **[P1]** Safari 26.5 CVE-2026-28962 — CSP Bypass / Sensitive Information Leak
+- [S-188] **[P2]** Safari 26 Tracking-Parameter Filtering (gclid/fbclid) & Fingerprinting Prevention
+- [C-136] **[P2]** Chrome 154 "Always Use Secure Connections" — HTTP Warning (October 2026)
+- [S-189] **[P2]** Edge CVE-2026-0628 — WebView Tag Policy Enforcement Vulnerability
+- [B-131] **[P2]** WebGL Context-Loss / Context-Restore Event Handling (blank canvas on tab background)
+- [B-132] **[P2]** WebGL Memory Leak — WEBGL_lose_context Cleanup Pattern (GPU memory across sessions)
+- [C-137] **[P2]** WebAudio AudioContext Autoplay Policy — Suspended-State Resume on user gesture
+- [A-044] **[P2]** WCAG Mobile Accessibility — Contrast Ratio (4.5:1/3:1) & Color-Only Information
+- [B-133] **[P3]** iOS Safari Input Keyboard Overlap — scrollIntoView Pattern
+### Sources
+- Search: "HTML5 game testing 2026 new techniques browser"
+- Search: "new browser security vulnerability 2026 June Chrome Safari"
+- Search: "WebGL context loss recovery test game 2026 canvas"
+- Search: "mobile game accessibility WCAG 2026 screen reader ARIA"
+- Search: "iOS Safari 26 WebKit breaking change 2026 game input"
+- Search: "WebAudio API autoplay policy restriction 2026 user gesture AudioContext"
+- Search: "Chrome Edge Safari update June 2026 breaking changes"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0236a054d4370952 (Safari 26.5 CVE-2026-28962)
+  - https://cloud.tencent.com/developer/article/2637644 (Safari 26 release notes — tracking param + fingerprinting)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_163690194b743552 (Chrome 154 Always Use Secure Connections)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_3736964790e40752 (Edge CVE-2026-0628)
+  - https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/webglcontextlost_event (WebGL context loss)
+  - https://developer.mozilla.org/en-US/docs/Web/API/WEBGL_lose_context (WebGL cleanup + simulation)
+  - https://blog.csdn.net/jyl919221lc/article/details/137256813 (WebGL memory leak cleanup)
+  - https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay (WebAudio autoplay policy)
+  - https://developer.mozilla.org/en-US/docs/Web/Accessibility/Guides/Mobile_accessibility_checklist (WCAG mobile)
+  - https://www.dvy.com.cn/2016/07/23/5526.html (iOS Safari keyboard overlap scrollIntoView)
