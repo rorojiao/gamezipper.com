@@ -1,3 +1,33 @@
+## [v1.92.0] - 2026-06-24
+### Added
+- 7 new test cases from late-June 2026 industry research (R211 Dynamic Test Intelligence cron)
+- [S-186] **[P1]** DarkSword iOS full-chain exploit kit — code leaked on GitHub (ghh-jb/DarkSword) + commercialized + actively deployed by Russian-nexus APT TA446 (SEABORGIUM/ColdRiver) for spearphishing; pure-JavaScript zero-click 6-vulnerability Safari→kernel chain (iOS 18.4-18.7) evolved to scaled financial attack targeting Coinbase/Binance/MetaMask/Ledger — ad-iframe sandbox enforcement is the primary mitigation (cloud.google.com TI March 18 2026; TA446 weaponization March 31 2026)
+- [B-130] **[P2]** Chrome 140 Fontations font-rendering crash on Linux (Ubuntu/openSUSE/Fedora) — new Rust-based Fontations font-indexing system breaks text rendering with corrupted fonts (HEJI2Text.otf via texlive); blanks game titles/scores on affected Linux desktops (IT之家 Sept 9 2025, reverberating 2026)
+- [PC-018] **[P2]** Chrome 140 Incognito IP anonymization for third-party iframes — incognito mode hides real user IP from embedded ad/analytics iframes, breaking geo-targeting, fraud detection, analytics attribution for Monetag/AdSense gz-ad-below-game iframes (IT之家 Sept 5 2025)
+- [W-203] **[P3]** Check Point 2026 cybersecurity report — ~2000 cyberattacks per week per organization aggregate attack-FREQUENCY baseline (distinct from S-184 actor-attribution); requires assume-breach posture for GameZipper hosting/CDN/dev infra (March 26 2026)
+- [C-134] **[P3]** Visual Studio 2026 + .NET 10 release (Nov 12 2025, 2026 dev baseline) — 5000+ bug fixes, Fluent UI redesign; DEVELOPER-IDE-MAJOR-RELEASE-TOOLCHAIN-BASELINE-SHIFT requiring .NET compatibility + Blazor WASM feasibility re-eval
+- [C-135] **[P3]** Browser Harness open-source browser-automation agent framework (7.2k GitHub stars, Claude-Code-native, April 27 2026) — candidate QA tool for agentic game playtesting AND a bot/abuse risk surface for Cloudflare bot-management
+- [G-157] **[P3]** Phaser.js canonical lightweight HTML5 game framework re-emergence 2026 — given Unity WebGL deprecation concerns + Godot WASM memory ceilings, Phaser (AUTO WebGL+Canvas, tiny footprint) becomes the preferred framework for GameZipper's new-game pipeline for sub-2s FCP
+### Sources
+- Search queries executed (mcp_minimax_search_web_search; web-search-prime SearXNG returned 404 again this cycle):
+  - "HTML5 game testing 2026 new techniques browser bugs WebKit Chrome"
+  - "browser security vulnerability 2026 XSS clickjacking WebGL canvas fingerprinting"
+  - "iOS Safari 26 WebKit breaking changes 2026 June viewport meta tag"
+  - "Chrome 140 141 2026 web game deprecated feature breaking"
+  - "Chrome 140 Fontations font rendering crash Linux Ubuntu 2026 text"
+  - "DarkSword iOS exploit kit 2026 full chain vulnerabilities TA446"
+- Key URLs cited in new test cases:
+  - https://cloud.google.com/blog/topics/threat-intelligence/darksword-ios-exploit-chain (March 18 2026 — DarkSword iOS full-chain Google TI disclosure)
+  - https://github.com/ghh-jb/DarkSword (leaked DarkSword exploit source code, public ~March 24 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_93369cb27c597952 (March 31 2026 — TA446/SEABORGIUM DarkSword spearphishing weaponization)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_04968bf8eb630352 (Sept 9 2025 — Chrome 140 Fontations font-rendering crash on Linux)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_18868ba26ae25452 (Sept 5 2025 — Chrome 140 incognito IP anonymization + script blocking)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_94969c4f2d862352 (March 26 2026 — Check Point 2026 report ~2000 attacks/week)
+  - https://new.qq.com/rain/a/20251112A010RX00 (Nov 12 2025 — Visual Studio 2026 + .NET 10 release)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_92669ef2db811252 (April 27 2026 — Browser Harness open-source 7.2k stars Claude-Code-native)
+  - https://cloud.tencent.com/developer/article/1467947 (2026 — Phaser.js most-starred HTML5 game framework re-emergence)
+- Additional context from searches (already covered, not re-added): CVE-2026-28962 Safari 26.5 CSP bypass (S-150); CVE-2026-5873 V8 Turboshaft + Claude Opus AI exploit chain (S-183); CVE-2026-1861 libvpx VP8/VP9 (S-176); Chrome 154 HTTP warning (v1.14.0); Chrome 148 AI autofill government IDs (C-122); CrowdStrike nation-state AI IP theft (S-184); .xor ransomware (S-171); HTTP/3 QUIC CDN (G-126).
+
 ## [v1.90.0] - 2026-06-23
 ### Added
 - 7 new test cases from late-June 2026 industry research (R209 Dynamic Test Intelligence cron)
