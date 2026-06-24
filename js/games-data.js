@@ -449,6 +449,8 @@ const GAMES = [
 ,
 {name:"Stick Hero",emoji:"🦸",cat:"skill",tags:["stick hero","stick bridge","grow stick","ketchapp","arcade","bridge game","platform","perfect hit","skill","html5","free","browser"],url:"/stick-hero/",desc:"Play Stick Hero free online! Hold to grow a stick, release to bridge the gap between platforms, then walk your hero across. Land the tip in the red zone for a PERFECT hit. 30 hand-tuned levels across 6 tiers plus a daily puzzle.",isNew:true,status:"live"},
 {name:"Tower of Hanoi",emoji:"🗼",cat:"puzzle",tags:["tower of hanoi","classic","logic","recursion","puzzle","brain teaser","strategy","disks","rods","minimal moves","mathematical","algorithm","html5","free","browser"],url:"/tower-of-hanoi/",desc:"Play Tower of Hanoi free online! Classic recursive puzzle with 27 hand-crafted levels from 3 to 6 disks across 6 tiers. Move all disks from source to target rod with minimal moves. Touch-friendly, 3-star ratings, optimal move tracking. No download needed.",isNew:true,status:"live"},
+{name:"Boggle",emoji:"🎲",cat:"puzzle",tags:["Puzzle","Word","Boggle","Letters","Dice","Brain","Spelling","Dictionary","Classic","Search","Free","HTML5"],url:"/boggle/",desc:"Play Boggle online free! Shake the dice, trace connected letters to spell words in this classic word search puzzle. 30 levels across Classic, Speed, Big Boggle, and Master tiers plus a daily challenge. No download needed!",isNew:true,status:"live"},
+
 ];
 
 /**
