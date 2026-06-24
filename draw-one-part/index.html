@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DOP: Draw One Part - Fun Brain Drawing Puzzle Game</title>
+<meta name="description" content="Play DOP: Draw One Part free online! Use your finger to draw the missing part and solve creative brain puzzles. 30 hand-crafted drawing challenges. Fun, addictive, no download needed!">
+<link rel="canonical" href="https://gamezipper.com/draw-one-part/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="DOP: Draw One Part - Fun Drawing Puzzle">
+<meta property="og:description" content="Draw the missing part to solve 30 creative brain puzzles! Play free online, no download.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/draw-one-part/">
+<meta property="og:image" content="https://gamezipper.com/og-images/draw-one-part.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="DOP: Draw One Part - Fun Drawing Puzzle">
+<meta name="twitter:description" content="Draw the missing part to solve 30 creative brain puzzles!">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "DOP: Draw One Part",
+  "description": "Creative brain puzzle game. Draw the missing part to solve each picture puzzle. 30 levels of increasing difficulty.",
+  "url": "https://gamezipper.com/draw-one-part/",
+  "genre": "Puzzle",
+  "gamePlatform": "Web Browser",
+  "applicationCategory": "Game",
+  "operatingSystem": "Any",
+  "offers": {"@type":"Offer","price":"0","priceCurrency":"USD"}
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [{
+    "@type": "Question",
+    "name": "How do you play DOP: Draw One Part?",
+    "acceptedAnswer": {"@type":"Answer","text":"Look at the picture and the prompt. Use your finger or mouse to draw the missing part in the correct area. The game detects your drawing and completes the picture when you draw in the right spot."}
+  },{
+    "@type": "Question",
+    "name": "How many levels does DOP: Draw One Part have?",
+    "acceptedAnswer": {"@type":"Answer","text":"There are 30 hand-crafted levels ranging from easy to master difficulty, each with a unique creative drawing challenge."}
+  }]
+}
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;touch-action:none;-webkit-user-select:none;user-select:none}
+:root{--primary:#6C5CE7;--primary-d:#5A4BD1;--accent:#FD79A8;--gold:#FDCB6E;--green:#00B894;--bg1:#a29bfe;--bg2:#6c5ce7;--shadow:0 4px 15px rgba(0,0,0,.2)}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));min-height:100vh;display:flex;flex-direction:column;align-items:center;color:#2d3436;overflow-x:hidden}
+h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+#game-container{width:100%;max-width:480px;min-height:100vh;display:flex;flex-direction:column;position:relative;background:linear-gradient(180deg,#dfe6e9,#b2bec3)}
+/* Top bar */
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;box-shadow:var(--shadow);z-index:10}
+.top-bar .logo{font-size:18px;font-weight:800;display:flex;align-items:center;gap:6px}
+.top-bar .logo span{font-size:24px}
+.top-bar .controls{display:flex;gap:8px}
+.icon-btn{width:40px;height:40px;border:none;border-radius:10px;background:rgba(255,255,255,.2);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.icon-btn:hover{background:rgba(255,255,255,.35)}
+.icon-btn:active{transform:scale(.92)}
+/* Level info bar */
+.level-bar{padding:10px 16px;background:rgba(255,255,255,.9);display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;border-bottom:2px solid rgba(0,0,0,.06)}
+.level-bar .prompt{flex:1;font-size:13px;line-height:1.3;color:#2d3436}
+.level-bar .level-num{background:var(--gold);padding:4px 10px;border-radius:20px;font-size:12px;white-space:nowrap;margin-left:8px}
+/* Game canvas area */
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;position:relative}
+.canvas-wrapper{position:relative;width:100%;max-width:400px;aspect-ratio:1;background:#fff;border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+#scene-svg{position:absolute;inset:0;width:100%;height:100%}
+#draw-canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;z-index:5}
+#complete-svg{position:absolute;inset:0;width:100%;height:100%;z-index:3;opacity:0;transition:opacity .5s}
+.canvas-wrapper.solved #complete-svg{opacity:1}
+.canvas-wrapper.solved #draw-canvas{pointer-events:none}
+.canvas-wrapper.solved{box-shadow:0 0 30px rgba(0,184,148,.4)}
+/* Hint glow */
+#hint-glow{position:absolute;border:3px dashed var(--accent);border-radius:50%;pointer-events:none;z-index:6;opacity:0;transition:opacity .3s;animation:pulse 1s ease-in-out infinite}
+#hint-glow.show{opacity:.7}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.05);opacity:.4}}
+/* Action buttons */
+.action-bar{display:flex;gap:10px;margin-top:16px;width:100%;max-width:400px}
+.action-btn{flex:1;padding:12px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s}
+.action-btn:active{transform:scale(.96)}
+.btn-hint{background:var(--gold);color:#6d4c0f}
+.btn-clear{background:#dfe6e9;color:#2d3436}
+.btn-next{background:var(--green);color:#fff;display:none}
+/* Win overlay */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.65);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.active{opacity:1;pointer-events:auto}
+.overlay .win-card{background:#fff;border-radius:24px;padding:28px 32px;text-align:center;max-width:340px;box-shadow:0 8px 40px rgba(0,0,0,.3);transform:scale(.8);transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+.overlay.active .win-card{transform:scale(1)}
+.win-card .stars{font-size:32px;margin-bottom:8px;letter-spacing:4px}
+.win-card h2{font-size:22px;margin-bottom:6px;color:#2d3436}
+.win-card p{font-size:14px;color:#636e72;margin-bottom:18px}
+.win-card .btn-primary{background:var(--green);color:#fff;border:none;padding:12px 28px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;width:100%;transition:.2s}
+.win-card .btn-primary:active{transform:scale(.95)}
+/* Level select */
+.level-select{position:absolute;inset:0;background:linear-gradient(180deg,#dfe6e9,#b2bec3);z-index:90;display:none;flex-direction:column;overflow-y:auto}
+.level-select.active{display:flex}
+.level-select-header{display:flex;justify-content:space-between;align-items:center;padding:16px;background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;position:sticky;top:0;z-index:5}
+.level-select-header h2{font-size:18px}
+.level-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px}
+.level-card{aspect-ratio:1;background:#fff;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-weight:800;font-size:18px;color:var(--primary);transition:.2s;position:relative;border:3px solid transparent}
+.level-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.level-card:active{transform:scale(.95)}
+.level-card.completed{background:linear-gradient(135deg,#55efc4,#00b894);color:#fff}
+.level-card .star-display{font-size:10px;margin-top:2px}
+.level-card.locked{opacity:.4;cursor:not-allowed}
+.level-card .lock-icon{font-size:14px}
+/* Settings modal */
+.modal{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal.active{opacity:1;pointer-events:auto}
+.modal .modal-card{background:#fff;border-radius:20px;padding:24px;width:90%;max-width:320px;text-align:center}
+.modal h3{font-size:18px;margin-bottom:16px;color:#2d3436}
+.modal .toggle-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eee}
+.modal .toggle-row:last-child{border-bottom:none}
+.modal .toggle-btn{width:50px;height:28px;border-radius:14px;border:none;background:#ccc;position:relative;cursor:pointer;transition:.3s}
+.modal .toggle-btn.active{background:var(--green)}
+.modal .toggle-btn::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.3s}
+.modal .toggle-btn.active::after{transform:translateX(22px)}
+/* Tutorial */
+.tutorial-overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:150;opacity:0;pointer-events:none;transition:opacity .3s}
+.tutorial-overlay.active{opacity:1;pointer-events:auto}
+.tutorial-card{background:#fff;border-radius:20px;padding:24px;max-width:340px;text-align:center}
+.tutorial-card .tut-emoji{font-size:48px;margin-bottom:12px}
+.tutorial-card h3{font-size:18px;margin-bottom:8px}
+.tutorial-card p{font-size:14px;color:#636e72;margin-bottom:16px;line-height:1.5}
+.tutorial-card .btn-primary{background:var(--primary);color:#fff;border:none;padding:10px 24px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer}
+/* Particle effect on solve */
+.particle{position:absolute;width:8px;height:8px;border-radius:50%;pointer-events:none;z-index:50}
+/* Progress dots */
+.progress-dots{display:flex;gap:4px;padding:6px 16px;justify-content:center}
+.progress-dots .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3)}
+.progress-dots .dot.done{background:var(--gold)}
+.progress-dots .dot.current{background:#fff;width:20px;border-radius:4px}
+@media(max-width:380px){.level-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<h1 class="gz-sr-only">DOP: Draw One Part - Fun Brain Drawing Puzzle Game</h1>
+<div id="game-container">
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div class="logo"><span>🎨</span> Draw One Part</div>
+    <div class="controls">
+      <button class="icon-btn" id="levels-btn" title="Levels">☰</button>
+      <button class="icon-btn" id="settings-btn" title="Settings">⚙</button>
+    </div>
+  </div>
+  <!-- Progress dots -->
+  <div class="progress-dots" id="progress-dots"></div>
+  <!-- Level info -->
+  <div class="level-bar">
+    <div class="prompt" id="prompt-text">Loading...</div>
+    <div class="level-num" id="level-num">1/30</div>
+  </div>
+  <!-- Game area -->
+  <div class="game-area">
+    <div class="canvas-wrapper" id="canvas-wrapper">
+      <svg id="scene-svg" viewBox="0 0 400 400"></svg>
+      <svg id="complete-svg" viewBox="0 0 400 400"></svg>
+      <canvas id="draw-canvas" width="400" height="400"></canvas>
+      <div id="hint-glow"></div>
+    </div>
+    <div class="action-bar">
+      <button class="action-btn btn-hint" id="hint-btn">💡 Hint</button>
+      <button class="action-btn btn-clear" id="clear-btn">🔄 Clear</button>
+      <button class="action-btn btn-next" id="next-btn">➡ Next</button>
+    </div>
+  </div>
+  <!-- Win overlay -->
+  <div class="overlay" id="win-overlay">
+    <div class="win-card">
+      <div class="stars" id="win-stars">⭐⭐⭐</div>
+      <h2 id="win-title">Solved!</h2>
+      <p id="win-msg">Great drawing! Ready for the next challenge?</p>
+      <button class="btn-primary" id="next-level-btn">Next Level ➡</button>
+    </div>
+  </div>
+  <!-- Level select -->
+  <div class="level-select" id="level-select">
+    <div class="level-select-header">
+      <h2>📐 Select Level</h2>
+      <button class="icon-btn" id="close-levels">✕</button>
+    </div>
+    <div class="level-grid" id="level-grid"></div>
+  </div>
+  <!-- Settings modal -->
+  <div class="modal" id="settings-modal">
+    <div class="modal-card">
+      <h3>⚙ Settings</h3>
+      <div class="toggle-row"><span>🔊 Sound</span><button class="toggle-btn active" id="sound-toggle"></button></div>
+      <div class="toggle-row"><span>🎵 Music</span><button class="toggle-btn active" id="music-toggle"></button></div>
+      <div class="toggle-row"><span>📳 Vibration</span><button class="toggle-btn active" id="vibration-toggle"></button></div>
+      <button class="btn-primary" id="close-settings" style="background:var(--primary);color:#fff;border:none;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:14px">Done</button>
+    </div>
+  </div>
+  <!-- Tutorial -->
+  <div class="tutorial-overlay" id="tutorial-overlay">
+    <div class="tutorial-card">
+      <div class="tut-emoji">✏️</div>
+      <h3>How to Play</h3>
+      <p>Look at each picture — something is missing! <strong>Draw the missing part</strong> with your finger or mouse. Draw in the highlighted area to solve the puzzle!</p>
+      <button class="btn-primary" id="start-game-btn">Let's Draw! 🎨</button>
+    </div>
+  </div>
+</div>
+<script>
+// ==================== LEVEL DATA ====================
+// Each level: {prompt, scene (SVG defs), complete (added SVG), target (x,y,r), hint}
+const LEVELS = [
+  // 1-6: Easy
+  {prompt:"The cat lost its tail! Draw one.", icon:"🐱",
+   scene:`<circle cx="200" cy="240" r="70" fill="#fdcb6e"/><polygon points="150,180 165,140 185,170" fill="#fdcb6e"/><polygon points="250,180 235,140 215,170" fill="#fdcb6e"/><circle cx="180" cy="230" r="6" fill="#2d3436"/><circle cx="220" cy="230" r="6" fill="#2d3436"/><path d="M195,250 Q200,256 205,250" stroke="#2d3436" stroke-width="2" fill="none"/><circle cx="172" cy="248" r="5" fill="#e17055" opacity=".5"/><circle cx="228" cy="248" r="5" fill="#e17055" opacity=".5"/>`,
+   complete:`<path d="M275,200 Q320,170 310,130" stroke="#fdcb6e" stroke-width="14" fill="none" stroke-linecap="round"/>`,
+   target:{x:295,y:155,r:35}, tier:1},
+  {prompt:"This cup needs a handle. Draw one!", icon:"☕",
+   scene:`<rect x="150" y="170" width="100" height="130" rx="10" fill="#dfe6e9" stroke="#2d3436" stroke-width="3"/><path d="M160,185 Q200,185 240,185 L235,290 Q200,295 165,290 Z" fill="#636e72"/><rect x="155" y="168" width="90" height="12" rx="6" fill="#b2bec3"/>`,
+   complete:`<path d="M250,200 Q295,200 295,240 Q295,275 255,275" stroke="#2d3436" stroke-width="4" fill="none"/>`,
+   target:{x:280,y:235,r:30}, tier:1},
+  {prompt:"The sun is shy. Draw its rays!", icon:"☀",
+   scene:`<circle cx="200" cy="200" r="55" fill="#fdcb6e"/>`,
+   complete:`<g stroke="#fdcb6e" stroke-width="6" stroke-linecap="round"><line x1="200" y1="110" x2="200" y2="80"/><line x1="200" y1="290" x2="200" y2="320"/><line x1="110" y1="200" x2="80" y2="200"/><line x1="290" y1="200" x2="320" y2="200"/><line x1="135" y1="135" x2="110" y2="110"/><line x1="265" y1="135" x2="290" y2="110"/><line x1="135" y1="265" x2="110" y2="290"/><line x1="265" y1="265" x2="290" y2="290"/></g>`,
+   target:{x:200,y:200,r:130}, tier:1},
+  {prompt:"The stickman has no arms. Give him two!", icon:"🤸",
+   scene:`<circle cx="200" cy="150" r="30" fill="#ffeaa7" stroke="#2d3436" stroke-width="2"/><line x1="200" y1="180" x2="200" y2="280" stroke="#2d3436" stroke-width="4"/><line x1="200" y1="280" x2="170" y2="340" stroke="#2d3436" stroke-width="4"/><line x1="200" y1="280" x2="230" y2="340" stroke="#2d3436" stroke-width="4"/>`,
+   complete:`<line x1="200" y1="210" x2="150" y2="250" stroke="#2d3436" stroke-width="4" stroke-linecap="round"/><line x1="200" y1="210" x2="250" y2="250" stroke="#2d3436" stroke-width="4" stroke-linecap="round"/>`,
+   target:{x:200,y:235,r:65}, tier:1},
+  {prompt:"The snowman needs a carrot nose!", icon:"⛄",
+   scene:`<circle cx="200" cy="280" r="60" fill="#fff" stroke="#b2bec3" stroke-width="2"/><circle cx="200" cy="200" r="45" fill="#fff" stroke="#b2bec3" stroke-width="2"/><circle cx="188" cy="192" r="5" fill="#2d3436"/><circle cx="212" cy="192" r="5" fill="#2d3436"/><rect x="170" y="155" width="60" height="20" rx="4" fill="#2d3436"/><rect x="175" y="140" width="50" height="20" rx="4" fill="#2d3436"/>`,
+   complete:`<polygon points="200,200 230,205 200,212" fill="#e17055"/>`,
+   target:{x:218,y:205,r:22}, tier:1},
+  {prompt:"Draw a stem on the apple!", icon:"🍎",
+   scene:`<path d="M200,160 Q150,160 140,210 Q130,280 200,310 Q270,280 260,210 Q250,160 200,160 Z" fill="#e74c3c"/><path d="M200,160 Q215,140 230,145" fill="#27ae60"/>`,
+   complete:`<line x1="200" y1="160" x2="200" y2="120" stroke="#6d4c41" stroke-width="5" stroke-linecap="round"/>`,
+   target:{x:200,y:135,r:25}, tier:1},
+  // 7-14: Medium
+  {prompt:"The fish needs a tail fin!", icon:"🐟",
+   scene:`<ellipse cx="170" cy="200" rx="70" ry="40" fill="#74b9ff"/><circle cx="130" cy="190" r="6" fill="#2d3436"/><path d="M180,175 Q200,165 210,180" fill="#0984e3" opacity=".4"/>`,
+   complete:`<polygon points="240,200 280,170 280,230" fill="#74b9ff"/>`,
+   target:{x:265,y:200,r:30}, tier:2},
+  {prompt:"Draw a door on this house!", icon:"🏠",
+   scene:`<rect x="120" y="180" width="160" height="140" fill="#e17055"/><polygon points="200,100 100,180 300,180" fill="#d63031"/><rect x="160" y="220" width="40" height="30" fill="#74b9ff"/><rect x="210" y="220" width="40" height="30" fill="#74b9ff"/>`,
+   complete:`<rect x="180" y="250" width="40" height="70" rx="4" fill="#6d4c41"/><circle cx="212" cy="285" r="3" fill="#fdcb6e"/>`,
+   target:{x:200,y:290,r:40}, tier:2},
+  {prompt:"The clock has no hands. Draw them!", icon:"🕐",
+   scene:`<circle cx="200" cy="200" r="80" fill="#fff" stroke="#2d3436" stroke-width="5"/><circle cx="200" cy="140" r="3" fill="#2d3436"/><circle cx="260" cy="200" r="3" fill="#2d3436"/><circle cx="200" cy="260" r="3" fill="#2d3436"/><circle cx="140" cy="200" r="3" fill="#2d3436"/><text x="195" y="148" font-size="14" font-weight="bold">12</text><text x="252" y="206" font-size="14" font-weight="bold">3</text>`,
+   complete:`<line x1="200" y1="200" x2="200" y2="150" stroke="#2d3436" stroke-width="4" stroke-linecap="round"/><line x1="200" y1="200" x2="240" y2="200" stroke="#e74c3c" stroke-width="3" stroke-linecap="round"/><circle cx="200" cy="200" r="4" fill="#2d3436"/>`,
+   target:{x:210,y:175,r:55}, tier:2},
+  {prompt:"Draw a smile on this face!", icon:"😀",
+   scene:`<circle cx="200" cy="200" r="80" fill="#ffeaa7"/><circle cx="175" cy="185" r="8" fill="#2d3436"/><circle cx="225" cy="185" r="8" fill="#2d3436"/>`,
+   complete:`<path d="M165,215 Q200,250 235,215" stroke="#2d3436" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+   target:{x:200,y:235,r:35}, tier:2},
+  {prompt:"Give the tree some leaves!", icon:"🌳",
+   scene:`<rect x="190" y="220" width="20" height="80" rx="4" fill="#6d4c41"/>`,
+   complete:`<circle cx="200" cy="180" r="70" fill="#55efc4"/><circle cx="165" cy="160" r="35" fill="#00b894"/><circle cx="235" cy="160" r="35" fill="#00b894"/>`,
+   target:{x:200,y:160,r:60}, tier:2},
+  {prompt:"The umbrella has no handle. Draw one!", icon:"☂",
+   scene:`<path d="M100,200 Q200,100 300,200 Z" fill="#0984e3"/><path d="M140,200 Q140,215 160,215" stroke="#0984e3" stroke-width="4" fill="none"/><path d="M260,200 Q260,215 240,215" stroke="#0984e3" stroke-width="4" fill="none"/>`,
+   complete:`<line x1="200" y1="200" x2="200" y2="300" stroke="#2d3436" stroke-width="4" stroke-linecap="round"/><path d="M200,300 Q195,315 205,315" stroke="#2d3436" stroke-width="4" fill="none"/>`,
+   target:{x:200,y:260,r:40}, tier:2},
+  {prompt:"The heart is incomplete. Finish it!", icon:"❤",
+   scene:`<path d="M200,280 L120,200 Q80,160 120,140 Q160,120 200,180" fill="none" stroke="#e74c3c" stroke-width="4"/>`,
+   complete:`<path d="M200,180 Q240,120 280,140 Q320,160 280,200 L200,280 Z" fill="#e74c3c" stroke="#e74c3c" stroke-width="4"/>`,
+   target:{x:250,y:180,r:50}, tier:2},
+  {prompt:"Draw the missing wheel on the car!", icon:"🚗",
+   scene:`<path d="M100,240 L100,200 L130,160 L270,160 L300,200 L300,240 Z" fill="#fd79a8"/><rect x="150" y="170" width="40" height="25" rx="3" fill="#74b9ff"/><rect x="210" y="170" width="40" height="25" rx="3" fill="#74b9ff"/><circle cx="145" cy="240" r="20" fill="#2d3436"/><circle cx="145" cy="240" r="8" fill="#636e72"/>`,
+   complete:`<circle cx="255" cy="240" r="20" fill="#2d3436"/><circle cx="255" cy="240" r="8" fill="#636e72"/>`,
+   target:{x:255,y:240,r:22}, tier:2},
+  // 15-22: Hard
+  {prompt:"The rocket needs a window. Draw one!", icon:"🚀",
+   scene:`<path d="M200,80 Q170,80 165,120 L165,280 L235,280 L235,120 Q230,80 200,80 Z" fill="#dfe6e9"/><polygon points="165,230 130,280 165,280" fill="#e74c3c"/><polygon points="235,230 270,280 235,280" fill="#e74c3c"/><path d="M185,290 L185,320 L195,310 L200,330 L205,310 L215,320 L215,290" fill="#fdcb6e"/>`,
+   complete:`<circle cx="200" cy="160" r="22" fill="#74b9ff" stroke="#2d3436" stroke-width="3"/><circle cx="193" cy="153" r="6" fill="#dfe6e9" opacity=".6"/>`,
+   target:{x:200,y:160,r:25}, tier:3},
+  {prompt:"Draw balloon strings!", icon:"🎈",
+   scene:`<ellipse cx="140" cy="130" rx="35" ry="45" fill="#e74c3c"/><polygon points="140,175 135,185 145,185" fill="#e74c3c"/><ellipse cx="260" cy="140" rx="35" ry="45" fill="#0984e3"/><polygon points="260,185 255,195 265,195" fill="#0984e3"/>`,
+   complete:`<path d="M140,185 Q130,250 145,320" stroke="#2d3436" stroke-width="2" fill="none"/><path d="M260,195 Q270,250 255,320" stroke="#2d3436" stroke-width="2" fill="none"/>`,
+   target:{x:200,y:270,r:90}, tier:3},
+  {prompt:"Add candles to the birthday cake!", icon:"🎂",
+   scene:`<rect x="120" y="220" width="160" height="80" rx="6" fill="#fdcb6e"/><rect x="120" y="210" width="160" height="15" fill="#e84393"/><path d="M120,235 Q140,220 160,235 Q180,220 200,235 Q220,220 240,235 Q260,220 280,235" fill="#d63031"/>`,
+   complete:`<rect x="180" y="180" width="8" height="32" fill="#fdcb6e"/><rect x="200" y="180" width="8" height="32" fill="#74b9ff"/><rect x="220" y="180" width="8" height="32" fill="#55efc4"/><path d="M184,170 Q184,180 184,180" stroke="#fdcb6e" stroke-width="3"/><circle cx="184" cy="168" r="4" fill="#fdcb6e"/><circle cx="204" cy="168" r="4" fill="#fdcb6e"/><circle cx="224" cy="168" r="4" fill="#fdcb6e"/>`,
+   target:{x:200,y:180,r:35}, tier:3},
+  {prompt:"Draw wings on this bird!", icon:"🐦",
+   scene:`<ellipse cx="200" cy="210" rx="40" ry="30" fill="#fdcb6e"/><circle cx="165" cy="200" r="22" fill="#fdcb6e"/><circle cx="158" cy="195" r="4" fill="#2d3436"/><polygon points="140,200 130,205 140,210" fill="#e17055"/><line x1="210" y1="240" x2="200" y2="270" stroke="#e17055" stroke-width="3"/><line x1="225" y1="240" x2="215" y2="270" stroke="#e17055" stroke-width="3"/>`,
+   complete:`<path d="M200,190 Q250,150 240,210" fill="#e84393" opacity=".7"/><path d="M200,195 Q245,165 235,215" fill="#fd79a8" opacity=".5"/>`,
+   target:{x:245,y:185,r:35}, tier:3},
+  {prompt:"Draw a keyhole on the lock!", icon:"🔒",
+   scene:`<path d="M160,160 Q160,120 200,120 Q240,120 240,160 L240,180 L160,180 Z" fill="none" stroke="#2d3436" stroke-width="5"/><rect x="140" y="180" width="120" height="120" rx="14" fill="#fdcb6e" stroke="#2d3436" stroke-width="4"/>`,
+   complete:`<circle cx="200" cy="225" r="12" fill="#2d3436"/><rect x="195" y="230" width="10" height="30" fill="#2d3436"/>`,
+   target:{x:200,y:235,r:25}, tier:3},
+  {prompt:"The pencil needs a sharp tip. Draw it!", icon:"✏",
+   scene:`<rect x="140" y="190" width="180" height="30" fill="#fdcb6e"/><rect x="280" y="190" width="30" height="30" fill="#e17055"/><rect x="130" y="190" width="14" height="30" fill="#636e72"/>`,
+   complete:`<polygon points="130,190 100,205 130,220" fill="#ffeaa7"/><polygon points="110,200 100,205 110,210" fill="#2d3436"/>`,
+   target:{x:110,y:205,r:22}, tier:3},
+  {prompt:"The spider needs a web. Draw one!", icon:"🕷",
+   scene:`<circle cx="200" cy="230" r="25" fill="#2d3436"/><circle cx="186" cy="220" r="8" fill="#2d3436"/><circle cx="214" cy="220" r="8" fill="#2d3436"/><line x1="180" y1="240" x2="140" y2="250" stroke="#2d3436" stroke-width="2"/><line x1="220" y1="240" x2="260" y2="250" stroke="#2d3436" stroke-width="2"/><line x1="185" y1="252" x2="155" y2="280" stroke="#2d3436" stroke-width="2"/><line x1="215" y1="252" x2="245" y2="280" stroke="#2d3436" stroke-width="2"/>`,
+   complete:`<g stroke="#dfe6e9" stroke-width="2" fill="none" opacity=".8"><line x1="200" y1="100" x2="200" y2="150"/><line x1="120" y1="140" x2="160" y2="165"/><line x1="280" y1="140" x2="240" y2="165"/><line x1="100" y1="200" x2="160" y2="180"/><line x1="300" y1="200" x2="240" y2="180"/><path d="M170,150 Q200,170 230,150"/><path d="M160,165 Q200,185 240,165"/><path d="M155,180 Q200,200 245,180"/></g>`,
+   target:{x:200,y:140,r:60}, tier:3},
+  {prompt:"Draw a bridge connecting the cliffs!", icon:"🌉",
+   scene:`<rect x="0" y="240" width="120" height="160" fill="#6d4c41"/><rect x="280" y="240" width="120" height="160" fill="#6d4c41"/><circle cx="60" cy="120" r="30" fill="#74b9ff" opacity=".6"/><circle cx="340" cy="100" r="40" fill="#74b9ff" opacity=".6"/>`,
+   complete:`<rect x="110" y="235" width="180" height="12" fill="#dfe6e9"/><line x1="110" y1="247" x2="110" y2="280" stroke="#a0a0a0" stroke-width="3"/><line x1="290" y1="247" x2="290" y2="280" stroke="#a0a0a0" stroke-width="3"/><line x1="150" y1="247" x2="150" y2="270" stroke="#a0a0a0" stroke-width="2"/><line x1="200" y1="247" x2="200" y2="275" stroke="#a0a0a0" stroke-width="2"/><line x1="250" y1="247" x2="250" y2="270" stroke="#a0a0a0" stroke-width="2"/>`,
+   target:{x:200,y:240,r:90}, tier:3},
+  // 23-30: Master
+  {prompt:"The starfish lost an arm. Draw it!", icon:"⭐",
+   scene:`<polygon points="200,120 215,180 275,180 225,215 245,275 200,240 155,275 175,215 125,180 185,180" fill="#e84393"/><circle cx="200" cy="200" r="6" fill="#d63031"/>`,
+   complete:`<polygon points="200,120 215,180 275,180 225,215 245,275 200,240" fill="#e84393"/>`,
+   target:{x:245,y:190,r:35}, tier:4},
+  {prompt:"Draw a lighthouse beam of light!", icon:"🗼",
+   scene:`<rect x="180" y="180" width="40" height="160" fill="#fff" stroke="#2d3436" stroke-width="2"/><rect x="175" y="170" width="50" height="20" fill="#e74c3c"/><rect x="185" y="140" width="30" height="35" fill="#fdcb6e"/><polygon points="175,140 225,140 220,120 180,120" fill="#e74c3c"/><rect x="170" y="340" width="60" height="15" fill="#636e72"/>`,
+   complete:`<polygon points="200,150 60,80 60,50" fill="#fdcb6e" opacity=".4"/><polygon points="200,150 340,80 340,50" fill="#fdcb6e" opacity=".4"/><line x1="200" y1="150" x2="80" y2="70" stroke="#fdcb6e" stroke-width="2" opacity=".5"/><line x1="200" y1="150" x2="320" y2="70" stroke="#fdcb6e" stroke-width="2" opacity=".5"/>`,
+   target:{x:150,y:100,r:80}, tier:4},
+  {prompt:"Draw a spider web between the corners!", icon:"🕸",
+   scene:`<rect x="20" y="20" width="360" height="360" rx="12" fill="none" stroke="#2d3436" stroke-width="2" opacity=".2"/>`,
+   complete:`<g stroke="#b2bec3" stroke-width="1.5" fill="none"><line x1="20" y1="20" x2="380" y2="380"/><line x1="380" y1="20" x2="20" y2="380"/><line x1="200" y1="20" x2="200" y2="380"/><line x1="20" y1="200" x2="380" y2="200"/><path d="M120,120 Q200,160 280,120"/><path d="M120,200 Q200,240 280,200"/><path d="M120,280 Q200,320 280,280"/><path d="M120,120 Q160,200 120,280"/><path d="M200,120 Q240,200 200,280"/><path d="M280,120 Q240,200 280,280"/></g>`,
+   target:{x:200,y:200,r:100}, tier:4},
+  {prompt:"Draw a rainbow above the clouds!", icon:"🌈",
+   scene:`<ellipse cx="120" cy="300" rx="60" ry="30" fill="#dfe6e9"/><ellipse cx="280" cy="300" rx="60" ry="30" fill="#dfe6e9"/>`,
+   complete:`<path d="M80,290 A120,120 0 0,1 320,290" stroke="#e74c3c" stroke-width="10" fill="none"/><path d="M90,290 A110,110 0 0,1 310,290" stroke="#e84393" stroke-width="10" fill="none"/><path d="M100,290 A100,100 0 0,1 300,290" stroke="#fdcb6e" stroke-width="10" fill="none"/><path d="M110,290 A90,90 0 0,1 290,290" stroke="#55efc4" stroke-width="10" fill="none"/><path d="M120,290 A80,80 0 0,1 280,290" stroke="#74b9ff" stroke-width="10" fill="none"/>`,
+   target:{x:200,y:200,r:100}, tier:4},
+  {prompt:"Draw a crown on the king's head!", icon:"👑",
+   scene:`<circle cx="200" cy="250" r="60" fill="#ffeaa7"/><circle cx="185" cy="245" r="5" fill="#2d3436"/><circle cx="215" cy="245" r="5" fill="#2d3436"/><path d="M185,275 Q200,285 215,275" stroke="#2d3436" stroke-width="3" fill="none"/><path d="M180,265 Q200,270 220,265" stroke="#2d3436" stroke-width="3" fill="none"/>`,
+   complete:`<polygon points="160,200 170,160 190,190 200,150 210,190 230,160 240,200" fill="#fdcb6e" stroke="#e84393" stroke-width="2"/><circle cx="200" cy="160" r="5" fill="#e74c3c"/><circle cx="170" cy="165" r="4" fill="#0984e3"/><circle cx="230" cy="165" r="4" fill="#00b894"/>`,
+   target:{x:200,y:175,r:45}, tier:4},
+  {prompt:"The monster is missing an eye!", icon:"👹",
+   scene:`<path d="M200,120 Q280,120 280,210 Q280,300 200,300 Q120,300 120,210 Q120,120 200,120 Z" fill="#55efc4"/><circle cx="170" cy="200" r="18" fill="#fff"/><circle cx="170" cy="200" r="8" fill="#2d3436"/><polygon points="160,300 155,330 175,310 180,330 185,315 195,330" fill="#2d3436"/><polygon points="240,300 235,330 255,310 260,330 265,315 275,330" fill="#2d3436"/>`,
+   complete:`<circle cx="230" cy="200" r="18" fill="#fff"/><circle cx="230" cy="200" r="8" fill="#2d3436"/>`,
+   target:{x:230,y:200,r:22}, tier:4},
+  {prompt:"Draw a mustache on the face!", icon:"👨",
+   scene:`<circle cx="200" cy="200" r="75" fill="#ffeaa7"/><circle cx="178" cy="190" r="7" fill="#2d3436"/><circle cx="222" cy="190" r="7" fill="#2d3436"/>`,
+   complete:`<path d="M165,225 Q175,215 185,225 Q195,230 200,225 Q205,230 215,225 Q225,215 235,225" stroke="#6d4c41" stroke-width="6" fill="none" stroke-linecap="round"/>`,
+   target:{x:200,y:225,r:40}, tier:4},
+  {prompt:"Draw the last petal of the flower!", icon:"🌸",
+   scene:`<ellipse cx="200" cy="280" rx="4" ry="40" fill="#27ae60"/><circle cx="160" cy="170" r="30" fill="#fd79a8"/><circle cx="240" cy="170" r="30" fill="#fd79a8"/><circle cx="200" cy="130" r="30" fill="#fd79a8"/><circle cx="200" cy="180" r="22" fill="#fdcb6e"/>`,
+   complete:`<circle cx="200" cy="220" r="30" fill="#fd79a8"/>`,
+   target:{x:200,y:220,r:32}, tier:4},
+];
+
+// ==================== STATE ====================
+const state = {
+  currentLevel: 0,
+  completed: JSON.parse(localStorage.getItem('dop_completed') || '[]'),
+  stars: JSON.parse(localStorage.getItem('dop_stars') || '{}'),
+  drawing: false,
+  strokes: [],
+  coverage: 0,
+  hintsUsed: 0,
+  soundOn: true,
+  musicOn: true,
+  vibrationOn: true,
+  audioCtx: null,
+  musicGain: null,
+  musicNodes: [],
+  musicPlaying: false,
+};
+
+// ==================== AUDIO ====================
+function initAudio(){
+  if(state.audioCtx) return;
+  try{
+    state.audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    state.musicGain = state.audioCtx.createGain();
+    state.musicGain.gain.value = 0.06;
+    state.musicGain.connect(state.audioCtx.destination);
+  }catch(e){}
+}
+function playSound(freq, dur, type='sine', vol=0.15){
+  if(!state.soundOn || !state.audioCtx) return;
+  const osc = state.audioCtx.createOscillator();
+  const gain = state.audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol, state.audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, state.audioCtx.currentTime + dur);
+  osc.connect(gain).connect(state.audioCtx.destination);
+  osc.start();
+  osc.stop(state.audioCtx.currentTime + dur);
+}
+function playDrawSound(){ playSound(600+Math.random()*200, 0.05, 'sine', 0.03); }
+function playWinSound(){
+  const notes = [523, 659, 784, 1047];
+  notes.forEach((f,i)=>setTimeout(()=>playSound(f,0.3,'triangle',0.12), i*100));
+}
+function playWrongSound(){ playSound(200, 0.2, 'sawtooth', 0.08); }
+function playHintSound(){ playSound(880, 0.15, 'sine', 0.1); setTimeout(()=>playSound(1100,0.15,'sine',0.1),100); }
+function playClickSound(){ playSound(400, 0.05, 'square', 0.05); }
+
+// Procedural background music
+function startMusic(){
+  if(!state.musicOn || !state.audioCtx || state.musicPlaying) return;
+  state.musicPlaying = true;
+  const ctx = state.audioCtx;
+  const melody = [523,587,659,784,659,587,523,440, 523,587,659,784,880,784,659,587];
+  const bass = [262,262,330,330, 262,262,220,220];
+  let beat = 0;
+  const playBeat = ()=>{
+    if(!state.musicPlaying || !state.musicOn) return;
+    const t = ctx.currentTime;
+    // melody
+    const mNote = melody[beat % melody.length];
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type='triangle'; osc.frequency.value=mNote;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.04, t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t+0.4);
+    osc.connect(g).connect(state.musicGain);
+    osc.start(t); osc.stop(t+0.45);
+    // bass
+    if(beat%2===0){
+      const bNote = bass[(beat/2|0) % bass.length];
+      const bosc = ctx.createOscillator();
+      const bg = ctx.createGain();
+      bosc.type='sine'; bosc.frequency.value=bNote;
+      bg.gain.setValueAtTime(0,t); bg.gain.linearRampToValueAtTime(0.06,t+0.02);
+      bg.gain.exponentialRampToValueAtTime(0.001,t+0.7);
+      bosc.connect(bg).connect(state.musicGain);
+      bosc.start(t); bosc.stop(t+0.75);
+    }
+    beat++;
+    setTimeout(playBeat, 350);
+  };
+  playBeat();
+}
+function stopMusic(){ state.musicPlaying = false; }
+
+// ==================== CANVAS DRAWING ====================
+const canvas = document.getElementById('draw-canvas');
+const ctx = canvas.getContext('2d');
+let lastX=0, lastY=0;
+
+function resizeCanvas(){
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = 400; canvas.height = 400;
+}
+resizeCanvas();
+
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX || (e.touches&&e.touches[0].clientX)) - rect.left;
+  const y = (e.clientY || (e.touches&&e.touches[0].clientY)) - rect.top;
+  return {x: x*(400/rect.width), y: y*(400/rect.height)};
+}
+
+function startDraw(e){
+  e.preventDefault();
+  initAudio();
+  if(state.musicOn) startMusic();
+  state.drawing = true;
+  const p = getPos(e);
+  lastX=p.x; lastY=p.y;
+  state.strokes.push([[p.x,p.y]]);
+  ctx.beginPath();
+  ctx.arc(p.x,p.y,4,0,Math.PI*2);
+  ctx.fillStyle='#2d3436';
+  ctx.fill();
+}
+function draw(e){
+  if(!state.drawing) return;
+  e.preventDefault();
+  const p = getPos(e);
+  ctx.beginPath();
+  ctx.moveTo(lastX,lastY);
+  ctx.lineTo(p.x,p.y);
+  ctx.strokeStyle='#2d3436';
+  ctx.lineWidth=8;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  ctx.stroke();
+  // Also draw a small circle for smooth thick line
+  ctx.beginPath();
+  ctx.arc(p.x,p.y,4,0,Math.PI*2);
+  ctx.fillStyle='#2d3436';
+  ctx.fill();
+  state.strokes[state.strokes.length-1].push([p.x,p.y]);
+  lastX=p.x; lastY=p.y;
+  if(Math.random()<0.3) playDrawSound();
+}
+function endDraw(e){
+  if(!state.drawing) return;
+  state.drawing=false;
+  checkSolution();
+}
+
+canvas.addEventListener('mousedown',startDraw);
+canvas.addEventListener('mousemove',draw);
+canvas.addEventListener('mouseup',endDraw);
+canvas.addEventListener('mouseleave',endDraw);
+canvas.addEventListener('touchstart',startDraw,{passive:false});
+canvas.addEventListener('touchmove',draw,{passive:false});
+canvas.addEventListener('touchend',endDraw,{passive:false});
+
+// ==================== SOLUTION DETECTION ====================
+function checkSolution(){
+  const level = LEVELS[state.currentLevel];
+  const t = level.target;
+  // Count coverage: check grid points in target circle covered by strokes
+  const checkPoints = [];
+  const samples = 100;
+  for(let i=0;i<samples;i++){
+    const angle = Math.random()*Math.PI*2;
+    const r = Math.sqrt(Math.random())*t.r;
+    checkPoints.push({x:t.x+Math.cos(angle)*r, y:t.y+Math.sin(angle)*r});
+  }
+  let covered = 0;
+  // Build pixel mask from canvas
+  const imgData = ctx.getImageData(0,0,400,400);
+  const data = imgData.data;
+  checkPoints.forEach(pt=>{
+    const px = Math.floor(pt.x), py = Math.floor(pt.y);
+    if(px<0||px>=400||py<0||py>=400) return;
+    const idx = (py*400+px)*4;
+    // Check if pixel is dark (drawn)
+    if(data[idx+3]>100 && data[idx]<100){ covered++; }
+  });
+  state.coverage = covered/checkPoints;
+  if(state.coverage > 0.25){
+    solveLevel();
+  }
+}
+
+function solveLevel(){
+  const level = LEVELS[state.currentLevel];
+  const wrapper = document.getElementById('canvas-wrapper');
+  wrapper.classList.add('solved');
+  // Clear canvas drawing
+  ctx.clearRect(0,0,400,400);
+  playWinSound();
+  if(state.vibrationOn && navigator.vibrate) navigator.vibrate([50,30,50]);
+  spawnParticles();
+  // Record completion
+  const stars = state.hintsUsed===0 ? 3 : (state.hintsUsed<=2 ? 2 : 1);
+  state.completed[state.currentLevel] = true;
+  state.stars[state.currentLevel] = Math.max(state.stars[state.currentLevel]||0, stars);
+  localStorage.setItem('dop_completed', JSON.stringify(state.completed));
+  localStorage.setItem('dop_stars', JSON.stringify(state.stars));
+  // Show win overlay
+  setTimeout(()=>{
+    document.getElementById('win-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
+    document.getElementById('win-title').textContent = stars===3 ? 'Perfect!' : (stars===2?'Well Done!':'Solved!');
+    document.getElementById('win-msg').textContent = stars===3 ? 'No hints used! Amazing!' : (stars===2?'Great work!':'You did it!');
+    document.getElementById('win-overlay').classList.add('active');
+  }, 800);
+  // Show next button
+  if(state.currentLevel < LEVELS.length-1){
+    document.getElementById('next-btn').style.display='flex';
+  }
+}
+
+function spawnParticles(){
+  const wrapper = document.getElementById('canvas-wrapper');
+  const colors=['#fdcb6e','#55efc4','#74b9ff','#fd79a8','#ffeaa7'];
+  for(let i=0;i<30;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.style.background=colors[i%colors.length];
+    p.style.left='50%'; p.style.top='50%';
+    wrapper.appendChild(p);
+    const angle=Math.random()*Math.PI*2;
+    const dist=80+Math.random()*120;
+    const dx=Math.cos(angle)*dist;
+    const dy=Math.sin(angle)*dist;
+    p.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:1},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(0)`,opacity:0}],{duration:800+Math.random()*400,easing:'ease-out'}).onfinish=()=>p.remove();
+  }
+}
+
+// ==================== LEVEL MANAGEMENT ====================
+function loadLevel(idx){
+  if(idx<0||idx>=LEVELS.length) return;
+  state.currentLevel=idx;
+  state.hintsUsed=0;
+  state.strokes=[];
+  state.coverage=0;
+  const level=LEVELS[idx];
+  // Render scene
+  document.getElementById('scene-svg').innerHTML=level.scene;
+  document.getElementById('complete-svg').innerHTML=level.scene+level.complete;
+  // Clear canvas
+  ctx.clearRect(0,0,400,400);
+  // Reset wrapper
+  const wrapper=document.getElementById('canvas-wrapper');
+  wrapper.classList.remove('solved');
+  document.getElementById('next-btn').style.display='none';
+  document.getElementById('win-overlay').classList.remove('active');
+  // Update UI
+  document.getElementById('prompt-text').textContent=level.prompt;
+  document.getElementById('level-num').textContent=`${idx+1}/${LEVELS.length}`;
+  updateProgressDots();
+}
+
+function nextLevel(){
+  if(state.currentLevel<LEVELS.length-1){
+    loadLevel(state.currentLevel+1);
+  }
+}
+
+function updateProgressDots(){
+  const dots=document.getElementById('progress-dots');
+  dots.innerHTML='';
+  const start=Math.max(0,state.currentLevel-2);
+  const end=Math.min(LEVELS.length,state.currentLevel+3);
+  for(let i=start;i<end;i++){
+    const dot=document.createElement('div');
+    dot.className='dot';
+    if(i===state.currentLevel) dot.classList.add('current');
+    else if(state.completed[i]) dot.classList.add('done');
+    dots.appendChild(dot);
+  }
+}
+
+function renderLevelSelect(){
+  const grid=document.getElementById('level-grid');
+  grid.innerHTML='';
+  LEVELS.forEach((level,i)=>{
+    const card=document.createElement('div');
+    const isLocked = i>0 && !state.completed[i-1];
+    card.className='level-card'+(state.completed[i]?' completed':'')+(isLocked?' locked':'');
+    if(state.completed[i]){
+      const stars=state.stars[i]||0;
+      card.innerHTML=`${i+1}<div class="star-display">${'⭐'.repeat(stars)}</div>`;
+    } else if(isLocked){
+      card.innerHTML=`<span class="lock-icon">🔒</span>`;
+    } else {
+      card.innerHTML=`${i+1}`;
+    }
+    if(!isLocked){
+      card.onclick=()=>{
+        loadLevel(i);
+        document.getElementById('level-select').classList.remove('active');
+        playClickSound();
+      };
+    }
+    grid.appendChild(card);
+  });
+}
+
+// ==================== HINTS ====================
+function showHint(){
+  const level=LEVELS[state.currentLevel];
+  const t=level.target;
+  const glow=document.getElementById('hint-glow');
+  // Position glow relative to canvas wrapper
+  const rect=document.getElementById('canvas-wrapper').getBoundingClientRect();
+  const cx=(t.x/400)*rect.width;
+  const cy=(t.y/400)*rect.height;
+  const cr=(t.r/400)*rect.width;
+  glow.style.left=(cx-cr)+'px';
+  glow.style.top=(cy-cr)+'px';
+  glow.style.width=(cr*2)+'px';
+  glow.style.height=(cr*2)+'px';
+  glow.classList.add('show');
+  state.hintsUsed++;
+  playHintSound();
+  if(state.vibrationOn&&navigator.vibrate) navigator.vibrate(30);
+  setTimeout(()=>glow.classList.remove('show'),2000);
+}
+
+function clearCanvas(){
+  ctx.clearRect(0,0,400,400);
+  state.strokes=[];
+  playClickSound();
+}
+
+// ==================== EVENT BINDINGS ====================
+document.getElementById('hint-btn').onclick=()=>{showHint();};
+document.getElementById('clear-btn').onclick=()=>{clearCanvas();};
+document.getElementById('next-btn').onclick=()=>{nextLevel();};
+document.getElementById('next-level-btn').onclick=()=>{
+  document.getElementById('win-overlay').classList.remove('active');
+  nextLevel();
+};
+document.getElementById('levels-btn').onclick=()=>{
+  renderLevelSelect();
+  document.getElementById('level-select').classList.add('active');
+  playClickSound();
+};
+document.getElementById('close-levels').onclick=()=>{
+  document.getElementById('level-select').classList.remove('active');
+};
+document.getElementById('settings-btn').onclick=()=>{
+  document.getElementById('settings-modal').classList.add('active');
+};
+document.getElementById('close-settings').onclick=()=>{
+  document.getElementById('settings-modal').classList.remove('active');
+};
+document.getElementById('sound-toggle').onclick=function(){
+  this.classList.toggle('active');
+  state.soundOn=this.classList.contains('active');
+  if(state.soundOn) initAudio();
+};
+document.getElementById('music-toggle').onclick=function(){
+  this.classList.toggle('active');
+  state.musicOn=this.classList.contains('active');
+  if(state.musicOn){ initAudio(); startMusic(); } else { stopMusic(); }
+};
+document.getElementById('vibration-toggle').onclick=function(){
+  this.classList.toggle('active');
+  state.vibrationOn=this.classList.contains('active');
+};
+document.getElementById('start-game-btn').onclick=function(){
+  document.getElementById('tutorial-overlay').classList.remove('active');
+  initAudio();
+  startMusic();
+};
+
+// Show tutorial on first visit
+if(!localStorage.getItem('dop_visited')){
+  document.getElementById('tutorial-overlay').classList.add('active');
+  localStorage.setItem('dop_visited','1');
+} else {
+  initAudio();
+}
+
+// Initialize first level
+loadLevel(0);
+</script>
+<script src="/monetag-manager.js?v=20260624dop" defer></script>
+<div id="gz-ad-below-game" style="max-width:728px;margin:16px auto;min-height:90px"></div>
+<script src="/game-footer.js" defer></script>
+</body>
+</html>
