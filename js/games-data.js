@@ -442,6 +442,7 @@ const GAMES = [
 
 {name:"Yosenabe",emoji:"⚖",cat:"puzzle",tags:["nikoli","logic","yosenabe","pot","japanese","brain teaser","grid puzzle","path","sum"],url:"/yosenabe/",desc:"Play Yosenabe free online! Move numbered circles into pots in this Japanese Nikoli logic puzzle. 27 levels from Beginner to Master. No download required.",isNew:true,status:"live"},
 {name:"Signpost",emoji:"🧭",cat:"puzzle",tags:["signpost", "arrow path", "pfeilpfad", "logic", "number path", "directional", "brain teaser", "grid puzzle", "html5", "free", "browser"],url:"/signpost/",desc:"Play Signpost free online! Follow the arrows to build one unbroken number chain 1 to N across the grid. 27 unique arrow-path puzzles from Beginner to Master. No download required.",isNew:true,status:"live"},
+{name:"Twiddle",emoji:"🔄",cat:"puzzle",tags:["twiddle", "rotate", "tile puzzle", "rotation", "2x2", "sorting", "logic", "brain teaser", "grid puzzle", "html5", "free", "browser"],url:"/twiddle/",desc:"Play Twiddle free online! Rotate 2x2 blocks of tiles to sort them into ascending order. 27 levels from Beginner 3x3 to Master 6x6. No download required.",isNew:true,status:"live"},
 ];
 
 /**
