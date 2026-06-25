@@ -171,16 +171,17 @@ let DPR=1, cell=0, boardPx=468;
 let animLock=false;
 let rafId=null;
 
-function freshState(size,mode,colors){
+function freshState(size,mode,colors,spawn){
   return{
     grid:Array.from({length:size},()=>Array(size).fill(-1)),
-    size,mode,colors,
+    size,mode,colors,spawn,
     nextBalls:[],
     selected:null,
     score:0,moves:0,cleared:0,
     history:[],
     gameOver:false,
     dailySeed:null,
+    lastMoveR:-1,lastMoveC:-1,movingBall:null,
     balls:[],            // visual ball objects {id,color,r,c,x,y,scale,alpha,vx,vy,state}
     particles:[],        // {x,y,vx,vy,life,color,size}
     ballIdSeq:1,
@@ -426,35 +427,27 @@ function selectCell(r,c){
   // perform move
   S.history.push(snapshot());if(S.history.length>20)S.history.shift();
   const color=S.grid[from.r][from.c];
+  const b=ballAt(from.r,from.c);
   S.grid[from.r][from.c]=-1;
   S.grid[r][c]=color;
   S.selected=null;
   S.moves++;
-  const b=ballAt(from.r,from.c);
-  if(b){b.state='move';b.path=path;b.pi=0;b.t=0}
+  if(b){b.state='move';b.path=path;b.pi=0;b.t=0;b.r=r;b.c=c;S.movingBall=b}
+  S.lastMoveR=r;S.lastMoveC=c;
   sfxMove();
   animLock=true;
-  // after move animation, evaluate clears
-  scheduleAfterMove(color,r,c);
+  // evaluation happens in loop when ball arrives (see evaluateMove)
 }
-function scheduleAfterMove(movedColor,mr,mc){
-  // wait for move anim via loop; check when ball arrives
-  setTimeout(()=>{
-    const {cells,groups}=detectClears();
-    if(cells.length){
-      doClear(cells,groups,mr,mc);
-    }else{
-      // spawn
-      const placed=spawnFromNext();
-      sfxSpawn();
-      // after spawn, check clears caused by spawned balls (rare but possible in blocks/squares)
-      setTimeout(()=>{
-        const{cells:c2,groups:g2}=detectClears();
-        if(c2.length){doClear(c2,g2,-1,-1)}
-        else{endTurnCheck()}
-      },260);
-    }
-  },230);
+function evaluateMove(){
+  // called from loop when the moving ball reaches its destination
+  S.movingBall=null;
+  const{cells,groups}=detectClears();
+  if(cells.length){
+    doClear(cells,groups,S.lastMoveR,S.lastMoveC);
+  }else{
+    const placed=spawnFromNext();sfxSpawn();
+    setTimeout(()=>{const{cells:c2,groups:g2}=detectClears();if(c2.length){doClear(c2,g2,-1,-1)}else{endTurnCheck()}},280);
+  }
 }
 function doClear(cells,groups,mr,mc){
   const N=S.size;
@@ -584,7 +577,7 @@ function draw(){
       // simple: position already updated in update(); here just draw at b.x,b.y
     }
     const sel=S.selected&&S.selected.r===b.r&&S.selected.c===b.c;
-    drawBall(x,y,cell,scale?b.color:b.color,alpha||1,sel);
+    drawBall(x,y,cell,b.color,b.alpha||1,sel);
   }
   // particles
   for(const p of S.particles){
@@ -609,12 +602,13 @@ function loop(ts){
     for(const b of S.balls){
       if(b.state==='move'&&b.path){
         b.t+=dt;
-        // advance along path segments; ~ cells per 90ms
+        // advance along path segments; ~ cells per 80ms
         const segTime=80; // ms per cell
         const segIdx=Math.floor(b.t/segTime);
         const frac=(b.t%segTime)/segTime;
         if(segIdx>=b.path.length-1){
           const last=b.path[b.path.length-1];b.x=last[1];b.y=last[0];b.state='idle';b.t=0;b.path=null;
+          if(S.movingBall===b){evaluateMove()}
         }else{
           const a=b.path[segIdx],nxt=b.path[segIdx+1];
           const e=frac<0.5?2*frac*frac:1-Math.pow(-2*frac+2,2)/2; // easeInOut
@@ -661,7 +655,7 @@ function currentDiff(){const active=document.querySelector('#diff-seg .btn.activ
 
 function newGame(diff,mode,daily){
   const cfg=DIFFS[diff]||DIFFS.normal;
-  S=freshState(cfg.size,mode,cfg.colors);
+  S=freshState(cfg.size,mode,cfg.colors,cfg.spawn);
   if(daily){const seed=parseInt(daily.replace(/-/g,'').slice(0,8));S.rng=mulberry32(seed);S.dailySeed=daily}
   fitBoard();
   placeInitial(cfg.init);
