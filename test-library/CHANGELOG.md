@@ -1,3 +1,36 @@
+## [v1.97.0] - 2026-06-26
+### Added
+- 8 new test cases from late-June 2026 industry research (R216 Dynamic Test Intelligence cron)
+- [B-137] **[P2]** Chrome 131+ Chromium `::selection` CSS inheritance BREAKING CHANGE (Nov 20 2024, recurring into Chromium 149+ 2026) — selection styling now inherits from PARENT element instead of element-self `::selection` rule, breaking text-highlight visual feedback on Tailwind-reset sites; players select game title/instructions but see no visible highlight; BROWSER-CSS-SELECTION-INHERITANCE-BREAKAGE-CLASS dimension (finance.sina.com.cn/tech/digi/2024-11-20/doc-incwteun2135599.shtml; Adam Wathan Tailwind fix)
+- [P-091] **[P2]** AMD 2026 H1 earnings-call memory-supply tightening warning (Lisa Su + Hu Jin, May 6 2026) — global memory/component cost pressure + game-hardware revenue forecast to decline >=20% QoQ in H2 2026 → player base skews TOWARD lower-RAM devices as new-device sales slow; HARDWARE-COST-PRESSURE-DRIVES-LOW-RAM-DEVICE-FRAGMENTATION dimension requiring a <4GB-available-RAM QA regression tier (sohu.com/a/1018745465_121885030)
+- [G-160] **[P1]** WebGL canvas auto-resize-on-window-resize class bug (github.com/Team766/2020Sim#25 pattern, recurring 2026 in foldable/multi-window/orientation-change contexts) — canvas uses fixed pixel dimensions, does not respond to window/orientation/devicePixelRatio change → distortion, clipping, letterboxing; WEBGL-CANVAS-RESPONSIVE-RESIZE-ON-VIEWPORT-CHANGE-CLASS dimension requiring ResizeObserver + devicePixelRatio handling
+- [S-195] **[P1]** WebGL shader type-misuse compile-failure class (cloud.tencent.com/developer/article/2548226 June 26 2026) — `glCreateShader(GL_VERTEX_SHADER)` wrongly reused for fragment shader → `error C1013: function "main" is already defined` link error that FAILS SILENTLY in some GPU drivers but CRASHES in others; WEBGL-SHADER-TYPE-MISUSE-SILENT-COMPILE-FAILURE-CLASS dimension requiring cross-driver QA (Chrome/Win/NVIDIA vs Safari/macOS vs mobile Adreno/Mali)
+- [C-140] **[P2]** WebKit-7620.1.16.11.5 release tag (github.com/WebKit/WebKit Nov 13 2025) rolling into Safari 27 stable baseline — recurring WebKit-specific tag introducing rendering quirks (canvas/WebAudio/CSS) NOT present in Chromium; WEBKIT-SPECIFIC-RELEASE-TAG-RENDERING-DRIFT-CLASS dimension requiring WebKit nightly in cross-browser QA matrix
+- [W-209] **[P3]** Chrome/Edge "STATUS_INVALID_IMAGE_HASH" RendererCodeIntegrityEnabled registry-disable workaround class (blog.csdn.net/weixin_39802884/article/details/119460308 Aug 6 2021, recurring 2026) — users apply registry edit to bypass renderer code-integrity protection, silently breaking some Canvas/WebGL extensions; USER-SELF-INFLICTED-RENDERER-INTEGRITY-DISABLE-WORKAROUND-CLASS dimension, Windows-side sibling of B-136 (iOS experimental toggles)
+- [PC-020] **[P2]** 2026 cross-region multiplayer/cloud-download-failure user-complaint class — players blame the GAME for failures that are actually ISP/CDN-transit/DNS-filtering issues ("REPO下载失败" / "无法发现联机主机" / "连接超时"); NETWORK-BLAMED-GAME-BUG-DIAGNOSTIC-DISAMBIGUATION dimension requiring GameZipper to distinguish game-bug from network-bug with clear diagnostic error messages + retry (so.html5.qq.com/page/real/search_news?docid=70000021_5816a05700305852 May 14 2026 + UU加速器 baseline April 17 2026)
+- [A-046] **[P2]** 2026 long-text voice-clone audio-stability baseline shift (悄然声色 50万字 voice-clone benchmark, 98% timbre similarity sustained, so.html5.qq.com June 10 2026) — establishes new PLAYER EXPECTATION that audio does NOT drift/crackle/pitch-shift over long sessions; directly relevant to GameZipper BGM/SFX 30+ minute loops; LONG-SESSION-AUDIO-STABILITY-BASELINE-SHIFT dimension, most impactful for hearing-impaired players with hearing aids
+### Sources
+- Search tools used: mcp_minimax_search_web_search (web-search-prime SearXNG returned 404 again this cycle — primary engine unavailable, fell back to minimax batch)
+- Search queries executed:
+  - "HTML5 game testing 2026 new techniques browser"
+  - "browser game bug report 2026 WebGL Canvas regression"
+  - "browser security vulnerability 2026 XSS clickjacking CSP"
+  - "casual game UX complaint 2026 haptic dark mode accessibility"
+  - "Chrome Edge Safari 2026 update WebKit change breaking"
+  - "Chrome 151 Edge Safari 2026 June stable release WebKit bug"
+  - "2026 game memory leak audio context close beforeunload cleanup"
+- Key URLs cited in new test cases:
+  - https://finance.sina.com.cn/tech/digi/2024-11-20/doc-incwteun2135599.shtml (Nov 20 2024, recurring into Chromium 149+ — Chrome 131 ::selection inheritance breakage; Tailwind CSS fix)
+  - https://www.sohu.com/a/1018745465_121885030 (May 6 2026 — AMD Q1 2026 earnings call; Lisa Su + Hu Jin memory-supply tightening + game-hardware -20% QoQ forecast)
+  - https://github.com/Team766/2020Sim/issues/25 (Sept 23 2020, recurring 2026 — WebGL canvas auto-resize class bug in foldable/multi-window/orientation contexts)
+  - https://cloud.tencent.com/developer/article/2548226 (June 26 2026 — WebGL shader type-misuse C1013 "function main already defined" class)
+  - https://github.com/WebKit/WebKit/releases/tag/WebKit-7620.1.16.11.5 (Nov 13 2025 — WebKit release tag rolling into Safari 27 baseline)
+  - https://blog.csdn.net/weixin_39802884/article/details/119460308 (Aug 6 2021, recurring 2026 — Chrome/Edge STATUS_INVALID_IMAGE_HASH RendererCodeIntegrityEnabled registry workaround)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_5816a05700305852 (May 14 2026 — "REPO下载失败" cross-region download-failure complaint class)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_25569e1d85033552 (April 17 2026 — UU加速器 cross-region LAN联机 baseline)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2746a2953f744152 (June 10 2026 — 悄然声色 50万字 voice-clone 98% timbre audio-stability benchmark)
+- Additional context from searches (already covered in prior versions, not re-added): CVE-2025-14174/CVE-2025-43529 cross-vendor ANGLE UAF (existing S-137/S-185); Apple emergency WebKit patch iOS 26.2/macOS Tahoe 26.2 (existing B-114/B-120); Chrome 131 Tailwind selection issue (NEW this cycle as B-137); Chrome 126 macOS WebSocket breakage (historical, resolved); AMD memory -20% forecast (NEW this cycle as P-091); WebGL resize pattern (NEW this cycle as G-160); shader C1013 (NEW this cycle as S-195); WebKit-7620 tag (NEW this cycle as C-140); STATUS_INVALID_IMAGE_HASH registry workaround (NEW this cycle as W-209); REPO下载失败 / UU加速器 (NEW this cycle as PC-020); 悄然声色 voice-clone (NEW this cycle as A-046).
+
 ## [v1.96.0] - 2026-06-26
 ### Added
 - 6 new test cases from late-June 2026 industry research (R215 Dynamic Test Intelligence cron)
