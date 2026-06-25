@@ -1,3 +1,27 @@
+## [v1.96.0] - 2026-06-26
+### Added
+- 6 new test cases from late-June 2026 industry research (R215 Dynamic Test Intelligence cron)
+- [S-193] **[P1]** CVE-2026-24771 Hono/jsx ErrorBoundary raw-HTML XSS (Jan 27 2026, GHSA-9r54-q6cx-xmh5, patched <4.11.7) — server-rendered error UI bypasses HTML-escaping when attacker-controlled URL/error/reflected strings render inside ErrorBoundary fallbackRender; SERVER-RENDERED-ERROR-BOUNDARY-BYPASS-ESCAPING-XSS dimension (github.com/advisories/ghsa-9r54-q6cx-xmh5)
+- [W-208] **[P2]** WebKit IndexedDB cross-origin name-enumeration leak vulnerability CLASS — affects ALL iOS browsers (Apple mandates WebKit); any page observes IndexedDB names of other origins' tabs → cross-site user tracking/fingerprinting; recurring Safari 15→27 (FingerprintJS 2022 disclosure); WEBKIT-INDEXEDDB-CROSS-ORIGIN-LEAK-VULNERABILITY-CLASS dimension (i4.cn/news_detail_48478 Jan 17 2022)
+- [B-136] **[P2]** iOS Safari experimental WebKit feature toggles user-self-broken state — users enabling ALL ~80 toggles in Settings > Safari > Advanced > Experimental Features break their own Safari (pages fail to load, games hang); USER-SELF-INFLICTED-BROWSER-MISCONFIGURATION-CLASS dimension (zhuanlan.zhihu.com/p/452496009)
+- [S-194] **[P2]** WebKit "Block cookies" privacy-browsing same-origin bypass vulnerability CLASS (CVE-2012-0640 prototype, recurring 2026) — MITM bypass of Safari privacy mode; WEBKIT-PRIVACY-BROWSING-BLOCK-COOKIES-BYPASS-CLASS dimension (ancii.com/arqu8mqu)
+- [C-139] **[P3]** Microsoft Defender Vulnerability Management + Exposure Management 2026 consolidation — secops-platform consolidation unifies cloud+device vulnerability scanning; SECOPS-PLATFORM-CONSOLIDATION-VULNERABILITY-TRACKING-BASELINE-SHIFT dimension (docs.microsoft.com/en-us/azure/defender-for-cloud/auto-deploy-vulnerability-assessment May 27 2026)
+- [P-090] **[P3]** Mobile-OS battery-saver rAF throttling to 30fps regression baseline 2026 — iOS 26 Low Power Mode + Android 17 Battery Saver cap requestAnimationFrame at ~30fps; Canvas+rAF games assuming 60fps run at HALF speed/desync; MOBILE-OS-BATTERY-SAVER-RAF-THROTTLING-30FPS-REGRESSION dimension (2026 mobile-OS power-management baseline)
+### Sources
+- Search queries executed (mcp_minimax_search_web_search; web-search-prime SearXNG returned 404 again this cycle):
+  - "HTML5 game testing 2026 new techniques browser"
+  - "browser security vulnerability 2026 XSS canvas"
+  - "Safari WebKit iOS bug 2026 June"
+  - "Chrome 151 stable ship July 2026 breaking changes"
+- Key URLs cited in new test cases:
+  - https://github.com/advisories/ghsa-9r54-q6cx-xmh5 (Jan 27 2026 — CVE-2026-24771 Hono/jsx ErrorBoundary XSS, patched <4.11.7)
+  - https://www.i4.cn/news_detail_48478.html (Jan 17 2022, recurring 2026 — WebKit IndexedDB cross-origin leak FingerprintJS disclosure)
+  - https://www.i4.cn/news_detail_48497.html (Jan 19 2022 — Apple preparing WebKit IndexedDB leak fix)
+  - https://zhuanlan.zhihu.com/p/452496009 (Jan 2 2022, recurring iOS 15→27 — Safari experimental WebKit toggles user-broken case study)
+  - https://www.ancii.com/arqu8mqu/ (Mar 13 2012 — CVE-2012-0640 WebKit Block-cookies privacy-mode MITM bypass prototype)
+  - https://docs.microsoft.com/en-us/azure/defender-for-cloud/auto-deploy-vulnerability-assessment (May 27 2026 — Defender Vulnerability Management + Exposure Management consolidation)
+- Additional context from searches (already covered, not re-added): CVE-2026-28962 Safari 26.5 CSP bypass (existing S-150/S-187); CVE-2026-20643 Apple silent RSR WebKit (existing B-120); HTML5test dead (existing C-133); Chrome 150 Google Wallet autofill (existing B-135); Chrome Skills / OpenAI Atlas / Edge Copilot Actions (existing W-204/W-205/C-138); IBM X-Force 2026 (existing S-190); Chrome 153 two-week cadence (existing W-200); Firefox China entity shutdown (existing W-206); CVE-2026-40369 Windows kernel LPE (existing S-191); CVE-2026-50751 Check Point IKEv1 (existing S-192); iOS 26 Liquid Glass (existing B-112/B-119/A-041); Safari 27 beta (existing B-127/C-118); Chrome 149 CSS Gap Decorations (existing B-117); WebKit Interop 2026 (existing W-181).
+
 ## [v1.95.0] - 2026-06-25
 ### Added
 - 8 new test cases from late-June 2026 industry research (R214 Dynamic Test Intelligence cron)
