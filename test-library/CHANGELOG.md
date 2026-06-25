@@ -1,3 +1,32 @@
+## [v1.95.0] - 2026-06-25
+### Added
+- 8 new test cases from late-June 2026 industry research (R214 Dynamic Test Intelligence cron)
+- [S-191] **[P0]** CVE-2026-40369 Windows 11 kernel nt!ExpGetProcessInformation LPE (CVSS 7.8) — Chrome renderer calls NtQuerySystemInformation (class 253) bypassing ProbeForWrite → deterministic sandbox-to-SYSTEM escalation on Windows 11 24H2/25H2; BROWSER-SANDBOX-TO-KERNEL-LPE-VIA-NATIVE-SYSTEM-INFO-API dimension (donews.com/cyberkendra May 22 2026)
+- [S-192] **[P1]** CVE-2026-50751 Check Point IKEv1 VPN Authentication Bypass — actively exploited, disclosed June 8-10 2026, unauthenticated remote attacker establishes VPN session without password via deprecated IKEv1 remote-access code paths; NETWORK-PERIMETER-DEPRECATED-PROTOCOL-VPN-AUTH-BYPASS dimension (threatprotect.qualys.com June 10 2026)
+- [B-135] **[P2]** Chrome 150 stable ship June 24 2026 — NEW autofill directly connects to Google Wallet, fills passport + driver license + Known Traveler Number into ANY web form; BROWSER-AUTOFILL-OS-WALLET-INTEGRATION-PII-EXFILTRATION-EXPANSION dimension distinct from C-122 AI-guessed autofill (so.html5.qq.com June 24 2026)
+- [W-206] **[P3]** Firefox China entity shutdown Sept 29 2025 — firefox.com.cn / mozilla.com.cn / accounts.firefox.com.cn / home.firefoxchina.cn all terminated, Beijing Firefox stopped using Mozilla-authorized trademarks, user data deleted per PRC law, Mozilla continues via authorized third party; FIREFOX-CHINA-ENTITY-SHUTDOWN-VENDOR-PRESENCE-EXIT-CN-MARKET dimension (mydown.yesky.com April 27 2026 documenting the Sept 29 2025 event)
+- [G-159] **[P2]** Heimao (黑猫投诉) 2024 annual game-complaint report — 100K+ complaints/year (+4.4% YoY), 46 collective complaints (9.24% of volume), 79.05% male aged 21-30, top categories = minor-refund + false-advertising + account-trade + cheats; CN-MARKET-GAME-COMPLAINT-BASELINE-MINOR-REFUND-DARK-PATTERN-CLASS-ACTION dimension (finance.sina.com.cn/heimao Feb 24 2025)
+- [W-207] **[P2]** 2026 casual game "zero-pay-to-win" (零氪畅玩) market differentiator trend — player fatigue with 氪金决定一切 (pay-to-win-decides-everything); CASUAL-GAME-ZERO-PAY-TO-WIN-DIFFERENTIATOR-MARKET-EXPECTATION-SHIFT dimension; GameZipper's free+ad model is already a competitive advantage to market (sohu/qq June 17/24/25 2026)
+- [P-089] **[P2]** Mobile WebView (WeChat/QQ/Discord/Telegram in-app browser) WKWebView evaluateJavaScript completion-handler crash pattern — _evaluateJavaScript:asAsyncFunction: completion handler crashes inside WebKit::WebPageProxy::runJavaScript; MOBILE-WEBVIEW-EVALUATEJAVASCRIPT-COMPLETION-HANDLER-CRASH-PATTERN dimension (ask.dcloud.net.cn #190510, recurring 2024-2026)
+- [PC-019] **[P3]** Account rental/trade scam dimension — 账号被找回 (traded-account-recovery fraud) + 租借账号被用于外挂 (rented accounts used for cheating leading to bans); ACCOUNT-RENTAL-TRADE-SCAM-DIMENSION-PLAYER-TRUST-RISK dimension; forward-looking risk for any future GameZipper account system (finance.sina.com.cn/heimao Feb 24 2025)
+### Sources
+- Search queries executed (mcp_minimax_search_web_search fallback — web-search-prime SearXNG returned 404 again this cycle):
+  - "HTML5 game testing 2026 new techniques June"
+  - "browser security vulnerability June 2026 Chrome Safari Firefox CVE"
+  - "CVE 2026 Chrome zero-day June 25 exploit"
+  - "手游 2026 6月 用户流失 氪金 投诉 体验"
+  - "Chrome 150 stable ship June 2026 features"
+  - "iOS 26 bug June 2026 Safari WebKit crash"
+- Key URLs cited in new test cases:
+  - https://www.donews.com/news/detail/8/6567089.html (May 22 2026 — CVE-2026-40369 Windows 11 kernel sandbox-bypass LPE via NtQuerySystemInformation)
+  - https://threatprotect.qualys.com/ (June 10 2026 — CVE-2026-50751 Check Point IKEv1 VPN auth bypass actively exploited, disclosed June 8 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_7246a3b412948452 (June 24 2026 — Chrome 150 stable ship with Google Wallet direct autofill)
+  - https://mydown.yesky.com/pcsoft/439813.html (April 27 2026 — documents Sept 29 2025 Firefox China entity shutdown)
+  - https://finance.sina.com.cn/heimao/2025-02-24/doc-inemqprh9963606.shtml (Feb 24 2025 — Heimao 2024 annual game-complaint report: 100K+ complaints, 46 collective, account-trade-scam category)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0826a3cca0325652 (June 25 2026 — "受够逼氪套路? 2026畅玩的良心手游TOP榜" zero-pay-to-win trend)
+  - https://ask.dcloud.net.cn/question/190510 (April 29 2024, recurring 2026 — HBuilder iOS WKWebView evaluateJavaScript completion-handler crash in WebPageProxy::runJavaScript)
+- Additional context from searches (already covered, not re-added): CVE-2026-28962 Safari 26.5 CSP bypass (existing S-150/S-187); Chrome 140 Fontations crash (existing B-130); Chrome 140 Incognito IP anonymization (existing PC-018); CVE-2026-5281 Dawn WebGPU UAF (existing S-177); CVE-2026-2441 Chrome CSS exfiltration (existing S-084); CVE-2025-43529 + CVE-2025-14174 iOS WebKit (existing S-137); Firefox 150 Mythos AI 271 vulns (existing B-052/S-149); Chrome 153 two-week cadence (existing W-200/B-093); iOS 26 Liquid Glass Control Center over-transparency (existing B-112/B-119/A-041); Safari 26.5 WebRTC crash (covered in S-150/C-130 sweep); Microsoft June 2026 Patch Tuesday 206 CVEs (existing B-063); HTML5test dead (existing C-133).
+
 ## [v1.94.0] - 2026-06-25
 ### Added
 - 8 new test cases from late-June 2026 industry research (R213 Dynamic Test Intelligence cron)
