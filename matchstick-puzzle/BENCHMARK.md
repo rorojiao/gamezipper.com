@@ -1,72 +1,145 @@
-# Matchstick Puzzle — Competitive Benchmark (Phase 2)
+# Matchstick Puzzle — Competitive Benchmark
 
-**Date:** 2026-06-25  |  **Slug:** `matchstick-puzzle`  |  **Genre:** Logic / Brain Teaser
+## Selected Game: Matchstick Puzzle (Move/Remove Sticks)
 
-## 1. Top Competitors (mobile + web)
+**Slug:** matchstick-puzzle  
+**Tier:** 1  
+**Rank:** Round 37 Top Candidate (23/25 score)
 
-| # | Title | Platform | Downloads / Installs | Key Mechanics |
-|---|-------|----------|---------------------|---------------|
-| 1 | **Matches Puzzle** (Joysoul) | Android/iOS | 50M+ | 1000+ levels, move 1-2 matches to fix equations, hint coins, drag-drop |
-| 2 | **Matchstick Puzzle Game** (Mobilie) | Android | 10M+ | 600+ levels, equations + shapes, daily challenges, star ratings |
-| 3 | **Matchstick: Crossword** | iOS | 5M+ | Equations only, 7-segment style, premium polish |
-| 4 | **MATCHSTICK — Puzzle Game** | iOS (2026-05) | New release | Brain-training angle, move matches to fix formula |
-| 5 | **Matchstick Logical Puzzle** (9game, v8.5.3 2026-05) | Android CN | Large | Logic puzzles, drag-drop, solution hints |
+---
 
-## 2. Core Mechanic Decomposition
+## Market Position
 
-- **7-segment digit rendering** using matchsticks (0=6, 1=2, 2=5, 3=5, 4=4, 5=5, 6=6, 7=3, 8=7, 9=6 matches)
-- **Operators:** `+` (2 matches, cross), `-` (1 match), `=` (2 parallel matches)
-- **Action:** tap a match to lift it → tap empty segment to place → tap again to discard
-- **Move budget:** typically 1-3 matches per level
-- **Win:** equation becomes mathematically true AND moves used ≤ budget
-- **Validator:** live evaluation of "a op b = c"
+### Downloads & Popularity
+- **Mobile downloads:** 10M+ (combined across "Matchstick Puzzles", "Matches Puzzle")
+- **Genre:** Classic brain-teaser puzzle
+- **Legacy:** 50+ years in puzzle books and brain games
+- **Playtime:** Long engagement via "one more level" loop
 
-## 3. Feature Matrix (competitor parity target)
+### Core Mechanics
+1. **Matchstick manipulation:** Drag sticks to move them OR tap to remove them
+2. **Equation solving:** Fix incorrect math equations by moving 1-2 sticks
+3. **Shape transformation:** Convert shapes (e.g., turn a house into a fish) by rearranging sticks
+4. **Constraint:** Most puzzles allow moving/removing 1-2 sticks only (not arbitrary)
 
-| Feature | Matches Puzzle | Matchstick Puzzle | GZ Target | Status |
-|---------|---------------|-------------------|-----------|--------|
-| Equation puzzles | ✅ | ✅ | ✅ | 30 levels |
-| Drag/tap interaction | ✅ | ✅ | ✅ (tap-lift/place) | required |
-| Move counter | ✅ | ✅ | ✅ | required |
-| Hint system | ✅ (coins) | ✅ | ✅ (free, limited) | required |
-| Solution reveal | ✅ | ✅ | ✅ (after hint) | required |
-| Level select grid | ✅ | ✅ | ✅ | 6 tiers |
-| Star rating | ❌ | ✅ | ✅ | by moves used |
-| Progress save | ✅ | ✅ | ✅ localStorage | required |
-| Daily challenge | ❌ | ✅ | ✅ | rotating level |
-| Achievements | ❌ | ✅ | ✅ | 8 badges |
-| Reset button | ✅ | ✅ | ✅ | required |
-| Tutorial overlay | ❌ | partial | ✅ | first level |
-| Sound effects | ✅ | ✅ | ✅ Web Audio | required |
-| Background music | ❌ | ❌ | ✅ Web Audio | ambient loop |
-| Mobile responsive | ✅ | ✅ | ✅ | required |
+### Monetization Patterns
+- **Interstitial ads:** Between levels (typical frequency: every 3-5 levels)
+- **Hint system:** Watch ad to reveal solution (stick movement)
+- **Skip level:** Watch ad to skip (rare but exists)
+- **Banner ads:** On level-select/menu screens
 
-## 4. Monetization / Engagement Patterns
+---
 
-- **Competitors:** rewarded-ad hints, coin shop, interstitials between tiers
-- **GZ approach:** ad slots (monetagManager already on site), NO coins/paywall, free hints with cooldown
-- **Engagement:** 30 levels + daily challenge + achievements + best-moves leaderboard (localStorage)
+## Feature Set (Based on Top Competitors)
 
-## 5. Differentiation (why GZ version wins)
+### Core Gameplay
+- **Two puzzle types:**
+  - **Equation puzzles:** Fix math equations (e.g., `6 + 4 = 4` → move stick to make `6 + 4 = 10` or `5 + 4 = 9`)
+  - **Shape puzzles:** Transform shapes (e.g., turn 4 squares into 3 squares by moving 2 sticks)
+- **Input:** Drag sticks (move) or double-tap (remove)
+- **Move count limit:** Each puzzle specifies allowed moves (usually 1-2)
+- **Win condition:** Equation correct OR shape matches target silhouette
 
-1. **No paywalls** — all competitors gate hints behind coins/ads; GZ gives free hints
-2. **Verified-unique solutions** — Python solver guarantees each level has exactly ONE solution within move budget (no ambiguity)
-3. **Balanced difficulty curve** — 6 tiers × 5 levels, progressive move budgets (1→3)
-4. **Polished book/parchment aesthetic** — warm wooden theme vs competitors' flat Material design
-5. **Achievements + daily challenge** — replayability hooks competitors lack
+### UI/UX
+- **Title screen:** Game title, "Play" button
+- **Level select:** Grid of level buttons, locked until previous completed
+- **In-game HUD:**
+  - Current level number
+  - Moves used / Moves allowed
+  - Undo button (rewind last move)
+  - Hint button (watch ad or free hints)
+  - Menu button (back to level select)
+- **Feedback:**
+  - Correct: Sticks turn green, particles, "Correct!" text
+  - Wrong: Sticks flash red, shake animation
+  - Win: Star rating (1-3 based on moves used), level-complete modal
 
-## 6. Risk Assessment
+### Difficulty Progression
+- **Easy:** 1 move, simple equations (e.g., `6 + 4 = 4` → `5 + 4 = 9`)
+- **Medium:** 2 moves, slightly complex equations (e.g., `9 + 2 = 5` → `3 + 2 = 5` or `8 + 2 = 10`)
+- **Hard:** Shape transformations, multi-step equations requiring creative thinking
 
-| Risk | Mitigation |
-|------|-----------|
-| Equation parsing edge cases | Strict regex + try/catch in validator |
-| Multiple solutions (ambiguous) | Python solver pre-verifies uniqueness |
-| Mobile tap precision | Large hit areas (≥32px), visual feedback |
-| Color-blind accessibility | Matches are positional, not color-coded |
+### Level Count Target
+- **30 levels** (standard for GZ puzzle games)
+- **10 levels per difficulty tier** (Easy/Medium/Hard × 10)
 
-## 7. Success Metrics
+---
 
-- QA: 40/40 checklist pass
-- Levels: 30 verified-solvable
-- Performance: <50KB HTML, loads <1s on 3G
-- SEO: targets "matchstick puzzle", "matchstick math game", "move matches to fix equation"
+## Competitive Gap (GameZipper Opportunity)
+
+### Missing Features in Browser Clones
+1. **No drag-drop stick UI:** Most browser versions use click-to-select + click-to-place (clunky)
+2. **Poor visual feedback:** No particle effects or smooth stick animations
+3. **Limited puzzle variety:** Often equation-only (no shape transformations)
+4. **No undo system:** Players can't experiment freely
+
+### GZ Differentiation
+- **Canvas-rendered sticks:** Smooth drag-drop, rotation animations
+- **Dual puzzle types:** Equations + shapes (double content)
+- **Undo + hints:** Low-friction experimentation
+- **Responsive design:** Mobile-first touch, desktop mouse support
+- **Performance:** Single-file HTML, no external assets
+
+---
+
+## Technical Constraints & Opportunities
+
+### Rendering
+- **Canvas 2D API:** Draw sticks as rounded rectangles with glow effects
+- **Stick states:** Normal (brown/wood), dragging (highlighted), placed (snap-to-grid), incorrect (red flash)
+- **Grid system:** Virtual 5×5 or 6×6 grid for stick endpoints (easier alignment)
+
+### Data Structure
+- **Level representation:**
+  ```javascript
+  {
+    type: "equation" | "shape",
+    initialSticks: [{x1,y1,x2,y2}, ...],  // Grid coordinates
+    target: "equation string" | silhouette shape,
+    allowedMoves: 1 | 2,
+    hint: "Move the vertical stick..."
+  }
+  ```
+- **Solution validation:**
+  - Equation: Parse string → evaluate math → check equality
+  - Shape: Compare stick positions to target pattern (exact match)
+
+### Audio
+- **Sound effects:**
+  - Stick pickup: `click` (short tap)
+  - Stick drop: `snap` (wood on wood)
+  - Correct: `ding` (success)
+  - Wrong: `buzz` (error)
+  - Win: `fanfare` (short melody)
+- **Music:** Ambient chord loop (same as other puzzle games)
+
+---
+
+## Monetization Integration (GZ Standard)
+- **Interstitial ads:** Every 3 levels (using Monetag zones 110122)
+- **Hint ads:** 110122 before showing hint
+- **Banner ads:** 110120 on title screen (top), 110121 on level-select (native style)
+
+---
+
+## QA Checklist (Game-Specific)
+- [ ] Equation validation correctly evaluates arithmetic (order of operations)
+- [ ] Shape validation accepts stick rotations and flips (symmetric solutions)
+- [ ] Drag-drop constraints: Sticks snap to grid, can't place off-grid
+- [ ] Move counter: Decrements on valid move, prevents exceeding allowed moves
+- [ ] Undo system: Reverts stick to previous position, restores move counter
+- [ ] Hint system: Animates the solution move-by-move
+- [ ] Win condition: Only triggers when equation correct AND moves ≤ allowed
+
+---
+
+## Development Timeline Estimate
+- **Phase 3 (Game dev):** ~20 min (30 levels, dual puzzle types, Canvas drag-drop)
+- **Phase 4 (Art):** ~5 min (RunningHub icon + procedural stick textures)
+- **Phase 5 (Music):** ~5 min (Web Audio BGM + SFX)
+- **Phase 6 (Level verification):** ~10 min (Parse levels, validate solutions)
+- **Phase 7 (QA):** ~10 min (40-point checklist)
+- **Phase 8 (Register):** ~5 min (games-data.js + sitemap updates)
+- **Phase 9 (Report):** ~5 min
+
+**Total:** ~60 min
