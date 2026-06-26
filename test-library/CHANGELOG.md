@@ -1,3 +1,39 @@
+## [v1.98.0] - 2026-06-26
+### Added
+- 7 new test cases from late-June 2026 industry research (R217 Dynamic Test Intelligence cron)
+- [S-196] **[P1]** TanStack "Mini Shai-Hulud" GitHub Actions cache-poisoning attack (May 12 2026) + June 26 2026 dead-man's-switch variant — single malicious PR triggered pull_request_target CI, poisoned pnpm cache, exfiltrated npm OIDC publish token, pushed 42 malicious packages / 84 versions in 6 MINUTES, ALL with VALID SLSA Level-3 build provenance bypassing 95%+ of supply-chain scanners; CI-CACHE-POISONING-WITH-VALID-SLSA-PROVENANCE-BYPASS dimension (blog.csdn.net/weixin_42376192/article/details/161181175 May 18 2026; cloud.tencent.com/developer/article/2679559 June 26 2026 JS Weekly #20)
+- [S-197] **[P2]** CVE-2026-27498 n8n "Read/Write Files from Disk" node authenticated RCE (May 29 2026, patched in 2.2.0 / 1.123.8) — any user with workflow-create/edit permission chains a git operation with the readWriteFile node to write a crafted config and trigger arbitrary shell-command execution; WORKFLOW-AUTOMATION-PLATFORM-AUTH-CHAIN-RCE dimension (blog.csdn.net/qiqiqi233/article/details/159990612)
+- [S-198] **[P1]** CVE-2026-20131 Cisco Secure Firewall Management Center (FMC) insecure-deserialization CVSS 10.0 RCE (March 4 2026, CISA KEV March 19 2026, federal patch deadline April 2 2026) — 2026's FIRST PERFECT-SCORE vulnerability, ransomware exploitation with ~100% success rate per CISA; NETWORK-PERIMETER-CVSS-10-DESERIALIZATION-RCE-2026-FIRST-PERFECT-SCORE dimension (blog.csdn.net/weixin_42376192/article/details/161069264 May 14 2026)
+- [S-199] **[P2]** "Download pumping" npm deception technique (Tenable research by Ron Popov, May 27-28 2026) — attackers artificially inflate npm download counts via coordinated bot networks to manipulate trust-scoring algorithms (Socket/Dependabot/Snyk) and mask malicious packages as "popular", evading reputation-based supply-chain defenses; NPM-DOWNLOAD-COUNT-INFLATION-TRUST-SCORING-MANIPULATION dimension (blog.indegy.com May 28 2026)
+- [W-210] **[P3]** Anthropic completed first public acquisition buying the Bun JavaScript-runtime team Dec 3 2025 (new.qq.com) + Bun shipped built-in headless-browser automation and cron scheduling in-core during 2026 H1 (cloud.tencent.com JS Weekly #16) — JS runtime now AI-VENDOR-OWNED and bundling browser-automation/cron primitives raises supply-chain + rendering-parity questions for QA pipelines; AI-VENDOR-ACQUIRED-JS-RUNTIME-CONSOLIDATION-WITH-BROWSER-AUTOMATION dimension
+- [C-141] **[P3]** GameDev.Land "Adaptive Layout for a Poki HTML5 game" workshop (May 13 2026) formalizes the Poki-platform ADAPTIVE-LAYOUT (orientation / viewport / aspect-ratio / devicePixelRatio) QA gate as a third-party-distributor reference baseline; THIRD-PARTY-DISTRIBUTOR-ADAPTIVE-LAYOUT-QA-BASELINE dimension (gamedev.land)
+- [P-092] **[P3]** Sohu 2026 game-industry insight report (April 28 2026) establishes USER-RETENTION as the dominant mobile-game industry winning strategy with 2025 mobile = 55% of total game revenue, ~3B global mobile players, 444.6B total player-hours; INDUSTRY-RETENTION-FIRST-METRIC-BASELINE-2026 dimension requiring GameZipper to benchmark D1/D7/D30 retention against the 2026 industry baseline (sohu.com/a/1015491436_121503203)
+- [PC-021] **[P3]** Steam mobile communication-error / login-failure / update-failure 2026 complaint cluster (so.html5.qq.com 7 articles April-June 2026) — players blame the GAME/PLATFORM for ISP/region/cache/time-skew/storage-induced failures; NETWORK-BLAMED-AUTH-LOGIN-UPDATE-FAILURE-DIAGNOSTIC-PATTERN dimension extending PC-020 into the AUTH/LOGIN/UPDATE-FAILURE surface
+### Sources
+- Search tools used: mcp_minimax_search_web_search (web-search-prime SearXNG returned 404 again this cycle — primary engine unavailable, fell back to minimax batch)
+- Search queries executed:
+  - "HTML5 game testing 2026 July browser new techniques bug report"
+  - "browser security vulnerability 2026 June July CVE Chrome Safari Edge Firefox"
+  - "casual game UX complaint 2026 mobile accessibility bug report"
+  - "TanStack Shai-Hulud npm worm 2026 June supply chain attack variant"
+  - "Bun headless browser automation cron 2026 JavaScript runtime new"
+  - "CVE-2026 July Chrome Firefox Safari emergency patch browser exploit"
+  - "WebGPU WebAssembly Out Of Memory crash 2026 mobile browser game"
+- Key URLs cited in new test cases:
+  - https://blog.csdn.net/weixin_42376192/article/details/161181175 (May 18 2026 — TanStack Mini-Shai-Hulud GitHub Actions cache poisoning; 6-minute 42-package 84-version attack; SLSA L3 bypass; pull_request_target trigger)
+  - https://cloud.tencent.com/developer/article/2679559 (June 26 2026 — JS Weekly #20; TanStack dead-man's-switch variant that wipes files on token revocation)
+  - https://blog.csdn.net/qiqiqi233/article/details/159990612 (May 29 2026 — CVE-2026-27498 n8n readWriteFile + git chain RCE; patched in 2.2.0 / 1.123.8)
+  - https://blog.csdn.net/weixin_42376192/article/details/161069264 (May 14 2026 — CVE-2026-20131 Cisco FMC CVSS 10.0 deserialization RCE; 2026 first perfect-score; CISA KEV March 19 2026; ransomware ~100% success rate)
+  - https://blog.indegy.com (May 27-28 2026 — Tenable Exposure Management Blog; Ron Popov research; "Download pumping: New npm deception technique for supply chain attacks")
+  - https://new.qq.com/rain/a/20251204A057ZS00 (Dec 4 2025 — Anthropic acquires Bun JS-runtime team; first public acquisition)
+  - https://cloud.tencent.com/developer/article/2672214 (June 2026 — JS Weekly #16; Bun built-in headless-browser automation + cron scheduling)
+  - https://www.gamedev.land/ (May 13 2026 — "Adaptive Layout for a Poki HTML5 game" workshop; Poki adaptive-layout QA gate baseline)
+  - https://www.sohu.com/a/1015491436_121503203 (April 28 2026 — "2026 年游戏应用洞察报告"; retention-first strategy; 55% mobile revenue; ~3B players; 444.6B player-hours)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_72369d4a41846352 (April 7 2026 — Steam error code 118 network-failure root-cause analysis)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_1786a38ddbc40852 (June 22 2026 — Steam e84 login failure + UU accelerator recommendation)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8486a3b829968052 (June 24 2026 — Steam mobile login cache-conflict + token-sync failure pattern)
+- Additional context from searches (already covered in prior versions, not re-added): CVE-2026-5281 Chrome Dawn WebGPU UAF in-the-wild (existing S-177); CVE-2026-42945 NGINX "Rift" heap overflow (existing S-086); CVE-2026-42897 Exchange OWA stored XSS (existing S-164); CVE-2026-21992 Oracle Identity Manager unauth RCE (existing W-163); CVE-2026-34926 Trend Micro Apex One path-traversal + EDR auto-update hijack (existing S-155); CVE-2026-27498 n8n (NEW this cycle as S-197); CVE-2026-20131 Cisco FMC CVSS 10.0 (NEW this cycle as S-198); TanStack Mini-Shai-Hulud GitHub Actions cache poisoning (NEW this cycle as S-196); Download pumping npm deception (NEW this cycle as S-199); Anthropic acquires Bun + Bun browser automation (NEW this cycle as W-210); GameDev.Land Poki adaptive-layout (NEW this cycle as C-141); Sohu 2026 retention-first industry baseline (NEW this cycle as P-092); Steam mobile auth/login/update complaint cluster (NEW this cycle as PC-021).
+
 ## [v1.97.0] - 2026-06-26
 ### Added
 - 8 new test cases from late-June 2026 industry research (R216 Dynamic Test Intelligence cron)
