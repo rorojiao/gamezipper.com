@@ -779,11 +779,29 @@ function setupInput(){
 }
 
 // ---- Animation Loop ----
+var rafId=null;
 function animate(){
   animTime+=0.016;
   render();
-  requestAnimationFrame(animate);
+  rafId=requestAnimationFrame(animate);
 }
+
+// ---- Cleanup ----
+function cleanup(){
+  if(rafId){cancelAnimationFrame(rafId);rafId=null}
+  stopBGM();
+  if(audioCtx){try{audioCtx.close()}catch(e){}audioCtx=null}
+}
+window.addEventListener('beforeunload',cleanup);
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){
+    if(rafId){cancelAnimationFrame(rafId);rafId=null}
+    stopBGM();
+  }else{
+    if(!rafId){animate()}
+    if(soundOn){startBGM()}
+  }
+});
 
 // ---- Resize ----
 function handleResize(){
@@ -853,7 +871,7 @@ if(document.readyState==='loading'){
 </script>
 
 <!-- Site scripts -->
-<script src="/gz-analytics.js?v=202606277d7eafa0244"></script>
+<script src="/gz-analytics.js?v=202606277defb86e259"></script>
 <script src="/monetag-manager.js?v=3"></script>
 <script src="/game-footer.js?v=3"></script>
 </body>
