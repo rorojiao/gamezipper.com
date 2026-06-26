@@ -1,3 +1,39 @@
+## [v1.99.0] - 2026-06-26
+### Added
+- 8 new test cases from late-June 2026 industry research (R218 Dynamic Test Intelligence cron)
+- [S-200] **[P1]** Safari 26.5 WebKit Content-Security-Policy bypass leaking sensitive user information (CVE-2026-28962, disclosed May 14 2026, patched in Safari 26.5) — attacker-crafted content bypasses page CSP and exfiltrates sensitive data at the WebKit engine layer; directly relevant to any GameZipper page relying on CSP to sandbox untrusted ad iframes (WEBKIT-CSP-BYPASS-SENSITIVE-INFO-LEAK)
+- [S-201] **[P2]** CVE-2026-26171 .NET System.Security.Cryptography.Xml EncryptedXml uncontrolled-resource-consumption DoS (April 21 2026, patched in PowerShell 7.6.1 / 7.5.6) — build-pipeline/build-tool DoS class relevant to any future .NET/PowerShell ops automation; BUILD-PIPELINE-DEPS-DOS-VIA-XML-CRYPTO-LIB dimension (github.com/PowerShell/Announcements/issues/83)
+- [B-138] **[P1]** Safari 26.5 WebRTC process-crash stability fix (May 14 2026) — malformed/crafted media signaling crashed the entire browser process pre-26.5; any GameZipper game using WebRTC or WebAudio-routed media could trigger a full-Safari crash; WEBRTC-PROCESS-CRASH-STABILITY-CLASS dimension
+- [B-139] **[P2]** Chrome 149 stable (v149.0.7827.115, June 17 2026) FULL WebAssembly 2.0 support with optimized GPU acceleration + parallel loading — WASM 2.0 instructions (SIMD, threads, exception handling) unavailable on older browsers produce silent "fail to instantiate"; WASM-2.0-FULL-SUPPORT-BROWSER-BASELINE dimension
+- [W-211] **[P2]** Rolldown 1.0 stable release (June 25-26 2026, rolldown.rs; JS Weekly #20) — Rust-based JS/TS bundler now powers Vite 8+, 10-30x faster than Rollup with Rollup-plugin compatibility; establishes a new BUILD-TOOL-BASELINE shift affecting dev/prod parity, plugin-compat, and source-map generation; ROLLDOWN-VITE-8-BUNDLER-BASELINE-SHIFT dimension
+- [W-212] **[P3]** Chrome 149 stable milestone baseline (v149.0.7827.115 June 17 2026) — establishes lowest-supported-Chromium floor for late-June 2026 for features shipping in 149 (WASM 2.0, Gemini sidebar, JPEG-XL return); CHROME-149-STABLE-MILESTONE-BASELINE dimension
+- [C-142] **[P2]** Chrome Gemini-in-Chrome AI sidebar + agent Auto-Browse + Nano Banana in-browser image editing + real-time captions (desktop Jan 29 2026; Android May 15 2026) — AI agent may auto-click game buttons (fake engagement / reward-farming), Nano Banana may alter visible game sprites/canvas overlays (visual QA drift), Auto-Browse may navigate away mid-session; CHROME-GEMINI-SIDEBAR-AGENT-AUTO-BROWSE-IMAGE-EDIT-QA-DIMENSION
+- [PC-022] **[P3]** Steam cross-region payment-failure + cache/Cookie-conflict + extension-interference complaint cluster (April-June 2026) — players blame the GAME/PLATFORM for failures actually rooted in browser cache corruption, ad-blocker/script-controller extension interference, or ISP cross-border latency; extends PC-021 into PAYMENT + CACHE-DIRTY + EXTENSION-INTERFERENCE surface; NETWORK-BLAMED-PAYMENT-CACHE-EXTENSION-FAILURE-DIAGNOSTIC-PATTERN dimension
+### Sources
+- Search tools used: mcp_minimax_search_web_search (primary); web-search-prime SearXNG not attempted this cycle (minimax batch returned high-quality results)
+- Search queries executed:
+  - "HTML5 game testing 2026 new techniques browser bug report June July"
+  - "browser security vulnerability 2026 June July CVE Chrome Safari Edge Firefox emergency"
+  - "casual game UX complaint 2026 mobile accessibility bug report June"
+  - "Chrome 152 Edge Safari 27 2026 June stable release WebKit change breaking"
+  - "Rolldown 1.0 Vite 8 Rust bundler 2026 JavaScript release June"
+  - "CVE-2026-28962 Safari 26.5 WebKit CSP bypass WebRTC crash fix"
+  - "Chrome 149 stable June 2026 release WebGPU WebRTC changes Gemini AI"
+- Key URLs cited in new test cases:
+  - https://finance.sina.com.cn/tech/digi/2026-05-14/doc-inhxvtwn8763233.shtml (May 14 2026 — Apple Safari 26.5 security advisory; CVE-2026-28962 WebKit CSP bypass; WebRTC process-crash stability fix)
+  - https://www.sohu.com/a/1022622771_122004016 (May 14 2026 — Safari 26.5 20-vulnerability patch summary; CVE-2026-28962 CSP bypass detail)
+  - https://github.com/PowerShell/Announcements/issues/83 (April 21 2026 — Microsoft Security Advisory CVE-2026-26171 .NET EncryptedXml DoS; PowerShell 7.6.1 / 7.5.6 patch)
+  - https://www.onlinedown.net/soft/1113489.htm (June 17 2026 — Chrome v149.0.7827.115 stable; full WebAssembly 2.0 support; GPU acceleration; parallel loading)
+  - https://rolldown.rs/ (June 25 2026 — Rolldown 1.0 stable homepage; Rust bundler; 10-30x faster than Rollup; Vite 8 integration)
+  - https://cloud.tencent.com/developer/article/2679559 (June 26 2026 — JS Weekly #20; Rolldown 1.0 + Node 26.1 FFI + TanStack dead-man's-switch variant)
+  - https://blog.csdn.net/xfy196/article/details/157909765 (April 15 2026 — Rolldown 1.0 RC announcement; Vite 8 bundler change)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_284697ae69602152 (Jan 29 2026 — Google integrates Gemini AI into Chrome; Nano Banana image gen; Auto Browse agent)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2186a06f72096852 (May 15 2026 — Chrome for Android full Gemini integration + Auto Browse)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_59669ddd87490852 (April 14 2026 — Steam payment stuck/failure; cross-region network causes)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_55769fadc5582652 (May 6 2026 — Steam verification infinite loop; browser cache/Cookie + ad-blocker/script-controller extension conflicts)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_1186a3b828834752 (June 24 2026 — Steam error 102; cross-region network instability)
+- Additional context from searches (already covered in prior versions, not re-added): CVE-2026-5281 Chrome Dawn WebGPU UAF in-the-wild (existing S-177); CVE-2026-42945 NGINX "Rift" heap overflow (existing S-086); CVE-2026-27498 n8n readWriteFile RCE (existing S-197); CVE-2026-20131 Cisco FMC CVSS 10.0 (existing S-198); TanStack Mini-Shai-Hulud (existing S-196); Download pumping npm deception (existing S-199); Anthropic acquires Bun + Bun browser automation (existing W-210); GameDev.Land Poki adaptive-layout (existing C-141); Sohu retention-first baseline (existing P-092); Steam mobile auth/login/update cluster (existing PC-021); Chrome 131 ::selection inheritance breakage (existing B-137); Chrome 150 stable milestone (existing W-200); Chrome 150 autofill OS-wallet integration (existing B-135); WebKit-7620.1.16.11.5 release tag (existing C-140); WebGL canvas responsive resize (existing G-160); WebGL shader type-misuse (existing S-195); iOS Safari experimental toggles self-broken state (existing B-136); STATUS_INVALID_IMAGE_HASH registry workaround (existing W-209); WebKit IndexedDB cross-origin leak (existing W-208); WebKit "Block cookies" bypass (existing S-194); AMD memory -20% forecast (existing P-091); Microsoft Defender VM consolidation (existing C-139); Mobile-OS battery-saver rAF throttling (existing P-090); Hono/jsx ErrorBoundary XSS (existing S-193); Bun headless browser + cron (existing W-210). CVE-2026-28962 Safari 26.5 WebKit CSP bypass (NEW this cycle as S-200); CVE-2026-26171 .NET EncryptedXml DoS (NEW this cycle as S-201); Safari 26.5 WebRTC process-crash (NEW this cycle as B-138); Chrome 149 WASM 2.0 full support (NEW this cycle as B-139); Rolldown 1.0 + Vite 8 (NEW this cycle as W-211); Chrome 149 stable milestone (NEW this cycle as W-212); Chrome Gemini sidebar + Auto-Browse + Nano Banana (NEW this cycle as C-142); Steam payment + cache + extension complaint cluster (NEW this cycle as PC-022).
+
 ## [v1.98.0] - 2026-06-26
 ### Added
 - 7 new test cases from late-June 2026 industry research (R217 Dynamic Test Intelligence cron)
