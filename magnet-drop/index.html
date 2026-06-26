@@ -305,7 +305,10 @@ function loseLevel(){state='fail';sfxFail();}
 /* ---------- trajectory preview ---------- */
 function previewTrajectory(vx,vy){
   const pts=[]; let x=ball.x,y=ball.y;const R=curL();
-  const steps=46, h=1;
+  // h = one simulation substep at 60fps (matches stepBall's per-substep timing).
+  // Previously h=1 made every step 60× too coarse, so the predicted path
+  // shot off-screen on the first iteration and the HINT line was always empty/misleading.
+  const steps=46, h=1/60;
   for(let i=0;i<steps;i++){
     for(const m of (R.m||[])){
       const dx=m.x-x,dy=m.y-y,d2=dx*dx+dy*dy+SOFT,d=Math.sqrt(d2);
@@ -315,7 +318,7 @@ function previewTrajectory(vx,vy){
     vy+=GRAV*h*60; vx*=Math.pow(AIR,h*60); vy*=Math.pow(AIR,h*60);
     x+=vx*h*60; y+=vy*h*60;
     if(x<0||x>VW||y>VH)break;
-    pts.push({x,y}); if(i%2===0)continue;
+    pts.push({x,y});
   }
   return pts;
 }
