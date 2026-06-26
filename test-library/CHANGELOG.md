@@ -1,3 +1,41 @@
+## [v1.101.0] - 2026-06-27
+### Added
+- 6 new test cases from late-June 2026 industry research (R220 Dynamic Test Intelligence cron)
+- [S-208] **[P1]** CVE-2026-23111 Linux kernel nf_tables "One Flipped Exclamation Mark" abort-path one-character condition-flip LPE (patched Feb 5 2026; Exodus Intelligence full walkthrough June 8 2026; Garrett Stimpson writeup June 23 2026; FuzzingLabs independent reproduction) — a single inverted condition lets any unprivileged user walk to root; the ONE-CHARACTER-CONDITION-FLIP-IN-NF_TABLES-ABORT-PATH-LPE-CLASS dimension (thehackernews.com June 8 2026; garrettstimpson.ca June 23 2026)
+- [B-142] **[P2]** Firefox 150 stable ship April 22-23 2026 — Mozilla借助 Anthropic Claude Mythos Preview AI 一次性发现并修复 271 个安全漏洞 (180 high + 80 medium + 11 low),创下历史记录;多个沙箱逃逸漏洞每个 2 万美元赏金;XSLT 漏洞潜伏 20 年、HTML 元素漏洞潜伏 15 年;百名工程师参与;the AI-AUDITED-STABLE-SHIP-VULN-FLOOD dimension (so.html5.qq.com April 22 2026; sohu.com May 20 2026)
+- [W-214] **[P2]** Apple iOS/iPadOS/macOS/tvOS/visionOS 27.0 Beta 2 (June 23 2026 — exactly 2 weeks after WWDC26 Beta 1) fixed 28 bugs across 5 OSes simultaneously, confirming the 2-week coordinated developer-beta cadence through fall 2026 stable ship; the MULTI-OS-BETA-CYCLE-COORDINATED-2-WEEK-CADENCE dimension (so.html5.qq.com June 23 2026)
+- [G-161] **[P2]** iOS 26.5 battery-life regression + button-enlargement + icon-misalignment + image/link-load-failure bug cluster (May 20 2026 field reports) where OS-level UI degradation mimics game bugs — players perceive enlarged buttons / shifted icons / missing images as GAME bugs; the OS-LEVEL-DEGRADATION-MIMICS-GAME-BUG dimension (so.html5.qq.com May 20 2026)
+- [PC-023] **[P3]** Steam mobile-app update-failure diagnostic cluster 2026 — three root causes (ISP routing/bandwidth, device storage exhaustion, accumulated cache incompatibility with new installer); the UPDATE-INSTALLATION-FAILURE-CACHE-STORAGE-NETWORK-TRIANGLE dimension (so.html5.qq.com April 2 2026; April 28 2026)
+- [C-144] **[P3]** AI-audited pre-release QA methodology adoption baseline 2026 — Firefox 150 (Mythos 271 vulns), Chrome 149 (429 fixes), depthfirst FFmpeg (21 zero-days for $1000), Anthropic Mythos (100 Chromium zero-days in 15 days) establish that AI-assisted vuln auditing is now INDUSTRY-STANDARD pre-release QA; the AI-AUDITED-PRE-RELEASE-QA-METHODOLOGY-ADOPTION-BASELINE dimension (sohu.com May 20 2026; thehackernews.com June 6 2026)
+### Sources
+- Search tools used: mcp_minimax_search_web_search (primary — minimax SSL endpoint recovered after initial failure); mcp_web_search_prime SearXNG returned 404 all queries this cycle (primary engine unavailable, as also noted in v1.100.0); mcp_web_search_prime_batch_search all 5 parallel queries returned "SearXNG 请求失败: 404"
+- Search queries executed:
+  - "HTML5 browser game testing 2026 new techniques June July" (minimax SSL failed first attempt — SSLEOFError on api.minimaxi.com)
+  - "browser security vulnerability CVE 2026 June July Chrome Safari Firefox emergency"
+  - "Chrome 150 Safari 27 Edge Firefox stable release June 26 27 2026"
+  - "npm PyPI supply chain attack June 26 27 2026 malicious package worm"
+  - "casual mobile game UX bug complaint June 26 27 2026"
+  - "WebGPU WebAssembly HTML5 game bug regression June 2026"
+  - "Linux kernel CVE-2026-23111 nf_tables UAF exploit root June 8 2026"
+  - "Chrome 150 stable release June 29 2026 features WebGPU bug regression"
+  - "Safari 27 iOS 27 stable ship September 2026 WebKit bug regression"
+  - "CVE-2026-23111 nf_tables abort path exploit root container escape June 2026"
+  - "Firefox 150 stable ship 271 vulnerabilities Claude Mythos AI bugs 2026"
+  - "mobile game bug report June 26 27 2026 iOS Android crash lag complaint"
+- Key URLs cited in new test cases:
+  - https://www.garrettstimpson.ca/ (June 23 2026 — "CVE-2026-23111: One Flipped Exclamation Mark Gives You the Linux Kernel"; full public exploit walkthrough)
+  - https://thehackernews.com/search/label/Vulnerability (June 8 2026 — "One-Character Linux Kernel Flaw Enables Local Root Access, Exploits Now Public"; CVE-2026-23111 patched Feb 5 2026, Exodus Intelligence + FuzzingLabs public exploits)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_02869e856ca74352 (April 22 2026 — "Anthropic 最强 AI 立功,揪出火狐 Firefox 150 浏览器 271 个漏洞"; Firefox 150 stable ship + Claude Mythos 271 vulns)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_25669e9b85a72152 (April 23 2026 — "Firefox 150 更新修复 271 个安全漏洞,AI 功臣是 Claude Mythos"; 271-vuln breakdown)
+  - https://www.sohu.com/a/1024937533_122066678 (May 20 2026 — "Claude Mythos 助力 Firefox 单月修复 271 个安全漏洞"; 180 high + 80 medium + 11 low breakdown, 20-year-old XSLT bug)
+  - https://www.sohu.com/a/1024939094_122066678 (May 20 2026 — "Claude Mythos 单月发现 271 个 Firefox 漏洞,包括隐藏 20 年的老 Bug"; 423 vulns in one month > prior 15 months combined, $20K sandbox-escape bounty)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_5856a3a314a96152 (June 23 2026 — "iOS 27 Beta 2 推送:修复 28 个 Bug,多项实用功能上线"; 5-OS simultaneous Beta 2, 2-week cadence)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0656a0d858960952 (May 20 2026 — "iOS 26.5 续航翻车,并存在多个 Bug"; battery + button-enlarge + icon-misalign + image-load-fail cluster)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_42769ce0efb35352 (April 2 2026 — "Steam 手机应用更新故障排除指南:2026 年实用解决方案"; cache/storage/network triangle)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_30769f058fb98952 (April 28 2026 — "2026 年 Steam 移动端通信错误全攻略与解决方案"; diagnostic cluster)
+  - https://thehackernews.com/search/label/Chrome (June 6 2026 — "AI Agent Uncovers 21 Zero-Days in FFmpeg; Chrome Patches Record 429 Bugs"; AI-audit methodology baseline)
+- Additional context from searches (already covered in prior versions, not re-added this cycle): CVE-2026-5281 Chrome Dawn WebGPU UAF (existing S-177); CVE-2026-32202 Windows Shell Spoofing (intentionally not added in v1.100.0 — would duplicate B-115/B-118 territory); CVE-2026-20045 Cisco Unified Comms (existing B-118); CVE-2026-21992 Oracle Identity Manager (existing W-163); CVE-2026-31431 Linux "Copy Fail" crypto LPE (existing P-074 — the sibling of new S-208 in the Linux-LPE family but different subsystem: crypto vs netfilter); CVE-2026-43284/43500 netfilter+RxRPC LPE pair (existing S-168 — the sibling of new S-208 in the netfilter family but different code path); Chrome 150 Google Wallet autofill (existing B-135); Firefox 152 stable ship (existing B-116); Safari 26.5 CVE-2026-28962 CSP bypass (existing S-150/S-200); Mozilla+Mythos AI discovery capability (existing S-149 — B-142 documents the stable-SHIP event, S-149 documents the capability).
+
 ## [v1.100.0] - 2026-06-26
 ### Added
 - 10 new test cases from late-June 2026 industry research (R219 Dynamic Test Intelligence cron)
