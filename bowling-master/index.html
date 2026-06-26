@@ -942,7 +942,7 @@ function drawParticles(ctx){
 }
 
 // ===== GAME LOOP =====
-var lastTime=0;
+var rafId=null;
 function loop(ts){
   S.animFrame++;
   if(S.sim){
@@ -952,7 +952,7 @@ function loop(ts){
     updateParticles();
   }
   render();
-  requestAnimationFrame(loop);
+  rafId=requestAnimationFrame(loop);
 }
 
 // ===== UI FUNCTIONS =====
@@ -1054,11 +1054,14 @@ function closeSettings(){ hideModals(); }
 function onVisChange(){
   if(document.hidden){
     stopBGM();
+    if(rafId){cancelAnimationFrame(rafId);rafId=null;}
   } else {
     if(S.screen==='game'&&S.bgmOn)startBGM();
+    if(!rafId)rafId=requestAnimationFrame(loop);
   }
 }
 function cleanup(){
+  if(rafId){cancelAnimationFrame(rafId);rafId=null;}
   stopBGM();
   if(S.audioCtx)try{S.audioCtx.close();}catch(e){}
 }
