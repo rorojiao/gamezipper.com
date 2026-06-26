@@ -1,3 +1,40 @@
+## [v1.100.0] - 2026-06-26
+### Added
+- 10 new test cases from late-June 2026 industry research (R219 Dynamic Test Intelligence cron)
+- [S-202] **[P1]** CVE-2026-41845 Spring Framework JavaScriptUtils.javaScriptEscape() HIGH XSS (June 8 2026) — the canonical Spring JS-escape utility ITSELF produces incorrectly-escaped output; FRAMEWORK-ESCAPING-PRIMITIVE-BYPASS-XSS-CLASS dimension (spring.io/security/page-7)
+- [S-203] **[P1]** CVE-2026-42945 NGINX "Rift" ngx_http_rewrite_module heap-buffer-overflow CVSS 9.2 (F5 disclosure May 13 2026) — 18-year latent bug (NGINX 0.6.27, 2008) in rewrite engine two-pass script execution; affects 1.3亿 sites; LONG-LATENT-INFRA-REWRITE-HEAP-OVERFLOW-CVE-2026-42945-CLASS dimension
+- [S-204] **[P2]** depthfirst autonomous AI security agent discovers 21 zero-days in FFmpeg for ~$1000 compute (June 6 2026) — all 23-year-old latent bugs in the canonical video-processing library; AI-DISCOVERED-LATENT-VULN-CLUSTER-IN-MEDIA-LIBRARY dimension
+- [W-213] **[P2]** Chrome 149 ships RECORD 429-bug single release + CVE-2026-10881 CVSS 9.6 sandbox-escape-to-RCE (June 6 2026) — BROWSER-SINGLE-RELEASE-PATCH-VOLUME-RECORD-CVE-2026-10881 dimension
+- [S-205] **[P2]** Cybernews 24-billion-record plaintext credential-leak Elasticsearch database (June 17 2026) — largest aggregate credential leak in history; CREDENTIAL-LEAK-VOLUME-RECORD-24-BILLION-RECORDS dimension
+- [S-206] **[P2]** UNC3753 (Chatty Spider / Luna Moth / Silent Ransom Group) vishing + physical-intrusion data-theft extortion campaign Jan-May 2026 (Google Mandiant + GTIG June 8 2026) — VISHING-PLUS-SCREEN-SHARE-DATA-EXTORTION-CAMPAIGN-CLASS dimension
+- [S-207] **[P3]** Xinference AI inference framework compromised via TeamPCP campaign April 22 2026 (dayssincelastsupplychainattack.com June 25 2026) — most recent major supply-chain attack; AI-INFERENCE-SERVER-SUPPLY-CHAIN-COMPROMISE-TEAMPCP-XINFERENCE dimension
+- [B-140] **[P3]** iOS 26.5.1 emergency dot-release for iPhone Air / iPhone 17 charging-failure hardware bug (MacRumors June 2 2026) — IOS-26.5.1-EMERGENCY-HARDWARE-CHARGING-FIX-DOT-RELEASE dimension
+- [B-141] **[P3]** Microsoft Edge 2026 "Copilot Design" UI revamp (Sohu April 13 2026) — Edge visual design language shift; EDGE-2026-COPILOT-DESIGN-VISUAL-REGRESSION-CLASS dimension for screenshots/baselines
+- [C-143] **[P3]** Cobenian/shai-hulud-detect open-source 3,290+ IoC supply-chain scanner baseline (github.com/Cobenian/shai-hulud-detect June 2026, 222 commits) — SHAI-HULUD-DETECT-OPEN-SOURCE-IoC-SCANNER-BASELINE dimension
+### Sources
+- Search tools used: mcp_minimax_search_web_search (primary — web-search-prime SearXNG returned 404 again this cycle; primary engine unavailable)
+- Search queries executed:
+  - "HTML5 browser game testing 2026 new techniques"
+  - "browser CVE security vulnerability June 2026"
+  - "Chrome Safari Edge update June 2026"
+  - "Spring Framework CVE-2026-41845 JavaScriptUtils XSS June 2026"
+  - "AI agent 21 zero-days FFmpeg Chrome 429 bugs 2026"
+  - "npm supply chain attack June 2026 malicious package"
+  - "iOS 26 Safari WebKit bug regression 2026"
+- Key URLs cited in new test cases:
+  - https://spring.io/security/page-7 (June 8 2026 — CVE-2026-41845 Spring Framework JavaScriptUtils XSS HIGH; CVE-2026-41846 JSP Form Tags XSS MEDIUM; CVE-2026-41854 SSRF via UriComponentsBuilder LOW)
+  - https://blog.csdn.net/weixin_42376192/article/details/161210582 (May 22 2026 — "NGINX Rift 深度解析"; CVE-2026-42945 detail)
+  - https://blog.csdn.net/FallenQu/article/details/161384855 (June 23 2026 — CVE-2026-42945 technical root cause; is_args two-pass flag divergence)
+  - https://thehackernews.com/search/label/Chrome (June 6 2026 — "AI Agent Uncovers 21 Zero-Days in FFmpeg; Chrome Patches Record 429 Bugs")
+  - https://blog.csdn.net/weixin_42376192/article/details/161762664 (June 7 2026 — "AI Agent 颠覆网络安全:FFmpeg 21个0Day与Chrome 429个漏洞背后的产业革命"; CVE-2026-10881 CVSS 9.6 $97K bounty)
+  - https://philiphall.com/ (June 17 2026 — "24 Billion Records Exposed: The Credential Leak That Changes Everything"; Cybernews Elasticsearch research)
+  - https://thehackernews.com/search/label/cybersecurity (June 8 2026 — "UNC3753 Used Vishing and Physical Intrusions in U.S. Data Theft Extortion Campaign"; Google Mandiant + GTIG attribution)
+  - https://www.dayssincelastsupplychainattack.com/ (June 25 2026 — "Xinference compromised (TeamPCP campaign) most recently on April 22 2026"; Semgrep tracker)
+  - https://www.macrumors.com/2025/04/01/ios-19-compatible-iphones-leak/ (June 2 2026 — iOS 26.5.1 current version; emergency fix for iPhone Air / iPhone 17 charging failure)
+  - https://www.sohu.com/a/1008833159_121956424 (April 13 2026 — "微软Edge 2026大改:界面深度融合Copilot设计"; Edge UI revamp toward Copilot design language)
+  - https://github.com/Cobenian/shai-hulud-detect (June 2026 — open-source Shai-Hulud supply-chain IoC scanner; 3,290+ compromised package versions; 222 commits)
+- Additional context from searches (already covered in prior versions, not re-added this cycle): CVE-2026-5281 Chrome Dawn WebGPU UAF (existing S-177); CVE-2026-32202 Windows Shell Spoofing (related CVE but distinct OS-layer dimension, not added — would duplicate B-115/B-118 territory); CVE-2026-10881 Chrome 149 sandbox-escape CVE (covered inline as part of new W-213 record-release dimension); GhostClaw/@openclaw-ai npm typosquat (existing S-157); IndonesianFoods npm spam-flood (existing W-156); Shai-Hulud campaign itself (existing S-130 — C-143 documents the DETECTION TOOL, not the attack); CVE-2026-41846 Spring JSP Form Tags XSS (companion to S-202, not separately added — same Spring advisory page, same JS-injection class); CVE-2026-41854 Spring SSRF via UriComponentsBuilder (companion to S-202, LOW severity, distinct SSRF class — could be added in future cycle if SSRF surface becomes relevant to GameZipper backend).
+
 ## [v1.99.0] - 2026-06-26
 ### Added
 - 8 new test cases from late-June 2026 industry research (R218 Dynamic Test Intelligence cron)
