@@ -285,6 +285,7 @@
 {n:"Solitaire Roguelite",e:"\U0001f3f0",u:"/solitaire-roguelite/",c:"card"},
 {n:'Peg Blast',e:'🎯',u:'/peg-blast/',c:'puzzle'},
       {n:'Delete One Part',e:'🧽',u:'/delete-one-part/',c:'puzzle'},
+      {n:'Draw to Save',e:'🛡️',u:'/draw-to-save/',c:'puzzle'},
       ]; }
    }
    function getDateSeed() {
