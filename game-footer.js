@@ -284,6 +284,7 @@
 {n:"Pop Them",e:"💥",u:"/pop-them/",c:"puzzle"},{n:"Heyawake",e:"\u25a2",u:"/heyawake/",c:"puzzle"},{n:"Gokigen Naname",e:"\u25c7",u:"/gokigen-naname/",c:"puzzle"},{n:"Stained Glass",e:"🎨",u:"/stained-glass/",c:"puzzle"},{n:"Sandtrix Classic",e:"🏖",u:"/sandtrix-classic/",c:"puzzle"},{n:"Sandtrix",e:"🏖️",u:"/sandtrix/",c:"puzzle"},
 {n:"Solitaire Roguelite",e:"\U0001f3f0",u:"/solitaire-roguelite/",c:"card"},
 {n:'Peg Blast',e:'🎯',u:'/peg-blast/',c:'puzzle'},
+      {n:'Delete One Part',e:'🧽',u:'/delete-one-part/',c:'puzzle'},
       ]; }
    }
    function getDateSeed() {
