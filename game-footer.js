@@ -225,8 +225,8 @@
       {n:'TriPeaks Solitaire',e:'🃏',u:'/tripeaks-solitaire/',c:'card'},
       {n:'Magic Tiles',e:'🎹',u:'/magic-tiles/',c:'puzzle'},
       {n:'Stick Hero',e:'🦸',u:'/stick-hero/',c:'skill'},
-      {n:'Balls vs Bricks',e:'⚪',u:'/balls-vs-bricks/',c:'puzzle'}
-   ];
+      {n:'Balls vs Bricks',e:'⚪',u:'/balls-vs-bricks/',c:'puzzle'},
+{n:'Magnet Drop',e:'🧲',u:'/magnet-drop/',c:'puzzle'},];
 
   var cur = location.pathname;
   var current = games.find(function(g){ return g.u === cur; });
