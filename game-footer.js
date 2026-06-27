@@ -289,6 +289,7 @@
       {n:'Burn the Rope',e:'🔥',u:'/burn-the-rope/',c:'puzzle'},
       {n:'String Art Studio',e:'🧵',u:'/string-art/',c:'puzzle'},
 {n:'Gem Paint',e:'💎',u:'/gem-paint/',c:'puzzle'},
+{n:'Futoshiki',e:'🧩',u:'/futoshiki/',c:'puzzle'},
       ]; }
    }
    function getDateSeed() {
