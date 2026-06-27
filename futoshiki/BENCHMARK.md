@@ -1,61 +1,46 @@
-# Futoshiki — Competitor Benchmark
+# Futoshiki — Competitive Benchmark
 
-## Selected Game
-**Futoshiki** (a.k.a. "More or Less") — Japanese inequality logic puzzle. Fill a Latin square (each digit 1..N once per row/column) while respecting < and > inequality signs between adjacent cells.
+## Candidate
+- **Game**: Futoshiki (Inequality / "Not Equal" Latin-Square Puzzle)
+- **Genre**: Nikoli-style logic puzzle, constraint satisfaction
+- **Slug**: `futoshiki`
+- **Score**: 20/25 (Tier 1)
+- **Catalog gap**: Confirmed — no `futoshiki` slug exists. `greater-than-sudoku` (#394) is a different mechanic (Sudoku variant WITH 3×3 box constraints + inequalities). Futoshiki is a pure Latin square (rows/columns) + inequality signs only — no box regions. Distinct from kakuro (sums), kenken (arithmetic cages), and skyscrapers (visibility).
 
-## Competitor Survey (2026-06-07)
+## How Futoshiki works
+- Fill an N×N grid with digits 1..N.
+- Each **row** must contain every digit exactly once (Latin-square row rule).
+- Each **column** must contain every digit exactly once (Latin-square column rule).
+- Some adjacent cell pairs are joined by an **inequality sign** (`>` or `<`) that the digits must satisfy.
+- Solve by logical deduction from the inequalities.
 
-### 1. puzzle-futoshiki.com
-- 5x5 default grid; cells with < > signs between them
-- Daily puzzle; difficulty: Easy → Hard
-- Number pad input, conflict highlighting
-- Undo, eraser, hint, pencil-mark notes
-- Timer, statistics, best time per difficulty
+## Top competitors analyzed
 
-### 2. futoshiki.com (Futoshiki Online)
-- 4x4, 5x5, 6x6, 7x7, 8x8, 9x9 grids
-- New daily puzzle + archive
-- Hint reveals single cell
-- Win check + victory screen
-- Mobile-friendly number pad
+| Source | Format | Features | Monetization | Avg. session |
+|--------|--------|----------|--------------|--------------|
+| **Simon Tatham's Puzzle Collection** (Unequal) | Desktop + mobile web, free | Click-edge to toggle < >, auto-conflict highlight, unlimited procedural levels, difficulty by grid size (4×4 → 7×7), undo/redo, solver-based hint, fill-in-pencil | Open source, no ads | 4–12 min |
+| **Puzzle Team / BrainBashers Futoshiki** | Web | Daily puzzle, weekly archive, multiple sizes, print-friendly, timer | Display ads | 5–15 min |
+| **Conceptis Futoshiki** (paid app) | iOS/Android | Hand-crafted levels, 5 difficulty tiers, star ratings, hints, packs | Paid + IAP | 8–20 min |
+| **Futoshiki mobile apps** (Google Play) | App | Daily challenge, achievements, 30+ levels per pack, no-ip reminder | Rewarded video + IAP | 5–10 min |
+| **The Guardian / Nikoli Futoshiki** | Web/print | Curated hand-made grids, varying sizes | Subscription/ads | 6–15 min |
 
-### 3. futoshiki.puzzlebaron.com
-- Printable + online; 4x4, 5x5, 6x6, 7x7, 9x9
-- Step-by-step solution reveal
-- 5 difficulty levels
+## Required systems (must match)
+1. ✅ **Multi-tier difficulty** (5 tiers, 6 levels each = 30 levels)
+2. ✅ **Size progression**: 4×4 → 5×5 → 6×6 → 7×7 across tiers
+3. ✅ **Inequality constraint rendering**: `<` / `>` signs between adjacent cells (horizontal + vertical), with visual flipping
+4. ✅ **Conflict detection**: highlight duplicate row/column digits in real time + violated inequalities
+5. ✅ **Unique-solution generator**: backtracking solver verifies uniqueness before shipping a level
+6. ✅ **Hint system** (solver-driven, costs a star)
+7. ✅ **Undo / reset / notes mode**
+8. ✅ **Star ratings** stored in localStorage
+9. ✅ **Daily challenge** (date-seeded)
+10. ✅ **Achievements** (8)
+11. ✅ **Procedural audio** (Web Audio API)
+12. ✅ **OG image + icon** (RunningHub)
+13. ✅ **Mobile-first responsive** (touch + mouse)
 
-## Core Systems Required (S-grade benchmark)
-| System | Required | Notes |
-|--------|----------|-------|
-| Grid sizes | 4x4, 5x5, 6x6, 7x7, 9x9 | Progressive difficulty |
-| Latin square rule | yes | Each digit 1..N once per row/column |
-| Inequality signs | yes | < and > between cells, click to cycle |
-| Conflict highlight | yes | Red on duplicate row/column, broken inequality |
-| Undo | yes | Full history stack |
-| Hint | yes | Reveals a single correct cell (limited) |
-| Notes mode | yes | Pencil marks (small digits in corners) |
-| Timer | yes | Per puzzle; best time saved |
-| Daily challenge | yes | Same puzzle for everyone, leaderboard |
-| 30+ puzzles | yes | 5 per size + 5 daily = 30+ |
-| Win celebration | yes | Confetti + best-time display |
-| Star rating | yes | 1-3 stars by time (par time per difficulty) |
-| Sound feedback | yes | Click, place, conflict, win SFX |
-| Progress save | yes | localStorage v1, per-size best times |
-| Tutorial | yes | First-launch modal, skippable |
-| Theme | yes | Dark gradient + neon accent |
-
-## Numbered Level Plan (30 levels)
-- Tier 1 — 4x4 (10 levels, par 60-180s)
-- Tier 2 — 5x5 (10 levels, par 90-300s)
-- Tier 3 — 6x6 (5 levels, par 180-420s)
-- Tier 4 — 7x7 (5 levels, par 240-540s)
-
-## Visual Style
-- Dark gradient background (#0a0e27 → #1a1f3a)
-- Neon accent: cyan (#00d9ff) for input, magenta (#ff006e) for conflict
-- Rounded cell tiles with subtle glassmorphism
-- < and > signs as elegant SVG arrows between cells
-
-## Music/SFX
-- BGM: ambient electronic, mysterious, slow tempo (Web Audio API procedural)
-- SFX: click, place, conflict (descending), undo, hint, win
+## Differentiation vs. competitors
+- **No download, no ads in the puzzle area** (GameZipper universal banner only)
+- **Daily challenge** — most free web competitors only offer static weekly puzzles
+- **S-tier polish**: dark neon theme consistent with catalog (Dominosa/Kropki/Aqre family), animated number placement, particle effects on completion
+- **Verified unique solutions** — many free generators ship ambiguous puzzles; ours guarantees uniqueness via solver check
