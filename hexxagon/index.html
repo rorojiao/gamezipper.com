@@ -265,25 +265,29 @@ function allCells(){
   return cells;
 }
 const CELLS = allCells();                 // 61 cells
-function neighborsOf(q,r){
-  const out=[];
-  for(const[dq,dr]of DIRS){ const nq=q+dq,nr=r+dr; if(onBoard(nq,nr)) out.push({q:nq,r:nr}); }
-  return out;
-}
-// distance-2 cells (for jumps)
-function distTwoCells(q,r){
-  const out=[];
-  for(const c of CELLS){ if(hexDist({q,r},c)===2) out.push(c); }
-  return out;
-}
+// Precomputed neighbor & dist-2 lookups (built ONCE for all 61 cells — O(1) at runtime)
+const NEIGHBORS = new Map();      // "q,r" -> [{q,r}...] (6 or fewer, border cells have fewer)
+const DISTTWO = new Map();        // "q,r" -> [{q,r}...] (cells exactly distance 2)
+(function buildLookups(){
+  for(const c of CELLS){
+    const k=c.q+","+c.r, nb=[], dt=[];
+    for(const[dq,dr]of DIRS){ const nq=c.q+dq,nr=c.r+dr; if(onBoard(nq,nr)) nb.push({q:nq,r:nr}); }
+    for(const c2 of CELLS){ if(hexDist(c,c2)===2) dt.push({q:c2.q,r:c2.r}); }
+    NEIGHBORS.set(k,nb); DISTTWO.set(k,dt);
+  }
+})();
+function neighborsOf(q,r){ return NEIGHBORS.get(q+","+r) || []; }
+function distTwoCells(q,r){ return DISTTWO.get(q+","+r) || []; }
 // precompute pixel centers (pointy-top hex), normalized then scaled at draw time
 const SQ3 = Math.sqrt(3);
 function hexToPixel(q,r,size){
   return { x: size*(SQ3*q + SQ3/2*r), y: size*(3/2*r) };
 }
-const CORNERS = [{q:RADIUS,r:0},{q:0,r:RADIUS},{q:-RADIUS,r:RADIUS},{q:-RADIUS,r:0},{q:0,r:-RADIUS},{q:RADIUS,r:-RADIUS}];
-function isCorner(q,r){ return CORNERS.some(c=>c.q===q&&c.r===r); }
-function isEdge(q,r){ return neighborsOf(q,r).length < 6; }   // border cell
+const CORNER_KEYS = new Set([RADIUS+",0","0,"+RADIUS,(-RADIUS)+","+RADIUS,(-RADIUS)+",0","0,"+(-RADIUS),RADIUS+","+(-RADIUS)]);
+const EDGE_KEYS = new Set();
+(function(){ for(const c of CELLS){ if(NEIGHBORS.get(c.q+","+c.r).length<6) EDGE_KEYS.add(c.q+","+c.r); } })();
+function isCorner(q,r){ return CORNER_KEYS.has(q+","+r); }
+function isEdge(q,r){ return EDGE_KEYS.has(q+","+r); }
 
 // ─── Board state ─────────────────────────────────────────────────
 // board: Map "q,r" -> 'R' | 'B'
@@ -346,33 +350,43 @@ function hasAnyMoveFull(b,p){
 }
 
 // ─── AI ──────────────────────────────────────────────────────────
+let aiStartTime=0, aiTimeBudget=1500, aiAborted=false;
 function evaluate(b,p){
   const me=p, o=opp(p);
-  let score=0, myC=0, oC=0, myMob=0, oMob=0, myFront=0, oFront=0;
+  let score=0, myC=0, oC=0, myFront=0, oFront=0;
   for(const[k,v]of b){
-    const[q,r]=k.split(',').map(Number);
-    if(v===me){ myC++; if(isCorner(q,r)) score+=30; else if(isEdge(q,r)) score+=8; }
-    else if(v===o){ oC++; if(isCorner(q,r)) score-=30; else if(isEdge(q,r)) score-=8; }
+    const isCornerCell = CORNER_KEYS.has(k);
+    const isEdgeCell = EDGE_KEYS.has(k);
+    if(v===me){
+      myC++;
+      if(isCornerCell) score+=30; else if(isEdgeCell) score+=8;
+      else { const nb=NEIGHBORS.get(k); for(const n of nb){ if(!b.has(n.q+","+n.r)){ myFront++; break; } } }
+    } else if(v===o){
+      oC++;
+      if(isCornerCell) score-=30; else if(isEdgeCell) score-=8;
+      else { const nb=NEIGHBORS.get(k); for(const n of nb){ if(!b.has(n.q+","+n.r)){ oFront++; break; } } }
+    }
   }
-  myMob = genMoves(b,me).length;
-  oMob  = genMoves(b,o).length;
-  score += (myC-oC)*3;
-  score += (myMob-oMob)*4;
+  score += (myC-oC)*4;
+  score += (oFront-myFront)*2;   // enemy frontiers help me, mine hurt me
   return score;
 }
-function minimax(b,depth,alpha,beta,maxim,p,aiColor){
-  const moves=genMoves(b,p);
-  if(depth===0 || moves.length===0){
-    if(moves.length===0){
-      // current player passes; if opponent also has no moves -> terminal
-      if(!hasAnyMoveFull(b,opp(p))) return {score:evaluate(b,aiColor),move:null};
-      // else opponent moves
-      return minimax(b,depth,alpha,beta,!maxim,opp(p),aiColor);
-    }
-    return {score:evaluate(b,aiColor),move:null};
-  }
-  // move ordering: prefer jumps that convert more (helps alpha-beta)
+function orderMoves(moves){
   moves.sort((x,y)=>(y.converts.length-(y.type==='jump'?1:0))-(x.converts.length-(x.type==='jump'?1:0)));
+  return moves;
+}
+function minimax(b,depth,alpha,beta,maxim,p,aiColor){
+  if(Date.now()-aiStartTime > aiTimeBudget){ aiAborted=true; return {score:evaluate(b,aiColor),move:null}; }
+  if(aiAborted) return {score:evaluate(b,aiColor),move:null};
+  const moves=genMoves(b,p);
+  if(moves.length===0){
+    if(!hasAnyMoveFull(b,opp(p))) return {score:evaluate(b,aiColor),move:null};  // terminal
+    return minimax(b,depth,alpha,beta,!maxim,opp(p),aiColor);                     // current player passes
+  }
+  if(depth===0) return {score:evaluate(b,aiColor),move:null};
+  // prune branching at deep nodes for responsiveness (keep top heuristic moves)
+  if(depth>=3 && moves.length>16) moves.length=16;
+  orderMoves(moves);
   let bestMove=moves[0];
   if(maxim){
     let val=-Infinity;
@@ -404,15 +418,23 @@ function chooseAIMove(b,level){
   }
   if(level===1){ // greedy: maximize net gain (converts - jumpCost)
     let best=moves[0], bestScore=-Infinity;
-    for(const m of moves){
-      const s=m.converts.length - (m.type==='jump'?1:0);
-      if(s>bestScore){ bestScore=s; best=m; }
-    }
+    for(const m of moves){ const s=m.converts.length-(m.type==='jump'?1:0); if(s>bestScore){ bestScore=s; best=m; } }
     return best;
   }
-  const depth = level===2?2 : level===3?3 : 4;
-  const r=minimax(b,depth,-Infinity,Infinity,true,AI,AI);
-  return r.move || moves[0];
+  // levels 2/3/4: iterative deepening with a wall-clock budget.
+  // Always returns a valid move (best from the last FULLY-completed depth).
+  const maxDepth = level===2?2 : level===3?3 : 4;
+  aiTimeBudget = level===4?1400 : 700;
+  aiStartTime=Date.now(); aiAborted=false;
+  orderMoves(moves);
+  let best=moves[0];
+  for(let d=1; d<=maxDepth; d++){
+    const r=minimax(b,d,-Infinity,Infinity,true,AI,AI);
+    if(!aiAborted && r.move) best=r.move;       // adopt only fully-searched depths
+    if(aiAborted) break;                          // ran out of time mid-depth
+    if(Date.now()-aiStartTime > aiTimeBudget*0.55) break;  // unlikely to finish next depth
+  }
+  return best;
 }
 
 // ─── Game state ──────────────────────────────────────────────────
@@ -706,6 +728,7 @@ function doMove(m,player){
     animPieces.push({q:c.q,r:c.r,fromScale:1,scale:0.7,t:Date.now()+60,dur:280,type:'convert'});
   }
   board=applyMove(board,m,player);
+  turn=opp(player);                       // hand turn to the other player
   // sounds
   if(player===HUMAN){
     if(m.type==='clone') sfxClone(); else sfxJump();
@@ -719,45 +742,35 @@ function doMove(m,player){
   setTimeout(checkContinue,320);
 }
 
+// single dispatcher: called after every move (and pass) to advance the game
 function checkContinue(){
-  // check end
+  if(gameOver) return;
   const c=countPieces(board);
   const boardFull = c.red+c.blue >= CELLS.length;
   const humanCan = hasAnyMoveFull(board,HUMAN);
   const aiCan = hasAnyMoveFull(board,AI);
   if(boardFull || (!humanCan && !aiCan)){ endGame(); return; }
-  // pass handling
+  // pass handling: the player whose turn it is may have no moves
   if(turn===HUMAN && !humanCan){
     toast('🔴 You have no moves — pass!'); sfxInvalid();
     turn=AI; updateHUD(); setTimeout(aiTurn,500); return;
   }
   if(turn===AI && !aiCan){
-    toast('🔵 Blue has no moves — pass!'); 
-    turn=HUMAN; updateHUD(); return;
+    toast('🔵 Blue has no moves — pass!');
+    turn=HUMAN; updateHUD(); return;   // human regains turn; both-stuck already caught above
   }
   if(turn===AI) setTimeout(aiTurn,420);
+  // turn===HUMAN && humanCan → wait for human input
 }
 
 function aiTurn(){
   if(gameOver) return;
   aiThinking=true; updateHUD();
-  // defer to keep UI responsive
   setTimeout(()=>{
     const m=chooseAIMove(board,difficulty);
     aiThinking=false;
-    if(m){ doMove(m,AI); 
-      // after AI moves, hand back to human
-      setTimeout(()=>{
-        turn=HUMAN; updateHUD();
-        if(!hasAnyMoveFull(board,HUMAN)){ 
-          if(!hasAnyMoveFull(board,AI)) endGame();
-          else { toast('🔴 You have no moves — pass!'); turn=AI; updateHUD(); setTimeout(aiTurn,500); }
-        }
-      },380);
-    } else {
-      turn=HUMAN; updateHUD();
-      checkContinue();
-    }
+    if(m){ doMove(m,AI); }            // doMove flips turn→HUMAN and calls checkContinue
+    else { turn=HUMAN; updateHUD(); checkContinue(); }  // AI had no move (safety; checkContinue normally pre-empts)
   },60);
 }
 
@@ -957,7 +970,7 @@ el.game.style.display='none';
 el.menu.style.display='flex';
 </script>
 
-<script src="/gz-analytics.js?v=2026062773485b125e4"></script>
+<script src="/gz-analytics.js?v=2026062785251d1d7a5"></script>
 <script src="/monetag-manager.js?v=3"></script>
 <script src="/game-footer.js?v=3"></script>
 <div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
