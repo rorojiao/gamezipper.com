@@ -1,3 +1,39 @@
+## [v1.107.0] - 2026-06-28
+### Added
+- 8 new test cases from late-June 2026 industry research (R226 Dynamic Test Intelligence cron)
+- [B-149] **[P2]** Chrome 145+ vertical-tabs chrome://flags/#vertical-tabs experiment — side-intrusion narrows game canvas WIDTH by ~200-300px when tab strip is moved to the side (BROWSER-VERTICAL-TABS-SIDE-INTRUSION-VIEWPORT-NARROWING) — source: so.html5.qq.com/page/real/search_news?docid=70000021_703696a47e556652 (Jan 16 2026)
+- [C-155] **[P2]** macOS 27 Golden Gate super-wide 5K 120Hz dual-axis rendering baseline — GameZipper games must sustain 120fps (8.33ms frame budget) at 5120×2880 on super-wide external monitors driven by M5 MacBook Pro (SUPER-WIDE-5K-120HZ-DUAL-AXIS-RENDERING-BASELINE) — source: so.html5.qq.com/page/real/search_news?docid=70000021_0956a27448443652 (June 9 2026); new.qq.com/rain/a/20260610A02CE200 (June 10 2026)
+- [W-222] **[P2]** iOS 27 4×6 super-large widget home-screen takeover viewport class — new widget aspect ratio (3:2 portrait) requires distinct canvas dimensions for GameZipper PWA widgets vs prior 2×2 / 4×2 / 4×4 tiers (IOS-27-SUPER-LARGE-WIDGET-HOME-SCREEN-VIEWPORT-CLASS-EXPANSION) — source: so.html5.qq.com/page/real/search_news?docid=70000021_7456a274a5d16552 (9to5Mac June 9 2026)
+- [P-096] **[P2]** WebGPU/WebGL hybrid coexistence in 2026 mobile-gaming production baseline (永利麻将 case) — dual-rendering-path pattern is industry standard, GameZipper WASM/WebGPU exports must implement runtime feature-detection + automatic WebGL fallback with visually-consistent output (WEBGPU-WEBGL-HYBRID-COEXISTENCE-MOBILE-GAMING-PRODUCTION-BASELINE) — source: www.lcxw.cn/39@wiki/ZoCGH (May 22 2026)
+- [S-222] **[P1]** CVE-2026-1281 Ivanti Endpoint Manager Mobile (EPMM) CVSS ~9.8 unauth RCE zero-day actively exploited in-wild with public PoC — single forged HTTP request achieves full MDM server takeover compromising every managed iOS/Android device including those running GameZipper games through enterprise fleets (MDM-SERVER-ZERO-DAY-CVE-2026-1281-IVANTI-EPMM-COMMAND-MOBILE-DEVICE-FLEET) — source: blog.csdn.net/zhengfei611/article/details/157618322 (June 2 2026)
+- [C-156] **[P2]** iOS 27 landscape-mode expansion preparing for iPhone Ultra foldable — Apple Maps/Calendar/Files/Mail gain horizontal layouts, Beta 1 code contains foldState + angleDegrees strings, raising player expectations for GameZipper landscape games to compete with native Apple landscape UX (IOS-27-LANDSCAPE-MODE-EXPANSION-IPHONE-ULTRA-FOLDABLE-PREP) — source: so.html5.qq.com/page/real/search_news?docid=70000021_0616a2cf58077852 (June 13 2026)
+- [B-150] **[P2]** iOS 27 lock-screen AI-personalized-dynamic-wallpaper visual-legibility competition — five major lock-screen upgrades including AI-generated backgrounds and dynamic wallpapers compete with GameZipper lock-screen widgets/notifications for attention; QA must verify widget legibility against high-motion wallpapers (IOS-27-LOCK-SCREEN-AI-PERSONALIZED-WALLPAPER-VISUAL-LEGIBILITY-COMPETITION) — source: so.html5.qq.com/page/real/search_news?docid=70000021_2236a2a197d74952 (CNMO June 11 2026)
+- [A-050] **[P2]** iOS 27/macOS 27 VoiceOver curtain-screen audio-only-navigation accessibility-test — VO-Shift-F11 / three-finger-triple-tap blanks the entire display; GameZipper games must announce critical state changes via Web Speech API / ARIA live regions to remain playable when the screen is black (VOICEOVER-CURTAIN-SCREEN-AUDIO-ONLY-NAVIGATION-ACCESSIBILITY-TEST-DIMENSION) — source: support.apple.com/zh-cn/guide/voiceover-guide/vo2726/web (June 16 2026)
+### Sources
+- Search queries (mcp_minimax_search_web_search — SearXNG returned 404, fallback to MiniMax):
+  - "HTML5 game testing techniques 2026 new browser bug"
+  - "new browser security vulnerability CVE July 2026"
+  - "Chrome Edge Safari update July 2026 stable ship release"
+  - "casual mobile game UX complaint player retention 2026"
+  - "browser game bug WebGL WebGPU WASM 2026 regression"
+  - "CVE-2026 July critical vulnerability CISA KEV actively exploited"
+  - "Chrome 150 151 stable ship July 2026 features release notes"
+  - "iOS 27 Safari 27 beta features WWDC accessibility 2026"
+  - "npm supply chain attack July 2026 malicious package"
+  - "Chrome 145+ vertical tabs experiment viewport"
+  - "macOS 27 Golden Gate super-wide 5K 120Hz monitor"
+  - "iOS 27 widget 4x6 large home screen takeover"
+  - "Playwright cross browser testing 2026 new features"
+- Key URLs:
+  - so.html5.qq.com/page/real/search_news?docid=70000021_703696a47e556652 (Chrome 145 vertical tabs)
+  - so.html5.qq.com/page/real/search_news?docid=70000021_0956a27448443652 (macOS 27 5K 120Hz super-wide)
+  - so.html5.qq.com/page/real/search_news?docid=70000021_7456a274a5d16552 (iOS 27 4×6 widget)
+  - www.lcxw.cn/39@wiki/ZoCGH (永利麻将 WebGPU production case)
+  - blog.csdn.net/zhengfei611/article/details/157618322 (CVE-2026-1281 Ivanti EPMM)
+  - so.html5.qq.com/page/real/search_news?docid=70000021_0616a2cf58077852 (iOS 27 landscape foldable prep)
+  - so.html5.qq.com/page/real/search_news?docid=70000021_2236a2a197d74952 (iOS 27 lock-screen AI wallpaper)
+  - support.apple.com/zh-cn/guide/voiceover-guide/vo2726/web (VoiceOver curtain-screen VO2726)
+
 ## [v1.106.0] - 2026-06-28
 ### Added
 - 8 new test cases from late-June 2026 industry research (R225 Dynamic Test Intelligence cron)
