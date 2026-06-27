@@ -1,3 +1,37 @@
+
+## [v1.104.0] - 2026-06-27
+### Added
+- 8 new test cases from late-June 2026 industry research (R223 Dynamic Test Intelligence cron)
+- [S-218] **[P1]** CVE-2026-35616 Fortinet FortiClient EMS pre-auth API-bypass CVSS 9.1 CISA KEV April 7 2026 — single forged HTTP header bypasses authentication on the Endpoint Management Server's API gateway granting full admin API access to ALL managed endpoints; in-the-wild since March 31 2026 per watchTowr honeypots; PoC on github.com/Alaatk/CVE-2026-35616 June 2 2026; the ENDPOINT-MANAGEMENT-SERVER-PREAUTH-API-BYPASS-CLASS dimension (so.html5.qq.com April 7 2026; blog.csdn.net/zhidingkeji April 7 2026; blog.csdn.net/weixin_42376192 May 19 2026 watchTowr breakdown)
+- [S-219] **[P1]** CVE-2026-22807 vLLM trust_remote_code bypass at model-config-load — vLLM in model initialization phase UNCONDITIONALLY loads Hugging Face `auto_map` dynamic modules via `try_get_class_from_dynamic_module()` WITHOUT checking the global `trust_remote_code` flag; even when user EXPLICITLY sets `trust_remote_code=False`, attacker who controls model repo path can still inject+execute arbitrary Python during model loading; happens at SERVICE STARTUP BEFORE any request handling, requires NO interface access; the LLM-SERVING-FRAMEWORK-CONFIG-LOAD-RCE-DESPITE-USER-OPT-OUT dimension (blog.csdn.net/sinat_17584329 Jan 23 2026)
+- [S-220] **[P2]** Cacti 1.2.30 perf-monitoring CVE-2026-40079 + CVE-2026-39951 command-injection RCE cluster June 24 2026 — open-source performance/fault-management framework (free alternative to Nagios/Zabbix/PRTG) with command-injection vulnerabilities; CVE-2026-40079 Quest NetVault Backup sibling confirms CLUSTER; the OPEN-SOURCE-PERF-MONITORING-RCE-CLASS dimension — monitoring tool that should DETECT attacks becomes the attack vector (cve.report June 24 2026)
+- [B-146] **[P2]** Chrome 149 on-device AI model management in OS Settings June 2 2026 — first OS-level user-facing on-device AI MODEL MANAGEMENT control surface inside a browser; users can now REJECT model downloads or DELETE already-installed models; the FIRST-OS-LEVEL-BROWSER-SIDE-AI-MODEL-CONTROL-SURFACE dimension; any GameZipper feature relying on a specific on-device model being present MUST gracefully detect absence and fall back (donews.com June 5 2026)
+- [B-147] **[P2]** Chrome 149 first official ARM64 Linux deb/rpm packages June 2 2026 — Chromium-on-ARM-Linux was previously community/Debian-only; now AWS Graviton / Ampere Altra / Raspberry Pi 4/5 / PineBook Pro / ARM SBCs are FIRST-CLASS Chrome targets; the FIRST-CHROMIUM-NATIVE-ARM64-LINUX-COMPLETING-CROSS-ARCH-MATRIX dimension; GameZipper QA must add ARM64 Linux Chromium to cross-arch test matrix (donews.com June 5 2026)
+- [W-216] **[P2]** Mozilla Firefox "Nova" project codename formal naming + H2 2026 ship commitment June 16 2026 — Mozilla's June 16 2026 blog post alongside Firefox 152 stable FORMALIZES the 2026 redesign as "Nova" — extending W-202 generic roadmap to a NAMED-PROJECT with ship target; the FIREFOX-NOVA-PROJECT-CODENAME-CONFIRMATION-EXTENDING-PRIOR-REDESIGN-ROADMAP dimension (so.html5.qq.com June 17 2026)
+- [W-217] **[P2]** Apple WWDC26 June 9 2026 SEVEN-OS coordinated stable ship cycle — iOS 27 + iPadOS 27 + macOS 27 Golden Gate + tvOS 27 + visionOS 27 + watchOS 27 + Safari 27 all shipping in coordinated Fall 2026 cycle; Apple's MOST AMBITIOUS multi-OS coordinated release; the MULTI-OS-COORDINATED-STABLE-SHIP-CYCLE-7-PRODUCTS dimension — GameZipper QA must run SIMULTANEOUS 7-product regression sweep at ship (Apple WWDC26 June 9 2026; webkit.org/blog WWDC26 coverage)
+- [G-162] **[P2]** Adjust "2026 Game Industry Insight Report" April 22 2026 — based on global thousands-of-games 2024-2025 dataset; USER RETENTION as SOLE winning strategy; IAP $81.8B 3-year growth; ~30亿 players; mobile 55% of game industry revenue; AI + cross-platform + D2C as growth drivers; the THIRD-VENDOR-RETENTION-FIRST-CORROBORATION-2026-INDUSTRY-CONSENSUS dimension — Adjust after Sohu (P-092) + Nordcurrent (G-144) confirms retention-first as global consensus (sohu.com April 22 2026)
+### Sources
+- Search queries (mcp_minimax_search_web_search):
+  - "HTML5 browser game testing 2026 new techniques CVE June"
+  - "browser security vulnerability CVE June 2026 Chrome Safari Firefox"
+  - "CVE 2026 Chrome V8 RCE in-the-wild exploit June 27"
+  - "Chrome 151 stable release June 2026 features security patches"
+  - "CVE-2026-35616 FortiClient EMS RCE zero-day exploit"
+  - "npm supply chain attack June 2026 malicious package Typosquat"
+  - "casual mobile game UX complaint 2026 ad placements player feedback"
+  - "CVE-2026-22807 vLLM RCE trust_remote_code model config"
+  - "Firefox 152 stable release 2026 features vulnerabilities"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_04069d4dc4672952 (FortiClient EMS April 7 2026)
+  - https://github.com/Alaatk/CVE-2026-35616 (CVE-2026-35616 PoC)
+  - https://blog.csdn.net/weixin_42376192/article/details/160200361 (watchTowr FortiClient EMS breakdown)
+  - https://blog.csdn.net/sinat_17584329/article/details/157292799 (CVE-2026-22807 vLLM Jan 23 2026)
+  - https://cve.report/ (CVE-2026-40079 + CVE-2026-39951 Cacti June 24 2026)
+  - https://www.donews.com/news/detail/8/6585054.html (Chrome 149 AI model + ARM64 Linux June 5 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4016a32165940252 (Mozilla Nova project June 17 2026)
+  - https://new.qq.com/rain/a/20260616A04F5B00 (Firefox 152 stable June 16 2026)
+  - https://www.sohu.com/a/1012550443_121752970 (Adjust 2026 Game Industry Report April 22 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_35669cdc85492252 (CVE-2026-5281 Chrome Dawn WebGPU UAF — already covered as S-177)
 ## [v1.103.0] - 2026-06-27
 ### Added
 - 10 new test cases from late-June 2026 industry research (R222 Dynamic Test Intelligence cron)
