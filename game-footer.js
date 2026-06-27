@@ -227,7 +227,8 @@
       {n:'Stick Hero',e:'🦸',u:'/stick-hero/',c:'skill'},
       {n:'Balls vs Bricks',e:'⚪',u:'/balls-vs-bricks/',c:'puzzle'},
 {n:'Magnet Drop',e:'🧲',u:'/magnet-drop/',c:'puzzle'},
-{n:'Rockfall',e:'🪨',u:'/rockfall/',c:'puzzle'},];
+{n:'Rockfall',e:'🪨',u:'/rockfall/',c:'puzzle'},
+{n:'Wood Turning',e:'🪵',u:'/wood-turning/',c:'puzzle'},];
 
   var cur = location.pathname;
   var current = games.find(function(g){ return g.u === cur; });
