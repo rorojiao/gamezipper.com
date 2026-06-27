@@ -1,3 +1,31 @@
+## [v1.106.0] - 2026-06-28
+### Added
+- 8 new test cases from late-June 2026 industry research (R225 Dynamic Test Intelligence cron)
+- [W-220] **[P2]** Chrome 146 DBSC Device Bound Session Credentials — auth session bound to physical device, breaks cross-device cookie restore (BROWSER-NATIVE-DEVICE-BOUND-SESSION-CREDENTIAL-CLASS) — source: so.html5.qq.com/page/real/search_news?docid=70000021_80569d9164342752 (April 10 2026)
+- [C-153] **[P2]** Chrome 149 WebAssembly 2.0 + WebGPU 2.0 + Lighthouse 14 Core Web Vitals stable ship (CHROMIUM-STABLE-SHIP-WEBASSEMBLY-2-AND-WEBGPU-2-LIGHTHOUSE-14-CORE-WEB-VITAL) — source: onlinedown.net/soft/1114433.htm (June 17 2026)
+- [P-095] **[P2]** Chrome V8 12.4 AI-predictive GC + 25% more aggressive background-tab freeze — rAF / setInterval / Web Audio must survive freeze-resume (BROWSER-AI-MEMORY-PREDICTION-BACKGROUND-TAB-FREEZE-AGGRESSION) — source: onlinedown.net/soft/1114433.htm (June 17 2026)
+- [W-221] **[P3]** Browser Harness open-source (7.2k stars) — AI agents drive Chrome multi-step automation, new fake-click / impression-fraud / reward-farming surface (BROWSER-AGENT-AUTOMATION-SURFACE-FROM-AGENT-FRAMEWORKS) — source: so.html5.qq.com/page/real/search_news?docid=70000021_92669ef2db811252 (April 27 2026)
+- [C-154] **[P2]** document.execCommand('copy') UC/QQ/360 return-false deprecation — share/copy buttons need navigator.clipboard fallback (LEGACY-CLIPBOARD-API-DEPRECATION-WITH-PARTIAL-BROWSER-COVERAGE) — source: blog.csdn.net/amyleeymy/article/details/108577480
+- [G-165] **[P2]** Adjust 2026 user retention core growth strategy — D1 >= 40% / D7 >= 15% / D30 >= 5% canonical industry KPI (INDUSTRY-RETENTION-METRIC-BASELINE-2026) — source: sohu.com/a/1012550443_121752970 (April 22 2026)
+- [S-221] **[P2]** 2026 attack-cycle weeks-to-hours compression + API attacks +113% — assume-breach posture, rate-limit auth-like endpoints, harden Cloudflare WAF for sub-hour cycle (ASSUME-BREACH-POSTURE-RATE-LIMIT-AND-WAF-HARDENING) — source: toutiao.com/article/7626708037775950362 (April 9 2026)
+- [A-049] **[P2]** Game Accessibility Guidelines 2026 refresh — canonical BASIC tier (12 items: remappable controls, color-blind safe, captions, no >3Hz flashing, etc.) self-audit (CANONICAL-GAME-ACCESSIBILITY-GUIDELINES-2026-BASIC-TIER-COMPLIANCE) — source: gameaccessibilityguidelines.com (June 25 2026)
+### Sources
+- Search (mcp_minimax_search_web_search): "HTML5 browser game testing 2026 new bug patterns Chrome Safari"
+- Search: "browser security vulnerability 2026 XSS clickjacking WebGL Canvas"
+- Search: "casual web game UX accessibility 2026 mobile haptic feedback dark mode"
+- Search: "Chrome 154 155 156 deprecation 2026 document.execCommand document.domain Permissions Policy"
+- Search: "mobile web game battery drain privacy sandbox third party cookies 2026"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_80569d9164342752 (Chrome 146 DBSC, April 10 2026)
+  - https://www.onlinedown.net/soft/1114433.htm (Chrome v149 stable ship, June 17 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_92669ef2db811252 (Browser Harness OSS, April 27 2026)
+  - https://blog.csdn.net/amyleeymy/article/details/108577480 (document.execCommand UC/QQ/360 breakage)
+  - https://www.sohu.com/a/1012550443_121752970 (Adjust 2026 game insight report, April 22 2026)
+  - https://www.toutiao.com/article/7626708037775950362/ (2026 cybersecurity trend, April 9 2026)
+  - https://www.manageengine.cn/secure-browser/policy-deployment.html (Browser Security Plus, May 25 2026)
+  - https://www.gameaccessibilityguidelines.com/ (Game Accessibility Guidelines, June 25 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_95169f1600f36952 (ClickFix cmdkey+regsvr32 variant, April 29 2026 — already covered S-169)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Safari 26.4 — already covered C-131)
 
 ## [v1.105.0] - 2026-06-27
 ### Added
