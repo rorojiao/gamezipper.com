@@ -287,6 +287,7 @@
       {n:'Delete One Part',e:'🧽',u:'/delete-one-part/',c:'puzzle'},
       {n:'Draw to Save',e:'🛡️',u:'/draw-to-save/',c:'puzzle'},
       {n:'Burn the Rope',e:'🔥',u:'/burn-the-rope/',c:'puzzle'},
+      {n:'Gem Paint',e:'💎',u:'/gem-paint/',c:'puzzle'},
       ]; }
    }
    function getDateSeed() {
