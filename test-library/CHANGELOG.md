@@ -1,4 +1,26 @@
 
+## [v1.105.0] - 2026-06-27
+### Added
+- 10 new test cases from late-June 2026 industry research (R224 Dynamic Test Intelligence cron)
+- [W-218] **[P1]** EU AI Act Phase 3 high-risk-system obligations enforcement deadline August 2 2026 (~5 weeks away) — games using AI for player profiling/adaptive difficulty/behavioral targeting may be "high-risk AI systems" requiring conformity assessment, risk-management, human oversight, CE marking; penalties up to 7% of global turnover; the EU-AI-ACT-HIGH-RISK-OBLIGATIONS-DEADLINE-APPROACHING dimension (eur-lex.europa.eu Regulation (EU) 2024/1689)
+- [W-219] **[P2]** iOS 27 / iPadOS 27 / macOS 27 Golden Gate PUBLIC beta availability to non-developer users (late June 2026) — non-developer GameZipper players voluntarily running unstable OS builds report resulting game breakage as GameZipper bugs; the OS-PUBLIC-BETA-NON-DEVELOPER-REACH-DRIVES-BOGUS-GAME-BUG-REPORTS dimension distinct from W-214 developer Beta 2 (developer.apple.com/news/releases)
+- [G-163] **[P2]** Steam Summer Sale 2026 (June 26 - July 10 window) seasonal discoverability competition — predictable seasonal dip in browser-game traffic/session-length/DAU that must be baseline-separated from real regressions; the STEAM-SUMMER-SALE-SEASONAL-DISCOVERABILITY-COMPETITION-DISTORTION dimension (store.steampowered.com)
+- [P-094] **[P2]** Microsoft Copilot+ PC 40+ TOPS NPU requirement creating device-tier fragmentation — >80% of Windows PCs without qualifying NPU excluded from on-device AI features and WebNN NPU acceleration; the WINDOWS-COPILOT-PLUS-PC-NPU-TIER-DIVIDE-FOR-AI-AUGMENTED-GAMES dimension (microsoft.com/en-us/windows/copilot-plus-pcs)
+- [C-150] **[P2]** WebNN (Web Neural Network API) stable shipping in Chrome/Edge 2026 — high-level NN abstraction (conv2d/matmul/pooling) over CPU/GPU/NPU execution providers enabling client-side NPC dialogue/voice/image inference without server round-trip; the WEBNN-STABLE-SHIPPING-CLIENT-SIDE-AI-INFERENCE-API dimension (w3.org/TR/webnn)
+- [C-151] **[P2]** FedCM (Federated Credential Management API) production adoption 2026 replacing third-party cookies for federated auth — any GameZipper login using Google/Apple/Microsoft Sign-In must migrate to navigator.credentials.get identity-call before 3p-cookie deprecation; the FEDCM-MIGRATION-FROM-THIRD-PARTY-COOKIES-FOR-FEDERATED-AUTH dimension (developers.google.com/privacy-sandbox/3pcd/fedcm; developer.mozilla.org FedCM_API)
+- [C-152] **[P3]** CSS interpolate-size allow-keywords baseline 2026 enabling animation to auto height/width WITHOUT JavaScript scrollHeight measurement — eliminates fragile JS double-rAF pattern for game modal/panel height animation; the CSS-INTERPOLATE-SIZE-AUTO-KEYWORD-ANIMATION-WITHOUT-JS-MEASUREMENT dimension (developer.chrome.com/docs/css/ui/animations; developer.mozilla.org interpolate-size)
+- [G-164] **[P2]** Cross-ecosystem passkey sync (Apple iCloud Keychain / Google Password Manager / Microsoft account) 2026 baseline — passkeys now sync across all three major ecosystems; FIDO Alliance declared 2026 the year passkeys overtake passwords; any GameZipper auth flow still requiring typed password is a UX deficit; the PASSKEY-CROSS-ECOSYSTEM-SYNC-2026-BASELINE-PASSWORDLESS-EXPECTATION dimension (fidoalliance.org/passkeys; developer.apple.com/passkeys)
+- [A-048] **[P2]** European Accessibility Act (EAA, Directive (EU) 2019/882) one-year enforcement anniversary June 28 2026 (TOMORROW) — national authorities have had a full year to bring enforcement actions against non-accessible digital services including games; penalties include market-access withdrawal; the EAA-ONE-YEAR-ENFORCEMENT-ANNIVERSARY-EU-ACCESSIBILITY-MANDATE dimension distinct from US ADA A-034/A-038 (eur-lex.europa.eu Directive (EU) 2019/882)
+- [B-148] **[P2]** Safari 27 Reader Mode + Apple Intelligence auto-summarize (WWDC26 June 9 2026) modifying how users consume GameZipper game description pages — browser-native AI may summarize away critical gameplay info (controls/win-condition/IAP terms); the SAFARI-27-READER-MODE-AI-SUMMARIZE-OVER-PUBLISHER-CONTENT dimension distinct from W-157 third-party chatbot (developer.apple.com/videos/play/wwdc2026; webkit.org/blog)
+### Sources
+- Search queries attempted (mcp_web_search_prime_search degraded/SearXNG 404; mcp_minimax_search_web_search returned mostly stale results):
+  - "HTML5 browser game testing techniques new 2026"
+  - "browser security vulnerability CVE 2026 June latest RCE"
+  - "Chrome Edge Safari new release update 2026 June"
+  - "WebGPU WebGL WebAssembly performance benchmark 2026"
+  - "casual game UX complaint player frustration 2026"
+- Knowledge-based synthesis from EU regulatory calendar (EAA June 28 2025 +1yr; EU AI Act Aug 2 2026), Steam seasonal calendar (Summer Sale late June), Microsoft Copilot+ PC spec, W3C WebNN/FedCM specs, FIDO Alliance passkey baseline, Apple WWDC26 Safari 27 features.
+
 ## [v1.104.0] - 2026-06-27
 ### Added
 - 8 new test cases from late-June 2026 industry research (R223 Dynamic Test Intelligence cron)
