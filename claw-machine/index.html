@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Claw Master — Claw Machine Puzzle Game | GameZipper</title>
+<meta name="description" content="Claw Master: A neon claw machine puzzle game. Grab prizes, complete objectives, master 30 levels!">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a1a;--panel:#14143a;--cyan:#00f5ff;--magenta:#ff00ff;--amber:#ffaa00;--gold:#ffd700;
+  --text:#e0e0f0;--dim:#8888aa;--green:#00ff88;--red:#ff3366;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);user-select:none;-webkit-user-select:none}
+body{display:flex;flex-direction:column;align-items:center;background:radial-gradient(ellipse at 50% 0%,#1a1a3a 0%,#0a0a1a 60%)}
+#app{width:100%;max-width:480px;height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden}
+
+/* Header */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(10,10,26,.95);border-bottom:1px solid rgba(0,245,255,.3);z-index:10;flex-shrink:0}
+.hdr h1{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;background:linear-gradient(90deg,var(--cyan),var(--magenta));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:1px}
+.hdr-btn{background:none;border:none;color:var(--cyan);font-size:22px;cursor:pointer;padding:4px 8px;opacity:.8}
+.hdr-btn:active{opacity:1}
+
+/* Screens */
+.screen{flex:1;display:none;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen.active{display:flex}
+
+/* Title screen */
+#titleScreen{align-items:center;justify-content:center;padding:20px;text-align:center;gap:16px}
+.logo{font-family:'Orbitron',sans-serif;font-size:42px;font-weight:900;line-height:1;text-shadow:0 0 20px rgba(0,245,255,.6),0 0 40px rgba(255,0,255,.4);background:linear-gradient(135deg,var(--cyan) 0%,var(--magenta) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px}
+.tagline{color:var(--dim);font-size:13px;letter-spacing:2px;text-transform:uppercase}
+.title-art{font-size:64px;line-height:1;filter:drop-shadow(0 0 15px rgba(0,245,255,.5))}
+.menu-btns{display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px;margin-top:10px}
+
+/* Buttons */
+.btn{font-family:'Orbitron',sans-serif;font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:1.5px;padding:14px 24px;background:rgba(20,20,58,.9);color:var(--cyan);border:2px solid var(--cyan);border-radius:8px;cursor:pointer;transition:all .2s;box-shadow:0 0 12px rgba(0,245,255,.3),inset 0 0 12px rgba(0,245,255,.05);position:relative;overflow:hidden}
+.btn:active{transform:scale(.97);box-shadow:0 0 20px rgba(0,245,255,.5),inset 0 0 20px rgba(0,245,255,.1)}
+.btn.primary{background:linear-gradient(135deg,rgba(0,245,255,.15),rgba(255,0,255,.15));border-color:var(--magenta);color:var(--magenta);box-shadow:0 0 15px rgba(255,0,255,.3)}
+.btn.primary:active{box-shadow:0 0 25px rgba(255,0,255,.5)}
+.btn.gold{border-color:var(--gold);color:var(--gold);box-shadow:0 0 12px rgba(255,215,0,.3)}
+.btn.small{font-size:12px;padding:8px 16px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Level Select */
+#levelScreen{padding:12px}
+.lvl-header{font-family:'Orbitron',sans-serif;font-size:18px;text-align:center;margin-bottom:12px;color:var(--cyan);text-shadow:0 0 10px rgba(0,245,255,.4)}
+.tier-label{text-align:center;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:2px;margin:14px 0 8px;border-bottom:1px solid rgba(0,245,255,.15);padding-bottom:4px}
+.lvl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding-bottom:20px}
+.lvl-card{aspect-ratio:1;background:rgba(20,20,58,.8);border:2px solid rgba(0,245,255,.3);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;position:relative}
+.lvl-card:active{transform:scale(.95);border-color:var(--cyan)}
+.lvl-card.locked{opacity:.4;cursor:not-allowed;border-color:rgba(136,136,170,.3)}
+.lvl-card.locked:active{transform:none}
+.lvl-num{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--cyan)}
+.lvl-card.locked .lvl-num{color:var(--dim)}
+.lvl-stars{display:flex;gap:2px;margin-top:2px;font-size:10px}
+.star-on{color:var(--gold);text-shadow:0 0 4px rgba(255,215,0,.6)}
+.star-off{color:rgba(255,255,255,.15)}
+
+/* Game Screen */
+#gameScreen{display:none;flex-direction:column}
+#gameScreen.active{display:flex}
+.hud{display:flex;justify-content:space-around;padding:6px 8px;background:rgba(10,10,26,.9);border-bottom:1px solid rgba(0,245,255,.2);font-size:12px;flex-shrink:0}
+.hud-item{text-align:center}
+.hud-label{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.hud-val{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--cyan)}
+.hud-val.obj{color:var(--amber);font-size:13px}
+.canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+#gameCanvas{display:block;touch-action:none;max-width:100%;max-height:100%}
+.drop-zone{position:absolute;bottom:0;left:0;right:0;height:70px;display:flex;align-items:center;justify-content:center;background:linear-gradient(0deg,rgba(10,10,26,.95),transparent);z-index:5}
+.btn-drop{font-size:20px;padding:16px 60px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 12px rgba(255,0,255,.4)}50%{box-shadow:0 0 25px rgba(255,0,255,.7)}}
+.obj-banner{position:absolute;top:6px;left:50%;transform:translateX(-50%);background:rgba(20,20,58,.9);border:1px solid rgba(255,170,0,.4);border-radius:6px;padding:4px 14px;font-size:11px;color:var(--amber);z-index:5;white-space:nowrap}
+
+/* Win Screen */
+#winScreen{align-items:center;justify-content:center;padding:20px;gap:14px}
+.win-title{font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;color:var(--green);text-shadow:0 0 20px rgba(0,255,136,.5)}
+.win-stars{font-size:48px;display:flex;gap:8px}
+.win-stat{font-size:16px;color:var(--text)}
+.win-stat span{color:var(--cyan);font-family:'Orbitron',sans-serif;font-weight:700}
+.win-btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:260px;margin-top:8px}
+
+/* How to play */
+#howScreen{padding:20px;gap:12px}
+.how-title{font-family:'Orbitron',sans-serif;font-size:22px;color:var(--cyan);text-align:center}
+.how-section{background:rgba(20,20,58,.6);border:1px solid rgba(0,245,255,.2);border-radius:8px;padding:14px;font-size:13px;line-height:1.6}
+.how-section h3{color:var(--magenta);font-size:14px;margin-bottom:6px}
+.how-section strong{color:var(--cyan)}
+
+/* Achievements */
+#achScreen{padding:16px;gap:8px}
+.ach-title{font-family:'Orbitron',sans-serif;font-size:22px;color:var(--gold);text-align:center;margin-bottom:8px}
+.ach-card{display:flex;align-items:center;gap:12px;background:rgba(20,20,58,.6);border:1px solid rgba(0,245,255,.15);border-radius:8px;padding:10px 12px}
+.ach-card.unlocked{border-color:var(--gold);background:rgba(255,215,0,.05)}
+.ach-icon{font-size:28px;width:40px;text-align:center;filter:grayscale(1);opacity:.4}
+.ach-card.unlocked .ach-icon{filter:none;opacity:1}
+.ach-info h4{font-size:13px;color:var(--cyan)}
+.ach-card.unlocked .ach-info h4{color:var(--gold)}
+.ach-info p{font-size:11px;color:var(--dim)}
+
+/* Daily */
+.daily-info{text-align:center;font-size:13px;color:var(--dim);padding:0 20px}
+.daily-streak{font-family:'Orbitron',sans-serif;font-size:24px;color:var(--amber);margin:8px 0}
+
+/* Toast */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(20,20,58,.95);border:1px solid var(--gold);color:var(--gold);padding:10px 20px;border-radius:8px;font-size:13px;z-index:100;transition:transform .3s;font-family:'Orbitron',sans-serif;font-weight:700}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* Responsive */
+@media(max-width:360px){.logo{font-size:34px}.lvl-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-height:700px){#titleScreen{gap:24px}.logo{font-size:48px}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- Header -->
+<div class="hdr">
+  <button class="hdr-btn" id="backBtn" style="display:none">‹</button>
+  <h1>🦾 CLAW MASTER</h1>
+  <button class="hdr-btn" id="soundBtn">🔊</button>
+</div>
+
+<!-- Title Screen -->
+<div class="screen active" id="titleScreen">
+  <div class="title-art">🦾</div>
+  <div class="logo">CLAW<br>MASTER</div>
+  <div class="tagline">Grab · Collect · Master</div>
+  <div class="menu-btns">
+    <button class="btn primary" onclick="showLevels()">▶ Play</button>
+    <button class="btn" onclick="startDaily()">📅 Daily Challenge</button>
+    <button class="btn" onclick="showScreen('howScreen')">❓ How to Play</button>
+    <button class="btn gold" onclick="showAchievements()">🏆 Achievements</button>
+  </div>
+</div>
+
+<!-- Level Select -->
+<div class="screen" id="levelScreen">
+  <div class="lvl-header">SELECT LEVEL</div>
+  <div id="tierContainer"></div>
+</div>
+
+<!-- Game Screen -->
+<div class="screen" id="gameScreen">
+  <div class="hud">
+    <div class="hud-item"><div class="hud-label">Level</div><div class="hud-val" id="hudLevel">1</div></div>
+    <div class="hud-item"><div class="hud-label">Tries</div><div class="hud-val" id="hudAttempts">5</div></div>
+    <div class="hud-item"><div class="hud-label">Score</div><div class="hud-val" id="hudScore">0</div></div>
+  </div>
+  <div class="canvas-wrap">
+    <div class="obj-banner" id="objBanner"></div>
+    <canvas id="gameCanvas"></canvas>
+    <div class="drop-zone">
+      <button class="btn primary btn-drop" id="dropBtn" ontouchstart="event.preventDefault();dropClaw()" onclick="dropClaw()">DROP</button>
+    </div>
+  </div>
+</div>
+
+<!-- Win Screen -->
+<div class="screen" id="winScreen">
+  <div class="win-title" id="winTitle">LEVEL CLEAR!</div>
+  <div class="win-stars" id="winStars">⭐⭐⭐</div>
+  <div class="win-stat">Score: <span id="winScore">0</span></div>
+  <div class="win-stat" id="winPrizes">Prizes: <span id="winPrizeCount">0</span></div>
+  <div class="win-btns">
+    <button class="btn primary" id="nextBtn" onclick="nextLevel()">Next ▶</button>
+    <button class="btn" onclick="retryLevel()">↻ Retry</button>
+    <button class="btn small" onclick="showLevels()">📋 Levels</button>
+  </div>
+</div>
+
+<!-- How to Play -->
+<div class="screen" id="howScreen">
+  <div class="how-title">HOW TO PLAY</div>
+  <div class="how-section">
+    <h3>🦾 The Claw</h3>
+    The claw auto-moves left and right above the prizes. <strong>Tap DROP</strong> (or tap the canvas) to send it down. You can also <strong>drag the claw</strong> to position it manually before dropping.
+  </div>
+  <div class="how-section">
+    <h3>🎯 Objectives</h3>
+    Each level has a goal: grab a number of prizes, reach a score, or grab a special prize. Watch the <strong>objective banner</strong> at the top.
+  </div>
+  <div class="how-section">
+    <h3>⭐ Stars</h3>
+    <strong>3 stars</strong> = complete objective with bonus (high score, no fails).<br>
+    <strong>2 stars</strong> = complete objective.<br>
+    <strong>1 star</strong> = barely pass.
+  </div>
+  <div class="how-section">
+    <h3>💎 Prizes</h3>
+    <strong>🔵 Ball</strong> 10pts · <strong>🟣 Gem</strong> 25pts · <strong>🌟 Star</strong> 50pts<br>
+    <strong>💗 Heart</strong> 40pts · <strong>👑 Crown</strong> 100pts · <strong>✨ Gold</strong> 200pts
+  </div>
+  <div class="how-section">
+    <h3>💪 Grip Strength</h3>
+    Each level has a grip strength. Lower grip = the claw may <strong>drop</strong> prizes during ascent. Time your grabs carefully!
+  </div>
+  <button class="btn" onclick="showScreen('titleScreen')" style="margin-top:8px">‹ Back</button>
+</div>
+
+<!-- Achievements -->
+<div class="screen" id="achScreen">
+  <div class="ach-title">🏆 ACHIEVEMENTS</div>
+  <div id="achContainer"></div>
+  <button class="btn" onclick="showScreen('titleScreen')" style="margin-top:8px">‹ Back</button>
+</div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+// ════════════════════════════════════════════════════════════════
+// CLAW MASTER — Complete HTML5 Claw Machine Puzzle Game
+// ════════════════════════════════════════════════════════════════
+
+// ── Audio Engine (Web Audio API) ────────────────────────────────
+var AC=null, soundOn=true;
+function initAudio(){
+  if(AC)return;
+  try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+}
+function tone(freq,dur,type,vol,attack){
+  if(!soundOn||!AC)return;
+  type=type||'sine';vol=vol||0.15;attack=attack||0.01;
+  var o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.value=freq;
+  o.connect(g);g.connect(AC.destination);
+  var t=AC.currentTime;
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(vol,t+attack);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.start(t);o.stop(t+dur);
+}
+function sweep(f1,f2,dur,vol,type){
+  if(!soundOn||!AC)return;
+  vol=vol||0.12;type=type||'sawtooth';
+  var o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.connect(g);g.connect(AC.destination);
+  var t=AC.currentTime;
+  o.frequency.setValueAtTime(f1,t);
+  o.frequency.exponentialRampToValueAtTime(Math.max(20,f2),t+dur);
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(vol,t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.start(t);o.stop(t+dur);
+}
+var motorNode=null;
+function playClawMotor(on){
+  if(!soundOn||!AC)return;
+  if(on){
+    if(motorNode)return;
+    var o=AC.createOscillator(),g=AC.createGain();
+    o.type='sawtooth';o.frequency.value=60;
+    g.gain.value=0.04;
+    o.connect(g);g.connect(AC.destination);
+    o.start();motorNode={o:o,g:g};
+  }else{
+    if(motorNode){try{motorNode.g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.1);motorNode.o.stop(AC.currentTime+0.12);}catch(e){}motorNode=null;}
+  }
+}
+function playGrab(){tone(180,0.12,'square',0.18);setTimeout(function(){tone(140,0.1,'square',0.12);},60);}
+function playDrop(){sweep(300,80,0.3,0.1,'sine');}
+function playFail(){sweep(200,50,0.25,0.12,'triangle');}
+function playWin(){var n=[523,659,784,1047];n.forEach(function(f,i){setTimeout(function(){tone(f,0.2,'square',0.12);},i*100);});}
+function playStar(){var n=[784,988,1175];n.forEach(function(f,i){setTimeout(function(){tone(f,0.15,'sine',0.1);},i*80);});}
+function playDeliver(){tone(880,0.08,'sine',0.15);setTimeout(function(){tone(1320,0.1,'sine',0.1);},60);}
+function playClick(){tone(600,0.05,'square',0.08);}
+
+// ── Prize Types ─────────────────────────────────────────────────
+var PRIZES={
+  ball:{name:'Ball',color:'#4488ff',glow:'#00aaff',value:10,r:18,emoji:'🔵'},
+  gem:{name:'Gem',color:'#aa44ff',glow:'#cc66ff',value:25,r:16,emoji:'🟣'},
+  star:{name:'Star',color:'#ffee44',glow:'#ffdd00',value:50,r:18,emoji:'🌟'},
+  heart:{name:'Heart',color:'#ff4488',glow:'#ff66aa',value:40,r:17,emoji:'💗'},
+  crown:{name:'Crown',color:'#ffaa00',glow:'#ffd700',value:100,r:20,emoji:'👑'},
+  gold:{name:'Gold',color:'#ffd700',glow:'#ffff00',value:200,r:16,emoji:'✨'}
+};
+
+// ── 30 Levels ───────────────────────────────────────────────────
+function mkPrizes(types,count,opts){
+  opts=opts||{};
+  if(!count)count=12+Math.floor(Math.random()*6);
+  var arr=[],cx=400,sy=510,spread=240;
+  for(var i=0;i<count;i++){
+    var t=types[Math.floor(Math.random()*types.length)];
+    var x=cx+(Math.random()-0.5)*spread;
+    var y=sy-Math.random()*60+ (opts.stack? i*8:0);
+    arr.push({type:t,x:x,y:y,r:PRIZES[t].r,value:PRIZES[t].value});
+  }
+  return arr;
+}
+var LEVELS=[
+  // Tier 1: Beginner (1-6) — balls only, strong grip
+  {id:1,name:'First Grab',tier:1,prizes:mkPrizes(['ball'],8),objective:{type:'count',target:3},grip:0.95,attempts:5},
+  {id:2,name:'Easy Pick',tier:1,prizes:mkPrizes(['ball'],10),objective:{type:'count',target:3},grip:0.93,attempts:5},
+  {id:3,name:'Ball Pit',tier:1,prizes:mkPrizes(['ball'],12),objective:{type:'count',target:4},grip:0.92,attempts:6},
+  {id:4,name:'Score 30',tier:1,prizes:mkPrizes(['ball'],10),objective:{type:'score',target:30},grip:0.9,attempts:5},
+  {id:5,name:'Gather Five',tier:1,prizes:mkPrizes(['ball'],12),objective:{type:'count',target:5},grip:0.9,attempts:6},
+  {id:6,name:'Beginner End',tier:1,prizes:mkPrizes(['ball'],14),objective:{type:'count',target:5},grip:0.88,attempts:6},
+  // Tier 2: Easy (7-12) — balls+gems, score targets
+  {id:7,name:'Gem Rush',tier:2,prizes:mkPrizes(['ball','gem'],12),objective:{type:'score',target:80},grip:0.85,attempts:5},
+  {id:8,name:'Mix It Up',tier:2,prizes:mkPrizes(['ball','gem'],12),objective:{type:'count',target:4},grip:0.83,attempts:5},
+  {id:9,name:'Score 120',tier:2,prizes:mkPrizes(['ball','gem'],14),objective:{type:'score',target:120},grip:0.82,attempts:6},
+  {id:10,name:'Quick Grab',tier:2,prizes:mkPrizes(['ball','gem'],10),objective:{type:'count',target:4},grip:0.8,attempts:4},
+  {id:11,name:'Treasure Hunt',tier:2,prizes:mkPrizes(['ball','gem','heart'],14),objective:{type:'score',target:150},grip:0.8,attempts:6},
+  {id:12,name:'Tier Test',tier:2,prizes:mkPrizes(['ball','gem','heart'],14),objective:{type:'count',target:5},grip:0.78,attempts:6},
+  // Tier 3: Medium (13-18) — stars+hearts, specific targets
+  {id:13,name:'Star Catcher',tier:3,prizes:mkPrizes(['ball','gem','star']),objective:{type:'specific',target:'star',count:2},grip:0.75,attempts:6},
+  {id:14,name:'Heart Hunter',tier:3,prizes:mkPrizes(['ball','gem','heart','star']),objective:{type:'specific',target:'heart',count:2},grip:0.73,attempts:6},
+  {id:15,name:'Score 250',tier:3,prizes:mkPrizes(['ball','gem','star','heart'],16),objective:{type:'score',target:250},grip:0.72,attempts:6},
+  {id:16,name:'Rare Find',tier:3,prizes:mkPrizes(['ball','gem','star','heart'],16),objective:{type:'count',target:5},grip:0.7,attempts:6},
+  {id:17,name:'Star Strike',tier:3,prizes:mkPrizes(['gem','star','heart'],14),objective:{type:'specific',target:'star',count:3},grip:0.7,attempts:5},
+  {id:18,name:'Medium Master',tier:3,prizes:mkPrizes(['ball','gem','star','heart'],18),objective:{type:'score',target:300},grip:0.68,attempts:6},
+  // Tier 4: Hard (19-24) — crowns, limited attempts
+  {id:19,name:'Crown Quest',tier:4,prizes:mkPrizes(['gem','star','heart','crown']),objective:{type:'specific',target:'crown',count:1},grip:0.68,attempts:5},
+  {id:20,name:'Royal Score',tier:4,prizes:mkPrizes(['ball','gem','star','heart','crown'],18),objective:{type:'score',target:400},grip:0.65,attempts:5},
+  {id:21,name:'Triple Crown',tier:4,prizes:mkPrizes(['gem','star','heart','crown'],18),objective:{type:'specific',target:'crown',count:2},grip:0.63,attempts:6},
+  {id:22,name:'Precision',tier:4,prizes:mkPrizes(['gem','star','crown'],14),objective:{type:'count',target:4},grip:0.62,attempts:4},
+  {id:23,name:'High Roller',tier:4,prizes:mkPrizes(['star','heart','crown'],16),objective:{type:'score',target:500},grip:0.6,attempts:5},
+  {id:24,name:'Hard Finish',tier:4,prizes:mkPrizes(['gem','star','heart','crown'],20),objective:{type:'count',target:6},grip:0.6,attempts:6},
+  // Tier 5: Master (25-30) — gold, precision, time
+  {id:25,name:'Golden Touch',tier:5,prizes:mkPrizes(['gem','star','crown','gold'],16),objective:{type:'golden',target:'gold'},grip:0.62,attempts:5},
+  {id:26,name:'Master Score',tier:5,prizes:mkPrizes(['star','heart','crown','gold'],18),objective:{type:'score',target:600},grip:0.6,attempts:5},
+  {id:27,name:'Gold Rush',tier:5,prizes:mkPrizes(['gem','crown','gold'],14),objective:{type:'specific',target:'gold',count:1},grip:0.6,attempts:4},
+  {id:28,name:'Crown & Gold',tier:5,prizes:mkPrizes(['star','crown','gold'],16),objective:{type:'count',target:5},grip:0.58,attempts:5},
+  {id:29,name:'Ultimate Score',tier:5,prizes:mkPrizes(['heart','crown','gold'],18),objective:{type:'score',target:800},grip:0.58,attempts:5},
+  {id:30,name:'Claw Master',tier:5,prizes:mkPrizes(['star','crown','gold'],20),objective:{type:'count',target:7},grip:0.6,attempts:6}
+];
+
+// Fix prizes count default for mkPrizes calls without count
+LEVELS.forEach(function(l){
+  // Ensure prizes have proper structure
+  l.prizes.forEach(function(p,i){
+    p.r=PRIZES[p.type].r;
+    p.value=PRIZES[p.type].value;
+    p.vx=0;p.vy=0;p.grabbed=false;p.delivered=false;p.id=i;
+  });
+});
+
+// ── Achievements ────────────────────────────────────────────────
+var ACHIEVEMENTS=[
+  {id:'first_grab',icon:'🎯',name:'First Grab',desc:'Grab your first prize'},
+  {id:'triple_star',icon:'⭐',name:'Triple Star',desc:'Earn 3 stars on any level'},
+  {id:'tier_master',icon:'🏅',name:'Tier Master',desc:'Complete all levels in a tier'},
+  {id:'golden_touch',icon:'✨',name:'Golden Touch',desc:'Grab a golden prize'},
+  {id:'daily_streak',icon:'📅',name:'Daily Streak',desc:'Play 3 daily challenges'},
+  {id:'perfect_level',icon:'💯',name:'Perfect Level',desc:'Complete a level with no failed grabs'},
+  {id:'collector',icon:'🎁',name:'Collector',desc:'Collect 50 total prizes'},
+  {id:'claw_master',icon:'🦾',name:'Claw Master',desc:'Complete all 30 levels'}
+];
+
+// ── Save/Load ───────────────────────────────────────────────────
+var SAVE_KEY='clawmaster_save_v1';
+var save={levels:{},achievements:{},totalPrizes:0,dailyStreak:0,lastDaily:null,soundOn:true};
+function loadSave(){
+  try{var s=localStorage.getItem(SAVE_KEY);if(s){save=JSON.parse(s);}}catch(e){}
+  if(!save.levels)save.levels={};
+  if(!save.achievements)save.achievements={};
+  if(!save.totalPrizes)save.totalPrizes=0;
+  if(!save.dailyStreak)save.dailyStreak=0;
+  if(!save.lastDaily)save.lastDaily=null;
+  soundOn=save.soundOn!==false;
+  document.getElementById('soundBtn').textContent=soundOn?'🔊':'🔇';
+}
+function saveSave(){
+  save.soundOn=soundOn;
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));}catch(e){}
+}
+
+// ── Navigation ──────────────────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  var back=document.getElementById('backBtn');
+  back.style.display=(id==='titleScreen')?'none':'block';
+  if(id==='levelScreen')renderLevels();
+  if(id==='achScreen')renderAchievements();
+}
+function showLevels(){playClick();showScreen('levelScreen');}
+function showAchievements(){playClick();showScreen('achScreen');}
+function goBack(){
+  playClick();
+  if(game.running){game.running=false;playClawMotor(false);}
+  showScreen('titleScreen');
+}
+
+// ── Level Select ────────────────────────────────────────────────
+var TIER_NAMES=['','Beginner','Easy','Medium','Hard','Master'];
+function renderLevels(){
+  var c=document.getElementById('tierContainer');c.innerHTML='';
+  for(var t=1;t<=5;t++){
+    var tl=document.createElement('div');tl.className='tier-label';
+    tl.textContent='Tier '+t+' · '+TIER_NAMES[t];c.appendChild(tl);
+    var grid=document.createElement('div');grid.className='lvl-grid';
+    for(var i=(t-1)*6+1;i<=t*6;i++){
+      (function(lid){
+        var card=document.createElement('div');
+        var unlocked=lid===1||(save.levels[lid-1]&&save.levels[lid-1].stars>0);
+        card.className='lvl-card'+(unlocked?'':' locked');
+        var info=save.levels[lid]||{stars:0};
+        var stars='';
+        for(var s=1;s<=3;s++){
+          stars+='<span class="'+(s<=info.stars?'star-on':'star-off')+'">★</span>';
+        }
+        card.innerHTML='<div class="lvl-num">'+(unlocked?lid:'🔒')+'</div><div class="lvl-stars">'+stars+'</div>';
+        if(unlocked)card.onclick=function(){playClick();startLevel(lid,false);};
+        grid.appendChild(card);
+      })(i);
+    }
+    c.appendChild(grid);
+  }
+}
+
+// ── Achievements Render ─────────────────────────────────────────
+function renderAchievements(){
+  var c=document.getElementById('achContainer');c.innerHTML='';
+  var unlocked=0;
+  ACHIEVEMENTS.forEach(function(a){
+    var card=document.createElement('div');
+    var isUnlocked=!!save.achievements[a.id];
+    if(isUnlocked)unlocked++;
+    card.className='ach-card'+(isUnlocked?' unlocked':'');
+    card.innerHTML='<div class="ach-icon">'+a.icon+'</div><div class="ach-info"><h4>'+a.name+'</h4><p>'+a.desc+'</p></div>';
+    c.appendChild(card);
+  });
+  var summary=document.createElement('div');
+  summary.style.cssText='text-align:center;font-size:12px;color:var(--dim);margin-top:8px';
+  summary.textContent=unlocked+' / '+ACHIEVEMENTS.length+' Unlocked';
+  c.appendChild(summary);
+}
+function unlockAchievement(id){
+  if(save.achievements[id])return;
+  save.achievements[id]=true;saveSave();
+  var a=ACHIEVEMENTS.find(function(x){return x.id===id;});
+  if(a){
+    showToast('🏆 '+a.name+'!');
+    playStar();
+  }
+}
+
+// ── Toast ───────────────────────────────────────────────────────
+var toastTimer=null;
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show');},2500);
+}
+
+// ── Daily Challenge ─────────────────────────────────────────────
+function getTodayStr(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function dailySeed(){var d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();}
+function startDaily(){
+  playClick();
+  var today=getTodayStr();
+  if(save.lastDaily!==today){
+    if(save.lastDaily){
+      var y=new Date(save.lastDaily),t=new Date(today);
+      var diff=Math.round((t-y)/(86400000));
+      if(diff===1)save.dailyStreak=(save.dailyStreak||0)+1;
+      else save.dailyStreak=1;
+    }else{
+      save.dailyStreak=(save.dailyStreak||0)+1;
+    }
+    save.lastDaily=today;saveSave();
+  }
+  if(save.dailyStreak>=3)unlockAchievement('daily_streak');
+  // Generate date-seeded level
+  var seed=dailySeed();
+  var rng=mulberry32(seed);
+  var types=['ball','gem','star','heart','crown'];
+  var count=10+Math.floor(rng()*10);
+  var prizes=[];
+  for(var i=0;i<count;i++){
+    var t=types[Math.floor(rng()*types.length)];
+    prizes.push({type:t,x:300+rng()*200,y:480+rng()*60,r:PRIZES[t].r,value:PRIZES[t].value,id:i,vx:0,vy:0,grabbed:false,delivered:false});
+  }
+  // Small chance of gold
+  if(rng()>0.7){prizes[0].type='gold';prizes[0].r=PRIZES.gold.r;prizes[0].value=PRIZES.gold.value;}
+  var dailyLevel={
+    id:999,name:'Daily Challenge',tier:3,daily:true,
+    prizes:prizes,
+    objective:{type:'score',target:200+Math.floor(rng()*200)},
+    grip:0.7+rng()*0.15,attempts:6
+  };
+  startLevel(dailyLevel,true);
+}
+
+// ── Seeded RNG ──────────────────────────────────────────────────
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+// ── Game State ──────────────────────────────────────────────────
+var game={
+  running:false,level:null,isDaily:false,
+  score:0,attempts:0,prizesCollected:0,specificCollected:{},failedGrabs:0,
+  claw:{x:400,y:70,state:'idle',jaws:1,carry:null,dir:1,dragging:false,dragX:0},
+  prizes:[],particles:[],deliveredPrizes:[],
+  cw:800,ch:600,scale:1,offsetX:0,offsetY:0,
+  lastTime:0,grabDelay:0,clawSpeed:2.5,autoMove:true,
+  flashTime:0,msgTime:0,msg:'',shake:0
+};
+
+// ── Canvas Setup ────────────────────────────────────────────────
+var canvas,ctx;
+function setupCanvas(){
+  canvas=document.getElementById('gameCanvas');
+  ctx=canvas.getContext('2d');
+  resizeCanvas();
+}
+function resizeCanvas(){
+  if(!canvas)return;
+  var wrap=canvas.parentElement;
+  var ww=wrap.clientWidth,wh=wrap.clientHeight;
+  game.cw=800;game.ch=600;
+  var sx=ww/game.cw,sy=wh/(game.ch-0); // Leave room for drop button handled by CSS
+  game.scale=Math.min(sx,sy);
+  canvas.width=game.cw;
+  canvas.height=game.ch;
+  canvas.style.width=(game.cw*game.scale)+'px';
+  canvas.style.height=(game.ch*game.scale)+'px';
+}
+
+// ── Start Level ─────────────────────────────────────────────────
+function startLevel(lvl,isDaily){
+  game.level=JSON.parse(JSON.stringify(lvl));
+  game.isDaily=isDaily;
+  game.score=0;game.attempts=lvl.attempts;game.prizesCollected=0;
+  game.specificCollected={};game.failedGrabs=0;
+  game.prizes=game.level.prizes.map(function(p,i){
+    return{x:p.x,y:p.y,r:p.r,value:p.value,type:p.type,vx:0,vy:0,id:i,grabbed:false,delivered:false,wob:Math.random()*6.28};
+  });
+  game.claw={x:400,y:70,state:'idle',jaws:1,carry:null,dir:1,dragging:false,dragX:0};
+  game.particles=[];game.deliveredPrizes=[];game.flashTime=0;game.msgTime=0;game.shake=0;
+  game.lastTime=0;game.running=true;game.autoMove=true;
+  // Settle prizes into pile
+  settlePrizes();
+  // Setup HUD
+  document.getElementById('hudLevel').textContent=lvl.name.substring(0,12);
+  document.getElementById('hudAttempts').textContent=game.attempts;
+  document.getElementById('hudScore').textContent=game.score;
+  var obj=lvl.objective;
+  var objText='';
+  if(obj.type==='count')objText='Grab '+obj.target+' prizes';
+  else if(obj.type==='score')objText='Score '+obj.target+' points';
+  else if(obj.type==='specific')objText='Grab '+obj.count+' '+PRIZES[obj.target].name+'(s)';
+  else if(obj.type==='golden')objText='Grab the GOLDEN prize!';
+  document.getElementById('objBanner').textContent='🎯 '+objText;
+  showScreen('gameScreen');
+  setTimeout(setupCanvas,50);
+  setTimeout(resizeCanvas,100);
+  if(!game.loopStarted){
+    game.loopStarted=true;
+    requestAnimationFrame(gameLoop);
+  }
+}
+
+// ── Prize Settling (simple pile) ────────────────────────────────
+function settlePrizes(){
+  // Sort by y descending (bottom first), then settle with basic collision
+  var floor=540;
+  var cx=400,halfW=130;
+  game.prizes.sort(function(a,b){return b.y-a.y;});
+  for(var pass=0;pass<3;pass++){
+    for(var i=0;i<game.prizes.length;i++){
+      var p=game.prizes[i];
+      // Gravity settle
+      if(p.y+p.r<floor){
+        var canGoDown=true;
+        for(var j=0;j<game.prizes.length;j++){
+          if(i===j)continue;
+          var q=game.prizes[j];
+          var dx=p.x-q.x,dy=p.y-q.y;
+          var dist=Math.sqrt(dx*dx+dy*dy);
+          if(dist<p.r+q.r&&p.y<q.y){canGoDown=false;break;}
+        }
+        if(canGoDown)p.y=Math.min(floor-p.r,p.y+2);
+      }
+      // Lateral overlap resolution
+      for(var j=0;j<game.prizes.length;j++){
+        if(i===j)continue;
+        var q=game.prizes[j];
+        var dx=p.x-q.x,dy=p.y-q.y;
+        var dist=Math.sqrt(dx*dx+dy*dy);
+        var minD=p.r+q.r;
+        if(dist<minD&&dist>0.1){
+          var push=(minD-dist)/2;
+          var nx=dx/dist,ny=dy/dist;
+          p.x+=nx*push;p.y+=ny*push;
+          // Keep within bounds
+          if(p.x<cx-halfW+p.r)p.x=cx-halfW+p.r;
+          if(p.x>cx+halfW-p.r)p.x=cx+halfW-p.r;
+        }
+      }
+    }
+  }
+}
+
+// ── Drop Claw ───────────────────────────────────────────────────
+function dropClaw(){
+  if(!game.running)return;
+  if(game.claw.state!=='idle'&&game.claw.state!=='moving')return;
+  if(game.attempts<=0)return;
+  initAudio();
+  game.claw.state='descending';
+  game.claw.jaws=1; // open
+  game.autoMove=false;
+  playClawMotor(true);
+}
+
+// ── Game Loop ───────────────────────────────────────────────────
+function gameLoop(ts){
+  if(!game.running){game.loopStarted=false;return;}
+  if(!game.lastTime)game.lastTime=ts;
+  var dt=Math.min(33,ts-game.lastTime);
+  game.lastTime=ts;
+  update(dt);
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+// ── Update ──────────────────────────────────────────────────────
+function update(dt){
+  var c=game.claw;
+  var dts=dt/16.67;
+  // Auto-move claw
+  if((c.state==='idle'||c.state==='moving')&&game.autoMove&&!c.dragging){
+    c.x+=c.dir*game.clawSpeed*dts;
+    if(c.x>650){c.x=650;c.dir=-1;}
+    if(c.x<150){c.x=150;c.dir=1;}
+  }
+  if(c.state==='idle'||c.state==='moving'){
+    if(game.autoMove&&!c.dragging)c.state='moving';
+    else c.state='idle';
+  }
+  // Descending
+  if(c.state==='descending'){
+    c.y+=4*dts;
+    // Check if reached bottom of pile
+    var reachY=520;
+    if(c.y>=reachY){
+      c.y=reachY;c.state='grabbing';game.grabDelay=300;
+    }
+  }
+  // Grabbing
+  if(c.state==='grabbing'){
+    game.grabDelay-=dt;
+    // Close jaws gradually
+    c.jaws=Math.max(0.15,c.jaws-0.04*dts);
+    if(game.grabDelay<=0){
+      // Determine grab
+      var grabbed=tryGrab();
+      if(grabbed){
+        c.carry=grabbed;
+        grabbed.grabbed=true;
+        playGrab();
+      }else{
+        game.failedGrabs++;
+      }
+      c.state='ascending';
+      game.attempts--;
+      updateHUD();
+    }
+  }
+  // Ascending
+  if(c.state==='ascending'){
+    c.y-=3.5*dts;
+    // Grip check — may drop prize
+    if(c.carry&&c.y>100&&c.y<480){
+      if(Math.random()>game.level.grip+0.05){
+        // Drop!
+        var p=c.carry;
+        p.grabbed=false;p.vx=(Math.random()-0.5)*2;p.vy=0;
+        c.carry=null;
+        game.failedGrabs++;
+        playFail();
+        spawnParticles(c.x,c.y,'#ff3366',8);
+      }
+    }
+    // Carry position
+    if(c.carry){
+      c.carry.x=c.x;
+      c.carry.y=c.y+35;
+    }
+    if(c.y<=70){
+      c.y=70;
+      if(c.carry){
+        // Deliver!
+        var pz=c.carry;
+        pz.delivered=true;
+        game.deliveredPrizes.push({type:pz.type,value:pz.value,x:730,y:300,anim:0});
+        game.score+=pz.value;
+        game.prizesCollected++;
+        save.totalPrizes++;saveSave();
+        if(!game.specificCollected[pz.type])game.specificCollected[pz.type]=0;
+        game.specificCollected[pz.type]++;
+        c.carry=null;
+        playDeliver();
+        spawnParticles(730,300,PRIZES[pz.type].glow,12);
+        game.flashTime=200;
+        // Check achievements
+        checkGameAchievements(pz.type);
+      }
+      c.state='delivering';
+      game.grabDelay=400;
+      playClawMotor(false);
+      updateHUD();
+    }
+  }
+  // Delivering (pause then resume auto-move)
+  if(c.state==='delivering'){
+    game.grabDelay-=dt;
+    // Open jaws
+    c.jaws=Math.min(1,c.jaws+0.05*dts);
+    if(game.grabDelay<=0){
+      c.state='idle';
+      game.autoMove=true;
+      checkWinLose();
+    }
+  }
+  // Update prizes physics (for dropped prizes)
+  for(var i=0;i<game.prizes.length;i++){
+    var p=game.prizes[i];
+    if(p.delivered)continue;
+    if(!p.grabbed&&c.carry!==p){
+      // Apply gravity if not settled
+      p.vy+=0.3*dts;
+      p.y+=p.vy*dts;
+      p.x+=p.vx*dts;
+      p.vx*=0.95;
+      // Floor
+      var floor=545;
+      if(p.y+p.r>floor){
+        p.y=floor-p.r;p.vy*=-0.3;
+        if(Math.abs(p.vy)<0.5)p.vy=0;
+      }
+      // Walls
+      var cx=400,halfW=135;
+      if(p.x-p.r<cx-halfW){p.x=cx-halfW+p.r;p.vx*=-0.5;}
+      if(p.x+p.r>cx+halfW){p.x=cx+halfW-p.r;p.vx*=-0.5;}
+      // Prize-prize collision
+      for(var j=i+1;j<game.prizes.length;j++){
+        var q=game.prizes[j];
+        if(q.delivered||q.grabbed)continue;
+        var dx=p.x-q.x,dy=p.y-q.y;
+        var dist=Math.sqrt(dx*dx+dy*dy);
+        var minD=p.r+q.r;
+        if(dist<minD&&dist>0.1){
+          var push=(minD-dist)/2;
+          var nx=dx/dist,ny=dy/dist;
+          p.x+=nx*push;p.y+=ny*push*0.5;
+          q.x-=nx*push;q.y-=ny*push*0.5;
+          p.vx+=nx*0.1;q.vx-=nx*0.1;
+        }
+      }
+    }
+    p.wob+=0.02*dts;
+  }
+  // Particles
+  for(var i=game.particles.length-1;i>=0;i--){
+    var pt=game.particles[i];
+    pt.x+=pt.vx*dts;pt.y+=pt.vy*dts;
+    pt.vy+=0.15*dts;pt.life-=dt;
+    if(pt.life<=0)game.particles.splice(i,1);
+  }
+  // Delivered prizes animation
+  for(var i=game.deliveredPrizes.length-1;i>=0;i--){
+    var dp=game.deliveredPrizes[i];
+    dp.anim+=dt;
+    if(dp.anim>1000){game.deliveredPrizes.splice(i,1);}
+  }
+  // Flash & shake decay
+  if(game.flashTime>0)game.flashTime-=dt;
+  if(game.shake>0)game.shake-=dt*0.1;
+  // Message timer
+  if(game.msgTime>0){
+    game.msgTime-=dt;
+    if(game.msgTime<=0)game.msg='';
+  }
+}
+
+// ── Try Grab ────────────────────────────────────────────────────
+function tryGrab(){
+  var c=game.claw;
+  var best=null,bestDist=999;
+  var jawSpan=28; // half-width of jaws
+  for(var i=0;i<game.prizes.length;i++){
+    var p=game.prizes[i];
+    if(p.delivered||p.grabbed)continue;
+    var dx=p.x-c.x;
+    var dy=p.y-(c.y+30);
+    var dist=Math.sqrt(dx*dx+dy*dy);
+    if(Math.abs(dx)<jawSpan+p.r&&dist<50+p.r){
+      if(dist<bestDist){bestDist=dist;best=p;}
+    }
+  }
+  return best;
+}
+
+// ── Particles ───────────────────────────────────────────────────
+function spawnParticles(x,y,color,n){
+  for(var i=0;i<n;i++){
+    var a=Math.random()*6.28;
+    var s=2+Math.random()*4;
+    game.particles.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,color:color,life:500+Math.random()*300,size:2+Math.random()*3});
+  }
+}
+
+// ── Check Win/Lose ──────────────────────────────────────────────
+function checkWinLose(){
+  var obj=game.level.objective;
+  var won=false;
+  if(obj.type==='count')won=game.prizesCollected>=obj.target;
+  else if(obj.type==='score')won=game.score>=obj.target;
+  else if(obj.type==='specific')won=(game.specificCollected[obj.target]||0)>=obj.count;
+  else if(obj.type==='golden')won=(game.specificCollected['gold']||0)>=1;
+
+  if(won){endLevel(true);return;}
+  if(game.attempts<=0){
+    // Check if impossible to win
+    var remaining=game.prizes.filter(function(p){return!p.delivered;}).length;
+    if(remaining===0||!canStillWin()){endLevel(false);return;}
+  }
+}
+function canStillWin(){
+  var obj=game.level.objective;
+  if(obj.type==='count')return game.prizesCollected<obj.target; // still prizes left
+  return true;
+}
+
+// ── End Level ───────────────────────────────────────────────────
+function endLevel(won){
+  game.running=false;playClawMotor(false);
+  if(!won){
+    // Show fail briefly then allow retry
+    document.getElementById('winTitle').textContent='FAILED!';
+    document.getElementById('winTitle').style.color='var(--red)';
+    document.getElementById('winStars').textContent='💔';
+    document.getElementById('winScore').textContent=game.score;
+    document.getElementById('winPrizeCount').textContent=game.prizesCollected;
+    document.getElementById('nextBtn').style.display='none';
+    showScreen('winScreen');
+    playFail();
+    return;
+  }
+  // Won — calculate stars
+  var stars=1;
+  var obj=game.level.objective;
+  // 2 stars: completed with good ratio
+  var efficiency=game.prizesCollected/Math.max(1,game.level.attempts-game.failedGrabs);
+  if(game.failedGrabs===0)stars=2;
+  if(game.failedGrabs===0&&game.score>=getScoreThreshold(obj))stars=3;
+  // Simpler: 3 stars if no fail AND exceeded target, 2 if no fail, 1 otherwise
+  if(game.failedGrabs===0){
+    stars=2;
+    if(obj.type==='count'&&game.prizesCollected>=obj.target+1)stars=3;
+    else if(obj.type==='score'&&game.score>=obj.target*1.3)stars=3;
+    else if(obj.type==='specific'&&game.specificCollected[obj.target]>=obj.count+1)stars=3;
+    else if(obj.type==='golden')stars=3;
+    else if(efficiency>=0.8)stars=3;
+  }
+  document.getElementById('winTitle').textContent='LEVEL CLEAR!';
+  document.getElementById('winTitle').style.color='var(--green)';
+  var starStr='';for(var i=0;i<3;i++)starStr+=(i<stars)?'⭐':' ☆ ';
+  document.getElementById('winStars').textContent=starStr;
+  document.getElementById('winScore').textContent=game.score;
+  document.getElementById('winPrizeCount').textContent=game.prizesCollected;
+  document.getElementById('nextBtn').style.display=(!game.isDaily&&game.level.id<30)?'block':'none';
+  showScreen('winScreen');
+  playWin();setTimeout(playStar,400);
+  // Save progress
+  if(!game.isDaily){
+    var prev=save.levels[game.level.id]||{stars:0,score:0};
+    save.levels[game.level.id]={stars:Math.max(prev.stars,stars),score:Math.max(prev.score,game.score)};
+    saveSave();
+  }
+  // Check achievements
+  if(stars===3)unlockAchievement('triple_star');
+  if(game.failedGrabs===0)unlockAchievement('perfect_level');
+  // Tier master
+  for(var t=1;t<=5;t++){
+    var allDone=true;
+    for(var l=(t-1)*6+1;l<=t*6;l++){
+      if(!save.levels[l]||save.levels[l].stars===0){allDone=false;break;}
+    }
+    if(allDone)unlockAchievement('tier_master');
+  }
+  // Claw master — all 30
+  var all30=true;
+  for(var l=1;l<=30;l++){
+    if(!save.levels[l]||save.levels[l].stars===0){all30=false;break;}
+  }
+  if(all30)unlockAchievement('claw_master');
+  if(save.totalPrizes>=50)unlockAchievement('collector');
+}
+function getScoreThreshold(obj){
+  if(obj.type==='score')return obj.target*1.3;
+  return 100;
+}
+function nextLevel(){
+  playClick();
+  if(game.level.id<30)startLevel(LEVELS[game.level.id],false);
+}
+function retryLevel(){
+  playClick();
+  if(game.isDaily)startDaily();
+  else startLevel(game.level,false);
+}
+
+// ── Check In-Game Achievements ──────────────────────────────────
+function checkGameAchievements(prizeType){
+  unlockAchievement('first_grab');
+  if(prizeType==='gold')unlockAchievement('golden_touch');
+  if(save.totalPrizes>=50)unlockAchievement('collector');
+}
+
+// ── HUD ─────────────────────────────────────────────────────────
+function updateHUD(){
+  document.getElementById('hudAttempts').textContent=Math.max(0,game.attempts);
+  document.getElementById('hudScore').textContent=game.score;
+}
+
+// ── Render ──────────────────────────────────────────────────────
+function render(){
+  if(!ctx)return;
+  var sx=(game.shake>0)?(Math.random()-0.5)*game.shake:0;
+  var sy=(game.shake>0)?(Math.random()-0.5)*game.shake:0;
+  ctx.save();
+  ctx.translate(sx,sy);
+  // Background
+  var bgGrad=ctx.createLinearGradient(0,0,0,600);
+  bgGrad.addColorStop(0,'#0a0a1a');
+  bgGrad.addColorStop(0.5,'#12122e');
+  bgGrad.addColorStop(1,'#0a0a1a');
+  ctx.fillStyle=bgGrad;
+  ctx.fillRect(0,0,800,600);
+  // Cabinet interior
+  drawCabinet();
+  // Prizes
+  for(var i=0;i<game.prizes.length;i++){
+    var p=game.prizes[i];
+    if(!p.delivered)drawPrize(p);
+  }
+  // Delivered prizes (flying to chute)
+  for(var i=0;i<game.deliveredPrizes.length;i++){
+    var dp=game.deliveredPrizes[i];
+    var t=Math.min(1,dp.anim/800);
+    var dx=730+(1-t)*(-50);
+    drawDeliveredPrize(dp,dp.anim);
+  }
+  // Claw
+  drawClaw();
+  // Particles
+  for(var i=0;i<game.particles.length;i++){
+    var pt=game.particles[i];
+    ctx.globalAlpha=Math.max(0,pt.life/500);
+    ctx.fillStyle=pt.color;
+    ctx.beginPath();ctx.arc(pt.x,pt.y,pt.size,0,6.28);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  // Flash overlay
+  if(game.flashTime>0){
+    ctx.fillStyle='rgba(255,255,255,'+(game.flashTime/2000)+')';
+    ctx.fillRect(0,0,800,600);
+  }
+  // Message
+  if(game.msg&&game.msgTime>0){
+    ctx.fillStyle='rgba(0,0,0,0.6)';
+    ctx.fillRect(0,0,800,600);
+    ctx.fillStyle='#00f5ff';
+    ctx.font='bold 48px Orbitron,sans-serif';
+    ctx.textAlign='center';
+    ctx.shadowColor='#00f5ff';ctx.shadowBlur=20;
+    ctx.fillText(game.msg,400,300);
+    ctx.shadowBlur=0;
+  }
+  ctx.restore();
+}
+
+function drawCabinet(){
+  // Glass case area
+  ctx.fillStyle='rgba(0,245,255,0.03)';
+  ctx.fillRect(130,55,540,500);
+  // Cabinet frame (neon outline)
+  ctx.strokeStyle='rgba(0,245,255,0.4)';
+  ctx.lineWidth=3;
+  roundRect(ctx,128,53,544,504,12);
+  ctx.stroke();
+  // Inner frame glow
+  ctx.shadowColor='#00f5ff';ctx.shadowBlur=10;
+  ctx.strokeStyle='rgba(0,245,255,0.15)';
+  ctx.lineWidth=1;
+  roundRect(ctx,135,60,530,490,8);
+  ctx.stroke();
+  ctx.shadowBlur=0;
+  // Top rail
+  ctx.fillStyle='rgba(255,170,0,0.15)';
+  ctx.fillRect(140,60,520,12);
+  ctx.strokeStyle='rgba(255,170,0,0.5)';
+  ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(140,72);ctx.lineTo(660,72);ctx.stroke();
+  // Chute (right side)
+  ctx.fillStyle='rgba(255,0,255,0.08)';
+  ctx.fillRect(670,300,90,200);
+  ctx.strokeStyle='rgba(255,0,255,0.4)';
+  ctx.lineWidth=2;
+  ctx.strokeRect(670,300,90,200);
+  // Chute opening (top)
+  ctx.fillStyle='rgba(10,10,26,0.8)';
+  ctx.fillRect(672,300,86,6);
+  // Chute label
+  ctx.fillStyle='rgba(255,0,255,0.4)';
+  ctx.font='10px Orbitron,sans-serif';
+  ctx.textAlign='center';
+  ctx.save();
+  ctx.translate(715,400);ctx.rotate(-Math.PI/2);
+  ctx.fillText('CHUTE',0,0);
+  ctx.restore();
+  // Bottom floor
+  ctx.fillStyle='rgba(0,245,255,0.08)';
+  ctx.fillRect(145,545,510,12);
+  ctx.strokeStyle='rgba(0,245,255,0.3)';
+  ctx.beginPath();ctx.moveTo(145,557);ctx.lineTo(655,557);ctx.stroke();
+  // Grid pattern on back wall
+  ctx.strokeStyle='rgba(0,245,255,0.04)';
+  ctx.lineWidth=1;
+  for(var x=160;x<660;x+=40){
+    ctx.beginPath();ctx.moveTo(x,75);ctx.lineTo(x,545);ctx.stroke();
+  }
+  for(var y=80;y<545;y+=40){
+    ctx.beginPath();ctx.moveTo(145,y);ctx.lineTo(655,y);ctx.stroke();
+  }
+}
+
+function drawPrize(p){
+  var def=PRIZES[p.type];
+  var x=p.x,y=p.y,r=p.r;
+  // Glow
+  ctx.shadowColor=def.glow;ctx.shadowBlur=12;
+  // Shape per type
+  if(p.type==='ball'){
+    ctx.fillStyle=def.color;
+    ctx.beginPath();ctx.arc(x,y,r,0,6.28);ctx.fill();
+    // Highlight
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,0.3)';
+    ctx.beginPath();ctx.arc(x-r*0.3,y-r*0.3,r*0.35,0,6.28);ctx.fill();
+  }else if(p.type==='gem'){
+    drawGem(x,y,r,def.color);
+  }else if(p.type==='star'){
+    drawStarShape(x,y,r,def.color);
+  }else if(p.type==='heart'){
+    drawHeart(x,y,r,def.color);
+  }else if(p.type==='crown'){
+    drawCrown(x,y,r,def.color);
+  }else if(p.type==='gold'){
+    // Shimmering gold
+    var sh=0.7+Math.sin(Date.now()*0.005)*0.3;
+    ctx.fillStyle='rgba(255,215,0,'+sh+')';
+    ctx.beginPath();ctx.arc(x,y,r,0,6.28);ctx.fill();
+    ctx.shadowBlur=0;
+    // Sparkles
+    ctx.fillStyle='#ffffff';
+    var sp=p.wob;
+    for(var i=0;i<3;i++){
+      var sa=sp+i*2.09;
+      ctx.globalAlpha=0.6+Math.sin(Date.now()*0.008+i)*0.4;
+      ctx.beginPath();ctx.arc(x+Math.cos(sa)*r*0.5,y+Math.sin(sa)*r*0.5,1.5,0,6.28);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }
+  ctx.shadowBlur=0;
+}
+
+function drawGem(x,y,r,color){
+  ctx.fillStyle=color;
+  ctx.beginPath();
+  ctx.moveTo(x,y-r);
+  ctx.lineTo(x+r*0.8,y);
+  ctx.lineTo(x,y+r);
+  ctx.lineTo(x-r*0.8,y);
+  ctx.closePath();ctx.fill();
+  // Facet line
+  ctx.strokeStyle='rgba(255,255,255,0.4)';
+  ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x-r*0.8,y);ctx.lineTo(x+r*0.8,y);ctx.stroke();
+}
+
+function drawStarShape(x,y,r,color){
+  ctx.fillStyle=color;
+  ctx.beginPath();
+  for(var i=0;i<10;i++){
+    var a=(i/10)*Math.PI*2-Math.PI/2;
+    var rr=(i%2===0)?r:r*0.45;
+    var px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr;
+    if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+  }
+  ctx.closePath();ctx.fill();
+}
+
+function drawHeart(x,y,r,color){
+  ctx.fillStyle=color;
+  ctx.beginPath();
+  var s=r/16;
+  ctx.moveTo(x,y+3*s);
+  ctx.bezierCurveTo(x,y,x-8*s,y-5*s,x-8*s,y-2*s);
+  ctx.bezierCurveTo(x-8*s,y+2*s,x,y+5*s,x,y+8*s);
+  ctx.bezierCurveTo(x,y+5*s,x+8*s,y+2*s,x+8*s,y-2*s);
+  ctx.bezierCurveTo(x+8*s,y-5*s,x,y,x,y+3*s);
+  ctx.fill();
+}
+
+function drawCrown(x,y,r,color){
+  ctx.fillStyle=color;
+  var w=r*1.4,h=r*0.9;
+  ctx.beginPath();
+  ctx.moveTo(x-w/2,y+h/2);
+  ctx.lineTo(x-w/2,y-h/4);
+  ctx.lineTo(x-w/3,y+h/4);
+  ctx.lineTo(x-w/6,y-h/2);
+  ctx.lineTo(x,y+h/4);
+  ctx.lineTo(x+w/6,y-h/2);
+  ctx.lineTo(x+w/3,y+h/4);
+  ctx.lineTo(x+w/2,y-h/4);
+  ctx.lineTo(x+w/2,y+h/2);
+  ctx.closePath();ctx.fill();
+  // Gems on crown
+  ctx.fillStyle='#ff3366';
+  ctx.beginPath();ctx.arc(x-w/3,y-h/4,1.5,0,6.28);ctx.fill();
+  ctx.beginPath();ctx.arc(x,y,1.5,0,6.28);ctx.fill();
+  ctx.beginPath();ctx.arc(x+w/3,y-h/4,1.5,0,6.28);ctx.fill();
+}
+
+function drawDeliveredPrize(dp,anim){
+  var def=PRIZES[dp.type];
+  var t=Math.min(1,anim/600);
+  var x=730+(1-t)*(-30);
+  var y=320+anim*0.1;
+  if(anim>600){y=380+Math.sin(anim*0.01)*3;ctx.globalAlpha=Math.max(0,1-(anim-600)/400);}
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.scale(0.7,0.7);
+  ctx.shadowColor=def.glow;ctx.shadowBlur=10;
+  ctx.fillStyle=def.color;
+  ctx.beginPath();ctx.arc(0,0,14,0,6.28);ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.restore();
+  ctx.globalAlpha=1;
+}
+
+function drawClaw(){
+  var c=game.claw;
+  // Rail
+  ctx.strokeStyle='rgba(255,170,0,0.3)';
+  ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(150,66);ctx.lineTo(650,66);ctx.stroke();
+  // Trolley
+  ctx.fillStyle='rgba(255,170,0,0.6)';
+  ctx.fillRect(c.x-14,60,28,10);
+  ctx.strokeStyle='#ffaa00';
+  ctx.strokeRect(c.x-14,60,28,10);
+  // Cable
+  ctx.strokeStyle='rgba(200,200,220,0.6)';
+  ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(c.x,70);ctx.lineTo(c.x,c.y);ctx.stroke();
+  // Claw body
+  ctx.fillStyle='rgba(180,180,200,0.9)';
+  ctx.strokeStyle='#aaaacc';
+  ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(c.x,c.y,12,0,6.28);ctx.fill();ctx.stroke();
+  // Jaws
+  var jawLen=25;
+  var jawAngle=c.jaws*0.6; // 0=closed, ~0.6=open
+  ctx.strokeStyle='#ccccee';
+  ctx.lineWidth=3;
+  ctx.lineCap='round';
+  // Left jaw
+  ctx.beginPath();
+  ctx.moveTo(c.x-6,c.y+5);
+  ctx.lineTo(c.x-6-jawAngle*20,c.y+jawLen);
+  ctx.lineTo(c.x-6-jawAngle*20+5,c.y+jawLen+5);
+  ctx.stroke();
+  // Right jaw
+  ctx.beginPath();
+  ctx.moveTo(c.x+6,c.y+5);
+  ctx.lineTo(c.x+6+jawAngle*20,c.y+jawLen);
+  ctx.lineTo(c.x+6+jawAngle*20-5,c.y+jawLen+5);
+  ctx.stroke();
+  // Joint
+  ctx.fillStyle='#666688';
+  ctx.beginPath();ctx.arc(c.x,c.y+5,3,0,6.28);ctx.fill();
+  ctx.lineCap='butt';
+}
+
+// ── Utility ─────────────────────────────────────────────────────
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+// ── Input Handling ──────────────────────────────────────────────
+function getCanvasPos(clientX,clientY){
+  var rect=canvas.getBoundingClientRect();
+  var x=(clientX-rect.left)/game.scale;
+  var y=(clientY-rect.top)/game.scale;
+  return{x:x,y:y};
+}
+function handlePointerDown(cx,cy){
+  if(!game.running)return;
+  initAudio();
+  var pos=getCanvasPos(cx,cy);
+  // Check if touching near claw (drag mode)
+  var c=game.claw;
+  if(c.state==='idle'||c.state==='moving'){
+    var dx=pos.x-c.x;
+    if(Math.abs(dx)<60&&pos.y<200){
+      c.dragging=true;
+      c.dragX=pos.x;
+      game.autoMove=false;
+      return;
+    }
+    // Otherwise drop
+    if(pos.y>100)dropClaw();
+  }
+}
+function handlePointerMove(cx,cy){
+  if(!game.running)return;
+  var c=game.claw;
+  if(c.dragging){
+    var pos=getCanvasPos(cx,cy);
+    c.x=Math.max(150,Math.min(650,pos.x));
+  }
+}
+function handlePointerUp(){
+  if(game.claw.dragging){
+    game.claw.dragging=false;
+    // Resume auto-move after a moment
+    setTimeout(function(){if(game.running&&game.claw.state==='idle')game.autoMove=true;},800);
+  }
+}
+
+// ── Init ────────────────────────────────────────────────────────
+function init(){
+  loadSave();
+  // Event listeners
+  document.getElementById('backBtn').onclick=goBack;
+  document.getElementById('soundBtn').onclick=function(){
+    soundOn=!soundOn;saveSave();
+    document.getElementById('soundBtn').textContent=soundOn?'🔊':'🔇';
+    if(!soundOn)playClawMotor(false);
+    if(soundOn)playClick();
+  };
+  // Canvas events (set after canvas exists)
+  setTimeout(function(){
+    var cv=document.getElementById('gameCanvas');
+    if(cv){
+      cv.addEventListener('touchstart',function(e){
+        e.preventDefault();
+        var t=e.touches[0];
+        handlePointerDown(t.clientX,t.clientY);
+      },{passive:false});
+      cv.addEventListener('touchmove',function(e){
+        e.preventDefault();
+        var t=e.touches[0];
+        handlePointerMove(t.clientX,t.clientY);
+      },{passive:false});
+      cv.addEventListener('touchend',function(e){e.preventDefault();handlePointerUp();},{passive:false});
+      cv.addEventListener('mousedown',function(e){handlePointerDown(e.clientX,e.clientY);});
+      cv.addEventListener('mousemove',function(e){handlePointerMove(e.clientX,e.clientY);});
+      cv.addEventListener('mouseup',function(e){handlePointerUp();});
+      cv.addEventListener('mouseleave',function(e){handlePointerUp();});
+    }
+    window.addEventListener('resize',resizeCanvas);
+  },100);
+}
+window.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
