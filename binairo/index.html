@@ -385,8 +385,11 @@ function setupCanvas(){
   const paletteEl=document.querySelector('#gameScreen .palette');
   const toolbarEl=document.querySelector('#gameScreen .toolbar');
   const footEl=document.querySelector('#gameScreen .foot');
+  // Account for site chrome footer (#game-footer) which loads async via game-footer.js
+  const siteFooterEl=document.getElementById('game-footer');
+  const siteFooterH=(siteFooterEl&&siteFooterEl.offsetHeight>0)?siteFooterEl.offsetHeight:0;
   const topOfBoard=boardWrap.getBoundingClientRect().top+window.scrollY;
-  const belowSpace=(toolbarEl?toolbarEl.offsetHeight:60)+(paletteEl?paletteEl.offsetHeight:70)+(footEl?footEl.offsetHeight:30)+30;
+  const belowSpace=(toolbarEl?toolbarEl.offsetHeight:60)+(paletteEl?paletteEl.offsetHeight:70)+(footEl?footEl.offsetHeight:30)+30+siteFooterH;
   const measuredReserve=topOfBoard+belowSpace;
   const vh=window.innerHeight;
   const staticReserve=vh<=560?250:(vh<=700?320:420);
@@ -400,6 +403,17 @@ function setupCanvas(){
   canvas.style.width=boardPx+'px'; canvas.style.height=boardPx+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
 }
+// Poll for site footer appearance and re-setup canvas when it loads (async via game-footer.js)
+(function(){
+  var _fc=setInterval(function(){
+    var f=document.getElementById('game-footer');
+    if(f&&f.offsetHeight>0){
+      clearInterval(_fc);
+      if(typeof S!=='undefined'&&S.screen==='game'){setupCanvas();drawBoard();}
+    }
+  },2000);
+  setTimeout(function(){clearInterval(_fc);},30000);
+})();
 
 function drawBoard(){
   const N=S.N, cs=cellSize;
