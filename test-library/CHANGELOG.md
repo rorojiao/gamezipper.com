@@ -1,3 +1,39 @@
+## [v1.102.0] - 2026-06-27
+### Added
+- 10 new test cases from late-June 2026 industry research (R221 Dynamic Test Intelligence cron)
+- [S-209] **[P1]** CVE-2026-33017 Langflow unauthenticated RCE (CVSS 9.3) via `/api/v1/build_public_tmp/{flow_id}/flow` endpoint reaching `exec()` on attacker-controlled Python — WEAPONIZED IN 20 HOURS (fastest AI-framework weaponization record); same exec() sink as CVE-2025-3248; the AI-WORKFLOW-PLATFORM-UNAUTH-RCE-RECORD-WEAPONIZATION-SPEED dimension (so.html5.qq.com March 23 2026; CSDN May 18 2026)
+- [S-210] **[P2]** CVE-2026-33873 Langflow Agentic Assistant authenticated code execution in validation phase — LLM-generated Python executed server-side when the validation SHOULD be static-only; the LLM-OUTPUT-AS-UNTRUSTED-CODE-EXECUTION-VALIDATION-PHASE dimension (github.com/advisories/ghsa-v8hw-mh8c-jxfc March 24 2026)
+- [S-211] **[P2]** CVE-2026-34486 Apache Tomcat EncryptInterceptor unauthenticated deserialization RCE on cluster port 4000 — decryption-failure path passes to ObjectInputStream.readObject() triggering CommonsCollections6; the CLUSTER-COMM-DECRYPTION-FAILURE-DESERIALIZATION-RCE dimension (github.com/404-src/CVE-2026-34486 June 5 2026)
+- [S-212] **[P1]** CVE-2026-32202 Windows Shell Spoofing (actively exploited, CISA KEV) EMERGED FROM INCOMPLETE PATCH of CVE-2026-21510 — Menlo CISO confirmed the prior fix left variants unfixed; the INCOMPLETE-PATCH-VARIANT-EMERGENCE-REGRESSION-TEST dimension (sohu.com May 8 2026)
+- [S-213] **[P1]** CVE-2026-41089 Windows Netlogon zero-click domain-controller RCE (CVSS 9.8, stack overflow, NO auth needed) disclosed June 2 2026 — post-Zerologon/PetitPotam generation; the WINDOWS-DOMAIN-CONTROLLER-ZERO-CLICK-RCE-CLASS dimension (CSDN June 22 2026)
+- [S-214] **[P1]** Axios npm supply-chain poisoning March 31 2026 — maintainer-account hijack → axios@1.14.1 + axios@0.30.4 with cross-platform RAT via postinstall; 3 BILLION weekly downloads; C2 sfrclak.com:8000; the MAINTAINER-ACCOUNT-HIJACK-WITH-POSTINSTALL-RAT dimension (CSDN April 2026 weekly brief)
+- [S-215] **[P2]** Apifox desktop-client CDN update-channel poisoning late-March 2026 — 18-DAY DWELL stealing SSH keys + K8s credentials via tampered auto-updater bundle; the DESKTOP-CLIENT-CDN-UPDATE-CHANNEL-POISONING dimension (CSDN April 2026 weekly brief)
+- [S-216] **[P2]** TA446 (Russian state APT) first field deployment of DarkSword iOS/iCloud exploit kit April 2026 — democratization of iOS exploitation beyond NSO Pegasus; the STATE-ACTOR-IOS-EXPLOIT-KIT-FIELD-DEPLOYMENT dimension (CSDN April 2026 weekly brief)
+- [B-143] **[P3]** CVE-2026-20833 Microsoft Kerberos RC4 FORCED DEPRECATION April 8 2026 — RC4 moved to disabled; legacy auth silently breaks; the KERBEROS-RC4-FORCED-DEPRECATION-BREAKS-LEGACY-AUTH dimension (CSDN April 2026 weekly brief)
+- [C-145] **[P2]** FIRST.ORG 2026 CVE volume forecast: 100,000+ CVEs likely (median 59K, 90% CI up to 118K) — first six-digit year; establishes the CVE-VOLUME-VS-PATCH-CAPACITY-IMBALANCE dimension making automated dependency patching (Dependabot/Renovate) MANDATORY (new.qq.com February 12 2026)
+### Sources
+- Search tools used: mcp_minimax_search_web_search (primary — 5 queries executed; 1 query "HTML5 browser game testing 2026 new techniques June 27" TIMED OUT after 300s on first attempt, retried with narrower queries successfully)
+- mcp_web_search_prime SearXNG NOT attempted this cycle (returned 404 on all queries in v1.100.0 and v1.101.0 cycles — primary engine still unavailable)
+- Search queries executed:
+  - "HTML5 browser game testing new techniques June 27 2026" (timed out 300s — replaced by narrower queries below)
+  - "browser security vulnerability CVE June 27 2026 emergency patch"
+  - "Chrome Edge Safari Firefox update June 27 28 2026"
+  - "casual mobile game UX bug complaint June 27 2026"
+  - "WebGPU WebAssembly HTML5 game bug regression June 2026"
+  - "CVE-2026-33017 Langflow unauthenticated RCE exec exploitation"
+  - "2026 CVE volume forecast 100000 First.org patch capacity"
+  - "incomplete patch variant emergence CVE 2026 incomplete fix regression"
+- Key URLs cited in new test cases:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_92569c0be2b74052 (March 23 2026 — "关键Langflow漏洞CVE-2026-33017在披露20小时内引发攻击"; 20-hour weaponization record)
+  - https://blog.csdn.net/weixin_42376192/article/details/159380294 (May 18 2026 — "20小时武器化!CVE-2026-33017敲响AI工具安全警钟:Langflow漏洞背后的行业暗疾")
+  - https://github.com/advisories/ghsa-v8hw-mh8c-jxfc (March 24 2026 — CVE-2026-33873 Langflow Agentic Assistant authenticated code execution in validation phase)
+  - https://github.com/404-src/CVE-2026-34486 (June 5 2026 — Apache Tomcat EncryptInterceptor RCE PoC with exp.py)
+  - https://www.sohu.com/a/1020020937_114765 (May 8 2026 — "Windows Shell欺骗漏洞CVE-2026-32202遭利用"; incomplete-patch-variant-emergence via CVE-2026-21510)
+  - https://blog.csdn.net/BEICHENst/article/details/161692767 (June 22 2026 — "CVE-2026-41089(Windows Netlogon 零点击远程代码执行漏洞)深度分析"; CVSS 9.8 zero-click DC RCE)
+  - https://download.csdn.net/blog/column/11568299/159802674 (April 2026 — "2026年4月第1周网络安全形势周报"; axios npm poisoning + Apifox CDN poisoning + TA446 DarkSword iOS kit + Kerberos RC4 deprecation, all in one weekly brief)
+  - https://new.qq.com/rain/a/20260212A0638C00 (February 12 2026 — "2026年CVE漏洞数量可能首次突破10万个"; FIRST.ORG forecast 100K+ CVEs)
+- Additional context from searches (already covered in prior versions, not re-added this cycle): CVE-2026-5281 Chrome Dawn WebGPU UAF (existing S-177); CVE-2026-32202 Windows Shell Spoofing CVE itself (intentionally not added in v1.100.0 — but S-212 adds the INCOMPLETE-PATCH-VARIANT dimension that was missing); CVE-2026-21992 Oracle Identity Manager (existing W-163); NGINX CVE-2026-42945 (existing S-203); CVE-2026-46244 Linux netfilter CVSS 9.1 (sibling of S-208 netfilter family, different code path — not re-added); Microsoft MDASH internal AI security system (folds into C-144 AI-audited QA baseline, not separately added); ShinyHunters EU Commission AWS breach (folds into S-205 credential-leak class, not separately added); GNU InetUtils Telnetd CVE-2026-32746 (March 2026 legacy protocol, lower GameZipper relevance — not added this cycle).
+
 ## [v1.101.0] - 2026-06-27
 ### Added
 - 6 new test cases from late-June 2026 industry research (R220 Dynamic Test Intelligence cron)
