@@ -1,3 +1,35 @@
+## [v1.110.0] - 2026-06-29
+### Added
+- 9 new test cases from late-June 2026 industry research (R229 Dynamic Test Intelligence cron)
+- [C-163] **[P2]** HTML-in-Canvas Experimental Proposal — `drawElementImage` / `layoutsubtree` API Class — new W3C-track proposal renders live DOM subtrees into `<canvas>`; Canvas-composited HTML is invisible to screen readers (accessibility-mirror required); experimental behind origin-trial/flag; feature-detect required — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_92969dba69c15252 (量子位 April 12 2026)
+- [W-224] **[P2]** Safari iOS/macOS 27 Apple-Intelligence AI Auto-Organize Tabs — Silent Tab Regrouping Breaks Game Session/Visibility Assumptions — Safari 27 AI silently reorganizes tabs into topic groups, firing unexpected visibilitychange events that may false-trigger GameZipper pause-on-blur / rAF-lifecycle / WebAudio autoplay logic; requires debounce + state-reconciliation — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_0556a00a1d430852 (古尔曼 May 10 2026)
+- [S-226] **[P1]** Apple April 2026 Emergency Security Update Wave for iOS 15–26 — LONG-TAIL-DEVICE-SUPPORT-POLICY Baseline Floor — Apple patched iOS 15–26 simultaneously, establishing iOS 15 as the durable minimum-supported-version floor for GameZipper QA; real players on iPhone 6s/7/8/SE2020 are still in Apple's security scope — source: https://www.donews.com/news/detail/8/6511560.html (April 15 2026)
+- [B-154] **[P3]** Chrome iOS 149+ Lock-Screen Notification for Cross-Device Synced Tabs — Game-Title/URL Preview Leak — Chrome iOS 149 shows lock-screen notification with game title/URL when receiving cross-device synced tabs; privacy concern for shared/public devices; GameZipper title tags become notification preview text — source: https://itunes.apple.com/cn/app/id535886823 (Chrome App Store June 10 2026, v149.0.7827.137)
+- [P-100] **[P2]** WebGPU Mobile Baseline — Chrome 121+ Default-Enabled on Android 12+ Qualcomm/ARM GPU — WebGPU is now default-enabled on the majority of Android 12+ devices (Pixel 6+, Samsung S21+, OnePlus 9+); establishes WebGPU as a REAL mobile rendering baseline; ML inference 3×+ speedup over WebGL on mobile — source: https://www.sohu.com/a/753242250_121124365 (Jan 21 2024 baseline through 2026)
+- [G-166] **[P2]** WASM Game Loading-State Async-Disposable Pattern — 2026 production pattern uses `IAsyncDisposable` / `[Symbol.asyncDispose]` / `await using` to wrap WASM game init (module fetch + GPU adapter + texture upload) ensuring deterministic cleanup on early-exit; prevents orphaned resources when player navigates away mid-init — source: https://blog.csdn.net/AlgoFun/article/details/160335021 (April 20 2026)
+- [C-164] **[P3]** Safari 27 Natural-Language Browser-Extension Generation — Player-Generated Extensions Inject Arbitrary JS into GameZipper Pages — Safari 27 Apple Intelligence lets users generate browser extensions from natural-language descriptions ("block ads", "auto-click play"); new player-self-generated-code-execution vector; GameZipper must detect + degrade gracefully, validate scores server-side — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_2846a27048114952 (June 9 2026)
+- [A-052] **[P3]** Safari 27 Apple-Intelligence Page Summarization on Minimal-Text Game Pages — AI-Generated Misleading Descriptions — Safari 27 AI summarizes page DOM text for tab/reader/spotlight; canvas-heavy GameZipper game pages have minimal extractable text and may get nonsensical/empty summaries ("a loading screen"); requires rich hidden descriptive `<section>` + meta + canvas aria-label — source: https://www.apple.com/macos/ (macOS 27 Golden Gate)
+- [PWA-4] **[P2]** Safari 27 AI Tab Grouping Breaks PWA "Continue Playing" Single-Tab Session Assumption — AI tab grouping may clone/move a PWA tab, creating duplicate service-worker clients racing on the same IndexedDB game-state record; requires last-write-wins + BroadcastChannel sync for multi-client safety — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_6676a2cb3ca28552 (June 13 2026)
+### Sources
+- Search queries (SearXNG returned 404 for all 5 batch queries; MiniMax fallback used):
+  - "HTML5 game testing 2026 new techniques browser canvas WebGL bug June"
+  - "browser security vulnerability 2026 June XSS clickjacking Safari Chrome CVE"
+  - "Chrome 150 Safari 26 iOS 19 breaking changes 2026 June WebKit HTML5"
+  - "WebGPU WebAssembly 2.0 stable browser mobile game 2026 performance"
+  - "PWA manifest v3 service worker deprecation 2026 iOS Android"
+  - "HTML-in-Canvas 2026 浏览器 HTML 渲染 Canvas 量子位"
+  - "iOS 27 macOS 27 Golden Gate 2026 Safari WebKit 新功能 浏览器"
+  - "casual game UX accessibility WCAG 2026 mobile touch target dark mode"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_92969dba69c15252 (HTML-in-Canvas 量子位 April 12 2026 — C-163)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0556a00a1d430852 (Safari 27 AI tab organizing 古尔曼 May 10 2026 — W-224)
+  - https://www.donews.com/news/detail/8/6511560.html (Apple iOS 15-26 security update wave April 15 2026 — S-226)
+  - https://itunes.apple.com/cn/app/id535886823 (Chrome iOS 149 cross-device tab lock-screen notification June 10 2026 — B-154)
+  - https://www.sohu.com/a/753242250_121124365 (Chrome 121 WebGPU Android 12+ default-enabled Jan 21 2024 baseline — P-100)
+  - https://blog.csdn.net/AlgoFun/article/details/160335021 (Blazor WASM async-disposable pattern April 20 2026 — G-166)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2846a27048114952 (Safari 27 NL extension generation June 9 2026 — C-164, A-052)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6676a2cb3ca28552 (Safari 27 AI tab grouping iOS 27 June 13 2026 — PWA-4)
+
 ## [v1.109.0] - 2026-06-29
 ### Added
 - 9 new test cases from late-June 2026 industry research (R228 Dynamic Test Intelligence cron)
