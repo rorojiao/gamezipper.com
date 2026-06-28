@@ -18,6 +18,7 @@ const GAME_GRADIENTS = [
 ];
 
 const GAMES = [
+{name:"Sum Swipe",emoji:"🔢",cat:"puzzle",tags:["math","number","swipe"],url:"/sum-swipe/",desc:"Swipe through numbers to reach the target sum. 30 levels across 5 tiers with satisfying gameplay.",isNew:true,status:"live"},
   {name:"Fruit Slash",emoji:"🍉",cat:"arcade",tags:["Arcade","Swipe","Fruit"],url:"/fruit-slash/",desc:"Swipe to slice fruits! Cut fast, combo big, dodge bombs. 60 seconds of juicy action!",isNew:false,status:"live"},
 {name:"Circuit Logic",emoji:"⚡",cat:"puzzle",tags:["Puzzle","Logic","Circuit","Rotation","Grid","Brain","Strategy","Connect","Neon","Browser","Free","HTML5"],url:"/circuit-logic/",desc:"Play Circuit Logic - rotate circuit tiles to connect all paths in this addictive brain puzzle. 65 free levels from easy 4x4 to expert 8x8 grids. No download needed!",isNew:false,status:"live"},
 {name:"Labyrinth Maze",emoji:"🌀",cat:"puzzle",tags:["Puzzle","Maze","Marble","Tilt","Physics","Brain","Skill","Classic","Ball","Browser","Free","HTML5"],url:"/labyrinth/",desc:"Play Labyrinth Maze - tilt your phone or use arrow keys to roll the marble through 30 wooden mazes. Dodge holes, beat the clock, earn 3-star ratings across 6 tiers plus a daily puzzle. Free online!",isNew:false,status:"live"},
