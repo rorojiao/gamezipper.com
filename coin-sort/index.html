@@ -143,16 +143,20 @@ var COLORS=[
 // Level definitions: [numColors, numStacks, stackDepth, extraEmptyStacks]
 // 30 levels, 5 tiers x 6
 var LEVELS=[
+  // Format: [numColors, numCoinStacks, stackDepth, numEmptyBuffers]
+  // Total stacks = numCoinStacks + numEmptyBuffers
+  // Win condition: numColors sorted stacks of stackDepth each
+  // numCoinStacks = numColors (each final sorted stack)
   // Tier 1: Easy (3 colors)
-  [3,4,4,1],[3,4,4,1],[3,5,4,1],[3,5,5,1],[3,5,5,2],[3,5,5,2],
+  [3,3,4,1],[3,3,4,1],[3,3,4,2],[3,3,5,1],[3,3,5,2],[3,3,6,2],
   // Tier 2: Normal (4 colors)
-  [4,5,4,1],[4,5,5,1],[4,6,5,1],[4,6,5,1],[4,6,5,2],[4,6,6,2],
+  [4,4,4,1],[4,4,5,1],[4,4,5,2],[4,4,5,2],[4,4,6,2],[4,4,6,2],
   // Tier 3: Hard (5 colors)
-  [5,6,5,1],[5,6,5,2],[5,7,5,1],[5,7,6,1],[5,7,6,2],[5,7,6,2],
+  [5,5,4,1],[5,5,5,1],[5,5,5,2],[5,5,6,2],[5,5,6,2],[5,5,7,2],
   // Tier 4: Expert (6 colors)
-  [6,7,6,1],[6,7,6,2],[6,8,6,1],[6,8,6,2],[6,8,6,2],[6,8,7,2],
+  [6,6,5,1],[6,6,5,2],[6,6,6,2],[6,6,6,2],[6,6,7,2],[6,6,7,2],
   // Tier 5: Master (7-8 colors)
-  [7,8,6,1],[7,8,7,2],[7,9,7,2],[8,9,7,2],[8,9,7,2],[8,10,7,2]
+  [7,7,5,2],[7,7,6,2],[7,7,6,2],[8,8,6,2],[8,8,7,2],[8,8,7,2]
 ];
 var TIER_NAMES=['Easy','Normal','Hard','Expert','Master'];
 
@@ -324,13 +328,14 @@ function generateLevel(idx){
     var j=Math.floor(rng()*(i+1));
     var tmp=coins[i];coins[i]=coins[j];coins[j]=tmp;
   }
-  // Distribute into ns stacks
+  // Distribute into (ns - extra) coin stacks of depth sd, then add extra empty buffers
+  // Total coin stacks = ns - extra (these hold all nc*sd coins)
+  var numCoinStacks=ns-extra;
   state.stacks=[];
-  var perStack=Math.ceil(coins.length/ns);
   var idx2=0;
-  for(var s=0;s<ns;s++){
+  for(var s=0;s<numCoinStacks;s++){
     var stack=[];
-    for(var k=0;k<perStack&&idx2<coins.length;k++,idx2++){
+    for(var k=0;k<sd&&idx2<coins.length;k++,idx2++){
       stack.push(coins[idx2]);
     }
     state.stacks.push(stack);
@@ -339,7 +344,7 @@ function generateLevel(idx){
   for(var e=0;e<extra;e++)state.stacks.push([]);
   state.numColors=nc;
   state.stackDepth=sd;
-  state.maxDepth=sd+1; // visual budget
+  state.maxDepth=sd+1; // visual budget — allows temp overflow during solving
   state.selected=-1;
   state.moves=0;
   state.undoStack=[];
@@ -347,7 +352,6 @@ function generateLevel(idx){
   state.hintStack=-1;
   state.hintTimer=0;
   state.particles=[];
-  // Make sure the level is solvable — it always is with extra empty stacks for standard sort
 }
 
 // ===================== LAYOUT =====================

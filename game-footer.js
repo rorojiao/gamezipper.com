@@ -294,6 +294,7 @@
 {n:'Hoop Stack',e:'🎯',u:'/hoop-stack/',c:'puzzle'},
 {n:'Claw Master',e:'🦾',u:'/claw-machine/',c:'puzzle'},
       {n:'Nail Art Studio',e:'💅',u:'/nail-art/',c:'puzzle'},
+      {n:'Odd One Out',e:'🔍',u:'/odd-one-out/',c:'puzzle'},
       ]; }
    }
    function getDateSeed() {
