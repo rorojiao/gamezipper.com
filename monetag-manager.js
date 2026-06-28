@@ -1,8 +1,34 @@
 /**
- * GameZipper Ad Manager v5.9 — Exit-Intent Fix (observability + looser guards)
+ * GameZipper Ad Manager v5.10 — Dead-Zone Cull + Commercial-Break Race + Exit-Intent Loosen
  *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ *
+ * v5.10 Changes (2026-06-29 — BI-Driven Monetag Optimization):
+ *   - 🪦 Cull: All 0% fill Monetag zones (11012003, 11012009, 11012010, 11012011) marked
+ *     DEAD in CONFIG.ZONES.deadZones. loadZone() rejects them immediately (no script
+ *     load, no event-tracking overhead). BI 7d: 11012003=0/9, 11012009=0/22, 11012010=0/138,
+ *     11012011=0/57 — wasted ~226 ad-provider.js loads in 7d (~32/day = ~1k/month of
+ *     useless bandwidth + risked IP reputation). ONLY 11012002 (inpagePush) is alive
+ *     with 9.4% fill rate 7d (48 fills / 513 attempts). Re-enable any zone by removing
+ *     it from deadZones array.
+ *   - 🏁 Race: Commercial break now starts Monetag inpagePush at T+0s (parallel with
+ *     AdSense Tier 1). Previously Tier 1 AdSense ran at T+0s then Tier 2 Monetag at
+ *     T+1.5s — by the time Monetag fired, AdSense had already filled 100% of
+ *     commercial_break_fill (216 adsense / 0 monetag 7d). Net effect: even when
+ *     AdSense misses, Monetag now races at the same time → more opportunity for the
+ *     only working Monetag zone to land a commercial_break_fill impression.
+ *   - 🔓 Loosen: exitIntentMinDwellMs kept 10s BUT clientY guard loosened from
+ *     `clientY > 10 → return` to `clientY > 30 → return` (top 30px of viewport counts
+ *     as exit intent, not just top 10px). BI 7d: 216 exit_mouse events / 0
+ *     exit_intent_detected → v5.9 clientY<10 was too strict (only catches the very
+ *     top edge where users rarely aim). Top 30px captures most "back to tab/close"
+ *     gestures without spamming other-area mouseouts.
+ *   - 🔓 Loosen: bannerAdCooldown 5min → 90s (per-slot). On slug pages, sequential
+ *     navigations after gameover will hit the cooldown wall; 90s allows cross-page
+ *     active browsing to trigger ~2-3 banners per session instead of 1.
+ *   - 📊 Add: 'dead_zone_skip' trackAdEvent so BI sees culling is firing (instead of
+ *     silent reject).
  *
  * v5.9 Changes (2026-06-25 — Exit-Intent Repair):
  *   - 🐛 Fix: trackAdEvent('exit_intent_detected') now fires BEFORE canShowAd
@@ -181,6 +207,10 @@
       inpagePushLegacy: 10687755,
       vignetteLegacy: 10687756,
       legacyEnabled: false,  // v5.3: kill switch for legacy zones (proven dead)
+      // v5.10: Dead-zone cull — skip 0% fill zones immediately (no script load).
+      // BI 7d (2026-06-22~06-29): all four have 0 fills across 226 attempts.
+      // Re-enable by removing from array. ONLY 11012002 is alive (9.4% fill).
+      deadZones: [11012003, 11012009, 11012010, 11012011],
       // v6.5 Adsterra tier — placeholders until user signs up + runs setup-adsterra.sh
       // See ADSTERRA_SETUP.md for signup → enable flow. zoneId=0 = no-op (no script load).
       adsterraInpagePush: 0,    // In-Page Push zone id
@@ -212,7 +242,7 @@
       dailyMaxAds: 60,                  // max 60 ads per day (对标 Poki 克制)
       homepageBannerCooldown: 10 * 60 * 1000, // 10 min between homepage banners
       containerAdCooldown: 3 * 60 * 1000,   // 3 min between container ads
-      bannerAdCooldown: 5 * 60 * 1000,  // v5.2: 5 min between in-game banner refresh
+      bannerAdCooldown: 90 * 1000,         // v5.10: 90s between in-game banner refresh (was 5min, blocking cross-page active browsing)
     },
     TIMING: {
       homepageBannerDelay: 1500,
@@ -231,7 +261,7 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.9-gz-exit-intent-fix',  // 2026-06-25: exit-intent observability + looser guards (10s/60s, canShowAdExitIntent)
+    VERSION: '5.10-gz-deadzone-cull',  // 2026-06-29: dead-zone cull + commercial break race + exit-intent loosen + banner cooldown
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -701,6 +731,15 @@
         return;
       }
 
+      // v5.10: Dead-zone cull (BI 7d: all four deadZones have 0% fill across 226 attempts).
+      // Skip zones marked DEAD — no script load, no ad-provider.js bandwidth waste,
+      // no IP-reputation risk. To re-enable, remove from CONFIG.ZONES.deadZones.
+      if (CONFIG.ZONES.deadZones && CONFIG.ZONES.deadZones.indexOf(zoneId) !== -1) {
+        trackAdEvent('dead_zone_skip', { network: 'monetag', zoneId: zoneId });
+        reject(new Error('dead_zone'));
+        return;
+      }
+
       // v5.3: short-circuit if zone is in backoff (skip wasted ad-provider.js load).
       // The fill rate data shows 0.23% across 1325 attempts in 3 days — these zones
       // are not filling right now, so don't waste CPU/bandwidth/IP reputation.
@@ -949,43 +988,42 @@
         trackAdEvent('adsense_load_error', { network: 'adsense', error: String(e) });
       }
 
-      // Tier 2: Monetag vignette (race with AdSense, 1.5s delay)
-      setTimeout(function() {
-        if (adFilled) return;
-        loadZone(CONFIG.ZONES.vignette).then(function() {
-          onAdFilled('monetag_vignette');
+      // v5.10: Race Monetag inpagePush (11012002) T+0s alongside AdSense Tier 1.
+      // Previously Monetag vignette ran at T+1.5s — by then AdSense had filled
+      // 100% of commercial_break_fill (BI 7d: 216 adsense / 0 monetag). Now the
+      // ONLY working Monetag zone races the same moment AdSense does, so when
+      // AdSense misses, Monetag already has +AdSense didn't claim the slot.
+      // Tier 2: inpagePush (11012002) — the only working Monetag zone (9.4% fill rate 7d).
+      // Skip dead zones (vignette 11012003 has 0% fill 7d — cull).
+      try {
+        loadZone(CONFIG.ZONES.inpagePush, null).then(function() {
+          onAdFilled('monetag_inpagePush');
         }).catch(function() {
-          // Tier 3: inpagePush (11012002) — the only working Monetag zone (1.75% fill rate 7d).
-          //   Vignette 11012003 has been at 0% fill for 7d (11 loads, 0 fills). In-page push
-          //   is the proven winner — try it before falling through to dead legacy zones.
+          // Tier 3: legacy Attractive zone (Attractive tag - was filling in March 2026)
           if (adFilled) return;
-          loadZone(CONFIG.ZONES.inpagePush, null).then(function() {
-            onAdFilled('monetag_inpagePush');
+          loadZone(CONFIG.ZONES.vignetteLegacy).then(function() {
+            onAdFilled('monetag_vignette_legacy');
           }).catch(function() {
-            // Tier 4: legacy Attractive zone
+            // v6.5 Tier 4: Adsterra vignette — bypass Monetag 14-day 0% fill.
+            // Only fires when CONFIG.ADSTERRA.enabled + zoneId configured.
+            // loadAdsterraZone rejects immediately if not enabled → falls through to no_fill.
             if (adFilled) return;
-            loadZone(CONFIG.ZONES.vignetteLegacy).then(function() {
-              onAdFilled('monetag_vignette_legacy');
+            loadAdsterraZone(CONFIG.ZONES.adsterraVignette, null, 'vignette').then(function() {
+              onAdFilled('adsterra_vignette');
             }).catch(function() {
-              // v6.5 Tier 5: Adsterra vignette — bypass Monetag 14-day 0% fill.
-              // Only fires when CONFIG.ADSTERRA.enabled + zoneId configured.
-              // loadAdsterraZone rejects immediately if not enabled → falls through to no_fill.
+              // v6.5 Tier 4b: Adsterra in-page push (last resort before user sees blank break)
               if (adFilled) return;
-              loadAdsterraZone(CONFIG.ZONES.adsterraVignette, null, 'vignette').then(function() {
-                onAdFilled('adsterra_vignette');
+              loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, null, 'inpage').then(function() {
+                onAdFilled('adsterra_inpage');
               }).catch(function() {
-                // v6.5 Tier 5b: Adsterra in-page push (last resort before user sees blank break)
-                if (adFilled) return;
-                loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, null, 'inpage').then(function() {
-                  onAdFilled('adsterra_inpage');
-                }).catch(function() {
-                  trackAdEvent('commercial_break_no_fill', {});
-                });
+                trackAdEvent('commercial_break_no_fill', {});
               });
             });
           });
         });
-      }, 1500);
+      } catch(e) {
+        trackAdEvent('monetag_race_error', { error: String(e) });
+      }
 
       // Auto-complete after max duration
       var maxTimer = setTimeout(function() {
@@ -1732,7 +1770,10 @@
       // toward the top edge (clientY < 10). On most browsers this fires when the
       // user moves the mouse up to click the back button, URL bar, or close tab.
       if (e.relatedTarget !== null && e.relatedTarget !== undefined) return;
-      if (typeof e.clientY !== 'number' || e.clientY > 10) return;
+      // v5.10: loosened from clientY > 10 → clientY > 30 — top 30px of viewport
+      // counts as exit intent. BI 7d showed 216 exit_mouse events / 0
+      // exit_intent_detected with strict top-10px — way too narrow.
+      if (typeof e.clientY !== 'number' || e.clientY > 30) return;
       // Also check the top region via movementY (browsers report different things
       // for mouse leaving the window vs leaving the document). Firefox fires
       // relatedTarget=null with negative clientY when mouse leaves the top.
