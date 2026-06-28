@@ -121,7 +121,7 @@ canvas{touch-action:none;display:block}
 <div id="tutorial"><div class="tutorial-card" id="tutorial-card"></div></div>
 </div>
 </div>
-<script src="/gz-analytics.js?v=2026062866a2eda3a9e" defer></script>
+<script src="/gz-analytics.js?v=20260628662836124bc" defer></script>
 <script>
 (function(){
 'use strict';
@@ -328,12 +328,10 @@ function generateLevel(idx){
     var j=Math.floor(rng()*(i+1));
     var tmp=coins[i];coins[i]=coins[j];coins[j]=tmp;
   }
-  // Distribute into (ns - extra) coin stacks of depth sd, then add extra empty buffers
-  // Total coin stacks = ns - extra (these hold all nc*sd coins)
-  var numCoinStacks=ns-extra;
+  // Distribute into ns coin stacks of depth sd, then add extra empty buffers
   state.stacks=[];
   var idx2=0;
-  for(var s=0;s<numCoinStacks;s++){
+  for(var s=0;s<ns;s++){
     var stack=[];
     for(var k=0;k<sd&&idx2<coins.length;k++,idx2++){
       stack.push(coins[idx2]);
@@ -360,15 +358,19 @@ function getLayout(){
   var maxD=state.maxDepth;
   var cw=CV.clientWidth;
   var ch=CV.clientHeight;
-  var coinR=Math.min((cw-40)/nstacks*0.35,(ch-80)/(maxD+2)*0.45);
-  coinR=Math.max(coinR,12);
-  coinR=Math.min(coinR,26);
+  var coinR=Math.min(
+    (cw-30)/nstacks/2.7,           // horizontal fit
+    (ch-100)/(maxD+2)*0.42,        // vertical fit
+    24                               // max radius
+  );
+  coinR=Math.max(coinR,9);           // min radius for readability
   var stackW=coinR*2.4;
-  var stackH=(maxD+1.5)*coinR*2;
-  var totalW=nstacks*stackW+(nstacks-1)*8;
+  var gap=Math.max(4,Math.min(12,(cw-30-nstacks*stackW)/(nstacks-1)));
+  var stackH=(maxD+1)*coinR*2+coinR;
+  var totalW=nstacks*stackW+(nstacks-1)*gap;
   var startX=(cw-totalW)/2;
-  var startY=ch-stackH-20;
-  return{coinR:coinR,stackW:stackW,stackH:stackH,startX:startX,startY:startY,gap:8};
+  var startY=ch-stackH-16;
+  return{coinR:coinR,stackW:stackW,stackH:stackH,startX:startX,startY:startY,gap:gap};
 }
 
 // ===================== RENDER =====================
