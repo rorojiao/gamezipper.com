@@ -1,3 +1,35 @@
+## [v1.109.0] - 2026-06-29
+### Added
+- 9 new test cases from late-June 2026 industry research (R228 Dynamic Test Intelligence cron)
+- [S-224] **[P1]** Microsoft Edge / Chromium Content-Security-Policy Bypass via `unsafe-inline` + `window.open()` + `document.write()` — long-known CSP-bypass pattern (Cisco Talos / Grødum) re-validated in 2026: pages with `script-src 'unsafe-inline'` (common — required by Monetag/AdSense inline scripts) allow `window.open()` + `document.write()` injection bypassing `'self'` origin boundary (CSP-BYPASS-VIA-WINDOW-OPEN-DOCUMENT-WRITE-CLASS) — source: https://threatpost.com/microsoft-wont-fix-security-bypass-vulnerability-in-edge/127865/
+- [S-225] **[P1]** CVE-2025-14174 + CVE-2025-43529 — DOUBLE CONCURRENT iOS WebKit use-after-free vulnerabilities ACTIVELY EXPLOITED IN THE WILD — patched in iOS 26.2 / Safari 26.2 / macOS Tahoe 26.2; both CVEs are UAF in WebKit content processing enabling arbitrary code execution; GameZipper players on iOS <26.2 are running KNOWN-EXPLOITABLE-DEVICE-CLASS via compromised ad iframes (DOUBLE-WEBKIT-CVE-CONCURRENT-IN-WILD-EXPLOITATION) — source: https://new.qq.com/rain/a/20251229A06B2H00 (Dec 29 2025)
+- [B-152] **[P2]** Chrome 148 New-Tab-Page Bookmark-Bar Resurrection Regression — bookmark bar RE-APPEARS on the new-tab page even after user explicitly hid it; affects GameZipper-as-new-tab URL deployments (ChromeOS kiosk, school Chromebook, HTPC) with ~40px unexpected viewport top-intrusion (CHROME-148-NEW-TAB-PAGE-BOOKMARK-BAR-RESURRECTION-REGRESSION) — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_2926a02975b55752 (IT之家 May 12 2026)
+- [B-153] **[P2]** Chrome 150 Google-Wallet-Integrated Autofill for Passport + Driver's License — PII Form-Misattribution — Chrome 150 surfaces passport/DL numbers in autofill dropdown on any 9-20 char alphanumeric input; GameZipper "name your high-score" / account-creation fields may leak PII; must use `autocomplete="off"` or specific tokens on every user-input field (AUTOFILL-PII-MISATTRIBUTION-TO-INAPPROPRIATE-FORM-FIELDS) — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_7246a3b412948452 (IT之家 June 24 2026)
+- [C-161] **[P2]** Apple Safari 26.4 — 191-Bug-Fix Mass Dot-Release Regression Batch — single dot-release shipped 191 behavior-changing fixes spanning SVG / web forms / MathML / CSS scaling; GameZipper QA must treat Safari 26.4 as a MAJOR regression milestone, not a minor dot-release (SAFARI-MASS-BUG-FIX-DOT-RELEASE-191-FIXES-REGRESSION-BATCH) — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (IT之家 March 25 2026)
+- [C-162] **[P2]** WebAssembly 2.0 Production-Performance Parity / Surpass-Native Confirmation — 2026 production benchmarks show browser-WASM is now FASTER than equivalent native compilation on key workloads; GameZipper should re-target WASM 2.0 (not asm.js fallback) as the primary compute path; AI NPCs, physics solvers, board-game engines may now be the FASTEST deployment target as WASM 2.0 (WASM-2-0-PRODUCTION-PARITY-SURPASSES-NATIVE) — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_0036a264f5247152 (IT之家 June 8 2026)
+- [P-98] **[P2]** WebGPU-vs-WebAssembly 256x256 Matrix Inflection-Point Dispatch — 72-matrix benchmark shows WASM FASTER than WebGPU at matrix sizes <= 256x256 (WebGPU 5-8x slower due to call-setup overhead), WebGPU 5-8x FASTER at >= 512x512; AI features must implement HYBRID DISPATCH (small -> WASM, large -> WebGPU) (WORKLOAD-SIZE-AWARE-PERFORMANCE-CROSSOVER-DISPATCH) — source: https://blog.csdn.net/weixin_29300931/article/details/159638655 (June 5 2026)
+- [P-99] **[P2]** WebAssembly-Whisper INT8 Quantization + IndexedDB Cache Pattern — canonical pattern for in-browser speech-to-text: quantize model to INT8 (~100-300MB), fetch via HTTP Range, cache in IndexedDB (avoid repeat 100-300MB download), stream mic via getUserMedia; any future GameZipper voice feature MUST adopt this pattern with `navigator.storage.persist()` for cache survival (WASM-MODEL-QUANTIZATION-INDEXEDDB-CACHE-PATTERN) — source: https://blog.csdn.net/2501_93878564/article/details/154301431 (Nov 2025, recurring 2026)
+- [A-051] **[P2]** MDN Mobile Accessibility Checklist — Authoritative 2026 Minimum Baseline — MDN's authoritative mobile-web-accessibility checklist: contrast >=4.5:1 normal text / >=3:1 large text; information conveyed via color must also be conveyed via text/icon; GameZipper should run Lighthouse a11y audit on every game page with min-score 90 (MDN-AUTHORITATIVE-MOBILE-ACCESSIBILITY-MINIMUM-BASELINE) — source: https://developer.mozilla.org/en-US/docs/Web/Accessibility/Guides/Mobile_accessibility_checklist (March 10 2026 update)
+### Sources
+- Search queries (SearXNG returned 404 for all 5 batch queries; MiniMax fallback used):
+  - "HTML5 game testing 2026 new techniques browser canvas WebGL"
+  - "browser security vulnerability 2026 June XSS clickjacking"
+  - "Chrome 139 June 2026 breaking changes WebKit Safari bug"
+  - "casual game UX accessibility WCAG 2026 mobile touch target"
+  - "Chrome 150 June 2026 release notes new features"
+  - "PWA manifest v3 service worker deprecation 2026"
+  - "WebGPU WebAssembly 2.0 stable browser mobile game 2026"
+- Key URLs:
+  - https://threatpost.com/microsoft-wont-fix-security-bypass-vulnerability-in-edge/127865/ (Edge CSP bypass — S-224)
+  - https://new.qq.com/rain/a/20251229A06B2H00 (WebKit double CVE active exploitation, Dec 29 2025 — S-225)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2926a02975b55752 (Chrome 148 bookmark-bar bug, May 12 2026 — B-152)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_7246a3b412948452 (Chrome 150 Google Wallet autofill, June 24 2026 — B-153)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Safari 26.4 191-bug-fix batch, March 25 2026 — C-161)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0036a264f5247152 (WASM 2.0 surpass-native, June 8 2026 — C-162)
+  - https://blog.csdn.net/weixin_29300931/article/details/159638655 (WebGPU-vs-WASM matrix benchmark, June 5 2026 — P-98)
+  - https://blog.csdn.net/2501_93878564/article/details/154301431 (WASM-Whisper INT8 IndexedDB cache pattern, Nov 2025 — P-99)
+  - https://developer.mozilla.org/en-US/docs/Web/Accessibility/Guides/Mobile_accessibility_checklist (MDN mobile a11y checklist, March 10 2026 — A-051)
+
 ## [v1.108.0] - 2026-06-28
 ### Added
 - 9 new test cases from late-June 2026 industry research (R227 Dynamic Test Intelligence cron)
