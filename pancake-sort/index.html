@@ -375,8 +375,12 @@ function resizeCanvas(){
   DPR=Math.min(window.devicePixelRatio||1,2);
   cv.width=Math.max(1,w*DPR);cv.height=Math.max(1,h*DPR);
   cv.style.width=w+"px";cv.style.height=h+"px";
-  ctx.setTransform(DPR,0,0,DPR,0,0);
   scale=Math.min(w/W,h/H);
+  // P0 fix: apply `scale` + centering so the W×H logical space fits the canvas.
+  // Old code used setTransform(DPR,0,0,DPR,0,0) — drew at full 540×720 logical units,
+  // cropping ~37% off-canvas when stage was shorter than H. Matches toLogical() inverse.
+  const ox=(w-W*scale)/2, oy=(h-H*scale)/2;
+  ctx.setTransform(DPR*scale,0,0,DPR*scale,DPR*ox,DPR*oy);
 }
 function toLogical(clientX,clientY){
   const rect=cv.getBoundingClientRect();
