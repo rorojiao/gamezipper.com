@@ -1,3 +1,41 @@
+## [v1.108.0] - 2026-06-28
+### Added
+- 9 new test cases from late-June 2026 industry research (R227 Dynamic Test Intelligence cron)
+- [S-223] **[P1]** Safari 26.5 WebKit 20-Vulnerability Batch + WebRTC Process-Crash Regression — single Safari dot-release now ships 20+ WebKit patches at once; QA gate must re-run full canvas/WebAudio/CSS regression on every 26.x dot-release (WEBKIT-MULTI-CVE-BATCH-WEBRTC-PROCESS-CRASH-CLASS) — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_0236a054d4370952 (IT之家 May 14 2026)
+- [C-157] **[P2]** WebKit Interop 2026 — 20 Priority Cross-Vendor Compatibility Areas — Apple/Bocoup/Google/Igalia/Microsoft/Mozilla published 20 prioritized feature-divergence areas; GameZipper must verify parity on each focus feature (INTEROP-2026-CROSS-VENDOR-COMPATIBILITY-PRIORITY-LIST) — source: https://new.qq.com/rain/a/20260213A015ZI00 (CNMO Feb 13 2026)
+- [C-158] **[P2]** Safari 26.3 Native Zstandard (zstd) Content-Encoding Support — Cloudflare/CDN may now serve zstd-compressed assets; verify Accept-Encoding negotiation + legacy-browser fallback to br/gzip (ZSTD-CONTENT-ENCODING-SAFARI-26.3-NATIVE-NEGOTIATION) — source: https://new.qq.com/rain/a/20260212A042R900 (Feb 12 2026); https://new.qq.com/rain/a/20260212A01LQL00 (Feb 12 2026)
+- [C-159] **[P3]** Safari 26 Beta Native SVG Rendering + HDR Image Support — SVG game art now renders natively (pixel-drift risk vs polyfill); HDR-encoded OG/preview images may overflow SDR gamut on HDR-capable displays (SAFARI-26-NATIVE-SVG-AND-HDR-IMAGE-GAMUT-OVERFLOW) — source: https://new.qq.com/rain/a/20250730A01KZG00 (IT之家 July 30 2025)
+- [PWA-3] **[P2]** Firefox 142+ PWA "Add to Taskbar" Installability — Firefox joins Chrome/Edge/Safari as 4th major PWA host via Labs flag; verify GameZipper PWA installability separately on Firefox 142+ (FIREFOX-PWA-INSTALLABILITY-LABS-FLAG-MATRIX-COMPLETION) — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_03768a9564890852 (IT之家 Aug 23 2025)
+- [P-97] **[P2]** AI-Fuzzing Browser-Vulnerability Volume Baseline (200+ vulns per release) — Mozilla used Anthropic Mythos AI to find 271 Firefox 150 vulns in 2 months; prior browser versions now accumulate known-but-unpatched vulns rapidly, requiring minimum-browser-version policy (AI-FUZZING-BROWSER-VULN-VOLUME-BASELINE-PER-RELEASE) — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_53769fd53ba77252 (IT之家 May 8 2026)
+- [W-223] **[P3]** Chrome 140 Probabilistic Reveal Tokens (PRT) for Incognito-Mode IP Anonymization — encrypted tokens with delayed-decryption anonymize IP samples for MDL-listed domains; affects Monetag/AdSense attribution accuracy and double-count risk on incognito sessions (PRT-CRYPTOGRAPHIC-TOKEN-IP-ANONYMIZATION-FOR-MDL-DOMAINS) — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_18868ba26ae25452 (IT之家 Sept 5 2025)
+- [B-151] **[P3]** Chrome 140 Wayland Default-Display-Server Hint on Linux (OverrideDefaultOzonePlatformHintToAuto) — Chromium auto-selects Wayland/X11 on Linux; prior NVIDIA-proprietary/Mesa<23 Wayland-specific WebGL blank-canvas issues may resurface (CHROMIUM-LINUX-WAYLAND-AUTO-SELECT-DISPLAY-SERVER-REGRESSION) — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_18868ba26ae25452 (IT之家 Sept 5 2025)
+- [C-160] **[P2]** iOS 27 Windowed / Split-Screen Mode Preparation for iPhone Ultra Foldable — games may render at <50% width in Split View, breaking pixel-perfect layouts and shrinking touch targets below WCAG 2.5.5 44pt minimum (IOS-27-WINDOWED-SPLIT-SCREEN-LESS-THAN-FULL-VIEWPORT-RENDERING) — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_7566a2214b633352 (差评 June 5 2026)
+### Sources
+- Search queries (mcp_minimax_search_web_search — SearXNG returned 404 for all 5 batch queries; MiniMax fallback):
+  - "HTML5 game testing 2026 new techniques browser bugs"
+  - "browser game bug report 2026 WebGL Canvas"
+  - "Chrome Edge Safari update 2026 June HTML5 breaking change"
+  - "Safari 26 iOS 19 WebKit change 2026 game audio audioContext"
+  - "PWA installable criteria 2026 Chrome manifest changes"
+  - "Chrome 138 139 140 release 2026 breaking change web"
+  - "iOS 19 Safari 26 web game input latency touch event 2026"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0236a054d4370952 (Safari 26.5 security advisory, May 14 2026 — S-223)
+  - https://cloud.tencent.com/developer/article/2637644 (Safari 26 release notes — tracking param + fingerprinting context)
+  - https://new.qq.com/rain/a/20260213A015ZI00 (Interop 2026 20 areas, Feb 13 2026 — C-157)
+  - https://new.qq.com/rain/a/20260212A042R900 (Safari 26.3 zstd support, Feb 12 2026 — C-158)
+  - https://new.qq.com/rain/a/20260212A01LQL00 (Safari 26.3 + WebRTC crash context — C-158 / S-223)
+  - https://new.qq.com/rain/a/20250730A01KZG00 (Safari 26 Beta SVG + HDR, July 30 2025 — C-159)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_03768a9564890852 (Firefox 142 PWA, Aug 23 2025 — PWA-3)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_53769fd53ba77252 (Firefox 150 Mythos AI 271 vulns, May 8 2026 — P-97)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_18868ba26ae25452 (Chrome 140 PRT + Wayland hint, Sept 5 2025 — W-223 / B-151)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_7566a2214b633352 (iOS 27 split-screen / iPhone Ultra prep, June 5 2026 — C-160)
+
+### Process Notes
+- Tools loaded: gamezipper-qa, post-deploy-verification skills
+- Search engine degradation this cycle: SearXNG (primary) returned 404 for all 5 batch queries; MiniMax (fallback) returned mixed SEO/SEO-download content (HTML5 test sites, old WebGL-support articles, Chrome download pages). Findings extracted from the usable data points (Firefox 271-vuln Mythos news, Safari 26.x release notes, iOS 27 WWDC coverage, Chrome 140 release coverage); 9 test cases synthesized with full distinctness analysis vs existing library (v1.0.0 → v1.107.0, prior 90 versions).
+- Distinctness checks performed: S-223 distinct from B-138 (WebRTC crash generic class — S-223 targets multi-CVE-batch cadence); C-157 distinct from C-126 (Interop 2025 prior year) and C-149 (single-tech WebGL conformance); C-158 distinct from C-131 (layout) and C-153 (runtime); C-159 distinct from B-128 (UI chrome transparency) and C-131 (layout); PWA-3 distinct from PWA-1 (general) and PWA-2 (iOS); P-97 distinct from S-204 (media-lib discovery) and W-213 (patch-side volume); W-223 distinct from PC-018 (generic IP anon) and S-205 (credential not token); B-151 distinct from B-147 (architecture not display server) and B-130 (font not display); C-160 distinct from C-156 (landscape-axis) and W-222 (widget-class).
+
 ## [v1.107.0] - 2026-06-28
 ### Added
 - 8 new test cases from late-June 2026 industry research (R226 Dynamic Test Intelligence cron)
