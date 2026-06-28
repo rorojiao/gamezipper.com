@@ -293,6 +293,7 @@
 {n:'Futoshiki',e:'🧩',u:'/futoshiki/',c:'puzzle'},
 {n:'Hoop Stack',e:'🎯',u:'/hoop-stack/',c:'puzzle'},
 {n:'Claw Master',e:'🦾',u:'/claw-machine/',c:'puzzle'},
+      {n:'Nail Art Studio',e:'💅',u:'/nail-art/',c:'puzzle'},
       ]; }
    }
    function getDateSeed() {
