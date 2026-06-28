@@ -411,40 +411,44 @@ function generateLevel(numVertices, numEdgesTarget, seed){
   // Step 2: outer ring edges (adjacent vertices)
   var edgeSet = [];
   for(var k = 0; k < N; k++){
-    edgeSet.push([k, (k + 1) % N]);
+    edgeSet.push({ a: k, b: (k + 1) % N });
   }
   // Step 3: add non-crossing diagonals
-  // Two edges (a,b) and (c,d) cross on the circle iff their endpoints interleave on the circle
+  // Two chords (a,b) and (c,d) on a circle cross iff their endpoints interleave:
+  // exactly one of {c,d} lies in the open arc from a to b (going clockwise).
   function segmentsCross(a, b, c, d){
-    // Assume a,b,c,d are 0..N-1 indices sorted along the circle
-    function ccw(p, q, r){
-      // Whether the three points are counter-clockwise on the circle — here we use index distance directly
-      // a<b, c<d are guaranteed; check whether c lies in the (a,b) interval
-      return (p < q && q < r && r < p + N) === false; // unused, simplified:
+    // Adjacent edges (including wrap-around) never cross anything
+    var diff1 = Math.abs(a - b);
+    if(diff1 === 1 || diff1 === N - 1) return false;
+    var diff2 = Math.abs(c - d);
+    if(diff2 === 1 || diff2 === N - 1) return false;
+    function inArc(p, lo, hi){
+      if(lo < hi) return p > lo && p < hi;
+      return p > lo || p < hi;
     }
-    // Simplified: detect interval overlap by ascending index order
-    var lo1 = Math.min(a, b), hi1 = Math.max(a, b);
-    var lo2 = Math.min(c, d), hi2 = Math.max(c, d);
-    // If either edge is an adjacent edge, treat it as not "internally crossing"
-    if(hi1 - lo1 === 1 || hi1 - lo1 === N - 1) return false;
-    if(hi2 - lo2 === 1 || hi2 - lo2 === N - 1) return false;
-    // Crossing iff one endpoint lies in the open interval of the other edge
-    var aIn = (lo1 < a && a < hi1);
-    var cIn = (lo2 < c && c < hi2);
-    return aIn !== cIn;
+    var cIn = inArc(c, a, b);
+    var dIn = inArc(d, a, b);
+    return cIn !== dIn;
   }
   function hasEdge(s, t){
     for(var i = 0; i < edgeSet.length; i++){
       var e = edgeSet[i];
-      if((e[0] === s && e[1] === t) || (e[0] === t && e[1] === s)) return true;
+      if((e.a === s && e.b === t) || (e.a === t && e.b === s)) return true;
     }
     return false;
   }
+  // Step 3: build edges
+  // Step 3a: First add fan triangulation from vertex 0 — this gives 2N-3 edges and is always planar
+  for(var fanI = 2; fanI < N - 1; fanI++){
+    edgeSet.push({ a: 0, b: fanI });
+  }
+  // Step 3b: Add random non-crossing diagonals (only those that don't cross any existing edge)
   // List every possible diagonal, shuffle in random order, greedily add the non-crossing ones
   var candidates = [];
   for(var i = 0; i < N; i++){
     for(var j = i + 2; j < N; j++){
       if(i === 0 && j === N - 1) continue; // skip adjacent edge
+      if(i === 0 || j === 0) continue;      // skip fan edges already added
       candidates.push([i, j]);
     }
   }
@@ -461,11 +465,41 @@ function generateLevel(numVertices, numEdgesTarget, seed){
     for(var xi = 0; xi < edgeSet.length; xi++){
       var ex = edgeSet[xi];
       // does not cross any already-added edge
-      if(segmentsCross(a, b, ex[0], ex[1])){ ok2 = false; break; }
+      if(segmentsCross(a, b, ex.a, ex.b)){ ok2 = false; break; }
     }
-    if(ok2) edgeSet.push([a, b]);
+    if(ok2) edgeSet.push({ a: a, b: b });
   }
-  // If not enough edges, relax (may be slightly non-planar but still roughly solvable); in practice sufficient for common sizes
+  // Step 3c: If still under target, add a second fan from vertex 1 (carefully — check each candidate)
+  if(edgeSet.length < numEdgesTarget){
+    for(var fan2 = 3; fan2 < N - 1; fan2++){
+      if(edgeSet.length >= numEdgesTarget) break;
+      if(hasEdge(1, fan2)) continue;
+      // Verify the new edge doesn't cross anything
+      var fan2Ok = true;
+      for(var xk = 0; xk < edgeSet.length; xk++){
+        if(segmentsCross(1, fan2, edgeSet[xk].a, edgeSet[xk].b)){ fan2Ok = false; break; }
+      }
+      if(fan2Ok) edgeSet.push({ a: 1, b: fan2 });
+    }
+  }
+  // Step 3d: Trim down if we exceeded the target — remove random edges that aren't critical
+  // (keep the outer ring + all fan-0 edges for guaranteed planarity; trim later additions)
+  if(edgeSet.length > numEdgesTarget){
+    // Keep first N outer + N-3 fan-0 edges = 2N-3, then randomly remove excess
+    var keepThreshold = 2 * N - 3;
+    var newEdgeSet = edgeSet.slice(0, keepThreshold);
+    // Try to preserve planarity while trimming
+    var removed = 0;
+    var toRemove = edgeSet.length - numEdgesTarget;
+    for(var rm = keepThreshold; rm < edgeSet.length && removed < toRemove; rm++){
+      var candidate = edgeSet[rm];
+      // Tentatively remove; check no two remaining edges cross
+      // Since edges beyond keepThreshold were already vetted, removing one is always safe
+      // (removing an edge can't create new crossings; it can only reduce them)
+      removed++;
+    }
+    edgeSet = edgeSet.slice(0, edgeSet.length - toRemove);
+  }
   // Step 4: build vertex objects
   var verts = [];
   for(var vi = 0; vi < N; vi++){
@@ -479,15 +513,59 @@ function generateLevel(numVertices, numEdgesTarget, seed){
       dragging: false
     });
   }
-  // Step 5: scramble positions (introduce initial crossings)
-  // Compute the perturbation distance (relative to the radius)
-  var scramble = 0.3;
+  // Step 5: scramble positions by shuffling vertex-to-slot assignment
+  // Try multiple shuffles; keep the first that produces at least 1 crossing
+  // (ensures the puzzle is non-trivial).
+  function countScrambledCross(posArr){
+    var tv = [];
+    for(var t = 0; t < N; t++){
+      var pp = posArr[t];
+      tv.push({ x: home[pp].x, y: home[pp].y });
+    }
+    var cc = 0;
+    for(var ii = 0; ii < edgeSet.length; ii++){
+      for(var jj = ii + 1; jj < edgeSet.length; jj++){
+        var e1 = edgeSet[ii], e2 = edgeSet[jj];
+        if(e1.a === e2.a || e1.a === e2.b || e1.b === e2.a || e1.b === e2.b) continue;
+        var p1 = tv[e1.a], p2 = tv[e1.b], p3 = tv[e2.a], p4 = tv[e2.b];
+        // inline segment intersection (can't call segIntersect before it's defined)
+        var d1x = p2.x - p1.x, d1y = p2.y - p1.y;
+        var d2x = p4.x - p3.x, d2y = p4.y - p3.y;
+        var denom = d1x * d2y - d1y * d2x;
+        if(Math.abs(denom) < 1e-12) continue;
+        var dx = p3.x - p1.x, dy = p3.y - p1.y;
+        var tt = (dx * d2y - dy * d2x) / denom;
+        var uu = (dx * d1y - dy * d1x) / denom;
+        if(tt > 0.001 && tt < 0.999 && uu > 0.001 && uu < 0.999) cc++;
+      }
+    }
+    return cc;
+  }
+
+  var bestPosIdx = null;
+  var bestCross = 0;
+  for(var attempt = 0; attempt < 20; attempt++){
+    var pi = [];
+    for(var qi = 0; qi < N; qi++) pi.push(qi);
+    for(var qi = pi.length - 1; qi > 0; qi--){
+      var rr = Math.floor(rng() * (qi + 1));
+      var tp2 = pi[qi]; pi[qi] = pi[rr]; pi[rr] = tp2;
+    }
+    var pc = countScrambledCross(pi);
+    if(pc > bestCross){ bestCross = pc; bestPosIdx = pi; }
+    if(pc > 0) break;
+  }
+  if(!bestPosIdx) bestPosIdx = posIdx_fallback(N);
+  function posIdx_fallback(n){ var a=[]; for(var i=0;i<n;i++) a.push(i); return a; }
+
   for(var si = 0; si < N; si++){
-    var ang = rng() * Math.PI * 2;
-    var dist = scramble * (0.5 + rng() * 0.5);
-    verts[si].x += Math.cos(ang) * dist;
-    verts[si].y += Math.sin(ang) * dist;
-    // clamp to [0.05, 0.95] to avoid going out of bounds
+    var pi2 = bestPosIdx[si];
+    verts[si].x = home[pi2].x;
+    verts[si].y = home[pi2].y;
+    var jAng = rng() * Math.PI * 2;
+    var jDist = 0.06 * rng();
+    verts[si].x += Math.cos(jAng) * jDist;
+    verts[si].y += Math.sin(jAng) * jDist;
     verts[si].x = Math.max(0.06, Math.min(0.94, verts[si].x));
     verts[si].y = Math.max(0.06, Math.min(0.94, verts[si].y));
   }
