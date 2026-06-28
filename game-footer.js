@@ -27,6 +27,7 @@
      {n:'Sushi Stack',e:'🍣',u:'/sushi-stack/',c:'puzzle'},
      {n:'Ocean Gem Pop',e:'💎',u:'/ocean-gem-pop/',c:'puzzle'},
      {n:'Color Block Jam',e:'🎨',u:'/color-block-jam/',c:'puzzle'},
+     {n:'Color Switch',e:'🎨',u:'/color-switch/',c:'puzzle'},
      {n:'Bonsai Prune',e:'🌳',u:'/bonsai-prune/',c:'puzzle'},
      {n:'Typing Speed',e:'⌨️',u:'/typing-speed/',c:'skill'},
      {n:'Brick Breaker',e:'🧱',u:'/brick-breaker/',c:'arcade'},
