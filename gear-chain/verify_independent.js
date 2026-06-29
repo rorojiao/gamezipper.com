@@ -1,61 +1,40 @@
-// Independent verifier for Gear Chain Logic levels.
-// Loads LEVELS_RAW from index.html, parses each, runs an INDEPENDENT brute-force
-// solver (mirroring gen_levels.py semantics), and asserts:
-//   1. Each level has >=1 solution (SOLVABLE)
-//   2. Each level's player-placement solution is UNIQUE (by active path)
-//   3. Each level's stored driver/prefilled mesh correctly
-// Reports "30/30 SOLVABLE + UNIQUE" on success.
+// Independent verifier for Gear Chain Logic.
+// Parses `var LV=[...]` + runtime PITCH/MESH_TOL from index.html, verifies under
+// canonical gen_levels.py physics (P=3, TOL=2.0, RPM_TOL=0.01) that every level's
+// stored solution (sp + ste, now including 2nd-target teeth) is VALID, and that
+// the solution is UNIQUE under both canonical and runtime physics.
 "use strict";
 const fs = require('fs');
 const path = require('path');
 
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-const m = html.match(/const LEVELS_RAW\s*=\s*(\[\[[\s\S]*?\]\]);/);
-if (!m) {
-  console.error('FAIL: could not find LEVELS_RAW in index.html');
-  process.exit(1);
-}
-let RAW;
-try { RAW = JSON.parse(m[1]); } catch(e) {
-  console.error('FAIL: LEVELS_RAW is not valid JSON:', e.message);
-  process.exit(1);
-}
-console.log('Loaded', RAW.length, 'compact levels');
+const lvMatch = html.match(/var LV=(\[[\s\S]*?\]);\n/);
+if (!lvMatch) { console.error('FAIL: could not find var LV= in index.html'); process.exit(1); }
+let LV;
+try { LV = eval('(' + lvMatch[1] + ')'); } catch(e) { console.error('FAIL: LV parse error:', e.message); process.exit(1); }
+console.log('Loaded', LV.length, 'levels from LV array');
 
-// Physics constants — MUST match gen_levels.py and index.html engine
-const P = 3;
-const TOL = 2.0;
-const RPM_TOL = 0.01;
+const pitchM = html.match(/var PITCH=([0-9.]+)/);
+const tolM = html.match(/var MESH_TOL=([0-9.]+)/);
+const RUNTIME_PITCH = pitchM ? parseFloat(pitchM[1]) : 3;
+const RUNTIME_TOL = tolM ? parseFloat(tolM[1]) : 2.0;
+console.log('Runtime PITCH=' + RUNTIME_PITCH + ', MESH_TOL=' + RUNTIME_TOL);
+
+const P = 3, TOL = 2.0, RPM_TOL = 0.01;
 
 function dist(a, b) { const dx = a[0]-b[0], dy = a[1]-b[1]; return Math.sqrt(dx*dx + dy*dy); }
-function meshes(t1, t2, d) { return Math.abs(d - P*(t1+t2)) <= TOL; }
+function meshes(t1, t2, d, pitch, tol) { return Math.abs(d - pitch*(t1+t2)) <= tol; }
 
-function parseLevel(raw) {
-  return {
-    id: raw[0], nodes: raw[1], driver: raw[2], driverTeeth: raw[3], driverRpm: raw[4],
-    target: raw[5], targetRpm: raw[6], targetCw: raw[7], palette: raw[8],
-    prefilled: raw[9] || {}, secondTarget: raw[10], par: raw[11],
-  };
-}
-
-// Propagation: build mesh adjacency, BFS from driver, compute rpm+cw for all reachable.
-function propagate(level, placed) {
+function propagate(nodes, placed, driver, driverRpm, pitch, tol) {
   const names = Object.keys(placed);
-  const adj = {};
-  names.forEach(n => adj[n] = []);
-  for (let i = 0; i < names.length; i++) {
-    for (let j = i+1; j < names.length; j++) {
-      const a = names[i], b = names[j];
-      const d = dist(level.nodes[a], level.nodes[b]);
-      if (meshes(placed[a], placed[b], d)) {
-        adj[a].push(b); adj[b].push(a);
-      }
-    }
+  const adj = {}; names.forEach(n => adj[n] = []);
+  for (let i = 0; i < names.length; i++) for (let j = i+1; j < names.length; j++) {
+    const a = names[i], b = names[j];
+    const d = dist(nodes[a], nodes[b]);
+    if (meshes(placed[a], placed[b], d, pitch, tol)) { adj[a].push(b); adj[b].push(a); }
   }
-  const driver = level.driver;
-  if (!adj[driver]) return { adj, paths: {}, rpmAt: {}, cwAt: {} };
   const prev = {}; prev[driver] = null;
-  const rpmAt = {}; rpmAt[driver] = level.driverRpm;
+  const rpmAt = {}; rpmAt[driver] = driverRpm;
   const cwAt = {}; cwAt[driver] = true;
   const q = [driver]; let qi = 0;
   while (qi < q.length) {
@@ -63,8 +42,7 @@ function propagate(level, placed) {
     for (const nb of adj[cur]) {
       if (nb in prev) continue;
       prev[nb] = cur;
-      const tIn = placed[cur], tOut = placed[nb];
-      rpmAt[nb] = rpmAt[cur] * tIn / tOut;
+      rpmAt[nb] = rpmAt[cur] * placed[cur] / placed[nb];
       cwAt[nb] = !cwAt[cur];
       q.push(nb);
     }
@@ -77,133 +55,112 @@ function propagate(level, placed) {
     pth.reverse();
     paths[n] = { path: pth, rpm: rpmAt[n], cw: cwAt[n] };
   }
-  return { adj, paths, rpmAt, cwAt };
+  return { adj, paths };
 }
 
-function checkWin(level, placed) {
-  const { paths } = propagate(level, placed);
-  const tgt = paths[level.target];
-  if (!tgt) return false;
-  if (tgt.cw !== level.targetCw) return false;
-  if (Math.abs(tgt.rpm - parseFloat(level.targetRpm)) > RPM_TOL) return false;
-  if (level.secondTarget) {
-    const [stN, stR, stC] = level.secondTarget;
-    const st = paths[stN];
-    if (!st) return false;
-    if (st.cw !== stC) return false;
-    if (Math.abs(st.rpm - stR) > RPM_TOL) return false;
+function checkWin(lv, placed, pitch, tol) {
+  const prop = propagate(lv.nodes, placed, lv.d, lv.dr, pitch, tol);
+  const tgt = prop.paths[lv.t];
+  if (!tgt) return { win: false, reason: 'target unreachable' };
+  if (tgt.cw !== lv.tcw) return { win: false, reason: 'dir mismatch ('+tgt.cw+' vs '+lv.tcw+')' };
+  if (Math.abs(tgt.rpm - lv.trv) > RPM_TOL) return { win: false, reason: 'rpm mismatch ('+tgt.rpm.toFixed(3)+' vs '+lv.trv+')' };
+  if (lv.st) {
+    const stN = lv.st[0][0], stR = lv.st[0][1], stC = lv.st[0][2];
+    const st = prop.paths[stN];
+    if (!st) return { win: false, reason: '2nd target unreachable' };
+    if (st.cw !== stC) return { win: false, reason: '2nd dir mismatch' };
+    if (Math.abs(st.rpm - stR) > RPM_TOL) return { win: false, reason: '2nd rpm mismatch' };
   }
-  return true;
+  return { win: true, path: tgt.path };
 }
 
-// Brute-force all solutions, dedup by active path + path-teeth + must_place teeth.
-function findAllSolutions(level) {
-  const nodes = level.nodes;
-  const prefilled = level.prefilled || {};
-  const driver = level.driver;
-  const mustPlace = level.secondTarget ? new Set([level.secondTarget[0]]) : new Set();
+function findAllSolutions(lv, pitch, tol) {
+  const nodes = lv.nodes;
+  const prefilled = lv.pre || {};
+  const driver = lv.d;
+  const mustPlace = lv.st ? new Set([lv.st[0][0]]) : new Set();
   const empties = Object.keys(nodes).filter(n => n !== driver && !(n in prefilled));
-  const solutions = [];
-  // guard against explosion
   if (empties.length > 8) return { solutions: [], skipped: true };
-  const opts = [0].concat(level.palette);
+  const opts = [0].concat(lv.pal);
   const total = Math.pow(opts.length, empties.length);
   if (total > 200000) return { solutions: [], skipped: true };
-  // iterate via base-N counting
   const idx = new Array(empties.length).fill(0);
+  const found = [];
   for (let n = 0; n < total; n++) {
-    // build placement
     const placed = {};
     Object.assign(placed, prefilled);
-    placed[driver] = level.driverTeeth;
-    for (let i = 0; i < empties.length; i++) {
-      const v = opts[idx[i]];
-      if (v > 0) placed[empties[i]] = v;
-    }
-    // must place
+    placed[driver] = lv.dt;
+    for (let i = 0; i < empties.length; i++) { const v = opts[idx[i]]; if (v > 0) placed[empties[i]] = v; }
     let mpOk = true;
     for (const mp of mustPlace) { if (!(mp in placed)) { mpOk = false; break; } }
-    if (mpOk && checkWin(level, placed)) {
-      // dedup key: active path to target + teeth along path + must_place teeth
-      const prop = propagate(level, placed);
-      const tgtPath = prop.paths[level.target].path;
-      let stInfo = null;
-      if (level.secondTarget) {
-        const stN = level.secondTarget[0];
-        const stPath = prop.paths[stN] ? prop.paths[stN].path : [];
-        stInfo = stPath.join(',') + '|' + stPath.map(p => placed[p]).join(',');
+    if (mpOk) {
+      const r = checkWin(lv, placed, pitch, tol);
+      if (r.win) {
+        const prop = propagate(nodes, placed, driver, lv.dr, pitch, tol);
+        const tgtPath = r.path;
+        let stInfo = '';
+        if (lv.st) {
+          const stN = lv.st[0][0];
+          const stPath = prop.paths[stN] ? prop.paths[stN].path : [];
+          stInfo = stPath.join(',') + '|' + stPath.map(p => placed[p]).join(',');
+        }
+        const mpOff = [...mustPlace].filter(mp => !tgtPath.includes(mp)).map(mp => mp+'='+placed[mp]).sort().join(';');
+        const key = tgtPath.join(',') + '|' + tgtPath.map(p => placed[p]).join(',') + '|' + stInfo + '|' + mpOff;
+        found.push({ placed, path: tgtPath, key });
       }
-      const key = tgtPath.join(',') + '|' + tgtPath.map(p => placed[p]).join(',') + '|' + (stInfo||'');
-      // also include must_place teeth not on main path
-      const mpTeeth = [...mustPlace].filter(mp => !tgtPath.includes(mp)).map(mp => mp+'='+placed[mp]).sort().join(';');
-      const fullKey = key + '|' + mpTeeth;
-      solutions.push({ placed, key: fullKey, path: tgtPath });
     }
-    // increment idx
     let carry = empties.length - 1;
-    while (carry >= 0) {
-      idx[carry]++;
-      if (idx[carry] < opts.length) break;
-      idx[carry] = 0; carry--;
-    }
+    while (carry >= 0) { idx[carry]++; if (idx[carry] < opts.length) break; idx[carry] = 0; carry--; }
   }
-  // dedup by key
-  const seen = new Set();
-  const uniq = [];
-  for (const s of solutions) {
-    if (!seen.has(s.key)) { seen.add(s.key); uniq.push(s); }
-  }
+  const seen = new Set(); const uniq = [];
+  for (const s of found) { if (!seen.has(s.key)) { seen.add(s.key); uniq.push(s); } }
   return { solutions: uniq, skipped: false };
 }
 
-// ===== RUN =====
 let pass = 0, fail = 0;
 const failures = [];
-const levels = RAW.map(parseLevel);
+console.log('\n=== Gear Chain Logic — Canonical + Runtime Verification ===');
+console.log('Canonical: P=' + P + ' TOL=' + TOL + ' (gen_levels.py truth)');
+console.log('Runtime:   P=' + RUNTIME_PITCH + ' TOL=' + RUNTIME_TOL + ' (index.html engine)\n');
 
-console.log('\n=== Gear Chain Logic — Independent Level Verification ===\n');
-for (const lv of levels) {
-  const driverPlaced = {}; driverPlaced[lv.driver] = lv.driverTeeth;
-  // 1. driver exists in nodes
-  if (!lv.nodes[lv.driver]) { fail++; failures.push('L'+lv.id+': driver node missing'); continue; }
-  if (!lv.nodes[lv.target]) { fail++; failures.push('L'+lv.id+': target node missing'); continue; }
-  // 2. driver meshes with at least one other node when target needs a path? (driver must be connectable)
-  const { solutions, skipped } = findAllSolutions(lv);
-  if (skipped) {
-    console.log('L'+lv.id+': SKIPPED (search space too large, empties='+lv.empties+')');
-    fail++; failures.push('L'+lv.id+': solver skipped');
-    continue;
+for (const lv of LV) {
+  const issues = [];
+  const placedSol = {};
+  Object.assign(placedSol, lv.pre || {});
+  placedSol[lv.d] = lv.dt;
+  Object.assign(placedSol, lv.ste);
+  const r1 = checkWin(lv, placedSol, P, TOL);
+  if (!r1.win) issues.push('stored solution INVALID (canonical): ' + r1.reason);
+  if (r1.win && r1.path.join(',') !== lv.sp.join(',')) issues.push('stored path ' + lv.sp.join(',') + ' != computed ' + r1.path.join(','));
+  const r2 = checkWin(lv, placedSol, RUNTIME_PITCH, RUNTIME_TOL);
+  if (!r2.win) issues.push('stored solution FAILS at runtime: ' + r2.reason);
+
+  const can = findAllSolutions(lv, P, TOL);
+  if (can.skipped) issues.push('canonical solver SKIPPED');
+  else if (can.solutions.length === 0) issues.push('canonical: NO SOLUTION');
+  else if (can.solutions.length > 1) issues.push('canonical: ' + can.solutions.length + ' solutions (NOT UNIQUE)');
+
+  const run = findAllSolutions(lv, RUNTIME_PITCH, RUNTIME_TOL);
+  if (run.skipped) issues.push('runtime solver SKIPPED');
+  else if (run.solutions.length === 0) issues.push('runtime: NO SOLUTION');
+  else if (run.solutions.length > 1) {
+    const canonPaths = new Set(can.solutions.map(s => s.path.join(',')));
+    const runtimeOnly = run.solutions.filter(s => !canonPaths.has(s.path.join(',')));
+    if (runtimeOnly.length > 0) issues.push('runtime TOL=' + RUNTIME_TOL + ' adds ' + runtimeOnly.length + ' EXTRA path(s): ' + runtimeOnly.slice(0,2).map(s => s.path.join('→')).join(' | '));
   }
-  if (solutions.length === 0) {
-    fail++; failures.push('L'+lv.id+': NO SOLUTION (unsolvable)');
-    console.log('L'+lv.id+': ❌ UNSOLVABLE');
-    continue;
+
+  if (issues.length === 0) {
+    pass++;
+    console.log('L' + String(lv.id).padStart(2) + ' ✓ ' + lv.t + '=' + lv.tr + 'rpm ' + (lv.tcw?'CW':'CCW') + (lv.st?' +2nd':'') + '  path ' + lv.sp.join('→') + '  UNIQUE (canon+runtime)');
+  } else {
+    fail++;
+    issues.forEach(i => failures.push('L' + lv.id + ': ' + i));
+    console.log('L' + String(lv.id).padStart(2) + ' ❌ ' + issues.join('; '));
   }
-  if (solutions.length > 1) {
-    fail++; failures.push('L'+lv.id+': '+solutions.length+' solutions (NOT UNIQUE)');
-    console.log('L'+lv.id+': ❌ NOT UNIQUE ('+solutions.length+' solutions)');
-    // log distinct paths
-    continue;
-  }
-  // unique + solvable
-  const sol = solutions[0];
-  // verify the solution path length matches par-ish (par = path nodes -1 = gears to place excluding driver)
-  const placedGears = sol.path.length - 1; // excludes driver
-  pass++;
-  console.log('L'+String(lv.id).padStart(2)+' '+lv.target+'='+lv.targetRpm+'rpm '+(lv.targetCw?'CW':'CCW')+
-    (lv.secondTarget?' +2nd':'')+' → UNIQUE ✓  path: '+sol.path.join('→')+'  ('+placedGears+' gears, par '+lv.par+')');
 }
 
 console.log('\n=== RESULT ===');
-console.log('PASS: '+pass+'/'+levels.length);
-console.log('FAIL: '+fail+'/'+levels.length);
-if (failures.length) {
-  console.log('\nFAILURES:');
-  failures.forEach(f => console.log('  - '+f));
-  process.exit(1);
-}
-if (pass === levels.length) {
-  console.log('\n✅ '+levels.length+'/'+levels.length+' SOLVABLE + UNIQUE — ALL VERIFIED');
-} else {
-  process.exit(1);
-}
+console.log('PASS: ' + pass + '/' + LV.length);
+console.log('FAIL: ' + fail + '/' + LV.length);
+if (failures.length) { console.log('\nFAILURES:'); failures.forEach(f => console.log('  - ' + f)); process.exit(1); }
+if (pass === LV.length) console.log('\n✅ ' + LV.length + '/' + LV.length + ' SOLVABLE + UNIQUE — canonical & runtime models agree');
