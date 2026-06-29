@@ -199,7 +199,10 @@ var cw = 0, ch = 0;
 function resizeCanvas() {
   dpr = window.devicePixelRatio || 1;
   cw = window.innerWidth;
-  ch = window.innerHeight;
+  // Footer-aware: subtract fixed footer height to prevent tray/content being hidden
+  var footerEl = document.getElementById('game-footer');
+  var footerH = (footerEl && footerEl.offsetHeight > 0) ? footerEl.offsetHeight : 0;
+  ch = window.innerHeight - footerH;
   canvas.width = cw * dpr;
   canvas.height = ch * dpr;
   canvas.style.width = cw + 'px';
@@ -224,6 +227,12 @@ function resizeCanvas() {
 
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
+// Re-resize after game-footer.js creates the footer (async)
+var _footerCheck = setInterval(function(){
+  var f = document.getElementById('game-footer');
+  if(f && f.offsetHeight > 0){ resizeCanvas(); clearInterval(_footerCheck); }
+}, 1000);
+setTimeout(function(){ clearInterval(_footerCheck); }, 15000);
 
 // ============================================================
 // AUDIO
@@ -848,10 +857,14 @@ function update(dt) {
 }
 
 function loop(time) {
-  var dt = Math.min(0.05, (time - lastTime) / 1000);
-  lastTime = time;
-  update(dt);
-  render();
+  try {
+    var dt = Math.min(0.05, (time - lastTime) / 1000);
+    lastTime = time;
+    update(dt);
+    render();
+  } catch(e) {
+    console.error('Game loop error:', e);
+  }
   rafId = requestAnimationFrame(loop);
 }
 
