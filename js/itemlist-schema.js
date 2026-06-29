@@ -488,8 +488,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":483,"url":"https://gamezipper.com/gear-chain/","name":"Gear Chain Logic"},
     {"@type":"ListItem","position":484,"url":"https://gamezipper.com/mosaic-merge/","name":"Mosaic Tile Merge"},
     {"@type":"ListItem","position":485,"url":"https://gamezipper.com/valve-network/","name":"Valve Network"},
-    {"@type":"ListItem","position":486,"url":"https://gamezipper.com/canal-lock/","name":"Canal Lock"}
+    {"@type":"ListItem","position":486,"url":"https://gamezipper.com/canal-lock/","name":"Canal Lock"},
+    {"@type":"ListItem","position":487,"url":"https://gamezipper.com/pulley-lift/","name":"Pulley Lift"}
   ],
-  "numberOfItems":486,
-  "description":"486 free browser games you can play instantly"
+  "numberOfItems":487,
+  "description":"487 free browser games you can play instantly"
 };
