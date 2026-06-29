@@ -39,6 +39,7 @@
 </script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com"},{"@type":"ListItem","position":2,"name":"Prism Path","item":"https://gamezipper.com/prism-path/"}]}</script>
 <h1 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Prism Path - Free Online Hex Color Route Puzzle</h1>
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=prism-path'></script>
 <link rel="icon" type="image/png" href="/prism-path/icon.png">
 <style>
 :root{
@@ -306,8 +307,8 @@ function playTone(freq, dur, type, vol){
   }catch(e){}
 }
 function sndRotate(){ playTone(440, 0.08, 'square', 0.08); }
-function sndConnect(){ playTone(660, 0.15, 'sine', 0.12); setTimeout(()=>playTone(880,0.15,'sine',0.1),60); }
-function sndWin(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.25,'triangle',0.15), i*100)); }
+function sndConnect(){ playTone(660, 0.15, 'sine', 0.12); const t = setTimeout(()=>playTone(880,0.15,'sine',0.1),60); timers.push(t); }
+function sndWin(){ [523,659,784,1047].forEach((f,i)=>{ const t = setTimeout(()=>playTone(f,0.25,'triangle',0.15), i*100); timers.push(t); }); }
 function sndError(){ playTone(150, 0.2, 'sawtooth', 0.1); }
 function sndHint(){ playTone(1000, 0.1, 'sine', 0.1); }
 
@@ -583,7 +584,7 @@ function rotateTile(idx, delta){
   // animate
   animating = {idx, from:prev, to:next, start:performance.now(), dur:180};
   // check win after animation
-  setTimeout(()=>{
+  const timerId = setTimeout(()=>{
     animating = null;
     const prop = propagate(curTiles);
     if(prop.won && !won){
@@ -593,6 +594,7 @@ function rotateTile(idx, delta){
     }
     draw();
   }, 200);
+  timers.push(timerId);
 }
 
 canvas.addEventListener('pointerdown', (e)=>{
@@ -767,6 +769,7 @@ function showToast(msg){
   el.classList.add('show');
   if(toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>el.classList.remove('show'), 2200);
+  timers.push(toastTimer);
 }
 
 // ============ EVENT BINDINGS ============
@@ -790,21 +793,40 @@ bind('btn-win-menu', showLevelSelect);
 document.getElementById('btn-sound').textContent = save.muted ? '🔇' : '🔊';
 document.getElementById('btn-sound').classList.toggle('muted', save.muted);
 
+// ============ CLEANUP ============
+let rafId = null;
+let timers = [];
+function cleanup(){
+  if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
+  timers.forEach(id => clearInterval(id)); timers = [];
+  if(audioCtx){ audioCtx.close().catch(()=>{}); audioCtx = null; }
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){
+    if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
+  } else if(state==='game'){
+    lastTime = performance.now();
+    rafId = requestAnimationFrame(loop);
+  }
+});
+window.addEventListener('beforeunload', cleanup);
+
 // ============ RESIZE ============
 window.addEventListener('resize', ()=>{ resizeCanvas(); draw(); });
 
 // ============ MAIN LOOP ============
+let lastTime = 0;
 function loop(){
   beamPhase = (beamPhase + 0.012) % 1;
   draw();
-  requestAnimationFrame(loop);
+  rafId = requestAnimationFrame(loop);
 }
 
 // ============ INIT ============
 try{
   resizeCanvas();
   showSplash();
-  requestAnimationFrame(loop);
+  rafId = requestAnimationFrame(loop);
 }catch(e){
   window.__initErr = e && e.stack ? e.stack : String(e);
   console.error(e);
