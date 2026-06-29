@@ -3624,3 +3624,35 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
   - https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay (WebAudio autoplay policy)
   - https://developer.mozilla.org/en-US/docs/Web/Accessibility/Guides/Mobile_accessibility_checklist (WCAG mobile)
   - https://www.dvy.com.cn/2016/07/23/5526.html (iOS Safari keyboard overlap scrollIntoView)
+
+
+## [v1.111.0] - 2026-06-29
+### Added
+- 8 new test cases from R230 Dynamic Test Intelligence industry research (June 29 2026, afternoon cycle)
+- [S-227] **[P1]** CVE-2026-5281 — Chrome Dawn WebGPU Use-After-Free, 4th In-The-Wild Chrome 0day of 2026
+- [S-228] **[P1]** CVE-2026-2441 — CSS-Only Exfiltration via @property + paint() Worklet Chaining (no JS needed)
+- [W-225] **[P2]** Apple Background Security Improvement (BSI) — Silent Update Mechanism Replacing Rapid Security Response
+- [C-165] **[P2]** iOS 26 Liquid Glass / Control Center Over-Transparency — Game UI Compositing Legibility Regression
+- [B-155] **[P2]** CVE-2026-20643 — WebKit Navigation API Vulnerability (First BSI Patch Target)
+- [P-101] **[P2]** WebGPU Dawn Layer Crash-Signature Detection — Verify GameZipper WebGPU Games Survive Dawn UAF
+- [G-167] **[P3]** CSS Houdini @property + paint() Worklet Adoption Guard — Verify No Exfiltration Vector
+- [A-053] **[P3]** iOS 26 Reduce Transparency Accessibility Setting — Verify Game UI/HUD Legibility Under Liquid-Glass Compositing
+### Sources
+- Search: "HTML5 game testing 2026 new techniques"
+- Search: "new browser security vulnerability 2026 Chrome Safari"
+- Search: "CSS exfiltration vulnerability CVE-2026-2441 CSRF token Chrome"
+- Search: "iOS Safari WebKit bug 2026 input event touch game"
+- Search: "Chrome Edge Safari update 2026"
+- Key URLs:
+  - https://toutiao.com/article/7624119670857122304 (CVE-2026-5281 Chrome Dawn WebGPU UAF, 4th Chrome 0day 2026)
+  - https://www.sitepoint.com/zero-day-css-cve-2026-2441-security-vulnerability/ (CVE-2026-2441 CSS exfiltration)
+  - https://www.sitepoint.com/css-zero-day-cve-2026-2441-browser-sandbox-escape/ (CVE-2026-2441 @property + paint() detail)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_08569b9e6fa30652 (Apple BSI replaces RSR)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_65569bcad1337152 (CVE-2026-20643 WebKit navigation API, first BSI patch)
+  - https://www.tenorshare.tw/ios-update-problems.html (iOS 26 Liquid Glass transparency bug reports)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_88669525be981652 (double WebKit CVE concurrent exploitation context)
+
+### Process Notes
+- Tools loaded: gamezipper-qa, post-deploy-verification skills
+- Search engine degradation this cycle: SearXNG (primary) returned 404 for all 5 batch queries; MiniMax (fallback) returned strong security/vulnerability coverage. Findings extracted; 8 test cases synthesized with full distinctness analysis vs existing library (110 prior versions, 2900 -> 2935 lines).
+- Key theme: 2026 has now seen 4 in-the-wild Chrome 0days (CVE-2026-5281 Dawn WebGPU UAF is #4), plus CVE-2026-2441 CSS exfiltration proves CSS is no longer harmless — both dimensions absent from prior library.
