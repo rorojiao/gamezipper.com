@@ -1,3 +1,50 @@
+## [v1.112.0] - 2026-06-29
+### Added
+- 8 new test cases from late-June 2026 industry research (R231 Dynamic Test Intelligence cron)
+- [S-229] **[P1]** CVE-2026-32202 — Windows Shell 0-Click LNK NTLMv2 Credential Theft (APT28 actively exploited; CISA KEV April 28 2026, FCEB deadline May 12 2026) — zero-click folder-open credential exfiltration via malicious .LNK icon-load to attacker SMB server — source: https://www.sohu.com/a/1020020937_114765 (May 8 2026); https://blog.csdn.net/weixin_42376192/article/details/160645609 (May 24 2026); https://blog.csdn.net/weixin_42376192/article/details/160753163 (May 4 2026 — attack chain Shell 0-Click → BlueHammer LPE)
+- [B-156] **[P2]** iOS 27 Siri Camera Mode Replacing Visual Intelligence — Camera Control long-press gesture remapped from Visual Intelligence overlay to in-app Siri Camera Mode; new shutter button with Apple Intelligence branding; relevant to any GameZipper AR/scan-based game feature and camera-mode-detection — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_0946a3cd29601952 (June 25 2026); https://so.html5.qq.com/page/real/search_news?docid=70000021_2616a2f978c89352 (June 15 2026); https://new.qq.com/rain/a/20260615A05F0200 (June 15 2026)
+- [S-230] **[P1]** CVE-2026-41940 cPanel & WHM Auth Bypass (CVSS 9.8) — 44,000+ hosts compromised, SORRY ransomware + Mirai deployment, 2-month in-wild patch gap; hosting control panel as distinct attack-surface class — source: https://blog.csdn.net/weixin_41905135/article/details/160880815 (May 22 2026 weekly); https://blog.csdn.net/weixin_45635831/article/details/160686133 (May 1 2026)
+- [W-226] **[P2]** cPanel/WHM Hosting Control Panel Class — vendor-surface category for GameZipper future backend hosting risk tracking (derived from S-230)
+- [C-166] **[P2]** Chrome 148 Native Lazy-Loading for `<audio>`/`<video>` — autoplay timing regression; hidden `display:none` audio elements may never trigger lazy-load intersection observer, silently breaking game BGM — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_18869cdffec30852 (April 2 2026)
+- [B-157] **[P3]** iOS 27 Siri Camera Mode Apple-Intelligence-Branded Shutter Button — visual distraction in GameZipper screenshots/marketing; new on-screen element that may appear in camera-region captures — source: https://sohu.com/a/1017020887_122066678 (May 1 2026); https://so.html5.qq.com/page/real/search_news?docid=70000021_98869f29c6b37852 (April 30 2026 Bloomberg)
+- [G-168] **[P3]** iOS 27 Siri Camera Mode Web API Detectability Gap — no web API exists to detect iOS camera mode; camera-based GameZipper features cannot know if Siri Camera Mode conflicts with game camera capture (derived from B-156/B-157)
+- [W-227] **[P3]** 2026 CVE Volume Projected >100,000 — R231 re-confirmation that H1 2026 trajectory tracks to FIRST.org upper-bound; GameZipper dependency-scanning must run daily not weekly — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_569698da76e17252 (Feb 12 2026 FIRST prediction)
+### Sources
+- Search engine status: SearXNG (primary) returned 404 for all 5 batch queries; MiniMax fallback used successfully
+- Search queries:
+  - "HTML5 game testing 2026 June browser canvas WebGL WebGPU bug regression"
+  - "browser security vulnerability CVE June 2026 XSS clickjacking Safari Chrome"
+  - "Chrome 150 151 Safari 27 iOS 27 stable release June 2026 breaking change"
+  - "casual mobile game UX accessibility WCAG 2026 dark mode haptic touch target"
+  - "WebGPU WebAssembly 2.0 PWA service worker deprecation 2026 performance"
+  - "Safari 27 iOS 27 WebKit new features 2026 June browser release"
+  - "Chrome 150 stable release June 2026 features WebGPU Wayland autofill"
+  - "CVE-2026 July critical vulnerability actively exploited WebKit Chrome iOS"
+  - "iOS 27 beta feature camera app 2026 Safari redesign Visual Intelligence"
+  - "CVE-2026-32202 Windows Shell spoofing vulnerability actively exploited CISA"
+  - "Firefox 150 Anthropic Claude Mythos 271 vulnerabilities AI auditing June 2026"
+  - "iOS 27 Siri Camera Visual Intelligence mode Camera Control gesture June 2026"
+  - "CVE-2026-32202 Windows Shell LNK NTLM zero-click APT28 actively exploited"
+- Key URLs:
+  - https://www.sohu.com/a/1020020937_114765 (Windows Shell CVE-2026-32202 APT28, May 8 2026 — S-229)
+  - https://blog.csdn.net/weixin_42376192/article/details/160645609 (CVE-2026-32202 zero-click NTLM deep-dive, May 24 2026 — S-229)
+  - https://blog.csdn.net/weixin_42376192/article/details/160753163 (Shell 0-Click → BlueHammer attack chain, May 4 2026 — S-229)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0946a3cd29601952 (iOS 27 Siri Camera Mode, June 25 2026 — B-156, B-157, G-168)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2616a2f978c89352 (Camera Control gesture remap, June 15 2026 — B-156)
+  - https://new.qq.com/rain/a/20260615A05F0200 (iOS 27 Siri Camera Control, June 15 2026 — B-156)
+  - https://blog.csdn.net/weixin_41905135/article/details/160880815 (May Week 2 security weekly — cPanel 44k hosts, May 22 2026 — S-230)
+  - https://blog.csdn.net/weixin_45635831/article/details/160686133 (May 1 2026 daily security intel — cPanel, S-230)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_18869cdffec30852 (Chrome 148 audio/video lazy-loading, April 2 2026 — C-166)
+  - https://sohu.com/a/1017020887_122066678 (iOS 27 Siri Camera Apple Intelligence branding, May 1 2026 — B-157)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_98869f29c6b37852 (Bloomberg iOS 27 Siri Camera food labels, April 30 2026 — B-157)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_569698da76e17252 (2026 CVE >100K FIRST prediction, Feb 12 2026 — W-227)
+
+### Process Notes
+- Tools loaded: gamezipper-qa, post-deploy-verification skills
+- Search engine degradation this cycle: SearXNG (primary) returned 404 for all 5 batch queries; MiniMax (fallback) returned usable results across 4 follow-up searches
+- 8 test cases synthesized with full distinctness analysis vs existing library (v1.0.0 → v1.111.0, prior 111 versions, ~900 test cases). Multiple candidate findings REJECTED as duplicates of existing entries: Windows kernel Chrome sandbox LPE (=S-191), NGINX Rift (=S-203), Firefox Mythos 271 vulns (=P-097/B-142), Chrome 153 2-week cadence (=W-200/W-185), CVE count >100K original (=S-161), Chrome 150 Wallet autofill (=B-135), Chrome 148 AI autofill (=C-122), Ivanti EPMM (=S-222). The 8 retained cases are genuinely novel dimensions
+- Distinctness checks performed: S-229 distinct from S-203/S-191/S-222; B-156 distinct from C-160/W-224/B-150; S-230 distinct from S-203/S-222/S-229; W-226 distinct from S-230/W-220/S-221; C-166 distinct from P-027/B-138/P-095; B-157 distinct from B-156/B-150/B-141; G-168 distinct from B-156/B-157/C-160; W-227 distinct from S-161/P-097/S-113
+
 ## [v1.110.0] - 2026-06-29
 ### Added
 - 9 new test cases from late-June 2026 industry research (R229 Dynamic Test Intelligence cron)
