@@ -280,6 +280,7 @@ const TIERS = [
 ];
 
 let curLevel = 0;
+let state = 'splash';       // 'splash', 'levelselect', 'game'
 let curTiles = null;     // current state array (mutable rot)
 let scrambleState = null; // snapshot of init rotations for reset
 let history = [];        // undo stack: array of {idx, prevRot}
@@ -292,6 +293,7 @@ let hoverIdx = -1;
 
 // ============ AUDIO ============
 let audioCtx = null;
+let bgmNodes = [];
 function initAudio(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
 function playTone(freq, dur, type, vol){
   if(save.muted || !audioCtx) return;
@@ -311,6 +313,57 @@ function sndConnect(){ playTone(660, 0.15, 'sine', 0.12); const t = setTimeout((
 function sndWin(){ [523,659,784,1047].forEach((f,i)=>{ const t = setTimeout(()=>playTone(f,0.25,'triangle',0.15), i*100); timers.push(t); }); }
 function sndError(){ playTone(150, 0.2, 'sawtooth', 0.1); }
 function sndHint(){ playTone(1000, 0.1, 'sine', 0.1); }
+
+// BGM: Ambient pad with chord progression
+function startBGM(){
+  if(!audioCtx || bgmNodes.length || save.muted) return;
+  try{
+    const sr = audioCtx.sampleRate;
+    const dur = 16;
+    const bufSize = sr * dur;
+    const buf = audioCtx.createBuffer(1, bufSize, sr);
+    const d = buf.getChannelData(0);
+    // Chord progression: Cmaj - Dmin - Emin - Dmin (ambient feel)
+    const chords = [[261.63,329.63,392.00],[293.66,369.99,440.00],[329.63,415.30,493.88],[293.66,369.99,440.00]];
+    const chordDur = dur / chords.length;
+    for(let i = 0; i < bufSize; i++){
+      const t = i / sr;
+      const ci = Math.min(Math.floor(t / chordDur), chords.length - 1);
+      const chord = chords[ci];
+      let s = 0;
+      for(let n = 0; n < chord.length; n++){
+        const f = chord[n];
+        s += Math.sin(2 * Math.PI * f * t) * 0.06;
+        s += Math.sin(2 * Math.PI * f * 2 * t) * 0.015;
+        s += Math.sin(2 * Math.PI * f * 0.5 * t) * 0.03;
+      }
+      const fade = t % chordDur;
+      const fadeIn = Math.min(fade / 0.8, 1);
+      const fadeOut = Math.min((chordDur - fade) / 0.8, 1);
+      s *= fadeIn * fadeOut;
+      const lfo = Math.sin(2 * Math.PI * 0.25 * t) * 0.15 + 1;
+      d[i] = s * lfo * 0.5;
+    }
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const filt = audioCtx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.value = 800;
+    filt.Q.value = 1;
+    const g = audioCtx.createGain();
+    g.gain.value = 0.25;
+    src.connect(filt);
+    filt.connect(g);
+    g.connect(audioCtx.destination);
+    src.start();
+    bgmNodes = [src,filt,g];
+  }catch(e){}
+}
+function stopBGM(){
+  bgmNodes.forEach(n => { try{n.stop?.(); n.disconnect?.();}catch(e){} });
+  bgmNodes = [];
+}
 
 // ============ CANVAS / RENDERING ============
 const canvas = document.getElementById('board');
@@ -623,8 +676,10 @@ function loadLevel(n){
   moves = 0;
   won = false;
   animating = null;
+  state = 'game';
   hideAllScreens();
   document.getElementById('hud').style.display='flex';
+  startBGM();
   updateHUD();
   requestAnimationFrame(()=>{ resizeCanvas(); draw(); });
 }
@@ -666,6 +721,8 @@ function hideAllScreens(){
 
 // ============ UI WIRING ============
 function showSplash(){
+  stopBGM();
+  state = 'splash';
   hideAllScreens();
   document.getElementById('hud').style.display='none';
   document.getElementById('splash').classList.remove('hidden');
@@ -675,6 +732,8 @@ function showSplash(){
   }
 }
 function showLevelSelect(){
+  stopBGM();
+  state = 'levelselect';
   hideAllScreens();
   document.getElementById('hud').style.display='none';
   document.getElementById('levelselect').classList.remove('hidden');

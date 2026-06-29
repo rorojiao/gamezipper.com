@@ -204,12 +204,12 @@ var W,H,DPR;
 function resize(){
   DPR=Math.min(window.devicePixelRatio||1,2);
   W=window.innerWidth;
-  // Account for gz-topnav (sticky, ~35px) and game-footer (fixed, ~44px)
+  // Account for gz-topnav (if visible) and game-footer
   var navH=0,footerH=0;
   var navEl=document.getElementById('gz-topnav');
-  if(navEl&&navEl.offsetHeight>0)navH=navEl.offsetHeight;
+  if(navEl&&navEl.offsetHeight>0&&getComputedStyle(navEl).display!=='none')navH=navEl.offsetHeight;
   var footerEl=document.getElementById('game-footer');
-  if(footerEl&&footerEl.offsetHeight>0)footerH=footerEl.offsetHeight;
+  if(footerEl&&footerEl.offsetHeight>0&&getComputedStyle(footerEl).display!=='none')footerH=footerEl.offsetHeight;
   H=window.innerHeight-navH-footerH;
   canvas.width=W*DPR;
   canvas.height=H*DPR;
@@ -797,6 +797,10 @@ function startLevel(idx){
   document.getElementById('howToPlay').style.display='none';
   document.getElementById('hudTop').style.display='flex';
   document.getElementById('hudInfo').textContent='Level '+(idx+1);
+  // Hide site topnav during gameplay (it overlays canvas, blocking pointer events on gears)
+  var nav=document.getElementById('gz-topnav');
+  if(nav)nav.style.display='none';
+  resize();
   initAudio();
   startBGM();
   // Tutorial for level 1
@@ -869,12 +873,20 @@ function showMenu(){
   document.getElementById('winScreen').style.display='none';
   document.getElementById('howToPlay').style.display='none';
   document.getElementById('hudTop').style.display='none';
+  // Restore site topnav
+  var nav=document.getElementById('gz-topnav');
+  if(nav)nav.style.display='flex';
+  resize();
   stopBGM();
 }
 
 function showLevelSelect(){
   var grid=document.getElementById('levelGrid');
   grid.innerHTML='';
+  // Restore site topnav
+  var nav=document.getElementById('gz-topnav');
+  if(nav)nav.style.display='flex';
+  resize();
   var tiers=[
     {label:'Tier 1 - Basics',start:1,end:5},
     {label:'Tier 2 - Decoys',start:6,end:10},
