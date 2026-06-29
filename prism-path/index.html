@@ -24,7 +24,7 @@
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
 {"@type":"Question","name":"How do you play Prism Path?","acceptedAnswer":{"@type":"Answer","text":"Tap any hexagonal tile to rotate it 60 degrees. Colored light beams emit from source tiles — rotate the pipe tiles to route each colored beam to the target tile of the same color. Win when every beam reaches its matching target."}},
 {"@type":"Question","name":"How is Prism Path different from other pipe puzzles?","acceptedAnswer":{"@type":"Answer","text":"Prism Path uses a hexagonal grid with 6 directions instead of the usual square grid with 4 directions. It also features multiple colored beams that must each reach a color-matched target, adding a routing layer on top of rotation."}},
-{"@type":"Question","name":"How many levels does Prism Path have?","acceptedAnswer":{"@type":"Answer","text":"30 handcrafted levels across 6 tiers: Tier 1-2 (7-cell grid, 1 color), Tier 3-4 (37-cell grid, 2 colors), Tier 5 (61-cell grid, 3 colors), and Tier 6 (61-cell grid, 4 colors). Each level awards up to 3 stars."}},
+{"@type":"Question","name":"How many levels does Prism Path have?","acceptedAnswer":{"@type":"Answer","text":"30 handcrafted levels across 5 tiers of 6 levels each. Tier 1 uses a 7-cell grid with 1 red color. Tiers 2-3 introduce green and blue beams. Tiers 4-5 escalate to a 61-cell grid with all four colors (red, green, blue, yellow). Each level awards up to 3 stars."}},
 {"@type":"Question","name":"Can I undo or reset my moves?","acceptedAnswer":{"@type":"Answer","text":"Yes. Use the Undo button to revert your last rotation, or Reset to restore the puzzle to its initial scrambled state. You can also use limited Hints to reveal one correct rotation."}}
 ]}
 </script>
@@ -81,7 +81,7 @@ canvas#board{display:block;position:absolute;top:0;left:0;width:100%;height:100%
 .tier-tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;max-width:500px}
 .tier-tab{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s}
 .tier-tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent}
-.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;max-width:420px;width:100%;margin-bottom:20px}
+.level-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;width:100%;margin-bottom:20px}
 .lvl-btn{aspect-ratio:1;border-radius:14px;border:2px solid var(--border);background:var(--panel);color:var(--text);font-size:18px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .lvl-btn:active{transform:scale(.95)}
 .lvl-btn.locked{opacity:.3;cursor:not-allowed}
@@ -743,7 +743,7 @@ function showLevelSelect(){
 function renderTierTabs(){
   const wrap = document.getElementById('tier-tabs');
   wrap.innerHTML = '';
-  for(let i=0;i<6;i++){
+  for(let i=0;i<5;i++){
     const tab = document.createElement('div');
     tab.className = 'tier-tab' + (i===save.currentTier?' active':'');
     tab.textContent = 'T'+(i+1);
@@ -756,8 +756,8 @@ function renderLevelGrid(){
   const grid = document.getElementById('level-grid');
   grid.innerHTML = '';
   const tier = save.currentTier;
-  for(let i=0;i<5;i++){
-    const lvlIdx = tier*5 + i;
+  for(let i=0;i<6;i++){
+    const lvlIdx = tier*6 + i;
     const btn = document.createElement('div');
     btn.className = 'lvl-btn';
     const locked = lvlIdx >= save.unlocked;
@@ -857,15 +857,17 @@ let rafId = null;
 let timers = [];
 function cleanup(){
   if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
-  timers.forEach(id => clearInterval(id)); timers = [];
+  timers.forEach(id => clearTimeout(id)); timers = [];
   if(audioCtx){ audioCtx.close().catch(()=>{}); audioCtx = null; }
 }
+let pageVisible = true;
 document.addEventListener('visibilitychange', ()=>{
+  pageVisible = !document.hidden;
   if(document.hidden){
     if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
-  } else if(state==='game'){
+  } else {
     lastTime = performance.now();
-    rafId = requestAnimationFrame(loop);
+    if(!rafId){ rafId = requestAnimationFrame(loop); }
   }
 });
 window.addEventListener('beforeunload', cleanup);
