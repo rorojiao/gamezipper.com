@@ -204,15 +204,31 @@ var W,H,DPR;
 function resize(){
   DPR=Math.min(window.devicePixelRatio||1,2);
   W=window.innerWidth;
-  H=window.innerHeight;
+  // Account for gz-topnav (sticky, ~35px) and game-footer (fixed, ~44px)
+  var navH=0,footerH=0;
+  var navEl=document.getElementById('gz-topnav');
+  if(navEl&&navEl.offsetHeight>0)navH=navEl.offsetHeight;
+  var footerEl=document.getElementById('game-footer');
+  if(footerEl&&footerEl.offsetHeight>0)footerH=footerEl.offsetHeight;
+  H=window.innerHeight-navH-footerH;
   canvas.width=W*DPR;
   canvas.height=H*DPR;
   canvas.style.width=W+'px';
   canvas.style.height=H+'px';
+  canvas.style.top=navH+'px';
   ctx.setTransform(DPR,0,0,DPR,0,0);
 }
 window.addEventListener('resize',resize);
 resize();
+// Re-resize after async footer/nav appear
+var _chromeCheck=setInterval(function(){
+  var navEl=document.getElementById('gz-topnav');
+  var footerEl=document.getElementById('game-footer');
+  if((navEl&&navEl.offsetHeight>0)||(footerEl&&footerEl.offsetHeight>0)){
+    resize();
+  }
+},2000);
+setTimeout(function(){clearInterval(_chromeCheck);},30000);
 
 // === AUDIO ===
 function initAudio(){
