@@ -1,31 +1,49 @@
-# Pulley Lift — Competitive Benchmark
+# Competitive Benchmark — Pulley Lift
 
-## Target Niche
-Mechanical linkage lifting puzzles (binary engage/disengage pulleys + counterweight balance).
+## Market Analysis: Pulley/Mechanical Advantage Puzzle Games
 
-## Differentiation from existing GameZipper catalog
-- grep `pulley` = 0 across 486 games ✅ (true gap)
-- grep `counterweight`/`fulcrum`/`winch`/`hoist` = 0 ✅
-- Existing rope/chain/gear games are CUT or ROTATE
-- Existing water (canal-lock) is water-level equalization
-- Pulley Lift = **binary torque-balance under gravity**: engage/disengage pulley routes to redistribute mechanical advantage, raising target load to goal height without dropping counterweights below their floor.
+### Competitor Analysis
+Direct pulley-based puzzle games are extremely rare in the browser/casual game market.
+The closest analogs are educational physics simulations and classroom tools, not games.
 
-## Mechanic Skeleton
-- N pulleys arranged along a support beam
-- 1 load (mass M) + K counterweights (masses m_i) hanging at variable heights
-- Each move: flip ONE pulley's engagement state (engaged = rope routes through it)
-- After a flip, heights settle deterministically by torque balance: heavy side goes down, light side up
-- Win: load height ≥ target (after settle), AND no counterweight dropped below 0 or above ceiling
+### Adjacent Categories
+1. **Rope physics games** (Cut the Rope franchise — 960M downloads)
+   - Mechanic: Cut rope to drop candy into creature's mouth
+   - NOT pulley-based — rope cutting, not routing through mechanical systems
+   - GameZipper has: Cut the Rope, Rope Rescue, Twisted Tangle
 
-## Tier Plan (30 levels)
-- T1 (5): 1 load + 1 CW, 1 pulley — basic torque intuition
-- T2 (5): 1 load + 2 CW, 2 pulleys — choose route
-- T3 (5): 1 load + 2 CW, 3 pulleys with gate pulleys
-- T4 (5): 2 loads + 2 CW (one load must stay put)
-- T5 (5): constraint pulleys that lock together
-- T6 (5): 3 loads + 3 CW, grand mechanical puzzle
+2. **Balance/weighing puzzles** (Balance Scale)
+   - Mechanic: Deduce fake coin via weighing on a balance scale
+   - GameZipper has: Balance Scale
+   - NOT mechanical advantage — it's binary balance, not ratio lifting
 
-## Tech
-- Canvas 2D
-- BFS verifier: state = (engagement bitmask, heights tuple)
-- Unique-solution enforced by BFS minimal-path length == declared par
+3. **Educational physics games** (BrainPOP, PhET)
+   - Mechanic: Interactive simulations of levers, pulleys, inclined planes
+   - NOT puzzle games with levels/win conditions — they are sandbox tools
+
+4. **Construction/engineering games** (Poly Bridge, World of Goo)
+   - Mechanic: Build bridges/structures with physics
+   - NOT focused on pulleys or mechanical advantage ratios
+
+### White Space Opportunity
+- **Zero pulley games on GameZipper** (grep verified: pulley=0, fulcrum=0, teeter=0, totter=0)
+- **No direct browser competitors** — this is a blue ocean category
+- **Educational SEO value** — "pulley", "mechanical advantage", "block and tackle" attract
+  students and physics enthusiasts searching for interactive learning tools
+
+### GameZipper's Unique Angle
+Pulley Lift combines:
+- Educational value (teaches mechanical advantage physics)
+- Casual puzzle gameplay (tap to route rope through pulley grid)
+- Progressive difficulty (from simple redirect to compound systems)
+- Star rating system (3-star for optimal solutions)
+
+### Monetization Strategy
+- Ad placement: Interstitial between levels, banner during level select
+- Target: Educational + casual puzzle audience overlap
+- Keywords: pulley puzzle, mechanical advantage, rope pulley, physics game
+
+## Benchmark Conclusion
+This is a TRUE GAP — not a clone of an existing game. The pulley mechanic is completely
+novel in GameZipper's catalog and rare in the browser game market. The educational angle
+adds SEO value that pure entertainment puzzles lack.
