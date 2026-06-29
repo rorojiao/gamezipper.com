@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  
+  <title>Tetra Fit — Polyomino Puzzle Game</title>
+  <meta name="description" content="Drag and drop polyomino pieces to perfectly fill grid levels. 30 progressively challenging puzzle levels. Test your spatial logic. Free online HTML5 game, no download.">
+  
+  <meta property="og:title" content="Tetra Fit — Polyomino Puzzle Game">
+  <meta property="og:description" content="Drag and drop polyomino pieces to perfectly fill grid levels. 30 progressively challenging puzzles. Free online HTML5 game.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://gamezipper.com/tetra-fit/">
+  <meta property="og:image" content="https://gamezipper.com/tetra-fit/og.png">
+  <meta property="og:site_name" content="GameZipper">
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tetra Fit — Polyomino Puzzle Game">
+  <meta name="twitter:description" content="Drag and drop polyomino pieces to perfectly fill grid levels. 30 progressively challenging puzzles. Free online HTML5 game.">
+  <meta name="twitter:image" content="https://gamezipper.com/tetra-fit/og.png">
+  
+  <meta name="keywords" content="polyomino,puzzle,tetris,brain teaser,HTML5,free,online,drag drop,tetromino,pentomino,logic puzzle">
+  <meta name="author" content="GameZipper">
+  <meta name="robots" content="index,follow">
+  
+  <link rel="canonical" href="https://gamezipper.com/tetra-fit/">
+  
+  <style>
+    :root {
+      --bg-dark: #1a1a2e;
+      --bg-darker: #16213e;
+      --accent: #e94560;
+      --accent-hover: #ff6b6b;
+      --text: #ecf0f1;
+      --text-muted: #95a5a6;
+      --cell-empty: #2c3e50;
+      --cell-valid: #27ae60;
+      --cell-invalid: #c0392b;
+      --cell-occupied: #34495e;
+      --shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 10px;
+    }
+
+    .header {
+      text-align: center;
+      padding: 15px 0;
+    }
+
+    .header h1 {
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      color: var(--accent);
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+      margin-bottom: 5px;
+    }
+
+    .header .subtitle {
+      font-size: clamp(0.8rem, 2.5vw, 1rem);
+      color: var(--text-muted);
+    }
+
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      max-width: 800px;
+      width: 100%;
+    }
+
+    .level-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 10px 15px;
+      background: var(--bg-darker);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .level-info__tier,
+    .level-info__name,
+    .level-info__progress {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .level-info__tier span,
+    .level-info__name span,
+    .level-info__progress .level-indicator {
+      color: var(--text-bright);
+      font-weight: 600;
+    }
+
+    .level-info span {
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    }
+
+    .level-info .level-number {
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .level-info .tier-badge {
+      background: var(--accent);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: clamp(0.7rem, 2vw, 0.85rem);
+      margin-left: 5px;
+    }
+
+    .game-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      width: 100%;
+    }
+
+    @media (min-width: 768px) {
+      .game-area {
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+      }
+    }
+
+    .grid-container {
+      background: var(--bg-darker);
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .grid {
+      display: grid;
+      gap: 2px;
+    }
+
+    .cell {
+      width: clamp(28px, 8vw, 45px);
+      height: clamp(28px, 8vw, 45px);
+      background: var(--cell-empty);
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .cell.active {
+      background: var(--cell-valid);
+      box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+    }
+
+    .cell.occupied {
+      background: var(--cell-occupied);
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+    }
+
+    .cell.invalid {
+      background: var(--cell-invalid);
+      animation: shake 0.3s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    .pieces-container {
+      background: var(--bg-darker);
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      min-width: 200px;
+    }
+
+    .pieces-container h3 {
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+      margin-bottom: 10px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .pieces {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .piece {
+      cursor: grab;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      user-select: none;
+    }
+
+    .piece:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(233, 69, 96, 0.4);
+    }
+
+    .piece:active {
+      cursor: grabbing;
+      transform: scale(1.15);
+    }
+
+    .piece.used {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    .piece-shape {
+      display: grid;
+      gap: 1px;
+    }
+
+    .piece-cell {
+      width: clamp(22px, 6vw, 35px);
+      height: clamp(22px, 6vw, 35px);
+      border-radius: 3px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: clamp(0.9rem, 2.5vw, 1rem);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(233, 69, 96, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-darker);
+      color: var(--text);
+      border: 1px solid var(--text-muted);
+    }
+
+    .btn-secondary:hover {
+      background: var(--cell-empty);
+      border-color: var(--accent);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-darker);
+      padding: 30px;
+      border-radius: 16px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    .modal-content h2 {
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      color: var(--accent);
+      margin-bottom: 15px;
+    }
+
+    .modal-content p {
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .instructions {
+      background: var(--bg-darker);
+      padding: 15px;
+      border-radius: 8px;
+      max-width: 600px;
+      margin: 10px 0;
+      font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+      line-height: 1.6;
+    }
+
+    .instructions h3 {
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .instructions ul {
+      padding-left: 20px;
+      margin-bottom: 10px;
+    }
+
+    .instructions li {
+      margin-bottom: 5px;
+    }
+
+    .dragging {
+      position: fixed;
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    @media (max-width: 480px) {
+      .header h1 { font-size: 1.8rem; }
+      .grid-container, .pieces-container { padding: 10px; }
+      .cell, .piece-cell { width: 24px; height: 24px; }
+      .btn { padding: 8px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Monetag MultiTag Zones -->
+  <div class="ad-banner" style="min-height:90px;background:#1a1f2e;margin:10px auto;text-align:center;">
+    <script src="//captive1.pristy.net/mt/110120/script.js" async></script>
+  </div>
+
+  <div class="ad-native" style="min-height:250px;background:#1a1f2e;margin:10px auto;text-align:center;">
+    <script src="//captive1.pristy.net/mt/110121/script.js" async></script>
+  </div>
+
+  <script>
+    // Monetag Interstitial (zone 110122) - show on level complete
+    function showInterstitial() {
+      const interstitial = document.createElement('div');
+      interstitial.id = 'gz-interstitial';
+      interstitial.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1f2e;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+      const script = document.createElement('script');
+      script.src = '//captive1.pristy.net/mt/110122/script.js';
+      script.async = true;
+      const closeBtn = document.createElement('button');
+      closeBtn.textContent = 'Close';
+      closeBtn.style.cssText = 'margin-top:20px;padding:12px 24px;background:#e94560;color:white;border:none;border-radius:8px;font-size:18px;';
+      closeBtn.addEventListener('click', () => interstitial.remove());
+      interstitial.appendChild(script);
+      interstitial.appendChild(closeBtn);
+      document.body.appendChild(interstitial);
+    }
+  </script>
+
+  <div class="header">
+    <h1>Tetra Fit</h1>
+    <div class="subtitle">Polyomino Puzzle — Drag & Fit</div>
+  </div>
+
+  <div class="game-container">
+    <div class="level-info">
+      <div class="level-info__tier">Tier <span id="tier">1</span></div>
+      <div class="level-info__name"><span id="level-name">First Fit</span></div>
+      <div class="level-info__progress">Level <span class="level-indicator" id="level-num">1</span> / 30</div>
+    </div>
+
+    <div class="game-area">
+      <div class="grid-container">
+        <div id="grid" class="grid"></div>
+      </div>
+
+      <div class="pieces-container">
+        <h3>Pieces</h3>
+        <div id="pieces" class="pieces"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="btn-reset" class="btn btn-secondary">Reset</button>
+      <button id="btn-hint" class="btn btn-secondary">Hint</button>
+      <button id="btn-next" class="btn btn-primary" disabled>Next Level</button>
+      <button id="btn-prev" class="btn btn-secondary" disabled>Previous</button>
+    </div>
+  </div>
+
+  <div class="instructions">
+    <h3>How to Play</h3>
+    <ul>
+      <li>Drag pieces from below onto the grid to fill all cells perfectly</li>
+      <li>Click a piece to rotate it</li>
+      <li>Green indicates a valid position, red means invalid</li>
+      <li>Complete the puzzle and click "Next Level" to continue</li>
+      <li>30 levels from Tier 1 (Beginner) to Tier 6 (Master)</li>
+    </ul>
+  </div>
+
+  <div id="win-modal" class="modal">
+    <div class="modal-content">
+      <h2>🎉 Level Complete!</h2>
+      <p>You filled every cell perfectly!</p>
+      <button id="btn-modal-next" class="btn btn-primary">Next Level</button>
+      <button id="btn-modal-close" class="btn btn-secondary">Close</button>
+    </div>
+  </div>
+
+  <script>
+    // Audio system using Web Audio API
+    const AudioEngine = {
+      ctx: null,
+      bgmOscillators: [],
+      bgmGain: null,
+      isPlaying: false,
+
+      init() {
+        if (this.ctx) return;
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.bgmGain = this.ctx.createGain();
+        this.bgmGain.gain.value = 0.1;
+        this.bgmGain.connect(this.ctx.destination);
+      },
+
+      playNote(freq, duration, type = 'sine') {
+        if (!this.ctx) this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+        osc.stop(this.ctx.currentTime + duration);
+      },
+
+      playPickup() {
+        this.playNote(523.25, 0.1, 'square');
+        setTimeout(() => this.playNote(659.25, 0.1, 'square'), 50);
+      },
+
+      playPlace() {
+        this.playNote(440, 0.15, 'sine');
+        setTimeout(() => this.playNote(554.37, 0.15, 'sine'), 75);
+      },
+
+      playWin() {
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, i) => {
+          setTimeout(() => this.playNote(freq, 0.3, 'sine'), i * 100);
+        });
+      },
+
+      playError() {
+        this.playNote(220, 0.2, 'sawtooth');
+        setTimeout(() => this.playNote(196, 0.2, 'sawtooth'), 100);
+      },
+
+      startBGM() {
+        if (!this.ctx) this.init();
+        if (this.isPlaying) return;
+        this.isPlaying = true;
+
+        const notes = [261.63, 293.66, 329.63, 349.23];
+        const pattern = [0, 1, 2, 3, 1, 0, 2, 3];
+
+        let noteIndex = 0;
+        const playPattern = () => {
+          if (!this.isPlaying) return;
+          const freq = notes[pattern[noteIndex % pattern.length]];
+          const osc = this.ctx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          osc.connect(this.bgmGain);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.3);
+          noteIndex++;
+          setTimeout(playPattern, 400);
+        };
+        playPattern();
+      },
+
+      stopBGM() {
+        this.isPlaying = false;
+      }
+    };
+
+    // Initialize audio on first interaction
+    document.addEventListener('click', () => AudioEngine.init(), { once: true });
+    document.addEventListener('touchstart', () => AudioEngine.init(), { once: true });
+
+    // Level data
+    const LEVELS = [{"id": 1, "tier": 1, "name": "First Fit", "rows": 2, "cols": 4, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2], [1, 3]], "pieces": ["I4", "I4"]}, {"id": 2, "tier": 1, "name": "Block Drop", "rows": 2, "cols": 3, "cells": [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]], "pieces": ["O4", "I2"]}, {"id": 3, "tier": 1, "name": "Triple Bar", "rows": 3, "cols": 3, "cells": [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]], "pieces": ["I3", "I3", "I3"]}, {"id": 4, "tier": 1, "name": "Double Square", "rows": 2, "cols": 4, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2], [1, 3]], "pieces": ["O4", "O4"]}, {"id": 5, "tier": 1, "name": "Quad Bar", "rows": 4, "cols": 4, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2], [1, 3], [2, 0], [2, 1], [2, 2], [2, 3], [3, 0], [3, 1], [3, 2], [3, 3]], "pieces": ["I4", "I4", "I4", "I4"]}, {"id": 6, "tier": 2, "name": "Triple Pack", "rows": 3, "cols": 4, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2], [1, 3], [2, 0], [2, 1], [2, 2], [2, 3]], "pieces": ["I4", "I4", "I4"]}, {"id": 7, "tier": 2, "name": "Bar Grid", "rows": 3, "cols": 4, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2], [1, 3], [2, 0], [2, 1], [2, 2], [2, 3]], "pieces": ["I4", "I4", "I4"]}, {"id": 8, "tier": 2, "name": "Sparse Fill", "rows": 5, "cols": 5, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [4, 0], [4, 1], [4, 2], [4, 3], [4, 4]], "pieces": ["O4", "O4", "O4", "O4", "I4", "I4", "I1"]}, {"id": 9, "tier": 2, "name": "Slim Bar", "rows": 2, "cols": 4, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2], [1, 3]], "pieces": ["I4", "I4"]}, {"id": 10, "tier": 2, "name": "Square Fill", "rows": 2, "cols": 3, "cells": [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]], "pieces": ["O4", "I2"]}, {"id": 11, "tier": 3, "name": "Block Party", "rows": 5, "cols": 5, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [4, 0], [4, 1], [4, 2], [4, 3], [4, 4]], "pieces": ["O4", "O4", "O4", "O4", "I3", "I3", "I3"]}, {"id": 12, "tier": 3, "name": "Shape Storm", "rows": 5, "cols": 5, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [4, 0], [4, 1], [4, 2], [4, 3], [4, 4]], "pieces": ["T4", "T4", "L4", "L4", "S4", "I3", "I2"]}, {"id": 13, "tier": 3, "name": "Triple Grid", "rows": 3, "cols": 3, "cells": [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]], "pieces": ["I3", "I3", "I3"]}, {"id": 14, "tier": 3, "name": "Wide Pack", "rows": 3, "cols": 4, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2], [1, 3], [2, 0], [2, 1], [2, 2], [2, 3]], "pieces": ["I4", "I4", "I4"]}, {"id": 15, "tier": 3, "name": "Big Quad", "rows": 4, "cols": 4, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2], [1, 3], [2, 0], [2, 1], [2, 2], [2, 3], [3, 0], [3, 1], [3, 2], [3, 3]], "pieces": ["I4", "I4", "I4", "I4"]}, {"id": 16, "tier": 4, "name": "Big Grid", "rows": 4, "cols": 9, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [0, 7], [0, 8], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [2, 5], [2, 6], [2, 7], [2, 8], [3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [3, 5], [3, 6], [3, 7], [3, 8]], "pieces": ["I4", "I4", "I4", "I4", "I4", "I4", "I4", "I4", "I4"]}, {"id": 17, "tier": 4, "name": "Wide Load", "rows": 4, "cols": 8, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [0, 7], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [2, 5], [2, 6], [2, 7], [3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [3, 5], [3, 6], [3, 7]], "pieces": ["O4", "O4", "I4", "I4", "T4", "T4", "L4", "S4"]}, {"id": 18, "tier": 4, "name": "Slim Fit", "rows": 3, "cols": 5, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4]], "pieces": ["I5", "I5", "I5"]}, {"id": 19, "tier": 4, "name": "Triple Bar 5", "rows": 3, "cols": 5, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4]], "pieces": ["I5", "I5", "I5"]}, {"id": 20, "tier": 4, "name": "Four Pack", "rows": 4, "cols": 4, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2], [1, 3], [2, 0], [2, 1], [2, 2], [2, 3], [3, 0], [3, 1], [3, 2], [3, 3]], "pieces": ["I4", "I4", "I4", "I4"]}, {"id": 21, "tier": 5, "name": "Quint Pack", "rows": 5, "cols": 5, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [4, 0], [4, 1], [4, 2], [4, 3], [4, 4]], "pieces": ["I5", "I5", "I5", "I5", "I5"]}, {"id": 22, "tier": 5, "name": "Octo Strip", "rows": 5, "cols": 8, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [0, 7], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [2, 5], [2, 6], [2, 7], [3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [3, 5], [3, 6], [3, 7], [4, 0], [4, 1], [4, 2], [4, 3], [4, 4], [4, 5], [4, 6], [4, 7]], "pieces": ["I5", "I5", "I5", "I5", "I5", "I5", "I5", "I5"]}, {"id": 23, "tier": 5, "name": "Mega Frame", "rows": 4, "cols": 6, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [2, 5], [3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [3, 5]], "pieces": ["I4", "I4", "I4", "I4", "I4", "I4"]}, {"id": 24, "tier": 5, "name": "T-Rex", "rows": 3, "cols": 5, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4]], "pieces": ["I5", "I5", "I5"]}, {"id": 25, "tier": 5, "name": "Block Z", "rows": 4, "cols": 4, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2], [1, 3], [2, 0], [2, 1], [2, 2], [2, 3], [3, 0], [3, 1], [3, 2], [3, 3]], "pieces": ["I4", "I4", "I4", "I4"]}, {"id": 26, "tier": 6, "name": "Diamond", "rows": 5, "cols": 5, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [4, 0], [4, 1], [4, 2], [4, 3], [4, 4]], "pieces": ["I5", "I5", "I5", "I5", "I5"]}, {"id": 27, "tier": 6, "name": "Spiral", "rows": 4, "cols": 6, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [2, 5], [3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [3, 5]], "pieces": ["I4", "I4", "I4", "I4", "I4", "I4"]}, {"id": 28, "tier": 6, "name": "Master Cross", "rows": 4, "cols": 5, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [3, 0], [3, 1], [3, 2], [3, 3], [3, 4]], "pieces": ["I4", "I4", "I4", "I4", "I4"]}, {"id": 29, "tier": 6, "name": "Star Core", "rows": 4, "cols": 5, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [3, 0], [3, 1], [3, 2], [3, 3], [3, 4]], "pieces": ["I5", "I5", "I5", "I5"]}, {"id": 30, "tier": 6, "name": "Fortress", "rows": 4, "cols": 8, "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [0, 7], [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [2, 5], [2, 6], [2, 7], [3, 0], [3, 1], [3, 2], [3, 3], [3, 4], [3, 5], [3, 6], [3, 7]], "pieces": ["I4", "I4", "I4", "I4", "I4", "I4", "I4", "I4"]}];
+
+    // Shape definitions (base orientations)
+    const SHAPES = {
+      I1: [[0,0]],
+      I2: [[0,0],[1,0]],
+      I3: [[0,0],[1,0],[2,0]],
+      L3: [[0,0],[1,0],[1,1]],
+      I4: [[0,0],[1,0],[2,0],[3,0]],
+      O4: [[0,0],[1,0],[0,1],[1,1]],
+      T4: [[0,0],[1,0],[2,0],[1,1]],
+      L4: [[0,0],[1,0],[2,0],[2,1]],
+      S4: [[1,0],[2,0],[0,1],[1,1]],
+      F5: [[1,0],[2,0],[0,1],[1,1],[1,2]],
+      I5: [[0,0],[1,0],[2,0],[3,0],[4,0]],
+      L5: [[0,0],[1,0],[2,0],[3,0],[3,1]],
+      P5: [[0,0],[1,0],[0,1],[1,1],[0,2]],
+      T5: [[0,0],[1,0],[2,0],[1,1],[1,2]],
+      U5: [[0,0],[1,0],[2,0],[0,1],[2,1]],
+      V5: [[0,0],[0,1],[0,2],[1,2],[2,2]],
+      W5: [[0,0],[0,1],[1,1],[1,2],[2,2]],
+      X5: [[1,0],[0,1],[1,1],[2,1],[1,2]],
+      Y5: [[1,0],[0,1],[1,1],[1,2],[1,3]],
+      Z5: [[0,0],[1,0],[1,1],[1,2],[2,2]]
+    };
+
+    // Colors for shapes
+    const COLORS = {
+      I1: '#f1c40f', I2: '#e74c3c', I3: '#e67e22', L3: '#2ecc71',
+      I4: '#3498db', O4: '#9b59b6', T4: '#1abc9c', L4: '#f39c12',
+      S4: '#ff6b6b', F5: '#a29bfe', I5: '#fd79a8', L5: '#55efc4',
+      P5: '#74b9ff', T5: '#ffeaa7', U5: '#fab1a0', V5: '#a8e6cf',
+      W5: '#d4a5f5', X5: '#fdcb6e', Y5: '#6c5ce7', Z5: '#00cec9'
+    };
+
+    // Game state
+    let currentLevel = 0;
+    let placedPieces = [];
+    let gridCells = [];
+    let activePiece = null;
+    let draggingPiece = null;
+
+    // DOM elements
+    const gridEl = document.getElementById('grid');
+    const piecesEl = document.getElementById('pieces');
+    const levelNumberEl = document.querySelector('.level-number');
+    const tierBadgeEl = document.querySelector('.tier-badge');
+    const piecesLeftEl = document.getElementById('pieces-left');
+    const btnReset = document.getElementById('btn-reset');
+    const btnHint = document.getElementById('btn-hint');
+    const btnNext = document.getElementById('btn-next');
+    const btnPrev = document.getElementById('btn-prev');
+    const winModal = document.getElementById('win-modal');
+    const btnModalNext = document.getElementById('btn-modal-next');
+    const btnModalClose = document.getElementById('btn-modal-close');
+
+    // Rotate shape
+    function rotateShape(shape) {
+      return shape.map(([r,c]) => [-c, r]);
+    }
+
+    // Get bounding box
+    function getBoundingBox(shape) {
+      const rows = shape.map(([r]) => r);
+      const cols = shape.map(([,c]) => c);
+      return {
+        minR: Math.min(...rows),
+        maxR: Math.max(...rows),
+        minC: Math.min(...cols),
+        maxC: Math.max(...cols)
+      };
+    }
+
+    // Normalize shape
+    function normalizeShape(shape) {
+      const {minR, minC} = getBoundingBox(shape);
+      return shape.map(([r,c]) => [r - minR, c - minC]).sort((a,b) => a[0] - b[0] || a[1] - b[1]);
+    }
+
+    // Get all rotations
+    function getAllRotations(shape) {
+      const rotations = [];
+      const seen = new Set();
+      let current = shape;
+      for (let i = 0; i < 4; i++) {
+        const norm = normalizeShape(current);
+        const key = JSON.stringify(norm);
+        if (!seen.has(key)) {
+          seen.add(key);
+          rotations.push(norm);
+        }
+        current = rotateShape(current);
+      }
+      return rotations;
+    }
+
+    // Render grid
+    function renderGrid() {
+      const level = LEVELS[currentLevel];
+      gridEl.style.gridTemplateColumns = `repeat(${level.cols}, 1fr)`;
+      gridEl.innerHTML = '';
+
+      for (let r = 0; r < level.rows; r++) {
+        for (let c = 0; c < level.cols; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+
+          const isActive = level.cells.some(([cr, cc]) => cr === r && cc === c);
+          const isOccupied = placedPieces.some(p => p.cells.some(([cr, cc]) => cr === r && cc === c));
+
+          if (isActive && isOccupied) {
+            cell.classList.add('occupied');
+          } else if (isActive) {
+            cell.classList.add('active');
+          }
+
+          gridEl.appendChild(cell);
+        }
+      }
+    }
+
+    // Render pieces
+    function renderPieces() {
+      const level = LEVELS[currentLevel];
+      piecesEl.innerHTML = '';
+
+      level.pieces.forEach((pieceKey, index) => {
+        if (placedPieces.some(p => p.index === index)) return;
+
+        const pieceWrapper = document.createElement('div');
+        pieceWrapper.className = 'piece';
+        pieceWrapper.dataset.piece = pieceKey;
+        pieceWrapper.dataset.index = index;
+
+        const shape = SHAPES[pieceKey];
+        const {maxR, maxC} = getBoundingBox(shape);
+        const color = COLORS[pieceKey];
+
+        const pieceShape = document.createElement('div');
+        pieceShape.className = 'piece-shape';
+        pieceShape.style.gridTemplateRows = `repeat(${maxR + 1}, 1fr)`;
+        pieceShape.style.gridTemplateColumns = `repeat(${maxC + 1}, 1fr)`;
+
+        const cellSet = new Set(shape.map(([r,c]) => `${r},${c}`));
+        for (let r = 0; r <= maxR; r++) {
+          for (let c = 0; c <= maxC; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'piece-cell';
+            if (cellSet.has(`${r},${c}`)) {
+              cell.style.backgroundColor = color;
+            }
+            pieceShape.appendChild(cell);
+          }
+        }
+
+        pieceWrapper.appendChild(pieceShape);
+
+        // Rotation on click
+        pieceWrapper.addEventListener('click', (e) => {
+          e.stopPropagation();
+          rotatePiece(pieceKey, index);
+        });
+
+        // Drag events
+        pieceWrapper.addEventListener('mousedown', (e) => startDrag(e, pieceKey, index, pieceWrapper));
+        pieceWrapper.addEventListener('touchstart', (e) => startDrag(e, pieceKey, index, pieceWrapper), {passive: false});
+
+        piecesEl.appendChild(pieceWrapper);
+      });
+
+      updatePiecesLeft();
+    }
+
+    // Rotate piece
+    let pieceRotations = {};
+    function rotatePiece(pieceKey, index) {
+      const key = `${currentLevel}-${index}`;
+      const currentRot = pieceRotations[key] || SHAPES[pieceKey];
+      const allRots = getAllRotations(currentRot);
+      const currentIdx = allRots.findIndex(r => JSON.stringify(r) === JSON.stringify(normalizeShape(currentRot)));
+      const nextIdx = (currentIdx + 1) % allRots.length;
+      pieceRotations[key] = allRots[nextIdx];
+      renderPieces();
+    }
+
+    // Update pieces left count
+    function updatePiecesLeft() {
+      const level = LEVELS[currentLevel];
+      const remaining = level.pieces.length - placedPieces.length;
+      piecesLeftEl.textContent = remaining;
+    }
+
+    // Drag handlers
+    function startDrag(e, pieceKey, index, element) {
+      e.preventDefault();
+      draggingPiece = {
+        key: pieceKey,
+        index: index,
+        element: element,
+        rotation: pieceRotations[`${currentLevel}-${index}`] || SHAPES[pieceKey]
+      };
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const clone = element.cloneNode(true);
+      clone.classList.add('dragging');
+      clone.style.left = clientX + 'px';
+      clone.style.top = clientY + 'px';
+      document.body.appendChild(clone);
+      draggingPiece.clone = clone;
+
+      document.addEventListener('mousemove', onDrag);
+      document.addEventListener('mouseup', endDrag);
+      document.addEventListener('touchmove', onDrag, {passive: false});
+      document.addEventListener('touchend', endDrag);
+    }
+
+    function onDrag(e) {
+      if (!draggingPiece) return;
+      e.preventDefault();
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      draggingPiece.clone.style.left = (clientX - draggingPiece.clone.offsetWidth / 2) + 'px';
+      draggingPiece.clone.style.top = (clientY - draggingPiece.clone.offsetHeight / 2) + 'px';
+
+      // Highlight valid cells
+      const hoveredCell = getHoveredCell(clientX, clientY);
+      clearHighlights();
+      if (hoveredCell) {
+        const {row, col} = hoveredCell;
+        highlightCells(row, col, draggingPiece.rotation);
+      }
+    }
+
+    function endDrag(e) {
+      if (!draggingPiece) return;
+
+      const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+      const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+
+      const hoveredCell = getHoveredCell(clientX, clientY);
+      if (hoveredCell) {
+        const {row, col} = hoveredCell;
+        if (canPlace(row, col, draggingPiece.rotation)) {
+          placePiece(row, col, draggingPiece.rotation, draggingPiece.key, draggingPiece.index);
+        }
+      }
+
+      if (draggingPiece.clone) {
+        draggingPiece.clone.remove();
+      }
+      draggingPiece = null;
+
+      clearHighlights();
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup', endDrag);
+      document.removeEventListener('touchmove', onDrag);
+      document.removeEventListener('touchend', endDrag);
+
+      renderGrid();
+      renderPieces();
+      checkWin();
+    }
+
+    function getHoveredCell(clientX, clientY) {
+      const cells = document.querySelectorAll('.grid .cell');
+      for (const cell of cells) {
+        const rect = cell.getBoundingClientRect();
+        if (clientX >= rect.left && clientX <= rect.right &&
+            clientY >= rect.top && clientY <= rect.bottom) {
+          return {
+            row: parseInt(cell.dataset.row),
+            col: parseInt(cell.dataset.col)
+          };
+        }
+      }
+      return null;
+    }
+
+    function clearHighlights() {
+      document.querySelectorAll('.grid .cell.invalid').forEach(c => c.classList.remove('invalid'));
+    }
+
+    function highlightCells(startRow, startCol, shape) {
+      const cells = [];
+      for (const [dr, dc] of shape) {
+        const r = startRow + dr;
+        const c = startCol + dc;
+        const cell = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+        if (cell && cell.classList.contains('active') && !cell.classList.contains('occupied')) {
+          cells.push(cell);
+        } else {
+          clearHighlights();
+          document.querySelectorAll('.grid .cell.invalid').forEach(c => c.classList.remove('invalid'));
+          for (const cell of cells) {
+            cell.classList.add('invalid');
+          }
+          return;
+        }
+      }
+
+      // Check if cells would conflict with placed pieces
+      for (const [dr, dc] of shape) {
+        const r = startRow + dr;
+        const c = startCol + dc;
+        if (placedPieces.some(p => p.cells.some(([cr, cc]) => cr === r && cc === c))) {
+          clearHighlights();
+          for (const cell of cells) {
+            cell.classList.add('invalid');
+          }
+          return;
+        }
+      }
+    }
+
+    function canPlace(startRow, startCol, shape) {
+      const level = LEVELS[currentLevel];
+      for (const [dr, dc] of shape) {
+        const r = startRow + dr;
+        const c = startCol + dc;
+        if (!level.cells.some(([cr, cc]) => cr === r && cc === c)) return false;
+        if (placedPieces.some(p => p.cells.some(([cr, cc]) => cr === r && cc === c))) return false;
+      }
+      return true;
+    }
+
+    function placePiece(startRow, startCol, shape, pieceKey, index) {
+      const cells = shape.map(([dr, dc]) => [startRow + dr, startCol + dc]);
+      placedPieces.push({
+        key: pieceKey,
+        index: index,
+        cells: cells,
+        rotation: shape
+      });
+    }
+
+    function checkWin() {
+      const level = LEVELS[currentLevel];
+      const totalCells = level.cells.length;
+      const filledCells = placedPieces.reduce((sum, p) => sum + p.cells.length, 0);
+
+      if (filledCells === totalCells) {
+        btnNext.disabled = false;
+        winModal.classList.add('active');
+        AudioEngine.playWin();
+        saveProgress();
+        if (currentLevel < LEVELS.length - 1) {
+          unlockLevel(currentLevel + 1);
+        }
+      }
+    }
+
+    function unlockLevel(levelIndex) {
+      const unlocked = JSON.parse(localStorage.getItem('tetra-fit-unlocked') || '[]');
+      if (!unlocked.includes(levelIndex)) {
+        unlocked.push(levelIndex);
+        localStorage.setItem('tetra-fit-unlocked', JSON.stringify(unlocked));
+      }
+    }
+
+    function saveProgress() {
+      localStorage.setItem('tetra-fit-level', currentLevel.toString());
+    }
+
+    // Level navigation
+    function loadLevel(index) {
+      currentLevel = index;
+      const level = LEVELS[index];
+
+      levelNumberEl.textContent = index + 1;
+      tierBadgeEl.textContent = `Tier ${level.tier}`;
+      placedPieces = [];
+      pieceRotations = {};
+
+      btnPrev.disabled = index === 0;
+      btnNext.disabled = true;
+      winModal.classList.remove('active');
+
+      renderGrid();
+      renderPieces();
+    }
+
+    btnReset.addEventListener('click', () => loadLevel(currentLevel));
+    btnNext.addEventListener('click', () => {
+      if (currentLevel < LEVELS.length - 1) {
+        loadLevel(currentLevel + 1);
+      }
+    });
+    btnPrev.addEventListener('click', () => {
+      if (currentLevel > 0) {
+        loadLevel(currentLevel - 1);
+      }
+    });
+
+    btnModalNext.addEventListener('click', () => {
+      winModal.classList.remove('active');
+      if (currentLevel < LEVELS.length - 1) {
+        loadLevel(currentLevel + 1);
+      }
+    });
+
+    btnModalClose.addEventListener('click', () => {
+      winModal.classList.remove('active');
+    });
+
+    // Hint (highlight a valid position for first unused piece)
+    btnHint.addEventListener('click', () => {
+      const level = LEVELS[currentLevel];
+      for (let i = 0; i < level.pieces.length; i++) {
+        if (!placedPieces.some(p => p.index === i)) {
+          const pieceKey = level.pieces[i];
+          const shape = pieceRotations[`${currentLevel}-${i}`] || SHAPES[pieceKey];
+          for (const [r, c] of level.cells) {
+            if (canPlace(r, c, shape)) {
+              clearHighlights();
+              for (const [dr, dc] of shape) {
+                const cell = document.querySelector(`.cell[data-row="${r+dr}"][data-col="${c+dc}"]`);
+                if (cell) {
+                  cell.style.animation = 'none';
+                  cell.offsetHeight;
+                  cell.style.animation = 'shake 0.5s ease-in-out';
+                }
+              }
+              return;
+            }
+          }
+        }
+      }
+    });
+
+    // Initialize
+    loadLevel(0);
+  </script>
+<script src="/gz-analytics.js?v=202606302fbacdf5e0ad" defer></script>
+</body>
+</html>

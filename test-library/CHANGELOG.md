@@ -1,3 +1,34 @@
+## [v1.115.0] - 2026-06-30
+### Added
+- 7 new test cases from late-June 2026 industry research (R234 Dynamic Test Intelligence cron)
+- [S-235] **[P0]** CVE-2025-43529 & CVE-2025-14174 — WebKit Zero-Days Actively Exploited, Apple Urgent Dual-iOS-Floor Patch Advisory (iOS 26.2 + iOS 18.7.3)
+- [S-236] **[P1]** Safari 26.5 CVE-2026-28962 — Content Security Policy Bypass, Sensitive Information Leak (20-vuln batch)
+- [B-158] **[P1]** Safari 26.5 WebRTC Process-Crash Stability Fix — Browser-Wide Crash on Malformed RTCPeerConnection
+- [B-159] **[P2]** iOS 26 "无法检查更新" (Cannot Check For Update) Persistent Hang — Update-Mechanism Bug Blocking Security Patches
+- [C-167] **[P2]** Chrome 136 `:visited` History-Detection Privacy Bug — 20-Year-Old Vulnerability Finally Fixed
+- [P-103] **[P2]** iOS 26 Liquid Glass Control-Center Over-Transparency — Game UI Legibility When Control Center Invoked Mid-Game
+- [W-229] **[P3]** Chrome 150 Google Wallet Autofill of Government IDs — PII Exfiltration Surface Re-Confirmation on Stable Ship
+### Sources
+- Search engine: SearXNG (primary) returned 404 for all 5 batch queries; MiniMax fallback used successfully
+- Queries: "HTML5 game testing 2026 new techniques browser", "Chrome Safari WebKit 2026 June security update vulnerability CVE", "iOS 26 Safari WebKit bug 2026 June", "Progressive Web App 2026 new feature web game", "Safari 26.5 CVE-2026-28962 CSP bypass WebRTC crash May 2026", "Chrome 150 stable July 2026 new features deprecation"
+- Key URLs: https://new.qq.com/rain/a/20260119A01E5F00 (WebKit zero-day advisory Jan 19 2026); https://finance.sina.com.cn/tech/digi/2026-05-14/doc-inhxvtwn8763233.shtml (Safari 26.5 security list May 14 2026); https://www.sohu.com/a/1022622771_122004016 (Safari 26.5 20-vuln fix); https://k.sina.com.cn/article_1826017320_6cd6d02804001etcc.html (Chrome 136 :visited fix April 30 2026); https://so.html5.qq.com/page/real/search_news?docid=70000021_7246a3b412948452 (Chrome 150 Wallet autofill June 24 2026); https://www.tenorshare.tw/ios-update-problems.html (iOS 26 bug regression sweep)
+
+## [v1.113.0] - 2026-06-29
+### Added
+- 7 new test cases from late-June 2026 industry research (R232 Dynamic Test Intelligence cron)
+- [S-231] **[P0]** CVE-2026-7333 — Chrome GPU Process Use-After-Free Full Sandbox Escape (CVSS 9.6, RCE) — source: https://blog.csdn.net/weixin_42376192/article/details/160846721 (May 7 2026); patched Chrome 147.0.7727.138 April 28 2026
+- [S-232] **[P1]** CVE-2026-0628 — Chrome WebView Tab SOP-Bypass Malicious-Extension Script Injection (60%+ desktop share) — source: https://blog.csdn.net/weixin_42376192/article/details/156710813 (April 2 2026); patched Chrome 143.0.7499.192 Jan 6 2026
+- [S-233] **[P1]** CVE-2026-23918 — Apache HTTP/2 mod_http2 Double-Free RCE (CVSS 8.8) — source: https://blog.csdn.net/qq_35366330/article/details/160869443 (May 9 2026); fixed Apache HTTP Server 2.4.67
+- [S-234] **[P2]** CVE-2026-42897 — Microsoft Exchange OWA Stored XSS Zero-Day (CVSS 8.1, in-the-wild) — source: https://blog.csdn.net/weixin_42376192/article/details/161153771 (May 17 2026)
+- [A-054] **[P2]** iOS 27 Liquid Glass Transparency-Slider Fix — User-Adjustable Readability Mitigation — source: https://new.qq.com/rain/a/20260611A054GA00 (June 11 2026); MacRumors WWDC 2026
+- [P-102] **[P2]** Firefox 150 Mythos AI Fuzzing 271-Bug Baseline — AI-Fuzzing Browser-Vuln Discovery Throughput — source: https://so.html5.qq.com/page/real/search_news?docid=70000021_53769fd53ba77252 (May 8 2026)
+- [W-228] **[P3]** Edge 149 / Chrome 149 Stable Baseline — 2026 Browser-Generation Floor — source: http://www.downxia.com/downinfo/417615.html (June 26 2026); Chromium 149 stable June 17 2026
+### Sources
+- Search engine status: SearXNG (primary) returned 404 for all 5 batch queries; MiniMax fallback used successfully
+- Queries: "HTML5 game testing new techniques June 2026 bug pattern"; "browser security CVE June 2026 Chrome Safari patch update"; "iOS Safari WebKit bug 2026 June regression game"; "CVE-2026 Chrome Edge Firefox Safari late June 2026 critical patch"; "iOS 26 Liquid Glass readability WebKit game canvas 2026 June"
+- Key URLs: blog.csdn.net/weixin_42376192/article/details/160846721 (CVE-2026-7333 Chrome GPU UAF sandbox escape); blog.csdn.net/weixin_42376192/article/details/156710813 (CVE-2026-0628 Chrome WebView SOP bypass); blog.csdn.net/qq_35366330/article/details/160869443 (CVE-2026-23918 Apache HTTP/2); blog.csdn.net/weixin_42376192/article/details/161153771 (CVE-2026-42897 Exchange OWA XSS); new.qq.com/rain/a/20260611A054GA00 (iOS 27 Liquid Glass transparency slider); so.html5.qq.com/page/real/search_news?docid=70000021_53769fd53ba77252 (Firefox Mythos 271 bugs); downxia.com/downinfo/417615.html (Edge 149 stable)
+- Distinctness analysis: performed against full prior library (v1.0.0 → v1.112.0, prior 112 versions, ~912 test cases) — confirmed no duplicates; each new case targets a distinct dimension (Chrome GPU compositor UAF vs Chrome WebView tab SOP vs Apache mod_http2 vs Exchange OWA vs iOS 27 transparency slider vs Firefox AI-fuzzing baseline vs Edge/Chrome 149 floor)
+
 ## [v1.112.0] - 2026-06-29
 ### Added
 - 8 new test cases from late-June 2026 industry research (R231 Dynamic Test Intelligence cron)

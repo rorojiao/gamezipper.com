@@ -249,8 +249,12 @@
   // 初始化Canvas尺寸
   function resizeCanvas() {
     const stage = document.querySelector('.stage');
-    const maxWidth = Math.min(stage.clientWidth - 20, 500);
-    const size = maxWidth;
+    // Bug 14b fix: subtract footer height so canvas doesn't overlap game-footer
+    var footerEl = document.getElementById('game-footer');
+    var footerH = (footerEl && footerEl.offsetHeight > 0) ? footerEl.offsetHeight : 0;
+    var availH = window.innerHeight - stage.getBoundingClientRect().top - footerH - 20;
+    var maxSide = Math.min(stage.clientWidth - 20, 500);
+    const size = Math.min(maxSide, Math.max(200, availH));
     canvas.width = size * window.devicePixelRatio;
     canvas.height = size * window.devicePixelRatio;
     canvas.style.width = size + 'px';
@@ -605,6 +609,12 @@
 
     // 窗口大小变化
     window.addEventListener('resize', resizeCanvas);
+    // Bug 14b: poll for footer appearance then re-resize
+    var _footerCheck = setInterval(function(){
+      var f = document.getElementById('game-footer');
+      if(f && f.offsetHeight > 0){ resizeCanvas(); clearInterval(_footerCheck); }
+    }, 2000);
+    setTimeout(function(){ clearInterval(_footerCheck); }, 30000);
   }
 
   // 初始化广告
