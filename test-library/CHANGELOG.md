@@ -1,3 +1,35 @@
+## [v1.116.0] - 2026-06-30
+### Added
+- 8 new test cases from late-June 2026 industry research (R235 Dynamic Test Intelligence cron)
+- [S-237] **[P0]** CVE-2026-0628 Chrome Gemini-Sidebar Elevated-WebView SOP-Bypass Privilege Escalation via Malicious Extension — browser-native AI-assistant elevated WebView as the privilege boundary bypassed; Unit 42 disclosure Jan 6 2026 patched Chrome 143.0.7499.192; full attack-chain June 11 2026 — silent camera/mic/screen/local-file access. Source: https://blog.csdn.net/OPHKVPS/article/details/159214667
+- [S-238] **[P1]** CVE-2026-32746 GNU InetUtils telnetd LINEMODE SLC Sub-Option Unauth Remote OOB-Write CVSS 9.8 RCE — legacy daemon LINEMODE buffer overflow as root with no auth; disclosed March 18 2026. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_20169ba7a7d29552
+- [S-239] **[P1]** CVE-2026-33017 Langflow Unauth build_public_tmp Flow Code-Injection RCE CVSS 9.3 — AI workflow-builder public-flow endpoint exec() with no sandbox, no auth; weaponized within 20 hours of disclosure. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_92569c0be2b74052
+- [S-240] **[P2]** CVE-2026-20841 Windows Notepad (Microsoft Store version) Markdown-Link Command-Injection RCE CVSS 8.8 — trusted basic OS tool (Markdown viewer) becomes phishing surface; patched Feb 2026 Patch Tuesday. Source: https://blog.csdn.net/weixin_42376192/article/details/157992925
+- [W-230] **[P2]** macOS 27 Golden Gate First Apple-Silicon-Only macOS Release (Intel Era Ends) — desktop-architecture floor raised; any Intel Mac QA rig frozen at macOS 26 indefinitely. Source: https://new.qq.com/rain/a/20260619A0635F00
+- [P-104] **[P2]** macOS 27 Golden Gate Dock Explicit Background-Running Indicator — OS-level background-app lifecycle visibility; GameZipper PWA must clean up timers/AudioContext or the leak becomes user-visible. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_9896a29388c71152
+- [B-160] **[P1]** macOS 27 / iOS 27 Apple Intelligence Region-Lock for Mainland-China (国行) Devices — device-origin determines AI-feature availability; same OS version behaves differently by region. Source: https://blog.csdn.net/2602_96010990/article/details/161824412
+- [B-161] **[P2]** Safari 26.4 Compact-Tab-Layout Restore Option — user-toggle viewport impact; compact-tabs ON adds ~80-120px vertical viewport, games using 100vh silently expand. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752
+### Sources
+- Search engine status: SearXNG (primary) returned 404 for all 5 batch queries; MiniMax web_search (fallback) returned strong security/vulnerability + macOS 27 + browser-CVE coverage
+- Queries: "HTML5 game testing 2026 June new bugs Chrome Safari"; "browser security vulnerability 2026 XSS clickjacking CSP bypass HTML5"; "CVE 2026 Chrome Safari browser critical vulnerability June 2026 patch"; "iOS 27 macOS 27 Golden Gate release 2026 game rendering bug"; "CVE 2026 June CISA KEV critical zero day in-the-wild exploit"; "browser game bug report 2026 Safari Chrome WebKit regression"
+- Key URLs:
+  - https://blog.csdn.net/OPHKVPS/article/details/159214667 (CVE-2026-0628 Chrome Gemini-sidebar elevated WebView Unit 42 full chain, June 11 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_20169ba7a7d29552 (CVE-2026-32746 GNU InetUtils telnetd LINEMODE SLC CVSS 9.8, March 18 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_92569c0be2b74052 (CVE-2026-33017 Langflow unauth RCE weaponized in 20h, March 23 2026)
+  - https://blog.csdn.net/weixin_42376192/article/details/157992925 (CVE-2026-20841 Windows Notepad Markdown-link RCE CVSS 8.8, April 3 2026)
+  - https://new.qq.com/rain/a/20260619A0635F00 (macOS 27 Golden Gate Apple-Silicon-only, June 19 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_9896a29388c71152 (macOS 27 Dock background-app indicator, June 10 2026)
+  - https://blog.csdn.net/2602_96010990/article/details/161824412 (Apple Intelligence CN region-lock, June 25 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Safari 26.4 compact-tab restore, March 25 2026)
+  - https://www.donews.com/news/detail/8/6567089.html (CVE-2026-40369 Windows kernel sandbox escape, May 22 2026 — context)
+  - https://www.sohu.com/a/1012262360_121823499 (2026 cybersecurity report ClickFix +500%, vishing, April 21 2026 — context)
+
+### Process Notes
+- Tools loaded: gamezipper-qa, post-deploy-verification skills
+- Max IDs per category from v1.115.0: W=229, G=168, C=167, P=103, S=236, B=159, PC=23, A=54. New v1.116.0 cases: S-237..240, W-230, P-104, B-160/161.
+- Distinctness analysis performed against the full prior library (v1.0.0 → v1.115.0, 115 prior versions). Each new case targets a distinct dimension: (1) S-237 = browser-native AI-assistant elevated-WebView SOP bypass (distinct from S-232 generic WebView tab SOP); (2) S-238 = legacy telnetd LINEMODE buffer overflow (distinct from W-182 telnetd env-var injection); (3) S-239 = AI-workflow-builder public-flow exec (distinct from S-197 n8n auth-chain, S-163 SGLang model-file); (4) S-240 = trusted OS Markdown viewer as phishing surface (distinct from S-152 PDF, C-123 Office); (5) W-230 = desktop-architecture Intel drop (distinct from B-114 mobile device drop); (6) P-104 = OS-level background app visibility (distinct from P-095 browser-level freeze); (7) B-160 = device-origin AI region-lock (distinct from W-206 vendor exit); (8) B-161 = user-toggle compact-tab viewport (distinct from B-149 default vertical-tabs).
+- Key theme: 2026-06-30 intel cycle surfaced 4 fresh CVEs (Chrome Gemini-sidebar privilege escalation, GNU telnetd LINEMODE, Langflow unauth public-flow, Windows Notepad Markdown) + 4 macOS 27 / Safari 26.4 dimensions. The Chrome Gemini-sidebar CVE-2026-0628 is especially notable: it proves the browser-native AI assistant's elevated WebView is now an attack surface where a malicious extension can silently capture camera/mic/screen — directly relevant to GameZipper because the same extension-injection path could exfiltrate localStorage favorites or inject fake engagement.
+
 ## [v1.115.0] - 2026-06-30
 ### Added
 - 7 new test cases from late-June 2026 industry research (R234 Dynamic Test Intelligence cron)
