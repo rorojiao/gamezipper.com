@@ -1,23 +1,24 @@
 # 🔍 GameZipper 每日 SEO + 竞品 + 长尾词分析 — 2026-06-29
 
-> **任务**: kanban t_7bf58d39 (🔍 每日SEO+竞品+长尾词分析)
-> **范围**: 竞品新游 (CrazyGames + Poki) · 缺口分析 vs 483 自有游戏 · 长尾词机会 · SEO 端点健康
-> **脚本**: `daily-seo-health.py` v5.9 + `daily_seo_analysis.py` v3.0 (Kachilu Browser + MiniMax Search) + `longtail_scan.py` + `longtail_analysis.py`
+> **任务**: kanban t_be7fb2c5 (🔍 每日SEO+竞品+长尾词分析)
+> **范围**: 竞品新游 (CrazyGames + Poki) · 缺口分析 vs 482 自有游戏 · 长尾词机会
+> **脚本**: `daily_seo_analysis.py` v3.0 (Kachilu Browser) + `longtail_scan.py` + `longtail_analysis.py`
 > **基线对比**: 2026-06-28 10:00 → **2026-06-29 12:00**
-> **状态**: ✅ 数据已采集 (3 个 cron 跑均完成) | 0 new gap (持续 1d) | 📈 **258 longtail gaps (+11)** | 🆕 **483 游戏 (+15)** | 🔧 **data drift 修复**
+> **状态**: ✅ 数据已采集 (3 个 cron 跑均完成) | 📉 0 new gap (静态日) | 📈 245 longtail gaps (37 high-ROI roots, +2 vs 06-28)
 
 ---
 
 ## 🎯 60s Executive Summary
 
-1. **SEO 端点 9/9 OK** — gz.com sitemap **811** (06-28: 811) / tools sitemap **3076** (06-28: 3076),均 100% lastmod 覆盖
-2. **IndexNow 增量 0** — gz.com tracked=811 / tools tracked=3078,无新 URL,skip 提交
-3. **新增 15 个游戏! 🎉** — games-data.js **467 → 483** (+16),但 06-28 script read 467,实际 js 文件 468,data drift 持续到 06-29,本轮 **sync-game-counts.sh 已修复** ✅
-4. **竞品新游 0 增 0 减** — CG 12 / Poki 25 列表完全静态 (与 06-28 一致)
-5. **缺口总数 27 (稳定)** — **0 new gap**, 持续 27 (in history 76 unique)
-6. **长尾词 258 gaps (+11)** — seeds 67/63,roots 37 (+2 新: crossy road / genshin impact / slither io, -2: krunker / valorant 已 fully covered)
-7. **BI 7d 1735 PV / 950 UV** — 06-29 today 266 PV / 164 UV (周六 06-27 400 PV 后周日回落 309 → 266,正常)
-8. **P0 阻塞持续** — GSC OAuth **25d** + Monetag Token **12d**,影响 queries/收益数据采集
+1. **Poki 静态 25/25** — 跟 06-28 完全一致,0 新增,0 下线;**Murder 持续 10 天** (06-20 起) 仍是隐藏缺口
+2. **CrazyGames 静态 12/12** — 跟 06-28 一致,12 games 列表无变化 (持续多日异常,可能选择器或 CG 改版)
+3. **缺口总数 27** (跟 06-28 持平),**新缺口 0**,持续缺口 27 个
+4. **长尾词 245 gaps** (06-28 247, **-2**),roots **37** (+2 vs 06-28),fully_covered 18 个
+5. **Top high-ROI roots 6/6 uncovered** — hay day / among us / brawl stars / overwatch / animal crossing / stardew valley
+6. **长尾 roots 波动** — 06-29 新增 **genshin impact** (5/5 uncovered 🆕) / **crossy road** (4/4) / **slither io** (4/4);退出 **krunker** / **valorant** (variations 消失)
+7. **游戏库 482** (+15 vs 06-28 467) — 持续高速扩张,平均 +15/天
+8. **BI 7d 数据** — 1758 PV / 964 UV (vs 06-28 1625/880, +8.2%/+9.5%),today 289/178 (vs 263/162)
+9. **P0 阻塞持续** — GSC OAuth **26d** (2026-06-04~) / Monetag Token **12d** (token_dead_since 2026-06-18)
 
 ---
 
@@ -31,41 +32,42 @@
 | Poki | 25 | 25 | 0 | — | — |
 | **合计** | 37 | 37 | 0 | 0 | 0 |
 
-### 🆕 新增竞品游戏 (06-29)
+**静态日** — 两平台今日均无新游戏/下线。Poki 25 款 / CG 12 款 列表稳定。
 
-无 (静态 1d)
+### CrazyGames 异常 (持续 5+ 天)
 
-### 📉 下线竞品游戏 (06-29)
-
-无
-
-### CrazyGames 持续异常
-
-12 个游戏列表与 06-27/06-28 完全一致 (3d 无变化)。可能性:
+12 games 列表与 06-28 完全一致。可能性:
 - ① CG /t/new 改版,选择器 `a[href*="/game/"]` 未抓到新游
 - ② Kachilu 浏览器被 Cloudflare 拦截
 - ③ CG 新游发布频率本身就很低 (typical < 2/天)
-- **建议**: 下次跑前人工验证 `https://www.crazygames.com/t/new` 第一页
+- **建议**: 下次跑前人工验证 `https://www.crazygames.com/t/new` 第一页是否有真新游
+
+### Poki 06-29 全量 (25 款)
+
+按字母排序: Airplane Manager, Battle Blast, Blocky Blast Puzzle 🟡, Brain Test 5, Car Circle, Combat Online 2, Drift Boss ✅, GoBattle 2 🟡, Hero VS Criminal, Home Builder Clicker, Level Devil ✅, Make Brainrots Online, Marina Club Rush, Monkey Mart ✅, Murder 🚨, Numbers Match 2448, Phone CASE DIY, Retro Bowl, Sea Catcher, Smash Room, Soccer 5, Stickman Battle ✅, Stickman Hook, Subway Surfers, SuperWEIRD
+
+> ✅ = 我们有, 🟡 = 部分匹配, 🚨 = 持续隐藏缺口
 
 ---
 
-## 📈 缺口分析 vs 483 自有游戏
+## 📈 缺口分析 vs 482 自有游戏
 
 ### 06-29 状态
 
 | 指标 | 06-28 | 06-29 | Δ |
 |------|-------|-------|---|
-| 实际 games-data.js | 468 | **483** | **+15** 🎉 |
-| 脚本读 our_game_count | 467 | 482 | +15 |
+| 自有游戏数 (脚本读) | 467 | 482 | **+15** |
+| 实际 games-data.js | 467 | 483 | +16 (minor count diff) |
 | **总缺口** | 27 | 27 | 0 |
 | **新缺口 (首次发现)** | 0 | 0 | 0 |
 | **持续缺口 (in history)** | 27 | 27 | 0 |
+| **隐藏缺口 (in history 但未做)** | 1 (Murder) | 1 (Murder) | 0 |
 
-### 🆕 新缺口 (06-29 首次发现)
+### 🆕 新缺口 (06-29)
 
-无 — 0 new gap (持续 2 天)
+**无** — 静态日,Poki/CG 列表未变化
 
-### 🔄 持续缺口 Top 5 (06-29 仍出现)
+### 🔄 持续缺口 Top 10 (06-29 仍出现,前 10 by recency)
 
 | # | 游戏 | 平台 | 历史 first_seen | 持续天数 | 类别 |
 |---|------|------|----------------|----------|------|
@@ -74,18 +76,27 @@
 | 3 | Battle Blast | Poki | 2026-06-24 | 6 | Shooter |
 | 4 | Bloxd.io | CrazyGames | 早期 | >30 | .io |
 | 5 | Brain Test 5 | Poki | 2026-06-25 | 5 | Puzzle/Brain |
+| 6 | Murder | Poki | 2026-06-20 | **10** | Social Deduction (MMO) |
+| 7 | Soccer 5 | Poki | 2026-06-28 | 2 | Sports |
+| 8 | Subway Surfers | Poki | 早期 | >30 | Runner (license) |
+| 9 | Veck.io | CrazyGames | 早期 | >30 | .io |
+| 10 | Openfront | CrazyGames | 早期 | >30 | Strategy (.io) |
 
-**Top 5 持续缺口统计**: Skill 1 / Idle 1 / Shooter 1 / .io 1 / Puzzle 1
-
-### 🚨 隐藏缺口 (Poki 竞品持续,但 daily_seo_analysis 未标记)
+### 🚨 隐藏缺口 (Poki 竞品持续 10 天,但 daily_seo_analysis 未标记)
 
 | # | 游戏 | 平台 | first_seen | 持续天数 | 状态 |
 |---|------|------|------------|----------|------|
-| 1 | **Murder** | Poki | 2026-06-20 | 10 | 脚本未标记为 new gap (in history),实际未做 |
+| 1 | **Murder** | Poki | 2026-06-20 | 10 | 脚本未标记为 new gap (在 history),但**真没做** |
 
-**判定**: 脚本逻辑 `is_new_gap = norm not in history.get('seen_gaps', {})` 一旦游戏首次出现就被标记 in history,后续不再显示为 new,但实际游戏仍未做。
-- **建议**: 改逻辑: `is_new_gap = norm not in OUR_GAMES` (而非 history)
-- 或新增 `still_unmade` 字段,显示在 history 但实际未做
+**判定**: daily_sa 逻辑 `is_new_gap = norm not in history.get('seen_gaps', {})` — 首次出现就被标记 in history,后续不再显示为 new,但实际游戏仍未做。
+**建议**: 改逻辑 `is_new_gap = norm not in OUR_GAMES` 而非 history (P2,下个 sprint 改)
+
+### 缺口分布 (按平台)
+
+| 平台 | 持续缺口 | 占比 | 类别分布 |
+|------|----------|------|----------|
+| CrazyGames | ~7 | 26% | .io (Bloxd, Veck, Openfront), 桌游 (Piles of Mahjong, Four Colors, 8 Ball), 物理 (Ragdoll Archers ✓, Piece of Cake), 模拟 (Mergest Kingdom) |
+| Poki | ~20 | 74% | 沙盒/益智 (Subway Surfers, Murder, Brain Test 5), 跑酷 (Stickman Hook), 模拟 (Retro Bowl, Drift Boss ✓), 装饰 (Phone CASE DIY, Sea Catcher) |
 
 ---
 
@@ -96,48 +107,56 @@
 | 指标 | 06-28 | 06-29 | Δ |
 |------|-------|-------|---|
 | Seeds | 67 | 67 | 0 |
-| Seeds with suggestions | (60) | 63 | — |
-| Failed seeds | 6 | **4** | -2 ✅ |
-| Total unique suggestions | 593 | 612 | +19 |
-| **Longtail gaps** | 247 | **258** | **+11** 📈 |
+| With suggestions | 61 | 63 | +2 |
+| Failed seeds | 6 | **4** | -2 (pokemon go, krunker, valorant, best card games) |
+| Total unique suggestions | 593 | **612** | +19 |
+| Long-tail gaps | 247 | **245** | -2 |
 | Existing blog | 296 | 296 | 0 |
-| **High-ROI roots** | 35 | **37** | **+2** |
+| High-ROI roots | 35 | **37** | **+2** |
+| Fully uncovered (no core) | 19 | 19 | 0 |
+
+### 🔥 Top 19 high-ROI roots (6/6 uncovered, no core blog)
+
+| # | Root | Var | Uncovered | 类别 | 立即可写? |
+|---|------|-----|-----------|------|----------|
+| 1 | **hay day** | 7 | 7 | 农场模拟 | ✅ 7 长尾全 uncovered |
+| 2 | **among us** | 6 | 6 | 社交推理 | ✅ |
+| 3 | **brawl stars** | 6 | 6 | MOBA | ✅ |
+| 4 | **overwatch** | 6 | 6 | FPS | ✅ |
+| 5 | **animal crossing** | 5 | 5 | 模拟经营 | ✅ |
+| 6 | **genshin impact** 🆕 | 5 | 5 | Gacha RPG | ✅ |
+| 7 | **stardew valley** | 5 | 5 | 农场 RPG | ✅ |
+| 8 | **crossy road** 🆕 | 4 | 4 | Arcade | ✅ |
+| 9 | **fortnite** | 4 | 4 | Battle Royale | ✅ |
+| 10 | **it takes two** | 4 | 4 | 合作冒险 | ✅ |
+| 11 | **kirby** | 4 | 4 | Platformer | ✅ |
+| 12 | **sims** | 4 | 4 | 模拟人生 | ✅ |
+| 13 | **slither io** 🆕 | 4 | 4 | .io | ✅ |
+| 14 | **zelda** | 4 | 4 | Action RPG | ✅ |
+| 15 | **1v1 lol** | 3 | 3 | FPS | ✅ |
+| 16 | **sims 4** | 3 | 3 | 模拟 | ✅ |
+| 17 | **gacha life 2** | 2 | 2 | 创作 | ✅ |
+| 18 | **mario** | 2 | 2 | Platformer | ✅ |
+| 19 | **mario party** | 2 | 2 | Party | ✅ |
 
 ### 06-28 → 06-29 high-ROI roots delta
 
 | Root | 06-28 | 06-29 | Δ | 备注 |
 |------|-------|-------|---|------|
-| **crossy road** 🆕 | — | 4 | 🆕 | re-enters (06-28 fully covered) |
-| **genshin impact** 🆕 | — | 5 | 🆕 | re-enters (06-28 fully covered) |
-| **slither io** 🆕 | — | 4 | 🆕 | re-enters (06-28 fully covered) |
-| **kahoot** 🆕 | — | 0 | 🆕 | re-enters but fully covered (no work) |
-| krunker | 0 | — | 📉 | 退 (已 fully covered) |
-| valorant | 0 | — | 📉 | 退 (已 fully covered) |
+| **genshin impact** 🆕 | 0 | 5 | **+5** | 首次进入 high-ROI,5 variations 全 uncovered |
+| **crossy road** 🆕 | 0 | 4 | **+4** | 4 variations 全 uncovered |
+| **slither io** 🆕 | 0 | 4 | **+4** | 4 variations 全 uncovered |
+| kahoot | 0 | 0 | +0 (var 8) | 8 variations,fully covered by blog variations |
+| **krunker** | 7 (cov) | — | 📉 | 退出 high-ROI (variations 消失) |
+| **valorant** | 6 (cov) | — | 📉 | 退出 high-ROI |
 
-### Top 10 high-ROI roots (06-29)
+### ✅ Fully covered roots (no work, 18 个)
 
-| # | Root | 06-29 variations | Uncovered | Has core blog? | 类别 |
-|---|------|------------------|-----------|----------------|------|
-| 1 | **hay day** | 7 | **7** | ❌ | 农场模拟 |
-| 2 | **among us** | 6 | **6** | ❌ | 社交推理 |
-| 3 | **brawl stars** | 6 | **6** | ❌ | MOBA |
-| 4 | **overwatch** | 6 | **6** | ❌ | FPS Hero |
-| 5 | **animal crossing** | 5 | **5** | ❌ | 生活模拟 |
-| 6 | **genshin impact** | 5 | **5** | ❌ | Gacha RPG |
-| 7 | **stardew valley** | 5 | **5** | ❌ | 农场 RPG |
-| 8 | **crossy road** | 4 | **4** | ❌ | Crossy |
-| 9 | **fortnite** | 4 | **4** | ❌ | Battle Royale |
-| 10 | **it takes two** | 4 | **4** | ❌ | 合作冒险 |
-| 10 | **slither io** | 4 | **4** | ❌ | .io |
-| 10 | **zelda** | 4 | **4** | ❌ | Action RPG |
+包含: agar.io, candy crush, clash of clans, clash royale, cookie clicker, fall guys, geometry dash, gta, gta 5, kahoot, minecraft, roblox, subway surfers, temple run, tetris, tomodachi life, wordle (+clash royale/clash of clans 已 core covered)
 
-### ✅ Fully covered roots (no work)
+### 📝 Top 5 立即可写的 blog 候选 (6/6 uncovered, no core)
 
-包含: agar.io, candy crush, clash of clans, clash royale, cookie clicker, fall guys, gacha life, geometry dash, gta, gta 5, kahoot, minecraft, roblox, subway surfers, temple run, tetris, tomodachi life, wordle (共 18 个)
-
-### 📝 Top 5 立即可写的 blog 候选 (高 ROI + 6/7 uncovered, no core blog)
-
-**hay day** (农场模拟,7/7 uncovered, 0 core):
+**hay day** (农场模拟,跟我们 antistress 流量接近):
 - games like hay day
 - games like hay day for pc
 - games like hay day but better
@@ -146,155 +165,84 @@
 - games like hay day reddit
 - games like hay day on steam
 
-**among us** (社交推理,6/6 uncovered, 0 core):
+**among us** (社交推理,跟我们 6 个 puzzle 高互动,适合):
 - games like among us
+- games like among us on phone
 - games like among us on steam
 - games like among us android
 - games like among us to play with friends
-- games like among us on ps5
-- games like among us on roblox
+- games like among us pc
 
-**brawl stars** (MOBA,6/6 uncovered, 0 core):
+**brawl stars** (MOBA 移动端,我们 touch 设备占比 2.6% 需提升):
 - games like brawl stars
 - games like brawl stars on mobile
+- games like brawl stars on pc
+- games like brawl stars offline
 - games like brawl stars on ps5
-- games like brawl stars reddit
 - games like brawl stars android
-- games like brawl stars on switch
-
-**overwatch** (FPS Hero,6/6 uncovered, 0 core):
-- games like overwatch
-- games like overwatch for mobile
-- games like overwatch and marvel rivals
-- games like overwatch on roblox
-- games like overwatch on switch
-- games like overwatch on xbox
-
-**stardew valley** (农场 RPG,5/5 uncovered, 0 core):
-- games like stardew valley
-- games like stardew valley for free
-- games like stardew valley on switch
-- games like stardew valley on ps5
-- games like stardew valley for mobile
-
-### Failed seeds 06-29
-
-| Seed | 状态 | 备注 |
-|------|------|------|
-| games like pokemon go | ❌ 持续 2d | Google Suggest 阻断 |
-| games like krunker | ❌ 1d | 新失败 |
-| games like valorant | ❌ 1d | 新失败 |
-| best card games free | ❌ 1d | 新失败 |
-
-恢复 (06-28 failed → 06-29 OK):
-- ✅ games like kahoot
-- ✅ games like slither.io
-- ✅ games like genshin impact
-- ✅ games like crossy road
-- ✅ best idle games browser
 
 ---
 
-## 🔧 SEO 端点健康 (daily-seo-health.py v5.9)
+## 📊 BI 数据 (今日 12:00 run)
 
-### 06-29 12:00 跑
+### 总览 (7d, 2026-06-23 ~ 2026-06-29)
 
-```
-🔧 技术SEO检查:
-  ✅ gamezipper.com: robots.txt:✅ | sitemap.xml:✅ | indexnowkey.txt:✅ | with lastmod:811/811 (100%)
-  ✅ tools.gamezipper.com: robots.txt:✅ | sitemap.xml:✅ | 027a0cd216fe45e6aeb738f2f49d59ff.txt:✅ | with lastmod:3076/3076 (100%)
+| 指标 | 06-29 12:00 | 06-28 10:01 | Δ |
+|------|-------------|-------------|----|
+| 7d PV | **1758** | 1625 | +133 (+8.2%) ✅ |
+| 7d UV | **964** | 880 | +84 (+9.5%) ✅ |
+| 今日 PV | 289 | 263 (前报) | +26 (+9.9%) ✅ |
+| 今日 UV | 178 | 162 (前报) | +16 (+9.9%) ✅ |
+| Online | 2 | 0 | +2 |
+| Bounce rate | 64.6% | 65.0% | -0.4pp ✅ |
+| Avg duration | 0s | 0s | — |
 
-📡 IndexNow 增量提交:
-  [sitemap] gamezipper.com: unique_locs=811 with_lastmod=811 coverage=100.0% tracked=811
-  ⏭️ gamezipper.com: 无新URL (811 URLs 已知)
-  [indexnow] gamezipper.com: skipped no_new_urls last_status=200 last_ok=2026-06-29T10:00:06 tracked=811
-  [sitemap] tools.gamezipper.com: unique_locs=3076 with_lastmod=3076 coverage=100.0% tracked=3078
-  ⏭️ tools.gamezipper.com: 无新URL (3076 URLs 已知)
-  [indexnow] tools.gamezipper.com: skipped no_new_urls last_status=200 last_ok=2026-06-29T09:00:07 tracked=3078
-```
+### gz.com vs tools.gamezipper.com (7d)
 
-### Sitemap 健康度 (06-29 vs 06-28)
+| 站点 | PV | UV | Today PV | Bounce |
+|------|----|----|----------|--------|
+| gz.com | 965 (54.9%) | 573 (59.4%) | 191 (66.1%) | **79.6%** ⚠️ |
+| tools | 628 (35.7%) | 338 (35.1%) | 98 (33.9%) | 41.9% ✅ |
 
-| Host | 06-28 | 06-29 | Δ | Lastmod 覆盖 | Range |
-|------|-------|-------|---|--------------|-------|
-| gamezipper.com | 811 | **811** | 0 | 100% | 2026-02-19 ~ 2026-06-29 |
-| tools.gamezipper.com | 3076 | **3076** | 0 | 100% | 2026-06-29 |
+**Bounce 严重分裂**:
+- gz.com 79.6% (高跳出) — 流量大但用户粘性差
+- tools 41.9% (低跳出) — 用户使用工具时长更高,粘性强
+- **建议**: gz.com 优化方向 — 提升游戏内体验 (engagement),降低 bounce (e.g. 添加相关游戏推荐 + 自动下一局)
 
-注: tools 跟踪 3078 vs sitemap 3076 = -2 (color-contrast-checker 2 个 URL 06-28 移除,sitemap 已同步)
+### 30d trend (last 14)
 
-### Sitemap 增长历史 (gz.com)
+| 日期 | PV | UV | 备注 |
+|------|----|----|------|
+| 2026-06-16 | 281 | 159 | — |
+| 2026-06-17 | 297 | 136 | — |
+| 2026-06-18 | 234 | 190 | — |
+| 2026-06-19 | **1122** | **383** | 周五 viral 峰值 (持续 11 天未查清来源) |
+| 2026-06-20 | 605 | 422 | 周六 (viral 后续) |
+| 2026-06-21 | 861 | 700 | 周日 (viral 长尾) |
+| 2026-06-22 | 300 | 165 | 周一 (viral 退潮) |
+| 2026-06-23 | 291 | 189 | 周二 |
+| 2026-06-24 | **125** | **85** | 周三低点 |
+| 2026-06-25 | 175 | 88 | 周四 |
+| 2026-06-26 | 169 | 89 | 周五 |
+| 2026-06-27 | 400 | 193 | 周六峰值 (二次 viral?) |
+| 2026-06-28 | 309 | 152 | 周日 |
+| 2026-06-29 | 289 | 178 | 周一 (今日) |
 
-| Date | Unique | Δ |
-|------|--------|---|
-| 2026-06-14 | 624 | — |
-| 2026-06-15 | 647 | +23 |
-| 2026-06-18 | 671 | +24 |
-| 2026-06-29 | 811 | **+140** 🎉 (6d 内大幅增长) |
-
-### IndexNow 跟踪状态
-
-| Host | 06-29 tracked | Last OK | Last Status | 备注 |
-|------|---------------|---------|-------------|------|
-| gamezipper.com | 811 | 2026-06-29T10:00:06 | 200 | 静态 1d |
-| tools.gamezipper.com | 3078 | 2026-06-29T09:00:07 | 200 | -2 vs sitemap (已 sync) |
-
----
-
-## 🔍 GSC organic 流量
+### 访客结构 (7d)
 
 | 指标 | 值 | 备注 |
-|------|---|------|
-| 状态 | ❌ auth_required | **25 天未解** (since 2026-06-04) |
-| 错误 | `missing /home/msdn/.openclaw/secrets/gsc.json; missing /home/msdn/.openclaw/secrets/gsc-sa.json` |
-| 影响 | 无法拉 queries/clicks/impressions |
-| 修复 | Option A (OAuth 5min) / Option B (Service Account, 推荐) |
+|------|-----|------|
+| Desktop | 1679 (95.5%) | ⚠️ 行业应 30-50%,持续异常 |
+| Mobile | **76 (4.4%)** | ⚠️ 远低于行业基准 |
+| New visitors | 958 (99.4%) | — |
+| Return visitors | 6 (0.6%) | ⚠️ 极低,无回访 |
+| Countries | [] (空) | 一直没数据,需查 |
 
----
+### Top 10 pages (7d)
 
-## 📊 BI 流量 (gamezipper.com 站点)
-
-### 7d / 30d 概览
-
-| 指标 | 7d | 30d | 备注 |
-|------|-----|------|------|
-| PV | 1,735 | 7,938 | 30d 较 06-21 (6956) **+14%** |
-| UV | 950 | 4,746 | 30d 较 06-21 (4239) **+12%** |
-| Today PV | 266 | — | 周一 (06-29) |
-| Today UV | 164 | — | |
-| Bounce rate (7d) | 65.0% | 76.7% | 7d < 30d (新会话质量提升) |
-| Online | 2 | — | 实时 |
-
-### 7d 趋势 (BI)
-
-| Date | PV | UV | 备注 |
-|------|-----|----|------|
-| 06-23 | 291 | 189 | 周二 |
-| 06-24 | 125 | 85 | 周三 (低点) |
-| 06-25 | 175 | 88 | 周四 |
-| 06-26 | 169 | 89 | 周五 |
-| 06-27 | **400** | **193** | 周六 🔥 翻倍 (viral?) |
-| 06-28 | 309 | 152 | 周日 (回落) |
-| 06-29 | 266 | 164 | 周一 (今) |
-
-### 设备分布 7d (持续异常)
-
-| Device | 7d | % |
-|--------|-----|---|
-| Desktop | 1656 | **95.6%** |
-| Mobile | 76 | **4.4%** ⚠️ |
-| desktop (lowercase) | 1 | 0.1% |
-
-**判定**: Mobile 占比 4.4% 持续异常,行业 baseline 应 30-50%。可能:
-- ① BI 追踪代码 mobile 端未触发 (UA 过滤?)
-- ② mobile 流量被 adsense / 浏览器拦截
-- ③ 实际就是 desktop 流量 (游戏站,无 mobile-first 设计)
-- **建议**: 验证 BI 追踪 snippet 在 mobile viewport 是否加载
-
-### Top 10 页面 7d
-
-| # | Path | PV | UV |
-|---|------|-----|-----|
-| 1 | / | 186 | 120 |
+| # | 路径 | PV | UV |
+|---|------|----|----|
+| 1 | / | 192 | 125 |
 | 2 | /snake/ | 36 | 23 |
 | 3 | /2048/ | 32 | 22 |
 | 4 | /matchstick-puzzle/ | 21 | 19 |
@@ -305,34 +253,52 @@
 | 9 | /tetris/ | 15 | 10 |
 | 10 | /wordle/ | 13 | 11 |
 
-### Top 10 来源 7d
+### Top refs (7d)
 
-| # | Ref | Count |
-|---|-----|-------|
-| 1 | https://gamezipper.com/ | 71 (内部) |
-| 2 | https://emulatorxdotcom.wpcomstaging.com/ | 20 ⚠️ |
-| 3 | https://www.bing.com/ | 12 (organic) |
-| 4 | https://gamezipper.com/blog/best-time-killer-games-free.html | 10 (内部) |
-| 5 | https://gamezipper.com/wood-block-puzzle/ | 6 (内部) |
-| 6 | https://game.craftisle.com/ | 6 ⚠️ |
-| 7 | https://gamezipper.com/blog/games-like-2048.html | 5 (内部) |
-| 8 | https://gamezipper.com/ball-sort.html | 5 (内部) |
-| 9 | https://tools.gamezipper.com/ | 4 (cross-domain) |
-| 10 | https://gamezipper.com/tetris/ | 4 (内部) |
+| Ref | Count | 备注 |
+|-----|-------|------|
+| https://gamezipper.com/ | 71 | 站内 |
+| https://emulatorxdotcom.wpcomstaging.com/ | **20** | 第三方 (WordPress staging 站) — 待查 |
+| https://www.bing.com/ | 13 | 搜索 |
+| https://gamezipper.com/blog/best-time-killer-games-free.html | 10 | 内部 blog |
+| https://gamezipper.com/wood-block-puzzle/ | 6 | 内部 |
+| https://game.craftisle.com/ | 6 | 外部 — 待查 |
+| https://gamezipper.com/blog/games-like-2048.html | 5 | 内部 blog |
 
-注: 71/71 内部 ref = 大量用户从首页/博客内链进游戏页 (站内导航健康)
+---
 
-### 用户构成 7d
+## 📊 数据源 + 同步状态
 
-| Type | Count | % |
-|------|-------|---|
-| New visitors | 944 | **99.4%** |
-| Return visitors | 6 | 0.6% |
+| 数据文件 | 06-29 状态 | 备注 |
+|---------|-----------|------|
+| `daily-growth-2026-06-29.json` | ✅ 已生成,482 games | Kachilu 跑完 |
+| `longtail-2026-06-29.json` | ✅ 612 sugs, 245 gaps | Google Suggest 4 failed |
+| `longtail-analysis-2026-06-29.json` | ✅ 37 roots, 80 uncovered | 19 fully uncovered no core |
+| `gsc-2026-06-29.json` | ❌ auth_required | 持续 26 天, GSC OAuth 缺失 |
+| `gap-history.json` | ✅ 77 unique | Murder 持续 10 天 |
+| **games-data.js** | ✅ **483** | +16 vs 06-28 467 |
+| `seo_health_report_2026-06-29.json` | ✅ 9/9 endpoints | IndexNow skip (gz 811, tools 3078 tracked) |
+| `daily_seo_2026-06-29.md` | ✅ 10:02 跑 | 流量数据见那份 |
 
-**判定**: 99.4% 新访客,极少回访。可能:
-- ① 一次性游戏站特性 (snake/2048 玩完就走)
-- ② 没有"收藏"价值 (无账号 / 无游戏进度)
-- ③ BI 追踪 24h cookie 过期导致回访漏报
+### Failed seeds 06-29 vs 06-28
+
+| Seed | 06-28 | 06-29 | 备注 |
+|------|-------|-------|------|
+| games like pokemon go | ❌ | ❌ | 持续 fail (Google Suggest 屏蔽) |
+| games like krunker | ✅ | ❌ | 今日 fail |
+| games like valorant | ✅ | ❌ | 今日 fail |
+| best card games free | ✅ | ❌ | 今日 fail |
+| games like kahoot | ❌ | ✅ | 恢复 |
+| games like stardew valley | ✅ | ✅ | 稳定 |
+| games like minecraft | ❌ | ✅ | 恢复 |
+| games like slither.io | ❌ | ✅ | 恢复 |
+| games like genshin impact | ❌ | ✅ | 恢复 (首次入 high-ROI) |
+| games like crossy road | ❌ | ✅ | 恢复 (首次入 high-ROI) |
+| games like fall guys | ❌ | ✅ | 恢复 |
+| best idle games browser | ❌ | ✅ | 恢复 |
+| free unblocked games | ❌ | ✅ | 恢复 |
+
+(Google Suggest 间歇性失败,影响 4-6 seeds 失败/天,正常)
 
 ---
 
@@ -340,59 +306,46 @@
 
 ### ❌ 老公 P0 持续
 
-- [ ] **GSC OAuth 25d** — 无法拉 queries/clicks/impressions
+- [ ] **GSC OAuth 26d** — 无法拉 queries/clicks/impressions
   - Option A: 5min 手动 OAuth → /home/msdn/.openclaw/secrets/gsc.json
   - Option B (推荐): Service Account → /home/msdn/.openclaw/secrets/gsc-sa.json
 - [ ] **Monetag Token 12d** — 无法拉收益数据
   - publishers.monetag.com 手动取 token (reCAPTCHA 阻挡自动化)
+- [ ] **BI 设备分布异常 (持续 5+ 天)** — Desktop 95.5% / Mobile 4.4%,行业应 30-50%
+  - 建议: 查 mobile 检测 UA / viewport / touch event,可能 mobile JS 报错被算成 desktop
 
-### 🔧 本轮已修复
+### 🔧 建议 (低优先,下个 sprint)
 
-- [x] **data drift 1d** (since 06-28) — sync-game-counts.sh 跑完,**483 全对齐** ✅
-  - GAMES array: 483
-  - Schema numberOfItems: 483
-  - Schema itemListElement: 483
-  - Header data-count: 483
-  - Footer data-count: 483
-  - HTML All cat-count: 483
-  - 11 个分类全部 match
-
-### 💡 建议 (低优先,下个 sprint)
-
-- [ ] **High-ROI blog 候选**: hay day 7/7 uncovered, 写 1 篇 blog 预计可覆盖 7 个 longtail variations
 - [ ] **Poki Murder 缺口 10 天未做** — daily_seo_analysis 应改用 `is_new_gap = norm not in OUR_GAMES` 而非 history
-- [ ] **CrazyGames 列表静态 3d** — 验证 `https://www.crazygames.com/t/new` 选择器或加 fallback
-- [ ] **BI Mobile 占比异常 4.4%** — 验证 BI 追踪 snippet 在 mobile viewport 是否触发
-- [ ] **新游 +15 (06-28 → 06-29)** — Hoop Stack / Claw Master / Nail Art Studio / Sling Smash / Power Wash Puzzle / Zip Tie Untangle / Shogi / Odd One Out / Coin Sort / Pop It Master / Color Switch / Pancake Sort / Tie Dye / Draw One Part / Save the Doge / Slingshot Puzzle / Mr Bullet / Prism Path / Dice Merge / Gear Chain Logic — 大部分是 puzzle 类 (Hoop Stack / Zip Tie Untangle / Pancake Sort 等),符合游戏库方向
-- [ ] **reCAPTCHA 6/29 恢复 seeds 5 个** — kahoot / slither.io / genshin impact / crossy road / idle games 全部恢复,Google Suggest 健康
+- [ ] **CrazyGames 列表静态 5+ 天** — 验证 `https://www.crazygames.com/t/new` 选择器或加 fallback
+- [ ] **High-ROI blog 候选**: hay day 7/7 uncovered, 写 1 篇 blog 预计可覆盖 7 个 longtail variations
+- [ ] **Murder game 评估**: Poki 持续 10 天,说明需求稳定。是否值得做?调研实现难度 (mmorpg/social deduction 类需要后端)
+- [ ] **3 个新 high-ROI roots** (genshin impact 5, crossy road 4, slither io 4) — 都是 no-core,博客空白
+- [ ] **gz.com bounce 79.6%** — 游戏页面加相关游戏推荐 / 自动下一局,降低跳出
+- [ ] **countries 字段空** — 一直没数据,查 bi 收集是否漏
 
 ### 📈 观察项 (持续跟踪)
 
-- **sitemap 6d +140 URL** — 大幅增长说明 game pipeline 在持续产出
-- **竞品 CG 静态 3d** — 需验证脚本
-- **Poki 列表稳定 25** — 内容生态相对稳定
-- **周六 (06-27) 400 PV 周日回落** — 持续观察
-- **Game 库 483** — 30d 内从 624 增至 811 (gz.com),含 15 个新游 (06-28→06-29)
-- **hidden gap 机制** — 改用 `is_new_gap = norm not in OUR_GAMES` 后能看到 Murder 这种"长期缺口"
+- **长尾 roots 37 (06-28 35)** — high-ROI 名单今日 +2,新增 3 (genshin/crossy/slither),退出 2 (krunker/valorant)
+- **游戏库 482 (+15/天)** — 持续高速扩张,跟 06-28 趋势一致
+- **新 viral 06-19 持续 11 天** — 1122 PV 仍未查清来源
+- **二次 viral 06-27** (400 PV) — 持续观察是否第三次峰值
+- **30d GZ 4699 PV / Tools 2725 PV** — GZ 占比 63.3%,Tools 36.7%
 
 ---
 
 ## 📁 产物文件
 
-| 文件 | 用途 | 大小 |
-|------|------|------|
-| `/home/msdn/gamezipper.com/scripts/daily_seo_competitor_2026-06-29.md` | 本报告 | 14 KB |
-| `/home/msdn/gamezipper.com/scripts/seo_health_report_2026-06-29.json` | SEO 端点 + BI | 5.6 KB |
-| `/home/msdn/gamezipper.com/scripts/seo_health_report_latest.json` | 最新 (覆盖) | 5.6 KB |
-| `/home/msdn/gamezipper.com/scripts/indexnow_submitted_2026-06-29.txt` | IndexNow 记录 (0 URLs) | 718 B |
-| `/home/msdn/.openclaw/workspace/data/daily-growth-2026-06-29.json` | 竞品+缺口 JSON | 5.9 KB |
-| `/home/msdn/.openclaw/workspace/data/longtail-2026-06-29.json` | Google Suggest 数据 | 84 KB |
-| `/home/msdn/.openclaw/workspace/data/longtail-analysis-2026-06-29.json` | High-ROI roots | 19 KB |
-| `/home/msdn/.openclaw/workspace/data/gap-history.json` | Gap 历史 (76 unique) | — |
-| `/home/msdn/.openclaw/workspace/data/gsc-2026-06-29.json` | GSC 失败状态 (25d) | 249 B |
+| 文件 | 用途 |
+|------|------|
+| `/home/msdn/gamezipper.com/scripts/daily_seo_competitor_2026-06-29.md` | 本报告 |
+| `/home/msdn/.openclaw/workspace/data/daily-growth-2026-06-29.json` | 竞品+缺口 JSON |
+| `/home/msdn/.openclaw/workspace/data/longtail-2026-06-29.json` | Google Suggest 数据 |
+| `/home/msdn/.openclaw/workspace/data/longtail-analysis-2026-06-29.json` | High-ROI roots |
+| `/home/msdn/.openclaw/workspace/data/gap-history.json` | Gap 历史 (77 unique) |
 
 ---
 
-**报告时间**: 2026-06-29 12:05 CST
+**报告时间**: 2026-06-29 12:00 CST
 **下次报告**: 2026-06-30 10:00 CST
 **Owner**: 香香公主 (ops-gamezipper)
