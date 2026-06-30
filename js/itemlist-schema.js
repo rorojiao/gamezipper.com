@@ -508,8 +508,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":503,"url":"https://gamezipper.com/gokigen-naname/","name":"Gokigen Naname"},
     {"@type":"ListItem","position":504,"url":"https://gamezipper.com/geneva-drive/","name":"Geneva Drive"},
     {"@type":"ListItem","position":505,"url":"https://gamezipper.com/orrery-planetary-gear/","name":"Orrery Planetary Gear"},
-    {"@type":"ListItem","position":506,"url":"https://gamezipper.com/sextant-celestial/","name":"Sextant Celestial"}
+    {"@type":"ListItem","position":506,"url":"https://gamezipper.com/sextant-celestial/","name":"Sextant Celestial"},
+    {"@type":"ListItem","position":507,"url":"https://gamezipper.com/resonance-lock/","name":"Resonance Lock"}
   ],
-  "numberOfItems":506,
-  "description":"505 free browser games you can play instantly"
+  "numberOfItems":507,
+  "description":"507 free browser games you can play instantly"
 };
