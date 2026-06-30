@@ -1,3 +1,29 @@
+## [v1.117.0] - 2026-06-30
+### Added
+- 7 new test cases from late-June 2026 industry research (R236 Dynamic Test Intelligence cron, 4h cadence)
+- [S-241] **[P0]** Chrome 138.0.7204 GPU-Process Remote Code Execution — Apple Emergency Advisory June 30 2026; malicious web page executes code in GPU process, bypasses browser↔OS isolation. Source: https://cloud.tencent.com/developer/article/2554781
+- [S-242] **[P1]** Coruna / PlasmaLoader iOS 13–17.2.1 WebKit Exploit Kit — crypto-wallet-targeted in-the-wild chain; Google TAG/GTIG disclosure March 4 2026. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_09769a79cd581652
+- [S-243] **[P1]** Chrome & Edge `STATUS_BREAKPOINT` Crash — browser-wide stability regression; 137-case field study June 23 2026. Source: https://blog.csdn.net/weixin_42656416/article/details/160649420
+- [W-231] **[P2]** Safari 26 Tracking-Parameter Stripping (announced, partially rolled back) — analytics/attribution impact; fingerprinting block 134227067 shipped, param-strip 134226694 pulled before release. Source: https://cloud.tencent.com/developer/article/2637644
+- [B-162] **[P2]** Chrome 2026 "Gemini in Address Bar" + Auto Tab-Grouping — in-browser AI assistant reads and transmits page content. Source: https://www.ppzy.com/app/49612.html
+- [P-105] **[P2]** Chrome 2026 Power-Saving "Freeze Idle Tabs" — rAF/setInterval suspension regression for foreground-but-idle puzzle games. Source: https://www.ppzy.com/app/49612.html
+- [C-168] **[P3]** Microsoft Edge 149 Built-In Gaming Mode — key-capture and overlay conflict surface for web games. Source: http://www.downxia.com/downinfo/417615.html
+### Sources
+- Search queries (minimax web_search, 2026-06-30):
+  - "HTML5 game testing 2026 new techniques browser"
+  - "browser game bug report 2026 webkit chrome"
+  - "new browser security vulnerability 2026 XSS clickjacking"
+  - "casual game UX complaint 2026 mobile haptic dark mode"
+  - "Chrome Edge Safari update 2026 breaking changes"
+- Key URLs:
+  - https://cloud.tencent.com/developer/article/2554781 (Chrome 138 GPU RCE, Apple advisory June 30 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_09769a79cd581652 (Coruna/PlasmaLoader WebKit exploit kit)
+  - https://blog.csdn.net/weixin_42656416/article/details/160649420 (STATUS_BREAKPOINT crash study)
+  - https://cloud.tencent.com/developer/article/2637644 (Safari 26 release notes)
+  - https://www.ppzy.com/app/49612.html (Chrome 2026 AI + power-save features)
+  - http://www.downxia.com/downinfo/417615.html (Edge 149 Gaming Mode)
+- Dedup note: CVE-2026-5281 WebGPU/Dawn (already S-238), Check Point 2026 / X-Force (already covered), WebKit zero-day patches (already S-235), Chrome 150 Wallet autofill (already W-229), iOS 26 bugs (already B-119/B-128/B-140) were all already in v1.116.0 — excluded to avoid duplicates.
+
 ## [v1.116.0] - 2026-06-30
 ### Added
 - 8 new test cases from late-June 2026 industry research (R235 Dynamic Test Intelligence cron)
