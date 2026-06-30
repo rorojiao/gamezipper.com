@@ -1,3 +1,42 @@
+## [v1.120.0] - 2026-07-01
+### Added
+- 10 new test cases from July-1 2026 industry research (R239 Dynamic Test Intelligence cron, 4h cadence cycle 2)
+- [W-234] **[P1]** Node.js 26 Default-Enabled Temporal API + V8 14.6 — Game Build/Tooling Migration Risk. Source: https://finance.sina.com.cn/tech/digi/2026-05-06/doc-inhwycsi5790469.shtml
+- [W-235] **[P2]** Safari 26.4 CSS Grid Lanes (Native Waterfall/Masonry) — Layout Forward-Compat. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752
+- [B-167] **[P2]** Safari 26.4 WebTransport Official Support — New Real-Time Multiplayer API. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752
+- [S-250] **[P1]** Chrome "Skills" Feature — AI Prompt Reuse on Any Page = Data-Exfiltration & UX-Manipulation Vector. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_02569df582c01752
+- [S-251] **[P1]** 2026 Industrialized API+Web+DDoS Attack Fusion — AI-Driven, Attack Cycle Weeks→Hours. Source: https://www.toutiao.com/article/7626708037775950362/
+- [S-252] **[P2]** MOVEit + cPanel Critical Vulns Mass-Exploited + Linux Priv-Esc (May 2026) — Third-Party Infra Supply-Chain Risk. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_6966a02ce5963952
+- [S-253] **[P2]** 2026 SaaS 13-Threat Landscape — Zero-Day / Data-Breach / Ransomware / APT Dependency Risk. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_2336973315c27552
+- [G-169] **[P1]** Multiplayer NAT-Traversal Failure — "Cannot Find Host / Room Load Failed" (2026 Casual-Game Top Complaint). Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_66869e5d11d91952
+- [P-107] **[P1]** iframe Memory Leak (Ads/Embeds) — Cross-Page / Closure / Pseudo-Leak Accumulation. Source: https://blog.csdn.net/jiaLoveQiQi/article/details/7565482
+- [S-254] **[P2]** iframe Clickjacking Reinforcement (2026) — Transparent Overlay / CSRF / Injection via Embedded Frames. Source: https://blog.csdn.net/sd19871122/article/details/107845108
+### Sources
+- Search engine status: Minimax web_search (primary, 5 parallel queries) — SearXNG not attempted this cycle
+- Search queries (minimax web_search, 2026-07-01):
+  - "HTML5 game testing 2026 July new techniques browser bug patterns"
+  - "browser security vulnerability 2026 July XSS clickjacking WebGL CVE critical"
+  - "Chrome Edge Safari update 2026 July breaking changes web API deprecation"
+  - "casual game UX complaint 2026 mobile haptic dark mode accessibility"
+  - "2026年7月 Chrome Safari Firefox 浏览器更新 新功能 漏洞 web游戏"
+  - "Node.js 26 Temporal API 2026 JavaScript breaking change web game"
+  - "Safari 26.4 CSS Grid Lanes WebTransport 2026 browser new feature web API"
+  - "2026年7月 网页游戏 触摸延迟 手势冲突 内存泄漏 iframe 安全"
+- Key URLs:
+  - https://finance.sina.com.cn/tech/digi/2026-05-06/doc-inhwycsi5790469.shtml (Node.js 26 Temporal API, May 6 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Safari 26.4 CSS Grid Lanes + WebTransport, March 25 2026)
+  - https://new.qq.com/rain/a/20251228A034KJ00 (WebKit CSS Grid Lanes concept, Dec 28 2025)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_02569df582c01752 (Chrome Skills AI prompt reuse, April 15 2026)
+  - https://www.toutiao.com/article/7626708037775950362/ (2026 API+Web+DDoS fusion, April 9 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6966a02ce5963952 (MOVEit/cPanel/Linux mass-exploit, May 12 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2336973315c27552 (SaaS 13 threats, Jan 23 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_66869e5d11d91952 (Multiplayer NAT-traversal complaint, April 20 2026)
+  - https://blog.csdn.net/jiaLoveQiQi/article/details/7565482 (iframe memory leak patterns)
+  - https://blog.csdn.net/zlq636785/article/details/84375522 (iframe memory leak fix)
+  - https://blog.csdn.net/sd19871122/article/details/107845108 (iframe clickjacking clickhacking)
+  - https://www.yisu.com/ask/42372376.html (iframe CSRF injection security risks)
+- Dedup note: Firefox 152 redesign (already B-165), Firefox 152 JPEG XL (already W-233), Edge Copilot UI (already C-169), Safari 26.5 CSP bypass CVE-2026-28962 (already S-244), Chrome DBSC device-bound sessions (already B-166) — all excluded to avoid duplicates. New dimensions: Node.js 26 Temporal+V814 build pipeline (W-234), Safari CSS Grid Lanes masonry (W-235), Safari WebTransport multiplayer API (B-167), Chrome Skills AI prompt exfil (S-250), 2026 industrialized API/DDoS fusion (S-251), MOVEit/cPanel/Linux priv-esc supply chain (S-252), SaaS 13-threat dependency (S-253), multiplayer NAT-traversal CGNAT failure (G-169), iframe ad memory leak (P-107), iframe clickjacking frame-ancestors (S-254).
+
 ## [v1.119.0] - 2026-07-01
 ### Added
 - 7 new test cases from July-1 2026 industry research (R238 Dynamic Test Intelligence cron, 4h cadence)
