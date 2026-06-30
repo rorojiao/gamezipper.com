@@ -1,3 +1,34 @@
+## [v1.119.0] - 2026-07-01
+### Added
+- 7 new test cases from July-1 2026 industry research (R238 Dynamic Test Intelligence cron, 4h cadence)
+- [S-246] **[P0]** Nginx CVE-2026-42945 "Rift" — 18-Year Heap Buffer Overflow in rewrite Module (CVSS 9.2, 5.7M servers affected). Source: https://blog.csdn.net/qq_35366330/article/details/161301047
+- [S-247] **[P1]** Nginx CVE-2026-27654 WebDAV COPY/MOVE Heap Overflow via alias+Destination Header (CVSS 8.8, 17-year dormant, AI-discovered). Source: https://blog.csdn.net/qq_35366330/article/details/160934931
+- [S-248] **[P1]** CVE-2026-21962 WebLogic Proxy Plugin Unauth RCE via X-Forwarded-For Header (CVSS 10.0). Source: https://blog.csdn.net/weishi122/article/details/157315311
+- [S-249] **[P2]** Firefox 150 AI-Vuln-Hunting (Anthropic Mythos/Opus) — 271 Security Fixes Sets New Patch Baseline. Source: https://www.sohu.com/a/1013055437_362225
+- [B-166] **[P2]** Chrome DBSC (Device-Bound Session Credentials) — Cookie-Session Binding to Physical Device. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_80569d9164342752
+- [W-233] **[P2]** Firefox 152 Experimental JPEG XL Support — Image Format Forward-Compat. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_4016a32165940252
+- [P-106] **[P2]** Mobile App Crashes When Device Free Storage < 4GB — Resource-Starvation Edge Case. Source: https://www.bilibili.com/opus/1058864735898828807
+### Sources
+- Search engine status: SearXNG (primary) returned 404 for all batch queries; MiniMax web_search (fallback) returned strong results
+- Search queries (minimax web_search, 2026-07-01):
+  - "HTML5 game testing 2026 July new techniques browser bug patterns"
+  - "browser security vulnerability 2026 July XSS clickjacking WebGL CVE"
+  - "Chrome Edge Safari update 2026 July breaking changes web API deprecation"
+  - "casual game UX complaint 2026 mobile haptic dark mode accessibility"
+  - "2026年7月 Chrome 150 Safari 26.6 Firefox 153 浏览器更新 新功能 漏洞"
+  - "CVE-2026 July Chrome Safari WebKit critical vulnerability zero-day patch"
+  - "2026年7月 网页游戏 崩溃 卡顿 触摸 用户体验问题 移动端"
+- Key URLs:
+  - https://blog.csdn.net/qq_35366330/article/details/161301047 (Nginx Rift CVE-2026-42945, CVSS 9.2, May 22 2026)
+  - https://blog.csdn.net/qq_35366330/article/details/160934931 (Nginx WebDAV CVE-2026-27654, CVSS 8.8, May 10 2026)
+  - https://blog.csdn.net/weishi122/article/details/157315311 (WebLogic Proxy CVE-2026-21962, CVSS 10.0, June 3 2026)
+  - https://www.sohu.com/a/1013055437_362225 (Firefox 150 AI 271 vulns, April 22 2026)
+  - https://www.sohu.com/a/1012908365_122132398 (Anthropic Mythos Firefox vuln discovery, April 22 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_80569d9164342752 (Chrome DBSC, April 10 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4016a32165940252 (Firefox 152 JPEG XL, June 17 2026)
+  - https://www.bilibili.com/opus/1058864735898828807 (Mobile low-storage crash threshold, April 23 2025)
+- Dedup note: CVE-2026-28962 CSP bypass (already S-244), Chrome 150 Wallet autofill (already W-229), Firefox 152 redesign (already B-165), Edge Copilot UI (already C-169), Check Point 2026 report (already S-245), Safari 26.5 WebRTC crash (already S-244), Chrome bfcache WebSocket (already B-163), Chrome approximate location (already B-164), Chrome Gemini omnibox (already B-162), Chrome power-save freeze (already P-105), Chrome GPU RCE (already S-241), Coruna/PlasmaLoader (already S-242), STATUS_BREAKPOINT (already S-243), Safari tracking-param strip (already W-231), CSS Gap Decorations (already W-232) — all excluded to avoid duplicates. New dimensions: Nginx Rift rewrite overflow (S-246), Nginx WebDAV alias underflow (S-247), WebLogic proxy header RCE (S-248), Firefox 150 AI mass-patch baseline (S-249), Chrome DBSC device-bound sessions (B-166), Firefox 152 JPEG XL forward-compat (W-233), mobile low-storage crash edge case (P-106).
+
 ## [v1.117.0] - 2026-06-30
 
 ## [v1.118.0] - 2026-06-30
