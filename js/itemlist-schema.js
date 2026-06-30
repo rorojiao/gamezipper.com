@@ -494,8 +494,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":489,"url":"https://gamezipper.com/hourglass-swap/","name":"Hourglass Swap"},
     {"@type":"ListItem","position":490,"url":"https://gamezipper.com/electromagnet-field/","name":"Electromagnet Field Puzzle"},
     {"@type":"ListItem","position":491,"url":"https://gamezipper.com/waterwheel-forge/","name":"Waterwheel Forge"},
-    {"@type":"ListItem","position":492,"url":"https://gamezipper.com/camshaft-timing/","name":"Camshaft Timing"}
+    {"@type":"ListItem","position":492,"url":"https://gamezipper.com/camshaft-timing/","name":"Camshaft Timing"},
+    {"@type":"ListItem","position":493,"url":"https://gamezipper.com/crankshaft-linkage/","name":"Crankshaft Linkage"}
   ],
-  "numberOfItems":492,
-  "description":"492 free browser games you can play instantly"
+  "numberOfItems":493,
+  "description":"493 free browser games you can play instantly"
 };
