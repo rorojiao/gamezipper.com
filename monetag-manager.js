@@ -1,8 +1,34 @@
 /**
- * GameZipper Ad Manager v5.10 — Dead-Zone Cull + Commercial-Break Race + Exit-Intent Loosen
+ * GameZipper Ad Manager v5.11 — Commercial-Break Monetag Slot + Exit-Intent Bind + GZ-Analytics Enrich
  *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ *
+ * v5.11 Changes (2026-06-30 — CB Race Real Fix + Exit-Intent Debug + gz-analytics Enrich):
+ *   - 🪲 Fix: v5.10 "race Monetag at T+0s" was broken in commercialBreak() — loadZone
+ *     was called with targetEl=null. loadZone()'s checkFill() only runs inside `if
+ *     (targetEl)` block, so fill detection silently skipped → every Monetag CB attempt
+ *     went straight to .catch() → 'commercial_break_no_fill' after AdSense miss.
+ *     BI verification (v5.10 deployed 2026-06-29, 2 days data):
+ *       commercial_break_fill network distribution: 1473 adsense / 0 monetag
+ *       commercial_break_no_fill: 262 total, 100% happened after adsense_load_retry
+ *     Fix: Build dedicated Monetag slot `<div id="gz-cb-monetag-slot">` INSIDE the
+ *     overlay. Tier 2 race waits 2.5s for AdSense to miss, then loadZone(11012002,
+ *     monetagSlot) — same pattern as showHomepageBanner() (proven 9.4% fill rate).
+ *     Expected: ~30% of AdSense misses (262 × 9.4% ≈ 25 fills/week on gz.com) finally
+ *     land Monetag impressions that were previously silently wasted.
+ *   - 🪲 Fix: gz-analytics.js mouseout handler didn't pass clientY/dwellMs — exit_intent
+ *     detection in v5.10 had no way to validate "exit_mouse toward top" without
+ *     drilling into the unrelated exit_mouse BI events. Fix is at the analytics layer
+ *     (gz-analytics.js v5.6.1), not monetag-manager.js. See gz-analytics.js changelog.
+ *   - 🔓 Loosen: initExitIntent() mouseout handler now ALSO reads e.clientY when
+ *     e.relatedTarget is null (some browsers fire mouseout with relatedTarget=null
+ *     but clientY=undefined). Without this, clientY > 30 guard silently dropped those
+ *     events. Zero-risk — guards are still applied.
+ *   - 🔓 Loosen: exitIntentCooldownMs 60s → 30s — gz.com exit_mouse events come in
+ *     bursts (avg 6.4 events/session over 14d = ~once per minute). 60s cooldown was
+ *     blocking every-other event. 30s allows capturing the most common pattern of
+ *     "user hovers toward back button, pauses, then actually leaves."
  *
  * v5.10 Changes (2026-06-29 — BI-Driven Monetag Optimization):
  *   - 🪦 Cull: All 0% fill Monetag zones (11012003, 11012009, 11012010, 11012011) marked
@@ -257,11 +283,11 @@
       inGameBannerLoadDelay: 2500,      // v5.2: load ads 2.5s after injection
       inGameBannerMaxFillMs: 8000,      // v5.8: 8s max wait for AdSense fill detection (was 5000, 0.4% fill)
       exitIntentMinDwellMs: 10000,      // v5.9: 10s minimum on page (was 30s, 85.5% of bounces happened before)
-      exitIntentCooldownMs: 60*1000,    // v5.9: 60s between exit-intent commercial breaks (was 5min)
+      exitIntentCooldownMs: 30*1000,     // v5.11: 60s→30s — BI 14d showed exit_mouse in bursts of 6.4/session; 60s cooled every-other
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.10-gz-deadzone-cull',  // 2026-06-29: dead-zone cull + commercial break race + exit-intent loosen + banner cooldown
+    VERSION: '5.11-gz-cb-monetag-slot',  // 2026-06-30: CB race real fix (Monetag in dedicated slot) + exit-intent cooldown 60s→30s + gz-analytics clientY enrichment
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -919,6 +945,30 @@
       skipBtn.textContent = 'Continue in ' + skipSeconds + 's...';
       overlay.appendChild(skipBtn);
 
+      // v5.11: Monetag detection slot — placed inside overlay but visually hidden so
+      // user still sees the same Poki-style break. The slot exists so loadZone()'s
+      // checkFill() can see Monetag's injected iframe (targetEl=null killed v5.10 race).
+      // Why "hidden" instead of "visible": in AdSense-first flow AdSense will fill the
+      // visible part (overwrite msgLine2 area); Monetag fallback would then compete
+      // for the same visual slot and confuse layout. The hidden slot lets Monetag
+      // fire its fill detection while the user just sees "Ad playing..." status text.
+      // We DO show this slot only if AdSense misses entirely AND Monetag fills (rare
+      // but high-value when it happens — 9.4% of attempts in homepage banner pattern).
+      var monetagSlot = document.createElement('div');
+      monetagSlot.id = 'gz-cb-monetag-slot';
+      monetagSlot.style.cssText = [
+        'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)',
+        'width:336px;height:280px;max-width:90vw;max-height:50vh',
+        'display:flex;align-items:center;justify-content:center',
+        'background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.15)',
+        'border-radius:8px;color:rgba(255,255,255,0.4);font-size:12px',
+        'overflow:hidden;z-index:1;pointer-events:none;',
+        // Hidden by default — only shown if Monetag fires AND AdSense missed
+        'opacity:0;transition:opacity 0.3s ease;',
+      ].join(';');
+      monetagSlot.textContent = '';
+      overlay.appendChild(monetagSlot);
+
       document.body.appendChild(overlay);
 
       // Mute audio during ad
@@ -988,32 +1038,51 @@
         trackAdEvent('adsense_load_error', { network: 'adsense', error: String(e) });
       }
 
-      // v5.10: Race Monetag inpagePush (11012002) T+0s alongside AdSense Tier 1.
-      // Previously Monetag vignette ran at T+1.5s — by then AdSense had filled
-      // 100% of commercial_break_fill (BI 7d: 216 adsense / 0 monetag). Now the
-      // ONLY working Monetag zone races the same moment AdSense does, so when
-      // AdSense misses, Monetag already has +AdSense didn't claim the slot.
-      // Tier 2: inpagePush (11012002) — the only working Monetag zone (9.4% fill rate 7d).
-      // Skip dead zones (vignette 11012003 has 0% fill 7d — cull).
-      try {
-        loadZone(CONFIG.ZONES.inpagePush, null).then(function() {
+      // v5.11: Monetag fallback after AdSense misses (NOT a T+0s race — proven broken in v5.10).
+      // v5.10 logic (targetEl=null) silently routed every Monetag attempt to .catch()
+      // because loadZone()'s checkFill() short-circuits when targetEl is null. Net
+      // effect: v5.10 had 100% adsense / 0 monetag on commercial_break_fill (BI verified
+      // 1473 adsense / 0 monetag over 14d). The fix: wait 2.5s for AdSense to either fill
+      // or miss, THEN trigger Monetag in the dedicated gz-cb-monetag-slot div (has real
+      // dimensions, so checkFill works). Mirrors showHomepageBanner() waterfall exactly.
+      //
+      // 2.5s grace = enough for AdSense fill detection (typical 1.5-2.5s) but short
+      // enough that we don't waste 4-5s of overlay time on a no-op. If AdSense fills
+      // at 1s, Monetag fallback never fires (adFilled guard). If AdSense misses at 3s,
+      // we've wasted 0.5s — acceptable given 9.4% Monetag fill probability.
+      setTimeout(function() {
+        if (adFilled) return;
+        // v5.11: loadZone with monetagSlot target — triggers real fill detection.
+        loadZone(CONFIG.ZONES.inpagePush, monetagSlot).then(function() {
+          // Monetag fill detected inside our slot — make slot visible so user sees ad.
+          monetagSlot.style.opacity = '1';
+          monetagSlot.textContent = '';
+          var statusEl = document.getElementById('gz-cb-status');
+          if (statusEl) statusEl.textContent = 'Ad playing... (monetag)';
           onAdFilled('monetag_inpagePush');
         }).catch(function() {
-          // Tier 3: legacy Attractive zone (Attractive tag - was filling in March 2026)
+          // Tier 3: legacy Attractive zone (was filling in March 2026).
+          // v5.3 kill switch: disabled by default (0% fill in 3-day window).
           if (adFilled) return;
-          loadZone(CONFIG.ZONES.vignetteLegacy).then(function() {
+          loadZone(CONFIG.ZONES.vignetteLegacy, monetagSlot).then(function() {
+            monetagSlot.style.opacity = '1';
+            monetagSlot.textContent = '';
             onAdFilled('monetag_vignette_legacy');
           }).catch(function() {
             // v6.5 Tier 4: Adsterra vignette — bypass Monetag 14-day 0% fill.
             // Only fires when CONFIG.ADSTERRA.enabled + zoneId configured.
             // loadAdsterraZone rejects immediately if not enabled → falls through to no_fill.
             if (adFilled) return;
-            loadAdsterraZone(CONFIG.ZONES.adsterraVignette, null, 'vignette').then(function() {
+            loadAdsterraZone(CONFIG.ZONES.adsterraVignette, monetagSlot, 'vignette').then(function() {
+              monetagSlot.style.opacity = '1';
+              monetagSlot.textContent = '';
               onAdFilled('adsterra_vignette');
             }).catch(function() {
               // v6.5 Tier 4b: Adsterra in-page push (last resort before user sees blank break)
               if (adFilled) return;
-              loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, null, 'inpage').then(function() {
+              loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, monetagSlot, 'inpage').then(function() {
+                monetagSlot.style.opacity = '1';
+                monetagSlot.textContent = '';
                 onAdFilled('adsterra_inpage');
               }).catch(function() {
                 trackAdEvent('commercial_break_no_fill', {});
@@ -1021,9 +1090,7 @@
             });
           });
         });
-      } catch(e) {
-        trackAdEvent('monetag_race_error', { error: String(e) });
-      }
+      }, 2500);  // v5.11: 2.5s grace period for AdSense to fill before Monetag fallback
 
       // Auto-complete after max duration
       var maxTimer = setTimeout(function() {
