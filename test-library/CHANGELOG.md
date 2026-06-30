@@ -1,4 +1,31 @@
 ## [v1.117.0] - 2026-06-30
+
+## [v1.118.0] - 2026-06-30
+### Added
+- 7 new test cases from late-June 2026 industry research (R237 Dynamic Test Intelligence cron, 4h cadence)
+- [S-244] **[P1]** Safari 26.5 CVE-2026-28962 Content-Security-Policy Bypass — Sensitive Information Leak + WebRTC Crash. Source: https://finance.sina.com.cn/tech/digi/2026-05-14/doc-inhxvtwn8763233.shtml
+- [B-163] **[P2]** Chrome 149 bfcache WebSocket Connection Management — Back/Forward Cache Interaction with Live Sockets. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_3076a1fbf5420452
+- [B-164] **[P2]** Chrome 148 Android Approximate Location — Coarse Geolocation Permission. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_83069fc56b987652
+- [B-165] **[P2]** Firefox 152 "2026 Biggest Redesign" — UI/Viewport Overhaul Impact on Fullscreen Games. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_4016a32165940252
+- [C-169] **[P2]** Microsoft Edge 2026 Copilot Design Language UI Overhaul — Rounded Corners & Overlay Conflict. Source: https://www.sohu.com/a/1008833159_121956424
+- [S-245] **[P2]** Check Point 2026 Security Report — AI-Powered Attack Escalation & Identity Abuse. Source: https://www.sohu.com/a/1012262360_121823499
+- [W-232] **[P2]** Chrome 149 CSS Gap Decorations (column-rule / row-rule) — Forward-Compat Rendering Test. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_3076a1fbf5420452
+### Sources
+- Search queries (minimax web_search, 2026-06-30; SearXNG was down 404):
+  - "HTML5 game testing 2026 new techniques browser"
+  - "browser game bug report 2026 WebKit Safari iOS"
+  - "new browser security vulnerability 2026 XSS clickjacking WebGL"
+  - "casual game UX complaint 2026 mobile haptic"
+  - "Chrome 138 Edge Safari update 2026 breaking changes"
+- Key URLs:
+  - https://finance.sina.com.cn/tech/digi/2026-05-14/doc-inhxvtwn8763233.shtml (Safari 26.5 security advisory, CVE-2026-28962)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_3076a1fbf5420452 (Chrome 149 CSS Gap Decorations + bfcache WebSocket)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_83069fc56b987652 (Chrome 148 Android approximate location)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4016a32165940252 (Firefox 152 redesign)
+  - https://www.sohu.com/a/1008833159_121956424 (Edge 2026 Copilot UI overhaul)
+  - https://www.sohu.com/a/1012262360_121823499 (Check Point 2026 security report)
+- Dedup note: Safari 26 tracking-param strip (already W-231 in v1.117.0), Chrome 149 Gaming Mode (already C-168), Chrome 149 release itself (already B-135 context), Check Point generic (partially S-235) were all already in v1.117.0 — excluded to avoid duplicates. New dimensions: CSP bypass (S-244), bfcache+WebSocket (B-163), coarse-geolocation (B-164), Firefox redesign viewport (B-165), Edge Copilot visual (C-169), AI-phishing threat landscape (S-245), CSS gap-decorations forward-compat (W-232).
+
 ### Added
 - 7 new test cases from late-June 2026 industry research (R236 Dynamic Test Intelligence cron, 4h cadence)
 - [S-241] **[P0]** Chrome 138.0.7204 GPU-Process Remote Code Execution — Apple Emergency Advisory June 30 2026; malicious web page executes code in GPU process, bypasses browser↔OS isolation. Source: https://cloud.tencent.com/developer/article/2554781
