@@ -489,8 +489,10 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":484,"url":"https://gamezipper.com/mosaic-merge/","name":"Mosaic Tile Merge"},
     {"@type":"ListItem","position":485,"url":"https://gamezipper.com/valve-network/","name":"Valve Network"},
     {"@type":"ListItem","position":486,"url":"https://gamezipper.com/canal-lock/","name":"Canal Lock"},
-    {"@type":"ListItem","position":487,"url":"https://gamezipper.com/pulley-lift/","name":"Pulley Lift"}
+    {"@type":"ListItem","position":487,"url":"https://gamezipper.com/pulley-lift/","name":"Pulley Lift"},
+    {"@type":"ListItem","position":488,"url":"https://gamezipper.com/ratchet-escapement/","name":"Ratchet Escapement"},
+    {"@type":"ListItem","position":489,"url":"https://gamezipper.com/hourglass-swap/","name":"Hourglass Swap"}
   ],
-  "numberOfItems":487,
-  "description":"487 free browser games you can play instantly"
+  "numberOfItems":489,
+  "description":"489 free browser games you can play instantly"
 };
