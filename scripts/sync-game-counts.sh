@@ -17,19 +17,17 @@ cd "$(dirname "$0")/.." || exit 1
 DRIFT=0
 REPORT=""
 
-# 1. GAMES array count
+# 1. GAMES array count — ONLY status:"live" entries (R175 fix)
+# Hidden games (status:"hidden") are excluded from display counts
 GAMES_COUNT=$(node -e "
 const fs = require('fs');
 const c = fs.readFileSync('js/games-data.js', 'utf8');
 const idx = c.indexOf('const GAMES = [');
 const endIdx = c.indexOf('];', idx);
 const inner = c.substring(idx + 'const GAMES = ['.length, endIdx);
-let d = 0, n = 0;
-for (let i = 0; i < inner.length; i++) {
-  if (inner[i] === '{') { if (d === 0) n++; d++; }
-  else if (inner[i] === '}') d--;
-}
-console.log(n);
+// Count entries with status:\"live\" only
+const live = (inner.match(/status:\\s*[\\\"']live[\\\"']/g) || []).length;
+console.log(live);
 " 2>/dev/null)
 
 # 2. Schema count
@@ -63,7 +61,7 @@ SIM_C=$(grep -E '🔧 Simulation.*cat-count' index.html | grep -oE 'cat-count\">
 RACING_C=$(grep -E '🏎️ Racing.*cat-count' index.html | grep -oE 'cat-count\">[0-9]+' | grep -oE '[0-9]+$' | head -1)
 SKILL_C=$(grep -E '⚡ Skill.*cat-count' index.html | grep -oE 'cat-count\">[0-9]+' | grep -oE '[0-9]+$' | head -1)
 
-# Computed cat counts from GAMES array
+# Computed cat counts from GAMES array — ONLY status:"live" (R175 fix)
 GAMES_CATS=$(node -e "
 const fs = require('fs');
 const c = fs.readFileSync('js/games-data.js', 'utf8');
@@ -71,9 +69,16 @@ const idx = c.indexOf('const GAMES = [');
 const endIdx = c.indexOf('];', idx);
 const inner = c.substring(idx + 'const GAMES = ['.length, endIdx);
 const cats = {};
-const re = /cat:[\s]*\"([^\"]+)\"/g;
+// Match each entry: {name:...,cat:\"X\",...,status:\"live\"} or status:\"hidden\"
+// Only count entries where status is \"live\" (or has no status field = legacy default live)
+const entryRe = /\{[^{}]*name:\"[^\"]*\"[^{}]*cat:\"([^\"]+)\"[^{}]*\}/g;
 let m;
-while ((m = re.exec(inner)) !== null) cats[m[1]] = (cats[m[1]] || 0) + 1;
+while ((m = entryRe.exec(inner)) !== null) {
+  const entry = m[0];
+  // Check if this entry is hidden
+  if (/status:\s*[\"']hidden[\"']/.test(entry)) continue;
+  cats[m[1]] = (cats[m[1]] || 0) + 1;
+}
 console.log(JSON.stringify(cats));
 " 2>/dev/null)
 

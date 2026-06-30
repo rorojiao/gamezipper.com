@@ -1,0 +1,997 @@
+(function(){
+"use strict";
+/* ===== Waterwheel Forge - game engine =====
+   Single-file ~46KB.  All state, drawing, physics, audio, scoring in
+   this closure.
+   ============================================ */
+
+const canvas = document.getElementById("cv");
+const ctx = canvas.getContext("2d");
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = window.devicePixelRatio || 1;
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+resize();
+window.addEventListener("resize", resize);
+
+/* ===== Audio (Web Audio, lazy-init) ===== */
+let AC = null;
+function audio() {
+  if (!AC) try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+  return AC;
+}
+function tone(freq, dur, type, vol) {
+  const a = audio();
+  if (!a) return;
+  const o = a.createOscillator();
+  const g = a.createGain();
+  o.type = type || "sine";
+  o.frequency.setValueAtTime(freq, a.currentTime);
+  o.frequency.exponentialRampToValueAtTime(Math.max(20, freq * 0.5), a.currentTime + dur);
+  g.gain.setValueAtTime((vol || 0.18), a.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+  o.connect(g).connect(a.destination);
+  o.start(); o.stop(a.currentTime + dur);
+}
+function noise(dur, vol) {
+  const a = audio();
+  if (!a) return;
+  const sr = a.sampleRate, len = sr * dur;
+  const buf = a.createBuffer(1, len, sr);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = a.createBufferSource();
+  src.buffer = buf;
+  const g = a.createGain();
+  g.gain.setValueAtTime(vol || 0.06, a.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+  src.connect(g).connect(a.destination);
+  src.start();
+}
+function sndFlow() { tone(260, 0.06, "sawtooth", 0.04); }
+function sndHammer(level) { tone(level ? 90 + Math.random() * 30 : 110, 0.18, "triangle", 0.18); }
+function sndValve(open) {
+  if (open) tone(440, 0.06, "sine", 0.10);
+  else tone(330, 0.05, "sine", 0.08);
+}
+function sndWin() { setTimeout(() => tone(523, 0.15, "triangle", 0.18), 0); setTimeout(() => tone(659, 0.18, "triangle", 0.18), 110); setTimeout(() => tone(784, 0.30, "triangle", 0.20), 240); }
+function sndOver() { tone(150, 0.30, "square", 0.18); }
+
+/* ===== LocalStorage ===== */
+const LS = "waterwheel-forge-v1";
+const save = {
+  stars: new Array(LEVELS.length + 1).fill(0),
+  unlocked: 1
+};
+try {
+  const d = JSON.parse(localStorage.getItem(LS) || "null");
+  if (d && Array.isArray(d.stars)) {
+    for (let i = 0; i < save.stars.length; i++) if (d.stars[i]) save.stars[i] = d.stars[i];
+    save.unlocked = Math.max(save.unlocked, d.unlocked || 1);
+  }
+} catch(e){}
+function persist() {
+  try { localStorage.setItem(LS, JSON.stringify(save)); } catch(e){}
+}
+
+/* ===== Game state ===== */
+let scene = "menu";          // menu | select | play | won
+let lvIdx = 0;               // 0..29
+let lv = null;
+let valves = [];             // [{open, x, y, w, knobY, dragging}]
+let wheels = [];             // [{x, y, r, omega, theta, target_w, friction, isTarget, gearRpm, color, type}]
+let pipes = [];              // [{x1,y1,x2,y2,valveIdx,wheelIdx,flow}]
+let particles = [];          // {x,y,vx,vy,life,alpha,wheelIdx}
+let ripple = null;           // hammer hit ripple
+let holdTime = 0;            // seconds inside target band
+let held = false;            // currently in band
+let overTime = 0;
+let overheated = false;
+let wonStars = 0;
+let wonLevel = 0;
+let overTimer = 0;           // ms since distractor over-cap
+let lastTickAt = 0;
+let mouseDown = false;
+let mouseXY = {x:0,y:0};
+let touchedValve = -1;
+let hintTimer = 0;
+
+/* ===== Layout helpers ===== */
+function layoutLevel(L) {
+  valves = [];
+  wheels = [];
+  pipes = [];
+  particles = [];
+  ripple = null;
+  holdTime = 0; held = false; overheated = false; overTime = 0; overTimer = 0;
+  hintTimer = 4.0;
+
+  // Play area: HUD top 100px, valves bottom 240px
+  const hudH = 96;
+  const valveH = 220;
+  const padX = 16;
+  const playY0 = hudH + 12;
+  const playY1 = H - valveH - 16;
+  const playH = playY1 - playY0;
+  const playX0 = padX;
+  const playX1 = W - padX;
+  const playW = playX1 - playX0;
+
+  // Compute wheel positions
+  const ws = L.wheels;
+  // Find non-gear "primary" upstream wheels (valve-typed) and the target
+  const targetW = ws[L.target_wheel_idx];
+  // Build a connectivity: each gear has source/source_a/source_b
+  // Lay out a small graph visually with 1-4 wheels
+  const nW = ws.length;
+  const placed = [];  // {wheelIdx, x, y, r, role}
+  // Heuristic: lay out by tier
+  if (nW <= 2) {
+    // Single or two wheels in a row
+    const r = Math.min(60, Math.min(playW, playH) * 0.18);
+    const cy = playY0 + playH * 0.45;
+    if (nW === 1) {
+      const idx = 0;
+      placed.push({wheelIdx: idx, x: W * 0.5, y: cy, r, role: "target"});
+    } else {
+      // tier 3 or tier 4: target usually on the right
+      // find which wheel is target
+      const tIdx = L.target_wheel_idx;
+      const other = tIdx === 0 ? 1 : 0;
+      placed.push({wheelIdx: tIdx, x: W * 0.66, y: cy, r, role: "target"});
+      placed.push({wheelIdx: other, x: W * 0.30, y: cy, r, role: ws[other].type === "distractor" ? "distractor" : "support"});
+    }
+  } else if (nW === 3) {
+    // tier 4 with 3 wheels
+    const r = Math.min(48, Math.min(playW, playH) * 0.14);
+    const tIdx = L.target_wheel_idx;
+    const positions = [
+      {x: W * 0.20, role: "support"},
+      {x: W * 0.50, role: "support"},
+      {x: W * 0.80, role: "support"}
+    ];
+    let idxs = [0, 1, 2];
+    if (L.id >= 19 && L.id <= 24) {
+      // tier 4: arrange from source to target in some order
+      // place target at right
+      const non_target = ws.map((w, i) => i).filter(i => i !== tIdx);
+      // Source-like wheel first (valve type), then support, then target
+      const src = ws.findIndex(w => w.type === "valve");
+      const tgt_right = idxs.indexOf(tIdx);
+      // Re-map: place target at right, source/valve at left
+      const order = [];
+      // find a left position for source
+      if (src >= 0 && src !== tIdx) order.push(src); else if (non_target[0] !== undefined) order.push(non_target[0]);
+      // middle: another non-target
+      for (let i = 0; i < nW; i++) {
+        if (i !== tIdx && !order.includes(i)) order.push(i);
+      }
+      // last: target
+      order.push(tIdx);
+      for (let i = 0; i < nW; i++) {
+        placed.push({wheelIdx: order[i], x: positions[i].x, y: playY0 + playH * 0.45, r, role: positions[i].role});
+      }
+    } else {
+      // tier 5 merge (2 upstream + 1 gear target): 3 wheels
+      placed.push({wheelIdx: 0, x: W * 0.25, y: playY0 + playH * 0.45, r, role: "support"});
+      placed.push({wheelIdx: 1, x: W * 0.50, y: playY0 + playH * 0.45, r, role: "support"});
+      placed.push({wheelIdx: tIdx, x: W * 0.78, y: playY0 + playH * 0.45, r, role: "target"});
+    }
+  } else if (nW === 4) {
+    // tier 5 chain
+    const r = Math.min(40, Math.min(playW, playH) * 0.12);
+    const tIdx = L.target_wheel_idx;
+    const positions = [W * 0.18, W * 0.39, W * 0.60, W * 0.81];
+    for (let i = 0; i < 4; i++) {
+      placed.push({wheelIdx: i, x: positions[i], y: playY0 + playH * 0.42, r, role: i === tIdx ? "target" : "support"});
+    }
+  } else {
+    // 5+ wheels: tier 4 with 5-6
+    const r = Math.min(36, Math.min(playW, playH) * 0.10);
+    const tIdx = L.target_wheel_idx;
+    const order = [];
+    // upstream valve-type wheels first, target last
+    const others = ws.map((w, i) => i).filter(i => i !== tIdx);
+    for (let i = 0; i < ws.length; i++) if (i !== tIdx) order.push(i);
+    order.push(tIdx);
+    for (let i = 0; i < nW; i++) {
+      const x = W * (0.12 + 0.76 * i / (nW - 1));
+      placed.push({wheelIdx: order[i], x, y: playY0 + playH * 0.42, r, role: i === order.length - 1 ? "target" : "support"});
+    }
+  }
+
+  // Build wheel state objects
+  for (const p of placed) {
+    const w = ws[p.wheelIdx];
+    wheels.push({
+      idx: p.wheelIdx,
+      x: p.x, y: p.y, r: p.r,
+      omega: 0, theta: 0,
+      target_rpm_display: 0,
+      type: w.type || "valve",
+      isTarget: p.wheelIdx === L.target_wheel_idx,
+      role: p.role,
+      // physics params
+      friction: w.friction || 0,
+      gear_ratio: w.gear_ratio || 1.0,
+      gear_friction: w.friction || 0,  // gear wheels also use 'friction' as coupling friction
+      source_idx: w.source_idx != null ? w.source_idx : -1,
+      source_a: w.source_a != null ? w.source_a : -1,
+      source_b: w.source_b != null ? w.source_b : -1,
+      cap: L.distractor_caps ? L.distractor_caps[L.distractors ? L.distractors.indexOf(p.wheelIdx) : -1] || 1000 : 1000,
+      // pipes used to compute direct-valve inflow
+      pipes: w.pipes || {},
+      gear_rpm_cached: 0,  // last computed gear output
+      hub_temp: 0,  // for spinner accent
+    });
+  }
+
+  // Compute valve widget positions
+  // Valves are arranged in a row across the bottom of the play area
+  const N = L.valves;
+  const slotW = playW / Math.max(N, 1);
+  for (let i = 0; i < N; i++) {
+    const cx = playX0 + slotW * (i + 0.5);
+    const cy = playY1 + 60;
+    valves.push({
+      idx: i,
+      x: cx, y: cy,
+      slotW: slotW * 0.85,
+      open: 0,
+      knobRel: 0,    // 0..1 (1 = fully open, knob at top)
+      prevKnob: 0,
+      dragging: false,
+    });
+  }
+}
+
+/* ===== Physics ===== */
+function rpmForWheel(idx, opens) {
+  const w = wheels[idx];
+  if (w.type === "valve") {
+    const u = lv.wheels[w.idx];
+    let inflow = 0;
+    for (const v in u.pipes) inflow += u.pipes[v] * opens[+v];
+    return Math.max(0, inflow - u.friction);
+  }
+  if (w.type === "gear") {
+    const src = w.source_idx;
+    if (src >= 0) {
+      const srpm = rpmForWheel(src, opens);  // current rpm of upstream
+      return Math.max(0, w.gear_ratio * srpm - (lv.wheels[w.idx].friction || 0));
+    }
+    const a = w.source_a, b = w.source_b;
+    if (a >= 0 && b >= 0) {
+      const ra = rpmForWheel(a, opens);
+      const rb = rpmForWheel(b, opens);
+      return Math.max(0, w.gear_ratio * (ra + rb) - (lv.wheels[w.idx].friction || 0));
+    }
+    return 0;
+  }
+  if (w.type === "distractor") {
+    const u = lv.wheels[w.idx];
+    let inflow = 0;
+    for (const v in u.pipes) inflow += u.pipes[v] * opens[+v];
+    return Math.max(0, inflow - u.friction);
+  }
+  return 0;
+}
+
+function targetRpm() {
+  // Use the most recent computed stable target rpm from the simulation
+  return wheels[lvTargetWheelIdx()].gear_rpm_cached;
+}
+
+function lvTargetWheelIdx() {
+  // Find the wheel object whose wheel.idx == lv.target_wheel_idx
+  for (let i = 0; i < wheels.length; i++) if (wheels[i].idx === lv.target_wheel_idx) return i;
+  return 0;
+}
+
+function overshootDistractor() {
+  for (let di = 0; di < (lv.distractors || []).length; di++) {
+    const idx = lv.distractors[di];
+    const cap = lv.distractor_caps[di];
+    const w = wheels.find(ww => ww.idx === idx);
+    if (w && w.gear_rpm_cached > cap + 0.5) return true;
+  }
+  return false;
+}
+
+/* ===== Update / Draw ===== */
+function tick(dt) {
+  // Compute current stable rpm per wheel from current valve opens
+  const opens = {};
+  for (const v of valves) opens[v.idx] = v.open;
+
+  // Compute steady-state rpms (cached for win-check / display)
+  for (let i = 0; i < wheels.length; i++) {
+    wheels[i].gear_rpm_cached = rpmForWheel(i, opens);
+  }
+
+  // Wheel inertia: smooth converge to stable rpm
+  for (let i = 0; i < wheels.length; i++) {
+    const w = wheels[i];
+    const target = w.gear_rpm_cached;
+    // convergence rate: based on rpm magnitude
+    const k = 4.0;
+    w.omega += (target - w.omega) * Math.min(1, dt * k);
+    if (w.omega < 0.01) w.omega = 0;
+    w.theta += w.omega * dt * 0.06;  // visual speed
+  }
+
+  // Particles: emit from each open valve and animate along its pipe to target
+  spawnParticles(dt);
+  updateParticles(dt);
+
+  // Win check
+  const tIdx = lvTargetWheelIdx();
+  const ti = wheels[tIdx];
+  const rpm = ti.gear_rpm_cached;
+  const in_band = rpm >= lv.rpm_min - 0.5 && rpm <= lv.rpm_max + 0.5;
+  if (in_band) {
+    if (held) holdTime += dt;
+    else { held = true; holdTime = 0; }
+  } else {
+    held = false;
+    holdTime = 0;
+  }
+  if (held && holdTime >= 0.6 && scene === "play") {
+    onWin();
+  }
+
+  // Overshoot check (distractor over cap)
+  if (overshootDistractor()) {
+    overTimer += dt * 1000;
+    if (overTimer > 1500 && !overheated) {
+      overheated = true;
+      sndOver();
+    }
+  } else {
+    overTimer = 0;
+    overheated = false;
+  }
+
+  // Ripple on hammer: when target wheel in band, occasionally play hammer sound
+  // (rhythmic, once per ~0.6s)
+  if (in_band) {
+    if (!ripple || ripple.age > 0.4) {
+      ripple = {x: ti.x, y: ti.y, age: 0, life: 0.45};
+      // play hammer
+      sndHammer(true);
+    }
+  }
+  if (ripple) {
+    ripple.age += dt;
+    if (ripple.age > ripple.life) ripple = null;
+  }
+
+  if (hintTimer > 0) hintTimer -= dt;
+  lastTickAt += dt;
+}
+
+/* ===== Particle system ===== */
+function spawnParticles(dt) {
+  const targetN = Math.min(200, Math.floor(150 * valves.reduce((s, v) => s + v.open, 0)));
+  while (particles.length < targetN) {
+    // pick a random valve with reasonable flow
+    const candidates = valves.filter(v => v.open > 0.05);
+    if (!candidates.length) break;
+    const v = candidates[Math.floor(Math.random() * candidates.length)];
+    // emit at valve outlet point (bottom of pipe)
+    particles.push(spawnFromValve(v));
+  }
+}
+
+function spawnFromValve(v) {
+  // Particles emit from valve base, just below the wheel target.
+  // Compute the wheel the valve flows toward.  For simplicity we send
+  // them toward the target wheel.
+  const tIdx = lvTargetWheelIdx();
+  const tW = wheels[tIdx];
+  const sx = v.x + (Math.random() - 0.5) * 6;
+  const sy = v.y - 50;
+  const dx = tW.x + (Math.random() - 0.5) * tW.r * 0.5;
+  const dy = tW.y + Math.random() * 6;
+  const dist = Math.hypot(dx - sx, dy - sy);
+  const speed = 120 + Math.random() * 80;
+  return {
+    sx, sy, dx, dy, dist,
+    t: 0,                // 0..1 progress along path
+    speed: speed,
+    life: dist / speed,
+    age: 0,
+    alpha: 0,
+    targetIdx: tIdx,
+    size: 2 + Math.random() * 1.5,
+  };
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.age += dt;
+    // fade in fast, fade out at end
+    if (p.age < 0.1) p.alpha = p.age / 0.1;
+    else if (p.age > p.life - 0.15) p.alpha = Math.max(0, (p.life - p.age) / 0.15);
+    else p.alpha = 1.0;
+    // progress along path
+    p.t = Math.min(1.0, p.age / p.life);
+    if (p.t >= 1.0) {
+      // splash into wheel: add tiny impulse (visual)
+      particles.splice(i, 1);
+      continue;
+    }
+  }
+}
+
+/* ===== Drawing ===== */
+function drawBackground() {
+  // Gradient sky
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#1a2440");
+  g.addColorStop(0.4, "#2a3458");
+  g.addColorStop(1, "#0e1428");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // Floor (forge plinth)
+  ctx.fillStyle = "#0a0e1a";
+  ctx.fillRect(0, H - 18, W, 18);
+  // bricks
+  ctx.fillStyle = "#1a2030";
+  for (let x = 0; x < W; x += 12) ctx.fillRect(x, H - 18, 10, 2);
+}
+
+function drawHUD() {
+  // Top hud bar
+  ctx.fillStyle = "rgba(8, 14, 28, 0.85)";
+  ctx.fillRect(0, 0, W, 96);
+  ctx.strokeStyle = "rgba(120, 180, 220, 0.3)";
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, 96); ctx.lineTo(W, 96); ctx.stroke();
+
+  // Header text
+  ctx.fillStyle = "#e6f2ff";
+  ctx.font = "bold 13px system-ui,-apple-system";
+  ctx.textBaseline = "top";
+  ctx.textAlign = "left";
+  ctx.fillText("Tier " + lv.tier + " · Lv " + lv.id + " · " + lv.name, 12, 10);
+
+  // Target band
+  const bX = 12, bY = 36, bW = W - 24, bH = 14;
+  ctx.fillStyle = "#0a1428";
+  ctx.fillRect(bX, bY, bW, bH);
+  // band
+  const tmin = lv.rpm_min, tmax = lv.rpm_max;
+  // We normalize rpm to scale 0..100
+  const scale = (rpm) => bX + (rpm / 100) * bW;
+  const bandLeft = scale(Math.max(0, tmin));
+  const bandRight = scale(Math.min(100, tmax));
+  ctx.fillStyle = "rgba(120, 220, 160, 0.5)";
+  ctx.fillRect(bandLeft, bY + 1, Math.max(2, bandRight - bandLeft), bH - 2);
+  ctx.strokeStyle = "#7ce08a";
+  ctx.strokeRect(bandLeft, bY + 1, Math.max(2, bandRight - bandLeft), bH - 2);
+
+  // Current rpm marker
+  const tIdx = lvTargetWheelIdx();
+  const crpm = wheels[tIdx].gear_rpm_cached;
+  const cx = scale(Math.max(0, Math.min(100, crpm)));
+  // vertical marker
+  ctx.fillStyle = (crpm >= tmin - 0.5 && crpm <= tmax + 0.5) ? "#ffd45a" : (crpm > tmax ? "#ff6a6a" : "#8fb3d0");
+  ctx.fillRect(cx - 2, bY - 4, 4, bH + 8);
+  // rpm label
+  ctx.font = "bold 11px system-ui";
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "center";
+  ctx.fillText(Math.round(crpm) + " rpm", cx, bY - 14);
+
+  // Star pip row
+  ctx.textAlign = "right";
+  ctx.font = "10px system-ui";
+  ctx.fillStyle = "#9fb6d0";
+  ctx.fillText("TARGET  " + Math.round(tmin) + "-" + Math.round(tmax) + " rpm", W - 12, 10);
+
+  // Bottom strip
+  ctx.fillStyle = "#9fb6d0";
+  ctx.font = "11px system-ui";
+  ctx.textAlign = "left";
+  ctx.fillText("★ " + save.stars.reduce((a, b) => a + b, 0) + "/" + (LEVELS.length * 3), 12, H - 26);
+  ctx.textAlign = "right";
+  ctx.fillText("Tap a valve, drag up/down to set flow", W - 12, H - 26);
+}
+
+function drawPipe(x1, y1, x2, y2, flow) {
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = "#3a4960";
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = "#1a2030";
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = flow > 0.05 ? "#5dafe0" : "#2a3a55";
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+}
+
+function drawWheel(w) {
+  // Shadow
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  ctx.beginPath(); ctx.ellipse(w.x, w.y + w.r * 1.1, w.r * 0.85, w.r * 0.18, 0, 0, Math.PI * 2); ctx.fill();
+
+  // Hub color: greenish if target in band, red if over target, blue otherwise
+  let col = "#3a4960";
+  let spokeCol = "#1a2030";
+  if (w.isTarget) {
+    const rpm = w.gear_rpm_cached;
+    if (rpm >= lv.rpm_min - 0.5 && rpm <= lv.rpm_max + 0.5) { col = "#5fbf80"; spokeCol = "#d0f5b0"; }
+    else if (rpm > lv.rpm_max + 0.5) { col = "#d65a5a"; spokeCol = "#ffe1e1"; }
+    else col = "#5dafe0";
+  } else if (w.type === "distractor") {
+    const cap = (lv.distractor_caps || [])[(lv.distractors || []).indexOf(w.idx)] || 1000;
+    if (w.gear_rpm_cached > cap + 0.5) { col = "#d65a5a"; spokeCol = "#ffd0d0"; }
+    else { col = "#3a4960"; spokeCol = "#1a2030"; }
+  }
+
+  // Outer rim
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "#222b3a";
+  ctx.beginPath(); ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2); ctx.stroke();
+
+  // Fill in col
+  ctx.fillStyle = col;
+  ctx.beginPath(); ctx.arc(w.x, w.y, w.r - 2, 0, Math.PI * 2); ctx.fill();
+
+  // Inner ring
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = "rgba(0,0,0,0.4)";
+  ctx.beginPath(); ctx.arc(w.x, w.y, w.r * 0.65, 0, Math.PI * 2); ctx.stroke();
+
+  // Spokes
+  ctx.strokeStyle = spokeCol;
+  ctx.lineWidth = 3;
+  const n = 6;
+  for (let i = 0; i < n; i++) {
+    const a = w.theta + (i / n) * Math.PI * 2;
+    const x1 = w.x + Math.cos(a) * w.r * 0.2;
+    const y1 = w.y + Math.sin(a) * w.r * 0.2;
+    const x2 = w.x + Math.cos(a) * (w.r - 4);
+    const y2 = w.y + Math.sin(a) * (w.r - 4);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  }
+  // Bucket tabs around the rim
+  ctx.fillStyle = spokeCol;
+  for (let i = 0; i < n; i++) {
+    const a = w.theta + (i / n) * Math.PI * 2 + Math.PI / n;
+    const x = w.x + Math.cos(a) * (w.r - 1);
+    const y = w.y + Math.sin(a) * (w.r - 1);
+    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+  }
+  // Center hub
+  ctx.fillStyle = "#0a0e1a";
+  ctx.beginPath(); ctx.arc(w.x, w.y, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#7d93ad";
+  ctx.beginPath(); ctx.arc(w.x, w.y, 3, 0, Math.PI * 2); ctx.fill();
+
+  // RPM label
+  ctx.fillStyle = w.isTarget ? "#ffd45a" : (w.type === "distractor" ? "#9fb6d0" : "#cfd9e6");
+  ctx.font = "bold 10px system-ui";
+  ctx.textAlign = "center";
+  ctx.fillText(Math.round(w.gear_rpm_cached), w.x, w.y - w.r - 8);
+
+  // Gear indicator: small cog lines outside if gear wheel
+  if (w.type === "gear" && w.source_idx >= 0) {
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(w.x, w.y, w.r + 6, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function drawValves() {
+  for (let i = 0; i < valves.length; i++) {
+    const v = valves[i];
+    const x = v.x, y = v.y;
+    const w = v.slotW;
+    // Body
+    ctx.fillStyle = "rgba(20, 28, 48, 0.9)";
+    ctx.fillRect(x - w / 2, y - 80, w, 160);
+    ctx.strokeStyle = "rgba(140, 180, 220, 0.3)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x - w / 2, y - 80, w, 160);
+
+    // Slot track
+    ctx.fillStyle = "#0a0e1a";
+    const sx = x - w / 4, sw = w / 2;
+    ctx.fillRect(sx, y - 70, sw, 140);
+
+    // Water inside slot proportional to open
+    if (v.open > 0.01) {
+      ctx.fillStyle = v.open > 0.95 ? "#5dafe0" : "#3a78a8";
+      const fillH = 140 * v.open;
+      ctx.fillRect(sx, y + 70 - fillH, sw, fillH);
+      // gradient overlay
+      const g = ctx.createLinearGradient(0, y + 70 - fillH, 0, y + 70);
+      g.addColorStop(0, "rgba(255,255,255,0.3)");
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(sx, y + 70 - fillH, sw, fillH);
+    }
+
+    // Knob (handle)
+    const ky = y + 70 - 140 * v.knobRel;
+    ctx.fillStyle = "#ffd45a";
+    ctx.beginPath(); ctx.arc(x, ky, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#a07210";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, ky, 14, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = "#fff7d0";
+    ctx.beginPath(); ctx.arc(x - 4, ky - 4, 4, 0, Math.PI * 2); ctx.fill();
+
+    // Numeric label
+    ctx.fillStyle = "#cfd9e6";
+    ctx.font = "bold 13px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText("V" + (i + 1), x, y + 90);
+    ctx.font = "10px system-ui";
+    ctx.fillStyle = "#9fb6d0";
+    ctx.fillText(Math.round(v.open * 100) + "%", x, y - 92);
+  }
+
+  // Hint text
+  if (hintTimer > 0) {
+    ctx.fillStyle = "rgba(255, 213, 90, 0.85)";
+    ctx.font = "12px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(lv.hint || "Set the flow.", W / 2, 100);
+  }
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    if (p.alpha <= 0) continue;
+    // curved bezier path from (sx,sy) to (dx,dy)
+    const mx = (p.sx + p.dx) / 2;
+    const my = Math.min(p.sy, p.dy) - 30;
+    const t = p.t;
+    // bezier point
+    const omt = 1 - t;
+    const px = omt * omt * p.sx + 2 * omt * t * mx + t * t * p.dx;
+    const py = omt * omt * p.sy + 2 * omt * t * my + t * t * p.dy;
+    ctx.fillStyle = "rgba(140, 210, 240, " + (0.85 * p.alpha) + ")";
+    ctx.beginPath(); ctx.arc(px, py, p.size, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(255, 255, 255, " + (0.4 * p.alpha) + ")";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(px, py, p.size + 0.5, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+
+function drawRipple() {
+  if (!ripple) return;
+  const t = ripple.age / ripple.life;
+  const r = 8 + 60 * t;
+  ctx.strokeStyle = "rgba(255, 213, 90, " + (1 - t) + ")";
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(ripple.x, ripple.y, r, 0, Math.PI * 2); ctx.stroke();
+}
+
+function drawConnections() {
+  // pipes from each valve base to each wheel its pipe feeds
+  ctx.lineCap = "round";
+  for (const v of valves) {
+    const svx = v.x;
+    const svy = v.y - 80;  // top of slot
+    for (let wi = 0; wi < wheels.length; wi++) {
+      const w = wheels[wi];
+      const wp = lv.wheels[w.idx].pipes || {};
+      const gain = wp[v.idx] || 0;
+      if (gain > 0) {
+        drawPipe(svx, svy, w.x, w.y + w.r * 0.7, v.open * (gain / 50));
+      }
+    }
+  }
+}
+
+function render() {
+  drawBackground();
+  if (scene === "play" || scene === "won") {
+    drawConnections();
+    drawParticles();
+    for (const w of wheels) drawWheel(w);
+    drawValves();
+    drawRipple();
+    drawHUD();
+  }
+  if (scene === "menu") drawMenu();
+  if (scene === "select") drawLevelSelect();
+  if (scene === "won") drawWinOverlay();
+}
+
+function drawMenu() {
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ffd45a";
+  ctx.font = "bold 32px system-ui";
+  ctx.fillText("Waterwheel Forge", W / 2, H * 0.30);
+  ctx.fillStyle = "#cfd9e6";
+  ctx.font = "14px system-ui";
+  ctx.fillText("Drag the valves to spin the wheel", W / 2, H * 0.36);
+  ctx.fillText("Match the target RPM to forge the metal", W / 2, H * 0.40);
+  drawButton(W / 2, H * 0.55, 220, 50, "▶  Start", "#ffd45a", "#0a0e1a", () => goSelect());
+  drawButton(W / 2, H * 0.65, 220, 50, "How to play", "#9fb6d0", "#0a0e1a", () => showHelp());
+}
+
+function drawHelp() {
+  ctx.fillStyle = "rgba(0,0,0,0.85)";
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "center";
+  ctx.font = "bold 22px system-ui";
+  ctx.fillText("How to Play", W / 2, 80);
+  ctx.font = "14px system-ui";
+  ctx.fillStyle = "#cfd9e6";
+  const lines = [
+    "1. Each puzzle has 1-4 valves that feed water into a waterwheel.",
+    "2. Drag the yellow handle on each valve UP to open, DOWN to close.",
+    "3. The more open, the faster the wheel spins.",
+    "4. Reach and HOLD the green RPM band for 0.6 seconds to win.",
+    "5. Stay away from the red RPM marker — red means too fast.",
+    "6. 3 stars for hitting the band's center, 2 for any band hit,"
+  ];
+  let y = 130;
+  for (const l of lines) { ctx.fillText(l, W / 2, y); y += 24; }
+  drawButton(W / 2, H - 70, 220, 50, "▶  Start", "#ffd45a", "#0a0e1a", () => goSelect());
+}
+
+let helpMode = false;
+function showHelp() { helpMode = true; scene = "menu"; }
+function hideHelp() { helpMode = false; }
+
+function drawLevelSelect() {
+  ctx.fillStyle = "rgba(8, 14, 28, 0.92)";
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ffd45a";
+  ctx.font = "bold 22px system-ui";
+  ctx.fillText("Select a Level", W / 2, 36);
+  // 6 columns x 5 rows of levels
+  const cols = 6, rows = 5;
+  const padX = 24, padY = 64;
+  const cellW = (W - padX * 2) / cols;
+  const cellH = Math.min(70, (H - padY - 110) / rows);
+  for (let i = 0; i < LEVELS.length; i++) {
+    const L = LEVELS[i];
+    const c = i % cols, r = Math.floor(i / cols);
+    const x = padX + c * cellW + cellW / 2;
+    const y = padY + r * cellH + cellH / 2;
+    const unlocked = i + 1 <= save.unlocked;
+    ctx.fillStyle = unlocked ? "#18243a" : "#10141c";
+    ctx.fillRect(padX + c * cellW + 4, padY + r * cellH + 4, cellW - 8, cellH - 8);
+    ctx.strokeStyle = unlocked ? "#5dafe0" : "#3a4858";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(padX + c * cellW + 4, padY + r * cellH + 4, cellW - 8, cellH - 8);
+    // Stars
+    ctx.fillStyle = "#ffd45a";
+    ctx.font = "10px system-ui";
+    ctx.textAlign = "center";
+    if (unlocked) {
+      const s = save.stars[i + 1] || 0;
+      const st = "★".repeat(s) + "☆".repeat(3 - s);
+      ctx.fillText(st, x, y - 2);
+      ctx.fillStyle = "#cfd9e6";
+      ctx.font = "bold 14px system-ui";
+      ctx.fillText(L.id + "", x, y + 16);
+      ctx.font = "9px system-ui";
+      ctx.fillStyle = "#7c8aa0";
+      ctx.fillText("T" + L.tier, x, y + 30);
+    } else {
+      ctx.fillStyle = "#5c6878";
+      ctx.font = "20px system-ui";
+      ctx.fillText("🔒", x, y + 6);
+    }
+    // Make interactive
+    levelGrid[i] = {x: padX + c * cellW + 4, y: padY + r * cellH + 4, w: cellW - 8, h: cellH - 8, idx: i, unlocked};
+  }
+  // Back button
+  drawButton(80, H - 50, 130, 44, "Menu", "#9fb6d0", "#0a0e1a", () => goMenu());
+  drawButton(W - 80, H - 50, 130, 44, "Reset ★", "#9fb6d0", "#0a0e1a", () => { if (confirm("Reset all stars?")) { save.stars.fill(0); save.unlocked = 1; persist(); } });
+}
+
+const levelGrid = [];
+
+function drawWinOverlay() {
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ffd45a";
+  ctx.font = "bold 30px system-ui";
+  ctx.fillText("Win!", W / 2, H * 0.30);
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 48px system-ui";
+  const st = "★".repeat(wonStars) + "☆".repeat(3 - wonStars);
+  ctx.fillStyle = "#ffd45a";
+  ctx.fillText(st, W / 2, H * 0.42);
+  ctx.fillStyle = "#cfd9e6";
+  ctx.font = "14px system-ui";
+  ctx.fillText("Level " + wonLevel + " cleared.", W / 2, H * 0.50);
+  drawButton(W / 2, H * 0.62, 220, 50, "Next ▶", "#ffd45a", "#0a0e1a", () => nextLevel());
+  drawButton(W / 2, H * 0.72, 220, 50, "Replay", "#9fb6d0", "#0a0e1a", () => replayLevel());
+  drawButton(W / 2, H * 0.82, 130, 36, "Levels", "#9fb6d0", "#0a0e1a", () => goSelect());
+}
+
+let btns = [];
+function drawButton(cx, cy, w, h, label, fg, bg, cb) {
+  ctx.fillStyle = bg;
+  ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
+  ctx.strokeStyle = fg;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cx - w / 2, cy - h / 2, w, h);
+  ctx.fillStyle = fg;
+  ctx.font = "bold 16px system-ui";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(label, cx, cy);
+  ctx.textBaseline = "alphabetic";
+  btns.push({x: cx - w / 2, y: cy - h / 2, w, h, cb});
+}
+
+/* ===== State transitions ===== */
+function goMenu() { scene = "menu"; btns = []; helpMode = false; }
+function goSelect() { scene = "select"; btns = []; }
+function startLevel(idx) {
+  lvIdx = idx;
+  lv = LEVELS[idx];
+  layoutLevel(lv);
+  scene = "play";
+  btns = [];
+}
+function nextLevel() {
+  if (lvIdx + 1 < LEVELS.length) startLevel(lvIdx + 1);
+  else goSelect();
+}
+function replayLevel() { startLevel(lvIdx); }
+function onWin() {
+  if (scene !== "play") return;
+  scene = "won";
+  wonLevel = lv.id;
+  const tIdx = lvTargetWheelIdx();
+  const r = wheels[tIdx].gear_rpm_cached;
+  const c = (lv.rpm_min + lv.rpm_max) / 2;
+  let s = 1;
+  if (Math.abs(r - c) < 3) s = 3;
+  else if (Math.abs(r - c) < 7) s = 2;
+  wonStars = s;
+  if (s > (save.stars[lv.id] || 0)) save.stars[lv.id] = s;
+  if (lvIdx + 1 >= save.unlocked && lvIdx + 1 < LEVELS.length) save.unlocked = lvIdx + 2;
+  persist();
+  sndWin();
+  btns = [];
+}
+
+/* ===== Input ===== */
+function hitValve(px, py) {
+  for (let i = 0; i < valves.length; i++) {
+    const v = valves[i];
+    if (Math.abs(px - v.x) <= v.slotW / 2 && Math.abs(py - v.y) <= 80) return i;
+  }
+  return -1;
+}
+function hitButton(px, py) {
+  for (let i = 0; i < btns.length; i++) {
+    const b = btns[i];
+    if (px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) return i;
+  }
+  return -1;
+}
+function hitLevel(px, py) {
+  for (let i = 0; i < levelGrid.length; i++) {
+    const c = levelGrid[i];
+    if (px >= c.x && px <= c.x + c.w && py >= c.y && py <= c.y + c.h) return i;
+  }
+  return -1;
+}
+
+function moveValve(i, py) {
+  const v = valves[i];
+  // top = fully open, bottom = closed.  y from v.y - 70 (top) to v.y + 70 (bottom)
+  const t = (v.y + 70 - py) / 140;
+  v.knobRel = Math.max(0, Math.min(1, t));
+  const newOpen = Math.round(v.knobRel * 10) / 10;
+  if (Math.abs(newOpen - v.open) > 0.05) {
+    v.open = newOpen;
+    sndValve(v.open > 0.5);
+  }
+}
+
+function onPointerDown(px, py) {
+  audio();
+  mouseDown = true;
+  btns = [];
+  if (scene === "menu") {
+    const bi = hitButton(px, py);
+    if (bi >= 0) { btns[bi].cb(); return; }
+    if (!helpMode) goSelect();
+    else hideHelp();
+    return;
+  }
+  if (scene === "select") {
+    const li = hitLevel(px, py);
+    if (li >= 0) {
+      const cell = levelGrid[li];
+      if (cell.unlocked) startLevel(cell.idx);
+      return;
+    }
+    const bi = hitButton(px, py);
+    if (bi >= 0) { btns[bi].cb(); return; }
+    return;
+  }
+  if (scene === "play") {
+    const vi = hitValve(px, py);
+    if (vi >= 0) {
+      valves[vi].dragging = true;
+      touchedValve = vi;
+      moveValve(vi, py);
+      return;
+    }
+    return;
+  }
+  if (scene === "won") {
+    const bi = hitButton(px, py);
+    if (bi >= 0) { btns[bi].cb(); return; }
+    return;
+  }
+}
+function onPointerMove(px, py) {
+  mouseXY.x = px; mouseXY.y = py;
+  if (mouseDown && touchedValve >= 0 && scene === "play") {
+    moveValve(touchedValve, py);
+  }
+}
+function onPointerUp() {
+  mouseDown = false;
+  touchedValve = -1;
+  for (const v of valves) v.dragging = false;
+}
+
+canvas.addEventListener("mousedown", e => onPointerDown(e.clientX, e.clientY));
+canvas.addEventListener("mousemove", e => onPointerMove(e.clientX, e.clientY));
+canvas.addEventListener("mouseup",   onPointerUp);
+canvas.addEventListener("mouseleave",onPointerUp);
+canvas.addEventListener("touchstart", e => {
+  const t = e.touches[0];
+  onPointerDown(t.clientX, t.clientY);
+  e.preventDefault();
+}, {passive: false});
+canvas.addEventListener("touchmove", e => {
+  const t = e.touches[0];
+  onPointerMove(t.clientX, t.clientY);
+  e.preventDefault();
+}, {passive: false});
+canvas.addEventListener("touchend", onPointerUp);
+canvas.addEventListener("touchcancel", onPointerUp);
+
+/* ===== Main loop ===== */
+let lastT = 0;
+function loop(t) {
+  if (!lastT) lastT = t;
+  let dt = (t - lastT) / 1000;
+  if (dt > 0.1) dt = 0.1;
+  lastT = t;
+  btns = []; // reset button hitboxes each frame
+  if (scene === "play" || scene === "won") tick(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// First render
+goMenu();
+})();

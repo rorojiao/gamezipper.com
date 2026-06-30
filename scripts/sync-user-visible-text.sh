@@ -13,18 +13,14 @@ cd "$(dirname "$0")/.." || exit 1
 DRIFT=0
 REPORT=""
 
-# 1. GAMES array count (source of truth)
+# 1. GAMES array count — ONLY status:"live" (R175 fix)
 GAMES_COUNT=$(node -e "
 const c = require('fs').readFileSync('js/games-data.js', 'utf8');
 const idx = c.indexOf('const GAMES = [');
 const endIdx = c.indexOf('];', idx);
 const inner = c.substring(idx + 'const GAMES = ['.length, endIdx);
-let d = 0, n = 0;
-for (let i = 0; i < inner.length; i++) {
-  if (inner[i] === '{') { if (d === 0) n++; d++; }
-  else if (inner[i] === '}') d--;
-}
-console.log(n);
+const live = (inner.match(/status:\s*[\"']live[\"']/g) || []).length;
+console.log(live);
 " 2>/dev/null)
 
 # The current GAMES count is the ONLY allowed number in user-visible text.
