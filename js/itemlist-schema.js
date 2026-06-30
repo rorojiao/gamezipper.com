@@ -491,8 +491,11 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":486,"url":"https://gamezipper.com/canal-lock/","name":"Canal Lock"},
     {"@type":"ListItem","position":487,"url":"https://gamezipper.com/pulley-lift/","name":"Pulley Lift"},
     {"@type":"ListItem","position":488,"url":"https://gamezipper.com/ratchet-escapement/","name":"Ratchet Escapement"},
-    {"@type":"ListItem","position":489,"url":"https://gamezipper.com/hourglass-swap/","name":"Hourglass Swap"}
+    {"@type":"ListItem","position":489,"url":"https://gamezipper.com/hourglass-swap/","name":"Hourglass Swap"},
+    {"@type":"ListItem","position":490,"url":"https://gamezipper.com/electromagnet-field/","name":"Electromagnet Field Puzzle"},
+    {"@type":"ListItem","position":491,"url":"https://gamezipper.com/pneumatic-logic/","name":"Pneumatic Logic Puzzle"},
+    {"@type":"ListItem","position":492,"url":"https://gamezipper.com/sundial-shadow/","name":"Sundial Shadow"}
   ],
-  "numberOfItems":489,
-  "description":"489 free browser games you can play instantly"
+  "numberOfItems":492,
+  "description":"492 free browser games you can play instantly"
 };
