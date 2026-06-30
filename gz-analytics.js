@@ -11,7 +11,6 @@
                    after 1h, retry pattern with cloudflared QUIC timeouts). Now
                    pointing at nearest-region-beside-locks.... Watchdog pending
                    (see kanban t_a62e9485).
-   2026-06-15 19:55 fix: P0 stale CDN cache (4h TTL) — tunnel URL committed
                    pointing at dead knew-futures-... while live working tree
                    already had sustainable-spies-... (the current live URL).
                    cache v=202606159ZR bumps to never-before-seen value to
@@ -24,7 +23,7 @@
   // Direct tunnel URL: browser → Cloudflare Tunnel → BI server (10.10.29.67:8090)
   // Tunnel: cloudflared systemd service (auto-restart on failure)
   // NOTE: If tunnel URL changes, update this and redeploy
-  var EP = 'https://reveals-novel-receptor-characters.trycloudflare.com/api/collect';
+  var EP = 'https://fairly-marathon-medieval-nuke.trycloudflare.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
@@ -173,9 +172,19 @@
     ps('v_chg', { u: P, st: document.visibilityState });
   });
 
+  // 2026-06-30: enrich exit_mouse meta with clientY/dwellMs so monetag-manager.js
+  // initExitIntent() can validate "exit_mouse toward top edge" without re-binding
+  // mouseout. Previously only {u: P} was sent, making it impossible to debug why
+  // exit_intent_detected events were 0 (gz.com v5.11 loosened guard 10px→30px).
   document.addEventListener('mouseout', function(e) {
     var f = e ? e.relatedTarget || e.toElement : null;
-    if (!f) ps('exit_mouse', { u: P });
+    if (!f) {
+      var dwell = Date.now() - t0;
+      // Some browsers fire mouseout with clientY=undefined; coerce to -1 to make
+      // it explicit (handlers should treat -1 as "left viewport, too late").
+      var cy = (e && typeof e.clientY === 'number') ? e.clientY : -1;
+      ps('exit_mouse', { u: P, cy: cy, dwell: dwell });
+    }
   });
 
   var pObs = window.PerformanceObserver || window.MozPerformanceObserver || window.webkitPerformanceObserver;
