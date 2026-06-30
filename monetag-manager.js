@@ -966,6 +966,16 @@
         // Hidden by default — only shown if Monetag fires AND AdSense missed
         'opacity:0;transition:opacity 0.3s ease;',
       ].join(';');
+      // CRITICAL (v5.11): Monetag MultiTag discovers zones via <ins data-zoneid="...">.
+      // Without this ins tag, Monetag will not know to inject the inpagePush ad into
+      // monetagSlot — it falls back to "nearest <ins>" which is usually the AdSense
+      // slot OR document.body, breaking our fill detection. Tested with home banner
+      // pattern: it works because there's already a <ins data-zoneid="..."> on the page
+      // (legacy or shared config). For our brand-new slot, we must add one.
+      var monetagIns = document.createElement('ins');
+      monetagIns.className = 'eas' + String(CONFIG.ZONES.inpagePush);
+      monetagIns.setAttribute('data-zoneid', String(CONFIG.ZONES.inpagePush));
+      monetagSlot.appendChild(monetagIns);
       monetagSlot.textContent = '';
       overlay.appendChild(monetagSlot);
 
