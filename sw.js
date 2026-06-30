@@ -4,7 +4,7 @@
 // v12: navigationPreload for faster TTFB on navigation requests
 // v17: bypass browser cache for /gz-analytics.js so EP rotation propagates immediately
 //      (tunnel rotates every ~5min; SW would otherwise hold stale EP for the lifetime of the SW)
-const CACHE='gz-v61';
+const CACHE='gz-v62';
 const HTML_MAX_AGE=4*60*60*1000; // 4 hours in ms
 
 // === Install ===
@@ -57,7 +57,8 @@ self.addEventListener('install',e=>{
     'kurodoko/',
     'gokigen-naname/',
     '/geneva-drive/',
-    '/gyroscope-precession/'];
+    '/gyroscope-precession/',
+    '/orrery-planetary-gear/'];
   e.waitUntil(
     caches.open(CACHE).then(function(c){
       return Promise.allSettled(

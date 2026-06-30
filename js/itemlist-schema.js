@@ -505,8 +505,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":500,"url":"https://gamezipper.com/teleport-jumper/","name":"Teleport Jumper"},
     {"@type":"ListItem","position":501,"url":"https://gamezipper.com/kurodoko/","name":"Kurodoko"},
     {"@type":"ListItem","position":502,"url":"https://gamezipper.com/gokigen-naname/","name":"Gokigen Naname"},
-    {"@type":"ListItem","position":503,"url":"https://gamezipper.com/geneva-drive/","name":"Geneva Drive"}
+    {"@type":"ListItem","position":503,"url":"https://gamezipper.com/geneva-drive/","name":"Geneva Drive"},
+    {"@type":"ListItem","position":504,"url":"https://gamezipper.com/orrery-planetary-gear/","name":"Orrery Planetary Gear"}
   ],
-  "numberOfItems":503,
-  "description":"503 free browser games you can play instantly"
+  "numberOfItems":504,
+  "description":"504 free browser games you can play instantly"
 };
