@@ -108,6 +108,7 @@
       {n:'Save the Doge',e:'🐕',u:'/save-the-doge/',c:'puzzle'},
       {n:'Screw Jam',e:'🔩',u:'/screw-jam/',c:'puzzle'},
       {n:'Slingshot Puzzle',e:'🎯',u:'/slingshot-puzzle/',c:'puzzle'},
+      {n:'Fulcrum Balance',e:'⚖️',u:'/fulcrum-balance/',c:'puzzle'},
       {n:'Solitaire',e:'🃏',u:'/solitaire/',c:'puzzle'},
       {n:'SoliTen',e:'🔢',u:'/soliten/',c:'puzzle'},
       {n:'Twisted Tangle',e:'🧶',u:'/tangled-yarn/',c:'puzzle'},
