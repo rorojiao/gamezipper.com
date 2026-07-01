@@ -231,11 +231,11 @@
       {n:'Balls vs Bricks',e:'⚪',u:'/balls-vs-bricks/',c:'puzzle'},
 {n:'Magnet Drop',e:'🧲',u:'/magnet-drop/',c:'puzzle'},
 {n:'Rockfall',e:'🪨',u:'/rockfall/',c:'puzzle'},
-{n:'Wood Turning',e:'🪵',u:'/wood-turning/',c:'puzzle'},,{n:'Sextant Celestial',e:'🧭',u:'/sextant-celestial/',c:'puzzle'},
+{n:'Wood Turning',e:'🪵',u:'/wood-turning/',c:'puzzle'},{n:'Sextant Celestial',e:'🧭',u:'/sextant-celestial/',c:'puzzle'},
 {n:'Resonance Lock',e:'🌊',u:'/resonance-lock/',c:'puzzle'}];
 
   var cur = location.pathname;
-  var current = games.find(function(g){ return g.u === cur; });
+  var current = games.find(function(g){ return g && g.u === cur; });
 
   // SAVE current game to localStorage for homepage "Continue Playing" feature
   // This was missing — caused gz_recent_games to never be populated
@@ -251,8 +251,8 @@
       localStorage.setItem('gz_recent_games', JSON.stringify(recentList));
     } catch(e) {}
   }
-  var sameCat = games.filter(function(g){ return current && g.c === current.c && g.u !== cur; });
-   var others = games.filter(function(g){ return g.u !== cur && (!current || g.c !== current.c); });
+  var sameCat = games.filter(function(g){ return g && current && g.c === current.c && g.u !== cur; });
+   var others = games.filter(function(g){ return g && g.u !== cur && (!current || g.c !== current.c); });
 
    // Deterministic sort: use localStorage recent-play data, fallback to date-hash seed
    function getRecentGames() {
