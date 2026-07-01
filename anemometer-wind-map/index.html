@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Anemometer Wind Map — Play Free Online Cup Anemometer Wind Coupling Puzzle</title>
+<meta name="description" content="Play Anemometer Wind Map free online — the cup anemometer wind coupling puzzle! Rotate cup anemometers so each reads the target wind direction. Wind from neighbors couples into readings — a unique tri-diagonal logic challenge. 30 levels. No download, mobile-friendly.">
+<meta name="keywords" content="anemometer,wind,map,cup,wind direction,weather,meteorology,physics,puzzle,logic,browser,free,html5,meteorological instrument">
+<meta property="og:title" content="Anemometer Wind Map — Cup Anemometer Wind Coupling Puzzle">
+<meta property="og:description" content="Rotate cup anemometers to read target wind directions. Neighbor-coupled readings create a unique logic puzzle. 30 levels.">
+<meta property="og:image" content="/anemometer-wind-map/og-image.jpg">
+<meta property="og:type" content="website">
+<link rel="icon" href="/anemometer-wind-map/icon.png" type="image/png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a1929;color:#e3f2fd;user-select:none}
+#game{display:flex;flex-direction:column;height:100vh;height:100dvh}
+#hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:linear-gradient(180deg,#0d2340,#0a1929);border-bottom:1px solid #1e4976;flex-shrink:0}
+#hud .l,#hud .r{display:flex;gap:10px;align-items:center;font-size:13px}
+.btn{background:#1565c0;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;transition:background .15s,transform .1s}
+.btn:hover{background:#1976d2}.btn:active{transform:scale(.95)}
+.btn:disabled{background:#37474f;cursor:not-allowed;opacity:.6}
+#wrap{flex:1;position:relative;overflow:hidden}
+#cv{display:block;width:100%;height:100%;cursor:pointer}
+#msg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,25,41,.95);border:2px solid #4fc3f7;border-radius:12px;padding:20px 32px;text-align:center;font-size:18px;z-index:10;pointer-events:none;opacity:0;transition:opacity .3s}
+#msg.show{opacity:1}
+#msg .ttl{font-size:24px;color:#4fc3f7;margin-bottom:6px;font-weight:700}
+#msg .sub{font-size:14px;color:#90caf9}
+#help{position:absolute;bottom:8px;left:8px;right:8px;background:rgba(10,25,41,.85);border:1px solid #1e4976;border-radius:8px;padding:6px 10px;font-size:11px;color:#90caf9;text-align:center;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="game">
+<div id="hud">
+<div class="l"><button class="btn" id="prevBtn">◀ Prev</button><span id="lvl">L1/30</span><button class="btn" id="nextBtn">Next ▶</button></div>
+<div class="r"><button class="btn" id="resetBtn">↻ Reset</button><button class="btn" id="muteBtn">🔊</button></div>
+</div>
+<div id="wrap">
+<canvas id="cv"></canvas>
+<div id="msg"><div class="ttl"></div><div class="sub"></div></div>
+<div id="help">Tap a cup anemometer to rotate clockwise (45°). Each anemometer's reading = its rotation + wind from the previous one. Match all yellow targets.</div>
+</div>
+</div>
+<script>
+(function(){
+"use strict";
+const DIRS=["N","NE","E","SE","S","SW","W","NW"];
+const DIR_ANG=[-Math.PI/2,-Math.PI/4,0,Math.PI/4,Math.PI/2,3*Math.PI/4,Math.PI,-3*Math.PI/4];
+// 30 levels: [K, W_ext, targets[], solutions[]]
+const LEVELS=[[3,4,[4,2,3],[0,2,1]],[3,1,[4,3,6],[3,0,6]],[3,4,[7,5,4],[3,2,2]],[3,7,[2,1,1],[3,6,3]],[3,7,[1,1,3],[2,7,4]],[3,1,[7,6,2],[6,0,2]],[3,1,[5,6,4],[4,2,2]],[3,3,[5,4,2],[2,2,0]],[3,2,[2,5,6],[0,5,1]],[3,1,[4,5,3],[3,2,1]],[4,5,[4,5,0,5],[7,6,2,3]],[4,0,[1,0,0,6],[1,7,1,5]],[4,3,[3,3,7,4],[0,3,4,0]],[4,7,[5,1,7,2],[6,3,4,6]],[4,2,[3,1,7,7],[1,0,7,0]],[4,0,[4,1,1,7],[4,5,4,3]],[4,2,[7,0,7,5],[5,3,4,1]],[4,6,[1,1,7,3],[3,6,1,2]],[4,3,[5,5,7,0],[2,3,4,4]],[4,1,[4,1,0,7],[3,6,2,5]],[5,6,[0,7,7,7,0],[2,5,2,5,3]],[5,5,[4,7,7,3,3],[7,0,7,4,7]],[5,0,[4,2,2,7,6],[4,6,4,3,3]],[5,3,[6,2,2,5,6],[3,7,3,2,4]],[5,0,[1,2,1,0,3],[1,1,0,0,3]],[6,7,[1,0,6,2,2,5],[2,6,0,2,0,5]],[6,6,[3,4,7,0,5,0],[5,7,0,0,5,3]],[6,1,[7,5,0,4,1,7],[6,7,1,3,6,1]],[6,7,[2,3,7,7,5,4],[3,0,7,0,5,7]],[6,1,[0,7,6,4,7,4],[7,0,6,6,1,3]]];
+
+// ---- state ----
+let curLevel=0;
+let K,Wext,targets,solutions;
+let settings; // current player settings per anemometer
+let sel=-1;
+let won=false;
+let muted=false;
+let animRot=[]; // visual rotation animation per cell
+
+// ---- audio (Web Audio API procedural) ----
+let actx=null;
+function aCtx(){if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}return actx}
+function beep(freq,dur,type,vol){if(muted)return;var c=aCtx();if(!c)return;try{var o=c.createOscillator(),g=c.createGain();o.type=type||'sine';o.frequency.value=freq;o.connect(g);g.connect(c.destination);var t=c.currentTime;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol||0.15,t+0.01);g.gain.exponentialRampToValueAtTime(0.001,t+dur);o.start(t);o.stop(t+dur+0.02)}catch(e){}}
+function sfxClick(){beep(440,0.08,'square',0.08)}
+function sfxWhoosh(){beep(220,0.12,'sawtooth',0.06);setTimeout(function(){beep(330,0.1,'sawtooth',0.05)},30)}
+function sfxAlign(){beep(660,0.1,'sine',0.1);setTimeout(function(){beep(880,0.12,'sine',0.08)},60)}
+function sfxWin(){var n=[523,659,784,1047];n.forEach(function(f,i){setTimeout(function(){beep(f,0.2,'triangle',0.12)},i*90)})}
+function sfxError(){beep(200,0.15,'sawtooth',0.1);setTimeout(function(){beep(150,0.2,'sawtooth',0.08)},100)}
+
+// ---- canvas setup ----
+const cv=document.getElementById('cv');
+const ctx=cv.getContext('2d');
+let W,H,DPR;
+function resize(){
+DPR=window.devicePixelRatio||1;
+var r=cv.getBoundingClientRect();
+W=r.width;H=r.height;
+cv.width=W*DPR;cv.height=H*DPR;
+ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize',resize);
+
+// ---- level logic ----
+function computeReading(i){
+// r_i = (s_i + prev) mod 8, prev = i>0 ? s_{i-1} : Wext
+var prev=i>0?settings[i-1]:Wext;
+return (settings[i]+prev)%8;
+}
+function isSolved(){
+for(var i=0;i<K;i++)if(computeReading(i)!==targets[i])return false;
+return true;
+}
+function loadLevel(idx){
+curLevel=idx;
+var lv=LEVELS[idx];
+K=lv[0];Wext=lv[1];targets=lv[2];solutions=lv[3];
+settings=solutions.map(function(){return 0}); // start at 0
+animRot=settings.map(function(){return 0});
+sel=-1;won=false;
+document.getElementById('lvl').textContent='L'+(idx+1)+'/'+LEVELS.length;
+hideMsg();
+}
+function checkWin(){
+if(!won&&isSolved()){
+won=true;
+sfxWin();
+showMsg('Level '+(curLevel+1)+' Solved!','Wind map aligned — all readings match');
+if(curLevel<LEVELS.length-1){setTimeout(function(){loadLevel(curLevel+1)},1800)}
+else{setTimeout(function(){showMsg('All 30 Levels Complete!','You mastered the Anemometer Wind Map')},200)}
+}
+}
+
+// ---- rendering ----
+function cellLayout(){
+var pad=20;
+var topH=70; // top weather vane area
+var availW=W-2*pad;
+var cellSize=Math.min(availW/K,90);
+var totalW=cellSize*K+(K-1)*8;
+var startX=(W-totalW)/2;
+var cellY=H/2-cellSize/2+15;
+return{startX:startX,cellSize:cellSize,cellY:cellY,topH:topH,pad:pad};
+}
+function drawArrow(x,y,dirIdx,len,color,lw){
+var a=DIR_ANG[dirIdx];
+ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=lw||2;
+ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*len,y+Math.sin(a)*len);ctx.stroke();
+var hx=x+Math.cos(a)*len,hy=y+Math.sin(a)*len;
+var hl=7;
+ctx.beginPath();ctx.moveTo(hx,hy);
+ctx.lineTo(hx-Math.cos(a-0.4)*hl,hy-Math.sin(a-0.4)*hl);
+ctx.lineTo(hx-Math.cos(a+0.4)*hl,hy-Math.sin(a+0.4)*hl);
+ctx.closePath();ctx.fill();
+}
+function drawCupAnemometer(cx,cy,r,rotDir,highlight,targetDir,readingIdx){
+// body
+ctx.save();
+// glow if selected
+if(highlight){ctx.shadowColor='#4fc3f7';ctx.shadowBlur=18}
+// base circle
+ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+ctx.fillStyle=highlight?'#0d47a1':'#102a4c';
+ctx.fill();
+ctx.lineWidth=2;ctx.strokeStyle=highlight?'#4fc3f7':'#1e4976';
+ctx.stroke();
+ctx.restore();
+// central hub
+ctx.beginPath();ctx.arc(cx,cy,r*0.12,0,Math.PI*2);
+ctx.fillStyle='#90caf9';ctx.fill();
+// 4 cups arranged in cross, rotated by DIR_ANG[rotDir]
+var cupA=DIR_ANG[rotDir];
+for(var k=0;k<4;k++){
+var a=cupA+k*Math.PI/2;
+var cr=r*0.62;
+var bx=cx+Math.cos(a)*cr,by=cy+Math.sin(a)*cr;
+ctx.beginPath();ctx.arc(bx,by,r*0.18,0,Math.PI*2);
+ctx.fillStyle='#64b5f6';ctx.fill();
+ctx.strokeStyle='#0d47a1';ctx.lineWidth=1;ctx.stroke();
+// arm
+ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(bx,by);
+ctx.strokeStyle='#42a5f5';ctx.lineWidth=2;ctx.stroke();
+}
+// target ring (yellow dashed) showing target direction
+if(targetDir>=0){
+var ta=DIR_ANG[targetDir];
+var tr=r*0.95;
+// dashed arc
+ctx.save();
+ctx.setLineDash([4,3]);
+ctx.strokeStyle='#ffc107';ctx.lineWidth=2;
+ctx.beginPath();ctx.arc(cx,cy,tr,0,Math.PI*2);ctx.stroke();
+ctx.restore();
+// target arrow on ring
+var tx=cx+Math.cos(ta)*tr,ty=cy+Math.sin(ta)*tr;
+drawArrow(cx,cy,targetDir,tr,'#ffc107',2.5);
+}
+// reading indicator (small arrow from center, green if matches target, white if not)
+var matched=readingIdx===targetDir;
+drawArrow(cx,cy,readingIdx,r*0.5,matched?'#4caf50':'#e3f2fd',2);
+ctx.restore();
+}
+function drawWeatherVane(x,y){
+// external wind indicator at top
+var w=W>0?W:300;
+ctx.save();
+ctx.fillStyle='rgba(13,35,64,.8)';
+ctx.fillRect(w/2-90,y-30,180,52);
+ctx.strokeStyle='#1e4976';ctx.lineWidth=1;ctx.strokeRect(w/2-90,y-30,180,52);
+ctx.fillStyle='#90caf9';ctx.font='11px sans-serif';ctx.textAlign='center';
+ctx.fillText('External Wind',w/2,y-16);
+drawArrow(w/2,y+8,Wext,28,'#4fc3f7',2.5);
+ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';
+ctx.fillText(DIRS[Wext],w/2,y+22);
+ctx.restore();
+}
+function drawWindStream(x1,y1,x2,y2,strength){
+// animated dashed line showing wind coupling
+ctx.save();
+ctx.setLineDash([3,6]);
+ctx.strokeStyle='rgba(79,195,247,'+(0.3+strength*0.4)+')';
+ctx.lineWidth=1.5;
+ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+ctx.restore();
+}
+var t0=Date.now();
+function render(){
+ctx.clearRect(0,0,W,H);
+// bg gradient sky
+var g=ctx.createLinearGradient(0,0,0,H);
+g.addColorStop(0,'#0a1929');g.addColorStop(0.5,'#0d2340');g.addColorStop(1,'#0a1929');
+ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+// subtle wind streaks bg
+var tt=(Date.now()-t0)/1000;
+ctx.save();ctx.globalAlpha=0.08;ctx.strokeStyle='#4fc3f7';ctx.lineWidth=1;
+for(var i=0;i<8;i++){
+var yy=(i*H/8+(tt*20)%60)%H;
+ctx.beginPath();ctx.moveTo(0,yy);
+for(var xx=0;xx<=W;xx+=20){ctx.lineTo(xx,yy+Math.sin(xx*0.02+tt+i)*3)}
+ctx.stroke();
+}
+ctx.restore();
+
+var L=cellLayout();
+// top weather vane
+drawWeatherVane(W/2,L.topH);
+// wind stream from vane to first cell
+var firstCx=L.startX+L.cellSize/2;
+drawWindStream(W/2,L.topH+25,firstCx,L.cellY-5,1);
+// cells
+for(var i=0;i<K;i++){
+var cx=L.startX+i*(L.cellSize+8)+L.cellSize/2;
+var cy=L.cellY+L.cellSize/2;
+var reading=computeReading(i);
+// wind stream from previous cell
+if(i>0){
+var pcx=L.startX+(i-1)*(L.cellSize+8)+L.cellSize/2;
+drawWindStream(pcx+L.cellSize/2,cy,cx-L.cellSize/2,cy,1);
+}
+drawCupAnemometer(cx,cy,L.cellSize/2,settings[i],i===sel,targets[i],reading);
+// cell label
+ctx.fillStyle=i===sel?'#4fc3f7':'#90caf9';
+ctx.font='11px sans-serif';ctx.textAlign='center';
+ctx.fillText('#'+(i+1),cx,L.cellY-6);
+// reading text below
+var matched=reading===targets[i];
+ctx.fillStyle=matched?'#4caf50':'#fff';
+ctx.font='bold 11px sans-serif';
+ctx.fillText('Read: '+DIRS[reading]+' / Want: '+DIRS[targets[i]],cx,L.cellY+L.cellSize+16);
+}
+// solved indicator
+if(won){
+ctx.fillStyle='rgba(76,175,80,0.15)';
+ctx.fillRect(0,0,W,H);
+}
+}
+function loop(){render();requestAnimationFrame(loop)}
+
+// ---- input ----
+function handleClick(x,y){
+if(won)return;
+var L=cellLayout();
+for(var i=0;i<K;i++){
+var cx=L.startX+i*(L.cellSize+8)+L.cellSize/2;
+var cy=L.cellY+L.cellSize/2;
+var dx=x-cx,dy=y-cy;
+if(dx*dx+dy*dy<=(L.cellSize/2)*(L.cellSize/2){
+// rotate this cell clockwise (+1 mod 8)
+settings[i]=(settings[i]+1)%8;
+sfxWhoosh();
+var reading=computeReading(i);
+if(reading===targets[i]){sfxAlign()}
+sel=i;
+checkWin();
+return;
+}
+}
+// clicked outside — deselect
+sel=-1;
+}
+cv.addEventListener('click',function(e){
+var r=cv.getBoundingClientRect();
+handleClick(e.clientX-r.left,e.clientY-r.top);
+});
+// touch
+cv.addEventListener('touchstart',function(e){
+e.preventDefault();
+var r=cv.getBoundingClientRect();
+var t=e.touches[0];
+handleClick(t.clientX-r.left,t.clientY-r.top);
+},{passive:false});
+
+// ---- UI ----
+function showMsg(t,s){var m=document.getElementById('msg');m.querySelector('.ttl').textContent=t;m.querySelector('.sub').textContent=s;m.classList.add('show')}
+function hideMsg(){document.getElementById('msg').classList.remove('show')}
+document.getElementById('prevBtn').onclick=function(){if(curLevel>0)loadLevel(curLevel-1)};
+document.getElementById('nextBtn').onclick=function(){if(curLevel<LEVELS.length-1)loadLevel(curLevel+1)};
+document.getElementById('resetBtn').onclick=function(){loadLevel(curLevel)};
+document.getElementById('muteBtn').onclick=function(){muted=!muted;this.textContent=muted?'🔇':'🔊'};
+
+// keyboard
+document.addEventListener('keydown',function(e){
+if(e.key==='ArrowLeft'&&curLevel>0)loadLevel(curLevel-1);
+if(e.key==='ArrowRight'&&curLevel<LEVELS.length-1)loadLevel(curLevel+1);
+if(e.key==='r'||e.key==='R')loadLevel(curLevel);
+});
+
+// ---- progress persistence (cron-safe try/catch) ----
+function saveProg(){try{localStorage.setItem('anem-wind-map-prog',JSON.stringify(curLevel))}catch(e){}}
+function loadProg(){try{var s=localStorage.getItem('anem-wind-map-prog');if(s!==null){var v=parseInt(s);if(!isNaN(v)&&v>=0&&v<LEVELS.length)return v}}catch(e){}return 0}
+
+// ---- init ----
+resize();
+loadLevel(loadProg());
+loop();
+// save progress on level change (poll)
+setInterval(saveProg,3000);
+})();
+</script>
+</body>
+</html>
