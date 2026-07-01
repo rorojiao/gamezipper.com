@@ -1,3 +1,24 @@
+## [v1.124.0] - 2026-07-02
+### Added
+- 8 new test cases from July-2 2026 industry research (R242 Dynamic Test Intelligence cron, 4h cadence cycle 5)
+- New test cases:
+  - [S-257] **[P0]** Safari 26.5 CVE-2026-28962 WebKit Content-Security-Policy Bypass — Sensitive Info Leak
+  - [C-173] **[P1]** Chrome 149 bfcache Now Caches WebSocket Pages — Game State Restore Breakage
+  - [W-240] **[P1]** Chrome 149 On-Device AI Model Management — Built-in Browser AI APIs Can Be Refused/Deleted by User
+  - [B-171] **[P2]** Chrome 149 ARM64 Linux Official Support — Raspberry Pi 5 / Pinebook Pro New Gaming Platform
+  - [W-241] **[P2]** Chrome 150 PWA Same-Site Origin Migration — Domain Move Without Losing Install State
+  - [S-258] **[P1]** CVE-2026-5911 Chrome ServiceWorker Policy Bypass — Offline Cache Integrity Compromise
+  - [W-242] **[P2]** iOS 27 App Intents Migration — Siri AI Integration Breakage for GameZipper Deep Links
+  - [C-174] **[P3]** macOS 27 / iOS 27 "Liquid Glass" Design Language — Visual Chrome Shift Across Apple Platforms
+### Sources
+- "HTML5 game testing 2026 July new techniques" — Minimax web_search
+- "Chrome Safari browser security vulnerability July 2026" — Minimax web_search
+- "casual game UX accessibility complaint 2026" — Minimax web_search
+- "Chrome 149 150 WebGPU WebAssembly Lighthouse 14 2026" — Minimax web_search
+- "CVE-2026 WebKit vulnerability content security policy bypass" — Minimax web_search
+- "iOS 27 Golden Gate new feature WebKit API 2026" — Minimax web_search
+- Key URLs: sohu.com/a/1022622771_122004016 (Safari 26.5 CVE-2026-28962), donews.com/news/detail/8/6581068.html (Chrome 149 bfcache WebSocket), donews.com/news/detail/8/6585054.html (Chrome 149 AI model mgmt + ARM64 Linux), developers.google.cn/web/updates (Chrome 150 PWA migration), github.com/advisories/ghsa-vmw5-396h-99jh (CVE-2026-5911 ServiceWorker), so.html5.qq.com/page/real/search_news?docid=70000021_3096a27f8d385352 (iOS 27 App Intents), apple.com/cn/ios/whats-new (Liquid Glass design)
+
 ## [v1.121.0] - 2026-07-01
 ### Added
 - 8 new test cases from July-1 2026 industry research (R240 Dynamic Test Intelligence cron, 4h cadence cycle 3)
