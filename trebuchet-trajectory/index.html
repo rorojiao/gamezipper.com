@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Trebuchet Trajectory — Counterweight Siege Puzzle | GameZipper</title>
+<meta name="description" content="Play Trebuchet Trajectory free online! Set counterweight power and launch angle to hit targets with parabolic projectiles. 30 physics puzzles across 6 tiers with verified unique solutions. A fresh siege weapon puzzle — master ballistic trajectory optimization. No download, mobile-friendly.">
+<meta property="og:title" content="Trebuchet Trajectory — Counterweight Siege Puzzle">
+<meta property="og:description" content="Set counterweight power and launch angle to hit targets with parabolic projectiles. 30 verified-unique physics puzzles.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/trebuchet-trajectory/">
+<link rel="icon" href="icon.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a2e;color:#eee;font-family:system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:10px}
+h1{font-size:1.3em;margin-bottom:4px;text-align:center}
+.sub{font-size:.8em;color:#888;margin-bottom:8px;text-align:center}
+#game{border:2px solid #444;border-radius:8px;background:#2a2a3e;max-width:100%;height:auto}
+.hud{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin:8px 0;font-size:.85em}
+.hud span{background:#2a2a4e;padding:4px 10px;border-radius:6px;border:1px solid #444}
+.controls{display:flex;flex-direction:column;gap:8px;max-width:360px;width:100%;margin:8px 0}
+.dial-row{display:flex;align-items:center;gap:8px;background:#2a2a4e;padding:8px 12px;border-radius:8px;border:1px solid #444}
+.dial-row label{font-size:.8em;min-width:55px;color:#aaa}
+.dial-row input[type=range]{flex:1;accent-color:#e74c3c;cursor:pointer}
+.dial-row .val{min-width:40px;text-align:center;font-weight:bold;color:#e74c3c;font-size:.85em}
+button{background:#e74c3c;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:.95em;cursor:pointer;font-weight:bold;transition:background .2s}
+button:hover{background:#c0392b}
+button:active{transform:scale(.97)}
+.btn-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.btn-row button{padding:8px 14px;font-size:.85em}
+#msg{text-align:center;font-weight:bold;margin:6px 0;min-height:1.2em;font-size:.95em}
+.lvl-grid{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;max-width:360px;margin:6px 0}
+.lvl-btn{background:#2a2a4e;color:#888;border:1px solid #444;width:30px;height:30px;border-radius:4px;font-size:.7em;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.lvl-btn.done{background:#27ae60;color:#fff;border-color:#27ae60}
+.lvl-btn.cur{background:#e74c3c;color:#fff;border-color:#e74c3c}
+.stars{color:#f1c40f;font-size:1em}
+.foot{font-size:.7em;color:#666;margin-top:8px;text-align:center}
+</style>
+</head>
+<body>
+<h1>🏰 Trebuchet Trajectory</h1>
+<div class="sub">Counterweight Siege Puzzle — 30 ballistic levels</div>
+<canvas id="game" width="360" height="320"></canvas>
+<div class="hud">
+<span>Level <b id="lvl">1</b>/30</span>
+<span>Tier <b id="tier">1</b></span>
+<span class="stars" id="stars">★★★</span>
+</div>
+<div class="controls">
+<div class="dial-row">
+<label>⚖️ Power</label>
+<input type="range" id="power" min="0" max="3" value="0" step="1">
+<span class="val" id="pwrval">1</span>
+</div>
+<div class="dial-row">
+<label>📐 Angle</label>
+<input type="range" id="angle" min="0" max="4" value="0" step="1">
+<span class="val" id="angval">1</span>
+</div>
+<div class="btn-row">
+<button onclick="fire()">🚀 Launch</button>
+<button onclick="resetLevel()">↻ Reset</button>
+<button onclick="prevLevel()">◀ Prev</button>
+<button onclick="nextLevel()">▶ Next</button>
+</div>
+</div>
+<div id="msg">Set power & angle, then Launch!</div>
+<div class="lvl-grid" id="grid"></div>
+<div class="foot">30 verified-unique physics puzzles • parabolic trajectory optimization • HTML5</div>
+
+<script>
+const LEVELS=[{"l":1,"t":1,"np":4,"na":5,"v":[8.0,10.0,12.0,14.0],"a":[35.0,42.5,50.0,57.5,65.0],"sp":0,"sa":3,"tx":163,"ty":280,"tw":12,"o":[]},{"l":2,"t":1,"np":4,"na":5,"v":[8.0,10.0,12.0,14.0],"a":[35.0,42.5,50.0,57.5,65.0],"sp":1,"sa":3,"tx":224,"ty":280,"tw":12,"o":[]},{"l":3,"t":1,"np":4,"na":5,"v":[8.0,10.0,12.0,14.0],"a":[35.0,42.5,50.0,57.5,65.0],"sp":2,"sa":3,"tx":298,"ty":280,"tw":12,"o":[]},{"l":4,"t":1,"np":4,"na":5,"v":[8.0,10.0,12.0,14.0],"a":[35.0,42.5,50.0,57.5,65.0],"sp":0,"sa":3,"tx":163,"ty":280,"tw":12,"o":[]},{"l":5,"t":1,"np":4,"na":5,"v":[8.0,10.0,12.0,14.0],"a":[35.0,42.5,50.0,57.5,65.0],"sp":0,"sa":3,"tx":163,"ty":280,"tw":12,"o":[]},{"l":6,"t":2,"np":5,"na":6,"v":[8.0,9.75,11.5,13.25,15.0],"a":[30.0,37.6,45.2,52.8,60.4,68.0],"sp":0,"sa":4,"tx":155,"ty":280,"tw":12,"o":[]},{"l":7,"t":2,"np":5,"na":6,"v":[8.0,9.75,11.5,13.25,15.0],"a":[30.0,37.6,45.2,52.8,60.4,68.0],"sp":1,"sa":4,"tx":205,"ty":280,"tw":12,"o":[]},{"l":8,"t":2,"np":5,"na":6,"v":[8.0,9.75,11.5,13.25,15.0],"a":[30.0,37.6,45.2,52.8,60.4,68.0],"sp":0,"sa":5,"tx":130,"ty":280,"tw":12,"o":[{"type":"rect","x":147,"y":268,"w":28,"h":12}]},{"l":9,"t":2,"np":5,"na":6,"v":[8.0,9.75,11.5,13.25,15.0],"a":[30.0,37.6,45.2,52.8,60.4,68.0],"sp":1,"sa":4,"tx":205,"ty":280,"tw":12,"o":[{"type":"rect","x":127,"y":262,"w":28,"h":18}]},{"l":10,"t":2,"np":5,"na":6,"v":[8.0,9.75,11.5,13.25,15.0],"a":[30.0,37.6,45.2,52.8,60.4,68.0],"sp":0,"sa":4,"tx":155,"ty":280,"tw":12,"o":[{"type":"rect","x":112,"y":266,"w":28,"h":14}]},{"l":11,"t":3,"np":6,"na":7,"v":[8.5,9.9,11.3,12.7,14.1,15.5],"a":[28.0,35.0,42.0,49.0,56.0,63.0,70.0],"sp":0,"sa":6,"tx":133,"ty":280,"tw":12,"o":[{"type":"rect","x":157,"y":222,"w":8,"h":58}]},{"l":12,"t":3,"np":6,"na":7,"v":[8.5,9.9,11.3,12.7,14.1,15.5],"a":[28.0,35.0,42.0,49.0,56.0,63.0,70.0],"sp":1,"sa":4,"tx":225,"ty":280,"tw":12,"o":[{"type":"rect","x":162,"y":230,"w":8,"h":50}]},{"l":13,"t":3,"np":6,"na":7,"v":[8.5,9.9,11.3,12.7,14.1,15.5],"a":[28.0,35.0,42.0,49.0,56.0,63.0,70.0],"sp":0,"sa":4,"tx":181,"ty":280,"tw":12,"o":[{"type":"rect","x":125,"y":215,"w":8,"h":65}]},{"l":14,"t":3,"np":6,"na":7,"v":[8.5,9.9,11.3,12.7,14.1,15.5],"a":[28.0,35.0,42.0,49.0,56.0,63.0,70.0],"sp":0,"sa":4,"tx":181,"ty":280,"tw":12,"o":[{"type":"rect","x":121,"y":221,"w":8,"h":59}]},{"l":15,"t":3,"np":6,"na":7,"v":[8.5,9.9,11.3,12.7,14.1,15.5],"a":[28.0,35.0,42.0,49.0,56.0,63.0,70.0],"sp":0,"sa":6,"tx":133,"ty":280,"tw":12,"o":[{"type":"rect","x":153,"y":229,"w":8,"h":51}]},{"l":16,"t":4,"np":7,"na":8,"v":[9.0,10.17,11.33,12.5,13.67,14.83,16.0],"a":[28.0,34.3,40.6,46.9,53.1,59.4,65.7,72.0],"sp":0,"sa":7,"tx":134,"ty":280,"tw":12,"o":[{"type":"rect","x":142,"y":204,"w":8,"h":76}]},{"l":17,"t":4,"np":7,"na":8,"v":[9.0,10.17,11.33,12.5,13.67,14.83,16.0],"a":[28.0,34.3,40.6,46.9,53.1,59.4,65.7,72.0],"sp":2,"sa":7,"tx":185,"ty":280,"tw":12,"o":[{"type":"rect","x":143,"y":191,"w":8,"h":89}]},{"l":18,"t":4,"np":7,"na":8,"v":[9.0,10.17,11.33,12.5,13.67,14.83,16.0],"a":[28.0,34.3,40.6,46.9,53.1,59.4,65.7,72.0],"sp":3,"sa":4,"tx":337,"ty":280,"tw":12,"o":[{"type":"rect","x":136,"y":193,"w":8,"h":87}]},{"l":19,"t":4,"np":7,"na":8,"v":[9.0,10.17,11.33,12.5,13.67,14.83,16.0],"a":[28.0,34.3,40.6,46.9,53.1,59.4,65.7,72.0],"sp":3,"sa":4,"tx":337,"ty":280,"tw":12,"o":[{"type":"rect","x":133,"y":204,"w":8,"h":76}]},{"l":20,"t":4,"np":7,"na":8,"v":[9.0,10.17,11.33,12.5,13.67,14.83,16.0],"a":[28.0,34.3,40.6,46.9,53.1,59.4,65.7,72.0],"sp":0,"sa":7,"tx":134,"ty":280,"tw":12,"o":[{"type":"rect","x":153,"y":195,"w":8,"h":85}]},{"l":21,"t":5,"np":8,"na":9,"v":[9.0,10.07,11.14,12.21,13.29,14.36,15.43,16.5],"a":[27.0,32.6,38.2,43.9,49.5,55.1,60.8,66.4,72.0],"sp":0,"sa":8,"tx":134,"ty":280,"tw":12,"o":[{"type":"rect","x":138,"y":220,"w":8,"h":60},{"type":"rect","x":45,"y":48,"w":275,"h":6}]},{"l":22,"t":5,"np":8,"na":9,"v":[9.0,10.07,11.14,12.21,13.29,14.36,15.43,16.5],"a":[27.0,32.6,38.2,43.9,49.5,55.1,60.8,66.4,72.0],"sp":0,"sa":8,"tx":134,"ty":280,"tw":12,"o":[{"type":"rect","x":148,"y":220,"w":8,"h":60},{"type":"rect","x":45,"y":43,"w":275,"h":6}]},{"l":23,"t":5,"np":8,"na":9,"v":[9.0,10.07,11.14,12.21,13.29,14.36,15.43,16.5],"a":[27.0,32.6,38.2,43.9,49.5,55.1,60.8,66.4,72.0],"sp":0,"sa":8,"tx":134,"ty":280,"tw":12,"o":[{"type":"rect","x":137,"y":220,"w":8,"h":60},{"type":"rect","x":45,"y":51,"w":275,"h":6}]},{"l":24,"t":5,"np":8,"na":9,"v":[9.0,10.07,11.14,12.21,13.29,14.36,15.43,16.5],"a":[27.0,32.6,38.2,43.9,49.5,55.1,60.8,66.4,72.0],"sp":0,"sa":8,"tx":134,"ty":280,"tw":12,"o":[{"type":"rect","x":140,"y":220,"w":8,"h":60},{"type":"rect","x":45,"y":46,"w":275,"h":6}]},{"l":25,"t":5,"np":8,"na":9,"v":[9.0,10.07,11.14,12.21,13.29,14.36,15.43,16.5],"a":[27.0,32.6,38.2,43.9,49.5,55.1,60.8,66.4,72.0],"sp":0,"sa":8,"tx":134,"ty":280,"tw":12,"o":[{"type":"rect","x":140,"y":220,"w":8,"h":60},{"type":"rect","x":45,"y":46,"w":275,"h":6}]},{"l":26,"t":6,"np":9,"na":10,"v":[9.5,10.44,11.38,12.31,13.25,14.19,15.12,16.06,17.0],"a":[26.0,31.3,36.7,42.0,47.3,52.7,58.0,63.3,68.7,74.0],"sp":6,"sa":9,"tx":268,"ty":280,"tw":12,"o":[{"type":"rect","x":114,"y":200,"w":8,"h":80},{"type":"rect","x":232,"y":200,"w":8,"h":80},{"type":"rect","x":45,"y":32,"w":275,"h":6}]},{"l":27,"t":6,"np":9,"na":10,"v":[9.5,10.44,11.38,12.31,13.25,14.19,15.12,16.06,17.0],"a":[26.0,31.3,36.7,42.0,47.3,52.7,58.0,63.3,68.7,74.0],"sp":2,"sa":9,"tx":171,"ty":280,"tw":12,"o":[{"type":"rect","x":121,"y":200,"w":8,"h":80},{"type":"rect","x":216,"y":200,"w":8,"h":80},{"type":"rect","x":45,"y":32,"w":275,"h":6}]},{"l":28,"t":6,"np":9,"na":10,"v":[9.5,10.44,11.38,12.31,13.25,14.19,15.12,16.06,17.0],"a":[26.0,31.3,36.7,42.0,47.3,52.7,58.0,63.3,68.7,74.0],"sp":6,"sa":9,"tx":268,"ty":280,"tw":12,"o":[{"type":"rect","x":105,"y":200,"w":8,"h":80},{"type":"rect","x":229,"y":200,"w":8,"h":80},{"type":"rect","x":45,"y":32,"w":275,"h":6}]},{"l":29,"t":6,"np":9,"na":10,"v":[9.5,10.44,11.38,12.31,13.25,14.19,15.12,16.06,17.0],"a":[26.0,31.3,36.7,42.0,47.3,52.7,58.0,63.3,68.7,74.0],"sp":6,"sa":9,"tx":268,"ty":280,"tw":12,"o":[{"type":"rect","x":105,"y":200,"w":8,"h":80},{"type":"rect","x":229,"y":200,"w":8,"h":80},{"type":"rect","x":45,"y":32,"w":275,"h":6}]},{"l":30,"t":6,"np":9,"na":10,"v":[9.5,10.44,11.38,12.31,13.25,14.19,15.12,16.06,17.0],"a":[26.0,31.3,36.7,42.0,47.3,52.7,58.0,63.3,68.7,74.0],"sp":6,"sa":9,"tx":268,"ty":280,"tw":12,"o":[{"type":"rect","x":105,"y":200,"w":8,"h":80},{"type":"rect","x":229,"y":200,"w":8,"h":80},{"type":"rect","x":45,"y":32,"w":275,"h":6}]}];
+const G=9.81,SCALE=18,CW=360,GY=280,LX=35,LY=240,TH=18;
+const cv=document.getElementById('game'),cx=cv.getContext('2d');
+let curLvl=0,powerIdx=0,angleIdx=0;
+let projectile=null,trail=[];
+let solved=new Set();
+let msgEl=document.getElementById('msg');
+let attempting=false;
+
+// Load progress
+try{const p=JSON.parse(localStorage.getItem('tt_progress')||'[]');if(Array.isArray(p))p.forEach(i=>solved.add(i));}catch(e){}
+
+function cur(){return LEVELS[curLvl];}
+function getV(i){return cur().v[i];}
+function getA(i){return cur().a[i];}
+
+function setDials(){
+  const lv=cur();
+  powerIdx=Math.min(powerIdx,lv.np-1);
+  angleIdx=Math.min(angleIdx,lv.na-1);
+  const pe=document.getElementById('power'),ae=document.getElementById('angle');
+  pe.max=lv.np-1;ae.max=lv.na-1;
+  pe.value=powerIdx;ae.value=angleIdx;
+  document.getElementById('pwrval').textContent=(powerIdx+1)+'/'+lv.np;
+  document.getElementById('angval').textContent=(angleIdx+1)+'/'+lv.na;
+}
+document.getElementById('power').oninput=e=>{powerIdx=+e.target.value;document.getElementById('pwrval').textContent=(powerIdx+1)+'/'+cur().np;previewTraj();};
+document.getElementById('angle').oninput=e=>{angleIdx=+e.target.value;document.getElementById('angval').textContent=(angleIdx+1)+'/'+cur().na;previewTraj();};
+
+function simulate(v0,thetaDeg,obstacles){
+  const th=thetaDeg*Math.PI/180;
+  const vx=v0*Math.cos(th),vy=v0*Math.sin(th);
+  let t=0,dt=0.004,px=LX,py=LY;
+  const pts=[[LX,LY,false]];
+  while(t<8){
+    t+=dt;
+    const nx=LX+vx*t*SCALE,ny=LY-(vy*t-.5*G*t*t)*SCALE;
+    if(ny>=GY){const f=(ny-py)!==0?(GY-py)/(ny-py):1;const gx=px+f*(nx-px);pts.push([gx,GY,false]);return{pts,landX:gx,landY:GY,blocked:false};}
+    if(nx>CW+5||nx<-5){pts.push([nx,Math.min(ny,GY),false]);return{pts,landX:nx,landY:Math.min(ny,GY),blocked:false};}
+    for(const o of obstacles){if(nx>=o.x&&nx<=o.x+o.w&&ny>=o.y&&ny<=o.y+o.h){pts.push([nx,ny,true]);return{pts,landX:nx,landY:ny,blocked:true};}}
+    pts.push([nx,ny,false]);px=nx;py=ny;
+  }
+  return{pts,landX:px,landY:py,blocked:false};
+}
+
+let preview=null;
+function previewTraj(){
+  if(attempting)return;
+  const v0=getV(powerIdx),th=getA(angleIdx);
+  preview=simulate(v0,th,cur().o||[]);
+  draw();
+}
+
+function draw(){
+  cx.fillStyle='#1a1a2e';cx.fillRect(0,0,CW,320);
+  // Sky gradient
+  const sg=cx.createLinearGradient(0,0,0,GY);sg.addColorStop(0,'#1a1a4e');sg.addColorStop(1,'#3a3a6e');
+  cx.fillStyle=sg;cx.fillRect(0,0,CW,GY);
+  // Ground
+  cx.fillStyle='#3d5a3d';cx.fillRect(0,GY,CW,40);
+  cx.fillStyle='#2d4a2d';cx.fillRect(0,GY,CW,4);
+  // Grid lines
+  cx.strokeStyle='rgba(255,255,255,0.03)';cx.lineWidth=1;
+  for(let i=40;i<CW;i+=40){cx.beginPath();cx.moveTo(i,0);cx.lineTo(i,GY);cx.stroke();}
+  for(let i=40;i<GY;i+=40){cx.beginPath();cx.moveTo(0,i);cx.lineTo(CW,i);cx.stroke();}
+
+  const lv=cur();
+  // Obstacles
+  if(lv.o)for(const o of lv.o){
+    cx.fillStyle='#555';cx.fillRect(o.x,o.y,o.w,o.h);
+    cx.fillStyle='#666';cx.fillRect(o.x,o.y,o.w,2);
+  }
+
+  // Target
+  const tx=lv.tx,ty=lv.ty;
+  cx.fillStyle='#e74c3c';cx.fillRect(tx-lv.tw/2,ty-3,lv.tw,6);
+  cx.strokeStyle='#e74c3c';cx.lineWidth=2;
+  cx.beginPath();cx.moveTo(tx,ty-3);cx.lineTo(tx,ty-20);
+  cx.stroke();
+  cx.fillStyle='#e74c3c';cx.beginPath();cx.arc(tx,ty-20,4,0,Math.PI*2);cx.fill();
+
+  // Trebuchet
+  drawTrebuchet(LX,LY,powerIdx,angleIdx);
+
+  // Preview trajectory (dotted)
+  if(preview&&!attempting&&preview.pts.length>1){
+    cx.strokeStyle='rgba(231,76,60,0.25)';cx.lineWidth=1.5;
+    cx.setLineDash([3,4]);
+    cx.beginPath();
+    cx.moveTo(preview.pts[0][0],preview.pts[0][1]);
+    for(let i=1;i<preview.pts.length;i++)cx.lineTo(preview.pts[i][0],preview.pts[i][1]);
+    cx.stroke();cx.setLineDash([]);
+  }
+
+  // Projectile + trail
+  if(projectile){
+    cx.strokeStyle='rgba(255,200,0,0.4)';cx.lineWidth=2;
+    cx.beginPath();
+    for(let i=0;i<trail.length;i++){if(i===0)cx.moveTo(trail[i][0],trail[i][1]);else cx.lineTo(trail[i][0],trail[i][1]);}
+    cx.stroke();
+    cx.fillStyle='#f1c40f';
+    cx.beginPath();cx.arc(projectile[0],projectile[1],4,0,Math.PI*2);cx.fill();
+  }
+
+  // Level info
+  cx.fillStyle='#666';cx.font='10px monospace';cx.textAlign='right';
+  cx.fillText('L'+(curLvl+1)+' T'+lv.t,CW-6,12);
+  cx.textAlign='left';
+}
+
+function drawTrebuchet(x,y,pi,ai){
+  // Base
+  cx.fillStyle='#5a4a3a';cx.fillRect(x-10,y,20,4);
+  // Frame (A-frame)
+  cx.strokeStyle='#6a5a4a';cx.lineWidth=3;
+  cx.beginPath();cx.moveTo(x-8,y);cx.lineTo(x,y-28);cx.lineTo(x+8,y);cx.stroke();
+  // Arm (rotates with angle)
+  const th=getA(ai)*Math.PI/180;
+  const armLen=24;
+  const ex=x+Math.cos(th)*armLen*0+5; // pivot offset
+  cx.save();
+  cx.translate(x,y-28);
+  cx.rotate(-th);
+  cx.strokeStyle='#8a7a6a';cx.lineWidth=3;
+  cx.beginPath();cx.moveTo(0,0);cx.lineTo(armLen,0);cx.stroke();
+  // Sling/counterweight
+  cx.fillStyle='#444';cx.beginPath();cx.arc(-12,4,5,0,Math.PI*2);cx.fill(); // counterweight
+  cx.fillStyle='#e74c3c';cx.beginPath();cx.arc(armLen,0,3,0,Math.PI*2);cx.fill(); // projectile
+  cx.restore();
+}
+
+// Audio
+let actx=null;
+function initAudio(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();}
+function beep(f,d,type='square',v=0.1){
+  if(!actx)return;
+  const o=actx.createOscillator(),g=actx.createGain();
+  o.type=type;o.frequency.value=f;o.connect(g);g.connect(actx.destination);
+  g.gain.setValueAtTime(v,actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+d);
+  o.start();o.stop(actx.currentTime+d);
+}
+function sfxCreak(){beep(150,0.08,'sawtooth',0.08);}
+function sfxClick(){beep(300,0.04,'square',0.06);}
+function sfxWhoosh(){if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.type='sawtooth';o.frequency.setValueAtTime(400,actx.currentTime);o.frequency.exponentialRampToValueAtTime(100,actx.currentTime+0.3);g.gain.setValueAtTime(0.08,actx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+0.3);o.start();o.stop(actx.currentTime+0.3);}
+function sfxThud(){beep(80,0.15,'sine',0.12);}
+function sfxWin(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.15,'square',0.08),i*80));}
+function sfxError(){beep(120,0.2,'square',0.1);}
+
+function fire(){
+  if(attempting)return;
+  initAudio();
+  attempting=true;
+  msgEl.textContent='🚀 Launching...';
+  sfxWhoosh();
+  const v0=getV(powerIdx),th=getA(angleIdx);
+  const res=simulate(v0,th,cur().o||[]);
+  trail=[];
+  let idx=0;
+  const step=Math.max(1,Math.floor(res.pts.length/60));
+
+  function animate(){
+    if(idx<res.pts.length){
+      for(let s=0;s<step&&idx<res.pts.length;s++){trail.push(res.pts[idx]);idx++;}
+      projectile=trail[trail.length-1];
+      draw();
+      requestAnimationFrame(animate);
+    } else {
+      // Check hit
+      const lv=cur();
+      const lx=res.landX,ly=res.landY;
+      const hit=!res.blocked&&Math.abs(lx-lv.tx)<lv.tw&&Math.abs(ly-lv.ty)<TH;
+      if(hit){
+        sfxWin();
+        solved.add(curLvl);
+        try{localStorage.setItem('tt_progress',JSON.stringify([...solved]));}catch(e){}
+        msgEl.innerHTML='🎯 <b>Target Hit!</b> Level '+(curLvl+1)+' solved!';
+        drawGrid();
+        setTimeout(()=>{attempting=false;projectile=null;trail=[];if(curLvl<29)nextLevel();else{previewTraj();draw();}},1500);
+      } else {
+        sfxThud();
+        if(res.blocked){msgEl.textContent='🚫 Blocked by obstacle! Try different power/angle.';}
+        else if(lx>lv.tx+lv.tw){msgEl.textContent='📏 Overshot! ('+Math.round(lx)+' vs target '+lv.tx+')';}
+        else if(lx<lv.tx-lv.tw){msgEl.textContent='📏 Undershot! ('+Math.round(lx)+' vs target '+lv.tx+')';}
+        else{msgEl.textContent='❌ Close but no hit. Adjust slightly!';}
+        setTimeout(()=>{attempting=false;projectile=null;trail=[];previewTraj();draw();},1200);
+      }
+    }
+  }
+  animate();
+}
+
+function loadLevel(i){
+  curLvl=Math.max(0,Math.min(29,i));
+  powerIdx=0;angleIdx=0;
+  attempting=false;projectile=null;trail=[];
+  document.getElementById('lvl').textContent=curLvl+1;
+  document.getElementById('tier').textContent=cur().t;
+  setDials();
+  previewTraj();
+  draw();
+  drawGrid();
+  msgEl.textContent='Level '+(curLvl+1)+' — Tier '+cur().t+' — Set power & angle!';
+}
+
+function nextLevel(){loadLevel(curLvl+1);}
+function prevLevel(){loadLevel(curLvl-1);}
+function resetLevel(){powerIdx=0;angleIdx=0;setDials();previewTraj();draw();msgEl.textContent='Level reset.';}
+
+function drawGrid(){
+  const g=document.getElementById('grid');
+  g.innerHTML='';
+  for(let i=0;i<30;i++){
+    const b=document.createElement('div');
+    b.className='lvl-btn'+(solved.has(i)?' done':'')+(i===curLvl?' cur':'');
+    b.textContent=i+1;
+    b.onclick=()=>loadLevel(i);
+    g.appendChild(b);
+  }
+}
+
+// Keyboard
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft')powerIdx=Math.max(0,powerIdx-1);
+  if(e.key==='ArrowRight')powerIdx=Math.min(cur().np-1,powerIdx+1);
+  if(e.key==='ArrowDown')angleIdx=Math.max(0,angleIdx-1);
+  if(e.key==='ArrowUp')angleIdx=Math.min(cur().na-1,angleIdx+1);
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();fire();return;}
+  if(e.key==='n')nextLevel();
+  if(e.key==='p')prevLevel();
+  setDials();previewTraj();draw();
+});
+
+// Init
+loadLevel(0);
+</script>
+</body>
+</html>
