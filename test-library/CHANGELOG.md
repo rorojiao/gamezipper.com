@@ -1,3 +1,23 @@
+## [v1.122.0] - 2026-07-01
+### Added
+- 8 new test cases from July-1 2026 industry research (R241 Dynamic Test Intelligence cron, 4h cadence cycle 4)
+- [S-256] **[P1]** iOS 26.3/iPadOS 26.3 Beta Broke Continuity Features (iPhone Mirroring, AirPlay, Continuity Camera, Sidecar) — OS-beta instability impacting game testing
+- [P-109] **[P2]** iOS WebKit Engine Mandate — ~28.6% Performance Penalty vs Desktop Chromium (Microsoft engineer benchmark)
+- [B-169] **[P2]** Browser Extension + Cache + Cookie Conflict Breaking Page Scripts — ad-blocker/script-blocker compatibility
+- [S-257] **[P2]** AI Deepfake Social Engineering Against Players — voice/video phishing impersonation of GameZipper staff
+- [S-258] **[P2]** AI Agent as Attack Surface — malicious/compromised autonomous AI agents targeting game APIs
+- [S-259] **[P2]** H5 Marketing Game Malware Impersonation — phishing disguised as casual mini-games, brand contamination
+- [P-110] **[P2]** Canvas Particle System Performance Degradation — draw-call bottleneck in heavy-particle games
+- [W-238] **[P3]** Google 2026 Core Search Update (May) — SEO traffic volatility & ranking shift
+### Sources
+- Search query: "HTML5 game testing 2026 new techniques browser automation Playwright"
+- Search query: "browser game bug report 2026 WebGL Canvas mobile Safari iOS"
+- Search query: "new browser security vulnerability 2026 XSS clickjacking CSP bypass"
+- Search query: "casual game UX complaint 2026 haptic feedback dark mode accessibility"
+- Search query: "Chrome Edge Safari update 2026 July breaking changes web API deprecated"
+- Key URLs: so.html5.qq.com (iOS 26.3 beta bug, iOS WebKit mandate, extension/cache conflict, AI agent attack surface), sohu.com (AI deepfake threat report), toutiao.com (H5 marketing games), blog.csdn.net (Canvas particle perf), k.sina.com.cn (Google core update)
+- Note: SearXNG web-search-prime was down (404); used Minimax web_search for all 5 queries
+
 ## [v1.121.0] - 2026-07-01
 ### Added
 - 8 new test cases from July-1 2026 industry research (R240 Dynamic Test Intelligence cron, 4h cadence cycle 3)
