@@ -224,6 +224,16 @@ function init(){
   loadLevel(curLevel);
   setupButtons();
   rafId=requestAnimationFrame(loop);
+  // R251 fix: fitCanvas may read 0 clientWidth during initial load before layout settles.
+  // Re-fit on next frame + window resize.
+  requestAnimationFrame(function(){fitCanvas();loadLevel(curLevel);});
+  window.addEventListener('resize',function(){fitCanvas();});
+  // Re-fit after footer appears (game-footer.js loads async)
+  var _fc=setInterval(function(){
+    var f=document.getElementById('game-footer');
+    if(f&&f.offsetHeight>0){fitCanvas();clearInterval(_fc);}
+  },2000);
+  setTimeout(function(){clearInterval(_fc);},30000);
 }
 function fitCanvas(){
   var wrap=document.querySelector('#wrap');
