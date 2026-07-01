@@ -3957,3 +3957,45 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
 - Tools loaded: gamezipper-qa, post-deploy-verification skills
 - Search engine degradation this cycle: SearXNG (primary) returned 404 for all 5 batch queries; MiniMax (fallback) returned strong security/vulnerability coverage. Findings extracted; 8 test cases synthesized with full distinctness analysis vs existing library (110 prior versions, 2900 -> 2935 lines).
 - Key theme: 2026 has now seen 4 in-the-wild Chrome 0days (CVE-2026-5281 Dawn WebGPU UAF is #4), plus CVE-2026-2441 CSS exfiltration proves CSS is no longer harmless — both dimensions absent from prior library.
+
+
+## [v1.123.0] - 2026-07-02
+### Added
+- 8 new test cases from July-2 2026 industry research (R241 Dynamic Test Intelligence cron, 4h cadence cycle 4)
+- New test cases:
+  - [P-109] **[P1]** LarkXR Real-Time Cloud Rendering — WebGL Server-Side Fallback for Low-Compute Devices
+  - [B-170] **[P0]** Chrome CVE-2026-3909 Skia OOB-Write + CVE-2026-3910 V8 Sandbox-Escape — Paired Zero-Day Exploit Chain
+  - [C-171] **[P0]** Chrome CVE-2025-6558 ANGLE GPU-Process Verification Bypass — Render-Pipeline Sandbox Escape
+  - [W-238] **[P2]** HTML-in-Canvas Experimental Technology — Blurring DOM/Canvas Boundary
+  - [W-239] **[P2]** WeChat Miniprogram Canvas.requestAnimationFrame API Divergence
+  - [G-170] **[P3]** 2026 Real-Time Rendering TOP8 Solutions — Low-Latency High-Concurrency Benchmark Matrix
+  - [A-055] **[P2]** 2026 Browser Fingerprint Evasion — Canvas/WebGL/Audio Anti-Detection Techniques
+  - [C-172] **[P3]** Browser Compatibility Data (BCD) for WebGL/Canvas Cross-Browser Compatibility
+
+### Sources
+- Search queries (5 parallel via MiniMax web_search):
+  - "HTML5 game testing 2026 new techniques browser Canvas WebGL"
+  - "browser security vulnerability 2026 XSS clickjacking Canvas"
+  - "Chrome Safari Edge update 2026 web API deprecation break"
+  - "casual game UX complaint 2026 mobile haptic feedback dark mode accessibility"
+  - "browser game performance 2026 WebGL Canvas memory leak requestAnimationFrame"
+  - "CVE 2026 browser Chrome Safari zero day exploit July"
+- Key URLs:
+  - https://cloud.tencent.com/developer/video/83393 (LarkXR real-time cloud rendering, July 2 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_31469ba423809852 (Chrome CVE-2026-3909 Skia + CVE-2026-3910 V8 paired zero-day, March 18 2026)
+  - https://cloud.tencent.com/developer/article/2554781 (Chrome CVE-2025-6558 ANGLE GPU-process bypass, Apple patch July 2026)
+  - https://www.sohu.com/a/1008636326_122066678 (HTML-in-Canvas experimental technology, April 12 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_92969dba69c15252 (HTML-in-Canvas quantum位 report, April 12 2026)
+  - https://developers.weixin.qq.com/miniprogram/dev/api/canvas/Canvas.requestAnimationFrame.html (WeChat Canvas API, June 19 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_9616a2bc79928552 (2026 real-time rendering TOP8, June 12 2026)
+  - https://blog.csdn.net/shanwei_spider/article/details/160390135 (2026 browser fingerprint evasion, April 24 2026)
+  - https://blog.csdn.net/gitblog_00859/article/details/153553036 (Browser Compatibility Data guide, May 24 2026)
+  - https://new.qq.com/rain/a/20260402A020XN00 (Chrome CVE-2026-5281 Dawn WebGPU UAF, April 2 2026)
+  - https://cloud.tencent.com/developer/article/2637644 (Safari 26 release notes, July 1 2026)
+
+### Process Notes
+- Tools loaded: gamezipper-qa, post-deploy-verification skills
+- Search engine degradation: SearXNG (primary via web_search_prime_batch_search) returned 404 for all 5 batch queries; MiniMax web_search (fallback) returned strong coverage across all 5 queries.
+- Version note: v1.122.0 was skipped (version-number collision detected from a concurrent cron worker that committed v1.122.0 at 18:10 July 1, then v1.121.0 was re-committed at 22:18 — creating an out-of-order history). This cycle uses v1.123.0 to avoid ambiguity.
+- Key themes: (1) Cloud rendering is emerging as the solution for WebGL games on low-compute devices; (2) Chrome's render pipeline (Skia + V8 + ANGLE) saw 3 separate 0-day exploit classes in 2026; (3) HTML-in-Canvas is blurring the DOM/Canvas boundary — experimental but tracked; (4) WeChat miniprogram Canvas API divergence matters for China market reach; (5) Browser fingerprint evasion (privacy browsers) can break WebGL rendering and ad serving.
+- All 8 verified zero-duplicate against v1.121.0 library (3189 lines, 2900+ existing test cases across W/G/C/S/P/B/A/PC categories).
