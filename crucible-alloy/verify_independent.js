@@ -16,16 +16,13 @@ const { combinations_with_replacement } = (() => {
   }
   return { combinations_with_replacement: (arr, r) => [...cwr(arr, r)] };
 })();
-
 const levels = JSON.parse(fs.readFileSync('levels.json','utf8'));
 let allOK = true, totalUnique = 0;
-
 for (const lv of levels) {
   const N = lv.N, dials = lv.dials, K = dials.length, start = lv.start, cap = 12;
   const stateMin = new Map(), stateSols = new Map();
   const startKey = start.join(',');
-  stateMin.set(startKey, 0);
-  stateSols.set(startKey, new Set(['']));
+  stateMin.set(startKey, 0); stateSols.set(startKey, new Set(['']));
   for (let length = 1; length <= cap; length++) {
     for (const combo of combinations_with_replacement([...Array(K).keys()], length)) {
       let st = [start[0], start[1], start[2]];
@@ -44,11 +41,8 @@ for (const lv of levels) {
   let st = [start[0], start[1], start[2]];
   for (const di of lv.solution) { const d = dials[di]; st[0]=(st[0]+d[0])%N; st[1]=(st[1]+d[1])%N; st[2]=(st[2]+d[2])%N; }
   const storedOK = st[0] === 0 && st[1] === 0 && st[2] === 0;
-  const status = (nSol <= 3 && storedOK) ? '✅' : '❌';
-  if (status === '❌') allOK = false;
-  console.log(`L${lv.level}: N=${N} K=${K} minPresses=${best} minSolutions=${nSol} storedSolValid=${storedOK} ${status}`);
+  if (!(nSol <= 3 && storedOK)) allOK = false;
 }
-console.log(`\nTotal: ${levels.length} levels`);
-console.log(`Unique (1 solution): ${totalUnique}/${levels.length}`);
-console.log(allOK ? 'ALL 30/30 UNIQUE+VALID ✅' : 'SOME LEVELS FAILED ❌');
+console.log(`Total: ${levels.length}, Unique: ${totalUnique}/${levels.length}`);
+console.log(allOK ? 'ALL 30/30 UNIQUE+VALID ✅' : 'FAILED ❌');
 process.exit(allOK ? 0 : 1);
