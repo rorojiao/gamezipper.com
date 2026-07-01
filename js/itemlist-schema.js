@@ -516,8 +516,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":511,"url":"https://gamezipper.com/centrifuge-separation/","name":"Centrifuge Separation"},
     {"@type":"ListItem","position":512,"url":"https://gamezipper.com/trebuchet-trajectory/","name":"Trebuchet Trajectory"},
     {"@type":"ListItem","position":513,"url":"https://gamezipper.com/vortex-valve/","name":"Vortex Valve"},
-    {"@type":"ListItem","position":514,"url":"https://gamezipper.com/anemometer-wind-map/","name":"Anemometer Wind Map"}
+    {"@type":"ListItem","position":514,"url":"https://gamezipper.com/anemometer-wind-map/","name":"Anemometer Wind Map"},
+    {"@type":"ListItem","position":515,"url":"https://gamezipper.com/crucible-alloy/","name":"Crucible Alloy"}
   ],
-  "numberOfItems":514,
+  "numberOfItems":515,
   "description":"514 free browser games you can play instantly"
 };
