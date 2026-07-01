@@ -1,3 +1,35 @@
+## [v1.121.0] - 2026-07-01
+### Added
+- 8 new test cases from July-1 2026 industry research (R240 Dynamic Test Intelligence cron, 4h cadence cycle 3)
+- New test cases:
+  - [S-255] **[P0]** CVE-2026-33825 "BlueHammer" — Windows Clustering Service Kernel EoP Actively Exploited July 1 2026
+  - [S-256] **[P1]** 2026 SaaS Threat Atlas Expansion — AI-Agent SaaS + MCP-Server Poisoning + Browser-Extension SaaS Vectors
+  - [B-168] **[P1]** 2026 Multi-Dimensional Browser Fingerprinting — Canvas+WebGL+Audio+Font 99% Accuracy Even in Private Mode
+  - [B-169] **[P2]** iOS 27 Siri AI Camera Visual Search — In-Game Screenshot Voice Query UX Shift
+  - [W-236] **[P1]** Chrome 153 Release-Cycle Reduction — 4 Weeks → 2 Weeks Starting September 2026
+  - [W-237] **[P1]** Safari 26 Tracking-Parameter Stripping in REGULAR Mode — gclid/fbclid Auto-Removed, Attribution Breakage
+  - [P-108] **[P2]** WebRTC Internal-IP Leak via ICE Candidate Harvesting — VPN/Proxy Privacy Defeat
+  - [C-170] **[P2]** mediabunny + WebCodecs API — New Pure-JS Video Watermarking/Cropping/Compositing in Browsers
+### Sources
+- "HTML5 game testing 2026 new techniques browser compatibility" — Minimax web_search
+- "browser security vulnerability July 2026 Chrome Safari" — Minimax web_search
+- "casual game UX complaint 2026 mobile puzzle" — Minimax web_search
+- "CVE 2026 critical vulnerability July web browser" — Minimax web_search
+- "Chrome Edge Safari update July 2026 new features" — Minimax web_search
+- "2026年7月 浏览器游戏 WebGL Canvas 漏洞 新技术" — Minimax web_search
+- "Chrome 151 July 2026 stable ship new features" — Minimax web_search
+- "iOS 27 Safari 27 2026 new features WebKit change" — Minimax web_search
+- Key URLs:
+  - so.html5.qq.com/page/real/search_news?docid=70000021_8436a44e24350352 (BlueHammer CVE-2026-33825 July 1 2026)
+  - download.csdn.net/blog/column/12991432/160130526 (2026 fingerprint guide June 11 2026)
+  - blog.csdn.net/shanwei_spider/article/details/160390135 (Canvas/WebGL/Audio/Font fingerprint April 24 2026)
+  - blog.csdn.net/2501_94224099/article/details/160891016 (WebRTC + 5 API fingerprint June 16 2026)
+  - so.html5.qq.com/page/real/search_news?docid=70000021_64169a790a846552 (Chrome 153 2-week cycle March 4 2026)
+  - cloud.tencent.com/developer/article/2637644 (Safari 26 tracking-param strip July 1 2026)
+  - so.html5.qq.com/page/real/search_news?docid=70000021_2336973315c27552 (SaaS 13 threat Jan 23 2026)
+  - apple.com/ios/ios-17 (iOS 27 Siri Camera June 19 2026)
+  - juejin.cn/pin/7164748388968169508 (mediabunny WebCodecs)
+
 ## [v1.122.0] - 2026-07-01
 ### Added
 - 8 new test cases from July-1 2026 industry research (R241 Dynamic Test Intelligence cron, 4h cadence cycle 4)
