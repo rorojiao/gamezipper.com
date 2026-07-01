@@ -1,3 +1,19 @@
+## [v1.121.0] - 2026-07-01
+### Added
+- 8 new test cases from July-1 2026 industry research (R240 Dynamic Test Intelligence cron, 4h cadence cycle 3)
+- [S-255] **[P1]** Ransomware-as-a-Service `.xor` Family Mass Campaign 2026 — Supply-Chain Ad-Script Injection Risk. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_8016a05efd112652
+- [W-236] **[P1]** Chrome 144+ Manifest V3 Full Enforcement — Ad-Blocker Restriction Impact on Monetag/AdSense Revenue. Source: https://www.bilibili.com/video/BV17WGtz9Eox/
+- [B-168] **[P2]** Safari 27 Tracker-Parameter Blocking 134227067 (Fingerprinting Script Block) — Analytics/Fraud-Detection Breakage. Source: https://cloud.tencent.com/developer/article/2637644
+- [C-170] **[P2]** Phaser.js 4 + 2026 Web-Automation Test Platform "Smart Element Recognition" — QA Tooling Capability Coverage. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_9536a2a73b929452
+- [P-108] **[P2]** LCP (Largest Contentful Paint) 2.5s → 2.0s Tightening — Chrome 150 Core Web Vitals Field-Data Threshold. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_80569d9164342752
+- [G-170] **[P2]** 2026 Casual Game "数值平衡" (Numeric Balance) Expectation — Fair Monetization & Non-Pay-To-Win Baseline. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_71969e211b525152
+- [PC-024] **[P2]** 2026 Cross-Region Multiplayer "Virtual LAN" Expectation — UU Accelerator Free Peer-Discovery Baseline. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_47969cf8b5c04652
+- [W-237] **[P2]** ComputeX 2026 "AI Inference On-Device" Trend — Low-End Device AI-Feature Fragmentation. Source: https://so.html5.qq.com/page/real/search_news?docid=70000021_0986a38e40765252
+### Sources
+- Search queries: "HTML5 game testing 2026 new techniques", "browser game bug report 2026 WebKit Safari", "new browser security vulnerability 2026 XSS", "casual game UX complaint 2026", "Chrome Edge Safari update 2026"
+- Key sources: so.html5.qq.com (6 results), cloud.tencent.com/developer/article/2637644 (Safari 26 release), bilibili.com/video/BV17WGtz9Eox (Chrome MV3 enforcement)
+- Industry reports referenced: IBM X-Force 2026 (already in W-203), Check Point 2026 (already in W-203), 2026 .xor ransomware analysis, ComputeX 2026 AI-on-device trend
+
 ## [v1.120.0] - 2026-07-01
 ### Added
 - 10 new test cases from July-1 2026 industry research (R239 Dynamic Test Intelligence cron, 4h cadence cycle 2)
