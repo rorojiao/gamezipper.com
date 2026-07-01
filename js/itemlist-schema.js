@@ -518,8 +518,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":513,"url":"https://gamezipper.com/vortex-valve/","name":"Vortex Valve"},
     {"@type":"ListItem","position":514,"url":"https://gamezipper.com/anemometer-wind-map/","name":"Anemometer Wind Map"},
     {"@type":"ListItem","position":515,"url":"https://gamezipper.com/crucible-alloy/","name":"Crucible Alloy"},
-    {"@type":"ListItem","position":516,"url":"https://gamezipper.com/armillary-align/","name":"Armillary Align"}
+    {"@type":"ListItem","position":516,"url":"https://gamezipper.com/armillary-align/","name":"Armillary Align"},
+    {"@type":"ListItem","position":517,"url":"https://gamezipper.com/ring-toss/","name":"Ring Toss Puzzle"}
   ],
-  "numberOfItems":516,
-  "description":"514 free browser games you can play instantly"
+  "numberOfItems":517,
+  "description":"517 free browser games you can play instantly"
 };
