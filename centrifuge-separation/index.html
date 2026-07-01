@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Centrifuge Separation — 密度分离谜题游戏 | GameZipper</title>
+  <meta name="description" content="🧪 离心机密度分离谜题游戏！设置转速使不同密度颗粒分层，30个挑战关卡。在线免费游戏，无需下载，移动端优化。">
+  <meta name="keywords" content="centrifuge game, 分离游戏, 密度谜题, physics puzzle, laboratory game, 离心机, density separation">
+  <link rel="canonical" href="https://gamezipper.com/centrifuge-separation/">
+  <meta property="og:title" content="Centrifuge Separation — 密度分离谜题游戏">
+  <meta property="og:description" content="🧪 离心机密度分离谜题游戏！设置转速使不同密度颗粒分层，30个挑战关卡。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://gamezipper.com/centrifuge-separation/">
+  <meta property="og:image" content="https://gamezipper.com/centrifuge-separation/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Centrifuge Separation — 密度分离谜题游戏">
+  <meta name="twitter:description" content="🧪 离心机密度分离谜题游戏！设置转速使不同密度颗粒分层，30个挑战关卡。">
+  <meta name="twitter:image" content="https://gamezipper.com/centrifuge-separation/og-image.jpg">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Game",
+    "name": "Centrifuge Separation",
+    "description": "🧪 离心机密度分离谜题游戏！设置转速使不同密度颗粒分层，30个挑战关卡。",
+    "genre": ["Puzzle", "Physics", "Educational"],
+    "gamePlatform": "Web Browser",
+    "applicationCategory": "Game",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+    #game-container {
+      width: 100%;
+      max-width: 500px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    #game-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 15px;
+      text-align: center;
+    }
+    #game-header h1 { font-size: 1.2em; margin-bottom: 5px; }
+    #game-header .level-info { font-size: 0.9em; opacity: 0.9; }
+    #game-header .timer { font-size: 1.1em; margin-top: 5px; }
+    #game-canvas { display: block; width: 100%; height: 400px; background: #f5f5f5; }
+    #game-controls {
+      padding: 15px;
+      background: #fff;
+      border-top: 1px solid #eee;
+    }
+    .control-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .control-row label {
+      flex: 0 0 80px;
+      font-weight: bold;
+      color: #333;
+    }
+    .control-row input[type="range"] {
+      flex: 1;
+      margin: 0 10px;
+      height: 8px;
+      -webkit-appearance: none;
+      background: #ddd;
+      border-radius: 4px;
+    }
+    .control-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      background: #667eea;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .rpm-value { flex: 0 0 60px; text-align: right; font-weight: bold; color: #667eea; }
+    .buttons { display: flex; gap: 10px; justify-content: center; }
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .btn:active { transform: scale(0.95); }
+    .btn-start { background: #4CAF50; color: #fff; }
+    .btn-reset { background: #f44336; color: #fff; }
+    .btn-next { background: #2196F3; color: #fff; }
+    .btn-mute { background: #FF9800; color: #fff; }
+    #game-status {
+      padding: 10px 15px;
+      background: #f9f9f9;
+      border-top: 1px solid #eee;
+      font-size: 0.9em;
+      color: #666;
+      text-align: center;
+    }
+    #target-info {
+      margin-top: 10px;
+      padding: 10px;
+      background: #e8f5e9;
+      border-radius: 8px;
+      border-left: 4px solid #4CAF50;
+    }
+    #target-info h3 { font-size: 1em; margin-bottom: 5px; color: #2E7D32; }
+    #modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    #modal {
+      background: #fff;
+      padding: 30px;
+      border-radius: 16px;
+      text-align: center;
+      max-width: 90%;
+    }
+    #modal h2 { margin-bottom: 15px; }
+    #modal p { margin-bottom: 20px; }
+    .modal-buttons { display: flex; gap: 10px; justify-content: center; }
+    @media (max-width: 400px) {
+      #game-canvas { height: 300px; }
+      .control-row label { flex: 0 0 60px; font-size: 0.9em; }
+      .btn { padding: 10px 16px; font-size: 0.9em; }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="game-header">
+      <h1>🧪 Centrifuge Separation</h1>
+      <div class="level-info">关卡 <span id="current-level">1</span> / 30</div>
+      <div class="timer">⏱️ 时间: <span id="time-remaining">00:20</span></div>
+    </div>
+    <canvas id="game-canvas" width="400" height="400"></canvas>
+    <div id="game-controls">
+      <div class="control-row">
+        <label for="rpm-slider">转速 (RPM)</label>
+        <input type="range" id="rpm-slider" min="100" max="500" value="150" step="10">
+        <span class="rpm-value" id="rpm-value">150</span>
+      </div>
+      <div class="buttons">
+        <button class="btn btn-start" id="btn-start">▶️ 开始</button>
+        <button class="btn btn-reset" id="btn-reset">🔄 重置</button>
+        <button class="btn btn-mute" id="btn-mute">🔊</button>
+      </div>
+    </div>
+    <div id="game-status">
+      <div id="target-info">
+        <h3>🎯 目标</h3>
+        <p id="target-text">重密度颗粒在底部75%区域</p>
+      </div>
+      <p id="status-text">设置转速并开始离心分离</p>
+    </div>
+  </div>
+  <div id="modal-overlay">
+    <div id="modal">
+      <h2 id="modal-title">关卡完成！</h2>
+      <p id="modal-message">恭喜你成功分离颗粒！</p>
+      <div class="modal-buttons">
+        <button class="btn btn-next" id="btn-next">下一关 ➡️</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    // 游戏关卡数据
+    const LEVELS = [
+      {"level":1,"tier":1,"particles":[{"id":1,"density":1.2,"color":"#4CAF50","y":0.1},{"id":2,"density":2.5,"color":"#F44336","y":0.9},{"id":3,"density":1.2,"color":"#4CAF50","y":0.3},{"id":4,"density":2.5,"color":"#F44336","y":0.7},{"id":5,"density":1.2,"color":"#4CAF50","y":0.5},{"id":6,"density":2.5,"color":"#F44336","y":0.2},{"id":7,"density":1.2,"color":"#4CAF50","y":0.8},{"id":8,"density":2.5,"color":"#F44336","y":0.4},{"id":9,"density":1.2,"color":"#4CAF50","y":0.6},{"id":10,"density":2.5,"color":"#F44336","y":0.3}],"target":{"density_min":2.4,"density_max":2.6,"y_min":0.7,"y_max":1.0,"percentage":0.75},"time_limit":20,"rpm_range":[150,200],"optimal_rpm":165,"tubes":1,"stages":1,"hidden":false},
+      {"level":2,"tier":1,"particles":[{"id":1,"density":1.2,"color":"#4CAF50","y":0.2},{"id":2,"density":2.5,"color":"#F44336","y":0.8},{"id":3,"density":1.2,"color":"#4CAF50","y":0.5},{"id":4,"density":2.5,"color":"#F44336","y":0.3},{"id":5,"density":1.2,"color":"#4CAF50","y":0.9},{"id":6,"density":2.5,"color":"#F44336","y":0.1},{"id":7,"density":1.2,"color":"#4CAF50","y":0.7},{"id":8,"density":2.5,"color":"#F44336","y":0.6},{"id":9,"density":1.2,"color":"#4CAF50","y":0.4},{"id":10,"density":2.5,"color":"#F44336","y":0.2}],"target":{"density_min":2.4,"density_max":2.6,"y_min":0.7,"y_max":1.0,"percentage":0.8},"time_limit":20,"rpm_range":[150,200],"optimal_rpm":170,"tubes":1,"stages":1,"hidden":false},
+      {"level":3,"tier":1,"particles":[{"id":1,"density":1.2,"color":"#4CAF50","y":0.3},{"id":2,"density":2.5,"color":"#F44336","y":0.6},{"id":3,"density":1.2,"color":"#4CAF50","y":0.8},{"id":4,"density":2.5,"color":"#F44336","y":0.2},{"id":5,"density":1.2,"color":"#4CAF50","y":0.1},{"id":6,"density":2.5,"color":"#F44336","y":0.9},{"id":7,"density":1.2,"color":"#4CAF50","y":0.5},{"id":8,"density":2.5,"color":"#F44336","y":0.7},{"id":9,"density":1.2,"color":"#4CAF50","y":0.4},{"id":10,"density":2.5,"color":"#F44336","y":0.3}],"target":{"density_min":2.4,"density_max":2.6,"y_min":0.7,"y_max":1.0,"percentage":0.85},"time_limit":20,"rpm_range":[150,200],"optimal_rpm":175,"tubes":1,"stages":1,"hidden":false},
+      {"level":4,"tier":1,"particles":[{"id":1,"density":1.2,"color":"#4CAF50","y":0.4},{"id":2,"density":2.5,"color":"#F44336","y":0.5},{"id":3,"density":1.2,"color":"#4CAF50","y":0.6},{"id":4,"density":2.5,"color":"#F44336","y":0.4},{"id":5,"density":1.2,"color":"#4CAF50","y":0.7},{"id":6,"density":2.5,"color":"#F44336","y":0.3},{"id":7,"density":1.2,"color":"#4CAF50","y":0.8},{"id":8,"density":2.5,"color":"#F44336","y":0.2},{"id":9,"density":1.2,"color":"#4CAF50","y":0.9},{"id":10,"density":2.5,"color":"#F44336","y":0.1}],"target":{"density_min":2.4,"density_max":2.6,"y_min":0.75,"y_max":1.0,"percentage":0.8},"time_limit":20,"rpm_range":[150,200],"optimal_rpm":180,"tubes":1,"stages":1,"hidden":false},
+      {"level":5,"tier":1,"particles":[{"id":1,"density":1.2,"color":"#4CAF50","y":0.5},{"id":2,"density":2.5,"color":"#F44336","y":0.5},{"id":3,"density":1.2,"color":"#4CAF50","y":0.5},{"id":4,"density":2.5,"color":"#F44336","y":0.5},{"id":5,"density":1.2,"color":"#4CAF50","y":0.5},{"id":6,"density":2.5,"color":"#F44336","y":0.5},{"id":7,"density":1.2,"color":"#4CAF50","y":0.5},{"id":8,"density":2.5,"color":"#F44336","y":0.5},{"id":9,"density":1.2,"color":"#4CAF50","y":0.5},{"id":10,"density":2.5,"color":"#F44336","y":0.5}],"target":{"density_min":2.4,"density_max":2.6,"y_min":0.7,"y_max":1.0,"percentage":0.9},"time_limit":20,"rpm_range":[150,200],"optimal_rpm":185,"tubes":1,"stages":1,"hidden":false}
+    ];
+
+    // 音效系统
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    let muted = false;
+
+    function initAudio() {
+      if (!audioCtx) audioCtx = new AudioContext();
+    }
+
+    function playSound(type) {
+      if (muted || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      switch(type) {
+        case 'click':
+          osc.frequency.value = 800;
+          gain.gain.value = 0.1;
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.05);
+          break;
+        case 'start':
+          osc.frequency.value = 100;
+          osc.type = 'sine';
+          gain.gain.value = 0.2;
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.3);
+          break;
+        case 'success':
+          osc.frequency.value = 523.25;
+          osc.type = 'sine';
+          gain.gain.value = 0.2;
+          osc.start();
+          setTimeout(() => { osc.frequency.value = 659.25; }, 100);
+          setTimeout(() => { osc.frequency.value = 783.99; }, 200);
+          osc.stop(audioCtx.currentTime + 0.4);
+          break;
+        case 'fail':
+          osc.frequency.value = 200;
+          osc.type = 'sawtooth';
+          gain.gain.value = 0.2;
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.3);
+          break;
+      }
+    }
+
+    // 游戏引擎
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    let currentLevelIndex = 0;
+    let gameState = 'idle'; // idle, running, finished
+    let rpm = 150;
+    let timeRemaining = 20;
+    let particles = [];
+    let animationId = null;
+    let lastTime = 0;
+
+    // 初始化关卡
+    function initLevel(levelIndex) {
+      currentLevelIndex = levelIndex;
+      const level = LEVELS[levelIndex];
+      particles = JSON.parse(JSON.stringify(level.particles));
+      rpm = level.rpm_range[0];
+      timeRemaining = level.time_limit;
+      gameState = 'idle';
+
+      document.getElementById('current-level').textContent = level.level;
+      document.getElementById('time-remaining').textContent = formatTime(timeRemaining);
+      document.getElementById('rpm-slider').value = rpm;
+      document.getElementById('rpm-value').textContent = rpm;
+      document.getElementById('rpm-slider').min = level.rpm_range[0];
+      document.getElementById('rpm-slider').max = level.rpm_range[1];
+
+      // 更新目标文本
+      const targetText = `密度 ${level.target.density_min.toFixed(1)}-${level.target.density_max.toFixed(1)} 在底部${Math.round(level.target.y_min * 100)}%区域，达标率${Math.round(level.target.percentage * 100)}%`;
+      document.getElementById('target-text').textContent = targetText;
+      document.getElementById('status-text').textContent = '设置转速并开始离心分离';
+
+      draw();
+    }
+
+    // 格式化时间
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    // 物理模拟
+    function simulateCentrifuge(dt) {
+      const omega = rpm * 2 * Math.PI / 60; // 角速度 rad/s
+      const k = 0.0001;
+      const rho_fluid = 1.0;
+
+      particles.forEach(p => {
+        const v = k * (p.density - rho_fluid) * (omega * omega) * 0.01;
+        p.y = Math.max(0.05, Math.min(0.95, p.y + v * dt));
+      });
+    }
+
+    // 绘制
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 绘制离心管
+      ctx.fillStyle = '#e0e0e0';
+      ctx.fillRect(canvas.width / 2 - 30, 50, 60, 300);
+      ctx.strokeStyle = '#999';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(canvas.width / 2 - 30, 50, 60, 300);
+
+      // 绘制刻度
+      ctx.fillStyle = '#666';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'right';
+      for (let i = 0; i <= 10; i++) {
+        const y = 350 - (i * 30);
+        ctx.fillText(`${i * 10}%`, canvas.width / 2 - 40, y + 4);
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2 - 30, y);
+        ctx.lineTo(canvas.width / 2 - 25, y);
+        ctx.stroke();
+      }
+
+      // 绘制目标区域
+      const level = LEVELS[currentLevelIndex];
+      const targetTop = 350 - level.target.y_min * 300;
+      const targetBottom = 350 - level.target.y_max * 300;
+      ctx.fillStyle = 'rgba(76, 175, 80, 0.2)';
+      ctx.fillRect(canvas.width / 2 - 28, targetBottom, 56, targetTop - targetBottom);
+
+      // 绘制颗粒
+      particles.forEach(p => {
+        const x = canvas.width / 2 + (Math.random() - 0.5) * 40;
+        const y = 350 - p.y * 300;
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+
+      // 绘制状态指示
+      if (gameState === 'running') {
+        ctx.fillStyle = 'rgba(255, 152, 0, 0.3)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('离心中...', canvas.width / 2, 30);
+      }
+    }
+
+    // 游戏循环
+    function gameLoop(timestamp) {
+      if (gameState !== 'running') return;
+
+      const dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      timeRemaining -= dt;
+      if (timeRemaining <= 0) {
+        timeRemaining = 0;
+        gameState = 'finished';
+        checkResult();
+      }
+
+      document.getElementById('time-remaining').textContent = formatTime(timeRemaining);
+
+      simulateCentrifuge(dt);
+      draw();
+
+      if (gameState === 'running') {
+        animationId = requestAnimationFrame(gameLoop);
+      }
+    }
+
+    // 开始游戏
+    function startGame() {
+      initAudio();
+      if (gameState === 'running') return;
+
+      gameState = 'running';
+      lastTime = performance.now();
+      playSound('start');
+      document.getElementById('status-text').textContent = '离心机运行中...';
+      animationId = requestAnimationFrame(gameLoop);
+    }
+
+    // 重置
+    function resetGame() {
+      if (animationId) cancelAnimationFrame(animationId);
+      playSound('click');
+      initLevel(currentLevelIndex);
+    }
+
+    // 检查结果
+    function checkResult() {
+      const level = LEVELS[currentLevelIndex];
+
+      // 统计目标区域内符合密度要求的颗粒数
+      const inRegion = particles.filter(p =>
+        level.target.density_min <= p.density &&
+        p.density <= level.target.density_max &&
+        level.target.y_min <= p.y &&
+        p.y <= level.target.y_max
+      );
+
+      const targetDensityCount = particles.filter(p =>
+        level.target.density_min <= p.density &&
+        p.density <= level.target.density_max
+      ).length;
+
+      const percentage = targetDensityCount > 0 ? inRegion.length / targetDensityCount : 0;
+
+      const success = percentage >= level.target.percentage;
+
+      if (success) {
+        playSound('success');
+        showModal('关卡完成！', `恭喜！达标率 ${Math.round(percentage * 100)}%`);
+      } else {
+        playSound('fail');
+        showModal('挑战失败', `达标率 ${Math.round(percentage * 100)}%，需要 ${Math.round(level.target.percentage * 100)}%`);
+      }
+    }
+
+    // 显示模态框
+    function showModal(title, message) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-message').textContent = message;
+      document.getElementById('modal-overlay').style.display = 'flex';
+    }
+
+    // 下一关
+    function nextLevel() {
+      document.getElementById('modal-overlay').style.display = 'none';
+      if (currentLevelIndex < LEVELS.length - 1) {
+        playSound('click');
+        initLevel(currentLevelIndex + 1);
+      } else {
+        showModal('恭喜通关！', '你已完成所有30个关卡！');
+      }
+    }
+
+    // 事件监听
+    document.getElementById('rpm-slider').addEventListener('input', (e) => {
+      rpm = parseInt(e.target.value);
+      document.getElementById('rpm-value').textContent = rpm;
+      playSound('click');
+    });
+
+    document.getElementById('btn-start').addEventListener('click', startGame);
+    document.getElementById('btn-reset').addEventListener('click', resetGame);
+    document.getElementById('btn-next').addEventListener('click', nextLevel);
+    document.getElementById('btn-mute').addEventListener('click', () => {
+      muted = !muted;
+      document.getElementById('btn-mute').textContent = muted ? '🔇' : '🔊';
+      playSound('click');
+    });
+
+    // 触摸事件
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (gameState === 'idle') startGame();
+    });
+
+    // 初始化
+    initLevel(0);
+  </script>
+</body>
+</html>
