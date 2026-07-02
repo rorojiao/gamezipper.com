@@ -275,8 +275,8 @@ function loadLevel(idx){
   computeLayout();
   grid=[];
   for(var r=0;r<GRID_R;r++){ grid[r]=[]; for(var c=0;c<GRID_C;c++) grid[r][c]=0; }
-  L.walls.forEach(function(w){ grid[w[0]][w[1]]=1; });
-  L.spikes.forEach(function(s){ grid[s[0]][s[1]]=2; });
+  L.walls.forEach(function(w){ if(w[0]!=null&&w[1]!=null&&grid[w[0]]) grid[w[0]][w[1]]=1; });
+  L.spikes.forEach(function(s){ if(s[0]!=null&&s[1]!=null&&grid[s[0]]) grid[s[0]][s[1]]=2; });
   player={r:L.player.r,c:L.player.c,vr:0,vc:0,animR:L.player.r,animC:L.player.c,blink:0};
   exitCell={r:L.exit.r,c:L.exit.c};
   enemies=L.enemies.map(function(e){ return {r:e.r,c:e.c,type:e.t,hp:e.t==='s'?2:1,alive:true,animR:e.r,animC:e.c,fireFlash:0}; });
@@ -541,8 +541,11 @@ function render(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   // bg
   ctx.fillStyle='#0d1428'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  // guard: grid not yet populated (before first loadLevel)
+  if(!grid||!grid.length||!grid[0]||!grid[0].length) return;
   // grid cells
   for(var r=0;r<GRID_R;r++){
+    if(!grid[r]) continue;
     for(var c=0;c<GRID_C;c++){
       var x=c*CELL, y=r*CELL;
       var cell=grid[r][c];
