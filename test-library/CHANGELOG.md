@@ -4020,3 +4020,38 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
 - Version note: v1.122.0 was skipped (version-number collision detected from a concurrent cron worker that committed v1.122.0 at 18:10 July 1, then v1.121.0 was re-committed at 22:18 — creating an out-of-order history). This cycle uses v1.123.0 to avoid ambiguity.
 - Key themes: (1) Cloud rendering is emerging as the solution for WebGL games on low-compute devices; (2) Chrome's render pipeline (Skia + V8 + ANGLE) saw 3 separate 0-day exploit classes in 2026; (3) HTML-in-Canvas is blurring the DOM/Canvas boundary — experimental but tracked; (4) WeChat miniprogram Canvas API divergence matters for China market reach; (5) Browser fingerprint evasion (privacy browsers) can break WebGL rendering and ad serving.
 - All 8 verified zero-duplicate against v1.121.0 library (3189 lines, 2900+ existing test cases across W/G/C/S/P/B/A/PC categories).
+
+## [v1.125.0] - 2026-07-02
+### Added
+- 7 new test cases from July 2 2026 industry research (R243 Dynamic Test Intelligence cron, 4h cadence cycle)
+- [S-259] CVE-2026-8633 IBM WebSphere Plug-ins Unauth RCE (CVSS 9.8) + HTTP Request Smuggling CVE-2026-8620
+- [B-172] Android Tablet Chrome Won't Open — "Max 5 windows" Spurious Prompt (Samsung/Xiaomi/Lenovo, May 2026)
+- [P-110] Chrome Single-Tab >1GB → Whole-Browser STATUS_BREAKPOINT Crash — Long-Run Memory QA Runbook
+- [C-175] Firefox 141 WebGPU Unbuffered-IPC Perf Bottleneck + Missing importExternalTexture
+- [W-243] ClickFix macOS `applescript://` Script-Editor Delivery Bypassing Gatekeeper (500% growth 2024→2025)
+- [S-260] Tri-Vendor (IBM X-Force + Check Point + CrowdStrike) AI-Attack Corroboration — Assume-Breach Ops Posture (~2000 attacks/org/week)
+- [G-171] 2026 Mobile Casual "Low-End Device Fluency" Table-Stakes + AMD H2 Memory-Cost Warning (<4GB RAM tier)
+### Sources
+- mcp_minimax_search_web_search queries (2026-07-02):
+  - "HTML5 game testing 2026 new techniques browser canvas WebGL"
+  - "browser game bug 2026 WebGL WebGL2 mobile Safari Chrome"
+  - "new browser security vulnerability 2026 XSS clickjacking CSP"
+  - "casual game UX complaint 2026 haptic feedback dark mode mobile"
+  - "Chrome Edge Safari update 2026 web API"
+  - "Chrome 149 CSS gap decoration bfcache WebSocket WebMCP 2026"
+  - "Safari 26.5 WebKit CVE-2026-28962 CSP bypass WebRTC crash May 2026"
+  - "Manifest V2 Chrome uBlock Origin deprecation June 2026 extension break"
+  - "CVE-2026-8633 IBM WebSphere July 2 2026 RCE plug-in"
+  - "Android tablet Chrome won't open Samsung Xiaomi May 2026 bug"
+  - "ClickFix attack 2026 fake CAPTCHA browser social engineering"
+  - "WebSocket bfcache back forward cache 2026 Chrome browser bug reconnect"
+  - "WebGPU API 2026 browser support shader compile error"
+  - "browser game FPS frame drop July 2026 performance regression"
+- Key URLs:
+  - https://cloud.tencent.com/developer/article/2696903 (CVE-2026-8633 IBM WebSphere)
+  - https://finance.sina.com.cn/tech/roll/2026-05-28/doc-inhzmtwm1128989.shtml (Android tablet Chrome)
+  - https://blog.csdn.net/weixin_42656416/article/details/160649420 (STATUS_BREAKPOINT crash)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4486879ce3110852 (Firefox WebGPU)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_32369d6e7ae21652 (ClickFix applescript://)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_94569a6d0d301752 (IBM X-Force 2026)
+  - https://www.pchome.net/games/665263.html (Pixel Game 2026 low-end fluency)
