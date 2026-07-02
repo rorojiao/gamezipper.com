@@ -333,6 +333,7 @@ var state = {
   maxUnlocked: 1,
   stars: {}, // levelNum -> 0-3
   paused: false,
+  soundOn: true,
   
   items: [],
   switches: [],
@@ -360,6 +361,8 @@ function loadSave() {
       state.maxUnlocked = d.maxUnlocked || 1;
       state.stars = d.stars || {};
     }
+    var snd = localStorage.getItem('cbs_sound');
+    if (snd !== null) state.soundOn = snd === '1';
   } catch(e) {}
 }
 function saveSave() {
@@ -381,7 +384,7 @@ function initAudio() {
 }
 
 function playTone(freq, dur, type, vol) {
-  if (!audioCtx) return;
+  if (!audioCtx || !state.soundOn) return;
   dur = dur || 0.1; type = type || 'sine'; vol = vol || 0.15;
   var osc = audioCtx.createOscillator();
   var gain = audioCtx.createGain();
@@ -1232,6 +1235,12 @@ document.getElementById('btn-quit').addEventListener('click', function() {
   showScreen('menu');
 });
 
+document.getElementById('btn-sound').addEventListener('click', function() {
+  state.soundOn = !state.soundOn;
+  this.textContent = 'Sound: ' + (state.soundOn ? 'On' : 'Off');
+  try { localStorage.setItem('cbs_sound', state.soundOn ? '1' : '0'); } catch(e) {}
+});
+
 document.getElementById('btn-next-level').addEventListener('click', function() {
   hideResult();
   if (state.currentLevel < 30) startLevel(state.currentLevel + 1);
@@ -1258,6 +1267,7 @@ canvas.addEventListener('click', function() {
 
 // ---- ----
 loadSave();
+document.getElementById('btn-sound').textContent = 'Sound: ' + (state.soundOn ? 'On' : 'Off');
 updateMenuStats();
 showScreen('menu');
 requestAnimationFrame(gameLoop);
