@@ -236,7 +236,8 @@
 {n:'Wood Turning',e:'🪵',u:'/wood-turning/',c:'puzzle'},{n:'Sextant Celestial',e:'🧭',u:'/sextant-celestial/',c:'puzzle'},
 {n:'Resonance Lock',e:'🌊',u:'/resonance-lock/',c:'puzzle'},
 {n:"Crucible Alloy",e:"🔥",u:"/crucible-alloy/",c:"puzzle"},
-{n:"Armillary Align",e:"🌐",u:"/armillary-align/",c:"puzzle"}
+{n:"Armillary Align",e:"🌐",u:"/armillary-align/",c:"puzzle"},
+{n:"Plug Master",e:"🔌",u:"/plug-master/",c:"puzzle"}
 ];
 
   var cur = location.pathname;
