@@ -238,7 +238,8 @@
 {n:"Crucible Alloy",e:"🔥",u:"/crucible-alloy/",c:"puzzle"},
 {n:"Armillary Align",e:"🌐",u:"/armillary-align/",c:"puzzle"},
 {n:"Plug Master",e:"🔌",u:"/plug-master/",c:"puzzle"}
-,{n:'Tetravex',e:'🔲',u:'/tetravex/',c:'puzzle'}]
+,{n:'Tetravex',e:'🔲',u:'/tetravex/',c:'puzzle'}
+,{n:'Qwirkle',e:'🎮',u:'/qwirkle/',c:'puzzle'}]
 
   var cur = location.pathname;
   var current = games.find(function(g){ return g && g.u === cur; });

@@ -1,3 +1,31 @@
+## [v1.129.0] - 2026-07-03
+### Added
+- 8 new test cases from July-3 2026 industry research (R246 Dynamic Test Intelligence cron, 4h cadence cycle 8)
+- New test cases:
+  - [S-269] **[P0]** CVE-2026-5281 Chrome Dawn WebGPU Use-After-Free Zero-Day — 4th Chrome 0day of 2026, actively exploited since March 10 2026, patched April 1 in Chrome 146.0.7680.178/.177
+  - [S-270] **[P1]** CVE-2026-2441 Chrome CSS Use-After-Free Zero-Day — Google TAG confirmed actively exploited, Chrome <145.0.7632.75, sandbox escape via crafted HTML
+  - [S-271] **[P1]** CVE-2026-0628 Chrome WebView Extension Sandbox Bypass — Malicious extension injects scripts into privileged pages, Chrome <143.0.7499.192
+  - [W-250] **[P1]** WebAssembly 2.0 Native-Parity Performance — GC + Exception Handling + Multi-Thread Workers landed June 2026, 5-10% of native C++
+  - [W-251] **[P2]** WebGPU + WebAssembly Hybrid Canvas Pipeline — Shared-Memory Multi-Thread Particle Systems for SPH fluid / 1M+ particle games
+  - [B-175] **[P2]** Safari 26 Tracking-Parameter Stripping in REGULAR Mode — gclid/fbclid/utm_* auto-removed in normal browsing, BI attribution breakage
+  - [C-179] **[P3]** BrowserOperator Open-Source Agentic Browser — Multi-Agent Web Automation, monetag/AdSense anti-fraud detection needed
+  - [PC-025] **[P2]** Playwright Bundled-Chromium CVE Drift — playwright v1.58.2 ships vulnerable Chromium 145.0.7632.6 for CVE-2026-2441
+### Sources
+- Search queries: "HTML5 game testing 2026 July new techniques browser compatibility", "browser security vulnerability 2026 July CVE Chrome Safari zero-day actively exploited", "casual game UX complaint 2026 mobile dark mode haptic feedback accessibility", "Chrome Edge Safari update July 2026 web API changes new features", "CVE-2026-5281 WebGPU Dawn use-after-free Chrome zero-day July 2026", "WebAssembly 2.0 browser performance 2026 native parity GC exception handling", "Safari 26 fingerprinting tracking parameter stripping gclid fbclid 2026"
+- Key URLs:
+  - https://blog.csdn.net/jianlu365/article/details/159769554 (CVE-2026-5281 Chrome 4th zero-day WebGPU Dawn)
+  - https://blog.csdn.net/weixin_45635831/article/details/159790573 (CVE-2026-5281 Chrome Dawn WebGPU UAF daily security brief)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_35669cdc85492252 (Chrome 0Day in-the-wild WebGPU)
+  - https://new.qq.com/rain/a/20260217A044OM00 (CVE-2026-2441 Chrome CSS zero-day fix)
+  - https://github.com/microsoft/playwright/issues/39574 (Chromium roll needed for CVE-2026-2441, playwright v1.58.2 vulnerable)
+  - https://blog.csdn.net/weixin_42376192/article/details/156710813 (CVE-2026-0628 Chrome WebView extension sandbox bypass)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0036a264f5247152 (WebAssembly 2.0 native-parity爆发)
+  - https://tool.lu/fr_FR/article/7yi/detail (WebGPU + WebAssembly hybrid pipeline)
+  - https://developer.mozilla.org/en-US/docs/Web/API/webGPU_API (WebGPU API docs)
+  - https://blog.csdn.net/abcd2468sfdsfsd/article/details/146182060 (WebGPU+WASM multi-thread particles)
+  - https://cloud.tencent.com/developer/article/2637644 (Safari 26 tracking-parameter stripping regular mode)
+  - https://github.com/BrowserOperator (Open Source Agentic Web Browser)
+
 ## [v1.128.0] - 2026-07-03
 ### Added
 - 8 new test cases from July-3 2026 industry research (R245 Dynamic Test Intelligence cron, 4h cadence cycle 7)
