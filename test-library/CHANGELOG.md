@@ -1,3 +1,28 @@
+## [v1.128.0] - 2026-07-03
+### Added
+- 8 new test cases from July-3 2026 industry research (R245 Dynamic Test Intelligence cron, 4h cadence cycle 7)
+- New test cases:
+  - [S-266] **[P1]** CVE-2026-22812 OpenCode open-source AI coding-agent unauthenticated HTTP-server RCE CVSS 8.8 (vendor refuses to fix)
+  - [S-267] **[P2]** CVE-2026-22778 vLLM video-processing RCE chain (PIL info-leak + JPEG2000 heap-overflow + ASLR bypass)
+  - [S-268] **[P3]** Dify 2026 hybrid LRU-K cache thread-safety concurrent-write conflict (Spring AOP interceptor patch)
+  - [W-247] **[P2]** Bun v1.3.14 Bun.Image built-in image-processing + HTTP/3 + Rust migration (last Zig release)
+  - [W-248] **[P2]** Rolldown 1.0 + Vite 8 unified single Rust bundler production GA (eliminates dev/prod dual-bundler split)
+  - [W-249] **[P2]** Node.js 26 Temporal API default-enabled LTS promotion Oct 2026 (V8 14.6 + Undici 8)
+  - [C-178] **[P3]** BlueJS JavaScript AOT compiler to ~1.2MB binary with 5ms startup (new deploy class)
+  - [P-113] **[P2]** 2026 canonical Core Web Vitals diagnostic guide (INP+LCP+CLS unified methodology, mobile-differential)
+### Sources
+- Search queries: "HTML5 game testing new techniques July 2026", "browser security vulnerability July 2026 CVE Chrome Safari", "casual game UX complaint 2026", "Chrome Edge Safari update 2026", "CVE-2026 Chrome Safari zero-day July 2026 actively exploited CISA KEV", "Rolldown 1.0 Vite 8 Rust bundler July 2026", "OpenCode CVE-2026-22812 RCE local HTTP server unauthenticated", "Node.js 26 Temporal API default 2026"
+- Key URLs:
+  - https://download.csdn.net/blog/column/12769155/158008049 (OpenCode CVE-2026-22812)
+  - https://github.com/barrersoftware/opencode-secure/releases (OpenCode security fork)
+  - https://github.com/advisories/GHSA-4r2x-xpjr-7cvv (vLLM CVE-2026-22778 video RCE)
+  - https://blog.csdn.net/CodeTrick/article/details/160794239 (Dify 2026 cache thread-safety)
+  - https://segmentfault.com/a/1190000047772930 (Bun v1.3.14 + Rolldown 1.0 + JS Weekly #20)
+  - https://blog.csdn.net/weixin_44829437/article/details/160905868 (Rolldown 1.0 GA)
+  - https://www.sohu.com/a/1018982544_122004016 (Node.js 26 Temporal API LTS)
+  - https://cloud.tencent.com/developer/article/2679559 (BlueJS + JS Weekly #20)
+  - https://www.digitalapplied.com/blog/core-web-vitals-2026-inp-lcp-cls-optimization-guide (CWV 2026 guide)
+
 ## [v1.127.0] - 2026-07-02
 ### Added
 - 8 new test cases from July-2 2026 industry research (R244 Dynamic Test Intelligence cron, 4h cadence cycle 6)
