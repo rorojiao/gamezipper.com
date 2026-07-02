@@ -1,3 +1,25 @@
+## [v1.127.0] - 2026-07-02
+### Added
+- 8 new test cases from July-2 2026 industry research (R244 Dynamic Test Intelligence cron, 4h cadence cycle 6)
+- New test cases:
+  - [S-264] **[P0]** CVE-2026-0300 Palo Alto PAN-OS Captive Portal Unauth Root RCE CVSS 9.3 (Nation-State CL-STA-1132, 4-Week Pre-Disclosure)
+  - [W-246] **[P1]** Firefox `browser.aiwindow.memories` Defaults to TRUE — Built-in AI Memory On by Default
+  - [S-265] **[P1]** CVE-2026-4670 + CVE-2026-5174 MOVEit Automation Dual-CVE (Auth-Bypass + Priv-Esc Chain)
+  - [B-174] **[P2]** Safari 26.4 Compact-Tab Layout Restore + 191-Bug Fix Sweep (Viewport Regression Class)
+  - [PC-024] **[P2]** Steam Error Code 118 — Client-Server Connection Failure Diagnostic Triangle
+  - [P-112] **[P2]** Safari 26.5 WebRTC Process-Crash Stability Fix (Multiplayer/Voice/BGM Crash Vector)
+  - [C-177] **[P3]** 2026 Automated Penetration Testing at Scale (AI-Driven Vulnerability Scanning Baseline)
+  - [G-172] **[P2]** 2026 $81.8B Mobile-First Retention Imperative (D1/D7 Metric Enforcement)
+### Sources
+- "HTML5 game testing 2026 new techniques browser compatibility" — mcp_web_search_prime_search
+- "browser game bug report 2026 July mobile Safari Chrome" — mcp_minimax_search_web_search
+- "new browser security vulnerability 2026 July XSS clickjacking" — mcp_minimax_search_web_search
+- "casual game UX complaint 2026 mobile dark mode haptic feedback" — mcp_minimax_search_web_search
+- "Chrome Edge Safari update July 2026 web API changes" — mcp_minimax_search_web_search
+- "Firefox AI window memories privacy default enabled 2026" — mcp_minimax_search_web_search
+- "Palo Alto PAN-OS zero-day 2026 nation-state firewall exploit" — mcp_minimax_search_web_search
+- Key URLs: blog.csdn.net/weixin_42376192/article/details/160877023 (CVE-2026-0300 PAN-OS), github.com/mozilla-firefox/firefox/commit/13c6f517f94d (Firefox AI memory), so.html5.qq.com/page/real/search_news?docid=70000021_6966a02ce5963952 (MOVEit dual-CVE), so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Safari 26.4), so.html5.qq.com/page/real/search_news?docid=70000021_72369d4a41846352 (Steam Error 118), finance.sina.com.cn/tech/digi/2026-05-14/doc-inhxvtwn8763233.shtml (Safari 26.5 WebRTC), sohu.com/a/1020518882_121734355 (automated pentest), sohu.com/a/1015491436_121503203 (mobile retention)
+
 ## [v1.124.0] - 2026-07-02
 ### Added
 - 8 new test cases from July-2 2026 industry research (R242 Dynamic Test Intelligence cron, 4h cadence cycle 5)
