@@ -222,15 +222,16 @@ def make_level(n,box_r,box_c,rng,target_clues,thermo_count,thermo_maxlen,max_rem
     }
 
 def main():
-    rng=random.Random(20260620)
+    rng=random.Random(20260702)
     # (n,boxR,boxC,target_clues,thermo_count_range,thermo_maxlen_range,count)
+    # R22 iterative upgrade: 23 -> 30 levels (5 per tier, parity with kurodoko standard)
     spec=[
-        (4,2,2, 6,(2,3),(3,4), 4),     # Beginner: 4x4, ~6 givens
+        (4,2,2, 6,(2,3),(3,4), 5),     # Beginner: 4x4, ~6 givens
         (6,2,3, 12,(3,4),(3,5), 5),    # Easy: 6x6, ~12 givens
-        (6,2,3, 9,(3,5),(4,6), 4),     # Medium: 6x6, ~9 givens (thermo-heavy)
+        (6,2,3, 9,(3,5),(4,6), 5),     # Medium: 6x6, ~9 givens (thermo-heavy)
         (9,3,3, 30,(4,6),(4,7), 5),    # Hard: 9x9, ~30 givens
-        (9,3,3, 24,(5,7),(5,9), 3),    # Expert: 9x9, ~24 givens (thermo-driven)
-        (9,3,3, 22,(6,8),(6,9), 2),    # Master: 9x9, ~22 givens
+        (9,3,3, 24,(5,7),(5,9), 5),    # Expert: 9x9, ~24 givens (thermo-driven)
+        (9,3,3, 22,(6,8),(6,9), 5),    # Master: 9x9, ~22 givens
     ]
     tiers=['Beginner','Easy','Medium','Hard','Expert','Master']
     levels=[]
@@ -251,7 +252,7 @@ def main():
         if made<cnt:
             print(f"  WARN {tier}: {made}/{cnt}",file=sys.stderr)
     out={'levels':levels}
-    with open('thermo-sudoku/levels.json','w') as f:
+    with open('levels.json','w') as f:
         json.dump(out,f)
     print(f"WROTE {len(levels)} levels")
     # reverify all
