@@ -150,6 +150,7 @@ canvas#game-canvas{display:block;width:100%;aspect-ratio:3/4;border-radius:12px;
 /* Ad zone */
 #gz-ad-below-game{min-height:100px;margin:16px auto;max-width:728px;text-align:center}
 </style>
+<script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=conveyor-sort"></script>
 </head>
 <body>
 <!-- SEO H1 (visually hidden, accessible to screen readers and search engines) — persists across all screens -->
@@ -189,8 +190,8 @@ canvas#game-canvas{display:block;width:100%;aspect-ratio:3/4;border-radius:12px;
       <span class="level-badge" id="level-badge">L1</span>
     </div>
     <div class="score-display">
-      <div class="score-item correct">✓ <span id="correct-count">0</span>/<span id="total-count">0</span></div>
-      <div class="score-item wrong">✗ <span id="mistake-count">0</span>/<span id="max-mistakes">3</span></div>
+      <div class="score-item correct">V <span id="correct-count">0</span>/<span id="total-count">0</span></div>
+      <div class="score-item wrong">X <span id="mistake-count">0</span>/<span id="max-mistakes">3</span></div>
     </div>
   </div>
   <div id="canvas-wrap">
@@ -199,6 +200,7 @@ canvas#game-canvas{display:block;width:100%;aspect-ratio:3/4;border-radius:12px;
   <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
   <div id="controls">
     <button class="ctrl-btn" id="btn-pause">Pause</button>
+    <button class="ctrl-btn" id="btn-sound">Sound: On</button>
     <button class="ctrl-btn" id="btn-restart">Restart</button>
     <button class="ctrl-btn" id="btn-quit">Menu</button>
   </div>
@@ -208,7 +210,7 @@ canvas#game-canvas{display:block;width:100%;aspect-ratio:3/4;border-radius:12px;
 <div id="result-overlay">
   <div class="result-card">
     <div class="result-title win" id="result-title">Level Complete!</div>
-    <div class="result-stars" id="result-stars">⭐⭐⭐</div>
+    <div class="result-stars" id="result-stars">***</div>
     <div class="result-stats" id="result-stats">Sorted 15/15 items correctly!</div>
     <div class="result-btns">
       <button class="menu-btn primary" id="btn-next-level">Next Level</button>
@@ -223,19 +225,19 @@ canvas#game-canvas{display:block;width:100%;aspect-ratio:3/4;border-radius:12px;
   <div class="tutorial-card">
     <h3>How to Play</h3>
     <div class="tutorial-step">
-      <div class="step-icon">📦</div>
+      <div class="step-icon">[+]</div>
       <div class="step-text">Colored boxes travel along conveyor belts from top to bottom.</div>
     </div>
     <div class="tutorial-step">
-      <div class="step-icon">🔀</div>
+      <div class="step-icon">~></div>
       <div class="step-text">Tap track switches to change their direction. Switches show an arrow for current routing.</div>
     </div>
     <div class="tutorial-step">
-      <div class="step-icon">🎯</div>
+      <div class="step-icon">(o)</div>
       <div class="step-text">Route each box to the bin matching its color. Correct = green glow, wrong = red flash.</div>
     </div>
     <div class="tutorial-step">
-      <div class="step-icon">⭐</div>
+      <div class="step-icon">*</div>
       <div class="step-text">Sort all items with few mistakes for 3 stars! Too many mistakes = game over.</div>
     </div>
     <button class="menu-btn primary" id="btn-close-tutorial">Got it!</button>
@@ -253,15 +255,15 @@ canvas#game-canvas{display:block;width:100%;aspect-ratio:3/4;border-radius:12px;
 (function(){
 'use strict';
 
-// ---- 配置常量 ----
+// ---- ----
 const CANVAS_W = 450;
 const CANVAS_H = 600;
-const BELT_W = 56;        // 传送带宽度
-const ITEM_SIZE = 38;     // 物品大小
-const ITEM_SPEED_BASE = 60; // px/秒
+const BELT_W = 56;        
+const ITEM_SIZE = 38;     
+const ITEM_SPEED_BASE = 60; // px/
 const SPAWN_INTERVAL = 2200; // ms
 
-// 颜色系统
+
 const COLORS = [
   { id:0, name:'red',    hex:'#e74c3c', light:'#ff7868', dark:'#a93226' },
   { id:1, name:'blue',   hex:'#3498db', light:'#5dade2', dark:'#21618c' },
@@ -270,27 +272,27 @@ const COLORS = [
   { id:4, name:'purple', hex:'#9b59b6', light:'#bb8fce', dark:'#6c3483' },
 ];
 
-// ---- 30关关卡数据 ----
-// 每关定义: colors数量, bins配置, switches数量, itemSequence, speed, maxMistakes
+// ---- 30 ----
+// : colors, bins, switches, itemSequence, speed, maxMistakes
 function genLevel(n) {
-  // 难度阶梯
+  
   let nColors, nSwitches, speed, maxMistakes, nItems;
   
-  if (n <= 5) {        // Tier 1: 入门
+  if (n <= 5) {        // Tier 1: 
     nColors = 2; nSwitches = 1; speed = 0.7; maxMistakes = 3; nItems = 8 + n;
-  } else if (n <= 10) { // Tier 2: 基础
+  } else if (n <= 10) { // Tier 2: 
     nColors = 3; nSwitches = 2; speed = 0.85; maxMistakes = 3; nItems = 10 + (n-5);
-  } else if (n <= 15) { // Tier 3: 中级
+  } else if (n <= 15) { // Tier 3: 
     nColors = 3; nSwitches = 2; speed = 1.0; maxMistakes = 2; nItems = 12 + (n-10);
-  } else if (n <= 20) { // Tier 4: 高级
+  } else if (n <= 20) { // Tier 4: 
     nColors = 4; nSwitches = 3; speed = 1.15; maxMistakes = 2; nItems = 14 + (n-15);
-  } else if (n <= 25) { // Tier 5: 专家
+  } else if (n <= 25) { // Tier 5: 
     nColors = 4; nSwitches = 3; speed = 1.3; maxMistakes = 2; nItems = 16 + (n-20);
-  } else {              // Tier 6: 大师
+  } else {              // Tier 6: 
     nColors = 5; nSwitches = 4; speed = 1.45; maxMistakes = 2; nItems = 18 + (n-25);
   }
   
-  // 生成物品序列 - 随机但可解
+  // - 
   var rng = mulberry32(n * 1337 + 42);
   var items = [];
   for (var i = 0; i < nItems; i++) {
@@ -308,7 +310,7 @@ function genLevel(n) {
   };
 }
 
-// 确定性随机数生成器
+
 function mulberry32(seed) {
   return function() {
     seed |= 0; seed = seed + 0x6D2B79F5 | 0;
@@ -318,20 +320,20 @@ function mulberry32(seed) {
   };
 }
 
-// 预生成30关
+// 30
 var LEVELS = [];
 for (var i = 1; i <= 30; i++) {
   LEVELS.push(genLevel(i));
 }
 
-// ---- 游戏状态 ----
+// ---- ----
 var state = {
   screen: 'menu',
   currentLevel: 1,
   maxUnlocked: 1,
   stars: {}, // levelNum -> 0-3
   paused: false,
-  // 游戏运行时
+  
   items: [],
   switches: [],
   bins: [],
@@ -349,7 +351,7 @@ var state = {
   beltAnimOffset: 0,
 };
 
-// 加载存档
+
 function loadSave() {
   try {
     var s = localStorage.getItem('conveyor_sort_save');
@@ -369,7 +371,7 @@ function saveSave() {
   } catch(e) {}
 }
 
-// ---- 音频系统 ----
+// ---- ----
 var audioCtx = null;
 function initAudio() {
   if (!audioCtx) {
@@ -407,11 +409,11 @@ function sndLose() {
   setTimeout(function(){playTone(220, 0.2, 'sawtooth', 0.1);}, 120);
 }
 
-// ---- 画布初始化 ----
+// ---- ----
 var canvas = document.getElementById('game-canvas');
 var ctx = canvas.getContext('2d');
 
-// 处理高DPI
+// DPI
 function setupCanvas() {
   var dpr = window.devicePixelRatio || 1;
   canvas.width = CANVAS_W * dpr;
@@ -420,10 +422,10 @@ function setupCanvas() {
 }
 setupCanvas();
 
-// ---- 布局系统 ----
-// 传送带网络定义
-// 布局: 一条主传送带从顶部到底部, 有 nSwitches 个分叉点
-// 每个分叉点将物品路由到左或右, 最终到达对应颜色的 bin
+// ---- ----
+
+// : , nSwitches 
+// , bin
 
 function buildLevel(levelData) {
   var nColors = levelData.nColors;
@@ -435,10 +437,10 @@ function buildLevel(levelData) {
   var bottomY = CANVAS_H - 80;
   var usableH = bottomY - topY;
   
-  // 主传送带 Y 位置
+  // Y 
   var mainBeltX = centerX;
   
-  // 开关位置: 均匀分布
+  // : 
   var switches = [];
   var switchSpacing = usableH / (nSwitches + 1);
   for (var i = 0; i < nSwitches; i++) {
@@ -453,8 +455,8 @@ function buildLevel(levelData) {
     });
   }
   
-  // 分叉传送带: 每个开关引出两条分叉带
-  // 左侧 bins 和右侧 bins
+  // : 
+  // bins bins
   var leftBins = Math.ceil(nBins / 2);
   var rightBins = nBins - leftBins;
   
@@ -463,7 +465,7 @@ function buildLevel(levelData) {
   var binH = 50;
   var binY = bottomY + 10;
   
-  // 左侧 bins
+  // bins
   for (var i = 0; i < leftBins; i++) {
     var bx = 30 + i * (binW + 10);
     bins.push({
@@ -476,7 +478,7 @@ function buildLevel(levelData) {
       glowTime: 0
     });
   }
-  // 右侧 bins
+  // bins
   for (var i = 0; i < rightBins; i++) {
     var bx = CANVAS_W - 30 - binW - i * (binW + 10);
     bins.push({
@@ -490,7 +492,7 @@ function buildLevel(levelData) {
     });
   }
   
-  // 重置状态
+  
   state.items = [];
   state.switches = switches;
   state.bins = bins;
@@ -506,7 +508,7 @@ function buildLevel(levelData) {
   state.flashTime = 0;
   state.currentLevelData = levelData;
   
-  // 更新UI
+  // UI
   document.getElementById('level-badge').textContent = 'L' + levelData.level;
   document.getElementById('correct-count').textContent = '0';
   document.getElementById('total-count').textContent = levelData.nItems;
@@ -515,10 +517,10 @@ function buildLevel(levelData) {
   document.getElementById('progress-bar').style.width = '0%';
 }
 
-// ---- 物品路径系统 ----
-// 物品从顶部生成, 沿主传送带向下移动
-// 到达开关时, 根据开关方向分流到左或右
-// 然后沿分叉带继续移动到 bin
+// ---- ----
+// , 
+// , 
+// bin
 
 function spawnItem(colorId) {
   var centerX = CANVAS_W / 2;
@@ -528,7 +530,7 @@ function spawnItem(colorId) {
     x: centerX,
     y: 30,
     vx: 0,
-    vy: 1, // 向下
+    vy: 1, 
     speed: ITEM_SPEED_BASE * state.currentLevelData.speed,
     onMainBelt: true,
     passedSwitches: new Set(),
@@ -540,7 +542,7 @@ function spawnItem(colorId) {
   });
 }
 
-// 更新物品位置
+
 function updateItem(item, dt) {
   if (item.splat) {
     item.splatTime -= dt;
@@ -550,28 +552,28 @@ function updateItem(item, dt) {
   var levelData = state.currentLevelData;
   
   if (item.onMainBelt) {
-    // 主传送带: 向下移动
+    // : 
     item.y += item.speed * dt;
     
-    // 检查是否到达某个开关
+    
     for (var i = 0; i < state.switches.length; i++) {
       var sw = state.switches[i];
       if (!item.passedSwitches.has(sw.id) && item.y >= sw.y) {
         item.passedSwitches.add(sw.id);
-        // 根据开关方向决定路由
+        
         var dir = sw.direction; // 0=left, 1=right
-        // 只在最后一个开关或决定性开关时实际分流
-        // 简化: 最后一个开关决定最终去向
+        
+        // : 
         if (i === state.switches.length - 1) {
           item.onMainBelt = false;
           item.routingSide = dir === 0 ? 'left' : 'right';
-          // 设置目标X: 朝最近的同侧 bin 移动
+          // X: bin 
           var bestBin = findBin(item.colorId, item.routingSide);
           if (bestBin) {
             item.targetBin = bestBin;
             item.targetX = bestBin.x;
           } else {
-            // 没有匹配的bin在那一侧, 找最近的
+            // bin, 
             bestBin = findBin(item.colorId, null);
             if (bestBin) {
               item.targetBin = bestBin;
@@ -579,7 +581,7 @@ function updateItem(item, dt) {
               item.routingSide = bestBin.side;
             }
           }
-          // 计算水平速度
+          
           var remainingDist = (CANVAS_H - 80 + 20) - item.y;
           if (remainingDist <= 0) remainingDist = 1;
           item.vx = (item.targetX - item.x) / remainingDist * item.speed * 0.6;
@@ -587,18 +589,18 @@ function updateItem(item, dt) {
       }
     }
   } else {
-    // 分叉带: 向下 + 水平移动到目标bin
+    // : + bin
     item.y += item.speed * dt;
     item.x += item.vx * dt;
     item.rotate += dt * 2;
     
-    // 检查是否到达 bin
+    // bin
     if (item.y >= item.targetBin.y - 10) {
       processItemIntoBin(item);
     }
   }
   
-  // 超出画布底部 = miss
+  // = miss
   if (item.y > CANVAS_H + 50) {
     item.splat = true;
     item.splatTime = 0;
@@ -631,14 +633,14 @@ function processItemIntoBin(item) {
   bin.glowTime = 0.5;
   
   if (bin.colorId === item.colorId) {
-    // 正确
+    
     state.correctCount++;
     sndCorrect();
     spawnParticles(bin.x, bin.y, COLORS[item.colorId].hex, 8);
     state.flashTime = 0.2;
     state.flashColor = 'rgba(67,233,123,0.08)';
   } else {
-    // 错误
+    
     state.mistakeCount++;
     sndWrong();
     spawnParticles(bin.x, bin.y, '#e74c3c', 6);
@@ -649,7 +651,7 @@ function processItemIntoBin(item) {
   state.processedCount++;
   updateScoreDisplay();
   
-  // 检查游戏结束条件
+  
   checkGameEnd();
 }
 
@@ -682,7 +684,7 @@ function checkGameEnd() {
   }
 }
 
-// ---- 粒子系统 ----
+// ---- ----
 function spawnParticles(x, y, color, count) {
   for (var i = 0; i < count; i++) {
     var angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
@@ -704,24 +706,24 @@ function updateParticles(dt) {
     var p = state.particles[i];
     p.x += p.vx * dt;
     p.y += p.vy * dt;
-    p.vy += 120 * dt; // 重力
+    p.vy += 120 * dt; 
     p.life -= dt;
     if (p.life <= 0) state.particles.splice(i, 1);
   }
 }
 
-// ---- 渲染 ----
+// ---- ----
 function render() {
   ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
   
-  // 背景
+  
   var grad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
   grad.addColorStop(0, '#0a0e1a');
   grad.addColorStop(1, '#0d1b2a');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
   
-  // 网格背景
+  
   ctx.strokeStyle = 'rgba(79,172,254,0.03)';
   ctx.lineWidth = 1;
   for (var x = 0; x < CANVAS_W; x += 30) {
@@ -731,31 +733,31 @@ function render() {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CANVAS_W, y); ctx.stroke();
   }
   
-  // 传送带背景
+  
   drawBelts();
   
-  // 分叉线
+  
   drawRoutingLines();
   
   // Bins
   for (var i = 0; i < state.bins.length; i++) drawBin(state.bins[i]);
   
-  // 开关
+  
   for (var i = 0; i < state.switches.length; i++) drawSwitch(state.switches[i]);
   
-  // 物品
+  
   for (var i = 0; i < state.items.length; i++) drawItem(state.items[i]);
   
-  // 粒子
+  
   for (var i = 0; i < state.particles.length; i++) drawParticle(state.particles[i]);
   
-  // 闪烁效果
+  
   if (state.flashTime > 0 && state.flashColor) {
     ctx.fillStyle = state.flashColor;
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
   }
   
-  // 暂停遮罩
+  
   if (state.paused) {
     ctx.fillStyle = 'rgba(0,0,0,0.7)';
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
@@ -774,10 +776,10 @@ function drawBelts() {
   var topY = 40;
   var bottomY = CANVAS_H - 80;
   
-  // 主传送带
+  
   drawBelt(centerX - BELT_W/2, topY, BELT_W, bottomY - topY);
   
-  // 入口指示
+  
   ctx.fillStyle = 'rgba(79,172,254,0.15)';
   ctx.fillRect(centerX - BELT_W/2 - 4, topY - 8, BELT_W + 8, 4);
   ctx.fillStyle = '#4facfe';
@@ -787,16 +789,16 @@ function drawBelts() {
 }
 
 function drawBelt(x, y, w, h) {
-  // 传送带背景
+  
   ctx.fillStyle = '#1a2332';
   ctx.fillRect(x, y, w, h);
   
-  // 传送带边框
+  
   ctx.strokeStyle = 'rgba(79,172,254,0.2)';
   ctx.lineWidth = 2;
   ctx.strokeRect(x, y, w, h);
   
-  // 传送带动画纹理 (移动的条纹)
+  // ()
   var stripeH = 12;
   var offset = (state.beltAnimOffset % stripeH);
   ctx.fillStyle = 'rgba(79,172,254,0.06)';
@@ -804,7 +806,7 @@ function drawBelt(x, y, w, h) {
     ctx.fillRect(x + 2, sy, w - 4, stripeH);
   }
   
-  // 传送带中线
+  
   ctx.strokeStyle = 'rgba(255,255,255,0.04)';
   ctx.lineWidth = 1;
   ctx.setLineDash([4, 4]);
@@ -816,7 +818,7 @@ function drawBelt(x, y, w, h) {
 }
 
 function drawRoutingLines() {
-  // 绘制从最后开关到各bin的分叉线
+  // bin
   if (state.switches.length === 0) return;
   var lastSwitch = state.switches[state.switches.length - 1];
   var centerX = CANVAS_W / 2;
@@ -824,20 +826,20 @@ function drawRoutingLines() {
   for (var i = 0; i < state.bins.length; i++) {
     var bin = state.bins[i];
     
-    // 分叉带
+    
     ctx.strokeStyle = 'rgba(79,172,254,0.08)';
     ctx.lineWidth = BELT_W;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(centerX, lastSwitch.y);
     
-    // 弯曲路径
+    
     var midX = (centerX + bin.x) / 2;
     var midY = (lastSwitch.y + bin.y) / 2 + 10;
     ctx.quadraticCurveTo(midX, midY, bin.x, bin.y - 5);
     ctx.stroke();
     
-    // 中心线
+    
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 6]);
@@ -855,7 +857,7 @@ function drawSwitch(sw) {
   var cy = sw.y;
   var r = sw.radius;
   
-  // 外圈光晕
+  
   if (sw.glowTime > 0) {
     ctx.beginPath();
     ctx.arc(cx, cy, r + 8, 0, Math.PI * 2);
@@ -864,7 +866,7 @@ function drawSwitch(sw) {
     sw.glowTime -= 0.016;
   }
   
-  // 开关底座
+  
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fillStyle = '#1a2332';
@@ -873,7 +875,7 @@ function drawSwitch(sw) {
   ctx.lineWidth = 2;
   ctx.stroke();
   
-  // 方向箭头
+  
   ctx.fillStyle = '#4facfe';
   ctx.font = 'bold 18px Inter, sans-serif';
   ctx.textAlign = 'center';
@@ -881,7 +883,7 @@ function drawSwitch(sw) {
   var arrow = sw.direction === 0 ? '◀' : '▶';
   ctx.fillText(arrow, cx, cy);
   
-  // 标签
+  
   ctx.font = 'bold 8px Inter, sans-serif';
   ctx.fillStyle = '#8899aa';
   ctx.fillText('TAP', cx, cy + r + 8);
@@ -890,33 +892,33 @@ function drawSwitch(sw) {
 function drawBin(bin) {
   var c = COLORS[bin.colorId];
   
-  // 光晕
+  
   if (bin.glowTime > 0) {
     ctx.fillStyle = 'rgba(' + hexToRgb(c.hex) + ',' + (bin.glowTime * 0.4) + ')';
     ctx.fillRect(bin.x - bin.w/2 - 6, bin.y - bin.h/2 - 6, bin.w + 12, bin.h + 12);
     bin.glowTime -= 0.016;
   }
   
-  // Bin 背景
+  // Bin 
   ctx.fillStyle = '#1a2332';
   roundRect(ctx, bin.x - bin.w/2, bin.y - bin.h/2, bin.w, bin.h, 8);
   ctx.fill();
   
-  // Bin 边框 (对应颜色)
+  // Bin ()
   ctx.strokeStyle = c.hex;
   ctx.lineWidth = 2;
   roundRect(ctx, bin.x - bin.w/2, bin.y - bin.h/2, bin.w, bin.h, 8);
   ctx.stroke();
   
-  // Bin 颜色标签
+  // Bin 
   ctx.fillStyle = c.hex;
   ctx.fillRect(bin.x - bin.w/2 + 6, bin.y - bin.h/2 + 6, bin.w - 12, 8);
   
-  // 收集区域指示
+  
   ctx.fillStyle = 'rgba(' + hexToRgb(c.hex) + ',0.1)';
   ctx.fillRect(bin.x - bin.w/2 + 6, bin.y - bin.h/2 + 18, bin.w - 12, bin.h - 24);
   
-  // 颜色名称
+  
   ctx.fillStyle = c.light;
   ctx.font = 'bold 9px Inter, sans-serif';
   ctx.textAlign = 'center';
@@ -934,28 +936,28 @@ function drawItem(item) {
   ctx.translate(item.x, item.y);
   if (!item.onMainBelt) ctx.rotate(item.rotate * 0.3);
   
-  // 阴影
+  
   ctx.fillStyle = 'rgba(0,0,0,0.3)';
   roundRect(ctx, -s/2 + 2, -s/2 + 2, s, s, 6);
   ctx.fill();
   
-  // 物品主体
+  
   ctx.fillStyle = c.hex;
   roundRect(ctx, -s/2, -s/2, s, s, 6);
   ctx.fill();
   
-  // 高光
+  
   ctx.fillStyle = c.light;
   roundRect(ctx, -s/2 + 3, -s/2 + 3, s - 6, 8, 4);
   ctx.fill();
   
-  // 中心标记 (小圆点表示颜色)
+  // ()
   ctx.beginPath();
   ctx.arc(0, 0, 6, 0, Math.PI * 2);
   ctx.fillStyle = c.dark;
   ctx.fill();
   
-  // 边框
+  
   ctx.strokeStyle = c.dark;
   ctx.lineWidth = 1.5;
   roundRect(ctx, -s/2, -s/2, s, s, 6);
@@ -974,7 +976,7 @@ function drawParticle(p) {
   ctx.globalAlpha = 1;
 }
 
-// 辅助函数
+
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -996,7 +998,7 @@ function hexToRgb(hex) {
   return r + ',' + g + ',' + b;
 }
 
-// ---- 输入处理 ----
+// ---- ----
 function handleCanvasClick(clientX, clientY) {
   if (state.paused || state.gameOver) return;
   initAudio();
@@ -1006,13 +1008,13 @@ function handleCanvasClick(clientX, clientY) {
   var cx = (clientX - rect.left) * scale;
   var cy = (clientY - rect.top) * scale;
   
-  // 检查是否点击了开关
+  
   for (var i = 0; i < state.switches.length; i++) {
     var sw = state.switches[i];
     var dx = cx - sw.x;
     var dy = cy - sw.y;
     if (dx * dx + dy * dy <= (sw.radius + 8) * (sw.radius + 8)) {
-      sw.direction = 1 - sw.direction; // 切换 0 <-> 1
+      sw.direction = 1 - sw.direction; // 0 <-> 1
       sw.glowTime = 0.4;
       sndSwitch();
       return;
@@ -1032,7 +1034,7 @@ canvas.addEventListener('touchstart', function(e) {
   }
 }, { passive: false });
 
-// ---- 游戏主循环 ----
+// ---- ----
 var lastTime = 0;
 function gameLoop(timestamp) {
   if (!lastTime) lastTime = timestamp;
@@ -1043,7 +1045,7 @@ function gameLoop(timestamp) {
     update(dt);
   }
   
-  // 始终渲染 (即使暂停也显示当前帧)
+  // ()
   if (state.screen === 'game') {
     render();
   }
@@ -1056,7 +1058,7 @@ function update(dt) {
   
   if (state.flashTime > 0) state.flashTime -= dt;
   
-  // 生成物品
+  
   state.lastSpawnTime += dt * 1000;
   var spawnInterval = SPAWN_INTERVAL / state.currentLevelData.speed;
   if (state.spawnQueue.length > 0 && state.lastSpawnTime >= spawnInterval) {
@@ -1065,21 +1067,21 @@ function update(dt) {
     spawnItem(colorId);
   }
   
-  // 更新物品
+  
   for (var i = 0; i < state.items.length; i++) {
     updateItem(state.items[i], dt);
   }
   
-  // 清理已处理的物品
+  
   state.items = state.items.filter(function(item) {
     return !(item.splat && item.splatTime <= 0);
   });
   
-  // 更新粒子
+  
   updateParticles(dt);
 }
 
-// ---- UI 导航 ----
+// ---- UI ----
 function showScreen(name) {
   state.screen = name;
   document.getElementById('menu-screen').style.display = name === 'menu' ? 'flex' : 'none';
@@ -1110,7 +1112,7 @@ function buildLevelSelect() {
     var stars = state.stars[i] || 0;
     var starStr = '';
     for (var s = 0; s < 3; s++) {
-      starStr += s < stars ? '★' : '☆';
+      starStr += s < stars ? '*' : '*';
     }
     
     card.innerHTML = '<div class="lv-num">' + i + '</div>' +
@@ -1148,7 +1150,7 @@ function showResult(won) {
     title.textContent = 'Level Complete!';
     title.className = 'result-title win';
     
-    // 计算星数
+    
     var mistakes = state.mistakeCount;
     var maxMistakes = state.currentLevelData.maxMistakes;
     var earnedStars;
@@ -1156,7 +1158,7 @@ function showResult(won) {
     else if (mistakes <= maxMistakes / 2) earnedStars = 2;
     else earnedStars = 1;
     
-    // 更新存档
+    
     var prevStars = state.stars[state.currentLevel] || 0;
     if (earnedStars > prevStars) {
       state.stars[state.currentLevel] = earnedStars;
@@ -1167,7 +1169,7 @@ function showResult(won) {
     saveSave();
     
     var starStr = '';
-    for (var s = 0; s < 3; s++) starStr += s < earnedStars ? '⭐' : '☆';
+    for (var s = 0; s < 3; s++) starStr += s < earnedStars ? '*' : '*';
     stars.innerHTML = starStr;
     stars.style.color = '#ffd700';
     
@@ -1178,7 +1180,7 @@ function showResult(won) {
   } else {
     title.textContent = 'Game Over!';
     title.className = 'result-title lose';
-    stars.innerHTML = '💫';
+    stars.innerHTML = '***';
     stars.style.color = '#e74c3c';
     stats.textContent = 'Too many mistakes! Sorted ' + state.correctCount + ' items correctly.';
     nextBtn.style.display = 'none';
@@ -1191,7 +1193,7 @@ function hideResult() {
   document.getElementById('result-overlay').style.display = 'none';
 }
 
-// ---- 按钮事件 ----
+// ---- ----
 document.getElementById('btn-continue').addEventListener('click', function() {
   initAudio();
   startLevel(state.maxUnlocked);
@@ -1246,7 +1248,7 @@ document.getElementById('btn-result-menu').addEventListener('click', function() 
   showScreen('menu');
 });
 
-// 点击暂停遮罩恢复
+
 canvas.addEventListener('click', function() {
   if (state.paused) {
     state.paused = false;
@@ -1254,7 +1256,7 @@ canvas.addEventListener('click', function() {
   }
 });
 
-// ---- 启动 ----
+// ---- ----
 loadSave();
 updateMenuStats();
 showScreen('menu');
@@ -1269,7 +1271,7 @@ console.log('Conveyor Belt Sort v1.0 loaded — 30 levels ready');
 <script>
 (function(){var _origRAF=window.requestAnimationFrame;var _origCAF=window.cancelAnimationFrame;var _rafId=null;window.requestAnimationFrame=function(cb){return _rafId=_origRAF.call(window,cb)};window.cancelAnimationFrame=function(id){if(id)_origCAF.call(window,id);_rafId=null};window.addEventListener('beforeunload',function(){if(_rafId)window.cancelAnimationFrame(_rafId)});document.addEventListener('visibilitychange',function(){if(!document.hidden&&_rafId===null){_rafId=_origRAF.call(window,function(){_rafId=null})}})})();
 </script>
-<script src="/gz-analytics.js?v=20260703206bd7d1148" defer></script>
+<script src="/gz-analytics.js?v=202607033132e5f4fe1" defer></script>
 <script src="/game-footer.js?v=202607021204"></script>
 <script src="/monetag-manager.js?v=v510cull2"></script>
 <div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
