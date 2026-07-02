@@ -239,7 +239,8 @@
 {n:"Armillary Align",e:"🌐",u:"/armillary-align/",c:"puzzle"},
 {n:"Plug Master",e:"🔌",u:"/plug-master/",c:"puzzle"}
 ,{n:'Tetravex',e:'🔲',u:'/tetravex/',c:'puzzle'}
-,{n:'Qwirkle',e:'🎮',u:'/qwirkle/',c:'puzzle'}]
+,{n:'Qwirkle',e:'🎮',u:'/qwirkle/',c:'puzzle'}
+,{n:'Ships Finder',e:'🚢',u:'/ships-finder/',c:'puzzle'}]
 
   var cur = location.pathname;
   var current = games.find(function(g){ return g && g.u === cur; });
@@ -306,6 +307,7 @@
 {n:'Claw Master',e:'🦾',u:'/claw-machine/',c:'puzzle'},
       {n:'Nail Art Studio',e:'💅',u:'/nail-art/',c:'puzzle'},
       {n:'Odd One Out',e:'🔍',u:'/odd-one-out/',c:'puzzle'},
+      {n:'Ships Finder',e:'🚢',u:'/ships-finder/',c:'puzzle'},
       ]; }
    }
    function getDateSeed() {
