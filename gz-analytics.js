@@ -24,9 +24,9 @@
   // Tunnel: cloudflared systemd service (auto-restart on failure)
   // NOTE: If tunnel URL changes, update this and redeploy
 <<<<<<< Updated upstream
-  var EP = 'https://troops-logic-lease-assisted.trycloudflare.com/api/collect';
+  var EP = 'https://empirical-nickel-punk-tin.trycloudflare.com/api/collect';
 =======
-  var EP = 'https://troops-logic-lease-assisted.trycloudflare.com/api/collect';
+  var EP = 'https://empirical-nickel-punk-tin.trycloudflare.com/api/collect';
 >>>>>>> Stashed changes
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
