@@ -177,6 +177,282 @@ const PUZZLES = [
       {id:'d3',dir:'down',row:0,col:9,answer:'MUSEUM',clue:'Building with exhibits (6)',num:8},
     ]
   },
+  // === R22 新增谜题 (P13-P30) ===
+  {
+    title: "Weather Watch",
+    difficulty: "easy",
+    rows: 5, cols: 5,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'RAIN',clue:'Water from clouds (4)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'CLOUD',clue:'Sky cotton (5)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'WINDY',clue:'Breezy conditions (5)',num:3},
+      {id:'d1',dir:'down',row:0,col:0,answer:'REACT',clue:'Respond to something (5)',num:1},
+      {id:'d2',dir:'down',row:0,col:3,answer:'NICE',clue:'Pleasant (4)',num:4},
+      {id:'d3',dir:'down',row:0,col:4,answer:'NAP',clue:'Short sleep (3)',num:5}
+    ]
+  },
+  {
+    title: "Color Palette",
+    difficulty: "easy",
+    rows: 6, cols: 6,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'PURPLE',clue:'Royal color (6)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'ORANGE',clue:'Citrus color (6)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'YELLOW',clue:'Bright sun color (6)',num:3},
+      {id:'d1',dir:'down',row:0,col:0,answer:'POETRY',clue:'Verse writing (6)',num:1},
+      {id:'d2',dir:'down',row:0,col:2,answer:'EAGLE',clue:'Soaring raptor (5)',num:4},
+      {id:'d3',dir:'down',row:0,col:5,answer:'ELDER',clue:'Older, respected person (5)',num:5}
+    ]
+  },
+  {
+    title: "Garden Party",
+    difficulty: "easy",
+    rows: 6, cols: 6,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'TULIP',clue:'Spring flower (5)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'DAISY',clue:'White-petaled flower (5)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'LILAC',clue:'Purple fragrant shrub (5)',num:3},
+      {id:'d1',dir:'down',row:0,col:0,answer:'TIDAL',clue:'Related to tides (5)',num:1},
+      {id:'d2',dir:'down',row:0,col:3,answer:'PALMS',clue:'Tropical trees (5)',num:4},
+      {id:'d3',dir:'down',row:2,col:2,answer:'SILK',clue:'Fine fabric (4)',num:5},
+      {id:'d4',dir:'down',row:0,col:4,answer:'PEACE',clue:'Calm, no war (5)',num:6}
+    ]
+  },
+  {
+    title: "Space Voyage",
+    difficulty: "medium",
+    rows: 7, cols: 7,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'GALAXY',clue:'Star system like Milky Way (6)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'PLANET',clue:'Mars or Venus (6)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'ROCKET',clue:'Space launch vehicle (6)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'COMET',clue:'Icy space body with tail (5)',num:4},
+      {id:'d1',dir:'down',row:0,col:0,answer:'GRAVITY',clue:'Force pulling objects together (7)',num:1},
+      {id:'d2',dir:'down',row:0,col:4,answer:'XENON',clue:'Noble gas element (5)',num:5},
+      {id:'d3',dir:'down',row:0,col:5,answer:'LUNAR',clue:'Relating to the moon (5)',num:6}
+    ]
+  },
+  {
+    title: "Body Talk",
+    difficulty: "medium",
+    rows: 7, cols: 7,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'ELBOW',clue:'Arm joint (5)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'HEART',clue:'Blood-pumping organ (5)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'LUNGS',clue:'Breathing organs (5)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'BRAIN',clue:'Thinking organ (5)',num:4},
+      {id:'d1',dir:'down',row:0,col:0,answer:'EARACHE',clue:'Pain in hearing organ (7)',num:1},
+      {id:'d2',dir:'down',row:0,col:2,answer:'BETA',clue:'Second Greek letter (4)',num:5},
+      {id:'d3',dir:'down',row:0,col:3,answer:'OPERA',clue:'Classical singing drama (5)',num:6},
+      {id:'d4',dir:'down',row:0,col:4,answer:'WAVES',clue:'Ocean swells (5)',num:7}
+    ]
+  },
+  {
+    title: "Winter Wonderland",
+    difficulty: "medium",
+    rows: 7, cols: 7,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'FROSTY',clue:'Like a snowman (6)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'ICICLE',clue:'Frozen drip (6)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'SLED',clue:'Snow slider (4)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'MITTEN',clue:'Hand warmer (6)',num:4},
+      {id:'d1',dir:'down',row:0,col:0,answer:'FAMILY',clue:'Kin, relatives (6)',num:1},
+      {id:'d2',dir:'down',row:0,col:2,answer:'RAZOR',clue:'Shaving blade (5)',num:5},
+      {id:'d3',dir:'down',row:0,col:4,answer:'TIDAL',clue:'Of the tides (5)',num:6},
+      {id:'d4',dir:'down',row:0,col:5,answer:'SLAB',clue:'Flat stone piece (4)',num:7}
+    ]
+  },
+  {
+    title: "Movie Magic",
+    difficulty: "hard",
+    rows: 8, cols: 8,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'PREMIERE',clue:'First showing of a film (8)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'ACTOR',clue:'Stage performer (5)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'CAMERA',clue:'Filming device (6)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'SCRIPT',clue:'Written dialogue (6)',num:4},
+      {id:'d1',dir:'down',row:0,col:0,answer:'POPULAR',clue:'Widely liked (7)',num:1},
+      {id:'d2',dir:'down',row:0,col:3,answer:'MARVEL',clue:'Comic book brand (6)',num:5},
+      {id:'d3',dir:'down',row:0,col:5,answer:'EMPIRE',clue:'Large domain or kingdom (6)',num:6},
+      {id:'d4',dir:'down',row:0,col:7,answer:'EPIC',clue:'Grand in scale (4)',num:7}
+    ]
+  },
+  {
+    title: "World Travels",
+    difficulty: "hard",
+    rows: 8, cols: 8,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'AIRPORT',clue:'Flight hub (7)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'TICKET',clue:'Boarding pass (6)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'PASSPORT',clue:'Travel ID document (8)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'MAP',clue:'Navigation guide (3)',num:4},
+      {id:'d1',dir:'down',row:0,col:0,answer:'ANTHEM',clue:'National song (6)',num:1},
+      {id:'d2',dir:'down',row:0,col:2,answer:'RESCUE',clue:'Save from danger (6)',num:5},
+      {id:'d3',dir:'down',row:0,col:4,answer:'PIRATE',clue:'Sea raider (6)',num:6},
+      {id:'d4',dir:'down',row:0,col:6,answer:'TROPHY',clue:'Winner prize (6)',num:7}
+    ]
+  },
+  {
+    title: "Detective Work",
+    difficulty: "hard",
+    rows: 9, cols: 9,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'MYSTERY',clue:'Unsolved puzzle (7)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'CLUES',clue:'Detective hints (5)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'SUSPECT',clue:'Person of interest (7)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'EVIDENCE',clue:'Courtroom proof (8)',num:4},
+      {id:'a5',dir:'across',row:8,col:0,answer:'ALIBI',clue:'Proof of innocence (5)',num:5},
+      {id:'d1',dir:'down',row:0,col:0,answer:'MEDALLION',clue:'Round metal ornament (9)',num:1},
+      {id:'d2',dir:'down',row:0,col:3,answer:'STAMP',clue:'Inky mark (5)',num:6},
+      {id:'d3',dir:'down',row:0,col:5,answer:'RESIN',clue:'Tree sap material (5)',num:7},
+      {id:'d4',dir:'down',row:0,col:6,answer:'YACHT',clue:'Luxury boat (5)',num:8}
+    ]
+  },
+  {
+    title: "Art Gallery",
+    difficulty: "expert",
+    rows: 10, cols: 10,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'PAINTING',clue:'Wall art piece (8)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'CANVAS',clue:'Painter surface (6)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'BRUSH',clue:'Painting tool (5)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'PORTRAIT',clue:'Painted face (8)',num:4},
+      {id:'a5',dir:'across',row:8,col:0,answer:'CLAY',clue:'Pottery material (4)',num:5},
+      {id:'d1',dir:'down',row:0,col:0,answer:'PLIERS',clue:'Gripping tool (6)',num:1},
+      {id:'d2',dir:'down',row:0,col:3,answer:'TRESTLE',clue:'Support framework (7)',num:6},
+      {id:'d3',dir:'down',row:0,col:6,answer:'RIPSAW',clue:'Wood-cutting tool (6)',num:7},
+      {id:'d4',dir:'down',row:0,col:8,answer:'EXTRA',clue:'Additional (5)',num:8}
+    ]
+  },
+  {
+    title: "Kitchen Chaos",
+    difficulty: "expert",
+    rows: 9, cols: 9,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'UTENSILS',clue:'Kitchen tools (8)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'BREAD',clue:'Baked staple (5)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'SPATULA',clue:'Flipper tool (7)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'WHISK',clue:'Egg beater (5)',num:4},
+      {id:'a5',dir:'across',row:8,col:0,answer:'RECIPE',clue:'Cooking instructions (6)',num:5},
+      {id:'d1',dir:'down',row:0,col:0,answer:'UMBRELLA',clue:'Rain shield (8)',num:1},
+      {id:'d2',dir:'down',row:0,col:2,answer:'THERMOS',clue:'Insulated bottle (7)',num:6},
+      {id:'d3',dir:'down',row:0,col:4,answer:'NEEDLE',clue:'Sewing pin (6)',num:7},
+      {id:'d4',dir:'down',row:0,col:6,answer:'LADDER',clue:'Climbing steps (6)',num:8}
+    ]
+  },
+  {
+    title: "Music Studio",
+    difficulty: "expert",
+    rows: 9, cols: 9,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'ORCHESTRA',clue:'Large musical group (9)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'VIOLIN',clue:'Bowed string instrument (6)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'RHYTHM',clue:'Beat pattern (6)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'CHORD',clue:'Three or more notes together (5)',num:4},
+      {id:'a5',dir:'across',row:8,col:0,answer:'BOW',clue:'Violin stick (3)',num:5},
+      {id:'d1',dir:'down',row:0,col:0,answer:'OVATION',clue:'Applause (7)',num:1},
+      {id:'d2',dir:'down',row:0,col:2,answer:'CELLO',clue:'Large string instrument (5)',num:6},
+      {id:'d3',dir:'down',row:0,col:5,answer:'STAND',clue:'Music sheet holder (5)',num:7},
+      {id:'d4',dir:'down',row:0,col:7,answer:'TRIO',clue:'Three performers (4)',num:8}
+    ]
+  },
+  {
+    title: "Chemistry Lab",
+    difficulty: "expert",
+    rows: 9, cols: 9,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'COMPOUND',clue:'Chemical mixture (8)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'OXYGEN',clue:'Breathing gas (6)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'FLASK',clue:'Lab container (5)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'REACTION',clue:'Chemical change (8)',num:4},
+      {id:'a5',dir:'across',row:8,col:0,answer:'ATOM',clue:'Matter building block (4)',num:5},
+      {id:'d1',dir:'down',row:0,col:0,answer:'COMPUTER',clue:'Electronic brain (8)',num:1},
+      {id:'d2',dir:'down',row:0,col:3,answer:'POURING',clue:'Liquid flow (7)',num:6},
+      {id:'d3',dir:'down',row:0,col:5,answer:'URANIUM',clue:'Radioactive element (7)',num:7},
+      {id:'d4',dir:'down',row:0,col:7,answer:'NEON',clue:'Bright sign gas (4)',num:8}
+    ]
+  },
+  {
+    title: "Ancient Wonders",
+    difficulty: "master",
+    rows: 10, cols: 10,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'PYRAMID',clue:'Egyptian monument (7)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'COLOSSEUM',clue:'Roman arena (9)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'STONEHENGE',clue:'English stone circle (10)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'TEMPLE',clue:'Place of worship (6)',num:4},
+      {id:'a5',dir:'across',row:8,col:0,answer:'STATUE',clue:'Carved figure (6)',num:5},
+      {id:'d1',dir:'down',row:0,col:0,answer:'PARADIGM',clue:'Model or pattern (8)',num:1},
+      {id:'d2',dir:'down',row:0,col:3,answer:'AMAZON',clue:'River or warrior (6)',num:6},
+      {id:'d3',dir:'down',row:0,col:5,answer:'DISCOVERY',clue:'Finding something new (9)',num:7},
+      {id:'d4',dir:'down',row:0,col:8,answer:'SCULPTURE',clue:'3D artwork (9)',num:8}
+    ]
+  },
+  {
+    title: "Financial District",
+    difficulty: "master",
+    rows: 10, cols: 10,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'INVESTMENT',clue:'Money placed for growth (10)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'STOCK',clue:'Market share (5)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'PROFIT',clue:'Financial gain (6)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'BROKER',clue:'Trade middleman (6)',num:4},
+      {id:'a5',dir:'across',row:8,col:0,answer:'CRYPTO',clue:'Digital currency (6)',num:5},
+      {id:'d1',dir:'down',row:0,col:0,answer:'INDUSTRIAL',clue:'Manufacturing sector (10)',num:1},
+      {id:'d2',dir:'down',row:0,col:3,answer:'ESTATE',clue:'Property, land (6)',num:6},
+      {id:'d3',dir:'down',row:0,col:5,answer:'STIMULUS',clue:'Economic boost (8)',num:7},
+      {id:'d4',dir:'down',row:0,col:7,answer:'EQUITY',clue:'Fairness, stock value (6)',num:8}
+    ]
+  },
+  {
+    title: "Literary World",
+    difficulty: "master",
+    rows: 10, cols: 10,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'AUTHORSHIP',clue:'Writing credit (10)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'NOVEL',clue:'Long fiction (5)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'POEM',clue:'Verse work (4)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'CHAPTER',clue:'Book division (7)',num:4},
+      {id:'a5',dir:'across',row:8,col:0,answer:'METAPHOR',clue:'Figurative comparison (8)',num:5},
+      {id:'d1',dir:'down',row:0,col:0,answer:'ALPHABET',clue:'Letter set (8)',num:1},
+      {id:'d2',dir:'down',row:0,col:3,answer:'KINGDOM',clue:'Realm, domain (7)',num:6},
+      {id:'d3',dir:'down',row:0,col:5,answer:'EXPRESSION',clue:'Way of conveying (10)',num:7},
+      {id:'d4',dir:'down',row:0,col:8,answer:'PROLOGUE',clue:'Story intro (7)',num:8}
+    ]
+  },
+  {
+    title: "Medical Center",
+    difficulty: "master",
+    rows: 10, cols: 10,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'SURGEON',clue:'Operating doctor (7)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'DIAGNOSIS',clue:'Medical identification (9)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'PULSE',clue:'Heartbeat measure (5)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'CLINIC',clue:'Walk-in medical center (6)',num:4},
+      {id:'a5',dir:'across',row:8,col:0,answer:'VACCINE',clue:'Preventive shot (7)',num:5},
+      {id:'d1',dir:'down',row:0,col:0,answer:'SPECTACLES',clue:'Eyeglasses (10)',num:1},
+      {id:'d2',dir:'down',row:0,col:3,answer:'GENESIS',clue:'Origin, beginning (7)',num:6},
+      {id:'d3',dir:'down',row:0,col:5,answer:'UNIVERSITY',clue:'Higher learning (10)',num:7},
+      {id:'d4',dir:'down',row:0,col:8,answer:'NURSERY',clue:'Baby room or plant shop (7)',num:8}
+    ]
+  },
+  {
+    title: "Tech Revolution",
+    difficulty: "master",
+    rows: 11, cols: 11,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'ALGORITHM',clue:'Computing procedure (9)',num:1},
+      {id:'a2',dir:'across',row:2,col:0,answer:'SOFTWARE',clue:'Computer programs (8)',num:2},
+      {id:'a3',dir:'across',row:4,col:0,answer:'NEURAL',clue:'Like brain networks (6)',num:3},
+      {id:'a4',dir:'across',row:6,col:0,answer:'QUANTUM',clue:'Subatomic computing (7)',num:4},
+      {id:'a5',dir:'across',row:8,col:0,answer:'CIPHER',clue:'Secret code (6)',num:5},
+      {id:'a6',dir:'across',row:10,col:0,answer:'BINARY',clue:'Base-2 number system (6)',num:6},
+      {id:'d1',dir:'down',row:0,col:0,answer:'ARISTOCRAT',clue:'Noble class member (10)',num:1},
+      {id:'d2',dir:'down',row:0,col:3,answer:'ORCHESTRA',clue:'Symphony group (9)',num:7},
+      {id:'d3',dir:'down',row:0,col:5,answer:'ITINERARY',clue:'Travel plan (9)',num:8},
+      {id:'d4',dir:'down',row:0,col:8,answer:'HARMONY',clue:'Musical agreement (7)',num:9}
+    ]
+  },
 ];
 
 // ── Game State ────────────────────────────────────────────────────────────────
@@ -199,6 +475,70 @@ function playBGM() {
   try { if (window.GameAudio) GameAudio.playBGM('word-puzzle'); } catch(e) {}
 }
 
+// ── Save/Progress System (R22) ────────────────────────────────────────────────
+const SAVE_KEY = 'crossword_save_v1';
+const STARS_KEY = 'crossword_stars_v1';
+
+function getSaveData() {
+  try { return JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); } catch(e) { return {}; }
+}
+
+function saveProgress(puzzleIndex, uGrid) {
+  try {
+    const data = getSaveData();
+    data[puzzleIndex] = uGrid.map(row => [...row]);
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch(e) {}
+}
+
+function clearProgress(puzzleIndex) {
+  try {
+    const data = getSaveData();
+    delete data[puzzleIndex];
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch(e) {}
+}
+
+function loadProgress(puzzleIndex, rows, cols) {
+  const data = getSaveData();
+  if (!data[puzzleIndex]) return null;
+  const saved = data[puzzleIndex];
+  if (!Array.isArray(saved) || saved.length !== rows) return null;
+  return saved.map(row => Array.isArray(row) ? [...row] : Array(cols).fill(''));
+}
+
+function getStarsData() {
+  try { return JSON.parse(localStorage.getItem(STARS_KEY) || '{}'); } catch(e) { return {}; }
+}
+
+function saveStars(puzzleIndex, stars, time) {
+  try {
+    const data = getStarsData();
+    const existing = data[puzzleIndex];
+    if (!existing || stars > existing.stars || (stars === existing.stars && time < existing.time)) {
+      data[puzzleIndex] = { stars, time, date: Date.now() };
+      localStorage.setItem(STARS_KEY, JSON.stringify(data));
+    }
+  } catch(e) {}
+}
+
+function calculateStars(time, hintsUsed) {
+  // 3 stars: no hints + fast time; 2 stars: 1 hint or medium time; 1 star: completed
+  const totalHints = 3;
+  if (hintsUsed === 0 && time <= 120) return 3;
+  if (hintsUsed <= 1 && time <= 300) return 2;
+  return 1;
+}
+
+function getStarHTML(stars) {
+  if (!stars || stars < 1) return '';
+  let html = '';
+  for (let i = 0; i < 3; i++) {
+    html += i < stars ? '\u2605' : '\u2606';
+  }
+  return html;
+}
+
 // ── Puzzle Selection ──────────────────────────────────────────────────────────
 function initPuzzleSelect() {
   const container = document.getElementById('puzzle-select');
@@ -216,15 +556,21 @@ function showStart() {
   const list = document.getElementById('puzzle-list');
   if (!list) return;
   list.innerHTML = '';
+  const starsData = getStarsData();
+  const saveData = getSaveData();
   PUZZLES.forEach((p, i) => {
     const card = document.createElement('div');
     card.className = 'puzzle-card';
+    const starInfo = starsData[i] ? getStarHTML(starsData[i].stars) : '';
+    const hasSave = saveData[i] && Array.isArray(saveData[i]);
+    const saveBadge = hasSave ? '<span class="tag" style="background:rgba(250,204,21,0.2);color:#fbbf24">SAVED</span>' : '';
     card.innerHTML = `
-      <h4>${p.title}</h4>
+      <h4>${p.title} ${starInfo ? '<span class="puzzle-stars">'+starInfo+'</span>' : ''}</h4>
       <div class="meta">${p.rows}×${p.cols} grid</div>
       <div class="tags">
         <span class="tag tag-${p.difficulty}">${p.difficulty.toUpperCase()}</span>
         <span class="tag" style="background:rgba(96,165,250,0.2);color:#93c5fd">${p.words.length} words</span>
+        ${saveBadge}
       </div>`;
     card.onclick = () => { startPuzzle(i); hideStart(); };
     list.appendChild(card);
@@ -440,6 +786,18 @@ function onInput(row, col, value) {
     moveToNextCell(row, col);
   }
   checkWordCompletion();
+  autoSaveProgress();
+}
+
+// R22: 自动保存当前进度
+let _saveTimer = null;
+function autoSaveProgress() {
+  if (!currentPuzzle) return;
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    const idx = PUZZLES.indexOf(currentPuzzle);
+    if (idx >= 0) saveProgress(idx, userGrid);
+  }, 500);
 }
 
 function onKeyDown(row, col, e) {
@@ -527,6 +885,18 @@ function startPuzzle(puzzleIndex) {
   seconds = 0;
   gameStarted = false;
   completedWords = new Set();
+
+  // 加载已保存的进度 (R22)
+  const saved = loadProgress(puzzleIndex, currentPuzzle.rows, currentPuzzle.cols);
+  if (saved) {
+    for (let r = 0; r < currentPuzzle.rows; r++) {
+      for (let c = 0; c < currentPuzzle.cols; c++) {
+        if (saved[r] && saved[r][c]) {
+          userGrid[r][c] = saved[r][c];
+        }
+      }
+    }
+  }
 
   clearInterval(timerInterval);
   const timerEl = document.getElementById('timer');
@@ -644,6 +1014,7 @@ function clearGrid() {
   });
   completedWords = new Set();
   document.querySelectorAll('.clue-item').forEach(c => c.classList.remove('completed'));
+  autoSaveProgress();
 }
 
 function showHint() {
@@ -716,9 +1087,19 @@ function revealPuzzle() {
 function puzzleComplete() {
   clearInterval(timerInterval);
   playSound('win');
+  const hintsUsed = 3 - hintsLeft;
+  const stars = calculateStars(seconds, hintsUsed);
+
+  // 保存星数和清除进度 (R22)
+  const idx = PUZZLES.indexOf(currentPuzzle);
+  if (idx >= 0) {
+    saveStars(idx, stars, seconds);
+    clearProgress(idx);
+  }
+
   const m = String(Math.floor(seconds / 60)).padStart(2, '0');
   const s = String(seconds % 60).padStart(2, '0');
-  const msg = `Time: ${m}:${s} — Hints used: ${3 - hintsLeft}`;
+  const msg = `Time: ${m}:${s} | Hints: ${hintsUsed} | Stars: ${getStarHTML(stars)}`;
   const msgEl = document.getElementById('win-msg');
   if (msgEl) msgEl.textContent = msg;
   const winOverlay = document.getElementById('win-overlay');
@@ -746,6 +1127,7 @@ document.addEventListener('keydown', (e) => {
     playSound('keytype');
     moveToNextCell(selectedCell.row, selectedCell.col);
     checkWordCompletion();
+    autoSaveProgress();
   }
   if (e.key === 'Backspace' && selectedCell) {
     e.preventDefault();
@@ -756,6 +1138,7 @@ document.addEventListener('keydown', (e) => {
       if (inp) inp.value = '';
     }
     moveToPrevCell(selectedCell.row, selectedCell.col);
+    autoSaveProgress();
   }
 });
 
