@@ -4021,6 +4021,46 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
 - Key themes: (1) Cloud rendering is emerging as the solution for WebGL games on low-compute devices; (2) Chrome's render pipeline (Skia + V8 + ANGLE) saw 3 separate 0-day exploit classes in 2026; (3) HTML-in-Canvas is blurring the DOM/Canvas boundary — experimental but tracked; (4) WeChat miniprogram Canvas API divergence matters for China market reach; (5) Browser fingerprint evasion (privacy browsers) can break WebGL rendering and ad serving.
 - All 8 verified zero-duplicate against v1.121.0 library (3189 lines, 2900+ existing test cases across W/G/C/S/P/B/A/PC categories).
 
+## [v1.126.0] - 2026-07-02
+### Added
+- 8 new test cases from July 2 2026 industry research (R244 Dynamic Test Intelligence cron, 4h cadence cycle 6)
+- New test cases:
+  - [S-261] **[P1]** CVE-2026-32202 Windows Shell LNK 0-Click NTLMv2 Hash Spoofing — APT28 Actively Exploited (CISA KEV)
+  - [S-262] **[P1]** CVE-2026-21962 Oracle WebLogic Server Proxy Plug-In Unauth RCE (CVSS 10.0, X-Forwarded-For injection)
+  - [C-176] **[P2]** Firefox 150 AI-Discovered 271 Vulnerabilities — 180 High-Severity, 15-20 Year Dormant Bugs
+  - [W-244] **[P3]** Chrome 150 Google Wallet Autofill — Passport/Driver License Government-ID Leakage Risk
+  - [P-111] **[P2]** 2026 DDoS Paradigm Shift — AI-Weaponized Cognitive Warfare (+35% YoY, Tbps-scale)
+  - [W-245] **[P1]** ClickFix Windows Terminal `wt.exe` Win+X→I Shortcut Delivery — EDR Bypass
+  - [S-263] **[P2]** API Attacks +113% in 2026 — Industrialized Toolchain, Attack Cycle Weeks→Hours
+  - [B-173] **[P3]** Steam steamwebhelper CEP Crash Pattern — Embedded-WebView Crash From Network/Driver/Cache
+### Sources
+- mcp_minimax_search_web_search queries (2026-07-02):
+  - "HTML5 game testing 2026 July new techniques browser canvas WebGL"
+  - "browser security vulnerability July 2026 XSS CSP clickjacking CVE"
+  - "casual game UX complaint 2026 mobile haptic dark mode accessibility"
+  - "Chrome Edge Safari Firefox update 2026 July new Web API breaking change"
+  - "browser game bug 2026 mobile Safari Chrome WebKit regression July"
+  - "Firefox 150 271 vulnerabilities AI Mythos browser security July 2026"
+  - "Chrome 150 stable release July 2026 new features breaking change"
+  - "CVE-2026-32202 Windows Shell spoofing actively exploited May 2026"
+  - "DDoS attack 2026 trend web game API gaming site protection"
+- Key URLs:
+  - https://www.sohu.com/a/1020020937_114765 (CVE-2026-32202 Windows Shell LNK spoofing)
+  - https://blog.csdn.net/weixin_42376192/article/details/160645609 (CVE-2026-32202 APT28 deep analysis)
+  - https://blog.csdn.net/weishi122/article/details/157315311 (CVE-2026-21962 Oracle WebLogic PoC)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_02869e856ca74352 (Firefox 150 AI 271 vulns)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_53769fd53ba77252 (Mozilla AI bug-finding proof)
+  - https://sohu.com/a/1024967528_122066678 (Firefox Mythos single-month 271 fixes)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_7246a3b412948452 (Chrome 150 Wallet autofill)
+  - https://www.sohu.com/a/1014477184_121864708 (NSFOCUS DDoS Report 2026 paradigm shift)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_95069fd58d093152 (AI-weaponized DDoS)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_40869b1400f33552 (ClickFix wt.exe Win+X)
+  - https://www.toutiao.com/article/7626708037775950362/ (API attacks +113% 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_47169e72cb991952 (Steam steamwebhelper crash)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8486a3b829968052 (Steam mobile login crash 2026)
+- Key themes: (1) Client-side zero-click credential theft (LNK/NTLMv2) is the 2026 growth class — browsers must audit all downloadable file surfaces; (2) Proxy-header-injection RCE is a cross-vendor pattern (IBM WebSphere + Oracle WebLogic) — X-Forwarded-For must be treated as untrusted user input; (3) AI-discovered browser vulnerability clusters (271 in one Firefox release) create massive before/after compatibility cliffs — GameZipper must re-test Top-30 on every browser major version; (4) DDoS has shifted from bandwidth warfare to AI-driven cognitive warfare — static Cloudflare WAF rules are outclassed; (5) ClickFix evolved from Win+R→cmd.exe to Win+X→I→wt.exe, evading all current EDR; (6) API attacks industrialized with sub-hour exploit windows; (7) Embedded webviews (Steam/Discord/Telegram/WeChat) crash from host-environment factors that standalone browsers don't exhibit.
+- All 8 verified zero-duplicate against v1.125.0 library (max IDs: W-243, G-171, C-175, P-110, S-260, B-172 → now W-245, G-171, C-176, P-111, S-263, B-173).
+
 ## [v1.125.0] - 2026-07-02
 ### Added
 - 7 new test cases from July 2 2026 industry research (R243 Dynamic Test Intelligence cron, 4h cadence cycle)
