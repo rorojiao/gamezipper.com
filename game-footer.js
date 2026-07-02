@@ -13,7 +13,9 @@
  if (sessionStorage.getItem('gz-footer-dismissed')) return;
 
  // Defer all DOM work to after DOMContentLoaded + requestIdleCallback
- function init() {
+  function init() {
+   // Guard: prevent duplicate footer if init() is called twice (RIC + setTimeout race)
+   if (document.getElementById('game-footer')) return;
    var games = [
      {n:'2048',e:'🔢',u:'/2048/',c:'puzzle'},
      {n:'Snake',e:'🐍',u:'/snake/',c:'arcade'},
@@ -411,9 +413,18 @@
    // DOM already ready — still defer to requestIdleCallback with hard timeout fallback.
    // RIC may never fire on idle headless browsers (Kachilu, Lighthouse), so always
    // schedule a setTimeout fallback that runs init() within 2s regardless.
+   // Guard against double-init: if RIC fires first, cancel the setTimeout fallback.
+   var _initDone = false;
+   var _initTimer = null;
+   var _safeInit = function() {
+     if (_initDone) return;
+     _initDone = true;
+     if (_initTimer) { clearTimeout(_initTimer); _initTimer = null; }
+     init();
+   };
    if ('requestIdleCallback' in window) {
-     requestIdleCallback(init, { timeout: 2000 });
+     requestIdleCallback(_safeInit, { timeout: 2000 });
    }
-   setTimeout(init, 2000);
+   _initTimer = setTimeout(_safeInit, 2000);
  }
 })();
