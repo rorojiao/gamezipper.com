@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Play Recoil Online Free - Knockback Physics Puzzle | GameZipper</title>
+<meta name="description" content="Play Recoil free online! A unique knockback physics puzzle — you only move by shooting. Destroy enemies with bullets, ride the recoil across the grid, and reach the exit in 30 brain-teasing levels.">
+<meta name="keywords" content="recoil, knockback puzzle, physics puzzle, shooting puzzle, gun puzzle, browser game, free online game, html5 game">
+<link rel="canonical" href="https://gamezipper.com/recoil/">
+<link rel="icon" href="/recoil/icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Play Recoil Online Free - Knockback Physics Puzzle | GameZipper">
+<meta property="og:description" content="A unique knockback physics puzzle — you only move by shooting! Destroy enemies with bullets, ride the recoil, reach the exit. 30 levels.">
+<meta property="og:image" content="https://gamezipper.com/recoil/icon.png">
+<meta property="og:url" content="https://gamezipper.com/recoil/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Recoil - Knockback Physics Puzzle | GameZipper">
+<meta name="twitter:description" content="You only move by shooting! Ride the recoil, destroy enemies, reach the exit.">
+<meta name="twitter:image" content="https://gamezipper.com/recoil/icon.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;user-select:none;-webkit-user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;overflow-x:hidden;background:#0a0e1a;font-family:'Segoe UI',system-ui,sans-serif;color:#e0e8ff}
+#game-wrap{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#141b35 0%,#0a0e1a 100%)}
+#hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-size:14px;z-index:10;background:linear-gradient(180deg,rgba(10,14,26,.85),transparent);pointer-events:none;flex-wrap:wrap;gap:6px}
+.hud-box{background:rgba(20,27,53,.75);border:1px solid rgba(99,179,237,.25);border-radius:8px;padding:6px 12px;backdrop-filter:blur(6px);white-space:nowrap}
+#hud-level{color:#63b3ed;font-weight:bold}
+#hud-shots{color:#f6ad55}
+#hud-par{color:#68d391}
+#hud-coins{color:#fbd38d}
+#canvas-wrap{position:relative;flex-shrink:0;max-width:96vw;max-height:76vh}
+canvas{display:block;border-radius:12px;box-shadow:0 0 40px rgba(99,179,237,.15),0 8px 32px rgba(0,0,0,.6);background:#0d1428;touch-action:none}
+#aim-hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:12px;color:#8a9bc4;pointer-events:none;text-align:center;width:90%}
+#menu,#win-screen,#gameover-screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,14,26,.92);z-index:20;backdrop-filter:blur(8px);padding:20px}
+#menu.show,#win-screen.show,#gameover-screen.show{display:flex}
+h1{font-size:clamp(28px,6vw,44px);background:linear-gradient(135deg,#63b3ed,#f6ad55);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:6px;letter-spacing:1px;font-weight:800}
+.subtitle{color:#8a9bc4;font-size:clamp(13px,3vw,16px);margin-bottom:20px;text-align:center;max-width:360px;line-height:1.5}
+.btn{display:inline-block;padding:13px 30px;font-size:16px;font-weight:bold;border:none;border-radius:30px;cursor:pointer;transition:transform .12s,box-shadow .12s;margin:6px;color:#0a0e1a;background:linear-gradient(135deg,#63b3ed,#4299e1);box-shadow:0 4px 18px rgba(99,179,237,.4);pointer-events:auto}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(99,179,237,.55)}
+.btn:active{transform:translateY(0)}
+.btn.secondary{background:linear-gradient(135deg,#68d391,#48bb78);box-shadow:0 4px 18px rgba(104,211,145,.4)}
+.btn.gold{background:linear-gradient(135deg,#fbd38d,#f6ad55);box-shadow:0 4px 18px rgba(246,173,85,.4)}
+.btn.small{padding:8px 16px;font-size:13px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.win-stars{font-size:38px;letter-spacing:6px;margin:8px 0 4px}
+.star-empty{filter:grayscale(1);opacity:.3}
+#level-select{max-width:420px;width:100%;max-height:50vh;overflow-y:auto;background:rgba(20,27,53,.5);border-radius:12px;padding:14px;margin:14px 0}
+.level-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.level-btn{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:15px;font-weight:bold;border-radius:8px;cursor:pointer;border:2px solid rgba(99,179,237,.2);background:rgba(13,20,40,.7);color:#e0e8ff;transition:all .12s}
+.level-btn:active{transform:scale(.92)}
+.level-btn.locked{opacity:.3;cursor:not-allowed}
+.level-btn.done{border-color:#68d391;background:rgba(72,187,120,.15)}
+.level-mini{font-size:8px;line-height:1}
+#toast{position:absolute;top:54px;left:50%;transform:translateX(-50%);background:rgba(246,173,85,.95);color:#0a0e1a;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;z-index:15;opacity:0;transition:opacity .3s;pointer-events:none;max-width:88vw;text-align:center}
+#toast.show{opacity:1}
+.icon-btn{position:absolute;top:8px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(20,27,53,.8);color:#63b3ed;font-size:18px;cursor:pointer;z-index:11;display:flex;align-items:center;justify-content:center}
+#btn-menu{right:8px}
+#btn-hint{right:50px;background:rgba(251,211,141,.85);color:#0a0e1a}
+#btn-sound{left:8px}
+.audio-hidden{display:none}
+.daily-banner{position:absolute;top:46px;left:8px;font-size:11px;background:rgba(104,211,145,.25);border:1px solid rgba(104,211,145,.4);color:#9ae6b4;padding:3px 8px;border-radius:6px;z-index:11}
+.par-bar{display:flex;align-items:center;gap:3px;font-size:11px}
+.par-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.15)}
+.par-dot.on{background:#68d391}
+.fade-in{animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@media(max-height:600px){#hud{font-size:12px;padding:6px 10px}}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Recoil","url":"https://gamezipper.com/recoil/","description":"A unique knockback physics puzzle — you only move by shooting. Destroy enemies with bullets, ride the recoil across the grid, and reach the exit in 30 brain-teasing levels.","genre":["Puzzle","Physics","Brain"],"gamePlatform":["Web Browser"],"applicationCategory":"Game","operatingSystem":"Any","playMode":"SinglePlayer","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","availability":"https://schema.org/InStock"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.6","ratingCount":"128"},"publisher":{"@type":"Organization","name":"GameZipper"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Recoil?","acceptedAnswer":{"@type":"Answer","text":"You cannot move directly. Tap or click in the direction you want to shoot. Firing a bullet pushes your character in the OPPOSITE direction (recoil). Use recoil to navigate, destroy enemies with your bullets, and reach the glowing exit."}},{"@type":"Question","name":"How many levels does Recoil have?","acceptedAnswer":{"@type":"Answer","text":"Recoil has 30 levels across 5 difficulty tiers — from beginner tutorial stages to expert mastery challenges. Your progress saves automatically."}},{"@type":"Question","name":"Is Recoil free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes! Recoil is completely free to play in your browser at gamezipper.com — no download, no signup required."}}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"HowTo","name":"How to play Recoil","step":[{"@type":"HowToStep","text":"Look at the grid: you are the glowing core. Find the exit tile and the enemies."},{"@type":"HowToStep","text":"Swipe or click in any of 4 directions (up/down/left/right) to shoot a plasma bullet that way."},{"@type":"HowToStep","text":"Your character gets pushed backward by the recoil. Plan your shots so you land safely."},{"@type":"HowToStep","text":"Bullets destroy enemies. The exit unlocks only after all enemies are defeated."},{"@type":"HowToStep","text":"Reach the exit tile to win! Use fewer shots to earn 3 stars."}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","url":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Puzzle Games","url":"https://gamezipper.com/puzzle-games.html"},{"@type":"ListItem","position":3,"name":"Recoil","url":"https://gamezipper.com/recoil/"}]}
+</script>
+</head>
+<body>
+<div id="game-wrap">
+  <div id="hud">
+    <div class="hud-box"><span id="hud-level">Level 1</span></div>
+    <div class="hud-box">Shots: <span id="hud-shots">0</span>/<span id="hud-par">3</span> <span class="par-bar" id="par-bar"></span></div>
+    <div class="hud-box">⭐ <span id="hud-coins">0</span></div>
+  </div>
+  <button class="icon-btn" id="btn-sound" title="Sound">🔊</button>
+  <button class="icon-btn" id="btn-hint" title="Hint (10 coins)">💡</button>
+  <button class="icon-btn" id="btn-menu" title="Menu">☰</button>
+  <div class="daily-banner" id="daily-banner">Daily: +<span id="daily-amt">25</span> ⭐</div>
+  <div id="canvas-wrap">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div id="aim-hint">Swipe / click a direction to shoot. You move by recoil!</div>
+  <div id="toast"></div>
+
+  <div id="menu" class="show">
+    <h1>RECOIL</h1>
+    <p class="subtitle">You can't walk. You can only <b style="color:#f6ad55">shoot</b>. Each shot pushes you backward by recoil. Destroy enemies with bullets, ride the kick, reach the exit.</p>
+    <div class="btn-row">
+      <button class="btn" id="btn-play">▶ Play</button>
+      <button class="btn secondary small" id="btn-levels">Levels</button>
+    </div>
+    <div id="level-select" style="display:none">
+      <div class="level-grid" id="level-grid"></div>
+    </div>
+    <p class="subtitle" style="margin-top:14px;font-size:11px;opacity:.7">30 levels · auto-save progress · earn stars · daily bonus</p>
+  </div>
+
+  <div id="win-screen">
+    <h1 style="font-size:32px">Level Complete!</h1>
+    <div class="win-stars" id="win-stars">⭐⭐⭐</div>
+    <p class="subtitle" id="win-msg"></p>
+    <div class="btn-row">
+      <button class="btn secondary small" id="btn-retry">↻ Retry</button>
+      <button class="btn" id="btn-next">Next ▶</button>
+      <button class="btn gold small" id="btn-menu-win">Menu</button>
+    </div>
+  </div>
+
+  <div id="gameover-screen">
+    <h1 style="font-size:30px;color:#fc8181">Knocked Out!</h1>
+    <p class="subtitle">You hit a hazard or an enemy bullet hit you.</p>
+    <div class="btn-row">
+      <button class="btn" id="btn-retry-go">↻ Try Again</button>
+      <button class="btn secondary small" id="btn-menu-go">Menu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  RECOIL — Knockback Physics Puzzle
+//  Core mechanic: you only move by shooting (recoil pushes you)
+// ============================================================
+(function(){
+'use strict';
+
+// ---------- Audio (Web Audio API procedural) ----------
+var AC=null, masterGain=null, bgmGain=null, soundOn=true, bgmStarted=false;
+function initAudio(){
+  if(AC) return;
+  try{
+    AC = new (window.AudioContext||window.webkitAudioContext)();
+    masterGain = AC.createGain(); masterGain.gain.value=0.5; masterGain.connect(AC.destination);
+    bgmGain = AC.createGain(); bgmGain.gain.value=0.18; bgmGain.connect(masterGain);
+  }catch(e){ AC=null; }
+}
+function tone(freq,dur,type,vol,dest){
+  if(!AC||!soundOn) return;
+  type=type||'sine'; vol=vol==null?0.3:vol; dur=dur||0.15;
+  var o=AC.createOscillator(),g=AC.createGain();
+  o.type=type; o.frequency.value=freq;
+  g.gain.setValueAtTime(0,AC.currentTime);
+  g.gain.linearRampToValueAtTime(vol,AC.currentTime+0.01);
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur);
+  o.connect(g); g.connect(dest||masterGain);
+  o.start(); o.stop(AC.currentTime+dur);
+}
+function sfxShoot(){ if(!AC) return; tone(660,0.12,'square',0.18); tone(330,0.18,'sawtooth',0.1); }
+function sfxRecoil(){ if(!AC) return; tone(200,0.1,'triangle',0.15); }
+function sfxHit(){ if(!AC) return; tone(440,0.08,'square',0.2); tone(220,0.15,'sawtooth',0.15); }
+function sfxKill(){ if(!AC) return; tone(523,0.08,'square',0.18); setTimeout(function(){tone(784,0.12,'square',0.18);},60); }
+function sfxStar(){ if(!AC) return; tone(880,0.1,'sine',0.2); setTimeout(function(){tone(1175,0.14,'sine',0.2);},70); }
+function sfxWin(){ if(!AC) return; [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){tone(f,0.18,'square',0.16);},i*90);}); }
+function sfxLose(){ if(!AC) return; tone(300,0.2,'sawtooth',0.2); setTimeout(function(){tone(150,0.35,'sawtooth',0.18);},100); }
+function sfxClick(){ if(!AC) return; tone(500,0.05,'square',0.1); }
+// Ambient BGM loop: slow pad arpeggio
+var bgmTimer=null, bgmNotes=[130.81,164.81,196.00,164.81,130.81,196.00,246.94,196.00];
+function startBGM(){
+  if(!AC||!soundOn||bgmStarted) return; bgmStarted=true;
+  var i=0;
+  bgmTimer=setInterval(function(){
+    if(!soundOn||!bgmStarted) return;
+    var f=bgmNotes[i%bgmNotes.length];
+    var o=AC.createOscillator(),g=AC.createGain();
+    o.type='sine'; o.frequency.value=f;
+    g.gain.setValueAtTime(0,AC.currentTime);
+    g.gain.linearRampToValueAtTime(0.4,AC.currentTime+0.4);
+    g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+1.6);
+    o.connect(g); g.connect(bgmGain);
+    o.start(); o.stop(AC.currentTime+1.7);
+    // harmony
+    var o2=AC.createOscillator(); o2.type='triangle'; o2.frequency.value=f*2;
+    var g2=AC.createGain();
+    g2.gain.setValueAtTime(0,AC.currentTime);
+    g2.gain.linearRampToValueAtTime(0.15,AC.currentTime+0.5);
+    g2.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+1.8);
+    o2.connect(g2); g2.connect(bgmGain); o2.start(); o2.stop(AC.currentTime+1.9);
+    i++;
+  },700);
+}
+function stopBGM(){ if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;} bgmStarted=false; }
+
+// ---------- Levels (30) ----------
+// Cell types: 0=floor,1=wall,2=spike
+// player{r,c}, exit{r,c}, enemies[{r,c,type}], par_shots
+var LEVELS=[
+// TIER 1 - Tutorial (6x6)
+{id:1,name:"First Push",R:6,C:6,player:{r:2,c:1},exit:{r:2,c:4},walls:[],spikes:[],enemies:[],par:2,tier:1,hint:"Swipe LEFT to shoot left — recoil pushes you RIGHT toward the exit!"},
+{id:2,name:"Take Aim",R:6,C:6,player:{r:3,c:1},exit:{r:3,c:4},walls:[],spikes:[],enemies:[{r:3,c:3,t:'d'}],par:3,tier:1,hint:"Shoot RIGHT to destroy the drone — but you get pushed LEFT!"},
+{id:3,name:"Drop Down",R:6,C:6,player:{r:1,c:2},exit:{r:4,c:2},walls:[],spikes:[],enemies:[{r:0,c:2,t:'d'}],par:2,tier:1,hint:"Shoot UP → pushed DOWN. Destroy the drone above first."},
+{id:4,name:"Double Trouble",R:6,C:6,player:{r:2,c:2},exit:{r:2,c:3},walls:[],spikes:[],enemies:[{r:2,c:0,t:'d'},{r:2,c:5,t:'d'}],par:4,tier:1,hint:"Destroy BOTH drones. Exit unlocks when all enemies are gone."},
+{id:5,name:"Around the Wall",R:6,C:6,player:{r:2,c:1},exit:{r:2,c:4},walls:[{r:2,c:2},{r:2,c:3}],spikes:[],enemies:[{r:3,c:4,t:'d'}],par:4,tier:1,hint:"The wall blocks your path. Go down, then across using recoil."},
+{id:6,name:"Up and Over",R:6,C:6,player:{r:4,c:3},exit:{r:1,c:3},walls:[{r:2,c:2},{r:3,c:2},{r:2,c:4},{r:3,c:4}],spikes:[],enemies:[{r:0,c:3,t:'d'}],par:3,tier:1,hint:"Shoot DOWN to go UP. Walls guide you through the gap."},
+// TIER 2 - Easy (7x7)
+{id:7,name:"Corner Run",R:7,C:7,player:{r:5,c:1},exit:{r:1,c:5},walls:[{r:3,c:3}],spikes:[],enemies:[{r:1,c:1,t:'d'},{r:5,c:5,t:'d'}],par:5,tier:2,hint:"Diagonal journey — clear drones in opposite corners."},
+{id:8,name:"Bounce House",R:7,C:7,player:{r:3,c:3},exit:{r:3,c:5},walls:[{r:0,c:3},{r:6,c:3}],spikes:[],enemies:[{r:3,c:0,t:'d'},{r:3,c:6,t:'d'}],par:3,tier:2,hint:"Center start — blast the side drones carefully."},
+{id:9,name:"Spike Trap",R:7,C:7,player:{r:3,c:1},exit:{r:3,c:5},walls:[{r:2,c:3},{r:4,c:3}],spikes:[{r:3,c:2},{r:3,c:3},{r:3,c:4}],enemies:[{r:3,c:6,t:'d'}],par:5,tier:2,hint:"Spikes in the middle row! Go around via top or bottom."},
+{id:10,name:"Four Sides",R:7,C:7,player:{r:3,c:3},exit:{r:3,c:3},walls:[],spikes:[],enemies:[{r:0,c:3,t:'d'},{r:6,c:3,t:'d'},{r:3,c:0,t:'d'},{r:3,c:6,t:'d'}],par:4,tier:2,hint:"Four drones around you. Shoot each direction — you stay centered!"},
+{id:11,name:"Narrow Maze",R:7,C:7,player:{r:1,c:1},exit:{r:5,c:5},walls:[{r:1,c:4},{r:2,c:4},{r:4,c:2},{r:5,c:2}],spikes:[],enemies:[{r:3,c:3,t:'d'}],par:6,tier:2,hint:"Navigate the corridors. Walls stop your recoil slide."},
+{id:12,name:"Turret Guard",R:7,C:7,player:{r:5,c:3},exit:{r:1,c:3},walls:[{r:3,c:1},{r:3,c:5}],spikes:[],enemies:[{r:3,c:3,t:'t'}],par:4,tier:2,hint:"A TURRET shoots back each turn! Destroy it fast."},
+// TIER 3 - Normal (8x8)
+{id:13,name:"Open Field",R:8,C:8,player:{r:3,c:3},exit:{r:4,c:4},walls:[],spikes:[],enemies:[{r:0,c:3,t:'d'},{r:7,c:4,t:'d'},{r:4,c:0,t:'d'},{r:3,c:7,t:'d'}],par:5,tier:3,hint:"Big open arena. Pick off drones one by one."},
+{id:14,name:"Spike Corridor",R:8,C:8,player:{r:4,c:1},exit:{r:4,c:6},walls:[{r:3,c:3},{r:5,c:4}],spikes:[{r:3,c:4},{r:5,c:3},{r:2,c:5},{r:6,c:5}],enemies:[{r:4,c:7,t:'d'}],par:6,tier:3,hint:"Dodge spikes — they end your run instantly."},
+{id:15,name:"Double Turret",R:8,C:8,player:{r:3,c:3},exit:{r:4,c:4},walls:[{r:2,c:4},{r:5,c:3}],spikes:[],enemies:[{r:1,c:1,t:'t'},{r:6,c:6,t:'t'}],par:5,tier:3,hint:"Two turrets in the corners. Move fast — they fire every turn."},
+{id:16,name:"Shield Wall",R:8,C:8,player:{r:4,c:1},exit:{r:4,c:6},walls:[],spikes:[],enemies:[{r:4,c:4,t:'s'},{r:4,c:5,t:'d'}],par:5,tier:3,hint:"SHIELDS need 2 hits. The drone behind only needs 1."},
+{id:17,name:"Plus Shape",R:8,C:8,player:{r:0,c:3},exit:{r:7,c:4},walls:[{r:1,c:1},{r:1,c:6},{r:6,c:1},{r:6,c:6}],spikes:[{r:3,c:0},{r:3,c:7},{r:4,c:0},{r:4,c:7}],enemies:[{r:3,c:4,t:'d'},{r:4,c:3,t:'d'}],par:6,tier:3,hint:"Spikes guard the sides. Stay in the safe cross zone."},
+{id:18,name:"Center Defense",R:8,C:8,player:{r:3,c:3},exit:{r:4,c:4},walls:[{r:2,c:2},{r:2,c:5},{r:5,c:2},{r:5,c:5}],spikes:[],enemies:[{r:0,c:3,t:'t'},{r:7,c:4,t:'t'},{r:3,c:7,t:'s'},{r:4,c:0,t:'s'}],par:7,tier:3,hint:"Mixed enemies — turrets and shields. Clear the dangerous turrets first."},
+// TIER 4 - Hard (8x8 + spikes)
+{id:19,name:"Deadly Path",R:8,C:8,player:{r:1,c:1},exit:{r:6,c:6},walls:[{r:3,c:2},{r:3,c:5},{r:4,c:2},{r:4,c:5}],spikes:[{r:2,c:3},{r:2,c:4},{r:5,c:3},{r:5,c:4},{r:0,c:6},{r:7,c:1}],enemies:[{r:3,c:3,t:'d'},{r:4,c:4,t:'d'}],par:7,tier:4,hint:"Tight squeeze with spikes everywhere. Plan every shot."},
+{id:20,name:"Turret Gauntlet",R:8,C:8,player:{r:0,c:0},exit:{r:7,c:7},walls:[{r:1,c:3},{r:3,c:1},{r:3,c:6},{r:6,c:3}],spikes:[{r:2,c:2},{r:5,c:5}],enemies:[{r:1,c:6,t:'t'},{r:6,c:1,t:'t'},{r:3,c:3,t:'d'}],par:7,tier:4,hint:"Turrets at each end. Strike before they strike you."},
+{id:21,name:"Armor Brigade",R:8,C:8,player:{r:3,c:3},exit:{r:4,c:4},walls:[],spikes:[{r:0,c:0},{r:0,c:7},{r:7,c:0},{r:7,c:7}],enemies:[{r:2,c:4,t:'s'},{r:5,c:3,t:'s'},{r:3,c:2,t:'s'},{r:4,c:5,t:'s'}],par:8,tier:4,hint:"Four shields surround you. Two shots each — 8 total minimum."},
+{id:22,name:"Crossfire",R:8,C:8,player:{r:3,c:3},exit:{r:3,c:3},walls:[{r:3,c:0},{r:3,c:7},{r:0,c:3},{r:7,c:3}],spikes:[],enemies:[{r:1,c:1,t:'t'},{r:1,c:6,t:'t'},{r:6,c:1,t:'t'},{r:6,c:6,t:'t'}],par:6,tier:4,hint:"Four turrets in the corners. Destroy all, you stay centered."},
+{id:23,name:"Maze of Pain",R:8,C:8,player:{r:0,c:0},exit:{r:7,c:7},walls:[{r:1,c:1},{r:1,c:2},{r:1,c:5},{r:1,c:6},{r:3,c:3},{r:3,c:4},{r:4,c:3},{r:4,c:4},{r:6,c:1},{r:6,c:2},{r:6,c:5},{r:6,c:6}],spikes:[{r:2,c:0},{r:5,c:7}],enemies:[{r:3,c:1,t:'d'},{r:4,c:6,t:'d'}],par:8,tier:4,hint:"Complex maze. Walls stop your slide — use them as brakes."},
+{id:24,name:"Final Stretch",R:8,C:8,player:{r:0,c:3},exit:{r:7,c:4},walls:[{r:2,c:1},{r:2,c:6},{r:5,c:1},{r:5,c:6}],spikes:[{r:3,c:0},{r:4,c:0},{r:3,c:7},{r:4,c:7},{r:0,c:0},{r:7,c:7}],enemies:[{r:2,c:4,t:'s'},{r:5,c:3,t:'t'},{r:3,c:3,t:'d'},{r:4,c:4,t:'d'}],par:8,tier:4,hint:"Everything at once. Clear threats, dodge spikes, reach the exit."},
+// TIER 5 - Expert (9x9)
+{id:25,name:"Grand Arena",R:9,C:9,player:{r:4,c:4},exit:{r:4,c:4},walls:[],spikes:[{r:0,c:0},{r:0,c:8},{r:8,c:0},{r:8,c:8}],enemies:[{r:0,c:4,t:'t'},{r:8,c:4,t:'t'},{r:4,c:0,t:'t'},{r:4,c:8,t:'t'}],par:5,tier:5,hint:"Grand finale. Four turrets, you're the center. One shot each direction."},
+{id:26,name:"Spiral Doom",R:9,C:9,player:{r:0,c:0},exit:{r:4,c:4},walls:[{r:0,c:3},{r:0,c:4},{r:0,c:5},{r:1,c:5},{r:2,c:5},{r:3,c:5},{r:3,c:6},{r:3,c:7},{r:3,c:8},{r:6,c:0},{r:6,c:1},{r:6,c:2},{r:6,c:3},{r:5,c:3},{r:4,c:3}],spikes:[{r:2,c:2},{r:2,c:7},{r:7,c:2},{r:7,c:7}],enemies:[{r:1,c:1,t:'s'},{r:1,c:7,t:'t'},{r:7,c:1,t:'t'},{r:7,c:7,t:'s'},{r:4,c:5,t:'d'}],par:9,tier:5,hint:"Spiral inward through the maze. Mind the corner spikes."},
+{id:27,name:"Fortress",R:9,C:9,player:{r:4,c:4},exit:{r:4,c:4},walls:[{r:1,c:3},{r:1,c:5},{r:3,c:1},{r:3,c:7},{r:5,c:1},{r:5,c:7},{r:7,c:3},{r:7,c:5}],spikes:[{r:0,c:4},{r:4,c:0},{r:4,c:8},{r:8,c:4}],enemies:[{r:1,c:4,t:'s'},{r:4,c:1,t:'s'},{r:4,c:7,t:'s'},{r:7,c:4,t:'s'},{r:2,c:2,t:'t'},{r:2,c:6,t:'t'},{r:6,c:2,t:'t'},{r:6,c:6,t:'t'}],par:10,tier:5,hint:"Fortress of shields and turrets. Methodical destruction required."},
+{id:28,name:"Pinball",R:9,C:9,player:{r:4,c:0},exit:{r:4,c:8},walls:[{r:1,c:2},{r:1,c:6},{r:3,c:4},{r:5,c:4},{r:7,c:2},{r:7,c:6}],spikes:[{r:0,c:1},{r:0,c:3},{r:0,c:5},{r:0,c:7},{r:8,c:0},{r:8,c:2},{r:8,c:4},{r:8,c:6},{r:8,c:8}],enemies:[{r:2,c:4,t:'d'},{r:6,c:4,t:'d'},{r:4,c:2,t:'s'},{r:4,c:6,t:'s'}],par:9,tier:5,hint:"Bumpers everywhere. Walls deflect your slide path."},
+{id:29,name:"Pincer",R:9,C:9,player:{r:4,c:4},exit:{r:4,c:4},walls:[{r:2,c:2},{r:2,c:6},{r:6,c:2},{r:6,c:6}],spikes:[{r:0,c:0},{r:0,c:8},{r:8,c:0},{r:8,c:8},{r:4,c:2},{r:4,c:6},{r:2,c:4},{r:6,c:4}],enemies:[{r:1,c:4,t:'t'},{r:7,c:4,t:'t'},{r:4,c:1,t:'t'},{r:4,c:7,t:'t'},{r:3,c:3,t:'s'},{r:5,c:5,t:'s'}],par:10,tier:5,hint:"Pincers closing in. Spikes block direct routes."},
+{id:30,name:"Master Recoil",R:9,C:9,player:{r:4,c:4},exit:{r:0,c:4},walls:[{r:3,c:0},{r:3,c:1},{r:3,c:7},{r:3,c:8},{r:5,c:0},{r:5,c:1},{r:5,c:7},{r:5,c:8},{r:1,c:3},{r:1,c:5},{r:7,c:3},{r:7,c:5}],spikes:[{r:0,c:0},{r:0,c:1},{r:0,c:7},{r:0,c:8},{r:8,c:0},{r:8,c:1},{r:8,c:7},{r:8,c:8}],enemies:[{r:2,c:2,t:'s'},{r:2,c:6,t:'s'},{r:6,c:2,t:'s'},{r:6,c:6,t:'s'},{r:4,c:2,t:'t'},{r:4,c:6,t:'t'},{r:2,c:4,t:'d'},{r:6,c:4,t:'d'}],par:12,tier:5,hint:"The ultimate test. Every enemy type, tight walls, corner spikes. Conquer the recoil!"}
+];
+
+// ---------- State ----------
+var canvas=document.getElementById('canvas'), ctx=canvas.getContext('2d');
+var CELL=56, GRID_R=6, GRID_C=6, OFFSET_X=0, OFFSET_Y=0;
+var currentLevel=0, shots=0, gameState='menu'; // menu, play, win, lose, anim
+var player={r:0,c:0,vr:0,vc:0,animR:0,animC:0};
+var exitCell={r:0,c:0};
+var grid=[]; // 2D cell array
+var enemies=[]; // {r,c,type:'d'|'t'|'s', hp, alive, animR, animC}
+var bullets=[]; // {r,c,dr,dc,alive, fromTurret}
+var particles=[];
+var coins=0, totalStars=0;
+var levelStars={}; // levelId -> stars earned
+var unlockedLevel=1;
+var animQueue=[], animTimer=0;
+var hintActive=false, hintArrow=null;
+var levelCompleteStars=0;
+var lastShotDir=null;
+
+// Persistence
+function load(){
+  try{
+    var s=JSON.parse(localStorage.getItem('recoil_save')||'{}');
+    coins=s.coins||0; totalStars=s.totalStars||0;
+    levelStars=s.levelStars||{}; unlockedLevel=s.unlockedLevel||1;
+    currentLevel=s.currentLevel||0;
+    var sd=s.dailyDate, today=new Date().toDateString();
+    if(sd!==today){ coins+=25; }
+  }catch(e){}
+}
+function save(){
+  try{
+    localStorage.setItem('recoil_save', JSON.stringify({
+      coins:coins, totalStars:totalStars, levelStars:levelStars,
+      unlockedLevel:unlockedLevel, currentLevel:currentLevel,
+      dailyDate:new Date().toDateString()
+    }));
+  }catch(e){}
+}
+
+// ---------- Level Loading ----------
+function loadLevel(idx){
+  var L=LEVELS[idx];
+  currentLevel=idx;
+  GRID_R=L.R; GRID_C=L.C;
+  computeLayout();
+  grid=[];
+  for(var r=0;r<GRID_R;r++){ grid[r]=[]; for(var c=0;c<GRID_C;c++) grid[r][c]=0; }
+  L.walls.forEach(function(w){ grid[w[0]][w[1]]=1; });
+  L.spikes.forEach(function(s){ grid[s[0]][s[1]]=2; });
+  player={r:L.player.r,c:L.player.c,vr:0,vc:0,animR:L.player.r,animC:L.player.c,blink:0};
+  exitCell={r:L.exit.r,c:L.exit.c};
+  enemies=L.enemies.map(function(e){ return {r:e.r,c:e.c,type:e.t,hp:e.t==='s'?2:1,alive:true,animR:e.r,animC:e.c,fireFlash:0}; });
+  bullets=[]; particles=[]; shots=0; animQueue=[]; animTimer=0;
+  hintActive=false; hintArrow=null; lastShotDir=null;
+  updateHUD();
+  gameState='play';
+}
+
+function computeLayout(){
+  var wrap=document.getElementById('canvas-wrap');
+  var maxW=Math.min(window.innerWidth*0.96, 560);
+  var maxH=window.innerHeight*0.72;
+  var cellW=Math.floor(maxW/GRID_C);
+  var cellH=Math.floor(maxH/GRID_R);
+  CELL=Math.max(34, Math.min(cellW,cellH,72));
+  var W=CELL*GRID_C, H=CELL*GRID_R;
+  canvas.width=W; canvas.height=H;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  OFFSET_X=0; OFFSET_Y=0;
+}
+
+// ---------- Input ----------
+var touchStartX=0, touchStartY=0, touchActive=false;
+function getDir(dx,dy){
+  if(Math.abs(dx)>Math.abs(dy)) return dx>0?{dr:0,dc:1}:dx<0?{dr:0,dc:-1}:null;
+  return dy>0?{dr:1,dc:0}:dy<0?{dr:-1,dc:0}:null;
+}
+canvas.addEventListener('pointerdown', function(e){
+  e.preventDefault();
+  touchStartX=e.clientX; touchStartY=e.clientY; touchActive=true;
+  initAudio();
+  if(!bgmStarted) startBGM();
+});
+canvas.addEventListener('pointermove', function(e){
+  if(!touchActive||gameState!=='play') return;
+  var dx=e.clientX-touchStartX, dy=e.clientY-touchStartY;
+  if(Math.abs(dx)>24||Math.abs(dy)>24){
+    var d=getDir(dx,dy); if(d){ fireShot(d.dr,d.dc); touchActive=false; }
+  }
+});
+canvas.addEventListener('pointerup', function(e){
+  if(!touchActive) return;
+  touchActive=false;
+  if(gameState!=='play') return;
+  // tap = treat as click direction from center
+  var rect=canvas.getBoundingClientRect();
+  var cx=e.clientX-rect.left, cy=e.clientY-rect.top;
+  var px=player.animC*CELL+CELL/2, py=player.animR*CELL+CELL/2;
+  var dx=cx-px, dy=cy-py;
+  if(Math.abs(dx)<10&&Math.abs(dy)<10) return;
+  var d=getDir(dx,dy); if(d) fireShot(d.dr,d.dc);
+});
+document.addEventListener('keydown', function(e){
+  if(gameState!=='play') return;
+  var d=null;
+  if(e.key==='ArrowUp'||e.key==='w') d={dr:-1,dc:0};
+  else if(e.key==='ArrowDown'||e.key==='s') d={dr:1,dc:0};
+  else if(e.key==='ArrowLeft'||e.key==='a') d={dr:0,dc:-1};
+  else if(e.key==='ArrowRight'||e.key==='d') d={dr:0,dc:1};
+  if(d){ e.preventDefault(); initAudio(); if(!bgmStarted) startBGM(); fireShot(d.dr,d.dc); }
+});
+
+// ---------- Game Logic ----------
+function fireShot(dr,dc){
+  if(gameState!=='play'||animQueue.length>0) return;
+  initAudio();
+  sfxShoot();
+  shots++; lastShotDir={dr:dr,dc:dc};
+  hintActive=false; hintArrow=null;
+  updateHUD();
+  // Spawn bullet from player in shot direction
+  var br=player.r, bc=player.c;
+  bullets.push({r:br,c:bc,dr:dr,dc:dc,alive:true,fromTurret:false,step:0});
+  // Queue: bullet resolves first, then recoil moves player
+  animQueue.push({type:'bullet'});
+  animQueue.push({type:'recoil',dr:-dr,dc:-dc}); // recoil = opposite of shot
+  // Turrets fire back
+  startAnim();
+}
+
+function startAnim(){
+  if(gameState!=='anim'){ gameState='anim'; processAnimQueue(); }
+}
+
+function processAnimQueue(){
+  if(animQueue.length===0){
+    // After all anims: check turret fire, then check win/lose
+    turretPhase();
+    return;
+  }
+  var action=animQueue.shift();
+  if(action.type==='bullet'){
+    // Step the bullet one cell at a time until it stops (wall, enemy, edge)
+    stepBullet(0);
+  } else if(action.type==='recoil'){
+    // Move player in recoil dir until blocked
+    recoilMove(action.dr, action.dc, 0);
+  } else if(action.type==='turretBullet'){
+    stepTurretBullet(action.bullet, 0);
+  }
+}
+
+function stepBullet(iter){
+  var b=bullets[bullets.length-1];
+  if(!b||!b.alive){ processAnimQueue(); return; }
+  var nr=b.r+b.dr, nc=b.c+b.dc;
+  b.step++;
+  if(iter>40){ b.alive=false; processAnimQueue(); return; }
+  // out of bounds
+  if(nr<0||nr>=GRID_R||nc<0||nc>=GRID_C){ b.alive=false; spawnParticles(b.r+b.dr*0.3,b.c+b.dc*0.3,'#63b3ed'); processAnimQueue(); return; }
+  // wall
+  if(grid[nr][nc]===1){ b.alive=false; sfxHit(); spawnParticles(b.r+b.dr*0.4,b.c+b.dc*0.4,'#9fb3d1'); processAnimQueue(); return; }
+  // enemy?
+  var hitEnemy=null;
+  for(var i=0;i<enemies.length;i++){
+    if(enemies[i].alive&&enemies[i].r===nr&&enemies[i].c===nc){ hitEnemy=enemies[i]; break; }
+  }
+  if(hitEnemy){
+    hitEnemy.hp--; b.alive=false;
+    if(hitEnemy.hp<=0){
+      hitEnemy.alive=false; sfxKill(); spawnParticles(nr,nc,'#f6ad55');
+      // coin from kill
+      coins+=1;
+    } else { sfxHit(); spawnParticles(nr,nc,'#fbd38d'); }
+    updateHUD();
+    processAnimQueue(); return;
+  }
+  // advance bullet visually
+  b.r=nr; b.c=nc;
+  setTimeout(function(){ stepBullet(iter+1); }, 55);
+}
+
+function recoilMove(dr,dc,iter){
+  if(iter>20){ processAnimQueue(); return; }
+  var nr=player.r+dr, nc=player.c+dc;
+  if(nr<0||nr>=GRID_R||nc<0||nc>=GRID_C){ processAnimQueue(); return; }
+  if(grid[nr][nc]===1){ // wall stops slide
+    processAnimQueue(); return;
+  }
+  // hit enemy = lose (you rammed an enemy)
+  for(var i=0;i<enemies.length;i++){
+    if(enemies[i].alive&&enemies[i].r===nr&&enemies[i].c===nc){ loseGame('ram'); return; }
+  }
+  // spike = lose
+  if(grid[nr][nc]===2){ player.animR=nr; player.animC=nc; player.r=nr; player.c=nc; loseGame('spike'); return; }
+  // safe move
+  player.r=nr; player.c=nc;
+  sfxRecoil();
+  // animate
+  animatePlayerTo(nr,nc,function(){ recoilMove(dr,dc,iter+1); });
+}
+
+function animatePlayerTo(tr,tc,cb){
+  var sr=player.animR, sc=player.animC, t0=Date.now(), dur=90;
+  function frame(){
+    var t=Math.min(1,(Date.now()-t0)/dur);
+    player.animR=sr+(tr-sr)*t; player.animC=sc+(tc-sc)*t;
+    if(t<1){ requestAnimationFrame(frame); }
+    else { player.animR=tr; player.animC=tc; if(cb) cb(); }
+  }
+  frame();
+}
+
+function turretPhase(){
+  // All alive turrets fire a bullet toward player's row/col if aligned
+  var queued=[];
+  enemies.forEach(function(e){
+    if(e.alive&&e.type==='t'){
+      e.fireFlash=1;
+      var dr=0,dc=0;
+      if(e.r===player.r){ dc=player.c>e.c?1:-1; }
+      else if(e.c===player.c){ dr=player.r>e.r?1:-1; }
+      if(dr||dc){
+        bullets.push({r:e.r,c:e.c,dr:dr,dc:dc,alive:true,fromTurret:true,step:0});
+        queued.push(bullets[bullets.length-1]);
+      }
+    }
+  });
+  if(queued.length>0){
+    gameState='anim';
+    sfxShoot();
+    var i=0;
+    function nextTB(){
+      if(i>=queued.length){ afterTurretPhase(); return; }
+      stepTurretBullet(queued[i], 0, function(){ i++; nextTB(); });
+    }
+    nextTB();
+  } else { afterTurretPhase(); }
+}
+
+function stepTurretBullet(b, iter, cb){
+  if(iter>30){ if(cb)cb(); return; }
+  var nr=b.r+b.dr, nc=b.c+b.dc;
+  if(nr<0||nr>=GRID_R||nc<0||nc>=GRID_C){ b.alive=false; if(cb)cb(); return; }
+  if(grid[nr][nc]===1){ b.alive=false; if(cb)cb(); return; }
+  // hit player?
+  if(nr===player.r&&nc===player.c){ b.alive=false; loseGame('shot'); return; }
+  b.r=nr; b.c=nc;
+  setTimeout(function(){ stepTurretBullet(b,iter+1,cb); }, 50);
+}
+
+function afterTurretPhase(){
+  // check win/lose
+  var aliveEnemies=enemies.filter(function(e){return e.alive;});
+  if(player.r===exitCell.r&&player.c===exitCell.c&&aliveEnemies.length===0){
+    winLevel(); return;
+  }
+  // continue play
+  gameState='play';
+}
+
+function loseGame(reason){
+  gameState='lose'; sfxLose();
+  save();
+  setTimeout(function(){
+    document.getElementById('gameover-screen').classList.add('show');
+  }, 400);
+}
+
+function winLevel(){
+  gameState='win';
+  // star calc: par=3star, par+2=2star, par+5=1star
+  var L=LEVELS[currentLevel];
+  var over=shots-L.par;
+  var stars = over<=0?3 : over<=2?2 : 1;
+  levelCompleteStars=stars;
+  var earned = stars*10;
+  coins += earned; totalStars += stars;
+  var prev=levelStars[currentLevel]||0;
+  totalStars += 0; // already added; avoid double on replay? we add fresh
+  if(prev>0) totalStars -= prev; // replace previous stars
+  levelStars[currentLevel]=stars;
+  if(currentLevel+1>=unlockedLevel) unlockedLevel=currentLevel+2;
+  if(unlockedLevel>LEVELS.length) unlockedLevel=LEVELS.length;
+  save();
+  sfxWin();
+  // show stars
+  var starStr='';
+  for(var i=0;i<3;i++) starStr += i<stars?'⭐ ':'<span class="star-empty">⭐</span> ';
+  document.getElementById('win-stars').innerHTML=starStr;
+  document.getElementById('win-msg').textContent = stars===3?'Perfect! Fewest shots. +'+earned+'⭐': stars===2?'Great work! +'+earned+'⭐':'You did it! +'+earned+'⭐';
+  setTimeout(function(){ document.getElementById('win-screen').classList.add('show'); }, 500);
+}
+
+// ---------- Particles ----------
+function spawnParticles(r,c,color){
+  for(var i=0;i<6;i++){
+    var ang=Math.PI*2*i/6+Math.random();
+    particles.push({r:r,c:c,vr:Math.sin(ang)*0.08,vc:Math.cos(ang)*0.08,life:1,color:color});
+  }
+}
+function updateParticles(){
+  for(var i=particles.length-1;i>=0;i--){
+    var p=particles[i];
+    p.r+=p.vr; p.c+=p.vc; p.life-=0.04;
+    if(p.life<=0) particles.splice(i,1);
+  }
+}
+
+// ---------- Rendering ----------
+function render(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // bg
+  ctx.fillStyle='#0d1428'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  // grid cells
+  for(var r=0;r<GRID_R;r++){
+    for(var c=0;c<GRID_C;c++){
+      var x=c*CELL, y=r*CELL;
+      var cell=grid[r][c];
+      // checker
+      ctx.fillStyle=(r+c)%2===0?'#101a33':'#0d152b';
+      ctx.fillRect(x,y,CELL,CELL);
+      if(cell===1){ // wall
+        ctx.fillStyle='#2d3a5c';
+        ctx.fillRect(x+2,y+2,CELL-4,CELL-4);
+        ctx.fillStyle='#3d4d75';
+        ctx.fillRect(x+2,y+2,CELL-4,3);
+        ctx.strokeStyle='#1a2244'; ctx.lineWidth=1;
+        ctx.strokeRect(x+2.5,y+2.5,CELL-5,CELL-5);
+      } else if(cell===2){ // spike
+        ctx.fillStyle='#3a1518';
+        ctx.fillRect(x+3,y+3,CELL-6,CELL-6);
+        // spikes
+        ctx.fillStyle='#fc8181';
+        var cx=x+CELL/2, cy=y+CELL/2;
+        for(var s=0;s<4;s++){
+          var sx=x+8+(s%2)*(CELL-16), sy=y+8+Math.floor(s/2)*(CELL-16);
+          ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx+5,sy-7); ctx.lineTo(sx+10,sy); ctx.closePath(); ctx.fill();
+        }
+      }
+      // grid line
+      ctx.strokeStyle='rgba(99,179,237,0.06)'; ctx.lineWidth=1;
+      ctx.strokeRect(x+0.5,y+0.5,CELL,CELL);
+    }
+  }
+  // exit
+  drawExit();
+  // enemies
+  enemies.forEach(drawEnemy);
+  // bullets
+  bullets.forEach(function(b){ if(b.alive) drawBullet(b); });
+  // player
+  drawPlayer();
+  // particles
+  particles.forEach(function(p){
+    ctx.globalAlpha=p.life; ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.c*CELL+CELL/2, p.r*CELL+CELL/2, 3*p.life, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+  });
+  // hint arrow
+  if(hintActive&&hintArrow){
+    drawHintArrow();
+  }
+}
+
+function drawExit(){
+  var x=exitCell.c*CELL, y=exitCell.r*CELL;
+  var cx=x+CELL/2, cy=y+CELL/2;
+  var aliveEnemies=enemies.filter(function(e){return e.alive;});
+  var unlocked=aliveEnemies.length===0;
+  var t=Date.now()/600;
+  ctx.save();
+  ctx.translate(cx,cy);
+  // glow
+  var grad=ctx.createRadialGradient(0,0,2,0,0,CELL*0.5);
+  grad.addColorStop(0, unlocked?'rgba(104,211,145,0.5)':'rgba(130,140,170,0.3)');
+  grad.addColorStop(1,'rgba(104,211,145,0)');
+  ctx.fillStyle=grad; ctx.fillRect(-CELL/2,-CELL/2,CELL,CELL);
+  // portal ring
+  ctx.strokeStyle=unlocked?'#68d391':'#6a7596';
+  ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(0,0,CELL*0.32+Math.sin(t)*2,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0,0,CELL*0.22+Math.cos(t)*2,0,Math.PI*2); ctx.stroke();
+  // inner core
+  ctx.fillStyle=unlocked?'rgba(104,211,145,0.6)':'rgba(106,117,150,0.4)';
+  ctx.beginPath(); ctx.arc(0,0,CELL*0.1,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawEnemy(e){
+  if(!e.alive) return;
+  var x=e.animC*CELL+CELL/2, y=e.animR*CELL+CELL/2;
+  var t=Date.now()/500;
+  ctx.save(); ctx.translate(x,y);
+  if(e.type==='d'){ // drone - red diamond
+    ctx.fillStyle='#fc8181'; ctx.shadowColor='#fc8181'; ctx.shadowBlur=8;
+    ctx.rotate(t*0.3);
+    ctx.beginPath(); ctx.moveTo(0,-CELL*0.28); ctx.lineTo(CELL*0.24,0); ctx.lineTo(0,CELL*0.28); ctx.lineTo(-CELL*0.24,0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,0,CELL*0.08,0,Math.PI*2); ctx.fill();
+  } else if(e.type==='t'){ // turret - orange square with barrel
+    ctx.fillStyle='#f6ad55'; ctx.shadowColor='#f6ad55'; ctx.shadowBlur=e.fireFlash>0?20:10;
+    ctx.fillRect(-CELL*0.26,-CELL*0.26,CELL*0.52,CELL*0.52);
+    ctx.fillStyle='#ed8936'; ctx.fillRect(-CELL*0.3,-CELL*0.06,CELL*0.6,CELL*0.12);
+    // eye
+    ctx.fillStyle='#0a0e1a'; ctx.beginPath(); ctx.arc(0,0,CELL*0.08,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#fc8181'; ctx.beginPath(); ctx.arc(0,0,CELL*0.04,0,Math.PI*2); ctx.fill();
+    e.fireFlash*=0.85;
+  } else if(e.type==='s'){ // shield - purple hexagon with armor ring
+    ctx.strokeStyle='#b794f4'; ctx.lineWidth=e.hp===2?3:1.5; ctx.shadowColor='#b794f4'; ctx.shadowBlur=8;
+    ctx.beginPath();
+    for(var i=0;i<6;i++){ var a=i*Math.PI/3; var px=Math.cos(a)*CELL*0.3, py=Math.sin(a)*CELL*0.3; if(i===0)ctx.moveTo(px,py); else ctx.lineTo(px,py); }
+    ctx.closePath(); ctx.stroke();
+    ctx.fillStyle=e.hp===2?'#6b46c1':'#805ad5'; ctx.beginPath(); ctx.arc(0,0,CELL*0.18,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e9d8fd'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(e.hp,0,1);
+  }
+  ctx.restore();
+}
+
+function drawBullet(b){
+  var x=b.c*CELL+CELL/2, y=b.r*CELL+CELL/2;
+  ctx.save();
+  if(b.fromTurret){ ctx.fillStyle='#fc8181'; ctx.shadowColor='#fc8181'; }
+  else { ctx.fillStyle='#63b3ed'; ctx.shadowColor='#63b3ed'; }
+  ctx.shadowBlur=12;
+  ctx.beginPath(); ctx.arc(x,y,CELL*0.12,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.beginPath(); ctx.arc(x,y,CELL*0.05,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawPlayer(){
+  var x=player.animC*CELL+CELL/2, y=player.animR*CELL+CELL/2;
+  var t=Date.now()/400;
+  ctx.save(); ctx.translate(x,y);
+  // outer glow
+  var grad=ctx.createRadialGradient(0,0,2,0,0,CELL*0.45);
+  grad.addColorStop(0,'rgba(99,179,237,0.6)'); grad.addColorStop(1,'rgba(99,179,237,0)');
+  ctx.fillStyle=grad; ctx.fillRect(-CELL/2,-CELL/2,CELL,CELL);
+  // body - rotating ring
+  ctx.strokeStyle='#63b3ed'; ctx.lineWidth=3; ctx.shadowColor='#63b3ed'; ctx.shadowBlur=12;
+  ctx.beginPath(); ctx.arc(0,0,CELL*0.28,0,Math.PI*2); ctx.stroke();
+  ctx.save(); ctx.rotate(t);
+  ctx.beginPath();
+  for(var i=0;i<3;i++){ var a=i*Math.PI*2/3; ctx.moveTo(Math.cos(a)*CELL*0.28,Math.sin(a)*CELL*0.28); ctx.lineTo(Math.cos(a)*CELL*0.16,Math.sin(a)*CELL*0.16); }
+  ctx.stroke();
+  ctx.restore();
+  // core
+  ctx.fillStyle='#bee3f8'; ctx.beginPath(); ctx.arc(0,0,CELL*0.12,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,0,CELL*0.05,0,Math.PI*2); ctx.fill();
+  // direction indicator (aim guide)
+  if(lastShotDir){
+    ctx.strokeStyle='rgba(246,173,85,0.35)'; ctx.lineWidth=2; ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.moveTo(0,0); ctx.lineTo(lastShotDir.dc*CELL*0.35, lastShotDir.dr*CELL*0.35); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.restore();
+}
+
+function drawHintArrow(){
+  var L=LEVELS[currentLevel];
+  // find a drone aligned with player
+  var target=null;
+  for(var i=0;i<enemies.length;i++){
+    if(enemies[i].alive){
+      if(enemies[i].r===player.r||enemies[i].c===player.c){ target=enemies[i]; break; }
+    }
+  }
+  if(!target){
+    // suggest moving toward exit
+    var dr=Math.sign(exitCell.r-player.r), dc=Math.sign(exitCell.c-player.c);
+    if(Math.abs(exitCell.c-player.c)>=Math.abs(exitCell.r-player.r)) hintArrow={dr:0,dc:-dc};
+    else hintArrow={dr:-dr,dc:0};
+  } else {
+    if(target.r===player.r) hintArrow={dr:0,dc:Math.sign(target.c-player.c)};
+    else hintArrow={dr:Math.sign(target.r-player.r),dc:0};
+  }
+  var x=player.animC*CELL+CELL/2+hintArrow.dc*CELL*0.4;
+  var y=player.animR*CELL+CELL/2+hintArrow.dr*CELL*0.4;
+  ctx.save();
+  ctx.translate(x,y); ctx.rotate(Math.atan2(hintArrow.dr,hintArrow.dc));
+  ctx.fillStyle='rgba(251,211,141,0.85)';
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-12,-8); ctx.lineTo(-12,8); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+// ---------- HUD / UI ----------
+function updateHUD(){
+  document.getElementById('hud-level').textContent='Level '+(currentLevel+1)+' · '+LEVELS[currentLevel].name;
+  document.getElementById('hud-shots').textContent=shots;
+  var par=LEVELS[currentLevel].par;
+  document.getElementById('hud-par').textContent=par;
+  document.getElementById('hud-coins').textContent=coins;
+  // par bar
+  var pb=document.getElementById('par-bar'); pb.innerHTML='';
+  var total=Math.max(par+2, shots);
+  for(var i=0;i<total;i++){
+    var dot=document.createElement('span'); dot.className='par-dot'+(i<shots?' on':'');
+    pb.appendChild(dot);
+  }
+}
+
+function toast(msg){
+  var el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); }, 2000);
+}
+
+function buildLevelSelect(){
+  var g=document.getElementById('level-grid'); g.innerHTML='';
+  LEVELS.forEach(function(L,i){
+    var btn=document.createElement('div');
+    var locked=i+1>unlockedLevel;
+    btn.className='level-btn'+(locked?' locked':'')+((levelStars[i]||0)>0?' done':'');
+    var stars=levelStars[i]||0;
+    var starStr=''; for(var s=0;s<3;s++) starStr+=s<stars?'★':'☆';
+    btn.innerHTML='<span>'+(i+1)+'</span><span class="level-mini">'+starStr+'</span>';
+    if(!locked){
+      btn.addEventListener('click', function(){ sfxClick(); loadLevel(i); hideAllOverlays(); startBGM(); });
+    }
+    g.appendChild(btn);
+  });
+}
+
+function hideAllOverlays(){
+  document.getElementById('menu').classList.remove('show');
+  document.getElementById('win-screen').classList.remove('show');
+  document.getElementById('gameover-screen').classList.remove('show');
+}
+
+// ---------- Buttons ----------
+document.getElementById('btn-play').addEventListener('click', function(){
+  sfxClick(); initAudio(); startBGM();
+  loadLevel(currentLevel>=0?currentLevel:0); hideAllOverlays();
+});
+document.getElementById('btn-levels').addEventListener('click', function(){
+  sfxClick();
+  var ls=document.getElementById('level-select');
+  ls.style.display = ls.style.display==='none'?'block':'none';
+  if(ls.style.display==='block') buildLevelSelect();
+});
+document.getElementById('btn-next').addEventListener('click', function(){
+  sfxClick();
+  var n=Math.min(currentLevel+1, LEVELS.length-1);
+  loadLevel(n); hideAllOverlays();
+});
+document.getElementById('btn-retry').addEventListener('click', function(){
+  sfxClick(); loadLevel(currentLevel); hideAllOverlays();
+});
+document.getElementById('btn-retry-go').addEventListener('click', function(){
+  sfxClick(); loadLevel(currentLevel); hideAllOverlays();
+});
+document.getElementById('btn-menu').addEventListener('click', function(){
+  sfxClick(); gameState='menu'; document.getElementById('menu').classList.add('show');
+  document.getElementById('level-select').style.display='none';
+});
+document.getElementById('btn-menu-win').addEventListener('click', function(){
+  sfxClick(); gameState='menu'; hideAllOverlays(); document.getElementById('menu').classList.add('show');
+  document.getElementById('level-select').style.display='none';
+});
+document.getElementById('btn-menu-go').addEventListener('click', function(){
+  sfxClick(); gameState='menu'; hideAllOverlays(); document.getElementById('menu').classList.add('show');
+});
+document.getElementById('btn-hint').addEventListener('click', function(){
+  sfxClick();
+  if(coins<10){ toast('Need 10⭐ for a hint!'); return; }
+  coins-=10; save(); updateHUD();
+  hintActive=true; toast(LEVELS[currentLevel].hint);
+});
+document.getElementById('btn-sound').addEventListener('click', function(){
+  soundOn=!soundOn; document.getElementById('btn-sound').textContent=soundOn?'🔊':'🔇';
+  if(soundOn){ startBGM(); } else { stopBGM(); }
+});
+
+// ---------- Main loop ----------
+function loop(){
+  updateParticles();
+  render();
+  requestAnimationFrame(loop);
+}
+
+// ---------- Resize ----------
+window.addEventListener('resize', function(){ if(gameState==='play'||gameState==='anim') computeLayout(); });
+
+// ---------- Cleanup (for site-analytics / SPA) ----------
+window.__recoil_cleanup = function(){
+  stopBGM();
+  if(AC){ try{AC.close();}catch(e){} AC=null; }
+};
+
+// ---------- Init ----------
+load();
+computeLayout();
+loop();
+updateHUD();
+
+// show daily banner briefly
+if(document.getElementById('daily-banner')){
+  setTimeout(function(){ var b=document.getElementById('daily-banner'); if(b) b.style.display='none'; }, 4000);
+}
+
+})();
+</script>
+<script src="/js/site-analytics.js" defer></script>
+</body>
+</html>
