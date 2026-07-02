@@ -286,8 +286,8 @@ function main() {
     console.error('❌ levels.json format: expected {"levels":[...]}');
     process.exit(1);
   }
-  if (levels.length !== 27) {
-    console.error(`❌ expected 27 levels, got ${levels.length}`);
+  if (levels.length !== 30) {
+    console.error(`❌ expected 30 levels, got ${levels.length}`);
     process.exit(1);
   }
 
@@ -340,7 +340,7 @@ function main() {
     for (const f of failures) console.log(`  - Level ${f.id} (${f.tier}): ${f.reason}`);
     process.exit(1);
   }
-  console.log('\n🎉 All 27 levels are valid and have exactly one unique solution!');
+  console.log('\n🎉 All 30 levels are valid and have exactly one unique solution!');
   process.exit(0);
 }
 
