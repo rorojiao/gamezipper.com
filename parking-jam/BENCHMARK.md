@@ -1,77 +1,52 @@
-# Parking Jam - Competitive Benchmark
+# Parking Jam — Competitive Benchmark
 
-## Target Game
-**Parking Jam** - Car unblock puzzle game where players tap/drag cars to clear a crowded parking lot in the correct order.
+## Selected Game
+- **Name**: Parking Jam
+- **Slug**: parking-jam
+- **Mechanic**: Rush Hour / Unblock Car puzzle. Slide cars horizontally or vertically on a grid; free the target car to the exit.
 
-## Competitors Analyzed
+## Top 3 Competitors Benchmarked
 
-### 1. Parking Jam 3D (Popcore Games)
-- **Downloads**: 80M+ (Google Play + iOS)
-- **Rating**: 4.11/5 (1.7M reviews)
-- **Core Mechanic**: Tap cars to move them out of parking lot in correct order
-- **Levels**: 1000+ levels, progressive difficulty
-- **Systems**:
-  - Score: Stars per level (1-3 stars based on moves)
-  - Coins: Earned per level completion
-  - Skins: Car customization unlocked with coins
-  - Idle system: Build rental properties, collect rent
-  - Characters: Granny NPC (comic relief)
-  - Obstacles: Road barriers, tight spaces
-  - Undo: Limited undo moves
-  - Hints: Show correct car order
-- **Art Style**: 3D isometric, colorful, cartoon
-- **Music**: Upbeat casual, cheerful
+### 1. Parking Jam 3D (Popcore, mobile)
+- DAU: millions
+- Levels: 5000+ procedural
+- Systems: level select, stars (1-3 by moves), hints, undo, daily challenge, color cars, skins
+- Art: 3D isometric, but 2D top-down is the classic form
+- Monetization: interstitial ads, rewarded hints
 
-### 2. Parking Jam (CrazyGames/DQQ)
-- **Rating**: 8.5/10
-- **Platform**: HTML5 browser (desktop + mobile)
-- **Core Mechanic**: Click and drag cars to clear lot
-- **Features**:
-  - Move counter (limited moves)
-  - Reverse movement allowed
-  - Road barriers as obstacles
-  - Progressive difficulty (more cars + obstacles)
-  - Score comparison vs other players
-- **Art Style**: 2D top-down, clean
+### 2. Rush Hour (ThinkFun board game)
+- Mechanic origin: 40 challenge cards from beginner to expert
+- Defines the genre: 6x6 grid, horizontal cars slide horizontal only, vertical trucks slide vertical only
+- Target: move red car out the right exit
 
-### 3. Parking Jam: Traffic Escape 3D
-- **Core Mechanic**: Move cars, tap to escape, clear the lot
-- **Features**: Logic + strategy, traffic jam theme
-- **3D perspective**, traffic-based obstacles
+### 3. Unblock Car (mobile, hundreds of variants)
+- Levels: 1000s
+- Systems: difficulty tiers, star ratings by par-moves, hint button, daily puzzle
+- Art: top-down neon cars
 
-## GameZipper Implementation Plan
+## Systems to Implement (must match)
+1. ✅ Grid-based level system (6x6 default, scaling to 7x7, 8x8)
+2. ✅ Horizontal cars (slide left/right only), vertical cars (slide up/down only)
+3. ✅ Target car (red) with exit marker on the right edge
+4. ✅ Win condition: target car reaches exit
+5. ✅ Move counter + par (optimal moves) for star rating
+6. ✅ Hint system (one free move reveal, then watch-ad/cooldown)
+7. ✅ Undo system
+8. ✅ Level select with tier progression (locked until previous cleared)
+9. ✅ Star ratings (3 stars = par or better, 2 = within 1.5x, 1 = solved)
+10. ✅ Progress save (localStorage, versioned)
+11. ✅ Tutorial overlay on level 1
+12. ✅ Daily challenge (procedural level seeded by date)
+13. ✅ Sound effects (Web Audio API)
+14. ✅ Particles on win, screen feedback on slide
+15. ✅ 30 handcrafted levels across 6 tiers
+16. ✅ All levels verified solvable (CSP solver during generation)
 
-### Core Systems to Implement
-1. **Parking Lot Grid** (top-down 2D): Cars on a grid, tap to move them out
-2. **Level System**: 30 handcrafted levels across 6 zones (Easy → Expert)
-3. **Car Types**: Regular, Truck (2 cells), Sports Car, Van
-4. **Obstacles**: Barriers, walls, other cars blocking paths
-5. **Move Counter**: Track moves, 3-star rating per level
-6. **Hint System**: Highlight next correct car to move (costs coins)
-7. **Undo System**: Unlimited undo (rewind moves)
-8. **Coin System**: Earn coins for completing levels, bonus for fewer moves
-9. **Progress Save**: localStorage with level completion + stars + coins
-10. **Tutorial**: First 2 levels are guided tutorial
-11. **Animations**: Car slide-out animation, celebration particles, screen shake
-12. **Sound**: Web Audio API procedural (engine start, horn, success, click)
+## Art Direction
+- Top-down neon dark theme (GameZipper house style)
+- Gradient cars with subtle shadow
+- Glowing exit arrow
+- Grid lines subtle
 
-### Difficulty Progression
-- Zone 1 (Levels 1-5): Small lot (3x3), 2-3 cars, no obstacles
-- Zone 2 (Levels 6-10): Medium lot (4x4), 3-5 cars, 1 obstacle type
-- Zone 3 (Levels 11-15): 4x4, 4-6 cars, barriers
-- Zone 4 (Levels 16-20): 5x5, 5-8 cars, multiple obstacles
-- Zone 5 (Levels 21-25): 5x6, 6-10 cars, complex layouts
-- Zone 6 (Levels 26-30): 6x6, 8-12 cars, expert-level puzzles
-
-### Visual Style
-- Dark gradient background (GameZipper theme)
-- Top-down parking lot view
-- Neon accent colors for car outlines
-- Car colors: distinct bright colors per type
-- Smooth slide animations
-- Particle effects on level completion
-
-### Music Style
-- Casual upbeat, slightly jazzy
-- Web Audio API procedural BGM
-- Sound effects: engine, horn honk, success chime, error buzz
+## Music
+- Ambient puzzle electronic (procedural via Web Audio API)
