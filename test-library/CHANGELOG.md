@@ -1,3 +1,29 @@
+## [v1.131.0] - 2026-07-03
+### Added
+- 8 new test cases from July-3 2026 industry research (R248 Dynamic Test Intelligence cron, 4h cadence cycle 10)
+- New test cases:
+  - [S-273] **[P0]** CVE-2026-21962 Oracle WebLogic Server Proxy Plug-in Unauthenticated RCE CVSS 10.0 — public PoC tool with auto-detection via 5 proxy paths, Base64 WAF bypass, multi-vector header injection
+  - [S-274] **[P0]** CVE-2026-40175 Axios Prototype-Pollution Gadget-Chain RCE CVSS 9.9 — DESIGN FLAW in ALL Axios 0.x/1.x versions <1.15.0, 120M+ weekly npm downloads, amplifies any prototype pollution to RCE
+  - [S-275] **[P1]** CVE-2026-21992 Oracle Identity Manager + Web Services Manager Unauth RCE CVSS 9.8 — AV:N/AC:L/PR:N/UI:N, full CIA impact
+  - [S-276] **[P1]** CVE-2026-3055 Citrix NetScaler ADC/Gateway SAML IdP OOB Memory Read CVSS 9.3 — CISA KEV, in-the-wild exploitation, SAML signing-key leak risk
+  - [S-277] **[P2]** CVE-2026-34156 NocoBase AI Low-Code Workflow Script Sandbox Escape CVSS 9.9 — Node.js vm sandbox break via leaked console object
+  - [W-254] **[P1]** Chrome 146 Native MCP (Model Context Protocol) via chrome://inspect/#remote-debugging — AI agents drive user's real Chrome session directly, defeats anti-bot presence checks
+  - [W-255] **[P3]** visionOS 27 / Safari 27 Spatial Web — inline 3D model embedding via <model> element, spatial browsing adds Z-depth to 2D content
+  - [P-115] **[P2]** WebGPU vs WebAssembly Transformers.js Benchmark — WebGPU 25-40 tok/s vs WASM 2-5 tok/s on TinyLlama 1.1B, 1-5s shader cold-start penalty
+### Sources
+- Search queries: "HTML5 browser game testing 2026 new techniques WebKit Chrome July", "CVE-2026 July Chrome Safari browser vulnerability zero-day actively exploited", "casual game UX mobile complaint 2026 dark mode haptic accessibility", "Chrome Edge Safari iOS update 2026 July web API", "CVE-2025-6558 Apple ANGLE Chrome rendering July 2026 emergency patch", "CVE-2026-21962 Oracle WebLogic Proxy Plugin RCE CVSS 10.0 2026", "Chrome 151 release stable July 2026 new features web API", "Chrome 146 垂直标签栏 MCP vertical tabs release July 2026", "Apple WWDC26 VisionOS 3 iOS 26 Liquid Glass game accessibility July 2026", "HTML5 WebGPU WebAssembly game engine performance benchmark 2026"
+- Key URLs:
+  - https://www.esecurityplanet.com/threats/oracle-weblogic-proxy-bug-enables-unauthenticated-remote-compromise/ (Jan 21 2026 — CVE-2026-21962 WebLogic Proxy RCE)
+  - https://blog.csdn.net/weishi122/article/details/157315311 (June 3 2026 — public PoC exploitation tool)
+  - https://blog.csdn.net/weixin_42376192/article/details/160136243 (April 9 2026 — CVE-2026-40175 Axios gadget-chain RCE full analysis)
+  - https://blog.itpub.net/31547506/viewspace-3114067/ (March 20 2026 — CVE-2026-21992 Oracle OIM/OWSM)
+  - https://blog.csdn.net/weixin_45635831/article/details/159749110 (April 2 2026 — daily security intel: CVE-2026-3055 Citrix + CVE-2026-34156 NocoBase)
+  - https://cloud.tencent.com/developer/article/2692333 (July 3 2026 — Chrome 146 native MCP support)
+  - https://developer.apple.com/cn/videos/all-videos/ (WWDC26 June 2026 — Safari spatial web lab)
+  - https://www.apple.com/cn/visionos/visionos-2 (visionOS 26 spatial web features)
+  - https://www.sitepoint.com/webgpu-vs-webasm-transformers-js/ (Feb 25 2026 — WebGPU vs WASM benchmark)
+  - https://www.sitepoint.com/css-zero-day-cve-2026-2441-browser-sandbox-escape/ (Feb 19 2026 — CVE-2026-2441 Chrome CSS zero-day context)
+
 ## [v1.130.0] - 2026-07-03
 ### Added
 - 8 new test cases from July-3 2026 industry research (R247 Dynamic Test Intelligence cron, 4h cadence cycle 9)
