@@ -531,8 +531,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":526,"url":"https://gamezipper.com/tetravex/","name":"Tetravex"},
     {"@type":"ListItem","position":527,"url":"https://gamezipper.com/domino-toppler/","name":"Domino Toppler"},
     {"@type":"ListItem","position":528,"url":"https://gamezipper.com/qwirkle/","name":"Qwirkle"},
-    {"@type":"ListItem","position":529,"url":"https://gamezipper.com/ships-finder/","name":"Ships Finder"}
+    {"@type":"ListItem","position":529,"url":"https://gamezipper.com/ships-finder/","name":"Ships Finder"},
+    {"@type":"ListItem","position":530,"url":"https://gamezipper.com/nerdle/","name":"Nerdle"}
   ],
-  "numberOfItems":529,
-  "description":"529 free browser games you can play instantly"
+  "numberOfItems":530,
+  "description":"530 free browser games you can play instantly"
 };
