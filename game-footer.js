@@ -310,8 +310,9 @@
       {n:'Odd One Out',e:'🔍',u:'/odd-one-out/',c:'puzzle'},
       {n:'Ships Finder',e:'🚢',u:'/ships-finder/',c:'puzzle'},
       {n:'Nerdle',e:'🧠',u:'/nerdle/',c:'puzzle'},
-      {n:'Quoridor Strategy',e:'🧱',u:'/quoridor/',c:'puzzle'}
-      ]; }
+      {n:'Quoridor Strategy',e:'🧱',u:'/quoridor/',c:'puzzle'},
+{n:'PathPix',e:'🎨',u:'/pathpix/',c:'puzzle'}
+]; }
    }
    function getDateSeed() {
      // Deterministic seed based on today's date string
