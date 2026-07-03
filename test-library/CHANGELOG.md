@@ -1,3 +1,30 @@
+## [v1.133.0] - 2026-07-04
+### Added
+- 8 new test cases from July-4 2026 industry research (R250 Dynamic Test Intelligence cron, 4h cadence cycle 12)
+- New test cases:
+  - [S-283] **[P0]** CVE-2026-20127 Cisco Catalyst SD-WAN Controller/Manager Unauth Admin Takeover CVSS 10.0 — in-the-wild exploitation since 2023, cascading threat to all managed edge devices
+  - [S-284] **[P1]** CVE-2026-20045 Cisco Unified Communications Unauth OS Command Execution CVSS 8.2 — web admin interface RCE, cascades to call recordings/voicemail
+  - [S-285] **[P2]** CVE-2026-26144 Microsoft Excel Information Disclosure with CWE-79 (XSS) Classification Critical — spreadsheet-as-XSS-carrier in any web Excel-rendering context
+  - [W-257] **[P2]** Boneyard Automated Skeleton-Screen Generation Tool — auto-generate loading placeholders from real UI, prevents CLS regression
+  - [W-258] **[P2]** Syncpack Monorepo Dependency Version Consistency Enforcement — detects version drift that reintroduces patched vulnerabilities (Electron/Cloudflare/Vercel use it)
+  - [W-259] **[P3]** Mediabunny v1.42.0 In-Browser HLS Read+Write Support — browser-native HLS generation reduces infra but adds codec/Safari-vs-Chrome QA surfaces
+  - [W-260] **[P3]** opentype.js v1.3.5→2.0-preview Programmatic Font Glyph Access — runtime glyph modification for CJK puzzle games, but may break TTS/screen-reader
+  - [A-056] **[P1]** a11ycheck WCAG 2.2 Accessibility Checker — URL-to-full-report automation, adopt as pre-deploy gate (EU EAA enforcement makes WCAG 2.2 AA legally mandatory)
+### Sources
+- Search queries: "HTML5 browser game testing techniques 2026 new bugs July", "new browser security vulnerability 2026 July XSS clickjacking WebGL", "casual game UX complaint 2026 mobile dark mode haptic accessibility", "Chrome Edge Safari update 2026 July deprecation web API", "browser game performance metrics 2026 INP CLS Web Vitals canvas", "WCAG 2.2 accessibility 2026 new requirements AAA game color contrast", "CVE 2026 July critical browser vulnerability zero-day patch", "WebGPU WebAssembly 2026 browser game engine deprecation"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_22569a0fda957852 (Feb 27 2026 — CVE-2026-20127 Cisco SD-WAN CVSS 10.0 in-wild-since-2023)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4116971f7d375852 (Jan 22 2026 — CVE-2026-20045 Cisco UC unauth OS cmd)
+  - https://msrc.microsoft.com/update-guide/en-US/vulnerability/CVE-2026-26144 (Mar 10 2026 — CVE-2026-26144 Excel CWE-79 XSS Critical)
+  - https://cloud.tencent.com/developer/article/2672214 (May 2026 JS Weekly #16 — Boneyard skeleton + Syncpack)
+  - https://cloud.tencent.com/developer/article/2677885 (May 2026 JS Weekly #18 — Mediabunny v1.42.0 HLS)
+  - https://cloud.tencent.com/developer/article/2677947 (May 2026 JS Weekly #19 — opentype.js v1.3.5→2.0)
+  - https://mrgig.com/ (June 20 2026 — a11ycheck WCAG 2.2 checker)
+  - https://new.qq.com/rain/a/20260212A0638C00 (Feb 12 2026 — FIRST forum 2026 CVE volume projection, context for S-282)
+  - https://www.sitepoint.com/zero-day-css-cve-2026-2441-security-vulnerability/ (Mar 20 2026 — CVE-2026-2441 Chrome CSS exfil, context)
+  - https://portswigger.net/web-security/clickjacking (June 20 2026 — clickjacking tutorial, context)
+  - https://www.w3.org/TR/WCAG22/ (WCAG 2.2 spec, context for A-056)
+
 ## [v1.132.0] - 2026-07-03
 ### Added
 - 8 new test cases from July-3 2026 industry research (R249 Dynamic Test Intelligence cron, 4h cadence cycle 11)
