@@ -1,3 +1,34 @@
+## [v1.130.0] - 2026-07-03
+### Added
+- 8 new test cases from July-3 2026 industry research (R247 Dynamic Test Intelligence cron, 4h cadence cycle 9)
+- New test cases:
+  - [S-272] **[P1]** Chrome 127+ App-Bound Encryption (ABE) LOTL Bypass via Direct Syscall Process Hollowing — 5+ open-source Infostealer tools (ChromElevator/ASkyeye/00nx/kawa5604/Hide067) bypass ABE in-memory by hijacking legitimate browser process identity
+  - [W-252] **[P3]** itch.io 2026 Spring Indie-Web-Game Showcase — 11 standout browser-playable games, competitive discovery surface vs GameZipper
+  - [W-253] **[P3]** Chrome 4-Week Cadence Marketing-Affirmed Baseline — Google's own marketing still says "每四周更新一次" even as Chrome 153 prepares to halve to 2-week cadence (Sep 2026)
+  - [C-180] **[P3]** melonJS Modern ES6-Class 100KB Game-Engine Modernization Baseline — post-processing/shaders/3D-mesh/Tiled workflows in 100KB minzipped with WebGL+Canvas2D fallback
+  - [P-114] **[P2]** 2026 Game-Phone Display 120Hz+Ray-Tracing+2K Baseline — ASUS ROG Phone/RedMagic/iQOO Neo/Black Shark tier expectation (~15-20% of Android audience)
+  - [B-176] **[P2]** PS4/PS5 WebKit Console-Browser Expanded Test Matrix — Sony firmware cadence slower than Apple, console players may run unpatched WebKit for months
+  - [PC-026] **[P2]** Mobile Super-Wide 21:9 Aspect-Ratio New Viewport Class — Sony Xperia 1 V/VI, Samsung S25 Ultra, foldables render 16:9-authored games incorrectly
+  - [G-173] **[P2]** Mobile-OS Game-Mode Integration ColorOS16/MIUI18/HarmonyOS Next/OneUI 7 Expectation — frame-rate lock + DND + anti-accidental-touch conflict with GameZipper rAF loops
+
+### Sources
+- Search: "HTML5 game testing 2026 new techniques" (HTML5 game market 18.9B→39.2B, Phaser/melonJS engines)
+- Search: "browser security vulnerability 2026 Chrome Safari WebKit" (Safari 26 privacy, CVE-2026-28962, Chrome App-Bound Encryption bypass)
+- Search: "casual game UX complaint 2026 mobile" (Adjust 2026 retention report, game-phone display tech, OS game-mode UX)
+- Search: "Chrome Edge Safari update 2026 game development" (Chrome 4-week cadence, WebKit PS4/PS5, melonJS modernization)
+- Search: "Safari 26 tracking parameter filtering fbclid gclid 2026" (Safari 26 release notes, anti-fingerprinting radar 134227067)
+- Key URLs:
+  - https://github.com/xaitax/Chrome-App-Bound-Encryption-Decryption (Feb 5 2026 — ChromElevator ABE bypass)
+  - https://github.com/ASkyeye/Chrome-App-Bound-Encryption-Decryption (June 5 2026)
+  - https://www.163.com/dy/article/JD1OKDFV0511A5GF.html (Sept 26 2024 — Rhadamanthys reversed ABE in 10 min)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_32569d44f8d79852 (April 7 2026 — itch.io 2026 Spring)
+  - https://github.com/melonjs/melonJS/blob/master/README.md (May 22 2026 — melonJS modernization)
+  - https://www.sohu.com/a/1022047024_121705619 (May 13 2026 — game-phone display tech)
+  - https://gbhackers.com/webkit-exploits-ps4-ps5/ (May 25 2026 — PS4/PS5 WebKit)
+  - https://www.google.cn/chrome/index.html (June 22 2026 — Chrome 4-week cadence marketing)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_14069a01a4441052 (Feb 26 2026 — ColorOS 16 game mode)
+  - https://www.pchome.net/games/665263.html (May 5 2026 — pixel game mobile)
+
 ## [v1.129.0] - 2026-07-03
 ### Added
 - 8 new test cases from July-3 2026 industry research (R246 Dynamic Test Intelligence cron, 4h cadence cycle 8)
