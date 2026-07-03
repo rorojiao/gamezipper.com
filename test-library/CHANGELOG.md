@@ -1,3 +1,33 @@
+## [v1.132.0] - 2026-07-03
+### Added
+- 8 new test cases from July-3 2026 industry research (R249 Dynamic Test Intelligence cron, 4h cadence cycle 11)
+- New test cases:
+  - [S-278] **[P1]** CVE-2026-2441 Chrome CSS Parsing Pipeline DOM Exfiltration Zero-Day CVSS 8.8 — CSS-as-exfil-channel, bypasses JS sanitization
+  - [S-279] **[P1]** CVE-2026-48095 7-Zip NtfsHandler Integer-Overflow Heap BOF CVSS 8.8 — archive-extractor RCE via crafted ZIP
+  - [S-280] **[P2]** CVE-2026-2007 PostgreSQL pg_trgm Extension Heap BOF CVSS 8.2 — attacker-controlled bytes written to server memory
+  - [S-281] **[P2]** CVE-2026-32202 Windows Shell Spoofing CISA KEV — in-the-wild exploitation, sensitive data disclosure
+  - [S-282] **[P2]** FIRST Forum 2026 CVE Volume Projection — 100K+ threshold first time, 90% CI upper bound ~118K
+  - [W-256] **[P2]** Firefox 151 Stable Ship — PDF merge + Web Serial API + Picture-in-Picture API + redesigned new-tab
+  - [C-181] **[P2]** Phaser.js AUTO Render Mode Canvas↔WebGL Fallback Verification — dual code-path latent bug class
+  - [P-116] **[P2]** 2026 Campus/Dorm WiFi Congestion Graceful Degradation Pattern — local-network congestion (not ISP)
+  - [PC-027] **[P3]** 2026 Gaming-Laptop Network-Stack WiFi-7 vs Legacy WiFi Stability Differential
+### Sources
+- Search queries: "CVE-2026 July browser Chrome Safari Firefox vulnerability zero-day actively exploited", "Chrome 151 stable release July 2026 new web API features", "HTML5 browser game testing 2026 new techniques performance", "CVE-2026 July RCE vulnerability npm supply chain attack web", "iOS Safari 27 WebKit feature 2026 July beta new API", "WebGPU WebAssembly game 2026 performance benchmark browser", "CVE-2026 7-Zip NtfsHandler heap overflow Windows Shell spoofing July", "browser game 2026 UX mobile complaint dark mode accessibility haptic"
+- Key URLs:
+  - https://www.sitepoint.com/zero-day-css-cve-2026-2441-security-vulnerability/ (Mar 20 2026 — CVE-2026-2441 Chrome CSS exfil)
+  - https://new.qq.com/rain/a/20260217A044OM00 (Feb 17 2026 — Chrome zero-day patch announcement)
+  - https://www.donews.com/news/detail/8/6573216.html (May 28 2026 — CVE-2026-48095 7-Zip heap overflow)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4616a1d644859852 (June 1 2026 — 7-Zip GHSL-2026-140)
+  - https://www.postgresql.org/support/security/CVE-2026-2007 (PostgreSQL pg_trgm CVE)
+  - https://www.sohu.com/a/1020020937_114765 (May 8 2026 — CVE-2026-32202 Windows Shell spoofing)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_06669fd7ea842752 (May 8 2026 — CISA KEV)
+  - https://new.qq.com/rain/a/20260212A0638C00 (Feb 12 2026 — FIRST forum CVE volume projection)
+  - https://www.donews.com/news/detail/8/6565520.html (May 21 2026 — Firefox 151 stable ship)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_3366a0e7da733552 (May 21 2026 — Firefox 151 features)
+  - https://cloud.tencent.com/developer/article/1467947 (July 3 2026 — Phaser.js tutorial Phaser.AUTO)
+  - https://www.sohu.com/a/1016438994_121814834 (Apr 29 2026 — campus WiFi congestion + gaming laptop)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_31669f2254726552 (Apr 29 2026 — HyperX gaming laptop network stability)
+
 ## [v1.131.0] - 2026-07-03
 ### Added
 - 8 new test cases from July-3 2026 industry research (R248 Dynamic Test Intelligence cron, 4h cadence cycle 10)
