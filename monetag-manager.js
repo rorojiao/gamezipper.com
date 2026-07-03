@@ -4,6 +4,35 @@
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
  *
+ * v5.12 Changes (2026-07-03 — Exit-Intent cy<0 Guard Fix + 40% Real Exit Recovery):
+ *   - 🪲 Fix: initExitIntent() mouseout guard `if (e.clientY < 0) return` was killing
+ *     40.8% of real exit gestures (BI 30d: 75/184 with-cy exit_mouse had cy<0).
+ *     Root cause analysis (post v5.11 deployment, 7-01~7-03):
+ *       - gz.com 30d: 979 exit_mouse events fired by gz-analytics.js (enriched w/ cy)
+ *       - Of 184 with clientY: 75 (40.8%) had cy < 0 (mouse already past top edge)
+ *       - 11 (6.0%) had 0 <= cy <= 30 (correctly caught)
+ *       - 98 (53.3%) had cy > 30 (correctly rejected)
+ *     v5.10 had loosened from cy < 10 → cy < 30 (top 30px) but also blocked cy < 0
+ *     "as too late" — wrong heuristic. Browsers report cy=-N when mouse has left
+ *     the viewport at the top (the EXACT gesture we want to catch). Standard
+ *     exit-intent libraries (exitbee, optinmonster) accept cy < 0 as exit.
+ *     Result: 99.5% of exit_mouse events were silently rejected at the guard.
+ *   - 📊 Fix: exit_intent_blocked events were 0 in 30d because guards returned
+ *     before any trackAdEvent fired. Now guard-rejected events log
+ *     'exit_intent_guard_rejected' so BI sees the full funnel (guard → detected
+ *     → blocked → fired).
+ *   - 🔓 Loosen: Accept clientY <= 30 OR clientY < 0 (browsers differ: some
+ *     report negative, some report 0-30). The combined test: clientY is not
+ *     a number > 30 → it's exit intent.
+ *   - 🎯 Cap the new flood: raise exitIntentCooldownMs 30s → 45s to prevent
+ *     over-firing since we're now catching 7x more events (40.8% vs 6.0%).
+ *     Keeps session cap to ~3 exit-breaks (was effectively 0).
+ *   - 📊 Acceptance (7d BI):
+ *     - exit_intent_detected 30d 5 → 7d target 40+ (8x lift)
+ *     - exit_intent_blocked 30d 0 → 7d target 5+ (observability)
+ *     - exit_intent_guard_rejected 7d target 100+ (visible funnel)
+ *     - exit_intent_fill (new event) 7d target 1+ (actual fills)
+ *
  * v5.11 Changes (2026-06-30 — CB Race Real Fix + Exit-Intent Debug + gz-analytics Enrich):
  *   - 🪲 Fix: v5.10 "race Monetag at T+0s" was broken in commercialBreak() — loadZone
  *     was called with targetEl=null. loadZone()'s checkFill() only runs inside `if
@@ -283,11 +312,11 @@
       inGameBannerLoadDelay: 2500,      // v5.2: load ads 2.5s after injection
       inGameBannerMaxFillMs: 8000,      // v5.8: 8s max wait for AdSense fill detection (was 5000, 0.4% fill)
       exitIntentMinDwellMs: 10000,      // v5.9: 10s minimum on page (was 30s, 85.5% of bounces happened before)
-      exitIntentCooldownMs: 30*1000,     // v5.11: 60s→30s — BI 14d showed exit_mouse in bursts of 6.4/session; 60s cooled every-other
+      exitIntentCooldownMs: 45*1000,     // v5.12: 30s→45s — guard fix unlocks 7x more events, cap to ~3/session
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.11-gz-cb-monetag-slot',  // 2026-06-30: CB race real fix (Monetag in dedicated slot) + exit-intent cooldown 60s→30s + gz-analytics clientY enrichment
+    VERSION: '5.12-gz-exit-intent-cy-fix',  // 2026-07-03: cy<0 guard fix (40.8% real exit recovery) + cooldown 30s→45s
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -1843,18 +1872,27 @@
     var lastExitIntentAt = 0;
 
     document.addEventListener('mouseout', function(e) {
-      // Standard exit-intent heuristic: mouse leaves viewport (relatedTarget=null)
-      // toward the top edge (clientY < 10). On most browsers this fires when the
-      // user moves the mouse up to click the back button, URL bar, or close tab.
+      // v5.12 (2026-07-03 — Exit-Intent cy<0 Guard Fix):
+      //   Previous guard `if (e.clientY < 0) return` silently rejected 40.8% of real
+      //   exit gestures (BI 30d: 75/184 with-cy exit_mouse events had cy < 0).
+      //   Standard exit-intent libraries (ExitBee, OptinMonster) treat cy < 0 as
+      //   "mouse has left viewport at top" — the EXACT gesture we want to catch.
+      //   Browsers report different things for mouseout: Chromium returns
+      //   clientY=undefined or 0/positive when mouse leaves the page top edge,
+      //   while Firefox reports negative clientY when mouse is past the top.
+      //   Combined check: if clientY is a number AND > 30, it's NOT exit intent
+      //   (mouse left from middle/bottom of viewport). Otherwise (cy < 0 OR cy 0-30
+      //   OR cy undefined), it IS exit intent.
+      //
+      //   Note: clientY=undefined happens when mouse leaves via alt-tab or window
+      //   minimize — we want to catch these too (they often precede tab close).
       if (e.relatedTarget !== null && e.relatedTarget !== undefined) return;
-      // v5.10: loosened from clientY > 10 → clientY > 30 — top 30px of viewport
-      // counts as exit intent. BI 7d showed 216 exit_mouse events / 0
-      // exit_intent_detected with strict top-10px — way too narrow.
-      if (typeof e.clientY !== 'number' || e.clientY > 30) return;
-      // Also check the top region via movementY (browsers report different things
-      // for mouse leaving the window vs leaving the document). Firefox fires
-      // relatedTarget=null with negative clientY when mouse leaves the top.
-      if (e.clientY < 0) return; // already left the viewport, too late
+      if (typeof e.clientY === 'number' && e.clientY > 30) {
+        // v5.12 observability: log guard rejections so BI shows the full funnel
+        trackAdEvent('exit_intent_guard_rejected', { reason: 'cy_above_30', cy: e.clientY });
+        return;
+      }
+      // Below: clientY <= 30, clientY < 0, or clientY undefined — all valid exit intent signals
 
       // Guard 1: minimum dwell time
       if (now() - pageLoadTime < CONFIG.TIMING.exitIntentMinDwellMs) return;
