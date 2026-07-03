@@ -311,7 +311,7 @@
       {n:'Ships Finder',e:'🚢',u:'/ships-finder/',c:'puzzle'},
       {n:'Nerdle',e:'🧠',u:'/nerdle/',c:'puzzle'},
       {n:'Quoridor Strategy',e:'🧱',u:'/quoridor/',c:'puzzle'},
-{n:'PathPix',e:'🎨',u:'/pathpix/',c:'puzzle'},{n:'Woodoku',e:'🪵',u:'/woodoku/',c:'puzzle'},
+{n:'PathPix',e:'🎨',u:'/pathpix/',c:'puzzle'},{n:'Woodoku',e:'🪵',u:'/woodoku/',c:'puzzle'},{n:'Fill-a-Pix',e:'🔢',u:'/fill-a-pix/',c:'puzzle'},
       ]; }
    }
    function getDateSeed() {
