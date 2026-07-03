@@ -311,8 +311,8 @@
       {n:'Ships Finder',e:'🚢',u:'/ships-finder/',c:'puzzle'},
       {n:'Nerdle',e:'🧠',u:'/nerdle/',c:'puzzle'},
       {n:'Quoridor Strategy',e:'🧱',u:'/quoridor/',c:'puzzle'},
-{n:'PathPix',e:'🎨',u:'/pathpix/',c:'puzzle'}
-]; }
+{n:'PathPix',e:'🎨',u:'/pathpix/',c:'puzzle'},{n:'Woodoku',e:'🪵',u:'/woodoku/',c:'puzzle'},
+      ]; }
    }
    function getDateSeed() {
      // Deterministic seed based on today's date string
