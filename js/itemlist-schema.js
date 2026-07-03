@@ -532,8 +532,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":527,"url":"https://gamezipper.com/domino-toppler/","name":"Domino Toppler"},
     {"@type":"ListItem","position":528,"url":"https://gamezipper.com/qwirkle/","name":"Qwirkle"},
     {"@type":"ListItem","position":529,"url":"https://gamezipper.com/ships-finder/","name":"Ships Finder"},
-    {"@type":"ListItem","position":530,"url":"https://gamezipper.com/nerdle/","name":"Nerdle"}
+    {"@type":"ListItem","position":530,"url":"https://gamezipper.com/nerdle/","name":"Nerdle"},
+    {"@type":"ListItem","position":531,"url":"https://gamezipper.com/quoridor/","name":"Quoridor Strategy"}
   ],
-  "numberOfItems":530,
-  "description":"530 free browser games you can play instantly"
+  "numberOfItems":531,
+  "description":"531 free browser games you can play instantly"
 };
