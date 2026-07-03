@@ -241,7 +241,7 @@
 ,{n:'Tetravex',e:'🔲',u:'/tetravex/',c:'puzzle'}
 ,{n:'Qwirkle',e:'🎮',u:'/qwirkle/',c:'puzzle'}
 ,{n:'Ships Finder',e:'🚢',u:'/ships-finder/',c:'puzzle'}
-,{n:'Nerdle',e:'🧠',u:'/nerdle/',c:'puzzle'},{n:"Klotski",e:"🧩",u:"/klotski/",c:"puzzle"}]
+,{n:'Nerdle',e:'🧠',u:'/nerdle/',c:'puzzle'},{n:"Klotski",e:"🧩",u:"/klotski/",c:"puzzle"},{n:"Green",e:"💚",u:"/green/",c:"puzzle"}]
 
   var cur = location.pathname;
   var current = games.find(function(g){ return g && g.u === cur; });
