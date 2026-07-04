@@ -1,3 +1,24 @@
+## [v1.138.0] - 2026-07-05
+### Added
+- 8 new test cases from July-5 2026 industry research (R255 Dynamic Test Intelligence cron, 4h cadence cycle 17)
+- S-294: Chrome 150 Google Wallet autofill integration - passport/driver-license data exfiltration via malicious form fields (P1)
+- S-295: Apple Background Security Improvements (BSI) silent-patch verification - CVE-2026-20643 WebKit SOP bypass (P1)
+- B-180: Safari experimental-WebGL-feature-flag site-breakage regression (P2)
+- P-122: iOS 26 Liquid Glass backdrop-filter GPU-cost regression on older iPhones A15 and below (P1)
+- P-123: WebGPU-vs-WebGL rendering-path divergence - 18 percent of mobile games migrating (P2)
+- C-187: Rolldown 1.0 / Vite 8 Rust bundler migration baseline (P3)
+- C-188: Node.js v24.15.0 LTS require(esm) stable + Node 26 Temporal API default-on (P3)
+- W-269: AI-discovered vulnerability cadence - Google Big Sleep AI agent found 5 WebKit zero-days (P2)
+### Sources
+- "HTML5 game testing new techniques July 2026" (mcp_minimax_search_web_search)
+- "Chrome Safari Firefox security vulnerability July 2026" (mcp_minimax_search_web_search)
+- "iOS Safari WebKit bug 2026 July game" (mcp_minimax_search_web_search)
+- "Chrome 150 release July 2026 new features" (mcp_minimax_search_web_search)
+- "WebGL WebGPU game performance issue 2026" (mcp_minimax_search_web_search)
+- "iOS 26 Liquid Glass backdrop-filter bug game web 2026" (mcp_minimax_search_web_search)
+- "Chrome 150 autofill Google Wallet passport form fill security 2026" (mcp_minimax_search_web_search)
+- Key URLs: https://so.html5.qq.com/page/real/search_news?docid=70000021_7246a3b412948452 (Chrome 150 Wallet autofill), https://so.html5.qq.com/page/real/search_news?docid=70000021_08569b9e6fa30652 (Apple BSI), https://so.html5.qq.com/page/real/search_news?docid=70000021_65569bcad1337152 (CVE-2026-20643), https://zhuanlan.zhihu.com/p/452496009 (Safari experimental flags), https://blog.csdn.net/weixin_29212429/article/details/159060262 (iOS 26 Liquid Glass perf), https://www.imooc.com/article/385352 (iOS 26 frame rate), https://www.lcxw.cn/39@wiki/ZoCGH (WebGPU vs WebGL IDC), https://blog.csdn.net/m0_56736369/article/details/118520795 (WebGPU perf), https://cloud.tencent.com/developer/article/2679559 (Rolldown 1.0 Vite 8), https://cloud.tencent.com/developer/article/2676878 (Node 24 require esm), https://new.qq.com/rain/a/20251105A01YTI00 (Big Sleep WebKit zero-days)
+
 ## [v1.137.0] - 2026-07-04
 ### Added
 - 8 new test cases from July-4 2026 industry research (R254 Dynamic Test Intelligence cron, 4h cadence cycle 16)
