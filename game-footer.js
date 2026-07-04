@@ -241,7 +241,7 @@
 ,{n:'Tetravex',e:'🔲',u:'/tetravex/',c:'puzzle'}
 ,{n:'Qwirkle',e:'🎮',u:'/qwirkle/',c:'puzzle'}
 ,{n:'Ships Finder',e:'🚢',u:'/ships-finder/',c:'puzzle'}
-,{n:'Nerdle',e:'🧠',u:'/nerdle/',c:'puzzle'},{n:"Klotski",e:"🧩",u:"/klotski/",c:"puzzle"},{n:"Green",e:"💚",u:"/green/",c:"puzzle"},{n:"Orange",e:"🧡",u:"/orange/",c:"puzzle"}]
+,{n:'Nerdle',e:'🧠',u:'/nerdle/',c:'puzzle'},{n:"Klotski",e:"🧩",u:"/klotski/",c:"puzzle"},{n:"Green",e:"💚",u:"/green/",c:"puzzle"},{n:"Orange",e:"🧡",u:"/orange/",c:"puzzle"},{n:"Purple",e:"💜",u:"/purple/",c:"puzzle"}]
 
   var cur = location.pathname;
   var current = games.find(function(g){ return g && g.u === cur; });
@@ -314,6 +314,7 @@
 {n:'PathPix',e:'🎨',u:'/pathpix/',c:'puzzle'},{n:'Woodoku',e:'🪵',u:'/woodoku/',c:'puzzle'},{n:'Fill-a-Pix',e:'🔢',u:'/fill-a-pix/',c:'puzzle'},
       {n:'Yellow',e:'💛',u:'/yellow/',c:'puzzle'},
       {n:'Blue',e:'💙',u:'/blue/',c:'puzzle'},
+      {n:'Purple',e:'💜',u:'/purple/',c:'puzzle'},
       ]; }
    }
    function getDateSeed() {
