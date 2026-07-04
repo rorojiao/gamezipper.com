@@ -420,34 +420,58 @@ function generatePuzzle(seed,rows,cols,tier){
 
 var LEVELS=[];
 var GENERATION_DONE=false;
+var HEYAWAKE_TIERS=[
+  {size:5,count:6,seedBase:1001,tier:1},
+  {size:6,count:6,seedBase:2001,tier:2},
+  {size:8,count:6,seedBase:3001,tier:3},
+  {size:10,count:6,seedBase:4001,tier:4},
+  {size:12,count:6,seedBase:5001,tier:5}
+];
+
+function generateOneLevel(tier,i){
+  var seed=tier.seedBase+i*37;
+  var p=null;
+  for(var retry=0;retry<3;retry++){
+    p=generatePuzzle(seed+retry*131,tier.size,tier.size,tier.tier);
+    if(p)break;
+  }
+  if(!p){
+    seed=tier.seedBase*7+i*53+9999;
+    p=generatePuzzle(seed,tier.size,tier.size,tier.tier);
+  }
+  if(!p){
+    var simple=generatePuzzle(tier.seedBase*13+i*17+777,tier.size,tier.size,Math.max(1,tier.tier-1));
+    p=simple;
+  }
+  return p||{r:tier.size,c:tier.size,s:Array(tier.size*tier.size).join("0"),rooms:"0,0,"+(tier.size-1)+","+(tier.size-1),n:"0,0,0",p:60};
+}
+
+/* Chunked async generation: one level per setTimeout tick (yields to UI between). */
+function generateAllLevelsAsync(onDone){
+  var idx=0;
+  function next(){
+    if(idx>=HEYAWAKE_TIERS.length*6){
+      GENERATION_DONE=true;
+      if(onDone)onDone();
+      return;
+    }
+    var t=Math.floor(idx/6);
+    var i=idx%6;
+    var tier=HEYAWAKE_TIERS[t];
+    try{LEVELS.push(generateOneLevel(tier,i));}catch(e){LEVELS.push({r:tier.size,c:tier.size,s:Array(tier.size*tier.size).join("0"),rooms:"0,0,"+(tier.size-1)+","+(tier.size-1),n:"0,0,0",p:60});}
+    idx++;
+    var pct=Math.floor(idx/(HEYAWAKE_TIERS.length*6)*100);
+    var lt=document.getElementById("loadingText");
+    if(lt)lt.textContent="Generating puzzles... "+pct+"%";
+    setTimeout(next,0);
+  }
+  next();
+}
 
 function generateAllLevels(){
-  var tiers=[
-    {size:5,count:6,seedBase:1001,tier:1},
-    {size:6,count:6,seedBase:2001,tier:2},
-    {size:8,count:6,seedBase:3001,tier:3},
-    {size:10,count:6,seedBase:4001,tier:4},
-    {size:12,count:6,seedBase:5001,tier:5}
-  ];
-  for(var t=0;t<tiers.length;t++){
-    var tier=tiers[t];
-    for(var i=0;i<tier.count;i++){
-      var seed=tier.seedBase+i*37;
-      var p=null;
-      for(var retry=0;retry<3;retry++){
-        p=generatePuzzle(seed+retry*131,tier.size,tier.size,tier.tier);
-        if(p)break;
-      }
-      if(!p){
-        seed=tier.seedBase*7+i*53+9999;
-        p=generatePuzzle(seed,tier.size,tier.size,tier.tier);
-      }
-      if(!p){
-        var simple=generatePuzzle(tier.seedBase*13+i*17+777,tier.size,tier.size,Math.max(1,tier.tier-1));
-        p=simple;
-      }
-      LEVELS.push(p||{r:tier.size,c:tier.size,s:Array(tier.size*tier.size).join("0"),rooms:"0,0,"+(tier.size-1)+","+(tier.size-1),n:"0,0,0",p:60});
-    }
+  for(var t=0;t<HEYAWAKE_TIERS.length;t++){
+    var tier=HEYAWAKE_TIERS[t];
+    for(var i=0;i<tier.count;i++){LEVELS.push(generateOneLevel(tier,i));}
   }
   GENERATION_DONE=true;
 }
@@ -1147,22 +1171,25 @@ function init(){
   document.getElementById("loadingText").textContent="Generating puzzles...";
   setTimeout(function(){
     var cached=tryCacheLoad();
-    if(!cached){
-      try{
-        generateAllLevels();
-        saveCache();
-      }catch(e){
-        document.getElementById("loadingText").textContent="Error: "+(e&&e.message||"generation failed");
-        return;
-      }
+    if(cached){
+      _afterGen();
+    }else{
+      /* Async chunked generation: yields to UI between levels. */
+      generateAllLevelsAsync(function(){
+        try{saveCache();}catch(e){}
+        _afterGen();
+      });
     }
-    refreshPuzzles();
-    showLoading(false);
-    showTitle();
-    var tutSeen=localStorage.getItem("heyawakeTut");
-    if(!tutSeen){showTutorial();localStorage.setItem("heyawakeTut","1");}
-    loadMonetag();
   },50);
+}
+
+function _afterGen(){
+  refreshPuzzles();
+  showLoading(false);
+  showTitle();
+  var tutSeen=localStorage.getItem("heyawakeTut");
+  if(!tutSeen){showTutorial();localStorage.setItem("heyawakeTut","1");}
+  loadMonetag();
 }
 
 window.showLevelSelect=showLevelSelect;
