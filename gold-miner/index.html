@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1a1520"/>
+<title>Play Gold Miner Online Free - Classic Gold Mining Game | GameZipper</title>
+<meta name="description" content="Play Gold Miner free online! Swing your hook, grab gold nuggets, diamonds, and treasures. 30 levels of gold mining puzzle fun. No download, mobile-friendly!">
+<meta name="keywords" content="gold miner, gold miner game, gold mining game, gold miner online, play gold miner free, gold miner classic, hook grab game, mining puzzle, gold rush, dig gold, treasure hunt, casual game, browser game, html5, free game">
+<link rel="canonical" href="https://gamezipper.com/gold-miner/">
+<meta property="og:title" content="Play Gold Miner Online Free - Classic Gold Mining Game | GameZipper">
+<meta property="og:description" content="Play Gold Miner free online! Swing your hook, grab gold nuggets, diamonds, and treasures. 30 levels of classic gold mining fun. No download!">
+<meta property="og:url" content="https://gamezipper.com/gold-miner/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://gamezipper.com/og-images/gold-miner.png">
+<meta name="twitter:image" content="https://gamezipper.com/og-images/gold-miner.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Play Gold Miner Online Free - Classic Gold Mining Game | GameZipper">
+<meta name="twitter:description" content="Play Gold Miner free online! Swing your hook, grab gold and diamonds. 30 levels. No download!">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Gold Miner - Classic Mining Game","description":"Play Gold Miner free online! Swing your hook, grab gold nuggets, diamonds and treasures. 30 levels of classic gold mining puzzle fun. No download required.","genre":["Puzzle","Arcade","Casual"],"gamePlatform":"Web Browser","applicationCategory":"Game","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","ratingCount":"3200","bestRating":"5"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Gold Miner?","acceptedAnswer":{"@type":"Answer","text":"A hook swings back and forth like a pendulum at the top of the screen. Tap or click to launch the hook. It extends into the mine and grabs the first object it touches. Gold nuggets and diamonds score points, while rocks are heavy and slow to reel in."}},{"@type":"Question","name":"What is the goal of Gold Miner?","acceptedAnswer":{"@type":"Answer","text":"Each level has a target score and a 60-second time limit. Grab enough gold and diamonds to reach the target before time runs out to advance to the next level."}},{"@type":"Question","name":"Is Gold Miner free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes! This Gold Miner game on GameZipper is completely free with no download or signup required. Play instantly in your browser on desktop or mobile."}}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"HowTo","name":"How to Play Gold Miner","step":[{"@type":"HowToStep","text":"Watch the hook swing back and forth at the top of the mine."},{"@type":"HowToStep","text":"Tap or click when the hook points toward the gold you want."},{"@type":"HowToStep","text":"The hook extends and grabs the first object it touches."},{"@type":"HowToStep","text":"Heavy objects like rocks reel in slowly. Gold and diamonds reel in fast."},{"@type":"HowToStep","text":"Reach the target score before time runs out to win!"}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Puzzle Games","item":"https://gamezipper.com/category/puzzle/"},{"@type":"ListItem","position":3,"name":"Gold Miner","item":"https://gamezipper.com/gold-miner/"}]}
+</script>
+<h1 class="gz-sr-only">Gold Miner - Free Online Classic Gold Mining Game</h1>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14;touch-action:none;user-select:none;-webkit-user-select:none;font-family:'Segoe UI',Arial,sans-serif}
+h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}
+#gc{display:block;margin:0 auto;background:#1a1520;image-rendering:auto}
+</style>
+</head>
+<body>
+<canvas id="gc"></canvas>
+<script>
+(function(){
+"use strict";
+// ============================================================
+// Gold Miner — Single File HTML5 Game
+// ============================================================
+var canvas=document.getElementById('gc');
+var ctx=canvas.getContext('2d');
+var W=0,H=0,DPR=window.devicePixelRatio||1;
+
+// --- State ---
+var state={
+  screen:'menu',       // menu, game, shop, win, levelComplete, gameOver, paused, levelSelect
+  level:0,
+  score:0,
+  totalScore:0,
+  gold:0,
+  target:0,
+  time:60,
+  timeFrac:0,
+  hookState:'swing',   // swing, extending, retracting, grabbing
+  hookAngle:0,         // pendulum angle in radians (0 = straight down)
+  hookSpeed:1.5,       // swing speed (rad/s)
+  hookDir:1,
+  hookLen:0,           // current extension length
+  hookMax:0,
+  hookGrab:null,       // grabbed object
+  objects:[],
+  particles:[],
+  floats:[],
+  shake:0,
+  grabbed:null,
+  dt:0,
+  lastTime:0,
+  soundOn:true,
+  musicOn:true,
+  bestScores:{},
+  stars:{},            // stars per level
+  unlocked:1,
+  tutorialShown:false,
+  dynamite:0,
+  strengthPotion:0,
+  combo:0,
+  comboTimer:0,
+};
+var rafId=null;
+var timers=[];
+var audioCtx=null;
+var bgmNodes=[];
+
+// --- Colors ---
+var C={
+  sky1:'#1a1525',sky2:'#2a1f3a',sky3:'#3d2d52',
+  ground1:'#3d2817',ground2:'#2a1810',ground3:'#1a0e08',
+  dirt1:'#4a3020',dirt2:'#3a2418',
+  gold:'#FFD700',goldDark:'#DAA520',goldLight:'#FFE55C',
+  diamond:'#00D4FF',diamondLight:'#7FEBFF',
+  rock:'#6B6B6B',rockDark:'#4A4A4A',
+  ruby:'#E0245E',rubyLight:'#FF5C8A',
+  hook:'#C0C0C0',hookDark:'#808080',
+  rope:'#8B6914',
+  text:'#FFFFFF',textGold:'#FFD700',textDim:'#9999AA',
+  green:'#4CAF50',greenBright:'#66BB6A',red:'#F44336',
+  panel:'rgba(20,15,30,0.92)',panelBorder:'#4A3568',
+  btn:'#5C3D8F',btnHover:'#7B52BE',btnText:'#FFFFFF',
+  star:'#FFD700',starDim:'#554444',
+};
+
+// --- Object Types ---
+var OT={
+  goldS:{w:16,h:16,val:50,spd:1.0,c:'gold'},
+  goldM:{w:26,h:26,val:150,spd:0.7,c:'gold'},
+  goldL:{w:42,h:42,val:500,spd:0.45,c:'gold'},
+  goldXL:{w:60,h:60,val:1500,spd:0.3,c:'gold'},
+  diamond:{w:16,h:16,val:1000,spd:1.2,c:'diamond'},
+  ruby:{w:18,h:18,val:500,spd:0.9,c:'ruby'},
+  rockS:{w:28,h:28,val:11,spd:0.5,c:'rock'},
+  rockL:{w:50,h:50,val:20,spd:0.3,c:'rock'},
+  bag:{w:22,h:22,val:0,spd:0.6,c:'bag'},
+};
+
+// --- Levels (30 levels, 5 tiers × 6) ---
+var LEVELS=[
+  // Tier 1: Easy (L1-6) — small targets, mostly gold
+  {t:300,time:60,objs:[
+    {t:'goldS',x:0.15,y:0.55},{t:'goldS',x:0.35,y:0.60},{t:'goldS',x:0.55,y:0.65},{t:'goldS',x:0.75,y:0.55},
+    {t:'goldM',x:0.25,y:0.75},{t:'goldM',x:0.65,y:0.80},
+    {t:'rockS',x:0.45,y:0.70},
+  ]},
+  {t:500,time:60,objs:[
+    {t:'goldS',x:0.10,y:0.50},{t:'goldS',x:0.85,y:0.50},{t:'goldS',x:0.30,y:0.55},{t:'goldS',x:0.70,y:0.55},
+    {t:'goldM',x:0.20,y:0.75},{t:'goldM',x:0.50,y:0.70},{t:'goldM',x:0.80,y:0.75},
+    {t:'rockS',x:0.40,y:0.80},{t:'rockS',x:0.60,y:0.65},
+  ]},
+  {t:700,time:60,objs:[
+    {t:'goldS',x:0.08,y:0.55},{t:'goldS',x:0.92,y:0.55},{t:'goldM',x:0.25,y:0.65},{t:'goldM',x:0.75,y:0.65},
+    {t:'goldL',x:0.50,y:0.80},
+    {t:'goldS',x:0.40,y:0.50},{t:'goldS',x:0.60,y:0.50},
+    {t:'rockS',x:0.15,y:0.80},{t:'rockS',x:0.85,y:0.80},
+  ]},
+  {t:900,time:55,objs:[
+    {t:'goldS',x:0.05,y:0.50},{t:'goldS',x:0.95,y:0.50},{t:'goldM',x:0.20,y:0.60},{t:'goldM',x:0.80,y:0.60},
+    {t:'goldM',x:0.35,y:0.75},{t:'goldM',x:0.65,y:0.75},
+    {t:'goldL',x:0.50,y:0.85},
+    {t:'rockS',x:0.10,y:0.85},{t:'rockS',x:0.90,y:0.85},
+  ]},
+  {t:1000,time:60,objs:[
+    {t:'goldS',x:0.08,y:0.50},{t:'goldS',x:0.92,y:0.50},{t:'goldM',x:0.22,y:0.58},{t:'goldM',x:0.78,y:0.58},
+    {t:'goldL',x:0.15,y:0.78},{t:'goldL',x:0.85,y:0.78},
+    {t:'diamond',x:0.50,y:0.85},
+    {t:'rockS',x:0.35,y:0.70},{t:'rockS',x:0.65,y:0.70},
+  ]},
+  {t:1200,time:55,objs:[
+    {t:'goldM',x:0.10,y:0.52},{t:'goldM',x:0.90,y:0.52},{t:'goldM',x:0.30,y:0.60},{t:'goldM',x:0.70,y:0.60},
+    {t:'goldL',x:0.20,y:0.78},{t:'goldL',x:0.80,y:0.78},
+    {t:'diamond',x:0.45,y:0.85},{t:'goldS',x:0.55,y:0.72},
+    {t:'rockL',x:0.50,y:0.90},
+  ]},
+  // Tier 2: Medium (L7-12) — more rocks, time pressure
+  {t:1400,time:55,objs:[
+    {t:'goldS',x:0.05,y:0.48},{t:'goldS',x:0.95,y:0.48},{t:'goldM',x:0.15,y:0.58},{t:'goldM',x:0.85,y:0.58},
+    {t:'goldL',x:0.08,y:0.80},{t:'goldL',x:0.92,y:0.80},
+    {t:'goldXL',x:0.50,y:0.88},
+    {t:'rockS',x:0.30,y:0.70},{t:'rockS',x:0.70,y:0.70},{t:'rockS',x:0.40,y:0.85},{t:'rockS',x:0.60,y:0.85},
+  ]},
+  {t:1600,time:55,objs:[
+    {t:'goldS',x:0.06,y:0.50},{t:'goldS',x:0.94,y:0.50},{t:'goldM',x:0.18,y:0.60},{t:'goldM',x:0.82,y:0.60},
+    {t:'goldL',x:0.10,y:0.78},{t:'goldL',x:0.90,y:0.78},
+    {t:'diamond',x:0.30,y:0.85},{t:'diamond',x:0.70,y:0.85},
+    {t:'rockL',x:0.50,y:0.92},{t:'rockS',x:0.40,y:0.65},{t:'rockS',x:0.60,y:0.65},
+  ]},
+  {t:1800,time:50,objs:[
+    {t:'goldM',x:0.08,y:0.50},{t:'goldM',x:0.92,y:0.50},{t:'goldL',x:0.15,y:0.68},{t:'goldL',x:0.85,y:0.68},
+    {t:'goldXL',x:0.25,y:0.85},{t:'goldXL',x:0.75,y:0.85},
+    {t:'diamond',x:0.50,y:0.75},
+    {t:'ruby',x:0.35,y:0.55},{t:'ruby',x:0.65,y:0.55},
+    {t:'rockL',x:0.42,y:0.90},{t:'rockL',x:0.58,y:0.90},
+  ]},
+  {t:2000,time:50,objs:[
+    {t:'goldS',x:0.04,y:0.46},{t:'goldS',x:0.96,y:0.46},{t:'goldM',x:0.12,y:0.55},{t:'goldM',x:0.88,y:0.55},
+    {t:'goldL',x:0.20,y:0.70},{t:'goldL',x:0.80,y:0.70},
+    {t:'diamond',x:0.10,y:0.85},{t:'diamond',x:0.90,y:0.85},
+    {t:'ruby',x:0.35,y:0.62},{t:'ruby',x:0.65,y:0.62},
+    {t:'rockL',x:0.45,y:0.88},{t:'rockL',x:0.55,y:0.88},
+    {t:'bag',x:0.50,y:0.78},
+  ]},
+  {t:2200,time:50,objs:[
+    {t:'goldM',x:0.05,y:0.48},{t:'goldM',x:0.95,y:0.48},{t:'goldL',x:0.12,y:0.62},{t:'goldL',x:0.88,y:0.62},
+    {t:'goldXL',x:0.30,y:0.85},{t:'goldXL',x:0.70,y:0.85},
+    {t:'diamond',x:0.20,y:0.75},{t:'diamond',x:0.80,y:0.75},
+    {t:'ruby',x:0.45,y:0.55},{t:'ruby',x:0.55,y:0.55},
+    {t:'rockL',x:0.40,y:0.90},{t:'rockL',x:0.60,y:0.90},
+    {t:'rockS',x:0.35,y:0.68},{t:'rockS',x:0.65,y:0.68},
+  ]},
+  {t:2400,time:50,objs:[
+    {t:'goldS',x:0.03,y:0.44},{t:'goldS',x:0.97,y:0.44},{t:'goldM',x:0.10,y:0.52},{t:'goldM',x:0.90,y:0.52},
+    {t:'goldL',x:0.18,y:0.65},{t:'goldL',x:0.82,y:0.65},
+    {t:'goldXL',x:0.08,y:0.82},{t:'goldXL',x:0.92,y:0.82},
+    {t:'diamond',x:0.30,y:0.75},{t:'diamond',x:0.70,y:0.75},
+    {t:'ruby',x:0.25,y:0.58},{t:'ruby',x:0.75,y:0.58},
+    {t:'rockL',x:0.50,y:0.90},{t:'rockS',x:0.40,y:0.70},{t:'rockS',x:0.60,y:0.70},
+    {t:'bag',x:0.50,y:0.80},
+  ]},
+  // Tier 3: Hard (L13-18) — tight targets, many obstacles
+  {t:2800,time:50,objs:[
+    {t:'goldL',x:0.05,y:0.50},{t:'goldL',x:0.95,y:0.50},
+    {t:'goldXL',x:0.15,y:0.68},{t:'goldXL',x:0.85,y:0.68},
+    {t:'diamond',x:0.08,y:0.82},{t:'diamond',x:0.92,y:0.82},
+    {t:'ruby',x:0.30,y:0.58},{t:'ruby',x:0.70,y:0.58},
+    {t:'goldM',x:0.40,y:0.50},{t:'goldM',x:0.60,y:0.50},
+    {t:'rockL',x:0.25,y:0.85},{t:'rockL',x:0.75,y:0.85},{t:'rockL',x:0.50,y:0.92},
+    {t:'bag',x:0.45,y:0.75},{t:'bag',x:0.55,y:0.75},
+  ]},
+  {t:3000,time:45,objs:[
+    {t:'goldXL',x:0.10,y:0.55},{t:'goldXL',x:0.90,y:0.55},
+    {t:'goldL',x:0.25,y:0.48},{t:'goldL',x:0.75,y:0.48},
+    {t:'diamond',x:0.15,y:0.72},{t:'diamond',x:0.85,y:0.72},
+    {t:'ruby',x:0.35,y:0.60},{t:'ruby',x:0.65,y:0.60},
+    {t:'goldM',x:0.45,y:0.52},{t:'goldM',x:0.55,y:0.52},
+    {t:'rockL',x:0.20,y:0.85},{t:'rockL',x:0.80,y:0.85},
+    {t:'rockS',x:0.40,y:0.78},{t:'rockS',x:0.60,y:0.78},
+    {t:'bag',x:0.50,y:0.90},
+  ]},
+  {t:3200,time:45,objs:[
+    {t:'goldS',x:0.02,y:0.42},{t:'goldS',x:0.98,y:0.42},
+    {t:'goldL',x:0.08,y:0.55},{t:'goldL',x:0.92,y:0.55},
+    {t:'goldXL',x:0.18,y:0.72},{t:'goldXL',x:0.82,y:0.72},
+    {t:'diamond',x:0.05,y:0.82},{t:'diamond',x:0.95,y:0.82},
+    {t:'ruby',x:0.30,y:0.52},{t:'ruby',x:0.70,y:0.52},
+    {t:'rockL',x:0.25,y:0.85},{t:'rockL',x:0.75,y:0.85},{t:'rockL',x:0.50,y:0.92},
+    {t:'rockS',x:0.38,y:0.65},{t:'rockS',x:0.62,y:0.65},
+    {t:'bag',x:0.45,y:0.78},{t:'bag',x:0.55,y:0.78},
+  ]},
+  {t:3500,time:45,objs:[
+    {t:'goldXL',x:0.12,y:0.50},{t:'goldXL',x:0.88,y:0.50},
+    {t:'goldL',x:0.28,y:0.42},{t:'goldL',x:0.72,y:0.42},
+    {t:'diamond',x:0.08,y:0.70},{t:'diamond',x:0.92,y:0.70},
+    {t:'ruby',x:0.22,y:0.58},{t:'ruby',x:0.78,y:0.58},
+    {t:'goldM',x:0.42,y:0.50},{t:'goldM',x:0.58,y:0.50},
+    {t:'rockL',x:0.15,y:0.85},{t:'rockL',x:0.85,y:0.85},
+    {t:'rockL',x:0.45,y:0.88},{t:'rockL',x:0.55,y:0.88},
+    {t:'bag',x:0.35,y:0.75},{t:'bag',x:0.65,y:0.75},
+  ]},
+  {t:3800,time:45,objs:[
+    {t:'goldS',x:0.03,y:0.40},{t:'goldS',x:0.97,y:0.40},
+    {t:'goldL',x:0.10,y:0.52},{t:'goldL',x:0.90,y:0.52},
+    {t:'goldXL',x:0.20,y:0.68},{t:'goldXL',x:0.80,y:0.68},
+    {t:'diamond',x:0.05,y:0.80},{t:'diamond',x:0.95,y:0.80},
+    {t:'ruby',x:0.35,y:0.55},{t:'ruby',x:0.65,y:0.55},
+    {t:'ruby',x:0.30,y:0.75},{t:'ruby',x:0.70,y:0.75},
+    {t:'rockL',x:0.25,y:0.88},{t:'rockL',x:0.75,y:0.88},{t:'rockL',x:0.50,y:0.92},
+    {t:'bag',x:0.42,y:0.82},{t:'bag',x:0.58,y:0.82},
+  ]},
+  {t:4000,time:40,objs:[
+    {t:'goldM',x:0.05,y:0.45},{t:'goldM',x:0.95,y:0.45},
+    {t:'goldXL',x:0.15,y:0.58},{t:'goldXL',x:0.85,y:0.58},
+    {t:'goldL',x:0.30,y:0.48},{t:'goldL',x:0.70,y:0.48},
+    {t:'diamond',x:0.10,y:0.72},{t:'diamond',x:0.90,y:0.72},
+    {t:'ruby',x:0.25,y:0.62},{t:'ruby',x:0.75,y:0.62},
+    {t:'rockL',x:0.20,y:0.85},{t:'rockL',x:0.80,y:0.85},{t:'rockL',x:0.50,y:0.92},
+    {t:'rockS',x:0.40,y:0.72},{t:'rockS',x:0.60,y:0.72},
+    {t:'bag',x:0.38,y:0.82},{t:'bag',x:0.62,y:0.82},
+  ]},
+  // Tier 4: Expert (L19-24) — extreme challenge
+  {t:4500,time:40,objs:[
+    {t:'goldL',x:0.05,y:0.48},{t:'goldL',x:0.95,y:0.48},
+    {t:'goldXL',x:0.12,y:0.62},{t:'goldXL',x:0.88,y:0.62},
+    {t:'goldXL',x:0.30,y:0.78},{t:'goldXL',x:0.70,y:0.78},
+    {t:'diamond',x:0.08,y:0.82},{t:'diamond',x:0.92,y:0.82},
+    {t:'ruby',x:0.22,y:0.55},{t:'ruby',x:0.78,y:0.55},
+    {t:'goldM',x:0.42,y:0.50},{t:'goldM',x:0.58,y:0.50},
+    {t:'rockL',x:0.20,y:0.88},{t:'rockL',x:0.80,y:0.88},{t:'rockL',x:0.50,y:0.92},
+    {t:'rockS',x:0.35,y:0.68},{t:'rockS',x:0.65,y:0.68},
+    {t:'bag',x:0.45,y:0.85},{t:'bag',x:0.55,y:0.85},
+  ]},
+  {t:5000,time:40,objs:[
+    {t:'goldS',x:0.02,y:0.40},{t:'goldS',x:0.98,y:0.40},
+    {t:'goldXL',x:0.08,y:0.55},{t:'goldXL',x:0.92,y:0.55},
+    {t:'goldL',x:0.22,y:0.45},{t:'goldL',x:0.78,y:0.45},
+    {t:'diamond',x:0.05,y:0.70},{t:'diamond',x:0.95,y:0.70},
+    {t:'ruby',x:0.30,y:0.55},{t:'ruby',x:0.70,y:0.55},
+    {t:'ruby',x:0.25,y:0.75},{t:'ruby',x:0.75,y:0.75},
+    {t:'rockL',x:0.18,y:0.85},{t:'rockL',x:0.82,y:0.85},{t:'rockL',x:0.50,y:0.92},
+    {t:'rockS',x:0.40,y:0.65},{t:'rockS',x:0.60,y:0.65},
+    {t:'bag',x:0.40,y:0.82},{t:'bag',x:0.60,y:0.82},
+  ]},
+  {t:5500,time:40,objs:[
+    {t:'goldXL',x:0.10,y:0.48},{t:'goldXL',x:0.90,y:0.48},
+    {t:'goldXL',x:0.25,y:0.65},{t:'goldXL',x:0.75,y:0.65},
+    {t:'diamond',x:0.05,y:0.78},{t:'diamond',x:0.95,y:0.78},
+    {t:'ruby',x:0.20,y:0.55},{t:'ruby',x:0.80,y:0.55},
+    {t:'goldL',x:0.38,y:0.50},{t:'goldL',x:0.62,y:0.50},
+    {t:'rockL',x:0.15,y:0.85},{t:'rockL',x:0.85,y:0.85},{t:'rockL',x:0.50,y:0.92},
+    {t:'rockL',x:0.35,y:0.78},{t:'rockL',x:0.65,y:0.78},
+    {t:'bag',x:0.42,y:0.72},{t:'bag',x:0.58,y:0.72},
+  ]},
+  {t:6000,time:38,objs:[
+    {t:'goldS',x:0.03,y:0.38},{t:'goldS',x:0.97,y:0.38},
+    {t:'goldL',x:0.08,y:0.50},{t:'goldL',x:0.92,y:0.50},
+    {t:'goldXL',x:0.15,y:0.62},{t:'goldXL',x:0.85,y:0.62},
+    {t:'goldXL',x:0.35,y:0.78},{t:'goldXL',x:0.65,y:0.78},
+    {t:'diamond',x:0.05,y:0.72},{t:'diamond',x:0.95,y:0.72},
+    {t:'ruby',x:0.25,y:0.55},{t:'ruby',x:0.75,y:0.55},
+    {t:'rockL',x:0.20,y:0.88},{t:'rockL',x:0.80,y:0.88},{t:'rockL',x:0.50,y:0.92},
+    {t:'rockS',x:0.42,y:0.68},{t:'rockS',x:0.58,y:0.68},
+    {t:'bag',x:0.40,y:0.82},{t:'bag',x:0.60,y:0.82},
+  ]},
+  {t:6500,time:38,objs:[
+    {t:'goldXL',x:0.05,y:0.48},{t:'goldXL',x:0.95,y:0.48},
+    {t:'goldL',x:0.18,y:0.42},{t:'goldL',x:0.82,y:0.42},
+    {t:'diamond',x:0.10,y:0.58},{t:'diamond',x:0.90,y:0.58},
+    {t:'ruby',x:0.25,y:0.52},{t:'ruby',x:0.75,y:0.52},
+    {t:'ruby',x:0.20,y:0.72},{t:'ruby',x:0.80,y:0.72},
+    {t:'goldM',x:0.42,y:0.48},{t:'goldM',x:0.58,y:0.48},
+    {t:'rockL',x:0.15,y:0.85},{t:'rockL',x:0.85,y:0.85},{t:'rockL',x:0.50,y:0.92},
+    {t:'rockL',x:0.35,y:0.78},{t:'rockL',x:0.65,y:0.78},
+    {t:'bag',x:0.42,y:0.65},{t:'bag',x:0.58,y:0.65},
+  ]},
+  {t:7000,time:38,objs:[
+    {t:'goldS',x:0.02,y:0.36},{t:'goldS',x:0.98,y:0.36},
+    {t:'goldXL',x:0.08,y:0.50},{t:'goldXL',x:0.92,y:0.50},
+    {t:'goldXL',x:0.22,y:0.65},{t:'goldXL',x:0.78,y:0.65},
+    {t:'diamond',x:0.05,y:0.78},{t:'diamond',x:0.95,y:0.78},
+    {t:'ruby',x:0.30,y:0.55},{t:'ruby',x:0.70,y:0.55},
+    {t:'goldL',x:0.40,y:0.48},{t:'goldL',x:0.60,y:0.48},
+    {t:'rockL',x:0.18,y:0.85},{t:'rockL',x:0.82,y:0.85},{t:'rockL',x:0.50,y:0.92},
+    {t:'rockS',x:0.35,y:0.72},{t:'rockS',x:0.65,y:0.72},
+    {t:'bag',x:0.42,y:0.80},{t:'bag',x:0.58,y:0.80},
+  ]},
+  // Tier 5: Master (L25-30) — brutal
+  {t:8000,time:38,objs:[
+    {t:'goldXL',x:0.05,y:0.45},{t:'goldXL',x:0.95,y:0.45},
+    {t:'goldXL',x:0.20,y:0.58},{t:'goldXL',x:0.80,y:0.58},
+    {t:'goldXL',x:0.35,y:0.72},{t:'goldXL',x:0.65,y:0.72},
+    {t:'diamond',x:0.08,y:0.80},{t:'diamond',x:0.92,y:0.80},
+    {t:'ruby',x:0.22,y:0.50},{t:'ruby',x:0.78,y:0.50},
+    {t:'goldL',x:0.45,y:0.42},{t:'goldL',x:0.55,y:0.42},
+    {t:'rockL',x:0.15,y:0.88},{t:'rockL',x:0.85,y:0.88},{t:'rockL',x:0.50,y:0.92},
+    {t:'rockL',x:0.40,y:0.82},{t:'rockL',x:0.60,y:0.82},
+    {t:'bag',x:0.45,y:0.65},{t:'bag',x:0.55,y:0.65},
+  ]},
+  {t:9000,time:35,objs:[
+    {t:'goldS',x:0.02,y:0.35},{t:'goldS',x:0.98,y:0.35},
+    {t:'goldXL',x:0.08,y:0.48},{t:'goldXL',x:0.92,y:0.48},
+    {t:'goldXL',x:0.22,y:0.62},{t:'goldXL',x:0.78,y:0.62},
+    {t:'diamond',x:0.05,y:0.75},{t:'diamond',x:0.95,y:0.75},
+    {t:'ruby',x:0.25,y:0.52},{t:'ruby',x:0.75,y:0.52},
+    {t:'ruby',x:0.30,y:0.68},{t:'ruby',x:0.70,y:0.68},
+    {t:'goldL',x:0.42,y:0.45},{t:'goldL',x:0.58,y:0.45},
+    {t:'rockL',x:0.18,y:0.85},{t:'rockL',x:0.82,y:0.85},{t:'rockL',x:0.50,y:0.92},
+    {t:'rockS',x:0.38,y:0.78},{t:'rockS',x:0.62,y:0.78},
+    {t:'bag',x:0.42,y:0.82},{t:'bag',x:0.58,y:0.82},
+  ]},
+  {t:10000,time:35,objs:[
+    {t:'goldXL',x:0.05,y:0.42},{t:'goldXL',x:0.95,y:0.42},
+    {t:'goldXL',x:0.18,y:0.55},{t:'goldXL',x:0.82,y:0.55},
+    {t:'goldXL',x:0.32,y:0.68},{t:'goldXL',x:0.68,y:0.68},
+    {t:'diamond',x:0.08,y:0.78},{t:'diamond',x:0.92,y:0.78},
+    {t:'ruby',x:0.22,y:0.48},{t:'ruby',x:0.78,y:0.48},
+    {t:'goldL',x:0.42,y:0.40},{t:'goldL',x:0.58,y:0.40},
+    {t:'rockL',x:0.15,y:0.85},{t:'rockL',x:0.85,y:0.85},{t:'rockL',x:0.50,y:0.92},
+    {t:'rockL',x:0.38,y:0.78},{t:'rockL',x:0.62,y:0.78},
+    {t:'bag',x:0.42,y:0.72},{t:'bag',x:0.58,y:0.72},
+  ]},
+  {t:11000,time:35,objs:[
+    {t:'goldS',x:0.02,y:0.34},{t:'goldS',x:0.98,y:0.34},
+    {t:'goldXL',x:0.06,y:0.46},{t:'goldXL',x:0.94,y:0.46},
+    {t:'goldXL',x:0.20,y:0.58},{t:'goldXL',x:0.80,y:0.58},
+    {t:'diamond',x:0.04,y:0.70},{t:'diamond',x:0.96,y:0.70},
+    {t:'ruby',x:0.28,y:0.50},{t:'ruby',x:0.72,y:0.50},
+    {t:'ruby',x:0.32,y:0.65},{t:'ruby',x:0.68,y:0.65},
+    {t:'goldL',x:0.44,y:0.42},{t:'goldL',x:0.56,y:0.42},
+    {t:'rockL',x:0.15,y:0.85},{t:'rockL',x:0.85,y:0.85},{t:'rockL',x:0.50,y:0.92},
+    {t:'rockS',x:0.38,y:0.75},{t:'rockS',x:0.62,y:0.75},
+    {t:'bag',x:0.42,y:0.80},{t:'bag',x:0.58,y:0.80},
+  ]},
+  {t:12000,time:35,objs:[
+    {t:'goldXL',x:0.04,y:0.40},{t:'goldXL',x:0.96,y:0.40},
+    {t:'goldXL',x:0.16,y:0.52},{t:'goldXL',x:0.84,y:0.52},
+    {t:'goldXL',x:0.30,y:0.65},{t:'goldXL',x:0.70,y:0.65},
+    {t:'diamond',x:0.06,y:0.78},{t:'diamond',x:0.94,y:0.78},
+    {t:'ruby',x:0.22,y:0.46},{t:'ruby',x:0.78,y:0.46},
+    {t:'goldL',x:0.44,y:0.38},{t:'goldL',x:0.56,y:0.38},
+    {t:'rockL',x:0.12,y:0.85},{t:'rockL',x:0.88,y:0.85},{t:'rockL',x:0.50,y:0.92},
+    {t:'rockL',x:0.38,y:0.78},{t:'rockL',x:0.62,y:0.78},
+    {t:'bag',x:0.42,y:0.70},{t:'bag',x:0.58,y:0.70},
+  ]},
+  {t:13000,time:35,objs:[
+    {t:'goldS',x:0.02,y:0.32},{t:'goldS',x:0.98,y:0.32},
+    {t:'goldXL',x:0.05,y:0.44},{t:'goldXL',x:0.95,y:0.44},
+    {t:'goldXL',x:0.15,y:0.55},{t:'goldXL',x:0.85,y:0.55},
+    {t:'goldXL',x:0.28,y:0.66},{t:'goldXL',x:0.72,y:0.66},
+    {t:'diamond',x:0.04,y:0.76},{t:'diamond',x:0.96,y:0.76},
+    {t:'ruby',x:0.25,y:0.48},{t:'ruby',x:0.75,y:0.48},
+    {t:'ruby',x:0.35,y:0.58},{t:'ruby',x:0.65,y:0.58},
+    {t:'diamond',x:0.12,y:0.85},{t:'diamond',x:0.88,y:0.85},
+    {t:'goldL',x:0.44,y:0.38},{t:'goldL',x:0.56,y:0.38},
+    {t:'rockL',x:0.12,y:0.92},{t:'rockL',x:0.88,y:0.92},{t:'rockL',x:0.50,y:0.95},
+    {t:'rockL',x:0.38,y:0.78},{t:'rockL',x:0.62,y:0.78},
+    {t:'bag',x:0.42,y:0.72},{t:'bag',x:0.58,y:0.72},
+  ]},
+];
+
+// --- Geometry helpers ---
+function hookOrigin(){return{x:W/2,y:H*0.15};}
+function groundY(){return H*0.30;}
+
+function hookTip(){
+  var o=hookOrigin();
+  var a=state.hookAngle+Math.PI/2;
+  var L=Math.max(state.hookLen,30);
+  return{x:o.x+Math.cos(a)*L,y:o.y+Math.sin(a)*L};
+}
+
+// --- Resize ---
+function resizeCanvas(){
+  var w=window.innerWidth,h=window.innerHeight;
+  W=w;H=h;
+  canvas.width=w*DPR;canvas.height=h*DPR;
+  canvas.style.width=w+'px';canvas.style.height=h+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  state.hookMax=Math.sqrt(W*W+H*H)*0.8;
+}
+window.addEventListener('resize',resizeCanvas);
+
+// --- Audio ---
+function ensureAudio(){
+  if(audioCtx)return;
+  try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+}
+function playTone(freq,dur,type,vol){
+  if(!audioCtx||!state.soundOn)return;
+  type=type||'square';vol=vol||0.1;
+  var osc=audioCtx.createOscillator();
+  var g=audioCtx.createGain();
+  osc.type=type;osc.frequency.value=freq;
+  g.gain.setValueAtTime(vol,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+  osc.connect(g);g.connect(audioCtx.destination);
+  osc.start();osc.stop(audioCtx.currentTime+dur);
+}
+function playSFX(type){
+  if(!audioCtx||!state.soundOn)return;
+  switch(type){
+    case'shoot':playTone(200,0.15,'sawtooth',0.12);break;
+    case'grabGold':playTone(800,0.1,'sine',0.15);setTimeout(function(){playTone(1200,0.1,'sine',0.12);},80);break;
+    case'grabDiamond':playTone(1000,0.08,'sine',0.15);setTimeout(function(){playTone(1400,0.08,'sine',0.12);},60);setTimeout(function(){playTone(1800,0.12,'sine',0.1);},120);break;
+    case'grabRock':playTone(120,0.2,'sawtooth',0.1);break;
+    case'grabRuby':playTone(700,0.1,'triangle',0.12);setTimeout(function(){playTone(900,0.1,'triangle',0.1);},80);break;
+    case'grabBag':playTone(400,0.15,'square',0.1);break;
+    case'reel':playTone(300,0.05,'sine',0.06);break;
+    case'win':playTone(523,0.12,'sine',0.15);setTimeout(function(){playTone(659,0.12,'sine',0.15);},120);setTimeout(function(){playTone(784,0.2,'sine',0.15);},240);break;
+    case'lose':playTone(200,0.3,'sawtooth',0.15);setTimeout(function(){playTone(150,0.4,'sawtooth',0.12);},200);break;
+    case'click':playTone(600,0.05,'sine',0.08);break;
+    case'tick':playTone(1000,0.03,'sine',0.05);break;
+  }
+}
+function startBGM(){
+  if(!audioCtx||!state.musicOn||bgmNodes.length)return;
+  try{
+    var sr=audioCtx.sampleRate;var dur=12;var bufSize=sr*dur;
+    var buf=audioCtx.createBuffer(1,bufSize,sr);var d=buf.getChannelData(0);
+    var chords=[[130.81,164.81,196.00],[146.83,174.61,220.00],[164.81,196.00,246.94],[146.83,174.61,220.00]];
+    var chordDur=dur/chords.length;
+    for(var i=0;i<bufSize;i++){
+      var t=i/sr;var ci=Math.min(Math.floor(t/chordDur),chords.length-1);var chord=chords[ci];
+      var s=0;
+      for(var n=0;n<chord.length;n++){var f=chord[n];s+=Math.sin(2*Math.PI*f*t)*0.04;s+=Math.sin(2*Math.PI*f*2*t)*0.01;}
+      var fade=t%chordDur;var fadeIn=Math.min(fade/0.5,1);var fadeOut=Math.min((chordDur-fade)/0.5,1);
+      s*=fadeIn*fadeOut;d[i]=s*0.6;
+    }
+    var src=audioCtx.createBufferSource();src.buffer=buf;src.loop=true;
+    var filt=audioCtx.createBiquadFilter();filt.type='lowpass';filt.frequency.value=600;
+    var g=audioCtx.createGain();g.gain.value=0.18;
+    src.connect(filt);filt.connect(g);g.connect(audioCtx.destination);
+    src.start();bgmNodes=[src,filt,g];
+  }catch(e){}
+}
+function stopBGM(){
+  bgmNodes.forEach(function(n){try{if(n.stop)n.stop();}catch(e){}});
+  bgmNodes=[];
+}
+
+// --- Particles ---
+function spawnParticles(x,y,color,count){
+  for(var i=0;i<count;i++){
+    var a=Math.random()*Math.PI*2;
+    var sp=1+Math.random()*4;
+    state.particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,life:1,color:color,size:2+Math.random()*3});
+  }
+}
+function spawnFloat(x,y,text,color){
+  state.floats.push({x:x,y:y,text:text,color:color||'#FFD700',life:1.5,vy:-1});
+}
+
+// --- Level Management ---
+function startLevel(idx){
+  state.level=idx;
+  var lv=LEVELS[idx];
+  state.target=lv.t;
+  state.time=lv.time;
+  state.timeFrac=0;
+  state.score=0;
+  state.hookState='swing';
+  state.hookAngle=0;
+  state.hookDir=Math.random()<0.5?1:-1;
+  state.hookLen=0;
+  state.hookGrab=null;
+  state.objects=[];
+  state.particles=[];
+  state.floats=[];
+  state.combo=0;
+  state.comboTimer=0;
+  var gy=groundY();
+  var areaTop=gy+30;
+  var areaBot=H-20;
+  var areaH=areaBot-areaTop;
+  for(var i=0;i<lv.objs.length;i++){
+    var od=lv.objs[i];
+    var spec=OT[od.t];
+    state.objects.push({
+      type:od.t,
+      x:od.x*W,
+      y:areaTop+od.y*areaH,
+      r:spec.w/2,
+      val:spec.val,
+      spd:spec.spd,
+      cat:spec.c,
+      grabbed:false,
+      rot:Math.random()*Math.PI,
+      bagVal:od.t==='bag'?Math.floor(Math.random()*4)*100+50:0,
+    });
+  }
+  state.screen='game';
+  if(state.musicOn){ensureAudio();startBGM();}
+}
+
+function loadProgress(){
+  try{
+    var s=JSON.parse(localStorage.getItem('goldMiner_v1')||'{}');
+    state.bestScores=s.bestScores||{};
+    state.stars=s.stars||{};
+    state.unlocked=s.unlocked||1;
+    state.soundOn=s.soundOn!==false;
+    state.musicOn=s.musicOn!==false;
+  }catch(e){}
+}
+function saveProgress(){
+  try{
+    localStorage.setItem('goldMiner_v1',JSON.stringify({
+      bestScores:state.bestScores,
+      stars:state.stars,
+      unlocked:state.unlocked,
+      soundOn:state.soundOn,
+      musicOn:state.musicOn,
+    }));
+  }catch(e){}
+}
+
+// --- Hook Logic ---
+function dropHook(){
+  if(state.hookState!=='swing')return;
+  state.hookState='extending';
+  state.hookLen=30;
+  playSFX('shoot');
+}
+function useDynamite(){
+  if(state.dynamite<=0||state.hookState!=='retracting'||!state.hookGrab)return;
+  if(state.hookGrab.cat==='rock'||state.hookGrab.cat==='bag'){
+    state.dynamite--;
+    spawnParticles(hookTip().x,hookTip().y,'#FF4444',20);
+    state.hookGrab=null;
+    state.hookState='retracting';
+    playSFX('click');
+  }
+}
+
+function updateHook(dt){
+  var o=hookOrigin();
+  if(state.hookState==='swing'){
+    state.hookAngle+=state.hookDir*state.hookSpeed*dt;
+    var maxA=Math.PI*0.42;
+    if(state.hookAngle>maxA){state.hookAngle=maxA;state.hookDir=-1;}
+    if(state.hookAngle<-maxA){state.hookAngle=-maxA;state.hookDir=1;}
+    state.hookLen=30;
+  }else if(state.hookState==='extending'){
+    var extSpeed=350;
+    state.hookLen+=extSpeed*dt;
+    // Check collision
+    var tip=hookTip();
+    for(var i=0;i<state.objects.length;i++){
+      var obj=state.objects[i];
+      if(obj.grabbed)continue;
+      var dx=tip.x-obj.x,dy=tip.y-obj.y;
+      if(dx*dx+dy*dy<obj.r*obj.r){
+        obj.grabbed=true;
+        state.hookGrab=obj;
+        state.hookState='retracting';
+        var sfx='grabGold';
+        if(obj.cat==='diamond')sfx='grabDiamond';
+        else if(obj.cat==='rock')sfx='grabRock';
+        else if(obj.cat==='ruby')sfx='grabRuby';
+        else if(obj.cat==='bag')sfx='grabBag';
+        playSFX(sfx);
+        spawnParticles(tip.x,tip.y,obj.cat==='gold'?'#FFD700':obj.cat==='diamond'?'#00D4FF':obj.cat==='ruby'?'#E0245E':'#888',8);
+        break;
+      }
+    }
+    // Check boundaries
+    if(tip.x<0||tip.x>W||tip.y>H-10||state.hookLen>state.hookMax){
+      state.hookState='retracting';
+    }
+  }else if(state.hookState==='retracting'){
+    var grab=state.hookGrab;
+    var reelBase=300;
+    var reelSpd=grab?reelBase*grab.spd*(state.strengthPotion>0?1.5:1):reelBase*1.5;
+    state.hookLen-=reelSpd*dt;
+    if(state.hookLen<=30){
+      state.hookLen=30;
+      // Score the grab
+      if(grab){
+        var val=grab.val;
+        if(grab.cat==='bag')val=grab.bagVal;
+        state.combo++;
+        state.comboTimer=3;
+        if(state.combo>=3)val=Math.floor(val*1.5);
+        state.score+=val;
+        state.totalScore+=val;
+        spawnFloat(o.x,o.y-20,'+'+val,grab.cat==='diamond'?'#00D4FF':grab.cat==='ruby'?'#E0245E':'#FFD700');
+        if(state.combo>=3)spawnFloat(o.x,o.y-40,'COMBO x'+state.combo,'#FF6B6B');
+      }
+      state.hookGrab=null;
+      state.hookState='swing';
+      // Check win/lose
+      if(state.score>=state.target){
+        levelComplete();
+      }else if(state.objects.filter(function(o){return!o.grabbed&&o.val>0;}).length===0&&state.score<state.target){
+        // No more valuable objects and below target
+        checkGameOver();
+      }
+    }
+  }
+}
+
+function checkGameOver(){
+  if(state.score<state.target){
+    state.screen='gameOver';
+    playSFX('lose');
+    stopBGM();
+  }
+}
+
+function levelComplete(){
+  var stars=1;
+  var ratio=state.score/state.target;
+  if(ratio>=1.5)stars=3;
+  else if(ratio>=1.2)stars=2;
+  var lv=state.level;
+  if(!state.stars[lv]||stars>state.stars[lv])state.stars[lv]=stars;
+  if(state.score>(state.bestScores[lv]||0))state.bestScores[lv]=state.score;
+  if(lv+1>=state.unlocked&&lv+1<LEVELS.length)state.unlocked=lv+2;
+  saveProgress();
+  state.screen='levelComplete';
+  playSFX('win');
+  spawnParticles(W/2,H/2,'#FFD700',30);
+}
+
+// --- Drawing ---
+function drawBackground(){
+  // Sky gradient
+  var grad=ctx.createLinearGradient(0,0,0,groundY());
+  grad.addColorStop(0,C.sky1);grad.addColorStop(0.5,C.sky2);grad.addColorStop(1,C.sky3);
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,W,groundY());
+  // Stars in sky
+  ctx.fillStyle='rgba(255,255,200,0.4)';
+  for(var i=0;i<20;i++){
+    var sx=(i*137.5)%W;
+    var sy=(i*73.3)%(groundY()*0.8);
+    ctx.fillRect(sx,sy,2,2);
+  }
+  // Ground
+  var gg=ctx.createLinearGradient(0,groundY(),0,H);
+  gg.addColorStop(0,C.ground1);gg.addColorStop(0.3,C.dirt1);gg.addColorStop(0.6,C.dirt2);gg.addColorStop(1,C.ground3);
+  ctx.fillStyle=gg;
+  ctx.fillRect(0,groundY(),W,H-groundY());
+  // Dirt texture (random dots)
+  ctx.fillStyle='rgba(0,0,0,0.15)';
+  for(var i=0;i<80;i++){
+    var dx=((i*47.3)%W);
+    var dy=groundY()+((i*89.7)%(H-groundY()));
+    ctx.fillRect(dx,dy,3,3);
+  }
+  ctx.fillStyle='rgba(255,200,100,0.05)';
+  for(var i=0;i<40;i++){
+    var dx2=((i*113.7)%W);
+    var dy2=groundY()+((i*67.3)%(H-groundY()));
+    ctx.fillRect(dx2,dy2,2,2);
+  }
+}
+
+function drawMiner(){
+  var o=hookOrigin();
+  // Boom/crane arm
+  ctx.strokeStyle=C.hookDark;ctx.lineWidth=6;
+  ctx.beginPath();ctx.moveTo(o.x-40,0);ctx.lineTo(o.x,o.y);ctx.lineTo(o.x+40,0);ctx.stroke();
+  // Pulley wheel
+  ctx.fillStyle=C.hookDark;
+  ctx.beginPath();ctx.arc(o.x,o.y,12,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=C.hook;
+  ctx.beginPath();ctx.arc(o.x,o.y,6,0,Math.PI*2);ctx.fill();
+  // Miner figure (simple)
+  ctx.fillStyle='#4A3568';
+  ctx.fillRect(o.x-30,o.y-50,25,35);
+  // Head
+  ctx.fillStyle='#D4A574';
+  ctx.beginPath();ctx.arc(o.x-17,o.y-55,12,0,Math.PI*2);ctx.fill();
+  // Helmet
+  ctx.fillStyle='#FFD700';
+  ctx.beginPath();ctx.arc(o.x-17,o.y-58,10,Math.PI,0);ctx.fill();
+  ctx.fillRect(o.x-27,o.y-58,20,4);
+  // Light
+  ctx.fillStyle='#FF0';
+  ctx.beginPath();ctx.arc(o.x-10,o.y-62,3,0,Math.PI*2);ctx.fill();
+}
+
+function drawHook(){
+  var o=hookOrigin();
+  var tip=hookTip();
+  // Rope
+  ctx.strokeStyle=C.rope;ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(tip.x,tip.y);ctx.stroke();
+  // Hook claw
+  ctx.save();
+  ctx.translate(tip.x,tip.y);
+  var a=state.hookAngle+Math.PI/2;
+  ctx.rotate(a);
+  // Hook body
+  ctx.fillStyle=C.hook;
+  ctx.fillRect(-4,-8,8,16);
+  // Claw
+  ctx.strokeStyle=C.hook;ctx.lineWidth=4;ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-2,6);ctx.lineTo(-8,12);ctx.lineTo(-8,18);
+  ctx.moveTo(2,6);ctx.lineTo(8,12);ctx.lineTo(8,18);
+  ctx.stroke();
+  ctx.restore();
+  // Draw grabbed object following hook
+  if(state.hookGrab){
+    var obj=state.hookGrab;
+    obj.x=tip.x;obj.y=tip.y+obj.r;
+    drawObject(obj);
+  }
+}
+
+function drawObject(obj){
+  ctx.save();
+  ctx.translate(obj.x,obj.y);
+  if(obj.cat==='gold'){
+    var gs=obj.r;
+    // Gold nugget — irregular blob with shine
+    ctx.fillStyle=C.goldDark;
+    ctx.beginPath();
+    for(var i=0;i<8;i++){
+      var a=(i/8)*Math.PI*2;
+      var r=gs*(0.85+Math.sin(i*2.3)*0.15);
+      if(i===0)ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);
+      else ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);
+    }
+    ctx.closePath();ctx.fill();
+    // Shine
+    ctx.fillStyle=C.goldLight;
+    ctx.beginPath();ctx.arc(-gs*0.3,-gs*0.3,gs*0.35,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=C.gold;
+    ctx.beginPath();ctx.arc(-gs*0.35,-gs*0.35,gs*0.2,0,Math.PI*2);ctx.fill();
+  }else if(obj.cat==='diamond'){
+    var ds=obj.r;
+    ctx.fillStyle=C.diamond;
+    ctx.beginPath();
+    ctx.moveTo(0,-ds);ctx.lineTo(ds,0);ctx.lineTo(0,ds*1.2);ctx.lineTo(-ds,0);
+    ctx.closePath();ctx.fill();
+    ctx.fillStyle=C.diamondLight;
+    ctx.beginPath();ctx.moveTo(0,-ds);ctx.lineTo(ds*0.5,-ds*0.2);ctx.lineTo(0,0);ctx.lineTo(-ds*0.5,-ds*0.2);
+    ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,-ds);ctx.lineTo(0,ds*1.2);ctx.stroke();
+  }else if(obj.cat==='ruby'){
+    var rs=obj.r;
+    ctx.fillStyle=C.ruby;
+    ctx.beginPath();ctx.moveTo(0,-rs*1.1);ctx.lineTo(rs,0);ctx.lineTo(0,rs);ctx.lineTo(-rs,0);
+    ctx.closePath();ctx.fill();
+    ctx.fillStyle=C.rubyLight;
+    ctx.beginPath();ctx.moveTo(0,-rs*1.1);ctx.lineTo(rs*0.4,-rs*0.3);ctx.lineTo(-rs*0.4,-rs*0.3);
+    ctx.closePath();ctx.fill();
+  }else if(obj.cat==='rock'){
+    var rs2=obj.r;
+    ctx.fillStyle=C.rockDark;
+    ctx.beginPath();
+    for(var i=0;i<7;i++){
+      var a2=(i/7)*Math.PI*2;
+      var r2=rs2*(0.8+Math.sin(i*3.1)*0.2);
+      if(i===0)ctx.moveTo(Math.cos(a2)*r2,Math.sin(a2)*r2);
+      else ctx.lineTo(Math.cos(a2)*r2,Math.sin(a2)*r2);
+    }
+    ctx.closePath();ctx.fill();
+    ctx.fillStyle=C.rock;
+    ctx.beginPath();ctx.arc(-rs2*0.3,-rs2*0.3,rs2*0.3,0,Math.PI*2);ctx.fill();
+  }else if(obj.cat==='bag'){
+    var bs=obj.r;
+    // Mystery bag — brown sack with $
+    ctx.fillStyle='#8B4513';
+    ctx.beginPath();ctx.arc(0,0,bs,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#A0522D';
+    ctx.fillRect(-bs*0.5,-bs*1.2,bs,bs*0.4);
+    ctx.fillStyle=C.gold;
+    ctx.font='bold '+Math.floor(bs*1.2)+'px Arial';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('?',0,0);
+  }
+  ctx.restore();
+}
+
+function drawObjects(){
+  for(var i=0;i<state.objects.length;i++){
+    var obj=state.objects[i];
+    if(obj.grabbed&&state.hookGrab!==obj)continue;
+    drawObject(obj);
+  }
+}
+
+function drawParticles(){
+  for(var i=state.particles.length-1;i>=0;i--){
+    var p=state.particles[i];
+    ctx.globalAlpha=p.life;
+    ctx.fillStyle=p.color;
+    ctx.fillRect(p.x-p.size/2,p.y-p.size/2,p.size,p.size);
+  }
+  ctx.globalAlpha=1;
+}
+function drawFloats(){
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  for(var i=0;i<state.floats.length;i++){
+    var f=state.floats[i];
+    ctx.globalAlpha=Math.min(f.life,1);
+    ctx.fillStyle=f.color;
+    ctx.font='bold 22px Arial';
+    ctx.fillText(f.text,f.x,f.y);
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawHUD(){
+  // Top bar
+  ctx.fillStyle='rgba(10,10,20,0.75)';
+  ctx.fillRect(0,0,W,50);
+  // Score
+  ctx.fillStyle=C.text;ctx.font='bold 18px Arial';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('Score: '+state.score,12,25);
+  // Target
+  ctx.fillStyle=C.textGold;
+  ctx.fillText('Goal: '+state.target,12+W*0.25,25);
+  // Time
+  var timeColor=state.time<=10?C.red:state.time<=20?C.gold:C.text;
+  ctx.fillStyle=timeColor;
+  ctx.fillText('Time: '+Math.ceil(state.time)+'s',12+W*0.5,25);
+  // Level
+  ctx.fillStyle=C.textDim;
+  ctx.fillText('L'+(state.level+1),W-50,25);
+  // Progress bar
+  var prog=Math.min(state.score/state.target,1);
+  ctx.fillStyle='rgba(255,255,255,0.1)';
+  ctx.fillRect(0,48,W,4);
+  ctx.fillStyle=prog>=1?C.green:C.gold;
+  ctx.fillRect(0,48,W*prog,4);
+  // Combo indicator
+  if(state.combo>=2&&state.comboTimer>0){
+    ctx.fillStyle=C.red;ctx.font='bold 16px Arial';ctx.textAlign='center';
+    ctx.fillText('COMBO x'+state.combo,W/2,65);
+  }
+}
+
+// --- Screen Drawing ---
+function drawMenu(){
+  drawBackground();
+  drawMiner();
+  // Hook idle swing
+  state.hookAngle=Math.sin(performance.now()/1000)*0.3;
+  state.hookLen=40;
+  drawHook();
+  ctx.fillStyle=C.panel;
+  var pw=Math.min(W*0.8,400),ph=Math.min(H*0.7,440);
+  var px=(W-pw)/2,py=(H-ph)/2;
+  roundRect(px,py,pw,ph,16);ctx.fill();
+  ctx.strokeStyle=C.panelBorder;ctx.lineWidth=2;ctx.stroke();
+  // Title
+  ctx.fillStyle=C.gold;ctx.font='bold 36px Arial';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('GOLD MINER',W/2,py+30);
+  ctx.fillStyle=C.textDim;ctx.font='14px Arial';
+  ctx.fillText('Swing. Grab. Strike it rich!',W/2,py+72);
+  // Buttons
+  drawButton('PLAY',W/2,py+130,200,48,'play');
+  drawButton('LEVEL SELECT',W/2,py+195,200,42,'select');
+  // Sound toggles
+  var btnY=py+270;
+  ctx.font='14px Arial';ctx.fillStyle=C.textDim;ctx.textAlign='center';
+  drawSmallBtn(state.soundOn?'SOUND: ON':'SOUND: OFF',W/2-70,btnY,120,32,'sound');
+  drawSmallBtn(state.musicOn?'MUSIC: ON':'MUSIC: OFF',W/2+70,btnY,120,32,'music');
+  // Total stars
+  var totalStars=0;
+  for(var k in state.stars)totalStars+=state.stars[k];
+  ctx.fillStyle=C.star;ctx.font='bold 20px Arial';
+  drawStarShape(W/2-16,py+330,8,C.star);
+  ctx.fillText(' '+totalStars+' / '+LEVELS.length*3,W/2+6,py+330);
+  // Hint
+  ctx.fillStyle=C.textDim;ctx.font='12px Arial';
+  ctx.fillText('Tap/Click to drop the hook',W/2,py+ph-30);
+}
+
+function drawLevelSelect(){
+  drawBackground();
+  ctx.fillStyle=C.panel;
+  var pw=Math.min(W*0.9,W-20),ph=Math.min(H*0.85,H-100);
+  var px=(W-pw)/2,py=(H-ph)/2;
+  roundRect(px,py,pw,ph,16);ctx.fill();
+  ctx.strokeStyle=C.panelBorder;ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle=C.gold;ctx.font='bold 28px Arial';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('SELECT LEVEL',W/2,py+20);
+  // Grid of levels
+  var cols=Math.min(5,Math.floor(pw/80));
+  var cellW=80,cellH=80;
+  var gridW=cols*cellW;
+  var startX=(W-gridW)/2;
+  var startY=py+70;
+  for(var i=0;i<LEVELS.length;i++){
+    var cx=startX+(i%cols)*cellW+cellW/2;
+    var cy=startY+Math.floor(i/cols)*cellH+cellH/2;
+    var unlocked=i<state.unlocked;
+    ctx.fillStyle=unlocked?C.btn:'#333';
+    ctx.beginPath();ctx.arc(cx,cy,28,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=unlocked?C.btnHover:'#555';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle=unlocked?C.btnText:'#888';ctx.font='bold 18px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(i+1,cx,cy);
+    // Stars
+    var st=state.stars[i]||0;
+    for(var s=0;s<3;s++){
+      ctx.fillStyle=s<st?C.star:C.starDim;
+      ctx.font='12px Arial';
+      drawStarShape(cx-14+s*14,cy+22,5,s<st?C.star:C.starDim);
+    }
+  }
+  // Back button
+  drawButton('BACK',W/2,py+ph-40,120,40,'back');
+}
+
+function drawGame(){
+  drawBackground();
+  drawMiner();
+  drawObjects();
+  drawHook();
+  drawParticles();
+  drawFloats();
+  drawHUD();
+}
+
+function drawLevelComplete(){
+  drawGame();
+  ctx.fillStyle='rgba(0,0,0,0.6)';
+  ctx.fillRect(0,0,W,H);
+  var pw=Math.min(W*0.7,360),ph=300;
+  var px=(W-pw)/2,py=(H-ph)/2;
+  ctx.fillStyle=C.panel;roundRect(px,py,pw,ph,16);ctx.fill();
+  ctx.strokeStyle=C.greenBright;ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle=C.greenBright;ctx.font='bold 32px Arial';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('LEVEL COMPLETE!',W/2,py+30);
+  // Stars
+  var lv=state.level;
+  var earned=state.stars[lv]||1;
+  for(var s=0;s<3;s++){
+    ctx.fillStyle=s<earned?C.star:C.starDim;
+    ctx.font='bold 48px Arial';
+    drawStarShape(W/2-60+s*60,py+95,20,s<earned?C.star:C.starDim);
+  }
+  ctx.fillStyle=C.gold;ctx.font='bold 24px Arial';
+  ctx.fillText('Score: '+state.score,W/2,py+160);
+  ctx.fillStyle=C.textDim;ctx.font='14px Arial';
+  ctx.fillText('Target: '+state.target,W/2,py+190);
+  var isLast=lv>=LEVELS.length-1;
+  drawButton(isLast?'FINISH':'NEXT LEVEL',W/2,py+230,200,44,'next');
+  drawSmallBtn('MENU',W/2,py+275,100,30,'menu');
+}
+
+function drawGameOver(){
+  drawGame();
+  ctx.fillStyle='rgba(0,0,0,0.7)';
+  ctx.fillRect(0,0,W,H);
+  var pw=Math.min(W*0.7,340),ph=260;
+  var px=(W-pw)/2,py=(H-ph)/2;
+  ctx.fillStyle=C.panel;roundRect(px,py,pw,ph,16);ctx.fill();
+  ctx.strokeStyle=C.red;ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle=C.red;ctx.font='bold 32px Arial';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('GAME OVER',W/2,py+30);
+  ctx.fillStyle=C.gold;ctx.font='20px Arial';
+  ctx.fillText('Score: '+state.score+' / '+state.target,W/2,py+90);
+  ctx.fillStyle=C.textDim;ctx.font='14px Arial';
+  ctx.fillText('You needed '+Math.max(0,state.target-state.score)+' more!',W/2,py+120);
+  drawButton('RETRY',W/2,py+160,200,44,'retry');
+  drawSmallBtn('MENU',W/2,py+215,100,30,'menu');
+}
+
+function drawWin(){
+  drawBackground();
+  // Confetti
+  for(var i=0;i<50;i++){
+    var t=performance.now()/1000;
+    var x=((i*73.5)%W);
+    var y=((i*137.3+t*100)%(H+100))-50;
+    ctx.fillStyle=['#FFD700','#00D4FF','#E0245E','#4CAF50'][i%4];
+    ctx.fillRect(x,y,6,6);
+  }
+  ctx.fillStyle=C.panel;
+  var pw=Math.min(W*0.8,400),ph=380;
+  var px=(W-pw)/2,py=(H-ph)/2;
+  roundRect(px,py,pw,ph,16);ctx.fill();
+  ctx.strokeStyle=C.gold;ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle=C.gold;ctx.font='bold 40px Arial';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('YOU WIN!',W/2,py+30);
+  ctx.fillStyle=C.text;ctx.font='18px Arial';
+  ctx.fillText('All 30 levels complete!',W/2,py+90);
+  var totalStars=0;for(var k in state.stars)totalStars+=state.stars[k];
+  drawStarShape(W/2,py+150,28,C.star);
+  ctx.fillStyle=C.gold;ctx.font='bold 28px Arial';
+  ctx.fillText(totalStars+' / '+LEVELS.length*3,W/2,py+210);
+  ctx.fillStyle=C.textDim;ctx.font='16px Arial';
+  ctx.fillText('Total: '+state.totalScore+' pts',W/2,py+250);
+  drawButton('PLAY AGAIN',W/2,py+300,200,44,'menu');
+}
+
+function drawButton(text,cx,cy,w,h,action){
+  var mx=input.mx,my=input.my;
+  var hover=mx>cx-w/2&&mx<cx+w/2&&my>cy-h/2&&my<cy+h/2;
+  ctx.fillStyle=hover?C.btnHover:C.btn;
+  roundRect(cx-w/2,cy-h/2,w,h,8);ctx.fill();
+  ctx.fillStyle=C.btnText;ctx.font='bold 16px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(text,cx,cy);
+  buttonAreas.push({x:cx-w/2,y:cy-h/2,w:w,h:h,action:action});
+}
+function drawSmallBtn(text,cx,cy,w,h,action){
+  var mx=input.mx,my=input.my;
+  var hover=mx>cx-w/2&&mx<cx+w/2&&my>cy-h/2&&my<cy+h/2;
+  ctx.fillStyle=hover?'#3D2A5C':'#2A1D40';
+  roundRect(cx-w/2,cy-h/2,w,h,6);ctx.fill();
+  ctx.strokeStyle=hover?C.btnHover:'#3D2A5C';ctx.lineWidth=1;ctx.stroke();
+  ctx.fillStyle=hover?C.text:C.textDim;ctx.font='bold 12px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(text,cx,cy);
+  buttonAreas.push({x:cx-w/2,y:cy-h/2,w:w,h:h,action:action});
+}
+
+// Draw a 5-pointed star at (x,y) with given radius r
+function drawStarShape(x,y,r,fill){
+  ctx.fillStyle=fill;
+  ctx.beginPath();
+  for(var i=0;i<10;i++){
+    var a=(Math.PI/5)*i-Math.PI/2;
+    var rad=i%2===0?r:r*0.45;
+    var px=x+Math.cos(a)*rad;
+    var py=y+Math.sin(a)*rad;
+    if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+  }
+  ctx.closePath();ctx.fill();
+}
+
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+// --- Input ---
+var input={mx:0,my:0};
+var buttonAreas=[];
+
+function handleAction(action){
+  playSFX('click');
+  switch(action){
+    case'play':startLevel(0);break;
+    case'select':state.screen='levelSelect';break;
+    case'back':state.screen='menu';break;
+    case'menu':state.screen='menu';stopBGM();break;
+    case'next':
+      if(state.level<LEVELS.length-1)startLevel(state.level+1);
+      else state.screen='win';
+      break;
+    case'retry':startLevel(state.level);break;
+    case'sound':state.soundOn=!state.soundOn;saveProgress();break;
+    case'music':state.musicOn=!state.musicOn;if(!state.musicOn)stopBGM();else{ensureAudio();startBGM();}saveProgress();break;
+    case'level_0':case'level_1':case'level_2':case'level_3':case'level_4':
+    case'level_5':case'level_6':case'level_7':case'level_8':case'level_9':
+      var idx=parseInt(action.slice(6));
+      if(idx<state.unlocked)startLevel(idx);
+      state.screen='game';
+      break;
+  }
+}
+
+canvas.addEventListener('pointerdown',function(e){
+  e.preventDefault();
+  ensureAudio();
+  var rect=canvas.getBoundingClientRect();
+  input.mx=e.clientX-rect.left;
+  input.my=e.clientY-rect.top;
+  // Check buttons
+  for(var i=0;i<buttonAreas.length;i++){
+    var b=buttonAreas[i];
+    if(input.mx>=b.x&&input.mx<=b.x+b.w&&input.my>=b.y&&input.my<=b.y+b.h){
+      handleAction(b.action);
+      return;
+    }
+  }
+  // Game action
+  if(state.screen==='game'){
+    dropHook();
+  }
+  // Level select
+  if(state.screen==='levelSelect'){
+    var cols=Math.min(5,Math.floor((Math.min(W*0.9,W-20))/80));
+    var cellW=80,cellH=80;
+    var gridW=cols*cellW;
+    var startX=(W-gridW)/2;
+    var startY=(H-Math.min(H*0.85,H-100))/2+70;
+    for(var lv=0;lv<LEVELS.length;lv++){
+      var cx=startX+(lv%cols)*cellW+cellW/2;
+      var cy=startY+Math.floor(lv/cols)*cellH+cellH/2;
+      var dx=input.mx-cx,dy=input.my-cy;
+      if(dx*dx+dy*dy<28*28&&lv<state.unlocked){
+        startLevel(lv);
+        return;
+      }
+    }
+  }
+});
+canvas.addEventListener('pointermove',function(e){
+  var rect=canvas.getBoundingClientRect();
+  input.mx=e.clientX-rect.left;
+  input.my=e.clientY-rect.top;
+});
+
+window.addEventListener('keydown',function(e){
+  if(e.key===' '||e.key==='ArrowDown'){
+    if(state.screen==='game'){dropHook();e.preventDefault();}
+  }
+  if(e.key==='d'||e.key==='D'){
+    if(state.screen==='game')useDynamite();
+  }
+  if(e.key==='Escape'){
+    if(state.screen==='game'||state.screen==='levelSelect'){state.screen='menu';stopBGM();}
+  }
+});
+
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){if(rafId){cancelAnimationFrame(rafId);rafId=null;}stopBGM();}
+  else if(state.screen==='game'){state.lastTime=performance.now();rafId=requestAnimationFrame(gameLoop);if(state.musicOn){ensureAudio();startBGM();}}
+});
+
+// --- Game Loop ---
+function gameLoop(now){
+  rafId=requestAnimationFrame(gameLoop);
+  var dt=Math.min((now-(state.lastTime||now))/1000,0.05);
+  state.lastTime=now;
+  state.dt=dt;
+  buttonAreas=[];
+  // Update
+  if(state.screen==='game'){
+    updateHook(dt);
+    // Timer
+    state.timeFrac+=dt;
+    if(state.timeFrac>=1){
+      state.time-=Math.floor(state.timeFrac);
+      state.timeFrac%=1;
+      if(state.time<=10&&state.time>0)playSFX('tick');
+      if(state.time<=0){
+        state.time=0;
+        checkGameOver();
+      }
+    }
+    // Combo timer
+    if(state.comboTimer>0){state.comboTimer-=dt;if(state.comboTimer<=0)state.combo=0;}
+    // Particles
+    for(var i=state.particles.length-1;i>=0;i--){
+      var p=state.particles[i];
+      p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life-=dt*1.5;
+      if(p.life<=0)state.particles.splice(i,1);
+    }
+    // Floats
+    for(var j=state.floats.length-1;j>=0;j--){
+      var f=state.floats[j];
+      f.y+=f.vy;f.life-=dt;
+      if(f.life<=0)state.floats.splice(j,1);
+    }
+  }
+  // Draw
+  ctx.clearRect(0,0,W,H);
+  switch(state.screen){
+    case'menu':drawMenu();break;
+    case'game':drawGame();break;
+    case'levelSelect':drawLevelSelect();break;
+    case'levelComplete':drawLevelComplete();break;
+    case'gameOver':drawGameOver();break;
+    case'win':drawWin();break;
+  }
+}
+
+// --- Cleanup ---
+function cleanup(){
+  if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+  stopBGM();
+  timers.forEach(function(id){clearInterval(id);});
+  timers=[];
+  if(audioCtx){try{audioCtx.close();}catch(e){}audioCtx=null;}
+}
+window.addEventListener('beforeunload',cleanup);
+
+// --- Init ---
+loadProgress();
+resizeCanvas();
+state.lastTime=performance.now();
+rafId=requestAnimationFrame(gameLoop);
+
+})();
+</script>
+<!-- Monetag MultiTag -->
+<script src="/monetag-manager.js?v=v510cull3"></script>
+<script src="/game-footer.js?v=202607021204"></script>
+<script async src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=gold-miner"></script>
+<div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
+</body>
+</html>
