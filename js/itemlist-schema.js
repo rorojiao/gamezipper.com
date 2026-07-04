@@ -557,8 +557,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":552,"url":"https://gamezipper.com/hexa-2048/","name":"Hexa 2048"},
     {"@type":"ListItem","position":553,"url":"https://gamezipper.com/drawer-sort/","name":"Drawer Sort"},
     {"@type":"ListItem","position":554,"url":"https://gamezipper.com/tap-away/","name":"Tap Away"},
-    {"@type":"ListItem","position":555,"url":"https://gamezipper.com/hexa-away/","name":"Hexa Away"}
+    {"@type":"ListItem","position":555,"url":"https://gamezipper.com/hexa-away/","name":"Hexa Away"},
+    {"@type":"ListItem","position":556,"url":"https://gamezipper.com/slide-cat/","name":"Slide Cat"}
   ],
-  "numberOfItems":555,
-  "description":"555 free browser games you can play instantly"
+  "numberOfItems":556,
+  "description":"556 free browser games you can play instantly"
 };
