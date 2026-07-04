@@ -1,3 +1,38 @@
+## [v1.137.0] - 2026-07-04
+### Added
+- 8 new test cases from July-4 2026 industry research (R254 Dynamic Test Intelligence cron, 4h cadence cycle 16)
+- New test cases:
+  - [S-290] **[P1]** Edgecution malware — Microsoft Edge extension as persistent Python-backdoor delivery vector (June 24 2026) — extension-inventory audit, deploy-token exfiltration surface
+  - [S-291] **[P2]** Storm-2603 outdated-SharePoint-server ransomware entry point (June 24 2026) — collaboration-server-as-pivot for deploy pipeline
+  - [S-292] **[P1]** CVE-2026-40369 Windows 11 kernel nt!ExpGetProcessInformation sandbox-to-SYSTEM LPE (May 21 2026) — post-disclosure weaponization cadence, dev/CI patch verification
+  - [S-293] **[P2]** CVE-2026-0628 Chrome Gemini-sidebar WebView SOP bypass — commercial weaponization evolution (June 11 2026) — Chrome <143.0.7499.192 exploit kits targeting crypto wallets
+  - [W-267] **[P2]** Chrome 151+ on-device AI model user-refusal graceful degradation — users can DELETE/REFUSE built-in AI models; window.ai.* capability check required
+  - [W-268] **[P2]** Firefox 152 stable ship — WebDriver BiDi Private Browsing automation support (June 16 2026) — closes private-browsing QA automation gap
+  - [C-186] **[P3]** HTML5test.com post-sunset migration — canonical QA tool dead since 2016; migrate all docs to CanIUse/MDN/WPT
+  - [G-175] **[P3]** 2026 H5 interactive mini-game brand-marketing competitive landscape — brand-funded marketing H5 games competing for casual session-time
+### Sources
+- Search queries:
+  - "HTML5 game testing 2026 new techniques browser"
+  - "new browser security vulnerability 2026 XSS clickjacking CSP"
+  - "CVE 2026 July browser vulnerability Chrome Safari CVE"
+  - "Edgecution malware Microsoft Edge extension bypass 2026"
+  - "Storm-2603 SharePoint ransomware 2026 June exploit"
+  - "Chrome Edge Safari update 2026 July breaking changes"
+  - "Firefox 152 stable ship 2026 features vulnerability patch"
+  - "casual game UX complaint 2026 mobile haptic dark mode"
+- Key URLs:
+  - https://cybersecurity-help.cz/ (Edgecution + Storm-2603 SharePoint June 24 2026)
+  - https://www.tenable.com/blog/cve-2025-53770 (Storm-2603 ToolShell SharePoint analysis)
+  - https://www.donews.com/news/detail/8/6567089.html (CVE-2026-40369 Windows kernel LPE May 22 2026)
+  - https://blog.csdn.net/OPHKVPS/article/details/159214667 (CVE-2026-0628 Chrome Gemini commercial weaponization June 11 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_9116a30cb5d40652 (Firefox 152 stable June 16 2026)
+  - https://fxdx.dev/ (Firefox 152 WebDriver BiDi Private Browsing June 25 2026)
+  - http://html5test.com/results/desktop.html (HTML5test dead self-declaration June 10 2026)
+  - https://www.toutiao.com/article/7630737164732563977/ (H5 mini-game marketing landscape April 20 2026)
+  - https://techcrunch.com/2026/03/03/amid-new-competition-chrome-speeds-up-its-release-schedule/ (Chrome 2-week cadence)
+  - https://www.163.com/dy/article/JSK8UNOK05385V3O.html (Chrome 136 history-sniffing fix)
+
+
 ## [v1.136.0] - 2026-07-04
 ### Added
 - 8 new test cases from July-4 2026 industry research (R253 Dynamic Test Intelligence cron, 4h cadence cycle 15)
