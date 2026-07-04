@@ -24,7 +24,6 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"HowTo","name":"How to Play Red","step":[{"@type":"HowToStep","name":"Goal","text":"Turn the entire screen red by solving each level's unique puzzle."},{"@type":"HowToStep","name":"Interact","text":"Tap, drag, rub, shake, type, and look for clues. Every level is different."},{"@type":"HowToStep","name":"Get Help","text":"Tap the hint button if you get stuck."}]}
 </script>
-<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=red'></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#1a0505;color:#fff;user-select:none;-webkit-user-select:none;touch-action:none;overflow-x:hidden}
@@ -218,439 +217,358 @@ function showToast(msg){
   clearTimeout(h._t); h._t=setTimeout(()=>h.classList.remove('show'),3000);
 }
 
-// ============== LEVEL DEFINITIONS ==============
+// ============== LEVEL DEFINITIONS =============
 const LEVELS = {
 // ---- BEGINNER 1-5 ----
-// L1: IGNITE 4 CANDLES — tap each candle to light its flame.
-1: { hint:'Tap each candle to light its flame. Light all 4!', render(s,win){
-  let lit=0; const N=4;
-  const pos=[{x:70,y:100},{x:150,y:100},{x:230,y:100},{x:310,y:100}];
-  pos.forEach((p,i)=>{
-    const candle=el('div','tap'); candle.style.cssText='position:absolute;width:30px;height:80px;background:linear-gradient(180deg,#666,#444);border-radius:4px 4px 0 0;left:'+(p.x-15)+'px;top:'+p.y+'px;cursor:pointer';
-    const wick=el('div'); wick.style.cssText='position:absolute;top:-8px;left:13px;width:4px;height:10px;background:#888'; candle.appendChild(wick);
-    const flame=el('div'); flame.style.cssText='position:absolute;top:-28px;left:50%;transform:translateX(-50%);width:16px;height:24px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:transparent;transition:.2s'; candle.appendChild(flame);
-    candle.onclick=()=>{ if(flame._lit)return; flame._lit=1; flame.style.background='radial-gradient(circle,'+CL+','+C+')'; flame.style.boxShadow='0 0 20px '+C; flame.style.animation='flicker'+i+' .3s infinite alternate'; lit++; if(lit>=N)setTimeout(win,500); };
-    s.appendChild(candle);
-    // add flicker keyframe
-    if(!document.getElementById('fk'+i)){ const st=document.createElement('style'); st.id='fk'+i; st.textContent='@keyframes flicker'+i+'{0%{transform:translateX(-50%) scale(1) rotate(-3deg)}100%{transform:translateX(-50%) scale(1.1) rotate(3deg)}}'; document.head.appendChild(st); }
-  });
-  const lbl=el('div'); lbl.style.cssText='position:absolute;top:50px;left:50%;transform:translateX(-50%);color:#888;font-size:13px'; lbl.textContent='Light all 4 candles!'; s.appendChild(lbl);
+// L1: TAP center red circle 5 times rapidly. Distinct from O=HOLD orb, P=tap 3 orbs in seq.
+1: { hint:'Tap the center red circle 5 times — fast!', render(s,win){
+  let taps=0; const NEED=5; let lastTap=0; let done=false;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div id="c1" class="tap" style="width:140px;height:140px;border-radius:50%;background:'+CD+';margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:700;border:3px solid '+CL+';box-shadow:0 0 30px rgba(244,67,54,.3);transition:transform .1s">TAP!</div><div id="cnt1" style="color:'+C+';font-size:18px;font-weight:700">0 / 5</div><div style="color:#888;font-size:11px;margin-top:4px">Tap quickly — pauses reset!</div></div>';
+  const c=$('c1'),cnt=$('cnt1');
+  c.onclick=()=>{ if(done)return; const now=Date.now(); if(now-lastTap>900&&taps>0){ taps=0; cnt.textContent='0 / 5'; c.style.background=CD; showToast('Too slow! Start over.'); return; } lastTap=now; taps++; c.style.background=C; c.style.transform='scale('+(1+taps*0.06)+')'; c.style.boxShadow='0 0 '+(30+taps*10)+'px rgba(244,67,54,'+(0.3+taps*0.12)+')'; cnt.textContent=taps+' / 5'; if(taps>=NEED){done=true;setTimeout(win,400);} };
 }},
-// L2: CONNECT 3 dots — drag from dot 1 through dot 2 to dot 3.
-2: { hint:'Drag from dot 1 through 2 and 3 to connect them!', render(s,win){
-  const dots=[{x:50,y:150,n:1},{x:175,y:80,n:2},{x:300,y:220,n:3}];
-  let reached=0; let done=false;
-  s.innerHTML='<canvas id="cv2" width="360" height="320" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);touch-action:none;border-radius:8px"></canvas>';
-  const cv=$('cv2'),ctx=cv.getContext('2d');
-  function draw(){ ctx.fillStyle=CDARK; ctx.fillRect(0,0,360,320);
-    dots.forEach(d=>{ ctx.fillStyle=reached>=d.n?C:CD; ctx.beginPath(); ctx.arc(d.x,d.y,20,0,7); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='bold 14px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(d.n,d.x,d.y); });
-  }
-  draw();
-  let dragging=false,prevX=0,prevY=0;
-  function checkDot(mx,my){ dots.forEach(d=>{ if(Math.abs(mx-d.x)<30&&Math.abs(my-d.y)<30&&d.n===reached+1){ reached=d.n; draw(); if(reached>=3&&!done){done=true;setTimeout(win,400);} } }); }
-  function start(e){ e.preventDefault(); dragging=true; const r=cv.getBoundingClientRect(); prevX=(e.touches?e.touches[0].clientX:e.clientX)-r.left; prevY=(e.touches?e.touches[0].clientY:e.clientY)-r.top; checkDot(prevX,prevY); }
-  function move(e){ if(!dragging||done)return; e.preventDefault(); const r=cv.getBoundingClientRect(); const mx=(e.touches?e.touches[0].clientX:e.clientX)-r.left; const my=(e.touches?e.touches[0].clientY:e.clientY)-r.top; ctx.strokeStyle=C; ctx.lineWidth=4; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(prevX,prevY); ctx.lineTo(mx,my); ctx.stroke(); prevX=mx; prevY=my; checkDot(mx,my); }
-  cv.addEventListener('mousedown',start); cv.addEventListener('touchstart',start,{passive:false});
+// L2: DRAG red slider Left→Right to fill the bar. Distinct from O=drag clockwise, P=drag brush 80%.
+2: { hint:'Drag the red slider all the way to the right to fill the bar!', render(s,win){
+  let done=false;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:300px"><div style="color:#888;font-size:12px;margin-bottom:10px">Fill the bar — drag →</div><div id="track2" style="position:relative;width:280px;height:40px;background:'+CDARK+';border:1px solid '+CD+';border-radius:20px;overflow:hidden;touch-action:none"><div id="fill2" style="position:absolute;left:0;top:0;width:0%;height:100%;background:linear-gradient(90deg,'+CD+','+C+','+CL+');transition:width .05s"></div><div id="knob2" style="position:absolute;left:0;top:0;width:24px;height:40px;background:#fff;border-radius:50%;box-shadow:0 0 10px '+C+';cursor:grab;z-index:5"></div></div><div id="pct2" style="color:'+C+';font-size:14px;margin-top:10px;font-weight:700">0%</div></div>';
+  const track=$('track2'),fill=$('fill2'),knob=$('knob2'),pct=$('pct2'); let dragging=false;
+  function setPct(p){ p=Math.max(0,Math.min(100,p)); fill.style.width=p+'%'; knob.style.left=(p/100*(280-24))+'px'; pct.textContent=Math.round(p)+'%'; if(p>=100&&!done){done=true;setTimeout(win,400);} }
+  function move(e){ if(!dragging)return; e.preventDefault(); const r=track.getBoundingClientRect(); const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left; setPct(x/280*100); }
+  knob.addEventListener('mousedown',()=>dragging=true); knob.addEventListener('touchstart',e=>{e.preventDefault();dragging=true;},{passive:false});
+  track.addEventListener('mousedown',e=>{dragging=true;move(e);}); track.addEventListener('touchstart',e=>{e.preventDefault();dragging=true;move(e);},{passive:false});
   document.addEventListener('mousemove',move); document.addEventListener('touchmove',move,{passive:false});
   document.addEventListener('mouseup',()=>dragging=false); document.addEventListener('touchend',()=>dragging=false);
 }},
-// L3: DIAMONDS DESCENDING — tap diamonds in order 5→4→3→2→1.
-3: { hint:'Tap the diamonds in DESCENDING order: 5,4,3,2,1.', render(s,win){
-  const nums=[2,5,1,4,3]; let idx=5;
-  nums.forEach((n,i)=>{
-    const d=el('div','tap'); d.textContent='\u25C6'+n;
-    d.style.cssText='width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:'+CBG+';border:1px solid '+CD+';border-radius:8px;position:absolute;cursor:pointer;color:#fff';
-    d.style.left=(35+i*62)+'px'; d.style.top='150px';
-    d.onclick=()=>{ if(n===idx){ d.style.background=C; d.style.borderColor=C; idx--; if(idx<1)setTimeout(win,400);} else showToast('Tap '+idx+' next!'); };
-    s.appendChild(d);
-  });
-  const lbl=el('div'); lbl.style.cssText='position:absolute;top:90px;left:50%;transform:translateX(-50%);color:#888;font-size:13px'; lbl.textContent='Tap DESCENDING: 5 \u2192 1'; s.appendChild(lbl);
+// L3: TAP red squares in ROW-COL order (r1c1, r1c2, r1c3, r2c1...). Distinct from O=DESC triangles, P=ASC hexagons.
+3: { hint:'Tap the red squares in reading order: top-left first, left-to-right, top-to-bottom.', render(s,win){
+  let idx=0; const order=[0,1,2,3,4,5]; // 2x3 grid, reading order
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:#888;font-size:12px;margin-bottom:10px">Reading order (r1c1 → r2c3)</div><div id="g3" style="display:grid;grid-template-columns:repeat(3,70px);gap:6px"></div></div>';
+  const g=$('g3');
+  for(let i=0;i<6;i++){ const c=el('div','tap'); c.style.cssText='width:70px;height:70px;border-radius:8px;background:'+CBG+';border:1px solid '+CD+';display:flex;align-items:center;justify-content:center;font-size:11px;color:#666;cursor:pointer'; c.textContent='r'+(Math.floor(i/3)+1)+'c'+(i%3+1); c._exp=i;
+    c.onclick=()=>{ if(c._exp===idx){ c.style.background=C; c.style.color='#fff'; idx++; if(idx>=6)setTimeout(win,400);} else showToast('Tap r'+(Math.floor(idx/3)+1)+'c'+(idx%3+1)+' next!'); };
+    g.appendChild(c); }
 }},
-// L4: TRIPLE-TAP — tap each tile exactly 3 times to fully charge it.
-4: { hint:'TRIPLE-TAP each tile (tap 3 times) to charge it red!', render(s,win){
-  let charged=0; const N=4;
-  const positions=[{x:60,y:90},{x:170,y:90},{x:280,y:90},{x:60,y:200}];
-  positions.forEach((p,i)=>{
-    const c=el('div','tap'); c._taps=0;
-    c.style.cssText='width:80px;height:80px;border-radius:12px;background:'+CBG+';border:2px solid '+CD+';position:absolute;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#666;font-weight:700;transition:.1s';
-    c.style.left=p.x+'px'; c.style.top=p.y+'px'; c.textContent='TAP x0/3';
-    c.onclick=()=>{ if(c._done)return; c._taps++; c.textContent='TAP x'+c._taps+'/3'; c.style.opacity=1-c._taps*0.1; if(c._taps>=3){ c._done=1; c.style.background=C; c.style.opacity=1; c.style.boxShadow='0 0 20px '+C; c.textContent='\u2714'; charged++; if(charged>=N)setTimeout(win,400);} };
-    s.appendChild(c);
-  });
+// L4: TRIPLE-TAP each red tile to activate. Distinct from O=DOUBLE-TAP, P=LONG-PRESS 1.5s.
+4: { hint:'TRIPLE-TAP each red tile to fully charge it!', render(s,win){
+  let lit=0; const N=4; let done=false; const need=[3,3,3,3];
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:#888;font-size:12px;margin-bottom:12px">Tap each tile 3 times</div><div id="g4" style="display:grid;grid-template-columns:repeat(2,90px);gap:10px"></div></div>';
+  const g=$('g4');
+  for(let i=0;i<N;i++){ const c=el('div','tap'); let cnt=0; c.style.cssText='width:90px;height:90px;border-radius:10px;background:'+CBG+';border:1px solid '+CD+';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#666;cursor:pointer;transition:.1s'; c.textContent='0';
+    c.onclick=()=>{ if(done||cnt>=3)return; cnt++; c.textContent=cnt; c.style.background=cnt===3?C:CL; c.style.color='#fff'; c.style.transform='scale('+(1+cnt*0.05)+')'; if(cnt===3){ c.textContent='❤'; lit++; if(lit>=N){done=true;setTimeout(win,400);} } };
+    g.appendChild(c); }
 }},
-// L5: FEED DRAGON — drag the meat to the dragon's mouth.
-5: { hint:'Drag the meat to the dragon to feed it!', render(s,win){
-  let done=false;
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div id="dragon5" style="font-size:72px;transition:.3s;cursor:default">\u{1F432}</div><div style="color:#888;font-size:12px;margin-top:4px">Feed the dragon!</div></div>';
-  const meat=el('div'); meat.textContent='\u{1F356}'; meat.style.cssText='position:absolute;font-size:36px;cursor:grab;z-index:10;left:50px;top:200px;transition:filter .3s';
-  s.appendChild(meat);
-  let dragging=false;
-  const down=e=>{ e.preventDefault(); dragging=true; meat.style.cursor='grabbing'; };
-  meat.addEventListener('mousedown',down); meat.addEventListener('touchstart',down,{passive:false});
-  const move=e=>{ if(!dragging||done)return; e.preventDefault(); const x=e.touches?e.touches[0].clientX:e.clientX; const y=e.touches?e.touches[0].clientY:e.clientY; meat.style.position='fixed'; meat.style.left=(x-18)+'px'; meat.style.top=(y-18)+'px'; };
+// L5: SPIN the red wheel (drag in circles) to charge it. Distinct from O=raise sun, P=tap flower bloom.
+5: { hint:'SPIN the red wheel! Drag in circles around it to charge it up.', render(s,win){
+  let angle=0, lastA=null, totalSpin=0; const NEED=720; let done=false; // 2 full rotations
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><svg id="w5" width="240" height="240" viewBox="0 0 240 240" style="cursor:grab;touch-action:none"><g id="rg5" transform="rotate(0 120 120)">'+[0,45,90,135,180,225,270,315].map(a=>{const rad=a*Math.PI/180;const x1=120+Math.cos(rad)*30,y1=120+Math.sin(rad)*30,x2=120+Math.cos(rad)*95,y2=120+Math.sin(rad)*95;return '<line x1="'+x1+'" y1="'+y1+'" y2="'+y2+'" x2="'+x2+'" stroke="'+C+'" stroke-width="14" stroke-linecap="round"/>';}).join('')+'<circle cx="120" cy="120" r="28" fill="'+CD+'"/><circle cx="120" cy="120" r="20" fill="'+CL+'"/></g><text x="120" y="235" text-anchor="middle" fill="#888" font-size="11">Drag in a circle!</text></svg><div id="cnt5" style="color:'+C+';font-size:14px;margin-top:8px;font-weight:700">Spin: 0° / '+NEED+'°</div></div>';
+  const w=$('w5'),rg=$('rg5'),cnt=$('cnt5'); let dragging=false;
+  function ang(e){ const r=w.getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2; const x=(e.touches?e.touches[0].clientX:e.clientX), y=(e.touches?e.touches[0].clientY:e.clientY); return Math.atan2(y-cy,x-cx)*180/Math.PI; }
+  function move(e){ if(!dragging||done)return; e.preventDefault(); const a=ang(e); if(lastA!==null){ let d=a-lastA; if(d>180)d-=360; if(d<-180)d+=360; totalSpin+=Math.abs(d); angle+=d; rg.setAttribute('transform','rotate('+angle+' 120 120)'); cnt.textContent='Spin: '+Math.min(NEED,Math.round(totalSpin))+'° / '+NEED+'°'; if(totalSpin>=NEED){done=true;setTimeout(win,400);} } lastA=a; }
+  w.addEventListener('mousedown',e=>{dragging=true;lastA=ang(e);}); w.addEventListener('touchstart',e=>{e.preventDefault();dragging=true;lastA=ang(e);},{passive:false});
   document.addEventListener('mousemove',move); document.addEventListener('touchmove',move,{passive:false});
-  const up=e=>{ if(!dragging||done)return; dragging=false; meat.style.cursor='grab'; const x=e.changedTouches?e.changedTouches[0].clientX:e.clientX; const y=e.changedTouches?e.changedTouches[0].clientY:e.clientY; const dr=$('dragon5').getBoundingClientRect(); const cx=dr.left+dr.width/2, cy=dr.top+dr.height/2; if(Math.abs(x-cx)<80&&Math.abs(y-cy)<80){ done=true; $('dragon5').textContent='\u{1F60B}'; $('dragon5').style.filter='hue-rotate(0deg) sepia(1) saturate(5)'; meat.style.display='none'; setTimeout(win,600); } };
-  document.addEventListener('mouseup',up); document.addEventListener('touchend',up);
+  document.addEventListener('mouseup',()=>{dragging=false;lastA=null;}); document.addEventListener('touchend',()=>{dragging=false;lastA=null;});
 }},
 // ---- EASY 6-10 ----
-// L6: RUB TO WARM — rapidly swipe over the cold tile to warm it up (friction heat).
-6: { hint:'RUB the cold tile rapidly (swipe back and forth) to warm it up!', render(s,win){
-  let heat=0; const MAX=100; let done=false; let lastX=null;
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div id="tile6" style="width:180px;height:180px;border-radius:16px;background:#1a3a5c;border:2px solid #2a5a8c;transition:background .2s;display:flex;align-items:center;justify-content:center;font-size:40px;touch-action:none">\u2744\uFE0F</div><div id="bar6" style="width:180px;height:8px;background:#333;border-radius:4px;margin-top:12px"><div id="fill6" style="width:0;height:100%;background:linear-gradient(90deg,#4fc3f7,'+C+');border-radius:4px;transition:width .1s"></div></div><div id="cnt6" style="color:#888;font-size:12px;margin-top:6px">0% heated</div><div style="color:#666;font-size:11px;margin-top:4px">Swipe rapidly over the tile!</div></div>';
-  const tile=$('tile6'),fill=$('fill6'),cnt=$('cnt6');
-  function update(){ const pct=Math.round(heat/MAX*100); fill.style.width=pct+'%'; cnt.textContent=pct+'% heated'; const r=Math.round(26+heat/MAX*(229-26)); const g=Math.round(58+heat/MAX*(57-58)); const b=Math.round(92+heat/MAX*(53-92)); tile.style.background='rgb('+r+','+g+','+b+')'; if(heat>=MAX&&!done){done=true;tile.textContent='\u{1F525}';setTimeout(win,500);} }
-  function move(e){ e.preventDefault(); const x=e.touches?e.touches[0].clientX:e.clientX; const r=tile.getBoundingClientRect(); if(x>=r.left&&x<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){ if(lastX!==null){ const dx=Math.abs(x-lastX); if(dx>10){ heat=Math.min(MAX,heat+3); update(); } } lastX=x; } else { lastX=null; } }
-  tile.addEventListener('mousedown',e=>{lastX=null;}); tile.addEventListener('touchstart',e=>{e.preventDefault();lastX=null;},{passive:false});
-  document.addEventListener('mousemove',move); document.addEventListener('touchmove',move,{passive:false});
+// L6: TAP red toggles to match a target pattern (Simon-style copy). Distinct from O=connect wires, P=drag bars to slots.
+6: { hint:'Memorize the target pattern, then tap toggles to recreate it.', render(s,win){
+  const target=[1,0,1,0,1,1]; // 6 toggles
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:#888;font-size:12px;margin-bottom:8px">Target (memorize!):</div><div id="tgt6" style="display:grid;grid-template-columns:repeat(6,40px);gap:4px;justify-content:center;margin-bottom:16px"></div><div style="color:'+C+';font-size:12px;margin-bottom:8px">Now recreate it:</div><div id="g6" style="display:grid;grid-template-columns:repeat(6,44px);gap:4px;justify-content:center"></div><button id="peek6" class="tap" style="margin-top:14px;padding:6px 16px;border-radius:12px;background:'+CBG+';color:#fff;border:1px solid '+CD+';font-size:12px">Peek (1s)</button></div>';
+  const tgt=$('tgt6'),g=$('g6'); let state6=new Array(6).fill(0); let done=false; let peeked=false;
+  function renderTgt(show){ tgt.innerHTML=''; target.forEach(v=>{ const d=el('div'); d.style.cssText='width:40px;height:40px;border-radius:6px;background:'+(show&&v?C:CBG)+';border:1px solid '+CD; tgt.appendChild(d); }); }
+  function renderMine(){ g.innerHTML=''; state6.forEach((v,i)=>{ const d=el('div','tap'); d.style.cssText='width:44px;height:44px;border-radius:6px;background:'+(v?C:CBG)+';border:1px solid '+CD+';cursor:pointer'; d.onclick=()=>{ if(done)return; state6[i]=state6[i]?0:1; renderMine(); if(state6.every((v,j)=>v===target[j])){done=true;setTimeout(win,400);} }; g.appendChild(d); }); }
+  renderTgt(true); renderMine();
+  $('peek6').onclick=()=>{ if(peeked)return; peeked=true; renderTgt(true); setTimeout(()=>renderTgt(false),1000); };
+  setTimeout(()=>renderTgt(false),2500);
 }},
-// L7: Spell R-E-D (3 letters — shortest in the series).
-7: { hint:'Spell R-E-D by tapping letters in order.', render(s,win){
+// L7: Spell R-E-D (3 letters, bigger). Distinct from O=O-R-A-N-G-E, P=P-U-R-P-L-E.
+7: { hint:'Spell R-E-D by tapping the letters in order!', render(s,win){
   const word='RED'; let idx=0;
-  const pos=[{l:100,t:120},{l:200,t:120},{l:300,t:120}];
-  const shuffled=[2,0,1];
-  shuffled.forEach(si=>{
-    const ch=word[si]; const d=el('div','tap'); d.textContent=ch;
-    d.style.cssText='width:56px;height:56px;border-radius:12px;background:'+CBG+';border:1px solid '+CD+';display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;position:absolute;cursor:pointer';
-    d.style.left=pos[si].l+'px'; d.style.top=pos[si].t+'px';
-    d._exp=si;
-    d.onclick=()=>{ if(d._exp===idx){ d.style.background=C; d.style.color='#fff'; idx++; if(idx===word.length)setTimeout(win,400);} else{ showToast('Wrong letter!'); } };
-    s.appendChild(d);
-  });
-  const lbl=el('div'); lbl.style.cssText='position:absolute;top:60px;left:50%;transform:translateX(-50%);color:'+C+';font-size:15px;font-weight:700'; lbl.textContent='Spell R-E-D'; s.appendChild(lbl);
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:'+C+';font-size:36px;font-weight:700;margin-bottom:20px;letter-spacing:8px">R _ _</div><div style="display:flex;gap:16px;justify-content:center"></div></div>';
+  const wrap=s.querySelector('div div');
+  const letters=[['R',40],['D',200],['E',120]]; // [letter, x-pos]
+  const shuffled=[...letters].sort(()=>Math.random()-.5);
+  shuffled.forEach(([ch])=>{ const d=el('div','tap'); d.textContent=ch; d.style.cssText='width:70px;height:70px;border-radius:12px;background:'+CBG+';border:1px solid '+CD+';display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:#fff;cursor:pointer';
+    d.onclick=()=>{ if(ch===word[idx]){ d.style.background=C; idx++; if(idx===word.length)setTimeout(win,400);} else { showToast('Wrong letter!'); } };
+    wrap.appendChild(d); });
 }},
-// L8: SIMON+1 — watch 4 steps, then tap them + 1 bonus step (5 total).
-8: { hint:'Watch the 4-step sequence, then tap it back PLUS one more!', render(s,win){
-  const seq=[]; for(let i=0;i<5;i++)seq.push(Math.floor(Math.random()*4));
-  let userIdx=0,showing=true,showCount=4;
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px"><div id="msg8" style="text-align:center;color:#888;font-size:13px;margin-bottom:12px">Watch...</div><div style="display:grid;grid-template-columns:repeat(2,80px);gap:6px">'+[0,1,2,3].map(i=>'<div class="tap" id="b8_'+i+'" style="width:80px;height:80px;border-radius:12px;background:'+CBG+';border:1px solid '+CD+';cursor:pointer"></div>').join('')+'</div></div>';
+// L8: MIRROR the sequence — watch a sequence light up LEFT-to-RIGHT, then tap them RIGHT-to-LEFT (mirror). Distinct from O=own-seq, P=tap-BACKWARDS (same order reversed).
+8: { hint:'Watch the sequence light up, then tap it MIRRORED (reverse the left-right positions)!', render(s,win){
+  const N=4; const seq=[]; for(let i=0;i<N;i++)seq.push(Math.floor(Math.random()*N));
+  let userIdx=0, showing=true; // mirror: tap in reversed POSITION order
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:240px"><div id="msg8" style="text-align:center;color:#888;font-size:13px;margin-bottom:12px">Watch...</div><div style="display:grid;grid-template-columns:repeat(4,50px);gap:6px;justify-content:center">'+[0,1,2,3].map(i=>'<div class="tap" id="b8_'+i+'" style="width:50px;height:80px;border-radius:8px;background:'+CBG+';border:1px solid '+CD+';cursor:pointer"></div>').join('')+'</div><div style="text-align:center;color:#666;font-size:11px;margin-top:10px">Mirror = reverse left↔right</div></div>';
   function flash(i){ const b=$('b8_'+i); b.style.background=C; setTimeout(()=>b.style.background=CBG,400); }
-  function play(){ showing=true; $('msg8').textContent='Watch the sequence ('+showCount+' steps)...'; let i=0;
-    const iv=setInterval(()=>{ flash(seq[i]); i++; if(i>=showCount){clearInterval(iv);setTimeout(()=>{$('msg8').textContent='Now tap them back!';showing=false;},700);} },700);
-  }
+  function play(){ showing=true; $('msg8').textContent='Watch (L→R)...'; let i=0; const iv=setInterval(()=>{ flash(seq[i]); i++; if(i>=seq.length){clearInterval(iv);setTimeout(()=>{$('msg8').textContent='Now tap MIRRORED (R→L)!';showing=false;},700);} },800); }
   setTimeout(play,500);
-  [0,1,2,3].forEach(i=>{ $('b8_'+i).onclick=()=>{ if(showing)return; flash(i); if(seq[userIdx]===i){ userIdx++; if(userIdx===showCount){ if(showCount===5)win(); else {showToast('Now add one more — step 5!');userIdx=0;showCount=5;setTimeout(play,1000);} } } else {showToast('Wrong! Watch again.');userIdx=0;showCount=4;setTimeout(play,800);} }; });
+  // mirror of position i in a 4-wide row = 3-i
+  [0,1,2,3].forEach(i=>{ $('b8_'+i).onclick=()=>{ if(showing)return; flash(i); // expected: tap mirrored of seq[userIdx]
+    const expected=3-seq[userIdx]; if(i===expected){ userIdx++; if(userIdx===seq.length)win(); } else { showToast('Mirror it! Start over.'); userIdx=0; setTimeout(play,800); } }; });
 }},
-// L9: SHAKE to reveal — shake device/mouse rapidly to uncover the hidden red button.
-9: { hint:'SHAKE your mouse rapidly over the screen to reveal what is hidden!', render(s,win){
-  let shakeCount=0; const NEED=25; let done=false; let lastPos={x:0,y:0}; let lastTime=0;
-  const fog=el('div'); fog.style.cssText='position:absolute;inset:0;background:radial-gradient(circle,rgba(60,20,20,.95),rgba(13,2,2,.98));display:flex;align-items:center;justify-content:center;flex-direction:column;color:#555;font-size:14px;pointer-events:none;transition:opacity .5s';
-  fog.innerHTML='<div style="text-align:center"><div style="font-size:36px;margin-bottom:8px">\u{1F4AB}</div><div>Something is hidden...</div><div style="font-size:11px;margin-top:4px">SHAKE to reveal!</div></div>';
-  s.appendChild(fog);
-  const cnt=el('div'); cnt.style.cssText='position:absolute;top:60px;left:50%;transform:translateX(-50%);color:'+C+';font-size:13px;font-weight:700;z-index:10'; cnt.textContent='Shake: 0/'+NEED; s.appendChild(cnt);
-  function handleMove(e){ if(done)return; const x=e.touches?e.touches[0].clientX:e.clientX; const y=e.touches?e.touches[0].clientY:e.clientY; const now=Date.now(); if(now-lastTime>30){ const dist=Math.sqrt((x-lastPos.x)**2+(y-lastPos.y)**2); if(dist>30){ shakeCount++; cnt.textContent='Shake: '+shakeCount+'/'+NEED; const opacity=Math.max(0,1-shakeCount/NEED); fog.style.opacity=opacity; if(shakeCount>=NEED&&!done){done=true;fog.style.opacity=0;setTimeout(()=>{fog.innerHTML='<div style="text-align:center"><div class="tap" id="revBtn9" style="width:100px;height:100px;border-radius:50%;background:'+C+';cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto;box-shadow:0 0 30px '+C+'">\u{1F534}</div></div>';fog.style.opacity=1;fog.style.pointerEvents='auto';$('revBtn9').onclick=()=>setTimeout(win,300);},300);} } lastPos={x,y}; lastTime=now; } }
-  document.addEventListener('mousemove',handleMove); document.addEventListener('touchmove',handleMove,{passive:false});
-  // Also handle devicemotion for mobile shake
-  window.addEventListener('devicemotion',e=>{ if(e.accelerationIncludingGravity){ const a=e.accelerationIncludingGravity; const mag=Math.sqrt(a.x*a.x+a.y*a.y+a.z*a.z); if(mag>15)handleMove({clientX:mag*10,clientY:0,touches:null}); } });
+// L9: SHAKE — drag/tilt the device left-right rapidly 5 times. Distinct from O=tap both dots, P=find hidden button.
+9: { hint:'SHAKE it! Drag left and right rapidly 5 times to charge the red core.', render(s,win){
+  let shakes=0; const NEED=5; let lastDir=0; let done=false; let lastX=null;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:100%"><div id="core9" style="width:100px;height:100px;border-radius:50%;background:'+CD+';margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:30px;transition:transform .1s">🔴</div><div id="cnt9" style="color:'+C+';font-size:18px;font-weight:700">Shakes: 0 / '+NEED+'</div><div style="color:#888;font-size:11px;margin-top:6px">Drag left ↔ right quickly!</div></div>';
+  const core=$('core9'),cnt=$('cnt9');
+  function move(e){ if(done)return; const x=(e.touches?e.touches[0].clientX:e.clientX); if(lastX!==null){ const dx=x-lastX; const dir=dx>20?1:dx<-20?-1:0; if(dir!==0&&dir!==lastDir&&lastDir!==0){ shakes++; cnt.textContent='Shakes: '+Math.min(NEED,shakes)+' / '+NEED; core.style.transform='translateX('+(dir*10)+'px) scale('+(1+shakes*0.04)+')'; core.style.background=shakes>=NEED?C:CL; if(shakes>=NEED){done=true;setTimeout(win,400);} } if(dir!==0)lastDir=dir; } lastX=x; }
+  s.addEventListener('mousedown',e=>{lastX=e.clientX;}); s.addEventListener('touchstart',e=>{lastX=e.touches[0].clientX;},{passive:true});
+  document.addEventListener('mousemove',move); document.addEventListener('touchmove',move,{passive:true});
 }},
-// L10: TIMING BAR — stop the moving indicator in the RED zone 3 times.
-10:{ hint:'Stop the indicator in the RED zone! Hit it 3 times.', render(s,win){
-  let hits=0; const NEED=3; let done=false; let pos=0; let dir=1; let speed=1.5;
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div id="bar10" style="position:relative;width:300px;height:40px;background:linear-gradient(90deg,#333 60%,'+C+' 60%,'+C+' 80%,#333 80%);border-radius:8px;overflow:hidden;border:1px solid '+CD+'"><div id="ind10" style="position:absolute;top:2px;left:0;width:6px;height:36px;background:#fff;border-radius:3px;box-shadow:0 0 6px #fff"></div></div><div id="cnt10" style="color:'+C+';font-size:14px;font-weight:700;margin-top:12px">Hits: 0/'+NEED+'</div><button class="tap" id="stop10" style="margin-top:12px;padding:12px 28px;border-radius:24px;background:'+C+';color:#fff;border:none;font-weight:700;font-size:15px;cursor:pointer">STOP!</button></div>';
-  const ind=$('ind10'),cnt=$('cnt10');
-  function anim(){ if(done)return; pos+=dir*speed; if(pos>=294){pos=294;dir=-1;} if(pos<=0){pos=0;dir=1;} ind.style.left=pos+'px'; requestAnimationFrame(anim); }
-  anim();
-  $('stop10').onclick=()=>{ if(done)return; if(pos>=180&&pos<=240){ hits++; cnt.textContent='Hits: '+hits+'/'+NEED; speed+=0.5; if(hits>=NEED&&!done){done=true;setTimeout(win,400);} } else { showToast('Missed! Aim for the red zone.'); } };
+// L10: TAP on the BEAT — 4 rhythm pulses, tap exactly on each. Distinct from O=STOP-at-value, P=balance 3s.
+10:{ hint:'Feel the rhythm! Tap exactly ON each beat (4 pulses).', render(s,win){
+  let hits=0; const N=4; let done=false; let pulseStart=0; const INTERVAL=800; // ms between beats
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div id="beat10" class="tap" style="width:120px;height:120px;border-radius:50%;background:'+CD+';margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;font-weight:700;transition:transform .1s,background .1s">Listen...</div><div id="cnt10" style="color:'+C+';font-size:16px;font-weight:700">Hits: 0 / '+N+'</div><div style="color:#888;font-size:11px;margin-top:4px">Tap when the ring flashes!</div></div>';
+  const beatEl=$('beat10'),cnt=$('cnt10');
+  function pulse(){ if(done)return; beatEl.style.background=C; beatEl.style.transform='scale(1.15)'; pulseStart=Date.now(); setTimeout(()=>{beatEl.style.background=CD;beatEl.style.transform='scale(1)';},250); }
+  // auto-pulse loop
+  const iv=setInterval(()=>{ if(done){clearInterval(iv);return;} pulse(); },INTERVAL);
+  setTimeout(pulse,300);
+  beatEl.onclick=()=>{ if(done)return; const now=Date.now(); const since=now-pulseStart; if(since<400){ hits++; cnt.textContent='Hits: '+hits+' / '+N; if(hits>=N){done=true;clearInterval(iv);setTimeout(win,400);} } else { showToast('Off-beat! Wait for the flash.'); } };
 }},
 // ---- NORMAL 11-15 ----
-// L11: CONNECT-THE-DOTS — draw through numbered dots to reveal a picture (star).
-11:{ hint:'Connect the dots in order 1-8 to draw a picture!', render(s,win){
-  const cx=150,cy=130; const pts=[];
-  // Star shape: outer + inner alternating
-  for(let i=0;i<8;i++){ const a=-Math.PI/2+i*Math.PI/4; const r=i%2===0?70:30; pts.push({x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r,n:i+1}); }
-  let idx=1; let done=false;
-  s.innerHTML='<canvas id="cv11" width="320" height="280" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);touch-action:none;border-radius:8px"></canvas>';
-  const cv=$('cv11'),ctx=cv.getContext('2d');
-  function draw(){ ctx.fillStyle=CDARK; ctx.fillRect(0,0,320,280);
-    pts.forEach(p=>{ ctx.fillStyle=idx>p.n?C:CD; ctx.beginPath(); ctx.arc(p.x,p.y,18,0,7); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='bold 13px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(p.n,p.x,p.y); });
-  }
-  draw(); let dragging=false,prevX=0,prevY=0;
-  function check(mx,my){ pts.forEach(p=>{ if(Math.abs(mx-p.x)<28&&Math.abs(my-p.y)<28&&p.n===idx&&idx<=8){ if(idx>1){ ctx.strokeStyle=C; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(prevX,prevY); ctx.lineTo(p.x,p.y); ctx.stroke(); } idx++; prevX=p.x; prevY=p.y; draw(); if(idx>8&&!done){done=true;setTimeout(win,500);} } }); }
-  const start=e=>{e.preventDefault();dragging=true;const r=cv.getBoundingClientRect();prevX=(e.touches?e.touches[0].clientX:e.clientX)-r.left;prevY=(e.touches?e.touches[0].clientY:e.clientY)-r.top;check(prevX,prevY);};
-  const move=e=>{if(!dragging||done)return;e.preventDefault();const r=cv.getBoundingClientRect();const mx=(e.touches?e.touches[0].clientX:e.clientX)-r.left;const my=(e.touches?e.touches[0].clientY:e.clientY)-r.top;check(mx,my);};
-  cv.addEventListener('mousedown',start);cv.addEventListener('touchstart',start,{passive:false});
-  document.addEventListener('mousemove',move);document.addEventListener('touchmove',move,{passive:false});
-  document.addEventListener('mouseup',()=>dragging=false);document.addEventListener('touchend',()=>dragging=false);
+// L11: SLIDE red tokens along a track to sorted order (1-5). Distinct from O=slide puzzle 1-8, P=tap petals clockwise.
+11:{ hint:'Slide the red tokens along the track into sorted order: 1,2,3,4,5.', render(s,win){
+  const N=5; let nums=[3,1,4,5,2]; let done=false;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:340px"><div style="color:#888;font-size:12px;margin-bottom:10px">Sort them: 1 → 2 → 3 → 4 → 5</div><div id="track11" style="position:relative;width:320px;height:60px;background:'+CDARK+';border:1px solid '+CD+';border-radius:30px;display:flex;align-items:center;padding:0 6px"></div><div style="color:#888;font-size:11px;margin-top:8px">Drag a token onto another to swap</div></div>';
+  const track=$('track11'); const slotW=60;
+  nums.forEach((n,i)=>{ const t=el('div','tap'); t._n=n; t.textContent=n; t.style.cssText='width:50px;height:50px;border-radius:50%;background:'+C+';color:#fff;font-weight:700;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:grab;margin:0 '+(slotW-50)/2+'px;box-shadow:0 0 10px rgba(244,67,54,.4)'; track.appendChild(t); });
+  let dragging=null;
+  track.querySelectorAll('.tap').forEach(t=>{ t.addEventListener('mousedown',e=>{dragging=t;e.preventDefault();}); t.addEventListener('touchstart',e=>{e.preventDefault();dragging=t;},{passive:false}); });
+  function over(e){ if(!dragging)return null; const x=(e.touches?e.touches[0].clientX:e.clientX); const r=track.getBoundingClientRect(); const idx=Math.floor((x-r.left)/slotW); const toks=[...track.querySelectorAll('.tap')]; return toks[idx]; }
+  function swap(a,b){ if(!a||!b||a===b)return; const toks=[...track.querySelectorAll('.tap')]; const ai=toks.indexOf(a),bi=toks.indexOf(b); if(ai<0||bi<0)return; [toks[ai],toks[bi]]=[toks[bi],toks[ai]]; toks.forEach(t=>track.appendChild(t)); check(); }
+  function check(){ const toks=[...track.querySelectorAll('.tap')]; const arr=toks.map(t=>t._n); if(arr.every((v,i)=>v===i+1)&&!done){done=true;setTimeout(win,400);} }
+  document.addEventListener('mousemove',e=>{ const t=over(e); if(dragging&&t){ swap(dragging,t); } }); document.addEventListener('touchmove',e=>{ const t=over(e); if(dragging&&t){ e.preventDefault(); swap(dragging,t); } },{passive:false});
+  document.addEventListener('mouseup',()=>dragging=null); document.addEventListener('touchend',()=>dragging=null);
 }},
-// L12: SLIDE TILE — mini 2x3 sliding puzzle to unscramble "R-E-D-H-O-T".
-12:{ hint:'Slide the tiles to spell R-E-D-H-O-T in order!', render(s,win){
-  // 2x3 grid: tiles R,E,D,H,O,T + 1 empty = 6 tiles, 1 hole in 3x2
-  // Actually use 2x3 = 6 cells, 5 tiles + 1 hole spelling "RED" then "HO" + T
-  // Simplify: 2x3 grid, tiles numbered 1-5, empty=6. Target: sequential.
-  const cols=3,rows=2; let tiles=[3,1,2,5,4,0]; // 0=hole
-  let done=false;
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"><div id="g12" style="display:grid;grid-template-columns:repeat(3,80px);gap:4px"></div><div style="text-align:center;color:#888;font-size:12px;margin-top:8px">Slide tiles to order 1-5</div></div>';
-  const labels={1:'R',2:'E',3:'D',4:'H',5:'O'};
-  function render(){ const g=$('g12'); g.innerHTML='';
-    tiles.forEach((v,i)=>{ const c=el('div','tap'); if(v===0){ c.style.cssText='width:80px;height:80px;border-radius:8px;background:transparent'; } else { c.style.cssText='width:80px;height:80px;border-radius:8px;background:'+CBG+';border:1px solid '+CD+';display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:'+C+';cursor:pointer'; c.textContent=labels[v]; c.onclick=()=>trySlide(i); } g.appendChild(c); });
-  }
-  function trySlide(i){ const r=Math.floor(i/cols),c=i%cols; const adj=[]; if(r>0)adj.push(i-cols); if(r<rows-1)adj.push(i+cols); if(c>0)adj.push(i-1); if(c<cols-1)adj.push(i+1);
-    adj.forEach(j=>{ if(tiles[j]===0){ tiles[j]=tiles[i]; tiles[i]=0; render(); checkWin(); } });
-  }
-  function checkWin(){ for(let i=0;i<5;i++){ if(tiles[i]!==i+1)return; } if(tiles[5]===0&&!done){done=true;setTimeout(win,500);} }
+// L12: COLOR FILL — tap a cell, flood-fills the connected red region. Goal: turn whole grid red. Distinct from O=turn-OFF, P=turn-ON lights.
+12:{ hint:'COLOR FILL! Tap a cell to flood-fill its connected region red. Fill the whole grid!', render(s,win){
+  const N=4; // 4x4 grid
+  // start: only (0,0) is red; rest are dark. Player expands the red region.
+  let grid=new Array(N*N).fill(0); grid[0]=1; let done=false;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:#888;font-size:12px;margin-bottom:10px">Tap any red-adjacent cell to grow the red region</div><div id="g12" style="display:grid;grid-template-columns:repeat('+N+',60px);gap:4px"></div><div id="cnt12" style="color:'+C+';font-size:12px;margin-top:8px">Red cells: 1 / '+ (N*N) +'</div></div>';
+  const g=$('g12'),cnt=$('cnt12'); let cells=[];
+  function render(){ cells.forEach((c,i)=>{ c.style.background=grid[i]?C:CBG; }); const red=grid.filter(v=>v).length; cnt.textContent='Red cells: '+red+' / '+(N*N); if(red===N*N&&!done){done=true;setTimeout(win,400);} }
+  function neighbors(i){ const r=Math.floor(i/N),c=i%N,out=[]; if(r>0)out.push(i-N); if(r<N-1)out.push(i+N); if(c>0)out.push(i-1); if(c<N-1)out.push(i+1); return out; }
+  for(let i=0;i<N*N;i++){ const c=el('div','tap'); c.style.cssText='width:60px;height:60px;border-radius:6px;cursor:pointer;transition:.1s';
+    c.onclick=()=>{ // can only fill if adjacent to a red cell
+      if(grid[i])return; if(neighbors(i).some(j=>grid[j])){ grid[i]=1; render(); } else { showToast('Must touch a red cell!'); } };
+    g.appendChild(c); cells.push(c); }
   render();
 }},
-// L13: POSITION MEMORY — dots flash on a grid, then you tap where they were.
-13:{ hint:'Memorize where the red dots appear, then tap their positions!', render(s,win){
-  const N=4; const grid=3; const cells=[]; const positions=[]; let phase='show'; let userIdx=0; let done=false;
-  while(positions.length<N){ const p=Math.floor(Math.random()*9); if(!positions.includes(p))positions.push(p); }
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div id="msg13" style="color:#888;font-size:13px;margin-bottom:12px">Watch carefully...</div><div id="g13" style="display:grid;grid-template-columns:repeat(3,70px);gap:6px"></div></div>';
-  const g=$('g13');
-  for(let i=0;i<9;i++){ const c=el('div'); c.style.cssText='width:70px;height:70px;border-radius:8px;background:'+CBG+';border:1px solid '+CD+';transition:.2s'; c._i=i; g.appendChild(c); cells.push(c); }
-  function showDots(){ phase='show'; positions.forEach((p,idx)=>{ setTimeout(()=>{ cells[p].style.background=C; },idx*500); });
-    setTimeout(()=>{ positions.forEach(p=>cells[p].style.background=CBG); $('msg13').textContent='Now tap where they were!'; phase='input'; setupInput(); },N*500+1000);
-  }
-  function setupInput(){ cells.forEach(c=>{ c.onclick=()=>{ if(phase!=='input'||done)return; if(positions.includes(c._i)){ c.style.background=C; userIdx++; if(userIdx>=N&&!done){done=true;setTimeout(win,400);} } else { c.style.background='#e74c3c'; showToast('Wrong spot!'); setTimeout(()=>c.style.background=CBG,300); } }; });
-  }
-  setTimeout(showDots,500);
+// L13: ECHO — repeat a growing sequence (1, then 1-2, then 1-2-3). Distinct from O=3-color seq, P=shape seq recall.
+13:{ hint:'ECHO! Watch the sequence grow: 1, then 1-2, then 1-2-3... Repeat each one.', render(s,win){
+  const MAX=4; const full=[]; for(let i=0;i<MAX;i++)full.push(Math.floor(Math.random()*4));
+  let round=1, userIdx=0, showing=true; let done=false;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:220px"><div id="msg13" style="text-align:center;color:#888;font-size:13px;margin-bottom:12px">Watch...</div><div style="display:grid;grid-template-columns:repeat(2,80px);gap:8px;justify-content:center">'+[0,1,2,3].map(i=>'<div class="tap" id="b13_'+i+'" style="width:80px;height:80px;border-radius:12px;background:'+CBG+';border:1px solid '+CD+';cursor:pointer"></div>').join('')+'</div><div id="rnd13" style="text-align:center;color:'+C+';font-size:12px;margin-top:10px">Round 1 / '+MAX+'</div></div>';
+  function flash(i){ const b=$('b13_'+i); b.style.background=C; setTimeout(()=>b.style.background=CBG,400); }
+  function playRound(){ showing=true; $('msg13').textContent='Watch round '+round+'...'; let i=0; const iv=setInterval(()=>{ flash(full[i]); i++; if(i>=round){clearInterval(iv);setTimeout(()=>{$('msg13').textContent='Your turn! Echo it.';showing=false;},600);} },700); }
+  setTimeout(playRound,500);
+  [0,1,2,3].forEach(i=>{ $('b13_'+i).onclick=()=>{ if(showing||done)return; flash(i); if(full[userIdx]===i){ userIdx++; if(userIdx===round){ if(round>=MAX){done=true;win();} else { round++; userIdx=0; $('rnd13').textContent='Round '+round+' / '+MAX; setTimeout(playRound,600); } } } else { showToast('Wrong! Restart round.'); userIdx=0; setTimeout(playRound,800); } }; });
 }},
-// L14: SHELL GAME — follow the red ball under 3 cups as they shuffle.
-14:{ hint:'Watch the red ball carefully. Which cup is it under after shuffling?', render(s,win){
-  const pos=[{x:60,y:120},{x:160,y:120},{x:260,y:120}]; let ballPos=0; let done=false; let shuffling=false;
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div id="arena14" style="position:relative;width:320px;height:200px"><div id="ball14" style="position:absolute;width:30px;height:30px;border-radius:50%;background:'+C+';left:75px;top:155px;z-index:1;transition:left .3s"></div>'+pos.map((p,i)=>'<div class="cup14" id="cup14_'+i+'" data-i="'+i+'" style="position:absolute;width:60px;height:80px;left:'+(p.x)+'px;top:90px;cursor:pointer;transition:left .3s, top .15s;font-size:50px;text-align:center;line-height:80px">\u26BD</div>').join('')+'</div><div id="msg14" style="color:#888;font-size:13px;margin-top:12px">Watch the ball...</div></div>';
-  // Actually use cup emoji that can hide: let's use a div that looks like a cup
-  $('arena14').innerHTML='<div id="ball14" style="position:absolute;width:24px;height:24px;border-radius:50%;background:'+C+';left:'+(60+15)+'px;top:165px;z-index:1;transition:left .25s,opacity .2s"></div>'+pos.map((p,i)=>'<div class="tap cup14" id="cup14_'+i+'" data-i="'+i+'" style="position:absolute;width:50px;height:70px;left:'+p.x+'px;top:95px;cursor:pointer;transition:left .25s,top .12s;z-index:2;background:linear-gradient(180deg,'+CD+','+CBG+');border-radius:8px 8px 4px 4px;border:1px solid '+CA+';display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:11px;color:#999;font-weight:700">CUP</div>').join('');
-  const ball=$('ball14'),msg=$('msg14');
-  ballPos=0;
-  function shuffle(times){ shuffling=true; msg.textContent='Shuffling...'; let t=0;
-    const iv=setInterval(()=>{ if(t>=times){clearInterval(iv);shuffling=false;msg.textContent='Where is the ball? Tap a cup!';ball.style.opacity=0;return;}
-      const a=Math.floor(Math.random()*3),b=Math.floor(Math.random()*3); if(a===b)return;
-      // swap cup positions visually
-      const ca=$('cup14_'+a),cb=$('cup14_'+b);
-      const la=ca.style.left,lb=cb.style.left;
-      ca.style.left=lb; cb.style.left=la;
-      ca.id='cup14_'+b; cb.id='cup14_'+a; ca.dataset.i=b; cb.dataset.i=a;
-      if(ballPos===a)ballPos=b; else if(ballPos===b)ballPos=a;
-      ball.style.left=pos[ballPos].x+15+'px'; t++;
-    },350);
-  }
-  ball.style.opacity=1; ball.style.left=pos[0].x+15+'px';
-  setTimeout(()=>shuffle(6),1500);
-  document.querySelectorAll('.cup14').forEach(c=>{ c.onclick=()=>{ if(shuffling||done)return; const i=parseInt(c.dataset.i); if(i===ballPos){ done=true; ball.style.opacity=1; c.style.top='70px'; setTimeout(win,500); } else { showToast('Not there! Try again.'); } }; });
+// L14: MATCH-3 — swap adjacent red gems to make 3 in a row. Distinct from O=rotate tiles arrows, P=flip cards.
+14:{ hint:'MATCH-3! Swap two adjacent gems to make 3 reds in a row.', render(s,win){
+  // 3x3 grid; player swaps to get a full row of reds (row index 1, the middle)
+  // Represent: 0=dark, 1=red. Goal: middle row all red.
+  let grid=[1,0,1, 0,1,0, 1,0,1]; let done=false; let selected=null;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:#888;font-size:12px;margin-bottom:10px">Make the MIDDLE row all red ❤❤❤</div><div id="g14" style="display:grid;grid-template-columns:repeat(3,64px);gap:4px"></div><div style="color:#888;font-size:11px;margin-top:8px">Tap a gem, then tap an adjacent one to swap</div></div>';
+  const g=$('g14'); let cells=[];
+  function render(){ cells.forEach((c,i)=>{ c.style.background=grid[i]?C:CBG; c.textContent=grid[i]?'❤':''; c.style.fontSize='28px'; c.style.color='#fff'; }); // check middle row
+    if(grid[3]&&grid[4]&&grid[5]&&!done){done=true;setTimeout(win,400);} }
+  function adj(a,b){ const r1=Math.floor(a/3),c1=a%3,r2=Math.floor(b/3),c2=b%3; return Math.abs(r1-r2)+Math.abs(c1-c2)===1; }
+  for(let i=0;i<9;i++){ const c=el('div','tap'); c.style.cssText='width:64px;height:64px;border-radius:8px;cursor:pointer;transition:.1s;display:flex;align-items:center;justify-content:center;border:1px solid '+CD;
+    c.onclick=()=>{ if(done)return; if(selected===null){ selected=i; c.style.outline='3px solid #fff'; } else if(selected===i){ selected=null; c.style.outline='none'; } else { if(adj(selected,i)){ [grid[selected],grid[i]]=[grid[i],grid[selected]]; cells[selected].style.outline='none'; selected=null; render(); } else { cells[selected].style.outline='none'; selected=null; render(); } } };
+    g.appendChild(c); cells.push(c); }
+  render();
 }},
-// L15: BLOW BUBBLES — tap the wand to blow 6 red soap bubbles.
-15:{ hint:'Tap the bubble wand to blow 6 red bubbles!', render(s,win){
-  let blown=0; const NEED=6; let done=false;
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div id="bubbleArea15" style="position:relative;width:260px;height:180px;margin-bottom:12px"></div><div id="wand15" class="tap" style="font-size:48px;cursor:pointer">\u{1FAE0}</div><div id="cnt15" style="color:'+C+';font-size:13px;margin-top:8px">0/'+NEED+' bubbles</div><div style="color:#888;font-size:11px;margin-top:4px">(tap the wand)</div></div>';
-  const area=$('bubbleArea15'),cnt=$('cnt15'),wand=$('wand15');
-  wand.textContent='\u{1F9FC}'; // soap emoji as wand proxy
-  wand.onclick=()=>{ if(done||blown>=NEED)return; blown++;
-    const b=el('div'); b.style.cssText='position:absolute;width:'+(30+Math.random()*20)+'px;height:'+(30+Math.random()*20)+'px;border-radius:50%;background:radial-gradient(circle at 30% 30%,'+CL+','+C+'80);border:1px solid '+C+';left:'+(Math.random()*200)+'px;top:'+(100+Math.random()*40)+'px;transition:all 2s ease-out;opacity:0'; area.appendChild(b);
-    setTimeout(()=>{b.style.opacity=1;b.style.top=(Math.random()*80)+'px';},10);
-    setTimeout(()=>{b.style.opacity=0.3;b.style.transform='scale(0.8)';},1500);
-    cnt.textContent=blown+'/'+NEED+' bubbles';
-    if(blown>=NEED&&!done){done=true;setTimeout(win,600);}
-  };
+// L15: BUILD red tower — tap when the oscillating marker is in the green zone. Distinct from O=stack blocks, P=water plant.
+15:{ hint:'BUILD a red tower! Tap when the marker is in the GREEN zone (5 floors).', render(s,win){
+  let floors=0; const NEED=5; let done=false; let pos=0; let dir=1;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:300px"><div id="tower15" style="display:flex;flex-direction:column-reverse;align-items:center;margin-bottom:16px;height:120px;justify-content:flex-start"></div><div id="bar15" style="position:relative;width:280px;height:30px;background:'+CDARK+';border:1px solid '+CD+';border-radius:15px;overflow:hidden;touch-action:none"><div style="position:absolute;left:40%;top:0;width:20%;height:100%;background:#4caf50;opacity:.4"></div><div id="mk15" style="position:absolute;left:0;top:0;width:4px;height:100%;background:#fff;box-shadow:0 0 8px #fff"></div></div><div id="cnt15" style="color:'+C+';font-size:14px;margin-top:10px;font-weight:700">Floors: 0 / '+NEED+'</div><div style="color:#888;font-size:11px">Tap the bar when marker is green!</div></div>';
+  const tower=$('tower15'),bar=$('bar15'),mk=$('mk15'),cnt=$('cnt15');
+  function anim(){ if(done)return; pos+=dir*1.8; if(pos>100){pos=100;dir=-1;} if(pos<0){pos=0;dir=1;} mk.style.left=pos+'%'; requestAnimationFrame(anim); }
+  anim();
+  bar.onclick=()=>{ if(done)return; if(pos>=40&&pos<=60){ const f=el('div'); f.style.cssText='width:'+(60+floors*8)+'px;height:18px;background:'+C+';border-radius:3px;margin-top:2px;box-shadow:0 0 8px rgba(244,67,54,.5)'; tower.appendChild(f); floors++; cnt.textContent='Floors: '+floors+' / '+NEED; if(floors>=NEED){done=true;setTimeout(win,500);} } else { showToast('Missed! Tap in the green zone.'); } };
 }},
 // ---- HARD 16-20 ----
-// L16: MATH EQUATION — type the answer to a visible math problem.
-16:{ hint:'Solve the math problem and type the answer!', render(s,win){
-  const a=3+Math.floor(Math.random()*5),b=4+Math.floor(Math.random()*5); const ans=a+b;
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="font-size:40px;font-weight:700;color:'+C+';margin-bottom:16px">'+a+' + '+b+' = ?</div><div style="color:#888;font-size:12px;margin-bottom:10px">Type the answer:</div><input id="ty16" type="number" style="width:120px;padding:10px;font-size:24px;text-align:center;background:'+CBG+';border:1px solid '+CD+';color:#fff;border-radius:8px" autofocus></div>';
+// L16: TYPE the word "SCARLET". Distinct from O=type orange word, P=type purple word.
+16:{ hint:'Type the word shown on screen exactly.', render(s,win){
+  const words=['SCARLET','CRIMSON','RUBY','BLOOD','ROSE','CHERRY','BRICK']; const w=words[Math.floor(Math.random()*words.length)];
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="font-size:40px;font-weight:700;color:'+C+';letter-spacing:4px;margin-bottom:18px;text-shadow:0 0 20px rgba(244,67,54,.4)">'+w+'</div><div style="color:#888;font-size:12px;margin-bottom:10px">Type the word:</div><input id="ty16" style="width:240px;padding:10px;font-size:20px;text-align:center;background:'+CBG+';border:1px solid '+CD+';color:#fff;border-radius:8px" autofocus></div>';
   const inp=$('ty16'); inp.focus();
-  function chk(){ if(parseInt(inp.value)===ans)win(); }
+  function chk(){ if(inp.value.toUpperCase()===w)win(); else if(inp.value.length>=w.length)showToast('Not quite!'); }
   inp.addEventListener('input',chk);
 }},
-// L17: X-SHAPED TOGGLE — tap flips an X (diagonal cross) pattern. Make all cells red.
-17:{ hint:'Tap flips an X (diagonal cross) pattern. Make all cells red!', render(s,win){
-  let grid=[0,1,0,1,0,1,0,1,0];
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"><div id="g17" style="display:grid;grid-template-columns:repeat(3,66px);gap:5px"></div><div style="text-align:center;color:#888;font-size:12px;margin-top:8px">Tap toggles its X (both diagonals)</div></div>';
+// L17: Flip ENTIRE ROW + its column. Distinct from O=DIAGONAL, P=PLUS cross.
+17:{ hint:'Tap flips a whole ROW and its COLUMN. Make all cells red!', render(s,win){
+  let grid=[1,0,1,0,1,0,1,0,1]; let done=false;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div id="g17" style="display:grid;grid-template-columns:repeat(3,66px);gap:5px"></div><div style="color:#888;font-size:11px;margin-top:8px">Tap = flips whole row + column</div></div>';
   const g=$('g17'); let cells=[];
-  function render(){ cells.forEach((c,i)=>c.style.background=grid[i]?C:CBG); if(grid.every(v=>v===1))setTimeout(win,400); }
-  function xOf(i){ const r=Math.floor(i/3),c=i%3; const idxs=[i]; // diagonal 1
-    idxs.push((r+1)*3+(c+1)<9&&r<2&&c<2?(r+1)*3+(c+1):-1); // not clean, let's use:
-    const out=[i]; // all cells on either diagonal passing through i
-    // main diagonal: r==c
-    if(r===c){ for(let k=0;k<3;k++)out.push(k*3+k); }
-    // anti-diagonal: r+c==2
-    if(r+c===2){ for(let k=0;k<3;k++)out.push(k*3+(2-k)); }
-    return [...new Set(out)];
-  }
+  function render(){ cells.forEach((c,i)=>c.style.background=grid[i]?C:CBG); if(grid.every(v=>v===1)&&!done){done=true;setTimeout(win,400);} }
+  function crossRC(i){ const r=Math.floor(i/3),c=i%3,out=[]; for(let k=0;k<3;k++){out.push(r*3+k);out.push(k*3+c);} return [...new Set(out)]; }
   for(let i=0;i<9;i++){ const c=el('div','tap'); c.style.cssText='width:66px;height:66px;border-radius:8px;cursor:pointer;transition:.1s';
-    c.onclick=()=>{ xOf(i).forEach(j=>{ if(j>=0&&j<9)grid[j]=grid[j]?0:1; }); render(); };
-    g.appendChild(c); cells.push(c);
-  }
+    c.onclick=()=>{ crossRC(i).forEach(j=>grid[j]=grid[j]?0:1); render(); };
+    g.appendChild(c); cells.push(c); }
   render();
 }},
-// L18: COUNT the red objects — count how many red circles are shown.
-18:{ hint:'How many RED circles are on screen? Type the number!', render(s,win){
-  const count=7+Math.floor(Math.random()*4); const positions=[];
-  while(positions.length<count){ positions.push({x:Math.random()*280+40,y:Math.random()*180+60,r:12+Math.random()*16}); }
-  // add decoy non-red circles
-  const decoys=3; const dpos=[];
-  while(dpos.length<decoys){ dpos.push({x:Math.random()*280+40,y:Math.random()*180+60,r:12+Math.random()*16}); }
-  s.innerHTML='<div id="area18" style="position:absolute;inset:0"></div><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;background:rgba(0,0,0,.8);padding:16px;border-radius:16px;border:1px solid '+CD+'"><div style="color:#888;font-size:12px;margin-bottom:8px">How many RED circles?</div><input id="ty18" type="number" style="width:80px;padding:8px;font-size:20px;text-align:center;background:'+CBG+';border:1px solid '+CD+';color:#fff;border-radius:8px" autofocus></div>';
-  const area=$('area18');
-  positions.forEach(p=>{ const c=el('div'); c.style.cssText='position:absolute;width:'+p.r*2+'px;height:'+p.r*2+'px;border-radius:50%;background:'+C+';left:'+p.x+'px;top:'+p.y+'px'; area.appendChild(c); });
-  dpos.forEach(p=>{ const c=el('div'); c.style.cssText='position:absolute;width:'+p.r*2+'px;height:'+p.r*2+'px;border-radius:50%;background:#2196F3;left:'+p.x+'px;top:'+p.y+'px'; area.appendChild(c); });
-  const inp=$('ty18'); inp.focus();
-  inp.addEventListener('input',()=>{ if(parseInt(inp.value)===count)win(); });
+// L18: Find the ODD-COLORED red (subtle hue). Distinct from O=find 2 identical, P=find LIGHTER.
+18:{ hint:'One tile is a slightly DIFFERENT red. Tap the odd one out!', render(s,win){
+  // subtle: normal #F44336, odd #E53935 (very close hue)
+  const normal='#F44336', odd='#E53935'; let done=false;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:#888;font-size:12px;margin-bottom:12px">Find the odd-colored red</div><div id="g18" style="display:grid;grid-template-columns:repeat(4,64px);gap:6px"></div></div>';
+  const g=$('g18'); const oddIdx=Math.floor(Math.random()*8);
+  for(let i=0;i<8;i++){ const c=el('div','tap'); c.style.cssText='width:64px;height:64px;border-radius:8px;background:'+(i===oddIdx?odd:normal)+';cursor:pointer;transition:.1s';
+    c.onclick=()=>{ if(done)return; if(i===oddIdx){ c.style.boxShadow='0 0 25px '+CL; done=true; setTimeout(win,400); } else { showToast('Not that one!'); } };
+    g.appendChild(c); }
 }},
-// L19: DODGE falling debris — move left/right to avoid falling obstacles for 6 seconds.
-19:{ hint:'DODGE the falling debris! Survive for 6 seconds!', render(s,win){
-  let px=150; let done=false; let timeLeft=6; let debris=[]; let dragging=false;
-  s.innerHTML='<canvas id="cv19" width="320" height="300" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:1px solid '+CD+';border-radius:8px;touch-action:none"></canvas><div id="t19" style="position:absolute;top:55px;left:50%;transform:translateX(-50%);color:'+C+';font-size:16px;font-weight:700">Survive: 6.0s</div>';
+// L19: GUIDE red ball through a moving-gap barrier. Distinct from O=tap oranges avoid bombs, P=drag maze.
+19:{ hint:'GUIDE the red ball! Drag it through the gap in the moving barrier.', render(s,win){
+  let done=false; let bx=30, by=100; let gapX=150; let gapDir=1;
+  s.innerHTML='<canvas id="cv19" width="320" height="280" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:1px solid '+CD+';touch-action:none;border-radius:8px"></canvas>';
   const cv=$('cv19'),ctx=cv.getContext('2d');
-  function draw(){ ctx.fillStyle=CDARK; ctx.fillRect(0,0,320,300);
-    debris.forEach(d=>{ ctx.fillStyle=d.color; ctx.fillRect(d.x,d.y,d.w,d.h); });
-    ctx.fillStyle=C; ctx.beginPath(); ctx.arc(px,280,14,0,7); ctx.fill();
+  const barrierY=140, gapW=70;
+  function draw(){ ctx.fillStyle=CDARK; ctx.fillRect(0,0,cv.width,cv.height);
+    // barrier with gap
+    ctx.fillStyle=CD; ctx.fillRect(0,barrierY,gapX,20); ctx.fillRect(gapX+gapW,barrierY,cv.width-gapX-gapW,20);
+    // goal
+    ctx.fillStyle=CL; ctx.fillRect(cv.width-30,100,20,80);
+    // ball
+    ctx.fillStyle=C; ctx.beginPath(); ctx.arc(bx,by,14,0,7); ctx.fill();
   }
-  function spawnDebris(){ if(done)return; debris.push({x:Math.random()*300,y:0,w:20+Math.random()*20,h:15,vx:(Math.random()-0.5)*1,vy:2+Math.random()*1.5,color:'#888'}); }
-  let frameCount=0;
-  function loop(){ if(done)return; frameCount++;
-    if(frameCount%30===0){ timeLeft-=0.5; $('t19').textContent='Survive: '+timeLeft.toFixed(1)+'s'; }
-    if(frameCount%25===0)spawnDebris();
-    debris.forEach(d=>{ d.y+=d.vy; d.x+=d.vx; if(d.x<0||d.x>300)d.vx*=-1; // check collision
-      if(Math.abs(d.x+d.w/2-px)<14+d.w/2&&Math.abs(d.y+d.h/2-280)<14+d.h/2){ done=true; $('t19').textContent='HIT!'; $('t19').style.color='#e74c3c'; showToast('You got hit! Try again.'); setTimeout(()=>{done=false;timeLeft=6;debris=[];frameCount=0;$('t19').style.color=C;loop();},1000); return; }
-    });
-    debris=debris.filter(d=>d.y<300);
-    draw();
-    if(timeLeft<=0&&!done){done=true;setTimeout(win,400);return;}
-    requestAnimationFrame(loop);
-  }
-  loop();
-  function move(e){ e.preventDefault(); const r=cv.getBoundingClientRect(); px=(e.touches?e.touches[0].clientX:e.clientX)-r.left; px=Math.max(14,Math.min(306,px)); }
+  function tick(){ if(done)return; gapX+=gapDir*2; if(gapX<10){gapX=10;gapDir=1;} if(gapX>cv.width-gapW-10){gapX=cv.width-gapW-10;gapDir=-1;} draw(); requestAnimationFrame(tick); }
+  tick();
+  let dragging=false;
+  function move(e){ if(!dragging||done)return; e.preventDefault(); const r=cv.getBoundingClientRect(); const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left; const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top; bx=x; by=y;
+    // hit barrier (not in gap)?
+    if(y>barrierY-14&&y<barrierY+34){ if(x<gapX||x>gapX+gapW){ showToast('Hit the wall!'); bx=30; by=100; } }
+    if(x>cv.width-30&&y>100&&y<180){done=true;win();} }
   cv.addEventListener('mousedown',e=>{dragging=true;move(e);}); cv.addEventListener('touchstart',e=>{e.preventDefault();dragging=true;move(e);},{passive:false});
-  document.addEventListener('mousemove',e=>{if(dragging)move(e);}); document.addEventListener('touchmove',e=>{if(dragging)move(e);},{passive:false});
-  document.addEventListener('mouseup',()=>dragging=false); document.addEventListener('touchend',()=>dragging=false);
-  // keyboard
-  document.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft')px=Math.max(14,px-12); if(e.key==='ArrowRight')px=Math.min(306,px+12); });
-}},
-// L20: FILL GLASS — adjust a slider to pour liquid to an exact line.
-20:{ hint:'Fill the glass to the RED LINE exactly! Use the pour button.', render(s,win){
-  const TARGET=75; let level=0; let done=false;
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="position:relative;width:60px;height:180px;background:'+CBG+';border:2px solid '+CD+';border-radius:0 0 8px 8px;margin:0 auto 12px;overflow:hidden"><div id="liquid20" style="position:absolute;bottom:0;left:0;width:100%;height:0;background:linear-gradient(180deg,'+CL+','+C+');transition:height .15s"></div><div style="position:absolute;bottom:'+TARGET+'%;left:0;width:100%;height:2px;background:'+C+';box-shadow:0 0 4px '+C+'"></div></div><div id="msg20" style="color:#888;font-size:12px;margin-bottom:10px">Fill to the red line!</div><div style="display:flex;gap:8px;justify-content:center"><button class="tap" id="pour20" style="padding:10px 20px;border-radius:12px;background:'+C+';color:#fff;border:none;font-weight:700;cursor:pointer">POUR</button><button class="tap" id="drain20" style="padding:10px 20px;border-radius:12px;background:'+CBG+';color:#fff;border:1px solid '+CD+';cursor:pointer">Drain</button></div></div>';
-  const liquid=$('liquid20'),msg=$('msg20');
-  function update(){ liquid.style.height=level+'%'; if(Math.abs(level-TARGET)<3&&!done){done=true;msg.textContent='Perfect!';setTimeout(win,500);} else if(level>TARGET+5){ msg.textContent='Too much! Drain some.'; } else if(level<TARGET-5){ msg.textContent='Keep pouring...'; } else { msg.textContent='Almost there!'; } }
-  $('pour20').onclick=()=>{ if(done)return; level=Math.min(100,level+8); update(); };
-  $('drain20').onclick=()=>{ if(done)return; level=Math.max(0,level-8); update(); };
-}},
-// ---- EXPERT 21-25 ----
-// L21: TRACE a HEART — connect dots to draw a heart shape.
-21:{ hint:'TRACE a heart! Tap the dots in order to draw it.', render(s,win){
-  // Heart shape points (simplified)
-  const cx=160,cy=140; const pts=[];
-  const heart=[[100,80],[140,60],[180,80],[200,120],[160,170],[120,220],[120,160],[100,120]];
-  heart.forEach((p,i)=>pts.push({x:p[0],y:p[1],n:i+1}));
-  let idx=1; let done=false;
-  s.innerHTML='<svg id="sv21" width="320" height="280" viewBox="0 0 320 280" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"><path id="heart21" fill="none" stroke="'+C+'" stroke-width="3" stroke-linecap="round"/><g>'+pts.map((p,i)=>'<circle id="p21_'+i+'" cx="'+p.x+'" cy="'+p.y+'" r="14" fill="'+CBG+'" stroke="'+CD+'" stroke-width="2" style="cursor:pointer"/>').join('')+'</g><text x="160" y="265" text-anchor="middle" fill="#888" font-size="12">Connect dots in order to trace a heart</text></svg>';
-  const path=$('heart21'); let dStr='';
-  function updatePath(){ if(idx>1){ const segs=[]; for(let i=0;i<idx;i++){ const p=pts[i-1]||pts[0]; segs.push((i===1?'M':'L')+p.x+' '+p.y); } path.setAttribute('d',segs.join(' ')); } }
-  for(let i=0;i<pts.length;i++){ $('p21_'+i).onclick=()=>{ if(done)return; if(i===idx-1||i===idx){ const p=$('p21_'+i); p.setAttribute('fill',C); idx=Math.max(idx,i+1); updatePath(); if(idx>=pts.length+1||idx>pts.length){done=true;setTimeout(win,400);} } else showToast('Tap dot '+idx+'!'); }; }
-}},
-// L22: PRIME NUMBERS — tap 2,3,5,7,11 from a grid.
-22:{ hint:'Tap all PRIME numbers: 2, 3, 5, 7, 11.', render(s,win){
-  const nums=[2,4,3,6,5,8,7,9,11,10]; const primes=[2,3,5,7,11]; let found=0; let done=false;
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:#888;font-size:12px;margin-bottom:12px">Tap only PRIME numbers</div><div id="g22" style="display:grid;grid-template-columns:repeat(5,54px);gap:5px"></div></div>';
-  const g=$('g22');
-  nums.forEach(n=>{ const c=el('div','tap'); c.textContent=n; c.style.cssText='width:54px;height:54px;border-radius:8px;background:'+CBG+';border:1px solid '+CD+';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;cursor:pointer';
-    c.onclick=()=>{ if(done)return; if(primes.includes(n)){ c.style.background=C; c.onclick=null; found++; if(found===primes.length){done=true;setTimeout(win,400);} } else { c.style.background='#e74c3c'; showToast(n+' is not prime!'); setTimeout(()=>c.style.background=CBG,300); } };
-    g.appendChild(c);
-  });
-}},
-// L23: CATCH EMBERS — catch 5 falling red sparks by moving a basket.
-23:{ hint:'CATCH 5 falling red embers! Move the basket left and right.', render(s,win){
-  let bx=140; let caught=0; const NEED=5; let done=false; let embers=[]; let dragging=false;
-  s.innerHTML='<canvas id="cv23" width="320" height="300" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:1px solid '+CD+';border-radius:8px;touch-action:none"></canvas><div id="c23" style="position:absolute;top:55px;left:50%;transform:translateX(-50%);color:'+C+';font-size:14px;font-weight:700">Caught: 0/'+NEED+'</div>';
-  const cv=$('cv23'),ctx=cv.getContext('2d');
-  function spawn(){ embers.push({x:20+Math.random()*280,y:0,r:8,vy:1.5+Math.random()*0.5,vx:(Math.random()-0.5)*0.5}); }
-  function draw(){ ctx.fillStyle=CDARK; ctx.fillRect(0,0,320,300);
-    embers.forEach(e=>{ ctx.fillStyle=C; ctx.shadowBlur=10; ctx.shadowColor=C; ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,7); ctx.fill(); ctx.shadowBlur=0; });
-    ctx.fillStyle=CD; ctx.fillRect(bx-30,285,60,10); ctx.fillStyle=C; ctx.fillRect(bx-25,280,50,6);
-  }
-  let fc=0;
-  function loop(){ if(done)return; fc++; if(fc%40===0)spawn();
-    embers.forEach(e=>{ e.y+=e.vy; e.x+=e.vx; if(e.y>280&&Math.abs(e.x-bx)<32){ caught++; $('c23').textContent='Caught: '+caught+'/'+NEED; e._caught=1; if(caught>=NEED&&!done){done=true;setTimeout(win,400);} } });
-    embers=embers.filter(e=>e.y<300&&!e._caught); draw(); requestAnimationFrame(loop);
-  }
-  loop();
-  function move(e2){ e2.preventDefault(); const r=cv.getBoundingClientRect(); bx=(e2.touches?e2.touches[0].clientX:e2.clientX)-r.left; bx=Math.max(30,Math.min(290,bx)); }
-  cv.addEventListener('mousedown',e2=>{dragging=true;move(e2);}); cv.addEventListener('touchstart',e2=>{e2.preventDefault();dragging=true;move(e2);},{passive:false});
-  document.addEventListener('mousemove',e2=>{if(dragging)move(e2);}); document.addEventListener('touchmove',e2=>{if(dragging)move(e2);},{passive:false});
-  document.addEventListener('mouseup',()=>dragging=false); document.addEventListener('touchend',()=>dragging=false);
-  document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')bx=Math.max(30,bx-15);if(e.key==='ArrowRight')bx=Math.min(290,bx+15);});
-}},
-// L24: SHAPE FIT — drag 3 red shapes into matching holes.
-24:{ hint:'Drag each red shape into its matching hole!', render(s,win){
-  let placed=0; let done=false;
-  const shapes=[{type:'circle',color:C},{type:'square',color:CL},{type:'triangle',color:CA}];
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div id="holes24" style="display:flex;gap:20px;margin-bottom:30px;justify-content:center"></div><div id="shapes24" style="display:flex;gap:20px;justify-content:center"></div></div>';
-  const holesEl=$('holes24'),shapesEl=$('shapes24');
-  const shuffled=[...shapes].sort(()=>Math.random()-.5);
-  shapes.forEach(sh=>{ const h=el('div'); h.style.cssText='width:60px;height:60px;border:2px dashed #555;display:flex;align-items:center;justify-content:center'; h.dataset.type=sh.type; drawShape(h,sh.type,'#222','#444'); holesEl.appendChild(h); });
-  shuffled.forEach((sh,idx)=>{ const d=el('div','drag24'); d.dataset.type=sh.type; d.style.cssText='width:60px;height:60px;cursor:grab;position:relative;z-index:5'; drawShape(d,sh.type,sh.color,sh.color); d._color=sh.color; shapesEl.appendChild(d); });
-  function drawShape(container,type,fill,stroke){ const svg='<svg width="50" height="50" viewBox="0 0 50 50">'; const ns='http://www.w3.org/2000/svg';
-    if(type==='circle')container.innerHTML=svg+'<circle cx="25" cy="25" r="20" fill="'+fill+'" stroke="'+stroke+'" stroke-width="2"/></svg>';
-    if(type==='square')container.innerHTML=svg+'<rect x="5" y="5" width="40" height="40" rx="4" fill="'+fill+'" stroke="'+stroke+'" stroke-width="2"/></svg>';
-    if(type==='triangle')container.innerHTML=svg+'<polygon points="25,5 45,45 5,45" fill="'+fill+'" stroke="'+stroke+'" stroke-width="2"/></svg>';
-  }
-  let dragging=null;
-  document.querySelectorAll('.drag24').forEach(d=>{ const down=e=>{ e.preventDefault(); dragging=d; d.style.zIndex=100; }; d.addEventListener('mousedown',down); d.addEventListener('touchstart',e=>{e.preventDefault();down(e);},{passive:false}); });
-  const move=e=>{ if(!dragging)return; e.preventDefault(); const x=e.touches?e.touches[0].clientX:e.clientX; const y=e.touches?e.touches[0].clientY:e.clientY; dragging.style.position='fixed'; dragging.style.left=(x-30)+'px'; dragging.style.top=(y-30)+'px'; };
   document.addEventListener('mousemove',move); document.addEventListener('touchmove',move,{passive:false});
-  const up=e=>{ if(!dragging)return; const x=e.changedTouches?e.changedTouches[0].clientX:e.clientX; const y=e.changedTouches?e.changedTouches[0].clientY:e.clientY; let snapped=false; document.querySelectorAll('#holes24 > div').forEach(h=>{ const r=h.getBoundingClientRect(); if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom&&!h._filled){ if(h.dataset.type===dragging.dataset.type){ h._filled=1; h.style.borderColor=dragging._color; h.style.opacity=1; drawShape(h,h.dataset.type,dragging._color,dragging._color); dragging.style.display='none'; placed++; if(placed>=3&&!done){done=true;setTimeout(win,500);} } else { showToast('Wrong shape!'); } snapped=true; } }); dragging=null; };
+  document.addEventListener('mouseup',()=>dragging=false); document.addEventListener('touchend',()=>dragging=false);
+}},
+// L20: DROP red balls into correct bins (sort by size). Distinct from O=pour to target, P=balance scale 60g.
+20:{ hint:'DROP each red ball into the bin matching its SIZE (S, M, L).', render(s,win){
+  const balls=[{sz:'M',r:18},{sz:'L',r:26},{sz:'S',r:12},{sz:'M',r:18}]; let placed=0; let done=false;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:340px"><div style="color:#888;font-size:12px;margin-bottom:10px">Drag each ball to its size bin</div><div id="balls20" style="position:relative;height:80px;margin-bottom:16px"></div><div style="display:flex;gap:12px;justify-content:center">'+['S','M','L'].map(s=>'<div class="drop20" data-sz="'+s+'" style="width:70px;height:80px;border:2px dashed '+CD+';border-radius:8px;display:flex;align-items:center;justify-content:center;color:'+CD+';font-weight:700">'+s+'</div>').join('')+'</div></div>';
+  const ballsEl=$('balls20');
+  const ballEls=balls.map((b,i)=>{ const d=el('div','tap'); d._sz=b.sz; d.style.cssText='position:absolute;width:'+(b.r*2)+'px;height:'+(b.r*2)+'px;border-radius:50%;background:'+C+';cursor:grab;left:'+(i*70+10)+'px;top:'+(40-b.r)+'px;box-shadow:0 0 10px rgba(244,67,54,.4)'; ballsEl.appendChild(d); return d; });
+  let dragging=null;
+  ballEls.forEach(b=>{ b.addEventListener('mousedown',e=>{dragging=b;e.preventDefault();}); b.addEventListener('touchstart',e=>{e.preventDefault();dragging=b;},{passive:false}); });
+  function move(e){ if(!dragging)return; e.preventDefault(); const x=(e.touches?e.touches[0].clientX:e.clientX); const y=(e.touches?e.touches[0].clientY:e.clientY); dragging.style.position='fixed'; dragging.style.left=(x-20)+'px'; dragging.style.top=(y-20)+'px'; }
+  document.addEventListener('mousemove',move); document.addEventListener('touchmove',move,{passive:false});
+  function up(e){ if(!dragging)return; const x=(e.changedTouches?e.changedTouches[0].clientX:e.clientX); const y=(e.changedTouches?e.changedTouches[0].clientY:e.clientY); let snapped=false; document.querySelectorAll('.drop20').forEach(bin=>{ const r=bin.getBoundingClientRect(); if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom){ if(bin.dataset.sz===dragging._sz){ bin.style.background=C; bin.style.color='#fff'; dragging.style.display='none'; placed++; if(placed>=balls.length&&!done){done=true;setTimeout(win,400);} } else { showToast('Wrong bin! That ball is '+dragging._sz); } snapped=true; } }); dragging=null; }
   document.addEventListener('mouseup',up); document.addEventListener('touchend',up);
 }},
-// L25: THERMOMETER — drag slider up to raise temperature to "red hot".
-25:{ hint:'Raise the temperature to RED HOT! Drag the mercury up to 100.', render(s,win){
-  let temp=20; const TARGET=100; let done=false;
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="position:relative;width:40px;height:240px;margin:0 auto 16px"><div style="position:absolute;bottom:0;width:100%;height:100%;background:'+CBG+';border:2px solid '+CD+';border-radius:20px;overflow:hidden"><div id="merc25" style="position:absolute;bottom:0;width:100%;height:10%;background:linear-gradient(180deg,'+CL+','+C+');transition:height .15s"></div></div><div style="position:absolute;bottom:100%;left:50%;transform:translateX(-50%);width:28px;height:28px;border-radius:50%;background:'+C+';z-index:-1"></div></div><div id="temp25" style="color:'+C+';font-size:22px;font-weight:700">'+temp+'\u00B0C</div><div id="msg25" style="color:#888;font-size:12px;margin-top:6px">Drag the bulb to raise temperature</div><input type="range" id="slider25" min="20" max="120" value="20" style="width:180px;margin-top:12px;accent-color:'+C+'"></div>';
-  const slider=$('slider25'),merc=$('merc25'),tempEl=$('temp25'),msg=$('msg25');
-  slider.oninput=()=>{ temp=parseInt(slider.value); tempEl.textContent=temp+'\u00B0C'; merc.style.height=Math.min(100,(temp-20)/100*80+10)+'%'; if(temp>=TARGET&&!done){done=true;msg.textContent='RED HOT!';setTimeout(win,500);} else if(temp>90){msg.textContent='Almost there!';} else if(temp>60){msg.textContent='Getting warm...';} else {msg.textContent='Keep raising!';} };
+// ---- EXPERT 21-25 ----
+// L21: TRACE a triangle (3 vertices). Distinct from O=trace circle, P=trace star 1-5.
+21:{ hint:'TRACE a triangle! Tap the 3 vertices in order: 1 → 2 → 3 → back to 1.', render(s,win){
+  const cx=150,cy=140,R=80; const pts=[ {x:cx,y:cy-R}, {x:cx-R*0.866,y:cy+R*0.5}, {x:cx+R*0.866,y:cy+R*0.5} ];
+  const order=[0,1,2,0]; let idx=0; let done=false;
+  s.innerHTML='<svg id="sv21" width="300" height="280" viewBox="0 0 300 280" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"><path id="tri21" fill="none" stroke="'+C+'" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>'+order.map((oi,i)=>{const p=pts[oi];return '<circle class="tap" id="p21_'+i+'" cx="'+p.x+'" cy="'+p.y+'" r="18" fill="'+CBG+'" stroke="'+CD+'" stroke-width="2" style="cursor:pointer"/>';}).join('')+'<text x="150" y="270" text-anchor="middle" fill="#888" font-size="12">Connect 1→2→3→1</text></svg>';
+  const path=$('tri21'); let dStr='';
+  function updatePath(){ if(idx>0){ const segs=[]; for(let i=0;i<=idx;i++){ const p=pts[order[i]]; segs.push((i===0?'M':'L')+p.x+' '+p.y); } path.setAttribute('d',segs.join(' ')); } }
+  for(let i=0;i<order.length;i++){ $('p21_'+i).onclick=()=>{ if(done)return; if(i===idx){ const p=$('p21_'+i); p.setAttribute('fill',C); idx++; updatePath(); if(idx>=order.length){done=true;setTimeout(win,400);} } else showToast('Tap vertex '+(idx+1)+'!'); }; }
+}},
+// L22: Tap PERFECT SQUARES (1,4,9,16,25). Distinct from O=EVEN, P=MULTIPLES OF 3.
+22:{ hint:'Tap all PERFECT SQUARES: 1, 4, 9, 16, 25.', render(s,win){
+  const nums=[2,4,7,9,11,14,16,19,22,25,3,1]; const sq=[1,4,9,16,25]; let found=0; let done=false;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:#888;font-size:12px;margin-bottom:12px">Tap only perfect squares (1,4,9,16,25)</div><div id="g22" style="display:grid;grid-template-columns:repeat(4,60px);gap:6px"></div></div>';
+  const g=$('g22');
+  nums.forEach(n=>{ const c=el('div','tap'); c.textContent=n; c.style.cssText='width:60px;height:60px;border-radius:8px;background:'+CBG+';border:1px solid '+CD+';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;cursor:pointer';
+    c.onclick=()=>{ if(done)return; if(sq.includes(n)){ c.style.background=C; c.onclick=null; found++; if(found===sq.length){done=true;setTimeout(win,400);} } else { c.style.background='#888'; showToast('Not a perfect square!'); setTimeout(()=>c.style.background=CBG,300); } };
+    g.appendChild(c); });
+}},
+// L23: DEFLECT red lasers with mirrors to hit targets. Distinct from O=catch falling, P=pop bubbles.
+23:{ hint:'DEFLECT the laser! Tap mirrors to rotate them. Hit all 3 red targets.', render(s,win){
+  // simplified: laser fires left, 3 mirrors redirect it. Tap a mirror to toggle / orientation. Hit all targets.
+  let hit=0; const T=3; let done=false;
+  // grid 5x5. Laser at (0,2) going right. Targets at (4,0),(4,4),(2,4). Mirrors at (2,2),(4,2),(2,4 is target).
+  // Simpler representation: 3 targets, each has a mirror the player rotates (0=wrong,1=right). All must be 1.
+  let mirrors=[0,0,0];
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:300px"><div style="color:#888;font-size:12px;margin-bottom:12px">Rotate mirrors to deflect the laser onto all 3 targets</div><svg width="280" height="200" viewBox="0 0 280 200"><line x1="10" y1="100" x2="270" y2="100" stroke="'+C+'" stroke-width="2" stroke-dasharray="4"/><circle cx="10" cy="100" r="8" fill="'+CL+'"/><text x="10" y="120" fill="#888" font-size="9">laser</text>'+[0,1,2].map(i=>{const x=60+i*80;return '<g><circle id="t23_'+i+'" cx="'+x+'" cy="40" r="14" fill="'+CD+'" stroke="'+CD+'" stroke-width="2"/><text x="'+x+'" y="44" text-anchor="middle" fill="#888" font-size="10">🎯</text><rect class="tap" id="m23_'+i+'" x="'+(x-18)+'" y="78" width="36" height="8" fill="'+CA+'" rx="3" style="cursor:pointer" transform="rotate(0 '+(x)+' 82)"/></g>';}).join('')+'</svg><div id="cnt23" style="color:'+C+';font-size:14px;margin-top:8px;font-weight:700">Targets hit: 0 / '+T+'</div><div style="color:#888;font-size:11px">Tap a mirror to rotate it</div></div>';
+  function check(){ hit=mirrors.filter(m=>m).length; $('cnt23').textContent='Targets hit: '+hit+' / '+T; for(let i=0;i<3;i++){ $('t23_'+i).setAttribute('fill',mirrors[i]?C:CD); } if(hit>=T&&!done){done=true;setTimeout(win,400);} }
+  [0,1,2].forEach(i=>{ $('m23_'+i).onclick=()=>{ if(done)return; mirrors[i]=mirrors[i]?0:1; $('m23_'+i).setAttribute('transform','rotate('+(mirrors[i]?45:0)+' '+(60+i*80)+' 82)'); check(); }; });
+  check();
+}},
+// L24: CONNECT red pipes to complete a circuit. Distinct from O=drag 2 pieces, P=rotate 3 rings.
+24:{ hint:'CONNECT the pipes! Tap each pipe to rotate it. Link the source to the drain.', render(s,win){
+  // 3x3 grid of pipe tiles. Each tile rotation 0-3. Source at (0,1) top, drain at (2,1) bottom.
+  // Simplified: each tile has a path; player rotates so a continuous vertical line forms.
+  // Represent: rot[i] in 0..3. Goal: middle column all "vertical" (rot that connects top-bottom).
+  const N=3; let rot=[1,0,2,3,0,1,2,1,0]; // random start
+  const VERTICAL=0; // the rotation value that makes a pipe vertical
+  let done=false;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:#888;font-size:12px;margin-bottom:10px">Connect the source (top) to drain (bottom) through the middle column</div><div style="position:relative"><div style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);color:'+CL+';font-size:20px">💧</div><div id="g24" style="display:grid;grid-template-columns:repeat(3,60px);gap:2px"></div><div style="position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);color:'+CL+';font-size:20px">🚰</div></div><div style="color:#888;font-size:11px;margin-top:14px">Middle column must be vertical pipes ( │ )</div></div>';
+  const g=$('g24'); let cells=[];
+  function pipeGlyph(r){ return ['│','─','┌','┐'][r]; }
+  function render(){ cells.forEach((c,i)=>{ c.textContent=pipeGlyph(rot[i]); c.style.color=(i%N===1&&rot[i]===VERTICAL)?C:'#555'; }); // middle column all vertical?
+    let ok=true; for(let r=0;r<N;r++){ if(rot[r*N+1]!==VERTICAL)ok=false; } if(ok&&!done){done=true;setTimeout(win,400);} }
+  for(let i=0;i<N*N;i++){ const c=el('div','tap'); c.style.cssText='width:60px;height:60px;background:'+CBG+';border:1px solid '+CD+';display:flex;align-items:center;justify-content:center;font-size:32px;cursor:pointer;font-family:monospace';
+    c.onclick=()=>{ rot[i]=(rot[i]+1)%4; render(); };
+    g.appendChild(c); cells.push(c); }
+  render();
+}},
+// L25: Mix RED + WHITE = PINK (add drops). Distinct from O=red+yellow=orange, P=red+blue=purple.
+25:{ hint:'Mix RED + WHITE drops to make PINK! Add red drops, then white drops.', render(s,win){
+  let redDrops=0, whiteDrops=0; const RED_NEED=3, WHITE_NEED=2; let done=false;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div id="cup25" style="width:90px;height:120px;background:'+CBG+';border:2px solid '+CD+';border-radius:10px 10px 30px 30px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#888;transition:background .3s">Empty cup</div><div style="display:flex;gap:20px;justify-content:center"><div id="red25" class="tap" style="width:64px;height:64px;border-radius:50%;background:'+C+';cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700">Red ❤</div><div id="white25" class="tap" style="width:64px;height:64px;border-radius:50%;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#444;font-weight:700">White</div></div><div id="msg25" style="color:#888;font-size:12px;margin-top:14px">Add 3 red drops, then 2 white drops!</div></div>';
+  const cup=$('cup25'),msg=$('msg25');
+  function update(){ let bg=CBG,txt='Empty cup'; if(redDrops>0&&whiteDrops===0){ bg='#C62828'; txt=redDrops+' red'; } if(redDrops>=RED_NEED&&whiteDrops>0&&whiteDrops<WHITE_NEED){ bg='#E91E63'; txt='Almost pink...'; } if(redDrops>=RED_NEED&&whiteDrops>=WHITE_NEED){ bg='#FF80AB'; txt='PINK! 💗'; cup.style.color='#fff'; if(!done){done=true;setTimeout(win,500);} } cup.style.background=bg; cup.textContent=txt; }
+  $('red25').onclick=()=>{ if(done)return; redDrops++; msg.textContent='Red: '+redDrops+'/'+RED_NEED; update(); };
+  $('white25').onclick=()=>{ if(done)return; if(redDrops<RED_NEED){showToast('Add '+RED_NEED+' red drops first!');return;} whiteDrops++; msg.textContent='White: '+whiteDrops+'/'+WHITE_NEED; update(); };
 }},
 // ---- MASTER 26-30 ----
-// L26: SQUARE NUMBERS — tap 1,4,9,16,25 in order.
-26:{ hint:'SQUARE NUMBERS! Tap 1, 4, 9, 16, 25 in order.', render(s,win){
-  const nums=[1,3,4,7,9,12,16,20,25,30]; const squares=[1,4,9,16,25]; let idx=0; let done=false;
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:#888;font-size:12px;margin-bottom:12px">Tap perfect squares: 1\u00B2, 2\u00B2, 3\u00B2, 4\u00B2, 5\u00B2</div><div id="g26" style="display:grid;grid-template-columns:repeat(5,54px);gap:5px"></div></div>';
-  const g=$('g26');
-  nums.forEach(n=>{ const c=el('div','tap'); c.textContent=n; c.style.cssText='width:54px;height:54px;border-radius:8px;background:'+CBG+';border:1px solid '+CD+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;cursor:pointer';
-    c.onclick=()=>{ if(done)return; if(n===squares[idx]){ c.style.background=C; c.onclick=null; idx++; if(idx>=squares.length){done=true;setTimeout(win,400);} } else showToast('Next: '+squares[idx]+'!'); };
-    g.appendChild(c);
-  });
+// L26: COUNT red dots — subitize (3 flash-cards, brief flash). Distinct from O=countdown 10→1, P=binary powers of 2.
+26:{ hint:'COUNT! Three cards flash briefly. Remember how many red dots were on each.', render(s,win){
+  const cards=[3,5,7]; let showing=0; let done=false; // current card index
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:320px"><div id="card26" style="width:200px;height:140px;background:'+CBG+';border:2px solid '+CD+';border-radius:12px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;padding:10px"></div><div id="msg26" style="color:'+C+';font-size:13px;margin-bottom:12px">Card 1 / 3 — how many red dots?</div><div id="opts26" style="display:flex;gap:8px;justify-content:center"></div></div>';
+  const card=$('card26'),msg=$('msg26'),opts=$('opts26');
+  function showCard(){ card.innerHTML=''; msg.textContent='Card '+(showing+1)+' / 3 — how many?'; for(let i=0;i<cards[showing];i++){ const d=el('div'); d.style.cssText='width:18px;height:18px;border-radius:50%;background:'+C+';box-shadow:0 0 6px rgba(244,67,54,.5)'; card.appendChild(d); } renderOpts(); }
+  function renderOpts(){ opts.innerHTML=''; const ans=cards[showing]; const choices=[ans-1,ans,ans+1,ans+2].sort(()=>Math.random()-.5); choices.forEach(ch=>{ const b=el('button','tap'); b.textContent=ch; b.style.cssText='width:54px;height:54px;border-radius:10px;background:'+CBG+';border:1px solid '+CD+';color:#fff;font-size:20px;font-weight:700;cursor:pointer';
+    b.onclick=()=>{ if(ch===ans){ b.style.background=C; showing++; if(showing>=cards.length){ if(!done){done=true;setTimeout(win,400);} } else { setTimeout(showCard,500); } } else { showToast('Wrong count!'); } };
+    opts.appendChild(b); }); }
+  showCard();
 }},
-// L27: TRIANGULAR NUMBERS — tap 1,3,6,10 in order.
-27:{ hint:'TRIANGULAR NUMBERS! Tap 1, 3, 6, 10 in order.', render(s,win){
-  const nums=[1,2,3,5,6,8,10,12]; const tri=[1,3,6,10]; let idx=0; let done=false;
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:#888;font-size:12px;margin-bottom:12px">Tap: 1, 1+2=3, 1+2+3=6, 1+2+3+4=10</div><div id="g27" style="display:grid;grid-template-columns:repeat(4,62px);gap:6px"></div></div>';
-  const g=$('g27');
-  nums.forEach(n=>{ const c=el('div','tap'); c.textContent=n; c.style.cssText='width:62px;height:62px;border-radius:8px;background:'+CBG+';border:1px solid '+CD+';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;cursor:pointer';
-    c.onclick=()=>{ if(done)return; if(n===tri[idx]){ c.style.background=C; c.onclick=null; idx++; if(idx>=tri.length){done=true;setTimeout(win,400);} } else showToast('Next: '+tri[idx]+'!'); };
-    g.appendChild(c);
-  });
+// L27: Tap SQUARE NUMBERS in DESCENDING order (25,16,9,4,1). Distinct from O=PRIMES, P=FIBONACCI.
+27:{ hint:'Tap the SQUARE NUMBERS in DESCENDING order: 25, 16, 9, 4, 1.', render(s,win){
+  const nums=[3,25,7,16,11,8,9,2,14,4,1,18]; const order=[25,16,9,4,1]; let idx=0; let done=false;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:'+C+';font-size:14px;margin-bottom:12px;font-weight:700">Next: '+order[idx]+'</div><div id="g27" style="display:grid;grid-template-columns:repeat(4,54px);gap:5px"></div><div style="color:#888;font-size:11px;margin-top:8px">Square numbers, biggest first</div></div>';
+  const g=$('g27'); const hdr=g.previousElementSibling;
+  nums.forEach(n=>{ const c=el('div','tap'); c.textContent=n; c.style.cssText='width:54px;height:54px;border-radius:8px;background:'+CBG+';border:1px solid '+CD+';display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;cursor:pointer';
+    c.onclick=()=>{ if(done)return; if(n===order[idx]){ c.style.background=C; c.onclick=null; idx++; if(idx>=order.length){done=true;setTimeout(win,400);} else hdr.textContent='Next: '+order[idx]; } else showToast('Next is '+order[idx]+'!'); };
+    g.appendChild(c); });
 }},
-// L28: ODD SHAPE OUT — find the non-matching shape in each of 3 rows.
-28:{ hint:'In each row, one shape is DIFFERENT. Tap all 3 odd ones out!', render(s,win){
-  const shapes=['\u25CF','\u25A0','\u25B2','\u25C6','\u2605','\u25BD']; let found=0; let done=false;
-  // Generate 3 rows, each with 4 same + 1 different
-  const rows=[];
-  for(let r=0;r<3;r++){ const main=shapes[r*2]; let odd; do{ odd=shapes[Math.floor(Math.random()*shapes.length)]; }while(odd===main); const arr=Array(5).fill(main); const oddPos=Math.floor(Math.random()*5); arr[oddPos]=odd; rows.push(arr); }
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">'+rows.map((row,r)=>'<div id="row28_'+r+'" style="display:flex;gap:8px;margin-bottom:10px;justify-content:center">'+row.map((sh,i)=>'<div class="tap c28" data-r="'+r+'" data-i="'+i+'" style="width:50px;height:50px;border-radius:8px;background:'+CBG+';border:1px solid '+CD+';display:flex;align-items:center;justify-content:center;font-size:28px;color:'+C+';cursor:pointer">'+sh+'</div>').join('')+'</div>').join('')+'</div>';
-  document.querySelectorAll('.c28').forEach(c=>{ c.onclick=()=>{ if(done||c._done)return; const r=parseInt(c.dataset.r); const i=parseInt(c.dataset.i); if(rows[r][i]!==rows[r][0]||i>0&&rows[r][i]!==rows[r].filter((v,idx)=>idx!==i)[0]){ c._done=1; c.style.background=C; found++; if(found>=3&&!done){done=true;setTimeout(win,400);} } else { showToast('That one is normal!'); } }; });
+// L28: SEQUENCE with 2 rules (alternating color + shape). Distinct from O/P single-rule pattern.
+28:{ hint:'Two rules at once! What comes next? (alternating color AND shape)', render(s,win){
+  // Pattern: ❤ ◆ ❤ ◆ ❤ ?  → answer ◆ (the shape alternates, color stays red)
+  // Visualize as red circle, red diamond, red circle, red diamond, red circle, ?
+  const answer='◆'; // next is diamond
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:'+C+';font-size:30px;margin-bottom:8px;letter-spacing:8px">● ◆ ● ◆ ● ?</div><div style="color:#888;font-size:12px;margin-bottom:18px">Shape alternates ●↔◆. What is next?</div><div id="opts28" style="display:flex;gap:14px;justify-content:center"></div></div>';
+  const opts=$('opts28'); const choices=['◆','●','■','▲'];
+  choices.forEach(ch=>{ const b=el('div','tap'); b.textContent=ch; b.style.cssText='width:64px;height:64px;border-radius:10px;background:'+CBG+';border:1px solid '+CD+';display:flex;align-items:center;justify-content:center;font-size:30px;color:'+C+';cursor:pointer';
+    b.onclick=()=>{ if(ch===answer){ b.style.background=C; b.style.color='#fff'; setTimeout(win,400); } else { b.style.background='#888'; setTimeout(()=>b.style.background=CBG,300); } };
+    opts.appendChild(b); });
 }},
-// L29: BRAILLE DECODE — decode a braille pattern to find the letter.
-29:{ hint:'Decode the BRAILLE pattern! What letter is it? Tap the answer.', render(s,win){
-  // Braille for 'B' = dots 1,2 (top-left and middle-left filled)
-  const answer='B';
-  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:#888;font-size:12px;margin-bottom:16px">Decode this Braille letter:</div><div style="display:grid;grid-template-columns:repeat(2,40px);gap:6px;margin:0 auto 20px;width:92px"><div style="width:40px;height:40px;border-radius:50%;background:'+C+'"></div><div style="width:40px;height:40px;border-radius:50%;background:'+CBG+';border:1px solid '+CD+'"></div><div style="width:40px;height:40px;border-radius:50%;background:'+C+'"></div><div style="width:40px;height:40px;border-radius:50%;background:'+CBG+';border:1px solid '+CD+'"></div><div style="width:40px;height:40px;border-radius:50%;background:'+CBG+';border:1px solid '+CD+'"></div><div style="width:40px;height:40px;border-radius:50%;background:'+CBG+';border:1px solid '+CD+'"></div></div><div style="display:flex;gap:10px;justify-content:center"></div></div>';
-  const wrap=s.querySelector('div div:last-child'); const opts=['B','A','E','D','C'];
-  opts.forEach(ch=>{ const b=el('button','tap'); b.textContent=ch; b.style.cssText='width:54px;height:54px;border-radius:10px;background:'+CBG+';border:1px solid '+CD+';color:#fff;font-size:22px;font-weight:700;cursor:pointer';
-    b.onclick=()=>{ if(ch===answer){ b.style.background=C; setTimeout(win,400); } else { b.style.background='#e74c3c'; setTimeout(()=>b.style.background=CBG,300); } };
-    wrap.appendChild(b);
-  });
+// L29: BINARY-CODED decimal — 1010 = ? Tap the answer. Distinct from O=Roman XVI, P=Morse ··.
+29:{ hint:'BINARY! What decimal number is 1010 in binary? Tap the answer.', render(s,win){
+  // 1010 binary = 8+2 = 10
+  const answer=10;
+  s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="color:'+C+';font-size:48px;margin-bottom:8px;font-family:monospace;letter-spacing:6px;font-weight:700">1010</div><div style="color:#888;font-size:12px;margin-bottom:8px">binary = ? (decimal)</div><div style="color:#666;font-size:11px;margin-bottom:20px">hint: 8 4 2 1 (place values)</div><div id="opts29" style="display:flex;gap:12px;justify-content:center"></div></div>';
+  const opts=$('opts29'); const choices=[8,10,12,1010];
+  choices.forEach(ch=>{ const b=el('button','tap'); b.textContent=ch; b.style.cssText='width:70px;height:64px;border-radius:10px;background:'+CBG+';border:1px solid '+CD+';color:#fff;font-size:22px;font-weight:700;cursor:pointer';
+    b.onclick=()=>{ if(ch===answer){ b.style.background=C; setTimeout(win,400); } else { b.style.background='#888'; setTimeout(()=>b.style.background=CBG,300); } };
+    opts.appendChild(b); });
 }},
-// L30: GRAND FINALE — tap all 4 corners in sequence, then hold center.
-30:{ hint:'GRAND FINALE: Tap all 4 corners in order, then HOLD the center orb!', render(s,win){
-  let phase='corners'; let cornerIdx=0; const cornerOrder=[0,1,2,3]; let done=false; let holdTime=0; const HOLD_NEED=3; let holding=false; let holdInt=null;
-  const corners=[{x:30,y:60},{x:290,y:60},{x:30,y:300},{x:290,y:300}];
-  s.innerHTML='<div id="c30_0" class="tap" style="position:absolute;width:50px;height:50px;border-radius:50%;background:'+CBG+';border:2px solid '+CD+';left:30px;top:60px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:#666;font-weight:700">1</div><div id="c30_1" class="tap" style="position:absolute;width:50px;height:50px;border-radius:50%;background:'+CBG+';border:2px solid '+CD+';left:290px;top:60px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:#666;font-weight:700">2</div><div id="c30_2" class="tap" style="position:absolute;width:50px;height:50px;border-radius:50%;background:'+CBG+';border:2px solid '+CD+';left:30px;top:300px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:#666;font-weight:700">3</div><div id="c30_3" class="tap" style="position:absolute;width:50px;height:50px;border-radius:50%;background:'+CBG+';border:2px solid '+CD+';left:290px;top:300px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:#666;font-weight:700">4</div><div id="center30" style="position:absolute;width:100px;height:100px;border-radius:50%;background:'+CBG+';border:2px solid '+CD+';left:50%;top:50%;transform:translate(-50%,-50%);display:none;align-items:center;justify-content:center;font-size:12px;color:#666;font-weight:700;cursor:pointer;touch-action:none"></div><div id="msg30" style="position:absolute;top:55px;left:50%;transform:translateX(-50%);color:'+C+';font-size:14px;font-weight:700">Tap corners 1\u21924 in order!</div><div id="hold30" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:'+C+';font-size:16px;font-weight:700;display:none">Hold: 0.0/'+HOLD_NEED.toFixed(1)+'s</div>';
-  corners.forEach((p,i)=>{ $('c30_'+i).onclick=()=>{ if(phase!=='corners'||done)return; if(i===cornerIdx){ $('c30_'+i).style.background=C; $('c30_'+i).style.borderColor=C; $('c30_'+i).style.boxShadow='0 0 20px '+C; $('c30_'+i).style.color='#fff'; cornerIdx++; if(cornerIdx>=4){ phase='hold'; $('msg30').textContent='Now HOLD the center!'; $('center30').style.display='flex'; $('hold30').style.display='block'; setupHold(); } } else { showToast('Tap corner '+(cornerIdx+1)+'!'); } }; });
-  function setupHold(){ const center=$('center30'),hold=$('hold30'); center.textContent='HOLD'; center.style.background=CL;
-    const start=e=>{ e.preventDefault(); if(done)return; holding=true; center.style.background=C; holdInt=setInterval(()=>{ if(!holding||done)return; holdTime+=0.1; hold.textContent='Hold: '+holdTime.toFixed(1)+'/'+HOLD_NEED.toFixed(1)+'s'; center.style.transform='translate(-50%,-50%) scale('+(1+holdTime*0.1)+')'; if(holdTime>=HOLD_NEED&&!done){done=true;clearInterval(holdInt);center.style.transform='translate(-50%,-50%) scale(1.4)';setTimeout(win,500);} },100);
-    };
-    const stop=()=>{ holding=false; if(holdInt){clearInterval(holdInt);holdInt=null;} if(!done){center.style.background=CL;center.style.transform='translate(-50%,-50%) scale(1)';} };
-    center.addEventListener('mousedown',start); center.addEventListener('touchstart',start,{passive:false});
-    document.addEventListener('mouseup',stop); document.addEventListener('touchend',stop);
-  }
+// L30: FINAL — TAP all 6 red nodes in order within 5 seconds (speed test). Distinct from O=4 corners, P=HOLD 5 pulses.
+30:{ hint:'FINAL SPEED TEST! Tap all 6 red nodes in order (1→6) within 5 seconds!', render(s,win){
+  const N=6; let idx=1; let done=false; let started=false; let startT=0; const LIMIT=5000;
+  // arrange 6 nodes in a hexagon
+  const cx=160,cy=150,R=90; const pos=[];
+  for(let i=0;i<N;i++){ const a=-Math.PI/2+i*Math.PI/3; pos.push({x:cx+Math.cos(a)*R,y:cy+Math.sin(a)*R}); }
+  s.innerHTML='<div id="cnt30" style="position:absolute;top:60px;left:50%;transform:translateX(-50%);color:'+C+';font-size:16px;font-weight:700">Tap 1 to start! (5s limit)</div><div id="tmr30" style="position:absolute;top:84px;left:50%;transform:translateX(-50%);color:#888;font-size:13px">⏱ 5.0s</div>';
+  const cnt=$('cnt30'),tmr=$('tmr30');
+  for(let i=0;i<N;i++){ const d=el('div','tap'); d.textContent=i+1; d._n=i+1; d.style.cssText='position:absolute;width:56px;height:56px;border-radius:50%;background:'+CBG+';border:2px solid '+CD+';left:'+(pos[i].x-28)+'px;top:'+(pos[i].y-28)+'px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:'+CL+';cursor:pointer';
+    d.onclick=()=>{ if(done)return; if(!started){ started=true; startT=Date.now(); tick(); } if(d._n===idx){ d.style.background=C; d.style.color='#fff'; idx++; cnt.textContent='Tap '+idx+'!'; if(idx>N){ done=true; cnt.textContent='DONE!'; win(); } } else { showToast('Tap '+idx+' next!'); } };
+    s.appendChild(d); }
+  function tick(){ if(done)return; const el2=Date.now()-startT; const left=Math.max(0,LIMIT-el2); tmr.textContent='⏱ '+(left/1000).toFixed(1)+'s'; if(left<=0){ showToast('Time up! Restart.'); // reset
+    started=false; idx=1; cnt.textContent='Tap 1 to start!'; tmr.textContent='⏱ 5.0s'; s.querySelectorAll('.tap').forEach((d)=>{ if(d._n){ d.style.background=CBG; d.style.color=CL; } }); return; } requestAnimationFrame(tick); }
 }}
 };
 
