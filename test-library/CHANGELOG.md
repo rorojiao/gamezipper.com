@@ -1,3 +1,28 @@
+## [v1.135.0] - 2026-07-04
+### Added
+- 8 new test cases from July-4 2026 industry research (R252 Dynamic Test Intelligence cron, 4h cadence cycle 14)
+- New test cases:
+  - [S-287] **[P1]** Apple Background Security Improvements (BSI) silent-patch mechanism (replaces RSR, no reboot, no version bump — silently mutates production WebKit baseline)
+  - [S-288] **[P2]** Phaser Browser.js misclassification (iOS Chrome/Firefox/Edge detected as mobileSafari via AppleWebKit UA)
+  - [B-177] **[P2]** iOS 26 widget drag-to-crash bug (hard reboot triggered by dragging widget + tapping ··· edit dot)
+  - [B-178] **[P2]** Android-tablet Chrome "maximum 5 windows" launch failure (Samsung/Xiaomi/Lenovo, May 2026)
+  - [P-120] **[P1]** iOS 26.5 background game runaway battery drain (iPhone 17, 53%→32% overnight, audio/rAF not suspended)
+  - [C-183] **[P3]** @callstack/liquid-glass RN-to-web polyfill layering for iOS 26 Liquid Glass (3 GPU cost tiers)
+  - [C-184] **[P2]** iOS 26 SwiftUI ZStack requirement for backdrop-filter visibility (VStack-with-fixed-button anti-pattern, sticky-footer analog)
+  - [W-264] **[P2]** Google "Aluminium OS" ChromeOS-Android fusion planned H2 2026 (MWC 2026 confirmation)
+### Sources
+- "HTML5 game testing 2026" / "browser game bug report 2026 mobile Safari Chrome" — cloud.tencent.com, divcss5.com
+- "browser security vulnerability 2026 XSS clickjacking" — portswigger.net, blog.csdn.net/i12344 (NGINX CVE-2026-42945)
+- "casual game UX complaint 2026 accessibility dark mode haptic" — developer.mozilla.org, caniuse.com, sohu.com/a/1022622771
+- "Chrome Edge Safari update 2026 WebKit breaking change" — so.html5.qq.com (Safari 26.5 CVE-2026-28962), sohu.com/a/1028896312 (Android tablet Chrome 5-window bug)
+- "Phaser 3.80 iOS Chrome mobileSafari UA detection bug 2026" — github.com/phaserjs/phaser/issues/6739
+- "iOS 26 Liquid Glass WebKit CSS backdrop-filter regression game 2026" — blog.csdn.net/darkb1rd, blog.csdn.net/food6 (CSDN uni-app/RN Liquid Glass 适配)
+- "Chrome Android tablet 5 windows limit launch bug 2026" — sohu.com/a/1028896312, sohu.com/a/1028997641 (AndroidPolice, Chrome IssueTracker)
+- "iOS 26.5 续航 background game" — so.html5.qq.com (iPhone 17 battery drain report)
+- "iOS 26 widget crash" — so.html5.qq.com (XC report 2025-11-24)
+- "Apple BSI silent patch" — sina.cn 2026-04-10 (CVE-2026-20643 WebKit zero-click, BSI replaces RSR)
+- "Aluminium OS ChromeOS Android fusion" — so.html5.qq.com (MWC 2026 Sameer Samat)
+
 
 ## [v1.134.0] - 2026-07-04
 ### Added
