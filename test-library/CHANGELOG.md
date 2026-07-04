@@ -1,3 +1,37 @@
+## [v1.136.0] - 2026-07-04
+### Added
+- 8 new test cases from July-4 2026 industry research (R253 Dynamic Test Intelligence cron, 4h cadence cycle 15)
+- New test cases:
+  - [W-265] **[P1]** Safari Technology Preview 247 official MCP (Model Context Protocol) server for AI-agent-driven debugging (July 1 2026) — native Safari MCP server for inspecting pages, console logs, network requests, screenshots; loopback-SSRF surface audit
+  - [W-266] **[P2]** Safari 27 Apple Intelligence natural-language browser-extension generation — player-generated extensions may interfere with GameZipper DOM/ad-iframes; malicious-prompt extensions exfiltrate data
+  - [S-289] **[P1]** CVE-2026-28962 Safari 26.5 WebKit CSP bypass — ~7-week active-exploitation window (Mar 25 → May 14 2026); ad-iframe sandboxing posture critical
+  - [B-179] **[P2]** Safari 26.4 compact-tab-layout mid-version revert + 191 BUG fixes (SVG/forms/MathML/CSS scaling) + CSS Grid Lanes — layout-policy revert means Safari 26.x behavior NOT stable across 26.0→26.4→26.5
+  - [P-121] **[P2]** Safari 26.5 WebRTC process-crash post-patch verification — re-test WebRTC games + WebAudio BGM routing on 26.5+
+  - [C-185] **[P3]** Firefox 152 major redesign (biggest in years) — redesigned settings page, JPEG XL experimental, MediaSession changes; Firefox China entity shutdown aftermath
+  - [PC-028] **[P2]** 2026 multi-dimensional browser fingerprinting 99% accuracy (Canvas+WebGL+Audio+Font+WebRTC+Navigator+Screen) — ad-fraud attribution impact, GDPR/CCPA disclosure, fingerprint-rotation persistence
+  - [G-174] **[P3]** Chrome Skills feature game-specific prompt abuse — auto-ad-click Skills, auto-puzzle-solve Skills, DOM-modification Skills
+### Sources
+- Search queries:
+  - "HTML5 game testing techniques 2026 canvas WebGL bugs"
+  - "Chrome Safari July 2026 update breaking changes web API"
+  - "Safari MCP server Technology Preview 247 webkit debugging July 2026"
+  - "browser game accessibility WCAG 2.2 2026 color contrast screen reader"
+  - "new browser security vulnerability 2026 XSS clickjacking CSP"
+  - "casual game UX complaint 2026 mobile haptic dark mode"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8316a45ac2425952 (Safari STP 247 MCP server July 2 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2846a27048114952 (Safari 27 Apple Intelligence WWDC26 June 9 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0236a054d4370952 (Safari 26.5 CVE-2026-28962 CSP bypass May 14 2026)
+  - https://www.sohu.com/a/1022622771_122004016 (Safari 26.5 20 WebKit vulns + WebRTC crash fix May 14 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Safari 26.4 compact-tab revert + 191 BUGs March 25 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4016a32165940252 (Firefox 152 Mozilla roadmap June 17 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_02569df582c01752 (Chrome Skills April 15 2026)
+  - https://blog.csdn.net/shanwei_spider/article/details/160390135 (99% fingerprinting June 2026)
+  - https://blog.csdn.net/2501_94224099/article/details/160891016 (5 API categories 80% fingerprint features June 16 2026)
+  - https://finance.sina.com.cn/tech/digi/2026-05-14/doc-inhxvtwn8763233.shtml (Safari 26.5 security list May 14 2026)
+  - https://webkit.org/blog (Safari Technology Preview release notes)
+  - https://developer.apple.com/safari/technology-preview/ (Apple Safari TP download)
+
 ## [v1.135.0] - 2026-07-04
 ### Added
 - 8 new test cases from July-4 2026 industry research (R252 Dynamic Test Intelligence cron, 4h cadence cycle 14)
