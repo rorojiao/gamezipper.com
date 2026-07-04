@@ -317,6 +317,7 @@
       {n:'Purple',e:'💜',u:'/purple/',c:'puzzle'},
       {n:'Red',e:'❤️',u:'/red/',c:'puzzle'},
       {n:'Hexa 2048',e:'🔷',u:'/hexa-2048/',c:'puzzle'},
+{n:'Drawer Sort',e:'🗂️',u:'/drawer-sort/',c:'puzzle'},
       ]; }
    }
    function getDateSeed() {

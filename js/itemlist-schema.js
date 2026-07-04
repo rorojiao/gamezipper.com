@@ -554,8 +554,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":549,"url":"https://gamezipper.com/word-stacks/","name":"Word Stacks"},
     {"@type":"ListItem","position":550,"url":"https://gamezipper.com/word-cookies/","name":"Word Cookies"},
     {"@type":"ListItem","position":551,"url":"https://gamezipper.com/tile-master/","name":"Tile Master"},
-    {"@type":"ListItem","position":552,"url":"https://gamezipper.com/hexa-2048/","name":"Hexa 2048"}
+    {"@type":"ListItem","position":552,"url":"https://gamezipper.com/hexa-2048/","name":"Hexa 2048"},
+    {"@type":"ListItem","position":553,"url":"https://gamezipper.com/drawer-sort/","name":"Drawer Sort"}
   ],
-  "numberOfItems":552,
-  "description":"551 free browser games you can play instantly"
+  "numberOfItems":553,
+  "description":"553 free browser games you can play instantly"
 };
