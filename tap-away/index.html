@@ -211,8 +211,8 @@ footer a{color:#4ecdc4;text-decoration:none}
     <div class="win-subtitle" id="win-level-name">Level 1</div>
     <div class="win-stars" id="win-stars"></div>
     <div class="win-stats">
-      <div>Moves<br><span id="win-moves">0</span></div>
-      <div>Par<br><span id="win-par">0</span></div>
+      <div>Time<br><span id="win-moves">0s</span></div>
+      <div>Hints<br><span id="win-par">0</span></div>
     </div>
     <div class="win-btns">
       <button class="menu-btn menu-btn-primary" id="win-next">Next Level</button>
@@ -276,6 +276,8 @@ var parMoves=0;
 var undoStack=[];
 var animatingBlocks=[];
 var hintBlockIdx=-1;
+var hintsUsed=0;
+var levelStartTime=0;
 var hintTimer=0;
 var particles=[];
 var levelData=null;
@@ -381,28 +383,28 @@ var LEVELS=[
   {w:4,h:4,par:5,blocks:[{x:0,y:0,d:0},{x:3,y:0,d:0},{x:1,y:2,d:3},{x:2,y:2,d:1},{x:3,y:3,d:3}]},
   {w:4,h:4,par:5,blocks:[{x:1,y:1,d:0},{x:2,y:1,d:0},{x:1,y:2,d:2},{x:2,y:2,d:2},{x:0,y:0,d:0}]},
   // Tier 2: Basic (4x4, 5x5) — 6 levels
-  {w:4,h:4,par:6,blocks:[{x:0,y:0,d:1},{x:1,y:0,d:2},{x:2,y:0,d:2},{x:3,y:0,d:2},{x:1,y:1,d:0},{x:2,y:1,d:0},{x:1,y:2,d:1},{x:2,y:2,d:1}]},
-  {w:4,h:4,par:6,blocks:[{x:0,y:0,d:2},{x:0,y:1,d:2},{x:1,y:0,d:1},{x:2,y:0,d:2},{x:3,y:0,d:2},{x:1,y:1,d:3},{x:2,y:2,d:0},{x:3,y:3,d:3}]},
-  {w:5,h:5,par:6,blocks:[{x:0,y:0,d:1},{x:1,y:0,d:1},{x:2,y:0,d:2},{x:3,y:0,d:1},{x:4,y:0,d:2},{x:2,y:1,d:0},{x:2,y:2,d:0},{x:2,y:3,d:0},{x:2,y:4,d:3}]},
+  {w:4,h:4,par:8,blocks:[{x:0,y:0,d:1},{x:1,y:0,d:2},{x:2,y:0,d:2},{x:3,y:0,d:2},{x:1,y:1,d:0},{x:2,y:1,d:0},{x:1,y:2,d:1},{x:2,y:2,d:1}]},
+  {w:4,h:4,par:8,blocks:[{x:0,y:0,d:2},{x:0,y:1,d:2},{x:1,y:0,d:1},{x:2,y:0,d:2},{x:3,y:0,d:2},{x:1,y:1,d:3},{x:2,y:2,d:0},{x:3,y:3,d:3}]},
+  {w:5,h:5,par:19,blocks:[{x:0,y:0,d:1},{x:1,y:0,d:1},{x:2,y:0,d:2},{x:3,y:0,d:1},{x:4,y:0,d:2},{x:2,y:1,d:0},{x:2,y:2,d:0},{x:2,y:3,d:0},{x:2,y:4,d:3}]},
   {w:5,h:5,par:7,blocks:[{x:0,y:0,d:2},{x:4,y:0,d:2},{x:0,y:4,d:0},{x:4,y:4,d:0},{x:2,y:2,d:0},{x:1,y:2,d:3},{x:3,y:2,d:1}]},
-  {w:5,h:5,par:8,blocks:[{x:0,y:0,d:1},{x:2,y:0,d:2},{x:4,y:0,d:2},{x:1,y:1,d:0},{x:3,y:1,d:0},{x:0,y:2,d:1},{x:2,y:2,d:0},{x:4,y:2,d:1},{x:1,y:3,d:2},{x:3,y:3,d:2}]},
-  {w:5,h:5,par:8,blocks:[{x:1,y:1,d:0},{x:2,y:1,d:0},{x:3,y:1,d:0},{x:1,y:2,d:3},{x:3,y:2,d:1},{x:1,y:3,d:2},{x:2,y:3,d:2},{x:3,y:3,d:2},{x:0,y:0,d:2},{x:4,y:4,d:0}]},
+  {w:5,h:5,par:12,blocks:[{x:0,y:0,d:1},{x:2,y:0,d:2},{x:4,y:0,d:2},{x:1,y:1,d:0},{x:3,y:1,d:0},{x:0,y:2,d:1},{x:2,y:2,d:0},{x:4,y:2,d:1},{x:1,y:3,d:2},{x:3,y:3,d:2}]},
+  {w:5,h:5,par:10,blocks:[{x:1,y:1,d:0},{x:2,y:1,d:0},{x:3,y:1,d:0},{x:1,y:2,d:3},{x:3,y:2,d:1},{x:1,y:3,d:2},{x:2,y:3,d:2},{x:3,y:3,d:2},{x:0,y:0,d:2},{x:4,y:4,d:0}]},
   // Tier 3: Intermediate (5x5, 6x6) — 6 levels
-  {w:5,h:5,par:9,blocks:[{x:0,y:0,d:1},{x:1,y:0,d:2},{x:2,y:0,d:2},{x:3,y:0,d:2},{x:4,y:0,d:3},{x:0,y:1,d:2},{x:4,y:1,d:2},{x:0,y:2,d:1},{x:1,y:2,d:1},{x:2,y:2,d:0},{x:3,y:2,d:3},{x:4,y:2,d:3},{x:0,y:3,d:0},{x:4,y:3,d:0},{x:0,y:4,d:1},{x:1,y:4,d:0},{x:2,y:4,d:0},{x:3,y:4,d:0},{x:4,y:4,d:3}]},
+  {w:5,h:5,par:13,blocks:[{x:0,y:0,d:1},{x:1,y:0,d:2},{x:2,y:0,d:2},{x:3,y:0,d:2},{x:4,y:0,d:3},{x:0,y:1,d:2},{x:4,y:1,d:2},{x:0,y:2,d:1},{x:1,y:2,d:1},{x:2,y:2,d:0},{x:3,y:2,d:3},{x:4,y:2,d:3},{x:0,y:3,d:0},{x:4,y:3,d:0},{x:0,y:4,d:1},{x:1,y:4,d:0},{x:2,y:4,d:0},{x:3,y:4,d:0},{x:4,y:4,d:3}]},
   {w:5,h:5,par:9,blocks:[{x:1,y:1,d:0},{x:2,y:1,d:0},{x:3,y:1,d:0},{x:1,y:2,d:3},{x:2,y:2,d:0},{x:3,y:2,d:1},{x:1,y:3,d:2},{x:2,y:3,d:2},{x:3,y:3,d:2},{x:0,y:0,d:1},{x:4,y:0,d:1},{x:0,y:4,d:3},{x:4,y:4,d:3}]},
   {w:5,h:5,par:10,blocks:[{x:0,y:0,d:2},{x:4,y:0,d:2},{x:0,y:4,d:0},{x:4,y:4,d:0},{x:1,y:1,d:3},{x:3,y:1,d:1},{x:1,y:3,d:3},{x:3,y:3,d:1},{x:2,y:0,d:2},{x:2,y:4,d:0},{x:0,y:2,d:3},{x:4,y:2,d:1}]},
-  {w:6,h:6,par:9,blocks:[{x:0,y:0,d:1},{x:1,y:0,d:1},{x:2,y:0,d:1},{x:3,y:0,d:1},{x:4,y:0,d:1},{x:5,y:0,d:2},{x:5,y:1,d:2},{x:5,y:2,d:2},{x:5,y:3,d:2},{x:5,y:4,d:2},{x:5,y:5,d:3},{x:0,y:5,d:0},{x:0,y:4,d:0},{x:0,y:3,d:0},{x:0,y:2,d:0},{x:0,y:1,d:1}]},
-  {w:6,h:6,par:10,blocks:[{x:0,y:0,d:2},{x:1,y:0,d:0},{x:2,y:0,d:2},{x:3,y:0,d:0},{x:4,y:0,d:2},{x:5,y:0,d:0},{x:0,y:5,d:0},{x:1,y:5,d:2},{x:2,y:5,d:0},{x:3,y:5,d:2},{x:4,y:5,d:0},{x:5,y:5,d:3},{x:2,y:2,d:0},{x:3,y:3,d:2}]},
-  {w:6,h:6,par:11,blocks:[{x:1,y:1,d:0},{x:2,y:1,d:0},{x:3,y:1,d:0},{x:4,y:1,d:0},{x:1,y:2,d:3},{x:4,y:2,d:1},{x:1,y:3,d:3},{x:4,y:3,d:1},{x:1,y:4,d:2},{x:2,y:4,d:2},{x:3,y:4,d:2},{x:4,y:4,d:2},{x:0,y:0,d:1},{x:5,y:5,d:3},{x:0,y:5,d:0},{x:5,y:0,d:2}]},
+  {w:6,h:6,par:16,blocks:[{x:0,y:0,d:1},{x:1,y:0,d:1},{x:2,y:0,d:1},{x:3,y:0,d:1},{x:4,y:0,d:1},{x:5,y:0,d:2},{x:5,y:1,d:2},{x:5,y:2,d:2},{x:5,y:3,d:2},{x:5,y:4,d:2},{x:5,y:5,d:3},{x:0,y:5,d:0},{x:0,y:4,d:0},{x:0,y:3,d:0},{x:0,y:2,d:0},{x:0,y:1,d:1}]},
+  {w:6,h:6,par:14,blocks:[{x:0,y:0,d:2},{x:1,y:0,d:0},{x:2,y:0,d:2},{x:3,y:0,d:0},{x:4,y:0,d:2},{x:5,y:0,d:0},{x:0,y:5,d:0},{x:1,y:5,d:2},{x:2,y:5,d:0},{x:3,y:5,d:2},{x:4,y:5,d:0},{x:5,y:5,d:3},{x:2,y:2,d:0},{x:3,y:3,d:2}]},
+  {w:6,h:6,par:16,blocks:[{x:1,y:1,d:0},{x:2,y:1,d:0},{x:3,y:1,d:0},{x:4,y:1,d:0},{x:1,y:2,d:3},{x:4,y:2,d:1},{x:1,y:3,d:3},{x:4,y:3,d:1},{x:1,y:4,d:2},{x:2,y:4,d:2},{x:3,y:4,d:2},{x:4,y:4,d:2},{x:0,y:0,d:1},{x:5,y:5,d:3},{x:0,y:5,d:0},{x:5,y:0,d:2}]},
   // Tier 4: Advanced (6x6, 7x7) — 6 levels
-  {w:6,h:6,par:12,blocks:[{x:0,y:0,d:1},{x:1,y:0,d:2},{x:2,y:0,d:1},{x:3,y:0,d:2},{x:4,y:0,d:1},{x:5,y:0,d:2},{x:0,y:1,d:2},{x:5,y:1,d:2},{x:0,y:2,d:1},{x:5,y:2,d:2},{x:0,y:3,d:1},{x:5,y:3,d:2},{x:0,y:4,d:1},{x:5,y:4,d:2},{x:0,y:5,d:1},{x:1,y:5,d:0},{x:2,y:5,d:0},{x:3,y:5,d:0},{x:4,y:5,d:0},{x:5,y:5,d:3}]},
-  {w:6,h:6,par:13,blocks:[{x:2,y:0,d:2},{x:3,y:0,d:2},{x:0,y:2,d:1},{x:1,y:2,d:1},{x:4,y:2,d:3},{x:5,y:2,d:3},{x:2,y:5,d:0},{x:3,y:5,d:0},{x:2,y:2,d:0},{x:3,y:2,d:1},{x:2,y:3,d:3},{x:3,y:3,d:2},{x:0,y:0,d:2},{x:5,y:0,d:3},{x:0,y:5,d:1},{x:5,y:5,d:0}]},
-  {w:6,h:6,par:13,blocks:[{x:1,y:1,d:0},{x:2,y:1,d:0},{x:3,y:1,d:0},{x:4,y:1,d:0},{x:1,y:2,d:3},{x:2,y:2,d:3},{x:3,y:2,d:1},{x:4,y:2,d:1},{x:1,y:3,d:3},{x:2,y:3,d:3},{x:3,y:3,d:1},{x:4,y:3,d:1},{x:1,y:4,d:2},{x:2,y:4,d:2},{x:3,y:4,d:2},{x:4,y:4,d:2},{x:0,y:0,d:1},{x:5,y:0,d:3},{x:0,y:5,d:1},{x:5,y:5,d:3}]},
-  {w:7,h:7,par:12,blocks:[{x:0,y:0,d:1},{x:1,y:0,d:1},{x:2,y:0,d:1},{x:4,y:0,d:2},{x:5,y:0,d:2},{x:6,y:0,d:2},{x:0,y:6,d:0},{x:1,y:6,d:0},{x:2,y:6,d:0},{x:4,y:6,d:3},{x:5,y:6,d:3},{x:6,y:6,d:3},{x:3,y:3,d:0},{x:3,y:0,d:2},{x:3,y:6,d:0}]},
-  {w:7,h:7,par:14,blocks:[{x:0,y:0,d:2},{x:6,y:0,d:2},{x:0,y:6,d:0},{x:6,y:6,d:0},{x:3,y:0,d:2},{x:3,y:6,d:0},{x:0,y:3,d:3},{x:6,y:3,d:1},{x:1,y:1,d:0},{x:5,y:1,d:0},{x:1,y:5,d:2},{x:5,y:5,d:2},{x:2,y:2,d:0},{x:4,y:2,d:0},{x:2,y:4,d:2},{x:4,y:4,d:2},{x:3,y:3,d:0}]},
+  {w:6,h:6,par:20,blocks:[{x:0,y:0,d:1},{x:1,y:0,d:2},{x:2,y:0,d:1},{x:3,y:0,d:2},{x:4,y:0,d:1},{x:5,y:0,d:2},{x:0,y:1,d:2},{x:5,y:1,d:2},{x:0,y:2,d:1},{x:5,y:2,d:2},{x:0,y:3,d:1},{x:5,y:3,d:2},{x:0,y:4,d:1},{x:5,y:4,d:2},{x:0,y:5,d:1},{x:1,y:5,d:0},{x:2,y:5,d:0},{x:3,y:5,d:0},{x:4,y:5,d:0},{x:5,y:5,d:3}]},
+  {w:6,h:6,par:16,blocks:[{x:2,y:0,d:2},{x:3,y:0,d:2},{x:0,y:2,d:1},{x:1,y:2,d:1},{x:4,y:2,d:3},{x:5,y:2,d:3},{x:2,y:5,d:0},{x:3,y:5,d:0},{x:2,y:2,d:0},{x:3,y:2,d:1},{x:2,y:3,d:3},{x:3,y:3,d:2},{x:0,y:0,d:2},{x:5,y:0,d:3},{x:0,y:5,d:1},{x:5,y:5,d:0}]},
+  {w:6,h:6,par:20,blocks:[{x:1,y:1,d:0},{x:2,y:1,d:0},{x:3,y:1,d:0},{x:4,y:1,d:0},{x:1,y:2,d:3},{x:2,y:2,d:3},{x:3,y:2,d:1},{x:4,y:2,d:1},{x:1,y:3,d:3},{x:2,y:3,d:3},{x:3,y:3,d:1},{x:4,y:3,d:1},{x:1,y:4,d:2},{x:2,y:4,d:2},{x:3,y:4,d:2},{x:4,y:4,d:2},{x:0,y:0,d:1},{x:5,y:0,d:3},{x:0,y:5,d:1},{x:5,y:5,d:3}]},
+  {w:7,h:7,par:21,blocks:[{x:0,y:0,d:1},{x:1,y:0,d:1},{x:2,y:0,d:1},{x:4,y:0,d:2},{x:5,y:0,d:2},{x:6,y:0,d:2},{x:0,y:6,d:0},{x:1,y:6,d:0},{x:2,y:6,d:0},{x:4,y:6,d:3},{x:5,y:6,d:3},{x:6,y:6,d:3},{x:3,y:3,d:0},{x:3,y:0,d:2},{x:3,y:6,d:0}]},
+  {w:7,h:7,par:17,blocks:[{x:0,y:0,d:2},{x:6,y:0,d:2},{x:0,y:6,d:0},{x:6,y:6,d:0},{x:3,y:0,d:2},{x:3,y:6,d:0},{x:0,y:3,d:3},{x:6,y:3,d:1},{x:1,y:1,d:0},{x:5,y:1,d:0},{x:1,y:5,d:2},{x:5,y:5,d:2},{x:2,y:2,d:0},{x:4,y:2,d:0},{x:2,y:4,d:2},{x:4,y:4,d:2},{x:3,y:3,d:0}]},
   {w:7,h:7,par:15,blocks:[{x:1,y:1,d:0},{x:2,y:1,d:0},{x:3,y:1,d:0},{x:4,y:1,d:0},{x:5,y:1,d:0},{x:1,y:2,d:3},{x:5,y:2,d:1},{x:1,y:3,d:3},{x:3,y:3,d:0},{x:5,y:3,d:1},{x:1,y:4,d:3},{x:5,y:4,d:1},{x:1,y:5,d:2},{x:2,y:5,d:2},{x:3,y:5,d:2},{x:4,y:5,d:2},{x:5,y:5,d:2},{x:0,y:0,d:1},{x:6,y:0,d:3},{x:0,y:6,d:1},{x:6,y:6,d:3}]},
   // Tier 5: Expert (7x7) — 6 levels
-  {w:7,h:7,par:18,blocks:[
+  {w:7,h:7,par:28,blocks:[
     {x:0,y:0,d:1},{x:1,y:0,d:2},{x:2,y:0,d:1},{x:3,y:0,d:2},{x:4,y:0,d:1},{x:5,y:0,d:2},{x:6,y:0,d:3},
     {x:0,y:1,d:2},{x:6,y:1,d:2},
     {x:0,y:2,d:1},{x:1,y:2,d:1},{x:5,y:2,d:3},{x:6,y:2,d:3},
@@ -411,7 +413,7 @@ var LEVELS=[
     {x:0,y:5,d:0},{x:6,y:5,d:0},
     {x:0,y:6,d:1},{x:1,y:6,d:0},{x:2,y:6,d:0},{x:3,y:6,d:0},{x:4,y:6,d:0},{x:5,y:6,d:0},{x:6,y:6,d:3}
   ]},
-  {w:7,h:7,par:16,blocks:[
+  {w:7,h:7,par:23,blocks:[
     {x:1,y:1,d:0},{x:2,y:1,d:0},{x:3,y:1,d:1},{x:4,y:1,d:0},{x:5,y:1,d:0},
     {x:1,y:2,d:3},{x:5,y:2,d:1},
     {x:1,y:3,d:3},{x:3,y:3,d:0},{x:5,y:3,d:1},
@@ -419,7 +421,7 @@ var LEVELS=[
     {x:1,y:5,d:2},{x:2,y:5,d:2},{x:3,y:5,d:3},{x:4,y:5,d:2},{x:5,y:5,d:2},
     {x:0,y:0,d:1},{x:6,y:0,d:3},{x:0,y:6,d:1},{x:6,y:6,d:3},{x:3,y:0,d:2},{x:3,y:6,d:0}
   ]},
-  {w:7,h:7,par:20,blocks:[
+  {w:7,h:7,par:30,blocks:[
     {x:0,y:0,d:2},{x:1,y:0,d:0},{x:2,y:0,d:2},{x:3,y:0,d:0},{x:4,y:0,d:2},{x:5,y:0,d:0},{x:6,y:0,d:2},
     {x:0,y:1,d:2},{x:2,y:1,d:3},{x:4,y:1,d:1},{x:6,y:1,d:2},
     {x:0,y:2,d:2},{x:6,y:2,d:2},
@@ -428,13 +430,13 @@ var LEVELS=[
     {x:0,y:5,d:2},{x:2,y:5,d:3},{x:4,y:5,d:1},{x:6,y:5,d:2},
     {x:0,y:6,d:0},{x:1,y:6,d:0},{x:2,y:6,d:0},{x:3,y:6,d:0},{x:4,y:6,d:0},{x:5,y:6,d:0},{x:6,y:6,d:3}
   ]},
-  {w:7,h:7,par:18,blocks:[
+  {w:7,h:7,par:28,blocks:[
     {x:0,y:0,d:1},{x:1,y:0,d:1},{x:2,y:0,d:2},{x:3,y:0,d:1},{x:4,y:0,d:2},{x:5,y:0,d:1},{x:6,y:0,d:2},
     {x:0,y:2,d:0},{x:1,y:2,d:3},{x:2,y:2,d:0},{x:3,y:2,d:1},{x:4,y:2,d:0},{x:5,y:2,d:3},{x:6,y:2,d:0},
     {x:0,y:4,d:2},{x:1,y:4,d:3},{x:2,y:4,d:2},{x:3,y:4,d:1},{x:4,y:4,d:2},{x:5,y:4,d:3},{x:6,y:4,d:2},
     {x:0,y:6,d:1},{x:1,y:6,d:0},{x:2,y:6,d:1},{x:3,y:6,d:3},{x:4,y:6,d:1},{x:5,y:6,d:0},{x:6,y:6,d:3}
   ]},
-  {w:7,h:7,par:22,blocks:[
+  {w:7,h:7,par:31,blocks:[
     {x:1,y:0,d:2},{x:3,y:0,d:2},{x:5,y:0,d:2},
     {x:0,y:1,d:1},{x:1,y:1,d:3},{x:2,y:1,d:1},{x:3,y:1,d:3},{x:4,y:1,d:1},{x:5,y:1,d:3},{x:6,y:1,d:3},
     {x:0,y:3,d:1},{x:1,y:3,d:1},{x:2,y:3,d:3},{x:3,y:3,d:0},{x:4,y:3,d:1},{x:5,y:3,d:3},{x:6,y:3,d:3},
@@ -442,7 +444,7 @@ var LEVELS=[
     {x:1,y:6,d:0},{x:3,y:6,d:0},{x:5,y:6,d:0},
     {x:0,y:0,d:2},{x:6,y:0,d:2},{x:0,y:6,d:0},{x:6,y:6,d:0}
   ]},
-  {w:7,h:7,par:25,blocks:[
+  {w:7,h:7,par:33,blocks:[
     {x:0,y:0,d:2},{x:6,y:0,d:2},{x:0,y:6,d:0},{x:6,y:6,d:0},
     {x:1,y:1,d:0},{x:5,y:1,d:0},{x:1,y:5,d:2},{x:5,y:5,d:2},
     {x:2,y:2,d:0},{x:4,y:2,d:0},{x:2,y:4,d:2},{x:4,y:4,d:2},
@@ -553,7 +555,9 @@ function loadLevel(idx){
   animatingBlocks=[];
   particles=[];
   hintBlockIdx=-1;
+  hintsUsed=0;
   hintTimer=0;
+  levelStartTime=Date.now();
   levelData=lv;
   
   // Compute canvas size
@@ -896,10 +900,15 @@ function onWin(){
   state='won';
   sfxWin();
   
-  // Calculate stars
+  // Calculate stars based on hints used and time
+  // 3 stars: no hints used, fast time
+  // 2 stars: no hints or fast time (one or the other)
+  // 1 star: completed (used hints + slow)
+  var elapsedSec=(Date.now()-levelStartTime)/1000;
+  var timeBonus=elapsedSec<parMoves*3; // generous time limit: 3s per block
   var stars=1;
-  if(moves<=parMoves)stars=3;
-  else if(moves<=parMoves+Math.ceil(parMoves*0.2))stars=2;
+  if(!hintsUsed&&timeBonus)stars=3;
+  else if(!hintsUsed||timeBonus)stars=2;
   
   // Save progress
   if(!progress.levels[currentLevel])progress.levels[currentLevel]={completed:false,stars:0,bestMoves:999};
@@ -982,7 +991,7 @@ function doUndo(){
 function doHint(){
   var removable=getRemovableBlocks();
   if(removable.length===0)return;
-  // Pick a removable block that leads toward a solution
+  hintsUsed++;
   hintBlockIdx=removable[Math.floor(Math.random()*removable.length)];
   hintTimer=3;
   sfxHint();
