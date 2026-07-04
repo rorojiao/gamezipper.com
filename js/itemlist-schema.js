@@ -551,8 +551,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":546,"url":"https://gamezipper.com/purple/","name":"Purple"},
     {"@type":"ListItem","position":547,"url":"https://gamezipper.com/red/","name":"Red"},
     {"@type":"ListItem","position":548,"url":"https://gamezipper.com/black/","name":"Black"},
-    {"@type":"ListItem","position":549,"url":"https://gamezipper.com/word-stacks/","name":"Word Stacks"}
+    {"@type":"ListItem","position":549,"url":"https://gamezipper.com/word-stacks/","name":"Word Stacks"},
+    {"@type":"ListItem","position":550,"url":"https://gamezipper.com/word-cookies/","name":"Word Cookies"}
   ],
-  "numberOfItems":549,
-  "description":"549 free browser games you can play instantly"
+  "numberOfItems":550,
+  "description":"550 free browser games you can play instantly"
 };
