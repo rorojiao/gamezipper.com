@@ -316,6 +316,7 @@
       {n:'Blue',e:'💙',u:'/blue/',c:'puzzle'},
       {n:'Purple',e:'💜',u:'/purple/',c:'puzzle'},
       {n:'Red',e:'❤️',u:'/red/',c:'puzzle'},
+      {n:'Hexa 2048',e:'🔷',u:'/hexa-2048/',c:'puzzle'},
       ]; }
    }
    function getDateSeed() {
