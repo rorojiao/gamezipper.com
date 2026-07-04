@@ -1,3 +1,42 @@
+## [v1.139.0] - 2026-07-05
+### Added
+- 10 new test cases from July-5 2026 industry research (R256 Dynamic Test Intelligence cron, 4h cadence cycle 18)
+- W-270: 2026 H1 CVE-volume ranking — Linux #1 (2308), Google #2 (1752) — Chrome/Android as continuous vuln surface (P2)
+- S-296: CVE-2026-2441 Chrome CSS sandbox-escape — @property + paint() worklet UAF, renderer→GPU escape WITHOUT JS (P1)
+- S-297: Chrome emergency out-of-band zero-day actively exploited — mid-session renderer version change breaks WASM/WebGPU (P1)
+- S-298: CVE-2025-5419 Chrome V8 JS/WASM OOB read/write heap corruption — WASM games as delivery surface (P2)
+- B-181: iOS browser-engine performance divergence — Chromium-iOS 28.6% faster than Safari on Speedometer 3.1 (P2)
+- B-182: iOS 26 Liquid Glass control-center transparency — TOP-reported iOS 26 issue, player complaint cadence (P3)
+- B-183: Linux-Chromium GPU-driver-compat black-screen/white-screen/font-flicker — deepin v23 case study (P2)
+- P-124: Web-game black-screen DOMINANT player complaint class — 7 root-cause diagnostic flow (P0)
+- C-189: 2026 WebGL/Canvas cross-browser compat trap — 35% of WebGL bugs are browser-compat-related (P2)
+- C-190: Browser Compatibility Data (BCD) MDN canonical JSON — CI pre-merge gate integration (P3)
+### Sources
+- Search queries:
+  - "HTML5 browser game testing 2026 July new techniques WebGL Canvas bug" (mcp_minimax_search_web_search)
+  - "iOS Safari WebKit bug 2026 July mobile game performance" (mcp_minimax_search_web_search)
+  - "Chrome 150 151 July 2026 security vulnerability CVE browser game" (mcp_minimax_search_web_search)
+  - "Safari 26.5 CVE-2026-28962 CSP bypass WebKit vulnerability July 2026" (mcp_minimax_search_web_search)
+  - "mobile game player complaint 2026 dark mode accessibility WCAG" (mcp_minimax_search_web_search)
+  - "CVE 2026 July RCE zero-day in-the-wild vulnerability Chrome Windows kernel" (mcp_minimax_search_web_search)
+  - "2026年7月 浏览器 游戏性能 黑屏 崩溃 WebGL Canvas bug" (mcp_minimax_search_web_search)
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8226a48682f87052 (2026 H1 CVE ranking Linux #1 Google #2 July 4 2026)
+  - https://www.sitepoint.com/css-zero-day-cve-2026-2441-browser-sandbox-escape/ (CVE-2026-2441 CSS sandbox escape Feb 19 2026)
+  - https://cybersecuritynews.com/google-chrome-0-day-vulnerability/ (Chrome emergency zero-day June 21 2026)
+  - https://thehackernews.com/2025/06/new-chrome-zero-day-actively-exploited.html (CVE-2025-5419 V8 OOB June 3 2025)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8006a3327f492452 (Microsoft Chromium iOS 28.6% faster June 18 2026)
+  - https://www.tenorshare.tw/ios-update-problems.html (iOS 26 Liquid Glass top reported issue June 8 2026)
+  - http://www.sanguomeng.com/yeyou/gl/45235.html (Web game black-screen dominant complaint)
+  - http://www.sanguomeng.com/yeyou/gl/32353.html (Web game black-screen other games normal)
+  - http://www.sanguomeng.com/yeyou/gl/38833.html (Web game black-screen open)
+  - http://www.sanguomeng.com/yeyou/gl/31725.html (Web game black-screen what to do)
+  - https://blog.csdn.net/gitblog_00859/article/details/153553036 (WebGL/Canvas 35% compat bug rate May 24 2026)
+  - https://gitcode.com/gh_mirrors/br/browser-compat-data (BCD canonical compat data)
+  - https://blog.csdn.net/mogoweb/article/details/145645429 (Linux Chromium GPU compat Feb 14 2025)
+  - https://blog.csdn.net/m0_66675766/article/details/137147641 (Chrome flags black-screen fix)
+  - https://finance.sina.com.cn/tech/digi/2026-05-14/doc-inhxvtwn8763233.shtml (Safari 26.5 CVE-2026-28962 CSP bypass May 14 2026)
+
 ## [v1.138.0] - 2026-07-05
 ### Added
 - 8 new test cases from July-5 2026 industry research (R255 Dynamic Test Intelligence cron, 4h cadence cycle 17)
