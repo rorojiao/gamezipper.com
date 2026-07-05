@@ -566,7 +566,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":561,"url":"https://gamezipper.com/jumping-clones/","name":"Jumping Clones"},
     {"@type":"ListItem","position":562,"url":"https://gamezipper.com/lockpick/","name":"Lockpick"},
     {"@type":"ListItem","position":563,"url":"https://gamezipper.com/sticker-book-puzzle/","name":"Sticker Book Puzzle"}
-],
-  "numberOfItems":563,
+,
+    {"@type":"ListItem","position":566,"url":"https://gamezipper.com/code-robot/","name":"Code Robot"}
+  ],
+  "numberOfItems":564,
   "description":"563 free browser games you can play instantly"
 };
