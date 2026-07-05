@@ -1,3 +1,38 @@
+## [v1.140.0] - 2026-07-05
+### Added
+- 9 new test cases from July-5 2026 industry research (R257, 4h cadence cycle 19):
+  - [S-299] **[P1]** CVE-2026-45247 Mirasvit Cache Warmer (Magento 2) PHP-object-injection unauth RCE CVSS 9.8 — single crafted cookie, no auth, ~6000 sites exposed
+  - [S-300] **[P1]** CVE-2026-3055 Citrix NetScaler SAML-IdP OOB-read unauth remote RCE CVSS 9.8 — massive in-the-wild exploitation ongoing; affects SSO perimeter
+  - [S-301] **[P2]** CVE-2026-5076 ARMember Premium (WordPress) insecure-password-reset CVSS 9.8 — plaintext reset keys → admin takeover
+  - [G-176] **[P2]** SONY PlayStation disc-phase-out announcement (July 1 2026) — all new PS games digital-only from Jan 1 2028; strategic tailwind for browser game portals
+  - [P-125] **[P2]** Video-stream black-frame / first-frame-stall class — recurring web-game complaint; root causes (codec, preload, CORS, poster)
+  - [C-191] **[P2]** Bun v1.3.14 `Bun.Image` built-in image-processing API (Sharp replacement) + HTTP/3 + Zig→Rust migration
+  - [C-192] **[P2]** Rolldown 1.0 stable (Vite 8 default bundler) — 10-30x faster than Rollup; output-parity regression risk
+  - [W-271] **[P2]** Node.js 26.0.0 Current release — Temporal API enabled by default; V8 14.6; LTS October 2026; silent Date-object behavior-change risk
+- Note: Safari Technology Preview 247 MCP (W-265 in v1.136.0) was identified as a duplicate during this cycle and skipped.
+### Sources
+- Search queries (executed 2026-07-05):
+  - "HTML5 game testing 2026 new techniques browser July"
+  - "browser security vulnerability July 2026 Chrome Safari"
+  - "casual mobile game UX complaint 2026 dark mode haptic"
+  - "Rolldown 1.0 Vite 8 Rust bundler 2026 release"
+  - "CVE-2026 zero-day exploit July 2026 browser"
+  - "web game performance benchmark INP LCP Core Web Vitals 2026"
+  - "Safari Technology Preview MCP server browser automation 2026"
+  - "Node.js 26 Temporary builtin modules FFI release 2026"
+  - "CVE-2026-34926 Trend Micro Apex One path traversal zero-day"
+  - "GameStop NFT marketplace shutdown 2026 web3 game impact"
+  - "Google Privacy Sandbox Topics API third-party cookie deprecation 2026 status"
+  - "SONY PlayStation disc production end 2026 digital-only impact web games"
+- Key URLs:
+  - https://blog.csdn.net/weixin_45635831/article/details/161691458 (2026-06-04 daily security intel — CVE-2026-45247, CVE-2026-3055, CVE-2026-5076)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2866a474df475952 (2026-07-03 SONY disc phase-out)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6246a48cebe23152 (2026-07-04 Alinea Analytics PS digital dominance)
+  - http://www.sanguomeng.com/yeyou/gl/45235.html (web-game black-screen complaint aggregate)
+  - https://segmentfault.com/a/1190000047772930 (2026-05 Bun v1.3.14 + Rolldown 1.0 weekly)
+  - https://blog.csdn.net/weixin_44829437/article/details/160905868 (2026-05-08 Rolldown 1.0 stable)
+  - https://www.donews.com/news/detail/8/6543521.html (2026-05-06 Node.js 26.0.0 release)
+
 ## [v1.139.0] - 2026-07-05
 ### Added
 - 10 new test cases from July-5 2026 industry research (R256 Dynamic Test Intelligence cron, 4h cadence cycle 18)
@@ -37,6 +72,41 @@
   - https://blog.csdn.net/m0_66675766/article/details/137147641 (Chrome flags black-screen fix)
   - https://finance.sina.com.cn/tech/digi/2026-05-14/doc-inhxvtwn8763233.shtml (Safari 26.5 CVE-2026-28962 CSP bypass May 14 2026)
 
+
+## [v1.140.0] - 2026-07-05
+### Added
+- 9 new test cases from July-5 2026 industry research (R257, 4h cadence cycle 19):
+  - [S-299] **[P1]** CVE-2026-45247 Mirasvit Cache Warmer (Magento 2) PHP-object-injection unauth RCE CVSS 9.8 — single crafted cookie, no auth, ~6000 sites exposed
+  - [S-300] **[P1]** CVE-2026-3055 Citrix NetScaler SAML-IdP OOB-read unauth remote RCE CVSS 9.8 — massive in-the-wild exploitation ongoing; affects SSO perimeter
+  - [S-301] **[P2]** CVE-2026-5076 ARMember Premium (WordPress) insecure-password-reset CVSS 9.8 — plaintext reset keys → admin takeover
+  - [G-176] **[P2]** SONY PlayStation disc-phase-out announcement (July 1 2026) — all new PS games digital-only from Jan 1 2028; strategic tailwind for browser game portals
+  - [P-125] **[P2]** Video-stream black-frame / first-frame-stall class — recurring web-game complaint; root causes (codec, preload, CORS, poster)
+  - [C-191] **[P2]** Bun v1.3.14 `Bun.Image` built-in image-processing API (Sharp replacement) + HTTP/3 + Zig→Rust migration
+  - [C-192] **[P2]** Rolldown 1.0 stable (Vite 8 default bundler) — 10-30x faster than Rollup; output-parity regression risk
+  - [W-271] **[P2]** Node.js 26.0.0 Current release — Temporal API enabled by default; V8 14.6; LTS October 2026; silent Date-object behavior-change risk
+- Note: Safari Technology Preview 247 MCP (W-265 in v1.136.0) was identified as a duplicate during this cycle and skipped.
+### Sources
+- Search queries (executed 2026-07-05):
+  - "HTML5 game testing 2026 new techniques browser July"
+  - "browser security vulnerability July 2026 Chrome Safari"
+  - "casual mobile game UX complaint 2026 dark mode haptic"
+  - "Rolldown 1.0 Vite 8 Rust bundler 2026 release"
+  - "CVE-2026 zero-day exploit July 2026 browser"
+  - "web game performance benchmark INP LCP Core Web Vitals 2026"
+  - "Safari Technology Preview MCP server browser automation 2026"
+  - "Node.js 26 Temporary builtin modules FFI release 2026"
+  - "CVE-2026-34926 Trend Micro Apex One path traversal zero-day"
+  - "GameStop NFT marketplace shutdown 2026 web3 game impact"
+  - "Google Privacy Sandbox Topics API third-party cookie deprecation 2026 status"
+  - "SONY PlayStation disc production end 2026 digital-only impact web games"
+- Key URLs:
+  - https://blog.csdn.net/weixin_45635831/article/details/161691458 (2026-06-04 daily security intel — CVE-2026-45247, CVE-2026-3055, CVE-2026-5076)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2866a474df475952 (2026-07-03 SONY disc phase-out)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6246a48cebe23152 (2026-07-04 Alinea Analytics PS digital dominance)
+  - http://www.sanguomeng.com/yeyou/gl/45235.html (web-game black-screen complaint aggregate)
+  - https://segmentfault.com/a/1190000047772930 (2026-05 Bun v1.3.14 + Rolldown 1.0 weekly)
+  - https://blog.csdn.net/weixin_44829437/article/details/160905868 (2026-05-08 Rolldown 1.0 stable)
+  - https://www.donews.com/news/detail/8/6543521.html (2026-05-06 Node.js 26.0.0 release)
 ## [v1.138.0] - 2026-07-05
 ### Added
 - 8 new test cases from July-5 2026 industry research (R255 Dynamic Test Intelligence cron, 4h cadence cycle 17)
