@@ -561,8 +561,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":556,"url":"https://gamezipper.com/slide-cat/","name":"Slide Cat"},
     {"@type":"ListItem","position":557,"url":"https://gamezipper.com/gold-miner/","name":"Gold Miner"},
     {"@type":"ListItem","position":558,"url":"https://gamezipper.com/catch-the-cat/","name":"Catch the Cat"},
-    {"@type":"ListItem","position":559,"url":"https://gamezipper.com/hole-stars/","name":"Hole Stars"}
+    {"@type":"ListItem","position":559,"url":"https://gamezipper.com/hole-stars/","name":"Hole Stars"},
+    {"@type":"ListItem","position":560,"url":"https://gamezipper.com/fluff-match/","name":"Fluff Match"}
   ],
-  "numberOfItems":559,
-  "description":"559 free browser games you can play instantly"
+  "numberOfItems":560,
+  "description":"560 free browser games you can play instantly"
 };
