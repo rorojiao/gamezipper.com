@@ -1,3 +1,25 @@
+## [v1.143.0] - 2026-07-05
+### Added
+- 9 new test cases from July-5 2026 industry research (R260, 4h cadence cycle 22):
+  - S-306: Safari 26 Announced Tracking-Param Filtering REMOVED Before Stable Ship (gclid/fbclid unaffected in GA)
+  - S-307: Palo Alto Firewall Zero-Day Nation-State 3-Week Pre-Disclosure Exploitation Cadence (May 2026)
+  - S-308: Linux Kernel "CopyFail" Universal Exploit Script 4-Distro Mass-Exploitation Cadence (Hours to Mass)
+  - S-309: ClickFix 500% Growth / 50% Malware Prevalence Aggregate Baseline (Fake-CAPTCHA Mainstream)
+  - W-276: Microsoft May 2026 Patch Tuesday 137 Vulnerabilities Aggregate Volume (Expanding Attack Surface)
+  - B-185: Edge Google OAuth Production Rollout Session Isolation Verification (July 2026)
+  - P-129: Cross-Browser WebRTC Process-Crash Stability Unified Matrix (Chrome 150 + Safari 26.5 + Firefox 152)
+  - PC-029: Steam Client Reliability Decline 2026 H1 Overlay Browser Compatibility (5+ Failure Modes)
+  - G-178: AI-DDoS Peak-Launch-Window Targeting Player-Facing Impact (NSFOCUS 2026: 22.36% YoY, 2.6Tbps peak)
+### Sources
+- "Safari版本26发布" — https://cloud.tencent.com/developer/article/2637644 (July 5 2026)
+- "新版Safari将会自动移除gclid、fbclid" — https://cloud.tencent.com/developer/article/2637645 (July 5 2026)
+- "微软2026年5月份漏洞补丁日安全通告 (137 vulns)" — https://www.toutiao.com/article/7639256531514573375/ (May 13 2026)
+- "代码漏洞扫描刻不容缓2026 (Palo Alto + Linux CopyFail)" — https://www.sohu.com/a/1020322070_121734355 (May 9 2026)
+- "2026年网络安全报告 (ClickFix 500% growth)" — https://www.sohu.com/a/1012262360_121823499 (April 21 2026)
+- "DDoS攻击威胁报告 2026 (NSFOCUS AI-DDoS)" — https://www.sohu.com/a/1014477184_121864708 (May 2 2026)
+- "苹果公布 Safari 26.5 浏览器安全清单" — https://so.html5.qq.com/page/real/search_news?docid=70000021_0236a054d4370952 (May 14 2026)
+- Search queries: "HTML5 game testing 2026", "browser security vulnerability 2026 July", "casual game UX 2026", "Chrome Edge Safari update 2026", "CVE 2026 July Chrome Safari"
+
 ## [v1.142.0] - 2026-07-05
 ### Added
 - 8 new test cases from July-5 2026 industry research (R259, 4h cadence cycle 21):
