@@ -241,7 +241,8 @@
 ,{n:'Tetravex',e:'🔲',u:'/tetravex/',c:'puzzle'}
 ,{n:'Qwirkle',e:'🎮',u:'/qwirkle/',c:'puzzle'}
 ,{n:'Ships Finder',e:'🚢',u:'/ships-finder/',c:'puzzle'}
-,{n:'Nerdle',e:'🧠',u:'/nerdle/',c:'puzzle'},{n:"Klotski",e:"🧩",u:"/klotski/",c:"puzzle"},{n:"Green",e:"💚",u:"/green/",c:"puzzle"},{n:"Orange",e:"🧡",u:"/orange/",c:"puzzle"},{n:"Purple",e:"💜",u:"/purple/",c:"puzzle"},{n:"Red",e:"❤️",u:"/red/",c:"puzzle"},{n:"Catch the Cat",e:"🐱",u:"/catch-the-cat/",c:"puzzle"}]
+,{n:'Nerdle',e:'🧠',u:'/nerdle/',c:'puzzle'},{n:"Klotski",e:"🧩",u:"/klotski/",c:"puzzle"},{n:"Green",e:"💚",u:"/green/",c:"puzzle"},{n:"Orange",e:"🧡",u:"/orange/",c:"puzzle"},{n:"Purple",e:"💜",u:"/purple/",c:"puzzle"},{n:"Red",e:"❤️",u:"/red/",c:"puzzle"},{n:"Catch the Cat",e:"🐱",u:"/catch-the-cat/",c:"puzzle"},
+{n:"Sticker Book Puzzle",e:"🎨",u:"/sticker-book-puzzle/",c:"puzzle"}]
 
   var cur = location.pathname;
   var current = games.find(function(g){ return g && g.u === cur; });
@@ -322,6 +323,7 @@
 {n:'Slide Cat',e:'🐱',u:'/slide-cat/',c:'puzzle'},
 {n:'Gold Miner',e:'⛏️',u:'/gold-miner/',c:'puzzle'},
 {n:'Catch the Cat',e:'🐱',u:'/catch-the-cat/',c:'puzzle'},
+{n:'Sticker Book Puzzle',e:'🎨',u:'/sticker-book-puzzle/',c:'puzzle'},
       ]; }
    }
    function getDateSeed() {
