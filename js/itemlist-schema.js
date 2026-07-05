@@ -563,8 +563,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":558,"url":"https://gamezipper.com/catch-the-cat/","name":"Catch the Cat"},
     {"@type":"ListItem","position":559,"url":"https://gamezipper.com/hole-stars/","name":"Hole Stars"},
     {"@type":"ListItem","position":560,"url":"https://gamezipper.com/fluff-match/","name":"Fluff Match"},
-    {"@type":"ListItem","position":561,"url":"https://gamezipper.com/jumping-clones/","name":"Jumping Clones"}
+    {"@type":"ListItem","position":561,"url":"https://gamezipper.com/jumping-clones/","name":"Jumping Clones"},
+    {"@type":"ListItem","position":562,"url":"https://gamezipper.com/lockpick/","name":"Lockpick"}
   ],
-  "numberOfItems":561,
-  "description":"561 free browser games you can play instantly"
+  "numberOfItems":562,
+  "description":"562 free browser games you can play instantly"
 };
