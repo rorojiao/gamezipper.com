@@ -4,9 +4,8 @@ on:
   push:
     branches: [main]
   schedule:
-    # Run every 10 minutes to catch any missed deploys.
-    # Combined with cancel-in-progress, this means at most 1 deploy per 10min,
-    # regardless of how many commits land in that window.
+    # Backup deploy every 10 minutes to catch any missed pushes.
+    # With cancel-in-progress, this means at most 1 active deploy at a time.
     - cron: '*/10 * * * *'
   workflow_dispatch:
 
@@ -15,9 +14,9 @@ permissions:
   pages: write
   id-token: write
 
-# Cancel ANY in-progress run when a new one starts.
-# This is the core fix: 242 pushes/day → at most 1 active deploy at any time.
-# No more CDN conflicts because there's never 2 concurrent deploys.
+# CRITICAL FIX (2026-07-05): This repo gets 100+ pushes/day from watchdog + pipeline.
+# Without this, concurrent deploys cause "Deployment failed, try again later" CDN errors.
+# cancel-in-progress ensures only 1 deploy runs at a time — newer cancels older.
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -29,12 +28,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - name: Check if deployment is needed
-        id: check
-        run: |
-          # For scheduled runs, always deploy (to catch missed pushes).
-          # For push events, the cancel-in-progress handles deduplication.
-          echo "should_deploy=true" >> $GITHUB_OUTPUT
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -42,10 +35,21 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: needs.build.outputs.should_deploy != 'skip'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deployment
+      - name: Deploy with retry
+        id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          error_count: 30
+          reporting_interval: 5000
+          timeout: 600000
+      - name: Retry deployment on failure
+        if: failure()
+        uses: actions/deploy-pages@v4
+        with:
+          error_count: 30
+          reporting_interval: 5000
+          timeout: 600000
