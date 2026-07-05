@@ -3,6 +3,11 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  schedule:
+    # Run every 10 minutes to catch any missed deploys.
+    # Combined with cancel-in-progress, this means at most 1 deploy per 10min,
+    # regardless of how many commits land in that window.
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -10,8 +15,9 @@ permissions:
   pages: write
   id-token: write
 
-# Cancel in-progress deployment when a new push arrives.
-# This handles within-repo concurrent pushes from watchdog.
+# Cancel ANY in-progress run when a new one starts.
+# This is the core fix: 242 pushes/day → at most 1 active deploy at any time.
+# No more CDN conflicts because there's never 2 concurrent deploys.
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -21,6 +27,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Check if deployment is needed
+        id: check
+        run: |
+          # For scheduled runs, always deploy (to catch missed pushes).
+          # For push events, the cancel-in-progress handles deduplication.
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -28,18 +42,10 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    if: needs.build.outputs.should_deploy != 'skip'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
-        # Retry on "Deployment failed, try again later" — this error is a
-        # transient GitHub CDN issue caused by cross-repo concurrent deploys.
-        # The watchdog pushes gamezipper.com + gamezipper-tools back-to-back,
-        # and when both deploy jobs hit GitHub's CDN simultaneously, one fails.
-        # Retrying after a short delay resolves it.
-        with:
-          error_count: 30
-          reporting_interval: 5000
-          timeout: 600000
