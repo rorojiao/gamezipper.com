@@ -1,7 +1,7 @@
 const ITEMLIST_SCHEMA = {
-  "@context": "https://schema.org",
-  "@type": "ItemList",
-  "name": "GameZipper Free HTML5 Games",
+  "@context":"https://schema.org",
+  "@type":"ItemList",
+  "name":"GameZipper Free HTML5 Games",
   "itemListElement": [
     {"@type":"ListItem","position":1,"url":"https://gamezipper.com/fulcrum-balance/","name":"Fulcrum Balance"},
     {"@type":"ListItem","position":2,"url":"https://gamezipper.com/sum-swipe/","name":"Sum Swipe"},
@@ -559,8 +559,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":554,"url":"https://gamezipper.com/tap-away/","name":"Tap Away"},
     {"@type":"ListItem","position":555,"url":"https://gamezipper.com/hexa-away/","name":"Hexa Away"},
     {"@type":"ListItem","position":556,"url":"https://gamezipper.com/slide-cat/","name":"Slide Cat"},
-    {"@type":"ListItem","position":557,"url":"https://gamezipper.com/gold-miner/","name":"Gold Miner"}
+    {"@type":"ListItem","position":557,"url":"https://gamezipper.com/gold-miner/","name":"Gold Miner"},
+    {"@type":"ListItem","position":558,"url":"https://gamezipper.com/catch-the-cat/","name":"Catch the Cat"}
   ],
-  "numberOfItems":557,
-  "description":"557 free browser games you can play instantly"
+  "numberOfItems":558,
+  "description":"558 free browser games you can play instantly"
 };
