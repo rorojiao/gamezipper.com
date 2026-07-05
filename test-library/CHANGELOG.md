@@ -1,3 +1,34 @@
+## [v1.141.0] - 2026-07-05
+### Added
+- 8 new test cases from July-5 2026 industry research (R258, 4h cadence cycle 20):
+  - [S-302] **[P0]** CVE-2026-7333 Chrome GPU-process UAF sandbox-escape CVSS 9.6 — GPU process has HIGHER privileges than renderer; any malicious webpage can trigger full renderer→GPU→kernel chain
+  - [S-303] **[P1]** CVE-2026-7908 Chrome 148 GPU UAF sandbox-escape — record-density 127 vulns in single update; 63% are UAF; highest single-update count in 5 years
+  - [S-304] **[P1]** CVE-2025-49844 Redis Lua-script UAF RCE "RediShell" — DEFAULT config affected; data-layer/cache/session-store dimension
+  - [W-272] **[P2]** Epoch AI: June 2026 CVE count 3.5x previous monthly record — AI-accelerated discovery velocity shock; requires daily intel ingestion
+  - [P-126] **[P1]** CVE-2025-14765 Chrome WebGPU Dawn UAF OOB read/write — pre-stable WebGPU is a moving vulnerability target
+  - [P-127] **[P2]** WebGPU vs WebGL 3-8x performance divergence — two-tier player experience; WebGL fallback mandatory for 30-35% of players
+  - [P-128] **[P2]** iOS browser-engine gameplay timing divergence — Safari 60fps → Chromium-iOS 77fps; breaks physics timing & competitive fairness
+  - [G-177] **[P3]** AI-accelerated vuln discovery volume shock — game engine dependency CVE accumulation; mandatory automated dependency-CVE scanning gate
+### Sources
+- mcp_minimax_search_web_search queries (2026-07-05):
+  - "HTML5 game testing 2026 new techniques browser game July"
+  - "browser security vulnerability 2026 July XSS Chrome Safari CVE"
+  - "Chrome Edge Safari update 2026 July browser release new feature"
+  - "casual game UX mobile complaint 2026 user feedback bug"
+  - "CVE 2026 July critical vulnerability RCE Chrome Safari Firefox"
+  - "WebGL WebGPU performance bug 2026 canvas crash fix"
+  - "2026年7月 浏览器安全漏洞 CVE 高危 Chrome更新"
+  - "2026年7月 网络安全 CISA KEV 高危漏洞 零日"
+- Key URLs:
+  - https://blog.csdn.net/weixin_42376192/article/details/160846721 (CVE-2026-7333 Chrome GPU UAF sandbox escape)
+  - https://blog.csdn.net/weixin_42376192/article/details/161180894 (CVE-2026-7908 Chrome 148 record-density 127 vulns)
+  - https://www.cnblogs.com/hzhsec/p/19412602 (CVE-2025-49844 Redis Lua RediShell)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_1586a48a11945452 (Epoch AI 3.5x CVE volume)
+  - https://new.qq.com/rain/a/20251217A05PZI00 (CVE-2025-14765 Chrome WebGPU Dawn UAF)
+  - https://www.sitepoint.com/webgpu-vs-webgl-inference-benchmarks/ (WebGPU vs WebGL benchmark)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8006a3327f492452 (iOS Chromium vs Safari performance)
+  - https://cloud.tencent.com/developer/article/2637644 (Safari 26 tracking-param filtering discrepancy — confirms W-186)
+
 ## [v1.140.0] - 2026-07-05
 ### Added
 - 9 new test cases from July-5 2026 industry research (R257, 4h cadence cycle 19):
