@@ -1,3 +1,34 @@
+## [v1.144.0] - 2026-07-06
+### Added
+- 7 new test cases from July-6 2026 industry research (R261, 4h cadence cycle 23):
+  - [S-310] **[P0]** CVE-2025-6558 ANGLE cross-vendor 6-Apple-OS simultaneous emergency patch (phone+tablet+TV+watch+visionOS)
+  - [S-311] **[P1]** Canvas/WebGL fingerprinting now used by Monetag/AdSense anti-fraud → headless-QA false-negative risk
+  - [C-195] **[P1]** HarmonyOS NEXT "pure-blood" OS — THIRD major mobile OS (ArkWeb engine) reaching mainstream game-engine support
+  - [P-130] **[P2]** WebGPU vs WebGL 2026 mobile migration — 18% adoption, +22% frame-rate stability, dual-track standard
+  - [B-186] **[P1]** Chrome ANGLE v139.0+ black-screen — #1 PC Chrome WebGL user complaint in 2026 (--disable-gpu smoke test)
+  - [B-187] **[P2]** iOS 26 first-wave aggregate 24+ user-complaint cluster (triage decision-tree required)
+  - [B-188] **[P3]** Microsoft Edge 2026 Copilot-design UI overhaul (rounded corners, visual-only)
+### Sources
+- Search queries: "HTML5 browser game testing techniques 2026", "Chrome Safari iOS 2026 browser security vulnerability WebGL sandbox escape", "casual game UX complaint 2026 haptic feedback dark mode", "CVE-2026 Chrome Safari zero day July 2026", "2026年7月 浏览器 游戏 WebGL 漏洞 CVE", "iOS Safari 26 WebKit 2026 new feature bug fix", "HarmonyOS NEXT 鸿蒙 浏览器 兼容性 游戏", "WebGPU 浏览器 性能 基准 测试 游戏 渲染 2026"
+- Key URLs:
+  - https://cloud.tencent.com/developer/article/2554781 (CVE-2025-6558 ANGLE Apple 6-OS patch, July 6 2026)
+  - https://blog.csdn.net/weixin_42376192/article/details/160846721 (CVE-2026-7333 Chrome GPU UAF sandbox-escape deep analysis)
+  - https://blog.csdn.net/weixin_42376192/article/details/161180894 (Chrome 148 GPU UAF 127-vuln single update)
+  - https://new.qq.com/rain/a/20260217A044OM00 (CVE-2026-2441 Chrome CSS sandbox-escape zero-day)
+  - https://www.sitepoint.com/css-zero-day-cve-2026-2441-browser-sandbox-escape/ (CVE-2026-2441 CSS sandbox-escape)
+  - https://developer.huawei.com/consumer/cn/next/ (HarmonyOS NEXT — July 3 2026)
+  - https://www.ithome.com/0/789/320.htm (HarmonyOS NEXT first MOBA game)
+  - https://www.ithome.com/0/812/822.htm (HarmonyOS NEXT game center lineup)
+  - https://www.lcxw.cn/zJ_wikimwU4M8WuU (IDC Q1 2026 mobile-game WebGPU migration report)
+  - https://blog.csdn.net/qq_51700102/article/details/145876401 (WebGPU vs WebGL compute 65x)
+  - https://php.cn (Chrome v139.0+ ANGLE black-screen — June 7 2026)
+  - https://www.tenorshare.tw/ios-update-problems.html (iOS 26 aggregate 24+ bug cluster — June 8 2026)
+  - https://www.sohu.com/a/868000000_122004016 (Edge 2026 Copilot-design UI overhaul)
+  - https://download.csdn.net/blog/column/12991432/160130526 (Canvas/WebGL fingerprinting industry baseline)
+  - https://blog.csdn.net/2501_94224099/article/details/160891016 (Canvas/WebGL fingerprint 80%+ of device-fingerprint sources)
+  - https://github.com/ruanyf/weekly/issues/8000 (Burn & Measure GPU stress benchmark — June 20 2026)
+  - https://cloud.tencent.com/developer/article/2625448 (2026 PC browser comparison — July 6 2026)
+
 ## [v1.143.0] - 2026-07-05
 ### Added
 - 9 new test cases from July-5 2026 industry research (R260, 4h cadence cycle 22):
