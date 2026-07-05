@@ -1442,6 +1442,8 @@ window.startGame = function(){
   startBgm();
   document.getElementById('menu-screen').style.display='none';
   document.getElementById('game-screen').style.display='flex';
+  // resize after game screen becomes visible
+  requestAnimationFrame(()=>{ resizeCanvas(); requestAnimationFrame(resizeCanvas); });
   // resume from furthest unlocked, or 0
   const startIdx = Math.min(progress.level, ALL_LEVELS.length-1);
   loadLevel(startIdx);
@@ -1587,6 +1589,8 @@ function updateMenuStats(){
 function init(){
   loadProgress();
   setupCanvas();
+  // Re-resize after layout settles (DOMContentLoaded may fire before CSS applies)
+  requestAnimationFrame(()=>{ resizeCanvas(); requestAnimationFrame(resizeCanvas); });
   updateMenuStats();
   // Pointer events
   canvas.addEventListener('mousedown', onPointerDown);
@@ -1605,8 +1609,14 @@ function init(){
   loop(performance.now());
 }
 
-// Expose init for window load
-window.addEventListener('DOMContentLoaded', init);
+// Expose init for window load — handle both DOMContentLoaded (normal) and late-load (CSP/eval) cases
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', init);
+} else {
+  // DOM already ready (script parsed after load, or eval'd) — init now
+  init();
+}
+window.addEventListener('load', function(){ setTimeout(resizeCanvas, 50); });
 window.init = init;
 
 // Expose game functions globally for onclick handlers
@@ -1631,7 +1641,7 @@ document.addEventListener('visibilitychange', function(){
     if(_rafId){ _origCAF.call(window,_rafId); _rafId=null; }
     if(typeof bgmInterval!=='undefined' && bgmInterval){ clearInterval(bgmInterval); bgmInterval=null; }
   } else {
-    if(gameState==='playing' && !_rafId){ _rafId=_origRAF.call(window, loop); }
+    if(typeof gameState!=='undefined' && gameState==='playing' && !_rafId){ _rafId=_origRAF.call(window, loop); }
   }
 });
 
