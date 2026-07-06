@@ -1,18 +1,33 @@
 name: Deploy to GitHub Pages
 
+# ═══════════════════════════════════════════════════════════════════
+# PLAN-D: Schedule-only deployment (2026-07-06)
+# ═══════════════════════════════════════════════════════════════════
+# This repo gets 100+ pushes/day from watchdog tunnel-rotation +
+# dev pipeline. Every push triggering a deploy caused ~280 deploy
+# attempts/day → GitHub Pages CDN "Deployment failed, try again later".
+#
+# STRATEGY: Deploy on a fixed schedule (every 2 hours) instead of on
+# every push. Commits accumulate; the next scheduled run deploys the
+# latest main. Max delay for content changes: 2 hours.
+#
+#   - gamezipper.com:  cron '7 */2 * * *'  (odd-offset to avoid overlap)
+#   - gamezipper-tools: cron '37 */2 * * *' (30 min apart → no CDN conflict)
+#
+# Pushes NO LONGER trigger deploys. For urgent releases, use
+# workflow_dispatch (Actions tab → Run workflow).
+# ═══════════════════════════════════════════════════════════════════
+
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  schedule:
+    - cron: '7 */2 * * *'  # every 2 hours at minute 7
+  workflow_dispatch:        # manual trigger for urgent releases
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# ROOT CAUSE FIX (2026-07-06): This repo gets 100+ pushes/day from watchdog.
-# Previous schedule:*/10 cron added 144 more deploys/day. All gone now.
-# cancel-in-progress ensures only 1 deploy runs at a time.
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -34,7 +49,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    continue-on-error: true  # CDN conflicts happen; don't send failure emails
+    continue-on-error: true  # CDN conflicts are non-fatal
     steps:
       - name: Deploy
         id: deployment
@@ -44,7 +59,6 @@ jobs:
           reporting_interval: 5000
           timeout: 600000
       - name: Retry on failure
-        id: retry_deployment
         if: failure()
         uses: actions/deploy-pages@v4
         with:
