@@ -223,7 +223,7 @@ body{background:linear-gradient(135deg,#0d1b2a 0%,#1b2838 40%,#0d1b2a 100%);min-
 <script src="/monetag-manager.js?v=20260707dottodot"></script>
 <div class="gz-ad-below-game" id="gz-ad-below-game"></div>
 <script src="/game-footer.js?v=20260707dottodot"></script>
-<script src="/gz-analytics.js?v=2026070742c8c88efe1"></script>
+<script src="/gz-analytics.js?v=202607075e6522a2006"></script>
 
 <script>
 (function(){
@@ -451,8 +451,14 @@ function startLevel(idx){
   document.getElementById('hud-level').textContent='Level '+(idx+1)+' - '+(LV[idx].name||'');
   updateStars();
   updateProgress();
-  if(state.rafId)cancelAnimationFrame(state.rafId);
-  gameLoop();
+  // Bug #9 fix (R1 Jul7): resizeCanvas() after showScreen('game') — canvas was sized
+  // to 0×0 during init() when game-screen was display:none. Defer to next frame so
+  // CSS display:flex has applied and clientWidth is correct (R118 lesson).
+  requestAnimationFrame(function(){
+    resizeCanvas();
+    if(state.rafId)cancelAnimationFrame(state.rafId);
+    gameLoop();
+  });
 }
 
 function updateStars(){
