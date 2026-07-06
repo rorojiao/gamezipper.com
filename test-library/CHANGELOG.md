@@ -1,3 +1,30 @@
+## [v1.146.0] - 2026-07-06
+### Added
+- 7 new test cases from July-6 2026 industry research (R263, 4h cadence cycle 25):
+  - [S-314] Chrome Multiplane Overlay (MPO) Display-Corruption Regression on Windows 10/11 (RunPlatformExperienceHelperOnUnlock + HW-accel) — P1
+  - [S-315] JADEPUFFER First Fully-Autonomous AI-Agent Ransomware — Assume-Breach 24/7 AI-Probing Posture (Sysdig) — P1
+  - [S-316] Anthropic Claude Code Hidden Region-Targeted Surveillance Code — Dev-Tool Supply-Chain Telemetry Risk — P2
+  - [S-317] National-Security-Agency Browser-Extension Excessive-Permission Data-Exfiltration Warning — P2
+  - [W-279] Chrome 142 Private Network Access (PNA) CORS-Preflight Enforcement Breaking Intranet/Local-Dev — P1
+  - [PC-030] "Burn-After-Read" Ephemeral-Messaging Memory-Resident Plaintext Player-Privacy-Expectation Mismatch — P3
+  - [G-180] Generative-AI Search (GEO) Citation Optimization — Distinct Discoverability Channel Parallel to SEO — P2
+### Sources
+- "HTML5 game testing 2026 new techniques browser" (mcp_minimax_search_web_search)
+- "new browser security vulnerability 2026 XSS clickjacking Safari Chrome" (mcp_minimax_search_web_search)
+- "casual game UX complaint 2026 mobile haptic feedback dark mode" (mcp_minimax_search_web_search)
+- "Chrome 138 139 140 2026 breaking changes web API deprecation" (mcp_minimax_search_web_search)
+- "iOS Safari 26 WebKit bug 2026 game canvas" (mcp_minimax_search_web_search)
+- "Chrome 142 内网访问危机 WebVPN Private Network Access 2026年7月" (mcp_minimax_search_web_search)
+- "Safari 26.5 CVE-2026-28962 WebKit CSP bypass security fix 2026" (mcp_minimax_search_web_search)
+- Key URLs:
+  - https://new.qq.com/rain/a/20260706A0004Z00 (Chrome MPO/Win10-11 display corruption, July 6 2026)
+  - https://new.qq.com/rain/a/20260705A03RJC00 (JADEPUFFER autonomous AI ransomware, July 5 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4346a46f84759152 (Claude Code surveillance code, July 3 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_453697c180540452 (Browser extension data-exfil warning, Jan 30 2026)
+  - https://cloud.tencent.com/developer/article/2606449 (Chrome 142 PNA intranet breakage, July 6 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_7836a470c1884452 (Burn-after-read memory plaintext, July 3 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8436a47169619852 (GEO AI-search optimization, July 3 2026)
+
 ## [v1.145.0] - 2026-07-06
 ### Added
 - 7 new test cases from July-6 2026 industry research (R262, 4h cadence cycle 24):
