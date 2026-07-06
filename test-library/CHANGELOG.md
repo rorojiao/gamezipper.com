@@ -4780,3 +4780,44 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
   - https://so.html5.qq.com/page/real/search_news?docid=70000021_32369d6e7ae21652 (ClickFix applescript://)
   - https://so.html5.qq.com/page/real/search_news?docid=70000021_94569a6d0d301752 (IBM X-Force 2026)
   - https://www.pchome.net/games/665263.html (Pixel Game 2026 low-end fluency)
+
+
+## [v1.150.0] - 2026-07-07
+### Added
+- 10 new test cases from July-7 2026 industry research (R267, 4h cadence cycle 29):
+  - [S-327] **[P1]** npm "Mini Shai-Hulud" Supply-Chain Attack — Valid SLSA Build Level 3 Provenance Bypassing SBOM/Signature Gates (CVE-2026-45321, May 11 2026)
+  - [S-328] **[P2]** Rspack/Vant npm Cryptominer via Stolen Publish Tokens — postinstall + Geo-Gated + CPU-Capped Evasion (persistent 2024->2026)
+  - [S-329] **[P2]** Safari 26.5 WebKit CVE-2026-28962 Content-Security-Policy Bypass — Sensitive-Info Disclosure (May 14 2026)
+  - [W-287] **[P2]** Bun 1.3.14 Last-Zig Release — Full Rust Rewrite of 960k-line Runtime in ~6 Days via Claude Code (AI-Accelerated Runtime Rewrite Precedent)
+  - [W-288] **[P3]** Vite 8 + Rolldown 1.0 Production Bundler Swap — esbuild+Rollup -> Unified Rust Rolldown (10-30x faster, dev/prod parity)
+  - [P-134] **[P2]** iOS 26 Post-Update Background Reindexing — 3-7 Day Transient Jank Window (QA Cooldown Hazard)
+  - [P-135] **[P2]** iOS 26 Liquid Glass backdrop-filter + Adaptive Power Thermal Throttling — Sustained-Game FPS Collapse on A15 (15-min test reveals it)
+  - [C-200] **[P2]** Safari 26.4 CSS Grid Lanes (Native Masonry/Waterfall) — Progressive-Enhancement Fallback Risk in Chrome/Firefox
+  - [B-189] **[P2]** Safari 26.4 "191 Bug Fixes" Regression Sweep — Silent Behavior Changes in SVG/Forms/MathML/CSS-Scaling
+  - [PC-031] **[P3]** 2026 Web-Game Industry "Three Shifts" — Compliance Hardening + Category Focus + Premiumization (Sohu May 27 2026)
+### Sources
+- mcp_minimax_search_web_search queries (2026-07-07):
+  - "HTML5 game testing techniques 2026 new methods browser"
+  - "browser security vulnerability 2026 XSS clickjacking WebGL"
+  - "casual game UX complaints 2026 user feedback mobile"
+  - "Chrome Edge Safari July 2026 update web API breaking changes"
+  - "npm supply chain attack 2026 TanStack malware package"
+  - "iOS Safari WebKit bug 2026 canvas WebGL regression"
+  - "Rolldown 1.0 Vite 8 Rust bundler 2026 breaking changes migration"
+  - "CSS Grid Lanes Safari 26.4 layout bug 2026"
+  - "iOS 26 Liquid Glass backdrop-filter performance regression game July 2026"
+- Key URLs:
+  - https://github.com/mqyqingfeng/Blog/issues/442 (Rolldown 1.0 + TanStack Mini Shai-Hulud + Bun Rust rewrite, May 17 2026)
+  - https://segmentfault.com/a/1190000047772930 (JS weekly: Rolldown/TanStack/Bun, May 10 2026)
+  - https://www.163.com/dy/article/JK497M5H0511A5GF.html (Rspack/Vant npm cryptominer, Dec 23 2024 persistent into 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4186a15535e00252 (npm supply-chain poisoning national advisory, May 26 2026)
+  - https://finance.sina.com.cn/tech/digi/2026-05-14/doc-inhxvtwn8763233.shtml (Safari 26.5 CVE-2026-28962 CSP bypass, May 14 2026)
+  - https://www.sohu.com/a/1022622771_122004016 (Safari 26.5 20 WebKit vulns, May 14 2026)
+  - https://rolldown.rs/ (Rolldown official, July 6 2026)
+  - https://github.com/antfu/skills/blob/main/skills/vite/references/rolldown-migration.md (Vite 8 migration guide, May 28 2026)
+  - https://cloud.tencent.com/developer/article/2679559 (JS Weekly #20, May 2026)
+  - https://www.cnblogs.com/X15512549546/p/19138910 (iOS 26 Adaptive Power + Liquid Glass perf, Oct 13 2025)
+  - https://www.cnblogs.com/slgkaifa/p/19116899 (iOS 26 Liquid Glass jank user feedback, Sep 28 2025)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0766950d08113752 (CSS Grid Lanes WebKit docs, Dec 28 2025)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Safari 26.4 191 bug fixes + Grid Lanes ship, March 25 2026)
+  - https://www.sohu.com/a/1028338060_122652494 (2026 web-game industry three shifts, May 27 2026)
