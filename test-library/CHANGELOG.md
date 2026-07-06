@@ -1,3 +1,32 @@
+## [v1.149.0] - 2026-07-07
+### Added
+- 8 new test cases from July-7 2026 industry research (R266, 4h cadence cycle 28):
+  - [S-324] **[P2]** FatFs Generic FAT/exFAT Filesystem 7-CVE Cluster (CVE-2026-38192..38198) — Embedded Storage Supply-Chain Vector (millions of SD/USB/IoT exposed)
+  - [S-325] **[P2]** CVE-2026-54998 + CVE-2026-41106 Microsoft Exchange Online & M365 Copilot Critical Privesc — Cloud-Side Patched (opaque SaaS patch window)
+  - [S-326] **[P1]** AMD Zen 1-5 Unsigned-Microcode CPU-Resident Ransomware — Firmware-Layer Class Survives OS Reinstall (Rapid7 PoC)
+  - [W-285] **[P2]** Chromium Private Google-Domains-Exclusive CPU-Info API — Vendor-Exclusive Hardware Fingerprint (asymmetric ad-fraud debug blind spot)
+  - [W-286] **[P3]** JavaScript Weekly #16 — Bun Headless Automation, Ink 7 React 19, pnpm v11 RC, Mantine 9 (toolchain shift)
+  - [P-133] **[P2]** Chrome CPU Performance API + Computing Pressure API — Proactive Adaptive Content Degradation (crash→graceful)
+  - [C-198] **[P1]** Android OEM Coalition (OPPO/vivo/Xiaomi/Honor/Lenovo) Joint Privacy-Permission Framework — Q4 2026 Full Enforcement
+  - [C-199] **[P2]** Google Aluminium OS = ChromeOS+Android Fusion Confirmed Late-2026 — OS-Fusion Dual-Store Distribution Tier
+### Sources
+- "HTML5 browser game testing 2026 July new technique" (mcp_minimax_search_web_search)
+- "browser security vulnerability 2026 July Chrome Safari Firefox CVE zero-day exploit" (mcp_minimax_search_web_search)
+- "CVE-2026-46242 Bad Epoll Linux kernel July 2026 LPE exploit" (mcp_minimax_search_web_search — confirmed S-319 already documented, not re-added)
+- "Chrome 143 144 2026 July new feature breaking change web API" (mcp_minimax_search_web_search)
+- "FatFs CVE-2026-38192 SD card filesystem vulnerability 2026" (mcp_minimax_search_web_search)
+- "Microsoft Exchange 365 Copilot CVE-2026-54998 privilege escalation 2026" (mcp_minimax_search_web_search)
+- "Chrome Android approximate location 2026 geolocation API privacy" (mcp_minimax_search_web_search)
+- "CPU Performance API Computing Pressure API Chrome 2026 web game adaptive" (mcp_minimax_search_web_search)
+- Key URLs:
+  - https://threat-modeling.com/ (FatFs 7-CVE cluster + Microsoft Exchange/Copilot privesc, July 5 2026)
+  - https://www.sohu.com/a/895177632_362225 (AMD Zen unsigned-microcode CPU ransomware PoC, May 14 2025 — persistent 2026 threat)
+  - https://www.163.com/dy/article/J6QA4SNU0511B8LM.html (Chromium private Google-domains CPU-info API, July 11 2024 — persistent into 2026)
+  - https://cloud.tencent.com/developer/article/2672214 (JS Weekly #16 Bun/Ink/pnpm/Mantine, April 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_75668e6024133352 (Chrome CPU Performance + Computing Pressure API, Oct 8 2025 rolling into 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_45968a914be91952 (Android OEM coalition privacy-permission framework, Aug 23 2025, Q4 2026 enforcement)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_29469a913a396552 (Google Aluminium OS ChromeOS+Android fusion, March 5 2026 MWC)
+
 ## [v1.148.0] - 2026-07-06
 ### Added
 - 8 new test cases from July-6 2026 industry research (R265, 4h cadence cycle 27):
