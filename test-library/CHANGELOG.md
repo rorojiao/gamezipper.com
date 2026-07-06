@@ -1,3 +1,29 @@
+## [v1.147.0] - 2026-07-06
+### Added
+- 7 new test cases from July-6 2026 industry research (R264, 4h cadence cycle 26):
+  - [S-318] Chrome Web Store Extension Delisting Enforcement (Aug 1 2026 deadline) — P1
+  - [S-319] CVE-2026-46242 "Bad Epoll" Linux Kernel epoll-subsystem LPE (Android impact) — P1
+  - [S-320] CVE-2026-3854 GitHub Enterprise Server git push Option Injection RCE — P1
+  - [S-321] CVE-2026-21858 n8n Webhook/Form-Node Unauthenticated Path Traversal — P2
+  - [W-280] Microsoft Edge 150 Stable — Google Account Login (Cross-Vendor Identity Federation LIVE) — P2
+  - [W-281] Meta Llama API Public-Preview Shutdown July 6 2026 (AI-Endpoint-Sunset Risk Class) — P2
+  - [C-197] JavaScript Weekly #19 Toolless Component Integration Testing + ViewTransitionsMock Production Hardening — P3
+### Sources
+- "HTML5 game testing 2026 new techniques browser July" (mcp_minimax_search_web_search)
+- "browser security vulnerability 2026 July Chrome Safari Firefox CVE" (mcp_minimax_search_web_search)
+- "casual game UX complaint 2026 mobile accessibility haptic dark mode" (mcp_minimax_search_web_search)
+- "Chrome 142 143 2026年7月 新功能 破坏性变更 安全补丁" (mcp_minimax_search_web_search)
+- "CVE-2026 zero-day July 2026 Chrome Safari WebKit exploit in-the-wild" (mcp_minimax_search_web_search)
+- "2026年7月 浏览器更新 Chrome Edge Safari 破坏性变更 Web API" (mcp_minimax_search_web_search)
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0136a486b3b77452 (Chrome extension delisting, July 4 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2326a4a6fea36852 (Bad Epoll CVE-2026-46242, July 5 2026)
+  - https://github.com/LACHHAB-Anas/Exploit_CVE-2026-3854 (GitHub Enterprise git push RCE, June 4 2026)
+  - https://blog.csdn.net/2501_90608651/article/details/160631808 (n8n CVE-2026-21858, May 1 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_7006a4a832493352 (Edge 150 Google login, July 6 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0536a4a797978752 (Meta Llama API shutdown, July 5 2026)
+  - https://cloud.tencent.com/developer/article/2677947 (JS Weekly #19, July 6 2026)
+
 ## [v1.146.0] - 2026-07-06
 ### Added
 - 7 new test cases from July-6 2026 industry research (R263, 4h cadence cycle 25):
