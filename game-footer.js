@@ -325,6 +325,8 @@
 {n:'Gold Miner',e:'⛏️',u:'/gold-miner/',c:'puzzle'},
 {n:'Catch the Cat',e:'🐱',u:'/catch-the-cat/',c:'puzzle'},
 {n:'Sticker Book Puzzle',e:'🎨',u:'/sticker-book-puzzle/',c:'puzzle'},
+{n:'Heart Star',e:'💛',u:'/heart-star/',c:'puzzle'},
+{n:'Rubber Band Puzzle',e:'🔵',u:'/rubber-band-puzzle/',c:'puzzle'},
       ]; }
    }
    function getDateSeed() {
