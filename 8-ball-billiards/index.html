@@ -63,7 +63,7 @@
   ]
 }
 </script>
-<script type="application/ld+json">{"@context":"https://***@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com"},{"@type":"ListItem","position":2,"name":"8 Ball Billiards Classic","item":"https://gamezipper.com/8-ball-billiards/"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com"},{"@type":"ListItem","position":2,"name":"8 Ball Billiards Classic","item":"https://gamezipper.com/8-ball-billiards/"}]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
@@ -177,8 +177,8 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
   <div class="menu-subtitle">Classic 8-Ball Pool — Solids vs Stripes vs the 8-Ball</div>
   <div class="menu-section">
    <h3>Quick Start</h3>
-   <button class="menu-btn primary" onclick="startGame('8ball')">Play 8-Ball<span class="diff-label">Standard rules · 15 balls</span></button>
-   <button class="menu-btn secondary" onclick="startGame('8ball')">Two Player<span class="diff-label">Pass-and-play on same device</span></button>
+   <button class="menu-btn primary" onclick="startGame('8ball')">Play vs AI<span class="diff-label">Standard rules · 15 balls</span></button>
+   <button class="menu-btn secondary" onclick="startGame('twoplayer')">Two Player<span class="diff-label">Pass-and-play on same device</span></button>
   </div>
   <div class="menu-section">
    <h3>AI Difficulty</h3>
@@ -423,6 +423,7 @@ function stopBGM() {
 // ============== GAME STATE ==============
 let gameMode = '8ball';
 let aiDifficulty = 'medium';
+let twoPlayerMode = false; // 8 Ball Billiards Classic: pass-and-play
 let gameState = 'menu'; // menu, playing, aiming, shooting, ai_turn, placing, gameover
 let balls = [];
 let pockets = [];
@@ -455,13 +456,13 @@ let canvas, ctx;
 // ============== STATS ==============
 function loadStats() {
   try {
-    const s = JSON.parse(localStorage.getItem('pool_stats'));
+    const s = JSON.parse(localStorage.getItem('8bb_stats'));
     if (s) return s;
   } catch(e) {}
   return { played: 0, wins: 0, losses: 0, highScore: 0 };
 }
 function saveStats() {
-  try { localStorage.setItem('pool_stats', JSON.stringify(stats)); } catch(e) {}
+  try { localStorage.setItem('8bb_stats', JSON.stringify(stats)); } catch(e) {}
 }
 function updateMenuStats() {
   const el = document.getElementById('menu-stats');
@@ -756,9 +757,9 @@ function processTurnEnd() {
       cueBall.vx = 0; cueBall.vy = 0;
       gameState = 'placing';
       placingBall = true;
-      setTurnLabel('Place cue ball - click on the table');
+      setTurnLabel(twoPlayerMode ? "P1 - Place cue ball" : 'Place cue ball - click on the table');
     } else {
-      // AI foul - give player ball in hand
+      // Opponent fouled - give ball in hand
       cueBall.pocketed = false;
       cueBall.x = railW + ballR + 10;
       cueBall.y = tableH / 2;
@@ -766,7 +767,7 @@ function processTurnEnd() {
       playerTurn = true;
       gameState = 'playing';
       placingBall = true;
-      setTurnLabel('AI fouled! Place cue ball');
+      setTurnLabel(twoPlayerMode ? "P1 - opponent scratched, place cue ball" : 'AI fouled! Place cue ball');
     }
   } else {
     // Check if player should continue
@@ -776,17 +777,28 @@ function processTurnEnd() {
         gameState = 'playing';
       } else {
         playerTurn = false;
-        gameState = 'ai_turn';
-        scheduleAI();
+        if (twoPlayerMode) {
+          gameState = 'playing';
+          setTurnLabel("P2's turn - drag from cue ball to shoot");
+        } else {
+          gameState = 'ai_turn';
+          scheduleAI();
+        }
       }
     } else {
       const aiContinue = pocketedThisTurn.some(b => b.id !== 0 && !isPlayerBall(b.id));
       if (aiContinue) {
-        gameState = 'ai_turn';
-        scheduleAI();
+        if (twoPlayerMode) {
+          gameState = 'playing';
+          setTurnLabel("P2's turn - drag from cue ball to shoot");
+        } else {
+          gameState = 'ai_turn';
+          scheduleAI();
+        }
       } else {
         playerTurn = true;
         gameState = 'playing';
+        setTurnLabel(twoPlayerMode ? "P1's turn" : "Your turn - drag to aim and shoot");
       }
     }
   }
@@ -920,7 +932,9 @@ function lineCircleIntersect(x1, y1, x2, y2, cx, cy, r) {
 function startGame(mode) {
   resumeAudio();
   playSound('button');
-  gameMode = mode || '8ball';
+  gameMode = '8ball'; // 8 Ball Billiards Classic always locks to 8-ball rules
+  twoPlayerMode = (mode === 'twoplayer');
+  // Map 2P click to aiDifficulty (P2 will be 'easy' style logic via mirror)
   playerScore = 0; aiScore = 0;
   consecutivePockets = 0;
   turnCount = 0;
@@ -930,6 +944,14 @@ function startGame(mode) {
   gameOverResult = null;
   placingBall = false;
   particles = [];
+  // Update player labels for 2P mode
+  if (twoPlayerMode) {
+    document.getElementById('player-label').textContent = 'P1';
+    document.getElementById('ai-label').textContent = 'P2';
+  } else {
+    document.getElementById('player-label').textContent = 'You';
+    document.getElementById('ai-label').textContent = 'AI';
+  }
   showScreen('game');
   // Defer resize + ball init to next frame so CSS layout is recalculated
   requestAnimationFrame(function() {
@@ -971,10 +993,23 @@ function endGame(playerWon) {
 
 function showGameOver(won) {
   const el = document.getElementById('game-over');
-  document.getElementById('go-title').textContent = won ? 'You Win!' : 'AI Wins!';
+  let titleText, textText, scoreText;
+  if (twoPlayerMode) {
+    // In 2P mode, won=true means the side that just shot pocketed the 8-ball legally.
+    // playerTurn flips after a successful shot, so the WINNER is the OPPOSITE of current playerTurn.
+    const winnerIsP1 = !playerTurn; // if it's P2's turn and they legally pocketed 8, P2 won
+    titleText = winnerIsP1 ? 'P1 Wins!' : 'P2 Wins!';
+    textText = winnerIsP1 ? 'Player 1 cleared the table and sank the 8!' : 'Player 2 cleared the table and sank the 8!';
+    scoreText = `P1 ${playerScore} · P2 ${aiScore}`;
+  } else {
+    titleText = won ? 'You Win!' : 'AI Wins!';
+    textText = won ? 'Excellent shotmaking!' : 'Better luck next time!';
+    scoreText = `You ${playerScore} · AI ${aiScore}`;
+  }
+  document.getElementById('go-title').textContent = titleText;
   document.getElementById('go-title').className = won ? 'win' : 'lose';
-  document.getElementById('go-text').textContent = won ? 'Excellent shotmaking!' : 'Better luck next time!';
-  document.getElementById('go-score').textContent = `Score: ${playerScore} - ${aiScore}`;
+  document.getElementById('go-text').textContent = textText;
+  document.getElementById('go-score').textContent = scoreText;
   document.getElementById('go-turns').textContent = `Turns: ${turnCount}`;
   el.classList.add('show');
 }
@@ -1043,20 +1078,33 @@ function render() {
 
 function drawTable() {
   const rw = railW;
-  // Outer rail (wood)
-  ctx.fillStyle = '#5a3a1a';
+  // Outer rail (wood) — rich mahogany for 8 Ball Billiards Classic feel
+  ctx.fillStyle = '#4a2810';
   ctx.fillRect(0, 0, tableW, tableH);
-  // Felt
-  ctx.fillStyle = '#1a5c1a';
+  // Wood grain stripe
+  const woodGrad = ctx.createLinearGradient(0, 0, 0, tableH);
+  woodGrad.addColorStop(0, 'rgba(120,70,30,0.4)');
+  woodGrad.addColorStop(0.5, 'rgba(80,45,20,0.3)');
+  woodGrad.addColorStop(1, 'rgba(40,20,10,0.5)');
+  ctx.fillStyle = woodGrad;
+  ctx.fillRect(0, 0, tableW, tableH);
+  // Inner felt (brighter classic billiards green)
+  ctx.fillStyle = '#1f7a2a';
   ctx.fillRect(rw, rw, tableW - 2 * rw, tableH - 2 * rw);
-  // Inner felt texture gradient
-  const feltGrad = ctx.createRadialGradient(tableW/2, tableH/2, 0, tableW/2, tableH/2, tableW/2);
-  feltGrad.addColorStop(0, 'rgba(30,90,30,0.3)');
-  feltGrad.addColorStop(1, 'rgba(0,0,0,0.2)');
+  // Inner felt texture gradient — radial highlight to mimic overhead lamp
+  const feltGrad = ctx.createRadialGradient(tableW/2, tableH/3, tableW*0.1, tableW/2, tableH/2, tableW*0.7);
+  feltGrad.addColorStop(0, 'rgba(80,200,90,0.35)');
+  feltGrad.addColorStop(0.5, 'rgba(20,80,25,0.1)');
+  feltGrad.addColorStop(1, 'rgba(0,20,5,0.45)');
   ctx.fillStyle = feltGrad;
   ctx.fillRect(rw, rw, tableW - 2 * rw, tableH - 2 * rw);
-  // Rails (cushions)
-  ctx.fillStyle = '#2d7a2d';
+  // Diagonal felt weave (very subtle)
+  ctx.fillStyle = 'rgba(0,0,0,0.04)';
+  for (let i = -tableH; i < tableW; i += 6) {
+    ctx.fillRect(i, rw, 1, tableH - 2 * rw);
+  }
+  // Rails (cushions) — classic rubberized green
+  ctx.fillStyle = '#2a8035';
   // Top rail
   ctx.fillRect(rw, 0, tableW - 2 * rw, rw);
   // Bottom rail
@@ -1243,8 +1291,10 @@ function onPointerDown(e) {
     placeCueBall(pos);
     return;
   }
-  if (gameState !== 'playing' || !playerTurn) return;
+  // In 2P mode, both players use the same pointer; in 1P, only on player turn
+  if (gameState !== 'playing') return;
   if (!cueBall || cueBall.pocketed) return;
+  if (!playerTurn && !twoPlayerMode) return;
   const pos = getCanvasPos(e);
   const dx = pos.x - cueBall.x, dy = pos.y - cueBall.y;
   if (Math.hypot(dx, dy) < ballR * 3) {
@@ -1255,7 +1305,8 @@ function onPointerDown(e) {
 
 function onPointerMove(e) {
   e.preventDefault();
-  if (!aimStart || gameState !== 'playing' || !playerTurn) return;
+  if (!aimStart || gameState !== 'playing') return;
+  if (!playerTurn && !twoPlayerMode) return;
   aimEnd = getCanvasPos(e);
   const dx = aimEnd.x - aimStart.x;
   const dy = aimEnd.y - aimStart.y;
@@ -1266,7 +1317,12 @@ function onPointerMove(e) {
 
 function onPointerUp(e) {
   e.preventDefault();
-  if (!aimStart || gameState !== 'playing' || !playerTurn) {
+  if (!aimStart || gameState !== 'playing') {
+    aimStart = null; aimEnd = null;
+    updatePowerBar(0);
+    return;
+  }
+  if (!playerTurn && !twoPlayerMode) {
     aimStart = null; aimEnd = null;
     updatePowerBar(0);
     return;
