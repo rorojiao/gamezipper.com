@@ -1,3 +1,33 @@
+## [v1.148.0] - 2026-07-06
+### Added
+- 8 new test cases from July-6 2026 industry research (R265, 4h cadence cycle 27):
+  - [W-282] **[P1]** Chrome 154 (October 2026) Always-Use-Secure-Connections Universal HTTP-Resource Warning — HARD DEADLINE GATE
+  - [W-283] **[P2]** Gemini 3.5 Pro July 17 2026 — Frontend/Visual Codegen Capability Leap (affects AI-assisted game-page pipeline)
+  - [W-284] **[P2]** Browser Wars 2026 Shift to AI-Agentic-Task-Execution — fake-engagement/reward-farming bot abuse surface
+  - [S-322] **[P1]** CVE-2026-40380 Windows volmgr.sys Kernel Heap-Overflow CVSS 9.8 (AI-discovered by Microsoft MDASH)
+  - [S-323] **[P2]** CVE-2026-20204 Splunk Low-Privilege RCE CVSS 7.1 — SIEM-as-Pivot (Security Monitoring Tool Itself Compromised)
+  - [G-181] **[P3]** Sony PlayStation Disc Production Halt July 1 2026 — Medium-Sunset Drives Browser-Game Load-Speed Expectation
+  - [G-182] **[P2]** 2026 Cross-Region Multiplayer Reliability Baseline — Player-Blame-Shift (UU accelerator sets expectation floor)
+  - [P-132] **[P2]** PlayCanvas WebGPU + Streaming Production Performance Wins — benchmark Canvas2D vs WebGL vs WebGPU
+### Sources
+- "HTML5 game testing 2026 new techniques browser July" (mcp_minimax_search_web_search)
+- "browser security vulnerability 2026 July Chrome Safari Firefox CVE zero-day" (mcp_minimax_search_web_search)
+- "casual game UX complaint 2026 mobile accessibility haptic dark mode" (mcp_minimax_search_web_search)
+- "Chrome Edge Safari update 2026 July breaking changes web API deprecation" (mcp_minimax_search_web_search)
+- "CVE-2026 zero-day July 2026 exploit in-the-wild RCE sandbox escape" (mcp_minimax_search_web_search)
+- "2026年7月 浏览器更新 Chrome Edge Safari 破坏性变更 Web API" (mcp_minimax_search_web_search)
+- "CVE-2026 July 2026 RCE exploit kernel browser sandbox escape new" (mcp_minimax_search_web_search)
+- "HTML5 WebGL WebGPU game performance optimization 2026 July mobile" (mcp_minimax_search_web_search)
+- Key URLs:
+  - https://new.qq.com/rain/a/20251029A02Y6K00 (Chrome 154 Always-Use-Secure-Connections, Oct 29 2025 — confirmed active July 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6096a4b97e126352 (Gemini 3.5 Pro July 17 release leak, July 6 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0756a4b81bb91052 (Browser wars AI-agentic shift, July 6 2026)
+  - https://blog.csdn.net/weixin_42376192/article/details/161378907 (CVE-2026-40380 volmgr.sys, May 25 2026)
+  - https://blog.csdn.net/weixin_42376192/article/details/160235264 (CVE-2026-20204 Splunk, May 21 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2866a474df475952 (Sony PS disc halt, July 3 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_02069cf81f754152 (Cross-region multiplayer baseline, April 3 2026)
+  - https://playcanvas.com/ (PlayCanvas WebGPU+Streaming, June 3 2026)
+
 ## [v1.147.0] - 2026-07-06
 ### Added
 - 7 new test cases from July-6 2026 industry research (R264, 4h cadence cycle 26):
