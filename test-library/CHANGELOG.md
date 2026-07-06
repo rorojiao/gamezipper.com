@@ -1,3 +1,29 @@
+## [v1.145.0] - 2026-07-06
+### Added
+- 7 new test cases from July-6 2026 industry research (R262, 4h cadence cycle 24):
+  - [S-312] **[P1]** Canvas/WebGL/Audio/Font fingerprinting — HEADLESS-QA-INFRA-WIDE false-negative class (ad anti-fraud flags Camoufox/Kachilu/Puppeteer/Playwright as bots regardless of IP rotation)
+  - [S-313] **[P2]** IBM X-Force 2026 Threat Intel Index — THIRD-vendor corroboration of AI-driven attack escalation; 84% of orgs hit by identity-based attacks; yearly authoritative baseline
+  - [W-277] **[P1]** Chrome 149 stable ship — bfcache WebSocket reconnect mgmt + DevTools WebMCP helper + ARM64 Linux official packages (multi-dimension, distinct from B-117 CSS-Gap-Decorations)
+  - [W-278] **[P2]** WebMCP Chrome 146 early preview → 149 DevTools-integrated — AI-agent direct-service-invocation WITHOUT UI; new reward-farming/ad-fraud abuse surface (no-click bots)
+  - [C-196] **[P2]** Browser Compatibility Data (BCD) — canonical MDN dataset replacing dead HTML5test; machine-readable JSON for WebGL/Canvas compat; wire into test-library cron
+  - [G-179] **[P2]** Sony PS 2026 digital-dominance — bestsellers nearly all digital; 2028 disc phase-out; player-expectation baseline shift to instant-load digital-first
+  - [P-131] **[P2]** BrowserQuest Canvas2D-vs-WebGL rendering optimization + webgl-2d drop-in library — 2D-tile game renderer upgrade path; >=30% frame-rate improvement threshold
+### Sources
+- Search queries: "HTML5 game testing 2026 new techniques browser", "browser game bug report 2026 webgl canvas", "new browser security vulnerability 2026 XSS clickjacking", "casual game UX complaint 2026 mobile haptic dark mode", "Chrome Edge Safari update 2026 July web API deprecation", "Chrome 149 bfcache WebSocket WebMCP DevTools 2026", "Sony PlayStation game disc production halt 2026 digital"
+- Key URLs:
+  - https://download.csdn.net/blog/column/12991432/160130526 (Canvas/WebGL fingerprint industry baseline — June 11 2026)
+  - https://blog.csdn.net/shanwei_spider/article/details/160390135 (browser fingerprint 2026 — April 24 2026)
+  - https://blog.csdn.net/2501_94224099/article/details/160891016 (fingerprint 80%+ of device-fingerprint sources — June 16 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_94569a6d0d301752 (IBM X-Force 2026 — March 3 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_3076a1fbf5420452 (Chrome 149 stable ship — June 3 2026)
+  - https://www.donews.com/news/detail/8/6581068.html (Chrome 149 CSS Gap Decorations + bfcache WebSocket — June 3 2026)
+  - https://new.qq.com/rain/a/20260211A00JSL00 (WebMCP Chrome 146 early preview — Feb 11 2026)
+  - https://github.com/ChromeDevTools/chrome-devtools-mcp/ (chrome-devtools-mcp v1.2.0 — June 9 2026)
+  - https://blog.csdn.net/gitblog_00859/article/details/153553036 (Browser Compatibility Data WebGL/Canvas — May 24 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6246a48cebe23152 (Sony PS digital dominance — July 4 2026)
+  - https://blog.csdn.net/gitblog_01057/article/details/153719449 (BrowserQuest Canvas vs WebGL — March 23 2026)
+  - https://github.com/corbanbrook/webgl-2d (webgl-2d Canvas2D API in WebGL — June 4 2026)
+
 ## [v1.144.0] - 2026-07-06
 ### Added
 - 7 new test cases from July-6 2026 industry research (R261, 4h cadence cycle 23):
