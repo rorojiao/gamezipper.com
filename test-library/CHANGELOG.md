@@ -1,3 +1,41 @@
+## [v1.154.0] - 2026-07-08
+### Added
+- 8 new test cases from July-8 2026 industry research (R271, 4h cadence cycle 33):
+  - [S-338] **[P1]** Anthropic Mythos Preview Found 271 Pre-Release Firefox 150 Vulnerabilities; Firefox Then Fixed 423 in One Month (20x Prior Average) — AI-Discovered-Vulnerability Flood Into Production Changes Cross-Browser Test Matrix Baseline (Apr-May 2026)
+  - [S-339] **[P1]** Google 2026 Core Update Wave (March + May) — Information Gain + Passage Ranking + Site-wide Quality Score Reweighting; Templated/AI-Rewritten Game Content Loses 30-80% Ranking (Content Quality Scoring)
+  - [W-296] **[P2]** Node.js v26.0.0 GA (May 5 2026) — Temporal API Default-Enabled + V8 14.6.202.33 (Map.prototype.getOrInsert, Iterator.concat) + Undici 8.0.2; LTS in October 2026
+  - [W-297] **[P2]** Vite 8 Beta (Dec 4 2025) Rolldown Unified Dev+Prod Single Engine + VoidZero "Vite+" Integrated Toolchain (Nov 2025) — Dev/Prod Divergence Eliminated, Single-Engine + Single-CLI Risk Introduced
+  - [C-204] **[P2]** Mythos "Glass Wing" Project — Claude Mythos Preview Autonomously Discovered 10,000+ Zero-Day Vulnerabilities in First Month; Dual-Use AI Weaponization Threat Model Shift (Adversary Zero-Day Discovery Faster Than Patch SLA)
+  - [B-194] **[P2]** TypeScript 6 Beta (Mar 7 2026) Three Silent Breaking Default Changes — Module Resolution esnext + Target es2025 + noUncheckedSideEffectImports ON (tsconfig.json Pin Required)
+  - [B-195] **[P2]** npm Version-Upgrade Plugin Regression Pattern — `Cannot read properties of null (reading 'matches')` Breaks Plugin Installation (vite-plugin-inspect case); CI npm Version Must Be Pinned
+  - [PC-033] **[P2]** 2026 SEO "GEO" Dual-Track Traffic Reality — Google AI Overview Consumes 20-35% of Search Traffic; Game Pages Must Optimize for AI Overview Citation (Structured Data + Unique Passage) Not Just Keyword Ranking
+### Sources
+- "HTML5 browser game security vulnerability July 2026 new CVE Chrome Safari" (mcp_minimax_search_web_search)
+- "Chrome Edge Safari update July 2026 stable release breaking change web API" (mcp_minimax_search_web_search)
+- "TypeScript Babel Node.js npm July 2026 release breaking change migration" (mcp_minimax_search_web_search)
+- "casual mobile game UX complaint 2026 July haptics dark mode accessibility friction" (mcp_minimax_search_web_search)
+- "ad fraud malvertising 2026 July supply chain attack fake game installer" (mcp_minimax_search_web_search)
+- "Anthropic Mythos Preview Firefox 150 security vulnerabilities 271 AI bug finding" (mcp_minimax_search_web_search)
+- "Google core update May 2026 search ranking algorithm change SEO impact" (mcp_minimax_search_web_search)
+- "Vite 8.1 Rolldown React Compiler Rsbuild 2.1 July 2026 frontend breaking change" (mcp_minimax_search_web_search)
+- "Node.js 26 Temporal API default Undici 8 V8 breaking change 2026" (mcp_minimax_search_web_search)
+- Note: SearXNG (mcp_web_search_prime_batch_search) returned 404 errors for all 5 batch queries — 5th+ consecutive cycle of SearXNG downtime (R266-R271); MiniMax (mcp_minimax_search_web_search) used as primary per §62 of the test-library-evolution skill references/r268-refinements.md.
+- Key URLs:
+  - https://www.sohu.com/a/1012908270_122132398 (Mozilla/Anthropic Mythos Firefox 150 — 271 vulns found, Apr 22 2026)
+  - https://blog.csdn.net/safetybug/article/details/161261477 (Firefox 423 vulns fixed in 1 month via Mythos, May 20 2026)
+  - https://blog.csdn.net/ylscode/article/details/161390013 (Mythos "Glass Wing" 10,000+ zero-days first month, July 5 2026)
+  - https://blog.csdn.net/sD7O95O/article/details/161092322 (Mythos capability vs hype strategic assessment, June 25 2026)
+  - https://k.sina.com.cn/article_1084407072_40a2bd2000101gb5a.html (Google May 2026 core update live, May 25 2026)
+  - https://blog.csdn.net/RD_daoyi/article/details/160373254 (Google March 2026 core update — Information Gain + Passage Ranking deep analysis, June 29 2026)
+  - https://cloud.tencent.com/developer/article/2663229 (2026 SEO new rules — Google reference-page to direct-answer shift, July 8 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_49169d6185774052 (2026 GEO dual-track 20-35% AI Overview traffic, Apr 8 2026)
+  - https://www.donews.com/news/detail/8/6543521.html (Node.js 26.0.0 GA — Temporal default, V8 14.6, Undici 8, May 6 2026)
+  - https://blog.csdn.net/xiaohui_hubei/article/details/161511621 (Node.js weekly W18 2026 — Temporal, Map.getOrInsert, Iterator.concat, June 9 2026)
+  - https://www.cnblogs.com/catchadmin/p/archive/2025/12/04 (Vite 8 Beta Rolldown unified dev+prod, Dec 4 2025)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_979690ecd5d57352 (VoidZero Vite+ integrated toolchain launch, Nov 8 2025)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_52069abdfb540452 (TypeScript 6 Beta — esnext/es2025/noUncheckedSideEffectImports defaults, Mar 7 2026)
+  - https://www.cnblogs.com/yuanyu610/p/19151962 (npm version-upgrade vite-plugin-inspect null matches regression, Oct 20 2025)
+
 ## [v1.153.0] - 2026-07-08
 ### Added
 - 8 new test cases from July-8 2026 industry research (R270, 4h cadence cycle 32):
