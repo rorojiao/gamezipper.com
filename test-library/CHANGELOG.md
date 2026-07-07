@@ -1,3 +1,35 @@
+## [v1.152.0] - 2026-07-07
+### Added
+- 9 new test cases from July-7 2026 industry research (R269, 4h cadence cycle 31):
+  - [S-333] **[P1]** React2Shell CVE-2025-55182 Actively Exploited Against Insurance/Ecommerce/IT — React Server Components / Server Actions Critical-RCE (Jan 28 2026)
+  - [S-334] **[P2]** First.org 2026 CVE Volume Forecast — Projected to Break 100k for First Time, 90%-CI Upper Bound 118k (CVE Volume Overflow Operational Paradigm, Feb 12 2026)
+  - [S-335] **[P2]** Bypassing CSP via Misconfiguration — intigriti 2025-2026 Research: CSP Misconfig as XSS Gateway (Dec 9 2025)
+  - [W-291] **[P2]** Edge 150 Stable (V150.0.4078.48) Confirmed GA July 6 2026 — Cross-Browser Parity Test Now Mandatory (4-Browser Matrix)
+  - [W-292] **[P2]** Chrome 148.0.7778.179 Stable (June 2 2026) — Chrome 148 Baseline Adoption Gate (Minimum Supported Version)
+  - [P-137] **[P2]** Core Web Vitals INP Field-Data vs Lab-Data 30-50% Divergence — Game-Specific INP Hotspots (Play btn / touchstart / keydown)
+  - [C-202] **[P2]** WebGPU W3C Recommendation (2025-Q4) vs Cross-Browser Gap — Safari Partial / Firefox Flagged (May 22 2026)
+  - [B-191] **[P2]** WebGL Context Loss/Restoration Perennial Failure Mode — Mandatory webglcontextlost/webglcontextrestored Handlers
+  - [PC-032] **[P3]** 2026 Cross-Platform Identity Demand ($386.04B Market) — Cross-Device Continue Player Expectation Baseline
+### Sources
+- "HTML5 browser game security vulnerability July 2026 new CVE" (mcp_minimax_search_web_search)
+- "Chrome Edge Safari update July 2026 breaking change web API" (mcp_minimax_search_web_search)
+- "browser game bug report July 2026 canvas WebGL rendering issue" (mcp_minimax_search_web_search)
+- "casual game UX player complaint 2026 mobile haptics accessibility" (mcp_minimax_search_web_search)
+- "web performance optimization 2026 browser Core Web Vitals INP new metric" (mcp_minimax_search_web_search)
+- "WebGPU 2026 browser game adoption shader pipeline compatibility issue" (mcp_minimax_search_web_search)
+- "content security policy CSP browser game inline script 2026 nonce" (mcp_minimax_search_web_search)
+- Note: SearXNG (mcp_web_search_prime_batch_search) remained 404-down for the 3rd+ consecutive cycle (R266-R269); MiniMax (mcp_minimax_search_web_search) used as primary per §62 of the test-library-evolution skill references/r268-refinements.md.
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_43469796af826852 (React2Shell CVE-2025-55182 active exploitation, Jan 28 2026)
+  - https://new.qq.com/rain/a/20260212A0638C00 (First.org 2026 CVE volume forecast 100k+, Feb 12 2026)
+  - https://www.cnblogs.com/sec875/p/19324177 (Bypassing CSP via misconfiguration - intigriti research summary, Dec 9 2025)
+  - http://www.downxia.com/downinfo/417615.html (Microsoft Edge 150 V150.0.4078.48 GA, July 6 2026)
+  - http://www.onlinedown.net:8080/soft/1113351.htm (Chrome 148.0.7778.179 stable, June 2 2026)
+  - https://blog.csdn.net/Vivien_pan/article/details/156304467 (Core Web Vitals INP optimization guide, Dec 26 2025)
+  - https://www.lcxw.cn/zJ_wikimwU4M8WuU (WebGPU vs WebGL mobile game rendering comparison, May 22 2026)
+  - https://github.com/Cloud7050/modules/issues/34 (WebGL context loss perennial bug class, still live July 2026)
+  - https://www.toutiao.com/article/7642560200637022772/ (2026 cross-platform identity demand $386.04B market, May 22 2026)
+
 ## [v1.151.0] - 2026-07-07
 ### Added
 - 8 new test cases from July-7 2026 industry research (R268, 4h cadence cycle 30):
