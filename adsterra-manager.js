@@ -53,7 +53,7 @@
   try { _bc = new BroadcastChannel('gz_tools_adst_popunder'); } catch(e) {}
 
   var POP_KEY = 'gz_tools_adst_pop_ts';
-  var POP_INTERVAL = 20 * 60 * 1000;
+  var POP_INTERVAL = 25 * 60 * 1000; // v5.13: 25min (was 20min, align with tools, Poki-like restraint)
 
   function canShowPopunder() {
     try {

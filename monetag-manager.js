@@ -287,36 +287,38 @@
       // Preconnect for adsterra CDN subdomains
       PRECONNECT: ['https://www.profitabledisplaynetwork.com', 'https://www.adsterra.com', 'https://pl.pub-pc.com'],
     },
-    // 频率控制 — 对标 Poki 克制策略
+    // 频率控制 — Poki-grade UX-first tuning (v5.13)
+    // Poki principles: ads only at natural breaks, never during gameplay,
+    // frequency capped to maintain trust, rewarded = optional
     FREQUENCY: {
-      minBetweenAds: 35 * 1000,        // v5.4: 35s minimum between any two ads (was 45s, reduced for AdSense auto-ads pickup)
-      firstAdDelay: 30 * 1000,          // v5.4: 30s before first ad (was 45s, AdSense 5-10% fill means we recover cost in 5 imps)
+      minBetweenAds: 60 * 1000,        // v5.13: 60s min gap (Poki: 60-120s, was 35s too aggressive)
+      firstAdDelay: 45 * 1000,          // v5.13: 45s before first ad (Poki: ~30-60s, give user time to engage)
       sessionWindowMs: 30 * 60 * 1000,  // 30-min rolling window
-      sessionMaxAds: 20,                // max 20 ads per 30-min window (对标 Poki 克制)
-      dailyWindowMs: 24 * 60 * 60 * 1000, // 24h rolling window
-      dailyMaxAds: 60,                  // max 60 ads per day (对标 Poki 克制)
-      homepageBannerCooldown: 10 * 60 * 1000, // 10 min between homepage banners
-      containerAdCooldown: 3 * 60 * 1000,   // 3 min between container ads
-      bannerAdCooldown: 90 * 1000,         // v5.10: 90s between in-game banner refresh (was 5min, blocking cross-page active browsing)
+      sessionMaxAds: 12,                // v5.13: max 12 ads per 30-min (was 20, Poki ~8-15)
+      dailyWindowMs: 24 * 60 * 60 * 1000,
+      dailyMaxAds: 50,                  // v5.13: max 50/day (was 60, reduce ad fatigue)
+      homepageBannerCooldown: 10 * 60 * 1000,
+      containerAdCooldown: 5 * 60 * 1000,   // v5.13: 5min (was 3min, less aggressive)
+      bannerAdCooldown: 120 * 1000,        // v5.13: 2min between banner refresh (was 90s)
     },
     TIMING: {
-      homepageBannerDelay: 1500,
-      commercialBreakSkipAfter: 5000,   // 5s skip countdown (Poki-style)
-      commercialBreakMaxDuration: 8000, // 8s auto-dismiss
-      containerAdDelay: 3000,
-      adLoadTimeout: 5000,
-      commercialBreakCooldown: 45 * 1000, // same as minBetweenAds
-      gameOverDetectionDelay: 1500,      // wait 1.5s after overlay appears
-      prerollDelay: 15 * 1000,           // 15s 无交互后触发 pre-roll
-      inGameBannerInjectDelay: 800,     // v5.2: inject after DOM ready
-      inGameBannerLoadDelay: 2500,      // v5.2: load ads 2.5s after injection
-      inGameBannerMaxFillMs: 8000,      // v5.8: 8s max wait for AdSense fill detection (was 5000, 0.4% fill)
-      exitIntentMinDwellMs: 10000,      // v5.9: 10s minimum on page (was 30s, 85.5% of bounces happened before)
-      exitIntentCooldownMs: 45*1000,     // v5.12: 30s→45s — guard fix unlocks 7x more events, cap to ~3/session
+      homepageBannerDelay: 2000,        // v5.13: 2s (was 1.5s, let game render first)
+      commercialBreakSkipAfter: 5000,   // 5s skip countdown (Poki-standard)
+      commercialBreakMaxDuration: 12000, // v5.13: 12s auto-dismiss (was 8s, allow longer video ads)
+      containerAdDelay: 5000,           // v5.13: 5s (was 3s, less pushy)
+      adLoadTimeout: 6000,              // v5.13: 6s (was 5s, give Adsterra more time)
+      commercialBreakCooldown: 60 * 1000, // v5.13: 60s (was 45s, Poki-like pacing)
+      gameOverDetectionDelay: 2000,      // v5.13: 2s (was 1.5s, avoid false triggers)
+      prerollDelay: 20 * 1000,           // v5.13: 20s (was 15s, less aggressive)
+      inGameBannerInjectDelay: 1200,     // v5.13: 1.2s (was 800ms, after game fully loads)
+      inGameBannerLoadDelay: 3000,       // v5.13: 3s (was 2.5s)
+      inGameBannerMaxFillMs: 10000,      // v5.13: 10s (was 8s, Adsterra CDN slower)
+      exitIntentMinDwellMs: 15000,       // v5.13: 15s (was 10s, Poki: user must be engaged)
+      exitIntentCooldownMs: 60*1000,     // v5.13: 60s (was 45s, max 2/session)
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.12-gz-exit-intent-cy-fix',  // 2026-07-03: cy<0 guard fix (40.8% real exit recovery) + cooldown 30s→45s
+    VERSION: '5.13-gz-poki-tuning',  // 2026-07-07: Poki-grade UX tuning (freq/timing/sizes)
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -603,11 +605,11 @@
       loadAdSenseScript();
       var ins = document.createElement('ins');
       ins.className = 'adsbygoogle';
-      ins.style.cssText = 'display:block;width:100%;max-height:100px;overflow:hidden;';
+      ins.style.cssText = 'display:block;width:100%;min-height:90px;max-height:120px;overflow:hidden;';  // v5.13: min-height 90px (was max-height 100px, Poki: give ads room)
       ins.setAttribute('data-ad-client', 'ca-pub-8346383990981353');
       ins.setAttribute('data-ad-slot', slotId);
       ins.setAttribute('data-ad-format', 'auto');
-      ins.setAttribute('data-full-width-responsive', 'false');
+      ins.setAttribute('data-full-width-responsive', 'true');  // v5.13: responsive=true (Poki: adapt to screen)
       container.innerHTML = '';
       container.appendChild(ins);
       try {
