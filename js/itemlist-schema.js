@@ -584,8 +584,10 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":579,"url":"https://gamezipper.com/hidden-picture-puzzle/","name":"Hidden Picture Puzzle"},
     {"@type":"ListItem","position":580,"url":"https://gamezipper.com/gravity-flip/","name":"Gravity Flip"},
     {"@type":"ListItem","position":581,"url":"https://gamezipper.com/flow-free-puzzle/","name":"Flow Free Puzzle"},
-    {"@type":"ListItem","position":582,"url":"https://gamezipper.com/shadow-match-puzzle/","name":"Shadow Match Puzzle"}
+    {"@type":"ListItem","position":582,"url":"https://gamezipper.com/shadow-match-puzzle/","name":"Shadow Match Puzzle"},
+    {"@type":"ListItem","position":583,"url":"https://gamezipper.com/maze-bridge-puzzle/","name":"Maze Bridge Puzzle"},
+    {"@type":"ListItem","position":584,"url":"https://gamezipper.com/i-love-hue/","name":"I Love Hue"}
   ],
-  "numberOfItems":582,
-  "description":"582 free browser games you can play instantly"
+  "numberOfItems":584,
+  "description":"584 free browser games you can play instantly"
 };
