@@ -1,3 +1,50 @@
+## [v1.151.0] - 2026-07-07
+### Added
+- 8 new test cases from July-7 2026 industry research (R268, 4h cadence cycle 30):
+  - [S-330] **[P1]** CVE-2026-40369 Windows 11 Kernel Sandbox-Escape LPE via Chrome NtQuerySystemInformation (CVSS 7.8; Pwn2Own Berlin 2026 pedigree) — browser-sandbox-to-kernel-SYSTEM chain
+  - [S-331] **[P2]** 2026 H1 CVE Leaderboard: Linux kernel #1 (2308 CVEs), Google #2 (1752) — aggregate kernel attack-surface baseline for server fleet
+  - [S-332] **[P1]** Windows Shell Spoofing CVE-2026-32202 actively exploited (CISA KEV) — incomplete-patch-chain regression from CVE-2026-21510
+  - [W-289] **[P2]** Microsoft Edge gains Google-account login + SSO (July 2026) — cross-browser session-merging & OAuth-leak risk on shared devices
+  - [W-290] **[P2]** Firefox 152 + Nova 2026 roadmap "biggest redesign ever" — settings/media-controls/JPEG-XL/regression-matrix risk
+  - [P-136] **[P2]** DDoS 2026 paradigm shift to "cognitive & decision-speed warfare" (NSFOCUS 2026 report) — AI-driven adaptive DDoS defeats static WAF rules
+  - [C-201] **[P2]** 2026 web-game industry three structural shifts — compliance deepening / category concentration / experience premiumization (CN regulatory macro)
+  - [B-190] **[P2]** Safari 26.4 silent-fix batch of 191 bugs (SVG/forms/MathML/CSS scaling) — silent-behavior-fix regression-matrix blind spot
+### Sources
+- "HTML5 game testing 2026 new techniques browser canvas WebGL" (mcp_minimax_search_web_search)
+- "browser security vulnerability 2026 July XSS clickjacking CVE" (mcp_minimax_search_web_search)
+- "casual game UX complaint 2026 mobile dark mode haptic feedback" (mcp_minimax_search_web_search)
+- "Chrome Edge Safari update 2026 July web API breaking change" (mcp_minimax_search_web_search)
+- "Windows 11 kernel CVE-2026-40369 sandbox bypass Chrome browser game 2026" (mcp_minimax_search_web_search)
+- "Edge Google account login July 2026 cross-browser session sync risk" (mcp_minimax_search_web_search)
+- "Firefox 152 2026 roadmap redesign web compatibility breaking change" (mcp_minimax_search_web_search)
+- "Linux kernel 2026 CVE epoll LPE Android exploit GameOver July" (mcp_minimax_search_web_search)
+- Note: SearXNG (mcp_web_search_prime_batch_search) returned 404 errors for all 5 queries — fell back to minimax_search successfully.
+- Key URLs:
+  - https://www.donews.com/news/detail/8/6567089.html (CVE-2026-40369 Windows 11 kernel sandbox-escape, May 22 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8226a48682f87052 (2026 H1 CVE leaderboard Linux 2308, July 4 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_06669fd7ea842752 (Windows Shell CVE-2026-32202 KEV, May 8 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4286a34c5b021052 (Edge Google-account login, June 19 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_9116a30cb5d40652 (Firefox 152 stable, June 16 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4016a32165940252 (Firefox Nova roadmap, June 17 2026)
+  - https://www.sohu.com/a/1014477184_121864708 (NSFOCUS DDoS 2026 report, May 2 2026)
+  - https://www.sohu.com/a/1028338060_122652494 (2026 web-game industry three shifts, May 27 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Safari 26.4 191 bug fixes, March 25 2026)
+
+## [v1.150.0] - 2026-07-07
+### Added
+- 10 new test cases from July-7 2026 industry research (R267, 4h cadence cycle 29):
+  - [S-327] **[P1]** npm "Mini Shai-Hulud" supply-chain attack — valid SLSA Build Level 3 provenance bypass (CVE-2026-45321, CVSS 10.0)
+  - [S-328] **[P2]** Rspack / Vant npm cryptominer via stolen publish tokens (postinstall geo-gated miner)
+  - [S-329] **[P2]** Safari 26.5 WebKit CVE-2026-28962 CSP bypass (sensitive-info disclosure)
+  - [W-287] **[P2]** Bun 1.3.14 last-Zig release — full Rust rewrite of 960k-line runtime via Claude Code (~6 days)
+  - [W-288] **[P3]** Vite 8 + Rolldown 1.0 production bundler swap (esbuild+Rollup → unified Rust Rolldown)
+  - [P-134] **[P2]** iOS 26 Liquid Glass post-update 3-7 day transient jank (background reindexing window)
+  - [P-135] **[P2]** iOS 26 Liquid Glass backdrop-filter GPU cost compounds with Adaptive Power thermal throttling
+  - [C-200] **[P2]** Safari 26.4 CSS Grid Lanes (native masonry) — progressive-enhancement fallback risk
+  - (plus GM/GP-category puzzle cases captured in the master file for v1.150.0)
+### Sources
+- (Backfill entry — v1.150.0 master file was committed in 509ab2a5 but CHANGELOG was not updated at that time. This entry records the v1.150.0 additions for historical completeness. See master file MASTER-TEST-CASES-v1.150.0.md section "v1.150.0 (R267)" for full source citations.)
+
 ## [v1.149.0] - 2026-07-07
 ### Added
 - 8 new test cases from July-7 2026 industry research (R266, 4h cadence cycle 28):
