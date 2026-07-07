@@ -1857,7 +1857,7 @@ function gzUpdateShowMoreBtn(){var w=document.getElementById('gz-show-more-wrap'
   if(msg){txt.textContent=msg;el.style.display='block'}
 })();
 </script>
-<script src="/gz-analytics.js?v=202607081b758ffc720" defer fetchpriority="low" crossorigin></script>
+<script src="/gz-analytics.js?v=202607082d56a43fd3b" defer fetchpriority="low" crossorigin></script>
 
 <!-- Web Vitals RUM: LCP/CLS/INP/TTFB → analytics beacon -->
 <!-- 2026-06-07 20h P1 fix: restore IIFE wrap + s() definition (lost in e6f9cf35 dead-code cleanup) -->
@@ -2541,13 +2541,19 @@ function playRandom(){
 // Defer ad manager loading to avoid blocking main thread (INP optimization)
 (function(){
   function loadAdManager(){
-    // v6.5: load adsterra-manager.js first (no-op when zone IDs placeholder, zero resource cost)
-    var sAd=document.createElement('script');
-    sAd.src='/adsterra-manager.js?v=v513poki';
-    sAd.defer=true;
-    document.head.appendChild(sAd);
+    // v5.21-p0fix: All 6 Adsterra zone IDs (30130927/9/30/31/32/33) CDN-dead since at least
+    //   2026-07-06 — profitabledisplaynetwork.com/{zoneId}.js returns HTTP 301→google.com.
+    //   6d BI: 0 fills / 11 attempts. Loading adsterra-manager.js adds +3s page-load latency
+    //   per request (script load + 6s timeout × N zones) with zero revenue.
+    //   Default OFF (must explicitly re-enable via window.GZ_LOAD_ADSTERRA=true).
+    if(window.GZ_LOAD_ADSTERRA===true){
+      var sAd=document.createElement('script');
+      sAd.src='/adsterra-manager.js?v=v521p0fix';
+      sAd.defer=true;
+      document.head.appendChild(sAd);
+    } else { try { console.log('[gz-ad] adsterra skipped: CDN dead (set GZ_LOAD_ADSTERRA=true to re-enable)'); } catch(e){} }
     var s=document.createElement('script');
-    s.src='/monetag-manager.js?v=v513poki';
+    s.src='/monetag-manager.js?v=v521p0fix';
     document.head.appendChild(s);
   }
   // Use scheduler.yield() if available (INP optimization 2026), fallback to requestIdleCallback
