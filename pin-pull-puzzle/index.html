@@ -112,9 +112,7 @@
     ]
   }
   </script>
-  <script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=pin-pull-puzzle'></script>
-  <script src="https://www.clkmg.com/tag/js/110120.js" async></script>
-  <script src="https://www.clkmg.com/tag/js/110121.js" async></script>
+  <!-- R1-2026-07-07: removed 1ktower.com dead analytics (HTTP 000) + clkmg.com 404 spy scripts -->
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
     body { background: #0a0a1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -145,8 +143,11 @@
       #level-display { font-size: 16px; }
     }
   </style>
+  <style>h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}</style>
 </head>
 <body>
+  <nav id="gz-topnav" style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:8px 16px;display:flex;justify-content:center;align-items:center;position:sticky;top:0;z-index:9999"><a href="https://gamezipper.com/" style="color:#fff;text-decoration:none;font-weight:bold;font-size:14px;animation:pulse-glow 2.5s ease-in-out infinite;display:inline-flex;align-items:center;gap:6px">&#x1F3AE; GameZipper — More Free Games</a></nav>
+  <h1 class="gz-sr-only">Pin Pull Puzzle - Free Online Pull Pins Physics Puzzle Game</h1>
   <div id="game-container">
     <canvas id="gameCanvas"></canvas>
     <div id="ui-overlay">
@@ -475,6 +476,25 @@ function updateParticles() {
 // === RENDERING ===
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // R1-2026-07-07 fix: guard against uninitialized state (state.goal null on menu, state.hazards/loot/pins/parts may be undefined in edge cases)
+  if(!state.goal || !state.hazards || !state.pins || !state.loot || !state.particles) {
+    // Menu state: draw title text on every frame so it persists across rAF
+    if(state.screen === 'menu') {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('PIN PULL', canvas.width/2, canvas.height/3);
+      ctx.font = '24px sans-serif';
+      ctx.fillStyle = '#fff';
+      ctx.fillText('PUZZLE', canvas.width/2, canvas.height/3 + 35);
+      ctx.font = '16px sans-serif';
+      ctx.fillStyle = '#aaa';
+      ctx.fillText('Tap to Start', canvas.width/2, canvas.height/2);
+      ctx.font = '14px sans-serif';
+      ctx.fillText('Level: ' + state.maxLevel + '/' + LEVELS.length, canvas.width/2, canvas.height/2 + 30);
+    }
+    return;
+  }
   // Draw hazards
   state.hazards.forEach(function(h){
     ctx.fillStyle = h.type === 'lava' ? '#ff4400' : '#884444';
@@ -718,5 +738,20 @@ document.addEventListener('visibilitychange', function(){
   else if(!document.hidden && state.screen === 'game') { lastTime = performance.now(); rafId = requestAnimationFrame(loop); }
 });
 </script>
+<script src="/game-footer.js?v=202607021204"></script>
+
+<section style="max-width:800px;margin:40px auto;padding:0 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#ccc;line-height:1.7;">
+<h2 style="font-size:22px;font-weight:700;color:#fff;margin-bottom:12px;">How to Play Pin Pull Puzzle</h2>
+<p>Pull the pins out one at a time to release the coins, gems, and loot. Each pin holds something in place — when you remove the right pin in the right order, gravity guides the loot down into the goal bag. Watch out for lava and spike hazards that will end your run if the loot falls into them!</p>
+<h2 style="font-size:22px;font-weight:700;color:#fff;margin:24px 0 12px;">Tips &amp; Strategy</h2>
+<p>Plan your pin pulls before you act — the par count tells you the ideal number of moves. Think about which pins are blocking the loot from falling straight down to the goal, and which can be left in place. Hazards are usually avoidable by careful pin ordering rather than random pulling.</p>
+<h2 style="font-size:20px;font-weight:700;color:#fff;margin-bottom:16px;">Frequently Asked Questions</h2>
+<div style="margin-bottom:12px;"><h3 style="font-size:16px;color:#4ecdc4;margin-bottom:4px;">Is this game free to play?</h3><p style="font-size:14px;color:#999;">Yes! Pin Pull Puzzle is completely free to play in your browser with no download or sign-up required.</p></div>
+<div style="margin-bottom:12px;"><h3 style="font-size:16px;color:#4ecdc4;margin-bottom:4px;">Can I play on mobile?</h3><p style="font-size:14px;color:#999;">Absolutely. The game is fully optimized for touch controls on phones and tablets.</p></div>
+<div style="margin-bottom:12px;"><h3 style="font-size:16px;color:#4ecdc4;margin-bottom:4px;">How many levels are there?</h3><p style="font-size:14px;color:#999;">30 handcrafted levels across 5 difficulty tiers, from Beginner to Master.</p></div>
+<div style="margin-bottom:12px;"><h3 style="font-size:16px;color:#4ecdc4;margin-bottom:4px;">Does progress save automatically?</h3><p style="font-size:14px;color:#999;">Yes — your highest unlocked level is saved locally so you can return later and continue where you left off.</p></div>
+</section>
+
+<div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
 </body>
 </html>
