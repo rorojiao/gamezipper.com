@@ -2,7 +2,7 @@
  * GameZipper Tools — Adsterra Ad Manager
  * ─────────────────────────────────────
  * Adsterra integration for tools.gamezipper.com
- * Currently pending account setup — zone IDs are placeholders.
+ * ACTIVE — Zone IDs configured via Adsterra Publisher API (2026-07-07).
  */
 
 (function () {
@@ -17,14 +17,18 @@
     return;
   }
 
-  var ADSTERRA_PID = 'YOUR_PUBLISHER_ID_HERE';
+  // Zone IDs from Adsterra Publisher API (2026-07-07)
+  var ADSTERRA_PID = 'gz_5896870';
 
   var ZONES = {
-    popunder:    'YOUR_POPUNDER_ZONE_ID',
-    inpagePush:  'YOUR_INPAGE_PUSH_ZONE_ID',
-    interstitial: 'YOUR_INTERSTITIAL_ZONE_ID',
-    socialBar:   'YOUR_SOCIAL_BAR_ZONE_ID',
-    banner:      'YOUR_BANNER_ZONE_ID'
+    popunder:    '30130929',
+    inpagePush:  '30130931',
+    interstitial: '30130930',
+    socialBar:   '30130931',
+    banner:      '30130932',
+    banner468:   '30130927',
+    banner320:   '30130933',
+    nativeBanner:'30130930'
   };
 
   function isHubPage() {
@@ -35,7 +39,7 @@
     var s = document.createElement('script');
     s.async = true;
     s.setAttribute('data-zone', String(zone));
-    s.src = 'https://adsterra.com/ads.php?zone_id=' + zone + '&pid=' + ADSTERRA_PID;
+    s.src = 'https://www.profitabledisplaynetwork.com/' + zone;
     if (container) {
       container.appendChild(s);
     } else {
@@ -135,5 +139,5 @@
     pid: ADSTERRA_PID
   };
 
-  console.log('[GZToolsAdsterra] Initialized — Adsterra manager loaded (zone IDs: PENDING CONFIGURATION)');
+  console.log('[GZToolsAdsterra] Initialized — Adsterra manager ACTIVE (popunder=' + ZONES.popunder + ', social=' + ZONES.socialBar + ', banner=' + ZONES.banner + ')');
 })();

@@ -268,9 +268,9 @@
       deadZones: [11012003, 11012009, 11012010, 11012011],
       // v6.5 Adsterra tier — placeholders until user signs up + runs setup-adsterra.sh
       // See ADSTERRA_SETUP.md for signup → enable flow. zoneId=0 = no-op (no script load).
-      adsterraInpagePush: 0,    // In-Page Push zone id
-      adsterraVignette: 0,      // Vignette / interstitial zone id
-      adsterraPopunder: 0,      // Popunder zone id (onclick-triggered only)
+      adsterraInpagePush: 30130931,    // Social Bar zone (serves as In-Page Push)
+      adsterraVignette: 30130930,      // Native Banner zone (serves as Vignette/Interstitial)
+      adsterraPopunder: 30130929,      // Popunder zone (onclick-triggered)
     },
     AD_PROVIDER: 'https://a.magsrv.com/ad-provider.js',
     // Preconnect for faster ad loading
@@ -279,7 +279,7 @@
     // Branched off v5.3 (NOT v6): keeps gz5_ STORAGE_PREFIX + ZONE_BACKOFF (proven 1.3% fill wins).
     // Activation: window.GZ_ADSTERRA_ENABLED = true + set adsterraInpagePush/Vignette zone ids.
     ADSTERRA: {
-      enabled: (typeof window.GZ_ADSTERRA_ENABLED === 'boolean' ? window.GZ_ADSTERRA_ENABLED : false),
+      enabled: (typeof window.GZ_ADSTERRA_ENABLED === 'boolean' ? window.GZ_ADSTERRA_ENABLED : true),
       publisherKey: (window.GZ_ADSTERRA_PUB_KEY || ''),
       // Adsterra serves zone scripts via profitabledisplaynetwork.com/{zoneId}.js
       providerUrl: 'https://www.profitabledisplaynetwork.com/',
