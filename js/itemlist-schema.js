@@ -581,8 +581,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":576,"url":"https://gamezipper.com/blockins/","name":"Blockins"},
     {"@type":"ListItem","position":577,"url":"https://gamezipper.com/time-rewind/","name":"Time Rewind"},
     {"@type":"ListItem","position":578,"url":"https://gamezipper.com/audio-rhythm-puzzle/","name":"Audio Rhythm Puzzle"},
-    {"@type":"ListItem","position":579,"url":"https://gamezipper.com/hidden-picture-puzzle/","name":"Hidden Picture Puzzle"}
+    {"@type":"ListItem","position":579,"url":"https://gamezipper.com/hidden-picture-puzzle/","name":"Hidden Picture Puzzle"},
+    {"@type":"ListItem","position":580,"url":"https://gamezipper.com/gravity-flip/","name":"Gravity Flip"}
   ],
-  "numberOfItems":579,
-  "description":"579 free browser games you can play instantly"
+  "numberOfItems":580,
+  "description":"580 free browser games you can play instantly"
 };
