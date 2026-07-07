@@ -13,7 +13,7 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#fccb90,#d57eeb)',
   'linear-gradient(135deg,#ff9a9e,#fecfef)',
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
-  'linear-gradient(135deg,#a1c4fd,#c2e9fb)'
+  'linear-gradient(135deg,#a1c4fd,#c2e9fb)',
 ];
 
 const GAMES = [
@@ -588,4 +588,6 @@ const GAMES = [
 ,{name:"Blockins",emoji:"🧩",cat:"puzzle",tags:["blockins","block puzzle","tetris puzzle","puzzle platformer","block stacking","stack blocks","rotate blocks","tetris blocks","platform puzzle","logic puzzle","brain teaser","strategy puzzle","physics puzzle","block game","browser game","html5","mobile game","no download","free"],url:"/blockins/",desc:"Play Blockins free online — a clever puzzle platformer! Stack tetris-shaped blocks, rotate pieces, switch between blocks, and reach the portal. 30 handcrafted levels across 5 difficulty tiers. Hints, star ratings, undo. No download, mobile-friendly!",isNew:true,status:"live"}
 ,{name:"Time Rewind",emoji:"⏪",cat:"puzzle",tags:["time rewind","temporal puzzle","time travel","rewind","temporal copy","brain game","logic puzzle","casual game","browser game","html5","free game","no download","mobile game"],url:"/time-rewind/",desc:"Play Time Rewind free online! Master time itself in this neon retro-futuristic puzzle game. Move through mazes, use temporal copies of yourself, and rewind to undo mistakes. 30 challenging levels across 5 difficulty tiers. Hold rewind to scrub through past positions. No download, mobile-friendly!",isNew:true,status:"live"},
 {name:"Audio Rhythm Puzzle",emoji:"🎵",cat:"puzzle",tags:["audio rhythm","pitch memory","ear training","music puzzle","tone sequence","simon says","brain game","memory game","music game","puzzle game","browser game","free game","no download","mobile game","html5"],url:"/audio-rhythm-puzzle/",desc:"Play Audio Rhythm Puzzle free online! Listen to a sequence of musical tones, then tap the colored buttons in the same order to replay the melody. A pitch-memory brain game with 30 levels across 5 difficulty tiers (Beginner to Expert). Train your ear and working memory with procedurally-generated audio. No download, mobile-friendly!",isNew:true,status:"live"}
+,
+{name:"Hidden Picture Puzzle",emoji:"🔍",cat:"puzzle",tags:["hidden object","find hidden","seek and find","spot hidden","hidden picture","puzzle","brain game","observation","mobile game","browser game","html5","free game","no download"],url:"/hidden-picture-puzzle/",desc:"Play Hidden Picture Puzzle free online! Find hidden objects across 30 procedurally-generated scenes in 5 difficulty tiers (Beginner to Master). Tap-to-find mechanic with 3-star ratings, hint system, daily streaks, and unique randomized scenes on every replay. No download, mobile-friendly!",isNew:true,status:"live"}
 ];
