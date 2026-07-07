@@ -1,3 +1,34 @@
+## [v1.153.0] - 2026-07-08
+### Added
+- 8 new test cases from July-8 2026 industry research (R270, 4h cadence cycle 32):
+  - [S-336] **[P1]** npm v12 Default-Disabling Install Scripts NOW LIVE (Node.js v26.4/v26.3) — Silent Downstream Dependency Breakage for postinstall-reliant packages (July 8 2026)
+  - [S-337] **[P2]** Ad-Fraud Detection Software 2026 Productized (TrafficGuard + category) — ML IVT-Verdict Directly Cuts GameZipper Ad Revenue via false-positive invalid-traffic classification
+  - [W-293] **[P2]** TypeScript 7.0 RC (July 7 2026) — Full Go Rewrite "Corsa" 10x Build-Speed + .tsbuildinfo Incompatible between JS tsc and Go tsgo (Migration Gate)
+  - [W-294] **[P3]** Next.js 16.3 Preview — Optional SPA-Like Navigation for React Server Components (RSC payload prefetch + client cache)
+  - [W-295] **[P3]** Takumi 2.0 Beta — Rust React/JSX-to-Image Renderer Without Headless Browser (OG-Image pipeline alternative, pixel-parity required)
+  - [C-203] **[P2]** 2026 Frontend Tooling Rust/Go-Migration Wave — Ecosystem-Wide Supply-Chain Consolidation: single Rust-crate CVE (serde/tokio) cascades across Rolldown+Bun+Turbopack+SWC+Biome simultaneously
+  - [B-192] **[P1]** Safari 26 Tracking-Param Strip CONFIRMED Shipped After Earlier Pullback + Contradictory Same-Day Reporting (gclid/fbclid/msclkid attribution regression)
+  - [B-193] **[P2]** AI-Rewritten-Software QA Gap — Bun 99.8% Legacy-Test-Pass Coverage Illusion (differential + exploratory + code-path coverage testing mandatory for AI-rewritten games)
+### Sources
+- "HTML5 browser game security vulnerability July 2026 new CVE" (mcp_minimax_search_web_search)
+- "Chrome Edge Safari update July 2026 stable release breaking change" (mcp_minimax_search_web_search)
+- "npm v12 default disable install scripts security breaking change 2026" (mcp_minimax_search_web_search)
+- "TypeScript 7.0 RC Babel 8.0 release 2026 breaking change migration" (mcp_minimax_search_web_search)
+- "Safari 26 tracking parameter filter gclid fbclid privacy regression analytics 2026" (mcp_minimax_search_web_search)
+- "casual mobile game UX complaint 2026 July loading screen friction dark mode" (mcp_minimax_search_web_search)
+- "Bun 1.3 last Zig release Rust rewrite Claude Code July 2026" (mcp_minimax_search_web_search)
+- "ad fraud malvertising 2026 July supply chain attack fake game installer" (mcp_minimax_search_web_search)
+- Note: SearXNG (mcp_web_search_prime_batch_search) returned 404 errors for all 5 batch queries — 4th+ consecutive cycle of SearXNG downtime (R266-R270); MiniMax (mcp_minimax_search_web_search) used as primary per §62 of the test-library-evolution skill references/r268-refinements.md.
+- Key URLs:
+  - https://cloud.tencent.com/developer/article/2699338 (Frontend Weekly 2026W26 — Next.js 16.3, Vite 8.1, Babel 8.0, TypeScript 7.0 RC, Node.js v26.4, npm v12 install-script disable, Takumi 2.0 Beta — July 8 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8336a4ced5727952 (TypeScript 7.0 RC official announcement, July 7 2026)
+  - https://www.sitepoint.com/typescript-70-rc-the-go-rewrite-migration-guide/ (TypeScript 7.0 RC Go-rewrite migration guide, June 24 2026)
+  - https://cloud.tencent.com/developer/article/2637644 (Safari 26 release notes — tracking-param filtering 134226694, July 8 2026)
+  - https://cloud.tencent.com/developer/article/2637645 (Safari 26 gclid/fbclid auto-strip shipped in regular mode, July 8 2026)
+  - https://sourceforge.net/software/ad-fraud-detection/ (Best Ad Fraud Detection Software of 2026 — TrafficGuard + ML-based IVT detection, July 5 2026)
+  - https://dy.163.com/v2/media/T1378287990197.html (Bun 9-day Claude Code 1M-line rewrite, 99.8% test-pass questioned, June 8 2026)
+  - https://blog.csdn.net/2501_91883294/article/details/161057398 (Bun Zig→Rust 6-day 960k-line Claude Code rewrite deep-dive, June 19 2026)
+
 ## [v1.152.0] - 2026-07-07
 ### Added
 - 9 new test cases from July-7 2026 industry research (R269, 4h cadence cycle 31):
