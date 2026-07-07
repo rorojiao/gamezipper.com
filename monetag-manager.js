@@ -277,9 +277,12 @@
     PRECONNECT: ['https://a.magsrv.com', 'https://static.magsrv.com'],
     // v6.5 Adsterra config — fail-safe: zoneId=0 / enabled=false / no pub key → no script load
     // Branched off v5.3 (NOT v6): keeps gz5_ STORAGE_PREFIX + ZONE_BACKOFF (proven 1.3% fill wins).
-    // Activation: window.GZ_ADSTERRA_ENABLED = true + set adsterraInpagePush/Vignette zone ids.
+    // v5.21-p0fix (2026-07-08): all 6 zone IDs (30130927/9/30/31/32/33) CDN-dead — 301→google.com,
+    //   6d BI 0 fills / 11 attempts. Default OFF; opt-in via window.GZ_ADSTERRA_ENABLED=true.
+    //   Indexed adsterra tier (8 loadAdsterraZone call sites) was wasting +6s/network per page.
+    //   Rollback: window.GZ_ADSTERRA_ENABLED=true OR set here in CONFIG.
     ADSTERRA: {
-      enabled: (typeof window.GZ_ADSTERRA_ENABLED === 'boolean' ? window.GZ_ADSTERRA_ENABLED : true),
+      enabled: (window.GZ_ADSTERRA_ENABLED === true),
       publisherKey: (window.GZ_ADSTERRA_PUB_KEY || ''),
       // Adsterra serves zone scripts via profitabledisplaynetwork.com/{zoneId}.js
       providerUrl: 'https://www.profitabledisplaynetwork.com/',
@@ -318,7 +321,7 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.13-gz-poki-tuning',  // 2026-07-07: Poki-grade UX tuning (freq/timing/sizes)
+    VERSION: '5.21-p0fix-adsterra-skip',  // 2026-07-08: All 6 Adsterra zone IDs CDN-dead (profitabledisplaynetwork.com → 301→google.com). Disable CONFIG.ADSTERRA.enabled by default; opt-in via window.GZ_ADSTERRA_ENABLED=true. Saves 6 loadAdsterraZone call sites × 6s timeout per page load.
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
