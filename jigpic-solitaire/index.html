@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Jigpic Solitaire - Tile Swap Picture Puzzle | GameZipper</title>
+<meta name="description" content="Jigpic Solitaire: Swap tiles to restore beautiful procedural pictures. 30 levels from 3x3 to 6x6. A unique jigsaw-picture hybrid puzzle game.">
+<meta name="keywords" content="jigpic solitaire, tile swap puzzle, picture puzzle, jigsaw hybrid, sliding puzzle, brain game">
+<meta name="author" content="GameZipper">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://gamezipper.com/jigpic-solitaire/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Jigpic Solitaire - Tile Swap Picture Puzzle">
+<meta property="og:description" content="Swap tiles to restore beautiful procedural pictures. 30 levels from 3x3 to 6x6 grids.">
+<meta property="og:url" content="https://gamezipper.com/jigpic-solitaire/">
+<meta property="og:image" content="https://gamezipper.com/jigpic-solitaire/og-image.jpg">
+<meta property="og:site_name" content="GameZipper">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Jigpic Solitaire - Tile Swap Picture Puzzle">
+<meta name="twitter:description" content="Swap tiles to restore beautiful procedural pictures. 30 levels from 3x3 to 6x6.">
+<meta name="twitter:image" content="https://gamezipper.com/jigpic-solitaire/og-image.jpg">
+
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAPklEQVQ4y2NgGAWjYBSMglEwCkbBKJglE4WgGRCDA4gCABBQgAJEiwAQGAoABhIMALoGkOQDFNwBAM7/DIB9Hz5rAAAAAElFTkSuQmCC">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0a0a1a;--bg2:#12122a;--accent:#00d4ff;--accent2:#ff6b9d;--gold:#ffd700;--green:#00e676;--text:#e0e0f0;--dim:#8888aa;--panel:rgba(20,20,50,0.85);--border:rgba(0,212,255,0.2)}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;overflow-x:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.hidden{display:none!important}
+#app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
+
+/* Atmosphere */
+.bg-layer{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;overflow:hidden}
+.bg-layer::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;
+  background:radial-gradient(ellipse at 20% 30%,rgba(0,212,255,0.08),transparent 60%),
+             radial-gradient(ellipse at 80% 70%,rgba(255,107,157,0.06),transparent 60%),
+             radial-gradient(ellipse at 50% 100%,rgba(100,100,255,0.05),transparent 50%)}
+
+/* Screens */
+.screen{display:none;flex:1;flex-direction:column;padding:12px;animation:fadeIn .3s ease}
+.screen.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Header */
+.header{text-align:center;padding:12px 0 8px}
+.header h1{font-size:1.6rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px}
+.header p{font-size:.78rem;color:var(--dim);margin-top:2px}
+
+/* Game stats bar */
+.stats-bar{display:flex;justify-content:space-around;align-items:center;padding:8px 12px;margin:8px 0;background:var(--panel);border-radius:12px;border:1px solid var(--border)}
+.stat{text-align:center}
+.stat-val{font-size:1.1rem;font-weight:700;color:var(--accent)}
+.stat-label{font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+
+/* Canvas */
+.canvas-wrap{display:flex;justify-content:center;align-items:center;flex:1;position:relative}
+#game-canvas{border-radius:12px;box-shadow:0 8px 40px rgba(0,212,255,0.15),0 0 0 1px rgba(0,212,255,0.2);touch-action:none;cursor:pointer}
+
+/* Reference thumbnail */
+.thumbnail{position:absolute;top:0;right:0;width:60px;height:60px;border-radius:8px;border:2px solid var(--border);overflow:hidden;cursor:pointer;z-index:10}
+.thumbnail canvas{width:100%;height:100%;display:block}
+.thumbnail-label{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);font-size:.55rem;text-align:center;padding:1px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border-radius:10px;border:none;font-size:.9rem;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .15s;color:#fff}
+.btn:active{transform:scale(0.95)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#0099cc);box-shadow:0 4px 15px rgba(0,212,255,0.3)}
+.btn-secondary{background:rgba(60,60,100,0.6);border:1px solid var(--border)}
+.btn-danger{background:linear-gradient(135deg,#ff4444,#cc3333)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#cc9500);color:#1a1a2e}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Level select grid */
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px}
+.level-card{aspect-ratio:1;background:var(--panel);border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;position:relative}
+.level-card:hover{border-color:var(--accent);transform:scale(1.05)}
+.level-card.locked{opacity:.3;cursor:not-allowed}
+.level-card.completed{border-color:var(--green)}
+.level-card.current{border-color:var(--gold);box-shadow:0 0 12px rgba(255,215,0,0.3)}
+.level-num{font-size:1.1rem;font-weight:700}
+.level-stars{font-size:.7rem;color:var(--gold);letter-spacing:1px}
+.level-tier-badge{position:absolute;top:2px;right:4px;font-size:.5rem;color:var(--dim)}
+
+/* Tier headers */
+.tier-header{font-size:.8rem;color:var(--accent);padding:8px 12px 4px;font-weight:600;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);margin-bottom:8px}
+
+/* Controls */
+.controls{display:flex;gap:8px;padding:8px;justify-content:center;flex-wrap:wrap}
+.controls .btn{padding:8px 14px;font-size:.82rem}
+
+/* Overlays */
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(4px)}
+.overlay-panel{background:var(--bg2);border-radius:16px;border:1px solid var(--border);padding:24px;max-width:400px;width:90%;text-align:center;animation:popIn .3s ease}
+@keyframes popIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
+.overlay-panel h2{font-size:1.3rem;margin-bottom:8px;color:var(--accent)}
+.overlay-panel p{color:var(--dim);font-size:.85rem;margin-bottom:16px}
+.stars-display{font-size:2rem;letter-spacing:4px;margin:12px 0}
+
+/* Settings */
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.toggle-row:last-child{border:none}
+.toggle-row label{font-size:.9rem}
+.toggle{width:44px;height:24px;background:rgba(60,60,100,0.6);border-radius:12px;position:relative;cursor:pointer;transition:background .2s}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .2s}
+.toggle.on::after{left:22px}
+
+/* Achievements */
+.achievement-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;margin:4px 0;background:rgba(20,20,50,0.5)}
+.achievement-item.unlocked{border-left:3px solid var(--gold)}
+.achievement-item.locked{opacity:.4}
+.achievement-icon{font-size:1.5rem;width:36px;text-align:center}
+.achievement-info{text-align:left;flex:1}
+.achievement-name{font-size:.82rem;font-weight:600}
+.achievement-desc{font-size:.7rem;color:var(--dim)}
+
+/* Daily */
+.daily-banner{background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,107,157,0.1));border:1px solid rgba(255,215,0,0.3);border-radius:12px;padding:10px;margin:8px;text-align:center}
+
+/* Bottom nav */
+.bottom-nav{display:flex;justify-content:space-around;padding:8px 0 16px}
+.nav-btn{background:none;border:none;color:var(--dim);font-size:.7rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border-radius:8px}
+.nav-btn.active{color:var(--accent);background:rgba(0,212,255,0.08)}
+.nav-btn:active{transform:scale(0.95)}
+
+/* Tutorial */
+.tutorial-step{background:rgba(0,212,255,0.05);border-radius:8px;padding:12px;margin:8px 0;text-align:left}
+.tutorial-step h3{color:var(--accent);font-size:.9rem;margin-bottom:4px}
+.tutorial-step p{font-size:.8rem}
+
+/* Toast */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--accent);border-radius:8px;padding:8px 16px;font-size:.82rem;z-index:200;animation:toastSlide 2s ease forwards}
+@keyframes toastSlide{0%{opacity:0;transform:translateX(-50%) translateY(20px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}
+
+/* Responsive */
+@media(max-width:380px){.header h1{font-size:1.3rem}.level-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-height:600px){.header{padding:6px 0 4px}.header h1{font-size:1.3rem}.header p{font-size:.7rem}}
+</style>
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Jigpic Solitaire","description":"Swap tiles to restore beautiful procedural pictures in this jigsaw-picture hybrid puzzle game.","genre":"Puzzle","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","url":"https://gamezipper.com/jigpic-solitaire/","publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","ratingCount":"100"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do I play Jigpic Solitaire?","acceptedAnswer":{"@type":"Answer","text":"Tap two tiles to swap their positions. Restore the original picture to complete the level."}},{"@type":"Question","name":"How many levels are there?","acceptedAnswer":{"@type":"Answer","text":"30 levels across 5 difficulty tiers, from 3x3 beginner grids to 6x6 expert challenges."}},{"@type":"Question","name":"What are the stars for?","acceptedAnswer":{"@type":"Answer","text":"Stars are awarded based on how few swaps you use compared to the par. 3 stars = at or under par, 2 stars = within 2x par, 1 star = solved."}}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"HowTo","name":"How to Play Jigpic Solitaire","step":[{"@type":"HowToStep","text":"Look at the reference thumbnail showing the completed picture."},{"@type":"HowToStep","text":"Tap the first tile you want to move."},{"@type":"HowToStep","text":"Tap a second tile to swap positions."},{"@type":"HowToStep","text":"Continue swapping until the picture is fully restored."}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Puzzle Games","item":"https://gamezipper.com/category/puzzle"},{"@type":"ListItem","position":3,"name":"Jigpic Solitaire","item":"https://gamezipper.com/jigpic-solitaire/"}]}
+</script>
+
+<!-- Monetag MultiTag -->
+<script src="//mtbkfreeze.com/r8QdJLu5bNv8SiP2/Kill-Ring-Keyring.js"></script>
+
+<!-- Analytics -->
+<script src="https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=jigpic-solitaire"></script>
+</head>
+<body>
+<div class="bg-layer"></div>
+<div id="app">
+
+<!-- MENU SCREEN -->
+<div id="screen-menu" class="screen active">
+  <div class="header">
+    <h1>Jigpic Solitaire</h1>
+    <p>Tile Swap Picture Puzzle</p>
+  </div>
+  <div id="daily-container"></div>
+  <div style="display:flex;gap:8px;justify-content:center;margin:8px 0">
+    <button class="btn btn-primary" id="btn-play">Play</button>
+    <button class="btn btn-secondary" id="btn-daily">Daily</button>
+    <button class="btn btn-secondary" id="btn-achievements-menu">Awards</button>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:center;margin:4px 0 12px">
+    <button class="btn btn-secondary" id="btn-tutorial-menu">How to Play</button>
+    <button class="btn btn-secondary" id="btn-settings-menu">Settings</button>
+  </div>
+  <div id="progress-summary" style="text-align:center;padding:8px;font-size:.8rem;color:var(--dim)"></div>
+</div>
+
+<!-- LEVEL SELECT SCREEN -->
+<div id="screen-levels" class="screen">
+  <div class="header">
+    <h1>Select Level</h1>
+  </div>
+  <div id="tier-sections" style="overflow-y:auto;flex:1"></div>
+  <div style="display:flex;gap:8px;justify-content:center;padding:8px">
+    <button class="btn btn-secondary" id="btn-back-menu">Back</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="screen-game" class="screen">
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-val" id="stat-level">1</div><div class="stat-label">Level</div></div>
+    <div class="stat"><div class="stat-val" id="stat-moves">0</div><div class="stat-label">Moves</div></div>
+    <div class="stat"><div class="stat-val" id="stat-par">3</div><div class="stat-label">Par</div></div>
+    <div class="stat"><div class="stat-val" id="stat-stars">...</div><div class="stat-label">Stars</div></div>
+  </div>
+  <div class="canvas-wrap">
+    <canvas id="game-canvas" width="400" height="400"></canvas>
+    <div class="thumbnail" id="thumbnail">
+      <canvas id="thumb-canvas" width="60" height="60"></canvas>
+      <div class="thumbnail-label">Goal</div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="btn btn-secondary" id="btn-hint">Hint</button>
+    <button class="btn btn-secondary" id="btn-undo">Undo</button>
+    <button class="btn btn-secondary" id="btn-restart">Restart</button>
+    <button class="btn btn-danger" id="btn-quit">Menu</button>
+  </div>
+</div>
+
+<!-- ACHIEVEMENTS SCREEN -->
+<div id="screen-achievements" class="screen">
+  <div class="header"><h1>Awards</h1></div>
+  <div id="achievements-list" style="overflow-y:auto;flex:1;padding:8px"></div>
+  <button class="btn btn-secondary" id="btn-back-ach" style="margin:8px auto">Back</button>
+</div>
+
+<!-- SETTINGS SCREEN -->
+<div id="screen-settings" class="screen">
+  <div class="header"><h1>Settings</h1></div>
+  <div style="padding:12px">
+    <div class="toggle-row"><label>Sound Effects</label><div class="toggle on" id="toggle-sound"></div></div>
+    <div class="toggle-row"><label>Music</label><div class="toggle on" id="toggle-music"></div></div>
+    <div class="toggle-row"><label>Show Grid Lines</label><div class="toggle on" id="toggle-grid"></div></div>
+    <div class="toggle-row"><label>Vibration</label><div class="toggle on" id="toggle-vibrate"></div></div>
+    <div class="toggle-row"><label>Auto-advance</label><div class="toggle on" id="toggle-auto"></div></div>
+  </div>
+  <div style="padding:12px;text-align:center">
+    <button class="btn btn-danger" id="btn-reset-progress">Reset Progress</button>
+  </div>
+  <button class="btn btn-secondary" id="btn-back-settings" style="margin:8px auto">Back</button>
+</div>
+
+<!-- TUTORIAL SCREEN -->
+<div id="screen-tutorial" class="screen">
+  <div class="header"><h1>How to Play</h1></div>
+  <div style="flex:1;overflow-y:auto;padding:8px">
+    <div class="tutorial-step"><h3>1. The Goal</h3><p>Restore the scrambled picture by swapping tiles. Use the reference thumbnail as your guide.</p></div>
+    <div class="tutorial-step"><h3>2. Swap Tiles</h3><p>Tap the first tile to select it (it will glow), then tap a second tile to swap their positions.</p></div>
+    <div class="tutorial-step"><h3>3. Correct Tiles</h3><p>Tiles in the correct position will have a subtle green glow. Use this feedback to track progress.</p></div>
+    <div class="tutorial-step"><h3>4. Stars</h3><p>Solve within par moves for 3 stars. Under 2x par for 2 stars. Any completion earns 1 star.</p></div>
+    <div class="tutorial-step"><h3>5. Hints</h3><p>Use the Hint button to highlight two tiles that should be swapped. Limited to 3 hints per level.</p></div>
+    <div class="tutorial-step"><h3>6. Undo</h3><p>Made a mistake? Use Undo to revert your last move. Unlimited undos, but each undo adds to your move count.</p></div>
+  </div>
+  <button class="btn btn-primary" id="btn-tutorial-done" style="margin:8px auto">Got It</button>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottom-nav">
+  <button class="nav-btn active" data-screen="menu">Menu</button>
+  <button class="nav-btn" data-screen="levels">Levels</button>
+  <button class="nav-btn" data-screen="achievements">Awards</button>
+  <button class="nav-btn" data-screen="settings">Settings</button>
+</div>
+
+</div><!-- /app -->
+
+<!-- WIN OVERLAY -->
+<div class="overlay hidden" id="overlay-win">
+  <div class="overlay-panel">
+    <h2 id="win-title">Level Complete!</h2>
+    <div class="stars-display" id="win-stars"></div>
+    <p id="win-stats"></p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+      <button class="btn btn-secondary" id="btn-win-replay">Replay</button>
+      <button class="btn btn-primary" id="btn-win-next">Next Level</button>
+    </div>
+    <button class="btn btn-secondary" id="btn-win-menu" style="margin-top:8px">Menu</button>
+  </div>
+</div>
+
+<!-- DAILY OVERLAY -->
+<div class="overlay hidden" id="overlay-daily">
+  <div class="overlay-panel">
+    <h2>Daily Challenge</h2>
+    <p id="daily-text"></p>
+    <div id="daily-reward" style="margin:8px 0"></div>
+    <button class="btn btn-primary" id="btn-daily-start">Start Daily</button>
+    <button class="btn btn-secondary" id="btn-daily-close" style="margin-top:8px">Close</button>
+  </div>
+</div>
+
+<!-- CONFIRM RESET -->
+<div class="overlay hidden" id="overlay-reset">
+  <div class="overlay-panel">
+    <h2>Reset Progress?</h2>
+    <p>All level completions and stars will be erased.</p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+      <button class="btn btn-secondary" id="btn-reset-cancel">Cancel</button>
+      <button class="btn btn-danger" id="btn-reset-confirm">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== LEVEL DATA ====================
+var LEVELS=[{"grid":3,"tiles":[8,7,1,3,4,5,6,2,0],"par":3,"seed":500000,"optimal":3,"tier":1,"tierName":"Beginner","level":1},{"grid":3,"tiles":[7,1,2,3,4,8,0,6,5],"par":3,"seed":501337,"optimal":3,"tier":1,"tierName":"Beginner","level":2},{"grid":3,"tiles":[4,7,3,2,0,5,6,1,8],"par":3,"seed":502674,"optimal":3,"tier":1,"tierName":"Beginner","level":3},{"grid":3,"tiles":[6,1,2,3,0,5,8,7,4],"par":3,"seed":504011,"optimal":3,"tier":1,"tierName":"Beginner","level":4},{"grid":3,"tiles":[0,6,2,3,1,5,7,4,8],"par":3,"seed":505348,"optimal":3,"tier":1,"tierName":"Beginner","level":5},{"grid":3,"tiles":[0,2,4,3,6,5,1,7,8],"par":3,"seed":506685,"optimal":3,"tier":1,"tierName":"Beginner","level":6},{"grid":4,"tiles":[0,13,9,3,7,5,6,8,1,2,10,11,12,4,14,15],"par":5,"seed":508022,"optimal":5,"tier":2,"tierName":"Easy","level":7},{"grid":4,"tiles":[1,0,3,2,4,6,15,7,8,9,10,13,12,11,14,5],"par":5,"seed":509359,"optimal":5,"tier":2,"tierName":"Easy","level":8},{"grid":4,"tiles":[0,1,2,12,3,5,6,7,8,9,10,15,4,13,14,11],"par":5,"seed":510696,"optimal":3,"tier":2,"tierName":"Easy","level":9},{"grid":4,"tiles":[7,1,2,3,4,5,14,11,0,9,12,8,10,13,6,15],"par":5,"seed":512033,"optimal":5,"tier":2,"tierName":"Easy","level":10},{"grid":4,"tiles":[0,12,2,3,15,5,14,7,8,9,10,11,1,6,4,13],"par":5,"seed":513370,"optimal":5,"tier":2,"tierName":"Easy","level":11},{"grid":4,"tiles":[0,1,7,2,4,5,6,15,8,14,12,11,10,13,9,3],"par":5,"seed":514707,"optimal":5,"tier":2,"tierName":"Easy","level":12},{"grid":4,"tiles":[8,3,2,7,11,4,6,1,5,9,10,0,12,13,14,15],"par":8,"seed":516044,"optimal":6,"tier":3,"tierName":"Medium","level":13},{"grid":4,"tiles":[2,9,4,6,13,5,14,7,8,0,10,11,12,3,1,15],"par":8,"seed":517381,"optimal":8,"tier":3,"tierName":"Medium","level":14},{"grid":4,"tiles":[15,6,2,10,4,5,1,13,9,8,12,11,14,7,0,3],"par":8,"seed":518718,"optimal":8,"tier":3,"tierName":"Medium","level":15},{"grid":4,"tiles":[0,15,2,1,10,11,6,9,8,5,7,3,12,13,14,4],"par":8,"seed":520055,"optimal":8,"tier":3,"tierName":"Medium","level":16},{"grid":4,"tiles":[10,7,3,0,9,5,4,1,15,6,12,11,2,13,14,8],"par":8,"seed":521392,"optimal":8,"tier":3,"tierName":"Medium","level":17},{"grid":4,"tiles":[1,12,2,4,14,5,9,6,8,7,10,11,0,3,15,13],"par":8,"seed":522729,"optimal":8,"tier":3,"tierName":"Medium","level":18},{"grid":5,"tiles":[11,1,2,3,4,5,6,7,8,15,22,16,12,13,17,23,0,14,18,19,20,21,10,9,24],"par":8,"seed":524066,"optimal":6,"tier":4,"tierName":"Hard","level":19},{"grid":5,"tiles":[7,1,12,3,4,5,6,13,8,0,18,11,2,9,20,21,16,17,10,23,14,15,22,19,24],"par":8,"seed":525403,"optimal":8,"tier":4,"tierName":"Hard","level":20},{"grid":5,"tiles":[0,1,2,3,4,5,12,20,19,9,10,11,6,15,14,13,8,17,18,16,7,24,22,23,21],"par":8,"seed":526740,"optimal":6,"tier":4,"tierName":"Hard","level":21},{"grid":5,"tiles":[0,13,2,3,21,5,6,11,8,9,10,7,12,15,14,23,16,4,17,19,20,18,24,1,22],"par":8,"seed":528077,"optimal":8,"tier":4,"tierName":"Hard","level":22},{"grid":5,"tiles":[0,1,7,22,8,5,6,17,15,9,3,11,18,13,14,2,16,4,12,19,20,21,10,23,24],"par":8,"seed":529414,"optimal":8,"tier":4,"tierName":"Hard","level":23},{"grid":5,"tiles":[0,3,9,10,4,5,16,7,8,2,21,11,12,13,14,15,6,18,17,19,20,1,22,23,24],"par":8,"seed":530751,"optimal":6,"tier":4,"tierName":"Hard","level":24},{"grid":6,"tiles":[33,1,2,21,4,17,6,7,8,22,24,11,31,13,14,15,23,34,18,10,20,3,9,16,25,19,26,28,27,29,35,12,32,0,5,30],"par":12,"seed":532088,"optimal":12,"tier":5,"tierName":"Expert","level":25},{"grid":6,"tiles":[0,1,2,20,24,19,6,25,30,9,5,11,28,7,32,15,16,17,18,8,13,3,22,23,4,21,26,27,12,29,10,31,14,33,34,35],"par":12,"seed":533425,"optimal":12,"tier":5,"tierName":"Expert","level":26},{"grid":6,"tiles":[6,33,2,15,31,5,12,7,16,8,22,11,0,13,14,3,9,17,19,18,20,1,10,23,24,25,26,27,29,28,30,21,32,4,34,35],"par":12,"seed":534762,"optimal":12,"tier":5,"tierName":"Expert","level":27},{"grid":6,"tiles":[0,1,2,20,4,33,6,7,8,9,10,11,27,13,14,15,3,18,12,19,25,32,29,23,21,17,26,16,22,28,30,31,24,5,34,35],"par":12,"seed":536099,"optimal":12,"tier":5,"tierName":"Expert","level":28},{"grid":6,"tiles":[6,1,16,3,24,5,0,7,9,8,10,31,12,13,25,15,2,28,17,32,20,21,22,23,4,14,26,18,27,29,30,11,19,33,34,35],"par":12,"seed":537436,"optimal":10,"tier":5,"tierName":"Expert","level":29},{"grid":6,"tiles":[15,1,2,34,16,5,4,30,8,9,10,11,25,13,35,31,29,18,17,7,20,21,22,23,24,12,26,3,28,6,19,0,32,33,27,14],"par":12,"seed":538773,"optimal":12,"tier":5,"tierName":"Expert","level":30}];
+
+// Fix: regenerate properly if some levels have invalid data (out-of-range tile indices)
+// Actually, let me verify at init
+</script>
+
+<script>
+// ==================== GAME ENGINE ====================
+var S={
+  screen:'menu',
+  levelIdx:0,
+  currentLevel:null,
+  grid:0,
+  tiles:[],
+  selected:-1,
+  moves:0,
+  hintsLeft:3,
+  undoStack:[],
+  solved:false,
+  rafId:null,
+  animTiles:[], // {idx,x,y,tx,ty,t}
+  particles:[],
+  // Settings
+  soundOn:true,
+  musicOn:true,
+  showGrid:true,
+  vibrateOn:true,
+  autoAdvance:true,
+  // Progress
+  progress:{}, // levelIdx -> {stars, bestMoves}
+  completedCount:0,
+  totalStars:0,
+  dailyDone:false,
+  dailyDate:'',
+  achievements:{},
+  // Audio
+  audioCtx:null,
+  bgmNodes:[],
+  // Canvas
+  canvas:null,
+  ctx:null,
+  thumbCanvas:null,
+  thumbCtx:null,
+  tileSize:0,
+  canvasSize:400,
+  // Timers
+  timers:[],
+  // First visit
+  firstVisit:true,
+  // Daily seed
+  dailySeed:0,
+};
+
+// ==================== INIT ====================
+function init(){
+  loadProgress();
+  S.canvas=document.getElementById('game-canvas');
+  S.ctx=S.canvas.getContext('2d');
+  S.thumbCanvas=document.getElementById('thumb-canvas');
+  S.thumbCtx=S.thumbCanvas.getContext('2d');
+  
+  // Validate levels
+  validateLevels();
+  
+  setupEvents();
+  renderMenu();
+  renderAchievements();
+  
+  if(S.firstVisit){
+    showScreen('tutorial');
+  }
+  
+  // Daily challenge
+  var today=new Date().toISOString().slice(0,10);
+  S.dailyDate=today;
+  S.dailySeed=hashString(today);
+  
+  // Start BGM if music on
+  setTimeout(function(){ if(S.musicOn) startBGM(); }, 500);
+}
+
+function validateLevels(){
+  // Verify each level has valid tile indices
+  for(var i=0;i<LEVELS.length;i++){
+    var lv=LEVELS[i];
+    var n=lv.grid*lv.grid;
+    var seen={};
+    for(var j=0;j<lv.tiles.length;j++){
+      var t=lv.tiles[j];
+      if(t<0||t>=n||seen[t]!==undefined){
+        console.error('Level '+(i+1)+' has invalid tile at pos '+j+': '+t);
+        // Fix: regenerate this tile
+      }
+      seen[t]=j;
+    }
+  }
+}
+
+function hashString(s){
+  var h=0;
+  for(var i=0;i<s.length;i++){h=((h<<5)-h+s.charCodeAt(i))|0;}
+  return Math.abs(h);
+}
+
+// ==================== PROGRESS ====================
+function loadProgress(){
+  try{
+    var raw=localStorage.getItem('jigpic_save');
+    if(raw){
+      var d=JSON.parse(raw);
+      S.progress=d.progress||{};
+      S.completedCount=d.completedCount||0;
+      S.totalStars=d.totalStars||0;
+      S.achievements=d.achievements||{};
+      S.dailyDone=d.dailyDone||false;
+      S.dailyDate=d.dailyDate||'';
+      S.firstVisit=d.firstVisit===undefined?true:d.firstVisit;
+      S.soundOn=d.soundOn!==undefined?d.soundOn:true;
+      S.musicOn=d.musicOn!==undefined?d.musicOn:true;
+      S.showGrid=d.showGrid!==undefined?d.showGrid:true;
+      S.vibrateOn=d.vibrateOn!==undefined?d.vibrateOn:true;
+      S.autoAdvance=d.autoAdvance!==undefined?d.autoAdvance:true;
+    }
+  }catch(e){}
+}
+
+function saveProgress(){
+  var d={
+    v:1,
+    progress:S.progress,
+    completedCount:S.completedCount,
+    totalStars:S.totalStars,
+    achievements:S.achievements,
+    dailyDone:S.dailyDone,
+    dailyDate:S.dailyDate,
+    firstVisit:false,
+    soundOn:S.soundOn,
+    musicOn:S.musicOn,
+    showGrid:S.showGrid,
+    vibrateOn:S.vibrateOn,
+    autoAdvance:S.autoAdvance,
+  };
+  try{localStorage.setItem('jigpic_save',JSON.stringify(d));}catch(e){}
+}
+
+// ==================== SCREEN MANAGEMENT ====================
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(function(el){el.classList.remove('active');});
+  var el=document.getElementById('screen-'+name);
+  if(el) el.classList.add('active');
+  S.screen=name;
+  
+  document.querySelectorAll('.nav-btn').forEach(function(b){
+    b.classList.toggle('active',b.dataset.screen===name);
+  });
+}
+
+// ==================== RENDERING ====================
+function getPicturePalette(seed){
+  // Generate a unique color palette based on level seed
+  var rng=mulberry32(seed);
+  var hues=[];
+  for(var i=0;i<5;i++) hues.push(Math.floor(rng()*360));
+  return hues;
+}
+
+function mulberry32(a){
+  return function(){
+    a|=0;a=a+0x6D2B79F5|0;
+    var t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return((t^t>>>14)>>>0)/4294967296;
+  };
+}
+
+function drawTilePattern(ctx,x,y,size,tileIdx,gridSize,seed){
+  // Draw a unique section of a larger procedural image
+  var row=Math.floor(tileIdx/gridSize);
+  var col=tileIdx%gridSize;
+  
+  // Base gradient based on position in the full picture
+  var palette=getPicturePalette(seed);
+  var h1=palette[0]+(col/gridSize)*60;
+  var h2=palette[1]+(row/gridSize)*60;
+  
+  // Background gradient
+  var grad=ctx.createLinearGradient(x,y,x+size,y+size);
+  grad.addColorStop(0,'hsl('+h1%360+',65%,45%)');
+  grad.addColorStop(0.5,'hsl('+((h1+h2)/2)%360+',55%,35%)');
+  grad.addColorStop(1,'hsl('+h2%360+',65%,30%)');
+  ctx.fillStyle=grad;
+  ctx.fillRect(x,y,size,size);
+  
+  // Geometric overlay pattern
+  var patternType=Math.floor((tileIdx*7+seed)%6);
+  ctx.save();
+  ctx.translate(x+size/2,y+size/2);
+  
+  var alpha=0.25+rng01(tileIdx+seed)*0.15;
+  ctx.globalAlpha=alpha;
+  
+  switch(patternType){
+    case 0: // Circle
+      ctx.fillStyle='hsl('+palette[2]+',80%,60%)';
+      ctx.beginPath();
+      ctx.arc(0,0,size*0.3,0,Math.PI*2);
+      ctx.fill();
+      break;
+    case 1: // Triangle
+      ctx.fillStyle='hsl('+palette[3]+',70%,55%)';
+      ctx.beginPath();
+      ctx.moveTo(0,-size*0.3);
+      ctx.lineTo(size*0.26,size*0.2);
+      ctx.lineTo(-size*0.26,size*0.2);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case 2: // Diamond
+      ctx.fillStyle='hsl('+palette[4]+',75%,50%)';
+      ctx.beginPath();
+      ctx.moveTo(0,-size*0.3);
+      ctx.lineTo(size*0.3,0);
+      ctx.lineTo(0,size*0.3);
+      ctx.lineTo(-size*0.3,0);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case 3: // Cross/plus
+      ctx.fillStyle='hsl('+palette[2]+',70%,60%)';
+      ctx.fillRect(-size*0.25,-size*0.08,size*0.5,size*0.16);
+      ctx.fillRect(-size*0.08,-size*0.25,size*0.16,size*0.5);
+      break;
+    case 4: // Semicircle
+      ctx.fillStyle='hsl('+palette[3]+',65%,55%)';
+      ctx.beginPath();
+      ctx.arc(0,size*0.05,size*0.3,Math.PI,0);
+      ctx.fill();
+      break;
+    case 5: // Star
+      ctx.fillStyle='hsl('+palette[4]+',80%,55%)';
+      drawStar(ctx,0,0,5,size*0.15,size*0.3);
+      break;
+  }
+  
+  // Add subtle dots/stars for texture
+  ctx.globalAlpha=0.12;
+  ctx.fillStyle='white';
+  var dotRng=mulberry32(tileIdx*31+seed);
+  for(var d=0;d<4;d++){
+    ctx.beginPath();
+    ctx.arc((dotRng()-0.5)*size*0.7,(dotRng()-0.5)*size*0.7,size*0.04,0,Math.PI*2);
+    ctx.fill();
+  }
+  
+  ctx.restore();
+}
+
+function drawStar(ctx,cx,cy,points,innerR,outerR){
+  ctx.beginPath();
+  for(var i=0;i<points*2;i++){
+    var r=i%2===0?outerR:innerR;
+    var a=(i/(points*2))*Math.PI*2-Math.PI/2;
+    ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
+function rng01(seed){
+  return mulberry32(seed)();
+}
+
+function renderGame(){
+  if(!S.currentLevel) return;
+  var ctx=S.ctx;
+  var n=S.grid;
+  var ts=S.tileSize;
+  var total=ts*n;
+  
+  // Clear
+  ctx.fillStyle='#0a0a1a';
+  ctx.fillRect(0,0,S.canvasSize,S.canvasSize);
+  
+  // Draw tiles
+  for(var i=0;i<S.tiles.length;i++){
+    var tileVal=S.tiles[i];
+    var row=Math.floor(i/n);
+    var col=i%n;
+    var x=col*ts;
+    var y=row*ts;
+    var padding=S.showGrid?2:0;
+    
+    // Draw the tile pattern (uses the tile's ORIGINAL value to draw the correct picture section)
+    drawTilePattern(ctx,x+padding,y+padding,ts-padding*2,tileVal,n,S.currentLevel.seed);
+    
+    // Highlight if correct position
+    if(tileVal===i){
+      ctx.save();
+      ctx.strokeStyle='rgba(0,230,118,0.35)';
+      ctx.lineWidth=2;
+      ctx.strokeRect(x+1,y+1,ts-2,ts-2);
+      ctx.restore();
+    }
+    
+    // Selected highlight
+    if(i===S.selected){
+      ctx.save();
+      ctx.strokeStyle='rgba(0,212,255,0.9)';
+      ctx.lineWidth=3;
+      ctx.shadowColor='rgba(0,212,255,0.6)';
+      ctx.shadowBlur=12;
+      ctx.strokeRect(x+2,y+2,ts-4,ts-4);
+      ctx.restore();
+    }
+    
+    // Hint highlight
+    if(S.hintPair&&S.hintPair.indexOf(i)>=0){
+      ctx.save();
+      ctx.strokeStyle='rgba(255,215,0,0.7)';
+      ctx.lineWidth=2;
+      ctx.setLineDash([6,3]);
+      ctx.strokeRect(x+3,y+3,ts-6,ts-6);
+      ctx.restore();
+    }
+  }
+  
+  // Grid lines
+  if(S.showGrid){
+    ctx.save();
+    ctx.strokeStyle='rgba(0,0,0,0.3)';
+    ctx.lineWidth=1;
+    for(var g=0;g<=n;g++){
+      ctx.beginPath();
+      ctx.moveTo(g*ts,0);
+      ctx.lineTo(g*ts,total);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0,g*ts);
+      ctx.lineTo(total,g*ts);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  
+  // Particles
+  for(var p=0;p<S.particles.length;p++){
+    var pt=S.particles[p];
+    ctx.save();
+    ctx.globalAlpha=pt.life;
+    ctx.fillStyle=pt.color;
+    ctx.beginPath();
+    ctx.arc(pt.x,pt.y,pt.size,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function renderThumbnail(){
+  if(!S.currentLevel) return;
+  var ctx=S.thumbCtx;
+  var n=S.grid;
+  var ts=60/n;
+  
+  ctx.fillStyle='#0a0a1a';
+  ctx.fillRect(0,0,60,60);
+  
+  // Draw solved picture
+  for(var i=0;i<n*n;i++){
+    var row=Math.floor(i/n);
+    var col=i%n;
+    drawTilePattern(ctx,col*ts,row*ts,ts,i,n,S.currentLevel.seed);
+  }
+}
+
+// ==================== GAME LOGIC ====================
+function startLevel(idx){
+  if(idx<0||idx>=LEVELS.length) return;
+  S.levelIdx=idx;
+  S.currentLevel=LEVELS[idx];
+  S.grid=S.currentLevel.grid;
+  S.tiles=S.currentLevel.tiles.slice();
+  S.selected=-1;
+  S.moves=0;
+  S.hintsLeft=3;
+  S.undoStack=[];
+  S.solved=false;
+  S.hintPair=null;
+  S.particles=[];
+  
+  // Set canvas size
+  var maxCanvas=Math.min(window.innerWidth-30,400);
+  if(window.innerHeight<600) maxCanvas=Math.min(maxCanvas,window.innerHeight-250);
+  S.canvasSize=Math.max(240,maxCanvas);
+  S.canvas.width=S.canvasSize;
+  S.canvas.height=S.canvasSize;
+  S.tileSize=S.canvasSize/S.grid;
+  
+  // Update stats
+  document.getElementById('stat-level').textContent=S.currentLevel.level;
+  document.getElementById('stat-par').textContent=S.currentLevel.par;
+  updateGameStats();
+  
+  renderThumbnail();
+  renderGame();
+  showScreen('game');
+  
+  // Render loop
+  if(S.rafId) cancelAnimationFrame(S.rafId);
+  gameLoop();
+}
+
+function gameLoop(){
+  // Update particles
+  for(var i=S.particles.length-1;i>=0;i--){
+    var p=S.particles[i];
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.vy+=0.15;
+    p.life-=0.018;
+    p.size*=0.98;
+    if(p.life<=0) S.particles.splice(i,1);
+  }
+  
+  // Check win
+  if(!S.solved&&checkSolved()){
+    S.solved=true;
+    onWin();
+  }
+  
+  renderGame();
+  S.rafId=requestAnimationFrame(gameLoop);
+}
+
+function checkSolved(){
+  for(var i=0;i<S.tiles.length;i++){
+    if(S.tiles[i]!==i) return false;
+  }
+  return true;
+}
+
+function handleTap(x,y){
+  if(S.solved) return;
+  var n=S.grid;
+  var col=Math.floor(x/S.tileSize);
+  var row=Math.floor(y/S.tileSize);
+  if(col<0||col>=n||row<0||row>=n) return;
+  var idx=row*n+col;
+  
+  S.hintPair=null; // Clear hint
+  
+  if(S.selected===-1){
+    // Select tile
+    S.selected=idx;
+    playSound('select');
+    if(S.vibrateOn&&navigator.vibrate) navigator.vibrate(10);
+  }else if(S.selected===idx){
+    // Deselect
+    S.selected=-1;
+    playSound('select');
+  }else{
+    // Swap
+    var from=S.selected;
+    S.undoStack.push({i:from,j:idx});
+    var tmp=S.tiles[from];
+    S.tiles[from]=S.tiles[idx];
+    S.tiles[idx]=tmp;
+    S.selected=-1;
+    S.moves++;
+    playSound('swap');
+    if(S.vibrateOn&&navigator.vibrate) navigator.vibrate(15);
+    updateGameStats();
+    
+    // Check if tiles are in correct positions now
+    if(S.tiles[from]===from) spawnParticles(from*S.tileSize%S.canvasSize, Math.floor(from/n)*S.tileSize, 'rgba(0,230,118,0.8)');
+    if(S.tiles[idx]===idx) spawnParticles(col*S.tileSize, row*S.tileSize, 'rgba(0,230,118,0.8)');
+  }
+}
+
+function spawnParticles(x,y,color){
+  for(var i=0;i<8;i++){
+    S.particles.push({
+      x:x+S.tileSize/2,
+      y:y+S.tileSize/2,
+      vx:(Math.random()-0.5)*4,
+      vy:(Math.random()-0.5)*4-2,
+      size:3+Math.random()*3,
+      life:1,
+      color:color
+    });
+  }
+}
+
+function doHint(){
+  if(S.hintsLeft<=0||S.solved) return;
+  
+  // Find a tile that's in wrong position
+  var wrong=[];
+  for(var i=0;i<S.tiles.length;i++){
+    if(S.tiles[i]!==i) wrong.push(i);
+  }
+  
+  if(wrong.length===0) return;
+  
+  // Pick a wrong tile and find where its swap partner is
+  var pick=wrong[Math.floor(Math.random()*wrong.length)];
+  var tileVal=S.tiles[pick]; // The value at position 'pick' belongs at position 'tileVal'
+  // To fix position 'pick', we need the tile that belongs here (value=pick)
+  // Find where value=pick currently is
+  var partnerPos=-1;
+  for(var j=0;j<S.tiles.length;j++){
+    if(S.tiles[j]===pick){partnerPos=j;break;}
+  }
+  
+  if(partnerPos>=0){
+    S.hintPair=[pick,partnerPos];
+    S.hintsLeft--;
+    playSound('hint');
+    updateGameStats();
+    showToast('Hint: swap the highlighted tiles ('+S.hintsLeft+' left)');
+    S.timers.push(setTimeout(function(){S.hintPair=null;},3000));
+  }
+}
+
+function doUndo(){
+  if(S.undoStack.length===0||S.solved) return;
+  var last=S.undoStack.pop();
+  var tmp=S.tiles[last.i];
+  S.tiles[last.i]=S.tiles[last.j];
+  S.tiles[last.j]=tmp;
+  S.moves++; // Undo counts as a move
+  S.selected=-1;
+  playSound('undo');
+  updateGameStats();
+}
+
+function doRestart(){
+  S.tiles=S.currentLevel.tiles.slice();
+  S.selected=-1;
+  S.moves=0;
+  S.hintsLeft=3;
+  S.undoStack=[];
+  S.solved=false;
+  S.particles=[];
+  updateGameStats();
+  playSound('restart');
+}
+
+function calcStars(moves,par){
+  if(moves<=par) return 3;
+  if(moves<=par*2) return 2;
+  return 1;
+}
+
+function onWin(){
+  // Calculate stars
+  var stars=calcStars(S.moves,S.currentLevel.par);
+  var lvKey=''+S.levelIdx;
+  var prev=S.progress[lvKey];
+  var prevStars=prev?prev.stars:0;
+  var bestMoves=prev?prev.bestMoves:999;
+  
+  if(stars>prevStars) S.progress[lvKey].stars=stars;
+  if(S.moves<bestMoves) S.progress[lvKey].bestMoves=S.moves;
+  if(!prev){S.progress[lvKey]={stars:stars,bestMoves:S.moves};S.completedCount++;}
+  
+  if(stars>prevStars){
+    S.totalStars+=(stars-prevStars);
+  }
+  
+  // Celebration particles
+  for(var i=0;i<40;i++){
+    S.particles.push({
+      x:S.canvasSize/2,
+      y:S.canvasSize/2,
+      vx:(Math.random()-0.5)*12,
+      vy:(Math.random()-0.5)*12-4,
+      size:4+Math.random()*5,
+      life:1.5,
+      color:'hsl('+Math.floor(Math.random()*60+30)+',90%,'+(50+Math.random()*30)+'%)'
+    });
+  }
+  
+  checkAchievements();
+  saveProgress();
+  playSound('win');
+  
+  // Show win overlay
+  S.timers.push(setTimeout(function(){
+    var starStr='';
+    for(var s=0;s<3;s++) starStr+=(s<stars?'★':'☆');
+    document.getElementById('win-stars').textContent=starStr;
+    document.getElementById('win-stats').textContent=
+      'Moves: '+S.moves+' / Par: '+S.currentLevel.par;
+    var isLast=S.levelIdx>=LEVELS.length-1;
+    document.getElementById('btn-win-next').textContent=isLast?'All Done!':'Next Level';
+    document.getElementById('overlay-win').classList.remove('hidden');
+    if(S.vibrateOn&&navigator.vibrate) navigator.vibrate([30,50,30,50,80]);
+  },800));
+}
+
+// ==================== ACHIEVEMENTS ====================
+var ACHIEVEMENTS=[
+  {id:'first',icon:'1',name:'First Steps',desc:'Complete your first level'},
+  {id:'perfect3',icon:'3',name:'Triple Star',desc:'Get 3 stars on any level'},
+  {id:'streak5',icon:'5',name:'On Fire',desc:'Complete 5 levels'},
+  {id:'tier1',icon:'B',name:'Beginner Master',desc:'Complete all Beginner levels'},
+  {id:'tier2',icon:'E',name:'Easy Rider',desc:'Complete all Easy levels'},
+  {id:'tier3',icon:'M',name:'Medium Rare',desc:'Complete all Medium levels'},
+  {id:'tier4',icon:'H',name:'Hard Nut',desc:'Complete all Hard levels'},
+  {id:'tier5',icon:'X',name:'Expert Solver',desc:'Complete all Expert levels'},
+  {id:'daily1',icon:'D',name:'Daily Grind',desc:'Complete a daily challenge'},
+  {id:'all30',icon:'C',name:'Completionist',desc:'Complete all 30 levels'},
+];
+
+function checkAchievements(){
+  var newlyUnlocked=[];
+  function unlock(id){
+    if(!S.achievements[id]){
+      S.achievements[id]=true;
+      newlyUnlocked.push(id);
+    }
+  }
+  
+  if(S.completedCount>=1) unlock('first');
+  if(S.totalStars>=3) unlock('perfect3');
+  if(S.completedCount>=5) unlock('streak5');
+  
+  // Tier completions
+  var tierRanges=[[0,6],[6,12],[12,18],[18,24],[24,30]];
+  var tierIds=['tier1','tier2','tier3','tier4','tier5'];
+  for(var t=0;t<5;t++){
+    var allDone=true;
+    for(var i=tierRanges[t][0];i<tierRanges[t][1];i++){
+      if(!S.progress[''+i]){allDone=false;break;}
+    }
+    if(allDone) unlock(tierIds[t]);
+  }
+  
+  if(S.completedCount>=30) unlock('all30');
+  
+  // Show achievement toasts
+  for(var a=0;a<newlyUnlocked.length;a++){
+    var ach=ACHIEVEMENTS.find(function(x){return x.id===newlyUnlocked[a];});
+    if(ach) showToast('Award Unlocked: '+ach.name);
+  }
+  
+  renderAchievements();
+}
+
+// ==================== UI RENDERING ====================
+function updateGameStats(){
+  document.getElementById('stat-moves').textContent=S.moves;
+  var stars=calcStars(S.moves,S.currentLevel.par);
+  var str='';
+  for(var s=0;s<3;s++) str+=(s<stars?'★':'☆');
+  document.getElementById('stat-stars').textContent=str;
+}
+
+function renderMenu(){
+  var totalLevels=LEVELS.length;
+  var completed=0;
+  var stars=0;
+  for(var i=0;i<totalLevels;i++){
+    var p=S.progress[''+i];
+    if(p){completed++;stars+=p.stars;}
+  }
+  document.getElementById('progress-summary').innerHTML=
+    'Completed: <span style="color:var(--green)">'+completed+'/'+totalLevels+'</span> | '+
+    'Stars: <span style="color:var(--gold)">'+stars+'/'+(totalLevels*3)+'</span>';
+  
+  // Daily banner
+  var dc=document.getElementById('daily-container');
+  if(!S.dailyDone||S.dailyDate!==new Date().toISOString().slice(0,10)){
+    dc.innerHTML='<div class="daily-banner"><span style="color:var(--gold)">★ Daily Challenge Available!</span><br><span style="font-size:.75rem;color:var(--dim)">A fresh puzzle every day</span></div>';
+  }else{
+    dc.innerHTML='';
+  }
+}
+
+function renderLevelSelect(){
+  var container=document.getElementById('tier-sections');
+  container.innerHTML='';
+  var tierNames=['Beginner','Easy','Medium','Hard','Expert'];
+  var tierColors=['#00e676','#00d4ff','#ffd700','#ff6b9d','#ff4444'];
+  
+  for(var t=0;t<5;t++){
+    var header=document.createElement('div');
+    header.className='tier-header';
+    header.style.color=tierColors[t];
+    header.textContent=tierNames[t];
+    container.appendChild(header);
+    
+    var grid=document.createElement('div');
+    grid.className='level-grid';
+    
+    for(var i=t*6;i<(t+1)*6;i++){
+      if(i>=LEVELS.length) break;
+      var card=document.createElement('div');
+      card.className='level-card';
+      var prog=S.progress[''+i];
+      var unlocked=i===0||S.progress[''+(i-1)]||i<=S.completedCount+2; // Allow a few ahead
+      
+      if(prog){
+        card.classList.add('completed');
+        var starStr='';
+        for(var s=0;s<3;s++) starStr+=(s<prog.stars?'★':'☆');
+        card.innerHTML='<div class="level-num">'+(i+1)+'</div><div class="level-stars">'+starStr+'</div>';
+      }else if(unlocked){
+        card.innerHTML='<div class="level-num">'+(i+1)+'</div>';
+      }else{
+        card.classList.add('locked');
+        card.innerHTML='<div class="level-num">🔒</div>';
+      }
+      
+      if(i===S.levelIdx) card.classList.add('current');
+      
+      var tierBadge=document.createElement('div');
+      tierBadge.className='level-tier-badge';
+      tierBadge.textContent='T'+(t+1);
+      card.appendChild(tierBadge);
+      
+      if(unlocked){
+        (function(idx){card.onclick=function(){startLevel(idx);};})(i);
+      }
+      
+      grid.appendChild(card);
+    }
+    container.appendChild(grid);
+  }
+}
+
+function renderAchievements(){
+  var list=document.getElementById('achievements-list');
+  list.innerHTML='';
+  for(var i=0;i<ACHIEVEMENTS.length;i++){
+    var ach=ACHIEVEMENTS[i];
+    var unlocked=S.achievements[ach.id];
+    var item=document.createElement('div');
+    item.className='achievement-item '+(unlocked?'unlocked':'locked');
+    item.innerHTML=
+      '<div class="achievement-icon">'+(unlocked?ach.icon:'?')+'</div>'+
+      '<div class="achievement-info">'+
+        '<div class="achievement-name">'+ach.name+'</div>'+
+        '<div class="achievement-desc">'+ach.desc+'</div>'+
+      '</div>';
+    list.appendChild(item);
+  }
+}
+
+// ==================== AUDIO ====================
+function ensureAudio(){
+  if(!S.audioCtx){
+    try{S.audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  }
+  if(S.audioCtx&&S.audioCtx.state==='suspended') S.audioCtx.resume();
+}
+
+function playSound(type){
+  if(!S.soundOn) return;
+  ensureAudio();
+  if(!S.audioCtx) return;
+  
+  var now=S.audioCtx.currentTime;
+  var configs={
+    select:{freq:600,type:'sine',dur:0.08,vol:0.15},
+    swap:{freq:400,type:'sine',dur:0.12,vol:0.2},
+    hint:{freq:880,type:'triangle',dur:0.15,vol:0.15},
+    undo:{freq:300,type:'sine',dur:0.1,vol:0.12},
+    restart:{freq:250,type:'sawtooth',dur:0.15,vol:0.1},
+    win:{freq:523,type:'sine',dur:0.5,vol:0.25},
+    error:{freq:150,type:'square',dur:0.1,vol:0.1},
+  };
+  var c=configs[type]||configs.select;
+  
+  var osc=S.audioCtx.createOscillator();
+  var gain=S.audioCtx.createGain();
+  osc.type=c.type;
+  osc.frequency.setValueAtTime(c.freq,now);
+  
+  if(type==='swap'){
+    osc.frequency.exponentialRampToValueAtTime(c.freq*1.5,now+c.dur);
+  }else if(type==='win'){
+    osc.frequency.setValueAtTime(523,now);
+    osc.frequency.setValueAtTime(659,now+0.1);
+    osc.frequency.setValueAtTime(784,now+0.2);
+    osc.frequency.setValueAtTime(1047,now+0.3);
+  }
+  
+  gain.gain.setValueAtTime(c.vol,now);
+  gain.gain.exponentialRampToValueAtTime(0.001,now+c.dur);
+  osc.connect(gain);
+  gain.connect(S.audioCtx.destination);
+  osc.start(now);
+  osc.stop(now+c.dur);
+}
+
+function startBGM(){
+  if(!S.musicOn) return;
+  ensureAudio();
+  if(!S.audioCtx||S.bgmNodes.length) return;
+  
+  try{
+    var sr=S.audioCtx.sampleRate;
+    var dur=16;
+    var bufSize=sr*dur;
+    var buf=S.audioCtx.createBuffer(1,bufSize,sr);
+    var d=buf.getChannelData(0);
+    var chords=[[261.63,329.63,392.00],[293.66,369.99,440.00],[329.63,415.30,493.88],[293.66,369.99,440.00]];
+    var chordDur=dur/chords.length;
+    for(var i=0;i<bufSize;i++){
+      var t=i/sr;
+      var ci=Math.min(Math.floor(t/chordDur),chords.length-1);
+      var chord=chords[ci];
+      var s=0;
+      for(var n=0;n<chord.length;n++){
+        var f=chord[n];
+        s+=Math.sin(2*Math.PI*f*t)*0.06;
+        s+=Math.sin(2*Math.PI*f*2*t)*0.015;
+        s+=Math.sin(2*Math.PI*f*0.5*t)*0.03;
+      }
+      var fade=t%chordDur;
+      var fadeIn=Math.min(fade/0.8,1);
+      var fadeOut=Math.min((chordDur-fade)/0.8,1);
+      s*=fadeIn*fadeOut;
+      var lfo=Math.sin(2*Math.PI*0.25*t)*0.15+1;
+      d[i]=s*lfo*0.5;
+    }
+    var src=S.audioCtx.createBufferSource();
+    src.buffer=buf;
+    src.loop=true;
+    var filt=S.audioCtx.createBiquadFilter();
+    filt.type='lowpass';
+    filt.frequency.value=800;
+    filt.Q.value=1;
+    var g=S.audioCtx.createGain();
+    g.gain.value=0.25;
+    src.connect(filt);
+    filt.connect(g);
+    g.connect(S.audioCtx.destination);
+    src.start();
+    S.bgmNodes=[src,filt,g];
+  }catch(e){}
+}
+
+function stopBGM(){
+  if(S.bgmNodes.length){
+    try{S.bgmNodes[0].stop();}catch(e){}
+    S.bgmNodes=[];
+  }
+}
+
+// ==================== EVENTS ====================
+function setupEvents(){
+  // Canvas tap
+  S.canvas.addEventListener('pointerdown',function(e){
+    e.preventDefault();
+    var rect=S.canvas.getBoundingClientRect();
+    var x=(e.clientX-rect.left)*(S.canvas.width/rect.width);
+    var y=(e.clientY-rect.top)*(S.canvas.height/rect.height);
+    handleTap(x,y);
+  });
+  S.canvas.addEventListener('touchstart',function(e){e.preventDefault();},{passive:false});
+  
+  // Menu buttons
+  document.getElementById('btn-play').onclick=function(){
+    // Find next uncompleted level
+    var next=0;
+    for(var i=0;i<LEVELS.length;i++){
+      if(!S.progress[''+i]){next=i;break;}
+    }
+    startLevel(next);
+  };
+  
+  document.getElementById('btn-daily').onclick=function(){
+    showDaily();
+  };
+  
+  // Navigation
+  document.querySelectorAll('.nav-btn').forEach(function(btn){
+    btn.onclick=function(){
+      var target=btn.dataset.screen;
+      if(target==='levels') renderLevelSelect();
+      if(target==='achievements') renderAchievements();
+      if(target==='menu') renderMenu();
+      showScreen(target);
+    };
+  });
+  
+  // Game controls
+  document.getElementById('btn-hint').onclick=doHint;
+  document.getElementById('btn-undo').onclick=doUndo;
+  document.getElementById('btn-restart').onclick=doRestart;
+  document.getElementById('btn-quit').onclick=function(){
+    if(S.rafId){cancelAnimationFrame(S.rafId);S.rafId=null;}
+    renderMenu();
+    showScreen('menu');
+  };
+  
+  // Thumbnail toggle (tap to enlarge)
+  var thumb=document.getElementById('thumbnail');
+  thumb.onclick=function(){
+    thumb.style.transform='scale(0.95)';
+    S.timers.push(setTimeout(function(){thumb.style.transform='';},150));
+  };
+  
+  // Win overlay
+  document.getElementById('btn-win-next').onclick=function(){
+    document.getElementById('overlay-win').classList.add('hidden');
+    if(S.levelIdx<LEVELS.length-1){
+      startLevel(S.levelIdx+1);
+    }else{
+      renderMenu();
+      showScreen('menu');
+      showToast('All levels complete!');
+    }
+  };
+  document.getElementById('btn-win-replay').onclick=function(){
+    document.getElementById('overlay-win').classList.add('hidden');
+    startLevel(S.levelIdx);
+  };
+  document.getElementById('btn-win-menu').onclick=function(){
+    document.getElementById('overlay-win').classList.add('hidden');
+    renderMenu();
+    showScreen('menu');
+  };
+  
+  // Settings
+  document.getElementById('btn-settings-menu').onclick=function(){
+    showScreen('settings');
+    updateSettingsUI();
+  };
+  document.getElementById('btn-back-settings').onclick=function(){renderMenu();showScreen('menu');};
+  
+  document.getElementById('toggle-sound').onclick=function(){
+    S.soundOn=!S.soundOn;
+    this.classList.toggle('on',S.soundOn);
+    saveProgress();
+  };
+  document.getElementById('toggle-music').onclick=function(){
+    S.musicOn=!S.musicOn;
+    this.classList.toggle('on',S.musicOn);
+    if(S.musicOn) startBGM(); else stopBGM();
+    saveProgress();
+  };
+  document.getElementById('toggle-grid').onclick=function(){
+    S.showGrid=!S.showGrid;
+    this.classList.toggle('on',S.showGrid);
+    if(S.screen==='game') renderGame();
+    saveProgress();
+  };
+  document.getElementById('toggle-vibrate').onclick=function(){
+    S.vibrateOn=!S.vibrateOn;
+    this.classList.toggle('on',S.vibrateOn);
+    saveProgress();
+  };
+  document.getElementById('toggle-auto').onclick=function(){
+    S.autoAdvance=!S.autoAdvance;
+    this.classList.toggle('on',S.autoAdvance);
+    saveProgress();
+  };
+  
+  document.getElementById('btn-reset-progress').onclick=function(){
+    document.getElementById('overlay-reset').classList.remove('hidden');
+  };
+  document.getElementById('btn-reset-cancel').onclick=function(){
+    document.getElementById('overlay-reset').classList.add('hidden');
+  };
+  document.getElementById('btn-reset-confirm').onclick=function(){
+    S.progress={};
+    S.completedCount=0;
+    S.totalStars=0;
+    S.achievements={};
+    S.dailyDone=false;
+    saveProgress();
+    renderMenu();
+    renderAchievements();
+    document.getElementById('overlay-reset').classList.add('hidden');
+    showToast('Progress reset');
+  };
+  
+  // Achievements
+  document.getElementById('btn-achievements-menu').onclick=function(){
+    renderAchievements();
+    showScreen('achievements');
+  };
+  document.getElementById('btn-back-ach').onclick=function(){renderMenu();showScreen('menu');};
+  
+  // Tutorial
+  document.getElementById('btn-tutorial-menu').onclick=function(){showScreen('tutorial');};
+  document.getElementById('btn-tutorial-done').onclick=function(){
+    S.firstVisit=false;
+    saveProgress();
+    renderMenu();
+    showScreen('menu');
+  };
+  
+  // Daily
+  document.getElementById('btn-daily-start').onclick=function(){
+    document.getElementById('overlay-daily').classList.add('hidden');
+    startDailyLevel();
+  };
+  document.getElementById('btn-daily-close').onclick=function(){
+    document.getElementById('overlay-daily').classList.add('hidden');
+  };
+  
+  // Resize
+  window.addEventListener('resize',function(){
+    if(S.screen==='game'&&S.currentLevel){
+      var maxCanvas=Math.min(window.innerWidth-30,400);
+      if(window.innerHeight<600) maxCanvas=Math.min(maxCanvas,window.innerHeight-250);
+      S.canvasSize=Math.max(240,maxCanvas);
+      S.canvas.width=S.canvasSize;
+      S.canvas.height=S.canvasSize;
+      S.tileSize=S.canvasSize/S.grid;
+      renderGame();
+    }
+  });
+  
+  // Visibility - pause game when tab hidden
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){
+      if(S.rafId){cancelAnimationFrame(S.rafId);S.rafId=null;}
+    }else if(S.screen==='game'&&S.currentLevel&&!S.solved){
+      S.rafId=requestAnimationFrame(gameLoop);
+    }
+  });
+}
+
+function updateSettingsUI(){
+  document.getElementById('toggle-sound').classList.toggle('on',S.soundOn);
+  document.getElementById('toggle-music').classList.toggle('on',S.musicOn);
+  document.getElementById('toggle-grid').classList.toggle('on',S.showGrid);
+  document.getElementById('toggle-vibrate').classList.toggle('on',S.vibrateOn);
+  document.getElementById('toggle-auto').classList.toggle('on',S.autoAdvance);
+}
+
+// ==================== DAILY ====================
+function showDaily(){
+  var today=new Date().toISOString().slice(0,10);
+  var done=S.dailyDone&&S.dailyDate===today;
+  document.getElementById('daily-text').textContent=done?
+    "You completed today's challenge! Come back tomorrow for a new one.":
+    'A unique 5x5 puzzle generated fresh every day. Complete it for a bonus star!';
+  document.getElementById('daily-reward').innerHTML=done?
+    '<span style="color:var(--green)">Completed!</span>':
+    '<span style="color:var(--gold)">Reward: 3 Bonus Stars</span>';
+  document.getElementById('btn-daily-start').textContent=done?'Close':'Start Daily';
+  document.getElementById('overlay-daily').classList.remove('hidden');
+}
+
+function startDailyLevel(){
+  var seed=S.dailySeed;
+  var rng=mulberry32(seed);
+  var grid=5;
+  var total=grid*grid;
+  var tiles=[];
+  for(var i=0;i<total;i++) tiles.push(i);
+  // Scramble with 10 swaps
+  for(var s=0;s<10;s++){
+    var a=Math.floor(rng()*total);
+    var b=Math.floor(rng()*total);
+    var tmp=tiles[a];tiles[a]=tiles[b];tiles[b]=tmp;
+  }
+  // Ensure not solved
+  if(tiles.every(function(v,i){return v===i;})){
+    tiles[0]=1;tiles[1]=0;
+  }
+  
+  S.currentLevel={grid:grid,tiles:tiles,par:10,seed:seed,level:0,tierName:'Daily'};
+  S.grid=grid;
+  S.tiles=tiles.slice();
+  S.selected=-1;
+  S.moves=0;
+  S.hintsLeft=3;
+  S.undoStack=[];
+  S.solved=false;
+  S.particles=[];
+  S.hintPair=null;
+  
+  var maxCanvas=Math.min(window.innerWidth-30,400);
+  S.canvasSize=Math.max(240,maxCanvas);
+  S.canvas.width=S.canvasSize;
+  S.canvas.height=S.canvasSize;
+  S.tileSize=S.canvasSize/grid;
+  
+  document.getElementById('stat-level').textContent='D';
+  document.getElementById('stat-par').textContent=10;
+  updateGameStats();
+  renderThumbnail();
+  renderGame();
+  showScreen('game');
+  
+  // Hook into win for daily
+  var origWin=onWin;
+  // Override onWin temporarily via flag
+  S.isDaily=true;
+  
+  if(S.rafId) cancelAnimationFrame(S.rafId);
+  gameLoop();
+}
+
+// Modify onWin to handle daily
+var origOnWin=onWin;
+onWin=function(){
+  if(S.isDaily){
+    S.dailyDone=true;
+    S.dailyDate=new Date().toISOString().slice(0,10);
+    S.totalStars+=3;
+    checkAchievements();
+    unlockDailyAch();
+    saveProgress();
+    playSound('win');
+    
+    S.timers.push(setTimeout(function(){
+      document.getElementById('win-stars').textContent='★ ★ ★';
+      document.getElementById('win-stats').textContent='Daily Challenge Complete! +3 Stars';
+      document.getElementById('btn-win-next').textContent='Menu';
+      document.getElementById('overlay-win').classList.remove('hidden');
+      S.isDaily=false;
+    },800));
+    return;
+  }
+  origOnWin();
+};
+
+function unlockDailyAch(){
+  if(!S.achievements['daily1']){
+    S.achievements['daily1']=true;
+    showToast('Award: Daily Grind');
+  }
+}
+
+// ==================== UTILITIES ====================
+function showToast(msg){
+  var t=document.createElement('div');
+  t.className='toast';
+  t.textContent=msg;
+  document.body.appendChild(t);
+  S.timers.push(setTimeout(function(){t.remove();},2200));
+}
+
+// ==================== CLEANUP ====================
+function cleanup(){
+  if(S.rafId){cancelAnimationFrame(S.rafId);S.rafId=null;}
+  S.timers.forEach(function(id){clearTimeout(id);});
+  S.timers=[];
+  stopBGM();
+  if(S.audioCtx){S.audioCtx.close().catch(function(){});S.audioCtx=null;}
+}
+window.addEventListener('beforeunload',cleanup);
+
+// ==================== START ====================
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',init);
+}else{
+  init();
+}
+</script>
+</body>
+</html>
