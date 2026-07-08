@@ -1,3 +1,33 @@
+## [v1.158.0] - 2026-07-09
+### Added
+- 9 new test cases from July-9 2026 industry research (R275, 4h cadence cycle 37):
+  - [S-348] **[P1]** Chrome CVE-2026-5281 WebGPU (Dawn) In-the-Wild Zero-Day — Actively Exploited, GPU Process Sandbox Escape (Jun 27 2026, Google's 4th Chrome zero-day of 2026)
+  - [S-349] **[P1]** 6 AI Browser Vulnerabilities Disclosed by LayerX (Jul 1 2026) — ChatGPT Atlas / Perplexity Comet / Fellou / Genspark / Sigma / Claude for Chrome Prompt-Injection Data Exfiltration
+  - [S-350] **[P2]** Apache httpd 2.4.68 UAF Patches (Jun 9 2026) — Server-Side Infrastructure Patch Cadence Awareness
+  - [W-301] **[P2]** 2026 Signals Fine-Grained Reactivity Paradigm Shift — SolidJS + Vue 3.5 + Angular Signals Convergence; AI-Codegen May Leak Reactive APIs into Vanilla JS
+  - [W-302] **[P2]** Chrome/Edge Mixed-Content Auto-Upgrade Expansion (2026) — All http→https Subresources Silently Rewritten, Failure if No HTTPS Origin; Monetag Revenue Risk
+  - [C-208] **[P3]** Firefox 152.0.1 Stable (Jun 23 2026) — ETP Strict Default Blocks Tracker-Classified Ad Scripts; Firefox Ad RPM Risk
+  - [B-199] **[P2]** AI-Generated "Signals Without Framework" Silent No-Op — createSignal/createEffect/$state in Vanilla JS IIFE = Game Renders Initial State but Never Updates
+  - [P-140] **[P2]** WebGPU vs Canvas2D Performance Cliff — Validation Layer + Fallback Memory Doubling Makes WebGPU Slower for Simple 2D Scenes
+  - [PC-036] **[P3]** AI-AI Pipeline (AI-writes + AI-tests) — Player Bug Reports Become the Sole Ground-Truth Signal
+### Sources
+- mcp_minimax_search_web_search queries (2026-07-09):
+  - "HTML5 game testing 2026 new techniques browser"
+  - "browser security vulnerability 2026 Chrome Safari Firefox"
+  - "casual game UX complaint 2026 mobile player"
+  - "2026年7月 浏览器 漏洞 Chrome Safari 安全更新"
+  - "2026年7月 Web 前端 新技术 API 发布"
+  - "HTML5 game canvas WebGL performance 2026 July"
+- Key URLs:
+  - https://blog.csdn.net/jianlu365/article/details/159769554 (Chrome CVE-2026-5281 WebGPU Dawn zero-day, Jun 27 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2886a447a2e04552 (6 AI browser vulns disclosed by LayerX, Jul 1 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_562688abfb500852 (historical CVE-2025-6558 Apple-patches-Chrome pattern, Jul 31 2025)
+  - https://digi.163.com/keywords/5/8/5b89516866f465b0/1.html (Apache 2.4.68 security update + 2026 security-update tag feed, Jun 9 2026)
+  - https://blog.csdn.net/sinat_38371752/article/details/160458083 (2026 frontend Signals paradigm — SolidJS / Vue 3.5 / Angular, Jun 6 2026)
+  - http://www.lyz810.com/ (Chrome 80 mixed-content auto-upgrade changelog, behavior persistent into Chrome 146/2026)
+  - http://www.downxia.com/downinfo/4116.html (Firefox 152.0.1 stable release + ETP Strict default, Jun 23 2026)
+  - https://blog.csdn.net/sanfen_guiyuanqi/article/details/159008253 (2026 AI-native frontend development workflow, Mar 14 2026)
+
 ## [v1.156.0] - 2026-07-08
 ### Added
 - 8 new test cases from July-8 2026 industry research (R273, 4h cadence cycle 35):
