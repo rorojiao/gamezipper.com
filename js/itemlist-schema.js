@@ -599,8 +599,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":594,"url":"https://gamezipper.com/anglers/","name":"Anglers"},
     {"@type":"ListItem","position":595,"url":"https://gamezipper.com/sukoro/","name":"Sukoro"},
     {"@type":"ListItem","position":596,"url":"https://gamezipper.com/gappy/","name":"Gappy"},
-    {"@type":"ListItem","position":597,"url":"https://gamezipper.com/nurimisaki/","name":"Nurimisaki"}
+    {"@type":"ListItem","position":597,"url":"https://gamezipper.com/nurimisaki/","name":"Nurimisaki"},
+    {"@type":"ListItem","position":598,"url":"https://gamezipper.com/fill-pix/","name":"Fill-Pix"}
   ],
-  "numberOfItems":597,
-  "description":"597 free browser games you can play instantly"
+  "numberOfItems":598,
+  "description":"598 free browser games you can play instantly"
 };
