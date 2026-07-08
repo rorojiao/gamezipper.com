@@ -440,13 +440,19 @@ function initParticles(){
 function resize(){
   dpr = window.devicePixelRatio || 1;
   W = window.innerWidth;
-  H = window.innerHeight;
+  // R276 fix (Bug #14b): subtract game-footer height so .tab-bar (position:fixed;bottom:0) isn't covered
+  var footerEl = document.getElementById('game-footer');
+  var footerH = (footerEl && footerEl.offsetHeight > 0) ? footerEl.offsetHeight : 0;
+  H = window.innerHeight - footerH;
   canvas_el.width = W * dpr;
   canvas_el.height = H * dpr;
   canvas_el.style.width = W + 'px';
   canvas_el.style.height = H + 'px';
   ctx = canvas_el.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Nudge .tab-bar above footer
+  var tabBar = document.querySelector('.tab-bar');
+  if(tabBar) tabBar.style.bottom = footerH + 'px';
 }
 
 function worldToScreen(worldY){
@@ -1091,6 +1097,9 @@ function setupEvents(){
     resize();
     initParticles();
   });
+
+  // R276: poll for game-footer appearance and re-resize
+  (function(){var c=setInterval(function(){var f=document.getElementById('game-footer');if(f&&f.offsetHeight>0){resize();clearInterval(c);}},2000);setTimeout(function(){clearInterval(c);},30000);})();
 
   document.addEventListener('visibilitychange', function(){
     if(document.hidden){

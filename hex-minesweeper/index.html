@@ -331,15 +331,23 @@ var screenFlashColor = '#ffffff';
 function resize(){
   dpr = window.devicePixelRatio||1;
   W = window.innerWidth;
-  H = window.innerHeight;
+  // R276 fix (Bug #14b): subtract game-footer height so hint-bar (position:fixed;bottom:0;z-index:5) isn't covered
+  var footerEl = document.getElementById('game-footer');
+  var footerH = (footerEl && footerEl.offsetHeight > 0) ? footerEl.offsetHeight : 0;
+  H = window.innerHeight - footerH;
   canvas.width = W*dpr;
   canvas.height = H*dpr;
   canvas.style.width = W+'px';
   canvas.style.height = H+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
   initBgStars();
+  // Nudge hint-bar above footer
+  var hintBar = document.getElementById('hintBar');
+  if(hintBar) hintBar.style.bottom = footerH + 'px';
 }
 window.addEventListener('resize',resize);
+// R276: poll for footer appearance and re-resize
+(function(){var c=setInterval(function(){var f=document.getElementById('game-footer');if(f&&f.offsetHeight>0){resize();clearInterval(c);}},2000);setTimeout(function(){clearInterval(c);},30000);})();
 
 function initBgStars(){
   bgStars = [];
