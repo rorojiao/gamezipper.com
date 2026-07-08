@@ -4304,7 +4304,10 @@ const PIECE_COLORS = ['#f093fb','#4facfe','#43e97b','#fa709a','#fccb90','#a18cd1
 function resize() {
   DPR = window.devicePixelRatio || 1;
   W = window.innerWidth;
-  H = window.innerHeight;
+  // R274 P2 fix (Bug #14b): subtract game-footer height so tray isn't covered
+  var footerEl = document.getElementById('game-footer');
+  var footerH = (footerEl && footerEl.offsetHeight > 0) ? footerEl.offsetHeight : 0;
+  H = window.innerHeight - footerH;
   canvas.width = W * DPR;
   canvas.height = H * DPR;
   canvas.style.width = W + 'px';
@@ -4788,6 +4791,18 @@ function loadStars() {
 loadStars();
 setInterval(saveStars, 5000);
 window.addEventListener('beforeunload', saveStars);
+
+// R274 P2 fix: poll for game-footer appearance and re-resize (footer loads ~2-15s after page load)
+(function() {
+  var _footerCheck = setInterval(function() {
+    var f = document.getElementById('game-footer');
+    if (f && f.offsetHeight > 0) {
+      resize();
+      clearInterval(_footerCheck);
+    }
+  }, 2000);
+  setTimeout(function() { clearInterval(_footerCheck); }, 30000);
+})();
 </script>
 
 <script src="/game-footer.js?v=202607021204"></script>
