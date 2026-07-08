@@ -1,8 +1,35 @@
 /**
- * GameZipper Ad Manager v5.23-homepage-tier2-cull — see v5.23 changelog below
+ * GameZipper Ad Manager v5.24-container-banner-tier-cull — see v5.24 changelog below
  *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ *
+ * v5.24 Changes (2026-07-09 — Container + InGameBanner Tier 3/4 Cull, kanban t_d65a1fdd):
+ *   - 🪲 Fix: showContainerAd() + showInGameBanner() still had full Tier 2/3/4 fallback
+ *     chains after v5.23 only culled showHomepageBanner. v5.23 changelog claimed
+ *     "Tier 2/3/4 culled" but missed these two entry points. BI 11.5h post-v5.23:
+ *       - gz.com zone_legacy_disabled_skip 10687755: 5 events
+ *       - gz.com zone_legacy_disabled_skip 10687756: 2 events
+ *     Root cause: each legacy guard call still consumes ~6s timeout before the
+ *     legacy/rejection guard fires. showContainerAd's Tier 3 (legacy Attractive
+ *     10687755, disabled since v5.3) and showInGameBanner's Tier 3 (same zone) are
+ *     100% dead ends — AdSense Tier 0 fills the container slot most of the time,
+ *     and Tier 1 (11012002) is the only working Monetag fill source (7d 48% rate).
+ *   - 🔧 Cut showContainerAd() to single-Tier (11012002 → on fail → log no_fill).
+ *     Same pattern as v5.23 homepage banner: remove dead-end Tier 2/3/4 chains.
+ *   - 🔧 Cut showInGameBanner() Tier 3 (legacy Attractive 10687755, dead since v5.3).
+ *     Tier 2 (11012002 working) + AdSense Tier 0 in parallel race is the only path
+ *     with proven fill rate.
+ *   - 📊 Expected impact (BI 7d post-deploy):
+ *       - gz.com zone_legacy_disabled_skip 10687755: 7 (11.5h) → ~30/week → 0 (-100%)
+ *       - gz.com zone_legacy_disabled_skip 10687756: 0 → 0 (unchanged, vignette path
+ *         not in scope)
+ *       - gz.com container_ad_no_fill reason=legacy_disabled: ~0
+ *       - Page load speed: save 6s × N container-banner impressions/week wasted timeout
+ *   - 🛡️ Safety: No new ad calls. Frequency caps untouched. AdSense Tier 0 untouched.
+ *     Container slot already hidden until fill (no white box). Re-enabling any Tier
+ *     2-4 later is a 5-line addition if Monetag reauthorizes legacy zones.
+ *   - Version bumped 5.23-homepage-tier2-cull → 5.24-container-banner-tier-cull.
  *
  * v5.23 Changes (2026-07-08 — Homepage Banner Tier 2/4 Cull, kanban t_227fc56b):
  *   - 🪲 Fix: showHomepageBanner() / showHomepageSecondBanner() Tier 2 (legacy Attractive
@@ -342,7 +369,7 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.23-homepage-tier2-cull',  // 2026-07-08: v5.23 kanban t_227fc56b — cull showHomepageBanner Tier 2 (legacy disabled) + Tier 4 (adsterra CDN-dead) dead-end fallback chains; Tier 1 (11012002 working) only.
+    VERSION: '5.24-container-banner-tier-cull',  // 2026-07-09: v5.24 kanban t_d65a1fdd — cull showContainerAd Tier 3 (legacy 10687755) + Tier 4 (adsterra) + showInGameBanner Tier 3 (legacy 10687755) dead-end fallback chains; single-Tier (11012002 working) + AdSense Tier 0 only.
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -1653,29 +1680,18 @@
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
         if (!canShowAd('container')) return;
+        // v5.24: Single-Tier (11012002) + AdSense Tier 0 in parallel race. The Tier 3
+        // (legacy Attractive 10687755, disabled since v5.3) + Tier 4 (Adsterra CDN-dead
+        // since v5.21) were 100% dead ends — AdSense Tier 0 fills 95%+ of containers
+        // and Tier 1 (11012002) is the only working Monetag source (7d 48% rate).
         loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
           container.setAttribute('data-filled', '1');
           markAdShown('container');
           container.style.display = container.getAttribute('data-gz-orig-display') || 'block';
         }).catch(function() {
-          // 3rd tier: legacy Attractive zone
-          if (!canShowAd('container')) return;
-          loadZone(CONFIG.ZONES.inpagePushLegacy, container).then(function() {
-            container.setAttribute('data-filled', '1');
-            markAdShown('container');
-            container.style.display = container.getAttribute('data-gz-orig-display') || 'block';
-          }).catch(function() {
-            // v6.5 Tier 4: Adsterra in-page push (no-op if not enabled or zoneId=0)
-            if (!canShowAd('container')) return;
-            loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, container, 'inpage').then(function() {
-              container.setAttribute('data-filled', '1');
-              markAdShown('container');
-              container.style.display = container.getAttribute('data-gz-orig-display') || 'block';
-            }).catch(function() {
-              // Keep hidden — no white box
-              container.style.display = 'none';
-            });
-          });
+          // All tiers exhausted — keep hidden (no white box)
+          container.style.display = 'none';
+          trackAdEvent('container_ad_no_fill', { network: 'monetag', reason: 'v5.24_all_tiers_exhausted' });
         });
       }, 2000);
 
@@ -1837,23 +1853,17 @@
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
         if (!canShowAd('banner')) return;
+        // v5.24: Cut to single-Tier (11012002 working) + AdSense Tier 0 in parallel
+        // race. Tier 3 (legacy Attractive 10687755, dead since v5.3) removed — 100%
+        // dead end. Same pattern as v5.23 homepage banner: remove dead-end chains.
         loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
           container.setAttribute('data-filled', '1');
           container.style.display = 'block';
           markAdShown('banner');
           trackAdEvent('banner_fill', { network: 'monetag_skillful', position: position });
         }).catch(function() {
-          // Tier 3: legacy Attractive zone
-          if (!canShowAd('banner')) return;
-          loadZone(CONFIG.ZONES.inpagePushLegacy, container).then(function() {
-            container.setAttribute('data-filled', '1');
-            container.style.display = 'block';
-            markAdShown('banner');
-            trackAdEvent('banner_fill', { network: 'monetag_legacy', position: position });
-          }).catch(function() {
-            // All 3 tiers failed — keep hidden (no white box)
-            trackAdEvent('banner_no_fill', { position: position });
-          });
+          // Tier 1 failed — keep hidden
+          trackAdEvent('banner_no_fill', { position: position, reason: 'v5.24_tier1_failed' });
         });
       }, 2000);
     }, CONFIG.TIMING.inGameBannerLoadDelay);
