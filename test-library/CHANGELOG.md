@@ -1,3 +1,30 @@
+## [v1.156.0] - 2026-07-08
+### Added
+- 8 new test cases from July-8 2026 industry research (R273, 4h cadence cycle 35):
+  - [S-343] **[P1]** Windows 11 Kernel CVE-2026-40369 Sandbox-Escape via NtQuerySystemInformation(0xFD) — Browser Sandbox is Not a Security Boundary (CVSS 7.8, May 21 2026)
+  - [S-344] **[P1]** React CVE-2025-11953 High-Severity Vulnerability — Verify "No React" Architectural Decision Is CVE-Driven (JFrog, Nov 5 2025)
+  - [S-345] **[P1]** iOS WebKit CVE-2025-14174 + CVE-2025-43529 In-the-Wild Zero-Days — Use-After-Free + Memory Corruption RCE (Dec 29 2025 Emergency Patch)
+  - [S-346] **[P2]** Mozilla 3162 Enterprise Framework — 6-Month Lifecycle, Auto-Block of High-Risk Sites for Outdated Firefox (May 2 2026)
+  - [G-182] **[P2]** 2026 Browser Industry "Demand Upgrade" — Security + Efficiency + Multi-Scenario Adaptation Beyond Load Speed (360 Browser Analysis, June 29 2026)
+  - [G-183] **[P2]** Browser Harness AI-Driven Chrome Automation — Anti-Bot Defense Against AI-Agent Scraping/Click-Farming (April 2026)
+  - [P-138] **[P2]** iOS 26 "Cannot Check for Update" Sticky Post-Upgrade — False OS-Version Reporting in Test Fleet (Tenorshare, June 2026)
+  - [C-206] **[P2]** iOS 26 Liquid Glass Control Center Backlash — Verify GameZipper UI Avoids Over-Reliance on Backdrop-Filter Transparency (June 2026)
+### Sources
+- mcp_minimax_search_web_search queries (2026-07-08):
+  - "HTML5 browser game security vulnerability 2026 new CVE Chrome Safari July 8"
+  - "casual game UX complaint 2026 July haptics dark mode accessibility friction"
+  - "Chrome Edge Safari update July 2026 stable release breaking change web API"
+  - "npm pnpm Vite Rollup July 2026 release breaking change migration"
+  - "iOS Safari WebKit bug 2026 canvas WebGL regression game"
+- Key URLs:
+  - https://www.donews.com/news/detail/8/6567089.html (CVE-2026-40369 ntoskrnl NtQuerySystemInformation, May 22 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_107690aae1860452 (CVE-2025-11953 React JFrog disclosure, Nov 5 2025)
+  - https://new.qq.com/rain/a/20251229A06B2H00 (iOS WebKit CVE-2025-14174 + CVE-2025-43529 in-the-wild, Dec 29 2025)
+  - https://www.lcxw.cn/wiki@R9U8uvZ.txt (Mozilla 3162 enterprise framework 6-month lifecycle, May 2 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0786a42769d37852 (360 browser 2026 industry trends security/AI/multi-scenario, June 29 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_92669ef2db811252 (Browser Harness Claude Code Chrome direct control 7.2k stars, April 27 2026)
+  - https://www.tenorshare.tw/ios-update-problems.html (iOS 26 bug list — "Cannot check for update" sticky, Liquid Glass Control Center jank, June 2026)
+
 ## [v1.155.0] - 2026-07-08
 ### Added
 - 10 new test cases from July-8 2026 industry research (R272, 4h cadence cycle 34):
