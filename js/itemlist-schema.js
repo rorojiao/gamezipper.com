@@ -1,9 +1,7 @@
 const ITEMLIST_SCHEMA = {
   "@context": "https://schema.org",
   "@type": "ItemList",
-  "name": "GameZipper Free Online Games",
-  "description": "All free browser games available on GameZipper.com",
-  "numberOfItems":593,
+  "name": "GameZipper Free HTML5 Games",
   "itemListElement": [
     {"@type":"ListItem","position":1,"url":"https://gamezipper.com/pin-pull-puzzle/","name":"Pin Pull Puzzle"},
     {"@type":"ListItem","position":2,"url":"https://gamezipper.com/jumping-shell/","name":"Jumping Shell"},
@@ -597,6 +595,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":590,"url":"https://gamezipper.com/rullo/","name":"Rullo"},
     {"@type":"ListItem","position":591,"url":"https://gamezipper.com/spiral-galaxies/","name":"Spiral Galaxies"},
     {"@type":"ListItem","position":592,"url":"https://gamezipper.com/statue-park/","name":"Statue Park"},
-    {"@type":"ListItem","position":593,"url":"https://gamezipper.com/tile-paint/","name":"Tile Paint"}
-  ]
+    {"@type":"ListItem","position":593,"url":"https://gamezipper.com/tile-paint/","name":"Tile Paint"},
+    {"@type":"ListItem","position":594,"url":"https://gamezipper.com/anglers/","name":"Anglers"}
+  ],
+  "numberOfItems":594,
+  "description":"594 free browser games you can play instantly"
 };
