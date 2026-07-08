@@ -4793,13 +4793,19 @@ setInterval(saveStars, 5000);
 window.addEventListener('beforeunload', saveStars);
 
 // R274 P2 fix: poll for game-footer appearance and re-resize (footer loads ~2-15s after page load)
+// R276 fix extension: also nudge .tray bottom to footer height (tray is position:fixed;bottom:0
+// and gets covered by the also-position:fixed footer)
 (function() {
-  var _footerCheck = setInterval(function() {
+  function applyFooterOffset() {
     var f = document.getElementById('game-footer');
-    if (f && f.offsetHeight > 0) {
-      resize();
-      clearInterval(_footerCheck);
-    }
+    if (!f || f.offsetHeight === 0) return false;
+    resize();
+    var tray = document.querySelector('.tray');
+    if (tray) tray.style.bottom = f.offsetHeight + 'px';
+    return true;
+  }
+  var _footerCheck = setInterval(function() {
+    if (applyFooterOffset()) clearInterval(_footerCheck);
   }, 2000);
   setTimeout(function() { clearInterval(_footerCheck); }, 30000);
 })();
