@@ -326,10 +326,10 @@
 {n:'Catch the Cat',e:'🐱',u:'/catch-the-cat/',c:'puzzle'},
 {n:'Sticker Book Puzzle',e:'🎨',u:'/sticker-book-puzzle/',c:'puzzle'},
 {n:'Heart Star',e:'💛',u:'/heart-star/',c:'puzzle'},
-{n:'Rubber Band Puzzle',e:'🔵',u:'/rubber-band-puzzle/',c:'puzzle'},,{n:'Pulse Path',e:'⚡',u:'/pulse-path/',c:'puzzle'}
-
-      {n:'Rullo',e:'🔢',u:'/rullo/',c:'puzzle'},
-      ]; }
+{n:'Rubber Band Puzzle',e:'🔵',u:'/rubber-band-puzzle/',c:'puzzle'},
+{n:'Pulse Path',e:'⚡',u:'/pulse-path/',c:'puzzle'},
+{n:'Rullo',e:'🔢',u:'/rullo/',c:'puzzle'},
+]; }
    }
    function getDateSeed() {
      // Deterministic seed based on today's date string
