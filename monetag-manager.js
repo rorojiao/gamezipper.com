@@ -1,8 +1,29 @@
 /**
- * GameZipper Ad Manager v5.11 — Commercial-Break Monetag Slot + Exit-Intent Bind + GZ-Analytics Enrich
+ * GameZipper Ad Manager v5.23-homepage-tier2-cull — see v5.23 changelog below
  *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ *
+ * v5.23 Changes (2026-07-08 — Homepage Banner Tier 2/4 Cull, kanban t_227fc56b):
+ *   - 🪲 Fix: showHomepageBanner() / showHomepageSecondBanner() Tier 2 (legacy Attractive
+ *     zone 10687755) + Tier 4 (Adsterra 30130931, CDN-dead since v5.21) were 100% dead
+ *     ends. BI 7d 2026-07-01~07-08 evidence:
+ *       - gz.com zone_legacy_disabled_skip 10687755: 128 events
+ *       - gz.com zone_legacy_disabled_skip 10687756: 12 events
+ *       - gz.com total wasted dead-end script loads: 140/week × 6s timeout = 14 min/week
+ *     Each attempted call still consumes the ad-provider.js timeout before the legacy
+ *     guard rejects. Removing the dead-end tiers turns these into 0 wasted calls.
+ *   - 🔧 Match tools v5.22 architecture: Tier 1 (11012002 working) → on fail → stop.
+ *     AdSense Tier 0 already runs in parallel and wins ~99% of the time (30d banner_fill
+ *     1610 / 0 monetag = 100% AdSense). When AdSense misses, Tier 1 Monetag fills ~48%
+ *     (7d 76/158). Tier 2/3/4 fallback chains never produce fills — keep config simple.
+ *   - 📊 Expected impact (BI 7d post-deploy):
+ *       - gz.com zone_legacy_disabled_skip: 140 → 0 (-100%)
+ *       - gz.com homepage banner fill rate unchanged (Tier 1 already the only fill source)
+ *       - gz.com dead_zone_skip: 0 (already culled in v5.10; deadZones array untouched)
+ *   - 🛡️ Safety: No new ad calls. Frequency caps untouched. AdSense Tier 0 untouched.
+ *     Re-enabling any Tier 2/4 later is a 3-line addition if Monetag reauthorizes legacy.
+ *   - Version bumped 5.21-p0fix → 5.23-homepage-tier2-cull.
  *
  * v5.12 Changes (2026-07-03 — Exit-Intent cy<0 Guard Fix + 40% Real Exit Recovery):
  *   - 🪲 Fix: initExitIntent() mouseout guard `if (e.clientY < 0) return` was killing
@@ -321,7 +342,7 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.21-p0fix-adsterra-skip',  // 2026-07-08: All 6 Adsterra zone IDs CDN-dead (profitabledisplaynetwork.com → 301→google.com). Disable CONFIG.ADSTERRA.enabled by default; opt-in via window.GZ_ADSTERRA_ENABLED=true. Saves 6 loadAdsterraZone call sites × 6s timeout per page load.
+    VERSION: '5.23-homepage-tier2-cull',  // 2026-07-08: v5.23 kanban t_227fc56b — cull showHomepageBanner Tier 2 (legacy disabled) + Tier 4 (adsterra CDN-dead) dead-end fallback chains; Tier 1 (11012002 working) only.
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -1469,23 +1490,20 @@
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
         if (!canShowAd('homepage_banner')) return;
+        // v5.23: Tier 2 (legacy Attractive 10687755, disabled since v5.3) + Tier 3
+        // (vignetteLegacy 10687756, disabled) + Tier 4 (adsterra CDN-dead since v5.21)
+        // removed. BI 7d 2026-07-01~07-08: zone_legacy_disabled_skip 10687755 = 128,
+        // 10687756 = 12. Each wasted call consumed 6s timeout before the legacy guard
+        // rejected. AdSense Tier 0 fills 95%+ of homepage banners in parallel, so the
+        // Tier 2/3/4 chain was almost never reached AND never produced a fill when
+        // it was. Cut to single-Tier for the homepage banner slot.
         loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
           container.setAttribute('data-filled', '1');
           markAdShown('homepage_banner');
         }).catch(function() {
-          // 3rd tier: legacy Attractive zone (was filling in March 2026)
-          if (!canShowAd('homepage_banner')) return;
-          loadZone(CONFIG.ZONES.inpagePushLegacy, container).then(function() {
-            container.setAttribute('data-filled', '1');
-            markAdShown('homepage_banner');
-          }).catch(function() {
-            // v6.5 Tier 4: Adsterra in-page push (no-op if not enabled or zoneId=0)
-            if (!canShowAd('homepage_banner')) return;
-            loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, container, 'inpage').then(function() {
-              container.setAttribute('data-filled', '1');
-              markAdShown('homepage_banner');
-            }).catch(function() {});
-          });
+          // v5.23: single-Tier architecture. If 11012002 fails, container stays empty
+          // — AdSense Tier 0 already filled in the parallel race above (or no_fill earlier).
+          trackAdEvent('homepage_banner_no_fill', { network: 'monetag', reason: 'v5.23_tier1_failed_only_tier', zoneId: CONFIG.ZONES.inpagePush });
         });
       }, 2000);
     }, CONFIG.TIMING.homepageBannerDelay);
@@ -1520,22 +1538,13 @@
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
         if (!canShowAd('homepage_banner')) return;
+        // v5.23: same single-Tier cull as showHomepageBanner — Tier 2/3/4 were 100% dead ends
         loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
           container.setAttribute('data-filled', '1');
           markAdShown('homepage_banner');
         }).catch(function() {
           if (!canShowAd('homepage_banner')) return;
-          loadZone(CONFIG.ZONES.inpagePushLegacy, container).then(function() {
-            container.setAttribute('data-filled', '1');
-            markAdShown('homepage_banner');
-          }).catch(function() {
-            // v6.5 Tier 4: Adsterra in-page push (no-op if not enabled or zoneId=0)
-            if (!canShowAd('homepage_banner')) return;
-            loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, container, 'inpage').then(function() {
-              container.setAttribute('data-filled', '1');
-              markAdShown('homepage_banner');
-            }).catch(function() {});
-          });
+          trackAdEvent('homepage_banner_no_fill', { network: 'monetag', reason: 'v5.23_tier1_failed_only_tier', zoneId: CONFIG.ZONES.inpagePush });
         });
       }, 2000);
     }, CONFIG.TIMING.homepageBannerDelay + 5000); // 6.5s total delay
