@@ -1,3 +1,34 @@
+## [v1.159.0] - 2026-07-09
+### Added
+- 8 new test cases from July-9 2026 industry research (R276, 4h cadence cycle 38):
+  - [S-351] **[P2]** Favicon Attack Surface — Server Fingerprinting via Favicon Hash (Passive Recon, Shodan http.favicon.hash Search; meterpreter.org Jul 7 2026)
+  - [S-352] **[P2]** Microsoft Office CVE-2026-21509 In-the-Wild Zero-Day — Security-Feature Bypass (Jan 26 2026 Emergency OOB Patch; OS-Patch-Delay Correlates with SmartScreen/Defender Gaps)
+  - [S-353] **[P2]** MOVEit CVE-2026-4670 (Auth Bypass) + CVE-2026-5174 (Privilege Escalation) — File-Transfer Infrastructure Supply-Chain Exfiltration Class (May 12 2026)
+  - [W-303] **[P2]** Safari 26.4 CSS Grid Lanes (网格轨道) — Native Waterfall Layout Shipped Ahead of Chrome/Edge/Firefox; 191 BUG Fixes; Feature-Detection Critical (Mar 25 2026)
+  - [W-304] **[P3]** JavaScript Ecosystem Week W20 (Jul 9 2026) — Rolldown 1.0 GA + Node 26.1 FFI + Valibot 1.4 + BlueJS AOT; Toolchain Fragmentation Pinning Risk
+  - [C-209] **[P3]** Microsoft Edge 2026 UI Redesign — Copilot Design Language (Larger Rounded Corners, New Switch Controls); Visual Regression Check
+  - [B-200] **[P3]** Mozilla Firefox 152 Roadmap — 2026 Largest Redesign Since Quantum 57; Mandatory Cross-Browser Test Target Upon Release
+  - [PC-037] **[P2]** 2026 Multiplayer-Network-Stability Player Expectation — Ping Spikes / Packet Loss / Connection Drops Are #1 Friction; <100ms Baseline for Any Future Real-Time Feature
+### Sources
+- mcp_minimax_search_web_search queries (2026-07-09):
+  - "HTML5 browser game testing new techniques 2026 July"
+  - "new browser security vulnerability July 2026 Chrome Safari"
+  - "casual game UX accessibility 2026 dark mode haptic feedback complaint"
+  - "Chrome Safari Edge update July 2026 web API breaking change"
+  - "favicon attack surface server fingerprinting security 2026"
+  - "CSS Grid Lanes Safari 26.4 new feature browser layout"
+- Note: SearXNG (mcp_web_search_prime_batch_search) returned 404 errors for all 5 batch queries — 7th+ consecutive cycle of SearXNG downtime; MiniMax (mcp_minimax_search_web_search) used as primary.
+- Key URLs:
+  - https://meterpreter.org/ (Favicon Attack Surface — server fingerprinting via favicon hash, Jul 7 2026)
+  - https://new.qq.com/rain/a/20260127A02F7Y00 (Microsoft Office CVE-2026-21509 emergency OOB patch, Jan 27 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6966a02ce5963952 (MOVEit CVE-2026-4670 + CVE-2026-5174 disclosure, May 12 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Safari 26.4 + CSS Grid Lanes + 191 BUG fixes, Mar 25 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0766950d08113752 (WebKit CSS Grid Lanes proposal, Dec 28 2025)
+  - https://cloud.tencent.com/developer/article/2679559 (JavaScript week W20 — Rolldown 1.0 GA, Node 26.1 FFI, Valibot 1.4, BlueJS, Jul 9 2026)
+  - https://www.sohu.com/a/1008833159_121956424 (Edge 2026 Copilot UI redesign, Apr 13 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4016a32165940252 (Firefox 152 2026 redesign roadmap, Jun 17 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_02069cf81f754152 (2026 multiplayer network stability player expectation, Apr 3 2026)
+
 ## [v1.158.0] - 2026-07-09
 ### Added
 - 9 new test cases from July-9 2026 industry research (R275, 4h cadence cycle 37):
