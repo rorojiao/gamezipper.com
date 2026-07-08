@@ -597,8 +597,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":592,"url":"https://gamezipper.com/statue-park/","name":"Statue Park"},
     {"@type":"ListItem","position":593,"url":"https://gamezipper.com/tile-paint/","name":"Tile Paint"},
     {"@type":"ListItem","position":594,"url":"https://gamezipper.com/anglers/","name":"Anglers"},
-    {"@type":"ListItem","position":595,"url":"https://gamezipper.com/gappy/","name":"Gappy"}
+    {"@type":"ListItem","position":595,"url":"https://gamezipper.com/sukoro/","name":"Sukoro"},
+    {"@type":"ListItem","position":596,"url":"https://gamezipper.com/gappy/","name":"Gappy"}
   ],
-  "numberOfItems":595,
-  "description":"595 free browser games you can play instantly"
+  "numberOfItems":596,
+  "description":"596 free browser games you can play instantly"
 };
