@@ -1,8 +1,9 @@
 const ITEMLIST_SCHEMA = {
-  "@context": "https://schema.org",
-  "@type": "ItemList",
-  "name": "GameZipper Free HTML5 Games",
-  "itemListElement": [
+  "@context":"https://schema.org",
+  "@type":"ItemList",
+  "name":"GameZipper Games",
+  "url":"https://gamezipper.com/",
+  "itemListElement":[
     {"@type":"ListItem","position":1,"url":"https://gamezipper.com/pin-pull-puzzle/","name":"Pin Pull Puzzle"},
     {"@type":"ListItem","position":2,"url":"https://gamezipper.com/jumping-shell/","name":"Jumping Shell"},
     {"@type":"ListItem","position":3,"url":"https://gamezipper.com/pattern-matrix/","name":"Pattern Matrix Puzzle"},
@@ -588,8 +589,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":583,"url":"https://gamezipper.com/maze-bridge-puzzle/","name":"Maze Bridge Puzzle"},
     {"@type":"ListItem","position":584,"url":"https://gamezipper.com/i-love-hue/","name":"I Love Hue"},
     {"@type":"ListItem","position":585,"url":"https://gamezipper.com/jigpic-solitaire/","name":"Jigpic Solitaire"},
-    {"@type":"ListItem","position":586,"url":"https://gamezipper.com/kaleidoscope-puzzle/","name":"Kaleidoscope Pattern Puzzle"}
+    {"@type":"ListItem","position":586,"url":"https://gamezipper.com/kaleidoscope-puzzle/","name":"Kaleidoscope Pattern Puzzle"},
+    {"@type":"ListItem","position":587,"url":"https://gamezipper.com/hex-tessellation/","name":"Hex Tessellation Puzzle"}
   ],
-  "numberOfItems":586,
-  "description":"586 free browser games you can play instantly"
+  "numberOfItems":587,
+  "description":"587 free browser games you can play instantly"
 };

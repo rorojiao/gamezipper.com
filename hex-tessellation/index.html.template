@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Hex Tessellation Puzzle — Play Free Online | GameZipper</title>
+<meta name="description" content="Play Hex Tessellation Puzzle free online! Place polyhex pieces to fill beautiful hexagonal silhouettes. 30 handcrafted levels across 5 difficulty tiers. Drag, rotate, and fit pieces with no gaps. No download, mobile-friendly!">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,5 90,28 90,72 50,95 10,72 10,28' fill='%23667eea' stroke='%23764ba2' stroke-width='3'/><polygon points='50,30 70,42 70,58 50,70 30,58 30,42' fill='%23f093fb'/></svg>">
+<style>
+:root {
+  --bg-dark: #0f0c29;
+  --bg-mid: #1a1a3e;
+  --bg-light: #24243e;
+  --accent: #667eea;
+  --accent2: #764ba2;
+  --accent3: #f093fb;
+  --text: #e8e8f0;
+  --text-dim: #8888a0;
+  --panel: rgba(20,20,50,0.85);
+  --piece-colors: #f093fb,#4facfe,#43e97b,#fa709a,#fccb90,#a18cd1,#ffecd2,#fcb69f,#a1c4fd,#38f9d7;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { width:100%; height:100%; overflow:hidden; font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:linear-gradient(135deg,var(--bg-dark),var(--bg-mid),var(--bg-light)); color:var(--text); user-select:none; }
+canvas { display:block; touch-action:none; }
+#game { position:fixed; inset:0; }
+
+/* Top HUD */
+.hud-top { position:fixed; top:0; left:0; right:0; display:flex; justify-content:space-between; align-items:center; padding:8px 12px; z-index:10; pointer-events:none; }
+.hud-top > * { pointer-events:auto; }
+.hud-btn { background:var(--panel); border:1px solid rgba(255,255,255,0.15); color:var(--text); padding:8px 14px; border-radius:8px; cursor:pointer; font-size:14px; backdrop-filter:blur(8px); transition:all .15s; }
+.hud-btn:hover,.hud-btn:active { background:rgba(102,126,234,0.4); border-color:var(--accent); }
+.hud-btn:disabled { opacity:0.4; cursor:default; }
+.hud-info { display:flex; gap:8px; align-items:center; }
+.hud-chip { background:var(--panel); border:1px solid rgba(255,255,255,0.1); padding:6px 12px; border-radius:8px; font-size:13px; backdrop-filter:blur(8px); }
+.hud-chip .label { color:var(--text-dim); margin-right:4px; }
+.hud-chip .val { font-weight:bold; color:var(--accent3); }
+
+/* Piece tray */
+.tray { position:fixed; bottom:0; left:0; right:0; background:var(--panel); border-top:1px solid rgba(255,255,255,0.1); padding:8px 12px; z-index:10; backdrop-filter:blur(8px); transition:transform .3s; }
+.tray-label { font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.tray-pieces { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; min-height:64px; }
+.tray-piece { width:60px; height:60px; cursor:grab; border-radius:8px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); transition:transform .15s; position:relative; }
+.tray-piece:hover { transform:scale(1.08); border-color:var(--accent); }
+.tray-piece.dragging { opacity:0.4; }
+.tray-piece.placed { opacity:0.2; pointer-events:none; }
+.tray-piece canvas { width:100%; height:100%; }
+
+/* Modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:100; backdrop-filter:blur(4px); }
+.modal-overlay.show { display:flex; }
+.modal { background:linear-gradient(135deg,var(--bg-mid),var(--bg-light)); border:1px solid rgba(255,255,255,0.15); border-radius:16px; padding:24px; max-width:420px; width:90%; text-align:center; }
+.modal h2 { font-size:22px; margin-bottom:8px; background:linear-gradient(90deg,var(--accent),var(--accent3)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.modal p { color:var(--text-dim); margin-bottom:16px; font-size:14px; line-height:1.5; }
+.modal-buttons { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+.modal-btn { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; transition:transform .15s; }
+.modal-btn:hover { transform:translateY(-2px); }
+.modal-btn.secondary { background:rgba(255,255,255,0.1); }
+
+/* Level select */
+.level-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin:12px 0; }
+.level-cell { aspect-ratio:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold; cursor:pointer; transition:all .15s; }
+.level-cell:hover { background:rgba(102,126,234,0.3); border-color:var(--accent); }
+.level-cell.locked { opacity:0.3; cursor:not-allowed; }
+.level-cell.completed { background:rgba(67,233,123,0.15); border-color:var(--accent3); }
+.level-cell.current { background:rgba(240,147,251,0.2); border-color:var(--accent3); }
+.tier-label { font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin:8px 0 4px; text-align:left; }
+
+/* Toast */
+.toast { position:fixed; bottom:120px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--panel); border:1px solid var(--accent); color:var(--text); padding:10px 20px; border-radius:8px; font-size:14px; opacity:0; transition:all .3s; z-index:50; pointer-events:none; backdrop-filter:blur(8px); }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* Stars */
+.stars { font-size:20px; letter-spacing:2px; margin:8px 0; }
+.stars .star { color:rgba(255,255,255,0.2); }
+.stars .star.filled { color:#ffd700; }
+
+.gz-sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+</style>
+</head>
+<body>
+<h1 class="gz-sr-only">Hex Tessellation Puzzle</h1>
+<canvas id="game"></canvas>
+
+<div class="hud-top">
+  <button class="hud-btn" id="btn-menu">☰ Levels</button>
+  <div class="hud-info">
+    <div class="hud-chip"><span class="label">Lvl</span><span class="val" id="hud-level">1</span></div>
+    <div class="hud-chip"><span class="label">⭐</span><span class="val" id="hud-stars">0</span></div>
+  </div>
+  <div style="display:flex;gap:6px;">
+    <button class="hud-btn" id="btn-hint">💡<span style="font-size:11px">(<span id="hint-count">3</span>)</span></button>
+    <button class="hud-btn" id="btn-reset">↻</button>
+  </div>
+</div>
+
+<div class="tray" id="tray">
+  <div class="tray-label">Pieces — drag to board, tap to rotate</div>
+  <div class="tray-pieces" id="tray-pieces"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="modal-levels">
+  <div class="modal">
+    <h2>Select Level</h2>
+    <p>Tap a level to play. Complete levels to unlock the next tier.</p>
+    <div id="level-grid-container"></div>
+    <div class="modal-buttons">
+      <button class="modal-btn secondary" onclick="closeModal('modal-levels')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-win">
+  <div class="modal">
+    <h2 id="win-title">Level Complete! 🎉</h2>
+    <div class="stars" id="win-stars"></div>
+    <p id="win-msg">Beautiful tessellation! Ready for the next challenge?</p>
+    <div class="modal-buttons">
+      <button class="modal-btn secondary" onclick="closeModal('modal-win');showLevels();">Levels</button>
+      <button class="modal-btn secondary" onclick="closeModal('modal-win');resetLevel();">Replay</button>
+      <button class="modal-btn" id="btn-next" onclick="closeModal('modal-win');nextLevel();">Next →</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-help">
+  <div class="modal">
+    <h2>How to Play 🧩</h2>
+    <p style="text-align:left;">
+      <b>Goal:</b> Fill the hexagonal silhouette completely with polyhex pieces.<br><br>
+      <b>Drag</b> pieces from the tray onto the board.<br>
+      <b>Tap</b> a piece to rotate it 60°.<br>
+      <b>Right-click</b> or <b>double-tap</b> to flip.<br>
+      Pieces must fit with <b>no gaps</b> and <b>no overlaps</b>.<br><br>
+      Use 💡 hints sparingly — you get 3 per level!
+    </p>
+    <div class="modal-buttons">
+      <button class="modal-btn" onclick="closeModal('modal-help')">Got it!</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== HEX TESSELLATION PUZZLE ====================
+// Polyhex tile-fitting puzzle on hex grid (axial coordinates)
+// Levels loaded from embedded JSON, verified unique-solution via BFS
+
+const LEVELS_DATA = __LEVELS_JSON__;
+
+// --- Hex math (axial coordinates) ---
+const HEX_SIZE = 34; // pixel radius of hex
+const NEIGHBORS = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
+
+function hexToPixel(q, r) {
+  const x = HEX_SIZE * (Math.sqrt(3) * q + Math.sqrt(3)/2 * r);
+  const y = HEX_SIZE * (3/2 * r);
+  return { x, y };
+}
+function pixelToHex(x, y) {
+  const q = (Math.sqrt(3)/3 * x - 1/3 * y) / HEX_SIZE;
+  const r = (2/3 * y) / HEX_SIZE;
+  return hexRound(q, r);
+}
+function hexRound(q, r) {
+  const s = -q - r;
+  let rq = Math.round(q), rr = Math.round(r), rs = Math.round(s);
+  const dq = Math.abs(rq - q), dr = Math.abs(rr - r), ds = Math.abs(rs - s);
+  if (dq > dr && dq > ds) rq = -rr - rs;
+  else if (dr > ds) rr = -rq - rs;
+  return { q: rq, r: rr };
+}
+function hexNeighbors(q, r) {
+  return NEIGHBORS.map(([dq,dr]) => ({q:q+dq, r:r+dr}));
+}
+function hexKey(q, r) { return q+','+r; }
+
+function drawHex(ctx, cx, cy, size, fillColor, strokeColor, strokeWidth) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = Math.PI / 3 * i + Math.PI / 6; // flat-top offset
+    // Actually pointy-top: angle = PI/3 * i - PI/2... let me use pointy-top
+    const a = Math.PI / 3 * i - Math.PI / 2;
+    const px = cx + size * Math.cos(a);
+    const py = cy + size * Math.sin(a);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  if (fillColor) { ctx.fillStyle = fillColor; ctx.fill(); }
+  if (strokeColor) { ctx.strokeStyle = strokeColor; ctx.lineWidth = strokeWidth || 1; ctx.stroke(); }
+}
+
+// --- Piece rotation ---
+function rotatePiece(piece, times) {
+  let cells = piece.map(c => ({q:c[0], r:c[1]}));
+  for (let i = 0; i < (times % 6); i++) {
+    cells = cells.map(c => ({q: -c.r, r: c.q + c.r}));
+  }
+  return cells;
+}
+function flipPiece(piece) {
+  // Flip horizontally: (q,r) -> (-q, q+r) ??? Actually for axial, flip q: (q,r)->(-q, r+q)
+  // Let me use: reflect across r-axis: q -> -q
+  return piece.map(c => ({q: -c[0], r: c[1] + c[0]}));
+}
+
+// --- Game state ---
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let W, H, DPR;
+let currentLevel = 0;
+let levelData = null;
+let boardCenter = { x: 0, y: 0 };
+let pieces = []; // {id, cells:[{q,r}], color, rotation, flipped, placed, placedCells, trayPos}
+let placedCells = new Set(); // "q,r" strings
+let targetCells = new Set();
+let dragPiece = null;
+let dragOffset = { x: 0, y: 0 };
+let dragPos = { x: 0, y: 0 };
+let hoverHex = null;
+let hintsLeft = 3;
+let stars = {};
+let moves = 0;
+let startTime = 0;
+let bgParticles = [];
+
+// --- Piece colors ---
+const PIECE_COLORS = ['#f093fb','#4facfe','#43e97b','#fa709a','#fccb90','#a18cd1','#ff9a9e','#fcb69f','#a1c4fd','#38f9d7','#667eea','#f5577c'];
+
+function resize() {
+  DPR = window.devicePixelRatio || 1;
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  boardCenter = { x: W / 2, y: H / 2 - 40 };
+}
+window.addEventListener('resize', resize);
+
+// --- Load level ---
+function loadLevel(idx) {
+  currentLevel = idx;
+  levelData = LEVELS_DATA.levels[idx];
+  targetCells = new Set(levelData.cells.map(c => hexKey(c[0], c[1])));
+  placedCells.clear();
+  pieces = levelData.pieces.map((p, i) => ({
+    id: i,
+    cells: p.map(c => ({q: c[0], r: c[1]})),
+    color: PIECE_COLORS[i % PIECE_COLORS.length],
+    rotation: 0,
+    flipped: false,
+    placed: false,
+    placedCells: null,
+  }));
+  hintsLeft = 3;
+  moves = 0;
+  startTime = Date.now();
+  document.getElementById('hud-level').textContent = idx + 1;
+  document.getElementById('hint-count').textContent = hintsLeft;
+  renderTray();
+  updateHUD();
+}
+
+function getCurrentCells(piece) {
+  let cells = rotatePiece(piece.cells.map(c => [c.q, c.r]), piece.rotation);
+  if (piece.flipped) cells = flipPiece(cells.map(c => [c.q, c.r])).map(c => ({q:c[0], r:c[1]}));
+  return cells;
+}
+
+// --- Tray rendering ---
+function renderTray() {
+  const container = document.getElementById('tray-pieces');
+  container.innerHTML = '';
+  pieces.forEach((piece, i) => {
+    if (piece.placed) return;
+    const div = document.createElement('div');
+    div.className = 'tray-piece';
+    div.dataset.pieceId = i;
+    div.innerHTML = '';
+    const cv = document.createElement('canvas');
+    cv.width = 120; cv.height = 120;
+    div.appendChild(cv);
+    drawPiecePreview(cv, piece);
+    div.addEventListener('pointerdown', (e) => startDrag(e, i));
+    container.appendChild(div);
+  });
+}
+
+function drawPiecePreview(cv, piece) {
+  const c = cv.getContext('2d');
+  c.clearRect(0, 0, cv.width, cv.height);
+  const cells = getCurrentCells(piece);
+  const previewSize = 16;
+  // Find bounds
+  let minQ = Infinity, maxQ = -Infinity, minR = Infinity, maxR = -Infinity;
+  cells.forEach(cell => {
+    minQ = Math.min(minQ, cell.q); maxQ = Math.max(maxQ, cell.q);
+    minR = Math.min(minR, cell.r); maxR = Math.max(maxR, cell.r);
+  });
+  const cx = cv.width / 2, cy = cv.height / 2;
+  cells.forEach(cell => {
+    const x = cx + previewSize * (Math.sqrt(3) * (cell.q - (minQ+maxQ)/2) + Math.sqrt(3)/2 * (cell.r - (minR+maxR)/2));
+    const y = cy + previewSize * (3/2 * (cell.r - (minR+maxR)/2));
+    drawHex(c, x, y, previewSize - 1, piece.color + 'cc', piece.color, 2);
+  });
+}
+
+// --- Rendering ---
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  
+  // Background particles
+  drawBgParticles();
+  
+  // Draw target silhouette (empty hexes)
+  ctx.save();
+  ctx.translate(boardCenter.x, boardCenter.y);
+  
+  // Target cells
+  targetCells.forEach(key => {
+    const [q, r] = key.split(',').map(Number);
+    const { x, y } = hexToPixel(q, r);
+    const isFilled = placedCells.has(key);
+    if (!isFilled) {
+      drawHex(ctx, x, y, HEX_SIZE - 1, 'rgba(255,255,255,0.04)', 'rgba(255,255,255,0.15)', 1);
+    }
+  });
+  
+  // Placed pieces
+  pieces.forEach(piece => {
+    if (!piece.placed) return;
+    const cells = piece.placedCells;
+    cells.forEach(cell => {
+      const { x, y } = hexToPixel(cell.q, cell.r);
+      drawHex(ctx, x, y, HEX_SIZE - 1, piece.color + 'dd', piece.color, 2);
+    });
+  });
+  
+  // Hover preview (ghost piece)
+  if (dragPiece !== null && hoverHex) {
+    const piece = pieces[dragPiece];
+    const cells = getCurrentCells(piece);
+    const valid = canPlace(piece, hoverHex.q, hoverHex.r);
+    const ghostColor = valid ? piece.color + '66' : 'rgba(255,80,80,0.4)';
+    cells.forEach(cell => {
+      const tq = hoverHex.q + cell.q;
+      const tr = hoverHex.r + cell.r;
+      const { x, y } = hexToPixel(tq, tr);
+      drawHex(ctx, x, y, HEX_SIZE - 1, ghostColor, valid ? piece.color : '#ff5050', 2);
+    });
+  }
+  
+  ctx.restore();
+  
+  // Dragging piece (follows cursor)
+  if (dragPiece !== null) {
+    const piece = pieces[dragPiece];
+    const cells = getCurrentCells(piece);
+    ctx.save();
+    ctx.translate(dragPos.x - dragOffset.x, dragPos.y - dragOffset.y);
+    cells.forEach(cell => {
+      const { x, y } = hexToPixel(cell.q, cell.r);
+      drawHex(ctx, x, y, HEX_SIZE - 1, piece.color + 'cc', piece.color, 2);
+    });
+    ctx.restore();
+  }
+  
+  requestAnimationFrame(render);
+}
+
+function drawBgParticles() {
+  const t = Date.now() / 1000;
+  for (let i = 0; i < bgParticles.length; i++) {
+    const p = bgParticles[i];
+    p.y -= p.speed;
+    if (p.y < -10) p.y = H + 10;
+    ctx.fillStyle = `rgba(102,126,234,${p.alpha * (0.5 + 0.5 * Math.sin(t + p.phase))})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function initBgParticles() {
+  bgParticles = [];
+  for (let i = 0; i < 30; i++) {
+    bgParticles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      size: 1 + Math.random() * 2,
+      speed: 0.2 + Math.random() * 0.5,
+      alpha: 0.1 + Math.random() * 0.3,
+      phase: Math.random() * Math.PI * 2,
+    });
+  }
+}
+
+// --- Placement logic ---
+function canPlace(piece, anchorQ, anchorR) {
+  const cells = getCurrentCells(piece);
+  for (const cell of cells) {
+    const key = hexKey(anchorQ + cell.q, anchorR + cell.r);
+    if (!targetCells.has(key)) return false;
+    if (placedCells.has(key)) return false;
+  }
+  return true;
+}
+
+function placePiece(pieceIdx, anchorQ, anchorR) {
+  const piece = pieces[pieceIdx];
+  const cells = getCurrentCells(piece);
+  piece.placedCells = cells.map(c => ({q: anchorQ + c.q, r: anchorR + c.r}));
+  piece.placedCells.forEach(c => placedCells.add(hexKey(c.q, c.r)));
+  piece.placed = true;
+  moves++;
+  renderTray();
+  updateHUD();
+  
+  // Check win
+  if (placedCells.size === targetCells.size) {
+    setTimeout(() => onWin(), 300);
+  }
+}
+
+function removePiece(pieceIdx) {
+  const piece = pieces[pieceIdx];
+  if (!piece.placed) return;
+  piece.placedCells.forEach(c => placedCells.delete(hexKey(c.q, c.r)));
+  piece.placed = false;
+  piece.placedCells = null;
+  renderTray();
+  updateHUD();
+}
+
+// --- Input handling ---
+function getPointerPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function startDrag(e, pieceIdx) {
+  e.preventDefault();
+  const piece = pieces[pieceIdx];
+  if (piece.placed) return;
+  dragPiece = pieceIdx;
+  const pos = getPointerPos(e);
+  dragPos = pos;
+  // Center the piece on cursor
+  dragOffset = { x: 0, y: 0 };
+  document.querySelectorAll('.tray-piece')[pieceIdx]?.classList.add('dragging');
+  canvas.setPointerCapture(e.pointerId);
+}
+
+canvas.addEventListener('pointermove', (e) => {
+  if (dragPiece === null) return;
+  const pos = getPointerPos(e);
+  dragPos = pos;
+  // Compute hover hex
+  const localX = pos.x - boardCenter.x;
+  const localY = pos.y - boardCenter.y;
+  // The piece's anchor (first cell) should be at cursor
+  hoverHex = pixelToHex(localX, localY);
+});
+
+canvas.addEventListener('pointerup', (e) => {
+  if (dragPiece === null) return;
+  const piece = pieces[dragPiece];
+  if (hoverHex && canPlace(piece, hoverHex.q, hoverHex.r)) {
+    placePiece(dragPiece, hoverHex.q, hoverHex.r);
+    showToast('✓ Placed!');
+  } else {
+    showToast('✗ Cannot place here');
+  }
+  document.querySelectorAll('.tray-piece').forEach(el => el.classList.remove('dragging'));
+  dragPiece = null;
+  hoverHex = null;
+});
+
+// Tap piece in tray to rotate
+document.getElementById('tray-pieces').addEventListener('click', (e) => {
+  const div = e.target.closest('.tray-piece');
+  if (!div || dragPiece !== null) return;
+  const idx = parseInt(div.dataset.pieceId);
+  pieces[idx].rotation = (pieces[idx].rotation + 1) % 6;
+  drawPiecePreview(div.querySelector('canvas'), pieces[idx]);
+});
+
+// Right-click / double-tap to flip
+document.getElementById('tray-pieces').addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  const div = e.target.closest('.tray-piece');
+  if (!div) return;
+  const idx = parseInt(div.dataset.pieceId);
+  pieces[idx].flipped = !pieces[idx].flipped;
+  drawPiecePreview(div.querySelector('canvas'), pieces[idx]);
+});
+
+// Click placed piece on board to remove
+canvas.addEventListener('click', (e) => {
+  if (dragPiece !== null) return;
+  const pos = getPointerPos(e);
+  const localX = pos.x - boardCenter.x;
+  const localY = pos.y - boardCenter.y;
+  const hex = pixelToHex(localX, localY);
+  const key = hexKey(hex.q, hex.r);
+  if (placedCells.has(key)) {
+    // Find and remove the piece
+    for (let i = 0; i < pieces.length; i++) {
+      if (pieces[i].placed && pieces[i].placedCells.some(c => c.q === hex.q && c.r === hex.r)) {
+        removePiece(i);
+        break;
+      }
+    }
+  }
+});
+
+// --- HUD / Buttons ---
+document.getElementById('btn-menu').addEventListener('click', showLevels);
+document.getElementById('btn-hint').addEventListener('click', useHint);
+document.getElementById('btn-reset').addEventListener('click', resetLevel);
+
+function updateHUD() {
+  document.getElementById('hud-level').textContent = currentLevel + 1;
+  document.getElementById('hud-stars').textContent = getTotalStars();
+}
+
+function getTotalStars() {
+  return Object.values(stars).reduce((a, b) => a + b, 0);
+}
+
+function useHint() {
+  if (hintsLeft <= 0) { showToast('No hints left!'); return; }
+  hintsLeft--;
+  document.getElementById('hint-count').textContent = hintsLeft;
+  // Find first unplaced piece and show its correct position (flash)
+  const unplaced = pieces.find(p => !p.placed);
+  if (unplaced) {
+    // The piece's original position IS the solution. Find any cell of original.
+    const origCell = unplaced.cells[0];
+    showToast(`💡 Piece goes near (${origCell.q}, ${origCell.r})`);
+    // Flash the target hex
+    flashHint(origCell.q, origCell.r);
+  }
+}
+
+let hintFlash = null;
+function flashHint(q, r) {
+  hintFlash = { q, r, time: Date.now() };
+}
+
+function resetLevel() {
+  loadLevel(currentLevel);
+}
+
+function nextLevel() {
+  if (currentLevel < LEVELS_DATA.levels.length - 1) {
+    loadLevel(currentLevel + 1);
+  } else {
+    showToast('🎉 All levels complete!');
+  }
+}
+
+function onWin() {
+  const elapsed = (Date.now() - startTime) / 1000;
+  const hintBonus = (3 - (3 - hintsLeft)) * 0; // hints don't reduce stars in this version
+  let earnedStars = 3;
+  if (moves > pieces.length * 2) earnedStars = 2;
+  if (moves > pieces.length * 3) earnedStars = 1;
+  stars[currentLevel] = Math.max(stars[currentLevel] || 0, earnedStars);
+  
+  const starsEl = document.getElementById('win-stars');
+  starsEl.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('span');
+    s.className = 'star' + (i < earnedStars ? ' filled' : '');
+    s.textContent = '★';
+    starsEl.appendChild(s);
+  }
+  
+  document.getElementById('win-title').textContent = earnedStars === 3 ? 'Perfect! ★★★' : 'Level Complete! 🎉';
+  document.getElementById('win-msg').textContent = `${moves} moves • ${Math.round(elapsed)}s • ${hintsLeft} hints left`;
+  document.getElementById('btn-next').style.display = currentLevel < LEVELS_DATA.levels.length - 1 ? '' : 'none';
+  
+  showModal('modal-win');
+  updateHUD();
+}
+
+function showLevels() {
+  const container = document.getElementById('level-grid-container');
+  container.innerHTML = '';
+  const tierNames = ['Beginner', 'Easy', 'Medium', 'Hard', 'Expert'];
+  for (let tier = 0; tier < 5; tier++) {
+  const label = document.createElement('div');
+    label.className = 'tier-label';
+    label.textContent = `Tier ${tier+1}: ${tierNames[tier]}`;
+    container.appendChild(label);
+    const grid = document.createElement('div');
+    grid.className = 'level-grid';
+    for (let i = 0; i < 6; i++) {
+      const idx = tier * 6 + i;
+      const cell = document.createElement('div');
+      cell.className = 'level-cell';
+      if (idx === currentLevel) cell.classList.add('current');
+      if (stars[idx]) cell.classList.add('completed');
+      // Unlock: previous level completed OR first level
+      if (idx > 0 && !stars[idx - 1]) cell.classList.add('locked');
+      cell.textContent = idx + 1;
+      if (!cell.classList.contains('locked')) {
+        cell.addEventListener('click', () => {
+          loadLevel(idx);
+          closeModal('modal-levels');
+        });
+      }
+      grid.appendChild(cell);
+    }
+    container.appendChild(grid);
+  }
+  showModal('modal-levels');
+}
+
+function showModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// --- Audio (Web Audio API procedural) ---
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    startBGM();
+  }
+}
+function playTone(freq, dur, type, vol) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(vol || 0.15, audioCtx.currentTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + dur);
+}
+function sfxPlace() { playTone(523, 0.12, 'triangle', 0.2); setTimeout(()=>playTone(659, 0.15, 'triangle', 0.15), 60); }
+function sfxRotate() { playTone(440, 0.08, 'square', 0.1); }
+function sfxWin() {
+  [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.3, 'triangle', 0.2), i * 120));
+}
+function sfxError() { playTone(200, 0.15, 'sawtooth', 0.1); }
+
+let bgmInterval = null;
+function startBGM() {
+  if (!audioCtx) return;
+  const chord = [
+    [261.63, 329.63, 392.00, 493.88], // Cmaj7
+    [349.23, 440.00, 523.25, 659.25], // Fmaj7
+    [220.00, 261.63, 329.63, 392.00], // Am7
+    [293.66, 369.99, 440.00, 587.33], // Dm
+  ];
+  let chordIdx = 0;
+  function playChord() {
+    const freqs = chord[chordIdx];
+    freqs.forEach(f => playTone(f, 2.5, 'sine', 0.04));
+    chordIdx = (chordIdx + 1) % chord.length;
+  }
+  playChord();
+  bgmInterval = setInterval(playChord, 3000);
+}
+function stopBGM() { if (bgmInterval) { clearInterval(bgmInterval); bgmInterval = null; } }
+
+// Override place/remove/win to add SFX
+const origPlace = placePiece;
+placePiece = function(idx, q, r) { origPlace(idx, q, r); sfxPlace(); };
+const origRemove = removePiece;
+removePiece = function(idx) { origRemove(idx); sfxRotate(); };
+const origOnWin = onWin;
+onWin = function() { sfxWin(); origOnWin(); };
+
+// First interaction starts audio
+document.addEventListener('pointerdown', initAudio, { once: true });
+
+// --- Init ---
+resize();
+initBgParticles();
+loadLevel(0);
+render();
+
+// Show help on first load
+if (!localStorage.getItem('hex-tess-helped')) {
+  setTimeout(() => showModal('modal-help'), 500);
+  localStorage.setItem('hex-tess-helped', '1');
+}
+
+// Save/restore stars
+function saveStars() { localStorage.setItem('hex-tess-stars', JSON.stringify(stars)); }
+function loadStars() {
+  try { stars = JSON.parse(localStorage.getItem('hex-tess-stars') || '{}'); } catch(e) { stars = {}; }
+  updateHUD();
+}
+loadStars();
+setInterval(saveStars, 5000);
+window.addEventListener('beforeunload', saveStars);
+</script>
+</body>
+</html>
