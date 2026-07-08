@@ -1,3 +1,37 @@
+## [v1.155.0] - 2026-07-08
+### Added
+- 10 new test cases from July-8 2026 industry research (R272, 4h cadence cycle 34):
+  - [S-340] **[P1]** CVE-2025-29927 Next.js Middleware Authorization Bypass — `x-middleware-subrequest` Header Defeats All Auth (CVSS 9.1, 0xMiddleware Exploit Tool Published July 8 2026)
+  - [S-341] **[P2]** Shai-Hulud 3.0 NPM Supply-Chain Worm Variant — Self-Propagating Install-Script Evolution (Dec 28 2025, SlowMist Warning)
+  - [S-342] **[P2]** Ad-Fraud-Detection Software Productization — TrafficGuard ML IVT Verdicts Gate Revenue; False-Positive Cuts Payouts (July 2026)
+  - [W-298] **[P2]** Safari 26 Tracking-Param Filter 134226694 Pulled From Shipped Build — Release-Notes-vs-Ship Divergence (gclid/fbclid Currently Survive; Corrects v1.153.0 B-192)
+  - [W-299] **[P2]** Chrome Multiplane Overlay (MPO) Display-Corruption — Non-Deterministic HW-Accel Variance Across GPU/Driver Combos (Persistent 2024-2026)
+  - [C-205] **[P3]** Chrome "Side-by-Side Configuration Incorrect" Launch Failure on Windows — new chrome.exe Workaround (June 2026)
+  - [B-196] **[P3]** Chrome `NSS_VersionCheck("3.26") failed` Launch Failure on Linux — libnss3 Upgrade Required (Recurring 2017-2026)
+  - [B-197] **[P3]** Edge `DNS_PROBE_FINISHED_BAD_SECURE_CONFIG` — Secure DNS (DoH) Unreachable Server Misreported as Local DNS (Edge 150)
+  - [PC-034] **[P3]** Sony PS Game Disc Phaseout by 2028 — Industry Digital-First Shift; Browser-Game Instant-Play Differentiator (July 3 2026)
+  - [G-181] **[P3]** 2026 TapTap Showcase — 52 Games, PC/Cross-Platform Increase; Cross-Device Player Expectation Baseline (July 2 2026)
+### Sources
+- "HTML5 browser game security vulnerability July 2026 new CVE Chrome Safari" (mcp_minimax_search_web_search)
+- "Chrome Edge Safari update July 2026 stable release breaking change web API" (mcp_minimax_search_web_search)
+- "npm pnpm Vite Rollup July 2026 release breaking change migration" (mcp_minimax_search_web_search)
+- "casual mobile game UX complaint 2026 July haptics dark mode accessibility friction" (mcp_minimax_search_web_search)
+- "ad fraud malvertising 2026 July supply chain attack fake game installer" (mcp_minimax_search_web_search)
+- "CVE-2025-29927 Next.js middleware bypass vulnerability exploit July 2026" (mcp_minimax_search_web_search)
+- Note: SearXNG (mcp_web_search_prime_batch_search) returned 404 errors for all 5 batch queries — 6th+ consecutive cycle of SearXNG downtime (R266-R272); MiniMax (mcp_minimax_search_web_search) used as primary per §62 of the test-library-evolution skill references/r268-refinements.md.
+- Key URLs:
+  - https://cloud.tencent.com/developer/article/2609419 (CVE-2025-29927 0xMiddleware exploit tool, July 8 2026)
+  - https://www.venustech.com.cn/new_type/aqtg/20250324/28467.html (CVE-2025-29927 original advisory, Mar 24 2025)
+  - https://www.freebuf.com/articles/vuls/426109.html (CVE-2025-29927 CDN cache-poisoning amplifier, Mar 31 2025)
+  - https://new.qq.com/rain/a/20251229A03I4Q00 (Shai-Hulud 3.0 SlowMist warning, Dec 29 2025)
+  - https://sourceforge.net/software/ad-fraud-detection/ (Ad Fraud Detection Software 2026 — TrafficGuard, July 2026)
+  - https://cloud.tencent.com/developer/article/2637644 (Safari 26 release — 134226694 tracking-param filter PULLED from shipped build, July 8 2026)
+  - http://meijinmeng.cn/410.html (Chrome side-by-side config launch failure, June 2 2026)
+  - https://www.cnblogs.com/yangbodong/p/15344805.html (Chrome NSS_VersionCheck libnss3 failure, recurring 2017-2026)
+  - https://blog.csdn.net/weixin_41510467/article/details/134278665 (Edge DNS_PROBE_BAD_SECURE_CONFIG secure DNS, Nov 2023, applicable Edge 150)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2866a474df475952 (Sony PS disc phaseout 2028, July 3 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0976a471fde85365 (TapTap 2026 showcase 52 games, July 3 2026)
+
 ## [v1.154.0] - 2026-07-08
 ### Added
 - 8 new test cases from July-8 2026 industry research (R271, 4h cadence cycle 33):
