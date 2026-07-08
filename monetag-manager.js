@@ -4,6 +4,18 @@
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
  *
+ * v5.25 Changes (2026-07-09 — showHomepageMidGrid Tier 2/4 Cull, kanban t_d65a1fdd, ad-hoc verify round 2):
+ *   - 🪲 Fix: v5.24 scope missed showHomepageMidGrid() — still had Tier 2 (legacy
+ *     Attractive 10687755, disabled since v5.3) + Tier 4 (Adsterra CDN-dead since v5.21).
+ *     Ad-hoc verification script (hermes-verify-v524.sh) caught the residual: gz.com
+ *     loadZone(CONFIG.ZONES.inpagePushLegacy, container) was still 1 hit after v5.24.
+ *   - 🔧 Cut showHomepageMidGrid() to single-Tier (11012002) + AdSense Tier 0 in
+ *     parallel race. Same pattern as v5.24 for showContainerAd/showInGameBanner.
+ *   - 📊 Expected impact (BI 7d post-deploy):
+ *       - gz.com zone_legacy_disabled_skip 10687755: ~5/wk (11.5h post-v5.24) → 0 (-100%)
+ *   - 🛡️ Safety: No new ad calls. AdSense Tier 0 + Tier 1 (11012002) unchanged.
+ *   - Version bumped 5.24-container-banner-tier-cull → 5.25-midgrid-tier2cull.
+ *
  * v5.24 Changes (2026-07-09 — Container + InGameBanner Tier 3/4 Cull, kanban t_d65a1fdd):
  *   - 🪲 Fix: showContainerAd() + showInGameBanner() still had full Tier 2/3/4 fallback
  *     chains after v5.23 only culled showHomepageBanner. v5.23 changelog claimed
@@ -369,7 +381,7 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.24-container-banner-tier-cull',  // 2026-07-09: v5.24 kanban t_d65a1fdd — cull showContainerAd Tier 3 (legacy 10687755) + Tier 4 (adsterra) + showInGameBanner Tier 3 (legacy 10687755) dead-end fallback chains; single-Tier (11012002 working) + AdSense Tier 0 only.
+    VERSION: '5.25-midgrid-tier2cull',  // 2026-07-09: v5.25 kanban t_d65a1fdd — cull showHomepageMidGrid Tier 2 (legacy Attractive 10687755) + Tier 4 (adsterra) — missed in v5.24 scope. Single-Tier (11012002 working) + AdSense Tier 0. Same pattern as v5.24.
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -1153,34 +1165,13 @@
           if (statusEl) statusEl.textContent = 'Ad playing... (monetag)';
           onAdFilled('monetag_inpagePush');
         }).catch(function() {
-          // Tier 3: legacy Attractive zone (was filling in March 2026).
-          // v5.3 kill switch: disabled by default (0% fill in 3-day window).
-          if (adFilled) return;
-          loadZone(CONFIG.ZONES.vignetteLegacy, monetagSlot).then(function() {
-            monetagSlot.style.opacity = '1';
-            monetagSlot.textContent = '';
-            onAdFilled('monetag_vignette_legacy');
-          }).catch(function() {
-            // v6.5 Tier 4: Adsterra vignette — bypass Monetag 14-day 0% fill.
-            // Only fires when CONFIG.ADSTERRA.enabled + zoneId configured.
-            // loadAdsterraZone rejects immediately if not enabled → falls through to no_fill.
-            if (adFilled) return;
-            loadAdsterraZone(CONFIG.ZONES.adsterraVignette, monetagSlot, 'vignette').then(function() {
-              monetagSlot.style.opacity = '1';
-              monetagSlot.textContent = '';
-              onAdFilled('adsterra_vignette');
-            }).catch(function() {
-              // v6.5 Tier 4b: Adsterra in-page push (last resort before user sees blank break)
-              if (adFilled) return;
-              loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, monetagSlot, 'inpage').then(function() {
-                monetagSlot.style.opacity = '1';
-                monetagSlot.textContent = '';
-                onAdFilled('adsterra_inpage');
-              }).catch(function() {
-                trackAdEvent('commercial_break_no_fill', {});
-              });
-            });
-          });
+          // v5.25: Tier 3 (vignetteLegacy 10687756, disabled since v5.3) + Tier 4
+          // (adsterraVignette CDN-dead) + Tier 4b (adsterraInpagePush CDN-dead) all
+          // removed. BI 7d 2026-07-01~07-08: zero fills from any of these zones.
+          // commercial_break_no_fill event signals the failure (tier 1 also failed).
+          // AdSense Tier 0 fills 78% of commercial breaks in 7d so this code rarely
+          // fires; when it does, single-Tier is the correct architecture.
+          trackAdEvent('commercial_break_no_fill', { network: 'monetag', reason: 'v5.25_tier1_failed_only_tier', zoneId: CONFIG.ZONES.inpagePush });
         });
       }, 2500);  // v5.11: 2.5s grace period for AdSense to fill before Monetag fallback
 
@@ -1600,6 +1591,12 @@
         if (container.getAttribute('data-filled')) return;
         if (!canShowAd('homepage_banner')) return;
         // Monetag Skillful fallback. Resolve on script load, reject on error/timeout.
+        // v5.25: Cut to single-Tier (11012002) + AdSense Tier 0 in parallel race.
+        // Tier 2 (legacy Attractive 10687755, disabled since v5.3) + Tier 4 (Adsterra
+        // CDN-dead since v5.21) removed — both 100% dead ends. Same pattern as v5.24
+        // for showContainerAd/showInGameBanner. BI 7d 2026-07-01~07-08 evidence shows
+        // gz.com zone_legacy_disabled_skip 10687755 ~5/wk (estimated post-v5.24 residual
+        // comes mostly from showHomepageMidGrid — this path).
         loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
           // Monetag script loaded successfully — they injected an iframe/element
           container.setAttribute('data-filled', '1');
@@ -1609,30 +1606,9 @@
           container.style.textAlign = 'center';
           container.style.padding = '12px 0';
         }).catch(function() {
-          // 3rd tier: legacy Attractive zone fallback
-          if (!canShowAd('homepage_banner')) return;
-          loadZone(CONFIG.ZONES.inpagePushLegacy, container).then(function() {
-            container.setAttribute('data-filled', '1');
-            markAdShown('homepage_banner');
-            container.style.display = 'block';
-            container.style.minHeight = '100px';
-            container.style.textAlign = 'center';
-            container.style.padding = '12px 0';
-          }).catch(function() {
-            // v6.5 Tier 4: Adsterra in-page push (no-op if not enabled or zoneId=0)
-            if (!canShowAd('homepage_banner')) return;
-            loadAdsterraZone(CONFIG.ZONES.adsterraInpagePush, container, 'inpage').then(function() {
-              container.setAttribute('data-filled', '1');
-              markAdShown('homepage_banner');
-              container.style.display = 'block';
-              container.style.minHeight = '100px';
-              container.style.textAlign = 'center';
-              container.style.padding = '12px 0';
-            }).catch(function() {
-              // All 4 tiers failed — keep container hidden (no white box)
-              container.style.display = 'none';
-            });
-          });
+          // Tier 1 failed — keep hidden (no white box)
+          container.style.display = 'none';
+          trackAdEvent('homepage_banner_no_fill', { network: 'monetag', reason: 'v5.25_tier1_failed', zoneId: CONFIG.ZONES.inpagePush });
         });
       }, 2000);
 
