@@ -5030,3 +5030,31 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
   - https://so.html5.qq.com/page/real/search_news?docid=70000021_0766950d08113752 (CSS Grid Lanes WebKit docs, Dec 28 2025)
   - https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Safari 26.4 191 bug fixes + Grid Lanes ship, March 25 2026)
   - https://www.sohu.com/a/1028338060_122652494 (2026 web-game industry three shifts, May 27 2026)
+
+## [v1.157.0] - 2026-07-08
+### Added
+- 8 new test cases from July-8 2026 industry research (R274, 4h cadence cycle 36):
+  - [S-347] **[P1]** Safari 26.5 WebKit CVE-2026-28962 — content-security-policy bypass leaks user sensitive information (May 14 2026, Apple Security Update)
+  - [W-300] **[P2]** Chrome 150 + Edge 150 stable release (Jul 6 2026) — Chromium 132 base + Gemini in Chrome AI Mariner host-permissions expansion
+  - [G-184] **[P2]** WICG "HTML-in-Canvas" API proposal (May 28 2026) — DOM + CSS can now be drawn into a `<canvas>` context, potentially obsoleting html2canvas
+  - [G-185] **[P2]** WebGPU adoption accelerating 2026 — emerging rendering context with Canvas2D/WebGL fall-back compliance requirements
+  - [P-139] **[P2]** Core Web Vitals 2026 INP / LCP / CLS optimization tightening — INP replaces FID as the primary interactivity metric, with strict 200ms "good" threshold
+  - [C-207] **[P2]** Safari 26 release-plan vs shipped divergence — gclid/fbclid tracking-parameter filter (134226694) announced, then PULLED from the actual ship (Jul 8 2026 confirmed)
+  - [B-198] **[P2]** Chrome 150 / Edge 150 AI assistant host-permission expansion — Gemini-in-Chrome / Edge-Copilot can read full DOM + cookies + localStorage of every page (Jul 6 2026)
+  - [PC-035] **[P3]** Steam steamwebhelper 2026 GPU-driver compatibility failures — a 2026 player-experience pattern that mirrors GameZipper's canvas-rendering risk surface
+### Sources
+- mcp_minimax_search_web_search queries (2026-07-08):
+  - "HTML5 browser game security vulnerability CVE 2026 Chrome WebKit Safari"
+  - "casual game UX complaint 2026 haptics dark mode accessibility"
+  - "Chrome Edge Safari update July 2026 release breaking change web API"
+  - "browser game performance Core Web Vitals 2026 INP CLS regression"
+  - "WebGPU Canvas2D bug 2026 rendering issue canvas game"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0236a054d4370952 (Safari 26.5 WebKit CVE-2026-28962 CSP bypass, May 14 2026)
+  - http://www.downxia.com/downinfo/417615.html (Edge 150.0.4078.48 stable release, Jul 6 2026)
+  - https://www.bear20.com/pcwin/137/725864137.html (Chrome 149 / 150 latest + AI Mariner host-permissions)
+  - https://www.sohu.com/a/1028944399_122066678 (WICG HTML-in-Canvas API, May 28 2026)
+  - https://www.digitalapplied.com/blog/core-web-vitals-2026-inp-lcp-cls-optimization-guide (Core Web Vitals 2026 INP guide, Feb 15 2026)
+  - https://zhuanlan.zhihu.com/p/412789348 (WebGPU Canvas-context integration spec, 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_47169e72cb991952 (Steam steamwebhelper 2026 GPU-driver crash pattern, Apr 21 2026)
+  - https://cloud.tencent.com/developer/article/2637644 (Safari 26 release-plan vs shipped divergence — gclid/fbclid filter pulled, Jul 8 2026)
