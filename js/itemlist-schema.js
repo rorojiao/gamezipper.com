@@ -591,8 +591,10 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":586,"url":"https://gamezipper.com/kaleidoscope-puzzle/","name":"Kaleidoscope Pattern Puzzle"},
     {"@type":"ListItem","position":587,"url":"https://gamezipper.com/hex-tessellation/","name":"Hex Tessellation Puzzle"},
     {"@type":"ListItem","position":588,"url":"https://gamezipper.com/color-pour/","name":"Color Pour Puzzle"},
-    {"@type":"ListItem","position":589,"url":"https://gamezipper.com/pulse-path/","name":"Pulse Path"},{"@type":"ListItem","position":590,"url":"https://gamezipper.com/rullo/","name":"Rullo"}
+    {"@type":"ListItem","position":589,"url":"https://gamezipper.com/pulse-path/","name":"Pulse Path"},
+    {"@type":"ListItem","position":590,"url":"https://gamezipper.com/rullo/","name":"Rullo"},
+    {"@type":"ListItem","position":591,"url":"https://gamezipper.com/spiral-galaxies/","name":"Spiral Galaxies"}
   ],
-  "numberOfItems":590,
-  "description":"590 free browser games you can play instantly"
+  "numberOfItems":591,
+  "description":"591 free browser games you can play instantly"
 };
