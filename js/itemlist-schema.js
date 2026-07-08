@@ -593,8 +593,10 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":588,"url":"https://gamezipper.com/color-pour/","name":"Color Pour Puzzle"},
     {"@type":"ListItem","position":589,"url":"https://gamezipper.com/pulse-path/","name":"Pulse Path"},
     {"@type":"ListItem","position":590,"url":"https://gamezipper.com/rullo/","name":"Rullo"},
-    {"@type":"ListItem","position":591,"url":"https://gamezipper.com/spiral-galaxies/","name":"Spiral Galaxies"}
+    {"@type":"ListItem","position":591,"url":"https://gamezipper.com/spiral-galaxies/","name":"Spiral Galaxies"},
+{"@type":"ListItem","position":592,"url":"https://gamezipper.com/statue-park/","name":"Statue Park"}
+
   ],
-  "numberOfItems":591,
+  "numberOfItems":592,
   "description":"591 free browser games you can play instantly"
 };
