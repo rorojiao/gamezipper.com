@@ -5229,3 +5229,31 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
   - https://zhuanlan.zhihu.com/p/412789348 (WebGPU Canvas-context integration spec, 2026)
   - https://so.html5.qq.com/page/real/search_news?docid=70000021_47169e72cb991952 (Steam steamwebhelper 2026 GPU-driver crash pattern, Apr 21 2026)
   - https://cloud.tencent.com/developer/article/2637644 (Safari 26 release-plan vs shipped divergence — gclid/fbclid filter pulled, Jul 8 2026)
+
+## [v1.163.0] - 2026-07-10
+### Added
+- 8 new test cases from industry research (4h cycle 42, R280)
+- S-362 (P0): iOS 26.5.2 Emergency Update — 30+ WebKit + WebRTC Vulnerability Fixes (Clipboard Hijack + Sandbox Bypass)
+- S-363 (P0): DarkSword iOS Exploit Toolkit (CVE-2026-20643) — Zero-Click WebKit RCE Chain, Code Leaked to GitHub
+- S-364 (P1): CVE-2026-45618 — LiquidJS Remote Code Execution (CVSS 10.0) — Template Injection in Node.js
+- S-365 (P1): CVE-2026-49448 — authentik Authentication Bypass (CVSS 9.8) — Empty POST Request Defeats SSO
+- W-310 (P2): Google Chrome 146 Security Update — 8 High-Severity Memory-Safety Vulnerabilities
+- B-204 (P1): AI Security Research Acceleration — Big Sleep + Mythos AI Agents Discover Browser Zero-Days at Scale
+- G-188 (P2): Casual-Game UI Component Standardization — Unity GUI Pro Kits Set 2026 Visual Expectations
+- P-142 (P2): Web Performance Snippets Toolkit (2026) — Console-First Core Web Vitals Measurement
+### Sources
+- "HTML5 game testing 2026 new techniques browser" (minimax search)
+- "browser security vulnerability July 2026 Chrome Safari WebKit" (minimax search)
+- "casual game UX complaint 2026 mobile web" (minimax search)
+- "Chrome Edge Safari update July 2026" (minimax search)
+- "iOS Safari iOS 26.5 July 2026 WebKit crash" (minimax search)
+- "CVE-2026-20643 DarkSword iOS WebKit zero-click RCE" (minimax search)
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4466a43c44933852 (iOS 26.5.2, Jun 30 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_49769bb3d8933552 (DarkSword, Mar 19 2026)
+  - https://blog.csdn.net/blackorbird/article/details/159265852 (DarkSword deep-dive, Jul 4 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_43469c3423974852 (Chrome 146, Mar 25 2026)
+  - https://blog.csdn.net/weixin_45635831/article/details/161643238 (CVE-2026-45618 LiquidJS + CVE-2026-49448 authentik, Jun 3 2026)
+  - https://new.qq.com/rain/a/20251105A01YTI00 (Big Sleep AI WebKit vulns, Nov 5 2025)
+  - https://blog.csdn.net/gitblog_00804/article/details/155086088 (Web Performance Snippets, Feb 26 2026)
+  - https://blog.csdn.net/2403_88403568/article/details/146059350 (GUI Pro Casual Game UI, Mar 8 2025)
