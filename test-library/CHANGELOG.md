@@ -1,3 +1,41 @@
+## [v1.160.0] - 2026-07-09
+### Added
+- 10 new test cases from 2026-07-09 industry research (R277, 4h cadence cycle 39):
+  - [S-354] **[P1]** Chrome 147 Monthly Vulnerability-Flood Cadence — 109 Vulns in 21 Days (Apr 7-28 2026); 70% UAF in Canvas/Skia/V8; Each Chrome Point Release Now a Regression Trigger
+  - [S-355] **[P1]** Safari 26.5 CVE-2026-28962 WebKit CSP-Bypass Information Disclosure — Browser-Side CSP Enforcement Bug (Site CSP Correct but Safari Fails to Enforce)
+  - [S-356] **[P2]** Vercel Supply-Chain Attack (May 2026) — Build-Platform-Level Compromise; Attacker Injects Code into Any Static Site the Platform Builds
+  - [W-305] **[P2]** Node.js v24.15.0 LTS Stable require(esm) + v26 Default Temporal — ESM/CJS Interop Silent-Success + Temporal Date API Dual Change
+  - [W-306] **[P3]** JS Ecosystem W19 (May 2026) — PM2 7.0 Bun Rewrite + Vitest Framework-Agnostic + Deno import defer + Astro v7 Alpha; Toolchain Fragmentation Pinning Risk
+  - [C-210] **[P3]** Firefox 152.0.2 Point Release — ETP Strict Default + Continuous Tracker-List Updates; Monetag/AdSense Revenue Risk per Firefox Point Release
+  - [B-201] **[P2]** Chrome 149 NSS_VersionCheck Floor Raise — Linux Launch Failure Recurrence (Ubuntu 18.04/20.04, CentOS 7, Debian 10); libnss3 Upgrade Required
+  - [B-202] **[P3]** Chrome 149 Mobile Lite Mode — Data-Saver Proxy Rewrites/Compresses Game Assets; SRI Breaks, Sprite-Slice Corruption Risk
+  - [PC-038] **[P2]** 2026 Remote-LAN-Coop Surge (UU Accelerator) — Player Expects Cross-Network Multiplayer Without VPN; Browser-Game Instant-Play as Counterweight
+  - [G-184] **[P3]** LeaferJS v2.1.11 (Jul 8 2026) — AI-Era Canvas Engine (70KB, Zero-Dep); AI-Canvas-Library Emergence in Pipeline-Generated Game Code
+### Sources
+- mcp_minimax_search_web_search queries (2026-07-09):
+  - "HTML5 game testing 2026 July new techniques browser"
+  - "browser security vulnerability July 2026 Chrome Safari Firefox CVE"
+  - "casual game UX complaint 2026 July mobile player dark mode haptic"
+  - "Chrome Edge Safari update July 2026 web API breaking change"
+  - "npm pnpm Vite Rollup July 2026 release breaking change migration"
+  - "2026年7月 浏览器 安全漏洞 Chrome Safari Firefox 更新"
+  - "2026年7月 Web前端 新技术 API 发布 JavaScript"
+  - "HTML5 canvas WebGL WebGPU 性能 2026年7月 游戏"
+  - "2026年7月 iOS Safari WebKit bug canvas 回归 游戏"
+  - "2026年7月 Chrome 149 Safari 26.5 Firefox 152 安全更新 CVE"
+- mcp_web_search_prime_extract queries (2026-07-09):
+  - cloud.tencent.com JavaScript weekly W17 + W19 (Node 24.15 require(esm), Node 26 Temporal, PM2 7.0 Bun, Vitest, Deno import defer, Astro v7 Alpha, Vercel supply-chain attack)
+- Note: SearXNG (mcp_web_search_prime_batch_search) not attempted this cycle (7+ prior cycles of 404 downtime); MiniMax (mcp_minimax_search_web_search) + web_search_prime extract used as primary.
+- Key URLs:
+  - https://blog.csdn.net/weixin_42376192/article/details/160847923 (Chrome 147 emergency security update — 30 vulns Apr 28 2026, 109 cumulative in 21 days; 70% UAF in Canvas/Skia/V8)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0236a054d4370952 (Safari 26.5 CVE-2026-28962 WebKit CSP-bypass information disclosure, May 14 2026)
+  - https://cloud.tencent.com/developer/article/2676878 (JavaScript weekly W17 — Vercel supply-chain attack, Node 24.15 require(esm), crates.io→Svelte5, May 29 2026)
+  - https://cloud.tencent.com/developer/article/2677947 (JavaScript weekly W19 — Node 26 Temporal default, PM2 7.0 Bun, Vitest framework-agnostic, Deno import defer, Astro v7 Alpha, May 30 2026)
+  - https://www.downxia.com/downinfo/393352.html (Firefox 152.0.2 stable + ETP Strict default 2000+ trackers, Jun 24 2026)
+  - https://www.downxia.com/downinfo/390794.html (Chrome 149.0.7827.160 mobile + Lite mode 60% data saving, Jun 24 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_47969cf8b5c04652 (UU accelerator remote-LAN-coop for Minecraft/Palworld/Stardew, Apr 3 2026)
+  - http://www.leaferjs.com/ (LeaferJS v2.1.11 AI-era canvas engine, Jul 8 2026)
+
 ## [v1.159.0] - 2026-07-09
 ### Added
 - 8 new test cases from July-9 2026 industry research (R276, 4h cadence cycle 38):
