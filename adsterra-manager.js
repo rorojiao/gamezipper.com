@@ -39,7 +39,8 @@
     var s = document.createElement('script');
     s.async = true;
     s.setAttribute('data-zone', String(zone));
-    s.src = 'https://www.profitabledisplaynetwork.com/' + zone;
+    // v5.14: use effectivecpmnetwork.com (same CDN, not blocked by ad-blockers in proxy chains)
+    s.src = 'https://www.effectivecpmnetwork.com/' + zone;
     if (container) {
       container.appendChild(s);
     } else {

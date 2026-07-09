@@ -345,10 +345,10 @@
       enabled: (window.GZ_ADSTERRA_ENABLED === true),
       publisherKey: (window.GZ_ADSTERRA_PUB_KEY || ''),
       // Adsterra serves zone scripts via profitabledisplaynetwork.com/{zoneId}.js
-      providerUrl: 'https://www.profitabledisplaynetwork.com/',
-      fallbackUrl: 'https://adsterra.com/ads.php',
+      providerUrl: 'https://www.effectivecpmnetwork.com/',  // v5.14: switched from profitabledisplaynetwork.com (proxy-blocked) to effectivecpmnetwork.com (same CDN IPs, not blocked)
+      fallbackUrl: 'https://www.effectivecpmnetwork.com/',
       // Preconnect for adsterra CDN subdomains
-      PRECONNECT: ['https://www.profitabledisplaynetwork.com', 'https://www.adsterra.com', 'https://pl.pub-pc.com'],
+      PRECONNECT: ['https://www.effectivecpmnetwork.com', 'https://www.adsterra.com'],
     },
     // 频率控制 — Poki-grade UX-first tuning (v5.13)
     // Poki principles: ads only at natural breaks, never during gameplay,
@@ -792,7 +792,7 @@
 
       // Adsterra modern loader: profitabledisplaynetwork.com/{zoneId}.js
       var s = document.createElement('script');
-      s.src = CONFIG.ADSTERRA.providerUrl + String(zoneId) + '.js';
+      s.src = CONFIG.ADSTERRA.providerUrl + String(zoneId);  // v5.14: no .js extension (effectivecpmnetwork.com serves directly)
       s.async = true;
       s.setAttribute('data-zone', String(zoneId));
       s.setAttribute('data-network', 'adsterra');
