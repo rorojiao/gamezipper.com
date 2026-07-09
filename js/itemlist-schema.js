@@ -606,8 +606,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":601,"url":"https://gamezipper.com/rail-pool/","name":"Ship Rail Pool"},
     {"@type":"ListItem","position":602,"url":"https://gamezipper.com/look-air/","name":"Look-Air"},
     {"@type":"ListItem","position":603,"url":"https://gamezipper.com/wagiri/","name":"Wagiri"},
-    {"@type":"ListItem","position":604,"url":"https://gamezipper.com/star-battle/","name":"Star Battle"}
+    {"@type":"ListItem","position":604,"url":"https://gamezipper.com/star-battle/","name":"Star Battle"},
+    {"@type":"ListItem","position":605,"url":"https://gamezipper.com/pentominous/","name":"Pentominous"}
   ],
-  "numberOfItems":604,
-  "description":"604 free browser games you can play instantly"
+  "numberOfItems":605,
+  "description":"605 free browser games you can play instantly"
 };
