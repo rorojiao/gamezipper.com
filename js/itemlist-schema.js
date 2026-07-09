@@ -601,8 +601,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":596,"url":"https://gamezipper.com/gappy/","name":"Gappy"},
     {"@type":"ListItem","position":597,"url":"https://gamezipper.com/nurimisaki/","name":"Nurimisaki"},
     {"@type":"ListItem","position":598,"url":"https://gamezipper.com/fill-pix/","name":"Fill-Pix"},
-  {"@type":"ListItem","position":599,"url":"https://gamezipper.com/araf/","name":"Araf"}
+    {"@type":"ListItem","position":599,"url":"https://gamezipper.com/araf/","name":"Araf"},
+    {"@type":"ListItem","position":600,"url":"https://gamezipper.com/canal-view/","name":"Canal View"}
   ],
-  "numberOfItems":599,
-  "description":"599 free browser games you can play instantly"
+  "numberOfItems":600,
+  "description":"600 free browser games you can play instantly"
 };
