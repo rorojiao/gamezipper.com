@@ -235,11 +235,21 @@ let cellSize = 0, gridOffsetX = 0, gridOffsetY = 0;
 
 function resizeCanvas(){
   const wrap = document.getElementById('canvas-wrap');
-  const size = Math.min(wrap.clientWidth-8, wrap.clientHeight-8, 420);
+  // Subtract footer height to prevent canvas-footer overlap (Bug #14b)
+  var footerEl = document.getElementById('game-footer');
+  var footerH = (footerEl && footerEl.offsetHeight > 0) ? footerEl.offsetHeight : 0;
+  const size = Math.min(wrap.clientWidth-8, wrap.clientHeight-8-footerH, 420);
   canvas.width = size; canvas.height = size;
   canvas.style.width = size+'px'; canvas.style.height = size+'px';
   if(state.level){ computeLayout(); render(); }
 }
+
+// Re-resize when footer appears (game-footer.js loads async)
+var _footerCheck_ai = setInterval(function(){
+  var f = document.getElementById('game-footer');
+  if(f && f.offsetHeight > 0){ resizeCanvas(); clearInterval(_footerCheck_ai); }
+}, 2000);
+setTimeout(function(){ clearInterval(_footerCheck_ai); }, 30000);
 
 function computeLayout(){
   const padding = 20;
@@ -731,7 +741,7 @@ updateMenuStats();
 })();
 </script>
 <!-- HR: cross-game navigation + ad revenue integration -->
-<script src="/gz-analytics.js?v=2026071011b8c206ed6" defer></script>
+<script src="/gz-analytics.js?v=202607102aac15f6a22" defer></script>
 <script src="/game-footer.js?v=20260710akichiwake"></script>
 <script src="/monetag-manager.js?v=v514cdn"></script>
 <div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
