@@ -1,85 +1,44 @@
-# Star Battle — BENCHMARK.md (Competitive Analysis)
+# Star Battle — Competitive Benchmark
 
-## Game Overview
-Star Battle (also known as "Two Not Touch", "Queens" on LinkedIn, "Starstruck" on Netflix)
-- **Created by**: Hans "Hns" Eendebak (Netherlands, 2003) for World Puzzle Championship
-- **Core Rules**: Place exactly N stars in every row, column, and outlined region. No two stars may touch — not even diagonally.
-- **Unique solution**: Every valid puzzle has exactly one solution via pure logic.
+## Game: Star Battle (#604)
+- Slug: `star-battle`
+- Type: Nikoli grid placement / constraint logic puzzle
+- Tier: 1 (true zero-gap)
 
-## Top Competitors
+## Catalog Gap Verification (2026-07-09)
+- `star battle` → 0 occurrences in `js/games-data.js`
+- `starbattle` → 0 occurrences
+- `star-battle` → 0 occurrences
+- Conclusion: **TRUE ZERO-GAP** — no competing entry in catalog
 
-### 1. Egghead Games — "Star Battle Puzzles" (iOS/Android)
-- Grid sizes: 8×8 (1★), 10×10 (1-2★), 12×12 (2★), 14×14 (3★)
-- Smart hints that explain logic (not just reveal answer)
-- Ad-free by design, IAP for puzzle volumes
-- Timer + Expert badge, Zen mode (no timer)
-- Tutorial, undo, error checking
+## Rules (Standard Star Battle — gmpuzzles.com)
+1. Place stars into some cells of the grid.
+2. Each row must contain exactly 2 stars (standard variant: 2-star).
+3. Each column must contain exactly 2 stars.
+4. Each outlined region must contain exactly 2 stars.
+5. Stars may not touch each other, not even diagonally (King-move constraint).
 
-### 2. Puzzle Baron — "Star Battles" (Web + Mobile)
-- **30,000+ puzzles** — largest library
-- Timer + competitive leaderboards + Hall of Fame
-- 1-3 star variants
-- Daily puzzles, hints, undo, error checking
-- Ad-supported web
+Source: Grandmaster Puzzles (gmpuzzles.com), Thomas Snyder "Dr. Sudoku Prescribes #16"
+- Master time: 2:00, Expert: 6:00, Novice: 20:00
+- Answer encoding: for each row top→bottom, column index of leftmost star.
 
-### 3. Hoshi — "Star Battle Puzzle" (iOS/Android)
-- 1-5 star range (widest in mobile)
-- Procedural generation = unlimited puzzles
-- Daily + Weekly "Genius Challenge"
-- Timer + global leaderboards
-- 5 difficulty levels (Easy to Diabolical)
+## Competitive Landscape
+- **gmpuzzles.com**: Daily puzzles, PDF export, themes. No interactive browser game.
+- **Puzzle Team / Star Battle apps**: iOS/Android apps with limited free content.
+- **bdressman/star_battle_solver** (GitHub): Solver only, no game.
+- **Puzzle-Baron, Puzzle-Wikipedia**: Reference, no playable game.
+- **No major free browser-based Star Battle** with 30 progressive levels + audio + hints.
 
-### 4. puzzle-star-battle.com (Web)
-- 1-6 stars, including "Shapeless" variants
-- Daily (4★), Weekly (5★), Monthly (6★) specials
-- Timer-based, Patreon for ad-free
-- Print capability
+## Our Differentiation
+- 30 handcrafted levels across 5 tiers (5×5 Beginner → 11×11 Expert)
+- Interactive Canvas with click-to-place, violation highlighting, hint system
+- Region coloring with distinct palette per region for clarity
+- Web Audio API procedural ambient BGM + SFX (place/remove/win/error/hint)
+- 3-star rating, level select, keyboard support, localStorage save
+- Free, no download, mobile-friendly, single-file HTML
 
-### 5. Cooltime — "Star Battle - Logic Puzzle" (Android)
-- Pastel colors, haptic feedback
-- Daily streak tracking
-- 5 difficulty tiers
-
-## Feature Matrix
-
-| Feature | Our Target |
-|---------|-----------|
-| Grid Sizes | 5×5→14×14 (5 sizes) |
-| Star Counts | 1-3 stars |
-| Levels | 25+ (5 tutorial + 20 progressive) |
-| Scoring | Time-based + star rating (1-3★) |
-| Hints | Smart hints (mark invalid cells) |
-| Undo | Full undo stack |
-| Error Checking | Real-time conflict highlighting |
-| Tutorial | Interactive 3-step onboarding |
-| Save/Load | localStorage with version |
-| Dark Mode | Default (GameZipper style) |
-| Sound | Web Audio procedural BGM + SFX |
-| Daily Puzzle | No (static levels) |
-
-## Visual Style Target
-- GameZipper dark gradient background (#0a0a1a → #1a1a2e)
-- Neon accent stars (gold/amber glow with particles)
-- Regions colored with subtle translucent fills
-- Grid lines: soft glow effect
-- Star placement: animated pop-in with sparkle particles
-- Confetti celebration on level complete
-
-## Level Design Blueprint
-| Level | Grid | Stars | Difficulty |
-|-------|------|-------|-----------|
-| 1-3 | 5×5 | 1 | Tutorial (guided) |
-| 4-6 | 6×6 | 1 | Easy |
-| 7-9 | 8×8 | 1 | Medium |
-| 10-14 | 8×8 | 2 | Medium |
-| 15-18 | 10×10 | 2 | Hard |
-| 19-22 | 10×10 | 2 | Hard+ |
-| 23-25 | 12×12 | 2 | Expert |
-| 26-30 | 14×14 | 2-3 | Master |
-
-## Key Differentiators for GameZipper
-1. **Visual polish**: Neon glow stars on dark theme (no competitor does this)
-2. **Full sound design**: BGM + interaction SFX (no competitor has this)
-3. **Smooth animations**: Particles, celebrations, transitions
-4. **Smart error highlighting**: Real-time conflict detection with visual feedback
-5. **Progressive difficulty curve**: 30 levels from tutorial to expert
+## Generation Strategy
+- **Solver-based generation**: Generate random region layouts → solver finds solution → verify uniqueness.
+- **Solver**: Row-by-row combinatorial DFS with pruning (column count, region count, adjacency).
+- **Uniqueness**: Solver must return exactly 1 solution. Reject if 0 or 2+.
+- **Difficulty tiers**: Larger grids + more regions = harder. 5×5 (4 regions) → 11×11 (10+ regions).
