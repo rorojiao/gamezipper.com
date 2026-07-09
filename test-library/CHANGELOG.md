@@ -1,3 +1,37 @@
+## [v1.162.0] - 2026-07-09
+### Added
+- 9 new test cases from 2026-07-09 industry research (R279, 4h cadence cycle 41):
+  - [S-359] **[P1]** Linux KVM "Januscape" 16-Year UAF — Single-VM Tenant Crashes Sibling VMs / Escapes to Host Kernel (Jul 6 2026 Disclosure)
+  - [S-360] **[P2]** AMD Linux GPU Driver BUG() Macro DoS — Malicious GPU Commands Trigger Full Kernel Panic (Jul 8 2026, 30 Patches)
+  - [S-361] **[P3]** CertiK 2026 H1 Web3 Report — $1.32B Losses / 344 Incidents; High-Value-Target Attack Concentration (Jul 8 2026)
+  - [W-310] **[P2]** HeroUI v3 Full Rewrite on Tailwind CSS v4 — Component-Library-to-CSS-Framework Locked-Step Migration Cascade (Jul 9 2026)
+  - [W-311] **[P3]** Visual Studio 2026 + .NET 10 Dual Release — 5000+ Bugfixes + AI Features; IDE Upgrade Mandates Runtime Assessment (Nov 12 2025)
+  - [C-211] **[P2]** Chrome PDF Reader OCR + 12-CVE Blink/Autofill/Media Batch — Browser-Builtin File Viewer as New Attack Surface
+  - [B-203] **[P2]** Entrust TLS Certificate Distrust — CA Trust-Store Breaking Change; Third-Party Endpoints Serving Entrust Certs Break Overnight (Nov 11 2024)
+  - [G-187] **[P3]** 2026 ReAct Agent Native Tool Calling + LangGraph State Machine — AI-Agent Architecture Paradigm Change
+  - [PC-039] **[P3]** Canvas LMS ShinyHunters Page-Defacement Ransomware — Third-Party-Platform Compromise Replaces Served Content (May 6-7 2026)
+### Sources
+- mcp_minimax_search_web_search queries (2026-07-09):
+  - "HTML5 game testing July 2026 new techniques canvas WebGL bug report"
+  - "browser security vulnerability July 2026 CVE Chrome Safari WebKit Firefox"
+  - "Chrome Edge Safari update July 2026 stable release new feature breaking change"
+  - "casual mobile game UX complaint 2026 dark mode haptic accessibility"
+  - "2026年7月 浏览器 更新 Chrome Safari Firefox 漏洞 安全"
+  - "npm pnpm Vite Rollup Bun July 2026 release breaking change migration"
+  - "React Vue Angular Svelte Solid July 2026 release new feature signal"
+  - "网页游戏 2026年7月 安全 漏洞 性能 Canvas WebGL 崩溃"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4026a4f13ce07552 (Linux KVM "Januscape" 16-year UAF, Jul 6 2026 disclosure, Jul 9 2026 report)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6206a4e188769552 (AMD Linux GPU driver BUG() macro DoS, 30 patches, Jul 8 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6266a4f176a31152 (CertiK 2026 H1 Web3 report $1.32B losses 344 incidents, Jul 8 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0056a4f46bf58452 (HeroUI v3 full rewrite on Tailwind CSS v4, Jul 9 2026)
+  - https://k.sina.com.cn/article_7879848900_1d5acf3c401902wn9c.html (Visual Studio 2026 + .NET 10 dual release, Nov 12 2025, ref Apr 12 2026)
+  - https://dcdv.zol.com.cn/918/9180491.html (Chrome PDF Reader OCR + 12-CVE Blink/Autofill/Media batch + Entrust TLS distrust Nov 11 2024)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_83669ecb37745952 (2026 ReAct Agent native Tool Calling + LangGraph state machine, Apr 25 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_7346a21436b78052 (Canvas LMS ShinyHunters page-defacement ransomware retrospective, Jun 4 2026 of May 6-7 2026 incident)
+- Key themes: (1) Linux KVM "Januscape" re-opens the cloud-VM-escape surface that was assumed closed — any GameZipper-adjacent Linux server must be kernel-patched + rebooted; (2) AMD Linux GPU driver BUG() macro turns a malicious/crafted WebGL canvas into a full OS kernel panic — player-support must recognize "whole-system freeze on AMD Linux" as a DRIVER bug, not a GameZipper bug; (3) CertiK 2026 H1 confirms attacks are concentrating on high-value targets (per-incident severity rising) — GameZipper's low-crypto surface is protective, but any payment/web3 integration inherits elevated intensity; (4) HeroUI v3 + Tailwind v4 locked-step migration cascade — adopting the component library FORCES the CSS framework upgrade atomically; (5) Visual Studio 2026 + .NET 10 dual release carries implicit runtime behavior changes via 5000+ bugfixes; (6) Chrome PDF-Reader OCR adds a new text-recognition attack surface to the browser's built-in file viewer; (7) Entrust TLS distrust is the CA-trust-store-breaking-change precedent — third-party endpoints serving distrusted CA certs break overnight with no site-side fix; (8) ReAct Agent architecture moved from prompt-hack tool dispatch to native tool-calling + LangGraph state machines — GameZipper's own Hermes-driven agent flows should migrate for reliability; (9) Canvas LMS ShinyHunters page-defacement shows third-party-platform compromise can REPLACE the content served to GameZipper pages — SRI + CSP are the mitigations.
+- All 9 verified zero-duplicate against v1.161.0 library (max IDs: S-358, W-309, C-210, B-202, G-186, P-141, PWA-005, PC-038 → now S-361, W-311, C-211, B-203, G-187, P-141, PWA-005, PC-039).
+
 ## [v1.161.0] - 2026-07-09
 ### Added
 - 8 new test cases from 2026-07-09 industry research (R278, 4h cadence cycle 40):
