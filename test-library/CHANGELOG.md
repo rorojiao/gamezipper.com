@@ -1,3 +1,34 @@
+## [v1.164.0] - 2026-07-10
+### Added
+- 8 new test cases from 2026-07-10 industry research (R281, 4h cadence cycle 43):
+  - [S-366] **[P0]** Zero Day Clock 2026 — Exploit Window Compressed to Under 2 Hours (Jul 5 2026)
+  - [S-367] **[P1]** CVE-2025-5419 — Chrome V8 OOB Read/Write Heap Corruption Zero-Day (Actively Exploited, Jun 3 2025)
+  - [W-312] **[P2]** Meta Llama API Public Preview Shutdown (Jul 6 2026) — AI Infrastructure Decommission
+  - [W-313] **[P3]** .NET 8 LTS Hard-End Nov 2026 — Forces Blazor/.NET 6-7 Component Migration
+  - [C-212] **[P2]** Edge Adobe PDF Engine Migration Complete (2026 Q1) — Upsell Injection in Native Viewer
+  - [C-213] **[P3]** Edge Extension Publish API V1 Deprecation — 72-Day API Key Expiry Forces CI/CD Rotation
+  - [G-189] **[P2]** 2026 Mobile Game Market — $386B / 55% Mobile / 3B Players — Retention as #1 Strategy
+  - [PC-040] **[P2]** Search Backend 404 Instability — Automated Research Pipeline Failback Resilience (Jul 10 2026)
+### Sources
+- mcp_minimax_search_web_search queries (2026-07-10):
+  - "HTML5 game testing 2026 new techniques browser"
+  - "browser security vulnerability July 2026 Chrome Safari"
+  - "casual game UX complaint 2026 mobile web"
+  - "Chrome Edge Safari update July 2026 web API"
+  - "browser game bug report 2026 common issues HTML5"
+  - "2026年7月 浏览器安全漏洞 Chrome Safari 零日"
+  - "2026年7月 Web API 废弃 移除 浏览器兼容性"
+- Note: SearXNG batch_search returned 404 for all 5 initial queries — fell back to MiniMax search
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4826a4a748f53952 (Zero Day Clock 2026 — exploit window < 2 hours, Jul 5 2026)
+  - https://thehackernews.com/2025/06/new-chrome-zero-day-actively-exploited.html (CVE-2025-5419 Chrome V8 OOB read/write, Jun 3 2025)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0536a4a797978752 (Meta Llama API shutdown, Jul 6 2026)
+  - https://blog.csdn.net/CodeVibe/article/details/159980276 (.NET 8 LTS hard-end Nov 2026, Apr 9 2026)
+  - https://www.ithome.com/0/845/849.htm (Edge Adobe PDF engine migration, Apr 17 2025, completing 2026 Q1)
+  - https://www.sohu.com/a/847537087_362225 (Edge extension Publish API v1 deprecation, Jan 10 2025)
+  - https://www.sohu.com/a/1015491436_121503203 (2026 mobile game market insights, Apr 28 2026)
+  - Internal observation: SearXNG 404 failback (Jul 10 2026)
+
 ## [v1.162.0] - 2026-07-09
 ### Added
 - 9 new test cases from 2026-07-09 industry research (R279, 4h cadence cycle 41):
