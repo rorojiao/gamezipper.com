@@ -1,3 +1,41 @@
+## [v1.161.0] - 2026-07-09
+### Added
+- 8 new test cases from 2026-07-09 industry research (R278, 4h cadence cycle 40):
+  - [S-357] **[P1]** Windows 11 CVE-2026-40369 — Kernel NtQuerySystemInformation Class 253 Sandbox-Escape via Chrome (May 21 2026, CVSS 7.8, was Pwn2Own Berlin 2026 entry)
+  - [S-358] **[P2]** 2026 H1 CVE Report — Linux Kernel 2309 CVEs + Google 1752 CVEs Lead Vulnerability-Flood Pattern (Linuxiac Jul 4 2026)
+  - [W-307] **[P1]** Chrome 150 Stable Release — 2026-06-30 — Chromium 138 + Energy Saver + Memory Saver + AI Mariner Omnibox + Web Platform Deprecations
+  - [W-308] **[P2]** Edge 150 Stable Release — 2026-07-02 — Microsoft Copilot Design Language + Chromium 138 Base
+  - [W-309] **[P2]** Tailwind CSS v4 (2026) — Config-Free, CSS-First Engine — Build-Pipeline Migration Risk
+  - [G-186] **[P2]** CSS Anchor Positioning Module Level 1 (W3C 2026) — Tooltip/Popover Tethering Primitive for Game UI
+  - [P-141] **[P1]** WebGPU vs WebGL 2026 Performance Delta — 22% Framerate-Stability + 60fps High-End vs 45fps WebGL — Forward-Compat Rendering Context
+  - [PWA-005] **[P2]** PWA Service-Worker Update Lifecycle — Waiting/Skip-Waiting/Clients Claim Gotchas for Offline Game-State
+### Sources
+- mcp_minimax_search_web_search queries (2026-07-09):
+  - "HTML5 game testing 2026 July new techniques browser canvas WebGL"
+  - "browser security vulnerability July 2026 CVE Chrome Safari Linux"
+  - "Chrome Edge Safari update July 2026 release web API breaking change"
+  - "casual game UX complaint 2026 July mobile player dark mode"
+  - "WebGPU WebGL Web 2026 性能 canvas 游戏"
+  - "Tailwind CSS v4 2026 release migration breaking change"
+  - "CSS Anchor Positioning 2026 tooltip popover tethering"
+  - "PWA service worker update lifecycle 2026 offline game"
+  - "Edge 150 stable release July 2026 Copilot design"
+  - "Chrome 150 stable release June 2026 energy memory saver"
+- Key URLs:
+  - https://www.donews.com/news/detail/8/6567089.html (Windows 11 CVE-2026-40369 kernel sandbox-escape via Chrome NtQuerySystemInformation class 253, May 21 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8226a48682f87052 (2026 H1 CVE report Linux 2309 + Google 1752, Jul 4 2026)
+  - https://www.jb51.net/softs/76102.html (Chrome 150.0.7871.47 stable, Jul 2 2026)
+  - https://www.browsers.fyi/ (browsers.fyi current versions — Chrome 150 Jun 30, Edge 150 Jul 2 2026)
+  - https://www.bear20.com/pcwin/137/725864137.html (Chrome 150 Energy/Memory Saver modes)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_7396a283ad576252 (Tailwind CSS v4 release — config-free, Rust engine, Jun 10 2026)
+  - https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Anchor_positioning (CSS Anchor Positioning MDN guide, Mar 24 2026)
+  - https://www.w3.org/TR/css-anchor-position-1/ (CSS Anchor Positioning W3C Level 1, Mar 27 2026)
+  - https://playcanvas.com/ (PlayCanvas WebGPU+streaming news, Jul 6 2026)
+  - https://www.lcxw.cn/zJ_wikimwU4M8WuU (WebGPU vs WebGL 22% framerate-stability + 60fps high-end, May 22 2026)
+  - https://zhuanlan.zhihu.com/p/33805089 (PWA service-worker update lifecycle, 2018 baseline + 2026 PWA best practice)
+- Key themes: (1) Chrome 150 Energy/Memory Saver modes are the new tab-freeze dimension that GameZipper must handle via IndexedDB checkpointing + beforeunload state-save; (2) Windows kernel CVE-2026-40369 (Pwn2Own 2026 winner class) is the new browser-to-OS escape vector that GameZipper cannot fix but must disclose in threat model; (3) 2026 H1 Linux/Google CVE-flood (2309+1752) shifts the cadence from "patch on disclosure" to "patch-on-monthly-SLA"; (4) Tailwind v4 config-free paradigm is a 2026 build-pipeline migration risk; (5) WebGPU is now production-ready with measured 22% framerate-stability delta worth a 6-month migration plan; (6) CSS Anchor Positioning lets GameZipper simplify tooltip/popover JS code via native CSS primitive.
+- All 8 verified zero-duplicate against v1.160.0 library (max IDs: S-356, B-202, W-306, C-210, G-185, P-140, PWA-004, PC-038 → now S-358, B-202→ still, W-309, C-210, G-186, P-141, PWA-005, PC-038).
+
 ## [v1.160.0] - 2026-07-09
 ### Added
 - 10 new test cases from 2026-07-09 industry research (R277, 4h cadence cycle 39):
