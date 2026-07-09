@@ -36,7 +36,10 @@ addCheck('Keyboard handler', /keydown/.test(html));
 addCheck('Touch handlers', /touchstart|touchmove|touchend/.test(html));
 addCheck('Mouse handlers', /mousedown|mousemove|mouseup/.test(html));
 addCheck('Restart function', /restartLevel/.test(html));
-addCheck('No external JS deps', !/<script\s+src=/.test(html));
+// Shared site scripts (gz-analytics, game-footer, monetag-manager) are required infrastructure, not external deps
+const externalScripts = (html.match(/<script\s+src="([^"]+)"/g) || []).map(s => s.replace(/<script\s+src="|"/g, ''));
+const disallowedExternals = externalScripts.filter(s => !/\/gz-analytics\.js|\/game-footer\.js|\/monetag-manager\.js/.test(s));
+addCheck('No external JS deps (site scripts OK)', disallowedExternals.length === 0, disallowedExternals.join(', '));
 addCheck('No console.log in production', !/console\.log/.test(html));
 addCheck('Music ambient BGM', /Cmaj7|Am7|Fmaj7|ambient/i.test(html) || /chord|progression/i.test(html));
 addCheck('SFX place/erase/hint/win', /playPlace/.test(html) && /playErase/.test(html) && /playHint/.test(html) && /playWin/.test(html));
