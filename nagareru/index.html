@@ -55,14 +55,14 @@ body{background:linear-gradient(135deg,#0d1117 0%,#161b2e 50%,#0d1117 100%);min-
 .ls-avail{background:rgba(52,211,199,.12);color:#34d3c7;border:1px solid rgba(52,211,199,.25)}
 .ls-done{background:rgba(167,139,250,.15);color:#a78bfa;border:1px solid rgba(167,139,250,.3)}
 .ls-stars{font-size:10px}
-#game-screen{display:none;flex-direction:column;align-items:center;padding:8px;gap:8px;min-height:calc(100vh - 35px);box-sizing:border-box;overflow:hidden}
-#game-header{display:flex;justify-content:space-between;align-items:center;width:min(700px,95vw);padding:4px 8px}
+#game-screen{display:none;flex-direction:column;align-items:center;padding:8px;gap:8px;min-height:calc(100vh - 35px);box-sizing:border-box;overflow-y:auto}
+#game-header{display:flex;justify-content:space-between;align-items:center;width:min(700px,95vw);padding:4px 8px;flex-shrink:0}
 .gh-btn{background:rgba(255,255,255,.08);color:#e0e0f0;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px 14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
 .gh-btn:hover{background:rgba(255,255,255,.15)}
 .gh-info{font-size:14px;color:#34d3c7;font-weight:700}
-#canvas-wrap{position:relative;display:flex;justify-content:center;align-items:center;max-height:calc(100vh - 200px)}
+#canvas-wrap{position:relative;display:flex;justify-content:center;align-items:center;max-height:calc(100vh - 380px);flex-shrink:0}
 #game-canvas{background:#1a1a2e;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.5);touch-action:none;max-width:95vw;max-height:100%}
-#controls-bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:min(700px,95vw);padding:4px}
+#controls-bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:min(700px,95vw);padding:4px;position:sticky;bottom:44px;background:#0d1117;z-index:10;flex-shrink:0}
 .ctrl-btn{background:rgba(255,255,255,.08);color:#e0e0f0;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px 12px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;flex:1;min-width:60px;text-align:center}
 .ctrl-btn:hover{background:rgba(255,255,255,.15)}
 .ctrl-btn.active{background:linear-gradient(135deg,#34d3c7,#a78bfa);color:#0d1117}
@@ -205,12 +205,15 @@ const footerEl=document.getElementById('game-footer');
 const footerH=(footerEl&&footerEl.offsetHeight>0)?footerEl.offsetHeight:44;
 const topnav=document.getElementById('gz-topnav');
 const topnavH=(topnav&&topnav.offsetHeight>0)?topnav.offsetHeight:35;
-// header 44 + controls 44 + status 18 + padding 32 = ~138
+// Use canvas-wrap clientHeight (real available space) when set, fallback to viewport estimate
+const cw=document.getElementById('canvas-wrap');
+const cwH=cw?cw.clientHeight:0;
+const useWrapH=cwH>0?cwH:Math.max(120,window.innerHeight-338-footerH-topnavH);
 const maxW=Math.min(window.innerWidth-20,560);
-const maxH=window.innerHeight-138-footerH-topnavH;
-const cw=Math.floor(Math.min(maxW/C,maxH/R,80));
-cellSize=cw;
-return{w:cw*C,h:cw*R,R,C};
+const maxH=useWrapH;
+const cs=Math.floor(Math.min(maxW/C,maxH/R,80));
+cellSize=cs;
+return{w:cs*C,h:cs*R,R,C};
 }
 function renderGrid(){
 const canvas=document.getElementById('game-canvas');
