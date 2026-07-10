@@ -1,3 +1,39 @@
+## [v1.170.0] - 2026-07-11
+### Added
+- 7 new test cases from 2026-07-11 industry research (R287, 4h cadence cycle 49):
+  - [S-380] **[P0]** WebGPU Compute Shader In-Browser SHA256 — Crypto-Mining Attack Surface (hash-shader project, 2026)
+  - [S-381] **[P1]** WebGPU Compute Shader Particle Simulation — Browser GPU Resource Exhaustion / DoS (10M particles, 2026)
+  - [S-382] **[P2]** 2026 H1 Web3 Security: AI Batch-Scanning Old Contracts — Generalizes to Legacy Game JS (Jul 3 2026)
+  - [S-383] **[P2]** 2026 Check Point Report: ~2000 Attacks/Org/Week, AI-Accelerated Threats, Ransomware +53% (Apr 2026)
+  - [W-324] **[P1]** Core Web Vitals as Direct Google Search Ranking Factor — Poor CWV Reduces Organic Traffic (DebugBear, 2026)
+  - [B-210] **[P2]** WCAG 2.2 Accessibility Compliance — Litigation Risk for Game Sites Lacking Keyboard/ARIA/Contrast (2026)
+  - [P-147] **[P2]** WebGPU + WASM Combined Graphics Pipeline — 3-8x Performance Over JS+WebGL for Physics Games (Mar 2026)
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-11, cycle 49):
+  - "HTML5 game testing techniques 2026 browser canvas WebGL"
+  - "browser security vulnerability 2026 XSS clickjacking WebGL"
+  - "Chrome Safari Edge 2026 web API breaking changes deprecation"
+  - "mobile web game performance 2026 INP interaction latency Core Web Vitals"
+  - "Safari WebKit 2026 WebGL canvas bug regression iOS"
+  - "WebGPU compute shader browser game 2026 particle simulation"
+  - "accessibility WCAG 2.2 AAA 2026 web game screen reader ARIA"
+- Note: SearXNG (mcp__web_search_prime__batch_search) returned HTTP 404 for all 5 initial queries — persistent backend failure since cycle 43 (7th consecutive cycle of SearXNG outage). Fell back to mcp__minimax_search__web_search (consistent fallback provider).
+- Key URLs:
+  - https://github.com/RustyBamboo/hash-shader (SHA256 WebGPU compute shader in Rust — S-380)
+  - https://github.com/voormann/webgpu-compute-shader-particles (WebGPU compute shader particle sim — S-381)
+  - https://blog.csdn.net/2401_87844781/article/details/146311596 (Three.js + WebGPU 10M particle fluid sim — S-381)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_3026a46fcaf34552 (2026 H1 Web3 security report, AI contract scanning — S-382)
+  - https://www.sohu.com/a/1010194947_121851694 (Check Point 2026 security report — S-383)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_94969c4f2d862352 (Check Point: ~2000 attacks/org/week — S-383)
+  - https://www.debugbear.com/docs/metrics/core-web-vitals (CWV as Google ranking factor — W-324)
+  - https://convergeaccessibility.com/ (Accessibility litigation services — B-210)
+  - https://silktide.com/tools/toolbar/ (200+ free WCAG checks — B-210)
+  - https://mrgig.com/ (WCAG 2.2 checker — B-210)
+  - https://blog.csdn.net/gitblog_01177/article/details/158278649 (WebGPU+WASM 3-8x performance — P-147)
+- Key themes: (1) WebGPU's compute shader pipeline — now in ALL 4 major browsers — can execute arbitrary hashing workloads (SHA256) entirely in-browser at GPU speed, making it the perfect vehicle for drive-by crypto-mining via a malicious game page or injected ad script (S-380); (2) The same compute shader power enables GPU resource exhaustion DoS — a buggy or malicious game requesting 10M particles can freeze the entire OS compositor, not just the browser tab (S-381); (3) AI is now used to BATCH-SCAN old code for vulnerabilities at scale — the Web3 report confirms this for smart contracts, but it generalizes to ALL legacy code including GameZipper's 540+ game JS files that were never security-audited (S-382); (4) Attack volume has industrialized to ~2000 attacks/org/week with AI-accelerated threat evolution — GameZipper's cron workers and dev machines are under continuous automated attack (S-383); (5) Core Web Vitals are not just UX metrics but DIRECT Google ranking signals — poor INP/LCP/CLS reduces organic search traffic, the primary acquisition channel for a free game site (W-324); (6) WCAG 2.2 accessibility compliance is a NEW dimension entirely missing from GameZipper's test library — canvas games are inherently inaccessible, and litigation services + 200+ check tools make non-compliance easy to document for lawsuits (B-210); (7) The WebGPU+WASM combined pipeline (Rust→WASM physics + WebGPU rendering) achieves 3-8x performance over JS+WebGL — the architectural paradigm for GameZipper's future physics-heavy games (P-147).
+- All 7 verified zero-duplicate against v1.169.0 library (max IDs: S-379, W-323, B-209, G-194, P-146, PC-043, C-215 → now S-383, W-324, B-210, G-194, P-147, PC-043, C-215).
+
+
 ## [v1.169.0] - 2026-07-11
 ### Added
 - 7 new test cases from 2026-07-11 industry research (R286, 4h cadence cycle 48):
