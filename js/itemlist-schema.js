@@ -619,8 +619,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":614,"url":"https://gamezipper.com/juosan/","name":"Juosan"},
     {"@type":"ListItem","position":615,"url":"https://gamezipper.com/nanro/","name":"Nanro"},
     {"@type":"ListItem","position":616,"url":"https://gamezipper.com/tasquare/","name":"Tasquare"},
-    {"@type":"ListItem","position":617,"url":"https://gamezipper.com/usowan/","name":"Usowan"}
+    {"@type":"ListItem","position":617,"url":"https://gamezipper.com/usowan/","name":"Usowan"},
+    {"@type":"ListItem","position":618,"url":"https://gamezipper.com/nurimeizu/","name":"Nurimeizu"}
   ],
-  "numberOfItems":617,
-  "description":"617 free browser games you can play instantly"
+  "numberOfItems":618,
+  "description":"618 free browser games you can play instantly"
 };
