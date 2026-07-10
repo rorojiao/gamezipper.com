@@ -616,7 +616,7 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":611,"url":"https://gamezipper.com/pencils/","name":"Pencils"},
     {"@type":"ListItem","position":612,"url":"https://gamezipper.com/akichiwake/","name":"Akichiwake"},
     {"@type":"ListItem","position":613,"url":"https://gamezipper.com/juosan/","name":"Juosan"}
-  ],
-  "numberOfItems":613,
+  ,{"@type":"ListItem","position":614,"name":"Nanro","url":"https://gamezipper.com/nanro/"}],
+  "numberOfItems":614,
   "description":"613 free browser games you can play instantly"
 };
