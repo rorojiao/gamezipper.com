@@ -1,3 +1,51 @@
+## [v1.168.0] - 2026-07-10
+### Added
+- 9 new test cases from 2026-07-10 industry research (R285, 4h cadence cycle 47):
+  - [S-375] **[P0]** TanStack npm Supply-Chain Attack — @tanstack/* Ecosystem Impersonation (3rd major npm campaign of 2026 H1, Jul 2026)
+  - [S-376] **[P1]** Safari 26.5 CVE-2026-28962 — WebKit CSP Bypass / Sensitive Info Leak (pre-26.5 users unprotected, May 14 2026)
+  - [W-320] **[P1]** Safari 26 Tracking Parameter Auto-Filtering — gclid/fbclid Stripped, Breaks Google Ads + Meta Attribution
+  - [W-321] **[P2]** Safari 26.4 CSS Grid Lanes + 191 Bug Fixes — New CSS Layout Feature (Mar 25 2026)
+  - [W-322] **[P2]** Rolldown 1.0 + Vite 8 Rust Bundler — 10-30x Faster Builds + Node 26.1 Experimental FFI (Jul 2026)
+  - [B-208] **[P2]** Firefox 141 WebGPU Win10/11 — WebGPU Now in ALL 4 Major Browsers (60fps vs 45fps WebGL)
+  - [P-145] **[P1]** Mobile Browser Game FPS/Touch/Thermal Metrics — 10-min Sustained-Play Benchmark (p1/p50/p99 FPS variance)
+  - [PC-043] **[P2]** View Transitions API Graceful Degradation — ViewTransitionsMock Pattern for Unsupported Browsers
+  - [G-193] **[P3]** 2026 Mobile Web Game Networking Expectations — Stable Connection as Baseline UX
+### Sources
+- mcp_minimax_search__web_search queries (2026-07-10):
+  - "HTML5 game testing 2026 new techniques browser game QA July"
+  - "browser security vulnerability 2026 July CVE Chrome Safari WebGL XSS"
+  - "casual mobile game UX complaint 2026 dark mode accessibility mobile web"
+  - "Chrome Edge Safari update 2026 July stable release web API deprecation"
+  - "WebGPU WebGL canvas game performance 2026 framerate browser game bug"
+- Note: SearXNG (mcp__web_search_prime__batch_search) returned HTTP 404 for all 5 initial queries — persistent backend failure since cycle 43. Fell back to mcp__minimax_search__web_search (consistent fallback provider).
+- Key URLs:
+  - https://cloud.tencent.com/developer/article/2679559 (JavaScript技术周刊 2026 W20 — Rolldown 1.0 / Node 26.1 FFI / TanStack supply-chain / Bun Rust)
+  - https://cloud.tencent.com/developer/article/2677947 (JavaScript技术周刊 2026 W19 — ViewTransitionsMock / Mediabunny)
+  - https://www.sohu.com/a/1022408966_114760 (Safari 26.5 CVE-2026-28962 WebKit CSP bypass, May 14 2026)
+  - https://cloud.tencent.com/developer/article/2637644 (Safari 26 tracking param filtering + fingerprinting prevention)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Safari 26.4 CSS Grid Lanes, 191 bug fixes, Mar 25 2026)
+  - https://new.qq.com/rain/a/20250718A05MX700 (Firefox 141 WebGPU Win10/11, Jul 18 2025→2026 rollout)
+  - https://k.sina.com.cn/article_7857141524_1d452771401902w0pk.html (2026 FPS phone review — frame stability / touch / thermal / battery metrics)
+- Key themes: (1) Safari 26 is a BREAKING-ANALYTICS release — automatic stripping of gclid/fbclid tracking params in regular mode silently breaks Google Ads + Meta conversion attribution for Safari users; GameZipper ad-revenue measurement needs server-side click-ID capture or this is a blind spot (W-320); (2) Safari 26.5 CVE-2026-28962 makes CSP-reliant XSS defenses unreliable on unpatched Safari — if GameZipper deploys CSP headers, verify the bypass path is closed (S-376); (3) WebGPU is now universally available (all 4 major browsers) — feature-detection + graceful WebGL fallback is no longer optional, it's a baseline expectation (B-208); (4) The npm supply-chain attack surface continues to expand — TanStack is the 3rd major ecosystem compromise of 2026 H1 after Ghost and Shai-Hulud; dependency pinning to known-good SHAs is now a P0 hygiene requirement (S-375); (5) Mobile game QA standards have formalized beyond "does it run" — frame-rate stability (p1/p50/p99 variance), touch latency, and thermal throttling are now measurable industry benchmarks that casual browser games must meet (P-145).
+- All 9 verified zero-duplicate against v1.167.0 library (max IDs: S-374, W-319, B-207, G-192, P-144, PC-042, C-215 → now S-376, W-322, B-208, G-193, P-145, PC-043, C-215).
+
+
+## [v1.167.0] - 2026-07-10
+### Added
+- 8 new test cases from 2026-07-10 industry research (R284, 4h cadence cycle 46):
+  - [S-373] **[P0]** CVE-2026-2441 — Chrome Blink CSS Exfiltration Zero-Day (Mar 2026) — CSS Injection Steals CSRF Tokens
+  - [S-374] **[P1]** 2026 Anti-Detect / Fingerprint-Browser Ecosystem — Defeats Ad-Network Fraud Detection
+  - [W-318] **[P2]** Firefox 152 Stable + Project Nova 2026 — Multi-Account Containers + VPN + Power-Saver + AI
+  - [W-319] **[P2]** 2026 Native CSS & JS API Wave — 10 Features Replacing Third-Party Libraries
+  - [B-207] **[P1]** Local-First AI Web Apps 2026 — On-Device ML via WebGPU (25-40 tok/s)
+  - [P-144] **[P2]** CSS Scroll-Driven Animations — Compositor-Thread Animation Eliminates JS Scroll Jank
+  - [G-192] **[P2]** 2026 Casual-Game Fair-Play Expectation Surge — Players Reject Pay-to-Win / Ad-Aggressive
+  - [C-215] **[P2]** Bun Runtime Built-in Headless Browser + Cron — All-in-One Competes with Node + Playwright
+### Sources
+- mcp_minimax_search__web_search (2026-07-10, fallback from SearXNG 404)
+- Note: This entry was missing from CHANGELOG due to a prior cycle gap. Added retroactively in v1.168.0.
+
+
 ## [v1.166.0] - 2026-07-10
 ### Added
 - 8 new test cases from 2026-07-10 industry research (R283, 4h cadence cycle 45):
