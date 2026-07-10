@@ -5355,3 +5355,19 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
   - https://new.qq.com/rain/a/20251105A01YTI00 (Big Sleep AI WebKit vulns, Nov 5 2025)
   - https://blog.csdn.net/gitblog_00804/article/details/155086088 (Web Performance Snippets, Feb 26 2026)
   - https://blog.csdn.net/2403_88403568/article/details/146059350 (GUI Pro Casual Game UI, Mar 8 2025)
+
+## [v1.167.0] - 2026-07-10
+### Added
+- 8 new test cases from 2026-07-10 industry research (R284, 4h cadence cycle 46):
+  - [S-373] **[P0]** CVE-2026-2441 — Chrome Blink Rendering-Engine CSS Exfiltration Zero-Day (Mar 2026) — CSS injection steals CSRF tokens/session cookies via @font-face + attribute selectors
+  - [S-374] **[P1]** 2026 Anti-Detect / Fingerprint-Browser Ecosystem Maturation — Commercial fingerprint spoofing defeats Monetag/AdSense fraud detection
+  - [W-318] **[P2]** Firefox 152 Stable + Project Nova 2026 Roadmap — Multi-Account Containers + VPN + Power-Saver + Smart Window AI
+  - [W-319] **[P2]** 2026 Native CSS & JS API Wave — 10 production-ready features replacing third-party libraries (:has(), Container Queries, Scroll-Driven Animations, Intl, structuredClone)
+  - [B-207] **[P1]** Local-First AI Web Apps 2026 — On-Device ML via WebGPU (25-40 tok/s Transformers.js) shifts inference to browser
+  - [P-144] **[P2]** CSS Scroll-Driven Animations Production-Ready — Compositor-thread animation eliminates JS IntersectionObserver scroll jank
+  - [G-192] **[P2]** 2026 Casual-Game Fair-Play Expectation Surge — Players reject pay-to-win and ad-aggressive monetization in browser games
+  - [C-215] **[P2]** Bun Runtime Built-in Headless Browser + Cron — All-in-one runtime competes with Node + Playwright + node-cron
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-10)
+- Note: SearXNG returned HTTP 404 for all 5 batch queries (4th consecutive cycle of SearXNG failure). Fell back to minimax_search.
+- Key URLs: sitepoint.com CVE-2026-2441, qq.com Firefox 152 Nova, cloud.tencent.com 2026 CSS/JS APIs, sitepoint.com WebGPU vs WASM
