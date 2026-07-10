@@ -29,9 +29,9 @@ let checked = 0;
 
 for (let idx = 0; idx < LEVELS.length; idx++) {
     const level = LEVELS[idx];
-    const R = level.r, C = level.c;
-    const sol = level.sol;  // 2D solution grid (region IDs)
-    const cl = level.cl;    // 2D clue grid (null or number)
+    const R = level.rows, C = level.cols;
+    const sol = level.solution;  // 2D solution grid (region IDs)
+    const cl = level.clues;      // dict "r,c" -> number
     const lvl = idx + 1;
     
     // 1. Verify region sizes
@@ -63,22 +63,21 @@ for (let idx = 0; idx < LEVELS.length; idx++) {
     
     // 2. Verify clue border counts match
     let cluesOk = true;
-    let clueCount = 0;
-    for (let r = 0; r < R; r++) {
-        for (let c = 0; c < C; c++) {
-            if (cl[r][c] === null || cl[r][c] === undefined) continue;
-            clueCount++;
-            const expected = cl[r][c];
-            let cnt = 0;
-            if (r === 0 || sol[r-1][c] !== sol[r][c]) cnt++;
-            if (r === R-1 || sol[r+1][c] !== sol[r][c]) cnt++;
-            if (c === 0 || sol[r][c-1] !== sol[r][c]) cnt++;
-            if (c === C-1 || sol[r][c+1] !== sol[r][c]) cnt++;
-            if (cnt !== expected) {
-                console.log(`  ❌ Level ${lvl}: clue at (${r},${c}) expected ${expected}, computed ${cnt}`);
-                cluesOk = false;
-                allPass = false;
-            }
+    const clueKeys = Object.keys(cl);
+    let clueCount = clueKeys.length;
+    for (const key of clueKeys) {
+        const parts = key.split(',');
+        const r = parseInt(parts[0]), c = parseInt(parts[1]);
+        const expected = cl[key];
+        let cnt = 0;
+        if (r === 0 || sol[r-1][c] !== sol[r][c]) cnt++;
+        if (r === R-1 || sol[r+1][c] !== sol[r][c]) cnt++;
+        if (c === 0 || sol[r][c-1] !== sol[r][c]) cnt++;
+        if (c === C-1 || sol[r][c+1] !== sol[r][c]) cnt++;
+        if (cnt !== expected) {
+            console.log(`  X Level ${lvl}: clue at (${r},${c}) expected ${expected}, computed ${cnt}`);
+            cluesOk = false;
+            allPass = false;
         }
     }
     
@@ -89,7 +88,7 @@ for (let idx = 0; idx < LEVELS.length; idx++) {
     if (!sizesOk || !cluesOk || !regionCountOk) allPass = false;
     
     const status = sizesOk && cluesOk && regionCountOk ? '✅' : '❌';
-    console.log(`  ${status} Level ${lvl}: ${R}x${C} ${level.t} — ${clueCount} clues, ${regionCount}/${expectedRegions} regions ${sizesOk?'✓':'✗'} ${cluesOk?'✓':'✗'}`);
+    console.log(`  ${status} Level ${lvl}: ${R}x${C} ${level.difficulty} — ${clueCount} clues, ${regionCount}/${expectedRegions} regions ${sizesOk?'✓':'✗'} ${cluesOk?'✓':'✗'}`);
     checked++;
 }
 
