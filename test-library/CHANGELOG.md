@@ -1,3 +1,34 @@
+## [v1.166.0] - 2026-07-10
+### Added
+- 8 new test cases from 2026-07-10 industry research (R283, 4h cadence cycle 45):
+  - [S-371] **[P0]** Windows Shell Spoofing CVE-2026-32202 — Incomplete-Patch-Variant-Class (Actively Exploited, May 2026)
+  - [S-372] **[P0]** CVE-2026-47291 Windows HTTP.sys RCE — Pre-Auth + Default-Config-Safe/Tuned-Exposed (June 2026)
+  - [W-316] **[P1]** ECMAScript 2026 Specification Approved (Jun 30 2026) — Math.sumPrecise / Iterator.concat / Array.fromAsync / Error.isError / JSON.rawJSON
+  - [W-317] **[P2]** Node.js 26.0.0 Release (Current Channel, Jul 8 2026) — Temporal API Default + V8 14.x
+  - [B-206] **[P2]** Firefox 152 Stable Release (Jun 17 2026) — Largest UX Redesign of 2026 + JPEG XL Experimental Support
+  - [C-214] **[P2]** First 2026 CVE Volume Forecast — 50K-100K+ CVEs Expected (CVE-Flood Threshold Cross)
+  - [PC-042] **[P2]** Clickjacking Defense Pattern 2026 — X-Frame-Options + CSP frame-ancestors Required Even for Non-Login Game Pages (Concrete Gap on GameZipper)
+  - [G-191] **[P3]** JavaScript Weekly W18 2026 — Vitest Framework-Agnostic Proposal + Bun Rust Port + Deno import defer
+### Sources
+- mcp_minimax_search__web_search queries (2026-07-10):
+  - "HTML5 browser game testing new technique July 2026"
+  - "browser security vulnerability CVE in the wild July 2026"
+  - "casual browser game UX complaint dark mode 2026"
+  - "Chrome Safari Edge Firefox update July 2026 stable release"
+  - "clickjacking XSS web game 2026 attack vector"
+- Note: SearXNG (mcp__web_search_prime__batch_search) returned HTTP 404 for all 5 initial queries — same backend failure pattern as v1.164.0 and v1.165.0. Fell back to mcp__minimax_search__web_search (the consistent failback provider since cycle 43). Search-infrastructure health needs investigation.
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6076a4fc86f46852 (ECMAScript 2026 approval — Jul 10 2026)
+  - https://cloud.tencent.com/developer/article/2677885 (JavaScript技术周刊 2026年第18周 — Node 26 / Temporal / Vitest / Bun Rust / Deno)
+  - https://www.sohu.com/a/1020020937_114765 (Windows Shell spoofing CVE-2026-32202, actively exploited, May 8 2026)
+  - https://avleonov.com/ (CVE-2026-47291 HTTP.sys RCE + MaxRequestBytes config note, Jun 26 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4016a32165940252 (Firefox 152 stable + JPEG XL experimental, Jun 17 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_569698da76e17252 (FIRST 2026 CVE volume forecast 50K-100K+, Feb 12 2026)
+  - https://portswigger.net/web-security/clickjacking / https://www.clickjacktest.com/ / https://www.imperva.com/learn/application-security/clickjacking/ (industry clickjacking defense references, 2026)
+- Key themes: (1) ECMAScript 2026 standardizes realm-agnostic error detection (`Error.isError`) and precise summation (`Math.sumPrecise`) — GameZipper error-boundary code can finally handle cross-realm errors robustly; (2) Node.js 26 default Temporal API + V8 14 synchronization with Chrome reduces dev/prod engine drift — relevant for AI-pipeline tooling that consumes Node-side timestamps; (3) Windows IIS / .NET game-server config trap — `MaxRequestBytes` registry tuning (common for perf) EXPOSES systems to CVE-2026-47291, meaning "performance tuning" and "RCE exposure" are linked through this specific registry; (4) CVE-flood threshold cross: FIRST predicts 50K-100K+ CVEs in 2026 ≈ one CVE every 9 minutes — per-CVE triage is dead; GameZipper security-monitoring must adopt pattern-based alerting; (5) Firefox 152's UI rewrite + clickjacking header defense reminder — GameZipper has no current `X-Frame-Options` / `frame-ancestors` header policy; this is a CONCRETE defense gap that PC-042 surfaces with actionable mitigation steps (Cloudflare Transform Rule or `_headers` file); (6) the JS ecosystem is in a FRAMEWORK-AGNOSTIC phase (Vitest, Bun Rust port, Deno defer, Node 26) — dev tooling should not be locked into single-framework dependencies.
+- All 8 verified zero-duplicate against v1.165.0 library (max IDs: S-370, W-315, C-213, B-205, G-190, P-143, PC-041 → now S-372, W-317, C-214, B-206, G-191, P-143, PC-042).
+
+
 ## [v1.165.0] - 2026-07-10
 ### Added
 - 9 new test cases from 2026-07-10 industry research (R282, 4h cadence cycle 44):
