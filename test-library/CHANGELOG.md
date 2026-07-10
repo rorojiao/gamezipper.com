@@ -1,3 +1,33 @@
+## [v1.169.0] - 2026-07-11
+### Added
+- 7 new test cases from 2026-07-11 industry research (R286, 4h cadence cycle 48):
+  - [S-377] **[P0]** @antv + echarts-for-react Data-Viz NPM Compromise — Shai-Hulud Hits Visualization Ecosystem (Gov Notification, May 25 2026)
+  - [S-378] **[P1]** Hola Browser Supply-Chain Crypto-Mining — Browser Distribution Channel Compromise (Kaspersky, May 5 2026)
+  - [S-379] **[P2]** IndonesianFoods NPM Spam Package Flood — Volume Attack Overwhelms Registry Review (Kaspersky, Mar 19 2026)
+  - [W-323] **[P2]** Chrome 151 Stable Release — AI Mariner Omnibox + Privacy Sandbox Evolution (Jul 7 2026)
+  - [B-209] **[P2]** 360 Security Browser 2026 AI — Chinese Browser Market Growing with Custom Rendering (Jun 29 2026)
+  - [P-146] **[P2]** ColorOS 16 / Mobile OS Game-Mode — OS-Level Optimization Doesn't Activate for Browser Games (Feb 26 2026)
+  - [G-194] **[P3]** 2026 LAN Co-op Gaming — "Cannot Find Host" / "Room Load Failed" Top Complaints (Apr 20 2026)
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-11):
+  - "HTML5 game testing 2026 new techniques browser game bug July"
+  - "browser security vulnerability 2026 July CVE Chrome Safari Firefox"
+  - "Chrome Edge Safari update 2026 July stable release web API"
+  - "casual mobile game UX accessibility 2026 WCAG dark mode"
+  - "npm supply chain attack 2026 JavaScript framework security"
+- Note: SearXNG (mcp__web_search_prime__batch_search) returned HTTP 404 for all 5 initial queries — persistent backend failure since cycle 43 (6th consecutive cycle of SearXNG outage). Fell back to mcp__minimax_search__web_search (consistent fallback provider).
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0566a13ed1f91252 (国家网络安全通报中心: Shai-Hulud npm supply-chain — @antv/echarts-for-react compromise, 300+ packages, May 25 2026)
+  - https://www.kaspersky.com/blog/tag/supply-chain-attack/ (Hola Browser crypto-mining May 5 2026 + IndonesianFoods npm spam flood Mar 19 2026 + 2025 supply-chain roundup)
+  - https://www.onlinedown.net/soft/1113489.htm (Chrome 151 stable release v151.0.7910.0, AI Mariner, Jul 7 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0786a42769d37852 (360 Security Browser 2026 AI integration, Jun 29 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_21669a024ac50352 (ColorOS 16 game-mode optimization, Feb 26 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_66869e5d11d91952 (2026 LAN co-op gaming networking expectations, Apr 20 2026)
+  - https://cloud.tencent.com/developer/article/2679559 (JavaScript技术周刊 2026 W20 — TanStack supply-chain/Rolldown/Bun, context for S-377)
+- Key themes: (1) The npm supply-chain attack surface has EXPANDED from generic packages (Shai-Hulud, Ghost) to the MOST POPULAR data-visualization libraries in the Chinese dev ecosystem — echarts-for-react and @antv/g2/g6/x6 are used in nearly every Chinese analytics dashboard; if GameZipper's BI dashboard uses them, the compromised versions steal credentials at install time (S-377); (2) Browser products themselves are now attack vectors — Hola Browser shipped a crypto-miner to users, meaning GameZipper games running in compromised browsers will appear broken due to resource theft that GameZipper cannot detect or fix (S-378); (3) Chrome 151 is a new major version with AI Mariner omnibox that may DISINTERMEDIATE game discovery — users typing "play puzzle game" may be routed away from GameZipper to Chrome's built-in suggestions (W-323); (4) Chinese browsers (360, QQ, Sogou) command 40-60% of Chinese browser traffic and may false-positive block Monetag/AdSense scripts as "malicious" — a revenue risk if GameZipper targets Chinese audiences (B-209); (5) Mobile OS game-modes (ColorOS 16, MIUI 14) optimize for NATIVE games but NOT browser tabs — GameZipper browser games run at a structural disadvantage vs native equivalents on the same device (P-146).
+- All 7 verified zero-duplicate against v1.168.0 library (max IDs: S-376, W-322, B-208, G-193, P-145, PC-043, C-215 → now S-379, W-323, B-209, G-194, P-146, PC-043, C-215).
+
+
 ## [v1.168.0] - 2026-07-10
 ### Added
 - 9 new test cases from 2026-07-10 industry research (R285, 4h cadence cycle 47):
