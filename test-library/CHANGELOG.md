@@ -1,3 +1,39 @@
+## [v1.165.0] - 2026-07-10
+### Added
+- 9 new test cases from 2026-07-10 industry research (R282, 4h cadence cycle 44):
+  - [S-368] **[P0]** "Ghost" NPM Supply-Chain Campaign (Feb 2026, Ongoing) — Fake Install Logs Deploy RAT via Hardcoded Package List
+  - [S-369] **[P0]** Self-Propagating Worm-Style NPM Supply-Chain Attack (May 13 2026) — Malicious PR + CI Cache Poisoning + Maintainer Auto-Publish
+  - [S-370] **[P1]** Shai-Hulud NPM Worm Re-Activation (May 25 2026) — 300+ Packages, 600+ Malicious Versions, npm Maintainer Accounts Compromised
+  - [W-314] **[P2]** WICG "HTML-in-Canvas" API Proposal (May 28 2026) — DOM + CSS Renderable Inside `<canvas>` Context, Potentially Obsoletes html2canvas
+  - [W-315] **[P1]** Chrome Emergency Update — WebGPU (Dawn) + V8 Engine High-Severity Memory Corruption Coupled Cluster (Dec 18 2025)
+  - [B-205] **[P3]** WebGL-2D — Canvas2D API Ported to WebGL Context (corbanbrook/webgl-2d, 2026) — Library-Level Hardware Acceleration for Canvas2D
+  - [P-143] **[P2]** WebGPU Context Loss + Recovery Pattern (2026) — `device.lost` + `uncapturederror` Listener Required for Production-Ready WebGPU Games
+  - [G-190] **[P2]** 2026 H1 NPM Supply-Chain Attack Convergence — Shai-Hulud + Ghost + PR-Cache Multiple Campaigns Stacking in Same 16-Week Window
+  - [PC-041] **[P3]** 2026 Browser Game Site Trust Pattern — Cross-Site Ad-Injector Pattern + AdBlock Detector Anti-Pattern (player-UX consensus against aggressive monetization)
+### Sources
+- mcp_minimax_search_web_search queries (2026-07-10):
+  - "HTML5 game testing 2026 new techniques browser canvas WebGL bug report"
+  - "browser security vulnerability July 2026 CVE Chrome Safari WebKit zero-day"
+  - "casual mobile game UX complaint 2026 retention dark mode haptic accessibility"
+  - "Chrome Edge Safari update July 2026 stable release new feature web API breaking change"
+  - "WebGPU WebGL 2D canvas game performance 2026 framerate stability issue"
+  - "HTML-in-Canvas API 2026 web platform new feature Chromium experiment"
+  - "npm supply chain attack July 2026 malware package compromised"
+  - "WebGPU context loss recovery canvas 2026 browser developer experience"
+- Note: SearXNG (mcp__web_search_prime) returned 404 for all 5 initial queries — fell back to mcp__minimax_search__web_search (same as v1.164.0 cycle 43; consistent backend failure pattern). Search infrastructure health should be monitored.
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_53069c5dfb832152 (Ghost campaign, Mar 27 2026)
+  - https://www.sohu.com/a/1022132365_122004016 (Self-propagating worm via PR cache poisoning, May 13 2026)
+  - https://www.sctv.com/news/2058877259321225218 (Shai-Hulud re-activation, May 25 2026)
+  - https://www.sohu.com/a/1028944399_122066678 (HTML-in-Canvas WICG API proposal, May 28 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_429694359bf01052 (Chrome WebGPU + V8 coupled patch, Dec 18 2025)
+  - https://github.com/corbanbrook/webgl-2d (WebGL-2D library, active 2026)
+  - https://www.kaspersky.com/blog/tag/supply-chain-attack/ (2025 supply-chain attack retrospective, Mar 27 2026)
+  - developer.mozilla.org WebGPU docs (device.lost + recovery pattern reference)
+- Key themes: (1) the 2026 H1 NPM supply-chain attack congestion — three SEPARATE campaigns (Ghost, PR-cache, Shai-Hulud re-activation) all within 16 weeks — indicates NPM is now under coordinated multi-vector attack, requiring defense-in-depth rather than single-mitigation; (2) the WICG HTML-in-Canvas proposal marks the first platform-level blurring of the DOM/Canvas boundary, with implications for html2canvas and the entire dom-to-image ecosystem; (3) Chrome's coupled V8+WebGPU memory-corruption patches indicate the JS-engine→GPU-engine trust boundary is a 2026 high-frequency attack surface; (4) WebGPU device-lost recovery is the new MANDATORY resilience pattern for production WebGPU games (WebGL's `webglcontextlost` event had ~3 states; WebGPU's recovery is more complex with more resource types); (5) the 2026 player-UX consensus is shifting AWAY from aggressive monetization (adblock detectors) — GameZipper's ad-supported model is sustainable if it doesn't push the trust boundary.
+- All 9 verified zero-duplicate against v1.164.0 library (max IDs: S-367, W-313, C-213, B-204, G-189, P-142, PC-040, PWA-005 → now S-370, W-315, C-213, B-205, G-190, P-143, PC-041, PWA-005).
+
+
 ## [v1.164.0] - 2026-07-10
 ### Added
 - 8 new test cases from 2026-07-10 industry research (R281, 4h cadence cycle 43):
