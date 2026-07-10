@@ -13,8 +13,7 @@ const GAME_GRADIENTS = [
   'linear-gradient(135deg,#fccb90,#d57eeb)',
   'linear-gradient(135deg,#ff9a9e,#fecfef)',
   'linear-gradient(135deg,#ffecd2,#fcb69f)',
-  'linear-gradient(135deg,#a1c4fd,#c2e9fb)',,{name:"Nanro",emoji:"🔢",cat:"puzzle",tags:["nanro","nanro puzzle","number region puzzle","nikoli puzzle","number placement","region puzzle","logic puzzle","brain teaser","grid puzzle","constraint puzzle","deduction puzzle","unique solution","free browser game","html5","mobile game","no download"],url:"/nanro/",desc:"Play Nanro free online! A Nikoli-style number region placement puzzle. Place numbers in grid cells where each number equals the count of numbered cells in its region. No two orthogonally adjacent numbered cells from different regions can share the same number. 30 unique-solution levels across 5 difficulty tiers from 5x5 Beginner to 8x10 Expert. Hints, undo, 3-star ratings, level select, keyboard support, ambient Web Audio music. No download, mobile-friendly!",isNew:true,status:"live"}
-
+  'linear-gradient(135deg,#a1c4fd,#c2e9fb)',
 ];
 
 const GAMES = [
