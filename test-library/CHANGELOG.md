@@ -5565,3 +5565,23 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
 - "libvpx CVE-2026-1861 heap buffer overflow VP8 VP9 video Chrome 2026" (minimax search)
 - "Chrome Gemini AI Mariner agent auto browsing 2026 web automation" (minimax search)
 - Key URLs: sohu.com/a/1022622771_122004016, blog.csdn.net/OPHKVPS/article/details/159214667, github.com/advisories/GHSA-ffrx-892g-4x38, new.qq.com/rain/a/20260204A0682W00, so.html5.qq.com/page/real/search_news?docid=70000021_6616a05f47995052, cloud.tencent.com/developer/article/2637644, google.cn/chrome/index.html
+
+
+## [v1.174.0] - 2026-07-12
+### Added
+- 7 new test cases from industry research (R291, 4h cycle 53)
+- W-329: Edge 2026 Copilot UI Overhaul — Browser UI Convergence + AI Panel Auto-Open Changes Game Page Rendering
+- W-330: HTML-in-Canvas API (WICG/Chromium) — Unified DOM+Canvas Rendering Changes Feature Detection & Screenshot Capture
+- S-396: Safari 26 Fingerprinting Protection for Known Tracking Scripts — Blocklist Silently Fails Analytics/Ad Scripts
+- S-397: Chrome 2026 One-Time Camera/Microphone Permissions — Single-Use Media Grant Expires After Session
+- S-398: Firefox 150 Mythos AI — 180 High-Severity Bugs Confirmed Triggerable by Normal Browsing
+- P-152: Chrome 2026 WebGPU 2.0 + V8 Engine Overhaul — 30% Faster Load / 25% Lower Memory Changes Game Performance Baseline
+- P-153: Chrome/Edge 2026 Battery-Saver Tab Freezing — Idle Game Tabs Frozen, Timers/RAF Halted Indefinitely
+### Sources
+- "HTML5 game testing 2026 new techniques browser" (minimax search)
+- "Chrome Edge Safari update July 2026 breaking changes" (minimax search)
+- "browser security vulnerability 2026 WebGL XSS CSP bypass" (minimax search)
+- "casual game UX complaint 2026 mobile accessibility" (minimax search)
+- "HTML5 canvas WebGL performance bug 2026 WebKit Chrome" (minimax search)
+- Note: SearXNG (web_search_prime) returned HTTP 404 for all 5 batch queries (5th+ consecutive cycle of SearXNG failure). Fell back to minimax_search.
+- Key URLs: sohu.com/a/1008833159_121956424 (Edge Copilot UI), cloud.tencent.com/developer/article/2637644 (Safari 26 fingerprinting shipped), sohu.com/a/1028944399_122066678 (HTML-in-Canvas API), ppzy.com/app/49612.html (Chrome 2026 WebGPU 2.0/V8/one-time perms/battery saver), so.html5.qq.com/page/real/search_news?docid=70000021_53769fd53ba77252 (Firefox 150 Mythos 180 high-sev confirmed)
