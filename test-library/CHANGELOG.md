@@ -1,3 +1,30 @@
+## [v1.172.0] - 2026-07-11
+### Added
+- 7 new test cases from 2026-07-11 industry research (R289, 4h cadence cycle 51):
+  - [P-149] **[P1]** iOS WebKit-Only Engine Restriction — 28.6% Performance Penalty vs Chromium Browsers (Microsoft Speedometer 3.1, Jun 18 2026)
+  - [P-150] **[P2]** Chrome DevTools Heap Snapshot + Allocation Timeline — Detached DOM + Layout Thrashing Memory Leak Detection (Jul 11 2026)
+  - [W-327] **[P2]** Apple WebKit Interop 2026 — 20 Focus Areas: View Transitions / Navigation API / Scroll-Driven Animations (Feb 13 2026)
+  - [S-387] **[P1]** Firefox 150 + Anthropic Mythos AI — 271 Vulnerabilities, 180 High-Severity Triggerable via Normal Browsing (May 8 2026)
+  - [S-388] **[P2]** 2026 Browser Fingerprinting Arms Race — Canvas/WebGL/Audio/Font Fingerprints Replace Cookies (Apr 24 2026)
+  - [S-389] **[P2]** Google Big Sleep AI Found 5 WebKit Vulnerabilities Confirmed by Apple — AI Bug Hunting Across All Engines (Nov 5 2025)
+  - [S-390] **[P2]** 2026 H1 Web3 Security — AI Batch-Scanning Legacy Contracts Generalizes to Legacy Game JavaScript (Jul 3 2026)
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-11, cycle 51):
+  - "HTML5 game testing techniques 2026 new bugs WebKit Chrome"
+  - "browser security vulnerability 2026 XSS clickjacking WebGL"
+  - "Chrome 140 Safari 18 WebKit breaking changes 2026 web game compatibility"
+  - "mobile game UX accessibility 2026 WCAG dark mode screen reader"
+  - "WebGL canvas memory leak detachment 2026 browser game performance"
+- Note: SearXNG (mcp__web_search_prime__batch_search) returned HTTP 404 for all 5 initial queries — persistent backend failure since cycle 43 (9th consecutive cycle of SearXNG outage). Fell back to mcp__minimax_search__web_search (consistent fallback provider).
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8006a3327f492452 (Microsoft: iOS WebKit 28.6% perf loss — P-149)
+  - https://cloud.tencent.com/developer/article/2681608 (Chrome DevTools Heap Snapshot deep dive — P-150)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_992698e67d835452 (Apple WebKit Interop 2026 — W-327)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_53769fd53ba77252 (Firefox 150 Mythos AI 271 vulns — S-387)
+  - https://blog.csdn.net/shanwei_spider/article/details/160390135 (Browser fingerprinting arms race — S-388)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_163690aad6548652 (Google Big Sleep 5 WebKit vulns — S-389)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_3026a46fcaf34552 (2026 H1 Web3 security AI scanning — S-390)
+
 ## [v1.171.0] - 2026-07-11
 ### Added
 - 8 new test cases from 2026-07-11 industry research (R288, 4h cadence cycle 50):
