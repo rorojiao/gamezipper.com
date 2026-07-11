@@ -623,8 +623,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":618,"url":"https://gamezipper.com/nanro/","name":"Nanro"},
     {"@type":"ListItem","position":619,"url":"https://gamezipper.com/tasquare/","name":"Tasquare"},
     {"@type":"ListItem","position":620,"url":"https://gamezipper.com/usowan/","name":"Usowan"},
-    {"@type":"ListItem","position":621,"url":"https://gamezipper.com/balance-loop/","name":"Balance Loop"}
+    {"@type":"ListItem","position":621,"url":"https://gamezipper.com/balance-loop/","name":"Balance Loop"},
+    {"@type":"ListItem","position":622,"url":"https://gamezipper.com/round-trip/","name":"Round Trip"}
   ],
-  "numberOfItems":621,
-  "description":"621 free browser games you can play instantly"
+  "numberOfItems":622,
+  "description":"622 free browser games you can play instantly"
 };
