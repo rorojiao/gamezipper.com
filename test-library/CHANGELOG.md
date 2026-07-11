@@ -1,3 +1,34 @@
+## [v1.171.0] - 2026-07-11
+### Added
+- 8 new test cases from 2026-07-11 industry research (R288, 4h cadence cycle 50):
+  - [S-384] **[P1]** Safari 26 Tracking Parameter Stripping — gclid/fbclid Removed, Breaks Analytics/Ad Attribution (Jul 11 2026)
+  - [S-385] **[P0]** CVE-2026-28962 — WebKit CSP Bypass Enables Sensitive Data Exfiltration, Safari < 26.5 (May 14 2026)
+  - [S-386] **[P0]** CVE-2026-20643 "DarkSword" — WebKit Zero-Click RCE, 42K+ iOS Devices Compromised (May 20 2026)
+  - [W-325] **[P2]** WebAssembly 2.0 Multithreading + Memory Management — Browser Game Architecture Shift (Jun 8 2026)
+  - [W-326] **[P2]** Chrome 151 AI Mariner Omnibox — AI-Suggested URLs Change Game Discovery Flow (Jul 7 2026)
+  - [B-211] **[P3]** Edge 2026 Copilot-Design UI Overhaul — Rounded Corners May Shift Game Layout Boundaries (Apr 13 2026)
+  - [B-212] **[P3]** Interop 2025 Safari Breakthrough — Reduces Safari-Specific CSS/JS Workarounds (Feb 7 2026)
+  - [P-148] **[P2]** WASI 1.0 + Component Model — Server-Client WASM Code Sharing Enables Anti-Cheat Score Validation (Jan 16 2026)
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-11, cycle 50):
+  - "HTML5 game testing 2026 new techniques browser compatibility"
+  - "browser security vulnerability 2026 XSS clickjacking Safari Chrome"
+  - "Chrome Edge Safari July 2026 breaking changes web API deprecation"
+  - "casual mobile game UX complaints 2026 accessibility dark mode haptic"
+  - "Safari 26 tracking parameter filtering gclid fbclid analytics impact 2026"
+  - "CVE-2026 WebKit CSP bypass vulnerability Safari 26.5"
+  - "WebGPU WebAssembly WASM game performance benchmark 2026"
+- Note: SearXNG (mcp__web_search_prime__batch_search) returned HTTP 404 for all 5 initial queries — persistent backend failure since cycle 43 (8th consecutive cycle of SearXNG outage). Fell back to mcp__minimax_search__web_search (consistent fallback provider).
+- Key URLs:
+  - https://cloud.tencent.com/developer/article/2637644 (Safari 26 tracking param filtering — S-384)
+  - https://finance.sina.com.cn/tech/digi/2026-05-14/doc-inhxvtwn8763233.shtml (CVE-2026-28962 CSP bypass — S-385)
+  - https://blog.csdn.net/weixin_42376192/article/details/160577800 (CVE-2026-20643 DarkSword zero-click — S-386)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0036a264f5247152 (WASM 2.0 multithreading — W-325)
+  - https://www.onlinedown.net/soft/1113489.htm (Chrome 151 stable — W-326)
+  - https://www.sohu.com/a/1008833159_121956424 (Edge 2026 Copilot UI — B-211)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8876986781b34152 (Interop 2025 Safari — B-212)
+  - https://new.qq.com/rain/a/20260116A03O8Y00 (WASI 1.0 Component Model — P-148)
+
 ## [v1.170.0] - 2026-07-11
 ### Added
 - 7 new test cases from 2026-07-11 industry research (R287, 4h cadence cycle 49):
