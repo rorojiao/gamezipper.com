@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kojun — Free Online Region Number Puzzle | GameZipper</title>
+<meta name="description" content="Play Kojun free online! A Nikoli-style number-placement puzzle where each region must contain 1 to N, adjacent cells differ, and vertical neighbors decrease downward. 30 levels across 5 tiers. No download, mobile-friendly!">
+<link rel="canonical" href="https://gamezipper.com/kojun/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Kojun — Free Online Region Number Puzzle">
+<meta property="og:description" content="A Nikoli-style number placement puzzle. Fill regions with 1-N, respect adjacency and vertical ordering rules. 30 unique levels.">
+<meta property="og:url" content="https://gamezipper.com/kojun/">
+<meta property="og:image" content="/kojun/og-image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kojun — Free Online Number Puzzle">
+<meta name="twitter:description" content="A Nikoli-style region number puzzle. 30 unique levels. No download.">
+<meta name="twitter:image" content="/kojun/og-image.jpg">
+<link rel="icon" href="/kojun/icon.png">
+<style>
+:root{
+  --bg-deep:#04030f;--bg-mid:#0a0820;--ink:#eaf2ff;--muted:#9ba9c8;
+  --cyan:#5bd9ff;--violet:#a78bfa;--pink:#f472b6;--gold:#ffd166;--green:#34d399;--danger:#fb7185;
+  --cell-bg:#1a2348;--cell-bg-hover:#243260;--given-bg:#2a3870;
+  --shadow:0 22px 60px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;overflow-x:hidden;background:#04030f}body{background:radial-gradient(ellipse at 15% 10%,rgba(91,217,255,.18),transparent 35%),radial-gradient(ellipse at 80% 0%,rgba(167,139,250,.20),transparent 38%),radial-gradient(ellipse at 50% 100%,rgba(244,114,182,.10),transparent 50%),linear-gradient(180deg,#04030f,#0a0820 60%,#04030f)}button{font:inherit;color:inherit}body:before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);background-size:48px 48px;mask-image:linear-gradient(#000,transparent 90%);pointer-events:none;z-index:0}
+.gz-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.app{width:min(1200px,100%);margin:0 auto;padding:18px clamp(12px,3vw,28px) 56px;position:relative;z-index:1}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:54px;height:54px;border-radius:17px;background:linear-gradient(135deg,#19224a,#0a102c);border:1px solid rgba(255,255,255,.14);display:grid;place-items:center;box-shadow:0 8px 30px rgba(91,217,255,.25);font-size:28px}
+.brand h1{font-size:clamp(20px,3.5vw,30px);font-weight:800;margin:0;letter-spacing:-.02em;background:linear-gradient(135deg,#5bd9ff,#a78bfa 50%,#f472b6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.brand .sub{font-size:13px;color:var(--muted);margin-top:2px}
+.nav-links{display:flex;gap:8px;flex-wrap:wrap}.nav-links a{color:var(--muted);text-decoration:none;font-size:13px;padding:6px 12px;border-radius:8px;transition:all .15s}.nav-links a:hover{color:var(--cyan);background:rgba(91,217,255,.08)}
+.game-wrap{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+@media(min-width:860px){.game-wrap{grid-template-columns:260px 1fr 220px}}
+.panel{background:rgba(12,16,36,.75);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+.panel h3{margin:0 0 10px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:14px}
+.info-row .lbl{color:var(--muted)}.info-row .val{font-weight:700;font-variant-numeric:tabular-nums}
+.stars{display:flex;gap:4px}.star{font-size:18px;color:rgba(255,255,255,.15);transition:color .3s}.star.filled{color:var(--gold);text-shadow:0 0 12px rgba(255,209,102,.5)}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{padding:9px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;display:flex;align-items:center;gap:6px}
+.btn:hover{background:rgba(91,217,255,.12);border-color:rgba(91,217,255,.3)}.btn:active{transform:scale(.96)}
+.btn.primary{background:linear-gradient(135deg,#5bd9ff,#a78bfa);color:#04030f;border:none}.btn.primary:hover{box-shadow:0 6px 24px rgba(91,217,255,.4)}
+.btn.danger:hover{background:rgba(251,113,133,.12);border-color:rgba(251,113,133,.3)}
+.canvas-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+.canvas-container{position:relative;width:100%;max-width:620px;display:grid;place-items:center}
+#gameCanvas{display:block;border-radius:14px;cursor:pointer;touch-action:none;box-shadow:0 16px 50px rgba(0,0,0,.5);max-width:100%;height:auto}
+.progress-bar{width:100%;max-width:620px;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#34d399,#5bd9ff);transition:width .4s;border-radius:3px}
+.tier-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.tier-cell{aspect-ratio:1;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);transition:all .15s;position:relative}
+.tier-cell:hover{background:rgba(91,217,255,.1);border-color:rgba(91,217,255,.3)}
+.tier-cell.current{background:rgba(91,217,255,.2);border-color:var(--cyan)}
+.tier-cell.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.2)}
+.tier-cell .mini-star{position:absolute;top:1px;right:3px;font-size:9px;color:var(--gold)}
+.tier-section{margin-bottom:12px}.tier-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-weight:600}
+.overlay{position:fixed;inset:0;background:rgba(4,3,15,.85);backdrop-filter:blur(8px);display:none;place-items:center;z-index:100;padding:20px}
+.overlay.show{display:grid}.overlay-card{background:linear-gradient(135deg,#0e1430,#161e44);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:32px;max-width:440px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:popIn .3s ease}
+@keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.overlay-card h2{margin:0 0 8px;font-size:26px;font-weight:800}.overlay-card .big-emoji{font-size:56px;margin-bottom:8px}.overlay-card .msg{color:var(--muted);font-size:15px;margin-bottom:20px;line-height:1.5}
+.overlay-stars{display:flex;justify-content:center;gap:8px;margin-bottom:20px}.overlay-stars .star{font-size:40px}.overlay-stars .star.filled{animation:starPop .4s ease backwards}
+@keyframes starPop{0%{transform:scale(0) rotate(-180deg)}60%{transform:scale(1.3) rotate(10deg)}100%{transform:scale(1) rotate(0)}}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:13px}
+.toggle{width:38px;height:22px;background:rgba(255,255,255,.1);border-radius:11px;position:relative;cursor:pointer;transition:background .2s}.toggle.on{background:var(--green)}.toggle:after{content:"";position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s}.toggle.on:after{left:19px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.legend-item{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)}.legend-dot{width:14px;height:14px;border-radius:4px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(12,16,36,.95);border:1px solid rgba(91,217,255,.3);border-radius:12px;padding:12px 24px;font-size:14px;font-weight:600;z-index:200;transition:transform .3s;pointer-events:none}.toast.show{transform:translateX(-50%) translateY(0)}
+.footer{text-align:center;color:var(--muted);font-size:12px;padding:24px 0;margin-top:20px;border-top:1px solid rgba(255,255,255,.05)}.footer a{color:var(--cyan);text-decoration:none}
+.help-section{margin-top:16px;padding:14px;background:rgba(255,255,255,.02);border-radius:12px;font-size:13px;line-height:1.6;color:var(--muted)}.help-section strong{color:var(--ink)}
+.num-selector{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.num-btn{width:44px;height:44px;border-radius:10px;border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);font-size:20px;font-weight:800;cursor:pointer;display:grid;place-items:center;transition:all .12s;color:var(--ink)}.num-btn:hover{border-color:rgba(91,217,255,.4);transform:translateY(-2px)}.num-btn.selected{background:rgba(91,217,255,.15);border-color:var(--cyan)}.num-btn.erase{font-size:16px;color:var(--danger)}
+</style>
+</head>
+<body>
+<h1 class="gz-sr-only">Kojun — Free Online Region Number Puzzle</h1>
+<div class="app">
+  <div class="top">
+    <div class="brand">
+      <div class="logo">🏰</div>
+      <div>
+        <h1>Kojun</h1>
+        <div class="sub">Region Number Logic Puzzle · 30 Levels</div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="/">🏠 Home</a>
+      <a href="/#puzzle">🧩 Puzzles</a>
+    </div>
+  </div>
+  <div class="game-wrap">
+    <div class="panel" id="leftPanel">
+      <h3>Level Info</h3>
+      <div class="info-row"><span class="lbl">Level</span><span class="val" id="lvlNum">1 / 30</span></div>
+      <div class="info-row"><span class="lbl">Difficulty</span><span class="val" id="lvlTier">Beginner</span></div>
+      <div class="info-row"><span class="lbl">Grid</span><span class="val" id="lvlGrid">—</span></div>
+      <div class="info-row"><span class="lbl">Clues</span><span class="val" id="lvlClues">—</span></div>
+      <div class="info-row"><span class="lbl">Stars</span><div class="stars" id="lvlStars"></div></div>
+      <div class="info-row"><span class="lbl">Time</span><span class="val" id="lvlTime">0:00</span></div>
+      <div class="btn-row">
+        <button class="btn" id="btnPrev">◀ Prev</button>
+        <button class="btn" id="btnNext">Next ▶</button>
+        <button class="btn" id="btnReset">↻ Reset</button>
+        <button class="btn" id="btnHint">💡 Hint (3)</button>
+        <button class="btn" id="btnCheck">✓ Check</button>
+      </div>
+      <div class="help-section">
+        <strong>How to Play:</strong><br>
+        1. Each region must contain numbers 1 to N exactly once (N = region size).<br>
+        2. Orthogonally adjacent cells must have different numbers.<br>
+        3. Within a region, vertically adjacent cells: upper number > lower number.<br><br>
+        <strong>Click</strong> a cell to cycle through numbers. <strong>Right-click</strong> or <strong>long-press</strong> to erase.
+      </div>
+    </div>
+    <div class="canvas-wrap">
+      <div class="canvas-container">
+        <canvas id="gameCanvas"></canvas>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+      <div class="num-selector" id="numSelector"></div>
+    </div>
+    <div class="panel" id="rightPanel">
+      <h3>Levels</h3>
+      <div id="tierGrid"></div>
+      <h3 style="margin-top:16px">Settings</h3>
+      <div class="toggle-row"><span>🔊 Sound Effects</span><div class="toggle on" id="toggleSound"></div></div>
+      <div class="toggle-row"><span>🎵 Music</span><div class="toggle on" id="toggleMusic"></div></div>
+      <div class="toggle-row"><span>⚡ Auto-Check</span><div class="toggle" id="toggleAuto"></div></div>
+    </div>
+  </div>
+  <div class="footer">
+    <p>Kojun — a Nikoli-style region number placement puzzle. Play free, no download.</p>
+    <p>🔗 More <a href="/#puzzle">puzzle games</a> on GameZipper</p>
+  </div>
+</div>
+<div class="overlay" id="winOverlay">
+  <div class="overlay-card">
+    <div class="big-emoji">🎉</div>
+    <h2 id="winTitle">Level Complete!</h2>
+    <div class="overlay-stars" id="winStars"></div>
+    <div class="msg" id="winMsg">Great job! Ready for the next challenge?</div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn" id="btnReplay">↻ Replay</button>
+      <button class="btn primary" id="btnContinue">Next ▶</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="allClearOverlay">
+  <div class="overlay-card">
+    <div class="big-emoji">🏆</div>
+    <h2>All Levels Complete!</h2>
+    <div class="msg">You've mastered all 30 Kojun puzzles. You're a true logic champion!</div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn primary" id="btnRestartAll">Play Again</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+// ===== LEVELS DATA =====
+const LEVELS = [{"id":1,"tier":"Beginner","H":4,"W":5,"regions":[[1,4,4,2,2],[1,1,4,2,3],[1,0,0,0,3],[1,0,0,0,3]],"givens":[[0,3,2,0,1],[3,5,1,2,3],[2,0,4,5,2],[0,2,1,0,1]],"solution":[[4,3,2,3,1],[3,5,1,2,3],[2,6,4,5,2],[1,2,1,3,1]]},{"id":2,"tier":"Beginner","H":4,"W":5,"regions":[[0,0,0,1,2],[3,3,0,1,2],[3,5,4,4,2],[5,5,4,2,2]],"givens":[[0,2,4,2,4],[3,1,0,1,3],[0,3,0,3,0],[1,2,1,5,0]],"solution":[[1,2,4,2,4],[3,1,3,1,3],[2,3,2,3,2],[1,2,1,5,1]]},{"id":3,"tier":"Beginner","H":5,"W":5,"regions":[[2,3,3,1,1],[2,3,3,1,0],[2,4,3,0,0],[2,4,3,3,0],[2,2,5,5,5]],"givens":[[0,3,7,3,2],[4,1,6,1,3],[3,2,0,0,2],[2,0,4,0,1],[1,6,0,3,2]],"solution":[[5,3,7,3,2],[4,1,6,1,3],[3,2,5,4,2],[2,1,4,2,1],[1,6,1,3,2]]},{"id":4,"tier":"Beginner","H":5,"W":5,"regions":[[1,5,3,3,3],[1,5,0,0,3],[5,5,4,0,3],[2,5,4,0,6],[2,2,4,6,6]],"givens":[[2,0,0,4,5],[1,0,4,3,2],[4,0,0,0,1],[3,1,2,1,3],[0,2,1,2,1]],"solution":[[2,5,3,4,5],[1,3,4,3,2],[4,2,3,2,1],[3,1,2,1,3],[1,2,1,2,1]]},{"id":5,"tier":"Beginner","H":5,"W":6,"regions":[[3,5,5,5,4,4],[3,5,5,5,4,4],[3,3,0,0,1,1],[6,6,0,0,2,1],[6,6,6,0,2,1]],"givens":[[4,0,6,0,4,3],[3,2,1,0,2,0],[2,1,4,5,1,0],[5,0,1,3,2,3],[2,0,4,2,1,2]],"solution":[[4,3,6,5,4,3],[3,2,1,4,2,1],[2,1,4,5,1,4],[5,3,1,3,2,3],[2,1,4,2,1,2]]},{"id":6,"tier":"Easy","H":5,"W":6,"regions":[[6,6,6,5,5,5],[0,0,6,6,2,2],[0,0,3,3,3,3],[4,0,3,3,7,7],[4,1,1,1,7,7]],"givens":[[2,1,5,1,2,0],[0,5,4,3,0,2],[0,2,0,0,4,6],[2,1,2,1,0,4],[0,2,1,3,2,1]],"solution":[[2,1,5,1,2,3],[4,5,4,3,1,2],[3,2,3,5,4,6],[2,1,2,1,3,4],[1,2,1,3,2,1]]},{"id":7,"tier":"Easy","H":6,"W":6,"regions":[[5,5,1,1,1,1],[5,5,0,0,1,1],[5,0,0,7,7,7],[3,4,0,2,2,6],[3,4,4,2,2,6],[3,3,4,6,6,6]],"givens":[[0,5,6,2,0,5],[2,3,5,4,1,4],[0,2,3,2,3,1],[4,3,1,0,0,4],[0,1,4,0,1,2],[1,0,2,5,3,1]],"solution":[[4,5,6,2,3,5],[2,3,5,4,1,4],[1,2,3,2,3,1],[4,3,1,4,2,4],[2,1,4,3,1,2],[1,3,2,5,3,1]]},{"id":8,"tier":"Easy","H":6,"W":6,"regions":[[2,2,0,0,5,5],[2,1,0,0,5,5],[2,1,8,8,8,6],[4,1,8,7,8,6],[4,4,7,7,6,6],[4,4,3,3,3,3]],"givens":[[3,4,0,4,0,4],[0,3,2,0,2,0],[1,2,0,2,3,4],[0,1,4,3,1,3],[3,5,2,1,2,1],[2,0,3,4,1,0]],"solution":[[3,4,3,4,3,4],[2,3,2,1,2,1],[1,2,5,2,3,4],[4,1,4,3,1,3],[3,5,2,1,2,1],[2,1,3,4,1,2]]},{"id":9,"tier":"Easy","H":6,"W":6,"regions":[[6,6,6,0,5,5],[6,7,7,0,0,5],[6,7,7,8,8,8],[4,7,3,8,8,1],[4,4,3,2,2,1],[3,3,3,2,2,1]],"givens":[[5,3,4,2,1,3],[2,5,0,1,3,2],[0,4,0,4,2,5],[3,0,0,0,1,3],[2,0,3,2,4,0],[1,5,2,0,3,1]],"solution":[[5,3,4,2,1,3],[2,5,3,1,3,2],[1,4,1,4,2,5],[3,2,4,3,1,3],[2,1,3,2,4,2],[1,5,2,1,3,1]]},{"id":10,"tier":"Easy","H":6,"W":7,"regions":[[4,4,9,6,6,6,8],[4,4,9,9,6,6,8],[3,3,9,9,6,2,2],[3,7,7,0,6,2,1],[3,7,0,0,1,1,1],[0,0,0,0,5,5,5]],"givens":[[0,3,5,0,6,0,0],[1,0,4,2,5,2,1],[3,4,3,1,4,3,2],[0,3,0,0,3,1,4],[0,2,3,4,2,0,1],[5,7,1,2,3,1,2]],"solution":[[4,3,5,1,6,7,2],[1,2,4,2,5,2,1],[3,4,3,1,4,3,2],[2,3,1,6,3,1,4],[1,2,3,4,2,3,1],[5,7,1,2,3,1,2]]},{"id":11,"tier":"Medium","H":6,"W":7,"regions":[[4,4,4,5,5,5,5],[4,4,1,1,1,8,8],[6,6,2,2,1,8,8],[6,6,2,2,9,9,8],[7,7,7,2,9,9,3],[0,0,0,0,0,3,3]],"givens":[[3,5,0,0,2,0,1],[0,0,0,4,3,5,3],[4,2,0,5,2,4,2],[3,1,3,2,4,2,0],[1,3,2,1,3,0,2],[3,0,1,2,4,3,1]],"solution":[[3,5,2,3,2,4,1],[1,4,1,4,3,5,3],[4,2,4,5,2,4,2],[3,1,3,2,4,2,1],[1,3,2,1,3,1,2],[3,5,1,2,4,3,1]]},{"id":12,"tier":"Medium","H":6,"W":7,"regions":[[1,5,5,5,7,9,9],[1,5,5,7,7,9,9],[1,10,10,0,7,9,9],[2,8,10,0,0,9,6],[2,8,8,3,3,3,6],[2,2,8,3,4,4,4]],"givens":[[3,5,0,2,4,7,6],[2,1,0,1,3,0,0],[0,3,0,3,2,4,1],[4,2,1,2,1,3,2],[3,1,4,3,4,0,0],[1,2,3,0,0,0,3]],"solution":[[3,5,4,2,4,7,6],[2,1,3,1,3,5,2],[1,3,2,3,2,4,1],[4,2,1,2,1,3,2],[3,1,4,3,4,2,1],[1,2,3,1,2,1,3]]},{"id":13,"tier":"Medium","H":7,"W":7,"regions":[[4,4,5,9,9,9,7],[3,4,5,5,7,7,7],[3,4,4,5,0,0,7],[3,4,2,2,0,8,1],[6,6,6,2,2,8,1],[6,6,6,10,2,1,1],[10,10,10,10,10,1,1]],"givens":[[1,0,2,3,1,0,3],[3,0,1,4,0,4,2],[2,0,6,3,2,3,0],[1,2,0,0,1,2,5],[0,6,4,2,4,0,3],[3,2,1,6,1,6,2],[0,3,2,1,5,4,1]],"solution":[[1,5,2,3,1,2,3],[3,4,1,4,5,4,2],[2,3,6,3,2,3,1],[1,2,3,5,1,2,5],[5,6,4,2,4,1,3],[3,2,1,6,1,6,2],[4,3,2,1,5,4,1]]},{"id":14,"tier":"Medium","H":7,"W":7,"regions":[[10,10,6,6,2,2,4],[10,10,6,6,2,3,4],[0,10,7,6,2,3,3],[0,10,7,6,2,5,3],[0,10,7,7,1,5,5],[11,8,8,1,1,5,9],[11,8,8,8,9,9,9]],"givens":[[0,7,2,6,4,0,2],[1,6,0,5,3,4,1],[0,5,0,4,2,3,2],[2,3,0,3,0,0,1],[1,2,1,4,3,2,3],[2,3,5,0,2,1,0],[1,2,1,0,3,4,0]],"solution":[[4,7,2,6,4,5,2],[1,6,1,5,3,4,1],[3,5,3,4,2,3,2],[2,3,2,3,1,4,1],[1,2,1,4,3,2,3],[2,3,5,1,2,1,2],[1,2,1,4,3,4,1]]},{"id":15,"tier":"Medium","H":7,"W":7,"regions":[[8,8,8,1,1,1,1],[8,6,4,4,4,3,3],[0,6,6,4,7,7,7],[0,6,11,11,11,7,7],[0,0,11,5,5,5,2],[10,10,10,10,5,5,2],[9,9,9,9,5,2,2]],"givens":[[4,1,3,2,3,4,1],[2,4,1,0,4,0,2],[0,2,0,2,0,3,0],[2,0,2,0,0,2,4],[1,4,1,6,4,5,3],[3,0,4,0,2,3,2],[2,4,0,3,1,4,1]],"solution":[[4,1,3,2,3,4,1],[2,4,1,3,4,1,2],[3,2,3,2,1,3,5],[2,1,2,4,3,2,4],[1,4,1,6,4,5,3],[3,2,4,1,2,3,2],[2,4,1,3,1,4,1]]},{"id":16,"tier":"Hard","H":7,"W":8,"regions":[[11,12,8,8,8,2,2,2],[11,12,12,12,6,6,4,4],[1,1,1,6,6,6,4,4],[7,7,1,3,3,3,3,3],[7,5,5,3,9,9,9,9],[7,7,5,10,9,9,0,9],[7,7,10,10,9,9,0,0]],"givens":[[0,3,1,3,2,0,2,1],[1,2,4,1,3,0,4,3],[4,0,3,4,0,1,2,1],[7,5,0,5,1,6,0,2],[6,1,3,4,0,7,4,3],[3,0,2,3,0,5,3,0],[1,2,1,2,0,1,0,1]],"solution":[[2,3,1,3,2,3,2,1],[1,2,4,1,3,5,4,3],[4,1,3,4,2,1,2,1],[7,5,2,5,1,6,3,2],[6,1,3,4,9,7,4,3],[3,4,2,3,8,5,3,2],[1,2,1,2,6,1,2,1]]},{"id":17,"tier":"Hard","H":7,"W":8,"regions":[[10,10,11,11,11,12,12,12],[10,10,1,11,11,12,0,0],[9,1,1,6,3,8,0,0],[9,1,6,6,3,8,0,0],[9,9,6,3,3,8,2,2],[5,5,7,3,4,8,8,2],[5,5,7,7,4,2,2,2]],"givens":[[4,3,2,0,5,4,1,3],[2,1,4,0,4,2,3,6],[4,0,3,4,5,4,2,0],[3,0,2,3,4,3,0,4],[0,2,1,2,3,2,0,5],[4,0,0,1,2,0,0,3],[1,2,1,0,1,4,2,1]],"solution":[[4,3,2,3,5,4,1,3],[2,1,4,1,4,2,3,6],[4,2,3,4,5,4,2,5],[3,1,2,3,4,3,1,4],[1,2,1,2,3,2,6,5],[4,3,2,1,2,1,5,3],[1,2,1,3,1,4,2,1]]},{"id":18,"tier":"Hard","H":7,"W":8,"regions":[[11,11,9,9,0,8,8,8],[10,10,9,9,0,8,8,8],[10,1,1,0,0,0,12,12],[10,7,7,7,7,0,3,12],[2,7,7,7,3,3,3,12],[2,4,4,6,6,6,13,13],[5,5,4,4,6,6,13,13]],"givens":[[1,0,3,4,6,3,4,0],[3,0,1,2,5,0,0,5],[0,1,2,1,2,4,1,4],[1,6,4,0,7,3,4,3],[0,1,2,3,1,0,3,0],[1,0,3,4,0,3,4,3],[0,1,2,1,2,0,2,1]],"solution":[[1,2,3,4,6,3,4,6],[3,4,1,2,5,1,2,5],[2,1,2,1,2,4,1,4],[1,6,4,5,7,3,4,3],[2,1,2,3,1,2,3,2],[1,4,3,4,5,3,4,3],[2,1,2,1,2,1,2,1]]},{"id":19,"tier":"Hard","H":8,"W":8,"regions":[[3,13,13,13,11,11,11,11],[3,3,6,13,7,11,11,11],[6,6,6,0,7,7,7,7],[6,0,0,0,7,12,12,7],[6,10,1,1,1,1,12,12],[10,10,2,5,4,4,4,12],[8,8,2,5,5,4,4,12],[8,8,2,2,2,9,9,9]],"givens":[[3,0,1,3,0,2,6,0],[2,1,0,2,5,1,3,5],[3,4,5,4,3,7,6,4],[2,3,2,1,0,0,5,1],[0,2,3,2,4,0,4,3],[0,1,4,3,1,5,3,2],[4,0,3,1,0,0,2,1],[3,0,2,5,0,3,1,2]],"solution":[[3,4,1,3,4,2,6,7],[2,1,6,2,5,1,3,5],[3,4,5,4,3,7,6,4],[2,3,2,1,2,6,5,1],[1,2,3,2,4,1,4,3],[3,1,4,3,1,5,3,2],[4,2,3,1,2,4,2,1],[3,1,2,5,1,3,1,2]]},{"id":20,"tier":"Hard","H":8,"W":8,"regions":[[9,9,4,4,12,3,0,0],[9,9,4,4,12,3,0,0],[7,7,5,4,12,10,0,13],[7,5,5,10,10,10,13,13],[8,8,14,10,11,11,6,13],[8,1,14,10,11,11,6,6],[1,1,14,10,2,2,2,6],[1,1,14,10,2,2,2,6]],"givens":[[2,4,2,5,0,2,4,5],[1,3,1,0,0,1,0,3],[0,1,0,3,0,0,1,4],[0,3,1,8,0,0,2,3],[3,1,4,7,2,4,0,1],[2,4,3,6,0,3,1,5],[0,3,2,5,4,6,2,4],[1,2,1,4,3,5,1,0]],"solution":[[2,4,2,5,3,2,4,5],[1,3,1,4,2,1,2,3],[3,1,2,3,1,2,1,4],[2,3,1,8,3,1,2,3],[3,1,4,7,2,4,3,1],[2,4,3,6,1,3,1,5],[5,3,2,5,4,6,2,4],[1,2,1,4,3,5,1,2]]},{"id":21,"tier":"Expert","H":8,"W":8,"regions":[[11,4,4,4,9,8,8,8],[11,4,9,9,9,6,6,6],[11,3,3,3,2,2,14,14],[11,11,1,1,13,13,14,14],[10,10,1,1,13,13,14,14],[10,10,5,1,0,13,14,12],[7,5,5,5,0,15,14,12],[7,7,5,5,15,15,14,12]],"givens":[[5,0,3,2,0,2,0,1],[4,1,2,4,0,3,1,2],[3,0,1,3,2,1,9,0],[2,0,4,5,4,5,8,2],[0,2,3,2,0,0,7,0],[0,1,6,0,0,1,5,3],[2,4,0,5,1,2,4,2],[1,3,2,1,3,1,3,0]],"solution":[[5,4,3,2,3,2,3,1],[4,1,2,4,1,3,1,2],[3,2,1,3,2,1,9,6],[2,1,4,5,4,5,8,2],[4,2,3,2,3,2,7,1],[3,1,6,1,2,1,5,3],[2,4,3,5,1,2,4,2],[1,3,2,1,3,1,3,1]]},{"id":22,"tier":"Expert","H":8,"W":8,"regions":[[8,8,0,0,10,13,13,13],[8,8,0,0,10,10,13,13],[6,8,8,0,10,9,9,13],[6,6,15,15,10,5,2,2],[6,1,12,12,12,5,2,2],[7,1,1,1,5,5,5,2],[7,14,14,14,5,3,3,4],[7,14,14,11,11,11,4,4]],"givens":[[5,4,0,4,5,6,0,3],[3,2,0,2,4,0,4,0],[4,0,0,1,3,1,2,1],[3,0,0,2,0,6,0,5],[1,3,2,0,3,4,2,3],[3,2,1,4,2,3,5,1],[0,0,0,3,0,2,1,2],[1,4,1,2,3,1,3,1]],"solution":[[5,4,5,4,5,6,5,3],[3,2,3,2,4,2,4,2],[4,1,6,1,3,1,2,1],[3,2,1,2,1,6,4,5],[1,3,2,1,3,4,2,3],[3,2,1,4,2,3,5,1],[2,5,2,3,1,2,1,2],[1,4,1,2,3,1,3,1]]},{"id":23,"tier":"Expert","H":8,"W":8,"regions":[[12,12,0,0,1,9,9,9],[12,12,0,0,1,16,9,9],[5,12,11,0,0,16,16,16],[5,5,11,6,6,7,7,16],[2,3,3,6,6,4,7,16],[2,2,8,8,14,4,7,14],[13,13,8,15,14,14,14,14],[13,13,15,15,15,10,10,10]],"givens":[[5,0,2,6,2,0,4,5],[2,3,1,4,1,0,1,0],[3,0,2,3,5,4,6,3],[1,2,0,2,4,0,4,0],[3,1,2,0,3,2,3,0],[0,2,3,0,5,1,2,0],[3,4,0,3,0,6,4,2],[1,0,4,0,2,3,2,1]],"solution":[[5,4,2,6,2,3,4,5],[2,3,1,4,1,5,1,2],[3,1,2,3,5,4,6,3],[1,2,1,2,4,1,4,2],[3,1,2,1,3,2,3,1],[1,2,3,2,5,1,2,3],[3,4,1,3,1,6,4,2],[1,2,4,1,2,3,2,1]]},{"id":24,"tier":"Expert","H":8,"W":8,"regions":[[3,13,13,10,1,1,1,12],[3,6,13,10,5,5,12,12],[3,6,13,14,0,0,7,12],[15,6,14,14,0,0,7,7],[15,11,4,4,0,0,7,7],[15,11,11,4,4,8,16,16],[15,2,2,9,4,8,8,16],[2,2,9,9,9,8,8,16]],"givens":[[3,4,0,2,1,2,0,0],[2,3,2,0,2,1,0,3],[1,2,0,2,5,0,3,0],[4,1,0,1,0,4,2,0],[3,2,5,3,1,3,1,0],[2,1,0,0,0,5,4,3],[1,2,4,3,2,4,3,2],[3,0,2,1,0,1,2,1]],"solution":[[3,4,3,2,1,2,3,4],[2,3,2,1,2,1,2,3],[1,2,1,2,5,6,3,1],[4,1,3,1,2,4,2,5],[3,2,5,3,1,3,1,4],[2,1,3,1,4,5,4,3],[1,2,4,3,2,4,3,2],[3,1,2,1,4,1,2,1]]},{"id":25,"tier":"Expert","H":8,"W":8,"regions":[[2,2,3,3,12,16,16,16],[2,15,3,7,12,14,16,1],[15,15,7,7,12,14,1,1],[15,15,13,7,12,14,1,1],[17,17,13,13,13,14,1,11],[17,10,9,5,0,8,8,11],[4,10,9,5,0,8,11,11],[4,9,9,0,0,6,6,6]],"givens":[[0,0,0,0,4,0,2,0],[2,5,2,4,0,4,0,5],[4,3,1,0,0,0,6,3],[1,2,3,0,0,2,4,0],[2,3,1,4,2,1,2,3],[1,2,4,2,3,2,0,2],[2,1,0,1,2,1,4,1],[0,3,0,4,1,3,1,2]],"solution":[[3,1,3,1,4,3,2,4],[2,5,2,4,3,4,1,5],[4,3,1,3,2,3,6,3],[1,2,3,2,1,2,4,1],[2,3,1,4,2,1,2,3],[1,2,4,2,3,2,3,2],[2,1,2,1,2,1,4,1],[1,3,1,4,1,3,1,2]]},{"id":26,"tier":"Expert","H":8,"W":8,"regions":[[15,15,11,3,3,3,2,2],[15,15,11,11,11,3,2,2],[0,0,0,8,8,3,2,9],[16,0,13,17,17,6,9,9],[16,16,13,17,17,6,14,14],[16,13,13,13,7,14,14,1],[4,12,12,12,7,10,5,1],[4,10,10,10,10,10,5,5]],"givens":[[0,2,4,1,2,5,3,5],[3,0,0,3,1,0,2,0],[4,2,3,1,2,3,0,0],[3,1,5,2,4,0,3,1],[0,0,0,1,3,0,2,4],[1,2,0,4,2,0,0,2],[2,1,3,2,0,6,0,1],[1,3,2,1,0,4,1,3]],"solution":[[4,2,4,1,2,5,3,5],[3,1,2,3,1,4,2,4],[4,2,3,1,2,3,1,2],[3,1,5,2,4,2,3,1],[2,4,3,1,3,1,2,4],[1,2,1,4,2,3,1,2],[2,1,3,2,1,6,2,1],[1,3,2,1,5,4,1,3]]},{"id":27,"tier":"Expert","H":8,"W":8,"regions":[[1,10,14,6,6,15,15,2],[1,10,14,6,6,15,2,2],[10,10,12,12,8,8,2,2],[10,7,12,12,8,8,2,4],[10,7,7,12,5,5,4,4],[16,3,7,12,0,0,9,17],[16,3,3,11,11,11,9,13],[16,16,16,11,11,9,9,13]],"givens":[[2,3,2,3,4,0,0,6],[0,2,0,2,0,2,0,5],[6,1,5,6,3,4,3,1],[5,3,0,0,2,0,2,0],[0,1,4,3,0,0,0,2],[5,3,2,1,0,1,4,1],[3,0,1,0,3,5,0,2],[1,4,2,1,2,1,2,1]],"solution":[[2,3,2,3,4,3,1,6],[1,2,1,2,1,2,4,5],[6,1,5,6,3,4,3,1],[5,3,2,4,2,1,2,3],[4,1,4,3,1,2,1,2],[5,3,2,1,2,1,4,1],[3,2,1,4,3,5,3,2],[1,4,2,1,2,1,2,1]]},{"id":28,"tier":"Expert","H":8,"W":8,"regions":[[1,1,1,0,7,7,6,17],[3,3,3,0,9,7,6,17],[3,11,3,9,9,7,6,15],[11,11,11,10,10,13,13,15],[5,5,11,10,14,14,14,15],[5,18,18,10,2,14,14,15],[16,16,18,2,2,2,8,8],[16,12,12,12,12,4,4,8]],"givens":[[2,0,3,0,0,0,3,2],[4,3,0,1,2,3,0,1],[2,0,1,3,1,2,1,4],[5,2,3,0,0,1,2,0],[0,3,1,2,5,0,4,2],[1,2,0,1,4,1,2,1],[0,3,1,3,1,2,0,2],[0,4,2,0,0,1,2,0]],"solution":[[2,1,3,2,1,4,3,2],[4,3,5,1,2,3,2,1],[2,4,1,3,1,2,1,4],[5,2,3,4,3,1,2,3],[2,3,1,2,5,3,4,2],[1,2,3,1,4,1,2,1],[2,3,1,3,1,2,3,2],[1,4,2,1,3,1,2,1]]},{"id":29,"tier":"Expert","H":8,"W":8,"regions":[[15,13,13,18,18,18,7,8],[15,15,13,16,16,7,7,8],[15,15,5,5,4,4,7,2],[3,3,5,5,4,4,2,2],[3,1,1,5,4,11,11,2],[3,1,1,6,4,11,0,0],[12,12,17,6,4,11,9,0],[14,14,17,10,10,10,9,0]],"givens":[[0,0,0,1,0,2,3,2],[4,0,0,0,1,4,2,0],[1,2,3,5,0,3,0,3],[0,4,2,4,0,1,4,2],[2,0,4,1,5,4,3,1],[0,2,1,2,4,2,1,0],[0,1,2,1,0,1,2,3],[1,2,1,0,1,2,0,2]],"solution":[[5,2,3,1,3,2,3,2],[4,3,1,2,1,4,2,1],[1,2,3,5,7,3,1,3],[3,4,2,4,6,1,4,2],[2,3,4,1,5,4,3,1],[1,2,1,2,4,2,1,4],[2,1,2,1,2,1,2,3],[1,2,1,3,1,2,1,2]]},{"id":30,"tier":"Expert","H":8,"W":8,"regions":[[2,2,1,1,1,11,11,11],[14,2,19,1,7,11,15,15],[14,19,19,1,7,7,12,15],[10,18,8,3,3,3,12,12],[10,18,8,8,0,0,13,13],[10,18,6,0,0,5,5,13],[16,18,6,17,17,4,5,9],[16,16,6,17,4,4,9,9]],"givens":[[3,2,1,5,2,3,0,4],[2,1,2,0,3,2,3,0],[0,0,1,0,2,1,0,1],[3,0,0,2,1,0,1,3],[0,0,0,1,3,0,3,2],[1,2,3,4,2,3,0,1],[2,0,2,3,1,2,1,0],[1,3,0,0,3,1,3,0]],"solution":[[3,2,1,5,2,3,1,4],[2,1,2,4,3,2,3,2],[1,3,1,3,2,1,2,1],[3,4,3,2,1,3,1,3],[2,3,2,1,3,1,3,2],[1,2,3,4,2,3,2,1],[2,1,2,3,1,2,1,2],[1,3,1,2,3,1,3,1]]}];
+
+// ===== GAME STATE =====
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+let currentLevel=0;
+let grid=[];       // player values (0=empty, >0=number)
+let givenGrid=[];  // pre-filled clues (0=not given, >0=given)
+let regionGrid=[]; // region id per cell
+let solGrid=[];    // solution
+let maxNum=1;      // max number on the board (max region size)
+let cellSize=40;
+let hintsLeft=3;
+let startTime=Date.now();
+let timerInterval=null;
+let violations=new Set();
+let won=false;
+let settings={sound:true,music:true,autoValidate:false};
+let progress={};
+let confettiParticles=[];
+let hoveredCell=null;
+
+try{progress=JSON.parse(localStorage.getItem('kojun_progress')||'{}');}catch(e){progress={};}
+try{settings={...settings,...JSON.parse(localStorage.getItem('kojun_settings')||'{}')};}catch(e){}
+
+// ===== AUDIO =====
+let audioCtx=null,musicGain=null,musicNodes=[];
+function initAudio(){if(audioCtx)return;try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+function playTone(f,d=.1,t='sine',v=.15){if(!settings.sound||!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+d);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d);}
+function sfxPlace(){playTone(523,.08,'triangle',.12);}
+function sfxErase(){playTone(330,.08,'triangle',.1);}
+function sfxError(){playTone(180,.15,'sawtooth',.12);}
+function sfxHint(){playTone(660,.1,'sine',.1);setTimeout(()=>playTone(880,.1,'sine',.1),80);}
+function sfxWin(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,.2,'triangle',.15),i*100));}
+let musicPlaying=false;
+function startMusic(){if(!settings.music||!audioCtx||musicPlaying)return;musicPlaying=true;musicGain=audioCtx.createGain();musicGain.gain.value=.035;musicGain.connect(audioCtx.destination);const chords=[[261.63,329.63,392,493.88],[174.61,220,261.63,349.23],[220,261.63,329.63,415.30],[196,246.94,293.66,392]];let ci=0;function pc(){if(!musicPlaying||!musicGain)return;const ch=chords[ci%chords.length];ch.forEach(f=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0,audioCtx.currentTime);g.gain.linearRampToValueAtTime(.3,audioCtx.currentTime+.5);g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+3.5);o.connect(g);g.connect(musicGain);o.start();o.stop(audioCtx.currentTime+3.8);musicNodes.push(o);});ci++;setTimeout(pc,3200);}pc();}
+function stopMusic(){musicPlaying=false;musicNodes.forEach(n=>{try{n.stop();}catch(e){}});musicNodes=[];if(musicGain){musicGain.disconnect();musicGain=null;}}
+
+// ===== LEVEL LOADING =====
+function loadLevel(idx){
+  currentLevel=idx;
+  const L=LEVELS[idx];
+  regionGrid=L.regions.map(r=>r.slice());
+  givenGrid=L.givens.map(r=>r.slice());
+  solGrid=L.solution.map(r=>r.slice());
+  grid=L.givens.map(r=>r.slice()); // start with givens
+  hintsLeft=3;
+  startTime=Date.now();
+  won=false;
+  violations.clear();
+  confettiParticles=[];
+  // Find max number (max region size)
+  maxNum=1;
+  const regionSizes={};
+  for(let r=0;r<L.H;r++)for(let c=0;c<L.W;c++){const rid=regionGrid[r][c];regionSizes[rid]=(regionSizes[rid]||0)+1;}
+  for(const rid in regionSizes)maxNum=Math.max(maxNum,regionSizes[rid]);
+  // Cell size
+  const maxW=580,maxH=520;
+  cellSize=Math.min(maxW/L.W,maxH/L.H);
+  cellSize=Math.max(22,Math.min(cellSize,56));
+  canvas.width=cellSize*L.W;
+  canvas.height=cellSize*L.H;
+  // Update UI
+  document.getElementById('lvlNum').textContent=`${idx+1} / ${LEVELS.length}`;
+  document.getElementById('lvlTier').textContent=L.tier;
+  document.getElementById('lvlGrid').textContent=`${L.W}\u00d7${L.H}`;
+  const nClues=L.givens.flat().filter(v=>v>0).length;
+  document.getElementById('lvlClues').textContent=nClues;
+  document.getElementById('lvlHints').textContent=`Hint (${hintsLeft})`;
+  updateStarsDisplay();
+  updateProgress();
+  updateLevelSelect();
+  updateNumSelector();
+  render();
+}
+
+function updateNumSelector(){
+  const sel=document.getElementById('numSelector');
+  sel.innerHTML='';
+  for(let v=1;v<=maxNum;v++){
+    const b=document.createElement('button');
+    b.className='num-btn';b.textContent=v;b.dataset.v=v;
+    sel.appendChild(b);
+  }
+  const eb=document.createElement('button');
+  eb.className='num-btn erase';eb.textContent='⌫';eb.dataset.v=0;
+  sel.appendChild(eb);
+  // Wire up
+  sel.querySelectorAll('.num-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      sel.querySelectorAll('.num-btn').forEach(b=>b.classList.remove('selected'));
+      const v=parseInt(btn.dataset.v);
+      btn.classList.add('selected');
+      setTimeout(()=>{
+        const all=sel.querySelectorAll('.num-btn.selected');
+        if(all.length>1)all.forEach(b=>b.classList.remove('selected'));
+      },0);
+    };
+  });
+}
+
+function getSelectedNum(){
+  const sel=document.querySelector('.num-btn.selected');
+  return sel?parseInt(sel.dataset.v):-1;
+}
+
+function updateStarsDisplay(){
+  const c=document.getElementById('lvlStars');
+  const stars=progress[LEVELS[currentLevel].id]||0;
+  c.innerHTML='';
+  for(let i=0;i<3;i++){const s=document.createElement('span');s.className='star'+(i<stars?' filled':'');s.textContent='★';c.appendChild(s);}
+}
+
+function updateProgress(){
+  const L=LEVELS[currentLevel];
+  let filled=0,total=L.H*L.W;
+  for(let r=0;r<L.H;r++)for(let c=0;c<L.W;c++){if(grid[r][c]>0)filled++;}
+  const pct=total>0?(filled/total*100):0;
+  document.getElementById('progFill').style.width=pct+'%';
+}
+
+// ===== REGION COLORS =====
+const REGION_COLORS=[
+  '#1e3a5f','#3a1e5f','#1e5f3a','#5f3a1e','#5f1e3a','#1e5f5f','#5f5f1e','#3a5f1e',
+  '#5f1e5f','#1e1e5f','#3a3a5f','#5f3a3a','#3a5f3a','#5f5f3a','#3a3a3a','#1e3a3a',
+  '#3a1e1e','#1e5f1e','#5f1e1e','#1e1e3a'
+];
+function regionColor(rid){return REGION_COLORS[rid%REGION_COLORS.length];}
+
+// ===== RENDERING =====
+const NUM_HEX={1:'#5bd9ff',2:'#34d399',3:'#ffd166',4:'#fb7185',5:'#a78bfa',6:'#f97316',7:'#06d6a0',8:'#ec4899',9:'#84cc16'};
+
+function render(){
+  const L=LEVELS[currentLevel];
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#0c0f24';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(let r=0;r<L.H;r++){
+    for(let c=0;c<L.W;c++){
+      const x=c*cellSize,y=r*cellSize;
+      const rid=regionGrid[r][c];
+      const isGiven=givenGrid[r][c]>0;
+      const val=grid[r][c];
+      const isViol=violations.has(r+','+c);
+      // Cell background based on region
+      ctx.fillStyle=regionColor(rid);
+      ctx.fillRect(x+1,y+1,cellSize-2,cellSize-2);
+      // Given cell highlight
+      if(isGiven){
+        ctx.fillStyle='rgba(255,255,255,.08)';
+        ctx.fillRect(x+1,y+1,cellSize-2,cellSize-2);
+      }
+      // Hovered cell
+      if(hoveredCell&&hoveredCell[0]===r&&hoveredCell[1]===c){
+        ctx.fillStyle='rgba(91,217,255,.15)';
+        ctx.fillRect(x+1,y+1,cellSize-2,cellSize-2);
+      }
+      // Violation highlight
+      if(isViol){
+        ctx.fillStyle='rgba(251,113,133,.25)';
+        ctx.fillRect(x+1,y+1,cellSize-2,cellSize-2);
+      }
+      // Draw region borders (thick lines between different regions)
+      const top=r>0&&regionGrid[r-1][c]!==rid;
+      const bot=r<L.H-1&&regionGrid[r+1][c]!==rid;
+      const lft=c>0&&regionGrid[r][c-1]!==rid;
+      const rgt=c<L.W-1&&regionGrid[r][c+1]!==rid;
+      ctx.strokeStyle='rgba(255,255,255,.7)';
+      ctx.lineWidth=2.5;
+      ctx.beginPath();
+      if(top){ctx.moveTo(x,y+1);ctx.lineTo(x+cellSize,y+1);}
+      if(bot){ctx.moveTo(x,y+cellSize-1);ctx.lineTo(x+cellSize,y+cellSize-1);}
+      if(lft){ctx.moveTo(x+1,y);ctx.lineTo(x+1,y+cellSize);}
+      if(rgt){ctx.moveTo(x+cellSize-1,y);ctx.lineTo(x+cellSize-1,y+cellSize);}
+      ctx.stroke();
+      // Outer border
+      ctx.strokeStyle='rgba(255,255,255,.2)';
+      ctx.lineWidth=1;
+      ctx.strokeRect(x+.5,y+.5,cellSize-1,cellSize-1);
+      // Draw number
+      if(val>0){
+        const color=NUM_HEX[val]||'#eaf2ff';
+        ctx.fillStyle=isGiven?'#eaf2ff':color;
+        ctx.font=`${Math.floor(cellSize*.55)}px Inter,sans-serif`;
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText(val,x+cellSize/2,y+cellSize/2);
+      }
+    }
+  }
+  // Region size hints (small numbers in corner for regions)
+  const L2=LEVELS[currentLevel];
+  const shown=new Set();
+  for(let r=0;r<L2.H;r++){
+    for(let c=0;c<L2.W;c++){
+      const rid=regionGrid[r][c];
+      if(!shown.has(rid)){
+        shown.add(rid);
+        // Find region size
+        let sz=0;
+        for(let rr=0;rr<L2.H;rr++)for(let cc=0;cc<L2.W;cc++)if(regionGrid[rr][cc]===rid)sz++;
+        ctx.fillStyle='rgba(255,255,255,.3)';
+        ctx.font=`${Math.floor(cellSize*.22)}px Inter,sans-serif`;
+        ctx.textAlign='left';
+        ctx.textBaseline='top';
+        ctx.fillText(sz,c*cellSize+4,r*cellSize+3);
+      }
+    }
+  }
+  // Confetti
+  if(confettiParticles.length>0){
+    confettiParticles.forEach(p=>{
+      ctx.fillStyle=p.color;
+      ctx.fillRect(p.x,p.y,p.size,p.size);
+    });
+  }
+}
+
+// ===== VALIDATION =====
+function NB(r,c,H,W){const o=[];if(r>0)o.push([r-1,c]);if(r<H-1)o.push([r+1,c]);if(c>0)o.push([r,c-1]);if(c<W-1)o.push([r,c+1]);return o;}
+
+function checkViolations(){
+  const L=LEVELS[currentLevel];
+  violations.clear();
+  // Rule 1: each region has 1..N exactly once
+  const regionMap={};
+  for(let r=0;r<L.H;r++)for(let c=0;c<L.W;c++){
+    const rid=regionGrid[r][c];
+    if(!regionMap[rid])regionMap[rid]={cells:[],vals:[]};
+    regionMap[rid].cells.push([r,c]);
+    if(grid[r][c]>0)regionMap[rid].vals.push(grid[r][c]);
+  }
+  for(const rid in regionMap){
+    const info=regionMap[rid];
+    const N=info.cells.length;
+    const seen={};
+    for(const v of info.vals){
+      if(seen[v]){// duplicate
+        info.cells.forEach(([r,c])=>{if(grid[r][c]===v)violations.add(r+','+c);});
+      }
+      seen[v]=true;
+    }
+  }
+  // Rule 2: orthogonal neighbors differ
+  for(let r=0;r<L.H;r++){
+    for(let c=0;c<L.W;c++){
+      if(grid[r][c]===0)continue;
+      for(const [nr,nc] of NB(r,c,L.H,L.W)){
+        if(grid[nr][nc]>0&&grid[r][c]===grid[nr][nc]){
+          violations.add(r+','+c);
+          violations.add(nr+','+nc);
+        }
+      }
+    }
+  }
+  // Rule 3: same-region vertical neighbors: upper > lower
+  for(let r=0;r<L.H-1;r++){
+    for(let c=0;c<L.W;c++){
+      if(regionGrid[r][c]===regionGrid[r+1][c]&&grid[r][c]>0&&grid[r+1][c]>0){
+        if(grid[r][c]<=grid[r+1][c]){
+          violations.add(r+','+c);
+          violations.add((r+1)+','+c);
+        }
+      }
+    }
+  }
+  render();
+}
+
+function isComplete(){
+  const L=LEVELS[currentLevel];
+  for(let r=0;r<L.H;r++)for(let c=0;c<L.W;c++){
+    if(grid[r][c]===0)return false;
+  }
+  checkViolations();
+  return violations.size===0;
+}
+
+function checkWin(){
+  if(won)return;
+  if(isComplete()){
+    won=true;
+    sfxWin();
+    spawnConfetti();
+    // Save progress
+    const lvlId=LEVELS[currentLevel].id;
+    const elapsed=Math.floor((Date.now()-startTime)/1000);
+    let stars=1;
+    if(hintsLeft>=2&&elapsed<120)stars=3;
+    else if(hintsLeft>=1&&elapsed<240)stars=2;
+    if(!progress[lvlId]||progress[lvlId]<stars)progress[lvlId]=stars;
+    localStorage.setItem('kojun_progress',JSON.stringify(progress));
+    setTimeout(()=>{
+      document.getElementById('winStars').innerHTML='';
+      for(let i=0;i<3;i++){const s=document.createElement('span');s.className='star'+(i<stars?' filled':'');s.textContent='★';s.style.animationDelay=(i*.15)+'s';document.getElementById('winStars').appendChild(s);}
+      document.getElementById('winOverlay').classList.add('show');
+    },800);
+  }
+}
+
+function spawnConfetti(){
+  const colors=['#5bd9ff','#34d399','#ffd166','#fb7185','#a78bfa'];
+  for(let i=0;i<60;i++){
+    confettiParticles.push({
+      x:canvas.width/2+(Math.random()-.5)*100,
+      y:canvas.height/2,
+      vx:(Math.random()-.5)*8,
+      vy:Math.random()*-8-2,
+      size:Math.random()*6+3,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      life:1
+    });
+  }
+  animateConfetti();
+}
+
+function animateConfetti(){
+  if(confettiParticles.length===0)return;
+  confettiParticles.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.life-=.015;
+  });
+  confettiParticles=confettiParticles.filter(p=>p.life>0&&p.y<canvas.height+50);
+  render();
+  if(confettiParticles.length>0)requestAnimationFrame(animateConfetti);
+}
+
+// ===== INPUT =====
+function getCellFromEvent(e){
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width;
+  const scaleY=canvas.height/rect.height;
+  const x=(e.clientX-rect.left)*scaleX;
+  const y=(e.clientY-rect.top)*scaleY;
+  const c=Math.floor(x/cellSize);
+  const r=Math.floor(y/cellSize);
+  const L=LEVELS[currentLevel];
+  if(r<0||r>=L.H||c<0||c>=L.W)return null;
+  return{r,c};
+}
+
+canvas.addEventListener('mousemove',(e)=>{
+  const cell=getCellFromEvent(e);
+  hoveredCell=cell?[cell.r,cell.c]:null;
+  render();
+});
+
+canvas.addEventListener('mouseleave',()=>{hoveredCell=null;render();});
+
+canvas.addEventListener('click',(e)=>{
+  initAudio();
+  const cell=getCellFromEvent(e);
+  if(!cell)return;
+  const{r,c}=cell;
+  if(givenGrid[r][c]>0)return; // can't change given
+  const sel=getSelectedNum();
+  if(sel>=0){
+    grid[r][c]=grid[r][c]===sel?0:sel;
+  }else{
+    // cycle mode: 0->1->2->...->maxNum->0
+    grid[r][c]=(grid[r][c]+1)%(maxNum+1);
+  }
+  if(grid[r][c]>0)sfxPlace();else sfxErase();
+  if(settings.autoValidate)checkViolations();
+  updateProgress();render();checkWin();
+});
+
+canvas.addEventListener('contextmenu',(e)=>{
+  e.preventDefault();initAudio();
+  const cell=getCellFromEvent(e);
+  if(!cell)return;
+  const{r,c}=cell;
+  if(givenGrid[r][c]>0)return;
+  grid[r][c]=0;
+  sfxErase();
+  if(settings.autoValidate)checkViolations();
+  updateProgress();render();
+});
+
+// Touch support
+let touchTimer=null;
+canvas.addEventListener('touchstart',(e)=>{
+  e.preventDefault();initAudio();
+  const touch=e.touches[0];
+  const cell=getCellFromEvent(touch);
+  if(!cell)return;
+  const{r,c}=cell;
+  if(givenGrid[r][c]>0)return;
+  touchTimer=setTimeout(()=>{
+    grid[r][c]=0;sfxErase();
+    if(settings.autoValidate)checkViolations();
+    updateProgress();render();touchTimer=null;
+  },500);
+},{passive:false});
+
+canvas.addEventListener('touchend',(e)=>{
+  e.preventDefault();
+  if(touchTimer){
+    clearTimeout(touchTimer);touchTimer=null;
+    const touch=e.changedTouches[0];
+    const cell=getCellFromEvent(touch);
+    if(!cell)return;
+    const{r,c}=cell;
+    if(givenGrid[r][c]>0)return;
+    const sel=getSelectedNum();
+    if(sel>=0){
+      grid[r][c]=grid[r][c]===sel?0:sel;
+    }else{
+      grid[r][c]=(grid[r][c]+1)%(maxNum+1);
+    }
+    if(grid[r][c]>0)sfxPlace();else sfxErase();
+    if(settings.autoValidate)checkViolations();
+    updateProgress();render();checkWin();
+  }
+},{passive:false});
+
+// ===== UI BUTTONS =====
+document.getElementById('btnPrev').onclick=()=>{
+  if(currentLevel>0)loadLevel(currentLevel-1);
+};
+document.getElementById('btnNext').onclick=()=>{
+  if(currentLevel<LEVELS.length-1)loadLevel(currentLevel+1);
+};
+document.getElementById('btnReset').onclick=()=>{
+  const L=LEVELS[currentLevel];
+  grid=L.givens.map(r=>r.slice());
+  violations.clear();won=false;
+  updateProgress();render();
+};
+document.getElementById('btnHint').onclick=()=>{
+  if(hintsLeft<=0){showToast('No hints left!');return;}
+  const L=LEVELS[currentLevel];
+  for(let r=0;r<L.H;r++)for(let c=0;c<L.W;c++){
+    if(grid[r][c]!==solGrid[r][c]){
+      grid[r][c]=solGrid[r][c];
+      givenGrid[r][c]=solGrid[r][c]; // make it permanent
+      hintsLeft--;
+      document.getElementById('lvlHints').textContent=`Hint (${hintsLeft})`;
+      sfxHint();
+      if(settings.autoValidate)checkViolations();
+      updateProgress();render();checkWin();
+      return;
+    }
+  }
+};
+document.getElementById('btnCheck').onclick=()=>{
+  checkViolations();
+  if(violations.size===0){
+    const L=LEVELS[currentLevel];
+    let filled=0;
+    for(let r=0;r<L.H;r++)for(let c=0;c<L.W;c++)if(grid[r][c]>0)filled++;
+    if(filled===L.H*L.W)showToast('All correct!');
+    else showToast(`No errors so far (${filled}/${L.H*L.W} filled)`);
+  }else{
+    sfxError();
+    showToast(`${violations.size} cell(s) with errors`);
+  }
+};
+
+// Win overlay buttons
+document.getElementById('btnReplay').onclick=()=>{
+  document.getElementById('winOverlay').classList.remove('show');
+  const L=LEVELS[currentLevel];
+  grid=L.givens.map(r=>r.slice());
+  violations.clear();won=false;
+  updateProgress();render();
+};
+document.getElementById('btnContinue').onclick=()=>{
+  document.getElementById('winOverlay').classList.remove('show');
+  if(currentLevel<LEVELS.length-1){
+    loadLevel(currentLevel+1);
+  }else{
+    document.getElementById('allClearOverlay').classList.add('show');
+  }
+};
+document.getElementById('btnRestartAll').onclick=()=>{
+  document.getElementById('allClearOverlay').classList.remove('show');
+  loadLevel(0);
+};
+
+// Settings toggles
+function updateToggles(){
+  document.getElementById('toggleSound').classList.toggle('on',settings.sound);
+  document.getElementById('toggleMusic').classList.toggle('on',settings.music);
+  document.getElementById('toggleAuto').classList.toggle('on',settings.autoValidate);
+}
+document.getElementById('toggleSound').onclick=()=>{settings.sound=!settings.sound;localStorage.setItem('kojun_settings',JSON.stringify(settings));updateToggles();};
+document.getElementById('toggleMusic').onclick=()=>{settings.music=!settings.music;localStorage.setItem('kojun_settings',JSON.stringify(settings));updateToggles();if(settings.music){initAudio();startMusic();}else{stopMusic();}};
+document.getElementById('toggleAuto').onclick=()=>{settings.autoValidate=!settings.autoValidate;localStorage.setItem('kojun_settings',JSON.stringify(settings));updateToggles();};
+
+// ===== LEVEL SELECT =====
+function updateLevelSelect(){
+  const container=document.getElementById('tierGrid');
+  container.innerHTML='';
+  const tierNames=['Beginner','Easy','Medium','Hard','Expert'];
+  for(let t=0;t<5;t++){
+    const section=document.createElement('div');
+    section.className='tier-section';
+    const label=document.createElement('div');
+    label.className='tier-label';
+    label.textContent=tierNames[t];
+    section.appendChild(label);
+    const grid=document.createElement('div');
+    grid.className='tier-grid';
+    grid.style.gridTemplateColumns='repeat(5,1fr)';
+    for(let i=0;i<6;i++){
+      const idx=t*6+i;
+      if(idx>=LEVELS.length)break;
+      const cell=document.createElement('div');
+      cell.className='tier-cell';
+      if(idx===currentLevel)cell.classList.add('current');
+      if(progress[LEVELS[idx].id])cell.classList.add('done');
+      cell.textContent=idx+1;
+      const stars=progress[LEVELS[idx].id]||0;
+      if(stars>0){const ms=document.createElement('span');ms.className='mini-star';ms.textContent='★';cell.appendChild(ms);}
+      cell.onclick=()=>loadLevel(idx);
+      grid.appendChild(cell);
+    }
+    section.appendChild(grid);
+    container.appendChild(section);
+  }
+}
+
+// ===== TIMER =====
+function updateTimer(){
+  const elapsed=Math.floor((Date.now()-startTime)/1000);
+  const m=Math.floor(elapsed/60);
+  const s=elapsed%60;
+  document.getElementById('lvlTime').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+}
+timerInterval=setInterval(updateTimer,1000);
+
+// ===== TOAST =====
+let toastTimer=null;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ===== STRUCTURED DATA =====
+const sd=document.createElement('script');
+sd.type='application/ld+json';
+sd.textContent=JSON.stringify({
+  "@context":"https://schema.org",
+  "@type":"WebApplication",
+  "name":"Kojun",
+  "description":"A Nikoli-style region number placement puzzle. Fill each region with 1-N numbers, respect adjacency and vertical ordering rules.",
+  "applicationCategory":"Game",
+  "operatingSystem":"Web Browser",
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+  "url":"https://gamezipper.com/kojun/"
+});
+document.head.appendChild(sd);
+
+const breadcrumb=document.createElement('script');
+breadcrumb.type='application/ld+json';
+breadcrumb.textContent=JSON.stringify({
+  "@context":"https://schema.org",
+  "@type":"BreadcrumbList",
+  "itemListElement":[
+    {"@type":"ListItem","position":1,"name":"Home","item":"https://gamezipper.com/"},
+    {"@type":"ListItem","position":2,"name":"Puzzle Games","item":"https://gamezipper.com/#puzzle"},
+    {"@type":"ListItem","position":3,"name":"Kojun","item":"https://gamezipper.com/kojun/"}
+  ]
+});
+document.head.appendChild(breadcrumb);
+
+const faq=document.createElement('script');
+faq.type='application/ld+json';
+faq.textContent=JSON.stringify({
+  "@context":"https://schema.org",
+  "@type":"FAQPage",
+  "mainEntity":[
+    {"@type":"Question","name":"What is Kojun?","acceptedAnswer":{"@type":"Answer","text":"Kojun is a Nikoli-style region number placement puzzle. Each region of size N must contain numbers 1 to N exactly once. Orthogonally adjacent cells must differ. Same-region vertical neighbors must have the upper number greater than the lower."}},
+    {"@type":"Question","name":"How many levels does Kojun have?","acceptedAnswer":{"@type":"Answer","text":"30 handcrafted levels across 5 difficulty tiers: Beginner, Easy, Medium, Hard, and Expert."}},
+    {"@type":"Question","name":"Is Kojun free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes! Kojun is completely free, plays in your browser, and requires no download."}}
+  ]
+});
+document.head.appendChild(faq);
+
+// ===== INIT =====
+updateToggles();
+loadLevel(0);
+</script>
+<script src="/adsterra-manager.js?v=v514cdn"></script><script src="/monetag-manager.js?v=v525midgridcull"></script>
+<div id="gz-ad-below-game" style="max-width:728px;margin:16px auto;min-height:90px;text-align:center"></div>
+<script src="/game-footer.js?v=20260711kojun"></script>
+<script src="/gz-analytics.js?v=202607118249178b5e0" defer></script>
+</body>
+</html>
