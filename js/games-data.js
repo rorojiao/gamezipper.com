@@ -628,4 +628,5 @@ const GAMES = [{name:"Kazunori",emoji:"🎲",cat:"puzzle",tags:["kazunori","kazu
 
 
 
+,{name:"Geradeweg",emoji:"🔵",cat:"puzzle",tags:["geradeweg","geradeweg puzzle","loop puzzle","draw the loop","nikoli puzzle","single loop","closed loop","straight segment","number clue","logic puzzle","brain teaser","grid puzzle","line puzzle","draw puzzle","constraint puzzle","deduction puzzle","unique solution","free browser game","html5","mobile game","no download"],url:"/geradeweg/",desc:"Play Geradeweg free online! Draw a single closed loop through the grid. Number clues show the straight segment length at each cell. A Nikoli-style loop puzzle with 30 unique-solution levels across 5 difficulty tiers from 6x5 Beginner to 9x8 Expert. Hints, undo, 3-star ratings, level select, keyboard support, ambient Web Audio music. No download, mobile-friendly!",isNew:true,status:"live"}
 ];
