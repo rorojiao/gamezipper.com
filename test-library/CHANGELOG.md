@@ -5543,3 +5543,25 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
 - mcp__minimax_search__web_search queries (2026-07-10)
 - Note: SearXNG returned HTTP 404 for all 5 batch queries (4th consecutive cycle of SearXNG failure). Fell back to minimax_search.
 - Key URLs: sitepoint.com CVE-2026-2441, qq.com Firefox 152 Nova, cloud.tencent.com 2026 CSS/JS APIs, sitepoint.com WebGPU vs WASM
+
+
+## [v1.173.0] - 2026-07-11
+### Added
+- 7 new test cases from industry research (R290, 4h cycle 52)
+- S-391: Safari 26.5 CVE-2026-28962 — Content Security Policy (CSP) Bypass Leaking Sensitive User Info
+- S-392: Chrome Gemini AI CVE-2026-0628 — Browser AI Assistant Privilege Escalation via Malicious Extensions (CVSS 8.8)
+- S-393: Chrome ANGLE WebGL Heap Buffer Overflow CVE-2026-7900 — WebGL Translation Layer Memory Corruption
+- S-394: libvpx VP8/VP9 Heap Buffer Overflow CVE-2026-1861 — Malformed Video Stream Crashes Chrome via Codec Overflow
+- S-395: Chrome Mariner / Gemini Auto-Browse AI Agent — Autonomous Web Browsing Changes Game Page Interaction Patterns
+- W-328: Safari 26 Tracking Parameter Stripping Reversal — gclid/fbclid Params NOT Stripped Despite Announcement
+- P-151: Chrome Memory Saver / Tab Discarding — Background Game Tab State Loss on Reactivation
+### Sources
+- "HTML5 game testing 2026 new techniques browser APIs" (minimax search)
+- "browser game bug report 2026 July Safari Chrome memory leak" (minimax search)
+- "new browser security vulnerability 2026 July WebGL XSS" (minimax search)
+- "casual game UX haptic feedback dark mode 2026 mobile complaint" (minimax search)
+- "Chrome Edge Safari update 2026 July WebKit Gecko new features" (minimax search)
+- "Safari 26.5 CVE-2026-28962 CSP bypass WebRTC crash July 2026" (minimax search)
+- "libvpx CVE-2026-1861 heap buffer overflow VP8 VP9 video Chrome 2026" (minimax search)
+- "Chrome Gemini AI Mariner agent auto browsing 2026 web automation" (minimax search)
+- Key URLs: sohu.com/a/1022622771_122004016, blog.csdn.net/OPHKVPS/article/details/159214667, github.com/advisories/GHSA-ffrx-892g-4x38, new.qq.com/rain/a/20260204A0682W00, so.html5.qq.com/page/real/search_news?docid=70000021_6616a05f47995052, cloud.tencent.com/developer/article/2637644, google.cn/chrome/index.html
