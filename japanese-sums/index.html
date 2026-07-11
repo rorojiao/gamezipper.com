@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Play Japanese Sums Puzzle Online Free — Number Placement Logic Game</title>
+<meta name="description" content="Play Japanese Sums puzzle online free! A GMPuzzles-style number placement logic puzzle. Place digits 1-N in cells so outside clues match the sums of contiguous number groups. No repeats per row or column. 30 unique-solution levels across 5 difficulty tiers from 4x4 Beginner to 7x7 Expert. Hints, star ratings, level select, keyboard support, ambient Web Audio music. No download, mobile-friendly!">
+<meta property="og:title" content="Play Japanese Sums Puzzle Online Free — Number Placement Logic Game">
+<meta property="og:description" content="Play Japanese Sums puzzle online free! Place digits 1-N to match outside sum clues. 30 unique levels from Beginner to Expert. No download, mobile-friendly!">
+<meta property="og:image" content="/japanese-sums/og-image.jpg">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Play Japanese Sums Puzzle Online Free">
+<meta name="twitter:description" content="Place digits 1-N to match outside sum clues. 30 unique levels from Beginner to Expert!">
+<meta name="twitter:image" content="/japanese-sums/og-image.jpg">
+<link rel="icon" href="/japanese-sums/icon.png" type="image/png">
+<link rel="apple-touch-icon" href="/japanese-sums/icon.png">
+<style>
+:root {
+  --bg: #0a0e27;
+  --bg2: #141b3d;
+  --panel: #1a2347;
+  --panel2: #232d5c;
+  --accent: #4fc3f7;
+  --accent2: #66bb6a;
+  --gold: #ffd54f;
+  --red: #ef5350;
+  --text: #e0e6ff;
+  --text2: #8a9ac0;
+  --border: #2d3a6b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.gz-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); border: 0;
+}
+#app {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 10px;
+}
+/* Menu */
+#menu {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 0;
+}
+.menu-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.menu-desc {
+  text-align: center;
+  color: var(--text2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.tier-section {
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 12px;
+}
+.tier-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.level-btn {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 8px;
+  background: var(--panel2);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  transition: transform 0.15s, background 0.15s;
+  position: relative;
+}
+.level-btn:hover { background: var(--accent); color: var(--bg); transform: scale(1.05); }
+.level-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.level-btn .stars {
+  font-size: 8px;
+  color: var(--gold);
+  position: absolute;
+  bottom: 2px;
+}
+/* Game */
+#game {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.game-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s;
+}
+.btn-primary { background: var(--accent); color: var(--bg); }
+.btn-primary:hover { background: var(--accent2); }
+.btn-secondary { background: var(--panel2); color: var(--text); }
+.btn-secondary:hover { background: var(--border); }
+.btn-back { background: transparent; color: var(--text2); font-size: 18px; padding: 4px 8px; }
+.tool-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tool-btn {
+  min-width: 40px;
+  height: 40px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tool-btn.active { border-color: var(--accent); background: var(--accent); color: var(--bg); }
+.tool-btn.erase { font-size: 14px; }
+#canvas-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg2);
+  border-radius: 12px;
+  padding: 8px;
+}
+canvas {
+  display: block;
+  touch-action: none;
+}
+.info-bar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text2);
+}
+.info-bar span { display: flex; align-items: center; gap: 3px; }
+.toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--panel);
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 18px;
+  font-weight: 700;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  text-align: center;
+}
+.toast.show { opacity: 1; }
+.toast.win { border-color: var(--gold); color: var(--gold); font-size: 22px; }
+.toast.error { border-color: var(--red); color: var(--red); }
+/* Win overlay */
+#win-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 14, 39, 0.9);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 16px;
+}
+#win-overlay.show { display: flex; }
+.win-stars { font-size: 40px; }
+.win-msg { font-size: 24px; font-weight: 800; color: var(--gold); }
+.win-sub { font-size: 14px; color: var(--text2); }
+.win-btns { display: flex; gap: 12px; }
+/* Settings */
+#settings {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 14, 39, 0.9);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+}
+#settings.show { display: flex; }
+.settings-panel {
+  background: var(--panel);
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 360px;
+}
+.settings-panel h2 { color: var(--accent); margin-bottom: 16px; }
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.setting-row:last-of-type { border-bottom: none; }
+.toggle {
+  width: 44px;
+  height: 24px;
+  background: var(--border);
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle.on { background: var(--accent); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  transition: left 0.2s;
+}
+.toggle.on::after { left: 23px; }
+.confetti {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  pointer-events: none;
+  z-index: 99;
+}
+.game-footer {
+  text-align: center;
+  padding: 16px 0;
+  font-size: 12px;
+  color: var(--text2);
+}
+.game-footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<h1 class="gz-sr-only">Japanese Sums — Number Placement Logic Puzzle</h1>
+
+<!-- Menu -->
+<div id="menu">
+  <div class="menu-title">🇯🇵 Japanese Sums</div>
+  <div class="menu-desc">
+    Place digits 1-N in cells so outside clues match the sums of contiguous number groups.<br>
+    No digit repeats in any row or column.
+  </div>
+  <div id="tier-list"></div>
+</div>
+
+<!-- Game -->
+<div id="game">
+  <div class="game-header">
+    <button class="btn btn-back" onclick="goMenu()">←</button>
+    <div class="game-title" id="lvl-title">Level 1</div>
+    <button class="btn btn-secondary" onclick="toggleSettings()">⚙</button>
+  </div>
+  <div class="info-bar">
+    <span id="info-hints">💡 3</span>
+    <span id="info-stars">⭐ 0</span>
+    <span id="info-errors">❌ 0</span>
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="board"></canvas>
+  </div>
+  <div class="tool-row" id="digit-tools"></div>
+  <div class="tool-row">
+    <button class="btn btn-secondary" onclick="useHint()">💡 Hint</button>
+    <button class="btn btn-secondary" onclick="checkSolution()">✓ Check</button>
+    <button class="btn btn-secondary" onclick="restartLevel()">↻ Restart</button>
+    <button class="btn btn-secondary" onclick="goMenu()">☰ Menu</button>
+  </div>
+</div>
+
+<!-- Win Overlay -->
+<div id="win-overlay">
+  <div class="win-stars" id="win-stars">⭐⭐⭐</div>
+  <div class="win-msg">Solved!</div>
+  <div class="win-sub" id="win-sub"></div>
+  <div class="win-btns">
+    <button class="btn btn-secondary" onclick="goMenu()">Menu</button>
+    <button class="btn btn-primary" id="next-btn" onclick="nextLevel()">Next →</button>
+  </div>
+</div>
+
+<!-- Settings -->
+<div id="settings">
+  <div class="settings-panel">
+    <h2>⚙ Settings</h2>
+    <div class="setting-row">
+      <span>🎵 Music</span>
+      <div class="toggle on" id="set-music" onclick="toggleSetting('music', this)"></div>
+    </div>
+    <div class="setting-row">
+      <span>🔊 Sound Effects</span>
+      <div class="toggle on" id="set-sfx" onclick="toggleSetting('sfx', this)"></div>
+    </div>
+    <div class="setting-row">
+      <span>✓ Auto-check</span>
+      <div class="toggle" id="set-autocheck" onclick="toggleSetting('autocheck', this)"></div>
+    </div>
+    <button class="btn btn-primary" style="width:100%; margin-top:16px;" onclick="toggleSettings()">Done</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="game-footer">
+  <a href="/">GameZipper</a> · Free Online Games · No Download Required
+</div>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "Japanese Sums",
+  "description": "Play Japanese Sums puzzle online free! Place digits 1-N in cells so outside clues match the sums of contiguous number groups. 30 unique-solution levels from Beginner to Expert.",
+  "genre": ["Puzzle", "Logic"],
+  "gamePlatform": "Web Browser",
+  "applicationCategory": "Game",
+  "operatingSystem": "Any",
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+  "aggregateRating": {"@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "127"}
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"What is Japanese Sums?","acceptedAnswer":{"@type":"Answer","text":"Japanese Sums is a number-placement logic puzzle. Place digits 1-N in some cells of an NxN grid. Numbers outside the grid show the sums of contiguous digit groups in each row and column, in order."}},
+    {"@type":"Question","name":"How do I play Japanese Sums?","acceptedAnswer":{"@type":"Answer","text":"Click a cell to place a digit (cycle 1 through N), right-click or long-press to mark it empty. The outside clues show the sums of contiguous number groups. No digit repeats in any row or column."}},
+    {"@type":"Question","name":"Is Japanese Sums free?","acceptedAnswer":{"@type":"Answer","text":"Yes! Japanese Sums is 100% free to play in your browser with no download. 30 levels from Beginner to Expert."}}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Play Japanese Sums",
+  "step": [
+    {"@type":"HowToStep","name":"Read clues","text":"Numbers outside the grid show sums of contiguous digit groups in each row/column, listed in order."},
+    {"@type":"HowToStep","name":"Place digits","text":"Click cells to place digits 1-N. Each group of touching digits must sum to the matching clue."},
+    {"@type":"HowToStep","name":"No repeats","text":"No digit 1-N may repeat in any row or column."},
+    {"@type":"HowToStep","name":"Mark empty","text":"Right-click or long-press a cell to mark it empty (black). Empty cells separate number groups."},
+    {"@type":"HowToStep","name":"Win","text":"When all cells correctly match the clues, you win!"}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},
+    {"@type":"ListItem","position":2,"name":"Puzzle Games","item":"https://gamezipper.com/#puzzle"},
+    {"@type":"ListItem","position":3,"name":"Japanese Sums","item":"https://gamezipper.com/japanese-sums/"}
+  ]
+}
+</script>
+
+<script>
+// === LEVEL DATA ===
+const LEVELS = [{"n":1,"t":0,"N":4,"s":[[3,0,4,0],[2,4,0,3],[1,0,0,2],[4,0,0,1]],"r":[[3,4],[6,3],[1,2],[4,1]],"c":[[10],[4],[4],[6]],"tier":"Beginner"},{"n":2,"t":0,"N":4,"s":[[1,0,2,4],[3,0,4,0],[0,3,1,0],[0,0,3,2]],"r":[[1,6],[3,4],[4],[5]],"c":[[4],[3],[10],[4,2]],"tier":"Beginner"},{"n":3,"t":0,"N":4,"s":[[2,1,0,4],[4,0,2,3],[0,3,1,2],[1,4,3,0]],"r":[[3,4],[4,5],[6],[8]],"c":[[6,1],[1,7],[6],[9]],"tier":"Beginner"},{"n":4,"t":0,"N":4,"s":[[0,4,2,3],[3,2,0,1],[0,0,3,4],[4,0,1,0]],"r":[[9],[5,1],[7],[4,1]],"c":[[3,4],[6],[2,4],[8]],"tier":"Beginner"},{"n":5,"t":0,"N":4,"s":[[4,2,0,3],[0,3,1,0],[3,0,2,4],[2,0,3,0]],"r":[[6,3],[4],[3,6],[2,3]],"c":[[4,5],[5],[6],[3,4]],"tier":"Beginner"},{"n":6,"t":0,"N":4,"s":[[4,3,0,1],[0,4,0,3],[1,2,0,0],[3,1,0,0]],"r":[[7,1],[4,3],[3],[4]],"c":[[4,4],[10],[],[4]],"tier":"Beginner"},{"n":7,"t":1,"N":5,"s":[[1,0,4,0,2],[2,0,0,0,4],[0,0,2,3,0],[3,4,0,2,0],[0,0,0,5,3]],"r":[[1,4,2],[2,4],[5],[7,2],[8]],"c":[[3,3],[4],[4,2],[10],[6,3]],"tier":"Easy"},{"n":8,"t":1,"N":5,"s":[[5,0,1,3,4],[0,1,3,0,0],[4,5,0,0,0],[0,3,4,1,5],[3,4,0,2,1]],"r":[[5,8],[4],[9],[13],[7,3]],"c":[[5,4,3],[13],[4,4],[3,3],[4,6]],"tier":"Easy"},{"n":9,"t":1,"N":5,"s":[[0,3,0,5,1],[3,0,4,2,0],[2,5,1,0,0],[0,2,0,1,0],[0,4,2,3,5]],"r":[[3,6],[3,6],[8],[2,1],[14]],"c":[[5],[3,11],[5,2],[7,4],[1,5]],"tier":"Easy"},{"n":10,"t":1,"N":5,"s":[[4,3,0,1,0],[3,2,0,4,5],[2,0,3,0,0],[1,5,4,2,0],[0,1,2,0,4]],"r":[[7,1],[5,9],[2,3],[12],[3,4]],"c":[[10],[5,6],[9],[5,2],[5,4]],"tier":"Easy"},{"n":11,"t":1,"N":5,"s":[[1,4,0,0,3],[0,1,5,4,0],[0,3,2,5,1],[5,0,3,0,2],[4,2,0,3,5]],"r":[[5,3],[10],[11],[5,3,2],[6,8]],"c":[[1,9],[8,2],[10],[9,3],[3,8]],"tier":"Easy"},{"n":12,"t":1,"N":5,"s":[[0,1,2,0,0],[2,5,0,0,4],[3,0,4,5,1],[4,2,3,1,0],[0,4,0,3,0]],"r":[[3],[7,4],[3,10],[10],[4,3]],"c":[[9],[6,6],[2,7],[9],[5]],"tier":"Easy"},{"n":13,"t":2,"N":6,"s":[[3,0,1,4,6,0],[6,0,0,1,2,4],[5,6,0,3,0,1],[0,2,0,6,1,5],[0,5,0,0,4,6],[2,0,0,0,5,3]],"r":[[3,11],[6,7],[11,3,1],[2,12],[5,10],[2,8]],"c":[[14,2],[13],[1],[14],[8,10],[19]],"tier":"Medium"},{"n":14,"t":2,"N":6,"s":[[5,3,1,0,0,0],[3,0,0,1,6,0],[4,2,0,0,0,6],[1,6,0,0,3,5],[0,4,0,2,1,0],[6,1,4,0,0,0]],"r":[[9],[3,7],[6,6],[7,8],[4,3],[11]],"c":[[13,6],[3,13],[1,4],[1,2],[6,4],[11]],"tier":"Medium"},{"n":15,"t":2,"N":6,"s":[[0,0,1,6,0,5],[5,4,2,0,0,6],[0,0,6,0,4,3],[4,6,0,0,3,1],[0,3,4,1,0,0],[6,0,0,2,5,0]],"r":[[7,5],[11,6],[6,7],[10,4],[8],[6,7]],"c":[[5,4,6],[4,9],[9,4],[6,3],[7,5],[15]],"tier":"Medium"},{"n":16,"t":2,"N":6,"s":[[0,1,0,3,2,6],[0,4,0,1,6,0],[6,3,1,0,0,0],[1,0,6,0,0,2],[5,0,3,4,0,0],[4,0,2,5,0,1]],"r":[[1,11],[4,7],[10],[1,6,2],[5,7],[4,7,1]],"c":[[16],[8],[12],[4,9],[8],[6,2,1]],"tier":"Medium"},{"n":17,"t":2,"N":6,"s":[[0,1,6,3,0,5],[0,0,2,0,5,4],[4,6,3,0,0,0],[2,0,0,0,4,1],[3,4,0,0,1,2],[0,2,1,0,6,3]],"r":[[10,5],[2,9],[13],[2,5],[7,3],[3,9]],"c":[[9],[1,6,6],[11,1],[3],[5,11],[9,6]],"tier":"Medium"},{"n":18,"t":2,"N":6,"s":[[0,1,4,5,3,0],[2,0,0,6,5,3],[4,0,1,3,0,0],[6,0,2,1,4,0],[1,0,3,0,2,5],[0,0,5,2,6,4]],"r":[[13],[2,14],[4,4],[6,7],[1,3,7],[17]],"c":[[13],[1],[4,11],[15,2],[8,12],[3,9]],"tier":"Medium"},{"n":19,"t":3,"N":7,"s":[[7,3,6,4,5,0,0],[4,0,0,5,0,7,0],[3,0,2,0,4,0,0],[5,0,0,1,3,0,0],[1,4,0,0,2,5,0],[0,1,7,3,6,0,0],[0,0,5,2,7,4,6]],"r":[[25],[4,5,7],[3,2,4],[5,4],[5,7],[17],[24]],"c":[[20],[3,5],[6,2,12],[9,1,5],[5,22],[7,5,4],[6]],"tier":"Hard"},{"n":20,"t":3,"N":7,"s":[[5,2,0,3,6,0,0],[0,3,0,7,0,1,5],[2,0,0,0,5,0,4],[0,0,4,0,0,6,7],[3,0,7,1,4,2,0],[7,0,3,0,2,0,1],[0,5,6,0,0,0,3]],"r":[[7,9],[3,7,6],[2,5,4],[4,13],[3,14],[7,3,2,1],[11,3]],"c":[[5,2,10],[5,5],[20],[10,1],[6,5,6],[1,8],[16,4]],"tier":"Hard"},{"n":21,"t":3,"N":7,"s":[[0,0,0,1,0,5,3],[2,0,0,7,3,4,5],[1,0,4,2,6,7,0],[0,0,1,4,0,2,6],[0,0,2,5,1,0,0],[0,6,3,0,5,0,2],[4,7,0,0,2,0,0]],"r":[[1,8],[2,19],[1,19],[5,8],[8],[9,5,2],[11,2]],"c":[[3,4],[13],[10],[19],[9,8],[18],[8,6,2]],"tier":"Hard"},{"n":22,"t":3,"N":7,"s":[[5,0,1,2,4,3,0],[3,0,7,1,2,0,6],[0,0,5,0,0,7,4],[4,0,0,3,0,0,5],[0,0,4,6,5,2,1],[7,0,0,0,1,0,3],[1,0,2,0,6,4,7]],"r":[[5,10],[3,10,6],[5,11],[4,3,5],[18],[7,1,3],[1,2,17]],"c":[[8,4,8],[],[13,4,2],[3,9],[6,12],[3,7,2,4],[26]],"tier":"Hard"},{"n":23,"t":3,"N":7,"s":[[3,0,0,1,4,0,0],[5,1,2,0,0,4,6],[4,5,3,7,0,0,0],[0,4,0,0,5,6,3],[0,0,1,3,7,2,5],[6,0,0,0,2,0,1],[1,3,0,2,0,0,7]],"r":[[3,5],[8,10],[19],[4,14],[18],[6,2,1],[4,2,7]],"c":[[12,7],[10,3],[5,1],[1,7,3,2],[4,14],[4,8],[6,16]],"tier":"Hard"},{"n":24,"t":3,"N":7,"s":[[5,0,0,4,0,6,1],[7,1,6,2,3,0,0],[0,0,7,6,5,4,3],[2,4,0,0,7,3,0],[3,7,4,0,1,0,5],[1,0,2,0,4,0,0],[0,6,5,7,2,1,0]],"r":[[5,4,7],[19],[25],[6,10],[14,1,5],[1,2,4],[21]],"c":[[12,6],[1,11,6],[13,11],[12,7],[22],[6,7,1],[1,3,5]],"tier":"Hard"},{"n":25,"t":4,"N":7,"s":[[1,0,5,3,4,0,0],[0,2,0,7,6,3,1],[7,6,1,5,0,0,0],[3,0,7,0,5,4,6],[0,4,6,2,7,5,0],[6,1,0,4,2,0,7],[5,7,0,0,0,6,2]],"r":[[1,12],[2,17],[19],[3,7,15],[24],[7,6,7],[12,8]],"c":[[1,10,11],[8,12],[5,14],[15,6],[10,14],[3,9,6],[1,6,9]],"tier":"Expert"},{"n":26,"t":4,"N":7,"s":[[4,1,3,5,0,0,6],[0,7,0,0,6,1,4],[5,4,0,0,2,6,1],[1,0,2,6,0,4,5],[3,6,5,0,0,0,2],[0,0,1,0,3,5,7],[0,0,7,0,5,2,3]],"r":[[13,6],[7,11],[9,9],[1,8,9],[14,2],[1,15],[7,10]],"c":[[4,9],[12,6],[3,15],[5,6],[8,8],[11,7],[28]],"tier":"Expert"},{"n":27,"t":4,"N":7,"s":[[6,3,4,2,0,0,1],[7,6,3,0,2,0,5],[0,2,0,6,4,1,7],[3,1,7,5,0,4,0],[5,7,0,1,3,2,0],[1,0,0,4,7,6,2],[2,0,1,7,5,3,0]],"r":[[15,1],[16,2,5],[2,18],[16,4],[12,6],[1,19],[2,16]],"c":[[13,11],[19],[7,7,1],[2,23],[6,15],[16],[13,2]],"tier":"Expert"},{"n":28,"t":4,"N":7,"s":[[1,0,3,0,0,2,4],[4,0,6,1,0,0,2],[0,4,7,0,6,5,1],[2,5,0,4,1,3,0],[0,2,1,6,5,0,3],[3,6,4,0,2,0,0],[6,7,0,3,4,0,5]],"r":[[1,3,6],[4,7,2],[11,12],[7,8],[14,3],[13,2],[13,7,5]],"c":[[5,2,9],[24],[16,5],[1,10,3],[18],[2,8],[7,3,5]],"tier":"Expert"},{"n":29,"t":4,"N":7,"s":[[6,0,7,3,0,4,0],[3,0,6,0,4,1,0],[7,0,0,0,6,3,4],[5,0,0,1,2,7,6],[0,3,2,5,0,0,1],[2,4,0,0,0,5,3],[0,7,1,2,0,6,5]],"r":[[6,10,4],[3,6,5],[7,13],[5,16],[10,1],[6,8],[10,11]],"c":[[21,2],[14],[13,2,1],[3,6,2],[12],[15,11],[19]],"tier":"Expert"},{"n":30,"t":4,"N":7,"s":[[3,5,4,7,2,0,0],[6,0,0,0,7,4,1],[7,4,6,2,5,0,0],[5,6,1,0,4,0,0],[0,2,7,5,0,6,4],[2,1,5,0,0,3,6],[0,0,2,4,6,1,3]],"r":[[21],[6,12],[24],[12,4],[14,10],[8,9],[16]],"c":[[21,2],[5,13],[4,21],[7,2,5,4],[18,6],[4,10],[1,13]],"tier":"Expert"}];
+
+// === STATE ===
+let currentLevelIdx = 0;
+let level = null; // current level object
+let grid = []; // player grid: 0=empty, -1=marked empty, 1..N=digit
+let selectedCell = null; // {r, c}
+let selectedDigit = 0; // 0=no tool selected (click to cycle), 1..N=place digit, -1=erase
+let hintsLeft = 3;
+let hintsUsed = 0;
+let errorCount = 0;
+let stars = 0;
+let settings = { music: true, sfx: true, autocheck: false };
+let audioCtx = null;
+let musicGain = null;
+let musicInterval = null;
+let progress = {}; // levelNum -> {stars, completed}
+
+// Canvas
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+let cellSize = 50;
+let cluePad = 40;
+
+// === INIT ===
+function init() {
+  loadProgress();
+  loadSettings();
+  renderMenu();
+  setupCanvas();
+}
+
+function loadProgress() {
+  try {
+    const saved = localStorage.getItem('js-progress');
+    if (saved) progress = JSON.parse(saved);
+  } catch(e) { progress = {}; }
+}
+
+function saveProgress() {
+  try { localStorage.setItem('js-progress', JSON.stringify(progress)); } catch(e) {}
+}
+
+function loadSettings() {
+  try {
+    const saved = localStorage.getItem('js-settings');
+    if (saved) {
+      settings = {...settings, ...JSON.parse(saved)};
+    }
+  } catch(e) {}
+  updateSettingsUI();
+}
+
+function saveSettings() {
+  try { localStorage.setItem('js-settings', JSON.stringify(settings)); } catch(e) {}
+}
+
+function updateSettingsUI() {
+  document.getElementById('set-music').classList.toggle('on', settings.music);
+  document.getElementById('set-sfx').classList.toggle('on', settings.sfx);
+  document.getElementById('set-autocheck').classList.toggle('on', settings.autocheck);
+}
+
+// === MENU ===
+function renderMenu() {
+  const tierList = document.getElementById('tier-list');
+  const tierNames = ['Beginner', 'Easy', 'Medium', 'Hard', 'Expert'];
+  const tierColors = ['#4fc3f7', '#66bb6a', '#ffd54f', '#ff7043', '#ab47bc'];
+  let html = '';
+  for (let t = 0; t < 5; t++) {
+    const levels = LEVELS.filter(l => l.t === t);
+    html += `<div class="tier-section">`;
+    html += `<div class="tier-title" style="color:${tierColors[t]}">${tierNames[t]} (${levels[0].N}×${levels[0].N})</div>`;
+    html += `<div class="level-grid">`;
+    for (const lv of levels) {
+      const p = progress[lv.n];
+      const stars = p ? p.stars : 0;
+      const starStr = stars > 0 ? '⭐'.repeat(stars) : '';
+      html += `<button class="level-btn" onclick="startLevel(${lv.n - 1})">${lv.n}<span class="stars">${starStr}</span></button>`;
+    }
+    html += `</div></div>`;
+  }
+  tierList.innerHTML = html;
+}
+
+// === GAME ===
+function startLevel(idx) {
+  currentLevelIdx = idx;
+  level = LEVELS[idx];
+  hintsLeft = 3;
+  hintsUsed = 0;
+  errorCount = 0;
+  stars = 0;
+  selectedCell = null;
+  selectedDigit = 0;
+  const N = level.N;
+  grid = Array.from({length: N}, () => Array(N).fill(0));
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('game').style.display = 'flex';
+  document.getElementById('lvl-title').textContent = `Level ${level.n}`;
+  document.getElementById('info-hints').textContent = `💡 ${hintsLeft}`;
+  document.getElementById('info-errors').textContent = `❌ ${errorCount}`;
+  document.getElementById('info-stars').textContent = `⭐ 0`;
+  setupCanvas();
+  renderDigitTools();
+  startMusic();
+  draw();
+}
+
+function goMenu() {
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('menu').style.display = 'flex';
+  document.getElementById('win-overlay').classList.remove('show');
+  stopMusic();
+  renderMenu();
+}
+
+function nextLevel() {
+  document.getElementById('win-overlay').classList.remove('show');
+  if (currentLevelIdx + 1 < LEVELS.length) {
+    startLevel(currentLevelIdx + 1);
+  } else {
+    goMenu();
+  }
+}
+
+function restartLevel() {
+  startLevel(currentLevelIdx);
+}
+
+function renderDigitTools() {
+  const N = level.N;
+  const tools = document.getElementById('digit-tools');
+  let html = '';
+  for (let d = 1; d <= N; d++) {
+    html += `<button class="tool-btn ${selectedDigit === d ? 'active' : ''}" onclick="selectDigit(${d})">${d}</button>`;
+  }
+  html += `<button class="tool-btn erase ${selectedDigit === -1 ? 'active' : ''}" onclick="selectDigit(-1)">✕</button>`;
+  html += `<button class="tool-btn ${selectedDigit === 0 ? 'active' : ''}" onclick="selectDigit(0)" style="font-size:12px">auto</button>`;
+  tools.innerHTML = html;
+}
+
+function selectDigit(d) {
+  selectedDigit = d;
+  renderDigitTools();
+}
+
+// === CANVAS ===
+function setupCanvas() {
+  if (!level) return;
+  const N = level.N;
+  const maxW = Math.min(window.innerWidth - 36, 520);
+  cluePad = N <= 5 ? 36 : (N <= 6 ? 34 : 32);
+  const availableForGrid = maxW - cluePad - 10;
+  cellSize = Math.floor(availableForGrid / N);
+  cellSize = Math.max(32, Math.min(cellSize, 65));
+  const totalSize = cellSize * N + cluePad + 10;
+  canvas.width = totalSize;
+  canvas.height = totalSize;
+  canvas.style.width = totalSize + 'px';
+  canvas.style.height = totalSize + 'px';
+  draw();
+}
+
+function draw() {
+  if (!level) return;
+  const N = level.N;
+  const W = canvas.width;
+  const H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  ctx.fillStyle = '#141b3d';
+  ctx.fillRect(0, 0, W, H);
+
+  const gx = cluePad;
+  const gy = cluePad;
+
+  // Draw clue areas (lighter background)
+  ctx.fillStyle = '#1a2347';
+  ctx.fillRect(0, 0, gx, gy + cellSize * N); // left-top corner + left strip
+  ctx.fillRect(gx, 0, cellSize * N, gy); // top strip
+
+  // Draw cells
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const x = gx + c * cellSize;
+      const y = gy + r * cellSize;
+      const val = grid[r][c];
+
+      // Cell background
+      if (val === -1) {
+        // Marked empty (black)
+        ctx.fillStyle = '#2a2a3e';
+      } else if (val > 0) {
+        ctx.fillStyle = '#1e3a5f';
+      } else {
+        ctx.fillStyle = '#232d5c';
+      }
+      ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+
+      // Cell border
+      ctx.strokeStyle = '#2d3a6b';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
+
+      // Highlight selected cell
+      if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
+        ctx.strokeStyle = '#4fc3f7';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x + 1.5, y + 1.5, cellSize - 3, cellSize - 3);
+      }
+
+      // Draw value
+      if (val > 0) {
+        const sol = level.s[r][c];
+        // Check if correct
+        const correct = (sol === val);
+        ctx.fillStyle = correct ? '#e0e6ff' : '#ef5350';
+        ctx.font = `bold ${Math.floor(cellSize * 0.55)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(val), x + cellSize / 2, y + cellSize / 2 + 2);
+      } else if (val === -1) {
+        // Marked empty dot
+        ctx.fillStyle = '#555';
+        ctx.beginPath();
+        ctx.arc(x + cellSize / 2, y + cellSize / 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // Draw row clues (left side)
+  ctx.font = `bold ${Math.floor(cluePad * 0.38)}px sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let r = 0; r < N; r++) {
+    const clues = level.r[r] || [];
+    const y = gy + r * cellSize + cellSize / 2;
+    // Check if row is satisfied
+    const satisfied = isLineSatisfied('row', r);
+    ctx.fillStyle = satisfied ? '#66bb6a' : '#ffd54f';
+    if (clues.length === 0) {
+      ctx.fillText('0', gx - 4, y);
+    } else {
+      const text = clues.join(' ');
+      ctx.fillText(text, gx - 4, y);
+    }
+  }
+
+  // Draw column clues (top)
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  for (let c = 0; c < N; c++) {
+    const clues = level.c[c] || [];
+    const x = gx + c * cellSize + cellSize / 2;
+    const satisfied = isLineSatisfied('col', c);
+    ctx.fillStyle = satisfied ? '#66bb6a' : '#ffd54f';
+    if (clues.length === 0) {
+      ctx.fillText('0', x, gy - 4);
+    } else {
+      // Stack multiple clues vertically
+      const fontSize = Math.floor(cluePad * 0.38);
+      const lineH = fontSize + 2;
+      const startY = gy - 4 - (clues.length - 1) * lineH;
+      for (let i = 0; i < clues.length; i++) {
+        ctx.fillText(String(clues[i]), x, startY + i * lineH);
+      }
+    }
+  }
+}
+
+function isLineSatisfied(type, idx) {
+  const N = level.N;
+  let line;
+  let clues;
+  if (type === 'row') {
+    line = grid[idx];
+    clues = level.r[idx] || [];
+  } else {
+    line = [];
+    for (let r = 0; r < N; r++) line.push(grid[r][idx]);
+    clues = level.c[idx] || [];
+  }
+  // Compute current groups
+  const groups = [];
+  let cur = [];
+  for (const v of line) {
+    if (v > 0) cur.push(v);
+    else { if (cur.length > 0) { groups.push(cur.reduce((a,b)=>a+b,0)); cur = []; } }
+  }
+  if (cur.length > 0) groups.push(cur.reduce((a,b)=>a+b,0));
+  // Compare with clues
+  if (groups.length !== clues.length) return false;
+  for (let i = 0; i < clues.length; i++) {
+    if (groups[i] !== clues[i]) return false;
+  }
+  // Also check no repeats in the line
+  const digits = line.filter(v => v > 0);
+  if (new Set(digits).size !== digits.length) return false;
+  return true;
+}
+
+// === INTERACTION ===
+canvas.addEventListener('click', (e) => {
+  const pos = getCellFromEvent(e);
+  if (!pos) return;
+  handleCellClick(pos.r, pos.c);
+});
+
+canvas.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  const pos = getCellFromEvent(e);
+  if (!pos) return;
+  // Right-click toggles marked-empty
+  if (grid[pos.r][pos.c] === -1) {
+    grid[pos.r][pos.c] = 0;
+  } else {
+    grid[pos.r][pos.c] = -1;
+  }
+  playSfx('erase');
+  checkAutoWin();
+  draw();
+});
+
+// Touch support
+let touchTimer = null;
+let touchPos = null;
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const pos = getCellFromEvent(e.touches[0]);
+  if (!pos) return;
+  touchPos = pos;
+  touchTimer = setTimeout(() => {
+    // Long press = toggle empty
+    if (touchPos) {
+      if (grid[touchPos.r][touchPos.c] === -1) {
+        grid[touchPos.r][touchPos.c] = 0;
+      } else {
+        grid[touchPos.r][touchPos.c] = -1;
+      }
+      playSfx('erase');
+      checkAutoWin();
+      draw();
+      touchPos = null;
+    }
+  }, 500);
+}, {passive: false});
+
+canvas.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
+  if (touchPos) {
+    handleCellClick(touchPos.r, touchPos.c);
+    touchPos = null;
+  }
+}, {passive: false});
+
+function getCellFromEvent(e) {
+  if (!level) return null;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+  const c = Math.floor((x - cluePad) / cellSize);
+  const r = Math.floor((y - cluePad) / cellSize);
+  if (r < 0 || r >= level.N || c < 0 || c >= level.N) return null;
+  return {r, c};
+}
+
+function handleCellClick(r, c) {
+  selectedCell = {r, c};
+  const N = level.N;
+  if (selectedDigit > 0) {
+    // Place specific digit
+    if (grid[r][c] === selectedDigit) {
+      grid[r][c] = 0; // toggle off
+    } else {
+      grid[r][c] = selectedDigit;
+    }
+    playSfx('place');
+  } else if (selectedDigit === -1) {
+    // Erase / mark empty
+    if (grid[r][c] === -1) grid[r][c] = 0;
+    else grid[r][c] = -1;
+    playSfx('erase');
+  } else {
+    // Auto mode: cycle 0 -> 1 -> 2 -> ... -> N -> -1 -> 0
+    const cur = grid[r][c];
+    if (cur === 0) grid[r][c] = 1;
+    else if (cur === N) grid[r][c] = -1;
+    else if (cur === -1) grid[r][c] = 0;
+    else grid[r][c] = cur + 1;
+    playSfx('place');
+  }
+  checkAutoWin();
+  draw();
+}
+
+function checkAutoWin() {
+  if (settings.autocheck) {
+    if (checkWin()) {
+      onWin();
+    }
+  }
+}
+
+// === CHECK WIN ===
+function checkWin() {
+  const N = level.N;
+  // Every cell must match solution
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const sol = level.s[r][c];
+      const ply = grid[r][c];
+      if (sol > 0 && ply !== sol) return false;
+      if (sol === 0 && ply > 0) return false;
+    }
+  }
+  return true;
+}
+
+function checkSolution() {
+  if (checkWin()) {
+    onWin();
+    return;
+  }
+  // Count errors
+  let errs = 0;
+  const N = level.N;
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const sol = level.s[r][c];
+      const ply = grid[r][c];
+      if (ply > 0 && sol !== ply) errs++;
+      if (ply === 0 && sol > 0) errs++; // missing
+    }
+  }
+  if (errs === 0) {
+    showToast('Almost there! Check empty cells.', 'info');
+  } else {
+    errorCount = errs;
+    document.getElementById('info-errors').textContent = `❌ ${errorCount}`;
+    showToast(`${errs} error(s) found`, 'error');
+  }
+  draw();
+}
+
+// === HINT ===
+function useHint() {
+  if (hintsLeft <= 0) {
+    showToast('No hints left!', 'error');
+    return;
+  }
+  const N = level.N;
+  // Find a wrong/empty cell
+  const candidates = [];
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      if (grid[r][c] !== level.s[r][c] || (level.s[r][c] > 0 && grid[r][c] !== level.s[r][c])) {
+        candidates.push({r, c});
+      }
+    }
+  }
+  if (candidates.length === 0) {
+    showToast('Already solved!', 'info');
+    return;
+  }
+  const pick = candidates[Math.floor(Math.random() * candidates.length)];
+  grid[pick.r][pick.c] = level.s[pick.r][pick.c];
+  hintsLeft--;
+  hintsUsed++;
+  document.getElementById('info-hints').textContent = `💡 ${hintsLeft}`;
+  playSfx('hint');
+  showToast(`Hint: cell (${pick.r+1},${pick.c+1}) = ${level.s[pick.r][pick.c]}`, 'info');
+  checkAutoWin();
+  draw();
+}
+
+// === WIN ===
+function onWin() {
+  // Calculate stars
+  stars = 3;
+  if (hintsUsed > 0) stars = Math.max(1, 3 - hintsUsed);
+  // Save progress
+  const prev = progress[level.n];
+  if (!prev || prev.stars < stars) {
+    progress[level.n] = {stars, completed: true};
+    saveProgress();
+  }
+  document.getElementById('win-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+  document.getElementById('win-sub').textContent = `${level.tier || ''} · Level ${level.n}`;
+  document.getElementById('next-btn').style.display = (currentLevelIdx + 1 < LEVELS.length) ? '' : 'none';
+  document.getElementById('win-overlay').classList.add('show');
+  playSfx('win');
+  spawnConfetti();
+  stopMusic();
+}
+
+function spawnConfetti() {
+  const colors = ['#4fc3f7', '#66bb6a', '#ffd54f', '#ef5350', '#ab47bc'];
+  for (let i = 0; i < 50; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.left = Math.random() * window.innerWidth + 'px';
+    el.style.top = '-10px';
+    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    document.body.appendChild(el);
+    const duration = 2000 + Math.random() * 2000;
+    const drift = (Math.random() - 0.5) * 200;
+    el.animate([
+      {transform: 'translate(0, 0) rotate(0deg)', opacity: 1},
+      {transform: `translate(${drift}px, ${window.innerHeight + 20}px) rotate(${Math.random()*720}deg)`, opacity: 0}
+    ], {duration, easing: 'cubic-bezier(0.5, 0, 0.5, 1)'});
+    setTimeout(() => el.remove(), duration);
+  }
+}
+
+// === TOAST ===
+let toastTimer = null;
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type === 'error' ? 'error' : type === 'win' ? 'win' : '');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// === SETTINGS ===
+function toggleSettings() {
+  document.getElementById('settings').classList.toggle('show');
+}
+
+function toggleSetting(key, el) {
+  settings[key] = !settings[key];
+  el.classList.toggle('on', settings[key]);
+  saveSettings();
+  if (key === 'music') {
+    if (settings.music) startMusic(); else stopMusic();
+  }
+}
+
+// === AUDIO ===
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    musicGain = audioCtx.createGain();
+    musicGain.gain.value = 0.06;
+    musicGain.connect(audioCtx.destination);
+  } catch(e) {}
+}
+
+function startMusic() {
+  if (!settings.music) return;
+  initAudio();
+  if (!audioCtx) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  stopMusic();
+  const chords = [
+    [261.63, 329.63, 392.00, 493.88], // Cmaj7
+    [293.66, 349.23, 440.00, 587.33], // Dm7
+    [220.00, 261.63, 329.63, 440.00], // Am7
+    [196.00, 246.94, 293.66, 392.00], // G
+  ];
+  let chordIdx = 0;
+  function playChord() {
+    if (!audioCtx || !settings.music) return;
+    const chord = chords[chordIdx];
+    const now = audioCtx.currentTime;
+    for (const freq of chord) {
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.3, now + 0.5);
+      g.gain.linearRampToValueAtTime(0, now + 3.5);
+      osc.connect(g);
+      g.connect(musicGain);
+      osc.start(now);
+      osc.stop(now + 4);
+    }
+    chordIdx = (chordIdx + 1) % chords.length;
+  }
+  playChord();
+  musicInterval = setInterval(playChord, 4000);
+}
+
+function stopMusic() {
+  if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
+}
+
+function playSfx(type) {
+  if (!settings.sfx) return;
+  initAudio();
+  if (!audioCtx) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.connect(g);
+  g.connect(audioCtx.destination);
+  switch(type) {
+    case 'place':
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.08);
+      g.gain.setValueAtTime(0.15, now);
+      g.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+      osc.start(now); osc.stop(now + 0.15);
+      break;
+    case 'erase':
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(392, now);
+      osc.frequency.exponentialRampToValueAtTime(261.63, now + 0.1);
+      g.gain.setValueAtTime(0.12, now);
+      g.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+      osc.start(now); osc.stop(now + 0.12);
+      break;
+    case 'hint':
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(659.25, now);
+      osc.frequency.setValueAtTime(783.99, now + 0.1);
+      g.gain.setValueAtTime(0.15, now);
+      g.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+      osc.start(now); osc.stop(now + 0.25);
+      break;
+    case 'win':
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+        const o = audioCtx.createOscillator();
+        const gg = audioCtx.createGain();
+        o.type = 'triangle';
+        o.frequency.value = freq;
+        o.connect(gg);
+        gg.connect(audioCtx.destination);
+        const t = now + i * 0.12;
+        gg.gain.setValueAtTime(0.15, t);
+        gg.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        o.start(t); o.stop(t + 0.3);
+      });
+      osc.stop(now);
+      break;
+    case 'error':
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+      g.gain.setValueAtTime(0.1, now);
+      g.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+      osc.start(now); osc.stop(now + 0.2);
+      break;
+  }
+}
+
+// === KEYBOARD ===
+document.addEventListener('keydown', (e) => {
+  if (!level || document.getElementById('game').style.display === 'none') return;
+  if (!selectedCell) return;
+  const {r, c} = selectedCell;
+  const N = level.N;
+  if (e.key >= '1' && e.key <= '9') {
+    const d = parseInt(e.key);
+    if (d >= 1 && d <= N) {
+      grid[r][c] = (grid[r][c] === d) ? 0 : d;
+      playSfx('place');
+      checkAutoWin();
+      draw();
+    }
+  } else if (e.key === '0' || e.key === 'Delete' || e.key === 'Backspace') {
+    grid[r][c] = 0;
+    playSfx('erase');
+    draw();
+  } else if (e.key === ' ') {
+    e.preventDefault();
+    grid[r][c] = grid[r][c] === -1 ? 0 : -1;
+    playSfx('erase');
+    draw();
+  } else if (e.key === 'h' || e.key === 'H') {
+    useHint();
+  } else if (e.key === 'r' || e.key === 'R') {
+    restartLevel();
+  } else if (e.key === 'Escape') {
+    goMenu();
+  } else if (e.key === 'ArrowUp') { e.preventDefault(); if (r > 0) { selectedCell = {r: r-1, c}; draw(); } }
+  else if (e.key === 'ArrowDown') { e.preventDefault(); if (r < N-1) { selectedCell = {r: r+1, c}; draw(); } }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); if (c > 0) { selectedCell = {r, c: c-1}; draw(); } }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); if (c < N-1) { selectedCell = {r, c: c+1}; draw(); } }
+});
+
+// === RESIZE ===
+window.addEventListener('resize', () => { setupCanvas(); });
+
+// === START ===
+init();
+</script>
+
+<script src="/adsterra-manager.js?v=v514cdn"></script><script src="/monetag-manager.js?v=v525midgridcull"></script>
+<script src="/gz-analytics.js?v=2026071160f82021b38" defer></script>
+<div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
+<script src="/game-footer.js?v=20260711japanesesums"></script>
+
+</body>
+</html>
