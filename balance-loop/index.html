@@ -980,9 +980,19 @@ function saveSettings() {
 // ============================================================
 function resize() {
   canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  // Subtract footer height so game buttons (at canvas.height-30) are not covered by #game-footer
+  var footerEl = document.getElementById('game-footer');
+  var footerH = (footerEl && footerEl.offsetHeight > 0) ? footerEl.offsetHeight : 0;
+  canvas.height = window.innerHeight - footerH;
   if (state.screen === 'game') computeLayout();
 }
+
+// Footer may load after init — re-resize when it appears
+var _footerCheck = setInterval(function(){
+  var f = document.getElementById('game-footer');
+  if (f && f.offsetHeight > 0) { resize(); clearInterval(_footerCheck); }
+}, 1000);
+setTimeout(function(){ clearInterval(_footerCheck); }, 15000);
 
 function init() {
   resize();
