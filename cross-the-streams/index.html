@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cross the Streams — Logic Shading Puzzle | GameZipper</title>
+<meta name="description" content="Play Cross the Streams puzzle online free! A Nonogram-Nurikabe hybrid shading puzzle. Shade cells using number clues to form a single connected group with no 2x2 blocks. 30 unique levels from beginner to expert. No download, mobile-friendly!">
+<link rel="icon" type="image/png" href="icon.png">
+<meta property="og:title" content="Cross the Streams — Logic Shading Puzzle">
+<meta property="og:description" content="Shade cells using number clues to form a single connected group with no 2x2 blocks. 30 levels, 5 tiers. Free online!">
+<meta property="og:image" content="og-image.jpg">
+<meta property="og:type" content="website">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0e27;color:#e0e6f0;overflow-x:hidden;user-select:none}
+.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+#app{display:flex;flex-direction:column;min-height:100vh;max-width:680px;margin:0 auto;padding:8px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:8px 4px;margin-bottom:4px}
+.header h1{font-size:1.3rem;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.header .stars{display:flex;gap:2px}
+.header .stars .star{font-size:1.1rem;color:#444}
+.header .stars .star.filled{color:#ffd700}
+.btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#e0e6f0;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:0.85rem;transition:all .15s}
+.btn:hover{background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.3)}
+.btn:active{transform:scale(0.96)}
+.btn.primary{background:linear-gradient(135deg,#667eea,#764ba2);border:none}
+.btn.primary:hover{opacity:0.9}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:6px 0;justify-content:center}
+.toolbar .btn{font-size:0.8rem;padding:6px 10px}
+.info-bar{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;font-size:0.8rem;color:#8899aa;margin-bottom:4px}
+.info-bar span{display:flex;gap:4px;align-items:center}
+.canvas-wrap{display:flex;justify-content:center;align-items:center;flex:1;overflow:auto;position:relative}
+canvas{touch-action:none;cursor:pointer;border-radius:8px}
+.controls{display:flex;gap:6px;justify-content:center;padding:8px 0}
+.mode-btn{padding:10px 16px;border-radius:10px;font-size:0.9rem;border:2px solid transparent;cursor:pointer;transition:all .15s;background:rgba(255,255,255,0.06);color:#aab}
+.mode-btn.active{border-color:#667eea;background:rgba(102,126,234,0.2);color:#fff}
+.mode-btn .icon{font-size:1.2rem;display:block;text-align:center}
+.mode-btn .label{font-size:0.7rem;opacity:0.8}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(20,25,50,0.95);border:1px solid rgba(255,255,255,0.2);padding:10px 20px;border-radius:10px;font-size:0.85rem;z-index:1000;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,20,0.8);display:flex;align-items:center;justify-content:center;z-index:999;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.show{opacity:1;pointer-events:auto}
+.overlay-content{background:linear-gradient(135deg,#1a1f3a,#252b50);border:1px solid rgba(255,255,255,0.2);border-radius:16px;padding:32px;text-align:center;max-width:360px;box-shadow:0 0 40px rgba(102,126,234,0.3)}
+.overlay-content h2{font-size:1.5rem;margin-bottom:8px;background:linear-gradient(135deg,#667eea,#f093fb);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.overlay-content p{font-size:0.9rem;color:#aab;margin-bottom:16px}
+.overlay-content .big-emoji{font-size:3rem;margin-bottom:8px}
+.level-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:6px;max-height:50vh;overflow-y:auto;padding:4px}
+.level-cell{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer;font-size:0.8rem;transition:all .15s}
+.level-cell:hover{background:rgba(102,126,234,0.15);border-color:rgba(102,126,234,0.4)}
+.level-cell.current{background:rgba(102,126,234,0.25);border-color:#667eea}
+.level-cell .num{font-weight:bold;font-size:1rem}
+.level-cell .mini-stars{font-size:0.6rem;color:#ffd700}
+.tier-label{font-size:0.75rem;color:#889;text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px;text-align:left;padding-left:4px}
+.settings-panel{display:none;flex-direction:column;gap:8px;padding:12px;background:rgba(255,255,255,0.04);border-radius:10px;margin:4px 0}
+.settings-panel.show{display:flex}
+.setting-row{display:flex;justify-content:space-between;align-items:center;font-size:0.85rem}
+.toggle{position:relative;width:44px;height:24px;background:rgba(255,255,255,0.1);border-radius:12px;cursor:pointer;transition:background .2s}
+.toggle.on{background:#667eea}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:left .2s}
+.toggle.on::after{left:22px}
+.diff-badge{font-size:0.65rem;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
+.diff-beginner{background:rgba(72,187,120,0.2);color:#48bb78}
+.diff-easy{background:rgba(102,126,234,0.2);color:#667eea}
+.diff-medium{background:rgba(236,201,75,0.2);color:#ecc94b}
+.diff-hard{background:rgba(237,137,54,0.2);color:#ed8936}
+.diff-expert{background:rgba(245,101,101,0.2);color:#f56565}
+@keyframes confetti-fall{0%{transform:translateY(-100vh) rotate(0)}100%{transform:translateY(100vh) rotate(720deg)}}
+.confetti{position:fixed;width:10px;height:10px;z-index:998;pointer-events:none;animation:confetti-fall 3s linear forwards}
+.game-footer{margin-top:auto;padding:8px 0;text-align:center;font-size:0.75rem;color:#556}
+</style>
+</head>
+<body>
+<h1 class="gz-sr-only">Cross the Streams — Logic Shading Puzzle</h1>
+<div id="app">
+  <div class="header">
+    <div>
+      <h1>🌊 Cross the Streams</h1>
+      <span class="diff-badge diff-medium" id="diffBadge">Loading</span>
+    </div>
+    <div class="stars" id="starDisplay"></div>
+  </div>
+  
+  <div class="info-bar">
+    <span>📋 Level <strong id="levelNum">1</strong>/30</span>
+    <span>⏱️ <strong id="timer">0:00</strong></span>
+    <span>✏️ <strong id="hintCount">3</strong> hints</span>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn" onclick="showLevelSelect()">📋 Levels</button>
+    <button class="btn" onclick="toggleSettings()">⚙️ Settings</button>
+    <button class="btn" onclick="hint()">💡 Hint (<span id="hintCount2">3</span>)</button>
+    <button class="btn" onclick="checkSolution()">✅ Check</button>
+    <button class="btn" onclick="restart()">🔄 Restart</button>
+  </div>
+
+  <div class="settings-panel" id="settingsPanel">
+    <div class="setting-row"><span>🎵 Music</span><div class="toggle on" id="musicToggle" onclick="toggleSetting('music',this)"></div></div>
+    <div class="setting-row"><span>🔊 Sound FX</span><div class="toggle on" id="sfxToggle" onclick="toggleSetting('sfx',this)"></div></div>
+    <div class="setting-row"><span>🔍 Auto-check</span><div class="toggle" id="autoCheckToggle" onclick="toggleSetting('autoCheck',this)"></div></div>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="game"></canvas>
+  </div>
+
+  <div class="controls">
+    <div class="mode-btn active" id="modeFill" onclick="setMode('fill')">
+      <span class="icon">⬛</span><span class="label">Fill</span>
+    </div>
+    <div class="mode-btn" id="modeMark" onclick="setMode('mark')">
+      <span class="icon">❌</span><span class="label">Mark X</span>
+    </div>
+    <div class="mode-btn" id="modeErase" onclick="setMode('erase')">
+      <span class="icon">⬜</span><span class="label">Erase</span>
+    </div>
+  </div>
+
+  <div class="game-footer">Cross the Streams — shade connected cells using number clues · Free HTML5 Puzzle</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="winOverlay">
+  <div class="overlay-content">
+    <div class="big-emoji">🎉</div>
+    <h2>Puzzle Solved!</h2>
+    <p id="winText">Great work!</p>
+    <div id="winStars" style="font-size:2rem;margin:8px 0"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+      <button class="btn" onclick="hideOverlay('winOverlay');showLevelSelect()">📋 Levels</button>
+      <button class="btn primary" onclick="nextLevel()">Next ➡️</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="levelOverlay">
+  <div class="overlay-content" style="max-width:500px">
+    <h2>Select Level</h2>
+    <div class="level-grid" id="levelGrid"></div>
+    <button class="btn" style="margin-top:12px" onclick="hideOverlay('levelOverlay')">Close</button>
+  </div>
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Cross the Streams","description":"A Nonogram-Nurikabe hybrid shading puzzle. Shade cells using number clues to form a single connected group with no 2x2 blocks.","genre":["Puzzle","Logic"],"gamePlatform":["Web Browser"],"applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"numberOfPlayers":1,"url":"https://gamezipper.com/cross-the-streams/"}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Cross the Streams?","acceptedAnswer":{"@type":"Answer","text":"Shade cells so they form a single connected group with no 2x2 blocks. Numbers on the left and top tell you the lengths of consecutive shaded cell groups in each row and column."}},{"@type":"Question","name":"What are the Cross the Streams rules?","acceptedAnswer":{"@type":"Answer","text":"1) Shade cells to form one connected group. 2) No 2x2 area can be fully shaded. 3) Numbers represent consecutive shaded group lengths in order. 4) The solution must be unique."}},{"@type":"Question","name":"Is Cross the Streams free?","acceptedAnswer":{"@type":"Answer","text":"Yes! Play 30 levels free online with no download required."}}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Puzzle","item":"https://gamezipper.com/#puzzle"},{"@type":"ListItem","position":3,"name":"Cross the Streams","item":"https://gamezipper.com/cross-the-streams/"}]}
+</script>
+
+<script>
+// ===================== LEVELS DATA =====================
+const LEVELS = [{"rows":6,"cols":6,"difficulty":"beginner","rowClues":[[],[1],[1,1],[3,1],[1,1,1],[6]],"colClues":[[5],[1,1],[4],[1],[3],[1]],"solution":[[0,0,0,0,0,0],[1,0,0,0,0,0],[1,0,1,0,0,0],[1,1,1,0,1,0],[1,0,1,0,1,0],[1,1,1,1,1,1]]},{"rows":6,"cols":6,"difficulty":"beginner","rowClues":[[1,3],[4],[1,1],[3],[1,1],[1]],"colClues":[[5],[2,1],[4],[2],[1],[1]],"solution":[[0,1,0,1,1,1],[1,1,1,1,0,0],[1,0,1,0,0,0],[1,1,1,0,0,0],[1,0,1,0,0,0],[1,0,0,0,0,0]]},{"rows":6,"cols":6,"difficulty":"beginner","rowClues":[[3],[1],[3],[2,1],[1,1],[4]],"colClues":[[],[],[1,1],[1,4],[3,1],[1,4]],"solution":[[0,0,0,1,1,1],[0,0,0,0,1,0],[0,0,0,1,1,1],[0,0,1,1,0,1],[0,0,0,1,0,1],[0,0,1,1,1,1]]},{"rows":7,"cols":7,"difficulty":"beginner","rowClues":[[1,1,1],[6],[1,1,1],[6],[1,1],[2],[]],"colClues":[[],[1,2],[4],[1,1,1],[6],[1,1],[4]],"solution":[[0,0,1,0,1,0,1],[0,1,1,1,1,1,1],[0,0,1,0,1,0,1],[0,1,1,1,1,1,1],[0,1,0,0,1,0,0],[0,0,0,1,1,0,0],[0,0,0,0,0,0,0]]},{"rows":7,"cols":7,"difficulty":"beginner","rowClues":[[],[],[2,1],[1,3],[1,1,2],[5,1],[1,1,3]],"colClues":[[4],[1],[1,2],[4],[1,2],[3,1],[3]],"solution":[[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,1,1,0,1,0],[1,0,0,1,1,1,0],[1,0,0,1,0,1,1],[1,1,1,1,1,0,1],[1,0,1,0,1,1,1]]},{"rows":7,"cols":7,"difficulty":"easy","rowClues":[[1,1,2],[6],[1,2],[2,1],[3],[2],[2]],"colClues":[[1],[2,1],[1,1,2],[6],[1,1],[3,1],[1,2]],"solution":[[0,1,0,1,0,1,1],[1,1,1,1,1,1,0],[0,0,0,1,0,1,1],[0,0,1,1,0,0,1],[0,0,0,1,1,1,0],[0,0,1,1,0,0,0],[0,1,1,0,0,0,0]]},{"rows":7,"cols":7,"difficulty":"easy","rowClues":[[1],[1],[5],[1,1],[6],[2,1,1],[1,1,2]],"colClues":[[2],[1,2],[5],[1,3],[3],[1,3],[1,1]],"solution":[[0,0,1,0,0,0,0],[0,0,1,0,0,0,0],[0,1,1,1,1,1,0],[0,0,1,0,1,0,0],[0,1,1,1,1,1,1],[1,1,0,1,0,1,0],[1,0,0,1,0,1,1]]},{"rows":8,"cols":8,"difficulty":"easy","rowClues":[[4],[2,1,1],[3,2],[2,3],[1,2,1],[1,5],[1,1],[]],"colClues":[[1,4],[4],[1,1,1],[7],[1,1,1],[4],[2,1],[1]],"solution":[[0,1,1,1,1,0,0,0],[1,1,0,1,0,0,1,0],[0,1,1,1,0,1,1,0],[1,1,0,1,1,1,0,0],[1,0,1,1,0,1,0,0],[1,0,0,1,1,1,1,1],[1,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0]]},{"rows":8,"cols":8,"difficulty":"easy","rowClues":[[3,1],[1,6],[3,1],[1,4],[1,3],[3],[3],[]],"colClues":[[4],[1,1],[4],[1,3],[4,1],[1,4],[1,1,1],[1,1,1]],"solution":[[1,1,1,0,1,0,0,0],[1,0,1,1,1,1,1,1],[1,1,1,0,1,0,0,0],[1,0,1,1,1,1,0,0],[0,0,0,1,0,1,1,1],[0,0,0,1,1,1,0,0],[0,0,0,0,0,1,1,1],[0,0,0,0,0,0,0,0]]},{"rows":8,"cols":8,"difficulty":"easy","rowClues":[[3],[1,1],[4],[1,1,1],[1,3],[4,1],[1,3],[5]],"colClues":[[],[1],[1,1],[5],[1,1,1],[8],[1,1,1,1],[7]],"solution":[[0,0,0,0,0,1,1,1],[0,0,0,0,0,1,0,1],[0,0,0,0,1,1,1,1],[0,0,0,1,0,1,0,1],[0,0,0,1,0,1,1,1],[0,0,1,1,1,1,0,1],[0,0,0,1,0,1,1,1],[0,1,1,1,1,1,0,0]]},{"rows":9,"cols":9,"difficulty":"medium","rowClues":[[5],[1,3],[4,1],[2,3],[2,1,1,1],[1,7],[2,1,1],[1,2],[1]],"colClues":[[2],[1,2,1],[1,2,4],[3,2],[1,1,2],[6,1],[1,1,3],[5],[1]],"solution":[[0,1,1,1,1,1,0,0,0],[0,0,0,1,0,1,1,1,0],[0,0,1,1,1,1,0,1,0],[0,1,1,0,0,1,1,1,0],[1,1,0,1,0,1,0,1,0],[1,0,1,1,1,1,1,1,1],[0,1,1,0,1,0,1,0,0],[0,0,1,0,0,1,1,0,0],[0,0,1,0,0,0,0,0,0]]},{"rows":9,"cols":9,"difficulty":"medium","rowClues":[[2],[2,1],[6],[1,1],[3,2,1],[1,3,2],[3,3],[1,2,2],[4]],"colClues":[[1,5],[5,1,1],[1,1,3,1],[1,1,2],[7],[1,1,1],[1,3],[2,1],[]],"solution":[[0,1,1,0,0,0,0,0,0],[1,1,0,0,1,0,0,0,0],[0,1,1,1,1,1,1,0,0],[0,1,0,0,1,0,0,0,0],[1,1,1,0,1,1,0,1,0],[1,0,1,1,1,0,1,1,0],[1,1,1,0,1,1,1,0,0],[1,0,0,1,1,0,1,1,0],[1,1,1,1,0,0,0,0,0]]},{"rows":9,"cols":9,"difficulty":"medium","rowClues":[[4],[1,4],[1,1,1],[4],[1,3],[4,1],[1,1,3],[7],[1,1,1]],"colClues":[[1,2,1,2],[2,5],[1,1,1,2],[8],[1,1,2],[1,1,1],[2,3],[1],[1]],"solution":[[1,1,1,1,0,0,0,0,0],[0,1,0,1,1,1,1,0,0],[1,0,0,1,0,0,1,0,0],[1,1,1,1,0,0,0,0,0],[0,1,0,1,1,1,0,0,0],[1,1,1,1,0,0,1,0,0],[0,1,0,1,0,0,1,1,1],[1,1,1,1,1,1,1,0,0],[1,0,1,0,1,0,0,0,0]]},{"rows":9,"cols":9,"difficulty":"medium","rowClues":[[1,1],[4,1],[1,1,2],[4,1],[1,3],[4,2],[1,3],[4,1],[1,3]],"colClues":[[6,2],[1,1,3],[3,1,1],[2,6],[1,1,1],[8],[1,1],[],[]],"solution":[[1,0,0,1,0,0,0,0,0],[1,1,1,1,0,1,0,0,0],[1,0,1,0,0,1,1,0,0],[1,1,1,1,0,1,0,0,0],[1,0,0,1,1,1,0,0,0],[1,1,1,1,0,1,1,0,0],[0,1,0,1,1,1,0,0,0],[1,1,1,1,0,1,0,0,0],[1,0,0,1,1,1,0,0,0]]},{"rows":10,"cols":10,"difficulty":"medium","rowClues":[[1,3],[5,1],[2,1,3],[6,1],[1,1,1,1],[1,5],[2,1,1],[1,3],[4,1],[1,3]],"colClues":[[],[1],[4],[1,1],[4,1,1],[2,1,5],[1,1,1,1],[10],[1,1,1,1,1],[10]],"solution":[[0,0,0,0,0,1,0,1,1,1],[0,0,0,1,1,1,1,1,0,1],[0,1,1,0,1,0,0,1,1,1],[0,0,1,1,1,1,1,1,0,1],[0,0,1,0,1,0,0,1,0,1],[0,0,1,0,0,1,1,1,1,1],[0,0,0,0,1,1,0,1,0,1],[0,0,0,0,0,1,0,1,1,1],[0,0,0,0,1,1,1,1,0,1],[0,0,0,0,0,1,0,1,1,1]]},{"rows":10,"cols":10,"difficulty":"hard","rowClues":[[1,1,1,1],[7,1],[1,1,3],[2,1,1,2],[8],[2,1,1],[9],[1,1,1],[1,1],[]],"colClues":[[2,1,1],[8],[2,1,1],[1,1,3],[7],[1,1,2],[7],[1,1,1],[4,1],[1,1]],"solution":[[1,0,1,0,1,0,1,0,0,0],[1,1,1,1,1,1,1,0,1,0],[0,1,0,0,1,0,1,1,1,0],[1,1,0,0,1,0,1,0,1,1],[0,1,1,1,1,1,1,1,1,0],[1,1,0,0,1,0,1,0,0,0],[0,1,1,1,1,1,1,1,1,1],[0,1,0,1,0,1,0,0,0,0],[0,1,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]},{"rows":10,"cols":10,"difficulty":"hard","rowClues":[[],[1],[3,1],[1,1,1],[5,4],[1,1,3,1],[1,1,1,4],[5,1,1],[1,1,5],[6,1,1]],"colClues":[[8],[1,1,1,1],[9],[1,1,1],[6,1],[1,2],[5],[1,1,2],[1,3],[3,2]],"solution":[[0,0,0,0,0,0,0,0,0,0],[0,0,1,0,0,0,0,0,0,0],[1,1,1,0,1,0,0,0,0,0],[1,0,1,0,1,0,0,0,0,0],[1,1,1,1,1,0,1,1,1,1],[1,0,1,0,1,1,1,0,0,1],[1,0,1,0,1,0,1,1,1,1],[1,1,1,1,1,0,1,0,1,0],[1,0,1,0,0,1,1,1,1,1],[1,1,1,1,1,1,0,1,0,1]]},{"rows":10,"cols":10,"difficulty":"hard","rowClues":[[1,2,1],[5,3],[1,1,3,1],[6,3],[1,1,1,1],[7],[2,1,1],[1,4],[2,1],[1,1]],"colClues":[[1],[3],[1,2,1],[4,3],[1,3],[4,1,1],[1,1,6],[3,1,1],[2,5],[3,1,3]],"solution":[[0,0,0,1,0,1,1,0,1,0],[0,1,1,1,1,1,0,1,1,1],[0,1,0,1,0,1,1,1,0,1],[1,1,1,1,1,1,0,1,1,1],[0,0,1,0,1,0,1,0,1,0],[0,0,0,1,1,1,1,1,1,1],[0,0,1,1,0,0,1,0,1,0],[0,0,0,1,0,0,1,1,1,1],[0,0,0,0,0,1,1,0,0,1],[0,0,0,0,0,0,1,0,0,1]]},{"rows":11,"cols":11,"difficulty":"hard","rowClues":[[8,1],[2,1,1,3],[8,1],[2,1,1,3],[4,1,1,1],[2,3],[4,1],[2,1,2],[1,1],[2],[1]],"colClues":[[1,1,1,4],[8,1],[1,1,1,1],[1,1,1,1],[8],[1,1,1],[9],[1,1,1],[5],[1,1],[5]],"solution":[[0,1,1,1,1,1,1,1,1,0,1],[1,1,0,0,1,0,1,0,1,1,1],[0,1,1,1,1,1,1,1,1,0,1],[1,1,0,0,1,0,1,0,1,1,1],[0,1,1,1,1,0,1,0,1,0,1],[1,1,0,0,1,1,1,0,0,0,0],[0,1,1,1,1,0,1,0,0,0,0],[1,1,0,0,1,0,1,1,0,0,0],[1,0,0,0,0,0,1,0,0,0,0],[1,1,0,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0,0,0,0]]},{"rows":11,"cols":11,"difficulty":"hard","rowClues":[[],[],[1,1],[1,1,1,1,1],[11],[1,1,1,1,1,1],[3,1,1,1,1],[1,6,2],[1,1,3],[7,1],[1,1,4]],"colClues":[[6],[1,1,1],[4,2],[2,3],[4,1],[2,4],[4,1],[1,4],[4,1,1],[1,4],[6,1]],"solution":[[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0,0,0,1],[1,0,0,1,0,1,0,0,1,0,1],[1,1,1,1,1,1,1,1,1,1,1],[1,0,1,0,1,0,1,0,1,0,1],[1,1,1,0,1,0,1,0,1,0,1],[1,0,1,1,1,1,1,1,0,1,1],[0,0,0,1,0,1,0,1,1,1,0],[0,1,1,1,1,1,1,1,0,1,0],[0,0,1,0,0,1,0,1,1,1,1]]},{"rows":12,"cols":12,"difficulty":"expert","rowClues":[[],[1],[1,2],[4],[3,2],[1,1,1,1],[9],[1,1,1,1],[1,1,1,4],[2,6,1],[3,1,4],[2,5,1,1]],"colClues":[[2,1],[3],[1],[1,3],[5,1],[1,1,3],[6,1],[2,1,1,1],[2,6],[1,1,1,2],[5,1,1],[2,1,6]],"solution":[[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,1,0,1,1],[0,0,0,0,0,0,0,1,1,1,1,0],[0,0,0,0,0,1,1,1,0,0,1,1],[0,0,0,0,1,0,1,0,1,0,1,0],[0,0,0,1,1,1,1,1,1,1,1,1],[0,0,0,0,1,0,1,0,1,0,0,1],[1,0,0,0,1,0,1,0,1,1,1,1],[1,1,0,1,1,1,1,1,1,0,0,1],[0,1,1,1,0,1,0,0,1,1,1,1],[1,1,0,1,1,1,1,1,0,1,0,1]]},{"rows":12,"cols":12,"difficulty":"expert","rowClues":[[],[],[],[1],[1,2,1],[4,3],[1,1,2,1],[3,7],[2,3,1,1,1],[1,2,7],[3,1,1,1],[1,10]],"colClues":[[2,4],[1,2,1],[4,3],[1,3,1],[1,1,1,1],[7,1],[1,1,3],[6,1],[1,1,1],[5],[1,1,1],[5]],"solution":[[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0,0,0,0],[0,0,1,0,1,1,0,1,0,0,0,0],[1,1,1,1,0,1,1,1,0,0,0,0],[1,0,1,0,1,1,0,1,0,0,0,0],[0,1,1,1,0,1,1,1,1,1,1,1],[1,1,0,1,1,1,0,1,0,1,0,1],[1,0,1,1,0,1,1,1,1,1,1,1],[1,1,1,0,0,0,1,0,0,1,0,1],[1,0,1,1,1,1,1,1,1,1,1,1]]},{"rows":12,"cols":12,"difficulty":"expert","rowClues":[[2],[2,1,1],[1,2,5],[1,2,1,1,1],[1,1,7],[5,1,1,1],[1,1,1,6],[7,1,1],[1,1,1,3],[4,1,1],[1,1,4],[5,1]],"colClues":[[10],[1,1,1,1],[1,5,3],[3,1,3,1],[1,4,2],[2,4],[4,2],[4,1,3],[1,5],[5,1,1],[1,1,3],[1,2]],"solution":[[0,0,0,0,0,0,0,0,0,1,1,0],[0,0,1,1,0,0,0,1,0,1,0,0],[1,0,0,1,1,0,0,1,1,1,1,1],[1,0,1,1,0,1,0,1,0,1,0,0],[1,0,1,0,1,1,1,1,1,1,1,0],[1,1,1,1,1,0,1,0,1,0,1,0],[1,0,1,0,1,0,1,1,1,1,1,1],[1,1,1,1,1,1,1,0,1,0,0,1],[1,0,0,1,0,1,0,1,1,1,0,0],[1,1,1,1,0,1,0,1,0,0,0,0],[1,0,1,0,1,1,1,1,0,0,0,0],[1,1,1,1,1,0,1,0,0,0,0,0]]},{"rows":13,"cols":13,"difficulty":"expert","rowClues":[[10,1],[2,1,1,1,3],[9,1],[1,1,1,3],[10,2],[1,1,1,1,3],[5,3,1],[2,1,2,1],[4],[2,1,2],[5],[1,1,2],[4]],"colClues":[[1,2,1,1],[5,6],[1,1,1,1,1,1,1],[1,1,9],[5,1,1,1,1],[1,1,3,4],[5,1,1,1],[1,1,4],[3,1,1],[1,6],[2,1,1],[6],[2,1]],"solution":[[0,1,1,1,1,1,1,1,1,1,1,0,1],[1,1,0,0,1,0,1,0,1,0,1,1,1],[0,1,1,1,1,1,1,1,1,1,0,1,0],[0,1,0,0,1,0,1,0,0,1,1,1,0],[1,1,1,1,1,1,1,1,1,1,0,1,1],[1,0,0,1,0,1,0,1,0,1,1,1,0],[0,1,1,1,1,1,0,1,1,1,0,1,0],[1,1,0,1,0,0,1,1,0,1,0,0,0],[0,1,1,1,1,0,0,0,0,0,0,0,0],[1,1,0,1,0,1,1,0,0,0,0,0,0],[0,1,1,1,1,1,0,0,0,0,0,0,0],[0,1,0,1,0,1,1,0,0,0,0,0,0],[0,0,1,1,1,1,0,0,0,0,0,0,0]]},{"rows":13,"cols":13,"difficulty":"expert","rowClues":[[1,1,4],[4,1,2],[1,5],[2,1,1,1],[8,1],[1,1,1,1,3],[5,1,1],[1,8],[2,2,1,1],[2,3,2],[3,1],[1,1],[]],"colClues":[[2,1,2,1],[4,4],[2,3,2],[4,1,1,1],[1,1,8],[3,1,1,1],[1,10],[3,1,1],[1,3,1,1],[5],[2,1],[1],[]],"solution":[[1,0,1,0,1,1,1,1,0,0,0,0,0],[1,1,1,1,0,1,0,1,1,0,0,0,0],[0,1,0,1,1,1,1,1,0,0,0,0,0],[1,1,0,1,0,0,1,0,1,0,0,0,0],[0,1,1,1,1,1,1,1,1,0,1,0,0],[1,0,1,0,1,0,1,0,1,1,1,0,0],[1,1,1,1,1,0,1,0,0,1,0,0,0],[0,1,0,0,1,1,1,1,1,1,1,1,0],[1,1,0,1,1,0,1,0,0,1,0,0,0],[0,1,1,0,1,1,1,0,1,1,0,0,0],[0,0,1,1,1,0,1,0,0,0,0,0,0],[0,0,0,0,1,0,1,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0]]},{"rows":13,"cols":13,"difficulty":"expert","rowClues":[[8],[1,1,2],[6,1],[2,1,5],[1,1,1,1,1],[11],[1,1,1,1,1],[8,1],[1,1,1,3],[8,2],[1,1,1,1,2],[3,5],[3,1]],"colClues":[[1,1,5],[1,6,1,1],[1,1,1,6],[1,6,1,1],[3,1,6],[1,1,4,1,1],[4,1,1,3],[1,7,2],[2,1,1,1,2],[10],[1,1,1],[],[]],"solution":[[0,1,1,1,1,1,1,1,1,0,0,0,0],[0,0,0,0,1,0,1,0,1,1,0,0,0],[0,1,1,1,1,1,1,0,0,1,0,0,0],[1,1,0,1,0,0,1,1,1,1,1,0,0],[0,1,0,1,0,1,0,1,0,1,0,0,0],[1,1,1,1,1,1,1,1,1,1,1,0,0],[0,1,0,1,0,1,0,1,0,1,0,0,0],[1,1,1,1,1,1,1,1,0,1,0,0,0],[1,0,1,0,1,0,0,1,1,1,0,0,0],[1,1,1,1,1,1,1,1,0,1,1,0,0],[1,0,1,0,1,0,1,0,1,1,0,0,0],[1,1,1,0,1,1,1,1,1,0,0,0,0],[0,0,1,1,1,0,0,1,0,0,0,0,0]]},{"rows":14,"cols":14,"difficulty":"expert","rowClues":[[2,7,1,1],[2,1,1,5],[8,1,1],[1,1,1,5],[1,1,4,1,1],[4,1,6],[1,1,3,1,1],[1,2,6],[3,1,1,1],[1,3,4],[2,2,1,1],[1,4],[4,1],[1]],"colClues":[[1],[2,3],[2,1,1],[1,9],[1,1,1,1],[5,3],[1,1,4,1],[5,1,3,1],[1,1,4,3],[4,1,3,2],[1,3,1,4],[4,5,1],[1,1,1,1,4],[8,1]],"solution":[[1,1,0,1,1,1,1,1,1,1,0,1,0,1],[0,1,1,0,0,1,0,1,0,1,1,1,1,1],[0,0,1,1,1,1,1,1,1,1,0,1,0,1],[0,0,0,1,0,1,0,1,0,1,1,1,1,1],[0,1,0,1,0,1,1,1,1,0,1,0,0,1],[0,1,1,1,1,0,1,0,1,1,1,1,1,1],[0,1,0,1,0,0,1,1,1,0,0,1,0,1],[0,0,0,1,0,1,1,0,1,1,1,1,1,1],[0,0,0,1,1,1,0,1,0,1,0,1,0,0],[0,0,0,1,0,1,1,1,0,1,1,1,1,0],[0,0,1,1,0,0,0,1,1,0,1,0,1,0],[0,0,0,0,0,0,0,0,1,0,1,1,1,1],[0,0,0,0,0,0,0,1,1,1,1,0,1,0],[0,0,0,0,0,0,0,0,0,1,0,0,0,0]]},{"rows":14,"cols":14,"difficulty":"expert","rowClues":[[],[],[],[2,1],[1,1,1],[9],[1,1,1,1,1],[12],[1,1,1,1,1,1],[6,5],[1,1,3,1,1],[1,1,1,6],[8,1],[1,1,1,6]],"colClues":[[9],[3,1,1,1],[1,5,2],[1,1,4],[7,2],[1,1,4],[4,1,1],[2,1,5],[5,1,1],[1,3,1],[3,3],[1,3,1],[1,1],[]],"solution":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,1,1,0,1,0,0,0,0,0,0,0,0,0],[0,1,0,0,1,0,0,1,0,0,0,0,0,0],[1,1,1,1,1,1,1,1,1,0,0,0,0,0],[1,0,1,0,1,0,1,0,1,0,0,0,0,0],[1,1,1,1,1,1,1,1,1,1,1,1,0,0],[1,0,1,0,1,0,1,0,1,0,1,0,0,0],[1,1,1,1,1,1,0,1,1,1,1,1,0,0],[1,0,0,1,0,1,1,1,0,1,0,1,0,0],[1,0,0,1,0,1,0,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,0,0,1,0,0,0],[1,0,1,0,1,0,0,1,1,1,1,1,1,0]]},{"rows":14,"cols":14,"difficulty":"expert","rowClues":[[1,1],[1,3],[4,3,1],[1,3,3],[4,3,1],[1,3,4],[2,1,3,1],[5,3],[1,1,4],[6,1],[1,1,2],[1,1,1,1],[9],[1,1,1,1]],"colClues":[[5,2,2],[3,1,2,4],[1,1,3,2],[7,4],[2,1,1,1,1,1],[13],[1,1,1,1,1,1],[5,2,3],[1,1,2,1],[6],[1,1],[],[],[]],"solution":[[0,1,0,0,1,0,0,0,0,0,0,0,0,0],[0,1,0,1,1,1,0,0,0,0,0,0,0,0],[1,1,1,1,0,1,1,1,0,1,0,0,0,0],[1,0,0,1,1,1,0,1,1,1,0,0,0,0],[1,1,1,1,0,1,1,1,0,1,0,0,0,0],[1,0,0,1,1,1,0,1,1,1,1,0,0,0],[1,1,0,1,0,1,1,1,0,1,0,0,0,0],[0,1,1,1,1,1,0,0,1,1,1,0,0,0],[1,0,1,0,0,1,1,1,1,0,0,0,0,0],[1,1,1,1,1,1,0,1,0,0,0,0,0,0],[0,1,0,1,0,1,1,0,0,0,0,0,0,0],[0,1,0,1,0,1,0,1,0,0,0,0,0,0],[1,1,1,1,1,1,1,1,1,0,0,0,0,0],[1,0,1,0,0,1,0,1,0,0,0,0,0,0]]},{"rows":15,"cols":15,"difficulty":"expert","rowClues":[[1,1,2,1,1],[1,4,6],[3,1,3,1],[1,4,3],[4,1,1],[1,6],[4,1,1],[1,1,1],[7,2],[1,1,3],[6,1],[2,1,1],[3,2],[2,4],[1,1,2]],"colClues":[[7,1,2],[3,1,1,6],[1,1,3,1,1],[1,4,1,5],[4,1,3,1],[1,1,4,1,1],[6,7],[1,1,2,1,1,1],[5,3],[2,1,1],[3],[1],[2],[1],[]],"solution":[[0,1,0,0,1,0,1,1,0,1,0,0,1,0,0],[0,1,0,1,1,1,1,0,1,1,1,1,1,1,0],[1,1,1,0,1,0,1,1,1,0,1,0,0,0,0],[1,0,0,1,1,1,1,0,1,1,1,0,0,0,0],[1,1,1,1,0,0,1,0,1,0,0,0,0,0,0],[1,0,0,1,1,1,1,1,1,0,0,0,0,0,0],[1,1,1,1,0,1,0,1,0,0,0,0,0,0,0],[1,0,1,0,0,1,0,0,0,0,0,0,0,0,0],[1,1,1,1,1,1,1,0,1,1,0,0,0,0,0],[0,1,0,0,1,0,1,1,1,0,0,0,0,0,0],[0,1,1,1,1,1,1,0,1,0,0,0,0,0,0],[1,1,0,1,0,0,1,0,0,0,0,0,0,0,0],[0,1,1,1,0,0,1,1,0,0,0,0,0,0,0],[1,1,0,1,1,1,1,0,0,0,0,0,0,0,0],[1,0,0,1,0,0,1,1,0,0,0,0,0,0,0]]}];
+
+// ===================== GAME STATE =====================
+let currentLevel = 0;
+let grid = [];
+let mode = 'fill'; // fill, mark, erase
+let hintsLeft = 3;
+let startTime = Date.now();
+let timerInterval = null;
+let settings = { music: true, sfx: true, autoCheck: false };
+let cellSize = 0;
+let clueOffsetX = 0;
+let clueOffsetY = 0;
+let won = false;
+
+const DIFF_LABELS = { beginner:'Beginner', easy:'Easy', medium:'Medium', hard:'Hard', expert:'Expert' };
+const DIFF_COLORS = { beginner:'diff-beginner', easy:'diff-easy', medium:'diff-medium', hard:'diff-hard', expert:'diff-expert' };
+
+// ===================== AUDIO =====================
+let audioCtx = null;
+let musicGain = null;
+let musicNodes = [];
+let sfxGain = null;
+
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    musicGain = audioCtx.createGain();
+    musicGain.gain.value = 0.08;
+    musicGain.connect(audioCtx.destination);
+    sfxGain = audioCtx.createGain();
+    sfxGain.gain.value = 0.15;
+    sfxGain.connect(audioCtx.destination);
+    if (settings.music) startMusic();
+  } catch(e) {}
+}
+
+function playSfx(freq, duration, type='sine', vol=1) {
+  if (!settings.sfx || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol * 0.3, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(sfxGain);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+function sfxFill() { playSfx(440, 0.08, 'square', 0.5); }
+function sfxErase() { playSfx(220, 0.06, 'sawtooth', 0.3); }
+function sfxMark() { playSfx(330, 0.05, 'triangle', 0.4); }
+function sfxHint() { playSfx(660, 0.15, 'sine', 0.6); setTimeout(() => playSfx(880, 0.1, 'sine', 0.4), 80); }
+function sfxError() { playSfx(150, 0.2, 'sawtooth', 0.5); }
+function sfxWin() {
+  [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playSfx(f, 0.2, 'sine', 0.6), i * 120));
+}
+
+const CHORD_PROGRESSION = [
+  [262, 330, 392, 494], // Cmaj7
+  [220, 277, 330, 415], // Am7
+  [294, 370, 440, 555], // Dm7
+  [196, 247, 294, 392], // G
+];
+let chordIndex = 0;
+
+function startMusic() {
+  if (!audioCtx || musicNodes.length > 0) return;
+  playChord();
+}
+
+function playChord() {
+  if (!audioCtx || !settings.music) return;
+  stopMusicNodes();
+  const chord = CHORD_PROGRESSION[chordIndex % CHORD_PROGRESSION.length];
+  chord.forEach(freq => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.5);
+    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 3.5);
+    osc.connect(gain);
+    gain.connect(musicGain);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 4);
+    musicNodes.push({osc, gain});
+  });
+  chordIndex++;
+  setTimeout(() => { if (settings.music) playChord(); }, 3500);
+}
+
+function stopMusicNodes() {
+  musicNodes.forEach(n => { try { n.osc.stop(); } catch(e){} });
+  musicNodes = [];
+}
+
+// ===================== GAME LOGIC =====================
+function loadLevel(idx) {
+  currentLevel = idx;
+  const level = LEVELS[idx];
+  grid = [];
+  for (let r = 0; r < level.rows; r++) {
+    grid.push(new Array(level.cols).fill(0));
+  }
+  hintsLeft = 3;
+  startTime = Date.now();
+  won = false;
+  updateUI();
+  resizeCanvas();
+  draw();
+  saveProgress();
+}
+
+function updateUI() {
+  const level = LEVELS[currentLevel];
+  document.getElementById('levelNum').textContent = currentLevel + 1;
+  document.getElementById('hintCount').textContent = hintsLeft;
+  document.getElementById('hintCount2').textContent = hintsLeft;
+  const badge = document.getElementById('diffBadge');
+  badge.textContent = DIFF_LABELS[level.difficulty];
+  badge.className = 'diff-badge ' + DIFF_COLORS[level.difficulty];
+  updateStars();
+}
+
+function updateStars() {
+  const stars = getStars(currentLevel);
+  const el = document.getElementById('starDisplay');
+  el.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('span');
+    s.className = 'star' + (i < stars ? ' filled' : '');
+    s.textContent = '⭐';
+    el.appendChild(s);
+  }
+}
+
+function getStars(levelIdx) {
+  const saved = localStorage.getItem('cts_stars');
+  if (!saved) return 0;
+  const data = JSON.parse(saved);
+  return data[levelIdx] || 0;
+}
+
+function setStars(levelIdx, stars) {
+  const saved = localStorage.getItem('cts_stars');
+  const data = saved ? JSON.parse(saved) : {};
+  data[levelIdx] = Math.max(data[levelIdx] || 0, stars);
+  localStorage.setItem('cts_stars', JSON.stringify(data));
+}
+
+function saveProgress() {
+  localStorage.setItem('cts_progress', JSON.stringify({ level: currentLevel, grid }));
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('mode' + m.charAt(0).toUpperCase() + m.slice(1)).classList.add('active');
+}
+
+function handleClick(r, c) {
+  if (won) return;
+  initAudio();
+  if (mode === 'fill') {
+    if (grid[r][c] === 1) { grid[r][c] = 0; sfxErase(); }
+    else { grid[r][c] = 1; grid[r][c] = 1; sfxFill(); }
+  } else if (mode === 'mark') {
+    if (grid[r][c] === 2) { grid[r][c] = 0; sfxErase(); }
+    else { grid[r][c] = 2; sfxMark(); }
+  } else if (mode === 'erase') {
+    grid[r][c] = 0;
+    sfxErase();
+  }
+  draw();
+  saveProgress();
+  if (settings.autoCheck) checkSolution();
+}
+
+function hint() {
+  if (won) return;
+  if (hintsLeft <= 0) { showToast('No hints left!'); sfxError(); return; }
+  initAudio();
+  const level = LEVELS[currentLevel];
+  const sol = level.solution;
+  const candidates = [];
+  for (let r = 0; r < level.rows; r++) {
+    for (let c = 0; c < level.cols; c++) {
+      const should = sol[r][c];
+      const have = grid[r][c];
+      if (should === 1 && have !== 1) candidates.push({r, c, type: 'fill'});
+      if (should === 0 && have === 1) candidates.push({r, c, type: 'unfill'});
+    }
+  }
+  if (candidates.length === 0) { showToast('Already correct!'); return; }
+  const pick = candidates[Math.floor(Math.random() * candidates.length)];
+  grid[pick.r][pick.c] = sol[pick.r][pick.c] === 1 ? 1 : 0;
+  hintsLeft--;
+  document.getElementById('hintCount').textContent = hintsLeft;
+  document.getElementById('hintCount2').textContent = hintsLeft;
+  sfxHint();
+  draw();
+  showToast(pick.type === 'fill' ? `💡 Filled (${pick.r+1},${pick.c+1})` : `💡 Cleared (${pick.r+1},${pick.c+1})`);
+}
+
+function getLineGroups(line) {
+  const groups = [];
+  let count = 0;
+  for (const v of line) {
+    if (v === 1) count++;
+    else { if (count > 0) groups.push(count); count = 0; }
+  }
+  if (count > 0) groups.push(count);
+  return groups;
+}
+
+function checkSolution() {
+  if (won) return;
+  const level = LEVELS[currentLevel];
+  const R = level.rows, C = level.cols;
+  
+  // Check row clues
+  for (let r = 0; r < R; r++) {
+    const groups = getLineGroups(grid[r].map(v => v === 1 ? 1 : 0));
+    if (JSON.stringify(groups) !== JSON.stringify(level.rowClues[r])) {
+      showToast('Row ' + (r+1) + ' does not match clues');
+      sfxError();
+      return;
+    }
+  }
+  // Check col clues
+  for (let c = 0; c < C; c++) {
+    const col = [];
+    for (let r = 0; r < R; r++) col.push(grid[r][c] === 1 ? 1 : 0);
+    const groups = getLineGroups(col);
+    if (JSON.stringify(groups) !== JSON.stringify(level.colClues[c])) {
+      showToast('Column ' + (c+1) + ' does not match clues');
+      sfxError();
+      return;
+    }
+  }
+  // Check no 2x2
+  for (let r = 0; r < R - 1; r++) {
+    for (let c = 0; c < C - 1; c++) {
+      if (grid[r][c] === 1 && grid[r][c+1] === 1 && grid[r+1][c] === 1 && grid[r+1][c+1] === 1) {
+        showToast('2×2 block detected!');
+        sfxError();
+        return;
+      }
+    }
+  }
+  // Check connectivity
+  const shaded = [];
+  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) if (grid[r][c] === 1) shaded.push([r,c]);
+  if (shaded.length === 0) { showToast('No shaded cells!'); sfxError(); return; }
+  const visited = new Set();
+  const queue = [shaded[0]];
+  visited.add(shaded[0].join(','));
+  while (queue.length > 0) {
+    const [r, c] = queue.shift();
+    for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+      const nr = r+dr, nc = c+dc;
+      const key = nr+','+nc;
+      if (nr >= 0 && nr < R && nc >= 0 && nc < C && grid[nr][nc] === 1 && !visited.has(key)) {
+        visited.add(key);
+        queue.push([nr, nc]);
+      }
+    }
+  }
+  if (visited.size !== shaded.length) {
+    showToast('Cells are not connected!');
+    sfxError();
+    return;
+  }
+  
+  // All checks pass
+  win();
+}
+
+function win() {
+  won = true;
+  clearInterval(timerInterval);
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  let stars = 1;
+  if (hintsLeft >= 2) stars = 2;
+  if (hintsLeft >= 3 && elapsed < 120) stars = 3;
+  setStars(currentLevel, stars);
+  sfxWin();
+  document.getElementById('winText').textContent = `Solved in ${formatTime(elapsed)}!`;
+  document.getElementById('winStars').textContent = '⭐'.repeat(stars);
+  showOverlay('winOverlay');
+  launchConfetti();
+  initAudio();
+}
+
+function launchConfetti() {
+  const colors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a','#fcb69f'];
+  for (let i = 0; i < 50; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.left = Math.random() * 100 + '%';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.animationDelay = Math.random() * 0.5 + 's';
+    el.style.animationDuration = (2 + Math.random() * 2) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+  }
+}
+
+function restart() {
+  loadLevel(currentLevel);
+}
+
+function nextLevel() {
+  hideOverlay('winOverlay');
+  if (currentLevel < LEVELS.length - 1) {
+    loadLevel(currentLevel + 1);
+  } else {
+    showToast('🏆 You completed all levels!');
+    showLevelSelect();
+  }
+}
+
+function showLevelSelect() {
+  const grid = document.getElementById('levelGrid');
+  grid.innerHTML = '';
+  const tiers = ['beginner', 'easy', 'medium', 'hard', 'expert'];
+  let idx = 0;
+  tiers.forEach(tier => {
+    const tierLevels = LEVELS.map((l, i) => ({l, i})).filter(x => x.l.difficulty === tier);
+    if (tierLevels.length === 0) return;
+    const label = document.createElement('div');
+    label.className = 'tier-label';
+    label.textContent = tier;
+    grid.appendChild(label);
+    tierLevels.forEach(({l, i}) => {
+      const cell = document.createElement('div');
+      cell.className = 'level-cell' + (i === currentLevel ? ' current' : '');
+      const stars = getStars(i);
+      cell.innerHTML = `<div class="num">${i+1}</div><div class="mini-stars">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div>`;
+      cell.onclick = () => { hideOverlay('levelOverlay'); loadLevel(i); };
+      grid.appendChild(cell);
+    });
+  });
+  showOverlay('levelOverlay');
+}
+
+function toggleSettings() {
+  document.getElementById('settingsPanel').classList.toggle('show');
+}
+
+function toggleSetting(key, el) {
+  settings[key] = !settings[key];
+  el.classList.toggle('on');
+  if (key === 'music') {
+    if (settings.music) { initAudio(); startMusic(); }
+    else stopMusicNodes();
+  }
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._timeout);
+  el._timeout = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function showOverlay(id) { document.getElementById(id).classList.add('show'); }
+function hideOverlay(id) { document.getElementById(id).classList.remove('show'); }
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  return m + ':' + String(s % 60).padStart(2, '0');
+}
+
+function updateTimer() {
+  if (won) return;
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  document.getElementById('timer').textContent = formatTime(elapsed);
+}
+
+// ===================== RENDERING =====================
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const level = LEVELS[currentLevel];
+  const R = level.rows, C = level.cols;
+  const maxDim = Math.min(window.innerWidth - 16, 600);
+  const clueSpace = Math.max(60, maxDim * 0.15);
+  const availForGrid = maxDim - clueSpace;
+  cellSize = Math.floor(Math.min(availForGrid / Math.max(R, C), 42));
+  cellSize = Math.max(cellSize, 18);
+  const gridW = C * cellSize;
+  const gridH = R * cellSize;
+  // Clue area sizes
+  const maxRowClueLen = Math.max(...level.rowClues.map(cl => cl.length || 1));
+  const maxColClueLen = Math.max(...level.colClues.map(cl => cl.length || 1));
+  clueOffsetX = Math.min(maxRowClueLen * (cellSize * 0.5) + 8, cellSize * 3);
+  clueOffsetY = Math.min(maxColClueLen * (cellSize * 0.5) + 8, cellSize * 3);
+  
+  const totalW = gridW + clueOffsetX;
+  const totalH = gridH + clueOffsetY;
+  
+  canvas.width = totalW;
+  canvas.height = totalH;
+  canvas.style.width = totalW + 'px';
+  canvas.style.height = totalH + 'px';
+}
+
+function draw() {
+  const level = LEVELS[currentLevel];
+  const R = level.rows, C = level.cols;
+  ctx.fillStyle = '#0a0e27';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  const ox = clueOffsetX;
+  const oy = clueOffsetY;
+  
+  // Draw clue background area
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  ctx.fillRect(0, 0, ox, oy + R * cellSize); // left clue column
+  ctx.fillRect(0, 0, ox + C * cellSize, oy); // top clue row
+  
+  // Draw grid cells
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      const x = ox + c * cellSize;
+      const y = oy + r * cellSize;
+      
+      // Background
+      ctx.fillStyle = '#141830';
+      ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+      
+      const val = grid[r][c];
+      if (val === 1) {
+        // Shaded cell
+        ctx.fillStyle = '#4a5d9e';
+        ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+        // Inner gradient effect
+        const grad = ctx.createLinearGradient(x, y, x + cellSize, y + cellSize);
+        grad.addColorStop(0, 'rgba(102,126,234,0.3)');
+        grad.addColorStop(1, 'rgba(118,75,162,0.3)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+      } else if (val === 2) {
+        // Mark X
+        ctx.strokeStyle = '#f56565';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const m = cellSize * 0.25;
+        ctx.moveTo(x + m, y + m);
+        ctx.lineTo(x + cellSize - m, y + cellSize - m);
+        ctx.moveTo(x + cellSize - m, y + m);
+        ctx.lineTo(x + m, y + cellSize - m);
+        ctx.stroke();
+      }
+      
+      // Grid borders — thick lines every 5
+      ctx.strokeStyle = (r % 5 === 0 || c % 5 === 0) ? 'rgba(102,126,234,0.3)' : 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = (r % 5 === 0 || c % 5 === 0) ? 1.5 : 0.5;
+      ctx.strokeRect(x, y, cellSize, cellSize);
+    }
+  }
+  
+  // Draw row clues (left side)
+  ctx.fillStyle = '#ccd';
+  ctx.font = `${Math.floor(cellSize * 0.4)}px monospace`;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let r = 0; r < R; r++) {
+    const clues = level.rowClues[r];
+    const y = oy + r * cellSize + cellSize / 2;
+    if (clues.length === 0) {
+      ctx.fillStyle = '#556';
+      ctx.fillText('0', ox - 6, y);
+    } else {
+      ctx.fillStyle = '#aab';
+      const text = clues.join(' ');
+      ctx.fillText(text, ox - 6, y);
+      // Check if satisfied
+      const currentGroups = getLineGroups(grid[r].map(v => v === 1 ? 1 : 0));
+      if (JSON.stringify(currentGroups) === JSON.stringify(clues)) {
+        ctx.fillStyle = '#48bb78';
+        ctx.fillText(text, ox - 6, y);
+      }
+    }
+  }
+  
+  // Draw col clues (top)
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  for (let c = 0; c < C; c++) {
+    const clues = level.colClues[c];
+    const x = ox + c * cellSize + cellSize / 2;
+    if (clues.length === 0) {
+      ctx.fillStyle = '#556';
+      ctx.fillText('0', x, oy - 4);
+    } else {
+      // Draw each clue number stacked
+      ctx.fillStyle = '#aab';
+      const clueH = cellSize * 0.4;
+      clues.forEach((n, i) => {
+        const y = oy - 4 - (clues.length - 1 - i) * (clueH + 2);
+        ctx.fillText(String(n), x, y);
+      });
+      // Check if satisfied
+      const col = [];
+      for (let r = 0; r < R; r++) col.push(grid[r][c] === 1 ? 1 : 0);
+      const currentGroups = getLineGroups(col);
+      if (JSON.stringify(currentGroups) === JSON.stringify(clues)) {
+        ctx.fillStyle = '#48bb78';
+        clues.forEach((n, i) => {
+          const y = oy - 4 - (clues.length - 1 - i) * (clueH + 2);
+          ctx.fillText(String(n), x, y);
+        });
+      }
+    }
+  }
+  
+  // Highlight 2x2 violations
+  if (!won) {
+    for (let r = 0; r < R - 1; r++) {
+      for (let c = 0; c < C - 1; c++) {
+        if (grid[r][c] === 1 && grid[r][c+1] === 1 && grid[r+1][c] === 1 && grid[r+1][c+1] === 1) {
+          ctx.strokeStyle = 'rgba(245,101,101,0.6)';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(ox + c * cellSize, oy + r * cellSize, cellSize * 2, cellSize * 2);
+        }
+      }
+    }
+  }
+}
+
+// ===================== INPUT =====================
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+  const level = LEVELS[currentLevel];
+  const c = Math.floor((x - clueOffsetX) / cellSize);
+  const r = Math.floor((y - clueOffsetY) / cellSize);
+  if (r >= 0 && r < level.rows && c >= 0 && c < level.cols) {
+    handleClick(r, c);
+  }
+});
+
+canvas.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+  const level = LEVELS[currentLevel];
+  const c = Math.floor((x - clueOffsetX) / cellSize);
+  const r = Math.floor((y - clueOffsetY) / cellSize);
+  if (r >= 0 && r < level.rows && c >= 0 && c < level.cols) {
+    // Right-click: cycle fill -> mark -> empty
+    if (grid[r][c] === 0) grid[r][c] = 1;
+    else if (grid[r][c] === 1) grid[r][c] = 2;
+    else grid[r][c] = 0;
+    initAudio();
+    sfxFill();
+    draw();
+    saveProgress();
+  }
+});
+
+// Touch support
+let touchTimer = null;
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (touch.clientX - rect.left) * scaleX;
+  const y = (touch.clientY - rect.top) * scaleY;
+  const level = LEVELS[currentLevel];
+  const c = Math.floor((x - clueOffsetX) / cellSize);
+  const r = Math.floor((y - clueOffsetY) / cellSize);
+  if (r >= 0 && r < level.rows && c >= 0 && c < level.cols) {
+    // Long press → right-click behavior
+    touchTimer = setTimeout(() => {
+      if (grid[r][c] === 0) grid[r][c] = 1;
+      else if (grid[r][c] === 1) grid[r][c] = 2;
+      else grid[r][c] = 0;
+      initAudio();
+      sfxMark();
+      draw();
+      saveProgress();
+      touchTimer = null;
+    }, 400);
+  }
+});
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  if (touchTimer) {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+    const touch = e.changedTouches[0];
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (touch.clientX - rect.left) * scaleX;
+    const y = (touch.clientY - rect.top) * scaleY;
+    const level = LEVELS[currentLevel];
+    const c = Math.floor((x - clueOffsetX) / cellSize);
+    const r = Math.floor((y - clueOffsetY) / cellSize);
+    if (r >= 0 && r < level.rows && c >= 0 && c < level.cols) {
+      handleClick(r, c);
+    }
+  }
+});
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (e.key === 'h' || e.key === 'H') hint();
+  if (e.key === 'r' || e.key === 'R') restart();
+  if (e.key === 'c' || e.key === 'C') checkSolution();
+  if (e.key === 'Escape') {
+    hideOverlay('winOverlay');
+    hideOverlay('levelOverlay');
+    document.getElementById('settingsPanel').classList.remove('show');
+  }
+  if (e.key === '1') setMode('fill');
+  if (e.key === '2') setMode('mark');
+  if (e.key === '3') setMode('erase');
+});
+
+window.addEventListener('resize', () => { resizeCanvas(); draw(); });
+
+// ===================== INIT =====================
+timerInterval = setInterval(updateTimer, 1000);
+loadLevel(0);
+</script>
+</body>
+</html>
