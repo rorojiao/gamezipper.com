@@ -635,8 +635,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":630,"url":"https://gamezipper.com/geradeweg/","name":"Geradeweg"},
     {"@type":"ListItem","position":631,"url":"https://gamezipper.com/rassi-silai/","name":"Rassi-Silai"},
     {"@type":"ListItem","position":632,"url":"https://gamezipper.com/pipelink/","name":"Pipelink"},
-    {"@type":"ListItem","position":633,"url":"https://gamezipper.com/hebi/","name":"Hebi-Ichigo"}
+    {"@type":"ListItem","position":633,"url":"https://gamezipper.com/hebi/","name":"Hebi-Ichigo"},
+    {"@type":"ListItem","position":634,"url":"https://gamezipper.com/myopia/","name":"Myopia"}
   ],
-  "numberOfItems":633,
-  "description":"633 free browser games you can play instantly"
+  "numberOfItems":634,
+  "description":"634 free browser games you can play instantly"
 };
