@@ -1,3 +1,23 @@
+## [v1.175.0] - 2026-07-12
+### Added
+- 7 new test cases from 2026-07-12 industry research (R292, 4h cadence cycle 54):
+  - [W-331] **[P2]** Safari 26.4 CSS Grid Lanes (Native Masonry/Waterfall) — Browser-Native Layout Conflicts with JS Masonry Libraries
+  - [W-332] **[P2]** Safari 26.4 WebTransport Support — New Transport API Feature Detection & Fallback Verification
+  - [S-399] **[P1]** npm v12 Default-Disable Install Scripts — Build Pipeline Breaks on Dependencies Requiring postinstall
+  - [S-400] **[P1]** npm Supply Chain — Shai-Hulud Self-Replicating Worm + TanStack Targeted Attack
+  - [P-154] **[P2]** Node.js 26 Temporal API Enabled by Default — Modern Date/Time API Conflicts with Polyfills & Browser Code
+  - [P-155] **[P2]** Firefox 152 Experimental JPEG XL Support — Next-Gen Image Format Creates Browser-Specific Rendering
+  - [B-198] **[P2]** Firefox 152 Nova Redesign + Compact Tab Layout — Major UI Overhaul Changes Effective Viewport Size
+### Sources
+- "Safari 26.4 CSS Grid Lanes WebTransport" — so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Mar 25 2026)
+- "WebKit CSS Grid Lanes waterfall" — new.qq.com/rain/a/20251228A034KJ00 (Dec 28 2025)
+- "npm v12 default-disable install scripts" — cloud.tencent.com/developer/article/2699338 (Jul 2026, frontend weekly W26)
+- "Shai-Hulud npm worm" — reversinglabs.com/blog/shai-hulud-worm-npm (Sep 15)
+- "TanStack npm supply chain attack" — cloud.tencent.com/developer/article/2679559 (Jul 2026, JS weekly W20)
+- "Node.js 26 Temporal API" — donews.com/news/detail/8/6543521.html (May 5 2026)
+- "Firefox 152 JPEG XL Nova redesign" — so.html5.qq.com/page/real/search_news?docid=70000021_9116a30cb5d40652 (Jun 16 2026)
+- "Firefox Nova roadmap" — so.html5.qq.com/page/real/search_news?docid=70000021_4016a32165940252 (Jun 17 2026)
+
 ## [v1.172.0] - 2026-07-11
 ### Added
 - 7 new test cases from 2026-07-11 industry research (R289, 4h cadence cycle 51):
