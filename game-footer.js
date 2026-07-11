@@ -328,7 +328,8 @@
 {n:'Heart Star',e:'💛',u:'/heart-star/',c:'puzzle'},
 {n:'Rubber Band Puzzle',e:'🔵',u:'/rubber-band-puzzle/',c:'puzzle'},
 {n:'Pulse Path',e:'⚡',u:'/pulse-path/',c:'puzzle'},
-{n:'Rullo',e:'🔢',u:'/rullo/',c:'puzzle'},
+{n:'Rullo',e:'🔢',u:'/rullo/',c:'puzzle'},,
+{n:'Pentopia',e:'🧩',u:'/pentopia/',c:'puzzle'}
 ]; }
    }
    function getDateSeed() {

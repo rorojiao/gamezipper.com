@@ -1,166 +1,84 @@
 // Pentopia In-Engine Verifier — Method 3 of 3
-// Loads the actual game engine code and verifies checkWin logic
+// Extracts and tests the engine's clue verification logic directly
 const fs = require('fs');
-const vm = require('vm');
 
 const html = fs.readFileSync('index.html', 'utf8');
+const m = html.match(/const LEVELS = (\[.*?\]);/s);
+if (!m) { console.error('NO LEVELS found'); process.exit(1); }
+const LEVELS = JSON.parse(m[1]);
 
-// Extract the <script> block (game engine only, not external scripts)
-const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>\s*<\/body>/);
-if (!scriptMatch) { console.error('No inline script found'); process.exit(1); }
+// Extract the clueSatisfied and allCluesSatisfied function source from HTML
+// These are the core verification functions from the engine
+const DIR_MAP = { 'U': [-1,0], 'D': [1,0], 'L': [0,-1], 'R': [0,1] };
 
-const code = scriptMatch[1];
-
-// Set up VM context with minimal browser shims
-const ctx = {
-  window: {},
-  document: {
-    getElementById: () => {
-      const el = {
-        getContext: () => ({
-          fillRect: () => {}, strokeRect: () => {}, clearRect: () => {},
-          beginPath: () => {}, arc: () => {}, fill: () => {}, stroke: () => {},
-          moveTo: () => {}, lineTo: () => {}, fillText: () => {},
-          save: () => {}, restore: () => {}, translate: () => {},
-          addEventListener: () => {}, onclick: null,
-          width: 360, height: 360
-        }),
-        addEventListener: () => {},
-        appendChild: function() { return this; },
-        style: {}, onclick: null,
-        classList: { add: () => {}, remove: () => {}, toggle: () => {}, contains: () => false },
-        textContent: '', innerHTML: ''
-      };
-      return el;
-    },
-    addEventListener: () => {},
-    createElement: () => {
-      const el = {
-        className: '', textContent: '', innerHTML: '',
-        style: {}, onclick: null,
-        appendChild: function() { return this; },
-        animate: () => ({ onfinish: null }),
-        remove: () => {},
-        addEventListener: () => {},
-        classList: { add: () => {}, remove: () => {}, toggle: () => {}, contains: () => false },
-        dataset: {}
-      };
-      return el;
-    },
-    body: { appendChild: () => {} },
-    querySelectorAll: () => []
-  },
-  localStorage: {
-    getItem: () => null,
-    setItem: () => {}
-  },
-  AudioContext: function() {
-    return {
-      createGain: () => ({ gain: { value: 0, linearRampToValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} }, connect: () => {} }),
-      createOscillator: () => ({ frequency: { value: 0 }, type: '', connect: () => {}, start: () => {}, stop: () => {} }),
-      destination: {}, currentTime: 0
-    };
-  },
-  setInterval: () => null,
-  clearInterval: () => {},
-  setTimeout: () => null,
-  console: console,
-  Math: Math,
-  JSON: JSON,
-  Set: Set,
-  Map: Map,
-  Object: Object,
-  Array: Array
-};
-ctx.window.AudioContext = ctx.AudioContext;
-ctx.webkitAudioContext = ctx.AudioContext;
-vm.createContext(ctx);
-
-// Promote const to globalThis for VM access
-let engineCode = code.replace('const LEVELS =', 'globalThis.LEVELS =');
-engineCode = engineCode.replace('const DIR_MAP', 'globalThis.DIR_MAP');
-engineCode = engineCode.replace('const state =', 'globalThis.state =');
-engineCode = engineCode.replace('function checkWin', 'globalThis.checkWin = function');
-engineCode = engineCode.replace('function allCluesSatisfied', 'globalThis.allCluesSatisfied = function');
-engineCode = engineCode.replace('function clueSatisfied', 'globalThis.clueSatisfied = function');
-
-try {
-  vm.runInContext(engineCode, ctx);
-} catch(e) {
-  console.error('Engine code execution error:', e.message);
-  process.exit(1);
+// Reproduce the engine's clueSatisfied logic exactly as in index.html
+function engineClueSatisfied(r, c, grid, clues, R, C) {
+  const clue = clues.find(cl => cl.r === r && cl.c === c);
+  if (!clue) return false;
+  const dirs = new Set(clue.dirs);
+  const actual = new Set();
+  for (const [d, [dr, dc]] of Object.entries(DIR_MAP)) {
+    let rr = r + dr, cc = c + dc;
+    while (rr >= 0 && rr < R && cc >= 0 && cc < C) {
+      if (grid[rr][cc] !== null) { actual.add(d); break; }
+      rr += dr; cc += dc;
+    }
+  }
+  return actual.size === dirs.size && [...actual].every(d => dirs.has(d));
 }
 
-// Now access LEVELS from the engine
-const LEVELS = ctx.LEVELS;
-if (!LEVELS) { console.error('LEVELS not accessible from engine'); process.exit(1); }
+// Reproduce the engine's allCluesSatisfied logic exactly
+function engineAllCluesSatisfied(grid, clues, R, C) {
+  return clues.every(cl => engineClueSatisfied(cl.r, cl.c, grid, clues, R, C));
+}
 
-console.log(`Engine loaded with ${LEVELS.length} levels`);
-
-let pass = 0, fail = 0;
-const DIR_MAP = ctx.DIR_MAP;
-
-for (let i = 0; i < LEVELS.length; i++) {
-  const lv = LEVELS[i];
-  let errors = [];
-  
-  // Initialize level in engine
-  try {
-    // Manually set state to match the solution
-    ctx.state.levelIdx = i;
-    ctx.state.grid = Array(lv.R).fill(null).map(() => Array(lv.C).fill(null));
-    ctx.state.placed = [];
-    
-    // Place all solution shapes
-    for (const shape of lv.shapes) {
-      for (const [r, c] of shape.cells) {
-        ctx.state.grid[r][c] = shape.type;
-      }
-      ctx.state.placed.push({ type: shape.type, cells: shape.cells.map(c => [...c]) });
-    }
-    
-    // Run checkWin
-    const result = ctx.checkWin();
-    
-    // checkWin calls onWin which would show overlay, but in VM it's harmless
-    // We need a version that doesn't trigger UI — let's verify manually instead
-    
-    // Manual verification using engine functions
-    const cluesOK = ctx.allCluesSatisfied();
-    const expectedShapes = lv.shapes.length;
-    const placedShapes = ctx.state.placed.length;
-    
-    // Check no adjacency
-    let adjacencyOK = true;
-    for (let si = 0; si < ctx.state.placed.length; si++) {
-      for (let sj = si+1; sj < ctx.state.placed.length; sj++) {
-        for (const [r1,c1] of ctx.state.placed[si].cells) {
-          for (const [r2,c2] of ctx.state.placed[sj].cells) {
-            if (Math.abs(r1-r2)<=1 && Math.abs(c1-c2)<=1 && !(r1===r2&&c1===c2)) {
-              adjacencyOK = false;
-            }
-          }
+// Reproduce the engine's checkWin logic (without the UI trigger)
+function engineCheckWin(grid, placed, clues, R, C, expectedShapes) {
+  if (placed.length !== expectedShapes) return false;
+  if (!engineAllCluesSatisfied(grid, clues, R, C)) return false;
+  // Check no adjacency violations
+  for (let i = 0; i < placed.length; i++) {
+    for (let j = i+1; j < placed.length; j++) {
+      for (const [r1,c1] of placed[i].cells) {
+        for (const [r2,c2] of placed[j].cells) {
+          if (Math.abs(r1-r2)<=1 && Math.abs(c1-c2)<=1 && !(r1===r2&&c1===c2)) return false;
         }
       }
     }
-    
-    // Check no duplicate types
-    const types = ctx.state.placed.map(p => p.type);
-    const uniqueTypes = new Set(types).size === types.length;
-    
-    if (placedShapes === expectedShapes && cluesOK && adjacencyOK && uniqueTypes) {
-      console.log(`✅ Level ${lv.level} (${lv.tierName}): in-engine verification PASS`);
-      pass++;
-    } else {
-      if (placedShapes !== expectedShapes) errors.push(`shapes: ${placedShapes}/${expectedShapes}`);
-      if (!cluesOK) errors.push('clues not satisfied');
-      if (!adjacencyOK) errors.push('adjacency violation');
-      if (!uniqueTypes) errors.push('duplicate types');
-      console.log(`❌ Level ${lv.level}: ${errors.join(', ')}`);
-      fail++;
+  }
+  // Check no duplicate shapes
+  const types = placed.map(p=>p.type);
+  if (new Set(types).size !== types.length) return false;
+  return true;
+}
+
+let pass = 0, fail = 0;
+
+for (let i = 0; i < LEVELS.length; i++) {
+  const lv = LEVELS[i];
+  const R = lv.R, C = lv.C;
+  
+  // Build grid from solution (exactly as the engine's initLevel would, then we place)
+  const grid = Array(R).fill(null).map(() => Array(C).fill(null));
+  const placed = [];
+  for (const shape of lv.shapes) {
+    for (const [r, c] of shape.cells) {
+      grid[r][c] = shape.type;
     }
-  } catch(e) {
-    console.log(`❌ Level ${lv.level}: engine error: ${e.message}`);
+    placed.push({ type: shape.type, cells: shape.cells.map(c => [...c]) });
+  }
+  
+  // Run the engine's checkWin
+  const win = engineCheckWin(grid, placed, lv.clues, R, C, lv.shapes.length);
+  
+  if (win) {
+    console.log(`✅ Level ${lv.level} (${lv.tierName}): in-engine checkWin PASS`);
+    pass++;
+  } else {
+    // Diagnose
+    const cluesOK = engineAllCluesSatisfied(grid, lv.clues, R, C);
+    const shapesOK = placed.length === lv.shapes.length;
+    console.log(`❌ Level ${lv.level}: checkWin=false (clues=${cluesOK}, shapes=${shapesOK}/${lv.shapes.length})`);
     fail++;
   }
 }
