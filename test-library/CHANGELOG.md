@@ -1,3 +1,30 @@
+## [v1.179.0] - 2026-07-13
+### Added
+- 7 new test cases from 2026-07-13 industry research (R296, 4h cadence cycle 58):
+  - [W-340] **[P2]** ECMAScript 2026 (ES17) — New Math/Iterator/Set/Map Methods Risk Name Shadowing & Polyfill Conflicts
+  - [W-341] **[P3]** Microsoft Edge 2026 Copilot-Design UI — Increased Border-Radius + New Toggles Alter Game Viewport & Touch Targets
+  - [S-408] **[P1]** CVE-2026-32202 — Windows Shell Spoofing Actively Exploited; Incomplete-Patch Chain (CVE-2026-21510->32202) Affects WebView2 Game Pages
+  - [B-202] **[P2]** 2026 Gaming Phone OS-Level Frame Interpolation (ColorOS 16 MEMC) — 118.2fps Alters Perceived Speed & Breaks Frame-Counting Logic
+  - [P-159] **[P2]** WebAssembly as Primary Browser Vulnerability Surface — Growing CVE Trend Means WASM Games Inherit Attack-Surface Backlog
+  - [P-160] **[P3]** WebGPU vs WASM Compute Crossover — 5-8x Perf Delta at 256x256 Threshold; Wrong Backend Choice Degrades Game Perf
+  - [C-116] **[P3]** 2026 Web Game Platform Benchmark — Compliance + Category Focus + Boutique Quality Now Baseline Standards
+### Sources
+- mcp__web_search_prime__batch_search queries (2026-07-13, cycle 58): ALL 5 returned "SearXNG 404" (11th consecutive cycle outage). Fell back to mcp__minimax_search__web_search.
+- mcp__minimax_search__web_search queries (2026-07-13, cycle 58):
+  - "HTML5 game testing 2026 new techniques browser canvas WebGL July"
+  - "browser security vulnerability 2026 July XSS clickjacking CVE Chrome Safari"
+  - "Chrome Edge Safari update July 2026 deprecation web API breaking change"
+  - "casual mobile game UX 2026 accessibility haptic dark mode complaint"
+  - "WebGPU WebAssembly game performance bug 2026 July browser memory leak"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6076a4fc86f46852 (ECMAScript 2026 ES17 approved - W-340)
+  - https://www.sohu.com/a/1008833159_121956424 (Edge 2026 Copilot-design UI overhaul - W-341)
+  - https://www.sohu.com/a/1020020937_114765 (CVE-2026-32202 Windows Shell spoofing actively exploited - S-408)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_21669a024ac50352 (ColorOS 16 OS-level frame interpolation 118.2fps - B-202)
+  - https://www.sohu.com/a/875192492_211762 (WebAssembly browser vulnerability surface trend - P-159)
+  - https://blog.csdn.net/weixin_29300931/article/details/159638655 (WebGPU vs WASM compute crossover 5-8x - P-160)
+  - https://www.sohu.com/a/1028338060_122652494 (2026 web game platform industry benchmark - C-116)
+
 ## [v1.178.0] - 2026-07-12
 ### Added
 - 8 new test cases from 2026-07-12 industry research (R295, 4h cadence cycle 57):
