@@ -1,3 +1,31 @@
+## [v1.177.0] - 2026-07-12
+### Added
+- 7 new test cases from 2026-07-12 industry research (R294, 4h cadence cycle 56):
+  - [W-336] **[P2]** Safari Technology Preview 247 Built-in MCP Server for AI-Agent Browser QA — Cross-Browser QA Methodology Shift & Snapshot Divergence Risk
+  - [W-337] **[P3]** Chrome 151 "Skills" Feature — User-Stored AI Prompts Applicable to Any Webpage May Inject/Modify Game Page Content
+  - [S-402] **[P1]** CVE-2025-14765 — WebGPU Use-After-Free Heap Corruption in Chrome < 143.0.7499.147
+  - [S-403] **[P1]** CVE-2025-14766 — V8 Engine Out-of-Bounds Read/Write, Renderer Sandbox Escape via Crafted JavaScript/WebAssembly
+  - [S-404] **[P2]** ClickFix Clipboard Command Injection Attack Vector — Malicious "Copy This" UI Planted on Game Pages Tricks Users into Pasting Shell Commands
+  - [B-200] **[P3]** Opera Paste Protect — First Browser-Native Clipboard Attack Defense Creates Cross-Browser "Copy" Behavior Divergence
+  - [P-157] **[P2]** Cloudflare AI Traffic Management — Granular Per-Crawler Control Affects Game Analytics, Ad Attribution & AI Discovery
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-12, cycle 56):
+  - "HTML5 game testing 2026 new techniques browser compatibility July"
+  - "browser security vulnerability 2026 July XSS clickjacking WebGL Safari Chrome"
+  - "Chrome Edge Safari update July 2026 breaking changes web API deprecation"
+  - "casual mobile game UX complaints 2026 accessibility haptic dark mode"
+  - "WebGPU WebAssembly game performance bug 2026 July browser"
+  - "Safari 技术预览版 247 MCP 服务器 AI agent 网页开发调试 2026"
+  - "Chrome WebGPU CVE-2025-14765 use after free vulnerability game security"
+- Note: SearXNG (mcp__web_search_prime__batch_search) returned HTTP 404 for all 5 initial queries — persistent backend failure since cycle 43 (10th consecutive cycle of SearXNG outage). Fell back to mcp__minimax_search__web_search (consistent fallback provider).
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8316a45ac2425952 (Safari TP 247 MCP server — W-336)
+  - https://github.com/advisories/GHSA-GV8F-9G4R-FJ8Q (CVE-2025-14765 WebGPU UAF + CVE-2025-14766 V8 OOB — S-402, S-403)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_429694359bf01052 (Chrome WebGPU/V8 emergency patch report — S-402, S-403)
+  - https://www.ithome.com/microsoft (Opera Paste Protect / ClickFix threat — S-404, B-200)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_02569df582c01752 (Chrome 151 Skills feature — W-337)
+  - http://www.chinaz.com/?frm=msidevs.net (Cloudflare AI Traffic Management — P-157)
+
 ## [v1.176.0] - 2026-07-12
 ### Added
 - 7 new test cases from 2026-07-12 industry research (R293, 4h cadence cycle 55):
