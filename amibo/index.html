@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Amibo — Nikoli Line Crossing Puzzle | GameZipper</title>
+<meta name="description" content="Play Amibo puzzle online free! A Nikoli-style line crossing puzzle. Draw horizontal and vertical line segments so each crosses another of equal length, all forming one connected network. 30 levels across 5 difficulty tiers from 5x5 Beginner to 8x8 Expert. Hints, star ratings, level select, keyboard support, ambient Web Audio music. No download, mobile-friendly!">
+<link rel="icon" href="/amibo/icon.png" type="image/png">
+<link rel="apple-touch-icon" href="/amibo/icon.png">
+<meta property="og:title" content="Amibo — Nikoli Line Crossing Puzzle">
+<meta property="og:description" content="Draw line segments that cross equal-length partners to form one connected network. 30 levels, 5 tiers, free browser puzzle.">
+<meta property="og:image" content="/amibo/og-image.jpg">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://gamezipper.com/amibo/">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Amibo","description":"A Nikoli-style line crossing puzzle. Draw horizontal and vertical line segments in the grid. Each numbered circle starts a line of that length. Every line must cross at least one other line of equal length. All lines form one connected network with no closed loops.","genre":"Puzzle","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GameZipper"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.5","ratingCount":"100"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Amibo?","acceptedAnswer":{"@type":"Answer","text":"Draw horizontal and vertical line segments in the grid. Each numbered circle marks where a line starts — the number is its length in cells. Every line segment must cross at least one other segment of the same length. All segments together must form one connected network (via crossings) with no closed loops."}},{"@type":"Question","name":"How many levels does Amibo have?","acceptedAnswer":{"@type":"Answer","text":"30 levels across 5 difficulty tiers: Beginner (5x5), Easy (6x6), Medium (7x7), Hard (8x7), and Expert (8x8)."}},{"@type":"Question","name":"Is Amibo free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes! Amibo is completely free to play online in your browser. No download required."}}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Amibo","item":"https://gamezipper.com/amibo/"}]}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0f0f1a;--card:#1a1a2e;--border:#2a2a4a;--text:#e0e0f0;--muted:#8888aa;--accent:#5b8def;--accent2:#f0a040;--warn:#ffd166;--green:#4ade80;--red:#ef4444}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);user-select:none;touch-action:none}
+#app{display:flex;flex-direction:column;height:100%;max-width:680px;margin:0 auto;position:relative}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0}
+.topbar h1{font-size:16px;font-weight:600;white-space:nowrap}
+.topbar .btns{display:flex;gap:6px}
+.btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s}
+.btn:hover{background:var(--border)}
+.btn:active{transform:scale(.95)}
+.btn.primary{background:var(--accent);color:#0f0f1a;border-color:var(--accent);font-weight:600}
+#canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;padding:8px}
+#canvas{display:block;touch-action:none;cursor:crosshair}
+.hud{padding:6px 12px;background:var(--card);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:13px;flex-shrink:0;gap:8px;flex-wrap:wrap}
+.hud .info{display:flex;gap:12px;align-items:center}
+.hud .timer{font-variant-numeric:tabular-nums;color:var(--accent);font-weight:600}
+.hud .level-info{color:var(--muted)}
+.mode-bar{display:flex;gap:4px;padding:6px 12px;background:var(--card);border-top:1px solid var(--border);flex-shrink:0;justify-content:center}
+.mode-btn{padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--text);transition:all .15s}
+.mode-btn.active{background:var(--accent);color:#0f0f1a;border-color:var(--accent);font-weight:600}
+.overlay{position:absolute;inset:0;background:rgba(15,15,26,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;padding:20px;text-align:center;overflow-y:auto}
+.overlay h2{font-size:22px;margin-bottom:12px;color:var(--accent)}
+.overlay p{color:var(--muted);margin-bottom:16px;font-size:14px;line-height:1.5;max-width:420px}
+.overlay .stars{font-size:32px;margin:10px 0;color:var(--warn)}
+.overlay .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.overlay .btn{padding:10px 20px;font-size:14px}
+.level-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-width:420px;margin:12px 0}
+.level-cell{aspect-ratio:1;background:var(--card);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;position:relative}
+.level-cell:hover{border-color:var(--accent)}
+.level-cell.done{background:var(--accent);color:#0f0f1a}
+.level-cell.current{border-color:var(--accent2);border-width:2px}
+.level-cell .mini-stars{position:absolute;bottom:2px;font-size:8px;color:var(--warn)}
+.tier-label{font-size:12px;color:var(--muted);text-align:center;margin:8px 0 4px;text-transform:uppercase;letter-spacing:1px}
+.toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);border:1px solid var(--accent);padding:12px 24px;border-radius:8px;font-size:14px;z-index:20;pointer-events:none;opacity:0;transition:opacity .3s}
+.toast.show{opacity:1}
+.confetti{position:absolute;width:8px;height:8px;pointer-events:none}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);width:100%;max-width:360px}
+.settings-row label{font-size:14px}
+.toggle{width:40px;height:22px;background:var(--border);border-radius:11px;position:relative;cursor:pointer;transition:background .2s}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .2s}
+.toggle.on::after{left:20px}
+.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+@media(max-width:480px){.topbar h1{font-size:14px}.btn{padding:5px 8px;font-size:11px}.level-grid{grid-template-columns:repeat(5,1fr)}}
+</style>
+</head>
+<body>
+<h1 class="gz-sr-only">Amibo — Nikoli Line Crossing Puzzle</h1>
+<div id="app">
+<div class="topbar">
+<h1>🔗 Amibo</h1>
+<div class="btns">
+<button class="btn" id="btn-levels" title="Level Select">☰</button>
+<button class="btn" id="btn-hint" title="Hint (H)">💡</button>
+<button class="btn" id="btn-check" title="Check (Enter)">✓</button>
+<button class="btn" id="btn-restart" title="Restart (R)">↻</button>
+<button class="btn" id="btn-settings" title="Settings">⚙</button>
+</div>
+</div>
+<div id="canvas-wrap"><canvas id="canvas"></canvas></div>
+<div class="mode-bar">
+<button class="mode-btn active" data-mode="draw">✏️ Draw</button>
+<button class="mode-btn" data-mode="erase">🧽 Erase</button>
+</div>
+<div class="hud">
+<div class="info">
+<span class="level-info" id="level-info">L1 · Beginner</span>
+<span class="timer" id="timer">0:00</span>
+</div>
+<div class="info">
+<span id="hints-left">💡 3</span>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ===================== LEVEL DATA =====================
+const LEVELS = [{"R":5,"C":5,"clues":[{"r":3,"c":1,"n":3},{"r":0,"c":2,"n":3},{"r":1,"c":3,"n":3}],"solution":[{"orient":"H","pos":3,"start":2,"end":5,"len":3},{"orient":"V","pos":2,"start":1,"end":4,"len":3},{"orient":"V","pos":3,"start":2,"end":5,"len":3}],"id":1,"tier":"Beginner","tierIndex":0},{"R":5,"C":5,"clues":[{"r":0,"c":3,"n":4},{"r":2,"c":0,"n":4},{"r":0,"c":1,"n":4}],"solution":[{"orient":"V","pos":3,"start":1,"end":5,"len":4},{"orient":"H","pos":2,"start":1,"end":5,"len":4},{"orient":"V","pos":1,"start":1,"end":5,"len":4}],"id":2,"tier":"Beginner","tierIndex":1},{"R":5,"C":5,"clues":[{"r":1,"c":3,"n":3},{"r":3,"c":1,"n":3},{"r":1,"c":4,"n":3}],"solution":[{"orient":"V","pos":3,"start":2,"end":5,"len":3},{"orient":"H","pos":3,"start":2,"end":5,"len":3},{"orient":"V","pos":4,"start":2,"end":5,"len":3}],"id":3,"tier":"Beginner","tierIndex":2},{"R":5,"C":5,"clues":[{"r":3,"c":2,"n":2},{"r":4,"c":3,"n":2},{"r":1,"c":4,"n":2}],"solution":[{"orient":"H","pos":3,"start":3,"end":5,"len":2},{"orient":"V","pos":3,"start":2,"end":4,"len":2},{"orient":"V","pos":4,"start":2,"end":4,"len":2}],"id":4,"tier":"Beginner","tierIndex":3},{"R":5,"C":5,"clues":[{"r":4,"c":2,"n":4},{"r":3,"c":0,"n":4},{"r":0,"c":3,"n":4}],"solution":[{"orient":"V","pos":2,"start":0,"end":4,"len":4},{"orient":"H","pos":3,"start":1,"end":5,"len":4},{"orient":"V","pos":3,"start":1,"end":5,"len":4}],"id":5,"tier":"Beginner","tierIndex":4},{"R":5,"C":5,"clues":[{"r":4,"c":1,"n":4},{"r":3,"c":4,"n":4},{"r":2,"c":0,"n":4}],"solution":[{"orient":"V","pos":1,"start":0,"end":4,"len":4},{"orient":"H","pos":3,"start":0,"end":4,"len":4},{"orient":"H","pos":2,"start":1,"end":5,"len":4}],"id":6,"tier":"Beginner","tierIndex":5},{"R":6,"C":6,"clues":[{"r":4,"c":4,"n":4},{"r":1,"c":1,"n":4},{"r":2,"c":0,"n":4},{"r":0,"c":5,"n":4}],"solution":[{"orient":"V","pos":4,"start":0,"end":4,"len":4},{"orient":"H","pos":1,"start":2,"end":6,"len":4},{"orient":"H","pos":2,"start":1,"end":5,"len":4},{"orient":"H","pos":0,"start":1,"end":5,"len":4}],"id":7,"tier":"Easy","tierIndex":0},{"R":6,"C":6,"clues":[{"r":3,"c":4,"n":3},{"r":0,"c":2,"n":3},{"r":1,"c":2,"n":3},{"r":2,"c":2,"n":3}],"solution":[{"orient":"V","pos":4,"start":0,"end":3,"len":3},{"orient":"H","pos":0,"start":3,"end":6,"len":3},{"orient":"H","pos":1,"start":3,"end":6,"len":3},{"orient":"H","pos":2,"start":3,"end":6,"len":3}],"id":8,"tier":"Easy","tierIndex":1},{"R":6,"C":6,"clues":[{"r":4,"c":2,"n":4},{"r":2,"c":1,"n":4},{"r":0,"c":5,"n":4},{"r":1,"c":5,"n":4}],"solution":[{"orient":"V","pos":2,"start":0,"end":4,"len":4},{"orient":"H","pos":2,"start":2,"end":6,"len":4},{"orient":"H","pos":0,"start":1,"end":5,"len":4},{"orient":"V","pos":5,"start":2,"end":6,"len":4}],"id":9,"tier":"Easy","tierIndex":2},{"R":6,"C":6,"clues":[{"r":2,"c":3,"n":3},{"r":3,"c":1,"n":3},{"r":5,"c":2,"n":3},{"r":2,"c":5,"n":3}],"solution":[{"orient":"V","pos":3,"start":3,"end":6,"len":3},{"orient":"H","pos":3,"start":2,"end":5,"len":3},{"orient":"H","pos":5,"start":3,"end":6,"len":3},{"orient":"V","pos":5,"start":3,"end":6,"len":3}],"id":10,"tier":"Easy","tierIndex":3},{"R":6,"C":6,"clues":[{"r":2,"c":2,"n":2},{"r":0,"c":1,"n":2},{"r":1,"c":2,"n":2},{"r":4,"c":0,"n":2}],"solution":[{"orient":"H","pos":2,"start":0,"end":2,"len":2},{"orient":"V","pos":1,"start":1,"end":3,"len":2},{"orient":"H","pos":1,"start":0,"end":2,"len":2},{"orient":"V","pos":0,"start":2,"end":4,"len":2}],"id":11,"tier":"Easy","tierIndex":4},{"R":6,"C":6,"clues":[{"r":5,"c":1,"n":2},{"r":3,"c":3,"n":2},{"r":4,"c":5,"n":2},{"r":3,"c":2,"n":2}],"solution":[{"orient":"H","pos":5,"start":2,"end":4,"len":2},{"orient":"V","pos":3,"start":4,"end":6,"len":2},{"orient":"H","pos":4,"start":3,"end":5,"len":2},{"orient":"V","pos":2,"start":4,"end":6,"len":2}],"id":12,"tier":"Easy","tierIndex":5},{"R":7,"C":7,"clues":[{"r":6,"c":1,"n":4},{"r":2,"c":2,"n":4},{"r":2,"c":4,"n":4},{"r":2,"c":5,"n":4},{"r":2,"c":3,"n":4}],"solution":[{"orient":"H","pos":6,"start":2,"end":6,"len":4},{"orient":"V","pos":2,"start":3,"end":7,"len":4},{"orient":"V","pos":4,"start":3,"end":7,"len":4},{"orient":"V","pos":5,"start":3,"end":7,"len":4},{"orient":"V","pos":3,"start":3,"end":7,"len":4}],"id":13,"tier":"Medium","tierIndex":0},{"R":7,"C":7,"clues":[{"r":0,"c":1,"n":4},{"r":2,"c":0,"n":4},{"r":1,"c":4,"n":4},{"r":6,"c":4,"n":4}],"solution":[{"orient":"H","pos":3,"start":0,"end":4,"len":4},{"orient":"V","pos":1,"start":1,"end":5,"len":4},{"orient":"H","pos":2,"start":1,"end":5,"len":4},{"orient":"H","pos":1,"start":0,"end":4,"len":4},{"orient":"V","pos":4,"start":2,"end":6,"len":4}],"id":14,"tier":"Medium","tierIndex":1},{"R":7,"C":7,"clues":[{"r":0,"c":0,"n":2},{"r":2,"c":2,"n":2},{"r":2,"c":1,"n":2},{"r":1,"c":4,"n":2},{"r":2,"c":3,"n":2}],"solution":[{"orient":"H","pos":0,"start":1,"end":3,"len":2},{"orient":"V","pos":2,"start":0,"end":2,"len":2},{"orient":"V","pos":1,"start":0,"end":2,"len":2},{"orient":"H","pos":1,"start":2,"end":4,"len":2},{"orient":"V","pos":3,"start":0,"end":2,"len":2}],"id":15,"tier":"Medium","tierIndex":2},{"R":7,"C":7,"clues":[{"r":6,"c":4,"n":2},{"r":5,"c":6,"n":2},{"r":4,"c":6,"n":2},{"r":2,"c":5,"n":2},{"r":3,"c":6,"n":2}],"solution":[{"orient":"V","pos":4,"start":4,"end":6,"len":2},{"orient":"H","pos":5,"start":4,"end":6,"len":2},{"orient":"H","pos":4,"start":4,"end":6,"len":2},{"orient":"V","pos":5,"start":3,"end":5,"len":2},{"orient":"H","pos":3,"start":4,"end":6,"len":2}],"id":16,"tier":"Medium","tierIndex":3},{"R":7,"C":7,"clues":[{"r":0,"c":4,"n":3},{"r":3,"c":3,"n":3},{"r":1,"c":4,"n":3},{"r":4,"c":1,"n":3},{"r":4,"c":2,"n":3}],"solution":[{"orient":"H","pos":0,"start":1,"end":4,"len":3},{"orient":"V","pos":3,"start":0,"end":3,"len":3},{"orient":"H","pos":1,"start":1,"end":4,"len":3},{"orient":"V","pos":1,"start":1,"end":4,"len":3},{"orient":"V","pos":2,"start":1,"end":4,"len":3}],"id":17,"tier":"Medium","tierIndex":4},{"R":7,"C":7,"clues":[{"r":2,"c":0,"n":2},{"r":0,"c":1,"n":2},{"r":3,"c":2,"n":2},{"r":1,"c":4,"n":2}],"solution":[{"orient":"H","pos":2,"start":1,"end":3,"len":2},{"orient":"V","pos":1,"start":1,"end":3,"len":2},{"orient":"H","pos":1,"start":0,"end":2,"len":2},{"orient":"V","pos":2,"start":1,"end":3,"len":2},{"orient":"H","pos":1,"start":2,"end":4,"len":2}],"id":18,"tier":"Medium","tierIndex":5},{"R":8,"C":7,"clues":[{"r":2,"c":6,"n":2},{"r":0,"c":4,"n":2},{"r":2,"c":5,"n":2},{"r":1,"c":3,"n":2},{"r":3,"c":4,"n":2},{"r":2,"c":2,"n":2}],"solution":[{"orient":"V","pos":6,"start":0,"end":2,"len":2},{"orient":"H","pos":0,"start":5,"end":7,"len":2},{"orient":"V","pos":5,"start":0,"end":2,"len":2},{"orient":"H","pos":1,"start":4,"end":6,"len":2},{"orient":"V","pos":4,"start":1,"end":3,"len":2},{"orient":"H","pos":2,"start":3,"end":5,"len":2}],"id":19,"tier":"Hard","tierIndex":0},{"R":8,"C":7,"clues":[{"r":1,"c":4,"n":3},{"r":0,"c":5,"n":3},{"r":1,"c":6,"n":3},{"r":3,"c":1,"n":3},{"r":1,"c":3,"n":3}],"solution":[{"orient":"H","pos":2,"start":4,"end":7,"len":3},{"orient":"V","pos":4,"start":2,"end":5,"len":3},{"orient":"V","pos":5,"start":1,"end":4,"len":3},{"orient":"V","pos":6,"start":2,"end":5,"len":3},{"orient":"H","pos":3,"start":2,"end":5,"len":3},{"orient":"V","pos":3,"start":2,"end":5,"len":3}],"id":20,"tier":"Hard","tierIndex":1},{"R":8,"C":7,"clues":[{"r":2,"c":1,"n":2},{"r":0,"c":3,"n":2},{"r":2,"c":2,"n":2},{"r":1,"c":4,"n":2},{"r":2,"c":0,"n":2}],"solution":[{"orient":"V","pos":1,"start":0,"end":2,"len":2},{"orient":"H","pos":0,"start":1,"end":3,"len":2},{"orient":"V","pos":2,"start":0,"end":2,"len":2},{"orient":"H","pos":1,"start":2,"end":4,"len":2},{"orient":"H","pos":1,"start":0,"end":2,"len":2},{"orient":"V","pos":0,"start":0,"end":2,"len":2}],"id":21,"tier":"Hard","tierIndex":2},{"R":8,"C":7,"clues":[{"r":3,"c":0,"n":3},{"r":3,"c":1,"n":3},{"r":0,"c":4,"n":3},{"r":3,"c":3,"n":3},{"r":4,"c":2,"n":3}],"solution":[{"orient":"H","pos":1,"start":0,"end":3,"len":3},{"orient":"V","pos":0,"start":0,"end":3,"len":3},{"orient":"V","pos":1,"start":0,"end":3,"len":3},{"orient":"H","pos":0,"start":1,"end":4,"len":3},{"orient":"V","pos":3,"start":0,"end":3,"len":3},{"orient":"V","pos":2,"start":1,"end":4,"len":3}],"id":22,"tier":"Hard","tierIndex":3},{"R":8,"C":7,"clues":[{"r":4,"c":6,"n":2},{"r":1,"c":5,"n":2},{"r":3,"c":3,"n":2},{"r":1,"c":4,"n":2},{"r":2,"c":2,"n":2}],"solution":[{"orient":"V","pos":6,"start":2,"end":4,"len":2},{"orient":"H","pos":2,"start":5,"end":7,"len":2},{"orient":"V","pos":5,"start":2,"end":4,"len":2},{"orient":"H","pos":3,"start":4,"end":6,"len":2},{"orient":"V","pos":4,"start":2,"end":4,"len":2},{"orient":"H","pos":2,"start":3,"end":5,"len":2}],"id":23,"tier":"Hard","tierIndex":4},{"R":8,"C":7,"clues":[{"r":1,"c":4,"n":3},{"r":3,"c":3,"n":3},{"r":4,"c":2,"n":3},{"r":3,"c":1,"n":3},{"r":0,"c":6,"n":3}],"solution":[{"orient":"H","pos":1,"start":1,"end":4,"len":3},{"orient":"V","pos":3,"start":0,"end":3,"len":3},{"orient":"V","pos":2,"start":1,"end":4,"len":3},{"orient":"V","pos":1,"start":0,"end":3,"len":3},{"orient":"H","pos":0,"start":0,"end":3,"len":3},{"orient":"H","pos":0,"start":3,"end":6,"len":3}],"id":24,"tier":"Hard","tierIndex":5},{"R":8,"C":8,"clues":[{"r":3,"c":3,"n":3},{"r":6,"c":2,"n":3},{"r":1,"c":0,"n":3},{"r":2,"c":3,"n":3},{"r":6,"c":1,"n":3}],"solution":[{"orient":"H","pos":3,"start":0,"end":3,"len":3},{"orient":"V","pos":2,"start":3,"end":6,"len":3},{"orient":"V","pos":0,"start":2,"end":5,"len":3},{"orient":"H","pos":2,"start":0,"end":3,"len":3},{"orient":"V","pos":1,"start":3,"end":6,"len":3},{"orient":"V","pos":1,"start":0,"end":3,"len":3},{"orient":"V","pos":2,"start":0,"end":3,"len":3}],"id":25,"tier":"Expert","tierIndex":0},{"R":8,"C":8,"clues":[{"r":2,"c":2,"n":3},{"r":0,"c":3,"n":3},{"r":3,"c":2,"n":3},{"r":6,"c":5,"n":3},{"r":6,"c":4,"n":3},{"r":1,"c":7,"n":3}],"solution":[{"orient":"H","pos":2,"start":3,"end":6,"len":3},{"orient":"V","pos":3,"start":1,"end":4,"len":3},{"orient":"H","pos":3,"start":3,"end":6,"len":3},{"orient":"V","pos":4,"start":0,"end":3,"len":3},{"orient":"V","pos":5,"start":3,"end":6,"len":3},{"orient":"V","pos":4,"start":3,"end":6,"len":3},{"orient":"H","pos":1,"start":4,"end":7,"len":3}],"id":26,"tier":"Expert","tierIndex":1},{"R":8,"C":8,"clues":[{"r":2,"c":4,"n":2},{"r":1,"c":3,"n":2},{"r":0,"c":3,"n":2},{"r":3,"c":5,"n":2},{"r":2,"c":7,"n":2},{"r":0,"c":6,"n":2}],"solution":[{"orient":"V","pos":4,"start":0,"end":2,"len":2},{"orient":"H","pos":1,"start":4,"end":6,"len":2},{"orient":"H","pos":0,"start":4,"end":6,"len":2},{"orient":"V","pos":5,"start":1,"end":3,"len":2},{"orient":"H","pos":2,"start":5,"end":7,"len":2},{"orient":"V","pos":6,"start":1,"end":3,"len":2},{"orient":"H","pos":1,"start":6,"end":8,"len":2}],"id":27,"tier":"Expert","tierIndex":2},{"R":8,"C":8,"clues":[{"r":1,"c":3,"n":4},{"r":5,"c":4,"n":4},{"r":4,"c":3,"n":4},{"r":2,"c":1,"n":4},{"r":1,"c":2,"n":4},{"r":3,"c":7,"n":4}],"solution":[{"orient":"H","pos":1,"start":4,"end":8,"len":4},{"orient":"V","pos":4,"start":1,"end":5,"len":4},{"orient":"H","pos":4,"start":4,"end":8,"len":4},{"orient":"H","pos":2,"start":2,"end":6,"len":4},{"orient":"V","pos":2,"start":2,"end":6,"len":4},{"orient":"H","pos":3,"start":3,"end":7,"len":4},{"orient":"V","pos":6,"start":4,"end":8,"len":4}],"id":28,"tier":"Expert","tierIndex":3},{"R":8,"C":8,"clues":[{"r":1,"c":7,"n":3},{"r":4,"c":6,"n":3},{"r":3,"c":4,"n":3},{"r":2,"c":1,"n":3},{"r":6,"c":5,"n":3}],"solution":[{"orient":"H","pos":1,"start":4,"end":7,"len":3},{"orient":"V","pos":6,"start":1,"end":4,"len":3},{"orient":"H","pos":2,"start":5,"end":8,"len":3},{"orient":"V","pos":4,"start":0,"end":3,"len":3},{"orient":"H","pos":2,"start":2,"end":5,"len":3},{"orient":"H","pos":3,"start":5,"end":8,"len":3},{"orient":"V","pos":5,"start":3,"end":6,"len":3}],"id":29,"tier":"Expert","tierIndex":4},{"R":8,"C":8,"clues":[{"r":2,"c":6,"n":3},{"r":5,"c":4,"n":3},{"r":3,"c":3,"n":3},{"r":1,"c":7,"n":3},{"r":1,"c":4,"n":3},{"r":0,"c":5,"n":3}],"solution":[{"orient":"V","pos":6,"start":3,"end":6,"len":3},{"orient":"H","pos":5,"start":5,"end":8,"len":3},{"orient":"H","pos":3,"start":4,"end":7,"len":3},{"orient":"H","pos":4,"start":5,"end":8,"len":3},{"orient":"V","pos":7,"start":2,"end":5,"len":3},{"orient":"V","pos":4,"start":2,"end":5,"len":3},{"orient":"V","pos":5,"start":1,"end":4,"len":3}],"id":30,"tier":"Expert","tierIndex":5}];
+
+// ===================== GAME STATE =====================
+const STORAGE_KEY = 'amibo_save_v1';
+const SETTINGS_KEY = 'amibo_settings_v1';
+let state = {
+  currentLevel: 0,
+  mode: 'draw',
+  segments: [],
+  startTime: 0,
+  elapsed: 0,
+  hintsUsed: 0,
+  maxHints: 3,
+  paused: false,
+  levelData: null,
+  dragStart: null,
+  dragCurrent: null,
+};
+let progress = {};
+let settings = { music: true, sfx: true, autocheck: false };
+
+// ===================== AUDIO =====================
+let audioCtx = null;
+let musicGain = null;
+let musicInterval = null;
+function initAudio(){
+  if(audioCtx) return;
+  try{
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    musicGain = audioCtx.createGain();
+    musicGain.gain.value = 0.08;
+    musicGain.connect(audioCtx.destination);
+  }catch(e){}
+}
+function sfx(freq, dur, type, vol){
+  dur = dur||0.1; type = type||'sine'; vol = vol||0.15;
+  if(!audioCtx || !settings.sfx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.frequency.value = freq;
+  osc.type = type;
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime+dur);
+}
+function sfxDraw(){ sfx(440,0.08,'triangle'); setTimeout(function(){sfx(660,0.08,'triangle');},40); }
+function sfxErase(){ sfx(300,0.1,'sawtooth',0.1); }
+function sfxClick(){ sfx(800,0.04,'square',0.08); }
+function sfxError(){ sfx(200,0.2,'sawtooth',0.15); }
+function sfxHint(){ sfx(523,0.1,'triangle'); setTimeout(function(){sfx(659,0.1,'triangle');},60); setTimeout(function(){sfx(784,0.1,'triangle');},120); }
+function sfxWin(){
+  [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){sfx(f,0.25,'triangle',0.12);},i*100); });
+}
+const CHORDS = [
+  [261.63,329.63,392,493.88],
+  [293.66,349.23,440,587.33],
+  [220,261.63,329.63,440],
+  [196,246.94,293.66,392],
+];
+let chordIdx = 0;
+function startMusic(){
+  if(!audioCtx || !settings.music || musicInterval) return;
+  const playChord = function(){
+    if(!audioCtx || !settings.music) return;
+    const chord = CHORDS[chordIdx % CHORDS.length];
+    chordIdx++;
+    chord.forEach(function(freq){
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.03, audioCtx.currentTime+0.5);
+      gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime+2.5);
+      osc.connect(gain); gain.connect(musicGain);
+      osc.start(); osc.stop(audioCtx.currentTime+2.5);
+    });
+  };
+  playChord();
+  musicInterval = setInterval(playChord, 2500);
+}
+function stopMusic(){ if(musicInterval){ clearInterval(musicInterval); musicInterval=null; } }
+
+// ===================== CANVAS =====================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let cellSize = 40;
+let gridOffsetX = 1, gridOffsetY = 1;
+function resizeCanvas(){
+  const wrap = document.getElementById('canvas-wrap');
+  const w = wrap.clientWidth - 16;
+  const h = wrap.clientHeight - 16;
+  const R = state.levelData ? state.levelData.R : 5;
+  const C = state.levelData ? state.levelData.C : 5;
+  cellSize = Math.min(w/C, h/R, 60);
+  cellSize = Math.max(20, cellSize);
+  canvas.width = cellSize * C + 2;
+  canvas.height = cellSize * R + 2;
+  gridOffsetX = 1;
+  gridOffsetY = 1;
+}
+
+// ===================== RENDER =====================
+function render(){
+  if(!state.levelData){ ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+  const R = state.levelData.R, C = state.levelData.C;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(let r=0;r<R;r++){
+    for(let c=0;c<C;c++){
+      const x = gridOffsetX + c*cellSize;
+      const y = gridOffsetY + r*cellSize;
+      ctx.fillStyle = '#0f0f1a';
+      ctx.fillRect(x,y,cellSize,cellSize);
+      ctx.strokeStyle = '#2a2a4a';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x+0.5,y+0.5,cellSize-1,cellSize-1);
+    }
+  }
+  state.segments.forEach(function(seg){
+    drawSegment(seg, '#5b8def', '#f0a040');
+  });
+  if(state.dragStart && state.dragCurrent){
+    const preview = segmentFromDrag(state.dragStart, state.dragCurrent);
+    if(preview) drawSegment(preview, 'rgba(91,141,239,0.4)', 'rgba(240,160,64,0.4)');
+  }
+  const clues = state.levelData.clues;
+  clues.forEach(function(cl){
+    const x = gridOffsetX + cl.c*cellSize + cellSize/2;
+    const y = gridOffsetY + cl.r*cellSize + cellSize/2;
+    const r = cellSize*0.35;
+    const satisfied = isClueSatisfied(cl);
+    ctx.beginPath();
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle = satisfied ? '#4ade80' : '#ffd166';
+    ctx.fill();
+    ctx.strokeStyle = satisfied ? '#22c55e' : '#e0a020';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#1a1a2e';
+    ctx.font = 'bold '+Math.floor(cellSize*0.4)+'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(cl.n, x, y);
+  });
+  highlightViolations();
+}
+
+function drawSegment(seg, hColor, vColor){
+  const color = seg.orient==='H' ? hColor : vColor;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(3, cellSize*0.15);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  if(seg.orient==='H'){
+    const y = gridOffsetY + seg.pos*cellSize + cellSize/2;
+    const x1 = gridOffsetX + seg.start*cellSize + cellSize/2;
+    const x2 = gridOffsetX + (seg.end-1)*cellSize + cellSize/2;
+    ctx.moveTo(x1,y); ctx.lineTo(x2,y);
+  } else {
+    const x = gridOffsetX + seg.pos*cellSize + cellSize/2;
+    const y1 = gridOffsetY + seg.start*cellSize + cellSize/2;
+    const y2 = gridOffsetY + (seg.end-1)*cellSize + cellSize/2;
+    ctx.moveTo(x,y1); ctx.lineTo(x,y2);
+  }
+  ctx.stroke();
+}
+
+function highlightViolations(){
+  state.segments.forEach(function(seg, i){
+    let hasCross = false;
+    for(let j=0;j<state.segments.length;j++){
+      if(i===j) continue;
+      if(segmentsCross(seg, state.segments[j]) && state.segments[j].len===seg.len){
+        hasCross = true; break;
+      }
+    }
+    if(!hasCross && state.segments.length>1){
+      ctx.save();
+      ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+      ctx.lineWidth = Math.max(5, cellSize*0.2);
+      ctx.shadowColor = '#ef4444';
+      ctx.shadowBlur = 8;
+      if(seg.orient==='H'){
+        const y = gridOffsetY + seg.pos*cellSize + cellSize/2;
+        const x1 = gridOffsetX + seg.start*cellSize + cellSize/2;
+        const x2 = gridOffsetX + (seg.end-1)*cellSize + cellSize/2;
+        ctx.beginPath(); ctx.moveTo(x1,y); ctx.lineTo(x2,y); ctx.stroke();
+      } else {
+        const x = gridOffsetX + seg.pos*cellSize + cellSize/2;
+        const y1 = gridOffsetY + seg.start*cellSize + cellSize/2;
+        const y2 = gridOffsetY + (seg.end-1)*cellSize + cellSize/2;
+        ctx.beginPath(); ctx.moveTo(x,y1); ctx.lineTo(x,y2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+  });
+}
+
+// ===================== GAME LOGIC =====================
+function segmentsCross(a, b){
+  if(a.orient===b.orient) return false;
+  if(a.orient==='H'){
+    return b.pos>=a.start && b.pos<a.end && a.pos>=b.start && a.pos<b.end;
+  } else {
+    return a.pos>=b.start && a.pos<b.end && b.pos>=a.start && b.pos<a.end;
+  }
+}
+
+function isClueSatisfied(cl){
+  for(let i=0;i<state.segments.length;i++){
+    const seg = state.segments[i];
+    if(seg.len !== cl.n) continue;
+    if(seg.orient==='H'){
+      if(seg.pos===cl.r && (cl.c===seg.start-1 || cl.c===seg.end)) return true;
+    } else {
+      if(seg.pos===cl.c && (cl.r===seg.start-1 || cl.r===seg.end)) return true;
+    }
+  }
+  return false;
+}
+
+function cellFromPoint(px, py){
+  const c = Math.floor((px - gridOffsetX) / cellSize);
+  const r = Math.floor((py - gridOffsetY) / cellSize);
+  if(!state.levelData) return null;
+  if(r<0||r>=state.levelData.R||c<0||c>=state.levelData.C) return null;
+  return {r:r, c:c};
+}
+
+function segmentFromDrag(start, end){
+  if(!start || !end) return null;
+  if(start.r === end.r){
+    const r = start.r;
+    const c1 = Math.min(start.c, end.c);
+    const c2 = Math.max(start.c, end.c);
+    if(c1 === c2) return null;
+    return {orient:'H', pos:r, start:c1, end:c2+1, len:c2-c1+1};
+  } else if(start.c === end.c){
+    const c = start.c;
+    const r1 = Math.min(start.r, end.r);
+    const r2 = Math.max(start.r, end.r);
+    if(r1 === r2) return null;
+    return {orient:'V', pos:c, start:r1, end:r2+1, len:r2-r1+1};
+  }
+  return null;
+}
+
+function canPlaceSegment(seg){
+  for(let i=0;i<state.segments.length;i++){
+    const existing = state.segments[i];
+    if(existing.orient !== seg.orient) continue;
+    if(existing.orient==='H'){
+      if(existing.pos===seg.pos && !(seg.end<=existing.start || seg.start>=existing.end)) return false;
+    } else {
+      if(existing.pos===seg.pos && !(seg.end<=existing.start || seg.start>=existing.end)) return false;
+    }
+  }
+  const clues = state.levelData.clues;
+  const cells = segCells(seg);
+  for(let i=0;i<clues.length;i++){
+    const cl = clues[i];
+    for(let j=0;j<cells.length;j++){
+      const cell = cells[j];
+      if(cell.r===cl.r && cell.c===cl.c) return false;
+    }
+  }
+  return true;
+}
+
+function segCells(seg){
+  const cells = [];
+  if(seg.orient==='H'){
+    for(let c=seg.start;c<seg.end;c++) cells.push({r:seg.pos, c:c});
+  } else {
+    for(let r=seg.start;r<seg.end;r++) cells.push({r:r, c:seg.pos});
+  }
+  return cells;
+}
+
+function removeSegmentAt(cell){
+  const before = state.segments.length;
+  state.segments = state.segments.filter(function(seg){
+    const cells = segCells(seg);
+    return !cells.some(function(c){ return c.r===cell.r && c.c===cell.c; });
+  });
+  return state.segments.length < before;
+}
+
+// ===================== INTERACTION =====================
+function getEventPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.touches?e.touches[0].clientX:e.clientX) - rect.left;
+  const y = (e.touches?e.touches[0].clientY:e.clientY) - rect.top;
+  const scaleX = canvas.width/rect.width;
+  const scaleY = canvas.height/rect.height;
+  return {x: x*scaleX, y: y*scaleY};
+}
+
+canvas.addEventListener('mousedown', onDown);
+canvas.addEventListener('mousemove', onMove);
+canvas.addEventListener('mouseup', onUp);
+canvas.addEventListener('mouseleave', onUp);
+canvas.addEventListener('touchstart', function(e){e.preventDefault(); onDown(e);}, {passive:false});
+canvas.addEventListener('touchmove', function(e){e.preventDefault(); onMove(e);}, {passive:false});
+canvas.addEventListener('touchend', function(e){e.preventDefault(); onUp(e);}, {passive:false});
+
+function onDown(e){
+  initAudio();
+  const pos = getEventPos(e);
+  const cell = cellFromPoint(pos.x, pos.y);
+  if(!cell) return;
+  if(state.mode==='erase'){
+    if(removeSegmentAt(cell)){ sfxErase(); render(); }
+    return;
+  }
+  state.dragStart = cell;
+  state.dragCurrent = cell;
+}
+function onMove(e){
+  if(!state.dragStart) return;
+  const pos = getEventPos(e);
+  const cell = cellFromPoint(pos.x, pos.y);
+  if(cell) state.dragCurrent = cell;
+  render();
+}
+function onUp(e){
+  if(!state.dragStart) return;
+  const seg = segmentFromDrag(state.dragStart, state.dragCurrent);
+  state.dragStart = null;
+  state.dragCurrent = null;
+  if(seg && canPlaceSegment(seg)){
+    state.segments.push(seg);
+    sfxDraw();
+    render();
+    if(settings.autocheck) setTimeout(checkWin, 200);
+  } else {
+    render();
+  }
+}
+
+// ===================== WIN CHECK =====================
+function checkWin(){
+  if(!state.levelData) return;
+  const sol = state.levelData.solution;
+  const norm = function(arr){ return arr.map(function(s){ return s.orient+s.pos+','+s.start+'-'+s.end; }).sort(); };
+  const playerNorm = norm(state.segments);
+  const solNorm = norm(sol);
+  const solSet = new Set(solNorm);
+  const playerSet = new Set(playerNorm);
+  let allPresent = true;
+  solSet.forEach(function(s){ if(!playerSet.has(s)) allPresent = false; });
+  let rulesOk = true;
+  for(let i=0;i<state.segments.length;i++){
+    let hasCross = false;
+    for(let j=0;j<state.segments.length;j++){
+      if(i===j) continue;
+      if(segmentsCross(state.segments[i], state.segments[j]) && state.segments[j].len===state.segments[i].len){
+        hasCross=true; break;
+      }
+    }
+    if(!hasCross){ rulesOk=false; break; }
+  }
+  const cluesOk = state.levelData.clues.every(function(cl){ return isClueSatisfied(cl); });
+
+  if(allPresent && rulesOk && cluesOk){
+    onWin();
+  } else {
+    if(!cluesOk){
+      showToast('Not all circles have matching lines');
+    } else if(!allPresent){
+      showToast('Missing segments — check solution');
+    } else {
+      showToast('Some lines lack equal-length crossings');
+    }
+    sfxError();
+  }
+}
+
+function onWin(){
+  sfxWin();
+  stopMusic();
+  state.paused = true;
+  const time = state.elapsed;
+  let stars = 1;
+  if(time < 60) stars = 3;
+  else if(time < 180) stars = 2;
+  const prev = progress[state.currentLevel] || 0;
+  progress[state.currentLevel] = Math.max(prev, stars);
+  saveProgress();
+  spawnConfetti();
+  showWinOverlay(stars);
+}
+
+// ===================== UI =====================
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+
+function showWinOverlay(stars){
+  const starStr = '\u2605'.repeat(stars) + '\u2606'.repeat(3-stars);
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.innerHTML =
+    '<h2>\uD83C\uDF89 Solved!</h2>' +
+    '<div class="stars">'+starStr+'</div>' +
+    '<p>Level '+(state.currentLevel+1)+' \u00b7 '+LEVELS[state.currentLevel].tier+'</p>' +
+    '<p>Time: '+Math.floor(state.elapsed/60)+':'+String(state.elapsed%60).padStart(2,'0')+'</p>' +
+    '<div class="actions">' +
+    '<button class="btn primary" id="ov-next">Next Level \u2192</button>' +
+    '<button class="btn" id="ov-replay">\u21bb Replay</button>' +
+    '<button class="btn" id="ov-levels">\u2630 Levels</button>' +
+    '</div>';
+  document.getElementById('app').appendChild(ov);
+  document.getElementById('ov-next').onclick = function(){
+    ov.remove(); state.paused=false;
+    const next = (state.currentLevel+1) % LEVELS.length;
+    loadLevel(next);
+  };
+  document.getElementById('ov-replay').onclick = function(){ ov.remove(); state.paused=false; loadLevel(state.currentLevel); };
+  document.getElementById('ov-levels').onclick = function(){ ov.remove(); state.paused=false; showLevelSelect(); };
+}
+
+function showLevelSelect(){
+  state.paused = true;
+  stopMusic();
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.id = 'level-select';
+  const tiers = {};
+  LEVELS.forEach(function(l, i){
+    if(!tiers[l.tier]) tiers[l.tier] = [];
+    tiers[l.tier].push(Object.assign({}, l, {idx:i}));
+  });
+  let html = '<h2>Level Select</h2>';
+  Object.keys(tiers).forEach(function(tier){
+    html += '<div class="tier-label">'+tier+'</div><div class="level-grid">';
+    tiers[tier].forEach(function(l){
+      const done = progress[l.idx] ? 'done' : '';
+      const cur = l.idx===state.currentLevel ? 'current' : '';
+      const stars = progress[l.idx] ? '<div class="mini-stars">'+'\u2605'.repeat(progress[l.idx])+'</div>' : '';
+      html += '<div class="level-cell '+done+' '+cur+'" data-level="'+l.idx+'">'+l.id+stars+'</div>';
+    });
+    html += '</div>';
+  });
+  html += '<div class="actions"><button class="btn" id="ls-close">Close</button></div>';
+  ov.innerHTML = html;
+  document.getElementById('app').appendChild(ov);
+  ov.querySelectorAll('.level-cell').forEach(function(cell){
+    cell.onclick = function(){
+      const idx = parseInt(cell.dataset.level);
+      ov.remove(); state.paused=false;
+      loadLevel(idx);
+    };
+  });
+  document.getElementById('ls-close').onclick = function(){ ov.remove(); state.paused=false; startMusic(); render(); };
+}
+
+function showSettings(){
+  state.paused = true;
+  stopMusic();
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.innerHTML =
+    '<h2>\u2699 Settings</h2>' +
+    '<div class="settings-row"><label>\uD83C\uDFB5 Music</label><div class="toggle '+(settings.music?'on':'')+'" id="set-music"></div></div>' +
+    '<div class="settings-row"><label>\uD83D\uDD0A Sound Effects</label><div class="toggle '+(settings.sfx?'on':'')+'" id="set-sfx"></div></div>' +
+    '<div class="settings-row"><label>\u2713 Auto-check</label><div class="toggle '+(settings.autocheck?'on':'')+'" id="set-auto"></div></div>' +
+    '<div class="actions"><button class="btn primary" id="set-close">Done</button></div>';
+  document.getElementById('app').appendChild(ov);
+  document.getElementById('set-music').onclick = function(){
+    settings.music = !settings.music;
+    this.classList.toggle('on');
+    saveSettings();
+    if(settings.music) startMusic();
+  };
+  document.getElementById('set-sfx').onclick = function(){
+    settings.sfx = !settings.sfx;
+    this.classList.toggle('on');
+    saveSettings();
+    sfxClick();
+  };
+  document.getElementById('set-auto').onclick = function(){
+    settings.autocheck = !settings.autocheck;
+    this.classList.toggle('on');
+    saveSettings();
+  };
+  document.getElementById('set-close').onclick = function(){ ov.remove(); state.paused=false; startMusic(); render(); };
+}
+
+function setMode(mode){
+  state.mode = mode;
+  document.querySelectorAll('.mode-btn').forEach(function(b){
+    b.classList.toggle('active', b.dataset.mode===mode);
+  });
+  canvas.style.cursor = mode==='draw' ? 'crosshair' : 'pointer';
+}
+
+function giveHint(){
+  if(state.hintsUsed >= state.maxHints){ showToast('No hints left'); sfxError(); return; }
+  initAudio();
+  const sol = state.levelData.solution;
+  const playerNorm = new Set(state.segments.map(function(s){ return s.orient+s.pos+','+s.start+'-'+s.end; }));
+  const missing = sol.filter(function(s){ return !playerNorm.has(s.orient+s.pos+','+s.start+'-'+s.end); });
+  if(missing.length===0){ showToast('All segments placed!'); return; }
+  const hint = missing[Math.floor(Math.random()*missing.length)];
+  state.segments.push(Object.assign({}, hint));
+  state.hintsUsed++;
+  document.getElementById('hints-left').textContent = '\uD83D\uDCA1 ' + (state.maxHints - state.hintsUsed);
+  sfxHint();
+  showToast('Hint: added a '+hint.len+'-cell '+hint.orient+' segment');
+  render();
+  if(settings.autocheck) setTimeout(checkWin, 200);
+}
+
+// ===================== CONFETTI =====================
+function spawnConfetti(){
+  const colors = ['#5b8def','#f0a040','#ffd166','#4ade80','#ff6b9d'];
+  for(let i=0;i<40;i++){
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.left = (50 + (Math.random()-0.5)*60) + '%';
+    c.style.top = '40%';
+    c.style.borderRadius = Math.random()>0.5 ? '50%' : '0';
+    document.getElementById('app').appendChild(c);
+    const dx = (Math.random()-0.5)*300;
+    const dy = 300 + Math.random()*200;
+    const rot = (Math.random()-0.5)*720;
+    c.animate([
+      {transform:'translate(0,0) rotate(0deg)', opacity:1},
+      {transform:'translate('+dx+'px,'+dy+'px) rotate('+rot+'deg)', opacity:0}
+    ], {duration: 1500+Math.random()*500, easing:'cubic-bezier(.2,.5,.5,1)'});
+    setTimeout(function(){ c.remove(); }, 2000);
+  }
+}
+
+// ===================== SAVE/LOAD =====================
+function saveProgress(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({progress:progress, currentLevel:state.currentLevel})); }catch(e){}
+}
+function loadProgress(){
+  try{
+    const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if(d){ progress = d.progress||{}; }
+  }catch(e){}
+}
+function saveSettings(){
+  try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }catch(e){}
+}
+function loadSettings(){
+  try{
+    const d = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+    if(d) settings = Object.assign({}, settings, d);
+  }catch(e){}
+}
+
+// ===================== LEVEL LOADING =====================
+function loadLevel(idx){
+  state.currentLevel = idx;
+  state.levelData = LEVELS[idx];
+  state.segments = [];
+  state.hintsUsed = 0;
+  state.startTime = Date.now();
+  state.elapsed = 0;
+  state.paused = false;
+  state.dragStart = null;
+  state.dragCurrent = null;
+  document.getElementById('level-info').textContent = 'L'+(idx+1)+' \u00b7 '+state.levelData.tier;
+  document.getElementById('hints-left').textContent = '\uD83D\uDCA1 '+state.maxHints;
+  resizeCanvas();
+  render();
+  saveProgress();
+  startMusic();
+}
+
+// ===================== INIT =====================
+function init(){
+  loadProgress();
+  loadSettings();
+  loadLevel(0);
+  document.getElementById('btn-levels').onclick = function(){ initAudio(); sfxClick(); showLevelSelect(); };
+  document.getElementById('btn-hint').onclick = function(){ initAudio(); giveHint(); };
+  document.getElementById('btn-check').onclick = function(){ initAudio(); checkWin(); };
+  document.getElementById('btn-restart').onclick = function(){ initAudio(); sfxClick(); loadLevel(state.currentLevel); };
+  document.getElementById('btn-settings').onclick = function(){ initAudio(); sfxClick(); showSettings(); };
+  document.querySelectorAll('.mode-btn').forEach(function(b){ b.onclick = function(){ sfxClick(); setMode(b.dataset.mode); }; });
+  document.addEventListener('keydown', function(e){
+    if(e.key==='h'||e.key==='H'){ initAudio(); giveHint(); }
+    else if(e.key==='r'||e.key==='R'){ initAudio(); sfxClick(); loadLevel(state.currentLevel); }
+    else if(e.key==='Enter'){ initAudio(); checkWin(); }
+    else if(e.key==='Escape'){ sfxClick(); showLevelSelect(); }
+    else if(e.key==='1') setMode('draw');
+    else if(e.key==='2') setMode('erase');
+  });
+  setInterval(function(){
+    if(!state.paused && state.levelData){
+      state.elapsed = Math.floor((Date.now()-state.startTime)/1000);
+      document.getElementById('timer').textContent = Math.floor(state.elapsed/60)+':'+String(state.elapsed%60).padStart(2,'0');
+    }
+  }, 500);
+  window.addEventListener('resize', function(){ resizeCanvas(); render(); });
+  const startOnce = function(){
+    initAudio();
+    if(settings.music) startMusic();
+    document.removeEventListener('click', startOnce);
+    document.removeEventListener('touchend', startOnce);
+  };
+  document.addEventListener('click', startOnce);
+  document.addEventListener('touchend', startOnce);
+}
+window.addEventListener('DOMContentLoaded', init);
+</script>
+<script src="/gz-analytics.js?v=2026071359e47f38487" defer></script>
+<script src="/game-footer.js?v=202607021204"></script>
+<script src="/adsterra-manager.js?v=v515pop"></script>
+<script src="/monetag-manager.js?v=v525midgridcull"></script>
+<div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
+</body>
+</html>
