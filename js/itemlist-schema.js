@@ -639,8 +639,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":634,"url":"https://gamezipper.com/myopia/","name":"Myopia"},
     {"@type":"ListItem","position":635,"url":"https://gamezipper.com/nawabari/","name":"Nawabari"},
     {"@type":"ListItem","position":636,"url":"https://gamezipper.com/satogaeri/","name":"Satogaeri"},
-    {"@type":"ListItem","position":637,"url":"https://gamezipper.com/kuroshuto/","name":"Kuroshuto"}
+    {"@type":"ListItem","position":637,"url":"https://gamezipper.com/kuroshuto/","name":"Kuroshuto"},
+    {"@type":"ListItem","position":638,"url":"https://gamezipper.com/ice-barn/","name":"Ice Barn"}
   ],
-  "numberOfItems":637,
-  "description":"637 free browser games you can play instantly"
+  "numberOfItems":638,
+  "description":"638 free browser games you can play instantly"
 };
