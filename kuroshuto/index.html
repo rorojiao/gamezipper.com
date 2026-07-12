@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Kuroshuto — Nikoli Number-Distance Shading Puzzle | GameZipper</title>
+<meta name="description" content="Play Kuroshuto puzzle online free! A Nikoli-style number-distance shading puzzle. Blacken cells so each number has exactly one black cell at that distance. 30 levels across 5 difficulty tiers. No download, mobile-friendly!">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231a1a2e'/><text x='50' y='68' font-size='52' font-weight='bold' fill='%2364ffda' text-anchor='middle' font-family='sans-serif'>3</text></svg>">
+<meta property="og:title" content="Kuroshuto — Nikoli Number-Distance Shading Puzzle">
+<meta property="og:description" content="Blacken cells so each number has exactly one black cell at that distance. No adjacent blacks, all whites connected. 30 levels, 5 tiers.">
+<meta property="og:image" content="/kuroshuto/og-image.jpg">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0f0f1a;--card:#1a1a2e;--border:#2a2a4a;--text:#e0e0f0;--muted:#8888aa;--accent:#64ffda;--accent2:#ff6b9d;--warn:#ffd166;--green:#4ade80;--red:#ef4444;--cell-size:44px}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);user-select:none}
+#app{display:flex;flex-direction:column;height:100%;max-width:680px;margin:0 auto;position:relative}
+.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0}
+.topbar h1{font-size:16px;font-weight:700;color:var(--accent)}
+.topbar .controls{display:flex;gap:6px}
+.btn{background:var(--border);color:var(--text);border:none;padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;transition:all .15s}
+.btn:hover{background:#3a3a5a}
+.btn:active{transform:scale(.95)}
+.btn.accent{background:var(--accent);color:#000}
+.btn.warn{background:var(--warn);color:#000}
+#game-area{flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;padding:8px;position:relative}
+#canvas-wrap{position:relative;margin:auto}
+canvas{display:block;touch-action:none;cursor:pointer;background:var(--card);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.toolbar{display:flex;gap:6px;padding:8px;flex-wrap:wrap;justify-content:center;background:var(--card);border-top:1px solid var(--border);flex-shrink:0}
+.mode-btn{padding:8px 14px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.mode-btn.active{border-color:var(--accent);background:rgba(100,255,218,.1);color:var(--accent)}
+.mode-btn:active{transform:scale(.95)}
+.info-bar{display:flex;justify-content:space-around;padding:6px 12px;background:var(--card);border-top:1px solid var(--border);font-size:12px;color:var(--muted);flex-shrink:0}
+.info-bar span{font-weight:600;color:var(--text)}
+.overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(15,15,26,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;padding:20px;text-align:center}
+.overlay h2{font-size:28px;color:var(--accent);margin-bottom:12px}
+.overlay p{color:var(--muted);margin-bottom:20px;max-width:400px;line-height:1.5}
+.overlay .stars{font-size:40px;margin:12px 0}
+.overlay .btn{font-size:16px;padding:12px 24px;margin:6px}
+.menu-list{display:flex;flex-direction:column;gap:4px;width:100%;max-width:400px;max-height:60vh;overflow-y:auto}
+.tier-header{font-size:14px;font-weight:700;color:var(--accent);margin:12px 0 4px;text-transform:uppercase;letter-spacing:1px;text-align:left;padding-left:8px}
+.level-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:0 8px}
+.level-cell{aspect-ratio:1;background:var(--card);border:2px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;position:relative}
+.level-cell:hover{border-color:var(--accent)}
+.level-cell.completed{background:rgba(74,222,128,.1);border-color:var(--green);color:var(--green)}
+.level-cell.current{border-color:var(--accent);background:rgba(100,255,218,.1)}
+.level-cell .stars-mini{position:absolute;bottom:2px;font-size:8px;color:var(--warn)}
+.settings-panel{background:var(--card);padding:16px;border-radius:12px;margin:12px;width:90%;max-width:400px}
+.settings-panel label{display:flex;align-items:center;justify-content:space-between;padding:8px 0;font-size:14px;cursor:pointer;border-bottom:1px solid var(--border)}
+.settings-panel input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+.toast{position:absolute;top:60px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--accent);padding:8px 16px;border-radius:8px;font-size:13px;z-index:50;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.howto-step{text-align:left;margin:4px 0;padding-left:20px;position:relative;font-size:13px;color:var(--muted);line-height:1.6}
+.howto-step::before{content:'▸';position:absolute;left:0;color:var(--accent)}
+@media(max-width:420px){
+:root{--cell-size:38px}
+.topbar h1{font-size:14px}
+.mode-btn{padding:6px 10px;font-size:12px}
+}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Kuroshuto","description":"Nikoli number-distance shading puzzle. Blacken cells so each number has exactly one black cell at that distance. No adjacent blacks, all whites connected.","genre":"Puzzle","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","playMode":"Single Player","numberOfPlayers":1,"url":"https://gamezipper.com/kuroshuto/","image":"https://gamezipper.com/kuroshuto/og-image.jpg","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Kuroshuto?","acceptedAnswer":{"@type":"Answer","text":"Blacken cells so each numbered clue has exactly one black cell at the indicated distance (up/down/left/right). Black cells cannot touch orthogonally. All white cells must stay connected."}},{"@type":"Question","name":"What does the number mean in Kuroshuto?","acceptedAnswer":{"@type":"Answer","text":"A number N means exactly one of the cells at distance N (in the 4 orthogonal directions) must be blackened."}},{"@type":"Question","name":"Is Kuroshuto free?","acceptedAnswer":{"@type":"Answer","text":"Yes! Play Kuroshuto online free at GameZipper. No download required. 30 levels across 5 difficulty tiers."}}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Puzzle Games","item":"https://gamezipper.com/#puzzle"},{"@type":"ListItem","position":3,"name":"Kuroshuto","item":"https://gamezipper.com/kuroshuto/"}]}
+</script>
+</head>
+<body>
+<h1 class="gz-sr-only">Kuroshuto — Nikoli Number-Distance Shading Puzzle</h1>
+<div id="app">
+<div class="topbar">
+<h1>🔢 Kuroshuto</h1>
+<div class="controls">
+<button class="btn" id="btn-menu">☰ Levels</button>
+<button class="btn" id="btn-howto">?</button>
+<button class="btn" id="btn-settings">⚙</button>
+</div>
+</div>
+<div id="game-area">
+<div id="canvas-wrap"><canvas id="canvas"></canvas></div>
+<div class="toast" id="toast"></div>
+</div>
+<div class="toolbar">
+<button class="mode-btn active" data-mode="fill">⬛ Shade</button>
+<button class="mode-btn" data-mode="erase">⬜ Erase</button>
+<button class="mode-btn" id="btn-hint">💡 Hint (<span id="hint-count">3</span>)</button>
+<button class="mode-btn" id="btn-check">✓ Check</button>
+<button class="mode-btn" id="btn-restart">↻ Restart</button>
+</div>
+<div class="info-bar">
+<span>Level: <span id="info-level">1</span>/30</span>
+<span>Tier: <span id="info-tier">Beginner</span></span>
+<span>⏱ <span id="info-time">0:00</span></span>
+</div>
+</div>
+
+<script>
+// === LEVELS DATA (loaded from levels.json, inlined) ===
+const LEVELS = [{"R":5,"C":5,"clues":{"0,0":1,"0,2":1,"0,3":2,"0,4":3,"1,0":2,"1,1":1,"1,2":2,"2,0":1,"2,1":2,"2,2":1,"3,3":1,"3,4":2,"4,0":1,"4,1":4,"4,2":1},"solution":["0,1","3,0","3,2"],"tier":"Beginner","tier_idx":0,"level_num":1},{"R":5,"C":5,"clues":{"0,1":1,"0,3":1,"1,0":1,"1,4":1,"2,1":1,"3,0":3,"3,2":1,"3,4":1,"4,1":3,"4,3":1},"solution":["1,1","1,3","3,3"],"tier":"Beginner","tier_idx":0,"level_num":2},{"R":5,"C":5,"clues":{"0,0":1,"0,1":4,"0,3":4,"1,1":1,"1,2":2,"1,4":4,"2,0":1,"2,1":2,"2,3":2,"3,0":2,"3,1":1,"3,3":1,"4,0":1,"4,4":1},"solution":["1,0","4,1","4,3"],"tier":"Beginner","tier_idx":0,"level_num":3},{"R":5,"C":6,"clues":{"0,1":1,"0,2":2,"0,3":3,"0,5":2,"1,0":1,"1,4":3,"1,5":1,"2,0":1,"2,1":4,"2,2":3,"2,3":2,"2,4":1,"3,1":1,"3,2":2,"3,3":3,"3,4":1,"3,5":1,"4,0":1,"4,1":3,"4,2":2,"4,3":1,"4,5":1},"solution":["0,0","2,5","3,0","4,4"],"tier":"Beginner","tier_idx":0,"level_num":4},{"R":5,"C":6,"clues":{"0,1":1,"0,2":2,"0,3":2,"0,5":2,"1,0":1,"1,3":1,"1,4":3,"1,5":1,"2,0":2,"2,1":2,"2,2":1,"3,0":3,"3,3":1,"3,4":1,"3,5":1,"4,1":3,"4,2":2,"4,3":1,"4,5":1},"solution":["0,0","2,3","2,5","4,4"],"tier":"Beginner","tier_idx":0,"level_num":5},{"R":5,"C":6,"clues":{"0,0":2,"0,1":2,"0,2":1,"0,4":1,"1,0":1,"1,1":3,"1,3":1,"1,5":1,"2,1":1,"2,2":2,"2,4":1,"3,0":1,"3,1":1,"3,3":3,"3,5":1,"4,0":1,"4,2":1,"4,3":2,"4,4":3,"4,5":2},"solution":["0,3","2,0","2,5","4,1"],"tier":"Beginner","tier_idx":0,"level_num":6},{"R":6,"C":6,"clues":{"0,0":2,"0,1":1,"0,3":1,"0,4":2,"0,5":2,"1,1":1,"1,2":1,"1,3":2,"1,4":4,"1,5":1,"2,0":1,"2,2":1,"2,3":1,"2,4":1,"3,0":3,"3,1":1,"3,2":1,"3,4":1,"3,5":1,"4,1":2,"4,2":4,"4,3":1,"4,4":1,"4,5":2,"5,0":4,"5,2":2,"5,3":1,"5,5":1},"solution":["0,2","2,1","2,5","3,3","5,4"],"tier":"Easy","tier_idx":1,"level_num":7},{"R":6,"C":6,"clues":{"0,1":2,"0,2":1,"0,4":1,"0,5":1,"1,0":2,"1,1":4,"1,2":2,"1,3":1,"1,4":1,"2,0":1,"2,2":1,"2,3":2,"2,4":1,"2,5":1,"3,5":1,"4,0":1,"4,2":1,"4,3":4,"4,4":1,"4,5":3,"5,0":2,"5,2":2,"5,3":5,"5,4":2,"5,5":4},"solution":["0,3","1,5","3,0","3,2","3,4"],"tier":"Easy","tier_idx":1,"level_num":8},{"R":6,"C":6,"clues":{"0,0":2,"0,1":1,"0,5":1,"1,2":1,"1,4":1,"2,2":2,"2,3":3,"2,4":4,"2,5":1,"3,0":1,"3,5":1,"4,0":2,"4,1":1,"4,2":3,"4,3":2,"4,4":1,"5,0":1,"5,2":1,"5,3":2,"5,4":3,"5,5":1},"solution":["1,1","1,5","2,0","4,5","5,1"],"tier":"Easy","tier_idx":1,"level_num":9},{"R":6,"C":7,"clues":{"0,1":1,"0,3":1,"0,5":1,"1,0":1,"1,2":4,"1,4":1,"1,6":1,"2,1":5,"2,2":3,"2,3":3,"2,4":1,"2,5":1,"3,0":1,"3,1":3,"3,3":1,"3,5":1,"3,6":1,"4,1":1,"4,2":1,"4,3":3,"4,4":1,"4,5":5,"4,6":2,"5,0":1,"5,1":1,"5,3":1,"5,5":3,"5,6":3},"solution":["0,0","0,4","2,6","3,4","4,0","5,2"],"tier":"Easy","tier_idx":1,"level_num":10},{"R":6,"C":7,"clues":{"0,1":1,"0,2":2,"0,3":2,"0,4":4,"0,6":6,"1,0":1,"1,1":1,"1,2":4,"1,3":1,"1,5":4,"2,0":1,"2,4":1,"2,5":2,"2,6":3,"3,0":2,"3,1":1,"3,2":2,"3,3":1,"3,5":2,"4,0":1,"4,1":2,"4,2":1,"4,3":2,"4,5":1,"5,3":1,"5,4":1,"5,6":1},"solution":["0,0","2,1","2,3","5,0","5,2","5,5"],"tier":"Easy","tier_idx":1,"level_num":11},{"R":7,"C":7,"clues":{"0,0":1,"0,2":1,"0,3":2,"0,5":2,"0,6":1,"1,0":1,"1,1":1,"1,2":4,"1,3":3,"2,1":1,"2,2":2,"2,3":2,"3,0":1,"3,2":2,"3,3":1,"4,0":2,"4,1":2,"4,4":1,"4,5":2,"4,6":3,"5,0":3,"5,1":1,"5,4":1,"5,5":3,"5,6":4,"6,0":1,"6,2":1,"6,3":1,"6,5":1,"6,6":2},"solution":["0,1","1,6","2,0","2,5","3,4","6,1","6,4"],"tier":"Easy","tier_idx":1,"level_num":12},{"R":7,"C":7,"clues":{"0,1":1,"0,3":3,"0,6":2,"1,0":1,"1,1":2,"1,2":1,"1,4":3,"1,5":4,"1,6":1,"2,3":1,"2,5":1,"3,0":1,"3,3":2,"3,4":1,"3,5":2,"3,6":1,"4,3":1,"5,0":1,"5,2":1,"5,6":1,"6,0":4,"6,1":1,"6,2":2,"6,3":1,"6,6":2},"solution":["0,0","2,2","2,6","3,1","4,4","5,1","5,5","6,4"],"tier":"Medium","tier_idx":2,"level_num":13},{"R":7,"C":8,"clues":{"0,0":1,"0,1":2,"0,2":3,"0,3":6,"0,4":2,"0,5":3,"0,6":6,"1,3":3,"1,4":1,"1,5":2,"1,6":5,"1,7":7,"2,3":1,"2,6":2,"2,7":3,"3,3":1,"3,6":1,"3,7":2,"4,0":1,"4,4":2,"4,5":1,"4,6":2,"4,7":6,"5,0":4,"5,2":2,"5,3":1,"5,4":3,"5,5":2,"5,6":1,"6,0":1,"6,4":1,"6,5":1,"6,7":1},"solution":["1,0","2,1","2,4","3,2","3,5","4,1","6,1","6,3","6,6"],"tier":"Medium","tier_idx":2,"level_num":14},{"R":7,"C":8,"clues":{"0,0":3,"0,1":1,"0,2":1,"1,0":1,"1,2":1,"1,3":1,"1,4":3,"1,5":1,"1,6":5,"1,7":1,"2,0":2,"2,1":1,"2,3":2,"2,7":1,"3,0":1,"3,1":2,"3,2":5,"3,3":3,"3,4":3,"3,5":1,"3,6":1,"4,1":1,"4,2":2,"4,3":2,"4,4":1,"4,6":1,"5,1":4,"5,2":5,"5,3":4,"5,4":3,"5,5":1,"5,6":1,"6,1":1,"6,2":2,"6,3":3,"6,4":4,"6,5":2,"6,6":6,"6,7":1},"solution":["0,3","0,5","0,7","1,1","3,7","4,0","4,5","5,7","6,0"],"tier":"Medium","tier_idx":2,"level_num":15},{"R":8,"C":8,"clues":{"0,1":1,"0,2":2,"0,3":1,"0,4":4,"0,5":5,"0,7":1,"1,0":1,"1,1":1,"1,2":1,"1,4":1,"1,6":1,"2,2":1,"2,3":1,"2,5":4,"2,6":4,"2,7":1,"3,2":2,"3,3":2,"3,4":2,"3,5":4,"3,6":3,"3,7":2,"4,1":2,"4,3":2,"4,4":1,"4,5":3,"4,6":2,"4,7":3,"5,1":1,"5,5":1,"5,6":1,"5,7":3,"6,0":1,"6,1":2,"6,2":1,"6,7":1,"7,0":2,"7,1":4,"7,2":3,"7,3":1,"7,4":1,"7,7":2},"solution":["0,0","1,3","1,7","2,1","3,0","5,0","5,4","6,3","6,6","7,5"],"tier":"Medium","tier_idx":2,"level_num":16},{"R":8,"C":8,"clues":{"0,0":1,"0,2":1,"0,3":2,"0,4":3,"0,7":2,"1,0":5,"1,1":1,"1,2":1,"1,3":2,"1,4":5,"1,5":3,"1,6":4,"1,7":1,"2,0":2,"2,1":1,"2,4":2,"2,6":1,"3,4":1,"3,5":1,"3,6":2,"3,7":1,"4,0":2,"4,1":1,"4,2":2,"4,3":1,"4,4":1,"5,2":1,"5,4":1,"5,7":1,"6,5":1,"6,6":1,"6,7":3,"7,0":1,"7,2":1,"7,5":2,"7,6":2,"7,7":4},"solution":["0,1","2,2","2,7","3,3","4,5","5,1","5,6","6,0","6,4","7,3"],"tier":"Medium","tier_idx":2,"level_num":17},{"R":8,"C":8,"clues":{"0,0":3,"0,1":2,"0,2":1,"0,4":1,"0,5":2,"0,6":3,"0,7":1,"1,0":6,"1,1":2,"1,2":4,"1,4":3,"1,5":2,"1,6":1,"2,0":3,"2,1":1,"2,2":1,"2,4":1,"2,5":2,"2,6":2,"2,7":1,"3,0":1,"3,2":1,"3,3":1,"3,4":3,"3,5":4,"3,6":1,"3,7":2,"4,0":3,"4,1":1,"4,2":1,"4,4":2,"4,5":1,"4,7":1,"5,1":1,"5,5":3,"5,6":1,"5,7":1,"6,0":1,"6,1":2,"6,6":1,"7,1":1,"7,5":1,"7,6":2,"7,7":1},"solution":["0,3","1,7","2,3","3,1","4,6","5,2","6,3","6,7","7,0","7,4"],"tier":"Medium","tier_idx":2,"level_num":18},{"R":8,"C":9,"clues":{"0,3":1,"0,4":1,"0,5":1,"0,7":1,"0,8":1,"1,0":1,"1,3":1,"1,5":1,"1,7":1,"2,1":1,"2,3":1,"2,4":1,"2,5":1,"2,7":1,"3,0":2,"3,1":1,"3,2":1,"3,3":5,"3,4":2,"3,5":3,"3,6":1,"4,3":2,"4,5":2,"4,6":1,"5,3":1,"5,4":2,"5,5":2,"5,6":3,"5,7":1,"5,8":2,"6,0":1,"6,1":2,"6,2":1,"6,4":5,"6,5":1,"6,6":4,"6,7":2,"6,8":3,"7,0":2,"7,1":3,"7,2":2,"7,3":2,"7,4":1,"7,6":1,"7,7":2,"7,8":3},"solution":["0,0","0,2","0,6","1,4","1,8","2,2","2,6","3,8","4,1","4,7","5,0","5,2","7,5"],"tier":"Hard","tier_idx":3,"level_num":19},{"R":9,"C":9,"clues":{"0,0":1,"0,2":1,"0,3":2,"0,4":2,"0,5":1,"0,8":2,"1,0":6,"1,1":1,"1,2":5,"1,3":2,"1,5":1,"1,8":1,"2,1":2,"2,2":3,"2,3":1,"2,4":1,"2,7":1,"2,8":3,"3,0":3,"3,1":2,"3,2":1,"3,8":2,"4,0":3,"4,1":2,"4,2":2,"4,5":1,"4,8":1,"5,0":2,"5,1":1,"5,2":1,"5,5":2,"5,6":2,"5,7":1,"5,8":1,"6,2":1,"6,3":1,"6,4":2,"6,5":3,"6,6":2,"7,2":1,"7,3":2,"7,5":2,"7,6":1,"8,0":1,"8,1":1,"8,3":1,"8,4":2,"8,5":3,"8,6":4,"8,7":1,"8,8":2},"solution":["0,1","0,6","1,7","2,5","3,3","3,6","4,4","4,7","5,3","6,1","6,8","7,0","7,7","8,2"],"tier":"Hard","tier_idx":3,"level_num":20},{"R":9,"C":9,"clues":{"0,0":4,"0,1":2,"0,2":3,"0,3":2,"0,7":2,"0,8":2,"1,0":3,"1,1":1,"1,2":2,"1,3":1,"1,7":1,"1,8":1,"2,0":1,"2,2":1,"2,3":2,"2,4":1,"2,5":2,"2,7":1,"3,0":1,"3,1":1,"3,2":1,"3,3":3,"3,5":1,"3,7":1,"4,3":1,"4,4":2,"4,5":1,"4,6":1,"4,7":1,"5,0":1,"5,1":1,"5,2":1,"5,4":1,"5,6":1,"5,7":1,"5,8":1,"6,0":1,"6,2":1,"6,3":1,"6,6":1,"6,8":1,"7,1":1,"7,2":1,"7,6":1,"7,7":1,"8,0":4,"8,1":2,"8,2":4,"8,3":1,"8,4":7,"8,5":1,"8,6":5,"8,7":2,"8,8":4},"solution":["0,5","1,4","1,6","2,1","2,8","3,6","4,0","4,2","4,8","5,5","6,1","6,7","7,3","7,5"],"tier":"Hard","tier_idx":3,"level_num":21},{"R":9,"C":10,"clues":{"0,0":2,"0,1":4,"0,2":1,"0,3":7,"0,4":8,"0,5":3,"0,6":1,"0,7":2,"0,8":4,"0,9":2,"1,0":1,"1,1":1,"1,3":1,"1,5":1,"1,8":2,"1,9":1,"2,1":1,"2,3":3,"2,4":3,"2,5":1,"3,0":1,"3,3":1,"3,4":1,"3,6":1,"3,7":1,"3,8":1,"3,9":1,"4,0":1,"4,3":2,"4,4":3,"4,6":2,"4,7":1,"4,9":1,"5,0":3,"5,1":1,"5,2":1,"5,4":1,"5,6":1,"5,7":2,"5,8":1,"5,9":3,"6,0":2,"6,5":1,"6,6":2,"6,7":4,"6,8":1,"6,9":4,"7,0":1,"7,6":1,"7,7":1,"7,9":1,"8,0":4,"8,1":1,"8,7":1,"8,8":1,"8,9":3},"solution":["1,2","1,6","2,0","2,7","2,9","3,2","3,5","4,1","4,8","5,5","6,2","7,1","7,3","7,8","8,4","8,6"],"tier":"Hard","tier_idx":3,"level_num":22},{"R":9,"C":10,"clues":{"0,0":1,"0,1":2,"0,2":4,"0,4":2,"0,5":1,"0,7":1,"0,8":2,"0,9":2,"1,2":2,"1,3":2,"1,5":3,"1,6":1,"1,7":1,"1,8":8,"1,9":1,"2,2":1,"2,3":1,"2,6":1,"3,0":1,"3,1":1,"3,2":1,"3,4":1,"3,5":1,"3,7":1,"3,8":5,"4,1":1,"4,2":1,"4,3":1,"4,6":1,"4,8":1,"5,0":1,"5,1":1,"5,6":2,"5,7":2,"5,8":4,"5,9":1,"6,0":2,"6,1":2,"6,2":1,"6,3":2,"6,4":1,"6,5":1,"6,6":6,"6,7":1,"6,9":1,"7,0":3,"7,1":1,"7,2":2,"7,3":1,"7,4":1,"8,0":1,"8,4":1,"8,5":1,"8,6":3,"8,7":1,"8,8":5,"8,9":1},"solution":["0,6","1,0","2,1","2,7","2,9","3,3","4,0","4,5","4,9","5,2","5,4","7,5","7,7","7,9","8,1","8,3"],"tier":"Hard","tier_idx":3,"level_num":23},{"R":9,"C":10,"clues":{"0,1":1,"0,3":1,"0,7":1,"0,9":3,"1,0":1,"1,1":4,"1,2":3,"1,3":2,"1,5":3,"1,6":1,"1,7":5,"1,8":1,"1,9":6,"2,0":1,"2,5":1,"2,7":1,"2,9":1,"3,1":1,"3,5":1,"3,7":3,"3,9":4,"4,0":1,"4,4":1,"4,6":1,"4,7":1,"4,9":1,"5,0":1,"5,3":1,"5,5":1,"5,7":1,"5,8":1,"5,9":2,"6,1":1,"6,2":1,"6,4":1,"6,5":1,"6,6":1,"6,8":1,"6,9":1,"7,0":4,"7,1":2,"7,4":1,"7,6":1,"7,7":1,"7,8":1,"8,0":3,"8,1":2,"8,2":1,"8,4":1,"8,5":1,"8,6":3,"8,7":2,"8,8":4,"8,9":1},"solution":["0,0","0,4","0,6","2,4","2,8","3,0","3,3","4,2","4,5","4,8","5,1","6,3","6,7","7,5","7,9","8,3"],"tier":"Hard","tier_idx":3,"level_num":24},{"R":10,"C":10,"clues":{"0,0":2,"0,1":3,"0,2":1,"0,4":2,"0,7":1,"0,8":1,"0,9":3,"1,0":1,"1,1":1,"1,3":1,"1,4":1,"1,7":1,"1,9":1,"2,2":1,"2,3":1,"2,4":4,"2,5":1,"2,7":6,"2,8":1,"2,9":2,"3,4":1,"3,6":1,"3,7":4,"3,8":2,"3,9":1,"4,0":1,"4,1":1,"4,3":1,"4,4":2,"4,5":1,"4,7":1,"4,8":1,"5,1":1,"5,3":1,"5,4":3,"5,5":1,"5,6":1,"5,7":3,"5,8":1,"5,9":1,"6,0":1,"6,1":2,"6,7":1,"7,0":1,"7,1":1,"7,4":1,"8,1":1,"8,2":1,"8,5":1,"8,8":1,"8,9":1,"9,0":1,"9,1":2,"9,2":1,"9,5":2,"9,6":2,"9,7":1,"9,8":3,"9,9":2},"solution":["0,6","1,2","1,5","1,8","2,0","3,1","3,3","4,6","4,9","5,0","6,3","6,5","6,8","7,2","7,6","7,9","8,0","8,4","8,7","9,3"],"tier":"Expert","tier_idx":4,"level_num":25},{"R":10,"C":10,"clues":{"0,0":4,"0,5":1,"0,6":1,"0,7":2,"0,8":4,"0,9":1,"1,0":3,"1,5":1,"1,8":1,"2,0":2,"2,4":1,"2,8":1,"2,9":1,"3,0":1,"3,3":1,"3,8":2,"3,9":2,"4,0":2,"4,1":1,"4,3":2,"4,8":2,"5,0":1,"5,1":2,"5,2":1,"5,3":1,"5,7":1,"5,8":1,"5,9":2,"6,4":1,"6,5":2,"6,7":1,"7,0":1,"7,1":1,"7,4":1,"7,5":1,"7,7":1,"8,0":1,"8,2":1,"8,3":1,"8,4":1,"8,6":1,"8,8":2,"8,9":1,"9,0":3,"9,1":1,"9,2":2,"9,3":1,"9,5":1,"9,7":3,"9,8":3,"9,9":2},"solution":["0,4","1,3","1,6","1,9","2,2","2,7","3,1","3,4","3,6","4,5","5,4","5,6","6,0","6,2","6,8","7,3","7,6","7,9","8,1","9,4"],"tier":"Expert","tier_idx":4,"level_num":26},{"R":10,"C":11,"clues":{"0,0":4,"0,1":1,"0,2":2,"0,3":1,"0,5":1,"0,9":1,"0,10":1,"1,0":1,"1,2":1,"1,3":2,"1,5":2,"1,9":1,"2,0":4,"2,1":1,"2,2":1,"2,3":1,"2,8":1,"3,0":2,"3,1":1,"3,3":1,"3,4":1,"3,5":2,"3,7":1,"4,0":3,"4,1":1,"4,2":1,"4,3":1,"4,7":1,"4,8":1,"4,9":1,"4,10":1,"5,0":1,"5,8":1,"6,0":1,"6,1":1,"6,2":2,"6,7":1,"7,1":1,"7,2":2,"8,0":1,"8,1":3,"8,2":5,"8,3":3,"8,4":2,"8,5":1,"8,6":2,"9,0":2,"9,1":4,"9,2":6,"9,3":4,"9,4":3,"9,5":2,"9,6":5,"9,7":2,"9,8":1,"9,9":4,"9,10":1},"solution":["0,4","0,8","1,1","1,10","1,7","2,4","2,6","3,10","3,2","3,8","4,6","5,1","5,3","5,5","5,9","6,10","6,4","7,0","7,5","7,7","8,10","8,8"],"tier":"Expert","tier_idx":4,"level_num":27},{"R":10,"C":11,"clues":{"0,0":1,"0,1":3,"0,3":1,"0,5":1,"0,7":1,"0,9":1,"1,1":1,"1,2":1,"1,4":1,"1,5":1,"1,7":2,"1,8":1,"1,9":3,"1,10":1,"2,1":1,"2,3":1,"2,4":1,"2,6":1,"2,7":1,"2,9":1,"3,1":1,"3,2":1,"3,3":1,"3,5":1,"3,6":1,"3,8":1,"3,9":1,"3,10":1,"4,4":1,"4,5":1,"4,7":1,"4,8":1,"4,10":1,"5,6":1,"5,7":1,"5,8":3,"5,9":1,"5,10":1,"6,3":1,"6,8":1,"6,9":1,"7,0":2,"7,2":2,"7,5":1,"7,8":2,"7,9":1,"7,10":1,"8,0":1,"8,2":1,"8,3":1,"8,6":1,"8,8":1,"8,10":1,"9,0":4,"9,1":1,"9,2":3,"9,3":2,"9,6":1,"9,7":2,"9,8":3,"9,9":1,"9,10":3},"solution":["0,4","0,8","1,0","2,10","2,2","2,5","3,0","3,7","4,3","4,9","5,0","5,2","5,5","6,1","6,10","6,4","6,7","7,6","8,1","8,4","8,9","9,5"],"tier":"Expert","tier_idx":4,"level_num":28},{"R":11,"C":11,"clues":{"0,1":4,"0,2":2,"0,3":1,"0,4":1,"0,6":1,"0,7":1,"0,8":1,"0,10":1,"1,0":3,"1,1":2,"1,4":1,"1,5":1,"1,6":1,"1,8":1,"1,10":2,"2,0":2,"2,1":1,"2,5":2,"2,6":3,"2,8":1,"3,0":2,"3,1":3,"3,4":1,"3,5":2,"3,6":1,"4,0":1,"4,1":1,"4,5":1,"4,9":1,"4,10":1,"5,5":2,"5,6":1,"5,8":1,"5,9":2,"5,10":1,"6,2":1,"6,3":1,"6,4":1,"6,5":1,"7,0":1,"7,1":1,"7,2":2,"7,3":1,"7,5":1,"8,1":1,"8,2":2,"8,3":2,"8,4":1,"8,5":2,"8,6":2,"8,7":1,"8,8":4,"8,9":1,"8,10":1,"9,0":1,"9,1":1,"9,2":5,"9,3":1,"9,4":2,"9,5":1,"9,6":3,"9,7":2,"9,8":2,"9,9":1,"10,0":1,"10,6":1,"10,7":2,"10,8":3,"10,9":3,"10,10":1},"solution":["0,5","0,9","1,3","1,7","10,1","10,3","10,5","2,2","2,9","3,10","3,7","4,2","4,4","4,8","5,0","5,3","6,1","6,10","6,6","7,4","7,7","7,9","8,0","9,10"],"tier":"Expert","tier_idx":4,"level_num":29},{"R":11,"C":11,"clues":{"0,0":1,"0,3":2,"0,5":1,"1,0":1,"1,3":1,"1,4":1,"1,5":3,"1,6":1,"1,7":1,"1,8":1,"1,9":4,"1,10":1,"2,1":1,"2,3":1,"2,5":1,"2,6":1,"2,8":1,"2,9":2,"3,0":1,"3,3":1,"3,4":1,"3,6":1,"3,7":1,"3,8":1,"3,9":2,"3,10":1,"4,0":1,"4,3":2,"4,5":1,"5,0":3,"5,1":1,"5,2":2,"5,3":2,"5,5":1,"6,1":1,"6,3":1,"6,4":1,"6,6":1,"6,8":2,"6,9":1,"6,10":1,"7,0":1,"7,5":1,"7,6":1,"7,8":1,"7,9":1,"8,0":2,"8,1":1,"8,2":2,"8,5":1,"8,6":1,"8,7":1,"8,9":3,"8,10":1,"9,0":1,"9,2":1,"9,5":1,"9,7":1,"9,8":2,"9,9":3,"9,10":2,"10,1":1,"10,2":2,"10,3":1,"10,4":2,"10,5":4,"10,6":1,"10,7":3,"10,8":6,"10,9":5,"10,10":3},"solution":["0,1","0,10","0,6","0,8","1,2","10,0","2,0","2,4","2,7","3,2","4,1","4,10","4,6","4,8","5,7","5,9","6,5","7,1","7,10","7,3","7,7","8,4","9,3","9,6"],"tier":"Expert","tier_idx":4,"level_num":30}];
+
+// === GAME STATE ===
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let currentLevelIdx = 0;
+let currentLevel = null;
+let grid = []; // 0=white, 1=black, 2=mark(X)
+let cellSize = 44;
+let mode = 'fill';
+let hintsLeft = 3;
+let startTime = 0;
+let timerInterval = null;
+let won = false;
+let violations = { adj: [], clue: [], conn: false };
+let audioCtx = null;
+let musicGain = null;
+let musicOn = true;
+let sfxOn = true;
+let autoCheck = false;
+
+const STORAGE_KEY = 'kuroshuto_progress';
+
+// === AUDIO ===
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    musicGain = audioCtx.createGain();
+    musicGain.gain.value = 0.06;
+    musicGain.connect(audioCtx.destination);
+    startBGM();
+  } catch(e) {}
+}
+
+function playTone(freq, dur, type='sine', vol=0.15) {
+  if (!audioCtx || !sfxOn) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + dur);
+}
+
+function sfxFill() { playTone(220, 0.08, 'square', 0.12); }
+function sfxErase() { playTone(440, 0.06, 'sine', 0.1); }
+function sfxHint() { playTone(660, 0.15, 'triangle', 0.15); }
+function sfxWin() {
+  [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.2, 'triangle', 0.2), i * 120));
+}
+function sfxError() { playTone(150, 0.15, 'sawtooth', 0.15); }
+function sfxClick() { playTone(800, 0.03, 'square', 0.08); }
+
+let bgmStep = 0;
+const bgmChords = [
+  [261.63, 329.63, 392, 493.88], // Cmaj7
+  [293.66, 349.23, 440, 587.33], // Dm7
+  [220, 277.18, 329.63, 440],    // Am7
+  [196, 246.94, 293.66, 392],    // G
+];
+function startBGM() {
+  if (!audioCtx || !musicOn) return;
+  function playChord() {
+    if (!audioCtx || !musicOn) return;
+    const chord = bgmChords[bgmStep % bgmChords.length];
+    bgmStep++;
+    chord.forEach(freq => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.015, audioCtx.currentTime + 0.5);
+      gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 3.5);
+      osc.connect(gain);
+      gain.connect(musicGain);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 3.5);
+    });
+    setTimeout(playChord, 3000);
+  }
+  playChord();
+}
+
+// === LEVEL LOADING ===
+function loadLevel(idx) {
+  currentLevelIdx = idx;
+  currentLevel = LEVELS[idx];
+  const R = currentLevel.R, C = currentLevel.C;
+  grid = Array(R).fill(0).map(() => Array(C).fill(0));
+  hintsLeft = 3;
+  won = false;
+  violations = { adj: [], clue: [], conn: false };
+  startTime = Date.now();
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimer, 1000);
+  document.getElementById('info-level').textContent = idx + 1;
+  document.getElementById('info-tier').textContent = currentLevel.tier;
+  document.getElementById('hint-count').textContent = hintsLeft;
+  resizeCanvas();
+  draw();
+}
+
+function resizeCanvas() {
+  if (!currentLevel) return;
+  const R = currentLevel.R, C = currentLevel.C;
+  const maxW = Math.min(window.innerWidth - 20, 640);
+  const maxH = window.innerHeight - 200;
+  cellSize = Math.floor(Math.min(maxW / C, maxH / R, 52));
+  cellSize = Math.max(28, cellSize);
+  canvas.width = C * cellSize;
+  canvas.height = R * cellSize;
+  canvas.style.width = canvas.width + 'px';
+  canvas.style.height = canvas.height + 'px';
+}
+
+// === DRAWING ===
+function draw() {
+  if (!currentLevel) return;
+  const R = currentLevel.R, C = currentLevel.C;
+  const clues = {};
+  for (const [k, v] of Object.entries(currentLevel.clues)) {
+    const [r, c] = k.split(',').map(Number);
+    clues[r + ',' + c] = v;
+  }
+
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      const x = c * cellSize, y = r * cellSize;
+      const isBlack = grid[r][c] === 1;
+      const isMark = grid[r][c] === 2;
+      const hasClue = clues[r + ',' + c] !== undefined;
+
+      // Cell background
+      if (isBlack) {
+        ctx.fillStyle = '#2a2a3e';
+        ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+        ctx.fillStyle = '#4a4a5e';
+        ctx.beginPath();
+        ctx.arc(x + cellSize/2, y + cellSize/2, cellSize * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // White cell
+        const grad = ctx.createLinearGradient(x, y, x + cellSize, y + cellSize);
+        grad.addColorStop(0, '#f0f0f8');
+        grad.addColorStop(1, '#e0e0e8');
+        ctx.fillStyle = grad;
+        ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+      }
+
+      // Mark X
+      if (isMark) {
+        ctx.strokeStyle = '#999';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x + cellSize * 0.3, y + cellSize * 0.3);
+        ctx.lineTo(x + cellSize * 0.7, y + cellSize * 0.7);
+        ctx.moveTo(x + cellSize * 0.7, y + cellSize * 0.3);
+        ctx.lineTo(x + cellSize * 0.3, y + cellSize * 0.7);
+        ctx.stroke();
+      }
+
+      // Clue number
+      if (hasClue) {
+        const d = clues[r + ',' + c];
+        ctx.fillStyle = isBlack ? '#ff6b9d' : '#2a2a4e';
+        ctx.font = `bold ${Math.floor(cellSize * 0.5)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(d, x + cellSize/2, y + cellSize/2 + 1);
+      }
+
+      // Grid border
+      ctx.strokeStyle = '#3a3a5a';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
+    }
+  }
+
+  // Highlight violations
+  violations.adj.forEach(([r, c]) => {
+    const x = c * cellSize, y = r * cellSize;
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x + 1.5, y + 1.5, cellSize - 3, cellSize - 3);
+  });
+  violations.clue.forEach(([r, c]) => {
+    const x = c * cellSize, y = r * cellSize;
+    ctx.strokeStyle = '#ffd166';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x + 1.5, y + 1.5, cellSize - 3, cellSize - 3);
+  });
+}
+
+// === GAME LOGIC ===
+function getCellFromXY(px, py) {
+  const c = Math.floor(px / cellSize);
+  const r = Math.floor(py / cellSize);
+  if (r < 0 || r >= currentLevel.R || c < 0 || c >= currentLevel.C) return null;
+  return [r, c];
+}
+
+function isClueCell(r, c) {
+  return currentLevel.clues[r + ',' + c] !== undefined;
+}
+
+function handleCellClick(r, c) {
+  if (won) return;
+  initAudio();
+  if (isClueCell(r, c)) {
+    // Can't shade clue cell — but can toggle mark
+    if (grid[r][c] === 2) { grid[r][c] = 0; sfxErase(); }
+    else { grid[r][c] = 2; sfxClick(); }
+  } else {
+    if (mode === 'fill') {
+      if (grid[r][c] === 1) { grid[r][c] = 0; sfxErase(); }
+      else { grid[r][c] = 1; sfxFill(); }
+    } else {
+      if (grid[r][c] === 2) { grid[r][c] = 0; sfxErase(); }
+      else { grid[r][c] = 2; sfxClick(); }
+    }
+  }
+  checkViolations();
+  draw();
+  if (autoCheck) doCheck();
+}
+
+function checkViolations() {
+  const R = currentLevel.R, C = currentLevel.C;
+  violations = { adj: [], clue: [], conn: false };
+
+  // Adjacent blacks
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      if (grid[r][c] !== 1) continue;
+      if (r + 1 < R && grid[r+1][c] === 1) {
+        violations.adj.push([r, c], [r+1, c]);
+      }
+      if (c + 1 < C && grid[r][c+1] === 1) {
+        violations.adj.push([r, c], [r, c+1]);
+      }
+    }
+  }
+
+  // Clue violations
+  for (const [k, d] of Object.entries(currentLevel.clues)) {
+    const [r, c] = k.split(',').map(Number);
+    const cands = [];
+    if (r - d >= 0) cands.push([r-d, c]);
+    if (r + d < R) cands.push([r+d, c]);
+    if (c - d >= 0) cands.push([r, c-d]);
+    if (c + d < C) cands.push([r, c+d]);
+    const blackCount = cands.filter(([br, bc]) => grid[br][bc] === 1).length;
+    if (blackCount > 1) {
+      violations.clue.push([r, c]);
+    }
+  }
+}
+
+function doCheck() {
+  if (won) return;
+  checkViolations();
+  draw();
+  if (violations.adj.length > 0 || violations.clue.length > 0) {
+    showToast('⚠️ Violations detected');
+    sfxError();
+    return;
+  }
+
+  // Check all clues satisfied (exactly 1 black at distance)
+  const R = currentLevel.R, C = currentLevel.C;
+  for (const [k, d] of Object.entries(currentLevel.clues)) {
+    const [r, c] = k.split(',').map(Number);
+    const cands = [];
+    if (r - d >= 0) cands.push([r-d, c]);
+    if (r + d < R) cands.push([r+d, c]);
+    if (c - d >= 0) cands.push([r, c-d]);
+    if (c + d < C) cands.push([r, c+d]);
+    const blackCount = cands.filter(([br, bc]) => grid[br][bc] === 1).length;
+    if (blackCount !== 1) {
+      showToast('⚠️ Some clues not satisfied');
+      sfxError();
+      return;
+    }
+  }
+
+  // Check connectivity of white cells
+  const whiteCells = [];
+  for (let r = 0; r < R; r++)
+    for (let c = 0; c < C; c++)
+      if (grid[r][c] !== 1) whiteCells.push([r, c]);
+  if (whiteCells.length === 0) { showToast('⚠️ All cells black!'); sfxError(); return; }
+  const visited = new Set([whiteCells[0].join(',')]);
+  const q = [whiteCells[0]];
+  while (q.length) {
+    const [r, c] = q.shift();
+    for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+      const nr = r+dr, nc = c+dc;
+      if (nr >= 0 && nr < R && nc >= 0 && nc < C && grid[nr][nc] !== 1) {
+        const key = nr+','+nc;
+        if (!visited.has(key)) { visited.add(key); q.push([nr, nc]); }
+      }
+    }
+  }
+  if (visited.size !== whiteCells.length) {
+    showToast('⚠️ White cells not connected');
+    sfxError();
+    return;
+  }
+
+  // WIN!
+  won = true;
+  clearInterval(timerInterval);
+  const time = Math.floor((Date.now() - startTime) / 1000);
+  const stars = time < 60 ? 3 : time < 180 ? 2 : 1;
+  saveProgress(currentLevelIdx, stars, time);
+  sfxWin();
+  showWinOverlay(stars, time);
+}
+
+function doHint() {
+  if (won || hintsLeft <= 0) {
+    showToast(hintsLeft <= 0 ? 'No hints left!' : 'Already solved!');
+    return;
+  }
+  initAudio();
+  const solution = new Set(currentLevel.solution);
+  // Find a cell that's wrong or missing
+  const R = currentLevel.R, C = currentLevel.C;
+  const wrong = [];
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      const shouldBeBlack = solution.has(r+','+c);
+      const isBlack = grid[r][c] === 1;
+      if (shouldBeBlack && !isBlack) wrong.push([r, c, 'fill']);
+      if (!shouldBeBlack && isBlack) wrong.push([r, c, 'erase']);
+    }
+  }
+  if (wrong.length === 0) {
+    showToast('Everything looks correct!');
+    return;
+  }
+  const [r, c, action] = wrong[Math.floor(Math.random() * wrong.length)];
+  if (action === 'fill') grid[r][c] = 1;
+  else grid[r][c] = 0;
+  hintsLeft--;
+  document.getElementById('hint-count').textContent = hintsLeft;
+  sfxHint();
+  showToast(`💡 Hint: (${r+1},${c+1}) ${action === 'fill' ? 'should be black' : 'should be white'}`);
+  checkViolations();
+  draw();
+  if (autoCheck) doCheck();
+}
+
+function doRestart() {
+  const R = currentLevel.R, C = currentLevel.C;
+  grid = Array(R).fill(0).map(() => Array(C).fill(0));
+  hintsLeft = 3;
+  won = false;
+  violations = { adj: [], clue: [], conn: false };
+  startTime = Date.now();
+  document.getElementById('hint-count').textContent = hintsLeft;
+  draw();
+  showToast('↻ Restarted');
+}
+
+// === PROGRESS ===
+function saveProgress(idx, stars, time) {
+  let progress = {};
+  try { progress = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) {}
+  if (!progress[idx] || stars > progress[idx].stars) {
+    progress[idx] = { stars, time, completed: true };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+  }
+}
+
+function getProgress() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+}
+
+// === UI ===
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function updateTimer() {
+  if (won) return;
+  const sec = Math.floor((Date.now() - startTime) / 1000);
+  const m = Math.floor(sec / 60), s = sec % 60;
+  document.getElementById('info-time').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function showWinOverlay(stars, time) {
+  const m = Math.floor(time / 60), s = time % 60;
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <h2>🎉 Solved!</h2>
+    <div class="stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+    <p>Level ${currentLevelIdx+1} completed in ${m}:${s.toString().padStart(2,'0')}</p>
+    <div>
+      ${currentLevelIdx < LEVELS.length - 1 ? '<button class="btn accent" id="next-btn">Next Level →</button>' : '<button class="btn accent" id="menu-btn2">Level Menu</button>'}
+      <button class="btn" id="retry-btn">Retry</button>
+    </div>
+  `;
+  document.getElementById('app').appendChild(overlay);
+  document.getElementById('retry-btn').onclick = () => { overlay.remove(); doRestart(); };
+  const nb = document.getElementById('next-btn');
+  if (nb) nb.onclick = () => { overlay.remove(); loadLevel(currentLevelIdx + 1); };
+  const mb = document.getElementById('menu-btn2');
+  if (mb) mb.onclick = () => { overlay.remove(); showMenu(); };
+}
+
+function showMenu() {
+  const progress = getProgress();
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  let html = '<h2>📋 Level Select</h2>';
+  const tiers = ['Beginner', 'Easy', 'Medium', 'Hard', 'Expert'];
+  tiers.forEach((tier, ti) => {
+    html += `<div class="tier-header">${tier}</div><div class="level-grid">`;
+    for (let i = ti * 6; i < ti * 6 + 6 && i < LEVELS.length; i++) {
+      const p = progress[i];
+      const cls = p && p.completed ? 'completed' : (i === currentLevelIdx ? 'current' : '');
+      const stars = p && p.completed ? '⭐'.repeat(p.stars) : '';
+      html += `<div class="level-cell ${cls}" data-level="${i}">${i+1}<span class="stars-mini">${stars}</span></div>`;
+    }
+    html += '</div>';
+  });
+  html += '<button class="btn" id="close-menu" style="margin-top:16px">Close</button>';
+  overlay.innerHTML = html;
+  document.getElementById('app').appendChild(overlay);
+  overlay.querySelectorAll('.level-cell').forEach(cell => {
+    cell.onclick = () => {
+      const idx = parseInt(cell.dataset.level);
+      overlay.remove();
+      loadLevel(idx);
+    };
+  });
+  document.getElementById('close-menu').onclick = () => overlay.remove();
+}
+
+function showHowTo() {
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <h2>📖 How to Play</h2>
+    <p><strong>Kuroshuto</strong> (クロシュート) is a Nikoli number-distance puzzle.</p>
+    <div class="howto-step">Blacken cells in the grid</div>
+    <div class="howto-step">A number <strong>N</strong> means exactly <strong>one</strong> cell at distance <strong>N</strong> (up/down/left/right) must be black</div>
+    <div class="howto-step">Black cells <strong>cannot touch</strong> orthogonally</div>
+    <div class="howto-step">All white cells must form a single <strong>connected area</strong></div>
+    <div class="howto-step">Click a cell to shade it, use Erase mode to clear</div>
+    <button class="btn accent" id="close-howto" style="margin-top:16px">Got it!</button>
+  `;
+  document.getElementById('app').appendChild(overlay);
+  document.getElementById('close-howto').onclick = () => overlay.remove();
+}
+
+function showSettings() {
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <h2>⚙ Settings</h2>
+    <div class="settings-panel">
+      <label>🎵 Music<input type="checkbox" id="set-music" ${musicOn?'checked':''}></label>
+      <label>🔊 Sound Effects<input type="checkbox" id="set-sfx" ${sfxOn?'checked':''}></label>
+      <label>✓ Auto-check<input type="checkbox" id="set-autocheck" ${autoCheck?'checked':''}></label>
+    </div>
+    <button class="btn accent" id="close-settings">Close</button>
+  `;
+  document.getElementById('app').appendChild(overlay);
+  document.getElementById('set-music').onchange = (e) => {
+    musicOn = e.target.checked;
+    if (musicOn) startBGM();
+  };
+  document.getElementById('set-sfx').onchange = (e) => { sfxOn = e.target.checked; };
+  document.getElementById('set-autocheck').onchange = (e) => { autoCheck = e.target.checked; };
+  document.getElementById('close-settings').onclick = () => overlay.remove();
+}
+
+// === INPUT ===
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+  const cell = getCellFromXY(x, y);
+  if (cell) handleCellClick(cell[0], cell[1]);
+});
+
+canvas.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+  const cell = getCellFromXY(x, y);
+  if (cell) {
+    const [r, c] = cell;
+    if (grid[r][c] === 2) grid[r][c] = 0;
+    else grid[r][c] = 2;
+    initAudio();
+    sfxClick();
+    draw();
+  }
+});
+
+// Touch support
+let touchTimer = null;
+let touchMoved = false;
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  touchMoved = false;
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+  touchTimer = setTimeout(() => {
+    if (!touchMoved) {
+      const cell = getCellFromXY(x, y);
+      if (cell) {
+        const [r, c] = cell;
+        if (grid[r][c] === 2) grid[r][c] = 0;
+        else grid[r][c] = 2;
+        initAudio(); sfxClick(); draw();
+      }
+    }
+  }, 400);
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => { touchMoved = true; clearTimeout(touchTimer); }, { passive: true });
+canvas.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  clearTimeout(touchTimer);
+  if (touchMoved) return;
+  const touch = e.changedTouches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+  const cell = getCellFromXY(x, y);
+  if (cell) handleCellClick(cell[0], cell[1]);
+}, { passive: false });
+
+// Mode buttons
+document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    sfxClick();
+  };
+});
+
+document.getElementById('btn-hint').onclick = doHint;
+document.getElementById('btn-check').onclick = () => { initAudio(); doCheck(); };
+document.getElementById('btn-restart').onclick = doRestart;
+document.getElementById('btn-menu').onclick = showMenu;
+document.getElementById('btn-howto').onclick = showHowTo;
+document.getElementById('btn-settings').onclick = showSettings;
+
+// Keyboard
+document.addEventListener('keydown', (e) => {
+  if (e.key === '1') { document.querySelector('.mode-btn[data-mode="fill"]').click(); }
+  else if (e.key === '2') { document.querySelector('.mode-btn[data-mode="erase"]').click(); }
+  else if (e.key.toLowerCase() === 'h') doHint();
+  else if (e.key.toLowerCase() === 'r') doRestart();
+  else if (e.key === 'Enter') { initAudio(); doCheck(); }
+  else if (e.key === 'Escape') {
+    document.querySelectorAll('.overlay').forEach(o => o.remove());
+  }
+});
+
+window.addEventListener('resize', () => { resizeCanvas(); draw(); });
+
+// === INIT ===
+window.addEventListener('load', () => {
+  loadLevel(0);
+  setTimeout(showHowTo, 100);
+});
+</script>
+</body>
+</html>
