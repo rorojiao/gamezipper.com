@@ -643,8 +643,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":638,"url":"https://gamezipper.com/ice-barn/","name":"Ice Barn"},
     {"@type":"ListItem","position":639,"url":"https://gamezipper.com/nuribou/","name":"Nuribou"},
     {"@type":"ListItem","position":640,"url":"https://gamezipper.com/dotchi-loop/","name":"Dotchi-Loop"},
-    {"@type":"ListItem","position":641,"url":"https://gamezipper.com/koburin/","name":"Koburin"}
+    {"@type":"ListItem","position":641,"url":"https://gamezipper.com/koburin/","name":"Koburin"},
+    {"@type":"ListItem","position":642,"url":"https://gamezipper.com/hakoiri/","name":"Hakoiri"}
   ],
-  "numberOfItems":641,
-  "description":"641 free browser games you can play instantly"
+  "numberOfItems":642,
+  "description":"642 free browser games you can play instantly"
 };
