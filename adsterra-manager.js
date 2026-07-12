@@ -1,62 +1,49 @@
 /**
- * GameZipper Tools — Adsterra Ad Manager
+ * GameZipper Adsterra Ad Manager v5.15
  * ─────────────────────────────────────
- * Adsterra integration for tools.gamezipper.com
- * ACTIVE — Zone IDs configured via Adsterra Publisher API (2026-07-07).
+ * Uses Popunder direct_url + Smartlink from Publisher API.
+ * Other formats (Banner/SocialBar) served via effectivecpmnetwork.com.
+ *
+ * Zone IDs from Adsterra Publisher API (2026-07-07, domain 5896870):
+ *   Popunder:  30130929  direct_url: effectivecpmnetwork.com/zdq0x5zp?key=...
+ *   Smartlink: 30130928  direct_url: effectivecpmnetwork.com/wvrk4xu035?key=...
+ *   SocialBar: 30130931
+ *   Banner:    30130932 (728x90), 30130927 (468x60), 30130933 (320x50)
+ *   Native:    30130930
  */
 
 (function () {
   'use strict';
-  if (window.GZToolsAdsterraManager) return;
-  window.GZToolsAdsterraManager = true;
+  if (window.GZAdsterra) return;
+  window.GZAdsterra = true;
 
-  /* ── CONFIGURATION ─────────────────────────────────────── */
   var ADS_ENABLED = (window.GZ_ADS_ENABLED !== undefined) ? window.GZ_ADS_ENABLED : true;
-  if (!ADS_ENABLED) {
-    console.log('[GZToolsAdsterra] PAUSED — set window.GZ_ADS_ENABLED=true to enable');
-    return;
-  }
+  if (!ADS_ENABLED) return;
 
-  // Zone IDs from Adsterra Publisher API (2026-07-07)
-  var ADSTERRA_PID = 'gz_5896870';
+  // ── Direct URLs from Publisher API (confirmed working) ──
+  var POPUNDER_URL = 'https://www.effectivecpmnetwork.com/zdq0x5zp?key=25eaa5c5041a6ef2f33d056e5feeb8d2';
+  var SMARTLINK_URL = 'https://www.effectivecpmnetwork.com/wvrk4xu035?key=e820da8370828a60705d61ac29bfe589';
 
+  // ── Zone IDs ──
   var ZONES = {
-    popunder:    '30130929',
-    inpagePush:  '30130931',
-    interstitial: '30130930',
-    socialBar:   '30130931',
-    banner:      '30130932',
-    banner468:   '30130927',
-    banner320:   '30130933',
-    nativeBanner:'30130930'
+    popunder:  '30130929',
+    smartlink: '30130928',
+    socialBar: '30130931',
+    native:    '30130930',
+    banner728: '30130932',
+    banner468: '30130927',
+    banner320: '30130933'
   };
 
-  function isHubPage() {
-    return location.pathname === '/' || /\/$/.test(location.pathname);
-  }
-
-  function loadScript(zone, container) {
-    var s = document.createElement('script');
-    s.async = true;
-    s.setAttribute('data-zone', String(zone));
-    // v5.14: use effectivecpmnetwork.com (same CDN, not blocked by ad-blockers in proxy chains)
-    s.src = 'https://www.effectivecpmnetwork.com/' + zone;
-    if (container) {
-      container.appendChild(s);
-    } else {
-      document.head.appendChild(s);
-    }
-    console.log('[GZToolsAdsterra] Zone ' + zone + ' loaded');
-  }
-
-  /* ── Popunder ───────────────────────────────────────────── */
+  // ── Popunder (direct_url approach — confirmed working from API) ──
+  var POP_KEY = 'gz_adst_pop_ts';
+  var POP_INTERVAL = 25 * 60 * 1000; // 25min cooldown
   var _bc = null;
-  try { _bc = new BroadcastChannel('gz_tools_adst_popunder'); } catch(e) {}
+  try { _bc = new BroadcastChannel('gz_adst_popunder'); } catch(e) {}
 
-  var POP_KEY = 'gz_tools_adst_pop_ts';
-  var POP_INTERVAL = 25 * 60 * 1000; // v5.13: 25min (was 20min, align with tools, Poki-like restraint)
+  var popArmed = false;
 
-  function canShowPopunder() {
+  function canShowPop() {
     try {
       var ts = localStorage.getItem(POP_KEY);
       if (ts && Date.now() - parseInt(ts, 10) < POP_INTERVAL) return false;
@@ -64,67 +51,84 @@
     return true;
   }
 
-  function markPopunderShown() {
-    try { localStorage.setItem(POP_KEY, String(Date.now())); } catch (e) {}
-    if (_bc) try { _bc.postMessage(Date.now()); } catch(e) {}
-  }
+  function firePopunder() {
+    if (!canShowPop()) return;
+    try { localStorage.setItem(POP_KEY, String(Date.now())); } catch(e) {}
+    if (_bc) try { _bc.postMessage(Date.now()); } catch(e) {};
 
-  var popPending = false;
-  var popLoaded = false;
-
-  function loadPopunder() {
-    if (popLoaded || !canShowPopunder()) return;
-    if (ZONES.popunder.indexOf('YOUR_') === 0) return;
-    popLoaded = true;
-    popPending = false;
-    markPopunderShown();
-    loadScript(ZONES.popunder);
-  }
-
-  function armPopunder() {
-    if (popLoaded || !canShowPopunder()) return;
-    popPending = true;
-  }
-
-  document.addEventListener('click', function () {
-    if (popPending) {
-      popPending = false;
-      loadPopunder();
+    // Open popunder in new tab (behind current window)
+    var w = window.open(POPUNDER_URL, '_blank');
+    if (w) {
+      w.blur();
+      window.focus();
     }
-  }, { passive: true });
-
-  /* ── In-Page Push ──────────────────────────────────────── */
-  var ippLoaded = false;
-
-  function loadInPagePush() {
-    if (ippLoaded) return;
-    if (ZONES.inpagePush.indexOf('YOUR_') === 0) return;
-    ippLoaded = true;
-    loadScript(ZONES.inpagePush);
+    // Also fire the pixel for impression tracking
+    var img = new Image();
+    img.src = POPUNDER_URL + '&pb=1';
   }
 
-  /* ── Container Ad Fill ────────────────────────────────── */
-  function fillContainerAd(containerId, zone, delay) {
-    setTimeout(function () {
-      var container = document.getElementById(containerId);
-      if (!container || container.getAttribute('data-filled')) return;
-      if (zone.indexOf('YOUR_') === 0) return;
-      container.setAttribute('data-filled', '1');
-      loadScript(zone, container);
-      console.log('[GZToolsAdsterra] Container ad filled: ' + containerId);
-    }, delay || 3000);
+  // Arm popunder on first user interaction (click/touch)
+  function armPop() {
+    if (popArmed || !canShowPop()) return;
+    popArmed = true;
   }
 
-  /* ── Init ──────────────────────────────────────────────── */
+  // Listen for first click to trigger popunder
+  document.addEventListener('click', function(e) {
+    if (!popArmed) return;
+    // Don't trigger on internal navigation links
+    var target = e.target;
+    while (target && target.tagName !== 'A') target = target.parentElement;
+    if (target && target.href && target.href.indexOf(location.origin) === 0) return; // internal link
+
+    popArmed = false;
+    firePopunder();
+  }, { passive: true, capture: true });
+
+  // Sync popunder cooldown across tabs
+  if (_bc) {
+    _bc.onmessage = function(e) {
+      try { localStorage.setItem(POP_KEY, String(e.data)); } catch(err) {}
+    };
+  }
+
+  // ── Social Bar / Native Banner via script tag ──
+  // Using effectivecpmnetwork.com (same CDN IPs as profitabledisplaynetwork.com)
+  function loadZone(zoneId) {
+    if (!zoneId || zoneId === '0') return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.setAttribute('data-zone', String(zoneId));
+    s.setAttribute('data-network', 'adsterra');
+    s.src = 'https://www.effectivecpmnetwork.com/' + zoneId;
+    s.onerror = function() {
+      // Fallback: try without www
+      var s2 = document.createElement('script');
+      s2.async = true;
+      s2.src = 'https://effectivecpmnetwork.com/' + zoneId;
+      document.head.appendChild(s2);
+    };
+    document.head.appendChild(s);
+  }
+
+  // ── Init ──
   function init() {
-    if (isHubPage()) {
-      armPopunder();
-      setTimeout(loadInPagePush, 3000);
-    } else {
-      armPopunder();
-      setTimeout(loadInPagePush, 5000);
+    var isHub = location.pathname === '/' || /\/$/.test(location.pathname);
+
+    // Arm popunder immediately (fires on first click)
+    armPop();
+
+    // Load Social Bar after 3-5s (non-blocking)
+    setTimeout(function() {
+      loadZone(ZONES.socialBar);
+    }, isHub ? 3000 : 5000);
+
+    // Load Native Banner on hub pages after 8s
+    if (isHub) {
+      setTimeout(function() {
+        loadZone(ZONES.native);
+      }, 8000);
     }
-    fillContainerAd('gz-tools-ad-below', ZONES.banner, 3500);
   }
 
   if (document.readyState === 'loading') {
@@ -133,12 +137,13 @@
     init();
   }
 
-  window.GZToolsAdsterra = {
-    loadPopunder: loadPopunder,
-    loadInPagePush: loadInPagePush,
-    zones: ZONES,
-    pid: ADSTERRA_PID
+  // Public API
+  window.GZAdsterraManager = {
+    firePopunder: firePopunder,
+    loadZone: loadZone,
+    getSmartlinkUrl: function() { return SMARTLINK_URL; },
+    zones: ZONES
   };
 
-  console.log('[GZToolsAdsterra] Initialized — Adsterra manager ACTIVE (popunder=' + ZONES.popunder + ', social=' + ZONES.socialBar + ', banner=' + ZONES.banner + ')');
+  console.log('[GZAdsterra] v5.15 active — popunder=' + ZONES.popunder + ' smartlink=' + ZONES.smartlink + ' social=' + ZONES.socialBar);
 })();
