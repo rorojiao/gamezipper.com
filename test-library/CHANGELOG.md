@@ -1,3 +1,26 @@
+## [v1.176.0] - 2026-07-12
+### Added
+- 7 new test cases from 2026-07-12 industry research (R293, 4h cadence cycle 55):
+  - [W-333] **[P1]** Chrome 154 "Always Use Secure Connections" (Oct 2026) — HTTP Warning Interstitial Blocks All HTTP Resources By Default
+  - [W-334] **[P1]** iOS Safari TouchEvent.targetTouches / TouchList Object Reuse & Mutation — Cached Touch Lists Silently Invalidated Across Events
+  - [W-335] **[P2]** Vite 8 Beta + Rolldown Unified Bundler — Dev/Prod Behavior Divergence on Build-Tool Migration
+  - [S-401] **[P2]** Safari 26 Tracking Parameter Filtering (gclid/fbclid) Roadmap — Analytics Attribution Breaks When URL Params Auto-Stripped
+  - [B-199] **[P2]** Edge 2026 Copilot Auto-Open New Tab + AI Sidebar Overlay — Game Viewport Coverage & Effective Area Reduction Without Resize Event
+  - [P-156] **[P3]** Same-Document View Transitions API — Polyfill Divergence & Non-Visual Fallback Promise Semantics
+  - [C-097] **[P3]** opentype.js 2.0-Preview & Browser Custom Font (WOFF/OTF/TTF) Glyph Rendering Divergence
+### Sources
+- "Chrome 154 Always Use Secure Connections HTTP warning" — new.qq.com/rain/a/20251103A05JOF00 (Nov 3 2025)
+- "Chrome 154 默认警告HTTP连接" — so.html5.qq.com/page/real/search_news?docid=70000021_163690194b743552 (Oct 29 2025)
+- "iOS Safari targetTouches object reuse bug" — blog.csdn.net/weixin_34167043/article/details/89292128
+- "Vite 8 Beta Rolldown unified bundler" — blog.csdn.net/qq_31470439/article/details/155553842 (Dec 4 2025)
+- "Vite 8 双打包器架构技术债" — blog.csdn.net/weixin_26854555/article/details/159819885 (Apr 4 2026)
+- "Safari 26 gclid/fbclid tracking param filtering roadmap" — cloud.tencent.com/developer/article/2637644
+- "Safari Advanced Tracking & Fingerprinting Protection" — cloud.tencent.com/developer/tag/15819
+- "Edge 2026 Copilot UI auto-open sidebar" — sohu.com/a/1008833159_121956424 (Apr 13 2026)
+- "ViewTransitionsMock polyfill Promise semantics" — cloud.tencent.com/developer/article/2677947 (Jul 2026, JS weekly W19)
+- "View Transitions same-document polyfill" — cloud.tencent.com/developer/article/2677885 (Jul 2026, JS weekly W18)
+- "opentype.js 1.3.5 / 2.0 preview font glyph rendering" — cloud.tencent.com/developer/article/2677947 (Jul 2026)
+
 ## [v1.175.0] - 2026-07-12
 ### Added
 - 7 new test cases from 2026-07-12 industry research (R292, 4h cadence cycle 54):
