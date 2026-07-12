@@ -1,3 +1,31 @@
+## [v1.180.0] - 2026-07-13
+### Added
+- 8 new test cases from 2026-07-13 industry research (R297, 4h cadence cycle 59):
+  - [W-342] **[P1]** Chrome 154 (Oct 2026) Default "Always Use Secure Connections" — Full-Screen Warning for ALL HTTP Resource References
+  - [W-343] **[P2]** Safari 26 Tracking-Parameter Filtering Strips gclid/fbclid/UTM in Regular Mode — Breaks Attribution Analytics
+  - [W-344] **[P3]** Firefox 152 Experimental JPEG XL Support — Fragmented Next-Gen Image-Format Compat Risk for OG/Content Images
+  - [S-409] **[P1]** Firefox 150 — AI Fuzzing (Mythos) Found 271 Vulns (180 High-Sev) Triggerable by Normal Browsing
+  - [S-410] **[P2]** Safari STP 247 Built-In MCP Server — New Localhost Attack Surface + New Automated-QA Capability
+  - [P-161] **[P2]** WebGPU vs WebGL — 22% Frame-Stability Advantage (60fps vs 45fps); 67% Player Preference; Render-API Choice as QA Gate
+  - [B-203] **[P3]** Firefox 152 Nova Redesign — UI Overhaul Alters Chrome Geometry, Shifting Game Viewport Dimensions
+  - [C-117] **[P3]** 2026 Paid/Organic Install Ratio 3.33 (+61%) — Organic SEO Traffic Now 3.3x More Valuable; SEO Bugs Cost 3.3x More
+### Sources
+- mcp__web_search_prime__batch_search queries (2026-07-13, cycle 59): ALL 5 returned "SearXNG 404" (12th consecutive cycle outage). Fell back to mcp__minimax_search__web_search.
+- mcp__minimax_search__web_search queries (2026-07-13, cycle 59):
+  - "HTML5 game testing 2026 new techniques browser bug"
+  - "new browser security vulnerability 2026 XSS clickjacking"
+  - "casual game UX complaint 2026 mobile user feedback"
+  - "Chrome 154 Edge Safari 18 2026 web API change deprecated"
+  - "HTML5 canvas WebGL WebGPU 2026 performance issue game"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_163690194b743552 (Chrome 154 Always Use Secure Connections default HTTP warning - W-342)
+  - https://cloud.tencent.com/developer/article/2637644 (Safari 26 tracking-parameter filtering gclid/fbclid - W-343)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4016a32165940252 (Firefox 152 JPEG XL + Nova redesign - W-344, B-203)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_53769fd53ba77252 (Firefox 150 AI Mythos 271 vulns - S-409)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8316a45ac2425952 (Safari STP 247 MCP server - S-410)
+  - https://www.lcxw.cn/39@wiki/ZoCGH (WebGPU vs WebGL 22% stability 60fps vs 45fps - P-161)
+  - https://www.sohu.com/a/1020755279_122346174 (2026 paid/organic install ratio 3.33 - C-117)
+
 ## [v1.179.0] - 2026-07-13
 ### Added
 - 7 new test cases from 2026-07-13 industry research (R296, 4h cadence cycle 58):
