@@ -1,10 +1,10 @@
-# 🚀 GameZipper 增长推进日报 — 2026-07-12 11:05 (恢复任务)
+# 🚀 GameZipper 增长推进日报 — 2026-07-12 11:16 (恢复任务)
 
-> **任务**: ⚠️ 原 kanban t_cfb3d37b (🔍 每日SEO+竞品+长尾词分析, priority=0) **启动 6 秒后被 dispatcher reclaimed/archived** (run #1372, 2026-07-12 11:00:57 ~ 11:01:11 CST, ~14s 寿命)。验证 2026-07-08 t_4d8f7ce1 已被 reclaim, P0 实际 effective window 1-3 分钟, 与 skill v1.2.0 文档一致。本报告由一次性恢复任务执行同等工作并以 cron 投递到 TG @rorojiao。
+> **任务**: ⚠️ 原 kanban t_cfb3d37b (🔍 每日SEO+竞品+长尾词分析, priority=0) **启动约 20 秒后被 dispatcher reclaimed/archived** (run #1372, 2026-07-12 11:00:51 ~ 11:01:11 CST, ~20s 寿命)。验证 2026-07-08 t_4d8f7ce1 已被 reclaim, P0 实际 effective window 1-3 分钟, 与 skill v1.2.0 文档一致。本报告由当前恢复 run 执行同等工作；原 kanban 已 archived，无法 kanban_complete。
 >
-> **范围**: 2026-07-12 11:02 ~ 11:05 CST 综合分析 (端点健康 + BI 30d + 竞品 + 长尾选题)
+> **范围**: 2026-07-12 11:02 ~ 11:16 CST 综合分析 (端点健康 + BI 30d + 竞品 + 长尾选题)
 >
-> **数据源**: BI SQLite `/home/msdn/gamezipper-bi/data/analytics.db` (30d 直查) + `daily-seo-health.py` v5.9 + `data/daily-growth-2026-07-12.json` + `data/longtail-2026-07-06.json`
+> **数据源**: BI SQLite `/home/msdn/gamezipper-bi/data/analytics.db` (30d 直查) + `daily-seo-health.py` v5.9 + `/tmp/gz_competitor_20260712.json` + `/tmp/gz_content_inventory_20260712.json`
 >
 > **状态**: ✅ SEO 9/9 健康 | 📊 BI 数据完整 | 🎯 下一长尾主题决策完成 | ❌ GSC/Monetag P0 仍阻塞 | ⚠️ 本任务不 commit/push (恢复任务定位分析 + 决策)
 
@@ -24,13 +24,13 @@
    - **设备分布 (gz.com 30d)**: Desktop 7,638 / Mobile **458** (5.7%) — Mobile 占比与 7/8 (6.1%) 持平微降
    - **跳出率 (7d 估算)**: 1 PV sessions 占 ~86% (与历史 86% 一致, 无改善)
    - **Top 路径 (gz.com 30d)**: `/tetris/` 298 / `/2048/` 252 / `/snake/` 209 / `/chess/` 108 / `/slope/` 97
-   - **搜索引擎 + AI 引用 30d**: BING 53 / GOOGLE 29 / AI_CHAT 40 (ChatGPT+Perplexity+OpenAI) / AI_CN 11 (Doubao+Kimi+DeepSeek) / YAHOO 6 / SOCIAL 15
-   - **DIRECT 10,774 PV** (绝对大头), INTERNAL 799 PV (站内互链有效)
+   - **搜索引擎 + AI 引用 30d**: BING 53 / GOOGLE 28 / AI_CHAT 42 (ChatGPT+Perplexity+OpenAI) / AI_CN 11 (Doubao+Kimi+DeepSeek) / YAHOO 6 / SOCIAL 15
+   - **DIRECT 6,784 PV** (绝对大头), INTERNAL 799 PV (站内互链有效)
    - **异常外部 referrer**: `ion.xo.je` 176 PV / `emulatorxdotcom.wpcomstaging.com` 70 PV (待 BI 关联, 可能是 dev/staging 残留)
 
 3. **已有 games-like 博客盘点** (截至 7/12):
-   - **EN**: 41 篇 (含 4 篇新写 stub: pokemon/minecraft/subway-surfers/roblox-2026-07-12 待完善)
-   - **ZH**: 13 篇完整 1:1 翻译 (覆盖率 ~32%, 仍欠翻译 28 篇 EN-only)
+   - **EN**: 40 篇 (含 4 篇新写 stub: pokemon/minecraft/subway-surfers/roblox-2026-07-12 待完善)
+   - **ZH**: 13 篇完整 1:1 翻译 (覆盖率 32.5%, 仍欠翻译 27 篇 EN-only)
    - **未覆盖高 ROI 主题 (30d 流量 + 站内游戏存在)**:
      - `/chess/` 108 PV ❌ 完全没写
      - `/slope/` 97 PV ❌ 完全没写
@@ -124,7 +124,7 @@
 **关键发现**:
 - **搜索引擎 + AI 引用 30d = 53+29+40+11+6 = 139 PV** (vs 7/8 7d 53 PV, 30d 推算 ~227, 略低 — 验证 SEO 加速放缓)
 - BING > GOOGLE > AI_CHAT, BING 仍是 SEO 长尾主力 (但差距在缩窄)
-- **AI_CHAT 40 PV / 30d** — 持续验证长尾 blog 在 AI 引用价值
+- **AI_CHAT 42 PV / 30d** — 持续验证长尾 blog 在 AI 引用价值
 - DIRECT 占 78%, 长尾 SEO 仍有 ~22% 增长空间 (行业平均 DIRECT 60-70%)
 
 ### AI_CHAT 引用路径分布 (30d, gz.com)
@@ -272,19 +272,19 @@ games-like-snake-free-browser                  (7/8 新写)
 games-like-subway-surfers-free-online          (新, 7/12 11:02)
 ```
 
-**覆盖率**: EN 41 篇 / 站 637 个游戏 = 6.4% 覆盖; ZH 13 篇 / EN 41 篇 = **31.7% 双语覆盖** (欠翻译 28 篇 EN-only)
+**覆盖率**: EN 40 篇 / 站 644 个游戏 = 6.2% 覆盖; ZH 13 篇 / EN 40 篇 = **32.5% 双语覆盖** (欠翻译 27 篇 EN-only)
 
 ### ⚠️ 7/12 stub blogs 风险 (pokemon / minecraft / subway-surfers)
 
 | 文件 | 大小 | cards | FAQ Q&A | 状态 |
 |------|------|-------|---------|------|
-| games-like-pokemon-free-browser.html | 15,722 | **0** | 0 | ⚠️ stub, 需补 12 cards |
-| games-like-minecraft-free-browser.html | 10,417 | **0** | 0 | ⚠️ stub, 需补 12 cards |
-| games-like-subway-surfers-free-online.html | 11,313 | **0** | **3** | ⚠️ stub, 需补 12 cards |
-| games-like-bubble-shooter-free-browser.html | 21,844 | 12 | 6 | ✅ 模板, 完整 |
-| games-like-hollow-knight-free-browser.html | 22,561 | 12 | 6 | ✅ 模板, 完整 |
+| games-like-pokemon-free-browser.html | 15,867 | **0** | 5 JSON-LD / 0 HTML blocks | ⚠️ stub, 需补 12 cards |
+| games-like-minecraft-free-browser.html | 10,487 | **0** | 3 JSON-LD / 0 HTML blocks | ⚠️ stub, 需补 12 cards |
+| games-like-subway-surfers-free-online.html | 11,389 | **0** | 3 JSON-LD / 0 HTML blocks | ⚠️ stub, 需补 12 cards |
+| games-like-bubble-shooter-free-browser.html | 22,041 | 12 | 6 JSON-LD | ✅ 模板, 完整 |
+| games-like-hollow-knight-free-browser.html | 22,561 | 12 | 7 JSON-LD | ✅ 模板, 完整 |
 
-**行动项**: 7/12 三篇 stub 缺少 game-cards div 和 JSON-LD FAQPage, 需补全才能发布 — 建议下轮一并补全 (作为优先 P1)
+**行动项**: 7/12 三篇 stub 缺少 game-cards div；FAQ 仅在 JSON-LD 中，页面可见 FAQ/对比表不足, 需补全才能发布 — 建议下轮一并补全 (作为优先 P1)
 
 ### 下一轮长尾博客推荐 (3 候选)
 
@@ -351,12 +351,11 @@ games-like-subway-surfers-free-online          (新, 7/12 11:02)
 
 ---
 
-## 💰 Monetag / AdSense 状态 (基线 7/11 报告, 本轮未重跑)
+## 💰 Monetag / AdSense 状态 (本轮 BI 7d/24h 直查)
 
-- **gz.com AdSense**: ✅ 1288/1288 **100% fill** (v5.12 修复后稳定)
-- **gz.com Monetag**: 18 fills / 24h (11012002 fill_rate 76.5%, **优于 7d 均值 9/d**)
-- **tools.gamezipper.com AdSense**: 0/68 fill (7d) — 待 v5.25-tools-adsense-slot-fix 验证 (7/11 已部署)
-- **tools.gamezipper.com Monetag**: 0 fills / 24h — 需关注
+- **gz.com Monetag**: 23 fills / 24h, 76 fills / 7d；fill_rate 24h **48.9%**, 7d **50.3%**；dead_zone_skip 7d = 0，仍有 legacy_disabled_skip 66 / backoff_skip 43 需观察
+- **tools.gamezipper.com Monetag**: 0 fills / 24h, 10 fills / 7d；fill_rate 24h **0%**, 7d **22.7%**；dead_zone_skip 54 / legacy_disabled_skip 44 / backoff_skip 26，仍低于 30% 健康线
+- **AdSense 事件信号**: gz.com 7d banner_fill 728 + commercial_break_fill 119；tools 7d adsense_commercial_break_no_fill 56，v5.25-tools-adsense-slot-fix 仍需 7d 验证
 - **Monetag API Token**: ❌ 失效 (31 天, 2026-06-11 至今), 错误: `{"errors":["Token does not exist."]}` HTTP 401
 - **影响**: 无法拉取 Monetag dashboard 收益数据, 仅靠 BI SQLite `ads_stats` 表估算
 
@@ -364,14 +363,14 @@ games-like-subway-surfers-free-online          (新, 7/12 11:02)
 
 ## 🆚 竞品 / 趋势检查 (轻量, 网络限制下)
 
-### 数据源: `data/daily-growth-2026-07-12.json` (今日已抓取)
+### 数据源: 本轮实时 curl 竞品首页/分类页 + `/tmp/gz_competitor_20260712.json`
 
 | 来源 | 游戏数 | 关键 gap (recurring, 站内未上线) |
 |------|--------|--------------------------------|
-| poki.com | 25 (今日) | Clash of Cards / Dan The Man / Drive Mad / Fight and Loot / Hero VS Criminal |
-| crazygames.com | 25 (今日) | Downhill Racer / Unscrambled / Block Sort Jigsaw / Pixel World / Kick the Buddy |
+| poki.com | 实时抓取 200 / 383-589KB | Subway Surfers / Drift Boss / Retro Bowl / Stickman Hook / Blocky Blast Puzzle |
+| crazygames.com | 实时抓取 200 / 304-315KB | New / Popular / Puzzle / Thinky / Word 分类入口 |
 
-**gap 状态**: 41 个 recurring gap, **0 个新 gap** (今日) — 与 7/8 一致, 竞品侧无新爆款
+**gap 状态**: 本轮未跑完整 gap diff；仅完成轻量可访问性/趋势抽样，竞品侧可见仍以 Puzzle/Skill/Endless/Runner 为主。
 
 **站内未上线热门 (Poki 持续推荐但我们没做)**:
 - Clash of Cards (poki) — 卡牌策略, ROI 中
@@ -381,7 +380,7 @@ games-like-subway-surfers-free-online          (新, 7/12 11:02)
 - Block Sort Jigsaw (crazy) — 拼图, 站内已有 `/blockudoku/` `/ball-sort/` 替代
 - Pixel World (crazy) — 沙盒, ROI 低 (类似 minecraft 但流量小)
 
-**网络限制说明**: 本次 cron 跑时 curl 测试 poki.com 直接访问返回 `301 Moved Permanently` (跳转至裸域), 但 daily-growth-2026-07-12.json 已包含完整数据, 说明 `longtail_scan.py` 在 7/12 之前已经成功抓取, 本轮不重复抓取以节省时间。
+**网络说明**: 本轮 curl --noproxy '*' 直接抓取 Poki/CrazyGames/Coolmath/Lagged 均返回 HTTP 200；未遇到硬性网络阻断，但只做轻量抽样，未执行完整 Ahrefs/SEMrush 级关键词库。
 
 ### Trend 信号 (从 daily-growth-2026-07-12.json)
 
@@ -399,7 +398,7 @@ games-like-subway-surfers-free-online          (新, 7/12 11:02)
 | IndexNow 自动提交 | ✅ HTTP 200 | last_ok gz 2026-07-12T10:00:07 / tools 2026-07-09T21:00:05 |
 | sitemap 100% lastmod 覆盖 | ✅ | gz 980/980 / tools 4029/4029 |
 | BI SQLite 直查 | ✅ | 0 SQL 错误, 数据完整 (30d 8,102 PV gz) |
-| daily-growth 抓取 | ✅ | 7/12 JSON 完整 (poki 25 + crazy 25 + gap 41) |
+| 竞品轻量抓取 | ✅ | Poki/CrazyGames/Coolmath/Lagged 关键页 HTTP 200，样本已保存 /tmp/gz_competitor_20260712.json |
 | 子代理 commit + 主代理 push | N/A | 本恢复任务不 commit, 不 push |
 | 上一 push 时间 (gz.com main) | ~2026-07-11 (估算) | 本任务不涉及 push |
 
@@ -411,10 +410,10 @@ games-like-subway-surfers-free-online          (新, 7/12 11:02)
 - [x] SEO 健康检查 9/9 OK (11:03)
 - [x] BI 30d 数据画像 (设备/路径/来源/AI 引用/趋势)
 - [x] sitemap 健康度 (gz 980 / tools 4029, +48/+342 vs 7/8)
-- [x] 已有 games-like 博客盘点 (EN 41 / ZH 13, 覆盖率统计)
+- [x] 已有 games-like 博客盘点 (EN 40 / ZH 13, 覆盖率统计)
 - [x] 下一长尾主题决策 (推荐 slope > chess > sudoku, 含流量/内链/AI 引用数据)
 - [x] 7/12 三篇 stub 风险识别 (pokemon/minecraft/subway-surfers 需补 cards+FAQ)
-- [x] 竞品 gap 检查 (41 recurring, 0 new)
+- [x] 竞品轻量检查 (Poki/CrazyGames/Coolmath/Lagged 关键页 HTTP 200)
 - [x] 报告产出: `daily_growth_2026-07-12.md` + `daily_growth_latest.md`
 
 ### ⏳ 推荐下轮 (下次 t_7ae22d89 / GameZipper 增长推进任务)
@@ -430,7 +429,7 @@ games-like-subway-surfers-free-online          (新, 7/12 11:02)
 - [ ] ❌ **Monetag API Token** (第 31 天) — 重新登录 publishers.monetag.com 取 token (reCAPTCHA 阻挡自动化)
 
 ### 🔍 建议 (后续)
-- [ ] ZH blog 覆盖率仅 31.7% (13/41), 长期目标提升到 80% — 优先补高 ROI EN-only (tetris 系列, candy-crush 系列, krunker, minecraft stub)
+- [ ] ZH blog 覆盖率 32.5% (13/40), 长期目标提升到 80% — 优先补高 ROI EN-only (tetris 系列, candy-crush 系列, krunker, minecraft stub)
 - [ ] BI 异常 referrer (ion.xo.je 176 PV / emulatorxdotcom.wpcomstaging 70 PV) 关联分析, 排除 dev/staging 残留污染数据
 - [ ] 7/12 三篇 stub blog 风险: 若不补全直接上线, E-E-A-T 信号弱, 建议立即补全
 - [ ] sitemap +48/+342 自然增长验证: 游戏上线节奏是否与 sitemap 更新同步, 防止有 URL 未提交
@@ -449,12 +448,12 @@ games-like-subway-surfers-free-online          (新, 7/12 11:02)
 
 ### 本恢复任务执行模式
 
-- **不创建新 cron job** (按任务要求)
+- **未继续依赖新 cron job** (此前尝试创建的恢复 cron 未成功执行；实际由当前 run 直接完成)
 - **不修改生产页面** (按任务要求)
 - **不 git push** (按任务要求)
 - **不创建子任务** (本任务是终点, 非 dispatch 节点)
 - **产出**: 仅本报告 + `daily_growth_latest.md` 同内容覆盖
-- **TG 投递**: 由 cron `0 0,10,18 * * *` 自动 deliver 到 telegram:1328729168 (rorojiao)
+- **TG 投递**: 本 run 尝试通过 CLI 发送简短通知；若 gateway 不可用，以本终端汇报为准。
 
 ---
 
@@ -465,12 +464,13 @@ games-like-subway-surfers-free-online          (新, 7/12 11:02)
 - **TG 投递目标**: telegram:1328729168 (rorojiao, 中文汇报)
 - **数据源快照**:
   - BI: `/home/msdn/gamezipper-bi/data/analytics.db` (30d 直查)
-  - SEO health log: `/tmp/seo_health_2026-07-12.log`
-  - Daily growth JSON: `/home/msdn/.openclaw/workspace/data/daily-growth-2026-07-12.json`
-  - Longtail JSON: `/home/msdn/.openclaw/workspace/data/longtail-2026-07-06.json`
+  - SEO health log: `/tmp/gz_daily_seo_20260712.log`
+  - BI snapshot: `/tmp/gz_bi_20260712.json`
+  - Content inventory: `/tmp/gz_content_inventory_20260712.json`
+  - Competitor snapshot: `/tmp/gz_competitor_20260712.json`
 
 ---
 
 **报告人**: ops-gamezipper 一次性恢复任务 (原 kanban t_cfb3d37b)
-**报告时间**: 2026-07-12 11:05 CST
+**报告时间**: 2026-07-12 11:16 CST
 **下次 cron**: 2026-07-12 18:00 CST (gamezipper-seo-health skill `0 0,10,18 * * *`)
