@@ -1,3 +1,35 @@
+## [v1.178.0] - 2026-07-12
+### Added
+- 8 new test cases from 2026-07-12 industry research (R295, 4h cadence cycle 57):
+  - [S-405] **[P1]** CVE-2026-28962 — Safari 26.5 WebKit Content Security Policy (CSP) Bypass Leaking Sensitive User Data
+  - [S-406] **[P1]** CVE-2026-0628 — Chrome WebView Extension Security Isolation Bypass via Malicious Browser Extension
+  - [S-407] **[P2]** ClickFix macOS 26.4 Evolution — AppleScript Editor Poisoning Variant Bypasses Terminal-Based Defenses
+  - [W-338] **[P2]** Chrome 149 V8 12.4 Engine — AI-Predicted Garbage Collection Timing Shifts May Introduce Game Loop Jank
+  - [W-339] **[P2]** Safari 26.4 — 191 Bug Fixes Across SVG/Web Forms/MathML/CSS Scaling + Compact Tab Layout Restoration
+  - [B-201] **[P2]** 2026 Gaming Phone Hardware — 144Hz + 3000Hz Touch Sampling Exposes Game Loop Timing & Input Latency Issues
+  - [P-158] **[P2]** WebGPU + WebAssembly Hybrid Rendering Mainstream Adoption — New Memory Management & Sandbox Test Dimension
+  - [C-115] **[P2]** Unity 2026 Game Report — Daily Tasks & Leaderboards as Industry Standard Retention (78% Adoption)
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-12, cycle 57):
+  - "HTML5 game testing 2026 new techniques browser canvas WebGL"
+  - "browser security vulnerability 2026 XSS clickjacking iframe"
+  - "Chrome Safari Edge 2026 deprecation web API breaking change"
+  - "casual mobile game UX 2026 dark mode haptic accessibility"
+  - "browser game performance 2026 memory leak requestAnimationFrame"
+  - "CVE-2026 browser vulnerability Chrome Safari July 2026"
+  - "WebGPU WebAssembly WASM 2026 security exploit sandbox escape"
+  - "iOS Safari 26 WebKit 2026 tracking prevention cookie ITP"
+- Note: SearXNG (mcp__web_search_prime__search) returned HTTP 404/unreachable for all 5 initial queries — persistent backend failure. Fell back to mcp__minimax_search__web_search (consistent fallback provider).
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0236a054d4370952 (Safari 26.5 CVE-2026-28962 CSP bypass — S-405)
+  - https://blog.csdn.net/weixin_42376192/article/details/156710813 (Chrome CVE-2026-0628 WebView extension isolation bypass — S-406)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_32369d6e7ae21652 (ClickFix macOS 26.4 AppleScript variant — S-407)
+  - https://www.onlinedown.net/soft/1114433.htm (Chrome 149 V8 12.4 AI-predicted GC — W-338)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Safari 26.4 191 bugfixes SVG/forms/CSS — W-339)
+  - https://www.sohu.com/a/1022047024_121705619 (2026 gaming phone 144Hz 3000Hz touch — B-201)
+  - https://tool.lu/article/7yi/detail (WebGPU+WASM hybrid rendering — P-158)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_88169af904131852 (Unity 2026 report daily tasks 78% — C-115)
+
 ## [v1.177.0] - 2026-07-12
 ### Added
 - 7 new test cases from 2026-07-12 industry research (R294, 4h cadence cycle 56):
