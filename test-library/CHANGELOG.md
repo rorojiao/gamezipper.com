@@ -5859,3 +5859,25 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
 - "HTML5 canvas WebGL performance bug 2026 WebKit Chrome" (minimax search)
 - Note: SearXNG (web_search_prime) returned HTTP 404 for all 5 batch queries (5th+ consecutive cycle of SearXNG failure). Fell back to minimax_search.
 - Key URLs: sohu.com/a/1008833159_121956424 (Edge Copilot UI), cloud.tencent.com/developer/article/2637644 (Safari 26 fingerprinting shipped), sohu.com/a/1028944399_122066678 (HTML-in-Canvas API), ppzy.com/app/49612.html (Chrome 2026 WebGPU 2.0/V8/one-time perms/battery saver), so.html5.qq.com/page/real/search_news?docid=70000021_53769fd53ba77252 (Firefox 150 Mythos 180 high-sev confirmed)
+
+
+## [v1.185.0] - 2026-07-14
+### Added
+- 7 new test cases from industry research (R302, 4h cycle 64)
+- W-355: Chrome 149 CSS Gap Decorations (column-rule/row-rule) — Native Gap Styling Replaces Border/Pseudo-Element Hacks
+- W-356: Chrome 149 bfcache WebSocket Safe Caching — Back-Button Now Preserves WebSocket Game Pages (Auto-Close Before Cache)
+- W-357: iOS 26.4 Beta WKWebView Blocks IP-Type WebSocket — Games with Raw-IP Endpoints Fail on iOS
+- B-209: Chrome 151 V8 12.4 + WebAssembly 2.0 — Engine Overhaul Shifts Timing Baseline for Physics/Audio Games
+- B-210: Chrome 149 On-Device AI Model Management — Users Can Delete Browser AI Models, Breaking AI-Dependent Game Features
+- P-166: Safari 26.5 Web Audio API Idle Auto-Play Glitch — Burst Sound Triggers Without User Interaction
+- C-122: iOS 26 Liquid Glass Transparency — System Transparency Reduces Game UI Contrast on iOS Devices
+### Sources
+- "HTML5 game testing 2026 new techniques browser automation" (minimax search)
+- "new browser security vulnerability 2026 XSS clickjacking Safari Chrome" (minimax search)
+- "Chrome 138 139 July 2026 new features breaking changes WebGPU" (minimax search)
+- "iOS Safari 26 WebKit bug 2026 July canvas audio issue" (minimax search)
+- "casual game UX accessibility 2026 WCAG 2.2 mobile complaint" (minimax search)
+- "Chrome 149 150 151 2026 July release notes bfcache CSS gap decoration" (minimax search)
+- "iOS Safari 26.5 Web Audio API glitch background playback burst bug 2026" (minimax search)
+- Note: SearXNG (web_search_prime) returned HTTP 404 for all 5 batch queries (6th+ consecutive cycle of SearXNG failure). Fell back to minimax_search.
+- Key URLs: donews.com/news/detail/8/6581068.html (Chrome 149 CSS gap + bfcache WebSocket), onlinedown.net/soft/1113489.htm (Chrome 151 V8 12.4 WASM 2.0), developer.apple.com/forums/tags/webkit (Safari 26.5 Web Audio glitch + iOS 26.4 WKWebView IP WebSocket), donews.com/news/detail/8/6585054.html (Chrome 149 AI model management), tenorshare.tw/ios-update-problems.html (iOS 26 Liquid Glass transparency)
