@@ -519,7 +519,7 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":514,"url":"https://gamezipper.com/ratchet-escapement/","name":"Ratchet Escapement"},
     {"@type":"ListItem","position":515,"url":"https://gamezipper.com/hourglass-swap/","name":"Hourglass Swap"},
     {"@type":"ListItem","position":516,"url":"https://gamezipper.com/electromagnet-field/","name":"Electromagnet Field Puzzle"},
-    {"@type":"ListItem","position":517,"url":"https://gamezipper.com/pneumatic-logic/","name":"Pneumatic Logic Puzzle"},
+    {"@type":"ListItem","position":517,"url":"https://gamezipper.com/waterwheel-forge/","name":"Waterwheel Forge"},
     {"@type":"ListItem","position":518,"url":"https://gamezipper.com/camshaft-timing/","name":"Camshaft Timing"},
     {"@type":"ListItem","position":519,"url":"https://gamezipper.com/crankshaft-linkage/","name":"Crankshaft Linkage"},
     {"@type":"ListItem","position":520,"url":"https://gamezipper.com/gyroscope-precession/","name":"Gyroscope Precession"},
@@ -647,8 +647,10 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":642,"url":"https://gamezipper.com/koburin/","name":"Koburin"},
     {"@type":"ListItem","position":643,"url":"https://gamezipper.com/hakoiri/","name":"Hakoiri"},
     {"@type":"ListItem","position":644,"url":"https://gamezipper.com/ichimaga/","name":"Ichimaga"},
-    {"@type":"ListItem","position":645,"url":"https://gamezipper.com/amibo/","name":"Amibo"}
+    {"@type":"ListItem","position":645,"url":"https://gamezipper.com/amibo/","name":"Amibo"},
+    {"@type":"ListItem","position":646,"url":"https://gamezipper.com/hanare/","name":"Hanare"},
+    {"@type":"ListItem","position":647,"url":"https://gamezipper.com/chained/","name":"Chained"}
   ],
-  "numberOfItems":645,
-  "description":"645 free browser games you can play instantly"
+  "numberOfItems":647,
+  "description":"647 free browser games you can play instantly"
 };
