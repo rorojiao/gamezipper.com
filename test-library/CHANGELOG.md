@@ -1,3 +1,29 @@
+## [v1.184.0] - 2026-07-13
+### Added
+- 7 new test cases from 2026-07-13 industry research (R301, 4h cadence cycle 63):
+  - [S-415] **[P1]** Safari 26.5 CVE-2026-28962 — CSP Bypass Fixed; Unpatched Safari Lets Attackers Circumvent CSP and Exfiltrate Data
+  - [S-416] **[P2]** Browser Clickjacking Protection Now Uses Threshold-Based Transparent-Iframe Detection — Opacity Tricks Get Suppressed
+  - [W-352] **[P1]** Apple Emergency iOS 15-26 Update for Web Attacks — Legacy iOS Tail Stays Vulnerable; GameZipper iOS Traffic at Risk
+  - [W-353] **[P2]** Safari Technology Preview 247 Ships Built-In MCP Server — Native Agent Debugging Channel (QA Enable + Local-Attack Surface)
+  - [W-354] **[P2]** Chrome 146 Native Remote-Debugging via chrome://inspect — One-Toggle Agent Access to Active Chrome Session
+  - [B-208] **[P2]** Safari 26 Tracking-Parameter Filtering (gclid/fbclid) — Ad Attribution and UTM Campaign Data Silently Stripped
+  - [C-121] **[P3]** Interop 2025 Safari Compatibility Gains — Legacy Polyfills and -webkit- Prefixes Now Obsolete/Harmful
+### Sources
+- mcp__web_search_prime__batch_search queries (2026-07-13, cycle 63): ALL 5 returned "SearXNG 404" (15th consecutive cycle outage). Fell back to mcp__minimax_search__web_search.
+- mcp__minimax_search__web_search queries (2026-07-13, cycle 63):
+  - "HTML5 game testing 2026 new techniques browser WebGL canvas memory leak"
+  - "new browser security vulnerability 2026 XSS clickjacking Safari Chrome"
+  - "casual game UX complaint 2026 mobile haptic dark mode accessibility"
+  - "Chrome Edge Safari update 2026 web API deprecation breaking change"
+- Key URLs:
+  - https://www.sohu.com/a/1022622771_122004016 (May 14 2026, Safari 26.5 release CVE-2026-28962 CSP bypass fix + 20 vulns - S-415)
+  - https://portswigger.net/web-security/clickjacking (Jun 20 2026, clickjacking threshold-based transparent-iframe detection - S-416)
+  - https://www.donews.com/news/detail/8/6511560.html (Apr 15 2026, Apple emergency iOS 15-26 update for web attacks - W-352)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8316a45ac2425952 (Jul 2 2026, Safari TP 247 built-in MCP server - W-353)
+  - https://cloud.tencent.com/developer/article/2692333 (Jul 2026, Chrome 146 native remote-debugging chrome://inspect MCP - W-354)
+  - https://cloud.tencent.com/developer/article/2637644 (2026, Safari 26 tracking-parameter filtering gclid/fbclid - B-208)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8876986781b34152 (Feb 7 2026, Interop 2025 Safari compatibility gains - C-121)
+
 ## [v1.183.0] - 2026-07-13
 ### Added
 - 7 new test cases from 2026-07-13 industry research (R300, 4h cadence cycle 62):
