@@ -656,6 +656,10 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":651,"url":"https://gamezipper.com/chained/","name":"Chained"},
     {"@type":"ListItem","position":652,"url":"https://gamezipper.com/kinkonkan/","name":"Kin-Kon-Kan"},
     {"@type":"ListItem","position":653,"url":"https://gamezipper.com/nurimaze/","name":"Nurimaze"},
-    {"@type":"ListItem","position":654,"url":"https://gamezipper.com/kaero/","name":"Kaero"}
-  ]
+    {"@type":"ListItem","position":654,"url":"https://gamezipper.com/kaero/","name":"Kaero"},
+    {"@type":"ListItem","position":655,"url":"https://gamezipper.com/stitches/","name":"Stitches"},
+    {"@type":"ListItem","position":656,"url":"https://gamezipper.com/renban/","name":"Renban"}
+  ],
+  "numberOfItems":656,
+  "description":"656 free browser games you can play instantly"
 };
