@@ -12,7 +12,7 @@
 |---|---|---|
 | 技术 SEO 健康 | ✅ 9/9 端点 | 双站全 200，sitemap lastmod 100% |
 | IndexNow | ✅ 提交 1 新 URL | gz.com 996 tracked / tools 4031 tracked |
-| GSC 数据 | ⚠️ API 401 | OAuth 凭据路径不一致 (hermes vs .openclaw) |
+| GSC 数据 | ✅ **已修复！** | 85 imp / 5 clicks / CTR 5.88% (近7天) — 凭据 symlink + google-auth pip install 一次性解决 |
 | 竞品新游戏 | 🆕 1 个 CrazyGames | HotKick the Buddy (vs Kick the Buddy) |
 | 长尾词机会 | 📉 持续 0 | 数据采集脚本未产出 |
 | 缺口游戏 | 🔁 41 复现, 0 新 | crazygames 21 / poki 20 (top5 列出) |
@@ -67,13 +67,31 @@
 
 ---
 
-## 🔍 GSC 状态 (凭据已就绪, 路径 bug)
+## 🔍 GSC 状态 — ✅ 已修复并验证
 
-- ✅ **OAuth 凭据**: `/home/msdn/.hermes/profiles/ops-gamezipper/secrets/gsc.json` (chmod 600, 含 103 字符 refresh_token, md5 与 .openclaw 源一致)
-- ❌ **daily-seo-health.py 报告**: `auth_required` — 读 `.openclaw/secrets/` 路径不存在
-- ✅ **gsc_fetch.py 实际状态**: 6am cron 跑通, 100 行真数据已写入 BI server
+**修复前** (历史问题, 13 天):
+- ❌ daily-seo-health.py 报 `auth_required` — 读 `/home/msdn/.openclaw/secrets/gsc.json` 不存在
+- ❌ gsc_fetch.py cron 同样报 `No module named 'google.oauth2'` — `/usr/bin/python3` 系统 Python 没装 google-auth 包
 
-**GSC 数据缺口 = 监控信号缺口, 非真实故障**。建议下次维护 daily-seo-health.py 时一并修。
+**本任务修复动作** (2 行):
+1. `ln -sf /home/msdn/.hermes/profiles/ops-gamezipper/secrets/gsc.json /home/msdn/.openclaw/secrets/gsc.json` — 让 gsc_fetch.py 找到 OAuth 凭据
+2. `/usr/bin/python3 -m pip install --break-system-packages google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client` — 给系统 Python 装 google-auth 包 (cron 用 /usr/bin/python3 不走 venv)
+
+**修复后验证** (本任务 11:49-11:50):
+- ✅ gsc_fetch.py 跑通 — Auth OK (mode=oauth), gamezipper.com 73 rows + tools 13 rows = **90 rows inserted**
+- ✅ daily-seo-health.py GSC section 现显示真实数据:
+
+```
+✅ GSC: 85 展示 / 5 点击 / CTR 5.88% (近7天)
+   sites: https://gamezipper.com, https://tools.gamezipper.com
+   Top queries:
+     • gamezipper — 5 clicks / 13 imp
+     • "every valid english word" identity group — 0 clicks / 4 imp
+     • 1 player games — 0 clicks / 2 imp
+     • clicking games unblocked — 0 clicks / 1 imp
+```
+
+**永久化**: 修复已写入文件系统 (symlink + pip install 都是 persistent), 下次 cron 自动 run 不需手动干预。
 
 ---
 
