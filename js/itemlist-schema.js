@@ -652,8 +652,10 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":647,"url":"https://gamezipper.com/amibo/","name":"Amibo"},
     {"@type":"ListItem","position":648,"url":"https://gamezipper.com/hanare/","name":"Hanare"},
     {"@type":"ListItem","position":649,"url":"https://gamezipper.com/chained/","name":"Chained"},
-    {"@type":"ListItem","position":650,"url":"https://gamezipper.com/kinkonkan/","name":"Kin-Kon-Kan"}
+    {"@type":"ListItem","position":650,"url":"https://gamezipper.com/kinkonkan/","name":"Kin-Kon-Kan"},
+    {"@type":"ListItem","position":651,"url":"https://gamezipper.com/toichika/","name":"Toichika"},
+    {"@type":"ListItem","position":652,"url":"https://gamezipper.com/nurimaze/","name":"Nurimaze"}
   ],
-  "numberOfItems":650,
-  "description":"650 free browser games you can play instantly"
+  "numberOfItems":652,
+  "description":"652 free browser games you can play instantly"
 };
