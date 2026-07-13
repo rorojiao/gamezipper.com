@@ -5881,3 +5881,22 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
 - "iOS Safari 26.5 Web Audio API glitch background playback burst bug 2026" (minimax search)
 - Note: SearXNG (web_search_prime) returned HTTP 404 for all 5 batch queries (6th+ consecutive cycle of SearXNG failure). Fell back to minimax_search.
 - Key URLs: donews.com/news/detail/8/6581068.html (Chrome 149 CSS gap + bfcache WebSocket), onlinedown.net/soft/1113489.htm (Chrome 151 V8 12.4 WASM 2.0), developer.apple.com/forums/tags/webkit (Safari 26.5 Web Audio glitch + iOS 26.4 WKWebView IP WebSocket), donews.com/news/detail/8/6585054.html (Chrome 149 AI model management), tenorshare.tw/ios-update-problems.html (iOS 26 Liquid Glass transparency)
+
+
+## [v1.186.0] - 2026-07-14
+### Added
+- 7 new test cases from industry research (R303, 4h cycle 65)
+- [S-417] ClickFix Social-Engineering — Fake Verification Prompts in Ad Creatives Trick Users Into Running Malicious Commands
+- [S-418] Ransomware Supply-Chain Page-Hijack (Canvas/ShinyHunters) — Third-Party/CDN Compromise Can Replace Page Content
+- [W-358] Firefox 151 ETP Reduces Fingerprinting 49% (macOS) — Ad/Analytics Fingerprinting Becomes Unreliable
+- [W-359] Mozilla AI (Claude Mythos) Found 423 Firefox CVEs in One Month — Accelerated Disclosure Expands Unpatched Tail
+- [B-211] Chrome 154 Will Warn on ALL HTTP Connections — Any HTTP Subresource Triggers "Not Secure" Warning
+- [P-167] Chrome 149 WebMCP DevTools Helper — AI-Agent Fix-Then-Verify Loop Becomes Standard QA Paradigm
+- [C-123] Steam CAPTCHA Infinite Loop (2026) — Verification Loops Destroy User Patience; Anti-Bot UX Must Not Loop
+### Sources
+- "HTML5 game testing 2026 new browser bugs" (minimax web search)
+- "browser security vulnerability 2026 XSS clickjacking canvas" (minimax web search)
+- "Chrome Edge Safari update 2026 July breaking changes web games" (minimax web search)
+- "Firefox 141 142 2026 new feature privacy total cookie protection WebGL" (minimax web search)
+- "casual game UX complaint 2026 mobile haptic feedback loading screen ad fatigue" (minimax web search)
+- Key URLs: so.html5.qq.com (ClickFix report, Chrome 154 HTTP warning, Canvas ShinyHunters, Steam CAPTCHA), donews.com (Firefox 151), sohu.com (Mozilla AI 423 CVEs), cloud.tencent.com (Chrome WebMCP)
