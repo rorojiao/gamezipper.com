@@ -1,8 +1,23 @@
 /**
- * GameZipper Ad Manager v5.26-backoff-fresh-reset — see v5.26 changelog below
+ * GameZipper Ad Manager v5.27-cache-bump — see v5.27 changelog below
  *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ *
+ * v5.27 Changes (2026-07-14 — index.html cache buster bump, kanban t_40a17bfc):
+ *   - 🪲 Fix: v5.26 firstMissAt logic was deployed 2026-07-13 but index.html cache
+ *     buster stayed at v=v525midgridcull. CF edge / cached browsers kept serving
+ *     pre-v5.26 code → 18 zone_legacy_disabled_skip 10687755 events/wk false-positive
+ *     (legacyEnabled guard dead code path but CF served stale script).
+ *   - 🔧 Bump index.html cache buster v=v525midgridcull → v=v526backoffreset forces
+ *     browser fresh fetch of deployed v5.26 logic. VERSION bumped 5.26 → 5.27 so
+ *     BI can verify new code is reaching users.
+ *   - 📊 Expected impact (BI 7d post-deploy):
+ *       - gz.com zone_legacy_disabled_skip 10687755: 18/wk → 0/wk (cache invalidate)
+ *       - gz.com 11012002 freshReset events: 5/wk → 15-25/wk (more users hit v5.26)
+ *   - 🛡️ Safety: cache buster bump only, code logic identical to v5.26. Revert by
+ *     setting index.html back to ?v=v525midgridcull.
+ *   - Version bumped 5.26-backoff-fresh-reset → 5.27-cache-bump.
  *
  * v5.26 Changes (2026-07-13 — backoff streak fresh-reset, kanban t_9077075f):
  *   - 🪲 Fix: recordZoneNoFill() streak could permanently cap at 3 (60min backoff) for
@@ -401,7 +416,7 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.26-backoff-fresh-reset',  // 2026-07-13: v5.26 kanban t_9077075f — backoff streak fresh-reset after 4h. Fixes gz.com 11012002 zone_backoff_skip 14d=81 amplification (115 no_fills → 196 backoff hits = 1.7x). Pairs with tools v5.26-tools-backoff-fresh-reset.
+    VERSION: '5.27-cache-bump',  // 2026-07-14: v5.27 kanban t_40a17bfc — bump index.html cache buster v525midgridcull → v526backoffreset so browsers fetch the deployed v5.26 code. v5.26 firstMissAt logic was deployed 7-13 but index.html had stale v525 cache version → 18 zone_legacy_disabled_skip 10687755 events/wk still hit (false positive — code path removed but CF/浏览器 still cached). gz.com freshReset=5/wk proves v5.26 logic is loading for users who bypass cache; bumping buster extends coverage. Code unchanged.
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
