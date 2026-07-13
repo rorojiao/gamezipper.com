@@ -1,3 +1,32 @@
+## [v1.181.0] - 2026-07-13
+### Added
+- 7 new test cases from 2026-07-13 industry research (R298, 4h cadence cycle 60):
+  - [W-345] **[P3]** Chrome 136 Three-Key `:visited` Link Partitioning — Ends 23-Year History-Sniffing, Breaks Global `:visited` UX/Analytics
+  - [S-411] **[P2]** 2026 Multi-Dimensional Fingerprinting (Canvas/WebGL/WebGPU/Audio/Fonts) Defeats Cookie-Clear & Incognito — GameZipper Canvas Games Are a Fingerprint Surface
+  - [S-412] **[P2]** AI-Fuzzing Disclosure Volume 423/Month (Sustained, Not One-Off) — Browser-Vuln Firehose Is New Normal
+  - [P-162] **[P1]** 2026 H5 Stutter/Black-Screen — 6-Factor Diagnostic Checklist (Memory/Repaint/DOM/WebView/iFrame/Asset) for Every "Laggy Game" Report
+  - [P-163] **[P2]** Chrome 138+ WebGPU 2.0 + New V8 Engine (30% Faster Load/25% Less Mem) — Perf-Characteristic Shift Risks Timing/Game Regression
+  - [B-204] **[P2]** iOS WebView Nested-iFrame Native Bridge — Severe Jank on Pages With iFramed Ads/Footer (Monetag/AdSense Compounds)
+  - [C-118] **[P3]** Network Latency/Packet-Loss = #1 H5 Game Complaint (2026) — GameZipper CDN/Origin Latency Is Direct Usability Factor
+### Sources
+- mcp__web_search_prime__batch_search queries (2026-07-13, cycle 60): ALL 5 returned "SearXNG 404" (13th consecutive cycle outage). Fell back to mcp__minimax_search__web_search.
+- mcp__minimax_search__web_search queries (2026-07-13, cycle 60):
+  - "HTML5 game testing 2026 new techniques browser automation"
+  - "browser security vulnerability 2026 July Chrome Safari Firefox"
+  - "Chrome 139 140 update 2026 new feature web API deprecated"
+  - "休闲游戏 H5 玩家投诉 2026 加载慢 卡顿 黑屏"
+  - "Chrome 136 :visited CSS history leak fix 2026 privacy"
+  - "WebGL WebGPU fingerprinting tracking 2026 browser canvas"
+- Key URLs:
+  - https://www.ithome.com/0/843/679.htm (Chrome 136 :visited three-key partitioning 23-year history sniffing fix - W-345)
+  - https://blog.csdn.net/shanwei_spider/article/details/160390135 (2026 browser fingerprinting Canvas/WebGL/WebGPU/Audio/Fonts - S-411)
+  - https://blog.csdn.net/2501_94224099/article/details/158571046 (2026 fingerprint anti-detection engineering - S-411)
+  - https://www.sohu.com/a/1024937447_121885030 (Firefox Mythos AI fuzzing 423 vulns/month April 2026 - S-412)
+  - https://consumer.huawei.com/cn/support/content/zh-cn16030772/ (H5 game stutter multi-factor diagnostic - P-162)
+  - https://blog.csdn.net/weixin_42232156/article/details/120847997 (H5 page jank causes + iOS nested iframe - P-162, B-204)
+  - https://www.ppzy.com/app/49612.html (Chrome 138 2026 WebGPU 2.0 + new V8 engine 30% faster 25% less mem - P-163)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2466a0c19f255452 (network latency #1 H5 game complaint 2026 - C-118)
+
 ## [v1.180.0] - 2026-07-13
 ### Added
 - 8 new test cases from 2026-07-13 industry research (R297, 4h cadence cycle 59):
