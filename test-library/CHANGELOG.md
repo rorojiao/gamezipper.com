@@ -1,3 +1,32 @@
+## [v1.182.0] - 2026-07-13
+### Added
+- 8 new test cases from 2026-07-13 industry research (R299, 4h cadence cycle 61):
+  - [W-346] **[P2]** Chrome 149 bfcache Now Caches WebSocket Pages — Auto-Closes WS on Navigate, Breaks Long-Poll/Live-Analytics Code
+  - [W-347] **[P2]** Chrome 149 DevTools — Built-In WebMCP Debug Helper — New DevTools Surface for MCP Server Inspection
+  - [W-348] **[P3]** Check Point 2026 — Global Baseline ~2000 Attacks/Week Per Org (2x 2022) — GameZipper Infrastructure Faces 2x Threat Density
+  - [S-413] **[P2]** FIRST.org Forecasts 2026 CVE Count May First Cross 100,000 (Median 59K, 90% CI 118K) — Patch Tuesday Obsoleted
+  - [P-164] **[P2]** Chrome CPU Performance API (Experimental 2026) — Device-Class-Aware Web Optimization — Adaptive Quality for Games
+  - [B-205] **[P3]** Chrome 149 CSS Gap Decorations (`column-rule`/`row-rule`) — Grid/Flex Gaps Now Paintable, Breaks "Gap Always Invisible" Assumption
+  - [B-206] **[P2]** HTML-in-Canvas AI Visual Paradigm (2026 Trend) — Breaks Copy/Paste, Accessibility, Right-Click, SEO If Adopted
+  - [C-119] **[P2]** AI Agent Era Design Paradigm (AIGC2026) — GameZipper Must Be Parseable / Actionable by AI Agents, Not Just Humans
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-13, cycle 61):
+  - "HTML5 game testing 2026 new techniques browser bug canvas WebGL"
+  - "browser security vulnerability 2026 July XSS clickjacking CVE Chrome Safari"
+  - "Chrome 139 140 update 2026 July new feature web API deprecated"
+  - "casual mobile game UX complaint 2026 accessibility haptic dark mode loading"
+  - "WebGPU WebAssembly game performance 2026 July browser memory leak crash"
+  - "HTML in Canvas 2026 AI agent browser web visualization new technique"
+  - "Chrome bfcache WebSocket 2026 back forward cache game state restore"
+  - "game accessibility WCAG 2026 dark mode color blind high contrast HTML5"
+- Key URLs:
+  - https://www.donews.com/news/detail/8/6581068.html (Chrome 149 stable release: bfcache WS safe-state, WebMCP debug helper, CSS gap decorations — W-346, W-347, B-205)
+  - https://new.qq.com/rain/a/20260212A0638C00 (FIRST.org forecast 2026 CVE count 100K — S-413)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_75668e6024133352 (Chrome CPU Performance API experimental — P-164)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_92969dba69c15252 (HTML-in-Canvas 2026 AI visual paradigm — B-206)
+  - https://www.sohu.com/a/1030123591_121956424 (Huang Chao AIGC2026 AI Agent Era design paradigm — C-119)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_94969c4f2d862352 (Check Point 2026 cybersecurity report 2000 attacks/week — W-348)
+
 ## [v1.181.0] - 2026-07-13
 ### Added
 - 7 new test cases from 2026-07-13 industry research (R298, 4h cadence cycle 60):
