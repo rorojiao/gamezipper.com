@@ -1,8 +1,28 @@
 /**
- * GameZipper Ad Manager v5.24-container-banner-tier-cull — see v5.24 changelog below
+ * GameZipper Ad Manager v5.26-backoff-fresh-reset — see v5.26 changelog below
  *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ *
+ * v5.26 Changes (2026-07-13 — backoff streak fresh-reset, kanban t_9077075f):
+ *   - 🪲 Fix: recordZoneNoFill() streak could permanently cap at 3 (60min backoff) for
+ *     zones that intermittently go 0% fill due to Monetag subdomain throttling. BI 14d
+ *     (2026-06-30~2026-07-13): gz.com 11012002 zone_backoff_skip = 81 events while
+ *     actual no_fills = 115 — 1.7x amplification on 196 backoff hits. Root cause:
+ *     streak caps at backoffs.length=3 (60min), then forever 60min → on a 30-min
+ *     session window the zone never retries once it hits streak-3.
+ *   - 🔧 Add firstMissAt field to backoff entry. If gap between first miss and current
+ *     miss > 4h, reset streak to 0 (treat as fresh start). Mirrors tools
+ *     v5.26-tools-backoff-fresh-reset same change.
+ *   - 📊 Expected impact (BI 7d post-deploy):
+ *       - gz.com 11012002 zone_backoff_skip ratio: 81/196 = 0.41 → ~0.2-0.5 (1 fill
+ *         per ~6 hours unlocks retry on next no_fill)
+ *       - gz.com 11012002 fill rate: 52.1% (14d baseline) → 55-65% (intermittent retries)
+ *       - gz.com homepage_banner_fill (11012002): 125/14d → 140-160/14d (+12-28%)
+ *   - 🛡️ Safety: backwards compatible (old localStorage entries without firstMissAt
+ *     field still work). Worst case: 4h reset still leaves backoff at streak-1 (10min)
+ *     so no risk of zero-cooldown. Revert by removing firstMissAt logic.
+ *   - Version bumped 5.25-midgrid-tier2cull → 5.26-backoff-fresh-reset.
  *
  * v5.25 Changes (2026-07-09 — showHomepageMidGrid Tier 2/4 Cull, kanban t_d65a1fdd, ad-hoc verify round 2):
  *   - 🪲 Fix: v5.24 scope missed showHomepageMidGrid() — still had Tier 2 (legacy
@@ -381,7 +401,7 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.25-midgrid-tier2cull',  // 2026-07-09: v5.25 kanban t_d65a1fdd — cull showHomepageMidGrid Tier 2 (legacy Attractive 10687755) + Tier 4 (adsterra) — missed in v5.24 scope. Single-Tier (11012002 working) + AdSense Tier 0. Same pattern as v5.24.
+    VERSION: '5.26-backoff-fresh-reset',  // 2026-07-13: v5.26 kanban t_9077075f — backoff streak fresh-reset after 4h. Fixes gz.com 11012002 zone_backoff_skip 14d=81 amplification (115 no_fills → 196 backoff hits = 1.7x). Pairs with tools v5.26-tools-backoff-fresh-reset.
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -480,12 +500,22 @@
   function recordZoneNoFill(zoneId) {
     if (!CONFIG.ZONE_BACKOFF.enabled) return;
     if (!state.zoneBackoff[zoneId]) {
-      state.zoneBackoff[zoneId] = { until: 0, streak: 0, lastAt: 0 };
+      state.zoneBackoff[zoneId] = { until: 0, streak: 0, lastAt: 0, firstMissAt: 0 };
     }
     var entry = state.zoneBackoff[zoneId];
     var n = now();
     // Avoid burst-tracking if multiple loadZone calls fail in quick succession
     if (n - entry.lastAt < CONFIG.ZONE_BACKOFF.minRecordIntervalMs) return;
+    // v5.26: Fresh-reset streak if last miss was > 4h ago — prevents permanent
+    //   60min lockout for zones with intermittent 0% periods (Monetag subdomain
+    //   throttling recovers after a few hours). Backwards compatible: entries
+    //   loaded from localStorage without firstMissAt fall through this guard
+    //   (NaN > 4h is false) and start tracking firstMissAt on next miss.
+    if (entry.firstMissAt > 0 && (n - entry.firstMissAt) > 4 * 60 * 60 * 1000) {
+      entry.streak = 0;
+      entry.firstMissAt = 0;
+    }
+    if (entry.streak === 0) entry.firstMissAt = n;
     entry.streak = Math.min(entry.streak + 1, CONFIG.ZONE_BACKOFF.backoffs.length);
     var backoffMs = CONFIG.ZONE_BACKOFF.backoffs[entry.streak - 1];
     entry.until = n + backoffMs;
@@ -494,7 +524,7 @@
     if (window.GZAdDebug) {
       try { console.log('[gz-ad] zone backoff', zoneId, 'streak=' + entry.streak, 'until +' + Math.round(backoffMs/60000) + 'min'); } catch(e) {}
     }
-    trackAdEvent('zone_backoff', { network: 'monetag', zoneId: zoneId, streak: entry.streak, minutes: Math.round(backoffMs/60000) });
+    trackAdEvent('zone_backoff', { network: 'monetag', zoneId: zoneId, streak: entry.streak, minutes: Math.round(backoffMs/60000), freshReset: entry.streak === 1 && entry.firstMissAt === n });
   }
 
   function clearZoneBackoff(zoneId) {
