@@ -658,8 +658,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":653,"url":"https://gamezipper.com/nurimaze/","name":"Nurimaze"},
     {"@type":"ListItem","position":654,"url":"https://gamezipper.com/kaero/","name":"Kaero"},
     {"@type":"ListItem","position":655,"url":"https://gamezipper.com/stitches/","name":"Stitches"},
-    {"@type":"ListItem","position":656,"url":"https://gamezipper.com/renban/","name":"Renban"}
+    {"@type":"ListItem","position":656,"url":"https://gamezipper.com/renban/","name":"Renban"},
+    {"@type":"ListItem","position":657,"url":"https://gamezipper.com/shingoki/","name":"Shingoki"}
   ],
-  "numberOfItems":656,
-  "description":"656 free browser games you can play instantly"
+  "numberOfItems":657,
+  "description":"657 free browser games you can play instantly"
 };
