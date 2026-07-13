@@ -215,7 +215,9 @@ genLevels();
 /* ---------- Game State ---------- */
 let canvas, ctx, W, H, dpr;
 let bubbleR, gridOffsetX, gridOffsetY;
-let grid = [];       // grid[row][col] = colorIndex | null
+let grid = (function(){ // grid[row][col] = colorIndex | null; pre-initialized to avoid 'undefined.length' before initGrid()
+  const g=[]; for(let r=0;r<20;r++){const mc=(r%2===0)?10:9;g[r]=[];for(let c=0;c<mc;c++)g[r][c]=null;} return g;
+})();
 let shooting = false;
 let shootBubble = null; // { x, y, vx, vy, color }
 let aimAngle = -Math.PI/2;
@@ -310,7 +312,7 @@ function initGrid(){
 function getActiveColors(){
   const s = new Set();
   for(let r=0;r<MAX_ROW;r++)
-    for(let c=0;c<grid[r].length;c++)
+    for(let c=0;c<(grid[r]?grid[r].length:0);c++)
       if(grid[r][c]!==null) s.add(grid[r][c]);
   return [...s];
 }
@@ -695,6 +697,7 @@ function drawShooter(){
 
 function drawGrid(){
   for(let r=0;r<MAX_ROW;r++){
+    if(!grid[r]) continue;
     for(let c=0;c<grid[r].length;c++){
       if(grid[r][c]===null) continue;
       const pos = gridToXY(r,c);

@@ -774,7 +774,7 @@
         // ==================== GAME STATE ====================
         let canvas, ctx;
         let gameState = {
-            columns: [],
+            columns: [[],[],[],[],[],[],[],[],[],[]],
             stock: [],
             stockDeals: 5,
             foundation: [],
@@ -1467,6 +1467,7 @@
                 if (cardX >= colX && cardX <= colX + CARD_WIDTH) {
                     clickedCol = col;
                     const column = gameState.columns[col];
+                    if (!Array.isArray(column)) break;
                     let y = getColumnY(col, 0);
                     
                     for (let i = 0; i < column.length; i++) {
@@ -1474,7 +1475,8 @@
                             clickedIndex = i;
                             break;
                         }
-                        y += column[i].faceUp ? CARD_OVERLAP : CARD_OVERLAP * 0.5;
+                        const card = column[i];
+                        y += (card && card.faceUp) ? CARD_OVERLAP : CARD_OVERLAP * 0.5;
                     }
                     break;
                 }
@@ -1594,8 +1596,13 @@
         
         function getColumnY(col, index) {
             let y = 60;
-            for (let i = 0; i < index; i++) {
-                y += gameState.columns[col][i].faceUp ? CARD_OVERLAP : CARD_OVERLAP * 0.5;
+            // Defensive: ensure the column exists and has enough cards
+            const column = gameState.columns[col];
+            if (!Array.isArray(column)) return y;
+            const maxIdx = Math.min(index, column.length);
+            for (let i = 0; i < maxIdx; i++) {
+                const card = column[i];
+                y += (card && card.faceUp) ? CARD_OVERLAP : CARD_OVERLAP * 0.5;
             }
             return y;
         }
@@ -1923,6 +1930,12 @@
             try {
                 const parsed = JSON.parse(data);
                 gameState.columns = parsed.gameState.columns;
+                // QA fix: ensure columns is always a valid 10-element array of arrays
+                // (prevents 'Cannot read properties of undefined (reading length)')
+                if (!Array.isArray(gameState.columns) || gameState.columns.length !== 10) {
+                    gameState.columns = Array.from({ length: 10 }, () => []);
+                }
+                gameState.columns = gameState.columns.map(col => Array.isArray(col) ? col : []);
                 gameState.stock = parsed.gameState.stock;
                 gameState.stockDeals = parsed.gameState.stockDeals;
                 gameState.foundation = parsed.gameState.foundation;

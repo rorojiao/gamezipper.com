@@ -81,6 +81,21 @@
     while (target && target.tagName !== 'A') target = target.parentElement;
     if (target && target.href && target.href.indexOf(location.origin) === 0) return; // internal link
 
+    // Don't trigger popunder on game UI elements (canvas, game buttons, overlays)
+    // This prevents ad redirects from hijacking game start/play actions
+    var gameEl = e.target;
+    while (gameEl) {
+      if (gameEl.tagName === 'CANVAS' || 
+          gameEl.tagName === 'BUTTON' ||
+          (gameEl.id && (gameEl.id.indexOf('btn-') === 0 || gameEl.id.indexOf('game') === 0 || gameEl.id.indexOf('overlay') >= 0)) ||
+          (gameEl.className && typeof gameEl.className === 'string' && 
+           (gameEl.className.indexOf('menu-btn') >= 0 || gameEl.className.indexOf('overlay') >= 0 || 
+            gameEl.className.indexOf('ctrl-btn') >= 0 || gameEl.className.indexOf('game') >= 0))) {
+        return; // skip popunder for game UI clicks
+      }
+      gameEl = gameEl.parentElement;
+    }
+
     popArmed = false;
     firePopunder();
   }, { passive: true, capture: true });
