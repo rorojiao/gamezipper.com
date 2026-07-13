@@ -1,4 +1,36 @@
-## [v1.182.0] - 2026-07-13
+## [v1.183.0] - 2026-07-13
+### Added
+- 7 new test cases from 2026-07-13 industry research (R300, 4h cadence cycle 62):
+  - [W-349] **[P2]** ECMAScript 2026 (ES17) Ratified Jun 30 2026 — New Math/Iterator/Array/Map/JSON Built-Ins — Bleeding-Edge JS Risks SyntaxError on Older Engines
+  - [W-350] **[P3]** Chrome 148 Web Serial API on Android + Approximate-Location Setting — New Permission Prompts + Coarse Geolocation Granularity
+  - [W-351] **[P3]** Chrome 150 Autofill Integrates Google Wallet for Passport/Driver License — Future GameZipper Forms May Auto-Suggest Gov-ID PII
+  - [S-414] **[P1]** Black Cat 2024 — Single Game (如鸢) Drew 3000+ Complaints Over Item-Duplication Bug — Client-Trusted Leaderboard/Save State Is Exploit Surface Requiring Server-Side Validation
+  - [P-165] **[P2]** WebGPU + WASM Synergy Pattern — WASM Game Modules Need Explicit Memory Pools to Avoid GC Frame Stalls on Long Sessions
+  - [B-207] **[P3]** ChromeOS 148 Cert-Config Migration Paves Way for LTS 150 — Origin/CDN Cert Renewal Cadence Tightening; GameZipper Cert Monitoring Needed
+  - [C-120] **[P2]** 4399 Self-Help Troubleshooting Taxonomy — GameZipper Lacks Equivalent "Game Not Loading?" Page, Driving Churn to Competitors
+### Sources
+- mcp__web_search_prime__batch_search queries (2026-07-13, cycle 62): ALL 5 returned "SearXNG 404" (14th consecutive cycle outage). Fell back to mcp__minimax_search__web_search.
+- mcp__minimax_search__web_search queries (2026-07-13, cycle 62):
+  - "HTML5 game testing 2026 new technique browser automation July"
+  - "browser security vulnerability 2026 July Chrome Safari Firefox CVE"
+  - "Chrome 150 151 update 2026 July new feature deprecated API"
+  - "休闲游戏 H5 玩家投诉 2027 加载慢 黑屏 触摸"
+  - "WebGPU WebAssembly game performance 2026 July memory leak crash"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6076a4fc86f46852 (ECMAScript 2026 ES17 ratified Jun 30 2026 new Math/Iterator/Array/Map/JSON built-ins - W-349)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_83069fc56b987652 (Chrome 148 Web Serial API on Android + approximate-location setting - W-350)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_7246a3b412948452 (Chrome 150 Google Wallet autofill passport/driver license - W-351)
+  - https://news.sina.com.cn/ts/2025-02-28/doc-inemzitm5628840.shtml (Black Cat 2024 annual game-complaint report 如鸢 3000+ complaints item-dup bug - S-414)
+  - https://tool.lu/en_US/article/7yi/detail (WebGPU + WebAssembly WASM synergy memory pool pattern 2026 - P-165)
+  - https://blog.csdn.net/gitblog_00372/article/details/158277179 (WebGPU/WASM performance optimization guide memory pool - P-165)
+  - https://blog.csdn.net/weixin_36282234/article/details/158302311 (WASM RMBG-2.0 memory pool pattern - P-165)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_2736a15714b22052 (ChromeOS 148 cert-config migration LTS 150 prep - B-207)
+  - https://www.lcxw.cn/wiki@R9U8uvZ.txt (Firefox version lifecycle management 45d→12d vuln-exposure window - B-207)
+  - http://h.4399.com/xyx.htm (4399 H5 game portal industry comparable - C-120)
+  - http://h.4399.com/feedback1.htm (4399 canonical white-screen/black-screen self-help doc 4-step taxonomy - C-120)
+  - https://www.sohu.com/a/801973234_122027300 (H5 game dev testing considerations - C-120 context)
+
+## [v1.182.0] - 2026-07-13## [v1.182.0] - 2026-07-13
 ### Added
 - 8 new test cases from 2026-07-13 industry research (R299, 4h cadence cycle 61):
   - [W-346] **[P2]** Chrome 149 bfcache Now Caches WebSocket Pages — Auto-Closes WS on Navigate, Breaks Long-Poll/Live-Analytics Code
