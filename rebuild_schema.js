@@ -12,7 +12,7 @@ if (!games || !games.length) {
   process.exit(1);
 }
 console.log(`Parsed ${games.length} games (total)`);
-const liveGames = games.filter(g => g.status === 'live');
+const liveGames = games.filter(g => g && g.url && g.status === 'live');
 console.log(`Live games: ${liveGames.length}`);
 const itemListElement = liveGames.map((g, i) => {
   const url = g.url.replace(/^\//, '').replace(/\/$/, '');
