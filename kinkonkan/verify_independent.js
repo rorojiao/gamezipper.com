@@ -74,6 +74,10 @@ function verify_level(level) {
     for (const [rid, cnt] of Object.entries(roomCounts)) {
         if (cnt !== 1) issues.push(`Room ${rid} has ${cnt} mirrors (should be 1)`);
     }
+    const expectedRooms = new Set(rooms.flat());
+    for (const rid of expectedRooms) {
+        if (!(rid in roomCounts)) issues.push(`Room ${rid} has no mirror`);
+    }
 
     // Check 2: All beams trace correctly
     const allHit = new Set();

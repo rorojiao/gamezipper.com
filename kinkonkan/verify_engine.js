@@ -58,6 +58,12 @@ function getEntryFromBeam(beam, rows, cols) {
 function checkSolution(grid, placement) {
   const rows = grid.rows, cols = grid.cols;
   const mg = placement.map(row => row.slice());
+  const roomCounts = {};
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const rid = grid.rooms[r][c];
+    roomCounts[rid] = (roomCounts[rid] || 0) + (mg[r][c] ? 1 : 0);
+  }
+  const roomsOk = Object.values(roomCounts).every(n => n === 1);
   const results = [];
   let allHit = true, allCountMatch = true;
   for (const beam of grid.beams) {
@@ -83,7 +89,7 @@ function checkSolution(grid, placement) {
     }
   }
   if (missing.length > 0) allHit = false;
-  return { results, allHit, allCountMatch, missing };
+  return { results, allHit, allCountMatch, roomsOk, missing };
 }
 
 console.log('=== Kin-Kon-Kan Engine Verification ===');
@@ -93,12 +99,13 @@ for (let i = 0; i < levels.length; i++) {
   const l = levels[i];
   const placement = l.mirrors.map(row => row.map(c => c === '' ? null : c));
   const check = checkSolution(l, placement);
-  const allOk = check.allHit && check.allCountMatch && check.results.every(r => r.ok);
+  const allOk = check.roomsOk && check.allHit && check.allCountMatch && check.results.every(r => r.ok);
   if (allOk) {
     pass++;
     console.log(`L${i+1} (T${l.tier}): PASS - ${placement.flat().filter(Boolean).length} mirrors, ${l.beams.length} beams`);
   } else {
     console.log(`L${i+1} (T${l.tier}): FAIL`);
+    if (!check.roomsOk) console.log('  Room count mismatch');
     if (!check.allHit) console.log(`  Missing mirrors: ${JSON.stringify(check.missing)}`);
     if (!check.allCountMatch) console.log(`  Count mismatch`);
     for (const r of check.results) if (!r.ok) console.log(`  Beam ${r.letter}: ${r.reason || 'bad'}`);

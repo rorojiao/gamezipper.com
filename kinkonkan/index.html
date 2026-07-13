@@ -759,25 +759,15 @@ function handleCellClick(r, c, button) {
 }
 
 canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-canvas.addEventListener('mousedown', function(e) {
+canvas.addEventListener('pointerdown', function(e) {
+  if (e.pointerType === 'touch') e.preventDefault();
   var rect = canvas.getBoundingClientRect();
   var x = e.clientX - rect.left;
   var y = e.clientY - rect.top;
   var cell = screenToGrid(x, y);
   if (!cell) return;
-  handleCellClick(cell[0], cell[1], e.button);
+  handleCellClick(cell[0], cell[1], e.button || 0);
 });
-canvas.addEventListener('touchstart', function(e) {
-  e.preventDefault();
-  if (!e.touches.length) return;
-  var t = e.touches[0];
-  var rect = canvas.getBoundingClientRect();
-  var x = t.clientX - rect.left;
-  var y = t.clientY - rect.top;
-  var cell = screenToGrid(x, y);
-  if (!cell) return;
-  handleCellClick(cell[0], cell[1], 0);
-}, { passive: false });
 
 document.addEventListener('keydown', function(e) {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -896,7 +886,7 @@ function checkAndWin() {
   state.showBeams = true;
   draw();
   setTimeout(function(){ state.showBeams = false; draw(); }, 1800);
-  if (check.allHit && check.allCountMatch && check.results.every(function(r){return r.ok;})) {
+  if (isSolved()) {
     onWin();
   } else {
     if (!check.allHit) showToast(check.missing.length + ' mirror(s) unused');
@@ -1092,6 +1082,7 @@ function init() {
   });
   tick();
 }
+window.addEventListener('beforeunload', cleanup);
 
 // Load levels and start
 fetch('levels.json').then(function(r) { return r.json(); }).then(function(data) {
@@ -1112,6 +1103,6 @@ fetch('levels.json').then(function(r) { return r.json(); }).then(function(data) 
 <script src="/monetag-manager.js?v=v525midgridcull"></script>
 <div id="gz-ad-below-game"></div>
 <script src="/game-footer.js?v=gfv3"></script>
-<script src="/gz-analytics.js?v=20260713763b865266b" defer></script>
+<script src="/gz-analytics.js?v=202607137c2a4d767d1" defer></script>
 </body>
 </html>
