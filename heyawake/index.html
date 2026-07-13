@@ -262,7 +262,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 'use strict';
 
 var SAVE_KEY="heyawakeV1";
-var CACHE_KEY="heyawakeCacheV1";
+var CACHE_KEY="heyawakeCacheV2";
 var DIRS=[[-1,0],[1,0],[0,-1],[0,1]];
 var TUT_STEPS=[
 {title:"Welcome to Heyawake",text:"Heyawake (Dividing the Rooms) is a Japanese logic puzzle by Nikoli. The grid is split into rectangular rooms. Some rooms have a small number. Your job is to shade cells black inside those rooms until every rule is satisfied.",diagram:[["tw-room","tw-num","tw-room"],["tw","tw-blk","tw"],["tw-room","tw","tw-room"]]},
@@ -325,7 +325,7 @@ function solveHeyawake(rooms,targets,rows,cols,rng,timeoutMs){
   var rs=rooms.map(function(rm,i){return{cells:roomCells(rm),target:targets[i],black:0,white:0,size:roomCells(rm).length};});
   var solved=false;
   var callCount=0;
-  var maxCalls=200000;
+  var maxCalls=80000;
   function nbrs(r,c){var ns=[];for(var d=0;d<4;d++){var nr=r+DIRS[d][0],nc=c+DIRS[d][1];if(nr>=0&&nr<rows&&nc>=0&&nc<cols)ns.push([nr,nc]);}return ns;}
 
   function checkSpanPartial(){
@@ -389,7 +389,7 @@ function solveHeyawake(rooms,targets,rows,cols,rng,timeoutMs){
 
 function generatePuzzle(seed,rows,cols,tier){
   var rng=seededRNG(seed);
-  var maxAttempts=tier<=2?30:(tier<=3?25:20);
+  var maxAttempts=tier<=2?30:(tier<=3?20:8);
   var total=rows*cols;
   for(var attempt=0;attempt<maxAttempts;attempt++){
     var rooms=generateRooms(rng,rows,cols,2,2);
@@ -400,7 +400,7 @@ function generatePuzzle(seed,rows,cols,tier){
     for(var i=0;i<targetBlack;i++){var ri=Math.floor(rng()*rooms.length);targets[ri]++;}
     for(var i=0;i<rooms.length;i++){var sz=(rooms[i][2]-rooms[i][0]+1)*(rooms[i][3]-rooms[i][1]+1);if(targets[i]>sz-1)targets[i]=Math.max(0,sz-1);}
     if(targets.reduce(function(a,b){return a+b;},0)===0)continue;
-    var timeoutMs=tier<=2?300:(tier<=3?500:(tier<=4?700:1000));
+    var timeoutMs=tier<=2?300:(tier<=3?400:(tier<=4?300:250));
     var sol=solveHeyawake(rooms,targets,rows,cols,rng,timeoutMs);
     if(!sol)continue;
     var solStr="";
@@ -424,21 +424,17 @@ var GENERATION_DONE=false;
 var HEYAWAKE_TIERS=[
   {size:5,count:6,seedBase:1001,tier:1},
   {size:6,count:6,seedBase:2001,tier:2},
-  {size:8,count:6,seedBase:3001,tier:3},
-  {size:10,count:6,seedBase:4001,tier:4},
-  {size:12,count:6,seedBase:5001,tier:5}
+  {size:7,count:6,seedBase:3001,tier:3},
+  {size:8,count:6,seedBase:4001,tier:4},
+  {size:9,count:6,seedBase:5001,tier:5}
 ];
 
 function generateOneLevel(tier,i){
   var seed=tier.seedBase+i*37;
   var p=null;
-  for(var retry=0;retry<3;retry++){
+  for(var retry=0;retry<2;retry++){
     p=generatePuzzle(seed+retry*131,tier.size,tier.size,tier.tier);
     if(p)break;
-  }
-  if(!p){
-    seed=tier.seedBase*7+i*53+9999;
-    p=generatePuzzle(seed,tier.size,tier.size,tier.tier);
   }
   if(!p){
     var simple=generatePuzzle(tier.seedBase*13+i*17+777,tier.size,tier.size,Math.max(1,tier.tier-1));
