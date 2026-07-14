@@ -153,21 +153,33 @@ function initLevel(idx){
   state.hintCells=new Set();
   state.hintsUsed=0;
   state.startTime=Date.now();
-  // Convert region-keyed clues ({regionId: blackCount}) to cell-coord-keyed
-  // by placing each region's clue in the first cell of that region.
+  // Convert region-keyed clues ({regionId: blackCount}) to cell-coord-keyed.
+  // Place each region's clue in the first NON-solution-black cell of that region,
+  // so the clue cell itself is not constrained by the player's black/shade rule.
   const _regionCells={};
   for(let _r=0;_r<lv.R;_r++){
     for(let _c=0;_c<lv.C;_c++){
       const _rid=lv.region[_r][_c];
-      if(!_regionCells[_rid])_regionCells[_rid]=[_r,_c];
+      if(!_regionCells[_rid])_regionCells[_rid]=[];
+      _regionCells[_rid].push([_r,_c]);
     }
   }
   const _newClues={};
   for(const _ridStr in lv.clues){
     const _rid=parseInt(_ridStr,10);
-    const _cell=_regionCells[_rid];
-    if(_cell){
-      _newClues[String(_cell[0])+','+String(_cell[1])]=lv.clues[_ridStr];
+    const _cells=_regionCells[_rid]||[];
+    // Prefer first non-solution-black cell so clue is visible and clickable
+    let _placed=false;
+    for(const [cr,cc] of _cells){
+      if(lv.solution[cr][cc]===0){
+        _newClues[String(cr)+','+String(cc)]=lv.clues[_ridStr];
+        _placed=true; break;
+      }
+    }
+    if(!_placed && _cells.length){
+      // Region is entirely black (e.g., 0-count region in non-symmetric level): use first cell
+      const [cr,cc]=_cells[0];
+      _newClues[String(cr)+','+String(cc)]=lv.clues[_ridStr];
     }
   }
   state.clues=_newClues;
