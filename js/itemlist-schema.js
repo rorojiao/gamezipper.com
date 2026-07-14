@@ -661,8 +661,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":656,"url":"https://gamezipper.com/renban/","name":"Renban"},
     {"@type":"ListItem","position":657,"url":"https://gamezipper.com/shingoki/","name":"Shingoki"},
     {"@type":"ListItem","position":658,"url":"https://gamezipper.com/detour/","name":"Detour"},
-    {"@type":"ListItem","position":659,"url":"https://gamezipper.com/trinudo/","name":"Trinudo"}
+    {"@type":"ListItem","position":659,"url":"https://gamezipper.com/trinudo/","name":"Trinudo"},
+    {"@type":"ListItem","position":660,"url":"https://gamezipper.com/putteria/","name":"Putteria"}
   ],
-  "numberOfItems":659,
-  "description":"659 free browser games you can play instantly"
+  "numberOfItems":660,
+  "description":"660 free browser games you can play instantly"
 };
