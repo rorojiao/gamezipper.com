@@ -667,8 +667,11 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":662,"url":"https://gamezipper.com/chiyotsui/","name":"Chiyotsui"},
     {"@type":"ListItem","position":663,"url":"https://gamezipper.com/mobiriti/","name":"Mobiriti"},
     {"@type":"ListItem","position":664,"url":"https://gamezipper.com/turf/","name":"Turf"},
-    {"@type":"ListItem","position":665,"url":"https://gamezipper.com/kuroclone/","name":"Kuroclone"}
+    {"@type":"ListItem","position":665,"url":"https://gamezipper.com/kuroclone/","name":"Kuroclone"},
+    {"@type":"ListItem","position":666,"url":"https://gamezipper.com/snake-pit/","name":"Snake Pit"},
+    {"@type":"ListItem","position":667,"url":"https://gamezipper.com/hide-and-paint/","name":"Hide and Paint"},
+    {"@type":"ListItem","position":668,"url":"https://gamezipper.com/punch-master/","name":"Punch Master"}
   ],
-  "numberOfItems":665,
-  "description":"665 free browser games you can play instantly"
+  "numberOfItems":668,
+  "description":"668 free browser games you can play instantly"
 };
