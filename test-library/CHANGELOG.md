@@ -1,3 +1,33 @@
+## [v1.187.0] - 2026-07-14
+### Added
+- 7 new test cases from 2026-07-14 industry research (R304, 4h cadence cycle 66):
+  - [S-419] **[P0]** Chrome WebGPU/Dawn CVE-2026-5281 Use-After-Free — In-the-Wild Exploited; WebGPU Games Are Attack Surface
+  - [S-420] **[P1]** AI-Autonomous Zero-Day Generation Intercepted by Google — Threat Pace Shifts From Human to AI
+  - [S-421] **[P2]** Chrome Zero-Day on Apple Platforms — iOS Chrome Shares WebKit Vulnerability Tail With Safari
+  - [W-360] **[P2]** Mozilla Mythos AI Found 271 Firefox 150 Vulns — 180 High-Severity Browsable; Any Page Could Trigger
+  - [B-212] **[P3]** Microsoft Edge 150 (Chromium 150 Base) — Copilot/Telemetry Overlays Can Interfere With Game Rendering
+  - [B-213] **[P2]** Browser Cache/SW Corruption Causes Stale/Blank Game Content — Steam 2026 Pattern Applies to GameZipper CDN
+  - [C-124] **[P2]** WCAG 2.2 Accessibility Litigation Risk Growing 2026 — Canvas Games Invisible to Screen Readers
+### Sources
+- mcp__web_search_prime__batch_search queries (2026-07-14, cycle 66): ALL 5 returned "SearXNG 404" (16th consecutive cycle outage). Fell back to mcp__minimax_search__web_search.
+- mcp__minimax_search__web_search queries (2026-07-14, cycle 66):
+  - "HTML5 game testing 2026 new techniques browser WebGL canvas memory leak"
+  - "new browser security vulnerability 2026 XSS clickjacking Safari Chrome"
+  - "casual game UX complaint 2026 mobile haptic dark mode accessibility"
+  - "Chrome Edge Safari update 2026 web API deprecation breaking change"
+  - "HTML5 browser game bug report 2026 canvas performance issue"
+  - "Chrome 151 zero-day vulnerability 2026 July WebGPU WASM security patch"
+  - "Web Accessibility WCAG 2.2 2026 new requirements game canvas screen reader"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_35669cdc85492252 (Apr 2 2026, Chrome CVE-2026-5281 Dawn WebGPU use-after-free in-the-wild - S-419)
+  - https://www.sohu.com/a/1021501359_121885030 (May 12 2026, Google intercepts AI-developed zero-day attack - S-420)
+  - https://cloud.tencent.com/developer/article/2554781 (Jul 14 2026, Apple emergency fix Chrome zero-day 6th of 2025 - S-421)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_53769fd53ba77252 (May 8 2026, Mozilla Mythos AI 271 Firefox 150 vulns 180 high-severity - W-360)
+  - http://www.downxia.com/downinfo/417615.html (Jul 13 2026, Microsoft Edge 150 V150.0.4078.65 - B-212)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_5556a0ac09787652 (May 18 2026, Steam 2026 loading failure cache corruption - B-213)
+  - https://www.accessibleweb.com/ + https://www.convergeaccessibility.com/ + https://accessibe.com/ (Jul 2026, WCAG 2.2 compliance/litigation services growing - C-124)
+  - https://www.w3.org/TR/WCAG22/ (WCAG 2.2 current standard - C-124)
+
 ## [v1.184.0] - 2026-07-13
 ### Added
 - 7 new test cases from 2026-07-13 industry research (R301, 4h cadence cycle 63):
