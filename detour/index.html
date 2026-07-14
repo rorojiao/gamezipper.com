@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Detour — Nikoli Turn-Count Loop Puzzle | GameZipper</title>
+<meta name="description" content="Play Detour puzzle online free! A Nikoli-style loop puzzle. Draw a single closed loop through every cell. Each numbered region shows how many turns the loop makes inside it. 30 levels across 5 difficulty tiers. Hints, star ratings, level select, keyboard support, ambient Web Audio music. No download, mobile-friendly!">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f0f1a'/><path d='M20 20 L80 20 L80 80 L20 80 Z' fill='none' stroke='%2364ffda' stroke-width='3'/><circle cx='20' cy='20' r='5' fill='%23ffd166'/><circle cx='80' cy='80' r='5' fill='%23ffd166'/><circle cx='80' cy='20' r='5' fill='%23ffd166'/><circle cx='20' cy='80' r='5' fill='%23ffd166'/></svg>">
+<meta property="og:title" content="Detour — Nikoli Turn-Count Loop Puzzle">
+<meta property="og:description" content="Draw a single closed loop through every cell. Each numbered region shows how many turns the loop makes inside it. 30 levels, 5 tiers.">
+<meta property="og:image" content="/detour/og-image.jpg">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://gamezipper.com/detour/">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Detour","description":"A Nikoli-style turn-count loop puzzle. Draw a single closed loop through every cell in the grid. Each numbered region indicates how many turns the loop must make inside that region. Unnumbered regions have no turn restrictions.","genre":"Puzzle","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GameZipper"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.7","ratingCount":"128"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Detour?","acceptedAnswer":{"@type":"Answer","text":"Draw a single closed loop that visits every cell exactly once. The loop runs horizontally and vertically between cell centers. Each numbered region shows how many 90-degree turns the loop makes inside that region. Unnumbered regions have no turn limit."}},{"@type":"Question","name":"How many levels does Detour have?","acceptedAnswer":{"@type":"Answer","text":"30 levels across 5 difficulty tiers: Beginner (5x6), Easy (6x6), Medium (6x8), Hard (8x8), and Expert (8x10)."}},{"@type":"Question","name":"Is Detour free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes! Detour is completely free to play online in your browser. No download required."}}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Detour","item":"https://gamezipper.com/detour/"}]}
+</script>
+<script src='https://site-analytics.cap.1ktower.com/hit?s=gamezipper.com&p=detour'></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.gz-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+body{background:#0f0f1a;color:#e0e0f0;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden;user-select:none;-webkit-user-select:none}
+#app{max-width:560px;margin:0 auto;padding:8px}
+canvas{display:block;margin:0 auto;background:#1a1a2e;border-radius:10px;touch-action:none}
+.bar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+button{background:#2a2a4e;color:#e0e0f0;border:1px solid #3a3a6e;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px;transition:all .15s}
+button:hover{background:#3a3a6e}
+button.active{background:#55c2a0;color:#0f0f1a;border-color:#55c2a0;font-weight:bold}
+button:disabled{opacity:.4;cursor:default}
+#info{display:flex;justify-content:space-between;align-items:center;margin:6px 0;padding:6px 10px;background:#1a1a2e;border-radius:8px;font-size:13px}
+#info span{color:#64ffda}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;justify-content:center;align-items:center;z-index:100}
+.overlay.show{display:flex}
+.panel{background:#1a1a2e;border-radius:14px;padding:20px;max-width:500px;width:92%;max-height:88vh;overflow-y:auto;border:1px solid #3a3a6e}
+.panel h2{color:#64ffda;margin-bottom:10px;text-align:center;font-size:18px}
+.lvl-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:10px 0}
+.lvl-btn{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;background:#2a2a4e;border-radius:8px;cursor:pointer;color:#e0e0f0;border:1px solid #3a3a6e}
+.lvl-btn:hover{background:#3a3a6e}
+.lvl-btn.locked{opacity:.3;cursor:not-allowed}
+.lvl-btn.completed{background:#1a3a2e;border-color:#55c2a0}
+.lvl-stars{font-size:9px;color:#ffd166;line-height:1}
+.tier-label{color:#ff6b9d;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px}
+#toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#2a2a4e;color:#e0e0f0;padding:10px 20px;border-radius:8px;border:1px solid #55c2a0;opacity:0;transition:opacity .3s;pointer-events:none;z-index:200;font-size:13px}
+#toast.show{opacity:1}
+.confetti{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:150;animation:fall 3s linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:0}}
+.win-stars{text-align:center;font-size:36px;color:#ffd166;margin:10px 0}
+.win-stars .dim{color:#3a3a6e}
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #2a2a4e}
+.toggle{width:44px;height:24px;background:#3a3a6e;border-radius:12px;position:relative;cursor:pointer;transition:background .2s}
+.toggle.on{background:#55c2a0}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s}
+.toggle.on::after{left:23px}
+.hint-glow{animation:hintPulse 1.5s ease-in-out 3}
+@keyframes hintPulse{0%,100%{filter:none}50%{filter:drop-shadow(0 0 8px #ffd166)}}
+@keyframes pulse-glow{0%,100%{opacity:1}50%{opacity:.7}}
+.mode-btn{font-size:12px;padding:6px 10px}
+.full-btn{width:100%;margin-top:8px;padding:10px;background:#55c2a0;color:#0f0f1a;font-weight:bold;border:none}
+.help-text{font-size:12px;color:#8888aa;line-height:1.5;margin:8px 0}
+</style>
+<style>
+.gz-related-games{margin-top:24px;padding-top:20px;border-top:1px solid #e2e8f0}
+.gz-related-games h3{font-size:16px;color:#1e293b;margin-bottom:12px}
+.gz-related-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.gz-related-card{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;text-decoration:none;color:#1e293b;font-size:13px;transition:border-color .2s,box-shadow .2s}
+.gz-related-card:hover{border-color:rgba(78,205,196,.5);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+</style>
+</head>
+<body>
+<script src="/gz-analytics.js?v=202607146bed67fc" defer></script>
+<nav id="gz-topnav" style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:8px 16px;display:flex;justify-content:center;align-items:center;position:sticky;top:0;z-index:9999"><a href="https://gamezipper.com/" style="color:#fff;text-decoration:none;font-weight:bold;font-size:14px;animation:pulse-glow 2.5s ease-in-out infinite;display:inline-flex;align-items:center;gap:6px">&#x1F3AE; GameZipper — More Free Games</a></nav>
+<h1 class="gz-sr-only">Detour — Nikoli Turn-Count Loop Puzzle</h1>
+<div id="app">
+<div id="info">
+<span id="info-level">L1</span>
+<span id="info-tier">Beginner</span>
+<span id="info-time">0:00</span>
+</div>
+<canvas id="board" width="500" height="500"></canvas>
+<div class="bar">
+<button class="mode-btn active" id="btn-draw" onclick="setMode('draw')">Draw</button>
+<button class="mode-btn" id="btn-erase" onclick="setMode('erase')">Erase</button>
+<button id="btn-hint" onclick="useHint()">Hint (<span id="hint-count">3</span>)</button>
+<button id="btn-check" onclick="checkSolution()">Check</button>
+<button id="btn-clear" onclick="clearEdges()">Clear</button>
+<button id="btn-menu" onclick="showMenu()">Menu</button>
+</div>
+<div class="bar">
+<button class="mode-btn" id="btn-settings" onclick="showSettings()">Settings</button>
+<button class="mode-btn" id="btn-help" onclick="showHelp()">? Help</button>
+</div>
+</div>
+
+<div class="overlay" id="menu-overlay">
+<div class="panel">
+<h2>Detour</h2>
+<div class="help-text">Draw a loop through every cell. Numbers show turns per region.</div>
+<div id="level-select"></div>
+<button class="full-btn" onclick="hideOverlay('menu-overlay')">Close</button>
+</div>
+</div>
+
+<div class="overlay" id="settings-overlay">
+<div class="panel">
+<h2>Settings</h2>
+<div class="settings-row"><span>Music</span><div class="toggle on" id="toggle-music" onclick="toggleSetting('music')"></div></div>
+<div class="settings-row"><span>Sound Effects</span><div class="toggle on" id="toggle-sfx" onclick="toggleSetting('sfx')"></div></div>
+<div class="settings-row"><span>Auto-check</span><div class="toggle" id="toggle-autocheck" onclick="toggleSetting('autocheck')"></div></div>
+<button class="full-btn" onclick="hideOverlay('settings-overlay')">Close</button>
+</div>
+</div>
+
+<div class="overlay" id="help-overlay">
+<div class="panel">
+<h2>How to Play</h2>
+<div class="help-text">
+<b>Goal:</b> Draw a single closed loop visiting every cell exactly once.<br><br>
+<b>Rules:</b><br>
+- Click between two cells to draw/erase a line segment<br>
+- Each numbered region shows how many turns the loop makes inside it<br>
+- Unnumbered regions have no turn limit<br>
+- The loop must not branch or cross itself<br><br>
+<b>Controls:</b><br>
+- 1 = Draw mode, 2 = Erase mode<br>
+- H = Hint, R = Clear, Enter = Check<br>
+- Esc = Menu
+</div>
+<button class="full-btn" onclick="hideOverlay('help-overlay')">Close</button>
+</div>
+</div>
+
+<div class="overlay" id="win-overlay">
+<div class="panel" style="text-align:center">
+<h2>Puzzle Solved!</h2>
+<div class="win-stars" id="win-stars"></div>
+<div id="win-time" style="color:#8888aa;margin:6px 0"></div>
+<button class="full-btn" onclick="nextLevel()">Next Level</button>
+<button class="full-btn" style="margin-top:6px;background:#3a3a6e;color:#e0e0f0" onclick="hideOverlay('win-overlay')">Stay</button>
+</div>
+</div>
+
+<div id="toast"></div>
+<div id="gz-related-container" class="gz-related-games" style="display:none"></div>
+
+<script src="/game-footer.js?v=202607021204"></script>
+<script src="/adsterra-manager.js?v=v515pop"></script>
+<script src="/monetag-manager.js?v=v525midgridcull"></script>
+
+<script>
+var LEVELS = [{"rows":5,"cols":6,"regions":[[2,2,2,2,1,1],[2,2,2,2,0,0],[2,2,2,2,0,0],[2,2,2,2,0,0],[2,2,2,2,0,0]],"clues":{"0":null,"1":2,"2":null},"solution":[[[1,2],[1,3],[1,3],[2,3],[1,2],[2,3]],[[0,1],[1,3],[2,3],[0,1],[0,3],[0,2]],[[1,2],[1,3],[0,3],[1,2],[1,3],[0,3]],[[0,2],[1,2],[2,3],[0,1],[1,3],[2,3]],[[0,1],[0,3],[0,1],[1,3],[1,3],[0,3]]],"num_regions":3,"tier":1,"level":1},{"rows":5,"cols":6,"regions":[[1,1,1,1,1,1],[1,1,0,0,0,0],[1,1,0,0,0,0],[1,2,2,2,2,0],[2,2,2,2,2,2]],"clues":{"0":null,"1":null,"2":10},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,1],[2,3],[1,2],[1,3],[1,3],[0,3]],[[1,2],[0,3],[0,1],[1,3],[1,3],[2,3]],[[0,2],[1,2],[2,3],[1,2],[2,3],[0,2]],[[0,1],[0,3],[0,1],[0,3],[0,1],[0,3]]],"num_regions":3,"tier":1,"level":2},{"rows":5,"cols":6,"regions":[[0,0,0,0,0,2],[0,0,0,0,0,2],[0,0,0,0,0,2],[0,0,0,1,1,1],[0,0,0,1,1,1]],"clues":{"0":12,"1":null,"2":null},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,1],[1,3],[1,3],[2,3],[1,2],[0,3]],[[1,2],[1,3],[1,3],[0,3],[0,1],[2,3]],[[0,2],[1,2],[2,3],[1,2],[2,3],[0,2]],[[0,1],[0,3],[0,1],[0,3],[0,1],[0,3]]],"num_regions":3,"tier":1,"level":3},{"rows":5,"cols":6,"regions":[[2,2,2,2,2,0],[2,2,2,2,1,0],[2,2,1,1,1,0],[2,2,1,1,1,0],[2,2,1,1,1,0]],"clues":{"0":null,"1":9,"2":null},"solution":[[[1,2],[2,3],[1,2],[1,3],[1,3],[2,3]],[[0,2],[0,2],[0,1],[2,3],[1,2],[0,3]],[[0,2],[0,2],[1,2],[0,3],[0,1],[2,3]],[[0,2],[0,1],[0,3],[1,2],[2,3],[0,2]],[[0,1],[1,3],[1,3],[0,3],[0,1],[0,3]]],"num_regions":3,"tier":1,"level":4},{"rows":5,"cols":6,"regions":[[0,0,1,1,1,1],[0,0,0,1,1,1],[2,2,2,1,1,1],[2,2,2,1,1,1],[2,2,2,1,1,1]],"clues":{"0":null,"1":null,"2":4},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[1,3],[1,3],[1,3],[0,3]],[[0,2],[0,2],[1,2],[1,3],[1,3],[2,3]],[[0,2],[0,1],[0,3],[1,2],[2,3],[0,2]],[[0,1],[1,3],[1,3],[0,3],[0,1],[0,3]]],"num_regions":3,"tier":1,"level":5},{"rows":5,"cols":6,"regions":[[2,2,2,1,1,1],[2,2,2,1,1,1],[2,0,0,1,1,1],[0,0,0,1,1,1],[0,0,0,1,1,1]],"clues":{"0":null,"1":6,"2":null},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[2,3],[1,2],[2,3],[0,2]],[[0,1],[0,3],[0,1],[0,3],[0,2],[0,2]],[[1,2],[1,3],[1,3],[1,3],[0,3],[0,2]],[[0,1],[1,3],[1,3],[1,3],[1,3],[0,3]]],"num_regions":3,"tier":1,"level":6},{"rows":6,"cols":6,"regions":[[1,1,1,1,1,0],[2,2,1,1,0,0],[2,2,3,3,0,0],[2,2,3,3,0,0],[2,2,3,3,0,0],[2,2,3,3,0,0]],"clues":{"0":null,"1":null,"2":7,"3":6},"solution":[[[1,2],[1,3],[2,3],[1,2],[1,3],[2,3]],[[0,1],[2,3],[0,1],[0,3],[1,2],[0,3]],[[1,2],[0,3],[1,2],[2,3],[0,1],[2,3]],[[0,2],[1,2],[0,3],[0,2],[1,2],[0,3]],[[0,2],[0,2],[1,2],[0,3],[0,1],[2,3]],[[0,1],[0,3],[0,1],[1,3],[1,3],[0,3]]],"num_regions":4,"tier":2,"level":7},{"rows":6,"cols":6,"regions":[[2,0,0,0,0,3],[2,0,0,0,0,3],[2,2,0,0,3,3],[2,2,2,3,3,3],[1,1,1,1,3,3],[1,1,1,1,1,3]],"clues":{"0":8,"1":6,"2":null,"3":null},"solution":[[[1,2],[1,3],[1,3],[2,3],[1,2],[2,3]],[[0,2],[1,2],[2,3],[0,1],[0,3],[0,2]],[[0,2],[0,2],[0,1],[2,3],[1,2],[0,3]],[[0,2],[0,2],[1,2],[0,3],[0,1],[2,3]],[[0,2],[0,2],[0,2],[1,2],[2,3],[0,2]],[[0,1],[0,3],[0,1],[0,3],[0,1],[0,3]]],"num_regions":4,"tier":2,"level":8},{"rows":6,"cols":6,"regions":[[0,0,3,3,3,1],[0,0,3,3,3,1],[0,0,3,3,3,1],[0,0,3,3,3,1],[0,0,2,3,1,1],[0,0,2,2,2,1]],"clues":{"0":null,"1":5,"2":null,"3":null},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[1,3],[1,3],[1,3],[0,3]],[[0,2],[0,1],[1,3],[1,3],[1,3],[2,3]],[[0,1],[1,3],[1,3],[1,3],[2,3],[0,2]],[[1,2],[1,3],[1,3],[1,3],[0,3],[0,2]],[[0,1],[1,3],[1,3],[1,3],[1,3],[0,3]]],"num_regions":4,"tier":2,"level":9},{"rows":6,"cols":6,"regions":[[2,3,3,3,3,3],[2,3,3,3,3,3],[2,2,3,3,3,3],[2,0,0,3,3,1],[2,0,0,0,1,1],[2,0,0,1,1,1]],"clues":{"0":4,"1":null,"2":7,"3":null},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,1],[2,3],[1,2],[1,3],[1,3],[0,3]],[[1,2],[0,3],[0,1],[1,3],[1,3],[2,3]],[[0,1],[2,3],[1,2],[1,3],[1,3],[0,3]],[[1,2],[0,3],[0,1],[1,3],[1,3],[2,3]],[[0,1],[1,3],[1,3],[1,3],[1,3],[0,3]]],"num_regions":4,"tier":2,"level":10},{"rows":6,"cols":6,"regions":[[1,1,0,3,3,3],[1,1,0,3,3,3],[1,0,0,3,3,3],[1,0,0,3,3,2],[1,0,0,2,2,2],[1,0,0,2,2,2]],"clues":{"0":null,"1":null,"2":3,"3":7},"solution":[[[1,2],[2,3],[1,2],[2,3],[1,2],[2,3]],[[0,2],[0,1],[0,3],[0,1],[0,3],[0,2]],[[0,1],[2,3],[1,2],[1,3],[2,3],[0,2]],[[1,2],[0,3],[0,1],[2,3],[0,2],[0,2]],[[0,2],[1,2],[2,3],[0,2],[0,2],[0,2]],[[0,1],[0,3],[0,1],[0,3],[0,1],[0,3]]],"num_regions":4,"tier":2,"level":11},{"rows":6,"cols":6,"regions":[[0,0,1,1,1,1],[0,0,1,1,1,1],[0,0,1,1,1,1],[0,2,2,2,1,1],[0,2,2,3,1,1],[0,3,3,3,3,1]],"clues":{"0":null,"1":14,"2":3,"3":null},"solution":[[[1,2],[2,3],[1,2],[2,3],[1,2],[2,3]],[[0,2],[0,1],[0,3],[0,1],[0,3],[0,2]],[[0,1],[1,3],[1,3],[2,3],[1,2],[0,3]],[[1,2],[1,3],[1,3],[0,3],[0,1],[2,3]],[[0,2],[1,2],[2,3],[1,2],[2,3],[0,2]],[[0,1],[0,3],[0,1],[0,3],[0,1],[0,3]]],"num_regions":4,"tier":2,"level":12},{"rows":6,"cols":8,"regions":[[2,2,2,4,4,4,4,4],[2,2,2,3,3,4,4,4],[2,2,3,3,3,3,0,0],[2,2,3,3,3,0,0,0],[2,2,1,1,0,0,0,0],[2,1,1,1,1,1,1,1]],"clues":{"0":null,"1":null,"2":6,"3":null,"4":2},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3],[0,2]],[[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3],[0,2]],[[0,2],[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]],[[0,2],[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]]],"num_regions":5,"tier":3,"level":13},{"rows":6,"cols":8,"regions":[[1,1,2,2,4,4,0,0],[1,1,2,2,2,4,0,0],[1,1,1,2,2,4,0,0],[1,1,1,2,2,4,0,0],[3,1,2,2,4,4,4,0],[3,3,3,3,3,4,4,0]],"clues":{"0":6,"1":3,"2":null,"3":1,"4":null},"solution":[[[1,2],[2,3],[1,2],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[0,2],[0,2],[1,2],[1,3],[1,3],[1,3],[0,3]],[[0,2],[0,2],[0,2],[0,2],[1,2],[2,3],[1,2],[2,3]],[[0,2],[0,2],[0,2],[0,2],[0,2],[0,1],[0,3],[0,2]],[[0,2],[0,1],[0,3],[0,1],[0,3],[1,2],[2,3],[0,2]],[[0,1],[1,3],[1,3],[1,3],[1,3],[0,3],[0,1],[0,3]]],"num_regions":5,"tier":3,"level":14},{"rows":6,"cols":8,"regions":[[3,3,3,3,2,2,2,2],[3,3,3,3,3,2,0,0],[4,4,3,3,3,2,0,0],[4,4,4,3,3,2,0,0],[4,4,4,3,3,1,1,1],[4,4,4,3,1,1,1,1]],"clues":{"0":5,"1":2,"2":6,"3":null,"4":null},"solution":[[[1,2],[1,3],[2,3],[1,2],[2,3],[1,2],[1,3],[2,3]],[[0,1],[2,3],[0,1],[0,3],[0,1],[0,3],[1,2],[0,3]],[[1,2],[0,3],[1,2],[2,3],[1,2],[2,3],[0,1],[2,3]],[[0,1],[1,3],[0,3],[0,1],[0,3],[0,1],[2,3],[0,2]],[[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3],[0,2]],[[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]]],"num_regions":5,"tier":3,"level":15},{"rows":6,"cols":8,"regions":[[2,2,2,2,2,4,4,4],[2,2,2,2,2,4,4,4],[2,2,2,2,4,4,0,4],[1,1,4,4,4,0,0,0],[1,1,1,4,3,0,0,0],[1,1,1,3,3,3,0,0]],"clues":{"0":5,"1":null,"2":7,"3":null,"4":null},"solution":[[[1,2],[1,3],[2,3],[1,2],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[0,3],[0,1],[1,3],[1,3],[2,3],[0,2]],[[0,2],[0,1],[1,3],[1,3],[2,3],[1,2],[0,3],[0,2]],[[0,2],[1,2],[1,3],[1,3],[0,3],[0,1],[2,3],[0,2]],[[0,2],[0,1],[1,3],[1,3],[1,3],[1,3],[0,3],[0,2]],[[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]]],"num_regions":5,"tier":3,"level":16},{"rows":6,"cols":8,"regions":[[0,0,0,0,0,0,0,0],[0,0,0,2,2,0,0,0],[0,2,2,2,2,2,4,0],[2,2,2,2,2,2,4,4],[3,3,3,3,3,4,4,1],[3,3,3,3,3,3,1,1]],"clues":{"0":null,"1":2,"2":null,"3":4,"4":1},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[2,3],[1,2],[2,3]],[[0,1],[1,3],[1,3],[1,3],[2,3],[0,1],[0,3],[0,2]],[[1,2],[1,3],[1,3],[1,3],[0,3],[1,2],[2,3],[0,2]],[[0,1],[1,3],[1,3],[1,3],[2,3],[0,2],[0,2],[0,2]],[[1,2],[1,3],[1,3],[1,3],[0,3],[0,2],[0,2],[0,2]],[[0,1],[1,3],[1,3],[1,3],[1,3],[0,3],[0,1],[0,3]]],"num_regions":5,"tier":3,"level":17},{"rows":6,"cols":8,"regions":[[4,4,4,4,2,0,0,0],[4,4,4,4,2,2,0,0],[4,4,4,4,2,2,0,1],[4,4,4,3,3,3,1,1],[4,4,4,3,3,3,1,1],[4,4,4,3,3,3,1,1]],"clues":{"0":3,"1":null,"2":4,"3":3,"4":null},"solution":[[[1,2],[1,3],[1,3],[1,3],[2,3],[1,2],[1,3],[2,3]],[[0,1],[1,3],[2,3],[1,2],[0,3],[0,1],[2,3],[0,2]],[[1,2],[2,3],[0,2],[0,1],[1,3],[2,3],[0,2],[0,2]],[[0,2],[0,2],[0,2],[1,2],[1,3],[0,3],[0,2],[0,2]],[[0,2],[0,1],[0,3],[0,1],[1,3],[1,3],[0,3],[0,2]],[[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]]],"num_regions":5,"tier":3,"level":18},{"rows":8,"cols":8,"regions":[[4,4,4,4,4,4,4,4],[4,4,4,5,5,5,5,4],[0,5,5,5,5,2,2,4],[0,0,5,5,2,2,2,1],[0,0,0,5,2,2,2,1],[0,0,0,3,2,2,1,1],[3,3,3,3,1,1,1,1],[3,3,3,3,3,1,1,1]],"clues":{"0":1,"1":null,"2":null,"3":null,"4":6,"5":7},"solution":[[[1,2],[1,3],[1,3],[1,3],[2,3],[1,2],[1,3],[2,3]],[[0,2],[1,2],[2,3],[1,2],[0,3],[0,1],[2,3],[0,2]],[[0,2],[0,2],[0,2],[0,2],[1,2],[2,3],[0,2],[0,2]],[[0,2],[0,2],[0,2],[0,1],[0,3],[0,2],[0,2],[0,2]],[[0,2],[0,2],[0,2],[1,2],[2,3],[0,2],[0,2],[0,2]],[[0,2],[0,2],[0,1],[0,3],[0,1],[0,3],[0,2],[0,2]],[[0,2],[0,1],[1,3],[1,3],[1,3],[1,3],[0,3],[0,2]],[[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]]],"num_regions":6,"tier":4,"level":19},{"rows":8,"cols":8,"regions":[[5,5,5,1,1,1,1,1],[5,5,5,5,1,1,0,0],[5,5,5,5,1,0,0,0],[2,5,5,5,1,0,0,0],[2,2,4,4,3,3,3,0],[2,2,2,4,3,3,3,3],[2,2,2,4,4,3,3,3],[2,2,4,4,4,4,4,4]],"clues":{"0":2,"1":4,"2":2,"3":null,"4":null,"5":null},"solution":[[[1,2],[2,3],[1,2],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[0,2],[0,1],[2,3],[1,2],[1,3],[2,3],[0,2]],[[0,2],[0,1],[1,3],[0,3],[0,1],[2,3],[0,2],[0,2]],[[0,2],[1,2],[2,3],[1,2],[2,3],[0,2],[0,2],[0,2]],[[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2]],[[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2]],[[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2]],[[0,1],[0,3],[0,1],[0,3],[0,1],[0,3],[0,1],[0,3]]],"num_regions":6,"tier":4,"level":20},{"rows":8,"cols":8,"regions":[[0,3,3,2,2,2,2,2],[0,0,3,2,2,2,2,2],[0,0,3,3,2,2,2,2],[0,0,4,4,2,2,2,2],[4,4,4,4,1,2,2,2],[5,4,4,4,1,1,2,2],[5,5,5,1,1,1,1,2],[5,5,5,5,1,1,1,2]],"clues":{"0":null,"1":3,"2":null,"3":1,"4":null,"5":4},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[2,3],[1,2],[2,3]],[[0,2],[1,2],[1,3],[1,3],[2,3],[0,1],[0,3],[0,2]],[[0,2],[0,2],[1,2],[1,3],[0,3],[1,2],[1,3],[0,3]],[[0,2],[0,2],[0,2],[1,2],[2,3],[0,1],[1,3],[2,3]],[[0,2],[0,2],[0,2],[0,2],[0,2],[1,2],[2,3],[0,2]],[[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2]],[[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2]],[[0,1],[0,3],[0,1],[0,3],[0,1],[0,3],[0,1],[0,3]]],"num_regions":6,"tier":4,"level":21},{"rows":8,"cols":8,"regions":[[4,4,4,4,5,5,5,5],[4,4,4,4,5,5,5,5],[4,4,4,1,1,1,1,1],[4,4,1,1,1,1,2,2],[4,4,1,1,2,2,2,2],[4,4,3,3,2,2,2,0],[4,4,3,3,3,3,0,0],[4,3,3,3,3,3,3,0]],"clues":{"0":null,"1":null,"2":5,"3":null,"4":10,"5":7},"solution":[[[1,2],[1,3],[1,3],[2,3],[1,2],[2,3],[1,2],[2,3]],[[0,2],[1,2],[2,3],[0,1],[0,3],[0,1],[0,3],[0,2]],[[0,2],[0,2],[0,1],[2,3],[1,2],[1,3],[1,3],[0,3]],[[0,2],[0,1],[2,3],[0,2],[0,1],[1,3],[1,3],[2,3]],[[0,2],[1,2],[0,3],[0,1],[1,3],[1,3],[1,3],[0,3]],[[0,2],[0,2],[1,2],[2,3],[1,2],[2,3],[1,2],[2,3]],[[0,2],[0,1],[0,3],[0,1],[0,3],[0,1],[0,3],[0,2]],[[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]]],"num_regions":6,"tier":4,"level":22},{"rows":8,"cols":8,"regions":[[4,4,5,5,2,2,3,3],[4,4,5,5,2,2,3,3],[4,4,5,5,2,2,3,3],[4,5,5,5,5,2,3,3],[4,4,5,5,2,2,3,3],[4,4,5,1,1,2,0,0],[4,4,1,1,1,0,0,0],[4,1,1,1,1,0,0,0]],"clues":{"0":3,"1":null,"2":2,"3":2,"4":null,"5":null},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[1,3],[1,3],[1,3],[1,3],[2,3],[0,2]],[[0,2],[0,1],[1,3],[1,3],[1,3],[2,3],[0,2],[0,2]],[[0,1],[1,3],[1,3],[1,3],[2,3],[0,2],[0,2],[0,2]],[[1,2],[1,3],[1,3],[1,3],[0,3],[0,2],[0,2],[0,2]],[[0,1],[1,3],[1,3],[1,3],[2,3],[0,2],[0,2],[0,2]],[[1,2],[1,3],[1,3],[1,3],[0,3],[0,2],[0,2],[0,2]],[[0,1],[1,3],[1,3],[1,3],[1,3],[0,3],[0,1],[0,3]]],"num_regions":6,"tier":4,"level":23},{"rows":8,"cols":8,"regions":[[5,5,5,2,2,2,0,0],[5,5,5,5,2,2,0,0],[5,5,5,5,2,2,0,0],[5,5,5,5,2,2,4,4],[5,1,5,4,4,4,4,4],[1,1,1,1,3,3,4,4],[1,1,1,1,3,3,3,3],[1,1,1,1,3,3,3,3]],"clues":{"0":null,"1":6,"2":2,"3":4,"4":null,"5":null},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[2,3],[1,2],[2,3],[1,2],[2,3],[0,2]],[[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2]],[[0,1],[0,3],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2]],[[1,2],[1,3],[0,3],[0,2],[0,2],[0,2],[0,2],[0,2]],[[0,1],[1,3],[2,3],[0,2],[0,2],[0,2],[0,2],[0,2]],[[1,2],[1,3],[0,3],[0,2],[0,2],[0,2],[0,2],[0,2]],[[0,1],[1,3],[1,3],[0,3],[0,1],[0,3],[0,1],[0,3]]],"num_regions":6,"tier":4,"level":24},{"rows":8,"cols":10,"regions":[[5,5,5,1,1,1,1,1,0,0],[5,5,5,1,1,1,1,1,0,0],[5,5,5,4,4,1,1,6,6,0],[2,2,2,4,4,4,4,6,6,0],[2,2,2,3,4,4,4,6,6,0],[2,2,3,3,3,4,4,6,6,0],[2,3,3,3,3,3,6,6,6,0],[2,2,3,3,3,3,6,6,6,0]],"clues":{"0":null,"1":null,"2":1,"3":4,"4":2,"5":3,"6":null},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[2,3],[1,2],[1,3],[1,3],[2,3]],[[0,2],[1,2],[2,3],[1,2],[2,3],[0,2],[0,1],[1,3],[2,3],[0,2]],[[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[1,2],[1,3],[0,3],[0,2]],[[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,1],[1,3],[2,3],[0,2]],[[0,2],[0,2],[0,2],[0,2],[0,2],[0,1],[1,3],[1,3],[0,3],[0,2]],[[0,2],[0,2],[0,1],[0,3],[0,1],[1,3],[1,3],[1,3],[1,3],[0,3]],[[0,2],[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]]],"num_regions":7,"tier":5,"level":25},{"rows":8,"cols":10,"regions":[[4,4,4,4,4,4,4,6,6,6],[4,4,4,1,4,4,0,6,6,6],[4,4,1,1,2,2,0,0,6,6],[4,1,1,1,1,2,0,0,5,5],[4,1,1,1,2,2,2,5,5,5],[4,1,1,1,2,2,2,5,5,5],[4,1,1,3,3,3,3,3,5,5],[4,1,3,3,3,3,3,3,3,5]],"clues":{"0":null,"1":8,"2":null,"3":null,"4":4,"5":4,"6":null},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]],[[0,2],[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]],[[0,2],[0,2],[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[0,1],[0,3],[1,2],[1,3],[1,3],[1,3],[1,3],[2,3],[0,2]],[[0,2],[1,2],[2,3],[0,1],[1,3],[1,3],[1,3],[2,3],[0,2],[0,2]],[[0,1],[0,3],[0,1],[1,3],[1,3],[1,3],[1,3],[0,3],[0,1],[0,3]]],"num_regions":7,"tier":5,"level":26},{"rows":8,"cols":10,"regions":[[0,0,0,0,0,1,1,1,1,1],[0,0,0,0,0,1,1,1,5,5],[0,0,0,2,2,2,2,2,5,5],[2,2,2,2,2,2,2,5,5,5],[2,2,6,6,6,6,6,6,6,6],[6,6,6,6,6,6,4,4,3,3],[6,6,4,4,4,4,4,4,3,3],[4,4,4,4,4,4,4,4,3,3]],"clues":{"0":null,"1":1,"2":null,"3":3,"4":null,"5":3,"6":3},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]],[[0,2],[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]],[[0,2],[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3],[0,2]],[[0,2],[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3],[0,2],[0,2]],[[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3],[0,1],[0,3]]],"num_regions":7,"tier":5,"level":27},{"rows":8,"cols":10,"regions":[[4,4,1,1,1,6,6,2,2,2],[4,4,1,1,6,6,6,2,2,2],[4,4,3,3,3,6,6,6,2,2],[4,4,3,3,3,3,6,6,2,2],[0,0,0,3,3,3,6,6,2,2],[0,0,0,0,5,5,6,6,2,2],[0,0,0,5,5,5,5,6,2,2],[0,0,5,5,5,5,5,5,2,2]],"clues":{"0":null,"1":null,"2":null,"3":4,"4":null,"5":7,"6":2},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3],[0,2]],[[0,2],[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3],[0,2],[0,2]],[[0,2],[1,2],[1,3],[1,3],[2,3],[1,2],[2,3],[0,2],[0,2],[0,2]],[[0,2],[0,1],[2,3],[1,2],[0,3],[0,2],[0,2],[0,2],[0,2],[0,2]],[[0,2],[1,2],[0,3],[0,1],[2,3],[0,2],[0,2],[0,2],[0,2],[0,2]],[[0,2],[0,1],[1,3],[2,3],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2]],[[0,1],[1,3],[1,3],[0,3],[0,1],[0,3],[0,1],[0,3],[0,1],[0,3]]],"num_regions":7,"tier":5,"level":28},{"rows":8,"cols":10,"regions":[[2,2,2,1,1,1,3,3,3,3],[2,2,2,1,1,1,1,3,3,3],[2,2,2,2,1,1,1,3,3,3],[0,0,0,0,1,1,1,3,3,5],[0,0,0,6,4,1,1,5,5,5],[0,0,6,6,4,4,4,5,5,5],[6,6,6,6,4,4,4,4,5,5],[6,6,6,6,4,4,4,4,5,5]],"clues":{"0":2,"1":null,"2":null,"3":null,"4":null,"5":7,"6":3},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3],[1,2],[2,3]],[[0,1],[1,3],[1,3],[1,3],[2,3],[1,2],[1,3],[0,3],[0,2],[0,2]],[[1,2],[1,3],[1,3],[1,3],[0,3],[0,1],[1,3],[1,3],[0,3],[0,2]],[[0,2],[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3],[1,2],[0,3]],[[0,2],[0,2],[1,2],[1,3],[1,3],[1,3],[1,3],[0,3],[0,1],[2,3]],[[0,2],[0,2],[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]],[[0,2],[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]]],"num_regions":7,"tier":5,"level":29},{"rows":8,"cols":10,"regions":[[3,3,3,3,2,2,2,4,4,4],[3,3,5,3,2,2,2,4,4,4],[5,5,5,5,2,1,6,6,6,6],[0,5,5,5,1,1,1,6,6,6],[0,0,5,5,1,1,1,6,6,6],[0,0,0,5,1,1,1,6,6,6],[0,0,0,5,1,1,1,6,6,6],[0,0,0,5,1,1,1,6,6,6]],"clues":{"0":4,"1":null,"2":null,"3":null,"4":null,"5":2,"6":6},"solution":[[[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[0,3]],[[0,2],[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[1,3],[2,3]],[[0,2],[1,2],[1,3],[1,3],[1,3],[1,3],[2,3],[1,2],[2,3],[0,2]],[[0,2],[0,1],[1,3],[1,3],[1,3],[2,3],[0,2],[0,2],[0,2],[0,2]],[[0,1],[1,3],[1,3],[1,3],[2,3],[0,2],[0,2],[0,2],[0,2],[0,2]],[[1,2],[1,3],[1,3],[1,3],[0,3],[0,2],[0,2],[0,2],[0,2],[0,2]],[[0,1],[1,3],[1,3],[1,3],[1,3],[0,3],[0,1],[0,3],[0,1],[0,3]]],"num_regions":7,"tier":5,"level":30}];
+
+// Region colors (15-color palette)
+var REGION_COLORS = [
+  'rgba(40,50,70,0.4)','rgba(50,40,60,0.4)','rgba(45,55,50,0.4)','rgba(55,45,55,0.4)',
+  'rgba(40,55,55,0.4)','rgba(55,50,40,0.4)','rgba(45,45,60,0.4)','rgba(50,55,45,0.4)',
+  'rgba(60,45,45,0.4)','rgba(45,60,45,0.4)','rgba(60,40,55,0.4)','rgba(40,60,55,0.4)',
+  'rgba(55,55,40,0.4)','rgba(40,45,60,0.4)','rgba(60,55,50,0.4)'
+];
+var REGION_BORDERS = [
+  '#4a5a7a','#5a4a6a','#4a5a50','#5a4a5a','#4a5a5a','#5a5a4a','#4a4a5a','#5a5a4a',
+  '#5a4a4a','#4a5a4a','#5a4a5a','#4a5a5a','#5a5a4a','#4a4a5a','#5a5a4a'
+];
+
+// Directions: 0=N, 1=E, 2=S, 3=W
+var DR=[-1,0,1,0], DC=[0,1,0,-1];
+
+var state = {
+  levelIdx: 0,
+  mode: 'draw', // 'draw' or 'erase'
+  edges: {}, // key: "r1,c1,r2,c2" -> true/false
+  hintsLeft: 3,
+  hintsUsed: 0,
+  startTime: 0,
+  timerInterval: null,
+  rafId: null,
+  audioCtx: null,
+  bgmNodes: [],
+  musicOn: true,
+  sfxOn: true,
+  autocheck: false,
+  progress: {},
+  currentLevel: null,
+  violations: [],
+  hintCells: [],
+  dragStart: null
+};
+
+var canvas, ctx;
+
+function init() {
+  canvas = document.getElementById('board');
+  ctx = canvas.getContext('2d');
+  
+  loadProgress();
+  
+  // Start at first unlocked level
+  var startLevel = 0;
+  for (var i = 0; i < 30; i++) {
+    if (!state.progress[i] || !state.progress[i].completed) {
+      startLevel = i;
+      break;
+    }
+  }
+  
+  loadLevel(startLevel);
+  buildLevelSelect();
+  setupAudio();
+  
+  // Event listeners
+  canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('pointermove', onPointerMove);
+  canvas.addEventListener('pointerup', onPointerUp);
+  canvas.addEventListener('pointercancel', onPointerUp);
+  
+  window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('resize', resizeCanvas);
+  document.addEventListener('visibilitychange', onVisibilityChange);
+  window.addEventListener('beforeunload', cleanup);
+  
+  resizeCanvas();
+  startTimer();
+  render();
+}
+
+function loadProgress() {
+  try {
+    var saved = JSON.parse(localStorage.getItem('detour_progress') || '{}');
+    state.progress = saved.progress || {};
+    state.musicOn = saved.musicOn !== false;
+    state.sfxOn = saved.sfxOn !== false;
+    state.autocheck = saved.autocheck || false;
+  } catch(e) {
+    state.progress = {};
+  }
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem('detour_progress', JSON.stringify({
+      progress: state.progress,
+      musicOn: state.musicOn,
+      sfxOn: state.sfxOn,
+      autocheck: state.autocheck
+    }));
+  } catch(e) {}
+}
+
+function loadLevel(idx) {
+  state.levelIdx = idx;
+  state.currentLevel = LEVELS[idx];
+  state.edges = {};
+  state.hintsLeft = 3;
+  state.hintsUsed = 0;
+  state.hintCells = [];
+  state.violations = [];
+  state.startTime = Date.now();
+  
+  document.getElementById('info-level').textContent = 'L' + (idx + 1);
+  var tierNames = ['Beginner','Easy','Medium','Hard','Expert'];
+  document.getElementById('info-tier').textContent = tierNames[state.currentLevel.tier - 1];
+  document.getElementById('hint-count').textContent = state.hintsLeft;
+  
+  resizeCanvas();
+}
+
+function resizeCanvas() {
+  if (!state.currentLevel) return;
+  var lv = state.currentLevel;
+  var maxW = Math.min(window.innerWidth - 20, 540);
+  var maxH = window.innerHeight - 200;
+  var cellSize = Math.min(maxW / lv.cols, maxH / lv.rows);
+  cellSize = Math.max(20, Math.min(cellSize, 60));
+  
+  canvas.width = lv.cols * cellSize;
+  canvas.height = lv.rows * cellSize;
+  canvas.dataset.cellSize = cellSize;
+  render();
+}
+
+function getCellSize() {
+  return parseFloat(canvas.dataset.cellSize) || 40;
+}
+
+function edgeKey(r1, c1, r2, c2) {
+  // Normalize: smaller cell first
+  if (r1 < r2 || (r1 === r2 && c1 < c2)) {
+    return r1 + ',' + c1 + ',' + r2 + ',' + c2;
+  }
+  return r2 + ',' + c2 + ',' + r1 + ',' + c1;
+}
+
+function hasEdge(r1, c1, r2, c2) {
+  return !!state.edges[edgeKey(r1, c1, r2, c2)];
+}
+
+function toggleEdge(r1, c1, r2, c2) {
+  var key = edgeKey(r1, c1, r2, c2);
+  if (state.mode === 'draw') {
+    state.edges[key] = true;
+  } else {
+    delete state.edges[key];
+  }
+}
+
+function onPointerDown(e) {
+  e.preventDefault();
+  var pos = getGridPos(e);
+  if (!pos) return;
+  state.dragStart = pos;
+  handleEdgeClick(pos, e);
+}
+
+function onPointerMove(e) {
+  if (!state.dragStart) return;
+  e.preventDefault();
+  var pos = getGridPos(e);
+  if (!pos) return;
+  handleEdgeClick(pos, e);
+}
+
+function onPointerUp(e) {
+  state.dragStart = null;
+  if (state.autocheck) checkSolution();
+}
+
+function getGridPos(e) {
+  var rect = canvas.getBoundingClientRect();
+  var cs = getCellSize();
+  var x = (e.clientX - rect.left);
+  var y = (e.clientY - rect.top);
+  
+  // Check if click is on a horizontal edge (between rows)
+  // or vertical edge (between columns)
+  var localX = x % cs;
+  var localY = y % cs;
+  var col = Math.floor(x / cs);
+  var row = Math.floor(y / cs);
+  
+  var lv = state.currentLevel;
+  if (row < 0 || row >= lv.rows || col < 0 || col >= lv.cols) return null;
+  
+  // Determine if clicking near an edge
+  var threshold = cs * 0.3;
+  
+  // Check vertical edges (between columns)
+  if (localX < threshold && col > 0) {
+    return {type: 'v', row: row, col: col - 1, dir: 1}; // East edge of (row, col-1)
+  }
+  if (localX > cs - threshold && col < lv.cols - 1) {
+    return {type: 'v', row: row, col: col, dir: 1}; // East edge of (row, col)
+  }
+  // Check horizontal edges (between rows)
+  if (localY < threshold && row > 0) {
+    return {type: 'h', row: row - 1, col: col, dir: 2}; // South edge of (row-1, col)
+  }
+  if (localY > cs - threshold && row < lv.rows - 1) {
+    return {type: 'h', row: row, col: col, dir: 2}; // South edge of (row, col)
+  }
+  
+  return null;
+}
+
+function handleEdgeClick(pos, e) {
+  if (!pos) return;
+  var r1, c1, r2, c2;
+  
+  if (pos.type === 'v') {
+    r1 = pos.row; c1 = pos.col;
+    r2 = pos.row; c2 = pos.col + 1;
+  } else {
+    r1 = pos.row; c1 = pos.col;
+    r2 = pos.row + 1; c2 = pos.col;
+  }
+  
+  var key = edgeKey(r1, c1, r2, c2);
+  var isDrawing = state.mode === 'draw';
+  var currentlyHas = !!state.edges[key];
+  
+  // Only toggle once per drag
+  if (isDrawing && !currentlyHas) {
+    state.edges[key] = true;
+    playSFX('place');
+    render();
+  } else if (!isDrawing && currentlyHas) {
+    delete state.edges[key];
+    playSFX('erase');
+    render();
+  }
+}
+
+function setMode(m) {
+  state.mode = m;
+  document.getElementById('btn-draw').classList.toggle('active', m === 'draw');
+  document.getElementById('btn-erase').classList.toggle('active', m === 'erase');
+  playSFX('click');
+}
+
+function useHint() {
+  if (state.hintsLeft <= 0) {
+    showToast('No hints left!');
+    return;
+  }
+  
+  var lv = state.currentLevel;
+  // Find a cell where the player's connections don't match the solution
+  var candidates = [];
+  for (var r = 0; r < lv.rows; r++) {
+    for (var c = 0; c < lv.cols; c++) {
+      if (state.hintCells.indexOf(r + ',' + c) >= 0) continue;
+      var solConns = lv.solution[r][c];
+      var playerConns = getPlayerConns(r, c);
+      if (!arraysEqual(solConns.sort(), playerConns.sort())) {
+        candidates.push({r: r, c: c});
+      }
+    }
+  }
+  
+  if (candidates.length === 0) {
+    showToast('Everything looks correct!');
+    return;
+  }
+  
+  var pick = candidates[Math.floor(Math.random() * candidates.length)];
+  // Set the correct edges for this cell
+  var lv2 = state.currentLevel;
+  var solConns = lv2.solution[pick.r][pick.c];
+  for (var i = 0; i < solConns.length; i++) {
+    var d = solConns[i];
+    var nr = pick.r + DR[d], nc = pick.c + DC[d];
+    state.edges[edgeKey(pick.r, pick.c, nr, nc)] = true;
+  }
+  
+  state.hintCells.push(pick.r + ',' + pick.c);
+  state.hintsLeft--;
+  state.hintsUsed++;
+  document.getElementById('hint-count').textContent = state.hintsLeft;
+  playSFX('hint');
+  showToast('Hint revealed!');
+  render();
+  
+  if (state.autocheck) checkSolution();
+}
+
+function getPlayerConns(r, c) {
+  var conns = [];
+  for (var d = 0; d < 4; d++) {
+    var nr = r + DR[d], nc = c + DC[d];
+    var lv = state.currentLevel;
+    if (nr >= 0 && nr < lv.rows && nc >= 0 && nc < lv.cols) {
+      if (hasEdge(r, c, nr, nc)) conns.push(d);
+    }
+  }
+  return conns;
+}
+
+function arraysEqual(a, b) {
+  if (a.length !== b.length) return false;
+  for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+function checkSolution() {
+  var lv = state.currentLevel;
+  state.violations = [];
+  
+  // Check 1: Every cell has exactly 2 connections
+  var allValid = true;
+  for (var r = 0; r < lv.rows; r++) {
+    for (var c = 0; c < lv.cols; c++) {
+      var conns = getPlayerConns(r, c);
+      if (conns.length !== 2) {
+        state.violations.push({r: r, c: c, type: 'count'});
+        allValid = false;
+      }
+    }
+  }
+  
+  if (!allValid) {
+    playSFX('error');
+    showToast('Some cells need exactly 2 connections');
+    render();
+    return;
+  }
+  
+  // Check 2: Single closed loop (trace)
+  var visited = {};
+  var start = '0,0';
+  var current = [0, 0];
+  var prevDir = -1;
+  var count = 0;
+  
+  while (count < lv.rows * lv.cols + 1) {
+    var key = current[0] + ',' + current[1];
+    if (visited[key] && key === start) break;
+    if (visited[key]) {
+      // Multiple loops
+      playSFX('error');
+      showToast('Multiple loops detected!');
+      render();
+      return;
+    }
+    visited[key] = true;
+    
+    var conns = getPlayerConns(current[0], current[1]);
+    var nextDir = -1;
+    for (var i = 0; i < conns.length; i++) {
+      if (conns[i] !== (prevDir + 2) % 4 || conns.length === 1) {
+        nextDir = conns[i];
+        break;
+      }
+    }
+    if (count === 0) nextDir = conns[0];
+    if (nextDir < 0) break;
+    
+    current = [current[0] + DR[nextDir], current[1] + DC[nextDir]];
+    prevDir = nextDir;
+    count++;
+  }
+  
+  if (Object.keys(visited).length !== lv.rows * lv.cols) {
+    playSFX('error');
+    showToast('Loop must visit all cells! Visited: ' + Object.keys(visited).length + '/' + (lv.rows * lv.cols));
+    render();
+    return;
+  }
+  
+  if (current[0] !== 0 || current[1] !== 0) {
+    playSFX('error');
+    showToast('Loop must be closed!');
+    render();
+    return;
+  }
+  
+  // Check 3: Turn counts per region
+  var turnCounts = {};
+  for (var r = 0; r < lv.rows; r++) {
+    for (var c = 0; c < lv.cols; c++) {
+      var conns2 = getPlayerConns(r, c);
+      var sorted = conns2.slice().sort();
+      var isTurn = (sorted[0] + 2) % 4 !== sorted[1];
+      if (isTurn) {
+        var rid = lv.regions[r][c];
+        turnCounts[rid] = (turnCounts[rid] || 0) + 1;
+      }
+    }
+  }
+  
+  for (var rid in lv.clues) {
+    var clue = lv.clues[rid];
+    if (clue !== null && clue !== undefined) {
+      var actual = turnCounts[rid] || 0;
+      if (actual !== clue) {
+        playSFX('error');
+        showToast('Region ' + (parseInt(rid)+1) + ': expected ' + clue + ' turns, got ' + actual);
+        render();
+        return;
+      }
+    }
+  }
+  
+  // SOLVED!
+  playSFX('win');
+  var time = Math.floor((Date.now() - state.startTime) / 1000);
+  var stars = calcStars(time, state.hintsUsed);
+  
+  state.progress[state.levelIdx] = {
+    completed: true,
+    stars: stars,
+    time: time
+  };
+  saveProgress();
+  
+  document.getElementById('win-stars').innerHTML = starHTML(stars);
+  document.getElementById('win-time').textContent = 'Time: ' + formatTime(time) + ' | Hints: ' + state.hintsUsed;
+  showOverlay('win-overlay');
+  fireConfetti();
+  buildLevelSelect();
+}
+
+function calcStars(time, hints) {
+  var stars = 3;
+  if (hints > 0) stars--;
+  if (hints > 2) stars--;
+  var lv = state.currentLevel;
+  var parTime = lv.rows * lv.cols * 3;
+  if (time > parTime * 2) stars--;
+  return Math.max(1, stars);
+}
+
+function starHTML(n) {
+  var s = '';
+  for (var i = 0; i < 3; i++) s += i < n ? '&#9733;' : '<span class="dim">&#9733;</span>';
+  return s;
+}
+
+function formatTime(s) {
+  var m = Math.floor(s / 60);
+  var sec = s % 60;
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+function clearEdges() {
+  state.edges = {};
+  state.violations = [];
+  state.hintCells = [];
+  playSFX('click');
+  render();
+}
+
+function nextLevel() {
+  hideOverlay('win-overlay');
+  if (state.levelIdx < 29) {
+    loadLevel(state.levelIdx + 1);
+  } else {
+    showMenu();
+  }
+}
+
+function showMenu() {
+  buildLevelSelect();
+  showOverlay('menu-overlay');
+}
+
+function buildLevelSelect() {
+  var html = '';
+  for (var t = 1; t <= 5; t++) {
+    var tierNames = ['Beginner','Easy','Medium','Hard','Expert'];
+    html += '<div class="tier-label">' + tierNames[t-1] + '</div><div class="lvl-grid">';
+    for (var i = (t-1)*6; i < t*6; i++) {
+      if (i >= 30) break;
+      var p = state.progress[i] || {};
+      var cls = 'lvl-btn';
+      if (p.completed) cls += ' completed';
+      // Unlock: first level always unlocked, rest need previous completed
+      var locked = i > 0 && !(state.progress[i-1] && state.progress[i-1].completed);
+      if (locked) cls += ' locked';
+      var stars = p.completed ? starHTML(p.stars) : '';
+      html += '<div class="' + cls + '" onclick="' + (locked ? '' : 'selectLevel(' + i + ')') + '">' + (i+1) + '<div class="lvl-stars">' + stars + '</div></div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('level-select').innerHTML = html;
+}
+
+function selectLevel(idx) {
+  hideOverlay('menu-overlay');
+  loadLevel(idx);
+}
+
+function showSettings() { showOverlay('settings-overlay'); }
+function showHelp() { showOverlay('help-overlay'); }
+
+function toggleSetting(name) {
+  if (name === 'music') {
+    state.musicOn = !state.musicOn;
+    document.getElementById('toggle-music').classList.toggle('on', state.musicOn);
+    if (state.musicOn) startBGM(); else stopBGM();
+  } else if (name === 'sfx') {
+    state.sfxOn = !state.sfxOn;
+    document.getElementById('toggle-sfx').classList.toggle('on', state.sfxOn);
+  } else if (name === 'autocheck') {
+    state.autocheck = !state.autocheck;
+    document.getElementById('toggle-autocheck').classList.toggle('on', state.autocheck);
+  }
+  saveProgress();
+}
+
+function showOverlay(id) { document.getElementById(id).classList.add('show'); }
+function hideOverlay(id) { document.getElementById(id).classList.remove('show'); }
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2500);
+}
+
+function onKeyDown(e) {
+  switch(e.key) {
+    case '1': setMode('draw'); break;
+    case '2': setMode('erase'); break;
+    case 'h': case 'H': useHint(); break;
+    case 'r': case 'R': clearEdges(); break;
+    case 'Enter': checkSolution(); break;
+    case 'Escape': showMenu(); break;
+  }
+}
+
+function onVisibilityChange() {
+  if (document.hidden) {
+    if (state.rafId) { cancelAnimationFrame(state.rafId); state.rafId = null; }
+  } else {
+    if (!state.rafId) { render(); }
+  }
+}
+
+// Timer
+function startTimer() {
+  if (state.timerInterval) clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(function() {
+    var t = Math.floor((Date.now() - state.startTime) / 1000);
+    document.getElementById('info-time').textContent = formatTime(t);
+  }, 500);
+}
+
+// Rendering
+function render() {
+  if (!state.currentLevel || !ctx) return;
+  var lv = state.currentLevel;
+  var cs = getCellSize();
+  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw region backgrounds
+  for (var r = 0; r < lv.rows; r++) {
+    for (var c = 0; c < lv.cols; c++) {
+      var rid = lv.regions[r][c];
+      ctx.fillStyle = REGION_COLORS[rid % REGION_COLORS.length];
+      ctx.fillRect(c * cs, r * cs, cs, cs);
+    }
+  }
+  
+  // Draw region borders
+  ctx.strokeStyle = '#4a4a6e';
+  ctx.lineWidth = 1;
+  for (var r = 0; r < lv.rows; r++) {
+    for (var c = 0; c < lv.cols; c++) {
+      var rid = lv.regions[r][c];
+      // Check each neighbor - draw thick border if different region
+      for (var d = 0; d < 4; d++) {
+        var nr = r + DR[d], nc = c + DC[d];
+        if (nr < 0 || nr >= lv.rows || nc < 0 || nc >= lv.cols) {
+          // Grid border
+          continue;
+        }
+        var nrid = lv.regions[nr][nc];
+        if (nrid !== rid) {
+          // Draw thick border between (r,c) and (nr,nc)
+          ctx.strokeStyle = REGION_BORDERS[rid % REGION_BORDERS.length];
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          if (d === 1) { // East
+            ctx.moveTo((c+1) * cs, r * cs);
+            ctx.lineTo((c+1) * cs, (r+1) * cs);
+          } else if (d === 2) { // South
+            ctx.moveTo(c * cs, (r+1) * cs);
+            ctx.lineTo((c+1) * cs, (r+1) * cs);
+          }
+          ctx.stroke();
+        }
+      }
+    }
+  }
+  
+  // Draw grid lines (light)
+  ctx.strokeStyle = 'rgba(80,80,120,0.2)';
+  ctx.lineWidth = 1;
+  for (var r = 0; r <= lv.rows; r++) {
+    ctx.beginPath();
+    ctx.moveTo(0, r * cs);
+    ctx.lineTo(canvas.width, r * cs);
+    ctx.stroke();
+  }
+  for (var c = 0; c <= lv.cols; c++) {
+    ctx.beginPath();
+    ctx.moveTo(c * cs, 0);
+    ctx.lineTo(c * cs, canvas.height);
+    ctx.stroke();
+  }
+  
+  // Draw clue numbers (region turn counts)
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (var rid in lv.clues) {
+    var clue = lv.clues[rid];
+    if (clue === null || clue === undefined) continue;
+    // Find centroid of this region
+    var cells = [];
+    for (var r = 0; r < lv.rows; r++) {
+      for (var c = 0; c < lv.cols; c++) {
+        if (lv.regions[r][c] === parseInt(rid)) cells.push({r: r, c: c});
+      }
+    }
+    if (cells.length === 0) continue;
+    var cr = 0, cc = 0;
+    for (var i = 0; i < cells.length; i++) { cr += cells[i].r; cc += cells[i].c; }
+    cr /= cells.length; cc /= cells.length;
+    
+    var cx = (cc + 0.5) * cs;
+    var cy = (cr + 0.5) * cs;
+    
+    ctx.fillStyle = 'rgba(15,15,26,0.8)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, cs * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#e0e0f0';
+    ctx.font = 'bold ' + Math.floor(cs * 0.3) + 'px sans-serif';
+    ctx.fillText(clue, cx, cy);
+  }
+  
+  // Draw loop segments
+  ctx.strokeStyle = '#64ffda';
+  ctx.lineWidth = Math.max(3, cs * 0.1);
+  ctx.lineCap = 'round';
+  for (var key in state.edges) {
+    if (!state.edges[key]) continue;
+    var parts = key.split(',');
+    var r1 = parseInt(parts[0]), c1 = parseInt(parts[1]);
+    var r2 = parseInt(parts[2]), c2 = parseInt(parts[3]);
+    
+    var x1 = (c1 + 0.5) * cs, y1 = (r1 + 0.5) * cs;
+    var x2 = (c2 + 0.5) * cs, y2 = (r2 + 0.5) * cs;
+    
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    
+    // Draw dots at cell centers
+    ctx.fillStyle = '#64ffda';
+    ctx.beginPath();
+    ctx.arc(x1, y1, Math.max(2, cs * 0.07), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x2, y2, Math.max(2, cs * 0.07), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Draw hint cells glow
+  for (var i = 0; i < state.hintCells.length; i++) {
+    var parts = state.hintCells[i].split(',');
+    var r = parseInt(parts[0]), c = parseInt(parts[1]);
+    ctx.fillStyle = 'rgba(255,209,102,0.15)';
+    ctx.fillRect(c * cs + 2, r * cs + 2, cs - 4, cs - 4);
+  }
+  
+  // Draw violation highlights
+  for (var i = 0; i < state.violations.length; i++) {
+    var v = state.violations[i];
+    ctx.strokeStyle = '#ff6b6b';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(v.c * cs + 1, v.r * cs + 1, cs - 2, cs - 2);
+  }
+}
+
+// Audio
+function setupAudio() {
+  try {
+    state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  } catch(e) {}
+  
+  // Update toggle UI
+  document.getElementById('toggle-music').classList.toggle('on', state.musicOn);
+  document.getElementById('toggle-sfx').classList.toggle('on', state.sfxOn);
+  document.getElementById('toggle-autocheck').classList.toggle('on', state.autocheck);
+}
+
+function playSFX(type) {
+  if (!state.sfxOn || !state.audioCtx) return;
+  var ctx = state.audioCtx;
+  var now = ctx.currentTime;
+  var osc = ctx.createOscillator();
+  var gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  
+  var freqs = {place: 400, erase: 200, error: 150, hint: 600, win: 800, click: 500};
+  osc.frequency.value = freqs[type] || 400;
+  osc.type = type === 'error' ? 'sawtooth' : 'sine';
+  
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(0.15, now + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+  
+  osc.start(now);
+  osc.stop(now + 0.15);
+  
+  if (type === 'win') {
+    // Play a chord
+    [600, 800, 1000].forEach(function(f, i) {
+      setTimeout(function() {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = f; o.type = 'sine';
+        var n = ctx.currentTime;
+        g.gain.setValueAtTime(0, n);
+        g.gain.linearRampToValueAtTime(0.1, n + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, n + 0.3);
+        o.start(n); o.stop(n + 0.3);
+      }, i * 100);
+    });
+  }
+}
+
+function startBGM() {
+  if (!state.audioCtx || !state.musicOn || state.bgmNodes.length > 0) return;
+  try {
+    var sr = state.audioCtx.sampleRate;
+    var dur = 16;
+    var bufSize = sr * dur;
+    var buf = state.audioCtx.createBuffer(1, bufSize, sr);
+    var d = buf.getChannelData(0);
+    var chords = [[261.63,329.63,392.00],[293.66,369.99,440.00],[329.63,415.30,493.88],[293.66,369.99,440.00]];
+    var chordDur = dur / chords.length;
+    for (var i = 0; i < bufSize; i++) {
+      var t = i / sr;
+      var ci = Math.min(Math.floor(t / chordDur), chords.length - 1);
+      var chord = chords[ci];
+      var s = 0;
+      for (var n = 0; n < chord.length; n++) {
+        var f = chord[n];
+        s += Math.sin(2 * Math.PI * f * t) * 0.06;
+        s += Math.sin(2 * Math.PI * f * 2 * t) * 0.015;
+        s += Math.sin(2 * Math.PI * f * 0.5 * t) * 0.03;
+      }
+      var fade = t % chordDur;
+      var fadeIn = Math.min(fade / 0.8, 1);
+      var fadeOut = Math.min((chordDur - fade) / 0.8, 1);
+      s *= fadeIn * fadeOut;
+      var lfo = Math.sin(2 * Math.PI * 0.25 * t) * 0.15 + 1;
+      d[i] = s * lfo * 0.5;
+    }
+    var src = state.audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    var filt = state.audioCtx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.value = 800;
+    filt.Q.value = 1;
+    var g = state.audioCtx.createGain();
+    g.gain.value = 0.25;
+    src.connect(filt); filt.connect(g); g.connect(state.audioCtx.destination);
+    src.start();
+    state.bgmNodes = [src, filt, g];
+  } catch(e) {}
+}
+
+function stopBGM() {
+  state.bgmNodes.forEach(function(n) { try { n.stop && n.stop(); n.disconnect && n.disconnect(); } catch(e) {} });
+  state.bgmNodes = [];
+}
+
+function fireConfetti() {
+  var colors = ['#64ffda','#ffd166','#ff6b9d','#55c2a0','#7c83fd'];
+  for (var i = 0; i < 60; i++) {
+    var el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.left = Math.random() * window.innerWidth + 'px';
+    el.style.top = '-10px';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.animationDelay = Math.random() * 2 + 's';
+    document.body.appendChild(el);
+    (function(confettiEl) {
+      setTimeout(function() { confettiEl.remove(); }, 5000 + Math.random() * 2000);
+    })(el);
+  }
+}
+
+function cleanup() {
+  if (state.timerInterval) clearInterval(state.timerInterval);
+  if (state.rafId) cancelAnimationFrame(state.rafId);
+  if (state.audioCtx) { try { state.audioCtx.close(); } catch(e) {} }
+  state.bgmNodes = [];
+}
+
+// Start audio on first user interaction
+document.addEventListener('click', function initAudio() {
+  if (state.audioCtx && state.audioCtx.state === 'suspended') {
+    state.audioCtx.resume();
+  }
+  if (state.musicOn) startBGM();
+  document.removeEventListener('click', initAudio);
+}, { once: true });
+
+// Init on load
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
