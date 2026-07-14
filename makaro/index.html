@@ -199,7 +199,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 
 <div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
 
-<script src="/gz-analytics.js?v=202607146eaeb691" defer></script>
+<script src="/gz-analytics.js?v=202607141edd44ea" defer></script>
 <script src="/game-footer.js?v=202607021204" defer></script>
 <script>var sa=document.createElement('script');sa.src='/adsterra-manager.js?v=v515pop';document.head.appendChild(sa);</script>
 <script>var s=document.createElement('script');s.src='/monetag-manager.js?v=v525midgridcull';document.head.appendChild(s);</script>
@@ -567,7 +567,7 @@ function drawBoard() {
   for (let r=0;r<=state.rows;r++){
     for (let c=0;c<=state.cols;c++){
       // Horizontal edge above cell (r,c): between (r-1,c) and (r,c)
-      if (r>0 && r<state.rows){
+      if (r>0 && r<state.rows && c<state.cols){
         const above = state.roomGrid[r-1][c];
         const below = state.roomGrid[r][c];
         if (above!==below){
@@ -576,7 +576,7 @@ function drawBoard() {
         }
       }
       // Vertical edge left of cell (r,c): between (r,c-1) and (r,c)
-      if (c>0 && c<state.cols){
+      if (c>0 && c<state.cols && r<state.rows){
         const left = state.roomGrid[r][c-1];
         const right = state.roomGrid[r][c];
         if (left!==right){
@@ -673,20 +673,7 @@ function isComplete() {
 }
 function findErrors() {
   const errs = new Set();
-  // Room constraint
-  state.rooms.forEach(room=>{
-    const seen={};
-    room.forEach(([r,c])=>{
-      const v=state.values[r][c];
-      if (!v) return;
-      if (seen[v]!==undefined){
-        errs.add(r+','+c); errs.add(seen[v]+','+c); // mark both? need full key
-        const [pr,pc]=room[seen[v]-0]; // wrong; redo
-      }
-    });
-  });
-  // Redo room check properly
-  errs.clear();
+  // Room constraint: each room must contain 1..N with no repeats
   state.rooms.forEach((room,ri)=>{
     const seen={};
     room.forEach(([r,c])=>{
@@ -717,8 +704,11 @@ function findErrors() {
   for (const k in state.arrows){
     const [r,c]=k.split(',').map(Number);
     const dir=state.arrows[k];
-    const [dr,dc]=DIR_DELTA[dir];
+    const delta=DIR_DELTA[dir];
+    if(!delta) continue;
+    const [dr,dc]=delta;
     const tr=r+dr,tc=c+dc;
+    if(tr<0||tr>=state.rows||tc<0||tc>=state.cols) continue;
     const nbs=[[-1,0],[1,0],[0,-1],[0,1]].map(([ddr,ddc])=>[r+ddr,c+ddc]).filter(([nr,nc])=>nr>=0&&nr<state.rows&&nc>=0&&nc<state.cols);
     // only check if all neighbors filled
     if (nbs.every(([nr,nc])=>state.values[nr][nc])){
@@ -784,6 +774,7 @@ function actionHint() {
   if (state.hintsLeft<=0){ flashHint('No hints left!'); sndError(); return; }
   // Find an empty or wrong cell, reveal its correct value
   const sol = state.level.solution;
+  if(!sol||!sol[0]){ flashHint('No solution available.'); return; }
   let candidates=[];
   for (let r=0;r<state.rows;r++){
     for (let c=0;c<state.cols;c++){
