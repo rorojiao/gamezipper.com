@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Scrin — Numbered Region Division Puzzle | GameZipper</title>
+<meta name="description" content="Play Scrin puzzle online free! A Nikoli-style numbered region division puzzle. Divide the grid into rectangles so each numbered cell's region has a cell count equal to the number. 30 levels across 5 difficulty tiers from 5x5 Beginner to 9x9 Expert. Hints, star ratings, level select, keyboard support, ambient Web Audio music. No download, mobile-friendly!">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f0f1a'/><rect x='15' y='15' width='30' height='20' fill='%2364ffda' opacity='0.6'/><rect x='50' y='15' width='35' height='30' fill='%23ff6b9d' opacity='0.6'/><rect x='15' y='40' width='20' height='20' fill='%23ffd166' opacity='0.6'/><rect x='40' y='50' width='45' height='35' fill='%2355c2a0' opacity='0.6'/><text x='28' y='32' text-anchor='middle' font-family='monospace' font-size='14' fill='%230f0f1a' font-weight='bold'>3</text><text x='68' y='35' text-anchor='middle' font-family='monospace' font-size='14' fill='%230f0f1a' font-weight='bold'>6</text></svg>">
+<meta property="og:title" content="Scrin — Numbered Region Division Puzzle">
+<meta property="og:description" content="Divide the grid into rectangles so each numbered cell's region has a cell count equal to the number. 30 levels, 5 tiers.">
+<meta property="og:image" content="/scrin/og-image.jpg">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://gamezipper.com/scrin/">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Scrin","description":"A Nikoli-style numbered region division puzzle. Divide the grid into rectangles so each numbered cell's region has a cell count equal to the number. 30 unique-solution levels across 5 difficulty tiers from 5x5 Beginner to 9x9 Expert.","genre":"Puzzle","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GameZipper"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","ratingCount":"76"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Scrin?","acceptedAnswer":{"@type":"Answer","text":"Divide the grid into rectangular regions. Each numbered cell must be in a region whose cell count matches the number. Each region contains exactly one number."}},{"@type":"Question","name":"How many levels does Scrin have?","acceptedAnswer":{"@type":"Answer","text":"30 levels across 5 difficulty tiers: Beginner (5x5), Easy (5x6), Medium (7x7), Hard (8x8), and Expert (9x9)."}},{"@type":"Question","name":"Is Scrin free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes! Scrin is completely free to play online in your browser. No download required."}}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Scrin","item":"https://gamezipper.com/scrin/"}]}
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.gz-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+body{background:#0f0f1a;color:#e0e0f0;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden;user-select:none;-webkit-user-select:none}
+#app{max-width:640px;margin:0 auto;padding:8px}
+canvas{display:block;margin:0 auto;background:#1a1a2e;border-radius:10px;touch-action:none}
+.bar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+button{background:#2a2a4e;color:#e0e0f0;border:1px solid #3a3a6e;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px;transition:all .15s}
+button:hover{background:#3a3a6e}
+button.active{background:#55c2a0;color:#0f0f1a;border-color:#55c2a0;font-weight:bold}
+button:disabled{opacity:.4;cursor:default}
+#info{display:flex;justify-content:space-between;align-items:center;margin:6px 0;padding:6px 10px;background:#1a1a2e;border-radius:8px;font-size:13px}
+#info span{color:#64ffda}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;justify-content:center;align-items:center;z-index:100}
+.overlay.show{display:flex}
+.panel{background:#1a1a2e;border-radius:14px;padding:20px;max-width:500px;width:92%;max-height:88vh;overflow-y:auto;border:1px solid #3a3a6e}
+.panel h2{color:#64ffda;margin-bottom:10px;text-align:center;font-size:18px}
+.lvl-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:10px 0}
+.lvl-btn{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;background:#2a2a4e;border-radius:8px;cursor:pointer;color:#e0e0f0;border:1px solid #3a3a6e}
+.lvl-btn:hover{background:#3a3a6e}
+.lvl-btn.locked{opacity:.3;cursor:not-allowed}
+.lvl-btn.completed{background:#1a3a2e;border-color:#55c2a0}
+.lvl-stars{font-size:9px;color:#ffd166;line-height:1}
+.tier-label{color:#ff6b9d;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px}
+#toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#2a2a4e;color:#e0e0f0;padding:10px 20px;border-radius:8px;border:1px solid #55c2a0;opacity:0;transition:opacity .3s;pointer-events:none;z-index:200;font-size:13px}
+#toast.show{opacity:1}
+#winModal{text-align:center}
+#winModal h2{color:#ffd166;font-size:24px;margin-bottom:8px}
+#winModal .stars{font-size:32px;margin:10px 0;color:#ffd166}
+#winModal .stats{color:#e0e0f0;margin:8px 0;font-size:13px}
+#winModal button{margin:6px}
+#settingsPanel label{display:flex;align-items:center;gap:8px;margin:8px 0;cursor:pointer}
+#settingsPanel input[type=checkbox]{width:18px;height:18px;cursor:pointer}
+.kbd-hint{font-size:10px;color:#888;margin-left:4px}
+.gz-footer{text-align:center;padding:14px;font-size:11px;color:#666}
+.gz-footer a{color:#64ffda;text-decoration:none}
+.gz-footer a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<h1 class="gz-sr-only">Scrin — Numbered Region Division Puzzle</h1>
+<div id="app">
+  <div id="info">
+    <div>Scrin · <span id="tier">Beginner</span></div>
+    <div>L<span id="lvlNum">1</span>/30 · <span id="timer">0:00</span></div>
+    <div>💡<span id="hints">3</span></div>
+  </div>
+  <canvas id="c"></canvas>
+  <div class="bar">
+    <button id="placeBtn" class="active">Draw Border</button>
+    <button id="eraseBtn">Erase</button>
+    <button id="hintBtn">Hint</button>
+    <button id="checkBtn">Check ✓</button>
+    <button id="clearBtn">Clear</button>
+    <button id="menuBtn">Menu</button>
+  </div>
+  <div class="gz-footer">
+    <a href="/">GameZipper</a> · <a href="/scrin/">Scrin</a> · A Nikoli-style numbered region division puzzle
+  </div>
+</div>
+
+<div id="menuOverlay" class="overlay">
+  <div class="panel">
+    <h2>Scrin</h2>
+    <p style="text-align:center;font-size:12px;color:#aaa;margin-bottom:10px">Draw borders to divide the grid into rectangles.<br>Each number = cell count of its region.</p>
+    <div id="tierList"></div>
+    <div style="text-align:center;margin-top:10px">
+      <button id="settingsBtn">⚙ Settings</button>
+      <button id="closeMenuBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="settingsPanel" class="overlay">
+  <div class="panel">
+    <h2>Settings</h2>
+    <label><input type="checkbox" id="musicToggle" checked> 🎵 Music</label>
+    <label><input type="checkbox" id="sfxToggle" checked> 🔊 Sound effects</label>
+    <label><input type="checkbox" id="autocheckToggle"> ✓ Auto-check after each move</label>
+    <div style="text-align:center;margin-top:14px">
+      <button id="closeSettingsBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="winModal" class="overlay">
+  <div class="panel">
+    <h2>🎉 Solved!</h2>
+    <div class="stars" id="winStars">⭐⭐⭐</div>
+    <div class="stats" id="winStats">Time: 0:00 · Hints: 0</div>
+    <div>
+      <button id="nextBtn">Next →</button>
+      <button id="replayBtn">Replay</button>
+      <button id="menuBtn2">Menu</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Monetag + Adsterra + analytics + game-footer (same as siblings) -->
+<div id="gz-ad-below-game"></div>
+<script src="/game-footer.js"></script>
+<script src="/gz-analytics.js"></script>
+<script src="/monetag-manager.js"></script>
+<script src="/adsterra-manager.js"></script>
+
+<script>
+// =====================================================================
+// Scrin — Numbered Region Division Puzzle
+// =====================================================================
+'use strict';
+
+// Border convention:
+//   state.borders['h_r_c'] = horizontal border between (r, c) and (r+1, c). r in [0, R-1].
+//   state.borders['v_r_c'] = vertical border between (r, c) and (r, c+1). c in [0, C-1].
+// Outer grid edges (top row's top, bottom row's bottom, left col's left, right col's right) are implicit.
+
+const LEVELS = [{"id": 1, "tier": "Beginner", "rows": 5, "cols": 5, "clues": [{"r": 2, "c": 0, "n": 3}, {"r": 0, "c": 2, "n": 2}, {"r": 1, "c": 2, "n": 4}, {"r": 1, "c": 3, "n": 3}, {"r": 1, "c": 4, "n": 3}, {"r": 3, "c": 1, "n": 5}, {"r": 4, "c": 3, "n": 5}], "solution": [{"r0": 0, "c0": 0, "r1": 2, "c1": 0}, {"r0": 0, "c0": 1, "r1": 0, "c1": 2}, {"r0": 1, "c0": 1, "r1": 2, "c1": 2}, {"r0": 0, "c0": 3, "r1": 2, "c1": 3}, {"r0": 0, "c0": 4, "r1": 2, "c1": 4}, {"r0": 3, "c0": 0, "r1": 3, "c1": 4}, {"r0": 4, "c0": 0, "r1": 4, "c1": 4}]}, {"id": 2, "tier": "Beginner", "rows": 5, "cols": 5, "clues": [{"r": 0, "c": 3, "n": 5}, {"r": 3, "c": 0, "n": 3}, {"r": 2, "c": 1, "n": 3}, {"r": 1, "c": 3, "n": 2}, {"r": 2, "c": 3, "n": 4}, {"r": 2, "c": 4, "n": 3}, {"r": 4, "c": 0, "n": 5}], "solution": [{"r0": 0, "c0": 0, "r1": 0, "c1": 4}, {"r0": 1, "c0": 0, "r1": 3, "c1": 0}, {"r0": 1, "c0": 1, "r1": 3, "c1": 1}, {"r0": 1, "c0": 2, "r1": 1, "c1": 3}, {"r0": 2, "c0": 2, "r1": 3, "c1": 3}, {"r0": 1, "c0": 4, "r1": 3, "c1": 4}, {"r0": 4, "c0": 0, "r1": 4, "c1": 4}]}, {"id": 3, "tier": "Beginner", "rows": 5, "cols": 5, "clues": [{"r": 0, "c": 0, "n": 5}, {"r": 4, "c": 1, "n": 5}, {"r": 0, "c": 3, "n": 3}, {"r": 1, "c": 4, "n": 3}, {"r": 2, "c": 3, "n": 3}, {"r": 3, "c": 2, "n": 2}, {"r": 3, "c": 4, "n": 4}], "solution": [{"r0": 0, "c0": 0, "r1": 4, "c1": 0}, {"r0": 0, "c0": 1, "r1": 4, "c1": 1}, {"r0": 0, "c0": 2, "r1": 0, "c1": 4}, {"r0": 1, "c0": 2, "r1": 1, "c1": 4}, {"r0": 2, "c0": 2, "r1": 2, "c1": 4}, {"r0": 3, "c0": 2, "r1": 4, "c1": 2}, {"r0": 3, "c0": 3, "r1": 4, "c1": 4}]}, {"id": 4, "tier": "Beginner", "rows": 5, "cols": 5, "clues": [{"r": 1, "c": 0, "n": 3}, {"r": 1, "c": 1, "n": 3}, {"r": 1, "c": 2, "n": 3}, {"r": 0, "c": 3, "n": 3}, {"r": 0, "c": 4, "n": 3}, {"r": 3, "c": 4, "n": 5}, {"r": 4, "c": 1, "n": 5}], "solution": [{"r0": 0, "c0": 0, "r1": 2, "c1": 0}, {"r0": 0, "c0": 1, "r1": 2, "c1": 1}, {"r0": 0, "c0": 2, "r1": 2, "c1": 2}, {"r0": 0, "c0": 3, "r1": 2, "c1": 3}, {"r0": 0, "c0": 4, "r1": 2, "c1": 4}, {"r0": 3, "c0": 0, "r1": 3, "c1": 4}, {"r0": 4, "c0": 0, "r1": 4, "c1": 4}]}, {"id": 5, "tier": "Beginner", "rows": 5, "cols": 5, "clues": [{"r": 1, "c": 0, "n": 5}, {"r": 1, "c": 1, "n": 4}, {"r": 2, "c": 1, "n": 4}, {"r": 4, "c": 2, "n": 2}, {"r": 1, "c": 4, "n": 4}, {"r": 3, "c": 3, "n": 3}, {"r": 4, "c": 4, "n": 3}], "solution": [{"r0": 0, "c0": 0, "r1": 4, "c1": 0}, {"r0": 0, "c0": 1, "r1": 1, "c1": 2}, {"r0": 2, "c0": 1, "r1": 3, "c1": 2}, {"r0": 4, "c0": 1, "r1": 4, "c1": 2}, {"r0": 0, "c0": 3, "r1": 1, "c1": 4}, {"r0": 2, "c0": 3, "r1": 4, "c1": 3}, {"r0": 2, "c0": 4, "r1": 4, "c1": 4}]}, {"id": 6, "tier": "Beginner", "rows": 5, "cols": 5, "clues": [{"r": 0, "c": 0, "n": 5}, {"r": 1, "c": 4, "n": 5}, {"r": 2, "c": 3, "n": 5}, {"r": 3, "c": 3, "n": 5}, {"r": 4, "c": 1, "n": 5}], "solution": [{"r0": 0, "c0": 0, "r1": 0, "c1": 4}, {"r0": 1, "c0": 0, "r1": 1, "c1": 4}, {"r0": 2, "c0": 0, "r1": 2, "c1": 4}, {"r0": 3, "c0": 0, "r1": 3, "c1": 4}, {"r0": 4, "c0": 0, "r1": 4, "c1": 4}]}, {"id": 7, "tier": "Easy", "rows": 5, "cols": 6, "clues": [{"r": 3, "c": 0, "n": 5}, {"r": 0, "c": 1, "n": 5}, {"r": 1, "c": 2, "n": 5}, {"r": 4, "c": 3, "n": 5}, {"r": 0, "c": 4, "n": 4}, {"r": 3, "c": 5, "n": 6}], "solution": [{"r0": 0, "c0": 0, "r1": 4, "c1": 0}, {"r0": 0, "c0": 1, "r1": 4, "c1": 1}, {"r0": 0, "c0": 2, "r1": 4, "c1": 2}, {"r0": 0, "c0": 3, "r1": 4, "c1": 3}, {"r0": 0, "c0": 4, "r1": 1, "c1": 5}, {"r0": 2, "c0": 4, "r1": 4, "c1": 5}]}, {"id": 8, "tier": "Easy", "rows": 5, "cols": 6, "clues": [{"r": 0, "c": 0, "n": 4}, {"r": 4, "c": 1, "n": 6}, {"r": 1, "c": 2, "n": 5}, {"r": 2, "c": 3, "n": 5}, {"r": 2, "c": 5, "n": 6}, {"r": 4, "c": 4, "n": 4}], "solution": [{"r0": 0, "c0": 0, "r1": 1, "c1": 1}, {"r0": 2, "c0": 0, "r1": 4, "c1": 1}, {"r0": 0, "c0": 2, "r1": 4, "c1": 2}, {"r0": 0, "c0": 3, "r1": 4, "c1": 3}, {"r0": 0, "c0": 4, "r1": 2, "c1": 5}, {"r0": 3, "c0": 4, "r1": 4, "c1": 5}]}, {"id": 9, "tier": "Easy", "rows": 5, "cols": 6, "clues": [{"r": 0, "c": 3, "n": 6}, {"r": 1, "c": 5, "n": 6}, {"r": 4, "c": 0, "n": 6}, {"r": 3, "c": 3, "n": 6}, {"r": 3, "c": 5, "n": 2}, {"r": 4, "c": 2, "n": 4}], "solution": [{"r0": 0, "c0": 0, "r1": 0, "c1": 5}, {"r0": 1, "c0": 0, "r1": 1, "c1": 5}, {"r0": 2, "c0": 0, "r1": 4, "c1": 1}, {"r0": 2, "c0": 2, "r1": 3, "c1": 4}, {"r0": 2, "c0": 5, "r1": 3, "c1": 5}, {"r0": 4, "c0": 2, "r1": 4, "c1": 5}]}, {"id": 10, "tier": "Easy", "rows": 5, "cols": 6, "clues": [{"r": 2, "c": 0, "n": 6}, {"r": 3, "c": 0, "n": 4}, {"r": 4, "c": 2, "n": 5}, {"r": 1, "c": 5, "n": 6}, {"r": 2, "c": 4, "n": 3}, {"r": 4, "c": 3, "n": 6}], "solution": [{"r0": 0, "c0": 0, "r1": 2, "c1": 1}, {"r0": 3, "c0": 0, "r1": 4, "c1": 1}, {"r0": 0, "c0": 2, "r1": 4, "c1": 2}, {"r0": 0, "c0": 3, "r1": 1, "c1": 5}, {"r0": 2, "c0": 3, "r1": 2, "c1": 5}, {"r0": 3, "c0": 3, "r1": 4, "c1": 5}]}, {"id": 11, "tier": "Easy", "rows": 5, "cols": 6, "clues": [{"r": 0, "c": 0, "n": 5}, {"r": 2, "c": 1, "n": 5}, {"r": 0, "c": 2, "n": 2}, {"r": 2, "c": 3, "n": 6}, {"r": 4, "c": 3, "n": 2}, {"r": 4, "c": 4, "n": 5}, {"r": 0, "c": 5, "n": 5}], "solution": [{"r0": 0, "c0": 0, "r1": 4, "c1": 0}, {"r0": 0, "c0": 1, "r1": 4, "c1": 1}, {"r0": 0, "c0": 2, "r1": 0, "c1": 3}, {"r0": 1, "c0": 2, "r1": 3, "c1": 3}, {"r0": 4, "c0": 2, "r1": 4, "c1": 3}, {"r0": 0, "c0": 4, "r1": 4, "c1": 4}, {"r0": 0, "c0": 5, "r1": 4, "c1": 5}]}, {"id": 12, "tier": "Easy", "rows": 5, "cols": 6, "clues": [{"r": 1, "c": 1, "n": 6}, {"r": 0, "c": 3, "n": 2}, {"r": 4, "c": 0, "n": 6}, {"r": 4, "c": 3, "n": 6}, {"r": 4, "c": 4, "n": 5}, {"r": 2, "c": 5, "n": 5}], "solution": [{"r0": 0, "c0": 0, "r1": 1, "c1": 2}, {"r0": 0, "c0": 3, "r1": 1, "c1": 3}, {"r0": 2, "c0": 0, "r1": 4, "c1": 1}, {"r0": 2, "c0": 2, "r1": 4, "c1": 3}, {"r0": 0, "c0": 4, "r1": 4, "c1": 4}, {"r0": 0, "c0": 5, "r1": 4, "c1": 5}]}, {"id": 13, "tier": "Medium", "rows": 7, "cols": 7, "clues": [{"r": 2, "c": 0, "n": 7}, {"r": 0, "c": 1, "n": 7}, {"r": 6, "c": 2, "n": 7}, {"r": 2, "c": 3, "n": 7}, {"r": 2, "c": 4, "n": 7}, {"r": 1, "c": 5, "n": 7}, {"r": 2, "c": 6, "n": 7}], "solution": [{"r0": 0, "c0": 0, "r1": 6, "c1": 0}, {"r0": 0, "c0": 1, "r1": 6, "c1": 1}, {"r0": 0, "c0": 2, "r1": 6, "c1": 2}, {"r0": 0, "c0": 3, "r1": 6, "c1": 3}, {"r0": 0, "c0": 4, "r1": 6, "c1": 4}, {"r0": 0, "c0": 5, "r1": 6, "c1": 5}, {"r0": 0, "c0": 6, "r1": 6, "c1": 6}]}, {"id": 14, "tier": "Medium", "rows": 7, "cols": 7, "clues": [{"r": 0, "c": 2, "n": 7}, {"r": 1, "c": 5, "n": 7}, {"r": 2, "c": 4, "n": 7}, {"r": 3, "c": 4, "n": 7}, {"r": 4, "c": 3, "n": 7}, {"r": 5, "c": 0, "n": 7}, {"r": 6, "c": 5, "n": 7}], "solution": [{"r0": 0, "c0": 0, "r1": 0, "c1": 6}, {"r0": 1, "c0": 0, "r1": 1, "c1": 6}, {"r0": 2, "c0": 0, "r1": 2, "c1": 6}, {"r0": 3, "c0": 0, "r1": 3, "c1": 6}, {"r0": 4, "c0": 0, "r1": 4, "c1": 6}, {"r0": 5, "c0": 0, "r1": 5, "c1": 6}, {"r0": 6, "c0": 0, "r1": 6, "c1": 6}]}, {"id": 15, "tier": "Medium", "rows": 7, "cols": 7, "clues": [{"r": 0, "c": 4, "n": 7}, {"r": 1, "c": 2, "n": 7}, {"r": 2, "c": 0, "n": 7}, {"r": 3, "c": 2, "n": 7}, {"r": 4, "c": 5, "n": 7}, {"r": 5, "c": 6, "n": 7}, {"r": 6, "c": 6, "n": 7}], "solution": [{"r0": 0, "c0": 0, "r1": 0, "c1": 6}, {"r0": 1, "c0": 0, "r1": 1, "c1": 6}, {"r0": 2, "c0": 0, "r1": 2, "c1": 6}, {"r0": 3, "c0": 0, "r1": 3, "c1": 6}, {"r0": 4, "c0": 0, "r1": 4, "c1": 6}, {"r0": 5, "c0": 0, "r1": 5, "c1": 6}, {"r0": 6, "c0": 0, "r1": 6, "c1": 6}]}, {"id": 16, "tier": "Medium", "rows": 7, "cols": 7, "clues": [{"r": 0, "c": 1, "n": 4}, {"r": 0, "c": 2, "n": 6}, {"r": 2, "c": 1, "n": 4}, {"r": 2, "c": 4, "n": 6}, {"r": 4, "c": 1, "n": 6}, {"r": 4, "c": 3, "n": 4}, {"r": 6, "c": 2, "n": 5}, {"r": 3, "c": 5, "n": 7}, {"r": 5, "c": 6, "n": 7}], "solution": [{"r0": 0, "c0": 0, "r1": 1, "c1": 1}, {"r0": 0, "c0": 2, "r1": 1, "c1": 4}, {"r0": 2, "c0": 0, "r1": 3, "c1": 1}, {"r0": 2, "c0": 2, "r1": 3, "c1": 4}, {"r0": 4, "c0": 0, "r1": 5, "c1": 2}, {"r0": 4, "c0": 3, "r1": 5, "c1": 4}, {"r0": 6, "c0": 0, "r1": 6, "c1": 4}, {"r0": 0, "c0": 5, "r1": 6, "c1": 5}, {"r0": 0, "c0": 6, "r1": 6, "c1": 6}]}, {"id": 17, "tier": "Medium", "rows": 7, "cols": 7, "clues": [{"r": 0, "c": 1, "n": 2}, {"r": 4, "c": 0, "n": 4}, {"r": 4, "c": 1, "n": 4}, {"r": 5, "c": 1, "n": 4}, {"r": 5, "c": 2, "n": 7}, {"r": 1, "c": 3, "n": 6}, {"r": 3, "c": 3, "n": 2}, {"r": 4, "c": 4, "n": 6}, {"r": 3, "c": 5, "n": 7}, {"r": 2, "c": 6, "n": 7}], "solution": [{"r0": 0, "c0": 0, "r1": 0, "c1": 1}, {"r0": 1, "c0": 0, "r1": 4, "c1": 0}, {"r0": 1, "c0": 1, "r1": 4, "c1": 1}, {"r0": 5, "c0": 0, "r1": 6, "c1": 1}, {"r0": 0, "c0": 2, "r1": 6, "c1": 2}, {"r0": 0, "c0": 3, "r1": 2, "c1": 4}, {"r0": 3, "c0": 3, "r1": 3, "c1": 4}, {"r0": 4, "c0": 3, "r1": 6, "c1": 4}, {"r0": 0, "c0": 5, "r1": 6, "c1": 5}, {"r0": 0, "c0": 6, "r1": 6, "c1": 6}]}, {"id": 18, "tier": "Medium", "rows": 7, "cols": 7, "clues": [{"r": 0, "c": 0, "n": 3}, {"r": 1, "c": 1, "n": 4}, {"r": 3, "c": 1, "n": 4}, {"r": 5, "c": 0, "n": 2}, {"r": 5, "c": 2, "n": 5}, {"r": 6, "c": 0, "n": 3}, {"r": 0, "c": 3, "n": 5}, {"r": 4, "c": 4, "n": 5}, {"r": 1, "c": 5, "n": 5}, {"r": 5, "c": 3, "n": 6}, {"r": 3, "c": 6, "n": 7}], "solution": [{"r0": 0, "c0": 0, "r1": 0, "c1": 2}, {"r0": 1, "c0": 0, "r1": 2, "c1": 1}, {"r0": 3, "c0": 0, "r1": 4, "c1": 1}, {"r0": 5, "c0": 0, "r1": 5, "c1": 1}, {"r0": 1, "c0": 2, "r1": 5, "c1": 2}, {"r0": 6, "c0": 0, "r1": 6, "c1": 2}, {"r0": 0, "c0": 3, "r1": 4, "c1": 3}, {"r0": 0, "c0": 4, "r1": 4, "c1": 4}, {"r0": 0, "c0": 5, "r1": 4, "c1": 5}, {"r0": 5, "c0": 3, "r1": 6, "c1": 5}, {"r0": 0, "c0": 6, "r1": 6, "c1": 6}]}, {"id": 19, "tier": "Hard", "rows": 8, "cols": 8, "clues": [{"r": 0, "c": 0, "n": 3}, {"r": 3, "c": 0, "n": 7}, {"r": 1, "c": 2, "n": 4}, {"r": 7, "c": 1, "n": 5}, {"r": 6, "c": 2, "n": 5}, {"r": 0, "c": 4, "n": 3}, {"r": 4, "c": 3, "n": 7}, {"r": 4, "c": 4, "n": 7}, {"r": 5, "c": 5, "n": 7}, {"r": 0, "c": 7, "n": 2}, {"r": 1, "c": 6, "n": 7}, {"r": 4, "c": 7, "n": 7}], "solution": [{"r0": 0, "c0": 0, "r1": 0, "c1": 2}, {"r0": 1, "c0": 0, "r1": 7, "c1": 0}, {"r0": 1, "c0": 1, "r1": 2, "c1": 2}, {"r0": 3, "c0": 1, "r1": 7, "c1": 1}, {"r0": 3, "c0": 2, "r1": 7, "c1": 2}, {"r0": 0, "c0": 3, "r1": 0, "c1": 5}, {"r0": 1, "c0": 3, "r1": 7, "c1": 3}, {"r0": 1, "c0": 4, "r1": 7, "c1": 4}, {"r0": 1, "c0": 5, "r1": 7, "c1": 5}, {"r0": 0, "c0": 6, "r1": 0, "c1": 7}, {"r0": 1, "c0": 6, "r1": 7, "c1": 6}, {"r0": 1, "c0": 7, "r1": 7, "c1": 7}]}, {"id": 20, "tier": "Hard", "rows": 8, "cols": 8, "clues": [{"r": 5, "c": 0, "n": 7}, {"r": 2, "c": 2, "n": 6}, {"r": 6, "c": 2, "n": 8}, {"r": 7, "c": 2, "n": 3}, {"r": 5, "c": 3, "n": 8}, {"r": 7, "c": 4, "n": 8}, {"r": 5, "c": 5, "n": 8}, {"r": 1, "c": 7, "n": 6}, {"r": 5, "c": 6, "n": 5}, {"r": 5, "c": 7, "n": 5}], "solution": [{"r0": 0, "c0": 0, "r1": 6, "c1": 0}, {"r0": 0, "c0": 1, "r1": 2, "c1": 2}, {"r0": 3, "c0": 1, "r1": 6, "c1": 2}, {"r0": 7, "c0": 0, "r1": 7, "c1": 2}, {"r0": 0, "c0": 3, "r1": 7, "c1": 3}, {"r0": 0, "c0": 4, "r1": 7, "c1": 4}, {"r0": 0, "c0": 5, "r1": 7, "c1": 5}, {"r0": 0, "c0": 6, "r1": 2, "c1": 7}, {"r0": 3, "c0": 6, "r1": 7, "c1": 6}, {"r0": 3, "c0": 7, "r1": 7, "c1": 7}]}, {"id": 21, "tier": "Hard", "rows": 8, "cols": 8, "clues": [{"r": 1, "c": 0, "n": 8}, {"r": 0, "c": 6, "n": 6}, {"r": 4, "c": 0, "n": 3}, {"r": 2, "c": 2, "n": 6}, {"r": 3, "c": 1, "n": 4}, {"r": 3, "c": 6, "n": 8}, {"r": 5, "c": 4, "n": 7}, {"r": 6, "c": 3, "n": 7}, {"r": 7, "c": 3, "n": 7}, {"r": 1, "c": 7, "n": 8}], "solution": [{"r0": 0, "c0": 0, "r1": 1, "c1": 3}, {"r0": 0, "c0": 4, "r1": 1, "c1": 6}, {"r0": 2, "c0": 0, "r1": 4, "c1": 0}, {"r0": 2, "c0": 1, "r1": 2, "c1": 6}, {"r0": 3, "c0": 1, "r1": 4, "c1": 2}, {"r0": 3, "c0": 3, "r1": 4, "c1": 6}, {"r0": 5, "c0": 0, "r1": 5, "c1": 6}, {"r0": 6, "c0": 0, "r1": 6, "c1": 6}, {"r0": 7, "c0": 0, "r1": 7, "c1": 6}, {"r0": 0, "c0": 7, "r1": 7, "c1": 7}]}, {"id": 22, "tier": "Hard", "rows": 8, "cols": 8, "clues": [{"r": 0, "c": 1, "n": 4}, {"r": 2, "c": 0, "n": 4}, {"r": 4, "c": 1, "n": 8}, {"r": 7, "c": 0, "n": 3}, {"r": 7, "c": 1, "n": 6}, {"r": 1, "c": 3, "n": 7}, {"r": 0, "c": 5, "n": 4}, {"r": 4, "c": 4, "n": 7}, {"r": 4, "c": 5, "n": 7}, {"r": 3, "c": 7, "n": 6}, {"r": 4, "c": 6, "n": 8}], "solution": [{"r0": 0, "c0": 0, "r1": 0, "c1": 3}, {"r0": 1, "c0": 0, "r1": 4, "c1": 0}, {"r0": 1, "c0": 1, "r1": 4, "c1": 2}, {"r0": 5, "c0": 0, "r1": 7, "c1": 0}, {"r0": 5, "c0": 1, "r1": 7, "c1": 2}, {"r0": 1, "c0": 3, "r1": 7, "c1": 3}, {"r0": 0, "c0": 4, "r1": 0, "c1": 7}, {"r0": 1, "c0": 4, "r1": 7, "c1": 4}, {"r0": 1, "c0": 5, "r1": 7, "c1": 5}, {"r0": 1, "c0": 6, "r1": 3, "c1": 7}, {"r0": 4, "c0": 6, "r1": 7, "c1": 7}]}, {"id": 23, "tier": "Hard", "rows": 8, "cols": 8, "clues": [{"r": 2, "c": 1, "n": 8}, {"r": 0, "c": 5, "n": 5}, {"r": 1, "c": 5, "n": 5}, {"r": 3, "c": 3, "n": 8}, {"r": 3, "c": 6, "n": 2}, {"r": 0, "c": 7, "n": 4}, {"r": 4, "c": 1, "n": 3}, {"r": 6, "c": 1, "n": 6}, {"r": 5, "c": 4, "n": 6}, {"r": 5, "c": 6, "n": 6}, {"r": 5, "c": 7, "n": 3}, {"r": 7, "c": 1, "n": 8}], "solution": [{"r0": 0, "c0": 0, "r1": 3, "c1": 1}, {"r0": 0, "c0": 2, "r1": 0, "c1": 6}, {"r0": 1, "c0": 2, "r1": 1, "c1": 6}, {"r0": 2, "c0": 2, "r1": 3, "c1": 5}, {"r0": 2, "c0": 6, "r1": 3, "c1": 6}, {"r0": 0, "c0": 7, "r1": 3, "c1": 7}, {"r0": 4, "c0": 0, "r1": 4, "c1": 2}, {"r0": 5, "c0": 0, "r1": 6, "c1": 2}, {"r0": 4, "c0": 3, "r1": 6, "c1": 4}, {"r0": 4, "c0": 5, "r1": 6, "c1": 6}, {"r0": 4, "c0": 7, "r1": 6, "c1": 7}, {"r0": 7, "c0": 0, "r1": 7, "c1": 7}]}, {"id": 24, "tier": "Hard", "rows": 8, "cols": 8, "clues": [{"r": 2, "c": 0, "n": 8}, {"r": 4, "c": 0, "n": 4}, {"r": 4, "c": 2, "n": 5}, {"r": 0, "c": 3, "n": 2}, {"r": 3, "c": 4, "n": 8}, {"r": 5, "c": 2, "n": 3}, {"r": 0, "c": 5, "n": 6}, {"r": 0, "c": 7, "n": 6}, {"r": 5, "c": 7, "n": 6}, {"r": 7, "c": 2, "n": 8}, {"r": 7, "c": 6, "n": 8}], "solution": [{"r0": 0, "c0": 0, "r1": 3, "c1": 1}, {"r0": 4, "c0": 0, "r1": 5, "c1": 1}, {"r0": 0, "c0": 2, "r1": 4, "c1": 2}, {"r0": 0, "c0": 3, "r1": 0, "c1": 4}, {"r0": 1, "c0": 3, "r1": 4, "c1": 4}, {"r0": 5, "c0": 2, "r1": 5, "c1": 4}, {"r0": 0, "c0": 5, "r1": 5, "c1": 5}, {"r0": 0, "c0": 6, "r1": 2, "c1": 7}, {"r0": 3, "c0": 6, "r1": 5, "c1": 7}, {"r0": 6, "c0": 0, "r1": 7, "c1": 3}, {"r0": 6, "c0": 4, "r1": 7, "c1": 7}]}, {"id": 25, "tier": "Expert", "rows": 9, "cols": 9, "clues": [{"r": 4, "c": 0, "n": 9}, {"r": 2, "c": 1, "n": 9}, {"r": 0, "c": 2, "n": 9}, {"r": 4, "c": 3, "n": 9}, {"r": 4, "c": 4, "n": 9}, {"r": 7, "c": 5, "n": 9}, {"r": 3, "c": 6, "n": 7}, {"r": 1, "c": 7, "n": 7}, {"r": 6, "c": 8, "n": 7}, {"r": 8, "c": 8, "n": 6}], "solution": [{"r0": 0, "c0": 0, "r1": 8, "c1": 0}, {"r0": 0, "c0": 1, "r1": 8, "c1": 1}, {"r0": 0, "c0": 2, "r1": 8, "c1": 2}, {"r0": 0, "c0": 3, "r1": 8, "c1": 3}, {"r0": 0, "c0": 4, "r1": 8, "c1": 4}, {"r0": 0, "c0": 5, "r1": 8, "c1": 5}, {"r0": 0, "c0": 6, "r1": 6, "c1": 6}, {"r0": 0, "c0": 7, "r1": 6, "c1": 7}, {"r0": 0, "c0": 8, "r1": 6, "c1": 8}, {"r0": 7, "c0": 6, "r1": 8, "c1": 8}]}, {"id": 26, "tier": "Expert", "rows": 9, "cols": 9, "clues": [{"r": 1, "c": 0, "n": 9}, {"r": 8, "c": 1, "n": 9}, {"r": 6, "c": 2, "n": 9}, {"r": 2, "c": 3, "n": 9}, {"r": 1, "c": 4, "n": 9}, {"r": 5, "c": 5, "n": 9}, {"r": 1, "c": 7, "n": 8}, {"r": 3, "c": 8, "n": 4}, {"r": 6, "c": 7, "n": 9}, {"r": 7, "c": 8, "n": 6}], "solution": [{"r0": 0, "c0": 0, "r1": 8, "c1": 0}, {"r0": 0, "c0": 1, "r1": 8, "c1": 1}, {"r0": 0, "c0": 2, "r1": 8, "c1": 2}, {"r0": 0, "c0": 3, "r1": 8, "c1": 3}, {"r0": 0, "c0": 4, "r1": 8, "c1": 4}, {"r0": 0, "c0": 5, "r1": 8, "c1": 5}, {"r0": 0, "c0": 6, "r1": 3, "c1": 7}, {"r0": 0, "c0": 8, "r1": 3, "c1": 8}, {"r0": 4, "c0": 6, "r1": 6, "c1": 8}, {"r0": 7, "c0": 6, "r1": 8, "c1": 8}]}, {"id": 27, "tier": "Expert", "rows": 9, "cols": 9, "clues": [{"r": 8, "c": 0, "n": 9}, {"r": 3, "c": 1, "n": 9}, {"r": 7, "c": 2, "n": 9}, {"r": 0, "c": 3, "n": 4}, {"r": 1, "c": 4, "n": 8}, {"r": 4, "c": 4, "n": 8}, {"r": 1, "c": 7, "n": 10}, {"r": 8, "c": 3, "n": 4}, {"r": 6, "c": 4, "n": 8}, {"r": 6, "c": 6, "n": 4}, {"r": 5, "c": 8, "n": 8}], "solution": [{"r0": 0, "c0": 0, "r1": 8, "c1": 0}, {"r0": 0, "c0": 1, "r1": 8, "c1": 1}, {"r0": 0, "c0": 2, "r1": 8, "c1": 2}, {"r0": 0, "c0": 3, "r1": 0, "c1": 6}, {"r0": 1, "c0": 3, "r1": 2, "c1": 6}, {"r0": 3, "c0": 3, "r1": 4, "c1": 6}, {"r0": 0, "c0": 7, "r1": 4, "c1": 8}, {"r0": 5, "c0": 3, "r1": 8, "c1": 3}, {"r0": 5, "c0": 4, "r1": 8, "c1": 5}, {"r0": 5, "c0": 6, "r1": 8, "c1": 6}, {"r0": 5, "c0": 7, "r1": 8, "c1": 8}]}, {"id": 28, "tier": "Expert", "rows": 9, "cols": 9, "clues": [{"r": 0, "c": 4, "n": 9}, {"r": 1, "c": 6, "n": 9}, {"r": 2, "c": 0, "n": 4}, {"r": 5, "c": 1, "n": 8}, {"r": 6, "c": 2, "n": 3}, {"r": 2, "c": 3, "n": 10}, {"r": 5, "c": 5, "n": 10}, {"r": 3, "c": 8, "n": 10}, {"r": 7, "c": 0, "n": 2}, {"r": 7, "c": 5, "n": 8}, {"r": 8, "c": 7, "n": 8}], "solution": [{"r0": 0, "c0": 0, "r1": 0, "c1": 8}, {"r0": 1, "c0": 0, "r1": 1, "c1": 8}, {"r0": 2, "c0": 0, "r1": 5, "c1": 0}, {"r0": 2, "c0": 1, "r1": 5, "c1": 2}, {"r0": 6, "c0": 0, "r1": 6, "c1": 2}, {"r0": 2, "c0": 3, "r1": 6, "c1": 4}, {"r0": 2, "c0": 5, "r1": 6, "c1": 6}, {"r0": 2, "c0": 7, "r1": 6, "c1": 8}, {"r0": 7, "c0": 0, "r1": 8, "c1": 0}, {"r0": 7, "c0": 1, "r1": 7, "c1": 8}, {"r0": 8, "c0": 1, "r1": 8, "c1": 8}]}, {"id": 29, "tier": "Expert", "rows": 9, "cols": 9, "clues": [{"r": 5, "c": 0, "n": 7}, {"r": 0, "c": 1, "n": 7}, {"r": 2, "c": 2, "n": 7}, {"r": 2, "c": 3, "n": 7}, {"r": 0, "c": 7, "n": 10}, {"r": 3, "c": 6, "n": 10}, {"r": 4, "c": 7, "n": 5}, {"r": 5, "c": 6, "n": 10}, {"r": 8, "c": 0, "n": 2}, {"r": 8, "c": 3, "n": 10}, {"r": 7, "c": 8, "n": 6}], "solution": [{"r0": 0, "c0": 0, "r1": 6, "c1": 0}, {"r0": 0, "c0": 1, "r1": 6, "c1": 1}, {"r0": 0, "c0": 2, "r1": 6, "c1": 2}, {"r0": 0, "c0": 3, "r1": 6, "c1": 3}, {"r0": 0, "c0": 4, "r1": 1, "c1": 8}, {"r0": 2, "c0": 4, "r1": 3, "c1": 8}, {"r0": 4, "c0": 4, "r1": 4, "c1": 8}, {"r0": 5, "c0": 4, "r1": 6, "c1": 8}, {"r0": 7, "c0": 0, "r1": 8, "c1": 0}, {"r0": 7, "c0": 1, "r1": 8, "c1": 5}, {"r0": 7, "c0": 6, "r1": 8, "c1": 8}]}, {"id": 30, "tier": "Expert", "rows": 9, "cols": 9, "clues": [{"r": 1, "c": 0, "n": 9}, {"r": 1, "c": 5, "n": 9}, {"r": 3, "c": 2, "n": 10}, {"r": 3, "c": 5, "n": 2}, {"r": 6, "c": 2, "n": 9}, {"r": 5, "c": 5, "n": 9}, {"r": 8, "c": 2, "n": 6}, {"r": 3, "c": 6, "n": 9}, {"r": 4, "c": 7, "n": 9}, {"r": 2, "c": 8, "n": 9}], "solution": [{"r0": 0, "c0": 0, "r1": 2, "c1": 2}, {"r0": 0, "c0": 3, "r1": 2, "c1": 5}, {"r0": 3, "c0": 0, "r1": 4, "c1": 4}, {"r0": 3, "c0": 5, "r1": 4, "c1": 5}, {"r0": 5, "c0": 0, "r1": 7, "c1": 2}, {"r0": 5, "c0": 3, "r1": 7, "c1": 5}, {"r0": 8, "c0": 0, "r1": 8, "c1": 5}, {"r0": 0, "c0": 6, "r1": 8, "c1": 6}, {"r0": 0, "c0": 7, "r1": 8, "c1": 7}, {"r0": 0, "c0": 8, "r1": 8, "c1": 8}]}];
+
+const COLORS = {
+  bg: '#0f0f1a',
+  panel: '#1a1a2e',
+  cell: '#1a1a2e',
+  border: '#3a3a6e',
+  borderActive: '#64ffda',
+  borderHint: '#ffd166',
+  borderError: '#ff5555',
+  text: '#e0e0f0',
+  clue: '#ffd166',
+};
+
+const REGION_COLORS = [
+  'rgba(100,255,218,0.10)','rgba(255,107,157,0.10)','rgba(255,209,102,0.10)',
+  'rgba(85,194,160,0.10)','rgba(180,140,255,0.10)','rgba(255,140,100,0.10)',
+  'rgba(140,200,255,0.10)','rgba(255,200,140,0.10)','rgba(200,255,140,0.10)',
+  'rgba(255,140,200,0.10)','rgba(140,255,200,0.10)','rgba(255,200,200,0.10)',
+];
+
+// ============== STATE ==============
+const state = {
+  level: 0,
+  rows: 0, cols: 0,
+  clues: [],
+  borders: {},
+  hints: 3,
+  hintsUsed: 0,
+  startTime: 0,
+  paused: false,
+  mode: 'place',
+  hintCells: new Set(),
+  musicOn: true,
+  sfxOn: true,
+  autoCheck: false,
+  won: false,
+};
+
+// ============== PERSISTENCE ==============
+const SAVE_KEY = 'scrin_save_v1';
+function loadSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { progress: {}, settings: { music: true, sfx: true, autocheck: false } };
+}
+function saveProgress() {
+  const s = loadSave();
+  const lvl = state.level;
+  if (!s.progress[lvl]) s.progress[lvl] = {};
+  s.progress[lvl].completed = state.won;
+  s.progress[lvl].time = Math.floor((Date.now() - state.startTime) / 1000);
+  s.progress[lvl].hints = state.hintsUsed;
+  s.progress[lvl].stars = state.won ? computeStars() : 0;
+  s.progress[lvl].borders = JSON.stringify(state.borders);
+  localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+}
+function saveSettings() {
+  const s = loadSave();
+  s.settings.music = state.musicOn;
+  s.settings.sfx = state.sfxOn;
+  s.settings.autocheck = state.autoCheck;
+  localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+}
+function getSavedBorders(lvl) {
+  const s = loadSave();
+  if (s.progress[lvl] && s.progress[lvl].borders) {
+    return JSON.parse(s.progress[lvl].borders);
+  }
+  return null;
+}
+
+// ============== CANVAS ==============
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let CELL = 50;
+
+function resize() {
+  const app = document.getElementById('app');
+  const w = Math.min(app.clientWidth - 16, 560);
+  CELL = Math.floor((w - 4) / state.cols);
+  const cw = CELL * state.cols + 4;
+  const ch = CELL * state.rows + 4;
+  canvas.width = cw;
+  canvas.height = ch;
+  canvas.style.width = cw + 'px';
+  canvas.style.height = ch + 'px';
+  draw();
+}
+
+// ============== REGION DETECTION ==============
+function computeRegions() {
+  const R = state.rows, C = state.cols;
+  const parent = [];
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      parent.push(r * C + c);
+    }
+  }
+  function find(x) {
+    while (parent[x] !== x) {
+      parent[x] = parent[parent[x]];
+      x = parent[x];
+    }
+    return x;
+  }
+  function union(a, b) {
+    const ra = find(a), rb = find(b);
+    if (ra !== rb) parent[ra] = rb;
+  }
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      // Union with right neighbor (r, c+1) if no vertical border between them
+      // state.borders['v_r_c'] = border between (r, c) and (r, c+1)
+      if (c < C - 1 && !state.borders['v_' + r + '_' + c]) {
+        union(r * C + c, r * C + c + 1);
+      }
+      // Union with bottom neighbor (r+1, c) if no horizontal border between them
+      // state.borders['h_r_c'] = border between (r, c) and (r+1, c)
+      if (r < R - 1 && !state.borders['h_' + r + '_' + c]) {
+        union(r * C + c, (r + 1) * C + c);
+      }
+    }
+  }
+  const regions = {};
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      const root = find(r * C + c);
+      if (!regions[root]) regions[root] = [];
+      regions[root].push({ r, c });
+    }
+  }
+  return Object.values(regions);
+}
+
+function isRectangle(cells) {
+  let r0 = Infinity, c0 = Infinity, r1 = -1, c1 = -1;
+  for (const {r, c} of cells) {
+    if (r < r0) r0 = r;
+    if (c < c0) c0 = c;
+    if (r > r1) r1 = r;
+    if (c > c1) c1 = c;
+  }
+  const expected = (r1 - r0 + 1) * (c1 - c0 + 1);
+  if (cells.length !== expected) return null;
+  const set = new Set(cells.map(({r, c}) => r + ',' + c));
+  for (let r = r0; r <= r1; r++) {
+    for (let c = c0; c <= c1; c++) {
+      if (!set.has(r + ',' + c)) return null;
+    }
+  }
+  return { r0, c0, r1, c1 };
+}
+
+function checkWin() {
+  const regions = computeRegions();
+  let allValid = true;
+  let clueCount = 0;
+  for (const cells of regions) {
+    if (cells.length === 0) continue;
+    if (!isRectangle(cells)) {
+      allValid = false;
+      continue;
+    }
+    let foundClue = -1;
+    for (const {r, c} of cells) {
+      for (const cl of state.clues) {
+        if (cl.r === r && cl.c === c) {
+          foundClue = cl.n;
+        }
+      }
+    }
+    if (foundClue === -1) {
+      allValid = false;  // every region must have a clue
+    } else if (cells.length !== foundClue) {
+      allValid = false;
+    } else {
+      clueCount++;
+    }
+  }
+  return { allValid, clueCount, totalRegions: regions.length };
+}
+
+// ============== DRAWING ==============
+function draw() {
+  const R = state.rows, C = state.cols;
+  ctx.fillStyle = COLORS.panel;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Region overlay
+  const regions = computeRegions();
+  const cellRegion = {};
+  regions.forEach((cells, idx) => {
+    for (const {r, c} of cells) cellRegion[r + ',' + c] = idx;
+  });
+
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      const x = 2 + c * CELL, y = 2 + r * CELL;
+      const idx = cellRegion[r + ',' + c] || 0;
+      ctx.fillStyle = REGION_COLORS[idx % REGION_COLORS.length];
+      ctx.fillRect(x, y, CELL, CELL);
+    }
+  }
+
+  // Light grid lines
+  ctx.strokeStyle = COLORS.border;
+  ctx.lineWidth = 1;
+  for (let r = 0; r <= R; r++) {
+    ctx.beginPath();
+    ctx.moveTo(2, 2 + r * CELL);
+    ctx.lineTo(2 + C * CELL, 2 + r * CELL);
+    ctx.stroke();
+  }
+  for (let c = 0; c <= C; c++) {
+    ctx.beginPath();
+    ctx.moveTo(2 + c * CELL, 2);
+    ctx.lineTo(2 + c * CELL, 2 + R * CELL);
+    ctx.stroke();
+  }
+
+  // Active borders (thick cyan)
+  ctx.strokeStyle = COLORS.borderActive;
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      if (state.borders['h_' + r + '_' + c]) {
+        // border between (r, c) and (r+1, c) — at y = (r+1) * CELL
+        const y = 2 + (r + 1) * CELL;
+        ctx.beginPath();
+        ctx.moveTo(2 + c * CELL, y);
+        ctx.lineTo(2 + (c + 1) * CELL, y);
+        ctx.stroke();
+      }
+      if (state.borders['v_' + r + '_' + c]) {
+        // border between (r, c) and (r, c+1) — at x = (c+1) * CELL
+        const x = 2 + (c + 1) * CELL;
+        ctx.beginPath();
+        ctx.moveTo(x, 2 + r * CELL);
+        ctx.lineTo(x, 2 + (r + 1) * CELL);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Hint highlights
+  for (const key of state.hintCells) {
+    const [r, c] = key.split(',').map(Number);
+    const x = 2 + c * CELL, y = 2 + r * CELL;
+    ctx.strokeStyle = COLORS.borderHint;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x + 4, y + 4, CELL - 8, CELL - 8);
+  }
+
+  // Clue numbers
+  ctx.fillStyle = COLORS.clue;
+  ctx.font = 'bold ' + Math.floor(CELL * 0.45) + 'px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const cl of state.clues) {
+    const x = 2 + cl.c * CELL + CELL / 2;
+    const y = 2 + cl.r * CELL + CELL / 2;
+    ctx.fillText(cl.n, x, y);
+  }
+}
+
+// ============== INPUT ==============
+canvas.addEventListener('pointerdown', handlePointer);
+
+function handlePointer(e) {
+  if (state.won) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left - 2;
+  const y = e.clientY - rect.top - 2;
+  // The grid is at x in [0, C*CELL], y in [0, R*CELL]
+  // Horizontal border between (r, c) and (r+1, c) is at y = (r+1) * CELL for r in [0, R-1]
+  // Vertical border between (r, c) and (r, c+1) is at x = (c+1) * CELL for c in [0, C-1]
+  // Also need outer edges (implicit) — but we don't allow toggling those.
+  const tol = Math.max(8, CELL * 0.3);
+  // Find nearest horizontal border line
+  // r ranges -1 (top edge, implicit) to R-1 (last h border before bottom)
+  // The h line at y is at integer multiple of CELL
+  // For y in [0, R*CELL], the nearest h line is at y_line = round(y / CELL) * CELL
+  // But we need y_line in [CELL, R*CELL] (no implicit top border toggle)
+  // Actually we also need to consider r=0 (border at y=CELL between row 0 and row 1)
+  // r ranges 0 to R-1: h_r is at y = (r+1) * CELL
+  // r=-1 is at y=0 (top of grid, implicit — don't toggle)
+  // r=R is at y=R*CELL (bottom of grid, implicit)
+  let bestH = null, bestHdist = Infinity;
+  for (let r = 0; r < R; r++) {
+    const yLine = (r + 1) * CELL;
+    const d = Math.abs(y - yLine);
+    if (d < bestHdist) { bestHdist = d; bestH = r; }
+  }
+  let bestV = null, bestVdist = Infinity;
+  for (let c = 0; c < C; c++) {
+    const xLine = (c + 1) * CELL;
+    const d = Math.abs(x - xLine);
+    if (d < bestVdist) { bestVdist = d; bestV = c; }
+  }
+  if (bestHdist < tol && bestHdist <= bestVdist) {
+    toggleBorder('h', bestH, findColumnAt(x));
+  } else if (bestVdist < tol) {
+    toggleBorder('v', findRowAt(y), bestV);
+  }
+  draw();
+  if (state.autoCheck) checkAndMaybeWin();
+  saveProgress();
+}
+
+function findColumnAt(x) {
+  // x in [0, C*CELL] — find the column whose cells are near x
+  const c = Math.floor(x / CELL);
+  return Math.max(0, Math.min(C - 1, c));
+}
+function findRowAt(y) {
+  const r = Math.floor(y / CELL);
+  return Math.max(0, Math.min(R - 1, r));
+}
+
+function toggleBorder(type, r, c) {
+  if (type === 'h') {
+    const key = 'h_' + r + '_' + c;
+    if (state.mode === 'place') state.borders[key] = true;
+    else delete state.borders[key];
+  } else {
+    const key = 'v_' + r + '_' + c;
+    if (state.mode === 'place') state.borders[key] = true;
+    else delete state.borders[key];
+  }
+  playClick();
+}
+
+// ============== HINT ==============
+function getSolution() {
+  const L = LEVELS[state.level];
+  if (!L || !L.solution) return null;
+  // Build borders from solution
+  // rect (r0, c0, r1, c1) → borders:
+  //   top:    h_(r0-1)_c for c in [c0, c1] (only if r0 > 0; otherwise implicit)
+  //   bottom: h_r1_c for c in [c0, c1] (always set — between (r1, c) and (r1+1, c))
+  //   left:   v_r_(c0-1) for r in [r0, r1] (only if c0 > 0; otherwise implicit)
+  //   right:  v_r_c1 for r in [r0, r1] (always set)
+  const borders = {};
+  for (const rect of L.solution) {
+    const r0 = rect.r0, c0 = rect.c0, r1 = rect.r1, c1 = rect.c1;
+    if (r0 > 0) for (let c = c0; c <= c1; c++) borders['h_' + (r0 - 1) + '_' + c] = true;
+    for (let c = c0; c <= c1; c++) borders['h_' + r1 + '_' + c] = true;
+    if (c0 > 0) for (let r = r0; r <= r1; r++) borders['v_' + r + '_' + (c0 - 1)] = true;
+    for (let r = r0; r <= r1; r++) borders['v_' + r + '_' + c1] = true;
+  }
+  return borders;
+}
+
+function giveHint() {
+  if (state.hints <= 0) {
+    toast('No hints left!');
+    return;
+  }
+  const sol = getSolution();
+  if (!sol) return;
+  const wrong = [];
+  for (const key of Object.keys(sol)) {
+    if (!state.borders[key]) wrong.push({ key, op: 'add' });
+  }
+  for (const key of Object.keys(state.borders)) {
+    if (!sol[key]) wrong.push({ key, op: 'remove' });
+  }
+  if (wrong.length === 0) {
+    toast('All borders correct!');
+    return;
+  }
+  const w = wrong[Math.floor(Math.random() * wrong.length)];
+  if (w.op === 'add') state.borders[w.key] = true;
+  else delete state.borders[w.key];
+  state.hints--;
+  state.hintsUsed++;
+  state.hintCells.clear();
+  const m = w.key.match(/^([hv])_(\d+)_(\d+)$/);
+  if (m) {
+    const type = m[1], r = +m[2], c = +m[3];
+    // Highlight adjacent cells
+    if (type === 'h') {
+      // border between (r, c) and (r+1, c)
+      state.hintCells.add(r + ',' + c);
+      state.hintCells.add((r + 1) + ',' + c);
+    } else {
+      state.hintCells.add(r + ',' + c);
+      state.hintCells.add(r + ',' + (c + 1));
+    }
+  }
+  draw();
+  document.getElementById('hints').textContent = state.hints;
+  playHint();
+  saveProgress();
+}
+
+// ============== CHECK & WIN ==============
+function checkAndMaybeWin() {
+  const { allValid, totalRegions } = checkWin();
+  if (allValid && totalRegions > 0) {
+    state.won = true;
+    showWin();
+    playWin();
+  } else {
+    playError();
+  }
+}
+
+function computeStars() {
+  const elapsed = (Date.now() - state.startTime) / 1000;
+  if (state.hintsUsed === 0 && elapsed < 60) return 3;
+  if (state.hintsUsed <= 1 && elapsed < 180) return 3;
+  if (state.hintsUsed <= 2) return 2;
+  return 1;
+}
+
+function showWin() {
+  const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  const stars = computeStars();
+  document.getElementById('winStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+  document.getElementById('winStats').textContent = `Time: ${mins}:${secs.toString().padStart(2, '0')} · Hints: ${state.hintsUsed} · Regions: ${computeRegions().length}`;
+  document.getElementById('winModal').classList.add('show');
+  saveProgress();
+}
+
+function clearAll() {
+  state.borders = {};
+  state.hintCells.clear();
+  draw();
+  playErase();
+}
+
+// ============== AUDIO (Web Audio API) ==============
+let audioCtx = null;
+let musicNodes = null;
+function getAudio() {
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) {}
+  }
+  return audioCtx;
+}
+function startMusic() {
+  if (!state.musicOn) return;
+  const ctx = getAudio();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
+  if (musicNodes) return;
+  const chords = [
+    [261.63, 329.63, 392.00, 493.88],
+    [293.66, 349.23, 440.00, 523.25],
+    [220.00, 277.18, 329.63, 415.30],
+    [196.00, 246.94, 293.66, 392.00],
+  ];
+  const oscs = [];
+  const gain = ctx.createGain();
+  gain.gain.value = 0.04;
+  gain.connect(ctx.destination);
+  chords.forEach((freqs) => {
+    freqs.forEach(f => {
+      const o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = f;
+      const g = ctx.createGain();
+      g.gain.value = 0.012;
+      o.connect(g);
+      g.connect(gain);
+      o.start();
+      oscs.push({ o, g });
+    });
+  });
+  let step = 0;
+  const cycle = setInterval(() => {
+    if (!state.musicOn || state.won) {
+      clearInterval(cycle);
+      oscs.forEach(({o}) => { try { o.stop(); } catch(e) {} });
+      musicNodes = null;
+      return;
+    }
+    step = (step + 1) % chords.length;
+    const c = chords[step];
+    oscs.forEach(({ o }, i) => {
+      o.frequency.setTargetAtTime(c[i % 4], ctx.currentTime, 0.5);
+    });
+  }, 4000);
+  musicNodes = { oscs, cycle };
+}
+function stopMusic() {
+  if (musicNodes) {
+    musicNodes.oscs.forEach(({o}) => { try { o.stop(); } catch(e) {} });
+    musicNodes = null;
+  }
+}
+
+function playTone(freq, dur, type='sine', vol=0.1) {
+  if (!state.sfxOn) return;
+  const ctx = getAudio();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+  o.connect(g);
+  g.connect(ctx.destination);
+  o.start();
+  o.stop(ctx.currentTime + dur);
+}
+function playClick() { playTone(800, 0.05, 'square', 0.05); }
+function playErase() { playTone(400, 0.08, 'sine', 0.06); }
+function playHint() { playTone(660, 0.15, 'sine', 0.08); setTimeout(() => playTone(880, 0.15, 'sine', 0.08), 100); }
+function playError() { playTone(200, 0.2, 'sawtooth', 0.08); }
+function playWin() { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.3, 'sine', 0.1), i * 150)); }
+
+// ============== UI ==============
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+function loadLevel(idx) {
+  state.level = idx;
+  const L = LEVELS[idx];
+  state.rows = L.rows;
+  state.cols = L.cols;
+  state.clues = L.clues;
+  const saved = getSavedBorders(idx);
+  state.borders = saved || {};
+  state.hints = 3;
+  state.hintsUsed = (loadSave().progress[idx] && loadSave().progress[idx].hints) || 0;
+  state.startTime = Date.now();
+  state.paused = false;
+  state.won = false;
+  state.hintCells.clear();
+  state.mode = 'place';
+  document.getElementById('tier').textContent = L.tier;
+  document.getElementById('lvlNum').textContent = (idx + 1);
+  document.getElementById('hints').textContent = state.hints;
+  document.getElementById('placeBtn').classList.add('active');
+  document.getElementById('eraseBtn').classList.remove('active');
+  document.getElementById('winModal').classList.remove('show');
+  R = state.rows;  // global for handlePointer
+  C = state.cols;
+  resize();
+  startTimer();
+  startMusic();
+}
+
+let R = 5, C = 5;  // global for handlePointer (set in loadLevel)
+
+function startTimer() {
+  if (state._timer) clearInterval(state._timer);
+  state._timer = setInterval(() => {
+    if (state.paused || state.won) return;
+    const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+    const m = Math.floor(elapsed / 60);
+    const s = elapsed % 60;
+    document.getElementById('timer').textContent = m + ':' + s.toString().padStart(2, '0');
+  }, 1000);
+}
+
+function openMenu() {
+  state.paused = true;
+  const tierList = document.getElementById('tierList');
+  const save = loadSave();
+  tierList.innerHTML = '';
+  const tiers = ['Beginner', 'Easy', 'Medium', 'Hard', 'Expert'];
+  tiers.forEach(tier => {
+    const div = document.createElement('div');
+    div.className = 'tier-label';
+    div.textContent = tier;
+    tierList.appendChild(div);
+    const grid = document.createElement('div');
+    grid.className = 'lvl-grid';
+    for (let i = 0; i < LEVELS.length; i++) {
+      if (LEVELS[i].tier !== tier) continue;
+      const btn = document.createElement('div');
+      btn.className = 'lvl-btn';
+      const prog = save.progress[i];
+      if (prog && prog.completed) btn.classList.add('completed');
+      btn.innerHTML = `<div>${i + 1}</div>${prog && prog.stars ? '<div class="lvl-stars">' + '⭐'.repeat(prog.stars) + '</div>' : ''}`;
+      btn.onclick = () => {
+        document.getElementById('menuOverlay').classList.remove('show');
+        loadLevel(i);
+      };
+      grid.appendChild(btn);
+    }
+    tierList.appendChild(grid);
+  });
+  document.getElementById('menuOverlay').classList.add('show');
+}
+
+// ============== INIT ==============
+window.addEventListener('DOMContentLoaded', () => {
+  const s = loadSave().settings || {};
+  state.musicOn = s.music !== false;
+  state.sfxOn = s.sfx !== false;
+  state.autoCheck = !!s.autocheck;
+  document.getElementById('musicToggle').checked = state.musicOn;
+  document.getElementById('sfxToggle').checked = state.sfxOn;
+  document.getElementById('autocheckToggle').checked = state.autoCheck;
+
+  document.getElementById('placeBtn').onclick = () => {
+    state.mode = 'place';
+    document.getElementById('placeBtn').classList.add('active');
+    document.getElementById('eraseBtn').classList.remove('active');
+  };
+  document.getElementById('eraseBtn').onclick = () => {
+    state.mode = 'erase';
+    document.getElementById('eraseBtn').classList.add('active');
+    document.getElementById('placeBtn').classList.remove('active');
+  };
+  document.getElementById('hintBtn').onclick = giveHint;
+  document.getElementById('checkBtn').onclick = () => { checkAndMaybeWin(); };
+  document.getElementById('clearBtn').onclick = clearAll;
+  document.getElementById('menuBtn').onclick = openMenu;
+  document.getElementById('menuBtn2').onclick = openMenu;
+  document.getElementById('closeMenuBtn').onclick = () => {
+    document.getElementById('menuOverlay').classList.remove('show');
+    state.paused = false;
+  };
+  document.getElementById('settingsBtn').onclick = () => {
+    document.getElementById('menuOverlay').classList.remove('show');
+    document.getElementById('settingsPanel').classList.add('show');
+  };
+  document.getElementById('closeSettingsBtn').onclick = () => {
+    document.getElementById('settingsPanel').classList.remove('show');
+    openMenu();
+  };
+  document.getElementById('musicToggle').onchange = (e) => {
+    state.musicOn = e.target.checked;
+    saveSettings();
+    if (state.musicOn) startMusic(); else stopMusic();
+  };
+  document.getElementById('sfxToggle').onchange = (e) => {
+    state.sfxOn = e.target.checked;
+    saveSettings();
+  };
+  document.getElementById('autocheckToggle').onchange = (e) => {
+    state.autoCheck = e.target.checked;
+    saveSettings();
+  };
+  document.getElementById('nextBtn').onclick = () => {
+    if (state.level < LEVELS.length - 1) loadLevel(state.level + 1);
+    else openMenu();
+  };
+  document.getElementById('replayBtn').onclick = () => {
+    state.borders = {};
+    state.won = false;
+    state.startTime = Date.now();
+    document.getElementById('winModal').classList.remove('show');
+    draw();
+  };
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '1') document.getElementById('placeBtn').click();
+    else if (e.key === '2') document.getElementById('eraseBtn').click();
+    else if (e.key === 'h' || e.key === 'H') giveHint();
+    else if (e.key === 'r' || e.key === 'R') clearAll();
+    else if (e.key === 'Enter') checkAndMaybeWin();
+    else if (e.key === 'Escape') openMenu();
+  });
+
+  document.addEventListener('pointerdown', () => {
+    if (state.musicOn) startMusic();
+  }, { once: true });
+
+  loadLevel(0);
+});
+
+window.addEventListener('beforeunload', () => {
+  if (state.borders && Object.keys(state.borders).length > 0) saveProgress();
+  stopMusic();
+});
+
+window.addEventListener('resize', resize);
+</script>
+</body>
+</html>
