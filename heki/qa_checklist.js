@@ -1,0 +1,76 @@
+// qa_checklist.js — Phase 7 code-level QA for Heki
+const fs = require('fs');
+const html = fs.readFileSync('index.html', 'utf8');
+
+const checks = [
+  ['HTML5 doctype', /^<!DOCTYPE html>/i.test(html)],
+  ['lang attribute', /<html lang="en">/.test(html)],
+  ['charset UTF-8', /<meta charset="UTF-8">/.test(html)],
+  ['viewport meta', /name="viewport"/.test(html)],
+  ['title tag', /<title>.*Heki.*<\/title>/.test(html)],
+  ['meta description', /name="description"/.test(html)],
+  ['favicon data URI', /rel="icon" href="data:image\/svg\+xml/.test(html)],
+  ['og:title', /property="og:title"/.test(html)],
+  ['og:description', /property="og:description"/.test(html)],
+  ['og:image', /property="og:image" content="\/heki\/og-image\.jpg"/.test(html)],
+  ['og:url', /property="og:url" content="https:\/\/gamezipper\.com\/heki\/"/.test(html)],
+  ['twitter:card', /name="twitter:card"/.test(html)],
+  ['canonical link', /rel="canonical" href="https:\/\/gamezipper\.com\/heki\/"/.test(html)],
+  ['JSON-LD VideoGame', /"@type":"VideoGame"/.test(html)],
+  ['JSON-LD FAQPage', /"@type":"FAQPage"/.test(html)],
+  ['JSON-LD BreadcrumbList', /"@type":"BreadcrumbList"/.test(html)],
+  ['schema.org context (not redacted)', /"@context":"https:\/\/schema\.org"/.test(html)],
+  ['Canvas element', /<canvas id="board"/.test(html)],
+  ['LEVELS array defined', /const LEVELS\s*=/.test(html)],
+  ['30 levels loaded', (html.match(/"tier":"[A-Za-z]+"/g) || []).length >= 30],
+  ['checkWin function', /function checkWin\(/.test(html)],
+  ['computeRegions (union-find)', /function computeRegions\(/.test(html)],
+  ['pointerdown handler', /pointerdown/.test(html)],
+  ['setMode function', /function setMode\(/.test(html)],
+  ['useHint function', /function useHint\(/.test(html)],
+  ['clearBoard function', /function clearBoard\(/.test(html)],
+  ['toggleLevelSelect', /function toggleLevelSelect\(/.test(html)],
+  ['toggleSettings', /function toggleSettings\(/.test(html)],
+  ['toggleSetting', /function toggleSetting\(/.test(html)],
+  ['nextLevel function', /function nextLevel\(/.test(html)],
+  ['closeWin function', /function closeWin\(/.test(html)],
+  ['launchConfetti', /function launchConfetti\(/.test(html)],
+  ['Web Audio AudioContext', /AudioContext/.test(html)],
+  ['playSfx function', /function playSfx\(/.test(html)],
+  ['startMusic function', /function startMusic\(/.test(html)],
+  ['stopMusic function', /function stopMusic\(/.test(html)],
+  ['localStorage save', /localStorage\.setItem/.test(html)],
+  ['localStorage load', /localStorage\.getItem/.test(html)],
+  ['keyboard handler', /addEventListener\('keydown'/.test(html)],
+  ['key 1 place', /e\.key === '1'/.test(html)],
+  ['key 2 erase', /e\.key === '2'/.test(html)],
+  ['key H hint', /e\.key === 'h'/.test(html)],
+  ['key R clear', /e\.key === 'r'/.test(html)],
+  ['key Enter check', /e\.key === 'Enter'/.test(html)],
+  ['key Escape menu', /e\.key === 'Escape'/.test(html)],
+  ['resize handler', /addEventListener\('resize'/.test(html)],
+  ['beforeunload cleanup', /beforeunload/.test(html)],
+  ['pagehide cleanup', /pagehide/.test(html)],
+  ['visibilitychange cleanup', /visibilitychange/.test(html)],
+  ['gz-sr-only H1', /class="gz-sr-only"/.test(html)],
+  ['timer element', /id="timer"/.test(html)],
+  ['hint count element', /id="hint-count"/.test(html)],
+  ['win overlay', /id="win-overlay"/.test(html)],
+  ['monetag div', /id="monetag"/.test(html)],
+  ['gz-analytics script', /\/js\/gz-analytics\.js/.test(html)],
+  ['monetag-manager script', /\/js\/monetag-manager\.js/.test(html)],
+  ['adsterra-manager script', /\/js\/adsterra-manager\.js/.test(html)],
+  ['game-footer script', /\/js\/game-footer\.js/.test(html)],
+  ['footer link', /gamezipper\.com\//.test(html)],
+  ['3-star rating logic', /stars = 3/.test(html)],
+  ['win chord SFX', /\[523, 659, 784, 1047\]/.test(html)],
+  ['ambient BGM chords', /\[261\.63, 329\.63/.test(html)],
+];
+
+let pass = 0, fail = 0;
+for (const [name, ok] of checks) {
+  console.log(`${ok ? '✅' : '❌'} ${name}`);
+  if (ok) pass++; else fail++;
+}
+console.log(`\n=== QA RESULT: ${pass}/${checks.length} passed, ${fail} failed ===`);
+process.exit(fail > 0 ? 1 : 0);
