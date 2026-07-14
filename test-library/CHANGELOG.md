@@ -1,3 +1,44 @@
+## [v1.190.0] - 2026-07-15
+
+### Added
+
+- 8 new test cases from 2026-07-15 industry research (R307, 4h cadence cycle 69):
+  - [S-426] **[P1]** Safari 26 GA Strips Tracking Params (gclid/fbclid/msclkid/mc_eid/utm_*) in REGULAR Browsing Mode — Silently Breaks GameZipper Ad-Attribution & Conversion Tracking
+  - [S-427] **[P2]** Safari 26 Active Fingerprinting Prevention for KNOWN Tracking Scripts — Canvas/WebGL/Audio Noise Breaks FingerprintJS, reCAPTCHA Enterprise, Analytics
+  - [W-365] **[P2]** Chrome 149 Stable (Jun 17 2026) V8 12.4 + WASM 2.0 + Multi-Process Sandbox + Site Isolation + AI-Predicted Memory Recovery — Long-Session Frame Timing Risk
+  - [W-366] **[P3]** Next.js 16.2 / React 19 Era — Modern Framework Perf Patterns Set New User Expectations for "Fast" Sites
+  - [W-367] **[P2]** Unity WebView / UniWebView 5 Mobile Embedding — Triple-Nested Rendering Quirks (iOS WKWebView + Android System WebView Diverge)
+  - [P-171] **[P2]** Chrome 149 AI-Predicted Memory Recovery (V8 12.4) — Non-Deterministic GC Pauses Driven by ML Model; "Ghost Lag Spikes" in Long-Running Games
+  - [B-216] **[P3]** Browser Fingerprint Detection Services 2026 Maturation — Anti-Fingerprint Extension Users (Brave, Tor, CanvasBlocker) Get Bot False-Positives
+  - [C-130] **[P2]** 2026 Web Game Industry "Compliance Deepening" (合规化深化) — GDPR/COPPA/DSA/China Regulatory Readiness Audit
+
+### Sources
+
+- mcp__minimax_search__web_search queries (2026-07-15, cycle 69):
+  - "HTML5 game testing 2026 new techniques browser canvas WebGL memory leak July"
+  - "browser security vulnerability July 2026 Chrome Safari Firefox CVE patch XSS"
+  - "Chrome 152 Edge 151 Safari 18 update 2026 July new feature deprecated API breaking"
+  - "casual mobile game UX complaint 2026 accessibility haptic dark mode loading ad fatigue"
+  - "Chrome 152 stable release 2026 July V8 WebAssembly security advisory"
+  - "web game performance API long animation frame 2026 INP Core Web Vitals"
+  - "browser fingerprinting protection 2026 new API Safari Firefox Chrome privacy"
+  - "HTML5 WebView Unity web game performance regression 2026 July WebGL crash"
+- Note: SearXNG (web_search_prime) NOT used this cycle (skipped - minimax_search returns adequate signal). Cycles since 2026-07-12 used minimax_search only.
+- Key URLs:
+  - https://cloud.tencent.com/developer/article/2637644 (Jul 15 2026, Safari 26 GA release notes — tracking-param stripping 134226694 + known-script fingerprint prevention 134227067 - S-426, S-427)
+  - https://www.onlinedown.net/soft/1114433.htm (Jun 17 2026, Chrome 149 v149.0.7827.115 — V8 12.4 + WASM 2.0 + AI-predicted memory recovery + site isolation - W-365, P-171)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0516a26637628952 (Jun 8 2026, Next.js 16.2 release — 4x dev speed, render perf, 200+ Turbopack fixes - W-366)
+  - https://www.yunqiaonet.com/unity/48399 (Jun 6 2026, UniWebView 5 Unity asset — iOS/Android WebView wrapper - W-367)
+  - https://browserinsight.net/ (Jul 12 2026, BrowserInsight fingerprint detection service — Bot Detection, Plugin Check - B-216)
+  - https://sourceforge.net/directory/browser-fingerprinting/ (Mar 2026, FingerprintJS open source + Fingerprint Pro Server API SDK - B-216)
+  - https://www.sohu.com/a/1028338060_122652494 (May 27 2026, 2026 web game industry — compliance deepening, unlicensed platforms out, quality improvement - C-130)
+  - https://www.sohu.com/a/1025584089_122652494 (May 21 2026, 2026 desktop web game industry — compliance quality improvement - C-130)
+  - https://www.sohu.com/a/1024937447_121885030 (May 20 2026, Mozilla Firefox Mythos AI — 423 vulns in one month, 180 high-severity - context for C-130 regulatory pressure)
+  - https://www.lcxw.cn/wiki@R9U8uvZ.txt (May 22 2026, Mozilla 3162 framework — version lifecycle 9mo→6mo, forced blocking of high-risk sites for expired versions - context for C-130)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6526a2b88a848352 (Jun 12 2026, Microsoft Edge biweekly cadence from V152 — context for C-130 + W-365 browser churn)
+  - developer.mozilla.org/en-US/docs/Web/API/Performance_API/Long_animation_frame_timing (Mar 27 2026, LoAF 50ms threshold — context for P-171 long-frame monitoring)
+
+
 ## [v1.189.0] - 2026-07-15
 
 ### Added
