@@ -1,3 +1,47 @@
+## [v1.189.0] - 2026-07-15
+
+### Added
+
+- 8 new test cases from 2026-07-15 industry research (R306, 4h cadence cycle 68):
+  - [S-424] **[P1]** Safari 26.5 CVE-2026-28962 — WebKit CSP-Bypass Leaks User-Sensitive Data (patched in 26.5 May 14 2026)
+  - [S-425] **[P2]** ClickFix 2026 Surge 500% YoY — Now Drives ~50% of All Malware Distribution; Ad Networks May Serve Fake-Verification Prompts
+  - [W-363] **[P2]** Safari 26.4 — 191 WebKit Bug Fixes + CSS Grid Lanes Feature Shipped (Mar 25 2026)
+  - [W-364] **[P2]** iOS 26.4 WKWebView Blocks IP-Type WebSocket Connections — Multiplayer Silent Failure on In-App Browsers
+  - [P-169] **[P2]** Chrome 149 WebAssembly Lazy-Load + Pre-Compile Pattern — 30% Faster First-Paint, 30% Bounce-Rate Reduction Per Saved Second
+  - [P-170] **[P1]** Long Animation Frame API (LoAF) — 50ms Threshold Is Now Standard INP Metric for Game Frame Performance
+  - [B-214] **[P2]** Chrome 148 AI-Driven Auto-Fill — Browser AI Fills Game Forms With Wrong/Profane/Random Values
+  - [B-215] **[P1]** Chrome 148 AI Auto-Fill XSS WAF-Bypass — Browser AI Injects HTML That Bypasses Server-Side Filters
+  - [C-129] **[P3]** iOS 26.4 Liquid Glass Transparency Reduces In-Game HUD Contrast on Light Backgrounds
+
+### Sources
+
+- mcp__minimax_search__web_search queries (2026-07-15, cycle 68):
+  - "HTML5 game testing 2026 new techniques browser"
+  - "browser game bug report 2026 casual web game"
+  - "Chrome Edge Safari update 2026 web compatibility"
+  - "iOS Safari WebKit bug 2026 HTML5 canvas"
+  - "web game accessibility WCAG 2026 new requirements"
+  - "browser security vulnerability July 2026 XSS clickjacking"
+  - "casual game UX complaint 2026 mobile haptic loading ad fatigue"
+  - "Safari 26.5 CVE-2026-28962 WebKit CSP bypass July 2026"
+  - "Chrome 152 release notes 2026 new features V8 WebAssembly"
+  - "web game performance API long animation frame 2026 INP"
+- Note: SearXNG (web_search_prime) NOT used this cycle (skipped - minimax_search returns adequate signal). Cycles since 2026-07-12 used minimax_search only.
+- Key URLs:
+  - https://finance.sina.com.cn/tech/digi/2026-05-14/doc-inhxvtwn8763233.shtml (May 14 2026, Safari 26.5 20-bug fix + CVE-2026-28962 CSP bypass - S-424)
+  - https://www.sohu.com/a/1022622771_122004016 (May 14 2026, Safari 26.5 20 vuln fixes + WebRTC crash fix + CSP bypass - S-424)
+  - https://www.sohu.com/a/1010194947_121851694 (Apr 16 2026, 2026 China cybersecurity report - ClickFix 500% surge, 50% of malware - S-425)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_17369c3312871752 (Mar 25 2026, Safari 26.4 191 WebKit fixes + CSS Grid Lanes - W-363)
+  - https://apple.com.cn/safari/ (Jul 2 2026, Safari 26.4 features + compact tab - W-363)
+  - https://finance.sina.com.cn/tech/digi/2026-05-14 (May 14 2026, Safari 26.5 stability - W-364 context)
+  - developer.apple.com/forums/tags/webkit (iOS 26.4 WKWebView IP-WebSocket blocking community pattern - W-364)
+  - https://cloud.tencent.com/developer/article/2656872 (Jul 15 2026, WebAssembly lazy-load pre-compile - 30% bounce-rate-per-second stat - P-169)
+  - https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/Long_animation_frame_timing (Mar 27 2026, LoAF 50ms threshold standard - P-170)
+  - https://developer.mozilla.org/en-US/docs/Web/Performance/Animation_performance_and_frame_rate (Nov 7 2025, animation perf baseline - P-170 context)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_83069fc56b987652 (May 7 2026, Chrome 148 AI-driven auto-fill - B-214, B-215)
+  - https://www.tenorshare.tw/ios-update-problems.html (Jun 8 2026, iOS 26 Liquid Glass transparency - C-129)
+
+
 ## [v1.188.0] - 2026-07-14
 ### Added
 - 7 new test cases from 2026-07-14 industry research (R305, 4h cadence cycle 67):
