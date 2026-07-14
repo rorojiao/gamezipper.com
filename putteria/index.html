@@ -346,6 +346,12 @@ function nextLevel(){closeModal('win-modal');if(state.levelIdx<LEVELS.length-1){
 
 function initLevel(idx){
   state.levelIdx=idx;state.placed={};state.hintsLeft=3;state.hintsUsed=0;state.startTime=Date.now();
+  // Fix: close any open win-modal from previous level (UX)
+  closeModal('win-modal');
+  // Fix: clear all leaked timers before starting a new one (memory hygiene)
+  if(state.timers&&state.timers.length){for(var i=0;i<state.timers.length;i++){try{clearInterval(state.timers[i]);}catch(e){}}}
+  state.timers=[];
+  state.timerInterval=null;
   var lv=LEVELS[idx];
   if(lv.v){Object.keys(lv.v).forEach(function(k){state.placed[k]=lv.v[k];});}
   document.getElementById('hud-level').textContent=(idx+1)+'/'+LEVELS.length;
@@ -353,7 +359,7 @@ function initLevel(idx){
   startTimer();draw();
 }
 
-function startTimer(){if(state.timerInterval)clearInterval(state.timerInterval);state.timerInterval=setInterval(function(){var time=Math.floor((Date.now()-state.startTime)/1000);document.getElementById('hud-time').textContent=formatTime(time);},1000);state.timers.push(state.timerInterval);}
+function startTimer(){if(state.timerInterval)clearInterval(state.timerInterval);state.timerInterval=setInterval(function(){var time=Math.floor((Date.now()-state.startTime)/1000);document.getElementById('hud-time').textContent=formatTime(time);},1000);if(state.timers){state.timers.push(state.timerInterval);}}
 function stopTimer(){if(state.timerInterval){clearInterval(state.timerInterval);state.timerInterval=null;}}
 function formatTime(s){var m=Math.floor(s/60);var sec=s%60;return m+':'+(sec<10?'0':'')+sec;}
 
@@ -412,6 +418,7 @@ if(!localStorage.getItem('putteria_visited')){localStorage.setItem('putteria_vis
 document.getElementById('howto-start').onclick=function(){closeModal('howto-modal');getAudioCtx();startBGM();};
 </script>
 
+<div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
 <!-- Monetag ad integration -->
 <script src="/monetag-manager.js"></script>
 <!-- Adsterra -->
