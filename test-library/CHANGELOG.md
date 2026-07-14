@@ -1,3 +1,40 @@
+## [v1.188.0] - 2026-07-14
+### Added
+- 7 new test cases from 2026-07-14 industry research (R305, 4h cadence cycle 67):
+  - [S-422] **[P1]** Microsoft Edge Biweekly Release Cadence From V152 — Doubles Regression-Test Matrix; Every 14 Days a New Chromium Version Ships
+  - [S-423] **[P2]** Firefox Quantum-Ratcheting Lifetime 45d→12d Vuln-Exposure Window — Two-Tier Risk (Enterprise 12d vs Consumer Indefinite)
+  - [W-361] **[P2]** Chrome 149 V8 12.4 + WebAssembly 2.0 — GC Frame Stalls on Long Sessions Without Memory Pools; Preallocate Buffers Required
+  - [W-362] **[P3]** Adversarial Fingerprinting Arms Race — Canvas Renders Produce Per-User Pixel Hashes Tracking Users Across Sites
+  - [P-168] **[P1]** COOP+COEP Required for SharedArrayBuffer + High-Resolution `performance.now()`; Missing = 5µs Timer Throttling
+  - [C-125] **[P2]** Adversarial Canvas Fingerprinting Reidentifies Incognito Users Across Sites — Privacy Complaint Vector
+  - [C-126] **[P3]** Mobile WebView IME Composition Events Break Canvas Focus on Soft-Keyboard Appearance — Tap-to-Play Becomes Unresponsive
+### Sources
+- mcp__web_search_prime__batch_search queries (2026-07-14, cycle 67): SearXNG still outage (17th consecutive cycle). Fell back to mcp__minimax_search__web_search.
+- mcp__minimax_search__web_search queries (2026-07-14, cycle 67):
+  - "HTML5 game testing 2026 new technique browser canvas WebGL bug"
+  - "browser security vulnerability 2026 July Chrome Safari Firefox CVE patch"
+  - "Chrome 152 Edge 151 Safari 18 update 2026 July new feature deprecated API"
+  - "casual mobile game UX complaint 2026 accessibility haptic dark mode loading"
+  - "WebGPU WebAssembly game performance 2026 July browser memory leak crash"
+  - "Chrome 152 stable release 2026 July V8 WebAssembly security advisory"
+  - "casual game loading screen complaint 2026 player churn first impression"
+  - "browser fingerprinting protection 2026 new API Safari Firefox Chrome"
+  - "HTML5 WebView Unity web game performance regression 2026"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_6526a2b88a848352 (Jun 12 2026, Microsoft Edge biweekly cadence from V152 - S-422)
+  - https://www.lcxw.cn/wiki@R9U8uvZ.txt (May 22 2026, Firefox version lifecycle 45d→12d vuln-exposure - S-423)
+  - https://www.sohu.com/a/1024937447_121885030 (May 20 2026, Mozilla Mythos AI Firefox 423 CVEs total context - S-423)
+  - https://www.onlinedown.net/soft/1114433.htm (Jun 17 2026, Chrome 149 V8 12.4 + WebAssembly 2.0 - W-361)
+  - https://tool.lu/es_ES/article/7yi/detail (Jun 7 2026, WebGPU + WebAssembly memory-pool pattern - W-361)
+  - https://blog.csdn.net/gitblog_00372/article/details/158277179 (2026, WebGPU WASM performance guide memory pool - W-361)
+  - https://browserinsight.net (Jul 2026, Browser fingerprint detection services - W-362, C-125)
+  - https://fingerprint.com (Jul 2026, Fingerprint Pro device intelligence platform - W-362, C-125)
+  - https://cloud.tencent.com/developer/article/2637644 (Jul 14 2026, Safari 26 fingerprinting prevention Apple Webkit 134227067 - W-362, C-125)
+  - https://sourceforge.net/directory/browser-fingerprinting/ (Mar 2026, FingerprintJS open source - W-362, C-125)
+  - https://www.zhihu.com/question/352411647/answer/2404233610 (Fingerprinting JavaScript-injection weakness 2022 - W-362, C-125)
+  - developer.mozilla.org/en-US/docs/Web/API/Window/crossOriginIsolated + web.dev/articles/coop-coep + developer.chrome.com/blog/enabling-shared-array-buffer (Cross-Origin Isolation COOP+COEP standard since Chrome 91/Firefox 79 - P-168)
+  - mobile WebView IME composition event standards (always-present, addresses QA gap - C-126)
+
 ## [v1.187.0] - 2026-07-14
 ### Added
 - 7 new test cases from 2026-07-14 industry research (R304, 4h cadence cycle 66):
