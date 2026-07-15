@@ -21,12 +21,11 @@ REPORT=""
 # Hidden games (status:"hidden") are excluded from display counts
 GAMES_COUNT=$(node -e "
 const fs = require('fs');
-const c = fs.readFileSync('js/games-data.js', 'utf8');
-const idx = c.indexOf('const GAMES = [');
-const endIdx = c.indexOf('];', idx);
-const inner = c.substring(idx + 'const GAMES = ['.length, endIdx);
-// Count entries with status:\"live\" only
-const live = (inner.match(/status:\\s*[\\\"']live[\\\"']/g) || []).length;
+const c = fs.readFileSync('js/games-data.js', 'utf8').replace(/localStorage\\.getItem/g,'(()=>null)');
+const ctx = { };
+require('vm').createContext(ctx);
+require('vm').runInContext(c.replace('const GAMES','var GAMES'), ctx);
+const live = ctx.GAMES.filter(g => g && g.status === 'live').length;
 console.log(live);
 " 2>/dev/null)
 
