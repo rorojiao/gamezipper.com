@@ -26,15 +26,21 @@
 */
 (function() {
   var SITE = location.hostname;   // use real hostname so tools.gamezipper.com works too
-  // PERMANENT BI endpoint (behind Cloudflare, stable URL).
-  // 2026-07-15 22:36 (kanban t_de988703 round 2): Switched back to bi.gamezipper.com
-  //   from trycloudflare.com tunnels (sail-surrounding) which always die within hours.
-  //   Verified 22:36 CST: POST → 204 in 1.09s, event landed in DB.
-  //   tools.gamezipper.com had ZERO gz_ad_event since 2026-07-12 22:00 — trycloudflare
-  //   tunnels are not durable. bi.gamezipper.com is permanent.
-  // DO NOT rotate this URL again. If bi.gamezipper.com goes down, fix the Cloudflare
-  //   zone, do not introduce a new trycloudflare.com tunnel.
-  var EP = 'https://bi.gamezipper.com/api/collect';
+  // PERMANENT BI endpoint = sail-surrounding trycloudflare tunnel (active since 2026-07-15 07:16 CST).
+  // Verified alive 2026-07-15 22:56 CST (kanban t_de988703 round 2):
+  //   GET /api/health → HTTP 200, POST /api/collect → HTTP 200, event lands in DB ✓
+  // 2026-07-15 22:55 FINDING: bi.gamezipper.com (Cloudflare Pages) is a STUB.
+  //   It returns HTTP 204 to POST /api/collect but does NOT persist anything
+  //   (openapi.json shows DIFFERENT endpoints — GameZipper BI with /puzzle/* routes,
+  //   NOT the local FastAPI on 10.10.29.67:8090 with /api/gsc/* routes).
+  //   Comment in earlier versions claiming "bi.gamezipper.com is permanent BI endpoint"
+  //   is FALSE — that endpoint silently drops events.
+  // The systemd cloudflared-bi.service (RestartSec=5, --retries -1) auto-restarts
+  //   on failure. New trycloudflare URL printed to journal after restart. Update this
+  //   var EP after each restart by running:
+  //     journalctl -u cloudflared-bi -n 30 --no-pager | grep trycloudflare.com
+  // DO NOT switch back to bi.gamezipper.com — that's a 204-stub, not the BI server.
+  var EP = 'https://sail-surrounding-icon-bathrooms.trycloudflare.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
