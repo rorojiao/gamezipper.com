@@ -673,9 +673,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":668,"url":"https://gamezipper.com/kuroclone/","name":"Kuroclone"},
     {"@type":"ListItem","position":669,"url":"https://gamezipper.com/snake-pit/","name":"Snake Pit"},
     {"@type":"ListItem","position":670,"url":"https://gamezipper.com/hide-and-paint/","name":"Hide and Paint"},
-    {"@type":"ListItem","position":671,"url":"https://gamezipper.com/punch-master/","name":"Punch Master"}
+    {"@type":"ListItem","position":671,"url":"https://gamezipper.com/punch-master/","name":"Punch Master"},
     {"@type":"ListItem","position":672,"url":"https://gamezipper.com/hiroimono/","name":"Hiroimono"}
-  ]
+  ],
   "numberOfItems":672,
   "description":"672 free browser games you can play instantly"
 };
