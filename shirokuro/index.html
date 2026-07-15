@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Shirokuro — White-Black Line Connection Puzzle | GameZipper</title>
+<meta name="description" content="Play Shirokuro puzzle online free! A Nikoli-style line connection puzzle. Connect each white circle with a black circle via a horizontal/vertical line. Lines cannot cross or pass through other circles. 30 levels across 5 difficulty tiers from 5x5 Beginner to 9x9 Expert. Hints, star ratings, level select, keyboard support, ambient Web Audio music. No download, mobile-friendly!">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f0f1a'/><circle cx='30' cy='30' r='10' fill='%23e0e0f0' stroke='%2364ffda' stroke-width='3'/><circle cx='70' cy='40' r='10' fill='%23333' stroke='%23ffd166' stroke-width='3'/><circle cx='30' cy='70' r='10' fill='%23333' stroke='%23ffd166' stroke-width='3'/><circle cx='70' cy='75' r='10' fill='%23e0e0f0' stroke='%2364ffda' stroke-width='3'/><path d='M30 30 L70 40 M70 40 L70 75 M30 70 L70 75 M30 30 L30 70' stroke='%2364ffda' stroke-width='2' fill='none'/></svg>">
+<meta property="og:title" content="Shirokuro — White-Black Line Connection Puzzle">
+<meta property="og:description" content="Connect each white circle with a black circle. Lines cannot cross. 30 levels, 5 tiers.">
+<meta property="og:image" content="/shirokuro/og-image.jpg">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://gamezipper.com/shirokuro/">
+<script type="application/ld+json">
+{"@context":"https://***@type":"VideoGame","name":"Shirokuro","description":"A Nikoli-style line connection puzzle. Connect each white circle with a black circle via a horizontal/vertical line. Lines may not cross other lines and may not pass through other circles. 30 levels across 5 difficulty tiers from 5x5 Beginner to 9x9 Expert.","genre":"Puzzle","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GameZipper"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.7","ratingCount":"82"}}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://***@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Shirokuro?","acceptedAnswer":{"@type":"Answer","text":"Connect each white circle with a black circle by drawing a horizontal or vertical line between them. Each line may use one or more 90-degree turns, but lines cannot cross other lines and cannot pass through other circles. Each circle is the endpoint of exactly one line."}},{"@type":"Question","name":"How many levels does Shirokuro have?","acceptedAnswer":{"@type":"Answer","text":"30 levels across 5 difficulty tiers: Beginner (5x5), Easy (6x6), Medium (7x7), Hard (8x8), and Expert (9x9)."}},{"@type":"Question","name":"Is Shirokuro free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes! Shirokuro is completely free to play online in your browser. No download required."}}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://***@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Shirokuro","item":"https://gamezipper.com/shirokuro/"}]}
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.gz-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+body{background:#0f0f1a;color:#e0e0f0;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden;user-select:none;-webkit-user-select:none}
+#app{max-width:560px;margin:0 auto;padding:8px}
+canvas{display:block;margin:0 auto;background:#1a1a2e;border-radius:10px;touch-action:none}
+.bar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+button{background:#2a2a4e;color:#e0e0f0;border:1px solid #3a3a6e;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px;transition:all .15s}
+button:hover{background:#3a3a6e}
+button.active{background:#55c2a0;color:#0f0f1a;border-color:#55c2a0;font-weight:bold}
+button:disabled{opacity:.4;cursor:default}
+#info{display:flex;justify-content:space-between;align-items:center;margin:6px 0;padding:6px 10px;background:#1a1a2e;border-radius:8px;font-size:13px}
+#info span{color:#64ffda}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;justify-content:center;align-items:center;z-index:100}
+.overlay.show{display:flex}
+.panel{background:#1a1a2e;border-radius:14px;padding:20px;max-width:500px;width:92%;max-height:88vh;overflow-y:auto;border:1px solid #3a3a6e}
+.panel h2{color:#64ffda;margin-bottom:10px;text-align:center;font-size:18px}
+.lvl-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:10px 0}
+.lvl-btn{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;background:#2a2a4e;border-radius:8px;cursor:pointer;color:#e0e0f0;border:1px solid #3a3a6e}
+.lvl-btn:hover{background:#3a3a6e}
+.lvl-btn.locked{opacity:.3;cursor:not-allowed}
+.lvl-btn.completed{background:#1a3a2e;border-color:#55c2a0}
+.lvl-stars{font-size:9px;color:#ffd166;line-height:1}
+.tier-label{color:#ff6b9d;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px}
+#toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#2a2a4e;color:#e0e0f0;padding:10px 20px;border-radius:8px;border:1px solid #55c2a0;opacity:0;transition:opacity .3s;pointer-events:none;z-index:200;font-size:13px}
+#toast.show{opacity:1}
+.confetti{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:150;animation:fall 3s linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:0}}
+.win-stars{text-align:center;font-size:36px;color:#ffd166;margin:10px 0}
+.win-stars .dim{color:#3a3a6e}
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #2a2a4e}
+.toggle{width:44px;height:24px;background:#3a3a6e;border-radius:12px;position:relative;cursor:pointer;transition:background .2s}
+.toggle.on{background:#55c2a0}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s}
+.toggle.on::after{left:23px}
+.hint-glow{animation:hintPulse 1.5s ease-in-out 3}
+@keyframes hintPulse{0%,100%{filter:none}50%{filter:drop-shadow(0 0 8px #ffd166)}}
+@keyframes pulse-glow{0%,100%{opacity:1}50%{opacity:.7}}
+.mode-btn{font-size:12px;padding:6px 10px}
+.full-btn{width:100%;margin-top:8px;padding:10px;background:#55c2a0;color:#0f0f1a;font-weight:bold;border:none}
+.help-text{font-size:12px;color:#8888aa;line-height:1.5;margin:8px 0}
+</style>
+<style>
+.gz-related-games{margin-top:24px;padding-top:20px;border-top:1px solid #e2e8f0}
+.gz-related-games h3{font-size:16px;color:#1e293b;margin-bottom:12px}
+.gz-related-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.gz-related-card{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;text-decoration:none;color:#1e293b;font-size:13px;transition:border-color .2s,box-shadow .2s}
+.gz-related-card:hover{border-color:rgba(78,205,196,.5);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+</style>
+</head>
+<body>
+<script src="/gz-analytics.js?v=2026071575e544d8" defer></script>
+<nav id="gz-topnav" style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:8px 16px;display:flex;justify-content:center;align-items:center;position:sticky;top:0;z-index:9999"><a href="https://gamezipper.com/" style="color:#fff;text-decoration:none;font-weight:bold;font-size:14px;animation:pulse-glow 2.5s ease-in-out infinite;display:inline-flex;align-items:center;gap:6px">&#x1F3AE; GameZipper — More Free Games</a></nav>
+<h1 class="gz-sr-only">Shirokuro — White-Black Line Connection Puzzle</h1>
+<div id="app">
+<div id="info">
+<span id="info-level">L1</span>
+<span id="info-tier">Beginner</span>
+<span id="info-time">0:00</span>
+</div>
+<canvas id="board" width="500" height="500"></canvas>
+<div class="bar">
+<button class="mode-btn active" id="btn-draw" onclick="setMode('draw')">Draw</button>
+<button class="mode-btn" id="btn-erase" onclick="setMode('erase')">Erase</button>
+<button id="btn-hint" onclick="useHint()">Hint (<span id="hint-count">3</span>)</button>
+<button id="btn-check" onclick="checkSolution()">Check</button>
+<button id="btn-clear" onclick="clearEdges()">Clear</button>
+<button id="btn-menu" onclick="showMenu()">Menu</button>
+</div>
+<div class="bar">
+<button class="mode-btn" id="btn-settings" onclick="showSettings()">Settings</button>
+<button class="mode-btn" id="btn-help" onclick="showHelp()">? Help</button>
+</div>
+</div>
+
+<div class="overlay" id="menu-overlay">
+<div class="panel">
+<h2>Shirokuro</h2>
+<p class="help-text">Connect each <b style="color:#e0e0f0">white</b> circle with a <b style="color:#888">black</b> circle by a horizontal/vertical line. Lines cannot cross. Each circle is the endpoint of exactly one line.</p>
+<div id="lvl-list"></div>
+<button class="full-btn" onclick="hideOverlay('menu-overlay')">Close</button>
+</div>
+</div>
+
+<div class="overlay" id="win-overlay">
+<div class="panel" style="text-align:center">
+<h2>Solved!</h2>
+<div class="win-stars" id="win-stars"></div>
+<p id="win-time" style="color:#64ffda;margin:8px 0"></p>
+<button class="full-btn" onclick="nextLevel()">Next Level</button>
+<button class="full-btn" style="background:#3a3a6e;color:#e0e0f0;margin-top:6px" onclick="hideOverlay('win-overlay')">Stay</button>
+</div>
+</div>
+
+<div class="overlay" id="settings-overlay">
+<div class="panel">
+<h2>Settings</h2>
+<div class="settings-row"><span>Music</span><div class="toggle on" id="tog-music" onclick="toggleMusic()"></div></div>
+<div class="settings-row"><span>Sound Effects</span><div class="toggle on" id="tog-sfx" onclick="toggleSfx()"></div></div>
+<div class="settings-row"><span>Auto-check</span><div class="toggle" id="tog-auto" onclick="toggleAuto()"></div></div>
+<button class="full-btn" onclick="hideOverlay('settings-overlay')">Close</button>
+</div>
+</div>
+
+<div class="overlay" id="help-overlay">
+<div class="panel">
+<h2>How to Play</h2>
+<p class="help-text"><b style="color:#64ffda">Goal:</b> Connect each white circle to a black circle by drawing a single horizontal/vertical line.</p>
+<p class="help-text"><b>Rules:</b></p>
+<p class="help-text">&#8226; Click an edge between two cell centers to draw/erase it.<br>&#8226; Each line may use 0, 1, or more 90-degree turns.<br>&#8226; Lines <b>cannot cross</b> each other.<br>&#8226; Lines <b>cannot pass through any circle</b> (only as endpoints).<br>&#8226; Each <b>white</b> circle is the endpoint of exactly one line.<br>&#8226; Each <b>black</b> circle is the endpoint of exactly one line.</p>
+<p class="help-text"><b>Controls:</b></p>
+<p class="help-text">&#8226; Click an edge to draw/erase it.<br>&#8226; <b>Draw</b> mode: click adds edges. <b>Erase</b> mode: click removes.<br>&#8226; Keys: <b>H</b> hint, <b>R</b> restart, <b>Enter</b> check, <b>Esc</b> menu.</p>
+<button class="full-btn" onclick="hideOverlay('help-overlay')">Got it!</button>
+</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============ LEVELS ============
+const LEVELS=[{"num":1,"tier":"Beginner","R":5,"C":5,"circles":[[4,0,"W"],[1,0,"B"],[3,1,"W"],[4,4,"B"],[0,3,"W"],[0,1,"B"],[2,2,"W"],[3,3,"B"]],"solution":[[4,0,3,0],[3,0,2,0],[2,0,1,0],[3,1,4,1],[4,1,4,2],[4,2,4,3],[4,3,4,4],[0,3,0,2],[0,2,0,1],[2,2,3,2],[3,2,3,3]]},{"num":2,"tier":"Beginner","R":5,"C":5,"circles":[[1,4,"W"],[3,0,"B"],[4,1,"W"],[2,2,"B"],[0,3,"W"],[0,0,"B"],[3,3,"W"],[4,4,"B"]],"solution":[[1,4,1,3],[1,3,1,2],[1,2,1,1],[1,1,2,1],[2,1,3,1],[3,1,3,0],[4,1,4,2],[4,2,3,2],[3,2,2,2],[0,3,0,2],[0,2,0,1],[0,1,0,0],[3,3,4,3],[4,3,4,4]]},{"num":3,"tier":"Beginner","R":5,"C":5,"circles":[[4,3,"W"],[3,4,"B"],[0,1,"W"],[0,3,"B"],[4,1,"W"],[3,0,"B"],[1,0,"W"],[2,2,"B"]],"solution":[[4,3,3,3],[3,3,3,4],[0,1,0,2],[0,2,0,3],[4,1,3,1],[3,1,3,0],[1,0,2,0],[2,0,2,1],[2,1,2,2]]},{"num":4,"tier":"Beginner","R":5,"C":5,"circles":[[4,0,"W"],[3,1,"B"],[0,4,"W"],[2,4,"B"],[3,3,"W"],[2,2,"B"],[0,1,"W"],[1,0,"B"]],"solution":[[4,0,3,0],[3,0,3,1],[0,4,1,4],[1,4,2,4],[3,3,2,3],[2,3,2,2],[0,1,1,1],[1,1,1,0]]},{"num":5,"tier":"Beginner","R":5,"C":5,"circles":[[4,4,"W"],[3,3,"B"],[0,4,"W"],[1,3,"B"],[4,0,"W"],[4,2,"B"],[0,1,"W"],[2,4,"B"]],"solution":[[4,4,3,4],[3,4,3,3],[0,4,1,4],[1,4,1,3],[4,0,4,1],[4,1,4,2],[0,1,1,1],[1,1,2,1],[2,1,2,2],[2,2,2,3],[2,3,2,4]]},{"num":6,"tier":"Beginner","R":5,"C":5,"circles":[[0,3,"W"],[2,0,"B"],[4,4,"W"],[2,4,"B"],[3,1,"W"],[4,0,"B"],[1,2,"W"],[4,2,"B"]],"solution":[[0,3,0,2],[0,2,0,1],[0,1,1,1],[1,1,2,1],[2,1,2,0],[4,4,3,4],[3,4,2,4],[3,1,4,1],[4,1,4,0],[1,2,2,2],[2,2,3,2],[3,2,4,2]]},{"num":7,"tier":"Easy","R":6,"C":6,"circles":[[5,0,"W"],[3,0,"B"],[5,3,"W"],[3,3,"B"],[5,5,"W"],[1,4,"B"],[4,1,"W"],[1,0,"B"],[4,4,"W"],[0,5,"B"],[0,1,"W"],[2,2,"B"]],"solution":[[5,0,4,0],[4,0,3,0],[5,3,4,3],[4,3,3,3],[5,5,4,5],[4,5,3,5],[3,5,2,5],[2,5,1,5],[1,5,1,4],[4,1,3,1],[3,1,2,1],[2,1,1,1],[1,1,1,0],[4,4,3,4],[3,4,2,4],[2,4,2,3],[2,3,1,3],[1,3,0,3],[0,3,0,4],[0,4,0,5],[0,1,0,2],[0,2,1,2],[1,2,2,2]]},{"num":8,"tier":"Easy","R":6,"C":6,"circles":[[2,0,"W"],[0,3,"B"],[0,5,"W"],[4,3,"B"],[1,1,"W"],[2,2,"B"],[3,1,"W"],[4,0,"B"],[5,2,"W"],[5,5,"B"],[2,4,"W"],[3,5,"B"]],"solution":[[2,0,1,0],[1,0,0,0],[0,0,0,1],[0,1,0,2],[0,2,0,3],[0,5,1,5],[1,5,1,4],[1,4,1,3],[1,3,2,3],[2,3,3,3],[3,3,4,3],[1,1,2,1],[2,1,2,2],[3,1,4,1],[4,1,4,0],[5,2,5,3],[5,3,5,4],[5,4,5,5],[2,4,3,4],[3,4,3,5]]},{"num":9,"tier":"Easy","R":6,"C":6,"circles":[[4,5,"W"],[2,5,"B"],[0,3,"W"],[1,2,"B"],[2,0,"W"],[5,0,"B"],[5,3,"W"],[3,4,"B"],[3,1,"W"],[0,0,"B"],[2,3,"W"],[0,5,"B"]],"solution":[[4,5,3,5],[3,5,2,5],[0,3,1,3],[1,3,1,2],[2,0,3,0],[3,0,4,0],[4,0,5,0],[5,3,4,3],[4,3,3,3],[3,3,3,4],[3,1,2,1],[2,1,1,1],[1,1,0,1],[0,1,0,0],[2,3,2,4],[2,4,1,4],[1,4,0,4],[0,4,0,5]]},{"num":10,"tier":"Easy","R":6,"C":6,"circles":[[5,2,"W"],[4,1,"B"],[0,1,"W"],[2,3,"B"],[3,5,"W"],[5,4,"B"],[1,5,"W"],[0,3,"B"],[2,1,"W"],[1,0,"B"],[3,2,"W"],[4,3,"B"]],"solution":[[5,2,4,2],[4,2,4,1],[0,1,1,1],[1,1,1,2],[1,2,2,2],[2,2,2,3],[3,5,4,5],[4,5,5,5],[5,5,5,4],[1,5,0,5],[0,5,0,4],[0,4,0,3],[2,1,2,0],[2,0,1,0],[3,2,3,3],[3,3,4,3]]},{"num":11,"tier":"Easy","R":6,"C":6,"circles":[[0,5,"W"],[2,5,"B"],[5,4,"W"],[4,3,"B"],[0,2,"W"],[0,0,"B"],[1,4,"W"],[4,5,"B"],[3,2,"W"],[5,0,"B"],[2,1,"W"],[4,1,"B"]],"solution":[[0,5,1,5],[1,5,2,5],[5,4,4,4],[4,4,4,3],[0,2,0,1],[0,1,0,0],[1,4,2,4],[2,4,3,4],[3,4,3,5],[3,5,4,5],[3,2,4,2],[4,2,5,2],[5,2,5,1],[5,1,5,0],[2,1,3,1],[3,1,4,1]]},{"num":12,"tier":"Easy","R":6,"C":6,"circles":[[2,0,"W"],[1,1,"B"],[0,4,"W"],[2,5,"B"],[4,5,"W"],[5,0,"B"],[1,3,"W"],[0,2,"B"],[3,1,"W"],[2,2,"B"],[4,3,"W"],[5,4,"B"]],"solution":[[2,0,1,0],[1,0,1,1],[0,4,1,4],[1,4,2,4],[2,4,2,5],[4,5,3,5],[3,5,3,4],[3,4,3,3],[3,3,3,2],[3,2,4,2],[4,2,5,2],[5,2,5,1],[5,1,5,0],[1,3,0,3],[0,3,0,2],[3,1,2,1],[2,1,2,2],[4,3,5,3],[5,3,5,4]]},{"num":13,"tier":"Medium","R":7,"C":7,"circles":[[6,6,"W"],[4,6,"B"],[0,0,"W"],[3,4,"B"],[0,5,"W"],[0,3,"B"],[1,6,"W"],[2,2,"B"],[5,0,"W"],[4,3,"B"],[6,2,"W"],[6,4,"B"],[2,5,"W"],[5,5,"B"],[3,1,"W"],[1,1,"B"]],"solution":[[6,6,5,6],[5,6,4,6],[0,0,1,0],[1,0,2,0],[2,0,3,0],[3,0,4,0],[4,0,4,1],[4,1,4,2],[4,2,3,2],[3,2,3,3],[3,3,3,4],[0,5,0,4],[0,4,0,3],[1,6,1,5],[1,5,1,4],[1,4,2,4],[2,4,2,3],[2,3,2,2],[5,0,5,1],[5,1,5,2],[5,2,5,3],[5,3,4,3],[6,2,6,3],[6,3,6,4],[2,5,3,5],[3,5,4,5],[4,5,5,5],[3,1,2,1],[2,1,1,1]]},{"num":14,"tier":"Medium","R":7,"C":7,"circles":[[1,6,"W"],[4,6,"B"],[4,1,"W"],[5,0,"B"],[2,1,"W"],[1,0,"B"],[0,5,"W"],[0,1,"B"],[3,2,"W"],[6,2,"B"],[2,3,"W"],[3,4,"B"],[4,3,"W"],[5,4,"B"],[2,5,"W"],[6,5,"B"]],"solution":[[1,6,2,6],[2,6,3,6],[3,6,4,6],[4,1,5,1],[5,1,5,0],[2,1,1,1],[1,1,1,0],[0,5,0,4],[0,4,0,3],[0,3,0,2],[0,2,0,1],[3,2,4,2],[4,2,5,2],[5,2,6,2],[2,3,3,3],[3,3,3,4],[4,3,5,3],[5,3,5,4],[2,5,3,5],[3,5,4,5],[4,5,5,5],[5,5,6,5]]},{"num":15,"tier":"Medium","R":7,"C":7,"circles":[[6,1,"W"],[2,2,"B"],[0,6,"W"],[2,4,"B"],[3,0,"W"],[0,3,"B"],[6,4,"W"],[5,6,"B"],[4,1,"W"],[1,1,"B"],[5,2,"W"],[5,0,"B"],[4,5,"W"],[2,6,"B"],[3,3,"W"],[1,5,"B"]],"solution":[[6,1,6,2],[6,2,6,3],[6,3,5,3],[5,3,4,3],[4,3,4,2],[4,2,3,2],[3,2,2,2],[0,6,0,5],[0,5,0,4],[0,4,1,4],[1,4,2,4],[3,0,2,0],[2,0,1,0],[1,0,0,0],[0,0,0,1],[0,1,0,2],[0,2,0,3],[6,4,5,4],[5,4,5,5],[5,5,5,6],[4,1,3,1],[3,1,2,1],[2,1,1,1],[5,2,5,1],[5,1,5,0],[4,5,4,6],[4,6,3,6],[3,6,2,6],[3,3,3,4],[3,4,3,5],[3,5,2,5],[2,5,1,5]]},{"num":16,"tier":"Medium","R":7,"C":7,"circles":[[0,5,"W"],[1,6,"B"],[2,0,"W"],[0,1,"B"],[4,0,"W"],[5,1,"B"],[6,5,"W"],[6,3,"B"],[1,4,"W"],[2,2,"B"],[0,3,"W"],[3,1,"B"],[5,6,"W"],[4,4,"B"],[2,5,"W"],[6,0,"B"]],"solution":[[0,5,1,5],[1,5,1,6],[2,0,1,0],[1,0,0,0],[0,0,0,1],[4,0,5,0],[5,0,5,1],[6,5,6,4],[6,4,6,3],[1,4,2,4],[2,4,2,3],[2,3,2,2],[0,3,1,3],[1,3,1,2],[1,2,1,1],[1,1,2,1],[2,1,3,1],[5,6,4,6],[4,6,4,5],[4,5,4,4],[2,5,3,5],[3,5,3,4],[3,4,3,3],[3,3,3,2],[3,2,4,2],[4,2,5,2],[5,2,6,2],[6,2,6,1],[6,1,6,0]]},{"num":17,"tier":"Medium","R":7,"C":7,"circles":[[0,1,"W"],[1,0,"B"],[3,6,"W"],[1,5,"B"],[5,6,"W"],[6,4,"B"],[1,2,"W"],[2,1,"B"],[4,0,"W"],[4,3,"B"],[2,3,"W"],[0,4,"B"],[5,2,"W"],[6,1,"B"],[3,4,"W"],[4,5,"B"]],"solution":[[0,1,1,1],[1,1,1,0],[3,6,2,6],[2,6,1,6],[1,6,1,5],[5,6,6,6],[6,6,6,5],[6,5,6,4],[1,2,2,2],[2,2,2,1],[4,0,4,1],[4,1,4,2],[4,2,4,3],[2,3,1,3],[1,3,0,3],[0,3,0,4],[5,2,6,2],[6,2,6,1],[3,4,4,4],[4,4,4,5]]},{"num":18,"tier":"Medium","R":7,"C":7,"circles":[[5,0,"W"],[2,0,"B"],[6,2,"W"],[6,4,"B"],[4,2,"W"],[3,3,"B"],[5,3,"W"],[5,6,"B"],[3,1,"W"],[1,3,"B"],[2,6,"W"],[2,2,"B"],[0,5,"W"],[0,1,"B"],[3,5,"W"],[4,4,"B"]],"solution":[[5,0,4,0],[4,0,3,0],[3,0,2,0],[6,2,6,3],[6,3,6,4],[4,2,3,2],[3,2,3,3],[5,3,5,4],[5,4,5,5],[5,5,5,6],[3,1,2,1],[2,1,1,1],[1,1,1,2],[1,2,1,3],[2,6,2,5],[2,5,2,4],[2,4,2,3],[2,3,2,2],[0,5,0,4],[0,4,0,3],[0,3,0,2],[0,2,0,1],[3,5,4,5],[4,5,4,4]]},{"num":19,"tier":"Hard","R":8,"C":8,"circles":[[1,0,"W"],[3,2,"B"],[5,7,"W"],[1,4,"B"],[1,2,"W"],[2,1,"B"],[0,5,"W"],[0,7,"B"],[6,0,"W"],[7,1,"B"],[4,0,"W"],[2,3,"B"],[6,6,"W"],[4,6,"B"],[5,1,"W"],[7,4,"B"],[5,5,"W"],[3,5,"B"],[5,3,"W"],[2,6,"B"]],"solution":[[1,0,2,0],[2,0,3,0],[3,0,3,1],[3,1,3,2],[5,7,4,7],[4,7,3,7],[3,7,2,7],[2,7,1,7],[1,7,1,6],[1,6,1,5],[1,5,1,4],[1,2,2,2],[2,2,2,1],[0,5,0,6],[0,6,0,7],[6,0,7,0],[7,0,7,1],[4,0,4,1],[4,1,4,2],[4,2,4,3],[4,3,3,3],[3,3,2,3],[6,6,5,6],[5,6,4,6],[5,1,6,1],[6,1,6,2],[6,2,7,2],[7,2,7,3],[7,3,7,4],[5,5,4,5],[4,5,3,5],[5,3,5,4],[5,4,4,4],[4,4,3,4],[3,4,2,4],[2,4,2,5],[2,5,2,6]]},{"num":20,"tier":"Hard","R":8,"C":8,"circles":[[0,6,"W"],[4,4,"B"],[0,3,"W"],[1,2,"B"],[1,5,"W"],[2,6,"B"],[3,0,"W"],[0,0,"B"],[7,2,"W"],[7,0,"B"],[6,1,"W"],[2,3,"B"],[4,1,"W"],[2,1,"B"],[3,5,"W"],[3,7,"B"],[5,5,"W"],[7,6,"B"],[5,3,"W"],[7,4,"B"]],"solution":[[0,6,0,5],[0,5,0,4],[0,4,1,4],[1,4,2,4],[2,4,3,4],[3,4,4,4],[0,3,1,3],[1,3,1,2],[1,5,2,5],[2,5,2,6],[3,0,2,0],[2,0,1,0],[1,0,0,0],[7,2,7,1],[7,1,7,0],[6,1,5,1],[5,1,5,2],[5,2,4,2],[4,2,3,2],[3,2,2,2],[2,2,2,3],[4,1,3,1],[3,1,2,1],[3,5,3,6],[3,6,3,7],[5,5,6,5],[6,5,7,5],[7,5,7,6],[5,3,6,3],[6,3,7,3],[7,3,7,4]]},{"num":21,"tier":"Hard","R":8,"C":8,"circles":[[0,6,"W"],[0,3,"B"],[7,3,"W"],[7,6,"B"],[2,7,"W"],[6,7,"B"],[4,0,"W"],[0,0,"B"],[1,5,"W"],[3,4,"B"],[4,6,"W"],[6,5,"B"],[5,4,"W"],[7,1,"B"],[4,3,"W"],[5,2,"B"],[3,1,"W"],[6,0,"B"],[2,3,"W"],[1,2,"B"]],"solution":[[0,6,0,5],[0,5,0,4],[0,4,0,3],[7,3,7,4],[7,4,7,5],[7,5,7,6],[2,7,3,7],[3,7,4,7],[4,7,5,7],[5,7,6,7],[4,0,3,0],[3,0,2,0],[2,0,1,0],[1,0,0,0],[1,5,2,5],[2,5,3,5],[3,5,3,4],[4,6,5,6],[5,6,6,6],[6,6,6,5],[5,4,6,4],[6,4,6,3],[6,3,6,2],[6,2,7,2],[7,2,7,1],[4,3,5,3],[5,3,5,2],[3,1,4,1],[4,1,5,1],[5,1,6,1],[6,1,6,0],[2,3,1,3],[1,3,1,2]]},{"num":22,"tier":"Hard","R":8,"C":8,"circles":[[7,7,"W"],[4,7,"B"],[0,3,"W"],[1,4,"B"],[2,3,"W"],[2,0,"B"],[0,6,"W"],[1,7,"B"],[1,1,"W"],[0,0,"B"],[7,1,"W"],[4,0,"B"],[6,6,"W"],[3,2,"B"],[2,5,"W"],[3,4,"B"],[7,5,"W"],[5,1,"B"],[5,4,"W"],[4,3,"B"]],"solution":[[7,7,6,7],[6,7,5,7],[5,7,4,7],[0,3,1,3],[1,3,1,4],[2,3,2,2],[2,2,2,1],[2,1,2,0],[0,6,1,6],[1,6,1,7],[1,1,0,1],[0,1,0,0],[7,1,7,0],[7,0,6,0],[6,0,5,0],[5,0,4,0],[6,6,6,5],[6,5,6,4],[6,4,6,3],[6,3,5,3],[5,3,5,2],[5,2,4,2],[4,2,3,2],[2,5,3,5],[3,5,3,4],[7,5,7,4],[7,4,7,3],[7,3,7,2],[7,2,6,2],[6,2,6,1],[6,1,5,1],[5,4,4,4],[4,4,4,3]]},{"num":23,"tier":"Hard","R":8,"C":8,"circles":[[0,4,"W"],[3,4,"B"],[2,7,"W"],[4,6,"B"],[1,6,"W"],[6,5,"B"],[7,6,"W"],[5,7,"B"],[2,5,"W"],[0,7,"B"],[6,0,"W"],[2,1,"B"],[1,2,"W"],[2,3,"B"],[7,1,"W"],[4,3,"B"],[4,0,"W"],[0,0,"B"],[5,4,"W"],[7,3,"B"]],"solution":[[0,4,1,4],[1,4,2,4],[2,4,3,4],[2,7,3,7],[3,7,4,7],[4,7,4,6],[1,6,2,6],[2,6,3,6],[3,6,3,5],[3,5,4,5],[4,5,5,5],[5,5,6,5],[7,6,6,6],[6,6,5,6],[5,6,5,7],[2,5,1,5],[1,5,0,5],[0,5,0,6],[0,6,0,7],[6,0,5,0],[5,0,5,1],[5,1,4,1],[4,1,3,1],[3,1,2,1],[1,2,2,2],[2,2,2,3],[7,1,6,1],[6,1,6,2],[6,2,5,2],[5,2,4,2],[4,2,4,3],[4,0,3,0],[3,0,2,0],[2,0,1,0],[1,0,0,0],[5,4,6,4],[6,4,7,4],[7,4,7,3]]},{"num":24,"tier":"Hard","R":8,"C":8,"circles":[[6,0,"W"],[3,0,"B"],[2,6,"W"],[5,6,"B"],[0,6,"W"],[1,7,"B"],[3,7,"W"],[7,7,"B"],[6,5,"W"],[7,2,"B"],[1,5,"W"],[3,5,"B"],[6,3,"W"],[4,1,"B"],[5,2,"W"],[2,2,"B"],[5,4,"W"],[0,0,"B"],[2,4,"W"],[0,2,"B"]],"solution":[[6,0,5,0],[5,0,4,0],[4,0,3,0],[2,6,3,6],[3,6,4,6],[4,6,5,6],[0,6,1,6],[1,6,1,7],[3,7,4,7],[4,7,5,7],[5,7,6,7],[6,7,7,7],[6,5,7,5],[7,5,7,4],[7,4,7,3],[7,3,7,2],[1,5,2,5],[2,5,3,5],[6,3,6,2],[6,2,6,1],[6,1,5,1],[5,1,4,1],[5,2,4,2],[4,2,3,2],[3,2,2,2],[5,4,5,3],[5,3,4,3],[4,3,3,3],[3,3,2,3],[2,3,1,3],[1,3,1,2],[1,2,1,1],[1,1,1,0],[1,0,0,0],[2,4,1,4],[1,4,0,4],[0,4,0,3],[0,3,0,2]]},{"num":25,"tier":"Expert","R":9,"C":9,"circles":[[8,8,"W"],[1,8,"B"],[7,0,"W"],[4,0,"B"],[1,4,"W"],[3,4,"B"],[0,5,"W"],[1,6,"B"],[6,8,"W"],[3,8,"B"],[8,5,"W"],[8,1,"B"],[1,2,"W"],[3,1,"B"],[8,3,"W"],[7,2,"B"],[2,3,"W"],[0,3,"B"],[7,7,"W"],[4,7,"B"],[4,5,"W"],[4,3,"B"],[6,5,"W"],[5,1,"B"]],"solution":[[8,8,8,7],[8,7,8,6],[8,6,7,6],[7,6,6,6],[6,6,5,6],[5,6,4,6],[4,6,3,6],[3,6,2,6],[2,6,2,7],[2,7,2,8],[2,8,1,8],[7,0,6,0],[6,0,5,0],[5,0,4,0],[1,4,2,4],[2,4,3,4],[0,5,1,5],[1,5,1,6],[6,8,5,8],[5,8,4,8],[4,8,3,8],[8,5,8,4],[8,4,7,4],[7,4,6,4],[6,4,6,3],[6,3,6,2],[6,2,6,1],[6,1,7,1],[7,1,8,1],[1,2,2,2],[2,2,3,2],[3,2,3,1],[8,3,7,3],[7,3,7,2],[2,3,1,3],[1,3,0,3],[7,7,6,7],[6,7,5,7],[5,7,4,7],[4,5,4,4],[4,4,4,3],[6,5,5,5],[5,5,5,4],[5,4,5,3],[5,3,5,2],[5,2,5,1]]},{"num":26,"tier":"Expert","R":9,"C":9,"circles":[[8,1,"W"],[7,2,"B"],[6,1,"W"],[6,3,"B"],[1,0,"W"],[5,2,"B"],[8,3,"W"],[7,4,"B"],[0,1,"W"],[5,6,"B"],[7,6,"W"],[7,8,"B"],[4,1,"W"],[3,0,"B"],[0,5,"W"],[0,7,"B"],[1,3,"W"],[2,2,"B"],[2,4,"W"],[4,3,"B"],[3,7,"W"],[1,8,"B"],[4,5,"W"],[6,5,"B"]],"solution":[[8,1,7,1],[7,1,7,2],[6,1,6,2],[6,2,6,3],[1,0,1,1],[1,1,2,1],[2,1,3,1],[3,1,3,2],[3,2,4,2],[4,2,5,2],[8,3,7,3],[7,3,7,4],[0,1,0,2],[0,2,0,3],[0,3,0,4],[0,4,1,4],[1,4,1,5],[1,5,1,6],[1,6,2,6],[2,6,3,6],[3,6,4,6],[4,6,5,6],[7,6,7,7],[7,7,7,8],[4,1,4,0],[4,0,3,0],[0,5,0,6],[0,6,0,7],[1,3,2,3],[2,3,2,2],[2,4,3,4],[3,4,4,4],[4,4,4,3],[3,7,2,7],[2,7,1,7],[1,7,1,8],[4,5,5,5],[5,5,6,5]]},{"num":27,"tier":"Expert","R":9,"C":9,"circles":[[8,7,"W"],[7,8,"B"],[1,0,"W"],[3,2,"B"],[3,0,"W"],[4,3,"B"],[8,1,"W"],[8,4,"B"],[2,8,"W"],[4,7,"B"],[4,1,"W"],[2,1,"B"],[1,7,"W"],[0,6,"B"],[7,6,"W"],[6,7,"B"],[6,1,"W"],[7,0,"B"],[7,3,"W"],[5,5,"B"],[3,6,"W"],[0,1,"B"],[2,4,"W"],[1,3,"B"]],"solution":[[8,7,7,7],[7,7,7,8],[1,0,1,1],[1,1,1,2],[1,2,2,2],[2,2,3,2],[3,0,4,0],[4,0,5,0],[5,0,5,1],[5,1,5,2],[5,2,4,2],[4,2,4,3],[8,1,8,2],[8,2,8,3],[8,3,8,4],[2,8,3,8],[3,8,4,8],[4,8,4,7],[4,1,3,1],[3,1,2,1],[1,7,0,7],[0,7,0,6],[7,6,6,6],[6,6,6,7],[6,1,7,1],[7,1,7,0],[7,3,6,3],[6,3,5,3],[5,3,5,4],[5,4,5,5],[3,6,2,6],[2,6,1,6],[1,6,1,5],[1,5,0,5],[0,5,0,4],[0,4,0,3],[0,3,0,2],[0,2,0,1],[2,4,1,4],[1,4,1,3]]},{"num":28,"tier":"Expert","R":9,"C":9,"circles":[[0,0,"W"],[1,3,"B"],[1,1,"W"],[3,1,"B"],[4,0,"W"],[4,3,"B"],[8,1,"W"],[7,0,"B"],[7,8,"W"],[3,5,"B"],[2,8,"W"],[0,7,"B"],[2,2,"W"],[0,4,"B"],[6,1,"W"],[8,3,"B"],[2,6,"W"],[5,8,"B"],[5,2,"W"],[6,5,"B"],[4,6,"W"],[6,7,"B"],[7,4,"W"],[8,7,"B"]],"solution":[[0,0,0,1],[0,1,0,2],[0,2,1,2],[1,2,1,3],[1,1,2,1],[2,1,3,1],[4,0,4,1],[4,1,4,2],[4,2,4,3],[8,1,7,1],[7,1,7,0],[7,8,7,7],[7,7,7,6],[7,6,6,6],[6,6,5,6],[5,6,5,5],[5,5,4,5],[4,5,3,5],[2,8,1,8],[1,8,0,8],[0,8,0,7],[2,2,2,3],[2,3,2,4],[2,4,1,4],[1,4,0,4],[6,1,6,2],[6,2,7,2],[7,2,8,2],[8,2,8,3],[2,6,3,6],[3,6,3,7],[3,7,3,8],[3,8,4,8],[4,8,5,8],[5,2,5,3],[5,3,6,3],[6,3,6,4],[6,4,6,5],[4,6,4,7],[4,7,5,7],[5,7,6,7],[7,4,8,4],[8,4,8,5],[8,5,8,6],[8,6,8,7]]},{"num":29,"tier":"Expert","R":9,"C":9,"circles":[[0,2,"W"],[2,0,"B"],[1,1,"W"],[5,0,"B"],[6,1,"W"],[7,5,"B"],[2,2,"W"],[1,3,"B"],[7,3,"W"],[7,0,"B"],[0,5,"W"],[2,7,"B"],[0,8,"W"],[4,7,"B"],[5,2,"W"],[4,1,"B"],[6,7,"W"],[8,8,"B"],[2,4,"W"],[4,3,"B"],[6,4,"W"],[8,1,"B"],[3,5,"W"],[5,8,"B"]],"solution":[[0,2,0,1],[0,1,0,0],[0,0,1,0],[1,0,2,0],[1,1,2,1],[2,1,3,1],[3,1,3,0],[3,0,4,0],[4,0,5,0],[6,1,6,2],[6,2,6,3],[6,3,5,3],[5,3,5,4],[5,4,5,5],[5,5,6,5],[6,5,7,5],[2,2,1,2],[1,2,1,3],[7,3,7,2],[7,2,7,1],[7,1,7,0],[0,5,1,5],[1,5,2,5],[2,5,2,6],[2,6,2,7],[0,8,1,8],[1,8,2,8],[2,8,3,8],[3,8,4,8],[4,8,4,7],[5,2,4,2],[4,2,4,1],[6,7,7,7],[7,7,8,7],[8,7,8,8],[2,4,3,4],[3,4,4,4],[4,4,4,3],[6,4,7,4],[7,4,8,4],[8,4,8,3],[8,3,8,2],[8,2,8,1],[3,5,4,5],[4,5,4,6],[4,6,5,6],[5,6,5,7],[5,7,5,8]]},{"num":30,"tier":"Expert","R":9,"C":9,"circles":[[2,0,"W"],[1,1,"B"],[3,1,"W"],[3,6,"B"],[8,0,"W"],[8,8,"B"],[6,0,"W"],[4,2,"B"],[8,2,"W"],[8,4,"B"],[2,8,"W"],[0,8,"B"],[5,8,"W"],[4,7,"B"],[1,6,"W"],[1,4,"B"],[0,3,"W"],[0,0,"B"],[3,4,"W"],[2,2,"B"],[7,7,"W"],[6,3,"B"],[5,4,"W"],[5,1,"B"]],"solution":[[2,0,1,0],[1,0,1,1],[3,1,3,2],[3,2,3,3],[3,3,4,3],[4,3,4,4],[4,4,4,5],[4,5,4,6],[4,6,3,6],[8,0,7,0],[7,0,7,1],[7,1,7,2],[7,2,7,3],[7,3,7,4],[7,4,7,5],[7,5,8,5],[8,5,8,6],[8,6,8,7],[8,7,8,8],[6,0,5,0],[5,0,4,0],[4,0,4,1],[4,1,4,2],[8,2,8,3],[8,3,8,4],[2,8,1,8],[1,8,0,8],[5,8,4,8],[4,8,4,7],[1,6,1,5],[1,5,1,4],[0,3,0,2],[0,2,0,1],[0,1,0,0],[3,4,2,4],[2,4,2,3],[2,3,2,2],[7,7,6,7],[6,7,6,6],[6,6,6,5],[6,5,6,4],[6,4,6,3],[5,4,5,3],[5,3,5,2],[5,2,5,1]]}];
+// ============ STATE ============
+let curLevel=0, mode='draw', edges=new Map(), hintsLeft=3, hintEdges=[], startTime=0, timerInterval=null;
+let musicOn=true, sfxOn=true, autoCheck=false;
+let audioCtx=null, musicGain=null, musicNodes=[];
+let cellSize=0, gridOffX=0, gridOffY=0;
+let progress=JSON.parse(localStorage.getItem('gz_shirokuro_progress')||'{}');
+const canvas=document.getElementById('board');
+const ctx=canvas.getContext('2d');
+// edge key: "r1*1000+c1-r2*1000+c2" (smaller first)
+function ekey(a,b){const k1=a[0]*1000+a[1],k2=b[0]*1000+b[1];return k1<k2?k1+'-'+k2:k2+'-'+k1;}
+// ============ RENDER ============
+function resizeCanvas(){
+const L=LEVELS[curLevel];const maxW=Math.min(window.innerWidth-20,520);const maxH=window.innerHeight-220;
+const size=Math.min(maxW,maxH);
+cellSize=Math.floor(Math.min(size/L.C,size/L.R));
+if(cellSize<20)cellSize=20;
+canvas.width=cellSize*L.C+4;canvas.height=cellSize*L.R+4;
+gridOffX=2;gridOffY=2;draw();
+}
+function draw(){
+const L=LEVELS[curLevel];ctx.clearRect(0,0,canvas.width,canvas.height);
+for(let r=0;r<L.R;r++)for(let c=0;c<L.C;c++){
+ctx.fillStyle=(r+c)%2===0?'#1a1a2e':'#1e1e34';
+ctx.fillRect(gridOffX+c*cellSize,gridOffY+r*cellSize,cellSize,cellSize);
+}
+ctx.fillStyle='#3a3a5e';
+for(let r=0;r<=L.R;r++)for(let c=0;c<=L.C;c++){
+ctx.beginPath();ctx.arc(gridOffX+c*cellSize,gridOffY+r*cellSize,2,0,Math.PI*2);ctx.fill();
+}
+ctx.strokeStyle='#64ffda';ctx.lineWidth=3.5;ctx.lineCap='round';
+for(const [ek, info] of edges){
+const [a,b]=ek.split('-').map(function(n){return [Math.floor(parseInt(n)/1000),parseInt(n)%1000];});
+ctx.strokeStyle=info==='hint'?'#ffd166':'#64ffda';
+ctx.beginPath();ctx.moveTo(gridOffX+a[1]*cellSize+cellSize/2,gridOffY+a[0]*cellSize+cellSize/2);
+ctx.lineTo(gridOffX+b[1]*cellSize+cellSize/2,gridOffY+b[0]*cellSize+cellSize/2);ctx.stroke();
+}
+for(const circ of L.circles){
+const cr=circ[0],cc=circ[1],ctype=circ[2];
+const cx=gridOffX+cc*cellSize+cellSize/2;const cy=gridOffY+cr*cellSize+cellSize/2;
+const rad=cellSize*0.32;
+if(ctype==='W'){
+ctx.fillStyle='#e8e8f0';ctx.beginPath();ctx.arc(cx,cy,rad,0,Math.PI*2);ctx.fill();
+ctx.strokeStyle='#64ffda';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(cx,cy,rad,0,Math.PI*2);ctx.stroke();
+} else {
+ctx.fillStyle='#222230';ctx.beginPath();ctx.arc(cx,cy,rad,0,Math.PI*2);ctx.fill();
+ctx.strokeStyle='#ffd166';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(cx,cy,rad,0,Math.PI*2);ctx.stroke();
+ctx.fillStyle='#ffd166';ctx.beginPath();ctx.arc(cx,cy,rad*0.5,0,Math.PI*2);ctx.fill();
+}
+}
+}
+canvas.addEventListener('pointermove', function(e){
+if(e.buttons===0)return;
+const rect=canvas.getBoundingClientRect();const x=(e.clientX-rect.left)*(canvas.width/rect.width);const y=(e.clientY-rect.top)*(canvas.height/rect.height);
+const edge=getEdgeNear(x,y);if(!edge)return;
+const k=ekey(edge[0],edge[1]);
+if(mode==='draw'){if(!edges.has(k)){edges.set(k,'user');playSfx('draw');draw();}}
+else{if(edges.has(k)){edges.delete(k);playSfx('erase');draw();}}
+if(autoCheck)checkSolution(true);
+});
+canvas.addEventListener('pointerdown',function(e){
+e.preventDefault();initAudio();startMusic();
+const rect=canvas.getBoundingClientRect();const x=(e.clientX-rect.left)*(canvas.width/rect.width);const y=(e.clientY-rect.top)*(canvas.height/rect.height);
+const edge=getEdgeNear(x,y);if(!edge)return;
+const k=ekey(edge[0],edge[1]);
+if(mode==='draw'){if(!edges.has(k)){edges.set(k,'user');playSfx('draw');}}
+else{if(edges.has(k)){edges.delete(k);playSfx('erase');}}
+draw();
+if(autoCheck)checkSolution(true);
+});
+function getEdgeNear(x,y){
+const L=LEVELS[curLevel];
+let best=null,bestDist=14;
+for(let r=0;r<L.R;r++)for(let c=0;c<L.C;c++){
+const cx=gridOffX+c*cellSize+cellSize/2,cy=gridOffY+r*cellSize+cellSize/2;
+if(c<L.C-1){const mx=(cx+cx+cellSize)/2,my=cy;const d=Math.hypot(x-mx,y-my);if(d<bestDist){bestDist=d;best=[[r,c],[r,c+1]];}}
+if(r<L.R-1){const mx=cx,my=(cy+cy+cellSize)/2;const d=Math.hypot(x-mx,y-my);if(d<bestDist){bestDist=d;best=[[r,c],[r+1,c]];}}
+}
+return best;
+}
+// ============ LEVEL CONTROL ============
+function loadLevel(i){
+curLevel=i;edges=new Map();hintsLeft=3;hintEdges=[];
+document.getElementById('info-level').textContent='L'+(i+1);
+document.getElementById('info-tier').textContent=LEVELS[i].tier;
+document.getElementById('hint-count').textContent=hintsLeft;
+resizeCanvas();startTimer();
+hideOverlay('menu-overlay');hideOverlay('win-overlay');
+}
+function startTimer(){if(timerInterval)clearInterval(timerInterval);startTime=Date.now();timerInterval=setInterval(function(){var e=Math.floor((Date.now()-startTime)/1000);document.getElementById('info-time').textContent=Math.floor(e/60)+':'+String(e%60).padStart(2,'0');},500);}
+function setMode(m){mode=m;document.getElementById('btn-draw').classList.toggle('active',m==='draw');document.getElementById('btn-erase').classList.toggle('active',m==='erase');playSfx('click');}
+function clearEdges(){edges=new Map();draw();playSfx('erase');}
+function buildAdjacencyFromEdges(){
+const adj={};
+for(const [ek, info] of edges){
+const parts=ek.split('-');const a=[Math.floor(parseInt(parts[0])/1000),parseInt(parts[0])%1000];const b=[Math.floor(parseInt(parts[1])/1000),parseInt(parts[1])%1000];
+const ka=a[0]+','+a[1],kb=b[0]+','+b[1];
+(adj[ka]=adj[ka]||[]).push(kb);(adj[kb]=adj[kb]||[]).push(ka);}
+return adj;
+}
+// ============ WIN CHECK ============
+// In Shirokuro, each circle is the endpoint of exactly one line.
+// We need: each W and B has degree 1 (or 0 for unsolved).
+// All W's must be connected to B's via valid paths (no cross, no circle in middle).
+function checkSolution(silent){
+const L=LEVELS[curLevel];
+const adj=buildAdjacencyFromEdges();
+const circleSet=new Set();
+const ws=new Set(),bs=new Set();
+for(const c of L.circles){
+const k=c[0]+','+c[1];circleSet.add(k);
+if(c[2]==='W')ws.add(k);
+else bs.add(k);
+}
+// Every W and B must have degree exactly 1 (one line endpoint).
+// Non-circle cells must have degree 0 or 2 (passing through).
+for(const k in adj){
+const isCircle=circleSet.has(k);
+const deg=adj[k].length;
+if(isCircle){if(deg!==1){if(!silent)showToast('Each circle needs exactly one line endpoint');return false;}}
+else{if(deg!==0&&deg!==2){if(!silent)showToast('Lines must end at circles');return false;}}
+}
+// Check every circle has a line
+for(const k of circleSet){if(!adj[k]){if(!silent)showToast('Each circle needs a line');return false;}}
+// Trace each line: starting from each W, follow edges to a B.
+// Also check that lines do not pass through any other circle.
+const visited=new Set();
+for(const w of ws){
+let cur=w,prev=null,steps=0;
+while(steps<2000){
+visited.add(cur);
+const nbrs=adj[cur];
+if(!nbrs||nbrs.length<1)break;
+let nxt=null;
+if(prev===null){nxt=nbrs[0];}
+else{nxt=nbrs[0]===prev?nbrs[1]:nbrs[0];}
+if(nxt===null)break;
+if(nxt!==w&&circleSet.has(nxt)&&!bs.has(nxt)){if(!silent)showToast('A line passes through a circle');return false;}
+if(bs.has(nxt)&&nxt!==w){visited.add(nxt);break;}
+prev=cur;cur=nxt;steps++;
+}
+}
+// Every B must be reached from exactly one W.
+const reachedBs=new Set();
+for(const w of ws){
+let cur=w,prev=null,steps=0;
+while(steps<2000){
+const nbrs=adj[cur];
+if(!nbrs||nbrs.length<1)break;
+let nxt=null;
+if(prev===null){nxt=nbrs[0];}
+else{nxt=nbrs[0]===prev?nbrs[1]:nbrs[0];}
+if(bs.has(nxt)){reachedBs.add(nxt);break;}
+prev=cur;cur=nxt;steps++;
+}
+}
+if(reachedBs.size!==bs.size){if(!silent)showToast('Not all black circles are connected');return false;}
+if(reachedBs.size!==ws.size){if(!silent)showToast('Some white circles have no partner');return false;}
+// No cross: all non-circle cells visited by at most 1 path
+if(!silent)showToast('All circles connected!');
+return true;
+}
+// ============ HINT ============
+function useHint(){
+if(hintsLeft<=0){showToast('No hints left');return;}
+hintsLeft--;document.getElementById('hint-count').textContent=hintsLeft;
+// Find a solution edge that is not yet drawn
+const L=LEVELS[curLevel];
+for(const edge of L.solution){
+const k=ekey([edge[0],edge[1]],[edge[2],edge[3]]);
+if(!edges.has(k)){
+edges.set(k,'hint');
+hintEdges.push(k);
+playSfx('hint');
+draw();
+return;
+}
+}
+showToast('Already complete!');
+}
+// ============ WIN HANDLER ============
+function onWin(){
+const L=LEVELS[curLevel];
+const elapsed=Math.floor((Date.now()-startTime)/1000);
+// 3 stars: 0 hints, 1 hint, 2+ hints
+let stars=3;
+if(hintsLeft<2)stars=3;else if(hintsLeft<3)stars=2;else stars=1;
+progress[curLevel]={stars,time:elapsed};
+localStorage.setItem('gz_shirokuro_progress',JSON.stringify(progress));
+const starsEl=document.getElementById('win-stars');
+starsEl.innerHTML='&#9733;'.repeat(stars)+'<span class="dim">&#9733;</span>'.repeat(3-stars);
+document.getElementById('win-time').textContent='Time: '+Math.floor(elapsed/60)+':'+String(elapsed%60).padStart(2,'0');
+showConfetti();
+playSfx('win');
+showOverlay('win-overlay');
+if(curLevel<LEVELS.length-1){
+setTimeout(nextLevel, 2000);
+}
+}
+function nextLevel(){if(curLevel<LEVELS.length-1)loadLevel(curLevel+1);else hideOverlay('win-overlay');}
+// ============ MENU ============
+function showMenu(){
+const list=document.getElementById('lvl-list');
+const tiers={};
+LEVELS.forEach(function(lv,i){(tiers[lv.tier]=tiers[lv.tier]||[]).push(i);});
+let html='';
+const tierOrder=['Beginner','Easy','Medium','Hard','Expert'];
+for(const t of tierOrder){
+if(!tiers[t])continue;
+html+='<div class="tier-label">'+t+'</div><div class="lvl-grid">';
+tiers[t].forEach(function(i){
+const p=progress[i];
+const stars=p?'<div class="lvl-stars">'+'★'.repeat(p.stars)+'</div>':'';
+const cls='lvl-btn'+(p?' completed':'');
+html+='<div class="'+cls+'" onclick="loadLevel('+i+')">L'+(i+1)+stars+'</div>';
+});
+html+='</div>';
+}
+list.innerHTML=html;
+showOverlay('menu-overlay');
+}
+// ============ OVERLAYS ============
+function showOverlay(id){document.getElementById(id).classList.add('show');}
+function hideOverlay(id){document.getElementById(id).classList.remove('show');}
+// ============ SETTINGS ============
+function toggleMusic(){musicOn=!musicOn;document.getElementById('tog-music').classList.toggle('on',musicOn);if(!musicOn)stopMusic();else if(audioCtx)startMusic();localStorage.setItem('gz_shirokuro_music',musicOn?'1':'0');}
+function toggleSfx(){sfxOn=!sfxOn;document.getElementById('tog-sfx').classList.toggle('on',sfxOn);localStorage.setItem('gz_shirokuro_sfx',sfxOn?'1':'0');}
+function toggleAuto(){autoCheck=!autoCheck;document.getElementById('tog-auto').classList.toggle('on',autoCheck);localStorage.setItem('gz_shirokuro_auto',autoCheck?'1':'0');}
+// ============ TOAST ============
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1500);}
+// ============ AUDIO ============
+function initAudio(){
+if(audioCtx)return;
+try{
+audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+musicGain=audioCtx.createGain();
+musicGain.gain.value=0.08;
+musicGain.connect(audioCtx.destination);
+}catch(e){}
+}
+function startMusic(){
+if(!audioCtx||!musicOn)return;stopMusic();
+const notes=[261.63,293.66,329.63,392.0,440.0,523.25,587.33,659.25]; // C-D-E-G-A-C-D-E
+const dur=1.5;
+let t=audioCtx.currentTime;
+for(let i=0;i<4;i++){
+const osc=audioCtx.createOscillator();
+const g=audioCtx.createGain();
+osc.type='sine';
+osc.frequency.value=notes[i*2%notes.length];
+g.gain.setValueAtTime(0,t);
+g.gain.linearRampToValueAtTime(0.06,t+0.5);
+g.gain.linearRampToValueAtTime(0,t+dur);
+osc.connect(g);g.connect(musicGain);
+osc.start(t);osc.stop(t+dur);
+musicNodes.push(osc);
+t+=dur;
+}
+setTimeout(()=>{if(musicOn)startMusic();},dur*4*1000);
+}
+function stopMusic(){for(const n of musicNodes){try{n.stop();}catch(e){}}musicNodes=[];}
+function playSfx(t){
+if(!audioCtx||!sfxOn)return;
+const osc=audioCtx.createOscillator();
+const g=audioCtx.createGain();
+const freqs={click:600,draw:400,erase:300,hint:800,win:523,error:200};
+osc.type='sine';
+osc.frequency.value=freqs[t]||400;
+g.gain.setValueAtTime(0,audioCtx.currentTime);
+g.gain.linearRampToValueAtTime(0.1,audioCtx.currentTime+0.01);
+g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.15);
+osc.connect(g);g.connect(audioCtx.destination);
+osc.start();osc.stop(audioCtx.currentTime+0.15);
+}
+// ============ CONFETTI ============
+function showConfetti(){
+const colors=['#64ffda','#ff6b9d','#ffd166','#55c2a0','#a18cd1'];
+for(let i=0;i<60;i++){
+const c=document.createElement('div');
+c.className='confetti';
+c.style.left=Math.random()*100+'vw';
+c.style.top='-10px';
+c.style.background=colors[Math.floor(Math.random()*colors.length)];
+c.style.animationDelay=Math.random()*2+'s';
+c.style.animationDuration=(2+Math.random()*2)+'s';
+document.body.appendChild(c);
+setTimeout(()=>c.remove(),5000);
+}
+}
+// ============ CHECK HOOK ============
+function checkSolutionAndWin(silent){
+if(checkSolution(silent)){
+setTimeout(onWin,500);
+}
+}
+// Override the button click
+document.getElementById('btn-check').onclick=function(){checkSolutionAndWin(false);};
+// ============ KEYBOARD ============
+document.addEventListener('keydown',function(e){
+if(e.key==='1')setMode('draw');
+else if(e.key==='2')setMode('erase');
+else if(e.key==='h'||e.key==='H')useHint();
+else if(e.key==='r'||e.key==='R')clearEdges();
+else if(e.key==='Enter')checkSolutionAndWin(false);
+else if(e.key==='Escape')showMenu();
+});
+// ============ INIT ============
+window.addEventListener('resize',resizeCanvas);
+loadLevel(0);
+// Restore settings
+if(localStorage.getItem('gz_shirokuro_music')==='0'){musicOn=false;document.getElementById('tog-music').classList.remove('on');}
+if(localStorage.getItem('gz_shirokuro_sfx')==='0'){sfxOn=false;document.getElementById('tog-sfx').classList.remove('on');}
+if(localStorage.getItem('gz_shirokuro_auto')==='1'){autoCheck=true;document.getElementById('tog-auto').classList.add('on');}
+// Page lifecycle
+window.addEventListener('beforeunload',function(){stopMusic();if(audioCtx)audioCtx.close();});
+window.addEventListener('pagehide',function(){stopMusic();if(audioCtx)audioCtx.close();});
+document.addEventListener('visibilitychange',function(){if(document.hidden)stopMusic();else if(musicOn&&audioCtx)startMusic();});
+</script>
+<div class="gz-related-games">
+<h3>More Free Puzzle Games</h3>
+<div class="gz-related-grid">
+<a class="gz-related-card" href="/shingoki/"><span>&#x1F3AF;</span><span>Shingoki</span></a>
+<a class="gz-related-card" href="/chiyotsui/"><span>&#x1F4A0;</span><span>Chiyotsui</span></a>
+<a class="gz-related-card" href="/nuritwin/"><span>&#x1F9E9;</span><span>Nuritwin</span></a>
+<a class="gz-related-card" href="/putteria/"><span>&#x1F3AF;</span><span>Putteria</span></a>
+<a class="gz-related-card" href="/toichika/"><span>&#x1F3AF;</span><span>Toichika</span></a>
+<a class="gz-related-card" href="/koburin/"><span>&#x1F9ED;</span><span>Koburin</span></a>
+</div>
+</div>
+<script src="/game-footer.js?v=20260715" defer></script>
+<script src="/monetag-manager.js" defer></script>
+<script src="/game-audio.js" defer></script>
+<script src="/sound-toggle.js" defer></script>
+<script src="/play-counter.js" defer></script>
+</body>
+</html>
