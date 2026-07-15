@@ -676,8 +676,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":671,"url":"https://gamezipper.com/hide-and-paint/","name":"Hide and Paint"},
     {"@type":"ListItem","position":672,"url":"https://gamezipper.com/punch-master/","name":"Punch Master"},
     {"@type":"ListItem","position":673,"url":"https://gamezipper.com/hiroimono/","name":"Hiroimono"},
-    {"@type":"ListItem","position":674,"url":"https://gamezipper.com/shirokuro/","name":"Shirokuro"}
+    {"@type":"ListItem","position":674,"url":"https://gamezipper.com/shirokuro/","name":"Shirokuro"},
+    {"@type":"ListItem","position":675,"url":"https://gamezipper.com/galaxies/","name":"Galaxies"}
   ],
-  "numberOfItems":674,
-  "description":"674 free browser games you can play instantly"
+  "numberOfItems":675,
+  "description":"675 free browser games you can play instantly"
 };
