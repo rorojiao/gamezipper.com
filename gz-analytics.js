@@ -1,12 +1,11 @@
-/* gz-analytics.js — permanent BI endpoint at bi.gamezipper.com — kanban t_401d13d9 2026-07-15
-   Replaces all trycloudflare.com tunnel URLs (gale-algorithms-conf-total, sail-surrounding-icon-bathrooms, etc.)
-   which die every few hours. bi.gamezipper.com is behind Cloudflare, stable URL, HTTP 204 confirmed.
-   Previous 7d tunnel history (all dead now):
-    - sail-surrounding-icon-bathrooms (t_113fdea6 2026-07-15 20:18)
-    - gale-algorithms-conf-total (rotated 2026-07-15 12:55)
-    - garden-cricket-aged-depends / oriental-begin / emma-somehow-fan-them / cornwall-bigger-charges-sought
-   Events flow: gz-analytics → bi.gamezipper.com (Cloudflare) → BI server (10.10.29.67:8090)
-   Historical changelog (archived):
+/* gz-analytics.js — trycloudflare.com tunnel to BI server (t_401d13d9 2026-07-15)
+   ACTIVE tunnel: https://sail-surrounding-icon-bathrooms.trycloudflare.com
+   (cloudflared-bi.service runs as --url quick tunnel on 10.10.29.67:8090).
+   bi.gamezipper.com has no Worker for /api/collect (HTTP 204 = silent drop).
+   DO NOT switch EP to bi.gamezipper.com.
+   Previous attempts today (all dead tunnels):
+     - bi.gamezipper.com 2026-07-15 22:30 CST (HTTP 204 but no DB insert — REVERTED)
+     - sail-surrounding-icon-bathrooms trycloudflare (re-applied 2026-07-15 22:35 CST)
    2026-06-05 fix: connected to Vercel /api/collect.js → BI server pipeline
    2026-06-08 fix: attach vid/sid/device/screen/browser/os/referrer/site/path
                    on every event so BI Server can compute UV/session/device split.
@@ -30,7 +29,7 @@
   // Direct tunnel URL: browser → Cloudflare Tunnel → BI server (10.10.29.67:8090)
   // Tunnel: cloudflared systemd service (auto-restart on failure)
   // NOTE: If tunnel URL changes, update this and redeploy
-  var EP = 'https://bi.gamezipper.com/api/collect';
+  var EP = 'https://sail-surrounding-icon-bathrooms.trycloudflare.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
