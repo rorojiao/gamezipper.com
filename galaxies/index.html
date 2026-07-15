@@ -227,9 +227,10 @@ function renderGrid() {
 function drawLevel(ctx, level, w, h) {
   ctx.clearRect(0,0,w,h);
   const solution = level.solution;
+  // Draw galaxy region tints very faintly (only as a subtle backdrop — not the answer)
   level.centers.forEach(([cy,cx], idx) => {
     const color = GALAXY_COLORS[idx % GALAXY_COLORS.length];
-    ctx.fillStyle = color + '33';
+    ctx.fillStyle = color + '15'; // very faint (8% alpha) — decorative only
     for (let i=0;i<level.rows*level.cols;i++) {
       if (solution[i] === idx) {
         const r = Math.floor(i/level.cols), c = i%level.cols;
@@ -241,6 +242,7 @@ function drawLevel(ctx, level, w, h) {
     ctx.arc(cx*cellSize+cellSize/2, cy*cellSize+cellSize/2, 6, 0, Math.PI*2);
     ctx.fill();
   });
+  // Draw faint grid lines
   ctx.strokeStyle = '#333';
   ctx.lineWidth = borderWidth;
   ctx.beginPath();
@@ -251,6 +253,34 @@ function drawLevel(ctx, level, w, h) {
     ctx.moveTo(c*cellSize, 0); ctx.lineTo(c*cellSize, h);
   }
   ctx.stroke();
+  // Draw player borders (from localStorage v_/h_ keys)
+  ctx.strokeStyle = '#fbbf24'; // amber
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  // Vertical borders: key v_${r}_${c} means a border between cell (r,c) and (r,c+1)
+  for (let r=0;r<level.rows;r++) {
+    for (let c=0;c<level.cols-1;c++) {
+      if (localStorage.getItem(`v_${r}_${c}`) === '1') {
+        const x = (c+1)*cellSize;
+        ctx.beginPath();
+        ctx.moveTo(x, r*cellSize);
+        ctx.lineTo(x, (r+1)*cellSize);
+        ctx.stroke();
+      }
+    }
+  }
+  // Horizontal borders: key h_${r}_${c} means a border between cell (r,c) and (r+1,c)
+  for (let r=0;r<level.rows-1;r++) {
+    for (let c=0;c<level.cols;c++) {
+      if (localStorage.getItem(`h_${r}_${c}`) === '1') {
+        const y = (r+1)*cellSize;
+        ctx.beginPath();
+        ctx.moveTo(c*cellSize, y);
+        ctx.lineTo((c+1)*cellSize, y);
+        ctx.stroke();
+      }
+    }
+  }
 }
 function handleClick(e) {
   const level = LEVELS[STATE.currentLevel];
@@ -259,18 +289,39 @@ function handleClick(e) {
   const c = Math.floor(x/cellSize), r = Math.floor(y/cellSize);
   if (c<0||c>=level.cols||r<0||r>=level.rows) return;
   const edgeX = x%cellSize, edgeY = y%cellSize;
-  if (edgeX < 10 || edgeX > cellSize-10 || edgeY < 10 || edgeY > cellSize-10) {
-    const isVert = edgeX < 10 || edgeX > cellSize-10;
-    const ec = Math.floor((x-cellSize/2)/cellSize);
-    const er = Math.floor(y/cellSize);
-    if (isVert && ec>=0 && ec<level.cols-1 && er>=0 && er<level.rows) {
-      const key = `v_${er}_${ec}`;
-      const current = localStorage.getItem(key);
-      const newVal = current === '1' ? '0' : '1';
-      localStorage.setItem(key, newVal);
-      STATE.moves.push({type:'border',key,old:current,new:newVal});
-      playTone(400, 0.1);
-      renderGrid();
+  const nearVert = edgeX < 10 || edgeX > cellSize-10;
+  const nearHoriz = edgeY < 10 || edgeY > cellSize-10;
+  if (nearVert || nearHoriz) {
+    // Vertical edge: between columns c and c+1 at row r (but only internal edges c in 0..cols-2)
+    // Use the click's column to disambiguate: if clicked near the RIGHT edge of cell c, the edge is between c and c+1
+    if (nearVert) {
+      // Determine which vertical edge: left edge of cell c (between c-1 and c) if edgeX<10, or right edge (between c and c+1) if edgeX>cellSize-10
+      let vc;
+      if (edgeX < 10) vc = c - 1;       // left edge of cell c = between c-1 and c
+      else vc = c;                       // right edge of cell c = between c and c+1
+      if (vc >= 0 && vc < level.cols-1 && r >= 0 && r < level.rows) {
+        const key = `v_${r}_${vc}`;
+        const current = localStorage.getItem(key);
+        const newVal = current === '1' ? '0' : '1';
+        localStorage.setItem(key, newVal);
+        STATE.moves.push({type:'border',key,old:current,new:newVal});
+        playTone(400, 0.1);
+        renderGrid();
+      }
+    } else {
+      // nearHoriz: horizontal edge between rows r-1 and r (top edge) or r and r+1 (bottom edge)
+      let hr;
+      if (edgeY < 10) hr = r - 1;        // top edge of cell r = between r-1 and r
+      else hr = r;                       // bottom edge of cell r = between r and r+1
+      if (hr >= 0 && hr < level.rows-1 && c >= 0 && c < level.cols) {
+        const key = `h_${hr}_${c}`;
+        const current = localStorage.getItem(key);
+        const newVal = current === '1' ? '0' : '1';
+        localStorage.setItem(key, newVal);
+        STATE.moves.push({type:'border',key,old:current,new:newVal});
+        playTone(400, 0.1);
+        renderGrid();
+      }
     }
   }
 }
