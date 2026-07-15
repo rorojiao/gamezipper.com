@@ -154,6 +154,7 @@ canvas#game{position:absolute;inset:0;width:100%;height:100%;display:block;backg
 <div class="btn-row">
 <button class="btn btn-primary" id="startBtn">START</button>
 <button class="btn btn-secondary" id="levelBtn">LEVELS</button>
+<button class="btn btn-secondary" id="audioBtn">🔊 SOUND</button>
 </div>
 <div class="brand">GAMEZIPPER</div>
 </div>
@@ -456,6 +457,7 @@ function updatePlayer(dt){
         z.painted = true;
         painted++;
         score += 100;
+        playSfx('paint'); // R323 audio
         // particle burst
         for(let i=0;i<18;i++){
           particles.push({
@@ -582,6 +584,7 @@ function startLevel(lv){
 function failLevel(){
   if(state !== 'playing') return;
   state = 'fail';
+  playSfx('detect'); // R323 audio
   document.getElementById('warning').classList.add('on');
   setTimeout(()=>document.getElementById('warning').classList.remove('on'), 500);
   setTimeout(()=>{
@@ -593,6 +596,7 @@ function failLevel(){
 function winLevel(){
   if(state !== 'playing') return;
   state = 'win';
+  playSfx('win'); // R323 audio
   const tier = tierOf(level);
   const elapsed = (Date.now() - currentLevelStart)/1000;
   const remain = tier.time > 0 ? Math.max(0, tier.time - elapsed) : 30;
@@ -1122,8 +1126,9 @@ function renderLevelGrid(){
 }
 
 /* ---------- Buttons ---------- */
-document.getElementById('startBtn').onclick = ()=>{ hideAllModals(); startLevel(progress.maxLevel||1); };
+document.getElementById('startBtn').onclick = ()=>{ hideAllModals(); ensureAudio(); startLevel(progress.maxLevel||1); };
 document.getElementById('levelBtn').onclick = ()=>{ renderLevelGrid(); document.getElementById('levelsModal').classList.remove('hidden'); };
+document.getElementById('audioBtn').onclick = ()=>{ audioEnabled = !audioEnabled; document.getElementById('audioBtn').textContent = audioEnabled ? '🔊 SOUND' : '🔇 MUTED'; };
 document.getElementById('closeLevels').onclick = ()=>{ document.getElementById('levelsModal').classList.add('hidden'); };
 document.getElementById('nextBtn').onclick = ()=>{ if(level<25) startLevel(level+1); };
 document.getElementById('replayBtn').onclick = ()=>{ startLevel(level); };
@@ -1134,6 +1139,63 @@ document.getElementById('replayAllBtn').onclick = ()=>{ progress.maxLevel=1; Sto
 document.getElementById('homeAllBtn').onclick = ()=>{ hideAllModals(); document.getElementById('menu').classList.remove('hidden'); state='menu'; };
 
 /* ---------- Init ---------- */
+
+/* ---------- Audio (Web Audio API) — R323 added ---------- */
+let audioCtx = null;
+let audioEnabled = true;
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  }
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playSfx(type){
+  if(!audioEnabled) return;
+  const ctx = ensureAudio(); if(!ctx) return;
+  const now = ctx.currentTime;
+  try {
+    if(type === 'paint'){
+      // pleasant chime
+      [523, 659, 784].forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = f; o.type = 'sine';
+        g.gain.setValueAtTime(0, now + i*0.04);
+        g.gain.linearRampToValueAtTime(0.1, now + i*0.04 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i*0.04 + 0.3);
+        o.start(now + i*0.04); o.stop(now + i*0.04 + 0.3);
+      });
+    } else if(type === 'detect'){
+      // harsh buzz
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sawtooth'; o.frequency.value = 150;
+      g.gain.setValueAtTime(0.15, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      o.start(now); o.stop(now + 0.4);
+    } else if(type === 'win'){
+      // fanfare
+      [523, 659, 784, 1047, 1319].forEach((f, i) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = f; o.type = 'triangle';
+        g.gain.setValueAtTime(0, now + i*0.1);
+        g.gain.linearRampToValueAtTime(0.14, now + i*0.1 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i*0.1 + 0.5);
+        o.start(now + i*0.1); o.stop(now + i*0.1 + 0.5);
+      });
+    } else if(type === 'click'){
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'square'; o.frequency.value = 600;
+      g.gain.setValueAtTime(0.06, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      o.start(now); o.stop(now + 0.05);
+    }
+  } catch(e) {}
+}
+
 function init(){
   fitWorld();
   document.getElementById('menu').classList.remove('hidden');
@@ -1146,7 +1208,7 @@ init();
 <!-- Ad scaffolding (Monetag + analytics) -->
 <div class="gz-ad-below-game" id="gz-ad-below-game"></div>
 <script src="/game-footer.js?v=20260706hideandpaint"></script>
-<script src="/gz-analytics.js?v=2026071575e544d8"></script>
+<script src="/gz-analytics.js?v=2026071578f54aba"></script>
 <div class="gz-related-games">
 <h3>🎮 You May Also Like</h3>
 <div class="gz-related-grid">
