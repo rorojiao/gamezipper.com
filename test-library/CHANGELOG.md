@@ -6147,3 +6147,39 @@ S-grade R90 new game (ragdoll-archers) 上线时**全部 6 验证都漏**: (1) 1
 - "Firefox 141 142 2026 new feature privacy total cookie protection WebGL" (minimax web search)
 - "casual game UX complaint 2026 mobile haptic feedback loading screen ad fatigue" (minimax web search)
 - Key URLs: so.html5.qq.com (ClickFix report, Chrome 154 HTTP warning, Canvas ShinyHunters, Steam CAPTCHA), donews.com (Firefox 151), sohu.com (Mozilla AI 423 CVEs), cloud.tencent.com (Chrome WebMCP)
+
+
+## [v1.194.0] - 2026-07-16
+### Added
+- 7 new test cases from R311 industry research (4h cycle 73)
+- S-435 [P0] CVE-2025-6558 Chrome Zero-Day (Actively Exploited, TAG-Discovered, Patched Jul 15 2025) — Nation-state-tier exploit; ad-iframe delivery risk; record Chrome version in every QA verdict
+- S-436 [P1] CVE-2025-6554 V8 Type-Confusion via Optional-Chaining "Hole Check" (CVSS 8.1, Sep 2025, Public PoC) — `?.` on TDZ variables reads uninitialized memory; affects all Chromium browsers + Electron
+- W-373 [P2] Chrome 150 Stable (v150.0.7871.115, Jul 13 2026) — New Chromium regression floor; bundled-Chromium laggards (360/QQ/Sogou) ≥1 major behind
+- W-374 [P3] Chrome Rapid Release Cadence 2026 (148→149→150→151 in 9 weeks) — QA window compressed to ~3 weeks/major; "test once per major" obsolete
+- C-136 [P1] Tencent "AI双引擎防沉迷" 2026 Summer (Jul 3) — Real-time behavioral risk grading via "AI巡航"/"AI守卫"; new UX expectation for Chinese platforms
+- C-137 [P1] 国家新闻出版署 防止未成年人沉迷网络游戏举报平台 Live (Jul 3 2026) — 1-click 实名/时段/充值 violation reports; GameZipper compliance now externally auditable
+- PC-009 [P3] V8 Optional-Chaining `?.` Hole-Check Hardening — Forward-looking game-code regression risk; static-scan for TDZ-optional-chaining anti-pattern
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-16, cycle 73):
+  - "HTML5 browser game testing 2026 July new techniques WebGL canvas"
+  - "browser security vulnerability CVE July 2026 Chrome Safari Firefox"
+  - "casual mobile game 2026 UX complaint ad loading dark mode accessibility"
+  - "Windows 11 kernel CVE-2026-40369 browser sandbox bypass ntoskrnl"
+  - "Chrome 152 July 2026 release new features V8 deprecation web API"
+  - "网页游戏 2026 7月 合规 版号 未成年人 防沉迷 新规 监管"
+  - "CVE-2025-6558 Chrome zero day July 2025 TAG exploited patch details"
+  - "Chrome 150 151 WebGPU V8 memory corruption December 2025 security patch CVE"
+  - "CVE-2025-6554 Chrome V8 type confusion exploit 2025 eighth zero day"
+  - "Apple Safari 26.5 WebRTC crash memory corruption fix July 2026"
+- Note: SearXNG (web_search_prime batch_search) returned 404 errors for all 5 parallel queries this cycle; used minimax_search exclusively (10 sequential queries).
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_562688abfb500852 (Jul 31 2025, CVE-2025-6558 Chrome 0-day TAG-discovered actively exploited - S-435)
+  - https://blog.csdn.net/weixin_38526314/article/details/150982391 (Sep 3 2025, CVE-2025-6554 V8 type-confusion CVSS 8.1 Hole Check optional-chaining - S-436)
+  - https://github.com/ghostn4444/POC-CVE-2025-6554 (May 20 2026, CVE-2025-6554 public PoC, optional-chaining Hole Check - S-436/PC-009)
+  - https://www.iplaysoft.com/tools/chrome/ (Jul 13 2026, Chrome 150 stable v150.0.7871.115 current distro version - W-373)
+  - https://www.onlinedown.net/soft/1113489.htm (Jul 7 2026, Chrome 151.0.7910.0 rolling out - W-373)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_83069fc56b987652 (May 7 2026, Chrome 148 release + Chrome 149 Jun 2 planned - W-374)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4256a476ba952252 (Jul 3 2026, Tencent 2026 summer minor limit Fri/Sat/Sun 20-21h + AI防沉迷 - C-136)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4586a473f9719252 (Jul 3 2026, Tencent AI巡航/AI守卫 behavioral risk grading - C-136)
+  - https://jubao.chinaso.com/ (Jul 3 2026, 国家新闻出版署 防沉迷举报平台 live, 3 report categories - C-137)
+  - https://new.qq.com/rain/a/20251218A03NUF00 (Dec 19 2025, 2025 Chrome 0-day analysis: V8 type-confusion pattern CVE-2025-6554/10585/13223 - S-436 context)
