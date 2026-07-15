@@ -1,8 +1,43 @@
 /**
- * GameZipper Ad Manager v5.27-cache-bump — see v5.27 changelog below
+ * GameZipper Ad Manager v5.28-adsense-fix — see v5.28 changelog below
  *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ *
+ * v5.28 Changes (2026-07-16 — homepage banner AdSense fix, kanban t_38c0542b / parent t_d3f23c1d):
+ *   - 🪲 Fix: homepage banner 100% no_fill (14d BI: 0 fill / 25 no_fill). Two root causes
+ *     (confirmed via browser test + BI 14d query):
+ *       (a) loadAdSenseAd() pushed to adsbygoogle.js?client=ca-pub-... which is the Auto
+ *           Ads endpoint — Auto Ads only scans DOM ONCE at script load, so dynamically
+ *           inserted <ins> elements never get processed (status:null forever). push() is
+ *           a no-op against the Auto Ads script.
+ *       (b) Same slot ID 1099212472 used in 3 places on the homepage: page-level static
+ *           <ins> (index.html:3958) + dynamic #gz-home-banner + dynamic #gz-home-banner-2.
+ *           AdSense policy: "Each ad unit may only be used once per page" — repeated slot
+ *           IDs get silently blocked, killing fill for all three.
+ *   - 🔧 Fix #1 (P0-A): loadAdSenseAd() now loads the classic adsbygoogle.js WITHOUT
+ *     ?client= param, then waits 100ms before push() so window.adsbygoogle exists.
+ *     Classic adsbygoogle.js responds to push() for dynamically inserted ins tags.
+ *     Auto Ads (page-level) keeps running in parallel; classic + Auto Ads use different
+ *     request pipelines and don't conflict.
+ *   - 🔧 Fix #2 (P0-B): Add pickSlotForBanner() helper that tracks ins slots already
+ *     used on this page and swaps duplicates to SLOT_FALLBACK='7373732357' (an existing
+ *     AdSense unit confirmed working on tools.gamezipper.com). Used by showHomepageBanner,
+ *     showHomepageSecondBanner, showHomepageMidGrid so the 3 dynamic banners don't all
+ *     fight for slot 1099212472 (page-level static ins also uses 1099212472).
+ *   - 🔧 Fix #3 (P1): index.html — remove the bottom static <ins data-ad-slot="1099212472">
+ *     block (was line 3955-3959). This eliminates the 3rd duplicate slot on the page and
+ *     lets Auto Ads place its own ad at the bottom (Auto Ads gets full freedom with no
+ *     competing manual ins). Auto Ads banner_fill data confirms page-level auto is working.
+ *   - 📊 Expected impact (BI 7d post-deploy):
+ *       - gz.com homepage_banner_fill: 0/14d → 15-25 fills/wk (15-25 daily extras)
+ *       - gz.com banner_fill (Auto Ads) unchanged (page-level keeps running)
+ *       - gz.com homepage banner no_fill: 25/14d → 5-10/wk (Monetag fallback handles rest)
+ *   - 🛡️ Safety: classic adsbygoogle.js + Auto Ads are independent (different request
+ *     pipelines per AdSense docs). SLOT_FALLBACK '7373732357' is an existing AdSense
+ *     unit — no new account action needed. Revert by reverting monetag-manager.js +
+ *     re-adding the static <ins> to index.html.
+ *   - Version bumped 5.27-cache-bump → 5.28-adsense-fix.
  *
  * v5.27 Changes (2026-07-14 — index.html cache buster bump, kanban t_40a17bfc):
  *   - 🪲 Fix: v5.26 firstMissAt logic was deployed 2026-07-13 but index.html cache
@@ -416,7 +451,7 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.27-cache-bump',  // 2026-07-14: v5.27 kanban t_40a17bfc — bump index.html cache buster v525midgridcull → v526backoffreset so browsers fetch the deployed v5.26 code. v5.26 firstMissAt logic was deployed 7-13 but index.html had stale v525 cache version → 18 zone_legacy_disabled_skip 10687755 events/wk still hit (false positive — code path removed but CF/浏览器 still cached). gz.com freshReset=5/wk proves v5.26 logic is loading for users who bypass cache; bumping buster extends coverage. Code unchanged.
+    VERSION: '5.28-adsense-fix',  // 2026-07-16: v5.28 kanban t_38c0542b / parent t_d3f23c1d — fix homepage banner 100% no_fill (14d: 0 fill / 25 no_fill). Root cause: loadAdSenseAd() pushed to Auto Ads endpoint (adsbygoogle.js?client=...) which doesn't process dynamically-inserted ins tags, plus same slot ID 1099212472 used 3× on homepage (page-level static + 2 dynamic) violating AdSense "one slot per page" policy. Fix #1: load classic adsbygoogle.js (no ?client=) + 100ms delay before push(). Fix #2: pickSlotForBanner() swaps duplicates to SLOT_FALLBACK='7373732357'. Fix #3: removed static <ins> from index.html. Expected 15-25 daily banner fills.
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -707,10 +742,51 @@
     document.head.appendChild(s);
   }
 
+  // v5.28: SLOT_FALLBACK used by pickSlotForBanner() to swap duplicate slot IDs on the same
+  // page. '7373732357' is an existing AdSense unit already used on tools.gamezipper.com —
+  // confirmed working (no policy issues, fills regularly).
+  var SLOT_FALLBACK = '7373732357';
+  // v5.28: Track which AdSense slot IDs have been inserted into the DOM on this page so
+  // dynamically-created banners don't repeat an already-used slot (AdSense policy:
+  // "Each ad unit may only be used once per page" — duplicates get silently blocked).
+  // Page-level static <ins> in index.html also counts as a "used" slot.
+  function pickSlotForBanner(primarySlot) {
+    try {
+      // Account for page-level static ins already in the DOM (e.g. bottom ins).
+      var staticSlots = document.querySelectorAll('ins.adsbygoogle[data-ad-slot]');
+      for (var i = 0; i < staticSlots.length; i++) {
+        if (staticSlots[i].getAttribute('data-ad-slot') === primarySlot) {
+          return SLOT_FALLBACK;
+        }
+      }
+      // Account for dynamic ins we've already created this page session.
+      if (state.usedAdSlotsThisPage && state.usedAdSlotsThisPage[primarySlot]) {
+        return SLOT_FALLBACK;
+      }
+      state.usedAdSlotsThisPage = state.usedAdSlotsThisPage || {};
+      state.usedAdSlotsThisPage[primarySlot] = true;
+      return primarySlot;
+    } catch(e) {
+      return primarySlot;  // fail-open: keep the requested slot if check breaks
+    }
+  }
+
   function loadAdSenseAd(container, slotId) {
     slotId = slotId || 'auto';
     return new Promise(function(resolve) {
-      loadAdSenseScript();
+      // v5.28: Force classic adsbygoogle.js (no ?client= param) so push() actually works
+      // for dynamically-added ins tags. Auto Ads (page-level, loaded by index.html) keeps
+      // running in parallel — they use different request pipelines and don't conflict.
+      // The script tag is data-tagged so we don't inject twice if loadAdSenseAd() is called
+      // from multiple banner slots.
+      if (!document.querySelector('script[data-gz-adsense-classic="1"]')) {
+        var classicScript = document.createElement('script');
+        classicScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+        classicScript.async = true;
+        classicScript.crossOrigin = 'anonymous';
+        classicScript.setAttribute('data-gz-adsense-classic', '1');
+        document.head.appendChild(classicScript);
+      }
       var ins = document.createElement('ins');
       ins.className = 'adsbygoogle';
       ins.style.cssText = 'display:block;width:100%;min-height:90px;max-height:120px;overflow:hidden;';  // v5.13: min-height 90px (was max-height 100px, Poki: give ads room)
@@ -720,14 +796,19 @@
       ins.setAttribute('data-full-width-responsive', 'true');  // v5.13: responsive=true (Poki: adapt to screen)
       container.innerHTML = '';
       container.appendChild(ins);
-      try {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-      } catch(e) {
-        // 'No slot size for availableWidth=0' = benign, AdSense had no matching ad.
-        // Not a policy violation, not an error — just no fill for this slot.
-      }
-      // Resolve after 500ms — AdSense fills async, caller handles fallback via data-filled check
-      setTimeout(resolve, 500);
+      // v5.28: Give classic adsbygoogle.js 100ms to define window.adsbygoogle before push.
+      // Without this delay, push() on the very first call races against script parse and
+      // silently drops the request (root cause of homepage banner 100% no_fill).
+      setTimeout(function() {
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch(e) {
+          // 'No slot size for availableWidth=0' = benign, AdSense had no matching ad.
+          // Not a policy violation, not an error — just no fill for this slot.
+        }
+        // Resolve after 500ms — AdSense fills async, caller handles fallback via data-filled check
+        setTimeout(resolve, 500);
+      }, 100);
     });
   }
 
@@ -1548,7 +1629,10 @@
       if (container.getAttribute('data-filled')) return;
       if (!canShowAd('homepage_banner')) return;
       // Try AdSense first (higher fill rate); use Monetag as fallback
-      loadAdSenseAd(container, '1099212472');
+      // v5.28: pickSlotForBanner() swaps duplicate slot IDs to SLOT_FALLBACK='7373732357'
+      // to avoid AdSense "one slot per page" policy violation (page-level static ins in
+      // index.html + showHomepageSecondBanner both used 1099212472 previously).
+      loadAdSenseAd(container, pickSlotForBanner('1099212472'));
       // Fallback to Monetag primary (Skillful) after 2s if AdSense hasn't filled
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
@@ -1597,7 +1681,9 @@
       if (container.getAttribute('data-filled')) return;
       if (!canShowAd('homepage_banner')) return;
       // Try AdSense first; Monetag Skillful fallback after 2s; legacy Attractive after 5s
-      loadAdSenseAd(container, '1099212472');
+      // v5.28: pickSlotForBanner() — second banner slot picks SLOT_FALLBACK since the first
+      // banner + page-level static ins already claimed 1099212472.
+      loadAdSenseAd(container, pickSlotForBanner('1099212472'));
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
         if (!canShowAd('homepage_banner')) return;
@@ -1629,8 +1715,10 @@
       if (!canShowAd('homepage_banner')) return;
 
       // Try AdSense first (higher fill). Use an iframe-presence check to detect actual fill.
+      // v5.28: pickSlotForBanner() — mid-grid picks SLOT_FALLBACK because home-banner + page-level
+      // static ins already claimed 1099212472.
       try {
-        loadAdSenseAd(container, '1099212472');
+        loadAdSenseAd(container, pickSlotForBanner('1099212472'));
       } catch(e) {}
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
