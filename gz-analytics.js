@@ -1,4 +1,4 @@
-/* watchdog-set tunnel URL: https://garden-cricket-aged-depends.trycloudflare.com — manual cache bump 2026-06-16 20:45 CST */
+/* watchdog-set tunnel URL: https://sail-surrounding-icon-bathrooms.trycloudflare.com — auto-fix t_113fdea6 2026-07-15 20:18 CST (previous gale-algorithms-conf-total DNS dead since 7/15 12:55) */
 /* gz-analytics.js — lightweight behavioral tracking, no deps, <5KB
    2026-06-05 fix: connected to Vercel /api/collect.js → BI server pipeline
    2026-06-08 fix: attach vid/sid/device/screen/browser/os/referrer/site/path
@@ -23,7 +23,7 @@
   // Direct tunnel URL: browser → Cloudflare Tunnel → BI server (10.10.29.67:8090)
   // Tunnel: cloudflared systemd service (auto-restart on failure)
   // NOTE: If tunnel URL changes, update this and redeploy
-  var EP = 'https://gale-algorithms-conf-total.trycloudflare.com/api/collect';
+  var EP = 'https://sail-surrounding-icon-bathrooms.trycloudflare.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
