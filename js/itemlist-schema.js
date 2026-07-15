@@ -680,8 +680,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":675,"url":"https://gamezipper.com/galaxies/","name":"Galaxies"},
     {"@type":"ListItem","position":676,"url":"https://gamezipper.com/usotatami/","name":"Usotatami"},
     {"@type":"ListItem","position":677,"url":"https://gamezipper.com/rekuto/","name":"Rekuto"},
-    {"@type":"ListItem","position":678,"url":"https://gamezipper.com/square-jam/","name":"Square Jam"}
+    {"@type":"ListItem","position":678,"url":"https://gamezipper.com/square-jam/","name":"Square Jam"},
+    {"@type":"ListItem","position":679,"url":"https://gamezipper.com/wanrumuwandoa/","name":"Wanrumuwandoa"}
   ],
-  "numberOfItems":678,
-  "description":"678 free browser games you can play instantly"
+  "numberOfItems":679,
+  "description":"679 free browser games you can play instantly"
 };
