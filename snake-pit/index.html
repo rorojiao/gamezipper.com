@@ -65,6 +65,11 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 60%,#0d1a2d 100%);min-
 .level-btn:hover{border-color:#22c55e;background:rgba(34,197,94,.15);transform:scale(1.05)}
 .level-btn.completed{background:rgba(34,197,94,.2);border-color:#22c55e}
 .level-btn.completed::after{content:'★';position:absolute;top:2px;right:2px;font-size:8px;color:#fbbf24}
+.palette{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:8px;max-width:340px;margin:0 auto}
+.palette-btn{width:36px;height:36px;border-radius:8px;border:2px solid rgba(255,255,255,.15);cursor:pointer;font-weight:700;font-size:13px;color:#fff;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.palette-btn:hover{transform:scale(1.08)}
+.palette-btn.active{border-color:#fff;box-shadow:0 0 0 2px #22c55e}
+.palette-btn.erase{background:#333!important;color:#aaa}
 #game-screen{display:none;flex-direction:column;align-items:center;width:100%;max-width:600px}
 .game-header{display:flex;justify-content:space-between;align-items:center;width:100%;padding:10px 20px;background:rgba(0,0,0,.3);border-radius:12px;margin-bottom:16px}
 .header-left,.header-right{display:flex;gap:10px;align-items:center}
@@ -133,6 +138,7 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 60%,#0d1a2d 100%);min-
       <div id="grid-container"></div>
       <canvas id="grid-canvas" class="grid-canvas"></canvas>
     </div>
+    <div id="palette" class="palette"></div>
     <div class="game-controls">
       <button class="control-btn primary" onclick="checkSolution()">✓ Check</button>
       <button class="control-btn secondary" onclick="undo()">Undo</button>
@@ -165,7 +171,12 @@ const state = {
   timerInterval: null,
   history: [],
   musicOn: false,
-  sfxOn: true
+  sfxOn: true,
+  userGrid: [],          // R323 fix: player's snake-ID assignments (0 = unset)
+  cellSize: 40,          // px per cell, recomputed in renderGrid
+  drawing: false,        // pointer drag paint mode
+  lastPaintCell: null,   // dedupe drag over same cell
+  activeSnakeId: 1       // current paint ID (cycle 1,2,3,...; 0 = erase)
 };
 
 // LEVELS (30 levels, will be replaced with generated data)
@@ -210,8 +221,12 @@ function showInterstitial() {
 function startLevel(idx) {
   state.currentLevel = idx;
   state.moves = 0;
-  state.history = [];
   state.timer = 0;
+  state.history = [];
+  state.activeSnakeId = 1;
+  // R323 fix: init userGrid (all 0 = unset) based on this level
+  const level = LEVELS[idx];
+  state.userGrid = new Array(level.rows * level.cols).fill(0);
   
   document.getElementById('menu-screen').style.display = 'none';
   document.getElementById('game-screen').style.display = 'flex';
@@ -219,7 +234,91 @@ function startLevel(idx) {
   document.getElementById('level-num').textContent = idx + 1;
   
   renderGrid();
+  renderPalette();
+  attachCanvasInput();
   startTimer();
+}
+
+// R323 fix: derive unique snake lengths from solution, build palette of IDs
+function getLevelSnakeLengths() {
+  const level = LEVELS[state.currentLevel];
+  const counts = {};
+  for (const v of level.solution) if (v > 0) counts[v] = (counts[v] || 0) + 1;
+  // each length L appears L times; one snake per distinct length-value
+  return Object.keys(counts).map(Number).sort((a,b) => a-b);
+}
+
+function renderPalette() {
+  const palette = document.getElementById('palette');
+  palette.innerHTML = '';
+  const lengths = getLevelSnakeLengths();
+  // Create one palette button per distinct snake-length (could be multiple snakes of same length; we use ID = length for simplicity)
+  lengths.forEach((len, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'palette-btn' + (len === state.activeSnakeId ? ' active' : '');
+    btn.style.background = snakeColor(len);
+    btn.textContent = len;
+    btn.title = `Paint cells of the length-${len} snake`;
+    btn.onclick = () => { state.activeSnakeId = len; renderPalette(); };
+    palette.appendChild(btn);
+  });
+  // erase button
+  const erase = document.createElement('button');
+  erase.className = 'palette-btn erase' + (state.activeSnakeId === 0 ? ' active' : '');
+  erase.textContent = '✕';
+  erase.title = 'Erase (set cell to unset)';
+  erase.onclick = () => { state.activeSnakeId = 0; renderPalette(); };
+  palette.appendChild(erase);
+}
+
+// stable per-ID color
+function snakeColor(id) {
+  if (id === 0) return '#1a1a3e';
+  const hues = [140, 200, 30, 280, 0, 60, 320, 180, 100, 240, 350, 20];
+  const h = hues[(id - 1) % hues.length];
+  return `hsl(${h}, 60%, 45%)`;
+}
+
+let _inputAttached = false;
+function attachCanvasInput() {
+  if (_inputAttached) return;
+  const canvas = document.getElementById('grid-canvas');
+  const ptHandler = (ev, isDown) => {
+    if (ev.type === 'pointerdown') state.drawing = true;
+    if (ev.type === 'pointerup' || ev.type === 'pointerleave') { state.drawing = false; state.lastPaintCell = null; return; }
+    if (ev.type === 'pointermove' && !state.drawing) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    const y = ev.clientY - rect.top;
+    const c = Math.floor(x / state.cellSize);
+    const r = Math.floor(y / state.cellSize);
+    const level = LEVELS[state.currentLevel];
+    if (r < 0 || r >= level.rows || c < 0 || c >= level.cols) return;
+    const key = r + ',' + c;
+    if (state.lastPaintCell === key) return; // dedupe drag
+    state.lastPaintCell = key;
+    paintCell(r, c);
+  };
+  canvas.addEventListener('pointerdown', e => { e.preventDefault(); ptHandler(e, true); });
+  canvas.addEventListener('pointermove', e => ptHandler(e, false));
+  canvas.addEventListener('pointerup', e => ptHandler(e, false));
+  canvas.addEventListener('pointerleave', e => ptHandler(e, false));
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; ptHandler({type:'pointerdown', clientX:t.clientX, clientY:t.clientY}, true); }, {passive:false});
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); const t = e.touches[0]; ptHandler({type:'pointermove', clientX:t.clientX, clientY:t.clientY}, false); }, {passive:false});
+  canvas.addEventListener('touchend', e => ptHandler({type:'pointerup'}, false));
+  _inputAttached = true;
+}
+
+function paintCell(r, c) {
+  const idx = r * LEVELS[state.currentLevel].cols + c;
+  const prev = state.userGrid[idx];
+  const next = state.activeSnakeId;
+  if (prev === next) return;
+  state.history.push({idx, prev}); // for undo
+  state.userGrid[idx] = next;
+  state.moves++;
+  if (state.sfxOn) try { playSFX('click'); } catch(e) {}
+  renderGrid();
 }
 
 function renderGrid() {
@@ -228,28 +327,58 @@ function renderGrid() {
   const ctx = canvas.getContext('2d');
   const container = document.getElementById('grid-container');
   
-  const cellSize = Math.min(280 / level.cols, 280 / level.rows);
+  // R323: fit canvas to viewport, max 320px
+  const maxDim = Math.min(320, window.innerWidth - 40);
+  const cellSize = Math.floor(Math.min(maxDim / level.cols, maxDim / level.rows));
+  state.cellSize = cellSize;
   canvas.width = level.cols * cellSize;
   canvas.height = level.rows * cellSize;
+  canvas.style.width = canvas.width + 'px';
+  canvas.style.height = canvas.height + 'px';
   
   container.innerHTML = '';
   
-  // Draw grid
-  ctx.fillStyle = '#1a1a3e';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  // Draw cells with snake values
+  // Draw cells: fill by userGrid assignment, grid lines on top
   for (let r = 0; r < level.rows; r++) {
     for (let c = 0; c < level.cols; c++) {
       const x = c * cellSize;
       const y = r * cellSize;
-      
-      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-      ctx.strokeRect(x, y, cellSize, cellSize);
+      const idx = r * level.cols + c;
+      const sid = state.userGrid[idx] || 0;
+      ctx.fillStyle = snakeColor(sid);
+      ctx.fillRect(x, y, cellSize, cellSize);
+      // border between different snake IDs (the "walls")
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
     }
   }
   
-  // Draw clues
+  // Draw thick borders between cells of DIFFERENT snake IDs (the snake boundaries)
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'square';
+  function diff(r1, c1, r2, c2) {
+    if (r2 < 0 || r2 >= level.rows || c2 < 0 || c2 >= level.cols) return true; // grid edge
+    const a = state.userGrid[r1 * level.cols + c1] || 0;
+    const b = state.userGrid[r2 * level.cols + c2] || 0;
+    return a !== b;
+  }
+  for (let r = 0; r < level.rows; r++) {
+    for (let c = 0; c < level.cols; c++) {
+      const x = c * cellSize, y = r * cellSize;
+      // top edge
+      if (diff(r, c, r-1, c)) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + cellSize, y); ctx.stroke(); }
+      // bottom edge
+      if (diff(r, c, r+1, c)) { ctx.beginPath(); ctx.moveTo(x, y + cellSize); ctx.lineTo(x + cellSize, y + cellSize); ctx.stroke(); }
+      // left edge
+      if (diff(r, c, r, c-1)) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + cellSize); ctx.stroke(); }
+      // right edge
+      if (diff(r, c, r, c+1)) { ctx.beginPath(); ctx.moveTo(x + cellSize, y); ctx.lineTo(x + cellSize, y + cellSize); ctx.stroke(); }
+    }
+  }
+  
+  // Draw clues as DOM overlays
   for (const [key, clue] of Object.entries(level.clues)) {
     const [r, c] = key.split(',').map(Number);
     const x = c * cellSize + cellSize / 2;
@@ -258,18 +387,28 @@ function renderGrid() {
     if (clue.type === 'circle') {
       const circle = document.createElement('div');
       circle.className = 'clue-circle';
-      circle.style.left = (c * cellSize + cellSize/2 - cellSize*0.3) + 'px';
-      circle.style.top = (r * cellSize + cellSize/2 - cellSize*0.3) + 'px';
+      circle.style.left = (x - cellSize * 0.3) + 'px';
+      circle.style.top = (y - cellSize * 0.3) + 'px';
       circle.style.width = (cellSize * 0.6) + 'px';
       circle.style.height = (cellSize * 0.6) + 'px';
+      circle.style.position = 'absolute';
+      circle.style.borderRadius = '50%';
+      circle.style.border = '3px solid #fff';
+      circle.style.background = 'transparent';
+      circle.style.pointerEvents = 'none';
       container.appendChild(circle);
     } else if (clue.type === 'number') {
       const num = document.createElement('div');
       num.className = 'clue-number';
       num.textContent = clue.val;
-      num.style.left = (c * cellSize + cellSize/2 - 10) + 'px';
-      num.style.top = (r * cellSize + cellSize/2 - 12) + 'px';
-      num.style.color = '#fbbf24';
+      num.style.left = (x - 12) + 'px';
+      num.style.top = (y - 14) + 'px';
+      num.style.color = '#fff';
+      num.style.fontWeight = '900';
+      num.style.fontSize = '20px';
+      num.style.textShadow = '0 0 6px #000, 0 0 6px #000';
+      num.style.position = 'absolute';
+      num.style.pointerEvents = 'none';
       container.appendChild(num);
     }
   }
@@ -277,30 +416,94 @@ function renderGrid() {
 
 function checkSolution() {
   const level = LEVELS[state.currentLevel];
-  const solution = level.solution;
-  const R = level.rows;
-  const C = level.cols;
+  const R = level.rows, C = level.cols;
+  const grid = state.userGrid;
   
-  // Verify value = length rule
-  const counts = {};
-  for (const v of solution) {
-    if (v > 0) counts[v] = (counts[v] || 0) + 1;
-  }
+  // R323 fix: validate the PLAYER's grid, not the puzzle's embedded solution
   
-  let valid = true;
-  for (const v of Object.keys(counts)) {
-    if (parseInt(v) !== counts[v]) {
-      valid = false;
-      break;
+  // Rule 1: no unset cells (every cell must be assigned to a snake)
+  for (let i = 0; i < grid.length; i++) {
+    if (!grid[i] || grid[i] === 0) {
+      alert('Some cells are not assigned to a snake yet. Keep painting!');
+      return;
     }
   }
   
-  if (valid) {
-    clearInterval(state.timerInterval);
-    showWin();
-  } else {
-    alert('Solution incorrect! Check snake lengths match values.');
+  // Rule 2: count cells per snake-ID; each snake must have exactly (length = ID) cells
+  // (We use ID = length convention: a length-15 snake has ID 15 and must occupy 15 cells)
+  const counts = {};
+  for (const v of grid) counts[v] = (counts[v] || 0) + 1;
+  for (const [idStr, cnt] of Object.entries(counts)) {
+    const id = parseInt(idStr);
+    if (id !== cnt) {
+      alert(`Snake "${id}" has ${cnt} cells but its length should be ${id}. Fix the assignment.`);
+      return;
+    }
   }
+  
+  // Rule 3: each snake must be a single connected region (orthogonal adjacency)
+  const visited = new Array(R * C).fill(false);
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      const idx = r * C + c;
+      if (visited[idx]) continue;
+      const id = grid[idx];
+      // BFS all cells of this ID
+      const queue = [[r, c]];
+      const component = [];
+      visited[idx] = true;
+      while (queue.length) {
+        const [cr, cc] = queue.shift();
+        component.push(cr * C + cc);
+        for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+          const nr = cr + dr, nc = cc + dc;
+          if (nr < 0 || nr >= R || nc < 0 || nc >= C) continue;
+          const nidx = nr * C + nc;
+          if (visited[nidx] || grid[nidx] !== id) continue;
+          visited[nidx] = true;
+          queue.push([nr, nc]);
+        }
+      }
+      if (component.length !== id) {
+        alert(`Snake "${id}" is split into pieces (one piece has ${component.length} cells). Snakes must be connected paths.`);
+        return;
+      }
+    }
+  }
+  
+  // Rule 4: number clues — a cell with a number clue N must belong to a snake of length N
+  for (const [key, clue] of Object.entries(level.clues)) {
+    if (clue.type !== 'number') continue;
+    const [r, c] = key.split(',').map(Number);
+    const id = grid[r * C + c];
+    if (id !== clue.val) {
+      alert(`The cell at row ${r+1}, col ${c+1} has clue ${clue.val} but is assigned to snake ${id}.`);
+      return;
+    }
+  }
+  
+  // Rule 5: circle clues must be at snake endpoints (exactly 1 same-ID neighbor)
+  // (Relaxed check: a circle-clue cell should have ≤1 same-snake neighbor)
+  for (const [key, clue] of Object.entries(level.clues)) {
+    if (clue.type !== 'circle') continue;
+    const [r, c] = key.split(',').map(Number);
+    const id = grid[r * C + c];
+    let sameNeighbors = 0;
+    for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nr >= R || nc < 0 || nc >= C) continue;
+      if (grid[nr * C + nc] === id) sameNeighbors++;
+    }
+    if (sameNeighbors > 1) {
+      alert(`The circle at row ${r+1}, col ${c+1} is in the middle of a snake. Circles mark endpoints (must have ≤1 same-snake neighbor).`);
+      return;
+    }
+  }
+  
+  // All rules pass
+  clearInterval(state.timerInterval);
+  if (state.sfxOn) try { playSFX('win'); } catch(e) {}
+  showWin();
 }
 
 function showWin() {
@@ -346,14 +549,17 @@ function showMenu() {
 }
 
 function undo() {
-  if (state.history.length > 0) {
-    state.history.pop();
-    state.moves++;
-    // Implement undo logic
-  }
+  if (state.history.length === 0) return;
+  const last = state.history.pop();
+  state.userGrid[last.idx] = last.prev;
+  state.moves = Math.max(0, state.moves - 1);
+  renderGrid();
+  if (state.sfxOn) try { playSFX('click'); } catch(e) {}
 }
 
 function resetLevel() {
+  const level = LEVELS[state.currentLevel];
+  state.userGrid = new Array(level.rows * level.cols).fill(0);
   state.history = [];
   state.moves = 0;
   state.timer = 0;
@@ -361,7 +567,23 @@ function resetLevel() {
 }
 
 function showHint() {
-  alert('Hint: Circle clues mark snake endpoints. Each snake\'s length equals its cell value.');
+  // R323 fix: reveal one correct cell from the embedded solution
+  const level = LEVELS[state.currentLevel];
+  const sol = level.solution;
+  const candidates = [];
+  for (let i = 0; i < state.userGrid.length; i++) {
+    if (state.userGrid[i] !== sol[i]) candidates.push(i);
+  }
+  if (candidates.length === 0) {
+    alert('All cells already match the solution!');
+    return;
+  }
+  const pick = candidates[Math.floor(Math.random() * candidates.length)];
+  state.history.push({idx: pick, prev: state.userGrid[pick]});
+  state.userGrid[pick] = sol[pick];
+  state.moves++;
+  renderGrid();
+  if (state.sfxOn) try { playSFX('click'); } catch(e) {}
 }
 
 function startTimer() {
