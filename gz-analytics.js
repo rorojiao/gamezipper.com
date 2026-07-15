@@ -1,5 +1,12 @@
-/* watchdog-set tunnel URL: https://sail-surrounding-icon-bathrooms.trycloudflare.com — auto-fix t_113fdea6 2026-07-15 20:18 CST (previous gale-algorithms-conf-total DNS dead since 7/15 12:55) */
-/* gz-analytics.js — lightweight behavioral tracking, no deps, <5KB
+/* gz-analytics.js — permanent BI endpoint at bi.gamezipper.com — kanban t_401d13d9 2026-07-15
+   Replaces all trycloudflare.com tunnel URLs (gale-algorithms-conf-total, sail-surrounding-icon-bathrooms, etc.)
+   which die every few hours. bi.gamezipper.com is behind Cloudflare, stable URL, HTTP 204 confirmed.
+   Previous 7d tunnel history (all dead now):
+    - sail-surrounding-icon-bathrooms (t_113fdea6 2026-07-15 20:18)
+    - gale-algorithms-conf-total (rotated 2026-07-15 12:55)
+    - garden-cricket-aged-depends / oriental-begin / emma-somehow-fan-them / cornwall-bigger-charges-sought
+   Events flow: gz-analytics → bi.gamezipper.com (Cloudflare) → BI server (10.10.29.67:8090)
+   Historical changelog (archived):
    2026-06-05 fix: connected to Vercel /api/collect.js → BI server pipeline
    2026-06-08 fix: attach vid/sid/device/screen/browser/os/referrer/site/path
                    on every event so BI Server can compute UV/session/device split.
@@ -16,14 +23,14 @@
                    cache v=202606159ZR bumps to never-before-seen value to
                    force GitHub Pages + Cloudflare to serve the corrected JS.
                    see kanban t_1b9df8de.
-   Events flow: gz-analytics → Cloudflare Tunnel → BI server (10.10.29.67:8090)
-   localStorage archive kept as fallback (gz_aa). */
+   Previous events flow: gz-analytics → Cloudflare Tunnel → BI server (10.10.29.67:8090)
+*/
 (function() {
   var SITE = location.hostname;   // use real hostname so tools.gamezipper.com works too
   // Direct tunnel URL: browser → Cloudflare Tunnel → BI server (10.10.29.67:8090)
   // Tunnel: cloudflared systemd service (auto-restart on failure)
   // NOTE: If tunnel URL changes, update this and redeploy
-  var EP = 'https://sail-surrounding-icon-bathrooms.trycloudflare.com/api/collect';
+  var EP = 'https://bi.gamezipper.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
