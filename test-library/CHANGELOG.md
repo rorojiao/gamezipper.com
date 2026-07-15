@@ -1,3 +1,23 @@
+## [v1.192.0] - 2026-07-15
+### Added
+- 7 new test cases from R309 industry research (4h cycle 71)
+- S-431 [P0] ClickFix Social-Engineering Epidemic — +500% YoY, ~50% of malware delivery; fake-CAPTCHA lures in ad iframes; GameZipper ad slots high-risk distribution vector
+- S-432 [P1] ClickFix macOS AppleScript-URL Variant (Jamf Apr 8 2026) — applescript:// + Script Editor; harvests 14 browsers + 16 crypto wallets; Safari/Mac users at risk
+- W-370 [P1] Chrome 151 Stable (Jul 7 2026) — V8 12.4 + AI-predicted GC + multi-process sandbox hardening; new regression baseline
+- W-371 [P1] Safari 26 GA (Jul 15 2026) — tracking-param stripping (gclid/fbclid) now in REGULAR mode; breaks analytics attribution for ~20% of traffic
+- P-173 [P2] V8 12.4 AI-predicted GC non-determinism (Chrome 151 stable) — frame-rate jitter in rAF-heavy games; use P95/P99 frame times, not averages
+- B-219 [P2] ClickGrab defense tool (Mar 14 2026) — 7 new ClickFix techniques (nslookup/wt.exe/net use/finger.exe); expand heuristic signature list
+- C-132 [P2] 2026 casual UX shift — dark-mode-default + haptics + "Last Updated" badge + reduced-motion respect; GameZipper lags on all four
+### Sources
+- sohu.com/a/1010194947_121851694 (Apr 16 2026) — 2026 网络安全报告: ClickFix 年度最具影响力攻击手法, +500% YoY
+- so.html5.qq.com/page/real/search_news?docid=70000021_32369d6e7ae21652 (Apr 9 2026) — Jamf: ClickFix macOS AppleScript-URL 升级, 绕过 macOS 26.4
+- so.html5.qq.com/page/real/search_news?docid=70000021_96069eaeda393152 (Apr 24 2026) — macOS ClickFix AppleScript 窃取器, 14 浏览器 + 16 钱包
+- github.com/MHaggis/clickgrab (Mar 14 2026) — ClickGrab defense tool, 7 new ClickFix variant detection techniques
+- onlinedown.net/soft/1114433.htm (Jul 7 2026) — Chrome 151 stable, V8 12.4 引擎, AI 预测内存回收
+- cloud.tencent.com/developer/article/2637644 (Jul 15 2026) — Safari 26 GA, tracking-param filtering regular mode + fingerprinting prevention
+- hackread.com/clickfix-scam-how-to-protect-business-againt-threat/ (May 6 2025) — ClickFix background for business defense
+- Industry trend synthesis (C-130/C-131/C-124) — 2026 casual-game UX expectations: dark-mode, haptics, trust badges, reduced-motion
+
 
 ## [v1.191.0] - 2026-07-15
 
