@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sukima — Triomino Placement Puzzle | GameZipper</title>
+<meta name="description" content="Play Sukima puzzle online free! A Nikoli triomino placement puzzle. Draw non-overlapping triominoes so each covers exactly one circle, no 2x2 fully covered. 30 unique-solution levels across 5 difficulty tiers from 5x5 Beginner to 7x7 Expert. Hints, star ratings, level select, keyboard support, ambient Web Audio music. No download, mobile-friendly!">
+<link rel="icon" href="/sukima/icon.png">
+<meta property="og:title" content="Sukima — Triomino Placement Puzzle">
+<meta property="og:description" content="Draw non-overlapping triominoes. Each covers exactly one circle. No 2x2 fully covered. 30 levels, 5 tiers.">
+<meta property="og:image" content="/sukima/og-image.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gamezipper.com/sukima/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://gamezipper.com/sukima/">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"Sukima","description":"A Nikoli triomino placement puzzle. Draw non-overlapping triominoes (3-cell L or I shapes) in the grid. Each triomino must contain exactly one circle clue. No 2x2 area may be completely covered by triominoes. Black cells do not belong to any triomino.","genre":"Puzzle","gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GameZipper"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Sukima?","acceptedAnswer":{"@type":"Answer","text":"Draw non-overlapping triominoes (3-cell L-shaped or straight shapes) along the grid lines. Each triomino must cover exactly one circle. No 2x2 area may be completely covered. Black cells are not part of any triomino."}},{"@type":"Question","name":"How many levels does Sukima have?","acceptedAnswer":{"@type":"Answer","text":"30 unique-solution levels across 5 difficulty tiers: Beginner (5x5), Easy (5x6), Medium (6x6), Hard (6x7), and Expert (7x7)."}},{"@type":"Question","name":"Is Sukima free to play?","acceptedAnswer":{"@type":"Answer","text":"Yes! Sukima is completely free to play in your browser. No download required."}}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},{"@type":"ListItem","position":2,"name":"Sukima","item":"https://gamezipper.com/sukima/"}]}
+</script>
+<style>
+:root{--bg:#0f0f1a;--panel:#1a1a2e;--panel2:#16213e;--accent:#64ffda;--accent2:#ff6b9d;--gold:#ffd166;--green:#55c2a0;--text:#e8e8f0;--muted:#8a8aa0;--border:#2a2a4a;--cell:#23234a;--cell-border:#3a3a5a;--black:#0a0a14}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:8px;padding-bottom:64px}
+.gz-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+h1.gz-sr-only{font-size:1px}
+#game-wrap{width:100%;max-width:760px;display:flex;flex-direction:column;align-items:center;gap:8px}
+#top-bar{width:100%;display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--panel);border-radius:8px;flex-wrap:wrap;gap:6px}
+#top-bar .title{font-size:18px;font-weight:700;color:var(--accent)}
+#top-bar .meta{font-size:13px;color:var(--muted)}
+#top-bar .timer{font-size:14px;font-family:monospace;color:var(--gold);background:var(--panel2);padding:2px 8px;border-radius:4px}
+#canvas-wrap{position:relative;background:var(--panel);border-radius:10px;padding:8px;display:flex;justify-content:center;align-items:center;width:100%}
+canvas{display:block;max-width:100%;touch-action:none;cursor:pointer;border-radius:6px}
+#controls{width:100%;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:6px}
+.btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:6px;font-size:13px;cursor:pointer;transition:all .15s;user-select:none}
+.btn:hover{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.btn.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.btn.gold{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.btn.green{background:var(--green);color:var(--bg);border-color:var(--green)}
+#level-select{width:100%;max-height:0;overflow:hidden;transition:max-height .3s;background:var(--panel);border-radius:8px}
+#level-select.open{max-height:600px;overflow-y:auto;padding:10px}
+.tier-group{margin-bottom:10px}
+.tier-group h3{font-size:13px;color:var(--accent);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
+.tier-levels{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.tier-levels .lvl-btn{background:var(--cell);color:var(--muted);border:1px solid var(--cell-border);padding:6px 0;border-radius:4px;font-size:12px;cursor:pointer;text-align:center}
+.tier-levels .lvl-btn:hover{background:var(--accent);color:var(--bg)}
+.tier-levels .lvl-btn.completed{background:var(--green);color:var(--bg);border-color:var(--green)}
+.tier-levels .lvl-btn.current{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+#status-msg{font-size:13px;color:var(--muted);text-align:center;min-height:18px}
+#win-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;justify-content:center;align-items:center;z-index:100}
+#win-overlay.show{display:flex}
+#win-card{background:var(--panel);padding:30px 40px;border-radius:12px;text-align:center;max-width:380px}
+#win-card h2{color:var(--gold);font-size:26px;margin-bottom:12px}
+#win-card .stars{font-size:32px;margin:12px 0}
+#win-card .stats{color:var(--muted);font-size:14px;margin-bottom:18px}
+#win-card .btns{display:flex;gap:8px;justify-content:center}
+.confetti{position:fixed;width:8px;height:8px;pointer-events:none;z-index:99}
+#settings-panel{width:100%;background:var(--panel);border-radius:8px;padding:10px;display:none;flex-direction:column;gap:6px}
+#settings-panel.open{display:flex}
+.setting-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:4px 0}
+.setting-row label{color:var(--muted)}
+.toggle{position:relative;width:40px;height:20px;background:var(--cell-border);border-radius:10px;cursor:pointer;transition:background .2s}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:left .2s}
+.toggle.on::after{left:22px}
+#footer-link{font-size:12px;color:var(--muted);text-align:center;padding:8px}
+#footer-link a{color:var(--accent);text-decoration:none}
+.help-text{font-size:12px;color:var(--muted);text-align:center;padding:4px 12px;line-height:1.5}
+@media(max-width:600px){
+  #top-bar .title{font-size:15px}
+  .btn{padding:6px 9px;font-size:12px}
+  .tier-levels{grid-template-columns:repeat(6,1fr)}
+}
+</style>
+</head>
+<body>
+<h1 class="gz-sr-only">Sukima — Triomino Placement Puzzle</h1>
+<div id="game-wrap">
+  <div id="top-bar">
+    <div><span class="title">🧩 Sukima</span> <span class="meta" id="level-label">L1 · Beginner</span></div>
+    <div class="timer" id="timer">00:00</div>
+  </div>
+  <div class="help-text">Draw <b>triominoes</b> (3-cell blocks). Each must cover exactly <b>one circle</b>. No <b>2×2</b> fully covered. <b>Black cells</b> are blocked.</div>
+  <div id="canvas-wrap">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div id="status-msg"></div>
+  <div id="controls">
+    <button class="btn active" id="btn-place" onclick="setMode('place')">🔲 Place</button>
+    <button class="btn" id="btn-erase" onclick="setMode('erase')">🧽 Erase</button>
+    <button class="btn gold" id="btn-hint" onclick="useHint()">💡 Hint (<span id="hint-count">3</span>)</button>
+    <button class="btn green" id="btn-check" onclick="checkWin(true)">✓ Check</button>
+    <button class="btn" id="btn-clear" onclick="clearBoard()">🔄 Clear</button>
+    <button class="btn" id="btn-menu" onclick="toggleLevelSelect()">📋 Levels</button>
+    <button class="btn" id="btn-settings" onclick="toggleSettings()">⚙️</button>
+  </div>
+  <div id="settings-panel">
+    <div class="setting-row"><label>🎵 Music</label><div class="toggle on" id="toggle-music" onclick="toggleSetting('music')"></div></div>
+    <div class="setting-row"><label>🔊 Sound Effects</label><div class="toggle on" id="toggle-sfx" onclick="toggleSetting('sfx')"></div></div>
+    <div class="setting-row"><label>⚡ Auto-check on win</label><div class="toggle on" id="toggle-autocheck" onclick="toggleSetting('autocheck')"></div></div>
+  </div>
+  <div id="level-select"></div>
+  <div id="footer-link">More puzzles at <a href="/">GameZipper.com</a></div>
+</div>
+<div id="win-overlay">
+  <div id="win-card">
+    <h2>🎉 Solved!</h2>
+    <div class="stars" id="win-stars">⭐⭐⭐</div>
+    <div class="stats" id="win-stats"></div>
+    <div class="btns">
+      <button class="btn green" onclick="nextLevel()">Next →</button>
+      <button class="btn" onclick="closeWin()">Close</button>
+    </div>
+  </div>
+</div>
+<div id="monetag" style="display:none"></div>
+<script>
+const LEVELS = [{"R":5,"C":5,"circles":{"1,3":1,"0,0":1,"1,4":1},"blocked":["0,4","1,0","1,2","2,0","2,2","2,3"],"sol":[["0,2","0,3","1,3"],["1,4","2,4","3,4"],["0,0","0,1","1,1"]],"tier":"Beginner","level":1},{"R":5,"C":5,"circles":{"1,1":1,"0,0":1,"0,3":1},"blocked":["0,2","1,3","2,1","3,0","3,1","3,2"],"sol":[["0,0","1,0","2,0"],["1,1","1,2","2,2"],["0,3","0,4","1,4"]],"tier":"Beginner","level":2},{"R":5,"C":5,"circles":{"0,4":1,"1,3":1,"4,4":1},"blocked":["1,0","1,4","2,4","3,4","4,0","4,2"],"sol":[["0,2","0,3","0,4"],["1,3","2,2","2,3"],["3,3","4,3","4,4"]],"tier":"Beginner","level":3},{"R":5,"C":5,"circles":{"0,4":1,"3,3":1,"1,3":1},"blocked":["0,0","0,1","1,0","1,4","4,2","4,3","4,4"],"sol":[["0,2","0,3","0,4"],["1,3","2,3","2,4"],["3,1","3,2","3,3"]],"tier":"Beginner","level":4},{"R":5,"C":5,"circles":{"2,3":1,"1,4":1,"3,2":1,"4,0":1},"blocked":["0,1","0,4","1,0","1,1","3,1","3,4","4,1"],"sol":[["2,1","2,2","2,3"],["0,3","1,3","1,4"],["2,0","3,0","4,0"],["3,2","4,2","4,3"]],"tier":"Beginner","level":5},{"R":5,"C":5,"circles":{"0,0":1,"2,4":1,"3,4":1,"1,3":1},"blocked":["0,4","1,0","1,2","1,4","3,0","3,1","3,2","4,0"],"sol":[["0,2","0,3","1,3"],["0,0","0,1","1,1"],["2,2","2,3","2,4"],["3,4","4,3","4,4"]],"tier":"Beginner","level":6},{"R":5,"C":6,"circles":{"1,5":1,"3,4":1,"2,2":1,"4,3":1},"blocked":["0,1","1,2","1,3","1,4","2,1","3,2","4,4","4,5"],"sol":[["2,5","3,4","3,5"],["0,4","0,5","1,5"],["2,2","2,3","3,3"],["4,1","4,2","4,3"]],"tier":"Easy","level":7},{"R":5,"C":6,"circles":{"2,3":1,"4,0":1,"4,1":1,"3,3":1},"blocked":["0,2","0,4","1,1","1,2","1,3","1,4","3,1","4,4"],"sol":[["2,0","3,0","4,0"],["4,1","4,2","4,3"],["3,3","3,4","3,5"],["2,1","2,2","2,3"]],"tier":"Easy","level":8},{"R":5,"C":6,"circles":{"0,1":1,"4,2":1,"0,0":1,"1,5":1},"blocked":["0,3","0,4","1,4","2,4","3,1","3,2","3,5","4,3"],"sol":[["0,0","1,0","2,0"],["0,5","1,5","2,5"],["0,1","0,2","1,2"],["4,0","4,1","4,2"]],"tier":"Easy","level":9},{"R":5,"C":6,"circles":{"1,5":1,"0,3":1,"0,2":1,"3,2":1},"blocked":["0,1","1,3","1,4","2,1","3,1","3,3","3,5","4,2","4,4"],"sol":[["0,3","0,4","0,5"],["0,2","1,1","1,2"],["2,2","2,3","3,2"],["1,5","2,4","2,5"]],"tier":"Easy","level":10},{"R":5,"C":6,"circles":{"4,5":1,"2,5":1,"0,4":1,"2,0":1,"4,3":1},"blocked":["0,3","1,0","1,1","1,5","2,1","3,1","3,2","3,3","3,5"],"sol":[["2,0","3,0","4,0"],["0,4","0,5","1,4"],["2,3","2,4","2,5"],["3,4","4,4","4,5"],["4,1","4,2","4,3"]],"tier":"Easy","level":11},{"R":5,"C":6,"circles":{"0,2":1,"1,0":1,"0,5":1,"2,1":1,"4,1":1},"blocked":["0,1","0,4","2,0","2,4","2,5","3,0","3,4","3,5","4,2","4,3"],"sol":[["3,1","4,0","4,1"],["2,1","2,2","2,3"],["0,0","1,0","1,1"],["0,5","1,4","1,5"],["0,2","0,3","1,3"]],"tier":"Easy","level":12},{"R":6,"C":6,"circles":{"0,5":1,"1,2":1,"0,3":1,"3,3":1},"blocked":["0,0","1,5","2,0","2,5","3,2","3,4","4,1","4,3","4,5","5,3"],"sol":[["0,4","0,5","1,4"],["0,1","0,2","0,3"],["2,3","2,4","3,3"],["1,2","2,1","2,2"]],"tier":"Medium","level":13},{"R":6,"C":6,"circles":{"3,0":1,"2,1":1,"3,2":1,"1,0":1},"blocked":["0,1","0,2","0,4","1,1","1,2","3,3","4,1","4,3","5,4","5,5"],"sol":[["0,0","1,0","2,0"],["2,1","2,2","2,3"],["3,0","4,0","5,0"],["3,2","4,2","5,2"]],"tier":"Medium","level":14},{"R":6,"C":6,"circles":{"5,5":1,"0,5":1,"3,4":1,"0,4":1},"blocked":["0,1","0,2","1,2","2,2","2,3","3,1","3,2","3,3","3,5","5,2"],"sol":[["5,3","5,4","5,5"],["0,5","1,5","2,5"],["0,3","0,4","1,3"],["2,4","3,4","4,4"]],"tier":"Medium","level":15},{"R":6,"C":6,"circles":{"5,3":1,"5,0":1,"2,0":1,"0,0":1},"blocked":["0,1","0,2","0,5","1,4","1,5","2,1","3,1","3,3","3,4","5,4","5,5"],"sol":[["0,0","1,0","1,1"],["4,3","4,4","5,3"],["5,0","5,1","5,2"],["2,0","3,0","4,0"]],"tier":"Medium","level":16},{"R":6,"C":6,"circles":{"5,1":1,"5,0":1,"2,2":1,"2,0":1,"0,3":1},"blocked":["0,2","0,5","1,0","1,2","1,4","2,5","3,2","3,3","4,1","4,2","4,5"],"sol":[["5,1","5,2","5,3"],["3,0","4,0","5,0"],["0,3","0,4","1,3"],["1,1","2,0","2,1"],["2,2","2,3","2,4"]],"tier":"Medium","level":17},{"R":6,"C":6,"circles":{"2,3":1,"1,0":1,"2,0":1,"0,3":1,"1,2":1},"blocked":["0,1","0,5","1,3","2,1","2,4","3,2","4,0","4,2","4,3","5,1","5,2","5,3"],"sol":[["0,0","1,0","1,1"],["0,2","1,2","2,2"],["2,0","3,0","3,1"],["0,3","0,4","1,4"],["2,3","3,3","3,4"]],"tier":"Medium","level":18},{"R":6,"C":7,"circles":{"1,1":1,"2,1":1,"0,3":1,"4,0":1,"2,2":1},"blocked":["0,2","1,0","1,3","1,4","2,4","2,5","3,1","3,3","3,5","4,2","5,1"],"sol":[["4,0","4,1","5,0"],["0,0","0,1","1,1"],["0,3","0,4","0,5"],["2,0","2,1","3,0"],["2,2","2,3","3,2"]],"tier":"Hard","level":19},{"R":6,"C":7,"circles":{"4,1":1,"4,5":1,"3,3":1,"5,0":1,"4,4":1},"blocked":["0,0","0,2","1,0","1,1","1,2","2,6","3,1","3,5","4,6","5,3","5,4"],"sol":[["4,1","4,2","5,2"],["2,2","3,2","3,3"],["3,0","4,0","5,0"],["2,4","3,4","4,4"],["4,5","5,5","5,6"]],"tier":"Hard","level":20},{"R":6,"C":7,"circles":{"4,4":1,"5,6":1,"0,2":1,"0,1":1,"5,4":1},"blocked":["0,4","1,1","1,2","2,3","2,4","3,5","3,6","4,1","4,2","4,3","4,5"],"sol":[["3,3","3,4","4,4"],["4,6","5,5","5,6"],["0,0","0,1","1,0"],["0,2","0,3","1,3"],["5,2","5,3","5,4"]],"tier":"Hard","level":21},{"R":6,"C":7,"circles":{"2,1":1,"3,2":1,"0,0":1,"4,3":1,"4,2":1},"blocked":["0,6","1,0","1,1","1,2","2,5","2,6","3,1","3,3","3,4","4,4","5,1","5,2"],"sol":[["2,0","2,1","3,0"],["4,3","5,3","5,4"],["2,2","2,3","3,2"],["0,0","0,1","0,2"],["4,0","4,1","4,2"]],"tier":"Hard","level":22},{"R":6,"C":7,"circles":{"2,1":1,"4,0":1,"5,5":1,"2,5":1,"2,6":1,"3,1":1},"blocked":["0,2","0,3","0,5","1,1","1,2","1,6","2,2","2,4","3,5","4,2","5,0","5,4"],"sol":[["2,6","3,6","4,6"],["4,0","4,1","5,1"],["4,4","4,5","5,5"],["1,4","1,5","2,5"],["1,0","2,0","2,1"],["3,1","3,2","3,3"]],"tier":"Hard","level":23},{"R":6,"C":7,"circles":{"2,0":1,"2,6":1,"0,1":1,"1,4":1,"2,1":1,"1,2":1},"blocked":["0,4","1,3","1,6","2,3","2,4","3,1","3,6","4,2","5,0","5,1","5,2","5,4","5,5"],"sol":[["2,1","2,2","3,2"],["0,2","0,3","1,2"],["0,0","0,1","1,0"],["2,5","2,6","3,5"],["0,5","1,4","1,5"],["2,0","3,0","4,0"]],"tier":"Hard","level":24},{"R":7,"C":7,"circles":{"5,4":1,"4,2":1,"3,3":1,"4,1":1,"6,3":1},"blocked":["0,3","1,1","2,1","2,2","2,4","3,6","4,0","5,0","5,1","5,3","5,5","5,6","6,1","6,2"],"sol":[["3,0","3,1","4,1"],["4,4","4,5","5,4"],["6,3","6,4","6,5"],["4,2","4,3","5,2"],["1,3","2,3","3,3"]],"tier":"Expert","level":25},{"R":7,"C":7,"circles":{"6,3":1,"5,2":1,"3,6":1,"5,3":1,"4,4":1},"blocked":["0,3","0,4","0,5","1,1","1,4","2,2","2,3","2,6","3,0","3,2","4,1","4,2","5,0","6,0"],"sol":[["5,1","5,2","6,1"],["6,3","6,4","6,5"],["3,3","4,3","5,3"],["4,4","4,5","5,5"],["2,5","3,5","3,6"]],"tier":"Expert","level":26},{"R":7,"C":7,"circles":{"0,1":1,"1,0":1,"1,6":1,"5,2":1,"6,1":1},"blocked":["0,4","0,6","1,2","1,4","1,5","2,0","2,5","3,4","3,5","4,2","4,5","5,1","5,3"],"sol":[["1,0","1,1","2,1"],["0,1","0,2","0,3"],["5,2","6,2","6,3"],["1,6","2,6","3,6"],["5,0","6,0","6,1"]],"tier":"Expert","level":27},{"R":7,"C":7,"circles":{"3,2":1,"2,4":1,"0,0":1,"1,2":1,"4,4":1},"blocked":["0,4","0,5","0,6","1,0","1,3","2,3","2,6","3,3","3,6","4,3","4,5","5,2","5,4","6,4"],"sol":[["1,2","2,1","2,2"],["0,0","0,1","0,2"],["1,4","1,5","2,4"],["3,4","3,5","4,4"],["3,2","4,1","4,2"]],"tier":"Expert","level":28},{"R":7,"C":7,"circles":{"0,2":1,"1,4":1,"1,2":1,"6,1":1,"2,4":1,"1,0":1},"blocked":["0,0","0,1","1,1","1,3","3,0","3,3","3,5","4,0","4,1","4,4","4,5","5,1","5,5","6,2","6,6"],"sol":[["0,2","0,3","0,4"],["1,0","2,0","2,1"],["1,2","2,2","3,2"],["5,0","6,0","6,1"],["1,4","1,5","1,6"],["2,3","2,4","3,4"]],"tier":"Expert","level":29},{"R":7,"C":7,"circles":{"0,6":1,"3,6":1,"6,5":1,"1,6":1,"6,4":1,"4,3":1},"blocked":["1,0","1,3","1,5","2,3","2,4","3,0","3,2","3,5","4,1","4,2","4,4","5,1","5,3","5,4","5,5"],"sol":[["1,6","2,5","2,6"],["5,6","6,5","6,6"],["3,6","4,5","4,6"],["3,3","3,4","4,3"],["0,4","0,5","0,6"],["6,2","6,3","6,4"]],"tier":"Expert","level":30}];
+</script>
+<script>
+// ============ STATE ============
+let curLevel = 0;
+let mode = 'place'; // 'place' or 'erase'
+let placedTriominoes = []; // array of arrays of "r,c" strings
+let cellTriomino = {}; // "r,c" -> triomino index
+let hintsUsed = 0;
+let hintCells = []; // cells revealed by hint
+let startTime = 0;
+let elapsed = 0;
+let timerInterval = null;
+let completed = {};
+let settings = { music: true, sfx: true, autocheck: true };
+let isDragging = false;
+let dragStart = null;
+let dragCells = [];
+
+// ============ AUDIO ============
+let audioCtx = null;
+let musicGain = null;
+let musicInterval = null;
+
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    musicGain = audioCtx.createGain();
+    musicGain.gain.value = 0.06;
+    musicGain.connect(audioCtx.destination);
+  } catch(e) {}
+}
+
+function playSfx(type) {
+  if (!settings.sfx || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  if (type === 'place') { osc.frequency.value = 523; osc.type = 'sine'; }
+  else if (type === 'erase') { osc.frequency.value = 330; osc.type = 'sine'; }
+  else if (type === 'hint') { osc.frequency.value = 880; osc.type = 'triangle'; }
+  else if (type === 'win') { osc.frequency.value = 659; osc.type = 'triangle'; }
+  else if (type === 'error') { osc.frequency.value = 180; osc.type = 'sawtooth'; }
+  else if (type === 'click') { osc.frequency.value = 440; osc.type = 'square'; }
+  gain.gain.setValueAtTime(0.15, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+  osc.start(now);
+  osc.stop(now + 0.2);
+  if (type === 'win') {
+    [659, 784, 1047].forEach((f, i) => {
+      const o2 = audioCtx.createOscillator();
+      const g2 = audioCtx.createGain();
+      o2.connect(g2); g2.connect(audioCtx.destination);
+      o2.frequency.value = f; o2.type = 'triangle';
+      g2.gain.setValueAtTime(0.12, now + i * 0.1);
+      g2.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.3);
+      o2.start(now + i * 0.1); o2.stop(now + i * 0.1 + 0.3);
+    });
+  }
+}
+
+function startMusic() {
+  if (!audioCtx || !settings.music) return;
+  stopMusic();
+  const chords = [
+    [261.63, 329.63, 392, 493.88], // Cmaj7
+    [293.66, 349.23, 440, 587.33], // Dm7
+    [220, 261.63, 329.63, 440],    // Am7
+    [196, 246.94, 293.66, 392],    // G
+  ];
+  let chordIdx = 0;
+  const playChord = () => {
+    if (!settings.music || !audioCtx) return;
+    const now = audioCtx.currentTime;
+    const chord = chords[chordIdx % chords.length];
+    chord.forEach(freq => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(musicGain);
+      osc.frequency.value = freq; osc.type = 'sine';
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.3, now + 0.5);
+      gain.gain.linearRampToValueAtTime(0.2, now + 2.5);
+      gain.gain.linearRampToValueAtTime(0, now + 4);
+      osc.start(now); osc.stop(now + 4);
+    });
+    chordIdx++;
+  };
+  playChord();
+  musicInterval = setInterval(playChord, 4000);
+}
+
+function stopMusic() {
+  if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
+}
+
+// ============ CANVAS / RENDERING ============
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let cellSize = 40;
+let gridOffsetX = 0;
+let gridOffsetY = 0;
+const TRI_COLORS = ['#64ffda','#ff6b9d','#ffd166','#a18cd1','#55c2a0','#f093fb','#4facfe','#fa709a','#43e97b','#fccb90','#ff9a9e','#ffecd2','#a1c4fd','#667eea','#764ba2'];
+
+function computeLayout() {
+  const lvl = LEVELS[curLevel];
+  const wrap = document.getElementById('canvas-wrap');
+  const wrapW = Math.min(wrap.clientWidth - 16, 600);
+  const maxCellW = Math.floor(wrapW / lvl.C);
+  const maxCellH = Math.floor((window.innerHeight - 340) / lvl.R);
+  cellSize = Math.max(20, Math.min(maxCellW, maxCellH, 55));
+  canvas.width = cellSize * lvl.C + 2;
+  canvas.height = cellSize * lvl.R + 2;
+  gridOffsetX = 1;
+  gridOffsetY = 1;
+}
+
+function draw() {
+  const lvl = LEVELS[curLevel];
+  const R = lvl.R, C = lvl.C;
+  ctx.fillStyle = '#0f0f1a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw cells
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      const key = r + ',' + c;
+      const x = gridOffsetX + c * cellSize;
+      const y = gridOffsetY + r * cellSize;
+      const isBlocked = lvl.blocked.includes(key);
+      const isCircle = lvl.circles[key] === 1;
+      const triIdx = cellTriomino[key];
+
+      if (isBlocked) {
+        ctx.fillStyle = '#0a0a14';
+        ctx.fillRect(x, y, cellSize, cellSize);
+        ctx.strokeStyle = '#1a1a2e';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
+      } else if (triIdx !== undefined) {
+        ctx.fillStyle = TRI_COLORS[triIdx % TRI_COLORS.length] + '40';
+        ctx.fillRect(x, y, cellSize, cellSize);
+        ctx.fillStyle = TRI_COLORS[triIdx % TRI_COLORS.length];
+        ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+        ctx.fillStyle = TRI_COLORS[triIdx % TRI_COLORS.length] + '30';
+        ctx.fillRect(x, y, cellSize, cellSize);
+      } else {
+        ctx.fillStyle = '#23234a';
+        ctx.fillRect(x, y, cellSize, cellSize);
+      }
+
+      // Grid border
+      ctx.strokeStyle = '#3a3a5a';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
+
+      // Circle clue
+      if (isCircle && !isBlocked) {
+        ctx.beginPath();
+        ctx.arc(x + cellSize / 2, y + cellSize / 2, cellSize * 0.22, 0, 2 * Math.PI);
+        if (triIdx !== undefined) {
+          ctx.fillStyle = '#0a0a14';
+        } else {
+          ctx.fillStyle = '#64ffda';
+        }
+        ctx.fill();
+        ctx.strokeStyle = '#64ffda';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      // Hint glow
+      if (hintCells.includes(key)) {
+        ctx.strokeStyle = '#ffd166';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x + 1.5, y + 1.5, cellSize - 3, cellSize - 3);
+      }
+    }
+  }
+
+  // Draw drag preview
+  if (isDragging && dragCells.length > 0) {
+    dragCells.forEach(key => {
+      const [r, c] = key.split(',').map(Number);
+      const x = gridOffsetX + c * cellSize;
+      const y = gridOffsetY + r * cellSize;
+      ctx.strokeStyle = mode === 'place' ? '#64ffda' : '#ff6b9d';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+    });
+  }
+
+  // Draw 2x2 violation highlights
+  drawViolations();
+}
+
+function drawViolations() {
+  const lvl = LEVELS[curLevel];
+  const R = lvl.R, C = lvl.C;
+  // Check 2x2 fully covered by triominoes
+  for (let r = 0; r < R - 1; r++) {
+    for (let c = 0; c < C - 1; c++) {
+      const k00 = r + ',' + c, k01 = r + ',' + (c+1);
+      const k10 = (r+1) + ',' + c, k11 = (r+1) + ',' + (c+1);
+      if (cellTriomino[k00] !== undefined && cellTriomino[k01] !== undefined &&
+          cellTriomino[k10] !== undefined && cellTriomino[k11] !== undefined) {
+        const x = gridOffsetX + c * cellSize;
+        const y = gridOffsetY + r * cellSize;
+        ctx.strokeStyle = 'rgba(255,107,157,0.6)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x + 1, y + 1, cellSize * 2 - 2, cellSize * 2 - 2);
+      }
+    }
+  }
+}
+
+// ============ GAME LOGIC ============
+function loadLevel(idx) {
+  curLevel = idx;
+  placedTriominoes = [];
+  cellTriomino = {};
+  hintsUsed = 0;
+  hintCells = [];
+  elapsed = 0;
+  startTime = Date.now();
+  const lvl = LEVELS[idx];
+  document.getElementById('level-label').textContent = 'L' + (idx+1) + ' · ' + lvl.tier;
+  document.getElementById('hint-count').textContent = '3';
+  document.getElementById('status-msg').textContent = '';
+  computeLayout();
+  draw();
+  updateLevelSelect();
+  saveProgress();
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+    const s = (elapsed % 60).toString().padStart(2, '0');
+    document.getElementById('timer').textContent = m + ':' + s;
+  }, 1000);
+}
+
+function getCanvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  const x = (clientX - rect.left) * (canvas.width / rect.width);
+  const y = (clientY - rect.top) * (canvas.height / rect.height);
+  const c = Math.floor((x - gridOffsetX) / cellSize);
+  const r = Math.floor((y - gridOffsetY) / cellSize);
+  const lvl = LEVELS[curLevel];
+  if (r < 0 || r >= lvl.R || c < 0 || c >= lvl.C) return null;
+  return { r, c };
+}
+
+function isAdjacent(a, b) {
+  return (Math.abs(a.r - b.r) === 1 && a.c === b.c) || (Math.abs(a.c - b.c) === 1 && a.r === b.r);
+}
+
+function isValidTriomino(cells) {
+  if (cells.length !== 3) return false;
+  // Check all 3 connected (form I or L triomino)
+  const set = new Set(cells.map(c => c.r + ',' + c.c));
+  let edges = 0;
+  for (let i = 0; i < 3; i++) {
+    for (let j = i+1; j < 3; j++) {
+      if (isAdjacent(cells[i], cells[j])) edges++;
+    }
+  }
+  if (edges < 2) return false;
+  // Must be connected: check all reachable
+  const visited = new Set([cells[0].r + ',' + cells[0].c]);
+  const queue = [cells[0]];
+  while (queue.length) {
+    const cur = queue.shift();
+    for (const cell of cells) {
+      const key = cell.r + ',' + cell.c;
+      if (!visited.has(key) && isAdjacent(cur, cell)) {
+        visited.add(key);
+        queue.push(cell);
+      }
+    }
+  }
+  return visited.size === 3;
+}
+
+function canPlace(cells) {
+  const lvl = LEVELS[curLevel];
+  // Check none blocked
+  for (const cell of cells) {
+    const key = cell.r + ',' + cell.c;
+    if (lvl.blocked.includes(key)) return false;
+    if (cellTriomino[key] !== undefined) return false;
+  }
+  // Check exactly one circle
+  let circleCount = 0;
+  for (const cell of cells) {
+    if (lvl.circles[cell.r + ',' + cell.c] === 1) circleCount++;
+  }
+  if (circleCount !== 1) return false;
+  // Check valid triomino shape
+  if (!isValidTriomino(cells)) return false;
+  // Check no 2x2 violation
+  const newSet = new Set(cells.map(c => c.r + ',' + c.c));
+  for (const key in cellTriomino) newSet.add(key);
+  for (let r = 0; r < lvl.R - 1; r++) {
+    for (let c = 0; c < lvl.C - 1; c++) {
+      const k00 = r+','+c, k01 = r+','+(c+1), k10 = (r+1)+','+c, k11 = (r+1)+','+(c+1);
+      if (newSet.has(k00) && newSet.has(k01) && newSet.has(k10) && newSet.has(k11)) return false;
+    }
+  }
+  return true;
+}
+
+function placeTriomino(cells) {
+  const idx = placedTriominoes.length;
+  placedTriominoes.push(cells.map(c => c.r + ',' + c.c));
+  for (const cell of cells) {
+    cellTriomino[cell.r + ',' + cell.c] = idx;
+  }
+  playSfx('place');
+  draw();
+  if (settings.autocheck) checkWin(false);
+}
+
+function eraseTriominoAt(r, c) {
+  const key = r + ',' + c;
+  const idx = cellTriomino[key];
+  if (idx === undefined) return;
+  // Remove all cells of this triomino
+  const tri = placedTriominoes[idx];
+  for (const k of tri) {
+    delete cellTriomino[k];
+  }
+  // Reindex
+  placedTriominoes.splice(idx, 1);
+  cellTriomino = {};
+  placedTriominoes.forEach((tri, i) => {
+    for (const k of tri) cellTriomino[k] = i;
+  });
+  playSfx('erase');
+  draw();
+}
+
+function handleStart(e) {
+  e.preventDefault();
+  const pos = getCanvasPos(e);
+  if (!pos) return;
+  const key = pos.r + ',' + pos.c;
+  const lvl = LEVELS[curLevel];
+
+  if (mode === 'erase') {
+    eraseTriominoAt(pos.r, pos.c);
+    return;
+  }
+
+  // Place mode: start drag
+  if (lvl.blocked.includes(key) || cellTriomino[key] !== undefined) return;
+  isDragging = true;
+  dragStart = pos;
+  dragCells = [key];
+  draw();
+}
+
+function handleMove(e) {
+  if (!isDragging) return;
+  e.preventDefault();
+  const pos = getCanvasPos(e);
+  if (!pos) return;
+  const key = pos.r + ',' + pos.c;
+  const lvl = LEVELS[curLevel];
+  if (lvl.blocked.includes(key) || cellTriomino[key] !== undefined) return;
+
+  // Build path from dragStart to pos (adjacent cells)
+  if (dragCells.length < 3 && !dragCells.includes(key)) {
+    const last = dragCells[dragCells.length - 1].split(',').map(Number);
+    const lastPos = { r: last[0], c: last[1] };
+    if (isAdjacent(lastPos, pos)) {
+      dragCells.push(key);
+      draw();
+    }
+  }
+}
+
+function handleEnd(e) {
+  if (!isDragging) return;
+  e.preventDefault();
+  isDragging = false;
+
+  if (dragCells.length === 3) {
+    const cells = dragCells.map(k => {
+      const [r, c] = k.split(',').map(Number);
+      return { r, c };
+    });
+    if (canPlace(cells)) {
+      placeTriomino(cells);
+    } else {
+      playSfx('error');
+      document.getElementById('status-msg').textContent = '⚠ Invalid placement. Need 3 connected cells with exactly 1 circle, no 2x2.';
+      setTimeout(() => { document.getElementById('status-msg').textContent = ''; }, 2500);
+    }
+  } else if (dragCells.length > 0) {
+    // Click mode: try auto-grow from single cell
+    if (dragCells.length === 1) {
+      tryAutoGrow(dragCells[0]);
+    }
+  }
+  dragCells = [];
+  draw();
+}
+
+function tryAutoGrow(startKey) {
+  const lvl = LEVELS[curLevel];
+  const [sr, sc] = startKey.split(',').map(Number);
+  // Try all valid triominoes containing this cell
+  const shapes = [
+    [[0,0],[0,1],[0,2]], [[0,0],[1,0],[2,0]],
+    [[0,0],[0,1],[1,0]], [[0,0],[0,1],[1,1]],
+    [[0,0],[1,0],[1,1]], [[0,1],[1,0],[1,1]],
+  ];
+  for (const shape of shapes) {
+    for (const [dr, dc] of shape) {
+      const cells = [];
+      let valid = true;
+      for (const [sdr, sdc] of shape) {
+        const r = sr - dr + sdr;
+        const c = sc - dc + sdc;
+        if (r < 0 || r >= lvl.R || c < 0 || c >= lvl.C) { valid = false; break; }
+        cells.push({ r, c });
+      }
+      if (valid && canPlace(cells)) {
+        // Prefer triominoes covering a circle
+        const hasCircle = cells.some(cell => lvl.circles[cell.r + ',' + cell.c] === 1);
+        if (hasCircle) {
+          placeTriomino(cells);
+          return;
+        }
+      }
+    }
+  }
+}
+
+// ============ CHECK WIN ============
+function checkWin(announce) {
+  const lvl = LEVELS[curLevel];
+  // All circles must be covered
+  let allCirclesCovered = true;
+  for (const key in lvl.circles) {
+    if (cellTriomino[key] === undefined) { allCirclesCovered = false; break; }
+  }
+  if (!allCirclesCovered) {
+    if (announce) {
+      playSfx('error');
+      document.getElementById('status-msg').textContent = 'Not all circles are covered yet.';
+      setTimeout(() => { document.getElementById('status-msg').textContent = ''; }, 2000);
+    }
+    return false;
+  }
+  // Check no 2x2 violation
+  for (let r = 0; r < lvl.R - 1; r++) {
+    for (let c = 0; c < lvl.C - 1; c++) {
+      const k00 = r+','+c, k01 = r+','+(c+1), k10 = (r+1)+','+c, k11 = (r+1)+','+(c+1);
+      if (cellTriomino[k00] !== undefined && cellTriomino[k01] !== undefined &&
+          cellTriomino[k10] !== undefined && cellTriomino[k11] !== undefined) {
+        if (announce) {
+          playSfx('error');
+          document.getElementById('status-msg').textContent = '⚠ 2x2 area fully covered!';
+          setTimeout(() => { document.getElementById('status-msg').textContent = ''; }, 2000);
+        }
+        return false;
+      }
+    }
+  }
+  // Check each triomino has exactly one circle
+  for (const tri of placedTriominoes) {
+    let cc = 0;
+    for (const key of tri) {
+      if (lvl.circles[key] === 1) cc++;
+    }
+    if (cc !== 1) {
+      if (announce) {
+        playSfx('error');
+        document.getElementById('status-msg').textContent = 'Each triomino must cover exactly one circle.';
+        setTimeout(() => { document.getElementById('status-msg').textContent = ''; }, 2000);
+      }
+      return false;
+    }
+  }
+  // Win!
+  win();
+  return true;
+}
+
+function win() {
+  if (timerInterval) clearInterval(timerInterval);
+  completed[curLevel] = true;
+  playSfx('win');
+  const stars = hintsUsed === 0 ? 3 : (hintsUsed <= 2 ? 2 : 1);
+  document.getElementById('win-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+  const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+  const s = (elapsed % 60).toString().padStart(2, '0');
+  document.getElementById('win-stats').textContent = 'Time: ' + m + ':' + s + ' · Hints: ' + hintsUsed + '/3';
+  setTimeout(() => {
+    document.getElementById('win-overlay').classList.add('show');
+    launchConfetti();
+  }, 400);
+  saveProgress();
+}
+
+function launchConfetti() {
+  const colors = ['#64ffda','#ff6b9d','#ffd166','#55c2a0','#a18cd1'];
+  for (let i = 0; i < 40; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.left = Math.random() * 100 + '%';
+    el.style.top = '-10px';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    document.body.appendChild(el);
+    const dur = 2000 + Math.random() * 2000;
+    el.animate([
+      { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+      { transform: 'translateY(' + (window.innerHeight + 20) + 'px) rotate(' + (Math.random()*720) + 'deg)', opacity: 0 }
+    ], { duration: dur, easing: 'cubic-bezier(0.5,0,0.5,1)' });
+    setTimeout(() => el.remove(), dur);
+  }
+}
+
+function closeWin() {
+  document.getElementById('win-overlay').classList.remove('show');
+}
+
+function nextLevel() {
+  closeWin();
+  if (curLevel < LEVELS.length - 1) {
+    loadLevel(curLevel + 1);
+  }
+}
+
+// ============ MODE / HINT ============
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-place').classList.toggle('active', m === 'place');
+  document.getElementById('btn-erase').classList.toggle('active', m === 'erase');
+  playSfx('click');
+}
+
+function useHint() {
+  if (hintsUsed >= 3) return;
+  const lvl = LEVELS[curLevel];
+  // Find a triomino from solution not yet placed correctly
+  for (const solTri of lvl.sol) {
+    // Check if this triomino is correctly placed
+    let correctlyPlaced = true;
+    for (const key of solTri) {
+      const idx = cellTriomino[key];
+      if (idx === undefined) { correctlyPlaced = false; break; }
+      // Check all cells of this placed triomino match solution
+      const placed = placedTriominoes[idx];
+      if (placed.length !== solTri.length || !solTri.every(k => placed.includes(k))) {
+        correctlyPlaced = false;
+        break;
+      }
+    }
+    if (!correctlyPlaced) {
+      // Reveal this triomino
+      hintsUsed++;
+      document.getElementById('hint-count').textContent = (3 - hintsUsed);
+      // Remove any conflicting triominoes
+      for (const key of solTri) {
+        const idx = cellTriomino[key];
+        if (idx !== undefined) {
+          const tri = placedTriominoes[idx];
+          for (const k of tri) delete cellTriomino[k];
+          placedTriominoes.splice(idx, 1);
+          cellTriomino = {};
+          placedTriominoes.forEach((t, i) => { for (const k of t) cellTriomino[k] = i; });
+        }
+      }
+      // Place the solution triomino
+      const cells = solTri.map(k => { const [r,c] = k.split(',').map(Number); return {r,c}; });
+      const idx = placedTriominoes.length;
+      placedTriominoes.push([...solTri]);
+      for (const key of solTri) cellTriomino[key] = idx;
+      hintCells.push(...solTri);
+      playSfx('hint');
+      draw();
+      if (settings.autocheck) checkWin(false);
+      setTimeout(() => { hintCells = hintCells.filter(k => !solTri.includes(k)); draw(); }, 2000);
+      return;
+    }
+  }
+}
+
+function clearBoard() {
+  placedTriominoes = [];
+  cellTriomino = {};
+  hintCells = [];
+  draw();
+  playSfx('click');
+}
+
+// ============ LEVEL SELECT ============
+function toggleLevelSelect() {
+  const el = document.getElementById('level-select');
+  el.classList.toggle('open');
+  document.getElementById('settings-panel').classList.remove('open');
+  if (el.classList.contains('open')) updateLevelSelect();
+}
+
+function updateLevelSelect() {
+  const el = document.getElementById('level-select');
+  const tiers = ['Beginner', 'Easy', 'Medium', 'Hard', 'Expert'];
+  let html = '';
+  tiers.forEach(tier => {
+    const tierLevels = LEVELS.map((l, i) => ({ l, i })).filter(x => x.l.tier === tier);
+    html += '<div class="tier-group"><h3>' + tier + '</h3><div class="tier-levels">';
+    tierLevels.forEach(({ l, i }) => {
+      const cls = completed[i] ? 'completed' : (i === curLevel ? 'current' : '');
+      html += '<button class="lvl-btn ' + cls + '" onclick="loadLevel(' + i + ')">' + (i+1) + '</button>';
+    });
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+// ============ SETTINGS ============
+function toggleSettings() {
+  document.getElementById('settings-panel').classList.toggle('open');
+  document.getElementById('level-select').classList.remove('open');
+}
+
+function toggleSetting(key) {
+  settings[key] = !settings[key];
+  document.getElementById('toggle-' + key).classList.toggle('on', settings[key]);
+  if (key === 'music') {
+    if (settings.music) startMusic(); else stopMusic();
+  }
+  saveProgress();
+}
+
+// ============ PROGRESS ============
+function saveProgress() {
+  try {
+    localStorage.setItem('sukima-progress', JSON.stringify({ completed, settings, curLevel }));
+  } catch(e) {}
+}
+
+function loadProgress() {
+  try {
+    const data = JSON.parse(localStorage.getItem('sukima-progress') || '{}');
+    if (data.completed) completed = data.completed;
+    if (data.settings) settings = Object.assign(settings, data.settings);
+    if (typeof data.curLevel === 'number') curLevel = data.curLevel;
+  } catch(e) {}
+}
+
+// ============ KEYBOARD ============
+document.addEventListener('keydown', (e) => {
+  if (e.key === '1') setMode('place');
+  else if (e.key === '2') setMode('erase');
+  else if (e.key === 'h' || e.key === 'H') useHint();
+  else if (e.key === 'r' || e.key === 'R') clearBoard();
+  else if (e.key === 'Enter') checkWin(true);
+  else if (e.key === 'Escape') {
+    document.getElementById('level-select').classList.toggle('open');
+    document.getElementById('settings-panel').classList.remove('open');
+  }
+});
+
+// ============ INIT ============
+window.addEventListener('resize', () => { computeLayout(); draw(); });
+
+function init() {
+  loadProgress();
+  document.getElementById('toggle-music').classList.toggle('on', settings.music);
+  document.getElementById('toggle-sfx').classList.toggle('on', settings.sfx);
+  document.getElementById('toggle-autocheck').classList.toggle('on', settings.autocheck);
+  if (LEVELS.length === 0) {
+    document.getElementById('status-msg').textContent = '⚠ No levels loaded.';
+    return;
+  }
+  loadLevel(Math.min(curLevel, LEVELS.length - 1));
+  const startAudioOnce = () => {
+    initAudio();
+    if (settings.music) startMusic();
+    document.removeEventListener('pointerdown', startAudioOnce);
+  };
+  document.addEventListener('pointerdown', startAudioOnce);
+
+  // Event listeners
+  canvas.addEventListener('pointerdown', handleStart);
+  canvas.addEventListener('pointermove', handleMove);
+  canvas.addEventListener('pointerup', handleEnd);
+  canvas.addEventListener('pointercancel', handleEnd);
+  canvas.addEventListener('pointerleave', handleEnd);
+}
+
+window.addEventListener('beforeunload', () => { stopMusic(); if (audioCtx) audioCtx.close(); });
+window.addEventListener('pagehide', () => { stopMusic(); if (audioCtx) audioCtx.close(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) stopMusic(); });
+
+init();
+</script>
+<div id="gz-ad-below-game"></div>
+<script src="/game-footer.js?v=20260715sukima"></script>
+<script src="/gz-analytics.js?v=20260715sukima"></script>
+<script src="/monetag-manager.js?v=v525midgridcull"></script>
+<script src="/adsterra-manager.js?v=v515pop"></script>
+</body>
+</html>
