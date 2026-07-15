@@ -26,10 +26,15 @@
 */
 (function() {
   var SITE = location.hostname;   // use real hostname so tools.gamezipper.com works too
-  // Direct tunnel URL: browser → Cloudflare Tunnel → BI server (10.10.29.67:8090)
-  // Tunnel: cloudflared systemd service (auto-restart on failure)
-  // NOTE: If tunnel URL changes, update this and redeploy
-  var EP = 'https://sail-surrounding-icon-bathrooms.trycloudflare.com/api/collect';
+  // PERMANENT BI endpoint (behind Cloudflare, stable URL).
+  // 2026-07-15 22:36 (kanban t_de988703 round 2): Switched back to bi.gamezipper.com
+  //   from trycloudflare.com tunnels (sail-surrounding) which always die within hours.
+  //   Verified 22:36 CST: POST → 204 in 1.09s, event landed in DB.
+  //   tools.gamezipper.com had ZERO gz_ad_event since 2026-07-12 22:00 — trycloudflare
+  //   tunnels are not durable. bi.gamezipper.com is permanent.
+  // DO NOT rotate this URL again. If bi.gamezipper.com goes down, fix the Cloudflare
+  //   zone, do not introduce a new trycloudflare.com tunnel.
+  var EP = 'https://bi.gamezipper.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
