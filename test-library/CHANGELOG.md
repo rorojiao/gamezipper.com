@@ -1,3 +1,38 @@
+## [v1.193.0] - 2026-07-15
+### Added
+- 8 new test cases from R310 industry research (4h cycle 72)
+- S-433 [P0] CVE-2026-28962 Safari 26.5 WebKit CSP Bypass — CSP enforcement broken; leaks sensitive info; first 2026 WebKit CSP-bypass CVE; affects Safari <26.5 (~20% of traffic)
+- S-434 [P1] CVE-2025-13223 Chrome 0-Day (Nov 19 2025, actively exploited) — sparsely documented; regression baseline for unpatched/lagging Chrome users
+- W-372 [P2] 2026 Browser Industry Shift — AI/security/efficiency integration; add Chinese domestic browsers (360/QQ/Sogou/UC) to QA matrix; bundled-Chromium lags stable 4-8 weeks
+- B-220 [P2] CVE-2025-9478 Chrome ANGLE Use-After-Free (Aug 2025, AI-discovered by Big Sleep) — WebGL backend UAF; Windows-only; affects WebGL GameZipper games
+- B-221 [P3] CVE-2025-10585 Chrome V8 Type-Confusion 0-Day (Sep 2025, 6th Chrome 0-day) — Symbol.toPrimitive array-return chain; 3rd V8 type-confusion of 2025 = systemic pattern
+- C-133 [P1] 2026 中国网页游戏 "合规化深化" — unlicensed platforms clearing; GameZipper must display ICP/软著/防沉迷/适龄 badges as trust+legality differentiator
+- C-134 [P1] 八部门未成年人网络平台认定新规 (effective Apr 1 2026) — >1000万 minor reg / >100万 minor MAU = higher obligations; instrument minor analytics; pre-build minor-protection
+- C-135 [P2] 2026 游戏版号 5 核心条件 — 纯内资 + ICP + 软著 + 防沉迷 + 标准化材料; per-game licensing bar raised; relevant if GameZipper pursues China monetization
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-15, cycle 72):
+  - "HTML5 game testing 2026 July new techniques browser canvas WebGL"
+  - "browser security vulnerability CVE 2026 July Chrome Safari Firefox critical patch"
+  - "Safari 26.5 CVE-2026-28962 WebKit CSP bypass 内容安全策略 绕过"
+  - "Chrome 151 152 July 2026 release V8 WebGL deprecation web API change"
+  - "casual mobile web game 2026 July UX complaint ad fatigue loading dark mode accessibility"
+  - "CVE-2025-6558 Chrome zero day July 2025 exploited fix patch"
+  - "网页游戏 2026 合规 资质 版号 未成年人 防沉迷 监管 新规"
+- Note: SearXNG (web_search_prime batch_search) returned 404 errors this cycle; used minimax_search exclusively.
+- Key URLs:
+  - https://finance.sina.com.cn/tech/digi/2026-05-14/doc-inhxvtwn8763233.shtml (May 14 2026, Safari 26.5 CVE-2026-28962 WebKit CSP bypass - S-433)
+  - https://www.sohu.com/a/1022622771_122004016 (May 14 2026, Safari 26.5 20 vulnerabilities, CVE-2026-28962 CSP bypass - S-433)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_414691d2fcf97652 (Nov 19 2025, CVE-2025-13223 Chrome 0-day actively exploited - S-434)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0786a42769d37852 (Jun 29 2026, 2026 browser industry AI/security/efficiency shift - W-372)
+  - https://new.qq.com/rain/a/20250827A05C5G00 (Aug 27 2025, CVE-2025-9478 Chrome ANGLE UAF, AI-discovered by Big Sleep - B-220)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_91668d2314196952 (Sep 23 2025, CVE-2025-10585 V8 type-confusion, Symbol.toPrimitive - B-221)
+  - https://new.qq.com/rain/a/20250918A02USE00 (Sep 18 2025, CVE-2025-10585 Chrome 140.0.7339.185 patch, 6th 2025 Chrome 0-day - B-221)
+  - https://www.sohu.com/a/1028338060_122652494 (May 27 2026, 2026 web-game industry 合规化深化/品类聚焦化/体验精品化 - C-133)
+  - https://new.qq.com/rain/a/20260228A07EF300 (Feb 28 2026, 8-ministry minor-platform designation, effective Apr 1 2026 - C-134)
+  - https://www.sohu.com/a/1013543704_120135737 (Apr 23 2026, 2026 游戏版号 5 core requirements - C-135)
+  - https://mjubao.chinaso.com/reportingguide.html (Jul 3 2026, 国家新闻出版署 anti-addiction violation reporting guide - C-134/C-135 context)
+
+
 ## [v1.192.0] - 2026-07-15
 ### Added
 - 7 new test cases from R309 industry research (4h cycle 71)
