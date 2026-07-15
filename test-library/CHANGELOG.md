@@ -1,3 +1,43 @@
+
+## [v1.191.0] - 2026-07-15
+
+### Added
+
+- 9 new test cases from 2026-07-15 industry research (R308, 4h cadence cycle 70):
+  - [S-428] **[P0]** CVE-2026-5281 Chrome WebGPU/Dawn Use-After-Free Zero-Day (Jun 27 2026, ACTIVE EXPLOITATION, 4th Chrome 0-day of 2026) — Crashes WebGPU-Backed Ad/Animation Iframes, Potential RCE on Unpatched Browsers
+  - [S-429] **[P1]** CVE-2026-2441 Chrome Blink CSS Exfiltration Zero-Day (Mar 20 2026, CVSS 6.5) — Chains `@import` + `background-image: url(...)` With Attribute Selectors to Exfiltrate DOM Content (CSRF Tokens, Session Cookies) Without JS
+  - [S-430] **[P1]** CVE-2026-40369 Windows 11 Kernel Sandbox-Escape From Chrome (CVSS 7.8, May 21 2026) — `NtQuerySystemInformation(253)` Bypasses ProbeForWrite; Elevates Chrome Renderer to SYSTEM Privileges
+  - [W-368] **[P2]** Microsoft Edge Biweekly Release Cadence Accelerates Further — Edge 150.0.4078.65 Shipped Jul 10 2026 (~6 Releases in 90 Days) — Quadrouples Regression-Test Matrix Since 2024
+  - [W-369] **[P2]** Firefox 152 Stable (Jun 16 2026) + Project Nova Redesign Announcement (May 21 2026) — Mozilla's Biggest 2026 UI Refresh; UA-String Will Change; Use Feature Detection, Not UA Sniffing
+  - [P-172] **[P2]** Firefox Gamepad-Initialization Deadlock (bug 1660660, gecko-dev Jul 9 2025) — `StartGamepadMonitoring()` ↔ `AddGamepad()` Mutex Re-Entrance Freezes All Connected Gamepads; Relevant for GameZipper Games With Gamepad Support
+  - [B-217] **[P2]** Chrome `:visited` Link-CSS 20-Year-Old Privacy Bug Patched in Chrome 136 (Apr 30 2025) — Firefox/Safari Still Leak; Footer Link Audit Needed
+  - [B-218] **[P3]** 2026 上半年 CVE 漏洞榜单 (H1 2026) — Linux Kernel 2309 CVEs, Google 1752 CVEs; Defense-in-Depth Requires CSP + Subresource Integrity + iframe sandbox
+  - [C-131] **[P3]** GameZipper Game-Page Trust Signals Lag Industry 2026 Standards — Missing "Last Updated", Cookie-Policy Snackbar, Report Link, Accessibility Statement
+
+### Sources
+
+- mcp__minimax_search__web_search queries (2026-07-15, cycle 70):
+  - "HTML5 game testing 2026 new techniques browser canvas WebGL WebGPU bug"
+  - "browser security vulnerability CVE 2026 July Chrome Safari Firefox WebKit"
+  - "Chrome Edge Safari update 2026 July August new feature deprecated API breaking change"
+  - "casual mobile game UX complaint 2026 accessibility dark mode haptic loading ad fatigue"
+  - "WebGPU 2026 browser support canvas game Chrome Safari Firefox gaming performance"
+  - "2026 CVE-2026 browser vulnerability critical patch Chrome Safari Firefox WebKit"
+  - "Firefox 152 release 2026 Nova redesign JPEG XL WebGPU AI tab grouping"
+  - "Microsoft Edge 150 151 152 2026 release notes V8 Chromium update biweekly"
+  - "2026 web game ad monetization ad blocker detection ad fatigue regulatory DSA"
+- Note: SearXNG (web_search_prime) NOT used this cycle (skipped - minimax_search returns adequate signal). Cycles since 2026-07-12 used minimax_search only.
+- Key URLs:
+  - https://blog.csdn.net/jianlu365/article/details/159769554 (Jun 27 2026, CVE-2026-5281 Chrome WebGPU/Dawn 0-day — 4th Chrome 0-day of 2026, actively exploited - S-428)
+  - https://www.sitepoint.com/zero-day-css-cve-2026-2441-security-vulnerability/ (Mar 20 2026, CVE-2026-2441 Chrome Blink CSS exfiltration 0-day, CVSS 6.5, chains @import + background-image with attribute selectors - S-429)
+  - https://www.donews.com/news/detail/8/6567089.html (May 21 2026, CVE-2026-40369 Win11 kernel sandbox-escape from Chrome via NtQuerySystemInformation, CVSS 7.8, was for Pwn2Own Berlin 2026 - S-430)
+  - https://microsoft-edge.updatestar.com/technical (Jul 10 2026, Edge 150.0.4078.65 - W-368)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_4016a32165940252 (Jun 17 2026, Firefox 152 release + Project Nova roadmap - W-369)
+  - https://www.donews.com/news/detail/8/6567067.html (May 22 2026, Project Nova announcement - Mozilla's biggest 2026 redesign - W-369)
+  - https://github.com/mozilla/gecko-dev/commit/55361bf402090388f0d4800d9289bf635c34e5b4 (Jul 9 2025, bug 1660660 Firefox gamepad init deadlock fix - P-172)
+  - https://k.sina.com.cn/article_1826017320_6cd6d02804001etcc.html (Apr 30 2025, Chrome 136 `:visited` 20-year privacy bug fix - B-217)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8226a48682f87052 (Jul 4 2026, 2026 H1 CVE ranking — Linux 2309, Google 1752 - B-218)
+
 ## [v1.190.0] - 2026-07-15
 
 ### Added
