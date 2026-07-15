@@ -1,3 +1,30 @@
+## [v1.195.0] - 2026-07-16
+### Added
+- 6 new test cases from R312 industry research (4h cycle 74)
+- S-437 [P0] CVE-2026-7333 Chrome GPU Process UAF Sandbox Escape (CVSS 9.6, Apr 28 2026) — Highest-severity 2026 Chrome CVE catalogued; GPU process higher privilege than renderer; WebGL games directly exercise vulnerable code path; full sandbox escape via malicious ad creative
+- S-438 [P1] CVE-2026-40369 Windows 11 ntoskrnl Sandbox Escape via Browser-Mediated NtQuerySystemInformation (CVSS 7.8, May 21 2026) — OS-layer compound-chain exploit; Pwn2Own Berlin 2026 origin; triggers from inside Chrome sandbox
+- S-439 [P2] CVE-2025-0999 V8 Heap Buffer Overflow (Feb 2025, Chrome <133.0.6943.126) — V8 heap-memory-corruption dimension distinct from type-confusion (S-436/B-221); laggard bundled-Chromium baseline
+- W-375 [P1] Chrome 154 "Always Use Secure Connections" Default-On (Effective Oct 2026, announced Oct 28 2025) — Full-page warning for any HTTP outbound; ad-creative silent blocking risk; 3-month migration deadline from this cycle
+- W-376 [P2] 2026 H1 CVE Volume Leaderboard — Chrome 1584 CVEs in 6 months (~265/month); patched-floor assumption provably fragile; validates 4h-cadence Dynamic Test Intelligence cron as minimum viable refresh rate
+- PC-010 [P3] GameZipper Outbound HTTP Reference Audit for Chrome 154 — Extended sweep for 15 HTML attributes (href/src/srcset/action/data/formaction/poster/background/cite/manifest/etc) + 7 JS APIs (WebSocket/EventSource/sendBeacon/window.open/window.location/fetch/XHR); pre-commit hook recommendation
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-16, cycle 74):
+  - "HTML5 game testing 2026 July new techniques browser canvas WebGL performance"
+  - "browser security vulnerability CVE 2026 July Chrome Safari Firefox critical patch"
+  - "Chrome 152 153 July 2026 release V8 WebGL deprecation"
+  - "casual mobile web game 2026 July UX complaint dark mode accessibility"
+  - "Windows 11 CVE-2026-40369 ntoskrnl browser sandbox escape July 2026"
+  - "Chrome 154 always use secure connections HTTP warning 2026 October"
+  - "2026 上半年 CVE 漏洞 Linux 谷歌 浏览器 排名"
+- Note: SearXNG (web_search_prime batch_search) returned 404 errors for all 5 queries this cycle; used minimax_search exclusively.
+- Key URLs:
+  - https://blog.csdn.net/weixin_42376192/article/details/160846721 (May 7 2026, CVE-2026-7333 Chrome GPU process UAF sandbox escape CVSS 9.6 - S-437)
+  - https://www.donews.com/news/detail/8/6567089.html (May 22 2026, CVE-2026-40369 Windows 11 ntoskrnl sandbox escape via browser NtQuerySystemInformation - S-438)
+  - https://www.fjpit.edu.cn/xxzx/2025/0507/c2958a125774/page.htm (May 7 2025, CVE-2025-0999 Chrome V8 heap buffer overflow - S-439)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_163690194b743552 (Oct 29 2025, Chrome 154 Always Use Secure Connections default-on Oct 2026 - W-375)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_1486a57636a99052 (Jul 15 2026, 2026 H1 CVE leaderboard Linux 2308/Google 1752/Chrome 1584 - W-376)
+  - https://new.qq.com/rain/a/20260704A02ZDW00 (Jul 4 2026, 2026 H1 CVE volume analysis confirming Linux 2309/Google 1752 - W-376)
+
 ## [v1.193.0] - 2026-07-15
 ### Added
 - 8 new test cases from R310 industry research (4h cycle 72)
