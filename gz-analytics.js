@@ -1,3 +1,4 @@
+/* watchdog-set tunnel URL: https://circle-session-imports-processed.trycloudflare.com -- auto-replaced by tunnel-watchdog.sh */
 /* gz-analytics.js — trycloudflare.com tunnel to BI server (t_401d13d9 2026-07-15)
    ACTIVE tunnel: https://sail-surrounding-icon-bathrooms.trycloudflare.com
    (cloudflared-bi.service runs as --url quick tunnel on 10.10.29.67:8090).
@@ -40,7 +41,7 @@
   //   var EP after each restart by running:
   //     journalctl -u cloudflared-bi -n 30 --no-pager | grep trycloudflare.com
   // DO NOT switch back to bi.gamezipper.com — that's a 204-stub, not the BI server.
-  var EP = 'https://sail-surrounding-icon-bathrooms.trycloudflare.com/api/collect';
+  var EP = 'https://circle-session-imports-processed.trycloudflare.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
