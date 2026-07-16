@@ -684,8 +684,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":679,"url":"https://gamezipper.com/wanrumuwandoa/","name":"Wanrumuwandoa"},
     {"@type":"ListItem","position":680,"url":"https://gamezipper.com/link-a-pix/","name":"Link-a-Pix"},
     {"@type":"ListItem","position":681,"url":"https://gamezipper.com/doppelblock/","name":"Doppelblock"},
-    {"@type":"ListItem","position":682,"url":"https://gamezipper.com/renzoku/","name":"Renzoku"}
+    {"@type":"ListItem","position":682,"url":"https://gamezipper.com/renzoku/","name":"Renzoku"},
+    {"@type":"ListItem","position":683,"url":"https://gamezipper.com/nuranaito/","name":"Nuranaito"}
   ],
-  "numberOfItems":682,
-  "description":"682 free browser games you can play instantly"
+  "numberOfItems":683,
+  "description":"683 free browser games you can play instantly"
 };
