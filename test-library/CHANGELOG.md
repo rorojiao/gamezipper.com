@@ -1,3 +1,32 @@
+## [v1.196.0] - 2026-07-16
+### Added
+- 7 new test cases from R313 industry research (4h cycle 75)
+- S-440 [P0] CVE-2026-0628 Chrome Gemini Live AI Assistant Policy Bypass (CVSS 8.8, Jan 6 2026) — Trusted-Code-Pathway dimension; malicious Chrome extension triggers unauthorized camera/mic/file/screenshot on panel open with no additional user interaction; abuses extension privilege architecture
+- S-441 [P1] CVE-2026-3909 Chrome Skia OOB Write + CVE-2026-3910 V8 Implementation Flaw (Mar 2026) — Coordinated Dual-CVE Disclosure Pattern; both patched in same Chrome emergency update; multi-vector attack surface
+- S-442 [P2] "Adblock for YouTube" Chrome Extension RCE via Server-Side Config Injection (Jul 2 2026, 11M+ installs) — Third-Party-Code-Trust-Gap; extension ecosystem as attack surface independent of Chrome browser itself
+- W-377 [P1] Chrome 2-Week Release Cycle Acceleration (Effective Sep 2026 with Chrome 153+, announced Mar 3 2026) — Cadence-Compound; ~14-day patch window shrinks from ~30 days; 4h Dynamic Test Intelligence cron MORE critical
+- W-378 [P2] Perplexity AI Brand-Impersonation Chrome Extension Search Hijack (Jun 30 2026, Microsoft Disclosure) — Chrome Web Store Trust Gap; brand impersonation affects GameZipper users; legitimate-extension impersonator pattern
+- PC-011 [P3] Android System WebView Out-of-Band Update Surface (Independent of OS Update Channel) — Android EoL phones still receive Chrome security patches via WebView updates; relevant to embedded GameZipper experiences in third-party apps
+- G-195 [P3] INP (Interaction to Next Paint) Core Web Vital Threshold Check (<200ms "Good") — Interaction-Heavy Games Need INP Tracking; SEO ranking signal; click→response latency measurement
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-16, cycle 75):
+  - "Chrome CVE-2026-0628 WebView policy bypass January 2026"
+  - "Chrome zero-day 2026 V8 Pwn2Own sandbox escape June July"
+  - "web game performance metrics Core Web Vitals 2026 INP"
+  - "Chrome 150 151 152 153 154 release notes May June July 2026"
+  - "mobile web game accessibility WCAG 2.2 AA 2026 player"
+- Note: SearXNG (web_search_prime) returned 404 errors for all queries this cycle; used minimax_search exclusively.
+- Key URLs:
+  - https://blog.csdn.net/weixin_42376192/article/details/156710813 (Apr 2 2026, CVE-2026-0628 Chrome WebView/Gemini Live policy bypass CVSS 8.8 - S-440)
+  - https://blog.csdn.net/OPHKVPS/article/details/159214667 (Jun 11 2026, CVE-2026-0628 Gemini Live 8-step privilege escalation via malicious extension - S-440)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_63469b7d76c74052 (Mar 16 2026, CVE-2026-3909 Chrome Skia OOB write + CVE-2026-3910 V8 implementation flaw coordinated disclosure - S-441)
+  - https://soft.ithome.com/chrome (Jul 3 2026, Adblock for YouTube 11M+ installs extension RCE via server-side config injection - S-442)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_64169a790a846552 (Mar 4 2026, Chrome release cycle shortening from 4 weeks to 2 weeks starting Sep 2026 - W-377)
+  - https://www.digitalapplied.com/blog/core-web-vitals-2026-inp-lcp-cls-optimization-guide (Feb 15 2026, Core Web Vitals 2026 INP <200ms target - G-195)
+  - https://developer.mozilla.org/en-US/docs/Glossary/Interaction_to_next_paint (Jan 14 2026, INP Core Web Vital metric definition since May 2024 - G-195)
+  - https://downxia.com/downinfo/434174.html (Jun 30 2026, Android System WebView V150.0.7871.46 independent update via Google Play - PC-011)
+  - https://soft.ithome.com/chrome (Jul 3 2026, Perplexity AI fake Chrome extension search hijack disclosure by Microsoft - W-378)
+
 ## [v1.195.0] - 2026-07-16
 ### Added
 - 6 new test cases from R312 industry research (4h cycle 74)
