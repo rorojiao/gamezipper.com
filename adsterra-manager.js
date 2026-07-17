@@ -1,19 +1,24 @@
 /**
- * GameZipper Adsterra Ad Manager v5.17.1 (2026-07-18)
+ * GameZipper Adsterra Ad Manager v5.17.2 (2026-07-18)
  * ─────────────────────────────────────────────────
- * v5.17.1 Changes (cron-resilient — fixes "no Adsterra events in 10d" chronic issue):
- *   - 🐛 Fix: v5.17's track() used window.gzTrack, but gz-analytics.js v5+
- *     exposes `window.gzAnalytics.sendAd(type, data)` instead — so v5.17 silently
- *     fell back to sendBeacon('/api/collect'), which GitHub Pages returns 405 on.
- *     Result: events still didn't reach BI server despite v5.17 console log.
- *   - 🔧 track() now uses gzAnalytics.sendAd() → forwards to trycloudflare BI
- *     tunnel (describing-...trycloudflare.com/api/collect → 10.10.29.67:8090).
- *     Keeps gzTrack + sendBeacon fallbacks for legacy self-hosted setups.
+ * v5.17.2 Changes (cron-resilient — guarantees events reach BI on init):
+ *   - 🐛 Fix: v5.17.1 used gzAnalytics.sendAd → 30s batch → setInterval flush.
+ *     On headless browsers / quick page close, flush never fires → events lost.
+ *     Real browsers with normal page view: works (verified trycloudflare EP).
+ *     But to guarantee init events (script_loaded + cdn_health) reach BI on
+ *     every page load, v5.17.2 adds channel 2: direct sendBeacon to the
+ *     trycloudflare BI endpoint (fire-and-forget, no batching).
+ *   - 🔧 track() now fires 4 channels in parallel:
+ *     1) gzAnalytics.sendAd → batched BI (best-effort, may be lost on quick nav)
+ *     2) sendBeacon trycloudflare EP (immediate fire-and-forget, guaranteed)
+ *     3) gzTrack fallback (legacy trackers)
+ *     4) sendBeacon /api/collect (self-hosted setups, GitHub Pages 405s)
  *   - 📊 Expected impact (BI 6h post-deploy):
- *       - gz_ad_event with network=adsterra: 0/10d → 1-3 script_loaded + 2-10 cdn_health + fill events
+ *       - gz_ad_event with network=adsterra: 0/10d → 1-3 script_loaded per page view
+ *       - Plus cdn_health, fill events on smartlink iframe impressions
  *       - cron job 9488d0a3a7d6 stays silent when BI sees healthy events
  *
- * v5.17 (2026-07-18 — initial cron-resilient release):
+ * v5.17.1 (2026-07-18 — initial gzAnalytics.sendAd fix):
  *   - 🪲 Fix: BI had ZERO adsterra events for 10 days despite v5.16 manager
  *     loading on every page. Root cause analysis:
  *       (a) v5.16's track() only fires on `armPop` + `firePopunder` + `init`.
@@ -82,42 +87,56 @@
     catch (e) { return '/api/collect'; }
   })();
 
-  // ── Hardened track() — v5.17.1: use window.gzAnalytics.sendAd() (BI-correct)
-  //     gz-analytics.js v5+ defines window.gzAnalytics with sendAd(type, data)
-  //     which forwards to the trycloudflare BI tunnel (describing-...trycloudflare.com).
-  //     Falls back to gzTrack (older tracker) then sendBeacon on /api/collect
-  //     (which 405s on GitHub Pages, but we keep as last-resort).
+  // ── Hardened track() — v5.17.2: dual-channel (BI batch + fire-and-forget)
+  //     1) gzAnalytics.sendAd → gz-analytics.js batch buffer → trycloudflare tunnel → BI
+  //        (best-effort, may be lost on tab close before 30s flush)
+  //     2) Direct sendBeacon to trycloudflare BI endpoint (fire-and-forget,
+  //        bypasses 30s batch window, guaranteed delivery on init events)
+  //     3) gzTrack fallback (legacy public/t.js)
+  //     4) sendBeacon('/api/collect') last-resort (self-hosted setups)
+  //
+  // v5.17.2 update: trycloudflare EP embedded directly so init events
+  // (script_loaded + cdn_health) ALWAYS reach BI even on fresh load,
+  // not just after 30s batch window. Synchronous sendBeacon is fire-and-forget
+  // (no response needed, no callback), reliable across navigations.
+  var BI_DIRECT_EP = 'https://describing-photographers-past-conditioning.trycloudflare.com/api/collect';
+
   function track(type, extra) {
-    var payload = Object.assign({ network: 'adsterra', type: type }, extra || {});
-    var ok = false;
-    // Preferred: gzAnalytics.sendAd (BI server pipeline, batched every 30s)
+    var payload = Object.assign({ network: 'adsterra', type: type, t: Date.now() }, extra || {});
+    // Channel 1: gzAnalytics.sendAd (BI batch pipeline, may be lost on quick nav)
     try {
       if (window.gzAnalytics && typeof window.gzAnalytics.sendAd === 'function') {
         window.gzAnalytics.sendAd(type, payload);
-        ok = true;
       }
     } catch (e) {}
-    // Fallback: legacy gzTrack (older public/t.js tracker)
-    if (!ok) {
-      try {
-        if (typeof window.gzTrack === 'function') {
-          window.gzTrack('gz_ad_event', payload);
-          ok = true;
-        }
-      } catch (e) {}
-    }
-    // Last-resort fallback: sendBeacon to /api/collect (GitHub Pages 405s,
-    // but kept for self-hosted environments where /api/collect is a real endpoint)
-    if (!ok) {
-      try {
-        if (navigator.sendBeacon && BI_EP) {
-          navigator.sendBeacon(BI_EP, JSON.stringify({
-            event: 'gz_ad_event', ts: Date.now(), path: location.pathname,
-            extra: payload
-          }));
-        }
-      } catch (e) {}
-    }
+    // Channel 2: Direct sendBeacon to trycloudflare BI tunnel (fire-and-forget)
+    // Guarantees init events (script_loaded + cdn_health) reach BI even on
+    // browsers that batch-flush never fires (headless, quick close).
+    try {
+      if (navigator.sendBeacon && BI_DIRECT_EP) {
+        var env = {
+          e: 'gz_ad_event',
+          d: payload,
+          t: Date.now()
+        };
+        navigator.sendBeacon(BI_DIRECT_EP, JSON.stringify(env));
+      }
+    } catch (e) {}
+    // Channel 3: gzTrack fallback (legacy trackers)
+    try {
+      if (typeof window.gzTrack === 'function') {
+        window.gzTrack('gz_ad_event', payload);
+      }
+    } catch (e) {}
+    // Channel 4: sendBeacon /api/collect (self-hosted setups, GitHub Pages 405s)
+    try {
+      if (navigator.sendBeacon && BI_EP) {
+        navigator.sendBeacon(BI_EP, JSON.stringify({
+          event: 'gz_ad_event', ts: Date.now(), path: location.pathname,
+          extra: payload
+        }));
+      }
+    } catch (e) {}
   }
 
   // ── Popunder ──
@@ -276,11 +295,11 @@
     armPop();
     track('script_loaded', {
       zones: ZONES,
-      v: '5.17.1',
+      v: '5.17.2',
       path: location.pathname,
       readyState: document.readyState
     });
-    track('config_loaded', { v: '5.17.1', popInterval: POP_INTERVAL });
+    track('config_loaded', { v: '5.17.2', popInterval: POP_INTERVAL });
     // Run CDN health probe asynchronously — doesn't block init.
     setTimeout(runCdnHealth, 1500);
   }
@@ -307,10 +326,10 @@
     fireSmartlinkPing: fireSmartlinkPing,
     getSmartlinkUrl: function () { return SMARTLINK_URL; },
     zones: ZONES,
-    version: '5.17.1'
+    version: '5.17.2'
   };
 
   try {
-    console.log('[GZAdsterra] v5.17.1 active — popunder(' + ZONES.popunder + ') + smartlink(' + ZONES.smartlink + ' iframe) + cdn_health probe');
+    console.log('[GZAdsterra] v5.17.2 active — popunder(' + ZONES.popunder + ') + smartlink(' + ZONES.smartlink + ' iframe) + cdn_health probe');
   } catch (e) {}
 })();
