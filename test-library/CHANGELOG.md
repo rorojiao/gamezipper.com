@@ -1,3 +1,29 @@
+## [v1.197.0] - 2026-07-17
+### Added
+- 7 new test cases from R314 industry research (4h cycle 76)
+- S-443 [P0] CVE-2026-5873 V8 Turboshaft WebAssembly OOB Read/Write + AI-Autonomous Exploit Chain (Fixed in Chrome 147, Disclosed Apr 2026) — Frontier LLM (Claude Opus) autonomously chained V8 Turboshaft WASM OOB with second V8 sandbox-escape into working RCE; first publicly documented fully-AI-weaponized Chrome V8 exploit; collapses CVE-to-Working-Exploit window to near-zero
+- S-444 [P1] CVE-2026-20643 WebKit Navigation API + Apple's First Rapid Security Response (RSR) Channel (Mar 2026) — Apple's first-ever background RSR patch for WebKit; affects iPhone/iPad/Mac/Vision Pro; signals WebKit now under comparable attack pressure to V8
+- S-445 [P1] PLASMAGRID / PlasmaLoader WebKit-to-Crypto-Wallet-Theft Chain (iOS 13.7.2.1, Mar 2026, GTIG Disclosure) — Multi-stage exploit: WebKit vuln delivers PlasmaLoader that injects into system processes and scans for MetaMask/Trust Wallet seed phrases and private keys; first catalogued WebKit-to-crypto-theft end-to-end chain
+- S-446 [P0] DataByCloud Access / Data By Cloud 1 / Data By Cloud 2 / Tool Access 11 / Software Access — Enterprise SaaS Session Hijack via Fake Productivity Chrome Extensions (Jan 2026) — Five extensions disguised as Workday/NetSuite/SAP SuccessFactors tools stealing SSO tokens and hijacking enterprise sessions; extension-ecosystem threat expands from consumer to enterprise
+- S-447 [P1] 170-Site MITM Proxy Chrome Extensions via webRequest.onAuthRequired Credential Injection (2026 Disclosure) — Two paid-subscription proxy extensions secretly injecting hardcoded proxy credentials (topfany/963852wei) via webRequest.onAuthRequired listeners into every HTTP auth challenge across 170+ target domains; routing traffic through attacker C2; modified jquery-1.12.2.min.js bundled; first catalogued abuse of webRequest.onAuthRequired API for transparent MITM
+- S-448 [P2] MEXC API-Key Stealer Fake Trading Tool Chrome Extension (Jan 2026) — Fake automated MEXC-exchange trading tool exfiltrating users' MEXC API keys; financial-API-key-theft via fake trading/bot extensions as recurring pattern
+- W-379 [P1] HTML-in-Canvas New Chrome Rendering Primitive (Apr 2026, Google Rollout) — DOM/HTML rendered directly into Canvas surface; enables new visual-effects patterns (fragment/shatter on DOM regions); changes rendering-path semantics; QA verdicts must detect rendering path before asserting pixel values
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-17, cycle 76):
+  - "Chrome zero-day CVE July 2026 browser security patch"
+  - "HTML5 game testing techniques 2026 canvas WebGL performance"
+  - "Safari iOS WebKit bug 2026 mobile browser gaming"
+  - "casual web game UX accessibility WCAG 2026 mobile"
+  - "Chrome extension malware 2026 supply chain attack"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_67169e5e87f91652 (Apr 20 2026, Claude Opus AI-autonomous weaponization of CVE-2026-5873 V8 Turboshaft WASM OOB - S-443)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_65569bcad1337152 (Mar 20 2026, Apple first RSR for CVE-2026-20643 WebKit navigation API - S-444)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_09769a79cd581652 (Mar 4 2026, GTIG PLASMAGRID/PlasmaLoader WebKit-to-crypto-wallet-theft chain - S-445)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_037696d944600852 (Jan 19 2026, 5 fake productivity extensions hijack Workday/NetSuite/SAP sessions - S-446)
+  - https://cloud.tencent.com/developer/article/2608790 (2026, 2 Chrome extensions MITM-proxy via webRequest.onAuthRequired across 170+ sites - S-447)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_448696848b642752 (Jan 15 2026, MEXC API-key stealer fake trading extension - S-448)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_92969dba69c15252 (Apr 12 2026, HTML-in-Canvas Chrome rendering primitive - W-379)
+
 ## [v1.196.0] - 2026-07-16
 ### Added
 - 7 new test cases from R313 industry research (4h cycle 75)
