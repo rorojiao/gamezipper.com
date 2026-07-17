@@ -1,7 +1,19 @@
 /**
- * GameZipper Adsterra Ad Manager v5.17 (2026-07-18)
+ * GameZipper Adsterra Ad Manager v5.17.1 (2026-07-18)
  * ─────────────────────────────────────────────────
- * v5.17 Changes (cron-resilient — fixes "no Adsterra events in 10d" chronic issue):
+ * v5.17.1 Changes (cron-resilient — fixes "no Adsterra events in 10d" chronic issue):
+ *   - 🐛 Fix: v5.17's track() used window.gzTrack, but gz-analytics.js v5+
+ *     exposes `window.gzAnalytics.sendAd(type, data)` instead — so v5.17 silently
+ *     fell back to sendBeacon('/api/collect'), which GitHub Pages returns 405 on.
+ *     Result: events still didn't reach BI server despite v5.17 console log.
+ *   - 🔧 track() now uses gzAnalytics.sendAd() → forwards to trycloudflare BI
+ *     tunnel (describing-...trycloudflare.com/api/collect → 10.10.29.67:8090).
+ *     Keeps gzTrack + sendBeacon fallbacks for legacy self-hosted setups.
+ *   - 📊 Expected impact (BI 6h post-deploy):
+ *       - gz_ad_event with network=adsterra: 0/10d → 1-3 script_loaded + 2-10 cdn_health + fill events
+ *       - cron job 9488d0a3a7d6 stays silent when BI sees healthy events
+ *
+ * v5.17 (2026-07-18 — initial cron-resilient release):
  *   - 🪲 Fix: BI had ZERO adsterra events for 10 days despite v5.16 manager
  *     loading on every page. Root cause analysis:
  *       (a) v5.16's track() only fires on `armPop` + `firePopunder` + `init`.
@@ -70,27 +82,39 @@
     catch (e) { return '/api/collect'; }
   })();
 
-  // ── Hardened track() — v5.17: always fires, never silent ──
+  // ── Hardened track() — v5.17.1: use window.gzAnalytics.sendAd() (BI-correct)
+  //     gz-analytics.js v5+ defines window.gzAnalytics with sendAd(type, data)
+  //     which forwards to the trycloudflare BI tunnel (describing-...trycloudflare.com).
+  //     Falls back to gzTrack (older tracker) then sendBeacon on /api/collect
+  //     (which 405s on GitHub Pages, but we keep as last-resort).
   function track(type, extra) {
-    var payload = {
-      event: 'gz_ad_event',
-      network: 'adsterra',
-      type: type,
-      path: location.pathname,
-      ts: Date.now(),
-      extra: extra || {}
-    };
+    var payload = Object.assign({ network: 'adsterra', type: type }, extra || {});
     var ok = false;
+    // Preferred: gzAnalytics.sendAd (BI server pipeline, batched every 30s)
     try {
-      if (typeof window.gzTrack === 'function') {
-        window.gzTrack('gz_ad_event', Object.assign({ network: 'adsterra', type: type }, extra || {}));
+      if (window.gzAnalytics && typeof window.gzAnalytics.sendAd === 'function') {
+        window.gzAnalytics.sendAd(type, payload);
         ok = true;
       }
     } catch (e) {}
+    // Fallback: legacy gzTrack (older public/t.js tracker)
     if (!ok) {
       try {
-        if (navigator.sendBeacon) {
-          navigator.sendBeacon(BI_EP, JSON.stringify(payload));
+        if (typeof window.gzTrack === 'function') {
+          window.gzTrack('gz_ad_event', payload);
+          ok = true;
+        }
+      } catch (e) {}
+    }
+    // Last-resort fallback: sendBeacon to /api/collect (GitHub Pages 405s,
+    // but kept for self-hosted environments where /api/collect is a real endpoint)
+    if (!ok) {
+      try {
+        if (navigator.sendBeacon && BI_EP) {
+          navigator.sendBeacon(BI_EP, JSON.stringify({
+            event: 'gz_ad_event', ts: Date.now(), path: location.pathname,
+            extra: payload
+          }));
         }
       } catch (e) {}
     }
@@ -245,15 +269,18 @@
   }
 
   // ── Init: popunder armed + script_loaded event + smartlink on first nav
+  var _initialized = false;
   function init() {
+    if (_initialized) return;
+    _initialized = true;
     armPop();
     track('script_loaded', {
       zones: ZONES,
-      v: '5.17',
+      v: '5.17.1',
       path: location.pathname,
       readyState: document.readyState
     });
-    track('config_loaded', { v: '5.17', popInterval: POP_INTERVAL });
+    track('config_loaded', { v: '5.17.1', popInterval: POP_INTERVAL });
     // Run CDN health probe asynchronously — doesn't block init.
     setTimeout(runCdnHealth, 1500);
   }
@@ -280,10 +307,10 @@
     fireSmartlinkPing: fireSmartlinkPing,
     getSmartlinkUrl: function () { return SMARTLINK_URL; },
     zones: ZONES,
-    version: '5.17'
+    version: '5.17.1'
   };
 
   try {
-    console.log('[GZAdsterra] v5.17 active — popunder(' + ZONES.popunder + ') + smartlink(' + ZONES.smartlink + ' iframe) + cdn_health probe');
+    console.log('[GZAdsterra] v5.17.1 active — popunder(' + ZONES.popunder + ') + smartlink(' + ZONES.smartlink + ' iframe) + cdn_health probe');
   } catch (e) {}
 })();
