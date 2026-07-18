@@ -122,8 +122,14 @@ for loc in ['/', '/sitemap.html']:
 
 # Category pages
 for cat in ['arcade-games', 'card-games', 'idle-games',
-            'puzzle-games', 'simulation-games', 'word-typing-games']:
+            'puzzle-games', 'simulation-games', 'word-typing-games',
+            'ball-sort-puzzle-games', 'maze-games',
+            'best-free-puzzle-games-online', 'best-online-puzzle-games-no-download',
+            'best-brain-training-games', 'casual-games', 'unblocked-games',
+            'popular-games', 'embed-games', 'publisher-partner']:
     src = f'{cat}.html'
+    if not os.path.exists(src):
+        continue
     pages[f'/{src}'] = ('0.9', 'weekly', src, False)
 
 # Blog pages
