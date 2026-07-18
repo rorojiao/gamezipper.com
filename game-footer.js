@@ -82,7 +82,7 @@
      {n:'Dots and Boxes',e:'⬜',u:'/dots-and-boxes/',c:'puzzle'},
      {n:'Sliding Puzzle',e:'🔢',u:'/sliding-puzzle/',c:'puzzle'},
      {n:'Reversi',e:'⚫',u:'/reversi/',c:'puzzle'},
-     {n:'Match Ninja',e:'🧊',u:'/match-ninja/',c:'puzzle'},
+     
      {n:'Jewel Coloring',e:'💎',u:'/jewel-coloring/',c:'puzzle'},
 
       {n:'Brain Out',e:'🧠',u:'/brain-out/',c:'puzzle'},
@@ -103,7 +103,7 @@
       {n:'Mahjong Solitaire',e:'🀄',u:'/mahjong-solitaire/',c:'puzzle'},
       {n:'Marble Run',e:'🔮',u:'/marble-run/',c:'puzzle'},
      {n:'Zuma Marble Shooter',e:'🔮',u:'/zuma/',c:'puzzle'},
-      {n:'Marble Shooter',e:'🔮',u:'/marble-shooter/',c:'puzzle'},
+      
       {n:'Nonogram Puzzle',e:'🔲',u:'/nonogram/',c:'puzzle'},
       {n:'One Line Puzzle',e:'✏️',u:'/one-line-puzzle/',c:'puzzle'},
       {n:'Parking Jam',e:'🚗',u:'/parking-jam/',c:'puzzle'},
@@ -112,7 +112,7 @@
       {n:'Sand Balls',e:'🏐',u:'/sand-balls/',c:'puzzle'},
       {n:'Save the Doge',e:'🐕',u:'/save-the-doge/',c:'puzzle'},
       {n:'Screw Jam',e:'🔩',u:'/screw-jam/',c:'puzzle'},
-      {n:'Slingshot Puzzle',e:'🎯',u:'/slingshot-puzzle/',c:'puzzle'},
+      
       {n:'Fulcrum Balance',e:'⚖️',u:'/fulcrum-balance/',c:'puzzle'},
       {n:'Solitaire',e:'🃏',u:'/solitaire/',c:'puzzle'},
       {n:'SoliTen',e:'🔢',u:'/soliten/',c:'puzzle'},
@@ -130,7 +130,7 @@
       {n:'Number Slide',e:'🔢',u:'/number-slide/',c:'puzzle'},
       {n:'Rope Rescue',e:'🪢',u:'/rope-rescue/',c:'puzzle'},
       {n:'Peg Solitaire',e:'🎱',u:'/peg-solitaire/',c:'puzzle'},
-      {n:'Path Finder',e:'🔗',u:'/path-finder/',c:'puzzle'},
+      
       {n:'Ice Breaker',e:'🧊',u:'/ice-breaker/',c:'puzzle'},
       {n:'Logic Gates',e:'🔌',u:'/logic-gates/',c:'puzzle'},
       {n:'KenKen Puzzle',e:'🧮',u:'/kenken/',c:'puzzle'},
@@ -141,7 +141,7 @@
       {n:'Labyrinth Maze',e:'🌀',u:'/labyrinth/',c:'puzzle'},
       {n:'Slitherlink',e:'🔗',u:'/slitherlink/',c:'puzzle'},
       {n:'Battleship',e:'🚢',u:'/battleship/',c:'puzzle'},
-      {n:'Lights Out',e:'💡',u:'/lights-out/',c:'puzzle'},
+      
       {n:'Backgammon',e:'🎲',u:'/backgammon/',c:'board'},
       {n:'Color by Number',e:'🎨',u:'/color-by-number/',c:'puzzle'},
       {n:'Connect Four',e:'🔴',u:'/connect-four/',c:'puzzle'},
@@ -198,7 +198,7 @@
       {n:'Tens',e:'🔢',u:'/tens-game/',c:'puzzle'},
       {n:'Pinball',e:'🎱',u:'/pinball/',c:'arcade'},
       {n:'Word Card Sort',e:'🃏',u:'/word-card-sort/',c:'puzzle'},
-      {n:'Stack Ball',e:'🔴',u:'/stack-ball/',c:'arcade'},
+      
       {n:'Stickman Swing',e:'🏃',u:'/stickman-swing/',c:'arcade'},
       {n:'Words Klondike',e:'🃏',u:'/words-klondike/',c:'puzzle'},
       {n:'Find N Merge',e:'🔍',u:'/find-n-merge/',c:'puzzle'},
@@ -219,11 +219,11 @@
       {n:'Two Dots',e:'🔴',u:'/two-dots/',c:'puzzle'},
       {n:'Who Is',e:'🤔',u:'/who-is/',c:'puzzle'},
       {n:'Mekorama',e:'🤖',u:'/mekorama/',c:'puzzle'},
-      {n:'IQ Ball',e:'🎯',u:'/iq-ball/',c:'puzzle'},
+      
       {n:'Color Cars Parking',e:'🚗',u:'/color-cars-parking/',c:'puzzle'},
       {n:'Cryptograms',e:'🔐',u:'/cryptograms/',c:'puzzle'},
       {n:'Threes',e:'3️⃣',u:'/threes/',c:'puzzle'},
-      {n:'Paper Fold Puzzle',e:'📄',u:'/paper-fold/',c:'puzzle'},
+      
       {n:'Eggy Car',e:'🥚',u:'/eggy-car/',c:'driving'},
       {n:'Unpacking',e:'📦',u:'/unpacking/',c:'puzzle'},
       {n:'Merge Sweets',e:'🍰',u:'/merge-sweets/',c:'puzzle'},
@@ -234,8 +234,8 @@
       {n:'Magic Tiles',e:'🎹',u:'/magic-tiles/',c:'puzzle'},
       {n:'Stick Hero',e:'🦸',u:'/stick-hero/',c:'skill'},
       {n:'Balls vs Bricks',e:'⚪',u:'/balls-vs-bricks/',c:'puzzle'},
-{n:'Magnet Drop',e:'🧲',u:'/magnet-drop/',c:'puzzle'},
-{n:'Rockfall',e:'🪨',u:'/rockfall/',c:'puzzle'},
+
+
 {n:'Wood Turning',e:'🪵',u:'/wood-turning/',c:'puzzle'},{n:'Sextant Celestial',e:'🧭',u:'/sextant-celestial/',c:'puzzle'},
 {n:'Resonance Lock',e:'🌊',u:'/resonance-lock/',c:'puzzle'},
 {n:"Crucible Alloy",e:"🔥",u:"/crucible-alloy/",c:"puzzle"},
@@ -280,7 +280,7 @@
 {name:'Contexto',e:'🧠',u:'/contexto/',c:'puzzle'},
       {n:'Pinball',e:'🎱',u:'/pinball/',c:'arcade'},
       {n:'Word Card Sort',e:'🃏',u:'/word-card-sort/',c:'puzzle'},
-      {n:'Stack Ball',e:'🔴',u:'/stack-ball/',c:'arcade'},
+      
       {n:'Stickman Swing',e:'🏃',u:'/stickman-swing/',c:'arcade'},
       {n:'Threes!',e:'🔢',u:'/threes/',c:'puzzle'},
       {n:'Words Klondike',e:'🃏',u:'/words-klondike/',c:'puzzle'},
@@ -294,17 +294,17 @@
       {n:'Fireboy & Watergirl',e:'🔥',u:'/fireboy-watergirl/',c:'puzzle'},
       {n:'Plinko',e:'⚪',u:'/plinko/',c:'arcade'},
       {n:'Mahjong Dimensions',e:'🀄',u:'/mahjong-dimensions/',c:'puzzle'},
-      {n:'Pattern Palace',e:'🔮',u:'/pattern-palace/',c:'puzzle'},
-      {n:'Liquid Sort',e:'🧪',u:'/liquid-sort/',c:'puzzle'},
+      
+      
 {n:"Factory Balls",e:"🎨",u:"/factory-balls/",c:"puzzle"},
-{n:"4 Pics 1 Word",e:"🖼️",u:"/picture-word-guessing/",c:"puzzle"},
+{n:"4 Pics 1 Word",e:"🖼️",u:"/triple-match-3d/",c:"puzzle"},
 {n:"Antistress",e:"🧸",u:"/antistress/",c:"casual"},{n:"Monkey Mart",e:"🐒",u:"/monkey-mart/",c:"casual"},{n:"Gravity Drop",e:"🔴",u:"/gravity-drop/",c:"puzzle"},{n:'Number Nexus',e:'🔢',u:'/number-nexus/',c:'puzzle'},{n:'Poly Art 3D',e:'🎨',u:'/poly-art-3d/',c:'puzzle'},{n:"Baba Is You",e:"🧩",u:"/baba-is-you/",c:"puzzle"},{n:"Nut Sort",e:"🔩",u:"/nut-sort/",c:"puzzle"},
-{n:"Pop Them",e:"💥",u:"/pop-them/",c:"puzzle"},{n:"Heyawake",e:"\u25a2",u:"/heyawake/",c:"puzzle"},{n:"Gokigen Naname",e:"\u25c7",u:"/gokigen-naname/",c:"puzzle"},{n:"Stained Glass",e:"🎨",u:"/stained-glass/",c:"puzzle"},{n:"Sandtrix Classic",e:"🏖",u:"/sandtrix-classic/",c:"puzzle"},{n:"Sandtrix",e:"🏖️",u:"/sandtrix/",c:"puzzle"},
+{n:"Pop Them",e:"💥",u:"/magic-tiles/",c:"puzzle"},{n:"Heyawake",e:"\u25a2",u:"/heyawake/",c:"puzzle"},{n:"Gokigen Naname",e:"\u25c7",u:"/gokigen-naname/",c:"puzzle"},{n:"Stained Glass",e:"🎨",u:"/stained-glass/",c:"puzzle"},{n:"Sandtrix Classic",e:"🏖",u:"/sandtrix-classic/",c:"puzzle"},{n:"Sandtrix",e:"🏖️",u:"/sandtrix/",c:"puzzle"},
 {n:"Solitaire Roguelite",e:"\U0001f3f0",u:"/solitaire-roguelite/",c:"card"},
-{n:'Peg Blast',e:'🎯',u:'/peg-blast/',c:'puzzle'},
-      {n:'Delete One Part',e:'🧽',u:'/delete-one-part/',c:'puzzle'},
-      {n:'Draw to Save',e:'🛡️',u:'/draw-to-save/',c:'puzzle'},
-      {n:'Burn the Rope',e:'🔥',u:'/burn-the-rope/',c:'puzzle'},
+
+      
+      
+      
       {n:'String Art Studio',e:'🧵',u:'/string-art/',c:'puzzle'},
 {n:'Gem Paint',e:'💎',u:'/gem-paint/',c:'puzzle'},
 {n:'Futoshiki',e:'🧩',u:'/futoshiki/',c:'puzzle'},
@@ -315,24 +315,24 @@
       {n:'Ships Finder',e:'🚢',u:'/ships-finder/',c:'puzzle'},
       {n:'Nerdle',e:'🧠',u:'/nerdle/',c:'puzzle'},
       {n:'Quoridor Strategy',e:'🧱',u:'/quoridor/',c:'puzzle'},
-{n:'PathPix',e:'🎨',u:'/pathpix/',c:'puzzle'},{n:'Woodoku',e:'🪵',u:'/woodoku/',c:'puzzle'},{n:'Fill-a-Pix',e:'🔢',u:'/fill-a-pix/',c:'puzzle'},
+{n:'Woodoku',e:'🪵',u:'/woodoku/',c:'puzzle'},{n:'Fill-a-Pix',e:'🔢',u:'/fill-a-pix/',c:'puzzle'},
       {n:'Yellow',e:'💛',u:'/yellow/',c:'puzzle'},
       {n:'Blue',e:'💙',u:'/blue/',c:'puzzle'},
       {n:'Purple',e:'💜',u:'/purple/',c:'puzzle'},
       {n:'Red',e:'❤️',u:'/red/',c:'puzzle'},
       {n:'Hexa 2048',e:'🔷',u:'/hexa-2048/',c:'puzzle'},
-{n:'Drawer Sort',e:'🗂️',u:'/drawer-sort/',c:'puzzle'},
-{n:'Hexa Away',e:'⬡',u:'/hexa-away/',c:'puzzle'},
+
+
 {n:'Slide Cat',e:'🐱',u:'/slide-cat/',c:'puzzle'},
-{n:'Gold Miner',e:'⛏️',u:'/gold-miner/',c:'puzzle'},
+
 {n:'Catch the Cat',e:'🐱',u:'/catch-the-cat/',c:'puzzle'},
 {n:'Sticker Book Puzzle',e:'🎨',u:'/sticker-book-puzzle/',c:'puzzle'},
-{n:'Heart Star',e:'💛',u:'/heart-star/',c:'puzzle'},
-{n:'Rubber Band Puzzle',e:'🔵',u:'/rubber-band-puzzle/',c:'puzzle'},
+
+
 {n:'Pulse Path',e:'⚡',u:'/pulse-path/',c:'puzzle'},
 {n:'Rullo',e:'🔢',u:'/rullo/',c:'puzzle'},
-{n:'Pentopia',e:'🧩',u:'/pentopia/',c:'puzzle'},
-{n:'Kaero',e:'🏠',u:'/kaero/',c:'puzzle'},
+
+
 {n:'Renban',e:'🔢',u:'/renban/',c:'puzzle'}
 ]; }
    }
