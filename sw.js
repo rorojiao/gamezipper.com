@@ -136,6 +136,11 @@ self.addEventListener('fetch',e=>{
     e.respondWith(fetch(e.request,{cache:'no-store'}).catch(function(){return fetch(e.request);}));
     return;
   }
+  // Network-only for /game-footer.js too (recommendations update frequently)
+  if(url.pathname==='/game-footer.js'){
+    e.respondWith(fetch(e.request,{cache:'no-store'}).catch(function(){return fetch(e.request);}));
+    return;
+  }
 
   // Cache-first for static assets (js, css, images, fonts, audio)
   if(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|mp3|ogg|wav|webp)$/i.test(url.pathname)){

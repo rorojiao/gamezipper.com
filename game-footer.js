@@ -17,6 +17,8 @@
    // Guard: prevent duplicate footer if init() is called twice (RIC + setTimeout race)
    if (document.getElementById('game-footer')) return;
    var games = [
+     {n:'Treasure Dig',e:'⛏️',u:'/treasure-dig/',c:'puzzle'},
+     {n:'Nurimaze',e:'🌀',u:'/nurimaze/',c:'puzzle'},
      {n:'Pattern Matrix',e:'🔢',u:'/pattern-matrix/',c:'puzzle'},
      {n:'2048',e:'🔢',u:'/2048/',c:'puzzle'},
      {n:'Snake',e:'🐍',u:'/snake/',c:'arcade'},
