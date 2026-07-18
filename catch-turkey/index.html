@@ -402,12 +402,45 @@ function gzToast(msg,dur){dur=dur||2500;var t=document.createElement('div');t.st
 <script>
 (function(){var _origRAF=window.requestAnimationFrame;var _origCAF=window.cancelAnimationFrame;var _rafId=null;window.requestAnimationFrame=function(cb){return _rafId=_origRAF.call(window,cb)};window.cancelAnimationFrame=function(id){if(id)_origCAF.call(window,id);_rafId=null};window.addEventListener('beforeunload',function(){if(_rafId)window.cancelAnimationFrame(_rafId)});document.addEventListener('visibilitychange',function(){if(!document.hidden&&_rafId===null){_rafId=_origRAF.call(window,function(){_rafId=null})}})})();
 </script>
-<script src="/gz-analytics.js?v=2026071872e5da02d" defer></script>
+<script src="/gz-analytics.js?v=2026071879140d7b1" defer></script>
 <script src="/adsterra-manager.js?v=v516poponly"></script><script src="/monetag-manager.js?v=v525midgridcull"></script>
 <div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
 
 <!-- AdSense display ad (moved from head to body) -->
 <ins class="adsbygoogle" style="display:block;text-align:center;margin:16px auto;max-width:728px" data-ad-client="ca-pub-8346383990981353" data-ad-slot="1099212472" data-ad-format="auto" data-full-width-responsive="true"></ins>
 <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
+
+<script>
+(function(){
+  if(!window.gzAnalytics) return;
+  var _gzFired = {loaded:false, started:false};
+  // gameLoaded: 任何 canvas 创建或 1.5s 后自动触发
+  function _gzGameLoaded(){
+    if(_gzFired.loaded) return;
+    _gzFired.loaded = true;
+    try { window.gzAnalytics.gameLoaded && window.gzAnalytics.gameLoaded(); } catch(e){}
+  }
+  // gameStart: 第一次用户点击（key/tap on canvas/button）
+  function _gzGameStart(){
+    if(_gzFired.started) return;
+    _gzFired.started = true;
+    try { window.gzAnalytics.gameStart && window.gzAnalytics.gameStart(); } catch(e){}
+  }
+  // gameEnd: pagehide 触发
+  window.addEventListener('pagehide', function(){
+    try {
+      var s = window.score || window.finalScore || window.currentScore || window.highScore || 0;
+      window.gzAnalytics.gameEnd && window.gzAnalytics.gameEnd(s);
+    } catch(e){}
+  });
+  // Auto-fire loaded after DOM ready
+  if(document.readyState==='complete') _gzGameLoaded();
+  else window.addEventListener('load', _gzGameLoaded);
+  // First interactive click = start
+  document.addEventListener('click', _gzGameStart, {once:true, capture:true});
+  document.addEventListener('keydown', _gzGameStart, {once:true, capture:true});
+  document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
+})();
+</script>
 </body>
 </html>

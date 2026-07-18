@@ -41,7 +41,7 @@
   //   var EP after each restart by running:
   //     journalctl -u cloudflared-bi -n 30 --no-pager | grep trycloudflare.com
   // DO NOT switch back to bi.gamezipper.com — that's a 204-stub, not the BI server.
-  var EP = 'https://tackle-processed-houston-attempted.trycloudflare.com/api/collect';
+  var EP = 'https://rocket-alike-grain-kurt.trycloudflare.com/api/collect';
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
@@ -380,9 +380,10 @@
     }, true);
   })();
 
-  /* Dead Click Detection: user clicks but no navigation/event fires within 1s
+  /* Dead Click Detection: user clicks but no visual feedback / state change within 1s
      — signals non-interactive element that LOOKS clickable (UX confusion)     */
   (function(){
+    // Snapshot of element state before click; if no state change after 1.5s → dead
     document.addEventListener('click', function(e){
       var t = e.target;
       var tag = t.tagName;
@@ -391,14 +392,24 @@
         var lookClickable = t.getAttribute('role') === 'button'
           || t.onclick
           || (t.style && t.style.cursor === 'pointer')
-          || (t.className && /click|card|btn|tile|thumb/i.test(t.className.toString()));
+          || (t.className && /click|card|btn|tile|thumb|seg/i.test(t.className.toString()));
         if (lookClickable) {
           var clickedAt = Date.now();
           var sel = (t.tagName || '?') + '.' + (t.className||'').toString().slice(0,40);
-          // After 1.5s, check if URL changed (no nav = dead click)
+          // Snapshot element class/aria-expanded/style to detect any visual change
+          var snapClass = t.className.toString();
+          var snapAria = t.getAttribute('aria-expanded') || '';
+          var snapInline = t.getAttribute('style') || '';
+          // After 1.5s, check if any state changed (= onclick worked = NOT dead)
           setTimeout(function(){
             if (location.pathname === P && Date.now() - clickedAt >= 1400) {
-              ps('dead_click', { u: P, sel: sel });
+              var nowClass = t.className.toString();
+              var nowAria = t.getAttribute('aria-expanded') || '';
+              var nowInline = t.getAttribute('style') || '';
+              var stateChanged = (snapClass !== nowClass) || (snapAria !== nowAria) || (snapInline !== nowInline);
+              if (!stateChanged) {
+                ps('dead_click', { u: P, sel: sel });
+              }
             }
           }, 1500);
         }

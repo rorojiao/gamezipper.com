@@ -814,5 +814,38 @@ window.addEventListener('pagehide', () => { try { stopMusic(); stopConfetti(); i
 <script src="/gz-analytics.js" defer></script>
 <script src="/game-footer.js"></script>
 <script src="/monetag-manager.js"></script>
+
+<script>
+(function(){
+  if(!window.gzAnalytics) return;
+  var _gzFired = {loaded:false, started:false};
+  // gameLoaded: 任何 canvas 创建或 1.5s 后自动触发
+  function _gzGameLoaded(){
+    if(_gzFired.loaded) return;
+    _gzFired.loaded = true;
+    try { window.gzAnalytics.gameLoaded && window.gzAnalytics.gameLoaded(); } catch(e){}
+  }
+  // gameStart: 第一次用户点击（key/tap on canvas/button）
+  function _gzGameStart(){
+    if(_gzFired.started) return;
+    _gzFired.started = true;
+    try { window.gzAnalytics.gameStart && window.gzAnalytics.gameStart(); } catch(e){}
+  }
+  // gameEnd: pagehide 触发
+  window.addEventListener('pagehide', function(){
+    try {
+      var s = window.score || window.finalScore || window.currentScore || window.highScore || 0;
+      window.gzAnalytics.gameEnd && window.gzAnalytics.gameEnd(s);
+    } catch(e){}
+  });
+  // Auto-fire loaded after DOM ready
+  if(document.readyState==='complete') _gzGameLoaded();
+  else window.addEventListener('load', _gzGameLoaded);
+  // First interactive click = start
+  document.addEventListener('click', _gzGameStart, {once:true, capture:true});
+  document.addEventListener('keydown', _gzGameStart, {once:true, capture:true});
+  document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
+})();
+</script>
 </body>
 </html>
