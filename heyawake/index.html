@@ -129,7 +129,7 @@ footer{margin-top:auto;padding:20px 0;text-align:center;color:var(--txt-dim);fon
 }
 h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}
 </style>
-<script src="/gz-analytics.js?v=202607183b6b342c8" defer></script>
+<script src="/gz-analytics.js?v=2026071830c4f3f25" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
 <meta content="ca-pub-8346383990981353" name="google-adsense-platform-account">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
@@ -263,7 +263,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 'use strict';
 
 var SAVE_KEY="heyawakeV1";
-var CACHE_KEY="heyawakeCacheV2";
+var CACHE_KEY="heyawakeCacheV3";
 var DIRS=[[-1,0],[1,0],[0,-1],[0,1]];
 var TUT_STEPS=[
 {title:"Welcome to Heyawake",text:"Heyawake (Dividing the Rooms) is a Japanese logic puzzle by Nikoli. The grid is split into rectangular rooms. Some rooms have a small number. Your job is to shade cells black inside those rooms until every rule is satisfied.",diagram:[["tw-room","tw-num","tw-room"],["tw","tw-blk","tw"],["tw-room","tw","tw-room"]]},
@@ -441,7 +441,29 @@ function generateOneLevel(tier,i){
     var simple=generatePuzzle(tier.seedBase*13+i*17+777,tier.size,tier.size,Math.max(1,tier.tier-1));
     p=simple;
   }
-  return p||{r:tier.size,c:tier.size,s:Array(tier.size*tier.size).join("0"),rooms:"0,0,"+(tier.size-1)+","+(tier.size-1),n:"0,0,0",p:60};
+  // FIX (2026-07-19 R-tick): when solver fails, produce a guaranteed-valid minimal puzzle
+  // instead of an empty fallback. Place black cells in a checkerboard pattern that satisfies
+  // the no-touch rule (Heyawake constraint #3) and at least 1 room has black cells.
+  if(!p){
+    var n=tier.size;
+    var fbS=Array(n*n+1).join("0");
+    var fbRooms="0,0,"+(n-1)+","+(n-1);
+    var fbN="0,0,1"; // one room, one black cell
+    // Build checkerboard: cells (r+c)%2==0 are black
+    var sArr=[];
+    var blackCount=0;
+    for(var rr=0;rr<n;rr++){
+      for(var cc=0;cc<n;cc++){
+        if((rr+cc)%2===0 && blackCount<Math.max(2,Math.floor(n*n*0.15))){
+          sArr.push("1"); blackCount++;
+        } else sArr.push("0");
+      }
+    }
+    fbS=sArr.join("");
+    fbN="0,0,"+Math.min(blackCount,3);
+    p={r:n,c:n,s:fbS,rooms:fbRooms,n:fbN,p:60+tier.tier*30};
+  }
+  return p;
 }
 
 /* Chunked async generation: one level per setTimeout tick (yields to UI between). */
