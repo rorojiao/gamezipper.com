@@ -1,3 +1,29 @@
+## [v1.198.0] - 2026-07-18
+### Added
+- 9 new machine-verifiable test cases from R315 industry research (4h cycle 77)
+- W-380 [P1] Chrome 150 `focusgroup` declarative arrow-key navigation — verify single tab stop, complete arrow traversal, wrap behavior, disabled-control skipping, last-focus memory, and fallback
+- W-381 [P2] Chrome 150 `light-dark()` image values — verify computed asset switch, HTTP 200/non-empty images, non-zero pixels, and cross-browser fallback
+- W-382 [P2] Chrome 150 programmatic smooth-scroll Promises — verify completion vs interruption, final position, and exactly-once callback
+- S-449 [P1] Chrome 150 opaque origin for `data:` URL workers — verify creator-storage and BroadcastChannel isolation
+- S-450 [P1] Chrome 150 SVG-filter blocking on cross-origin/restricted iframes — verify untransformed pixels, aligned hit testing, and anti-framing headers
+- B-222 [P1] Firefox 153 `::-webkit-scrollbar` capability false-positive — prevent unreachable content in nested game panels
+- P-174 [P2] Firefox 152 Resource Timing interim/final header split — verify 103 Early-Hints timing monotonicity, isolate >500 ms interim-to-final stalls, and compare a no-interim control
+- G-196 [P1] Large-reward economy overflow — verify balances never wrap negative across signed-32-bit and JS-safe-integer boundaries and survive reload exactly
+- C-216 [P2] Firefox 152 Pointer Lock `unadjustedMovement` — verify raw-mouse determinism, Escape/relock lifecycle, and standard-lock fallback
+### Sources
+- Required parallel queries (2026-07-18, cycle 77):
+  - "HTML5 game testing 2026 new techniques"
+  - "browser game bug report 2026"
+  - "Chrome Edge Safari update 2026"
+  - "casual game UX complaint 2026"
+  - "mobile game performance issue 2026"
+- Primary / key URLs:
+  - https://developer.chrome.com/release-notes/150 (Chrome 150 stable, 2026-06-30: focusgroup, light-dark image values, scroll Promises, opaque data-URL workers, SVG-filter iframe restriction)
+  - https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/152 (Firefox 152 stable, 2026-06-16: Resource Timing interim/final header timestamps and Pointer Lock unadjustedMovement)
+  - https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (Firefox 153 beta, retrieved 2026-07-18: `::-webkit-scrollbar` selector recognition without real styling)
+  - https://news.17173.com/content/06072026/154037735.shtml (2026-06-07 real game patch: large one-time coin reward displayed held balance as negative)
+- Research note: Codex escalation used the `hermes-auto` profile in `/tmp/hermes-codex-research-gz-testlib-r315` with `danger-full-access`; it completed read-only reconnaissance but its final synthesis was truncated, so Hermes independently verified primary release notes, rejected duplicates, drafted all cases, and ran the library validation.
+
 ## [v1.197.0] - 2026-07-17
 ### Added
 - 7 new test cases from R314 industry research (4h cycle 76)
