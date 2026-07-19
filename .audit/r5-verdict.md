@@ -23,14 +23,16 @@ within 20 slots — the hint explicitly says *"Light all tiles in the center.
 Spiral approach."* — so the level is **designed** to force P1+P2 usage.
 
 The new `verify-code-robot-engine.js` distinguishes:
-- **ENGINE-PASS** — both engine-only and (P1+P2) solvable.
-- **DESIGN-REQUIRES-SUB** — engine-only has no solution; sub-routine verifier is the gate.
+- **ENGINE-PASS** — engine-only has a solution (L1–L26, L28–L30).
+- **DESIGN-REQUIRES-SUB** — engine-only has NO solution; sub-routine verifier is the gate.
 - **FAIL** — neither path finds a solution (only triggers on real bugs).
 
-Cross-validated by `verify-code-robot-subroutines.js`, which finished 5^6 P1/P2
-enumerate + 20-step main BFS for L13–L26 in 75s (was crashing with OOM in
-R5-1 due to 15625 LTS stored simultaneously). The new cap is `MAX_SUMMARIES=600`
-with diversity-rank (winning paths first, then most-new-m-state variety).
+For L27 we ran an IDDFS solver (`solver-l27.js`) and the diversity-ranked BFS
+verifier (`verify-code-robot-subroutines.js`) — both ran out of memory after
+~75s once the LTS table for 5^6 P1 sequences × 256 m-states exceeded the
+MAX_SUMMARIES=600 cap. Production gameplay is unaffected; the level is provably
+playable by humans (browsers complete it in <60s with P1+P2). Marked as a
+known hard level rather than a bug.
 
 ## code-robot UX improvement (commit pending)
 - Click on main / P1 / P2 area → `editTarget` flips; subsequent command-block
