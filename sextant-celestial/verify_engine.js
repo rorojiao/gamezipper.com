@@ -3,9 +3,9 @@
 // win: state[0]===state[1]&&state[1]===state[2]).
 const fs = require('fs');
 const html = fs.readFileSync('index.html','utf8');
-const m = html.match(/const LEVELS=(\[.*?\]);/s);
-if(!m){ console.error('LEVELS not found in index.html'); process.exit(1); }
-const LEVELS = JSON.parse(m[1]);
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('sextant-celestial');
 console.log(`Extracted ${LEVELS.length} levels from index.html`);
 
 function verifyEngine(L){

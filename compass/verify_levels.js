@@ -2,7 +2,8 @@
 // Re-derives N/E/S/W counts from the solution and checks every compass.
 // Also checks: whites connected, blacks non-adjacent.
 const fs = require('fs');
-const levels = JSON.parse(fs.readFileSync('compass/_levels.json','utf8'));
+const path = require('path');
+const levels = JSON.parse(fs.readFileSync(path.join(__dirname, '_levels.json'),'utf8'));
 
 let pass = 0, fail = 0;
 levels.forEach((lvl, idx) => {

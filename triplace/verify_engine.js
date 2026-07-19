@@ -7,15 +7,11 @@ const vm = require('vm');
 const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 
 // Extract the LEVELS array and key functions
-const levelsMatch = html.match(/const LEVELS=(\[.*?\]);/s);
-if (!levelsMatch) {
-    console.error('Could not extract LEVELS from index.html');
-    process.exit(1);
-}
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('triplace');
 
-const levelsCode = levelsMatch[1];
-const LEVELS = eval(levelsCode);
-
+const levelsCode = LEVELS[1];
 console.log(`Loaded ${LEVELS.length} levels from index.html\n`);
 
 // Extract the checkSolution and isComplete function bodies

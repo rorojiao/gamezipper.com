@@ -11,12 +11,10 @@ const path = require('path');
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 
 // Extract LEVELS_DATA JSON
-const levelsMatch = html.match(/const LEVELS_DATA\s*=\s*(\{[\s\S]*?\});/);
-if (!levelsMatch) {
-    console.error('Could not extract LEVELS_DATA from index.html');
-    process.exit(1);
-}
-const LEVELS_DATA = JSON.parse(levelsMatch[1]);
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('hex-tessellation');
+const LEVELS_DATA = JSON.parse(LEVELS[1]);
 console.log(`Loaded ${LEVELS_DATA.levels.length} levels from in-engine code\n`);
 
 // Extract key game functions by running the script in a sandbox with stubs

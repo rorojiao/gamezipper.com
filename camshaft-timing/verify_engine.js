@@ -6,9 +6,9 @@ const vm = require('vm');
 
 const html = fs.readFileSync(__dirname+'/index.html','utf8');
 // Directly extract the LEVELS array literal from the script source (robust — no execution needed).
-const levelsMatch = html.match(/const LEVELS=(\[\[[\s\S]*?\]\]);/);
-if(!levelsMatch){ console.error('Could not extract LEVELS from HTML'); process.exit(2); }
-const LEVELS = JSON.parse(levelsMatch[1]);
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('camshaft-timing');
 function mod(n,m){ return ((n%m)+m)%m; }
 // Re-implement the engine's exact rule: valveOpen(pattern,P,phi,theta) => pattern[(theta-phi)%P]===1
 function valveOpen(pattern,P,phi,theta){ return pattern[mod(theta-phi,P)]===1; }

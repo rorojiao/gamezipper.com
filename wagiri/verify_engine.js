@@ -4,9 +4,9 @@
 const fs = require('fs');
 
 const html = fs.readFileSync('/home/msdn/gamezipper.com/wagiri/index.html', 'utf8');
-const m = html.match(/const __LEVELS_DATA_SCRIPT__ = `([^`]+)`/);
-if (!m) { console.error('No levels data found'); process.exit(1); }
-const LEVELS = JSON.parse(m[1]);
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('wagiri');
 console.log(`Loaded ${LEVELS.length} levels`);
 
 function neighbors(r, c, R, C) {

@@ -10,12 +10,12 @@ const vm = require('vm');
 const html = fs.readFileSync('index.html', 'utf8');
 
 // Extract the LEVELS array
-const m = html.match(/var LEVELS\s*=\s*(\[\[.*?\]\]);/s);
-if (!m) { console.error('LEVELS not found'); process.exit(1); }
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('suraromu');
 const levelsJSON = m[1];
 
 // Parse levels
-const LEVELS = JSON.parse(levelsJSON);
 console.log(`Loaded ${LEVELS.length} levels`);
 
 function edgeKey(r1,c1,r2,c2){

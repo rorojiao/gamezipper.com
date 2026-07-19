@@ -6,11 +6,9 @@ const vm = require('vm');
 const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 
 // Extract the <script> block containing the game logic
-const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
-if (!scriptMatch) {
-  console.error('Could not find main script block');
-  process.exit(1);
-}
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('amibo');
 let gameCode = scriptMatch[1];
 
 // Convert const/var declarations to global so we can access them
@@ -109,7 +107,6 @@ if (typeof sandbox.LEVELS === 'undefined') {
   process.exit(1);
 }
 
-const LEVELS = sandbox.LEVELS;
 let pass = 0, fail = 0;
 
 // Use the engine's own functions for verification

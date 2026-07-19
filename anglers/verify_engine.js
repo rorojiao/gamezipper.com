@@ -5,10 +5,9 @@
  */
 const fs = require('fs');
 const html = fs.readFileSync('index.html', 'utf8');
-const match = html.match(/const LEVELS\s*=\s*(\[.+?\]);/s);
-if (!match) { console.error('Cannot extract LEVELS'); process.exit(1); }
-const LEVELS = JSON.parse(match[1]);
-
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('anglers');
 function neighbors(r, c, H, W) {
   const res = [];
   if (r+1<H) res.push([r+1,c]);

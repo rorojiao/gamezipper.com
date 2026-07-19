@@ -7,15 +7,16 @@ const vm = require('vm');
 const html = fs.readFileSync('index.html', 'utf8');
 
 // Extract the LEVELS array and netPath logic from the game
-const levelsMatch = html.match(/const LEVELS=(\[[\s\S]*?\]);/);
-if (!levelsMatch) { console.log('FAIL: cannot extract LEVELS from index.html'); process.exit(1); }
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('interferometer-align');
 
 const sandbox = { console, performance: { now: () => 0 } };
 const ctx = vm.createContext(sandbox);
 
 // Run the game script's level data + netPath computation in the sandbox
 const script = `
-${levelsMatch[0]}
+${LEVELS[0]}
 function netPathFor(L, state) {
   const nDials = L[0], P = L[1], steps = L[2], signs = L[3];
   let n = 0;
@@ -25,7 +26,6 @@ function netPathFor(L, state) {
 `;
 vm.runInContext(script, ctx);
 
-const LEVELS = vm.runInContext('LEVELS', ctx);
 let pass = 0, fail = 0;
 
 for (let idx = 0; idx < LEVELS.length; idx++) {

@@ -6,8 +6,9 @@ const path = require('path');
 const vm = require('vm');
 
 const html = fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
-const m = html.match(/<script>\s*("use strict";.*?)<\/script>\s*<script src="\/game-footer/s);
-if(!m){ console.error('cannot extract game script'); process.exit(2); }
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('prism-path');
 let gameCode = m[1];
 
 // We need to expose propagate + LEVELS + expandLevel from the game scope.

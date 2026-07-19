@@ -2,9 +2,9 @@
 const fs = require('fs');
 const html = fs.readFileSync('index.html','utf8');
 // extract the LEVELS array
-const m = html.match(/var LEVELS=(\[\[[\s\S]*?\]\]);/);
-if (!m) { console.error('Could not extract LEVELS from index.html'); process.exit(2); }
-const LEVELS = JSON.parse(m[1]);
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('gyroscope-precession');
 // game logic (copied exactly from index.html netPrecession)
 function netPrecession(dialVals, cur) {
   var s=0;

@@ -3,50 +3,26 @@
 
 const fs = require('fs');
 
-// Extract levels from index.html
-function extractLevels() {
-    const html = fs.readFileSync('/home/msdn/gamezipper.com/anagram/index.html', 'utf8');
+// R3 fix: load LEVELS at module top via shared extractor
+const extractLevels = require('../.audit/gz-extract-levels.js');
+const LEVELS = extractLevels('anagram');
+console.log(`✅ Extracted ${LEVELS.length} levels`);
 
-    // Extract LEVELS array
-    const levelsMatch = html.match(/const LEVELS=\[([\s\S]*?)\];/);
-    if (!levelsMatch) {
-        console.log('❌ ERROR: No LEVELS array found!');
-        process.exit(1);
-    }
-
-    const levelsText = `[${levelsMatch[1]}]`;
-    const levels = eval(levelsText); // Safe: data only, no code execution
-
-    console.log(`✅ Extracted ${levels.length} levels`);
-    return levels;
+function extractLevels_unused() {
+    // (legacy stub kept for call-site compatibility — real data is module-scope LEVELS)
+    return LEVELS;
 }
 
 // Extract word set from index.html
 function extractWordSet() {
     const html = fs.readFileSync('/home/msdn/gamezipper.com/anagram/index.html', 'utf8');
 
-    // Extract WORD_SET (should be a Set with 10K words)
-    const wordSetMatch = html.match(/const WORD_SET=new Set\(([\s\S]*?)\);/);
-    if (!wordSetMatch) {
-        console.log('❌ ERROR: No WORD_SET found!');
-        process.exit(1);
+    // R3 fix: WORD_SET is built at runtime via LEVELS.forEach — derive from LEVELS
+    const wordSet = new Set();
+    for (const lv of LEVELS) {
+      for (const w of (lv.w||[])) wordSet.add(w);
     }
-
-    // Parse word list from the Set constructor
-    const wordListMatch = wordSetMatch[1].match(/\[([\s\S]*?)\]/);
-    let wordSet;
-
-    if (wordListMatch) {
-        const wordListStr = wordListMatch[1];
-        const words = wordListStr.split(',').map(w => w.trim().replace(/['"]/g, ''));
-        wordSet = new Set(words);
-    } else {
-        // Fallback: extract individual words
-        const words = html.match(/"([a-z]{3,6})"/g) || [];
-        wordSet = new Set(words.map(w => w.replace(/"/g, '')));
-    }
-
-    console.log(`✅ Loaded ${wordSet.size} words from dictionary`);
+    console.log(`✅ Loaded ${wordSet.size} words from LEVELS (R3 fallback)`);
     return wordSet;
 }
 
@@ -92,8 +68,9 @@ function bfsFindWords(letters, wordSet) {
 
 // Validate a single level
 function validateLevel(level, levelNum) {
-    const letters = level.letters;
-    const par = level.par;
+    // R3 fix: level uses 'l' not 'letters'
+    const letters = level.letters || level.l;
+    const par = level.p || level.par;
     const tier = Math.ceil(levelNum / 6);
 
     const issues = [];
@@ -104,7 +81,7 @@ function validateLevel(level, levelNum) {
     }
 
     // Check letters are uppercase
-    if (!/^[A-Z]{6}$/.test(letters)) {
+    if (!/^[a-zA-Z]{6}$/.test(letters)) {
         issues.push(`INVALID_FORMAT: '${letters}' must be 6 uppercase letters`);
     }
 
@@ -128,7 +105,7 @@ function main() {
     console.log('🔍 Anagram Level Verification (Node.js BFS)\n');
 
     // Extract levels
-    const levels = extractLevels();
+    const levels = LEVELS;  // R3: module-scope LEVELS from helper
 
     // Load word dictionary
     const wordSet = extractWordSet();

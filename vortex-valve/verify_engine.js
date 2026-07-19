@@ -3,9 +3,9 @@
 const fs = require('fs');
 
 const html = fs.readFileSync('/home/msdn/gamezipper.com/vortex-valve/index.html', 'utf8');
-const levelMatch = html.match(/const LEVELS=\[([\s\S]*?)\];/);
-// Use eval to parse JS object literals (unquoted keys)
-const LEVELS = eval('[' + levelMatch[1] + ']');
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('vortex-valve');
 
 function mod(a, n) { return ((a % n) + n) % n; }
 

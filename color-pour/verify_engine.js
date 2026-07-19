@@ -11,15 +11,11 @@ const htmlPath = path.join(__dirname, 'index.html');
 const html = fs.readFileSync(htmlPath, 'utf8');
 
 // Extract the LEVELS array from the game's IIFE
-const match = html.match(/var LEVELS = (\[[\s\S]*?\]);/);
-if (!match) {
-  console.error('ERROR: Could not extract LEVELS array from index.html');
-  process.exit(1);
-}
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('color-pour');
 
 // Safe eval the levels array
-const LEVELS = eval(match[1]);
-
 const MAX_LAYERS = 4;
 const MAX_STATES = 150000;
 

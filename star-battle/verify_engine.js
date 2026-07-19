@@ -9,12 +9,9 @@ const fs = require('fs');
 const html = fs.readFileSync('index.html', 'utf8');
 
 // Extract LEVELS from HTML (const LEVELS = [...];)
-const match = html.match(/const\s+LEVELS\s*=\s*(\[[\s\S]*?\]);/);
-if (!match) {
-  console.error('ERROR: Could not extract LEVELS from index.html');
-  process.exit(1);
-}
-const LEVELS = eval(match[1]);
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('star-battle');
 console.log(`Extracted ${LEVELS.length} levels from index.html`);
 
 // Re-implement checkWin exactly as the engine does

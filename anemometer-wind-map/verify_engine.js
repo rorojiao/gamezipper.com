@@ -5,8 +5,9 @@ const path = require('path');
 
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 // Extract LEVELS array
-const m = html.match(/const LEVELS=(\[\[[\s\S]*?\]\]);/);
-if (!m) { console.error('Could not extract LEVELS from index.html'); process.exit(2); }
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('anemometer-wind-map');
 const LEVELS = eval(m[1]); // eslint-disable-line no-eval
 
 // Extract mechanic by re-implementing exactly what the engine does:

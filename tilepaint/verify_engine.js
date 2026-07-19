@@ -7,13 +7,10 @@ const vm = require('vm');
 const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 
 // Extract the LEVELS data from the embedded JSON
-const levelsMatch = html.match(/const LEVELS\s*=\s*(\[[\s\S]*?\]);/);
-if (!levelsMatch) {
-  console.error('Could not extract LEVELS from index.html');
-  process.exit(1);
-}
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('tilepaint');
 
-const LEVELS = JSON.parse(levelsMatch[1]);
 console.log(`Extracted ${LEVELS.length} levels from index.html\n`);
 
 // Replicate the engine's checkWin logic

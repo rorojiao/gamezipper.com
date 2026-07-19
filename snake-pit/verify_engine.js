@@ -12,13 +12,9 @@ const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 // We create a sandbox that simulates the browser environment just enough
 // to run checkSolution.
 
-const levelsMatch = html.match(/const\s+LEVELS\s*=\s*(\[.*?\]);/s);
-if (!levelsMatch) {
-  console.error('LEVELS not found in index.html');
-  process.exit(1);
-}
-const LEVELS = JSON.parse(levelsMatch[1]);
-
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('snake-pit');
 // Simulate checkSolution logic (mirrors the index.html checkSolution)
 const DIRS4 = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 const DIAGS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];

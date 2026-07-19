@@ -2,10 +2,9 @@
 // Extracts LEVELS from index.html and verifies all 30 levels are solvable
 const fs = require('fs');
 const html = fs.readFileSync('/home/msdn/gamezipper.com/fulcrum-balance/index.html', 'utf8');
-const lvMatch = html.match(/var LEVELS=(\[.*?\]);/);
-if (!lvMatch) { console.log('ERROR: LEVELS not found'); process.exit(1); }
-const LEVELS = JSON.parse(lvMatch[1]);
-
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('fulcrum-balance');
 function bruteForcePlacements(fixed, tray, posRange) {
   const fixedDict = {};
   fixed.forEach(f => fixedDict[f[0]] = f[1]);

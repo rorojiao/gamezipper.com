@@ -14,13 +14,10 @@ const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 // We'll extract the LEVELS constant and reimplement the check logic using the actual game data
 
 // Extract LEVELS
-const levelsMatch = html.match(/const LEVELS(\s*=\s*)(\[.*?\]);/s);
-if (!levelsMatch) {
-    console.error('ERROR: Could not extract LEVELS from index.html');
-    process.exit(1);
-}
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('kazunori');
 
-const LEVELS = JSON.parse(levelsMatch[2]);
 console.log(`Loaded ${LEVELS.length} levels from index.html engine\n`);
 
 // Reimplement the engine's checkSolution logic (from index.html)

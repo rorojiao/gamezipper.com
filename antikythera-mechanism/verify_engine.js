@@ -5,15 +5,11 @@ const fs = require('fs');
 const html = fs.readFileSync('/home/msdn/gamezipper.com/antikythera-mechanism/index.html', 'utf8');
 
 // Extract LEVELS array from HTML
-const match = html.match(/var LEVELS=(\[.*?\]);/);
-if (!match) {
-    console.log('ERROR: Could not extract LEVELS from HTML');
-    process.exit(1);
-}
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('antikythera-mechanism');
 
 // Evaluate the extracted array
-const LEVELS = JSON.parse(match[1]);
-
 // Extract the getDialPosition function logic (exact copy from game)
 function getDialPosition(crankPos, dialData) {
     return (crankPos * dialData[1]) % dialData[0];

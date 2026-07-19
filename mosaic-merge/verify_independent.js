@@ -9,10 +9,11 @@ const fs = require('fs');
 const path = require('path');
 
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-const lvMatch = html.match(/var LV=(\[[\s\S]*?\]);/);
-if (!lvMatch) { console.error('FAIL: could not find var LV= in index.html'); process.exit(1); }
-let LV;
-try { LV = eval('(' + lvMatch[1] + ')'); } catch(e) { console.error('FAIL: LV parse error:', e.message); process.exit(1); }
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('mosaic-merge');
+// R3 fix: LV also loaded via helper
+const LV = extractLevels('mosaic-merge');
 console.log('Loaded ' + LV.length + ' levels from LV array\n');
 
 // === CANONICAL GAME LOGIC (mirrors index.html engine) ===

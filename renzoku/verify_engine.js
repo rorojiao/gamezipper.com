@@ -9,12 +9,12 @@ const vm = require('vm');
 const html = fs.readFileSync('index.html', 'utf8');
 
 // Extract the inline LEVELS const + checkSolution function
-const levelMatch = html.match(/const LEVELS = (\[[\s\S]*?\]);/);
-if (!levelMatch) { console.error('LEVELS not found'); process.exit(1); }
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('renzoku');
 const checkMatch = html.match(/function checkSolution\(\)\s*\{[\s\S]*?^\}/m);
 if (!checkMatch) { console.error('checkSolution not found'); process.exit(1); }
 
-const LEVELS = JSON.parse(levelMatch[1]);
 const ctx = {
   console,
   document: {
@@ -31,7 +31,7 @@ const ctx = {
 vm.createContext(ctx);
 
 vm.runInContext(`
-  ${levelMatch[0]}
+  ${LEVELS[0]}
   ${checkMatch[0]}
 `, ctx);
 

@@ -2,9 +2,9 @@
 const fs = require('fs');
 const vm = require('vm');
 const html = fs.readFileSync('index.html', 'utf8');
-const m = html.match(/var LEVELS=\[([\s\S]*?)\];/);
-if (!m) { console.log('LEVELS not found ❌'); process.exit(1); }
-const LEVELS = vm.runInNewContext('([' + m[1] + '])');
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('crucible-alloy');
 let allOK = true;
 for (let idx = 0; idx < LEVELS.length; idx++) {
   const lv = LEVELS[idx];

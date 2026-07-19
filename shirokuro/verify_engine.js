@@ -8,12 +8,11 @@ const vm = require('vm');
 const html = fs.readFileSync('index.html', 'utf8');
 
 // Extract the LEVELS const
-const levelsMatch = html.match(/const LEVELS=(\[[\s\S]*?\]);/);
-if (!levelsMatch) { console.error('Could not find LEVELS'); process.exit(1); }
-const LEVELS = JSON.parse(levelsMatch[1]);
-
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('shirokuro');
 // Find the position of the next </script> after LEVELS
-const levelsEnd = html.indexOf(levelsMatch[0]) + levelsMatch[0].length;
+const levelsEnd = html.indexOf(LEVELS[0]) + LEVELS[0].length;
 const scriptEnd = html.indexOf('</script>', levelsEnd);
 let gameScript = html.substring(levelsEnd + 1, scriptEnd);
 

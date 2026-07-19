@@ -6,8 +6,9 @@ const fs = require('fs');
 const vm = require('vm');
 
 const html = fs.readFileSync('index.html', 'utf8');
-const m = html.match(/<script>\n(const LEVELS[\s\S]*?)<\/script>/);
-if (!m) { console.error('Could not extract inline script'); process.exit(1); }
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('toichika');
 let code = m[1];
 
 // Stub out DOM/browser APIs the engine touches at load + during our calls.

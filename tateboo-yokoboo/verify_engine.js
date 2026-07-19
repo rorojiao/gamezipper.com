@@ -5,10 +5,9 @@ const path = require('path');
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 
 // Extract LEVELS
-const m = html.match(/const LEVELS\s*=\s*(\[[\s\S]*?\]);/);
-if (!m) { console.error('Cannot extract LEVELS'); process.exit(1); }
-const LEVELS = JSON.parse(m[1]);
-
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('tateboo-yokoboo');
 const DIRS4 = [[-1,0],[1,0],[0,-1],[0,1]];
 
 function blackEndpoints(R, C, grid, dirs, br, bc) {

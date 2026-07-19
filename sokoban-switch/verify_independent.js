@@ -22,8 +22,9 @@ const fns = ['parseLevel', 'cloneGrid', 'findPlayer', 'findBoxes', 'updatePlates
 let engineCode = "var COLORS = {R:{name:'red'}, G:{name:'green'}, L:{name:'blue'}, Y:{name:'yellow'}}; var COLOR_KEYS = ['R','G','L','Y'];";
 for (const fn of fns) engineCode += '\n' + extractFunction(html, fn);
 
-const lvlMatch = html.match(/const LEVELS = \[([\s\S]*?)\n\];/);
-const levelsCode = 'globalThis.LEVELS = [' + lvlMatch[1] + '\n];';
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('sokoban-switch');
 
 const sb = {
   console,
@@ -31,9 +32,8 @@ const sb = {
   Uint8Array, Uint16Array, Uint32Array, Float32Array, Float64Array
 };
 const ctx = vm.createContext(sb);
-vm.runInContext(levelsCode, ctx);
+vm.runInContext("globalThis.LEVELS = " + JSON.stringify(LEVELS) + ";", ctx);
 vm.runInContext(engineCode, ctx);
-const LEVELS = ctx.LEVELS;
 globalThis.LEVELS = LEVELS;
 
 const GATE = {R:1, G:2, L:3, Y:4};

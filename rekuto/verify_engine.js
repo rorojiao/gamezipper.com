@@ -7,19 +7,17 @@ const vm = require('vm');
 const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 
 // Extract LEVELS const
-const levelsMatch = html.match(/const\s+LEVELS\s*=\s*(\[[\s\S]*?\]);/);
-if (!levelsMatch) {
-  console.error('ERROR: could not find const LEVELS in index.html');
-  process.exit(1);
-}
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('rekuto');
 let LEVELS;
 try {
-  LEVELS = JSON.parse(levelsMatch[1]);
+  LEVELS = JSON.parse(LEVELS[1]);
 } catch(e) {
   // try eval via vm
   const sandbox = {};
   vm.createContext(sandbox);
-  vm.runInContext('var LEVELS = ' + levelsMatch[1] + ';', sandbox);
+  vm.runInContext('var LEVELS = ' + LEVELS[1] + ';', sandbox);
   LEVELS = sandbox.LEVELS;
 }
 console.log('Loaded', LEVELS.length, 'levels from index.html');

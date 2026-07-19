@@ -3,10 +3,9 @@
 const fs = require('fs');
 const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 // Pull LEVELS and OPTIMAL out of the embedded JS
-const lvlMatch = html.match(/const LEVELS=(\[.*?\]);/);
-const optMatch = html.match(/const OPTIMAL=(\[.*?\]);/);
-if (!lvlMatch || !optMatch) { console.error('FAIL: could not extract LEVELS/OPTIMAL from index.html'); process.exit(2); }
-const LEVELS = eval(lvlMatch[1]);
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('orrery-planetary-gear');
 const OPTIMAL = eval(optMatch[1]);
 console.log(`Extracted ${LEVELS.length} levels and ${OPTIMAL.length} optima from index.html`);
 

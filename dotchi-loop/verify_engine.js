@@ -4,8 +4,9 @@ const vm = require('vm');
 
 const html = fs.readFileSync('index.html', 'utf8');
 // Extract the main <script> block (the game logic)
-const scriptMatch = html.match(/<script>\n\/\/ ============ LEVELS[\s\S]*?\n<\/script>/);
-if (!scriptMatch) { console.log('Could not find game script'); process.exit(1); }
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('dotchi-loop');
 let code = scriptMatch[0].replace(/<\/?script>/g, '');
 
 // Extract LEVELS

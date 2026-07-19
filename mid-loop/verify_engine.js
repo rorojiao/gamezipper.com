@@ -9,12 +9,10 @@ const vm = require('vm');
 
 const html = fs.readFileSync('index.html', 'utf8');
 // Extract the LEVELS array definition
-const levelsMatch = html.match(/var LEVELS = \[([\s\S]*?)\];/);
-if (!levelsMatch) {
-    console.error('Could not extract LEVELS from index.html');
-    process.exit(1);
-}
-const levelsCode = 'var LEVELS = [' + levelsMatch[1] + '];';
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('mid-loop');
+const levelsCode = 'var LEVELS = [' + LEVELS[1] + '];';
 // Also extract checkSolved and checkDotStatus functions
 const checkSolvedMatch = html.match(/function checkSolved\(\)\{([\s\S]*?)\}\nfunction loadLevel/);
 const checkDotStatusMatch = html.match(/function checkDotStatus\(r,c\)\{([\s\S]*?)\}\nfunction getCanvasPos/);

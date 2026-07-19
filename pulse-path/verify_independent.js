@@ -2,11 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-const m = html.match(/const LEVELS = (\[[\s\S]*?\]);\nconst DIRS/);
-if (!m) throw new Error('LEVELS not found in index.html');
-const ctx = vm.createContext({});
-vm.runInContext('LEVELS=' + m[1], ctx);
-const LEVELS = ctx.LEVELS;
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('pulse-path');
 const DIRS = {U:[-1,0],D:[1,0],L:[0,-1],R:[0,1]};
 function key(r,c){return r+','+c;}
 function wallsSet(L){return new Set((L.walls||[]).map(x=>key(x[0],x[1])));}

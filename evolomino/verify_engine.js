@@ -7,10 +7,9 @@ const vm = require('vm');
 const html = fs.readFileSync('index.html', 'utf8');
 
 // Extract LEVELS constant
-const lvlMatch = html.match(/const LEVELS=(\[.*?\]);/);
-if (!lvlMatch) { console.error('Could not extract LEVELS'); process.exit(1); }
-const LEVELS = JSON.parse(lvlMatch[1]);
-
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('evolomino');
 // Extract the main script block
 const scripts = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)];
 const mainScript = scripts.find(s => s[1].includes('checkWin'));

@@ -5,10 +5,9 @@ const vm = require('vm');
 
 // Load levels from index.html
 const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
-const m = html.match(/const LEVELS = (\[.+?\]);/s);
-if (!m) { console.error('Could not extract LEVELS'); process.exit(1); }
-const LEVELS = JSON.parse(m[1]);
-
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('sukima');
 // Triomino shapes (same as gen_levels.py)
 const SHAPES = [
     [[0,0],[0,1],[0,2]], [[0,0],[1,0],[2,0]],

@@ -6,11 +6,9 @@ const vm = require('vm');
 
 const html = fs.readFileSync('index.html', 'utf8');
 // Extract the <script> with the game code
-const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
-if (!scriptMatch) {
-  console.error('No script tag found');
-  process.exit(1);
-}
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('flow-free-puzzle');
 const gameCode = scriptMatch[1];
 
 // Mock browser environment
@@ -98,7 +96,6 @@ try {
 // Access STATE and LEVELS via the exposed __game object
 const gameApi = sandbox.__game;
 const STATE = gameApi && gameApi.STATE;
-const LEVELS = gameApi && gameApi.LEVELS;
 if (!STATE || !LEVELS) {
   console.error('STATE or LEVELS not exposed');
   process.exit(1);

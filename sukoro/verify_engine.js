@@ -5,19 +5,15 @@ const vm = require('vm');
 const html = fs.readFileSync('index.html','utf8');
 
 // Extract LEVELS from the HTML
-const match = html.match(/const LEVELS\s*=\s*(\[.*?\]);/s);
-if(!match){
-  console.error('Could not extract LEVELS from index.html');
-  process.exit(1);
-}
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('sukoro');
 const levelsCode = match[1];
 
 // Evaluate LEVELS in a sandbox
 const sandbox = { LEVELS: null };
 const ctx = vm.createContext(sandbox);
 vm.runInContext('LEVELS = ' + levelsCode + ';', ctx);
-const LEVELS = sandbox.LEVELS;
-
 console.log(`Loaded ${LEVELS.length} levels from index.html\n`);
 
 function NB(r,c,H,W){

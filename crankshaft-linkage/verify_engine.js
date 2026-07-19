@@ -1,10 +1,9 @@
 // In-engine Node.js BFS verification — extracts LEVELS from index.html
 const fs = require('fs');
 const html = fs.readFileSync('index.html','utf8');
-const m = html.match(/const LEVELS\s*=\s*(\[[\s\S]*?\]);/);
-if(!m){ console.error('LEVELS not found'); process.exit(1); }
-const LEVELS = JSON.parse(m[1]);
-
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('crankshaft-linkage');
 function sliderX(angleIdx, nPos, radius){
   var ang = angleIdx * 2 * Math.PI / nPos;
   return Math.round(radius * Math.cos(ang) * 10) / 10;

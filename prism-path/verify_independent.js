@@ -8,11 +8,9 @@ const path = require('path');
 
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 // extract LEVELS_RAW JSON
-const m = html.match(/const LEVELS_RAW\s*=\s*(\[.*?\]);/s);
-if (!m) {
-  console.error('FAIL: could not find LEVELS_RAW in index.html');
-  process.exit(1);
-}
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('prism-path');
 const RAW = JSON.parse(m[1]);
 console.log('Loaded', RAW.length, 'compact levels');
 

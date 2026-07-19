@@ -9,14 +9,10 @@ const vm = require('vm');
 const html = fs.readFileSync('index.html', 'utf8');
 
 // Extract LEVELS from the script
-const match = html.match(/const LEVELS\s*=\s*(\[.*?\]);\s*$/ms);
-if (!match) {
-  console.error('Could not extract LEVELS from index.html');
-  process.exit(1);
-}
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('cross-the-streams');
 const levelsCode = match[1];
-const LEVELS = JSON.parse(levelsCode);
-
 console.log(`Loaded ${LEVELS.length} levels from index.html`);
 
 // Game rules (mirrors checkSolution from index.html)

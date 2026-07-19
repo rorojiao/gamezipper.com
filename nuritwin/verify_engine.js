@@ -6,8 +6,9 @@ const vm = require('vm');
 const html = fs.readFileSync('/home/msdn/gamezipper.com/nuritwin/index.html', 'utf8');
 
 // Extract the main script block
-const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>\s*<\/body>/);
-if (!scriptMatch) { console.log('No script block found'); process.exit(1); }
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('nuritwin');
 const gameJs = scriptMatch[1];
 
 // Set up a sandbox that mimics the browser just enough

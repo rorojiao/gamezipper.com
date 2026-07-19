@@ -10,11 +10,9 @@ const vm = require('vm');
 const html = fs.readFileSync('index.html', 'utf8');
 
 // Extract LEVELS constant
-const levelsMatch = html.match(/const LEVELS = (\[[\s\S]+?\]);/);
-if (!levelsMatch) {
-    console.error('ERROR: Could not extract LEVELS from index.html');
-    process.exit(1);
-}
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('chocona');
 
 // Extract the game logic (between <script> tags)
 const scriptMatches = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)];
@@ -48,7 +46,7 @@ const sandbox = {
 };
 
 // Parse levels
-const levels = JSON.parse(levelsMatch[1]);
+const levels = JSON.parse(LEVELS[1]);
 console.log(`Loaded ${levels.length} levels from index.html\n`);
 
 // We need to reimplement checkWin logic since it depends on canvas state.

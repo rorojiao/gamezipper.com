@@ -5,17 +5,13 @@ const fs = require('fs');
 const vm = require('vm');
 
 const html = fs.readFileSync('index.html', 'utf-8');
-const match = html.match(/const LEVELS = (\[.*?\]);/s);
-if (!match) {
-    console.error('FAIL: Could not extract LEVELS from index.html');
-    process.exit(1);
-}
+// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
+const extractLevels=require('../.audit/gz-extract-levels.js');
+const LEVELS=extractLevels('double-choco');
 
 const sandbox = { LEVELS: null };
 vm.createContext(sandbox);
 vm.runInContext(`LEVELS = ${match[1]};`, sandbox);
-const LEVELS = sandbox.LEVELS;
-
 console.log(`Extracted ${LEVELS.length} levels from index.html`);
 
 // Polyomino normalization and congruence check
