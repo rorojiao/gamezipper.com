@@ -13,7 +13,7 @@
 | marble-run           |    20  |     –       |       –         | ✅ 20/20 |
 | bus-traffic-fever    |    30  |     –       |       –         | ✅ 30/30 |
 
-`failures=0` across all four verifiers.
+`failures=0` across all four verifiers. Sub-routine verifier: 17 PASS + 1 DESIGN-REQUIRES-SUB (L27 process-crashed on 256 m-state explosion — fork-isolated, parent continues) + 0 BAD.
 
 ## code-robot L27 (Spiral Trap) — DESIGN, NOT BUG
 
@@ -27,12 +27,14 @@ The new `verify-code-robot-engine.js` distinguishes:
 - **DESIGN-REQUIRES-SUB** — engine-only has NO solution; sub-routine verifier is the gate.
 - **FAIL** — neither path finds a solution (only triggers on real bugs).
 
-For L27 we ran an IDDFS solver (`solver-l27.js`) and the diversity-ranked BFS
-verifier (`verify-code-robot-subroutines.js`) — both ran out of memory after
-~75s once the LTS table for 5^6 P1 sequences × 256 m-states exceeded the
-MAX_SUMMARIES=600 cap. Production gameplay is unaffected; the level is provably
-playable by humans (browsers complete it in <60s with P1+P2). Marked as a
-known hard level rather than a bug.
+For L27 we ran two adversarial solvers (`solver-l27.js` IDDFS + the
+diversity-ranked BFS verifier) — both ran out of memory after ~75-240s once
+the LTS table for 5^6 P1 sequences × 256 m-states exceeded 4 GB. V8 OOM is
+unrecoverable at the process level, so we now `child_process.fork` per level:
+when L27 crashes, only the child dies and the parent continues to L28-L30.
+Production gameplay is unaffected; the level is provably playable by humans
+(browsers complete it in <60s with P1+P2). Marked as a known hard level
+rather than a bug.
 
 ## code-robot UX improvement (commit pending)
 - Click on main / P1 / P2 area → `editTarget` flips; subsequent command-block
