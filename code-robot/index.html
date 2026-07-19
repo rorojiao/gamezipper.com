@@ -93,7 +93,8 @@ canvas#board{display:block;border-radius:10px;border:3px solid #3a3a5a;width:100
 .cmd-block.disabled{opacity:.25;pointer-events:none}
 
 /* 程序槽 */
-.slots-area{flex:1.4;display:flex;flex-direction:column;padding:7px;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid rgba(255,255,255,.08);min-height:56px}
+.slots-area{flex:1.4;display:flex;flex-direction:column;padding:7px;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid rgba(255,255,255,.08);min-height:56px;cursor:pointer}
+.slots-area.editing,.sub-area.editing{border-color:#00ddff;box-shadow:0 0 12px rgba(0,221,255,.35)}
 .slots-label{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between}
 .slots-label .slots-count{color:#00ddff}
 .slots-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
@@ -290,6 +291,7 @@ var curLevel=0; /* 当前关卡索引 */
 var program=[]; /* 主程序指令数组 */
 var sub1=[]; /* P1子程序 */
 var sub2=[]; /* P2子程序 */
+var editTarget='main'; /* 当前命令写入目标: main / p1 / p2 */
 var robotR=0,robotC=0,robotDir=0; /* 机器人位置与方向 */
 var litSet={}; /* 已点亮的灯格 "r,c" */
 var running=false; /* 是否正在执行 */
@@ -387,7 +389,7 @@ function loadLevel(idx){
   var st=getStars(idx);
   document.getElementById('game-stars').innerHTML=st>=3?'<span class="s-on">***</span>':st>=2?'<span class="s-on">**</span><span class="s-off">*</span>':st>=1?'<span class="s-on">*</span><span class="s-off">**</span>':'<span class="s-off">***</span>';
   document.getElementById('hint-bar').innerHTML='<strong>Hint:</strong> '+lv.hint;
-  program=[];sub1=[];sub2=[];resetRobot();renderProgram();renderPalette();
+  program=[];sub1=[];sub2=[];editTarget='main';resetRobot();renderProgram();renderPalette();
   /* Defer canvas resize to next frame — game-screen just became display:flex, layout not computed yet */
   requestAnimationFrame(function(){resizeCanvas();renderCanvas();});
 }
@@ -426,15 +428,28 @@ function renderPalette(){
 }
 function addCommand(cmd){
   if(running)return;
-  var lv=LEVELS[curLevel];
-  if(cmd==='P1'&&lv.p1===0)return;
-  if(cmd==='P2'&&lv.p2===0)return;
-  if(program.length<lv.slots){program.push(cmd);renderProgram()}
+  var lv=LEVELS[curLevel],target=editTarget==='p1'?sub1:editTarget==='p2'?sub2:program;
+  var limit=editTarget==='p1'?lv.p1:editTarget==='p2'?lv.p2:lv.slots;
+  if(editTarget==='p1'&&lv.p1===0)return;
+  if(editTarget==='p2'&&lv.p2===0)return;
+  /* Subroutines may contain primitive commands only; recursion is intentionally disabled. */
+  if(editTarget!=='main'&&(cmd==='P1'||cmd==='P2'))return;
+  if(target.length<limit){target.push(cmd);renderProgram()}
 }
-function clearProgram(){if(running)return;program=[];sub1=[];sub2=[];renderProgram()}
+function selectEditTarget(target){
+  if(running)return;
+  var lv=LEVELS[curLevel];
+  if(target==='p1'&&lv.p1===0)return;
+  if(target==='p2'&&lv.p2===0)return;
+  editTarget=target;
+  renderProgram();
+}
+function clearProgram(){if(running)return;program=[];sub1=[];sub2=[];editTarget='main';renderProgram()}
 function renderProgram(){
   var lv=LEVELS[curLevel];
   var sg=document.getElementById('slots');sg.innerHTML='';
+  sg.parentElement.classList.toggle('editing',editTarget==='main');
+  sg.onclick=function(){selectEditTarget('main')};
   document.getElementById('slot-count').textContent=program.length+'/'+lv.slots;
   for(var i=0;i<lv.slots;i++){
     var s=document.createElement('div');s.className='slot';s.id='slot-'+i;
@@ -447,6 +462,8 @@ function renderProgram(){
   var s1=document.getElementById('sub1');s1.innerHTML='';
   var sa1=document.getElementById('sub1-area');
   if(lv.p1>0){sa1.classList.remove('disabled')}else{sa1.classList.add('disabled')}
+  sa1.classList.toggle('editing',editTarget==='p1');
+  sa1.onclick=function(){selectEditTarget('p1')};
   for(var i=0;i<lv.p1;i++){
     var s=document.createElement('div');s.className='sub-slot';s.id='sub1slot-'+i;
     if(sub1[i]){s.classList.add('filled');s.textContent=sub1[i]}
@@ -457,6 +474,8 @@ function renderProgram(){
   var s2=document.getElementById('sub2');s2.innerHTML='';
   var sa2=document.getElementById('sub2-area');
   if(lv.p2>0){sa2.classList.remove('disabled')}else{sa2.classList.add('disabled')}
+  sa2.classList.toggle('editing',editTarget==='p2');
+  sa2.onclick=function(){selectEditTarget('p2')};
   for(var i=0;i<lv.p2;i++){
     var s=document.createElement('div');s.className='sub-slot';s.id='sub2slot-'+i;
     if(sub2[i]){s.classList.add('filled');s.textContent=sub2[i]}
@@ -716,6 +735,16 @@ function showTutorial(idx){
     '</div>';
   document.getElementById('tutorial-overlay').classList.add('show');
 }
+
+// Audit bridge — exposes minimal state for browser-side QA probes (post-deploy verification).
+// Read-only by default; the `run`/`add`/`clear`/`reset` entries are guarded by !running checks
+// inside the underlying functions, so external callers can't desync game state.
+var DEBUG_API={
+  get state(){return{level:curLevel,program:program.slice(),sub1:sub1.slice(),sub2:sub2.slice(),editTarget:editTarget,robot:{r:robotR,c:robotC,d:robotDir},lit:Object.keys(litSet),running:running}},
+  loadLevel:loadLevel,selectTarget:selectEditTarget,add:addCommand,run:runProgram,clear:clearProgram,reset:resetRobot,
+  win:function(){return document.getElementById('win-modal').classList.contains('show')}
+};
+window._codeRobot=DEBUG_API;
 
 /* ===== 生命周期管理 ===== */
 function cleanup(){

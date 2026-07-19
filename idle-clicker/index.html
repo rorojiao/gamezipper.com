@@ -555,12 +555,17 @@ function tick(){
 }
 
 function save(){
-  const d={cookies,totalCookies,upgrades:upgrades.map(u=>u.owned),time:Date.now(),types:[...purchasedTypes],achievements:[...unlockedAch],goldenClicks,prestigeLevel,prestigeMultiplier};
+  const d={v:1,cookies,totalCookies,upgrades:upgrades.map(u=>u.owned),time:Date.now(),types:[...purchasedTypes],achievements:[...unlockedAch],goldenClicks,prestigeLevel,prestigeMultiplier};
   localStorage.setItem('idleCookie',JSON.stringify(d));
 }
 function load(){
   try{
-    const d=JSON.parse(localStorage.getItem('idleCookie'));if(!d)return;
+    // v1 = current shape. Legacy saves from before this revision have no `v` field — accept them
+    // (they predate `types`/`achievements`/`goldenClicks`/`prestigeLevel`, but those fields are guarded by
+    // `if (d.types)` etc. so undefined reads default to safe empty/0).
+    // Future-incompatible saves (v>=2) are refused to avoid silent corruption.
+    const d=JSON.parse(localStorage.getItem('idleCookie'));
+    if(!d||d.v>1)return;
     d.upgrades.forEach((n,i)=>{upgrades[i].owned=n});
     cookies=d.cookies||0;totalCookies=d.totalCookies||cookies;
     if(d.types)d.types.forEach(t=>purchasedTypes.add(t));
