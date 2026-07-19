@@ -1,7 +1,7 @@
 /**
  * GameZipper Adsterra Ad Manager v5.17.2 (2026-07-18)
  * ─────────────────────────────────────────────────
- * v5.17.2 Changes (cron-resilient — guarantees events reach BI on init):
+ * v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
  *   - 🐛 Fix: v5.17.1 used gzAnalytics.sendAd → 30s batch → setInterval flush.
  *     On headless browsers / quick page close, flush never fires → events lost.
  *     Real browsers with normal page view: works (verified trycloudflare EP).
@@ -10,7 +10,7 @@
  *     trycloudflare BI endpoint (fire-and-forget, no batching).
  *   - 🔧 track() now fires 4 channels in parallel:
  *     1) gzAnalytics.sendAd → batched BI (best-effort, may be lost on quick nav)
- *     2) sendBeacon trycloudflare EP (immediate fire-and-forget, guaranteed)
+ *     2) sendBeacon trycloudflare EP (immediate fire-and-forget, best-effort)
  *     3) gzTrack fallback (legacy trackers)
  *     4) sendBeacon /api/collect (self-hosted setups, GitHub Pages 405s)
  *   - 📊 Expected impact (BI 6h post-deploy):
@@ -91,15 +91,13 @@
   //     1) gzAnalytics.sendAd → gz-analytics.js batch buffer → trycloudflare tunnel → BI
   //        (best-effort, may be lost on tab close before 30s flush)
   //     2) Direct sendBeacon to trycloudflare BI endpoint (fire-and-forget,
-  //        bypasses 30s batch window, guaranteed delivery on init events)
+  //        bypasses the 30s batch window for init events)
   //     3) gzTrack fallback (legacy public/t.js)
   //     4) sendBeacon('/api/collect') last-resort (self-hosted setups)
   //
-  // v5.17.2 update: trycloudflare EP embedded directly so init events
-  // (script_loaded + cdn_health) ALWAYS reach BI even on fresh load,
-  // not just after 30s batch window. Synchronous sendBeacon is fire-and-forget
-  // (no response needed, no callback), reliable across navigations.
-  var BI_DIRECT_EP = 'https://describing-photographers-past-conditioning.trycloudflare.com/api/collect';
+  // Keep this in sync with gz-analytics.js's active Cloudflare Tunnel endpoint.
+  // sendBeacon is fire-and-forget; it reduces, but cannot eliminate, loss on navigation.
+  var BI_DIRECT_EP = 'https://bishop-fix-realtor-local.trycloudflare.com/api/collect';
 
   function track(type, extra) {
     var payload = Object.assign({ network: 'adsterra', type: type, t: Date.now() }, extra || {});
@@ -110,8 +108,8 @@
       }
     } catch (e) {}
     // Channel 2: Direct sendBeacon to trycloudflare BI tunnel (fire-and-forget)
-    // Guarantees init events (script_loaded + cdn_health) reach BI even on
-    // browsers that batch-flush never fires (headless, quick close).
+    // Sends init events (script_loaded + cdn_health) without waiting for the
+    // batch flush, including browsers that close before the next interval.
     try {
       if (navigator.sendBeacon && BI_DIRECT_EP) {
         var env = {
