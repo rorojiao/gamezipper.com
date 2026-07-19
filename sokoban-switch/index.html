@@ -549,7 +549,7 @@ const LEVELS = [
     '#.........#',
     '#.........#',
     '#r.r..r...#',
-    '#P........#',
+    '#......P..#',
     '###########',
   ]},
   {t:'Easy', name:'Two Center', w:11, h:9, rows:[
@@ -891,11 +891,11 @@ function parseLevel(lv){
       else if(c==='*'){cell.box=true;cell.goal=true;cell.base='floor';}
       else if(COLOR_KEYS.includes(c.toUpperCase()) && c===c.toUpperCase()){
         // gate uppercase = closed gate
-        cell.gate = {open:false, color:c};
+        cell.gate = {open:false, color:c, colorIndex: {R:1,G:2,B:3,Y:4}[c]};
         cell.base='gate';
       } else if(COLOR_KEYS.includes(c.toLowerCase())){
         // plate lowercase = pressure plate
-        cell.plate = {on:false, color:c.toUpperCase()};
+        cell.plate = {on:false, color:c.toUpperCase(), colorIndex: {R:1,G:2,B:3,Y:4}[c.toUpperCase()]};
         cell.base='floor';
       } else {
         cell.base='floor';
@@ -1405,36 +1405,108 @@ function nextLevel(){
 }
 
 // ---------- Solution checker (in-engine) ----------
-// Returns 'solved' | 'unsolvable' | 'unknown' (limit reached)
+// Returns 'solved' | 'unsolvable' | 'unknown' (limit reached).
+// Uses the same move/clone/isSolved semantics as the live game. Prunes
+// push-states where a box would land on a corner that can never be resolved
+// or against a closed wall, and uses a per-push reachable set rather than
+// treating every player step as a unique state.
 function checkSolution(g){
-  // BFS / Bounded DFS from current state. Cap iterations.
-  const MAX = 500000;
-  const start = cloneGrid(g);
-  const startKey = gridKey(start);
-  if(isSolved(start)) return 'solved';
-  const visited = new Set([startKey]);
-  const queue = [{g:start, moves:0}];
-  const dirs = [[0,-1],[1,0],[0,1],[-1,0]];
+  const MAX = 250000;
+  const W = g[0].length, H = g.length;
+  function nIdx(x,y){return y*W+x;}
+  function gateOpen(boxes){
+    const active = [false,false,false,false,false];
+    for(const b of boxes){
+      const p = g[Math.floor(b/W)][b%W].plate;
+      if(p) active[p.colorIndex] = true;
+    }
+    const open = new Uint8Array(W*H);
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+      const gate = g[y][x].gate;
+      if(gate) open[nIdx(x,y)] = active[gate.colorIndex] ? 1 : 0;
+    }
+    return open;
+  }
+  function reachable(player, boxes){
+    const occ = new Uint8Array(W*H);
+    for(const b of boxes) occ[b] = 1;
+    const open = gateOpen(boxes);
+    const seen = new Uint8Array(W*H); seen[player]=1;
+    const q = [player];
+    while(q.length){
+      const p = q.pop();
+      const x = p%W, y = (p/W)|0;
+      if(y>0 && !seen[p-W] && !g[y-1][x].wall && !occ[p-W] && (!g[y-1][x].gate || open[p-W])){ seen[p-W]=1; q.push(p-W); }
+      if(y<H-1 && !seen[p+W] && !g[y+1][x].wall && !occ[p+W] && (!g[y+1][x].gate || open[p+W])){ seen[p+W]=1; q.push(p+W); }
+      if(x>0 && !seen[p-1] && !g[y][x-1].wall && !occ[p-1] && (!g[y][x-1].gate || open[p-1])){ seen[p-1]=1; q.push(p-1); }
+      if(x<W-1 && !seen[p+1] && !g[y][x+1].wall && !occ[p+1] && (!g[y][x+1].gate || open[p+1])){ seen[p+1]=1; q.push(p+1); }
+    }
+    return seen;
+  }
+  function isSolvedArr(boxes){
+    for(const b of boxes) if(!g[Math.floor(b/W)][b%W].goal) return false;
+    return true;
+  }
+  function key(boxes, reach){
+    let anchor = -1;
+    for(let i=0;i<reach.length;i++) if(reach[i]){ anchor = i; break; }
+    return boxes.join(',') + '|' + anchor;
+  }
+  function cornerDead(idx){
+    if(g[Math.floor(idx/W)][idx%W].goal) return false;
+    const x = idx%W, y = (idx/W)|0;
+    function wall(nx,ny){
+      if(nx<0||ny<0||nx>=W||ny>=H) return true;
+      return g[ny][nx].wall;
+    }
+    return (wall(x,y-1) && wall(x-1,y)) ||
+           (wall(x,y-1) && wall(x+1,y)) ||
+           (wall(x,y+1) && wall(x-1,y)) ||
+           (wall(x,y+1) && wall(x+1,y));
+  }
+  const startBoxes = findBoxes(g).map(b => nIdx(b.x, b.y));
+  const startPlayer = nIdx(findPlayer(g).x, findPlayer(g).y);
+  const startReach = reachable(startPlayer, startBoxes);
+  if(isSolvedArr(startBoxes)) return 'solved';
+  const queue = [{b: startBoxes.slice().sort((a,b)=>a-b), p: startPlayer, d: 0}];
+  const seen = new Map([[key(startBoxes, startReach), true]]);
   let iters = 0;
   while(queue.length && iters < MAX){
     iters++;
-    const {g:cur, moves:mv} = queue.shift();
-    if(mv > 50) continue; // reasonable cap
-    for(const [dx,dy] of dirs){
-      const next = cloneGrid(cur);
-      const r = movePlayer(next, dx, dy);
-      if(!r.ok) continue;
-      if(isSolved(next)) return 'solved';
-      const k = gridKey(next);
-      if(!visited.has(k)){
-        visited.add(k);
-        queue.push({g:next, moves:mv+1});
+    const cur = queue.shift();
+    if(isSolvedArr(cur.b)) return 'solved';
+    const reach = reachable(cur.p, cur.b);
+    const occ = new Uint8Array(W*H);
+    for(const b of cur.b) occ[b] = 1;
+    const DIRS = [[0,-1],[1,0],[0,1],[-1,0]];
+    for(const [dx,dy] of DIRS){
+      const bx = cur.p%W + dx, by = (cur.p/W)|0 + dy;
+      const tx = bx + dx, ty = by + dy;
+      if(bx<0||by<0||bx>=W||by>=H||tx<0||ty<0||tx>=W||ty>=H) continue;
+      const bi = nIdx(bx,by), ti = nIdx(tx,ty);
+      if(!reach[bi]) continue;
+      if(g[by][bx].wall || occ[bi] === 0) continue;
+      if(g[ty][tx].wall || occ[ti]) continue;
+      if(g[ty][tx].gate){
+        const open = gateOpen(cur.b);
+        if(!open[ti]) continue;
       }
+      if(cornerDead(ti)) continue;
+      const nb = cur.b.slice();
+      const at = nb.indexOf(bi);
+      nb[at] = ti;
+      nb.sort((a,b)=>a-b);
+      const nr = reachable(bi, nb);
+      const k = key(nb, nr);
+      if(seen.has(k)) continue;
+      seen.set(k, true);
+      queue.push({b: nb, p: bi, d: cur.d+1});
     }
   }
   if(iters >= MAX) return 'unknown';
   return 'unsolvable';
 }
+
 
 function gridKey(g){
   // Compact key: player pos, box positions, gate states, plate states
