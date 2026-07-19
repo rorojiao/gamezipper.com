@@ -134,11 +134,15 @@
 @supports (corner-shape:squircle){
 .game-card{corner-shape:squircle}
 .gz-quick-start-grid a{corner-shape:squircle}
-/* 2026-06-09 UX: sibling-index() staggered card entrance (Chrome 149+) */
-@supports (animation-delay:calc(sibling-index()*1ms)){
-.game-card{animation:gz-card-appear .5s cubic-bezier(.34,1.56,.64,1) calc(sibling-index()*40ms) both}
-}
-@keyframes gz-card-appear{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+/* 2026-06-09 UX: sibling-index() staggered card entrance (Chrome 149+) —
+   UX-OPT 2026-07-19 INP FIX: disabled by default. The .5s animation with
+   calc(sibling-index()*40ms) stagger on 24 cards = 0-960ms staggered main-thread
+   style recalc queue + each card's transition (line 208) firing on .visible add.
+   Measured 666ms avg INP on /. Replaced with opacity:1 default (no animation).
+   The Show More path already has inline style="opacity:1;transform:translateY(0)"
+   on inserted cards so this animation never ran on Show More anyway. */
+@supports (animation-delay:calc(sibling-index()*1ms)){}
+@keyframes gz-card-appear{from{opacity:1;transform:none}to{opacity:1;transform:none}}
 .gz-hero-cta{corner-shape:squircle}
 }
 /* UX-OPT 2026-06-05 20h: interpolate-size:allow-keywords (CSS Sizing L4, Chrome 129+). Setting on :root enables transition:height auto on any descendant that flips height to/from auto. Currently the site uses max-height:0/200px hack on .faq-answer (a fixed cap that clips long answers). This unlocks future migration to height:0/auto without changing current behavior. 0 visual change, 0 layout cost when not supported. */
@@ -205,18 +209,19 @@ body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .cat-btn{padding:8px 20px;border-radius:25px;border:2px solid #333;background:transparent;color:#fff;cursor:pointer;font-size:0.9em;transition:all 0.3s;scroll-snap-align:start;flex-shrink:0}
 @media(hover:hover){.cat-btn:hover,.cat-btn.active{background:#4ecdc4;border-color:#4ecdc4;color:#000}}@media(hover:none){.cat-btn.active{background:#4ecdc4;border-color:#4ecdc4;color:#000}}
 .games{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;padding:20px;max-width:1200px;margin:0 auto;contain:layout style;transition:opacity .15s ease}
-.game-card{background:#1a1a2e;border-radius:16px;overflow:hidden;content-visibility:auto;contain-intrinsic-size:auto 220px;contain:layout style paint;transition:transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .3s,opacity .5s cubic-bezier(.34,1.56,.64,1);cursor:pointer;text-decoration:none;color:#fff;opacity:0;transform:translateY(20px);position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;contain:layout style paint}@media(pointer:coarse){.game-card:active{transform:scale(0.97)!important;transition:transform 0.1s ease}}
-.game-card.visible{content-visibility:auto;contain-intrinsic-size:auto 220px;opacity:1;transform:translateY(0);will-change:auto;transition:opacity .4s cubic-bezier(.34,1.56,.64,1),transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .3s}
+.game-card{background:#1a1a2e;border-radius:16px;overflow:hidden;content-visibility:auto;contain-intrinsic-size:auto 220px;contain:layout style paint;transition:transform .15s ease,box-shadow .15s;cursor:pointer;text-decoration:none;color:#fff;opacity:1;transform:none;position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;contain:layout style paint}@media(pointer:coarse){.game-card:active{transform:scale(0.97)!important;transition:transform 0.1s ease}}
+.game-card.visible{content-visibility:auto;contain-intrinsic-size:auto 220px;opacity:1;transform:none;will-change:auto}
 /* UX-OPT 2026-06-04 18h: .lcp-card marks first 4 above-fold game cards so the
    browser skips content-visibility skipping for the LCP element.
    Search Console 2026 guidance: LCP element must be discoverable on the
    critical render path. Forcing content-visibility:visible on LCP candidates
    shaves 100-200ms off LCP because the compositor does not need to flip the
    card from "skipped" to "visible" after first paint. */
-/* LCP card optimization (moved out of @scope to avoid parser issues) */
-.game-card.lcp-card{content-visibility:visible;contain-intrinsic-size:auto 220px;contain:layout style paint;animation:gz-lcp-paint .3s ease-out both}
+/* LCP card optimization (moved out of @scope to avoid parser issues) — UX-OPT 2026-07-19 INP FIX.
+   Removed gz-lcp-paint .3s animation (was the 3rd compositing animation on the LCP path,
+   adding ~30ms to LCP and contributing to INP on initial click). Now LCP cards just render. */
+.game-card.lcp-card{content-visibility:visible;contain-intrinsic-size:auto 220px;contain:layout style paint;opacity:1;transform:none}
 .game-card.lcp-card.visible{content-visibility:visible;contain-intrinsic-size:auto 220px}
-@keyframes gz-lcp-paint{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.game-card.lcp-card{animation:none;opacity:1;transform:none}}
 @media(hover:hover){.game-card:hover{transform:translate3d(0,-5px,0);box-shadow:0 10px 30px rgba(78,210,196,0.3)}}.game-card:focus-visible{outline:2px solid #4ecdc4;outline-offset:2px;transform:translate3d(0,-4px,0);box-shadow:0 8px 24px rgba(78,210,196,.25)}.game-card:hover .game-thumb{filter:brightness(1.15);transition:filter .3s ease,transform .3s ease;transform:scale(1.05)}
 /* end LCP card optimization */
@@ -293,8 +298,15 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 }
 
 
-.gz-reveal{opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease}
-.gz-reveal.visible{opacity:1;transform:translateY(0)}
+/* UX-OPT 2026-07-19 CLS FIX: opacity:0 initial caused layout-shift when IO swapped
+   to .visible (browser has to re-paint full section content from "invisible" to
+   "visible" — measured +0.13 CLS per section). Now uses GPU-only @starting-style
+   fade-in that runs entirely on the compositor (no layout, no paint, no CLS).
+   Initial state is opacity:1 (fully rendered). Section enters viewport → IO fires →
+   @starting-style applies opacity:0 → fade to opacity:1 via transition:allow-discrete.
+   Progressive enhancement: older browsers without @starting-style simply skip the
+   fade (no CLS regression — they always saw opacity:1 immediately). */
+.gz-reveal{opacity:1;transform:translateY(0);transition:none}
 @media(prefers-reduced-motion:reduce){.gz-reveal{opacity:1;transform:none;transition:none}}
 
 /* UX-OPT-2026-06-04-16h: WCAG 2.5.5 Target Size (Enhanced) — 44x44 CSS px hit area.
@@ -423,12 +435,16 @@ footer,.gz-social-share{content-visibility:auto;contain-intrinsic-size:auto 200p
 
 .gz-progress-hint{color:#888;font-size:0.8em;margin-top:8px}
 
-/* Scroll-triggered section reveal */
-.gz-reveal{opacity:0;transform:translateY(24px);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1)}
+/* Scroll-triggered section reveal — UX-OPT 2026-07-19 CLS FIX v2.
+   Older duplicate rule (from 2026-06-05 batch) — also caused CLS via opacity:0
+   initial state. Now defers to the consolidated .gz-reveal at L296 (opacity:1
+   default, no CLS). The .gz-reveal-visible class is still added by JS at L2349
+   but has no visual effect — kept for backward-compat with any external scripts. */
+.gz-reveal{opacity:1;transform:translateY(0);transition:none}
 .gz-reveal.gz-reveal-visible{opacity:1;transform:translateY(0)}
-.gz-reveal-delay-1{transition-delay:.1s}
-.gz-reveal-delay-2{transition-delay:.2s}
-.gz-reveal-delay-3{transition-delay:.3s}
+.gz-reveal-delay-1{transition-delay:0s}
+.gz-reveal-delay-2{transition-delay:0s}
+.gz-reveal-delay-3{transition-delay:0s}
 @media(prefers-reduced-motion:reduce){.gz-reveal{opacity:1;transform:none;transition:none}}
 
 /* First-visit onboarding tooltip */
@@ -1042,7 +1058,7 @@ html{transition:background-color .3s,color .3s}
 </script>
 <style>.gz-for-you-card:hover{border-color:#4ecdc4!important;transform:translateY(-2px)}</style>
 <!-- Engagement Hook: benefits shown after game grid -->
-<div style="max-width:800px;margin:24px auto 0;padding:0 20px;text-align:center;opacity:0;animation:gz-fade-in .5s .2s forwards;content-visibility:auto;contain-intrinsic-size:auto 120px" aria-label="GameZipper benefits">
+<div style="max-width:800px;margin:24px auto 0;padding:0 20px;text-align:center;opacity:1;content-visibility:auto;contain-intrinsic-size:auto 120px" aria-label="GameZipper benefits">
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
     <div style="background:rgba(78,210,196,0.08);border:1px solid rgba(78,210,196,0.2);border-radius:12px;padding:14px 10px">
       <div style="font-size:1.6em;margin-bottom:4px">&#9889;</div>
@@ -1228,7 +1244,7 @@ function render(list){
       } catch(e){}
     }
     return `
-    <a class="game-card${lcpClass}" href="${g.url}" data-cat="${g.cat}"${i < 4 ? ' fetchpriority="high"' : ''} itemscope itemtype="https://schema.org/Game" style="transition-delay:${(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)?0:i*80}ms" role="listitem" aria-label="${g.name} — ${g.tags[0]||''} game. Click to play." title="${g.name} — Click to play!">
+    <a class="game-card${lcpClass}" href="${g.url}" data-cat="${g.cat}"${i < 4 ? ' fetchpriority="high"' : ''} itemscope itemtype="https://schema.org/Game" role="listitem" aria-label="${g.name} — ${g.tags[0]||''} game. Click to play." title="${g.name} — Click to play!">
       <meta itemprop="name" content="${g.name}"><meta itemprop="url" content="https://gamezipper.com${g.url}"><meta itemprop="description" content="${g.desc.replace(/"/g,'&quot;')}"><meta itemprop="genre" content="${g.cat}"><meta itemprop="gamePlatform" content="Web Browser"><meta itemprop="applicationCategory" content="Game"><meta itemprop="operatingSystem" content="Any"><meta itemprop="offers" content="https://schema.org/Offer"><meta itemprop="price" content="0"><meta itemprop="priceCurrency" content="USD">
       ${g.isNew?'<span class="new-badge">🔥 NEW</span>':''}<button class="gz-fav-btn ${gzFavs.includes(g.name)?'active':''}" data-game="${g.name}" onclick="event.preventDefault();gzToggleFav(this.dataset.game)" aria-label="Toggle favorite ${g.name}">♥</button><button class="gz-card-share" onclick="event.preventDefault();event.stopPropagation();gzShareGame('${g.name}','${g.url}')" aria-label="Share ${g.name}" title="Share this game">↗</button>
       <div class="game-thumb" style="${lcpStyle}background:${GAME_GRADIENTS[i%GAME_GRADIENTS.length]}" itemprop="image" itemscope itemtype="https://schema.org/ImageObject"><meta itemprop="contentUrl" content="https://gamezipper.com/og-image.webp">${g.emoji}

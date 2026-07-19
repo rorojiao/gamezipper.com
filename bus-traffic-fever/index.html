@@ -353,7 +353,8 @@ var G={
   hintArrow:false,tutorialStep:0,
   history:[],// for undo
   rafId:null,lastTime:0,running:false,
-  pointerDown:false
+  pointerDown:false,
+  _pendingTimeouts:[]// UX-OPT 2026-07-19 INP FIX: tracked setTimeouts so they can be cancelled on level load
 };
 
 // ============ CANVAS SETUP ============
@@ -386,6 +387,13 @@ function resizeCanvas(){
 
 // ============ LEVEL LOADING ============
 function loadLevel(idx){
+  // UX-OPT 2026-07-19 INP FIX: cancel any pending setTimeouts from prior level (win overlay, stars, etc)
+  // before doing the synchronous buses/gates rebuild. Otherwise stale callbacks fire during the
+  // next click handler and inflate INP.
+  if(G._pendingTimeouts&&G._pendingTimeouts.length){
+    for(var _pi=0;_pi<G._pendingTimeouts.length;_pi++)clearTimeout(G._pendingTimeouts[_pi]);
+    G._pendingTimeouts.length=0;
+  }
   G.levelIdx=idx;
   var lvl=LEVELS[idx];
   G.moves=0;G.par=lvl.par;
@@ -514,7 +522,7 @@ function tryMoveBus(bus){
     else if(bus.dir==='u')bus.targetPy=-G.cellSize*2;
     G.animating=true;
     playSfx('slide');
-    setTimeout(function(){playSfx('exit');spawnParticles(bus);},200);
+    G._pendingTimeouts.push(setTimeout(function(){playSfx('exit');spawnParticles(bus);},200));
     G.comboCount++;G.comboTimer=60;
     if(G.comboCount>1)showCombo(bus);
     updateHUD();
@@ -627,7 +635,7 @@ function checkDeadlock(){
   var remaining=G.buses.filter(function(b){return b.alive;}).length;
   if(remaining>0&&!canAnyBusMove()&&G.undoLeft===0){
     // Stuck with no undos - show fail
-    setTimeout(function(){showFail();},500);
+    G._pendingTimeouts.push(setTimeout(function(){showFail();},500));
   }
 }
 function onLevelComplete(){
@@ -649,8 +657,8 @@ function onLevelComplete(){
   if(G.levelIdx+2>save.unlocked&&G.levelIdx+1<LEVELS.length)save.unlocked=G.levelIdx+2;
   saveSave(save);
   updateCoinDisplay();
-  // Show overlay
-  setTimeout(function(){
+  // Show overlay — UX-OPT 2026-07-19 INP FIX: tracked setTimeout (cancelled on next level load)
+  var _t1=setTimeout(function(){
     var ov=document.getElementById('win-overlay');
     document.getElementById('win-coins').textContent=coinReward;
     var starEls=ov.querySelectorAll('.star');
@@ -658,7 +666,8 @@ function onLevelComplete(){
       el.classList.remove('earned');
       var s=parseInt(el.dataset.s);
       if(s<=stars){
-        setTimeout(function(){el.classList.add('earned');playSfx('star');},s*200);
+        var _t2=setTimeout(function(){el.classList.add('earned');playSfx('star');},s*200);
+        G._pendingTimeouts.push(_t2);
       }
     });
     // Next button visibility
@@ -666,6 +675,7 @@ function onLevelComplete(){
     ov.classList.add('active');
     stopBGM();
   },800);
+  G._pendingTimeouts.push(_t1);
 }
 function showFail(){
   playSfx('fail');
@@ -705,7 +715,7 @@ function showCombo(bus){
   el.style.left=(G.canvas.offsetLeft+cx)+'px';
   el.style.top=(G.canvas.offsetTop+cy)+'px';
   document.body.appendChild(el);
-  setTimeout(function(){el.remove();},1000);
+  G._pendingTimeouts.push(setTimeout(function(){el.remove();},1000));
 }
 
 // ============ RENDERING ============
@@ -1005,14 +1015,46 @@ function hideLevelSelect(){
   document.getElementById('level-select').classList.remove('active');
 }
 
-// ============ GAME LOOP ============
+// ============ GAME LOOP — UX-OPT 2026-07-19 INP FIX ============
+// Adaptive rAF: at 60fps when animating, drop to ~10fps via setTimeout when fully
+// idle. This frees the main thread to respond to user clicks fast (INP was 336ms
+// avg, 62% bad, because the 60fps loop was blocking the click handler queue).
+// resumeLoop() wakes the loop back to 60fps whenever there's something to render.
+var _gzIdleTickHandle=null;
+function isFullyIdle(){
+  if(G.animating)return false;
+  if(G.screenShake>0)return false;
+  if(G.hintHighlight>=0&&G.hintTimer>0)return false;
+  for(var i=0;i<G.buses.length;i++){
+    var b=G.buses[i];
+    if(!b.alive)continue;
+    if(Math.abs(b.targetPx-b.px)>0.5||Math.abs(b.targetPy-b.py)>0.5)return false;
+  }
+  for(var j=0;j<G.confetti.length;j++){if(G.confetti[j].life>0)return false;}
+  for(var k=0;k<G.particles.length;k++){if(G.particles[k].life>0)return false;}
+  return true;
+}
+function scheduleNextFrame(){
+  if(!G.running)return;
+  if(isFullyIdle()){
+    // Idle: 100ms tick (10fps) — saves CPU, frees main thread for click responses
+    _gzIdleTickHandle=setTimeout(function(){_gzIdleTickHandle=null;gameLoop(performance.now())},100);
+  }else{
+    G.rafId=requestAnimationFrame(gameLoop);
+  }
+}
 function gameLoop(now){
   if(!G.running)return;
   var dt=Math.min((now-G.lastTime)/16.67,3);
   G.lastTime=now;
   update(dt);
   render(dt);
-  G.rafId=requestAnimationFrame(gameLoop);
+  scheduleNextFrame();
+}
+function resumeLoop(){
+  // Called by user-input handlers to immediately wake the loop if it's idling.
+  if(_gzIdleTickHandle){clearTimeout(_gzIdleTickHandle);_gzIdleTickHandle=null;}
+  if(G.running&&!G.rafId){G.lastTime=performance.now();G.rafId=requestAnimationFrame(gameLoop);}
 }
 
 // ============ CLEANUP ============
@@ -1020,6 +1062,7 @@ var cleanups=[];
 function cleanup(){
   G.running=false;
   if(G.rafId)cancelAnimationFrame(G.rafId);
+  if(_gzIdleTickHandle){clearTimeout(_gzIdleTickHandle);_gzIdleTickHandle=null;}
   stopBGM();
   if(actx&&actx.state==='running')actx.suspend();
   cleanups.forEach(function(fn){try{fn();}catch(e){}});
@@ -1032,6 +1075,7 @@ function init(){
   // Canvas events
   G.canvas.addEventListener('pointerdown',function(e){
     e.preventDefault();
+    resumeLoop();
     handleTap(e.clientX,e.clientY);
   });
   // Buttons
@@ -1044,20 +1088,20 @@ function init(){
   });
   // Powerups
   document.getElementById('pu-undo').addEventListener('click',function(){
-    if(!this.classList.contains('disabled'))doUndo();
+    if(!this.classList.contains('disabled')){resumeLoop();doUndo();}
   });
   document.getElementById('pu-hint').addEventListener('click',function(){
-    if(!this.classList.contains('disabled'))doHint();
+    if(!this.classList.contains('disabled')){resumeLoop();doHint();}
   });
   document.getElementById('pu-shuffle').addEventListener('click',function(){
-    if(!this.classList.contains('disabled'))doShuffle();
+    if(!this.classList.contains('disabled')){resumeLoop();doShuffle();}
   });
   // Win overlay
   document.getElementById('btn-win-next').addEventListener('click',function(){
-    startLevel(G.levelIdx+1);
+    resumeLoop();startLevel(G.levelIdx+1);
   });
   document.getElementById('btn-win-replay').addEventListener('click',function(){
-    startLevel(G.levelIdx);
+    resumeLoop();startLevel(G.levelIdx);
   });
   document.getElementById('btn-win-menu').addEventListener('click',function(){
     document.getElementById('win-overlay').classList.remove('active');
@@ -1065,7 +1109,7 @@ function init(){
   });
   // Fail overlay
   document.getElementById('btn-fail-retry').addEventListener('click',function(){
-    startLevel(G.levelIdx);
+    resumeLoop();startLevel(G.levelIdx);
   });
   document.getElementById('btn-fail-menu').addEventListener('click',function(){
     document.getElementById('fail-overlay').classList.remove('active');
