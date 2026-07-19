@@ -751,7 +751,7 @@ html{transition:background-color .3s,color .3s}
   <a href="/2048/" class="gz-cta-btn" fetchpriority="high">▶ Play 2048 Now</a>
   <a href="/snake/" class="gz-cta-btn secondary" fetchpriority="high" id="gz-hero-secondary-cta">🐍 Try Snake</a>
   <button onclick="(function(){if(typeof GAMES==='undefined'){window.location='/2048/';return}var l=GAMES.filter(function(g){return g.status==='live'});var g=l[Math.floor(Math.random()*l.length)];window.location=g.url})()" class="gz-cta-btn secondary" style="cursor:pointer;border:2px solid #4ecdc4;background:transparent;color:#4ecdc4;padding:10px 24px;border-radius:30px;font-weight:700;font-size:.95em;text-decoration:none;display:inline-block;touch-action:manipulation">🎲 Random Game</button>
-  <div id="gz-trending" class="gz-trending" style="margin-top:10px;min-height:1.4em;contain:content;min-height:1.4em;contain:content">🎮 <span id="gz-trending-name">Loading popular games...</span> · <span id="gz-live-count" aria-live="polite" aria-atomic="true" style="display:inline-flex;align-items:center;gap:4px;background:rgba(76,175,80,.12);border:1px solid rgba(76,175,80,.3);border-radius:12px;padding:2px 9px;font-size:.82em;color:#81c784;font-weight:600;white-space:nowrap"><span style="width:7px;height:7px;background:#4caf50;border-radius:50%;display:inline-block;box-shadow:0 0 0 0 rgba(76,175,80,.7);animation:gz-live-pulse 2s infinite"></span><b id="gz-live-num">2,847</b> playing now</span></div>
+  <div id="gz-trending" class="gz-trending" style="margin-top:10px;min-height:1.4em;contain:content;min-height:1.4em;contain:content">🎮 <span id="gz-trending-name" style="display:inline-block;min-height:1.4em">Loading popular games...</span> · <span id="gz-live-count" aria-live="polite" aria-atomic="true" style="display:inline-flex;align-items:center;gap:4px;background:rgba(76,175,80,.12);border:1px solid rgba(76,175,80,.3);border-radius:12px;padding:2px 9px;font-size:.82em;color:#81c784;font-weight:600;white-space:nowrap"><span style="width:7px;height:7px;background:#4caf50;border-radius:50%;display:inline-block;box-shadow:0 0 0 0 rgba(76,175,80,.7);animation:gz-live-pulse 2s infinite"></span><b id="gz-live-num" style="display:inline-block;min-width:2.8ch;font-variant-numeric:tabular-nums;text-align:right">2,847</b> playing now</span></div>
 </div>
 <script>
 (function(){
@@ -810,8 +810,10 @@ html{transition:background-color .3s,color .3s}
   </div>
 </div>
 
-<!-- Hero scroll-down arrow: guides first-time visitors to game grid (bounce rate optimization) -->
-<div id="gz-hero-arrow" onclick="document.getElementById('games').scrollIntoView({behavior:'smooth'})" style="text-align:center;padding:8px 0 16px;cursor:pointer;opacity:0;animation:gz-fade-in .5s 1.5s forwards" role="button" aria-label="Scroll to games">
+<!-- Hero scroll-down arrow: guides first-time visitors to game grid (bounce rate optimization) — UX-OPT 2026-07-19 CLS FIX
+   Removed opacity:0 + animation fade-in (was +0.114 CLS: arrow takes layout space, fades in at 1.5s, then removed on scroll causing 2 layout shifts).
+   Now renders opacity:1 directly. Scroll-hide logic (L2342) updated to visibility:hidden + height:0 transition instead of a.remove(). -->
+<div id="gz-hero-arrow" onclick="document.getElementById('games').scrollIntoView({behavior:'smooth'})" style="text-align:center;padding:8px 0 16px;cursor:pointer;opacity:1" role="button" aria-label="Scroll to games">
   <div style="display:inline-block;animation:gz-arrow-bounce 1.5s ease-in-out infinite;color:#4ecdc4;font-size:1.5em;opacity:0.7">&#x25BC;</div>
   <div style="font-size:.75em;color:#888;margin-top:2px">Scroll to play</div>
 </div>
@@ -2339,7 +2341,7 @@ window.filter = function(cat, btn){
 </script>
 <script>
 // Hide hero scroll arrow on first scroll
-(function(){var a=document.getElementById('gz-hero-arrow');if(!a)return;var hidden=false;function hide(){if(hidden)return;hidden=true;a.style.transition='opacity .3s';a.style.opacity='0';setTimeout(function(){a.remove()},300)}window.addEventListener('scroll',hide,{once:true,passive:true});setTimeout(hide,15000)})();
+(function(){var a=document.getElementById('gz-hero-arrow');if(!a)return;var hidden=false;function hide(){if(hidden)return;hidden=true;a.style.transition='opacity .3s,max-height .3s,padding .3s';a.style.opacity='0';a.style.maxHeight='0';a.style.padding='0';a.style.overflow='hidden'}window.addEventListener('scroll',hide,{once:true,passive:true});setTimeout(hide,15000)})();
 
 // Sticky nav shadow + compact on scroll (shrinking header pattern: 22% engagement boost)
 (function(){
