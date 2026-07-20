@@ -260,7 +260,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a1a;color:#fff;min-height:100vh;height:100dvh;-webkit-overflow-scrolling:touch;text-rendering:optimizeLegibility;overscroll-behavior-y:contain;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom);font-variant-numeric:tabular-nums;background-color:color-mix(in srgb,#0a0a1a 95%,#1a1a3e);color-scheme:dark light}@supports not (background:color-mix(in srgb,red,blue)){body{background-color:#0a0a1a}}h1,h2,h3{text-wrap:balance}p{text-wrap:pretty}h1[style*="text-align:center"],.header p{text-wrap:balance}@supports(font-optical-sizing:auto){body{font-optical-sizing:auto}}a{text-underline-offset:2px;text-decoration-thickness:.08em;text-decoration-skip-ink:auto}@media(min-width:769px){.header p,h1+p{punctuation-trim:trim-both;hanging-punctuation:first allow-end}}@media(prefers-reduced-motion:reduce){h1,h2,h3,p{text-wrap:auto}}
 .header{text-align:center;padding:40px 20px 20px;background:linear-gradient(135deg,#1a1a3e,#2d1b69)}
-.header h1{font-size:2.5em;background:linear-gradient(90deg,#ff6b6b,#ffd93d,#6bcf7f,#4ecdc4,#45b7d1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;min-height:1.2em;contain:layout style}
+.header h1{font-size:clamp(1.25em,3vw,1.9em);background:linear-gradient(90deg,#ff6b6b,#ffd93d,#6bcf7f,#4ecdc4,#45b7d1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;min-height:1.2em;contain:layout style;padding:0 8px;word-break:normal;overflow-wrap:break-word;max-width:100%;text-wrap:balance;letter-spacing:-0.01em;hyphens:none}
 /* UX-OPT 2026-06-05 20h: removed will-change:background-position on H1 (latent GPU layer, no animation attached). Kept contain:layout style for real LCP benefit. 2026 web.dev: only use will-change for properties actually animating. */
 .header h1{text-rendering:optimizeSpeed;font-synthesis:weight style}
 .header p{color:#aaa;margin-top:8px;font-size:1.1em}
@@ -347,7 +347,7 @@ body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
 .footer{text-align:center;padding:40px 20px;color:#888;border-top:1px solid #1a1a2e;margin-top:40px}
 .footer a{color:#4ecdc4;text-decoration:none}
-.stats{display:flex;gap:30px;justify-content:center;padding:10px;color:#888;font-size:0.9em}
+.stats{display:flex;gap:14px 24px;justify-content:center;padding:10px;color:#888;font-size:0.9em;flex-wrap:wrap;max-width:1100px;margin:0 auto}
 /* Skeleton loading styles */
 .gz-skeleton{background:linear-gradient(90deg,#1a1a2e 25%,#251547 50%,#1a1a2e 75%);background-size:200% 100%;animation:gz-shimmer 1.5s infinite;border-radius:12px;min-height:165px}
 @keyframes gz-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}
@@ -775,6 +775,62 @@ html{transition:background-color .3s,color .3s}
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
 <meta content="ca-pub-8346383990981353" name="google-adsense-platform-account">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
+<!-- UX-FIX 2026-07-20: Auto-Ads collapse empty iframes + adblocker sentinel so the white-rectangle hole disappears when AdSense is blocked / slow -->
+<style>
+/* Auto-Ads injected <ins> containers default to ~280px min-height and white BG.
+   When AdSense is unavailable (adblocker / offline / not yet approved) the
+   injected iframe never fills, leaving a huge white rectangle in mid-page.
+   Solution: collapse the placeholder once we detect AdSense never resolved,
+   plus cap empty <ins> height so even un-blocked slow loads don't dominate. */
+ins.adsbygoogle[data-ad-status="unfilled"],
+ins.adsbygoogle[data-ad-status="filled"]+ins.adsbygoogle:empty{min-height:0!important;max-height:0!important;display:none!important}
+ins.adsbygoogle{min-height:0;max-height:280px;background:transparent}
+/* AdSense Auto Ads inserts iframes that may end up empty (white) — kill them */
+iframe[id^="aswift_"]:not([src]),iframe[id^="aswift_"][style*="visibility: hidden"]{display:none!important;height:0!important;min-height:0!important}
+.gz-ads-collapsed{display:none!important}
+</style>
+<script>
+/* Adblocker sentinel: bait element pattern from Anti-Adblock Killer research.
+   If AdSense script never loads (blocked) or Auto Ads inserts a placeholder
+   that stays empty, collapse the placeholder within 3s so the white hole disappears. */
+(function(){
+  var bait=document.createElement('div');
+  bait.className='ad adsbox ad-placement carbon-ads';
+  bait.style.cssText='position:absolute;left:-9999px;width:1px;height:1px;visibility:hidden;pointer-events:none';
+  bait.setAttribute('aria-hidden','true');
+  document.body.appendChild(bait);
+  function adsBlocked(){
+    if(typeof window.adsbygoogle==='undefined')return true;
+    return bait.offsetHeight===0;
+  }
+  function collapseAutoAds(){
+    /* Walk all <ins class="adsbygoogle"> injected by Auto Ads; if any are empty
+       (no iframe child OR ad-status unfilled) hide them. Also kill any
+       standalone aswift iframes that are empty placeholders. */
+    var ins=document.querySelectorAll('ins.adsbygoogle');
+    ins.forEach(function(el){
+      var status=el.getAttribute('data-ad-status');
+      var hasContent=el.querySelector('iframe');
+      if(status==='unfilled'||(status===null&&!hasContent)){
+        el.classList.add('gz-ads-collapsed');
+      }
+    });
+    document.querySelectorAll('iframe[id^="aswift_"]').forEach(function(f){
+      if(!f.src||f.style.visibility==='hidden')f.remove();
+    });
+  }
+  /* Initial pass after Auto Ads settles (typical 1-2s); safety net at 4s */
+  setTimeout(collapseAutoAds,1500);
+  setTimeout(collapseAutoAds,3500);
+  /* Observe DOM for late Auto Ads injection */
+  if(window.MutationObserver){
+    var mo=new MutationObserver(function(){collapseAutoAds()});
+    mo.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['data-ad-status','style']});
+    setTimeout(function(){mo.disconnect()},8000);
+  }
+  if(adsBlocked())document.documentElement.setAttribute('data-gz-ads','blocked');
+})();
+</script>
 </head>
 <body>
 <div class="gz-scroll-progress" id="gz-scroll-progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Page scroll progress"></div>
@@ -782,7 +838,7 @@ html{transition:background-color .3s,color .3s}
 <a href="#games" class="gz-skip-link">Skip to games</a>
 <nav aria-label="Breadcrumb" style="max-width:1200px;margin:0 auto;padding:8px 20px;font-size:0.85em"><a href="/" style="color:#4ecdc4;text-decoration:none" aria-current="page">🏠 Home</a></nav>
 
-<div id="gz-welcome-back" style="max-width:1200px;margin:0 auto;padding:0 20px;display:none"><div style="background:linear-gradient(135deg,#2a1a3a,#1a2a3a);border:1px solid #4ecdc4;border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-size:1.2em">👋</span><span style="color:#e0e0e0;font-size:.9em" id="gz-wb-text">Welcome back!</span><a href="#" id="gz-wb-link" style="padding:6px 16px;background:linear-gradient(135deg,#4ecdc4,#45b7d1);color:#000;font-weight:700;border-radius:20px;text-decoration:none;font-size:.85em;display:none">Play Now →</a><button onclick="this.parentElement.parentElement.style.display='none'" style="margin-left:auto;background:none;border:none;color:#888;cursor:pointer;font-size:1.2em;padding:4px">×</button></div></div>
+<div id="gz-welcome-back" style="max-width:1200px;margin:12px auto;padding:0 20px;display:none"><div style="background:linear-gradient(135deg,#2a1a3a,#1a2a3a);border:1px solid #4ecdc4;border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-size:1.2em;flex-shrink:0">👋</span><span style="color:#e0e0e0;font-size:.9em;flex:1 1 200px;min-width:0;word-break:break-word" id="gz-wb-text">Welcome back!</span><a href="#" id="gz-wb-link" style="padding:6px 16px;background:linear-gradient(135deg,#4ecdc4,#45b7d1);color:#000;font-weight:700;border-radius:20px;text-decoration:none;font-size:.85em;display:none;white-space:nowrap;flex-shrink:0">Play Now →</a><button onclick="this.parentElement.parentElement.style.display='none'" aria-label="Dismiss" style="margin-left:auto;background:none;border:none;color:#888;cursor:pointer;font-size:1.2em;padding:4px;flex-shrink:0;min-height:28px;min-width:28px">×</button></div></div>
 <div class="header">
 <h1 fetchpriority="high">Free Online Games — 533 Games, No Download | ⚡ GameZipper</h1>
 <p id="gz-time-greeting" style="color:#4ecdc4;font-size:0.95em;margin:-4px 0 8px;min-height:1.4em;opacity:0.9"></p>
@@ -858,7 +914,7 @@ html{transition:background-color .3s,color .3s}
   <a href="/2048/" class="gz-cta-btn" fetchpriority="high">▶ Play 2048 Now</a>
   <a href="/snake/" class="gz-cta-btn secondary" fetchpriority="high" id="gz-hero-secondary-cta">🐍 Try Snake</a>
   <button onclick="(function(){if(typeof GAMES==='undefined'){window.location='/2048/';return}var l=GAMES.filter(function(g){return g.status==='live'});var g=l[Math.floor(Math.random()*l.length)];window.location=g.url})()" class="gz-cta-btn secondary" style="cursor:pointer;border:2px solid #4ecdc4;background:transparent;color:#4ecdc4;padding:10px 24px;border-radius:30px;font-weight:700;font-size:.95em;text-decoration:none;display:inline-block;touch-action:manipulation">🎲 Random Game</button>
-  <div id="gz-trending" class="gz-trending" style="margin-top:10px;min-height:1.4em;contain:content;flex-basis:100%;align-self:center;justify-content:center;min-height:46px;contain:content">🎮 <span id="gz-trending-name" style="display:inline-block;min-height:1.4em">Loading popular games...</span> · <span id="gz-live-count" aria-live="polite" aria-atomic="true" style="display:inline-flex;align-items:center;gap:4px;background:rgba(76,175,80,.12);border:1px solid rgba(76,175,80,.3);border-radius:12px;padding:2px 9px;font-size:.82em;color:#81c784;font-weight:600;white-space:nowrap"><span style="width:7px;height:7px;background:#4caf50;border-radius:50%;display:inline-block;box-shadow:0 0 0 0 rgba(76,175,80,.7);animation:gz-live-pulse 2s infinite"></span><b id="gz-live-num" style="display:inline-block;min-width:2.8ch;font-variant-numeric:tabular-nums;text-align:right">2,847</b> playing now</span></div>
+  <div id="gz-trending" class="gz-trending" style="margin-top:10px;min-height:46px;contain:content;flex-basis:100%;align-self:center;justify-content:center">🎮 <span id="gz-trending-name" style="display:inline-block;min-height:1.4em">Loading popular games...</span> · <span id="gz-live-count" aria-live="polite" aria-atomic="true" style="display:inline-flex;align-items:center;gap:4px;background:rgba(76,175,80,.12);border:1px solid rgba(76,175,80,.3);border-radius:12px;padding:2px 9px;font-size:.82em;color:#81c784;font-weight:600;white-space:nowrap"><span style="width:7px;height:7px;background:#4caf50;border-radius:50%;display:inline-block;box-shadow:0 0 0 0 rgba(76,175,80,.7);animation:gz-live-pulse 2s infinite"></span><b id="gz-live-num" style="display:inline-block;min-width:2.8ch;font-variant-numeric:tabular-nums;text-align:right">2,847</b> playing now</span></div>
 </div>
 <script>
 (function(){
@@ -2004,7 +2060,7 @@ function gzUpdateShowMoreBtn(){var w=document.getElementById('gz-show-more-wrap'
   if(msg){txt.textContent=msg;el.style.display='block'}
 })();
 </script>
-<script src="/gz-analytics.js?v=202607206c969de14" defer fetchpriority="low" crossorigin></script>
+<script src="/gz-analytics.js?v=20260720687472bf7" defer fetchpriority="low" crossorigin></script>
 
 <!-- Web Vitals RUM: LCP/CLS/INP/TTFB → analytics beacon -->
 <!-- 2026-06-07 20h P1 fix: restore IIFE wrap + s() definition (lost in e6f9cf35 dead-code cleanup) -->
