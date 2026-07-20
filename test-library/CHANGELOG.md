@@ -1,4 +1,34 @@
-## [v1.198.0] - 2026-07-18
+## [v1.199.0] - 2026-07-20
+### Added
+- 8 new machine-verifiable test cases from R316 industry research (4h cycle 78)
+- S-451 [P0] CVE-2026-1281 Ivanti Endpoint Manager Mobile (EPMM) Critical Zero-Day Unauthenticated RCE — Active In-The-Wild Exploitation, CVSS ~9.8 — Managed-mobile-device posture check + outbound host allowlist + token rotation
+- S-452 [P1] iOS 26.1 WebKit Memory-Corruption Cluster — WKWebView Game Content Rendering Surface Compromise — Apple iOS 26.1 (Jun 26 2026) patched multiple WebKit memory-corruption CVEs reachable from any embedded WKWebView; legacy iOS 15-25 traffic stays vulnerable
+- S-453 [P1] DarkSword Full-Chain iOS 17.0 – 26.0.1 Exploit Kit (Disclosed Mar 2026) — Six-CVE WebKit-to-Kernel Chain Catalogs WebKit Attack Economics — First publicly catalogued commercial-grade iOS full-chain exploit kit
+- W-383 [P1] Chrome 150 Stable Google Wallet Autofill for Government-ID PII — Passport / Driver License / Known Traveler Number Now Auto-Fillable (Jun 24 2026) — Form must defensively strip PII-shaped values from any submit
+- P-175 [P1] Chrome 151 V8 12.4 Microtask-Starvation Under Game-Loops with Continuous `MessageChannel.postMessage` — Frame Jitter for Real-Time Casual Games — Chrome 151 (Jul 7 2026) ships V8 12.4 with AI-predicted GC; rAF loops with postMessage inter-frame work see P95 frame interval 30-80 ms (exceeds 200 ms INP "good" budget)
+- B-223 [P2] iOS WebView `-webkit-overflow-scrolling: touch` Touch-White-Screen Regression — `Retina 1:2` Layer Backing-Store Pressure Causes Visible Blank Canvas After Tap — persistent iOS 26.x issue; first tap on lower-fold canvas re-tiles backing store at 1:2, triggers ~500 ms white screen
+- G-197 [P2] WebGPU Fingerprint-Defender Extension Arms-Race — Game Anti-Cheat False-Positives on Privacy-Enhancing Browser Configurations — WebGPU fingerprint-defender extensions (WebGPU Fingerprint Defender, CanvasBlocker 4.x, Brave anti-fingerprinting) generate non-deterministic GPU adapter strings + varying canvas-pixel hashes per session
+- C-217 [P3] Chrome Manifest V3 Stable Web Game Ad-Blocker Detection Degradation — `declarativeNetRequest` Drops Game Served Ads in a "User-Configurable" Way — Casual users running uBlock Origin / AdBlock Plus with default filter lists now consistently block GameZipper's Monetag/Adsterra ad iframes even when the game page itself is allowed
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-20, cycle 78):
+  - "HTML5 game testing 2026 new techniques browser canvas WebGL"
+  - "browser security CVE vulnerability July 2026 Chrome Safari Firefox zero-day patch"
+  - "Chrome 151 152 stable release notes 2026 new feature web API deprecated"
+  - "casual mobile web game 2026 UX complaint accessibility dark mode haptic loading"
+  - "web game performance LCP INP Core Web Vitals 2026 optimization mobile"
+  - "CVE-2026 Chrome July V8 zero-day GPU WebGPU 0day actively exploited"
+  - "iOS 26 Safari WebKit bug game canvas touch input 2026"
+  - "Chromium ad blocker Manifest V3 web game 2026 monetization"
+  - "WebGPU 2026 browser support canvas game Chrome Safari Firefox performance bug"
+- Key URLs:
+  - https://blog.csdn.net/zhengfei611/article/details/157618322 (Jul 18 2026, CVE-2026-1281 Ivanti EPMM RCE 9.8 - S-451)
+  - https://blog.csdn.net/ai_longyu/article/details/83888328 (Jun 26 2026, iOS 26.1 WebKit memory-corruption cluster - S-452)
+  - https://blog.csdn.net/gitblog_00553/article/details/162028330 (Jun 16 2026, DarkSword full-chain iOS 17-26.0.1 exploit - S-453)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_7246a3b412948452 (Jun 24 2026, Chrome 150 Google Wallet autofill passport/ID - W-383)
+  - https://www.onlinedown.net/soft/1113489.htm (Jul 7 2026, Chrome 151 stable V8 12.4 - P-175)
+  - https://www.poorren.com/ios-webview-white-screen-bug-fixes (persistent iOS WebView overflow-scrolling white-screen - B-223)
+  - https://www.crx4chrome.com/extensions/kadocklfjjaaekpjhmpbkbjkhloacing/ (May 31 2026, WebGPU Fingerprint Defender extension - G-197)
+  - https://zhuanlan.zhihu.com/p/451197423 + https://www.163.com/dy/article/IJOQFB700526D8LR.html (2026, Chrome Manifest V3 stable enforcement + ad-blocker impact - C-217)## [v1.198.0] - 2026-07-18
 ### Added
 - 9 new machine-verifiable test cases from R315 industry research (4h cycle 77)
 - W-380 [P1] Chrome 150 `focusgroup` declarative arrow-key navigation — verify single tab stop, complete arrow traversal, wrap behavior, disabled-control skipping, last-focus memory, and fallback
