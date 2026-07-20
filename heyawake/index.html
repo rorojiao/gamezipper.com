@@ -263,7 +263,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 'use strict';
 
 var SAVE_KEY="heyawakeV1";
-var CACHE_KEY="heyawakeCacheV3";
+var CACHE_KEY="heyawakeCacheV4";
 var DIRS=[[-1,0],[1,0],[0,-1],[0,1]];
 var TUT_STEPS=[
 {title:"Welcome to Heyawake",text:"Heyawake (Dividing the Rooms) is a Japanese logic puzzle by Nikoli. The grid is split into rectangular rooms. Some rooms have a small number. Your job is to shade cells black inside those rooms until every rule is satisfied.",diagram:[["tw-room","tw-num","tw-room"],["tw","tw-blk","tw"],["tw-room","tw","tw-room"]]},
@@ -394,7 +394,8 @@ function generatePuzzle(seed,rows,cols,tier){
   var total=rows*cols;
   for(var attempt=0;attempt<maxAttempts;attempt++){
     var rooms=generateRooms(rng,rows,cols,2,2);
-    if(rooms.length<3)continue;
+    // FIX (2026-07-21 cron R-tick): allow 2+ room layouts (was <3, forced fallback 100% of time on small grids)
+    if(rooms.length<2)continue;
     var targetBlackFrac=tier===1?0.10:(tier===2?0.13:(tier===3?0.14:(tier===4?0.15:0.16)));
     var targetBlack=Math.max(2,Math.floor(total*targetBlackFrac+rng()*total*0.04));
     var targets=rooms.map(function(){return 0;});
@@ -441,17 +442,30 @@ function generateOneLevel(tier,i){
     var simple=generatePuzzle(tier.seedBase*13+i*17+777,tier.size,tier.size,Math.max(1,tier.tier-1));
     p=simple;
   }
-  // FIX (2026-07-19 R-tick): when solver fails, produce a guaranteed-valid minimal puzzle
-  // instead of an empty fallback. Place black cells in a checkerboard pattern that satisfies
-  // the no-touch rule (Heyawake constraint #3) and at least 1 room has black cells.
+  // FIX (2026-07-21 cron R-tick): fallback must produce MULTI-ROOM puzzle (was single-room
+  // which defeated the run-of-3-crosses-boundary rule). Split grid into 2 vertical or
+  // horizontal strips (depending on grid size) for a guaranteed multi-room layout, then
+  // place black cells in a checkerboard pattern that respects the no-touch rule.
   if(!p){
     var n=tier.size;
-    var fbS=Array(n*n+1).join("0");
-    var fbRooms="0,0,"+(n-1)+","+(n-1);
-    var fbN="0,0,1"; // one room, one black cell
-    // Build checkerboard: cells (r+c)%2==0 are black
+    // Choose split direction: vertical (left+right) for taller-than-wide, horizontal (top+bottom) otherwise
+    var useVert = n >= 6;
+    var half = useVert ? Math.floor(n/2) : Math.max(2, Math.floor(n/2));
+    var fbRooms;
+    if (useVert) {
+      fbRooms = [
+        [0, 0, n-1, half-1],
+        [0, half, n-1, n-1]
+      ].map(function(rm){return rm.join(",");}).join(";");
+    } else {
+      fbRooms = [
+        [0, 0, half-1, n-1],
+        [half, 0, n-1, n-1]
+      ].map(function(rm){return rm.join(",");}).join(";");
+    }
     var sArr=[];
     var blackCount=0;
+    // Build checkerboard across whole grid (respects no-touch rule)
     for(var rr=0;rr<n;rr++){
       for(var cc=0;cc<n;cc++){
         if((rr+cc)%2===0 && blackCount<Math.max(2,Math.floor(n*n*0.15))){
@@ -459,8 +473,27 @@ function generateOneLevel(tier,i){
         } else sArr.push("0");
       }
     }
-    fbS=sArr.join("");
-    fbN="0,0,"+Math.min(blackCount,3);
+    var fbS=sArr.join("");
+    // Place one clue per room: pick first white cell in each room with blackCount > 0
+    var clueParts=[];
+    var rmList = useVert
+      ? [[0, 0, n-1, half-1], [0, half, n-1, n-1]]
+      : [[0, 0, half-1, n-1], [half, 0, n-1, n-1]];
+    for(var ri=0;ri<rmList.length;ri++){
+      var rm=rmList[ri];
+      var blackHere=0;
+      var firstWhite=null;
+      for(var rrr=rm[0];rrr<=rm[2];rrr++){
+        for(var ccc=rm[1];ccc<=rm[3];ccc++){
+          if(sArr[rrr*n+ccc]==="1") blackHere++;
+          else if(firstWhite===null) firstWhite=[rrr,ccc];
+        }
+      }
+      if(blackHere>0 && firstWhite){
+        clueParts.push(firstWhite[0]+","+firstWhite[1]+","+blackHere);
+      }
+    }
+    var fbN=clueParts.join(";");
     p={r:n,c:n,s:fbS,rooms:fbRooms,n:fbN,p:60+tier.tier*30};
   }
   return p;
