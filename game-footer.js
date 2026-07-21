@@ -72,7 +72,6 @@
      {n:'Magic Sort',e:'✨',u:'/magic-sort/',c:'puzzle'},
      {n:'T-Rex',e:'🦖',u:'/t-rex/',c:'arcade'},
      {n:'Bubble Pop',e:'🫧',u:'/bubble-pop/',c:'puzzle'},
-     {n:'Pixel Logic',e:'🧩',u:'/pixel-logic/',c:'puzzle'},
      {n:'Tile Dynasty',e:'🏮',u:'/tile-dynasty/',c:'puzzle'},
      {n:'Arrow Escape',e:'🚀',u:'/arrow-escape/',c:'puzzle'},
      {n:'Bubble Shooter',e:'🫧',u:'/bubble-shooter/',c:'puzzle'},
