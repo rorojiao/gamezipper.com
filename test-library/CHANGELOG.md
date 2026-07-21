@@ -1,3 +1,37 @@
+## [v1.200.0] - 2026-07-21
+### Added
+- 9 new machine-verifiable test cases from R317 industry research (4h cycle 79)
+- W-384 [P2] Chrome 153+ 2-Week Release Cadence Starts Sep 2026 — Defends Against ~$0.4/wk Per-7-Day Patch-Lag — Cadence halves from 4 weeks; 4h cron necessity scales linearly with release cadence
+- W-385 [P2] Chrome 152 Stable V8 12.4 Long-Session GC Frame Stalls — rAF-Heavy Games Must Preallocate WebAssembly Memory Pools — 30-minute loop without preallocation shows ≥ 3 P95 spikes > 50 ms vs. ≤ 16.7 ms with `WebAssembly.Memory({initial: 256})`
+- S-454 [P1] Safari 26 GA Tracking-Param Stripping in REGULAR Mode — gclid/fbclid/msclkid/mc_eid/utm_* Silently Removed (Effective Jul 15 2026) — ~20% Safari traffic loses Google/Microsoft/affiliate attribution; server-side UTM fallback required
+- S-455 [P1] Safari 26 Known-Script Active Fingerprinting Prevention — Canvas/WebGL/Audio Noise Breaks FingerprintJS, reCAPTCHA Enterprise, and Custom Analytics — `canvas.toDataURL()` hash drifts ≥ 2 across 5 reloads; session-binding must use cookies not fingerprint
+- S-456 [P2] DarkSword Full-Chain iOS 17.0 – 26.0.1 Exploit Kit (Disclosed Mar 2026) — WebKit Font-Loader Trust Gap & postMessage Origin Validation — First catalogued commercial iOS full-chain; chains 6 CVEs across WebKit→Renderer→Kernel
+- P-176 [P2] WebGPU 2.0 + V8 12.4 Perf-Characteristic Shift Risks Timing/Game Regression in Chrome 152 — ~30% faster load, ~25% less memory, but non-backward-compatible timing; hitbox timing ≤ ±1ms between Chrome 151/152
+- B-224 [P2] Firefox 152 StartGamepadMonitoring() ↔ AddGamepad() Mutex Deadlock Freezes All Connected Gamepads — Re-Entrance Bug 1660660; hot-plug 3× in 10s, fallback ≤ 100ms when getGamepads returns empty for ≥ 200ms
+- C-218 [P2] iOS 26 Liquid Glass Transparency Reduces In-Game HUD Contrast on Light Backgrounds — color-contrast ≥ 4.5:1 required, text-shadow outline required, high-contrast theme ≥ 7:1 fallback
+- C-219 [P3] Chrome 153+ HTTP Default-Warning Adoption Risks Ad-Creative Silent Blocking — All ad-creative/impression pixels must be HTTPS, no Mixed-Content warnings, fill-rate ≥ 99% post-flag
+### Sources
+- mcp__minimax_search__web_search queries (2026-07-21, cycle 79):
+  - "HTML5 game testing 2026 new techniques browser canvas WebGL"
+  - "browser game bug report 2026 casual web game"
+  - "Chrome Edge Safari update 2026 July new feature deprecated"
+  - "casual mobile game UX complaint 2026 accessibility haptic loading"
+  - "mobile game performance issue 2026 INP LCP CLS"
+  - "browser security CVE vulnerability July 2026 Chrome Safari Firefox zero-day patch"
+  - "WebGPU 2026 browser support canvas game Chrome Safari Firefox performance bug"
+  - "Chrome 152 153 154 stable release notes 2026 new feature deprecated"
+  - "iOS 26 Safari WebKit bug game canvas touch input 2026"
+  - "Chromium ad blocker Manifest V3 web game 2026 monetization"
+  - "CVE-2026 Chrome July V8 zero-day GPU WebGPU 0day actively exploited"
+- Key URLs:
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_64169a790a846552 (Mar 3 2026, Chrome 153+ 2-week cadence announcement - W-384)
+  - https://www.onlinedown.net/soft/1114433.htm (Jun 17 2026, Chrome 152 V8 12.4 + WASM 2.0 release notes - W-385)
+  - https://cloud.tencent.com/developer/article/2637644 (Jul 15 2026, Safari 26 GA tracking-param + active fingerprint prevention - S-454, S-455)
+  - https://blog.csdn.net/gitblog_00553/article/details/162028330 (Mar 2026, DarkSword iOS 17-26.0.1 6-CVE full-chain - S-456)
+  - https://www.ppzy.com/app/49612.html (2026, Chrome 138+ WebGPU 2.0 + V8 new engine - P-176)
+  - https://github.com/mozilla/gecko-dev/commit/55361bf402090388f0d4800d9289bf635c34e5b4 (Jul 9 2025, bug 1660660 Firefox gamepad mutex deadlock - B-224)
+  - https://www.tenorshare.tw/ios-update-problems.html (Jun 8 2026, iOS 26 Liquid Glass transparency - C-218)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_163690194b743552 (Oct 29 2025, Chrome 154 Always Use Secure Connections default-on Oct 2026 - C-219)
 ## [v1.199.0] - 2026-07-20
 ### Added
 - 8 new machine-verifiable test cases from R316 industry research (4h cycle 78)
