@@ -1036,6 +1036,16 @@ function gameLoop(timestamp){
   state.animFrame=requestAnimationFrame(gameLoop);
 }
 
+window.__marbleRunQA={
+  get state(){return state},
+  get levels(){return LEVELS},
+  startLevel:startLevel,
+  levelComplete:levelComplete,
+  resetLevel:resetLevel,
+  undoLast:undoLast,
+  selectPiece:selectPiece
+};
+
 // ============ UI ============
 function showScreen(name){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
@@ -1218,7 +1228,8 @@ function undoLast(){
   if(state.simulating)return;
   if(state.undoStack.length===0)return;
   var last=state.undoStack.pop();
-  state.grid[last.r][last.c]=null;
+  state.grid[last.r][last.c]=last.piece;
+  state.piecesUsed+=last.piece?1:-1;
   updateHUD();
   playSound('remove');
 }
@@ -1266,6 +1277,7 @@ canvas.addEventListener('click',function(e){
     if(!existing.fixed){
       state.undoStack.push({r:cell.r,c:cell.c,piece:existing});
       state.grid[cell.r][cell.c]=null;
+      state.piecesUsed--;
       playSound('remove');
     }else if(existing.type===2){
       // Rotate curves
@@ -1273,10 +1285,12 @@ canvas.addEventListener('click',function(e){
       playSound('click');
     }
   }else if(state.selectedPiece>=0){
+    if(state.piecesUsed>=lvl.budget)return;
     // Place piece
     var np={type:state.selectedPiece,rot:0,fixed:false};
     state.grid[cell.r][cell.c]=np;
     state.undoStack.push({r:cell.r,c:cell.c,piece:null});
+    state.piecesUsed++;
     playSound('place');
   }
   updateHUD();
@@ -1297,15 +1311,18 @@ canvas.addEventListener('touchstart',function(e){
     if(!existing.fixed){
       state.undoStack.push({r:cell.r,c:cell.c,piece:existing});
       state.grid[cell.r][cell.c]=null;
+      state.piecesUsed--;
       playSound('remove');
     }else if(existing.type===2){
       existing.rot=(existing.rot+1)%4;
       playSound('click');
     }
   }else if(state.selectedPiece>=0){
+    if(state.piecesUsed>=lvl.budget)return;
     var np={type:state.selectedPiece,rot:0,fixed:false};
     state.grid[cell.r][cell.c]=np;
     state.undoStack.push({r:cell.r,c:cell.c,piece:null});
+    state.piecesUsed++;
     playSound('place');
   }
   updateHUD();
@@ -1374,7 +1391,7 @@ init();
 <script>
 function gzToast(msg,dur){dur=dur||2500;var t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:10000;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center';t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1'});setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove()},300)},dur)}
 </script>
-<script src="/gz-analytics.js?v=202607217b1b6386c" defer></script>
+<script src="/gz-analytics.js?v=20260721757beaaff" defer></script>
 <script src="/adsterra-manager.js?v=v516poponly"></script><script src="/monetag-manager.js?v=v525midgridcull"></script>
 <div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
 <script>
