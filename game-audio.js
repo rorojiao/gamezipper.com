@@ -31,7 +31,6 @@ const GameAudio = (() => {
     'flappy-wings':  '/audio/flappy_cyber.mp3?v=6',
     'whack-a-mole':  '/audio/whack_steam.mp3?v=6',
     'memory-match':  '/audio/memory_circus.mp3?v=6',
-    'idle-clicker':  '/audio/alchemy_magic.mp3?v=6',
   };
 
   // SFX synthesizer (Web Audio API, independent of BGM)

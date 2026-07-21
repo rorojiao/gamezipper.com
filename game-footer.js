@@ -41,7 +41,7 @@
      {n:'Paint Splash',e:'🎨',u:'/paint-splash/',c:'puzzle'},
      {n:'Phantom Blade',e:'⚔️',u:'/phantom-blade/',c:'arcade'},
      {n:'Kitty Cafe',e:'🐱',u:'/kitty-cafe/',c:'puzzle'},
-     {n:'Idle Clicker',e:'👆',u:'/idle-clicker/',c:'idle'},
+     {n:'Idle Clicker',e:'👆',u:'/cookie-clicker/',c:'idle'},
      {n:'Stacker',e:'📦',u:'/stacker/',c:'arcade'},
      {n:'Wood Block',e:'🪵',u:'/wood-block-puzzle/',c:'puzzle'},
      {n:'Bolt Jam 3D',e:'🔩',u:'/bolt-jam-3d/',c:'puzzle'},
