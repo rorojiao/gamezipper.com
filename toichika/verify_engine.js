@@ -9,7 +9,9 @@ const html = fs.readFileSync('index.html', 'utf8');
 // R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
 const extractLevels=require('../.audit/gz-extract-levels.js');
 const LEVELS=extractLevels('toichika');
-let code = m[1];
+// Extract only inline <script> blocks (no src attr, not ld+json) that contain game logic
+const scripts = [...html.matchAll(/<script(?![^>]*src=)(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+const code = scripts.join('\n');
 
 // Stub out DOM/browser APIs the engine touches at load + during our calls.
 const noop = () => {};
