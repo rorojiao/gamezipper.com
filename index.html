@@ -854,17 +854,33 @@ iframe[id^="aswift_"]:not([src]),iframe[id^="aswift_"][style*="visibility: hidde
 <!-- UX-OPT 2026-07-22 R346: Static homepage-ad placeholder. Normally invisible (height 0), but JS inserts a child iframe via Monetag → :has(iframe) sets the height reservation so CLS=0. Without this, monetag-manager.js dynamically creates + inserts an empty div that grows 0→90→285→0 over 4s, driving / CLS to 0.394 (3 large shifts each on .header). Pre-placed static container eliminates the createElement path entirely; the :has() guard avoids ugly empty space before the ad loads. -->
 <div id="gz-home-banner" class="gz-home-banner-placeholder" style="max-width:728px;margin:12px auto 4px;text-align:center;max-height:280px;min-height:0;overflow:hidden;contain:layout paint style;display:flex;align-items:center;justify-content:center;color:#666;font-size:.85em;background:rgba(255,255,255,.02);border:1px dashed transparent;transition:height .2s ease"><span style="font-size:.8em;color:#888" aria-hidden="true"></span></div>
 <style>
-/* UX-OPT 2026-07-22 R346: When ad fills (iframe present) or container gets a JS-set ready class,
-   reserve the 90-120px ad slot so layout doesn't shift. Without :has() or .gz-banner-ready,
-   the box stays at height 0 — visually invisible pre-paint. */
+/* UX-OPT 2026-07-22 R346b: Lock the banner box at 120px from the moment gz-banner-ready
+   class is added (at DOMContentLoaded by monetag-manager init). This is the SINGLE atomic
+   transition — before that, the box is height 0 (invisible). After, it stays 120px regardless
+   of what AdSense/Monetag creatives try to do inside (overflow:hidden on parent + max-height
+   on ins element clip internal growth). Ins/iframe/iframes inside the banner can do whatever
+   they want but the parent bounding box never expands beyond 120px → no CLS downstream. */
 .gz-home-banner-placeholder{height:0}
-#gz-home-banner:has(iframe), #gz-home-banner:has(ins), #gz-home-banner.gz-banner-ready{
-  height:120px;border-color:#333;
+#gz-home-banner.gz-banner-ready,
+#gz-home-banner:has(iframe),
+#gz-home-banner:has(ins){
+  height:120px!important;max-height:120px!important;
+  border-color:#333;
 }
 @media(max-width:600px){
-  #gz-home-banner:has(iframe), #gz-home-banner:has(ins), #gz-home-banner.gz-banner-ready{
-    height:60px;
+  #gz-home-banner.gz-banner-ready,
+  #gz-home-banner:has(iframe),
+  #gz-home-banner:has(ins){
+    height:60px!important;max-height:60px!important;
   }
+}
+/* Internal lock: any <ins> or iframe the ad SDK injects inside the banner must clip
+   and never exceed parent dimensions. */
+#gz-home-banner ins, #gz-home-banner iframe{max-height:120px!important;overflow:hidden!important}
+#gz-home-banner-2 ins, #gz-home-banner-2 iframe{max-height:120px!important;overflow:hidden!important}
+@media(max-width:600px){
+  #gz-home-banner ins, #gz-home-banner iframe{max-height:60px!important}
+  #gz-home-banner-2 ins, #gz-home-banner-2 iframe{max-height:60px!important}
 }
 </style>
 <div id="gz-welcome-back" style="max-width:1200px;margin:12px auto;padding:0 20px;display:none"><div style="background:linear-gradient(135deg,#2a1a3a,#1a2a3a);border:1px solid #4ecdc4;border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-size:1.2em;flex-shrink:0">👋</span><span style="color:#e0e0e0;font-size:.9em;flex:1 1 200px;min-width:0;word-break:break-word" id="gz-wb-text">Welcome back!</span><a href="#" id="gz-wb-link" style="padding:6px 16px;background:linear-gradient(135deg,#4ecdc4,#45b7d1);color:#000;font-weight:700;border-radius:20px;text-decoration:none;font-size:.85em;display:none;white-space:nowrap;flex-shrink:0">Play Now →</a><button onclick="this.parentElement.parentElement.style.display='none'" aria-label="Dismiss" style="margin-left:auto;background:none;border:none;color:#888;cursor:pointer;font-size:1.2em;padding:4px;flex-shrink:0;min-height:28px;min-width:28px">×</button></div></div>
@@ -1135,12 +1151,17 @@ iframe[id^="aswift_"]:not([src]),iframe[id^="aswift_"][style*="visibility: hidde
 <!-- UX-OPT 2026-07-22 R346: Static secondary homepage-ad placeholder. Same pattern as #gz-home-banner: invisible (height 0) until JS populates an iframe (which triggers :has() → reserves 120px). No CLS from late insertion. -->
 <div id="gz-home-banner-2" class="gz-home-banner-placeholder" style="max-width:728px;margin:16px auto;text-align:center;max-height:280px;min-height:0;overflow:hidden;contain:layout paint style;display:flex;align-items:center;justify-content:center;color:#666;font-size:.85em;background:rgba(255,255,255,.02);border:1px dashed transparent;transition:height .2s ease"><span aria-hidden="true"></span></div>
 <style>
-#gz-home-banner-2:has(iframe), #gz-home-banner-2:has(ins), #gz-home-banner-2.gz-banner-ready{
-  height:120px;border-color:#333;
+#gz-home-banner-2.gz-banner-ready,
+#gz-home-banner-2:has(iframe),
+#gz-home-banner-2:has(ins){
+  height:120px!important;max-height:120px!important;
+  border-color:#333;
 }
 @media(max-width:600px){
-  #gz-home-banner-2:has(iframe), #gz-home-banner-2:has(ins), #gz-home-banner-2.gz-banner-ready{
-    height:60px;
+  #gz-home-banner-2.gz-banner-ready,
+  #gz-home-banner-2:has(iframe),
+  #gz-home-banner-2:has(ins){
+    height:60px!important;max-height:60px!important;
   }
 }
 </style>
