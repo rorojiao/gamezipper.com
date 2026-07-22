@@ -851,7 +851,21 @@ iframe[id^="aswift_"]:not([src]),iframe[id^="aswift_"][style*="visibility: hidde
 <noscript><div style="text-align:center;padding:60px 20px;font-family:sans-serif;color:#fff"><h2 style="font-size:2em;margin-bottom:16px">🎮 GameZipper — 522+ free browser games</h2><p style="color:#aaa;margin-bottom:24px">JavaScript is required to play games. Please enable JavaScript, or <a href="/sitemap-page.html" style="color:#4ecdc4">browse our game list</a>.</p><p><a href="/sitemap-page.html" style="color:#4ecdc4">Browse All Games →</a></p></div></noscript>
 <a href="#games" class="gz-skip-link">Skip to games</a>
 <nav aria-label="Breadcrumb" style="max-width:1200px;margin:0 auto;padding:8px 20px;font-size:0.85em"><a href="/" style="color:#4ecdc4;text-decoration:none" aria-current="page">🏠 Home</a></nav>
-
+<!-- UX-OPT 2026-07-22 R346: Static homepage-ad placeholder. Normally invisible (height 0), but JS inserts a child iframe via Monetag → :has(iframe) sets the height reservation so CLS=0. Without this, monetag-manager.js dynamically creates + inserts an empty div that grows 0→90→285→0 over 4s, driving / CLS to 0.394 (3 large shifts each on .header). Pre-placed static container eliminates the createElement path entirely; the :has() guard avoids ugly empty space before the ad loads. -->
+<div id="gz-home-banner" style="max-width:728px;margin:12px auto 4px;text-align:center;height:0;max-height:280px;min-height:0;overflow:hidden;contain:layout paint style;display:flex;align-items:center;justify-content:center;color:#666;font-size:.85em;background:rgba(255,255,255,.02);border:1px dashed transparent;transition:height .2s ease"><span style="font-size:.8em;color:#888" aria-hidden="true"></span></div>
+<style>
+/* UX-OPT 2026-07-22 R346: When ad fills (iframe present) or container gets a JS-set ready class,
+   reserve the 90-120px ad slot so layout doesn't shift. Without :has() or .gz-banner-ready,
+   the box stays at height 0 — visually invisible pre-paint. */
+#gz-home-banner:has(iframe), #gz-home-banner:has(ins), #gz-home-banner.gz-banner-ready{
+  height:120px;border-color:#333;
+}
+@media(max-width:600px){
+  #gz-home-banner:has(iframe), #gz-home-banner:has(ins), #gz-home-banner.gz-banner-ready{
+    height:60px;
+  }
+}
+</style>
 <div id="gz-welcome-back" style="max-width:1200px;margin:12px auto;padding:0 20px;display:none"><div style="background:linear-gradient(135deg,#2a1a3a,#1a2a3a);border:1px solid #4ecdc4;border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-size:1.2em;flex-shrink:0">👋</span><span style="color:#e0e0e0;font-size:.9em;flex:1 1 200px;min-width:0;word-break:break-word" id="gz-wb-text">Welcome back!</span><a href="#" id="gz-wb-link" style="padding:6px 16px;background:linear-gradient(135deg,#4ecdc4,#45b7d1);color:#000;font-weight:700;border-radius:20px;text-decoration:none;font-size:.85em;display:none;white-space:nowrap;flex-shrink:0">Play Now →</a><button onclick="this.parentElement.parentElement.style.display='none'" aria-label="Dismiss" style="margin-left:auto;background:none;border:none;color:#888;cursor:pointer;font-size:1.2em;padding:4px;flex-shrink:0;min-height:28px;min-width:28px">×</button></div></div>
 <div class="header">
 <h1 fetchpriority="high">Free Online Games — 522 Games, No Download | ⚡ GameZipper</h1>
@@ -1117,6 +1131,18 @@ iframe[id^="aswift_"]:not([src]),iframe[id^="aswift_"][style*="visibility: hidde
   <div class="gz-skeleton" style="aspect-ratio:4/3"></div>
   <div class="gz-skeleton" style="aspect-ratio:4/3"></div>
 </div>
+<!-- UX-OPT 2026-07-22 R346: Static secondary homepage-ad placeholder. Same pattern as #gz-home-banner: invisible (height 0) until JS populates an iframe (which triggers :has() → reserves 120px). No CLS from late insertion. -->
+<div id="gz-home-banner-2" style="max-width:728px;margin:16px auto;text-align:center;height:0;max-height:280px;min-height:0;overflow:hidden;contain:layout paint style;display:flex;align-items:center;justify-content:center;color:#666;font-size:.85em;background:rgba(255,255,255,.02);border:1px dashed transparent;transition:height .2s ease"><span aria-hidden="true"></span></div>
+<style>
+#gz-home-banner-2:has(iframe), #gz-home-banner-2:has(ins), #gz-home-banner-2.gz-banner-ready{
+  height:120px;border-color:#333;
+}
+@media(max-width:600px){
+  #gz-home-banner-2:has(iframe), #gz-home-banner-2:has(ins), #gz-home-banner-2.gz-banner-ready{
+    height:60px;
+  }
+}
+</style>
 <div class="gz-show-more-wrap" id="gz-show-more-wrap" style="display:none"><button class="gz-show-more-btn" id="gz-show-more" onclick="gzShowMoreGames()">&#x1F3AE; Show More Games <span class="gz-remaining" id="gz-remaining-count"></span></button><div class="gz-progress-hint" id="gz-progress-hint"></div></div>
 <!-- Infinite scroll sentinel: auto-loads more games when scrolled into view -->
 <div id="gz-scroll-sentinel" style="height:1px;width:100%;contain:strict" aria-hidden="true"></div>
@@ -2776,7 +2802,7 @@ function playRandom(){
       document.head.appendChild(sAd);
     }
     var s=document.createElement('script');
-    s.src='/monetag-manager.js?v=v528adsensefix';
+    s.src='/monetag-manager.js?v=v529clsstaticbanner';
     document.head.appendChild(s);
   }
   // Use scheduler.yield() if available (INP optimization 2026), fallback to requestIdleCallback

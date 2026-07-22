@@ -789,7 +789,11 @@
       }
       var ins = document.createElement('ins');
       ins.className = 'adsbygoogle';
-      ins.style.cssText = 'display:block;width:100%;min-height:90px;max-height:120px;overflow:hidden;';  // v5.13: min-height 90px (was max-height 100px, Poki: give ads room)
+      // v5.29 R346: width:100% locked to parent's 728px box. min-height:90 matches the static
+      // placeholder's reservation exactly (zero CLS when ad fills). max-height:120px caps
+      // Monetag fallback creatives to the reserved block (no second-line insert that would
+      // re-introduce CLS). overflow:hidden clips any creative that exceeds.
+      ins.style.cssText = 'display:block;width:100%!important;min-height:90px!important;max-height:120px!important;overflow:hidden;';
       ins.setAttribute('data-ad-client', 'ca-pub-8346383990981353');
       ins.setAttribute('data-ad-slot', slotId);
       ins.setAttribute('data-ad-format', 'auto');
@@ -1605,16 +1609,18 @@
     commercialBreak();
   }
 
-  // ==================== HOMEPAGE BANNER ====================
+  // ==================== HOMEPAGE PRIMARY BANNER (above #header / hero) ====================
   function showHomepageBanner() {
     if (!state.isHomePage) return;
     if (!canShowAd('homepage_banner')) return;
 
     var container = $('#gz-home-banner');
     if (!container) {
+      // v5.28: Static placeholder is in index.html since 2026-07-22 R346 CLS fix.
+      // This dead code should never run in production.
       container = document.createElement('div');
       container.id = 'gz-home-banner';
-      container.style.cssText = 'max-width:728px;margin:12px auto;text-align:center;min-height:90px;overflow:hidden;';
+      container.style.cssText = 'max-width:728px;margin:12px auto;text-align:center;min-height:90px;overflow:hidden;contain:layout paint;';
       if (isMobile()) {
         container.style.maxWidth = '320px';
         container.style.minHeight = '50px';
@@ -1623,11 +1629,29 @@
       if (nav && nav.parentNode) {
         nav.parentNode.insertBefore(container, nav.nextSibling);
       }
+    } else {
+      // v5.29 R346: Static placeholder already exists in HTML. Don't override its
+      // reservation dimensions (CLS fix relies on stable height/max-height). Only
+      // adjust max-width for mobile if needed.
+      if (isMobile() && parseInt(container.style.maxWidth || '0', 10) > 320) {
+        container.style.maxWidth = '320px';
+      }
     }
+
+    // v5.29 R346: Reserve the ad slot IMMEDIATELY (not on timeout) so CLS=0. The CSS rule
+    // `#gz-home-banner.gz-banner-ready{height:120px}` (in index.html) lifts the banner from
+    // height 0 → 120px atomically with the ad insertion. Since this runs synchronously
+    // inside init(), the layout shift (if any) happens before the user's first paint reaction.
+    container.classList.add('gz-banner-ready');
 
     setTimeout(function() {
       if (container.getAttribute('data-filled')) return;
       if (!canShowAd('homepage_banner')) return;
+      // v5.29 R346: Set gz-banner-ready class BEFORE any inner-element changes so the static
+      // placeholder's :has() CSS rule (or .gz-banner-ready fallback) reserves the 120px ad
+      // slot in a single atomic batch. The container was previously created at 0px and grew
+      // to 90px then 285px — drove / CLS to 0.394. Locking height before ad fills kills it.
+      container.classList.add('gz-banner-ready');
       // Try AdSense first (higher fill rate); use Monetag as fallback
       // v5.28: pickSlotForBanner() swaps duplicate slot IDs to SLOT_FALLBACK='7373732357'
       // to avoid AdSense "one slot per page" policy violation (page-level static ins in
@@ -1663,9 +1687,10 @@
 
     var container = $('#gz-home-banner-2');
     if (!container) {
+      // v5.28 R346: Static placeholder is in index.html. Dead code on production.
       container = document.createElement('div');
       container.id = 'gz-home-banner-2';
-      container.style.cssText = 'max-width:728px;margin:16px auto;text-align:center;min-height:90px;overflow:hidden;';
+      container.style.cssText = 'max-width:728px;margin:16px auto;text-align:center;min-height:90px;overflow:hidden;contain:layout paint;';
       if (isMobile()) {
         container.style.maxWidth = '320px';
         container.style.minHeight = '50px';
@@ -1675,11 +1700,18 @@
       if (gamesSection && gamesSection.parentNode) {
         gamesSection.parentNode.insertBefore(container, gamesSection.nextSibling);
       }
+    } else {
+      // v5.29 R346: Static placeholder exists. Don't override reservation.
+      if (isMobile() && parseInt(container.style.maxWidth || '0', 10) > 320) {
+        container.style.maxWidth = '320px';
+      }
     }
 
     setTimeout(function() {
       if (container.getAttribute('data-filled')) return;
       if (!canShowAd('homepage_banner')) return;
+      // v5.29 R346: Set gz-banner-ready class BEFORE ins creation (see #gz-home-banner above).
+      container.classList.add('gz-banner-ready');
       // Try AdSense first; Monetag Skillful fallback after 2s; legacy Attractive after 5s
       // v5.28: pickSlotForBanner() — second banner slot picks SLOT_FALLBACK since the first
       // banner + page-level static ins already claimed 1099212472.
