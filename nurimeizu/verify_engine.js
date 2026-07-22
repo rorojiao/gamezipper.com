@@ -1,97 +1,22 @@
-// In-engine verifier: loads the actual index.html and runs checkSolution with the known solution
-const fs = require('fs');
-const vm = require('vm');
-
-const html = fs.readFileSync('index.html', 'utf8');
-
-// Extract LEVELS from the script
-// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
-const extractLevels=require('../.audit/gz-extract-levels.js');
-const LEVELS=extractLevels('nurimeizu');
-// Extract the script content between <script> (last one) and </script>
-const scriptMatches = html.match(/<script>([\s\S]*?)<\/script>/g);
-const gameScript = scriptMatches[scriptMatches.length-1].replace(/<\/?script>/g,'');
-
-// We need to modify the script: remove loadLevel(0) at the end, and expose internal state
-// Replace "loadLevel(0);" at the end with nothing
-let modScript = gameScript.replace(/loadLevel\(0\);?\s*$/, '');
-
-// Add helper at the end of script to test each level
-modScript += `
-function testLevel(i) {
-  currentLevel = i;
-  userPaint = {};
-  isPlaying = true;
-  hintCell = null;
-  var lv = LEVELS[i];
-  for (var rid = 0; rid < lv.rooms.length; rid++) {
-    userPaint[rid] = lv.solution.includes(rid) ? 'black' : 'white';
-  }
-  return checkSolution(false);
+#!/usr/bin/env node
+'use strict';
+const fs=require('fs'),path=require('path'),vm=require('vm');
+const html=fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
+const scripts=[...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].map(m=>m[1]);
+const code=scripts.find(s=>/const\s+LEVELS\s*=\s*\[/.test(s)&&/function\s+checkSolution/.test(s));
+if(!code)throw new Error('Nurimeizu production script not found');
+function el(){return{textContent:'',innerHTML:'',className:'',style:{},onclick:null,classList:{add(){},remove(){},toggle(){},contains(){return false;}},addEventListener(){},appendChild(){},querySelector(){return null;},querySelectorAll(){return[];},getBoundingClientRect(){return{left:0,top:0,width:500,height:500};},getContext(){return new Proxy({canvas:{width:500,height:500}}, {get(t,p){if(p in t)return t[p];return function(){return{addColorStop(){}};};},set(){return true;}});}};}
+const nodes=new Map(),store=new Map();
+const document={hidden:false,getElementById(id){if(!nodes.has(id))nodes.set(id,el());return nodes.get(id);},createElement(){return el();},addEventListener(){},body:el(),querySelectorAll(){return[];}};
+const window={innerWidth:1280,innerHeight:720,devicePixelRatio:1,addEventListener(){},AudioContext:function(){},webkitAudioContext:function(){}};
+const c={console,document,window,localStorage:{getItem:k=>store.has(k)?store.get(k):null,setItem:(k,v)=>store.set(k,String(v))},requestAnimationFrame:()=>0,cancelAnimationFrame(){},setTimeout:()=>0,clearTimeout(){},setInterval:()=>0,clearInterval(){},Math,JSON,Array,Object,String,Number,Boolean,Set,Map,Date};window.localStorage=c.localStorage;
+vm.createContext(c);vm.runInContext(code,c,{filename:'nurimeizu/index.inline.js',timeout:5000});
+const n=vm.runInContext('LEVELS.length',c);if(n!==30)throw new Error(`expected 30 levels, got ${n}`);
+let pass=0;
+for(let i=0;i<n;i++){
+ store.clear();nodes.clear();
+ const r=vm.runInContext(`(()=>{loadLevel(${i});const lv=LEVELS[${i}];for(let rid=0;rid<lv.rooms.length;rid++)userPaint[rid]=lv.solution.includes(rid)?'black':'white';const ok=checkSolution(false);const saved=JSON.parse(localStorage.getItem('nurimeizu_progress')||'{}');const modal=document.getElementById('win-overlay').classList.contains('show')||document.getElementById('win-overlay').style.display==='flex';loadLevel(${i});return{ok,saved,modal,restart:{level:currentLevel,paint:Object.keys(userPaint).length,hints:hintsUsed}};})()`,c);
+ const rec=r.saved['L'+(i+1)];const ok=r.ok===true&&rec&&rec.completed===true&&r.restart.level===i&&r.restart.paint===0&&r.restart.hints===0;
+ if(ok){pass++;console.log(`L${String(i+1).padStart(2,'0')} ENGINE PASS stars=${rec.stars}`);}else console.log(`L${String(i+1).padStart(2,'0')} ENGINE FAIL ${JSON.stringify(r)}`);
 }
-`;
-
-const fakeCanvas = {
-  width: 500, height: 500,
-  getContext: ()=>({
-    fillRect:()=>{},strokeRect:()=>{},beginPath:()=>{},moveTo:()=>{},lineTo:()=>{},
-    stroke:()=>{},fill:()=>{},arc:()=>{},closePath:()=>{},fillText:()=>{},
-    set fillStyle(v){},get fillStyle(){return''},set strokeStyle(v){},get strokeStyle(){return''},
-    set lineWidth(v){},get lineWidth(){return 1},set font(v){},get font(){return''},
-    set textAlign(v){},get textAlign(){return'center'},set textBaseline(v){},get textBaseline(){return'middle'},
-    setLineDash:()=>{}
-  }),
-  getBoundingClientRect:()=>({left:0,top:0,width:500,height:500}),
-  addEventListener:()=>{}
-};
-
-const sandbox = {
-  console: console,
-  localStorage: { getItem: ()=>null, setItem: ()=>{} },
-  document: {
-    getElementById: function(id){
-      if(id==='board') return fakeCanvas;
-      return {
-        textContent:'',innerHTML:'',className:'',style:{},
-        classList:{add:()=>{},remove:()=>{},toggle:()=>{}},
-        onclick:null, appendChild:()=>{}, querySelector:()=>null,
-        getBoundingClientRect:()=>({left:0,top:0,width:500,height:500})
-      };
-    },
-    createElement: ()=>({className:'',textContent:'',style:{},onclick:null,appendChild:()=>{},classList:{add:()=>{},remove:()=>{}}}),
-    addEventListener: ()=>{},
-    body: { appendChild:()=>{} }
-  },
-  window: {},
-  AudioContext: function(){return {createGain:()=>({gain:{value:0},connect:()=>{}}),createOscillator:()=>({type:'',frequency:{value:0},connect:()=>{},start:()=>{},stop:()=>{}}),destination:{},currentTime:0};},
-  setTimeout: setTimeout,
-  setInterval: ()=>0,
-  clearInterval: ()=>{},
-  Set: Set, Map: Map, Math: Math, JSON: JSON, Date: Date
-};
-
-// R3 fix: skip engine VM (IIFE-bound checkSolution hard to extract); fall back
-// to structural validation matching the independent verifier's logic.
-let pass = 0, fail = 0;
-for (let i = 0; i < LEVELS.length; i++) {
-  const lv = LEVELS[i];
-  try {
-    if (!lv.solution || !Array.isArray(lv.solution) || lv.solution.length === 0) {
-      throw new Error('missing solution array');
-    }
-    if (lv.solution.some(s => s < 0 || s >= lv.rooms.length)) {
-      throw new Error('solution index out of range');
-    }
-    if (typeof lv.h !== 'number' || typeof lv.w !== 'number') {
-      throw new Error('missing h/w');
-    }
-    pass++;
-    console.log(`L${String(lv.num).padStart(2)} ${lv.tierName.padEnd(10)} ${lv.h}x${lv.w} STRUCTURAL PASS`);
-  } catch(e) {
-    fail++;
-    console.log(`L${String(lv.num).padStart(2)} ERROR: ${e.message}`);
-  }
-}
-
-console.log(`\n${pass}/${LEVELS.length} IN-ENGINE PASS`);
-process.exit(fail > 0 ? 1 : 0);
+console.log(`\n${pass}/${n} IN-ENGINE PASS (solution injection + checkSolution + save/restart)`);process.exit(pass===n?0:1);

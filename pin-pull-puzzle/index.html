@@ -388,10 +388,10 @@ function loadLevel(n) {
 }
 
 function saveState() {
-  var stack = [];
-  state.pins.forEach(function(p){ stack.push({pulled:p.pulled, angle:p.angle}); });
-  state.loot.forEach(function(l){ stack.push({x:l.x,y:l.y,vx:l.vx,vy:l.vy,collected:l.collected}); });
-  state.undoStack.push(stack);
+  state.undoStack.push({
+    pins: state.pins.map(function(p){ return {pulled:p.pulled, angle:p.angle}; }),
+    loot: state.loot.map(function(l){ return {x:l.x,y:l.y,vx:l.vx,vy:l.vy,collected:l.collected}; })
+  });
 }
 
 function undo() {
@@ -399,11 +399,11 @@ function undo() {
   var stack = state.undoStack.pop();
   var pinIdx = 0, lootIdx = 0;
   state.pins.forEach(function(p){
-    if(stack[pinIdx]) { p.pulled = stack[pinIdx].pulled; p.angle = stack[pinIdx].angle; }
+    if(stack.pins[pinIdx]) { p.pulled = stack.pins[pinIdx].pulled; p.angle = stack.pins[pinIdx].angle; }
     pinIdx++;
   });
   state.loot.forEach(function(l){
-    if(stack[lootIdx]) { l.x = stack[lootIdx].x; l.y = stack[lootIdx].y; l.vx = stack[lootIdx].vx; l.vy = stack[lootIdx].vy; l.collected = stack[lootIdx].collected; }
+    if(stack.loot[lootIdx]) { l.x = stack.loot[lootIdx].x; l.y = stack.loot[lootIdx].y; l.vx = stack.loot[lootIdx].vx; l.vy = stack.loot[lootIdx].vy; l.collected = stack.loot[lootIdx].collected; }
     lootIdx++;
   });
   state.moves--;

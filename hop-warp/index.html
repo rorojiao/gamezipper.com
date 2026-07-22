@@ -18,7 +18,7 @@
 <meta name="twitter:title" content="Play Hop Warp Free Online - Teleport Puzzle Game">
 <meta name="twitter:description" content="Teleport across grid puzzles with limited warp charges. 30 levels, 5 tiers. No download!">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"VideoGame","name":"Hop Warp","description":"Play Hop Warp free online! Teleport across grid puzzles with limited warp charges. Collect stars, avoid walls, unlock doors, and reach the exit portal. 30 levels across 5 difficulty tiers.","genre":["Puzzle","Logic","Brain Teaser"],"gamePlatform":["Web Browser","Mobile"],"applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GameZipper"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.7","reviewCount":"152"}}
+{"@context":"https://schema.org","@type":"VideoGame","name":"Hop Warp","description":"Play Hop Warp free online! Teleport across grid puzzles with limited warp charges. Collect stars, avoid walls, unlock doors, and reach the exit portal. 30 levels across 5 difficulty tiers.","genre":["Puzzle","Logic","Brain Teaser"],"gamePlatform":["Web Browser","Mobile"],"applicationCategory":"Game","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GameZipper"}}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do you play Hop Warp?","acceptedAnswer":{"@type":"Answer","name":"Answer","text":"Move your character with arrow keys or swipe. Use warp charges to teleport to any reachable tile. Collect all stars and reach the exit portal to complete each level."}},{"@type":"Question","name":"Is Hop Warp free to play?","acceptedAnswer":{"@type":"Answer","name":"Answer","text":"Yes! Hop Warp is 100% free to play in your browser. No download or registration required."}},{"@type":"Question","name":"How many levels does Hop Warp have?","acceptedAnswer":{"@type":"Answer","name":"Answer","text":"Hop Warp has 30 handcrafted levels across 5 difficulty tiers, from beginner-friendly grids to expert-level teleport puzzles."}},{"@type":"Question","name":"Can I play Hop Warp on mobile?","acceptedAnswer":{"@type":"Answer","name":"Answer","text":"Yes! Hop Warp is fully mobile-optimized with touch controls. Swipe to move, tap to warp."}}]}
@@ -526,6 +526,13 @@ return true;
 }
 function findDoor(x,y){for(var i=0;i<S.doors.length;i++)if(S.doors[i].x===x&&S.doors[i].y===y)return S.doors[i];return null;}
 
+function directionAllowed(tile,dx,dy){
+if(tile===6)return dx===0&&dy===-1;
+if(tile===7)return dx===0&&dy===1;
+if(tile===8)return dx===-1&&dy===0;
+if(tile===9)return dx===1&&dy===0;
+return true;
+}
 function tryMove(dx,dy){
 if(S.warping)return;
 var nx=S.px+dx,ny=S.py+dy;
@@ -533,16 +540,10 @@ var nx=S.px+dx,ny=S.py+dy;
 if(canWalk(nx,ny)){
 // Check one-way: tile at current position might restrict direction
 var cur=S.grid[S.py][S.px];
-if(cur===6&&dy!==1&&dy!==-1&&dx!==0)return; // up-only
-if(cur===7&&dy!==-1&&dy!==1&&dx!==0)return; // down-only
-if(cur===8&&dx!==1&&dx!==-1&&dy!==0)return; // left-only
-if(cur===9&&dx!==-1&&dx!==1&&dy!==0)return; // right-only
+if(!directionAllowed(cur,dx,dy))return;
 // Check one-way at destination
 var dest=S.grid[ny][nx];
-if(dx===0&&dy===-1&&(dest===7))return; // can't enter down-only from below going up
-if(dx===0&&dy===1&&(dest===6))return; // can't enter up-only from above going down
-if(dx===1&&dest===8)return; // can't enter left-only from left going right
-if(dx===-1&&dest===9)return; // can't enter right-only from right going left
+if(!directionAllowed(dest,dx,dy))return;
 
 S.moveHistory.push({px:S.px,py:S.py,warps:S.warps,gotStars:S.gotStars,keys:S.keys,collected:S.collected.slice(),doors:S.doors.map(function(d){return{x:d.x,y:d.y,open:d.open};})});
 S.px=nx;S.py=ny;S.anim=1;sfxStep();
