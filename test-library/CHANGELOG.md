@@ -1,3 +1,32 @@
+## [v1.201.0] - 2026-07-22
+### Added
+- 9 new machine-verifiable test cases from R318 industry research (4h cycle 80)
+- W-386 [P1] Firefox 153 customizable-select parser nested-DOM/value/submission/keyboard fallback
+- W-387 [P1] Firefox 153 dynamic `muted` attribute and `:muted` game-audio state synchronization
+- S-457 [P1] Firefox 153 text-module imports remain inert across executable MIME and script text
+- S-458 [P1] Chrome 150 CSS `url()` integrity/CORS/referrer-policy modifier enforcement
+- S-459 [P1] Firefox 153 WebRTC remote-certificate binding blocks multiplayer peer impersonation
+- P-177 [P2] Firefox 153 `Error.stackTraceLimit` bounds error-storm telemetry bytes
+- B-225 [P1] Firefox 153 WebDriver clicks controls with a zero-sized first DOMRect
+- P-178 [P1] Firefox 153 HTTP Compression Dictionary rollout byte parity, fail-closed mismatch, and no stale decode
+- C-220 [P1] Firefox 153 accessibility tree exposes exact game-instruction heading levels
+### Sources
+- Required parallel queries (2026-07-22, cycle 80):
+  - "HTML5 game testing 2026 new techniques"
+  - "browser game bug report 2026"
+  - "Chrome Edge Safari update 2026"
+  - "casual game UX complaint 2026"
+  - "mobile game performance issue 2026"
+- Primary release-note follow-ups:
+  - "Firefox 153 developer release notes July 2026 CSS JavaScript API"
+  - "Chrome 150 release notes web platform 2026"
+  - "Safari 26 WebKit release notes 2026 web features"
+- Key URLs:
+  - https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (Firefox 153 stable developer changes, released Jul 21 2026 — W-386, W-387, S-457, S-459, P-177, P-178, B-225, C-220)
+  - https://www.mozilla.org/en-US/firefox/153.0/releasenotes/ (Firefox 153 release-channel confirmation, Jul 21 2026)
+  - https://developer.chrome.com/release-notes/150 (Chrome 150 CSS `url()` request modifiers, Jun 30 2026 — S-458)
+- Research note: the required five searches were run in parallel. A difficult-research Codex escalation used the `hermes-auto` profile once in `/tmp/hermes-codex-research-gz-testlib-r318` with `danger-full-access`; it timed out during web reconnaissance and made no file changes. Hermes independently extracted the primary release notes, rejected duplicate signals, authored the cases, and ran all library validation.
+
 ## [v1.200.0] - 2026-07-21
 ### Added
 - 9 new machine-verifiable test cases from R317 industry research (4h cycle 79)
