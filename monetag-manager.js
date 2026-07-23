@@ -1880,8 +1880,13 @@
       var mobile = isMobile();
       var maxW = mobile ? CONFIG.BANNERS.mobileMaxWidth : CONFIG.BANNERS.desktopMaxWidth;
       var minH = mobile ? CONFIG.BANNERS.mobileMinHeight : CONFIG.BANNERS.desktopMinHeight;
+      // R347: Removed `display:none` — was causing CLS when AdSense/Monetag filled.
+      // Now always in-flow with reserved min-height so layout is stable from page
+      // load. Empty placeholder stays visually neutral (no background, no border).
+      // If the placeholder is reused (already exists in HTML), this cssText is NOT
+      // applied — we trust the page's CSS to have reserved the right amount.
       var bannerCSS = 'max-width:' + maxW + 'px;min-height:' + minH + 'px;' +
-                      'margin:8px auto;text-align:center;overflow:hidden;display:none;';
+                      'margin:8px auto;text-align:center;overflow:hidden;';
 
       // Helper to create banner div
       function createBannerDiv(position) {
@@ -1894,51 +1899,70 @@
         return div;
       }
 
+      // R347: Respect pre-placed static placeholders (CLS=0 path). If a game page
+      // has <div id="gz-ad-above-game"> or <div id="gz-ad-below-canvas"> already
+      // in HTML, reuse them in place — don't createElement + insertBefore (which
+      // would trigger layout shift). The static placeholder has reserved
+      // min-height via CSS so the space is held from initial layout.
+      function getOrCreate(position) {
+        var id = position === 'above' ? 'gz-ad-above-game' : 'gz-ad-below-canvas';
+        var existing = $('#' + id);
+        if (existing) {
+          // Mark as reused so the CSS :has() rules work, but keep its in-DOM position.
+          existing.setAttribute('data-gz-banner-reused', '1');
+          return existing;
+        }
+        return createBannerDiv(position);
+      }
+
       // Inject above canvas (insertBefore canvas-wrap)
       if (canvasWrap) {
-        var aboveBanner = createBannerDiv('above');
-        if (canvasWrap.parentNode) {
+        var aboveBanner = getOrCreate('above');
+        if (!aboveBanner.parentNode && canvasWrap.parentNode) {
           canvasWrap.parentNode.insertBefore(aboveBanner, canvasWrap);
-          fillInGameBanner(aboveBanner, 'above');
-          injected++;
         }
+        fillInGameBanner(aboveBanner, 'above');
+        injected++;
         // Inject below canvas (insertAfter canvas-wrap)
-        var belowBanner = createBannerDiv('below');
-        if (canvasWrap.nextSibling) {
-          canvasWrap.parentNode.insertBefore(belowBanner, canvasWrap.nextSibling);
-        } else {
-          canvasWrap.parentNode.appendChild(belowBanner);
+        var belowBanner = getOrCreate('below');
+        if (!belowBanner.parentNode) {
+          if (canvasWrap.nextSibling) {
+            canvasWrap.parentNode.insertBefore(belowBanner, canvasWrap.nextSibling);
+          } else {
+            canvasWrap.parentNode.appendChild(belowBanner);
+          }
         }
         fillInGameBanner(belowBanner, 'below');
         injected++;
       } else if (wrap) {
         // No canvas-wrap but have wrap — inject at top + bottom of wrap
-        var topBanner = createBannerDiv('above');
-        wrap.insertBefore(topBanner, wrap.firstChild);
+        var topBanner = getOrCreate('above');
+        if (!topBanner.parentNode) wrap.insertBefore(topBanner, wrap.firstChild);
         fillInGameBanner(topBanner, 'above');
-        var bottomBanner = createBannerDiv('below');
-        wrap.appendChild(bottomBanner);
+        var bottomBanner = getOrCreate('below');
+        if (!bottomBanner.parentNode) wrap.appendChild(bottomBanner);
         fillInGameBanner(bottomBanner, 'below');
         injected += 2;
       } else {
         // No wrap — inject at body top + before gz-ad-below-game (if exists)
-        var bodyBanner = createBannerDiv('above');
-        bodyBanner.id = 'gz-ad-above-game';
         var belowGameAnchor = $('#gz-ad-below-game');
         if (belowGameAnchor) {
-          // Insert above the existing below-game container
-          var refAbove = createBannerDiv('above');
-          belowGameAnchor.parentNode.insertBefore(refAbove, belowGameAnchor);
+          // Insert above the existing below-game container (reuse static if present)
+          var refAbove = getOrCreate('above');
+          if (!refAbove.parentNode) {
+            belowGameAnchor.parentNode.insertBefore(refAbove, belowGameAnchor);
+          }
           fillInGameBanner(refAbove, 'above');
           injected++;
         } else {
-          document.body.insertBefore(bodyBanner, document.body.firstChild);
+          var bodyBanner = getOrCreate('above');
+          if (!bodyBanner.parentNode) document.body.insertBefore(bodyBanner, document.body.firstChild);
           fillInGameBanner(bodyBanner, 'above');
           injected++;
         }
-        // Bottom banner: append to body
-        var bottomBanner2 = createBannerDiv('below');
-        document.body.appendChild(bottomBanner2);
+        // Bottom banner: append to body (reuse static if present)
+        var bottomBanner2 = getOrCreate('below');
+        if (!bottomBanner2.parentNode) document.body.appendChild(bottomBanner2);
         fillInGameBanner(bottomBanner2, 'below');
         injected++;
       }
