@@ -1,3 +1,27 @@
+## [v1.202.0] - 2026-07-23
+### Added
+- 7 new machine-verifiable test cases from R319 industry research (4h cycle 81)
+- W-388 [P1] Firefox 153 IndexedDB `getAllRecords()` save-slot order/direction/abort atomicity
+- W-389 [P1] Firefox 153 WebAssembly JSPI async suspension without frame blocking
+- W-390 [P2] Firefox 153 `Intl.Locale` info-method deterministic locale menus
+- S-460 [P1] Firefox 153 source-phase WASM imports remain inert until instantiation
+- P-179 [P2] Firefox 153 Windows HDR playback preserves SDR game UI and fallback
+- B-226 [P2] Firefox 153 CSS rollout keeps unsupported-engine control fallbacks operable
+- C-221 [P1] Firefox 153 dynamic accessibility relationships and modal-focus lifecycle
+### Sources
+- Required parallel queries (2026-07-23, cycle 81):
+  - "HTML5 game testing 2026 new techniques"
+  - "browser game bug report 2026"
+  - "Chrome Edge Safari update 2026"
+  - "casual game UX complaint 2026"
+  - "mobile game performance issue 2026"
+- Primary follow-ups: "Chrome 151 release notes web platform July 2026"; "Safari 26 release notes tracking parameters actual release"; "Firefox 153 release notes July 2026 web platform"
+- Key URLs:
+  - https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (IndexedDB, JSPI, Intl.Locale, source-phase imports, CSS and accessibility changes)
+  - https://www.mozilla.org/en-US/firefox/153.0/releasenotes/ (Firefox 153 stable and Windows HDR playback)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_0106a60295095952 (Firefox 153 stable release confirmation, Jul 22 2026)
+- Research note: required searches ran in parallel. One difficult-research Codex escalation used `hermes-auto` in `/tmp/hermes-codex-research-gz-testlib-r319` with `danger-full-access`; it timed out during source validation and changed no files. Hermes independently authored and validated the cases from primary release notes.
+
 ## [v1.201.0] - 2026-07-22
 ### Added
 - 9 new machine-verifiable test cases from R318 industry research (4h cycle 80)
