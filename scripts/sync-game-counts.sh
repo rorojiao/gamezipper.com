@@ -30,12 +30,12 @@ console.log(live);
 " 2>/dev/null)
 
 # 2. Schema count
-SCHEMA_NOI=$(grep -oE 'numberOfItems\":[0-9]+' js/itemlist-schema.js | grep -oE '[0-9]+$')
+SCHEMA_NOI=$(grep -oE '"numberOfItems"\s*:\s*[0-9]+' js/itemlist-schema.js | grep -oE '[0-9]+$' | head -1)
 SCHEMA_ILE=$(node -e "
 const fs = require('fs');
 const c = fs.readFileSync('js/itemlist-schema.js', 'utf8');
 // Count ListItem occurrences (more reliable than split('},{') on compressed JSON)
-const matches = c.match(/\"@type\":\"ListItem\"/g);
+const matches = c.match(/\"@type\":\s*\"ListItem\"/g);
 console.log(matches ? matches.length : 0);
 " 2>/dev/null)
 
