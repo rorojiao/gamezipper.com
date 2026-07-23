@@ -2015,6 +2015,12 @@ function gzUpdateShowMoreBtn(){var w=document.getElementById('gz-show-more-wrap'
     <p style="font-size:12px;margin-top:10px">🎮 <a href="/embed-games.html" style="color:#4ecdc4">Embed our games</a> on your website — free! · <a href="/publisher-partner.html" style="color:#4ecdc4">Publisher Partner Program</a> · <a href="https://tools.gamezipper.com" class="gz-gold" rel="noopener noreferrer">🛠 Free Online Tools</a></p>
 </footer>
 <script>
+// Popup mutex: only ONE engagement popup visible at a time (P5 fix)
+window.__gzPopupLock={owner:null};
+window.gzPopupAcquire=function(id){if(window.__gzPopupLock.owner)return false;window.__gzPopupLock.owner=id;return true};
+window.gzPopupRelease=function(id){if(window.__gzPopupLock.owner===id)window.__gzPopupLock.owner=null};
+</script>
+<script>
 // UX-ENGAGE: Personalized welcome back for returning visitors (research: +15% return engagement)
 (function(){
   var v=localStorage.getItem('gz_visit_count');
@@ -2047,10 +2053,10 @@ function gzUpdateShowMoreBtn(){var w=document.getElementById('gz-show-more-wrap'
     lnk.onclick=function(){if(typeof GAMES!=='undefined'){var g=GAMES.filter(function(g){return g.status==='live'});var r=g[Math.floor(Math.random()*g.length)];if(r)window.location.href=r.url}};
     lnk.style.display='inline-block';
   }
-  if(msg){txt.textContent=msg;el.style.display='block'}
+  if(msg&&window.gzPopupAcquire&&window.gzPopupAcquire('wb')){txt.textContent=msg;el.style.display='block';setTimeout(function(){el.style.display='none';window.gzPopupRelease('wb')},30000)}
 })();
 </script>
-<script src="/gz-analytics.js?v=2026072311b2607848" defer fetchpriority="low" crossorigin></script>
+<script src="/gz-analytics.js?v=20260723177fa38284" defer fetchpriority="low" crossorigin></script>
 
 <!-- Web Vitals RUM: LCP/CLS/INP/TTFB → analytics beacon -->
 <!-- 2026-06-07 20h P1 fix: restore IIFE wrap + s() definition (lost in e6f9cf35 dead-code cleanup) -->
@@ -3368,7 +3374,9 @@ try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){if(e.
   var shown=false;
   function resetIdle(){clearTimeout(idleTimer);if(!shown)idleTimer=setTimeout(showPrompt,30000)}
   function showPrompt(){
-    if(shown)return;shown=true;
+    if(shown)return;
+    if(window.gzPopupAcquire&&!window.gzPopupAcquire('idle1')){idleTimer=setTimeout(showPrompt,15000);return}
+    shown=true;
     var g=popularGames[Math.floor(Math.random()*popularGames.length)];
     var d=document.createElement('div');
     d.id='gz-idle-prompt';
@@ -3380,7 +3388,7 @@ try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){if(e.
     var closeBtn=document.createElement('button');
     closeBtn.style.cssText='position:absolute;top:6px;right:8px;background:none;border:none;color:#666;cursor:pointer;font-size:1em;padding:4px;line-height:1';
     closeBtn.textContent='\u00d7';
-    closeBtn.onclick=function(){d.style.opacity='0';setTimeout(function(){if(d.parentElement)d.remove()},400)};
+    closeBtn.onclick=function(){d.style.opacity='0';if(window.gzPopupRelease)window.gzPopupRelease('idle1');setTimeout(function(){if(d.parentElement)d.remove()},400)};
     d.innerHTML='<span style="font-size:1.5em">'+g.emoji+'</span><div><div style="color:#fff;font-weight:600">Try '+g.name+'?</div><div style="color:#888;font-size:0.8em;margin-top:2px">Our players love it</div></div>';
     d.appendChild(btn);
     d.appendChild(closeBtn);
@@ -3518,7 +3526,7 @@ try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){if(e.
 </script>
 <script>
 // UX-OPT: Idle detection — show game suggestion after 45s of inactivity
-(function(){if(!window.GAMES||!GAMES.length)return;var idleTimer=null;var shown=false;var overlay=null;function resetTimer(){if(overlay)return;clearTimeout(idleTimer);if(!shown){idleTimer=setTimeout(showSuggestion,45000)}}function showSuggestion(){if(shown)return;shown=true;var g=GAMES[Math.floor(Math.random()*GAMES.length)];overlay=document.createElement('div');overlay.style.cssText='position:fixed;bottom:80px;right:28px;background:rgba(20,20,35,0.95);border:1px solid rgba(78,210,196,0.4);border-radius:16px;padding:14px 18px;z-index:99997;max-width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;transition:opacity .3s,transform .3s';overlay.innerHTML='<div style="font-size:0.8em;color:#4ecdc4;margin-bottom:6px">Try this game?</div><div style="font-size:1.2em;margin-bottom:4px">'+g.emoji+' '+g.name+'</div><div style="font-size:0.75em;color:#888">'+g.cat+'</div><div style="position:absolute;top:8px;right:10px;color:#666;font-size:0.8em;cursor:pointer" id="gz-idle-close">&times;</div>';overlay.addEventListener('click',function(e){if(e.target.id==='gz-idle-close'){overlay.remove();overlay=null;shown=false;resetTimer();return}window.location.href=g.url});document.body.appendChild(overlay);setTimeout(function(){if(overlay){overlay.remove();overlay=null;shown=false;resetTimer()}},12000)}['mousemove','keydown','scroll','touchstart','click'].forEach(function(e){document.addEventListener(e,resetTimer,{passive:true})});resetTimer()})();
+(function(){if(!window.GAMES||!GAMES.length)return;var idleTimer=null;var shown=false;var overlay=null;function resetTimer(){if(overlay)return;clearTimeout(idleTimer);if(!shown){idleTimer=setTimeout(showSuggestion,45000)}}function showSuggestion(){if(shown)return;if(window.gzPopupAcquire&&!window.gzPopupAcquire('idle2')){idleTimer=setTimeout(showSuggestion,15000);return}shown=true;var g=GAMES[Math.floor(Math.random()*GAMES.length)];overlay=document.createElement('div');overlay.style.cssText='position:fixed;bottom:80px;right:28px;background:rgba(20,20,35,0.95);border:1px solid rgba(78,210,196,0.4);border-radius:16px;padding:14px 18px;z-index:99997;max-width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;transition:opacity .3s,transform .3s';overlay.innerHTML='<div style="font-size:0.8em;color:#4ecdc4;margin-bottom:6px">Try this game?</div><div style="font-size:1.2em;margin-bottom:4px">'+g.emoji+' '+g.name+'</div><div style="font-size:0.75em;color:#888">'+g.cat+'</div><div style="position:absolute;top:8px;right:10px;color:#666;font-size:0.8em;cursor:pointer" id="gz-idle-close">&times;</div>';overlay.addEventListener('click',function(e){if(e.target.id==='gz-idle-close'){overlay.remove();overlay=null;shown=false;if(window.gzPopupRelease)window.gzPopupRelease('idle2');resetTimer();return}window.location.href=g.url});document.body.appendChild(overlay);setTimeout(function(){if(overlay){overlay.remove();overlay=null;shown=false;if(window.gzPopupRelease)window.gzPopupRelease('idle2');resetTimer()}},12000)}['mousemove','keydown','scroll','touchstart','click'].forEach(function(e){document.addEventListener(e,resetTimer,{passive:true})});resetTimer()})();
 </script>
 <script>
 // UX-OPT: Keyboard category navigation (Alt+Left/Right arrows)
@@ -3793,6 +3801,7 @@ if(d){d.style.display='block';setTimeout(function(){gzDismissOnboarding()},8000)
   function showIdleToast(){
     if(!idleToast||shownThisSession)return;
     if(window.scrollY>300)return; // only when near top
+    if(window.gzPopupAcquire&&!window.gzPopupAcquire('idle3'))return;
     idleToast.hidden=false;
     requestAnimationFrame(function(){idleToast.classList.add('show')});
     shownThisSession=true;
@@ -3800,6 +3809,7 @@ if(d){d.style.display='block';setTimeout(function(){gzDismissOnboarding()},8000)
   function resetIdle(){
     if(idleToast&&idleToast.classList.contains('show')){
       idleToast.classList.remove('show');
+      if(window.gzPopupRelease)window.gzPopupRelease('idle3');
       setTimeout(function(){if(!idleToast.classList.contains('show'))idleToast.hidden=true;},300);
     }
     if(idleTimer)clearTimeout(idleTimer);
