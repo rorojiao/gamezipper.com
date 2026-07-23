@@ -41,8 +41,8 @@ function normLevel(L) {
   let sol = null, solKey = null;
   for (const k of solKeys) if (L[k] !== undefined) { sol = L[k]; solKey = k; break; }
   if (sol === null) return null;
-  const rows = L.rows || L.R || L.h || L.height || (isGrid(sol) ? sol.length : null);
-  const cols = L.cols || L.C || L.w || L.width || (isGrid(sol) ? (sol[0] || []).length : null);
+  const rows = L.rows || L.R || L.size || L.n || L.h || L.height || (isGrid(sol) ? sol.length : null);
+  const cols = L.cols || L.C || L.size || L.n || L.w || L.width || (isGrid(sol) ? (sol[0] || []).length : null);
   return { sol, solKey, rows, cols, clues: L.clues ?? L.givens ?? L.grid ?? L.puzzle ?? null };
 }
 
@@ -50,6 +50,12 @@ function classify(L) {
   const n = normLevel(L);
   if (!n) return { type: 'unknown' };
   const { sol } = n;
+  // 坐标对列表 [[r,c],...] 优先于 isGrid (akari/tents/star-battle: 解=坐标列表)
+  // 判别: 每个子数组长度恰为2, 且关卡网格列数≠2 (真2列网格极罕见)
+  if (Array.isArray(sol) && sol.length && sol.every(p => Array.isArray(p) && p.length === 2 && p.every(v => typeof v === 'number'))
+      && n.cols !== 2) {
+    return { type: 'points', ...n };
+  }
   // 2D 网格
   if (isGrid(sol)) {
     const flat = sol.flat();
