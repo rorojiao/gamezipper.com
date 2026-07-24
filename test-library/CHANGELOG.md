@@ -1,3 +1,26 @@
+## [v1.203.0] - 2026-07-24
+### Added
+- 7 new machine-verifiable test cases from R320 industry research (4h cycle 82)
+- W-391 [P1] Firefox 153 Picture-in-Picture API on desktop — single-window, geometry, enter/leave events, cross-engine parity
+- W-392 [P1] Firefox 153 `popover="hint"` lifecycle — single-open, auto coexistence, focus restore, before/toggle events, inline fallback
+- S-461 [P1] Firefox 153 `MediaCapabilities` `"webrtc"` config — supported/smooth/powerEfficient booleans, `transmission` type rejected
+- P-180 [P1] Firefox 153 `RTCTransportStats` mandatory fields + `transportId` linkage across all RTP stats
+- P-181 [P2] Firefox 153 HTTP Compression Dictionary rollout — smaller transfer, SHA-256 decode identity, wrong-dictionary fail-closed, version invalidation
+- B-227 [P2] Firefox 153 tree-counting CSS `sibling-count()` / `sibling-index()` — index values, hidden exclusion, fallback when pref off
+- B-228 [P2] Firefox 153 `link-parameters` CSS property — re-bind without re-fetch, supported/unsupported parity
+### Sources
+- Required parallel queries (2026-07-24, cycle 82):
+  - "HTML5 game testing 2026 new techniques"
+  - "browser game bug report 2026"
+  - "Chrome Edge Safari update 2026"
+  - "casual game UX complaint 2026"
+  - "mobile game performance issue 2026"
+- Primary release-note follow-ups: Firefox 153 developer release notes (MDN, https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153) and Firefox 153 release notes (Mozilla, https://www.mozilla.org/en-US/firefox/153.0/releasenotes/) — new in 153: Picture-in-Picture API on desktop, Popover-API `hint` spec, `MediaCapabilities` `"webrtc"` config + mandatory `RTCTransportStats`, HTTP Compression Dictionary rollout, tree-counting CSS `sibling-count()` / `sibling-index()` (experimental), `link-parameters` CSS property (experimental).
+- Key URLs:
+  - https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (Firefox 153 stable developer release notes — W-391 bug 1463402; W-392 bug 2029974; S-461 bugs 2037610/2032075; P-180 bugs 1225723/2019389; B-227 bug 2042063; B-228 bug 2046153)
+  - https://www.mozilla.org/en-US/firefox/153.0/releasenotes/ (Firefox 153 stable release notes, Jul 21 2026 — P-181 HTTP Compression Dictionary progressive rollout)
+- Research note: required five searches ran in parallel; SearXNG (`mcp__web_search_prime__batch_search`) returned HTTP 404 for all 5 queries — persistent backend failure since cycle 43. Fell back to `mcp__minimax_search__web_search` and `mcp__web_search_prime__extract` for primary Mozilla source verification. Hermes independently extracted the Firefox 153 release notes, rejected duplicates (all 7 IDs new vs v1.202.0), authored the cases, and ran the library validation.
+
 ## [v1.202.0] - 2026-07-23
 ### Added
 - 7 new machine-verifiable test cases from R319 industry research (4h cycle 81)
