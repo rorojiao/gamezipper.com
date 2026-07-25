@@ -1,3 +1,31 @@
+## [v1.204.0] - 2026-07-25
+### Added
+- 8 new machine-verifiable test cases from R321 industry research (4h cycle 83)
+- W-393 [P1] Firefox 153 WebDriver BiDi `script.addPreloadScript` survives ≥5 repeated game-page navigations without duplicate registration or stale closure
+- W-394 [P1] Firefox 153 WebDriver Marionette/BiDi window-geometry independent axis mutation preserves unmutated axes and tracks canvas size
+- W-395 [P1] Firefox 153 restricted privileged-page navigation in content scope blocks automation accidents on `chrome://`, `about:`, `resource://` targets
+- W-396 [P2] Firefox 153 extension `file://` access requires explicit user-granted permission (default-deny for new and existing extensions)
+- W-397 [P3] Firefox 153 JPEG XL decoder round-trip equality for game sprite asset pipeline (Nightly default-on, perceptual-delta tolerance, fallback CLS ≤ 0.001)
+- S-462 [P1] Firefox 153 `RTCDtlsTransport.getRemoteCertificates()` returns valid application-layer peer authenticity with X.509 chain and SHA-256 fingerprint match
+- S-463 [P1] Firefox 153 WebDriver BiDi `browsingContext.create` emits `contextCreated` last and suppresses `domContentLoaded`/`load` for initial `about:blank`
+- S-464 [P2] Safari 26 W3C Digital Credentials API request UX never silently submits player age or ID data — always surfaces a user-mediated prompt and raises `NotAllowedError` without user gesture
+### Sources
+- Required parallel queries (2026-07-25, cycle 83):
+  - "HTML5 game testing 2026 new techniques"
+  - "browser game bug report 2026"
+  - "Chrome Edge Safari update 2026"
+  - "casual game UX complaint 2026"
+  - "mobile game performance issue 2026"
+- Primary follow-ups: Firefox 153 developer release notes full text (MDN); Chrome 149 stable release notes (June 2 2026); Safari 26 W3C Digital Credentials API (Apple/W3C, Oct 7 2025)
+- Key URLs:
+  - https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (Firefox 153 stable developer release notes — W-393 bug 2046390; W-394 bug 1941404; W-395 bug 1579790; W-396 bug 2034168; W-397 bug 2040074; S-462 bug 1805446; S-463 bug 1930594)
+  - https://www.mozilla.org/en-US/firefox/153.0/releasenotes/ (Firefox 153 stable release notes, Jul 21 2026)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_3076a1fbf5420452 (Chrome 149 stable, June 2 2026 — context for W-397 fallback parity)
+  - https://new.qq.com/rain/a/20251007A01IMO00 (Safari 26 W3C Digital Credentials API mDoc, Oct 7 2025 — S-464)
+  - https://www.w3.org/TR/digital-credentials/ (W3C Digital Credentials API spec — S-464)
+- Semantic-dedup note: dropped two earlier-drafted cases (B-229 Chrome 149 CSS Gap Decorations and C-222 iOS 26.2 Safari Notify Me) because they were already covered by B-117/B-205/W-190/W-232 and W-175 respectively across earlier cycles. Replaced with W-397 (Firefox 153 JPEG XL decoder round-trip) and S-464 (Safari 26 W3C Digital Credentials API request UX contract) — both new dimensions confirmed absent from full CHANGELOG grep.
+- Research note: required five searches ran in parallel via mcp__minimax_search__web_search. Firefox 153 release notes re-fetched via mcp__web_search_prime__extract (Chrome 152 release-notes URL returned 404; Firefox 153 URL successful and complete). All 8 new IDs verified absent from v1.203.0 source via set-diff before write.
+
 ## [v1.203.0] - 2026-07-24
 ### Added
 - 7 new machine-verifiable test cases from R320 industry research (4h cycle 82)
