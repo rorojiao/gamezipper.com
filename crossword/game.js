@@ -3,183 +3,6 @@
 
 const PUZZLES = [
   {
-    title: "Getting Started",
-    difficulty: "easy",
-    rows: 5, cols: 5,
-    words: [
-      {id:'a1',dir:'across',row:0,col:0,answer:'HELLO',clue:'A common greeting (5)',num:1},
-      {id:'a2',dir:'across',row:2,col:1,answer:'MIND',clue:'The brain, thoughts (4)',num:2},
-      {id:'a3',dir:'across',row:4,col:0,answer:'YOUNG',clue:'Not old (5)',num:3},
-      {id:'d1',dir:'down',row:0,col:0,answer:'HAPPY',clue:'Feeling joy (5)',num:1},
-      {id:'d2',dir:'down',row:0,col:1,answer:'ELM',clue:'A type of tree (3)',num:2},
-      {id:'d3',dir:'down',row:0,col:2,answer:'LOUD',clue:'High volume (4)',num:4},
-      {id:'d4',dir:'down',row:0,col:3,answer:'OPEN',clue:'Not closed (4)',num:5},
-    ]
-  },
-  {
-    title: "Animal Friends",
-    difficulty: "easy",
-    rows: 5, cols: 5,
-    words: [
-      {id:'a1',dir:'across',row:0,col:0,answer:'MOUSE',clue:'A small rodent (5)',num:1},
-      {id:'a2',dir:'across',row:2,col:0,answer:'FROG',clue:'Jumps in a pond (4)',num:2},
-      {id:'a3',dir:'across',row:3,col:1,answer:'OWL',clue:'Night bird, hoots (3)',num:3},
-      {id:'a4',dir:'across',row:4,col:0,answer:'ZEBRA',clue:'Black and white animal (5)',num:4},
-      {id:'d1',dir:'down',row:0,col:0,answer:'MERRY',clue:'Full of joy (5)',num:1},
-      {id:'d2',dir:'down',row:2,col:2,answer:'OGRE',clue:'A fairy tale monster (4)',num:5},
-      {id:'d3',dir:'down',row:0,col:4,answer:'RAKE',clue:'Garden tool (4)',num:6},
-    ]
-  },
-  {
-    title: "Food & Drink",
-    difficulty: "easy",
-    rows: 5, cols: 6,
-    words: [
-      {id:'a1',dir:'across',row:0,col:0,answer:'PIZZA',clue:'Italian flatbread with toppings (5)',num:1},
-      {id:'a2',dir:'across',row:1,col:1,answer:'COOK',clue:'Prepare food (4)',num:2},
-      {id:'a3',dir:'across',row:2,col:0,answer:'SALAD',clue:'Cold vegetable mix (5)',num:3},
-      {id:'a4',dir:'across',row:3,col:2,answer:'YUM',clue:'Tastes good! (3)',num:4},
-      {id:'a5',dir:'across',row:4,col:0,answer:'FEAST',clue:'A big meal (5)',num:5},
-      {id:'d1',dir:'down',row:0,col:0,answer:'PASTA',clue:'Italian carb dish (5)',num:1},
-      {id:'d2',dir:'down',row:0,col:1,answer:'ICECREAM',clue:'Cold sweet treat (8)',num:6},
-      {id:'d3',dir:'down',row:0,col:4,answer:'TEA',clue:'Hot leaf drink (3)',num:7},
-    ]
-  },
-  {
-    title: "Tech World",
-    difficulty: "medium",
-    rows: 7, cols: 7,
-    words: [
-      {id:'a1',dir:'across',row:0,col:0,answer:'COMPUTER',clue:'Electronic brain (8)',num:1},
-      {id:'a2',dir:'across',row:2,col:0,answer:'APPLE',clue:'A fruit or a tech brand (5)',num:2},
-      {id:'a3',dir:'across',row:4,col:1,answer:'LINUX',clue:'Open source OS (5)',num:3},
-      {id:'a4',dir:'across',row:6,col:0,answer:'SCREEN',clue:'Monitor display (6)',num:4},
-      {id:'d1',dir:'down',row:0,col:0,answer:'CABLES',clue:'Wires that connect devices (6)',num:1},
-      {id:'d2',dir:'down',row:0,col:3,answer:'POINTER',clue:'Mouse cursor (7)',num:5},
-      {id:'d3',dir:'down',row:0,col:6,answer:'NETWORK',clue:'Group of connected computers (7)',num:6},
-    ]
-  },
-  {
-    title: "Planet Earth",
-    difficulty: "medium",
-    rows: 7, cols: 7,
-    words: [
-      {id:'a1',dir:'across',row:0,col:0,answer:'PLANET',clue:'Celestial body like Earth (6)',num:1},
-      {id:'a2',dir:'across',row:2,col:0,answer:'RIVER',clue:'Flowing body of water (5)',num:2},
-      {id:'a3',dir:'across',row:4,col:0,answer:'OCEAN',clue:'Massive saltwater body (5)',num:3},
-      {id:'a4',dir:'across',row:6,col:0,answer:'FOREST',clue:'Dense trees area (6)',num:4},
-      {id:'d1',dir:'down',row:0,col:0,answer:'PRAISE',clue:'To speak highly of (6)',num:1},
-      {id:'d2',dir:'down',row:0,col:3,answer:'TIGER',clue:'Striped big cat (5)',num:5},
-      {id:'d3',dir:'down',row:0,col:5,answer:'NORTH',clue:'Compass direction (5)',num:6},
-    ]
-  },
-  {
-    title: "Science Lab",
-    difficulty: "medium",
-    rows: 8, cols: 8,
-    words: [
-      {id:'a1',dir:'across',row:0,col:0,answer:'SCIENTIST',clue:'Research professional (9)',num:1},
-      {id:'a2',dir:'across',row:2,col:0,answer:'ENERGY',clue:'Power, vitality (6)',num:2},
-      {id:'a3',dir:'across',row:4,col:1,answer:'ATOMS',clue:'Building blocks of matter (5)',num:3},
-      {id:'a4',dir:'across',row:6,col:0,answer:'GRAVITY',clue:'What keeps us on Earth (7)',num:4},
-      {id:'a5',dir:'across',row:7,col:0,answer:'SCALE',clue:'Measuring tool (5)',num:5},
-      {id:'d1',dir:'down',row:0,col:0,answer:'SOLAR',clue:'Related to the sun (5)',num:1},
-      {id:'d2',dir:'down',row:0,col:4,answer:'ELECTRON',clue:'Negative particle (8)',num:6},
-      {id:'d3',dir:'down',row:0,col:7,answer:'GENOME',clue:'DNA set of an organism (6)',num:7},
-    ]
-  },
-  {
-    title: "History Class",
-    difficulty: "hard",
-    rows: 9, cols: 9,
-    words: [
-      {id:'a1',dir:'across',row:0,col:0,answer:'REVOLUTION',clue:'Dramatic political change (10)',num:1},
-      {id:'a2',dir:'across',row:2,col:0,answer:'PYRAMID',clue:'Ancient Egyptian tomb (7)',num:2},
-      {id:'a3',dir:'across',row:4,col:0,answer:'WARRIOR',clue:'Fighting hero (7)',num:3},
-      {id:'a4',dir:'across',row:6,col:0,answer:'EMPEROR',clue:'Ruler of an empire (7)',num:4},
-      {id:'a5',dir:'across',row:8,col:0,answer:'TOMB',clue:'Burial place (4)',num:5},
-      {id:'d1',dir:'down',row:0,col:0,answer:'REPUBLIC',clue:'Government by elected reps (9)',num:1},
-      {id:'d2',dir:'down',row:0,col:5,answer:'ANCIENT',clue:'From very long ago (7)',num:6},
-      {id:'d3',dir:'down',row:0,col:8,answer:'WRITING',clue:'Text on paper (7)',num:7},
-    ]
-  },
-  {
-    title: "Bookworm",
-    difficulty: "hard",
-    rows: 9, cols: 9,
-    words: [
-      {id:'a1',dir:'across',row:0,col:0,answer:'LIBRARY',clue:'Place full of books (7)',num:1},
-      {id:'a2',dir:'across',row:2,col:0,answer:'AUTHOR',clue:'Book writer (6)',num:2},
-      {id:'a3',dir:'across',row:4,col:0,answer:'NOVEL',clue:'Long work of fiction (5)',num:3},
-      {id:'a4',dir:'across',row:6,col:0,answer:'CHAPTER',clue:'Section of a book (7)',num:4},
-      {id:'a5',dir:'across',row:8,col:0,answer:'POETRY',clue:'Verse and rhythm writing (6)',num:5},
-      {id:'d1',dir:'down',row:0,col:0,answer:'LANGUAGE',clue:'System of communication (8)',num:1},
-      {id:'d2',dir:'down',row:0,col:3,answer:'IDEA',clue:'A thought or concept (4)',num:6},
-      {id:'d3',dir:'down',row:0,col:6,answer:'TALE',clue:'A story (4)',num:7},
-    ]
-  },
-  {
-    title: "Sports Arena",
-    difficulty: "easy",
-    rows: 6, cols: 6,
-    words: [
-      {id:'a1',dir:'across',row:0,col:0,answer:'SOCCER',clue:'11 players per side, goal kick (6)',num:1},
-      {id:'a2',dir:'across',row:2,col:0,answer:'SWIM',clue:'Move through water (4)',num:2},
-      {id:'a3',dir:'across',row:4,col:1,answer:'RUN',clue:'Move fast on foot (3)',num:3},
-      {id:'a4',dir:'across',row:5,col:0,answer:'CHAMP',clue:'Winner, title holder (5)',num:4},
-      {id:'d1',dir:'down',row:0,col:0,answer:'SKIING',clue:'Snow sport with poles (6)',num:1},
-      {id:'d2',dir:'down',row:0,col:2,answer:'CURLING',clue:'Ice sliding stones sport (7)',num:5},
-      {id:'d3',dir:'down',row:0,col:4,answer:'POLE',clue:'Long vertical stick (4)',num:6},
-    ]
-  },
-  {
-    title: "Music Notes",
-    difficulty: "medium",
-    rows: 7, cols: 7,
-    words: [
-      {id:'a1',dir:'across',row:0,col:0,answer:'MELODY',clue:'A tune, musical phrase (6)',num:1},
-      {id:'a2',dir:'across',row:2,col:0,answer:'GUITAR',clue:'Six-stringed instrument (6)',num:2},
-      {id:'a3',dir:'across',row:4,col:0,answer:'PIANO',clue:'88-key keyboard instrument (5)',num:3},
-      {id:'a4',dir:'across',row:6,col:0,answer:'TEMPO',clue:'Speed of music (5)',num:4},
-      {id:'d1',dir:'down',row:0,col:0,answer:'MUSIC',clue:'Organized sound art form (5)',num:1},
-      {id:'d2',dir:'down',row:0,col:3,answer:'DRUM',clue:'Percussion instrument (4)',num:5},
-      {id:'d3',dir:'down',row:0,col:5,answer:'CHOIR',clue:'Singing group (5)',num:6},
-    ]
-  },
-  {
-    title: "Ocean Deep",
-    difficulty: "medium",
-    rows: 8, cols: 8,
-    words: [
-      {id:'a1',dir:'across',row:0,col:0,answer:'WHALE',clue:'Largest mammal in the sea (5)',num:1},
-      {id:'a2',dir:'across',row:2,col:0,answer:'CORAL',clue:'Reef-building organism (5)',num:2},
-      {id:'a3',dir:'across',row:4,col:0,answer:'SHARK',clue:'Fearsome toothed fish (5)',num:3},
-      {id:'a4',dir:'across',row:6,col:0,answer:'ANCHOR',clue:'Device that stops a ship (6)',num:4},
-      {id:'a5',dir:'across',row:7,col:0,answer:'PEARL',clue:'Valuable gem from oysters (5)',num:5},
-      {id:'d1',dir:'down',row:0,col:0,answer:'WAVES',clue:'Moving water on ocean surface (5)',num:1},
-      {id:'d2',dir:'down',row:0,col:3,answer:'SAFETY',clue:'Protection from danger (6)',num:6},
-      {id:'d3',dir:'down',row:0,col:6,answer:'KELP',clue:'Brown seaweed (4)',num:7},
-    ]
-  },
-  {
-    title: "City Life",
-    difficulty: "hard",
-    rows: 10, cols: 10,
-    words: [
-      {id:'a1',dir:'across',row:0,col:0,answer:'SKYSCRAPER',clue:'Very tall city building (10)',num:1},
-      {id:'a2',dir:'across',row:2,col:0,answer:'SUBWAY',clue:'Underground train system (6)',num:2},
-      {id:'a3',dir:'across',row:4,col:0,answer:'BRIDGE',clue:'Structure spanning a gap (6)',num:3},
-      {id:'a4',dir:'across',row:6,col:0,answer:'TRAFFIC',clue:'Vehicles on roads (7)',num:4},
-      {id:'a5',dir:'across',row:8,col:0,answer:'SIDEWALK',clue:'Pedestrian path on a street (8)',num:5},
-      {id:'a6',dir:'across',row:9,col:0,answer:'PARK',clue:'Green public urban space (4)',num:6},
-      {id:'d1',dir:'down',row:0,col:0,answer:'SUBURBS',clue:'Residential area outside city (7)',num:1},
-      {id:'d2',dir:'down',row:0,col:5,answer:'AVENUE',clue:'Wide city street (6)',num:7},
-      {id:'d3',dir:'down',row:0,col:9,answer:'MUSEUM',clue:'Building with exhibits (6)',num:8},
-    ]
-  },
-  // === R22 新增谜题 (P13-P30) ===
-// === R22 新增谜题 (P13-P30) — verified intersections ===
-  {
     title: "Weather Watch",
     difficulty: "easy",
     rows: 7, cols: 7,
@@ -478,6 +301,202 @@ const PUZZLES = [
       {id:'d4',dir:'down',row:0,col:3,answer:'ATS',clue:'Fill in (3)',num:4},
       {id:'d5',dir:'down',row:0,col:4,answer:'DYKE',clue:'Fill in (4)',num:5},
       {id:'d6',dir:'down',row:0,col:5,answer:'KNIFE',clue:'Fill in (5)',num:6}
+    ]
+  },
+  {
+    title: "Weather Watch",
+    difficulty: "easy",
+    rows: 7, cols: 7,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'SUNNY',clue:'Bright and clear weather (5)',num:1},
+      {id:'a6',dir:'across',row:2,col:0,answer:'CLOUD',clue:'Sky cotton (5)',num:6},
+      {id:'a7',dir:'across',row:4,col:0,answer:'RAIN',clue:'Water from sky (4)',num:7},
+      {id:'d1',dir:'down',row:0,col:0,answer:'SEC',clue:'Fill in (3)',num:1},
+      {id:'d2',dir:'down',row:0,col:1,answer:'URL',clue:'Fill in (3)',num:2},
+      {id:'d3',dir:'down',row:0,col:2,answer:'NCO',clue:'Fill in (3)',num:3},
+      {id:'d4',dir:'down',row:0,col:3,answer:'NOUS',clue:'Fill in (4)',num:4},
+      {id:'d5',dir:'down',row:0,col:4,answer:'YODA',clue:'Fill in (4)',num:5}
+    ]
+  },
+  {
+    title: "Color Palette",
+    difficulty: "easy",
+    rows: 7, cols: 7,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'PURPLE',clue:'Royal color (6)',num:1},
+      {id:'a7',dir:'across',row:2,col:0,answer:'ORANGE',clue:'Citrus hue (6)',num:7},
+      {id:'a8',dir:'across',row:4,col:0,answer:'YELLOW',clue:'Sun shade (6)',num:8},
+      {id:'d1',dir:'down',row:0,col:0,answer:'PRO',clue:'Fill in (3)',num:1},
+      {id:'d6',dir:'down',row:1,col:1,answer:'BRIE',clue:'Fill in (4)',num:6},
+      {id:'d2',dir:'down',row:0,col:2,answer:'RDA',clue:'Fill in (3)',num:2},
+      {id:'d3',dir:'down',row:0,col:3,answer:'PIN',clue:'Fill in (3)',num:3},
+      {id:'d4',dir:'down',row:0,col:4,answer:'LUG',clue:'Fill in (3)',num:4},
+      {id:'d5',dir:'down',row:0,col:5,answer:'EVE',clue:'Fill in (3)',num:5}
+    ]
+  },
+  {
+    title: "Garden Party",
+    difficulty: "easy",
+    rows: 7, cols: 7,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'TULIP',clue:'Spring flower (5)',num:1},
+      {id:'a6',dir:'across',row:2,col:0,answer:'DAISY',clue:'White petals (5)',num:6},
+      {id:'a7',dir:'across',row:4,col:0,answer:'LILAC',clue:'Purple shrub (5)',num:7},
+      {id:'d1',dir:'down',row:0,col:0,answer:'TAD',clue:'Fill in (3)',num:1},
+      {id:'d2',dir:'down',row:0,col:1,answer:'UFA',clue:'Fill in (3)',num:2},
+      {id:'d3',dir:'down',row:0,col:2,answer:'LEI',clue:'Fill in (3)',num:3},
+      {id:'d4',dir:'down',row:0,col:3,answer:'IVS',clue:'Fill in (3)',num:4},
+      {id:'d5',dir:'down',row:0,col:4,answer:'PRY',clue:'Fill in (3)',num:5}
+    ]
+  },
+  {
+    title: "Space Voyage",
+    difficulty: "medium",
+    rows: 9, cols: 9,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'GALAXY',clue:'Star system (6)',num:1},
+      {id:'a7',dir:'across',row:2,col:0,answer:'PLANET',clue:'Orbits a star (6)',num:7},
+      {id:'a8',dir:'across',row:4,col:0,answer:'ROCKET',clue:'Launch vehicle (6)',num:8},
+      {id:'a9',dir:'across',row:6,col:0,answer:'COMET',clue:'Icy traveler (5)',num:9},
+      {id:'d1',dir:'down',row:0,col:0,answer:'GAP',clue:'Fill in (3)',num:1},
+      {id:'d2',dir:'down',row:0,col:1,answer:'ALL',clue:'Fill in (3)',num:2},
+      {id:'d3',dir:'down',row:0,col:2,answer:'LEA',clue:'Fill in (3)',num:3},
+      {id:'d4',dir:'down',row:0,col:3,answer:'ANN',clue:'Fill in (3)',num:4},
+      {id:'d5',dir:'down',row:0,col:4,answer:'XREF',clue:'Fill in (4)',num:5},
+      {id:'d6',dir:'down',row:0,col:5,answer:'YET',clue:'Fill in (3)',num:6}
+    ]
+  },
+  {
+    title: "Body Talk",
+    difficulty: "medium",
+    rows: 9, cols: 9,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'ELBOW',clue:'Arm joint (5)',num:1},
+      {id:'a6',dir:'across',row:2,col:0,answer:'HEART',clue:'Blood pump (5)',num:6},
+      {id:'a7',dir:'across',row:4,col:0,answer:'BRAIN',clue:'Thinker (5)',num:7},
+      {id:'d1',dir:'down',row:0,col:0,answer:'ECHO',clue:'Fill in (4)',num:1},
+      {id:'d2',dir:'down',row:0,col:1,answer:'LIE',clue:'Fill in (3)',num:2},
+      {id:'d3',dir:'down',row:0,col:2,answer:'BAA',clue:'Fill in (3)',num:3},
+      {id:'d4',dir:'down',row:0,col:3,answer:'OAR',clue:'Fill in (3)',num:4},
+      {id:'d5',dir:'down',row:0,col:4,answer:'WOT',clue:'Fill in (3)',num:5}
+    ]
+  },
+  {
+    title: "Winter Fun",
+    difficulty: "medium",
+    rows: 9, cols: 9,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'FROSTY',clue:'Like a snowman (6)',num:1},
+      {id:'a7',dir:'across',row:2,col:0,answer:'ICICLE',clue:'Frozen drip (6)',num:7},
+      {id:'a8',dir:'across',row:4,col:0,answer:'SLED',clue:'Snow slider (4)',num:8},
+      {id:'d1',dir:'down',row:0,col:0,answer:'FYI',clue:'Fill in (3)',num:1},
+      {id:'d2',dir:'down',row:0,col:1,answer:'RFC',clue:'Fill in (3)',num:2},
+      {id:'d3',dir:'down',row:0,col:2,answer:'ODIN',clue:'Fill in (4)',num:3},
+      {id:'d4',dir:'down',row:0,col:3,answer:'SAC',clue:'Fill in (3)',num:4},
+      {id:'d5',dir:'down',row:0,col:4,answer:'TEL',clue:'Fill in (3)',num:5},
+      {id:'d6',dir:'down',row:0,col:5,answer:'YVES',clue:'Fill in (4)',num:6}
+    ]
+  },
+  {
+    title: "Movie Magic",
+    difficulty: "hard",
+    rows: 9, cols: 9,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'ACTOR',clue:'Stage star (5)',num:1},
+      {id:'a7',dir:'across',row:2,col:0,answer:'CAMERA',clue:'Film device (6)',num:7},
+      {id:'a8',dir:'across',row:4,col:0,answer:'SCRIPT',clue:'Dialogue text (6)',num:8},
+      {id:'a9',dir:'across',row:6,col:0,answer:'DRAMA',clue:'Serious film (5)',num:9},
+      {id:'d1',dir:'down',row:0,col:0,answer:'AFC',clue:'Fill in (3)',num:1},
+      {id:'d2',dir:'down',row:0,col:1,answer:'CPA',clue:'Fill in (3)',num:2},
+      {id:'d3',dir:'down',row:0,col:2,answer:'TIM',clue:'Fill in (3)',num:3},
+      {id:'d4',dir:'down',row:0,col:3,answer:'ORE',clue:'Fill in (3)',num:4},
+      {id:'d5',dir:'down',row:0,col:4,answer:'RARE',clue:'Fill in (4)',num:5},
+      {id:'d6',dir:'down',row:0,col:5,answer:'GRAFT',clue:'Fill in (5)',num:6}
+    ]
+  },
+  {
+    title: "World Travels",
+    difficulty: "hard",
+    rows: 9, cols: 9,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'TICKET',clue:'Boarding pass (6)',num:1},
+      {id:'a9',dir:'across',row:2,col:0,answer:'PASSPORT',clue:'Travel ID (8)',num:9},
+      {id:'a10',dir:'across',row:4,col:0,answer:'MAP',clue:'Guide book (3)',num:10},
+      {id:'d1',dir:'down',row:0,col:0,answer:'TSP',clue:'Fill in (3)',num:1},
+      {id:'d2',dir:'down',row:0,col:1,answer:'IVA',clue:'Fill in (3)',num:2},
+      {id:'d3',dir:'down',row:0,col:2,answer:'CIS',clue:'Fill in (3)',num:3},
+      {id:'d4',dir:'down',row:0,col:3,answer:'KISS',clue:'Fill in (4)',num:4},
+      {id:'d5',dir:'down',row:0,col:4,answer:'ESP',clue:'Fill in (3)',num:5},
+      {id:'d6',dir:'down',row:0,col:5,answer:'TWO',clue:'Fill in (3)',num:6},
+      {id:'d7',dir:'down',row:0,col:6,answer:'PAR',clue:'Fill in (3)',num:7},
+      {id:'d8',dir:'down',row:0,col:7,answer:'MIT',clue:'Fill in (3)',num:8}
+    ]
+  },
+  {
+    title: "Detective",
+    difficulty: "hard",
+    rows: 9, cols: 9,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'CLUES',clue:'Detective hints (5)',num:1},
+      {id:'a8',dir:'across',row:2,col:0,answer:'SUSPECT',clue:'Person of interest (7)',num:8},
+      {id:'a9',dir:'across',row:4,col:0,answer:'ALIBI',clue:'Innocence proof (5)',num:9},
+      {id:'d1',dir:'down',row:0,col:0,answer:'CIS',clue:'Fill in (3)',num:1},
+      {id:'d2',dir:'down',row:0,col:1,answer:'LOU',clue:'Fill in (3)',num:2},
+      {id:'d3',dir:'down',row:0,col:2,answer:'UBS',clue:'Fill in (3)',num:3},
+      {id:'d4',dir:'down',row:0,col:3,answer:'ESP',clue:'Fill in (3)',num:4},
+      {id:'d5',dir:'down',row:0,col:4,answer:'SUE',clue:'Fill in (3)',num:5},
+      {id:'d6',dir:'down',row:0,col:5,answer:'UTC',clue:'Fill in (3)',num:6},
+      {id:'d7',dir:'down',row:0,col:6,answer:'EMT',clue:'Fill in (3)',num:7}
+    ]
+  },
+  {
+    title: "Music Studio",
+    difficulty: "expert",
+    rows: 10, cols: 10,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'VIOLIN',clue:'Bowed strings (6)',num:1},
+      {id:'a7',dir:'across',row:2,col:0,answer:'RHYTHM',clue:'Beat pattern (6)',num:7},
+      {id:'a8',dir:'across',row:4,col:0,answer:'CHORD',clue:'Notes together (5)',num:8},
+      {id:'a9',dir:'across',row:6,col:0,answer:'CELLO',clue:'Big strings (5)',num:9},
+      {id:'d1',dir:'down',row:0,col:0,answer:'VAR',clue:'Fill in (3)',num:1},
+      {id:'d2',dir:'down',row:0,col:1,answer:'IMHO',clue:'Fill in (4)',num:2},
+      {id:'d3',dir:'down',row:0,col:2,answer:'ONYX',clue:'Fill in (4)',num:3},
+      {id:'d4',dir:'down',row:0,col:3,answer:'LET',clue:'Fill in (3)',num:4},
+      {id:'d6',dir:'down',row:1,col:4,answer:'THUD',clue:'Fill in (4)',num:6},
+      {id:'d5',dir:'down',row:0,col:5,answer:'NAM',clue:'Fill in (3)',num:5}
+    ]
+  },
+  {
+    title: "Chemistry",
+    difficulty: "expert",
+    rows: 10, cols: 10,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'OXYGEN',clue:'Breathing gas (6)',num:1},
+      {id:'a7',dir:'across',row:2,col:0,answer:'FLASK',clue:'Lab beaker (5)',num:7},
+      {id:'a8',dir:'across',row:4,col:0,answer:'ATOM',clue:'Building block (4)',num:8},
+      {id:'a9',dir:'across',row:6,col:0,answer:'NEON',clue:'Sign gas (4)',num:9},
+      {id:'d1',dir:'down',row:0,col:0,answer:'OFF',clue:'Fill in (3)',num:1},
+      {id:'d2',dir:'down',row:0,col:1,answer:'XML',clue:'Fill in (3)',num:2},
+      {id:'d3',dir:'down',row:0,col:2,answer:'YEA',clue:'Fill in (3)',num:3},
+      {id:'d4',dir:'down',row:0,col:3,answer:'GUS',clue:'Fill in (3)',num:4},
+      {id:'d5',dir:'down',row:0,col:4,answer:'ELK',clue:'Fill in (3)',num:5},
+      {id:'d6',dir:'down',row:0,col:5,answer:'NET',clue:'Fill in (3)',num:6}
+    ]
+  },
+  {
+    title: "Art Gallery",
+    difficulty: "expert",
+    rows: 10, cols: 10,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'CANVAS',clue:'Painter surface (6)',num:1},
+      {id:'a7',dir:'across',row:2,col:0,answer:'BRUSH',clue:'Paint tool (5)',num:7},
+      {id:'a8',dir:'across',row:4,col:0,answer:'CLAY',clue:'Pottery material (4)',num:8},
+      {id:'d1',dir:'down',row:0,col:0,answer:'COB',clue:'Fill in (3)',num:1},
+      {id:'d2',dir:'down',row:0,col:1,answer:'AIR',clue:'Fill in (3)',num:2},
+      {id:'d3',dir:'down',row:0,col:2,answer:'NOUN',clue:'Fill in (4)',num:3},
+      {id:'d4',dir:'down',row:0,col:3,answer:'VHS',clue:'Fill in (3)',num:4},
+      {id:'d5',dir:'down',row:0,col:4,answer:'ASH',clue:'Fill in (3)',num:5},
+      {id:'d6',dir:'down',row:0,col:5,answer:'SIP',clue:'Fill in (3)',num:6}
     ]
   }
 ];

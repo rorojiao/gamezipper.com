@@ -4,7 +4,7 @@
 
 const fs = require('fs');
 
-const LEVELS = JSON.parse(fs.readFileSync('levels.json', 'utf8')).LEVELS;
+const LEVELS = JSON.parse(fs.readFileSync(require('path').join(__dirname,'levels.json'), 'utf8')).LEVELS;
 
 function solveCount(gridInit, givens, N, cap = 2) {
   const MAX_NODES = 50000;

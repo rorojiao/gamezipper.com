@@ -3,7 +3,7 @@
 // Validates HTML structure, SEO, art assets, all game systems.
 const fs = require('fs');
 
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(require('path').join(__dirname,'index.html'), 'utf8');
 let pass = 0, fail = 0;
 const failList = [];
 
@@ -90,21 +90,21 @@ check('Multiple related games', (html.match(/gz-related-card/g) || []).length >=
 
 // Art assets exist
 const fs2 = require('fs');
-check('icon.png exists', fs2.existsSync('icon.png'));
-check('og-image.jpg exists', fs2.existsSync('og-image.jpg'));
-if (fs2.existsSync('icon.png')) {
-  const sz = fs2.statSync('icon.png').size;
+check('icon.png exists', fs2.existsSync(require('path').join(__dirname,'icon.png')));
+check('og-image.jpg exists', fs2.existsSync(require('path').join(__dirname,'og-image.jpg')));
+if (fs2.existsSync(require('path').join(__dirname,'icon.png'))) {
+  const sz = fs2.statSync(require('path').join(__dirname,'icon.png')).size;
   check('icon.png reasonable size', sz > 1000 && sz < 100000, `size=${sz}`);
 }
-if (fs2.existsSync('og-image.jpg')) {
-  const sz = fs2.statSync('og-image.jpg').size;
+if (fs2.existsSync(require('path').join(__dirname,'og-image.jpg'))) {
+  const sz = fs2.statSync(require('path').join(__dirname,'og-image.jpg')).size;
   check('og-image.jpg reasonable size', sz > 5000 && sz < 500000, `size=${sz}`);
 }
 
 // Levels.json
-check('levels.json exists', fs2.existsSync('levels.json'));
-if (fs2.existsSync('levels.json')) {
-  const data = JSON.parse(fs2.readFileSync('levels.json'));
+check('levels.json exists', fs2.existsSync(require('path').join(__dirname,'levels.json')));
+if (fs2.existsSync(require('path').join(__dirname,'levels.json'))) {
+  const data = JSON.parse(fs2.readFileSync(require('path').join(__dirname,'levels.json')));
   check('levels.json has 30 levels', data.LEVELS && data.LEVELS.length === 30);
   for (const lv of data.LEVELS) {
     check(`L${lv.i+1} has givens`, Array.isArray(lv.g));

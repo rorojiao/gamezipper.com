@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+const fs=require('fs'),path=require('path');const s=fs.readFileSync(path.join(__dirname,'game.js'),'utf8');
+function ext(){let i=s.indexOf('const PUZZLES ='),a=s.indexOf('[',i),d=0,q=null,e=0;for(let j=a;j<s.length;j++){let c=s[j];if(q){if(e)e=0;else if(c==='\\')e=1;else if(c===q)q=null;continue}if(c==='"'||c==="'")q=c;else if(c==='[')d++;else if(c===']'&&--d===0)return s.slice(a,j+1)}}
+const P=new Function('return '+ext())();let pass=0;for(const [pi,p] of P.entries()){let g=new Map,ok=true;for(const w of p.words)for(let i=0;i<w.answer.length;i++){let r=w.row+(w.dir==='down'?i:0),c=w.col+(w.dir==='across'?i:0),k=r+','+c;if(r<0||r>=p.rows||c<0||c>=p.cols)ok=false;if(g.has(k)&&g.get(k)!==w.answer[i])ok=false;if(!g.has(k))g.set(k,w.answer[i])}if(ok)pass++;else console.error(`P${pi+1}: invalid intersections/bounds`)}console.log(`${pass}/${P.length} puzzles PASS`);process.exit(pass===P.length?0:1);
