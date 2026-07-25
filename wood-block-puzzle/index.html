@@ -272,6 +272,22 @@ let W = canvas.width = window.innerWidth;
 let H = canvas.height = window.innerHeight - 30;
 window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight - 30; });
 
+let _audioCtx=null;
+function playTone(freq, type, dur, vol) {
+  if (_muted) return;
+  try {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if (_audioCtx.state === 'suspended') _audioCtx.resume();
+    const o = _audioCtx.createOscillator();
+    const g = _audioCtx.createGain();
+    o.type = type || 'sine';
+    o.frequency.value = freq;
+    g.gain.value = vol || 0.1;
+    o.connect(g); g.connect(_audioCtx.destination);
+    o.start();
+    o.stop(_audioCtx.currentTime + (dur || 0.1));
+  } catch(e) { /* audio is optional */ }
+}
 function playPlace() { playTone(440, 'triangle', 0.1, 0.08); }
 function playClear() {
   [523,659,784,1047].forEach((f,i) => setTimeout(() => playTone(f,'triangle',0.15,0.15), i*80));
@@ -1003,7 +1019,7 @@ function gzToast(msg,dur){dur=dur||2500;var t=document.createElement('div');t.st
 <script>
 (function(){var _origRAF=window.requestAnimationFrame;var _origCAF=window.cancelAnimationFrame;var _rafId=null;window.requestAnimationFrame=function(cb){return _rafId=_origRAF.call(window,cb)};window.cancelAnimationFrame=function(id){if(id)_origCAF.call(window,id);_rafId=null};window.addEventListener('beforeunload',function(){if(_rafId)window.cancelAnimationFrame(_rafId)});document.addEventListener('visibilitychange',function(){if(!document.hidden&&_rafId===null){_rafId=_origRAF.call(window,function(){_rafId=null})}})})();
 </script>
-<script src="/gz-analytics.js?v=2026072523ebfe1fe7" defer></script>
+<script src="/gz-analytics.js?v=20260725374766e5c1" defer></script>
 <script src="/adsterra-manager.js?v=v516poponly"></script><script src="/monetag-manager.js?v=v525midgridcull"></script>
 <div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
 
