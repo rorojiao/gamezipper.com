@@ -1,6 +1,15 @@
 /**
- * GameZipper Adsterra Ad Manager v5.17.2 (2026-07-18)
+ * GameZipper Adsterra Ad Manager v5.17.4 (2026-07-26)
  * ─────────────────────────────────────────────────
+ * v5.17.4 Changes (endpoint hygiene — kills dead-tunnel console spam):
+ *   - 🐛 Fix: channel 2 pointed at a hardcoded tunnel URL
+ *     (bishop-fix-realtor-local.trycloudflare.com) that died on every
+ *     cloudflared restart -> ERR_NAME_NOT_RESOLVED on every page load.
+ *     Now resolved lazily from window.__GZ_COLLECT_EP (published by
+ *     gz-analytics.js, kept fresh by tunnel-watchdog.sh).
+ *   - 🗑️ Removed channel 4 (same-origin /api/collect beacon): GitHub Pages
+ *     is static hosting, that endpoint always returns 405 and only produced
+ *     console error spam. Ad events still flow via channels 1-3.
  * v5.17.3 Changes (probeCdn hardening — stops cdn_blocked noise pollution):
    - 🐛 Fix: v5.17's probeCdn used new Image() which fires onerror for ANY
      non-image response (effectivecpmnetwork returns HTML/JS, not bitmap).
@@ -95,24 +104,24 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     smartlink: '30130928'
   };
 
-  // ── BI endpoint (same-origin, fallback if gzTrack missing) ──
-  var BI_EP = (function () {
-    try { return new URL('/api/collect', location.origin).toString(); }
-    catch (e) { return '/api/collect'; }
-  })();
+  // ── BI endpoint (resolved lazily from gz-analytics.js — watchdog-rotated) ──
+  // 2026-07-26: the old hardcoded tunnel URL (bishop-fix-realtor-local) died on
+  // every cloudflared restart -> ERR_NAME_NOT_RESOLVED spam + lost ad events.
+  // window.__GZ_COLLECT_EP is published by gz-analytics.js and kept current by
+  // tunnel-watchdog.sh, so this channel now follows rotations automatically.
+  function biDirectEP() { return window.__GZ_COLLECT_EP || ''; }
 
-  // ── Hardened track() — v5.17.2: dual-channel (BI batch + fire-and-forget)
+  // ── Hardened track() — v5.17.3: dual-channel (BI batch + fire-and-forget)
   //     1) gzAnalytics.sendAd → gz-analytics.js batch buffer → trycloudflare tunnel → BI
   //        (best-effort, may be lost on tab close before 30s flush)
-  //     2) Direct sendBeacon to trycloudflare BI endpoint (fire-and-forget,
-  //        bypasses the 30s batch window for init events)
+  //     2) Direct sendBeacon to the watchdog-rotated tunnel endpoint
+  //        (fire-and-forget, bypasses the 30s batch window for init events)
   //     3) gzTrack fallback (legacy public/t.js)
-  //     4) sendBeacon('/api/collect') last-resort (self-hosted setups)
   //
-  // Keep this in sync with gz-analytics.js's active Cloudflare Tunnel endpoint.
-  // sendBeacon is fire-and-forget; it reduces, but cannot eliminate, loss on navigation.
-  var BI_DIRECT_EP = 'https://bishop-fix-realtor-local.trycloudflare.com/api/collect';
-
+  // 2026-07-26 v5.17.3: removed channel 4 (same-origin /api/collect beacon) —
+  // GitHub Pages is static hosting, that endpoint always 405s and only produced
+  // console error spam. Channel 2 now resolves the tunnel lazily via
+  // window.__GZ_COLLECT_EP so it survives watchdog rotations.
   function track(type, extra) {
     var payload = Object.assign({ network: 'adsterra', type: type, t: Date.now() }, extra || {});
     // Channel 1: gzAnalytics.sendAd (BI batch pipeline, may be lost on quick nav)
@@ -121,32 +130,24 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
         window.gzAnalytics.sendAd(type, payload);
       }
     } catch (e) {}
-    // Channel 2: Direct sendBeacon to trycloudflare BI tunnel (fire-and-forget)
+    // Channel 2: Direct sendBeacon to the active BI tunnel (fire-and-forget)
     // Sends init events (script_loaded + cdn_health) without waiting for the
     // batch flush, including browsers that close before the next interval.
     try {
-      if (navigator.sendBeacon && BI_DIRECT_EP) {
+      var ep = biDirectEP();
+      if (navigator.sendBeacon && ep) {
         var env = {
           e: 'gz_ad_event',
           d: payload,
           t: Date.now()
         };
-        navigator.sendBeacon(BI_DIRECT_EP, JSON.stringify(env));
+        navigator.sendBeacon(ep, JSON.stringify(env));
       }
     } catch (e) {}
     // Channel 3: gzTrack fallback (legacy trackers)
     try {
       if (typeof window.gzTrack === 'function') {
         window.gzTrack('gz_ad_event', payload);
-      }
-    } catch (e) {}
-    // Channel 4: sendBeacon /api/collect (self-hosted setups, GitHub Pages 405s)
-    try {
-      if (navigator.sendBeacon && BI_EP) {
-        navigator.sendBeacon(BI_EP, JSON.stringify({
-          event: 'gz_ad_event', ts: Date.now(), path: location.pathname,
-          extra: payload
-        }));
       }
     } catch (e) {}
   }

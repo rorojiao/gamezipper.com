@@ -2056,14 +2056,22 @@ window.gzPopupRelease=function(id){if(window.__gzPopupLock.owner===id)window.__g
   if(msg&&window.gzPopupAcquire&&window.gzPopupAcquire('wb')){txt.textContent=msg;el.style.display='block';setTimeout(function(){el.style.display='none';window.gzPopupRelease('wb')},30000)}
 })();
 </script>
-<script src="/gz-analytics.js?v=202607250d975285e6" defer fetchpriority="low" crossorigin></script>
+<script src="/gz-analytics.js?v=202607250b4002d9ff" defer fetchpriority="low" crossorigin></script>
 
 <!-- Web Vitals RUM: LCP/CLS/INP/TTFB → analytics beacon -->
 <!-- 2026-06-07 20h P1 fix: restore IIFE wrap + s() definition (lost in e6f9cf35 dead-code cleanup) -->
 <script>
 (function(){
-var _EP='https://indiana-similarly-sizes-symbols.trycloudflare.com/api/collect';
-function s(t,v){try{var u=_EP+'?s=gamezipper.com&p='+encodeURIComponent(location.pathname)+'&t='+Date.now()+'&vit='+t+'='+Math.round(v);if(navigator.sendBeacon){navigator.sendBeacon(u)}else{(new Image).src=u}}catch(e){}}
+// 2026-07-26: endpoint resolved lazily from gz-analytics.js (window.__GZ_COLLECT_EP,
+// kept fresh by tunnel-watchdog.sh). The old hardcoded tunnel URL died on every
+// rotation -> ERR_NAME_NOT_RESOLVED console spam + 100% RUM loss. Early beacons
+// (TTFB fires before the deferred gz-analytics.js executes) are queued and
+// flushed once the endpoint appears (10s window).
+var _Q=[];
+function _EP(){return window.__GZ_COLLECT_EP||''}
+function _send(q){var e=_EP();if(!e)return false;try{var u=e+q;if(navigator.sendBeacon){navigator.sendBeacon(u)}else{(new Image).src=u}}catch(x){}return true}
+function _flush(){while(_Q.length&&_send(_Q[0]))_Q.shift()}
+function s(t,v){var q='?s=gamezipper.com&p='+encodeURIComponent(location.pathname)+'&t='+Date.now()+'&vit='+t+'='+Math.round(v);if(_send(q))return;_Q.push(q);if(_Q.length===1){var n=0;var iv=setInterval(function(){_flush();if(++n>20||!_Q.length)clearInterval(iv)},500)}}
 if('PerformanceObserver' in window){
 new PerformanceObserver(function(l){var e=l.getEntries();e.length&&s('lcp',e[e.length-1].startTime)}).observe({type:'largest-contentful-paint',buffered:true});
 var c=0,h=0;new PerformanceObserver(function(l){l.getEntries().forEach(function(e){if(!e.hadRecentInput){c+=e.value;h=Math.max(h,e.value)}s('cls',c)})}).observe({type:'layout-shift',buffered:true});
@@ -2753,7 +2761,7 @@ function playRandom(){
     //   Override: window.GZ_LOAD_ADSTERRA=false to hard-disable.
     if(window.GZ_LOAD_ADSTERRA!==false){
       var sAd=document.createElement('script');
-      sAd.src='/adsterra-manager.js?v=v5173cdnprobe';
+      sAd.src='/adsterra-manager.js?v=v5174lazyep';
       sAd.defer=true;
       document.head.appendChild(sAd);
     }
@@ -3270,9 +3278,14 @@ if(e.target.closest(".game-card"))clearTimeout(timer);
 
 <script id="gz-cwv-rum">
 // 2026-06-07 20h P1 fix: restore IIFE wrap + send() definition (lost in e6f9cf35 dead-code cleanup)
+// 2026-07-26: endpoint resolved lazily from gz-analytics.js (window.__GZ_COLLECT_EP,
+// watchdog-rotated) instead of a hardcoded tunnel URL that dies on every rotation.
 (function(){
-var _EP='https://indiana-similarly-sizes-symbols.trycloudflare.com/api/collect';
-function send(d){try{var u=_EP+'?s=gamezipper.com&p='+encodeURIComponent(location.pathname)+'&t='+Date.now();var p=new URLSearchParams(d);p.forEach(function(v,k){if(!u.includes(k+'='))u+='&'+k+'='+encodeURIComponent(v)});if(navigator.sendBeacon){navigator.sendBeacon(u)}else{(new Image).src=u}}catch(e){}}
+var _Q=[];
+function _EP(){return window.__GZ_COLLECT_EP||''}
+function _send(q){var e=_EP();if(!e)return false;try{var u=e+q;if(navigator.sendBeacon){navigator.sendBeacon(u)}else{(new Image).src=u}}catch(x){}return true}
+function _flush(){while(_Q.length&&_send(_Q[0]))_Q.shift()}
+function send(d){var u='?s=gamezipper.com&p='+encodeURIComponent(location.pathname)+'+'&t='+Date.now();var p=new URLSearchParams(d);p.forEach(function(v,k){if(!u.includes(k+'='))u+='&'+k+'='+encodeURIComponent(v)});if(_send(u))return;_Q.push(u);if(_Q.length===1){var n=0;var iv=setInterval(function(){_flush();if(++n>20||!_Q.length)clearInterval(iv)},500)}}
 new PerformanceObserver(function(l){var e=l.getEntries();var last=e[e.length-1];send({m:'LCP',v:Math.round(last.startTime),u:location.pathname})}).observe({type:'largest-contentful-paint',buffered:true});
 new PerformanceObserver(function(l){var e=l.getEntries();var s=0;e.forEach(function(i){if(!i.hadRecentInput)s+=i.value});send({m:'CLS',v:Math.round(s*10000)/10000,u:location.pathname})}).observe({type:'layout-shift',buffered:true});
 var _gzInp=0;new PerformanceObserver(function(l){l.getEntries().forEach(function(e){if(e.duration>_gzInp)_gzInp=e.duration})}).observe({type:'event',buffered:true,durationThreshold:40});addEventListener('pagehide',function(){if(_gzInp>0)send({m:'INP',v:Math.round(_gzInp),u:location.pathname})})

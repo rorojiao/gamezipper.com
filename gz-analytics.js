@@ -41,7 +41,11 @@
   //   var EP after each restart by running:
   //     journalctl -u cloudflared-bi -n 30 --no-pager | grep trycloudflare.com
   // DO NOT switch back to bi.gamezipper.com — that's a 204-stub, not the BI server.
-  var EP = 'https://championship-accommodate-ghz-district.trycloudflare.com/api/collect';
+  var EP = 'https://bandwidth-dangerous-armstrong-perfume.trycloudflare.com/api/collect';
+  // 2026-07-26: expose the watchdog-rotated endpoint so inline RUM scripts
+  // (index.html Web-Vitals beacons) and adsterra-manager.js can resolve it
+  // lazily instead of hardcoding tunnel URLs that die every few hours.
+  try { window.__GZ_COLLECT_EP = EP; } catch (e) {}
   var BK = 'gz_ab';   // batch buffer (cleared on flush)
   var AR = 'gz_aa';   // long-term archive (capped at 500 events)
   var T = 30000;
