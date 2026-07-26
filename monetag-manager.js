@@ -451,13 +451,20 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.28-adsense-fix',  // 2026-07-16: v5.28 kanban t_38c0542b / parent t_d3f23c1d — fix homepage banner 100% no_fill (14d: 0 fill / 25 no_fill). Root cause: loadAdSenseAd() pushed to Auto Ads endpoint (adsbygoogle.js?client=...) which doesn't process dynamically-inserted ins tags, plus same slot ID 1099212472 used 3× on homepage (page-level static + 2 dynamic) violating AdSense "one slot per page" policy. Fix #1: load classic adsbygoogle.js (no ?client=) + 100ms delay before push(). Fix #2: pickSlotForBanner() swaps duplicates to SLOT_FALLBACK='7373732357'. Fix #3: removed static <ins> from index.html. Expected 15-25 daily banner fills.
+    VERSION: '5.29-backoff-fast',  // 2026-07-26: v5.29 reduce ZONE_BACKOFF streak-1 from 10min → 90s. See ZONE_BACKOFF comment.
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
       storageKey: 'gz5_zone_backoff_v1',   // bump v# if shape changes
-      // Exponential: 1st no_fill → 10min, 2nd → 30min, 3rd+ → 60min
-      backoffs: [10 * 60 * 1000, 30 * 60 * 1000, 60 * 60 * 1000],
+      // v5.29: Reduced streak-1 backoff from 10min → 90s. BI 7d 2026-07-19~26:
+      //   gz.com 11012002 fill rate collapsed from 97% (7-19) → 0% (7-22 onward).
+      //   Old 10min streak-1 + 4h freshReset meant a recovering zone gets retried
+      //   once per ~10min per session. New 90s streak-1 = 6.6x faster recovery
+      //   when Monetag's zone comes back online. Higher streaks stay aggressive
+      //   because once a zone has 2+ consecutive misses in 4h, sustained failure
+      //   is likely — 30min/60min cooldown remains appropriate. Cost: more
+      //   `no_fill` events in BI when zone is broken (no UX impact).
+      backoffs: [90 * 1000, 30 * 60 * 1000, 60 * 60 * 1000],
       // Min interval between backoff records (avoid burst-tracking on repeated attempts)
       minRecordIntervalMs: 60 * 1000,
     },
