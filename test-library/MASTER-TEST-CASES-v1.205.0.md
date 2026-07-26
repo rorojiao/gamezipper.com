@@ -1,10 +1,49 @@
 # GameZipper 100% Master Test Case Library
-**Version**: 1.204.0
-**Effective Date**: 2026-07-25 (v1.204.0 auto-research, 4h cycle 83)
-**Build**: R321 (Dynamic Test Intelligence 4h cron evolution)
+**Version**: 1.205.0
+**Effective Date**: 2026-07-26 (v1.205.0 auto-research, 4h cycle 84)
+**Build**: R322 (Dynamic Test Intelligence 4h cron evolution)
 
-**Version Note**: v1.204.0 = R321 Dynamic Test Intelligence cron — 8 new, machine-verifiable test cases from 2026-07-25 research. This cycle converts remaining Firefox 153 unmined automation/security surfaces (`script.addPreloadScript` navigation resilience bug 2046390, WebDriver window-geometry independent axis mutation bug 1941404, restricted privileged-page navigation in content scope bug 1579790, extension `file://` scheme default-deny bug 2034168, `RTCDtlsTransport.getRemoteCertificates()` application-layer peer-authentication bug 1805446, `browsingContext.create` event-order contract bug 1930594) plus Firefox 153 JPEG XL decoder round-trip equality (Nightly default-on bug 2040074), Firefox 153 `closest-corner`/`farthest-corner` ellipse/circle CSS basic-shape keywords (Nightly bug 2037673), and Safari 26 W3C Digital Credentials API mDoc request UX contract into executable browser-game regressions.
+**Version Note**: v1.205.0 = R322 Dynamic Test Intelligence cron — 8 new, machine-verifiable test cases from 2026-07-26 research. This cycle covers Firefox 153 WebDriver geometry/action completion and worker emulation, WebExtension one-off injection/domain/document identity contracts, and the W3C Digital Credentials permission, consent, and privacy boundary.
 **Review Cycle**: Every 4 hours (auto-update via Dynamic Test Intelligence)
+
+---
+
+## New Test Cases Added in v1.205.0 (R322 — July 26 2026, 4h cycle 84)
+
+### Web Platform / Browser (W)
+
+- [W-398] **[P1] Firefox 153 WebDriver Element-Origin Pointer Actions Resolve a Later Non-Zero DOMRect After Reflow** — Create a wrapping game command whose first `getClientRects()` entry has zero width or height and whose later entry is visible; change its wrapping immediately before an element-origin `pointerMove`/`pointerDown`/`pointerUp` action sequence. In WebDriver BiDi and Marionette, assert one click, `clientX`/`clientY` inside the current non-zero rect, focused-command state, and no `move target out of bounds` or interception error at device scale factors 1 and 2. This action-coordinate/reflow contract complements the static direct-click coverage in B-225. Source: Firefox 153 developer release notes, https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (Firefox bug 2038932).
+
+- [W-399] **[P1] Firefox 153 BiDi Locale and Timezone Overrides Reach Dedicated and Shared Worker Game Logic** — Before creating workers, apply `emulation.setLocaleOverride` for `fr-FR` and `emulation.setTimezoneOverride` for `Asia/Tokyo`; have the page, one dedicated worker, and one shared worker report `Intl.DateTimeFormat().resolvedOptions()` and `formatToParts()` for a fixed instant. Assert every realm reports the requested locale/time zone and identical formatted parts, then repeat after restoring `en-US`/`UTC` and assert no host locale or host timezone leaks into either worker. Source: Firefox 153 developer release notes, https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (Firefox bugs 2015655 and 2015657).
+
+- [W-400] **[P1] Firefox 153 Marionette Element Screenshot Crops an Off-Viewport Game Surface Precisely** — Put a known-color game canvas partly below a fixed 320x240 viewport, take a WebDriver Classic `Take Element Screenshot`, and decode the returned PNG. Assert its pixel bounds and color-band sequence equal the canvas rectangle intersected with the viewport at each tested device scale factor, with no blank rows, repeated top band, or pixels outside the expected crop; scroll the canvas fully into view as a full-surface control. Source: Firefox 153 developer release notes, https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (Firefox bug 2013176).
+
+- [W-401] **[P1] Firefox 153 Marionette `Perform Actions` Does Not Return Before Game Input Finalization** — Attach synchronous event logging and a microtask-finalized game-input reducer to a controlled pointer down/move/up sequence, then issue `Perform Actions` followed immediately by a second action sequence. Across 100 repetitions, assert the first command resolves only after its `pointerup`/`mouseup`/`click` events and reducer-finalized state are recorded, the second sequence begins afterward, button state is zero at completion, and no click is lost, duplicated, or attributed to the next sequence. Source: Firefox 153 developer release notes, https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (Firefox bug 2031596).
+
+- [W-402] **[P1] Firefox 153 WebExtension `userScripts.execute()` Preserves Source Order and One-Off Isolation** — In a signed test extension, call `browser.userScripts.execute()` for one tab with three `js` sources that append `A`, `B`, and `C` to a page sentinel. Assert the returned injection outcome has the target frame/document identifiers and the page records exactly `ABC`; `browser.userScripts.getScripts()` remains empty, a reload does not replay any source, and a subsequent one-source call records only its new sentinel. Source: Firefox 153 developer release notes, https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (Firefox bug 1930776).
+
+### Security (S)
+
+- [S-465] **[P1] Firefox 153 WebExtension `publicSuffix` Uses the Browser PSL for Tenant Boundaries** — In an extension declaring the `publicSuffix` permission, assert `isKnownSuffix("co.uk") === true`, `getKnownSuffix("static.game.example.co.uk") === "co.uk"`, and `getDomain("static.game.example.co.uk") === "example.co.uk"`; assert an unknown suffix returns `null` from `getKnownSuffix()`. Run the same vectors after a browser update without bundling a PSL copy, and block any cookie, storage, or request-grouping decision whose returned registrable domain differs from the API result. Source: Firefox 153 developer release notes, https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (Firefox bug 1315558).
+
+- [S-466] **[P1] Firefox 153 WebExtension `documentId` Stays Consistent Within a Document and Changes on Navigation** — In a test extension, correlate the `documentId` from `webNavigation`, content-script message sender, `runtime.getDocumentId(window)`, and `userScripts.execute()` result for a top frame and child frame. Assert all identifiers agree for each document and survive `history.pushState`; after a full navigation, assert the new document ID differs, a `documentIds`-targeted injection reaches only the current document, and an unloaded frame lookup throws rather than returning a stale ID. Source: Firefox 153 developer release notes, https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (Firefox bug 1891478).
+
+- [S-467] **[P1] Safari 26 / W3C Digital Credentials Keeps Permission Separate from Consent and Hides Credential Availability** — On a secure age-gate fixture with controlled verifier and credential-manager test profiles, call `navigator.credentials.get({digital: {requests: [...]}})` from an unpermitted cross-origin iframe and assert default `digital-credentials-get` policy rejection before any chooser, wallet, network, or `postMessage` activity. In the permitted top-level flow, assert browser approval never marks the app's separate legal-consent record, cancellation exposes neither a credential-present signal nor payload, and an approved response is sent only to the first-party verifier endpoint, never to analytics, URL parameters, storage, DOM logs, or third-party frames; profiles with and without a matching credential must be indistinguishable before user permission. Source: W3C Digital Credentials API, https://www.w3.org/TR/digital-credentials/.
+
+### Summary — v1.205.0 New Test Cases
+
+| ID | Cat | P | Machine-verifiable focus |
+|----|-----|---|--------------------------|
+| W-398 | W | P1 | Element-origin pointer actions select current non-zero rect after reflow, exact coordinates, no driver error |
+| W-399 | W | P1 | Locale/timezone override equality across page, dedicated worker, and shared worker, no host-setting leak |
+| W-400 | W | P1 | Element screenshot PNG equals the off-viewport viewport-intersection crop at each device scale factor |
+| W-401 | W | P1 | `Perform Actions` resolves after input finalization; adjacent action sequences cannot race |
+| W-402 | W | P1 | `userScripts.execute()` source order, result document/frame identity, no registration or navigation replay |
+| S-465 | S | P1 | Built-in PSL suffix/eTLD+1 truth, update-safe domain grouping, no conflicting tenant decision |
+| S-466 | S | P1 | Cross-API document ID equality, same-document history stability, new-document and stale-frame isolation |
+| S-467 | S | P1 | Default cross-origin denial, permission-versus-consent separation, no availability or credential-data leak |
+
+*(8 new test cases this cycle. Every acceptance criterion is executable through WebDriver BiDi/Marionette logs and decoded screenshots, controlled WebExtension test fixtures, or a Digital Credentials test credential manager with request/network/message instrumentation; no case depends on subjective visual scoring.)*
 
 ---
 

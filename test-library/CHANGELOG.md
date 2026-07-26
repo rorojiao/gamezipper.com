@@ -1,3 +1,28 @@
+## [v1.205.0] - 2026-07-26
+### Added
+- 8 new machine-verifiable test cases from R322 industry research (4h cycle 84)
+- W-398 [P1] Firefox 153 element-origin WebDriver pointer actions select a current later non-zero DOMRect after reflow
+- W-399 [P1] Firefox 153 BiDi locale/timezone emulation propagates to dedicated and shared workers
+- W-400 [P1] Firefox 153 Marionette element screenshots precisely crop off-viewport game surfaces
+- W-401 [P1] Firefox 153 Marionette Perform Actions awaits game-input finalization and cannot race the next sequence
+- W-402 [P1] Firefox 153 WebExtension userScripts.execute() preserves source order and one-off injection isolation
+- S-465 [P1] Firefox 153 WebExtension publicSuffix uses the built-in PSL for eTLD+1 tenant boundaries
+- S-466 [P1] Firefox 153 WebExtension documentId stays consistent across navigation events, messages, and targeted injection
+- S-467 [P1] Safari 26 / W3C Digital Credentials keeps permission separate from consent and hides credential availability
+### Sources
+- Required parallel queries (2026-07-26, cycle 84):
+  - "HTML5 game testing 2026 new techniques"
+  - "browser game bug report 2026"
+  - "Chrome Edge Safari update 2026"
+  - "casual game UX complaint 2026"
+  - "mobile game performance issue 2026"
+- Primary URLs:
+  - https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (Firefox 153 developer release notes: WebDriver worker emulation, screenshot/action fixes, userScripts.execute, publicSuffix, and documentId)
+  - https://www.w3.org/TR/digital-credentials/ (Digital Credentials user mediation, permission-versus-consent, Permissions Policy, and privacy/credential-availability guidance)
+- Failed Chrome release-notes URL: https://developer.chrome.com/release-notes/153 returned HTTP 404 on 2026-07-26; it was not used as evidence.
+- Semantic-dedup note: B-225 already covers the static direct click for a zero-sized first DOMRect. W-398 is limited to the distinct element-origin pointer-action coordinate contract after layout reflow; all other IDs cover release-note surfaces absent from the catalog.
+- Validation approach: reviewed full-catalog keyword/ID matches before insertion, then ran local Python checks for unique IDs, all eight R322 IDs, master v1.205.0 header, and v1.205.0 changelog first section.
+
 ## [v1.204.0] - 2026-07-25
 ### Added
 - 8 new machine-verifiable test cases from R321 industry research (4h cycle 83)
