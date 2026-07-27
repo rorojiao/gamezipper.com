@@ -159,7 +159,7 @@ canvas{display:block;border-radius:10px;border:2px solid rgba(0,242,254,0.2);box
 .fade-in{animation:fadeIn .3s ease}
 .mt-zone{min-height:90px;background:rgba(255,255,255,0.03);border-radius:8px}
 h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}</style>
-<script src="/gz-analytics.js?v=2026072824344ccd69" defer></script>
+<script src="/gz-analytics.js?v=20260727805e4bbaf7" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
 <meta content="ca-pub-8346383990981353" name="google-adsense-platform-account">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
@@ -171,10 +171,6 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 .gz-related-card{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;text-decoration:none;color:#1e293b;font-size:13px;transition:border-color .2s,box-shadow .2s}
 .gz-related-card:hover{border-color:rgba(78,205,196,.5);box-shadow:0 2px 8px rgba(0,0,0,.08)}
 </style>
-
-<script type="application/ld+json">
-{"@context": "https://schema.org", "@type": "VideoGame", "name": "Infinity Loop", "description": "Play Infinity Loop online free - a relaxing tile rotation puzzle game. Connect paths to form complete loops with no loose ends. 50 levels across 5 packs, procedurally generated puzzles.", "url": "https://gamezipper.com/infinity-loop/", "genre": "Puzzle", "gamePlatform": "Web Browser", "playMode": "SinglePlayer", "applicationCategory": "Game", "operatingSystem": "Any", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "publisher": {"@type": "Organization", "name": "GameZipper", "url": "https://gamezipper.com"}}
-</script>
 </head>
 <body>
 <h1 class="gz-sr-only">INFINITY LOOP - Free Online Game</h1>
@@ -319,9 +315,15 @@ function tileFromConnections(conns){
  if(len===1)return{type:TILE_DEAD,rotation:conns[0]};
  if(len===2){
   if(Math.abs(conns[0]-conns[1])===2)return{type:TILE_STRAIGHT,rotation:Math.min(conns[0],conns[1])};
-  return{type:TILE_CURVE,rotation:Math.min(conns[0],conns[1])};
+  for(var r=0;r<4;r++){
+   if(conns.indexOf(r)!==-1&&conns.indexOf((r+1)%4)!==-1)return{type:TILE_CURVE,rotation:r};
+  }
  }
- if(len===3)return{type:TILE_T,rotation:conns[0]};
+ if(len===3){
+  for(var t=0;t<4;t++){
+   if(conns.indexOf(t)!==-1&&conns.indexOf((t+1)%4)!==-1&&conns.indexOf((t+2)%4)!==-1)return{type:TILE_T,rotation:t};
+  }
+ }
  return{type:TILE_CROSS,rotation:0};
 }
 
@@ -348,26 +350,24 @@ function generateLevel(level){
   }
  }
 
- // Build spanning tree for connectivity
+ // Build a connected spanning tree using the same direction order as checkWin.
  var visited=[];
  for(var y=0;y<gridSize;y++){
   visited[y]=[];
   for(var x=0;x<gridSize;x++)visited[y][x]=false;
  }
 
- var stack=[[Math.floor(Math.random()*gridSize),Math.floor(Math.random()*gridSize)]];
+ var startX=Math.floor(Math.random()*gridSize),startY=Math.floor(Math.random()*gridSize);
+ var stack=[[startX,startY]];
+ visited[startY][startX]=true;
  var edgeCount=0;
  var neededEdges=(gridSize*gridSize-1);
 
  while(stack.length>0&&edgeCount<neededEdges){
-  var idx=Math.floor(Math.random()*stack.length);
-  var curr=stack[idx];
+  var curr=stack[stack.length-1];
   var x=curr[0],y=curr[1];
-  stack.splice(idx,1);
-  if(visited[y][x])continue;
-  visited[y][x]=true;
 
-  var dirs=[[0,1],[1,0],[0,-1],[-1,0]];
+  var dirs=[[0,-1],[1,0],[0,1],[-1,0]];
   var neighbors=[];
   for(var d=0;d<4;d++){
    var nx=x+dirs[d][0],ny=y+dirs[d][1];
@@ -376,71 +376,22 @@ function generateLevel(level){
    }
   }
 
-  // Shuffle
-  for(var i=neighbors.length-1;i>0;i--){
-   var j=Math.floor(Math.random()*(i+1));
-   var tmp=neighbors[i];neighbors[i]=neighbors[j];neighbors[j]=tmp;
-  }
-
-  for(var n=0;n<neighbors.length;n++){
-   var nb=neighbors[n];
-   if(!visited[nb.ny][nb.nx]){
-    grid[y][x].conns.push(nb.dir);
-    grid[nb.ny][nb.nx].conns.push(nb.rev);
-    edgeCount++;
-    stack.push([nb.nx,nb.ny]);
-    break;
-   }
-  }
- }
-
- // Connect isolated cells
- for(var y=0;y<gridSize;y++){
-  for(var x=0;x<gridSize;x++){
-   if(!visited[y][x]){
-    var best=null,bestDist=999;
-    for(var yy=0;yy<gridSize;yy++){
-     for(var xx=0;xx<gridSize;xx++){
-      if(visited[yy][xx]){
-       var dist=Math.abs(xx-x)+Math.abs(yy-y);
-       if(dist<bestDist){bestDist=dist;best={tx:xx,ty:yy};}
-      }
-     }
-    }
-    if(best){
-     var dx=best.tx-x,dy=best.ty-y;
-     var dir=-1,rev=-1;
-     if(dx===1){dir=0;rev=2;}
-     else if(dx===-1){dir=2;rev=0;}
-     else if(dy===1){dir=1;rev=3;}
-     else if(dy===-1){dir=3;rev=1;}
-     if(dir!==-1){
-      grid[y][x].conns.push(dir);
-      grid[best.ty][best.tx].conns.push(rev);
-      visited[y][x]=true;
-     }
-    }
-   }
-  }
+  if(!neighbors.length){stack.pop();continue;}
+  var nb=neighbors[Math.floor(Math.random()*neighbors.length)];
+  grid[y][x].conns.push(nb.dir);
+  grid[nb.ny][nb.nx].conns.push(nb.rev);
+  visited[nb.ny][nb.nx]=true;
+  edgeCount++;
+  stack.push([nb.nx,nb.ny]);
  }
 
  // Convert to tile types
  for(var y=0;y<gridSize;y++){
   for(var x=0;x<gridSize;x++){
    var conns=grid[y][x].conns;
-   if(conns.length===0){
-    if(Math.random()<0.25+level/150){
-     var rtype=types[Math.floor(Math.random()*types.length)];
-     grid[y][x].type=rtype;
-     grid[y][x].rotation=Math.floor(Math.random()*4);
-    } else {
-     grid[y][x].type=TILE_EMPTY;
-    }
-   } else {
-    var tile=tileFromConnections(conns);
-    grid[y][x].type=tile.type;
-    grid[y][x].rotation=tile.rotation;
-   }
+   var tile=tileFromConnections(conns);
+   grid[y][x].type=tile.type;
+   grid[y][x].rotation=tile.rotation;
   }
  }
 
@@ -701,7 +652,11 @@ function showScreen(name){
  if(name==='menu')updateMenuStats();
  if(name==='levelSelect')renderLevelSelect();
  hideVictory();
- if(name!=='game')stopBGM();
+ if(name!=='game'){
+  stopBGM();
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  if(raf){cancelAnimationFrame(raf);raf=null;}
+ }
 }
 
 function hideVictory(){
@@ -747,10 +702,10 @@ function renderLevelGrid(pack){
   if(isCompleted)btn.classList.add('completed');
   if(!isUnlocked)btn.classList.add('locked');
   if(lvl===currentLevel&&isUnlocked)btn.classList.add('current');
-  btn.onclick=(function(l){return function(){
-   if(!isUnlocked)return;
+  btn.onclick=(function(l,unlocked){return function(){
+   if(!unlocked)return;
    startLevel(l);
-  };})(lvl);
+  };})(lvl,isUnlocked);
   levelGrid.appendChild(btn);
  }
 }
@@ -766,10 +721,10 @@ function startLevel(lvl){
  showScreen('game');
  initAudio();
  startBGM();
- if(timerInterval)clearInterval(timerInterval);
+ if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
  startTime=Date.now();
  timerInterval=setInterval(updateTimer,1000);
- if(raf)cancelAnimationFrame(raf);
+ if(raf){cancelAnimationFrame(raf);raf=null;}
  raf=requestAnimationFrame(animate);
 }
 
@@ -836,7 +791,7 @@ function showInterstitial(callback){
 }
 
 function showVictory(){
- clearInterval(timerInterval);
+ if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
  var elapsed=Math.floor((Date.now()-startTime)/1000);
  var m=Math.floor(elapsed/60),s=elapsed%60;
  document.getElementById('victoryMoves').textContent=moves;
@@ -951,11 +906,13 @@ document.getElementById('muteBtn').addEventListener('click',function(){
 
 document.addEventListener('visibilitychange',function(){
  if(document.hidden){
-  if(timerInterval)clearInterval(timerInterval);
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  if(raf){cancelAnimationFrame(raf);raf=null;}
   stopBGM();
  } else {
   if(!document.getElementById('gameScreen').classList.contains('hidden')){
-   timerInterval=setInterval(updateTimer,1000);
+   if(!timerInterval)timerInterval=setInterval(updateTimer,1000);
+   if(!raf)raf=requestAnimationFrame(animate);
    if(settings.music)startBGM();
   }
  }

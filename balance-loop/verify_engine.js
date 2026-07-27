@@ -40,11 +40,55 @@ try {
 }
 
 console.log(`Loaded ${LEVELS.length} levels from index.html`);
+if (!Array.isArray(LEVELS) || LEVELS.length === 0) {
+  console.error('No production levels supplied; refusing zero-level success.');
+  process.exit(1);
+}
 
 // Constants
 const DR = [-1, 0, 1, 0];
 const DC = [0, 1, 0, -1];
 const OPP = [2, 3, 0, 1];
+
+function extractFunction(source, name) {
+  const start = source.indexOf(`function ${name}()`);
+  const brace = source.indexOf('{', start);
+  if (start < 0 || brace < 0) throw new Error(`Could not extract ${name}.`);
+  let depth = 0;
+  for (let i = brace; i < source.length; i++) {
+    if (source[i] === '{') depth++;
+    if (source[i] === '}' && --depth === 0) return source.slice(start, i + 1);
+  }
+  throw new Error(`Could not finish ${name}.`);
+}
+
+const productionCheckWinSource = extractFunction(html, 'checkWin');
+
+function edgeKey(r1, c1, r2, c2) {
+  return r1 < r2 || (r1 === r2 && c1 < c2)
+    ? `${r1},${c1},${r2},${c2}`
+    : `${r2},${c2},${r1},${c1}`;
+}
+
+function runProductionCheck(level, addExtraEdge) {
+  const state = { rows: level.rows, cols: level.cols, level, edges: new Set() };
+  for (let i = 0; i < level.solution.length; i++) {
+    const [r1, c1] = level.solution[i];
+    const [r2, c2] = level.solution[(i + 1) % level.solution.length];
+    state.edges.add(edgeKey(r1, c1, r2, c2));
+  }
+  if (addExtraEdge) state.edges.add(edgeKey(...addExtraEdge[0], ...addExtraEdge[1]));
+  const getCellEdges = (r, c) => {
+    const result = [];
+    for (let d = 0; d < 4; d++) {
+      const nr = r + DR[d], nc = c + DC[d];
+      if (nr >= 0 && nr < state.rows && nc >= 0 && nc < state.cols && state.edges.has(edgeKey(r, c, nr, nc))) result.push(d);
+    }
+    return result;
+  };
+  const checkWin = new Function('state', 'getCellEdges', 'DR', 'DC', 'OPP', `${productionCheckWinSource}; return checkWin;`)(state, getCellEdges, DR, DC, OPP);
+  return checkWin();
+}
 
 let allPass = true;
 let passCount = 0;
@@ -167,6 +211,33 @@ for (let li = 0; li < LEVELS.length; li++) {
     console.log(`✅ Level ${level.level} (${level.tier}): VALID — ${n} cells, ${clues.length} clues`);
   }
 }
+
+for (const level of LEVELS) {
+  if (!runProductionCheck(level)) {
+    console.error(`Production checkWin rejects canonical Level ${level.level}.`);
+    process.exit(1);
+  }
+  const loopCells = new Set(level.solution.map(([r, c]) => `${r},${c}`));
+  let extraEdge = null;
+  for (let r = 0; r < level.rows && !extraEdge; r++) {
+    for (let c = 0; c < level.cols && !extraEdge; c++) {
+      if (loopCells.has(`${r},${c}`)) continue;
+      for (const [dr, dc] of [[0, 1], [1, 0]]) {
+        const nr = r + dr, nc = c + dc;
+        if (nr < level.rows && nc < level.cols && !loopCells.has(`${nr},${nc}`)) {
+          extraEdge = [[r, c], [nr, nc]];
+          break;
+        }
+      }
+    }
+  }
+  if (!extraEdge || runProductionCheck(level, extraEdge)) {
+    console.error(`Production checkWin accepts an extraneous edge on Level ${level.level}.`);
+    process.exit(1);
+  }
+}
+
+console.log(`Production checkWin accepted all ${LEVELS.length} canonical loops and rejected injected extra edges.`);
 
 console.log('\n' + '='.repeat(50));
 console.log(`In-engine verification: ${allPass ? 'ALL ' + passCount + ' PASS ✅' : 'FAILURES ❌'}`);

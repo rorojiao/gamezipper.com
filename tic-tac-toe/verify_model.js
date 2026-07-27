@@ -51,6 +51,9 @@ for (const [name, source, token] of [
 ]) {
   if (!source.includes(token)) fail(`Missing ${name}.`);
 }
+if (!functionSource('loadScores').includes("soundToggle.textContent = soundEnabled ? 'SOUND' : 'MUTED'")) {
+  fail('Stored sound setting does not refresh the UI.');
+}
 for (const token of ["ttt_save_v1", 'version: 1', "newGameBtn.addEventListener('click'", 'gz-ad-below-game']) {
   if (!html.includes(token)) fail(`Missing production path: ${token}`);
 }

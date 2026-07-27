@@ -11,6 +11,11 @@ const OPP = [2, 3, 0, 1];
 
 const data = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8'));
 
+if (!data || !Array.isArray(data.levels) || data.levels.length === 0) {
+  console.error('No levels supplied; refusing zero-level success.');
+  process.exit(1);
+}
+
 let allPass = true;
 let passCount = 0;
 

@@ -134,7 +134,9 @@ function handleInput() {
 }
 
 function startGame() {
+  if (gameOver) return;
   started = true;
+  document.getElementById('start-screen').classList.add('hidden');
   if (isMobile && jumpBtn) jumpBtn.style.display = 'block';
   if (isMobile && duckBtn) duckBtn.style.display = 'block';
 }
@@ -151,7 +153,12 @@ function restart() {
   dino.ducking = false;
   dino.dead = false;
   dino.vy = 0;
+  nightMode = false;
+  nightTimer = 0;
+  document.getElementById('start-screen').classList.add('hidden');
   document.getElementById('game-over-screen').classList.remove('active');
+  var cta = document.getElementById('gz-cta');
+  if (cta) cta.style.display = 'none';
   if (isMobile && jumpBtn) jumpBtn.style.display = 'block';
   if (isMobile && duckBtn) duckBtn.style.display = 'block';
 }
@@ -450,5 +457,13 @@ function gameLoop() {
 
 // Init high score display
 document.getElementById('best-val').textContent = highScore;
+document.getElementById('btn-start').addEventListener('click', function(e) {
+  e.preventDefault();
+  startGame();
+});
+document.getElementById('btn-restart').addEventListener('click', function(e) {
+  e.preventDefault();
+  restart();
+});
 
 gameLoop();

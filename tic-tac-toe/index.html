@@ -432,7 +432,7 @@
             .mode-btn { padding: 12px; font-size: 0.75rem; }
         }
     </style>
-<script src="/gz-analytics.js?v=2026072824344ccd69" defer></script>
+<script src="/gz-analytics.js?v=20260727805e4bbaf7" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
 <meta content="ca-pub-8346383990981353" name="google-adsense-platform-account">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
@@ -579,6 +579,8 @@
         let lastTime = 0;
         let animationId = null;
         let isPageVisible = true;
+        let aiMoveTimer = null;
+        let bgmTimer = null;
 
         function initCanvas() {
             const container = canvas.parentElement;
@@ -624,6 +626,9 @@
                     }
                 }
                 if (gameState.soundEnabled === undefined) gameState.soundEnabled = true;
+                soundEnabled = gameState.soundEnabled !== false;
+                soundToggle.textContent = soundEnabled ? 'SOUND' : 'MUTED';
+                soundToggle.style.opacity = soundEnabled ? '1' : '0.5';
             } catch (e) {
             }
         }
@@ -779,7 +784,9 @@
             gameState.aiThinking = true;
             updateStatus('AI is thinking...', true);
 
-            setTimeout(() => {
+            aiMoveTimer = setTimeout(() => {
+                aiMoveTimer = null;
+                if (gameState.gameOver || gameState.currentPlayer !== CELL_O || !gameState.aiThinking) return;
                 let move = null;
                 const aiPlayer = CELL_O;
 
@@ -1034,7 +1041,7 @@
                         osc.stop(audioContext.currentTime + 2);
                     });
                     chordIndex = (chordIndex + 1) % chords.length;
-                    setTimeout(playChord, 2000);
+                    bgmTimer = setTimeout(playChord, 2000);
                 }
                 playChord();
             } catch (e) {
@@ -1043,6 +1050,14 @@
 
         function stopBGM() {
             isBGMPlaying = false;
+            if (bgmTimer) {
+                clearTimeout(bgmTimer);
+                bgmTimer = null;
+            }
+            if (bgmGain) {
+                try { bgmGain.disconnect(); } catch (e) {}
+                bgmGain = null;
+            }
         }
 
         function drawGrid(progress) {
@@ -1278,6 +1293,10 @@
         }
 
         function startNewGame() {
+            if (aiMoveTimer) {
+                clearTimeout(aiMoveTimer);
+                aiMoveTimer = null;
+            }
             initBoard();
             gameState.gameOver = false;
             gameState.winner = null;
@@ -1313,6 +1332,8 @@
 
         function toggleSound() {
             soundEnabled = !soundEnabled;
+            gameState.soundEnabled = soundEnabled;
+            saveScores();
             soundToggle.textContent = soundEnabled ? 'SOUND' : 'MUTED';
             soundToggle.style.opacity = soundEnabled ? '1' : '0.5';
             if (soundEnabled && audioContext) {
@@ -1329,14 +1350,18 @@
         function handleVisibilityChange() {
             if (document.hidden) {
                 if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
+                stopBGM();
             } else {
                 lastTime = performance.now();
                 animationId = requestAnimationFrame(render);
+                if (soundEnabled && audioContext) startBGM();
             }
         }
 
         function handleBeforeUnload() {
             stopBGM();
+            if (aiMoveTimer) { clearTimeout(aiMoveTimer); aiMoveTimer = null; }
+            if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
             if (audioContext) {
                 audioContext.close();
             }
