@@ -1,3 +1,34 @@
+## [v1.206.0] - 2026-07-27
+### Added
+- 8 new machine-verifiable test cases from R323 industry research (4h cycle 85)
+- S-468 [P1] Edge 150 strict worker MIME checking rejects legacy/non-script response types by default
+- W-403 [P1] Firefox 153 content scripts safely read and mutate document/shadow-root adopted stylesheets
+- W-404 [P2] Firefox 153 WebExtension theme gradients preserve layer order, validation, and background size
+- W-405 [P2] Firefox 153 contextual-identity capability APIs eliminate hard-coded colors and icons
+- W-406 [P2] Firefox 153 legacy container colors canonicalize to cyan/gray without profile breakage
+- W-407 [P2] Firefox 153 Local Mode maps multiple fixture directories to isolated custom origins
+- B-230 [P2] Firefox 153 alignment-baseline keywords keep multiscript SVG game glyphs anchored
+- C-223 [P2] Edge 150 WebView2 per-application downgrade selects installed majors and falls back safely
+### Sources
+- Required parallel queries (2026-07-27, cycle 85):
+  - "HTML5 game testing 2026 new techniques"
+  - "browser game bug report 2026"
+  - "Chrome Edge Safari update 2026"
+  - "casual game UX complaint 2026"
+  - "mobile game performance issue 2026"
+- Primary URLs:
+  - https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/153 (Firefox 153 extension adopted stylesheets, theme gradients, contextual-identity APIs)
+  - https://www.mozilla.org/en-US/firefox/153.0/releasenotes/ (Firefox 153 Local Mode and alignment-baseline keywords)
+  - https://bugzilla.mozilla.org/show_bug.cgi?id=1751346 (content-script/Xray adoptedStyleSheets semantics)
+  - https://bugzilla.mozilla.org/show_bug.cgi?id=2036647 (theme gradient object grammar, validation, and background size)
+  - https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/contextualIdentities/getSupportedColors (supported colors, object return shape, legacy alias resolution)
+  - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-relnote-stable-channel (Edge 150 worker-MIME and WebView2 rollout facts)
+  - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/strictmimetypecheckforworkerscriptsenabled (strict/lax worker MIME behavior)
+  - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-webview-policies#downgradeversion (digits-only per-app major selection and missing-runtime fallback)
+- Search-quality note: the five broad searches were noisy. Chrome 151 and 152 release-note URLs returned HTTP 404 and were not used as evidence. Safari 26 tracking-parameter stripping was rejected because W-298 already records that feature 134226694 was pulled from the shipped build; Local Network Access and the macOS 12 cutoff were rejected as duplicates of B-088 and W-153.
+- Semantic-dedup note: full CHANGELOG.md and COMPLETED.md scans found zero occurrences for `StrictMimetypeCheckForWorkerScriptsEnabled`, `adoptedStyleSheets`, `additional_backgrounds`, `getSupportedColors`, `getSupportedIcons`, `turquoise`, `alignment-baseline`, `Local Mode`, and `DowngradeVersion` before insertion. ID set-diff and title similarity are validated separately against v1.205.0 and the full history.
+- Design review: a read-only Codex escalation ran with the `hermes-auto` profile in isolated worktree `/tmp/gz-testlib-r323`; Hermes independently tightened gradient object grammar, contextual-identity return shapes/aliases, strict MIME policy behavior, and WebView2 invalid-target fallback from primary documentation before authoring the final cases.
+
 ## [v1.205.0] - 2026-07-26
 ### Added
 - 8 new machine-verifiable test cases from R322 industry research (4h cycle 84)
