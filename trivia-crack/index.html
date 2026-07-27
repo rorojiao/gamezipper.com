@@ -29,8 +29,7 @@
   "gamePlatform": "Web Browser",
   "applicationCategory": "Game",
   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
-  "publisher": {"@type": "Organization", "name": "GameZipper", "url": "https://gamezipper.com"},
-  "aggregateRating": {"@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "3200", "bestRating": "5"}
+  "publisher": {"@type": "Organization", "name": "GameZipper", "url": "https://gamezipper.com"}
 }
 </script>
 <script type="application/ld+json">
@@ -518,6 +517,8 @@ function buildCrownChoiceButtons(){
 /* ====== QUESTIONS ====== */
 var timerInterval = null;
 var timeLeft = 10;
+var timerTotal = 10;
+var timerExpire = null;
 
 function showQuestion(catName, isCrownChallenge){
   state.phase = 'question';
@@ -566,14 +567,16 @@ function showQuestion(catName, isCrownChallenge){
   });
 }
 
-function startTimer(seconds, onExpire){
+function startTimer(seconds, onExpire, totalSeconds){
   clearInterval(timerInterval);
   timeLeft = seconds;
+  timerTotal = totalSeconds || seconds;
+  timerExpire = onExpire;
   timerFill.style.width = '100%';
   var ticked = false;
   timerInterval = setInterval(function(){
     timeLeft -= 0.1;
-    var pct = Math.max(0,(timeLeft/seconds)*100);
+    var pct = Math.max(0,(timeLeft/timerTotal)*100);
     timerFill.style.width = pct+'%';
     if(timeLeft<=3 && !ticked){ticked=true;sfxTick();}
     if(timeLeft<=0){
@@ -581,6 +584,12 @@ function startTimer(seconds, onExpire){
       onExpire();
     }
   },100);
+}
+
+function resumeTimer(){
+  if(state.phase==='question' && timeLeft>0 && timerExpire){
+    startTimer(timeLeft, timerExpire, timerTotal);
+  }
 }
 
 function playerAnswer(chosen, correct, catName, isCrown, clickedBtn){
@@ -755,6 +764,24 @@ function endGame(winner){
 /* ====== DAILY CHALLENGE ====== */
 var dailyState = {questions:[],current:0,score:0};
 
+function dailySeed(date){
+  var seed=0;
+  for(var i=0;i<date.length;i++) seed=((seed*31)+date.charCodeAt(i))>>>0;
+  return seed||1;
+}
+function makeDailyQuestions(date){
+  var allQ=[];
+  CATEGORIES.forEach(function(c){
+    (QUESTIONS[c.name]||[]).forEach(function(q){
+      allQ.push({q:q.q,options:q.options,answer:q.answer,cat:c.name,color:c.color});
+    });
+  });
+  var seed=dailySeed(date);
+  function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
+  for(var i=allQ.length-1;i>0;i--){var j=Math.floor(random()*(i+1));var t=allQ[i];allQ[i]=allQ[j];allQ[j]=t;}
+  return allQ.slice(0,10);
+}
+
 function startDaily(){
   showScreen('daily');
   $('daily-result').classList.add('hidden');
@@ -762,16 +789,7 @@ function startDaily(){
   $('daily-options').innerHTML='';
   var today = new Date().toISOString().split('T')[0];
   $('daily-date').textContent = today;
-  var allQ = [];
-  CATEGORIES.forEach(function(c){
-    var pool = QUESTIONS[c.name]||[];
-    pool.forEach(function(q){
-      allQ.push({q:q.q,options:q.options,answer:q.answer,cat:c.name,color:c.color});
-    });
-  });
-  // Shuffle and pick 10
-  for(var i=allQ.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=allQ[i];allQ[i]=allQ[j];allQ[j]=t;}
-  dailyState = {questions:allQ.slice(0,10),current:0,score:0};
+  dailyState = {questions:makeDailyQuestions(today),current:0,score:0};
   $('daily-current').textContent='0';
   showDailyQuestion();
 }
@@ -838,7 +856,14 @@ function endDaily(){
   var ds=dailyState;
   var stats=loadStats();
   if(!stats.dailyScores) stats.dailyScores=[];
-  stats.dailyScores.push({date:new Date().toISOString().split('T')[0],score:ds.score,total:ds.questions.length});
+  var date=new Date().toISOString().split('T')[0];
+  var previous=stats.dailyScores.find(function(d){return d.date===date;});
+  if(previous){
+    previous.score=Math.max(previous.score,ds.score);
+    previous.total=ds.questions.length;
+  }else{
+    stats.dailyScores.push({date:date,score:ds.score,total:ds.questions.length});
+  }
   if(stats.dailyScores.length>30)stats.dailyScores=stats.dailyScores.slice(-30);
   saveStats(stats);
 
@@ -1028,8 +1053,16 @@ document.addEventListener('visibilitychange',function(){
   if(document.hidden){
     clearInterval(timerInterval);
     cancelAnimationFrame(spinAnim);
+    spinAnim=null;
+    wheelSpinning=false;
   } else {
-    if(state.phase==='question') drawWheel();
+    if(state.phase==='question'){
+      drawWheel();
+      resumeTimer();
+    }else if(state.phase==='spinning'){
+      drawWheel();
+      if(!state.isPlayerTurn) switchToAI();
+    }
   }
 });
 

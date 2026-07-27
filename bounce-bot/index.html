@@ -693,9 +693,17 @@ document.addEventListener('keydown', e => {
   if (e.code==='Escape'||e.code==='KeyP') { if(state===STATE.PLAYING) togglePause(); else if(state===STATE.PAUSED) togglePause(); }
 });
 document.addEventListener('keyup', e => { if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW') inputPressed=false; });
-canvas.addEventListener('touchstart', e => { e.preventDefault(); if(!inputPressed) inputJustPressed=true; inputPressed=true; }, {passive:false});
-canvas.addEventListener('touchend', () => { inputPressed=false; });
-canvas.addEventListener('mousedown', e => { if(!inputPressed) inputJustPressed=true; inputPressed=true; });
+function pressInput(){
+  if(state!==STATE.PLAYING) return;
+  if(!inputPressed) inputJustPressed=true;
+  inputPressed=true;
+}
+function releaseInput(){ inputPressed=false; }
+canvas.addEventListener('touchstart', e => { e.preventDefault(); pressInput(); }, {passive:false});
+canvas.addEventListener('touchend', releaseInput, {passive:false});
+canvas.addEventListener('touchcancel', releaseInput, {passive:false});
+canvas.addEventListener('mousedown', pressInput);
+window.addEventListener('mouseup', releaseInput);
 
 // ============================================================
 // UI BUTTONS
@@ -1156,6 +1164,9 @@ function circRectCollide(cx,cy,cr,rx,ry,rw,rh) { const nx=Math.max(rx,Math.min(c
 // ============================================================
 function startLevel(n, fromCheckpoint) {
   currentLevel=n;
+  infiniteMode=false;
+  inputPressed=false;
+  inputJustPressed=false;
   level=getLevel(n);
   resetPlayer(fromCheckpoint&&level.checkpoint ? level.checkpoint.x : 100,
               fromCheckpoint&&level.checkpoint ? level.checkpoint.y : H-120);
@@ -1171,6 +1182,8 @@ function startLevel(n, fromCheckpoint) {
 
 function startInfinite() {
   infiniteMode=true; infiniteScore=0;
+  inputPressed=false;
+  inputJustPressed=false;
   level=generateLevel(25);
   level.speed=5; level.width=99999; level.endX=99999; level.hasChaser=true;
   resetPlayer(100,H-120);
