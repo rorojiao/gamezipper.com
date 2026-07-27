@@ -1004,7 +1004,8 @@ function startLevel(idx){
   document.getElementById('fail-overlay').classList.remove('active');
   document.getElementById('start-overlay').classList.remove('active');
   loadLevel(idx);
-  if(!G.running){G.running=true;G.lastTime=performance.now();requestAnimationFrame(gameLoop);}
+  if(!G.running){G.running=true;}
+  resumeLoop();
   startBGM();
 }
 function showLevelSelect(){
@@ -1015,12 +1016,9 @@ function hideLevelSelect(){
   document.getElementById('level-select').classList.remove('active');
 }
 
-// ============ GAME LOOP — UX-OPT 2026-07-19 INP FIX ============
-// Adaptive rAF: at 60fps when animating, drop to ~10fps via setTimeout when fully
-// idle. This frees the main thread to respond to user clicks fast (INP was 336ms
-// avg, 62% bad, because the 60fps loop was blocking the click handler queue).
-// resumeLoop() wakes the loop back to 60fps whenever there's something to render.
-var _gzIdleTickHandle=null;
+// ============ GAME LOOP — UX-OPT 2026-07-27 INP FIX ============
+// Run rAF only while the canvas state is changing. A static board does not need
+// polling; stopping it removes recurring canvas work from the input queue.
 function isFullyIdle(){
   if(G.animating)return false;
   if(G.screenShake>0)return false;
@@ -1036,15 +1034,13 @@ function isFullyIdle(){
 }
 function scheduleNextFrame(){
   if(!G.running)return;
-  if(isFullyIdle()){
-    // Idle: 100ms tick (10fps) — saves CPU, frees main thread for click responses
-    _gzIdleTickHandle=setTimeout(function(){_gzIdleTickHandle=null;gameLoop(performance.now())},100);
-  }else{
+  if(!isFullyIdle()){
     G.rafId=requestAnimationFrame(gameLoop);
   }
 }
 function gameLoop(now){
   if(!G.running)return;
+  G.rafId=null;
   var dt=Math.min((now-G.lastTime)/16.67,3);
   G.lastTime=now;
   update(dt);
@@ -1052,8 +1048,7 @@ function gameLoop(now){
   scheduleNextFrame();
 }
 function resumeLoop(){
-  // Called by user-input handlers to immediately wake the loop if it's idling.
-  if(_gzIdleTickHandle){clearTimeout(_gzIdleTickHandle);_gzIdleTickHandle=null;}
+  // Called after input or a canvas resize to draw the newly changed state.
   if(G.running&&!G.rafId){G.lastTime=performance.now();G.rafId=requestAnimationFrame(gameLoop);}
 }
 
@@ -1062,7 +1057,7 @@ var cleanups=[];
 function cleanup(){
   G.running=false;
   if(G.rafId)cancelAnimationFrame(G.rafId);
-  if(_gzIdleTickHandle){clearTimeout(_gzIdleTickHandle);_gzIdleTickHandle=null;}
+  G.rafId=null;
   stopBGM();
   if(actx&&actx.state==='running')actx.suspend();
   cleanups.forEach(function(fn){try{fn();}catch(e){}});
@@ -1153,6 +1148,7 @@ function init(){
   window.addEventListener('resize',function(){
     if(G.running){resizeCanvas();
       G.buses.forEach(function(b){b.px=b.c*G.cellSize;b.py=b.r*G.cellSize;b.targetPx=b.px;b.targetPy=b.py;});
+      resumeLoop();
     }
   });
   // Page lifecycle
@@ -1164,7 +1160,7 @@ function init(){
   // Start render loop for initial display
   G.running=true;G.lastTime=performance.now();
   loadLevel(0);
-  requestAnimationFrame(gameLoop);
+  G.rafId=requestAnimationFrame(gameLoop);
 }
 
 // Start when DOM is ready
