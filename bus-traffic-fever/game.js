@@ -342,6 +342,7 @@ function tryMoveBus(bus){
     else if(bus.dir==='l'){bus.c=newHeadC;}
     else{bus.r=newHeadR;}
     bus.targetPx=bus.c*G.cellSize;bus.targetPy=bus.r*G.cellSize;
+    checkDeadlock();
     G.animating=true;
     playSfx('slide');
     updateHUD();
@@ -349,6 +350,7 @@ function tryMoveBus(bus){
     // Blocked immediately
     playSfx('collide');
     G.screenShake=6;
+    checkDeadlock();
   }
   // Clear hint
   G.hintHighlight=-1;
@@ -421,13 +423,14 @@ function canAnyBusMove(){
 }
 function doShuffle(){
   if(G.shuffleLeft<=0||G.animating){showToast('No shuffles left!');return;}
+  var undoLeft=G.undoLeft,hintLeft=G.hintLeft,shuffleLeft=G.shuffleLeft;
   // This is complex for grid games - instead of true shuffle, just undo all
   // For simplicity, reset to level start
   G.shuffleLeft--;
   playSfx('powerup');
   loadLevel(G.levelIdx);
   // Restore powerup state
-  G.shuffleLeft=0; // already used
+  G.undoLeft=undoLeft;G.hintLeft=hintLeft;G.shuffleLeft=shuffleLeft-1;
   showToast('Lot rearranged!');
   updatePowerups();
 }
