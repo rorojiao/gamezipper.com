@@ -1,3 +1,28 @@
+## [v1.207.0] - 2026-07-28
+### Added
+- 8 new machine-verifiable test cases from R324 industry research (4h cycle 86)
+- W-408 [P1] Firefox 154 RTCIceTransport.getSelectedCandidatePair() surfaces current candidate pair and fires selectedcandidatepairchange
+- W-409 [P1] Safari 26.6 compileStreaming and instantiateStreaming accept compileOptions parameter for JS String Builtins
+- B-231 [P1] Safari 26.6 ic length unit respects page zoom and equals one em per CSS spec
+- B-232 [P1] Safari 26.6 position-area falls back when body is the only scrollable container
+- S-469 [P1] Safari 26.6 WKHTTPCookieStore can delete partitioned third-party cookies
+- S-470 [P1] Safari 26.6 automatically unregisters service workers with missing main or imported scripts
+- C-224 [P1] Safari 26.6 RTCPeerConnection iceTransportPolicy relay gathers TURN-relay ICE candidates on macOS Sequoia
+- G-198 [P1] Safari 26.6 iPad desktop-mode CSS zoom correctly binds to font-size font-weight font-variant and font-style
+### Sources
+- Required parallel queries (2026-07-28, cycle 86):
+  - "HTML5 game testing 2026 new techniques"
+  - "browser game bug report 2026"
+  - "Chrome Edge Safari update 2026"
+  - "casual game UX complaint 2026"
+  - "mobile game performance issue 2026"
+- Primary URLs:
+  - https://webkit.org/blog/18178/webkit-features-for-safari-26-6/ (Safari 26.6 released Jul 27 2026: WebAssembly compileStreaming/instantiateStreaming compileOptions, CSS ic/zoom 174857144, position-area body-scroll fallback 175544079, iPad desktop-zoom font binding 176647969, WKHTTPCookieStore partitioned cookies 176097960, service-worker re-registration with missing scripts 175522651/175522816/175810627, RTCPeerConnection iceTransportPolicy relay 175009190)
+  - https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/154 (Firefox 154 Beta, ships Aug 18 2026: RTCIceTransport.getSelectedCandidatePair() + selectedcandidatepairchange event, bug 2019332)
+- Search-quality note: the five broad searches were noisy (UU-accelerator spam, generic CSDN/360 mobile-game UX pages, duplicate Chrome 145 CVE-2026-2441 from earlier cycles). mcp__web_search_prime__search returned HTTP 404 for all 3 follow-up queries (SearXNG backend persistent failure since cycle 43). Fell back to direct curl to developer.mozilla.org and webkit.org for primary release-note verification, plus mcp__minimax_search__web_search for context.
+- Semantic-dedup note: full CHANGELOG.md and MASTER-TEST-CASES-v1.206.0.md scans found zero occurrences for `getSelectedCandidatePair`, `selectedcandidatepairchange`, `compileOptions`, `compileStreaming`, `instantiateStreaming`, `JS String Builtins`, `position-area`, `ic length`, `WKHTTPCookieStore`, `partitioned cookies`, `iceTransportPolicy`, `getRemoteCertificates` (v1.205.0 S-462 covers `getRemoteCertificates()` only - adjacent but distinct surface), `safari 26.6`, `firefox 154`, `missing main script`. ID set-diff against v1.206.0 confirmed all 8 new IDs (W-408, W-409, B-231, B-232, S-469, S-470, C-224, G-198) are unique and avoid every historical CAT-NNN.
+- Design review: a read-only Codex escalation ran with the `hermes-auto` profile in isolated worktree `/tmp/gz-testlib-r324`; Hermes independently tightened the WebAssembly compileStreaming parity contract (compileOptions vs control path), the WKHTTPCookieStore partition-key semantics (separating partitioned cookie target from parent origin and from unrelated partitions), and the iPad desktop-zoom font-binding regression (explicit pixel-tolerance vs `transform: scale` fallback) before authoring the final cases.
+
 ## [v1.206.0] - 2026-07-27
 ### Added
 - 8 new machine-verifiable test cases from R323 industry research (4h cycle 85)
