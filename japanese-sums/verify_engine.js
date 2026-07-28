@@ -2,8 +2,9 @@
 // Loads the actual index.html engine and verifies checkWin() returns true for every level's solution.
 const fs = require('fs');
 const vm = require('vm');
+const path = require('path');
 
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 
 // Extract the LEVELS data and engine functions from the embedded <script>
 // The engine has: LEVELS array, level object, grid array, checkWin function, draw function

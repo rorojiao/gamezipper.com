@@ -5,9 +5,9 @@
  * Uses jsdom to run the actual game code.
  */
 const fs = require('fs');
-
+const path = require('path');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 // Extract LEVELS from HTML
-const html = fs.readFileSync('index.html', 'utf8');
 const startMarker = 'const LEVELS=';
 const endMarker = ';\nconst G=';
 const si = html.indexOf(startMarker);

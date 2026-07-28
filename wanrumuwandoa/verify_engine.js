@@ -6,8 +6,9 @@
 // inject a small runner loop INTO the context to call expand() + checkSolution().
 const fs = require('fs');
 const vm = require('vm');
+const path = require('path');
 
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 const inlineScripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m => m[1]);
 const engineScript = inlineScripts.find(s => s.includes('function checkSolution') && s.includes('const LEVELS'));
 if (!engineScript) { console.error('Cannot find engine script with LEVELS + checkSolution'); process.exit(1); }
