@@ -4,7 +4,8 @@
  * Verifies stored solutions: paths connected, fish counts correct, no overlaps.
  */
 const fs = require('fs');
-const levels = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+const path = require('path');
+const levels = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'), 'utf8'));
 
 function neighbors(r, c, H, W) {
   const res = [];

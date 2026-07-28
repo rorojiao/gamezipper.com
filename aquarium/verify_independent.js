@@ -3,8 +3,9 @@
 // brute-forces ALL water-level assignments per cage to confirm exactly ONE
 // matches the clues. Independent of gen.py's solver logic.
 const fs = require('fs');
+const path = require('path');
 
-const data = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'), 'utf8'));
 let allOk = true;
 let t0 = Date.now();
 
