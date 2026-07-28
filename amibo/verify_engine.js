@@ -9,7 +9,10 @@ const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 // R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
 const extractLevels=require('../.audit/gz-extract-levels.js');
 const LEVELS=extractLevels('amibo');
-let gameCode = scriptMatch[1];
+
+// Extract all inline game scripts (no src, not ld+json) — same logic as shared-vm-verify
+const scripts = [...html.matchAll(/<script(?![^>]*src=)(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+let gameCode = scripts.join('\n');
 
 // Convert const/var declarations to global so we can access them
 gameCode = gameCode.replace(/^const LEVELS/m, 'var LEVELS');

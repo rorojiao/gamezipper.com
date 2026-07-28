@@ -127,7 +127,7 @@ if (detection.hasCheckSolution && detection.hasPUZZLES) {
         } catch(e){ /* currentLevel may not be defined in this game's IIFE scope */ }
         const ok = checkWin(true);
         if(ok) pass++;
-        else { fail++; fails.push('L'+(i+1)+':'+(game?.rows||currentLevel?.rows)+'x'+(game?.cols||currentLevel?.cols)); }
+        else { fail++; fails.push('L'+(i+1)+':'+(typeof game!=='undefined'&&game?game.rows:currentLevel?currentLevel.rows:'?')+'x'+(typeof game!=='undefined'&&game?game.cols:currentLevel?currentLevel.cols:'?')); }
       }
       return JSON.stringify({pass, fail, fails: fails.slice(0,5), total: LEVELS.length});
     })()
