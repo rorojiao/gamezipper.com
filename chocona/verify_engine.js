@@ -1,146 +1,151 @@
 #!/usr/bin/env node
 /**
- * Chocona In-Engine Verifier
- * Loads the actual index.html, extracts the LEVELS constant and checkWin function,
- * then verifies each level passes the engine's own validation.
+ * Chocona ground-truth verifier.
+ *
+ * This runs the actual game script from index.html in a small DOM sandbox, then
+ * feeds every stored solution through the engine's own checkWin(true) function.
+ * UI side effects are disabled only after the script has loaded; validation
+ * functions and level data are never reimplemented or copied here.
  */
 const fs = require('fs');
+const path = require('path');
 const vm = require('vm');
 
-const html = fs.readFileSync('index.html', 'utf8');
+const gamePath = path.join(__dirname, 'index.html');
+const html = fs.readFileSync(gamePath, 'utf8');
+const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(match => match[1]);
+const gameScript = scripts.find(script => script.includes('const LEVELS') && script.includes('function checkWin'));
 
-// Extract LEVELS constant
-// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
-const extractLevels=require('../.audit/gz-extract-levels.js');
-const LEVELS=extractLevels('chocona');
-
-// Extract the game logic (between <script> tags)
-const scriptMatches = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)];
-let gameCode = '';
-for (const m of scriptMatches) {
-    const code = m[1];
-    if (code.includes('const LEVELS') || code.includes('function checkWin') || code.includes('function getBlackComponents')) {
-        gameCode += code + '\n';
-    }
+if (!gameScript) {
+  console.error('Cannot find the Chocona engine script containing LEVELS and checkWin.');
+  process.exit(1);
 }
 
-// Create a sandbox with the game functions
-const sandbox = {
-    console: console,
-    Math: Math,
-    Date: Date,
-    JSON: JSON,
-    Set: Set,
-    Map: Map,
-    Array: Array,
-    Object: Object,
-    Number: Number,
-    String: String,
-    Boolean: Boolean,
-    localStorage: { getItem: () => null, setItem: () => {} },
-    document: { addEventListener: () => {}, getElementById: () => null },
-    window: {},
-    AudioContext: function() { return { createGain: () => ({ gain: {}, connect: () => {} }), destination: {} }; },
-    setInterval: () => 0,
-    clearInterval: () => {},
+// Do not boot the browser UI while loading the engine definitions. Fail closed
+// if the exact startup call changes, so this never silently tests another code path.
+const startupCall = /\ninit\(\);\s*$/;
+if (!startupCall.test(gameScript)) {
+  console.error('Cannot isolate the Chocona engine startup call.');
+  process.exit(1);
+}
+const engineScript = gameScript.replace(startupCall, '\n/* verifier: startup disabled */');
+
+function stubElement() {
+  return {
+    style: {},
+    className: '',
+    classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
+    dataset: {},
+    children: [],
+    textContent: '',
+    innerHTML: '',
+    onclick: null,
+    appendChild() {},
+    removeChild() {},
+    addEventListener() {},
+    removeEventListener() {},
+    animate() { return { onfinish: null }; },
+    getBoundingClientRect() { return { left: 0, top: 0, width: 1, height: 1 }; },
+  };
+}
+
+const canvasContext = new Proxy({}, { get: () => () => {} });
+const board = stubElement();
+board.width = 1;
+board.height = 1;
+board.getContext = () => canvasContext;
+
+const elements = new Map([['board', board]]);
+const getElement = id => {
+  if (!elements.has(id)) elements.set(id, stubElement());
+  return elements.get(id);
 };
+const noop = () => {};
+const sandbox = {
+  console,
+  document: {
+    createElement: stubElement,
+    getElementById: getElement,
+    addEventListener: noop,
+    body: stubElement(),
+  },
+  window: { addEventListener: noop, removeEventListener: noop, innerWidth: 1024, innerHeight: 768 },
+  localStorage: { getItem: () => null, setItem: noop, removeItem: noop },
+  setTimeout: () => 0,
+  clearTimeout: noop,
+  setInterval: () => 0,
+  clearInterval: noop,
+  Date,
+  Math,
+  JSON,
+  Array,
+  Object,
+  String,
+  Number,
+  Boolean,
+  Map,
+  Set,
+  RegExp,
+  Error,
+  parseInt,
+};
+sandbox.window.window = sandbox.window;
+sandbox.window.document = sandbox.document;
+vm.createContext(sandbox);
 
-// Parse levels
-const levels = JSON.parse(LEVELS[1]);
-console.log(`Loaded ${levels.length} levels from index.html\n`);
-
-// We need to reimplement checkWin logic since it depends on canvas state.
-// Instead, we'll verify the levels using the same logic the engine uses.
-
-function getBlackComponents(blackSet, rows, cols) {
-    const visited = new Set();
-    const components = [];
-    for (const cellKey of blackSet) {
-        if (visited.has(cellKey)) continue;
-        const [r, c] = cellKey.split(',').map(Number);
-        const comp = [[r, c]];
-        const queue = [[r, c]];
-        visited.add(cellKey);
-        while (queue.length > 0) {
-            const [cr, cc] = queue.shift();
-            for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
-                const nr = cr + dr, nc = cc + dc;
-                const key = `${nr},${nc}`;
-                if (blackSet.has(key) && !visited.has(key)) {
-                    visited.add(key);
-                    comp.push([nr, nc]);
-                    queue.push([nr, nc]);
-                }
-            }
-        }
-        components.push(comp);
-    }
-    return components;
+try {
+  vm.runInContext(engineScript, sandbox, { filename: gamePath, timeout: 15000 });
+} catch (error) {
+  console.error('Engine load error:', error.message);
+  process.exit(1);
 }
 
-function isRectangle(comp) {
-    const minR = Math.min(...comp.map(c => c[0]));
-    const maxR = Math.max(...comp.map(c => c[0]));
-    const minC = Math.min(...comp.map(c => c[1]));
-    const maxC = Math.max(...comp.map(c => c[1]));
-    const expected = (maxR - minR + 1) * (maxC - minC + 1);
-    if (comp.length !== expected) return false;
-    const cellSet = new Set(comp.map(c => `${c[0]},${c[1]}`));
-    for (let r = minR; r <= maxR; r++) {
-        for (let c = minC; c <= maxC; c++) {
-            if (!cellSet.has(`${r},${c}`)) return false;
-        }
-    }
-    return true;
+const runner = `
+  __verifyResults = [];
+  renderGrid = function() {};
+  onWin = function() {};
+  playSFX = function() {};
+  for (var __i = 0; __i < LEVELS.length; __i++) {
+    var __level = LEVELS[__i];
+    currentLevel = __level;
+    currentLevelIdx = __i;
+    isPlaying = true;
+    userBlack = new Set(__level.solution.map(function(cell) { return cell[0] + ',' + cell[1]; }));
+    hintCells = new Set();
+    violationCells = new Set();
+    satisfiedRegions = new Set();
+    __verifyResults.push({
+      idx: __i,
+      tier: __level.tier,
+      rows: __level.rows,
+      cols: __level.cols,
+      ok: checkWin(true)
+    });
+  }
+`;
+
+try {
+  vm.runInContext(runner, sandbox, { filename: 'chocona-verify-runner.js', timeout: 30000 });
+} catch (error) {
+  console.error('Engine runner error:', error.message);
+  process.exit(1);
 }
 
-function checkWin(level, blackSet) {
-    const { rows, cols, regions, clues } = level;
-    
-    // 1. Check all clues satisfied
-    for (const [rid, count] of Object.entries(clues)) {
-        const ridNum = parseInt(rid);
-        let actual = 0;
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                if (regions[r][c] === ridNum && blackSet.has(`${r},${c}`)) {
-                    actual++;
-                }
-            }
-        }
-        if (actual !== count) return false;
-    }
-    
-    // 2. Check all black cells form rectangles
-    const components = getBlackComponents(blackSet, rows, cols);
-    for (const comp of components) {
-        if (!isRectangle(comp)) return false;
-    }
-    
-    return true;
+const results = sandbox.__verifyResults;
+if (!Array.isArray(results) || results.length !== 30) {
+  console.error(`Expected 30 engine results, received ${Array.isArray(results) ? results.length : 'none'}.`);
+  process.exit(1);
 }
 
-// Verify all levels
-let passCount = 0;
-let failCount = 0;
-
-for (let i = 0; i < levels.length; i++) {
-    const level = levels[i];
-    const blackSet = new Set();
-    for (const [r, c] of level.solution) {
-        blackSet.add(`${r},${c}`);
-    }
-    
-    if (checkWin(level, blackSet)) {
-        passCount++;
-        console.log(`  PASS Level ${i + 1} (${level.tier} ${level.rows}x${level.cols}): checkWin returns true`);
-    } else {
-        failCount++;
-        console.log(`  FAIL Level ${i + 1}: checkWin returns false!`);
-    }
+let pass = 0;
+for (const result of results) {
+  if (result.ok) {
+    pass++;
+    console.log(`L${result.idx + 1} ${result.tier} ${result.rows}x${result.cols}: PASS`);
+  } else {
+    console.log(`L${result.idx + 1} ${result.tier} ${result.rows}x${result.cols}: FAIL`);
+  }
 }
 
-console.log(`\n=== IN-ENGINE VERIFICATION RESULTS ===`);
-console.log(`Passed: ${passCount}/${levels.length}`);
-console.log(`Failed: ${failCount}/${levels.length}`);
-process.exit(failCount > 0 ? 1 : 0);
+console.log(`\nIn-engine checkWin from ${path.relative(process.cwd(), gamePath) || 'index.html'}: ${pass}/${results.length} PASS, ${results.length - pass} FAIL`);
+process.exit(pass === results.length ? 0 : 1);
