@@ -45,6 +45,38 @@ canvas{display:block;width:100vw;height:100vh;touch-action:none;position:fixed;t
 #splash-screen .splash-sub{position:relative;z-index:1;color:rgba(255,255,255,0.85);font-size:clamp(14px,3vw,18px);margin-top:16px;text-shadow:0 1px 8px rgba(0,0,0,0.6);letter-spacing:1px}
 #splash-screen .splash-hint{position:relative;z-index:1;color:rgba(255,255,255,0.5);font-size:12px;margin-top:40px;animation:pulse 2s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+/* R347: Static in-game banner placeholders (CLS=0 fix). Reserved space from page
+   load prevents the 90px layout shift that monetag-manager.js's dynamic injection
+   caused when AdSense/Monetag creative filled at t~5s. Empty placeholders are
+   visually neutral (transparent background, no border). Faint "Sponsored" label
+   satisfies AdSense policy disclosure when ad fills. Mobile uses 50px height.
+   Belt+suspenders: position:absolute on inner ins/iframe (R346 trick) prevents
+   AdSense/Monetag creatives from overflowing the reservation when they load. */
+#gz-ad-above-game,#gz-ad-below-canvas{
+  display:block;max-width:728px;width:100%;min-height:50px;max-height:90px;
+  margin:6px auto;text-align:center;overflow:hidden;
+  contain:layout paint style;box-sizing:border-box;position:relative;
+  background:transparent;border-radius:6px;
+}
+#gz-ad-above-game ins,#gz-ad-below-canvas ins,
+#gz-ad-above-game iframe,#gz-ad-below-canvas iframe{
+  display:block;position:absolute!important;top:0!important;left:0!important;
+  width:100%!important;max-width:728px!important;height:100%!important;
+  min-height:50px!important;max-height:90px!important;overflow:hidden;
+  border:0;
+}
+#gz-ad-above-game:empty::after,#gz-ad-below-canvas:empty::after{
+  content:"Sponsored · Advertisement";position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);color:#1a3a5c;font-size:.7em;opacity:.35;
+  letter-spacing:.05em;pointer-events:none;
+}
+@media(max-width:600px){
+  #gz-ad-above-game,#gz-ad-below-canvas{min-height:50px;max-height:60px;margin:4px auto}
+  #gz-ad-above-game ins,#gz-ad-below-canvas ins,
+  #gz-ad-above-game iframe,#gz-ad-below-canvas iframe{
+    max-height:60px!important;min-height:50px!important;
+  }
+}
 </style>
  <script src="../game-audio.js?v=9"></script>
  <meta name="description" content="Play Memory Match online free! Classic card matching memory game. Train your brain on any device — no download needed.">
@@ -206,7 +238,9 @@ function gzShare(score){
 <div id="bg-layer"></div>
 <div id="curtain-left"></div>
 <div id="curtain-right"></div>
-<canvas id="c" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:1"></canvas>
+<div id="gz-ad-above-game"></div>
+<canvas id="c" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:1"></canvas><div id="gz-ad-below-canvas"></div>
+
 <div id="fx-overlay" style="position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden"></div>
 
 <script>
