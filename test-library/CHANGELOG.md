@@ -1,3 +1,34 @@
+## [v1.208.0] - 2026-07-29
+### Added
+- 10 new machine-verifiable test cases from R325 industry research (4h cycle 87)
+- W-410 [P1] Chrome 151 AnimationEvent.animation and TransitionEvent.animation accessor returns the triggering Animation object read-only
+- W-411 [P1] Chrome 151 <usermedia> declarative capability element gates getUserMedia behind a click activation gesture
+- W-412 [P1] Chrome 151 DeviceOrientationEvent.requestPermission / DeviceMotionEvent.requestPermission static Promise-returning API distinct from Geolocation
+- W-413 [P1] Chrome 151 SpeechRecognition.unspokenPunctuation lets the engine inject punctuation from natural pauses
+- B-233 [P1] Chrome 151 position-anchor initial value changes from none to normal, aligning with Safari 26.6 and Firefox 154
+- B-234 [P1] Chrome 151 AnimationTrigger play/play-forwards/play-backwards actions do not auto-rewind a completed animation
+- B-235 [P1] Chrome 151 declarative shadow DOM <template shadowrootslotassignment> reflects as HTMLTemplateElement.shadowRootSlotAssignment
+- B-236 [P1] Chrome 151 memory-safe Rust XML parser for DOMParser, XMLHttpRequest.responseXML, and standalone / external SVG without XSLT
+- P-182 [P1] Chrome 151 soft-navigation and interaction-contentful-paint PerformanceEntry types capture SPA INP and same-document navigation
+- C-225 [P1] Chrome 151 / Edge 151 macOS 12 (Monterey) support end forces navigator.userAgentData fallback for embedded WebView hosts
+### Sources
+- Required parallel queries (2026-07-29, cycle 87):
+  - "HTML5 game testing 2026 new techniques"
+  - "browser game bug report 2026"
+  - "Chrome Edge Safari update 2026"
+  - "casual game UX complaint 2026"
+  - "mobile game performance issue 2026"
+- Primary URLs:
+  - https://developer.chrome.com/release-notes/151 (Chrome 151 stable, 2026-07-28: AnimationEvent.animation/TransitionEvent.animation, CSS ruby-overhang, position-anchor initial none→normal, AnimationTrigger no-auto-rewind, declarative shadow DOM shadowrootslotassignment, Rust XML parser, soft-navigation + interaction-contentful-paint PerformanceEntries, speculation rules form_submission, textStream() for Request/Response/Blob, <usermedia> capability MVP, DeviceOrientationEvent.requestPermission, wheel event momentum, aria-actions, SpeechRecognition.unspokenPunctuation, LanguageDetector zh-Hant/zh-Hans split, post-quantum WebCrypto ML-KEM/ML-DSA/ChaCha20-Poly1305/X-Wing Origin Trial, WebRTC SCTP-negotiation acceleration Origin Trial, direct-sockets-private → local-network + loopback-network policy merger, macOS 12 drop, FontFaceSet IDL [LegacyNoInterfaceObject] removal)
+  - https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/154 (Firefox 154 Beta, ships 2026-08-18: RTCIceTransport.getSelectedCandidatePair() + selectedcandidatepairchange, RTCDtlsTransport error event — already covered in v1.207.0 W-408)
+  - https://webkit.org/blog/18178/webkit-features-for-safari-26-6/ (Safari 26.6 stable, 2026-07-27 — already covered in v1.207.0 W-409/B-231/B-232/S-469/S-470/C-224/G-198)
+  - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-relnote-stable-channel (Edge 150.0.4078.105 stable, 2026-07-27: macOS 12 floor announcement for Edge 151 — paired with C-225)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8566a699b6900652 (Chrome 151 IT之家, 2026-07-29: Language Detector zh-Hans/zh-Hant split confirmation)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_7176a68406648652 (iOS 26.6 GA, 2026-07-28: 78 vulnerability patches including 14 kernel + 8 WebKit — context for cross-vendor 7/28-7/29 release-day correlation)
+  - https://www.browsers.fyi/ (release-index confirmation: Chrome 151 7/28, Safari 26.6 7/27, Firefox 153 7/21, Edge 150 7/2)
+- Research note: required five broad searches ran in parallel; results were noisy (UU-accelerator spam, generic CSDN/Sogou/360 mobile-game UX pages, repeated 2025 Chrome CVE articles). Hermes independently probed the primary Chrome release-notes URL via mcp__web_search_prime__extract and read the full Chrome 151 notes to identify machine-verifiable contracts. The Chrome 151 release-notes URL was independently verified to return the full new surface (last updated 2026-07-28 UTC).
+- Semantic-dedup note: full CHANGELOG.md scan found zero occurrences for AnimationEvent.animation, TransitionEvent.animation, shadowrootslotassignment, shadowRootSlotAssignment, position-anchor initial, AnimationTrigger auto-rewind, Rust XML parser, soft-navigation, interaction-contentful-paint, <usermedia> capability, DeviceOrientationEvent.requestPermission, SpeechRecognition.unspokenPunctuation, LanguageDetector zh-Hant, LanguageDetector zh-Hans, macOS 12 (Monterey) drop, ML-KEM, ML-DSA, ChaCha20-Poly1305, X-Wing, form_submission, textStream(), aria-actions, wheel event momentum, aria-actions. ID set-diff against v1.207.0 confirmed all 10 new IDs (W-410, W-411, W-412, W-413, B-233, B-234, B-235, B-236, P-182, C-225) are unique and avoid every historical CAT-NNN.
+
 ## [v1.207.0] - 2026-07-28
 ### Added
 - 8 new machine-verifiable test cases from R324 industry research (4h cycle 86)
