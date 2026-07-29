@@ -3,8 +3,9 @@
 //            (3) clues consistent with solution, (4) uniqueness (values deterministic)
 
 const fs = require('fs');
+const path = require('path');
 
-const data = JSON.parse(fs.readFileSync('levels.json','utf8'));
+const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'),'utf8'));
 const levels = data.levels;
 
 function NB(r,c,H,W){

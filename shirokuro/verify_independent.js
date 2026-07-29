@@ -3,7 +3,8 @@
 // Re-implements the validation logic from scratch (does NOT use the engine).
 
 const fs = require('fs');
-const data = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+const path = require('path');
+const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'), 'utf8'));
 
 function checkLevel(lv) {
   // Build adjacency from solution edges

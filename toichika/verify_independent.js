@@ -3,7 +3,8 @@
 // Re-implements the 4 rules from scratch. Verifies the stored solution is valid
 // AND counts solutions (with incremental pruning) to report uniqueness distribution.
 const fs = require('fs');
-const data = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+const path = require('path');
+const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'), 'utf8'));
 const levels = data.levels;
 const DIRS = { R: [0, 1], L: [0, -1], D: [1, 0], U: [-1, 0] };
 const OPP = { R: 'L', L: 'R', D: 'U', U: 'D' };
@@ -53,66 +54,93 @@ function validate(assign, adj, R, C, nreg) {
 
 function countSolutions(region, R, C, nreg, cap) {
   const cells = Array.from({ length: nreg }, () => []);
-  const regionOf = {};
-  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
-    cells[region[r][c]].push([r, c]);
-    regionOf[r + ',' + c] = region[r][c];
-  }
-  const adj = buildAdj(region, R, C, nreg);
-  const choices = cells.map(cs => {
-    const out = [];
-    for (const [r, c] of cs) for (const d of Object.keys(DIRS)) {
-      const [dr, dc] = DIRS[d];
-      const nr = r + dr, nc = c + dc;
-      if (nr >= 0 && nr < R && nc >= 0 && nc < C) out.push([r, c, d]);
-    }
-    return out;
-  });
-  const order = [...Array(nreg).keys()].sort((a, b) => choices[a].length - choices[b].length);
-  const assign = new Array(nreg).fill(null);
-  const occupied = new Map(); // "r,c" -> [regionIdx, dir]
-  let count = 0, nodes = 0;
-  const NODE_CAP = 2000000;
+  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) cells[region[r][c]].push([r, c]);
+  const adjacent = buildAdj(region, R, C, nreg);
+  const byRegion = Array.from({ length: nreg }, () => []);
 
-  function partialOk(i, r, c, d) {
-    const [dr, dc] = DIRS[d];
-    let nr = r + dr, nc = c + dc;
-    const between = [];
-    while (nr >= 0 && nr < R && nc >= 0 && nc < C) {
-      const key = nr + ',' + nc;
-      if (occupied.has(key)) {
-        const unassignedBetween = between.some(b => assign[regionOf[b]] === null);
-        if (!unassignedBetween) {
-          const [j, pd] = occupied.get(key);
-          if (pd !== OPP[d]) return false;
-          if (adj[i].has(j)) return false;
-        }
-        return true;
+  // A finished puzzle is a matching of non-adjacent regions. A pair is legal
+  // when its arrows face each other on one row or column and no other arrow
+  // occupies a cell between them. Enumerating pairs makes that sightline rule
+  // explicit, rather than guessing at it with unsound partial assignments.
+  for (let a = 0; a < nreg; a++) for (let b = a + 1; b < nreg; b++) {
+    if (adjacent[a].has(b)) continue;
+    for (const [ar, ac] of cells[a]) for (const [br, bc] of cells[b]) {
+      if (ar !== br && ac !== bc) continue;
+      const dr = Math.sign(br - ar);
+      const dc = Math.sign(bc - ac);
+      if (dr === 0 && dc === 0) continue;
+      const dA = dr === 1 ? 'D' : dr === -1 ? 'U' : dc === 1 ? 'R' : 'L';
+      const dB = OPP[dA];
+      const between = [];
+      for (let r = ar + dr, c = ac + dc; r !== br || c !== bc; r += dr, c += dc) between.push(r + ',' + c);
+      const candidate = {
+        a, b,
+        aKey: ar + ',' + ac,
+        bKey: br + ',' + bc,
+        between,
+        aArrow: [ar, ac, dA],
+        bArrow: [br, bc, dB],
+      };
+      byRegion[a].push(candidate);
+      byRegion[b].push(candidate);
+    }
+  }
+
+  const assigned = new Array(nreg).fill(false);
+  const endpoints = new Set();
+  const blocked = new Map();
+  let count = 0;
+
+  function viable(candidate) {
+    return !assigned[candidate.a] && !assigned[candidate.b]
+      && !blocked.has(candidate.aKey) && !blocked.has(candidate.bKey)
+      && candidate.between.every(key => !endpoints.has(key));
+  }
+
+  function chooseRegion() {
+    let choice = -1;
+    let candidates = null;
+    for (let regionId = 0; regionId < nreg; regionId++) {
+      if (assigned[regionId]) continue;
+      const viableCandidates = byRegion[regionId].filter(viable);
+      if (viableCandidates.length === 0) return { regionId, candidates: viableCandidates };
+      if (!candidates || viableCandidates.length < candidates.length) {
+        choice = regionId;
+        candidates = viableCandidates;
       }
-      between.push(key);
-      nr += dr; nc += dc;
     }
-    for (const b of between) if (assign[regionOf[b]] === null) return true;
-    return false;
+    return choice === -1 ? null : { regionId: choice, candidates };
   }
 
-  function bt(k) {
-    if (count >= cap || nodes > NODE_CAP) return;
-    nodes++;
-    if (k === nreg) { if (validate(assign, adj, R, C, nreg)) count++; return; }
-    const i = order[k];
-    for (const ch of choices[i]) {
-      const [r, c, d] = ch;
-      assign[i] = ch;
-      occupied.set(r + ',' + c, [i, d]);
-      if (partialOk(i, r, c, d)) bt(k + 1);
-      occupied.delete(r + ',' + c);
-      assign[i] = null;
-      if (count >= cap || nodes > NODE_CAP) return;
+  function search(done) {
+    if (count >= cap) return;
+    if (done === nreg) {
+      count++;
+      return;
+    }
+    const choice = chooseRegion();
+    if (!choice || choice.candidates.length === 0) return;
+    for (const candidate of choice.candidates) {
+      assigned[candidate.a] = true;
+      assigned[candidate.b] = true;
+      endpoints.add(candidate.aKey);
+      endpoints.add(candidate.bKey);
+      for (const key of candidate.between) blocked.set(key, (blocked.get(key) || 0) + 1);
+      search(done + 2);
+      for (const key of candidate.between) {
+        const remaining = blocked.get(key) - 1;
+        if (remaining) blocked.set(key, remaining); else blocked.delete(key);
+      }
+      endpoints.delete(candidate.aKey);
+      endpoints.delete(candidate.bKey);
+      assigned[candidate.a] = false;
+      assigned[candidate.b] = false;
+      if (count >= cap) return;
     }
   }
-  bt(0);
-  return { count, capped: nodes > NODE_CAP };
+
+  search(0);
+  return count;
 }
 
 let pass = 0, fail = 0;
@@ -122,17 +150,16 @@ for (const lv of levels) {
   const adj = buildAdj(region, R, C, nreg);
   const assign = solution.map(s => [s.r, s.c, s.d]);
   const ok = validate(assign, adj, R, C, nreg);
-  const { count, capped } = countSolutions(region, R, C, nreg, 20);
+  const count = countSolutions(region, R, C, nreg, 2);
   if (ok && count >= 1) {
     pass++;
     if (count === 1) dist.unique++;
-    else if (count <= 5) dist.few++;
     else dist.many++;
-    console.log(`L${lv.num} ${R}x${C} ${nreg}reg: VALID, solutions=${count}${capped ? '+' : ''}`);
+    console.log(`L${lv.num} ${R}x${C} ${nreg}reg: VALID, solutions=${count === 1 ? '1' : '2+'}`);
   } else {
     fail++;
     console.log(`L${lv.num} ${R}x${C}: FAIL (validOK=${ok}, count=${count})`);
   }
 }
-console.log(`\n${pass}/${levels.length} VALID. Distribution: unique=${dist.unique} few(2-5)=${dist.few} many(6+)=${dist.many}. FAIL=${fail}`);
+console.log(`\n${pass}/${levels.length} VALID. Counted unique=${dist.unique}; multiple (capped at 2)=${dist.many}. FAIL=${fail}`);
 process.exit(fail === 0 ? 0 : 1);

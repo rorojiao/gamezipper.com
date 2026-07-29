@@ -14,7 +14,7 @@ const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 // R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
 const extractLevels=require('../.audit/gz-extract-levels.js');
 const LEVELS=extractLevels('hex-tessellation');
-const LEVELS_DATA = JSON.parse(LEVELS[1]);
+const LEVELS_DATA = { levels: LEVELS };
 console.log(`Loaded ${LEVELS_DATA.levels.length} levels from in-engine code\n`);
 
 // Extract key game functions by running the script in a sandbox with stubs
@@ -181,4 +181,6 @@ console.log('\n=== IN-ENGINE VERIFICATION SUMMARY ===');
 const passed = results.filter(r => r.pass).length;
 console.log(`${passed}/${results.length} levels UNIQUE+VALID via in-engine BFS`);
 console.log(allPass ? '✅ ALL PASS — engine rules match mathematical solution' : '❌ SOME FAILED');
-process.exit(allPass ? 0 : 1);
+if (!allPass) process.exit(1);
+console.log('Independent validator:');
+require('../.audit/gz-production-engine.js').runIndependentVerifier(__dirname);

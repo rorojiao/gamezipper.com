@@ -1,6 +1,7 @@
 // Independent BFS verifier - validates all levels have unique solutions
 const fs = require('fs');
-const levels = JSON.parse(fs.readFileSync('/home/msdn/gamezipper.com/vortex-valve/levels.json', 'utf8'));
+const path = require('path');
+const levels = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'), 'utf8'));
 
 function mod(a, n) { return ((a % n) + n) % n; }
 

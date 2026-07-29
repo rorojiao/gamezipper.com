@@ -1,7 +1,8 @@
 // Independent Node.js verifier for Dotchi-Loop levels.
 // Re-implements cycle + white-circle + region-consistency checks.
 const fs = require('fs');
-const levels = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+const path = require('path');
+const levels = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'), 'utf8'));
 
 function verify(lv) {
   const { R, C, regions, white, solution } = lv;

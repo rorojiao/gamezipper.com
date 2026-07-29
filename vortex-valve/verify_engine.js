@@ -1,8 +1,9 @@
 // In-engine BFS solver: uses EXACT game logic from index.html
 // Verifies all 30 levels are solvable using the game's rotateDial logic
 const fs = require('fs');
+const path = require('path');
+const { runIndependentVerifier } = require('../.audit/gz-production-engine.js');
 
-const html = fs.readFileSync('/home/msdn/gamezipper.com/vortex-valve/index.html', 'utf8');
 // R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
 const extractLevels=require('../.audit/gz-extract-levels.js');
 const LEVELS=extractLevels('vortex-valve');
@@ -11,8 +12,8 @@ function mod(a, n) { return ((a % n) + n) % n; }
 
 function solveBFS(lv) {
     const K = lv.K, N = lv.N;
-    const offsets = lv.o.slice();
-    const links = lv.l || [];
+    const offsets = lv.offsets.slice();
+    const links = lv.links || [];
     
     // Build linkedMap (same as game)
     const linkedMap = {};
@@ -74,12 +75,15 @@ console.log('Vortex Valve — In-Engine BFS Verification');
 console.log('==========================================');
 let allPass = true;
 LEVELS.forEach((lv, i) => {
-    const result = solveBFS(lv);
-    const parMatch = result.moves === lv.p;
+  const result = solveBFS(lv);
+    const parMatch = result.moves === lv.par;
     const status = result.solvable && parMatch ? 'PASS' : 'FAIL';
     if (status === 'FAIL') allPass = false;
     console.log(`L${String(i+1).padStart(2,'0')} T${Math.floor(i/5)+1} K=${lv.K} N=${lv.N} ` +
-        `links=${(lv.l||[]).length} par=${lv.p} bfs=${result.moves} ` +
-        `${result.unique ? 'UNIQUE' : 'multi'} states=${result.states} ${status}`);
+        `links=${(lv.links||[]).length} par=${lv.par} bfs=${result.moves} ` +
+        `states=${result.states} ${status}`);
 });
 console.log('\n' + (allPass ? 'ALL 30/30 SOLVABLE, PAR VERIFIED' : 'SOME LEVELS FAILED'));
+if (!allPass) process.exit(1);
+console.log('Independent validator:');
+runIndependentVerifier(__dirname);

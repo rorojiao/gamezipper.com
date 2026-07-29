@@ -1,18 +1,10 @@
 // verify_independent.js — Independent Node.js verifier for Double Choco levels
-// Extracts LEVELS from index.html and validates each level independently.
+// Validates the production LEVELS independently.
 
-const fs = require('fs');
-const vm = require('vm');
-
-const html = fs.readFileSync('index.html', 'utf-8');
-// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
 const extractLevels=require('../.audit/gz-extract-levels.js');
 const LEVELS=extractLevels('double-choco');
-
-const sandbox = { LEVELS: null };
-vm.createContext(sandbox);
-vm.runInContext(`LEVELS = ${match[1]};`, sandbox);
-console.log(`Extracted ${LEVELS.length} levels from index.html`);
+if (!Array.isArray(LEVELS)) throw new Error('Could not load production LEVELS');
+console.log(`Extracted ${LEVELS.length} production levels from index.html`);
 
 // Polyomino normalization and congruence check
 function normalize(cells) {

@@ -2,14 +2,14 @@
 // run BFS using the EXACT game rules (state=[(s0+d0)%N, (s1+d1)%N, (s2+d2)%N],
 // win: state[0]===state[1]&&state[1]===state[2]).
 const fs = require('fs');
-const html = fs.readFileSync('index.html','utf8');
+const { runIndependentVerifier } = require('../.audit/gz-production-engine.js');
 // R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
 const extractLevels=require('../.audit/gz-extract-levels.js');
 const LEVELS=extractLevels('sextant-celestial');
 console.log(`Extracted ${LEVELS.length} levels from index.html`);
 
 function verifyEngine(L){
-  const N=L.n, dials=L.d, start=L.s;
+  const N=L.N, dials=L.dials, start=L.start;
   const K=dials.length;
   const sm={}, ss={};
   const sk=start.join(',');
@@ -41,8 +41,10 @@ let pass=0;
 LEVELS.forEach((L,i)=>{
   const r=verifyEngine(L);
   const ok=r.solvable;
-  console.log(`L${(i+1).toString().padStart(2)} N=${L.n} solvable=${r.solvable} opt=${r.best||'-'} ${ok?'✅':'❌'}`);
+  console.log(`L${(i+1).toString().padStart(2)} N=${L.N} solvable=${r.solvable} opt=${r.best||'-'} ${ok?'✅':'❌'}`);
   if(ok)pass++;
 });
 console.log(`\n${pass}/${LEVELS.length} SOLVABLE (in-engine exact rules)`);
 if(pass<LEVELS.length)process.exit(1);
+console.log('Independent validator:');
+runIndependentVerifier(__dirname);

@@ -1,12 +1,13 @@
 // In-engine Node.js BFS verifier — uses EXACT game rules from index.html
 // Extracts LEVELS and applies the same state transitions the game uses.
 const fs = require('fs');
+const { runIndependentVerifier } = require('../.audit/gz-production-engine.js');
 const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 // Pull LEVELS and OPTIMAL out of the embedded JS
 // R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
 const extractLevels=require('../.audit/gz-extract-levels.js');
 const LEVELS=extractLevels('orrery-planetary-gear');
-const OPTIMAL = eval(optMatch[1]);
+const OPTIMAL = LEVELS.map(level => level.solution_presses);
 console.log(`Extracted ${LEVELS.length} levels and ${OPTIMAL.length} optima from index.html`);
 
 // Replicate EXACT game state transition (from pressDial):
@@ -44,13 +45,15 @@ function bfsMin(N, dials, start) {
 
 let allPass = true;
 LEVELS.forEach((L, i) => {
-  const minPresses = bfsMin(L.n, L.d, L.s);
+  const minPresses = bfsMin(L.N, L.dials, L.start);
   const opt = OPTIMAL[i];
   const solvable = minPresses > 0;
   const optMatch = minPresses === opt;
   const status = solvable && optMatch ? 'OK' : 'FAIL';
   if (!solvable || !optMatch) allPass = false;
-  console.log(`L${(i+1).toString().padStart(2)} N=${L.n} K=${L.d.length} start=[${L.s}] engineMin=${minPresses} opt=${opt} ${status}`);
+  console.log(`L${(i+1).toString().padStart(2)} N=${L.N} K=${L.dials.length} start=[${L.start}] engineMin=${minPresses} opt=${opt} ${status}`);
 });
 console.log('\n' + (allPass ? '✅ ALL 30 LEVELS SOLVABLE IN-ENGINE (Node BFS, exact game rules)' : '❌ SOME LEVELS FAILED IN-ENGINE'));
-process.exit(allPass ? 0 : 1);
+if (!allPass) process.exit(1);
+console.log('Independent validator:');
+runIndependentVerifier(__dirname);

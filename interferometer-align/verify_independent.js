@@ -2,7 +2,8 @@
 // Re-implements the modular arithmetic from scratch, counts solutions per target,
 // confirms stored solution yields the target. Must agree with Python gen_levels.py.
 const fs = require('fs');
-const levels = JSON.parse(fs.readFileSync('levels.json','utf8'));
+const path = require('path');
+const levels = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'),'utf8'));
 
 let pass = 0, fail = 0;
 levels.forEach((L, idx) => {

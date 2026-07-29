@@ -1,7 +1,8 @@
 // Independent Node.js BFS verifier for Sextant Celestial.
 // Re-derives optimal solutions independently (not importing gen_levels.py logic).
 const fs = require('fs');
-const levels = JSON.parse(fs.readFileSync('levels.json','utf8'));
+const path = require('path');
+const levels = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'),'utf8'));
 
 function verify(lv){
   const N = lv.N, dials = lv.dials, start = lv.start;

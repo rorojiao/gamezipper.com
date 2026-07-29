@@ -1,6 +1,5 @@
 // In-engine verifier: loads LEVELS from index.html and runs the game's actual netPrecession logic
-const fs = require('fs');
-const html = fs.readFileSync('index.html','utf8');
+const { runIndependentVerifier } = require('../.audit/gz-production-engine.js');
 // extract the LEVELS array
 // R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
 const extractLevels=require('../.audit/gz-extract-levels.js');
@@ -13,8 +12,7 @@ function netPrecession(dialVals, cur) {
 }
 let ok=0, bad=0;
 for (let idx=0; idx<LEVELS.length; idx++) {
-  const L = LEVELS[idx];
-  const cur = {P:L[0],n:L[1],steps:L[2],signs:L[3],maxes:L[4],target:L[5],solution:L[6]};
+  const cur = LEVELS[idx];
   // set dialVals = solution and check netPrecession === target
   const dialVals = cur.solution.slice();
   const net = netPrecession(dialVals, cur);
@@ -22,4 +20,6 @@ for (let idx=0; idx<LEVELS.length; idx++) {
   else { bad++; console.log(`BAD in-engine L${idx+1}: net=${net} target=${cur.target}`); }
 }
 console.log(`Node in-engine: ${ok}/30 solvable (solution yields target), ${bad} bad`);
-process.exit(bad>0?1:0);
+if (bad) process.exit(1);
+console.log('Independent validator:');
+runIndependentVerifier(__dirname);

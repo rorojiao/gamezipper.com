@@ -1,6 +1,7 @@
 // Independent Node.js BFS/brute-force verifier — does NOT use game code
 const fs = require('fs');
-const levels = JSON.parse(fs.readFileSync('levels.json','utf8'));
+const path = require('path');
+const levels = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'),'utf8'));
 let ok=0, bad=0;
 for (const l of levels) {
   const {P,steps,signs,maxes,target,solution}=l;
