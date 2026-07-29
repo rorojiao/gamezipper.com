@@ -184,7 +184,12 @@ function solve(blackGrid, clues, N, prefilled, cap = 3, timeLimitMs = 4000) {
   return solutions;
 }
 
-const levels = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+const path = require('path');
+const levels = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'), 'utf8'));
+if (!Array.isArray(levels) || levels.length === 0) {
+  console.error('ERROR: levels.json did not yield a non-empty level array');
+  process.exit(1);
+}
 console.log(`Loaded ${levels.length} levels`);
 let nPass = 0;
 for (let i = 0; i < levels.length; i++) {
@@ -224,3 +229,4 @@ for (let i = 0; i < levels.length; i++) {
   console.log(`  L${String(i + 1).padStart(2, ' ')} N=${N}: ${ok ? 'PASS' : 'FAIL'} sols=${found.length} match=${match} unique=${unique} time=${(Date.now() - t0) / 1000}s`);
 }
 console.log(`\n${nPass}/${levels.length} levels PASS`);
+if (nPass !== levels.length) process.exit(1);
