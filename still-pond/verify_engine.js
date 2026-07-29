@@ -9,7 +9,8 @@
  */
 
 const fs = require('fs');
-const data = JSON.parse(fs.readFileSync('levels.json', 'utf8')).LEVELS;
+const path = require('path');
+const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'), 'utf8')).LEVELS;
 
 // Replicate the engine's golStep / isStillLife / verify logic.
 // Match the constants used in index.html.
