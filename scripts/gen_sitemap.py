@@ -19,6 +19,7 @@ For static pages, category pages, and blog pages, lastmod is the most
 |recent commit date for the underlying file (or today if untracked) so
 |edits to those pages are reflected in the sitemap on every regen.
 
+Bug fix 2026-07-30: skip redirect stubs (noindex + JS replace) — 82 stubs de-listed (sibling fd56e7bfe pattern).
 Bug fix 2026-06-09: previous version used `today` for every URL, so
 |game pages added in bulk got today's lastmod instead of their real add
 |date, and any pre-existing entry without a lastmod (e.g. malformed
@@ -106,6 +107,18 @@ for d in sorted(os.listdir('.')):
         continue
     if not os.path.exists(f'{d}/index.html'):
         continue
+    # v5.31 (2026-07-30): skip redirect stubs (e.g. /alien-whack/ → /whack-a-mole/).
+    # Stub pages have <meta name="robots" content="noindex,follow"> + JS window.location.replace
+    # + canonical link to the real game. Listing them in sitemap would create duplicate
+    # content signals and dilute crawl budget — sibling fd56e7bfe (7-29) explicitly
+    # removed these 82 stubs. Detect by scanning the first 4KB of index.html.
+    try:
+        with open(f'{d}/index.html', 'rb') as f:
+            head = f.read(4096).decode('utf-8', errors='ignore')
+        if 'noindex,follow' in head and 'window.location.replace' in head:
+            continue
+    except OSError:
+        pass
     games.append(d)
 
 # Build pages in stable order; use OrderedDict to dedupe (in case a game
