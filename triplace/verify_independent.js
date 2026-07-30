@@ -76,29 +76,27 @@ for (let i = 0; i < levels.length; i++) {
         }
     }
     
-    // 5. Each triomino is straight 1x3 (horizontal or vertical)
+    // 5. Each triomino is orthogonally connected. L-shaped pieces are valid;
+    // only straight 1x3 pieces contribute to directional clue counts.
     if (valid) {
         for (let t = 0; t < sol.length; t++) {
-            const cells = sol[t].slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-            const rs = new Set(cells.map(x => x[0]));
-            const cs = new Set(cells.map(x => x[1]));
-            if (rs.size === 1) {
-                // Horizontal - must be consecutive
-                if (cells[2][1] - cells[0][1] !== 2) {
-                    valid = false;
-                    reason = `Triomino ${t} not consecutive H`;
-                    break;
+            const cells = sol[t];
+            const keys = new Set(cells.map(([r, c]) => r + ',' + c));
+            const reached = new Set([cells[0][0] + ',' + cells[0][1]]);
+            const stack = [cells[0]];
+            while (stack.length) {
+                const [r, c] = stack.pop();
+                for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+                    const key = (r + dr) + ',' + (c + dc);
+                    if (keys.has(key) && !reached.has(key)) {
+                        reached.add(key);
+                        stack.push([r + dr, c + dc]);
+                    }
                 }
-            } else if (cs.size === 1) {
-                // Vertical - must be consecutive
-                if (cells[2][0] - cells[0][0] !== 2) {
-                    valid = false;
-                    reason = `Triomino ${t} not consecutive V`;
-                    break;
-                }
-            } else {
+            }
+            if (reached.size !== 3) {
                 valid = false;
-                reason = `Triomino ${t} is not straight (L-shape not allowed)`;
+                reason = `Triomino ${t} is not orthogonally connected`;
                 break;
             }
         }
