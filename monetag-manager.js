@@ -394,8 +394,17 @@
       legacyEnabled: false,  // v5.3: kill switch for legacy zones (proven dead)
       // v5.10: Dead-zone cull — skip 0% fill zones immediately (no script load).
       // BI 7d (2026-06-22~06-29): all four have 0 fills across 226 attempts.
-      // Re-enable by removing from array. ONLY 11012002 is alive (9.4% fill).
-      deadZones: [11012003, 11012009, 11012010, 11012011],
+      // v5.30 (2026-07-30): Added 11012002 to deadZones. Zone was the last surviving
+      //   Monetag zone (was 9.4% fill in v5.10 baseline, 97% spark on 7-20, then
+      //   total death 7-22 onward). BI 9d 2026-07-22~30: 1 fill, 130+ no_fill, 0%
+      //   rate. v5.29 (7-26) reduced backoff streak-1 10min→90s for faster recovery
+      //   testing — 4 more days with 0 recovery confirms service-side ban/throttle.
+      //   All 4 waterfalls (homepage_banner, container_ad, commercial_break, in-game
+      //   banner) now skip 11012002 immediately — AdSense Tier 0 (88.7% fill) +
+      //   Adsterra popunder/smartlink carry revenue. Saves ~30-50 dead no_fill
+      //   BI events/day + avoids the 2.5s commercial_break fallback timer.
+      // Re-enable by removing zone from deadZones array when BI shows fill rate > 5%.
+      deadZones: [11012002, 11012003, 11012009, 11012010, 11012011],
       // v6.5 Adsterra tier — placeholders until user signs up + runs setup-adsterra.sh
       // See ADSTERRA_SETUP.md for signup → enable flow. zoneId=0 = no-op (no script load).
       adsterraInpagePush: 30130931,    // Social Bar zone (serves as In-Page Push)
@@ -451,7 +460,9 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.29-backoff-fast',  // 2026-07-26: v5.29 reduce ZONE_BACKOFF streak-1 from 10min → 90s. See ZONE_BACKOFF comment.
+    VERSION: '5.30-monetag-zone-disable',  // 2026-07-30: v5.30 add 11012002 to deadZones (zone dead 9+ days, 1 fill / 9d).
+                                          //   See ZONES.deadZones comment. Re-enable by removing 11012002 from deadZones
+                                          //   array when zone recovers (check BI dead_zone_skip events to confirm).
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
