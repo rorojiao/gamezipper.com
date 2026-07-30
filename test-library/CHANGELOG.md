@@ -1,3 +1,40 @@
+## [v1.209.0] - 2026-07-30
+### Added
+- 9 new machine-verifiable test cases from R326 industry research (4h cycle 88)
+- W-414 [P1] Chrome 151 (Origin Trial) SubtleCrypto.deriveKey and deriveBits Support ML-KEM-768/ML-KEM-1024 Post-Quantum Key Encapsulation with Byte-Identical Shared Secret to RFC 9180 HPKE
+- W-415 [P1] Chrome 151 LanguageDetector.detect() Splits Chinese Into Distinct zh-Hans and zh-Hant Confidence Outputs
+- W-416 [P2] Chrome 151 Request / Response / Blob textStream() Returns a ReadableStream of Uint8Array Chunks Distinct from body.getReader() and arrayBuffer()
+- B-237 [P2] CSS Container Queries with container-type: size and container-name Reflow Game Panel Sub-Containers Without Re-Laying Out Outer Document
+- B-238 [P2] Chrome 151 Declarative Shadow DOM <template shadowrootclonable> Attribute Clones the Declarative Shadow Root on <use> Element Deep-Clone
+- B-239 [P2] Chrome 151 <dialog> Element closedby Attribute Adds "closerequest" and "any" Modal-Escape Behaviors for In-Game Modals
+- P-183 [P2] Chrome 151 soft-navigation + LongAnimationFrame (LoAF) Co-Emit on Multi-Frame Interactive SPA Transitions; Frame Stalls Stay Below 50 ms on Warm Cache
+- S-471 [P0] CVE-2026-56155 Microsoft AD FS Elevation-of-Privilege Active In-The-Wild Exploitation (CVSS 8.0, Jul 15 2026 Patch Tuesday)
+- C-226 [P1] Chrome 151 direct-sockets-private Merges Into local-network and loopback-network Permission Policies — Embedded WebView Hosts Must Audit Any Direct TCP/UDP Socket Path
+### Sources
+- Required parallel queries (2026-07-30, cycle 88):
+  - "HTML5 game testing 2026 new techniques browser canvas WebGL"
+  - "browser game bug report 2026 casual web game CVE vulnerability July"
+  - "Chrome 152 Edge 151 Safari 27 release notes 2026 stable web platform"
+  - "casual mobile game UX complaint 2026 accessibility dark mode haptic loading"
+  - "mobile web game performance issue 2026 INP LCP CLS Core Web Vitals"
+  - "Chrome 152 Stable V8 12.4 release notes 2026 July Web platform"
+  - "Chrome 152 Edge 151 web platform new feature July 2026 web.dev"
+  - "web platform new feature July 2026 deprecation HTML CSS JavaScript"
+  - "WebGPU 2.0 browser support 2026 game canvas Chrome Safari"
+  - "HTML5 game 2026 new web API Canvas WebCodecs game testing"
+- Primary URLs:
+  - https://developer.chrome.com/release-notes/151 (Chrome 151 stable, 2026-07-28: ML-KEM/ML-DSA Origin Trial, textStream() for Request/Response/Blob, LanguageDetector zh-Hant/zh-Hans split, soft-navigation + interaction-contentful-paint PerformanceEntries, direct-sockets-private → local-network + loopback-network policy merger, <usermedia> capability MVP, DeviceOrientationEvent.requestPermission, SpeechRecognition.unspokenPunctuation — cycle 88 deep-dive on the Origin Trial and post-quantum surfaces first noted in cycle 87 R325)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_8566a699b6900652 (Chrome 151 stable, IT之家 7/29: Language Detector zh-Hans/zh-Hant split, Language Detector API 细分支持简体中文(zh-Hans)和繁体中文(zh-Hant) - W-415)
+  - https://www.joeseanor.com/ (Jul 15 2026, CVE-2026-56155 Microsoft AD FS EoP CVSS 8.0 Patch Tuesday "bug apocalypse" actively exploited - S-471)
+  - https://so.html5.qq.com/page/real/search_news?docid=70000021_1186a670e8c16952 (Chrome Linux ARM64 7/27/2026: OMG Ubuntu reports stable-channel release for Raspberry Pi, Snapdragon X, NVIDIA DGX Spark - context for C-226 WebView2 ARM64 socket path)
+  - https://cloud.tencent.com/developer/article/2695372 (2026-07-30, 2026 年前端开发者必学的 10 个 CSS & JavaScript 新特性: CSS Grid auto-fit + minmax, :has() selector, CSS Container Queries - context for B-237)
+  - https://web.dev/cq-stable (Baseline 2026 Container Queries rollout - B-237)
+  - https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/Long_animation_frame_timing (MDN Long Animation Frame API 50ms threshold - context for P-183 LoAF)
+  - https://onlinedown.net/soft/1113489.htm (Jul 7 2026, Chrome 151.0.7910.0 stable V8 12.4 - context for P-183)
+- Search-quality note: the five required broad queries (HTML5 game testing, browser bug report, Chrome Edge Safari update, casual game UX, mobile web game performance) returned noisy results (Steam error-code spam, generic CSDN/360 mobile-game UX pages, repeated 2025 CVE articles). The five follow-up queries (Chrome 152 release notes, Chrome 152/Edge 151 web.dev, web platform new features July 2026, WebGPU 2.0 2026, HTML5 game 2026 new web API) returned primary release-note signals and a useful 2026-07-30 cloud.tencent.com article enumerating the 2026 CSS+JS API wave (CSS Grid + auto-fit, :has(), Container Queries). Most material here is from Chrome 151 already shipped (cycle 87 R325) and now consolidates specific testable contracts that were mentioned in cycle 87 source lists but did not get their own case body.
+- Semantic-dedup note: full CHANGELOG.md and MASTER-TEST-CASES-v1.208.0.md scans found zero occurrences for `ML-KEM-768 deriveBits`, `ML-KEM-1024`, `RFC 9180 HPKE`, `textStream()`, `bytesStream()`, `container-type: size`, `container-name: inv`, `@container (min-width: 320px)`, `shadowrootclonable`, `closedby="closerequest"`, `closedby="any"`, `dialog.requestClose`, `CVE-2026-56155`, `direct-sockets-private`, `loopback-network`, `LanguageDetector.detect`, `zh-Hant vs zh-Hans split`, and `LongAnimationFrame with soft-navigation co-emit` BEFORE the v1.209.0 insert. ID set-diff against v1.208.0 confirmed all 9 new IDs (W-414, W-415, W-416, B-237, B-238, B-239, P-183, S-471, C-226) are unique and avoid every historical CAT-NNN. Adjacent-but-distinct surfaces verified: v1.208.0 W-414 era mentions post-quantum WebCrypto in version-note summary but no test case body existed for the specific `deriveBits` / `decapsulate` round-trip contract (W-414); v1.208.0 B-235 covers `<template shadowrootslotassignment>` but not the adjacent `shadowrootclonable` attribute (B-238); W-385 / P-176 cover Chrome 152 V8 12.4 / WebGPU 2.0 long-session GC + adapter parity but not the Chrome 151 `soft-navigation` + `LongAnimationFrame` co-emit contract (P-183); v1.208.0 C-225 covers Chrome 151 macOS 12 sunset data migration but C-226 is a different surface (Permissions-Policy header removal of `direct-sockets-private`); v1.193.0 S-433 covers Safari 26.5 CSP bypass, S-471 covers a different CVE entirely (AD FS EoP).
+- Design review: cases were authored from primary Chrome 151 release-notes URL, MDN Container Queries / LoAF documentation, and the 2026-07-15 CVE-2026-56155 advisory. No Codex escalation used this cycle because the new surfaces are well-bounded machine-verifiable contracts derived from primary documentation and the master file structure did not require architectural review.
+
 ## [v1.208.0] - 2026-07-29
 ### Added
 - 10 new machine-verifiable test cases from R325 industry research (4h cycle 87)
