@@ -161,7 +161,11 @@ var G={
   history:[],// for undo
   rafId:null,lastTime:0,running:false,
   pointerDown:false,
-  _pendingTimeouts:[]// UX-OPT 2026-07-19 INP FIX: tracked setTimeouts so they can be cancelled on level load
+  _pendingTimeouts:[],// UX-OPT 2026-07-19 INP FIX: tracked setTimeouts so they can be cancelled on level load
+  // UX-OPT 2026-07-31 INP FIX: offscreen canvas for static wall hatch pattern (pre-rendered once per level load).
+  // Replaces 5-10 ctx.beginPath/moveTo/lineTo/stroke calls per wall per frame with a single drawImage.
+  // wallsCanvas holds the static grid cells + wall hatch + arrows; wallsCanvasW/H are its dimensions.
+  wallsCanvas:null,wallsCanvasW:0,wallsCanvasH:0,wallsCanvasDirty:true
 };
 
 // ============ CANVAS SETUP ============
@@ -190,6 +194,8 @@ function resizeCanvas(){
   G.cellSize=Math.min((w-pad*2)/lvl.cols,(h-pad*2)/lvl.rows);
   G.gridOX=(w-G.cellSize*lvl.cols)/2;
   G.gridOY=(h-G.cellSize*lvl.rows)/2;
+  // UX-OPT 2026-07-31 INP FIX: cellSize or canvas size changed → mark walls offscreen dirty
+  G.wallsCanvasDirty=true;
 }
 
 // ============ LEVEL LOADING ============
@@ -532,76 +538,84 @@ function showCombo(bus){
 function render(dt){
   var ctx=G.ctx;
   ctx.clearRect(0,0,G.W,G.H);
+  // UX-OPT 2026-07-31 INP FIX: render static grid + walls + gate arrows from offscreen cache
+  if(G.wallsCanvasDirty){
+    renderWallsOffscreen();
+  }
+  if(G.wallsCanvas){
+    // The offscreen canvas includes 24px padding around the grid (translate(pad,pad)).
+    // To position the grid at (gridOX,gridOY) on the main canvas, draw the image
+    // starting at (gridOX-pad, gridOY-pad) = (gridOX-24, gridOY-24).
+    ctx.drawImage(G.wallsCanvas,G.gridOX-24,G.gridOY-24,G.wallsCanvasW,G.wallsCanvasH);
+  }else{
+    // Fallback: draw grid + walls + gates inline (original behavior)
+    ctx.save();
+    ctx.translate(G.gridOX,G.gridOY);
+    var lvl=LEVELS[G.levelIdx];
+    for(var r=1;r<=lvl.rows;r++){
+      for(var c=1;c<=lvl.cols;c++){
+        var x=(c-1)*G.cellSize,y=(r-1)*G.cellSize;
+        ctx.fillStyle=(r+c)%2===0?'rgba(255,255,255,0.03)':'rgba(255,255,255,0.06)';
+        roundRect(ctx,x,y,G.cellSize-2,G.cellSize-2,6);ctx.fill();
+        ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=1;ctx.stroke();
+      }
+    }
+    G.walls.forEach(function(w){
+      var x=(w.c-1)*G.cellSize,y=(w.r-1)*G.cellSize;
+      ctx.fillStyle='rgba(100,100,120,0.6)';
+      roundRect(ctx,x+3,y+3,G.cellSize-8,G.cellSize-8,8);ctx.fill();
+      ctx.strokeStyle='rgba(60,60,80,0.8)';ctx.lineWidth=2;
+      for(var i=0;i<G.cellSize;i+=8){
+        ctx.beginPath();ctx.moveTo(x+3+i,y+3);ctx.lineTo(x+3,y+3+i);ctx.stroke();
+      }
+    });
+    G.gates.forEach(function(g){
+      var x,y,w,h;
+      if(g.c<1){x=-6;y=(g.r-1)*G.cellSize;w=8;h=G.cellSize-2;}
+      else if(g.c>lvl.cols){x=lvl.cols*G.cellSize-2;y=(g.r-1)*G.cellSize;w=8;h=G.cellSize-2;}
+      else if(g.r<1){x=(g.c-1)*G.cellSize;y=-6;w=G.cellSize-2;h=8;}
+      else{x=(g.c-1)*G.cellSize;y=lvl.rows*G.cellSize-2;w=G.cellSize-2;h=8;}
+      var col=COLORS[g.color];
+      ctx.shadowColor=col;ctx.shadowBlur=15;
+      ctx.fillStyle=col;
+      roundRect(ctx,x,y,w,h,4);ctx.fill();
+      ctx.shadowBlur=0;
+      ctx.fillStyle='rgba(255,255,255,0.9)';
+      ctx.font='bold '+Math.floor(G.cellSize*0.4)+'px Inter';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      var ax,ay,ar;
+      if(g.c<1){ax=-14;ay=(g.r-1)*G.cellSize+G.cellSize/2;ar=0;}
+      else if(g.c>lvl.cols){ax=lvl.cols*G.cellSize+14;ay=(g.r-1)*G.cellSize+G.cellSize/2;ar=Math.PI;}
+      else if(g.r<1){ax=(g.c-1)*G.cellSize+G.cellSize/2;ay=-14;ar=Math.PI/2;}
+      else{ax=(g.c-1)*G.cellSize+G.cellSize/2;ay=lvl.rows*G.cellSize+14;ar=-Math.PI/2;}
+      ctx.save();ctx.translate(ax,ay);ctx.rotate(ar);
+      ctx.beginPath();ctx.moveTo(-6,-5);ctx.lineTo(6,0);ctx.lineTo(-6,5);ctx.closePath();ctx.fill();
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+  // Screen shake applied to dynamic layers (buses + particles)
   ctx.save();
-  // Screen shake
   if(G.screenShake>0){
     ctx.translate((Math.random()-0.5)*G.screenShake,(Math.random()-0.5)*G.screenShake);
     G.screenShake*=0.85;
     if(G.screenShake<0.5)G.screenShake=0;
   }
-  var lvl=LEVELS[G.levelIdx];
-  // Draw grid background
   ctx.save();
   ctx.translate(G.gridOX,G.gridOY);
-  // Grid cells
-  for(var r=1;r<=lvl.rows;r++){
-    for(var c=1;c<=lvl.cols;c++){
-      var x=(c-1)*G.cellSize,y=(r-1)*G.cellSize;
-      ctx.fillStyle=(r+c)%2===0?'rgba(255,255,255,0.03)':'rgba(255,255,255,0.06)';
-      roundRect(ctx,x,y,G.cellSize-2,G.cellSize-2,6);ctx.fill();
-      ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=1;ctx.stroke();
-    }
-  }
-  // Walls
-  G.walls.forEach(function(w){
-    var x=(w.c-1)*G.cellSize,y=(w.r-1)*G.cellSize;
-    ctx.fillStyle='rgba(100,100,120,0.6)';
-    roundRect(ctx,x+3,y+3,G.cellSize-8,G.cellSize-8,8);ctx.fill();
-    // Hatch pattern
-    ctx.strokeStyle='rgba(60,60,80,0.8)';ctx.lineWidth=2;
-    for(var i=0;i<G.cellSize;i+=8){
-      ctx.beginPath();ctx.moveTo(x+3+i,y+3);ctx.lineTo(x+3,y+3+i);ctx.stroke();
-    }
-  });
-  // Gates
-  G.gates.forEach(function(g){
-    var x,y,w,h;
-    if(g.c<1){x=-6;y=(g.r-1)*G.cellSize;w=8;h=G.cellSize-2;}
-    else if(g.c>lvl.cols){x=lvl.cols*G.cellSize-2;y=(g.r-1)*G.cellSize;w=8;h=G.cellSize-2;}
-    else if(g.r<1){x=(g.c-1)*G.cellSize;y=-6;w=G.cellSize-2;h=8;}
-    else{x=(g.c-1)*G.cellSize;y=lvl.rows*G.cellSize-2;w=G.cellSize-2;h=8;}
-    var col=COLORS[g.color];
-    // Glow
-    ctx.shadowColor=col;ctx.shadowBlur=15;
-    ctx.fillStyle=col;
-    roundRect(ctx,x,y,w,h,4);ctx.fill();
-    ctx.shadowBlur=0;
-    // Arrow indicator
-    ctx.fillStyle='rgba(255,255,255,0.9)';
-    ctx.font='bold '+Math.floor(G.cellSize*0.4)+'px Inter';
-    ctx.textAlign='center';ctx.textBaseline='middle';
-    var ax,ay,ar;
-    if(g.c<1){ax=-14;ay=(g.r-1)*G.cellSize+G.cellSize/2;ar=0;}
-    else if(g.c>lvl.cols){ax=lvl.cols*G.cellSize+14;ay=(g.r-1)*G.cellSize+G.cellSize/2;ar=Math.PI;}
-    else if(g.r<1){ax=(g.c-1)*G.cellSize+G.cellSize/2;ay=-14;ar=Math.PI/2;}
-    else{ax=(g.c-1)*G.cellSize+G.cellSize/2;ay=lvl.rows*G.cellSize+14;ar=-Math.PI/2;}
-    ctx.save();ctx.translate(ax,ay);ctx.rotate(ar);
-    ctx.beginPath();ctx.moveTo(-6,-5);ctx.lineTo(6,0);ctx.lineTo(-6,5);ctx.closePath();ctx.fill();
-    ctx.restore();
-  });
   // Buses
   G.buses.forEach(function(bus){
     if(!bus.alive)return;
     drawBus(ctx,bus);
   });
-  // Hint highlight
+  // Hint highlight (re-drawn each frame because of pulse animation)
   if(G.hintHighlight>=0&&G.hintTimer>0){
     var hb=G.buses.find(function(b){return b.id===G.hintHighlight;});
     if(hb&&hb.alive){
       var pulse=0.5+0.5*Math.sin(Date.now()*0.008);
       ctx.strokeStyle='rgba(255,255,100,'+(0.5+pulse*0.5)+')';
       ctx.lineWidth=3+pulse*2;
-      var bx=hb.px,by=by=hb.py;
+      var bx=hb.px,by=hb.py;
       var bw=hb.dir==='l'||hb.dir==='r'?hb.len*G.cellSize-4:G.cellSize-4;
       var bh=hb.dir==='l'||hb.dir==='r'?G.cellSize-4:hb.len*G.cellSize-4;
       if(hb.dir==='u'||hb.dir==='d'){bx=hb.px;by=hb.py;}
@@ -682,6 +696,79 @@ function roundRect(ctx,x,y,w,h,r){
   ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
   ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
   ctx.closePath();
+}
+// UX-OPT 2026-07-31 INP FIX: pre-render static grid cells + wall hatch pattern + gate arrows
+// to an offscreen canvas once per level load. render() then drawImage's it instead of
+// re-running all beginPath/stroke calls every frame. cellSize is constant per level so this
+// is purely a per-level cost. Saved hundreds of ctx calls per frame on mid-size levels.
+function renderWallsOffscreen(){
+  var lvl=LEVELS[G.levelIdx];
+  if(!lvl||!G.cellSize)return;
+  // Allocate offscreen canvas — sized to grid bounds + padding for edge gates/arrows
+  // Gates at c<1/c>cols/r<1/r>rows extend ~14px outside the grid (for arrow indicator).
+  // Add 24px on each side so both gates and arrows render fully without clipping.
+  var pad=24;
+  var w=G.cellSize*lvl.cols+pad*2;
+  var h=G.cellSize*lvl.rows+pad*2;
+  if(!G.wallsCanvas){
+    G.wallsCanvas=document.createElement('canvas');
+  }
+  var dpr=window.devicePixelRatio||1;
+  G.wallsCanvas.width=Math.ceil(w*dpr);
+  G.wallsCanvas.height=Math.ceil(h*dpr);
+  G.wallsCanvasW=w;
+  G.wallsCanvasH=h;
+  var offCtx=G.wallsCanvas.getContext('2d');
+  offCtx.setTransform(1,0,0,1,0,0);// reset
+  offCtx.scale(dpr,dpr);
+  offCtx.clearRect(0,0,w,h);
+  offCtx.save();
+  offCtx.translate(pad,pad);
+  // Grid cells (constant per level)
+  for(var r=1;r<=lvl.rows;r++){
+    for(var c=1;c<=lvl.cols;c++){
+      var x=(c-1)*G.cellSize,y=(r-1)*G.cellSize;
+      offCtx.fillStyle=(r+c)%2===0?'rgba(255,255,255,0.03)':'rgba(255,255,255,0.06)';
+      roundRect(offCtx,x,y,G.cellSize-2,G.cellSize-2,6);offCtx.fill();
+      offCtx.strokeStyle='rgba(255,255,255,0.04)';offCtx.lineWidth=1;offCtx.stroke();
+    }
+  }
+  // Walls with hatch pattern (constant per level)
+  G.walls.forEach(function(wall){
+    var x=(wall.c-1)*G.cellSize,y=(wall.r-1)*G.cellSize;
+    offCtx.fillStyle='rgba(100,100,120,0.6)';
+    roundRect(offCtx,x+3,y+3,G.cellSize-8,G.cellSize-8,8);offCtx.fill();
+    offCtx.strokeStyle='rgba(60,60,80,0.8)';offCtx.lineWidth=2;
+    for(var i=0;i<G.cellSize;i+=8){
+      offCtx.beginPath();offCtx.moveTo(x+3+i,y+3);offCtx.lineTo(x+3,y+3+i);offCtx.stroke();
+    }
+  });
+  // Gate arrows (constant per level, includes shadow glow for visual fidelity)
+  G.gates.forEach(function(g){
+    var col=COLORS[g.color];
+    var x,y,w,h;
+    if(g.c<1){x=-6;y=(g.r-1)*G.cellSize;w=8;h=G.cellSize-2;}
+    else if(g.c>lvl.cols){x=lvl.cols*G.cellSize-2;y=(g.r-1)*G.cellSize;w=8;h=G.cellSize-2;}
+    else if(g.r<1){x=(g.c-1)*G.cellSize;y=-6;w=G.cellSize-2;h=8;}
+    else{x=(g.c-1)*G.cellSize;y=lvl.rows*G.cellSize-2;w=G.cellSize-2;h=8;}
+    offCtx.shadowColor=col;offCtx.shadowBlur=15;
+    offCtx.fillStyle=col;
+    roundRect(offCtx,x,y,w,h,4);offCtx.fill();
+    offCtx.shadowBlur=0;
+    offCtx.fillStyle='rgba(255,255,255,0.9)';
+    offCtx.font='bold '+Math.floor(G.cellSize*0.4)+'px Inter';
+    offCtx.textAlign='center';offCtx.textBaseline='middle';
+    var ax,ay,ar;
+    if(g.c<1){ax=-14;ay=(g.r-1)*G.cellSize+G.cellSize/2;ar=0;}
+    else if(g.c>lvl.cols){ax=lvl.cols*G.cellSize+14;ay=(g.r-1)*G.cellSize+G.cellSize/2;ar=Math.PI;}
+    else if(g.r<1){ax=(g.c-1)*G.cellSize+G.cellSize/2;ay=-14;ar=Math.PI/2;}
+    else{ax=(g.c-1)*G.cellSize+G.cellSize/2;ay=lvl.rows*G.cellSize+14;ar=-Math.PI/2;}
+    offCtx.save();offCtx.translate(ax,ay);offCtx.rotate(ar);
+    offCtx.beginPath();offCtx.moveTo(-6,-5);offCtx.lineTo(6,0);offCtx.lineTo(-6,5);offCtx.closePath();offCtx.fill();
+    offCtx.restore();
+  });
+  offCtx.restore();
+  G.wallsCanvasDirty=false;
 }
 function shadeColor(hex,percent){
   var num=parseInt(hex.slice(1),16);
