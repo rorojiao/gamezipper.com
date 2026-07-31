@@ -1,3 +1,18 @@
+## [v1.210.0] - 2026-07-31
+### Added
+- 6 new machine-verifiable test cases from R327 industry research (4h cycle 89)
+- W-417 [P1] Chrome 151 speculation-rules form_submission prerender activates a matching trusted GET form navigation
+- W-418 [P1] Chrome 151 WebCrypto Origin Trial CHACHA20-POLY1305 authenticates fixture bytes and rejects invalid AEAD inputs
+- W-419 [P1] Chrome 151 WebCrypto Origin Trial X-Wing hybrid KEM MLKEM768-X25519 encapsulates and decapsulates without repeating W-414 ML-KEM derivation
+- W-420 [P1] Chrome 151 WebRTC Data Channel SCTP Negotiation Acceleration Origin Trial adds a=sctp-init to offer and answer SDP
+- W-421 [P2] Chrome 151 WheelEvent.momentum read-only semantics distinguish inertial fling events from physical scroll input
+- W-422 [P2] Chrome 151 FontFaceSet LegacyNoInterfaceObject removal exposes the global while construction remains illegal
+### Sources
+- Required broad queries (2026-07-31, cycle 89) ran: "HTML5 game testing 2026 new techniques", "browser game bug report 2026", "Chrome Edge Safari update 2026", "casual game UX complaint 2026", and "mobile game performance issue 2026".
+- Search-quality note: all five broad queries were noisy, dominated by generic mobile-game pages, stale browser/CVE stories, and unrelated troubleshooting content.
+- Primary URL: https://developer.chrome.com/release-notes/151. The Chrome 151 release notes, retrieved directly with no proxy, provided the maintained unmined candidate bank for all 6 cases.
+- Semantic-dedup note: full pre-insert scans of CHANGELOG.md and /home/msdn/.openclaw/workspace/COMPLETED.md found no prior test-case body for form_submission prerender activation, ChaCha20-Poly1305 AEAD, X-Wing MLKEM768-X25519, SCTP a=sctp-init, WheelEvent.momentum, or FontFaceSet global construction. v1.208.0 contains only a source-list mention of these Chrome 151 candidates; W-414 is the adjacent ML-KEM derivation case, not the hybrid X-Wing encapsulation case.
+
 ## [v1.209.0] - 2026-07-30
 ### Added
 - 9 new machine-verifiable test cases from R326 industry research (4h cycle 88)
