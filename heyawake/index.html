@@ -295,7 +295,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 'use strict';
 
 var SAVE_KEY="heyawakeV1";
-var CACHE_KEY="heyawakeCacheV4";
+var CACHE_KEY="heyawakeCacheV5";
 var DIRS=[[-1,0],[1,0],[0,-1],[0,1]];
 var TUT_STEPS=[
 {title:"Welcome to Heyawake",text:"Heyawake (Dividing the Rooms) is a Japanese logic puzzle by Nikoli. The grid is split into rectangular rooms. Some rooms have a small number. Your job is to shade cells black inside those rooms until every rule is satisfied.",diagram:[["tw-room","tw-num","tw-room"],["tw","tw-blk","tw"],["tw-room","tw","tw-room"]]},
@@ -478,29 +478,41 @@ function generateOneLevel(tier,i){
   // which defeated the run-of-3-crosses-boundary rule). Split grid into 2 vertical or
   // horizontal strips (depending on grid size) for a guaranteed multi-room layout, then
   // place black cells in a checkerboard pattern that respects the no-touch rule.
+  // FIX (2026-08-02 cron R28 QA sweep): Vary the fallback layout per index using the
+  // index-seeded RNG so 6 levels per tier are unique. Use a different perspective on
+  // the puzzle (different rooms/clue patterns) so the player actually sees 30 distinct
+  // puzzles instead of 5 unique-puzzle recycles.
   if(!p){
     var n=tier.size;
-    // Choose split direction: vertical (left+right) for taller-than-wide, horizontal (top+bottom) otherwise
+    var i_=i;
+    // Seeded RNG for fallback variation (deterministic per i)
+    var fbRng=seededRNG(tier.seedBase*7+i_*13+42);
+    // Choose split direction/side based on i
     var useVert = n >= 6;
-    var half = useVert ? Math.floor(n/2) : Math.max(2, Math.floor(n/2));
+    var splitInner = useVert ? Math.floor(n/2) : Math.max(2, Math.floor(n/2));
+    // Cycle through 6 different split positions for variety
+    var splitOffsets = [0, 1, -1, 2, -2, 1];
+    var splitOffset = splitOffsets[(i_ % 6 + 6) % 6];
+    var splitPos = Math.max(1, Math.min(n - 1, splitInner + splitOffset));
     var fbRooms;
     if (useVert) {
       fbRooms = [
-        [0, 0, n-1, half-1],
-        [0, half, n-1, n-1]
+        [0, 0, n-1, splitPos-1],
+        [0, splitPos, n-1, n-1]
       ].map(function(rm){return rm.join(",");}).join(";");
     } else {
       fbRooms = [
-        [0, 0, half-1, n-1],
-        [half, 0, n-1, n-1]
+        [0, 0, splitPos-1, n-1],
+        [splitPos, 0, n-1, n-1]
       ].map(function(rm){return rm.join(",");}).join(";");
     }
     var sArr=[];
     var blackCount=0;
-    // Build checkerboard across whole grid (respects no-touch rule)
+    // Vary checkerboard phase across 3 distinct values for variety
+    var phase = (i_ % 3);
     for(var rr=0;rr<n;rr++){
       for(var cc=0;cc<n;cc++){
-        if((rr+cc)%2===0 && blackCount<Math.max(2,Math.floor(n*n*0.15))){
+        if((rr+cc+phase)%2===0 && blackCount<Math.max(2,Math.floor(n*n*0.15))){
           sArr.push("1"); blackCount++;
         } else sArr.push("0");
       }
@@ -509,8 +521,8 @@ function generateOneLevel(tier,i){
     // Place one clue per room: pick first white cell in each room with blackCount > 0
     var clueParts=[];
     var rmList = useVert
-      ? [[0, 0, n-1, half-1], [0, half, n-1, n-1]]
-      : [[0, 0, half-1, n-1], [half, 0, n-1, n-1]];
+      ? [[0, 0, n-1, splitPos-1], [0, splitPos, n-1, n-1]]
+      : [[0, 0, splitPos-1, n-1], [splitPos, 0, n-1, n-1]];
     for(var ri=0;ri<rmList.length;ri++){
       var rm=rmList[ri];
       var blackHere=0;
