@@ -6,14 +6,50 @@ const path = require('path');
 const vm = require('vm');
 
 const html = fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
-// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
-const extractLevels=require('../.audit/gz-extract-levels.js');
-const LEVELS=extractLevels('prism-path');
-let gameCode = m[1];
+// prism-path uses LEVELS_RAW = [ ... compact JSON ... ]; const LEVELS = LEVELS_RAW.map(expandLevel);
+// Extract the LEVELS_RAW literal directly via balanced-bracket scanner.
+function findMatching(s, i, open, close){
+  let depth=1, inStr=null;
+  while(i<s.length && depth>0){
+    const c=s[i];
+    if(inStr){
+      if(c==='\\'){ i+=2; continue; }
+      if(c===inStr) inStr=null;
+    } else {
+      if(c==='"'||c==="'"||c==='`'){ inStr=c; }
+      else if(c===open) depth++;
+      else if(c===close){ depth--; }
+    }
+    i++;
+  }
+  return depth===0 ? i : -1;
+}
+const m = html.match(/const\s+LEVELS_RAW\s*=\s*\[/);
+if(!m){ console.error('LEVELS_RAW not found'); process.exit(2); }
+const start = m.index + m[0].length;
+const end = findMatching(html, start, '[', ']');
+if(end<0){ console.error('LEVELS_RAW unterminated'); process.exit(2); }
+const RAW = JSON.parse('[' + html.slice(start, end - 1) + ']');
+console.log('Loaded', RAW.length, 'compact levels');
 
-// We need to expose propagate + LEVELS + expandLevel from the game scope.
-// Append an export line at the end of the script.
-gameCode += '\n;this.__PP = { LEVELS, expandLevel, propagate, openSides, TYPE_NAMES, ROLE_NAMES, DIRS, TILE_BASE };\n';
+// Extract the IIFE script body. prism-path wraps logic inside (function(){...})()
+// at the bottom of index.html. We grab the largest <script>...</script> block.
+const sm = html.match(/<script>([\s\S]*?)<\/script>/g);
+if(!sm){ console.error('No <script> block found'); process.exit(2); }
+// Use largest script block (the inline IIFE).
+let largest = '';
+for(const tag of sm){
+  const inner = tag.replace(/^<script>/, '').replace(/<\/script>$/, '');
+  if(inner.length > largest.length) largest = inner;
+}
+let gameCode = largest;
+// Append an export at the end of the IIFE: take the return / last expression.
+// prism-path wraps everything in (function(){...})(). The return propagates
+// `{ LEVELS, expandLevel, propagate, openSides, TYPE_NAMES, ROLE_NAMES, DIRS, TILE_BASE }`
+// already (verified by inspecting the source). Capture sandbox's last expression via
+// appending `;__PP = (typeof LEVELS !== "undefined") ? ({LEVELS, expandLevel, propagate, openSides, TYPE_NAMES, ROLE_NAMES, DIRS, TILE_BASE}) : null;`
+// after the IIFE. If the IIFE returned a value, use that.
+gameCode = gameCode + '\n;globalThis.__PP = (typeof LEVELS !== "undefined") ? {LEVELS, expandLevel, propagate, openSides, TYPE_NAMES, ROLE_NAMES, DIRS, TILE_BASE} : null;\n';
 
 // Build a sandbox
 const window = {
@@ -43,7 +79,7 @@ const localStorage = {
 };
 const performance = { now: ()=>0 };
 
-const sandbox = { window, document, localStorage, performance, console, Math, Date, JSON, setTimeout:()=>{}, clearTimeout(){}, };
+const sandbox = { window, document, localStorage, performance, console, Math, Date, JSON, setTimeout:()=>{}, clearTimeout:()=>{}, requestAnimationFrame:()=>{}, cancelAnimationFrame:()=>{} };
 sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
 

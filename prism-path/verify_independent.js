@@ -7,11 +7,30 @@ const fs = require('fs');
 const path = require('path');
 
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-// extract LEVELS_RAW JSON
-// R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
-const extractLevels=require('../.audit/gz-extract-levels.js');
-const LEVELS=extractLevels('prism-path');
-const RAW = JSON.parse(m[1]);
+// prism-path uses LEVELS_RAW = [ ... compact JSON ... ]; const LEVELS = LEVELS_RAW.map(expandLevel);
+// Extract the LEVELS_RAW literal directly via balanced-bracket scanner.
+function findMatching(s, i, open, close){
+  let depth=1, inStr=null;
+  while(i<s.length && depth>0){
+    const c=s[i];
+    if(inStr){
+      if(c==='\\'){ i+=2; continue; }
+      if(c===inStr) inStr=null;
+    } else {
+      if(c==='"'||c==="'"||c==='`'){ inStr=c; }
+      else if(c===open) depth++;
+      else if(c===close){ depth--; }
+    }
+    i++;
+  }
+  return depth===0 ? i : -1;
+}
+const m = html.match(/const\s+LEVELS_RAW\s*=\s*\[/);
+if(!m){ console.error('LEVELS_RAW not found in prism-path/index.html'); process.exit(2); }
+const start = m.index + m[0].length;
+const end = findMatching(html, start, '[', ']');
+if(end<0){ console.error('LEVELS_RAW unterminated'); process.exit(2); }
+const RAW = JSON.parse('[' + html.slice(start, end - 1) + ']');
 console.log('Loaded', RAW.length, 'compact levels');
 
 const TYPE_NAMES = ['empty','straight','curve','tee','splitter','source','target'];
