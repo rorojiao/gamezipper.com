@@ -1191,8 +1191,7 @@ document.addEventListener('keydown', (e) => {
 // ── Init ─────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   initPuzzleSelect();
-  // Auto-show start screen
-  setTimeout(showStart, 200);
+  showStart();
 });
 
 // ── Prevent zoom on double tap (mobile) ──────────────────────────────────────
