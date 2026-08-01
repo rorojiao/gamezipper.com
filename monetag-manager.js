@@ -460,9 +460,14 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.30-monetag-zone-disable',  // 2026-07-30: v5.30 add 11012002 to deadZones (zone dead 9+ days, 1 fill / 9d).
-                                          //   See ZONES.deadZones comment. Re-enable by removing 11012002 from deadZones
-                                          //   array when zone recovers (check BI dead_zone_skip events to confirm).
+    VERSION: '5.31-static-ins-fill-observer',  // 2026-08-01: v5.31 add MutationObserver for ALL <ins.adsbygoogle>
+                                                 //   elements (incl. static blog-page ins). Prior versions only tracked
+                                                 //   fill events for in-game injected banners — R372 blog AdSense library
+                                                 //   injection (306 blog HTMLs) was filling invisibly to BI. Probe (2026-08-01)
+                                                 //   confirmed ins[0] on blog pages fills at 280px height, but 0 BI events.
+                                                 //   Fix: watch ALL ins.adsbygoogle not yet claimed by fillInGameBanner()
+                                                 //   via data-observed attribute; emit static_banner_fill (AdSense) on
+                                                 //   data-adsbygoogle-status="done" or data-ad-status="filled".
     // v5.3: Monetag zone backoff (skip zones that recently returned no_fill)
     ZONE_BACKOFF: {
       enabled: true,                       // master kill switch
@@ -515,6 +520,8 @@
     firstInteraction: 0,       // v5: 首次用户交互时间
     bannersInjected: false,    // v5.2: in-game banner 是否已注入
     zoneBackoff: {},          // v5.3: { zoneId: { until: timestamp, streak: count, lastAt: timestamp } }
+    staticInsObserved: {},    // v5.31: track static <ins.adsbygoogle> elements by index to dedupe fill events
+    staticInsObserverActive: false,  // v5.31: flag whether the global observer is running
   };
 
   // ==================== ZONE BACKOFF (v5.3) ====================
@@ -2200,6 +2207,176 @@
   }
 
   // ==================== INITIALIZATION ====================
+  // ==================== STATIC INS FILL OBSERVER (v5.31) ====================
+  // Watch ALL <ins.adsbygoogle> elements (including static blog-page ins from
+  // R372 batch) for fill state transitions and emit static_banner_fill BI events.
+  // Prior versions only polled for fills inside fillInGameBanner() containers,
+  // so any static <ins> on non-game pages was invisible to BI even when AdSense
+  // successfully filled it. Live probe (2026-08-01) confirmed blog pages fill
+  // ins[0] at 280px height — but 0 banner_fill events were recorded in 24h.
+  //
+  // Strategy:
+  //   1) Periodic poll (every 1500ms, up to 30s after load) checks all
+  //      ins.adsbygoogle elements that aren't yet tracked.
+  //   2) MutationObserver picks up dynamic iframe insertion.
+  //   3) Dedupe via data-static-tracked attribute; emit one event per fill.
+  //   4) Skip ins inside containers already claimed by fillInGameBanner() (their
+  //      fill events are emitted by the existing 300ms poll loop).
+  function initStaticInsFillObserver() {
+    if (state.staticInsObserverActive) return;
+    state.staticInsObserverActive = true;
+
+    var POLL_MS = 1500;
+    var MAX_MS = 30000;  // stop polling after 30s (AdSense usually fills by 8s)
+    var pollStart = Date.now();
+    var pendingIns = [];
+
+    function isClaimedByInGameBanner(ins) {
+      // Walk up to find a container that fillInGameBanner() creates. These IDs
+      // and class prefixes are inserted by injectInGameBanners() ~1.2s after load
+      // and are always managed by fillInGameBanner's 300ms poll loop (which emits
+      // banner_fill events with network:'adsense' / 'monetag_skillful'). We must
+      // NOT also emit static_banner_fill for the same ins or it gets double-
+      // counted in BI. Probe 2026-08-01 showed parent containers have class
+      // "gz-injected-banner-above" / "gz-injected-banner-below" — substring match
+      // covers all variants.
+      var p = ins.parentElement;
+      while (p) {
+        var pid = p.id || '';
+        var pcls = (p.className || '').toString();
+        if (pid === 'gz-ad-above-game' || pid === 'gz-ad-below-canvas' ||
+            pid === 'gz-ad-below-game') return true;
+        if (/gz-ad-(above|below|below-canvas|below-game)/.test(pid)) return true;
+        if (/gz-injected-banner/.test(pcls)) return true;
+        if (p.getAttribute && p.getAttribute('data-filled')) return true;
+        p = p.parentElement;
+      }
+      return false;
+    }
+
+    function emitIfFilled(ins) {
+      if (!ins || ins.getAttribute('data-static-tracked')) return;
+      var adsbyStatus = ins.getAttribute('data-adsbygoogle-status');
+      var adStatus = ins.getAttribute('data-ad-status');
+      var hasIframe = !!ins.querySelector('iframe');
+      var hasSize = ins.offsetHeight > 30;
+      var filled = (adsbyStatus === 'done' || adStatus === 'filled' || (hasIframe && hasSize));
+      if (!filled) return;
+      // Re-check parent walk at emit time (the ins may have been moved into a
+      // fillInGameBanner container AFTER our initial scan, or it may have been
+      // created in body and only later wrapped). Probe 2026-08-01: AdSense
+      // inserts <ins> into body first; injectInGameBanners then wraps them in
+      // gz-ad-above-game containers. Without re-check, we double-count fills.
+      if (isClaimedByInGameBanner(ins)) {
+        ins.setAttribute('data-static-tracked', '1');
+        return;
+      }
+      // Mark so we never emit twice for the same element
+      ins.setAttribute('data-static-tracked', '1');
+      var slot = ins.getAttribute('data-ad-slot') || 'unknown';
+      var client = ins.getAttribute('data-ad-client') || 'unknown';
+      // Differentiate "real" static ins (with client/slot) from AdSense auto-ads
+      // generated secondary ins (client=null, slot=null). Auto-ads ones are
+      // useful to know about but not the same as our manual placements.
+      var source = (client !== 'unknown') ? 'manual' : 'auto_ads';
+      trackAdEvent('static_banner_fill', {
+        network: 'adsense',
+        position: source,
+        slot: slot,
+        client: client,
+        height: ins.offsetHeight,
+        adStatus: adStatus || '',
+        adsbyStatus: adsbyStatus || ''
+      });
+    }
+
+    function scanAllIns() {
+      try {
+        var insList = document.querySelectorAll('ins.adsbygoogle');
+        for (var i = 0; i < insList.length; i++) {
+          var ins = insList[i];
+          if (ins.getAttribute('data-static-tracked')) continue;
+          if (isClaimedByInGameBanner(ins)) {
+            // Already tracked by fillInGameBanner poll loop; mark so we skip it
+            ins.setAttribute('data-static-tracked', '1');
+            continue;
+          }
+          emitIfFilled(ins);
+        }
+      } catch(e) {
+        // Silent: page might be mid-transition
+      }
+    }
+
+    // Initial scan after a brief delay (let AdSense start the auction).
+    // v5.31 fix: delay 4500ms (was 1500ms) so fillInGameBanner() has already
+    // been called for in-game containers and marked them data-filled=1.
+    // Without this delay, our observer raced fillInGameBanner and double-counted
+    // fills on game pages (probe 2026-08-01: static_banner_fill + banner_fill
+    // both fired for same ins element). Game-page ins elements are now skipped
+    // via the data-filled check + parent container walk in isClaimedByInGameBanner.
+    setTimeout(scanAllIns, 4500);
+    setTimeout(scanAllIns, 6500);
+    setTimeout(scanAllIns, 9000);
+
+    // Re-scan after banner injection completes (AdSense auto-ads may inject
+    // late, and parent containers are created by injectInGameBanners ~1.2s
+    // post-load). By t+11s, fillInGameBanner should have settled. This scan
+    // re-validates the parent walk — ins elements that were tracked too early
+    // (before their parent container was created) are skipped if parent now
+    // claims them. New fills that appeared between scans also get caught.
+    setTimeout(scanAllIns, 11000);
+    setTimeout(scanAllIns, 14000);
+
+    // Periodic poll while within MAX_MS window
+    var pollTimer = setInterval(function() {
+      if (Date.now() - pollStart > MAX_MS) {
+        clearInterval(pollTimer);
+        return;
+      }
+      scanAllIns();
+    }, POLL_MS);
+
+    // MutationObserver for dynamic iframe insertion (insurance against poll miss)
+    try {
+      var mo = new MutationObserver(function(mutations) {
+        for (var m = 0; m < mutations.length; m++) {
+          var mut = mutations[m];
+          if (mut.type === 'childList') {
+            for (var n = 0; n < mut.addedNodes.length; n++) {
+              var node = mut.addedNodes[n];
+              if (node && node.nodeType === 1) {
+                if (node.tagName === 'INS' && node.classList.contains('adsbygoogle')) {
+                  pendingIns.push(node);
+                } else if (node.querySelectorAll) {
+                  var nested = node.querySelectorAll('ins.adsbygoogle');
+                  for (var k = 0; k < nested.length; k++) pendingIns.push(nested[k]);
+                }
+              }
+            }
+          } else if (mut.type === 'attributes' && mut.target &&
+                     mut.target.tagName === 'INS' && mut.target.classList.contains('adsbygoogle')) {
+            emitIfFilled(mut.target);
+          }
+        }
+        // Process any newly seen ins elements
+        if (pendingIns.length) {
+          var batch = pendingIns.slice();
+          pendingIns = [];
+          for (var j = 0; j < batch.length; j++) emitIfFilled(batch[j]);
+        }
+      });
+      mo.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['data-ad-status', 'data-adsbygoogle-status']
+      });
+    } catch(e) {
+      // MutationObserver unsupported (very old browsers) — fall back to polling
+    }
+  }
+
   function init() {
     if (state.initialized) return;
     state.initialized = true;
@@ -2251,6 +2428,11 @@
     detectPage();
     initBroadcast();
     detectAdBlock();
+
+    // v5.31: Static <ins.adsbygoogle> fill observer (works on ALL pages including
+    // blog/content pages where R372 added AdSense library + static ins). Runs
+    // before the homepage/gamepage early-return so blog pages also get tracked.
+    initStaticInsFillObserver();
 
     // Only show ads on homepage and game pages
     if (!state.isHomePage && !state.isGamePage) return;
