@@ -102,6 +102,21 @@ document.addEventListener('keyup', function(e) {
   if (e.code === 'ArrowDown' || e.code === 'KeyS') dino.ducking = false;
 });
 
+// Mouse jump (R369: desktop click-to-start fix)
+// t-rex had no mousedown handler; the #start-screen div with z-index:100 covered the canvas
+// and intercepted all desktop clicks. BI 7d: 7 rage_clicks at (490, 454) (start-screen center)
+// + 0 page_view events for 4 days = the user path was broken before any traffic diagnosis.
+// Mirrors the existing touchstart handler logic (skip BUTTON/A targets, primary button only,
+// startGame/restart/doJump otherwise) so the same UX works on touch and mouse.
+document.addEventListener('mousedown', function(e) {
+  if (e.target.tagName === 'BUTTON') return;
+  if (e.target.tagName === 'A') return;
+  if (e.button !== undefined && e.button !== 0) return;
+  if (!started && !gameOver) { startGame(); }
+  else if (gameOver) restart();
+  else doJump();
+});
+
 // Touch jump
 document.addEventListener('touchstart', function(e) {
   if (e.target.tagName === 'BUTTON') return;
