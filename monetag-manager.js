@@ -460,7 +460,7 @@
     },
     STORAGE_PREFIX: 'gz5_',
     BC_CHANNEL: 'gz5-sync',
-    VERSION: '5.31-static-ins-fill-observer',  // 2026-08-01: v5.31 add MutationObserver for ALL <ins.adsbygoogle>
+    VERSION: '5.32a-static-ins-fill-deovercount-unfilled',  // 2026-08-02: v5.32a fix v5.31 over-count (require adStatus='filled' OR iframe+size>30, exclude adStatus='unfilled')
                                                  //   elements (incl. static blog-page ins). Prior versions only tracked
                                                  //   fill events for in-game injected banners — R372 blog AdSense library
                                                  //   injection (306 blog HTMLs) was filling invisibly to BI. Probe (2026-08-01)
@@ -2260,7 +2260,28 @@
       var adStatus = ins.getAttribute('data-ad-status');
       var hasIframe = !!ins.querySelector('iframe');
       var hasSize = ins.offsetHeight > 30;
-      var filled = (adsbyStatus === 'done' || adStatus === 'filled' || (hasIframe && hasSize));
+      // v5.32 (2026-08-02): Require visual presence (size/iframe) OR explicit 'filled'
+      // status. The v5.31 condition `adsbyStatus === 'done'` over-counted: AdSense SDK
+      // marks ALL processed <ins> as status='done' even when no ad was returned.
+      // BI 24h (2026-08-02): 470 static_banner_fill events / 24h, but 200 had
+      // adStatus='' + height=0 (auto_ads no-fill), 45 had adStatus='unfilled' +
+      // height=0 (explicit no-fill), only ~225 had a real fill signal.
+      // v5.32a fix: also reject adStatus='unfilled' — AdSense auto-ads injects an
+      // empty 0-height iframe when no ad is returned (adStatus='unfilled' +
+      // hasIframe=true + height=0). This pattern previously passed the
+      // `hasIframe` check and was still over-counted. Real fills have
+      // adStatus='filled' (manual ins) or adStatus=null + height>30 (visual fill
+      // via auto-ads without explicit status update).
+      // Real fill now requires: (a) data-ad-status='filled' (AdSense explicit fill
+      // flag), (b) hasIframe + hasSize > 30 (rendered ad with iframe), (c) hasSize
+      // > 30 alone (some fills render without adStatus update). Pure adsbyStatus
+      // 'done' or 'unfilled' without visual presence = SDK processed, no ad.
+      var isUnfilled = adStatus === 'unfilled';
+      var filled = !isUnfilled && (
+        adStatus === 'filled' ||
+        (hasIframe && hasSize) ||
+        hasSize
+      );
       if (!filled) return;
       // Re-check parent walk at emit time (the ins may have been moved into a
       // fillInGameBanner container AFTER our initial scan, or it may have been
