@@ -33,7 +33,7 @@ canvas.getContext = () => new Proxy({
 
 const documentEvents = {};
 const windowEvents = {};
-const storage = new Map([['trex-high', '12']]);
+const storage = new Map([['trex-high', 'not-a-number']]);
 const context = {
   console, Math, Date, setTimeout: () => 1, clearTimeout: () => {},
   requestAnimationFrame: () => 1, cancelAnimationFrame: () => {},
@@ -53,6 +53,8 @@ const context = {
 context.window = context;
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(__dirname + '/game.js', 'utf8'), context);
+
+if (context.highScore !== 0) fail('Malformed trex-high must normalize to 0.');
 
 const click = (id) => {
   const handlers = getElement(id).listeners.click || [];
@@ -79,4 +81,4 @@ for (const token of ['id="btn-start"', 'id="btn-restart"', 'gz-ad-below-game', "
 }
 if (html.includes('aggregateRating')) fail('Structured data contains an aggregate rating.');
 
-console.log('T-Rex: start, restart, overlay exclusion, and high-score persistence paths verified.');
+console.log('T-Rex: malformed save recovery, start, restart, overlay exclusion, and high-score persistence paths verified.');

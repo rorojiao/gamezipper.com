@@ -42,7 +42,8 @@ window.addEventListener('resize', setupMobileButtons);
 
 // Game state
 var score = 0;
-var highScore = parseInt(localStorage.getItem('trex-high') || '0');
+var highScore = parseInt(localStorage.getItem('trex-high') || '0', 10);
+if (!Number.isFinite(highScore) || highScore < 0) highScore = 0;
 var speed = 6;
 var groundY;
 var gameOver = false;
