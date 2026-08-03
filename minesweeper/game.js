@@ -240,6 +240,10 @@ function handleCellClick(r, c) {
   if (gameState === 'won' || gameState === 'lost') return;
   if (board[r][c].revealed || board[r][c].flagged) return;
 
+  // R377: move the cursor highlight to the clicked cell so the user sees immediate visual feedback that the click was registered (timer stays at 000 for the first second otherwise)
+  cursorX = c;
+  cursorY = r;
+
   if (firstClick) {
     firstClick = false;
     placeMines(r, c);
@@ -358,7 +362,7 @@ function resizeCanvas() {
   const availW = window.innerWidth - 8;
   const availH = window.innerHeight - headerH - navH - 20;
 
-  cellSize = Math.max(20, Math.min(36, Math.floor(Math.min(availW / cfg.cols, availH / cfg.rows))));
+  cellSize = Math.max(20, Math.min(64, Math.floor(Math.min(availW / cfg.cols, availH / cfg.rows)))); // R377: cap raised 36→64 so canvas fills the screen on desktop instead of being a tiny 324x324 widget; avoids rage-clicks caused by users missing the small target
   boardPixelW = cfg.cols * cellSize;
   boardPixelH = cfg.rows * cellSize;
 
@@ -669,11 +673,16 @@ function init() {
   setupKeyboard();
   animLoop();
 
-  // Difficulty buttons
+  // Difficulty buttons — R377: ignore clicks during active gameplay so rage-clicks around the canvas do not reset the board mid-game
   var diffBtns = document.querySelectorAll('.ms-diff-btn[data-diff]');
   for (var i = 0; i < diffBtns.length; i++) {
     diffBtns[i].addEventListener('click', (function(btn) {
       return function() {
+        // Only allow difficulty change when idle or game-over; mid-game clicks are ignored
+        if (gameState === 'playing' && !firstClick) {
+          if (typeof window.gzToast === 'function') window.gzToast('Finish or restart to change difficulty');
+          return;
+        }
         var diff = btn.dataset.diff;
         hideGameOverOverlay();
         newGame(diff);
