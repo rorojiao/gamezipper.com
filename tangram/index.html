@@ -255,23 +255,35 @@ function checkWin(){
   if(!levelActive)return;
   if(!pieces.every(function(p){return p.placed}))return;
   var sil=getSilWorld();
-  // Check all piece centers are inside silhouette
+  // Canonical tangram invariant: all 7 pieces must (1) lie fully inside silhouette
+  // with every vertex inside (not just centroid), (2) not overlap each other
+  // (vertex-in-poly both directions), and (3) area sum equals silhouette area within 0.5.
+  var i,j,k,wi,wj;
+  // (1) every piece vertex inside silhouette
   var allIn=true;
-  pieces.forEach(function(p){if(!pip(p.x,p.y,sil))allIn=false});
-  // Check no major overlaps between placed pieces
+  for(i=0;i<pieces.length;i++){
+    wi=getWorldVerts(pieces[i]);
+    for(k=0;k<wi.length;k++){if(!pip(wi[k][0],wi[k][1],sil)){allIn=false;break}}
+    if(!allIn)break;
+  }
+  if(!allIn)return false;
+  // (2) no two pieces overlap (both directions)
   var overlap=false;
-  for(var i=0;i<pieces.length&&!overlap;i++){
-    for(var j=i+1;j<pieces.length&&!overlap;j++){
-      var wi=getWorldVerts(pieces[i]),wj=getWorldVerts(pieces[j]);
-      for(var k=0;k<wi.length;k++){if(pip(wi[k][0],wi[k][1],wj)){overlap=true;break}}
+  for(i=0;i<pieces.length&&!overlap;i++){
+    wi=getWorldVerts(pieces[i]);
+    for(j=i+1;j<pieces.length&&!overlap;j++){
+      wj=getWorldVerts(pieces[j]);
+      for(k=0;k<wi.length;k++){if(pip(wi[k][0],wi[k][1],wj)){overlap=true;break}}
+      if(overlap)break;
+      for(k=0;k<wj.length;k++){if(pip(wj[k][0],wj[k][1],wi)){overlap=true;break}}
     }
   }
-  // Check area coverage
-  var totalA=0;pieces.forEach(function(p){totalA+=polyArea(getWorldVerts(p))});
+  if(overlap)return false;
+  // (3) area sum == silhouette area (within 0.5 sq-unit tolerance)
+  var totalA=0;for(i=0;i<pieces.length;i++)totalA+=polyArea(getWorldVerts(pieces[i]));
   var silA=polyArea(sil);
-  var cov=totalA/Math.max(1,silA);
-  if(allIn&&!overlap&&cov>.6&&cov<1.8){completeLevel();return true}
-  return false;
+  if(Math.abs(totalA-silA)>0.5)return false;
+  completeLevel();return true;
 }
 
 function completeLevel(){
@@ -427,7 +439,7 @@ window.addEventListener("beforeunload",cleanup);
 <script>function gzToast(msg,dur){dur=dur||2500;var t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:10000;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center';t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1'});setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove()},300)},dur)}
 function gzConfirm(msg,cb){var o=document.createElement('div');o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10001;display:flex;align-items:center;justify-content:center';var b=document.createElement('div');b.style.cssText='background:#1a1a2e;color:#fff;padding:24px;border-radius:12px;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4)';var t=document.createElement('p');t.style.cssText='margin:0 0 16px;font-size:15px;line-height:1.4';t.textContent=msg;var bw=document.createElement('div');bw.style.cssText='display:flex;gap:8px;justify-content:center';var yn=document.createElement('button');yn.style.cssText='padding:8px 20px;border:none;border-radius:8px;background:#e74c3c;color:#fff;font-size:14px;cursor:pointer';yn.textContent='Yes';var nn=document.createElement('button');nn.style.cssText='padding:8px 20px;border:none;border-radius:8px;background:#555;color:#fff;font-size:14px;cursor:pointer';nn.textContent='No';yn.onclick=function(){o.remove();cb(true)};nn.onclick=function(){o.remove();cb(false)};o.onclick=function(e){if(e.target===o)o.remove();cb(false)};b.appendChild(t);bw.appendChild(yn);bw.appendChild(nn);b.appendChild(bw);o.appendChild(b);document.body.appendChild(o)}</script>
 
-<script src="/gz-analytics.js?v=2026080307a47b75312" defer></script>
+<script src="/gz-analytics.js?v=2026080308412804f2c" defer></script>
 <script defer src="/adsterra-manager.js?v=v5174lazyep"></script><script defer src="/monetag-manager.js?v=v532aUnfilled"></script>
 <div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
 <section style="content-visibility:auto;contain-intrinsic-size:auto 350px" class="gz-related-games" aria-label="Related games">
