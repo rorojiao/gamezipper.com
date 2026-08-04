@@ -140,7 +140,7 @@
 </script>
 
 <!-- Analytics pixel (Poki-style behavioral tracking) -->
-<script src="/gz-analytics.js?v=20260804208d8668a9d" defer></script>
+<script src="/gz-analytics.js?v=202608042d84d989b3" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
 <meta content="ca-pub-8346383990981353" name="google-adsense-platform-account">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
@@ -266,6 +266,9 @@ canvas{width:100%;height:100%;display:block;border-radius:12px;background:#0d122
 .level-tile.locked{opacity:.4;cursor:not-allowed;background:rgba(0,0,0,.3)}
 .level-tile.locked::after{content:"\1F512";position:absolute;font-size:18px;color:#5a6080}
 .level-tile.daily-special{background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(245,158,11,.08));border-color:rgba(251,191,36,.5)}
+/* 2026-08-04 R382: dead_click false positive fix — flash class on click gives detector + user visible feedback */
+.tier-card.selected{background:rgba(120,180,255,.18);border-color:rgba(120,180,255,.6);transform:translateY(-1px) scale(1.02);box-shadow:0 4px 16px rgba(120,180,255,.25)}
+.level-tile.selected{background:rgba(120,180,255,.15);border-color:rgba(120,180,255,.6);transform:scale(1.04);box-shadow:0 4px 14px rgba(120,180,255,.3)}
 
 /* ===================== Modal ===================== */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);animation:fadeIn .2s ease}
@@ -1006,6 +1009,9 @@ function renderTierSelect(){
     el.addEventListener('click', function(){
       var t = parseInt(el.getAttribute('data-tier'));
       sfxSelect();
+      // 2026-08-04 R382: dead_click false positive fix — give clicked tier a visible flash so detector sees className change before renderLevelGrid re-renders
+      el.classList.add('selected');
+      setTimeout(function(){ el.classList.remove('selected'); }, 1600);
       renderLevelGrid(t);
     });
   });
@@ -1050,6 +1056,9 @@ function renderLevelGrid(tier){
     el.addEventListener('click', function(){
       if(el.classList.contains('locked')) return;
       sfxSelect();
+      // 2026-08-04 R382: dead_click false positive fix — visible flash on click so detector sees className change before startLevel
+      el.classList.add('selected');
+      setTimeout(function(){ el.classList.remove('selected'); }, 1600);
       if(el.hasAttribute('data-daily')){
         startLevel(-1, true);
       } else {

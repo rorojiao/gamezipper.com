@@ -33,9 +33,11 @@ canvas{display:block;touch-action:none}
 #touch-controls.active{display:block}
 .touch-btn{position:absolute;bottom:15px;width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,0.15);border:3px solid rgba(255,255,255,0.3);color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;-webkit-tap-highlight-color:transparent}
 .touch-btn:active{background:rgba(255,255,255,0.3);transform:scale(0.95)}
+.touch-btn.pressed{background:rgba(255,255,255,0.5);box-shadow:0 0 14px rgba(255,255,255,0.6);transform:scale(0.92)}
 #btn-left{left:20px}
 #btn-right{left:110px}
 #btn-jump{right:20px;background:rgba(78,205,196,0.3);border-color:rgba(78,205,196,0.5)}
+#btn-jump.pressed{background:rgba(78,205,196,0.7);box-shadow:0 0 14px rgba(78,205,196,0.7);transform:scale(0.92)}
 h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}
 </style>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7wn5iIPC90ZXh0Pjwvc3ZnPg==">
@@ -202,6 +204,23 @@ function handleTouchEnd(e){e.preventDefault();keys.left=false;keys.right=false;k
 function handleVisibility(){if(document.hidden){isPaused=true;if(animFrame){cancelAnimationFrame(animFrame);animFrame=null}}else{isPaused=false;lastTime=0;animFrame=requestAnimationFrame(gameLoop)}}
 function destroy(){stopBGM();if(animFrame){cancelAnimationFrame(animFrame);animFrame=null}document.removeEventListener('keydown',handleKeyDown);document.removeEventListener('keyup',handleKeyUp);canvas.removeEventListener('click',handleClick);canvas.removeEventListener('touchstart',handleTouchStart,false);canvas.removeEventListener('touchend',handleTouchEnd,false);window.removeEventListener('beforeunload',destroy);document.removeEventListener('visibilitychange',handleVisibility);if(audioCtx){audioCtx.close();audioCtx=null}}
 startBGM();window.addEventListener('beforeunload',destroy);document.addEventListener('visibilitychange',handleVisibility);document.addEventListener('keydown',handleKeyDown);document.addEventListener('keyup',handleKeyUp);canvas.addEventListener('click',handleClick);canvas.addEventListener('touchstart',handleTouchStart,false);canvas.addEventListener('touchend',handleTouchEnd,false);
+// 2026-08-04 R382: wire touch-btn divs to keys.* flags. touch-btn had no listeners → clicks bubbled to canvas handleClick → nothing matched → dead_click reported.
+(function(){
+  function pressBtn(btn, key){
+    if(!btn) return;
+    var on=function(){ keys[key]=true; btn.classList.add('pressed'); };
+    var off=function(){ keys[key]=false; setTimeout(function(){ btn.classList.remove('pressed'); },1600); };
+    btn.addEventListener('mousedown', function(e){ e.preventDefault(); on(); });
+    btn.addEventListener('mouseup', function(e){ e.preventDefault(); off(); });
+    btn.addEventListener('mouseleave', off);
+    btn.addEventListener('touchstart', function(e){ e.preventDefault(); on(); }, {passive:false});
+    btn.addEventListener('touchend', function(e){ e.preventDefault(); off(); }, {passive:false});
+    btn.addEventListener('touchcancel', off);
+  }
+  pressBtn(document.getElementById('btn-left'),'left');
+  pressBtn(document.getElementById('btn-right'),'right');
+  pressBtn(document.getElementById('btn-jump'),'jump');
+})();
 window.addEventListener('resize',resize);resize();loadProgress();var LEVELS=[
 {name:"Welcome",chapter:1,grid:["####################","#..................#","#..................#","#..................#","#..................#","#..................#","#..................#","#..................#","#..................#","#.P..............D.#","####################","####################"],traps:[{type:'fall_floor',tx:12,ty:9},{type:'spike_popup',tx:14,ty:9,triggerRange:2}],parDeaths:3},
 {name:"First Jump",chapter:1,grid:["####################","#..................#","#..................#","#..................#","#..................#","#..................#","#..................#","#..................#","#..................#","#..................#","#.P..............D.#","####################"],traps:[{type:'spike_popup',tx:10,ty:10,triggerRange:3},{type:'fall_floor',tx:13,ty:10}],parDeaths:2},
@@ -259,7 +278,7 @@ loadProgress();animFrame=requestAnimationFrame(gameLoop);
 })();
 </script>
 <a href="/" style="position:fixed;top:8px;left:8px;z-index:9999;font-size:20px;text-decoration:none;" title="Home">🏠</a>
-<script src="/gz-analytics.js?v=20260804208d8668a9d" defer></script>
+<script src="/gz-analytics.js?v=202608042d84d989b3" defer></script>
 <script defer src="/game-footer.js?v=202607021204"></script>
 <script defer src="/adsterra-manager.js?v=v5174lazyep"></script><script defer src="/monetag-manager.js?v=v532aUnfilled"></script>
 <div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
