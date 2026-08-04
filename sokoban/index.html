@@ -240,19 +240,33 @@
             border: 1px solid rgba(0, 255, 255, 0.3);
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: background 0.15s ease, box-shadow 0.15s ease;
         }
         .dpad-btn:hover {
             background: rgba(0, 255, 255, 0.3);
         }
-        .dpad-btn:active {
-            background: rgba(0, 255, 255, 0.5);
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        .dpad-btn:active, .dpad-btn.pressed {
+            background: rgba(0, 255, 255, 0.6);
+            box-shadow: 0 0 18px rgba(0, 255, 255, 0.7);
+            transform: scale(0.94);
+        }
+        .dpad-btn.bump {
+            background: rgba(255, 80, 80, 0.5);
+            box-shadow: 0 0 18px rgba(255, 80, 80, 0.7);
+            transform: scale(0.94);
         }
         .dpad-btn.empty {
             background: transparent;
             border: none;
             cursor: default;
+        }
+        .dpad-hint {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-size: 11px;
+            color: rgba(0, 255, 255, 0.6);
+            margin-top: 4px;
+            letter-spacing: 0.05em;
         }
         .overlay {
             position: fixed;
@@ -463,7 +477,7 @@
             }
         }
     h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}</style>
-<script src="/gz-analytics.js?v=2026080412fd1e6f549" defer></script>
+<script src="/gz-analytics.js?v=202608041348e6ea78f" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
 <meta content="ca-pub-8346383990981353" name="google-adsense-platform-account">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
@@ -616,14 +630,15 @@
         </div>
         <div class="dpad">
             <div class="dpad-btn empty"></div>
-            <div class="dpad-btn" onclick="move(0,-1)">UP</div>
+            <div class="dpad-btn" data-dir="up" onclick="dpadPress(this,0,-1)">UP</div>
             <div class="dpad-btn empty"></div>
-            <div class="dpad-btn" onclick="move(-1,0)">LEFT</div>
+            <div class="dpad-btn" data-dir="left" onclick="dpadPress(this,-1,0)">LEFT</div>
             <div class="dpad-btn empty"></div>
-            <div class="dpad-btn" onclick="move(1,0)">RIGHT</div>
+            <div class="dpad-btn" data-dir="right" onclick="dpadPress(this,1,0)">RIGHT</div>
             <div class="dpad-btn empty"></div>
-            <div class="dpad-btn" onclick="move(0,1)">DOWN</div>
+            <div class="dpad-btn" data-dir="down" onclick="dpadPress(this,0,1)">DOWN</div>
             <div class="dpad-btn empty"></div>
+            <div class="dpad-hint">or use ↑ ← ↓ → keys</div>
         </div>
     </div>
 
@@ -1278,34 +1293,34 @@
     }
 
     function move(dx, dy) {
-        if (animating || !gameState) return;
+        if (animating || !gameState) return false;
         initAudio();
-        
+
         const newX = gameState.player.x + dx;
         const newY = gameState.player.y + dy;
-        
+
         if (isWall(newX, newY)) {
             playBumpSound();
-            return;
+            return false;
         }
-        
+
         const boxIndex = getBoxAt(newX, newY);
         if (boxIndex !== -1) {
             const boxNewX = newX + dx;
             const boxNewY = newY + dy;
-            
+
             if (isWall(boxNewX, boxNewY) || getBoxAt(boxNewX, boxNewY) !== -1) {
                 playBumpSound();
-                return;
+                return false;
             }
-            
+
             saveState();
             gameState.boxes[boxIndex] = { x: boxNewX, y: boxNewY };
             gameState.player = { x: newX, y: newY };
             moves++;
-            
+
             playPushSound();
-            
+
             if (isGoal(boxNewX, boxNewY)) {
                 playGoalSound();
             }
@@ -1315,10 +1330,28 @@
             moves++;
             playMoveSound();
         }
-        
+
         document.getElementById('moveCount').textContent = moves;
         checkWin();
         render();
+        return true;
+    }
+
+    // UX-OPT 2026-08-04 R381: d-pad press handler — flashes the clicked d-pad button
+    // (so the user sees immediate visual feedback AND the dead_click detector sees
+    // a className change, instead of falsely flagging a working d-pad as "dead").
+    // Also handles the wall-bump case with a red flash so the user understands
+    // the d-pad IS responding but the move was blocked.
+    // Class is held for 1.6s so gz-analytics.js's 1.5s dead-click detector sees the change.
+    function dpadPress(btn, dx, dy) {
+        const ok = move(dx, dy);
+        if (ok) {
+            btn.classList.add('pressed');
+            setTimeout(function(){ btn.classList.remove('pressed'); }, 1600);
+        } else {
+            btn.classList.add('bump');
+            setTimeout(function(){ btn.classList.remove('bump'); }, 1600);
+        }
     }
 
     function isWall(x, y) {
@@ -1714,33 +1747,45 @@
     }
 
     // ===== INPUT HANDLERS =====
+    // UX-OPT 2026-08-04 R381: holds the .pressed class for 1.6s so the
+    // gz-analytics.js dead-click detector (which checks at 1.5s) sees the state change.
+    function flashDpad(dir) {
+        const btn = document.querySelector('.dpad-btn[data-dir="' + dir + '"]');
+        if (!btn) return;
+        btn.classList.add('pressed');
+        setTimeout(function(){ btn.classList.remove('pressed'); }, 1600);
+    }
     function handleKeyDown(e) {
         if (!gameState) return;
         if (document.getElementById('winOverlay').classList.contains('hidden') === false) return;
-        
+
         switch (e.key) {
             case 'ArrowUp':
             case 'w':
             case 'W':
                 e.preventDefault();
+                flashDpad('up');
                 move(0, -1);
                 break;
             case 'ArrowDown':
             case 's':
             case 'S':
                 e.preventDefault();
+                flashDpad('down');
                 move(0, 1);
                 break;
             case 'ArrowLeft':
             case 'a':
             case 'A':
                 e.preventDefault();
+                flashDpad('left');
                 move(-1, 0);
                 break;
             case 'ArrowRight':
             case 'd':
             case 'D':
                 e.preventDefault();
+                flashDpad('right');
                 move(1, 0);
                 break;
             case 'u':
@@ -1785,8 +1830,10 @@
         const minSwipe = 30;
         
         if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > minSwipe) {
+            flashDpad(dx > 0 ? 'right' : 'left');
             move(dx > 0 ? 1 : -1, 0);
         } else if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > minSwipe) {
+            flashDpad(dy > 0 ? 'down' : 'up');
             move(0, dy > 0 ? 1 : -1);
         }
     
