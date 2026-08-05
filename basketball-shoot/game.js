@@ -665,7 +665,13 @@
       '<div class="best-label">Best: ' + bestScore + '</div>' +
       '<button class="btn" id="restart-btn">Play Again</button>' +
       '<button class="btn btn-share" id="share-score-btn" onclick="shareScore(' + score + ')">Share Score</button>';
-    setTimeout(function(){ document.getElementById('restart-btn').addEventListener('click', startGame); }, 50);
+    // Attach click handler to the new restart-btn directly (no setTimeout needed —
+    // overlay.innerHTML was just set, the element is in the DOM and ready).
+    var restartBtn = document.getElementById('restart-btn');
+    if (restartBtn && !restartBtn._gzHandlerAttached) {
+      restartBtn.addEventListener('click', startGame);
+      restartBtn._gzHandlerAttached = true;
+    }
 
     // Trigger Monetag ad
     if (window.GZMonetagSafe) {
@@ -690,10 +696,12 @@
       '<div class="sub">60 seconds — score as many baskets as you can!</div>' +
       '<div class="best-label">Best: <span id="best-val">' + bestScore + '</span></div>' +
       '<button class="btn" id="start-btn">Start Game</button>';
-    setTimeout(function(){ 
-      document.getElementById('start-btn').addEventListener('click', function() {
-        startGame();
-      }); 
+    setTimeout(function(){
+      var sb = document.getElementById('start-btn');
+      if (sb && !sb._gzHandlerAttached) {
+        sb.addEventListener('click', function() { startGame(); });
+        sb._gzHandlerAttached = true;
+      }
     }, 100);
   }
 
