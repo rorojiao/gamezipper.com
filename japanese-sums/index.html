@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Play Japanese Sums Puzzle Online Free — Number Placement Logic Game</title>
-<meta name="description" content="Play Japanese Sums puzzle online free! A GMPuzzles-style number placement logic puzzle. Place digits 1-N in cells so outside clues match the sums of contiguous number groups. No repeats per row or column. 30 unique-solution levels across 5 difficulty tiers from 4x4 Beginner to 7x7 Expert. Hints, star ratings, level select, keyboard support, ambient Web Audio music. No download, mobile-friendly!">
+<meta name="description" content="Play Japanese Sums puzzle online free! A GMPuzzles-style number placement logic puzzle. Place digits 1-N in cells so outside clues match the sums of contiguous number groups. No repeats per row or column. 30 logic-deduction levels across 5 difficulty tiers from 4x4 Beginner to 7x7 Expert. Hints, star ratings, level select, keyboard support, ambient Web Audio music. No download, mobile-friendly!">
 <meta property="og:title" content="Play Japanese Sums Puzzle Online Free — Number Placement Logic Game">
-<meta property="og:description" content="Play Japanese Sums puzzle online free! Place digits 1-N to match outside sum clues. 30 unique levels from Beginner to Expert. No download, mobile-friendly!">
+<meta property="og:description" content="Play Japanese Sums puzzle online free! Place digits 1-N to match outside sum clues. 30 logic levels from Beginner to Expert. No download, mobile-friendly!">
 <meta property="og:image" content="/japanese-sums/og-image.jpg">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Play Japanese Sums Puzzle Online Free">
-<meta name="twitter:description" content="Place digits 1-N to match outside sum clues. 30 unique levels from Beginner to Expert!">
+<meta name="twitter:description" content="Place digits 1-N to match outside sum clues. 30 logic levels from Beginner to Expert!">
 <meta name="twitter:image" content="/japanese-sums/og-image.jpg">
 <link rel="icon" href="/japanese-sums/icon.png" type="image/png">
 <link rel="apple-touch-icon" href="/japanese-sums/icon.png">
@@ -406,7 +406,7 @@ canvas {
   "@context": "https://schema.org",
   "@type": "VideoGame",
   "name": "Japanese Sums",
-  "description": "Play Japanese Sums puzzle online free! Place digits 1-N in cells so outside clues match the sums of contiguous number groups. 30 unique-solution levels from Beginner to Expert.",
+  "description": "Play Japanese Sums puzzle online free! Place digits 1-N in cells so outside clues match the sums of contiguous number groups. 30 logic-deduction levels from Beginner to Expert.",
   "genre": ["Puzzle", "Logic"],
   "gamePlatform": "Web Browser",
   "applicationCategory": "Game",
@@ -668,10 +668,19 @@ function draw() {
 
       // Draw value
       if (val > 0) {
-        const sol = level.s[r][c];
-        // Check if correct
-        const correct = (sol === val);
-        ctx.fillStyle = correct ? '#e0e6ff' : '#ef5350';
+        // Highlight conflicts: red only if this digit REPEATS another digit already
+        // placed in the same row or column (i.e. provably wrong regardless of
+        // which valid completion the player is aiming for).
+        let conflict = false;
+        for (let cc = 0; cc < N; cc++) {
+          if (cc !== c && grid[r][cc] === val) { conflict = true; break; }
+        }
+        if (!conflict) {
+          for (let rr = 0; rr < N; rr++) {
+            if (rr !== r && grid[rr][c] === val) { conflict = true; break; }
+          }
+        }
+        ctx.fillStyle = conflict ? '#ef5350' : '#e0e6ff';
         ctx.font = `bold ${Math.floor(cellSize * 0.55)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -863,16 +872,19 @@ function checkAutoWin() {
 }
 
 // === CHECK WIN ===
+// Verify against ALL valid Japanese Sums line patterns, not just the stored solution.
+// The stored `level.s` is ONE valid completion, but other completions also satisfy
+// the clues (the data has non-unique solutions per the spec — see audit 2026-08-06).
+// isLineSatisfied checks: contiguous-group sums match clues + no repeated digits.
+// Cells with value 0 (blank) or -1 (marked empty) are allowed; the puzzle allows
+// partial fills where the placed digits satisfy every row+col clue without repeats.
 function checkWin() {
   const N = level.N;
-  // Every cell must match solution
   for (let r = 0; r < N; r++) {
-    for (let c = 0; c < N; c++) {
-      const sol = level.s[r][c];
-      const ply = grid[r][c];
-      if (sol > 0 && ply !== sol) return false;
-      if (sol === 0 && ply > 0) return false;
-    }
+    if (!isLineSatisfied('row', r)) return false;
+  }
+  for (let c = 0; c < N; c++) {
+    if (!isLineSatisfied('col', c)) return false;
   }
   return true;
 }
@@ -1153,7 +1165,7 @@ init();
 </script>
 
 <script defer src="/adsterra-manager.js?v=v5174lazyep"></script><script defer src="/monetag-manager.js?v=v532aUnfilled"></script>
-<script src="/gz-analytics.js?v=2026080601b533fd3d44" defer></script>
+<script src="/gz-analytics.js?v=2026080601526ab4eb91" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
 <meta content="ca-pub-8346383990981353" name="google-adsense-platform-account">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
