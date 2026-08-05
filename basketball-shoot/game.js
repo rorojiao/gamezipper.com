@@ -622,7 +622,8 @@
     scorePopups = [];
     ball.hitRimThisShot = false;
     document.getElementById('score-val').textContent = '0';
-    document.getElementById('best-val').textContent = bestScore;
+    var bv = document.getElementById('best-val');
+    if (bv) bv.textContent = bestScore;
     document.getElementById('streak').classList.remove('show');
     document.getElementById('overlay').style.display = 'none';
     document.getElementById('timer').classList.remove('low');
@@ -662,7 +663,7 @@
     overlay.innerHTML =
       '<h2>Time\'s Up!</h2>' +
       '<div class="final-score">' + score + '</div>' +
-      '<div class="best-label">Best: ' + bestScore + '</div>' +
+      '<div class="best-label">Best: <span id="best-val">' + bestScore + '</span></div>' +
       '<button class="btn" id="restart-btn">Play Again</button>' +
       '<button class="btn btn-share" id="share-score-btn" onclick="shareScore(' + score + ')">Share Score</button>';
     // Attach click handler to the new restart-btn directly (no setTimeout needed —
