@@ -364,8 +364,10 @@ function buildLevel(lv){
       y = 100 + Math.random()*(WORLD_H-200);
       ok = !pads.some(p => Math.hypot(p.x-x,p.y-y) < 100) && !zones.some(z=>Math.hypot(z.x-x,z.y-y)<100) && Math.hypot(x-WORLD_W/2, y-(WORLD_H-100)) > 110;
     }
-    // Zone color = one of the pads (player needs to sample that color)
-    const themeCol = theme.pads[Math.floor(Math.random()*theme.pads.length)];
+    // Zone color must come from an actually spawned pad. Sampling the full
+    // theme palette made early procedural levels unsolvable whenever a zone
+    // picked one of the colors omitted from padColors.
+    const themeCol = padColors[Math.floor(Math.random()*padColors.length)];
     const hsl = hexToHSL(themeCol);
     zones.push({x, y, radius:38, color:themeCol, hsl, painted:false, glow:Math.random()*Math.PI*2});
   }
@@ -1042,16 +1044,8 @@ function loop(t){
     if(tier.time > 0){
       timeLeft -= dt;
       if(timeLeft <= 0){
-        if(painted >= totalZones){
-          winLevel();
-        } else {
-          // Partial clear or fail
-          if(painted > 0){
-            winLevel();
-          } else {
-            failLevel();
-          }
-        }
+        if(painted >= totalZones) winLevel();
+        else failLevel();
         return requestAnimationFrame(loop);
       }
     }

@@ -1,0 +1,14 @@
+#!/usr/bin/env node
+'use strict';
+const fs=require('fs'),path=require('path');
+const html=fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
+const chargeSeed=/GZ\.mouse\.down=true;GZ\.chargePower=0\.01;/.test(html);
+const chargeGrowth=/if\(GZ\.chargePower>0\)\{GZ\.chargePower=Math\.min\(1,GZ\.chargePower\+dt\*1\.5\);\}/.test(html);
+const releaseShot=/GZ\.chargePower>0\.1[\s\S]*?GZ\.arrows\.push\(a\)/.test(html);
+const completion=/GZ\.wave>=GZ\.maxWaves&&GZ\.applesCollected>=GZ\.applesNeeded[\s\S]*?allDead[\s\S]*?levelComplete\(\)/.test(html);
+const nextPersists=/GZ\.level\+\+;saveSave\(\);startLevel\(\)/.test(html);
+const defeat=/if\(!GZ\.player\.alive\)\{GZ\.state='dead';\}/.test(html);
+const retry=/GZ\.state==='dead'[\s\S]*?startLevel\(\)/.test(html);
+const saveShape=/localStorage\.setItem\('ragdollArchersV1'[\s\S]*?s:GZ\.skulls,l:GZ\.level,u:GZ\.upgrades/.test(html);
+const checks={chargeSeed,chargeGrowth,releaseShot,completion,nextPersists,defeat,retry,saveShape};
+const pass=Object.values(checks).every(Boolean);console.log(JSON.stringify({checks,pass},null,2));if(!pass)process.exit(1);

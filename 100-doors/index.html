@@ -1059,13 +1059,14 @@ function handleGameTap(px,py){
         sndClick();
         if(!lvlState.wireFirst){lvlState.wireFirst=o.id;}
         else{
-          // Check if this pair matches
+          // Check if this pair matches. Never mutate the embedded solution:
+          // retries and revisits in the same page session must remain solvable.
           var sol=levelData.solution;
           var a=lvlState.wireFirst,b=o.id;
           if((sol[a]===b)||(sol[b]===a)){
             lvlState.wireConns[a]=b;lvlState.wireConns[b]=a;
-            delete sol[a];delete sol[b];
-            if(Object.keys(sol).length===0)solvePuzzle();
+            var complete=Object.keys(sol).every(function(k){return lvlState.wireConns[k]===sol[k];});
+            if(complete)solvePuzzle();
           }
           lvlState.wireFirst=null;
         }
