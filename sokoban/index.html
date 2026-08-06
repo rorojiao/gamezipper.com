@@ -1188,16 +1188,36 @@
         ], par: 0 },
     ];
 
+    // The original advanced boards (28 and 31-50) were not verifier-backed
+    // and contained deadlocked/unsolved layouts. Keep the advertised 50-level
+    // progression while replacing those slots with deterministic transforms
+    // of the independently-solved 1-27 catalog. Mirroring preserves Sokoban
+    // reachability, box/goal counts, walls and move rules while varying layout.
+    function mirrorLevel(source, pack, name) {
+        return {
+            pack: pack,
+            name: name,
+            map: source.map.map(function(row){ return row.split('').reverse().join(''); }),
+            par: source.par
+        };
+    }
+    [27].concat(Array.from({length:20}, function(_,i){ return 30+i; })).forEach(function(slot, i){
+        var source = LEVELS[(i * 7 + 3) % 27];
+        LEVELS[slot] = mirrorLevel(source, Math.floor(slot / 10) + 1, 'Level ' + (slot + 1));
+    });
+
     // ===== GAME LOGIC =====
     function parseLevel(levelData) {
         const level = { walls: [], goals: [], boxes: [], player: null };
         const map = levelData.map;
         const rows = map.length;
-        const cols = map[0].length;
+        // A few legacy maps are ragged. Use the full authored width and make
+        // missing cells solid so a player can never walk outside the level.
+        const cols = map.reduce((width, row) => Math.max(width, row.length), 0);
         
         for (let y = 0; y < rows; y++) {
             for (let x = 0; x < cols; x++) {
-                const char = map[y][x] || ' ';
+                const char = map[y][x] || '#';
                 if (char === '#') {
                     level.walls.push({ x, y });
                 } else if (char === '.') {
@@ -1233,7 +1253,7 @@
         document.getElementById('packNum').textContent = levelData.pack;
         document.getElementById('levelNum').textContent = index + 1;
         document.getElementById('moveCount').textContent = moves;
-        document.getElementById('parMoves').textContent = levelData.par;
+        document.getElementById('parMoves').textContent = levelData.par > 0 ? levelData.par : '-';
         document.getElementById('bestMoves').textContent = bestMoves[index] || '-';
         document.getElementById('levelStars').textContent = getStarsDisplay(index);
         
@@ -1367,9 +1387,11 @@
     }
 
     function checkWin() {
-        const allOnGoals = gameState.boxes.every(box => 
-            gameState.goals.some(goal => goal.x === box.x && goal.y === box.y)
-        );
+        const allOnGoals = gameState.boxes.length > 0 &&
+            gameState.boxes.length === gameState.goals.length &&
+            gameState.boxes.every(box =>
+                gameState.goals.some(goal => goal.x === box.x && goal.y === box.y)
+            );
         
         if (allOnGoals) {
             setTimeout(() => showWinScreen(), 300);
@@ -1381,9 +1403,10 @@
         startConfetti();
         
         const par = LEVELS[currentLevel].par;
-        let starCount = 1;
-        if (moves <= par) starCount = 3;
-        else if (moves <= par + 5) starCount = 2;
+        const hasPar = Number.isInteger(par) && par > 0;
+        let starCount = 3;
+        if (hasPar && moves > par + 5) starCount = 1;
+        else if (hasPar && moves > par) starCount = 2;
         
         if (!bestMoves[currentLevel] || moves < bestMoves[currentLevel]) {
             bestMoves[currentLevel] = moves;
@@ -1399,7 +1422,9 @@
         saveProgress();
         
         document.getElementById('winStars').textContent = '★'.repeat(starCount) + '☆'.repeat(3 - starCount);
-        document.getElementById('winStats').innerHTML = `Moves: <span>${moves}</span> / Par: <span>${par}</span>`;
+        document.getElementById('winStats').innerHTML = hasPar
+            ? `Moves: <span>${moves}</span> / Par: <span>${par}</span>`
+            : `Moves: <span>${moves}</span>`;
         
         if (currentLevel >= LEVELS.length - 1) {
             document.getElementById('nextLevelBtn').style.display = 'none';
@@ -1731,9 +1756,10 @@
         try {
             const save = JSON.parse(localStorage.getItem('sokoban_save'));
             if (save) {
-                unlockedLevel = save.unlocked || 0;
-                bestMoves = save.best || {};
-                starsEarned = save.stars || {};
+                unlockedLevel = Number.isInteger(save.unlocked)
+                    ? Math.max(0, Math.min(LEVELS.length - 1, save.unlocked)) : 0;
+                bestMoves = save.best && typeof save.best === 'object' ? save.best : {};
+                starsEarned = save.stars && typeof save.stars === 'object' ? save.stars : {};
                 soundEnabled = save.sound !== false;
                 musicEnabled = save.music !== false;
             }

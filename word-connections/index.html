@@ -2333,12 +2333,14 @@
         this.hintsUsed = 0;
         this.maxHints = 3;
         this.maxMistakes = 4;
+        this.dailyFinished = false;
 
         this.currentPuzzle = null;
         this.puzzleSelectedWords = [];
         this.puzzleSolvedGroups = [];
         this.puzzleMistakes = 0;
         this.puzzleHintsUsed = 0;
+        this.puzzleFinished = false;
 
         this.init();
     }
@@ -2410,21 +2412,32 @@
         }
     };
 
+    WordConnections.prototype.getPlayablePuzzles = function() {
+        var all = [];
+        if (Array.isArray(PUZZLES)) all = all.concat(PUZZLES);
+        if (typeof EXTENDED_PUZZLES !== 'undefined' && Array.isArray(EXTENDED_PUZZLES)) all = all.concat(EXTENDED_PUZZLES);
+        if (typeof ADDITIONAL_PUZZLES !== 'undefined' && Array.isArray(ADDITIONAL_PUZZLES)) all = all.concat(ADDITIONAL_PUZZLES);
+        if (typeof EXPANDED_PUZZLES !== 'undefined' && Array.isArray(EXPANDED_PUZZLES)) all = all.concat(EXPANDED_PUZZLES);
+        return all;
+    };
+
     WordConnections.prototype.getDailyPuzzleIndex = function() {
+        var puzzles = this.getPlayablePuzzles();
         var dateStr = this.state.getDailyDate();
         var hash = 0;
         for (var i = 0; i < dateStr.length; i++) {
             hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
             hash = hash & hash;
         }
-        return Math.abs(hash) % PUZZLES.length;
+        return Math.abs(hash) % puzzles.length;
     };
 
     WordConnections.prototype.loadDailyPuzzle = function() {
+        var puzzles = this.getPlayablePuzzles();
         var savedState = this.state.getDailyState();
 
         if (savedState) {
-            this.dailyPuzzle = PUZZLES.find(function(p) { return p.id === savedState.puzzleId; });
+            this.dailyPuzzle = puzzles.find(function(p) { return p.id === savedState.puzzleId; });
             this.dailyState = savedState;
             this.selectedWords = savedState.selectedWords || [];
             this.solvedGroups = savedState.solvedGroups || [];
@@ -2432,7 +2445,7 @@
             this.hintsUsed = savedState.hintsUsed || 0;
         } else {
             var puzzleIndex = this.getDailyPuzzleIndex();
-            this.dailyPuzzle = PUZZLES[puzzleIndex];
+            this.dailyPuzzle = puzzles[puzzleIndex];
             this.dailyState = {
                 date: this.state.getDailyDate(),
                 puzzleId: this.dailyPuzzle.id,
@@ -2446,6 +2459,8 @@
             this.mistakes = 0;
             this.hintsUsed = 0;
         }
+
+        this.dailyFinished = this.solvedGroups.length === this.dailyPuzzle.groups.length;
 
         this.renderDailyGame();
     };
@@ -2570,6 +2585,7 @@
     };
 
     WordConnections.prototype.toggleDailyWord = function(word, tile) {
+        if (this.dailyFinished) return;
         this.audio.resume();
         var index = this.selectedWords.indexOf(word);
 
@@ -2593,6 +2609,7 @@
     };
 
     WordConnections.prototype.togglePuzzleWord = function(word, tile) {
+        if (this.puzzleFinished) return;
         this.audio.resume();
         var index = this.puzzleSelectedWords.indexOf(word);
 
@@ -2651,7 +2668,7 @@
     };
 
     WordConnections.prototype.submitDailyGuess = function() {
-        if (this.selectedWords.length !== 4) return;
+        if (this.dailyFinished || this.selectedWords.length !== 4) return;
 
         this.audio.resume();
 
@@ -2665,7 +2682,7 @@
     };
 
     WordConnections.prototype.submitPuzzleGuess = function() {
-        if (this.puzzleSelectedWords.length !== 4) return;
+        if (this.puzzleFinished || this.puzzleSelectedWords.length !== 4) return;
 
         this.audio.resume();
 
@@ -2736,9 +2753,8 @@
 
             self.selectedWords = [];
 
-            self.saveProgressAndStats(true, self.mistakes);
-
             if (self.solvedGroups.length === 4) {
+                self.saveProgressAndStats(true, self.mistakes);
                 self.handleWin();
             } else {
                 self.renderDailyGame();
@@ -2759,11 +2775,11 @@
         });
 
         setTimeout(function() {
-            self.selectedWords = [];
-            self.renderDailyGame();
-
             if (self.mistakes >= self.maxMistakes) {
                 self.handleLose();
+            } else {
+                self.selectedWords = [];
+                self.renderDailyGame();
             }
         }, 500);
     };
@@ -2789,6 +2805,7 @@
             self.puzzleSelectedWords = [];
 
             if (self.puzzleSolvedGroups.length === 4) {
+                self.savePuzzleProgressAndStats(true, self.puzzleMistakes);
                 self.handlePuzzleWin();
             } else {
                 self.renderPuzzleGame();
@@ -2809,17 +2826,22 @@
         });
 
         setTimeout(function() {
-            self.puzzleSelectedWords = [];
-            self.renderPuzzleGame();
-
             if (self.puzzleMistakes >= self.maxMistakes) {
                 self.handlePuzzleLose();
+            } else {
+                self.puzzleSelectedWords = [];
+                self.renderPuzzleGame();
             }
         }, 500);
     };
 
     WordConnections.prototype.saveProgressAndStats = function(won, mistakes) {
         var puzzleId = this.dailyPuzzle.id;
+        if (this.dailyFinished) return;
+        this.dailyFinished = true;
+
+        this.state.stats.played++;
+        this.state.stats.totalMistakes += mistakes;
 
         if (won) {
             var stars = this.getStarsForMistakes(mistakes);
@@ -2829,18 +2851,37 @@
             }
             this.state.saveProgress();
 
-            this.state.stats.played++;
             this.state.stats.wins++;
             this.state.stats.currentStreak++;
             if (this.state.stats.currentStreak > this.state.stats.bestStreak) {
                 this.state.stats.bestStreak = this.state.stats.currentStreak;
             }
-            this.state.stats.totalMistakes += mistakes;
             this.state.stats.totalStars += stars;
-            this.state.saveStats();
-
             this.state.updateStreak();
+        } else {
+            this.state.stats.currentStreak = 0;
         }
+        this.state.saveStats();
+        this.saveCurrentGame();
+    };
+
+    WordConnections.prototype.savePuzzleProgressAndStats = function(won, mistakes) {
+        if (this.puzzleFinished) return;
+        this.puzzleFinished = true;
+
+        var puzzleId = this.currentPuzzle.id;
+        this.state.stats.played++;
+        this.state.stats.totalMistakes += mistakes;
+        if (won) {
+            var stars = this.getStarsForMistakes(mistakes);
+            if (!this.state.progress[puzzleId] || this.state.progress[puzzleId] < stars) {
+                this.state.progress[puzzleId] = stars;
+            }
+            this.state.saveProgress();
+            this.state.stats.wins++;
+            this.state.stats.totalStars += stars;
+        }
+        this.state.saveStats();
     };
 
     WordConnections.prototype.useDailyHint = function() {
@@ -2904,6 +2945,7 @@
     };
 
     WordConnections.prototype.handleLose = function() {
+        this.saveProgressAndStats(false, this.mistakes);
         this.audio.playWrong();
         this.showLoseModal();
     };
@@ -2915,6 +2957,7 @@
     };
 
     WordConnections.prototype.handlePuzzleLose = function() {
+        this.savePuzzleProgressAndStats(false, this.puzzleMistakes);
         this.audio.playWrong();
         this.showPuzzleLoseModal();
     };
@@ -3062,7 +3105,20 @@
 
     WordConnections.prototype.retryDaily = function() {
         document.getElementById('loseModal').classList.remove('active');
-        this.deselectDailyAll();
+        this.dailyFinished = false;
+        this.selectedWords = [];
+        this.solvedGroups = [];
+        this.mistakes = 0;
+        this.hintsUsed = 0;
+        this.dailyState = {
+            date: this.state.getDailyDate(),
+            puzzleId: this.dailyPuzzle.id,
+            selectedWords: [],
+            solvedGroups: [],
+            mistakes: 0,
+            hintsUsed: 0
+        };
+        this.state.saveDailyState(this.dailyState);
         this.renderDailyGame();
     };
 
@@ -3131,8 +3187,7 @@
         var grid = document.getElementById('levelGrid');
         grid.innerHTML = '';
         var self = this;
-
-        PUZZLES.forEach(function(puzzle) {
+        this.getPlayablePuzzles().forEach(function(puzzle) {
             var btn = document.createElement('button');
             btn.className = 'level-btn';
 
@@ -3157,11 +3212,12 @@
     WordConnections.prototype.loadPuzzle = function(puzzleId) {
         this.audio.playClick();
 
-        this.currentPuzzle = PUZZLES.find(function(p) { return p.id === puzzleId; });
+        this.currentPuzzle = this.getPlayablePuzzles().find(function(p) { return p.id === puzzleId; });
         this.puzzleSelectedWords = [];
         this.puzzleSolvedGroups = [];
         this.puzzleMistakes = 0;
         this.puzzleHintsUsed = 0;
+        this.puzzleFinished = false;
 
         document.getElementById('puzzleModalTitle').textContent = 'Puzzle #' + puzzleId;
 
@@ -3198,7 +3254,7 @@
 
         var easyCount = 0, mediumCount = 0, hardCount = 0, expertCount = 0;
         var self = this;
-        PUZZLES.forEach(function(p) {
+        this.getPlayablePuzzles().forEach(function(p) {
             var stars = self.state.progress[p.id] || 0;
             if (stars > 0) {
                 if (p.difficulty === 'easy') easyCount++;
@@ -3884,6 +3940,7 @@
     }
 
     var extendedPuzzleLoader = createExtendedPuzzleLoader();
+
 
     var VERSION_INFO = {
         game: 'Word Connections',

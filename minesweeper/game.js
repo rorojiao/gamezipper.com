@@ -32,9 +32,14 @@ let totalWins = 0;
 function loadSave() {
   try {
     const d = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
-    if (d.bt) bestTimes = Object.assign({ beginner: 0, intermediate: 0, expert: 0 }, d.bt);
-    if (d.bw) bestWins = Object.assign({ beginner: 0, intermediate: 0, expert: 0 }, d.bw);
-    totalWins = d.tw | 0;
+    ['beginner', 'intermediate', 'expert'].forEach(function(name) {
+      var time = Number(d.bt && d.bt[name]);
+      var wins = Number(d.bw && d.bw[name]);
+      bestTimes[name] = Number.isInteger(time) && time > 0 && time <= 999 ? time : 0;
+      bestWins[name] = Number.isSafeInteger(wins) && wins >= 0 ? wins : 0;
+    });
+    var savedTotal = Number(d.tw);
+    totalWins = Number.isSafeInteger(savedTotal) && savedTotal >= 0 ? savedTotal : 0;
   } catch (e) {}
 }
 function writeSave() {
@@ -189,7 +194,10 @@ function startTimer() {
   updateTimerDisplay();
   timerInterval = setInterval(function() {
     elapsedSeconds++;
-    if (elapsedSeconds >= 999) elapsedSeconds = 999;
+    if (elapsedSeconds >= 999) {
+      elapsedSeconds = 999;
+      stopTimer();
+    }
     updateTimerDisplay();
   }, 1000);
 }
@@ -273,11 +281,8 @@ function handleCellClick(r, c) {
 function toggleFlag(r, c) {
   if (gameState === 'won' || gameState === 'lost') return;
   if (board[r][c].revealed) return;
-  if (gameState === 'idle') {
-    gameState = 'playing';
-    firstClick = false;
-    startTimer();
-  }
+  // Flags are allowed before the first reveal. Starting here would leave the
+  // board mine-free and make the run impossible to win.
   board[r][c].flagged = !board[r][c].flagged;
   playClick();
   updateMinesDisplay();
@@ -526,8 +531,10 @@ const LONG_PRESS_MS = 400;
 function getCellFromEvent(e) {
   if (!canvas) return null;
   const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
+  // canvas.width is device-pixel sized. Board coordinates must stay in CSS
+  // pixels so touch input maps correctly on high-DPR and constrained screens.
+  const scaleX = boardPixelW / rect.width;
+  const scaleY = boardPixelH / rect.height;
   let clientX, clientY;
   if (e.touches && e.touches.length > 0) {
     clientX = e.touches[0].clientX;
@@ -648,12 +655,28 @@ function setupKeyboard() {
 
 // ── Animation loop ─────────────────────────────────────────────────
 let animFrameId = null;
+let animationRunning = false;
 
 function animLoop() {
+  if (!animationRunning) return;
   if (particles.length > 0) {
     draw();
   }
   animFrameId = requestAnimationFrame(animLoop);
+}
+
+function startAnimation() {
+  if (animationRunning) return;
+  animationRunning = true;
+  animFrameId = requestAnimationFrame(animLoop);
+}
+
+function stopAnimation() {
+  animationRunning = false;
+  if (animFrameId) {
+    cancelAnimationFrame(animFrameId);
+    animFrameId = null;
+  }
 }
 
 // ── Global API ─────────────────────────────────────────────────────
@@ -671,7 +694,7 @@ function init() {
   newGame('beginner');
   setupTouchHandlers();
   setupKeyboard();
-  animLoop();
+  startAnimation();
 
   // Difficulty buttons — R377: ignore clicks during active gameplay so rage-clicks around the canvas do not reset the board mid-game
   var diffBtns = document.querySelectorAll('.ms-diff-btn[data-diff]');
@@ -693,14 +716,12 @@ function init() {
   }
 
   // Restart button (the 🔄 button)
-  var restartBtns = document.querySelectorAll('.ms-controls .ms-diff-btn[onclick]');
-  for (var j = 0; j < restartBtns.length; j++) {
-    if (restartBtns[j].title === 'Restart') {
-      restartBtns[j].addEventListener('click', function() {
-        hideGameOverOverlay();
-        newGame(getCurrentDifficulty());
-      });
-    }
+  var restartBtn = document.getElementById('ms-restart-btn');
+  if (restartBtn) {
+    restartBtn.addEventListener('click', function() {
+      hideGameOverOverlay();
+      newGame(getCurrentDifficulty());
+    });
   }
 
   // Resize
@@ -716,6 +737,15 @@ function init() {
     if (e.target !== canvas && (!canvas || !canvas.contains(e.target)) && e.target.tagName !== 'BUTTON') {
       setTimeout(function() { if (canvas) canvas.focus(); }, 50);
     }
+  });
+
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) stopAnimation();
+    else startAnimation();
+  });
+  window.addEventListener('beforeunload', function() {
+    stopTimer();
+    stopAnimation();
   });
 }
 

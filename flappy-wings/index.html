@@ -260,7 +260,8 @@ imgBgTile.onload=function(){bgPattern=ctx.createPattern(imgBgTile,'repeat');};
 
 const CANDY_COLORS=['#ff69b4','#ff6b9d','#ff85c0','#ffb6c1','#dda0dd','#da70d6','#ba55d3'];
 const READY=0,PLAYING=1,GAMEOVER=2;
-let state=READY,score=0,bestScore=parseInt(localStorage.getItem('flappyWingsBest'))||0;
+const savedBestScore = Number(localStorage.getItem('flappyWingsBest'));
+let state=READY,score=0,bestScore=Number.isSafeInteger(savedBestScore) && savedBestScore >= 0 ? savedBestScore : 0;
 let frameCount=0,scoreBounce=0;
 
 // Death
@@ -343,7 +344,7 @@ let groundX=0;
 
 function resetGame(){
   bird.y=H/2;bird.vy=0;bird.wingAngle=0;
-  pipes=[];pipeTimer=getPipeInterval()-30;score=0;frameCount=0;
+  pipes=[];score=0;pipeTimer=getPipeInterval()-30;frameCount=0;
   scoreBounce=0;deathRotation=0;flashAlpha=0;
   deathPhase=0;deathTimer=0;slowMoTimer=0;deathY=0;deathFallVy=0;
   deathSquash=1;deathFragments=[];
@@ -356,7 +357,7 @@ function flap(){
   try{const a=getAC();if(a.state==='suspended')a.resume();}catch(e){}
   if(state===READY){state=PLAYING;resetGame();}
   if(state===PLAYING){bird.vy=FLAP;playFlapSound();}
-  if(state===GAMEOVER&&frameCount>30){state=READY;resetGame();}
+  if(state===GAMEOVER&&frameCount>30){state=PLAYING;resetGame();bird.vy=FLAP;playFlapSound();}
 }
 
 canvas.addEventListener('pointerdown',e=>{e.preventDefault();flap();});
@@ -818,10 +819,10 @@ function showCopyToast(msg){
   var d=document.createElement('div');d.textContent=msg;
   d.style.cssText='position:fixed;top:20%;left:50%;transform:translateX(-50%);background:#4466dd;color:#fff;padding:12px 24px;border-radius:12px;font-weight:bold;z-index:99999;font-size:16px;';
   document.body.appendChild(d);setTimeout(()=>d.remove(),2000);
-// R200 P0 FIX (Bug #26 — IIFE scope): expose functions used by inline onclick handlers.
-// Without this, inline onclick throws ReferenceError because the functions live inside the IIFE.
-window.shareGame = shareGame;
 }
+// Inline controls live outside this IIFE, so expose the action when the game
+// initializes rather than only after a copy toast is shown.
+window.shareGame = shareGame;
 })();
 </script>
 

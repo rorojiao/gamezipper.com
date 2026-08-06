@@ -1102,7 +1102,9 @@ function startLevel(idx, isDaily){
       showModal('Daily puzzle is still generating. Please wait a moment and try again.',[{label:'OK',primary:true,fn:closeModal}]);
       return;
     }
-    run = newRun(getLevelDef(2), true);
+    // The daily puzzle is generated at medium difficulty (36 givens), so it
+    // must use the medium target rather than Beginner level 3's two minutes.
+    run = newRun(getLevelDef(12), true);
     $('game-title').textContent = '★ Daily Puzzle';
   } else {
     if(!puzzleCache || !puzzleCache[idx]){
@@ -1143,7 +1145,7 @@ function buildNumpad(){
     b.innerHTML = '<span class="count" data-cnt="'+i+'"></span>'+i;
     b.addEventListener('click', function(e){
       e.preventDefault();
-      var num = parseInt(b.getAttribute('data-num'));
+      var num = parseInt(e.currentTarget.getAttribute('data-num'));
       onNumber(num);
     });
     n.appendChild(b);
@@ -1182,6 +1184,7 @@ function updateStatus(){
 
 // ----------------------- Canvas / Rendering -----------------------
 var CELL_PX = 0;
+var resumeTimerAfterVisibility = false;
 function resizeCanvas(){
   var rect = canvas.getBoundingClientRect();
   var dpr = window.devicePixelRatio || 1;
@@ -1750,13 +1753,18 @@ function wireApp(){
   // Visibility — pause timer when hidden
   document.addEventListener('visibilitychange', function(){
     if(document.hidden){
+      resumeTimerAfterVisibility = !!(run && !run.finished && run.timerInterval);
+      if(resumeTimerAfterVisibility) stopTimer();
       if(bgmPlaying) stopBGM();
     } else {
+      if(resumeTimerAfterVisibility && run && !run.finished) startTimer();
+      resumeTimerAfterVisibility = false;
       if(!gameScreen.classList.contains('hidden') && state.settings.musicOn) startBGM();
     }
   });
   // Cleanup on unload
   window.addEventListener('beforeunload', function(){
+    stopTimer();
     stopBGM();
     saveState();
   });
