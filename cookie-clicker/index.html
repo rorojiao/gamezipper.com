@@ -126,10 +126,15 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a0a2e 50%,#0d1a2d 100%);min-
 .tab-panel.active{display:block}
 
 /* Buildings */
-.building-item{display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.building-item{display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:background-color .2s,border-color .2s,box-shadow .2s,transform .12s}
 .building-item:hover{background:rgba(139,69,19,.15);border-color:rgba(139,69,19,.3)}
 .building-item.affordable{border-color:rgba(139,69,19,.6);box-shadow:0 0 8px rgba(139,69,19,.2)}
 .building-item.locked{opacity:.4;cursor:default}
+.building-item.building-purchased{background:rgba(66,170,91,.22);border-color:#75d68a;box-shadow:0 0 14px rgba(117,214,138,.45);animation:buildingPurchaseFeedback .42s ease-out}
+.building-item.building-blocked{background:rgba(220,83,75,.2);border-color:#ff8b80;box-shadow:0 0 12px rgba(255,139,128,.3);animation:buildingBlockedFeedback .38s ease-in-out}
+@keyframes buildingPurchaseFeedback{0%{transform:scale(.98)}55%{transform:scale(1.02)}100%{transform:scale(1)}}
+@keyframes buildingBlockedFeedback{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@media (prefers-reduced-motion:reduce){.building-item.building-purchased,.building-item.building-blocked{animation:none}}
 .building-icon{width:44px;height:44px;flex-shrink:0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(139,69,19,.2)}
 .building-info{flex:1;min-width:0}
 .building-name{font-weight:700;font-size:14px;color:#FFFDD0}
@@ -467,6 +472,9 @@ let musicEnabled = true;
 let audioCtx = null;
 let bgmOsc = null;
 let bgmGain = null;
+const buildingFeedback = new Map();
+const BUILDING_FEEDBACK_DURATION = 1700;
+const buildingFeedbackTimers = new Set();
 
 // ============ AUDIO ============
 function initAudio(){
@@ -643,6 +651,33 @@ cps*=Math.pow(2,upgradeCount);
 return cps*state.buildings[bId];
 }
 
+function getBuildingFeedbackClass(bId){
+const feedback=buildingFeedback.get(bId);
+if(!feedback)return '';
+if(feedback.expiresAt<=Date.now()){
+buildingFeedback.delete(bId);
+return '';
+}
+return ' building-'+feedback.type;
+}
+
+function showBuildingFeedback(bId,type,element){
+const feedback={type,expiresAt:Date.now()+BUILDING_FEEDBACK_DURATION};
+buildingFeedback.set(bId,feedback);
+if(element){
+element.classList.remove('building-purchased','building-blocked');
+element.classList.add('building-'+type);
+}
+const timerId=setTimeout(()=>{
+buildingFeedbackTimers.delete(timerId);
+if(buildingFeedback.get(bId)!==feedback)return;
+buildingFeedback.delete(bId);
+const building=document.querySelector('.building-item[data-building-id="'+bId+'"]');
+if(building)building.classList.remove('building-purchased','building-blocked');
+},BUILDING_FEEDBACK_DURATION);
+buildingFeedbackTimers.add(timerId);
+}
+
 // ============ UI UPDATES ============
 function updateDisplay(){
 document.getElementById('cookie-count').textContent=fmt(state.cookies)+' cookies';
@@ -657,7 +692,8 @@ const cost=getBuildingCost(i);
 const canAfford=state.cookies>=cost;
 const cps=getCPSContribution(i);
 const div=document.createElement('div');
-div.className='building-item'+(canAfford?' affordable':'')+(state.buildings[i]===0&&!canAfford?' locked':'');
+div.className='building-item'+(canAfford?' affordable':'')+(state.buildings[i]===0&&!canAfford?' locked':'')+getBuildingFeedbackClass(i);
+div.dataset.buildingId=i;
 div.innerHTML=`<div class="building-icon">${b.icon}</div>
 <div class="building-info">
 <div class="building-name">${b.name}</div>
@@ -667,7 +703,7 @@ div.innerHTML=`<div class="building-icon">${b.icon}</div>
 <div class="building-owned">${state.buildings[i]}</div>
 <div class="building-cost">${fmtCost(cost)}</div>
 </div>`;
-div.onclick=()=>buyBuilding(i);
+div.onclick=()=>buyBuilding(i,div);
 panel.appendChild(div);
 });
 }
@@ -744,9 +780,14 @@ return `${h}h ${m}m ${s}s`;
 }
 
 // ============ GAME ACTIONS ============
-function buyBuilding(bId){
+function buyBuilding(bId,element){
 const cost=getBuildingCost(bId);
-if(state.cookies<cost)return;
+if(state.cookies<cost){
+showBuildingFeedback(bId,'blocked',element);
+showToast('Need '+fmtCost(cost)+' cookies for '+BUILDINGS[bId].name+'.');
+return;
+}
+showBuildingFeedback(bId,'purchased',element);
 initAudio();
 state.cookies-=cost;
 state.buildings[bId]++;
@@ -1207,6 +1248,7 @@ function trackRAF(id){rafIds.push(id);return id;}
 function cleanup(){
   rafIds.forEach(id=>cancelAnimationFrame(id));rafIds=[];
   if(timers)timers.forEach(id=>clearInterval(id));timers=[];
+  buildingFeedbackTimers.forEach(id=>clearTimeout(id));buildingFeedbackTimers.clear();buildingFeedback.clear();
   if(audioCtx){audioCtx.close().catch(()=>{});audioCtx=null;}
 }
 
