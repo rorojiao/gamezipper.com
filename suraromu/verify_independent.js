@@ -6,7 +6,7 @@
  */
 const fs = require('fs');
 
-const raw = fs.readFileSync('levels.json', 'utf8');
+const raw = fs.readFileSync(__dirname + '/levels.json', 'utf8');
 const levels = JSON.parse(raw);
 
 let pass = 0, fail = 0;

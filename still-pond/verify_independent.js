@@ -3,7 +3,7 @@
 // still-life, and that completion matches the stored solution.
 
 const fs = require('fs');
-const data = JSON.parse(fs.readFileSync('levels.json', 'utf8')).LEVELS;
+const data = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8')).LEVELS;
 
 const NEIGHBORS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
 

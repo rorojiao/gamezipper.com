@@ -160,7 +160,7 @@ function countSolutions(rowClues, colClues, N, limit = 2, timeoutMs = 5000) {
 }
 
 // Main
-const levelsData = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+const levelsData = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8'));
 const levels = levelsData.levels;
 console.log(`Verifying ${levels.length} levels (Node.js independent)...\n`);
 

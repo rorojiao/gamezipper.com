@@ -9,7 +9,7 @@
  */
 const fs = require('fs');
 
-const levels = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+const levels = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8'));
 
 // 9×9 Sudoku solver — count solutions up to limit
 function countSolutions(grid, limit) {

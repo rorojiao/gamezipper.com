@@ -95,7 +95,7 @@ function solve(size, starsPer, regions, maxSolutions = 2) {
 }
 
 function main() {
-  const data = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+  const data = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8'));
   const levels = data.levels;
   let pass = 0, fail = 0;
   for (let i = 0; i < levels.length; i++) {

@@ -4,7 +4,7 @@
 // Validates every stored solution and counts alternative completions over FREE (unnumbered) cells.
 
 const fs = require('fs');
-const data = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+const data = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8'));
 const levels = data.levels;
 const DIRS4 = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 

@@ -5,7 +5,7 @@
  */
 const fs = require('fs');
 
-const levels = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+const levels = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8'));
 let allOk = true;
 
 for (const lvl of levels) {

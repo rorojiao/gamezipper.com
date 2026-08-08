@@ -16,7 +16,7 @@ const { combinations_with_replacement } = (() => {
   }
   return { combinations_with_replacement: (arr, r) => [...cwr(arr, r)] };
 })();
-const levels = JSON.parse(fs.readFileSync('levels.json','utf8'));
+const levels = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8'));
 let allOK = true, totalUnique = 0;
 for (const lv of levels) {
   const N = lv.N, dials = lv.dials, K = dials.length, start = lv.start, cap = 12;

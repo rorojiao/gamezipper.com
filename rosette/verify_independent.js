@@ -59,7 +59,7 @@ function countSolutions(n, cc, dists, anchors) {
 }
 
 function main() {
-  const data = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+  const data = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8'));
   let pass = 0, fail = 0;
   const failures = [];
   for (const lv of data.LEVELS) {

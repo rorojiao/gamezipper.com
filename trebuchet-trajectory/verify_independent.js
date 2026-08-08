@@ -61,7 +61,7 @@ function countHitters(landings, tx, ty) {
     return [cnt, hitter];
 }
 
-const levels = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+const levels = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8'));
 let allPass = true;
 let uniqueCount = 0;
 let validCount = 0;

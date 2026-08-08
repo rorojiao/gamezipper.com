@@ -2,7 +2,7 @@
 // solutions and confirm exactly 1.
 
 const fs = require('fs');
-const data = JSON.parse(fs.readFileSync('levels.json', 'utf8')).LEVELS;
+const data = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8')).LEVELS;
 
 const NEIGH = [[-1,0],[1,0],[0,-1],[0,1]];
 
