@@ -3,6 +3,7 @@
 Daily SEO Health Check for GameZipper
 Checks: robots.txt, sitemap.xml, IndexNow key, site accessibility, HTTP status
 """
+import os
 import requests
 import json
 import sys
@@ -18,7 +19,11 @@ INDEXNOW_KEYS = {
     "tools.gamezipper.com": "b7e3f8c2d1a94b5e",
 }
 
+for _key in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "all_proxy"):
+    os.environ.pop(_key, None)
+
 _session = requests.Session()
+_session.trust_env = False
 _session.headers.update({"User-Agent": "GameZipper-SEO-Checker/1.0"})
 
 def check_url(url, name, allow_redirects=False, timeout=15):
@@ -130,7 +135,7 @@ def main():
         print("\n✅ All checks passed!")
     
     # Save JSON report
-    report_path = f"/home/msdn/gamezipper.com/scripts/seo_health_report_{today}.json"
+    report_path = f"/home/junze/gamezipper.com/scripts/seo_health_report_{today}.json"
     with open(report_path, 'w') as f:
         json.dump(results, f, indent=2)
     print(f"\nReport saved: {report_path}")
