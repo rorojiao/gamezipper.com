@@ -1,6 +1,6 @@
-/* watchdog-set tunnel URL: https://circle-session-imports-processed.trycloudflare.com -- auto-replaced by tunnel-watchdog.sh */
+/* watchdog-set tunnel URL: https://beginning-everyday-reload-por.trycloudflare.com -- manual recovery R413 2026-08-09 19:00 CST (cloudflared-bi.service was removed; new quick tunnel from cron session) */
 /* gz-analytics.js — trycloudflare.com tunnel to BI server (t_401d13d9 2026-07-15)
-   ACTIVE tunnel: https://sail-surrounding-icon-bathrooms.trycloudflare.com
+   ACTIVE tunnel: https://beginning-everyday-reload-por.trycloudflare.com
    (cloudflared-bi.service runs as --url quick tunnel on 10.10.29.67:8090).
    bi.gamezipper.com has no Worker for /api/collect (HTTP 204 = silent drop).
    DO NOT switch EP to bi.gamezipper.com.
