@@ -2,7 +2,8 @@
 // Extracts the EXACT game logic from index.html and verifies levels are solvable
 
 const fs = require('fs');
-const html = fs.readFileSync('/home/msdn/gamezipper.com/antikythera-mechanism/index.html', 'utf8');
+const path = require('path');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 
 // Extract LEVELS array from HTML
 // R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)

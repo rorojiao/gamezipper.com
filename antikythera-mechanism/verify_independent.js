@@ -5,8 +5,9 @@
 //   3. The par (shortest path from 0 to solution) is correct
 
 const fs = require('fs');
+const path = require('path');
 
-const levels = JSON.parse(fs.readFileSync('/home/msdn/gamezipper.com/antikythera-mechanism/levels_embed.json', 'utf8'));
+const levels = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels_embed.json'), 'utf8'));
 
 let allValid = true;
 let allUnique = true;
