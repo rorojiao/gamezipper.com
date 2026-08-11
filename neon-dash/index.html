@@ -2231,6 +2231,8 @@ var cameraX = 0;
 var trail = [];
 var particles = [];
 var stars = [];
+// R394: click-ripple feedback for canvas — eliminates false rage_click by showing users their click registered
+var clickRipples = [];
 
 // ============ STARS (BACKGROUND) ============
 function initStars() {
@@ -2504,6 +2506,9 @@ document.addEventListener('keyup', function(e) {
 });
 canvas.addEventListener('mousedown', function(e) {
   e.preventDefault();
+  // R394: push ripple at click position — visual feedback to prevent rage_click
+  var rect = canvas.getBoundingClientRect();
+  clickRipples.push({ x: (e.clientX - rect.left) * (CANVAS_W / rect.width), y: (e.clientY - rect.top) * (CANVAS_H / rect.height), t: performance.now() });
   handleAction();
 });
 canvas.addEventListener('mouseup', function(e) {
@@ -2511,6 +2516,12 @@ canvas.addEventListener('mouseup', function(e) {
 });
 canvas.addEventListener('touchstart', function(e) {
   e.preventDefault();
+  // R394: same ripple for touch
+  if (e.changedTouches && e.changedTouches[0]) {
+    var rect = canvas.getBoundingClientRect();
+    var t = e.changedTouches[0];
+    clickRipples.push({ x: (t.clientX - rect.left) * (CANVAS_W / rect.width), y: (t.clientY - rect.top) * (CANVAS_H / rect.height), t: performance.now() });
+  }
   handleAction();
 }, {passive:false});
 canvas.addEventListener('touchend', function(e) {
@@ -3186,6 +3197,27 @@ function render() {
   }
 
   ctx.restore();
+
+  // R394: draw click-ripples — visual feedback for canvas clicks
+  var now = performance.now();
+  for (var ri = clickRipples.length - 1; ri >= 0; ri--) {
+    var rp = clickRipples[ri];
+    var age = now - rp.t;
+    if (age > 400) { clickRipples.splice(ri, 1); continue; }
+    var progress = age / 400;
+    var radius = 10 + progress * 40;
+    var alpha = (1 - progress) * 0.7;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = PLAYER_COLORS[saveData.selectedColor].hex;
+    ctx.shadowColor = ctx.strokeStyle;
+    ctx.shadowBlur = 12;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(rp.x, rp.y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
 }
 
 // ============ MAIN LOOP ============
