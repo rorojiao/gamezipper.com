@@ -15,7 +15,7 @@ const path = require('path');
 const SLUG = process.argv[2];
 if (!SLUG) { console.error('Usage: node shared-vm-verify.js SLUG'); process.exit(1); }
 
-const SLUG_DIR = path.join('/home/msdn/gamezipper.com', SLUG);
+const SLUG_DIR = path.resolve(__dirname, '..', SLUG);
 const html = fs.readFileSync(path.join(SLUG_DIR, 'index.html'), 'utf8');
 
 // Extract inline game scripts (no src, not ld+json)

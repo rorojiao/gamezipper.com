@@ -1,7 +1,7 @@
 // Independent Nuritwin level verifier (Node.js)
 // Loads levels.json and verifies all rules independently of gen_levels.py
 const fs = require('fs');
-const levels = JSON.parse(fs.readFileSync('/home/msdn/gamezipper.com/nuritwin/levels.json','utf8'));
+const levels = JSON.parse(fs.readFileSync(__dirname + '/levels.json','utf8'));
 
 const DIRS = [[-1,0],[1,0],[0,-1],[0,1]];
 
