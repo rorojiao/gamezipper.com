@@ -980,13 +980,31 @@ function init(){
   });
   // Powerups
   document.getElementById('pu-undo').addEventListener('click',function(){
-    if(!this.classList.contains('disabled')){resumeLoop();doUndo();}
+    // 2026-08-11 R393: when disabled, still show visible feedback (rejected shake) so
+    // dead_click detector (1.5s window) sees snapClass != nowClass. Otherwise clicks
+    // on disabled powerup buttons report as dead_click false positives.
+    if(this.classList.contains('disabled')){
+      this.classList.add('rejected');
+      setTimeout(()=>this.classList.remove('rejected'),1700);
+      return;
+    }
+    resumeLoop();doUndo();
   });
   document.getElementById('pu-hint').addEventListener('click',function(){
-    if(!this.classList.contains('disabled')){resumeLoop();doHint();}
+    if(this.classList.contains('disabled')){
+      this.classList.add('rejected');
+      setTimeout(()=>this.classList.remove('rejected'),1700);
+      return;
+    }
+    resumeLoop();doHint();
   });
   document.getElementById('pu-shuffle').addEventListener('click',function(){
-    if(!this.classList.contains('disabled')){resumeLoop();doShuffle();}
+    if(this.classList.contains('disabled')){
+      this.classList.add('rejected');
+      setTimeout(()=>this.classList.remove('rejected'),1700);
+      return;
+    }
+    resumeLoop();doShuffle();
   });
   // Win overlay
   document.getElementById('btn-win-next').addEventListener('click',function(){

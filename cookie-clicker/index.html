@@ -149,6 +149,13 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a0a2e 50%,#0d1a2d 100%);min-
 .upgrade-item.affordable{border-color:#FFD700;box-shadow:0 0 8px rgba(255,215,0,.2)}
 .upgrade-item.purchased{opacity:.4;cursor:default;border-color:rgba(100,200,100,.3)}
 .upgrade-item.purchased::after{content:'✓';position:absolute;right:12px;color:#4CAF50;font-weight:900}
+/* 2026-08-11 R393: upgrade purchase/rejection feedback (mirrors R386 building-purchased/building-blocked).
+   Transient class for 1.7s so dead_click detector (1.5s window) sees visible state change. */
+.upgrade-item.upgrade-purchased{background:rgba(66,170,91,.22);border-color:#75d68a;box-shadow:0 0 14px rgba(117,214,138,.45);animation:upgradePurchaseFeedback .42s ease-out}
+.upgrade-item.upgrade-rejected{background:rgba(220,83,75,.2);border-color:#ff8b80;box-shadow:0 0 12px rgba(255,139,128,.3);animation:upgradeRejectedFeedback .38s ease-in-out}
+@keyframes upgradePurchaseFeedback{from{transform:scale(1)}50%{transform:scale(1.04)}to{transform:scale(1)}}
+@keyframes upgradeRejectedFeedback{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@media (prefers-reduced-motion:reduce){.upgrade-item.upgrade-purchased,.upgrade-item.upgrade-rejected{animation:none}}
 .upgrade-icon{width:44px;height:44px;flex-shrink:0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,215,0,.15)}
 .upgrade-info{flex:1}
 .upgrade-name{font-weight:700;font-size:13px;color:#FFFDD0}
@@ -708,6 +715,38 @@ panel.appendChild(div);
 });
 }
 
+/* 2026-08-11 R393: upgrade-item purchase/rejection feedback (mirrors R386 building pattern).
+   Track feedback by upgrade ID so the visible class survives updateUpgradesPanel re-render
+   and survives across re-renders for ≥1.7s (dead_click detector window is 1.5s). */
+const UPGRADE_FEEDBACK_DURATION = 1700;
+const upgradeFeedback = new Map();
+const upgradeFeedbackTimers = new Set();
+function showUpgradeFeedback(uId, type, element){
+  const prev = upgradeFeedback.get(uId);
+  if(prev){
+    clearTimeout(prev.timerId);
+    upgradeFeedbackTimers.delete(prev.timerId);
+  }
+  if(element){
+    element.classList.remove('upgrade-purchased','upgrade-rejected');
+    element.classList.add('upgrade-'+type);
+  }
+  const timerId = setTimeout(()=>{
+    upgradeFeedbackTimers.delete(timerId);
+    if(upgradeFeedback.get(uId) && upgradeFeedback.get(uId).timerId === timerId){
+      upgradeFeedback.delete(uId);
+      const div = document.querySelector('.upgrade-item[data-upgrade-id="'+uId+'"]');
+      if(div) div.classList.remove('upgrade-purchased','upgrade-rejected');
+    }
+  }, UPGRADE_FEEDBACK_DURATION);
+  upgradeFeedback.set(uId, {type, timerId});
+  upgradeFeedbackTimers.add(timerId);
+}
+function getUpgradeFeedbackClass(uId){
+  const f = upgradeFeedback.get(uId);
+  if(!f) return '';
+  return ' upgrade-'+f.type;
+}
 function updateUpgradesPanel(){
 const panel=document.getElementById('upgrades-panel');
 panel.innerHTML='';
@@ -722,14 +761,20 @@ if(owned<tierOwners[u.tier])return;
 }
 const canAfford=state.cookies>=u.cost;
 const div=document.createElement('div');
-div.className='upgrade-item'+(canAfford?' affordable':'');
+div.className='upgrade-item'+(canAfford?' affordable':'')+getUpgradeFeedbackClass(u.id);
+div.dataset.upgradeId=u.id;
 div.innerHTML=`<div class="upgrade-icon">${u.icon||'⬆'}</div>
 <div class="upgrade-info">
 <div class="upgrade-name">${u.name}</div>
 <div class="upgrade-desc">${u.desc}</div>
 <div class="upgrade-cost">${fmtCost(u.cost)}</div>
 </div>`;
-div.onclick=()=>buyUpgrade(u.id);
+// 2026-08-11 R393: wrap with explicit purchased/rejected feedback so user + dead_click
+// detector (1.5s window) see visible state change regardless of success/failure outcome
+div.onclick=()=>{
+  const success = buyUpgrade(u.id);
+  showUpgradeFeedback(u.id, success ? 'purchased' : 'rejected', div);
+};
 panel.appendChild(div);
 });
 if(panel.children.length===0){
@@ -801,7 +846,7 @@ checkAchievements();
 
 function buyUpgrade(uId){
 const u=UPGRADES.find(u=>u.id===uId);
-if(!u||state.upgrades.includes(uId)||state.cookies<u.cost)return;
+if(!u||state.upgrades.includes(uId)||state.cookies<u.cost)return false;
 initAudio();
 state.cookies-=u.cost;
 state.upgrades.push(uId);
@@ -811,6 +856,7 @@ updateDisplay();
 updateUpgradesPanel();
 checkAchievements();
 showToast('Upgrade purchased: '+u.name);
+return true;
 }
 
 function clickCookie(e){

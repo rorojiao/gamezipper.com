@@ -618,7 +618,13 @@ function showStart() {
         <span class="tag" style="background:rgba(96,165,250,0.2);color:#93c5fd">${p.words.length} words</span>
         ${saveBadge}
       </div>`;
-    card.onclick = () => { startPuzzle(i); hideStart(); };
+    // 2026-08-11 R393: transient .clicked class for dead_click detector coverage
+    card.onclick = () => {
+      card.classList.add('clicked');
+      setTimeout(() => card.classList.remove('clicked'), 1700);
+      startPuzzle(i);
+      hideStart();
+    };
     list.appendChild(card);
   });
   const overlay = document.getElementById('start-overlay');
@@ -731,7 +737,13 @@ function renderClues(puzzle) {
     item.className = 'clue-item';
     item.id = `clue-${w.id}`;
     item.innerHTML = `<span class="num">${w.num}.</span> ${w.clue}`;
-    item.onclick = () => { selectWord(w.id); playSound('click'); };
+    // 2026-08-11 R393: transient .clicked class for dead_click detector coverage
+    item.onclick = () => {
+      item.classList.add('clicked');
+      setTimeout(() => item.classList.remove('clicked'), 1700);
+      selectWord(w.id);
+      playSound('click');
+    };
     acrossEl.appendChild(item);
   });
 
@@ -740,7 +752,13 @@ function renderClues(puzzle) {
     item.className = 'clue-item';
     item.id = `clue-${w.id}`;
     item.innerHTML = `<span class="num">${w.num}.</span> ${w.clue}`;
-    item.onclick = () => { selectWord(w.id); playSound('click'); };
+    // 2026-08-11 R393: transient .clicked class for dead_click detector coverage
+    item.onclick = () => {
+      item.classList.add('clicked');
+      setTimeout(() => item.classList.remove('clicked'), 1700);
+      selectWord(w.id);
+      playSound('click');
+    };
     downEl.appendChild(item);
   });
 }

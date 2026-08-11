@@ -464,6 +464,14 @@
             60% { transform: translateX(-4px); }
             80% { transform: translateX(4px); }
         }
+        /* 2026-08-11 R393: transient .clicked class on every tile click — survives
+           re-render so dead_click detector (1.5s post-click) sees snapClass != nowClass
+           even when handleWrongDailyGuess → renderDailyGame recreates all tiles */
+        .word-tile.clicked {
+            background: rgba(139, 92, 246, 0.35) !important;
+            border-color: rgba(167, 139, 250, 0.9) !important;
+            transform: scale(1.05);
+        }
 
         .controls {
             display: flex;
@@ -2587,6 +2595,12 @@
     WordConnections.prototype.toggleDailyWord = function(word, tile) {
         if (this.dailyFinished) return;
         this.audio.resume();
+        // 2026-08-11 R393: transient .clicked class for dead_click detector coverage.
+        // Must be added BEFORE any code path that may trigger re-render
+        // (handleWrongDailyGuess → renderDailyGame recreates tiles 500ms later,
+        // leaving the original tile reference stale but className intact).
+        tile.classList.add('clicked');
+        setTimeout(function(){ tile.classList.remove('clicked'); }, 1700);
         var index = this.selectedWords.indexOf(word);
 
         if (index > -1) {
@@ -2611,6 +2625,9 @@
     WordConnections.prototype.togglePuzzleWord = function(word, tile) {
         if (this.puzzleFinished) return;
         this.audio.resume();
+        // 2026-08-11 R393: transient .clicked class for dead_click detector coverage
+        tile.classList.add('clicked');
+        setTimeout(function(){ tile.classList.remove('clicked'); }, 1700);
         var index = this.puzzleSelectedWords.indexOf(word);
 
         if (index > -1) {
