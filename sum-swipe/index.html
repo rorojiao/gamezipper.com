@@ -102,6 +102,7 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 50%,#0d1a2d 100%);min-
 .ls-cell:hover{background:rgba(167,139,250,.25)}
 .ls-cell.locked{opacity:.32;cursor:not-allowed}
 .ls-cell.completed{background:rgba(94,234,212,.14);border-color:rgba(94,234,212,.4)}
+.ls-cell.selected{background:rgba(167,139,250,.45);border-color:#a78bfa;box-shadow:0 0 12px rgba(167,139,250,.6)}
 .ls-cell .stars{font-size:9px;line-height:1;margin-top:2px;letter-spacing:-1px}
 
 /* =========================== GAME SCREEN =========================== */
@@ -1004,7 +1005,15 @@ function renderLevelSelect(){
       else if(data) cell.classList.add('completed');
       cell.innerHTML = `<div>${lv}</div>${data ? `<div class="stars">${'★'.repeat(data.stars)}${'☆'.repeat(3-data.stars)}</div>` : '<div class="stars">---</div>'}`;
       if(unlocked){
-        cell.onclick = ()=>{ playSound('btn'); startLevel(lv); };
+        cell.onclick = ()=>{
+          playSound('btn');
+          cell.classList.add('selected');
+          // R427 (2026-08-13) dead_click fix: hold .selected for 1.6s so the capture-phase
+          // dead_click detector (gz-analytics.js) sees className change at t=1.5s after click.
+          // Original was: callback ran, but cell.className never changed → dead_click fires.
+          setTimeout(()=>cell.classList.remove('selected'), 1600);
+          startLevel(lv);
+        };
       }
       grid.appendChild(cell);
     }
