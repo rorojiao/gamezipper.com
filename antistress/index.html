@@ -58,6 +58,12 @@ canvas{display:block;touch-action:none}
 .toy-card:hover::before{opacity:1}
 .toy-card.locked{opacity:.5;filter:grayscale(.6);cursor:default}
 .toy-card.locked:hover{transform:none;box-shadow:none}
+/* 2026-08-13 R428: pressed/locked-shake classes for dead_click prevention (R381/R382 pattern) */
+.toy-card.pressed{outline:2px solid var(--neon1);outline-offset:2px;transform:scale(.97);transition:background .15s ease,box-shadow .15s ease}
+.toy-card.locked.shake{animation:lockedShake .55s cubic-bezier(.36,.07,.19,.97)}
+@keyframes lockedShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-6px)}30%{transform:translateX(6px)}45%{transform:translateX(-4px)}60%{transform:translateX(4px)}75%{transform:translateX(-2px)}90%{transform:translateX(2px)}}
+.recent-chip:active{transform:scale(.95)}
+.recent-chip.flash{box-shadow:0 0 0 2px var(--neon1),0 0 16px rgba(0,240,255,.35);transition:background .15s ease,box-shadow .15s ease}
 .toy-icon{font-size:2.2rem;margin-bottom:6px;display:block;line-height:1.2}
 .toy-name{font-size:.8rem;font-weight:600;color:rgba(255,255,255,.9)}
 .fav-btn{position:absolute;top:6px;right:6px;background:none;border:none;font-size:16px;cursor:pointer;opacity:.4;transition:all .2s;padding:2px}
@@ -314,12 +320,20 @@ ${!unlocked?'<span class="lock-icon">🔒</span>':''}
 ${unlocked&&state.toyUses[toy.id]?`<div class="toy-uses">×${state.toyUses[toy.id]}</div>`:''}
 `;
 if(unlocked){
-card.addEventListener('click',()=>{initAudio();openToy(toy)});
+card.addEventListener('click',()=>{initAudio();openToy(toy);
+  // 2026-08-13 R428: visible feedback inside 1.5s dead_click detector window (R381/R382 sub-case B pattern)
+  card.classList.add('pressed');setTimeout(()=>card.classList.remove('pressed'),1600);
+});
 }else{
 const info=getNextUnlockInfo();
 if(info&&info.toys.includes(toy.name)){
 card.title=`Try ${info.threshold-info.current} more toy${info.threshold-info.current>1?'s':''} to unlock`;
 }
+// 2026-08-13 R428: locked toys still fire click bubbles — give visible rejection (R382 sub-case C pattern)
+card.addEventListener('click',()=>{card.classList.remove('shake');void card.offsetWidth;card.classList.add('shake');setTimeout(()=>card.classList.remove('shake'),600);
+  if(info&&info.toys.includes(toy.name))showToast('Try '+(info.threshold-info.current)+' more toy'+((info.threshold-info.current)>1?'s':'')+' to unlock '+toy.name+'.');
+  else showToast('Try more toys to unlock '+toy.name+'.');
+});
 }
 const favBtn=card.querySelector('.fav-btn');
 favBtn.addEventListener('click',e=>{e.stopPropagation();toggleFav(toy.id)});
@@ -334,7 +348,10 @@ const items=[...favs,...recent].filter((v,i,a)=>a.findIndex(x=>x.id===v.id)===i)
 items.forEach(toy=>{
 const chip=document.createElement('div');
 chip.className='recent-chip';chip.textContent=toy.icon+' '+toy.name;
-chip.addEventListener('click',()=>{initAudio();openToy(toy)});
+chip.addEventListener('click',()=>{initAudio();openToy(toy);
+  // 2026-08-13 R428: visible feedback inside 1.5s dead_click detector window (R381/R382 sub-case B pattern)
+  chip.classList.add('flash');setTimeout(()=>chip.classList.remove('flash'),1600);
+});
 recentBar.appendChild(chip);
 });
 }
