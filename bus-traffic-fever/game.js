@@ -161,6 +161,10 @@ var G={
   history:[],// for undo
   rafId:null,lastTime:0,running:false,
   pointerDown:false,
+  // R395: click-ripple feedback for canvas — prevents rage_click when handleTap()
+  // returns silently (no bus at clicked cell, animating, or out-of-grid bounds).
+  // User sees their click registered → knows the UI is responsive.
+  ripples:[],
   _pendingTimeouts:[],// UX-OPT 2026-07-19 INP FIX: tracked setTimeouts so they can be cancelled on level load
   // UX-OPT 2026-07-31 INP FIX: offscreen canvas for static wall hatch pattern (pre-rendered once per level load).
   // Replaces 5-10 ctx.beginPath/moveTo/lineTo/stroke calls per wall per frame with a single drawImage.
@@ -216,6 +220,7 @@ function loadLevel(idx){
   G.screenShake=0;G.hintHighlight=-1;G.hintTimer=0;
   G.hintArrow=lvl.hintArrow||false;G.tutorialStep=0;
   G.history=[];G.animating=false;
+  G.ripples=[];// R395: clear ripples when loading new level
   // Build grid
   G.grid=[];
   for(var r=0;r<=lvl.rows;r++){G.grid[r]=[];for(var c=0;c<=lvl.cols;c++)G.grid[r][c]=0;}
@@ -640,6 +645,26 @@ function render(dt){
   });
   ctx.globalAlpha=1;
   ctx.restore();
+  // R395: click-ripples — visual feedback for canvas clicks (handleTap silent returns)
+  var now395=performance.now();
+  for(var ri=G.ripples.length-1;ri>=0;ri--){
+    var rp=G.ripples[ri];
+    var age=now395-rp.t;
+    if(age>400){G.ripples.splice(ri,1);continue;}
+    var progress=age/400;
+    var radius=8+progress*36;
+    var alpha=(1-progress)*0.75;
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.strokeStyle='rgba(255,255,255,0.95)';
+    ctx.shadowColor='rgba(255,220,120,0.9)';
+    ctx.shadowBlur=14;
+    ctx.lineWidth=2.5;
+    ctx.beginPath();
+    ctx.arc(rp.x,rp.y,radius,0,Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
+  }
 }
 function drawBus(ctx,bus){
   var x=bus.px,y=bus.py;
@@ -968,6 +993,15 @@ function init(){
   G.canvas.addEventListener('pointerdown',function(e){
     e.preventDefault();
     resumeLoop();
+    // R395: push ripple at click position BEFORE handleTap() — visual feedback
+    // so user sees their click registered even when handleTap() returns silently
+    // (no bus at cell, animating, or out-of-grid bounds).
+    var rect=G.canvas.getBoundingClientRect();
+    G.ripples.push({
+      x:(e.clientX-rect.left)*(G.W/rect.width),
+      y:(e.clientY-rect.top)*(G.H/rect.height),
+      t:performance.now()
+    });
     handleTap(e.clientX,e.clientY);
   });
   // Buttons
