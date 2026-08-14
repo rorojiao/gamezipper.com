@@ -1,10 +1,9 @@
-/* watchdog-set tunnel URL: https://beginning-everyday-reload-por.trycloudflare.com -- manual recovery R413 2026-08-09 19:00 CST (cloudflared-bi.service was removed; new quick tunnel from cron session) */
-/* gz-analytics.js — trycloudflare.com tunnel to BI server (t_401d13d9 2026-07-15)
-   ACTIVE tunnel: https://beginning-everyday-reload-por.trycloudflare.com
-   (cloudflared-bi.service runs as --url quick tunnel on 10.10.29.67:8090).
-   bi.gamezipper.com has no Worker for /api/collect (HTTP 204 = silent drop).
-   DO NOT switch EP to bi.gamezipper.com.
-   Previous attempts today (all dead tunnels):
+/* gz-analytics.js — bi.gamezipper.com stable endpoint (R415 2026-08-14)
+   EP = https://bi.gamezipper.com/api/collect (PRODUCTION-PROMOTED)
+   Path: browser → DNS (Porkbun → 43.172.69.197) → CapRover nginx → wash-editorials trycloudflare tunnel → gamezipper-bi server (10.10.29.67:8090)
+   /api/ proxy added 2026-08-14 in captain.conf → upstream https://wash-editorials-opening-specific.trycloudflare.com
+   See kanban R415. Replaces R413 trycloudflare random tunnel pattern.
+   Was-failing tunnels (kept for history only):
      - bi.gamezipper.com 2026-07-15 22:30 CST (HTTP 204 but no DB insert — REVERTED)
      - sail-surrounding-icon-bathrooms trycloudflare (re-applied 2026-07-15 22:35 CST)
    2026-06-05 fix: connected to Vercel /api/collect.js → BI server pipeline
@@ -41,7 +40,7 @@
   //   var EP after each restart by running:
   //     journalctl -u cloudflared-bi -n 30 --no-pager | grep trycloudflare.com
   // DO NOT switch back to bi.gamezipper.com — that's a 204-stub, not the BI server.
-  var EP = 'https://adventures-focus-possibly-oclc.trycloudflare.com/api/collect';
+  var EP = 'https://bi.gamezipper.com/api/collect';
   // 2026-07-26: expose the watchdog-rotated endpoint so inline RUM scripts
   // (index.html Web-Vitals beacons) and adsterra-manager.js can resolve it
   // lazily instead of hardcoding tunnel URLs that die every few hours.
