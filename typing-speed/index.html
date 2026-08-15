@@ -423,13 +423,15 @@ function reset(){
 function startTimer(){
   if(mode==="survival"){startTime=Date.now();running=true;updateStats();return}
   startTime=Date.now();running=true;
-  function updateFrame(){
+  function updateFrame() {
+    if(!running) return;
     const elapsed=(Date.now()-startTime)/1000|0;
     timeLeft=Math.max(0,parseInt(mode)-elapsed);
     timerEl.textContent=timeLeft;
     if(timeLeft<=5&&timeLeft>0)playCountdown();
-    if(timeLeft<=0)endGame();
     updateStats();
+    if(timeLeft<=0){ endGame(); return; }
+    timerInterval=setTimeout(updateFrame,250);
   }
   updateFrame();
 }
@@ -455,7 +457,8 @@ function updateStats(){
 }
 
 function endGame(){
-  finished=true;running=false;timerInterval=null;
+  finished=true;running=false;
+  if(timerInterval!==null){clearTimeout(timerInterval);timerInterval=null;}
   input.disabled=true;playCheer();
   // Matrix flood effect
   if(window.matrixFlood)window.matrixFlood();
