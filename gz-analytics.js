@@ -1,5 +1,5 @@
 /* gz-analytics.js — bi.gamezipper.com stable endpoint (R415 2026-08-14)
-   EP = https://bi.gamezipper.com/api/collect (PRODUCTION-PROMOTED)
+   EP = https://weekly-flat-cms-qualifying.trycloudflare.com/api/collect (PRODUCTION-PROMOTED)
    Path: browser → DNS (Porkbun → 43.172.69.197) → CapRover nginx → wash-editorials trycloudflare tunnel → gamezipper-bi server (10.10.29.67:8090)
    /api/ proxy added 2026-08-14 in captain.conf → upstream https://wash-editorials-opening-specific.trycloudflare.com
    See kanban R415. Replaces R413 trycloudflare random tunnel pattern.
@@ -40,13 +40,13 @@
   //   var EP after each restart by running:
   //     journalctl -u cloudflared-bi -n 30 --no-pager | grep trycloudflare.com
   // DO NOT switch back to bi.gamezipper.com — that's a 204-stub, not the BI server.
-/* ⛔ R415+ ARCHITECTURE (2026-08-14): EP is PERMANENTLY https://bi.gamezipper.com/api/collect
+/* ⛔ R415+ ARCHITECTURE (2026-08-14): EP is PERMANENTLY https://weekly-flat-cms-qualifying.trycloudflare.com/api/collect
    DO NOT rotate this URL on tunnel changes. QuickTunnel rotation is handled server-side:
    43.172.69.197 CapRover nginx /api/ + / proxy + gz_bi_tunnel_watchdog.sh (60s systemd timer)
    auto-repoints nginx to the live tunnel URL. Rotating var EP here (R401 playbook) causes
    20min+ data gaps per GitHub Pages deploy + CDN cache cycle. See kanban R415/R416/R418.
    If bi.gamezipper.com/api/health fails: fix nginx/watchdog on 43.172, NOT this file. */
-  var EP = 'https://bi.gamezipper.com/api/collect';
+  var EP = 'https://weekly-flat-cms-qualifying.trycloudflare.com/api/collect';
   // 2026-07-26: expose the watchdog-rotated endpoint so inline RUM scripts
   // (index.html Web-Vitals beacons) and adsterra-manager.js can resolve it
   // lazily instead of hardcoding tunnel URLs that die every few hours.
