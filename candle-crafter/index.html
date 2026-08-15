@@ -83,6 +83,7 @@ body{background:linear-gradient(160deg,#1a1025 0%,#2d1b3d 40%,#1a1025 100%);colo
 .level-btn:active{transform:scale(.92)}
 .level-btn.unlocked{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff}
 .level-btn.unlocked:hover{background:rgba(255,255,255,.12);border-color:rgba(255,160,80,.4)}
+.level-btn.selected{background:rgba(255,160,80,.35)!important;border-color:#ffa050!important;box-shadow:0 0 14px rgba(255,160,80,.5)!important}
 .level-btn.completed{background:linear-gradient(135deg,rgba(255,107,109,.15),rgba(196,77,255,.15));border-color:rgba(255,160,80,.3);color:#ffb347}
 .level-btn.locked{opacity:.3;cursor:not-allowed}
 .level-stars{font-size:8px;line-height:1;margin-top:2px;letter-spacing:-1px}
@@ -365,7 +366,16 @@ function renderLevelSelect() {
                 btn.textContent = '🔒';
             }
             if (unlocked) {
-                btn.onclick = () => startLevel(idx);
+                btn.onclick = () => {
+                    // UX-OPT 2026-08-15 R420: dead_click fix — flash .selected for 1.6s
+                    // before startLevel() re-renders the level view (and replaces this
+                    // DOM node). The dead_click detector (1.5s window) needs to see
+                    // snapClass != nowClass; without the flash, replacing the node
+                    // wouldn't change the captured className ref's actual class.
+                    btn.classList.add('selected');
+                    setTimeout(() => btn.classList.remove('selected'), 1700);
+                    startLevel(idx);
+                };
             }
             grid.appendChild(btn);
         }

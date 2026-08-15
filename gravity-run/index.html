@@ -450,10 +450,18 @@ var stars=sv.st[id]||0;
 var d=document.createElement("div");
 d.className="level-btn"+(unlocked?"":" locked");
 d.innerHTML='<div class="lnum">'+id+"</div>"+'<div class="lstars">'+(unlocked?repeatStar(stars)+repeatEmpty(3-stars):"LOCKED")+"</div>";
-if(unlocked)d.onclick=(function(id2){return function(){curLvlIdx=id2;startLevel(id2);};})(id);
+if(unlocked)d.onclick=(function(id2){return function(){
+// UX-OPT 2026-08-15 R419: dead_click fix — flash .selected for 1.6s so the capture-phase
+// dead_click detector sees snapClass != nowClass. UI re-renders via showScr+startLevel
+// so the original DOM cell is replaced; the class flash guarantees className change.
+this.classList.add('selected');
+setTimeout(function(){this.classList.remove('selected');}.bind(this),1700);
+curLvlIdx=id2;startLevel(id2);};})(id);
 el.appendChild(d);
 }
 }
+// UX-OPT R419: .selected style for level-btn (background highlight during click hold)
+document.head.insertAdjacentHTML('beforeend','<style>.level-btn.selected{background:rgba(0,255,255,.25)!important;border-color:#0ff!important;box-shadow:0 0 14px rgba(0,255,255,.45)!important}</style>');
 function repeatStar(n){var s="";for(var i=0;i<n;i++)s+="★";return s;}
 function repeatEmpty(n){var s="";for(var i=0;i<n;i++)s+="☆";return s;}
 

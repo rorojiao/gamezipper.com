@@ -95,6 +95,10 @@ time:0,dt:0,last:0,
 gravity:600,groundY:0,
 mouse:{x:0,y:0,down:false},
 player:null,enemies:[],arrows:[],apples:[],particles:[],
+// UX-OPT 2026-08-15 R418: click-ripple feedback for canvas — prevents rage_click when
+// pointerdown falls in a state that silently returns (e.g. playing but player=dead,
+// levelComplete menu press, or outside-click on shop/menu). User sees their click registered.
+ripples:[],
 skulls:0,totalSkulls:0,score:0,wave:0,maxWaves:3,
 level:1,tier:1,
 applesCollected:0,applesNeeded:0,
@@ -318,7 +322,7 @@ try{localStorage.setItem('ragdollArchersV1',JSON.stringify({s:GZ.skulls,l:GZ.lev
 function getMaxHp(){return 3+GZ.upgrades.hp;}
 function getDmgMult(){return 1+GZ.upgrades.dmg*0.2;}
 function startLevel(lv){
-GZ.level=lv||GZ.level;GZ.state='playing';GZ.arrows=[];GZ.apples=[];GZ.particles=[];
+GZ.level=lv||GZ.level;GZ.state='playing';GZ.arrows=[];GZ.apples=[];GZ.particles=[];GZ.ripples=[];// UX-OPT R418: clear ripples on level start
 GZ.score=0;GZ.wave=0;GZ.chargePower=0;GZ.applesCollected=0;GZ.tier=Math.min(3,Math.ceil(GZ.level/10));
 var def=GZ.levelDefs[GZ.level-1]||GZ.levelDefs[GZ.levelDefs.length-1];
 GZ.maxWaves=def.waves;GZ.waveDelay=def.waveDelay;GZ.applesNeeded=def.apples||1;GZ.waveTimer=1;
@@ -586,6 +590,25 @@ case 'dead':drawDead();break;
 case 'victory':drawVictory();break;
 }
 GZ.x.restore();
+// UX-OPT 2026-08-15 R418: draw click-ripples on top of all state layers. These confirm
+// every pointerdown to the user (and the dead_click detector at 1.5s) by giving a visible
+// expanding ring at the tap position regardless of whether the tap produced an action.
+var now418=performance.now();
+for(var ri=GZ.ripples.length-1;ri>=0;ri--){
+var rp=GZ.ripples[ri];var age=now418-rp.t;
+if(age>400){GZ.ripples.splice(ri,1);continue;}
+var prog=age/400;
+GZ.x.save();
+GZ.x.globalAlpha=(1-prog)*0.75;
+GZ.x.strokeStyle='rgba(255,204,0,0.95)';
+GZ.x.shadowColor='rgba(255,220,120,0.8)';
+GZ.x.shadowBlur=12;
+GZ.x.lineWidth=2.5;
+GZ.x.beginPath();
+GZ.x.arc(rp.x,rp.y,8+prog*36,0,Math.PI*2);
+GZ.x.stroke();
+GZ.x.restore();
+}
 }
 function loop(ts){
 if(!GZ.last)GZ.last=ts;GZ.dt=Math.min(0.05,(ts-GZ.last)/1000);GZ.last=ts;GZ.time+=GZ.dt;
@@ -655,7 +678,11 @@ if(newType>=0&&newType<GZ.arrowTypes.length&&unlocked(newType)){GZ.arrowType=new
 }
 function setupEvents(){
 var c=GZ.c;
-c.addEventListener('pointerdown',function(e){e.preventDefault();handleDown(getCanvasPos(e));});
+c.addEventListener('pointerdown',function(e){e.preventDefault();
+// UX-OPT 2026-08-15 R418: push ripple BEFORE handleDown() so even silent-return states
+// (player dead, levelComplete no-button click, outside-rect on shop) get visible feedback.
+GZ.ripples.push({x:getCanvasPos(e).x,y:getCanvasPos(e).y,t:performance.now()});
+handleDown(getCanvasPos(e));});
 c.addEventListener('pointermove',function(e){e.preventDefault();handleMove(getCanvasPos(e));});
 c.addEventListener('pointerup',function(e){e.preventDefault();handleUp();});
 c.addEventListener('pointercancel',function(e){e.preventDefault();handleUp();});
