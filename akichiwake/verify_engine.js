@@ -3,7 +3,8 @@
 const fs = require('fs');
 
 // Load levels
-const levels = JSON.parse(fs.readFileSync('/home/msdn/gamezipper.com/akichiwake/levels.json', 'utf8')).levels;
+const path = require('path');
+const levels = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'), 'utf8')).levels;
 
 let passCount = 0;
 let failCount = 0;
