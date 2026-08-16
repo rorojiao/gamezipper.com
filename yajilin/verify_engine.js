@@ -2,10 +2,10 @@
 /* GENERATED in-engine verifier for yajilin — STATIC LEVELS edition.
  * yajilin/index.html now embeds offline-generated levels (STATIC_LV, 30 levels +
  * DAILY_LV, 7-level daily rotation) produced by _optimization/scripts/gen-yajilin-levels.js,
- * each proven uniquely solvable offline (Hamiltonian-cycle-first construction, then an
- * independent shading enumerator proving exactly one shading with exactly one cycle).
- * The previous runtime generator (genPuzzle -> unbounded findHC DFS, clues placed after
- * the cycle) produced unsolvable/hanging boards and was removed from the play path.
+ * each proven uniquely solvable offline (induced-cycle construction matching the engine's
+ * checkWin rules, then an independent exhaustive enumerator proving exactly one winning
+ * shading). The previous runtime generator (genPuzzle -> unbounded findHC DFS, clues placed
+ * after the cycle) produced unsolvable/hanging boards and was removed from the play path.
  *
  * This verifier checks, for every one of the 30 static levels + all 7 daily-pool dates
  * (daily pick = YYYYMMDD % DAILY_LV.length, exercised via a controlled clock):
@@ -265,7 +265,7 @@ if(IDX>=0){
  stars='stars='+st;
 }
 return {ok:true,msg:'static level served + embedded solution won via cellAction' + (stars?' (' + stars + ')':'')};
-})`;
+})()`;
 
 /* ---------- main ---------- */
 function main() {
@@ -335,11 +335,11 @@ function main() {
   const out = {
     pass, fail, total: pass + fail,
     verdict: fail === 0 ? 'PASS' : 'FAIL',
-    headline: pass + '/' + LVN + ' (30 levels + today daily) — daily pool rotation: ' + (results.length - staticLv.length) + '/' + dailyLv.length + ' dates exercised',
+    headline: (fail === 0 ? LVN + '/' + LVN : pass + '/' + LVN) + ' (30 levels + today daily) — daily pool rotation: ' + (results.length - staticLv.length) + '/' + dailyLv.length + ' dates exercised (' + results.length + ' items total)',
     extra: {
       staticLevels: staticLv.length, dailyPool: dailyLv.length, dailyPickToday: todayPick,
       sizes: [...new Set(staticLv.map(L => L.w + 'x' + L.h))].join(','),
-      provenance: 'offline generator _optimization/scripts/gen-yajilin-levels.js (cycle-first construction; independent shading enumerator proved exactly one shading with exactly one Hamiltonian cycle per level; see _optimization/evidence/yajilin/)',
+      provenance: 'offline generator _optimization/scripts/gen-yajilin-levels.js (induced-cycle construction matching engine checkWin rules; independent exhaustive enumerator proved exactly one winning shading per level; see _optimization/evidence/yajilin/)',
     },
   };
   if (issues.length) out.extra.issues = issues;

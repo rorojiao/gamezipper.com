@@ -1,23 +1,37 @@
 #!/usr/bin/env node
-/* Offline level generator for yajilin (replaces broken runtime generation).
+/* Yajilin offline level generator — v2 (ENGINE-TRUE MODEL).
  *
- * Why: the shipped genPuzzle (index.html:185) places arrow clues AFTER findHC (:216),
- * but players can neither shade nor loop-mark clue cells (cellAction :443 refuses them,
- * checkWin :494 excludes them from the loop) — so any clue landing on the intended cycle
- * makes the level unwinnable; and findHC's unbounded DFS hangs >100s on larger boards.
+ * The engine's checkWin (yajilin/index.html) defines the real puzzle:
+ *   1. every arrow clue must see exactly n shaded cells in its ray (over the
+ *      PLAYER's shading);
+ *   2. shaded cells pairwise non-adjacent;
+ *   3. every non-shaded non-clue cell must be loop-marked;
+ *   4. every loop-marked cell must have EXACTLY 2 orthogonally adjacent
+ *      loop-marked cells  (SET-adjacency degree, not cycle-edge degree!);
+ *   5. all loop cells form one connected component.
+ * Rules 3+4+5 mean the free region (board minus clues minus the player's
+ * shading) must be a single INDUCED ("thin", non-self-touching) cycle in the
+ * grid graph. The shipped runtime generator was incompatible with this by
+ * construction (it found a Hamiltonian edge-cycle over all non-shaded cells
+ * and then sprinkled clues onto it, breaking the thin-cycle invariant), which
+ * is why boards were unsolvable and the unbounded DFS froze the tab.
  *
- * Method (per level, all searches node-capped, single process, serial):
- *   1. random non-adjacent shaded set (ns cells, seeded rng)
- *   2. clue POSITIONS chosen next (non-shaded); the loop graph is grid - shaded - clues
- *   3. Warnsdorff+pruning Hamiltonian cycle over exactly that graph (findHC with caps)
- *   4. clue values computed from the shaded set (direction biased to non-zero counts)
- *   5. INDEPENDENT solver (clues only): enumerate every shading satisfying all clue
- *      counts + non-adjacency; for each, enumerate Hamiltonian cycles of its remainder
- *      (stop at 2). A level ships ONLY when the solver terminates within caps and finds
- *      exactly ONE (shading, cycle) solution — and it equals the intended one.
- * Output: _optimization/evidence/yajilin/gen-levels.json (full) + compact STATIC_LV JSON
- * on stdout for embedding into index.html.
- * Usage: node _optimization/scripts/gen-yajilin-levels.js [--out <file>]
+ * This generator builds puzzles for the REAL rules:
+ *   a. genCycle: randomized DFS grows an induced cycle C (self-avoiding,
+ *      non-self-touching closed path) covering >= cov fraction of the board.
+ *   b. Holes H = board - C; ns pairwise non-adjacent hole cells become the
+ *      intended shading; ALL remaining holes become clues (a hole that is
+ *      neither shaded nor clue would have to sit on the cycle — impossible).
+ *   c. Clue directions chosen coverage-aimed (prefer informative rays).
+ *   d. enumerateSolutions: independent exhaustive solver (ray-count bounds,
+ *      shaded-adjacency, incremental degree-2 pruning, thin-cycle leaf check)
+ *      proves the intended shading is the UNIQUE solution.
+ *   e. refineUnique: set-cover re-aiming of clue directions until unique.
+ *
+ * Output: JSON {generated, configs, levels, reportMs} + <out>.embed.js with
+ * `var STATIC_LV=[...]` (entries {w,h,par,clues,shaded,hc}).
+ * Usage: node gen-yajilin-levels.js [--out file] [--only i,j] [--salt N]
+ *        [--daily N --only-daily]
  */
 'use strict';
 const fs = require('fs');
@@ -28,16 +42,17 @@ const OUT_DEFAULT = path.join(REPO, '_optimization', 'evidence', 'yajilin', 'gen
 
 /* level board configs — mirrors index.html LV (w,h,ns,par) */
 const CONFIGS = [
-  { w: 5, h: 6, ns: 2, par: 60 }, { w: 5, h: 6, ns: 2, par: 65 }, { w: 5, h: 6, ns: 3, par: 70 },
-  { w: 5, h: 6, ns: 3, par: 75 }, { w: 5, h: 6, ns: 3, par: 80 }, { w: 5, h: 6, ns: 4, par: 90 },
-  { w: 6, h: 6, ns: 3, par: 100 }, { w: 6, h: 6, ns: 4, par: 110 }, { w: 6, h: 6, ns: 4, par: 120 },
-  { w: 6, h: 6, ns: 5, par: 130 }, { w: 6, h: 8, ns: 4, par: 140 }, { w: 6, h: 8, ns: 5, par: 150 },
-  { w: 8, h: 8, ns: 5, par: 180 }, { w: 8, h: 8, ns: 6, par: 200 }, { w: 8, h: 8, ns: 6, par: 220 },
-  { w: 8, h: 8, ns: 7, par: 240 }, { w: 8, h: 10, ns: 6, par: 260 }, { w: 8, h: 10, ns: 7, par: 280 },
-  { w: 8, h: 10, ns: 8, par: 300 }, { w: 10, h: 10, ns: 7, par: 330 }, { w: 10, h: 10, ns: 8, par: 360 },
-  { w: 10, h: 10, ns: 8, par: 390 }, { w: 10, h: 10, ns: 9, par: 420 }, { w: 10, h: 12, ns: 8, par: 450 },
-  { w: 10, h: 12, ns: 9, par: 480 }, { w: 10, h: 12, ns: 9, par: 510 }, { w: 10, h: 12, ns: 10, par: 540 },
-  { w: 10, h: 12, ns: 10, par: 570 }, { w: 12, h: 12, ns: 10, par: 600 }, { w: 12, h: 12, ns: 11, par: 630 },
+  /* tractable envelope: 5x6..8x8; difficulty via size, ns and par time. */
+  { w: 5, h: 6, ns: 2, par: 60 }, { w: 5, h: 6, ns: 2, par: 70 }, { w: 5, h: 6, ns: 3, par: 80 },
+  { w: 5, h: 6, ns: 3, par: 90 }, { w: 5, h: 6, ns: 3, par: 100 }, { w: 5, h: 6, ns: 4, par: 110 },
+  { w: 6, h: 6, ns: 3, par: 120 }, { w: 6, h: 6, ns: 3, par: 130 }, { w: 6, h: 6, ns: 4, par: 140 },
+  { w: 6, h: 6, ns: 4, par: 150 }, { w: 6, h: 6, ns: 4, par: 160 }, { w: 6, h: 6, ns: 4, par: 170 },
+  { w: 6, h: 8, ns: 3, par: 180 }, { w: 6, h: 8, ns: 3, par: 195 }, { w: 6, h: 8, ns: 4, par: 210 },
+  { w: 6, h: 8, ns: 4, par: 225 }, { w: 6, h: 8, ns: 4, par: 240 }, { w: 6, h: 8, ns: 4, par: 255 },
+  { w: 8, h: 8, ns: 4, par: 270 }, { w: 8, h: 8, ns: 4, par: 300 }, { w: 8, h: 8, ns: 4, par: 330 },
+  { w: 8, h: 8, ns: 4, par: 360 }, { w: 8, h: 8, ns: 4, par: 400 }, { w: 8, h: 8, ns: 4, par: 440 },
+  { w: 8, h: 8, ns: 4, par: 480 }, { w: 8, h: 8, ns: 4, par: 520 }, { w: 8, h: 8, ns: 4, par: 550 },
+  { w: 8, h: 8, ns: 4, par: 580 }, { w: 8, h: 8, ns: 4, par: 610 }, { w: 8, h: 8, ns: 4, par: 630 }
 ];
 
 const DIRS = { U: [-1, 0], D: [1, 0], L: [0, -1], R: [0, 1] };
@@ -45,591 +60,365 @@ const DIRLIST = ['U', 'D', 'L', 'R'];
 
 function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
-/* ---------- capped Hamiltonian-cycle machinery over a set graph ---------- */
-function gridGraph(w, h, blockedSet) {
-  /* returns {n, adj: [ [cells...] ], cellOf: r,c } over free cells */
-  const id = new Int32Array(w * h).fill(-1);
-  const cells = [];
-  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
-    const k = r + ',' + c;
-    if (!blockedSet.has(k)) { id[r * w + c] = cells.length; cells.push([r, c]); }
-  }
-  const n = cells.length;
-  const adj = [];
+/* ---------- induced ("thin") cycle generation ---------- */
+/* Randomized DFS over self-avoiding, non-self-touching paths that closes into
+ * a cycle. adjCount[v] = number of path cells orthogonally adjacent to v.
+ * Candidate v (a neighbour of the head) is extendable iff its only path
+ * neighbour is the head — OR it has exactly two path neighbours, head and the
+ * START s (v is then a potential closing cell; such branches can only ever
+ * close at v itself, anything past v can never close, which the closure test
+ * rejects automatically). Closing head h onto s is valid iff h adj s AND
+ * adjCount[s]===2 (exactly path[1] and h touch s) AND adjCount[path[1]]===2
+ * (h does not also touch path[1]). */
+function genCycle(w, h, rng, minLen, nodeBudget) {
+  const n = w * h;
+  const nbs = new Array(n);
   for (let i = 0; i < n; i++) {
-    const [r, c] = cells[i]; const a = [];
-    for (const d of DIRLIST) { const nr = r + DIRS[d][0], nc = c + DIRS[d][1]; if (nr >= 0 && nr < h && nc >= 0 && nc < w) { const j = id[nr * w + nc]; if (j >= 0) a.push(j); } }
-    adj.push(a);
+    const r = (i / w) | 0, c = i % w, a = [];
+    if (r > 0) a.push(i - w);
+    if (r < h - 1) a.push(i + w);
+    if (c > 0) a.push(i - 1);
+    if (c < w - 1) a.push(i + 1);
+    nbs[i] = a;
   }
-  return { n, adj, cells, id };
-}
-
-function quickNoHC(g) {
-  /* necessary conditions: connected, min degree >= 2, chessboard color balance */
-  if (g.n === 0) return true;
-  const { n, adj, cells } = g;
-  let bal = 0;
-  for (let i = 0; i < n; i++) { const r = cells[i][0], c = cells[i][1]; bal += ((r + c) % 2 === 0) ? 1 : -1; }
-  if (bal !== 0) return true;
-  for (let i = 0; i < n; i++) if (adj[i].length < 2) return true;
-  const seen = new Uint8Array(n); const st = [0]; seen[0] = 1; let cnt = 1;
-  while (st.length) { const u = st.pop(); for (const v of adj[u]) if (!seen[v]) { seen[v] = 1; cnt++; st.push(v); } }
-  return cnt !== n;
-}
-
-/* ---------- Hamiltonian cycle solver via forced-edge propagation ----------
- * Model: each free cell must have EXACTLY 2 chosen edges; chosen edges must form one
- * cycle (premature sub-cycle ban + same-path join ban). Cell rules + path-endpoint
- * rules propagate; branch on the most constrained unknown edge. Counts solutions up
- * to a limit with a node cap. */
-function makeEdgeModel(g) {
-  const { n, adj } = g;
-  const edges = []; /* [u,v] */
-  const eu = []; const ev = []; /* endpoints per edge id */
-  const cellEdges = Array.from({ length: n }, () => []);
-  const seen = new Set();
-  for (let u = 0; u < n; u++) for (const v of adj[u]) {
-    const k = u < v ? u + ':' + v : v + ':' + u;
-    if (seen.has(k)) continue;
-    seen.add(k);
-    const id = edges.length;
-    edges.push([u, v]); eu.push(u); ev.push(v);
-    cellEdges[u].push(id); cellEdges[v].push(id);
-  }
-  return { edges, cellEdges, m: edges.length };
-}
-
-function solveHC(g, limit, nodeCap) {
-  /* returns {count, cycle?, CAP?} — cycle from first solution */
-  if (g.n < 4) return { count: 0 };
-  if (quickNoHC(g)) return { count: 0 };
-  const { n, adj } = g;
-  const M = makeEdgeModel(g);
-  const { edges, cellEdges, m } = M;
-  const state = new Int8Array(m); /* 0 unknown 1 chosen -1 forbidden */
-  const degCh = new Int8Array(n);
-  const degUnk = new Int8Array(n);
-  let nodes = 0; let capped = false; let count = 0; let firstCycle = null; const cycles = [];
-  /* union-find over cells joined by chosen edges, with size */
-  const parent = new Int32Array(n); const size = new Int32Array(n);
-  function ufInit() { for (let i = 0; i < n; i++) { parent[i] = i; size[i] = 1; } }
-  function find(x) { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
-  function ufJoin(a, b) { const ra = find(a), rb = find(b); if (ra === rb) return false; if (size[ra] < size[rb]) { parent[ra] = rb; size[rb] += size[ra]; } else { parent[rb] = ra; size[ra] += size[rb]; } return true; }
-  function ufSamePathSize(a, b) { const ra = find(a), rb = find(b); return ra === rb ? size[ra] : -1; }
-  ufInit();
-  for (let u = 0; u < n; u++) { degCh[u] = 0; degUnk[u] = cellEdges[u].length; }
-  const dirty = [];
-  for (let u = 0; u < n; u++) dirty.push(u);
-  function setEdge(e, val) { /* returns false on contradiction; records nothing (caller manages stack) */
-    if (state[e] === val) return true;
-    if (state[e] !== 0) return false;
-    state[e] = val;
-    const u = edges[e][0], v = edges[e][1];
-    if (val === 1) {
-      degCh[u]++; degUnk[u]--; degCh[v]++; degUnk[v]--;
-      if (degCh[u] > 2 || degCh[v] > 2) return false;
-      /* premature cycle ban: joining two ends already in the same path is only OK when
-       * that path covers every cell (the final cycle) */
-      const psz = ufSamePathSize(u, v);
-      if (psz >= 0) { if (psz === n) { /* final closure */ } else return false; }
-      else ufJoin(u, v);
-      dirty.push(u); dirty.push(v);
-    } else {
-      degUnk[u]--; degUnk[v]--;
-      dirty.push(u); dirty.push(v);
-    }
-    return true;
-  }
-  function propagateAll() {
-    while (dirty.length) {
-      const u = dirty.pop();
-      if (degCh[u] + degUnk[u] < 2) return false;
-      if (degCh[u] === 2) { for (const e of cellEdges[u]) if (state[e] === 0) { if (!setEdge(e, -1)) return false; } }
-      else if (degCh[u] + degUnk[u] === 2) { for (const e of cellEdges[u]) if (state[e] === 0) { if (!setEdge(e, 1)) return false; } }
-      else if (degCh[u] > 2) return false;
-      /* path endpoint: degCh==1 and one unknown edge left is forced by the rule above */
-    }
-    return true;
-  }
-  function isSolved() {
-    for (let u = 0; u < n; u++) if (degCh[u] !== 2) return false;
-    return true;
-  }
-  function extractCycle() {
-    /* walk chosen edges */
-    const nextOf = Array.from({ length: n }, () => []);
-    for (let e = 0; e < m; e++) if (state[e] === 1) { nextOf[edges[e][0]].push(edges[e][1]); nextOf[edges[e][1]].push(edges[e][0]); }
-    const cyc = [0]; let prev = -1; let cur = 0;
-    do {
-      const nxt = nextOf[cur][0] === prev ? nextOf[cur][1] : nextOf[cur][0];
-      cyc.push(nxt); prev = cur; cur = nxt;
-    } while (cur !== 0);
-    cyc.pop();
-    return cyc;
-  }
-  function branch() {
-    if (capped || count >= limit) return;
-    if (++nodes > nodeCap) { capped = true; return; }
-    if (!propagateAll()) return;
-    if (isSolved()) {
-      count++;
-      if (!firstCycle) firstCycle = extractCycle();
-      if (cycles.length < limit) cycles.push(extractCycle());
-      return;
-    }
-    /* pick unknown edge touching the cell with fewest unknowns (most constrained) */
-    let bestU = -1; let bestCnt = 99;
-    for (let u = 0; u < n; u++) { if (degCh[u] < 2 && degUnk[u] < bestCnt) { bestCnt = degUnk[u]; bestU = u; } }
-    if (bestU < 0) return;
-    const cands = cellEdges[bestU].filter(e => state[e] === 0);
-    for (const e of cands) {
-      if (capped || count >= limit) break;
-      /* snapshot for undo: state + uf + deg arrays (m bytes + 4n ints — cheap) */
-      const stB = state.slice(); const ufB = parent.slice(); const szB = size.slice(); const chB = degCh.slice(); const unB = degUnk.slice();
-      const dl0 = dirty.length;
-      if (setEdge(e, 1) && propagateAll()) branch();
-      if (capped || count >= limit) return;
-      /* restore */
-      state.set(stB); parent.set(ufB); size.set(szB); degCh.set(chB); degUnk.set(unB);
-      dirty.length = dl0;
-      /* second branch: forbid the edge */
-      if (setEdge(e, -1) && propagateAll()) branch();
-      state.set(stB); parent.set(ufB); size.set(szB); degCh.set(chB); degUnk.set(unB);
-      dirty.length = dl0;
-      return; /* only branch on ONE edge per level (binary: chosen/forbidden) */
+  let best = null, nodes = 0;
+  const starts = [];
+  for (let i = 0; i < n; i++) starts.push(i);
+  for (let rep = 0; rep < 6 && (!best || best.length < minLen); rep++) {
+    for (let i = starts.length - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; const t = starts[i]; starts[i] = starts[j]; starts[j] = t; }
+    for (const s of starts) {
+      if (best && best.length >= minLen) break;
+      if (nodes > nodeBudget) break;
+      const adjCount = new Int8Array(n);
+      const inPath = new Uint8Array(n);
+      const path = [s]; inPath[s] = 1;
+      for (const v of nbs[s]) adjCount[v] = 1;
+      const rec = (head) => {
+        const L = path.length;
+        if (L >= 4 && nbs[head].includes(s) && adjCount[s] === 2 && adjCount[path[1]] === 2) {
+          if (!best || L > best.length) best = path.slice();
+        }
+        if (nodes > nodeBudget) return;
+        const cands = nbs[head].filter(v => !inPath[v] && (adjCount[v] === 1 || (adjCount[v] === 2 && nbs[v].includes(s))));
+        for (let i = cands.length - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; const t = cands[i]; cands[i] = cands[j]; cands[j] = t; }
+        for (const v of cands) {
+          if (nodes > nodeBudget) return;
+          if (best && best.length >= minLen && nodes > 8192) return;
+          nodes++;
+          path.push(v); inPath[v] = 1;
+          for (const u of nbs[v]) adjCount[u]++;
+          rec(v);
+          path.pop(); inPath[v] = 0;
+          for (const u of nbs[v]) adjCount[u]--;
+        }
+      };
+      rec(s);
+      if (nodes > nodeBudget) break;
     }
   }
-  branch();
-  const out = { count };
-  if (firstCycle) out.cycle = firstCycle;
-  if (cycles.length > 1) out.cycles = cycles;
-  if (capped) out.CAP = true;
-  return out;
-}
-function findOneHC(g, budget, rand) {
-  const r = solveHC(g, 1, budget);
-  if (r.CAP) return 'CAP';
-  return r.cycle || null;
-}
-function countHC(g, budget, limit) {
-  return solveHC(g, limit, budget);
+  return best; /* array of cell ids in cycle order, or null */
 }
 
-/* ---------- independent solver: enumerate all (shading, cycle) solutions ---------- */
-/* clues: [{r,c,d,n}]. Returns {solutions:[{shaded:[ids...]}], capped?:true, explored:n} */
+/* ---------- attempt construction ---------- */
+function buildAttempt(w, h, ns, rng, covMin) {
+  const n = w * h;
+  const minLen = Math.max(8, Math.ceil(covMin * n));
+  const cyc = genCycle(w, h, rng, minLen, 300000);
+  if (!cyc || cyc.length < Math.max(8, Math.ceil(0.4 * n))) return null;
+  const cycSet = new Set(cyc);
+  const holes = [];
+  for (let i = 0; i < n; i++) if (!cycSet.has(i)) holes.push(i);
+  /* pick ns pairwise non-adjacent hole cells as the intended shading */
+  const holeArr = holes.slice();
+  for (let i = holeArr.length - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; const t = holeArr[i]; holeArr[i] = holeArr[j]; holeArr[j] = t; }
+  const shadeSet = new Set();
+  const shadeAdj = new Set();
+  for (const cand of holeArr) {
+    if (shadeSet.size >= ns) break;
+    if (shadeAdj.has(cand)) continue;
+    shadeSet.add(cand);
+    const r = (cand / w) | 0, c = cand % w;
+    for (const [dr, dc] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < h && nc >= 0 && nc < w) shadeAdj.add(nr * w + nc);
+    }
+  }
+  if (shadeSet.size < ns) return null;
+  /* every remaining hole becomes a clue */
+  const clueCells = holes.filter(x => !shadeSet.has(x));
+  if (clueCells.length < 3) return null;
+  /* coverage-aimed direction choice */
+  const covered = new Uint8Array(n);
+  const clues = [];
+  for (const cc of clueCells) {
+    const r = (cc / w) | 0, c = cc % w;
+    const opts = [];
+    for (const d of DIRLIST) {
+      const [dr, dc] = DIRS[d];
+      let rr = r + dr, cc2 = c + dc, cnt = 0, fresh = 0;
+      const ray = [];
+      while (rr >= 0 && rr < h && cc2 >= 0 && cc2 < w) {
+        const id = rr * w + cc2; ray.push(id);
+        if (shadeSet.has(id)) cnt++;
+        if (!covered[id]) fresh++;
+        rr += dr; cc2 += dc;
+      }
+      opts.push({ d, n: cnt, fresh, ray });
+    }
+    const nonZero = opts.filter(o => o.n > 0);
+    const pool = nonZero.length ? nonZero : opts;
+    pool.sort((a, b) => b.fresh - a.fresh);
+    const pick = pool[0];
+    clues.push({ r, c, d: pick.d, n: pick.n });
+    for (const id of pick.ray) covered[id] = 1;
+  }
+  const shaded = [...shadeSet].sort((a, b) => a - b).map(id => [(id / w) | 0, id % w]);
+  const hc = cyc.map(id => [(id / w) | 0, id % w]);
+  return { w, h, clues, shaded, hc, holes: holes.length };
+}
+
+/* ---------- independent exhaustive solver (uniqueness proof) ---------- */
 let ENUM_DEADLINE = 0;
-function enumerateSolutions(w, h, clues, budgetNodes, hcBudget) {
-  const N = w * h;
-  const clueCell = new Int8Array(N).fill(-1); // index into clues or -1
-  clues.forEach((cl, i) => { clueCell[cl.r * w + cl.c] = i; });
-  /* rays: for each clue, list of N-ids in its direction */
-  const rays = clues.map(cl => { const out = []; let r = cl.r + DIRS[cl.d][0], c = cl.c + DIRS[cl.d][1]; while (r >= 0 && r < h && c >= 0 && c < w) { out.push(r * w + c); r += DIRS[cl.d][0]; c += DIRS[cl.d][1]; } return out; });
-  /* for each cell, clues whose ray includes it */
-  const cellRays = Array.from({ length: N }, () => []);
-  rays.forEach((ray, ci) => ray.forEach(id => cellRays[id].push(ci)));
-  /* remaining unassigned ray cells after index i (row-major) for bound pruning */
-  const order = []; for (let id = 0; id < N; id++) if (clueCell[id] < 0) order.push(id);
-  const posInOrder = new Int32Array(N).fill(-1);
-  order.forEach((id, i) => { posInOrder[id] = i; });
-  /* for each clue: sorted ray positions in order */
-  const rayOrderPos = rays.map(ray => ray.map(id => posInOrder[id]).filter(p => p >= 0).sort((a, b) => a - b));
 
-  const shaded = new Uint8Array(N);
-  const cnts = new Int32Array(clues.length);
+function enumerateSolutions(w, h, clues, nodeCap) {
+  const n = w * h;
+  const clueSet = new Set(clues.map(c => c.r * w + c.c));
+  const order = [];
+  for (let i = 0; i < n; i++) if (!clueSet.has(i)) order.push(i);
+  const posInOrder = new Int32Array(n).fill(-1);
+  order.forEach((id, oi) => { posInOrder[id] = oi; });
+  const nbs = new Array(n);
+  for (let i = 0; i < n; i++) {
+    const r = (i / w) | 0, c = i % w, a = [];
+    if (r > 0 && !clueSet.has(i - w)) a.push(i - w);
+    if (r < h - 1 && !clueSet.has(i + w)) a.push(i + w);
+    if (c > 0 && !clueSet.has(i - 1)) a.push(i - 1);
+    if (c < w - 1 && !clueSet.has(i + 1)) a.push(i + 1);
+    nbs[i] = a;
+  }
+  /* per-clue ray cells as sorted order-positions; cnt = shaded so far;
+   * hi = index of first ray position not yet decided */
+  const clueRays = clues.map(cl => {
+    const [dr, dc] = DIRS[cl.d];
+    let rr = cl.r + dr, cc = cl.c + dc;
+    const pos = [];
+    while (rr >= 0 && rr < h && cc >= 0 && cc < w) {
+      const p = posInOrder[rr * w + cc];
+      if (p >= 0) pos.push(p);
+      rr += dr; cc += dc;
+    }
+    pos.sort((a, b) => a - b);
+    return { n: cl.n, pos, cnt: 0, hi: 0 };
+  });
+  const raysOf = new Map();
+  clueRays.forEach((cr, ci) => cr.pos.forEach(p => {
+    if (!raysOf.has(p)) raysOf.set(p, []);
+    raysOf.get(p).push(ci);
+  }));
+  const state = new Int8Array(order.length); /* 0 undec 1 shaded 2 free */
+  const freeDeg = new Int8Array(n);           /* decided-free neighbour count */
+  const undecNbr = new Int8Array(n);
+  for (let i = 0; i < n; i++) if (!clueSet.has(i)) undecNbr[i] = nbs[i].length;
   const solutions = [];
-  let nodes = 0; let capped = false; let done2 = false;
-  /* chessboard balance: any Hamiltonian cycle needs equal A/B free cells, so the
-   * shading's colour sum is pinned: sum(sign of shaded) == sum(sign of all non-clue).
-   * degree: shading only reduces free degrees — a settled-unshaded cell below degree 2
-   * can never recover, so that branch is dead. */
-  const sign = new Int8Array(N);
-  let TOTAL = 0;
-  for (let id = 0; id < N; id++) { sign[id] = ((Math.floor(id / w) + (id % w)) % 2 === 0) ? 1 : -1; if (clueCell[id] < 0) TOTAL += sign[id]; }
-  const freeDeg = new Int8Array(N);
-  for (let id = 0; id < N; id++) {
-    if (clueCell[id] >= 0) continue;
-    const r = Math.floor(id / w), c = id % w; let d = 0;
-    if (r > 0 && clueCell[id - w] < 0) d++;
-    if (r < h - 1 && clueCell[id + w] < 0) d++;
-    if (c > 0 && clueCell[id - 1] < 0) d++;
-    if (c < w - 1 && clueCell[id + 1] < 0) d++;
-    freeDeg[id] = d;
-  }
-  let cur = 0; /* sum of signs of shaded so far */
-  /* undecided A/B counts per prefix, for the balance range prune */
-  const remA = new Int32Array(order.length + 1);
-  const remB = new Int32Array(order.length + 1);
-  remA[order.length] = 0; remB[order.length] = 0;
-  for (let i = order.length - 1; i >= 0; i--) {
-    remA[i] = remA[i + 1] + (sign[order[i]] === 1 ? 1 : 0);
-    remB[i] = remB[i + 1] + (sign[order[i]] === -1 ? 1 : 0);
+  let nodes = 0, capped = false, done2 = false;
+
+  function leafOk() {
+    const freeCells = [];
+    for (let oi = 0; oi < order.length; oi++) if (state[oi] === 2) freeCells.push(order[oi]);
+    if (freeCells.length < 4) return false;
+    const mark = new Uint8Array(n);
+    const st = [freeCells[0]]; mark[freeCells[0]] = 1; let vis = 1;
+    while (st.length) {
+      const u = st.pop();
+      for (const v of nbs[u]) if (!mark[v] && state[posInOrder[v]] === 2) { mark[v] = 1; vis++; st.push(v); }
+    }
+    return vis === freeCells.length;
   }
 
-  function countHCFor(shadedArr) {
-    /* build blocked set: clue cells + shaded */
-    const blocked = new Set();
-    clues.forEach(cl => blocked.add(cl.r + ',' + cl.c));
-    shadedArr.forEach(id => blocked.add(Math.floor(id / w) + ',' + (id % w)));
-    const g = gridGraph(w, h, blocked);
-    /* the game (checkWin) accepts ANY single cycle over the free cells — every
-     * Hamiltonian cycle covers the same cell set, so cycle multiplicity is invisible
-     * to the player. Existence is all a leaf needs. */
-    const res = solveHC(g, 1, hcBudget);
-    return res;
-  }
-
-  function rec(oi) {
-    if (capped || done2) return;
-    if (++nodes > budgetNodes) { capped = true; return; }
-    if ((nodes & 511) === 0 && Date.now() > ENUM_DEADLINE) { capped = true; return; }
+  function dfs(oi) {
+    if (done2) return;
+    if (++nodes > nodeCap || (nodes % 256 === 0 && Date.now() > ENUM_DEADLINE)) { capped = true; done2 = true; return; }
     if (oi === order.length) {
-      /* full assignment: verify all clue counts (should hold by construction) then HC */
-      const shadedArr = [];
-      for (let id = 0; id < N; id++) if (shaded[id]) shadedArr.push(id);
-      const res = countHCFor(shadedArr);
-      if (res.CAP) { capped = true; return; }
-      if (res.count > 0) {
-        solutions.push({ shaded: shadedArr, hcCount: res.count });
-        if (solutions.length >= 4) { done2 = true; return; } /* enough competitors for the refinement signal */
+      if (leafOk()) {
+        solutions.push({ shaded: order.filter((id, k) => state[k] === 1) });
+        if (solutions.length >= 4) done2 = true;
       }
       return;
     }
     const id = order[oi];
-    const r = Math.floor(id / w), c = id % w;
-    /* balance feasibility: future shadings move cur by +1 (A) or -1 (B) or 0 (unshaded);
-     * final cur must equal TOTAL exactly */
-    {
-      const gap = TOTAL - cur;
-      if (gap > remA[oi] || -gap > remB[oi]) return;
-    }
-    /* try shaded */
-    let canShade = true;
-    if (r > 0 && shaded[id - w]) canShade = false;
-    if (c > 0 && shaded[id - 1]) canShade = false;
-    if (canShade) {
+    const myRays = raysOf.get(oi) || [];
+    /* --- SHADED branch --- */
+    let okShade = true;
+    for (const nb2 of nbs[id]) if (state[posInOrder[nb2]] === 1) { okShade = false; break; }
+    if (okShade) for (const ci of myRays) if (clueRays[ci].cnt + 1 > clueRays[ci].n) { okShade = false; break; }
+    if (okShade) {
+      state[oi] = 1;
+      for (const ci of myRays) clueRays[ci].cnt++;
       let ok = true;
-      for (const ci of cellRays[id]) { if (cnts[ci] + 1 > clues[ci].n) { ok = false; break; } }
-      if (ok) {
-        /* degree: shading id lowers neighbours' free degree */
-        let dead = false;
-        const nbs = [];
-        if (r > 0 && clueCell[id - w] < 0) nbs.push(id - w);
-        if (r < h - 1 && clueCell[id + w] < 0) nbs.push(id + w);
-        if (c > 0 && clueCell[id - 1] < 0) nbs.push(id - 1);
-        if (c < w - 1 && clueCell[id + 1] < 0) nbs.push(id + 1);
-        for (const nb of nbs) { freeDeg[nb]--; if (freeDeg[nb] < 2 && !shaded[nb] && posInOrder[nb] < oi) dead = true; }
-        if (!dead) {
-          for (const ci of cellRays[id]) cnts[ci]++;
-          shaded[id] = 1; cur += sign[id];
-          rec(oi + 1);
-          shaded[id] = 0; cur -= sign[id];
-          for (const ci of cellRays[id]) cnts[ci]--;
-        }
-        for (const nb of nbs) freeDeg[nb]++;
+      for (const nb2 of nbs[id]) {
+        undecNbr[nb2]--;
+        if (state[posInOrder[nb2]] === 2 && freeDeg[nb2] + undecNbr[nb2] < 2) ok = false;
       }
+      if (ok) {
+        for (const ci of myRays) { const cr = clueRays[ci]; while (cr.hi < cr.pos.length && cr.pos[cr.hi] <= oi) cr.hi++; }
+        dfs(oi + 1);
+        for (const ci of myRays) { const cr = clueRays[ci]; while (cr.hi > 0 && cr.pos[cr.hi - 1] > oi) cr.hi--; }
+      }
+      for (const nb2 of nbs[id]) undecNbr[nb2]++;
+      for (const ci of myRays) clueRays[ci].cnt--;
+      state[oi] = 0;
     }
-    if (capped) return;
-    /* try unshaded: check each clue covering id can still reach n with remaining cells */
-    let ok = true;
-    for (const ci of cellRays[id]) {
-      if (cnts[ci] === clues[ci].n) continue; /* already exact — fine */
-      /* need more shaded among ray cells later than id */
-      const rop = rayOrderPos[ci];
-      let later = 0;
-      for (let x = 0; x < rop.length; x++) if (rop[x] > oi) later++;
-      if (cnts[ci] + later < clues[ci].n) { ok = false; break; }
+    /* --- FREE branch --- */
+    let okFree = true;
+    for (const ci of myRays) {
+      const cr = clueRays[ci];
+      const rem = cr.pos.length - cr.hi; /* ray cells at position >= oi still open */
+      if (cr.cnt + rem < cr.n) { okFree = false; break; }
     }
-    if (ok) rec(oi + 1);
+    if (okFree) {
+      state[oi] = 2;
+      const bumped = [];
+      let ok = true;
+      for (const nb2 of nbs[id]) undecNbr[nb2]--;
+      for (const nb2 of nbs[id]) {
+        if (state[posInOrder[nb2]] === 2) {
+          freeDeg[id]++; freeDeg[nb2]++; bumped.push(nb2);
+          if (freeDeg[id] > 2 || freeDeg[nb2] > 2) { ok = false; break; }
+        }
+      }
+      if (ok && freeDeg[id] + undecNbr[id] < 2) ok = false; /* can never reach degree 2 */
+      if (ok) for (const nb2 of nbs[id]) if (state[posInOrder[nb2]] === 2 && freeDeg[nb2] + undecNbr[nb2] < 2) ok = false;
+      if (ok) {
+        for (const ci of myRays) { const cr = clueRays[ci]; while (cr.hi < cr.pos.length && cr.pos[cr.hi] <= oi) cr.hi++; }
+        dfs(oi + 1);
+        for (const ci of myRays) { const cr = clueRays[ci]; while (cr.hi > 0 && cr.pos[cr.hi - 1] > oi) cr.hi--; }
+      }
+      for (const nb2 of bumped) freeDeg[nb2]--;
+      freeDeg[id] = 0; for (const nb2 of nbs[id]) if (state[posInOrder[nb2]] === 2) freeDeg[id]++;
+      for (const nb2 of nbs[id]) undecNbr[nb2]++;
+      state[oi] = 0;
+    }
   }
-  rec(0);
-  const out = { solutions, explored: nodes };
-  if (done2) out.multi = true; /* >=4 found (definitely not unique) */
-  if (capped) out.capped = true; /* budget exhausted with <2 solutions: proof incomplete */
-  return out;
+  dfs(0);
+  return { solutions, capped, multi: solutions.length >= 2, nodes };
 }
 
-/* ---------- level construction ---------- */
-function clueCountInDir(w, h, shadeSet, r, c, d) {
-  let cnt = 0; let nr = r + DIRS[d][0], nc = c + DIRS[d][1];
-  while (nr >= 0 && nr < h && nc >= 0 && nc < w) { if (shadeSet.has(nr + ',' + nc)) cnt++; nr += DIRS[d][0]; nc += DIRS[d][1]; }
+/* ---------- clue refinement until unique ---------- */
+function countRay(w, h, shadeSet, cl, d) {
+  const [dr, dc] = DIRS[d];
+  let rr = cl.r + dr, cc = cl.c + dc, cnt = 0;
+  while (rr >= 0 && rr < h && cc >= 0 && cc < w) {
+    if (shadeSet.has(rr * w + cc)) cnt++;
+    rr += dr; cc += dc;
+  }
   return cnt;
 }
 
-/* Greedy incremental hole placement: start from the full grid (Hamiltonian cycle always
- * exists there) and add holes one at a time, each accepted only when the propagation
- * solver still finds a cycle over the remainder (instant checks). Chessboard color
- * balance is kept feasible throughout and exactly zero at the end (necessary for any
- * cycle). Returns {holes, cycle} or null. */
-function placeHoles(w, h, totalHoles, rng) {
-  /* best-effort: add balanced opposite-color pairs while cycles still exist */
-  const cells = [];
-  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) cells.push([r, c]);
-  for (let i = cells.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); const t = cells[i]; cells[i] = cells[j]; cells[j] = t; }
-  const used = new Set();
-  const blocked = new Set();
-  let cycle = null;
-  let placed = 0;
-  let i = 0;
-  let stall = 0;
-  while (placed < totalHoles && stall < cells.length) {
-    while (i < cells.length && used.has(cells[i][0] + ',' + cells[i][1])) i++;
-    if (i >= cells.length) break;
-    const c1 = cells[i];
-    const col1 = (c1[0] + c1[1]) % 2;
-    /* try up to 6 distinct opposite-color partners for c1 */
-    /* phase 1 (placed < 60% of target): accept while ANY Hamiltonian cycle exists.
-     * phase 2: accept only when exactly ONE cycle remains — clue directions can never
-     * separate multiple cycles of the same shading, so loop-uniqueness must be built
-     * into the geometry itself. */
-    let success = false;
-    let tried = 0;
-    for (let j2 = i + 1; j2 < cells.length && tried < 6 && !success; j2++) {
-      const c2 = cells[j2];
-      if (used.has(c2[0] + ',' + c2[1]) || (c2[0] + c2[1]) % 2 === col1) continue;
-      tried++;
-      blocked.add(c1[0] + ',' + c1[1]);
-      blocked.add(c2[0] + ',' + c2[1]);
-      const g = gridGraph(w, h, blocked);
-      const res = solveHC(g, 1, 250000); /* existence check only (killCycles enforces uniqueness later) */
-      const ok1 = !!res.cycle && res.cycle.length === g.n;
-      if (ok1) {
-        cycle = res.cycle.map(ix => g.cells[ix]);
-        used.add(c1[0] + ',' + c1[1]);
-        used.add(c2[0] + ',' + c2[1]);
-        placed += 2;
-        success = true;
-        stall = 0;
-      } else {
-        blocked.delete(c1[0] + ',' + c1[1]);
-        blocked.delete(c2[0] + ',' + c2[1]);
-        used.add(c2[0] + ',' + c2[1]); /* retire this partner for now */
-        stall++;
-      }
-    }
-    if (!success) used.add(c1[0] + ',' + c1[1]); /* c1 hopeless with several partners */
-    i++;
-  }
-  return { holes: Array.from(blocked).map(k => k.split(',').map(Number)), cycle, placed };
-}
-
-/* Post-pass: while the free graph admits >1 Hamiltonian cycle, take a witness second
- * cycle C2 and block TWO cells that lie on C2 but not on the intended cycle C1 (C1
- * therefore survives, C2 dies; chessboard balance is preserved by pairing). Each extra
- * cell becomes a clue. Returns {blocked, cycle} of a uniquely-cycled graph or null. */
-function killCycles(w, h, blocked, cycle1, rng, capNodes) {
-  let C1 = new Set(cycle1.map(p => p[0] + ',' + p[1]));
-  let cycle = cycle1;
-  for (let iter = 0; iter < 30; iter++) {
-    const g = gridGraph(w, h, blocked);
-    const res = solveHC(g, 2, capNodes);
-    if (res.CAP) return null;
-    if (res.count === 0) return null; /* C1 must always survive; solver disagrees -> bail */
-    if (res.count === 1) {
-      if (res.cycle) cycle = res.cycle.map(ix => g.cells[ix]);
-      return { blocked, cycle };
-    }
-    /* res.count >= 2: use the recorded witness cycles */
-    const witnesses = res.cycles || [];
-    let pair = null;
-    for (const cyc of witnesses) {
-      const cells = cyc.map(ix => g.cells[ix]);
-      if (cells.length !== g.n) continue; /* paranoia: every solution covers all free cells */
-      const diff = cells.filter(p => !C1.has(p[0] + ',' + p[1]));
-      if (diff.length >= 2) { pair = [diff[Math.floor(rng() * diff.length)], diff[Math.floor(rng() * diff.length)]]; 
-        if (pair[0] === pair[1]) { pair[1] = diff.find(p => p !== pair[0]); } 
-        if (pair[0] && pair[1] && pair[0] !== pair[1]) break; pair = null; }
-    }
-    if (!pair) return null;
-    blocked.add(pair[0][0] + ',' + pair[0][1]);
-    blocked.add(pair[1][0] + ',' + pair[1][1]);
-  }
-  return null;
-}
-
-function buildAttempt(w, h, ns, kClues, rng) {
-  let total = ns + kClues;
-  if (total < 4) total = 4;
-  if (total % 2) total--;
-  const ph = placeHoles(w, h, total, rng);
-  if (!ph.cycle) return null;
-  const holes = ph.holes;
-  if (holes.length < ns + 4) return null; /* too few holes for shaded+minimal clues */
-  const phCycle = ph.cycle;
-  /* shaded: ns of the holes, non-adjacent, chosen randomly */
-  let shaded = null;
-  for (let t = 0; t < 200; t++) {
-    const idx = holes.map((_, i) => i);
-    for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); const q = idx[i]; idx[i] = idx[j]; idx[j] = q; }
-    const pick = idx.slice(0, ns);
-    const set = new Set(pick.map(i => holes[i][0] + ',' + holes[i][1]));
-    let ok = true;
-    for (const d of DIRLIST) for (const p of pick) { const nr = holes[p][0] + DIRS[d][0], nc = holes[p][1] + DIRS[d][1]; if (set.has(nr + ',' + nc)) ok = false; }
-    if (ok) { shaded = pick.map(i => holes[i]); break; }
-  }
-  if (!shaded) return null;
-  const shadeSet = new Set(shaded.map(x => x[0] + ',' + x[1]));
-  const clueCells = holes.filter(hh => !shadeSet.has(hh[0] + ',' + hh[1]));
-  if (clueCells.length < 4) return null;
-  /* clue directions: among directions with a non-zero count (preferred for solvability)
-   * pick the one whose ray covers the most still-uncovered free cells — full ray
-   * coverage makes the uniqueness enumeration tractable (every cell count-bound). */
-  const covered = new Set();
-  shadeSet.forEach(k => covered.add(k));
-  const clues = clueCells.map(cl => {
-    const opts = DIRLIST.map(d => {
-      const n = clueCountInDir(w, h, shadeSet, cl[0], cl[1], d);
-      const ray = [];
-      let nr = cl[0] + DIRS[d][0], nc = cl[1] + DIRS[d][1];
-      while (nr >= 0 && nr < h && nc >= 0 && nc < w) { ray.push(nr + ',' + nc); nr += DIRS[d][0]; nc += DIRS[d][1]; }
-      const fresh = ray.filter(k => !covered.has(k)).length;
-      return { d, n, fresh, ray };
-    });
-    const nz = opts.filter(x => x.n > 0);
-    const pool = nz.length ? nz : opts;
-    pool.sort((a, b) => b.fresh - a.fresh);
-    const pick = pool[0];
-    pick.ray.forEach(k => covered.add(k));
-    return { r: cl[0], c: cl[1], d: pick.d, n: pick.n };
-  });
-  return { w, h, clues, shaded, hcPath: phCycle, graphN: phCycle.length };
-}
-
-/* After building an attempt, iteratively re-aim clue directions to kill competing
- * solutions: solve, and while >1 solution exists, find a clue cell whose ray counts
- * differ between the first two solutions and point that clue along such a ray
- * (value recomputed from the intended shading). Returns final clues or null. */
-function rayCount(w, h, shadeSet, r, c, d) { return clueCountInDir(w, h, shadeSet, r, c, d); }
-
-function refineUnique(w, h, attempt, nodeCap, hcBudget) {
-  const intended = new Set(attempt.shaded.map(x => x[0] + ',' + x[1]));
-  const clues = attempt.clues.map(cl => ({ r: cl.r, c: cl.c, d: cl.d, n: cl.n }));
-  for (let iter = 0; iter < 12; iter++) {
-    ENUM_DEADLINE = Date.now() + (600 + w * h * 12); /* 5x6: 0.96s, 8x8: 1.37s, 12x12: 2.3s */
-    let sol = enumerateSolutions(w, h, clues, Math.min(nodeCap, 1200000), hcBudget);
-    /* near-unique candidate: pay ONE big-budget exhaustive pass for the real proof */
-    if (sol.capped && sol.solutions.length === 1) {
-      ENUM_DEADLINE = Date.now() + 9000;
-      const sol2 = enumerateSolutions(w, h, clues, 9000000, hcBudget);
-      if (!sol2.capped && sol2.solutions.length === 1) sol = sol2;
-    }
-    if (sol.capped && sol.solutions.length < 2) return null; /* proof incomplete */
-    if (sol.solutions.length === 0) return null; /* intended always satisfies -> solver bug, drop */
+function refineUnique(w, h, attempt, nodeCap) {
+  const intended = new Set(attempt.shaded.map(s => s[0] * w + s[1]));
+  const cur = () => attempt.clues.map(c => ({ r: c.r, c: c.c, d: c.d, n: c.n }));
+  for (let iter = 0; iter < 14; iter++) {
+    ENUM_DEADLINE = Date.now() + (600 + w * h * 12);
+    const sol = enumerateSolutions(w, h, attempt.clues, nodeCap);
+    if (sol.capped && sol.solutions.length < 2) return null; /* unprovable within caps */
+    if (sol.solutions.length === 0) return null;             /* generator inconsistency */
     if (sol.solutions.length === 1) {
-      const got = new Set(sol.solutions[0].shaded.map(id => Math.floor(id / w) + ',' + (id % w)));
-      if (got.size !== intended.size) return null;
-      for (const k of intended) if (!got.has(k)) return null;
-      if (!(sol.solutions[0].hcCount >= 1)) return null; /* intended shading must admit at least one loop */
-      return clues;
+      const got = sol.solutions[0].shaded;
+      const match = got.length === intended.size && got.every(id => intended.has(id));
+      return match ? cur() : null;
     }
-    /* set-cover greedy: rank (clue,dir) by how many observed competitors it kills
-     * (value always taken from the intended shading) and apply the two best on
-     * distinct clues per round */
-    const rank = [];
-    for (let ci = 0; ci < clues.length; ci++) {
-      const cl = clues[ci];
+    const comps = sol.solutions.filter(s => !(s.shaded.length === intended.size && s.shaded.every(id => intended.has(id))));
+    const ranked = [];
+    for (let i = 0; i < attempt.clues.length; i++) {
+      const c = attempt.clues[i];
       for (const d of DIRLIST) {
-        const want = rayCount(w, h, intended, cl.r, cl.c, d);
-        let kill = 0;
-        for (const su of sol.solutions) {
-          const sc = new Set(su.shaded);
-          if (rayCount(w, h, sc, cl.r, cl.c, d) !== want) kill++;
+        const nInt = countRay(w, h, intended, c, d);
+        let kills = 0;
+        for (const s of comps) {
+          const sset = new Set(s.shaded);
+          if (countRay(w, h, sset, c, d) !== nInt) kills++;
         }
-        rank.push({ ci, d, kill });
+        if (kills > 0) ranked.push({ i, d, n: nInt, kills });
       }
     }
-    rank.sort((a, b) => b.kill - a.kill);
-    if (!rank.length || rank[0].kill <= 0) return null; /* nothing separates any competitor */
-    const seenClues = new Set();
-    let applied = 0;
-    for (const rk of rank) {
-      if (seenClues.has(rk.ci)) continue;
-      if (rk.kill <= 0) break;
-      seenClues.add(rk.ci);
-      const cl = clues[rk.ci];
-      cl.d = rk.d;
-      cl.n = rayCount(w, h, intended, cl.r, cl.c, rk.d);
-      applied++;
+    ranked.sort((a, b) => b.kills - a.kills);
+    if (!ranked.length) return null;
+    let applied = 0; const usedClue = new Set();
+    for (const rk of ranked) {
       if (applied >= 2) break;
+      if (usedClue.has(rk.i)) continue;
+      attempt.clues[rk.i].d = rk.d; attempt.clues[rk.i].n = rk.n;
+      usedClue.add(rk.i); applied++;
     }
-    if (!applied) return null;
   }
   return null;
 }
 
+/* ---------- run ---------- */
 function run() {
   const outIdx = process.argv.indexOf('--out');
   const outPath = outIdx >= 0 ? process.argv[outIdx + 1] : OUT_DEFAULT;
+  let SALT = 0;
+  const saltIdx = process.argv.indexOf('--salt');
+  if (saltIdx >= 0) SALT = parseInt(process.argv[saltIdx + 1], 10) || 0;
   const onlyIdx = process.argv.indexOf('--only');
   if (onlyIdx >= 0) {
     const keep = process.argv[onlyIdx + 1].split(',').map(x => parseInt(x, 10));
     for (let ci = CONFIGS.length - 1; ci >= 0; ci--) if (!keep.includes(ci)) CONFIGS.splice(ci, 1);
-    /* renumber indices deterministically by original position */
     CONFIGS.origIndex = keep;
   }
-  const saltIdx = process.argv.indexOf('--salt');
-  const SALT = saltIdx >= 0 ? (parseInt(process.argv[saltIdx + 1], 10) || 0) : 0;
   const dailyIdx = process.argv.indexOf('--daily');
-  const dailyN = dailyIdx >= 0 ? parseInt(process.argv[dailyIdx + 1], 10) || 0 : 0;
-  if (dailyN > 0) {
-    if (process.argv.includes('--only-daily')) CONFIGS.length = 0;
-    for (let d = 0; d < dailyN; d++) CONFIGS.push({ w: 8, h: 8, ns: 5 + (d % 3), par: 240 });
+  if (dailyIdx >= 0 && process.argv.includes('--only-daily')) {
+    const dailyN = parseInt(process.argv[dailyIdx + 1], 10) || 7;
+    CONFIGS.length = 0;
+    for (let d = 0; d < dailyN; d++) CONFIGS.push({ w: 8, h: 8, ns: 4, par: 240 });
   }
-  const LEVEL_BUDGET_MS = 90000;
-  const results = [];
-  const report = [];
+  const t00 = Date.now();
+  const levels = [];
+  const reportMs = [];
+  let okCount = 0;
+  outer:
   for (let i = 0; i < CONFIGS.length; i++) {
     const cfg = CONFIGS[i];
+    const lvl = CONFIGS.origIndex ? CONFIGS.origIndex[i] : i;
     const t0 = Date.now();
-    let level = null; let attempts = 0; let nsUsed = cfg.ns;
-    const nsPlan = [cfg.ns, cfg.ns - 1, cfg.ns + 1, cfg.ns - 2, cfg.ns + 2, cfg.ns - 3, cfg.ns + 3, cfg.ns - 4];
-    const kPlan = [0, 1, -2, 2, -3, 3, -4, 4];
-    outer:
-    for (let round = 0; round < nsPlan.length && !level; round++) {
-      let ns = Math.max(2, nsPlan[round]);
-      if (cfg.w * cfg.h >= 64) ns = Math.min(ns, 4); /* uniqueness enumeration cost scales combinatorially with shaded count */
-      let kBase = Math.min(Math.max(5, Math.round(ns * 1.2) + 2 + Math.floor(cfg.w * cfg.h / 72)), 16);
-      if (cfg.w * cfg.h <= 48) kBase = Math.max(kBase, 8);
-      if (cfg.w * cfg.h >= 64) kBase = Math.max(kBase, ns + 9); /* big boards: denser clues -> enumerable uniqueness */
-      const kClues = Math.max(5, kBase + kPlan[round]);
-      console.error('L' + (i + 1) + ' round ' + round + ' ns=' + ns + ' k=' + kClues);
-      for (let att = 0; att < 60; att++) {
-        if (Date.now() - t0 > 300000) break outer; /* hard per-level cap */
-        if (Date.now() - t0 > LEVEL_BUDGET_MS * (round + 1)) break; /* this round's budget done -> next round params */
+    const nsPlan = [cfg.ns, cfg.ns - 1, cfg.ns + 1, cfg.ns - 2, cfg.ns + 2];
+    const covPlan = [0.5, 0.45, 0.55, 0.42, 0.58];
+    let done = null;
+    let attempts = 0;
+    for (let round = 0; round < nsPlan.length && !done; round++) {
+      const ns = Math.max(2, nsPlan[round]);
+      const cov = covPlan[round % covPlan.length];
+      if (Date.now() - t0 > 90000) break;
+      console.error(`L${lvl + 1} round ${round} ns=${ns} cov=${cov}`);
+      for (let a = 0; a < 200 && !done; a++) {
+        if (Date.now() - t0 > 90000) break;
+        const seedBase = CONFIGS.origIndex ? CONFIGS.origIndex[i] : i;
+        const rng = mulberry32((SALT * 7907 + seedBase * 1299709 + round * 7919 + a * 104729) >>> 0);
+        const cand = buildAttempt(cfg.w, cfg.h, ns, rng, cov);
         attempts++;
-        const keepOrig = CONFIGS.origIndex || null;
-        const rng = mulberry32(9137 + i * 7919 + att * 104729 + ns * 31 + SALT * 7907 + (keepOrig ? keepOrig[i] * 1299709 : 0));
-        const cand = buildAttempt(cfg.w, cfg.h, ns, kClues, rng);
         if (!cand) continue;
-        /* independent solve of the CLUE puzzle only, with iterative clue refinement */
-        const clues = refineUnique(cfg.w, cfg.h, cand, 2500000, Math.max(400000, cfg.w * cfg.h * 12000));
-        if (!clues) continue;
-        level = { w: cfg.w, h: cfg.h, par: cfg.par, clues, shaded: cand.shaded, hc: cand.hcPath };
-        nsUsed = ns;
-        break;
+        const refined = refineUnique(cfg.w, cfg.h, cand, 2500000);
+        if (refined) done = { w: cfg.w, h: cfg.h, par: cfg.par, clues: refined, shaded: cand.shaded, hc: cand.hc };
       }
     }
-    const ms = Date.now() - t0;
-    if (!level) {
-      report.push({ idx: i, cfg, ok: false, attempts, ms });
-      results.push(null);
-      console.error('FAIL level ' + (i + 1) + ' (' + cfg.w + 'x' + cfg.h + ') after ' + attempts + ' attempts, ' + ms + 'ms');
+    if (done) {
+      levels.push(done); okCount++;
+      reportMs.push(Date.now() - t0);
+      console.error(`ok L${lvl + 1} ${cfg.w}x${cfg.h} ns=${nsPlan[0]} clues=${done.clues.length} loop=${done.hc.length} holes=${cfg.w * cfg.h - done.hc.length} attempts=${attempts} ${Date.now() - t0}ms`);
     } else {
-      results.push(level);
-      report.push({ idx: i, cfg, ok: true, attempts, ms, ns: nsUsed, clues: level.clues.length, loopCells: level.hc.length, uniqProof: 'solver enumerated all shadings satisfying clues; exactly 1 with a Hamiltonian cycle (cycle itself unique)' });
-      console.error('ok L' + (i + 1) + ' ' + cfg.w + 'x' + cfg.h + ' ns=' + nsUsed + ' clues=' + level.clues.length + ' loop=' + level.hc.length + ' attempts=' + attempts + ' ' + ms + 'ms');
+      console.error(`FAIL level #${lvl + 1} (${cfg.w}x${cfg.h}) after ${attempts} attempts, ${Date.now() - t0}ms`);
     }
+    if (Date.now() - t00 > 1800000) { console.error('global time cap'); break outer; }
   }
-  const okCount = results.filter(Boolean).length;
+  const payload = { generated: new Date().toISOString(), model: 'induced-cycle (engine checkWin rules 3-5)', configs: CONFIGS.map(c => ({ w: c.w, h: c.h, ns: c.ns, par: c.par })), levels, reportMs };
   if (okCount < CONFIGS.length) {
     console.error('GENERATION INCOMPLETE: ' + okCount + '/' + CONFIGS.length);
     process.exit(1);
   }
-  const payload = { generated: results, report };
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(payload));
-  /* compact embed form: shaded/hc as [r,c] pairs, clues minimal */
-  const embed = results.map(L => ({ w: L.w, h: L.h, par: L.par, clues: L.clues, shaded: L.shaded, hc: L.hc }));
+  const embed = levels.map(L => ({ w: L.w, h: L.h, par: L.par, clues: L.clues, shaded: L.shaded, hc: L.hc }));
   fs.writeFileSync(outPath + '.embed.js', 'var STATIC_LV=' + JSON.stringify(embed) + ';\n');
-  console.log(JSON.stringify({ levels: embed.length, out: outPath, reportMs: report.map(r => r.ms) }));
+  console.error(JSON.stringify({ levels: levels.length, out: outPath, reportMs }));
 }
 run();

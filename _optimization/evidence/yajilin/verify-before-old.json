@@ -1,0 +1,30 @@
+{
+  "finalStdout": {
+    "pass": 0,
+    "fail": 31,
+    "total": 31,
+    "failIdx": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,99],
+    "verdict": "FAIL"
+  },
+  "approach": "vm sandbox loads index.html inline scripts (top-level var globals, no surgery); driver calls the engine's own init() then startLevel(idx) per level 0..29 + daily, each in a child process with a 100s kill timer (the engine's generator has no deadline of its own). Independent validation: arrow clues count the generator's shaded cells; shaded cells non-adjacent. Winnability: cellAction (index.html:443-448) refuses to mark clue cells and checkWin (494-556) requires ALL non-shaded non-clue cells to form one cycle — so a win needs a Hamiltonian cycle over grid - shaded - clues; an independent Warnsdorff+pruning DFS searches it (parity and min-degree proofs close the no-cases), plus a bounded exhaustive search over ALTERNATE shadings (any non-adjacent non-clue set satisfying every clue count). Found solutions are played through the engine's own cellAction; checkWin must show #winOv and persist save.lv to localStorage yajilinV1.",
+  "results": {
+    "dead-buttons": "L3, L4, L5, L10 — genPuzzle returns null after 200 attempts (10-15s of spinning) and startLevel bounces to the title screen: clicking these level buttons never starts a level.",
+    "provably-unwinnable": "L1 (free=23 cells, odd — bipartite grid admits no cycle), L6 (free=17, odd), L2/L8/L9 (some free cell has <2 free neighbors — no cycle possible). For all of these the bounded alternate-shading search (2321-38773 candidates each) found no winnable state either.",
+    "hangs": "L7, L11-L30, daily — the engine's own genPuzzle (200 attempts x unbounded exhaustive findHC DFS, index.html:185-246) still running at the 100s kill timer; in-browser this freezes the tab (single-threaded main thread) on level click.",
+    "engine-own-solution-unplayable": "On every level that did generate, the engine's own hc path crosses clue cells (5-9 of them) — clue cells cannot be loop-marked (cellAction :447 returns early), so even the game's own HINT system (doHint marks hc cells, :500+) teaches a loop that checkWin can never accept."
+  },
+  "issues": [
+    {
+      "severity": "game-breaking",
+      "rootCause": "findHC (index.html:216-247) computes the Hamiltonian cycle over grid minus SHADED cells only; clues are placed on the hc path afterward by makeClues (248-277). Since cellAction (443-448) blocks marking clue cells and checkWin (494-556) requires every non-shaded non-clue cell to be a loop cell with exactly 2 loop neighbors in ONE component, the stored solution can never win: levels with odd free-cell count (L1, L6) are provably unwinnable, L2/L8/L9 fail on min-degree.",
+      "engineLines": [216, 247, 248, 277, 443, 448, 494, 556],
+      "repro": "Start L1, shade the intended cells (or use hints), try to complete the loop: the cells under the arrow clues cannot be marked, so either some non-clue cell stays unmarked or a loop cell ends with !=2 loop neighbors; checkWin never fires."
+    },
+    {
+      "severity": "game-breaking",
+      "rootCause": "genPuzzle (index.html:185-246) gives up after 200 attempts for seeds 303/404/505/1010 (L3/L4/L5/L10): returns null -> startLevel (:394-396) calls showTitle(); the level button silently does nothing. For the larger grids (L7, L11-L30, daily) the attempt loop's exhaustive DFS has no deadline and runs beyond 100s per click, freezing the browser tab.",
+      "engineLines": [185, 246, 394, 396],
+      "repro": "Click level 3/4/5/10 -> returns to title. Click level 11+ -> tab freezes for minutes."
+    }
+  ]
+}

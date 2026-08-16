@@ -312,12 +312,59 @@ const REGION_TINTS=[
   'rgba(255,120,0,.07)','rgba(120,0,255,.07)','rgba(0,255,120,.07)',
   'rgba(255,0,120,.07)','rgba(120,255,0,.07)','rgba(0,120,255,.07)'
 ];
-const LEVELS=[];
-for(let i=1;i<=30;i++){
-  let sz;
-  if(i<=5)sz=6;else if(i<=12)sz=8;else if(i<=22)sz=10;else sz=12;
-  LEVELS.push({id:i,size:sz,difficulty:.3+(i/30)*.25,seed:i*7919+42});
-}
+/* STATIC LEVELS (offline-generated 2026-08-16 by _optimization/scripts/gen-ripple-levels.js
+ * using this engine's own generateRegions/generateSolution/createPuzzle logic).
+ * The runtime generator was retired: its bounded solver needed minutes on many seeds
+ * (measured in-browser L6=171.7s, L14=126.8s, L18=59.6s) and stuck the page on the
+ * generation toast forever. Same 30-level schedule as before: sizes 6/8/10/12,
+ * removal difficulty .30->.55 ascending. Compact fields per entry: rm regionMap
+ * row-major base36; sol solution row-major base36; giv given mask (1=given);
+ * hydrated at play time by hydrateLevel(). DAILY_POOL: 10 puzzles, sizes 8/10/12
+ * cycling, difficulty .45, picked deterministically by day-of-year. */
+const LEVELS=[
+{id:1,size:6,difficulty:0.30833333333333335,seed:7961,rm:"774666744883554233522233519900511100",sol:"312132234213121345512412341231423124",giv:"111111110110001100001101110111011111",maxNum:5},
+{id:2,size:6,difficulty:0.31666666666666665,seed:15880,rm:"266077220087225588435558433911433911",sol:"421312132143251231123452315124234213",giv:"101001101111110011001001111101111111",maxNum:5},
+{id:3,size:6,difficulty:0.325,seed:23799,rm:"222277666277566111548883540003444333",sol:"325142532413214321153214342131231523",giv:"110111011101101101110110101111101010",maxNum:5},
+{id:4,size:6,difficulty:0.3333333333333333,seed:31718,rm:"773111703155403155403222400266448886",sol:"231243142132423514254321531413312132",giv:"100101011010001111110111111101111100",maxNum:5},
+{id:5,size:6,difficulty:0.3416666666666667,seed:39637,rm:"665555114333184433184400227770222700",sol:"213412134153421324215241342135521423",giv:"010111010101111010001011111110011111",maxNum:5},
+{id:6,size:8,difficulty:0.35,seed:47556,rm:"66644499663399992233d0002233dd001111addb887aabbb7777ee55ccccc555",sol:"3412315452412631213542134326134532143521215124321423125453124123",giv:"1100111000001110110011111101111001101110101011100111111100111011",maxNum:6},
+{id:7,size:8,difficulty:0.35833333333333334,seed:55475,rm:"6666aaaa9926ddbb922e000b992e077b833e47bb833444118334ff11cc555511",sol:"3412312421451213423121355312432621635142345132141234215321421362",giv:"1111000110111000100111111101001101100011111111111011101101011011",maxNum:6},
+{id:8,size:8,difficulty:0.36666666666666664,seed:63394,rm:"dd222111dd24411f99bb485f93bb885533bb78553a777g00ea766g00eaaa66cc",sol:"2413254331423121132413122161215442531423342532411341213225124321",giv:"1101110010110101011101011111010111100011011111001101011111010110",maxNum:6},
+{id:9,size:8,difficulty:0.375,seed:71313,rm:"ff09922200009122ed6661bbed6441bbcdd44133cd8aaa35c788aa357788a335",sol:"2152314242131453134123142532413231213215141351432352642112342632",giv:"1011000111111011111101011000100001111000111110111110010010110111",maxNum:6},
+{id:10,size:8,difficulty:0.3833333333333333,seed:79232,rm:"b888ee5fbb38e55fb3333666d1139966d1109442a0004442aa0ccc72aaccc777",sol:"4312132121342132362145131215312423412352542312413254612341325431",giv:"0111010000111011101011110001111110110110111100000101111111011001",maxNum:6},
+{id:11,size:8,difficulty:0.39166666666666666,seed:87151,rm:"660000aa869900aa8899f44a8ee9f45511bbbb3511gb333371g22dcc7222ddcc",sol:"3214351221316253134213244215213224531241512431251312431225312134",giv:"0100011110111011011011101011010010101101000101111111011011100111",maxNum:6},
+{id:12,size:8,difficulty:0.4,seed:95070,rm:"ccc9ee1bcc79991b337add11f37aadd6ff700446f57000465588222655882226",sol:"1431213225123421124312144351234221324135342135215213241313425364",giv:"0110111101011111000011111101011110111100111110010110000101001011",maxNum:6},
+{id:13,size:10,difficulty:0.4083333333333333,seed:102989,rm:"4444aaa55jl3322gg5jjl9332ggccjl93322ffcc999000ffcch9bb0000iih6bb888iiih6kk888mmeh6771111eehh7dd1eeee",sol:"2314123124143521431236521321432161341235432715346215324623545214625123312131421663121325414231243725",giv:"1100001111100000101111111011111000101011101100001010111011111000000110111111111110101011010101011110",maxNum:7},
+{id:14,size:10,difficulty:0.41666666666666663,seed:110908,rm:"37777000663nn55400663995544mm6j9995hggggjfffdhhgggjfdddbeeeecccddb8eee2221bb88kkaaa1188iiiaaa1118lll",sol:"2312451314312531243212341231252541231763142361254231523462371231423154231513462151642152133421362132",giv:"0110010011111111010001110011100000011001001010111110011111111000011110010001110111011101101110111111",maxNum:7},
+{id:15,size:10,difficulty:0.425,seed:118827,rm:"888bb7jj35888b77j335g81177h555gg11eeh665gdaaehhh66ddaee99h66ddiffk9h60d2ifkk990022iii49c002224444ccc",sol:"5163241321374131213512345276432312435712412316132436152142362451326452534213254315312432154263125134",giv:"1011111101001001110010100111100001111000010001011101111110000111010111111111001010011101101000110011",maxNum:7},
+{id:16,size:10,difficulty:0.43333333333333335,seed:126746,rm:"66aafff44466aaaff444cccccf22ee000ii2255el00idd255el033ddggge1113mm89gg113388899gk1hhh8777jkbbbb877jj",sol:"3145631245241325436152341231524121345231135213241326134213243245216245612435213615321415232413214312",giv:"1111100010101101010011011100001111111101011101011110101011010001100101111011000100010101111010000111",maxNum:6},
+{id:17,size:10,difficulty:0.44166666666666665,seed:134665,rm:"55iieee000555ice00005111cc9999a111dd4444aakddd66bb8ak777633b8gg777333b88gj2fff3b88jj22ffhbjjjj222fhh",sol:"6532413625324132713414132143124652131423231452316131263425321215216145643215462325734623145164325132",giv:"0101001100011000111000101111111101000101001111011110100100101110111000010101111010101101111010100111",maxNum:7},
+{id:18,size:10,difficulty:0.44999999999999996,seed:142584,rm:"lgghhh44bblgghh2244b33gff244bb33dffii115kdd777i155kk7777ii55kacc888ee6aacc88eee6aajj8800669999000006",sol:"2143526341132413251234523142351231453124412561231223472314531213547121352412354214123647354231256314",giv:"0001001101111111110111001000101100101100101010001001011110101000111011011110111100110110101100110110",maxNum:7},
+{id:19,size:10,difficulty:0.4583333333333333,seed:150503,rm:"bbb3iiggggbbb3iiaaa8eee3ii778855522277k8j5529977kkjjddd9cckf440dddmchf440066mmhf441666mhhh111116mlll",sol:"3412354231562341231221312631414312135423352431263412635213126131243251531243251342516214323416254321",giv:"1010101110010101110111101001010110101010001001001001000101011111100111001110001001111011000111011110",maxNum:6},
+{id:20,size:10,difficulty:0.4666666666666667,seed:158422,rm:"kbbbggg9ffk4433g99ff04a33399ff00a33555550aa7cc55iiaa77cccc112am7l8811122m7l88hdd2666eehhdd2jj6eeeddd",sol:"1312143526213452134142131724533146215234235142671267321536211214231543342512436121423121545213245237",giv:"1111000101001111110100011011111010011100110100011011100011000111101010110100100101101011100101001100",maxNum:7},
+{id:21,size:10,difficulty:0.475,seed:166341,rm:"ff519999003f51199000355a177eem355a77leemhh446nlljjc4446nbjjjcci666bbbbcci6ddbb88gggkkd2o88gggkk22oo8",sol:"1231426354236421521315213421323412131421214121321542531273425124362531231523461315324131526423121324",giv:"1101000001100110111010001001011111010110011111011011011110000001001110001110101111101111101110000101",maxNum:7},
+{id:22,size:10,difficulty:0.4833333333333333,seed:174260,rm:"n1jjfaa99kn11ffa999k11cfffeeekiicccceeeeiggggc666hmmg77lllhh4md77222004dddb22200444bbb52804333b55880",sol:"2512312432132463521341315246211256243715342531213223124312135143127354423126452136243521361312131213",giv:"1001001111100011110111101101010110111011011010010101010010000011010100100110101110110100111010010001",maxNum:7},
+{id:23,size:12,difficulty:0.4916666666666667,seed:182179,rm:"caaa22233sssccco22f33iiicccoofff33ii999obbbhhnii66611bhhhnn76661bbtdhnn7611100td7777jj100lddrr88je555ldddr88ee5555mmmmmgkkppppqq44ggkppppqqq44gg",sol:"123142365231674351234615235123412173312436123524543712541236761245236412256324125143324132651321131251417234213467324512125341213451387624532143",giv:"101001000111100101010001001000111110100101111111100000100100100100110110001001100100001101111101101100011110010001011110111111101100000101010111",maxNum:8},
+{id:24,size:12,difficulty:0.5,seed:190098,rm:"ggg226777777ggc226hh8a7agccc26hh8aaaeeecjjj18aa0eeejjj111000eeiij111ff00nniiiik1fff0n44i9kkkff3354999kkbfbo3555l999bbbooq55lmmmmppdoq5lllddddddo",sol:"256342135247341213421561132451312473864537143621273625821735517243652142125361475386312432567413734251346152413516723521126324132174251243251643",giv:"101100110111000011001111011110101010111011011010000100110000001000100110101000011111010100101011001010001101001010000101010011101101111101001101",maxNum:8},
+{id:25,size:12,difficulty:0.5083333333333333,seed:198017,rm:"00001112223300411122253644444755555688887779666688aa77999bbbcaaadd9eeeffccaggdheeijjckggddheiijjcclgdmmniijjllloommmpiqqlrrrsmttppqqlrrrsssupqqv",sol:"153216432513462352146125614531263452521643521346342162154123135421312612456314235164214256143215361532416532543121562413231643121346625412314251",giv:"101011111110110110100011111001010011010101111011000001010001110101110011100010101101010110110101001010111010100101011000001101101100100010011011",maxNum:6},
+{id:26,size:12,difficulty:0.5166666666666666,seed:205936,rm:"001111223334000112233554660777738554667799888854a66b9ccd8ee4abbb99ceeef4aggbh9cijekkaaglhhcijjkmagglhhcijjkmngnlohppjqkknnnllrrqqqqqssntlruuuuuu",sol:"461523146253235462314516321645231421653121465234241352613145124136152312316524321653562143516421435261432512143615213246652432165314124153642135",giv:"100100011001011110011101110110000100111010010010111101010110000100010110100110000011110010111011101010110101100011010011010011100011010101110011",maxNum:6},
+{id:27,size:12,difficulty:0.525,seed:213855,rm:"0000112223330011112233435556667784495566aaa884995b6aacc884debbfaccgg8heebbbijjjgghkeliiimjngnneelllljjnnnooolppqqqrrsooopptqqqruvvvwppxxxrrrvwww",sol:"125614315241346235243615234156124321152413651432613241362514461524123161235161435213142315246325324632514136516413121452231256312143453124653214",giv:"001001100001101001001110100110111001001111100001010010000111111110100100011001111011011011000101100101101011100001101100111111010101000101100100",maxNum:6},
+{id:28,size:12,difficulty:0.5333333333333333,seed:221774,rm:"00011123444400011223445566617723355866977aaaab5869977aaccd58999eeffccd88gggeeeccddd8hhheijjkdlllhhiiijjkllmlhniijjokpqmmrnnrskkkpqmtrrrrsssuqqqq",sol:"261435216413354263145236135126432514623542163145416314521623542631254261321452631452163125413124254361245316425136121542131243562131643521316423",giv:"110111111110100111101110010010101110100010011100100010011001001011010100111110001100010011100010100101101110010011100111000100101001000000111011",maxNum:6},
+{id:29,size:12,difficulty:0.5416666666666666,seed:229693,rm:"00001111223300441152223344445556623377888896aaab77788c666aab7dddcccceaffgdhhiiceefffgdhiijjkkkflgdmiijkknoolgmmmjjjknoplgmqqqqrsnollgtqqsssssolu",sol:"463215436125512462153416356134215243634513164352125621342161413256231214241315423625562431516431354263251243131542632512623124163154415631425361",giv:"011001100000101111001011010001101010001100100001111111101101000001101010010101110000110100110000110110000010010010011010111010110011110100010011",maxNum:6},
+{id:30,size:12,difficulty:0.55,seed:237612,rm:"000111223333001112223444506677283449555a7778b4cc5ddaa7e88fcc5daagg88ffchidjjggggkkchidjjjlllkhhhidjmmmkkknhoippmmmqnnnooirrrrssstnnuirrvvssstuuu",sol:"324632542316615413164532452164215141236251321624163542136253541326451312214231542161325613214536653421365243412365131421126152412652534213651314",giv:"011011011001011011010000111101100001010000101101110010111101010110110110000001000111100101101101011000000101001100100011000101000111011010001000",maxNum:6}
+];
+const DAILY_POOL=[
+{id:"d1",size:8,difficulty:0.45,seed:91000007,rm:"711333bb71133a0071d22aa077d222ac66d88ecc665f8eec555f884c99994444",sol:"3241352123542312412352431512141524352132132143213142315442131243",giv:"1110010100111000011010111011010001011010011000101011110111101111",maxNum:5},
+{id:"d2",size:10,difficulty:0.45,seed:91007926,rm:"iiieeell99ijheeelm99ijh111gm00hhhggggbd0ffkk66bbddf22266cbddff22cccc7755228c7777533888a444533888aa44",sol:"5342612342121543121321531241313421352412431214312515762312435213425362214236153434256134214137241253",giv:"0101101111111010110110100111101101001010100110110001100101111011111011100000000001111010101100100101",maxNum:7},
+{id:"d3",size:12,difficulty:0.45,seed:91015845,rm:"000112223344001122523344011655577448999667777a889b66caaaaa889bd6effffff89gdeeeehijjjgggkellhijmjggkklliiimmjnnnoolppiqqqnnooolpprqssntuuuuuussss",sol:"246152143256134263254132563141326413251624135264425316413521612435261345341521624153236243512632513164351214452312416321164251231463315436125142",giv:"001101011011011100100001000101001001111000111101111111010100001001000101011101011011101101110000011110101110101111011000101010101111111011110100",maxNum:6},
+{id:"d4",size:8,difficulty:0.45,seed:91023764,rm:"884455008844450038e4b00933eebb99666eb7cc22611777226a1dd7ff6aaaaa",sol:"4235123131416325251236421324121352134121346213522141321412362435",giv:"1110011010011010100111001000110101011101110010111110110111110001",maxNum:6},
+{id:"d5",size:10,difficulty:0.45,seed:91031683,rm:"001112334500122233450011263344777829944a77b8889caa7bb8d89aaaeebfdgghhhiebdddgghhiijjdkgllhiiikkkkklm",sol:"2412516342364532142151634152362312641513452613215461342536211251324165234516134256214351231432516431",giv:"0011001011111001010110011111100010110011001001011100010110011011111111111100000010011111100101001101",maxNum:6},
+{id:"d6",size:12,difficulty:0.45,seed:91039602,rm:"011112233334010122533444000225556477889aaaaa6b77889999ca6b7d8e9fffcc6bdd8egfccc66hddeegiiijhhhkkeelimmhhnookppiimqnnnnokpprmmqssssoturrrmssvvoot",sol:"361431524362256243251413415621342531131564123142243256431254514321615321621435264135362143126412451214352163135621431524243562143251124136521342",giv:"010101111101000101111110110111111101000010000110111111011101001111111101010111011000011011100010101001011011110111100101000110000001101000111110",maxNum:6},
+{id:"d7",size:8,difficulty:0.45,seed:91047521,rm:"66dccc1166dddc1a66ddaaaab0555a77b055ee87b00888823344499233344922",sol:"3652431241362135254132141423562332142151213214321315432142532143",giv:"0111001110001001011010011010111111010101110011011011001101011101",maxNum:6},
+{id:"d8",size:10,difficulty:0.45,seed:91055440,rm:"00011112220001133224555666644455667888995aab88ccccaaddd8cecfaaddgeeeeehhdiijjjkkhhiilljkkkhhllllmmkn",sol:"1645123412325461235413214561236532141612426153214614263254315314161523325141326416231543124532642151",giv:"1111111101000001111010101011001010111010110111001011010010010100101100001010001011111011111011101101",maxNum:6},
+{id:"d9",size:12,difficulty:0.45,seed:91063359,rm:"001111222233001455223336001555777776889aa5a7bbcc8899aaaddbce8899ffddddcegh9hiiiijjccghhhikillllmghnokkplplmmgnnoqkpppprmggssqkkturrvssssqqwuuuuu",sol:"426312412615154126354231365431216452231265132146512643521321643521463512214312642135126451321463352136154321431214235614563142516231245623142513",giv:"100110011100111111110111111110110000011000101000011110000100001011000111100101101000011011011111111110111011011011011000001111110111100010101111",maxNum:6},
+{id:"d10",size:8,difficulty:0.45,seed:91071278,rm:"88333444833a44dd887aaddc777666cc2776600c22bb000c955511ee99551111",sol:"4235243234125143514312141261352125342135132142533215131221435624",giv:"1010010010101100101101000010111110110111011110111101101100111100",maxNum:6}
+];
 const ACHIEVEMENTS=[
   {id:'firstWin',name:'First Victory',desc:'Complete your first level',icon:'&#127942;'},
   {id:'speedDemon',name:'Speed Demon',desc:'Complete a level in under 2 minutes',icon:'&#9889;'},
@@ -329,158 +376,26 @@ const ACHIEVEMENTS=[
   {id:'noHints',name:'Pure Logic',desc:'Complete a level without hints',icon:'&#129504;'}
 ];
 
-/* ========== UTILITIES ========== */
-function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-function createRNG(seed){return mulberry32(seed)}
-function shuffle(arr,rng){for(let i=arr.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
-function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v))}
-
-/* ========== PUZZLE GENERATOR ========== */
-
-function generateRegions(size,rng){
-  const grid=Array.from({length:size},()=>Array(size).fill(-1));
-  const regions=[];
-  const cells=[];
-  for(let r=0;r<size;r++)for(let c=0;c<size;c++)cells.push([r,c]);
-  shuffle(cells,rng);
-  let rid=0;
-  for(const[sr,sc]of cells){
-    if(grid[sr][sc]!==-1)continue;
-    const maxR=Math.min(size<=8?5:size<=10?6:7);
-    const minR=Math.min(3,maxR-1);
-    const target=minR+Math.floor(rng()*(maxR-minR+1));
-    const region=[[sr,sc]];
-    grid[sr][sc]=rid;
-    let tries=0;
-    while(region.length<target&&tries<100){
-      tries++;
-      const candidates=[];
-      for(const[rr,cc]of region){
-        for(const[dr,dc]of[[0,1],[0,-1],[1,0],[-1,0]]){
-          const nr=rr+dr,nc=cc+dc;
-          if(nr>=0&&nr<size&&nc>=0&&nc<size&&grid[nr][nc]===-1)candidates.push([nr,nc]);
-        }
-      }
-      if(!candidates.length)break;
-      const[nr,nc]=candidates[Math.floor(rng()*candidates.length)];
-      region.push([nr,nc]);
-      grid[nr][nc]=rid;
-    }
-    regions.push(region);
-    rid++;
-  }
-  // merge singletons
-  for(let i=regions.length-1;i>=0;i--){
-    if(regions[i].length>1)continue;
-    const[r,c]=regions[i][0];
-    let merged=false;
-    for(const[dr,dc]of[[0,1],[0,-1],[1,0],[-1,0]]){
-      const nr=r+dr,nc=c+dc;
-      if(nr>=0&&nr<size&&nc>=0&&nc<size&&grid[nr][nc]!==i){
-        const targetRid=grid[nr][nc];
-        regions[targetRid].push([r,c]);
-        grid[r][c]=targetRid;
-        regions.splice(i,1);
-        for(let rr=0;rr<size;rr++)for(let cc=0;cc<size;cc++){
-          if(grid[rr][cc]===i)grid[rr][cc]=targetRid;
-        }
-        merged=true;break;
-      }
+/* ========== STATIC LEVEL HYDRATION ========== */
+/* Expands a compact static entry (rm/sol/giv strings) into the exact {size,regions,
+ * regionMap,solution,puzzle,maxNum} shape the runtime generator used to produce, so the
+ * rest of the engine (placeNumber/checkWin/initGameState) is unchanged. */
+function hydrateLevel(e){
+  const n=e.size;
+  const regionMap=[],solution=[],puzzle=[],regions=[];
+  for(let r=0;r<n;r++){
+    regionMap.push([]);solution.push([]);puzzle.push([]);
+    for(let c=0;c<n;c++){
+      const i=r*n+c;
+      const rid=parseInt(e.rm[i],36);
+      regionMap[r].push(rid);
+      while(regions.length<=rid)regions.push([]);
+      regions[rid].push([r,c]);
+      solution[r].push(parseInt(e.sol[i],36));
+      puzzle[r].push(e.giv[i]==='1');
     }
   }
-  const newGrid=Array.from({length:size},()=>Array(size).fill(-1));
-  for(let i=0;i<regions.length;i++){
-    for(const[r,c]of regions[i])newGrid[r][c]=i;
-  }
-  return{regions,regionMap:newGrid};
-}
-
-function canPlace(r,c,val,solution,regionUsed,size){
-  for(let cc=Math.max(0,c-val);cc<=Math.min(size-1,c+val);cc++){
-    if(cc!==c&&solution[r][cc]===val)return false;
-  }
-  for(let rr=Math.max(0,r-val);rr<=Math.min(size-1,r+val);rr++){
-    if(rr!==r&&solution[rr][c]===val)return false;
-  }
-  return true;
-}
-
-function generateSolution(size,regions,regionMap,rng){
-  const solution=Array.from({length:size},()=>Array(size).fill(0));
-  const regionUsed=regions.map(()=>new Set());
-  const cellOrder=[];
-  const sortedRegions=[...regions].sort((a,b)=>a.length-b.length);
-  for(const region of sortedRegions)for(const[r,c]of region)cellOrder.push([r,c]);
-  const regionSizes=regions.map(r=>r.length);
-  const maxTime=size<=8?3000:size<=10?6000:15000;
-  const deadline=Date.now()+maxTime;
-  let nodes=0;
-
-  function backtrack(idx){
-    if(++nodes%2000===0&&Date.now()>deadline)return false;
-    if(idx===cellOrder.length)return true;
-    const[r,c]=cellOrder[idx];
-    const rid=regionMap[r][c];
-    const maxVal=regionSizes[rid];
-    const vals=[];
-    for(let v=1;v<=maxVal;v++)vals.push(v);
-    shuffle(vals,rng);
-    for(const val of vals){
-      if(regionUsed[rid].has(val))continue;
-      if(!canPlace(r,c,val,solution,regionUsed,size))continue;
-      solution[r][c]=val;
-      regionUsed[rid].add(val);
-      if(backtrack(idx+1))return true;
-      solution[r][c]=0;
-      regionUsed[rid].delete(val);
-    }
-    return false;
-  }
-  return backtrack(0)?solution:null;
-}
-
-function createPuzzle(size,regions,regionMap,solution,difficulty,rng){
-  const given=Array.from({length:size},()=>Array(size).fill(true));
-  const cells=[];
-  for(let r=0;r<size;r++)for(let c=0;c<size;c++)cells.push([r,c]);
-  shuffle(cells,rng);
-  const total=size*size;
-  const target=Math.floor(total*difficulty);
-  let removed=0;
-  // Skip uniqueness check for performance - use region-based clues instead
-  for(const[r,c]of cells){
-    if(removed>=target)break;
-    given[r][c]=false;
-    removed++;
-  }
-  // ensure at least 1 given per region
-  for(let i=0;i<regions.length;i++){
-    const hasGiven=regions[i].some(([r,c])=>given[r][c]);
-    if(!hasGiven){
-      const[r,c]=regions[i][Math.floor(rng()*regions[i].length)];
-      given[r][c]=true;
-    }
-  }
-  return given;
-}
-
-function generateLevel(config){
-  const rng=createRNG(config.seed);
-  const{size,difficulty}=config;
-  let regions,regionMap,solution;
-  for(let attempt=0;attempt<50;attempt++){
-    const r=createRNG(config.seed+attempt*9973);
-    const gen=generateRegions(size,r);
-    regions=gen.regions;regionMap=gen.regionMap;
-    // Limit max region size based on grid size to keep solver fast
-    const maxRegion=Math.max(...regions.map(rg=>rg.length));
-    if(maxRegion>Math.floor(size/2)+2)continue; // skip regions that are too large
-    solution=generateSolution(size,regions,regionMap,r);
-    if(solution)break;
-  }
-  if(!solution)return null;
-  const puzzle=createPuzzle(size,regions,regionMap,solution,difficulty,rng);
-  return{size,regions,regionMap,solution,puzzle,maxNum:Math.max(...regions.map(r=>r.length))};
+  return{size:n,regions,regionMap,solution,puzzle,maxNum:e.maxNum};
 }
 
 /* ========== AUDIO SYSTEM ========== */
@@ -1072,39 +987,20 @@ function startLevel(id){
   if(!config)return;
   showScreen('gameScreen');
   document.getElementById('levelDisplay').textContent=id;
-  // generate or load from cache
-  if(!state.levelCache[id]){
-    showToast('Generating puzzle...','info');
-    setTimeout(()=>{
-      const data=generateLevel(config);
-      if(!data){showToast('Generation failed, retrying...','error');return;}
-      state.levelCache[id]=data;
-      initGameState(id,data,false);
-    },50);
-  }else{
-    initGameState(id,state.levelCache[id],false);
-  }
+  /* static pre-validated level - instant, no runtime generation */
+  initGameState(id,hydrateLevel(config),false);
 }
 
 function startDaily(){
   initAudio();
   const today=new Date();
-  const seed=today.getFullYear()*10000+(today.getMonth()+1)*100+today.getDate();
-  const dateStr=today.toISOString().slice(0,10);
-  // check if already completed today
-  const dailySize=8+Math.floor((today.getDay()+today.getDate())%3)*2;
-  const config={id:'daily',size:dailySize,difficulty:.45,seed};
+  const doy=Math.floor((today.getTime()-new Date(today.getFullYear(),0,0).getTime())/86400000);
+  const config=DAILY_POOL[doy%DAILY_POOL.length];
   showScreen('gameScreen');
   document.getElementById('levelDisplay').textContent='Daily';
   state.dailyMode=true;
-  if(!state.levelCache['daily_'+seed]){
-    const data=generateLevel(config);
-    if(!data){showToast('Generation failed','error');return;}
-    state.levelCache['daily_'+seed]=data;
-    initGameState('daily',data,true);
-  }else{
-    initGameState('daily',state.levelCache['daily_'+seed],true);
-  }
+  /* static pre-validated daily pool - instant, no runtime generation */
+  initGameState('daily',hydrateLevel(config),true);
 }
 
 function initGameState(id,data,isDaily){

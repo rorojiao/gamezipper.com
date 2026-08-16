@@ -36,7 +36,7 @@ _optimization/
 
 - [x] Phase 0 游戏清单盘点(543 款 = 452 真游戏 + 91 重定向桩,2026-08-16)
 - [x] Phase 1 全站冒烟测试(452 PASS / 0 FAIL;3 个 P0 崩溃当场修复,4 个 flaky 降级观察 → `reports/phase1-report.md`)
-- [x] Phase 2 逐关可解性验证(**127 款 verify_engine 全 PASS**;P0 内容缺陷 5 款全部闭环 → 修复记录见下)
+- [x] Phase 2 逐关可解性验证(**144 款 verify_engine 144/144 全 PASS**;两波 P0 内容缺陷 10 款全部闭环 → 修复记录见下)
 - [x] Phase 3 策划评分(9 维度 452 款 → `reports/scoring.md`)
 - [x] Phase 4 优化方案(`optimization-plan.md`,P0–P3 排期)
 - [x] Phase 5 修复落地 + 终报(`final-report.md`)

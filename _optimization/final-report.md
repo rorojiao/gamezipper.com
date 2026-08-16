@@ -7,13 +7,13 @@
 
 ## 1. 总成果(一句话)
 
-**452 款游戏全部可启动(P0=0),127 款逐关验证器全 PASS,5 款"数学证明不可解"P0 内容缺陷全部修复并带前后证据,Top 流量游戏的 P1/P2 手感与留存缺陷(slope 闪撞/tetris 存档/snake 曲线/solitaire 验证)全部闭环。**
+**452 款游戏全部可启动(P0=0);144 款逐关验证器 144/144 全 PASS;两波共 10 款"数学证明不可解/软锁/假死"P0 内容缺陷全部修复并带 before/after 证据(suguru、unblock-me、tap-away、train-tracks、sandwich-sudoku、memory-match、heyawake、peg-solitaire、yajilin、ripple-effect);另 bubble-shooter 30/30;Top 流量游戏的 P1/P2 手感与留存缺陷(slope 闪撞/tetris 存档/snake 曲线/solitaire 验证)全部闭环。**
 
 ## 2. 验收硬指标对照(§四)
 
 | 硬性要求 | 终态 | 证据 |
 |---|---|---|
-| 每一关可证明可完成 | 127 款 verify_engine 全 PASS(覆盖全部有关卡数据的核心解谜;无固定关卡品类用策略胜率+引擎回放,如 solitaire 9/10 Monte-Carlo 胜局全回放) | `reports/solvability-results.json` |
+| 每一关可证明可完成 | 144 款 verify_engine 全 PASS(覆盖全部有关卡数据的核心解谜;无固定关卡品类用策略胜率+引擎回放,如 solitaire 9/10 Monte-Carlo 胜局全回放) | `reports/solvability-results.json` |
 | 锯齿难度曲线 | unblock-me 新曲线 1→15 带锯齿(峰 15 后回落 12);suguru 分层 5×5@0.44 → 7×7@0.41 → 9×9@0.30 | `state/{unblock-me,suguru}-levels.json` |
 | 首关 60 秒内爽+赢 | 解谜类首关均为低密度起步(L1 BFS optimal=1~3);9 款深评解谜补首访 How to Play overlay | `evidence/onboarding-rollout.md` |
 | 反挫败(软帮助) | 各解谜引擎自带 hint/undo;tetris/snake 失败即重开零惩罚 | `reports/scoring.md` |
@@ -53,9 +53,9 @@
 |---|---|---|---|
 | memory-match | comboTimer2 未声明 → checkMatch ReferenceError → lockBoard 永久 true,**8 关全部软锁不可完成** | 补一行声明 | ✅ 修复 0/8→8/8,verify PASS |
 | heyawake | ① 19/31 关无解(运行时生成器跌入不可解棋盘回退) ② saveResult s.best undefined 崩溃 | ② initSave 补 best:{}; ① gen-heyawake-levels.js 离线生成 30 战役+10 daily 池静态嵌入(构造式+独立谓词双证明), verify 引擎实玩回放 31/31 + 存档断言 | ✅ 31/31 PASS,41.7s |
-| ripple-effect | 关卡运行时生成不受 deadline 约束(L6=171.7s/L14=126.8s/L18=59.6s),15+ 关浏览器卡死 "Generating..." | 离线预生成 31 关静态嵌入 + daily 有界化 | 🔄 生成中 |
+| ripple-effect | 关卡运行时生成不受 deadline 约束(L6=171.7s/L14=126.8s/L18=59.6s),15+ 关 105s 内生成不完, 浏览器卡死 "Generating..." | gen-ripple-levels.js 离线生成 30 战役+10 daily 池(引擎自身语义;12x12 用解先行构造+精确覆盖分区), 每关独立复验后静态嵌入 | ✅ 31/31 PASS,12.4s |
 | peg-solitaire | 8 盘 6 盘证明无解(穷举穷尽 B1/B2/B4 + 奇偶不可达 B3/B6/B7,B8 2700 万节点未决) | B1-B4/B6-B8 反向跳从 1 钉终局构造(构造式证明)+独立记忆化 DFS 复证(最差 B8 106 万节点),B5 英式十字保留;梯度 5/7/9/13/24/26/30/32 钉 | ✅ 8/8 PASS,16.2s |
-| yajilin | **31/31 全 FAIL**(9/15 已证提示数与黑格圈矛盾无解,6 关生成 ≥100s 不终止浏览器假死) | 离线生成器(哈密顿圈先行,硬性每关 300s 上限)静态嵌入 | 🔄 生成中 |
+| yajilin | **31/31 全 FAIL**: ① 引擎 bug — checkWin 规则 4 列界笔误(nr<S.w), 非方板次末行永远无法获胜 ② 运行时生成器无界 DFS 假死+提示数撒在圈上与胜利条件矛盾 | ① 一字修复(nc<S.w) ② gen-yajilin-levels.js 重写为引擎真模型(诱导圈 DFS+独立穷举证明唯一获胜涂黑), STATIC_LV 30 关+DAILY_LV 7 关静态嵌入, 每关 <1s | ✅ 37/37 PASS(30 战役+7 daily),34.1s |
 | bubble-shooter | 20/30:9 关**证明不可解**(0 行炸弹: popBubbles color-8 分支为不可达死代码+floodFill 不含 8,0 行永不浮空,而 checkLevelClear 要求全清)+L13 预算 | ① generateLevels r>0 守卫(炸弹永不进 0 行,rng 流不变) ② 10 关 +3 发 ③ verifier 残局 IDDFS oracle(引擎真值驱动) | ✅ 30/30 PASS,76.2s(余 6 关 0 星为装饰性阈值问题) |
 | minesweeper/tic-tac-toe/compound-word/infinity-loop/arrow-puzzle/stained-glass | — | 首验即 PASS(9/9, 57/57, 20/20, 50/50, 32/32, 31/31) | ✅ 无需处置 |
 

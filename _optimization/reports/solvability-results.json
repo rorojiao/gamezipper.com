@@ -1,5 +1,5 @@
 {
- "updated": "2026-08-16T13:05:00Z",
+ "updated": "2026-08-16T14:34:18Z",
  "results": {
   "2048": {
    "slug": "2048",
@@ -1176,7 +1176,7 @@
    "passed": 50,
    "total": 50,
    "verdict": "PASS",
-   "durS": 41.0,
+   "durS": 41,
    "detail": "P0 TELEPORT bug 闭环: 生成器 moves() 重写为引擎逐步语义(原仅查目标 footprint→方块穿墙, 16 关假可解/真死局); scrambleFromSolved 构造+爬山拒绝不可解突变; 峰值 18→15 校正(18 源自原始坏关卡数据); 50/50 BFS-optimal 可解, 无 INCONCLUSIVE, 曲线 1→15 锯齿",
    "evidence": [
     "_optimization/evidence/unblock-me/verify.json"
@@ -1612,14 +1612,23 @@
   "yajilin": {
    "slug": "yajilin",
    "verifierRun": true,
-   "exitCode": 1,
-   "passed": 0,
-   "total": 31,
-   "verdict": "FAIL",
-   "durS": 100.2,
-   "stdoutTail": "  FAIL L28: worker killed at 100s — engine search (genPuzzle/findHC) does not terminate; in-browser this hangs the tab\n  FAIL L29: worker killed at 100s — engine search (genPuzzle/findHC) does not terminate; in-browser this hangs the tab\n  FAIL L30: worker killed at 100s — engine search (genPuzzle/findHC) does not terminate; in-browser this hangs the tab\n  FAIL daily: worker killed at 100s — engine search (genPuzzle/findHC) does not terminate; in-browser this hangs the tab\n{\"pass\":0,\"fail\":31,\"total\":31,\"failIdx\":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,99],\"verdict\":\"FAIL\",\"fails\":[\"L1 (2448ms): no winnable state: intended shading has no cycle over grid-shaded-clues (free=23 (odd — bipartite grid admits no cycle), cluesOnEngineHc=5) and bounded alternate-shading search found none (7455 candidates)\",\"L2 (2752ms): no winnable state: intended shading has no cycle over grid-shaded-clues (degree<2, cluesOnEngineHc=5) and bounded alternate-shading search found none (19643 candidates)\",\"L3 (9411ms): startLevel failed: genPuzzle returned null (200 attempts), engine bounces to title screen — level unplayable\",\"L4 (9344ms): startLevel failed: genPuzzle returned null (200 attempts), engine bounces to title screen — level unplayable\",\"L5 (10298ms): startLevel failed: genPuzzle returned null (200 attempts), engine bounces to title screen — level unplayable\",\"L6 (3187ms): no winnable state: intended shading has no cycle over grid-shaded-clues (free",
+   "exitCode": 0,
+   "passed": 37,
+   "total": 37,
+   "verdict": "PASS",
+   "durS": 34.1,
+   "stdoutTail": "yajilin in-engine verification (static levels): 37/37 items (30 static levels + 7 daily-pool dates; structural validation of all 37 embedded entries included), verdict=PASS\n  L1 (968ms): static level served + embedded solution won via cellAction (stars=3)\n  L30 (904ms): static level served + embedded solution won via cellAction (stars=3)\n  daily+0d(pool#2) (1000ms): static level served + embedded solution won via cellAction\n{\"pass\":37,\"fail\":0,\"total\":37,\"verdict\":\"PASS\",\"headline\":\"31/31 (30 levels + today daily) — daily pool rotation: 7/7 dates exercised (37 items total)\",\"extra\":{\"staticLevels\":30,\"dailyPool\":7,\"dailyPickToday\":2,\"sizes\":\"5x6,6x6,6x8,8x8\",\"provenance\":\"offline generator _optimization/scripts/gen-yajilin-levels.js (induced-cycle construction matching engine checkWin rules; independent exhaustive enumerator proved exactly one winning shading per level; see _optimization/evidence/yajilin/)\"}}",
    "stderrTail": "",
-   "ts": "2026-08-16T11:24:08.000Z"
+   "ts": "2026-08-16T14:28:47.000Z",
+   "extra": {
+    "staticLevels": 30,
+    "dailyPool": 7,
+    "dailyPickToday": 2,
+    "sizes": "5x6,6x6,6x8,8x8",
+    "provenance": "offline generator _optimization/scripts/gen-yajilin-levels.js (induced-cycle construction matching engine checkWin rules; independent exhaustive enumerator proved exactly one winning shading per level; see _optimization/evidence/yajilin/)"
+   },
+   "detail": "pre-fix 0/31 FAIL (31/31 hangs: runtime genPuzzle's unbounded findHC DFS never terminates -> frozen tab; on boards where it did return, clues were sprinkled ONTO the found Hamiltonian cycle, making every board unwinnable under checkWin). Root causes fixed: (1) ENGINE BUG checkWin rule 4 (index.html ~:460): column bound typo 'nc>=0&&nr<S.w' -> nr<S.w made row-(h-2) cells lose their down-neighbour count on every non-square board (5x6/6x8/8x10/10x12 tiers) -> no winnable state; corrected to nc<S.w (rule 5 already had the correct form). (2) DATA LAYER: replaced runtime generation with offline-generated static pools embedded as STATIC_LV (30 levels, sizes 5x6x6/6x6x6/6x8x6/8x8x12, par 60..630s) + DAILY_LV (7x 8x8, pick=YYYYMMDD%7), built by _optimization/scripts/gen-yajilin-levels.js: randomized DFS grows an induced (thin, non-self-touching) cycle covering 50-63% of the board, holes become ns non-adjacent shaded cells + clue cells, clue directions coverage-aimed, then an independent exhaustive enumerator (ray-count bounds + adjacency + incremental degree-2 prunes) proves EXACTLY ONE winning shading; clue dirs re-aimed set-cover style until unique. 10x10+ boards dropped from the envelope (old LV had up to 12x12) - uniqueness proof intractable offline at those sizes; difficulty now scales via size/ns/par within 5x6..8x8; meta/FAQ size claims updated to match. verify_engine.js rewritten for static levels: structural validation (clue rays, shading adjacency, loop covers exactly the free cells, every loop cell exactly 2 loop neighbours, single component) + full replay through the engine's own cellAction for all 30 levels + all 7 daily-pool dates via controlled clock. Post-fix 37/37 items PASS (31/31 headline) in 34s.",
+   "evidence": "_optimization/evidence/yajilin/verify.json + verify.log (PASS 37/37; verify-before.* holds the honest 0/31 pre-fix FAIL of the runtime generator; verify-before-old.* an earlier run of the same) + gen-levels.json / gen-levels.embed.js / gen-daily.embed.js (offline generator output + uniqueness proofs)"
   },
   "bubble-shooter": {
    "slug": "bubble-shooter",
@@ -1676,19 +1685,90 @@
   "ripple-effect": {
    "slug": "ripple-effect",
    "verifierRun": true,
-   "exitCode": 1,
-   "passed": 12,
+   "exitCode": 0,
+   "passed": 31,
    "total": 31,
-   "verdict": "FAIL",
-   "durS": 1715,
-   "stdoutTail": "issues: [\"slow generation (>8s, in-browser blocks on the Generating puzzle... toast): 6:171.7s, 14:126.8s, 18:59.6s\",\"generation did not finish within 105s worker budget: 7,12,13,15,16,17,19,20,21,22,23,24,25,26,27,28,29,30\"]\ntimer errors: [\"Maximum call stack size exceeded\"]\n{\"pass\":12,\"fail\":19,\"total\":31,\"failIdx\":[7,12,13,15,16,17,19,20,21,22,23,24,25,26,27,28,29,30,99],\"verdict\":\"FAIL\",\"fails\":[\"L7 EX:engine generateLevel did not finish within the 105s worker budget for 7\",\"L12 EX:engine generateLevel did not finish within the 105s worker budget for 12\",\"L13 EX:engine generateLevel did not finish within the 105s worker budget for 13\",\"L15 EX:engine generateLevel did not finish within the 105s worker budget for 15\",\"L16 EX:engine generateLevel did not finish within the 105s worker budget for 16\",\"L17 EX:engine generateLevel did not finish within the 105s worker budget for 17\",\"L19 EX:engine generateLevel did not finish within the 105s worker budget for 19\",\"L20 EX:engine generateLevel did not finish within the 105s worker budget for 20\",\"L21 EX:engine generateLevel did not finish within the 105s worker budget for 21\",\"L22 EX:engine generateLevel did not finish within the 105s worker budget for 22\",\"L23 EX:engine generateLevel did not finish within the 105s worker budget for 23\",\"L24 EX:engine generateLevel did not finish within the 105s worker budget for 24\",\"L25 EX:engine generateLevel did not finish within the 105s worker budget for 25\",\"L26 EX:engine generateLevel did ",
-   "stderrTail": "",
-   "issues": [
-    "slow generation (>8s, in-browser blocks on the Generating puzzle... toast): 6:171.7s, 14:126.8s, 18:59.6s",
-    "generation did not finish within 105s worker budget: 7,12,13,15,16,17,19,20,21,22,23,24,25,26,27,28,29,30"
+   "verdict": "PASS",
+   "durS": 12.4,
+   "detail": "2026-08-16 sweep proved the runtime generator unbounded (measured in-browser L6=171.7s, L14=126.8s, L18=59.6s; 15+ of 31 items never finished inside the 105s worker cap, page stuck on the generation toast). Fixed by offline generation: gen-ripple-levels.js produces 30 campaign levels + a 10-puzzle daily pool using the engine's own region/solver semantics (MRV search for sizes 6-10; for 12x12, where most random compact layouts are provably unsatisfiable, a solution-first constructive generator: placement-checked value grid + exact-cover partition into perfect {1..N} rooms), each re-validated independently (region tiling+connectivity, 1..N per region, row/col +-v window rule, given-mask counts) and statically embedded in index.html (compact base36 rm/sol/giv fields + hydrateLevel(); runtime generation removed; startDaily reads the static pool by day-of-year). Verifier replays every level through the live engine via startLevel + selectedCell/placeNumber to a win, asserts completed=true + localStorage persistence, and hydration is now 0-26ms per level. 31/31 PASS.",
+   "evidence": [
+    "_optimization/evidence/ripple-effect/verify.json",
+    "_optimization/evidence/ripple-effect/verify.log",
+    "_optimization/evidence/ripple-effect/verify-before.json"
    ],
-   "note": "levels generated by the engine itself in forked workers (105s/child cap), cached to gen_cache.json across runs; driver replays cached levels to checkWin; 18 levels + daily never finish generating within budget (reproduced twice)",
-   "ts": "2026-08-16T11:26:37.000Z"
+   "note": "supersedes FAIL entry of the same date (runtime generator)"
+  },
+  "8-ball-billiards": {
+   "slug": "8-ball-billiards",
+   "verifierRun": true,
+   "exitCode": 0,
+   "passed": 4,
+   "total": 4,
+   "verdict": "PASS",
+   "durS": 0.1,
+   "stdoutTail": "8-ball-billiards in-engine verification: potted=true firstHit=1 scratch=false foul=false score=15 steps=11 stopped=true\n{\"pass\":4,\"fail\":0,\"fails\":[],\"total\":4,\"goal\":\"complete 1 legal potted shot (straight cue->ball-1->pocket via engine shoot + updatePhysics + processTurnEnd)\",\"steps\":11,\"verdict\":\"PASS\"}\n",
+   "stderrTail": "",
+   "ts": "2026-08-16T13:29:24.160Z"
+  },
+  "flappy-wings": {
+   "slug": "flappy-wings",
+   "verifierRun": true,
+   "exitCode": 0,
+   "passed": 2,
+   "total": 2,
+   "verdict": "PASS",
+   "durS": 0.1,
+   "stdoutTail": "flappy-wings in-engine verification: score=1 frames=660 flaps=17 deaths=0\n{\"pass\":2,\"fail\":0,\"fails\":[],\"total\":2,\"goal\":\"score >= 1 (flap through one pipe gap) via engine flap()/update()\",\"steps\":660,\"verdict\":\"PASS\"}\n",
+   "stderrTail": "",
+   "ts": "2026-08-16T13:29:24.175Z"
+  },
+  "slice-master": {
+   "slug": "slice-master",
+   "verifierRun": true,
+   "exitCode": 0,
+   "passed": 3,
+   "total": 3,
+   "verdict": "PASS",
+   "durS": 0.1,
+   "stdoutTail": "slice-master in-engine verification: cutHit=true pieces=2/2 completed=true stars=3 score=200\n{\"pass\":3,\"fail\":0,\"fails\":[],\"total\":3,\"goal\":\"complete one cut that splits the target shape (level 1 solved via performCut + engine checkComplete/finishLevel)\",\"steps\":1,\"verdict\":\"PASS\"}\n",
+   "stderrTail": "",
+   "ts": "2026-08-16T13:29:24.194Z"
+  },
+  "pong": {
+   "slug": "pong",
+   "verifierRun": true,
+   "exitCode": 0,
+   "passed": 2,
+   "total": 2,
+   "verdict": "PASS",
+   "durS": 0.1,
+   "stdoutTail": "pong in-engine verification: p1=1 p2=0 steps=13272 restarts=0\n{\"pass\":2,\"fail\":0,\"fails\":[],\"total\":2,\"goal\":\"player paddle scores at least 1 point (touch-drag paddle tracking + engine updatePhysics ticks)\",\"steps\":13272,\"verdict\":\"PASS\"}\n",
+   "stderrTail": "",
+   "ts": "2026-08-16T13:29:24.196Z"
+  },
+  "phantom-blade": {
+   "slug": "phantom-blade",
+   "verifierRun": true,
+   "exitCode": 0,
+   "passed": 4,
+   "total": 4,
+   "verdict": "PASS",
+   "durS": 0.1,
+   "stdoutTail": "phantom-blade in-engine verification: score=150 sticks=5 throws=5 taps=2 state=levelComplete failed=false frames=157\n{\"pass\":4,\"fail\":0,\"fails\":[],\"total\":4,\"goal\":\"complete 1 knife stick on the disc / score > 0 via handleTap + update() with predicted safe throws\",\"steps\":157,\"verdict\":\"PASS\"}\n",
+   "stderrTail": "",
+   "ts": "2026-08-16T13:29:24.207Z"
+  },
+  "chess": {
+   "slug": "chess",
+   "verifierRun": true,
+   "exitCode": 0,
+   "passed": 5,
+   "total": 5,
+   "verdict": "PASS",
+   "durS": 0.2,
+   "stdoutTail": "chess in-engine verification: executed=420 (white=20, black=400) notMoved=0 kingInCheckViolations=0 mate=e2e4 e7e5 d1h5 b8c6 f1c4 g8f6 h5f7 gameOver=true\n{\"pass\":5,\"fail\":0,\"fails\":[],\"total\":5,\"goal\":\"all legal moves execute cleanly (depth-2 sweep) + checkmate a suicidal opponent via scholar's mate\",\"steps\":427,\"verdict\":\"PASS\"}\n",
+   "stderrTail": "",
+   "ts": "2026-08-16T13:29:24.318Z"
   }
  }
 }

@@ -27,7 +27,7 @@ const path = require('path');
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function shuffle(arr,rng){for(let i=arr.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
 
-function generateRegions(size,rng){
+function generateRegions(size,rng,capRegion){
   const grid=Array.from({length:size},()=>Array(size).fill(-1));
   const regions=[];
   const cells=[];
@@ -36,7 +36,7 @@ function generateRegions(size,rng){
   let rid=0;
   for(const[sr,sc]of cells){
     if(grid[sr][sc]!==-1)continue;
-    const maxR=Math.min(size<=8?5:size<=10?6:7);
+    const maxR=Math.min(size<=8?5:size<=10?6:7,capRegion||99);
     const minR=Math.min(3,maxR-1);
     const target=minR+Math.floor(rng()*(maxR-minR+1));
     const region=[[sr,sc]];
@@ -181,6 +181,272 @@ function generateSolutionMRV(size,regions,regionMap,rng,maxMs){
   return ok?{solution,nodes}:null;
 }
 
+/* Region-by-region constructive solver with REGION-LEVEL BACKTRACKING.
+ * Probe data (2026-08-16): pure greedy fill-or-die completes ~0/250 layouts even at 8x8 —
+ * when one region has no valid completion the whole layout was abandoned. Here each
+ * region's assignments are enumerated lazily (generator), and a stuck region backtracks
+ * into the previous region's NEXT alternative assignment before giving up on the layout.
+ * Region order is most-constrained-first (most assigned neighbor cells), recomputed at
+ * each depth. Dead layouts still die in milliseconds, so generateLevel can try hundreds
+ * of layouts per wall. Output semantics: every region holds 1..N exactly once + the
+ * canPlace row/col window rule, re-proven by the independent validator below. */
+const DIRS=[[0,1],[0,-1],[1,0],[-1,0]];
+function solveByRegions(size,regions,regionMap,rng,deadline){
+  const solution=Array.from({length:size},()=>Array(size).fill(0));
+  const regionUsed=regions.map(()=>new Set());
+  const remaining=regions.map((_,i)=>i);
+  shuffle(remaining,rng);
+  let nodes=0;const NODE_CAP=2_000_000;
+  function* regionAssignments(cells,rid){
+    const n=cells.length;
+    function* rec(idx){
+      if(idx===n){yield true;return;} // one complete assignment of this region is live in solution[]
+      const r=cells[idx][0],c=cells[idx][1];
+      const vals=[];
+      for(let v=1;v<=n;v++)if(!regionUsed[rid].has(v))vals.push(v);
+      shuffle(vals,rng);
+      for(const v of vals){
+        if(!canPlace(r,c,v,solution,regionUsed,size))continue;
+        solution[r][c]=v;
+        regionUsed[rid].add(v);
+        yield* rec(idx+1);
+        solution[r][c]=0;
+        regionUsed[rid].delete(v);
+      }
+    }
+    yield* rec(0);
+  }
+  function pickRegion(){
+    let bi=0,bs=-1;
+    for(let ri=0;ri<remaining.length;ri++){
+      const rid=remaining[ri];
+      let score=0;
+      for(let d=0;d<4;d++){
+        const cell=regions[rid];
+        for(let ci=0;ci<cell.length;ci++){
+          const r=cell[ci][0]+DIRS[d][0],c=cell[ci][1]+DIRS[d][1];
+          if(r>=0&&r<size&&c>=0&&c<size&&solution[r][c]!==0)score++;
+        }
+      }
+      if(score>bs){bs=score;bi=ri;}
+    }
+    return bi;
+  }
+  function dfs(){
+    if(!remaining.length)return true;
+    if(++nodes>NODE_CAP)return false;
+    if((nodes&255)===0&&Date.now()>deadline)return false;
+    const bi=pickRegion();
+    const rid=remaining[bi];
+    for(const _ of regionAssignments(regions[rid],rid)){
+      remaining.splice(bi,1);
+      if(dfs())return true;
+      remaining.push(rid);
+      if(++nodes>NODE_CAP)return false;
+      if((nodes&255)===0&&Date.now()>deadline)return false;
+    }
+    return false;
+  }
+  if(!dfs())return null;
+  return{solution,nodes};
+}
+
+/* ---------- constructive 12x12 generator (satisfiable BY DESIGN) ----------
+ * Measured reality (2026-08-16): most random compact-growth 12x12 layouts are simply
+ * UNSATISFIABLE - L25's stream burned 3x900s (MRV) and 90s x N full-budget probes with
+ * zero solves, and a complete region-level DFS also proved layouts dead. Instead of
+ * playing the satisfiability lottery, build the SOLUTION first and grow regions around it:
+ *
+ *   1. V(r,c) filled reading-order, each cell a random value from 1..6 that conflicts
+ *      with no already-placed same value inside its row/col +-v windows (checked at
+ *      placement - sound by construction; a rare dead cell restarts the grid).
+ *   2. Regions grow by adjacency to a "perfect" value set: stop when the region's values
+ *      are exactly {1..|region|}. Connected by construction, sizes 1..6, each holding a
+ *      permutation of 1..N - engine semantics, re-proven by the independent validator.
+ * Repeated sweeps reseed cells no region could perfect (boundaries shift between sweeps). */
+function buildPatternSolution(size,rng){
+  const V=Array.from({length:size},()=>Array(size).fill(0));
+  /* low values weighted higher: perfect regions {1..N} need the low run 1,2,3.. far more
+   * often than the top value (only a full size-6 region wants a 6) */
+  const WEIGHTS=[0,30,24,18,13,9,6]; /* index=value; ~1..6 */
+  const WSUM=WEIGHTS.reduce((a,b)=>a+b,0);
+  function drawValue(){
+    let t=rng()*WSUM;
+    for(let v=1;v<=6;v++){t-=WEIGHTS[v];if(t<0)return v}
+    return 6;
+  }
+  for(let restart=0;restart<200;restart++){
+    let ok=true;
+    for(let r=0;r<size&&ok;r++)for(let c=0;c<size&&ok;c++){
+      const cand=[];
+      for(let v=1;v<=6;v++){
+        let good=true;
+        for(let cc=Math.max(0,c-v);cc<c;cc++)if(V[r][cc]===v){good=false;break}
+        if(good)for(let rr=Math.max(0,r-v);rr<r;rr++)if(V[rr][c]===v){good=false;break}
+        if(good)cand.push(v);
+      }
+      if(!cand.length){ok=false;break}
+      /* local balancing: prefer the legal value least used in the surrounding 5x5, so
+       * every neighbourhood carries a 1..N spread for perfect-region growth to draw on
+       * (weighted-random V clusters values and forces singleton-heavy partitions) */
+      let bestUse=Infinity;
+      const tied=[];
+      for(const v of cand){
+        let use=0;
+        for(let rr=Math.max(0,r-2);rr<=Math.min(size-1,r+2);rr++)
+          for(let cc=Math.max(0,c-2);cc<=Math.min(size-1,c+2);cc++)
+            if(V[rr][cc]===v)use++;
+        if(use<bestUse){bestUse=use;tied.length=0;tied.push(v)}
+        else if(use===bestUse)tied.push(v);
+      }
+      V[r][c]=tied[Math.floor(rng()*tied.length)];
+    }
+    if(ok){
+      /* belt-and-braces: full window-rule assert over the finished grid */
+      for(let r=0;r<size;r++)for(let c=0;c<size;c++){
+        const v=V[r][c];
+        for(let cc=c+1;cc<=Math.min(size-1,c+v);cc++)if(V[r][cc]===v)throw new Error('greedy row violation at '+r+','+c+'/'+cc);
+        for(let rr=r+1;rr<=Math.min(size-1,r+v);rr++)if(V[rr][c]===v)throw new Error('greedy col violation at '+r+','+c+'/'+rr);
+      }
+      return V;
+    }
+    for(let r=0;r<size;r++)for(let c=0;c<size;c++)V[r][c]=0;
+  }
+  throw new Error('greedy value grid failed');
+}
+function buildPatternRegions(size,V,rng,diag){
+  const regionMap=Array.from({length:size},()=>Array(size).fill(-1));
+  const regions=[];
+  let nodes=0;const NODE_CAP=120000;
+  /* enumerate perfect connected subsets ({1..N} value set) containing (sr,sc), grown
+   * cell-by-cell; yields shape after shape (small perfect first via preference order) */
+  function* perfectRegionsContaining(sr,sc){
+    const cells=[[sr,sc]];
+    const vals=new Set([V[sr][sc]]);
+    function* grow(){
+      const selfPerfect=vals.size===cells.length&&isInitialSegment(vals);
+      let pool=[];
+      if(cells.length<6){
+        const len=cells.length;
+        const cand=[];
+        for(const[r,c]of cells){
+          for(const[dr,dc]of[[0,1],[0,-1],[1,0],[-1,0]]){
+            const nr=r+dr,nc=c+dc;
+            if(nr<0||nr>=size||nc<0||nc>=size)continue;
+            if(regionMap[nr][nc]!==-1)continue;
+            if(cells.some(x=>x[0]===nr&&x[1]===nc))continue;
+            cand.push([nr,nc]);
+          }
+        }
+        /* exact-extension first (value len+1), then missing <=len+1, then any missing */
+        const exact=cand.filter(x=>V[x[0]][x[1]]===len+1);
+        const preferred=exact.length?exact:cand.filter(x=>{const v=V[x[0]][x[1]];return !vals.has(v)&&v<=len+1});
+        pool=preferred.length?preferred:cand.filter(x=>!vals.has(V[x[0]][x[1]]));
+      }
+      if(pool.length){
+        /* bigger shapes first; yield self afterwards; a size-1 {1} singleton only as a
+         * last resort (engine boards have ~30 rooms of size 2..8, not singleton dust) */
+        for(const[nr,nc]of pool){
+          cells.push([nr,nc]);
+          vals.add(V[nr][nc]);
+          yield* grow();
+          cells.pop();
+          vals.delete(V[nr][nc]);
+        }
+        if(selfPerfect){
+          if(cells.length>=2)yield cells.slice();
+          else yield cells.slice(); /* singleton after every bigger option failed */
+        }
+        return;
+      }
+      if(selfPerfect)yield cells.slice();
+    }
+    yield* grow();
+  }
+  /* exact cover: assign the first unassigned cell's region, recurse, backtrack globally */
+  function dfs(){
+    if(++nodes>NODE_CAP)return false;
+    let sr=-1,sc=-1;
+    outer:for(let r=0;r<size;r++)for(let c=0;c<size;c++){
+      if(regionMap[r][c]===-1){sr=r;sc=c;break outer}
+    }
+    if(sr===-1)return true; /* fully partitioned */
+    for(const reg of perfectRegionsContaining(sr,sc)){
+      for(const[r,c]of reg)regionMap[r][c]=regions.length;
+      regions.push(reg);
+      if(dfs())return true;
+      regions.pop();
+      for(const[r,c]of reg)regionMap[r][c]=-1;
+      if(nodes>NODE_CAP)return false;
+    }
+    return false;
+  }
+  if(!dfs())return null;
+  /* any cells left unassigned (rare): attach each to an adjacent region that stays perfect,
+   * else form singleton regions if value==1, else fail the layout */
+  let ok=true;
+  for(let r=0;r<size&&ok;r++)for(let c=0;c<size&&ok;c++){
+    if(regionMap[r][c]!==-1)continue;
+    const v=V[r][c];
+    let attached=false;
+    for(const[dr,dc]of[[0,1],[0,-1],[1,0],[-1,0]]){
+      const nr=r+dr,nc=c+dc;
+      if(nr<0||nr>=size||nc<0||nc>=size)continue;
+      const rid=regionMap[nr][nc];
+      if(rid===-1)continue;
+      const reg=regions[rid];
+      if(reg.length===6)continue;
+      const vs=new Set(reg.map(function(x){return V[x[0]][x[1]]}));
+      if(!vs.has(v)&&v===reg.length+1){ /* extends the initial segment by exactly one */
+        reg.push([r,c]);
+        regionMap[r][c]=rid;
+        attached=true;
+        break;
+      }
+    }
+    if(!attached){
+      if(v===1){ /* singleton {1} is a legal region */
+        regionMap[r][c]=regions.length;
+        regions.push([[r,c]]);
+        attached=true;
+      }else{
+        ok=false; /* orphan cell - layout failed, caller retries */
+        break;
+      }
+    }
+  }
+  if(!ok)return null;
+  /* rebuild region ids contiguous */
+  const remap=Array(regions.length).fill(-1);
+  let next=0;
+  for(let i=0;i<regions.length;i++)remap[i]=next++;
+  for(let r=0;r<size;r++)for(let c=0;c<size;c++)regionMap[r][c]=remap[regionMap[r][c]];
+  return{regions,regionMap};
+}
+function isInitialSegment(vals){
+  for(let i=1;i<=vals.size;i++)if(!vals.has(i))return false;
+  return true;
+}
+function generateLevelConstructive(config,wallCapMs){
+  const rng=mulberry32(config.seed);
+  const{size,difficulty}=config;
+  const t0=Date.now();
+  const cap=wallCapMs||900000;
+  for(let attempt=0;attempt<200;attempt++){
+    if(attempt&&(Date.now()-t0)>cap)return null;
+    const r=mulberry32(config.seed+attempt*9973);
+    let V,regions,regionMap;
+    try{V=buildPatternSolution(size,r)}catch(e){continue}
+    const reg=buildPatternRegions(size,V,r);
+    if(!reg)continue;
+    regions=reg.regions;regionMap=reg.regionMap;
+    const solution=V;
+    const puzzle=createPuzzle(size,regions,regionMap,solution,difficulty,rng);
+    return{size,regions,regionMap,solution,puzzle,maxNum:Math.max(...regions.map(x=>x.length)),attempts:attempt+1,nodes:0};
+  }
+  return null;
+}
+
 function createPuzzle(size,regions,regionMap,solution,difficulty,rng){
   const given=Array.from({length:size},()=>Array(size).fill(true));
   const cells=[];
@@ -205,6 +471,16 @@ function createPuzzle(size,regions,regionMap,solution,difficulty,rng){
 }
 
 function generateLevel(config,wallCapMs){
+  /* size>=12: constructive generator directly (compact-growth layouts are mostly UNSAT
+   * there - L25 burned 45+ min proving it across 3 strategies).
+   * smaller sizes: fast MRV attempts first (engine-style layouts, usually <1s), then the
+   * constructive generator as a guaranteed fallback for unlucky seed streams (daily d1). */
+  if(config.size>=12)return generateLevelConstructive(config,wallCapMs);
+  const fast=generateLevelMRV(config,Math.min(wallCapMs,45000));
+  if(fast)return fast;
+  return generateLevelConstructive(config,wallCapMs);
+}
+function generateLevelMRV(config,wallCapMs){
   const rng=mulberry32(config.seed);
   const{size,difficulty}=config;
   let regions,regionMap,solutionResult;
@@ -213,7 +489,7 @@ function generateLevel(config,wallCapMs){
   for(attempt=0;attempt<50;attempt++){
     if(Date.now()-t0>wallCapMs)break;
     const r=mulberry32(config.seed+attempt*9973);
-    const gen=generateRegions(size,r);
+    const gen=generateRegions(size,r,0);
     regions=gen.regions;regionMap=gen.regionMap;
     const maxRegion=Math.max(...regions.map(rg=>rg.length));
     if(maxRegion>Math.floor(size/2)+2)continue; // engine rule: skip too-large regions
@@ -284,7 +560,7 @@ function build(config,wallCapMs){
   /* seed fallback ladder: some seeds never solve under the engine's own bounded generator
    * (the original pathology - L6/L14/L15/L18-class seeds); the size/difficulty schedule is
    * what defines the level, so failing seeds fall through to deterministic alternates. */
-  const SEED_STEPS=[0,500001,1000003,1500005,2000011,2500029,3000047,3500059];
+  const SEED_STEPS=[0,500001,1000003,1500005,2000011,2500029,3000047,3500059,4000093,4500101,5000117];
   let data=null,usedSeed=config.seed;
   const t0=Date.now();
   for(const step of SEED_STEPS){
@@ -316,31 +592,41 @@ for(let i=0;i<10;i++){
   DAILY.push({id:'d'+(i+1),size:[8,10,12][i%3],difficulty:.45,seed:91000000+i*7919+7});
 }
 
-const WALL={6:30000,8:90000,10:180000,12:300000};
-const out={generated:new Date().toISOString(),levels:[],daily:[],meta:[]};
+const WALL={6:30000,8:90000,10:180000,12:900000};
+const STATE=path.join(__dirname,'..','state','ripple-levels.json');
+/* resume support: every solved item is flushed to the state file immediately, and a rerun
+ * skips ids already present (a killed run loses nothing - L25's first run burned 24 solved
+ * levels because output was only written at the end) */
+let out;
+try{out=JSON.parse(fs.readFileSync(STATE,'utf8'))}catch(e){out=null}
+if(!out||!Array.isArray(out.levels)||!Array.isArray(out.daily)){
+  out={generated:new Date().toISOString(),levels:[],daily:[]};
+}
+function have(id,isDaily){return (isDaily?out.daily:out.levels).some(l=>l.id===id)}
+function flush(){fs.mkdirSync(path.dirname(STATE),{recursive:true});fs.writeFileSync(STATE,JSON.stringify(out,null,1))}
 const T0=Date.now();
-const GLOBAL_MS=40*60*1000;
+const GLOBAL_MS=80*60*1000;
 
 for(const cfg of LEVELS){
+  if(have(cfg.id,false)){console.log(`L${cfg.id}: already in state file, skipping`);continue}
   if(Date.now()-T0>GLOBAL_MS){console.error('global budget exceeded');process.exit(1)}
   const t0=Date.now();
   const lv=build(cfg,WALL[cfg.size]);
   if(!lv){console.error(`L${cfg.id} (${cfg.size}x${cfg.size}) FAILED within ${WALL[cfg.size]}ms wall cap`);process.exit(1)}
   out.levels.push(lv);
-  out.meta.push({id:cfg.id,size:cfg.size,attempts:lv._attempts,nodes:lv._nodes,ms:Date.now()-t0});
-  console.log(`L${cfg.id} (${cfg.size}x${cfg.size} diff=${cfg.difficulty.toFixed(2)}): ${lv._attempts} attempts, ${lv._nodes} solver nodes, ${(Date.now()-t0)/1000}s, ${lv.rm.length} cells, maxNum=${lv.maxNum}`);
-  delete lv._attempts;delete lv._nodes;
+  flush();
+  console.log(`L${cfg.id} (${cfg.size}x${cfg.size} diff=${cfg.difficulty.toFixed(2)}): seed=${lv.seed}, ${(Date.now()-t0)/1000}s, ${lv.rm.length} cells, maxNum=${lv.maxNum}`);
 }
 for(const cfg of DAILY){
+  if(have(cfg.id,true)){console.log(`daily ${cfg.id}: already in state file, skipping`);continue}
   if(Date.now()-T0>GLOBAL_MS){console.error('global budget exceeded');process.exit(1)}
   const t0=Date.now();
   const lv=build(cfg,WALL[cfg.size]);
   if(!lv){console.error(`daily ${cfg.id} (${cfg.size}x${cfg.size}) FAILED`);process.exit(1)}
   out.daily.push(lv);
-  console.log(`D${cfg.id} (${cfg.size}x${cfg.size} diff=.45): ${(Date.now()-t0)/1000}s, maxNum=${lv.maxNum}`);
-  delete lv._attempts;delete lv._nodes;
+  flush();
+  console.log(`D${cfg.id} (${cfg.size}x${cfg.size} diff=.45): seed=${lv.seed}, ${(Date.now()-t0)/1000}s, maxNum=${lv.maxNum}`);
 }
-
-fs.mkdirSync(path.join(__dirname,'..','state'),{recursive:true});
-fs.writeFileSync(path.join(__dirname,'..','state','ripple-levels.json'),JSON.stringify(out,null,1));
-console.log(`OK: 30 levels + 10 dailies written to state/ripple-levels.json (total ${((Date.now()-T0)/1000).toFixed(1)}s). Every level independently validated (region tiling+connectivity, 1..N per region, row/col window rule, given-mask counts).`);
+out.levels.sort((a,b)=>a.id-b.id);
+flush();
+console.log(`OK: ${out.levels.length} levels + ${out.daily.length} dailies in state/ripple-levels.json. Every level independently validated (region tiling+connectivity, 1..N per region, row/col window rule, given-mask counts).`);
