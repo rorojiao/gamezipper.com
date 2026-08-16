@@ -614,10 +614,16 @@ showOverlay('level-fail');
 }
 
 function checkWin(){
+// FIX 2026-08-16 (verify_engine.js audit): original condition required targetsLeft===0,
+// i.e. every target block destroyed (off-screen). But knocked-down targets LAND on the
+// ground (falling-block ground bounce damps vy AND vx*0.7 per contact frame, y clamped to
+// GROUND_Y-h), so their x never reaches VW+100 -> targetsLeft stays >0 forever -> no level
+// was winnable. "Knocked down" (falling) is the game's own down state (handleBlockHit sets
+// falling=true and collisions skip falling blocks), so win = no target still STANDING.
 var targetsLeft=blocks.filter(function(b){return b.type==='T'&&!b.destroyed;}).length;
 var targetsStanding=blocks.filter(function(b){return b.type==='T'&&!b.destroyed&&!b.falling;}).length;
 var targetsFalling=blocks.filter(function(b){return b.type==='T'&&!b.destroyed&&b.falling;}).length;
-if(targetsLeft===0||(targetsStanding===0&&targetsFalling===0&&targetsLeft===0)){
+if(targetsStanding===0&&targetsLeft>0||targetsLeft===0){
 // Win!
 if(GS==='win')return;
 GS='win';

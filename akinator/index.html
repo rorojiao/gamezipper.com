@@ -329,7 +329,7 @@ var STORAGE_KEY='gz_akinator_v1';
 var WEIGHTS={yes:1,prob:0.5,dk:0,probnot:-0.5,no:-1};
 var ANSWER_KEYS={1:'yes',0.5:'prob',0:'dk',"-0.5":'probnot',"-1":'no'};
 var MAX_WRONG_GUESSES=3;
-var MAX_QUESTIONS=25;
+var MAX_QUESTIONS=62; /* FIX(verify 2026-08-16): was 25 — with a sparse KB (6-8 attrs/char) the entropy selector cannot know which questions the secret actually defines, so most of 25 questions draw Don.t-Know answers that eliminate nothing; the cap made the game structurally unwinnable for most of its own characters. Allow the genie to use the full question pool. */
 var MIN_CONFidence=0.75;
 var MIN_QUESTIONS_FOR_GUESS=6;
 
@@ -814,6 +814,7 @@ questionsAsked:0,
 wrongGuesses:0,
 currentGuess:null,
 history:[],
+answers:{},
 learnData:null,
 soundEnabled:true,
 audioCtx:null,
@@ -1120,6 +1121,7 @@ state.phase='playing';
 state.questionsAsked=0;
 state.wrongGuesses=0;
 state.history=[];
+state.answers={};
 state.learnData=null;
 var kb=CHARACTERS.slice();
 if(state.category==='characters'){
@@ -1160,6 +1162,10 @@ return{question:q,score:dist};
 scored.sort(function(a,b){return b.score-a.score});
 var topScore=scored[0].score;
 var topQuestions=scored.filter(function(s){return s.score>topScore*0.7});
+/* FIX(verify 2026-08-16): when every remaining question has zero entropy (no question
+discriminates the last few candidates) topQuestions was empty and `selected.question` crashed
+with TypeError. Fall back to the top-scored question so play continues to the forced guess. */
+if(topQuestions.length===0)topQuestions=[scored[0]];
 var selected=topQuestions[Math.floor(Math.random()*topQuestions.length)];
 return selected.question;
 }
@@ -1212,12 +1218,19 @@ document.getElementById('progressText').textContent='Candidates: '+total+' | Que
 function answerQuestion(w){
 playSFX(w>0?'yes':w<0?'no':'click');
 var attrKey=state.currentQuestion.q;
+state.answers[attrKey]=w; /* FIX(verify 2026-08-16): record answers so confidence can score agreement, not just yes-density */
 var cands=state.candidates;
 cands=cands.filter(function(c){
 if(!c.attrs||c.attrs[attrKey]===undefined)return true;
 var av=c.attrs[attrKey];
-var match=w*av;
-return match>=0||av===0;
+/* FIX(verify 2026-08-16): old `match=w*av;return match>=0||av===0` kept av===0 candidates
+even on a crisp Yes (w=1, match=0>=0) — the genie ignored definite information, so
+candidates that definitively lack the answered attribute survived forever and sparse-signature
+wrong candidates kept outranking the secret. Crisp Yes must drop av<=0; crisp No semantics
+unchanged (drops av>0, keeps av===0); fuzzy/DK answers (w=0,±0.5) stay non-eliminating. */
+if(w===1)return av>0;
+if(w===-1)return av<=0;
+return true;
 });
 state.candidates=cands;
 updateProgress();
@@ -1232,7 +1245,12 @@ function shouldGuess(){
 if(state.candidates.length<=1)return true;
 if(state.questionsAsked>=MAX_QUESTIONS)return true;
 var top=getTopCandidate();
-if(top&&top.confidence>=MIN_CONFidence&&state.questionsAsked>=MIN_QUESTIONS_FOR_GUESS)return true;
+if(top&&top.confidence>=MIN_CONFidence&&state.questionsAsked>=MIN_QUESTIONS_FOR_GUESS){
+/* FIX(verify 2026-08-16): an eager confidence guess previously fired even when the runner-up
+tied the leader (array-order duplicates), burning all 3 wrong-guess chances at question 6.
+Require a clear lead over the second candidate; ties keep asking instead. */
+return top.secondConfidence===null||(top.confidence-top.secondConfidence)>=0.05;
+}
 return false;
 }
 
@@ -1243,20 +1261,28 @@ var conf=calculateConfidence(c);
 return{name:c.name,id:c.id,conf:conf};
 });
 scored.sort(function(a,b){return b.conf-a.conf});
-return{name:scored[0].name,confidence:scored[0].conf};
+return{name:scored[0].name,confidence:scored[0].conf,secondConfidence:scored.length>1?scored[1].conf:null};
 }
 
 function calculateConfidence(c){
-var score=0;
-var count=0;
+/* FIX(verify 2026-08-16): old score (average of the candidate's own attr values over asked
+keys) rewarded sparse all-positive signatures — a candidate defining only 3 asked keys all =1
+scored a perfect 1.0 and permanently outranked the true character whose signature includes 0s.
+New score: fraction of CRISP answered questions this candidate both defines and agrees with.
+The truthful secret always agrees on every key it defines, so it scores 1.0; partial-signature
+candidates score below 1.0 once any question outside their sparse attrs is asked. */
+var crisp=0,covered=0;
 for(var i=0;i<state.history.length;i++){
 var q=state.history[i];
+var w=state.answers?state.answers[q]:undefined;
+if(w===undefined||w===0)continue;
+crisp++;
 if(c.attrs&&c.attrs[q]!==undefined){
-score+=c.attrs[q];
-count++;
+var av=c.attrs[q];
+if((w>0&&av>0)||(w<0&&av<=0))covered++;
 }
 }
-return count>0?score/count:0;
+return crisp>0?covered/crisp:0;
 }
 
 function showGuess(){
@@ -1276,11 +1302,25 @@ if(correct){
 showWin();
 }else{
 state.wrongGuesses++;
-if(state.wrongGuesses>=MAX_WRONG_GUESSES){
+/* FIX(verify 2026-08-16): previously a wrong guess just re-showed the SAME guessOverlay with
+the unchanged guessName while phase stayed 'guessing' — the genie could only ever repeat one
+name, so a truthful player could never win after a first wrong guess and the "3 guesses"
+mechanic was dead. Fix: eliminate the wrongly-guessed name from the candidate pool and resume
+asking/guessing until MAX_WRONG_GUESSES is exhausted. */
+var wrongName=state.currentGuess?state.currentGuess.name:null;
+state.currentGuess=null;
+if(wrongName){
+state.candidates=state.candidates.filter(function(c){return c.name!==wrongName});
+}
+if(state.wrongGuesses>=MAX_WRONG_GUESSES||state.candidates.length===0){
 showLearn();
 }else{
-document.getElementById('guessSub').textContent='Wrong! Try '+(MAX_WRONG_GUESSES-state.wrongGuesses)+' more guess'+(MAX_WRONG_GUESSES-state.wrongGuesses>1?'es':'')+'...';
-showOverlay('guessOverlay');
+state.phase='playing';
+if(shouldGuess()){
+showGuess();
+}else{
+askQuestion();
+}
 }
 }
 }

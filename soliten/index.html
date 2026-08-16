@@ -706,7 +706,14 @@ function clearSelectedCards(){
 }
 
 function checkWin(){
-  const remaining=cards.filter(c=>!c.cleared);
+  // FIX 2026-08-16 (verify_engine.js audit): win race — the 500ms clear timer calls
+  // checkWin before the rAF clear animation sets cleared=true (clearTimer+=0.03 needs
+  // 34 frames ≈ 567ms @60fps > 500ms), so the just-cleared group still had cleared=false
+  // here and the final checkWin never saw an empty board: NO level could complete at
+  // 60Hz (only ≥120Hz displays won the race). A card in `clearing` state is already
+  // committed to removal (input hit-test and checkNoMoves both skip it), so it must
+  // count as cleared here too.
+  const remaining=cards.filter(c=>!c.cleared&&!c.clearing);
   if(remaining.length===0){
     setTimeout(()=>showLevelComplete(),600);
   }

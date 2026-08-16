@@ -596,7 +596,15 @@ function resolveCollisions() {
       for (let j = i + 1; j < coins.length; j++) {
         const a = coins[i];
         const b = coins[j];
-        if (a.level !== b.level) continue;
+        // ENGINE BUG FIX (verify BC1 2026-08-16): the original code had
+        //   `if (a.level !== b.level) continue;` HERE, before any collision handling, so coins
+        // of DIFFERENT levels never collided at all — no separation, no impulse: every coin
+        // fell straight through the pile to the floor (pile = flat overlapping soup at y=H-r).
+        // Consequence: the pile could never gain height, so checkGameOver's overflow condition
+        // (a coin resting above the danger line, older than 800ms, slow) was physically
+        // unreachable — the "machine overflowed" game-over state could never trigger, and
+        // nothing ever stacked. Fix: run separation+impulse for ALL overlapping pairs (the
+        // math below is already level-agnostic); only the MERGE stays gated to equal levels.
         if (merged.has(i) || merged.has(j)) continue;
 
         const dx = b.x - a.x;
@@ -628,10 +636,12 @@ function resolveCollisions() {
             b.vy += imp * ny * bRatio * 2;
           }
 
-          if (dist < minDist * 0.92) {
+          // merge only equal-level pairs (rest of collision handling is for every pair)
+          if (a.level === b.level && dist < minDist * 0.92) {
             merged.add(i);
             merged.add(j);
             chainCount++;
+            didMerge = true; // restore resolve-until-stable intent (original never set it)
           }
         }
       }

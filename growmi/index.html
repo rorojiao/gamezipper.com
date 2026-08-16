@@ -306,8 +306,16 @@ var titleWormPhase=0;
 function p(x,y){return{x:x,y:y};}
 
 function generateLevels(){
+/* FIX(verify 2026-08-16): stars/walls/spikes are authored as [[x,y],...] arrays but
+ * were processed with .map(p) — and p(x,y) takes two args, so map passed the whole
+ * [x,y] array as x and the index as y, yielding {x:[x,y],y:index}. Every wall/spike/
+ * star coordinate therefore landed off-grid (walls never materialized in levelGrid,
+ * stars could never be collected, exitActive never became true — all 30 levels were
+ * unwinnable). blocks/switches were pre-wrapped p(x,y) point objects and got mangled
+ * the same way. pt() handles both authoring styles correctly. */
+var pt=function(a){return Array.isArray(a)?{x:a[0],y:a[1]}:a;};
 var lv=function(name,cols,rows,moves,par,wx,wy,starsArr,exitX,exitY,wallsArr,spikesArr,blocksArr,switchesArr,doorsArr,enemiesArr){
-return{name:name,cols:cols,rows:rows,moves:moves,par:par,worm:p(wx,wy),stars:starsArr.map(p),exit:p(exitX,exitY),walls:wallsArr.map(p),spikes:spikesArr.map(p),blocks:blocksArr.map(p),switches:switchesArr.map(p),doors:doorsArr,enemies:enemiesArr};
+return{name:name,cols:cols,rows:rows,moves:moves,par:par,worm:p(wx,wy),stars:starsArr.map(pt),exit:p(exitX,exitY),walls:wallsArr.map(pt),spikes:spikesArr.map(pt),blocks:blocksArr.map(pt),switches:switchesArr.map(pt),doors:doorsArr,enemies:enemiesArr};
 };
 var ep=function(ex,ey,pathArr,interval){
 var p2=pathArr.map(p);
@@ -493,7 +501,12 @@ function isWall(x,y){return getTile(x,y)===1;}
 function isSpike(x,y){return getTile(x,y)===3;}
 function isBlock(x,y){for(var i=0;i<level.blocks.length;i++)if(level.blocks[i].x===x&&level.blocks[i].y===y)return true;return false;}
 function isSwitch(x,y){for(var i=0;i<level.switches.length;i++)if(level.switches[i].x===x&&level.switches[i].y===y)return true;return false;}
-function isDoor(x,y){for(var i=0;i<activeDoors.length;i++)if(activeDoors[i].x===x&&activeDoors[i].y===y)return true;return false;}
+/* FIX(verify 2026-08-16): isDoor() used to scan activeDoors (the list of doors that
+ * had been OPENED by a switch), so an opened door BLOCKED movement while a closed
+ * door (grid tile 6) was passable — the switch mechanic was inverted. Correct
+ * semantics: a door blocks while its grid tile is still 6; checkTile() sets the
+ * tile to 0 when the door opens, making it passable. */
+function isDoor(x,y){return getTile(x,y)===6;}
 function isStar(x,y){for(var i=0;i<stars.length;i++)if(!stars[i].collected&&stars[i].x===x&&stars[i].y===y)return true;return false;}
 function isExit(x,y){return x===exitPos.x&&y===exitPos.y;}
 function isEnemyPos(x,y){for(var i=0;i<level.enemies.length;i++)if(level.enemies[i].x===x&&level.enemies[i].y===y)return true;return false;}

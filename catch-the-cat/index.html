@@ -325,9 +325,9 @@ var LEVELS = [
   // Tier 5: Expert (L25-30) — off-center, ~30 obstacles, expert AI
   {cat:{q:4,r:6}, obstacles:genLevel(25,30,'expert',4,6), ai:'expert', stars3:24, stars2:30},
   {cat:{q:6,r:4}, obstacles:genLevel(26,31,'expert',6,4), ai:'expert', stars3:25, stars2:31},
-  {cat:{q:5,r:3}, obstacles:genLevel(27,34,'expert',5,3), ai:'expert', stars3:25, stars2:31},
+  {cat:{q:5,r:4}, obstacles:genLevel(271,28,'expert',5,4), ai:'expert', stars3:25, stars2:31}, // cat at (5,3) sat 2 hexes from the border — solver proved no forced win and steer ran out of candidate walls. Mirrored to distance-3 like the passing L28.
   {cat:{q:5,r:7}, obstacles:genLevel(28,32,'expert',5,7), ai:'expert', stars3:26, stars2:32},
-  {cat:{q:3,r:5}, obstacles:genLevel(29,30,'expert',3,5), ai:'expert', stars3:26, stars2:32},
+  {cat:{q:4,r:5}, obstacles:genLevel(291,28,'expert',4,5), ai:'expert', stars3:26, stars2:32}, // cat at (3,5) is 3 hexes from the border with expert AI — structurally cat-favoured (exact solver: no proven wall at any depth ≤19, 560s budget). Aligned to the proven expert tier geometry (cat 4 from border, ~32-35 obstacles).
   {cat:{q:5,r:5}, obstacles:genLevel(30,33,'expert',5,5), ai:'expert', stars3:24, stars2:30}
 ];
 
@@ -668,7 +668,7 @@ function catMove(){
   // Sort by distance ascending
   candidates.sort(function(a,b){ return a.dist - b.dist; });
   
-  var ai = LEVELS[state.level].ai;
+  var ai = currentLevel().ai; // fix(root-cause): was LEVELS[state.level].ai — crashes on the daily challenge (loadDaily sets state.level=-1 sentinel; currentLevel() already handles it)
   var pick;
   
   if(ai === 'easy'){
@@ -788,11 +788,11 @@ function loadDaily(){
   // Generate a random-ish level centered at (5,5) with 2-4 obstacles.
   var rng = function(max){ seed = (seed*9301+49297)%233280; return Math.floor(seed/233280*max); };
   var obs = [];
-  var obsCount = 2 + rng(3); // 2-4
+  var obsCount = 26 + rng(7); // full-grid scatter, matching the winnable bfs campaign tier (2-4 inner-box obstacles left the board too open: exact solver found no forced win)
   var tries = 0;
-  while(obs.length < obsCount && tries < 40){
+  while(obs.length < obsCount && tries < 200){
     tries++;
-    var dq = 3 + rng(5), dr = 3 + rng(5);
+    var dq = rng(11), dr = rng(11);
     if(dq===5 && dr===5) continue;
     var dup = false;
     for(var k=0;k<obs.length;k++){ if(obs[k].q===dq && obs[k].r===dr){dup=true;break;} }

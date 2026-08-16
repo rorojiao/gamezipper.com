@@ -667,6 +667,20 @@
                 }
             }
             if (neighbors.length === 0) {
+                // FIX 2026-08-16 (verify_engine.js audit): dead end — the edge drawn to ENTER
+                // this vertex must be undone before popping, otherwise spur edges with degree-1
+                // vertices stay in the "solution" and the engine's own checkWinCondition rejects
+                // its own level (unwinnable).
+                if (path.length > 1) {
+                    const [pr, pc] = path[path.length - 2];
+                    let out = null, inn = null;
+                    if (cr === pr - 1) { out = 'top'; inn = 'bottom'; }
+                    else if (cr === pr + 1) { out = 'bottom'; inn = 'top'; }
+                    else if (cc === pc - 1) { out = 'left'; inn = 'right'; }
+                    else { out = 'right'; inn = 'left'; }
+                    edges[pr][pc][out] = 0;
+                    edges[cr][cc][inn] = 0;
+                }
                 path.pop();
                 continue;
             }
@@ -708,14 +722,17 @@
         const minC = 1, maxC = cols - 2;
         const r1 = minR + Math.floor(rng() * (maxR - minR + 1));
         const c1 = minC + Math.floor(rng() * (maxC - minC + 1));
-        const r2 = r1 + 1 + Math.floor(rng() * (maxR - r1 - 1));
-        const c2 = c1 + 1 + Math.floor(rng() * (maxC - c1 - 1));
-        for (let r = r1; r <= r2; r++) {
-            for (let c = c1; c <= c2; c++) {
-                if (r < r2) { edges[r][c].bottom = 1; edges[r + 1][c].top = 1; }
-                if (c < c2) { edges[r][c].right = 1; edges[r][c + 1].left = 1; }
-            }
-        }
+        // FIX 2026-08-16 (verify_engine.js audit): clamp so r2>=r1+1 / c2>=c1+1 always
+        // (r1===maxR made the old expression yield r1 or r1-1 => degenerate zero-height rect).
+        const r2 = Math.max(r1 + 1, r1 + 1 + Math.floor(rng() * Math.max(0, maxR - r1 - 1)));
+        const c2 = Math.max(c1 + 1, c1 + 1 + Math.floor(rng() * Math.max(0, maxC - c1 - 1)));
+        // FIX 2026-08-16 (verify_engine.js audit): original set bottom/right for EVERY cell in
+        // the rect (a full mesh) — interior vertices got degree 4, rejected by checkWinCondition.
+        // A fallback loop must be the rectangle BORDER only.
+        for (let c = c1; c < c2; c++) { edges[r1][c].right = 1; edges[r1][c + 1].left = 1; }
+        for (let c = c1; c < c2; c++) { edges[r2][c].right = 1; edges[r2][c + 1].left = 1; }
+        for (let r = r1; r < r2; r++) { edges[r][c1].bottom = 1; edges[r + 1][c1].top = 1; }
+        for (let r = r1; r < r2; r++) { edges[r][c2].bottom = 1; edges[r + 1][c2].top = 1; }
         return edges;
     }
 
@@ -852,42 +869,32 @@
     }
 
     function getEdgeAtPoint(x, y, state) {
+        // FIX 2026-08-16 (verify_engine.js audit): the edge store is VERTEX-centric
+        // (edges[r][c].top = segment from vertex (r,c) to (r-1,c); generateLoop/renderGame/
+        // checkWinCondition all agree on this). The old hit-test was written cell-centric
+        // and its generic branch could only ever return 'left'/'top' flags ('right'/'bottom'
+        // required dx>=1-dy, impossible for dx<=0.5,dy<=0.5) — most interior edges were
+        // unclickable and border clicks toggled perpendicular edges, so generated loops
+        // could not be drawn through the UI. Rewritten: near a vertical gridline x=C the
+        // click means the vertical edge (R,C)-(R+1,C); near a horizontal gridline y=R the
+        // horizontal edge (R,C)-(R,C+1).
         const { cellSize, cols, rows } = state;
         const gx = x / cellSize;
         const gy = y / cellSize;
-        const threshold = 0.25;
-        if (gy < threshold && gx >= 0 && gx <= cols) {
-            const c = Math.round(gx);
-            const r = Math.max(0, Math.min(rows - 1, Math.floor(gy)));
-            if (c >= 0 && c <= cols) return { type: 'top', r, c };
+        if (gx < -0.25 || gx > cols + 0.25 || gy < -0.25 || gy > rows + 0.25) return null;
+        const dx = Math.abs(gx - Math.round(gx));
+        const dy = Math.abs(gy - Math.round(gy));
+        if (dx < 0.25 && dx <= dy) {
+            // vertical edge at gridline x = C between vertex rows floor(gy) and floor(gy)+1
+            const C = Math.round(gx);
+            const R = Math.max(0, Math.min(rows - 1, Math.floor(gy)));
+            return { type: 'bottom', r: R, c: C };
         }
-        if (gy > rows - threshold && gx >= 0 && gx <= cols) {
-            const c = Math.round(gx);
-            const r = Math.max(0, Math.min(rows - 1, Math.ceil(gy) - 1));
-            if (c >= 0 && c <= cols) return { type: 'bottom', r, c };
-        }
-        if (gx < threshold && gy >= 0 && gy <= rows) {
-            const r = Math.round(gy);
-            const c = Math.max(0, Math.min(cols - 1, Math.floor(gx)));
-            if (r >= 0 && r <= rows) return { type: 'left', r, c };
-        }
-        if (gx > cols - threshold && gy >= 0 && gy <= rows) {
-            const r = Math.round(gy);
-            const c = Math.max(0, Math.min(cols - 1, Math.ceil(gx) - 1));
-            if (r >= 0 && r <= rows) return { type: 'right', r, c };
-        }
-        const c = Math.round(gx);
-        const r = Math.round(gy);
-        if (r >= 0 && r < rows && c >= 0 && c < cols) {
-            const dx = Math.abs(gx - c);
-            const dy = Math.abs(gy - r);
-            const d = Math.min(dx, dy, Math.abs(1 - dx), Math.abs(1 - dy));
-            if (d < threshold) {
-                if (dx <= dy && dx <= 1 - dy) return { type: 'left', r, c: Math.max(0, c - 1) };
-                if (dx >= 1 - dy) return { type: 'right', r, c };
-                if (dy <= dx && dy <= 1 - dx) return { type: 'top', r: Math.max(0, r - 1), c };
-                return { type: 'bottom', r, c };
-            }
+        if (dy < 0.25) {
+            // horizontal edge at gridline y = R between vertex cols floor(gx) and floor(gx)+1
+            const R = Math.round(gy);
+            const C = Math.max(0, Math.min(cols - 1, Math.floor(gx)));
+            return { type: 'right', r: R, c: C };
         }
         return null;
     }
@@ -1182,14 +1189,20 @@
         if (!gameState || gameState.completed) return;
         if (soundEnabled) playClick();
         const sol = gameState.solution;
-        for (let r = 0; r < gameState.rows; r++) {
-            for (let c = 0; c < gameState.cols; c++) {
+        // FIX 2026-08-16 (verify_engine.js audit): scan ran r<rows,c<cols, so solution edges
+        // whose flags live on the bottom vertex row / right vertex column were never hinted
+        // (and the unguarded mirror would have crashed on them). Full vertex range + the same
+        // bounds guard handleToggleDraw uses.
+        for (let r = 0; r <= gameState.rows; r++) {
+            for (let c = 0; c <= gameState.cols; c++) {
                 for (const type of ['top', 'right', 'bottom', 'left']) {
                     if (gameState.playerEdges[r][c][type] === 0 && gameState.xMarks[r][c][type] === 0) {
                         if (sol[r][c][type] === 1) {
                             const [nr, nc] = getNeighbor(r, c, type);
                             gameState.playerEdges[r][c][type] = 1;
-                            gameState.playerEdges[nr][nc][getOpposite(type)] = 1;
+                            if (nr >= 0 && nr <= gameState.rows && nc >= 0 && nc <= gameState.cols) {
+                                gameState.playerEdges[nr][nc][getOpposite(type)] = 1;
+                            }
                             gameState.xMarks[r][c][type] = 0;
                             gameState.xMarks[nr][nc][getOpposite(type)] = 0;
                             gameState.hints++;
@@ -1207,14 +1220,16 @@
         if (!dailyState || dailyState.completed) return;
         if (soundEnabled) playClick();
         const sol = dailyState.solution;
-        for (let r = 0; r < dailyState.rows; r++) {
-            for (let c = 0; c < dailyState.cols; c++) {
+        for (let r = 0; r <= dailyState.rows; r++) {
+            for (let c = 0; c <= dailyState.cols; c++) {
                 for (const type of ['top', 'right', 'bottom', 'left']) {
                     if (dailyState.playerEdges[r][c][type] === 0 && dailyState.xMarks[r][c][type] === 0) {
                         if (sol[r][c][type] === 1) {
                             const [nr, nc] = getNeighbor(r, c, type);
                             dailyState.playerEdges[r][c][type] = 1;
-                            dailyState.playerEdges[nr][nc][getOpposite(type)] = 1;
+                            if (nr >= 0 && nr <= dailyState.rows && nc >= 0 && nc <= dailyState.cols) {
+                                dailyState.playerEdges[nr][nc][getOpposite(type)] = 1;
+                            }
                             dailyState.xMarks[r][c][type] = 0;
                             dailyState.xMarks[nr][nc][getOpposite(type)] = 0;
                             dailyState.hints++;

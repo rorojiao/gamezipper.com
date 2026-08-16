@@ -423,13 +423,16 @@ function checkBlock(){
   return false;
 }
 function playerPass(){
-  if(!active||curP!==0)return;sfx('pass');saveU();conPass++;
-  showPass('You');
+  /* FIX 2026-08-16 (verify_engine sweep): hotseat PVP shares these bottom buttons, so
+   * Draw/Pass must act for the CURRENT player, not just P1 (old curP!==0 guard deadlocked
+   * P2 whenever they had no playable tile). AI mode still restricts them to the human. */
+  if(!active)return;if(gameType==='ai'&&curP!==0)return;sfx('pass');saveU();conPass++;
+  showPass(gameType==='pvp'?(curP===0?'Player 1':'Player 2'):'You');
   if(conPass>=2){active=false;setTimeout(function(){endRndBlocked()},400);return}
   advTurn();
 }
 function playerDraw(){
-  if(!active||curP!==0)return;
+  if(!active)return;if(gameType==='ai'&&curP!==0)return; /* FIX 2026-08-16: see playerPass */
   if(gameMode==='block'||bone.length===0){sfx('error');return}
   rAC();saveU();p1H.push(bone.pop());sfx('draw');updateUI();renderHands();renderBone();
 }
@@ -628,7 +631,7 @@ function updateUI(){
   document.getElementById('move-num').textContent=mvCnt;
   document.getElementById('round-num').textContent=rndNum;
   document.getElementById('bone-count').textContent=bone.length;
-  var my=curP===0&&active,hp=hasPlay(p1H),cd=gameMode!=='block'&&bone.length>0;
+  var my=active&&(gameType==='pvp'||curP===0),hp=hasPlay(curP===0?p1H:p2H),cd=gameMode!=='block'&&bone.length>0; /* FIX 2026-08-16: pvp shared buttons + current player's hand */
   document.getElementById('draw-btn').disabled=!(my&&!hp&&cd);
   document.getElementById('pass-btn').disabled=!(my&&!hp&&!cd&&active);
   document.getElementById('undo-btn').disabled=undoSt.length===0||!active;

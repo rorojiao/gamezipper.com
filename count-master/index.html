@@ -263,13 +263,18 @@ function isInRect(mx,my,x,y,w,h){return mx>=x&&mx<=x+w&&my>=y&&my<=y+h;}
 function shake(d){shakeTimer=0.2;shakeX=(Math.random()-0.5)*d;shakeY=(Math.random()-0.5)*d;}
 
 /* ─── Init Level ─── */
-function initLevel(lv){
-var lv=LEVELS[lv];
+function initLevel(lvIdx){
+// ENGINE BUG FIX (verify BC1 2026-08-16): the parameter used to be `lv` and was immediately
+// shadowed by `var lv=LEVELS[lv]` BEFORE the `tutStep=lv<2?0:-1` line below compared against
+// it — comparing an object to 2 is always false, so the tutorial arrow ("Swipe to choose!")
+// never appeared on levels 1-2 (indices 0-1). Fix: capture the index as lvIdx, keep `lv` as
+// the level object everywhere else.
+var lv=LEVELS[lvIdx];
 crowd=lv.sc;startCrowd=lv.sc;lane=1;gateIdx=0;gateDist=0;runY=H*0.7;
 combo=0;comboMult=1;comboTimer=0;
 shieldActive=false;magnetActive=false;doubleActive=false;
 powerups=[];obstacles=[];bossActive=false;bossTimer=0;bossAnim=0;
-starCount=0;gateAnimTimer=0;resultTimer=0;tutStep=lv<2?0:-1;
+starCount=0;gateAnimTimer=0;resultTimer=0;tutStep=lvIdx<2?0:-1;
 gateCooldown=0;runSpeed=120;
 crowdArr=[];particles=[];
 for(var i=0;i<Math.min(crowd,60);i++){
@@ -536,7 +541,12 @@ if(crowd<=0){state='gameOver';sfxDeath();BGM.stop();resultTimer=0;}
 function startBossFight(){
 var lv=LEVELS[level];
 if(!lv.boss)return;
-bossActive=true;bossTimer=0;bossCrowd=crowd;bossAnim=0;
+// ENGINE BUG FIX (verify BC1 2026-08-16): this function set only bossActive but never
+// state='bossFight', while drawBoss() — which advances bossTimer, applies the crowd-vs-boss
+// damage ticks, and evaluates the win/lose conditions — is gated on state==='bossFight' in
+// draw(). Result: on every boss level (indices 9,14,19,24,29) the game softlocked forever
+// after the last gate: no boss ticks, no win, no loss, unwinnable. Fix: enter bossFight.
+bossActive=true;bossTimer=0;bossCrowd=crowd;bossAnim=0;state='bossFight';
 BGM.start('boss');
 }
 function drawBoss(){

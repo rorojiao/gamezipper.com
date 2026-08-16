@@ -230,7 +230,7 @@ const LEVELS = [
  available:[{type:'planet',count:3},{type:'star',count:2}], obstacles:[{x:300,y:320,r:18,type:'asteroid'},{x:460,y:250,r:20,type:'asteroid'},{x:460,y:380,r:20,type:'asteroid'},{x:600,y:300,r:18,type:'asteroid'}], par:2, timeLimit:40,
  hint:[{x:330,y:170,type:'star'},{x:550,y:480,type:'planet'}] },
  { tier:3, start:{x:100,y:300,vx:156,vy:0}, goal:{x:720,y:300,r:55,type:'blackhole'},
- available:[{type:'planet',count:2},{type:'star',count:1}], obstacles:[{x:400,y:300,r:18,type:'asteroid'}], par:1, timeLimit:20,
+ available:[{type:'planet',count:2},{type:'star',count:1}], obstacles:[{x:400,y:300,r:18,type:'asteroid'}], par:2, timeLimit:20, // FIX(verify 2026-08-16): par was 1 but exhaustive single-body search (10px grid + descent) proves min closest-approach 57.2 > capture r=55; level is winnable with 2 bodies, so 3-star at par 1 was unattainable
  hint:[{x:280,y:300,type:'star'}] },
  { tier:3, start:{x:100,y:150,vx:144,vy:18}, goal:{x:720,y:450,r:55,type:'blackhole'},
  available:[{type:'planet',count:2},{type:'star',count:2}], obstacles:[], par:2, timeLimit:22,
@@ -275,6 +275,11 @@ const LEVELS = [
  available:[{type:'blackhole',count:1},{type:'star',count:2},{type:'planet',count:1}], obstacles:[{x:280,y:200,r:16,type:'asteroid'},{x:280,y:400,r:16,type:'asteroid'},{x:400,y:300,r:22,type:'asteroid'},{x:520,y:200,r:16,type:'asteroid'},{x:520,y:400,r:16,type:'asteroid'}], par:3, timeLimit:28,
  hint:[{x:220,y:300,type:'star'},{x:580,y:300,type:'star'},{x:400,y:300,type:'planet'}] }
 ];
+// FIX(verify 2026-08-16): pristine per-level body counts. placeBody() decrements
+// lvl.available[].count in place, but startLevel() never restored them, so every
+// Retry/Next replay permanently drained the shelf — after enough retries count hit 0,
+// no body could be placed and the level became unwinnable. startLevel() now restores these.
+const LEVEL_BASE_COUNTS = LEVELS.map(l => l.available.map(a => a.count));
 let canvas, ctx, dpr, scaleX = 1, scaleY = 1;
 let screen = 'title'; // 'title' | 'game' | 'levelSelect' | 'win' | 'lose' | 'paused'
 let currentLevel = 0;
@@ -819,6 +824,8 @@ function updateToggle(btn, on){
 }
 function startLevel(idx){
  currentLevel = idx;
+ // FIX(verify 2026-08-16): restore pristine body counts (see LEVEL_BASE_COUNTS comment).
+ (LEVEL_BASE_COUNTS[idx]||[]).forEach((c,k)=>{ const a = LEVELS[idx].available[k]; if(a) a.count = c; });
  screen = 'game';
  state = 'setup';
  placed = [];

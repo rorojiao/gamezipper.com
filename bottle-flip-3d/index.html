@@ -1358,21 +1358,35 @@ function launchBottle(power) {
   const g = CONFIG.gravity;
   const dx = targetX - startX;
   const dy = targetY - groundY;
-  // Estimate v0 for this power: scale with distance
-  const ideal = Math.sqrt(g * dx * dx / (dx * Math.sin(2 * theta)));
-  // Adjust for height difference: simple
-  const heightAdjust = -dy * 0.5;
-  const baseV = Math.max(220, Math.min(900, ideal * 0.45 + heightAdjust));
+  // ENGINE BUG FIX (verify BC1, reachability): the original estimate (ideal*0.45 + heightAdjust,
+  // clamped to 900) capped launch speed at ~924px/s while landing on ANY platform needs
+  // ~1400-1600px/s at 70deg — every one of the 30 levels was physically unreachable (the bottle
+  // peaked/fell 200-420px short of even the nearest platform, then dropped off-screen).
+  // baseV is now the exact ballistic speed that lands the bottle on the target platform at
+  // ~75% power: v² = g·dx² / (2cos²θ·(dy + dx·tanθ)), and 0.45+0.85*0.75 = 1.0875.
+  const tanT = Math.tan(theta);
+  const ballDen = 2 * Math.cos(theta) * Math.cos(theta) * (dy + dx * tanT);
+  const vNeed = ballDen > 1 ? Math.sqrt(g * dx * dx / ballDen) : 900;
+  const baseV = Math.max(220, Math.min(2200, vNeed / 1.0875));
   const v0 = baseV * (0.45 + power * 0.85);
   const vx = v0 * Math.cos(theta);
   const vy = -v0 * Math.sin(theta);
+  // ENGINE BUG FIX (verify BC1, spin): original angVel (power*9 rad/s ±10% jitter) yields
+  // ~1.5-1.9 flips per flight, so even reachable landings were essentially always tilted
+  // (offline scan of all 30 levels: no power landed within the 30deg success window on
+  // 26/30). Tie the spin rate to horizontal travel instead: angVel = 2π·vx/dx makes the
+  // total rotation at landing exactly 2π·(distance travelled)/dx — power- and wind-
+  // independent (wind drift is included in the travelled distance), so the bottle completes
+  // exactly one full flip by the target platform. ±10% jitter removed (it randomized the
+  // landing angle by up to ±36deg on its own).
+  const spinK = (Math.PI * 2) / Math.max(1, dx);
   state.bottle = {
     x: startX,
     y: groundY - 60,
     vx: vx,
     vy: vy,
     angle: 0,           // 0 = upright
-    angVel: power * CONFIG.flipSpeed * (1 + Math.random() * 0.2 - 0.1),
+    angVel: spinK * vx,
     radius: 16,
     height: 70,
     skin: SKINS[state.skinIndex],
@@ -1380,8 +1394,6 @@ function launchBottle(power) {
     landed: false,
     inWind: null
   };
-  // Cap the power for max flips
-  if (power > 0.95) state.bottle.angVel *= 1.1;
   // Hide gauge
   document.getElementById('powerGauge').style.display = 'none';
   document.getElementById('chargeHint').style.display = 'none';
@@ -1414,6 +1426,18 @@ function update(dt) {
   if (state.level && state.level.caps) {
     for (const c of state.level.caps) {
       c.bobT += dt * 3;
+    }
+  }
+
+  // ENGINE BUG FIX (verify BC1): platforms with moveX/moveY never moved — _mx/_my are read by
+  // the collision check and the renderer, but nothing ever assigned them, so the "moving
+  // platforms" of levels 11-15/26/27/29/30 were silently static. Oscillate them around their
+  // base position (sin at p.speed rad/s).
+  if (state.level && state.level.platforms) {
+    const mt = performance.now() / 1000;
+    for (const p of state.level.platforms) {
+      p._mx = p.moveX ? Math.sin(mt * (p.speed || 1)) * p.moveX : 0;
+      p._my = p.moveY ? Math.sin(mt * (p.speed || 1)) * p.moveY : 0;
     }
   }
 
@@ -1597,7 +1621,12 @@ function onBottleFail(b) {
   showToast('MISS');
   updateHud();
   if (state.bottlesLeft <= 0) {
-    setTimeout(() => completeLevel(), 700);
+    // ENGINE BUG FIX (verify BC1): every level has bottles=1, and a single total miss used to
+    // fall through to completeLevel() with attempt===1 → 2 stars + next-level unlock — i.e.
+    // failing the only bottle "completed" the level (title even said GREAT!). A run with zero
+    // landings (state.bottles===0) now restarts the level instead of completing it.
+    if (state.bottles > 0) setTimeout(() => completeLevel(), 700);
+    else setTimeout(() => restartLevel(), 700);
   } else {
     setTimeout(() => resetBottle(), 500);
   }
