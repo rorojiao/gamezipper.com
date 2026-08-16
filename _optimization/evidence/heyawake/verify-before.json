@@ -1,0 +1,41 @@
+{
+  "finalStdout": {
+    "pass": 0,
+    "fail": 31,
+    "total": 31,
+    "failIdx": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,99],
+    "verdict": "FAIL"
+  },
+  "approach": "vm sandbox loads index.html inline scripts; surgery after the engine's own window.resetProgress export injects window.__HY internals accessor (index.html untouched). Engine init() runs its chunked generator (generateAllLevelsAsync) producing PUZZLES[0..29]. Per level: startLevel, independent validation of the embedded solution against full Heyawake rules, then PLAY the embedded solution through the engine's own onCellClick; if checkWin does not reach onWin, a row-major DFS independent solver (adjacency + room-count + span pruning, exact counts + white connectivity at leaf; leaf re-verified against the engine's OWN predicates findAdjacentBlack/findSpanViolations/findConnectivityError + clue-count logic in a separate probe) searches for ANY winning assignment and plays it through onCellClick too. Daily via startDaily.",
+  "results": {
+    "winnable-but-win-crashes": "L3, L4, L10, L17, L19, L21, L25, L26, L27 — a fully valid solution EXISTS (engine-verified), and playing it makes checkWin reach onWin, which throws 'Cannot read properties of undefined (reading length)' in saveResult before the win overlay shows. Win impossible to complete.",
+    "provably-unwinnable": "L1, L2, L5, L6, L7, L8, L9, L11-L16, L18, L20, L22, L23, L24, L29 (19 levels) — exhaustive search: no cell assignment satisfies the engine's own checkWin predicates (clued-room exact counts + clueless-room <=3 blacks + no adjacent blacks + span rule + white connectivity).",
+    "inconclusive-under-cap": "L28, L30, daily — embedded solution invalid (span); independent solver hit the 20M-node/20s cap without exhausting.",
+    "all-30-levels-are-fallback-checkerboards": "Every level has rooms=2 regardless of tier (5x5..9x9): generatePuzzle returned null, so generateOneLevel's fallback path built each level as a 2-room checkerboard pattern.",
+    "embedded-solutions": "All 30 embedded solutions violate the engine's own span predicate (findSpanViolations) — playing the stored solution, or following the game's hints (doHint teaches state.sol), can never pass checkWin."
+  },
+  "issues": [
+    {
+      "severity": "game-breaking",
+      "rootCause": "solveHeyawake (index.html:362-430) picks cells via rng-random choice and burns its maxCalls=80000 budget in ~1ms without ever backtracking to a solution, returning false for (nearly) every seed; generatePuzzle (432-463) thus returns null and generateOneLevel (475-553) falls back to a 2-room checkerboard 'puzzle' for all 30 levels. The fallback's embedded solution violates the engine's own span rule (findSpanViolations :881-899) on every level, so checkWin (:1019) can never pass on the stored solution; 19/30 levels are provably unwinnable outright.",
+      "engineLines": [362, 430, 432, 463, 475, 553, 881, 899, 1019],
+      "repro": "Start L1: the board is a trivial 2-room checkerboard no matter the tier; shade the hinted/taught cells -> checkWin never fires."
+    },
+    {
+      "severity": "game-breaking",
+      "rootCause": "saveResult (index.html:321) executes s.best[s.best.length||lvl] but initSave (:320) never creates a 'best' field -> s.best.length throws 'Cannot read properties of undefined (reading length)'. onWin (:1051-1072) calls saveResult BEFORE showing the win overlay, so the 9 levels that do have valid solutions (L3, L4, L10, L17, L19, L21, L25, L26, L27) crash at the exact moment of winning: no overlay, no star, no persistence to localStorage heyawakeV1. No level in the game can ever be completed.",
+      "engineLines": [320, 321, 1051, 1072],
+      "repro": "Solve L3 correctly (a valid solution exists) -> the final click throws; nothing happens visually; completed[2] never saved."
+    },
+    {
+      "severity": "content",
+      "rootCause": "startDaily (index.html:711-720) depends on generatePuzzle too: for seeds where generation fails it alerts 'Could not generate daily puzzle. Try again!' and returns; today's (2026-08-16) seed did generate but its embedded solution violates the span rule, so the daily is likewise unplayable to a win.",
+      "engineLines": [711, 720],
+      "repro": "Click Daily on a failing seed -> alert, no game."
+    }
+  ],
+  "notes": [
+    "One non-fatal 'Maximum call stack size exceeded' was captured from a timer callback during engine load; generation completed (all 30 PUZZLES present).",
+    "Independent-solver null results were cross-validated in a separate probe (/tmp/hy_wincheck.js) that verifies candidate solutions against the engine's own predicate functions (findAdjacentBlack/findSpanViolations/findConnectivityError + clue counts), and winnable levels against the engine's validators found the same 9-level set (probe at 2M-node cap found 8; raising the cap found L27 as well)."
+  ]
+}

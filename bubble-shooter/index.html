@@ -368,7 +368,7 @@ const ctx=canvas.getContext('2d');
 const container=document.getElementById('gameContainer');
 let W,H,bubbleRadius,bubbleDiam,gridOffsetX,gridOffsetY;
 let rafId=null,isRunning=false,lastTime=0;
-const timers=[];
+let timers=[];
 let audioCtx=null,audioEnabled=true,musicEnabled=true;
 let bgmOsc=null,bgmGain=null,bgmInterval=null,bgmChordIndex=0;
 const BGM_CHORDS=[[130.81,164.81,196],[146.83,174.61,220],[164.81,196,246.94],[130.81,164.81,196]];
@@ -501,13 +501,16 @@ function generateLevels(){
     'Neon Nights','Solar Flare','Thunder Storm','Iceberg','Volcano',
     'Aurora','Galaxy','Nebula','Supernova','Cosmic'
   ];
+  // verified shot-budget boost: in-engine optimal policy left 1-4 bubbles on these 10 levels
+  // (verify_engine.js budgetShortfall); +3 shots each restores clearability with margin.
+  const SHOT_BOOST={13:3,16:3,20:3,22:3,24:3,25:3,26:3,27:3,28:3,30:3};
   for(let p=0;p<5;p++){
     const cfg=packConfigs[p];
     for(let i=0;i<6;i++){
       const lvl=p*6+i+1;
       const rng=seededRandom(cfg.seed+lvl*100);
       const rows=Math.floor(cfg.rowsMin+rng()*(cfg.rowsMax-cfg.rowsMin+1));
-      const shots=Math.max(10,Math.floor(rows*3+rng()*5));
+      const shots=Math.max(10,Math.floor(rows*3+rng()*5))+(SHOT_BOOST[lvl]||0);
       const baseScore=rows*100+lvl*50;
       const pattern=[];
       for(let r=0;r<rows;r++){

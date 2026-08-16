@@ -127,15 +127,21 @@ const OBSTACLE_INTERVAL_MIN = 80;
 const OBSTACLE_INTERVAL_MAX = 200;
 const GEM_INTERVAL = 180;
 
-function spawnObstacle() {
-  const lane = (Math.random() * 2 - 1) * 0.82; // -0.82..0.82
-  const z = roadZ + ZLOOP - 20;
+function spawnObstacle(zAt) {
+  let lane = (Math.random() * 2 - 1) * 0.82; // -0.82..0.82
+  const z = zAt !== undefined ? zAt : roadZ + ZLOOP - 20;
+  // fairness guard: if the previous obstacle is close in z, keep lanes apart so the
+  // pair can never form an impassable wall (passing needs |dx|>0.44 from both)
+  const prev = obstacles[obstacles.length - 1];
+  if (prev && Math.abs(z - prev.z) < 150) {
+    for (let t = 0; t < 8 && Math.abs(lane - prev.lane) < 0.55; t++) lane = (Math.random() * 2 - 1) * 0.82;
+  }
   obstacles.push({ z, lane, type: Math.random() < 0.3 ? 'wall' : 'block', alive: true });
 }
 
-function spawnGem() {
+function spawnGem(zAt) {
   const lane = (Math.random() * 2 - 1) * 0.75;
-  const z = roadZ + ZLOOP - 30;
+  const z = zAt !== undefined ? zAt : roadZ + ZLOOP - 30;
   gems.push({ z, lane, alive: true, collected: false, flash: 0 });
 }
 
@@ -144,9 +150,9 @@ function resetWorld() {
   gems = [];
   nextObstacleZ = roadZ + 200 + Math.random() * 100;
   nextGemZ = roadZ + 150;
-  // pre-spawn
-  for (let i = 0; i < 8; i++) spawnObstacle();
-  for (let i = 0; i < 5; i++) spawnGem();
+  // pre-spawn — SPREAD across the loop (was: all 8 at the same z = guaranteed death wall)
+  for (let i = 0; i < 8; i++) spawnObstacle(roadZ + 160 + i * ((ZLOOP - 240) / 8));
+  for (let i = 0; i < 5; i++) spawnGem(roadZ + 220 + i * (ZLOOP / 5));
 }
 
 // ─── PARTICLES ────────────────────────────────────────────
@@ -325,8 +331,8 @@ function update() {
   if (invincible <= 0) {
     for (const obs of obstacles) {
       if (!obs.alive) continue;
-      const dz = ((roadZ - obs.z) % ZLOOP + ZLOOP) % ZLOOP;
-      if (dz < 30) {
+      const dz = obs.z - roadZ; // signed ahead-distance (positive = approaching, ahead)
+      if (dz < 30 && dz > -15) { // lethal while at/ahead of player + 15z physical overlap tail
         const dx = Math.abs(playerX - obs.lane);
         if (dx < 0.22) {
           // crash
@@ -340,8 +346,8 @@ function update() {
   // Collect gems
   for (const gem of gems) {
     if (gem.collected || !gem.alive) continue;
-    const dz = ((roadZ - gem.z) % ZLOOP + ZLOOP) % ZLOOP;
-    if (dz < 25) {
+    const dz = gem.z - roadZ; // signed ahead-distance
+    if (dz < 25 && dz > -25) {
       const dx = Math.abs(playerX - gem.lane);
       if (dx < 0.2) {
         gem.collected = true;
@@ -355,14 +361,8 @@ function update() {
   }
 
   // Cull old obstacles
-  obstacles = obstacles.filter(o => {
-    const dz = ((roadZ - o.z) % ZLOOP + ZLOOP) % ZLOOP;
-    return dz < ZLOOP * 0.85;
-  });
-  gems = gems.filter(g => {
-    const dz = ((roadZ - g.z) % ZLOOP + ZLOOP) % ZLOOP;
-    return dz < ZLOOP * 0.85;
-  });
+  obstacles = obstacles.filter(o => o.z - roadZ > -100); // keep until 100 past the player
+  gems = gems.filter(g => g.z - roadZ > -100);
 
   // Particles
   for (const p of particles) {
@@ -551,9 +551,9 @@ function drawRoad() {
 
 // Draw obstacle
 function drawObstacle(obs) {
-  const dz = ((roadZ - obs.z) % ZLOOP + ZLOOP) % ZLOOP;
-  if (dz > ZLOOP * 0.5) return; // too far behind
-  const proj = project(obs.lane, obs.z);
+  const rel = obs.z - roadZ; // signed ahead-distance: 0=at player, ZLOOP=horizon
+  if (rel < -60 || rel > ZLOOP * 0.96) return;
+  const proj = project(obs.lane, rel);
   if (proj.y < HORIZON) return;
   const size = 18 * proj.scale;
   if (size < 1) return;
@@ -603,9 +603,9 @@ function drawObstacle(obs) {
 // Draw gem
 function drawGem(gem) {
   if (gem.collected && gem.flash <= 0) return;
-  const dz = ((roadZ - gem.z) % ZLOOP + ZLOOP) % ZLOOP;
-  if (dz > ZLOOP * 0.5) return;
-  const proj = project(gem.lane, gem.z);
+  const rel = gem.z - roadZ;
+  if (rel < -60 || rel > ZLOOP * 0.96) return;
+  const proj = project(gem.lane, rel);
   if (proj.y < HORIZON) return;
   const size = 12 * proj.scale;
   if (size < 1) return;
@@ -774,8 +774,8 @@ function draw() {
 
     // Sort obstacles & gems by Z (far to near)
     const allThings = [
-      ...obstacles.map(o => ({ type: 'obs', data: o, z: ((roadZ - o.z) % ZLOOP + ZLOOP) % ZLOOP })),
-      ...gems.map(g => ({ type: 'gem', data: g, z: ((roadZ - g.z) % ZLOOP + ZLOOP) % ZLOOP }))
+      ...obstacles.map(o => ({ type: 'obs', data: o, z: o.z - roadZ })),
+      ...gems.map(g => ({ type: 'gem', data: g, z: g.z - roadZ }))
     ];
     allThings.sort((a, b) => b.z - a.z);
 

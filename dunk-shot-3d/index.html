@@ -1213,15 +1213,18 @@ function updatePhysics(dt){
   // If ball is well past the rim plane (y < rim.y - 0.1) and falling, end shot as success
   if(ballInFlight.hasScored && ballInFlight.pos.y < 0.0){
     endShot(true);
+    return; // crash fix: endShot() nulls ballInFlight; the checks below would read .pos off null
   }
   // If ball is in front of launcher (y > 1.0) and z low, end shot
   if(ballInFlight.pos.y > 1.05){
     endShot(false);
+    return; // crash fix: same — ballInFlight is null after endShot()
   }
   // Dead ball: too low energy after 3 bounces
   const speed = Math.hypot(ballInFlight.vel.x, ballInFlight.vel.y, ballInFlight.vel.z);
   if(ballInFlight.time > 300 && speed < 0.001){
     endShot(ballInFlight.hasScored);
+    return; // crash fix: same
   }
   if(ballInFlight.time > 600){ // 10s max
     endShot(ballInFlight.hasScored);

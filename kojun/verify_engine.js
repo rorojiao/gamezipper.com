@@ -5,7 +5,7 @@
 // Sandbox: shared-vm-verify.js stubs (document/window/localStorage/canvas getContext/setTimeout/rAF/animate/appendChild).
 const fs = require('fs'); const vm = require('vm'); const path = require('path');
 const SLUG = 'kojun';
-const SLUG_DIR = path.join('/home/msdn/gamezipper.com', SLUG);
+const SLUG_DIR = __dirname;
 const html = fs.readFileSync(path.join(SLUG_DIR, 'index.html'), 'utf8');
 const scripts = [...html.matchAll(/<script(?![^>]*src=)(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
 const code = scripts.join('\n');

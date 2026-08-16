@@ -3,7 +3,7 @@
 // has exactly 1 unique solution.
 const fs = require('fs');
 
-const html = fs.readFileSync('/home/msdn/gamezipper.com/wagiri/index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 // R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
 const extractLevels=require('../.audit/gz-extract-levels.js');
 const LEVELS=extractLevels('wagiri');

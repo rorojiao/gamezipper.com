@@ -105,6 +105,7 @@ let board = [];          // 2D array [row][col], null or color string
 let currentPiece = null;
 let nextPiece = null;
 let score = 0, lines = 0, level = 1;
+let bestScore = (() => { try { return parseInt(localStorage.getItem('gz_tetris_best') || '0', 10) || 0; } catch (e) { return 0; } })();
 let gameRunning = false, gamePaused = false;
 let lastDropTime = 0;
 let animatingLines = []; // rows being cleared (flash animation)
@@ -326,12 +327,15 @@ function startGame() {
 function gameOver() {
   gameRunning = false;
   sfxGameOver();
+  const isBest = score > bestScore;
+  if (isBest) { bestScore = score; try { localStorage.setItem('gz_tetris_best', String(bestScore)); } catch (e) {} }
   const overlay = document.getElementById('overlay');
   overlay.innerHTML = `
     <h2>GAME OVER</h2>
+    ${isBest ? '<div style="color:#ffd700;font-size:14px;font-weight:700;letter-spacing:2px;margin-bottom:6px">★ NEW BEST ★</div>' : ''}
     <div class="final-score">${score}</div>
     <div class="final-label">Score</div>
-    <div style="font-size:13px;color:#888;margin-bottom:16px">Lines: ${lines} · Level: ${level}</div>
+    <div style="font-size:13px;color:#888;margin-bottom:16px">Lines: ${lines} · Level: ${level} · Best: ${bestScore}</div>
     <div class="btn-group">
       <button class="btn" onclick="startGame()">🔄 PLAY AGAIN</button>
     </div>
@@ -353,6 +357,8 @@ function updateHUD() {
   document.getElementById('score-disp').textContent = score;
   document.getElementById('lines-disp').textContent = lines;
   document.getElementById('level-disp').textContent = level;
+  const b = document.getElementById('best-disp');
+  if (b) { b.textContent = bestScore; b.style.color = score > 0 && score >= bestScore ? '#ffd700' : ''; }
 }
 
 // ─── GAME LOOP ───────────────────────────────────────────────────────────────

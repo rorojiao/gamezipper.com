@@ -1,0 +1,19 @@
+{
+  "finalStdout": {
+    "pass": 0,
+    "fail": 8,
+    "total": 8,
+    "failIdx": [1, 2, 3, 4, 5, 6, 7, 8],
+    "verdict": "FAIL"
+  },
+  "approach": "vm sandbox loads index.html inline scripts; perfect-memory player flips both cards of each pair through the engine's own flipCard -> setTimeout(checkMatch,1100) -> state must become 'complete' with saveBest persisted, per difficulty x 2 seeded decks.",
+  "issues": [
+    {
+      "severity": "game-breaking",
+      "rootCause": "index.html:419 'if(comboTimer2)clearTimeout(comboTimer2);' — comboTimer2 is never declared anywhere in the page (only referenced at lines 419-420; no site-level script defines it either). On the FIRST successfully matched pair the setTimeout(checkMatch,1100) callback (line 378) throws ReferenceError at line 419, aborting checkMatch before its cleanup at line 449 (first=null;second=null;lockBoard=false). lockBoard was set true at line 377 when the second card was flipped and is never released, so every subsequent flipCard returns at the line-370 guard: the game soft-locks permanently after the first match.",
+      "engineLines": [378, 419, 420, 449, 377, 370],
+      "repro": "Flip any two matching cards; both stay marked matched but the board never unlocks; no further card can be flipped until page reload.",
+      "note": "Same defect class as the engine's own documented 'Bug #23' (overlay undefined -> checkMatch aborted -> lockBoard stuck) at lines 253-255; that one was fixed, comboTimer2 was not."
+    }
+  ]
+}

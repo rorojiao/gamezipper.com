@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0a0a2e">
+<meta name="application-name" content="Star Loom">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>Star Loom Online Free - Connect the Constellation Puzzle | GameZipper</title>
+<meta name="description" content="Play Star Loom online free! A unique circle-topology constellation puzzle. Draw chords between stars so each star has exactly its clue number of connections. 30 handcrafted levels across 5 difficulty tiers. No download, mobile-friendly!">
+<meta name="keywords" content="star loom, star puzzle, constellation puzzle, circle puzzle, chord puzzle, nikoli-style puzzle, logic puzzle, brain teaser, unique solution, free browser game, html5, mobile game, no download">
+<meta property="og:title" content="Star Loom - Circle Topology Constellation Puzzle | GameZipper">
+<meta property="og:description" content="Draw chords between stars on a circle so each star has exactly its clue number of connections. 30 unique-solution levels. No download needed!">
+<meta property="og:type" content="game">
+<meta property="og:url" content="https://gamezipper.com/star-loom/">
+<meta property="og:image" content="https://gamezipper.com/og-images/star-loom.png">
+<link rel="canonical" href="https://gamezipper.com/star-loom/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Star Loom - Constellation Puzzle | GameZipper">
+<meta name="twitter:description" content="Draw chords between stars on a circle. 30 unique levels. No download needed!">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:radial-gradient(ellipse at center,#0a0a2e 0%,#000 100%);font-family:'Segoe UI',Roboto,system-ui,sans-serif;color:#e6e6f0;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+body{display:flex;flex-direction:column}
+#game-container{flex:1;display:flex;flex-direction:column;position:relative}
+canvas{display:block;width:100%;height:100%;position:absolute;top:0;left:0;z-index:1}
+.screen{position:absolute;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:5;padding:20px}
+.screen.active{display:flex}
+.title-screen{background:radial-gradient(ellipse at center,rgba(74,30,140,.5) 0%,transparent 70%)}
+.title-screen h1{font-size:3em;text-shadow:0 0 20px rgba(180,140,255,.8);margin-bottom:20px;animation:pulse 3s infinite}
+.title-screen p{max-width:600px;text-align:center;line-height:1.6;margin:10px 0;color:#b0b0d0}
+@keyframes pulse{0%,100%{text-shadow:0 0 20px rgba(180,140,255,.8)}50%{text-shadow:0 0 40px rgba(255,200,100,.9)}}
+.btn{padding:12px 28px;border:2px solid rgba(180,140,255,.6);border-radius:30px;background:rgba(74,30,140,.4);color:#fff;font-size:1.1em;font-weight:600;cursor:pointer;margin:8px;transition:all .2s ease;min-width:140px}
+.btn:hover{background:rgba(74,30,140,.7);border-color:#b49cff;transform:translateY(-2px)}
+.btn:active{transform:translateY(0)}
+.btn.primary{background:rgba(255,180,80,.25);border-color:rgba(255,180,80,.8)}
+.btn.primary:hover{background:rgba(255,180,80,.4)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.level-select{max-width:800px;width:100%;padding:20px;overflow-y:auto}
+.tier{margin:20px 0;padding:15px;background:rgba(74,30,140,.2);border-radius:12px;border:1px solid rgba(180,140,255,.3)}
+.tier h3{color:#b49cff;margin-bottom:10px;font-size:1.2em}
+.level-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:8px}
+.level-btn{aspect-ratio:1;border:2px solid rgba(180,140,255,.4);border-radius:8px;background:rgba(74,30,140,.3);color:#fff;font-size:.9em;cursor:pointer;transition:all .15s}
+.level-btn:hover:not(:disabled){background:rgba(74,30,140,.6);border-color:#b49cff}
+.level-btn.completed{background:rgba(80,180,80,.3);border-color:rgba(120,220,120,.7)}
+.level-btn.locked{opacity:.4;cursor:not-allowed}
+.game-hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:10px 16px;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,transparent 100%)}
+.hud-btn{padding:6px 14px;border:1px solid rgba(255,255,255,.3);border-radius:16px;background:rgba(0,0,0,.4);color:#fff;font-size:.85em;cursor:pointer}
+.hud-btn:hover{background:rgba(74,30,140,.5)}
+.win-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(20,15,40,.95);padding:30px 50px;border-radius:16px;border:2px solid rgba(255,200,100,.6);text-align:center;z-index:20;display:none}
+.win-overlay.show{display:block;animation:winIn .5s ease}
+.win-overlay h2{color:#ffd060;margin-bottom:14px;font-size:1.8em}
+@keyframes winIn{from{opacity:0;transform:translate(-50%,-50%) scale(.5)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+#level-info{color:#b0b0d0;font-size:.9em;margin-top:8px}
+#level-title{font-size:1.1em;color:#b49cff;font-weight:600}
+@media (max-width:600px){
+  .title-screen h1{font-size:2em}
+  .level-grid{grid-template-columns:repeat(auto-fill,minmax(50px,1fr))}
+  .btn{padding:10px 20px;font-size:1em}
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"VideoGame",
+  "name":"Star Loom - Circle Topology Constellation Puzzle",
+  "description":"Draw chords between stars on a circle so each star has exactly its clue number of connections. 30 unique-solution logic puzzles.",
+  "image":"https://gamezipper.com/og-images/star-loom.png",
+  "url":"https://gamezipper.com/star-loom/",
+  "genre":["Puzzle","Logic","Brain"],
+  "gamePlatform":"Web Browser",
+  "applicationCategory":"Game",
+  "operatingSystem":"Any",
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+  "publisher":{"@type":"Organization","name":"GameZipper","url":"https://gamezipper.com"}
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"FAQPage",
+  "mainEntity":[
+    {"@type":"Question","name":"How do you play Star Loom?","acceptedAnswer":{"@type":"Answer","text":"Tap two stars to draw a chord between them. Each star shows a number that tells you exactly how many chords must touch that star. Fill in all chords so every clue number is satisfied and all stars form one connected network."}},
+    {"@type":"Question","name":"Is there a unique solution?","acceptedAnswer":{"@type":"Answer","text":"Yes! Every level has exactly one solution. Use the Hint button to reveal a chord when stuck."}}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"BreadcrumbList",
+  "itemListElement":[
+    {"@type":"ListItem","position":1,"name":"GameZipper","item":"https://gamezipper.com/"},
+    {"@type":"ListItem","position":2,"name":"Star Loom","item":"https://gamezipper.com/star-loom/"}
+  ]
+}
+</script>
+
+<script defer src="/gz-analytics.js"></script>
+<script defer src="/js/games-data.js"></script>
+<script defer src="/adsterra-manager.js?v=v5174lazyep"></script><script defer src="/monetag-manager.js?v=v532aUnfilled"></script>
+<script src="/game-footer.js" defer></script>
+
+</head>
+<body>
+<div id="game-container">
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="screen title-screen active" id="title-screen">
+    <h1>⭐ Star Loom</h1>
+    <p>Connect the stars on a circle. Each star shows a number — that's exactly how many chords must touch it. Draw chords between stars until every clue is satisfied.</p>
+    <p style="color:#ffd060">30 handcrafted levels · 5 difficulty tiers · One unique solution per level</p>
+    <button class="btn primary" id="play-btn">Play</button>
+    <button class="btn" id="levels-btn">Level Select</button>
+  </div>
+
+  <div class="screen level-select" id="level-select">
+    <h2 style="color:#b49cff;margin-bottom:14px">Select a Level</h2>
+    <div id="tiers-container"></div>
+    <button class="btn" id="back-to-title" style="margin-top:20px">Back</button>
+  </div>
+
+  <div class="screen" id="game-screen">
+    <div class="game-hud">
+      <button class="hud-btn" id="back-btn">← Menu</button>
+      <div id="level-title">Level 1</div>
+      <button class="hud-btn" id="reset-btn">↻ Reset</button>
+    </div>
+    <div id="gz-ad-top"></div>
+  <canvas id="game-canvas"></canvas>
+  <div id="gz-ad-below-canvas"></div>
+    <div style="position:absolute;bottom:80px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10">
+      <button class="hud-btn" id="hint-btn">💡 Hint</button>
+      <button class="hud-btn" id="undo-btn">↶ Undo</button>
+    </div>
+    <div id="level-info">Tap two stars to draw a chord</div>
+  </div>
+
+  <div class="win-overlay" id="win-overlay">
+    <h2>⭐ Constellation Complete!</h2>
+    <p id="win-stars" style="color:#b0b0d0"></p>
+    <button class="btn primary" id="next-btn">Next Level</button>
+    <button class="btn" id="replay-btn" style="margin-top:10px">Replay</button>
+  </div>
+</div>
+
+<script>
+// ===== Star Loom Game =====
+
+const LEVELS = {"levels": [{"tier": "Beginner", "tier_idx": 0, "level_in_tier": 0, "number": 1, "num_stars": 5, "anchors": {"0": 1, "1": 2, "2": 3, "3": 4, "4": 2}, "solution": [[0, 3], [3, 4], [2, 3], [1, 3], [2, 4], [1, 2]], "chord_count": 6}, {"tier": "Beginner", "tier_idx": 0, "level_in_tier": 1, "number": 2, "num_stars": 5, "anchors": {"0": 4, "1": 2, "2": 2, "3": 3, "4": 1}, "solution": [[4, 0], [0, 1], [1, 3], [2, 3], [0, 3], [0, 2]], "chord_count": 6}, {"tier": "Beginner", "tier_idx": 0, "level_in_tier": 2, "number": 3, "num_stars": 5, "anchors": {"0": 4, "1": 2, "2": 2, "3": 1, "4": 3}, "solution": [[4, 0], [1, 4], [2, 4], [0, 3], [0, 1], [0, 2]], "chord_count": 6}, {"tier": "Beginner", "tier_idx": 0, "level_in_tier": 3, "number": 4, "num_stars": 5, "anchors": {"0": 3, "1": 2, "2": 2, "3": 1, "4": 4}, "solution": [[4, 0], [0, 2], [3, 4], [0, 1], [2, 4], [1, 4]], "chord_count": 6}, {"tier": "Beginner", "tier_idx": 0, "level_in_tier": 4, "number": 5, "num_stars": 5, "anchors": {"0": 4, "1": 2, "2": 3, "3": 1, "4": 2}, "solution": [[4, 0], [2, 4], [0, 1], [0, 3], [0, 2], [1, 2]], "chord_count": 6}, {"tier": "Beginner", "tier_idx": 0, "level_in_tier": 5, "number": 6, "num_stars": 5, "anchors": {"0": 3, "1": 1, "2": 2, "3": 2, "4": 4}, "solution": [[0, 2], [4, 0], [0, 3], [1, 4], [3, 4], [2, 4]], "chord_count": 6}, {"tier": "Easy", "tier_idx": 1, "level_in_tier": 0, "number": 7, "num_stars": 6, "anchors": {"0": 5, "1": 2, "2": 3, "3": 1, "4": 1, "5": 2}, "solution": [[0, 3], [5, 0], [0, 2], [0, 4], [0, 1], [2, 5], [1, 2]], "chord_count": 7}, {"tier": "Easy", "tier_idx": 1, "level_in_tier": 1, "number": 8, "num_stars": 6, "anchors": {"0": 5, "1": 2, "2": 1, "3": 1, "4": 2, "5": 3}, "solution": [[0, 4], [0, 3], [0, 2], [4, 5], [1, 5], [0, 1], [5, 0]], "chord_count": 7}, {"tier": "Easy", "tier_idx": 1, "level_in_tier": 2, "number": 9, "num_stars": 6, "anchors": {"0": 5, "1": 2, "2": 3, "3": 1, "4": 2, "5": 1}, "solution": [[0, 2], [0, 3], [1, 2], [5, 0], [2, 4], [0, 1], [0, 4]], "chord_count": 7}, {"tier": "Easy", "tier_idx": 1, "level_in_tier": 3, "number": 10, "num_stars": 6, "anchors": {"0": 1, "1": 2, "2": 1, "3": 5, "4": 3, "5": 2}, "solution": [[0, 3], [1, 3], [3, 5], [4, 5], [2, 3], [3, 4], [1, 4]], "chord_count": 7}, {"tier": "Easy", "tier_idx": 1, "level_in_tier": 4, "number": 11, "num_stars": 6, "anchors": {"0": 2, "1": 2, "2": 5, "3": 1, "4": 3, "5": 1}, "solution": [[0, 2], [2, 3], [2, 5], [1, 2], [2, 4], [0, 4], [1, 4]], "chord_count": 7}, {"tier": "Easy", "tier_idx": 1, "level_in_tier": 5, "number": 12, "num_stars": 6, "anchors": {"0": 1, "1": 2, "2": 3, "3": 5, "4": 1, "5": 2}, "solution": [[0, 3], [2, 3], [1, 3], [3, 5], [3, 4], [1, 2], [2, 5]], "chord_count": 7}, {"tier": "Medium", "tier_idx": 2, "level_in_tier": 0, "number": 13, "num_stars": 6, "anchors": {"0": 3, "1": 1, "2": 2, "3": 1, "4": 2, "5": 5}, "solution": [[0, 4], [0, 2], [2, 5], [1, 5], [3, 5], [4, 5], [5, 0]], "chord_count": 7}, {"tier": "Medium", "tier_idx": 2, "level_in_tier": 1, "number": 14, "num_stars": 6, "anchors": {"0": 5, "1": 1, "2": 1, "3": 2, "4": 2, "5": 3}, "solution": [[0, 4], [0, 3], [0, 2], [3, 5], [0, 1], [4, 5], [5, 0]], "chord_count": 7}, {"tier": "Medium", "tier_idx": 2, "level_in_tier": 2, "number": 15, "num_stars": 6, "anchors": {"0": 2, "1": 2, "2": 1, "3": 1, "4": 3, "5": 5}, "solution": [[5, 0], [4, 5], [1, 4], [2, 5], [3, 5], [0, 4], [1, 5]], "chord_count": 7}, {"tier": "Medium", "tier_idx": 2, "level_in_tier": 3, "number": 16, "num_stars": 6, "anchors": {"0": 5, "1": 1, "2": 2, "3": 2, "4": 1, "5": 3}, "solution": [[0, 4], [0, 1], [0, 2], [2, 5], [0, 3], [3, 5], [5, 0]], "chord_count": 7}, {"tier": "Medium", "tier_idx": 2, "level_in_tier": 4, "number": 17, "num_stars": 6, "anchors": {"0": 5, "1": 2, "2": 3, "3": 2, "4": 1, "5": 1}, "solution": [[0, 4], [0, 1], [5, 0], [0, 3], [0, 2], [2, 3], [1, 2]], "chord_count": 7}, {"tier": "Medium", "tier_idx": 2, "level_in_tier": 5, "number": 18, "num_stars": 6, "anchors": {"0": 5, "1": 2, "2": 1, "3": 3, "4": 2, "5": 1}, "solution": [[0, 2], [0, 1], [5, 0], [0, 4], [1, 3], [3, 4], [0, 3]], "chord_count": 7}, {"tier": "Hard", "tier_idx": 3, "level_in_tier": 0, "number": 19, "num_stars": 7, "anchors": {"0": 2, "1": 4, "2": 1, "3": 2, "4": 2, "5": 1, "6": 6}, "solution": [[6, 0], [5, 6], [2, 6], [3, 6], [1, 3], [4, 6], [1, 4], [0, 1], [1, 6]], "chord_count": 9}, {"tier": "Hard", "tier_idx": 3, "level_in_tier": 1, "number": 20, "num_stars": 7, "anchors": {"0": 6, "1": 2, "2": 4, "3": 1, "4": 2, "5": 1, "6": 2}, "solution": [[0, 1], [0, 5], [0, 4], [1, 2], [6, 0], [0, 3], [2, 6], [2, 4], [0, 2]], "chord_count": 9}, {"tier": "Hard", "tier_idx": 3, "level_in_tier": 2, "number": 21, "num_stars": 7, "anchors": {"0": 6, "1": 3, "2": 3, "3": 1, "4": 3, "5": 1, "6": 1}, "solution": [[0, 2], [0, 1], [0, 5], [2, 4], [6, 0], [0, 3], [1, 4], [1, 2], [0, 4]], "chord_count": 9}, {"tier": "Hard", "tier_idx": 3, "level_in_tier": 3, "number": 22, "num_stars": 7, "anchors": {"0": 6, "1": 1, "2": 1, "3": 3, "4": 3, "5": 3, "6": 1}, "solution": [[0, 4], [0, 5], [0, 1], [3, 4], [0, 2], [6, 0], [0, 3], [3, 5], [4, 5]], "chord_count": 9}, {"tier": "Hard", "tier_idx": 3, "level_in_tier": 4, "number": 23, "num_stars": 7, "anchors": {"0": 6, "1": 1, "2": 2, "3": 2, "4": 1, "5": 2, "6": 4}, "solution": [[0, 1], [6, 0], [0, 2], [0, 4], [0, 3], [0, 5], [3, 6], [2, 6], [5, 6]], "chord_count": 9}, {"tier": "Hard", "tier_idx": 3, "level_in_tier": 5, "number": 24, "num_stars": 7, "anchors": {"0": 6, "1": 1, "2": 3, "3": 1, "4": 1, "5": 3, "6": 3}, "solution": [[0, 1], [0, 5], [0, 3], [0, 4], [0, 2], [5, 6], [2, 5], [2, 6], [6, 0]], "chord_count": 9}, {"tier": "Expert", "tier_idx": 4, "level_in_tier": 0, "number": 25, "num_stars": 7, "anchors": {"0": 2, "1": 1, "2": 1, "3": 2, "4": 6, "5": 1, "6": 3}, "solution": [[0, 4], [6, 0], [4, 5], [3, 6], [1, 4], [2, 4], [4, 6], [3, 4]], "chord_count": 8}, {"tier": "Expert", "tier_idx": 4, "level_in_tier": 1, "number": 26, "num_stars": 7, "anchors": {"0": 6, "1": 1, "2": 3, "3": 2, "4": 2, "5": 1, "6": 1}, "solution": [[0, 3], [0, 2], [0, 1], [6, 0], [0, 4], [0, 5], [2, 3], [2, 4]], "chord_count": 8}, {"tier": "Expert", "tier_idx": 4, "level_in_tier": 2, "number": 27, "num_stars": 7, "anchors": {"0": 6, "1": 1, "2": 1, "3": 2, "4": 2, "5": 3, "6": 1}, "solution": [[0, 5], [0, 1], [0, 2], [0, 4], [0, 3], [6, 0], [3, 5], [4, 5]], "chord_count": 8}, {"tier": "Expert", "tier_idx": 4, "level_in_tier": 3, "number": 28, "num_stars": 7, "anchors": {"0": 1, "1": 1, "2": 3, "3": 2, "4": 2, "5": 6, "6": 1}, "solution": [[0, 5], [5, 6], [2, 5], [2, 4], [1, 5], [2, 3], [3, 5], [4, 5]], "chord_count": 8}, {"tier": "Expert", "tier_idx": 4, "level_in_tier": 4, "number": 29, "num_stars": 7, "anchors": {"0": 6, "1": 1, "2": 1, "3": 1, "4": 2, "5": 2, "6": 3}, "solution": [[6, 0], [4, 6], [0, 3], [0, 5], [0, 1], [0, 2], [0, 4], [5, 6]], "chord_count": 8}, {"tier": "Expert", "tier_idx": 4, "level_in_tier": 5, "number": 30, "num_stars": 7, "anchors": {"0": 3, "1": 6, "2": 1, "3": 1, "4": 2, "5": 1, "6": 2}, "solution": [[6, 0], [0, 1], [1, 5], [0, 4], [1, 2], [1, 3], [1, 6], [1, 4]], "chord_count": 8}]};
+
+const State = {
+  currentScreen: 'title',
+  currentLevel: 0,
+  selectedStars: [],
+  drawnChords: [],  // [{i, j}]
+  levelProgress: {},
+  audioCtx: null,
+  musicStarted: false,
+};
+
+// Load progress from localStorage
+function loadProgress() {
+  try {
+    const data = JSON.parse(localStorage.getItem('starloom_progress') || '{}');
+    State.levelProgress = data;
+  } catch (e) {
+    State.levelProgress = {};
+  }
+}
+function saveProgress() {
+  try {
+    localStorage.setItem('starloom_progress', JSON.stringify(State.levelProgress));
+  } catch (e) {}
+}
+
+// Star Loom solver (in-page)
+const StarLoom = (function() {
+  function allChordsPairs(N) {
+    const edges = [];
+    for (let i = 0; i < N; i++) edges.push([i, (i + 1) % N]);
+    for (let i = 0; i < N; i++) {
+      for (let j = i + 2; j < N; j++) {
+        if (!(i === 0 && j === N - 1)) edges.push([i, j]);
+      }
+    }
+    return edges;
+  }
+  function solveUnique(allE, anchors, N, timeLimitMs) {
+    const start = Date.now();
+    const neighbors = Array.from({length: N}, () => []);
+    for (let idx = 0; idx < allE.length; idx++) {
+      const [i, j] = allE[idx];
+      neighbors[i].push([j, idx]);
+      neighbors[j].push([i, idx]);
+    }
+    const nChords = allE.length;
+    const used = new Array(nChords).fill(false);
+    const currentDeg = new Array(N).fill(0);
+    const solutions = [];
+    const order = Array.from({length: nChords}, (_, k) => k).sort((a, b) => {
+      const [ai, aj] = allE[a];
+      const [bi, bj] = allE[b];
+      const aMin = Math.min(anchors[ai] !== undefined ? anchors[ai] : 99, anchors[aj] !== undefined ? anchors[aj] : 99);
+      const bMin = Math.min(anchors[bi] !== undefined ? anchors[bi] : 99, anchors[bj] !== undefined ? anchors[bj] : 99);
+      return bMin - aMin;
+    });
+    function feasible() {
+      for (const nStr of Object.keys(anchors)) {
+        const n = parseInt(nStr);
+        const target = anchors[n];
+        if (currentDeg[n] > target) return false;
+        let remaining = 0;
+        for (const [, eidx] of neighbors[n]) if (!used[eidx]) remaining++;
+        if (currentDeg[n] + remaining < target) return false;
+      }
+      return true;
+    }
+    function backtrack(idx) {
+      if (Date.now() - start > timeLimitMs) return;
+      if (solutions.length >= 2) return;
+      if (idx === order.length) {
+        for (const nStr of Object.keys(anchors)) {
+          const n = parseInt(nStr);
+          if (currentDeg[n] !== anchors[n]) return;
+        }
+        const visited = new Set([0]);
+        const stack = [0];
+        while (stack.length > 0) {
+          const cur = stack.pop();
+          for (const [nb, eidx] of neighbors[cur]) {
+            if (used[eidx] && !visited.has(nb)) { visited.add(nb); stack.push(nb); }
+          }
+        }
+        if (visited.size === N) solutions.push([...used]);
+        return;
+      }
+      const ci = order[idx];
+      const [i, j] = allE[ci];
+      used[ci] = true;
+      currentDeg[i]++; currentDeg[j]++;
+      if (feasible()) backtrack(idx + 1);
+      currentDeg[i]--; currentDeg[j]--;
+      const mustExclude = (anchors[i] !== undefined && currentDeg[i] === anchors[i]) || (anchors[j] !== undefined && currentDeg[j] === anchors[j]);
+      used[ci] = false;
+      if (mustExclude) backtrack(idx + 1);
+      else if (feasible()) backtrack(idx + 1);
+    }
+    backtrack(0);
+    return solutions;
+  }
+  function findHint(anchors, drawnChords, N) {
+    // Find one chord in solution that isn't drawn yet
+    const allE = allChordsPairs(N);
+    const sols = solveUnique(allE, anchors, N, 3000);
+    if (sols.length !== 1) return null;
+    const drawnSet = new Set(drawnChords.map(c => [c.i, c.j].sort((a, b) => a - b).join(',')));
+    for (let idx = 0; idx < allE.length; idx++) {
+      if (sols[0][idx]) {
+        const [i, j] = allE[idx];
+        const key = [i, j].sort((a, b) => a - b).join(',');
+        if (!drawnSet.has(key)) return { i, j };
+      }
+    }
+    return null;
+  }
+  return { solveUnique, findHint };
+})();
+
+// ===== Canvas rendering =====
+let bgCanvas, gameCanvas, ctx;
+let starPositions = [];
+let radius, centerX, centerY;
+
+function initBgCanvas() {
+  bgCanvas = document.getElementById('bg-canvas');
+  bgCanvas.width = window.innerWidth;
+  bgCanvas.height = window.innerHeight;
+  const bgCtx = bgCanvas.getContext('2d');
+  // Draw starfield
+  bgCtx.fillStyle = '#000';
+  bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+  bgCtx.fillStyle = '#fff';
+  for (let i = 0; i < 200; i++) {
+    const x = Math.random() * bgCanvas.width;
+    const y = Math.random() * bgCanvas.height;
+    const r = Math.random() * 1.5 + 0.5;
+    const alpha = Math.random() * 0.5 + 0.5;
+    bgCtx.globalAlpha = alpha;
+    bgCtx.beginPath();
+    bgCtx.arc(x, y, r, 0, Math.PI * 2);
+    bgCtx.fill();
+  }
+  bgCtx.globalAlpha = 1;
+}
+
+function setupGameCanvas() {
+  gameCanvas = document.getElementById('game-canvas');
+  ctx = gameCanvas.getContext('2d');
+  resizeCanvas();
+}
+
+function resizeCanvas() {
+  if (!gameCanvas) return;
+  gameCanvas.width = window.innerWidth;
+  gameCanvas.height = window.innerHeight;
+  drawGame();
+}
+
+function computeStarPositions(N) {
+  const w = gameCanvas.width;
+  const h = gameCanvas.height;
+  centerX = w / 2;
+  centerY = h / 2;
+  radius = Math.min(w, h) * 0.32;
+  starPositions = [];
+  for (let i = 0; i < N; i++) {
+    const angle = (2 * Math.PI * i / N) - Math.PI / 2;
+    starPositions.push({
+      x: centerX + radius * Math.cos(angle),
+      y: centerY + radius * Math.sin(angle),
+      r: 22
+    });
+  }
+}
+
+function drawGame() {
+  if (!ctx) return;
+  const lvl = LEVELS.levels[State.currentLevel];
+  if (!lvl) return;
+  computeStarPositions(lvl.num_stars);
+  ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+  // Draw chords
+  ctx.strokeStyle = 'rgba(180,140,255,0.8)';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = 'rgba(180,140,255,0.6)';
+  ctx.shadowBlur = 8;
+  for (const chord of State.drawnChords) {
+    const p1 = starPositions[chord.i];
+    const p2 = starPositions[chord.j];
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+
+  // Draw hint chord (if requested)
+  // Draw stars
+  for (let i = 0; i < lvl.num_stars; i++) {
+    const pos = starPositions[i];
+    const isSelected = State.selectedStars.includes(i);
+    const clue = lvl.anchors[String(i)];
+    // Outer glow
+    const gradient = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, pos.r * 2);
+    gradient.addColorStop(0, isSelected ? 'rgba(255,200,100,0.4)' : 'rgba(180,140,255,0.3)');
+    gradient.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(pos.x - pos.r * 2, pos.y - pos.r * 2, pos.r * 4, pos.r * 4);
+    // Star body
+    ctx.fillStyle = isSelected ? '#ffd060' : '#4a1e8c';
+    ctx.strokeStyle = isSelected ? '#fff' : '#b49cff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, pos.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Clue number
+    ctx.fillStyle = clue === undefined ? '#806080' : '#fff';
+    ctx.font = 'bold 18px system-ui,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(clue !== undefined ? String(clue) : '?', pos.x, pos.y);
+  }
+}
+
+function getClickedStar(x, y) {
+  for (let i = 0; i < starPositions.length; i++) {
+    const dx = x - starPositions[i].x;
+    const dy = y - starPositions[i].y;
+    if (dx * dx + dy * dy <= starPositions[i].r * starPositions[i].r * 1.5) return i;
+  }
+  return -1;
+}
+
+function handleStarClick(starIdx) {
+  if (starIdx < 0) return;
+  if (State.selectedStars.includes(starIdx)) {
+    // Deselect
+    State.selectedStars = State.selectedStars.filter(s => s !== starIdx);
+  } else if (State.selectedStars.length === 0) {
+    State.selectedStars.push(starIdx);
+  } else {
+    // Draw chord from first selected to this star
+    const a = State.selectedStars[0];
+    const b = starIdx;
+    if (a !== b) {
+      const existing = State.drawnChords.find(c =>
+        (c.i === a && c.j === b) || (c.i === b && c.j === a)
+      );
+      if (existing) {
+        // Remove chord
+        State.drawnChords = State.drawnChords.filter(c => c !== existing);
+      } else {
+        State.drawnChords.push({ i: a, j: b });
+        checkWin();
+      }
+    }
+    State.selectedStars = [];
+  }
+  drawGame();
+}
+
+function checkWin() {
+  const lvl = LEVELS.levels[State.currentLevel];
+  // Check all anchor clues satisfied
+  const degrees = new Array(lvl.num_stars).fill(0);
+  for (const c of State.drawnChords) {
+    degrees[c.i]++;
+    degrees[c.j]++;
+  }
+  for (let i = 0; i < lvl.num_stars; i++) {
+    const clue = lvl.anchors[String(i)];
+    if (clue !== undefined && degrees[i] !== clue) return;
+  }
+  // Check connectivity
+  if (State.drawnChords.length === 0) return;
+  const adj = Array.from({length: lvl.num_stars}, () => new Set());
+  for (const c of State.drawnChords) {
+    adj[c.i].add(c.j);
+    adj[c.j].add(c.i);
+  }
+  const visited = new Set([0]);
+  const stack = [0];
+  while (stack.length) {
+    const cur = stack.pop();
+    for (const nb of adj[cur]) {
+      if (!visited.has(nb)) { visited.add(nb); stack.push(nb); }
+    }
+  }
+  if (visited.size === lvl.num_stars) {
+    showWin();
+  }
+}
+
+function showWin() {
+  // Play sound
+  playWinSound();
+  // Mark complete
+  State.levelProgress[State.currentLevel] = Math.max(State.levelProgress[State.currentLevel] || 0, 1);
+  saveProgress();
+  // Show overlay
+  document.getElementById('win-stars').textContent = `Level ${State.currentLevel + 1} solved!`;
+  document.getElementById('win-overlay').classList.add('show');
+  // Track ad trigger
+  if (window.gzAnalytics) window.gzAnalytics('level_complete', { level: State.currentLevel });
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame(levelIdx) {
+  State.currentLevel = levelIdx;
+  State.selectedStars = [];
+  State.drawnChords = [];
+  document.getElementById('level-title').textContent = `Level ${levelIdx + 1}`;
+  showScreen('game-screen');
+  resizeCanvas();
+  startMusic();
+}
+
+function buildLevelSelect() {
+  const container = document.getElementById('tiers-container');
+  container.innerHTML = '';
+  const tiers = ['Beginner', 'Easy', 'Medium', 'Hard', 'Expert'];
+  for (const tierName of tiers) {
+    const tierLevels = LEVELS.levels.filter(l => l.tier === tierName);
+    const tierDiv = document.createElement('div');
+    tierDiv.className = 'tier';
+    const h3 = document.createElement('h3');
+    h3.textContent = tierName;
+    tierDiv.appendChild(h3);
+    const grid = document.createElement('div');
+    grid.className = 'level-grid';
+    for (let i = 0; i < tierLevels.length; i++) {
+      const lvlNum = LEVELS.levels.indexOf(tierLevels[i]);
+      const btn = document.createElement('button');
+      btn.className = 'level-btn';
+      btn.textContent = (i + 1);
+      if (State.levelProgress[lvlNum]) btn.classList.add('completed');
+      btn.onclick = () => startGame(lvlNum);
+      grid.appendChild(btn);
+    }
+    tierDiv.appendChild(grid);
+    container.appendChild(tierDiv);
+  }
+}
+
+// ===== Audio (Web Audio API ambient music) =====
+function startMusic() {
+  if (State.musicStarted) return;
+  try {
+    State.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    State.musicStarted = true;
+    // Simple ambient drone
+    const osc1 = State.audioCtx.createOscillator();
+    const osc2 = State.audioCtx.createOscillator();
+    const gain = State.audioCtx.createGain();
+    osc1.frequency.value = 110;
+    osc2.frequency.value = 165;
+    osc1.type = 'sine';
+    osc2.type = 'sine';
+    gain.gain.value = 0.04;
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(State.audioCtx.destination);
+    osc1.start();
+    osc2.start();
+    // Clean up on page hide
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        gain.gain.value = 0;
+      } else {
+        gain.gain.value = 0.04;
+      }
+    });
+  } catch (e) {
+    // Audio not available
+  }
+}
+
+function playWinSound() {
+  if (!State.audioCtx) return;
+  const osc = State.audioCtx.createOscillator();
+  const gain = State.audioCtx.createGain();
+  osc.frequency.value = 660;
+  osc.type = 'sine';
+  gain.gain.value = 0;
+  osc.connect(gain);
+  gain.connect(State.audioCtx.destination);
+  gain.gain.linearRampToValueAtTime(0.15, State.audioCtx.currentTime + 0.05);
+  gain.gain.linearRampToValueAtTime(0, State.audioCtx.currentTime + 0.6);
+  osc.frequency.linearRampToValueAtTime(880, State.audioCtx.currentTime + 0.3);
+  osc.start();
+  osc.stop(State.audioCtx.currentTime + 0.6);
+}
+
+// ===== Event handlers =====
+window.addEventListener('load', () => {
+  loadProgress();
+  initBgCanvas();
+  setupGameCanvas();
+  buildLevelSelect();
+  document.getElementById('play-btn').onclick = () => startGame(0);
+  document.getElementById('levels-btn').onclick = () => { buildLevelSelect(); showScreen('level-select'); };
+  document.getElementById('back-to-title').onclick = () => showScreen('title-screen');
+  document.getElementById('back-btn').onclick = () => showScreen('title-screen');
+  document.getElementById('reset-btn').onclick = () => {
+    State.drawnChords = [];
+    State.selectedStars = [];
+    drawGame();
+  };
+  document.getElementById('hint-btn').onclick = () => {
+    const lvl = LEVELS.levels[State.currentLevel];
+    const hint = StarLoom.findHint(lvl.anchors, State.drawnChords, lvl.num_stars);
+    if (hint) {
+      State.drawnChords.push({ i: hint.i, j: hint.j });
+      drawGame();
+      checkWin();
+    }
+  };
+  document.getElementById('undo-btn').onclick = () => {
+    if (State.drawnChords.length > 0) {
+      State.drawnChords.pop();
+      drawGame();
+    }
+  };
+  document.getElementById('next-btn').onclick = () => {
+    document.getElementById('win-overlay').classList.remove('show');
+    if (State.currentLevel < LEVELS.levels.length - 1) {
+      startGame(State.currentLevel + 1);
+    } else {
+      showScreen('title-screen');
+    }
+  };
+  document.getElementById('replay-btn').onclick = () => {
+    document.getElementById('win-overlay').classList.remove('show');
+    startGame(State.currentLevel);
+  };
+  // Canvas click handler
+  gameCanvas.addEventListener('click', (e) => {
+    const rect = gameCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const starIdx = getClickedStar(x, y);
+    handleStarClick(starIdx);
+  });
+  // Touch handler
+  gameCanvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    if (e.changedTouches.length === 0) return;
+    const touch = e.changedTouches[0];
+    const rect = gameCanvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    const starIdx = getClickedStar(x, y);
+    handleStarClick(starIdx);
+  }, { passive: false });
+  // Resize
+  window.addEventListener('resize', () => {
+    initBgCanvas();
+    resizeCanvas();
+  });
+});
+
+// Expose for testing
+window.StarLoom = StarLoom;
+window.StarLoom.solve = StarLoom.solveUnique;
+window.LEVELS = LEVELS;
+window.StarLoom.solve = StarLoom.solveUnique;
+</script>
+<div id="gz-ad-below-game" style="min-height:100px;margin:16px auto;max-width:728px;text-align:center"></div>
+</body>
+</html>
