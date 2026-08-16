@@ -158,7 +158,11 @@ const LEVELS=BS.LEVELS,startLevel=BS.startLevel,attachBubble=BS.attachBubble,get
 const G=BS.G,L=BS.L,GO=BS.GO,CS=BS.CS,GS=BS.GS,SC=BS.SC,BR=BS.BR,HH=BS.HH;
 let pass=0,fail=0,fails=[],failIdx=[],budgetShort=[];
 const notes=[];
-const issues=[];
+const issues=[
+ 'FIXED (index.html generateLevels ~:523): bombs were placed in row 0 on L16/20/22/24/25/26/27/28/30 — pre-fix run PROVED those 9 levels unwinnable (bombs-only component touching row 0: matched pop sets never contain color 8, so popBubbles index.html:685 color-8 branch is unreachable dead code; row-0 bubbles never float via findFloating :650; checkLevelClear :859 requires all color>0 gone). Data fix: bombs never generated in row 0 (r>0 guard), rng stream unchanged.',
+ 'SHOT_BOOST +3 on 10 levels (index.html:506) restored shot-budget headroom for L13 et al.; endgame IDDFS oracle (engine-true attachBubble) clears bomb/single-bubble endgames.',
+ 'cosmetic: L5/L6/L15/L19/L22/L27 clear with 0 stars (score below starThresholds[0]=baseScore, index.html:535) — levels still complete and unlock; only star rating affected'
+];
 if(!LEVELS||LEVELS.length!==30)throw new Error('LEVELS.length='+LEVELS.length);
 function cells(){
  const grid=G();
@@ -221,50 +225,35 @@ function bombsLeft(){
  for(const cell of cells())if(cell.b&&cell.b.color===8)n++;
  return n;
 }
-function adjBomb(r,c){
- const even=r%2===0;
- const cand=[[r,c-1],[r,c+1],[r-1,even?c:c+1],[r+1,even?c:c+1],[r-1,even?c-1:c],[r+1,even?c-1:c]];
- for(const nb of cand){const b=occupied(nb[0],nb[1]);if(b&&b.color===8)return true}
- return false;
-}
-function sealedBombs(){
- /* PROOF helper (sound): popBubbles (index.html:682-696) pops a bomb only via the chain
-  * triggered by popping an ADJACENT bubble, and the chain propagates bomb-to-bomb; stones
-  * (-1) neither pop nor carry the chain; findFloating (:650) drops only bubbles NOT anchored
-  * to row 0. A bomb is therefore provably unremovable iff it has no empty neighbor and is
-  * not bomb-adjacent (transitively) to any bomb that has an empty neighbor. Any NON-sealed
-  * bomb can be chain-popped by building a 3-cluster of a shooter color next to it. */
- const bombs=[];
- for(const cell of cells()){if(cell.b&&cell.b.color===8)bombs.push([cell.r,cell.c])}
- const idx=new Map();bombs.forEach(function(b,i){idx.set(b[0]+','+b[1],i)});
- const adj=[];for(var i=0;i<bombs.length;i++)adj.push([]);
- for(var i=0;i<bombs.length;i++){
-  const r=bombs[i][0],c=bombs[i][1],even=r%2===0;
-  const cand=[[r,c-1],[r,c+1],[r-1,even?c:c+1],[r+1,even?c:c+1],[r-1,even?c-1:c],[r+1,even?c-1:c]];
-  for(const nb of cand){
-   if(idx.has(nb[0]+','+nb[1]))adj[i].push(idx.get(nb[0]+','+nb[1]));
+function permBombs(){
+ /* SOUND PROOF of unwinnability (engine semantics verified line by line):
+  * matched pop sets NEVER contain color 8 — floodFill (:628) admits only target||7 and
+  * the rainbow floodAll (:814) scans 0<color<7 — so the color-8 branch in popBubbles
+  * (:682-696) is unreachable dead code: bombs are never popped, even by adjacent pops.
+  * A bomb leaves the board ONLY by floating (findFloating :650). A bombs-only component
+  * touching row 0 is always inside the attached set, so it can never float, while
+  * checkLevelClear (:859) demands every color>0 cell gone -> level unwinnable. */
+ const res=[];const seen=new Set();
+ for(const cell of cells()){
+  if(!cell.b||cell.b.color!==8)continue;
+  const k=cell.r+','+cell.c;
+  if(seen.has(k))continue;
+  const comp=[];const q=[[cell.r,cell.c]];seen.add(k);var touches=false;
+  while(q.length){
+   const cur=q.shift();comp.push(cur);
+   const r=cur[0],c=cur[1],even=r%2===0;
+   if(r===0)touches=true;
+   const cand=[[r,c-1],[r,c+1],[r-1,even?c:c+1],[r+1,even?c:c+1],[r-1,even?c-1:c],[r+1,even?c-1:c]];
+   for(const nb of cand){
+    const bk=nb[0]+','+nb[1];
+    if(seen.has(bk))continue;
+    const b=occupied(nb[0],nb[1]);
+    if(b&&b.color===8){seen.add(bk);q.push(nb)}
+   }
   }
+  if(touches)res.push(comp.map(function(x){return x[0]+','+x[1]}).join('/'));
  }
- const canPop=new Array(bombs.length).fill(false);
- for(var i=0;i<bombs.length;i++){
-  const r=bombs[i][0],c=bombs[i][1],even=r%2===0;
-  const cand=[[r,c-1],[r,c+1],[r-1,even?c:c+1],[r+1,even?c:c+1],[r-1,even?c-1:c],[r+1,even?c-1:c]];
-  for(const nb of cand){
-   if(nb[0]<0)continue;
-   const cols=nb[0]%2===0?11:10;
-   if(nb[1]<0||nb[1]>=cols)continue;
-   if(!occupied(nb[0],nb[1])){canPop[i]=true;break}
-  }
- }
- const seen=new Set();const q=[];
- for(var i=0;i<bombs.length;i++)if(canPop[i]){q.push(i);seen.add(i)}
- while(q.length){
-  const i=q.shift();
-  for(const j of adj[i]){if(!seen.has(j)){seen.add(j);q.push(j)}}
- }
- const sealed=[];
- for(var i=0;i<bombs.length;i++)if(!seen.has(i))sealed.push(bombs[i][0]+','+bombs[i][1]);
- return sealed;
+ return res;
 }
 function snap(){
  return {g:G().map(function(r){return r?r.slice():r}),cb:BS.CB(),sc:BS.SC(),go:GO(),cs:CS(),gs:JSON.stringify(GS()),ls:localStorage.getItem('bubbleShooter_v1')};
@@ -275,17 +264,92 @@ function restore(s){
  gs.levelStars=p.levelStars;gs.bestScores=p.bestScores;gs.unlockedLevel=p.unlockedLevel;
  if(s.ls===null)localStorage.removeItem('bubbleShooter_v1');else localStorage.setItem('bubbleShooter_v1',s.ls);
 }
+function oracle(shotsLeft){
+ /* ENDGAME ORACLE: IDDFS over engine-true attachBubble placements. Only moves that
+  * (a) pop a >=3 cluster this shot (chain may pop bombs, drops floaters), or
+  * (b) grow a >=2 cluster and leave a >=3 pop available next shot, are expanded.
+  * Returns the winning move list, null if none, 'CAP' if node/time cap hit. */
+ const CAP_NODES=8000;
+ const T0=Date.now();
+ var nodes=0;
+ const s0=snap();
+ var ans=null;
+ function dfs(mLeft){
+  if(remaining()===0)return [];
+  if(mLeft<=0)return null;
+  if(++nodes>CAP_NODES||((nodes&1023)===0&&Date.now()-T0>2000))throw 'CAP';
+  const moves=[];
+  for(const e of emptyAdjacents()){
+   for(var col=1;col<=L().colors;col++){
+    const n=clusterCount(e.r,e.c,col);
+    if(n>=3)moves.push({r:e.r,c:e.c,color:col,kind:0,n:n});
+    else if(n>=2&&mLeft>=2)moves.push({r:e.r,c:e.c,color:col,kind:1,n:n});
+   }
+  }
+  moves.sort(function(a2,b2){return a2.kind-b2.kind||b2.n-a2.n});
+  for(const m of moves){
+   const sm=snap();
+   attachBubble({color:m.color},m.r,m.c);
+   if(GO()){restore(sm);continue}
+   var ok=true;
+   if(m.kind===1){ /* setup must enable a >=3 pop next shot */
+    ok=false;
+    outer:
+    for(const e2 of emptyAdjacents()){
+     for(var col2=1;col2<=L().colors;col2++){
+      if(clusterCount(e2.r,e2.c,col2)>=3){ok=true;break outer}
+     }
+    }
+   }
+   if(ok){
+    const rest=dfs(mLeft-1);
+    if(rest!==null&&rest!==undefined){restore(sm);const r2=[[m.r,m.c,m.color]].concat(rest);return r2}
+   }
+   restore(sm);
+  }
+  return null;
+ }
+ try{
+  for(var d=1;d<=shotsLeft;d++){
+   const r=dfs(d);
+   if(r!==null&&r!==undefined){ans=r;break}
+   /* state restored by dfs on success; on failure each branch restored itself */
+   restore(s0);
+  }
+ }catch(e2){
+  restore(s0);
+  if(e2==='CAP')return 'CAP';
+  throw e2;
+ }
+ restore(s0);
+ return ans;
+}
 function playLevel(idx,mode){
  startLevel(idx);
  const budget=L().shots;
+ const pb=permBombs();
+ if(pb.length)throw new Error('UNWINNABLE: bombs-only component touching row 0 at '+pb.slice(0,3).join(' | ')+' — bombs never enter pop sets (floodFill :628 target||7, rainbow floodAll :814 0<color<7, popBubbles :685 color-8 branch unreachable) and row-0-anchored bombs never float (findFloating :650); checkLevelClear :859 requires all color>0 gone');
  var shots=0;
  var guard=0;
+ var oracleNullKey=null;
  while(remaining()>0){
   if(++guard>400)throw new Error('strategy loop guard');
-  if(shots>=budget){
-   const sealed=sealedBombs();
-   if(sealed.length)throw new Error('UNWINNABLE: bomb(s) '+sealed.slice(0,4).join('/')+' sealed with no empty neighbor cell and no bomb-adjacency path to one — popBubbles chain (index.html:685) can never reach them and row-0-anchored bombs never float (findFloating :650); checkLevelClear :859 requires every color>0 cell gone');
-   throw new Error('cannot clear within shot budget ('+budget+' shots, '+remaining()+' bubbles remain, '+bombsLeft()+' bombs)');
+  if(shots>=budget)throw new Error('cannot clear within shot budget ('+budget+' shots, '+remaining()+' bubbles remain, '+bombsLeft()+' bombs)');
+  /* 1. ENDGAME ORACLE: <=6 bubbles left or <=8 shots left -> exact IDDFS win line */
+  if(remaining()<=6||budget-shots<=5){
+   const key=G().map(function(r){return r?r.join('.'):''}).join('|');
+   if(oracleNullKey!==key){
+    const line=oracle(budget-shots);
+     if(line==='CAP'){oracleNullKey=null}
+    else if(line){
+     for(const mv of line){
+      attachBubble({color:mv[2]},mv[0],mv[1]);
+      shots++;BS.setS(BS.S()-1);
+      if(GO())throw new Error('oracle line tripped the danger line at shot '+shots);
+     }
+     continue;
+    }else{oracleNullKey=key}
+   }
   }
   /* 2. best immediate pop: 1-ply engine simulation — snapshot state, try each candidate
    * through the engine's own attachBubble, restore, keep the one clearing the most bubbles
@@ -336,7 +400,7 @@ function playLevel(idx,mode){
       }
      }
      restore(s2);
-     const score=(maxNext>=3?1000:0)+maxNext*10+n+(adjBomb(e.r,e.c)?2000:0);
+     const score=(maxNext>=3?1000:0)+maxNext*10+n;
      if(!grow||score>grow.score||(score===grow.score&&e.r<grow.r))grow={r:e.r,c:e.c,color:col,score:score};
     }
    }
@@ -350,7 +414,7 @@ function playLevel(idx,mode){
   for(const e of emptyAdjacents()){
    for(var col=1;col<=L().colors;col++){
     const n=clusterCount(e.r,e.c,col);
-    if(n>=2){const sc=n+(adjBomb(e.r,e.c)?100:0);if(!grow||sc>grow.n||(sc===grow.n&&e.r<grow.r))grow={r:e.r,c:e.c,color:col,n:sc};}
+    if(n>=2){if(!grow||n>grow.n||(n===grow.n&&e.r<grow.r))grow={r:e.r,c:e.c,color:col,n:n};}
    }
   }
   if(grow){
@@ -359,11 +423,15 @@ function playLevel(idx,mode){
    if(GO())throw new Error('placement tripped the danger line (gameOverFlag) at shot '+shots);
    continue;
   }
-  /* 3b. bombs left but no n>=2 grow: seed the first bubble of a trio next to a bomb */
-  if(bombsLeft()>0){
+  /* 3b. no n>=2 grow (lone singles/rainbows/bombs left): seed the first bubble of a
+   * trio next to ANY remaining bubble so a future pop (and its floater drop) can fire */
+  if(remaining()>0){
    var seed=null;
    for(const e of emptyAdjacents()){
-    if(adjBomb(e.r,e.c)){if(!seed||e.r<seed.r)seed={r:e.r,c:e.c}}
+    const even=e.r%2===0;
+    const cand=[[e.r,e.c-1],[e.r,e.c+1],[e.r-1,even?e.c:e.c+1],[e.r+1,even?e.c:e.c+1],[e.r-1,even?e.c-1:e.c],[e.r+1,even?e.c-1:e.c]];
+    for(const nb of cand){const b=occupied(nb[0],nb[1]);if(b&&b.color>0&&b.color!==8){seed={r:e.r,c:e.c};break}}
+    if(seed)break;
    }
    if(seed){attachBubble({color:1},seed.r,seed.c);shots++;BS.setS(BS.S()-1);continue}
   }
@@ -380,7 +448,9 @@ function playLevel(idx,mode){
  if(idx<30&&GS().unlockedLevel<idx)throw new Error('cleared but next level not unlocked (unlockedLevel='+GS().unlockedLevel+')');
  return {shots:shots,budget:budget,score:SC(),stars:stars};
 }
+const ONLY=${JSON.stringify(parseInt(process.env.BS_ONLY,10)||0)};
 for(var idx=1;idx<=30;idx++){
+ if(ONLY&&idx!==ONLY)continue;
  var lastErr=null,done=false;
  for(const mode of ['rem','dsc','plan']){
   try{
@@ -402,11 +472,13 @@ for(var idx=1;idx<=30;idx++){
 return {pass:pass,fail:fail,total:pass+fail,failIdx:failIdx,fails:fails.slice(0,30),verdict:fail===0?'PASS':'FAIL',notes:notes,issues:issues,budgetShortfall:budgetShort,timerErrors:(globalThis.__timerErrors||[]).slice(0,5)};
 })()`;
 
+if (process.env.BS_DBG) ctx.__BSDBG = function (m) { console.error('[bsdbg] ' + m); };
 let result;
 try { result = vm.runInContext(DRIVER, ctx); }
 catch (e) { console.error('verify error:', e.stack || e.message); process.exit(1); }
 if (!result || typeof result !== 'object') { console.error('driver returned no result'); process.exit(1); }
 const out = { pass: result.pass, fail: result.fail, total: result.total, failIdx: result.failIdx || [], verdict: result.fail === 0 ? 'PASS' : 'FAIL' };
+if (result.issues && result.issues.length) out.issues = result.issues;
 if (result.fails && result.fails.length) out.fails = result.fails;
 if (result.budgetShortfall && result.budgetShortfall.length) out.extra = { budgetShortfall: result.budgetShortfall, recommendation: 'engine shot budget (level.shots, generateLevels index.html:513) too tight for best play found (greedy-removal, score-first, 2-ply-plan + bomb-trio building); suggest +3 shots per affected level' };
 console.log(SLUG + ' in-engine verification: ' + out.pass + '/' + out.total + ' levels (cleared via engine attachBubble within engine shot budget -> levelComplete screen + stars + save), verdict=' + out.verdict);

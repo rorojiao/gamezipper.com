@@ -55,7 +55,7 @@
     {"@type": "Question", "name": "How do you play Peg Solitaire?", "acceptedAnswer": {"@type": "Answer", "text": "Peg Solitaire is played by jumping one marble over another into an empty hole. The jumped marble is removed. The goal is to remove all marbles except one, ideally leaving it in the center position."}},
     {"@type": "Question", "name": "What are the rules of Peg Solitaire?", "acceptedAnswer": {"@type": "Answer", "text": "Marbles can only jump orthogonally (up, down, left, right) over an adjacent marble into an empty space. Diagonal jumps are not allowed. The game ends when no more valid jumps are possible. A perfect game leaves exactly one marble."}},
     {"@type": "Question", "name": "Is the classic English Peg Solitaire solvable?", "acceptedAnswer": {"@type": "Answer", "text": "Yes! The classic English 33-hole cross board is solvable. The solution requires 31 jumps. Many patterns and strategies exist, including starting from the center or corners."}},
-    {"@type": "Question", "name": "How many Peg Solitaire board layouts are there?", "acceptedAnswer": {"@type": "Answer", "text": "This game features 8 board layouts: Triangle (5 and 10 pegs), Plus Shape (13 pegs), Diamond (21 pegs), English Cross (32 pegs), European Cross (36 pegs), and two expert layouts (41 and 45 pegs)."}}
+    {"@type": "Question", "name": "How many Peg Solitaire board layouts are there?", "acceptedAnswer": {"@type": "Answer", "text": "This game features 8 board layouts: Mini Square (5 pegs), Small Cross (7 pegs), Corner Square (9 pegs), Diamond (13 pegs), English Cross (32 pegs), Cross Drill (24 pegs), Large Diamond (26 pegs), and Super Cross (30 pegs). Every layout is solvable down to one marble."}}
   ]
 }
 </script>
@@ -286,63 +286,68 @@ canvas{border-radius:16px;cursor:pointer;margin:8px 0}
 <script>
 // ===== BOARD LAYOUTS =====
 // 1 = peg, 0 = empty hole, -1 = not part of board
+// 2026-08-16 content fix: previous B1-B4/B6-B8 layouts were proven unsolvable to the win
+// condition (B1/B2/B4 memoized-DFS exhaustion, B3/B6/B7 3-color parity, B8 inconclusive).
+// All 8 boards are now end-to-end solvable: B1-B4/B6-B8 constructed by REVERSE JUMPS from
+// the required 1-peg terminal state (any position reachable backwards is solvable forwards
+// by construction) and re-proven with an independent memoized DFS; B5 (classic English
+// Cross) kept as shipped. Generator: _optimization/scripts/gen-pegsolitaire-boards.js
+// (state/pegsolitaire-boards.json holds the proofs: DFS nodes/memo/jump counts).
 var BOARDS = [
   {
-    name: "Triangle 5",
+    name: "Mini Square",
     desc: "5 pegs - Tutorial",
     tier: 1,
-    rows: 4, cols: 4,
+    rows: 3, cols: 3,
     grid: [
-      [-1,-1, 1,-1],
-      [-1, 1, 1,-1],
-      [ 1, 1, 1, 1],
-      [-1,-1, 0,-1]
+      [ 0, 1, 1],
+      [ 1, 1, 1],
+      [ 0, 0, 0]
     ],
-    startEmpty: [[3,2]]
+    startEmpty: [[0,0],[2,0],[2,1],[2,2]]
   },
   {
-    name: "Triangle 10",
-    desc: "10 pegs - Easy",
+    name: "Small Cross",
+    desc: "7 pegs - Easy",
     tier: 1,
     rows: 5, cols: 5,
     grid: [
       [-1,-1, 1,-1,-1],
-      [-1, 1, 1, 1,-1],
-      [ 1, 1, 1, 1, 1],
-      [-1, 1, 1, 1,-1],
-      [-1,-1, 0,-1,-1]
-    ],
-    startEmpty: [[4,2]]
-  },
-  {
-    name: "Plus Shape",
-    desc: "13 pegs - Medium",
-    tier: 2,
-    rows: 5, cols: 5,
-    grid: [
       [-1,-1, 1,-1,-1],
-      [-1,-1, 1,-1,-1],
-      [ 1, 1, 0, 1, 1],
+      [ 0, 1, 1, 0, 1],
       [-1,-1, 1,-1,-1],
       [-1,-1, 1,-1,-1]
     ],
-    startEmpty: [[2,2]]
+    startEmpty: [[2,0],[2,3]]
+  },
+  {
+    name: "Corner Square",
+    desc: "9 pegs - Medium",
+    tier: 2,
+    rows: 4, cols: 4,
+    grid: [
+      [ 0, 0, 1, 1],
+      [ 1, 1, 1, 0],
+      [ 1, 1, 0, 0],
+      [ 0, 1, 1, 0]
+    ],
+    startEmpty: [[0,0],[0,1],[1,3],[2,2],[2,3],[3,0],[3,3]]
   },
   {
     name: "Diamond",
-    desc: "21 pegs - Medium",
+    desc: "13 pegs - Medium",
     tier: 2,
     rows: 7, cols: 7,
     grid: [
-      [-1,-1,-1, 1,-1,-1,-1],
-      [-1,-1, 1, 1, 1,-1,-1],
-      [-1, 1, 1, 1, 1, 1,-1],
-      [ 1, 1, 1, 0, 1, 1, 1],
-      [-1, 1, 1, 1, 1, 1,-1],
-      [-1,-1, 1, 1, 1,-1,-1],
+      [-1,-1,-1, 0,-1,-1,-1],
+      [-1,-1, 0, 1, 0,-1,-1],
+      [-1, 1, 1, 0, 1, 1,-1],
+      [ 1, 1, 0, 1, 0, 0, 0],
+      [-1, 0, 0, 1, 1, 0,-1],
+      [-1,-1, 1, 1, 0,-1,-1],
       [-1,-1,-1, 1,-1,-1,-1]
     ],
-    startEmpty: [[3,3]]
+    startEmpty: [[0,3],[1,2],[1,4],[2,3],[3,2],[3,4],[3,5],[3,6],[4,1],[4,2],[4,5],[5,4]]
   },
   {
     name: "English Cross",
@@ -361,56 +366,56 @@ var BOARDS = [
     startEmpty: [[3,3]]
   },
   {
-    name: "European Cross",
-    desc: "36 pegs - Hard",
+    name: "Cross Drill",
+    desc: "24 pegs - Hard",
     tier: 3,
     rows: 7, cols: 7,
     grid: [
-      [-1, 1, 1, 1, 1, 1,-1],
+      [-1,-1, 1, 1, 0,-1,-1],
+      [-1,-1, 1, 1, 1,-1,-1],
+      [ 0, 1, 0, 1, 0, 1, 0],
       [ 1, 1, 1, 1, 1, 1, 1],
-      [ 1, 1, 1, 1, 1, 1, 1],
-      [ 1, 1, 1, 0, 1, 1, 1],
-      [ 1, 1, 1, 1, 1, 1, 1],
-      [ 1, 1, 1, 1, 1, 1, 1],
-      [-1, 1, 1, 1, 1, 1,-1]
+      [ 1, 1, 0, 0, 1, 1, 0],
+      [-1,-1, 1, 1, 0,-1,-1],
+      [-1,-1, 1, 1, 1,-1,-1]
     ],
-    startEmpty: [[3,3]]
+    startEmpty: [[0,4],[2,0],[2,2],[2,4],[2,6],[4,2],[4,3],[4,6],[5,4]]
   },
   {
     name: "Large Diamond",
-    desc: "41 pegs - Expert",
+    desc: "26 pegs - Expert",
     tier: 4,
     rows: 9, cols: 9,
     grid: [
       [-1,-1,-1,-1, 1,-1,-1,-1,-1],
-      [-1,-1,-1, 1, 1, 1,-1,-1,-1],
-      [-1,-1, 1, 1, 1, 1, 1,-1,-1],
-      [-1, 1, 1, 1, 1, 1, 1, 1,-1],
-      [ 1, 1, 1, 1, 0, 1, 1, 1, 1],
-      [-1, 1, 1, 1, 1, 1, 1, 1,-1],
-      [-1,-1, 1, 1, 1, 1, 1,-1,-1],
-      [-1,-1,-1, 1, 1, 1,-1,-1,-1],
-      [-1,-1,-1,-1, 1,-1,-1,-1,-1]
+      [-1,-1,-1, 1, 1, 0,-1,-1,-1],
+      [-1,-1, 1, 1, 0, 1, 0,-1,-1],
+      [-1, 0, 1, 0, 0, 1, 1, 0,-1],
+      [ 1, 1, 0, 1, 1, 1, 1, 1, 1],
+      [-1, 1, 1, 0, 1, 0, 0, 1,-1],
+      [-1,-1, 1, 1, 1, 1, 0,-1,-1],
+      [-1,-1,-1, 0, 1, 0,-1,-1,-1],
+      [-1,-1,-1,-1, 0,-1,-1,-1,-1]
     ],
-    startEmpty: [[4,4]]
+    startEmpty: [[1,5],[2,4],[2,6],[3,1],[3,3],[3,4],[3,7],[4,2],[5,3],[5,5],[5,6],[6,6],[7,3],[7,5],[8,4]]
   },
   {
     name: "Super Cross",
-    desc: "45 pegs - Expert",
+    desc: "30 pegs - Expert",
     tier: 4,
     rows: 9, cols: 9,
     grid: [
+      [-1,-1,-1, 1, 1, 0,-1,-1,-1],
       [-1,-1,-1, 1, 1, 1,-1,-1,-1],
-      [-1,-1, 1, 1, 1, 1, 1,-1,-1],
-      [ 1, 1, 1, 1, 1, 1, 1, 1, 1],
-      [ 1, 1, 1, 1, 1, 1, 1, 1, 1],
-      [ 1, 1, 1, 1, 0, 1, 1, 1, 1],
-      [ 1, 1, 1, 1, 1, 1, 1, 1, 1],
-      [ 1, 1, 1, 1, 1, 1, 1, 1, 1],
-      [-1,-1, 1, 1, 1, 1, 1,-1,-1],
-      [-1,-1,-1, 1, 1, 1,-1,-1,-1]
+      [-1,-1,-1, 0, 0, 1,-1,-1,-1],
+      [ 1, 1, 0, 1, 1, 1, 0, 1, 1],
+      [ 1, 1, 1, 1, 1, 1, 1, 0, 1],
+      [ 0, 1, 1, 1, 1, 0, 0, 0, 0],
+      [-1,-1,-1, 1, 1, 1,-1,-1,-1],
+      [-1,-1,-1, 0, 1, 1,-1,-1,-1],
+      [-1,-1,-1, 0, 0, 0,-1,-1,-1]
     ],
-    startEmpty: [[4,4]]
+    startEmpty: [[0,5],[2,3],[2,4],[3,2],[3,6],[4,7],[5,0],[5,5],[5,6],[5,7],[5,8],[7,3],[8,3],[8,4],[8,5]]
   }
 ];
 

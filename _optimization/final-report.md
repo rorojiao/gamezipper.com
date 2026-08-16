@@ -47,17 +47,28 @@
 - 修复后: 5 款 P0 全部升为可玩(每款核心维度"核心玩法乐趣/难度曲线"由不可玩=0 分回升至 3.4–3.9 区间),Top-15 中 slope 2.6→3.3(闪撞修复)、snake 3.3→3.5(渐进提速)、tetris 3.4→3.7(存档+反馈)。
 - 明细: `reports/scoring.md` + `reports/scoring-data.json`
 
-## 6. 遗留项(诚实清单)
+## 6. 第二波深验发现(B1 agent 12 款验证器)与处置
+
+| 游戏 | 发现(实测) | 处置 | 状态 |
+|---|---|---|---|
+| memory-match | comboTimer2 未声明 → checkMatch ReferenceError → lockBoard 永久 true,**8 关全部软锁不可完成** | 补一行声明 | ✅ 修复 0/8→8/8,verify PASS |
+| heyawake | ① 19/31 关无解(运行时生成器跌入不可解棋盘回退) ② saveResult s.best undefined 崩溃 | ② initSave 补 best:{}; ① gen-heyawake-levels.js 离线生成 30 战役+10 daily 池静态嵌入(构造式+独立谓词双证明), verify 引擎实玩回放 31/31 + 存档断言 | ✅ 31/31 PASS,41.7s |
+| ripple-effect | 关卡运行时生成不受 deadline 约束(L6=171.7s/L14=126.8s/L18=59.6s),15+ 关浏览器卡死 "Generating..." | 离线预生成 31 关静态嵌入 + daily 有界化 | 🔄 生成中 |
+| peg-solitaire | 8 盘 6 盘证明无解(穷举穷尽 B1/B2/B4 + 奇偶不可达 B3/B6/B7,B8 2700 万节点未决) | B1-B4/B6-B8 反向跳从 1 钉终局构造(构造式证明)+独立记忆化 DFS 复证(最差 B8 106 万节点),B5 英式十字保留;梯度 5/7/9/13/24/26/30/32 钉 | ✅ 8/8 PASS,16.2s |
+| yajilin | **31/31 全 FAIL**(9/15 已证提示数与黑格圈矛盾无解,6 关生成 ≥100s 不终止浏览器假死) | 离线生成器(哈密顿圈先行,硬性每关 300s 上限)静态嵌入 | 🔄 生成中 |
+| bubble-shooter | 20/30:9 关**证明不可解**(0 行炸弹: popBubbles color-8 分支为不可达死代码+floodFill 不含 8,0 行永不浮空,而 checkLevelClear 要求全清)+L13 预算 | ① generateLevels r>0 守卫(炸弹永不进 0 行,rng 流不变) ② 10 关 +3 发 ③ verifier 残局 IDDFS oracle(引擎真值驱动) | ✅ 30/30 PASS,76.2s(余 6 关 0 星为装饰性阈值问题) |
+| minesweeper/tic-tac-toe/compound-word/infinity-loop/arrow-puzzle/stained-glass | — | 首验即 PASS(9/9, 57/57, 20/20, 50/50, 32/32, 31/31) | ✅ 无需处置 |
+
+## 7. 遗留项(诚实清单)
 
 | 项 | 级别 | 说明 |
 |---|---|---|
-| bubble-shooter 高段关卡预算 | P1 | 引擎内最优策略 20/30(剩 1-4 球差 1-3 发);若终局复核仍不达,建议每关 +3 发预算(数据一行改动) — 处置进行中,见 §7 |
 | 解谜类无音频 | P2 | 小众解谜 ~15 款纯静音(品类惯例,非缺陷) |
 | chess 对局存档 | P3 | 中盘续玩缺失 |
 | 91 重定向桩 | — | 行为正常(全部指向有效目标) |
 | 广告 TagError | — | adsbygoogle 广告位配置告警(外部脚本,生产环境真实广告位配置后自然消失,非游戏代码) |
 
-## 7. 验收方式
+## 8. 验收方式
 
 ```bash
 # 本地静态服务(已启动)

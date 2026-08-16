@@ -211,7 +211,7 @@ function validate(p,label){
 }
 function playLevel(lvl,label){
  const state=HY.S();
- window.startLevel(lvl);
+ if(lvl===-1){window.startDaily();}else{window.startLevel(lvl);}
  if(state.screen!=='game')throw new Error('startLevel did not enter game screen');
  const p=state.puzzle;
  var valIssue=null;
@@ -344,7 +344,7 @@ for(var li=0;li<30;li++){
 if(fallbackSuspect.length)notes.push('levels with <=2 rooms (possible checkerboard fallback path, index.html:505-553): '+fallbackSuspect.join(','));
 try{
  const res=playLevel(-1,'daily');
- pass++;notes.push('daily 8x8: won ('+res.clicks+' blacks, '+res.nRooms+' rooms)');
+ pass++;notes.push('daily 10x10 (static pool): won ('+res.clicks+' blacks, '+res.nRooms+' rooms)');
 }catch(e){fail++;failIdx.push(99);fails.push('daily EX:'+String(e.message).slice(0,100));}
 return {pass:pass,fail:fail,total:pass+fail,failIdx:failIdx,fails:fails.slice(0,31),verdict:fail===0?'PASS':'FAIL',notes:notes,issues:issues,timerErrors:(globalThis.__timerErrors||[]).slice(0,5)};
 })()`;

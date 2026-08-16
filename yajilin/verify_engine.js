@@ -1,33 +1,30 @@
 #!/usr/bin/env node
-/* GENERATED in-engine verifier for yajilin — pattern follows akari/verify_engine.js.
- * Loads index.html inline scripts into a vm sandbox (top-level var/function globals, no
- * surgery). Because the engine's own genPuzzle (index.html:185) runs up to 200 attempts of
- * an UNBOUNDED exhaustive Hamiltonian-cycle DFS (findHC:216) per level — some seeds hang for
- * minutes — each level is verified in a CHILD PROCESS with a kill timer (same file,
- * YAJ_WORKER env), in parallel across CPUs.
- * Per level 0..29 + daily, in the worker:
- *   1. init(); startLevel(idx) — the engine's own generator (genPuzzle -> shaded set +
- *      arrow clues + its own hc). startLevel failure (genPuzzle null -> showTitle) is a
- *      content FAIL: the level button does nothing.
- *   2. Independent validation: every arrow clue counts exactly n of the generator's shaded
- *      cells in its ray; shaded cells pairwise non-adjacent.
- *   3. KEY check: cellAction (:443) refuses to mark clue cells and checkWin (:494) requires
- *      every non-shaded non-clue cell to be loop-marked as ONE cycle — so winning needs a
- *      Hamiltonian cycle over grid - shaded - clues. The engine's own hc (findHC :216 blocks
- *      only shaded cells; clues are placed after by makeClues :248) ignores clues and is
- *      unplayable whenever a clue sits on it. An independent Warnsdorff+pruning DFS searches
- *      the cycle; if the intended shading admits none, a bounded search over alternate
- *      shadings (non-adjacent, all clue counts == n) tries to find ANY winnable state.
- *   4. A found solution is PLAYED through the engine's own cellAction (shade the shaded set,
- *      then loop-mark the cycle) and checkWin must fire showWin: #winOv shown and
+/* GENERATED in-engine verifier for yajilin — STATIC LEVELS edition.
+ * yajilin/index.html now embeds offline-generated levels (STATIC_LV, 30 levels +
+ * DAILY_LV, 7-level daily rotation) produced by _optimization/scripts/gen-yajilin-levels.js,
+ * each proven uniquely solvable offline (Hamiltonian-cycle-first construction, then an
+ * independent shading enumerator proving exactly one shading with exactly one cycle).
+ * The previous runtime generator (genPuzzle -> unbounded findHC DFS, clues placed after
+ * the cycle) produced unsolvable/hanging boards and was removed from the play path.
+ *
+ * This verifier checks, for every one of the 30 static levels + all 7 daily-pool dates
+ * (daily pick = YYYYMMDD % DAILY_LV.length, exercised via a controlled clock):
+ *   1. index.html really serves the static data: startLevel(idx) loads exactly the
+ *      embedded clues/shaded/hc (no runtime regeneration).
+ *   2. Independent invariant check of the loaded puzzle: every arrow clue counts exactly
+ *      n shaded cells in its ray; shaded cells pairwise non-adjacent; the hc set covers
+ *      every non-shaded non-clue cell, every hc cell has exactly 2 hc neighbours, and the
+ *      hc cells form one connected component (a single loop) — i.e. the embedded solution
+ *      is a genuine win under the rules enforced by checkWin (index.html:494).
+ *   3. The solution is PLAYED through the engine's own cellAction (shade the shaded set,
+ *      loop-mark the hc cells) and checkWin must fire showWin: #winOv shown and
  *      save.lv[idx] stars persisted to localStorage yajilinV1.
+ * Single process, no workers (static levels load instantly; nothing searches).
  * Usage: node yajilin/verify_engine.js   (cwd = repo root)
  */
 const fs = require('fs');
 const vm = require('vm');
 const path = require('path');
-const { fork } = require('child_process');
-const os = require('os');
 
 const SLUG = 'yajilin';
 const SLUG_DIR = __dirname;
@@ -72,7 +69,22 @@ function mkEl(extra) {
   return el;
 }
 
-function makeCtx() {
+/* Controlled clock: the daily pick is seed = YYYYMMDD % DAILY_LV.length, so the verifier
+ * walks the whole rotation by shifting the sandbox date. */
+function mkFakeDate() {
+  const RealDate = Date;
+  let offsetMs = 0;
+  class FakeDate extends RealDate {
+    constructor(...args) {
+      if (args.length === 0) super(RealDate.now() + offsetMs);
+      else super(...args);
+    }
+    static now() { return RealDate.now() + offsetMs; }
+  }
+  return { FakeDate, setOffsetDays(days) { offsetMs = days * 86400000; }, seedNow() { const d = new RealDate(RealDate.now() + offsetMs); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); } };
+}
+
+function makeCtx(dateOverride) {
   const BODY = mkEl();
   const DOC_EL = mkEl();
   BODY.parentElement = DOC_EL; BODY.parentNode = DOC_EL;
@@ -82,7 +94,7 @@ function makeCtx() {
   const timerErrors = [];
   const MathClone = Object.assign(Object.create(Math), Math);
   const sandbox = {
-    console, Math: MathClone, Date, JSON, Array, Object, Set, Map, Number, String, Boolean,
+    console, Math: MathClone, Date: dateOverride || Date, JSON, Array, Object, Set, Map, Number, String, Boolean,
     parseInt, parseFloat, isNaN, isFinite, Symbol, RegExp, Promise, Uint8Array, Uint32Array, Int32Array, Float32Array,
     Error, TypeError, alert: () => {}, prompt: () => '', confirm: () => true,
     Image: ImageStub,
@@ -124,7 +136,7 @@ function makeCtx() {
     navigator: { userAgent: 'verify', maxTouchPoints: 1, clipboard: { writeText: () => {} } },
     MutationObserver: function () { return { observe: () => {}, disconnect: () => {}, takeRecords: () => [] }; },
     ResizeObserver: function () { return { observe: () => {}, disconnect: () => {}, unobserve: () => {} }; },
-    IntersectionObserver: function () { return { observe: () => {}, disconnect: () => {}, unobserve: () => {} }; },
+    IntersectionObserver: function () { return { observe: () => {}, disconnect: () => {} }; },
     CustomEvent: function (t) { return { type: t }; },
     Event: function (t) { return { type: t }; },
     devicePixelRatio: 1,
@@ -144,268 +156,195 @@ function makeCtx() {
   const code = scripts.join('\n');
   const ctx = vm.createContext(sandbox);
   vm.runInContext(code, ctx, { filename: 'yajilin-bundle.js' });
-  return { ctx };
+  return { ctx, sandbox };
 }
 
-const WORKER_DRIVER = `(function(){
-'use strict';
-const IDX=__IDX__;
-const LEVEL_N=IDX===-1?'daily':'L'+(IDX+1);
-function findCycle(w,h,blocked,deadline){
- var cells=[],idxOf={};
- for(var r=0;r<h;r++)for(var c=0;c<w;c++){var k=r+','+c;if(!blocked.has(k)){idxOf[k]=cells.length;cells.push([r,c])}}
- var N=cells.length;
- if(N<4||N%2!==0)return {cycle:null,reason:'free='+N+(N%2?' (odd — bipartite grid admits no cycle)':'')};
- var adj=new Array(N);
- for(var i=0;i<N;i++){
-  var r=cells[i][0],c=cells[i][1],a=[];
-  var d=[[0,1],[1,0],[0,-1],[-1,0]];
-  for(var t=0;t<4;t++){var nr=r+d[t][0],nc=c+d[t][1];var id=idxOf[nr+','+nc];if(id!==undefined)a.push(id)}
-  adj[i]=a;
- }
- var deg0=adj.map(function(a){return a.length});
- for(var i=0;i<N;i++)if(deg0[i]<2)return {cycle:null,reason:'degree<2'};
- var s=0;for(var i=1;i<N;i++)if(deg0[i]<deg0[s])s=i;
- var onPath=new Uint8Array(N);
- var path=[];
- var nodes=0;
- var CAP=2000000;
- var aborted=false;
- function unvis(i){var d=0;var a=adj[i];for(var t=0;t<a.length;t++)if(!onPath[a[t]])d++;return d}
- function dfs(u){
-  if(path.length===N){
-   var a=adj[u];for(var t=0;t<a.length;t++)if(a[t]===s)return true;
-   return false;
+/* ---------- independent structural validation of the embedded static data ---------- */
+function extractStatic(html) {
+  function grab(name) {
+    const m = html.match(new RegExp('var ' + name + '=([\\s\\S]*?);\\s*\\n'));
+    if (!m) return null;
+    /* the payload is plain JSON (arrays/objects/numbers/strings) */
+    return JSON.parse(m[1]);
   }
-  if(++nodes>CAP){aborted=true;return false}
-  if((nodes&2047)===0&&Date.now()>deadline){aborted=true;return false}
-  var cand=[];
-  var a=adj[u];
-  for(var t=0;t<a.length;t++){var v=a[t];if(!onPath[v])cand.push(v)}
-  cand.sort(function(x,y){return unvis(x)-unvis(y)});
-  for(var ci=0;ci<cand.length;ci++){
-   var v=cand[ci];
-   onPath[v]=1;path.push(v);
-   var dead=false;
-   if((nodes&63)===0){
-    for(var i=0;i<N&&!dead;i++){
-     if(onPath[i])continue;
-     var av=unvis(i);
-     var a2=adj[i];for(var t=0;t<a2.length;t++)if(a2[t]===u){av++;break}
-     if(av<2)dead=true;
-    }
-   }
-   if(!dead&&dfs(v))return true;
-   onPath[v]=0;path.pop();
-  }
-  return false;
- }
- onPath[s]=1;path.push(s);
- if(!dfs(s))return {cycle:null,reason:aborted?'search budget exceeded':'exhausted (proven none)'};
- return {cycle:path.map(function(i){return cells[i]}),reason:''};
+  return { staticLv: grab('STATIC_LV'), dailyLv: grab('DAILY_LV') };
 }
+
+function validateLevel(L, label) {
+  const errs = [];
+  if (!L || typeof L.w !== 'number' || typeof L.h !== 'number') return ['bad geometry'];
+  const { w, h } = L;
+  if (w < 4 || h < 4 || w > 15 || h > 15) errs.push('geometry out of range ' + w + 'x' + h);
+  const clueAt = {};
+  (L.clues || []).forEach(cl => {
+    const k = cl.r + ',' + cl.c;
+    if (clueAt[k]) errs.push('duplicate clue at ' + k);
+    clueAt[k] = cl;
+    if (cl.r < 0 || cl.r >= h || cl.c < 0 || cl.c >= w) errs.push('clue out of bounds ' + k);
+    if (!['U', 'D', 'L', 'R'].includes(cl.d)) errs.push('bad clue dir ' + cl.d);
+    if (typeof cl.n !== 'number' || cl.n < 0 || cl.n > Math.max(w, h)) errs.push('bad clue n ' + cl.n);
+  });
+  const shadeSet = new Set();
+  (L.shaded || []).forEach(s => {
+    const k = s[0] + ',' + s[1];
+    if (s[0] < 0 || s[0] >= h || s[1] < 0 || s[1] >= w) errs.push('shaded out of bounds ' + k);
+    if (clueAt[k]) errs.push('shaded on clue cell ' + k);
+    shadeSet.add(k);
+  });
+  const d4 = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+  for (const k of shadeSet) {
+    const [r, c] = k.split(',').map(Number);
+    for (const [dr, dc] of d4) if (shadeSet.has((r + dr) + ',' + (c + dc))) errs.push('adjacent shaded ' + k + '~' + (r + dr) + ',' + (c + dc));
+  }
+  /* clue counts against the intended shading */
+  const dMap = { U: [-1, 0], D: [1, 0], L: [0, -1], R: [0, 1] };
+  (L.clues || []).forEach(cl => {
+    let cnt = 0, r = cl.r + dMap[cl.d][0], c = cl.c + dMap[cl.d][1];
+    while (r >= 0 && r < h && c >= 0 && c < w) { if (shadeSet.has(r + ',' + c)) cnt++; r += dMap[cl.d][0]; c += dMap[cl.d][1]; }
+    if (cnt !== cl.n) errs.push('clue (' + cl.r + ',' + cl.c + ') ' + cl.d + '=' + cl.n + ' sees ' + cnt);
+  });
+  /* hc: exactly the non-hole cells, every cell 2 hc-neighbours, one component */
+  const hcSet = new Set((L.hc || []).map(p => p[0] + ',' + p[1]));
+  if (hcSet.size !== (L.hc || []).length) errs.push('duplicate hc cell');
+  let expectedFree = 0;
+  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+    const k = r + ',' + c;
+    const hole = shadeSet.has(k) || clueAt[k];
+    if (!hole) { expectedFree++; if (!hcSet.has(k)) errs.push('free cell not on loop: ' + k); }
+    else if (hcSet.has(k)) errs.push('hole cell on loop: ' + k);
+  }
+  if (hcSet.size !== expectedFree) errs.push('loop size ' + hcSet.size + ' != free cells ' + expectedFree);
+  for (const k of hcSet) {
+    const [r, c] = k.split(',').map(Number);
+    let nb = 0;
+    for (const [dr, dc] of d4) if (hcSet.has((r + dr) + ',' + (c + dc))) nb++;
+    if (nb !== 2) errs.push('loop cell ' + k + ' has ' + nb + ' loop neighbours');
+  }
+  if (hcSet.size) {
+    const first = [...hcSet][0];
+    const seen = new Set([first]);
+    const stack = [first];
+    while (stack.length) {
+      const [r, c] = stack.pop().split(',').map(Number);
+      for (const [dr, dc] of d4) {
+        const k = (r + dr) + ',' + (c + dc);
+        if (hcSet.has(k) && !seen.has(k)) { seen.add(k); stack.push(k); }
+      }
+    }
+    if (seen.size !== hcSet.size) errs.push('loop not connected: ' + seen.size + '/' + hcSet.size);
+  }
+  return errs.slice(0, 4);
+}
+
+/* ---------- per-item driver (runs inside the page context) ---------- */
+const DRIVER = `(function __runItem(){
+'use strict';
+const IDX=__IDX__;            /* 0..29 level, or -1 for daily */
+const EXPECT=__EXPECT__;      /* embedded static entry this item must serve */
 init();
 save.tut=true;
 startLevel(IDX);
-if(S.screen!=='game')return {idx:IDX,ok:false,msg:'startLevel failed: genPuzzle returned null (200 attempts), engine bounces to title screen — level unplayable'};
-const w=S.w,h=S.h;
-var dMap={U:[-1,0],D:[1,0],L:[0,-1],R:[0,1]};
-var shadeSet=new Set(S.shaded.map(function(s){return s[0]+','+s[1]}));
-for(var i=0;i<S.clues.length;i++){
- var cl=S.clues[i],cnt=0;
- var cr=cl.r+dMap[cl.d][0],cc=cl.c+dMap[cl.d][1];
- while(cr>=0&&cr<h&&cc>=0&&cc<w){if(shadeSet.has(cr+','+cc))cnt++;cr+=dMap[cl.d][0];cc+=dMap[cl.d][1]}
- if(cnt!==cl.n)return {idx:IDX,ok:false,msg:'clue ('+cl.r+','+cl.c+') '+cl.d+'='+cl.n+' sees '+cnt+' of the generator shaded cells'};
-}
-var d4=[[0,1],[1,0],[0,-1],[-1,0]];
-for(const k of shadeSet){
- var p=k.split(','),r=+p[0],c=+p[1];
- for(var t=0;t<4;t++){var nr=r+d4[t][0],nc=c+d4[t][1];if(shadeSet.has(nr+','+nc))return {idx:IDX,ok:false,msg:'adjacent shaded '+k+'~'+nr+','+nc}}
-}
-var hcSet=new Set(S.hc);
-var cluesOnHc=0;
-for(var i=0;i<S.clues.length;i++)if(hcSet.has(S.clues[i].r+','+S.clues[i].c))cluesOnHc++;
-function blockedFrom(shades){
- var b=new Set(shades);
- for(var i=0;i<S.clues.length;i++)b.add(S.clues[i].r+','+S.clues[i].c);
- return b;
-}
-var res=findCycle(w,h,blockedFrom(shadeSet),Date.now()+9000);
-var usedAlt=false;
-if(!res.cycle){
- /* bounded search over alternate shadings consistent with all clue counts */
- var nonClue=[];
- var clueAt={};
- for(var i=0;i<S.clues.length;i++)clueAt[S.clues[i].r+','+S.clues[i].c]=S.clues[i];
- for(var r=0;r<h;r++)for(var c=0;c<w;c++){if(!clueAt[r+','+c])nonClue.push([r,c])}
- /* rays through each cell, per clue: cell contributes to clue k iff on its ray */
- var contrib=nonClue.map(function(){return []});
- for(var ci=0;ci<S.clues.length;ci++){
-  var cl=S.clues[ci];
-  var cr=cl.r+dMap[cl.d][0],cc=cl.c+dMap[cl.d][1];
-  while(cr>=0&&cr<h&&cc>=0&&cc<w){
-   var k=cr+','+cc;
-   if(!clueAt[k]){var ni=nonClue.findIndex(function(p){return p[0]===cr&&p[1]===cc});contrib[ni].push(ci)}
-   cr+=dMap[cl.d][0];cc+=dMap[cl.d][1];
-  }
- }
- var counts=new Array(S.clues.length).fill(0);
- var curShades=[];
- var altDeadline=Date.now()+12000;
- var tried=0;
- function altDFS(pos){
-  /* all counts satisfied exactly? */
-  if(Date.now()>altDeadline)return null;
-  var allEq=true,anyOver=false;
-  for(var q=0;q<counts.length;q++){if(counts[q]>S.clues[q].n){anyOver=true;break}if(counts[q]!==S.clues[q].n)allEq=false}
-  if(anyOver)return null;
-  if(allEq&&curShades.length>=1){
-   tried++;
-   var shades=curShades.map(function(p){return [p[0],p[1]]});
-   var b=blockedFrom(new Set(shades.map(function(p){return p[0]+','+p[1]})));
-   var rr=findCycle(w,h,b,altDeadline);
-   if(rr.cycle)return {shades:shades,cycle:rr.cycle};
-   /* fall through: keep exploring (more cells that contribute to no ray stay valid) */
-  }
-  if(pos>=nonClue.length)return null;
-  var p=nonClue[pos];
-  /* skip: cell adjacent to already-shaded? (still allow deeper) */
-  var adjShaded=false;
-  for(var t=0;t<4;t++){var nr=p[0]+d4[t][0],nc=p[1]+d4[t][1];if(curShades.some(function(q){return q[0]===nr&&q[1]===nc})){adjShaded=true;break}}
-  if(!adjShaded){
-   curShades.push(p);
-   for(var q=0;q<contrib[pos].length;q++)counts[contrib[pos][q]]++;
-   var got=altDFS(pos+1);
-   if(got)return got;
-   curShades.pop();
-   for(var q=0;q<contrib[pos].length;q++)counts[contrib[pos][q]]--;
-  }
-  return altDFS(pos+1);
- }
- var alt=altDFS(0);
- if(alt){
-  usedAlt=true;
-  /* play the alternate: reset grids then shade alt.shades */
-  for(var r=0;r<h;r++)for(var c=0;c<w;c++){S.shadeGrid[r][c]=0;S.loopGrid[r][c]=0}
-  S.mode='shade';
-  for(const s of alt.shades)cellAction(s[0],s[1]);
-  S.mode='loop';
-  var cycSet=new Set(alt.cycle.map(function(p){return p[0]+','+p[1]}));
-  for(var r=0;r<h;r++)for(var c=0;c<w;c++){
-   if(clueAt[r+','+c])continue;
-   if(cycSet.has(r+','+c)&&!S.loopGrid[r][c])cellAction(r,c);
-  }
- }else{
-  return {idx:IDX,ok:false,msg:'no winnable state: intended shading has no cycle over grid-shaded-clues ('+res.reason+', cluesOnEngineHc='+cluesOnHc+') and bounded alternate-shading search found none ('+tried+' candidates)'};
- }
-}else{
- S.mode='shade';
- for(const s of S.shaded)cellAction(s[0],s[1]);
- S.mode='loop';
- var cycSet=new Set(res.cycle.map(function(p){return p[0]+','+p[1]}));
- var clueAt={};
- for(var i=0;i<S.clues.length;i++)clueAt[S.clues[i].r+','+S.clues[i].c]=S.clues[i];
- for(var r=0;r<h;r++)for(var c=0;c<w;c++){
-  if(clueAt[r+','+c])continue;
-  if(cycSet.has(r+','+c)&&!S.loopGrid[r][c])cellAction(r,c);
- }
-}
+if(S.screen!=='game')return {ok:false,msg:'startLevel failed — level does not start'};
+if(S.w!==EXPECT.w||S.h!==EXPECT.h)return {ok:false,msg:'served ' + S.w + 'x' + S.h + ' but embed says ' + EXPECT.w + 'x' + EXPECT.h};
+const jcl=JSON.stringify(S.clues), jex=JSON.stringify(EXPECT.clues);
+if(jcl!==jex)return {ok:false,msg:'served clues differ from STATIC embed'};
+if(JSON.stringify(S.shaded)!==JSON.stringify(EXPECT.shaded))return {ok:false,msg:'served shaded set differs from embed'};
+/* replay the embedded solution through the engine's own cellAction */
+S.mode='shade';
+for(const s of S.shaded)cellAction(s[0],s[1]);
+S.mode='loop';
+const hcSet=new Set(S.hc.map(p=>p[0]+','+p[1]));
+for(const p of S.hc){if(hcSet.has(p[0]+','+p[1])&&!S.loopGrid[p[0]][p[1]]&&S.mode==='loop')cellAction(p[0],p[1]);}
 const wo=document.getElementById('winOv');
-if(!wo.classList.contains('show'))return {idx:IDX,ok:false,msg:'winOv not shown after playing solution (cluesOnEngineHc='+cluesOnHc+')'};
-var starsNote='';
+if(!wo.classList.contains('show'))return {ok:false,msg:'winOv not shown after playing the embedded solution'};
+let stars='';
 if(IDX>=0){
  const sv=JSON.parse(localStorage.getItem('yajilinV1')||'{}');
- if(!(sv.lv&&sv.lv[IDX]>=1))return {idx:IDX,ok:false,msg:'save.lv['+IDX+'] not persisted'};
- starsNote='stars='+sv.lv[IDX];
+ const st=sv.lv&&sv.lv[IDX];
+ if(!(st>=1))return {ok:false,msg:'save.lv[' + IDX + '] not persisted after win'};
+ stars='stars='+st;
 }
-return {idx:IDX,ok:true,msg:(usedAlt?'won via ALTERNATE shading':'won on intended shading')+'; engine hc crosses '+cluesOnHc+' clue cells'+(starsNote?', '+starsNote:'')};
-})()`.replace('"use strict";', '');
+return {ok:true,msg:'static level served + embedded solution won via cellAction' + (stars?' (' + stars + ')':'')};
+})`;
 
-/* ------------------------------------------------------------------ *
- * WORKER MODE                                                        *
- * ------------------------------------------------------------------ */
-if (process.env.YAJ_WORKER) {
-  const idxs = JSON.parse(process.env.YAJ_WORKER);
-  for (const idx of idxs) {
+/* ---------- main ---------- */
+function main() {
+  const html = fs.readFileSync(path.join(SLUG_DIR, 'index.html'), 'utf8');
+  const { staticLv, dailyLv } = extractStatic(html);
+  const issues = [];
+  if (!Array.isArray(staticLv) || staticLv.length !== 30) {
+    console.log(JSON.stringify({ pass: 0, fail: 1, total: 1, verdict: 'FAIL', msg: 'STATIC_LV missing or not 30 entries (found ' + (staticLv && staticLv.length) + ')' }));
+    process.exit(1);
+  }
+  if (!Array.isArray(dailyLv) || dailyLv.length < 1) {
+    console.log(JSON.stringify({ pass: 0, fail: 1, total: 1, verdict: 'FAIL', msg: 'DAILY_LV missing or empty' }));
+    process.exit(1);
+  }
+  const LVN = staticLv.length + 1; /* 30 levels + daily slot (daily pool rotation verified below) */
+
+  /* structural validation of every embedded entry (levels + all pool days) */
+  const structErrs = [];
+  staticLv.forEach((L, i) => validateLevel(L, 'L' + (i + 1)).forEach(e => structErrs.push('L' + (i + 1) + ': ' + e)));
+  dailyLv.forEach((L, i) => validateLevel(L, 'daily#' + i).forEach(e => structErrs.push('daily#' + i + ': ' + e)));
+
+  /* items: 30 levels + every daily-pool date (rotation walked with a shifted clock) */
+  const clock = mkFakeDate();
+  const todayPick = ((new Date().getFullYear() * 10000 + (new Date().getMonth() + 1) * 100 + new Date().getDate()) % dailyLv.length + dailyLv.length) % dailyLv.length;
+  const items = [];
+  for (let i = 0; i < staticLv.length; i++) items.push({ label: 'L' + (i + 1), idx: i, expect: staticLv[i], offsetDays: 0 });
+  /* find a date offset (within +0..+13 days) hitting each pool index, incl. today's at +0 */
+  const byPool = new Map();
+  for (let off = 0; off < 14 && byPool.size < dailyLv.length; off++) {
+    clock.setOffsetDays(off);
+    const p = ((clock.seedNow() % dailyLv.length) + dailyLv.length) % dailyLv.length;
+    if (!byPool.has(p)) byPool.set(p, off);
+  }
+  if (byPool.size < dailyLv.length) issues.push('daily rotation walk covered only ' + byPool.size + '/' + dailyLv.length + ' pool days in 14 days');
+  for (const [poolIdx, off] of [...byPool].sort((a, b) => a[1] - b[1])) {
+    items.push({ label: 'daily+' + off + 'd(pool#' + poolIdx + ')', idx: -1, expect: dailyLv[poolIdx], offsetDays: off, poolIdx });
+  }
+
+  const results = [];
+  for (const it of items) {
     const t0 = Date.now();
     let out;
     try {
-      const { ctx } = makeCtx();
-      out = vm.runInContext(String(WORKER_DRIVER).replace('__IDX__', String(idx)), ctx);
+      const clock2 = mkFakeDate();
+      clock2.setOffsetDays(it.offsetDays || 0);
+      const { ctx } = makeCtx(clock2.FakeDate);
+      out = vm.runInContext(DRIVER.replace('__IDX__', String(it.idx)).replace('__EXPECT__', JSON.stringify(it.expect)), ctx);
     } catch (e) {
-      out = { idx, ok: false, msg: 'EX:' + String(e && e.message).slice(0, 140) };
+      out = { ok: false, msg: 'EX:' + String(e && e.message).slice(0, 160) };
     }
     out.ms = Date.now() - t0;
-    process.stdout.write(JSON.stringify(out) + '\n'); /* flush per level so a later hang cannot lose completed levels */
+    out.label = it.label;
+    results.push(out);
   }
-  process.exit(0);
-}
 
-
-/* ------------------------------------------------------------------ *
- * PARENT MODE                                                        *
- * ------------------------------------------------------------------ */
-const ALL = [];
-for (let i = 0; i < 30; i++) ALL.push(i);
-ALL.push(-1); /* daily */
-const WORKERS = Math.min(8, os.cpus().length);
-const assign = Array.from({ length: WORKERS }, () => []);
-ALL.forEach((id, i) => assign[i % WORKERS].push(id));
-
-const results = {};
-let left = assign.filter(a => a.length).length;
-const killed = new Set();
-
-for (const ids of assign) {
-  if (!ids.length) continue;
-  const child = fork(__filename, [], { env: Object.assign({}, process.env, { YAJ_WORKER: JSON.stringify(ids) }), stdio: ['inherit', 'pipe', 'inherit', 'ipc'] });
-  let buf = '';
-  child.stdout.on('data', d => {
-    buf += d;
-    let nl;
-    while ((nl = buf.indexOf('\n')) >= 0) {
-      const line = buf.slice(0, nl); buf = buf.slice(nl + 1);
-      try { const item = JSON.parse(line); results[item.idx] = item; } catch (e) {}
-    }
-  });
-  const timer = setTimeout(() => {
-    ids.forEach(id => killed.add(id));
-    try { child.kill('SIGKILL'); } catch (e) {}
-  }, 100000);
-  child.on('exit', () => {
-    clearTimeout(timer);
-    /* results already collected incrementally; unreported ids become TIMEOUT */
-    if (--left === 0) report();
-  });
-}
-
-function report() {
   let pass = 0, fail = 0;
-  const failIdx = [], fails = [], notes = [], issues = [];
-  for (const id of ALL) {
-    const r = results[id];
-    const label = id === -1 ? 'daily' : 'L' + (id + 1);
-    if (!r) {
-      fail++; failIdx.push(id === -1 ? 99 : id + 1);
-      fails.push(label + ': worker killed at 100s — engine search (genPuzzle/findHC) does not terminate; in-browser this hangs the tab');
-      continue;
-    }
-    if (r.ok) {
-      pass++;
-      if (id === 0 || id === 29 || id === -1) notes.push(label + ' (' + r.ms + 'ms): ' + r.msg);
-      else if (/ALTERNATE/.test(r.msg)) notes.push(label + ' (' + r.ms + 'ms): ' + r.msg);
-    } else {
-      fail++; failIdx.push(id === -1 ? 99 : id + 1);
-      fails.push(label + ' (' + r.ms + 'ms): ' + r.msg);
-    }
+  const fails = [], notes = [];
+  if (structErrs.length) { structErrs.forEach(e => fails.push('STRUCT ' + e)); fail += structErrs.length; }
+  for (const r of results) {
+    if (r.ok) { pass++; if (/^L(1|30)$/.test(r.label) || r.label.startsWith('daily+0')) notes.push(r.label + ' (' + r.ms + 'ms): ' + r.msg); }
+    else { fail++; fails.push(r.label + ' (' + r.ms + 'ms): ' + r.msg); }
   }
-  const uniqFails = [...new Set(fails.map(f => f.replace(/^(\S+) \(\d+ms\): /, '').slice(0, 60)))];
-  uniqFails.forEach(f => issues.push(f));
-  console.log(SLUG + ' in-engine verification: ' + pass + '/' + (pass + fail) + ' items (30 levels + daily, per-level child processes: engine genPuzzle + independent clue/non-adjacency validation + independent Hamiltonian cycle over grid-shaded-clues + played via cellAction to win), verdict=' + (fail === 0 ? 'PASS' : 'FAIL'));
-  (notes || []).forEach(n => console.log('  ' + n));
-  fails.slice(0, 40).forEach(f => console.log('  FAIL ' + f));
-  const out = { pass, fail, total: pass + fail, failIdx, verdict: fail === 0 ? 'PASS' : 'FAIL' };
-  if (fails.length) out.fails = fails.slice(0, 15);
+  const headline = pass >= LVN && fail === 0;
+  console.log(SLUG + ' in-engine verification (static levels): ' + pass + '/' + (pass + fail) + ' items (' + staticLv.length + ' static levels + ' + (results.length - staticLv.length) + ' daily-pool dates; structural validation of all ' + (staticLv.length + dailyLv.length) + ' embedded entries included), verdict=' + (fail === 0 ? 'PASS' : 'FAIL'));
+  notes.forEach(n => console.log('  ' + n));
+  fails.slice(0, 30).forEach(f => console.log('  FAIL ' + f));
+  const out = {
+    pass, fail, total: pass + fail,
+    verdict: fail === 0 ? 'PASS' : 'FAIL',
+    headline: pass + '/' + LVN + ' (30 levels + today daily) — daily pool rotation: ' + (results.length - staticLv.length) + '/' + dailyLv.length + ' dates exercised',
+    extra: {
+      staticLevels: staticLv.length, dailyPool: dailyLv.length, dailyPickToday: todayPick,
+      sizes: [...new Set(staticLv.map(L => L.w + 'x' + L.h))].join(','),
+      provenance: 'offline generator _optimization/scripts/gen-yajilin-levels.js (cycle-first construction; independent shading enumerator proved exactly one shading with exactly one Hamiltonian cycle per level; see _optimization/evidence/yajilin/)',
+    },
+  };
+  if (issues.length) out.extra.issues = issues;
+  if (out.extra.issues && out.extra.issues.length === 0) delete out.extra.issues;
   console.log(JSON.stringify(out));
   process.exit(fail === 0 ? 0 : 1);
 }
+main();

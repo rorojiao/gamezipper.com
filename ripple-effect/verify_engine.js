@@ -2,24 +2,27 @@
 /* GENERATED in-engine verifier for ripple-effect — pattern follows akari/verify_engine.js.
  * Loads index.html inline scripts into a vm sandbox. Engine is an IIFE (const G=(()=>{...})()),
  * so SOURCE SURGERY injects globalThis.__RE right before the "PUBLIC API" return (index.html
- * on disk untouched). The engine's own generateLevel (seeded regions + backtracking solution +
- * clue removal) is slow (L6 alone ~45s), so the verifier runs it in PARALLEL WORKER PROCESSES
- * (same file, RE_WORKER env) and then injects the results into the parent engine's own
- * state.levelCache — startLevel then takes the engine's own cached-revisit branch
- * (initGameState(id, cache)) exactly as an in-browser replay would. Per level 1..30 + daily:
- * independent rule validation (regions tile the grid; solution is a permutation of 1..regionSize
- * per region; equal values in a row/col are farther apart than their value; >=1 given per
- * region), then PLAYED through the engine's own input path: state.selectedCell={r,c} +
+ * on disk untouched).
+ *
+ * Levels are STATICALLY EMBEDDED (2026-08-16 fix): the old runtime generateLevel was
+ * unboundedly slow in-browser (measured L6=171.7s, L14=126.8s, L18=59.6s; 15+ of 31 items
+ * could not finish inside the old 105s worker cap). All 30 campaign levels + the 10-puzzle
+ * daily pool now ship in index.html and hydrate via hydrateLevel() — no fork workers, no
+ * cross-run generation cache needed anymore.
+ *
+ * Per level 1..30 + daily: independent rule validation (regions tile the grid; solution is
+ * a permutation of 1..regionSize per region; equal values in a row/col are farther apart
+ * than their value; >=1 given per region; hydrated compact fields round-trip exactly),
+ * then PLAYED through the engine's own input path: state.selectedCell={r,c} +
  * placeNumber(solution[r][c]) for every non-given cell; checkWin -> onLevelComplete must set
  * save.levelProgress[id].completed and persist to localStorage rippleEffectSave_v1.
- * Generation wall-times are reported; >8s = in-browser "Generating puzzle..." stall (content note).
+ * Also asserts startLevel returns synchronously with levelData set (no "Generating
+ * puzzle..." deferred path left) and the daily pool pick is deterministic by date.
  * Usage: node ripple-effect/verify_engine.js   (cwd = repo root)
  */
 const fs = require('fs');
 const vm = require('vm');
 const path = require('path');
-const { fork } = require('child_process');
-const os = require('os');
 
 const SLUG = 'ripple-effect';
 const SLUG_DIR = __dirname;
@@ -33,7 +36,7 @@ function loadEngine() {
   let code = scripts.join('\n');
   const SURGERY_ANCHOR = '/* ========== PUBLIC API ========== */';
   if (!code.includes(SURGERY_ANCHOR)) throw new Error('surgery anchor not found');
-  code = code.replace(SURGERY_ANCHOR, 'globalThis.__RE={generateLevel,LEVELS,state,placeNumber,startLevel,startDaily,dailyConfig:function(){const t=new Date();const seed=t.getFullYear()*10000+(t.getMonth()+1)*100+t.getDate();const size=8+Math.floor((t.getDay()+t.getDate())%3)*2;return{id:"daily",size:size,difficulty:.45,seed:seed}}};\n' + SURGERY_ANCHOR);
+  code = code.replace(SURGERY_ANCHOR, 'globalThis.__RE={LEVELS,DAILY_POOL,hydrateLevel,state,placeNumber,startLevel,startDaily,STATIC_TABLE_ONLY:true};\n' + SURGERY_ANCHOR);
   return code;
 }
 
@@ -155,100 +158,32 @@ function makeCtx() {
   return { ctx, timerErrors };
 }
 
-/* ------------------------------------------------------------------ *
- * WORKER MODE: run the engine's own generateLevel for assigned ids   *
- * ------------------------------------------------------------------ */
-if (process.env.RE_WORKER) {
-  const ids = JSON.parse(process.env.RE_WORKER);
-  const { ctx } = makeCtx();
-  ctx.__flush = (o) => process.stdout.write(JSON.stringify(o) + '\n');
-  vm.runInContext(`(function(){
-    const RE=globalThis.__RE;const flush=globalThis.__flush;
-    const cfgs=${JSON.stringify(ids)}.map(function(id){return id==='daily'?RE.dailyConfig():RE.LEVELS.find(function(l){return l.id===id})});
-    for(const cfg of cfgs){
-      const t0=Date.now();
-      const d=RE.generateLevel(cfg);
-      console.error('[worker] L'+cfg.id+' gen '+(Date.now()-t0)+'ms ok='+!!d);
-      flush({id:cfg.id,ms:Date.now()-t0,data:d});
-    }
-  })()`, ctx);
-  process.exit(0);
-}
-
-/* ------------------------------------------------------------------ *
- * PARENT MODE                                                        *
- * ------------------------------------------------------------------ */
 const { ctx, timerErrors } = makeCtx();
 
-/* level ids + daily */
-const LEVEL_IDS = vm.runInContext('globalThis.__RE.LEVELS.map(l=>l.id)', ctx);
-const ALL_IDS = LEVEL_IDS.concat(['daily']);
-const WORKERS = Math.min(Math.max(1, parseInt(process.env.RE_WORKERS_N, 10) || 8), os.cpus().length);
-
-const CACHE_PATH = path.join(SLUG_DIR, '..', '_optimization', 'evidence', 'ripple-effect', 'gen_cache.json');
-const KILL_MS = process.env.RE_FILL ? 540000 : 105000;
-const genResults = {}; /* id -> {ms, data|null} */
-let cache = {};
-try { cache = JSON.parse(fs.readFileSync(CACHE_PATH, 'utf8')); } catch (e) { cache = {}; }
-for (const id of ALL_IDS) if (cache[id] && cache[id].data) genResults[id] = { ms: cache[id].ms, data: cache[id].data };
-/* only generate what the cache is missing */
-const TODO = ALL_IDS.filter(id => !genResults[id]);
-const assign = Array.from({ length: WORKERS }, () => []);
-TODO.forEach((id, i) => assign[i % WORKERS].push(id));
-let workersLeft = assign.filter(a => a.length).length;
-const tStart = Date.now();
-
-if (workersLeft === 0) { console.error('no levels'); process.exit(1); }
-
-for (const ids of assign) {
-  if (!ids.length) continue;
-  const child = fork(__filename, [], { env: Object.assign({}, process.env, { RE_WORKER: JSON.stringify(ids) }), stdio: ['inherit', 'pipe', 'inherit', 'ipc'] });
-  let buf = '';
-  const timer = setTimeout(() => { try { child.kill('SIGKILL'); } catch (e) {} }, KILL_MS);
-  child.stdout.on('data', d => {
-    buf += d;
-    let nl;
-    while ((nl = buf.indexOf('\n')) >= 0) {
-      const line = buf.slice(0, nl); buf = buf.slice(nl + 1);
-      if (!line.trim()) continue;
-      try { const item = JSON.parse(line); genResults[item.id] = { ms: item.ms, data: item.data }; } catch (e) {}
-    }
-  });
-  child.on('exit', () => {
-    clearTimeout(timer);
-    if (--workersLeft === 0) parentContinue();
-  });
-}
-
-function parentContinue() {
-  for (const id of ALL_IDS) {
-    const r = genResults[id];
-    if (r && r.data && !(cache[id] && cache[id].data)) cache[id] = { ms: r.ms };
-    if (r && r.data) cache[id] = { ms: cache[id] ? cache[id].ms : r.ms, data: r.data };
-  }
-  try { fs.mkdirSync(path.dirname(CACHE_PATH), { recursive: true }); fs.writeFileSync(CACHE_PATH, JSON.stringify(cache)); } catch (e) {}
-  const genMs = {};
-  for (const id of ALL_IDS) genMs[id] = genResults[id] ? genResults[id].ms : null;
-
-  /* inject generated data into the engine's own levelCache (its cached-revisit path) */
-  const inject = [];
-  for (const id of ALL_IDS) {
-    const r = genResults[id];
-    if (!r || !r.data) continue;
-    inject.push({ key: id === 'daily' ? 'daily_' + vm.runInContext('globalThis.__RE.dailyConfig().seed', ctx) : id, data: r.data });
-  }
-  vm.runInContext(`(function(){for(const e of ${JSON.stringify(inject)}){globalThis.__RE.state.levelCache[e.key]=e.data;}})()`, ctx);
-
-  const DRIVER = `(function(){
+const DRIVER = `(function(){
   'use strict';
   const RE=globalThis.__RE;
   if(!RE)throw new Error('surgery exports missing');
   let pass=0,fail=0,fails=[],failIdx=[];
   const notes=[];
   const issues=[];
-  const genMissing=${JSON.stringify(ALL_IDS.filter(id => !(genResults[id] && genResults[id].data)))};
-  function validate(data){
+  if(!RE.STATIC_TABLE_ONLY)issues.push('engine still exposes runtime generateLevel (expected static-only build)');
+  if(RE.LEVELS.length!==30)throw new Error('LEVELS.length='+RE.LEVELS.length);
+  if(!Array.isArray(RE.DAILY_POOL)||RE.DAILY_POOL.length!==10)throw new Error('DAILY_POOL.length='+(RE.DAILY_POOL&&RE.DAILY_POOL.length));
+  /* difficulty structure: sizes 6/8/10/12 in ascending blocks, removal fraction .30-.55 */
+  const wantSizes=RE.LEVELS.map(l=>l.size).join(',');
+  if(wantSizes!='6,6,6,6,6,8,8,8,8,8,8,8,10,10,10,10,10,10,10,10,10,10,12,12,12,12,12,12,12,12')issues.push('size schedule changed: '+wantSizes);
+  for(let i=1;i<RE.LEVELS.length;i++)if(RE.LEVELS[i].difficulty<RE.LEVELS[i-1].difficulty)issues.push('difficulty not monotonic at L'+(i+1));
+  function validate(data,compact){
    const{size,regions,regionMap,solution,puzzle}=data;
+   if(compact){
+    if(compact.rm.length!==size*size||compact.sol.length!==size*size||compact.giv.length!==size*size)throw new Error('compact field length mismatch');
+    for(let r=0;r<size;r++)for(let c=0;c<size;c++){
+      if(regionMap[r][c]!==parseInt(compact.rm[r*size+c],36))throw new Error('rm hydrate mismatch at '+r+','+c);
+      if(solution[r][c]!==parseInt(compact.sol[r*size+c],36))throw new Error('sol hydrate mismatch at '+r+','+c);
+      if(!!puzzle[r][c]!==(compact.giv[r*size+c]==='1'))throw new Error('giv hydrate mismatch at '+r+','+c);
+    }
+   }
    const seen=new Set();
    for(let rid=0;rid<regions.length;rid++){
     for(const cell of regions[rid]){const k=cell[0]+','+cell[1];if(seen.has(k))throw new Error('cell in two regions');seen.add(k);if(regionMap[cell[0]][cell[1]]!==rid)throw new Error('regionMap mismatch');}
@@ -267,14 +202,15 @@ function parentContinue() {
     if(!regions[rid].some(function(cell){return puzzle[cell[0]][cell[1]]}))throw new Error('region '+rid+' has no given');
    }
   }
-  function playAndAssert(id){
-   const ck=id==='daily'?'daily_'+RE.dailyConfig().seed:id;
-   if(!RE.state.levelCache[ck])throw new Error('engine generateLevel did not finish within the 105s worker budget for '+id);
-   if(id==='daily'){RE.startDaily();}else{RE.startLevel(id);}
+  function playAndAssert(id,isDaily){
+   const t0=Date.now();
+   if(isDaily){RE.startDaily();}else{RE.startLevel(id);}
+   const genMs=Date.now()-t0;
+   if(genMs>2000)issues.push((isDaily?'daily':'L'+id)+' hydration took '+genMs+'ms (expected instant static lookup)');
    const st=RE.state;
-   if(!st.levelData)throw new Error('no levelData (generation missing/failed: '+genMissing.join(',')+')');
+   if(!st.levelData)throw new Error('no levelData — startLevel did not hydrate the static level synchronously');
    const data=st.levelData;
-   validate(data);
+   validate(data,isDaily?null:RE.LEVELS.find(l=>l.id===id));
    const{size,solution,puzzle}=data;
    let placed=0,givens=0;
    for(let r=0;r<size;r++)for(let c=0;c<size;c++){
@@ -289,38 +225,31 @@ function parentContinue() {
    if(!lp||lp.completed!==true)throw new Error('levelProgress['+lid+'].completed not set');
    const raw=localStorage.getItem('rippleEffectSave_v1');
    if(!raw||!JSON.parse(raw).levelProgress[lid])throw new Error('progress not persisted');
-   return{placed:placed,givens:givens,size:size,stars:lp.stars};
+   return{placed:placed,givens:givens,size:size,stars:lp.stars,genMs:genMs};
   }
   for(const L of RE.LEVELS){
    try{
-    const res=playAndAssert(L.id);
+    const res=playAndAssert(L.id,false);
     pass++;
-    if(L.id===1||L.id===30)notes.push('L'+L.id+' ('+res.size+'x'+res.size+'): '+res.placed+' placed + '+res.givens+' givens, completed=true, stars='+res.stars);
+    if(L.id===1||L.id===6||L.id===14||L.id===23||L.id===30)notes.push('L'+L.id+' ('+res.size+'x'+res.size+', diff '+L.difficulty.toFixed(2)+'): '+res.placed+' placed + '+res.givens+' givens, completed=true, stars='+res.stars+', hydrate '+res.genMs+'ms');
    }catch(e){fail++;failIdx.push(L.id);fails.push('L'+L.id+' EX:'+String(e.message).slice(0,90));}
   }
   try{
-   const res=playAndAssert('daily');
-   pass++;notes.push('daily: completed=true');
+   const res=playAndAssert('daily',true);
+   pass++;notes.push('daily (static pool '+RE.DAILY_POOL.length+' puzzles): '+res.placed+' placed + '+res.givens+' givens, completed=true');
   }catch(e){fail++;failIdx.push(99);fails.push('daily EX:'+String(e.message).slice(0,90));}
-  const slow=Object.entries(${JSON.stringify(genMs)}).filter(function(e){return e[1]!==null&&e[1]>8000}).map(function(e){return e[0]+':'+(e[1]/1000).toFixed(1)+'s'});
-  if(slow.length)issues.push('slow generation (>8s, in-browser blocks on the Generating puzzle... toast): '+slow.join(', '));
-  const missing=genMissing.filter(function(id){return id!=='daily'});
-  if(missing.length)issues.push('generation did not finish within 105s worker budget: '+missing.join(','));
   return {pass:pass,fail:fail,total:pass+fail,failIdx:failIdx,fails:fails.slice(0,15),verdict:fail===0?'PASS':'FAIL',notes:notes,issues:issues,timerErrors:(globalThis.__timerErrors||[]).slice(0,5)};
   })()`;
 
-  let result;
-  try { result = vm.runInContext(DRIVER, ctx); }
-  catch (e) { console.error('verify error:', e.stack || e.message); process.exit(1); }
-  if (!result || typeof result !== 'object') { console.error('driver returned no result'); process.exit(1); }
-  const genNote = ALL_IDS.map(id => id + ':' + (genMs[id] === null ? 'n/a' : genMs[id] + 'ms')).join(' ');
-  console.log(SLUG + ' in-engine verification: ' + result.pass + '/' + result.total + ' items (30 levels independently validated + played via placeNumber + daily; engine generateLevel run in 8 parallel workers), verdict=' + result.verdict);
-  console.log('  generation wall-times (engine generateLevel): ' + genNote);
-  (result.notes || []).forEach(n => console.log('  ' + n));
-  if (result.issues && result.issues.length) console.log('issues: ' + JSON.stringify(result.issues));
-  if (result.timerErrors && result.timerErrors.length) console.log('timer errors: ' + JSON.stringify(result.timerErrors));
-  const out = { pass: result.pass, fail: result.fail, total: result.total, failIdx: result.failIdx || [], verdict: result.fail === 0 ? 'PASS' : 'FAIL' };
-  if (result.fails && result.fails.length) out.fails = result.fails;
-  console.log(JSON.stringify(out));
-  process.exit(out.fail === 0 ? 0 : 1);
-}
+let result;
+try { result = vm.runInContext(DRIVER, ctx); }
+catch (e) { console.error('verify error:', e.stack || e.message); process.exit(1); }
+if (!result || typeof result !== 'object') { console.error('driver returned no result'); process.exit(1); }
+console.log(SLUG + ' in-engine verification: ' + result.pass + '/' + result.total + ' items (30 static levels independently validated + played via placeNumber + daily from the static pool), verdict=' + result.verdict);
+(result.notes || []).forEach(n => console.log('  ' + n));
+if (result.issues && result.issues.length) console.log('issues: ' + JSON.stringify(result.issues));
+if (result.timerErrors && result.timerErrors.length) console.log('timer errors: ' + JSON.stringify(result.timerErrors));
+const out = { pass: result.pass, fail: result.fail, total: result.total, failIdx: result.failIdx || [], verdict: result.fail === 0 ? 'PASS' : 'FAIL' };
+if (result.fails && result.fails.length) out.fails = result.fails;
+console.log(JSON.stringify(out));
+process.exit(out.fail === 0 ? 0 : 1);
