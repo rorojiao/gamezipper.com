@@ -219,7 +219,7 @@ const DRIVER = `
      * survives die()'s resetLevel path). The verifier itself never calls it. */
     LEVELS[idx].moves = m;
   }
-  return { search: search, replay: replay, nLevels: LEVELS.length, setMoves: setMoves };
+  return { search: search, replay: replay, nLevels: LEVELS.length, setMoves: setMoves, LEVELS: LEVELS }; // LEVELS exported for surgery tooling (mutation is live — startLevel re-reads it)
 })();
 `;
 scripts[ENGINE_IDX] = scripts[ENGINE_IDX].replace(/\}\)\(\);\s*$/, DRIVER + '\n})();');
