@@ -64,6 +64,9 @@ canvas{display:block}
   text-align:center;transition:all .15s}
 #modal-box .bid-btn:hover{background:rgba(78,205,196,0.25);border-color:#4ecdc4}
 #modal-box .bid-btn.active{background:#4ecdc4;color:#1a1f4e}
+/* UX-OPT 2026-08-16 R392: R382 sub-case B flash class. Clicked bid-btn holds .selected for 1.6s > dead_click detector window. */
+#modal-box .bid-btn.selected{background:#ffd93d;color:#1a1f4e;border-color:#ffd93d;transform:scale(1.08);box-shadow:0 0 12px rgba(255,217,61,0.6)}
+#modal-box .btn.selected{background:#ffd93d;color:#1a1f4e;border-color:#ffd93d;transform:scale(1.05)}
 .spade-indicator{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
   font-size:64px;color:#4ecdc4;opacity:0;pointer-events:none;z-index:150;
   text-shadow:0 0 30px rgba(78,205,196,0.5);transition:none}
@@ -773,6 +776,12 @@ function showBidDialog(){
   document.querySelectorAll('.bid-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{
       const bid=parseInt(btn.dataset.bid);
+      // UX-OPT 2026-08-16 R392: R382 sub-case B fix — add `.selected` flash on bid-btn BEFORE closeModal()
+      // removes the modal DOM. dead_click detector's 1.5s window needs visible state change; otherwise
+      // capture-phase snapClass == nowClass (both empty) → reports dead_click even though navigation worked.
+      // Flash duration 1.6s > detector window. Mirrors R381/R382 pattern.
+      btn.classList.add('selected');
+      setTimeout(()=>btn.classList.remove('selected'),1600);
       closeModal();
       placeBid(SOUTH,bid,false);
     });
@@ -780,6 +789,9 @@ function showBidDialog(){
 
   const bnBtn=document.getElementById('bBlindNil');
   if(bnBtn)bnBtn.addEventListener('click',()=>{
+    // UX-OPT 2026-08-16 R392: same R382 sub-case B flash pattern for Blind Nil button.
+    bnBtn.classList.add('selected');
+    setTimeout(()=>bnBtn.classList.remove('selected'),1600);
     closeModal();
     placeBid(SOUTH,0,true);
   });
