@@ -91,7 +91,11 @@ function bootGame(slug, opts) {
     location: { href: 'http://localhost/' + slug + '/', search: '', hash: '', origin: 'http://localhost', protocol: 'http:', host: 'localhost', pathname: '/' + slug + '/', reload() {}, assign() {}, replace() {} },
     document: {
       getElementById: (id) => els[id] || (els[id] = makeEl({ id })),
-      querySelector: (sel) => els['q:' + sel] || (els['q:' + sel] = makeEl({ className: String(sel).replace(/^\./, '') })),
+      querySelector: (sel) => {
+        const k = 'q:' + sel;
+        if (!els[k]) { els[k] = makeEl({ className: String(sel).replace(/^\./, '') }); els[k].parentElement = els[k].parentNode = sandbox.document.body; } // site-infra scripts inject banners via canvasWrap.parentNode (real DOM always has one)
+        return els[k];
+      },
       querySelectorAll: (sel) => {
         const key = 'qa:' + sel;
         if (!els[key]) {
@@ -172,8 +176,8 @@ function bootGame(slug, opts) {
       { const q = module.exports.__pendingOnloads.splice(0); q.forEach(f => { try { f(); } catch (e) {} }); } // deferred dynamic-script onload
       const due = []; // snapshot first: callbacks mutate the timer list (clearTimeout/extra setTimeout)
       for (let j = timers.length - 1; j >= 0; j--) { const t = timers[j]; if (t && t.at <= sandbox.__now) { if (t.every) { t.at += t.every; } else { timers.splice(j, 1); } due.push(t); } }
-      for (const t of due) { try { t.f(); } catch (e) { sandbox.__errors = (sandbox.__errors || []).concat('timer: ' + e.message); } }
-      const q = rafQ.splice(0); q.forEach(f => { try { f(sandbox.__now); } catch (e) { sandbox.__errors = (sandbox.__errors || []).concat('raf: ' + e.message); } }); } },
+      for (const t of due) { try { t.f(); } catch (e) { sandbox.__errors = (sandbox.__errors || []).concat('timer: ' + e.message + ' @ ' + String(e.stack || '').split('\n')[1]); } }
+      const q = rafQ.splice(0); q.forEach(f => { try { f(sandbox.__now); } catch (e) { sandbox.__errors = (sandbox.__errors || []).concat('raf: ' + e.message + ' @ ' + String(e.stack || '').split('\n')[1]); } }); } },
     /** evaluate an expression inside the vm (reads engine internals after an export surgery) */
     call(expr) { return vm.runInContext(expr, ctx); },
     /** dispatch a keyboard event to the element that owns key listeners (canvas/document/body fallback chain) */
