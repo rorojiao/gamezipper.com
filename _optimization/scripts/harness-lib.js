@@ -20,7 +20,7 @@ function makeEl(extra) {
     dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); const el = this; (listeners[t] || []).forEach(f => f.call(el, ev)); return true; },
     getContext: () => mk2d(),
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 480, height: 640 }),
-    appendChild(c) { this.children.push(c); return c; }, removeChild(c) { const i = this.children.indexOf(c); if (i >= 0) this.children.splice(i, 1); return c; }, remove() { if (this.parentElement) this.parentElement.removeChild(this); }, parentElement: null,
+    appendChild(c) { this.children.push(c); if (c && c.parentNode !== this) { c.parentNode = c.parentElement = this; } return c; }, insertBefore(c, ref) { const i = ref ? this.children.indexOf(ref) : -1; if (i < 0) this.children.push(c); else this.children.splice(i, 0, c); if (c && c.parentNode !== this) { c.parentNode = c.parentElement = this; } return c; }, get nextSibling() { if (this.parentNode && this.parentNode.children) { const i = this.parentNode.children.indexOf(this); return this.parentNode.children[i + 1] || null; } return null; }, removeChild(c) { const i = this.children.indexOf(c); if (i >= 0) this.children.splice(i, 1); return c; }, remove() { if (this.parentElement) this.parentElement.removeChild(this); }, parentElement: null,
     focus() {}, blur() {}, click() { this.dispatch('click'); },
     insertAdjacentHTML() {}, insertAdjacentElement() {}, closest() { return null; }, contains() { return false; }, matches() { return false; },
     setAttribute(k, v) { this['__attr_' + k] = v; if (k === 'id') this.id = v; }, getAttribute(k) { return this['__attr_' + k] === undefined ? null : this['__attr_' + k]; }, removeAttribute(k) { delete this['__attr_' + k]; }, hasAttribute(k) { return this['__attr_' + k] !== undefined; },
@@ -76,9 +76,9 @@ function bootGame(slug, opts) {
   const sandbox = {
     console: { log() {}, error: (...a) => { (sandbox.__errors = sandbox.__errors || []).push(a.map(String).join(' ')); }, warn() {} },
     Date, JSON, Math,
-    setTimeout: (f, ms) => { timers.push({ f, at: (sandbox.__now || 0) + (ms || 0), id: timers.length + 1 }); return timers.length; },
+    setTimeout: (f, ms) => { const id = (timers._seq = (timers._seq || 0) + 1); timers.push({ f, at: (sandbox.__now || 0) + (ms || 0), id }); return id; }, // return the id actually stored — the old off-by-one made every clearTimeout kill the WRONG timer (go-fish's aiTimer clear cancelled unrelated callbacks and froze games)
     clearTimeout: (id) => { const i = timers.findIndex(t => t.id === id); if (i >= 0) timers.splice(i, 1); },
-    setInterval: (f, ms) => { const iv = { f, at: (sandbox.__now || 0) + (ms || 1), every: ms || 1, id: timers.length + 1000 }; timers.push(iv); return iv.id; },
+    setInterval: (f, ms) => { const id = (timers._seq = (timers._seq || 0) + 1) + 1000000; timers.push({ f, at: (sandbox.__now || 0) + (ms || 1), every: ms || 1, id }); return id; },
     clearInterval: (id) => { const i = timers.findIndex(t => t.id === id); if (i >= 0) timers.splice(i, 1); },
     requestAnimationFrame: (f) => { rafQ.push(f); return rafQ.length; }, cancelAnimationFrame() {},
     requestIdleCallback: (f) => { try { f({ didTimeout: false, timeRemaining: () => 50 }); } catch (e) {} return 0; }, cancelIdleCallback() {},
@@ -91,10 +91,13 @@ function bootGame(slug, opts) {
     navigator: { userAgent: 'node', maxTouchPoints: 1, vibrate() {}, platform: 'linux' },
     location: { href: 'http://localhost/' + slug + '/', search: '', hash: '', origin: 'http://localhost', protocol: 'http:', host: 'localhost', pathname: '/' + slug + '/', reload() {}, assign() {}, replace() {} },
     document: {
-      getElementById: (id) => els[id] || (els[id] = makeEl({ id })),
+      getElementById: (id) => {
+        if (!els[id]) { els[id] = makeEl({ id }); els[id].parentNode = els[id].parentElement = sandbox.document.body; } // site-infra scripts walk .parentNode to inject banners
+        return els[id];
+      },
       querySelector: (sel) => {
         const idm = /^#([A-Za-z][\w-]*)$/.exec(sel);
-        if (idm) return els[idm[1]] || (els[idm[1]] = makeEl({ id: idm[1] })); // #id must alias getElementById — engines bind listeners via $() and tests click via id
+        if (idm) { if (!els[idm[1]]) { els[idm[1]] = makeEl({ id: idm[1] }); els[idm[1]].parentNode = els[idm[1]].parentElement = sandbox.document.body; } return els[idm[1]]; } // #id aliases getElementById (engines bind via $()); parentNode wired for ad-infra walks
         const k = 'q:' + sel;
         if (!els[k]) { els[k] = makeEl({ className: String(sel).replace(/^\./, '') }); els[k].parentElement = els[k].parentNode = sandbox.document.body; } // site-infra scripts inject banners via canvasWrap.parentNode (real DOM always has one)
         return els[k];
@@ -141,7 +144,7 @@ function bootGame(slug, opts) {
   sandbox.window = sandbox; sandbox.globalThis = sandbox; sandbox.self = sandbox;
   if (opts.seedLS) for (const [k, v] of Object.entries(opts.seedLS)) sandbox.localStorage.setItem(k, v); // returning-player state
   // browsers expose every element id as a window property (named access); engines rely on it
-  for (const m of html.matchAll(/\sid="([A-Za-z][A-Za-z0-9_-]*)"/g)) { const id = m[1]; if (!(id in sandbox)) sandbox[id] = els[id] || (els[id] = makeEl({ id })); }
+  for (const m of html.matchAll(/\sid="([A-Za-z][A-Za-z0-9_-]*)"/g)) { const id = m[1]; if (!(id in sandbox)) { sandbox[id] = els[id] || (els[id] = makeEl({ id })); } }
   const ctx = vm.createContext(sandbox);
   const loadErrors = [];
   if (opts.vendor) for (const [name, file] of Object.entries(opts.vendor)) {
