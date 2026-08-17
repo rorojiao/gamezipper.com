@@ -456,15 +456,25 @@
   }
 
   // ── Game Loop ───────────────────────────────────────────────────────────
+  // R489 stopped-idle: skip render+reschedule when not playing; resumeLoop() wakes it up
   var lastTime = 0;
+  var lastRAF = 0;
+  var loopActive = false;
+  function resumeLoop() {
+    if (loopActive) return;
+    loopActive = true;
+    lastRAF = requestAnimationFrame(gameLoop);
+  }
   function gameLoop(ts) {
-    if (state === STATE.PLAYING) {
-      updatePhysics();
-      updateParticles();
-    }
+    loopActive = false;
+    if (document.hidden) { loopActive = true; lastRAF = requestAnimationFrame(gameLoop); return; }
+    if (state !== STATE.PLAYING) { render(); lastTime = ts; return; }  // single frame then stop
+    updatePhysics();
+    updateParticles();
     render();
     lastTime = ts;
-    requestAnimationFrame(gameLoop);
+    loopActive = true;
+    lastRAF = requestAnimationFrame(gameLoop);
   }
 
   // ── Game Control ────────────────────────────────────────────────────────
@@ -476,6 +486,7 @@
     document.getElementById('overlay').classList.add('hidden');
     state = STATE.PLAYING;
     initPositions();
+    resumeLoop();
   }
 
   function endGame(playerWon) {
@@ -505,6 +516,7 @@
     document.getElementById('diff-btns').style.display = 'flex';
     document.getElementById('start-btn').textContent = 'PLAY AGAIN';
     overlay.classList.remove('hidden');
+    render();  // R489: render final frame so canvas shows final state when game ends
     window.dispatchEvent(new CustomEvent('gameover', { detail: { game: 'pong', score: p1Score } }));
   }
 
@@ -533,10 +545,9 @@
     window.addEventListener('resize', function() {
       updateSize();
       initPositions();
+      resumeLoop();
     });
 
-    // Start loop
-    requestAnimationFrame(gameLoop);
   }
 
   init();
