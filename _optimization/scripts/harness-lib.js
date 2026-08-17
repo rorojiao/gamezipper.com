@@ -93,6 +93,8 @@ function bootGame(slug, opts) {
     document: {
       getElementById: (id) => els[id] || (els[id] = makeEl({ id })),
       querySelector: (sel) => {
+        const idm = /^#([A-Za-z][\w-]*)$/.exec(sel);
+        if (idm) return els[idm[1]] || (els[idm[1]] = makeEl({ id: idm[1] })); // #id must alias getElementById — engines bind listeners via $() and tests click via id
         const k = 'q:' + sel;
         if (!els[k]) { els[k] = makeEl({ className: String(sel).replace(/^\./, '') }); els[k].parentElement = els[k].parentNode = sandbox.document.body; } // site-infra scripts inject banners via canvasWrap.parentNode (real DOM always has one)
         return els[k];
