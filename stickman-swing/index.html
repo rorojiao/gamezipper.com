@@ -1099,7 +1099,7 @@ function initLevel(lvl) {
   if (!levelData) return;
 
   const start = levelData.start;
-  stickman = { x: start.x, y: start.y, vx: 0, vy: 0 };
+  stickman = { x: start.x, y: start.y, vx: 150, vy: -700 }; /* FIX(verify 2026-08-17): was vx:0,vy:0 — the stickman fell straight down from spawn with the first anchor 240-280px away (>180 grab range) and NOTHING the player did could attach: level 1 died in ~2.5s in production browsers (tap-spam trace: y 373->4454, hold never true). Launch arc (up-forward) brings anchors into grab range during flight, matching the swing-genre start. */
   grabbedAnchor = null;
   ropeLength = 0;
   isHolding = false;
@@ -1197,6 +1197,12 @@ function updatePhysics(dt) {
       // Let's re-apply properly
     }
 
+    /* FIX(verify 2026-08-17): the grabbed branch NEVER integrated position (only the
+     * free-flight branch did x+=vx*dt). The stickman froze at the grab point while velocity
+     * accumulated unboundedly (~1300px/s) — production-fatal: swinging did nothing, release
+     * slingshotted at absurd speed. Integrate along the tangent before the rope constraint. */
+    stickman.x += stickman.vx * dt;
+    stickman.y += stickman.vy * dt;
     // Recalculate after gravity
     const dx2 = stickman.x - ap.x;
     const dy2 = stickman.y - ap.y;
