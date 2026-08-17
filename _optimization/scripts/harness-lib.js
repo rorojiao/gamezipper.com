@@ -125,7 +125,7 @@ function bootGame(slug, opts) {
     Image: function () { const o = { onload: null, onerror: null, width: 0, height: 0 }; let s = ''; Object.defineProperty(o, 'src', { get: () => s, set(v) { s = v; if (o.onload) { try { o.onload(); } catch (e) {} } } }); return o; },
     CustomEvent: function (t) { return { type: t }; }, Event: function (t) { return { type: t }; },
     AudioContext: function () { return mkAudio(); }, webkitAudioContext: function () { return mkAudio(); },
-    innerWidth: 480, innerHeight: 640, devicePixelRatio: 1,
+    innerWidth: (opts.viewport && opts.viewport[0]) || 480, innerHeight: (opts.viewport && opts.viewport[1]) || 640, devicePixelRatio: 1,
     screen: { width: 480, height: 640 },
     adsbygoogle: { push() {} },
     __rafQ: rafQ, __timers: timers, __els: els,
