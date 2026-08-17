@@ -982,7 +982,8 @@ function updateTextDisplay(){
 const state=gameState.raceState;
 if(!state)return;
 const passage=state.passage;
-const idx=state.player.charIndex;
+let idx=state.player.charIndex; /* FIX(verify 2026-08-17): was const, then idx++ below — TypeError on every keystroke in browsers too (display froze, post-display input logic never ran) */
+
 let html='';
 // Completed characters
 for(let i=0;i<idx;i++){
@@ -1078,9 +1079,9 @@ ai.slowUntil=ts+500+Math.random()*1000;
 // Progress
 const passageLen=state.passage.length;
 ai.charsTyped=Math.min(passageLen,ai.charsTyped+charsAdded);
-ai.progress=ai.charsTyped/passage.length;
+ai.progress=ai.charsTyped/state.passage.length; /* FIX(verify 2026-08-17): bare `passage` was undefined in raceLoop — every rAF frame threw, so in production the AI cars never moved and the race could never end (player types the whole passage, nothing happens) */
 ai.wpm=wpm;
-if(ai.charsTyped>=passage.length){
+if(ai.charsTyped>=state.passage.length){ /* FIX(verify): second bare `passage` in raceLoop — AI finish check threw every frame */
 ai.finished=true;
 ai.finishTime=ts;
 }
