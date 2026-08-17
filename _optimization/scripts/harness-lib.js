@@ -126,6 +126,7 @@ function bootGame(slug, opts) {
   sandbox.Math = Object.create(Math);
   sandbox.Math.random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
   sandbox.window = sandbox; sandbox.globalThis = sandbox; sandbox.self = sandbox;
+  if (opts.seedLS) for (const [k, v] of Object.entries(opts.seedLS)) sandbox.localStorage.setItem(k, v); // returning-player state
   // browsers expose every element id as a window property (named access); engines rely on it
   for (const m of html.matchAll(/\sid="([A-Za-z][A-Za-z0-9_-]*)"/g)) { const id = m[1]; if (!(id in sandbox)) sandbox[id] = els[id] || (els[id] = makeEl({ id })); }
   const ctx = vm.createContext(sandbox);
