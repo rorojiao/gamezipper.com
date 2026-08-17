@@ -24,13 +24,16 @@ for (const s of slugs) {
   let entry = null;
   try { entry = JSON.parse(fs.readFileSync(vj, 'utf8')); } catch (e) { broken.push(s); }
   if (!entry) continue;
-  const verdict = entry.verdict === 'PASS' ? 'PASS' : 'FAIL';
+  const isPass = entry.verdict === 'PASS' ||
+    (entry.passed !== undefined && entry.failed === 0 && entry.passed === entry.total) || // tap-away style {passed,failed,total}
+    (entry.pass !== undefined && entry.fail === 0);
+  const verdict = isPass ? 'PASS' : 'FAIL';
   if (verdict === 'PASS') pass++; else fail++;
   // preserve rich fields from fragment (agents write these) or previous store entry
   const frag = (() => { try { return JSON.parse(fs.readFileSync(path.join(FRAG, s + '.json'), 'utf8')); } catch (e) { return null; } })();
   const rich = frag || prev[s] || {};
   out[s] = { slug: s, verifierRun: true, exitCode: entry.verdict === 'PASS' ? 0 : 1,
-    passed: entry.pass ?? null, total: entry.total ?? null, verdict, durS: rich.durS ?? entry.durS ?? null,
+    passed: entry.pass ?? entry.passed ?? null, total: entry.total ?? null, verdict, durS: rich.durS ?? entry.durS ?? null,
     ...(rich.detail ? { detail: rich.detail } : {}), ...(rich.evidence ? { evidence: rich.evidence } : {}),
     ...(verdict === 'FAIL' && entry.fails ? { fails: entry.fails } : {}) };
 }
