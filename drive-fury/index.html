@@ -741,7 +741,7 @@ function updatePhysics(g, dt, accel, brake) {
   }
   if (rPen > 0) {
     grounded = true;
-    const f = rPen * SPRING_K - v.vy * SPRING_DAMP * 0.5 + v.av * hw * SPRING_DAMP * 0.3;
+    const f = fPen * SPRING_K - v.vy * SPRING_DAMP * 0.5 + v.av * hw * SPRING_DAMP * 0.3;
     v.vy -= f * dt / def.mass;
     v.av += f * hw * dt / (v.inertia * def.mass);
   }
@@ -768,6 +768,19 @@ function updatePhysics(g, dt, accel, brake) {
   v.angle += v.av * dt;
   v.speed = v.vx;
   v.wheelAngle += v.speed * dt * 0.1;
+
+  /* FIX(verify 2026-08-17): the wheel springs (K=4200 vs mass 1, damping ~90) are far below
+   * critical damping — at 60fps the vehicle pogoed at spawn, angular velocity exploded to
+   * ~60rad/s and it backflipped at x≈163 on flat ground (real-browser confirmed: level 1 was
+   * unbeatable with full throttle). Replace the unstable vertical response with a hard ground
+   * constraint when grounded + angular clamps — standard casual-racer model. */
+  if (v.av > 5) v.av = 5; else if (v.av < -5) v.av = -5;
+  if (v.vy > 600) v.vy = 600; else if (v.vy < -800) v.vy = -800;
+  if (grounded) {
+    const restY = getTerrainY(pts, v.x) - def.cogH - def.wheelR;
+    if (v.y > restY) { v.y = restY; if (v.vy > 0) v.vy = 0; }
+  }
+
 
   // Flip tracking
   v.wasGrounded = v.grounded;
