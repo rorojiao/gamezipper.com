@@ -95,7 +95,9 @@ function bootGame(slug, opts) {
         }
         return els[key];
       },
-      addEventListener() {}, removeEventListener() {},
+      addEventListener(t, f) { (this.__dls = this.__dls || {})[t] = (this.__dls[t] || []).concat(f); },
+      removeEventListener() {},
+      dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); ((this.__dls || {})[t] || []).forEach(f => { try { f.call(this, ev); } catch (e) {} }); return true; },
       createElement: () => makeEl(), createElementNS: () => makeEl(),
       createTextNode: t => ({ textContent: t }),
       body: makeEl(), head: makeEl(), documentElement: makeEl(),
