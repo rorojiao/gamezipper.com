@@ -639,7 +639,7 @@ for(var pi=0;pi<8;pi++)addP(W/2+(rnd()-0.5)*40,H*0.7,ch.c,0.5,(rnd()-0.5)*100,-r
 gSp=baseSp*ch.sp;
 if(gMode==="infinite")gSp+=gTime*0.018*ch.sp;
 pl.sp=gSp;
-pl.y+=pl.sp*dt*60;
+pl.y+=pl.sp*dt; /* FIX(verify 2026-08-17): was pl.sp*dt*60 — 3.2 ROWS PER FRAME (60x intended): a 22-row level was crossed in ~7 frames, the END tile was skipped every run and the player fell into the void. Real-browser confirmed dead in <2.5s on level 1. Now 3.2 rows/second (~7s per level-1 run). */
 
 // Gravity
 var grav=22*dt*60;
@@ -1073,15 +1073,18 @@ pauseToggle:pauseToggle,restart:restart,nextLevel:nextLvl,quitMenu:quitMenu,togg
   document.addEventListener('click', _gzGameStart, {once:true, capture:true});
   document.addEventListener('keydown', _gzGameStart, {once:true, capture:true});
   document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
-window.pauseToggle = pauseToggle;
-window.toggleBGM = toggleBGM;
-window.showStory = showStory;
-window.startInfinite = startInfinite;
-window.showChars = showChars;
-window.showTut = showTut;
-window.showMenu = showMenu;
-window.restart = restart;
-window.quitMenu = quitMenu;
+/* FIX(verify 2026-08-17): these referenced the game IIFE's internals, which are NOT global
+ * — ReferenceError at load killed the rest of this script in production too (console error).
+ * The exported API is window.G; bind through it. */
+window.pauseToggle = window.G ? G.pauseToggle : undefined;
+window.toggleBGM = window.G ? G.toggleBGM : undefined;
+window.showStory = window.G ? G.showStory : undefined;
+window.startInfinite = window.G ? G.startInfinite : undefined;
+window.showChars = window.G ? G.showChars : undefined;
+window.showTut = window.G ? G.showTut : undefined;
+window.showMenu = window.G ? G.showMenu : undefined;
+window.restart = window.G ? G.restart : undefined;
+window.quitMenu = window.G ? G.quitMenu : undefined;
 })();
 </script>
 </body>

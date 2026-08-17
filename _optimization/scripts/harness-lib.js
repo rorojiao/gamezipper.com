@@ -22,6 +22,7 @@ function makeEl(extra) {
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 480, height: 640 }),
     appendChild(c) { this.children.push(c); return c; }, removeChild(c) { const i = this.children.indexOf(c); if (i >= 0) this.children.splice(i, 1); return c; }, remove() { if (this.parentElement) this.parentElement.removeChild(this); }, parentElement: null,
     focus() {}, blur() {}, click() { this.dispatch('click'); },
+    insertAdjacentHTML() {}, insertAdjacentElement() {}, closest() { return null; }, contains() { return false; }, matches() { return false; },
     setAttribute(k, v) { this['__attr_' + k] = v; if (k === 'id') this.id = v; }, getAttribute(k) { return this['__attr_' + k] === undefined ? null : this['__attr_' + k]; }, removeAttribute(k) { delete this['__attr_' + k]; }, hasAttribute(k) { return this['__attr_' + k] !== undefined; },
     querySelector: () => makeEl(), querySelectorAll: () => [],
   };
