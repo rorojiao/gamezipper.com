@@ -16,7 +16,8 @@ function makeEl(extra) {
     children: [], width: 480, height: 640, clientWidth: 480, clientHeight: 640,
     disabled: false, hidden: false, checked: false,
     addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); },
-    removeEventListener() {}, dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); (listeners[t] || []).forEach(f => f(ev)); return true; },
+    removeEventListener() {}, /* dispatch binds the element as `this` — engines rely on it (e.g. btnStart's this.disabled) */
+    dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); const el = this; (listeners[t] || []).forEach(f => f.call(el, ev)); return true; },
     getContext: () => mk2d(),
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 480, height: 640 }),
     appendChild(c) { this.children.push(c); return c; }, removeChild(c) { const i = this.children.indexOf(c); if (i >= 0) this.children.splice(i, 1); return c; }, remove() { if (this.parentElement) this.parentElement.removeChild(this); }, parentElement: null,
