@@ -25,6 +25,12 @@ function makeEl(extra) {
     setAttribute(k, v) { this['__attr_' + k] = v; if (k === 'id') this.id = v; }, getAttribute(k) { return this['__attr_' + k] === undefined ? null : this['__attr_' + k]; }, removeAttribute(k) { delete this['__attr_' + k]; }, hasAttribute(k) { return this['__attr_' + k] !== undefined; },
     querySelector: () => makeEl(), querySelectorAll: () => [],
   };
+  // dynamic script/link loading: onload fires on the NEXT pump frame (browsers load
+  // asynchronously; engines assign .onload AFTER .src, so a synchronous fire would miss it)
+  let _src = '';
+  try {
+    Object.defineProperty(el, 'src', { get: () => _src, set(v) { _src = v; module.exports.__pendingOnloads.push(() => { if (typeof el.onload === 'function') { try { el.onload(); } catch (e) {} } }); } });
+  } catch (e) {}
   return Object.assign(el, extra || {});
 }
 function mk2d() {
@@ -131,6 +137,13 @@ function bootGame(slug, opts) {
   for (const m of html.matchAll(/\sid="([A-Za-z][A-Za-z0-9_-]*)"/g)) { const id = m[1]; if (!(id in sandbox)) sandbox[id] = els[id] || (els[id] = makeEl({ id })); }
   const ctx = vm.createContext(sandbox);
   const loadErrors = [];
+  if (opts.vendor) for (const [name, file] of Object.entries(opts.vendor)) {
+    // run vendored libs in a bare context, then expose on the game sandbox
+    const vctx = vm.createContext({ console: { log() {}, error() {} }, setTimeout: () => 0, clearTimeout() {}, setInterval: () => 0, clearInterval() {}, requestAnimationFrame: () => 0, performance: { now: () => 0 }, document: { addEventListener() {}, removeEventListener() {}, createElement: () => ({ style: {} }), documentElement: { style: {} } }, navigator: { userAgent: 'node' }, Math, Date, JSON });
+    vctx.window = vctx; vctx.self = vctx; vctx.globalThis = vctx;
+    try { vm.runInContext(fs.readFileSync(path.join(REPO, '_optimization', 'vendor', file), 'utf8'), vctx, { filename: file }); sandbox[name] = vctx[name] || vctx.window[name]; }
+    catch (e) { loadErrors.push('vendor ' + name + ': ' + e.message); }
+  }
   // opts.inject: append an export shim INSIDE a chosen script's scope (IIFE internals access).
   //   { anchor: 'window.RT = ', exports: 'globalThis.__X={state:()=>state};' } -> after the anchor line
   if (opts.inject) {
@@ -156,6 +169,7 @@ function bootGame(slug, opts) {
     ctx, sandbox, els, loadErrors, rafQ, timers,
     /** pump n rAF frames (each frame advances __now by 16.67ms and fires due timers) */
     pump(n) { for (let i = 0; i < n; i++) { sandbox.__now += 16.67;
+      { const q = module.exports.__pendingOnloads.splice(0); q.forEach(f => { try { f(); } catch (e) {} }); } // deferred dynamic-script onload
       const due = []; // snapshot first: callbacks mutate the timer list (clearTimeout/extra setTimeout)
       for (let j = timers.length - 1; j >= 0; j--) { const t = timers[j]; if (t && t.at <= sandbox.__now) { if (t.every) { t.at += t.every; } else { timers.splice(j, 1); } due.push(t); } }
       for (const t of due) { try { t.f(); } catch (e) { sandbox.__errors = (sandbox.__errors || []).concat('timer: ' + e.message); } }
@@ -173,4 +187,4 @@ function bootGame(slug, opts) {
   };
   return api;
 }
-module.exports = { bootGame, makeEl, mk2d, REPO };
+module.exports = { bootGame, makeEl, mk2d, REPO, __pendingOnloads: [] };
