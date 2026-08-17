@@ -316,7 +316,7 @@ return{platforms:platList,spikes:spikeList,door:doorPos,checkpoints:cpList,movin
 
 function loadLevel(ci,li){
 var data=genLevel(ci,li);
-platforms=data.platforms;spikes=data.spikes;doors=[data.door];
+platforms=data.platforms;spikes=data.spikes;doors=[data.door?{x:data.door.x,y:data.door.y,w:26,h:48}:null]; /* FIX(verify 2026-08-17): doorPos carried only {x,y} — the win aabb and the door RENDER both used d.w/d.h = undefined -> NaN: the door was invisible and could NEVER trigger; all 30 levels + daily were unbeatable in production */
 checkpoints=data.checkpoints;movingPlatforms=data.movingPlatforms;
 saws=data.saws;bouncePads=data.bouncePads;crumblePlatforms=data.crumblePlatforms;
 P.x=40;P.y=H-80;P.spawnX=40;P.spawnY=H-80;P.checkpointX=40;P.checkpointY=H-80;
@@ -453,7 +453,7 @@ c.timer+=dt;if(c.timer>0.5){c.broken=true;c.respawn=3;spawnParticles(c.x+c.w/2,c
 
 for(var i=0;i<doors.length;i++){
 var d=doors[i];
-if(d&&aabb(P.x,P.y,P.w,P.h,d.x,d.y,d.w,d.h)){completeLevel(ci,curLevel);return}
+if(d&&aabb(P.x,P.y,P.w,P.h,d.x,d.y,d.w,d.h)){completeLevel(curChapter,curLevel);return} /* FIX(verify 2026-08-17): free variable `ci` — evaluating the argument threw ReferenceError the moment the player touched the door, so even with a door hitbox the win never completed (production too) */
 }
 
 for(var i=0;i<checkpoints.length;i++){
