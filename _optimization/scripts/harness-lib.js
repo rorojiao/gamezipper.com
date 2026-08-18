@@ -145,6 +145,7 @@ function bootGame(slug, opts) {
   if (opts.seedLS) for (const [k, v] of Object.entries(opts.seedLS)) sandbox.localStorage.setItem(k, v); // returning-player state
   // browsers expose every element id as a window property (named access); engines rely on it
   for (const m of html.matchAll(/\sid="([A-Za-z][A-Za-z0-9_-]*)"/g)) { const id = m[1]; if (!(id in sandbox)) { sandbox[id] = els[id] || (els[id] = makeEl({ id })); } }
+  for (const id in els) { if (!els[id].parentNode) els[id].parentNode = els[id].parentElement = sandbox.document.body; } // every element has a parent in a real DOM (mancala measures canvas.parentElement.clientWidth)
   const ctx = vm.createContext(sandbox);
   const loadErrors = [];
   if (opts.vendor) for (const [name, file] of Object.entries(opts.vendor)) {
