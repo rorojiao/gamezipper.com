@@ -12,7 +12,7 @@ function makeEl(extra) {
   const el = {
     id: '', className: '', textContent: '', innerHTML: '', value: '',
     style: { setProperty() {} }, dataset: {},
-    classList: { _s: new Set(), add(...c) { c.forEach(x => this._s.add(x)); }, remove(...c) { c.forEach(x => this._s.delete(x)); }, toggle(c, f) { const on = f === undefined ? !this._s.has(c) : !!f; on ? this._s.add(c) : this._s.delete(c); return on; }, contains(c) { return this._s.has(c); } },
+    classList: { _s: new Set(), add(...c) { c.forEach(x => this._s.add(x)); }, remove(...c) { c.forEach(x => this._s.delete(x)); }, toggle(c, f) { const on = f === undefined ? !this._s.has(c) : !!f; on ? this._s.add(c) : this._s.delete(c); return on; }, contains(c) { return this._s.has(c) || String(el.className).split(/\s+/).includes(c); } }, // className assignments and classList must agree (boggle's getDieFromEvent checks classList after engines set className directly)
     children: [], width: 480, height: 640, clientWidth: 480, clientHeight: 640, offsetWidth: 480, offsetHeight: 640, scrollWidth: 480, scrollHeight: 640,
     disabled: false, hidden: false, checked: false,
     addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); },
@@ -79,6 +79,10 @@ function bootGame(slug, opts) {
     if (src) {
       if (/^https?:|^\/\//.test(src)) continue; // external CDN — page must work without it
       const clean = src.split('?')[0].split('#')[0];
+      // opts.scriptOverrides: { 'three.min.js': source } swaps a local script's payload —
+      // used for WebGL libraries that cannot run headless (verifiers drive logic, not pixels)
+      const ov = opts.scriptOverrides && Object.entries(opts.scriptOverrides).find(([k]) => clean.endsWith(k));
+      if (ov) { scripts.push(ov[1]); continue; }
       const local = clean.startsWith('/') ? path.join(REPO, clean) : path.join(REPO, slug, clean);
       try { scripts.push(fs.readFileSync(local, 'utf8')); } catch (e) { loadErrorsLater.push('src ' + src + ': ' + e.code); }
     } else if (body.trim()) scripts.push(body);
@@ -116,7 +120,17 @@ function bootGame(slug, opts) {
         if (!els[k]) { els[k] = makeEl({ className: String(sel).replace(/^\./, '') }); els[k].parentElement = els[k].parentNode = sandbox.document.body; } // site-infra scripts inject banners via canvasWrap.parentNode (real DOM always has one)
         return els[k];
       },
-      querySelectorAll: (sel) => {
+      querySelectorAll(sel) {
+        // live walk, uncached: levels re-render grids mid-session (boggle 4x4 -> 5x5) and a
+        // cached node list goes stale against the rebuilt children
+        if (sel.startsWith('.') || /^[a-z]+$/i.test(sel)) {
+          const cls = String(sel).replace(/^\./, '');
+          const tag = /^[a-z]+$/i.test(sel) ? sel : null;
+          const out = [];
+          const walk = (el) => { for (const c of (el.children || [])) { walk(c); const cn = String(c.className || ''); if (tag ? c.tagName === tag : (cls && cn.split(/\s+/).includes(cls)) || (cls && c.classList && c.classList.contains(cls))) out.push(c); } };
+          for (const id of Object.keys(els)) walk(els[id]);
+          if (out.length) return out;
+        }
         const key = 'qa:' + sel;
         if (!els[key]) {
           const n = (opts.qsAll && opts.qsAll[sel]) || 6;
@@ -129,6 +143,21 @@ function bootGame(slug, opts) {
       removeEventListener() {},
       dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); ((this.__dls || {})[t] || []).forEach(f => { try { f.call(this, ev); } catch (e) {} }); return true; },
       createElement: () => makeEl(), createElementNS: () => makeEl(),
+      // deepest registered element whose (style-derived) rect contains the point —
+      // engines like boggle resolve their grid tiles through elementFromPoint
+      elementFromPoint(x, y) {
+        const walk = (el) => {
+          let hit = null;
+          for (const c of (el.children || [])) { const r = walk(c); if (r) hit = r; }
+          if (hit) return hit;
+          try { const r = this.getElementById === undefined ? null : null; } catch (e) {}
+          const rr = el.getBoundingClientRect && el.getBoundingClientRect();
+          if (rr && x >= rr.left && x <= rr.right && y >= rr.top && y <= rr.bottom && (el.children || []).length === 0) return el;
+          return null;
+        };
+        for (const id of Object.keys(els)) { const r = walk(els[id]); if (r) return r; }
+        return null;
+      },
       createTextNode: t => ({ textContent: t }),
       body: makeEl(), head: makeEl(), documentElement: makeEl(),
       hidden: false, visibilityState: 'visible', readyState: 'complete', cookie: '',
