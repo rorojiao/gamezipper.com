@@ -175,6 +175,11 @@ function bootGame(slug, opts) {
     } else loadErrorsLater.push('inject-anchor-missing: ' + opts.inject.anchor);
   }
   scripts.forEach((sc, i) => { try { vm.runInContext(sc, ctx, { filename: slug + '-' + i + '.js' }); } catch (e) { loadErrors.push('script#' + i + ': ' + String(e.message)); } });
+  // real browsers always fire DOMContentLoaded after parsing — engines assign their
+  // canvas/listeners inside it (solitaire-roguelite: canvas stays null without this)
+  const dcl = (host, name) => { try { ((host.__wls || {})[name] || []).forEach(f => f.call(host, { type: name })); } catch (e) { loadErrors.push(name + ': ' + String(e.message)); } };
+  dcl(sandbox.document, 'DOMContentLoaded'); // document listeners
+  dcl(sandbox, 'DOMContentLoaded'); // window listeners (solitaire-roguelite wires canvas here)
   loadErrors.push(...loadErrorsLater);
   const api = {
     ctx, sandbox, els, loadErrors, rafQ, timers,
