@@ -757,7 +757,7 @@ function drawToken(player,cx,cy,radius){
 }
 
 function drawAnimToken(cs){
-  const t=Math.min(1,(performance.now()-animStart)/(animating.duration||250));
+  const t=Math.min(1,(performance.now()-animStart)/((animData&&animData.duration)||250));
   const ease=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
   const {fromDist,toDist,player}=animData;
   const fPos=fromDist===-1?BASE_POS[player][animData.tokenIdx]:getTokenPos(player,fromDist);
@@ -984,7 +984,7 @@ function animateMove(move){
   animating=true;
   animData={fromDist:move.fromDist,toDist:move.toDist,player:currentPlayer,tokenIdx:move.tokenIdx};
   animStart=performance.now();
-  animating.duration=300;
+  animData.duration=300; /* FIX(verify 2026-08-17): property assignment on the boolean `animating` throws in strict mode ('use strict' at line 368) — EVERY token move crashed in production browsers at this line; the duration was meant for animData (read as animating.duration||250 in drawAnimToken) */
   requestAnimationFrame(()=>drawBoard());
   setTimeout(()=>{
     applyMove(move);
