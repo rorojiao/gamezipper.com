@@ -298,7 +298,7 @@ function buildLevels(){
       var obstacles=[];
       var y=-160;
       var steps=8+lv*2+t*2;
-      var spacing=-200-lv*8-t*5;
+      var spacing=-130-lv*5-t*3; // P0 fix: was -200-lv*8-t*5 — gaps beyond the 196px bounce apex made every level unwinnable
       var colorIdx=0;
       // Start platform
       platforms.push({y:0,w:160,h:14,color:tier.colors[0],moving:false,range:0,speed:0,phase:0,x:0});
@@ -318,7 +318,7 @@ function buildLevels(){
         else if(t===3)oType=['ring','bar','multiring'][Math.floor(rand()*3)];
         else oType=['ring','bar','multiring','pulse'][Math.floor(rand()*4)];
         var obs={
-          y:y+spacing*0.85,
+          y:y+spacing*0.05, // P0 chain: rings sit in the LOWER half of the gap (0.05 spacing => 58-76px above the lower platform, never reaching its rest point; band crossed exactly once, pre-touch, with the gap's deterministic transit color)
           type:oType,
           color:tier.colors[(colorIdx)%tier.colors.length],
           speed:(0.4+rand()*0.6)+t*0.15,
@@ -326,7 +326,7 @@ function buildLevels(){
           segments:oType==='multiring'?Math.min(4,2+Math.floor(rand()*2)):1,
           pulsePhase:rand()*Math.PI*2,
           pulseRate:0.04+rand()*0.03,
-          size:48+rand()*8
+          size:26+rand()*6 // P0 fix: was 48+rand()*8 — kill band [size-7,size+7] reached down to the platform surface (resting ball d≈51 inside the band), guaranteeing spawn deaths
         };
         if(oType==='bar'){
           obs.barW=70+rand()*60;
@@ -499,7 +499,7 @@ function setupInput(){
     ensureAudio();
     if(game.state==='play'){
       if(game.ball.onPlatform){
-        game.ball.vy=-10;
+        game.ball.vy=BOUNCE; // P1 fix: was -10 — WEAKER than the auto-bounce (-16), so tapping while grounded always REDUCED the climb; a tap now equals the bounce
         game.ball.onPlatform=false;
         sfxJump();
       }else if(game.ball.vy>0){
@@ -513,7 +513,7 @@ function setupInput(){
       if(game.state==='play'){
         ensureAudio();
         if(game.ball.onPlatform){
-          game.ball.vy=-10;
+          game.ball.vy=BOUNCE; // P1 fix: match the auto-bounce (was -10, weaker)
           game.ball.onPlatform=false;
           sfxJump();
         }
@@ -748,7 +748,7 @@ function nextTutorial(){
 
 /* ---------- Physics & update ---------- */
 var GRAVITY=0.5;
-var BOUNCE=-12;
+var BOUNCE=-16; // P0 fix: -12 gave a 144px apex while generator gaps run 130-170px — the ball fell short of every next platform; -16 gives a 256px apex
 var JUMP=-10;
 var MAX_VEL=15;
 
@@ -775,12 +775,15 @@ function updateGame(dt){
   ball.onPlatform=false;
   for(var i=0;i<level.platforms.length;i++){
     var p=level.platforms[i];
-    var px=(p.x||0);
+    var px=W/2+(p.x||0); // P0 fix: was (p.x||0) — platform x is a center offset, but the ball spawns at W/2 and obstacles center on W/2; using it absolute put every platform on the far-left strip, so the ball could never land (all 30 levels unwinnable)
     var py=p.y;
     if(p.moving){
       px+=Math.sin((game.elapsed*0.001*p.speed)+p.phase)*p.range;
     }
-    if(ball.vy>=0){
+    {
+      // P0 fix: was `if(ball.vy>=0)` — one-way platforms let the ball rise PAST the next
+      // platform, entering the next gap with its pre-landing color and dying on that gap's
+      // ring. Catch-on-rise makes each gap transit deterministic (one bounce per platform).
       var platTop=py-p.h/2;
       var platLeft=px-p.w/2;
       var platRight=px+p.w/2;
@@ -933,7 +936,7 @@ function renderGame(){
   // Platforms
   for(var i=0;i<level.platforms.length;i++){
     var p=level.platforms[i];
-    var px=(p.x||0)+Math.sin((game.elapsed*0.001*p.speed)+p.phase)*p.range*(p.moving?1:0);
+    var px=W/2+(p.x||0)+Math.sin((game.elapsed*0.001*p.speed)+p.phase)*p.range*(p.moving?1:0); // P0 fix: match collision coords (center offset + W/2)
     var py=p.y;
     ctx.shadowColor=p.color;
     ctx.shadowBlur=12;
@@ -1077,10 +1080,10 @@ function wireButtons(){
   document.getElementById('btn-home-pause').onclick=function(){stopMusic();document.getElementById('pause-overlay').classList.remove('show');game.state='menu';showScreen('menu-screen');updateMenuStats();};
   document.getElementById('btn-next-level').onclick=function(){
     document.getElementById('win-overlay').classList.remove('show');
-    if(game.level.id<30)startLevel(game.levelIdx+1);
+    if(game.level.id<30){game.state='play';startLevel(game.levelIdx+1);} // P1 fix: state stayed 'win' — next level started frozen
     else{game.state='menu';showScreen('menu-screen');updateMenuStats();}
   };
-  document.getElementById('btn-retry-win').onclick=function(){document.getElementById('win-overlay').classList.remove('show');startLevel(game.levelIdx);};
+  document.getElementById('btn-retry-win').onclick=function(){document.getElementById('win-overlay').classList.remove('show');game.state='play';startLevel(game.levelIdx);}; // P1 fix: state stayed 'win' after REPLAY — physics loop and input handlers are gated on 'play', so replay froze the game
   document.getElementById('btn-home-win').onclick=function(){stopMusic();document.getElementById('win-overlay').classList.remove('show');game.state='menu';showScreen('menu-screen');updateMenuStats();};
   document.getElementById('btn-retry-fail').onclick=function(){document.getElementById('fail-overlay').classList.remove('show');startLevel(game.levelIdx);};
   document.getElementById('btn-home-fail').onclick=function(){document.getElementById('fail-overlay').classList.remove('show');game.state='menu';showScreen('menu-screen');updateMenuStats();};
