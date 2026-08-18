@@ -180,6 +180,7 @@ function bootGame(slug, opts) {
   const dcl = (host, name) => { try { ((host.__wls || {})[name] || []).forEach(f => f.call(host, { type: name })); } catch (e) { loadErrors.push(name + ': ' + String(e.message)); } };
   dcl(sandbox.document, 'DOMContentLoaded'); // document listeners
   dcl(sandbox, 'DOMContentLoaded'); // window listeners (solitaire-roguelite wires canvas here)
+  dcl(sandbox, 'load'); // balls-vs-bricks registers its rAF loop on window 'load'
   loadErrors.push(...loadErrorsLater);
   const api = {
     ctx, sandbox, els, loadErrors, rafQ, timers,
