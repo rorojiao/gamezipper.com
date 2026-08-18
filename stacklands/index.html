@@ -109,6 +109,9 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
 .card-icon{width:36px;height:36px;margin-bottom:2px}
 .card-icon svg{width:100%;height:100%}
 .card-name{font-size:9px;color:#9ca3af;text-align:center;line-height:1.1;font-weight:500;text-transform:uppercase;letter-spacing:0.3px}
+/* UX-OPT 2026-08-18 R494: visible feedback when card label is clicked (R381/R382 dead_click fix) */
+.card-name.tapped{color:#fbbf24;text-shadow:0 0 6px rgba(251,191,36,.5)}
+.card-icon.tapped{filter:brightness(1.3) drop-shadow(0 0 4px rgba(251,191,36,.4))}
 .card.spawn{animation:cardSpawn 0.3s ease-out}
 .card.craft{animation:cardCraft 0.4s ease-out}
 .card.shake{animation:cardShake 0.3s ease-out}
@@ -793,13 +796,16 @@ function renderBoard(){
     }
   }
 
-  // Bind card clicks
-  boardEl.querySelectorAll('.card').forEach(function(el){
-    el.addEventListener('pointerdown', function(e){
-      e.preventDefault();
-      var slot = parseInt(el.dataset.slot);
-      onCardClick(slot);
-    });
+  // Bind card clicks — use event delegation so clicks on .card-name/.card-icon also register
+  boardEl.addEventListener('pointerdown', function(e){
+    var el = e.target.closest && e.target.closest('.card');
+    if(!el || !boardEl.contains(el)) return;
+    e.preventDefault();
+    // UX-OPT 2026-08-18 R494: add transient .tapped to clicked element (covers card-name child)
+    e.target.classList.add('tapped');
+    setTimeout(function(){ e.target.classList.remove('tapped'); }, 1700);
+    var slot = parseInt(el.dataset.slot);
+    onCardClick(slot);
   });
 }
 
