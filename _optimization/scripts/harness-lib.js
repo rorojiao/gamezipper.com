@@ -41,8 +41,29 @@ function makeEl(extra) {
     querySelector(sel) { this.__qs = this.__qs || {}; if (!this.__qs[sel]) this.__qs[sel] = makeEl(); return this.__qs[sel]; },
     querySelectorAll(sel) { const cls = String(sel).replace(/^\./, ''); return this.children.filter(c => c.classList && c.classList.contains(cls)); },
   };
-  // every innerHTML assignment replaces children in a real browser (black re-renders grids/wraps per level; keeping stale children made verifiers click previous levels' tiles)
-  try { let _ih = ''; Object.defineProperty(el, 'innerHTML', { get: () => _ih, set(v) { _ih = String(v); el.children.length = 0; } }); } catch (e) {}
+  // every innerHTML assignment replaces children in a real browser (black re-renders grids/wraps per level; keeping stale children made verifiers click previous levels' tiles).
+  // Parse simple markup into child elements one level deep — engines iterate .children
+  // of innerHTML-built containers (constellation-connect star spans, color-blend wells).
+  try {
+    let _ih = '';
+    Object.defineProperty(el, 'innerHTML', {
+      get: () => _ih,
+      set(v) {
+        _ih = String(v);
+        el.children.length = 0;
+        const tagRe = /<([a-zA-Z][a-zA-Z0-9]*)((?:\s+[^<>]*?)?)\s*(?:\/>|>([\s\S]*?)<\/\1>)/g;
+        let m;
+        while ((m = tagRe.exec(_ih))) {
+          const child = makeEl();
+          child.tagName = child.nodeName = m[1];
+          const cls = /class="([^"]*)"/.exec(m[2] || '');
+          if (cls) child.className = cls[1];
+          if (m[3] !== undefined && !/<[a-zA-Z]/.test(m[3])) child.textContent = m[3];
+          el.children.push(child);
+        }
+      },
+    });
+  } catch (e) {}
   // dynamic script/link loading: onload fires on the NEXT pump frame (browsers load
   // asynchronously; engines assign .onload AFTER .src, so a synchronous fire would miss it)
   let _src = '';
@@ -198,6 +219,12 @@ function bootGame(slug, opts) {
   if (opts.seedLS) for (const [k, v] of Object.entries(opts.seedLS)) sandbox.localStorage.setItem(k, v); // returning-player state
   // browsers expose every element id as a window property (named access); engines rely on it
   for (const m of html.matchAll(/\sid="([A-Za-z][A-Za-z0-9_-]*)"/g)) { const id = m[1]; if (!(id in sandbox)) { sandbox[id] = els[id] || (els[id] = makeEl({ id })); } }
+  // populate registered elements' children from the page markup (engines iterate
+  // .children of statically-written containers, e.g. constellation-connect's star spans)
+  for (const m of html.matchAll(/<([a-zA-Z][a-zA-Z0-9]*)\b[^>]*\sid="([A-Za-z][A-Za-z0-9_-]*)"[^>]*>([\s\S]*?)<\/\1>/g)) {
+    const el = els[m[2]];
+    if (el && !el.children.length) { try { el.innerHTML = m[3]; } catch (e) {} }
+  }
   for (const id in els) { if (!els[id].parentNode) els[id].parentNode = els[id].parentElement = sandbox.document.body; } // every element has a parent in a real DOM (mancala measures canvas.parentElement.clientWidth)
   const ctx = vm.createContext(sandbox);
   const loadErrors = [];

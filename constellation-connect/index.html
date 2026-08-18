@@ -922,8 +922,18 @@ function onPointerDown(e){
     }else if(idx===state.currentStar){
       // Tapped same star, release
       state.dragActive=false;
-    }else{
+    }else if(canConnect(state.currentStar,idx)){
       // Try to connect
+      tryConnect(state.currentStar,idx);
+    }else if(getNextExpectedStar(idx)>=0){
+      // P1 fix: re-anchor. Multi-path constellations (segment graphs with >2 odd-degree
+      // vertices, e.g. Northern Cross) could never be completed: finishing one path left
+      // currentStar pinned to its endpoint and every later tap was rejected. Tapping a
+      // star that still has unconnected segments now starts a new line there (no mistake).
+      state.currentStar=idx;
+      state.dragActive=true;
+      playTone(400,0.05,'sine',0.08);
+    }else{
       tryConnect(state.currentStar,idx);
     }
   }
