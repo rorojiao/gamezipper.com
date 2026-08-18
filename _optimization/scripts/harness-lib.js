@@ -13,7 +13,7 @@ function makeEl(extra) {
     id: '', className: '', textContent: '', innerHTML: '', value: '',
     style: { setProperty() {} }, dataset: {},
     classList: { _s: new Set(), add(...c) { c.forEach(x => this._s.add(x)); }, remove(...c) { c.forEach(x => this._s.delete(x)); }, toggle(c, f) { const on = f === undefined ? !this._s.has(c) : !!f; on ? this._s.add(c) : this._s.delete(c); return on; }, contains(c) { return this._s.has(c); } },
-    children: [], width: 480, height: 640, clientWidth: 480, clientHeight: 640,
+    children: [], width: 480, height: 640, clientWidth: 480, clientHeight: 640, offsetWidth: 480, offsetHeight: 640, scrollWidth: 480, scrollHeight: 640,
     disabled: false, hidden: false, checked: false,
     addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); },
     removeEventListener() {}, /* dispatch binds the element as `this` — engines rely on it (e.g. btnStart's this.disabled) */
