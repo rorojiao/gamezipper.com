@@ -9,6 +9,7 @@ const REPO = path.resolve(__dirname, '..', '..');
 
 function makeEl(extra) {
   const listeners = {};
+  const elBase = { tagName: 'div', nodeName: 'div' };
   const el = {
     id: '', className: '', textContent: '', innerHTML: '', value: '',
     style: { setProperty() {} }, dataset: {},
@@ -48,6 +49,8 @@ function makeEl(extra) {
   try {
     Object.defineProperty(el, 'src', { get: () => _src, set(v) { _src = v; module.exports.__pendingOnloads.push(() => { if (typeof el.onload === 'function') { try { el.onload(); } catch (e) {} } }); } });
   } catch (e) {}
+  el.tagName = (extra && extra.tagName) || 'div';
+  el.nodeName = el.tagName;
   return Object.assign(el, extra || {});
 }
 function mk2d() {
@@ -90,6 +93,8 @@ function bootGame(slug, opts) {
     } else if (body.trim()) scripts.push(body);
   }
   const els = {};
+  // a stand-in for the page's first <script> tag (ad-snippet insertBefore anchors on it)
+  els[':script0'] = makeEl({ tagName: 'script', nodeName: 'script' });
   let seed = opts.seed || 424242;
   const rafQ = [];
   const timers = [];
@@ -145,6 +150,8 @@ function bootGame(slug, opts) {
       removeEventListener() {},
       dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); ((this.__dls || {})[t] || []).forEach(f => { try { f.call(this, ev); } catch (e) {} }); return true; },
       createElement: () => makeEl(), createElementNS: () => makeEl(),
+      getElementsByTagName(tag) { const out = []; const walk = (el) => { const cn = String(el.tagName || el.nodeName || ''); if (String(tag) === '*' || cn.toLowerCase() === String(tag).toLowerCase()) out.push(el); for (const c of (el.children || [])) walk(c); }; for (const id of Object.keys(els)) walk(els[id]); return out; },
+      getElementsByClassName(cls) { const out = []; const walk = (el) => { if (String(el.className || '').split(/\s+/).includes(String(cls))) out.push(el); for (const c of (el.children || [])) walk(c); }; for (const id of Object.keys(els)) walk(els[id]); return out; },
       // deepest registered element whose (style-derived) rect contains the point —
       // engines like boggle resolve their grid tiles through elementFromPoint
       elementFromPoint(x, y) {
