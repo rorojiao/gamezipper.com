@@ -17,15 +17,29 @@ function makeEl(extra) {
     disabled: false, hidden: false, checked: false,
     addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); },
     removeEventListener() {}, /* dispatch binds the element as `this` — engines rely on it (e.g. btnStart's this.disabled) */
-    dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); const el = this; (listeners[t] || []).forEach(f => f.call(el, ev)); return true; },
+    dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); const el = this; (listeners[t] || []).forEach(f => f.call(el, ev)); const h = this['on' + t]; if (typeof h === 'function') { try { h.call(el, ev); } catch (e) {} } return true; }, // browsers fire BOTH addEventListener listeners and the on<event> property (black/beads-out style engines use d.onclick=)
     getContext: () => mk2d(),
-    getBoundingClientRect: () => ({ left: 0, top: 0, width: 480, height: 640 }),
+    // browser-accurate: setting style.left/top moves the rect (drag-geometry games like
+    // black/moon-eclipse compute wins from two elements' rects). Falls back to the old
+    // static 480x640 at origin when no inline position/size is set.
+    getBoundingClientRect() {
+      const st = this.style || {};
+      const l = parseFloat(st.left) || 0, t = parseFloat(st.top) || 0;
+      const w = parseFloat(st.width) || this.offsetWidth || 480;
+      const h = parseFloat(st.height) || this.offsetHeight || 640;
+      return { left: l, top: t, right: l + w, bottom: t + h, width: w, height: h, x: l, y: t };
+    },
     appendChild(c) { this.children.push(c); if (c && c.parentNode !== this) { c.parentNode = c.parentElement = this; } return c; }, insertBefore(c, ref) { const i = ref ? this.children.indexOf(ref) : -1; if (i < 0) this.children.push(c); else this.children.splice(i, 0, c); if (c && c.parentNode !== this) { c.parentNode = c.parentElement = this; } return c; }, get nextSibling() { if (this.parentNode && this.parentNode.children) { const i = this.parentNode.children.indexOf(this); return this.parentNode.children[i + 1] || null; } return null; }, removeChild(c) { const i = this.children.indexOf(c); if (i >= 0) this.children.splice(i, 1); return c; }, remove() { if (this.parentElement) this.parentElement.removeChild(this); }, parentElement: null,
     focus() {}, blur() {}, click() { this.dispatch('click'); },
     insertAdjacentHTML() {}, insertAdjacentElement() {}, closest() { return null; }, contains() { return false; }, matches() { return false; },
     setAttribute(k, v) { this['__attr_' + k] = v; if (k === 'id') this.id = v; }, getAttribute(k) { return this['__attr_' + k] === undefined ? null : this['__attr_' + k]; }, removeAttribute(k) { delete this['__attr_' + k]; }, hasAttribute(k) { return this['__attr_' + k] !== undefined; },
-    querySelector: () => makeEl(), querySelectorAll: () => [],
+    // per-element cache: engines do wrap = s.querySelector('div') then appendChild into it —
+    // a fresh stub per call would orphan those children (black L3/L7/L22 star/letter taps)
+    querySelector(sel) { this.__qs = this.__qs || {}; if (!this.__qs[sel]) this.__qs[sel] = makeEl(); return this.__qs[sel]; },
+    querySelectorAll(sel) { const cls = String(sel).replace(/^\./, ''); return this.children.filter(c => c.classList && c.classList.contains(cls)); },
   };
+  // every innerHTML assignment replaces children in a real browser (black re-renders grids/wraps per level; keeping stale children made verifiers click previous levels' tiles)
+  try { let _ih = ''; Object.defineProperty(el, 'innerHTML', { get: () => _ih, set(v) { _ih = String(v); el.children.length = 0; } }); } catch (e) {}
   // dynamic script/link loading: onload fires on the NEXT pump frame (browsers load
   // asynchronously; engines assign .onload AFTER .src, so a synchronous fire would miss it)
   let _src = '';

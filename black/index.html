@@ -508,9 +508,10 @@ const LEVELS = {
   let done=false; let angle=0;
   s.innerHTML='<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center"><canvas id="cv23" width="280" height="280" style="touch-action:none"></canvas><button id="tap23" class="wbtn btn-primary" style="margin-top:12px;font-size:18px">ECLIPSE!</button><div style="color:#666;font-size:12px;margin-top:4px">Tap when moon covers sun!</div></div>';
   const cv=$('cv23'); const ctx=cv.getContext('2d'); const cx=140,cy=140,R=80; let raf;
-  function draw(){ if(done)return; ctx.clearRect(0,0,cv.width,cv.height); angle+=0.02; const mx=cx+Math.cos(angle)*R; const my=cy+Math.sin(angle)*R; ctx.fillStyle='#FFD54F'; ctx.beginPath(); ctx.arc(cx,cy,30,0,7); ctx.fill(); ctx.shadowBlur=20; ctx.shadowColor='rgba(255,213,79,.3)'; ctx.fill(); ctx.shadowBlur=0; ctx.fillStyle='#424242'; ctx.beginPath(); ctx.arc(mx,my,28,0,7); ctx.fill(); raf=requestAnimationFrame(draw); }
+  function orbitR(){ return 10+70*Math.abs(Math.sin(angle*0.5)); } // P0 fix: fixed R made d=R=80 forever — d<20 unreachable, level unwinnable
+  function draw(){ if(done)return; ctx.clearRect(0,0,cv.width,cv.height); angle+=0.02; const ro=orbitR(); const mx=cx+Math.cos(angle)*ro; const my=cy+Math.sin(angle)*ro; ctx.fillStyle='#FFD54F'; ctx.beginPath(); ctx.arc(cx,cy,30,0,7); ctx.fill(); ctx.shadowBlur=20; ctx.shadowColor='rgba(255,213,79,.3)'; ctx.fill(); ctx.shadowBlur=0; ctx.fillStyle='#424242'; ctx.beginPath(); ctx.arc(mx,my,28,0,7); ctx.fill(); raf=requestAnimationFrame(draw); }
   draw();
-  $('tap23').onclick=()=>{ if(done)return; cancelAnimationFrame(raf); const mx=cx+Math.cos(angle)*R; const my=cy+Math.sin(angle)*R; const d=Math.hypot(mx-cx,my-cy); if(d<20){done=true;ctx.fillStyle=CD;ctx.fillRect(0,0,cv.width,cv.height);setTimeout(win,400);} else { showToast('Not aligned! Distance: '+Math.round(d)); draw(); } };
+  $('tap23').onclick=()=>{ if(done)return; cancelAnimationFrame(raf); const ro=orbitR(); const d=ro; if(d<20){done=true;ctx.fillStyle=CD;ctx.fillRect(0,0,cv.width,cv.height);setTimeout(win,400);} else { showToast('Not aligned! Distance: '+Math.round(d)); draw(); } };
 }},
 // L24: PRISM ANGLE — rotate a prism to split white light into spectrum, then rotate more to recombine to black. Distinct from Y=mirror, B=mirror, G=spin dial, O=TANGRAM, P=ROTATE rings, R=SHAPE FIT.
 24: { hint:'Rotate the dial to absorb all light! Stop in the BLACK zone.', render(s,win){
