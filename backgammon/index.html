@@ -267,7 +267,7 @@ return;
 if(G.turn==='black'&&G.gameMode==='ai')return;
 G.dice=[];
 G.diceUsed=[];
-var d1=rand(6)+1,d2=rand(6)+1;
+var d1=rand(6),d2=rand(6); /* FIX(verify 2026-08-17): rand(6) already returns 1..6 — the extra +1 rolled dice in the 2..7 range (a SEVEN on a d6, biased distribution, every roll in production) */
 if(d1===d2)G.dice=[d1,d1,d1,d1];
 else G.dice=[d1,d2];
 var avail=G.dice.filter(function(_,i){return !G.diceUsed.includes(i);});
@@ -286,13 +286,13 @@ setTimeout(aiTurn,600);
 }
 function rand(n){return Math.floor(Math.random()*n)+1;}
 function calcMoves(){
-var player=G.turn;
+var player=G.turn==='white'?1:-1; /* FIX(verify 2026-08-17): was the string G.turn — every `c*player` below evaluated NaN>0=false, so calcMoves ALWAYS returned [] and NOBODY could ever move in production */
 var moves=[];
 var avail=G.dice.filter(function(_,i){return !G.diceUsed.includes(i);});
 if(G.bar[player]>0){
 for(var i=0;i<avail.length;i++){
 var die=avail[i];
-var entry=player==='white'?242+die:7-die;
+var entry=player>0?242+die:7-die;
 if(entry<1||entry>24)continue;
 var occ=G.board[entry]||0;
 if(Math.abs(occ)<2||occ*player>0){
@@ -325,8 +325,8 @@ moves.push(bm[n]);
 }
 return moves;
 }
-function getValidDests(from,die,player){
-var dir=player==='white'?-1:1;
+function getValidDests(from,die,player){ /* player is a SIGN (+1 white / -1 black) since the calcMoves fix */
+var dir=player>0?-1:1;
 var target=from+die*dir;
 if(target<1||target>24)return[];
 var occ=G.board[target]||0;
@@ -335,20 +335,20 @@ return[];
 }
 function canBearOff(player){
 if(G.bar[player]>0)return false;
-var home=player==='white'?WHITE_HOME:BLACK_HOME;
+var home=player>0?WHITE_HOME:BLACK_HOME;
 var allInHome=Object.keys(G.board).every(function(p){return !G.board.hasOwnProperty(p)||!G.board[p]*player>0||home.indexOf(parseInt(p))!==-1;});
 return allInHome&&Object.keys(G.board).filter(function(p){return G.board.hasOwnProperty(p)&&G.board[p]*player>0;}).length===15;
 }
-function getBearoffMoves(player,die){
-var home=player==='white'?WHITE_HOME:BLACK_HOME;
+function getBearoffMoves(player,die){ /* player is a SIGN since the calcMoves fix */
+var home=player>0?WHITE_HOME:BLACK_HOME;
 var moves=[];
 var myPts=Object.keys(G.board).filter(function(p){return G.board.hasOwnProperty(p)&&G.board[p]*player>0&&home.indexOf(parseInt(p))!==-1;});
 if(myPts.length===0)return moves;
 for(var i=0;i<myPts.length;i++){
 var p=myPts[i];
-var dist=player==='white'?parseInt(p):25-parseInt(p);
+var dist=player>0?parseInt(p):25-parseInt(p);
 var valid=false;
-if(player==='white'){
+if(player>0){
 if(parseInt(p)===die)valid=true;
 else if(die>parseInt(p)&&!myPts.some(function(pp){return parseInt(pp)<die;}))valid=true;
 }else{
@@ -392,10 +392,11 @@ dice:G.dice.slice(),
 diceUsed:G.diceUsed.slice()
 }));
 var player=G.turn;
+var pn=player==='white'?1:-1; /* FIX(verify 2026-08-17): board arithmetic needs the SIGN; the string worked only as an object key (bar/borneOff) */
 if(from==='bar'){
 G.bar[player]--;
-hitCheck(move.to,player);
-G.board[move.to]=(G.board[move.to]||0)+player;
+hitCheck(move.to,pn);
+G.board[move.to]=(G.board[move.to]||0)+pn;
 play('move');
 }else if(to==='off'){
 G.board[from]--;
@@ -403,8 +404,8 @@ if(G.board[from]===0)delete G.board[from];
 G.borneOff[player]++;
 play('bearoff');
 }else{
-hitCheck(to,player);
-G.board[to]=(G.board[to]||0)+player;
+hitCheck(to,pn);
+G.board[to]=(G.board[to]||0)+pn;
 G.board[from]--;
 if(G.board[from]===0)delete G.board[from];
 play('move');
@@ -417,9 +418,9 @@ updateUI();
 render();
 checkTurnEnd();
 }
-function hitCheck(point,player){
+function hitCheck(point,player){ /* player is a SIGN (+1 white / -1 black) since the calcMoves/makeMove fix */
 var occ=G.board[point]||0;
-var opp=player==='white'?'black':'white';
+var opp=player>0?'black':'white';
 if(occ*player===-1&&Math.abs(occ)===1){
 G.board[point]=0;
 delete G.board[point];
