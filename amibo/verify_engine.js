@@ -51,6 +51,8 @@ const sandbox = {
         getBoundingClientRect: function() { return { left: 0, top: 0, width: 400, height: 400 }; },
         addEventListener: function(){},
         querySelectorAll: function() { return []; },
+    querySelector: function() { return null; },
+        querySelector: function() { return null; },
         style: {},
         appendChild: function(){},
         dataset: {},
@@ -68,11 +70,14 @@ const sandbox = {
         animate: function(){},
         remove: function(){},
         querySelectorAll: function() { return []; },
+    querySelector: function() { return null; },
+        querySelector: function() { return null; },
         onclick: null,
         appendChild: function(){}
       };
     },
     querySelectorAll: function() { return []; },
+    querySelector: function() { return null; },
   },
   AudioContext: function() { return { createGain: function(){ return { gain:{value:0,setValueAtTime:function(){},linearRampToValueAtTime:function(){},exponentialRampToValueAtTime:function(){}}, connect:function(){} }; }, createOscillator: function(){ return { frequency:{value:0}, type:'', connect:function(){}, start:function(){}, stop:function(){} }; }, currentTime: 0, destination: {} }; },
   webkitAudioContext: function() { return { createGain: function(){ return { gain:{value:0,setValueAtTime:function(){},linearRampToValueAtTime:function(){},exponentialRampToValueAtTime:function(){}}, connect:function(){} }; }, createOscillator: function(){ return { frequency:{value:0}, type:'', connect:function(){}, start:function(){}, stop:function(){} }; }, currentTime: 0, destination: {} }; },
