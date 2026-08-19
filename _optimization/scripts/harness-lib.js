@@ -20,6 +20,7 @@ function makeEl(extra) {
     removeEventListener() {}, /* dispatch binds the element as `this` — engines rely on it (e.g. btnStart's this.disabled) */
     dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); const el = this; (listeners[t] || []).forEach(f => f.call(el, ev)); const h = this['on' + t]; if (typeof h === 'function') { try { h.call(el, ev); } catch (e) {} } return true; }, // browsers fire BOTH addEventListener listeners and the on<event> property (black/beads-out style engines use d.onclick=)
     getContext: () => mk2d(),
+    setPointerCapture() {}, releasePointerCapture() {}, // pointer-capture API: no-op here, listeners stay on the capturing element
     // browser-accurate: setting style.left/top moves the rect (drag-geometry games like
     // black/moon-eclipse compute wins from two elements' rects). Falls back to the old
     // static 480x640 at origin when no inline position/size is set.
@@ -210,6 +211,8 @@ function bootGame(slug, opts) {
     adsbygoogle: { push() {} },
     __rafQ: rafQ, __timers: timers, __els: els,
   };
+  // pointer capture API (no-op in the harness; listeners on the capturing element still get events)
+  for (const el of Object.values(els)) { el.setPointerCapture = function () {}; el.releasePointerCapture = function () {}; }
   // virtual clock: engines mixing Date.now() with timers/rAF must observe the pump's time
   class VDate extends Date { static now() { return sandbox.__now || 0; } constructor(...a) { super(...(a.length ? a : [sandbox.__now || 0])); } }
   sandbox.Date = VDate;
