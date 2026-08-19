@@ -269,13 +269,24 @@ body{
   display:flex;align-items:center;justify-content:center;
   padding:8px 4px;overflow:auto;
   width:100%;
+  /* UX-OPT 2026-08-19 R502: contain:layout to scope canvas resize reflow (R351 belt+suspenders) */
+  contain:layout paint style;
 }
 #ms-canvas{
   border:2px solid #1a3a5c;
   border-radius:4px;
   cursor:crosshair;
-  max-width:calc(100vw - 8px);
   display:block;
+  /* UX-OPT 2026-08-19 R502: Reserve canvas space in CSS to prevent layout-shift when
+     JS resizeCanvas() sets canvas.width/height. Without explicit CSS dimensions,
+     canvas defaults to 300x150 intrinsic, then JS expands it → 290px CLS shift.
+     Match JS calc: min(cellSize*cols, max=64*30=1920); cellSize up to 64, beginner 9x9=576.
+     Use 576x576 (max beginner/intermediate) as default reservation; JS may shrink or grow. */
+  width:min(calc(100vw - 8px), 576px);
+  height:min(calc(100vh - 188px), 576px);
+  aspect-ratio:1/1;
+  max-width:calc(100vw - 8px);
+  box-sizing:border-box;
 }
 
 /* ── Keyboard hint ── */
@@ -478,7 +489,7 @@ function toggleMute(){
 <div class="ms-canvas-wrap">
 
 <div id="gz-ad-above-game"></div>
- <canvas id="ms-canvas"></canvas>
+ <canvas id="ms-canvas" width="576" height="576"></canvas>
 <div id="gz-ad-below-canvas"></div>
 
 </div>
