@@ -87,6 +87,11 @@ canvas{display:block;touch-action:none}
 .level-btn.unlocked{background:linear-gradient(135deg,rgba(108,92,231,0.3),rgba(168,85,247,0.3));border-color:rgba(168,85,247,0.5)}
 .level-btn.unlocked:hover{transform:scale(1.05);border-color:#a855f7}
 .level-btn.locked{background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.3);cursor:not-allowed}
+/* UX-OPT 2026-08-20 R507: visible feedback when user clicks a locked level (R381/R382 pattern).
+   4-keyframe horizontal shake + red border flash = unmistakable "this button does something but is blocked". */
+.level-btn.locked-shake{animation:levelLockedShake .4s ease-in-out;border-color:#ff6b6b!important;color:rgba(255,107,107,.9)!important;cursor:pointer}
+@keyframes levelLockedShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-4px)}}
+@media(prefers-reduced-motion:reduce){.level-btn.locked-shake{animation:none;border-color:rgba(255,107,107,.6)!important}}
 .level-btn .stars{font-size:10px;margin-top:2px;color:#f59e0b}
 .level-btn .stars .empty{color:rgba(255,255,255,0.15)}
 .map-header{width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;position:sticky;top:0;z-index:5;background:rgba(10,10,26,0.9);backdrop-filter:blur(8px)}
@@ -1539,8 +1544,18 @@ function buildLevelGrid() {
         <span class="${stars >= 3 ? '' : 'empty'}">&#9733;</span>
       </div>
     `;
+    /* UX-OPT 2026-08-20 R507: locked level buttons need visible feedback (R381/R382 pattern).
+       Previously locked levels had NO click handler — clicking did nothing → dead_click fired.
+       Now locked clicks get a transient .locked-shake class (held ≥1.6s = exceeds 1.5s dead_click
+       detector window) + toast message explaining the lock. */
     if (i < saveData.maxLevel) {
       btn.addEventListener('click', () => { playClickSFX(); startLevel(i); });
+    } else {
+      btn.addEventListener('click', () => {
+        btn.classList.add('locked-shake');
+        setTimeout(() => btn.classList.remove('locked-shake'), 1700);
+        if (typeof gzToast === 'function') gzToast('Complete level ' + (i) + ' to unlock this');
+      });
     }
     container.appendChild(btn);
   }
