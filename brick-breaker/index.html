@@ -244,6 +244,9 @@ var bestScore=+(localStorage.getItem('brick_best')||0);
 var score=0,lives=3,currentLevel=1,gameState='menu',paused=false;
 const COLS=8,ROWS=5,BRICK_W=CW/COLS-4,BRICK_H=20,BRICK_PAD=4,BRICK_TOP=50;
 let bricks=[],particles=[],powerups=[];
+// UX-OPT 2026-08-20 R503: visible click ripples so users see their click was registered.
+// Without this, rage_click fires because clicks after ball-launch appear to do nothing.
+let clickRipples=[];
 var paddle={x:CW/2-40,y:CH-30,w:80,h:12,baseW:80};
 var balls=[],launched=false;
 // Power-up system
@@ -420,6 +423,15 @@ function update(){
   });
   // Paddle width timer
   if(paddleTimer>0){paddleTimer--;if(paddleTimer<=0)paddle.w=paddle.baseW;}
+  // UX-OPT 2026-08-20 R503: animate click ripples (expand radius, fade alpha)
+  if(clickRipples.length){
+    for(let i=clickRipples.length-1;i>=0;i--){
+      const r=clickRipples[i];
+      r.r+=2.5;
+      r.alpha-=0.018;
+      if(r.alpha<=0||r.r>120)clickRipples.splice(i,1);
+    }
+  }
 }
 
 function drawAll(){
@@ -448,6 +460,23 @@ function drawAll(){
     ctx.fillStyle='#000';ctx.font='bold 10px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(pt.label,p.x+p.w/2,p.y+p.h/2);ctx.textBaseline='alphabetic';
   });
+  // UX-OPT 2026-08-20 R503: click ripples — visible feedback for every click
+  if(clickRipples.length){
+    clickRipples.forEach(r=>{
+      ctx.save();
+      ctx.globalAlpha=r.alpha;
+      ctx.strokeStyle=r.color;
+      ctx.lineWidth=3;
+      ctx.beginPath();
+      ctx.arc(r.x,r.y,r.r,0,Math.PI*2);
+      ctx.stroke();
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.arc(r.x,r.y,r.r*0.65,0,Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
 }
 
 function drawGameOver(){
@@ -541,8 +570,29 @@ document.addEventListener('keydown',e=>{
   if(e.key==='p'||e.key==='P'){if(gameState==='play'){paused=!paused;}return;}
   if(e.key===' '||e.key==='Space'){e.preventDefault();handleLaunch();}
 });
-canvas.addEventListener('click',handleLaunch);
-canvas.addEventListener('touchstart',e=>{handleLaunch();},{passive:true});
+// UX-OPT 2026-08-20 R503: route every canvas click/touch through a single handler
+// that adds a visible ripple at the click position. Fixes rage_click cluster (BI 7d 10
+// rage_clicks across 4 days on CANVAS at x=109-1141 y=274-696). Root cause: clicks
+// after ball-launch were silently absorbed by handleLaunch with no visible feedback.
+function getCanvasXY(e){
+  const rect=canvas.getBoundingClientRect();
+  const cx=e.touches?e.touches[0].clientX:e.clientX;
+  const cy=e.touches?e.touches[0].clientY:e.clientY;
+  return {x:(cx-rect.left)*(CW/rect.width),y:(cy-rect.top)*(CH/rect.height)};
+}
+function spawnClickRipple(x,y,color){
+  clickRipples.push({x,y,r:0,alpha:1,color:color||'#4ecdc4'});
+}
+canvas.addEventListener('click',function(e){
+  const xy=getCanvasXY(e);
+  spawnClickRipple(xy.x,xy.y);
+  handleLaunch();
+});
+canvas.addEventListener('touchstart',function(e){
+  const xy=getCanvasXY(e);
+  spawnClickRipple(xy.x,xy.y);
+  handleLaunch();
+},{passive:true});
 
 function shareGame(sc){
   const url=window.location.href.split('?')[0];
