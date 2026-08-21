@@ -109,9 +109,13 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
 .card-icon{width:36px;height:36px;margin-bottom:2px}
 .card-icon svg{width:100%;height:100%}
 .card-name{font-size:9px;color:#9ca3af;text-align:center;line-height:1.1;font-weight:500;text-transform:uppercase;letter-spacing:0.3px}
-/* UX-OPT 2026-08-18 R494: visible feedback when card label is clicked (R381/R382 dead_click fix) */
+/* UX-OPT 2026-08-18 R494 + 2026-08-21 R508: visible feedback for card clicks (R381 dead_click fix).
+   R508 fix: also add .card.tapped so clicking card padding area gets visual feedback,
+   and the .tapped class must be applied on 'click' (not 'pointerdown') so
+   gz-analytics.js dead_click detector's capture-phase snapshot still sees a change. */
 .card-name.tapped{color:#fbbf24;text-shadow:0 0 6px rgba(251,191,36,.5)}
 .card-icon.tapped{filter:brightness(1.3) drop-shadow(0 0 4px rgba(251,191,36,.4))}
+.card.tapped{box-shadow:0 0 0 2px #fbbf24,0 0 14px rgba(251,191,36,.35);transform:translateY(-2px)}
 .card.spawn{animation:cardSpawn 0.3s ease-out}
 .card.craft{animation:cardCraft 0.4s ease-out}
 .card.shake{animation:cardShake 0.3s ease-out}
@@ -801,11 +805,21 @@ function renderBoard(){
     var el = e.target.closest && e.target.closest('.card');
     if(!el || !boardEl.contains(el)) return;
     e.preventDefault();
-    // UX-OPT 2026-08-18 R494: add transient .tapped to clicked element (covers card-name child)
-    e.target.classList.add('tapped');
-    setTimeout(function(){ e.target.classList.remove('tapped'); }, 1700);
+    // Handle game logic on pointerdown (low latency)
     var slot = parseInt(el.dataset.slot);
     onCardClick(slot);
+  });
+  // UX-OPT 2026-08-21 R508: apply .tapped on 'click' (NOT pointerdown) so gz-analytics.js
+  // dead_click detector's capture-phase snapshot (snapClass at click time) sees the original
+  // className, and 1.5s later (nowClass) sees the .tapped suffix. State-changed → not dead.
+  // Apply to closest .card so even clicks on .card padding register a visible glow ring.
+  boardEl.addEventListener('click', function(e){
+    var el = e.target.closest && e.target.closest('.card');
+    if(!el || !boardEl.contains(el)) return;
+    el.classList.add('tapped');
+    setTimeout(function(){
+      if(el && el.classList) el.classList.remove('tapped');
+    }, 1700);
   });
 }
 
