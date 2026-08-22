@@ -119,6 +119,9 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 60%,#0d1a2d 100%),url(
 .level-card:hover{transform:translateY(-3px);border-color:rgba(0,242,254,.4);box-shadow:0 4px 16px rgba(0,0,0,.3)}
 .level-card:active{transform:scale(.95)}
 .level-card.locked{opacity:.4;cursor:not-allowed}
+.level-card.shake{animation:jc-shake .35s ease-in-out 0s 2;border-color:rgba(255,80,80,.65)!important}
+.level-card.locked.shake{opacity:.7}
+@keyframes jc-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 .level-card.locked:hover{transform:none;border-color:rgba(255,255,255,.1)}
 .level-card.completed{border-color:rgba(0,242,254,.3);background:rgba(0,242,254,.05)}
 .level-num{font-size:15px;font-weight:900;color:#fff}
@@ -1476,6 +1479,18 @@ function renderLevelSelect() {
       const stars = gameState.stars[levelIdx] || 0;
       if (!unlocked) card.classList.add('locked');
       if (completed) card.classList.add('completed');
+      // R514 R382-A: attach click handler to BOTH locked and unlocked cards
+      // - unlocked: navigates to level
+      // - locked: applies .shake for 1.7s so gz-analytics.js dead_click detector sees class change
+      card.addEventListener('click', () => {
+        if (unlocked) {
+          startLevel(levelIdx);
+        } else {
+          card.classList.add('shake');
+          setTimeout(() => { if (card && card.classList) card.classList.remove('shake'); }, 1700);
+          if (typeof window.gzToast === 'function') window.gzToast('🔒 Complete previous levels to unlock');
+        }
+      });
       if (unlocked) {
         card.innerHTML = '<span class="level-num">' + (levelIdx + 1) + '</span>' +
           '<div class="level-stars">' +
@@ -1483,7 +1498,6 @@ function renderLevelSelect() {
           '<div class="star' + (stars >= 2 ? ' earned' : '') + '"></div>' +
           '<div class="star' + (stars >= 3 ? ' earned' : '') + '"></div>' +
           '</div>';
-        card.addEventListener('click', () => startLevel(levelIdx));
       } else {
         card.innerHTML = '<span class="lock-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,.3)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="rgba(255,255,255,.3)" stroke-width="2" fill="none"/></svg></span>';
       }

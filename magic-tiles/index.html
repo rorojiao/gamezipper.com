@@ -257,6 +257,9 @@ button,input{font-family:inherit;color:inherit}
 }
 .chapter-card:hover{transform:translateY(-2px);border-color:rgba(0,240,255,0.35);box-shadow:0 10px 30px rgba(0,240,255,0.18)}
 .chapter-card.locked{opacity:0.55;cursor:not-allowed}
+.chapter-card.shake{animation:mt-shake .35s ease-in-out 0s 2;border-color:rgba(255,80,80,.55)!important}
+.chapter-card.shake .ch-title{color:#ff8a8a}
+@keyframes mt-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 .chapter-card .num{
   font-family:'Orbitron',sans-serif;font-size:46px;font-weight:900;
   background:linear-gradient(135deg,var(--neon-cyan),var(--neon-magenta));
@@ -291,6 +294,8 @@ button,input{font-family:inherit;color:inherit}
 }
 .song-card:hover{border-color:rgba(0,240,255,0.35);transform:translateX(2px)}
 .song-card.locked{opacity:0.55;cursor:not-allowed}
+.song-card.shake{animation:mt-shake .35s ease-in-out 0s 2;border-color:rgba(255,80,80,.55)!important}
+.song-card.shake .t{color:#ff8a8a}
 .song-num{
   width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
   background:linear-gradient(135deg,rgba(0,240,255,0.2),rgba(255,43,214,0.2));
@@ -1591,12 +1596,20 @@ function renderChapters(){
       '<div class="ch-title">'+ch.name+'</div>'+
       '<div class="ch-meta"><span>'+ch.bpm+' BPM</span><span>·</span><span>6 songs</span><span>·</span><span>'+ch.count+' tiles</span></div>'+
       '<div style="margin-top:10px;font-size:12px;color:var(--text-3)">'+ch.sub+'</div>';
+    card.addEventListener('click',function(){
+      if(unlocked){openChapter(ch.id);return;}
+      // R514 R382-A: locked cards need visible rejection feedback so gz-analytics.js
+      // dead_click detector (1.5s capture-phase vs 1.5s-later state check) sees class change
+      card.classList.add('shake');
+      setTimeout(function(){if(card&&card.classList)card.classList.remove('shake');},1700);
+      // also surface a transient toast so the user knows it's a deliberate rejection
+      var need=ch.unlockStars-total;
+      if(typeof gzToast==='function')gzToast('🔒 Need '+need+' more ★ to unlock');
+    });
     if(!unlocked){
       var ov=el('div','lock-overlay');
       ov.innerHTML='<span>🔒 Need '+ch.unlockStars+'★ (have '+total+')</span>';
       card.appendChild(ov);
-    }else{
-      card.addEventListener('click',function(){openChapter(ch.id)});
     }
     grid.appendChild(card);
   });
@@ -1654,6 +1667,19 @@ function renderSongs(){
         '<div class="song-stars">'+starHtml+'</div>'+
         (best?'<div class="song-best">'+best+'</div>':'')+
       '</div>';
+    card.addEventListener('click',(function(card,unlocked,idx){return function(){
+      // R514 R382-A: locked songs silently rejected before — add shake class for dead_click detector
+      if(!unlocked){card.classList.add('shake');setTimeout(function(){if(card&&card.classList)card.classList.remove('shake');},1700);return;}
+      if(!chapterUnlocked(currentChapterId))return;
+      currentSongIdx=idx;
+      show('screenGame');
+      // size canvas after layout
+      setTimeout(function(){
+        resizeCanvas();
+        var song=generateSong(currentChapterId,idx);
+        startGame(song);
+      },50);
+    };})(card,unlocked,s));
     if(!unlocked){
       var lock=el('div','lock-overlay');lock.style.position='static';lock.style.background='transparent';
       lock.innerHTML='<span style="background:transparent;border:none">🔒</span>';
@@ -1662,18 +1688,6 @@ function renderSongs(){
       badge.style.cssText='position:absolute;top:10px;right:10px;color:#ff3366;font-size:10px;font-family:Orbitron,sans-serif;letter-spacing:1px';
       badge.textContent='LOCKED';
       card.appendChild(badge);
-    }else{
-      card.addEventListener('click',function(idx){return function(){
-        if(!chapterUnlocked(currentChapterId)) return;
-        currentSongIdx=idx;
-        show('screenGame');
-        // size canvas after layout
-        setTimeout(function(){
-          resizeCanvas();
-          var song=generateSong(currentChapterId,idx);
-          startGame(song);
-        },50);
-      }}(s));
     }
     list.appendChild(card);
   }
