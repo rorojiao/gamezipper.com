@@ -1,5 +1,5 @@
 /* gz-analytics.js — bi.gamezipper.com stable endpoint (R415 2026-08-14)
-   R448 2026-08-22 23:08 CST auto-rotate → clients-cant-approve-catalogs.trycloudflare.com (cron watchdog + bi.gamezipper.com stub mitigation; see postmortem 2026-08-22-adsense-bi-data-blackout)
+   R448b 2026-08-22 23:15 CST re-rotate -> website-jesus-pike-villas.trycloudflare.com (R448 URL died; orphan cleanup)
    EP = https://weekly-flat-cms-qualifying.trycloudflare.com/api/collect (PRODUCTION-PROMOTED)
    Path: browser → DNS (Porkbun → 43.172.69.197) → CapRover nginx → wash-editorials trycloudflare tunnel → gamezipper-bi server (10.10.29.67:8090)
    /api/ proxy added 2026-08-14 in captain.conf → upstream https://wash-editorials-opening-specific.trycloudflare.com
@@ -47,7 +47,7 @@
    auto-repoints nginx to the live tunnel URL. Rotating var EP here (R401 playbook) causes
    20min+ data gaps per GitHub Pages deploy + CDN cache cycle. See kanban R415/R416/R418.
    If bi.gamezipper.com/api/health fails: fix nginx/watchdog on 43.172, NOT this file. */
-  var EP = 'https://clients-cant-approve-catalogs.trycloudflare.com/api/collect';
+  var EP = 'https://website-jesus-pike-villas.trycloudflare.com/api/collect';
   // 2026-07-26: expose the watchdog-rotated endpoint so inline RUM scripts
   // (index.html Web-Vitals beacons) and adsterra-manager.js can resolve it
   // lazily instead of hardcoding tunnel URLs that die every few hours.
