@@ -59,8 +59,11 @@ canvas{display:block;width:100%;background:#0d0d1f;touch-action:none}
 .toggle-btn.active{background:rgba(255,215,0,0.2);border-color:rgba(255,215,0,0.4);color:#FFD700}
 .back-btn{position:absolute;top:8px;left:8px}
 .chapter-nav{display:flex;gap:8px;padding:0 16px;margin-bottom:8px;flex-wrap:wrap;justify-content:center}
-.chapter-tab{padding:6px 14px;border-radius:15px;font-size:13px;cursor:pointer;background:rgba(255,255,255,0.05);color:#888;border:1px solid transparent}
+.chapter-tab{padding:6px 14px;border-radius:15px;font-size:13px;cursor:pointer;background:rgba(255,255,255,0.05);color:#888;border:1px solid transparent;transition:background 0.18s,color 0.18s,border-color 0.18s,box-shadow 0.18s,transform 0.18s}
 .chapter-tab.active{background:rgba(255,215,0,0.15);color:#FFD700;border-color:rgba(255,215,0,0.3)}
+/* UX-OPT 2026-08-23 R521: dead_click visual feedback (R382 Sub-case B) so gz-analytics.js
+   detector sees className change in 1.5s even though buildLevelGrid() rebuilds nav. */
+.chapter-tab.flash{background:rgba(120,180,255,0.25);color:#e0f2ff;border-color:rgba(120,180,255,0.6);box-shadow:0 0 12px rgba(120,180,255,0.4);transform:translateY(-1px) scale(1.04)}
 .gz-related-games{margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);width:100%;max-width:600px}
 .gz-related-games h3{font-size:16px;color:#FFD700;margin-bottom:12px;text-align:center}
 .gz-related-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
@@ -397,7 +400,14 @@ mb.textContent=musicOn?'Music ON':'Music OFF';mb.classList.toggle('active',music
 function buildLevelGrid(){
 var nav=document.getElementById('chapter-nav');nav.innerHTML='';
 for(var c=1;c<=5;c++){var tab=document.createElement('div');tab.className='chapter-tab'+(c===currentChapter+1?' active':'');
-tab.textContent='Ch.'+c;tab.onclick=function(){currentChapter=c-1;buildLevelGrid();};nav.appendChild(tab);}
+tab.textContent='Ch.'+c;
+tab.dataset.chapter=String(c);
+/* UX-OPT 2026-08-23 R521: capture chapter index via dataset (R381 capture-snap pattern).
+   Previous code used closure on `var c` — all 5 handlers shared the post-loop value c=5,
+   so clicking any tab always jumped to chapter 5. Wrong chapter + rebuild destroyed the
+   clicked element → gz-analytics.js dead_click detector saw no className change at +1.5s. */
+tab.onclick=function(){var idx=parseInt(this.dataset.chapter,10)-1;this.classList.add('flash');setTimeout(function(){if(tab&&tab.classList)tab.classList.remove('flash');},1600);currentChapter=idx;buildLevelGrid();};
+nav.appendChild(tab);}
 var grid=document.getElementById('level-grid');grid.innerHTML='';
 var start=currentChapter*6;var end=Math.min(start+6,30);
 for(var i=start;i<end;i++){var cell=document.createElement('div');
