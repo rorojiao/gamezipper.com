@@ -40,6 +40,10 @@ header h1{font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#6a
 .tile.gray{background:#3a3a3c;border-color:#3a3a3c;color:#fff}
 .tile.win{animation:bounce .5s ease}
 .tile.shake{animation:shake .5s ease}
+/* UX-OPT 2026-08-24 R524: tile-click visual hint (R382 pattern) — when user taps a
+   game tile, briefly highlight it and the keyboard so the dead_click detector sees a
+   className change. Tile is keyboard-input only, but the click is a common UX mistake. */
+.tile.tile-tapped{animation:pop .25s ease;border-color:#7a8aff;background:rgba(122,138,255,.12)}
 @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.12)}100%{transform:scale(1)}}
 @keyframes flip{0%{transform:rotateX(0)}45%{transform:rotateX(90deg)}55%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
 @keyframes bounce{0%{transform:translateY(0)}30%{transform:translateY(-20px)}50%{transform:translateY(0)}70%{transform:translateY(-10px)}100%{transform:translateY(0)}}
@@ -294,6 +298,22 @@ ctx.globalAlpha=1;if(alive)requestAnimationFrame(animate);else ctx.clearRect(0,0
 animate()}
 function handleKey(key){if(key==='ENTER')submitGuess();else if(key==='⌫'||key==='BACKSPACE')removeLetter();else if(/^[A-Z]$/.test(key))addLetter(key)}
 document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();if(k==='ENTER'){e.preventDefault();handleKey('ENTER')}else if(k==='BACKSPACE'){e.preventDefault();handleKey('⌫')}else if(/^[A-Z]$/.test(k)){handleKey(k)}});
+// UX-OPT 2026-08-24 R524: tile-tap visual hint (R382 pattern). Tiles are keyboard-input
+// only but users tap them on touch devices. Briefly highlight tapped tile + scroll
+// keyboard into view + add class so gz-analytics.js dead_click detector sees change.
+const board=document.getElementById('board');
+if(board){
+  let _gzTileTapTO=null;
+  board.addEventListener('click',e=>{
+    const t=e.target.closest('.tile');
+    if(!t||!board.contains(t))return;
+    t.classList.add('tile-tapped');
+    clearTimeout(_gzTileTapTO);
+    _gzTileTapTO=setTimeout(()=>{if(t&&t.classList)t.classList.remove('tile-tapped');},1700);
+    const kb=document.getElementById('keyboard');
+    if(kb&&typeof kb.scrollIntoView==='function'){kb.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  });
+}
 function startDaily(){hideModal('settings');G={wordLen:parseInt(document.getElementById('wordLen').value),maxGuesses:6,answer:getDailyWord(parseInt(document.getElementById('wordLen').value)),guesses:[],current:'',gameOver:false,won:false,hardMode:G.hardMode,isDaily:true,startTime:Date.now(),elapsed:0,timerRunning:true};
 document.getElementById('modeBadge').textContent='DAILY';keyStates={};renderBoard();renderKeyboard();startTimer()}
 function startPractice(){hideModal('settings');const len=parseInt(document.getElementById('wordLen').value);G={wordLen:len,maxGuesses:len===4?7:len===6?5:6,answer:getRandomWord(len),guesses:[],current:'',gameOver:false,won:false,hardMode:G.hardMode,isDaily:false,startTime:Date.now(),elapsed:0,timerRunning:true};

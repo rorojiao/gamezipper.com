@@ -397,17 +397,26 @@ mb.textContent=musicOn?'Music ON':'Music OFF';mb.classList.toggle('active',music
 }
 
 // ============ LEVEL GRID ============
+// UX-OPT 2026-08-24 R524: build chapter tabs ONCE (idempotent). Previous R521 rebuilt
+// nav.innerHTML on every chapter change, which destroyed the clicked tab before
+// gz-analytics.js dead_click detector's 1.5s snapshot — the .flash class was applied
+// to the original (detached) tab, not the new replacement matching DIV.chapter-tab.
+// Now: tabs persist, only their .active class toggles. Clicked tab keeps .flash ≥1.6s.
+function buildChapterNav(){
+  var nav=document.getElementById('chapter-nav');
+  if(!nav || nav.children.length===5) return; // already built
+  for(var c=1;c<=5;c++){var tab=document.createElement('div');tab.className='chapter-tab';
+    tab.textContent='Ch.'+c;
+    tab.dataset.chapter=String(c);
+    tab.onclick=function(){var idx=parseInt(this.dataset.chapter,10)-1;this.classList.add('flash');var self=this;setTimeout(function(){if(self&&self.classList)self.classList.remove('flash');},1700);currentChapter=idx;buildLevelGrid();};
+    nav.appendChild(tab);
+  }
+}
 function buildLevelGrid(){
-var nav=document.getElementById('chapter-nav');nav.innerHTML='';
-for(var c=1;c<=5;c++){var tab=document.createElement('div');tab.className='chapter-tab'+(c===currentChapter+1?' active':'');
-tab.textContent='Ch.'+c;
-tab.dataset.chapter=String(c);
-/* UX-OPT 2026-08-23 R521: capture chapter index via dataset (R381 capture-snap pattern).
-   Previous code used closure on `var c` — all 5 handlers shared the post-loop value c=5,
-   so clicking any tab always jumped to chapter 5. Wrong chapter + rebuild destroyed the
-   clicked element → gz-analytics.js dead_click detector saw no className change at +1.5s. */
-tab.onclick=function(){var idx=parseInt(this.dataset.chapter,10)-1;this.classList.add('flash');setTimeout(function(){if(tab&&tab.classList)tab.classList.remove('flash');},1600);currentChapter=idx;buildLevelGrid();};
-nav.appendChild(tab);}
+  buildChapterNav();
+  var nav=document.getElementById('chapter-nav');
+  var tabs=nav.children;
+  for(var i=0;i<tabs.length;i++){tabs[i].classList.toggle('active',parseInt(tabs[i].dataset.chapter,10)===currentChapter+1);}
 var grid=document.getElementById('level-grid');grid.innerHTML='';
 var start=currentChapter*6;var end=Math.min(start+6,30);
 for(var i=start;i<end;i++){var cell=document.createElement('div');

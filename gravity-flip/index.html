@@ -61,6 +61,8 @@ html,body{width:100%;height:100%;overflow-x:hidden;overflow-x:hidden;background:
 .lvl-btn.unlocked{border-color:#46a;color:#aaf;cursor:pointer}
 .lvl-btn.unlocked:hover{background:rgba(40,40,80,0.9);transform:scale(1.08)}
 .lvl-btn.locked{opacity:0.3;cursor:default}
+.lvl-btn.locked.shake{animation:gfLockedShake .38s ease-in-out}
+@keyframes gfLockedShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-5px);}40%{transform:translateX(5px);}60%{transform:translateX(-3px);}80%{transform:translateX(3px);}}
 .lvl-btn .mini-stars{font-size:7px;color:#fd5;margin-top:1px}
 .win-stars{font-size:48px;margin:8px 0 4px;letter-spacing:8px}
 .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:5}
@@ -1396,6 +1398,20 @@ grid.appendChild(btn);
 }
 }
 }
+// UX-OPT 2026-08-24 R524: locked lvl-btn shake feedback (R382 Sub-case A pattern).
+// Click on locked btn has no handler → gz-analytics.js dead_click fires. Add .shake
+// class on click so the detector sees a className change.
+(function(){
+  var grid=document.getElementById('levelGrid');
+  if(!grid||grid.__gzLockedBound)return;
+  grid.__gzLockedBound=true;
+  grid.addEventListener('click',function(e){
+    var b=e.target.closest('.lvl-btn.locked');
+    if(!b||!grid.contains(b))return;
+    b.classList.add('shake');
+    setTimeout(function(){if(b&&b.classList)b.classList.remove('shake');},1700);
+  });
+})();
 
 // ===== INPUT =====
 function handleFlip(e){
