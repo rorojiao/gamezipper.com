@@ -481,6 +481,11 @@ function addTrainToLine(line){
   state.availTrains--;
   const train={lineId:line.id, dist:0, dir:1, passengers:[], capacity:6, stopTimer:0, carriages:0};
   line.trains.push(train); state.trains.push(train);
+  /* P1 fix (QA 2026-08-25): startCarriages had NO attach path — attachCarriage
+     was only ever called from the carriage upgrade card, so a level's starting
+     carriage stock was dead inventory (L17 ships 2, unusable). Equip one
+     carriage per newly created train while stock remains. */
+  if(state.availCarriages>0) attachCarriage(train);
   return true;
 }
 function attachCarriage(train){
@@ -515,9 +520,26 @@ function offerUpgrades(){
 function applyUpgrade(choice){
   switch(choice.kind){
     case 'line': state.availLines++; break;
-    case 'train': state.availTrains++; break;
-    case 'carriage': state.availCarriages++; break;
-    case 'bridge': state.availBridges++; break;
+    case 'train':
+      state.availTrains++;
+      /* P2 fix (QA 2026-08-25): "Extra Train" only ever incremented an inventory
+         counter — addTrainToLine was never called outside new-line creation, so
+         taking the card did nothing and availTrains could never be spent. Attach
+         the train immediately to the eligible line with the fewest trains (same
+         <2-per-line rule offerUpgrades uses); if no line can take it, keep it in
+         inventory for the next line drawn. */
+      {const cand=state.lines.filter(l=>l.stations.length>=2&&l.trains.length<2).sort((a,b)=>a.trains.length-b.trains.length)[0];
+       if(cand) addTrainToLine(cand);}
+      break;
+    case 'carriage':
+      state.availCarriages++;
+      /* P2 fix (QA 2026-08-25): attachCarriage was never called anywhere — the
+         "Carriage (+3 cap)" card only bumped the HUD counter, so capacity could
+         never grow. Attach to the train with the least capacity. */
+      {const tr=state.trains.slice().sort((a,b)=>a.capacity-b.capacity)[0];
+       if(tr) attachCarriage(tr);}
+      break;
+    case 'bridge': state.availBridges++; break; // documented P3: rivers never block line drawing in this engine, so bridges are inventory-only
   }
   state.pendingUpgrade=false; state.paused=false; state.upgradeChoices=[];
   state.week++;
@@ -638,7 +660,17 @@ function checkIntermediateStop(tr,line,pts,total){
     const st=line.stations[si];
     const d=Math.hypot(pos.x-st.x,pos.y-st.y);
     if(d<STATION_R+4){
-      const mem=_stopMemory.get(tr)||-99;
+      /* P0 fix (QA 2026-08-25): `_stopMemory.get(tr)||-99` maps a remembered
+         index of 0 to -99 (0 is falsy), so the stop memory for a line's FIRST
+         station never stuck. Any time a train was within STATION_R+4 px of
+         station 0's position — including the departure crawl and every later
+         geographic re-crossing of its row (the right-angle bend routing makes
+         paths re-traverse earlier stations' corridors constantly) — it stopped
+         again every 0.4s and advanced ~2px per stop. Trains spent 15+s per 30s
+         parked on a station they had already served, collapsing delivery
+         throughput until every station overcrowded (all survive levels were
+         unwinnable). Use has() so index 0 is remembered like any other. */
+      const mem=_stopMemory.has(tr)?_stopMemory.get(tr):-99;
       if(si!==mem){
         _stopMemory.set(tr,si);
         tr.stopTimer=0.4;
@@ -910,6 +942,14 @@ function drawTextBtn(id,label,x,y,w,h,center){
 
 // ---- Game screen ----
 function drawGame(){
+  /* P1 fix (QA 2026-08-25): state.buttons was never cleared when a level
+     started (only drawTitle resets it), so the level-select card rects stayed
+     live in hitButton(). The upgrade-modal cards (x≈316-964, y≈280-480) overlap
+     the Easy/Medium level cards' region, and hitButton returns the FIRST hit —
+     clicking an upgrade card returned a stale 'lvl*' id, applyUpgrade never
+     ran, and the paused modal became unclickable in those regions (game stuck).
+     Reset here each frame; drawHUD and the overlay draws re-add their buttons. */
+  state.buttons={};
   // playfield
   drawBg('#1a1c33');
   // subtle grid
@@ -1353,7 +1393,16 @@ function completeLevel(survived){
     if(state.score>state.save.endlessHigh){state.save.endlessHigh=state.score;saveSave();}
   }
 }
-function quitToMenu(){ cleanupGame(); state.screen='title'; }
+function quitToMenu(){
+  /* P2 fix (QA 2026-08-25): endlessHigh was only written in endGame(), so
+     quitting an endless run to the menu silently discarded its score — the
+     best-score display could never reflect a voluntarily-ended run. Same
+     high-score rule as endGame, applied on quit. */
+  if(state.isEndless && !state.gameOver && state.score>state.save.endlessHigh){
+    state.save.endlessHigh=state.score; saveSave();
+  }
+  cleanupGame(); state.screen='title';
+}
 
 // ===== Cleanup =====
 function cleanupGame(){
