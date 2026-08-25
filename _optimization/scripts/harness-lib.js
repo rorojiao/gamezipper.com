@@ -423,10 +423,13 @@ function bootGame(slug, opts) {
     call(expr) { return vm.runInContext(expr, ctx); },
     /** dispatch a keyboard event to the element that owns key listeners (canvas/document/body fallback chain) */
     key(k, type) {
-      const targets = ['document', 'window', 'body'].map(t => sandbox.document[t]);
-      for (const t of targets) { if (t && t.dispatch) { t.dispatch(type || 'keydown', { key: k, code: k, preventDefault() {} }); return; } }
-      // fallback: any element with keydown listeners
-      for (const id in els) { if (els[id].dispatch) els[id].dispatch(type || 'keydown', { key: k, code: k, preventDefault() {} }); }
+      const t = type || 'keydown';
+      const ev = { key: k, code: k, preventDefault() {} };
+      const targets = ['document', 'window', 'body'].map(x => sandbox.document[x]);
+      for (const x of targets) { if (x && x.dispatch) { x.dispatch(t, ev); break; } }
+      // browser reality: a keydown on body BUBBLES to document — engines binding at document
+      // level (windmill-sudoku 1-9 keys) must hear keys dispatched at body level too
+      for (const f of (sandbox.document.__dls || {})[t] || []) { try { f.call(sandbox.document, ev); } catch (e) { sandbox.__errors = (sandbox.__errors || []).concat('key: ' + e.message); } }
     },
     ls: sandbox.localStorage,
   };
