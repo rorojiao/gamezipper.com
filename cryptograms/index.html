@@ -224,6 +224,8 @@ h3{font-size:1.1rem;color:var(--text-secondary);margin-bottom:8px}
   background:transparent;border-color:transparent;cursor:default;width:clamp(14px,2.5vw,20px);
 }
 .cipher-cell.space-cell{background:transparent;border-color:transparent;cursor:default;width:clamp(10px,2vw,16px)}
+@keyframes gz-cryptogram-flash{0%{box-shadow:0 0 0 2px var(--neon-cyan),0 0 18px rgba(0,229,255,.5)}100%{box-shadow:0 0 0 0 transparent,0 0 0 transparent}}
+.cipher-cell.gz-flash,.key.gz-flash{animation:gz-cryptogram-flash 1.7s ease-out}
 .word-row{display:flex;flex-wrap:wrap;gap:2px;margin-bottom:4px;justify-content:center}
 .puzzle-words{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;padding:12px}
 .mapping-bar{
@@ -835,6 +837,13 @@ let state = {
   hintsLeft: 3,
   isSolved: false,
   filter: { category: 'All', difficulty: 'all' },
+  // R525: transient flash targets for cipher-cell + keyboard key.
+  // renderGame() reads these flags AFTER rebuilding the DOM, applies .gz-flash class
+  // to the matching element, then setTimeout removes it after 1.7s (>= 1.5s
+  // gz-analytics.js dead_click detector window). Fixes false-positive dead_click on
+  // /cryptograms/ (n=12 events 7d, R524 same pattern as save-the-doge chapter-tab).
+  _flashCipher: null,
+  _flashKey: null,
 };
 let stats = loadStats();
 
@@ -1152,6 +1161,35 @@ function renderGame() {
 
   // Mapping bar
   renderMappingBar();
+
+  // R525: apply transient .gz-flash class to clicked cipher-cell / keyboard key
+  // (the elements were just rebuilt by renderGame so the original node is gone,
+  // but the new replacement node can carry the flash class for 1.7s — long enough
+  // to make gz-analytics.js dead_click detector see snapClass !== nowClass).
+  if (state._flashCipher) {
+    const target = area.querySelector('.cipher-cell[data-cipher="' + state._flashCipher + '"]');
+    if (target) {
+      target.classList.add('gz-flash');
+      setTimeout(function() {
+        if (target.classList) target.classList.remove('gz-flash');
+      }, 1700);
+    }
+    state._flashCipher = null;
+  }
+  if (state._flashKey) {
+    const kbEl = document.getElementById('keyboard');
+    if (kbEl) {
+      const target = kbEl.querySelector('.key[data-key="' + state._flashKey + '"]') ||
+                     (state._flashKey === 'CLEAR' ? kbEl.querySelector('.key:last-child') : null);
+      if (target) {
+        target.classList.add('gz-flash');
+        setTimeout(function() {
+          if (target.classList) target.classList.remove('gz-flash');
+        }, 1700);
+      }
+    }
+    state._flashKey = null;
+  }
 }
 
 function renderMappingBar() {
@@ -1181,7 +1219,7 @@ function renderKeyboard() {
   kb.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => {
     const usedFor = Object.entries(state.playerMap).find(([k,v]) => v === letter);
     const cls = usedFor ? 'used' : '';
-    return '<div class="key ' + cls + '" onclick="assignLetter(\'' + letter + '\')">' + letter + '</div>';
+    return '<div class="key ' + cls + '" data-key="' + letter + '" onclick="assignLetter(\'' + letter + '\')">' + letter + '</div>';
   }).join('') +
     '<div class="key" onclick="assignLetter(\'\')" style="width:60px;font-size:0.7rem">CLEAR</div>';
 }
@@ -1204,12 +1242,14 @@ function updateProgress() {
 function selectCipher(c) {
   if (state.isSolved) return;
   state.selectedCipher = c;
+  state._flashCipher = c;  // R525: tell renderGame to flash this cell for 1.7s
   playSound('click');
   renderGame();
 }
 
 function assignLetter(letter) {
   if (state.isSolved || !state.selectedCipher) return;
+  state._flashKey = letter || 'CLEAR';  // R525: tell renderGame to flash this key for 1.7s
 
   // Remove old reverse mapping if any
   const oldGuess = state.playerMap[state.selectedCipher];
