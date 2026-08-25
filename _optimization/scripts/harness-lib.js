@@ -86,7 +86,8 @@ function makeEl(extra) {
     disabled: false, hidden: false, checked: false,
     addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); },
     removeEventListener() {}, /* dispatch binds the element as `this` — engines rely on it (e.g. btnStart's this.disabled) */
-    dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); const el = this; (listeners[t] || []).forEach(f => f.call(el, ev)); const h = this['on' + t]; if (typeof h === 'function') { try { h.call(el, ev); } catch (e) {} } return true; }, // browsers fire BOTH addEventListener listeners and the on<event> property (black/beads-out style engines use d.onclick=)
+    dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); const el = this; ev.target = ev.target || el; ev.currentTarget = el; // browsers set both during dispatch (futoshiki gzCellClick reads e.currentTarget.dataset)
+      (listeners[t] || []).forEach(f => f.call(el, ev)); const h = this['on' + t]; if (typeof h === 'function') { try { h.call(el, ev); } catch (e) {} } return true; }, // browsers fire BOTH addEventListener listeners and the on<event> property (black/beads-out style engines use d.onclick=)
     getContext: () => mk2d(),
     setPointerCapture() {}, releasePointerCapture() {}, // pointer-capture API: no-op here, listeners stay on the capturing element
     animate() { return { onfinish: null, cancel() {}, finish() {}, finished: Promise.resolve() }; }, // WAAPI: confetti-style engines set anim.onfinish=()=>el.remove() (outside-sudoku)
@@ -335,7 +336,7 @@ function bootGame(slug, opts) {
     CustomEvent: function (t) { return { type: t }; }, Event: function (t) { return { type: t }; },
     AudioContext: function () { return mkAudio(); }, webkitAudioContext: function () { return mkAudio(); },
     CanvasRenderingContext2D: function () { this.prototype = CanvasRenderingContext2D.prototype; }, // engines polyfill roundRect etc. on the 2d context prototype
-    innerWidth: (opts.viewport && opts.viewport[0]) || 480, innerHeight: (opts.viewport && opts.viewport[1]) || 640, devicePixelRatio: 1, scrollX: 0, scrollY: 0, pageXOffset: 0, pageYOffset: 0, // outside-sudoku setupCanvas adds window.scrollY to a rect.top -> NaN cellSize without it
+    innerWidth: (opts.viewport && opts.viewport[0]) || 480, innerHeight: (opts.viewport && opts.viewport[1]) || 640, devicePixelRatio: 1, scrollX: 0, scrollY: 0, pageXOffset: 0, pageYOffset: 0, scrollTo() {}, scrollBy() {}, // outside-sudoku setupCanvas adds window.scrollY to a rect.top -> NaN cellSize without it
     screen: { width: 480, height: 640 },
     adsbygoogle: { push() {} },
     __rafQ: rafQ, __timers: timers, __els: els,
