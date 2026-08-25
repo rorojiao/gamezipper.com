@@ -714,8 +714,13 @@ bind('undoBtn',()=>undo());
 bind('eraseBtn',()=>placeDigit(0));
 bind('notesBtn',()=>{S.notesMode=!S.notesMode;document.getElementById('notesBtn').classList.toggle('active',S.notesMode);sfx('btn');});
 bind('hintBtn',()=>useHint());
-bind('winNext',()=>{document.getElementById('winModal').classList.remove('hidden');const ni=S.levelIdx+1;if(ni<LEVELS_DATA.length)startLevel(ni,S.isDaily);else openLevelSelect();});
-bind('winLevels',()=>{document.getElementById('winModal').classList.remove('hidden');openLevelSelect();});
+/* FIX 2026-08-25 (QA outside-sudoku): winNext/winLevels called classList.REMOVE('hidden') —
+   inverted vs every other modal handler (tutNext/tutSkip/resumeBtn all ADD it). The win
+   overlay stayed visible over the next level's board, and .modal-overlay covers the canvas,
+   so after any win the game was unplayable until page reload. Root cause: copy-paste of the
+   open (remove) line from winLevel's setTimeout instead of the close (add) line. */
+bind('winNext',()=>{document.getElementById('winModal').classList.add('hidden');const ni=S.levelIdx+1;if(ni<LEVELS_DATA.length)startLevel(ni,S.isDaily);else openLevelSelect();});
+bind('winLevels',()=>{document.getElementById('winModal').classList.add('hidden');openLevelSelect();});
 bind('tutNext',()=>{const total=document.querySelectorAll('.tut-step').length;if(tutStep<total-1){tutStep++;showTutStep();}else{document.getElementById('tutModal').classList.add('hidden');localStorage.setItem(TUT_KEY,'1');}});
 bind('tutSkip',()=>{document.getElementById('tutModal').classList.add('hidden');localStorage.setItem(TUT_KEY,'1');});
 const soundBtn=document.getElementById('soundBtn');
