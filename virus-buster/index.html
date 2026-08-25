@@ -333,6 +333,7 @@ var comboCount = 0;
 var pillsDropped = 0;
 var particles = [];
 var clearAnims = [];
+var levelViruses = 0;
 var pendingMatches = null;
 var clearTimer = 0;
 var rafId = null;
@@ -638,6 +639,7 @@ function initLevel(lv) {
   makeGrid();
   var virusNum = Math.min(84, lv * 4);
   generateViruses(virusNum);
+  levelViruses = virusCount;
   score = score; // keep score across levels
   maxCombo = 0;
   comboCount = 0;
@@ -691,11 +693,14 @@ function levelComplete() {
   stopBGM();
   playSFX('win');
   // Stars based on pills used vs viruses
-  var efficiency = virusCount === 0 ? pillsDropped : 999;
+  // FIX(verify 2026-08-25): this compared pillsDropped against virusCount AFTER clearing,
+  // when virusCount is always 0 — so any win on levels 1-5 scored pillsDropped > 0 and
+  // could never earn more than 1 star. Rate against the level's starting virus count
+  // (captured in initLevel) instead.
   var stars = 3;
   if (level <= 5) {
-    if (pillsDropped > virusCount * 3) stars = 2;
-    if (pillsDropped > virusCount * 5) stars = 1;
+    if (pillsDropped > levelViruses * 3) stars = 2;
+    if (pillsDropped > levelViruses * 5) stars = 1;
   }
   // Score bonus
   score += level * 1000;
@@ -705,7 +710,7 @@ function levelComplete() {
   document.getElementById('lc-score').textContent = score.toLocaleString();
   document.getElementById('lc-combo').textContent = 'x' + maxCombo;
   document.getElementById('lc-stars').textContent = stars;
-  document.getElementById('lc-sub').textContent = level >= 20 ? 'Endless mode continues!' : 'All ' + (level * 4) + ' viruses eliminated!';
+  document.getElementById('lc-sub').textContent = level >= 20 ? 'Endless mode continues!' : 'All ' + levelViruses + ' viruses eliminated!';
   showOverlay('levelcomplete-overlay');
 }
 
@@ -719,15 +724,23 @@ function gameOver() {
 }
 
 // ===== PAUSE =====
+// FIX(verify 2026-08-25): resumeGame() hard-set gameState='playing', but the game can be
+// paused DURING a cascade ('clearing'): matches were already removed, the falling pill is
+// null, and the pending gravity/next-match steps only run in the 'clearing' branch of the
+// game loop. Resuming into 'playing' therefore left the board with no pill and no cascade —
+// a permanent soft-lock (nothing ever spawns again). Pause now remembers the state it came
+// from and resume restores exactly that.
+var pausedFrom = 'playing';
 function pauseGame() {
   if (gameState !== 'playing' && gameState !== 'clearing') return;
+  pausedFrom = gameState;
   gameState = 'paused';
   showOverlay('pause-overlay');
 }
 
 function resumeGame() {
   hideOverlay('pause-overlay');
-  gameState = 'playing';
+  gameState = pausedFrom;
   lastTime = performance.now();
 }
 

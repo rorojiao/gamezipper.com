@@ -22,8 +22,19 @@ function isSolved(tubes) {
   return true;
 }
 
+// Colors are 0..8 (at most 9 colors), so base-16 digits make each tube a
+// unique small integer; joining those ints is much cheaper than joining the
+// raw layer lists (this verifier must stay well under the QA time budget).
+function tubeKey(tube) {
+  let k = tube.length;
+  for (let i = 0; i < tube.length; i++) k = k * 16 + tube[i] + 1;
+  return k;
+}
+
 function tubesToKey(tubes) {
-  return tubes.map(t => t.join(',')).join('|');
+  let s = '' + tubeKey(tubes[0]);
+  for (let i = 1; i < tubes.length; i++) s += '|' + tubeKey(tubes[i]);
+  return s;
 }
 
 function getTopCount(tube) {
@@ -54,10 +65,13 @@ function solveBFS(initialTubes) {
   const visited = new Set();
   visited.add(tubesToKey(initialTubes));
   const queue = [[initialTubes.map(t => [...t]), 0]];
+  // Head pointer instead of queue.shift(): shift() is O(queue length) per
+  // dequeue and made each state-limited level take ~10x longer.
+  let head = 0;
   let states = 0;
 
-  while (queue.length > 0) {
-    const [tubes, depth] = queue.shift();
+  while (head < queue.length) {
+    const [tubes, depth] = queue[head++];
     states++;
     if (states > MAX_STATES) return -2; // state limit
 
@@ -71,20 +85,26 @@ function solveBFS(initialTubes) {
         const space = MAX_LAYERS - tubes[to].length;
         const pourAmt = Math.min(srcCount, space);
 
-        // Execute pour
-        const newTubes = tubes.map(t => [...t]);
+        // Execute pour in place (undone after probing; a copy is only made
+        // for states that are actually enqueued).
         for (let i = 0; i < pourAmt; i++) {
-          newTubes[from].pop();
-          newTubes[to].push(srcTop);
+          tubes[from].pop();
+          tubes[to].push(srcTop);
         }
 
-        const key = tubesToKey(newTubes);
-        if (visited.has(key)) continue;
+        const key = tubesToKey(tubes);
+        if (!visited.has(key)) {
+          if (isSolved(tubes)) return depth + 1;
 
-        if (isSolved(newTubes)) return depth + 1;
+          visited.add(key);
+          queue.push([tubes.map(t => [...t]), depth + 1]);
+        }
 
-        visited.add(key);
-        queue.push([newTubes, depth + 1]);
+        // Undo pour
+        for (let i = 0; i < pourAmt; i++) {
+          tubes[to].pop();
+          tubes[from].push(srcTop);
+        }
       }
     }
   }
@@ -133,3 +153,4 @@ console.log('\n' + '='.repeat(60));
 console.log(`RESULT: ${passed + stateLimited}/${levels.length} verified (${passed} BFS-solved, ${stateLimited} reverse-gen guaranteed)`);
 if (failed > 0) console.log(`FAILED: ${failed} levels UNSOLVABLE`);
 console.log('='.repeat(60));
+process.exit(failed > 0 ? 1 : 0);

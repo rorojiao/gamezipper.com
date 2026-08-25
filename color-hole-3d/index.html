@@ -653,6 +653,13 @@ function generateLevel(levelIndex) {
   var targetPct = 0.55 + rng() * 0.15; // 55-70% target
   var targetColorCount = Math.max(Math.ceil(numObjects * targetPct), 15);
   if (targetColorCount > numObjects) targetColorCount = numObjects;
+  // FIX(P0): on single-color tiers (levels 1-6) the "other color" picker below
+  // computes 1 + floor(rng() * (levelColors.length - 1)) = 1 + 0 = 1, past the
+  // end of a 1-color palette, so several objects got color: undefined — drawn
+  // white and treated as WRONG-color hazards on levels advertised (and tuned)
+  // as single-color. A level could drain all 3 lives in under a second with
+  // nothing visible to avoid. With one color every object is a target.
+  if (levelColors.length === 1) targetColorCount = numObjects;
   var targetCount = Math.max(5, Math.floor(targetColorCount * (0.5 + rng() * 0.25)));
   // Ensure buffer of at least 5
   if (targetCount > targetColorCount - 5) targetCount = Math.max(5, targetColorCount - 5);
@@ -660,11 +667,29 @@ function generateLevel(levelIndex) {
   var objects = [];
   var types = OBJECT_TYPES;
 
+  // FIX(P1): objects could spawn on top of the hole's fixed spawn point (the
+  // arena center) — a wrong-colored object there damaged the player on frame
+  // 1, before any input could matter, and with 2 lives on tier 4 most levels
+  // 25-30 died instantly at spawn. Keep every object at least ~0.18 of the
+  // arena away from the center (the hole spawns there and lerps out freely).
+  function placeXY() {
+    var x = 0.08 + rng() * 0.84, y = 0.08 + rng() * 0.84;
+    var dx = x - 0.5, dy = y - 0.5, d = Math.sqrt(dx * dx + dy * dy);
+    if (d < 0.18) {
+      var ang = d < 1e-6 ? rng() * Math.PI * 2 : Math.atan2(dy, dx);
+      var nd = 0.18 + rng() * 0.1;
+      x = Math.max(0.08, Math.min(0.92, 0.5 + Math.cos(ang) * nd));
+      y = Math.max(0.08, Math.min(0.92, 0.5 + Math.sin(ang) * nd));
+    }
+    return [x, y];
+  }
+
   // ---- Create target-color objects ----
   for (var i = 0; i < targetColorCount; i++) {
+    var pXY = placeXY();
     objects.push({
-      x: 0.08 + rng() * 0.84,
-      y: 0.08 + rng() * 0.84,
+      x: pXY[0],
+      y: pXY[1],
       type: types[Math.floor(rng() * types.length)],
       color: targetColor,
       size: 0.025 + rng() * 0.018,
@@ -682,9 +707,10 @@ function generateLevel(levelIndex) {
   var remaining = numObjects - targetColorCount;
   for (var i = 0; i < remaining; i++) {
     var ci = 1 + Math.floor(rng() * (levelColors.length - 1));
+    var pXY = placeXY();
     objects.push({
-      x: 0.08 + rng() * 0.84,
-      y: 0.08 + rng() * 0.84,
+      x: pXY[0],
+      y: pXY[1],
       type: types[Math.floor(rng() * types.length)],
       color: levelColors[ci],
       size: 0.025 + rng() * 0.018,
@@ -1112,8 +1138,24 @@ function update(dt) {
       var dist = Math.sqrt(dx * dx + dy * dy);
       var effectiveSuction = G.suctionRadius;
 
-      if (dist < effectiveSuction + obj.size * 20) {
-        var isTarget = (obj.color === G.level.targetColor);
+      // FIX(P0): the trigger used obj.size * 20 (the FULL drawn size, see
+      // drawObjects) as if it were the object's radius, on top of the suction
+      // radius — a 260-420px disk on a 441px-wide arena. At level start every
+      // wrong-colored object on the map sat inside that disk around the
+      // center hole, so every level with 2+ colors (7-30) drained all lives
+      // in the first frames with no possible reaction (verified: instant
+      // LEVEL_FAILED, 0 collected). Trigger = suction radius + the object's
+      // pixel radius, matching what is drawn.
+      // FIX(P1): with the radius fixed at suction+size, wrong-colored objects
+      // still mined a 50-66px disk each — on 3+ color tiers 30+ such disks
+      // covered the whole arena several times over, leaving no corridor to
+      // any target (verified: an avoidance-perfect bot collected 0 of 23 on
+      // level 13 until the timer killed the level, lives untouched). Targets
+      // keep the generous magnetic suction radius; wrong-colored objects now
+      // only damage on contact with their drawn body (radius + 6px grace).
+      var isTarget = (obj.color === G.level.targetColor);
+      var triggerR = isTarget ? (effectiveSuction + obj.size) : (obj.size + 6);
+      if (dist < triggerR) {
         if (isTarget) {
           // Start suction
           obj.state = 'suctioned';
@@ -1424,7 +1466,9 @@ function drawObjects(ctx) {
     ctx.globalAlpha = obj.opacity;
     ctx.translate(obj.x, obj.y);
     ctx.scale(obj.scale, obj.scale);
-    var s = obj.size * 20; // pixel size
+    var s = obj.size * 2; // pixel size (FIX(P0): was *20 — objects drew at
+                          // 220-380px across, half the arena width; now the
+                          // drawn body matches the collision radius)
     var color = GAME_COLORS[obj.color] || '#ffffff';
     draw3DObject(ctx, obj.type, s, color, obj.rotation);
     ctx.restore();

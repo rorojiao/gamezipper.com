@@ -332,30 +332,45 @@ function generatePuzzle(size,seed){
   var result=tryGenerate(size,rng);
   if(result)return result;
  }
- return tryGenerate(size,makeRng(42));
+ // P0 fix companion: crossing-free MSTs are harder to hit, so widen the deterministic
+ // last-resort chain instead of betting everything on seed 42 (a lone failure sent the
+ // game into the endless "Retrying..." loop).
+ for(var fs2=42;fs2<72;fs2++){
+  var r2=tryGenerate(size,makeRng(fs2));
+  if(r2)return r2;
+ }
+ return null;
 }
 
 function tryGenerate(size,rng){
- // Place islands
+ // P0 fix 2026-08-25 (part 3): random free placement can NEVER yield a crossing-free
+ // spanning tree (verified 0/8 layouts by exhaustive subset search) — sparse aligned
+ // pairs force Kruskal onto long edges that cross each other, so ~79% of puzzles were
+ // unwinnable and most other layouts failed generation outright. Grow a connected blob
+ // on the coarse lattice (every 2nd row/col) instead: adjacent lattice sites sit exactly
+ // 2 apart, never block each other, and unit lattice edges cannot cross, so a
+ // crossing-free MST exists by construction.
  var grid=[];
  for(var r=0;r<size;r++){grid[r]=[];for(var c=0;c<size;c++)grid[r][c]=0;}
  var islands=[];
- var targetCount=Math.max(5,Math.round(size*1.2+rng()*size*0.5));
- var candidates=[];
- for(var r=0;r<size;r++)for(var c=0;c<size;c++)candidates.push([r,c]);
- shuffle(candidates,rng);
-
- for(var ci=0;ci<candidates.length&&islands.length<targetCount;ci++){
-  var cr=candidates[ci][0],cc=candidates[ci][1];
-  var tooClose=false;
-  for(var ii=0;ii<islands.length;ii++){
-   if(Math.abs(cr-islands[ii][0])+Math.abs(cc-islands[ii][1])<2){tooClose=true;break}
+ var L=Math.floor((size-1)/2)+1;
+ var targetCount=Math.min(L*L,Math.max(4,Math.round(L*L*0.55+rng()*L*L*0.25)));
+ var start=[Math.floor(rng()*L),Math.floor(rng()*L)];
+ var inS={};inS[start[0]+','+start[1]]=1;
+ var blob=[start];
+ while(blob.length<targetCount){
+  var frontier=[];
+  for(var b=0;b<blob.length;b++){
+   var nbs=[[blob[b][0]-1,blob[b][1]],[blob[b][0]+1,blob[b][1]],[blob[b][0],blob[b][1]-1],[blob[b][0],blob[b][1]+1]];
+   for(var x=0;x<4;x++){var q=nbs[x];if(q[0]>=0&&q[0]<L&&q[1]>=0&&q[1]<L&&!inS[q[0]+','+q[1]])frontier.push(q)}
   }
-  if(tooClose)continue;
-  islands.push([cr,cc]);
-  grid[cr][cc]=1;
+  if(!frontier.length)break;
+  var pick=frontier[Math.floor(rng()*frontier.length)];
+  inS[pick[0]+','+pick[1]]=1;blob.push(pick);
  }
- if(islands.length<4)return null;
+ if(blob.length<4)return null;
+ for(var b2=0;b2<blob.length;b2++){var ir=blob[b2][0]*2,ic=blob[b2][1]*2;islands.push([ir,ic]);grid[ir][ic]=1}
+ islands.sort(function(a,b){return a[0]-b[0]||a[1]-b[1]});
 
  // Find all possible edges (no island blocking)
  var possibleEdges=[];
@@ -388,10 +403,22 @@ function tryGenerate(size,rng){
  }
 
  possibleEdges.sort(function(a,b){return a[2]-b[2]});
+ // P0 fix 2026-08-25: the old loop united first and never checked geometry — 79% of
+ // generated puzzles (130/165 sampled seeds incl. both tutorial seeds and the daily
+ // seed) carried two REQUIRED edges that cross each other. wouldCross() blocks the
+ // second one at input time, so the intended solution was unplaceable and the puzzle
+ // permanently unwinnable. Skip crossing candidates BEFORE uniting so union-find stays
+ // consistent with the edge set we actually keep.
  var mstEdges=[];
  for(var ei=0;ei<possibleEdges.length;ei++){
-  if(unite(possibleEdges[ei][0],possibleEdges[ei][1]))
-   mstEdges.push([possibleEdges[ei][0],possibleEdges[ei][1]]);
+  var ei0=possibleEdges[ei][0],ei1=possibleEdges[ei][1];
+  if(find(ei0)===find(ei1))continue;
+  var crossesMst=false;
+  for(var mk=0;mk<mstEdges.length;mk++){
+   if(edgesCross(islands[ei0],islands[ei1],islands[mstEdges[mk][0]],islands[mstEdges[mk][1]])){crossesMst=true;break}
+  }
+  if(crossesMst)continue;
+  if(unite(ei0,ei1))mstEdges.push([ei0,ei1]);
  }
  if(mstEdges.length<islands.length-1)return null;
 
@@ -483,10 +510,20 @@ function islandCurCount(idx){
 function findEdgeAt(mx,my){
  if(!G.puzzle)return null;
  var isl=G.puzzle.islands;
+ // P2 fix 2026-08-25: the generator blocks pairs with an island between them, but this
+ // hit-test never did — clicking a long row/column segment toggled a bridge that ran
+ // THROUGH the middle island (illegal in hashiwokakero and invisible in the intended
+ // puzzle). Skip blocked pairs exactly like tryGenerate does.
+ var occ={};
+ for(var k=0;k<isl.length;k++)occ[isl[k][0]+','+isl[k][1]]=1;
  for(var i=0;i<isl.length;i++){
   for(var j=i+1;j<isl.length;j++){
    var ri=isl[i][0],ci=isl[i][1],rj=isl[j][0],cj=isl[j][1];
    if(ri!==rj&&ci!==cj)continue;
+   var blocked=false;
+   if(ri===rj){var mnC=Math.min(ci,cj),mxC=Math.max(ci,cj);for(var c2=mnC+1;c2<mxC;c2++)if(occ[ri+','+c2]){blocked=true;break}}
+   else{var mnR=Math.min(ri,rj),mxR=Math.max(ri,rj);for(var r2=mnR+1;r2<mxR;r2++)if(occ[r2+','+ci]){blocked=true;break}}
+   if(blocked)continue;
    var p1=cellToPx(ri,ci),p2=cellToPx(rj,cj);
    if(ptSegDist(mx,my,p1[0],p1[1],p2[0],p2[1])<G.cellSize*0.35)return[i,j];
   }
@@ -654,9 +691,9 @@ function startTimer(){
 }
 
 /* ===== GAME LIFECYCLE ===== */
-window.startGame=function(diff,seed){
+window.startGame=function(diff,seed,isDaily){
  initAudio();cleanupGame();
- G.currentDiff=diff;G.isDaily=!seed;
+ G.currentDiff=diff;G.isDaily=!!isDaily;
  var actualSeed=seed||Date.now();
  G.puzzle=generatePuzzle(diff,actualSeed);
  if(!G.puzzle){showHintBubble('Retrying...');setTimeout(function(){startGame(diff,Date.now())},100);return}
@@ -674,7 +711,11 @@ window.startGame=function(diff,seed){
  G.animFrame=requestAnimationFrame(renderLoop);
 };
 
-window.startDaily=function(){startGame(G.currentDiff||7,dailySeed())};
+// P2 fix 2026-08-25: isDaily used to be `!seed` — inverted. Daily (which PASSES a seed)
+// flagged false, and every regular game flagged true, so after ANY regular win
+// "Next Puzzle" reloaded the same fixed dailySeed()+1 board for everyone all day.
+// The flag now comes from the caller.
+window.startDaily=function(){startGame(G.currentDiff||7,dailySeed(),true)};
 
 function setupCanvas(){
  var canvas=$('gameCanvas');
@@ -920,8 +961,11 @@ document.addEventListener('keydown',function(e){
  if(e.key==='z'&&(e.ctrlKey||e.metaKey)){e.preventDefault();doUndo()}
  else if(e.key==='y'&&(e.ctrlKey||e.metaKey)){e.preventDefault();doRedo()}
  else if(e.key==='h'||e.key==='H'){doHint()}
- else if(e.key==='n'||e.key==='N'){generateNewPuzzle()}
- else if(e.key==='Escape'){if(G.screen==='playing')backToMenu()}
+ // P2 fix 2026-08-25: 'n' called generateNewPuzzle() and Escape called backToMenu() —
+ // neither function ever existed, and G.screen is never assigned, so both keys just
+ // threw ReferenceError. Wire them to the real lifecycle functions instead.
+ else if(e.key==='n'||e.key==='N'){if(G.puzzle&&!G.won)startGame(G.currentDiff,Date.now())}
+ else if(e.key==='Escape'){if(G.puzzle&&!G.won)goBackFromGame()}
 });
 
 /* ===== INIT ===== */

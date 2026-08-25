@@ -116,7 +116,7 @@ check('Has semantic structure', html.includes('<h1') || html.includes('gz-sr-onl
 console.log('\n10. Code Quality:');
 check('No console.log in production code', !/console\.log\(/.test(html.replace(/<script[^>]*>/g, '').replace(/\/\/.*console/g, '')));
 check('No TODO comments', !/TODO|FIXME|HACK/.test(html));
-check('Escaped quotes in JSON-LD', !html.includes('{\"@context\":\"https://schema.org\"')); // should be escaped properly
+check('Escaped quotes in JSON-LD', !html.includes('\\"@context\\":\\"https://schema.org\\"')); // JSON-LD must not contain backslash-escaped quotes
 
 // 11. Content section
 console.log('\n11. Content Section:');

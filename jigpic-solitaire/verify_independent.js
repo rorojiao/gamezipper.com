@@ -1,6 +1,6 @@
 // Independent Node.js BFS verification for Jigpic Solitaire
 const fs = require('fs');
-const levels = JSON.parse(fs.readFileSync('/home/msdn/gamezipper.com/jigpic-solitaire/levels.json', 'utf8'));
+const levels = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8'));
 
 function minSwapsCycle(arr) {
     const n = arr.length;

@@ -13,7 +13,7 @@ function check(name, cond, detail) {
     else { fail++; console.log('  ✗ ' + name + (detail ? ' — ' + detail : '')); }
 }
 
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 
 console.log('=== Mid-Loop QA Checklist ===\n');
 
@@ -39,7 +39,7 @@ console.log('\nJSON-LD:');
 check('VideoGame schema', html.includes('"@type":"VideoGame"'));
 check('FAQPage schema', html.includes('"@type":"FAQPage"'));
 check('BreadcrumbList schema', html.includes('"@type":"BreadcrumbList"'));
-check('aggregateRating', html.includes('"aggregateRating"'));
+check('no fake aggregateRating', !/"aggregateRating"/.test(html) || !/"ratingValue"/.test(html));
 
 console.log('\nGame Systems:');
 check('LEVELS array defined', html.includes('var LEVELS = ['));
@@ -74,8 +74,8 @@ check('monetag-manager.js', html.includes('/monetag-manager.js'));
 check('rAF guard', html.includes('_origRAF'));
 
 console.log('\nAssets:');
-check('icon.png exists', fs.existsSync('icon.png'));
-check('og-image.jpg exists', fs.existsSync('og-image.jpg'));
+check('icon.png exists', fs.existsSync(path.join(__dirname, 'icon.png')));
+check('og-image.jpg exists', fs.existsSync(path.join(__dirname, 'og-image.jpg')));
 check('favicon.svg ref', html.includes('href="/favicon.svg"'));
 
 console.log('\n=== QA RESULT: ' + pass + ' passed, ' + fail + ' failed ===');

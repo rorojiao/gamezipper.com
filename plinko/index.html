@@ -255,7 +255,12 @@ var score=0,target=100,ballsRemaining=0,totalBalls=0;
 var stars=0;
 var rafId=null,lastTime=0;
 var ball=null,pegX=[],pegY=[],pegs=[],slots=[];
-var spacingX,spacingY,pegRadius=8,ballRadius=12;
+/* FIX(ball-size-vs-peg-density, P1): ball diameter 24px exceeds the peg gap on dense boards
+(spacingX-2*pegRadius = 19.3px for c=15) — every non-edge drop landed on the top peg row as
+on a solid shelf and could never funnel down (rattled in V-pockets at ~0.01px/frame; only
+wall-edge drops were playable). Ball radius 12->8 (16px < 19.3px gap) restores real plinko
+funneling on every board density. */
+var spacingX,spacingY,pegRadius=8,ballRadius=8;
 var gravity=0.35,bounce=0.55,friction=0.99;
 var levelComplete=false,dropReady=true,dropX=null;
 var particles=[];
@@ -487,10 +492,25 @@ var nx=dx/dist;
 var ny=dy/dist;
 var dv=ball.vx*nx+ball.vy*ny;
 if(dv<0){
+/* FIX(peg-apex-trap, P1): two stacked problems for a ball landing on/near a peg apex:
+(1) it bounced in a stable limit cycle (identical x/y every frame, bounces++ ~60/s forever)
+— never reached a slot, dropReady stayed false, level soft-locked (repro: L18 drop near
+x=300: ball pinned at (281.87, 69.40) for 5000+ frames);
+(2) dense boards (c>=15) have peg gaps of spacingX-2*pegRadius = 19.3px < ball diameter
+24px, so the top peg row is a solid shelf — the ball random-walked along it at ~0.01px/frame.
+Apex hits (near-vertical normal) now ROLL OFF instead of bouncing: vertical energy converts
+to horizontal travel (direction of current drift, random if still), letting the ball funnel
+row to row like real plinko. Regular side hits keep the original bounce. */
+if(ny<-0.85&&Math.abs(nx)<0.35){
+ball.vy=Math.abs(ball.vy)*0.2;
+ball.vx+=(ball.vx>0.05?1.2:ball.vx<-0.05?-1.2:(Math.random()<0.5?-1.2:1.2));
+}else{
 ball.vx-=2*dv*nx*bounce;
 ball.vy-=2*dv*ny*bounce;
 ball.x=p.x+nx*(ball.r+p.r+1);
 ball.y=p.y+ny*(ball.r+p.r+1);
+ball.vx+=(Math.random()-0.5)*0.3;
+}
 playTone(300+Math.random()*200,0.08,'sine',0.15*Math.min(1,Math.abs(dv)/10));
 ball.bounces++;
 spawnParticles(ball.x,ball.y,5);

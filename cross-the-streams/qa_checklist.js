@@ -4,7 +4,7 @@
  */
 const fs = require('fs');
 
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 let errors = [];
 let checks = 0;
 
@@ -91,8 +91,8 @@ check('no placeholder', !html.includes('PLACEHOLDER'));
 
 // 9. File sizes
 console.log('\n--- File Sizes ---');
-const iconStat = fs.statSync('icon.png');
-const ogStat = fs.statSync('og-image.jpg');
+const iconStat = fs.statSync(__dirname + '/icon.png');
+const ogStat = fs.statSync(__dirname + '/og-image.jpg');
 check('icon.png exists and >1KB', iconStat.size > 1024);
 check('og-image.jpg exists and >5KB', ogStat.size > 5 * 1024);
 check('icon is 512x512', iconStat.size > 5000); // heuristic

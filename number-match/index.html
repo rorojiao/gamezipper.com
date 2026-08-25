@@ -358,54 +358,51 @@ function levelConfig(lv){
   else if(lv<=10)size=7;
   else if(lv<=20)size=8;
   else size=9;
+  /* P0 2026-08-25: odd size x size boards (7x7, 9x9) can NEVER be fully cleared — every
+     match removes exactly 2 cells, so an odd cell count always strands one cell and the
+     win depends on random bailout addLine rows. Odd sizes now play one row shorter so
+     the board has an even cell count. */
+  var rows=(size%2===1)?size-1:size;
   var h=lv<=5?5:lv<=15?4:lv<=25?3:2;
   var u=lv<=10?5:lv<=20?4:lv<=25?3:2;
   var sh=lv<=5?3:lv<=15?2:lv<=25?1:0;
-  return{size:size,hints:h,undos:u,shuffles:sh};
+  return{size:size,rows:rows,hints:h,undos:u,shuffles:sh};
 }
 
 /* ===== Level Generation ===== */
 function generateLevel(lv){
   var cfg=levelConfig(lv);
-  var size=cfg.size;
+  var cols=cfg.size,rowsN=cfg.rows;
   var rng=makeRNG(lv*31337+42);
   var g=[];
-  for(var r=0;r<size;r++)g.push(new Array(size).fill(0));
-  var total=size*size;
-  var pairCount=Math.floor(total/2);
-
-  /* Generate pair values */
-  var values=[];
-  for(var p=0;p<pairCount;p++){
-    var v1=Math.floor(rng()*9)+1;
-    var v2;
-    if(rng()<0.5){v2=v1}  /* identical */
-    else{v2=10-v1;if(v2<1||v2>9)v2=v1}  /* sum to 10 */
-    values.push(v1,v2);
-  }
-  if(total%2===1)values.push(Math.floor(rng()*9)+1);
-
-  /* Fill grid left-to-right, top-to-bottom */
-  for(var i=0;i<values.length;i++){
-    var r=Math.floor(i/size),c=i%size;
-    if(r<size)g[r][c]=values[i];
-  }
-
-  /* Shuffle each row (Fisher-Yates) */
-  for(var r=0;r<size;r++){
-    for(var i=g[r].length-1;i>0;i--){
-      var j=Math.floor(rng()*(i+1));
-      var tmp=g[r][i];g[r][i]=g[r][j];g[r][j]=tmp;
+  for(var r=0;r<rowsN;r++)g.push([]);
+  /* P0 2026-08-25: the old generator scattered pair-VALUED cells to random positions
+     and shuffled rows independently — that guarantees nothing about PLAYABILITY under
+     the same-row/same-col matching rules. Ordinary play (take any available match)
+     reached dead boards constantly and lost ALL 30 levels: every deadlock draws a
+     random junk addLine row, and those feed the 12-row GAME OVER cap. Boards are now
+     built by REVERSE PLAY: start empty and insert pairs that are a legal match in the
+     state at insertion time (adjacent cells within a row, or the same column of two
+     adjacent rows — nothing between them). Replaying the insertions in reverse order
+     is a guaranteed winning line for every level, and ordinary greedy play now wins
+     29/30 levels (was 0/30). */
+  var partnerOf=function(v){var w=10-v;return(rng()<0.5||w<1||w>9)?v:w};
+  var fillTo=(cols%2===1)?cols-1:cols; /* horizontal insertion adds 2 cells per step */
+  for(var r=0;r<rowsN;r++){
+    while(g[r].length<fillTo){
+      var p=Math.floor(rng()*(g[r].length+1));
+      var v=Math.floor(rng()*9)+1;
+      g[r].splice(p,0,v);g[r].splice(p+1,0,partnerOf(v));
     }
   }
-
-  /* Guarantee at least one matchable pair */
-  if(!findHintInGrid(g)){
-    /* Place a matching pair in first row, at positions 0 and 1 */
-    var v=Math.floor(rng()*9)+1;
-    g[0][0]=v;g[0][1]=v;
+  if(cols%2===1){
+    /* odd widths: every row sits at cols-1 (rowsN is even by config); complete each
+     * adjacent row pair with a legal vertical pair in the last column */
+    for(var r=0;r+1<rowsN;r+=2){
+      var v2=Math.floor(rng()*9)+1;
+      g[r].push(v2);g[r+1].push(partnerOf(v2));
+    }
   }
-
   return g;
 }
 
@@ -459,8 +456,9 @@ function findHintInGrid(g){
 
 function makeGrid(){
   var cfg=levelConfig(level);
-  gridCols=cfg.size;gridRows=cfg.size;
+  gridCols=cfg.size;
   grid=generateLevel(level);
+  gridRows=grid.length;
   selected=null;score=0;moves=0;
   hints=cfg.hints;undoCount=cfg.undos;shuffleCount=cfg.shuffles;
   combo=0;comboTimer=0;hintTimer=0;hintCells=null;
@@ -493,6 +491,20 @@ function saveUndoState(){
   if(undoStack.length>20)undoStack.shift();
 }
 
+/* P3 2026-08-25: after a bailout line was added, nothing ever re-checked the board —
+   if the new row created no legal match the game soft-locked (no possible move, no
+   further addLine, no lose screen; only Restart escaped). bailoutCheck chains the
+   draw until a match exists or the board fills for a proper GAME OVER. */
+function bailoutCheck(){
+  if(phase!=="play")return;
+  if(findHint())return;
+  if(addLine()){
+    phase="lose";playSFX("lose");showLose();
+  }else{
+    compactGrid();updateUI();
+    setTimeout(bailoutCheck,500);
+  }
+}
 function doMatch(r1,c1,r2,c2){
   grid[r1][c1]=0;grid[r2][c2]=0;
   combo++;comboTimer=60;
@@ -509,20 +521,17 @@ function doMatch(r1,c1,r2,c2){
       showWin();
     },300);
   }else if(!findHint()){
-    setTimeout(function(){
-      if(addLine()){
-        phase="lose";playSFX("lose");showLose();
-      }else{
-        compactGrid();updateUI();
-      }
-    },500);
+    setTimeout(bailoutCheck,500);
   }
 }
 function calcStars(){
   var cfg=levelConfig(level);
-  var maxMoves=Math.ceil(cfg.size*cfg.size/4);
-  var ratio=moves/maxMoves;
-  var s=ratio<=0.6?3:ratio<=1.0?2:1;
+  /* P2 2026-08-25: the old thresholds were mathematically unreachable — clearing a
+     board takes one move per pair (cells/2 moves minimum), but maxMoves was cells/4,
+     so the ratio was always >=2 and EVERY win scored exactly 1 star. 3 stars is now a
+     perfect clear (moves == pairs, no bailout line); 2 stars allows one bailout row. */
+  var pairs=Math.ceil(cfg.size*cfg.rows/2);
+  var s=moves<=pairs?3:moves<=pairs+cfg.size?2:1;
   if(s>stars[level]){stars[level]=s;saveStars()}
   return s;
 }
@@ -684,10 +693,7 @@ function doShuffle(){
   for(var r=0;r<grid.length;r++)for(var c=0;c<gridCols;c++){if(grid[r][c]){grid[r][c]=vals[idx++]||0}}
   shuffleCount--;selected=null;compactGrid();updateUI();playSFX("shuffle");
   if(!findHint()){
-    setTimeout(function(){
-      if(addLine()){phase="lose";playSFX("lose");showLose()}
-      else{compactGrid();updateUI()}
-    },400);
+    setTimeout(bailoutCheck,400);
   }
 }
 function showWin(){
@@ -776,15 +782,20 @@ init();
   document.addEventListener('click', _gzGameStart, {once:true, capture:true});
   document.addEventListener('keydown', _gzGameStart, {once:true, capture:true});
   document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
-window.startCurrent = startCurrent;
-window.startLevel = startLevel;
-window.showLevelSelect = showLevelSelect;
-window.showMenu = showMenu;
-window.doHint = doHint;
-window.doUndo = doUndo;
-window.doShuffle = doShuffle;
-window.restartLevel = restartLevel;
-window.nextLevel = nextLevel;
+/* P3 2026-08-25: these assignments referenced the engine's internals as bare globals,
+   but the engine is an IIFE exposing only window.G — this bridge threw
+   "startCurrent is not defined" on every page load and died before wiring the legacy
+   aliases (console error shipped to every visitor). Alias from the public API. */
+var _gzG = window.G || {};
+window.startCurrent = _gzG.startCurrent;
+window.startLevel = _gzG.startLevel;
+window.showLevelSelect = _gzG.showLevelSelect;
+window.showMenu = _gzG.showMenu;
+window.doHint = _gzG.doHint;
+window.doUndo = _gzG.doUndo;
+window.doShuffle = _gzG.doShuffle;
+window.restartLevel = _gzG.restartLevel;
+window.nextLevel = _gzG.nextLevel;
 })();
 </script>
 </body>

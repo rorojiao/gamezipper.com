@@ -314,41 +314,50 @@ function playSound(type) {
   } catch(e) {}
 }
 
+/* FIX(unwinnable-geometry 2026-08-25): 15 levels (L5,8,10,12,13,14,16,18,21,24,25,26,28,29,30) shipped
+   with vikings riding pieces whose x-interval cannot overlap the open goal interval
+   (300,500) — or vikings placed exactly ON a piece edge (unattached) — or (L5) three
+   vikings sharing ONE piece where only the first can ever be rescued. The engine gives pieces
+   no horizontal motion (vx=0, cuts only shrink a piece's x-extent, wall bounce never engages
+   for interior pieces), and rescue requires a piece CARRYING the viking to overlap the goal,
+   so those vikings could only fall off the bottom: every such level was a forced loss.
+   Fix: nudge piece bounds / viking spots by 10-20px so every viking rides its own piece that
+   strictly overlaps the goal — consistent with the other 19 levels (zero-cut auto-wins). */
 const LEVELS = [
   { name: "First Steps", ice: [{x:350,y:150,w:100,h:80,type:'ice'}], vikings: [{x:400,y:190}], goal:{x:300,y:520,w:200,h:60}, par:1, max:5 },
   { name: "Simple Drop", ice: [{x:320,y:120,w:160,h:70,type:'ice'}], vikings: [{x:400,y:155}], goal:{x:300,y:520,w:200,h:60}, par:1, max:6 },
   { name: "Tilted", ice: [{x:280,y:130,w:90,h:100,type:'ice'},{x:430,y:130,w:90,h:100,type:'ice'}], vikings: [{x:325,y:180},{x:475,y:180}], goal:{x:300,y:520,w:200,h:60}, par:2, max:7 },
   { name: "Stack", ice: [{x:350,y:100,w:100,h:60,type:'ice'},{x:350,y:170,w:100,h:60,type:'ice'}], vikings: [{x:400,y:130},{x:400,y:200}], goal:{x:300,y:520,w:200,h:60}, par:1, max:5 },
-  { name: "Wide", ice: [{x:200,y:140,w:400,h:60,type:'ice'}], vikings: [{x:300,y:170},{x:400,y:170},{x:500,y:170}], goal:{x:300,y:520,w:200,h:60}, par:2, max:6 },
+  { name: "Wide", ice: [{x:200,y:140,w:140,h:60,type:'ice'},{x:340,y:140,w:120,h:60,type:'ice'},{x:460,y:140,w:140,h:60,type:'ice'}], vikings: [{x:300,y:170},{x:400,y:170},{x:500,y:170}], goal:{x:300,y:520,w:200,h:60}, par:2, max:6 },
   { name: "Narrow Gap", ice: [{x:250,y:120,w:80,h:90,type:'ice'},{x:470,y:120,w:80,h:90,type:'ice'},{x:330,y:180,w:140,h:60,type:'ice'}], vikings: [{x:290,y:165},{x:510,y:165}], goal:{x:300,y:520,w:200,h:60}, par:2, max:6 },
 
   { name: "Double Trouble", ice: [{x:250,y:100,w:120,h:70,type:'ice'},{x:430,y:100,w:120,h:70,type:'ice'}], vikings: [{x:310,y:135},{x:490,y:135}], goal:{x:300,y:520,w:200,h:60}, par:2, max:7 },
-  { name: "Rock Barrier", ice: [{x:300,y:130,w:200,h:60,type:'ice'},{x:380,y:80,w:40,h:60,type:'rock'}], vikings: [{x:350,y:160},{x:450,y:160}], goal:{x:300,y:520,w:200,h:60}, par:2, max:6 },
+  { name: "Rock Barrier", ice: [{x:300,y:130,w:120,h:60,type:'ice'},{x:420,y:130,w:80,h:60,type:'ice'},{x:380,y:80,w:40,h:60,type:'rock'}], vikings: [{x:350,y:160},{x:450,y:160}], goal:{x:300,y:520,w:200,h:60}, par:2, max:6 },
   { name: "Pyramid", ice: [{x:350,y:80,w:100,h:50,type:'ice'},{x:275,y:140,w:100,h:50,type:'ice'},{x:425,y:140,w:100,h:50,type:'ice'},{x:200,y:200,w:100,h:50,type:'ice'},{x:500,y:200,w:100,h:50,type:'ice'}], vikings: [{x:400,y:105},{x:325,y:165},{x:475,y:165}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
-  { name: "Three Vikings", ice: [{x:200,y:120,w:400,h:50,type:'ice'},{x:300,y:180,w:200,h:50,type:'ice'}], vikings: [{x:250,y:145},{x:400,y:145},{x:500,y:205}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
+  { name: "Three Vikings", ice: [{x:200,y:120,w:150,h:50,type:'ice'},{x:350,y:120,w:250,h:50,type:'ice'},{x:300,y:180,w:220,h:50,type:'ice'}], vikings: [{x:250,y:145},{x:400,y:145},{x:500,y:205}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
   { name: "Wooden Plank", ice: [{x:250,y:100,w:300,h:40,type:'wood'},{x:250,y:150,w:300,h:40,type:'ice'}], vikings: [{x:350,y:170}], goal:{x:300,y:520,w:200,h:60}, par:2, max:6 },
-  { name: "Two Boats", ice: [{x:150,y:140,w:150,h:60,type:'ice'},{x:500,y:140,w:150,h:60,type:'ice'}], vikings: [{x:225,y:170},{x:575,y:170}], goal:{x:300,y:520,w:200,h:60}, par:2, max:7 },
+  { name: "Two Boats", ice: [{x:150,y:140,w:160,h:60,type:'ice'},{x:490,y:140,w:160,h:60,type:'ice'}], vikings: [{x:225,y:170},{x:575,y:170}], goal:{x:300,y:520,w:200,h:60}, par:2, max:7 },
 
-  { name: "Rock Maze", ice: [{x:200,y:100,w:100,h:80,type:'ice'},{x:400,y:100,w:100,h:80,type:'ice'},{x:300,y:160,w:100,h:60,type:'rock'},{x:300,y:230,w:100,h:50,type:'ice'}], vikings: [{x:250,y:140},{x:450,y:140},{x:350,y:255}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
-  { name: "Four Friends", ice: [{x:180,y:90,w:100,h:60,type:'ice'},{x:320,y:90,w:100,h:60,type:'ice'},{x:460,y:90,w:100,h:60,type:'ice'},{x:250,y:160,w:100,h:60,type:'ice'},{x:390,y:160,w:100,h:60,type:'ice'}], vikings: [{x:230,y:120},{x:370,y:120},{x:510,y:120},{x:300,y:190}], goal:{x:300,y:520,w:200,h:60}, par:4, max:10 },
+  { name: "Rock Maze", ice: [{x:200,y:100,w:110,h:80,type:'ice'},{x:400,y:100,w:100,h:80,type:'ice'},{x:300,y:160,w:100,h:60,type:'rock'},{x:300,y:230,w:100,h:50,type:'ice'}], vikings: [{x:250,y:140},{x:450,y:140},{x:350,y:255}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
+  { name: "Four Friends", ice: [{x:180,y:90,w:140,h:60,type:'ice'},{x:320,y:90,w:100,h:60,type:'ice'},{x:460,y:90,w:100,h:60,type:'ice'},{x:250,y:160,w:100,h:60,type:'ice'},{x:390,y:160,w:100,h:60,type:'ice'}], vikings: [{x:230,y:120},{x:370,y:120},{x:510,y:120},{x:300,y:190}], goal:{x:300,y:520,w:200,h:60}, par:4, max:10 },
   { name: "Heavy Rock", ice: [{x:300,y:100,w:200,h:50,type:'ice'},{x:250,y:160,w:80,h:80,type:'rock'},{x:470,y:160,w:80,h:80,type:'rock'},{x:300,y:160,w:80,h:80,type:'ice'}], vikings: [{x:340,y:135},{x:340,y:200}], goal:{x:300,y:520,w:200,h:60}, par:2, max:6 },
-  { name: "Bridge", ice: [{x:200,y:120,w:400,h:40,type:'ice'},{x:300,y:170,w:200,h:40,type:'wood'},{x:200,y:220,w:100,h:60,type:'ice'},{x:500,y:220,w:100,h:60,type:'ice'}], vikings: [{x:250,y:145},{x:550,y:250},{x:250,y:250}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
+  { name: "Bridge", ice: [{x:200,y:120,w:400,h:40,type:'ice'},{x:300,y:170,w:200,h:40,type:'wood'},{x:200,y:220,w:110,h:60,type:'ice'},{x:490,y:220,w:110,h:60,type:'ice'}], vikings: [{x:250,y:145},{x:550,y:250},{x:250,y:250}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
   { name: "Step Down", ice: [{x:250,y:80,w:120,h:50,type:'ice'},{x:430,y:130,w:120,h:50,type:'ice'},{x:250,y:180,w:120,h:50,type:'ice'}], vikings: [{x:310,y:105},{x:490,y:155},{x:310,y:205}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
-  { name: "Island", ice: [{x:300,y:100,w:200,h:50,type:'ice'},{x:250,y:160,w:60,h:100,type:'rock'},{x:490,y:160,w:60,h:100,type:'rock'},{x:320,y:160,w:60,h:80,type:'ice'},{x:420,y:160,w:60,h:80,type:'ice'}], vikings: [{x:350,y:135},{x:450,y:135}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
+  { name: "Island", ice: [{x:300,y:100,w:120,h:50,type:'ice'},{x:420,y:100,w:80,h:50,type:'ice'},{x:250,y:160,w:60,h:100,type:'rock'},{x:490,y:160,w:60,h:100,type:'rock'},{x:320,y:160,w:60,h:80,type:'ice'},{x:420,y:160,w:60,h:80,type:'ice'}], vikings: [{x:350,y:135},{x:450,y:135}], goal:{x:300,y:520,w:200,h:60}, par:3, max:8 },
 
   { name: "Falling Rocks", ice: [{x:250,y:80,w:80,h:60,type:'ice'},{x:470,y:80,w:80,h:60,type:'ice'},{x:250,y:150,w:80,h:60,type:'rock'},{x:470,y:150,w:80,h:60,type:'rock'},{x:300,y:220,w:200,h:40,type:'ice'}], vikings: [{x:290,y:110},{x:510,y:110},{x:400,y:240}], goal:{x:300,y:520,w:200,h:60}, par:4, max:10 },
   { name: "Pendulum", ice: [{x:350,y:60,w:100,h:40,type:'wood'},{x:300,y:110,w:80,h:80,type:'ice'},{x:420,y:110,w:80,h:80,type:'ice'}], vikings: [{x:340,y:150},{x:460,y:150}], goal:{x:300,y:520,w:200,h:60}, par:2, max:7 },
-  { name: "Five", ice: [{x:150,y:80,w:500,h:40,type:'ice'},{x:150,y:130,w:80,h:60,type:'ice'},{x:270,y:130,w:80,h:60,type:'ice'},{x:390,y:130,w:80,h:60,type:'ice'},{x:510,y:130,w:80,h:60,type:'ice'}], vikings: [{x:190,y:95},{x:310,y:95},{x:430,y:95},{x:550,y:95},{x:400,y:160}], goal:{x:300,y:520,w:200,h:60}, par:3, max:9 },
+  { name: "Five", ice: [{x:150,y:80,w:160,h:40,type:'ice'},{x:270,y:80,w:120,h:40,type:'ice'},{x:390,y:80,w:60,h:40,type:'ice'},{x:450,y:80,w:200,h:40,type:'ice'},{x:150,y:130,w:80,h:60,type:'ice'},{x:270,y:130,w:80,h:60,type:'ice'},{x:390,y:130,w:80,h:60,type:'ice'},{x:510,y:130,w:80,h:60,type:'ice'}], vikings: [{x:190,y:95},{x:310,y:95},{x:430,y:95},{x:480,y:95},{x:400,y:160}], goal:{x:300,y:520,w:200,h:60}, par:3, max:9 },
   { name: "Cave", ice: [{x:200,y:60,w:400,h:40,type:'ice'},{x:200,y:110,w:60,h:100,type:'rock'},{x:540,y:110,w:60,h:100,type:'rock'},{x:200,y:220,w:400,h:40,type:'ice'},{x:300,y:270,w:200,h:50,type:'ice'}], vikings: [{x:350,y:80},{x:350,y:295} ], goal:{x:300,y:520,w:200,h:60}, par:4, max:10 },
   { name: "Tower", ice: [{x:350,y:60,w:100,h:40,type:'ice'},{x:350,y:110,w:100,h:40,type:'ice'},{x:350,y:160,w:100,h:40,type:'ice'},{x:350,y:210,w:100,h:40,type:'ice'},{x:300,y:260,w:200,h:40,type:'ice'}], vikings: [{x:400,y:80},{x:400,y:130},{x:400,y:180},{x:400,y:230},{x:400,y:280}], goal:{x:300,y:520,w:200,h:60}, par:5, max:12 },
-  { name: "Complex", ice: [{x:200,y:80,w:100,h:50,type:'ice'},{x:500,y:80,w:100,h:50,type:'ice'},{x:300,y:140,w:200,h:40,type:'rock'},{x:250,y:190,w:120,h:50,type:'ice'},{x:430,y:190,w:120,h:50,type:'ice'},{x:200,y:250,w:100,h:50,type:'ice'},{x:500,y:250,w:100,h:50,type:'ice'}], vikings: [{x:250,y:105},{x:550,y:105},{x:310,y:215},{x:490,y:215},{x:250,y:275},{x:550,y:275}], goal:{x:300,y:520,w:200,h:60}, par:5, max:12 },
+  { name: "Complex", ice: [{x:200,y:80,w:110,h:50,type:'ice'},{x:490,y:80,w:110,h:50,type:'ice'},{x:300,y:140,w:200,h:40,type:'rock'},{x:250,y:190,w:120,h:50,type:'ice'},{x:430,y:190,w:120,h:50,type:'ice'},{x:200,y:250,w:110,h:50,type:'ice'},{x:490,y:250,w:110,h:50,type:'ice'}], vikings: [{x:250,y:105},{x:550,y:105},{x:310,y:215},{x:490,y:215},{x:250,y:275},{x:550,y:275}], goal:{x:300,y:520,w:200,h:60}, par:5, max:12 },
 
-  { name: "Expert 1", ice: [{x:200,y:60,w:60,h:80,type:'ice'},{x:280,y:60,w:60,h:80,type:'rock'},{x:360,y:60,w:60,h:80,type:'ice'},{x:440,y:60,w:60,h:80,type:'rock'},{x:520,y:60,w:60,h:80,type:'ice'},{x:240,y:150,w:320,h:40,type:'ice'},{x:280,y:200,w:240,h:40,type:'rock'},{x:300,y:250,w:200,h:50,type:'ice'}], vikings: [{x:230,y:100},{x:390,y:100},{x:550,y:100},{x:400,y:275}], goal:{x:300,y:520,w:200,h:60}, par:5, max:12 },
-  { name: "Expert 2", ice: [{x:150,y:60,w:500,h:30,type:'ice'},{x:150,y:100,w:80,h:60,type:'ice'},{x:570,y:100,w:80,h:60,type:'ice'},{x:270,y:100,w:60,h:60,type:'rock'},{x:470,y:100,w:60,h:60,type:'rock'},{x:340,y:100,w:120,h:60,type:'ice'},{x:250,y:170,w:300,h:40,type:'wood'},{x:300,y:220,w:200,h:50,type:'ice'}], vikings: [{x:190,y:130},{x:610,y:130},{x:400,y:245}], goal:{x:300,y:520,w:200,h:60}, par:5, max:12 },
+  { name: "Expert 1", ice: [{x:200,y:60,w:60,h:80,type:'ice'},{x:280,y:60,w:60,h:80,type:'rock'},{x:360,y:60,w:60,h:80,type:'ice'},{x:440,y:60,w:60,h:80,type:'rock'},{x:480,y:60,w:100,h:80,type:'ice'},{x:240,y:150,w:320,h:40,type:'ice'},{x:280,y:200,w:240,h:40,type:'rock'},{x:300,y:250,w:200,h:50,type:'ice'}], vikings: [{x:400,y:175},{x:390,y:100},{x:550,y:100},{x:400,y:275}], goal:{x:300,y:520,w:200,h:60}, par:5, max:12 },
+  { name: "Expert 2", ice: [{x:150,y:60,w:500,h:30,type:'ice'},{x:150,y:100,w:170,h:60,type:'ice'},{x:490,y:100,w:160,h:60,type:'ice'},{x:270,y:100,w:60,h:60,type:'rock'},{x:470,y:100,w:60,h:60,type:'rock'},{x:340,y:100,w:120,h:60,type:'ice'},{x:250,y:170,w:300,h:40,type:'wood'},{x:300,y:220,w:200,h:50,type:'ice'}], vikings: [{x:190,y:130},{x:610,y:130},{x:400,y:245}], goal:{x:300,y:520,w:200,h:60}, par:5, max:12 },
   { name: "Expert 3", ice: [{x:200,y:50,w:400,h:30,type:'ice'},{x:200,y:90,w:30,h:100,type:'ice'},{x:570,y:90,w:30,h:100,type:'ice'},{x:250,y:90,w:80,h:50,type:'rock'},{x:470,y:90,w:80,h:50,type:'rock'},{x:350,y:90,w:100,h:50,type:'ice'},{x:300,y:150,w:200,h:30,type:'wood'},{x:320,y:190,w:160,h:50,type:'ice'},{x:250,y:250,w:100,h:40,type:'ice'},{x:450,y:250,w:100,h:40,type:'ice'}], vikings: [{x:400,y:115},{x:350,y:215},{x:300,y:270},{x:500,y:270}], goal:{x:300,y:520,w:200,h:60}, par:6, max:14 },
-  { name: "Expert 4", ice: [{x:150,y:60,w:100,h:50,type:'ice'},{x:550,y:60,w:100,h:50,type:'ice'},{x:280,y:60,w:240,h:30,type:'rock'},{x:200,y:120,w:400,h:30,type:'ice'},{x:200,y:160,w:60,h:80,type:'rock'},{x:540,y:160,w:60,h:80,type:'rock'},{x:280,y:160,w:240,h:30,type:'ice'},{x:300,y:200,w:200,h:50,type:'ice'},{x:200,y:260,w:80,h:50,type:'ice'},{x:520,y:260,w:80,h:50,type:'ice'}], vikings: [{x:200,y:85},{x:600,y:85},{x:400,y:135},{x:400,y:225},{x:240,y:285},{x:560,y:285}], goal:{x:300,y:520,w:200,h:60}, par:6, max:14 },
-  { name: "Expert 5", ice: [{x:200,y:40,w:400,h:25,type:'ice'},{x:200,y:75,w:50,h:50,type:'ice'},{x:275,y:75,w:50,h:50,type:'rock'},{x:350,y:75,w:100,h:50,type:'ice'},{x:475,y:75,w:50,h:50,type:'rock'},{x:550,y:75,w:50,h:50,type:'ice'},{x:250,y:135,w:300,h:25,type:'ice'},{x:250,y:170,w:60,h:60,type:'ice'},{x:490,y:170,w:60,h:60,type:'ice'},{x:330,y:170,w:140,h:30,type:'rock'},{x:350,y:210,w:100,h:50,type:'ice'},{x:200,y:270,w:400,h:30,type:'wood'}], vikings: [{x:225,y:100},{x:575,y:100},{x:280,y:200},{x:520,y:200},{x:400,y:235}], goal:{x:300,y:520,w:200,h:60}, par:7, max:15 },
-  { name: "Final Challenge", ice: [{x:100,y:40,w:600,h:20,type:'ice'},{x:100,y:70,w:40,h:60,type:'ice'},{x:200,y:70,w:40,h:60,type:'rock'},{x:300,y:70,w:40,h:60,type:'ice'},{x:400,y:70,w:40,h:60,type:'rock'},{x:500,y:70,w:40,h:60,type:'ice'},{x:600,y:70,w:40,h:60,type:'ice'},{x:150,y:140,w:500,h:20,type:'ice'},{x:150,y:170,w:80,h:60,type:'ice'},{x:270,y:170,w:80,h:60,type:'rock'},{x:390,y:170,w:80,h:60,type:'ice'},{x:510,y:170,w:80,h:60,type:'rock'},{x:630,y:170,w:20,h:60,type:'ice'},{x:200,y:240,w:400,h:20,type:'ice'},{x:250,y:270,w:300,h:40,type:'ice'},{x:300,y:320,w:200,h:40,type:'ice'}], vikings: [{x:120,y:100},{x:320,y:100},{x:520,y:100},{x:720,y:100},{x:190,y:200},{x:430,y:200},{x:630,y:200},{x:400,y:290},{x:400,y:340}], goal:{x:300,y:520,w:200,h:60}, par:8, max:18 }
+  { name: "Expert 4", ice: [{x:150,y:60,w:170,h:50,type:'ice'},{x:480,y:60,w:170,h:50,type:'ice'},{x:280,y:60,w:240,h:30,type:'rock'},{x:200,y:120,w:400,h:30,type:'ice'},{x:200,y:160,w:60,h:80,type:'rock'},{x:540,y:160,w:60,h:80,type:'rock'},{x:280,y:160,w:240,h:30,type:'ice'},{x:300,y:200,w:200,h:50,type:'ice'},{x:200,y:260,w:110,h:50,type:'ice'},{x:490,y:260,w:110,h:50,type:'ice'}], vikings: [{x:200,y:85},{x:600,y:85},{x:400,y:135},{x:400,y:225},{x:240,y:285},{x:560,y:285}], goal:{x:300,y:520,w:200,h:60}, par:6, max:14 },
+  { name: "Expert 5", ice: [{x:200,y:40,w:400,h:25,type:'ice'},{x:200,y:75,w:50,h:50,type:'ice'},{x:275,y:75,w:50,h:50,type:'rock'},{x:350,y:75,w:100,h:50,type:'ice'},{x:475,y:75,w:50,h:50,type:'rock'},{x:490,y:75,w:110,h:50,type:'ice'},{x:250,y:135,w:300,h:25,type:'ice'},{x:250,y:170,w:60,h:60,type:'ice'},{x:490,y:170,w:60,h:60,type:'ice'},{x:330,y:170,w:140,h:30,type:'rock'},{x:350,y:210,w:100,h:50,type:'ice'},{x:200,y:270,w:400,h:30,type:'wood'}], vikings: [{x:400,y:100},{x:575,y:100},{x:280,y:200},{x:520,y:200},{x:400,y:235}], goal:{x:300,y:520,w:200,h:60}, par:7, max:15 },
+  { name: "Final Challenge", ice: [{x:100,y:40,w:600,h:20,type:'ice'},{x:100,y:70,w:40,h:60,type:'ice'},{x:200,y:70,w:40,h:60,type:'rock'},{x:300,y:70,w:40,h:60,type:'ice'},{x:400,y:70,w:40,h:60,type:'rock'},{x:490,y:70,w:50,h:60,type:'ice'},{x:440,y:70,w:50,h:60,type:'ice'},{x:150,y:140,w:500,h:20,type:'ice'},{x:150,y:170,w:80,h:60,type:'ice'},{x:270,y:170,w:80,h:60,type:'rock'},{x:390,y:170,w:80,h:60,type:'ice'},{x:510,y:170,w:80,h:60,type:'rock'},{x:450,y:170,w:150,h:60,type:'ice'},{x:200,y:240,w:400,h:20,type:'ice'},{x:250,y:270,w:300,h:40,type:'ice'},{x:300,y:320,w:200,h:40,type:'ice'}], vikings: [{x:400,y:150},{x:320,y:100},{x:520,y:100},{x:480,y:100},{x:400,y:250},{x:430,y:200},{x:480,y:200},{x:400,y:290},{x:400,y:340}], goal:{x:300,y:520,w:200,h:60}, par:8, max:18 }
 ];
 
 let state = {
@@ -429,17 +438,26 @@ function initLevel(lvlIdx) {
   startBGM();
 }
 
-function lineIntersectsRect(x1, y1, x2, y2, rx, ry, rw, rh) {
-  function lineSegs(xa, ya, xb, yb, xc, yc, xd, yd) {
-    const denom = (xb - xa) * (yd - yc) - (yb - ya) * (xd - xc);
-    if (Math.abs(denom) < 0.0001) return null;
-    const t = ((xa - xc) * (yd - yc) - (ya - yc) * (xd - xc)) / denom;
-    const u = ((xa - xc) * (yb - ya) - (ya - yc) * (xa - xb)) / denom;
-    if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
-      return { x: xa + t * (xb - xa), y: ya + t * (yb - ya) };
-    }
-    return null;
+/* FIX(lineSegs-scope 2026-08-25): lineSegs was declared INSIDE lineIntersectsRect, but
+   cutPiece() also calls it — a ReferenceError the moment a cut line actually intersected
+   a piece (masked until now because the sign bug made lineIntersectsRect always return
+   null before cutPiece reached the call). Hoisted to IIFE scope so both callers share it. */
+function lineSegs(xa, ya, xb, yb, xc, yc, xd, yd) {
+  const denom = (xb - xa) * (yd - yc) - (yb - ya) * (xd - xc);
+  if (Math.abs(denom) < 0.0001) return null;
+  /* FIX(lineSegs-sign 2026-08-25): t's numerator used cross(a-c, ...) instead of
+     cross(c-a, ...) — sign-flipped, so every REAL line/edge crossing produced t in [-1,0]
+     and was rejected; u's numerator additionally used (xa-xb) where (xb-xa) belongs.
+     Together: tryCut never registered a single cut — the game's core mechanic was 100%
+     dead (cuts always 0). Restored the textbook line-line intersection. */
+  const t = ((xc - xa) * (yd - yc) - (yc - ya) * (xd - xc)) / denom;
+  const u = ((xc - xa) * (yb - ya) - (yc - ya) * (xb - xa)) / denom;
+  if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+    return { x: xa + t * (xb - xa), y: ya + t * (yb - ya) };
   }
+  return null;
+}
+function lineIntersectsRect(x1, y1, x2, y2, rx, ry, rw, rh) {
   const edges = [
     [rx, ry, rx + rw, ry],
     [rx + rw, ry, rx + rw, ry + rh],
@@ -518,7 +536,15 @@ function cutPiece(piece, x1, y1, x2, y2) {
     unique.sort((a, b) => {
       const angA = Math.atan2(a.y - origin.y, a.x - origin.x);
       const angB = Math.atan2(b.y - origin.y, b.x - origin.x);
-      return angA - angB;
+      /* FIX(buildPoly-bowtie 2026-08-25): the origin point itself has angle 0 and can tie
+         with another point on the +x axis; stable sort then started the ring at the WRONG
+         point, producing a self-intersecting (bowtie) polygon whose shoelace area is 0 —
+         e.g. the right half of every vertical cut was silently discarded. Tie-break by
+         distance from origin so the ring starts at the origin. */
+      if (angA !== angB) return angA - angB;
+      const dA = (a.x - origin.x) * (a.x - origin.x) + (a.y - origin.y) * (a.y - origin.y);
+      const dB = (b.x - origin.x) * (b.x - origin.x) + (b.y - origin.y) * (b.y - origin.y);
+      return dA - dB;
     });
 
     let area = 0;
@@ -762,18 +788,18 @@ function tryCut() {
     if (result.length > 0) {
       cutSomething = true;
       result.forEach(np => {
-        if (p.viking) {
+        /* FIX(viking-clone 2026-08-25): the old code spawned a NEW viking object on every
+           sub-piece. The win check is state.vikings.every(v => v.rescued) over the ORIGINAL
+           objects — a clone getting rescued at the goal never set the original's flag, so
+           cutting a viking-carrying piece (the game's core mechanic; most levels have par>0
+           cuts) made the level a guaranteed loss. Fix: carry the SAME object onto whichever
+           sub-piece's bounds contain the viking. */
+        if (p.viking && !np.viking) {
           const vx = p.viking.x;
           const vy = p.viking.y;
-          const relX = (vx - p.x) / p.w;
-          const relY = (vy - p.y) / p.h;
-          np.viking = {
-            id: p.viking.id,
-            x: np.x + relX * np.w,
-            y: np.y + relY * np.h,
-            rescued: false,
-            fallSpeed: 0
-          };
+          if (vx >= np.x && vx <= np.x + np.w && vy >= np.y && vy <= np.y + np.h) {
+            np.viking = p.viking;
+          }
         }
         newPieces.push(np);
       });

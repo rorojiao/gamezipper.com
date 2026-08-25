@@ -15,12 +15,12 @@ function extractLevels_unused() {
 
 // Extract word set from index.html
 function extractWordSet() {
-    const html = fs.readFileSync('/home/msdn/gamezipper.com/anagram/index.html', 'utf8');
+    const html = fs.readFileSync(require('path').join(__dirname, 'index.html'), 'utf8');
 
     // R3 fix: WORD_SET is built at runtime via LEVELS.forEach — derive from LEVELS
     const wordSet = new Set();
     for (const lv of LEVELS) {
-      for (const w of (lv.w||[])) wordSet.add(w);
+      for (const w of (lv.words||lv.w||[])) wordSet.add(w);
     }
     console.log(`✅ Loaded ${wordSet.size} words from LEVELS (R3 fallback)`);
     return wordSet;

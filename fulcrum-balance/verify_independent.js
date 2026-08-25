@@ -1,7 +1,8 @@
 // Independent Node.js BFS solver for Fulcrum Balance levels
 // Extracts LEVELS from index.html and verifies all 30 levels are solvable
 const fs = require('fs');
-const html = fs.readFileSync('/home/msdn/gamezipper.com/fulcrum-balance/index.html', 'utf8');
+const path = require('path');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 // R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)
 const extractLevels=require('../.audit/gz-extract-levels.js');
 const LEVELS=extractLevels('fulcrum-balance');

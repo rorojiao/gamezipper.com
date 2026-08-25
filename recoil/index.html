@@ -487,18 +487,29 @@ function animatePlayerTo(tr,tc,cb){
 }
 
 function turretPhase(){
-  // All alive turrets fire a bullet toward player's row/col if aligned
+  // All alive turrets AIM at the player's row/col if aligned; they fire on the
+  // SECOND consecutive aligned turn (one-turn telegraph).
+  // FIX(2026-08-25): previously turrets fired INSTANTLY on any turn that ended in
+  // their row/column. A turret can only be destroyed by a shot fired from inside
+  // its own row/column (bullets travel in straight lines), and ending a turn in
+  // that line meant eating its bullet first — on wall-less boards (L15/L18/L24)
+  // every turret was therefore permanently unkillable and those levels were
+  // unwinnable (verified by exhaustive search). One turn of aiming grace breaks
+  // the deadlock: step into the line, the turret flashes, kill it next turn.
   var queued=[];
   enemies.forEach(function(e){
     if(e.alive&&e.type==='t'){
-      e.fireFlash=1;
       var dr=0,dc=0;
       if(e.r===player.r){ dc=player.c>e.c?1:-1; }
       else if(e.c===player.c){ dr=player.r>e.r?1:-1; }
       if(dr||dc){
-        bullets.push({r:e.r,c:e.c,dr:dr,dc:dc,alive:true,fromTurret:true,step:0});
-        queued.push(bullets[bullets.length-1]);
-      }
+        e.aim=(e.aim||0)+1;
+        e.fireFlash=1;
+        if(e.aim>=2){
+          bullets.push({r:e.r,c:e.c,dr:dr,dc:dc,alive:true,fromTurret:true,step:0});
+          queued.push(bullets[bullets.length-1]);
+        }
+      } else { e.aim=0; }
     }
   });
   if(queued.length>0){

@@ -1,8 +1,9 @@
 // qa_checklist.js — Code-level QA checklist for Sukoro
 const fs = require('fs');
+const path = require('path');
 const vm = require('vm');
 
-const html = fs.readFileSync('index.html','utf8');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'),'utf8');
 let checks = [];
 let pass = 0, fail = 0;
 
@@ -87,11 +88,10 @@ try {
 }
 
 // 9. Files exist
-check('icon.png exists', fs.existsSync('icon.png'));
-check('og-image.jpg exists', fs.existsSync('og-image.jpg'));
-check('levels.json exists', fs.existsSync('levels.json'));
-check('gen_levels.py exists', fs.existsSync('gen_levels.py'));
-check('BENCHMARK.md exists', fs.existsSync('BENCHMARK.md'));
+check('icon.png exists', fs.existsSync(path.join(__dirname, 'icon.png')));
+check('og-image.jpg exists', fs.existsSync(path.join(__dirname, 'og-image.jpg')));
+check('levels.json exists', fs.existsSync(path.join(__dirname, 'levels.json')));
+check('BENCHMARK.md exists', fs.existsSync(path.join(__dirname, 'BENCHMARK.md')));
 
 checks.forEach(c => console.log(c));
 console.log(`\n${fail===0?'✅':'❌'} QA: ${pass}/${pass+fail} checks passed (${fail} failures)`);

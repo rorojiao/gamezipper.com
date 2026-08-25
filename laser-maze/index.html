@@ -243,7 +243,7 @@ html,body{width:100%;height:100%;overflow-x:hidden;overscroll-behavior:none;touc
 
 /* ============================================================
    LASER MAZE — Neon Light Beam Puzzle
-   30 levels across 5 tiers
+   29 levels across 5 tiers
    ============================================================ */
 
 // Piece type constants
@@ -302,10 +302,14 @@ var LEVELS = [
     placeable: {3: 2, 4: 2}
   },
   {
-    name: 'Double Back', tier: 1, rows: 5, cols: 5, par: 2,
+    /* P2 2026-08-25: source row aimed straight at the target — board won with 0 pieces
+       (free 3 stars, "double back" never needed). Wall at (2,2) blocks the direct line so
+       the beam must route up over (or down under) and come back: min 3 pieces, par 3. */
+    name: 'Double Back', tier: 1, rows: 5, cols: 5, par: 3,
     fixed: [
       {r: 2, c: 0, type: P.SOURCE, dir: DIR.RIGHT},
-      {r: 2, c: 4, type: P.TARGET}
+      {r: 2, c: 4, type: P.TARGET},
+      {r: 2, c: 2, type: P.WALL}
     ],
     placeable: {3: 3, 4: 3, 6: 1}
   },
@@ -319,13 +323,17 @@ var LEVELS = [
     placeable: {3: 3, 4: 3}
   },
   {
-    name: 'Two Targets', tier: 1, rows: 5, cols: 5, par: 2,
+    /* P0 2026-08-25: UNWINNABLE as shipped — win requires BOTH targets hit, but a beam
+       terminates at the first target it enters, so 2 targets need 2 beams = source + 1
+       splitter; the tray had mirrors only. Progression hard-blocked at level 5 (unlock
+       gating needs stars[4]). Added a splitter to the tray; min 3 pieces, par 3. */
+    name: 'Two Targets', tier: 1, rows: 5, cols: 5, par: 3,
     fixed: [
       {r: 2, c: 0, type: P.SOURCE, dir: DIR.RIGHT},
       {r: 2, c: 4, type: P.TARGET},
       {r: 0, c: 2, type: P.TARGET}
     ],
-    placeable: {3: 3, 4: 3}
+    placeable: {5: 1, 3: 3, 4: 3}
   },
   {
     name: 'The Loop', tier: 1, rows: 5, cols: 5, par: 3,
@@ -340,7 +348,8 @@ var LEVELS = [
 
   // === TIER 2: Walls & More Targets (6x6) ===
   {
-    name: 'Obstacle Course', tier: 2, rows: 6, cols: 6, par: 2,
+    /* P2 2026-08-25: par 2 was tighter than the true minimum (3) — 3 stars unreachable. */
+    name: 'Obstacle Course', tier: 2, rows: 6, cols: 6, par: 3,
     fixed: [
       {r: 2, c: 0, type: P.SOURCE, dir: DIR.RIGHT},
       {r: 2, c: 5, type: P.TARGET},
@@ -370,14 +379,16 @@ var LEVELS = [
     placeable: {3: 4, 4: 4}
   },
   {
-    name: 'Triple Hit', tier: 2, rows: 6, cols: 6, par: 3,
+    /* P0 2026-08-25: UNWINNABLE as shipped — 3 targets need 3 beams (each beam stops at
+       its first target) = source + 2 splitters; tray had mirrors only. Block at level 10. */
+    name: 'Triple Hit', tier: 2, rows: 6, cols: 6, par: 4,
     fixed: [
       {r: 0, c: 0, type: P.SOURCE, dir: DIR.RIGHT},
       {r: 0, c: 5, type: P.TARGET},
       {r: 5, c: 5, type: P.TARGET},
       {r: 5, c: 0, type: P.TARGET}
     ],
-    placeable: {3: 4, 4: 4}
+    placeable: {5: 2, 3: 4, 4: 4}
   },
   {
     name: 'Wall Street', tier: 2, rows: 6, cols: 6, par: 3,
@@ -392,13 +403,17 @@ var LEVELS = [
     placeable: {3: 4, 4: 4}
   },
   {
-    name: 'Split Decision', tier: 2, rows: 6, cols: 6, par: 2,
+    /* P0 2026-08-25: UNWINNABLE even with its 1 splitter — the source fires DOWN col 0,
+       so a splitter there wastes its LEFT branch off the grid instantly: net beam count
+       stays 2 but one terminates off-board → max 1 target reachable. 2nd splitter added;
+       min 3 pieces, par 3. */
+    name: 'Split Decision', tier: 2, rows: 6, cols: 6, par: 3,
     fixed: [
       {r: 0, c: 0, type: P.SOURCE, dir: DIR.DOWN},
       {r: 5, c: 0, type: P.TARGET},
       {r: 0, c: 5, type: P.TARGET}
     ],
-    placeable: {5: 1, 3: 3, 4: 3}
+    placeable: {5: 2, 3: 3, 4: 3}
   },
 
   // === TIER 3: Splitters (7x7) ===
@@ -412,7 +427,8 @@ var LEVELS = [
     placeable: {5: 2, 3: 2, 4: 2}
   },
   {
-    name: 'Network', tier: 3, rows: 7, cols: 7, par: 3,
+    /* P2 2026-08-25: par 3 tighter than true minimum (4) — 3 stars unreachable. */
+    name: 'Network', tier: 3, rows: 7, cols: 7, par: 4,
     fixed: [
       {r: 3, c: 0, type: P.SOURCE, dir: DIR.RIGHT},
       {r: 0, c: 6, type: P.TARGET},
@@ -432,7 +448,11 @@ var LEVELS = [
     placeable: {5: 2, 3: 3, 4: 3, 6: 1}
   },
   {
-    name: 'The Hub', tier: 3, rows: 7, cols: 7, par: 3,
+    /* P0 2026-08-25: UNWINNABLE as shipped — 4 targets need 4 beams = source + 3
+       splitters; tray had 1. Even at 2 splitters the topology fails (both up-going
+       leaves compete for the one top target). 3 splitters + 4 mirrors solve it;
+       min 7 pieces, par 7. */
+    name: 'The Hub', tier: 3, rows: 7, cols: 7, par: 7,
     fixed: [
       {r: 3, c: 3, type: P.SOURCE, dir: DIR.UP},
       {r: 0, c: 3, type: P.TARGET},
@@ -440,7 +460,7 @@ var LEVELS = [
       {r: 3, c: 0, type: P.TARGET},
       {r: 3, c: 6, type: P.TARGET}
     ],
-    placeable: {5: 1, 3: 4, 4: 4}
+    placeable: {5: 3, 3: 3, 4: 4}
   },
   {
     name: 'Obstacle Field', tier: 3, rows: 7, cols: 7, par: 4,
@@ -455,6 +475,9 @@ var LEVELS = [
     placeable: {3: 4, 4: 4}
   },
   {
+    /* P0 2026-08-25: UNWINNABLE as shipped — 4 corner targets need 4 beams = source +
+       3 splitters; tray had 1. Block at level 18. Solver min 3 pieces (3 chained
+       splitters fan the beam out to all four corners). */
     name: 'Four Corners', tier: 3, rows: 7, cols: 7, par: 4,
     fixed: [
       {r: 3, c: 0, type: P.SOURCE, dir: DIR.RIGHT},
@@ -463,38 +486,53 @@ var LEVELS = [
       {r: 6, c: 0, type: P.TARGET},
       {r: 6, c: 6, type: P.TARGET}
     ],
-    placeable: {5: 1, 3: 4, 4: 4}
+    placeable: {5: 3, 3: 4, 4: 4}
   },
 
   // === TIER 4: Color Filters (7x7) ===
   {
+    /* P2 2026-08-25: target sat on the source row — beam passed straight through the
+       filter into it: 0-piece instant win. Target moved to (0,6) + wall at (3,5) so the
+       beam still demonstrates the filter pass-through but needs 2 mirrors; min 2, par 2. */
     name: 'Color Theory', tier: 4, rows: 7, cols: 7, par: 2,
     fixed: [
       {r: 3, c: 0, type: P.SOURCE, dir: DIR.RIGHT},
-      {r: 3, c: 6, type: P.TARGET},
-      {r: 3, c: 3, type: P.FILTER_RED}
+      {r: 0, c: 6, type: P.TARGET},
+      {r: 3, c: 3, type: P.FILTER_RED},
+      {r: 3, c: 5, type: P.WALL}
     ],
     placeable: {3: 2, 4: 2}
   },
   {
+    /* P1 2026-08-25: fixed list had TARGET and FILTER_RED both at (0,0) — loadLevel is
+       last-wins, so the filter erased the target: board collapsed to 1 target hit
+       straight-on by the source → free 3-star win with 0 pieces. Filter moved off the
+       target cell onto the beam path; splitter added to the tray so both targets are
+       reachable; min 3 pieces, par 3. */
     name: 'Red Light', tier: 4, rows: 7, cols: 7, par: 3,
     fixed: [
       {r: 0, c: 3, type: P.SOURCE, dir: DIR.DOWN},
       {r: 6, c: 3, type: P.TARGET},
       {r: 0, c: 0, type: P.TARGET},
-      {r: 0, c: 0, type: P.FILTER_RED},
+      {r: 3, c: 2, type: P.FILTER_RED},
       {r: 3, c: 0, type: P.FILTER_GREEN}
     ],
-    placeable: {3: 3, 4: 3}
+    placeable: {5: 1, 3: 4, 4: 4}
   },
   {
-    name: 'Spectrum', tier: 4, rows: 7, cols: 7, par: 4,
+    /* P0 2026-08-25: fixed list had FILTER_RED/FILTER_GREEN on the SAME cells as both
+       targets (0,6)/(6,6) — last-wins erased BOTH targets → allTargets.length===0 →
+       win condition (allTargets.length > 0) permanently false: level unwinnable, and
+       levels 22-29 stayed locked behind it. Filters moved onto the branch paths; wall
+       at (3,6) stops a 1-piece col-6 splitter solve; min 3 pieces, par 3. */
+    name: 'Spectrum', tier: 4, rows: 7, cols: 7, par: 3,
     fixed: [
       {r: 3, c: 0, type: P.SOURCE, dir: DIR.RIGHT},
       {r: 0, c: 6, type: P.TARGET},
       {r: 6, c: 6, type: P.TARGET},
-      {r: 0, c: 6, type: P.FILTER_RED},
-      {r: 6, c: 6, type: P.FILTER_GREEN}
+      {r: 0, c: 4, type: P.FILTER_RED},
+      {r: 6, c: 4, type: P.FILTER_GREEN},
+      {r: 3, c: 6, type: P.WALL}
     ],
     placeable: {5: 1, 3: 3, 4: 3}
   },
@@ -521,6 +559,8 @@ var LEVELS = [
     placeable: {3: 4, 4: 4}
   },
   {
+    /* P0 2026-08-25: UNWINNABLE as shipped — 3 targets need 3 beams = source + 2
+       splitters; tray had 1. Solver min 4 pieces (par 5 kept, 3 stars at ≤5). */
     name: 'Prism', tier: 4, rows: 7, cols: 7, par: 5,
     fixed: [
       {r: 0, c: 0, type: P.SOURCE, dir: DIR.RIGHT},
@@ -529,7 +569,7 @@ var LEVELS = [
       {r: 6, c: 0, type: P.TARGET},
       {r: 3, c: 3, type: P.WALL}
     ],
-    placeable: {5: 1, 3: 4, 4: 4}
+    placeable: {5: 2, 3: 4, 4: 4}
   },
 
   // === TIER 5: Master (8x8, bombs, complex) ===
@@ -571,18 +611,27 @@ var LEVELS = [
     placeable: {3: 5, 4: 5}
   },
   {
-    name: 'Dual Source', tier: 5, rows: 8, cols: 8, par: 4,
+    /* P0 2026-08-25: topologically UNWINNABLE as shipped, regardless of tray — corner
+       targets (7,0)/(7,7) sat directly under the only two sources, pinning both edge
+       columns unobstructed; that consumed both beams, leaving the row-7 inner targets
+       (reachable only along row 7, where a beam stops at the first target it meets)
+       with no beam left. Targets moved out of the source columns so each source does
+       mirror-in → splitter → two targets; min 6 pieces, par 6. */
+    name: 'Dual Source', tier: 5, rows: 8, cols: 8, par: 6,
     fixed: [
       {r: 0, c: 0, type: P.SOURCE, dir: DIR.DOWN},
       {r: 0, c: 7, type: P.SOURCE, dir: DIR.DOWN},
-      {r: 7, c: 0, type: P.TARGET},
-      {r: 7, c: 7, type: P.TARGET},
-      {r: 7, c: 3, type: P.TARGET},
-      {r: 7, c: 4, type: P.TARGET}
+      {r: 0, c: 2, type: P.TARGET},
+      {r: 0, c: 5, type: P.TARGET},
+      {r: 6, c: 3, type: P.TARGET},
+      {r: 6, c: 4, type: P.TARGET}
     ],
-    placeable: {3: 5, 4: 5}
+    placeable: {5: 2, 3: 4, 4: 4}
   },
   {
+    /* P0 2026-08-25: UNWINNABLE as shipped — 3 targets need 3 beams = source + 2
+       splitters; tray had 1. Solver min 4 pieces around the central bomb block
+       (par 6 kept, 3 stars at ≤6). */
     name: 'Grand Finale', tier: 5, rows: 8, cols: 8, par: 6,
     fixed: [
       {r: 0, c: 0, type: P.SOURCE, dir: DIR.RIGHT},
@@ -596,7 +645,7 @@ var LEVELS = [
       {r: 0, c: 3, type: P.WALL},
       {r: 7, c: 4, type: P.WALL}
     ],
-    placeable: {5: 1, 3: 5, 4: 5}
+    placeable: {5: 2, 3: 5, 4: 5}
   }
 ];
 
@@ -737,16 +786,16 @@ function loadLevel(idx) {
     }
   }
   // Place fixed pieces
+  /* P3 2026-08-25: removed a dead no-op "overlapping fixed pieces" block here — it
+     documented coexisting target+filter but did nothing, while the real overlap
+     behavior (last-wins silently erasing a target) shipped two broken levels (idx19
+     'Red Light', idx20 'Spectrum'). Overlaps are now rejected at the data level. */
   for (var i = 0; i < lv.fixed.length; i++) {
     var fp = lv.fixed[i];
     if (grid[fp.r] && grid[fp.r][fp.c]) {
       grid[fp.r][fp.c].type = fp.type;
       grid[fp.r][fp.c].dir = fp.dir || 0;
       grid[fp.r][fp.c].isFixed = true;
-      // Handle overlapping fixed pieces (e.g., target + filter)
-      if (fp.type !== P.TARGET && grid[fp.r][fp.c].extraType === undefined) {
-        // This is a non-target fixed piece that might coexist with target
-      }
     }
   }
   // Copy placeable pieces

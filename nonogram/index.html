@@ -1013,8 +1013,12 @@ function checkRowCol(r, c, size) {
   const rowLine = [];
   for (let i = 0; i < size; i++) rowLine.push(state.playerGrid[r * size + i]);
   const rowGroups = getLineGroups(rowLine);
+  // FIX 2026-08-24 (P0, verify_engine caught): empty lines produce groups=[] but their clue is [0];
+  // arraysEqual([], [0]) is always false, so any level with a fully-empty row/column could NEVER
+  // complete (L11/L14-17/L22 shipped unwinnable). Normalize [] <-> [0] on both sides.
+  const norm = a => (a.length === 0 ? [0] : a);
   const rowWasComplete = state.rowComplete[r];
-  state.rowComplete[r] = arraysEqual(rowGroups, state.rowClues[r]);
+  state.rowComplete[r] = arraysEqual(norm(rowGroups), norm(state.rowClues[r]));
 
   if (state.rowComplete[r] && !rowWasComplete) sfxRowComplete();
 
@@ -1028,7 +1032,7 @@ function checkRowCol(r, c, size) {
   for (let i = 0; i < size; i++) colLine.push(state.playerGrid[i * size + c]);
   const colGroups = getLineGroups(colLine);
   const colWasComplete = state.colComplete[c];
-  state.colComplete[c] = arraysEqual(colGroups, state.colClues[c]);
+  state.colComplete[c] = arraysEqual(norm(colGroups), norm(state.colClues[c]));
 
   if (state.colComplete[c] && !colWasComplete) sfxRowComplete();
 

@@ -1470,9 +1470,12 @@ function updatePhysics(dt){
     if(!c.falling && !c.triggered) solidPlatforms.push({x:c.x,y:c.y,w:c.w,h:c.h});
   }
 
-  // Horizontal collision
+  // Horizontal collision — only when the slime's center is beside the platform
+  // (within its vertical span). Top/bottom contacts are the vertical pass's job;
+  // without this gate, landing on a floor with any horizontal velocity (even the
+  // micro-fall overlap while standing) yanks the slime to the platform's edge.
   for(const p of solidPlatforms){
-    if(rectCircleOverlap(p.x, p.y, p.w, p.h, s.x, s.y, s.r-2)){
+    if(s.y > p.y && s.y < p.y + p.h && rectCircleOverlap(p.x, p.y, p.w, p.h, s.x, s.y, s.r-2)){
       if(s.vx > 0){
         s.x = p.x - s.r + 1;
         s.vx = 0;
@@ -1488,7 +1491,8 @@ function updatePhysics(dt){
   for(const p of solidPlatforms){
     if(rectCircleOverlap(p.x, p.y, p.w, p.h, s.x, s.y, s.r-2)){
       if(game.reverseGravity){
-        // Floor is top of platform
+        // Floor is the platform underside (ceiling-walking) — resting there must ground
+        // the slime, or reverse-gravity levels can never charge a jump
         if(s.vy > 0){
           s.y = p.y - s.r + 1;
           s.vy = 0;
@@ -1496,6 +1500,7 @@ function updatePhysics(dt){
         } else if(s.vy < 0){
           s.y = p.y + p.h + s.r - 1;
           s.vy = 0;
+          s.grounded = true;
         }
       } else {
         if(s.vy > 0){
@@ -1588,7 +1593,6 @@ function updatePhysics(dt){
       st.collected = true;
       st.burst = 1;
       game.starsCollected++;
-      game.save.stars = (game.save.stars||0) + 1; // cosmetic total
       saveProgress();
       sfxStar();
       spawnParticles(st.x, st.y, 16, '#ffe17a', {speed:180, life:0.7, up:80});

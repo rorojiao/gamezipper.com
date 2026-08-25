@@ -2,9 +2,10 @@
 // This replays the solution through the actual interaction flow
 
 const fs = require('fs');
+const path = require('path');
 const vm = require('vm');
 
-const html = fs.readFileSync('index.html','utf8');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'),'utf8');
 const match = html.match(/const LEVELS\s*=\s*(\[.*?\]);/s);
 const sandbox = { LEVELS: null };
 const ctx = vm.createContext(sandbox);

@@ -724,6 +724,7 @@ function updatePhysics(elapsed) {
     ball.vx = 0;
     ball.vy = 0;
     strokes++;
+    updateHud(); // FIX(2026-08-25): keep the stroke HUD in sync on the water-penalty path too
     showToast('Splash! +1 stroke');
     return;
   }
@@ -1262,6 +1263,9 @@ function onPointerUp(e) {
   ball.vx = -nx * power * maxSpeed;
   ball.vy = -ny * power * maxSpeed;
   strokes++;
+  updateHud(); // FIX(2026-08-25): stroke HUD was dead mid-hole — updateHud() was only called from
+               // startHole, so #hud-stroke (and the +/- diff) showed 0 for the entire hole no
+               // matter how many putts the player took; it only ever reset to 0 on the next hole.
   state.totalHolesPlayed = (state.totalHolesPlayed || 0);
   sfxPutt(power);
   spawnPuff(ball.x, ball.y, 6, '#ffffff');
@@ -1309,6 +1313,23 @@ function completeHole() {
   if (isDaily) {
     state.dailyDone = true;
   }
+
+  // FIX(2026-08-25): the 'Under Par' achievement was permanently unobtainable —
+  // state.courseUnderPar was declared, defaulted in loadState() and tested by the
+  // ACHIEVEMENTS entry, but nothing ever wrote it. Compute it here: once every hole
+  // of the course is cleared, compare the sum of best scores against total par.
+  (function(){
+    const courseHoles = HOLES.filter(function(hh){ return hh.c === currentHole.c; });
+    const allCleared = courseHoles.every(function(hh){
+      const b = state.bestScores[holeKey(hh.c, hh.h)];
+      return b !== undefined && b < 99;
+    });
+    if (allCleared) {
+      const total = courseHoles.reduce(function(a, hh){ return a + state.bestScores[holeKey(hh.c, hh.h)]; }, 0);
+      const parTotal = courseHoles.reduce(function(a, hh){ return a + hh.par; }, 0);
+      state.courseUnderPar[currentHole.c] = total < parTotal;
+    }
+  })();
 
   // Check achievements
   for (let i = 0; i < ACHIEVEMENTS.length; i++) {
@@ -1637,7 +1658,10 @@ function handleHudAction(e) {
 function showStats() {
   const totalStars = Object.values(state.courseStars || {}).reduce(function(a,b){return a+b;}, 0);
   const totalCleared = Object.values(state.courseHolesCleared || {}).reduce(function(a,b){return a+b;}, 0);
-  const html = ''
+  // FIX(2026-08-25): was `const html` but the per-course loop below appends with `html +=`,
+  // so opening the Stats screen threw "TypeError: Assignment to constant variable" — the
+  // 📊 Stats button was dead in real browsers (uncaught error, screen never rendered).
+  let html = ''
     + '<div class="screen">'
     + '<div class="title-block">'
     +   '<div class="eyebrow">YOUR PROGRESS</div>'
@@ -1676,7 +1700,10 @@ function showStats() {
 }
 
 function showAchievements() {
-  const html = ''
+  // FIX(2026-08-25): was `const html` but the achievements loop below appends with `html +=`,
+  // so opening the 🏆 Achievements screen threw "TypeError: Assignment to constant variable"
+  // and never rendered (same bug as showStats).
+  let html = ''
     + '<div class="screen">'
     + '<div class="title-block">'
     +   '<div class="eyebrow">UNLOCKABLES</div>'

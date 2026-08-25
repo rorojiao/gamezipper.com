@@ -683,7 +683,10 @@ function drawHint(move){
   ctx.save();
   ctx.strokeStyle='#ffd700'; ctx.lineWidth=3; ctx.setLineDash([6,4]);
   if(move.type==='move'){
-    var tr=move.to[1],tc=move.to[0];
+    /* P2 2026-08-25: move.to is [row, col] everywhere else in the engine, but this unpacked
+       it transposed (tr=to[1], tc=to[0]) — every pawn-move hint rendered its highlight box
+       at the mirrored cell (col,row), pointing the player at the wrong square. */
+    var tr=move.to[0],tc=move.to[1];
     var x=boardOffset+tc*cellSize, y=boardOffset+tr*cellSize;
     ctx.strokeRect(x+2,y+2,cellSize-4,cellSize-4);
   } else {
@@ -777,11 +780,11 @@ function movePlayer(toC,toR){
   draw(); updateHUD();
   if(G.mode==='puzzle'){ checkPuzzleWin(toC,toR); return; }
   if(G.playerR===8){ endGame('player'); return; }
-  G.turn='ai'; updateHUD();
-  if(G.mode==='ai'){
-    G.aiThinking=true; showMsg('AI is thinking...','');
-    setTimeout(function(){ aiTurn(); }, 350);
-  }
+  /* P3 2026-08-25: aiThinking was flipped AFTER updateHUD, so the 'AI...' turn label and
+     the thinking-time undo-button disable never rendered. Set it first. */
+  G.turn='ai'; G.aiThinking=true; updateHUD();
+  showMsg('AI is thinking...','');
+  setTimeout(function(){ aiTurn(); }, 350);
 }
 
 function placeWall(w,who){
@@ -793,8 +796,10 @@ function placeWall(w,who){
   draw(); updateHUD();
   if(G.mode==='puzzle'){ checkPuzzleWall(w); return; }
   if(who==='player'){
-    G.turn='ai'; updateHUD();
-    G.aiThinking=true; showMsg('AI is thinking...','');
+    /* P3 2026-08-25: same as movePlayer — flip aiThinking before updateHUD so 'AI...'
+       renders and undo is disabled while the AI reply is pending. */
+    G.turn='ai'; G.aiThinking=true; updateHUD();
+    showMsg('AI is thinking...','');
     setTimeout(function(){ aiTurn(); }, 350);
   } else {
     G.turn='player'; updateHUD(); showMsg('Your turn.','');
@@ -802,6 +807,11 @@ function placeWall(w,who){
 }
 
 function aiTurn(){
+  /* P2 2026-08-25: reset/undo during the 350ms AI timer left this callback running against
+     a freshly restored game (turn already back to 'player'), teleporting the AI pawn on a
+     reset board or double-moving after an undo. Bail unless it is still genuinely the AI's
+     pending turn of the current game. */
+  if(!G.aiThinking||G.turn!=='ai'||G.gameOver) return;
   G.aiThinking=false;
   var choice=aiChooseMove();
   if(!choice){ G.turn='player'; updateHUD(); showMsg('AI has no moves! Your turn.',''); return; }
@@ -849,13 +859,20 @@ function checkPuzzleWall(w){
     puzzleSolved(G.hintUsed?1:3);
     return;
   }
-  // Accept any wall that creates advantage >= optimal
-  var nw=G.walls.concat([w]);
-  // Actually wall already placed in G.walls by placeWall. Re-eval:
+  /* P2 2026-08-25: acceptance was `playerP<=aiP` after the wall, so on levels where the
+     player already had the shorter path (e.g. level 29: 5 vs 6) ANY wall — even an
+     irrelevant far-corner one — instantly solved the puzzle at 2 stars. Implement the
+     comment's stated intent instead: accept only walls whose resulting advantage
+     (AI path - player path) matches or beats the advantage the level's own solution
+     produces on the level's original walls. */
+  var base=lvl.walls.map(function(x){return {r:x.r,c:x.c,orient:x.orient};});
+  var optWalls=sol.type==='wall'?base.concat([{r:sol.r,c:sol.c,orient:sol.orient}]):base;
+  var playerOpt=bfsShortest(G.playerR,G.playerC,8,optWalls);
+  var aiOpt=bfsShortest(G.aiR,G.aiC,0,optWalls);
   var playerP=bfsShortest(G.playerR,G.playerC,8,G.walls);
   var aiP=bfsShortest(G.aiR,G.aiC,0,G.walls);
-  if(playerP<=aiP){
-    // Any wall giving advantage is acceptable (2 stars)
+  if(aiP-playerP>=aiOpt-playerOpt){
+    // Any wall giving advantage >= optimal is acceptable (2 stars)
     puzzleSolved(G.hintUsed?1:2);
     return;
   }
@@ -865,7 +882,9 @@ function checkPuzzleWall(w){
 }
 
 function puzzleSolved(stars){
-  G.gameOver=true;
+  /* P3 2026-08-25: gameOver was set without a winner or an updateHUD pass, so the HUD's
+     'WIN!' branch was dead code (it would have rendered 'LOSS' — winner stayed null). */
+  G.gameOver=true; G.winner='player'; updateHUD();
   sfxSolve();
   var lvl=LEVELS[G.puzzleIdx];
   var prev=SAVE.puzzleStars[lvl.num]||0;
@@ -874,7 +893,9 @@ function puzzleSolved(stars){
 }
 
 function endGame(winner){
-  G.gameOver=true; G.winner=winner;
+  /* P3 2026-08-25: updateHUD was never called after gameOver/winner were set (draw only),
+     so the promised 'WIN!'/'LOSS' turn label never rendered. */
+  G.gameOver=true; G.winner=winner; updateHUD();
   if(G.mode==='ai'){
     if(winner==='player'){
       sfxWin(); SAVE.aiWins[G.difficulty]++; showResult('🎉 You Win!', 3, 'You reached the goal row!');

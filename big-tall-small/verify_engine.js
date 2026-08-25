@@ -103,6 +103,7 @@ function herdSolve(maxFrames) {
   const gl = g.call('__BT.goal()');
   if (!gl) return false;
   let deaths = -1, hold = 0; // vary the neutral wait after each death — deterministic re-runs would otherwise repeat the same death forever
+  let mode = 'B'; // herd phase is per-call state — left undeclared it becomes an implicit global leaking the previous level's phase into frame 0
   // catcher tile spans E.x+32..E.x+64; the win set is everyone pinned at its WEST face,
   // so herd until every char's left edge is west of E.x+32 (a right-edge test makes chars
   // surf the boundary at x~183, flipping the phase every frame forever)
@@ -158,14 +159,16 @@ function solveLevel(i) { // policies first, then beam search; returns ms (0 = un
   }
   g.call('__BT.restore(' + JSON.stringify(S0) + ')'); g.timers.length = 0;
   let frontier = [{ snap: g.call('__BT.snap()'), tmr: g.timers.map(t => ({ ...t })), score: 1e9 }];
+  let budget = 15000; // rollout cap, NOT wall-clock: a Date.now() cutoff makes pass/fail depend on machine load (worst level needs ~4.4k rollouts, winning at depth 6)
   for (let depth = 0; depth < 60; depth++) {
-    if (Date.now() - t0 > 3500) break;
+    if (budget <= 0) break;
     const cand = [];
     for (const node of frontier) {
       for (const a of ACTIONS) {
         g.call(`__BT.restore(${JSON.stringify(node.snap)})`);
         g.timers.length = 0; g.timers.push(...node.tmr.map(t => ({ ...t }))); // respawn timers are part of the branch state
         const r = rollout(a);
+        budget--;
         if (r.won) return Date.now() - t0;
         cand.push(r);
       }

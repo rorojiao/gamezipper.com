@@ -661,7 +661,10 @@ const LEVELS = [
   { id:16, name:'Jam Session',  tier:2, buses:[{color:'yellow',capacity:7},{color:'green',capacity:7},{color:'blue',capacity:7}],
     passengers:['yellow','green','blue','yellow','green','blue','yellow','green','blue','yellow','green','blue','yellow','blue','green','yellow','green','blue','yellow','blue','green'] },
   { id:17, name:'All Hands',    tier:2, buses:[{color:'red',capacity:6},{color:'green',capacity:7},{color:'purple',capacity:7}],
-    passengers:['red','green','purple','red','green','purple','red','green','purple','red','purple','green','red','green','purple','red','green','purple','red','green'] },
+    // FIX(2026-08-25): had 7 red passengers for a 6-seat red bus and only 6 purple for a
+    // 7-seat purple bus — the 7th red could NEVER board once the red bus departed (Add Slot
+    // skips departed buses), permanently soft-locking the level. Swapped one red->purple: exact 6/7/7.
+    passengers:['red','green','purple','red','green','purple','red','green','purple','red','purple','green','red','green','purple','red','green','purple','purple','green'] },
   { id:18, name:'Crowd Out',    tier:2, buses:[{color:'yellow',capacity:6},{color:'blue',capacity:6},{color:'red',capacity:6},{color:'green',capacity:6}],
     passengers:['yellow','blue','red','green','yellow','blue','red','green','yellow','blue','red','green','yellow','red','blue','green','yellow','blue','red','green','yellow','red','blue','green'] },
 
@@ -669,7 +672,10 @@ const LEVELS = [
   { id:19, name:'Big Four',     tier:3, buses:[{color:'red',capacity:7},{color:'yellow',capacity:7},{color:'blue',capacity:7},{color:'green',capacity:7}],
     passengers:['red','yellow','blue','green','red','yellow','blue','green','red','yellow','blue','green','red','blue','yellow','green','red','yellow','blue','green','red','yellow','blue','green','red','blue','yellow','green'] },
   { id:20, name:'Terminal A',   tier:3, buses:[{color:'red',capacity:6},{color:'blue',capacity:7},{color:'green',capacity:7},{color:'purple',capacity:8}],
-    passengers:['red','blue','green','purple','red','blue','green','purple','red','blue','green','purple','red','blue','green','purple','red','blue','green','purple','blue','green','purple','red','blue','green','purple','red'] },
+    // FIX(2026-08-25): had 7 red passengers for a 6-seat red bus and only 7 purple for an
+    // 8-seat purple bus — 7th red unboardable after the red bus departs (Add Slot skips
+    // departed buses) = permanent soft-lock. Swapped one red->purple: exact 6/7/7/8.
+    passengers:['red','blue','green','purple','red','blue','green','purple','red','blue','green','purple','red','blue','green','purple','red','blue','green','purple','blue','green','purple','red','blue','green','purple','purple'] },
   { id:21, name:'Spread Out',   tier:3, buses:[{color:'yellow',capacity:7},{color:'red',capacity:7},{color:'purple',capacity:7},{color:'green',capacity:7}],
     passengers:['yellow','red','purple','green','yellow','red','purple','green','yellow','red','purple','green','red','purple','yellow','green','yellow','red','purple','green','yellow','red','purple','green','red','purple','yellow','green'] },
   { id:22, name:'Five Wide',    tier:3, buses:[{color:'red',capacity:6},{color:'yellow',capacity:6},{color:'blue',capacity:6},{color:'green',capacity:6},{color:'purple',capacity:6}],
@@ -1750,6 +1756,11 @@ function updateBoosterCounts(){
 }
 
 function checkGameEnd(){
+  // FIX(2026-08-25): every departing bus schedules its own checkGameEnd (600ms), so once the
+  // last passenger seats, EACH pending check passed the all-seated test and scheduled its
+  // own finishLevel — completing a level ran finishLevel N times (N = buses), duplicating
+  // endless leaderboard entries, star animations and save writes. Guard re-entry.
+  if (!scene || scene.state !== 'play') return;
   const queued = scene.passengers.filter(p => p.state === 'queued');
   const allSeated = scene.passengers.every(p => p.state === 'seated' || p.state === 'gone');
   if (allSeated && queued.length === 0){
@@ -1994,8 +2005,14 @@ function generateEndlessLevel(){
     buses.push({ color: colors[i % colors.length], capacity: cap });
   }
   const totalPax = buses.reduce((s,b)=>s+b.capacity, 0);
+  // FIX(2026-08-25): passengers used to be random over the tier's FULL color list, but
+  // tiers 0/1 field fewer buses than colors — a passenger whose color has no bus can never
+  // board (Add Slot can't help: it only grows existing buses), and a color could also be
+  // over-subscribed past its total capacity. Both permanently jammed the run. Fill each
+  // bus exactly, then shuffle, so every endless board is completable.
   const passengers = [];
-  for (let i=0;i<totalPax;i++) passengers.push(colors[Math.floor(Math.random()*colors.length)]);
+  for (const b of buses) for (let i=0;i<b.capacity;i++) passengers.push(b.color);
+  for (let i=passengers.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [passengers[i],passengers[j]]=[passengers[j],passengers[i]]; }
   return { id: 1000+endlessCounter, name:'Endless ' + endlessCounter, tier:4, buses, passengers };
 }
 

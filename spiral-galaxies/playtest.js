@@ -7,10 +7,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const HTML = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-const m = HTML.match(/const\s+LEVELS\s*=\s*(\[[\s\S]*?\]);/);
-if(!m){ console.error('LEVELS not found'); process.exit(1); }
-const LEVELS = eval('(' + m[1] + ')');
+// index.html is now a canonical redirect stub to the spiral-galaxy keeper;
+// replay the archived level data from levels.json (same shape as the old
+// inline LEVELS array).
+const LEVELS = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'))).levels;
 
 function intStars(L){ return L.stars.map(s => [Math.round(s.r*2), Math.round(s.c*2)]); }
 function partnerCell(cr, cc, sr2, sc2){ return [sr2 - cr - 1, sc2 - cc - 1]; }

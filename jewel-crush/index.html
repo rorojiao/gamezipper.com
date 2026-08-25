@@ -282,21 +282,44 @@ function generateLevels() {
       const star3 = Math.floor(star1 * 2.5);
       let objective;
       const r = i % 5;
-      if (r === 0) objective = { type: 'score', target: star3, desc: `Target: ${star3} pts` };
-      else if (r === 1) objective = { type: 'clear_ice', target: Math.min(6 + n, 30), desc: `Clear ${Math.min(6 + n, 30)} ice tiles` };
-      else if (r === 2) objective = { type: 'collect', color: idx % 7, target: Math.min(10 + n, 40), desc: `Collect ${Math.min(10 + n, 40)} ${GEM_COLORS[idx % 7].name} gems` };
-      else if (r === 3) objective = { type: 'score', target: star2, desc: `Target: ${star2} pts` };
-      else objective = { type: 'clear_ice', target: Math.min(4 + n, 24), desc: `Clear ${Math.min(4 + n, 24)} ice tiles` };
+      // FIX(level-balance 2026-08-25): the old pass-targets grew with n while moves SHRANK
+      // (max(12, 30-n/4)): r=0 demanded a 3-star score (star3 = 2.5x star1, e.g. L46: 14000
+      // pts in 19 moves), r=1 demanded min(6+n,30) ice clears though the board could hold at
+      // most ~8-20 ice cells, r=2 demanded up to 40 gems of ONE color in ~18 moves with 7
+      // colors — late levels were effectively unwinnable for any player. Star thresholds are
+      // unchanged; only the PASS targets are scaled to what ~26 moves of focused play yields.
+      // score targets are additionally capped at 200 pts/move: with 7 colors + stones + chains
+      // real play yields ~230-280 pts/move, and star1 (which the multipliers scale) grows with
+      // n while the move budget SHRINKS — L46/L49 demanded 350-390 pts/move just to pass.
+      if (r === 0) objective = { type: 'score', target: Math.min(Math.floor(star1 * 1.4), 200 * moves), desc: `Target: ${Math.min(Math.floor(star1 * 1.4), 200 * moves)} pts` };
+      else if (r === 1) objective = { type: 'clear_ice', target: Math.min(4 + Math.floor(n / 2), 16), desc: `Clear ${Math.min(4 + Math.floor(n / 2), 16)} ice tiles` };
+      // FIX(collect-palette 2026-08-25): color was idx % 7 — on levels whose palette is smaller
+      // (e.g. L13: 5 colors, idx%7=5; L28: 6 colors, idx%7=6) the objective named a color that
+      // never spawns, making the level unwinnable. Modulo the actual palette instead.
+      else if (r === 2) objective = { type: 'collect', color: idx % colors, target: Math.min(4 + Math.floor(n / 2), 16), desc: `Collect ${Math.min(4 + Math.floor(n / 2), 16)} ${GEM_COLORS[idx % colors].name} gems` };
+      else if (r === 3) objective = { type: 'score', target: Math.min(Math.floor(star1 * 1.2), 200 * moves), desc: `Target: ${Math.min(Math.floor(star1 * 1.2), 200 * moves)} pts` };
+      else objective = { type: 'clear_ice', target: Math.min(4 + Math.floor(n / 2), 16), desc: `Clear ${Math.min(4 + Math.floor(n / 2), 16)} ice tiles` };
 
       const icePositions = [];
       const stonePositions = [];
       const chainPositions = [];
       if (objective.type === 'clear_ice' || n > 8) {
-        const iceCount = Math.min(Math.floor(n / 2) + 2, 20);
-        for (let k = 0; k < iceCount; k++) {
-          const rr = (k * 3 + idx) % ROWS;
-          const cc = (k * 5 + idx * 2) % COLS;
-          if (objective.type === 'clear_ice' || Math.random() < 0.5) icePositions.push({ r: rr, c: cc });
+        // FIX(clear-ice-unwinnable 2026-08-25): the old (k*3+idx)%ROWS / (k*5+idx*2)%COLS wheels
+        // repeat with period 8 in k, so at most 8 DISTINCT ice cells could ever exist while
+        // clear_ice targets run up to 30 — every clear_ice level was mathematically unwinnable.
+        // Now: Fisher-Yates over all 64 cells, take a DISTINCT set; for clear_ice objectives
+        // size it to cover the target with slack so the objective is actually reachable.
+        const need = objective.type === 'clear_ice'
+          ? Math.min(objective.target + 14, 46)
+          : Math.min(Math.floor(n / 2) + 2, 20);
+        const cells = [];
+        for (let rr = 0; rr < ROWS; rr++) for (let cc = 0; cc < COLS; cc++) cells.push({ r: rr, c: cc });
+        for (let k = cells.length - 1; k > 0; k--) {
+          const j = Math.floor(Math.random() * (k + 1));
+          const t = cells[k]; cells[k] = cells[j]; cells[j] = t;
+        }
+        for (let k = 0; k < need; k++) {
+          if (objective.type === 'clear_ice' || Math.random() < 0.5) icePositions.push(cells[k]);
         }
       }
       if (n > 12) {

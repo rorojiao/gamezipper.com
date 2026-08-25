@@ -736,7 +736,13 @@ function startLevel(idx){
   S.solved=false;
   S.hintPair=null;
   S.particles=[];
-  
+  // FIX(2026-08-25): P1 — startLevel never cleared S.isDaily. If a player started a
+  // Daily challenge and quit mid-level, the flag stayed true, so the NEXT regular
+  // level's win was routed down the daily branch in the wrapped onWin: no level
+  // progress saved, dailyDone falsely set to true, +3 bonus stars granted for a
+  // normal level. Clear the flag on every normal level start.
+  S.isDaily=false;
+
   // Set canvas size
   var maxCanvas=Math.min(window.innerWidth-30,400);
   if(window.innerHeight<600) maxCanvas=Math.min(maxCanvas,window.innerHeight-250);
@@ -909,9 +915,20 @@ function onWin(){
   var prevStars=prev?prev.stars:0;
   var bestMoves=prev?prev.bestMoves:999;
   
-  if(stars>prevStars) S.progress[lvKey].stars=stars;
-  if(S.moves<bestMoves) S.progress[lvKey].bestMoves=S.moves;
-  if(!prev){S.progress[lvKey]={stars:stars,bestMoves:S.moves};S.completedCount++;}
+  // FIX(2026-08-25): P0 — first-time completion crashed here. When prev was undefined
+  // (level never completed before), `S.progress[lvKey].stars=stars` dereferenced a
+  // nonexistent entry and threw "Cannot set properties of undefined" inside the rAF
+  // gameLoop, BEFORE saveProgress()/completedCount++/the win overlay ever ran: every
+  // level's first win was silently lost, so the game was unwinnable from a fresh save
+  // (verified: solved L1 in 3 real taps, progress stayed {}, overlay never shown).
+  // Fix: create the progress entry first, then update stars/bestMoves on the live entry.
+  if(!prev){
+    S.progress[lvKey]={stars:stars,bestMoves:S.moves};
+    S.completedCount++;
+  }else{
+    if(stars>prevStars) S.progress[lvKey].stars=stars;
+    if(S.moves<bestMoves) S.progress[lvKey].bestMoves=S.moves;
+  }
   
   if(stars>prevStars){
     S.totalStars+=(stars-prevStars);

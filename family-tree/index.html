@@ -576,6 +576,13 @@ function drawTree(){
     ctx.fillStyle=p.color;ctx.globalAlpha=p.life;
     ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();ctx.globalAlpha=1;
   });
+  // feedback toast (P2 2026-08-25: was set by flash() but never drawn)
+  if(state.feedback){
+    ctx.save();ctx.globalAlpha=Math.max(0,Math.min(1,state.feedback.t));
+    ctx.fillStyle=state.feedback.color;ctx.font='700 '+(16*DPR)+'px Inter,sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(state.feedback.text,cv.width/2,26*DPR);ctx.restore();
+  }
   ctx.restore();
 }
 function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
@@ -631,6 +638,9 @@ function startLevel(idx){
   state.dragging=null;state.hoverSlot=null;state.shake=0;state.particles=[];state.confetti=[];
   state.screen='play';
   document.getElementById('lvlPill').textContent='Level '+(idx+1);
+  /* P3 2026-08-25: useHint() rewrote hintBtn as 'Hint (0)' but startLevel never restored it,
+     so every level after a used hint showed (0) while a fresh hint was actually available. */
+  document.getElementById('hintBtn').textContent='💡 Hint';
   layoutNodes();renderTray();renderClues();updateHUD();
   startBGM();hideAllOverlays();
 }
@@ -726,6 +736,8 @@ function useHint(){
   document.getElementById('hintBtn').textContent='💡 Hint ('+state.hintsLeft+')';
 }
 function flash(t){state.feedback={text:t,color:'#ffc857',t:1}}
+/* P2 2026-08-25: flash() set state.feedback but nothing ever rendered it — tapping Hint with
+   none left was a silent no-op. drawTree now paints the message with a ~600ms fade. */
 
 /* ============ Main loop ============ */
 let lastT=0,rafId=null;
@@ -733,6 +745,7 @@ function loop(ts){
   const dt=Math.min(50,ts-lastT);lastT=ts;
   state.animTime+=dt;
   if(state.shake>0)state.shake=Math.max(0,state.shake-dt*0.06*DPR);
+  if(state.feedback){state.feedback.t-=dt/600;if(state.feedback.t<=0)state.feedback=null}
   // update particles
   state.particles=state.particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.12*DPR;p.life-=0.02;return p.life>0});
   // confetti

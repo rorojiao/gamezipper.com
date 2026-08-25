@@ -492,6 +492,11 @@ function getSave(){try{var d=localStorage.getItem(SAVE_KEY);return d?JSON.parse(
 function saveProgress(){
 try{
 var data={v:1,levels:[],ach:achievementData};
+// FIX(daily-marker-wiped-by-save,P2): saveProgress rebuilt the save object without the
+// `daily` field written by startDailyPuzzle(), so the very next save (level complete or
+// achievement unlock) erased the "already played today" marker - the daily puzzle could be
+// replayed endlessly and the day's chosen level was lost. Carry the stored field through.
+var _prev=getSave()||{};if(_prev.daily)data.daily=_prev.daily;
 for(var i=0;i<30;i++)data.levels.push({unlocked:LEVELS[i].unlocked,stars:LEVELS[i].stars||0,bestScore:LEVELS[i].bestScore||0});
 localStorage.setItem(SAVE_KEY,JSON.stringify(data));
 }catch(e){}
@@ -758,11 +763,15 @@ var d=getSave();
 if(d&&d.daily&&d.daily.date===today&&d.daily.level!==null){
 $('daily-info').textContent="You already played today's puzzle! Come back tomorrow.";
 $('daily-start-btn').textContent='Play Again';
-$('daily-start-btn').onclick=function(){closeModal('daily-modal');startDaily()};
+// FIX(daily-btn-undefined-handler,P1): the reassigned onclick called startDaily(),
+// which is defined nowhere (the real function is startDailyPuzzle()). Every click on
+// the daily Play button threw ReferenceError: startDaily is not defined - the modal
+// never closed and the daily puzzle could never be started from this dialog.
+$('daily-start-btn').onclick=function(){closeModal('daily-modal');startDailyPuzzle()};
 }else{
 $('daily-info').textContent='A special hidden object challenge for today only!';
 $('daily-start-btn').textContent='Play';
-$('daily-start-btn').onclick=function(){closeModal('daily-modal');startDaily()};
+$('daily-start-btn').onclick=function(){closeModal('daily-modal');startDailyPuzzle()};
 }
 var dc=$('daily-canvas'),dctx=dc.getContext('2d');dc.width=320;dc.height=240;
 dctx.fillStyle='#0a0a1a';dctx.fillRect(0,0,320,240);

@@ -1,6 +1,6 @@
 // Phase 7: QA Checklist — code-level verification of Japanese Sums game
 const fs = require('fs');
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 
 let pass = 0, fail = 0;
 function check(name, condition) {

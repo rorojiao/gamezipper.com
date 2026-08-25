@@ -516,7 +516,10 @@ function findAllValidMoves(hand,board){
   if(existing.length===0){
     // First move: any tile anywhere near center
     for(var i=0;i<hand.length;i++){
-      moves.push({placements:[{x:7,y:7,color:hand[i].color,shape:hand[i].shape}],tileIdx:i});
+      /* P1 2026-08-25: score was missing here — if the AI made the game's first board move
+         (player swaps/passes on move 1), aiTakeTurn added undefined to aiScore → NaN score
+         display and every endGame comparison false. First placement is worth 1 point. */
+      moves.push({placements:[{x:7,y:7,color:hand[i].color,shape:hand[i].shape}],tileIdx:i,score:1});
     }
     return moves;
   }
@@ -670,6 +673,11 @@ function validatePlacementsOnBoard(placements,board){
 
 // AI turn: pick best move
 function aiTakeTurn(){
+  /* P2 2026-08-25: restarting/switching level while the 800ms AI timer was pending fired
+     this on the freshly reset game (turn already back to 'player', empty board), placing a
+     ghost AI first-move tile on the player's new board. Guard: only act if it is still
+     genuinely the AI's turn of the current game. */
+  if(G.turn!=='ai'||G.gameOver)return;
   var moves=findAllValidMoves(G.aiHand,G.board);
   if(moves.length===0){
     // No valid moves: swap or pass

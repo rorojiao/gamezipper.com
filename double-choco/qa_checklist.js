@@ -1,8 +1,9 @@
 // qa_checklist.js — Code-level QA checklist for Double Choco
 const fs = require('fs');
+const path = require('path');
 const vm = require('vm');
 
-const html = fs.readFileSync('index.html', 'utf-8');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8');
 
 let pass = 0, fail = 0;
 const checks = [];

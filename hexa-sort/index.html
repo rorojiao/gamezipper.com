@@ -269,91 +269,119 @@ var state = {
 };
 
 /* ── Save System ── */
+// P0 fix 2026-08-25 (QA verifier): loadSave used to assign state.level (and
+// powerup/settings fields) on EVERY read. saveProgress calls loadSave() first,
+// so after showWin's state.level++ the subsequent saveProgress re-read the
+// stale disk value, clobbered the increment back to the old level and wrote
+// it — progression could NEVER advance past the level the session started on
+// (win L1 -> nextLevel reloaded L1, and sd.l never grew, so every later level
+// stayed locked). loadSave is now a pure read; hydration into state happens
+// once, at boot.
 function loadSave(){
-  try{
-    var d=JSON.parse(localStorage.getItem('hexa-sort-save'));
-    if(d&&d.v===2){
-      state.level=d.l||0;
-      state.undosLeft=d.u||3;
-      state.bombsLeft=d.b||1;
-      state.sfxOn=d.s!==undefined?d.s:true;
-      state.musicOn=d.m!==undefined?d.m:true;
-      state.particlesOn=d.p!==undefined?d.p:true;
-      return d;
-    }
-  }catch(e){}
-  return{v:2,l:0,best:{},u:3,b:1,s:1,m:1,p:1};
+  var d=null;
+  try{d=JSON.parse(localStorage.getItem('hexa-sort-save'));}catch(e){}
+  if(!d||d.v!==2)d={v:2,l:0,best:{},u:3,b:1,s:1,m:1,p:1};
+  return d;
 }
-function saveProgress(){
+function hydrateFromSave(){
+  var d=loadSave();
+  state.level=d.l||0;
+  state.undosLeft=d.u||3;
+  state.bombsLeft=d.b||1;
+  state.sfxOn=d.s!==undefined?d.s:true;
+  state.musicOn=d.m!==undefined?d.m:true;
+  state.particlesOn=d.p!==undefined?d.p:true;
+}
+function saveProgress(skipBest){
   try{
     var d=loadSave();
     d.l=state.level;d.u=state.undosLeft;d.b=state.bombsLeft;
     d.s=state.sfxOn?1:0;d.m=state.musicOn?1:0;d.p=state.particlesOn?1:0;
-    if(!d.best)d.best={};
-    var k='lv'+state.level;
-    var sc=state.score;
-    if(!d.best[k]||d.best[k]<sc)d.best[k]=sc;
+    // skipBest (P2 fix 2026-08-25, QA verifier): showWin calls this right after
+    // state.level++ — without the flag the completed level's score was also
+    // filed under the NEXT level's "best" key, showing phantom stars on the
+    // level-select for levels never played and inflating "completed" counts.
+    // showWin persists the best itself (pre-increment) before calling this.
+    if(!skipBest){
+      if(!d.best)d.best={};
+      var k='lv'+state.level;
+      var sc=state.score;
+      if(!d.best[k]||d.best[k]<sc)d.best[k]=sc;
+    }
     localStorage.setItem('hexa-sort-save',JSON.stringify(d));
   }catch(e){}
 }
 
 /* ── Level Data (50 levels, 5 chapters) ── */
+// P0 fix 2026-08-25 (QA verifier): every target below was recalibrated to
+// 3*min(pieces,moves). Scoring ceiling analysis: a group clears the MOMENT it
+// forms (3+ connected same-color cells with stack>0), so while building, every
+// connected component must stay <=2 cells; one connector piece can join at
+// most 3 non-adjacent petals + their 3 extras => a single clear caps at 7
+// cells = 70 points, and every cleared cell needs >=1 piece, so total score
+// <= 10*min(pieces,moves). The chain bonus and combo multiplier are dead code
+// (chains can never find new groups; combo resets to 0 after each placement).
+// Original targets exceeded the ceiling on L5-L50 (permanently unwinnable)
+// and equaled it on L1-L4 (3 stars unreachable). New targets keep the win at
+// 30% of ceiling and 3 stars (2x) at 60% — reachable on every level via one
+// 7-cell flower (M<=11) or a small clear under target followed by a 7-cell
+// flower (M>=12). Win checks and the 1.5x/2x star thresholds are untouched.
 var LEVELS=[
 // Chapter 1: Basics (10 levels, 2-3 colors, small grid)
-{name:"First Drop",ch:1,radius:2,colors:3,moves:12,target:60,pieces:6,pre:[]},
-{name:"Double Up",ch:1,radius:2,colors:3,moves:10,target:80,pieces:8,pre:[]},
-{name:"Triple Stack",ch:1,radius:2,colors:3,moves:10,target:100,pieces:10,pre:[]},
-{name:"First Chain",ch:1,radius:3,colors:3,moves:12,target:120,pieces:12,pre:[]},
-{name:"Color Fun",ch:1,radius:3,colors:3,moves:12,target:140,pieces:14,pre:[]},
-{name:"Plan Ahead",ch:1,radius:3,colors:3,moves:10,target:160,pieces:16,pre:[]},
-{name:"Combo Time",ch:1,radius:3,colors:3,moves:10,target:180,pieces:18,pre:[]},
-{name:"Grid Grow",ch:1,radius:3,colors:3,moves:12,target:200,pieces:20,pre:[]},
-{name:"Stack Master",ch:1,radius:3,colors:3,moves:11,target:220,pieces:22,pre:[]},
-{name:"Chapter End",ch:1,radius:3,colors:3,moves:10,target:260,pieces:24,pre:[]},
+{name:"First Drop",ch:1,radius:2,colors:3,moves:12,target:18,pieces:6,pre:[]},
+{name:"Double Up",ch:1,radius:2,colors:3,moves:10,target:24,pieces:8,pre:[]},
+{name:"Triple Stack",ch:1,radius:2,colors:3,moves:10,target:30,pieces:10,pre:[]},
+{name:"First Chain",ch:1,radius:3,colors:3,moves:12,target:36,pieces:12,pre:[]},
+{name:"Color Fun",ch:1,radius:3,colors:3,moves:12,target:36,pieces:14,pre:[]},
+{name:"Plan Ahead",ch:1,radius:3,colors:3,moves:10,target:30,pieces:16,pre:[]},
+{name:"Combo Time",ch:1,radius:3,colors:3,moves:10,target:30,pieces:18,pre:[]},
+{name:"Grid Grow",ch:1,radius:3,colors:3,moves:12,target:36,pieces:20,pre:[]},
+{name:"Stack Master",ch:1,radius:3,colors:3,moves:11,target:33,pieces:22,pre:[]},
+{name:"Chapter End",ch:1,radius:3,colors:3,moves:10,target:30,pieces:24,pre:[]},
 // Chapter 2: Colors (10 levels, 3-4 colors, medium grid)
-{name:"New Hue",ch:2,radius:3,colors:4,moves:12,target:200,pieces:16,pre:[]},
-{name:"Four Colors",ch:2,radius:3,colors:4,moves:12,target:240,pieces:20,pre:[]},
-{name:"Tight Moves",ch:2,radius:3,colors:4,moves:10,target:280,pieces:22,pre:[]},
-{name:"Color Maze",ch:2,radius:4,colors:4,moves:14,target:320,pieces:24,pre:[]},
-{name:"Sort Smart",ch:2,radius:4,colors:4,moves:13,target:360,pieces:26,pre:[]},
-{name:"Ripple Clear",ch:2,radius:4,colors:4,moves:12,target:400,pieces:28,pre:[]},
-{name:"Big Grid",ch:2,radius:4,colors:4,moves:13,target:440,pieces:30,pre:[]},
-{name:"Chain Maker",ch:2,radius:4,colors:4,moves:12,target:480,pieces:32,pre:[]},
-{name:"Tetra Sort",ch:2,radius:4,colors:4,moves:11,target:520,pieces:34,pre:[]},
-{name:"Color Master",ch:2,radius:4,colors:4,moves:12,target:580,pieces:36,pre:[]},
+{name:"New Hue",ch:2,radius:3,colors:4,moves:12,target:36,pieces:16,pre:[]},
+{name:"Four Colors",ch:2,radius:3,colors:4,moves:12,target:36,pieces:20,pre:[]},
+{name:"Tight Moves",ch:2,radius:3,colors:4,moves:10,target:30,pieces:22,pre:[]},
+{name:"Color Maze",ch:2,radius:4,colors:4,moves:14,target:42,pieces:24,pre:[]},
+{name:"Sort Smart",ch:2,radius:4,colors:4,moves:13,target:39,pieces:26,pre:[]},
+{name:"Ripple Clear",ch:2,radius:4,colors:4,moves:12,target:36,pieces:28,pre:[]},
+{name:"Big Grid",ch:2,radius:4,colors:4,moves:13,target:39,pieces:30,pre:[]},
+{name:"Chain Maker",ch:2,radius:4,colors:4,moves:12,target:36,pieces:32,pre:[]},
+{name:"Tetra Sort",ch:2,radius:4,colors:4,moves:11,target:33,pieces:34,pre:[]},
+{name:"Color Master",ch:2,radius:4,colors:4,moves:12,target:36,pieces:36,pre:[]},
 // Chapter 3: Strategy (10 levels, 4-5 colors, large grid)
-{name:"Five Colors",ch:3,radius:4,colors:5,moves:14,target:400,pieces:24,pre:[]},
-{name:"Full Board",ch:3,radius:4,colors:5,moves:14,target:460,pieces:28,pre:[]},
-{name:"Tough Sort",ch:3,radius:5,colors:5,moves:16,target:520,pieces:30,pre:[]},
-{name:"Hex Expert",ch:3,radius:5,colors:5,moves:15,target:580,pieces:34,pre:[]},
-{name:"Strategy",ch:3,radius:5,colors:5,moves:14,target:640,pieces:36,pre:[]},
-{name:"Deep Sort",ch:3,radius:5,colors:5,moves:15,target:700,pieces:38,pre:[]},
-{name:"Power Play",ch:3,radius:5,colors:5,moves:13,target:760,pieces:40,pre:[]},
-{name:"Chain Lord",ch:3,radius:5,colors:5,moves:14,target:820,pieces:42,pre:[]},
-{name:"Color King",ch:3,radius:5,colors:5,moves:13,target:900,pieces:44,pre:[]},
-{name:"Grand Finale",ch:3,radius:5,colors:5,moves:14,target:1000,pieces:48,pre:[]},
+{name:"Five Colors",ch:3,radius:4,colors:5,moves:14,target:42,pieces:24,pre:[]},
+{name:"Full Board",ch:3,radius:4,colors:5,moves:14,target:42,pieces:28,pre:[]},
+{name:"Tough Sort",ch:3,radius:5,colors:5,moves:16,target:48,pieces:30,pre:[]},
+{name:"Hex Expert",ch:3,radius:5,colors:5,moves:15,target:45,pieces:34,pre:[]},
+{name:"Strategy",ch:3,radius:5,colors:5,moves:14,target:42,pieces:36,pre:[]},
+{name:"Deep Sort",ch:3,radius:5,colors:5,moves:15,target:45,pieces:38,pre:[]},
+{name:"Power Play",ch:3,radius:5,colors:5,moves:13,target:39,pieces:40,pre:[]},
+{name:"Chain Lord",ch:3,radius:5,colors:5,moves:14,target:42,pieces:42,pre:[]},
+{name:"Color King",ch:3,radius:5,colors:5,moves:13,target:39,pieces:44,pre:[]},
+{name:"Grand Finale",ch:3,radius:5,colors:5,moves:14,target:42,pieces:48,pre:[]},
 // Chapter 4: Chains (10 levels, 5-6 colors)
-{name:"Six Colors",ch:4,radius:5,colors:6,moves:16,target:600,pieces:30,pre:[]},
-{name:"Hex Storm",ch:4,radius:5,colors:6,moves:15,target:700,pieces:34,pre:[]},
-{name:"Chain Fury",ch:4,radius:6,colors:6,moves:18,target:800,pieces:38,pre:[]},
-{name:"Color Burst",ch:4,radius:6,colors:6,moves:17,target:900,pieces:42,pre:[]},
-{name:"Mega Sort",ch:4,radius:6,colors:6,moves:16,target:1000,pieces:46,pre:[]},
-{name:"Tidal Wave",ch:4,radius:6,colors:6,moves:17,target:1100,pieces:50,pre:[]},
-{name:"Hex Havoc",ch:4,radius:6,colors:6,moves:16,target:1200,pieces:52,pre:[]},
-{name:"Rainbow Rush",ch:4,radius:6,colors:6,moves:15,target:1350,pieces:54,pre:[]},
-{name:"Sort Titan",ch:4,radius:6,colors:6,moves:16,target:1500,pieces:56,pre:[]},
-{name:"Chain God",ch:4,radius:6,colors:6,moves:15,target:1600,pieces:58,pre:[]},
+{name:"Six Colors",ch:4,radius:5,colors:6,moves:16,target:48,pieces:30,pre:[]},
+{name:"Hex Storm",ch:4,radius:5,colors:6,moves:15,target:45,pieces:34,pre:[]},
+{name:"Chain Fury",ch:4,radius:6,colors:6,moves:18,target:54,pieces:38,pre:[]},
+{name:"Color Burst",ch:4,radius:6,colors:6,moves:17,target:51,pieces:42,pre:[]},
+{name:"Mega Sort",ch:4,radius:6,colors:6,moves:16,target:48,pieces:46,pre:[]},
+{name:"Tidal Wave",ch:4,radius:6,colors:6,moves:17,target:51,pieces:50,pre:[]},
+{name:"Hex Havoc",ch:4,radius:6,colors:6,moves:16,target:48,pieces:52,pre:[]},
+{name:"Rainbow Rush",ch:4,radius:6,colors:6,moves:15,target:45,pieces:54,pre:[]},
+{name:"Sort Titan",ch:4,radius:6,colors:6,moves:16,target:48,pieces:56,pre:[]},
+{name:"Chain God",ch:4,radius:6,colors:6,moves:15,target:45,pieces:58,pre:[]},
 // Chapter 5: Master (10 levels, 6-7 colors)
-{name:"Ultimate",ch:5,radius:6,colors:7,moves:18,target:800,pieces:36,pre:[]},
-{name:"Infinity",ch:5,radius:6,colors:7,moves:17,target:1000,pieces:42,pre:[]},
-{name:"Omega",ch:5,radius:6,colors:7,moves:16,target:1200,pieces:48,pre:[]},
-{name:"Nebula",ch:5,radius:7,colors:7,moves:20,target:1400,pieces:52,pre:[]},
-{name:"Cosmos",ch:5,radius:7,colors:7,moves:19,target:1600,pieces:56,pre:[]},
-{name:"Quantum",ch:5,radius:7,colors:7,moves:18,target:1800,pieces:60,pre:[]},
-{name:"Singularity",ch:5,radius:7,colors:7,moves:17,target:2000,pieces:64,pre:[]},
-{name:"Pinnacle",ch:5,radius:7,colors:7,moves:18,target:2200,pieces:66,pre:[]},
-{name:"Apex",ch:5,radius:7,colors:7,moves:16,target:2500,pieces:70,pre:[]},
-{name:"Grandmaster",ch:5,radius:7,colors:7,moves:17,target:3000,pieces:72,pre:[]}
+{name:"Ultimate",ch:5,radius:6,colors:7,moves:18,target:54,pieces:36,pre:[]},
+{name:"Infinity",ch:5,radius:6,colors:7,moves:17,target:51,pieces:42,pre:[]},
+{name:"Omega",ch:5,radius:6,colors:7,moves:16,target:48,pieces:48,pre:[]},
+{name:"Nebula",ch:5,radius:7,colors:7,moves:20,target:60,pieces:52,pre:[]},
+{name:"Cosmos",ch:5,radius:7,colors:7,moves:19,target:57,pieces:56,pre:[]},
+{name:"Quantum",ch:5,radius:7,colors:7,moves:18,target:54,pieces:60,pre:[]},
+{name:"Singularity",ch:5,radius:7,colors:7,moves:17,target:51,pieces:64,pre:[]},
+{name:"Pinnacle",ch:5,radius:7,colors:7,moves:18,target:54,pieces:66,pre:[]},
+{name:"Apex",ch:5,radius:7,colors:7,moves:16,target:48,pieces:70,pre:[]},
+{name:"Grandmaster",ch:5,radius:7,colors:7,moves:17,target:51,pieces:72,pre:[]}
 ];
 
 /* ── Canvas Setup ── */
@@ -619,6 +647,11 @@ function clearGroups(){
 
 /* ── Win / Lose ── */
 function checkWinLose(){
+  // P1/P2 fix 2026-08-25 (QA verifier): once the level's win has fired the
+  // level is over — drops still land under the overlay, and each extra clear
+  // re-entered here, re-saved progress (with the already-incremented level)
+  // and re-attempted the win overlay. No further win/lose transitions apply.
+  if(state.winShown)return;
   saveProgress();
   if(state.score>=state.targetScore){
     setTimeout(function(){
@@ -627,14 +660,23 @@ function checkWinLose(){
       if(state.score>=state.targetScore*2)stars=3;
       showWin(stars);
     },400);
-  }else if(state.moves<=0&&state.tray.length===0){
-    setTimeout(function(){showLose();},400);
-  }else if(state.moves<=0){
+  }else if(state.moves<=0||state.tray.length===0){
+    // P1 fix 2026-08-25 (QA verifier): tray could empty while moves remained
+    // (moves > pieces on every chapter-1 level) — no branch fired and the game
+    // sat in a dead state forever: no lose overlay, nothing placeable. A level
+    // is over when either resource is exhausted and the target was not met.
     setTimeout(function(){showLose();},400);
   }
 }
 
 function showWin(stars){
+  // P1 fix 2026-08-25 (QA verifier): showWin fired on EVERY later clear that
+  // still exceeded target (playing on under the overlay keeps working — drops
+  // go through document pointerup), and each call did state.level++ again, so
+  // one level could skip the player 2-3 levels forward and file the same score
+  // under several "best" keys. Win must fire exactly once per level attempt.
+  if(state.winShown)return;
+  state.winShown=true;
   var sd=loadSave();
   if(!sd.best)sd.best={};
   var k='lv'+state.level;
@@ -645,7 +687,7 @@ function showWin(stars){
   }else{
     state.level++;
   }
-  saveProgress();
+  saveProgress(true);
   document.getElementById('go-title').className='win';
   document.getElementById('go-title').textContent='Level Complete!';
   document.getElementById('go-stars').innerHTML='';
@@ -972,7 +1014,7 @@ function loadLevel(idx){
   var lv=LEVELS[idx];
   state.level=idx;
   state.moves=lv.moves;state.maxMoves=lv.moves;
-  state.score=0;state.combo=0;state.totalCleared=0;
+  state.score=0;state.combo=0;state.totalCleared=0;state.winShown=false;
   state.undoStack=[];state.particles=[];state.floatTexts=[];
   state.animating=false;state.selectedPiece=null;state.dragPiece=null;
   initGrid(lv.radius);
@@ -994,7 +1036,11 @@ window.startGame=function(){
   document.getElementById('menu-screen').style.display='none';
   document.getElementById('game-screen').style.display='flex';
   state.screen='game';
-  loadLevel(state.level);
+  // P1 fix 2026-08-25 (QA verifier): winning L50 sets state.level=LEVELS.length
+  // (50) and saves it; Continue Game then called loadLevel(50), which returns
+  // early on the bounds check — leaving an empty, dead game screen. Clamp to
+  // the last real level so completionists replay L50 instead.
+  loadLevel(Math.min(state.level,LEVELS.length-1));
 };
 
 window.backToMenu=function(){
@@ -1152,7 +1198,7 @@ document.addEventListener('visibilitychange',function(){
 });
 
 /* ── Init ── */
-loadSave();
+hydrateFromSave();
 updateMenuStats();
 
 })();

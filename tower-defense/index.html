@@ -1288,26 +1288,35 @@
             this.lastAttack += dt;
             
             // Find target
-            if (this.type !== 'laser') {
-                this.target = this.findTarget(enemies);
-            } else {
-                this.target = this.findTarget(enemies);
+            this.target = this.findTarget(enemies);
+
+            if (this.type === 'laser') {
                 this.laserTarget = this.target;
+                if (this.target) {
+                    // FIX(verify 2026-08-25): the laser's damage lived in render() behind
+                    // `lastAttack < 0.05`, but its attack interval is 1/0.1 = 10s — the beam
+                    // dealt ~3 frames of damage (~10 total) once every TEN SECONDS (~1 DPS)
+                    // despite the "Continuous beam, high DPS" description: a 200g tower was
+                    // combat dead weight. The beam now ticks continuously in update() at
+                    // DPS = damage * 3 (90 base, scaled by upgrades); render() stays visual.
+                    this.lastAttack = 0;
+                    this.target.takeDamage(this.damage * 3 * dt);
+                    if (Math.random() < 0.02) playSound('laser_hum');
+                }
+                return;
             }
-            
+
             if (this.target) {
                 // Rotate towards target
                 this.rotation = Math.atan2(this.target.y - this.y, this.target.x - this.x);
             }
-            
+
             // Check if can attack
             const attackInterval = 1 / this.attackSpeed;
-            
+
             if (this.lastAttack >= attackInterval) {
                 this.lastAttack = 0;
-                
-                if (this.type === 'laser') return; // Laser handles its own damage
-                
+
                 if (this.target && this.type === 'lightning') {
                     // Chain lightning
                     this.chainAttack(this.target, enemies);
@@ -1418,12 +1427,7 @@
                 ctx.lineTo(this.target.x, this.target.y);
                 ctx.stroke();
                 ctx.restore();
-                
-                // Deal continuous damage
-                if (this.lastAttack < 0.05) {
-                    this.target.takeDamage(this.damage * 0.1);
-                    if (Math.random() < 0.3) playSound('laser_hum');
-                }
+                // FIX(verify 2026-08-25): damage moved to update() — render() is visual-only
             }
         }
 
@@ -2067,11 +2071,17 @@
         gameState.selectedTower = tower;
         gameState.selectedTowerType = null;
         gameState.placingTower = false;
-        
+
         // Update tower panel selection
         document.querySelectorAll('.tower-card').forEach(card => {
             card.classList.remove('selected');
         });
+
+        // FIX(verify 2026-08-25): updateTowerPanel() was never called when a tower was
+        // selected, so the Upgrade / Sell / Cancel cards (which updateTowerPanel renders
+        // for gameState.selectedTower) NEVER appeared — players could not upgrade or sell
+        // a placed tower at all.
+        updateTowerPanel();
     }
 
     function placeTower(cell) {
@@ -2335,7 +2345,13 @@
         
         gameState.level = level;
         gameState.lives = 20;
-        gameState.gold = 300 - (level - 1) * 8; // 300 to 148
+        /* FIX(verify 2026-08-25): start gold SHRANK as levels got harder (300 down to 68 by
+           level 30) while towers reset every level and wave-1 threats explode — L28 opens
+           with 100 swarms @ 84 gold (nothing costing <=84 stops them: provably unwinnable,
+           ~20 lives gone in the first seconds) and L30 opens with two 8000hp mega bosses @
+           68 gold. Gold now scales with the tier so every level is playable:
+           300 (L1-10) / 400 (L11-20) / 550 (L21-27) / 750 (L28-30). */
+        gameState.gold = level <= 10 ? 300 : level <= 20 ? 400 : level <= 27 ? 550 : 750;
         gameState.score = 0;
         gameState.wave = 0;
         gameState.waveInProgress = false;

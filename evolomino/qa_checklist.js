@@ -5,7 +5,7 @@
  */
 const fs = require('fs');
 
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 const checks = [];
 function check(name, ok, detail) {
     checks.push({ name, ok, detail: detail || '' });
@@ -63,11 +63,11 @@ check('gz-ad-below-game', /gz-ad-below-game/.test(html));
 // 6. Art assets
 const fs2 = require('fs');
 try {
-    const iconStat = fs2.statSync('icon.png');
+    const iconStat = fs2.statSync(__dirname + '/icon.png');
     check('icon.png exists', iconStat.size > 100);
 } catch (e) { check('icon.png exists', false, e.message); }
 try {
-    const ogStat = fs2.statSync('og-image.jpg');
+    const ogStat = fs2.statSync(__dirname + '/og-image.jpg');
     check('og-image.jpg exists', ogStat.size > 1000);
 } catch (e) { check('og-image.jpg exists', false, e.message); }
 

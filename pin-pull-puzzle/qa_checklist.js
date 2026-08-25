@@ -1,88 +1,52 @@
 #!/usr/bin/env node
-// Code-Level QA Checklist (40 checks)
+/**
+ * Pin Pull Puzzle — code-level QA checklist.
+ * This directory is now a redirect stub to /pull-the-pin/; checks verify the
+ * redirect contract, page structure, and assets. Runs without a browser.
+ */
 const fs = require('fs');
-
-const html = fs.readFileSync('/home/msdn/gamezipper.com/pin-pull-puzzle/index.html', 'utf8');
-
-const checks = [
-  // HTML & SEO
-  ['Analytics pixel', html.includes('site-analytics.cap.1ktower.com')],
-  ['Canonical URL', html.includes('gamezipper.com/pin-pull-puzzle/')],
-  ['JSON-LD VideoGame', html.includes('VideoGame')],
-  ['JSON-LD FAQPage', html.includes('FAQPage')],
-  ['JSON-LD HowTo', html.includes('HowTo')],
-  ['JSON-LD BreadcrumbList', html.includes('BreadcrumbList')],
-  ['OG tags', html.includes('og:title')],
-  ['Meta description', html.includes('meta name="description"')],
-
-  // CSS & Responsive
-  ['Dark theme', html.includes('#0a0a1a')],
-  ['Responsive canvas', html.includes('resize')],
-  ['Touch targets', html.includes('36px')], // Minimum touch target hint
-  ['No hardcoded widths', !html.match(/width:\s*\d+px/)], // Flexible widths preferred
-  ['Overflow hidden', html.includes('overflow: hidden')],
-
-  // Game Logic
-  ['Deterministic RNG', !html.includes('Math.random')], // No RNG needed for this game
-  ['Win condition', html.includes('checkWin')],
-  ['Scoring', html.includes('stars')],
-  ['3-star rating', html.includes('par')],
-  ['Hint system', html.includes('showHint')],
-  ['Undo system', html.includes('undoStack')],
-  ['Level system', html.includes('LEVELS')],
-
-  // Input Handling
-  ['Pointer events', html.includes('pointerdown')],
-  ['Touch action none', html.includes('touch-action:none')],
-  ['Prevent default touch', html.includes('preventDefault')],
-
-  // Audio
-  ['AudioContext lazy init', html.includes('initAudio')],
-  ['SFX functions', html.includes('playTone')],
-  ['Music toggle', html.includes('toggleMusic')],
-  ['Sound toggle', html.includes('toggleSound')],
-
-  // State Management
-  ['localStorage progress', html.includes('localStorage.getItem')],
-  ['Level unlock', html.includes('maxLevel')],
-  ['Tutorial first-visit', html.includes('tutorialSeen')],
-
-  // Performance
-  ['requestAnimationFrame', html.includes('requestAnimationFrame')],
-  ['Delta time', html.includes('dt')],
-  ['No memory leaks', html.includes('cleanup')],
-
-  // Accessibility
-  ['Window resize', html.includes('resize')],
-  ['Valid grid sizes', html.includes('canvas.width')],
-  ['Valid colors', html.includes('#ff4444')],
-  ['No div by 0', !html.includes('/ 0')],
-
-  // Code Quality
-  ['No console.log', !html.includes('console.log')],
-  ['No TODO/FIXME', !html.includes('TODO') && !html.includes('FIXME')],
-  ['Organized sections', html.includes('// ===')], // Section markers
-  ['No external CSS', !html.includes('rel="stylesheet"')],
-
-  // Monetag Ads (checked separately)
-  ['Monetag zone 110120', false], // Will be checked in Phase 8
-  ['Monetag zone 110121', false],
-  ['Monetag zone 110122', false],
-
-  // File properties
-  ['File size > 30KB', html.length > 30000],
-  ['Single file', html.includes('<!DOCTYPE html>')],
-  ['Closing </html>', html.includes('</html>')],
-  ['Closing </body>', html.includes('</body>')],
-  ['Closing </script>', html.includes('</script>')],
-];
+const path = require('path');
+const DIR = __dirname;
+const HTML = fs.readFileSync(path.join(DIR, 'index.html'), 'utf8');
+const destination = 'https://gamezipper.com/pull-the-pin/';
+const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 let pass = 0, fail = 0;
-checks.forEach(c => {
-  const status = c[1] ? 'OK' : 'FAIL';
-  console.log(`${status} ${c[0]}`);
-  c[1] ? pass++ : fail++;
-});
+function check(name, cond, detail=''){
+  if(cond){ pass++; console.log('  ✓', name); }
+  else   { fail++; console.log('  ✗', name, '—', detail); }
+}
 
-console.log(`\n${pass}/${checks.length} passed` + (fail ? ` (${fail} failed)` : ''));
-process.exit(fail > 0 ? 1 : 0);
+console.log('== Pin Pull Puzzle (redirect) QA ==');
+check('index.html present', fs.existsSync(path.join(DIR, 'index.html')));
+check('icon.png present', fs.existsSync(path.join(DIR, 'icon.png')));
+check('og-image.jpg present', fs.existsSync(path.join(DIR, 'og-image.jpg')));
+check('verify_engine.js present', fs.existsSync(path.join(DIR, 'verify_engine.js')));
+check('verify_independent.js present', fs.existsSync(path.join(DIR, 'verify_independent.js')));
+
+// HTML structural checks
+check('HTML has <!DOCTYPE html>', /^<!doctype html>/i.test(HTML));
+check('HTML has <html lang="en">', /<html\s+lang="en"/i.test(HTML));
+check('HTML has viewport meta', /<meta\s+name="viewport"/i.test(HTML));
+check('HTML has title', /<title>[^<]+<\/title>/i.test(HTML));
+check('HTML has VideoGame JSON-LD', /"@type":\s*"VideoGame"/.test(HTML));
+check('HTML has closing </html>', /<\/html>/.test(HTML));
+check('HTML has closing </body>', /<\/body>/.test(HTML));
+
+// Redirect contract
+check('robots noindex,follow', /<meta\s+name=["']robots["']\s+content=["']noindex,follow["']\s*\/?>/i.test(HTML));
+check('canonical destination', new RegExp(`<link\\s+rel=["']canonical["']\\s+href=["']${esc(destination)}["']\\s*\\/?>`, 'i').test(HTML));
+check('zero-delay meta refresh', new RegExp(`<meta\\s+http-equiv=["']refresh["']\\s+content=["']0;url=${esc(destination)}["']\\s*\\/?>`, 'i').test(HTML));
+check('JavaScript location.replace destination', new RegExp(`window\\.location\\.replace\\(['"]${esc(destination)}['"]\\)`).test(HTML));
+check('fallback Pull The Pin link', /<a\s+href=["']\/pull-the-pin\/["']/i.test(HTML));
+check('no embedded game LEVELS', !/\b(?:const|let|var)\s+LEVELS\s*=/.test(HTML));
+
+// Hygiene
+check('no insecure http:// resources', !/src=["']http:\/\//i.test(HTML) && !/href=["']http:\/\/(?!gamezipper)/i.test(HTML));
+check('no TODO/FIXME', !/TODO|FIXME/i.test(HTML));
+check('no eval()', !/eval\(/.test(HTML));
+check('no document.write', !/document\.write\(/.test(HTML));
+check('no console.log', !/console\.log/.test(HTML));
+
+console.log(`\n=== ${pass} pass, ${fail} fail ===`);
+process.exit(fail === 0 ? 0 : 1);

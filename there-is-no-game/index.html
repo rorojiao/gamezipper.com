@@ -594,7 +594,7 @@ miniGameState={genre:'fps',targets:3,clicks:0,timer:0};
 miniGameState.genre='puzzle';saySeq(["HOW?!","Okay, puzzle game. Match the colors."]);
 miniGameState={genre:'puzzle',matches:0,needed:3,colors:['#ff3399','#00ffff','#39ff14','#ffd700'],grid:[]};
 for(let i=0;i<4;i++)miniGameState.grid.push({color:miniGameState.colors[i],matched:false,x:300+i*170,y:350});
-}else if(miniGameState.genre==='puzzle'&&miniGameState.matches>=miniGameState.needed){
+}else if(miniGameState.genre==='puzzle'&&miniGameState.matches>=miniGameState.needed&&!levelComplete){ /* FIX(verify 2026-08-25): missing !levelComplete guard (every other level has it). The win branch re-ran EVERY frame, re-registering completeLevel timers endlessly; each completeLevel call re-invoked fadeTo() which resets fadeAlpha=0, so the fade never finished and level++ never fired — the game froze on a black fade right after winning L6, permanently blocking levels 7-20. */
 levelComplete=true;levelWon=true;sfxSuccess();
 saySeq(["You broke through every genre!","This game... it keeps becoming things!","I can't stop it!"]);
 setTimeout(()=>completeLevel(),2500);
@@ -1349,7 +1349,11 @@ function completeLevel(){
 const stars=levelWon?Math.max(1,3-Math.floor(hintCount/2)):1;
 if(stars>levelStars[level])levelStars[level]=stars;
 chapter=Math.floor(level/4);levelInChapter=level%4;
-if(levelWon&&levelInChapter===3&&chapter+1<5){chapterUnlocked[chapter+1]=true;unlockAchievement(chapter);}
+/* FIX(verify 2026-08-25): chapter-complete achievements were off by one vs their labels
+ * ('Rule Breaker' says Chapter 1 but was awarded for chapter index 1 = Chapter 2), and the
+ * final chapter (index 4) was excluded by chapter+1<5, so 'Surfer' (Chapter 4) could NEVER be
+ * unlocked. Award achievement idx chapter+1 (5 for the last chapter = Game Saver). */
+if(levelWon&&levelInChapter===3){unlockAchievement(chapter<4?chapter+1:5);if(chapter+1<5)chapterUnlocked[chapter+1]=true;}
 if(levelWon&&level<19){
 setTimeout(()=>{fadeTo(()=>{level++;initLevel(level);save()})},500);
 }else if(level===19&&levelWon){unlockAchievement(5);

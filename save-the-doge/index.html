@@ -396,8 +396,13 @@ mb.textContent=musicOn?'Music ON':'Music OFF';mb.classList.toggle('active',music
 // ============ LEVEL GRID ============
 function buildLevelGrid(){
 var nav=document.getElementById('chapter-nav');nav.innerHTML='';
+// P1 fix 2026-08-25 (QA verifier): `for(var c=...)` closure captured the LOOP
+// variable, not per-iteration value — after the loop c===6, so EVERY chapter
+// tab set currentChapter=5 (out of range: start=30,end=30 → the level grid
+// rendered EMPTY and the levels screen soft-locked until a level was won).
+// Tabs now capture their chapter via IIFE, same as the level cells below.
 for(var c=1;c<=5;c++){var tab=document.createElement('div');tab.className='chapter-tab'+(c===currentChapter+1?' active':'');
-tab.textContent='Ch.'+c;tab.onclick=function(){currentChapter=c-1;buildLevelGrid();};nav.appendChild(tab);}
+tab.textContent='Ch.'+c;(function(cc){tab.onclick=function(){currentChapter=cc-1;buildLevelGrid();};})(c);nav.appendChild(tab);}
 var grid=document.getElementById('level-grid');grid.innerHTML='';
 var start=currentChapter*6;var end=Math.min(start+6,30);
 for(var i=start;i<end;i++){var cell=document.createElement('div');
@@ -527,7 +532,15 @@ if(h.x<-50||h.x>W+50||h.y>H+50||h.y<-100){h.alive=false;}
 // panic state
 var pdist=Math.sqrt(ddx*ddx+ddy*ddy);if(pdist<120&&dogeState==='idle'){dogeState='panic';}
 if(pdist>200&&dogeState==='panic'){dogeState='idle';}
-// win check
+// bee buzz
+if(h.type==='bee'&&Math.random()<dt*5)playBuzz();
+}
+// P0 fix 2026-08-25 (QA verifier): the win check used to live INSIDE the hazard
+// loop, after `if(!h.alive)continue` — so when the player's lines deflected every
+// hazard off-screen (or into spikes), which is the natural result of GOOD play,
+// the loop body never executed and the win check never ran: the timer filled to
+// 100% and the level hung in 'simulating' forever (soft-lock; 100% of plays that
+// cleared all hazards never completed). Moved to after the loop.
 if(simTimer>=simDuration){dogeState='celebrate';GS='win';
 var stars=1;if(inkUsed<inkMax*0.7)stars=2;if(inkUsed<inkMax*0.4)stars=3;
 levelStars[currentLevel]=Math.max(stars,levelStars[currentLevel]||0);levelCompleted[currentLevel]=true;
@@ -540,9 +553,6 @@ document.getElementById('win-stars').textContent=st;
 document.getElementById('win-sub').textContent='Ink used: '+Math.round(inkUsed)+'/'+inkMax;
 document.getElementById('btn-next').style.display=currentLevel<29?'inline-block':'none';
 setTimeout(function(){showScreen('screen-win');},600);return;}
-// bee buzz
-if(h.type==='bee'&&Math.random()<dt*5)playBuzz();
-}
 // particles
 for(var i=particles.length-1;i>=0;i--){var p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=200*dt;p.life-=dt;if(p.life<=0)particles.splice(i,1);}
 // doge hit animation

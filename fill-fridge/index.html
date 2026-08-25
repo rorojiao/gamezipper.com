@@ -444,14 +444,20 @@ const LEVELS=[
 
 // Pre-compute item total cells per level and verify packing is possible
 // We'll compute a difficulty rating
-function levelDifficulty(lv){
-  const totalCells=lv.items.reduce((s,it)=>s+it.cells.length,0);
-  const gridCells=lv.cols*lv.rows;
-  const fillRatio=totalCells/gridCells;
-  if(fillRatio<.55)return 1;
-  if(fillRatio<.7)return 2;
-  if(fillRatio<.85)return 3;
+// P2 fix 2026-08-25 (QA verifier): the rating was fill-ratio-based, but every
+// level's ratio is a CONSTANT in [.50,.67] (a completed level always fills
+// exactly totalCells cells) — the old .55/.7/.85 bounds labeled 18/20 levels
+// "Medium" and 2 "Easy", never "Hard"/"Expert", contradicting the authored
+// level comments (L6 "Medium", L11 "Hard", L16 "Expert") and the advertised
+// four difficulty tiers. Tier is now index-based per those comments.
+function levelTier(num){
+  if(num<=5)return 1;
+  if(num<=10)return 2;
+  if(num<=15)return 3;
   return 4;
+}
+function levelDifficulty(num){
+  return levelTier(num);
 }
 
 /* ── Build level grid UI ── */
@@ -472,7 +478,7 @@ function buildLevelGrid(){
 
   LEVELS.forEach((lv,i)=>{
     const num=i+1;
-    const diff=levelDifficulty(lv);
+    const diff=levelTier(num);
     const diffLabels=['Easy','Medium','Hard','Expert'];
     const btn=document.createElement('button');
     btn.className='level-btn';
@@ -1062,12 +1068,16 @@ function shuffleItems(){
 
 /* ── Level complete ── */
 function showComplete(){
-  const totalCells=items.reduce((s,it)=>s+it.cells.length,0);
-  const gridCells=fridgeCols*fridgeRows;
-  const fillRatio=totalCells/gridCells;
-  let stars=1;
-  if(fillRatio>=.6)stars=2;
-  if(fillRatio>=.75)stars=3;
+  // P2 fix 2026-08-25 (QA verifier): stars were fill-ratio-based, but the
+  // ratio is a per-level constant (a completed fridge always fills exactly
+  // totalCells of cols*rows cells) capped at .667 across all 20 levels —
+  // under the old .75 three-star bound, NO level could ever award 3 stars,
+  // making the FAQ-advertised "+1 hint per 3-star level" unreachable and
+  // every level-grid row show at most **. Stars now follow the authored
+  // difficulty tiers (L1-5 Easy=1, L6-10 Medium=2, L11-15 Hard=3,
+  // L16-20 Expert=3), matching levelTier().
+  let stars=levelTier(currentLevel);
+  if(stars===4)stars=3;
 
   // Bonus hints for 3-star
   if(stars===3)saveData.hints+=1;

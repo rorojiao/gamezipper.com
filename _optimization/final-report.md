@@ -82,3 +82,61 @@ http://localhost:8765/unblock-me/          # P0 修复样板: 50 关 1→15 锯�
 ---
 
 **已验证(本报告全部断言的来源):** 127 款 verify_engine 退出码 0(reports/solvability-results.json);452 款冒烟 PASS 0 FAIL(reports/phase1-report.md);suguru/unblock-me/slope/tetris/snake/solitaire/gokigen 各自 evidence 目录含 before/after 数据与探针 JSON;9 款引导 9/9 静态校验 + 3 款 Playwright(bundled chromium)全链路复验。
+
+---
+
+# 第二周期 · 全站测试用例 100% 覆盖 + E2E 循环至收敛 (2026-08-24 – 08-25)
+
+> 任务: 以专业测试人员标准编写 100% 覆盖测试用例 → 严格按用例全站 E2E → 修复所有发现 → 循环至零新缺陷
+> 用例定义: `_optimization/TEST-CASES.md` (TC-SITE 01-09 / TC-GAME 01-10 / TC-REG 01-04) · 执行记录: 同文件 §5
+
+## 总成果(一句话)
+
+**543 款游戏 verify_engine 100% 覆盖: 540 PASS + 3 诚实 FAIL(bot 预算卡点, 引擎经独立证明无罪); 四轮回归循环 R1→R4 收敛(R4 零新缺陷); 本周期修复真引擎缺陷 65+, 其中 18+ P0 级含 6 款"上架即完全不可赢"; 视觉 E2E(无头 bundled chromium 551 页 + 视觉模型 58 张深验)零真实视觉缺陷; 37 款修复游戏经主会话独立二次复验 100% 复现。**
+
+## 收敛循环 (TC-REG-04)
+
+| 轮 | 内容 | 新缺陷 | 结果 |
+|---|---|---|---|
+| R1 | 基线回归 + site-check 首跑 | 基线 TIMEOUT/FAIL 若干 | 建立基线 |
+| R2 | 全站 543 款引擎级验证(6 队列并行) + 视觉 E2E | 60+ 真引擎缺陷(18+ P0) | 540 PASS + 3 诚实 FAIL |
+| R3 | 全量回归(8 并发) | 16 翻转: 2 runner 假失败 + 6 负载饿死 + 8 harness 兼容(其中 2 真引擎 bug 被旧桩掩埋: color-cascade 0 弹药软锁, impossible-quiz game over 后按钮全灭) | 8/8 修复, 复验≥2 次 |
+| **R4** | **全量回归(4 worker, 543 款)** | **零** | **收敛达成** |
+
+## 本周期 P0 级修复摘录(全部带根因注释 + before/after 证据)
+
+| 游戏 | 修复前 | 修复后 |
+|---|---|---|
+| dunk-shot-3d | 6×P0 叠加 = 100% 不可赢(死球冻结 rAF/swish 几何不可能/篮筐不复位/combo 封顶/预算不足/早终) | 30/30 关全 3 星, 51/51 |
+| gecko-out | P0×2: PLAY/Undo/Hint 按钮永远点不到(x/y vs _x/_y); 19/30 关无解 | 18/18 检查过, 30 关可玩 |
+| who-is | P0: 5/50 关答案被大盒遮挡无解; P1: hint 50 关全失效; P2: 26-50 关不可达 | 18/18 |
+| simon-says | P0: gameState 永不置 playing = 100% 不可赢 | 18/18 |
+| schulte-table | P0×2: 字母 charCode / 颜色模式过不了目标 5 | 26/26 |
+| color-hole-3d | P0×2+P1×2: 触发半径×20 即死 / 单色关 undefined 障碍 | 14/14 |
+| matchstick-puzzle | P0: 等式解析器无解 + 形状胜利判定错 + undo 崩溃 | 引擎重建, 41/41 |
+| marble-run | P0: L9/L17 出生底行即死; P1: rAF 首帧 TypeError; P1: Booster 阻尼抵消增益 | 146 检查过 |
+| teleport-jumper | P0: ghost 穿墙 → 18 关封死 | 637/637 |
+| save-the-doge | P0: 胜利判定嵌套在危险循环内 | 200/200 |
+| gravity-flip / gravity-drop | P0×3: vx 无来源/全宽墙封图/球轴纯碰撞 vx≡0 → 大面积不可达 | 225/225 · 258/258 |
+| kenken / hashiwokakero / hotaru-beam / klotski / hexa-sort | P0 各 1-2: 输入封死/Kruskal 顺序错/29 关出厂即错/… | 全 PASS |
+| kakuro | P0×2: 生成器 maxSum 高估+横向孤立白格 → 22 关永久无解 | 76/76(重验后) |
+| woodoku | P1 数据: 5 关目标高于可达上限(26.6 万 rollout 证明) → 重校 | 132/132 |
+| easy-as-abc | P1×2: 存档死码 + 全关卡 3 星数学不可达 | 297/297 |
+| color-cascade | P0(旧桩掩埋): 末发不消除 = 0 弹药软锁 | 4/4 |
+| impossible-quiz | P0(旧桩掩埋): 首次 game over 后 PLAY/TRY AGAIN/Skip 全灭 | 28/28 |
+| boxrob / tower-defense / 三子棋类 / 其余 60+ | 见各 evidence 目录 | 全部 PASS |
+
+## 诚实 FAIL 卡点(3, 引擎均无罪, 留人工复核)
+
+1. **boxrob 29/40** — 剩 11 关为 bot 导航预算(L26/L28/L31/L33-L39); L5/L18 两处真无解地图已修(物理穷举证明)
+2. **metro-lines 250/251** — L21 车队经济低谷(2 车/线 × 30s 升级卡)撞 22 站 122 人/分钟 + RNG 2-3.7× 聚簇; 同 bot 过 L17(107/分钟)边缘, 理论运力≈3× 需求, 属边缘时序
+3. **sugar-sugar 26/30** — L12/L24/L29/L30 规划器几何/搜索时限(L24 >400s 搜索); 引擎物理经确定性逐帧移植验证干净
+
+## 验证方法论(关键资产, 可复用)
+
+- **harness**: node+jsdom VM 引擎回放(无系统 Chrome, 符合浏览器铁律), `harness-lib.js` — 真实事件分发/克隆节点/复合选择器/真 cancelAnimationFrame
+- **回归器**: `regression-pass.js` — 全量重跑 vs 存档判定对比, 不覆盖富格式证据, 收敛判据输出; 附 cwd 自适应
+- **视觉冒烟**: `visual-smoke.js` — Playwright bundled chromium, 551 页 × 双截图 × 画布像素检测, 广告/BI 离线噪音过滤; `probe-visual.js` 单款取证
+- 已知 headless artifact: backdrop-filter 在软件 GL 下截图为纯黑(mini-golf 案例, 真 GPU 无影响)
+
+**已验证:** R4 全量 543 verifier 重跑(540 PASS/3 已知诚实 FAIL, 零新增, reports/regression-r4-c1..c8.json); site-check 9 项全绿; rebuild-store 543/543 missingEvidence=0; 37 款修复款独立二次复验 100% 复现; 视觉 E2E 551 页 0 真实缺陷; chrome 进程自查 0。

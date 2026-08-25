@@ -442,7 +442,7 @@ this.shotsLeft=def.shots;
 this.powerups={bomb:0,wipe:0,slow:0};
 this.awardedThisLevel={bomb:false,wipe:false,slow:false};
 this.shakeX=0;this.shakeY=0;this.shakeDur=0;
-this.particles=[];this.shootAnim=null;
+this.particles=[];this.shootAnim=null;this.endQueued=false;
 this.bannerText="";this.bannerTimer=0;
 this.buildGrid(def);
 this.buildConveyor(def);
@@ -597,7 +597,12 @@ if(this.score>=def.stars[1]&&!this.awardedThisLevel.wipe){this.powerups.wipe++;t
 if(this.score>=def.stars[0]&&!this.awardedThisLevel.slow){this.powerups.slow++;this.awardedThisLevel.slow=true;this.showBanner("","⏳ SLOW!")}
 this.advanceConveyor();
 const empty=this.grid.flat().every(v=>v===-1);
-if(empty||this.shotsLeft<=0){setTimeout(()=>this.endLevel(),600)}
+// ENGINE FIX 2026-08-25: endLevel used to be scheduled ONLY here (inside clearCluster), so a
+// final shot that landed WITHOUT clearing a cluster (miss / single-block placement / lone
+// match) soft-locked the game at 0 shots forever — no further input accepted, no end screen,
+// in real browsers too. endQueued (reset in startLevel) guards double-scheduling since
+// update() now also queues the end when shots run out.
+if(empty||this.shotsLeft<=0){if(!this.endQueued){this.endQueued=true;setTimeout(()=>this.endLevel(),600)}}
 },
 floodFill(sr,sc,color){
 if(sr<0||sr>=GRID_ROWS||sc<0||sc>=GRID_COLS)return[];
@@ -759,6 +764,9 @@ if(a.t>=1){
 a.t=1;this.onShootComplete();
 }
 }
+// second half of the 2026-08-25 endLevel fix: catch the non-clearing final shot —
+// 0 shots left, no in-flight shot animation, level still playing => level must end
+if(this.shotsLeft<=0&&!this.shootAnim&&!this.endQueued){this.endQueued=true;setTimeout(()=>this.endLevel(),600)}
 if(this.bannerTimer>0)this.bannerTimer-=dt;
 if(this.shakeDur>0){
 this.shakeDur-=dt;

@@ -521,7 +521,7 @@
     <div class="level-info">
       <div class="level-info__tier">Tier <span id="tier">1</span></div>
       <div class="level-info__name"><span id="level-name">First Fit</span></div>
-      <div class="level-info__progress">Level <span class="level-indicator" id="level-num">1</span> / 30</div>
+      <div class="level-info__progress">Level <span class="level-indicator" id="level-num">1</span> / 30<!-- P3 2026-08-25: #pieces-left existed only in JS — updatePiecesLeft() wrote to a null element; added the missing indicator --> &middot; <span id="pieces-left" class="level-indicator">0</span> pieces</div>
     </div>
 
     <div class="game-area">
@@ -1008,7 +1008,12 @@
     }
 
     function unlockLevel(levelIndex) {
-      const unlocked = JSON.parse(localStorage.getItem('tetra-fit-unlocked') || '[]');
+      /* P2 2026-08-25: JSON.parse of a corrupt 'tetra-fit-unlocked' value threw inside
+         checkWin right after a win — the exception aborted the unlock write on every
+         subsequent win (console error + progression lost). Treat unreadable as empty. */
+      let unlocked;
+      try { unlocked = JSON.parse(localStorage.getItem('tetra-fit-unlocked') || '[]'); } catch (e) { unlocked = []; }
+      if (!Array.isArray(unlocked)) unlocked = [];
       if (!unlocked.includes(levelIndex)) {
         unlocked.push(levelIndex);
         localStorage.setItem('tetra-fit-unlocked', JSON.stringify(unlocked));
@@ -1088,7 +1093,15 @@
     });
 
     // Initialize
-    loadLevel(0);
+    /* P3 2026-08-25: saveProgress() wrote 'tetra-fit-level' on every win but nothing
+       ever read it — reloads always restarted at level 1 despite "progress saves
+       automatically". Restore the last reached level; unreadable/out-of-range -> 1. */
+    (function () {
+      let start = 0;
+      try { start = parseInt(localStorage.getItem('tetra-fit-level'), 10); } catch (e) { start = 0; }
+      if (!(start >= 0 && start < LEVELS.length)) start = 0;
+      loadLevel(start);
+    })();
   </script>
 <script src="/gz-analytics.js?v=202608151335weekly-flat" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->

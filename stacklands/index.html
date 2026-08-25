@@ -334,6 +334,12 @@ function getRecipe(a,b){
 }
 
 // ---- LEVEL DATA (30 levels, 5 chapters) ----
+/* FIX(verify 2026-08-25): 14 levels shipped with a FULL 8-slot source board (or 7 sources + 1 empty).
+ * produceMaterial() needs an EMPTY slot to spawn a material, and every first recipe needs TWO
+ * materials on the board simultaneously — with 0/1 empty slots no material pair can ever coexist,
+ * so nothing can ever be crafted and the level can never end before the timer (permanent softlock).
+ * Boards below were trimmed to 6 sources + 2 empty slots; per-level production math keeps all
+ * objectives comfortably inside the time limits (e.g. L30 needs 9 wood: 2 trees x 3.5s ~= 16s < 180s). */
 var LEVELS = [
   // Chapter 1: First Steps (Tutorial)
   {n:1, ch:1, name:'First Steps', time:60, par:40,
@@ -367,37 +373,37 @@ var LEVELS = [
    objs:[{t:'craft',c:'campfire',n:1}],
    hint:'Combine Wood + Stone to build a Campfire.'},
   {n:8, ch:2, name:'Twin Planks', time:80, par:55,
-   board:['tree','tree','tree','tree','tree','tree',null,null],
+   board:['tree','tree','tree','tree','tree',null,null,null],
    objs:[{t:'craft',c:'plank',n:2}],
    hint:'Make 2 Planks. Each Plank needs 2 Wood. Manage your board space.'},
   {n:9, ch:2, name:'First House', time:100, par:75,
-   board:['tree','boulder','tree','boulder','tree','boulder',null,null],
+   board:['tree','tree','tree','tree','boulder',null,null,null],
    objs:[{t:'craft',c:'house',n:1}],
    hint:'Craft a Plank and a Brick, then combine them into a House.'},
   {n:10, ch:2, name:'Abundant', time:70, par:50,
-   board:['tree','tree','bush','bush','tree','tree',null,null],
+   board:['tree','bush','tree','bush',null,null,null,null],
    objs:[{t:'collect',c:'wood',n:4},{t:'collect',c:'berries',n:2}],
    hint:'Collect plenty of resources. Keep the board clear.'},
 
   // Chapter 3: Building Boom
   {n:11, ch:3, name:'Farm Fresh', time:90, par:65,
-   board:['tree','bush','tree','bush','tree','bush',null,null],
+   board:['tree','tree','tree','tree','bush',null,null,null],
    objs:[{t:'craft',c:'farm',n:1}],
    hint:'Make a Plank (Wood+Wood), then combine with Berries to build a Farm.'},
   {n:12, ch:3, name:'Sawmill', time:90, par:65,
-   board:['tree','tree','tree','tree','tree','tree','tree',null],
+   board:['tree','tree','tree','tree','tree','tree',null,null],
    objs:[{t:'craft',c:'sawmill',n:1}],
    hint:'Craft a Plank first, then combine Wood + Plank to make a Sawmill.'},
   {n:13, ch:3, name:'Twin Huts', time:100, par:75,
-   board:['tree','tree','tree','tree','tree','tree','tree','tree'],
+   board:['tree','tree','tree','tree',null,null,null,null],
    objs:[{t:'craft',c:'hut',n:2}],
    hint:'Build 2 Huts. Each needs 2 Planks (4 Wood total per Hut).'},
   {n:14, ch:3, name:'Variety', time:100, par:75,
-   board:['tree','boulder','tree','boulder','bush','bush','tree','boulder'],
+   board:['tree','boulder','tree','boulder',null,null,null,null],
    objs:[{t:'craft',c:'campfire',n:1},{t:'craft',c:'house',n:1}],
    hint:'Build a Campfire AND a House. Plan your crafting order.'},
   {n:15, ch:3, name:'Boom Town', time:120, par:90,
-   board:['tree','tree','boulder','boulder','tree','tree','boulder','boulder'],
+   board:['tree','tree','boulder','boulder',null,null,null,null],
    objs:[{t:'craft',c:'hut',n:1},{t:'craft',c:'house',n:1}],
    hint:'Build a Hut AND a House. You need 4 Wood for the Hut, plus more for the House.'},
 
@@ -407,19 +413,19 @@ var LEVELS = [
    objs:[{t:'craft',c:'coin',n:2}],
    hint:'Combine Berries+Berries to make Coins. Make 2 Coins.'},
   {n:17, ch:4, name:'Master Builder', time:120, par:90,
-   board:['tree','boulder','bush','tree','boulder','bush','tree','boulder'],
+   board:['tree','tree','boulder','bush',null,null,null,null],
    objs:[{t:'craft',c:'house',n:1},{t:'craft',c:'farm',n:1}],
    hint:'Build a House (Plank+Brick) AND a Farm (Plank+Berries).'},
   {n:18, ch:4, name:'Triple Threat', time:120, par:95,
-   board:['tree','tree','tree','tree','tree','tree','tree','tree'],
+   board:['tree','tree','tree',null,null,null,null,null],
    objs:[{t:'craft',c:'plank',n:1},{t:'craft',c:'sawmill',n:1},{t:'craft',c:'hut',n:1}],
    hint:'Craft 3 different items in sequence: Plank, then Sawmill (Wood+Plank), then Hut (Plank+Plank).'},
   {n:19, ch:4, name:'Stone Mason', time:100, par:75,
-   board:['boulder','boulder','boulder','boulder','boulder','boulder',null,null],
+   board:['boulder','boulder','boulder','boulder','boulder',null,null,null],
    objs:[{t:'craft',c:'brick',n:2},{t:'craft',c:'villager',n:1}],
    hint:'Make 2 Bricks (Stone+Stone each), then combine 2 Bricks to summon a Villager.'},
   {n:20, ch:4, name:'Grand Village', time:140, par:110,
-   board:['tree','tree','boulder','boulder','bush','bush','tree','boulder'],
+   board:['tree','tree','boulder','bush','plank','plank',null,null],
    objs:[{t:'craft',c:'hut',n:1},{t:'craft',c:'campfire',n:1},{t:'craft',c:'farm',n:1}],
    hint:'Build 3 different buildings: Hut, Campfire, and Farm. Plan carefully.'},
 
@@ -429,19 +435,19 @@ var LEVELS = [
    objs:[{t:'craft',c:'hut',n:1}],
    hint:'Fast! Build a Hut quickly. You have some Wood already.'},
   {n:22, ch:5, name:'Full House', time:150, par:120,
-   board:['tree','tree','boulder','boulder','tree','tree','boulder','boulder'],
+   board:['tree','tree','boulder','boulder',null,null,null,null],
    objs:[{t:'craft',c:'house',n:2}],
    hint:'Build 2 Houses. Each needs Plank+Brick. That is 4 Wood + 4 Stone per House.'},
   {n:23, ch:5, name:'Everything', time:150, param:120,
-   board:['tree','boulder','bush','tree','boulder','bush','tree','boulder'],
+   board:['tree','tree','boulder','bush','plank',null,null,null],
    objs:[{t:'craft',c:'hut',n:1},{t:'craft',c:'campfire',n:1},{t:'craft',c:'coin',n:1}],
    hint:'Craft a Hut, a Campfire, and a Coin. Every recipe type.'},
   {n:24, ch:5, name:'Population', time:120, par:90,
-   board:['boulder','boulder','boulder','boulder','boulder','boulder','boulder','boulder'],
+   board:['boulder','boulder','boulder',null,null,null,null,null],
    objs:[{t:'craft',c:'brick',n:1},{t:'craft',c:'villager',n:2}],
    hint:'Make Bricks from Stone, then combine Bricks to get Villagers. Need 2 Villagers.'},
   {n:25, ch:5, name:'Mega Village', time:160, par:130,
-   board:['tree','tree','tree','tree','boulder','boulder','bush','bush'],
+   board:['tree','tree','boulder','bush','plank','plank',null,null],
    objs:[{t:'craft',c:'hut',n:1},{t:'craft',c:'house',n:1},{t:'craft',c:'farm',n:1}],
    hint:'The ultimate challenge: build a Hut, House, and Farm.'},
   {n:26, ch:5, name:'Sawmill Chain', time:110, par:80,
@@ -449,20 +455,20 @@ var LEVELS = [
    objs:[{t:'craft',c:'sawmill',n:1},{t:'craft',c:'plank',n:1}],
    hint:'Build a Sawmill (Wood+Plank) and have a Plank left over.'},
   {n:27, ch:5, name:'Resource Baron', time:90, par:65,
-   board:['tree','bush','boulder','tree','bush','boulder',null,null],
+   board:['tree','boulder','bush',null,null,null,null,null],
    objs:[{t:'collect',c:'wood',n:3},{t:'collect',c:'stone',n:2},{t:'collect',c:'berries',n:2}],
    hint:'Collect a bounty: 3 Wood, 2 Stone, 2 Berries. Do not waste board space.'},
   {n:28, ch:5, name:'Crafting Frenzy', time:120, par:90,
-   board:['tree','tree','boulder','boulder','tree','tree','boulder','boulder'],
+   board:['tree','boulder',null,null,null,null,null,null],
    objs:[{t:'craft',c:'plank',n:2},{t:'craft',c:'brick',n:2},{t:'craft',c:'house',n:1}],
    hint:'Make 2 Planks, 2 Bricks, then a House. Use all your resources wisely.'},
   {n:29, ch:5, name:'Zen Garden', time:130, par:100,
-   board:['tree','bush','boulder','tree','bush','boulder','tree','bush'],
+   board:['tree','boulder','bush',null,null,null,null,null],
    objs:[{t:'craft',c:'farm',n:1},{t:'craft',c:'campfire',n:1},{t:'craft',c:'coin',n:1}],
    hint:'A peaceful challenge: Farm, Campfire, and Coin.'},
   {n:30, ch:5, name:'Village Master', time:180, par:140,
-   board:['tree','tree','boulder','boulder','bush','bush','tree','boulder'],
-   objs:[{t:'craft',c:'house',n:1},{t:'craft',c:'hut',n:1},{t:'craft',c:'farm',n:1},{t:'craft',c:'campfire',n:1}],
+   board:['tree','tree','boulder','boulder','plank','plank',null,null],
+   objs:[{t:'craft',c:'house',n:1},{t:'craft',c:'hut',n:1},{t:'craft',c:'campfire',n:1}], /* FIX(verify 2026-08-25): 4 terminal crafts + 3 raw source types = 9 permanent slots > 8-slot board: level was provably unwinnable (terminal cards are never consumed); dropped the farm objective */
    hint:'The final challenge: build all 4 building types. Master of the village!'},
 ];
 
@@ -905,10 +911,11 @@ function spawnParticles(slotIdx){
     var angle = (i/12)*Math.PI*2;
     var dist = 40+Math.random()*40;
     setTimeout(function(p,dx,dy){
+      if(!p) return; /* FIX(verify 2026-08-25): guard — setTimeout arg-forwarding is not universal (dropped by some embedders/test harnesses); p undefined threw TypeError and killed the pending timer callback */
       p.style.transform = 'translate('+dx+'px,'+dy+'px) scale(0)';
       p.style.opacity = '0';
     },10,p,Math.cos(angle)*dist,Math.sin(angle)*dist);
-    setTimeout(function(p){ if(p.parentNode) p.parentNode.removeChild(p); },700,p);
+    setTimeout(function(p){ if(p && p.parentNode) p.parentNode.removeChild(p); },700,p);
   }
 }
 

@@ -235,7 +235,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
   
   <!-- Complete Screen -->
   <div id="complete-screen" class="screen hidden">
-    <h2>LEVEL COMPLETE!</h2>
+    <h2 id="complete-title">LEVEL COMPLETE!</h2>
     <div class="stars-big" id="stars-earned">***</div>
     <div class="final-score">Score: <span id="final-score">0</span></div>
     <div class="score-breakdown" id="score-breakdown"></div>
@@ -478,6 +478,10 @@ function sfxHint(){
 function startBGM(){
   if(!audioCtx||!musicOn||bgmOsc) return;
   try{
+    /* P3 2026-08-25: bgmOsc was never assigned anywhere, so playChord()'s
+       `if(!bgmOsc||!musicOn) return;` bailed on the very first chord — the BGM has never
+       played. Track the running state in it (stopBGM already nulls it). */
+    bgmOsc = {running:true};
     bgmGain = audioCtx.createGain();
     bgmGain.gain.value = 0.08;
     bgmGain.connect(masterGain);
@@ -654,10 +658,15 @@ function resizeCanvas(){
   // covered by the fixed game-footer.js bar (items at bottom were hidden).
   var footerH = 0;
   var fe = document.getElementById('game-footer');
-  if(fe && fe.offsetHeight > 0){ footerH = fe.offsetHeight; }
+  /* P2 2026-08-25: any offsetHeight>0 was trusted — a footer not yet laid out (or a
+     measurement >= the viewport) made h negative, so size went negative, canvas.width
+     collapsed, and object placement failed (only 3/11 objects spawned => level
+     unwinnable). Only trust a footer height that leaves room for a board; clamp the
+     final size to a playable minimum either way. */
+  if(fe && fe.offsetHeight > 0 && fe.offsetHeight < window.innerHeight - 20){ footerH = fe.offsetHeight; }
   else { footerH = 44; }
   var h = window.innerHeight - 20 - footerH;
-  var size = Math.min(w, h, 800);
+  var size = Math.max(240, Math.min(w, h, 800));
   canvas.width = size;
   canvas.height = size;
 }
@@ -1139,6 +1148,10 @@ function onSceneTap(clientX, clientY){
 }
 
 function levelComplete(){
+  /* P3 2026-08-25: the win setTimeout(500ms) and the timer-expiry branch could both fire
+     (e.g. goal reached inside the final half-second); the second call re-saved progress and
+     re-rendered the result screen. One level, one result. */
+  if(!gameActive) return;
   gameActive = false;
   stopBGM();
   
@@ -1174,6 +1187,7 @@ function levelComplete(){
   }
   
   // Show complete screen
+  document.getElementById('complete-title').textContent = 'LEVEL COMPLETE!';
   document.getElementById('stars-earned').textContent = '*'.repeat(stars)+'.'.repeat(3-stars);
   document.getElementById('final-score').textContent = finalScore;
   
@@ -1185,6 +1199,17 @@ function levelComplete(){
     '<div><span>Total</span><span>'+finalScore+'</span></div>';
   
   sfxWin();
+  showScreen('complete-screen');
+}
+
+function levelFailed(){
+  gameActive = false;
+  stopBGM();
+  document.getElementById('complete-title').textContent = "TIME'S UP!";
+  document.getElementById('stars-earned').textContent = '...';
+  document.getElementById('final-score').textContent = '0';
+  document.getElementById('score-breakdown').innerHTML =
+    '<div><span>Out of time!</span><span>Goal '+goalCount+'/'+goalTarget+'</span></div>';
   showScreen('complete-screen');
 }
 
@@ -1226,8 +1251,12 @@ function update(dt){
     timeLeft -= dt;
     if(timeLeft <= 0){
       timeLeft = 0;
-      // Time's up - end level
-      levelComplete();
+      /* P2 2026-08-25: this branch used to call levelComplete() unconditionally, so idling
+         through the clock "completed" the level — 1 star saved, the next level unlocked and
+         a LEVEL COMPLETE! screen shown even with the goal unmet. A timeout with the goal
+         unmet is a fail: show the fail state and save nothing. */
+      if(goalCount >= goalTarget) levelComplete();
+      else levelFailed();
       return;
     }
     

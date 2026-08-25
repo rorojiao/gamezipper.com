@@ -1,6 +1,6 @@
 // Comprehensive Phase 7 QA for jigpic-solitaire
 const fs = require('fs');
-const html = fs.readFileSync('/home/msdn/gamezipper.com/jigpic-solitaire/index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 
 let pass = 0, fail = 0;
 function check(name, cond) {
@@ -20,7 +20,7 @@ check('canonical URL', html.includes('canonical'));
 check('og:title', html.includes('og:title'));
 check('og:image', html.includes('og:image'));
 check('twitter:card', html.includes('twitter:card'));
-check('site-analytics', html.includes('site-analytics.cap.1ktower.com'));
+check('site-analytics', html.includes('/gz-analytics.js'));
 check('Monetag script', html.includes('mtbkfreeze.com') || html.includes('monetag'));
 
 // Structured Data
@@ -35,7 +35,7 @@ check('touch-action none', html.includes('touch-action:none') || html.includes('
 check('user-select none', html.includes('user-select:none') || html.includes('user-select: none'));
 check('overflow-x hidden', html.includes('overflow-x:hidden') || html.includes('overflow-x: hidden'));
 check('no text-stroke', !html.includes('-webkit-text-stroke'));
-check('responsive viewport', html.includes('maximum-scale=1'));
+check('responsive viewport', html.includes('width=device-width') && html.includes('initial-scale=1'));
 check('flex layout', html.includes('display:flex') || html.includes('display: flex'));
 
 // Game Logic
@@ -91,9 +91,11 @@ check('organized sections', html.includes('==='));
 check('no external CSS files', !html.includes('rel="stylesheet"'));
 check('no external JS files', !html.includes('src="http') || html.includes('site-analytics') || html.includes('monetag'));
 
-// Emoji check (no emoji in game code, only in locked level card which is DOM)
+// Emoji check (no emoji in game code; locked level card and site-wide related-games footer are DOM)
 const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{1F000}-\u{1F2FF}\u{1FA70}-\u{1FAFF}]/u;
-check('no emoji in canvas fillText', !emojiRegex.test(html.replace(/<div class="level-num">[^<]*<\/div>/g, '')));
+check('no emoji in canvas fillText', !emojiRegex.test(html
+  .replace(/<div class="level-num">[^<]*<\/div>/g, '')
+  .replace(/<h3>[^<]*You May Also Like<\/h3>/g, '')));
 
 console.log('\n' + pass + '/' + (pass+fail) + ' passed' + (fail ? ' (' + fail + ' FAILED)' : ''));
 if (fail > 0) process.exit(1);

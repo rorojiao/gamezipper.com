@@ -4,7 +4,8 @@
  * Does NOT import game code — recomputes slider positions from scratch.
  */
 const fs = require('fs');
-const levels = JSON.parse(fs.readFileSync('levels_compact.json','utf8'));
+const path = require('path');
+const levels = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels_compact.json'),'utf8'));
 
 function sliderX(angleIdx, nPos, radius) {
   const ang = angleIdx * 2 * Math.PI / nPos;

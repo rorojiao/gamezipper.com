@@ -1,8 +1,7 @@
 // Playtest: simulate solving each level by rotating cranks from 0 to solution
 const fs = require('fs');
-const html = fs.readFileSync('index.html','utf8');
-const m = html.match(/const LEVELS\s*=\s*(\[[\s\S]*?\]);/);
-const LEVELS = JSON.parse(m[1]);
+// index.html is now an alias redirect to antikythera-mechanism; LEVELS live in local compact JSON
+const LEVELS = JSON.parse(fs.readFileSync(__dirname + '/levels_compact.json','utf8'));
 function sliderX(a,p,r){ return Math.round(r*Math.cos(a*2*Math.PI/p)*10)/10; }
 let pass=0;
 LEVELS.forEach((lvl,i)=>{

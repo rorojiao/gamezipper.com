@@ -128,7 +128,7 @@ body{margin:0;padding:0;overflow-x:hidden;}</style>
 <div id="gz-ad-below-canvas"></div>
 
 
-<div class="ov" id="ts"><div class="pn" style="animation:fi .5s"><h2>Tangram Puzzle</h2><p>Arrange 7 Pieces to Complete the Shape</p><div style="margin:14px 0"><canvas id="tc" width="160" height="160" style="margin:0 auto;display:block;border-radius:8px"></canvas></div><button class="btn" id="bp" style="background:linear-gradient(135deg,rgba(0,255,255,.15),rgba(136,68,255,.15));border-color:rgba(0,255,255,.25);font-size:16px;padding:12px 40px">Play</button><p style="margin-top:12px;font-size:10px;color:#444">30 Handcrafted Levels</p></div></div>
+<div class="ov" id="ts"><div class="pn" style="animation:fi .5s"><h2>Tangram Puzzle</h2><p>Arrange 7 Pieces to Complete the Shape</p><div style="margin:14px 0"><canvas id="tc" width="160" height="160" style="margin:0 auto;display:block;border-radius:8px"></canvas></div><button class="btn" id="bp" style="background:linear-gradient(135deg,rgba(0,255,255,.15),rgba(136,68,255,.15));border-color:rgba(0,255,255,.25);font-size:16px;padding:12px 40px">Play</button> <button class="btn" id="bset" style="font-size:12px;padding:8px 18px">&#9881; Settings</button><p style="margin-top:12px;font-size:10px;color:#444">30 Handcrafted Levels</p></div></div>
 <div class="ov" id="ls" style="display:none"><div class="pn" style="max-width:400px;max-height:88vh;overflow-y:auto"><h2>Select Level</h2><div id="lco"></div><button class="btn" id="bbt">Back</button></div></div>
 <div class="ov" id="cs" style="display:none"><div class="pn" style="animation:fi .3s"><h2>Level Complete!</h2><div id="cst" style="font-size:28px;margin:8px 0;letter-spacing:3px"></div><div class="sd" id="sb"></div><div style="display:flex;gap:6px;justify-content:center;margin-top:12px"><button class="btn" id="bn">Next Level</button><button class="btn" id="bl">Levels</button></div></div></div>
 <div class="ov" id="ss" style="display:none"><div class="pn"><h2>Settings</h2><div class="sr"><label>Sound Effects</label><div class="tg on" id="tgs"></div></div><div class="sr"><label>Music</label><div class="tg on" id="tgm"></div></div><div class="sr"><label>Reset Progress</label><button class="btn" id="brp" style="background:rgba(255,68,102,.15);border-color:rgba(255,68,102,.25);color:#ff4466;font-size:11px">Reset</button></div><br><button class="btn" id="bbs">Back</button></div></div>
@@ -144,40 +144,56 @@ var SHAPES=[
   [[0,0],[1,0],[0,1]],
   [[0,0],[1,0],[0,1]],
   [[0,0],[1,0],[1,1],[0,1]],
-  [[0,0],[1,0],[1+S2*.5,S2*.5],[S2*.5,S2*.5]]
+  // P0 fix 2026-08-25: classic parallelogram (sides 1 & S2, area 1). Shipped piece
+  // had sides 1 & 1 (area S2/2), so piece areas summed to 7.5 != 8 = silhouette area.
+  [[0,0],[S2,0],[S2*1.5,S2*.5],[S2*.5,S2*.5]]
 ];
 
+// P0 fix 2026-08-25: ALL 30 shipped silhouettes were geometrically untileable (their
+// straight edges have lengths outside Z+S2*Z, but every exact tangram tiling forces
+// silhouette edges to be concatenations of piece edges with lengths in that set), so
+// no level was completable. Replaced with generated figures, each a solver-verified
+// exact tiling built by seeded edge-reattachment walks from the classic 4x2 rectangle
+// (tier = walk length). q = per-piece solution slots [cx,cy,rot,flip] in game units
+// (engine piece position p satisfies p = (cx + q[0]*U, cy + q[1]*U)); used by the
+// snap-to-slot feature required by BENCHMARK.md (dropped pieces within 0.45*U of
+// their slot with matching orientation snap exactly into place).
 var LVLS=[
-  {n:"Square",t:1,s:[[-1.388,-1.388],[1.388,-1.388],[1.388,1.388],[-1.388,1.388]]},
-  {n:"Rectangle",t:1,s:[[-2.267,-0.85],[2.267,-0.85],[2.267,0.85],[-2.267,0.85]]},
-  {n:"Triangle",t:1,s:[[0,-1.983],[2.267,1.417],[-2.267,1.417]]},
-  {n:"Diamond",t:1,s:[[0,-2.483],[1.552,0],[0,2.483],[-1.552,0]]},
-  {n:"Trapezoid",t:1,s:[[-2.339,-0.836],[2.339,-0.836],[1.504,1.17],[-1.504,1.17]]},
-  {n:"Pentagon",t:1,s:[[0,-1.832],[1.691,-0.564],[1.128,1.409],[-1.128,1.409],[-1.691,-0.564]]},
-  {n:"House",t:2,s:[[-1.628,0],[1.628,0],[1.628,1.48],[-1.628,1.48],[-1.628,0],[0,-1.776],[1.628,0]]},
-  {n:"Arrow",t:2,s:[[0,-2.968],[1.484,0],[0.742,0],[0.742,2.226],[-0.742,2.226],[-0.742,0],[-1.484,0]]},
-  {n:"Boat",t:2,s:[[-2.723,0.34],[2.723,0.34],[1.872,1.362],[-1.872,1.362],[-1.362,0.34],[0,-2.383],[1.362,0.34]]},
-  {n:"Heart",t:2,s:[[0,2.116],[-0.814,0.814],[-1.79,-0.163],[-1.627,-0.976],[-0.814,-1.79],[0,-0.976],[0.814,-1.79],[1.627,-0.976],[1.79,-0.163],[0.814,0.814]]},
-  {n:"Cross",t:2,s:[[-0.567,-1.983],[0.567,-1.983],[0.567,-0.567],[1.983,-0.567],[1.983,0.567],[0.567,0.567],[0.567,1.983],[-0.567,1.983],[-0.567,0.567],[-1.983,0.567],[-1.983,-0.567],[-0.567,-0.567]]},
-  {n:"Rocket",t:2,s:[[0,-2.945],[0.982,-0.982],[0.982,0.654],[1.636,1.963],[0.654,1.963],[0.654,1.309],[-0.654,1.309],[-0.654,1.963],[-1.636,1.963],[-0.982,0.654],[-0.982,-0.982]]},
-  {n:"Cat",t:3,s:[[-0.414,-2.21],[0.414,-2.21],[0.829,-1.105],[1.243,0.276],[0.829,1.657],[0.276,2.21],[-0.276,2.21],[-0.829,1.657],[-1.243,0.276],[-0.829,-1.105]]},
-  {n:"Bird",t:3,s:[[-0.463,-2.159],[0,-2.468],[0.463,-2.159],[1.234,-0.925],[2.468,0],[1.234,0.617],[0.463,0.308],[0,0.925],[-0.463,0.308],[-1.234,0.617],[-2.468,0],[-1.234,-0.925]]},
-  {n:"Fish",t:3,s:[[-2.945,0],[-1.309,-1.145],[0.982,-0.818],[2.617,0],[0.982,0.818],[-1.309,1.145]]},
-  {n:"Rabbit",t:3,s:[[-0.587,-2.348],[0.587,-2.348],[1.027,-0.88],[1.027,0.88],[0.44,2.054],[-0.44,2.054],[-1.027,0.88],[-1.027,-0.88]]},
-  {n:"Swan",t:3,s:[[-1.998,0.999],[-0.999,-0.333],[-0.333,-1.665],[0.333,-0.999],[0.666,-0.333],[2.331,0.666],[1.332,1.665],[-0.666,1.832]]},
-  {n:"Turtle",t:3,s:[[-2.552,-0.729],[2.552,-0.729],[2.552,0.729],[-2.552,0.729],[-1.823,-1.64],[-0.547,-1.276],[0.547,-1.276],[1.823,-1.64]]},
-  {n:"Runner",t:4,s:[[0,-2.711],[0.638,-1.914],[0.478,-0.478],[1.914,0.319],[1.116,1.435],[0.319,1.116],[0.478,2.552],[0,1.754],[-0.478,2.552],[-0.319,1.116],[-1.116,1.435],[-1.914,0.319],[-0.478,-0.478],[-0.638,-1.914]]},
-  {n:"Candle",t:4,s:[[0,-3.008],[0.501,-2.172],[0.501,1.337],[1.337,2.172],[1.337,3.008],[-1.337,3.008],[-1.337,2.172],[-0.501,1.337],[-0.501,-2.172]]},
-  {n:"Bridge",t:4,s:[[-2.612,0.871],[-1.886,-0.58],[1.886,-0.58],[2.612,0.871],[1.886,1.451],[0.58,0.871],[-0.58,0.871],[-1.886,1.451]]},
-  {n:"Sword",t:4,s:[[0,-3.339],[0.556,-2.411],[0.556,0.742],[1.484,1.484],[0.556,2.04],[0.556,2.968],[-0.556,2.968],[-0.556,2.04],[-1.484,1.484],[-0.556,0.742],[-0.556,-2.411]]},
-  {n:"Cup",t:4,s:[[-1.483,1.647],[1.483,1.647],[1.153,-0.659],[0.494,-1.647],[-0.494,-1.647],[-1.153,-0.659]]},
-  {n:"Key",t:4,s:[[0,-2.215],[0.633,-1.582],[0.633,-0.316],[2.056,-0.316],[2.056,0.316],[0.633,0.316],[0.633,1.265],[1.265,1.898],[1.265,2.531],[-1.265,2.531],[-1.265,1.898],[-0.633,1.265],[-0.633,-0.158],[-0.633,-1.582]]},
-  {n:"Windmill",t:5,s:[[-2.323,-2.323],[0,-0.83],[2.323,-2.323],[0.83,0],[2.323,2.323],[0,0.83],[-2.323,2.323],[-0.83,0]]},
-  {n:"Butterfly",t:5,s:[[0,0],[-3.505,-1.315],[-1.315,-2.629],[0,-1.096],[-1.315,0.439],[-3.068,1.753],[0,0.657],[1.315,0.439],[0,-1.096],[1.315,-2.629],[3.505,-1.315],[0,0]]},
-  {n:"Castle",t:5,s:[[-1.546,1.767],[-1.546,-0.331],[-0.552,-0.331],[-0.552,-1.436],[0.552,-1.436],[0.552,-0.331],[1.546,-0.331],[1.546,1.767],[0.552,1.767],[0.552,0.883],[1.104,0.442],[1.104,0.883],[0.552,0.883],[0.552,1.767],[-0.552,1.767],[-0.552,0.883],[-1.104,0.442],[-1.104,0.883],[-0.552,0.883],[-0.552,1.767]]},
-  {n:"Dancer",t:5,s:[[0,-2.527],[0.562,-1.825],[1.123,-0.562],[1.825,0.562],[1.123,1.123],[0.421,0.562],[0.281,2.106],[-0.281,2.106],[-0.421,0.562],[-1.123,1.123],[-1.825,0.562],[-1.123,-0.562],[-0.562,-1.825]]},
-  {n:"Sailboat",t:5,s:[[-3.4,0],[3.4,0],[2.456,0.756],[-2.456,0.756],[-1.889,0],[0,-3.4],[0.378,0]]},
-  {n:"Phoenix",t:5,s:[[0,-2.162],[0.721,-1.442],[1.442,-0.481],[1.922,0.481],[1.201,0.721],[0.481,1.201],[0.961,1.682],[0,0.961],[-0.481,0.721],[-0.721,1.442],[-1.442,1.201],[-1.922,0.24],[-1.442,-0.481],[-0.721,-1.442]]}
+  // Tier 1
+  {n:"Shape 1",t:1,s:[[-2,-1],[2,-1],[2,1],[-2,1]],q:[[-1.333333,-0.333333,0,0],[1.333333,-0.333333,0,1],[0,-0.333333,1,0],[-1.333333,0.666667,2,1],[0.333333,0.666667,4,1],[-0.5,0.5,0,0],[1,0.5,1,1]]},
+  {n:"Shape 2",t:1,s:[[0.5,-2],[0.5,0],[2.5,0],[2.5,2],[1.5,2],[0.5,1],[-2.5,1],[-0.5,-1]],q:[[0.166667,0.333333,4,1],[-1.166667,0.333333,2,1],[0.166667,-1,7,0],[2.166667,0.333333,0,1],[1.166667,1.333333,0,1],[2,1.5,4,0],[1.5,0.5,5,1]]},
+  {n:"Shape 3",t:1,s:[[1,-3],[1,3],[-1,1],[-1,-1]],q:[[0.333333,1.666667,0,1],[0.333333,-1.666667,4,0],[0,-0.666667,5,0],[-0.666667,-0.333333,4,1],[0.666667,0.666667,4,0],[-0.5,0.5,2,0],[0.5,0,7,1]]},
+  {n:"Shape 4",t:1,s:[[2,-2.853553],[3,-2.853553],[-0.292893,0.43934],[0.414214,1.146447],[0.707107,0.853553],[0.707107,2.853553],[-3,-0.853553],[0,-0.853553]],q:[[-1.666667,-0.186887,2,0],[-0.333333,-0.186887,0,0],[0.373773,1.853553,7,0],[1.333333,-1.52022,0,0],[0.666667,-1.186887,4,0],[-0.292893,1.146447,3,0],[2,-2.353553,3,0]]},
+  {n:"Shape 5",t:1,s:[[-0.353553,-2.12132],[1.06066,-2.12132],[1.06066,2.12132],[0.353553,1.414214],[-0.353553,2.12132],[-1.06066,1.414214],[-1.06066,-1.414214]],q:[[0.589256,0.707107,7,0],[-0.589256,0,3,0],[-0.117851,-0.942809,0,1],[0.824958,-1.414214,5,1],[0.589256,-0.707107,3,0],[-0.353553,1.414214,5,1],[0,-1.767767,4,1]]},
+  {n:"Shape 6",t:1,s:[[-0.353553,-2.12132],[2.474874,-2.12132],[-0.353553,0.707107],[0.353553,1.414214],[-0.353553,2.12132],[-2.474874,0],[-1.06066,0],[-1.06066,-1.414214]],q:[[0.353553,-0.942809,3,1],[-0.589256,0,3,0],[-1.532065,0.471405,2,0],[-0.353553,-1.649916,7,1],[0.353553,-1.885618,3,1],[-0.353553,1.414214,7,0],[1.414214,-1.767767,4,1]]},
+  // Tier 2
+  {n:"Shape 7",t:2,s:[[0.585786,-2.62132],[0.585786,1.207107],[2,2.62132],[-2,2.62132],[-2,0.62132],[-1,1.62132],[0,0.62132],[-0.828427,-0.207107],[-0.414214,-0.62132],[-0.414214,-1.62132]],q:[[0.666667,1.954654,6,0],[0.114382,-0.207107,5,1],[-0.333333,1.62132,7,0],[-1.666667,1.287987,6,0],[-0.666667,2.287987,4,1],[-1.5,2.12132,0,1],[0.085786,-1.62132,7,1]]},
+  {n:"Shape 8",t:2,s:[[-1,-2],[0,-1],[2,-1],[1,0],[1,2],[-2,2],[-1,1],[-1,-0.585786],[-1.707107,-1.292893]],q:[[-0.666667,1.333333,4,0],[0.666667,-0.333333,0,0],[-0.666667,0,3,0],[-1.235702,-1.292893,7,0],[0.666667,0.666667,4,0],[0.5,1.5,2,0],[-0.5,-1,1,0]]},
+  {n:"Shape 9",t:2,s:[[1,-2.5],[1,-1.5],[2,-0.5],[2,0.5],[0,0.5],[-2,2.5],[-2,0.5]],q:[[0.333333,-1.166667,2,1],[-1.333333,1.166667,0,0],[-1,0.166667,7,1],[-0.333333,-0.166667,0,1],[1.333333,0.166667,6,0],[0.5,0,2,1],[1.5,-0.5,5,0]]},
+  {n:"Shape 10",t:2,s:[[2.12132,-2.12132],[2.12132,0.707107],[1.414214,0],[-0.707107,2.12132],[-2.12132,0.707107],[0,-1.414214],[0.707107,-0.707107]],q:[[1.649916,-0.707107,7,0],[-1.178511,0.707107,7,0],[0.471405,0.471405,0,0],[0.707107,-0.235702,1,0],[-0.471405,0,1,1],[0,-0.707107,3,0],[-0.353553,1.06066,6,0]]},
+  {n:"Shape 11",t:2,s:[[1,-2.267767],[2.414214,-0.853553],[1,-0.853553],[0.707107,-0.56066],[0.707107,2.267767],[-1,0.56066],[-1.707107,1.267767],[-2.414214,0.56066],[0.292893,-2.146447],[0.292893,-1.56066]],q:[[-0.373773,-0.813113,2,1],[0.235702,0.853553,5,1],[-0.707107,0.186887,3,1],[1.707107,-1.089256,1,0],[1.235702,-1.56066,3,0],[-1.707107,0.56066,3,0],[0.646447,-1.207107,6,0]]},
+  {n:"Shape 12",t:2,s:[[0.146447,-1.914214],[0.146447,-0.914214],[1.56066,-0.914214],[2.267767,-0.207107],[0.146447,1.914214],[-0.267767,1.5],[-2.267767,1.5],[-0.853553,0.085786],[-1.853553,0.085786]],q:[[0.617851,0.5,3,0],[-0.324958,0.5,7,0],[-1.267767,1.166667,1,0],[0.853553,-0.678511,5,0],[-0.186887,-1.247547,4,0],[1.56066,-0.207107,7,0],[-0.853553,-0.414214,7,0]]},
+  // Tier 3
+  {n:"Shape 13",t:3,s:[[-0.792893,-2],[-0.5,-1.707107],[0.914214,-1.707107],[1.207107,-2],[1.207107,0],[2.207107,1],[-0.792893,1],[-0.792893,2],[-2.207107,0.585786],[-0.792893,-0.828427]],q:[[-1.264298,0.585786,7,0],[-0.126227,-0.666667,4,1],[0.873773,-1,5,1],[0.54044,0.666667,4,1],[0.207107,-1.471405,5,0],[-0.292893,0.5,6,1],[1.207107,0.5,5,1]]},
+  {n:"Shape 14",t:3,s:[[1.414214,-2.914214],[2.414214,-2.914214],[2.414214,-1.914214],[-2.414214,2.914214],[-2.414214,0.085786],[-1,0.085786],[-1,-1.328427],[-0.585786,-0.914214],[0.414214,-0.914214],[1.414214,-1.914214]],q:[[-0.528595,0.085786,3,0],[-1.942809,1.5,3,0],[0.414214,-0.58088,5,0],[-1.235702,0.792893,5,1],[-1.707107,0.321489,3,1],[1.914214,-2.414214,0,0],[1.414214,-1.414214,3,0]]},
+  {n:"Shape 15",t:3,s:[[-1,-2.353553],[-1,-0.353553],[2,-0.353553],[3,0.646447],[1,0.646447],[0.707107,0.93934],[0.707107,2.353553],[-2,-0.353553],[-3,0.646447],[-3,-0.353553]],q:[[-0.666667,0.313113,2,0],[0.666667,0.313113,0,0],[2,0.313113,1,0],[0.471405,1.646447,5,1],[-1.333333,-1.686887,2,1],[-1.5,-0.853553,0,1],[-2.5,-0.353553,3,1]]},
+  {n:"Shape 16",t:3,s:[[0.353553,-2.12132],[0.353553,-0.707107],[2.767767,-0.707107],[2.767767,0.292893],[1.767767,0.292893],[1.767767,2.12132],[-0.353553,0],[-0.767767,0],[-2.767767,2],[-2.767767,1]],q:[[0.353553,-0.235702,3,1],[1.296362,0.707107,5,1],[-0.117851,-1.178511,4,0],[-1.06066,-0.235702,1,0],[-2.434434,1.333333,0,0],[2.267767,-0.207107,4,1],[-1.767767,0.5,7,0]]},
+  {n:"Shape 17",t:3,s:[[-0.414214,-2.414214],[2,0],[1,0],[0,1],[1.414214,2.414214],[-0.585786,2.414214],[-0.585786,1.828427],[-1.292893,1.12132],[-1.292893,-0.292893],[-2,-1],[-0.414214,-1]],q:[[-0.666667,-0.333333,0,1],[0.08088,1.747547,6,0],[0.057191,-1.471405,6,0],[0.333333,0.333333,6,1],[1.333333,-0.333333,6,0],[0.5,-0.5,0,1],[-0.93934,0.767767,6,1]]},
+  {n:"Shape 18",t:3,s:[[-1.56066,-2.353553],[-0.146447,-2.353553],[0.853553,-1.353553],[1.56066,-2.06066],[1.56066,0.353553],[0.56066,1.353553],[0.56066,2.353553],[-1.43934,0.353553],[-0.146447,-0.93934]],q:[[-0.106006,-0.313113,2,1],[-0.106006,1.02022,0,1],[0.893994,-0.646447,3,0],[-0.853553,-2.117851,3,1],[1.324958,-1.353553,5,1],[-0.146447,-1.646447,7,1],[1.06066,0.353553,7,1]]},
+  // Tier 4
+  {n:"Shape 19",t:4,s:[[-2.414214,-2.56066],[0.585786,0.43934],[2.414214,0.43934],[1.707107,1.146447],[2.414214,1.853553],[1.707107,2.56066],[-0.414214,0.43934],[-1.414214,0.43934],[-1.414214,1.43934],[-2.414214,0.43934]],q:[[-1.747547,-1.227327,4,1],[1,0.910744,5,0],[-1.747547,0.43934,5,1],[-2.08088,-0.227327,6,1],[-1.08088,0.106006,4,1],[1.707107,1.853553,7,0],[-0.414214,-0.06066,5,1]]},
+  {n:"Shape 20",t:4,s:[[-0.353553,-1.767767],[2.474874,-1.767767],[0.353553,0.353553],[0.353553,1.767767],[-2.474874,1.767767],[-1.353553,0.646447],[-2.353553,0.646447],[-0.353553,-1.353553],[-0.353553,-0.353553],[0.353553,-1.06066]],q:[[-1.06066,1.296362,7,1],[1.06066,-1.296362,3,1],[-0.117851,0.824958,2,0],[-0.686887,-0.686887,2,1],[-0.353553,0.117851,7,1],[0.353553,-0.353553,7,1],[-1.353553,0.146447,3,0]]},
+  {n:"Shape 21",t:4,s:[[-0.292893,-1.914214],[-0.292893,-0.085786],[2.707107,-0.085786],[0.707107,1.914214],[-0.292893,0.914214],[-1.707107,0.914214],[-2.414214,0.207107],[-2.707107,0.5],[-2.707107,-1.5],[-1.707107,-0.5]],q:[[-0.764298,-0.5,7,0],[1.373773,0.58088,6,1],[-2.373773,-0.5,1,1],[-1.707107,-0.028595,1,0],[0.373773,1.247547,0,1],[0.207107,0.414214,6,0],[-1.353553,0.56066,4,0]]},
+  {n:"Shape 22",t:4,s:[[2.474874,-1.207107],[1.06066,0.207107],[1.646447,0.792893],[0.646447,0.792893],[1.06066,1.207107],[-1.767767,1.207107],[-1.353553,0.792893],[-1.353553,-0.207107],[-1.767767,0.207107],[-2.474874,-0.5],[-1.767767,-1.207107]],q:[[1.06066,-0.735702,3,1],[-0.353553,0.735702,1,0],[-0.353553,-0.54044,1,0],[-1.06066,-0.971405,5,0],[-1.02022,0.126227,0,0],[-1.767767,-0.5,5,0],[0.646447,0.292893,1,1]]},
+  {n:"Shape 23",t:4,s:[[1.707107,-2.414214],[0.414214,-1.12132],[0.414214,0.292893],[1.12132,-0.414214],[1.12132,2.414214],[0.12132,1.414214],[-0.585786,2.12132],[-0.585786,0.707107],[-1.292893,0],[-1.707107,0],[-0.292893,-1.414214],[-1.292893,-1.414214],[-1.292893,-2.414214]],q:[[0.373773,-1.747547,6,1],[0.649916,1,5,1],[-0.764298,-0.471405,4,0],[-0.626227,0.333333,0,1],[-0.350084,1.414214,3,0],[-0.792893,-1.914214,0,0],[0.06066,-0.06066,2,0]]},
+  {n:"Shape 24",t:4,s:[[-1,-2.414214],[-1,-1.585786],[0.292893,-0.292893],[1.707107,-0.292893],[2.414214,0.414214],[2,0.414214],[2,1.414214],[1,1.414214],[1,2.414214],[-2.414214,-1]],q:[[-1.471405,-1,5,1],[0.333333,1.08088,2,0],[-0.666667,-0.585786,1,1],[0.333333,0.08088,4,1],[-0.333333,0.08088,4,0],[1.5,0.914214,2,0],[1.353553,0.06066,0,0]]},
+  // Tier 5
+  {n:"Shape 25",t:5,s:[[1,-2],[1,-1],[2,0],[2,1],[1,2],[0,2],[0,1],[-0.292893,0.707107],[-1,1.414214],[-1.707107,0.707107],[-2,1],[-2,0],[-1,0]],q:[[0.333333,-0.666667,2,1],[0.333333,0.666667,0,1],[1.333333,1,1,1],[-1.666667,0.333333,6,1],[0.333333,1.666667,4,1],[-1,0.707107,7,0],[1.5,0,5,0]]},
+  {n:"Shape 26",t:5,s:[[-0.353553,-2.5],[0.93934,-1.207107],[2.353553,-1.207107],[-0.646447,1.792893],[0.06066,2.5],[-2.353553,2.5],[-2.353553,1.5],[-1.353553,1.5],[-0.353553,0.5],[-0.353553,0.328427],[-1.767767,-1.085786],[-0.353553,-1.085786]],q:[[0.313113,0.166667,6,1],[0.313113,-1.166667,6,0],[-0.824958,-0.614382,0,1],[-0.646447,2.264298,1,0],[1.646447,-0.971405,3,1],[-1.853553,2,0,0],[-0.853553,1.5,7,1]]},
+  {n:"Shape 27",t:5,s:[[-1.292893,-2.5],[1.707107,0.5],[2.707107,0.5],[2.707107,2.5],[-0.292893,-0.5],[-1.292893,-0.5],[-1.292893,0.914214],[-2.292893,0.914214],[-2,0.62132],[-2.707107,-0.085786],[-2,-0.792893],[-2.707107,-1.5],[-2.292893,-1.5]],q:[[-0.626227,-1.166667,4,1],[2.04044,1.166667,0,1],[-1.764298,-1.028595,0,1],[-1.626227,0.58088,4,0],[-1.626227,-1.833333,4,0],[-2,-0.085786,3,1],[0.707107,0,1,1]]},
+  {n:"Shape 28",t:5,s:[[-1.585786,-2.56066],[0.414214,-0.56066],[0,-0.146447],[0,0.853553],[1,0.853553],[1.414214,0.43934],[1.414214,0.853553],[2.414214,-0.146447],[2.414214,0.853553],[0.707107,2.56066],[-2.414214,-0.56066],[-1.585786,-0.56066]],q:[[-1,-0.089256,3,1],[-0.91912,-1.227327,6,0],[-0.333333,0.853553,5,1],[1.178511,1.146447,5,1],[0.333333,1.186887,6,1],[0.707107,1.853553,3,0],[1.914214,0.853553,7,1]]},
+  {n:"Shape 29",t:5,s:[[-1.267767,-1.707107],[1.146447,0.707107],[2.56066,0.707107],[3.267767,1.414214],[-0.974874,1.414214],[-0.56066,1],[-0.56066,0.414214],[-1.267767,1.12132],[-1.267767,1.707107],[-3.267767,1.707107],[-1.267767,-0.292893],[-1.974874,-1]],q:[[0.43934,0.942809,7,1],[-1.934434,1.04044,4,0],[-0.227327,0,3,0],[-0.796362,-0.292893,5,1],[-1.032065,0.414214,3,0],[-1.267767,-1,1,1],[2.207107,1.06066,4,0]]},
+  {n:"Shape 30",t:5,s:[[-1,-1.5],[1,-1.5],[0,-0.5],[0.292893,-0.207107],[0.87868,-0.207107],[1.585786,-0.914214],[3,-0.914214],[2,0.085786],[2.707107,0.792893],[2,1.5],[1,0.5],[-3,0.5]],q:[[-0.333333,-0.166667,6,0],[-1.666667,-0.166667,2,1],[1.292893,0.126227,3,1],[-0.333333,-1.166667,2,0],[0.333333,-1.166667,6,1],[2,0.792893,3,1],[1.93934,-0.56066,4,1]]},
 ];
 
 /* AUDIO */
@@ -233,6 +249,26 @@ function pip(px,py,poly){
   }return inside;
 }
 function polyArea(pts){var a=0,n=pts.length;for(var i=0;i<n;i++){var j=(i+1)%n;a+=pts[i][0]*pts[j][1]-pts[j][0]*pts[i][1]}return Math.abs(a/2)}
+// P0 fix 2026-08-25 helpers: boundary-tolerant inside test, strict-interior test
+// and proper edge crossing (open intervals — shared edges must not count)
+function segDist2(px,py,a,b){var dx=b[0]-a[0],dy=b[1]-a[1],L2=dx*dx+dy*dy;var t=L2?Math.max(0,Math.min(1,((px-a[0])*dx+(py-a[1])*dy)/L2)):0;return Math.hypot(px-(a[0]+t*dx),py-(a[1]+t*dy))}
+function onPoly(px,py,poly,tol){for(var i=0;i<poly.length;i++)if(segDist2(px,py,poly[i],poly[(i+1)%poly.length])<=tol)return true;return false}
+function strictIn(px,py,poly){return pip(px,py,poly)&&!onPoly(px,py,poly,.6)}
+function edgesCross2(a1,a2,b1,b2){
+  var ax=a2[0]-a1[0],ay=a2[1]-a1[1],bx=b2[0]-b1[0],by=b2[1]-b1[1];
+  var d=ax*by-ay*bx;
+  // near-parallel guard: shared/collinear edges (incl. antiparallel pairs) pick up
+  // ~1e-3 cross noise from independent 6dp slot rounding — |sin(angle)| < 1e-4 is
+  // collinear at this coordinate scale; real wrong-config crossings sit on the 45-deg
+  // lattice so |sin| >= ~.7. Only genuinely non-parallel edges can properly cross.
+  if(Math.abs(d)<1e-4*Math.hypot(ax,ay)*Math.hypot(bx,by))return false;
+  var t=((b1[0]-a1[0])*by-(b1[1]-a1[1])*bx)/d;
+  var u=((b1[0]-a1[0])*ay-(b1[1]-a1[1])*ax)/d;
+  // 1e-5 open-interval eps: exact tilings have T-junctions (one edge ENDS on another's
+  // interior => one param is 0/1 up to ~1e-6 float+slot-rounding error); genuine
+  // crossings in wrong configs are interior by >=2e-3 (0.3px min feature / 150px edge)
+  return t>1e-5&&t<1-1e-5&&u>1e-5&&u<1-1e-5;
+}
 
 /* LEVEL */
 function startLevel(idx){
@@ -254,6 +290,18 @@ function startLevel(idx){
   updateHUD();initAudio();startBGM();
 }
 function getSilWorld(){var lv=LVLS[curLevel];return lv.s.map(function(v){return[cx+v[0]*U,cy+v[1]*U]})}
+// P0 fix 2026-08-25: snap-to-slot. Exact tangram solutions need ~0.0003px drag
+// precision, which is humanly impossible; every level now carries per-piece
+// solution slots q=[dx,dy,rot,flip] (game units; piece center = cx+dx*U, cy+dy*U).
+// A dropped piece within 0.45*U of its slot with matching orientation snaps exactly.
+function slotFor(p){var q=LVLS[curLevel].q[p.idx];return{x:cx+q[0]*U,y:cy+q[1]*U,rot:q[2],flip:q[3]===1}}
+function snapPiece(p){
+  var s=slotFor(p);
+  if(p.rot!==s.rot||p.flip!==s.flip)return false;
+  if(Math.hypot(p.x-s.x,p.y-s.y)>U*.45)return false;
+  if(!p.placed){undoStack.push({p:p,tx:p.trayX,ty:p.trayY,wp:false});p.placed=true}
+  p.x=s.x;p.y=s.y;return true;
+}
 
 function checkWin(){
   if(!levelActive)return;
@@ -262,24 +310,30 @@ function checkWin(){
   // Canonical tangram invariant: all 7 pieces must (1) lie fully inside silhouette
   // with every vertex inside (not just centroid), (2) not overlap each other
   // (vertex-in-poly both directions), and (3) area sum equals silhouette area within 0.5.
+  // P0 fix 2026-08-25: exact tilings put piece verts exactly ON the silhouette
+  // boundary and on shared piece edges, so all inside/overlap tests are now
+  // boundary-inclusive for "inside" and strictly-interior for "overlap" — the
+  // old bare even-odd tests rejected every correct tiling and accepted none.
   var i,j,k,wi,wj;
-  // (1) every piece vertex inside silhouette
+  // (1) every piece vertex inside silhouette (boundary counts as inside, 0.6px tol)
   var allIn=true;
   for(i=0;i<pieces.length;i++){
     wi=getWorldVerts(pieces[i]);
-    for(k=0;k<wi.length;k++){if(!pip(wi[k][0],wi[k][1],sil)){allIn=false;break}}
+    for(k=0;k<wi.length;k++){if(!pip(wi[k][0],wi[k][1],sil)&&!onPoly(wi[k][0],wi[k][1],sil,.6)){allIn=false;break}}
     if(!allIn)break;
   }
   if(!allIn)return false;
-  // (2) no two pieces overlap (both directions)
+  // (2) no two pieces overlap: strict-interior verts both ways + proper edge crossings
   var overlap=false;
   for(i=0;i<pieces.length&&!overlap;i++){
     wi=getWorldVerts(pieces[i]);
     for(j=i+1;j<pieces.length&&!overlap;j++){
       wj=getWorldVerts(pieces[j]);
-      for(k=0;k<wi.length;k++){if(pip(wi[k][0],wi[k][1],wj)){overlap=true;break}}
+      for(k=0;k<wi.length;k++){if(strictIn(wi[k][0],wi[k][1],wj)){overlap=true;break}}
       if(overlap)break;
-      for(k=0;k<wj.length;k++){if(pip(wj[k][0],wj[k][1],wi)){overlap=true;break}}
+      for(k=0;k<wj.length;k++){if(strictIn(wj[k][0],wj[k][1],wi)){overlap=true;break}}
+      if(!overlap)for(var e1=0;e1<wi.length&&!overlap;e1++)for(var e2=0;e2<wj.length;e2++)
+        if(edgesCross2(wi[e1],wi[(e1+1)%wi.length],wj[e2],wj[(e2+1)%wj.length])){overlap=true;break}
     }
   }
   if(overlap)return false;
@@ -335,19 +389,23 @@ canvas.addEventListener("pointerdown",function(e){
 canvas.addEventListener("pointermove",function(e){e.preventDefault();if(!dragPiece)return;var pos=getPos(e);dragPiece.x=pos.x-dragOff.x;dragPiece.y=pos.y-dragOff.y});
 canvas.addEventListener("pointerup",function(e){
   e.preventDefault();if(!dragPiece)return;dragPiece.scale=1;
-  var sil=getSilWorld(),centerIn=pip(dragPiece.x,dragPiece.y,sil);
+  var sil=getSilWorld(),centerIn=pip(dragPiece.x,dragPiece.y,sil)||onPoly(dragPiece.x,dragPiece.y,sil,.6);
   if(centerIn){if(!dragPiece.placed)undoStack.push({p:dragPiece,tx:dragPiece.trayX,ty:dragPiece.trayY,wp:false});dragPiece.placed=true;sndPlace();spawnP(dragPiece.x,dragPiece.y,5)}
   else{if(dragPiece.placed)undoStack.push({p:dragPiece,tx:dragPiece.x,ty:dragPiece.y,wp:true});dragPiece.placed=false;dragPiece.x=dragPiece.trayX;dragPiece.y=dragPiece.trayY}
+  snapPiece(dragPiece);
   dragPiece=null;setTimeout(checkWin,150);
 });
 canvas.addEventListener("contextmenu",function(e){e.preventDefault()});
 
 /* BUTTONS */
-document.getElementById("br").onclick=function(){sndBtn();var t=dragPiece||null;if(!t)for(var i=pieces.length-1;i>=0;i--)if(pieces[i].placed){t=pieces[i];break}if(t){t.rot=(t.rot+1)%8;sndRotate()}};
-document.getElementById("bf").onclick=function(){sndBtn();var t=dragPiece||null;if(!t)for(var i=pieces.length-1;i>=0;i--)if(pieces[i].placed){t=pieces[i];break}if(t){t.flip=!t.flip;sndFlip()}};
+document.getElementById("br").onclick=function(){sndBtn();var t=dragPiece||null;if(!t)for(var i=pieces.length-1;i>=0;i--)if(pieces[i].placed){t=pieces[i];break}if(t){t.rot=(t.rot+1)%8;sndRotate();if(t.placed&&!dragPiece){snapPiece(t);setTimeout(checkWin,150)}}};
+document.getElementById("bf").onclick=function(){sndBtn();var t=dragPiece||null;if(!t)for(var i=pieces.length-1;i>=0;i--)if(pieces[i].placed){t=pieces[i];break}if(t){t.flip=!t.flip;sndFlip();if(t.placed&&!dragPiece){snapPiece(t);setTimeout(checkWin,150)}}};
 document.getElementById("bu").onclick=function(){sndBtn();if(undoStack.length>0){var u=undoStack.pop();u.p.placed=u.wp;if(!u.wp){u.p.x=u.p.trayX;u.p.y=u.p.trayY}else{u.p.x=u.tx;u.p.y=u.ty}}};
 document.getElementById("bx").onclick=function(){sndBtn();pieces.forEach(function(p){p.placed=false;p.x=p.trayX;p.y=p.trayY;p.rot=0;p.flip=false});undoStack=[];hintsUsed=0};
-document.getElementById("bh").onclick=function(){sndBtn();if(hintsUsed>=3||st.hints<=0)return;hintsUsed++;st.hints--;sndHint();for(var i=0;i<pieces.length;i++){if(!pieces[i].placed){pieces[i].x=cx+(Math.random()-.5)*U*.5;pieces[i].y=cy+(Math.random()-.5)*U*.5;pieces[i].placed=true;pieces[i].rot=Math.floor(Math.random()*8);spawnP(pieces[i].x,pieces[i].y,8);break}}saveSave();updateHUD()};
+// P1 fix 2026-08-25: hint now places the next unplaced piece at its EXACT solution
+// slot (spec: "highlight the correct position") instead of a random in-silhouette
+// spot with a random rotation, which was never a valid placement.
+document.getElementById("bh").onclick=function(){sndBtn();if(hintsUsed>=3||st.hints<=0)return;hintsUsed++;st.hints--;sndHint();for(var i=0;i<pieces.length;i++){if(!pieces[i].placed){var s=slotFor(pieces[i]);undoStack.push({p:pieces[i],tx:pieces[i].trayX,ty:pieces[i].trayY,wp:false});pieces[i].x=s.x;pieces[i].y=s.y;pieces[i].rot=s.rot;pieces[i].flip=s.flip;pieces[i].placed=true;spawnP(s.x,s.y,8);break}}saveSave();updateHUD();setTimeout(checkWin,150)};
 document.getElementById("bm").onclick=function(){sndBtn();levelActive=false;stopBGM();document.getElementById("hud").style.display="none";showLS()};
 
 /* HUD */
@@ -414,12 +472,15 @@ function showLS(){
 
 /* SCREENS */
 document.getElementById("bp").onclick=function(){sndBtn();initAudio();showLS()};
+// P2 fix: settings screen was unreachable (no button anywhere). Reachable from title.
+document.getElementById("bset").onclick=function(){sndBtn();var ss=document.getElementById("ss");document.getElementById("tgs").className="tg"+(soundOn?" on":"");document.getElementById("tgm").className="tg"+(musicOn?" on":"");ss.style.display="flex"};
 document.getElementById("bbt").onclick=function(){sndBtn();document.getElementById("ls").style.display="none";document.getElementById("ts").style.display="flex"};
 document.getElementById("bn").onclick=function(){sndBtn();if(curLevel<LVLS.length-1)startLevel(curLevel+1);else showLS()};
 document.getElementById("bl").onclick=function(){sndBtn();levelActive=false;stopBGM();showLS()};
 
 /* SETTINGS */
-document.getElementById("bbs").onclick=function(){sndBtn();document.getElementById("ss").style.display="none";if(levelActive)startBGM()};
+// P1 fix: Back from settings hid ss without re-showing any panel => permanent black screen.
+document.getElementById("bbs").onclick=function(){sndBtn();document.getElementById("ss").style.display="none";document.getElementById("ts").style.display="flex"};
 document.getElementById("tgs").onclick=function(){soundOn=!soundOn;st.settings.sound=soundOn;this.className="tg"+(soundOn?" on":"");saveSave()};
 document.getElementById("tgm").onclick=function(){musicOn=!musicOn;st.settings.music=musicOn;this.className="tg"+(musicOn?" on":"");saveSave();if(musicOn&&levelActive)startBGM();else stopBGM()};
 document.getElementById("brp").onclick=function(){gzConfirm("Reset all progress?",function(c){if(c){localStorage.removeItem(SK);st={completed:{},stars:{},totalScore:0,hints:3,settings:{sound:true,music:true},achievements:{}};soundOn=true;musicOn=true;saveSave();document.getElementById("ss").style.display="none";showLS()}})};

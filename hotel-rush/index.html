@@ -1449,8 +1449,12 @@ document.getElementById('btnStart').addEventListener('click', () => {
     }
   }
   const startLvl = save && save.level ? Math.min(30, save.level) : 1;
-  startLevel(startLvl);
+  // FIX(tutorial-instantly-hidden,P2): hideAllOverlays() used to run AFTER startLevel(), so
+  // the tutorial overlay startLevel() had just opened for a first-time L1 player was hidden
+  // again in the same tick — the tutorial could never be seen via the Play button. Hide the
+  // start screen first, then let startLevel() open the tutorial when it applies.
   hideAllOverlays();
+  startLevel(startLvl);
 });
 
 document.getElementById('btnHowTo').addEventListener('click', () => {
@@ -1505,12 +1509,14 @@ document.getElementById('btnCollectOffline').addEventListener('click', () => {
   const amt = parseInt(document.getElementById('offlineScreen').dataset.amount || '0');
   const save = loadGame();
   const startLvl = save ? Math.min(30, save.level) : 1;
+  // FIX(tutorial-instantly-hidden,P2): same reorder as btnStart — hideAllOverlays() after
+  // startLevel() used to instantly hide a tutorial overlay the player should see.
+  hideAllOverlays();
   startLevel(startLvl);
   G.cash += amt;
   spawnFloatText(CW / 2, CH / 2, '+$' + amt, '#fbbf24');
   SFX.cash();
   updateUI();
-  hideAllOverlays();
 });
 
 document.getElementById('btnFloor').addEventListener('click', buyFloor);

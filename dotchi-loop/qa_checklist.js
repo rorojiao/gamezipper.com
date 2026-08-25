@@ -1,6 +1,7 @@
 // Code-level QA checklist for Dotchi-Loop
 const fs = require('fs');
-const html = fs.readFileSync('index.html', 'utf8');
+const path = require('path');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 
 const checks = {
   // SEO / metadata

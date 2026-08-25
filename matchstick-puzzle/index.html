@@ -272,7 +272,9 @@
 <script>
 const canvas=document.getElementById('gameCanvas');
 const ctx=canvas.getContext('2d');
-const GRID_SIZE=60;
+/* FIX(grid-scale): 60px cells pushed the new equation layouts (x up to ~19.5) far outside
+ * the ~600px canvas; 28px cells + 10px margin fit the widest level (verified in verify_engine.js). */
+const GRID_SIZE=28;
 const STICK_LENGTH=GRID_SIZE;
 const STICK_WIDTH=8;
 
@@ -282,6 +284,7 @@ let movesUsed=0;
 let sticks=[];
 let draggedStick=null;
 let dragOffset={x:0,y:0};
+let dragStartJson=null;
 let moveHistory=[];
 let stars=0;
 let rafId=null;
@@ -291,36 +294,36 @@ let particles=[];
 let soundOn=true,musicOn=true;
 
 const LEVELS=[
-  {type:'equation',sticks:[[2,3,2,5],[2,5,4,5],[4,5,4,3],[4,3,6,3],[6,3,6,5],[6,5,8,5],[8,5,8,3],[8,3,10,3],[10,3,10,5],[10,5,12,5]],targetEquation:'6 + 4 = 10',allowedMoves:1,hint:'Move the vertical stick from the right to make 10',tier:1},
-  {type:'equation',sticks:[[3,3,3,5],[3,5,5,5],[5,5,5,3],[5,3,7,3],[7,3,7,5],[7,5,9,5],[9,5,9,3],[9,3,11,3],[11,3,11,5],[11,5,13,5],[13,5,13,7]],targetEquation:'5 + 4 = 9',allowedMoves:1,hint:'Move the top-right stick to make the 9',tier:1},
-  {type:'equation',sticks:[[2,4,2,6],[2,6,4,6],[4,6,4,4],[4,4,6,4],[6,4,6,6],[6,6,8,6],[8,6,8,4],[8,4,10,4],[10,4,10,6],[10,6,12,6],[12,6,12,8],[12,8,14,8]],targetEquation:'9 - 5 = 4',allowedMoves:1,hint:'Move a stick to change + to -',tier:1},
-  {type:'equation',sticks:[[3,4,3,6],[3,6,5,6],[5,6,5,4],[5,4,7,4],[7,4,7,6],[7,6,9,6],[9,6,9,4],[9,4,11,4],[11,4,11,6],[11,6,13,6],[13,6,13,8],[13,8,15,8]],targetEquation:'8 - 4 = 4',allowedMoves:1,hint:'Move the plus sign stick to create the 4',tier:1},
-  {type:'equation',sticks:[[2,5,2,7],[2,7,4,7],[4,7,4,5],[4,5,6,5],[6,5,6,7],[6,7,8,7],[8,7,8,5],[8,5,10,5],[10,5,10,7],[10,7,12,7],[12,7,12,9]],targetEquation:'6 - 2 = 4',allowedMoves:1,hint:'Move the right vertical stick to fix the 6',tier:1},
-  {type:'equation',sticks:[[3,4,3,6],[3,6,5,6],[5,6,5,4],[5,4,7,4],[7,4,7,6],[7,6,9,6],[9,6,9,4],[9,4,11,4],[11,4,11,6],[11,6,13,6],[13,6,13,8],[13,8,15,8]],targetEquation:'3 + 5 = 8',allowedMoves:1,hint:'Change 9 to 3 by moving the top-left stick',tier:1},
-  {type:'equation',sticks:[[2,3,2,5],[2,5,4,5],[4,5,4,3],[4,3,6,3],[6,3,6,5],[6,5,8,5],[8,5,8,3],[8,3,10,3],[10,3,10,5],[10,5,12,5]],targetEquation:'8 + 2 = 10',allowedMoves:1,hint:'Move the left stick to make 8 from 6',tier:1},
-  {type:'equation',sticks:[[3,3,3,5],[3,5,5,5],[5,5,5,3],[5,3,7,3],[7,3,7,5],[7,5,9,5],[9,5,9,3],[9,3,11,3],[11,3,11,5],[11,5,13,5],[13,5,13,7]],targetEquation:'7 + 2 = 9',allowedMoves:1,hint:'Move the right top stick to change the 2',tier:1},
-  {type:'equation',sticks:[[2,4,2,6],[2,6,4,6],[4,6,4,4],[4,4,6,4],[6,4,6,6],[6,6,8,6],[8,6,8,4],[8,4,10,4],[10,4,10,6],[10,6,12,6],[12,6,12,8],[12,8,14,8]],targetEquation:'6 + 3 = 9',allowedMoves:1,hint:'Change the 4 to 3 by moving the right stick',tier:1},
-  {type:'equation',sticks:[[3,5,3,7],[3,7,5,7],[5,7,5,5],[5,5,7,5],[7,5,7,7],[7,7,9,7],[9,7,9,5],[9,5,11,5],[11,5,11,7],[11,7,13,7],[13,7,13,9],[13,9,15,9]],targetEquation:'5 + 3 = 8',allowedMoves:1,hint:'Move the plus stick to create the 3',tier:1},
-  {type:'equation',sticks:[[2,3,2,5],[2,5,4,5],[4,5,4,3],[4,3,6,3],[6,3,6,5],[6,5,8,5],[8,5,8,3],[8,3,10,3],[10,3,10,5],[10,5,12,5],[12,5,12,7],[12,7,14,7]],targetEquation:'9 + 5 = 14',allowedMoves:2,hint:'Move two sticks to create 9 and 14',tier:2},
-  {type:'equation',sticks:[[3,4,3,6],[3,6,5,6],[5,6,5,4],[5,4,7,4],[7,4,7,6],[7,6,9,6],[9,6,9,4],[9,4,11,4],[11,4,11,6],[11,6,13,6],[13,6,13,8],[13,8,15,8],[15,8,17,8]],targetEquation:'12 - 5 = 7',allowedMoves:2,hint:'Rearrange sticks to make 12 and 7',tier:2},
-  {type:'equation',sticks:[[2,5,2,7],[2,7,4,7],[4,7,4,5],[4,5,6,5],[6,5,6,7],[6,7,8,7],[8,7,8,5],[8,5,10,5],[10,5,10,7],[10,7,12,7],[12,7,12,9],[12,9,14,9]],targetEquation:'8 + 6 = 14',allowedMoves:2,hint:'Create 8 and 6 from existing sticks',tier:2},
-  {type:'equation',sticks:[[3,3,3,5],[3,5,5,5],[5,5,5,3],[5,3,7,3],[7,3,7,5],[7,5,9,5],[9,5,9,3],[9,3,11,3],[11,3,11,5],[11,5,13,5],[13,5,13,7],[13,7,15,7],[15,7,17,7]],targetEquation:'11 + 4 = 15',allowedMoves:2,hint:'Move two sticks to form 11 and 4',tier:2},
-  {type:'equation',sticks:[[2,4,2,6],[2,6,4,6],[4,6,4,4],[4,4,6,4],[6,4,6,6],[6,6,8,6],[8,6,8,4],[8,4,10,4],[10,4,10,6],[10,6,12,6],[12,6,12,8],[12,8,14,8],[14,8,16,8]],targetEquation:'15 - 7 = 8',allowedMoves:2,hint:'Transform sticks to create 15 and 7',tier:2},
-  {type:'equation',sticks:[[3,5,3,7],[3,7,5,7],[5,7,5,5],[5,5,7,5],[7,5,7,7],[7,7,9,7],[9,7,9,5],[9,5,11,5],[11,5,11,7],[11,7,13,7],[13,7,13,9],[13,9,15,9],[15,9,17,9]],targetEquation:'9 + 6 = 15',allowedMoves:2,hint:'Move sticks to create 9 and 6',tier:2},
-  {type:'equation',sticks:[[2,3,2,5],[2,5,4,5],[4,5,4,3],[4,3,6,3],[6,3,6,5],[6,5,8,5],[8,5,8,3],[8,3,10,3],[10,3,10,5],[10,5,12,5],[12,5,12,7],[12,7,14,7],[14,7,16,7]],targetEquation:'13 + 2 = 15',allowedMoves:2,hint:'Rearrange to form 13 and 2',tier:2},
-  {type:'equation',sticks:[[3,4,3,6],[3,6,5,6],[5,6,5,4],[5,4,7,4],[7,4,7,6],[7,6,9,6],[9,6,9,4],[9,4,11,4],[11,4,11,6],[11,6,13,6],[13,6,13,8],[13,8,15,8],[15,8,17,8],[17,8,19,8]],targetEquation:'17 - 8 = 9',allowedMoves:2,hint:'Create 17 and 9 by moving two sticks',tier:2},
-  {type:'equation',sticks:[[2,5,2,7],[2,7,4,7],[4,7,4,5],[4,5,6,5],[6,5,6,7],[6,7,8,7],[8,7,8,5],[8,5,10,5],[10,5,10,7],[10,7,12,7],[12,7,12,9],[12,9,14,9],[14,9,16,9],[16,9,18,9]],targetEquation:'14 + 3 = 17',allowedMoves:2,hint:'Move two sticks to make 14 and 3',tier:2},
-  {type:'equation',sticks:[[3,3,3,5],[3,5,5,5],[5,5,5,3],[5,3,7,3],[7,3,7,5],[7,5,9,5],[9,5,9,3],[9,3,11,3],[11,3,11,5],[11,5,13,5],[13,5,13,7],[13,7,15,7],[15,7,17,7],[17,7,19,7]],targetEquation:'16 - 7 = 9',allowedMoves:2,hint:'Transform to create 16 and 7',tier:2},
-  {type:'shape',sticks:[[3,3,3,7],[3,7,7,7],[7,7,7,3],[7,3,3,3],[3,7,7,3],[7,7,3,3],[3,7,5,7],[5,7,5,5],[5,5,3,5]],targetShape:'2 squares',allowedMoves:1,hint:'Move diagonal to create 2 separate squares',tier:3},
-  {type:'shape',sticks:[[4,3,4,9],[4,9,10,9],[10,9,10,3],[10,3,4,3],[4,9,10,3],[10,9,4,3],[4,6,10,6]],targetShape:'4 triangles',allowedMoves:1,hint:'Move horizontal to create 4 small triangles',tier:3},
-  {type:'shape',sticks:[[3,3,3,9],[3,9,9,9],[9,9,9,3],[9,3,3,3],[3,6,9,6],[6,3,6,9]],targetShape:'3 rectangles',allowedMoves:2,hint:'Move two sticks to create 3 equal rectangles',tier:3},
-  {type:'shape',sticks:[[4,2,4,10],[4,10,12,10],[12,10,12,2],[12,2,4,2],[4,6,12,6],[8,2,8,10],[4,4,8,4],[8,4,8,6],[8,6,4,6]],targetShape:'5 squares',allowedMoves:2,hint:'Rearrange to create a 2x2 grid plus one',tier:3},
-  {type:'shape',sticks:[[3,3,3,8],[3,8,8,8],[8,8,8,3],[8,3,3,3],[3,5,8,5],[5,3,5,8],[3,6,8,6]],targetShape:'fish shape',allowedMoves:2,hint:'Move sticks to create a fish silhouette',tier:3},
-  {type:'shape',sticks:[[4,3,4,10],[4,10,11,10],[11,10,11,3],[11,3,4,3],[4,6,11,6],[7,3,7,10],[4,4,7,4],[7,4,7,6],[7,6,4,6]],targetShape:'6 rectangles',allowedMoves:2,hint:'Move two sticks to create 6 rectangles',tier:3},
-  {type:'shape',sticks:[[3,3,3,9],[3,9,9,9],[9,9,9,3],[9,3,3,3],[3,6,9,6],[6,3,6,9],[6,4,9,4],[6,6,9,6]],targetShape:'arrow',allowedMoves:2,hint:'Move sticks to form an arrow pointing right',tier:3},
-  {type:'shape',sticks:[[4,2,4,10],[4,10,12,10],[12,10,12,2],[12,2,4,2],[4,6,12,6],[8,2,8,10],[4,4,8,4],[8,4,8,6],[8,6,4,6],[6,8,10,8],[6,8,6,10],[6,10,8,10]],targetShape:'house',allowedMoves:2,hint:'Create a house with triangular roof',tier:3},
-  {type:'shape',sticks:[[3,3,3,8],[3,8,8,8],[8,8,8,3],[8,3,3,3],[3,5,8,5],[5,3,5,8],[3,6,8,6],[5,6,8,6],[5,6,5,8]],targetShape:'hourglass',allowedMoves:2,hint:'Move sticks to form an hourglass shape',tier:3},
-  {type:'shape',sticks:[[4,3,4,9],[4,9,10,9],[10,9,10,3],[10,3,4,3],[4,9,10,3],[10,9,4,3],[4,6,10,6],[7,3,7,9],[4,5,7,5],[7,5,7,6],[7,6,4,6]],targetShape:'diamond',allowedMoves:2,hint:'Create a diamond shape by rearranging',tier:3}
+  {type:'equation',sticks:[[2,3,4,3],[4,4,4,5],[2,5,4,5],[2,3,2,4],[2,4,4,4],[5.5,3,5.5,5],[4.5,4,6.5,4],[9,3,9,4],[9,4,9,5],[7,3,7,4],[7,4,9,4],[9.5,3.5,11.5,3.5],[9.5,4.5,11.5,4.5],[14,3,14,4],[14,4,14,5],[14.5,3,16.5,3],[16.5,3,16.5,4],[16.5,4,16.5,5],[14.5,5,16.5,5],[14.5,4,14.5,5],[14.5,3,14.5,4],[3,7,3,8]],targetEquation:'6 + 4 = 10',y0:3,allowedMoves:1,hint:'Move the stray stick to turn the shown 5 into a 6, making the equation true.',tier:1},
+  {type:'equation',sticks:[[2,3,4,3],[4,4,4,5],[2,5,4,5],[2,3,2,4],[2,4,4,4],[5.5,3,5.5,5],[4.5,4,6.5,4],[9,3,9,4],[9,4,9,5],[7,3,7,4],[7,4,9,4],[9.5,3.5,11.5,3.5],[9.5,4.5,11.5,4.5],[12,3,14,3],[14,4,14,5],[12,5,14,5],[12,3,12,4],[12,4,14,4],[3,7,3,8]],targetEquation:'5 + 4 = 9',y0:3,allowedMoves:1,hint:'Move the stray stick to turn the shown 5 into a 9, making the equation true.',tier:1},
+  {type:'equation',sticks:[[2,3,4,3],[4,3,4,4],[4,4,4,5],[2,5,4,5],[2,4,4,4],[4.5,4,6.5,4],[7,3,9,3],[9,4,9,5],[7,5,9,5],[7,3,7,4],[7,4,9,4],[9.5,3.5,11.5,3.5],[9.5,4.5,11.5,4.5],[14,3,14,4],[14,4,14,5],[12,3,12,4],[12,4,14,4],[3,7,3,8]],targetEquation:'9 - 5 = 4',y0:3,allowedMoves:1,hint:'Move the stray stick to turn the shown 3 into a 9, making the equation true.',tier:1},
+  {type:'equation',sticks:[[2,3,4,3],[4,3,4,4],[4,4,4,5],[2,5,4,5],[2,4,2,5],[2,3,2,4],[2,4,4,4],[4.5,4,6.5,4],[9,3,9,4],[9,4,9,5],[7,3,7,4],[7,4,9,4],[9.5,3.5,11.5,3.5],[9.5,4.5,11.5,4.5],[14,3,14,4],[14,4,14,5],[12,3,12,4],[2,7.5,4,7.5]],targetEquation:'8 - 4 = 4',y0:3,allowedMoves:1,hint:'Move the stray stick to repair the 4, making the equation true.',tier:1},
+  {type:'equation',sticks:[[2,3,4,3],[4,4,4,5],[2,5,4,5],[2,3,2,4],[2,4,4,4],[4.5,4,6.5,4],[7,3,9,3],[9,3,9,4],[7,5,9,5],[7,4,7,5],[7,4,9,4],[9.5,3.5,11.5,3.5],[9.5,4.5,11.5,4.5],[14,3,14,4],[14,4,14,5],[12,3,12,4],[12,4,14,4],[3,7,3,8]],targetEquation:'6 - 2 = 4',y0:3,allowedMoves:1,hint:'Move the stray stick to turn the shown 5 into a 6, making the equation true.',tier:1},
+  {type:'equation',sticks:[[2,3,4,3],[4,3,4,4],[4,4,4,5],[2,5,4,5],[2,4,4,4],[5.5,3,5.5,5],[4.5,4,6.5,4],[7,3,9,3],[9,4,9,5],[7,5,9,5],[7,3,7,4],[7,4,9,4],[9.5,3.5,11.5,3.5],[9.5,4.5,11.5,4.5],[12,3,14,3],[14,3,14,4],[14,4,14,5],[12,5,14,5],[12,3,12,4],[12,4,14,4],[3,7,3,8]],targetEquation:'3 + 5 = 8',y0:3,allowedMoves:1,hint:'Move the stray stick to turn the shown 9 into a 8, making the equation true.',tier:1},
+  {type:'equation',sticks:[[2,3,4,3],[4,4,4,5],[2,5,4,5],[2,4,2,5],[2,3,2,4],[2,4,4,4],[5.5,3,5.5,5],[4.5,4,6.5,4],[7,3,9,3],[9,3,9,4],[7,5,9,5],[7,4,7,5],[7,4,9,4],[9.5,3.5,11.5,3.5],[9.5,4.5,11.5,4.5],[14,3,14,4],[14,4,14,5],[14.5,3,16.5,3],[16.5,3,16.5,4],[16.5,4,16.5,5],[14.5,5,16.5,5],[14.5,4,14.5,5],[14.5,3,14.5,4],[3,7,3,8]],targetEquation:'8 + 2 = 10',y0:3,allowedMoves:1,hint:'Move the stray stick to turn the shown 6 into a 8, making the equation true.',tier:1},
+  {type:'equation',sticks:[[2,3,4,3],[4,3,4,4],[4,4,4,5],[5.5,3,5.5,5],[4.5,4,6.5,4],[7,3,9,3],[9,3,9,4],[7,5,9,5],[7,4,7,5],[7,4,9,4],[9.5,3.5,11.5,3.5],[9.5,4.5,11.5,4.5],[12,3,14,3],[14,4,14,5],[12,5,14,5],[12,3,12,4],[12,4,14,4],[3,7,3,8]],targetEquation:'7 + 2 = 9',y0:3,allowedMoves:1,hint:'Move the stray stick to turn the shown 5 into a 9, making the equation true.',tier:1},
+  {type:'equation',sticks:[[2,3,4,3],[4,4,4,5],[2,5,4,5],[2,3,2,4],[2,4,4,4],[5.5,3,5.5,5],[4.5,4,6.5,4],[7,3,9,3],[9,3,9,4],[9,4,9,5],[7,5,9,5],[7,4,9,4],[9.5,3.5,11.5,3.5],[9.5,4.5,11.5,4.5],[12,3,14,3],[14,3,14,4],[14,4,14,5],[12,5,14,5],[12,3,12,4],[12,4,14,4],[3,7,3,8]],targetEquation:'6 + 3 = 9',y0:3,allowedMoves:1,hint:'Move the stray stick to turn the shown 5 into a 6, making the equation true.',tier:1},
+  {type:'equation',sticks:[[2,3,4,3],[4,4,4,5],[2,5,4,5],[2,3,2,4],[2,4,4,4],[5.5,3,5.5,5],[4.5,4,6.5,4],[7,3,9,3],[9,3,9,4],[9,4,9,5],[7,5,9,5],[7,4,9,4],[9.5,3.5,11.5,3.5],[9.5,4.5,11.5,4.5],[12,3,14,3],[14,3,14,4],[14,4,14,5],[12,5,14,5],[12,4,12,5],[12,3,12,4],[2,7.5,4,7.5]],targetEquation:'5 + 3 = 8',y0:3,allowedMoves:1,hint:'Move the stray stick to turn the shown 0 into a 8, making the equation true.',tier:1},
+  {type:'equation',sticks:[[2,3,4,3],[4,4,4,5],[2,5,4,5],[2,3,2,4],[2,4,4,4],[5.5,3,5.5,5],[4.5,4,6.5,4],[7,3,9,3],[9,4,9,5],[7,5,9,5],[7,3,7,4],[7,4,9,4],[9.5,3.5,11.5,3.5],[9.5,4.5,11.5,4.5],[14,3,14,4],[14,4,14,5],[16.5,3,16.5,4],[16.5,4,16.5,5],[14.5,3,14.5,4],[3,7,3,8],[6,7.5,8,7.5]],targetEquation:'9 + 5 = 14',y0:3,allowedMoves:2,hint:'Move the stray sticks to turn the shown 5 into a 9 and repair the 4, making the equation true.',tier:2},
+  {type:'equation',sticks:[[4,3,4,4],[4,4,4,5],[4.5,3,6.5,3],[6.5,3,6.5,4],[4.5,5,6.5,5],[4.5,4,4.5,5],[4.5,4,6.5,4],[7,4,9,4],[9.5,3,11.5,3],[11.5,4,11.5,5],[9.5,5,11.5,5],[9.5,3,9.5,4],[12,3.5,14,3.5],[12,4.5,14,4.5],[16.5,3,16.5,4],[16.5,4,16.5,5],[2,7.5,4,7.5],[6,7.5,8,7.5]],targetEquation:'12 - 5 = 7',y0:3,allowedMoves:2,hint:'Move the stray sticks to turn the shown 1 into a 7 and repair the 5, making the equation true.',tier:2},
+  {type:'equation',sticks:[[2,3,4,3],[4,3,4,4],[4,4,4,5],[2,5,4,5],[2,3,2,4],[2,4,4,4],[5.5,3,5.5,5],[4.5,4,6.5,4],[7,3,9,3],[9,4,9,5],[7,5,9,5],[7,3,7,4],[7,4,9,4],[9.5,3.5,11.5,3.5],[9.5,4.5,11.5,4.5],[14,3,14,4],[14,4,14,5],[16.5,3,16.5,4],[16.5,4,16.5,5],[14.5,3,14.5,4],[14.5,4,16.5,4],[3,7,3,8],[7,7,7,8]],targetEquation:'8 + 6 = 14',y0:3,allowedMoves:2,hint:'Move the stray sticks to turn the shown 9 into a 8 and turn the shown 5 into a 6, making the equation true.',tier:2},
+  {type:'equation',sticks:[[4,3,4,4],[4,4,4,5],[6.5,3,6.5,4],[6.5,4,6.5,5],[8,3,8,5],[7,4,9,4],[11.5,3,11.5,4],[11.5,4,11.5,5],[9.5,3,9.5,4],[12,3.5,14,3.5],[12,4.5,14,4.5],[16.5,3,16.5,4],[16.5,4,16.5,5],[17,3,19,3],[19,4,19,5],[17,5,19,5],[17,3,17,4],[2,7.5,4,7.5],[6,7.5,8,7.5]],targetEquation:'11 + 4 = 15',y0:3,allowedMoves:2,hint:'Move the stray sticks to repair the 5 and repair the 4, making the equation true.',tier:2},
+  {type:'equation',sticks:[[4,3,4,4],[4,4,4,5],[4.5,3,6.5,3],[6.5,4,6.5,5],[4.5,5,6.5,5],[4.5,3,4.5,4],[4.5,4,6.5,4],[7,4,9,4],[11.5,3,11.5,4],[11.5,4,11.5,5],[12,3.5,14,3.5],[12,4.5,14,4.5],[14.5,3,16.5,3],[16.5,3,16.5,4],[16.5,4,16.5,5],[14.5,5,16.5,5],[14.5,4,14.5,5],[14.5,3,14.5,4],[2,7.5,4,7.5],[6,7.5,8,7.5]],targetEquation:'15 - 7 = 8',y0:3,allowedMoves:2,hint:'Move the stray sticks to turn the shown 0 into a 8 and turn the shown 1 into a 7, making the equation true.',tier:2},
+  {type:'equation',sticks:[[2,3,4,3],[4,4,4,5],[2,5,4,5],[2,3,2,4],[2,4,4,4],[5.5,3,5.5,5],[4.5,4,6.5,4],[7,3,9,3],[9,4,9,5],[7,5,9,5],[7,3,7,4],[7,4,9,4],[9.5,3.5,11.5,3.5],[9.5,4.5,11.5,4.5],[14,3,14,4],[14,4,14,5],[14.5,3,16.5,3],[16.5,4,16.5,5],[14.5,5,16.5,5],[14.5,3,14.5,4],[14.5,4,16.5,4],[3,7,3,8],[7,7,7,8]],targetEquation:'9 + 6 = 15',y0:3,allowedMoves:2,hint:'Move the stray sticks to turn the shown 5 into a 9 and turn the shown 5 into a 6, making the equation true.',tier:2},
+  {type:'equation',sticks:[[4,3,4,4],[4,4,4,5],[4.5,3,6.5,3],[6.5,3,6.5,4],[6.5,4,6.5,5],[4.5,5,6.5,5],[4.5,4,6.5,4],[8,3,8,5],[7,4,9,4],[9.5,3,11.5,3],[9.5,5,11.5,5],[9.5,4,9.5,5],[9.5,4,11.5,4],[12,3.5,14,3.5],[12,4.5,14,4.5],[16.5,3,16.5,4],[16.5,4,16.5,5],[17,3,19,3],[19,4,19,5],[17,5,19,5],[17,3,17,4],[3,7,3,8],[6,7.5,8,7.5]],targetEquation:'13 + 2 = 15',y0:3,allowedMoves:2,hint:'Move the stray sticks to repair the 2 and repair the 5, making the equation true.',tier:2},
+  {type:'equation',sticks:[[4,3,4,4],[4,4,4,5],[4.5,3,6.5,3],[6.5,3,6.5,4],[6.5,4,6.5,5],[7,4,9,4],[9.5,3,11.5,3],[11.5,4,11.5,5],[9.5,5,11.5,5],[9.5,4,9.5,5],[9.5,3,9.5,4],[9.5,4,11.5,4],[12,3.5,14,3.5],[12,4.5,14,4.5],[14.5,3,16.5,3],[16.5,3,16.5,4],[16.5,4,16.5,5],[14.5,5,16.5,5],[14.5,4,16.5,4],[3,7,3,8],[7,7,7,8]],targetEquation:'17 - 8 = 9',y0:3,allowedMoves:2,hint:'Move the stray sticks to turn the shown 6 into a 8 and turn the shown 3 into a 9, making the equation true.',tier:2},
+  {type:'equation',sticks:[[4,3,4,4],[4,4,4,5],[6.5,3,6.5,4],[6.5,4,6.5,5],[4.5,3,4.5,4],[4.5,4,6.5,4],[8,3,8,5],[7,4,9,4],[9.5,3,11.5,3],[11.5,3,11.5,4],[11.5,4,11.5,5],[9.5,5,11.5,5],[12,3.5,14,3.5],[12,4.5,14,4.5],[16.5,3,16.5,4],[16.5,4,16.5,5],[19,3,19,4],[19,4,19,5],[2,7.5,4,7.5],[6,7.5,8,7.5]],targetEquation:'14 + 3 = 17',y0:3,allowedMoves:2,hint:'Move the stray sticks to turn the shown 1 into a 7 and repair the 3, making the equation true.',tier:2},
+  {type:'equation',sticks:[[4,3,4,4],[4,4,4,5],[4.5,3,6.5,3],[6.5,4,6.5,5],[4.5,5,6.5,5],[4.5,3,4.5,4],[4.5,4,6.5,4],[7,4,9,4],[11.5,3,11.5,4],[11.5,4,11.5,5],[12,3.5,14,3.5],[12,4.5,14,4.5],[14.5,3,16.5,3],[16.5,3,16.5,4],[16.5,4,16.5,5],[14.5,5,16.5,5],[14.5,3,14.5,4],[14.5,4,16.5,4],[3,7,3,8],[6,7.5,8,7.5]],targetEquation:'16 - 7 = 9',y0:3,allowedMoves:2,hint:'Move the stray sticks to turn the shown 5 into a 6 and turn the shown 1 into a 7, making the equation true.',tier:2},
+  {type:'shape',sticks:[[3,3,5,3],[5,3,5,5],[3,5,5,5],[3,3,3,5],[6,3,8,3],[8,3,8,5],[6,5,8,5],[3,6,3,8]],solution:[[3,3,5,3],[5,3,5,5],[3,5,5,5],[3,3,3,5],[6,3,8,3],[8,3,8,5],[6,5,8,5],[6,3,6,5]],targetShape:'2 squares',allowedMoves:1,hint:'Move the stray stick to complete the left edge of the second square.',tier:3},
+  {type:'shape',sticks:[[4,3,6,3],[6,3,6,5],[4,5,6,5],[4,3,4,5],[4,3,6,5],[4,6,2,8]],solution:[[4,3,6,3],[6,3,6,5],[4,5,6,5],[4,3,4,5],[4,3,6,5],[6,3,4,5]],targetShape:'4 triangles',allowedMoves:1,hint:'Move the stray diagonal to divide the square into 4 small triangles.',tier:3},
+  {type:'shape',sticks:[[3,3,9,3],[9,3,9,5],[3,5,9,5],[3,3,3,5],[3,6,3,8],[7,6,7,8]],solution:[[3,3,9,3],[9,3,9,5],[3,5,9,5],[3,3,3,5],[5,3,5,5],[7,3,7,5]],targetShape:'3 rectangles',allowedMoves:2,hint:'Move the two stray sticks to split the wide box into 3 equal rectangles.',tier:3},
+  {type:'shape',sticks:[[4,2,8,2],[8,2,8,6],[4,6,8,6],[4,2,4,6],[6,2,6,6],[4,4,8,4],[10,2,12,2],[12,2,12,4],[2,8,4,8],[7,7,7,9]],solution:[[4,2,8,2],[8,2,8,6],[4,6,8,6],[4,2,4,6],[6,2,6,6],[4,4,8,4],[10,2,12,2],[12,2,12,4],[10,4,12,4],[10,2,10,4]],targetShape:'5 squares',allowedMoves:2,hint:'Move the two stray sticks to finish the detached square - a 2x2 grid plus one.',tier:3},
+  {type:'shape',sticks:[[3,4,4,3],[4,3,5,4],[5,4,4,5],[4,5,3,4],[5,4,6,3],[3,6,3,8],[6.5,6.5,7.5,7.5]],solution:[[3,4,4,3],[4,3,5,4],[5,4,4,5],[4,5,3,4],[5,4,6,3],[6,3,6,5],[5,4,6,5]],targetShape:'fish shape',allowedMoves:2,hint:'Move the two stray sticks to finish the tail of the fish.',tier:3},
+  {type:'shape',sticks:[[4,3,10,3],[10,3,10,7],[4,7,10,7],[4,3,4,7],[6,3,6,7],[3,7,3,11],[4,9,10,9]],solution:[[4,3,10,3],[10,3,10,7],[4,7,10,7],[4,3,4,7],[6,3,6,7],[8,3,8,7],[4,5,10,5]],targetShape:'6 rectangles',allowedMoves:2,hint:'Move the two stray sticks to split the big box into 6 rectangles (3 columns x 2 rows).',tier:3},
+  {type:'shape',sticks:[[2,5,6,5],[2,6,6,6],[6,4,6,7],[6,4,8,5],[2,9.5,4,8.5],[7,8.5,7,9.5]],solution:[[2,5,6,5],[2,6,6,6],[6,4,6,7],[6,4,8,5],[6,7,8,6],[8,5,8,6]],targetShape:'arrow',allowedMoves:2,hint:'Move the two stray sticks to complete the arrowhead pointing right.',tier:3},
+  {type:'shape',sticks:[[4,4,8,4],[8,4,8,8],[4,8,8,8],[4,4,4,8],[2,11,4,9],[6,9,8,11]],solution:[[4,4,8,4],[8,4,8,8],[4,8,8,8],[4,4,4,8],[4,4,6,2],[6,2,8,4]],targetShape:'house',allowedMoves:2,hint:'Move the two stray sticks onto the top to build the roof.',tier:3},
+  {type:'shape',sticks:[[3,3,7,3],[3,3,5,5],[7,3,5,5],[3,7,7,7],[2,10,4,8],[8,10,6,8]],solution:[[3,3,7,3],[3,3,5,5],[7,3,5,5],[3,7,7,7],[3,7,5,5],[7,7,5,5]],targetShape:'hourglass',allowedMoves:2,hint:'Move the two stray sticks to complete the lower triangle of the hourglass.',tier:3},
+  {type:'shape',sticks:[[5,2,8,5],[8,5,5,8],[5,8,2,5],[2,5,5,2],[5,4,6,5],[6,5,5,6],[3.5,10.5,2.5,9.5],[6.5,10.5,7.5,9.5]],solution:[[5,2,8,5],[8,5,5,8],[5,8,2,5],[2,5,5,2],[5,4,6,5],[6,5,5,6],[5,6,4,5],[4,5,5,4]],targetShape:'diamond',allowedMoves:2,hint:'Move the two stray sticks to complete the inner diamond.',tier:3}
 ];
 
 let completedLevels=JSON.parse(localStorage.getItem('matchstick-completed')||'[]');
@@ -425,8 +428,8 @@ function updateHUD(){
 
 function drawStick(stick,highlight=false){
   ctx.beginPath();
-  ctx.moveTo(stick.x1*GRID_SIZE+20,stick.y1*GRID_SIZE+20);
-  ctx.lineTo(stick.x2*GRID_SIZE+20,stick.y2*GRID_SIZE+20);
+  ctx.moveTo(stick.x1*GRID_SIZE+10,stick.y1*GRID_SIZE+10);
+  ctx.lineTo(stick.x2*GRID_SIZE+10,stick.y2*GRID_SIZE+10);
   ctx.strokeStyle=highlight?'#ffcc00':stick.color;
   ctx.lineWidth=STICK_WIDTH;
   ctx.lineCap='round';
@@ -439,11 +442,11 @@ function drawStick(stick,highlight=false){
   }
 }
 
-function gridToScreen(x,y){return{x:x*GRID_SIZE+20,y:y*GRID_SIZE+20};}
+function gridToScreen(x,y){return{x:x*GRID_SIZE+10,y:y*GRID_SIZE+10};}
 function screenToGrid(x,y){return{x:(x-20)/GRID_SIZE,y:(y-20)/GRID_SIZE};}
 
 function isNearStick(x,y,stick){
-  const dist=pointToLineDistance(x,y,stick.x1*GRID_SIZE+20,stick.y1*GRID_SIZE+20,stick.x2*GRID_SIZE+20,stick.y2*GRID_SIZE+20);
+  const dist=pointToLineDistance(x,y,stick.x1*GRID_SIZE+10,stick.y1*GRID_SIZE+10,stick.x2*GRID_SIZE+10,stick.y2*GRID_SIZE+10);
   return dist<20;
 }
 
@@ -473,7 +476,12 @@ function handlePointerDown(e){
     if(isNearStick(pos.x,pos.y,sticks[i])){
       draggedStick=sticks[i];
       const center={x:(draggedStick.x1+draggedStick.x2)/2,y:(draggedStick.y1+draggedStick.y2)/2};
-      dragOffset={x:pos.x-center.x*GRID_SIZE-20,y:pos.y-center.y*GRID_SIZE-20};
+      dragOffset={x:pos.x-center.x*GRID_SIZE-10,y:pos.y-center.y*GRID_SIZE-10};
+      // FIX(undo-crash,P1): snapshot the FULL board at drag start (the old code stored
+      // single-stick snapshots and undo assigned one stick object to the whole sticks
+      // array, corrupting the board and throwing in draw()). A no-op drag pops it back.
+      dragStartJson=JSON.stringify(draggedStick);
+      moveHistory.push(JSON.parse(JSON.stringify(sticks)));
       playTone(300,0.1);
       break;
     }
@@ -485,8 +493,8 @@ function handlePointerMove(e){
   e.preventDefault();
   const pos=getPointerPos(e);
   const center={x:(draggedStick.x1+draggedStick.x2)/2,y:(draggedStick.y1+draggedStick.y2)/2};
-  const dx=pos.x-center.x*GRID_SIZE-20-dragOffset.x;
-  const dy=pos.y-center.y*GRID_SIZE-20-dragOffset.y;
+  const dx=pos.x-center.x*GRID_SIZE-10-dragOffset.x;
+  const dy=pos.y-center.y*GRID_SIZE-10-dragOffset.y;
   draggedStick.x1+=dx/GRID_SIZE;
   draggedStick.y1+=dy/GRID_SIZE;
   draggedStick.x2+=dx/GRID_SIZE;
@@ -497,25 +505,22 @@ function handlePointerUp(e){
   if(!draggedStick||state!=='game')return;
   e.preventDefault();
   const center={x:(draggedStick.x1+draggedStick.x2)/2,y:(draggedStick.y1+draggedStick.y2)/2};
-  const snapX=Math.round(center.x),snapY=Math.round(center.y);
-  const isHorizontal=Math.abs(draggedStick.y2-draggedStick.y1)<0.5;
-  const isVertical=Math.abs(draggedStick.x2-draggedStick.x1)<0.5;
-  if(isHorizontal){
-    draggedStick.x1=snapX-0.5;draggedStick.y1=snapY;
-    draggedStick.x2=snapX+0.5;draggedStick.y2=snapY;
-  }else if(isVertical){
-    draggedStick.x1=snapX;draggedStick.y1=snapY-0.5;
-    draggedStick.x2=snapX;draggedStick.y2=snapY+0.5;
-  }else{
-    draggedStick.x1=snapX-0.5;draggedStick.y1=snapY-0.5;
-    draggedStick.x2=snapX+0.5;draggedStick.y2=snapY+0.5;
-  }
-  if(JSON.stringify(draggedStick)!==JSON.stringify(moveHistory[moveHistory.length-1])){
-    moveHistory.push(JSON.parse(JSON.stringify(draggedStick)));
+  // FIX(snap-mangles-stick,P0): the old snap forced EVERY stick to unit length and integer
+  // centers, teleporting/resizing whatever the player dropped. The new snap keeps each
+  // stick's own orientation and length and only aligns the CENTER to the 0.5 grid lattice
+  // (the lattice the level data and the equation parser both use).
+  const RH=v=>Math.round(v*2)/2;
+  const snapX=RH(center.x),snapY=RH(center.y);
+  const dx=draggedStick.x2-draggedStick.x1,dy=draggedStick.y2-draggedStick.y1;
+  draggedStick.x1=snapX-dx/2;draggedStick.y1=snapY-dy/2;
+  draggedStick.x2=snapX+dx/2;draggedStick.y2=snapY+dy/2;
+  if(JSON.stringify(draggedStick)!==dragStartJson){
     movesUsed++;
     updateHUD();
     playTone(500,0.15);
     checkWin();
+  }else{
+    moveHistory.pop(); // drag ended where it started: cancel the pre-move snapshot
   }
   draggedStick=null;
 }
@@ -527,8 +532,10 @@ canvas.addEventListener('pointercancel',handlePointerUp);
 
 function undo(){
   if(moveHistory.length===0)return;
-  sticks=JSON.parse(JSON.stringify(moveHistory[moveHistory.length-2]||LEVELS[currentLevel].sticks));
-  moveHistory.pop();
+  // FIX(undo-crash,P1): moveHistory now holds FULL board snapshots taken at each drag
+  // start; undo pops one and restores it exactly (the old code restored a single stick
+  // object as the whole array, which crashed every later frame).
+  sticks=JSON.parse(JSON.stringify(moveHistory.pop()));
   movesUsed=Math.max(0,movesUsed-1);
   updateHUD();
   playTone(350,0.1);
@@ -550,7 +557,11 @@ function checkWin(){
     const eq=parseEquationFromSticks(sticks);
     won=eq===lvl.targetEquation;
   }else{
-    won=sticks.length===lvl.sticks.length-movesUsed;
+    // FIX(shape-unwinnable,P0): the old condition required sticks.length to SHRINK by
+    // movesUsed although sticks are never removed (checkWin only ever ran with
+    // movesUsed>=1), so every shape level was impossible. Shape levels now carry an
+    // explicit solution layout and win on an exact snapped-multiset match.
+    won=shapeMatches(sticks,lvl.solution);
   }
   if(won){
     playTone(523,0.3);setTimeout(()=>playTone(659,0.3),100);setTimeout(()=>playTone(784,0.4),200);
@@ -560,50 +571,85 @@ function checkWin(){
   }
 }
 
+/* FIX(equation-parser,P0): the old parser (countDigits/parseOps/constructEquation) could
+ * NEVER recognize an operator — it required vertical sticks at x===4.5/6.5, but the old
+ * snap forced integer x, so constructEquation always returned '' and every equation level
+ * was unwinnable; countDigits also mapped HORIZONTAL-segment counts through a
+ * TOTAL-segment digit table and infinite-looped on unmatched windows (a page-freeze risk).
+ * New parser: real seven-segment reading on the 0.5 lattice. Digit cells are 2 wide /
+ * 2 tall within the level band [y0, y0+2]; numbers merge at cell pitch 2.5; '+', '-' and
+ * '=' are matched as exact glyph patterns. Returns 'a op b = c' or ''. */
 function parseEquationFromSticks(sticks){
-  const segments=[];
+  const y0=(LEVELS[currentLevel]&&LEVELS[currentLevel].y0)||3;
+  const RH=v=>Math.round(v*2)/2;
+  const hset=new Set(),vset=new Set();
   sticks.forEach(s=>{
-    const isHorizontal=Math.abs(s.y2-s.y1)<0.5;
-    const isVertical=Math.abs(s.x2-s.x1)<0.5;
-    const y=Math.round(s.y1);
-    const x=Math.round((s.x1+s.x2)/2);
-    if(isHorizontal&&y===5){segments.push({type:'h',y,x});}
-    else if(isVertical){segments.push({type:'v',x,y});}
+    const x1=RH(s.x1),y1=RH(s.y1),x2=RH(s.x2),y2=RH(s.y2);
+    if(y1===y2&&Math.abs(x2-x1)>=1){if(y1>=y0-0.25&&y1<=y0+2.25)hset.add(x1+','+y1+','+x2);}
+    else if(x1===x2&&Math.abs(y2-y1)>=1){if(y1>=y0-0.25&&y2<=y0+2.25)vset.add(x1+','+y1+','+y2);}
   });
-  const digits=countDigits(segments);
-  const ops=parseOps(segments);
-  return constructEquation(digits,ops);
-}
-
-function countDigits(segments){
-  const hLines=segments.filter(s=>s.type==='h'&&s.y===5).length;
-  const vLines=segments.filter(s=>s.type==='v').length;
-  const digitMaps={'0':6,'1':2,'2':5,'3':5,'4':4,'5':5,'6':6,'7':3,'8':7,'9':6};
-  const digits=[];
-  let i=0;
-  while(i<segments.length){
-    const count=segments.slice(i,i+7).filter(s=>s.type==='h').length;
-    for(const [d,c]of Object.entries(digitMaps)){
-      if(count===c){digits.push(parseInt(d));i+=7;break;}
+  const h=(x1,y,x2)=>hset.has(x1+','+y+','+x2);
+  const v=(x,y1,y2)=>vset.has(x+','+y1+','+y2);
+  const DIG={'0':'abcdef','1':'bc','2':'abdeg','3':'abcdg','4':'bcfg','5':'acdfg','6':'acdefg','7':'abc','8':'abcdefg','9':'abcdfg'};
+  const digitAt=L=>{
+    const pat=[
+      h(L,y0,L+2)?'a':'',v(L+2,y0,y0+1)?'b':'',v(L+2,y0+1,y0+2)?'c':'',
+      h(L,y0+2,L+2)?'d':'',v(L,y0+1,y0+2)?'e':'',v(L,y0,y0+1)?'f':'',
+      h(L,y0+1,L+2)?'g':''
+    ].join('');
+    for(const [d,p]of Object.entries(DIG))if(p===pat)return d;
+    return null;
+  };
+  const eqAt=L=>h(L,y0+0.5,L+2)&&h(L,y0+1.5,L+2)&&!v(L,y0,y0+2)&&!v(L+1,y0,y0+2)&&!v(L+2,y0,y0+2)&&!h(L,y0,L+2)&&!h(L,y0+1,L+2)&&!h(L,y0+2,L+2);
+  const plusAt=L=>v(L+1,y0,y0+2)&&h(L,y0+1,L+2)&&!h(L,y0,L+2)&&!h(L,y0+2,L+2)&&!v(L,y0,y0+2)&&!v(L+2,y0,y0+2)&&!h(L,y0+0.5,L+2)&&!h(L,y0+1.5,L+2);
+  const minusAt=L=>h(L,y0+1,L+2)&&!v(L,y0,y0+2)&&!v(L+1,y0,y0+2)&&!v(L+2,y0,y0+2)&&!h(L,y0,L+2)&&!h(L,y0+2,L+2)&&!h(L,y0+0.5,L+2)&&!h(L,y0+1.5,L+2);
+  // glyph scan: only columns where a band stick actually begins (plus a -2 fallback for
+  // '1', whose sticks all live on its right edge), with a consume cursor so the interior
+  // columns of an already-consumed glyph can't re-match.
+  const cands=[...new Set(sticks.map(s=>{
+    const yMin=Math.min(RH(s.y1),RH(s.y2)),yMax=Math.max(RH(s.y1),RH(s.y2));
+    if(yMin<y0-0.25||yMax>y0+2.25)return null;
+    return Math.min(RH(s.x1),RH(s.x2));
+  }).filter(x=>x!==null))].sort((a,b)=>a-b);
+  const tokens=[];
+  let cursor=-1e9;
+  for(const cand of cands){
+    if(cand<cursor)continue;
+    let consumed=false;
+    for(const L of [cand,cand-2]){
+      if(L<cursor)continue;
+      const d=digitAt(L);
+      if(d!==null){
+        let num=d,E=L+2;
+        while(digitAt(E+0.5)!==null){num+=digitAt(E+0.5);E+=2.5;}
+        tokens.push(num);cursor=E;consumed=true;break;
+      }
     }
+    if(consumed)continue;
+    if(eqAt(cand)){tokens.push('=');cursor=cand+2;continue;}
+    if(plusAt(cand)){tokens.push('+');cursor=cand+2;continue;}
+    if(minusAt(cand)){tokens.push('-');cursor=cand+2;continue;}
   }
-  return digits;
+  if(tokens.length===5&&tokens[3]==='='&&(tokens[1]==='+'||tokens[1]==='-')){
+    return tokens[0]+' '+tokens[1]+' '+tokens[2]+' = '+tokens[4];
+  }
+  return '';
 }
 
-function parseOps(segments){
-  const ops=[];
-  segments.forEach(s=>{
-    if(s.type==='v'&&s.x===4.5)ops.push('+');
-    else if(s.type==='v'&&s.x===6.5)ops.push('-');
-  });
-  return ops;
+// shape-level win helper: exact match of the snapped stick multiset to the level solution
+function normSticks(arr){
+  const RH=v=>Math.round(v*2)/2;
+  return arr.map(s=>{
+    let a=[RH(s.x1),RH(s.y1)],b=[RH(s.x2),RH(s.y2)];
+    if(b[0]<a[0]||(b[0]===a[0]&&b[1]<a[1])){const t=a;a=b;b=t;}
+    return a.concat(b);
+  }).sort((p,q)=>p[0]-q[0]||p[1]-q[1]||p[2]-q[2]||p[3]-q[3]).map(s=>s.join(','));
 }
-
-function constructEquation(digits,ops){
-  if(digits.length<3||ops.length===0)return'';
-  const a=digits[0],b=digits[1],c=digits[2];
-  const op=ops[0];
-  return`${a} ${op} ${b} = ${op==='+'?a+b:a-b}`;
+function shapeMatches(cur,sol){
+  if(!sol)return false;
+  const b=normSticks(sol.map(x=>({x1:x[0],y1:x[1],x2:x[2],y2:x[3]})));
+  const a=normSticks(cur);
+  return a.length===b.length&&a.every((val,i)=>val===b[i]);
 }
 
 function showWinModal(){

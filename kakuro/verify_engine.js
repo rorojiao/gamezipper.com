@@ -13,10 +13,12 @@
 const { bootGame } = require('../_optimization/scripts/harness-lib');
 
 const g = bootGame('kakuro');
-// harness gap: document.addEventListener stores into __dls but the harness only fires __wls
-// for DOMContentLoaded, so this engine's init() (all wiring lives inside it) never ran. Fire
-// the document listeners exactly like a real browser at parse-complete.
-{
+// the harness now fires document-DCL itself (the old harness read only __wls and silently
+// dropped __dls document listeners, so this verifier used to fire them manually). Re-firing
+// here would run init() a second time — every initEvents() closure double-binds (fresh
+// closures defeat the harness's identical-callback dedupe), clicks fire twice, and NEXT
+// advances two levels. Only fire if the engine somehow didn't boot.
+if (!(g.els['toggle-sfx'] && g.els['toggle-sfx'].classList.contains('on'))) { // applySettings marks toggles; numpad is built per-level in startGame, not by init
   const ls = ((g.sandbox.document.__dls || {})['DOMContentLoaded'] || []);
   ls.forEach(f => { try { f.call(g.sandbox.document, { type: 'DOMContentLoaded' }); } catch (e) { g.loadErrors.push('manual-dcl: ' + e.message); } });
   if (!ls.length) g.loadErrors.push('no-document-DCL-listener');

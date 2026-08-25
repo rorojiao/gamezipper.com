@@ -355,6 +355,23 @@ function nextRound(){currentSetIndex++;if(currentSetIndex>=LETTER_SETS.length){s
 function showGameOver(){try{const prev=parseInt(localStorage.getItem("textTwist_best")||"0");if(totalScore>prev)localStorage.setItem("textTwist_best",totalScore.toString());const stats=JSON.parse(localStorage.getItem("textTwist_stats")||'{"played":0,"wordsFound":0,"bestScore":0}');stats.played++;stats.wordsFound+=totalWordsFound;stats.bestScore=Math.max(stats.bestScore,totalScore);localStorage.setItem("textTwist_stats",JSON.stringify(stats));localStorage.setItem("textTwist_version","1.0")}catch(e){}document.getElementById("finalScore").textContent=totalScore;document.getElementById("totalWordsFound").textContent=totalWordsFound;document.getElementById("totalRounds").textContent=currentSetIndex;showScreen("gameover-screen");playSFX(totalWordsFound>50?"win":"lose")}
 function showInterstitial(callback){const overlay=document.getElementById("interstitial-overlay");overlay.classList.add("active");const adDiv=document.getElementById("interstitialAd");adDiv.innerHTML='<div style="color:rgba(255,255,255,0.5)">Loading advertisement...</div>';if(typeof monetag!=="undefined"&&monetag.callback){monetag.callback(()=>{},{block_id:"110122",container_id:"interstitialAd",reset:true})}setTimeout(()=>{overlay.classList.remove("active");if(callback)callback()},2000)}
 function initBannerAd(){const banner=document.getElementById("bannerAd");if(typeof monetag!=="undefined"&&monetag.callback){monetag.callback(()=>{},{block_id:"110120",container_id:"bannerAd"})}else{banner.innerHTML='<div style="color:rgba(255,255,255,0.3);font-size:12px">Advertisement</div>'}}
+/* P0 2026-08-24: every control button shipped UNWIRED — no mode/submit/clear/twist/hint/next/play-again
+   button had a listener, and nothing ever called showScreen("game-screen") or startRound(), so the
+   game could not be started or played at all. Wiring restored below; startGame also resets totalScore
+   (startRound only resets per-round state, so Play Again previously carried the old game's score). */
+function startGame(mode){currentMode=mode;totalScore=0;startRound();showScreen("game-screen")}
+document.getElementById("btnClassic").addEventListener("click",()=>startGame("classic"));
+document.getElementById("btnUntimed").addEventListener("click",()=>startGame("untimed"));
+document.getElementById("btnLightning").addEventListener("click",()=>startGame("lightning"));
+document.getElementById("btnTwist").addEventListener("click",twistLetters);
+document.getElementById("btnClear").addEventListener("click",clearSelection);
+document.getElementById("btnSubmit").addEventListener("click",submitWord);
+document.getElementById("btnHint").addEventListener("click",useHint);
+document.getElementById("btnNextRound").addEventListener("click",nextRound);
+document.getElementById("btnPlayAgain").addEventListener("click",()=>startGame(currentMode));
+document.getElementById("audioToggle").addEventListener("click",toggleAudio);
+document.getElementById("audioToggleGame").addEventListener("click",toggleAudio);
+initBannerAd();
 document.addEventListener("visibilitychange",()=>{if(document.hidden){pauseTimer()}else{resumeTimer()}});
 window.addEventListener("beforeunload",()=>{if(audioCtx){audioCtx.close();audioCtx=null}if(timerInterval){clearInterval(timerInterval)}});
 function cleanup(){if(timerInterval)clearInterval(timerInterval);isTimerRunning=false;stopBGM();if(audioCtx){audioCtx.close();audioCtx=null}}

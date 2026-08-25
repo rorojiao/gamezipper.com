@@ -544,6 +544,10 @@ function loadLevel(idx){
 }
 
 function loadDaily(){
+  // P1 fix 2026-08-25: lvlIdx must be -1 during the daily — it used to keep its stale
+  // value, so the HUD showed a level name and winLevel credited that level's
+  // done/stars/best for a daily win.
+  lvlIdx=-1;
   var today=new Date();
   dailySeed=today.getFullYear()*10000+(today.getMonth()+1)*100+today.getDate();
   var pz=generateDailyPuzzle(dailySeed);
@@ -562,15 +566,17 @@ function clickCell(r,c,markGrass){
   if(isTree(r,c))return;
   var prev=playerGrid[r][c];
   if(markGrass){
-    // Right click: toggle grass
-    if(prev===1){playerGrid[r][c]=2;undoStack.push({r:r,c:c,prev:1});sfxGrass()}
-    else if(prev===2){playerGrid[r][c]=0;undoStack.push({r:r,c:c,prev:2});sfxRemove()}
-    else{playerGrid[r][c]=2;undoStack.push({r:r,c:c,prev:0});sfxGrass()}
+    // Right click: toggle grass (P2 fix 2026-08-25: every action also records `next`, the
+    // value it placed — redo() re-applies `next`; deriving it from `prev` lost the
+    // grass->tent and tent->grass transitions)
+    if(prev===1){playerGrid[r][c]=2;undoStack.push({r:r,c:c,prev:1,next:2});sfxGrass()}
+    else if(prev===2){playerGrid[r][c]=0;undoStack.push({r:r,c:c,prev:2,next:0});sfxRemove()}
+    else{playerGrid[r][c]=2;undoStack.push({r:r,c:c,prev:0,next:2});sfxGrass()}
   }else{
     // Left click: cycle empty->tent->empty
-    if(prev===0){playerGrid[r][c]=1;undoStack.push({r:r,c:c,prev:0});sfxPlace()}
-    else if(prev===1){playerGrid[r][c]=0;undoStack.push({r:r,c:c,prev:1});sfxRemove()}
-    else if(prev===2){playerGrid[r][c]=1;undoStack.push({r:r,c:c,prev:2});sfxPlace()}
+    if(prev===0){playerGrid[r][c]=1;undoStack.push({r:r,c:c,prev:0,next:1});sfxPlace()}
+    else if(prev===1){playerGrid[r][c]=0;undoStack.push({r:r,c:c,prev:1,next:0});sfxRemove()}
+    else if(prev===2){playerGrid[r][c]=1;undoStack.push({r:r,c:c,prev:2,next:1});sfxPlace()}
   }
   redoStack=[];
   if(validate())winLevel();
@@ -586,7 +592,7 @@ function undo(){
 function redo(){
   if(!redoStack.length||won)return;
   var act=redoStack.pop();
-  playerGrid[act.r][act.c]=act.prev===0?1:act.prev===1?0:act.prev;
+  playerGrid[act.r][act.c]=(act.next!==undefined)?act.next:(act.prev===0?1:act.prev===1?0:act.prev);
   undoStack.push(act);
   sfxClick();
 }
@@ -594,22 +600,23 @@ function redo(){
 function winLevel(){
   won=true;timerMs=Date.now()-startTime;
   sfxWin();
-  // Save progress
-  var key='L'+lvlIdx;
-  var isNew=!progress.done[key];
-  progress.done[key]=true;
   progress.stats.played++;
   progress.stats.completed++;
   progress.stats.totalTime+=timerMs;
-
-  // Star rating
-  var sec=timerMs/1000;
-  var expected=LEVELS[lvlIdx].r*LEVELS[lvlIdx].c*2; // rough expected time in seconds
-  var stars=1;
-  if(sec<expected*0.6)stars=3;
-  else if(sec<expected*1.2)stars=2;
-  if(!progress.stars[key]||progress.stars[key]<stars){progress.stars[key]=stars;sfxStar()}
-  if(!progress.best[key]||timerMs<progress.best[key])progress.best[key]=timerMs;
+  // P1 fix 2026-08-25: per-level progress only for real levels — lvlIdx is -1 on the
+  // daily (used to index LEVELS[-1] / write done['L-1'] style credit to a stale level).
+  if(lvlIdx>=0){
+    var key='L'+lvlIdx;
+    progress.done[key]=true;
+    // Star rating
+    var sec=timerMs/1000;
+    var expected=LEVELS[lvlIdx].r*LEVELS[lvlIdx].c*2; // rough expected time in seconds
+    var stars=1;
+    if(sec<expected*0.6)stars=3;
+    else if(sec<expected*1.2)stars=2;
+    if(!progress.stars[key]||progress.stars[key]<stars){progress.stars[key]=stars;sfxStar()}
+    if(!progress.best[key]||timerMs<progress.best[key])progress.best[key]=timerMs;
+  }
   saveProgress();
 
   // Particles
@@ -1004,7 +1011,10 @@ function drawTutorial(){
   var stepLabel='Step '+(tutStep+1)+'/'+texts.length+' - Tap to continue';
   ctx.fillText(stepLabel,W/2,by+130);
 
-  menuBtns.push({x:bx,y:by,w:bw,h:bh,action:'tut_next',label:''});
+  // P1 fix 2026-08-25: this button must live in playBtns — the play-state mousedown/touch
+  // handlers hit-test playBtns only, so pushing it into menuBtns made "tap to continue"
+  // unreachable and the tutorial overlay impossible to dismiss on real devices.
+  playBtns.push({x:bx,y:by,w:bw,h:bh,action:'tut_next',label:''});
 }
 
 // -- Win Screen --
@@ -1156,7 +1166,10 @@ function handleAction(action){
   else if(action==='undo'){undo()}
   else if(action==='check'){errorCheckMode=!errorCheckMode;sfxClick()}
   else if(action==='next'){
-    var next=lvlIdx+1;if(next<LEVELS.length){loadLevel(next);sfxClick()}
+    // P1 fix 2026-08-25: lvlIdx must advance WITH the load — it was never assigned, so
+    // after a win the Next button replayed the same level forever (win -> credit went to
+    // the previous level, and the level after never unlocked).
+    var next=lvlIdx+1;if(next<LEVELS.length){lvlIdx=next;loadLevel(next);sfxClick()}
     else{state='select';sfxClick()}
   }
   else if(action==='select'){state='select';sfxClick()}

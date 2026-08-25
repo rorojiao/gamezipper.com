@@ -2,8 +2,9 @@
 // Re-implements solver using shortest-path enumeration, verifies each puzzle
 // has exactly 1 solution.
 const fs = require('fs');
+const path = require('path');
 
-const data = JSON.parse(fs.readFileSync('/home/msdn/gamezipper.com/wagiri/levels.json', 'utf8'));
+const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'), 'utf8'));
 const LEVELS = data.levels;
 console.log(`Loaded ${LEVELS.length} levels`);
 

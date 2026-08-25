@@ -922,6 +922,13 @@ function project(x, y, z, rotY) {
 }
 
 function isFaceVisible(face, rotY) {
+  // FIX(2026-08-25): 'top'/'bottom' faces had a zero (x,z) normal, so nz stayed 0 at every
+  // rotation and this returned false forever — every cube level (1-6) and tower level (7-12)
+  // generates top/bottom-face blocks whose tiles could then never be clicked at ANY rotation,
+  // making those levels permanently unwinnable (board can never be cleared). This isometric
+  // camera looks down on the shape, so up/down faces are always in view; the four side faces
+  // still rotate in/out of view normally.
+  if (face === 'top' || face === 'bottom') return true;
   const faceNormals = {
     front: { x: 0, z: 1 },
     back: { x: 0, z: -1 },
@@ -978,6 +985,13 @@ function getBlockDepth(block) {
 
 // ============== RENDERING ==============
 function render() {
+  // FIX(2026-08-25): the rAF re-schedule used to be the LAST statement of this function,
+  // behind two early returns — the boot-time render() ran on the title screen, hit the
+  // screen/blocks early-return and never scheduled another frame, so after starting a
+  // level the canvas never repainted (frozen/blank board) and the G.rotation -> targetRot
+  // lerp below (which lives in this loop) never ran: drag-rotating the shape did nothing.
+  // Schedule unconditionally at the top, then early-out for the drawing work only.
+  requestAnimationFrame(render);
   if (!ctx) return;
   ctx.clearRect(0, 0, canvasW, canvasH);
 
@@ -1035,8 +1049,6 @@ function render() {
   } else {
     G.rotation = G.targetRot;
   }
-
-  requestAnimationFrame(render);
 }
 
 function drawParticles() {
@@ -1341,6 +1353,12 @@ function useUndo() {
   });
 
   // Restore tiles if they were removed
+  // FIX(2026-08-25): animateRemove() splices matched tiles out of G.tiles, but undo only
+  // restored block.tileId — the tile objects stayed missing from G.tiles, so
+  // getVisibleBlocks() skipped those blocks forever: after one undo the restored pair was
+  // permanently unclickable and the level could never be completed. Re-add them first so the
+  // blockId fixup below also runs on the restored tiles.
+  [last.tile1, last.tile2].forEach(t => { if (!G.tiles.find(x => x.id === t.id)) G.tiles.push(t); });
   G.tiles.forEach(t => {
     if (t.id === last.tile1.id) t.blockId = last.block1;
     if (t.id === last.tile2.id) t.blockId = last.block2;

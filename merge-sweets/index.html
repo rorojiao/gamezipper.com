@@ -288,12 +288,19 @@ var LEVELS=[
  {orders:[{c:2,l:4},{c:4,l:2},{c:0,l:4},{c:1,l:3},{c:3,l:3},{c:4,l:1}],time:70,gens:[0,1,2,3,4],energy:70},
  {orders:[{c:0,l:5},{c:2,l:4},{c:4,l:2},{c:1,l:4},{c:3,l:3}],time:65,gens:[0,1,2,3,4],energy:75},
  {orders:[{c:1,l:5},{c:4,l:3},{c:0,l:4},{c:2,l:4},{c:3,l:3},{c:4,l:2}],time:65,gens:[0,1,2,3,4],energy:75},
- {orders:[{c:0,l:6},{c:1,l:5},{c:2,l:4},{c:3,l:3},{c:4,l:2},{c:0,l:3}],time:60,gens:[0,1,2,3,4],energy:80},
- {orders:[{c:0,l:6},{c:1,l:5},{c:2,l:4},{c:3,l:4},{c:4,l:3},{c:0,l:4},{c:1,l:3}],time:55,gens:[0,1,2,3,4],energy:85},
- {orders:[{c:0,l:6},{c:1,l:6},{c:2,l:5},{c:3,l:4},{c:4,l:3},{c:4,l:2}],time:55,gens:[0,1,2,3,4],energy:85},
- {orders:[{c:0,l:6},{c:1,l:5},{c:2,l:5},{c:3,l:4},{c:4,l:4},{c:0,l:3}],time:50,gens:[0,1,2,3,4],energy:90},
- {orders:[{c:0,l:7},{c:1,l:6},{c:2,l:5},{c:3,l:5},{c:4,l:4},{c:0,l:5},{c:2,l:3}],time:50,gens:[0,1,2,3,4],energy:90},
- {orders:[{c:0,l:7},{c:1,l:7},{c:2,l:6},{c:3,l:5},{c:4,l:4},{c:0,l:6},{c:2,l:4}],time:45,gens:[0,1,2,3,4],energy:100}
+ /* FIX(verify 2026-08-25): levels 20-25 shipped PROVABLY UNWINNABLE. An order {c,l} costs 2^l generator
+  * taps (base items merge pairwise), taps cost 1 energy, and energy regenerates 1 per 3s (0.5s best
+  * upgrade) — capacity is E + floor(T/3) (E+T fully upgraded; ~2/3 of that in expectation with max
+  * Better Yields). Old needs 132/160/188/168/312/448 taps vs capacities 100/103/103/106/106/115
+  * (140/140/140/140/140/140 fully upgraded — the last two levels were impossible even then).
+  * Retuned so every level is completable with ZERO upgrades: needs 84/100/100/96/112/120 vs
+  * capacities 100/108/106/106/118/128. */
+ {orders:[{c:0,l:5},{c:1,l:4},{c:2,l:4},{c:3,l:3},{c:4,l:2},{c:0,l:3}],time:60,gens:[0,1,2,3,4],energy:80},
+ {orders:[{c:0,l:5},{c:1,l:4},{c:2,l:4},{c:3,l:4},{c:4,l:3},{c:0,l:3},{c:1,l:2}],time:70,gens:[0,1,2,3,4],energy:85},
+ {orders:[{c:0,l:5},{c:1,l:5},{c:2,l:3},{c:3,l:4},{c:4,l:3},{c:4,l:2}],time:65,gens:[0,1,2,3,4],energy:85},
+ {orders:[{c:0,l:5},{c:1,l:4},{c:2,l:4},{c:3,l:4},{c:4,l:3},{c:0,l:3}],time:50,gens:[0,1,2,3,4],energy:90},
+ {orders:[{c:0,l:5},{c:1,l:5},{c:2,l:4},{c:3,l:4},{c:4,l:3},{c:0,l:3}],time:70,gens:[0,1,2,3,4],energy:95},
+ {orders:[{c:0,l:5},{c:1,l:5},{c:2,l:4},{c:3,l:4},{c:4,l:4},{c:0,l:3}],time:85,gens:[0,1,2,3,4],energy:100}
 ];
 
 // Validate all levels are completable
@@ -511,7 +518,7 @@ function startLevel(lvlIdx){
   var reward=50+od.l*60;
   activeOrders.push({c:od.c,l:od.l,reward:reward,fulfilled:false});
  }
- var maxE=50+save.upgrades.energyMax*15;
+ var maxE=def.energy+save.upgrades.energyMax*15; // FIX(verify 2026-08-25): was hardcoded 50+upgrades — every level's energy budget (LEVELS.energy 30..100) was silently ignored, so late levels (designed for up to 100 starting energy) could only ever start at 50
  energy=maxE;maxEnergy=maxE;
  timeLeft=def.time;levelTime=def.time;
  combo=0;comboTimer=0;earnedCoins=0;levelCoins=0;

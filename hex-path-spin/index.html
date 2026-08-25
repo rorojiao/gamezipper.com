@@ -491,6 +491,16 @@ var LEVELS=[];
       var rot=Math.floor(rng()*6);
       return{q:h.q,r:h.r,type:type,rotation:rot};
     });
+
+    // P0 fix 2026-08-25 (QA verifier): TILE_PATTERNS[0] pairs only adjacent edges,
+    // so a type-0 start tile at (0,-radius) entered via rim edge 4 ALWAYS exited
+    // through rim edge 3/5 after 1 segment under every rotation — 12/30 levels
+    // (1,3,7,8,9,14,17,21,22,28,29,30) were permanently unwinnable (max path 1 <
+    // target1). The start hex must carry a pattern whose entry edge can pair with
+    // an interior edge (types 1/2 both can). Only the start tile's type changes;
+    // all other tiles, the rng stream and the level seeds stay identical.
+    var startTile=tiles.filter(function(t){return t.q===0&&t.r===-radius;})[0];
+    if(startTile&&startTile.type===0)startTile.type=1;
     
     // Start position: edge of the board
     var startQ=0,startR=-radius;

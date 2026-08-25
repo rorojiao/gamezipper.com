@@ -959,11 +959,15 @@ function endDrag(e){
   if(dragging===null) return;
   if(ghostValid && ghostCells){
     const piece = pieces[dragging];
+    // P0 fix 2026-08-25: null the slot BEFORE placePiece. placePiece -> checkLines
+    // reads pieces[] to decide whether to deal the next set and whether the game
+    // is over — with the piece still in its slot, allPlaced was always false on the
+    // 3rd placement, so a new set was NEVER dealt and the tray soft-locked empty.
+    pieces[dragging] = null;
     // Use the first ghost cell as anchor
     const gc = ghostCells[0];
     const c0 = piece.cells[0];
     placePiece(piece, gc.q - c0.dq, gc.r - c0.dr);
-    pieces[dragging] = null;
     renderPieceTray();
   }
   dragging = null;

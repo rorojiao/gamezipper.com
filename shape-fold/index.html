@@ -618,7 +618,13 @@ function buildSquares(positions, targetStates, par, name, tier, hint){
       }
     }
   }
-  return {name, tier, panels, hinges, par:par||positions.length, hint:hint||'Click panels to fold them into the target state.'};
+  // P2 fix 2026-08-25 (QA verifier): several authored pars were BELOW the theoretical
+  // minimum move count (per panel: FLAT=0 clicks, UP=1, DOWN=2), making 3 stars
+  // mathematically unattainable on those levels (e.g. L2 par 2 vs min 3, L5 par 4 vs
+  // min 6, L8 par 5 vs min 6). Clamp par up to the true minimum so an optimal solve
+  // always earns 3 stars.
+  const minMoves = targetStates.reduce((sum,t)=>sum+(t===STATE.FLAT?0:(t===STATE.UP?1:2)),0);
+  return {name, tier, panels, hinges, par: Math.max(par||0, minMoves), hint:hint||'Click panels to fold them into the target state.'};
 }
 
 const PANEL_COLORS = ['#60a5fa','#f472b6','#34d399','#fbbf24','#a78bfa','#fb7185','#22d3ee','#facc15','#86efac','#fda4af','#c4b5fd','#67e8f9','#fdba74','#d8b4fe'];
@@ -676,6 +682,7 @@ let particlesActive = [];
 let startTime = 0;
 let solvedThisRun = false;
 let visibleHints = []; // panel indices currently highlighted as hints
+let dailyRun = false;  // true while the current run was launched from the Daily button
 
 // ===== CANVAS RENDERING =====
 function setupCanvas(){
@@ -1177,14 +1184,19 @@ function checkWin(){
     let stars = 1;
     if(moves <= lvl.par) stars = 3;
     else if(moves <= lvl.par + 2) stars = 2;
+    // P1 fix 2026-08-25 (QA verifier): the old code unconditionally overwrote the
+    // level record, so a sloppier replay (more moves -> fewer stars) DOWNGRADED the
+    // saved best — level-select mini-stars and the 3-star achievement count could
+    // regress. The intended keep-best guard below it compared against the record it
+    // had just overwritten (dead code). Preserve best stars/moves/time explicitly.
+    const timeSec = Math.floor((Date.now() - startTime) / 1000);
+    if(dailyRun){ progress.dailySolvedToday = true; } // P2 fix 2026-08-25 (QA verifier): see showDaily
+    const prev = progress.levels[lvl.num];
     progress.levels[lvl.num] = {
-      moves,
-      stars,
-      time: Math.floor((Date.now() - startTime) / 1000)
+      moves: prev ? Math.min(prev.moves, moves) : moves,
+      stars: prev ? Math.max(prev.stars, stars) : stars,
+      time: prev ? prev.time : timeSec
     };
-    if(!progress.levels[lvl.num] || progress.levels[lvl.num].stars < stars){
-      progress.levels[lvl.num].stars = stars;
-    }
     saveProgress();
     sfxWin();
     setTimeout(()=>sfxStar(stars-1), 200);
@@ -1315,6 +1327,12 @@ function loadLevel(idx){
   history = [];
   visibleHints = [];
   solvedThisRun = false;
+  // P1 fix 2026-08-25 (QA verifier): loadLevel reset the move counter but NOT the
+  // panel states, so folds survived across Menu exits / level re-entries — a board
+  // left one click from the target could be re-entered and "solved" in 1 move for an
+  // underserved 3-star record. Every level entry now starts from flat, matching the
+  // move counter it just zeroed.
+  lvl.panels.forEach(p => { p.state = STATE.FLAT; });
   startTime = Date.now();
 
   // daily: randomize hint settings to 5 each day
@@ -1360,6 +1378,7 @@ function showGame(){
   hideAllScreens();
   document.getElementById('game-screen').style.display = 'block';
   setupCanvas();
+  dailyRun = false; // default entry is not the daily run; showDaily re-arms it after showGame()
   loadLevel(currentLevel);
   startLoop();
   startMusic();
@@ -1469,7 +1488,11 @@ function showDaily(){
   const lvl = Math.abs(seed) % TOTAL_LEVELS;
   currentLevel = lvl;
   progress.dailySolvedToday = false;
+  // P2 fix 2026-08-25 (QA verifier): dailySolvedToday was never set anywhere, so the
+  // "Daily Devotee" achievement was permanently unobtainable. Track the run's origin
+  // (set AFTER showGame(), which calls loadLevel) and flip the flag in checkWin.
   showGame();
+  dailyRun = true;
   showToast('Daily Challenge: Level ' + (lvl+1));
 }
 
@@ -1634,7 +1657,6 @@ if(document.readyState === 'loading'){
   document.addEventListener('click', _gzGameStart, {once:true, capture:true});
   document.addEventListener('keydown', _gzGameStart, {once:true, capture:true});
   document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
-window.showMenu = showMenu;
 })();
 </script>
 </body>

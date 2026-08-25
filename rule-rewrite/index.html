@@ -287,8 +287,13 @@ t:[['baba',1,0],['is',1,1],['you',1,2],['flag',9,0],['is',9,1],['win',9,2]]},
 o:[['baba',3,4],['flag',9,4],['wall',6,3],['wall',6,4],['wall',6,5]],
 t:[['baba',1,0],['is',1,1],['you',1,2],['flag',11,0],['is',11,1],['win',11,2],['wall',5,7],['is',6,7],['stop',7,7]]},
 
-{n:"Become the Goal",w:13,h:9,par:5,tier:1,hint:"No flag? Push WIN next to BABA IS to make BABA IS WIN!",
-o:[['baba',6,4]],
+{n:"Become the Goal",w:13,h:9,par:9,tier:1,hint:"No flag? Push WIN next to BABA IS to make BABA IS WIN!",
+// FIX(P0): shipped with a SINGLE object. checkWin needs a YOU object sharing a
+// tile with a different WIN object — with one baba and no object-creating rule,
+// no move sequence could ever win (BABA IS YOU + BABA IS WIN on the same lone
+// baba can never self-overlap). Added a second baba so two babas can stack:
+// form BABA IS WIN, then walk both YOU babas together until they overlap.
+o:[['baba',6,4],['baba',2,2]],
 t:[['baba',3,3],['is',4,3],['you',5,3],['baba',7,4],['is',8,4],['win',10,6]]},
 
 {n:"Push Rocks",w:13,h:9,par:8,tier:1,hint:"ROCK IS PUSH. Push rocks to clear your path!",
@@ -344,7 +349,12 @@ t:[['baba',1,0],['is',1,1],['you',1,2],['rock',9,0],['is',10,0],['win',11,0],['r
 // === TIER 4: HARD ===
 {n:"Transform Master",w:13,h:9,par:9,tier:4,hint:"Transform objects by rewriting rules. FLAG IS ROCK then ROCK IS YOU!",
 o:[['baba',2,2],['flag',9,6],['water',6,4],['water',6,5],['water',6,3],['rock',4,6]],
-t:[['baba',1,0],['is',1,1],['you',1,2],['flag',3,7],['is',4,7],['rock',5,7],['rock',7,7],['is',8,7],['you',9,7],['water',10,0],['is',11,0],['sink',12,0]]},
+// FIX(P0): "Transform Master" shipped with NO 'win' text — same unwinnable-by-
+// construction bug as "Mirror World". Rules are the only source of the WIN
+// property, so checkWin could never fire no matter what the player pushed.
+// Added a 'win' text at the end of the ROCK IS YOU row: break that rule, push
+// WIN in to form ROCK IS WIN, then walk BABA IS YOU into a rock.
+t:[['baba',1,0],['is',1,1],['you',1,2],['flag',3,7],['is',4,7],['rock',5,7],['rock',7,7],['is',8,7],['you',9,7],['win',10,7],['water',10,0],['is',11,0],['sink',12,0]]},
 
 {n:"Defeat Yourself",w:13,h:9,par:8,tier:4,hint:"SKULL IS YOU — control the skull! Then find a way to reach the flag.",
 o:[['baba',2,4],['flag',10,4],['skull',6,4]],
@@ -360,7 +370,14 @@ t:[['baba',1,0],['is',1,1],['you',1,2],['flag',13,0],['is',13,1],['win',13,2],['
 
 {n:"Mirror World",w:13,h:9,par:10,tier:4,hint:"BABA IS FLAG and FLAG IS YOU. You are the flag and the flag is you!",
 o:[['baba',3,4],['flag',9,4],['wall',6,3],['wall',6,4],['wall',6,5]],
-t:[['baba',1,0],['is',1,1],['you',1,2],['baba',9,6],['is',10,6],['flag',11,6],['flag',1,7],['is',2,7],['you',3,7]]},
+// FIX(P0): this level shipped with NO 'win' text anywhere, and its structure
+// makes any later FLAG IS WIN formation impossible: forming it needs the
+// flag/is/win texts where FLAG IS YOU sits, which strips YOU from every object
+// (all babas permanently become flags on move 1 via BABA IS FLAG) -> instant
+// loss. The intended puzzle (par 10) is the flag-stack: FLAG IS WIN must be
+// active from the start. Added the FLAG IS WIN column (0,3)-(0,5) out of the
+// play path: walk both YOU flags right until they stack at the edge = win.
+t:[['baba',1,0],['is',1,1],['you',1,2],['baba',9,6],['is',10,6],['flag',11,6],['flag',1,7],['is',2,7],['you',3,7],['flag',0,3],['is',0,4],['win',0,5]]},
 
 // === TIER 5: EXPERT ===
 {n:"Rule Breaker",w:13,h:9,par:12,tier:5,hint:"Everything stops you. Break every rule to escape!",

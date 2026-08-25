@@ -1419,6 +1419,9 @@ function loadLevel(idx){
   elapsed = 0;
   document.getElementById('level-name').textContent = 'L'+(idx+1)+': '+lvl.name;
   document.getElementById('hints-left').textContent = hintsLeft;
+  /* P3 2026-08-25: the ⭐ HUD pill (stars-val) was never written anywhere — it showed 0
+     forever. Show the best stars earned on this level so far. */
+  document.getElementById('stars-val').textContent = progress.stars[idx]||0;
   updatePlacedCount();
   setStatus('Drag a sticker from the tray onto the picture');
   if(timerInterval) clearInterval(timerInterval);
@@ -1443,6 +1446,10 @@ function checkWin(){
 }
 
 function showWin(){
+  /* P2 2026-08-25: win fires via setTimeout(400ms); an Undo inside that window popped a
+     sticker after the check had already passed — the game then celebrated and recorded
+     progress for an incomplete picture. Re-verify before awarding. */
+  if(countPlaced() !== stickers.filter(s=>s.z>=0).length) return;
   if(timerInterval) clearInterval(timerInterval);
   playSfx('win');
   haptic([50,30,50]);
@@ -1489,7 +1496,11 @@ window.startGame = function(){
   // resume from furthest unlocked, or 0
   const startIdx = Math.min(progress.level, ALL_LEVELS.length-1);
   loadLevel(startIdx);
+  /* P1 2026-08-25 (part 2): `lastRAF` stays truthy forever once the loop has run, so after a
+     tab-hide cancelled the rAF (visibilitychange below) this guard could never restart the
+     loop — Continue after hiding the tab at the menu left the canvas frozen in-game. */
   if(!lastRAF) loop(performance.now());
+  else if(!_rafId) _rafId = _origRAF.call(window, loop);
   updateMenuStats();
 };
 
@@ -1519,7 +1530,9 @@ window.openLevelSelect = function(){
         document.getElementById('game-screen').style.display='flex';
         loadLevel(idx);
         initAudio(); if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume(); startBgm();
+        /* P1 2026-08-25 (part 2): same stale-lastRAF freeze as startGame — restart a dead loop */
         if(!lastRAF) loop(performance.now());
+        else if(!_rafId) _rafId = _origRAF.call(window, loop);
       };})(i);
     }
     grid.appendChild(cell);
@@ -1602,8 +1615,10 @@ window.replayLevel = function(){
 
 window.nextLevel = function(){
   document.getElementById('win-modal').classList.remove('show');
-  const next = Math.min(currentLevel+1, ALL_LEVELS.length-1);
-  loadLevel(next);
+  /* P3 2026-08-25: Math.min(currentLevel+1, length-1) made "Next Level" after beating L30
+     silently go BACK to L29. After the final level, return to the menu instead. */
+  if(currentLevel >= ALL_LEVELS.length-1){ window.backToMenu(); return; }
+  loadLevel(currentLevel+1);
 };
 
 window.resetProgress = function(){
@@ -1683,7 +1698,11 @@ document.addEventListener('visibilitychange', function(){
     if(_rafId){ _origCAF.call(window,_rafId); _rafId=null; }
     if(typeof bgmInterval!=='undefined' && bgmInterval){ clearInterval(bgmInterval); bgmInterval=null; }
   } else {
-    if(typeof gameState!=='undefined' && gameState==='playing' && !_rafId){ _rafId=_origRAF.call(window, loop); }
+    /* P1 2026-08-25: this engine has no `gameState` variable (template leftover from another
+       game) — the guard was always false, so after hiding the tab the render loop was never
+       restarted and the canvas stayed frozen forever. Resume whenever the game screen is shown. */
+    /* (paired with the stale-lastRAF restarts in startGame / openLevelSelect above) */
+    if(document.getElementById('game-screen').style.display==='flex' && !_rafId){ _rafId=_origRAF.call(window, loop); }
   }
 });
 

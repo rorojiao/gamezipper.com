@@ -3,7 +3,7 @@
 // Validates HTML structure, SEO, art assets, all game systems.
 const fs = require('fs');
 
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 let pass = 0, fail = 0;
 const failList = [];
 
@@ -83,14 +83,14 @@ check('adsterra-manager.js', html.includes('adsterra-manager.js'));
 check('gz-ad-below-canvas container', html.includes('gz-ad-below-canvas'));
 
 // Art assets exist
-check('icon.png exists', fs.existsSync('icon.png'));
-if (fs.existsSync('icon.png')){
-  const sz = fs.statSync('icon.png').size;
+check('icon.png exists', fs.existsSync(__dirname + '/icon.png'));
+if (fs.existsSync(__dirname + '/icon.png')){
+  const sz = fs.statSync(__dirname + '/icon.png').size;
   check('icon.png reasonable size', sz > 500 && sz < 100000, `size=${sz}`);
 }
-check('og-image.jpg exists', fs.existsSync('og-image.jpg'));
-if (fs.existsSync('og-image.jpg')){
-  const sz = fs.statSync('og-image.jpg').size;
+check('og-image.jpg exists', fs.existsSync(__dirname + '/og-image.jpg'));
+if (fs.existsSync(__dirname + '/og-image.jpg')){
+  const sz = fs.statSync(__dirname + '/og-image.jpg').size;
   check('og-image.jpg reasonable size', sz > 5000 && sz < 500000, `size=${sz}`);
 }
 

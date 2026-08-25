@@ -733,10 +733,20 @@ function getLevelConfig(n){
   let hoops = 1;
   if(difficulty >= 8) hoops = 1 + Math.floor((difficulty-8)/8); // 1,2,3
   hoops = Math.min(3, hoops);
-  // Shots allowed
-  const shots = Math.max(3, 12 - Math.floor(difficulty/3)); // 12..3
   // Target score
   const target = 200 + difficulty * 80;
+  // Shots allowed
+  // FIX(2026-08-25): P0 — target (200+difficulty*80) outran the scoring economy from
+  // L12 up. With every shot a swish, the max level score (no trick bonus — center
+  // rims cannot carry sideways speed) is sum_{i=1..k} 100*(1+0.1*min(i,10)); the old
+  // budget max(3, 12-floor(difficulty/3)) fell below the target itself from L15
+  // (max 1155 < 1400) down to L30 (435 < 2600), and below the 3-star threshold
+  // (target*1.2) already at L12 — those levels were unclearable with perfect play.
+  // Keep the 12..3 curve, then top the budget up until perfect play can reach the
+  // game's own 3-star threshold.
+  let shots = Math.max(3, 12 - Math.floor(difficulty/3)); // 12..3
+  const perfectMax = k => k <= 10 ? 100*k + 5*k*(k+1) : 200*k - 450;
+  while(shots < 40 && perfectMax(shots) < target * 1.2) shots++;
   // Obstacles
   const obs = [];
   if(difficulty >= 7){
@@ -939,15 +949,30 @@ function shootBall(vx, vy, power){
     hasScored: false,
     rot: 0
   };
-  // Convert screen vx/vy to world units:
-  // Drag down 200px = power 1 ≈ world velocity 0.04 in x, 0.08 in z
-  ballInFlight.vel.x = -vx * 25;  // screen->world
-  ballInFlight.vel.y = -0.005 - power * 0.005; // forward (toward hoop, y decreases)
+  // FIX(2026-08-25): P0 — the old screen->world launch scaling made swishing
+  // geometrically impossible, so no drag could ever score (proved two ways: 781 real
+  // touch drags swept across the full parameter space on L1 scored 0 points; an exact
+  // physics port swept every launch state — best rim-approach distance 0.116 vs the
+  // 0.07 swish window). Root causes, all in this block:
+  //  - vel.y -(0.005+0.005p) needed 85-170 frames to reach the rim plane y=0.15, but
+  //    the vertical motion only crosses rim height z=0.55 around frame ~57 and is
+  //    dead-bouncing below z~0.4 long before the ball arrives — the two windows never
+  //    overlap. Now -(0.011+0.007p) arrives in 42-77 frames, straddling the descent
+  //    through rim height.
+  //  - vel.x = -vx*25 pinned to the ±0.045 clamp for any lateral drag over ~0.24px,
+  //    so lateral aim was wall-pinball instead of the ±0.005-0.03 a flight needs.
+  //    Now *2: a 100px side drag ≈ 0.016 world/frame.
+  //  - the maxV*1.4 z-clamp (0.063) rocketed every shot into the ceiling at z=1.4;
+  //    maxV*0.8 (0.036) gives a natural arc apexing at z≈0.9 that drops through rim
+  //    height right on the arrival window (scoring band verified for every rim x of
+  //    all 30 levels, obstacles included).
+  ballInFlight.vel.x = -vx * 2;  // screen->world
+  ballInFlight.vel.y = -(0.011 + power * 0.007); // forward (toward hoop, y decreases)
   ballInFlight.vel.z = -vy * 20; // up
   // Clamp
   const maxV = 0.045;
   ballInFlight.vel.x = Math.max(-maxV, Math.min(maxV, ballInFlight.vel.x));
-  ballInFlight.vel.z = Math.max(-maxV*1.4, Math.min(maxV*1.4, ballInFlight.vel.z));
+  ballInFlight.vel.z = Math.max(-maxV*0.8, Math.min(maxV*0.8, ballInFlight.vel.z));
   // Reset combo on new shot? No, combo persists.
   // Decrement shots
   levelShots++;
@@ -1122,7 +1147,13 @@ function updatePhysics(dt){
     ballInFlight.bounced++;
     if(Math.abs(ballInFlight.vel.z) < 0.003 && ballInFlight.bounced > 1){
       // dead ball
-      endShot(false);
+      // FIX(2026-08-25): P0 — this and the y>1.05 exit below always called endShot(false),
+      // even when the ball had already swished, so every scored flight ended as a "miss":
+      // combo reset to 0 (maxCombo could never exceed 1), totalMisses inflated and a MISS
+      // pop covered the basket. Combo-chained scoring — the whole progression economy —
+      // was dead: scores capped at 110/shot, targets unreachable from L10 up.
+      endShot(ballInFlight.hasScored);
+      return; // crash fix (2026-08-25): endShot() nulls ballInFlight; the pos.z>1.4 check below would read .pos off null. The 2026-08-16 fix guarded the three endShot calls at the bottom of updatePhysics but missed this one — the FIRST rolling-dead ball killed the rAF loop (reproduced: 'raf: Cannot read properties of null (reading pos)' on every weak flop).
     }
   }
   if(ballInFlight.pos.z > 1.4){
@@ -1217,7 +1248,7 @@ function updatePhysics(dt){
   }
   // If ball is in front of launcher (y > 1.0) and z low, end shot
   if(ballInFlight.pos.y > 1.05){
-    endShot(false);
+    endShot(ballInFlight.hasScored); // FIX(2026-08-25): scored balls exit through here most often — was endShot(false), killing the combo after every basket (see dead-ball fix above)
     return; // crash fix: same — ballInFlight is null after endShot()
   }
   // Dead ball: too low energy after 3 bounces
@@ -1244,6 +1275,13 @@ function endShot(scored){
   }
   // Remove from flight
   ballInFlight = null;
+  // FIX(2026-08-25): P0 — rims never reset after a scored ball, so each hoop could pay
+  // out at most ONCE per level: the maximum possible level score was ~135/290/465
+  // (1/2/3 hoops) while targets run 280-2600 — level 1 was mathematically unwinnable
+  // (1 hoop x 135 max < 280 target) even with perfect aim. ballInFlight.hasScored
+  // already prevents double-scoring within one flight; reset the flags when the ball
+  // clears so later shots can score again (combo-chain design intent).
+  rims.forEach(r=>{ r.scored = false; });
   ballTrail = [];
   updateHUD();
   if(levelShots >= levelConfig.shots){
@@ -1294,7 +1332,14 @@ function onSwish(rim){
   }
   Audio.sfx.swish(combo >= 3);
   // Check level complete early
-  if(levelScore >= levelConfig.target){
+  // FIX(2026-08-25): P0 — the early-end fired at >= target, but endLevel awards
+  // 3 stars only at >= target*1.2, and no second swish can land inside the 600ms
+  // window, so the final score was capped near the target: 3 stars became
+  // unreachable for every level whose target gap (0.2*target) exceeded one shot's
+  // value (~225 max) — L12+. End early only once the 3-star threshold is secured;
+  // otherwise play continues and endLevel runs when the shot budget is exhausted
+  // (win check itself unchanged: score >= target = cleared).
+  if(levelScore >= levelConfig.target * 1.2){
     // Wait for ball to clear, then end
     setTimeout(()=>{
       if(!ballInFlight || ballInFlight.hasScored){

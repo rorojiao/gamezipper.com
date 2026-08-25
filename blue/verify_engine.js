@@ -53,7 +53,7 @@ const DRIVERS = {
   17: (g, el, win, click, ptr, stage, kids) => { for (const n of [1, 2, 3, 4, 5]) { const t = kids(stage()).find(c => String(c.textContent) === String(n)); if (t) click(t); } },
   18: (g, el, win, click, ptr, stage, kids) => { const t = kids(stage()).find(c => /#1E88E5/.test(c.style.cssText || '')); if (t) click(t); },
   19: (g, el, win, click) => { for (let i = 0; i < 17; i++) { click(el('tap19')); g.pump(1); } },
-  20: (g, el, win, click) => { const btns = g.els['qa:.mb']; btns.forEach((b, i) => { b.dataset.d = ['up', 'left', 'down', 'right', 'x', 'x'][i]; }); const seq = ['right', 'right', 'down', 'down', 'left', 'left', 'down', 'down', 'right', 'right', 'right', 'right']; // col3 walls force the left detour
+  20: (g, el, win, click) => { const btns = g.sandbox.document.querySelectorAll('.mb'); if (!btns.length) throw new Error('no .mb buttons'); const seq = ['right', 'right', 'down', 'down', 'left', 'left', 'down', 'down', 'right', 'right', 'right', 'right']; // col3 walls force the left detour; buttons are the real innerHTML-parsed nodes (dataset.d from markup, onclick wired by the engine) — the old qa:.mb fake fallback no longer exists now that qsa finds them
     for (const d of seq) { const b = btns.find(x => x.dataset.d === d); if (b) { click(b); g.pump(1); } } },
   21: (g, el, win, click, ptr, stage) => { const m = (stage().innerHTML || '').match(/>([A-Z]{3,})</); if (!m) throw new Error('no word'); const inp = el('ty21'); inp.value = m[1]; inp.dispatch('input', {}); },
   22: (g, el, win, click, ptr, stage, kids) => { for (const n of [5, 4, 3, 2, 1]) { const t = kids(stage()).find(c => String(c.textContent) === String(n)); if (t) click(t); } },

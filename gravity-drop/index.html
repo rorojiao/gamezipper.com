@@ -318,6 +318,17 @@ const BOUNCY_RESTITUTION = 1.0;
 const FRICTION = 0.92;
 const ICE_FRICTION = 0.98;
 const MAX_VEL = 800;
+// P0 fix 2026-08-25: the ball spawns perfectly column-centered with vx=0 and every
+// collision from a centered fall resolves axis-pure ('top'), so NOTHING in the
+// physics ever imparted horizontal velocity — the ball fell down its spawn column
+// forever. 18/30 levels place the goal 1-2 columns away (unwinnable), and permanent
+// bouncy/fixed/ice blocks under the spawn column sealed several of the rest.
+// Arrow-key / hold-and-drag steering restores lateral play (block removal stays the
+// puzzle: moveCount only counts block removals, so pars and stars are unchanged).
+const STEER_ACCEL = 1200;
+const MAX_VX = 320;
+const keys = {left: false, right: false};
+const steerPtr = {active: false, x: 0};
 const SAVE_KEY = 'gravity_drop_save';
 
 // ---- AUDIO SYSTEM ----
@@ -841,6 +852,17 @@ function physicsUpdate(dt) {
   ballVY += GRAVITY * dt;
   ballVY = Math.min(ballVY, MAX_VEL);
   ballVX *= FRICTION;
+
+  // P0 fix: player steering (arrow keys / A-D, or hold-and-drag on the board)
+  let steer = 0;
+  if (keys.left) steer -= 1;
+  if (keys.right) steer += 1;
+  if (!steer && steerPtr.active) { const sdx = steerPtr.x - ballX; if (Math.abs(sdx) > 6) steer = sdx > 0 ? 1 : -1; }
+  if (steer) {
+    ballVX += steer * STEER_ACCEL * dt;
+    if (ballVX > MAX_VX) ballVX = MAX_VX;
+    if (ballVX < -MAX_VX) ballVX = -MAX_VX;
+  }
 
   let nx = ballX + ballVX * dt;
   let ny = ballY + ballVY * dt;
@@ -1443,6 +1465,10 @@ function showResult(stars, moves, par) {
   if (currentLevel >= 30) nextBtn.style.display = 'none';
   else nextBtn.style.display = '';
 
+  // P1 fix 2026-08-25: showLevelSelect() parks this modal with inline style.display='none';
+  // inline style outranks the .show class, so without clearing it every win after a
+  // level-select visit rendered its classList-only "shown" modal invisibly — soft-lock.
+  modal.style.display = '';
   modal.classList.add('show');
 }
 
@@ -1681,23 +1707,48 @@ function startTitleBg() {
 const canvas = document.getElementById('board');
 let pointerDown = false;
 
+// canvas-space position of a pointer event (same rect scaling as handleBoardClick)
+function canvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) * (canvasW / rect.width),
+    y: (e.clientY - rect.top) * (canvasH / rect.height)
+  };
+}
+
 canvas.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   pointerDown = true;
+  const p = canvasPos(e);       // P0 fix: tap still removes a block, but a held
+  steerPtr.active = true;       // pointer now also steers the falling ball
+  steerPtr.x = p.x;
   handleBoardClick(e.clientX, e.clientY);
 });
 
 canvas.addEventListener('pointermove', (e) => {
   if (!pointerDown) return;
   e.preventDefault();
+  steerPtr.x = canvasPos(e).x;
 });
 
 canvas.addEventListener('pointerup', () => {
   pointerDown = false;
+  steerPtr.active = false;
 });
 
 canvas.addEventListener('pointercancel', () => {
   pointerDown = false;
+  steerPtr.active = false;
+});
+
+// keyboard steering (P0 fix)
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+  if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+});
+window.addEventListener('keyup', (e) => {
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+  if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
 });
 
 // ---- VISIBILITY ----

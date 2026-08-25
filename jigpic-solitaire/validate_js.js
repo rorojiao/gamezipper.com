@@ -1,6 +1,6 @@
 // JS syntax validation + level data extraction for jigpic-solitaire
 const fs = require('fs');
-const html = fs.readFileSync('/home/msdn/gamezipper.com/jigpic-solitaire/index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 
 // Extract all script blocks
 const scripts = html.match(/<script[^>]*>([\s\S]*?)<\/script>/g);

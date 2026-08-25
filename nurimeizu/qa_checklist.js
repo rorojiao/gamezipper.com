@@ -1,6 +1,6 @@
 // QA checklist for Nurimeizu
 const fs = require('fs');
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 
 const checks = {
   'HTML has DOCTYPE': html.startsWith('<!DOCTYPE html>'),
@@ -39,7 +39,7 @@ const checks = {
   'Has star ratings': html.includes('stars'),
   'Has 30 levels (LEVELS array)': (html.match(/"num":\d+/g) || []).length >= 30,
   'No eval() usage': !html.includes('eval('),
-  'No external scripts': !html.includes('<script src='),
+  'No external scripts': (html.match(/<script src="[^"]+"/g) || []).every(src => src.startsWith('<script src="/gz-analytics.js')),
   'No console.log': !html.includes('console.log'),
   ' gz-sr-only H1': html.includes('gz-sr-only'),
 };

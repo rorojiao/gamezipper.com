@@ -243,7 +243,9 @@ grid.push({type:'color',h:cp[0],s:cp[1],l:cp[2],odd:false});
 }
 }else if(type==='emoji'){
 const em=EMOJIS[themeIdx%EMOJIS.length];
-const alts={'😀':'😃','🌟':'💫','🎮':'🕹️','🍕':'🍕','🐱':'😺','🌈':'🌝','⚡':'☇','🎃':'🏮','🚀':'🛸','🎨':'🖌️','🎈':'🎏','🔥':'🕯️','💎':'💍','🍩':'🍪','🦄':'🐴','🎯':'🎖️','🍀':'🌿','🎸':'🎻','🌸':'🌺','⭐':'✨'};
+const alts={'😀':'😃','🌟':'💫','🎮':'🕹️','🍕':'🫓','🐱':'😺','🌈':'🌝','⚡':'☇','🎃':'🏮','🚀':'🛸','🎨':'🖌️','🎈':'🎏','🔥':'🕯️','💎':'💍','🍩':'🍪','🦄':'🐴','🎯':'🎖️','🍀':'🌿','🎸':'🎻','🌸':'🌺','⭐':'✨'};
+/* P1 2026-08-25: alts['🍕'] was '🍕' itself — the odd cell was pixel-identical to the
+rest, so any emoji level that rolled that theme was unwinnable (timed = guaranteed fail). */
 const altEm=alts[em]||'❓';
 for(let i=0;i<total;i++){
 grid.push({type:'emoji',char:i===oddIdx?altEm:em,odd:i===oddIdx});
@@ -367,12 +369,9 @@ particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,life:30+Math.random()*
 
 function nextLevel(){
 curLevel++;
-if(curLevel>=LEVELS.length){
-state='allDone';
-sndWin();
-return;
-}
 // Calculate stars for just-completed level
+/* P2 2026-08-25: this block ran AFTER the allDone early-return, so the final level's
+   stars were never recorded (87/90 was the max attainable totalStars). */
 const prev=curLevel-1;
 let st=1;
 if(LEVELS[prev].time>0){
@@ -380,6 +379,14 @@ if(timeLeft>LEVELS[prev].time*.5)st=3;
 else if(timeLeft>LEVELS[prev].time*.2)st=2;
 }else{st=3;}
 setStars(prev,st);
+/* P1 2026-08-25: save() was only ever called by useHint — completing levels never
+   persisted curLevel/totalStars, so a page refresh reset all unlock progress. */
+save();
+if(curLevel>=LEVELS.length){
+state='allDone';
+sndWin();
+return;
+}
 if(curLevel%6===0){
 // Tier complete - show interstitial screen
 state='complete';

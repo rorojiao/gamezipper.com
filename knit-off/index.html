@@ -237,7 +237,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
   <div class="menu-title">KNIT OUT</div>
   <div class="menu-subtitle">Cozy Yarn Puzzle</div>
   <div class="menu-section">
-   <button class="menu-btn primary" onclick="startLevel(1)">Play</button>
+   <button class="menu-btn primary" onclick="startLevel(lastUnlockedLevel())">Play</button>
    <button class="menu-btn secondary" onclick="showLevelSelect()">Select Level</button>
    <button class="menu-btn tutorial-btn" onclick="startTutorial()">How to Play</button>
   </div>
@@ -563,11 +563,19 @@ function generateLevel(levelNum) {
   const shuffledColors = [...COLOR_KEYS].sort(() => rng() - 0.5);
   const levelColors = shuffledColors.slice(0, numColors);
 
-  // Distribute bobbin needs (ensure solvable: total knots = total needed)
+  // Distribute bobbin needs — reserve surplus so tier obstacles are satisfiable
+  /* P0 2026-08-25 (part 2): the old distribution handed the LAST bobbin whatever
+     `remaining` there was, consuming all numKnots — totalNeeded always equaled numKnots,
+     the "pad with extra" loop below was dead code, and there was never a surplus knot.
+     With zero surplus every knot was required, so any locked knot (L21+) or frozen +2
+     (L31+) made the level unsolvable. Reserve slack = planned locks + frozen +2s + 2. */
+  const plannedLocked = levelNum >= 21 ? Math.min(2 + Math.floor((levelNum - 20) / 5), Math.floor(numKnots / 4)) : 0;
+  const plannedFrozen = levelNum >= 31 ? Math.min(1 + Math.floor((levelNum - 30) / 5), Math.floor(numBobbins / 2)) : 0;
+  const reserve = plannedLocked + plannedFrozen * 2 + 2;
   let totalNeeded = 0;
   const bobbins = [];
-  const basePerBobbin = Math.ceil(numKnots / numBobbins);
-  let remaining = numKnots;
+  const basePerBobbin = Math.ceil((numKnots - reserve) / numBobbins);
+  let remaining = numKnots - reserve;
 
   for (let i = 0; i < numBobbins; i++) {
     const color = levelColors[i % levelColors.length];
@@ -626,34 +634,26 @@ function generateLevel(levelNum) {
     });
   }
 
-  // Validate solvability
-  const colorCounts = {};
-  knots.forEach(k => { colorCounts[k.color] = (colorCounts[k.color] || 0) + 1; });
-  const bobbinCounts = {};
-  bobbins.forEach(b => { bobbinCounts[b.color] = (bobbinCounts[b.color] || 0) + b.needed; });
-
-  // Rebuild if not balanced (retry up to 10 times)
-  let retry = 0;
-  while (retry < 10) {
-    const knotTotal = Object.values(colorCounts).reduce((a, b) => a + b, 0);
-    const bobbinTotal = Object.values(bobbinCounts).reduce((a, b) => a + b, 0);
-    if (Math.abs(knotTotal - bobbinTotal) <= 3) break;
-    retry++;
-    // Adjust knots to match bobbin totals
-    const neededTotal = bobbinTotal;
-    const currentTotal = knotTotal;
-    if (currentTotal < neededTotal) {
-      for (let i = 0; i < neededTotal - currentTotal && knots.length < 50; i++) {
-        knots.push({ color: levelColors[Math.floor(rng() * levelColors.length)], locked: false });
-      }
-    } else if (currentTotal > neededTotal) {
-      while (knots.length > neededTotal) knots.pop();
-    }
-    // Recount
-    Object.keys(colorCounts).forEach(k => delete colorCounts[k]);
-    knots.forEach(k => { colorCounts[k.color] = (colorCounts[k.color] || 0) + 1; });
-    Object.keys(bobbinCounts).forEach(k => delete bobbinCounts[k]);
-    bobbins.forEach(b => { bobbinCounts[b.color] = (bobbinCounts[b.color] || 0) + b.needed; });
+  // Validate solvability — per color, not just totals
+  /* P0 2026-08-25: the old validation compared only TOTAL knot/bobbin counts, so two
+     generators shipped broken levels: locked knots (Tier 3, L21-30) could lock away every
+     knot a bobbin required — and locked knots never unlock — and frozen bobbins (Tier 4+,
+     L31-50) added +2 needed with no matching yarn. All 30 of those levels were unwinnable.
+     Balance each color explicitly, preserving the lock mechanic where possible: recolor
+     surplus knots (padding extras) to cover deficits first; only unlock a locked knot when
+     no surplus remains; grow the board as an absolute last resort (frozen +2 deficits). */
+  const needOf = {};
+  bobbins.forEach(b => { needOf[b.color] = (needOf[b.color] || 0) + b.needed; });
+  for (;;) {
+    const avail = {};
+    knots.forEach(k => { if (!k.locked) avail[k.color] = (avail[k.color] || 0) + 1; });
+    const defColor = levelColors.find(c => (avail[c] || 0) < (needOf[c] || 0));
+    if (!defColor) break;
+    const surplus = knots.find(k => !k.locked && (avail[k.color] || 0) > (needOf[k.color] || 0));
+    if (surplus) { surplus.color = defColor; continue; }
+    const unlockable = knots.find(k => k.locked);
+    if (unlockable) { unlockable.locked = false; continue; } // its color may now be surplus -> recolored next pass
+    knots.push({ color: defColor, locked: false });
   }
 
   return {
@@ -729,6 +729,19 @@ function resizeCanvas() {
   canvas.style.width = w + 'px';
   canvas.style.height = layout.H + 'px';
   ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+}
+
+/* P1 2026-08-25: exponential rAF storm. drawGame re-queued a frame from BOTH drawParticles
+   (line ~1079) and drawAnimatingYarn (line ~1110) whenever particles overlapped an
+   animation — which is every yarn move — so queued callbacks doubled each frame
+   (billions of draw calls within ~15 frames of consecutive moves; browsers burn a core
+   and jank for the ~0.8s particle window). All scheduling now funnels through one
+   at-most-one-queued-frame guard. */
+let rafScheduled = false;
+function scheduleDraw() {
+  if (rafScheduled) return;
+  rafScheduled = true;
+  requestAnimationFrame(() => { rafScheduled = false; drawGame(); });
 }
 
 function drawGame() {
@@ -1076,7 +1089,7 @@ function drawParticles() {
   ctx.globalAlpha = 1;
 
   if (particles.length > 0 || confettiParticles.length > 0) {
-    requestAnimationFrame(drawGame);
+    scheduleDraw();
   }
 }
 
@@ -1107,7 +1120,7 @@ function drawAnimatingYarn(L) {
   ctx.restore();
 
   if (t < 1) {
-    requestAnimationFrame(drawGame);
+    scheduleDraw();
   } else {
     finishAnimation();
   }
@@ -1246,7 +1259,7 @@ function tapKnot(index) {
   animStart = performance.now();
   moves++;
   updateUI();
-  requestAnimationFrame(drawGame);
+  scheduleDraw();
 }
 
 function tapTray(index) {
@@ -1286,7 +1299,7 @@ function tapTray(index) {
   tray.splice(index, 1);
 
   updateUI();
-  requestAnimationFrame(drawGame);
+  scheduleDraw();
 }
 
 function finishAnimation() {
@@ -1353,8 +1366,12 @@ function showWin() {
 
   // Calculate stars
   const allBobbins = levelData.bobbins;
-  const maxNeeded = Math.max(...allBobbins.map(b => b.needed));
-  const efficiency = maxNeeded / Math.max(moves - allBobbins.length, 1);
+  /* P2 2026-08-25: old efficiency = maxNeeded/(moves - bobbins) could never reach the
+     3-star threshold (0/50 levels at perfect play) because every delivered yarn costs TWO
+     moves (knot tap + tray tap). Compare moves against the true optimal: 2 per required
+     yarn. 3 stars = no wasted taps; 2 stars = moves <= 2x optimal; else 1. */
+  const optimalMoves = allBobbins.reduce((a, b) => a + b.needed, 0) * 2;
+  const efficiency = optimalMoves / Math.max(moves, optimalMoves);
   let stars = 1;
   if (efficiency >= 0.8) stars = 3;
   else if (efficiency >= 0.5) stars = 2;
@@ -1758,12 +1775,18 @@ function drawTutStep3(tctx) {
   tctx.textAlign = 'center'; tctx.fillText('Fill all bobbins to win!', 140, 150);
 }
 
+function lastUnlockedLevel() {
+  /* P3 2026-08-25: Play always restarted at Level 1 even with saved progress (the menu
+     itself advertises "Furthest: Level N") — resume from the furthest unlocked level. */
+  return Math.min(loadProgress().lastLevel || 1, 50);
+}
+
 function nextTutorialStep() {
   playSound('button');
   tutStep++;
   if (tutStep >= tutSteps.length) {
     closeTutorial();
-    startLevel(1);
+    startLevel(lastUnlockedLevel());
   } else {
     renderTutorial();
   }

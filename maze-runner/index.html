@@ -536,6 +536,52 @@ function bfsPath(grid,gh,gw,sr,sc,er,ec){
   return[];
 }
 
+// FIX(verify 2026-08-25): key/door-aware solvability proof. The old validation ran a plain bfs over
+// walls and IGNORED doors, so a door could land on the only corridor to its own key or to the exit —
+// shipping permanently unwinnable levels (seen: tier1 level5 seed 1137). BFS over (cell, keys-held,
+// doors-open): entering a closed door needs its key and consumes it (door stays open forever);
+// a key whose door is already open was already consumed.
+function itemsSolvable(mz){
+  var items=mz.items,grid=mz.grid,gh=mz.gh,gw=mz.gw;
+  var colorIdx={},nb=0;
+  for(var i=0;i<items.keys.length;i++){var col=items.keys[i].color;if(!(col in colorIdx))colorIdx[col]=nb++;}
+  var keyAt={};
+  for(var i=0;i<items.keys.length;i++)keyAt[items.keys[i].r+','+items.keys[i].c]=colorIdx[items.keys[i].color];
+  var doorAt={},doorColorBit=[];
+  for(var i=0;i<nb;i++)doorColorBit[i]=0;
+  for(var i=0;i<items.doors.length;i++){
+    doorAt[items.doors[i].r+','+items.doors[i].c]=i;
+    doorColorBit[colorIdx[items.doors[i].color]]=1<<colorIdx[items.doors[i].color];
+  }
+  var seen={};
+  var q=[[1,1,0,0]];
+  var dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  while(q.length>0){
+    var nq=[];
+    for(var qi=0;qi<q.length;qi++){
+      var s=q[qi],kk=s[0]+','+s[1]+':'+s[2]+':'+s[3];
+      if(seen[kk])continue;seen[kk]=1;
+      if(s[0]===items.exit[0]&&s[1]===items.exit[1])return true;
+      for(var d=0;d<4;d++){
+        var r=s[0]+dirs[d][0],c=s[1]+dirs[d][1];
+        if(r<0||r>=gh||c<0||c>=gw||grid[r][c]===1)continue;
+        var h=s[2],o=s[3];
+        var di=doorAt[r+','+c];
+        if(di!==undefined&&!(o&(1<<di))){
+          var cb=1<<colorIdx[items.doors[di].color];
+          if(!(h&cb))continue;
+          h&=~cb;o|=(1<<di);
+        }
+        var kc=keyAt[r+','+c];
+        if(kc!==undefined&&!(o&doorColorBit[kc]))h|=(1<<kc);
+        nq.push([r,c,h,o]);
+      }
+    }
+    q=nq;
+  }
+  return false;
+}
+
 // Place items
 function placeItems(mz,tierIdx,seed){
   var rng=mulberry32(seed+9999);
@@ -1255,8 +1301,9 @@ function startLevel(tier,level){
   maze=generateMaze(tierDef.size,seed);
   maze.items=placeItems(maze,tier,seed);
 
-  // Validate solvability
-  if(!bfs(maze.grid,maze.gh,maze.gw,1,1,maze.gh-2,maze.gw-2)){
+  // Validate solvability — door-aware (FIX(verify 2026-08-25): retry placement until provably completable)
+  for(var att=0;att<64;att++){
+    if(bfs(maze.grid,maze.gh,maze.gw,1,1,maze.gh-2,maze.gw-2)&&itemsSolvable(maze))break;
     seed+=7919;
     maze=generateMaze(tierDef.size,seed);
     maze.items=placeItems(maze,tier,seed);
@@ -1294,9 +1341,13 @@ function startDaily(){
   maze=generateMaze(tierDef.size,seed);
   maze.items=placeItems(maze,1,seed);
 
-  if(!bfs(maze.grid,maze.gh,maze.gw,1,1,maze.gh-2,maze.gw-2)){
-    maze=generateMaze(tierDef.size,seed+7919);
-    maze.items=placeItems(maze,1,seed+7919);
+  if(!bfs(maze.grid,maze.gh,maze.gw,1,1,maze.gh-2,maze.gw-2)||!itemsSolvable(maze)){ // FIX(verify 2026-08-25): door-aware, reseed until completable
+    for(var att=0;att<64;att++){
+      seed+=7919;
+      maze=generateMaze(tierDef.size,seed);
+      maze.items=placeItems(maze,1,seed);
+      if(bfs(maze.grid,maze.gh,maze.gw,1,1,maze.gh-2,maze.gw-2)&&itemsSolvable(maze))break;
+    }
   }
 
   player={r:1,c:1,visited:new Set()};
@@ -1542,21 +1593,24 @@ return{
   document.addEventListener('click', _gzGameStart, {once:true, capture:true});
   document.addEventListener('keydown', _gzGameStart, {once:true, capture:true});
   document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
-window.showScreen = showScreen;
-window.startDaily = startDaily;
-window.toggleMinimap = toggleMinimap;
-window.togglePause = togglePause;
-window.touchDir = touchDir;
-window.restartLevel = restartLevel;
-window.useHint = useHint;
-window.quitToMenu = quitToMenu;
-window.nextLevel = nextLevel;
-window.nextTier = nextTier;
-window.advanceTutorial = advanceTutorial;
-window.toggleSetting = toggleSetting;
-window.setVolume = setVolume;
-window.replayTutorial = replayTutorial;
-window.confirmReset = confirmReset;
+/* FIX(verify 2026-08-25): these assignments referenced the G-IIFE-internal function names, which
+ * are NOT in scope here — in production (gzAnalytics loaded) this threw "showScreen is not defined"
+ * on every page load and none of the window.* exports happened. Route through the public G module. */
+window.showScreen = G.showScreen;
+window.startDaily = G.startDaily;
+window.toggleMinimap = G.toggleMinimap;
+window.togglePause = G.togglePause;
+window.touchDir = G.touchDir;
+window.restartLevel = G.restartLevel;
+window.useHint = G.useHint;
+window.quitToMenu = G.quitToMenu;
+window.nextLevel = G.nextLevel;
+window.nextTier = G.nextTier;
+window.advanceTutorial = G.advanceTutorial;
+window.toggleSetting = G.toggleSetting;
+window.setVolume = G.setVolume;
+window.replayTutorial = G.replayTutorial;
+window.confirmReset = G.confirmReset;
 })();
 </script>
 </body>

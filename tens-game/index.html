@@ -1027,10 +1027,16 @@
         // Queue gravity after animation
         animationQueue.push(function() {
             // Clear cells
+            var lpKey = lastPlaced ? (lastPlaced.r + ',' + lastPlaced.c) : null;
             toClear.forEach(function(key) {
                 const parts = key.split(',');
                 grid[parseInt(parts[0])][parseInt(parts[1])] = 0;
             });
+            /* P2 2026-08-25: undo after the placed tile itself was cleared zeroed
+             * whatever tile gravity had dropped into that cell (silent board
+             * corruption) while the cleared partner stayed gone. A cleared
+             * placement is not undoable — drop the undo anchor instead. */
+            if (lpKey && toClear.has(lpKey)) lastPlaced = null;
             grid = applyGravity(grid);
 
             chainMultiplier++;
@@ -1242,7 +1248,11 @@
             ctx.restore();
         });
 
-        rafId = requestAnimationFrame(function(t) { render(t); });
+        /* P0 2026-08-25: this self-reschedule was render's ONLY rAF call — nothing ever
+         * started it (init only starts gameLoop), so the canvas was never drawn AND
+         * gridOffsetX/gridOffsetY (assigned only in render) stayed undefined, making
+         * getCellFromPixel return null for every tap: game unplayable as shipped.
+         * render is now driven by gameLoop each frame (see below). */
     }
 
     // === UI ===
@@ -1430,6 +1440,7 @@
             document.getElementById('score-display').textContent = displayScore;
         }
 
+        render(now); /* P0 2026-08-25: render was never started (see comment in render) — draw here, which also refreshes gridOffsetX/Y so pointer input maps to cells */
         rafId = requestAnimationFrame(gameLoop);
     }
 

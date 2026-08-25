@@ -709,76 +709,88 @@ function updatePhysics(g, dt, accel, brake) {
   const v = g.vehicle;
   const pts = g.level.points;
   const def = v.def;
-
-  // Gravity
-  v.vy += GRAVITY * dt;
-
-  // Air drag
-  v.vx *= (1 - AIR_DRAG * dt);
-  v.av *= (1 - ANGULAR_DAMP * dt * (1 + def.stability));
-
-  // Wheel positions
   const hw = def.wheelBase / 2;
-  const cosA = Math.cos(v.angle), sinA = Math.sin(v.angle);
-  const perpX = -sinA, perpY = cosA;
-
-  const fwX = v.x + cosA * hw + perpX * def.cogH;
-  const fwY = v.y + sinA * hw + perpY * def.cogH;
-  const rwX = v.x - cosA * hw + perpX * def.cogH;
-  const rwY = v.y - sinA * hw + perpY * def.cogH;
-
+  let cosA = 1, sinA = 0;
   let grounded = false;
-  const fTY = getTerrainY(pts, fwX);
-  const rTY = getTerrainY(pts, rwX);
-  const fPen = fwY - fTY;
-  const rPen = rwY - rTY;
 
-  if (fPen > 0) {
-    grounded = true;
-    const f = fPen * SPRING_K - v.vy * SPRING_DAMP * 0.5 - v.av * hw * SPRING_DAMP * 0.3;
-    v.vy -= f * dt / def.mass;
-    v.av -= f * hw * dt / (v.inertia * def.mass);
-  }
-  if (rPen > 0) {
-    grounded = true;
-    const f = fPen * SPRING_K - v.vy * SPRING_DAMP * 0.5 + v.av * hw * SPRING_DAMP * 0.3;
-    v.vy -= f * dt / def.mass;
-    v.av += f * hw * dt / (v.inertia * def.mass);
-  }
+  /* FIX(verify 2026-08-24): integrate contact in substeps. At full frame dt the wheel
+   * springs (K=4200) sit outside the explicit-Euler stability region — the angular mode
+   * gains ~210 rad/s per pixel of penetration asymmetry against only ~162 of damping, so
+   * the car bounced off flat ground and backflipped into a crash/restart loop at x≈150
+   * (level 1 was unbeatable). 4 substeps keep the same springs/damping/handling but put
+   * the integrator back in its stable region. Contact force is also clamped to >= 0 (a
+   * contact spring can push but never pull — the raw damping term sucked the car into
+   * the ground on fast landings), and the rear wheel now uses rPen (it mistakenly read
+   * fPen, adding wrong-direction torque whenever only the rear wheel touched). */
+  const SUB = 4, sdt = dt / SUB;
+  for (let sub = 0; sub < SUB; sub++) {
+    // Gravity
+    v.vy += GRAVITY * sdt;
 
-  // Drive force
-  if (grounded) {
-    const ta = getTerrainAngle(pts, v.x);
-    const dir = accel ? 1 : (brake ? -0.6 : 0);
-    if (dir !== 0) {
-      const force = dir * def.power * 650 * def.grip;
-      v.vx += (Math.cos(ta) * force * dt) / def.mass;
-      v.vy += (Math.sin(ta) * force * dt) / def.mass;
+    // Air drag
+    v.vx *= (1 - AIR_DRAG * sdt);
+    v.av *= (1 - ANGULAR_DAMP * sdt * (1 + def.stability));
+
+    // Wheel positions
+    cosA = Math.cos(v.angle); sinA = Math.sin(v.angle);
+    const perpX = -sinA, perpY = cosA;
+
+    const fwX = v.x + cosA * hw + perpX * def.cogH;
+    const fwY = v.y + sinA * hw + perpY * def.cogH;
+    const rwX = v.x - cosA * hw + perpX * def.cogH;
+    const rwY = v.y - sinA * hw + perpY * def.cogH;
+
+    let contact = false;
+    const fTY = getTerrainY(pts, fwX);
+    const rTY = getTerrainY(pts, rwX);
+    const fPen = fwY - fTY;
+    const rPen = rwY - rTY;
+
+    if (fPen > 0) {
+      contact = true;
+      const f = Math.max(0, fPen * SPRING_K - v.vy * SPRING_DAMP * 0.5 - v.av * hw * SPRING_DAMP * 0.3);
+      v.vy -= f * sdt / def.mass;
+      v.av -= f * hw * sdt / (v.inertia * def.mass);
     }
-    // Ground friction
-    v.vx *= (1 - GROUND_FRIC * dt * 0.1);
-    // Speed limit
-    const spd = Math.abs(v.vx);
-    if (spd > def.maxSpeed) v.vx *= def.maxSpeed / spd;
-  }
+    if (rPen > 0) {
+      contact = true;
+      const f = Math.max(0, rPen * SPRING_K - v.vy * SPRING_DAMP * 0.5 + v.av * hw * SPRING_DAMP * 0.3);
+      v.vy -= f * sdt / def.mass;
+      v.av += f * hw * sdt / (v.inertia * def.mass);
+    }
 
-  // Update position
-  v.x += v.vx * dt;
-  v.y += v.vy * dt;
-  v.angle += v.av * dt;
-  v.speed = v.vx;
-  v.wheelAngle += v.speed * dt * 0.1;
+    // Drive force
+    if (contact) {
+      const ta = getTerrainAngle(pts, v.x);
+      const dir = accel ? 1 : (brake ? -0.6 : 0);
+      if (dir !== 0) {
+        const force = dir * def.power * 650 * def.grip;
+        v.vx += (Math.cos(ta) * force * sdt) / def.mass;
+        v.vy += (Math.sin(ta) * force * sdt) / def.mass;
+      }
+      // Ground friction
+      v.vx *= (1 - GROUND_FRIC * sdt * 0.1);
+      // Speed limit
+      const spd = Math.abs(v.vx);
+      if (spd > def.maxSpeed) v.vx *= def.maxSpeed / spd;
+    }
 
-  /* FIX(verify 2026-08-17): the wheel springs (K=4200 vs mass 1, damping ~90) are far below
-   * critical damping — at 60fps the vehicle pogoed at spawn, angular velocity exploded to
-   * ~60rad/s and it backflipped at x≈163 on flat ground (real-browser confirmed: level 1 was
-   * unbeatable with full throttle). Replace the unstable vertical response with a hard ground
-   * constraint when grounded + angular clamps — standard casual-racer model. */
-  if (v.av > 5) v.av = 5; else if (v.av < -5) v.av = -5;
-  if (v.vy > 600) v.vy = 600; else if (v.vy < -800) v.vy = -800;
-  if (grounded) {
-    const restY = getTerrainY(pts, v.x) - def.cogH - def.wheelR;
-    if (v.y > restY) { v.y = restY; if (v.vy > 0) v.vy = 0; }
+    // Update position
+    v.x += v.vx * sdt;
+    v.y += v.vy * sdt;
+    v.angle += v.av * sdt;
+    v.speed = v.vx;
+    v.wheelAngle += v.speed * sdt * 0.1;
+
+    /* FIX(verify 2026-08-17): hard ground constraint when grounded + angular clamps —
+     * standard casual-racer model; with substeps above these only catch rare extremes. */
+    if (v.av > 5) v.av = 5; else if (v.av < -5) v.av = -5;
+    if (v.vy > 600) v.vy = 600; else if (v.vy < -800) v.vy = -800;
+    if (contact) {
+      const restY = getTerrainY(pts, v.x) - def.cogH - def.wheelR;
+      if (v.y > restY) { v.y = restY; if (v.vy > 0) v.vy = 0; }
+    }
+    grounded = grounded || contact;
   }
 
 

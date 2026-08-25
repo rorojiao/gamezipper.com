@@ -732,6 +732,14 @@ const SIZES = [3, 4, 5, 6, 7];
 const SIZE_NAMES = { 3: 'Beginner', 4: 'Easy', 5: 'Medium', 6: 'Hard', 7: 'Expert' };
 const COLOR_PALETTE = ['#ff4444', '#4444ff', '#44ff44', '#ffff44', '#ff44ff'];
 const COLOR_NAMES = ['red', 'blue', 'green', 'yellow', 'purple'];
+// P0 2026-08-25: letters/colors modes were unwinnable (see handleCellClick) and reverse
+// played ascending despite its "Find N down to 1" card. letterFor mirrors initGame's
+// letter generation (A..Z then AA..), usedColorCells stops one cell counting twice.
+function letterFor(n) {
+  if (n <= 26) return String.fromCharCode(64 + n);
+  return String.fromCharCode(65 + Math.floor((n - 27) / 26)) + String.fromCharCode(65 + (n - 27) % 26);
+}
+let usedColorCells = new Set();
 
 let audioCtx = null;
 let masterGain = null;
@@ -1051,7 +1059,10 @@ function initGame() {
   const size = selectedSize;
   const total = size * size;
   maxTarget = total;
-  currentTarget = 1;
+  // P1 2026-08-25: reverse mode card says "Find N down to 1" but the target started at 1
+  // and counted up, making it identical to classic. Start at N and step down.
+  currentTarget = selectedMode === 'reverse' ? total : 1;
+  usedColorCells = new Set();
   grid = [];
   cellAnimations = {};
   confettiParticles = [];
@@ -1123,21 +1134,22 @@ function updateTargetDisplay() {
     }).join('');
   } else {
     let displayVal = grid[findCellByValue(currentTarget)] || currentTarget;
-    if (selectedMode === 'letters') displayVal = grid[findCellByValue(currentTarget)] || String.fromCharCode(64 + currentTarget);
+    if (selectedMode === 'letters') displayVal = grid[findCellByValue(currentTarget)] || letterFor(currentTarget);
     el.textContent = 'Find: ' + displayVal;
     el.style.color = '#ff00aa';
     el.style.textShadow = '0 0 10px #ff00aa';
     colorSeqEl.style.display = 'none';
   }
-  const progress = ((currentTarget - 1) / maxTarget) * 100;
+  const foundCount = selectedMode === 'reverse' ? maxTarget - currentTarget : currentTarget - 1;
+  const progress = (foundCount / maxTarget) * 100;
   document.getElementById('progress-fill').style.width = progress + '%';
-  document.getElementById('progress-text').textContent = (currentTarget - 1) + ' / ' + maxTarget;
+  document.getElementById('progress-text').textContent = foundCount + ' / ' + maxTarget;
 }
 
 function findCellByValue(val) {
   for (let i = 0; i < grid.length; i++) {
     if (selectedMode === 'letters') {
-      if (grid[i] === val || (typeof grid[i] === 'string' && grid[i].charCodeAt(0) === val)) return i;
+      if (grid[i] === letterFor(val)) return i; // P0 2026-08-25: charCodeAt compare never matched the 1-based target
     } else if (grid[i] === val) {
       return i;
     }
@@ -1162,19 +1174,28 @@ function handleCellClick(x, y) {
   let expectedValue = currentTarget;
   let isCorrect = false;
   if (selectedMode === 'letters') {
-    const charCode = typeof cellValue === 'string' ? cellValue.charCodeAt(0) : cellValue;
-    isCorrect = charCode === expectedValue;
+    // P0 2026-08-25: compared cellValue.charCodeAt(0) (65 for 'A') against currentTarget
+    // (1) — never equal, so letters mode could not progress past the first tap.
+    isCorrect = cellValue === letterFor(currentTarget);
+  } else if (selectedMode === 'colors') {
+    // P0 2026-08-25: compared the raw color index (0-4) against currentTarget (1..N) —
+    // no cell ever matched targets >= 5, so colors mode froze permanently. The target
+    // display already cycles COLOR_PALETTE[(currentTarget-1) % 5]; the check now agrees,
+    // and a cell can only be consumed once.
+    expectedValue = (currentTarget - 1) % COLOR_PALETTE.length;
+    isCorrect = cellValue === expectedValue && !usedColorCells.has(idx);
   } else {
     isCorrect = cellValue === expectedValue;
   }
 
   if (isCorrect) {
+    if (selectedMode === 'colors') usedColorCells.add(idx);
     playSfxCorrect();
     cellAnimations[idx] = { type: 'correct', start: performance.now(), duration: 300 };
     spawnParticles(gridOffsetX + (idx % selectedSize) * cellSize + cellSize / 2, gridOffsetY + Math.floor(idx / selectedSize) * cellSize + cellSize / 2, '#00ff88');
-    currentTarget++;
+    currentTarget += selectedMode === 'reverse' ? -1 : 1;
     updateTargetDisplay();
-    if (currentTarget > maxTarget) {
+    if (currentTarget > maxTarget || currentTarget < 1) {
       gameComplete();
     }
   } else {
@@ -1445,7 +1466,7 @@ function renderGrid() {
     const y = gridOffsetY + row * cellSize;
     const value = grid[i];
     const isFound = i < foundCount;
-    const isNext = !isFound && getCellContent(i) === currentTarget;
+    const isNext = !isFound && (selectedMode === 'letters' ? grid[i] === letterFor(currentTarget) : getCellContent(i) === currentTarget);
     let cellColor = '#1e2a3a';
     let borderColor = '#2a3a4a';
     let scale = 1;

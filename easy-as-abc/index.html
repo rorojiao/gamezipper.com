@@ -270,7 +270,10 @@ function startBGM() {
 // --- Game Logic ---
 function init() {
   loadProgress();
-  loadLevel(0);
+  /* P1 2026-08-25: init() called loadLevel(0) right after loadProgress(), stomping the
+     saved curLevel — restored progress was dead code and every session restarted at
+     level 1. Restore into the clamped saved level instead. */
+  loadLevel(curLevel);
   buildLevelSelect();
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
@@ -298,10 +301,19 @@ function loadProgress() {
   if (saved) {
     try { curLevel = parseInt(JSON.parse(saved).curLevel) || 0; } catch(e) { curLevel = 0; }
   }
+  /* P2 2026-08-25: an out-of-range saved curLevel (e.g. 999 or -1) made loadLevel read
+     LEVELS[999].size -> TypeError inside init() -> dead game. Clamp to the real range. */
+  if (!(curLevel >= 0 && curLevel < LEVELS.length)) curLevel = 0;
 }
 
+function loadDoneSafe() {
+  /* P2 2026-08-25: a corrupt 'abc_done' value threw inside buildLevelSelect during init —
+     the exception aborted init() before the canvas listeners were wired, leaving the game
+     permanently unplayable. Treat unreadable storage as no progress. */
+  try { var d = JSON.parse(localStorage.getItem('abc_done') || '{}'); return (d && typeof d === 'object') ? d : {}; } catch (e) { return {}; }
+}
 function saveProgress() {
-  var done = JSON.parse(localStorage.getItem('abc_done') || '{}');
+  var done = loadDoneSafe();
   done[curLevel] = true;
   localStorage.setItem('abc_done', JSON.stringify(done));
   localStorage.setItem('abc_progress', JSON.stringify({curLevel: curLevel}));
@@ -309,9 +321,15 @@ function saveProgress() {
 
 function getStars() {
   var level = LEVELS[curLevel];
-  var maxMoves = level.size * level.letters * 3;
-  if (hintsUsed === 0 && moveCount <= maxMoves * 0.5) return 3;
-  if (hintsUsed <= 1 && moveCount <= maxMoves) return 2;
+  /* P1 2026-08-25: 3 stars was mathematically unreachable on EVERY level. Each letter
+     appears exactly `size` times and letter #k costs k+1 taps to cycle to, so flawless
+     play needs size*letters*(letters+1)/2 moves = 0.67x maxMoves (3-letter levels) or
+     0.83x (4-letter), while 3 stars demanded <= 0.5x maxMoves. New thresholds: 3 stars =
+     no hints and within one full extra cycle of the theoretical minimum; 2 stars =
+     at most one hint and within twice the minimum. */
+  var minMoves = level.size * level.letters * (level.letters + 1) / 2;
+  if (hintsUsed === 0 && moveCount <= minMoves + level.size) return 3;
+  if (hintsUsed <= 1 && moveCount <= minMoves * 2) return 2;
   return 1;
 }
 
@@ -591,7 +609,7 @@ function checkConflict(r, c, val) {
 function buildLevelSelect() {
   var grid = $('selGrid');
   grid.innerHTML = '';
-  var done = JSON.parse(localStorage.getItem('abc_done') || '{}');
+  var done = loadDoneSafe();
   var tiers = ['Beginner', 'Easy', 'Medium', 'Hard', 'Expert'];
   
   for (var t = 0; t < 5; t++) {

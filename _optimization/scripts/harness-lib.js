@@ -48,7 +48,7 @@ function matchTag(html, from) {
   }
 }
 const VOID_TAGS = new Set(['br', 'hr', 'img', 'input', 'meta', 'link', 'source', 'area', 'base', 'col', 'embed', 'track', 'wbr']);
-function parseMarkupChildren(el, html, depth) {
+function parseMarkupChildren(el, html, depth, mirror) {
   let i = 0;
   for (;;) {
     const lt = html.indexOf('<', i);
@@ -60,23 +60,78 @@ function parseMarkupChildren(el, html, depth) {
     if (VOID_TAGS.has(m.tag.toLowerCase())) continue; // void tags carry no children/text
     const child = makeEl();
     child.tagName = child.nodeName = m.tag;
+    if (mirror) child.__mirror = true; // id-subtree parse: this node DUPLICATES the canonical body-tree node (the id-extraction lazy match truncates inner HTML at the first same-tag close, e.g. woodoku's #piece-tray yields a phantom extra .piece-slot) — document-level walks must skip it or engines double-bind / render onto shifted elements
     const cls = /class="([^"]*)"/.exec(m.attrs || '');
     if (cls) String(cls[1]).split(/\s+/).forEach(t => t && child.classList._s.add(t)); // seed the live set only — className is a stale fallback view, classList.remove() only clears the set
     const idm = /\sid="([^"]*)"/.exec(m.attrs || '');
     if (idm) child.id = idm[1]; // deep static-markup nodes must be addressable by id (find-n-merge's per-screen X/PLAY/GOT IT buttons live past nested divs, where the els-extraction lazy match truncates)
     // data-* attrs -> dataset: killer-sudoku wires .diff-btn/.puzzle-btn handlers that read
     // this.dataset.diff / this.dataset.idx — a parsed node without dataset silently yields NaN
-    // (same regex as the find-n-merge els-extraction below)
-    for (const dm of String(m.attrs || '').matchAll(/\sdata-([a-zA-Z0-9_-]+)="([^"]*)"/g)) child.dataset[dm[1].replace(/-([a-z])/g, (c) => c[1].toUpperCase())] = dm[2];
+    // (same regex as the find-n-merge els-extraction below). Also mirrored to __attr_ storage:
+    // real DOM getAttribute('data-lv') works too (tangram showLS cells parse it).
+    for (const dm of String(m.attrs || '').matchAll(/\sdata-([a-zA-Z0-9_-]+)="([^"]*)"/g)) { child.dataset[dm[1].replace(/-([a-z])/g, (c) => c[1].toUpperCase())] = dm[2]; child['__attr_data-' + dm[1]] = dm[2]; }
     const oc = /\sonclick="([^"]*)"/.exec(m.attrs || '');
     if (oc) stashInlineHandler(child, oc[1]);
     if (m.content !== undefined) {
-      if (/<[a-zA-Z]/.test(m.content)) { if (depth > 0) parseMarkupChildren(child, m.content, depth - 1); }
+      if (/<[a-zA-Z]/.test(m.content)) { if (depth > 0) parseMarkupChildren(child, m.content, depth - 1, mirror); }
       else child.textContent = m.content;
     }
     el.children.push(child);
     child.parentNode = child.parentElement = el;
   }
+}
+
+// compound/descendant selector matching (`.grid .cell`, `.cell[data-row="1"][data-col="2"]`,
+// `div.piece[data-index="0"]`, `.a.b`) — the simple class/tag/attr walks can't express these;
+// tetra-fit resolves drop targets and hint cells through them. Tree order: registry first,
+// then the parsed body; deduped by identity. Engaged ONLY when the simple branches found
+// nothing real, so existing outcomes (and the fake fallback) are unchanged.
+function qsPartMatches(part, el) {
+  let rest = String(part);
+  const tagM = /^([a-zA-Z][\w-]*)/.exec(rest);
+  if (tagM) { rest = rest.slice(tagM[0].length); if (String(el.tagName || '').toLowerCase() !== tagM[1].toLowerCase()) return false; }
+  const idM = /^#([\w-]+)/.exec(rest);
+  if (idM) { rest = rest.slice(idM[0].length); if (el.id !== idM[1]) return false; }
+  let any = !!tagM || !!idM;
+  while (rest[0] === '.') { const cM = /^\.([\w-]+)/.exec(rest); if (!cM) return false; rest = rest.slice(cM[0].length); any = true; if (!(el.classList && el.classList.contains(cM[1]))) return false; }
+  for (const m of rest.matchAll(/\[\s*([\w-]+)\s*(?:=\s*"([^"]*)")?\s*\]/g)) {
+    any = true;
+    const dk = m[1].replace(/^data-/, '').replace(/-([a-z])/g, (c) => c[1].toUpperCase());
+    const val = el.dataset && el.dataset[dk] !== undefined ? String(el.dataset[dk]) : (el['__attr_' + m[1]] !== undefined ? String(el['__attr_' + m[1]]) : null);
+    if (m[2] === undefined ? val === null : val !== String(m[2])) return false;
+  }
+  return any && rest.replace(/\[[^\]]*\]/g, '').trim() === '';
+}
+function qsGeneral(sel, els, root) {
+  const parts = String(sel).trim().split(/\s+/);
+  const out = [], seen = new Set();
+  const consider = (el) => {
+    if (seen.has(el) || !qsPartMatches(parts[parts.length - 1], el)) return;
+    seen.add(el);
+    let need = parts.length - 1, a = el.parentNode;
+    while (need > 0 && a && a !== root) { if (qsPartMatches(parts[need - 1], a)) need--; a = a.parentNode; }
+    if (need === 0) out.push(el);
+  };
+  const walk = (el) => { for (const c of (el.children || [])) { if (c.__mirror) continue; walk(c); consider(c); } };
+  for (const id of Object.keys(els)) { const r = els[id]; if (!Array.isArray(r)) { consider(r); walk(r); } }
+  walk(root);
+  return out;
+}
+function qsCompoundish(sel) { return sel.includes(' ') || /\.[\w-]*\[/.test(sel) || (sel.startsWith('.') && sel.slice(1).includes('.')) || /:not\(/.test(sel); }
+// ":not()" class-selector chains (tangram showLS wires its level grid via
+// querySelectorAll('.lc:not(.lk)')) — need-classes + not-classes matched
+// against the LIVE element tree so onclick lands on the real parsed nodes.
+function parseNotClasses(sel) {
+  const m = /^((?:\.[\w-]+)+)((?::not\(\.[\w-]+\))*)$/.exec(String(sel).trim());
+  if (!m) return null;
+  return {
+    need: [...m[1].matchAll(/\.[\w-]+/g)].map(x => x[0].slice(1)),
+    not: [...m[2].matchAll(/:not\(\.([\w-]+)\)/g)].map(x => x[1]),
+  };
+}
+function matchesNotClasses(el, s) {
+  const cn = String(el.className || '').split(/\s+/).filter(Boolean);
+  return s.need.every(c => cn.includes(c)) && !s.not.some(c => cn.includes(c));
 }
 
 function makeEl(extra) {
@@ -88,9 +143,21 @@ function makeEl(extra) {
     classList: { _s: new Set(), add(...c) { c.forEach(x => this._s.add(x)); }, remove(...c) { c.forEach(x => this._s.delete(x)); }, toggle(c, f) { const on = f === undefined ? !this._s.has(c) : !!f; on ? this._s.add(c) : this._s.delete(c); return on; }, contains(c) { return this._s.has(c) || String(el.className).split(/\s+/).includes(c); } }, // className assignments and classList must agree (boggle's getDieFromEvent checks classList after engines set className directly)
     children: [], width: 480, height: 640, clientWidth: 480, clientHeight: 640, offsetWidth: 480, offsetHeight: 640, scrollWidth: 480, scrollHeight: 640,
     disabled: false, hidden: false, checked: false,
-    addEventListener(t, f) { (listeners[t] = listeners[t] || []).push(f); },
-    removeEventListener() {}, /* dispatch binds the element as `this` — engines rely on it (e.g. btnStart's this.disabled) */
-    dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); const el = this; ev.target = ev.target || el; ev.currentTarget = el; // browsers set both during dispatch (futoshiki gzCellClick reads e.currentTarget.dataset)
+    addEventListener(t, f) { const L = listeners[t] = listeners[t] || []; if (L.indexOf(f) === -1) L.push(f); }, // browser-accurate: identical (type, callback) registrations are deduped (shape-fold setupCanvas re-binds on every showGame; dupes double-fired every click)
+    // real removal (2026-08-25): hashiwokakero's setupCanvas does remove-then-add on the
+    // canvas every game; with a no-op remove, listeners piled up one per game start and
+    // every click toggled the same bridge N times (N games -> net 0 or 1 by parity).
+    // Mirrors the document/window stubs — browsers really drop the handler.
+    removeEventListener(t, f) { if (listeners[t]) listeners[t] = listeners[t].filter((x) => x !== f); }, /* dispatch binds the element as `this` — engines rely on it (e.g. btnStart's this.disabled) */
+    cloneNode(deep) { // drag ghosts: tetra-fit's startDrag clones the picked piece and positions the clone via style.left/top (listeners intentionally NOT copied — browsers don't copy them either)
+      const c = makeEl({ tagName: this.tagName, nodeName: this.nodeName, id: this.id, className: this.className, textContent: this.textContent, value: this.value });
+      for (const t of this.classList._s) c.classList._s.add(t);
+      Object.assign(c.dataset, this.dataset);
+      for (const k of Object.keys(this.style)) if (k !== 'setProperty') c.style[k] = this.style[k];
+      if (deep) for (const ch of (this.children || [])) c.appendChild(ch.cloneNode(true));
+      return c;
+    },
+    dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); ev.stopPropagation = ev.stopPropagation || (() => {}); const el = this; ev.target = ev.target || el; ev.currentTarget = el; // browsers set both during dispatch (futoshiki gzCellClick reads e.currentTarget.dataset)
       (listeners[t] || []).forEach(f => f.call(el, ev)); const h = this['on' + t]; if (typeof h === 'function') { try { h.call(el, ev); } catch (e) {} } return true; }, // browsers fire BOTH addEventListener listeners and the on<event> property (black/beads-out style engines use d.onclick=)
     getContext: () => mk2d(),
     setPointerCapture() {}, releasePointerCapture() {}, // pointer-capture API: no-op here, listeners stay on the capturing element
@@ -128,7 +195,11 @@ function makeEl(extra) {
     },
     // class selectors return ALL descendants (real querySelectorAll semantics — overlays
     // wire nested .lvl-cell grids 3 levels down)
-    querySelectorAll(sel) { const cls = String(sel).replace(/^\./, ''); const out = []; const walk = (el) => { for (const c of (el.children || [])) { if (c.classList && (c.classList.contains(cls) || String(c.className || '').split(/\s+/).includes(cls))) out.push(c); walk(c); } }; walk(this); return out; },
+    querySelectorAll(sel) {
+      const s = parseNotClasses(sel);
+      if (s) { const out = []; const walk = (el) => { for (const c of (el.children || [])) { if (matchesNotClasses(c, s)) out.push(c); walk(c); } }; walk(this); return out; }
+      const cls = String(sel).replace(/^\./, ''); const out = []; const walk = (el) => { for (const c of (el.children || [])) { if (c.classList && (c.classList.contains(cls) || String(c.className || '').split(/\s+/).includes(cls))) out.push(c); walk(c); } }; walk(this); return out;
+    },
   };
   // every innerHTML assignment replaces children in a real browser (black re-renders grids/wraps per level; keeping stale children made verifiers click previous levels' tiles).
   // Parse simple markup into child elements one level deep — engines iterate .children
@@ -158,7 +229,7 @@ function makeEl(extra) {
             if (cls) { child.className = cls[1]; String(cls[1]).split(/\s+/).forEach(t => t && child.classList._s.add(t)); }
             const idm = /\sid="([^"]*)"/.exec(m.attrs || '');
             if (idm) child.id = idm[1];
-            for (const dm of String(m.attrs || '').matchAll(/data-([a-zA-Z0-9_-]+)="([^"]*)"/g)) child.dataset[dm[1].replace(/-([a-z])/g, (c) => c[1].toUpperCase())] = dm[2];
+            for (const dm of String(m.attrs || '').matchAll(/data-([a-zA-Z0-9_-]+)="([^"]*)"/g)) { child.dataset[dm[1].replace(/-([a-z])/g, (c) => c[1].toUpperCase())] = dm[2]; child['__attr_data-' + dm[1]] = dm[2]; }
             const oc = /\sonclick="([^"]*)"/.exec(m.attrs || '');
             if (oc) stashInlineHandler(child, oc[1]);
             if (m.content !== undefined) {
@@ -235,7 +306,11 @@ function bootGame(slug, opts) {
     clearTimeout: (id) => { const i = timers.findIndex(t => t.id === id); if (i >= 0) timers.splice(i, 1); },
     setInterval: (f, ms) => { const id = (timers._seq = (timers._seq || 0) + 1) + 1000000; timers.push({ f, at: (sandbox.__now || 0) + (ms || 1), every: ms || 1, id }); return id; },
     clearInterval: (id) => { const i = timers.findIndex(t => t.id === id); if (i >= 0) timers.splice(i, 1); },
-    requestAnimationFrame: (f) => { rafQ.push(f); return rafQ.length; }, cancelAnimationFrame() {},
+    // real cancel: games that cancel+restart their rAF chain (cancelAnimationFrame(rafId) in
+    // startGame) accumulated zombie loops under the old no-op — every pump then ran update
+    // twice+ and physics diverged from single-step mirrors (gravity-flip frame-2 lockstep)
+    requestAnimationFrame: (f) => { const id = (rafQ._seq = (rafQ._seq || 0) + 1); rafQ.push({ id, f }); return id; },
+    cancelAnimationFrame: (id) => { if (!id) return; for (let i = rafQ.length - 1; i >= 0; i--) if (rafQ[i] && rafQ[i].id === id) rafQ.splice(i, 1); },
     requestIdleCallback: (f) => { try { f({ didTimeout: false, timeRemaining: () => 50 }); } catch (e) {} return 0; }, cancelIdleCallback() {},
     BroadcastChannel: function () { this.postMessage = () => {}; this.onmessage = null; this.close = () => {}; this.addEventListener = () => {}; this.removeEventListener = () => {}; },
     URL, URLSearchParams, structuredClone: (o) => JSON.parse(JSON.stringify(o)), TextEncoder, TextDecoder, btoa: (s) => Buffer.from(String(s), 'binary').toString('base64'), atob: (s) => Buffer.from(String(s), 'base64').toString('binary'),
@@ -253,6 +328,7 @@ function bootGame(slug, opts) {
       querySelector: (sel) => {
         const idm = /^#([A-Za-z][\w-]*)$/.exec(sel);
         if (idm) { if (!els[idm[1]]) { els[idm[1]] = makeEl({ id: idm[1] }); els[idm[1]].parentNode = els[idm[1]].parentElement = sandbox.document.body; } return els[idm[1]]; } // #id aliases getElementById (engines bind via $()); parentNode wired for ad-infra walks
+        if (qsCompoundish(sel)) { const r = qsGeneral(sel, els, sandbox.document.body); if (r && r.length) return r[0]; }
         const k = 'q:' + sel;
         if (!els[k]) { els[k] = makeEl({ className: String(sel).replace(/^\./, '') }); els[k].parentElement = els[k].parentNode = sandbox.document.body; } // site-infra scripts inject banners via canvasWrap.parentNode (real DOM always has one)
         return els[k];
@@ -260,11 +336,20 @@ function bootGame(slug, opts) {
       querySelectorAll(sel) {
         // live walk, uncached: levels re-render grids mid-session (boggle 4x4 -> 5x5) and a
         // cached node list goes stale against the rebuilt children
+        const s2 = parseNotClasses(sel);
+        if (s2) {
+          const out = [], seen = new Set();
+          const add = (e) => { if (matchesNotClasses(e, s2) && !seen.has(e)) { seen.add(e); out.push(e); } };
+          const walkN = (el) => { for (const c of (el.children || [])) { if (c.__mirror) continue; add(c); walkN(c); } };
+          for (const id of Object.keys(els)) { const r = els[id]; if (!Array.isArray(r) && r.className !== undefined) { add(r); walkN(r); } }
+          walkN(sandbox.document.body);
+          if (out.length) return out;
+        }
         if (sel.startsWith('.') || /^[a-z]+$/i.test(sel)) {
           const cls = String(sel).replace(/^\./, '');
           const tag = /^[a-z]+$/i.test(sel) ? sel : null;
           const out = [];
-          const walk = (el) => { for (const c of (el.children || [])) { walk(c); const cn = String(c.className || ''); if (tag ? c.tagName === tag : (cls && cn.split(/\s+/).includes(cls)) || (cls && c.classList && c.classList.contains(cls))) out.push(c); } };
+          const walk = (el) => { for (const c of (el.children || [])) { if (c.__mirror) continue; walk(c); const cn = String(c.className || ''); if (tag ? c.tagName === tag : (cls && cn.split(/\s+/).includes(cls)) || (cls && c.classList && c.classList.contains(cls))) out.push(c); } };
           // top-level els (markup ids) are body children in a real DOM — class selectors must
           // match them too (schulte showScreen does querySelectorAll('.screen') on top-level
           // screens; getElementsByClassName below already root-checks). Tag selectors stay
@@ -295,11 +380,12 @@ function bootGame(slug, opts) {
             return v === undefined ? val !== null : val === String(v);
           });
           const out = [];
-          const walk = (el) => { for (const c of (el.children || [])) { if (test(c)) out.push(c); walk(c); } };
+          const walk = (el) => { for (const c of (el.children || [])) { if (c.__mirror) continue; if (test(c)) out.push(c); walk(c); } };
           walk(sandbox.document.body);
           for (const id of Object.keys(els)) { const r = els[id]; if (!Array.isArray(r) && test(r)) out.push(r); walk(r); }
           if (out.length) return out;
         }
+        if (qsCompoundish(sel)) { const out2 = qsGeneral(sel, els, sandbox.document.body); if (out2.length) return out2; }
         const key = 'qa:' + sel;
         if (!els[key]) {
           const n = (opts.qsAll && opts.qsAll[sel]) || 6;
@@ -310,14 +396,14 @@ function bootGame(slug, opts) {
       },
       addEventListener(t, f) { (this.__dls = this.__dls || {})[t] = (this.__dls[t] || []).concat(f); },
       removeEventListener(t, f) { if (this.__dls && this.__dls[t]) this.__dls[t] = this.__dls[t].filter((x) => x !== f); },
-      dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); ((this.__dls || {})[t] || []).forEach(f => { try { f.call(this, ev); } catch (e) {} }); return true; },
+      dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); ev.stopPropagation = ev.stopPropagation || (() => {}); ((this.__dls || {})[t] || []).forEach(f => { try { f.call(this, ev); } catch (e) {} }); return true; },
       // real DOM API (killer-sudoku endGame dispatches new Event('gameover') on document);
       // window.dispatchEvent below already mirrors this for __wls
-      dispatchEvent(ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); ((this.__dls || {})[ev.type] || []).forEach(f => { try { f.call(this, ev); } catch (e) {} }); return true; },
+      dispatchEvent(ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); ev.stopPropagation = ev.stopPropagation || (() => {}); ((this.__dls || {})[ev.type] || []).forEach(f => { try { f.call(this, ev); } catch (e) {} }); return true; },
       createElement: (tag) => makeEl({ tagName: String(tag || 'div').toUpperCase(), nodeName: String(tag || 'div').toUpperCase() }), // browsers report UPPER tagName (2026-08-25)
       createElementNS: () => makeEl(),
       getElementsByTagName(tag) { const out = []; const walk = (el) => { const cn = String(el.tagName || el.nodeName || ''); if (String(tag) === '*' || cn.toLowerCase() === String(tag).toLowerCase()) out.push(el); for (const c of (el.children || [])) walk(c); }; for (const id of Object.keys(els)) walk(els[id]); return out; },
-      getElementsByClassName(cls) { const out = []; const walk = (el) => { if (String(el.className || '').split(/\s+/).includes(String(cls))) out.push(el); for (const c of (el.children || [])) walk(c); }; for (const id of Object.keys(els)) walk(els[id]); return out; },
+      getElementsByClassName(cls) { const out = []; const walk = (el) => { if (String(el.className || '').split(/\s+/).includes(String(cls))) out.push(el); for (const c of (el.children || [])) { if (c.__mirror) continue; walk(c); } }; for (const id of Object.keys(els)) walk(els[id]); return out; },
       // deepest registered element whose (style-derived) rect contains the point —
       // engines like boggle resolve their grid tiles through elementFromPoint
       elementFromPoint(x, y) {
@@ -343,7 +429,7 @@ function bootGame(slug, opts) {
     XMLHttpRequest: function () { this.open = () => {}; this.send = () => {}; this.setRequestHeader = () => {}; },
     addEventListener(t, f) { (this.__wls = this.__wls || {})[t] = (this.__wls[t] || []).concat(f); },
     removeEventListener(t, f) { if (this.__wls && this.__wls[t]) this.__wls[t] = this.__wls[t].filter((x) => x !== f); }, // real removal: drag systems add per-gesture window listeners and drop them on pointerup — a no-op made stale handlers re-fire on later gestures
-    dispatchEvent(ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); ((this.__wls || {})[ev.type] || []).forEach(f => { try { f(ev); } catch (e) {} }); return true; },
+    dispatchEvent(ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); ev.stopPropagation = ev.stopPropagation || (() => {}); ((this.__wls || {})[ev.type] || []).forEach(f => { try { f(ev); } catch (e) {} }); return true; },
     MutationObserver: function () { this.observe = () => {}; this.disconnect = () => {}; },
     ResizeObserver: function () { this.observe = () => {}; this.disconnect = () => {}; },
     IntersectionObserver: function () { this.observe = () => {}; this.disconnect = () => {}; },
@@ -376,7 +462,7 @@ function bootGame(slug, opts) {
   // .children of statically-written containers, e.g. constellation-connect's star spans)
   for (const m of html.matchAll(/<([a-zA-Z][a-zA-Z0-9]*)\b[^>]*\sid="([A-Za-z][A-Za-z0-9_-]*)"[^>]*>([\s\S]*?)<\/\1>/g)) {
     const el = els[m[2]];
-    if (el && !el.children.length && !Array.isArray(el)) { try { parseMarkupChildren(el, m[3], 4); } catch (e) {} }
+    if (el && !el.children.length && !Array.isArray(el)) { try { parseMarkupChildren(el, m[3], 4, true); } catch (e) {} }
   }
   for (const id in els) { if (!els[id].parentNode) els[id].parentNode = els[id].parentElement = sandbox.document.body; } // every element has a parent in a real DOM (mancala measures canvas.parentElement.clientWidth)
   // full recursive parse of the page body: inline-onclick controls nested deep in static
@@ -421,7 +507,10 @@ function bootGame(slug, opts) {
   scripts.forEach((sc, i) => { try { vm.runInContext(sc, ctx, { filename: slug + '-' + i + '.js' }); } catch (e) { loadErrors.push('script#' + i + ': ' + String(e.message)); } });
   // real browsers always fire DOMContentLoaded after parsing — engines assign their
   // canvas/listeners inside it (solitaire-roguelite: canvas stays null without this)
-  const dcl = (host, name) => { try { ((host.__wls || {})[name] || []).forEach(f => f.call(host, { type: name })); } catch (e) { loadErrors.push(name + ': ' + String(e.message)); } };
+  // fire BOTH registries: window stores listeners in __wls, the document stub in __dls —
+  // reading only __wls silently dropped document-level DOMContentLoaded handlers
+  // (hotaru-beam wires ALL input inside document-DCL init; engine booted deaf until this)
+  const dcl = (host, name) => { try { [].concat((host.__wls || {})[name] || [], (host.__dls || {})[name] || []).forEach(f => f.call(host, { type: name })); } catch (e) { loadErrors.push(name + ': ' + String(e.message)); } };
   dcl(sandbox.document, 'DOMContentLoaded'); // document listeners
   dcl(sandbox, 'DOMContentLoaded'); // window listeners (solitaire-roguelite wires canvas here)
   dcl(sandbox, 'load'); // balls-vs-bricks registers its rAF loop on window 'load'
@@ -434,7 +523,7 @@ function bootGame(slug, opts) {
       const due = []; // snapshot first: callbacks mutate the timer list (clearTimeout/extra setTimeout)
       for (let j = timers.length - 1; j >= 0; j--) { const t = timers[j]; if (t && t.at <= sandbox.__now) { if (t.every) { t.at += t.every; } else { timers.splice(j, 1); } due.push(t); } }
       for (const t of due) { try { t.f(); } catch (e) { sandbox.__errors = (sandbox.__errors || []).concat('timer: ' + e.message + ' @ ' + String(e.stack || '').split('\n')[1]); } }
-      const q = rafQ.splice(0); q.forEach(f => { try { f(sandbox.__now); } catch (e) { sandbox.__errors = (sandbox.__errors || []).concat('raf: ' + e.message + ' @ ' + String(e.stack || '').split('\n')[1]); } }); } },
+      const q = rafQ.splice(0); q.forEach(e => { try { e.f(sandbox.__now); } catch (e2) { sandbox.__errors = (sandbox.__errors || []).concat('raf: ' + e2.message + ' @ ' + String(e2.stack || '').split('\n')[1]); } }); } },
     /** evaluate an expression inside the vm (reads engine internals after an export surgery) */
     call(expr) { return vm.runInContext(expr, ctx); },
     /** dispatch a keyboard event to the element that owns key listeners (canvas/document/body fallback chain) */

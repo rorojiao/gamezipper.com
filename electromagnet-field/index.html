@@ -179,10 +179,17 @@ var EMPTY=0,MAGNET_N=1,MAGNET_S=2,TARGET=3,IRON=4;
 /* Grid symbols: . empty, N north magnet, S south magnet, T target, I iron */
 var LEVELS=[
 /* Tier 1: Basic field routing */
-{n:1,g:[".......","...N...",".......",".T.T...",".......","...S...","......."],par:2,name:"First Field"},
-{n:2,g:[".......","..N...T",".......","..I....",".......","..S...T","......."],par:3,name:"Iron Block"},
+/* FIX(verify 2026-08-25): L1/L2/L4 target cells relocated — with the seeded-ray trace
+ * (see traceFieldLine FIX), field lines from a magnet bend toward the opposing magnet
+ * (N->S flow), so the original off-axis/edge targets (L1 (3,1); L2 (1,6),(5,6); L4
+ * (3,1),(3,3),(3,5)) were crossed by NO field line under ANY of the 2^k polarity
+ * assignments — all three levels permanently unwinnable. New positions were chosen from
+ * the solver's ray-coverage sets nearest the originals; each level verified solvable at
+ * 1 flip (par 2/3/3) by exhaustive config search. */
+{n:1,g:[".......","...N...",".T.....","...T...",".......","...S...","......."],par:2,name:"First Field"},
+{n:2,g:[".......","..N..T.",".......","..I....","......T","..S....","......."],par:3,name:"Iron Block"},
 {n:3,g:[".......",".N..S..",".......",".T.I.T.",".......",".N..S..","......."],par:4,name:"Dual Path"},
-{n:4,g:[".......","...N...","...I...",".T.T.T.","...I...","...S...","......."],par:3,name:"Iron Tunnel"},
+{n:4,g:[".......","...N...",".TTI.T.",".......","...I...","...S...","......."],par:3,name:"Iron Tunnel"},
 {n:5,g:[".......",".N...S.",".I.I.I.",".T.T.T.",".I.I.I.",".N...S.","......."],par:4,name:"Iron Grid"},
 /* Tier 2: Multiple magnets */
 {n:6,g:[".......",".N...S.","...N.S.",".T.I.T.","...N.S.",".N...S.","......."],par:5,name:"Quad Magnets"},
@@ -339,6 +346,17 @@ function traceFieldLine(startMagnet,angleStep,maxSteps){
   var points=[{x:x,y:y}];
   var angle=m.p==='N'?angleStep:angleStep+Math.PI;
   var stepSize=8;
+  /* FIX(verify 2026-08-25): `angle` was computed but never used — the walk started at the
+   * magnet's own center, where the self-field is 0 and the nearest other magnet (4 cells
+   * apart = 224px at the default cellSize 56) contributes 5000/224^2 = 0.0997 < the 0.1
+   * threshold, so traceFieldLine broke immediately with a single point: NO field lines
+   * existed at all on desktop cell sizes and checkWin() could never hit any target — every
+   * level with only 4-cell-spaced magnets was permanently unwinnable. Seed the first step
+   * along the ray angle (the evident intent: 8 radial lines per magnet), then follow the
+   * field as before. checkWin untouched. */
+  x+=Math.cos(angle)*stepSize;
+  y+=Math.sin(angle)*stepSize;
+  points.push({x:x,y:y});
   for(var step=0;step<maxSteps;step++){
     var field=calculateField(x,y);
     var fieldMag=Math.sqrt(field.bx*field.bx+field.by*field.by);

@@ -280,7 +280,10 @@ var COLORS=[
 // 创建圆周排列的钉子 (Create pins arranged in a circle)
 // cx, cy: 中心; r: 半径; n: 数量
 function circlePins(cx,cy,r,n,startAngle){
-  startAngle=startAngle||-Math.PI/2;
+  /* P2 2026-08-25: `startAngle||-Math.PI/2` treated an explicit 0 (L12 Heart Curve's
+     intended zero-angle start) as falsy and silently rotated the whole pin ring by
+     -90°. Honor 0; default only when the argument is absent. */
+  startAngle=startAngle===undefined?-Math.PI/2:startAngle;
   var pins=[];
   for(var i=0;i<n;i++){
     var a=startAngle+(i/n)*Math.PI*2;
@@ -304,10 +307,17 @@ function gridPins(cx,cy,cols,rows,spacing){
 
 // 螺旋线连接 (Skip-pattern threads — classic string art curves)
 // 在圆周上每隔skip个钉子连接, 形成曲线
-function skipThread(colorIdx,pinCount,skip){
+/* P0 2026-08-25: skipThread had no pin offset, so multi-ring levels' "ring N curve"
+   threads all collapsed onto pins 0..N-1 instead of their intended ring. L30 Grand
+   Mandala was UNWINNABLE: its inner-ring closing pair {7,0} collided with the outer
+   c0 thread's {0,7} (same color; isSegmentPlaced is per-color and unordered), capping
+   the level at 191/192. L23's "outer curve" drew over the mid-ring pins (visual).
+   offset shifts the generated indices to the ring's first pin. */
+function skipThread(colorIdx,pinCount,skip,offset){
+  offset=offset||0;
   var seq=[];
   for(var i=0;i<=pinCount;i++){
-    seq.push((i*skip)%pinCount);
+    seq.push(((i*skip)%pinCount)+offset);
   }
   return {c:colorIdx,seq:seq};
 }
@@ -411,7 +421,11 @@ var LEVELS=[
 }},
 // L10: Sun
 {n:"Sun",t:2,gen:function(){
-  var center=[0.5,0.5];
+  /* P0 2026-08-25: center was the flat coordinate [0.5,0.5], so center.concat(inner)
+     spliced two bare numbers into the pin list — pins 0/1 mapped to NaN canvas
+     coordinates (untappable), segments (0,1)/(8,0) were unplaceable, and the level
+     could never complete. Nested to a real center pin as the seq [0,1..8,0] intends. */
+  var center=[[0.5,0.5]];
   var inner=circlePins(0.5,0.5,0.15,8);
   var outer=circlePins(0.5,0.5,0.38,16);
   var rays=[];
@@ -569,8 +583,8 @@ var LEVELS=[
   return {pins:pins,threads:[
     {c:0,seq:[0,1,2,3,4,5,0]}, // inner hexagon
     {c:0,seq2:[6,7,8,9,10,11,6]}, // mid hexagon
-    skipThread(1,12,5), // outer curve (pins 12-23)
-    skipThread(4,12,7),
+    skipThread(1,12,5,12), // outer curve (pins 12-23) — P0 2026-08-25: was drawing over pins 0-11
+    skipThread(4,12,7,12),
     {c:2,seq:[0,6,12,1,7,13,2,8,14,0]}, // spokes
   ]};
 }},
@@ -664,11 +678,11 @@ var LEVELS=[
   var pins=r1.concat(r2).concat(r3).concat(r4);
   return {pins:pins,threads:[
     {c:0,seq:[0,1,2,3,4,5,6,7,0]}, // innermost ring
-    skipThread(3,16,7), // 2nd ring curve (pins 8-23)
-    skipThread(4,24,11), // 3rd ring curve (pins 24-47)
-    skipThread(1,48,19), // outermost ring curve (pins 48-95)
-    skipThread(2,48,13),
-    skipThread(0,48,7),
+    skipThread(3,16,7,8), // 2nd ring curve (pins 8-23) — P0 2026-08-25: offsets were missing (all ring curves drew over pins 0-47; L30 was 191/192-unwinnable)
+    skipThread(4,24,11,24), // 3rd ring curve (pins 24-47)
+    skipThread(1,48,19,48), // outermost ring curve (pins 48-95)
+    skipThread(2,48,13,48),
+    skipThread(0,48,7,48),
   ]};
 }},
 ];
@@ -710,22 +724,37 @@ function expandLevel(levelIdx){
   var pins=raw.pins.map(function(p){return [p[0],p[1]];});
   var threads=[]; // expanded: {c:color, segments:[[pinA,pinB],...], path:[...]}
   raw.threads.forEach(function(t){
+    /* P0 2026-08-25: 7 of 30 levels (L14/18/19/20/26/27/29) were unwinnable: spoke
+       sequences like [0,1,0,3,...] and skip-threads with gcd(skip,n)>1 repeat their
+       own pairs (a,b) then (b,a) — and isSegmentPlaced() matches segments UNORDERED,
+       so the repeat could never be placed and placedCount could never reach
+       totalSegments. L14 gating L15+ meant 17 levels were unreachable. Fix: dedupe
+       identical segments (unordered pin pair / ray coords) at expand time — the
+       duplicate stroke draws the exact same line, so the artwork is unchanged. */
     var segs=[];
+    var seen={};
+    var addPinSeg=function(a,b){
+      var k=a<b?a+'-'+b:b+'-'+a;
+      if(seen[k])return;
+      seen[k]=1;
+      segs.push([a,b]);
+    };
     if(t.seq){
       for(var i=0;i<t.seq.length-1;i++){
-        segs.push([t.seq[i],t.seq[i+1]]);
+        addPinSeg(t.seq[i],t.seq[i+1]);
       }
     }
     if(t.seq2){
       for(var i=0;i<t.seq2.length-1;i++){
-        segs.push([t.seq2[i],t.seq2[i+1]]);
+        addPinSeg(t.seq2[i],t.seq2[i+1]);
       }
     }
     if(t.rays){
-      // rays: array of [pinA_x,pinA_y,pinB_x,pinB_y] — find pin indices
+      // rays: array of [pinA_x,pinA_y,pinB_x,pinB_y] — stored as coordinate pairs
       t.rays.forEach(function(ray){
-        // find closest pins — but easier: rays reference absolute coords
-        // We'll store as coordinate pairs and match by coordinate
+        var k='r'+ray[0]+','+ray[1]+','+ray[2]+','+ray[3];
+        if(seen[k])return;
+        seen[k]=1;
         segs.push({ray:[ray[0],ray[1],ray[2],ray[3]]});
       });
     }

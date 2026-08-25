@@ -493,6 +493,7 @@
         let pathPoints = [];
         let pathLength = 0;
         let spawnTimer = 0;
+        let marblesSpawned = 0; // FIX(P0): total marbles spawned this level — spawn gating must not use the live chain length
         let gameTimer = 60;
         let timerInterval = null;
         let paused = false;
@@ -969,6 +970,7 @@
             pathPoints = computePathPoints(levelConfig.path);
             pathLength = computePathLength(pathPoints);
             chain = [];
+            marblesSpawned = 0; // FIX(P0): reset the per-level spawn counter
             particles = [];
             floatingTexts = [];
             combo = 0;
@@ -1189,7 +1191,10 @@
         }
 
         function spawnMarble() {
-            if (chain.length >= levelConfig.marbleCount) return;
+            // FIX(P0): report whether a marble was actually spawned so the caller
+            // can count total spawns (chain may be temporarily full of inserted
+            // shooter marbles — retry at the next spawn interval).
+            if (chain.length >= levelConfig.marbleCount) return false;
             const color = Math.floor(Math.random() * levelConfig.colors);
             // Determine if this is a powerup (5% chance after level 3)
             let isPowerup = false;
@@ -1207,6 +1212,7 @@
                 isPowerup,
                 powerType
             });
+            return true;
         }
 
         function getMarblePos(marble) {
@@ -1224,8 +1230,13 @@
             // Spawn
             spawnTimer += dt;
             const spawnInterval = levelConfig.spawnInterval;
-            if (spawnTimer >= spawnInterval && chain.length < levelConfig.marbleCount) {
-                spawnMarble();
+            // FIX(P0): the spawn gate used the LIVE chain length, so the moment a
+            // level's chain was fully popped this block respawned a marble before
+            // the win check further below (chain empty && spawnTimer >= interval)
+            // could ever see an empty chain — no level in the game was completable.
+            // Gate on the total spawned this level instead (marbleCount = level total).
+            if (spawnTimer >= spawnInterval && marblesSpawned < levelConfig.marbleCount) {
+                if (spawnMarble()) marblesSpawned++;
                 spawnTimer = 0;
             }
 
@@ -1387,6 +1398,23 @@
                 combo++;
                 lastPopTime = Date.now();
                 const now = Date.now();
+
+                // FIX(P1): powerup marbles were uncollectable — the only grant
+                // path was insertMarble()'s shooter-side branch, but shooter
+                // marbles are never powerups, so every power button stayed dead
+                // for the entire game. Grant the power when the glowing chain
+                // marble is popped as part of a matched group.
+                group.forEach(i => {
+                    const gm = chain[i];
+                    if (gm.isPowerup && gm.powerType && powerUps[gm.powerType] !== undefined) {
+                        powerUps[gm.powerType]++;
+                        const gp = getMarblePos(gm);
+                        floatingTexts.push({
+                            text: `${gm.powerType.toUpperCase()}!`,
+                            x: gp.x, y: gp.y, color: '#ffd93d', life: 1.5
+                        });
+                    }
+                });
 
                 group.forEach(i => {
                     chain[i].popping = true;

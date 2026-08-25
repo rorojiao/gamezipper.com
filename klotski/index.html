@@ -185,48 +185,56 @@ canvas{background:#0f0f1a;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.
 <!-- removed: 1ktower zombie analytics endpoint (HR#40) -->
 <script>
 const CELL=100,ROWS=5,COLS=4,EMPTY=[{r:3,c:1},{r:3,c:2},{r:4,c:1},{r:4,c:2}];
+// P0 fix 2026-08-25: 29/33 shipped levels had OVERLAPPING blocks (invalid layouts, e.g. L2 soldier s1 stacked on vertical mc),
+// and L11/L13/L22/L27 filled 19-20 of 20 cells (<=1 empty cell: the 2x2 Cao Cao can NEVER move => unsolvable by construction).
+// Repaired: surplus soldiers dropped back to the classic 10-piece set where cells>18, each colliding piece re-homed to the
+// nearest valid spot (nearest placement that leaves a BFS-solvable puzzle to the documented goal cc@(r3,c1) - see
+// FINAL_REPORT.md "Win condition: 2x2 block reaches position (r=3, c=1) - bottom center exit").
+// par recalibrated to the single-slide BFS optimum where the shipped par was unattainable (pars were authored as
+// multi-square-slide counts; the engine counts every single-cell slide as one move - classic 横刀立马 = 116 single slides
+// = the famous 81 multi-square solution). Names/tiers kept.
 const LEVELS=[
-{name:"横刀立马",tier:1,par:81,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:1,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"层层设防",tier:1,par:100,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:0,l:''},{id:'s2',type:1,r:3,c:3,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:2,l:''}]},
-{name:"走马换将",tier:1,par:85,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:1,c:0,l:'G'},{id:'hz',type:'v',r:3,c:3,l:'H'},{id:'s1',type:1,r:0,c:2,l:''},{id:'s2',type:1,r:1,c:3,l:''},{id:'s3',type:1,r:3,c:1,l:''},{id:'s4',type:1,r:3,c:2,l:''}]},
-{name:"小将突围",tier:1,par:72,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:2,c:1,l:''},{id:'s2',type:1,r:2,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"引蛇出洞",tier:1,par:90,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:1,c:0,l:''},{id:'s2',type:1,r:1,c:3,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:2,l:''}]},
-{name:"将拥曹营",tier:1,par:88,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:0,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:0,c:2,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"兵分三路",tier:1,par:95,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:0,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"飞渡关山",tier:1,par:78,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:1,c:0,l:'G'},{id:'hz',type:'v',r:3,c:3,l:'H'},{id:'s1',type:1,r:2,c:1,l:''},{id:'s2',type:1,r:2,c:2,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:2,l:''}]},
-{name:"插翅难逃",tier:1,par:102,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:0,l:''},{id:'s2',type:1,r:3,c:3,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"一路平安",tier:1,par:75,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:1,c:3,l:''},{id:'s2',type:1,r:3,c:0,l:''},{id:'s3',type:1,r:3,c:2,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"四面楚歌",tier:2,par:125,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:1,c:0,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:1,c:3,l:''},{id:'s2',type:1,r:3,c:0,l:''},{id:'s3',type:1,r:3,c:2,l:''},{id:'s4',type:1,r:4,c:1,l:''},{id:'s5',type:1,r:4,c:3,l:''}]},
-{name:"重围出险",tier:2,par:140,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:0,c:2,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"峰回路转",tier:2,par:118,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:1,c:0,l:''},{id:'s2',type:1,r:3,c:0,l:''},{id:'s3',type:1,r:3,c:2,l:''},{id:'s4',type:1,r:4,c:1,l:''},{id:'s5',type:1,r:4,c:3,l:''}]},
-{name:"柳暗花明",tier:2,par:132,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:0,l:'G'},{id:'hz',type:'v',r:3,c:3,l:'H'},{id:'s1',type:1,r:0,c:2,l:''},{id:'s2',type:1,r:2,c:1,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:2,l:''}]},
-{name:"退避三舍",tier:2,par:145,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:0,l:''},{id:'s2',type:1,r:3,c:3,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"楚汉相争",tier:2,par:138,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:1,c:3,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
+{name:"横刀立马",tier:1,par:116,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:1,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
+{name:"层层设防",tier:1,par:117,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:4,c:1,l:''},{id:'s2',type:1,r:4,c:2,l:''},{id:'s3',type:1,r:3,c:1,l:''},{id:'s4',type:1,r:4,c:0,l:''}]},
+{name:"走马换将",tier:1,par:112,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:3,c:2,l:'G'},{id:'hz',type:'v',r:3,c:1,l:'H'},{id:'s1',type:1,r:0,c:2,l:''},{id:'s2',type:1,r:4,c:2,l:''},{id:'s3',type:1,r:4,c:3,l:''},{id:'s4',type:1,r:2,c:0,l:''}]},
+{name:"小将突围",tier:1,par:99,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:2,c:1,l:''},{id:'s2',type:1,r:2,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
+{name:"引蛇出洞",tier:1,par:90,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:4,c:2,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:0,c:1,l:''},{id:'s2',type:1,r:4,c:1,l:''},{id:'s3',type:1,r:2,c:0,l:''},{id:'s4',type:1,r:3,c:2,l:''}]},
+{name:"将拥曹营",tier:1,par:88,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:0,c:2,l:''},{id:'s2',type:1,r:4,c:0,l:''},{id:'s3',type:1,r:4,c:3,l:''},{id:'s4',type:1,r:4,c:1,l:''}]},
+{name:"兵分三路",tier:1,par:117,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:2,l:''},{id:'s2',type:1,r:4,c:2,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
+{name:"飞渡关山",tier:1,par:78,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:4,c:1,l:'G'},{id:'hz',type:'v',r:3,c:3,l:'H'},{id:'s1',type:1,r:3,c:2,l:''},{id:'s2',type:1,r:0,c:2,l:''},{id:'s3',type:1,r:0,c:1,l:''},{id:'s4',type:1,r:4,c:0,l:''}]},
+{name:"插翅难逃",tier:1,par:118,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:4,c:3,l:''},{id:'s2',type:1,r:4,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:1,l:''}]},
+{name:"一路平安",tier:1,par:75,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:4,c:3,l:''},{id:'s2',type:1,r:4,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:0,c:2,l:''}]},
+{name:"四面楚歌",tier:2,par:125,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:2,l:'G'},{id:'hz',type:'v',r:3,c:1,l:'H'},{id:'s1',type:1,r:2,c:1,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:3,l:''},{id:'s4',type:1,r:4,c:0,l:''}]},
+{name:"重围出险",tier:2,par:140,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:4,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:0,c:2,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:3,l:''},{id:'s4',type:1,r:0,c:1,l:''}]},
+{name:"峰回路转",tier:2,par:118,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:4,c:3,l:''},{id:'s2',type:1,r:4,c:1,l:''},{id:'s3',type:1,r:3,c:2,l:''},{id:'s4',type:1,r:4,c:0,l:''}]},
+{name:"柳暗花明",tier:2,par:132,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:4,c:1,l:'G'},{id:'hz',type:'v',r:3,c:3,l:'H'},{id:'s1',type:1,r:0,c:2,l:''},{id:'s2',type:1,r:3,c:1,l:''},{id:'s3',type:1,r:3,c:2,l:''},{id:'s4',type:1,r:4,c:0,l:''}]},
+{name:"退避三舍",tier:2,par:145,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:4,c:1,l:''},{id:'s2',type:1,r:4,c:0,l:''},{id:'s3',type:1,r:4,c:3,l:''},{id:'s4',type:1,r:3,c:2,l:''}]},
+{name:"楚汉相争",tier:2,par:138,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:3,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:2,c:0,l:''},{id:'s2',type:1,r:4,c:3,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:0,c:2,l:''}]},
 {name:"过五关",tier:2,par:128,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:2,c:1,l:''},{id:'s2',type:1,r:2,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"千里走单骑",tier:2,par:142,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:1,c:0,l:'G'},{id:'hz',type:'v',r:3,c:3,l:'H'},{id:'s1',type:1,r:2,c:1,l:''},{id:'s2',type:1,r:2,c:2,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:2,l:''}]},
+{name:"千里走单骑",tier:2,par:142,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:4,c:1,l:'G'},{id:'hz',type:'v',r:3,c:3,l:'H'},{id:'s1',type:1,r:3,c:1,l:''},{id:'s2',type:1,r:0,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:3,c:2,l:''}]},
 {name:"华容新道",tier:2,par:135,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:1,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"春风不度",tier:2,par:148,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:1,c:0,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"步步惊心",tier:2,par:130,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:0,l:''},{id:'s2',type:1,r:3,c:3,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:2,l:''}]},
-{name:"绝地求生",tier:3,par:165,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:1,c:0,l:''},{id:'s2',type:1,r:1,c:3,l:''},{id:'s3',type:1,r:3,c:0,l:''},{id:'s4',type:1,r:3,c:3,l:''},{id:'s5',type:1,r:4,c:1,l:''},{id:'s6',type:1,r:4,c:2,l:''}]},
-{name:"九死一生",tier:3,par:178,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:0,c:2,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"破釜沉舟",tier:3,par:185,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:1,c:0,l:'G'},{id:'hz',type:'v',r:3,c:3,l:'H'},{id:'s1',type:1,r:2,c:1,l:''},{id:'s2',type:1,r:2,c:2,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:2,l:''}]},
-{name:"背水一战",tier:3,par:192,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:0,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:1,c:3,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"围魏救赵",tier:3,par:170,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:0,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"暗度陈仓",tier:3,par:188,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:1,c:0,l:''},{id:'s2',type:1,r:3,c:0,l:''},{id:'s3',type:1,r:3,c:2,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"草船借箭",tier:3,par:175,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:2,c:0,l:''},{id:'s2',type:1,r:4,c:0,l:''},{id:'s3',type:1,r:4,c:3,l:''}]},
-{name:"空城计",tier:3,par:195,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:1,c:0,l:'G'},{id:'hz',type:'v',r:3,c:3,l:'H'},{id:'s1',type:1,r:2,c:1,l:''},{id:'s2',type:1,r:2,c:2,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:2,l:''}]},
-{name:"连环计",tier:3,par:182,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:0,l:''},{id:'s2',type:1,r:3,c:3,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:2,l:''}]},
-{name:"苦肉计",tier:3,par:190,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:1,c:0,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"美人计",tier:3,par:198,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:2,c:0,l:''},{id:'s2',type:1,r:3,c:0,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
-{name:"瞒天过海",tier:3,par:200,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:1,c:0,l:'G'},{id:'hz',type:'v',r:3,c:3,l:'H'},{id:'s1',type:1,r:2,c:1,l:''},{id:'s2',type:1,r:2,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:4,c:3,l:''}]}
+{name:"春风不度",tier:2,par:148,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:4,c:2,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:2,l:''},{id:'s2',type:1,r:2,c:0,l:''},{id:'s3',type:1,r:0,c:2,l:''},{id:'s4',type:1,r:3,c:1,l:''}]},
+{name:"步步惊心",tier:2,par:130,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:4,c:1,l:''},{id:'s2',type:1,r:4,c:2,l:''},{id:'s3',type:1,r:4,c:0,l:''},{id:'s4',type:1,r:3,c:2,l:''}]},
+{name:"绝地求生",tier:3,par:165,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:2,l:''},{id:'s2',type:1,r:4,c:0,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:2,l:''}]},
+{name:"九死一生",tier:3,par:178,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:3,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:0,c:2,l:''},{id:'s2',type:1,r:0,c:1,l:''},{id:'s3',type:1,r:4,c:3,l:''},{id:'s4',type:1,r:4,c:2,l:''}]},
+{name:"破釜沉舟",tier:3,par:185,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:3,c:3,l:'H'},{id:'s1',type:1,r:4,c:0,l:''},{id:'s2',type:1,r:4,c:1,l:''},{id:'s3',type:1,r:4,c:2,l:''},{id:'s4',type:1,r:3,c:1,l:''}]},
+{name:"背水一战",tier:3,par:192,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:4,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:4,c:0,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:3,l:''},{id:'s4',type:1,r:3,c:1,l:''}]},
+{name:"围魏救赵",tier:3,par:170,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:3,c:2,l:''},{id:'s2',type:1,r:4,c:3,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:0,l:''}]},
+{name:"暗度陈仓",tier:3,par:188,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:4,c:2,l:''},{id:'s2',type:1,r:0,c:2,l:''},{id:'s3',type:1,r:4,c:1,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
+{name:"草船借箭",tier:3,par:175,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:2,c:0,l:''},{id:'s2',type:1,r:4,c:3,l:''},{id:'s3',type:1,r:4,c:1,l:''}]},
+{name:"空城计",tier:3,par:195,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:1,l:'G'},{id:'hz',type:'v',r:3,c:3,l:'H'},{id:'s1',type:1,r:4,c:0,l:''},{id:'s2',type:1,r:4,c:1,l:''},{id:'s3',type:1,r:4,c:2,l:''},{id:'s4',type:1,r:0,c:2,l:''}]},
+{name:"连环计",tier:3,par:182,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:2,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:4,c:1,l:''},{id:'s2',type:1,r:3,c:2,l:''},{id:'s3',type:1,r:4,c:3,l:''},{id:'s4',type:1,r:4,c:2,l:''}]},
+{name:"苦肉计",tier:3,par:190,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:3,c:0,l:'M'},{id:'gy',type:'h',r:3,c:2,l:'G'},{id:'hz',type:'v',r:3,c:1,l:'H'},{id:'s1',type:1,r:4,c:3,l:''},{id:'s2',type:1,r:2,c:3,l:''},{id:'s3',type:1,r:4,c:2,l:''},{id:'s4',type:1,r:0,c:1,l:''}]},
+{name:"美人计",tier:3,par:198,blocks:[{id:'cc',type:2,r:0,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:3,c:1,l:'G'},{id:'hz',type:'v',r:2,c:3,l:'H'},{id:'s1',type:1,r:4,c:1,l:''},{id:'s2',type:1,r:2,c:2,l:''},{id:'s3',type:1,r:4,c:2,l:''},{id:'s4',type:1,r:4,c:3,l:''}]},
+{name:"瞒天过海",tier:3,par:200,blocks:[{id:'cc',type:2,r:1,c:1,l:'C'},{id:'zf',type:'v',r:0,c:0,l:'Z'},{id:'zy',type:'v',r:0,c:3,l:'Y'},{id:'mc',type:'v',r:2,c:0,l:'M'},{id:'gy',type:'h',r:4,c:0,l:'G'},{id:'hz',type:'v',r:3,c:3,l:'H'},{id:'s1',type:1,r:3,c:1,l:''},{id:'s2',type:1,r:4,c:2,l:''},{id:'s3',type:1,r:3,c:2,l:''},{id:'s4',type:1,r:0,c:1,l:''}]},
 ];
-let state={unlocked:1,stars:[0]*30,soundOn:true,musicOn:false,level:0,moves:0,startTime:0,timer:0,hints:3,undoStack:[],blocks:[]},audioCtx=null,rafId=null,bgmNodes=[],timerInt=null;
+let state={unlocked:1,stars:new Array(LEVELS.length).fill(0),soundOn:true,musicOn:false,level:0,moves:0,startTime:0,timer:0,hints:3,undoStack:[],blocks:[]},audioCtx=null,rafId=null,bgmNodes=[],timerInt=null,timer=0;
 function loadSave(){
 const s=localStorage.getItem('klotski_save');
 if(s){
 const d=JSON.parse(s);
 state.unlocked=d.unlocked||1;
-state.stars=d.stars||[0]*30;
+state.stars=(d.stars&&d.stars.length===LEVELS.length)?d.stars:new Array(LEVELS.length).fill(0);
 state.soundOn=d.soundOn!==false;
 state.musicOn=d.musicOn||false;
 }
@@ -296,22 +304,31 @@ for(let c=b.c;c<b.c+sz.w;c++)occ.add(`${r},${c}`);
 return occ;
 }
 function bfs(allBlocks,startState){
-const queue=[{blocks:startState,step:0,path:[]}];const seen=new Set();
-while(queue.length){
-const{blocks,step,path}=queue.shift();
-const cc=blocks.find(b=>b.type===2);
-if(cc.r===1&&cc.c===1){
-return{path,steps:step};
+// P1 fix 2026-08-25: the shipped BFS copied the whole move path into EVERY queue entry
+// (O(states x path) memory) and deduped on exact piece ids — one Hint click on a
+// 100+ move level froze the tab for minutes. Parent-pointer BFS + canonical key with
+// identical-type pieces collapsed (permutations of equal pieces are the same state).
+// (step cap also raised 100 -> 400: pars run up to 200 single slides, the old cap made
+// hint() silently dead on most levels.)
+const key=bs=>{const g={'2':[],'v':[],'h':[],'1':[]};for(const b of bs)g[String(b.type)].push(b.r*4+b.c);for(const k of ['2','v','h','1'])g[k].sort();return g['2'].join(',')+'|'+g.v.join(',')+'|'+g.h.join(',')+'|'+g['1'].join(',');};
+const queue=[{blocks:startState,step:0,prev:-1,move:null}];const seen=new Set([key(startState)]);
+let head=0;
+while(head<queue.length){
+const cur=queue[head++];
+const cc=cur.blocks.find(b=>b.type===2);
+if(cc.r===3&&cc.c===1){
+const path=[];for(let i=head-1;i>0;i=queue[i].prev)path.push(queue[i].move);path.reverse();
+return{path,steps:cur.step};
 }
-const key=JSON.stringify(blocks);
-if(seen.has(key))continue;seen.add(key);
-if(step>100)continue;
-for(let b of blocks){
+if(cur.step>400)continue;
+for(const b of cur.blocks){
 const sz=getBlockSize(b.type);
-for(let[dr,dc]of [[0,1],[0,-1],[1,0],[-1,0]]){
-if(canMove(b,dr,dc,blocks)){
-const nb=blocks.map(bb=>bb.id===b.id?{...bb,r:bb.r+dr,c:bb.c+dc}:bb);
-queue.push({blocks:nb,step:step+1,path:[...path,{id:b.id,dr,dc}]});
+for(const[dr,dc]of [[0,1],[0,-1],[1,0],[-1,0]]){
+if(canMove(b,dr,dc,cur.blocks)){
+const nb=cur.blocks.map(bb=>bb.id===b.id?{...bb,r:bb.r+dr,c:bb.c+dc}:bb);
+const k=key(nb);
+if(seen.has(k))continue;seen.add(k);
+queue.push({blocks:nb,step:cur.step+1,prev:head-1,move:{id:b.id,dr,dc}});
 }}
 }}
 return null;
@@ -325,7 +342,11 @@ checkWin();
 }
 function checkWin(){
 const cc=state.blocks.find(b=>b.type===2);
-if(cc.r===1&&cc.c===1){
+// P0 fix 2026-08-25: win was cc@(r1,c1) — the board CENTER. Per FINAL_REPORT.md and the
+// page's own copy/FAQ the goal is the bottom-center exit = cc top-left (r3,c1). Under
+// (1,1), 14 levels started ALREADY WON (any first move triggered the win modal) and the
+// rest solved in <=2 moves; the shipped pars (72-200) were unreachable under it too.
+if(cc.r===3&&cc.c===1){
 clearInterval(timerInt);
 playTone(523,0.3);setTimeout(()=>playTone(659,0.3),200);setTimeout(()=>playTone(784,0.5),400);
 const moves=state.moves;
@@ -333,7 +354,7 @@ let stars=1;
 if(moves<=LEVELS[state.level].par)stars=3;
 else if(moves<=LEVELS[state.level].par*1.2)stars=2;
 if(state.stars[state.level]<stars)state.stars[state.level]=stars;
-if(state.level>=state.unlocked-1)state.unlocked=Math.min(30,state.unlocked+1);
+if(state.level>=state.unlocked-1)state.unlocked=Math.min(LEVELS.length,state.unlocked+1); // P2 fix 2026-08-25: was Math.min(30,...) — L31-33 were permanently locked
 saveSave();
 showWin(moves,stars);
 }
@@ -346,7 +367,7 @@ document.getElementById('win-modal').style.display='flex';
 }
 function nextLevel(){
 document.getElementById('win-modal').style.display='none';
-if(state.level<29){state.level++;loadLevel(state.level);}else{showLevelSelect();}
+if(state.level<LEVELS.length-1){state.level++;loadLevel(state.level);}else{showLevelSelect();} // P2 fix 2026-08-25: was <29, locking L31-33
 }
 function replayLevel(){
 document.getElementById('win-modal').style.display='none';
@@ -484,7 +505,7 @@ document.getElementById('sound-toggle').classList.toggle('on',state.soundOn);
 document.getElementById('music-toggle').classList.toggle('on',state.musicOn);
 }
 function resetProgress(){
-if(confirm('Reset all progress?')){localStorage.removeItem('klotski_save');state.unlocked=1;state.stars=[0]*30;saveSave();renderLevelSelect();closeSettings();}}
+if(confirm('Reset all progress?')){localStorage.removeItem('klotski_save');state.unlocked=1;state.stars=new Array(LEVELS.length).fill(0);saveSave();renderLevelSelect();closeSettings();}}
 let pointerDown=null;
 document.getElementById('game-canvas').addEventListener('pointerdown',e=>{
 initAudio();

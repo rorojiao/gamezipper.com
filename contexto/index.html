@@ -1296,7 +1296,10 @@ for (const catName of Object.keys(CATEGORY_WORDS)) {
 const cat = CATEGORY_WORDS[catName];
 for (let i = 0; i < cat.length; i++) {
 const w = cat[i];
-const wLower = w.toLowerCase();
+/* P2 2026-08-24: source category lists contain entries with leading spaces (' grotto', ' absence');
+   without trim those words landed in ALL_WORDS as ' absence' etc, so a correctly-typed guess
+   'absence' failed the includes() check and was silently ignored — unguessable words. */
+const wLower = w.toLowerCase().trim();
 if (!ALL_WORDS.includes(wLower)) ALL_WORDS.push(wLower);
 if (!WORD_TO_CATS[wLower]) WORD_TO_CATS[wLower] = [];
 if (!WORD_TO_CATS[wLower].includes(catName)) WORD_TO_CATS[wLower].push(catName);
@@ -1760,7 +1763,10 @@ state.stats.streak++;
 if (state.stats.streak > state.stats.bestStreak) {
 state.stats.bestStreak = state.stats.streak;
 }
-const key = Math.min(numGuesses, 20).toString();
+/* P1 2026-08-24: was Math.min(numGuesses, ...) — numGuesses is a local const of showWinScreen(),
+   undefined here; every WIN threw ReferenceError inside updateStats, so saveState() never ran
+   (win not persisted) and isSubmitting stayed true (input locked). Use the live guess count. */
+const key = Math.min(state.guesses.length, 20).toString();
 state.stats.distribution[key] = (state.stats.distribution[key] || 0) + 1;
 state.stats.lastPlayed = new Date().toDateString();
 } else if (isPlaying) {

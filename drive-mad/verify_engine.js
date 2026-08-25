@@ -9,7 +9,7 @@
 const { bootGame } = require('../_optimization/scripts/harness-lib.js');
 const g = bootGame('drive-mad', { inject: {
   anchor: 'function winLevel() {',
-  exports: "globalThis.__DM = { run: () => running, won: () => (car.crashed && typeof lastWin !== 'undefined' ? lastWin : false), s: () => car.s, y: () => car.y, pitch: () => car.pitch, v: () => car.v, len: () => road[road.length - 1].s, onG: () => car.onGround, crashed: () => car.crashed, start: (i) => startLevel(i) };",
+  exports: "globalThis.__DM = { run: () => running, won: () => ((save.levels[currentLevelIdx] || {}).stars || 0) > 0, s: () => car.s, y: () => car.y, pitch: () => car.pitch, v: () => car.v, len: () => road[road.length - 1].s, onG: () => car.onGround, crashed: () => car.crashed, start: (i) => startLevel(i) };",
 } });
 let pass = 0, fail = 0; const fails = [];
 const T = (n, ok, info) => { if (ok) pass++; else { fail++; fails.push(n + (info ? ': ' + info : '')); } };
@@ -24,6 +24,10 @@ let guard = 0, maxS = 0, won = false, restarts = 0;
 while (guard++ < 250000) {
   if (!g.call('__DM.run()')) break;
   if (g.call('__DM.won()')) { won = true; break; }
+  // winLevel() and crashCar() both set car.crashed and freeze update() — no point driving on.
+  // (Old loop keyed off a `lastWin` engine variable that never existed, so it ALWAYS burned
+  // the full 250000-iteration budget ~150s; the archived PASS won only via the maxS fallback.)
+  if (g.call('__DM.crashed()')) break;
   const pitch = g.call('__DM.pitch()') || 0;
   const s = g.call('__DM.s()') || 0;
   if (s < maxS - 5) restarts++; // engine reset us (crash)

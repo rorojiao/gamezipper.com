@@ -2,7 +2,9 @@
 const fs = require('fs');
 const vm = require('vm');
 
-const html = fs.readFileSync('/home/msdn/gamezipper.com/nuritwin/index.html', 'utf8');
+const path = require('path');
+const DIR = __dirname;
+const html = fs.readFileSync(path.join(DIR, 'index.html'), 'utf8');
 let checks = [];
 function check(name, cond) { checks.push({name, pass: !!cond}); }
 
@@ -34,8 +36,9 @@ check('JSON-LD has publisher GameZipper', html.includes('GameZipper'));
 check('Has gz-sr-only H1', html.includes('gz-sr-only') && html.includes('Nuritwin'));
 check('No site-analytics pixel (deprecated)', !html.includes('site-analytics') || html.toLowerCase().indexOf('site-analytics') === -1);
 
-// 4. Game code checks
-const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>\s*<\/body>/);
+// 4. Game code checks — main game script is the inline block defining LEVELS
+// (trailing site-wide blocks e.g. onboarding sit between it and </body>)
+const scriptMatch = html.match(/<script>([\s\S]*?var LEVELS=[\s\S]*?)<\/script>/);
 check('Has main script block', !!scriptMatch);
 if (scriptMatch) {
   const js = scriptMatch[1];
@@ -67,11 +70,10 @@ if (scriptMatch) {
 }
 
 // 5. Assets
-check('icon.png exists', fs.existsSync('/home/msdn/gamezipper.com/nuritwin/icon.png'));
-check('og-image.jpg exists', fs.existsSync('/home/msdn/gamezipper.com/nuritwin/og-image.jpg'));
-check('BENCHMARK.md exists', fs.existsSync('/home/msdn/gamezipper.com/nuritwin/BENCHMARK.md'));
-check('gen_levels.py exists', fs.existsSync('/home/msdn/gamezipper.com/nuritwin/gen_levels.py'));
-check('levels.json exists', fs.existsSync('/home/msdn/gamezipper.com/nuritwin/levels.json'));
+check('icon.png exists', fs.existsSync(path.join(DIR, 'icon.png')));
+check('og-image.jpg exists', fs.existsSync(path.join(DIR, 'og-image.jpg')));
+check('BENCHMARK.md exists', fs.existsSync(path.join(DIR, 'BENCHMARK.md')));
+check('levels.json exists', fs.existsSync(path.join(DIR, 'levels.json')));
 
 // Report
 let pass = 0, fail = 0;

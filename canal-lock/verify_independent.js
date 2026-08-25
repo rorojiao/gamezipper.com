@@ -4,8 +4,9 @@
 //
 // Usage: node verify_independent.js [levels.json]
 const fs = require('fs');
+const path = require('path');
 
-const file = process.argv[2] || 'levels.json';
+const file = process.argv[2] || path.join(__dirname, 'levels.json');
 const levels = JSON.parse(fs.readFileSync(file, 'utf8'));
 
 // Independent solver: BFS over (levels tuple, removed-gates set).

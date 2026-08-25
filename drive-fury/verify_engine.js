@@ -43,14 +43,13 @@ while (guard++ < 400000) {
   if (maxX >= g.call('__DF.finish()')) { for (let k = 0; k < 200 && g.call('__DF.st()') === 'playing'; k++) g.pump(3); }
 }
 const finish = g.call('__DF.finish()');
-/* HONEST FAIL (P0, documented): drive-fury's wheel-spring physics is far below critical
- * damping — in production browsers the vehicle backflips at x≈163 on flat ground and level 1
- * is unbeatable with full throttle (real-browser evidence: x stalls 161-163 forever, speed 41,
- * angle -16.8rad, av 62rad/s frozen mid-crash). Applied stabilizers (av clamp ±5, vy clamp,
- * hard ground snap) stop the infinite flip/launch; the underlying spring model still needs a
- * retune (K=4200 vs mass=1 needs damping ~130/wheel, has 90) before any policy can finish. */
-T('level-completed', won || maxX >= finish, 'maxX=' + Math.round(maxX) + ' finish=' + Math.round(finish) + ' st=' + g.call('__DF.st()') + ' [P0 physics: see note]');
-T('distance-driven', maxX > 130, 'maxX=' + Math.round(maxX) + ' [post-stabilizer progress: spawn 120 -> ' + Math.round(maxX) + ']');
+/* Physics note (fixed 2026-08-24): the wheel-spring integrator was numerically unstable at
+ * full frame dt (angular mode ~210 rad/s per px penetration vs ~162 damping; rear wheel also
+ * read fPen and contact force could go negative), bouncing/backflipping the car on flat ground
+ * — level 1 was unbeatable. updatePhysics now integrates contact in 4 substeps with the same
+ * constants/handling; level 1 completes under full throttle through the engine win path. */
+T('level-completed', won || maxX >= finish, 'maxX=' + Math.round(maxX) + ' finish=' + Math.round(finish) + ' st=' + g.call('__DF.st()') + ' [physics: see note]');
+T('distance-driven', maxX > 130, 'maxX=' + Math.round(maxX) + ' [spawn 120 -> ' + Math.round(maxX) + ']');
 T('no-vm-errors', !(g.sandbox.__errors || []).some(e => /TypeError|ReferenceError/.test(e)),
   JSON.stringify((g.sandbox.__errors || []).find(e => /TypeError|ReferenceError/.test(e)) || '').slice(0, 80));
 

@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 /**
  * Spiral Galaxies — code-level QA checklist.
- * Runs without browser, verifies HTML structure, meta, scripts, assets, no obvious bugs.
+ * Runs without browser, verifies assets and levels data integrity.
+ *
+ * The plural slug is archived: index.html is a canonical redirect stub to the
+ * live spiral-galaxy keeper. When the stub is detected, verify the redirect
+ * contract (noindex/canonical/meta refresh/JS redirect) instead of the removed
+ * full-game markup. levels.json data checks apply either way.
  */
 const fs = require('fs');
 const path = require('path');
@@ -19,52 +24,67 @@ check('index.html present', fs.existsSync(path.join(DIR, 'index.html')));
 check('icon.png present', fs.existsSync(path.join(DIR, 'icon.png')));
 check('og-image.jpg present', fs.existsSync(path.join(DIR, 'og-image.jpg')));
 check('levels.json present', fs.existsSync(path.join(DIR, 'levels.json')));
-check('gen_levels.py present', fs.existsSync(path.join(DIR, 'gen_levels.py')));
 check('verify_independent.js present', fs.existsSync(path.join(DIR, 'verify_independent.js')));
 check('verify_engine.js present', fs.existsSync(path.join(DIR, 'verify_engine.js')));
 check('BENCHMARK.md present', fs.existsSync(path.join(DIR, 'BENCHMARK.md')));
 
-// HTML structural checks
-check('HTML has <!DOCTYPE html>', /^<!DOCTYPE html>/i.test(HTML));
-check('HTML has <html lang="en">', /<html\s+lang="en"/i.test(HTML));
-check('HTML has viewport meta', /<meta\s+name="viewport"/i.test(HTML));
-check('HTML has title', /<title>[^<]+<\/title>/i.test(HTML));
-check('HTML has meta description', /<meta\s+name="description"/i.test(HTML));
-check('HTML has canonical link', /<link\s+rel="canonical"/i.test(HTML));
-check('HTML has og:title', /property="og:title"/i.test(HTML));
-check('HTML has og:description', /property="og:description"/i.test(HTML));
-check('HTML has og:image', /property="og:image"/i.test(HTML));
-check('HTML has twitter:card', /name="twitter:card"/i.test(HTML));
-check('HTML has VideoGame JSON-LD', /"@type":"VideoGame"/.test(HTML) || /VideoGame/.test(HTML));
-check('HTML has HowTo JSON-LD', /"@type":"HowTo"/.test(HTML) || /HowTo/.test(HTML));
-check('HTML has FAQPage JSON-LD', /"@type":"FAQPage"/.test(HTML) || /FAQPage/.test(HTML));
-check('HTML has BreadcrumbList JSON-LD', /"@type":"BreadcrumbList"/.test(HTML) || /BreadcrumbList/.test(HTML));
-check('HTML has gz-sr-only h1', /<h1[^>]*class="gz-sr-only"/.test(HTML));
-check('HTML has board canvas', /<canvas[^>]+id="board"/.test(HTML));
-check('HTML has levelGrid', /id="levelGrid"/.test(HTML));
-check('HTML has palette', /id="palette"/.test(HTML));
-check('HTML has hintBtn', /id="hintBtn"/.test(HTML));
-check('HTML has undoBtn', /id="undoBtn"/.test(HTML));
-check('HTML has restartBtn', /id="restartBtn"/.test(HTML));
-check('HTML has winOverlay', /id="winOverlay"/.test(HTML));
-check('HTML has adsterra-manager.js', /adsterra-manager\.js/.test(HTML));
-check('HTML has game-footer.js', /game-footer\.js/.test(HTML));
-check('HTML has gz-analytics.js', /gz-analytics\.js/.test(HTML));
-check('HTML loads site-analytics pixel (deprecated — should NOT)', !/<script[^>]+site-analytics\.js/i.test(HTML));
-check('HTML has monetag-manager.js', /monetag-manager\.js/.test(HTML));
-check('HTML defines LEVELS array', /const\s+LEVELS\s*=\s*\[/.test(HTML));
-check('HTML uses Web Audio', /AudioContext|webkitAudioContext/.test(HTML));
-check('HTML has no external resources with HTTP:// (insecure)', !/src=["']http:\/\//i.test(HTML) && !/href=["']http:\/\/(?!gamezipper)/i.test(HTML));
-check('HTML has keyboard shortcut "1-9" for stars', /['"]1-9['"]|\[1-9\]/.test(HTML));
-check('HTML handles Undo (z/u)', /undo\(\)|'z'|'u'|'Z'|'U'/i.test(HTML));
-check('HTML handles Restart (r)', /'r'|'R'/.test(HTML));
-check('HTML handles Hint (h)', /'h'|'H'/.test(HTML));
-check('HTML has localStorage save', /localStorage/.test(HTML));
-check('HTML has 30 levels embedded', (HTML.match(/\{id:\d+,tier:/g) || []).length >= 30);
-check('HTML 30 levels match all tier names', /Beginner/.test(HTML) && /Easy/.test(HTML) && /Medium/.test(HTML) && /Hard/.test(HTML) && /Expert/.test(HTML));
-check('HTML no TODO/FIXME', !/TODO|FIXME/i.test(HTML));
-check('HTML no obvious eval()', !/eval\(/.test(HTML));
-check('HTML no document.write', !/document\.write\(/.test(HTML));
+const isRedirect = /http-equiv=["']refresh["']/i.test(HTML);
+if (isRedirect) {
+  // Archived slug: index.html only carries the redirect to the keeper slug.
+  const expected = 'https://gamezipper.com/spiral-galaxy/';
+  const canonical = HTML.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i);
+  const refresh = HTML.match(/http-equiv=["']refresh["'][^>]+content=["'][^"']*url=([^"']+)["']/i);
+  check('redirect stub marked noindex', /name=["']robots["'][^>]+content=["'][^"']*noindex/i.test(HTML));
+  check('canonical points at spiral-galaxy keeper', !!canonical && canonical[1] === expected, canonical && canonical[1]);
+  check('meta refresh points at spiral-galaxy keeper', !!refresh && refresh[1] === expected, refresh && refresh[1]);
+  check('JS redirect points at spiral-galaxy keeper',
+    HTML.includes(`window.location.replace('${expected}')`) || HTML.includes(`window.location.replace("${expected}")`));
+  check('HTML no TODO/FIXME', !/TODO|FIXME/i.test(HTML));
+  check('HTML no obvious eval()', !/eval\(/.test(HTML));
+  check('HTML no document.write', !/document\.write\(/.test(HTML));
+} else {
+  // Live game page: full HTML structural checks.
+  check('HTML has <!DOCTYPE html>', /^<!DOCTYPE html>/i.test(HTML));
+  check('HTML has <html lang="en">', /<html\s+lang="en"/i.test(HTML));
+  check('HTML has viewport meta', /<meta\s+name="viewport"/i.test(HTML));
+  check('HTML has title', /<title>[^<]+<\/title>/i.test(HTML));
+  check('HTML has meta description', /<meta\s+name="description"/i.test(HTML));
+  check('HTML has canonical link', /<link\s+rel="canonical"/i.test(HTML));
+  check('HTML has og:title', /property="og:title"/i.test(HTML));
+  check('HTML has og:description', /property="og:description"/i.test(HTML));
+  check('HTML has og:image', /property="og:image"/i.test(HTML));
+  check('HTML has twitter:card', /name="twitter:card"/i.test(HTML));
+  check('HTML has VideoGame JSON-LD', /"@type":"VideoGame"/.test(HTML) || /VideoGame/.test(HTML));
+  check('HTML has HowTo JSON-LD', /"@type":"HowTo"/.test(HTML) || /HowTo/.test(HTML));
+  check('HTML has FAQPage JSON-LD', /"@type":"FAQPage"/.test(HTML) || /FAQPage/.test(HTML));
+  check('HTML has BreadcrumbList JSON-LD', /"@type":"BreadcrumbList"/.test(HTML) || /BreadcrumbList/.test(HTML));
+  check('HTML has gz-sr-only h1', /<h1[^>]*class="gz-sr-only"/.test(HTML));
+  check('HTML has board canvas', /<canvas[^>]+id="board"/.test(HTML));
+  check('HTML has levelGrid', /id="levelGrid"/.test(HTML));
+  check('HTML has palette', /id="palette"/.test(HTML));
+  check('HTML has hintBtn', /id="hintBtn"/.test(HTML));
+  check('HTML has undoBtn', /id="undoBtn"/.test(HTML));
+  check('HTML has restartBtn', /id="restartBtn"/.test(HTML));
+  check('HTML has winOverlay', /id="winOverlay"/.test(HTML));
+  check('HTML has adsterra-manager.js', /adsterra-manager\.js/.test(HTML));
+  check('HTML has game-footer.js', /game-footer\.js/.test(HTML));
+  check('HTML has gz-analytics.js', /gz-analytics\.js/.test(HTML));
+  check('HTML loads site-analytics pixel (deprecated — should NOT)', !/<script[^>]+site-analytics\.js/i.test(HTML));
+  check('HTML has monetag-manager.js', /monetag-manager\.js/.test(HTML));
+  check('HTML defines LEVELS array', /const\s+LEVELS\s*=\s*\[/.test(HTML));
+  check('HTML uses Web Audio', /AudioContext|webkitAudioContext/.test(HTML));
+  check('HTML has no external resources with HTTP:// (insecure)', !/src=["']http:\/\//i.test(HTML) && !/href=["']http:\/\/(?!gamezipper)/i.test(HTML));
+  check('HTML has keyboard shortcut "1-9" for stars', /['"]1-9['"]|\[1-9\]/.test(HTML));
+  check('HTML handles Undo (z/u)', /undo\(\)|'z'|'u'|'Z'|'U'/i.test(HTML));
+  check('HTML handles Restart (r)', /'r'|'R'/.test(HTML));
+  check('HTML handles Hint (h)', /'h'|'H'/.test(HTML));
+  check('HTML has localStorage save', /localStorage/.test(HTML));
+  check('HTML has 30 levels embedded', (HTML.match(/\{id:\d+,tier:/g) || []).length >= 30);
+  check('HTML 30 levels match all tier names', /Beginner/.test(HTML) && /Easy/.test(HTML) && /Medium/.test(HTML) && /Hard/.test(HTML) && /Expert/.test(HTML));
+  check('HTML no TODO/FIXME', !/TODO|FIXME/i.test(HTML));
+  check('HTML no obvious eval()', !/eval\(/.test(HTML));
+  check('HTML no document.write', !/document\.write\(/.test(HTML));
+}
 
 // Levels data integrity
 const levels = JSON.parse(fs.readFileSync(path.join(DIR, 'levels.json'))).levels;

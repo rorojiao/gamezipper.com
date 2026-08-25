@@ -1093,6 +1093,11 @@ function startPuzzle(puzzle, mode){
   lastFrameTime = performance.now();
   updateGameUI();
   showScreen("game");
+  /* P0 2026-08-24: initHexLayout() existed but was never called — hexLetters stayed []
+     at puzzle start, so the honeycomb rendered letter-less and every tap/letter key was
+     dropped by the hexLetters[idx] guard until the player happened to press SPACE
+     (shuffle). The game shipped unplayable-by-mouse at level start. */
+  initHexLayout();
   drawHoneycomb();
   startGameLoop();
   if(save.settings.music && audioReady && !bgmGain) startBGM();
@@ -1534,7 +1539,9 @@ function setupCanvasInput(){
 }
 
 function onKey(e){
-  if(currentMode !== "game" && currentMode !== "daily" && currentMode !== "endless") return;
+  /* P1 2026-08-24: guard omitted "campaign" — startChapter/startPuzzle set currentMode="campaign",
+   so keyboard input was dead in all 50 campaign levels (mouse/touch only). */
+  if(currentMode !== "campaign" && currentMode !== "game" && currentMode !== "daily" && currentMode !== "endless") return;
   if(e.key === "Enter"){ submitWord(); e.preventDefault(); return; }
   if(e.key === "Backspace"){ deleteLetter(); e.preventDefault(); return; }
   if(e.key === "Escape"){ clearWord(); e.preventDefault(); return; }
@@ -1542,11 +1549,22 @@ function onKey(e){
   // Letter key
   const k = e.key.toUpperCase();
   if(k.length === 1 && k >= "A" && k <= "Z"){
-    // Find matching hex (prefer unselected)
-    let idx = hexLetters.findIndex((L, i) => L === k && !currentWord.some(c => c.idx === i));
-    if(idx === -1) idx = hexLetters.findIndex(L => L === k);
-    if(idx >= 0) tapHex(idx);
+    const idx = hexLetters.findIndex(L => L === k);
+    if(idx >= 0) appendLetter(idx);
   }
+}
+
+/* P0 2026-08-24: keyboard letters routed through tapHex's toggle (2nd tap on an already-selected
+   hex DESELECTS it), so any word needing a repeated letter was untypeable — yet the engine's own
+   puzzle hints include such words (ch1_01 "abbe", "babe") and maxWords counts them (NYT-style
+   letter reuse), making Queen Bee / level completion unreachable on every affected level.
+   Keyboard now always appends (tapHex keeps mouse deselect UX). */
+function appendLetter(idx){
+  if(!hexLetters[idx]) return;
+  currentWord.push({letter: hexLetters[idx], idx: idx});
+  playLetterTap();
+  drawHoneycomb();
+  updateCurrentWordDisplay();
 }
 
 function tapHex(idx){

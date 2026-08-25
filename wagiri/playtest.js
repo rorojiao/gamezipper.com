@@ -1,8 +1,9 @@
 // Playtest: replays the engine's logic to verify that the recorded solution
 // passes the same validation as the in-game checkProgress would.
 const fs = require('fs');
+const path = require('path');
 
-const html = fs.readFileSync('/home/msdn/gamezipper.com/wagiri/index.html', 'utf8');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 const m = html.match(/const __LEVELS_DATA_SCRIPT__ = `([^`]+)`/);
 if (!m) { console.error('No levels data found'); process.exit(1); }
 const LEVELS = JSON.parse(m[1]);

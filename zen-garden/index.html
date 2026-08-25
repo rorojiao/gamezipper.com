@@ -298,7 +298,7 @@ function genDailyLevel(seed,n){
   return{id:'daily',n:n,p:puzzle,s:sol}
 }
 
-const G={level:null,grid:null,locked:null,size:0,mistakes:0,hintsLeft:3,hintsUsed:0,history:[],startTime:0,timerId:null,elapsed:0,completed:false,soundOn:true,isDaily:false,save:null,rafId:null};
+const G={level:null,grid:null,locked:null,size:0,mistakes:0,hintsLeft:3,hintsUsed:0,history:[],startTime:0,timerId:null,elapsed:0,completed:false,soundOn:true,isDaily:false,save:null,rafId:null,pendingMistake:null};
 
 function defaultSave(){return{version:1,levels:{},daily:{},soundOn:true,lastPlayed:1,tutorialSeen:false}}
 function loadSave(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return defaultSave();const s=JSON.parse(raw);if(!s||s.version!==1)return defaultSave();return s}catch(e){return defaultSave()}}
@@ -356,12 +356,32 @@ function refreshCellVisuals(){
 }
 function updateHUD(){const n=G.size;let filled=0;for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(G.grid[r][c]!==null)filled++;$('hud-filled').textContent=filled+'/'+(n*n);$('hud-mistakes').textContent=G.mistakes;$('hud-mistakes').className='val'+(G.mistakes>0?' warn':'');$('hud-hints').textContent=G.hintsLeft;$('hud-hints').className='val'+(G.hintsLeft===0?' warn':'')}
 
+/* P2 2026-08-25: the tap cycle null->black->white forces EVERY white placement through a
+   transient black stone. The old code counted a mistake the instant any placed stone
+   violated the rules, so a transient black landing next to a "11" clue pair formed a
+   triple and was counted — a flawless solve could never earn 3 stars (level 1 alone has
+   two such cells, and it is the first level every new player meets). A mistake is now
+   confirmed only when the violating stone is STILL on the board when the player next
+   acts (taps another cell, taps Hint/Undo, or confirms Reset) — pure cycle-throughs are
+   never counted. Instant violation HIGHLIGHTING is unchanged. */
+function confirmPendingMistake(){
+  if(!G.pendingMistake)return;
+  const p=G.pendingMistake.split(','),pr=+p[0],pc=+p[1];
+  if(G.grid[pr]&&G.grid[pr][pc]!==null&&findViolations(G.grid,G.size).has(G.pendingMistake))G.mistakes++;
+  G.pendingMistake=null;
+}
 function onCellClick(e){if(e.detail===0)return;handleCellTap(e.currentTarget)}
 function onCellTouchEnd(e){e.preventDefault();handleCellTap(e.currentTarget)}
-function handleCellTap(cell){if(G.completed)return;const r=+cell.dataset.r,c=+cell.dataset.c;if(G.locked[r][c]){Audio.sfxClick();return}const cur=G.grid[r][c];let next;if(cur===null)next=1;else if(cur===1)next=0;else next=null;G.history.push({r,c,prev:cur});G.grid[r][c]=next;if(next===null)Audio.sfxClear();else if(next===1)Audio.sfxPlaceBlack();else Audio.sfxPlaceWhite();if(next!==null){const bad=findViolations(G.grid,G.size);if(bad.has(r+','+c))G.mistakes++}refreshCellVisuals();if(isComplete(G.grid,G.size))onLevelComplete()}
+function handleCellTap(cell){if(G.completed)return;const r=+cell.dataset.r,c=+cell.dataset.c;if(G.locked[r][c]){Audio.sfxClick();return}const cur=G.grid[r][c];
+  /* P2 2026-08-25 (pendingMistake): confirm the previous stone only when the player has
+     moved on to a DIFFERENT cell; cycling the same cell away is a transient, never a
+     mistake. Confirmed against the pre-tap board so the new tap cannot retroactively
+     create/erase the pending violation. */
+  if(G.pendingMistake===r+','+c)G.pendingMistake=null;else confirmPendingMistake();
+  let next;if(cur===null)next=1;else if(cur===1)next=0;else next=null;G.history.push({r,c,prev:cur});G.grid[r][c]=next;if(next===null)Audio.sfxClear();else if(next===1)Audio.sfxPlaceBlack();else Audio.sfxPlaceWhite();if(next!==null){const bad=findViolations(G.grid,G.size);if(bad.has(r+','+c))G.pendingMistake=r+','+c}refreshCellVisuals();if(isComplete(G.grid,G.size))onLevelComplete()}
 
-function actHint(){if(G.completed)return;if(G.hintsLeft<=0){toast('No hints left','warn');return}const n=G.size;let target=null;for(let r=0;r<n&&!target;r++)for(let c=0;c<n&&!target;c++){if(G.locked[r][c])continue;if(G.grid[r][c]!==G.level.solution[r][c])target=[r,c]}if(!target){toast('No hints needed — looking good!','success');return}const [r,c]=target;G.history.push({r,c,prev:G.grid[r][c]});G.grid[r][c]=G.level.solution[r][c];G.hintsLeft--;G.hintsUsed++;Audio.sfxHint();refreshCellVisuals();const cell=$('board').children[r*n+c];if(cell){cell.classList.add('hint-glow');setTimeout(()=>cell.classList.remove('hint-glow'),1000)}toast('Hint revealed','success');if(isComplete(G.grid,n))onLevelComplete()}
-function actUndo(){if(G.completed)return;if(G.history.length===0){toast('Nothing to undo','warn');return}const last=G.history.pop();G.grid[last.r][last.c]=last.prev;Audio.sfxClear();refreshCellVisuals()}
+function actHint(){if(G.completed)return;if(G.hintsLeft<=0){toast('No hints left','warn');return}confirmPendingMistake();/* P2 2026-08-25: acting elsewhere confirms a pending mistake */const n=G.size;let target=null;for(let r=0;r<n&&!target;r++)for(let c=0;c<n&&!target;c++){if(G.locked[r][c])continue;if(G.grid[r][c]!==G.level.solution[r][c])target=[r,c]}if(!target){toast('No hints needed — looking good!','success');return}const [r,c]=target;G.history.push({r,c,prev:G.grid[r][c]});G.grid[r][c]=G.level.solution[r][c];G.hintsLeft--;G.hintsUsed++;Audio.sfxHint();refreshCellVisuals();const cell=$('board').children[r*n+c];if(cell){cell.classList.add('hint-glow');setTimeout(()=>cell.classList.remove('hint-glow'),1000)}toast('Hint revealed','success');if(isComplete(G.grid,n))onLevelComplete()}
+function actUndo(){if(G.completed)return;if(G.history.length===0){toast('Nothing to undo','warn');return}confirmPendingMistake();/* P2 2026-08-25: acting elsewhere confirms a pending mistake */const last=G.history.pop();G.grid[last.r][last.c]=last.prev;Audio.sfxClear();refreshCellVisuals()}
 function actReset(){
   if(G.completed)return;
   // Two-tap confirmation: first tap arms, second tap within 3s confirms
@@ -370,6 +390,7 @@ function actReset(){
     setTimeout(()=>{G._resetArmed=false},3000);return;
   }
   G._resetArmed=false;
+  confirmPendingMistake();/* P2 2026-08-25: a violation still on the board when the player confirms Reset must count — mistakes persist across reset by design */
   const n=G.size;for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(!G.locked[r][c])G.grid[r][c]=null;G.history=[];Audio.sfxClear();refreshCellVisuals();toast('Garden reset')
 }
 function actCheck(){if(G.completed)return;const n=G.size,bad=findViolations(G.grid,n);if(bad.size===0){let allFilled=true;for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(G.grid[r][c]===null)allFilled=false;if(allFilled){Audio.sfxCheckOk();toast('Perfect harmony!','success')}else{Audio.sfxCheckOk();toast('No conflicts — keep going','success')}}else{Audio.sfxWrong();toast(bad.size+' conflicts found','warn')}}
@@ -390,6 +411,11 @@ function onLevelComplete(){
 }
 
 function startLevel(parsed,isDaily){
+  /* P3 2026-08-25: the 3s two-tap confirmation flags (_resetArmed/_menuArmed) survived
+     level transitions — arm Reset, exit via the double-tap Menu, enter any other level
+     and the FIRST Reset tap instantly wiped the fresh board with no confirmation.
+     Both flags are per-attempt UI state; clear them on level start. */
+  G._resetArmed=false;G._menuArmed=false;G.pendingMistake=null;
   G.level=parsed;G.size=parsed.n;G.grid=parsed.clues.map(r=>r.slice());G.locked=parsed.clues.map(r=>r.map(v=>v!==null));G.mistakes=0;G.hintsLeft=3;G.hintsUsed=0;G.history=[];G.elapsed=0;G.completed=false;G.isDaily=!!isDaily;
   $('hdr-level').textContent=isDaily?'Daily Garden':('Level '+parsed.id);
   $('hdr-size').textContent=parsed.n+' \u00d7 '+parsed.n;

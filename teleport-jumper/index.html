@@ -611,8 +611,22 @@ function stopBGM(){
 // Collision
 function isWall(x,y){return walls[x+","+y]===true;}
 function isThinWall(x,y){return thinWalls[x+","+y]===true;}
-function isBlocked(x,y){return x<0||x>=G.COLS||y<0||y>=G.ROWS||isWall(x,y);}
-function isSolidForGhost(x,y){return x<0||x>=G.COLS||y<0||y>=G.ROWS||isWall(x,y);}
+// P1 fix 2026-08-25 (QA verifier): thin walls never blocked WALKING — isBlocked
+// checked only isWall, so every T wall was walk-through (tier-2's "teleport
+// through thin walls" mechanic was dead: you could just walk across them).
+// Authored design (tier-2 comment): "T=thin wall (can teleport through but
+// not walk through)". Walk now respects T; the ghost still passes them.
+function isBlocked(x,y){return x<0||x>=G.COLS||y<0||y>=G.ROWS||isWall(x,y)||isThinWall(x,y);}
+// P0 fix 2026-08-25 (QA verifier): the ghost treated walls as solid, so the
+// advertised core mechanic ("Blink through walls" — title-screen tagline) never
+// worked: the teleport preview could only walk open corridors like the player.
+// 18/80 authored levels seal the exit behind a full wall perimeter (L12/14/15
+// in the tutorial tier), and both walk and ghost paths are wall-blocked, so
+// those levels were PERMANENTLY UNWINNABLE and progression hard-stuck at L12
+// (next level only unlocks by winning). The ghost now passes walls; only the
+// board bounds are solid for it, matching the par values (e.g. L2 "one wall,
+// need teleport", par 1) and the tier-2 thin-wall design.
+function isSolidForGhost(x,y){return x<0||x>=G.COLS||y<0||y>=G.ROWS;}
 
 // Movement
 var keysDown={};

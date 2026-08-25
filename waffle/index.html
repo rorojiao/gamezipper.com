@@ -484,11 +484,27 @@ function scrambleGrid(sol,seed){
   const rng=mulberry32(seed+9999);
   const ac=[];
   for(let r=0;r<5;r++)for(let c=0;c<5;c++)if(isActiveCell(r,c))ac.push([r,c]);
-  const lt=ac.map(([r,c])=>sol[r][c]);
-  for(let i=lt.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[lt[i],lt[j]]=[lt[j],lt[i]]}
-  if(ac.every(([r,c],i)=>lt[i]===sol[r][c])&&lt.length>1)[lt[0],lt[1]]=[lt[1],lt[0]];
+  /* P0 2026-08-24: was a full random shuffle of all 21 letters — a random permutation of 21
+     cells needs ~17 swaps on average (misplaced − cycles), but the game allows only 15 swaps,
+     so ~1/3 of daily/practice puzzles were mathematically unwinnable (measured: 64/200 seeds
+     needed >15, worst 19). Scramble is now a product of ≤12 random transpositions of the
+     solution, so every puzzle is solvable in ≤12 < 15 swaps. */
   const g=sol.map(r=>[...r]);
-  ac.forEach(([r,c],i)=>{g[r][c]=lt[i]});
+  for(let k=0;k<12;k++){
+    const i=Math.floor(rng()*ac.length),j=Math.floor(rng()*ac.length);
+    if(i===j)continue;
+    const [r1,c1]=ac[i],[r2,c2]=ac[j];
+    const t=g[r1][c1];g[r1][c1]=g[r2][c2];g[r2][c2]=t;
+  }
+  // guard: transpositions can cancel out — never ship an already-solved grid
+  let solvedNow=true;
+  for(const [r,c] of ac)if(g[r][c]!==sol[r][c]){solvedNow=false;break}
+  if(solvedNow){
+    for(let i=0;i<ac.length&&solvedNow;i++)for(let j=i+1;j<ac.length;j++){
+      const [r1,c1]=ac[i],[r2,c2]=ac[j];
+      if(g[r1][c1]!==g[r2][c2]){const t=g[r1][c1];g[r1][c1]=g[r2][c2];g[r2][c2]=t;solvedNow=false;break}
+    }
+  }
   return g;
 }
 

@@ -1,5 +1,5 @@
 const fs = require('fs');
-const html = fs.readFileSync('/home/msdn/gamezipper.com/nuritwin/index.html','utf8');
+const html = fs.readFileSync(require('path').join(__dirname, 'index.html'),'utf8');
 // Extract all script blocks
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
 console.log('Found', scripts.length, 'inline script blocks');

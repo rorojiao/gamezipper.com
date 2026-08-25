@@ -579,6 +579,12 @@ function onPointerUp(e){
   }
   state.dragStart=null;
   state.dragEnd=null;
+  // FIX(tap-tap-select-cleared,P2): this used to clear state.selected on EVERY pointerup, so
+  // "tap an emoji on the left, then tap its match on the right" — the interaction documented
+  // in the page FAQ, the meta description and every level hint — could never connect; only
+  // dragging worked. Keep the selection sticky when the pointer lifted without landing on a
+  // right slot: onPointerDown's right-slot branch completes the connection on the next tap.
+  if(ri<0)return;
   state.selected=null;
   drawGame();
 }
@@ -696,8 +702,11 @@ function useHint(){
           state.hintsLeft--;
           state.hintsUsed++;
           sfxHint();
-          showHintHighlight(i,j);
+          // FIX(hint-text-wiped,P2): updateUI() clears hint-display, and it used to run AFTER
+          // showHintHighlight — the hint sentence was set and instantly wiped, so spending a
+          // hint showed only the pulse animation, never the explanation text.
           updateUI();
+          showHintHighlight(i,j);
           return;
         }
       }

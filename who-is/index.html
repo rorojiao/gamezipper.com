@@ -363,7 +363,12 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 // ============================================================
 
 // ---- CONSTANTS ----
-const LEVELS_PER_CHAPTER = 5;
+// FIX(P2): the game has 50 levels in 5 chapters of 10 (startFromChapter
+// computes level = (chapter-1)*10+1 and the level counter shows /50), but the
+// level select rendered only 5 buttons per chapter — levels 26-50 (all of
+// chapters 4-5, half of 3) were unreachable from the Level Select screen and
+// every chapter block showed half its levels. 10 matches the real structure.
+const LEVELS_PER_CHAPTER = 10;
 const TOTAL_LEVELS = 50;
 const HINT_COST = 10;
 const CHAPTER_NAMES = [
@@ -1734,6 +1739,15 @@ function handlePointerDown(e) {
   var lvl = LEVELS[currentLevel - 1];
 
   // Check character taps
+  // FIX(P0): the old hit-test returned the FIRST box containing the tap
+  // (chars in order, then objects in order). Five levels (21, 31, 33, 36, 47)
+  // draw their answer object on top of a larger earlier box (Reflection under
+  // the Window, Hidden Will inside the clock, Broken glass at the Victim's
+  // feet, Hidden Print on the hook, Ceiling hatch inside Walls) — every tap
+  // on the answer selected the big box instead, making those levels
+  // unwinnable. Collect ALL boxes under the tap and select the SMALLEST (the
+  // most specific drawn-on-top target the player actually aimed at).
+  var best = null;
   for (var i = 0; i < lvl.chars.length; i++) {
     var c = lvl.chars[i];
     var cx = c.x * cw;
@@ -1741,11 +1755,8 @@ function handlePointerDown(e) {
     var bw = c.w * cw;
     var bh = c.h * ch;
     if (x >= cx - bw / 2 && x <= cx + bw / 2 && y >= cy - bh * 0.4 && y <= cy + bh * 0.6) {
-      tapHighlight = { type: 'char', index: i };
-      selectedCharacter = i;
-      spawnParticles(cx, cy, c.color);
-      showCharacterStatement(i);
-      return;
+      var area = bw * bh;
+      if (!best || area < best.area) best = { type: 'char', index: i, area: area };
     }
   }
 
@@ -1757,11 +1768,24 @@ function handlePointerDown(e) {
     var ow = obj.w * cw;
     var oh = obj.h * ch;
     if (x >= ox && x <= ox + ow && y >= oy && y <= oy + oh) {
-      tapHighlight = { type: 'obj', index: i };
-      revealObject(i);
-      spawnParticles(obj.x * cw, obj.y * ch, obj.color);
-      return;
+      var oArea = ow * oh;
+      if (!best || oArea < best.area) best = { type: 'obj', index: i, area: oArea };
     }
+  }
+  if (best) {
+    if (best.type === 'char') {
+      var cc = lvl.chars[best.index];
+      tapHighlight = { type: 'char', index: best.index };
+      selectedCharacter = best.index;
+      spawnParticles(cc.x * cw, cc.y * ch, cc.color);
+      showCharacterStatement(best.index);
+    } else {
+      var co = lvl.objects[best.index];
+      tapHighlight = { type: 'obj', index: best.index };
+      revealObject(best.index);
+      spawnParticles(co.x * cw, co.y * ch, co.color);
+    }
+    return;
   }
 
   // Tap on empty space - deselect
@@ -1895,7 +1919,14 @@ function useHint() {
   playSound('hint');
   var lvl = LEVELS[currentLevel - 1];
   var hintIndex = 3 - hintsLeft;
-  if (hintIndex < lvl.hints.length) {
+  // FIX(P1): the LEVELS data declares its hint list as `hint:` (singular), but
+  // this read `lvl.hints` — undefined on ALL 50 levels, so useHint threw
+  // "Cannot read properties of undefined (reading 'length')" on the very first
+  // line and the hint button silently did nothing for the entire game (the
+  // uncaught error inside the inline onclick just dies in the console; hints
+  // never decrement, no hint text ever appears). Accept both spellings.
+  var hintsArr = lvl.hints || lvl.hint || [];
+  if (hintIndex < hintsArr.length) {
     hintsLeft--;
     hintsUsedThisLevel++;
     document.getElementById('hintLeft').textContent = hintsLeft;
@@ -1912,7 +1943,7 @@ function useHint() {
 
     var clueEl = document.getElementById('clue-display');
     var textEl = document.getElementById('clue-text');
-    textEl.textContent = 'HINT: ' + lvl.hints[hintIndex];
+    textEl.textContent = 'HINT: ' + hintsArr[hintIndex]; // FIX(P1): was lvl.hints — see the hintsArr note above
     clueEl.style.display = 'block';
     moves++;
     document.getElementById('moveDisplay').textContent = 'Moves: ' + moves;

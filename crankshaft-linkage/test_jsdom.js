@@ -1,5 +1,7 @@
-// jsdom integration test: load index.html, simulate menu→play→rotate→win
-let dom, doc;
+// jsdom integration test: crankshaft-linkage is now a permanent alias page
+// redirecting to antikythera-mechanism (no engine by design). Verify the stub
+// redirects consistently and the target exists locally as a real game page.
+let JSDOM;
 try {
   ({ JSDOM } = require('jsdom'));
 } catch(e) {
@@ -7,46 +9,37 @@ try {
   process.exit(0);
 }
 const fs = require('fs');
-const html = fs.readFileSync('index.html','utf8');
+const path = require('path');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 
-dom = new JSDOM(html, { runScripts: 'dangerously', resources: 'usable', pretendToBeVisual: true });
-doc = dom.window.document;
+const dom = new JSDOM(html);
+const doc = dom.window.document;
 
-// Wait for script
-setTimeout(()=>{
-  const w = dom.window;
-  let errors = [];
-  // Check screens exist
-  const menu = doc.getElementById('menu-screen');
-  const game = doc.getElementById('game-screen');
-  if(!menu || !game){ console.log('FAIL: screens missing'); process.exit(1); }
+let ok = true;
+const check = (name, cond, info) => {
+  console.log((cond ? 'PASS' : 'FAIL') + ': ' + name + (cond ? '' : ' (' + info + ')'));
+  if (!cond) ok = false;
+};
 
-  // Start game
-  w.startGame();
-  const title = doc.getElementById('level-title').textContent;
-  console.log('After startGame: title =', title);
+const refresh = doc.querySelector('meta[http-equiv="refresh"]');
+const refreshUrl = refresh ? (String(refresh.getAttribute('content')).match(/url=([^;"]+)/i) || [])[1] : '';
+const canon = doc.querySelector('link[rel="canonical"]');
+const canonUrl = canon ? canon.getAttribute('href') : '';
+const js = (html.match(/location\.replace\('([^']+)'\)/) || [])[1] || '';
+const last = u => String(u || '').replace(/\/+$/, '').split('/').pop();
 
-  // L1: n=2, p=6, solution [0,3]. Start angles [0,0]. Need to rotate crank 2 by 3.
-  const controls = doc.getElementById('crank-controls');
-  const buttons = controls.querySelectorAll('button');
-  console.log('Buttons:', buttons.length, '(expected 4: 2 cranks × 2 dir)');
+check('meta-refresh -> antikythera-mechanism', last(refreshUrl) === 'antikythera-mechanism', refreshUrl);
+check('canonical -> antikythera-mechanism', last(canonUrl) === 'antikythera-mechanism', canonUrl);
+check('js-replace -> antikythera-mechanism', last(js) === 'antikythera-mechanism', js);
+check('no-engine-by-design', !/<canvas|requestAnimationFrame/.test(html), 'alias page should not embed an engine');
 
-  // Click rotate crank[1] (index 2 = second crank right) three times
-  // buttons: [c0-left, c0-right, c1-left, c1-right]
-  for(let i=0;i<3;i++) buttons[3].click(); // c1 right ×3
+const tp = path.join(__dirname, '..', 'antikythera-mechanism', 'index.html');
+let tok = fs.existsSync(tp);
+if (tok) { // a real game page, not another alias hop
+  const th = fs.readFileSync(tp, 'utf8');
+  tok = !/http-equiv="refresh"|location\.replace/.test(th) || /<canvas|requestAnimationFrame|addEventListener/.test(th);
+}
+check('target-is-real-game', tok, 'antikythera-mechanism/index.html');
 
-  const alignCount = doc.getElementById('align-count').textContent;
-  console.log('After 3 rotations: align =', alignCount, '(expected 2/2 for L1)');
-
-  const overlay = doc.getElementById('win-overlay');
-  const won = overlay.classList.contains('active');
-  console.log('Win overlay active:', won);
-
-  if(won){
-    console.log('L1 solved! Stars:', doc.getElementById('win-stars').textContent);
-    console.log('jsdom integration: PASS');
-  } else {
-    console.log('jsdom integration: PARTIAL (level logic ok, win not triggered)');
-  }
-  process.exit(0);
-}, 500);
+console.log(ok ? 'jsdom alias integration: PASS' : 'jsdom alias integration: FAIL');
+process.exit(ok ? 0 : 1);

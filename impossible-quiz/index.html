@@ -332,6 +332,13 @@ _listeners=[];
 if(_raf){cancelAnimationFrame(_raf);_raf=null}
 }
 function on(el,ev,fn){_listeners.push([el,ev,fn]);el.addEventListener(ev,fn)}
+// ENGINE FIX 2026-08-25: the permanent controls (PLAY / TRY AGAIN / PLAY AGAIN / Skip /
+// window-resize) were registered via on(), i.e. into _listeners — so cleanup() ran
+// removeEventListener on them at every game start AND every game over. After the first
+// game over the menu buttons were permanently dead in real browsers (page reload was the
+// only way to play again). Previously masked in the jsdom harness only because its
+// removeEventListener stub was a no-op. bind() registers listeners cleanup() keeps.
+function bind(el,ev,fn){el.addEventListener(ev,fn)}
 function after(ms,fn){var t=setTimeout(fn,ms);_timers.push(t);return t}
 function every(ms,fn){var t=setInterval(fn,ms);_timers.push(t);return t}
 function clearTimer(t){clearTimeout(t);clearInterval(t);var i=_timers.indexOf(t);if(i>-1)_timers.splice(i,1)}
@@ -530,7 +537,11 @@ S.bombLeft=BOMB_TIME;bombEl.classList.remove('hidden');bombEl.textContent='BOMB 
 S.bombIv=every(1000,function(){
 S.bombLeft--;bombEl.textContent='BOMB '+S.bombLeft;
 sfxTick();
-if(S.bombLeft<=0){clearTimer(S.bombIv);S.bombIv=null;loseLife();showQuestion()}
+if(S.bombLeft<=0){clearTimer(S.bombIv);S.bombIv=null;loseLife();
+/* P1 2026-08-25: bomb expiry re-called showQuestion() WITHOUT advancing S.qi, so the
+   same bomb question re-armed forever — a failed bomb burned one life every 10s until
+   game over with the quiz frozen on that question. Advance like a wrong answer does. */
+if(S.lives>0){S.qi++;showQuestion()}}
 });
 }
 
@@ -696,10 +707,10 @@ function startGame(){
 cleanup();resetS();showOnly('question-screen');showQuestion();
 }
 
-on($('play-btn'),'click',startGame);
-on($('retry-btn'),'click',startGame);
-on($('replay-btn'),'click',startGame);
-on(skipBtn,'click',function(){
+bind($('play-btn'),'click',startGame);
+bind($('retry-btn'),'click',startGame);
+bind($('replay-btn'),'click',startGame);
+bind(skipBtn,'click',function(){
 var avail=Math.floor(S.correct/SKIP_EVERY)-S.skipUsed;
 if(avail<=0)return;
 S.skipUsed++;S.qi++;
@@ -730,7 +741,7 @@ if(p.y<0)p.y=bgC.height;if(p.y>bgC.height)p.y=0;
 _raf=requestAnimationFrame(drawPts);
 }
 initPts();drawPts();
-on(window,'resize',function(){initPts()});
+bind(window,'resize',function(){initPts()});
 
 })();
 </script>

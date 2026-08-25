@@ -26,14 +26,18 @@ for (const s of slugs) {
   if (!entry) continue;
   const isPass = entry.verdict === 'PASS' ||
     (entry.passed !== undefined && entry.failed === 0 && entry.passed === entry.total) || // tap-away style {passed,failed,total}
-    (entry.pass !== undefined && entry.fail === 0);
+    (entry.pass !== undefined && entry.fail === 0) ||
+    // unblock-me style {summary:{solved,total,unsolvable,inconclusive}, gameContent} — exhaustive-solver evidence
+    (entry.summary && entry.summary.solved === entry.summary.total && !entry.summary.unsolvable && !entry.summary.inconclusive) ||
+    entry.gameContent === 'PASS';
   const verdict = isPass ? 'PASS' : 'FAIL';
   if (verdict === 'PASS') pass++; else fail++;
   // preserve rich fields from fragment (agents write these) or previous store entry
   const frag = (() => { try { return JSON.parse(fs.readFileSync(path.join(FRAG, s + '.json'), 'utf8')); } catch (e) { return null; } })();
   const rich = frag || prev[s] || {};
   out[s] = { slug: s, verifierRun: true, exitCode: entry.verdict === 'PASS' ? 0 : 1,
-    passed: entry.pass ?? entry.passed ?? null, total: entry.total ?? null, verdict, durS: rich.durS ?? entry.durS ?? null,
+    passed: entry.pass ?? entry.passed ?? (entry.summary ? entry.summary.solved : null) ?? null,
+    total: entry.total ?? (entry.summary ? entry.summary.total : null) ?? null, verdict, durS: rich.durS ?? entry.durS ?? null,
     ...(rich.detail ? { detail: rich.detail } : {}), ...(rich.evidence ? { evidence: rich.evidence } : {}),
     ...(verdict === 'FAIL' && entry.fails ? { fails: entry.fails } : {}) };
 }

@@ -986,11 +986,12 @@ function getLevelStars(lv) {
   return progress.completed[lv] || 0;
 }
 function completeLevel(lv, stars) {
+  // FIX(verify 2026-08-25): a 0-star completion (goal reached, no stars) recorded NOTHING, so the
+  // unlock chain (next level needs getLevelStars(lv-1) > 0) dead-ended permanently. Reaching the
+  // goal now always records the completion; hints still only granted on a 3-star improvement.
   const prev = getLevelStars(lv);
-  if (stars > prev) {
-    progress.completed[lv] = stars;
-    if (stars === 3) progress.hints = Math.min(progress.hints + 1, 10);
-  }
+  progress.completed[lv] = Math.max(prev, stars);
+  if (stars === 3 && prev < 3) progress.hints = Math.min(progress.hints + 1, 10);
   saveProgress();
 }
 function resetProgress() {
@@ -1089,7 +1090,7 @@ function renderLevelSelect() {
     grid.className = 'pack-grid';
     for (let lv = (pack - 1) * 5 + 1; lv <= pack * 5; lv++) {
       const idx = lv - 1;
-      const unlocked = lv === 1 || getLevelStars(lv - 1) > 0;
+      const unlocked = lv === 1 || progress.completed[lv - 1] !== undefined; // FIX(verify 2026-08-25): was stars>0 — a 0-star completion locked the chain forever
       const stars = getLevelStars(lv);
       const btn = document.createElement('button');
       btn.className = 'level-btn ' + (unlocked ? (stars > 0 ? 'completed' : 'unlocked') : 'locked');
@@ -1143,6 +1144,10 @@ function startLevel(idx) {
 
   resizeCanvas();
   startBGM();
+  // FIX(verify 2026-08-25): every startLevel queued ANOTHER gameLoop without canceling the
+  // previous one — N parallel loops each process one arrival per frame window, so by level N
+  // the robot advanced N tiles at once (teleporting) and per-frame work multiplied.
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
   requestAnimationFrame(gameLoop);
 }
 
@@ -1293,19 +1298,29 @@ function handleCanvasClick(clientX, clientY) {
   const rot = viewRotation;
 
   // Find clicked tile
-  let bestDist = Infinity;
-  let bestTile = null;
-
+  // FIX(verify 2026-08-25): reverse-isometric projection TIES (e.g. a stair top at (2,2,h2)
+  // projects to exactly the same screen point as the lower tile (0,0,h0) behind it) were won by
+  // whichever tile iterated first — row-major order picks the OCCLUDED background tile, so taps
+  // on elevated tiles walked the robot somewhere else entirely. Resolve ties in PAINTER ORDER
+  // (back-to-front, same sort as drawGame): the visually front-most tile wins, as the player sees.
+  const hitTiles = [];
   for (let z = 0; z < lv.size.d; z++) {
     for (let x = 0; x < lv.size.w; x++) {
       const h = lv.heights[z][x];
       if (h === undefined || h === null) continue;
-      const sc = isoToScreen(x, z, h, centerX, centerY);
-      const dist = Math.hypot(sc.x - cx, sc.y - cy);
-      if (dist < bestDist && dist < TILE_W * scale * 1.5) {
-        bestDist = dist;
-        bestTile = { x, z, h };
-      }
+      hitTiles.push({ x, z, h });
+    }
+  }
+  hitTiles.sort((a, b) => (a.x + a.z) - (b.x + b.z));
+  let bestDist = Infinity;
+  let bestTile = null;
+
+  for (const t of hitTiles) {
+    const sc = isoToScreen(t.x, t.z, t.h, centerX, centerY);
+    const dist = Math.hypot(sc.x - cx, sc.y - cy);
+    if (dist <= bestDist && dist < TILE_W * scale * 1.5) {
+      bestDist = dist;
+      bestTile = t;
     }
   }
 
@@ -1332,7 +1347,13 @@ function handlePointerDown(e) {
 }
 
 function handlePointerUp(e) {
-  if (e.pointerType !== 'touch') return;
+  // FIX(verify 2026-08-25): this handler returned early for every non-touch pointer and no other
+  // mouse path existed — DESKTOP MOUSE PLAYERS COULD NOT MOVE THE ROBOT AT ALL (game was
+  // touch-only despite advertising mouse controls). Mouse pointers now tap like touch.
+  if (e.pointerType !== 'touch') {
+    handleCanvasClick(e.clientX, e.clientY);
+    return;
+  }
   const dx = e.clientX - touchStartX;
   const dy = e.clientY - touchStartY;
   if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
@@ -1820,6 +1841,15 @@ function gameLoop(timestamp) {
 
       pathIndex++;
       playSound('move');
+      // FIX(verify 2026-08-25): when the final tile of a walk was reached the loop condition above
+      // went false but `animating` was NEVER cleared, so handleCanvasClick's `if (animating) return`
+      // swallowed every subsequent tap — the robot could move exactly ONCE per level (the game was
+      // unplayable past the first move unless it directly reached the goal).
+      if (pathIndex >= path.length - 1) {
+        animating = false;
+        path = [];
+        pathIndex = 0;
+      }
     }
   }
 

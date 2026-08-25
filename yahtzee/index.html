@@ -677,7 +677,10 @@ function calcTotal(scores,isUpper){
 
 function upperTotal(scores){return UPPER_CATS.reduce((s,c)=>s+(scores[c]||0),0)}
 function lowerTotal(scores){return LOWER_CATS.reduce((s,c)=>s+(scores[c]||0),0)}
-function totalScore(scores){return upperTotal(scores)+lowerTotal(scores)+(upperTotal(scores)>=UPPER_BONUS_THRESHOLD?UPPER_BONUS_VALUE:0)}
+// FIX(verify 2026-08-25): yahtzeeBonus was stored in scores (renderScorecard even displays it in the
+// total row) but NEVER added here — the +100 bonuses never counted toward the HUD, the endGame
+// win/lose comparison, or stats.bestScore. calcTotal() (which did add it) is dead code, never called.
+function totalScore(scores){return upperTotal(scores)+lowerTotal(scores)+(upperTotal(scores)>=UPPER_BONUS_THRESHOLD?UPPER_BONUS_VALUE:0)+(scores.yahtzeeBonus||0)}
 
 function checkYahtzee(d){return d.every(v=>v===d[0])}
 function checkFullHouse(d){
@@ -1033,7 +1036,10 @@ function scoreAndAdvance(player,cat){
   scores[cat]=s;
 
   // Yahtzee bonus: if yahtzee rolled and yahtzee category already filled
-  if(checkYahtzee(dice)&&cat!=='yahtzee'){
+  // FIX(verify 2026-08-25): the comment says "yahtzee category already filled" but there was NO such
+  // check — a yahtzee rolled after scoring a non-yahtzee category granted +100 even with the yahtzee
+  // box empty or zeroed. Official rules (and this code's own comment) require the box scored 50.
+  if(checkYahtzee(dice)&&cat!=='yahtzee'&&scores.yahtzee!==undefined&&scores.yahtzee>0){
     scores.yahtzeeBonus=(scores.yahtzeeBonus||0)+YAHTZEE_BONUS_VALUE;
     if(player==='human'){
       achievementCheck('yahtzee_bonus');
@@ -1059,7 +1065,10 @@ function scoreAndAdvance(player,cat){
   updateHUD();
 
   if(gameMode==='solo'){
-    if(Object.keys(humanScores).length>=ROUNDS){
+    // FIX(verify 2026-08-25): was Object.keys(humanScores).length>=ROUNDS — the yahtzeeBonus key
+    // inflates the count, so 12 categories + 1 bonus ended the game a round early with a category
+    // still open. Count actual categories filled instead.
+    if(ALL_CATS.every(c=>humanScores[c]!==undefined)){
       endGame();
     } else {
       // Reset for next round
@@ -1067,7 +1076,9 @@ function scoreAndAdvance(player,cat){
       renderDice();updateRollInfo();renderScorecard();
     }
   } else {
-    if(Object.keys(humanScores).length>=ROUNDS&&Object.keys(aiScores).length>=ROUNDS){
+    // FIX(verify 2026-08-25): same Object.keys-length bug as the solo branch — a yahtzeeBonus key
+    // could satisfy >=ROUNDS with only 12/13 categories scored, ending the game early.
+    if(ALL_CATS.every(c=>humanScores[c]!==undefined)&&ALL_CATS.every(c=>aiScores[c]!==undefined)){
       endGame();
     } else {
       // Switch player
@@ -1152,6 +1163,12 @@ function aiScore(){
   if(!cat){currentPlayer='human';updateHUD();updateRollInfo();return;}
   const s=scoreCategory(dice,cat);
   aiScores[cat]=s;
+  // FIX(verify 2026-08-25): scoreAndAdvance() awards +100 yahtzee bonuses, but aiScore() (a
+  // duplicate of the scoring path) never did — the AI was silently denied bonuses the human got,
+  // skewing every win/lose comparison. Same eligibility rule as the human path.
+  if(checkYahtzee(dice)&&cat!=='yahtzee'&&aiScores.yahtzee!==undefined&&aiScores.yahtzee>0){
+    aiScores.yahtzeeBonus=(aiScores.yahtzeeBonus||0)+YAHTZEE_BONUS_VALUE;
+  }
   if(checkYahtzee(dice)){
     playSFX('yahtzee');
     achievementCheck('first_yahtzee');
@@ -1161,7 +1178,9 @@ function aiScore(){
   renderScorecard();
   updateHUD();
 
-  if(Object.keys(humanScores).length>=ROUNDS&&Object.keys(aiScores).length>=ROUNDS){
+  // FIX(verify 2026-08-25): same Object.keys-length bug as scoreAndAdvance — counted the
+  // yahtzeeBonus key, so 12 categories + 1 bonus could end the game with a category still open.
+  if(ALL_CATS.every(c=>humanScores[c]!==undefined)&&ALL_CATS.every(c=>aiScores[c]!==undefined)){
     endGame();
   } else {
     currentPlayer='human';
@@ -1451,30 +1470,11 @@ function setupDiceInteraction(){
   canvas.addEventListener('touchstart',e=>{e.preventDefault();},{passive:false});
 }
 
-$('dice-canvas').addEventListener('pointerdown',e=>{
-  if(isAnimating)return;
-  const canvas=$('dice-canvas');
-  const rect=canvas.getBoundingClientRect();
-  const x=e.clientX-rect.left;
-  const y=e.clientY-rect.top;
-  const w=rect.width;
-  const h=rect.height;
-  const pad=w*0.03;
-  const availW=w-pad*2;
-  const availH=h-pad*2;
-  const n=DICE_COUNT;
-  const dieSize=Math.min(availW/n*0.85,availH*0.8);
-  const totalW=dieSize*n+(n-1)*(availW/n-dieSize);
-  const startX=(w-totalW)/2;
-  const startY=(h-dieSize)/2;
-  const spacing=dieSize+(availW-totalW)/(n-1);
-  if(y>=startY&&y<=startY+dieSize){
-    const idx=Math.floor((x-startX)/spacing);
-    if(idx>=0&&idx<n&&x<=startX+idx*spacing+dieSize){
-      toggleHold(idx);
-    }
-  }
-});
+// FIX(verify 2026-08-25): a second, anonymous pointerdown listener used to be attached here — a
+// DUPLICATE of setupDiceInteraction()'s handlePointerDown (same canvas, same hit geometry, both
+// calling toggleHold(idx)). In a real browser both listeners fire on one tap, so the die toggled
+// twice (on then off) and holding dice NEVER worked for players. setupDiceInteraction() is the
+// canonical handler; the duplicate block is deleted outright.
 
 // ========== PARTICLES ==========
 function initParticles(){

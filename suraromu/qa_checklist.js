@@ -5,7 +5,7 @@
  */
 const fs = require('fs');
 
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 let pass = 0, fail = 0;
 const errors = [];
 

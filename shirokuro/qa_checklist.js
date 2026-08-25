@@ -3,7 +3,7 @@
 
 const fs = require('fs');
 
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 const checks = [];
 let pass = 0, fail = 0;
 
@@ -47,8 +47,8 @@ check('BreadcrumbList JSON-LD is present', () => {
   return /"@type":"BreadcrumbList"/.test(html) && /GameZipper/.test(html);
 });
 // === Art assets ===
-check('icon.png exists', () => fs.existsSync('icon.png') && fs.statSync('icon.png').size > 1000);
-check('og-image.jpg exists', () => fs.existsSync('og-image.jpg') && fs.statSync('og-image.jpg').size > 1000);
+check('icon.png exists', () => fs.existsSync(__dirname + '/icon.png') && fs.statSync(__dirname + '/icon.png').size > 1000);
+check('og-image.jpg exists', () => fs.existsSync(__dirname + '/og-image.jpg') && fs.statSync(__dirname + '/og-image.jpg').size > 1000);
 
 // === Game systems ===
 check('LEVELS array is defined', () => /const LEVELS=\[/.test(html));
@@ -111,13 +111,13 @@ check('Related games links', () => {
 const { execSync } = require('child_process');
 check('All 30 levels pass verify_engine.js', () => {
   try {
-    const out = execSync('node verify_engine.js 2>&1', { encoding: 'utf8' });
+    const out = execSync('node verify_engine.js 2>&1', { encoding: 'utf8', cwd: __dirname });
     return out.includes('✓ ALL 30 LEVELS PASS');
   } catch (e) { return false; }
 });
 check('All 30 levels pass verify_independent.js', () => {
   try {
-    const out = execSync('node verify_independent.js 2>&1', { encoding: 'utf8' });
+    const out = execSync('node verify_independent.js 2>&1', { encoding: 'utf8', cwd: __dirname });
     return out.includes('✓ ALL 30 LEVELS PASS');
   } catch (e) { return false; }
 });

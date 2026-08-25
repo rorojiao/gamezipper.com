@@ -822,6 +822,7 @@ function startGame(levelIdx) {
   state.hintActive = 0;
   document.getElementById('menu-screen').style.display = 'none';
   document.getElementById('game-screen').style.display = 'flex';
+  if (state.rafId) { cancelAnimationFrame(state.rafId); state.rafId = null; } // FIX(2026-08-25): nextLevel()/replayLevel() call startGame() while the previous level's rAF loop is still scheduled — each level start added another self-perpetuating loop (update/render ran N times per frame, N = levels played: measured 13x after 12 levels). Only backToMenu cancelled. Cancel here so exactly one loop exists, matching the visibilitychange guard.
   resizeCanvas(); // P0 FIX: was setTimeout(resizeCanvas,30) which left ctx=undefined when loop() ran immediately → TypeError in render() → game loop dead, canvas blank
   initMode();
   setStatus('Begin...');
@@ -868,6 +869,10 @@ function initMode() {
   } else if (L.mode === 'combo') {
     state.comboState = {
       angle: 0,
+      vel: 0, // FIX(2026-08-25): update() runs `cs.angle += cs.vel * dt` on the very first frame
+             // (before any drag) while vel was never initialized — undefined*dt = NaN poisoned
+             // cs.angle permanently (NaN survives every later drag op), so the dial reading was
+             // NaN forever, atTarget never matched, and ALL combo levels (13-18) were unwinnable.
       nums: L.nums.slice(),
       step: 0, // which number we are dialing now
       directions: ['right','left','right'],

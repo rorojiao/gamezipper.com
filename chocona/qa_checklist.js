@@ -3,7 +3,7 @@
  * Chocona QA Checklist — Code-level verification
  */
 const fs = require('fs');
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 
 let checks = [];
 let passCount = 0;

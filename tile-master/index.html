@@ -584,7 +584,14 @@ function onTileTap(id){
     t.el.style.transition = "left .25s ease, top .25s ease, opacity .2s";
     t.el.style.opacity = "0";
     var self = t;
-    setTimeout(function(){ if(self.el && self.el.parentNode) self.el.parentNode.removeChild(self.el); self.el=null; }, 260);
+    /* P1 2026-08-25: the removal timer used to read self.el at FIRE time. Undo within
+       260ms of a tap nulls t.el and renderGame() assigns a fresh element for the restored
+       tile — the pending timer then removed THAT fresh element and nulled t.el, leaving the
+       restored tile invisible, unclickable and blocking the win (countRemaining() never
+       reaches 0). Capture the fading element up front and only clear t.el if renderGame
+       has not already replaced it. */
+    var fadeEl = t.el;
+    setTimeout(function(){ if(fadeEl && fadeEl.parentNode) fadeEl.parentNode.removeChild(fadeEl); if(self.el===fadeEl) self.el=null; }, 260);
   }
   state.tray.push({ type: t.type, srcTileId: id });
   state.history.push({ tileId: id });
@@ -598,6 +605,12 @@ function onTileTap(id){
     sfx("match");
   }
   renderTray();
+  /* P3 2026-08-25: t.covered was only refreshed inside the 50ms deferred timeout below, so
+     a tap on a tile uncovered by the immediately preceding tap (<50ms apart — a fast
+     double-tap on a two-tile stack) hit the stale covered=true flag and was silently
+     dropped. Refresh coverage synchronously; the deferred pass still handles rendering,
+     HUD and the win/lose check. */
+  updateCoverage();
   // Re-render board to update coverage
   setTimeout(function(){
     updateCoverage();
@@ -739,6 +752,11 @@ function useHint(){
   state.pu.hint--;
   state.puUsed++;
   sfx("powerup");
+  /* P3 2026-08-25: useHint was the only power-up that never refreshed the HUD, so the
+     Hint badge kept showing the pre-use count (and stayed enabled-looking at 0 charges)
+     until the next unrelated render — players thought the click had not registered and
+     pressed it again, burning charges. Undo/Shuffle both re-render via renderGame(). */
+  renderHUD();
   found.forEach(function(t){
     if(t.el){
       t.el.classList.add("hint-pulse");

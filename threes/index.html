@@ -254,7 +254,10 @@
     var canvas,ctx,gameArea;
     var dpr=window.devicePixelRatio||1;
     var cw,ch,pad,cellSz;
-    var grid,nextTile,score,bestScore,gameOver,isOver;
+    /* FIX(P1): bestScore was never initialized — loadState() returns early when no
+       save exists, leaving it undefined: the first game's best was never recorded
+       (score > undefined is always false) and the Best box rendered "undefined". */
+    var grid,nextTile,score,bestScore=0,gameOver,isOver;
     var moveNum,sessionMerges;
     var prevState=null;
     var animQueue=[];
@@ -320,7 +323,10 @@
     /* Slide a single row to the left, return {result, pts, mc, moves} */
     function slideRowLeft(row){
         var tiles=[],pts=0,mc=0;
-        for(var c=0;c<GRID;c++)if(row[c])tiles.push({v:row[c].v,src:c});
+        /* FIX(P0): every caller passes a NUMERIC row (t?t.v:0) — reading row[c].v off a
+           number yielded undefined for every tile, so canMerge never matched (0 merges,
+           score stuck at 0 forever) and all slid tiles collapsed to v=undefined. */
+        for(var c=0;c<GRID;c++)if(row[c])tiles.push({v:row[c],src:c});
         var result=[],merged=[],i=0;
         while(i<tiles.length){
             if(i+1<tiles.length){

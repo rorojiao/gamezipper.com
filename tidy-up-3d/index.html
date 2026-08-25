@@ -160,10 +160,12 @@ for(let tier=0;tier<6;tier++){
   const itemCount=[3,4,5,6,7,8][tier];
   const timer=[60,55,50,45,40,35][tier];
   const cols=[4,5,6,7,8,8][tier];
-  const rows=[3,3,3,3,4,4][tier];
+  // FIX(verify 2026-08-25): tiers 4/5 used 8x4=32 grid cells; 32 is not divisible by 3, so with
+  // the 3-pop match rule no board could ever fully clear. rows 4->3 (24 cells) for those tiers.
+  const rows=[3,3,3,3,3,3][tier];
   for(let i=0;i<5;i++){
     const levelNum=tier*5+i+1;
-    const totalItems=(cols*rows)*itemCount;
+    const totalItems=cols*rows; // FIX(verify 2026-08-25): was (cols*rows)*itemCount — a phantom count 4-8x the items actually placed on the grid; only itemsPerZone/par display use it
     const zoneCount=Math.min(itemCount+2,cols);
     const parScore=Math.ceil(totalItems*1.5);
     LEVELS.push({num:levelNum,tier,itemCount,timer,cols,rows,zoneCount,totalItems,itemsPerZone:Math.ceil(totalItems/zoneCount),par:parScore});
@@ -668,8 +670,22 @@ function createGameScreen(levelNum){
   const gridStartY=100*scale;
   const tierItems=ITEMS_BY_TIER[lvl.tier].slice(0,lvl.itemCount);
   const itemPool=[];
-  tierItems.forEach(it=>{
-    for(let k=0;k<Math.ceil(lvl.totalItems/lvl.itemCount);k++)itemPool.push({...it});
+  // FIX(verify 2026-08-25): the pool used to contain itemCount*ceil(totalItems/itemCount) items
+  // of which only cols*rows were ever placed on the grid, so the per-type counts actually in
+  // play were random. checkMatches pops exactly 3 per type and zone contents can never be
+  // re-selected, so any type whose on-grid count is not a multiple of 3 left unmatchable
+  // leftovers in the zones forever — levelComplete (grid empty AND all zones empty) could then
+  // never fire, making most boards unwinnable by pure luck of the shuffle (and tiers 4/5, with
+  // 8x4=32 cells, unwinnable on EVERY board since 32 is not divisible by 3). The pool is now
+  // built from exact multiples of 3 that sum to cols*rows (tiers 4/5 rows 4->3, see LEVELS
+  // note), so every board is completable while the match rule itself is unchanged.
+  const cells=lvl.cols*lvl.rows;
+  const triples=Math.floor(cells/3);
+  const base=Math.floor(triples/lvl.itemCount);
+  const extra=triples-base*lvl.itemCount;
+  tierItems.forEach((it,i)=>{
+    const copies=3*(base+(i<extra?1:0));
+    for(let k=0;k<copies;k++)itemPool.push({...it});
   });
   shuffleArray(itemPool);
   let poolIdx=0;
@@ -762,7 +778,11 @@ function createGameUI(game){
       {icon:'↻',label:'SHUFFLE',count:game.shuffles,x:2,action:()=>{if(game.shuffles>0)useShuffle()}},
       {icon:'⏸',label:'PAUSE',count:null,x:3,action:()=>{state.screen='paused'}}
     ];
-    actBtns.forEach(b=>{
+    // FIX(verify 2026-08-25): ui.buttons[b.x] used b.x AFTER it was overwritten from the column
+    // index to the pixel position, so the buttons array got sparse indices (1040..1220) riddled
+    // with holes — ui.handleClick's `for(const b of ui.buttons)` then hit an undefined entry and
+    // threw on EVERY in-game click, freezing the board. Use the forEach index instead.
+    actBtns.forEach((b,btnIdx)=>{
       const bx=W-60*scale-b.x*60*scale,by=H-80*scale,bw=50*scale,bh=50*scale;
       b.x=bx;b.y=by;b.w=bw;b.h=bh;
       ctx.beginPath();ctx.roundRect(bx,by,bw,bh,12*scale);
@@ -776,12 +796,18 @@ function createGameUI(game){
         ctx.font=`${10*scale}px Arial`;
         ctx.fillText(`${b.count}`,bx+bw/2,by+bh/2+12*scale);
       }
-      ui.buttons[b.x]={x:bx,y:by,w:bw,h:bh,action:b.action};
+      ui.buttons[btnIdx]={x:bx,y:by,w:bw,h:bh,action:b.action};
     });
     game.particles.forEach(p=>p.draw());
     game.confetti.forEach(c=>c.draw());
     game.floatingTexts.forEach(f=>f.draw());
-    if(game.tutorialShown||game.level===1){
+    // FIX(verify 2026-08-25): this overlay's draw condition re-set tutorialShown=true on EVERY
+    // frame while level===1, and handlePointer's tutorial branch consumed every pointerdown
+    // while tutorialShown — so on level 1 the "Tap anywhere to start" overlay dismissed on one
+    // click, re-armed on the next frame and ate every subsequent click forever. Level 1 — the
+    // first screen every new player sees — was permanently unplayable. tutorialDismissed now
+    // latches the dismissal so the tutorial shows exactly once.
+    if(!game.tutorialDismissed&&(game.tutorialShown||game.level===1)){
       game.tutorialShown=true;
       ctx.fillStyle='rgba(0,0,0,0.7)';
       ctx.fillRect(0,0,W,H);
@@ -800,7 +826,7 @@ function createGameUI(game){
     ctx.restore();
   };
   ui.handleClick=function(x,y){
-    if(game.tutorialShown){game.tutorialShown=false;playSFX('tap');return true}
+    if(game.tutorialShown){game.tutorialShown=false;game.tutorialDismissed=true;playSFX('tap');return true}
     if(game.state!=='playing')return false;
     const itemSize=game.items[0]?game.items[0].size:50;
     const lvl=LEVELS[game.level-1];
@@ -1003,6 +1029,7 @@ function levelComplete(){
   state.completedScore=game.score;
   state.completedBest=Math.max(game.score,prevBest);
   state.completedCoins=coinsEarned;
+  save(); /* FIX(verify 2026-08-25): levelComplete wrote per-level stars/best keys but never save(), and save() was only invoked from the settings toggles — the aggregate tidyup3d_v1 blob was never written after finishing a level, so on reload load().progress was empty and level select showed only level 1 unlocked (all progress lost across sessions) */
   state.screen='complete';
   playSFX('complete');
   for(let i=0;i<80;i++){
@@ -1298,19 +1325,31 @@ state={screen:'menu',mouseX:0,mouseY:0,gameUI:null,completedLevel:null,completed
 
 (function initTheme(){const tid=getCurrentTheme();const t=THEMES.find(x=>x.id===tid);if(t){COLORS.bg1=t.bg[0];COLORS.bg2=t.bg[1];COLORS.primary=t.accent;}})();
 
+// FIX(verify 2026-08-25): getScreen built a FRESH UI object on every call while each screen's
+// button hit-rects are only populated inside its draw(). The rAF loop draws one throwaway
+// instance per frame and handlePointer clicks a different fresh instance whose buttons array
+// is empty — so every non-game screen's buttons (menu PLAY/LEVELS/..., complete NEXT/RETRY,
+// gameover RETRY/MENU, paused RESUME) were dead: the game could not even be started by
+// clicking. Screens are now memoized so the drawn instance is the clickable one (the game
+// screen was already persistent via state.gameUI). Dynamic values (coins, stars, scores) are
+// read inside draw() each frame, so caching instances changes nothing else.
+const __uiCache={};
 function getScreen(name){
-  switch(name){
-    case'menu':return createMenuScreen();
-    case'levelSelect':return createLevelSelectScreen();
-    case'game':return state.gameUI||createGameScreen(1);
-    case'settings':return createSettingsScreen();
-    case'complete':return createCompleteScreen();
-    case'gameover':return createGameOverScreen();
-    case'paused':return createPausedScreen();
-    case'themes':return createThemesScreen();
-    case'achievements':return createAchievementsScreen();
-    default:return createMenuScreen();
+  if(name==='game')return state.gameUI||createGameScreen(1).ui;
+  if(!__uiCache[name]){
+    switch(name){
+      case'menu':__uiCache[name]=createMenuScreen();break;
+      case'levelSelect':__uiCache[name]=createLevelSelectScreen();break;
+      case'settings':__uiCache[name]=createSettingsScreen();break;
+      case'complete':__uiCache[name]=createCompleteScreen();break;
+      case'gameover':__uiCache[name]=createGameOverScreen();break;
+      case'paused':__uiCache[name]=createPausedScreen();break;
+      case'themes':__uiCache[name]=createThemesScreen();break;
+      case'achievements':__uiCache[name]=createAchievementsScreen();break;
+      default:__uiCache[name]=createMenuScreen();
+    }
   }
+  return __uiCache[name];
 }
 
 let currentUI=createMenuScreen();
@@ -1335,6 +1374,7 @@ function handlePointer(e){
       currentUI=ui;
     }else if(game?.tutorialShown){
       game.tutorialShown=false;
+      game.tutorialDismissed=true; // FIX(verify 2026-08-25): latch dismissal (see draw() note)
       playSFX('tap');
     }
   }

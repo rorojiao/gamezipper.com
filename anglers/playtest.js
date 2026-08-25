@@ -3,7 +3,7 @@
  * Playtest: simulate the stored solution through the engine's isComplete logic.
  */
 const fs = require('fs');
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 const match = html.match(/const LEVELS\s*=\s*(\[.+?\]);/s);
 if (!match) { console.error('Cannot extract LEVELS'); process.exit(1); }
 const LEVELS = JSON.parse(match[1]);

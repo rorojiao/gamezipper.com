@@ -709,8 +709,7 @@ function resetLevel(){
 function findVertexAt(nx, ny){
   for(var i = 0; i < vertices.length; i++){
     var v = vertices[i];
-    var dx = (v.x - nx) * w;
-    var dy = (v.y - h) * h / h + (v.y - ny) * h; // simplified
+    /* P3 2026-08-25: removed two dead, mis-computed locals (dx/dy were never used). */
     var ddx = (v.x - nx) * w;
     var ddy = (v.y - ny) * h;
     var d = Math.sqrt(ddx * ddx + ddy * ddy);
@@ -737,23 +736,29 @@ function handlePointer(nx, ny){
 
 function handlePointerMove(nx, ny){
   if(state !== 'playing') return;
+  /* P3 2026-08-25: move EVERY dragging vertex, not just the first. With multi-touch
+     (two pointers down) the old break-after-first froze the second vertex mid-drag,
+     and any stray hover pointermove then teleported that stuck vertex. */
   for(var i = 0; i < vertices.length; i++){
     var v = vertices[i];
     if(v.dragging){
       v.x = Math.max(0.05, Math.min(0.95, nx));
       v.y = Math.max(0.05, Math.min(0.95, ny));
-      recomputeCrossings();
-      break;
     }
   }
+  recomputeCrossings();
 }
 
 function handlePointerUp(){
   if(state !== 'playing') return;
+  /* P3 2026-08-25: release ALL dragging vertices. pointerup/pointercancel used to
+     release only the first one in id order, leaving a second multi-touch drag stuck. */
+  var released = 0;
   for(var i = 0; i < vertices.length; i++){
     var v = vertices[i];
-    if(v.dragging){
+    if(v.dragging && v._dragStart){
       v.dragging = false;
+      released++;
       // Compute the move distance
       var dx = v.x - v._dragStart.x;
       var dy = v.y - v._dragStart.y;
@@ -766,10 +771,11 @@ function handlePointerUp(){
         playDrop(false);
       }
       v._dragStart = null;
-      updateHUD();
-      checkWin();
-      break;
     }
+  }
+  if(released > 0){
+    updateHUD();
+    checkWin();
   }
 }
 
@@ -846,9 +852,16 @@ function checkWin(){
     if(moveCount <= p.star3) stars = 3;
     else if(moveCount <= p.star2) stars = 2;
     // Update progress
+    /* P1 2026-08-25: level unlock could NEVER fire. prevStars was computed from
+       getStarsForLevel() AFTER progress.best[level] had just been overwritten with this
+       run's moveCount, so prevStars === stars always and `stars > prevStars` was never
+       true. progress.unlocked stayed 1 forever: cross-session play restarted at level 1
+       and level-select never unlocked tiers 2-5 (the win-modal Next button was the only
+       way past level 1). Fix: capture prevStars BEFORE the best-update — on a first win
+       getStarsForLevel() returns 0 (no record), so any win unlocks the next level. */
     var prevBest = progress.best[level] || 999;
-    if(moveCount < prevBest) progress.best[level] = moveCount;
     var prevStars = getStarsForLevel(level);
+    if(moveCount < prevBest) progress.best[level] = moveCount;
     if(stars > prevStars){
       // Unlock the next level
       if(level >= progress.unlocked && level < totalLevels){
@@ -865,7 +878,9 @@ function checkWin(){
 function getStarsForLevel(lv){
   var p = getLevelParams(lv);
   var best = progress.best[lv];
-  if(!best) return 0;
+  /* P3 2026-08-25: `!best` also caught best===0 (degenerate identity-scramble level won
+     with a grab-and-release) and treated it as "never completed", hiding the record. */
+  if(best === undefined || best === null) return 0;
   if(best <= p.star3) return 3;
   if(best <= p.star2) return 2;
   return 1;
@@ -1160,18 +1175,10 @@ function cleanup(){
   stopBGM();
   if(audioCtx){ audioCtx.close().catch(function(){}); audioCtx = null; }
 }
-window.addEventListener('beforeunload', cleanup);
-document.addEventListener('visibilitychange', function(){
-  if(document.hidden){
-    if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
-    stopBGM();
-  } else if(state === 'playing' || state === 'win'){
-    if(state === 'playing') startTime = Date.now() - elapsedMs;
-    lastTime = performance.now();
-    rafId = requestAnimationFrame(loop);
-    if(soundOn && bgmOn) startBGM();
-  }
-});
+/* P3 2026-08-25: removed the duplicate beforeunload/visibilitychange registration here —
+   init() registers identical handlers, and the doubled visibilitychange handler
+   double-requested the resume rAF loop (two concurrent loops per frame after every
+   tab-away/back, doubling particle decay and render work). */
 
 /* ============================================================
  *  Initialization

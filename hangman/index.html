@@ -2133,11 +2133,16 @@
                     
                 case 'game':
                     // Check hint button
+                    /* P1 2026-08-25: hint button rect (bottom-right of keyboard area) overlaps the
+                     * V key rect, so a hint tap ALSO registered guessLetter('V') — an unfair wrong
+                     * guess when V is not in the word (one step closer to gameOver). Hint hit is
+                     * now exclusive: consume the tap and skip the keyboard pass. */
                     if (STATE.hintBtn && isInRect(coords, STATE.hintBtn) && STATE.hintsRemaining > 0) {
                         playClickSound();
                         useHint();
+                        break;
                     }
-                    
+
                     // Check keyboard
                     if (STATE.keyBounds) {
                         for (const [letter, bounds] of Object.entries(STATE.keyBounds)) {
@@ -2173,8 +2178,13 @@
                             STATE.screen = 'title';
                         }
                     } else {
+                        /* P1 2026-08-25: daily hint rect overlaps the keyboard the same way the
+                         * game-screen hint does — a hint/back tap must consume the tap instead of
+                         * also registering a letter guess via the keyboard pass below. */
+                        let btnTap = false;
                         if (STATE.backBtn && isInRect(coords, STATE.backBtn)) {
                             playClickSound();
+                            btnTap = true;
                             STATE.screen = 'title';
                         } else if (STATE.hintBtn && isInRect(coords, STATE.hintBtn) && !STATE.dailyHintUsed) {
                             playClickSound();
@@ -2190,14 +2200,15 @@
                                 const choice = unrevealed[Math.floor(Math.random() * unrevealed.length)];
                                 STATE.dailyGuessed.add(choice.letter);
                                 STATE.dailyHintUsed = true;
+                                btnTap = true;
                                 if (!STATE.dailyRevealed) STATE.dailyRevealed = {};
                                 STATE.dailyRevealed[choice.index] = { progress: 0, letter: choice.letter };
                                 playHintSound();
                             }
                         }
-                        
+
                         // Check keyboard
-                        if (STATE.keyBounds) {
+                        if (!btnTap && STATE.keyBounds) {
                             for (const [letter, bounds] of Object.entries(STATE.keyBounds)) {
                                 if (isInRect(coords, bounds)) {
                                     // Daily challenge letter handling

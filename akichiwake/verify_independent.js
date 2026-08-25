@@ -2,8 +2,9 @@
 // Independent Node.js verifier for Akichiwake puzzle levels
 // Loads levels.json and verifies all 30 levels
 const fs = require('fs');
+const path = require('path');
 
-const levels = JSON.parse(fs.readFileSync('/home/msdn/gamezipper.com/akichiwake/levels.json', 'utf8')).levels;
+const levels = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'), 'utf8')).levels;
 
 let allValid = true;
 let passCount = 0;

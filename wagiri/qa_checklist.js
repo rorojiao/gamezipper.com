@@ -1,7 +1,8 @@
 // Comprehensive QA checklist for wagiri game
 const fs = require('fs');
+const path = require('path');
 
-const html = fs.readFileSync('/home/msdn/gamezipper.com/wagiri/index.html', 'utf8');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 const checks = [];
 const addCheck = (name, ok, detail = '') => checks.push({name, ok, detail});
 
@@ -34,7 +35,10 @@ addCheck('Win overlay', /id="win-overlay"/.test(html));
 addCheck('Keyboard handler', /keydown/.test(html));
 addCheck('Touch handlers', /touchstart|touchmove|touchend/.test(html));
 addCheck('Mouse handlers', /mousedown|mousemove|mouseup/.test(html));
-addCheck('No external JS deps', !/<script\s+src=/.test(html));
+// External scripts allowed site-wide (analytics/footer/ads); game logic itself must be self-contained.
+const allowedExtSrc = /^\/(gz-analytics|game-footer|adsterra-manager|monetag-manager)\.js|^https:\/\/pagead2\.googlesyndication\.com\//;
+const extSrcs = [...html.matchAll(/<script\b[^>]*\bsrc="([^"]+)"/g)].map(mm => mm[1]);
+addCheck('No external JS deps', extSrcs.every(s => allowedExtSrc.test(s)), extSrcs.filter(s => !allowedExtSrc.test(s)).join(', '));
 addCheck('No console.log in production', !/console\.log/.test(html));
 addCheck('Music BGM (chord progression)', /bgmChords/.test(html));
 addCheck('SFX draw/erase/hint/win', /'draw'/.test(html) && /'erase'/.test(html) && /'hint'/.test(html) && /'win'/.test(html));
@@ -59,10 +63,10 @@ if (m) {
 addCheck('No deprecated site-analytics', !/site-analytics\.js/.test(html));
 
 // Check icon and og-image files exist
-addCheck('icon.png exists', fs.existsSync('/home/msdn/gamezipper.com/wagiri/icon.png'));
-addCheck('og-image.jpg exists', fs.existsSync('/home/msdn/gamezipper.com/wagiri/og-image.jpg'));
-const iconSize = fs.statSync('/home/msdn/gamezipper.com/wagiri/icon.png').size;
-const ogSize = fs.statSync('/home/msdn/gamezipper.com/wagiri/og-image.jpg').size;
+addCheck('icon.png exists', fs.existsSync(path.join(__dirname, 'icon.png')));
+addCheck('og-image.jpg exists', fs.existsSync(path.join(__dirname, 'og-image.jpg')));
+const iconSize = fs.statSync(path.join(__dirname, 'icon.png')).size;
+const ogSize = fs.statSync(path.join(__dirname, 'og-image.jpg')).size;
 addCheck('icon.png > 1KB', iconSize > 1024, `${iconSize} bytes`);
 addCheck('og-image.jpg > 5KB', ogSize > 5120, `${ogSize} bytes`);
 

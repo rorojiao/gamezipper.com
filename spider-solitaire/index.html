@@ -1466,9 +1466,16 @@
         
         function handleWin() {
             gameState.gameWon = true;
+            // FIX(P2): the win was never persisted — handleWin set gameWon=true
+            // but the last saveGame() ran inside moveCards BEFORE completion, so
+            // localStorage kept gameWon:false with completedSequences:8. A reload
+            // then "resumed" a ghost won game (empty board, no win screen, no
+            // fresh deal). Persist the won state so loadGame's next-run branch
+            // deals a fresh game instead.
+            saveGame();
             stopBGM();
             playSound('win');
-            
+
             // Update stats
             stats.played++;
             stats.won++;
@@ -1523,6 +1530,26 @@
             }
             
             if (clickedCol === -1 || clickedIndex === -1) {
+                // FIX(P1): dropping onto an EMPTY column was impossible — the
+                // click loop only assigns clickedIndex while walking existing
+                // cards, so an empty target column always fell through to the
+                // deselect branch, leaving canPlaceCards' empty-column rule
+                // (and every findValidMoves hint targeting an empty column)
+                // dead through the pointer path. Core spider play needs it.
+                if (clickedCol !== -1 && gameState.selectedColumn !== -1 &&
+                    Array.isArray(gameState.columns[clickedCol]) &&
+                    gameState.columns[clickedCol].length === 0) {
+                    const from = gameState.selectedColumn;
+                    const fromIdx = gameState.columns[from].length - gameState.selectedCards.length;
+                    if (moveCards(from, fromIdx, clickedCol)) {
+                        gameState.selectedCards = null;
+                        gameState.selectedColumn = -1;
+                        gameState.hintCards = null;
+                        gameState.hintColumn = -1;
+                        render();
+                        return;
+                    }
+                }
                 // Clicked empty area - deselect
                 gameState.selectedCards = null;
                 gameState.selectedColumn = -1;

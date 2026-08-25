@@ -459,6 +459,11 @@ function hideAllModals(){
   ['menuModal','statsModal','settingsModal','resultModal','gameOverModal','dailyModal'].forEach(id=>document.getElementById(id).classList.remove('active'));
 }
 
+function anyModalOpen(){ /* P1 2026-08-25: visibility-resume guard (see visibilitychange handler) */
+  return ['menuModal','statsModal','settingsModal','resultModal','gameOverModal','dailyModal']
+    .some(id=>document.getElementById(id).classList.contains('active'));
+}
+
 function showStats(){
   document.getElementById('statSolved').textContent=gameState.totalSolved;
   document.getElementById('statBest').textContent=gameState.bestStreak;
@@ -503,13 +508,22 @@ function startMode(m){
   let puzzle;
   if(m==='daily'){
     const today=new Date().toDateString();
-    const seed=today.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
-    let nums=[((seed*7)%13)+1,((seed*11)%13)+1,((seed*13)%13)+1,((seed*17)%13)+1];
-    nums=nums.map(v=>v===0?1:v);
-    const sol=solve24(nums);
+    /* P2 2026-08-25: (a) dailyStreak incremented on EVERY 'Daily' start — replaying the
+       same day inflated the streak; only a new calendar day counts now. (b) if the day's
+       fixed quad had no 24 solution, `puzzle` stayed undefined and daily mode silently
+       launched the PREVIOUS board (or none); walk the seed until the quad solves. */
+    let seed=today.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+    let nums=null,sol=null;
+    for(let t=0;t<40&&!sol;t++){
+      nums=[((seed*7)%13)+1,((seed*11)%13)+1,((seed*13)%13)+1,((seed*17)%13)+1];
+      sol=solve24(nums);
+      if(!sol)seed++;
+    }
     if(sol){puzzle={nums,solution:sol,diff:'daily'};}
-    gameState.lastDaily=today;
-    gameState.dailyStreak++;
+    if(gameState.lastDaily!==today){
+      gameState.lastDaily=today;
+      gameState.dailyStreak++;
+    }
   }else{
     const diff=m==='classic'?(gameState.puzzlesCompleted<25?'easy':gameState.puzzlesCompleted<60?'medium':'hard'):'medium';
     puzzle=genPuzzle(diff);
@@ -525,15 +539,25 @@ function startMode(m){
   if(m==='speed'){
     gameState.score=0;
     gameState.streak=0;
-    gameState.timerInterval=setInterval(()=>{
-      if(!gameState.paused&&gameState.mode==='speed'){
-        gameState.time++;
-        if(gameState.time>=60){clearInterval(gameState.timerInterval);gameState.timerInterval=null;endSpeedGame();}
-        draw();
-      }
-    },1000);
   }
+  /* P1 2026-08-25: the 1s interval was created ONLY for speed mode, so in classic/daily
+     gameState.time never advanced — HUD clock frozen at 0s, every win auto-3-star (t<30)
+     with a full time bonus, and totalTime/average-time stats accumulated zeros.
+     One shared ticker for every mode; only speed ends the game at 60. */
+  startTick();
   draw();
+}
+
+function startTick(){
+  if(gameState.timerInterval){clearInterval(gameState.timerInterval);}
+  gameState.timerInterval=setInterval(()=>{
+    if(gameState.paused||!gameState.mode)return;
+    gameState.time++;
+    if(gameState.mode==='speed'&&gameState.time>=60){
+      clearInterval(gameState.timerInterval);gameState.timerInterval=null;endSpeedGame();return;
+    }
+    draw();
+  },1000);
 }
 
 function endSpeedGame(){
@@ -563,11 +587,13 @@ function nextPuzzle(){
     gameState.used=[false,false,false,false];
     gameState.hints=3;
     gameState.puzzlesCompleted++;
+    gameState.time=0; /* P1 2026-08-25: each puzzle is independently timed (stars + time bonus) but nextPuzzle never reset the clock — consecutive classics accumulated the previous puzzle's seconds. */
     gameState.flipProgress=0;
     setTimeout(()=>{gameState.flipProgress=1;if(sfxEnabled&&sounds.flip)sounds.flip();},50);
   }
   hideAllModals();
   gameState.paused=false;
+  if(!gameState.timerInterval)startTick(); /* P1 2026-08-25: the ticker can be dead here after a visibilitychange clear (see the resume handler) — restart it instead of leaving the next puzzle untimed */
   draw();
 }
 
@@ -576,12 +602,17 @@ function useHint(){
   gameState.hints--;
   if(sfxEnabled&&sounds.hint)sounds.hint();
   const sol=gameState.puzzle.solution;
-  const parts=sol.match(/\d+|[+\-×÷]/g)||[];
+  /* P2 2026-08-25: the tokenizer missed '*' and '/' (solve24 emits raw operators; only
+     formatSolution swaps them to ×÷), so any solution whose FIRST op was × or ÷ produced
+     hintOp=null — the hint burned a charge and wrote NOTHING to the expression. Also
+     append the card DISPLAY glyph (A/J/Q/K): cards append glyphs and the evaluator
+     (getExprResult) parses glyphs, not raw 1/11/12/13 digits. */
+  const parts=sol.match(/\d+|[+\-*/]/g)||[];
   let hintNum=null,hintOp=null;
   for(let i=0;i<parts.length;i++){
     if(/\d/.test(parts[i])&&hintNum===null){
-      hintNum=parts[i];
-      if(i+1<parts.length&&'[+\-×÷]'.includes(parts[i+1])){hintOp=parts[i+1];}
+      hintNum=cardDisplay(+parts[i]);
+      if(i+1<parts.length&&'+-*/'.includes(parts[i+1])){hintOp=parts[i+1]==='*'?'×':'÷';}
     }
     if(hintNum&&hintOp)break;
   }
@@ -795,20 +826,22 @@ function drawOpsPanel(){
   const bw=52*scale;
   const bh=52*scale;
   const gap=8*scale;
+  /* P1 2026-08-25: '=' was drawn at column 4 exactly on top of '(' — '(' was invisible,
+     and the hit-test (ops are checked before '=') made tapping the upper half of '='
+     append '(' instead of submitting. Parens are required by most 24 solutions, so most
+     boards were unsolvable through the drawn UI. 7-column layout: + - × ÷ ( ) in cols
+     0-5, '=' alone in col 6, no overlap (hit-test in handlePointerDown matches). */
   const ops=['+','-','×','÷','(',')'];
-  const cols=6;
+  const cols=7;
   const totalW=cols*bw+(cols-1)*gap;
   let sx=(W-totalW)/2;
   const y=H-155*scale;
   ops.forEach((op,i)=>{
-    const col=i%cols;
-    const bx=sx+col*(bw+gap);
-    const by=y+Math.floor(i/cols)*(bh+gap);
-    drawOpBtn(bx,by,bw,bh,op);
+    const bx=sx+i*(bw+gap);
+    drawOpBtn(bx,y,bw,bh,op);
   });
-  const eqX=sx+4*(bw+gap);
-  const eqY=y;
-  drawOpBtn(eqX,eqY,bw,bh*2+gap,'=',true);
+  const eqX=sx+6*(bw+gap);
+  drawOpBtn(eqX,y,bw,bh*2+gap,'=',true);
 }
 
 function drawOpBtn(x,y,w,h,label,bg=false){
@@ -956,14 +989,26 @@ function drawHUD(){
 function getExprResult(){
   if(!gameState.expression)return null;
   try{
-    const e=gameState.expression.replace(/×/g,'*').replace(/÷/g,'/');
+    /* P1 2026-08-25: cards append A/J/Q/K (cardDisplay) but the evaluator only swapped ×÷ —
+       any expression using a face/ace card Function-evaled undefined identifiers (A,J,Q,K)
+       → ReferenceError → null. Medium/hard deals (values 1-13) could never be solved
+       through the cards as displayed. Map the glyphs to their numeric values before eval. */
+    const e=gameState.expression.replace(/×/g,'*').replace(/÷/g,'/')
+      .replace(/\bA\b/g,'1').replace(/\bJ\b/g,'11').replace(/\bQ\b/g,'12').replace(/\bK\b/g,'13');
     return Function('"use strict";return('+e+')')();
   }catch(e){return null;}
 }
 
 function checkAnswer(){
+  /* P1 2026-08-25: 24 requires ALL four cards exactly once, but only the numeric result
+     was checked — any deal containing e.g. an 8 and a 3 won instantly via 8×3= without
+     touching the other two cards. Parse the card tokens out of the built expression and
+     require an exact multiset match with the dealt cards before accepting the answer. */
+  const exprCards=(gameState.expression.match(/A|J|Q|K|10|[2-9]/g)||[])
+    .map(t=>t==='A'?1:t==='J'?11:t==='Q'?12:t==='K'?13:+t).sort((a,b)=>a-b).join(',');
+  const dealt=gameState.cards.slice().sort((a,b)=>a-b).join(',');
   const r=getExprResult();
-  if(r!==null&&Math.abs(r-24)<.0001){
+  if(exprCards===dealt&&r!==null&&Math.abs(r-24)<.0001){
     if(sfxEnabled&&sounds.correct)sounds.correct();
     spawnParticles(W/2,H/2-50,60);
     setTimeout(()=>{if(sfxEnabled&&sounds.celebrate)sounds.celebrate();},200);
@@ -1068,14 +1113,13 @@ function handlePointerDown(e){
   const bh=52*scale;
   const gap2=8*scale;
   const ops=['+','-','×','÷','(',')'];
-  const cols=6;
+  const cols=7; /* P1 2026-08-25: 7-col layout — '=' occupied col 4 on top of '(' (see drawOpsPanel); it now lives alone in col 6 with no overlap */
   const totalW2=cols*bw+(cols-1)*gap2;
   let sx2=(W-totalW2)/2;
   const opsY=H-155*scale;
   for(let i=0;i<ops.length;i++){
-    const col=i%cols;
-    const bx=sx2+col*(bw+gap2);
-    const by=opsY+Math.floor(i/cols)*(bh+gap2);
+    const bx=sx2+i*(bw+gap2);
+    const by=opsY;
     if(x>=bx&&x<=bx+bw&&y>=by&&y<=by+bh){
       if(sfxEnabled&&sounds.select)sounds.select();
       gameState.expression+=ops[i];
@@ -1083,7 +1127,7 @@ function handlePointerDown(e){
       return;
     }
   }
-  const eqX=sx2+4*(bw+gap2);
+  const eqX=sx2+6*(bw+gap2);
   if(x>=eqX&&x<=eqX+bw&&y>=opsY&&y<=opsY+bh*2+gap2){
     checkAnswer();
     return;
@@ -1106,11 +1150,19 @@ function handlePointerDown(e){
 
 canvas.addEventListener('pointerdown',handlePointerDown);
 
+/* P1 2026-08-25: hiding the tab paused the game but NOTHING ever resumed it — on return
+   gameState.paused stayed true with no modal open, and handlePointerDown rejects input
+   while paused-without-modal, so the board was dead until page reload (a mobile
+   tab-switch lost the puzzle). Resume (and restart the cleared ticker) when visible
+   again, unless a modal is up. Modal state is read via ids/classList so this works in
+   any embedding. */
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden&&gameState.timerInterval){
-    clearInterval(gameState.timerInterval);
-    gameState.timerInterval=null;
-    gameState.paused=true;
+  if(document.hidden){
+    if(gameState.timerInterval){clearInterval(gameState.timerInterval);gameState.timerInterval=null;}
+    if(gameState.mode&&!anyModalOpen())gameState.paused=true;
+  }else if(gameState.mode&&gameState.paused&&!anyModalOpen()){
+    gameState.paused=false;
+    if(!gameState.timerInterval)startTick();
   }
 });
 

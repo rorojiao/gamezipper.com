@@ -900,6 +900,10 @@ function startGame(diff) {
   flashAlpha = 0;
   shakeX = 0;
   shakeTime = 0;
+  gameState = 'playing'; // P0 2026-08-25: gameState was never set to 'playing' anywhere, so
+  // handlePointerDown's guard rejected every tap — no input ever registered, no round could
+  // be completed (and no game-over either). The game was 100% unwinnable after pressing a
+  // difficulty button. Set it here, where the game actually starts.
 
   document.getElementById('menu-screen').style.display = 'none';
   document.getElementById('game-screen').style.display = 'flex';
@@ -970,6 +974,12 @@ function playSequence() {
   }, totalTime);
 }
 function roundComplete() {
+  // P1 2026-08-25: the 1s gap before nextRound left isPlayerTurn=true and inputLocked=false,
+  // so a tap landing in the gap read sequence[playerIndex] with playerIndex===sequence.length
+  // -> expected===undefined -> instant gameOver. Players who tap quickly after finishing a
+  // round were killed between rounds. Lock input here; playSequence re-unlocks on the next
+  // turn. (perfectGame path is unaffected: it never returns to a player turn.)
+  inputLocked = true;
   score += 10 * round * combo;
   combo = Math.min(combo + 1, 10);
   maxCombo = Math.max(maxCombo, combo);

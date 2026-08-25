@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Doppelblock QA checklist - 50+ code-level checks
 const fs = require('fs');
-const html = fs.readFileSync('index.html', 'utf8');
+const path = require('path');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 let nPass = 0, nFail = 0;
 const fail = [];
 function check(name, ok, detail) {
@@ -85,7 +86,7 @@ check('win overlay', /ov-win/.test(html));
 check('settings overlay', /ov-settings/.test(html));
 check('howto overlay', /ov-howto/.test(html));
 check('tier label rendering', /tier-label/.test(html));
-check('lvl-btn class', /class="lvl-btn"/.test(html));
+check('lvl-btn class', /class="lvl-btn"|className\s*=\s*['"]lvl-btn['"]/.test(html));
 check('confetti canvas', /id="confetti"/.test(html));
 
 // Monetag/Adsterra

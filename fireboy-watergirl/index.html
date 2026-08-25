@@ -293,11 +293,13 @@ LEVELS[4]=mkLevel(
     t[14][9]=5;t[14][22]=6;t[11][19]=7;
     for(let c=16;c<18;c++)t[20][c]=4;
     for(let c=27;c<30;c++)t[20][c]=4;
-    for(let c=34;c<38;c++)t[8][c]=1;
-    t[7][35]=8;t[7][37]=9;
-    // stairs to exit
-    t[11][32]=1;t[11][33]=1;t[11][34]=1;
-    t[9][34]=1;t[9][35]=1;t[9][36]=1;t[9][37]=1;
+    // FIX(L5-P0, part 2): the original exit shelf sat at row 8 above row-9 stairs —
+    // a 1-row slot (head-clamp trap) 160px above the highest reachable platform.
+    // The old stairs under it are removed; the exit shelf is now at row 13 with the
+    // exits at row 12: one verified hop (rise 128, descent crossing +119px) from the
+    // t[17][30..32] platform, with fully clear air above for the exit jump.
+    for(let c=34;c<38;c++)t[13][c]=1;
+    t[12][35]=8;t[12][37]=9;
     return t;
   })()
 );
@@ -322,19 +324,39 @@ function genLevel(num){
   function rng(){seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;}
   
   // Add platforms
+  // FIX(gen-P0): random platforms at rows 13+ reaching into cols >= COLS-12 roof
+  // over the only takeoff corridor for the exit platform (verified L6: row-15/16
+  // platforms over cols 25-32 made both heroes' exit jump bump-and-fall forever).
+  // Low/left platforms stay; the corridor above the floor takeoff zone stays open.
   for(let i=0;i<platCount;i++){
     let pc=3+Math.floor(rng()*(COLS-8));
     let pr=5+Math.floor(rng()*(ROWS-8));
     let pw=2+Math.floor(rng()*4);
+    if(pr>=13&&pc+pw-1>=COLS-12)continue;
     for(let j=0;j<pw&&pc+j<COLS-1;j++)t[pr][pc+j]=1;
   }
   
   // Add hazards
+  // FIX(gen-P0): hazards used to be 2-5 wide, could merge with adjacent hazards into
+  // uncrossable lakes (verified L19 acid 11 tiles, L22 water 9, L23 lava 12), could sit
+  // under the spawn ledge (L25 acid covered spawn col 4 = instant death loop) and under
+  // row-18 platforms (ceiling 32px above floor = jump impossible). Max jump clears a
+  // 4-tile hazard + hero width (156px <= 184px air distance); wider is a wall for the
+  // non-immune hero. Now: width 2-4, spawn/exit approach kept clear, >=2 floor tiles
+  // between hazards, never under a row-18 platform.
+  let lastHaz=-3;
   for(let i=0;i<hazCount;i++){
     let hc=3+Math.floor(rng()*(COLS-8));
-    let hw=2+Math.floor(rng()*4);
+    let hw=2+Math.floor(rng()*3);
     let htype=rng()<0.35?2:rng()<0.6?3:4;
+    let bad=hc<7||hc+hw-1>=COLS-11||hc<=lastHaz+2;
+    // FIX(gen-P0): a platform at rows 14-18 over/near the hazard clips the jump arc
+    // (apex head reaches row 15) -> the hero drops back into the hazard = death loop
+    for(let j=0;j<hw&&!bad;j++)for(let rr=14;rr<=ROWS-4;rr++)
+      if(hc+j+2<COLS-1&&(t[rr][hc+j]===1||t[rr][Math.min(hc+j+2,COLS-2)]===1||t[rr][Math.max(hc+j-2,0)]===1))bad=true;
+    if(bad)continue;
     for(let j=0;j<hw&&hc+j<COLS-2;j++)t[ROWS-2][hc+j]=htype;
+    lastHaz=hc+hw-1;
   }
   
   // Add diamonds
@@ -554,6 +576,11 @@ function moveEntity(e,type){
   // Vertical
   e.vy+=0.5; // gravity
   if(e.vy>12)e.vy=12;
+  let py=e.y; // FIX(P1): remember pre-move y — the head-bump below must only fire when
+  // the entity actually rose INTO the tile this frame; without this guard an entity
+  // squeezed into a wall corner (e.g. pressed into the level's right wall while
+  // standing on its 1-tile top) got teleported up 32px every frame and flew off
+  // the top of the level (y -> -2.3 million) instead of falling back out.
   e.y+=e.vy;
   e.onGround=false;
   
@@ -566,7 +593,7 @@ function moveEntity(e,type){
     for(let c=left;c<=right;c++){
       if(isSolid(c,r)){
         if(e.vy>0){e.y=r*T-e.h;e.vy=0;e.onGround=true;}
-        else if(e.vy<0){e.y=(r+1)*T;e.vy=0;}
+        else if(e.vy<0&&py>=(r+1)*T){e.y=(r+1)*T;e.vy=0;} // FIX(P1): see py note above
       }
     }
   }
@@ -980,7 +1007,10 @@ function gameLoop(ts){
       fireboy.vx=0;
       if(Input.fbLeft())fireboy.vx=-4;
       if(Input.fbRight())fireboy.vx=4;
-      if(Input.fbUp()&&fireboy.onGround){fireboy.vy=-11;Audio.jump();}
+      // FIX(P0): jump impulse was -11 -> max rise 115px, but L1-4 exit platforms sit
+      // 128px above the floor (tutorial level included) = unreachable, level unwinnable.
+      // -12 gives a 138px rise and keeps 4-tile-wide hazards clearable.
+      if(Input.fbUp()&&fireboy.onGround){fireboy.vy=-12;Audio.jump();}
       moveEntity(fireboy,'fire');
       if(!fireboy.alive)gameOver('fire');
     }
@@ -989,7 +1019,7 @@ function gameLoop(ts){
       watergirl.vx=0;
       if(Input.wgLeft())watergirl.vx=-4;
       if(Input.wgRight())watergirl.vx=4;
-      if(Input.wgUp()&&watergirl.onGround){watergirl.vy=-11;Audio.jump();}
+      if(Input.wgUp()&&watergirl.onGround){watergirl.vy=-12;Audio.jump();} // FIX(P0): see fireboy jump fix
       moveEntity(watergirl,'water');
       if(!watergirl.alive)gameOver('water');
     }

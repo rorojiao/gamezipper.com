@@ -682,6 +682,7 @@ function startLevel(levelIdx) {
   G.matchesInLevel = 0;
   G.animating = false;
   G.matchAnimations = [];
+  G.levelCompleting = false; // FIX(P1 part 2): reset completion latch per level
   G.lastTickTime = 0;
   G.tutorialShown = false;
   G.tutorialStep = 0;
@@ -880,7 +881,10 @@ function triggerMatch(shelfIdx, item, slotIndices) {
 
     // Check win
     if (G.matchesInLevel >= G.totalMatchTarget) {
-      setTimeout(() => levelComplete(), 400);
+      // FIX(P1 part 2): only the FIRST crossing may schedule completion — a
+      // cascade's later matches each queued another levelComplete whose inner
+      // 1200ms showScreen fired over the NEXT level (phantom win overlay).
+      if (!G.levelCompleting) { G.levelCompleting = true; setTimeout(() => levelComplete(), 400); }
     } else {
       // Check for cascading matches
       setTimeout(() => checkAllMatches(), 100);
@@ -933,6 +937,15 @@ function isLevelStuck() {
 }
 
 function levelComplete() {
+  // FIX(P1): cascading matches schedule levelComplete MULTIPLE times (each late
+  // checkAllMatches -> triggerMatch sees matchesInLevel already >= target and
+  // queues another 400ms levelComplete). Stale timers then fired DURING THE NEXT
+  // LEVEL: a phantom "Level Complete" overlay popped over live play, saveStars
+  // wrote a bogus entry for the new level, and G.timerRunning=false froze its
+  // countdown (a fast Next-click after a cascade = free skip). Guard: only the
+  // level that actually earned completion, while it is still on screen.
+  if (G.screen !== 'playing') return;
+  if (G.matchesInLevel < G.totalMatchTarget) return;
   G.timerRunning = false;
   Audio.stopBGM();
   Audio.levelComplete();

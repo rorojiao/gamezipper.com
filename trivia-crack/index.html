@@ -583,6 +583,7 @@ function showQuestion(catName, isCrownChallenge){
   if(!state.usedQuestions[catName])state.usedQuestions[catName]=[];
   state.usedQuestions[catName].push(qi);
   var q = pool[qi];
+  curQ = q;
 
   qText.textContent = q.q;
   qOpts.innerHTML = '';
@@ -679,9 +680,11 @@ function switchToAI(){
   turnInd.textContent = "AI's Turn";
   drawWheel();
   setTimeout(function(){
+    if(state.phase!=='spinning'||state.isPlayerTurn)return; /* P2 2026-08-25: quit-during-AI-turn guard */
     aiThink.classList.remove('hidden');
     aiThink.textContent = 'AI is spinning...';
     setTimeout(function(){
+      if(state.phase!=='spinning'||state.isPlayerTurn)return;
       aiSpin();
     }, 800);
   }, 500);
@@ -726,6 +729,7 @@ function aiAnswerQuestion(catName, isCrown){
   var thinkTime = cfg.thinkMin + Math.random()*(cfg.thinkMax-cfg.thinkMin);
 
   setTimeout(function(){
+    if(state.isPlayerTurn||state.phase==='menu')return; /* P2 2026-08-25: player quit mid-AI-think */
     var isCorrect = Math.random() < cfg.correctRate;
     if(isCrown && isCorrect){
       state.aiCrowns[catName] = true;
@@ -796,7 +800,7 @@ function endGame(winner){
   );
 
   $('btn-play-again').addEventListener('click',function(){hideOverlay();resetGame();startGame();});
-  $('btn-overlay-menu').addEventListener('click',function(){hideOverlay();showScreen('menu');updateMenuStats();});
+  $('btn-overlay-menu').addEventListener('click',function(){hideOverlay();state.phase='menu';showScreen('menu');updateMenuStats();});
 }
 
 /* ====== DAILY CHALLENGE ====== */
@@ -915,24 +919,20 @@ function endDaily(){
 }
 
 /* ====== POWER-UPS ====== */
+var curQ = null; // active question (50/50 must know which option is correct)
 $('pu-5050').addEventListener('click',function(){
   if(state.pu['5050']<=0||state.phase!=='question')return;
   state.pu['5050']--;
   updatePUDisplay();
-  var btns=qOpts.querySelectorAll('.option-btn:not(.correct):not(.wrong)');
-  var wrong=[];
-  btns.forEach(function(b){if(!b.classList.contains('disabled'))wrong.push(b);});
-  // Find current question to identify correct answer
-  var catName = qCat.textContent.replace(' (CROWN!)','').trim();
-  var pool=QUESTIONS[catName]||[];
-  var used=state.usedQuestions[catName]||[];
-  var available=pool.filter(function(q,i){return used.indexOf(i)===-1;});
-  if(available.length===0)available=pool;
-  // Get correct answer index from the visible correct button
-  var correctBtn=qOpts.querySelector('.correct');
+  /* P1 2026-08-25: 50/50 disabled the FIRST TWO option buttons regardless of correctness.
+     The old lookup qOpts.querySelector('.correct') only matches AFTER the question is
+     answered (playerAnswer paints .correct), so during the question it found nothing and
+     the correct option could be among the two removed = no clickable right answer. */
+  var correctIdx = curQ ? curQ.answer : -1;
+  var btns=qOpts.querySelectorAll('.option-btn');
   var toRemove=[];
-  wrong.forEach(function(b){
-    if(b!==correctBtn && toRemove.length<2) toRemove.push(b);
+  btns.forEach(function(b){
+    if(+b.dataset.index!==correctIdx && !b.classList.contains('disabled') && toRemove.length<2) toRemove.push(b);
   });
   toRemove.forEach(function(b){b.classList.add('disabled');b.style.opacity='.3';});
 });
@@ -949,6 +949,9 @@ $('pu-skip').addEventListener('click',function(){
   state.pu.skip--;
   updatePUDisplay();
   clearInterval(timerInterval);
+  /* P2 2026-08-25: phase stayed 'question' during the 500ms handoff window, so a second
+     tap re-entered here and scheduled a second switchToAI = duplicate AI turn chains. */
+  state.phase='answered';
   qSection.classList.add('hidden');
   timerBar.classList.add('hidden');
   // Count as wrong - switch turns
@@ -1059,6 +1062,7 @@ $('btn-stats').addEventListener('click',showStatsScreen);
 $('btn-stats-back').addEventListener('click',function(){showScreen('menu');updateMenuStats();});
 $('btn-menu-back').addEventListener('click',function(){
   clearInterval(timerInterval);
+  state.phase='menu'; /* P2 2026-08-25: mark quit so pending AI-turn timers stop (guards above) */
   showScreen('menu');updateMenuStats();
 });
 $('daily-back').addEventListener('click',function(){
