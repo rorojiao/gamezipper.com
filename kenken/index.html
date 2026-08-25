@@ -451,7 +451,15 @@ function getCellFromEvent(e){const rect=canvas.getBoundingClientRect();const x=(
 canvas.addEventListener('pointerdown',e=>{e.preventDefault();playClick();const cell=getCellFromEvent(e);if(cell){if(state.selectedCell&&state.selectedCell.r===cell.r&&state.selectedCell.c===cell.c){state.selectedCell=null}else{state.selectedCell=cell}render()}});
 document.addEventListener('keydown',e=>{if(state.currentScreen!=='game')return;if(e.key>='1'&&e.key<='9'){const num=parseInt(e.key);if(num<=state.gridSize)placeNumber(num)}if(e.key==='Delete'||e.key==='Backspace')eraseCell();if(e.key==='z'&&(e.ctrlKey||e.metaKey))undoMove();if(e.key==='y'&&(e.ctrlKey||e.metaKey))redoMove()});
 
-function placeNumber(num){if(!state.selectedCell)return;const{r,c}=state.selectedCell;if(state.solution[r][c]!==0&&!state.pencilMode){playError();return}if(state.pencilMode){const notes=state.notes[r][c]||[];const idx=notes.indexOf(num);if(idx>=0)state.notes[r][c]=notes.filter(n=>n!==num);else if(notes.length<state.gridSize)state.notes[r][c]=[...notes,num].sort((a,b)=>a-b);addMove({type:'note',r,c,notes:[...state.notes[r][c]]})}else{if(state.board[r][c]===num)return;const prev=state.board[r][c];state.board[r][c]=num;state.notes[r][c]=[];addMove({type:'place',r,c,prev,num});playPlace();checkCageComplete()}render();checkWin()}
+// P0 fix (every placement bounced): the old guard `state.solution[r][c]!==0` is ALWAYS true —
+// solution is a complete Latin square — so playError() fired on every numpad/keypad placement
+// and the game was 100% unwinnable. Gate entries on the Latin-square constraint (row/col
+// duplicate) instead of the generator's exact solution: all 65 shipped levels and today's
+// daily measure unique, but future dailies aren't guaranteed to be, and an exact-solution
+// gate would bounce valid alternate completions on any non-unique one. checkWin still
+// validates cages + full board + Latin at the end, so nothing invalid can win.
+function violatesLatin(r,c,num){const n=state.gridSize;for(let i=0;i<n;i++){if(i!==c&&state.board[r][i]===num)return true;if(i!==r&&state.board[i][c]===num)return true}return false}
+function placeNumber(num){if(!state.selectedCell)return;const{r,c}=state.selectedCell;if(!state.pencilMode&&violatesLatin(r,c,num)){playError();state.mistakes++;document.getElementById('mistakes').textContent=state.mistakes;return}if(state.pencilMode){const notes=state.notes[r][c]||[];const idx=notes.indexOf(num);if(idx>=0)state.notes[r][c]=notes.filter(n=>n!==num);else if(notes.length<state.gridSize)state.notes[r][c]=[...notes,num].sort((a,b)=>a-b);addMove({type:'note',r,c,notes:[...state.notes[r][c]]})}else{if(state.board[r][c]===num)return;const prev=state.board[r][c];state.board[r][c]=num;state.notes[r][c]=[];addMove({type:'place',r,c,prev,num});playPlace();checkCageComplete()}render();checkWin()}
 function eraseCell(){if(!state.selectedCell)return;const{r,c}=state.selectedCell;if(state.board[r][c]===0&&(!state.notes[r][c]||state.notes[r][c].length===0))return;const prev=state.board[r][c];const prevNotes=state.notes[r][c]?[...state.notes[r][c]]:[];state.board[r][c]=0;state.notes[r][c]=[];addMove({type:'erase',r,c,prev,prevNotes});render()}
 
 function addMove(move){state.moveHistory.push(move);state.redoStack=[]}
@@ -478,15 +486,25 @@ function toggleMusic(){state.settings.music=!state.settings.music;if(bgmGain)bgm
 
 // ===== TIMER =====
 let timerInterval=null;
-function startTimer(){state.timer=0;state.timerRunning=true;updateTimerDisplay();if(state.settings.timer){document.getElementById('timer').classList.remove('hidden')}timerInterval=setInterval(()=>{state.timer++;updateTimerDisplay()},1000)}
-function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null}}
+// P1 fix (interval leak): startTimer overwrote timerInterval without stopping a live one —
+// every game abandoned mid-run (New button, re-picking a level) leaked a 1s interval that
+// kept incrementing state.timer; after N abandonments the clock ran N times fast and N
+// callbacks burned CPU forever. Stop any live interval before re-arming.
+function startTimer(){stopTimer();state.timer=0;state.timerRunning=true;updateTimerDisplay();if(state.settings.timer){document.getElementById('timer').classList.remove('hidden')}timerInterval=setInterval(()=>{state.timer++;updateTimerDisplay()},1000)}
+// P2 fix: stopTimer left timerRunning=true, so the visibility-resume guard (!timerRunning)
+// never fired after a tab-away — the interval was cleared but the flag said "running" and the
+// clock stayed dead for the rest of the game.
+function stopTimer(){state.timerRunning=false;if(timerInterval){clearInterval(timerInterval);timerInterval=null}}
 function updateTimerDisplay(){const m=Math.floor(state.timer/60);const s=state.timer%60;document.getElementById('timer').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
 
 // ===== NUMBER PAD =====
 function buildNumpad(){const pad=document.getElementById('numpad');pad.innerHTML='';pad.style.gridTemplateColumns=`repeat(${state.gridSize},1fr)`;for(let i=1;i<=state.gridSize;i++){const btn=document.createElement('button');btn.className='num-btn';btn.textContent=i;btn.onclick=()=>{playBtn();placeNumber(i)};pad.appendChild(btn)}const clear=document.createElement('button');clear.className='num-btn clear-btn';clear.textContent='Clear';clear.onclick=()=>{playBtn();eraseCell()};pad.appendChild(clear)}
 
 // ===== GAME FLOW =====
-function startGame(n,level,isDaily=false){state.currentScreen='game';state.gridSize=n;state.level=level;state.isDaily=isDaily;state.board=Array(n).fill(null).map(()=>Array(n).fill(0));state.notes=Array(n).fill(null).map(()=>Array(n).fill(null).map(()=>[]));state.selectedCell=null;state.pencilMode=false;state.moveHistory=[];state.redoStack=[];state.hints=0;state.mistakes=0;state.score=0;document.getElementById('mistakes').textContent='0';document.getElementById('hint-count').textContent='0';document.getElementById('score-display').textContent='Score: 0';const puzzle=generatePuzzle(n,level);state.solution=puzzle.grid.map(r=>[...r]);state.cages=puzzle.cages;document.getElementById('game-info').textContent=`${n}x${n} ${GRID_SIZES[n].name}`;document.getElementById('timer').classList.add('hidden');resizeCanvas();buildNumpad();render();startTimer();initBGM();if(state.settings.music)startBGM();showScreen('game-screen')}
+// P2 fix (stale win modal): the modal kept its 'show' class across screen switches — after
+// Win -> Menu -> picking a new level, the OLD modal reappeared covering the fresh game, and
+// its Next/Replay buttons then acted on the new game's state. Hide it on every game start.
+function startGame(n,level,isDaily=false){document.getElementById('win-modal').classList.remove('show');state.currentScreen='game';state.gridSize=n;state.level=level;state.isDaily=isDaily;state.board=Array(n).fill(null).map(()=>Array(n).fill(0));state.notes=Array(n).fill(null).map(()=>Array(n).fill(null).map(()=>[]));state.selectedCell=null;state.pencilMode=false;state.moveHistory=[];state.redoStack=[];state.hints=0;state.mistakes=0;state.score=0;document.getElementById('mistakes').textContent='0';document.getElementById('hint-count').textContent='0';document.getElementById('score-display').textContent='Score: 0';const puzzle=generatePuzzle(n,level);state.solution=puzzle.grid.map(r=>[...r]);state.cages=puzzle.cages;document.getElementById('game-info').textContent=`${n}x${n} ${GRID_SIZES[n].name}`;document.getElementById('timer').classList.add('hidden');resizeCanvas();buildNumpad();render();startTimer();initBGM();if(state.settings.music)startBGM();showScreen('game-screen')}
 function newGame(){playBtn();startGame(state.gridSize,state.level,state.isDaily)}
 function restartLevel(){playBtn();closeWinModal();startGame(state.gridSize,state.level,state.isDaily)}
 function nextLevel(){playBtn();closeWinModal();let nextLevel=state.level+1;if(nextLevel>=GRID_SIZES[state.gridSize].levels)nextLevel=0;startGame(state.gridSize,nextLevel,state.isDaily)}
@@ -517,7 +535,10 @@ function showTutorialStep(){const t=tutorialSteps[tutorialStep];document.getElem
 function tutorialPrev(){if(tutorialStep>0){tutorialStep--;showTutorialStep()}}
 function tutorialNext(){if(tutorialStep<tutorialSteps.length-1){tutorialStep++;showTutorialStep()}else{closeTutorial();startGame(4,0)}}
 function closeTutorial(){document.getElementById('tutorial-overlay').classList.remove('show')}
-function renderTutorialCanvas(){const tc=document.getElementById('tutorial-canvas');const c=tc.getContext('2d');const s=200/state.gridSize;c.clearRect(0,0,200,200);c.fillStyle='#1a1a3e';c.fillRect(0,0,200,200);for(let i=0;i<state.gridSize;i++){c.strokeStyle='#3a3a5a';c.strokeRect(i*s,0,s,200);c.strokeStyle='#3a3a5a';c.strokeRect(0,i*s,200,s)}c.fillStyle='#00f2fe';c.font='bold 14px Inter';c.textAlign='center';c.textBaseline='middle';const examples={0:{r:0,c:0,text:'3+',x:15,y:15},1:{r:0,c:0,text:'12+',x:15,y:15},2:{r:0,c:0,text:'6x',x:15,y:15}};const ex=examples[tutorialStep];c.fillText(ex.text,ex.x,ex.y)}
+// P1 fix: examples only covered steps 0-2 while tutorialSteps has 4 — step 4 ("Use Pencil
+// Marks") hit `ex.text` on undefined, threw, and left the tutorial overlay stuck with no way
+// to reach Start Game. Added the missing step-3 illustration (pencil candidates).
+function renderTutorialCanvas(){const tc=document.getElementById('tutorial-canvas');const c=tc.getContext('2d');const s=200/state.gridSize;c.clearRect(0,0,200,200);c.fillStyle='#1a1a3e';c.fillRect(0,0,200,200);for(let i=0;i<state.gridSize;i++){c.strokeStyle='#3a3a5a';c.strokeRect(i*s,0,s,200);c.strokeStyle='#3a3a5a';c.strokeRect(0,i*s,200,s)}c.fillStyle='#00f2fe';c.font='bold 14px Inter';c.textAlign='center';c.textBaseline='middle';const examples={0:{r:0,c:0,text:'3+',x:15,y:15},1:{r:0,c:0,text:'12+',x:15,y:15},2:{r:0,c:0,text:'6x',x:15,y:15},3:{r:0,c:0,text:'1 2',x:15,y:15}};const ex=examples[tutorialStep];c.fillText(ex.text,ex.x,ex.y)}
 
 // ===== CONFETTI =====
 let confettiParticles=[];
@@ -533,7 +554,10 @@ function stopConfetti(){if(confettiAnimId){cancelAnimationFrame(confettiAnimId);
 window.addEventListener('resize',()=>{if(state.currentScreen==='game'){resizeCanvas();render()}});
 
 // ===== VISIBILITY =====
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(state.timerRunning)stopTimer();if(bgmPlaying)stopBGM()}else if(!document.hidden&&state.currentScreen==='game'){if(!state.timerRunning)startTimer();if(state.settings.music&&!bgmPlaying){initBGM();startBGM()}}});
+// P2 fix: the resume path called startTimer(), which resets state.timer=0 — one tab-away and
+// back restarted the clock at 00:00 mid-game (stopTimer had also cleared the interval, so
+// resuming must re-arm it). Resume in place instead of restarting.
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(state.timerRunning)stopTimer();if(bgmPlaying)stopBGM()}else if(!document.hidden&&state.currentScreen==='game'){if(!state.timerRunning&&!document.getElementById('win-modal').classList.contains('show')){state.timerRunning=true;updateTimerDisplay();if(state.settings.timer)document.getElementById('timer').classList.remove('hidden');timerInterval=setInterval(()=>{state.timer++;updateTimerDisplay()},1000)}if(state.settings.music&&!bgmPlaying){initBGM();startBGM()}}});
 window.addEventListener('beforeunload',()=>{stopTimer();stopConfetti()});
 
 // ===== INIT =====
