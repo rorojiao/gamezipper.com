@@ -140,3 +140,19 @@ http://localhost:8765/unblock-me/          # P0 修复样板: 50 关 1→15 锯�
 - 已知 headless artifact: backdrop-filter 在软件 GL 下截图为纯黑(mini-golf 案例, 真 GPU 无影响)
 
 **已验证:** R4 全量 543 verifier 重跑(540 PASS/3 已知诚实 FAIL, 零新增, reports/regression-r4-c1..c8.json); site-check 9 项全绿; rebuild-store 543/543 missingEvidence=0; 37 款修复款独立二次复验 100% 复现; 视觉 E2E 551 页 0 真实缺陷; chrome 进程自查 0。
+
+## 第三阶段 · 双副本收束合并 (R5, 2026-08-25)
+
+**背景**: 本副本 94 个本地提交从未推送, origin/main 由另一副本推进了 89 个提交(R5xx ops 管线), 真分叉(merge-base 6544207480c)。origin = 线上部署真源。
+
+**策略**: `merge -s ours`(138 个双方都改的文件以本方 R4 验证版为准) + 逐文件证据门采纳对方 net-new 769 文件(blog 307 篇 / zh 页 / test-library / arukone 新游戏 / ~345 款游戏页 ops 包裹 / 26 款验证器更新 / js·admin·api 站点文件)。
+
+**验证门成果**:
+- 341 款受采纳影响游戏在最终树上全量重跑验证器: **275 PASS 采纳**, **26 款回退**。
+- 26 款回退 = 对方 R5xx 批量脚本跑在过期文件上, **把 merge-base 已有的修复抹掉**: battleship salvo 模式敌军齐射修复("FIX(verify 2026-08-18)"注释被连代码一起回退)、aqua-digger hudH=30 输入对齐(回退成 hudH=0, 验证器抓到的正是"tap 挖错格")、akinator 精灵逻辑、backgammon/bag-puzzle/bloxorz/blue/brain-it-on/canal-lock/cave/color-switch/color-by-number/color-block-jam/constellation-connect/count-master/cover-orange/country-road/cut-the-rope/cribbage/sliding-puzzle/sugar-sugar/baba-is-you/big-tall-small 等。每款回退后复验 PASS。
+- 过程中修复本方采纳分类 bug(构造 mine-all 集时漏拼本地已提交文件清单, 95 文件误采纳覆盖本方修复, 全部回退)。
+- arukone(全新游戏) 30/30 PASS 入库。
+
+**终态**: store 544 款 = 541 PASS + 3 诚实 FAIL, missingEvidence=0; site-check 9/9 缺陷=0; push `f883f8b1644`(3c3532cde4f..f883f8b1644)。
+
+**给另一副本的提示**: 其 R5xx 批量脚本需先 rebase 到含本副本修复的 main 再跑, 否则会继续回退 2026-08-16..18 已修的引擎缺陷; 26 款回退清单见 f883f8b1644 提交信息。

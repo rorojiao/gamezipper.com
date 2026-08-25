@@ -72,7 +72,9 @@
 | R3 | 2026-08-25 | 全量回归循环(543 verifier 重跑 vs 存档判定对比, regression-pass.js 8并发) | 16 款 PASS→FAIL 翻转 + unblock-me 自愈; 修复期又揪出 2 个被旧 harness 桩掩埋的真引擎 bug: color-cascade 末发不消除即 0 弹药软锁(endLevel 只在 clearCluster 内调度), impossible-quiz 首次 game over 后永久控件(PLAY/TRY AGAIN/Skip)被 cleanup() 全反注册=真浏览器按钮全灭 | 归因三类: ① 回归器 cwd 缺 repo-root 回退 → anti-knight-sudoku/sudoku ENOENT 假失败(已修 runner, 恢复 PASS); ② 8 并发饿死时间预算型 bot → 6 款串行全恢复(blumgi-slime/color-block-jam/kakuro/cribbage/growmi/maze-runner); ③ harness 收尾变更 vs 旧验证器假设 → 8 款: 6 款验证器侧修(blue qsa 假节点/drive-mad 死探针+150s 环路→真胜 0.14s/flood-fill+spelling-bee+yahtzee 双初始化/mini-golf 规划器旧叠加轨迹), 2 款引擎侧修(color-cascade/impossible-quiz, 根因注释+before/after) | 8/8 全绿复验≥2次; 收敛轮 R4 低并发(4 worker)启动 |
 | R4 | 2026-08-25 | 收敛回归(543 verifier, 4 worker 低并发, 8 分块) | **零新增失败** → 按 TC-REG-04 收敛达成 | unblock-me 存档 "SOLVED" 非标判定刷新为 PASS 50/50 | 540 PASS / 3 诚实 FAIL(boxrob 29/40, metro-lines 250/251, sugar-sugar 26/30), 全轮零新缺陷; site-check 9 项全绿; rebuild-store 543/543 missingEvidence=0 三方一致 |
 
+| R5 | 2026-08-25 | 双副本收束: 与 origin/main(89 提交, R5xx 管线)真分叉合并 — merge -s ours 保 R4 树 + 逐文件证据门采纳对方 net-new 769 文件 | 341 款采纳游戏全量重验: 26 款对方版本实为**对 merge-base 已有修复的回归**(其 R5xx 批量脚本跑在过期文件上: battleship salvo 修复被回退、aqua-digger hudH 输入对齐被回退、akinator/backgammon/bag-puzzle 等); 另发现并修复本方采纳分类 bug(95 文件误采纳, 已全部回退) | 26 款回归全部回退我方 R4 版并逐款复验 PASS; 275 款对方 ops/性能版验证 PASS 采纳+证据刷新; arukone 新游戏 30/30; store 544 款 541 PASS+3 诚实 FAIL missingEvidence=0; site-check 9/9 缺陷=0; push f883f8b1644 | 采纳层零未验文件, 合并态全绿 |
+
 ## 6. 收敛结论
 
-R1(基线) → R2(全站验证+修复) → R3(全量回归, 16 翻转→修复, 含 2 个被旧 harness 桩掩埋的真引擎 bug) → **R4(全量回归零新缺陷) — 循环终止判据达成**。
-终态: 543 款 verify_engine 全覆盖, 540 PASS + 3 诚实 FAIL(bot 搜索预算卡点, 引擎均经独立证明无罪, 留人工复核); 视觉 E2E 551 页冒烟 + 58 张视觉模型深验零真实缺陷; 本周期累计修复真引擎缺陷 65+(18+ P0 级"上架即不可玩", 含 6 款完全不可赢), 37 款修复款经主会话独立二次复验 100% 复现。
+R1(基线) → R2(全站验证+修复) → R3(全量回归, 16 翻转→修复, 含 2 个被旧 harness 桩掩埋的真引擎 bug) → **R4(全量回归零新缺陷) — 循环终止判据达成** → R5(双副本收束合并, 证据门采纳+回归拦截)。
+终态: **544 款** verify_engine 全覆盖(543 + arukone), **541 PASS + 3 诚实 FAIL**(bot 搜索预算卡点, 引擎均经独立证明无罪, 留人工复核); 视觉 E2E 551 页冒烟 + 58 张视觉模型深验零真实缺陷; 本周期累计修复真引擎缺陷 65+(18+ P0 级"上架即不可玩", 含 6 款完全不可赢), 37 款修复款经主会话独立二次复验 100% 复现; 双副本 183 提交分叉(本方 94 + 对方 89)以 mine-wins+验证门采纳收束为单一 main(f883f8b1644), 拦截对方 26 款回归。
