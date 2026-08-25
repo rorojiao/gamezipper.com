@@ -387,7 +387,12 @@ var PNAMES=['Ramp L','Ramp R','Curve','Funnel','Bounce','Tube','Boost','Slow'];
 // Each level: {name, grid (10x8), stars: [{r,c}], start:{r,c}, finish:{r,c}, budget}
 var LEVELS=[
   // Level 1 - Tutorial: Simple right ramp
-  {name:"First Roll",budget:3,
+  // P0 data fix (was unwinnable at budget 3): the finish sits at row-6 center
+  // altitude (y=566), reachable only by riding row-6 rails; a tube catch + ONE
+  // booster still exits at vx~650 but the ballistic gap to the sphere falls
+  // 56px short (exhaustive 3-piece search over all cells/types, best dist 56
+  // vs 33px win radius). Two chained row-6 boosters close the gap — budget 3->4.
+  {name:"First Roll",budget:4,
    start:{r:1,c:1},finish:{r:6,c:8},
    stars:[{r:3,c:4},{r:5,c:7}],
    fixed:[],hint:"Place ramps to guide the marble right and down"},
@@ -417,7 +422,13 @@ var LEVELS=[
    stars:[{r:2,c:2},{r:4,c:6},{r:6,c:8}],
    fixed:[],hint:"Funnels redirect the marble downward"},
   // Level 7
-  {name:"Speed Run",budget:5,
+  // P0 data fix (was unwinnable at budget 5): finish (1,9) is at row-1 center
+  // altitude; reaching it needs a booster chain on row 7 + a two-trampoline
+  // climb (row 7 -> row 4, each bounce capped at vy=-480). The final rise
+  // crosses row 1 at x~684 — 153px short of the sphere — and no 5th piece can
+  // extend it (exhaustive add-1 over all cells/types). A 6th piece catching
+  // the rise closes it — budget 5->6.
+  {name:"Speed Run",budget:6,
    start:{r:1,c:0},finish:{r:1,c:9},
    stars:[{r:1,c:3},{r:1,c:6},{r:1,c:9}],
    fixed:[],hint:"Boosters keep the marble moving fast"},
@@ -427,8 +438,15 @@ var LEVELS=[
    stars:[{r:1,c:3},{r:4,c:5},{r:6,c:7}],
    fixed:[],hint:"Plan your route carefully"},
   // Level 9
+  // P0 data fix (was unwinnable): start was {r:7,c:1} — bottom-row spawn. The marble
+  // falls 30px to the floor inside its own start cell (pieces can't be placed there),
+  // floor bounces decay vx 20→<15 in ~0.5s / ~15px of travel, so it dies before
+  // reaching any placeable cell. No piece can catch it either: the lowest possible
+  // rail (tube lower rail) sits 17.3px above a floor-rolling marble's center vs the
+  // 14.55px catch radius. Moving the spawn up 2 rows lets a trampoline in (7,1)
+  // catch the fall — the level's intended "double bounce" route.
   {name:"Double Bounce",budget:7,
-   start:{r:7,c:1},finish:{r:0,c:8},
+   start:{r:5,c:1},finish:{r:0,c:8},
    stars:[{r:5,c:3},{r:3,c:6},{r:1,c:8}],
    fixed:[],hint:"Two bounces may be needed"},
   // Level 10
@@ -471,8 +489,17 @@ var LEVELS=[
    fixed:[{r:2,c:2,t:1},{r:2,c:3,t:1},{r:4,c:6,t:1},{r:4,c:7,t:1},{r:6,c:5,t:1}],
    hint:"Navigate around many obstacles"},
   // Level 17
-  {name:"Triple Bounce",budget:9,
-   start:{r:7,c:0},finish:{r:0,c:9},
+  // P0 data fix (was unwinnable): start was {r:7,c:0} — same bottom-row-spawn death
+  // as Level 9 (marble dies on the floor inside its own spawn cell before reaching
+  // any placeable cell; rails can't catch a floor roll). Raised 2 rows so the fall
+  // through (7,0) can be caught and bounced up toward (0,9).
+  // P0 data fix (was unwinnable at budget 9): the (5,0)->(0,9) climb needs a
+  // 3-stage trampoline staircase (row 7 -> 4 -> 2/3 -> top-wall graze); every
+  // bounce multiplies vx by 0.65, so the final skim crosses the finish column
+  // ~41px short of the 33px win sphere (exhaustive 9-piece pair sweeps, best
+  // dist 41). A 10th piece (corner deflector at the top-left graze) closes it.
+  {name:"Triple Bounce",budget:10,
+   start:{r:5,c:0},finish:{r:0,c:9},
    stars:[{r:5,c:3},{r:3,c:6},{r:1,c:8}],
    fixed:[],hint:"Chain bounces to go uphill"},
   // Level 18
@@ -500,6 +527,7 @@ var state={
   screen:'title',
   currentLevel:0,
   grid:[], // 10x8 array of piece objects or null
+  hoverCell:null, // P1 fix: was never initialized -> undefined passed the ===null guard in drawHoverCell and crashed the rAF loop on the first game frame (always on touch devices, where canvas mousemove never fires; also desktop until the cursor crosses the canvas)
   selectedPiece:-1,
   simulating:false,
   marble:null,
@@ -798,7 +826,7 @@ function spawnParticles(x,y,color,count){
 }
 
 function drawHoverCell(){
-  if(state.simulating||state.hoverCell===null)return;
+  if(state.simulating||state.hoverCell==null)return; // ==null covers undefined too (defensive half of the hoverCell P1 fix)
   var hc=state.hoverCell;
   var p=cellToPixel(hc.r,hc.c);
   if(state.selectedPiece>=0&&!state.grid[hc.r][hc.c]){
@@ -966,8 +994,17 @@ function updateMarble(dt){
               if(dot<0){
                 m.vx-=2*dot*nx;
                 m.vy-=2*dot*ny;
-                m.vx*=BOUNCE_DAMP;
-                m.vy*=BOUNCE_DAMP;
+                // P1 fix: Booster (type 6) previously went through BOUNCE_DAMP (0.65)
+                // before its own 1.6x boost -> net 1.04x per contact; with friction that
+                // is net DECELERATION, so a marble riding a booster rail decayed to
+                // vx~0 and stayed glued to the rail forever (level never resolves).
+                // The piece's name/icon/level hints ("Booster Alley") promise
+                // acceleration — skip the reflect damp for boosters so the 1.6x/0.4x
+                // effect applies as designed.
+                if(piece.type!==6){
+                  m.vx*=BOUNCE_DAMP;
+                  m.vy*=BOUNCE_DAMP;
+                }
                 // Piece-specific effects
                 if(piece.type===4&&ny<0){ // Trampoline
                   m.vy=Math.min(m.vy,-480);
@@ -1026,7 +1063,12 @@ function updateMarble(dt){
     playSound('win');
     spawnParticles(fp.x+cellW/2,fp.y+cellH/2,'#00ff88',25);
     spawnParticles(fp.x+cellW/2,fp.y+cellH/2,'#00f0ff',15);
-    setTimeout(levelComplete,600);
+    // P1 fix: the 600ms win timer used to fire levelComplete unconditionally — if the
+    // player left the level within that window (level select / next / retry), the stale
+    // timer called stopSim() on the NEW level's live run and killed it mid-flight
+    // (marble vanished). Guard by level snapshot so a stale timer is a no-op.
+    var wonLevel=state.currentLevel;
+    setTimeout(function(){if(state.currentLevel===wonLevel)levelComplete()},600);
   }
 }
 
