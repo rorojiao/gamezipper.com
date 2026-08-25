@@ -401,16 +401,17 @@ function startGame(puzzle){
   render();
 }
 
+function tickTimer(){
+  if(!G.timerRunning)return;
+  G.timerSec++;
+  var m=Math.floor(G.timerSec/60),s=G.timerSec%60;
+  document.getElementById('timer').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
 function startTimer(){
   stopTimer();
   G.timerRunning=true;
   document.getElementById('timer').textContent='00:00';
-  G.timerInterval=setInterval(function(){
-    if(!G.timerRunning)return;
-    G.timerSec++;
-    var m=Math.floor(G.timerSec/60),s=G.timerSec%60;
-    document.getElementById('timer').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-  },1000);
+  G.timerInterval=setInterval(tickTimer,1000);
 }
 function stopTimer(){G.timerRunning=false;if(G.timerInterval){clearInterval(G.timerInterval);G.timerInterval=null}}
 
@@ -493,8 +494,28 @@ function giveHint(){
 }
 
 function checkWin(){
+  // P1 fix (false losses): cages are carved from ONE solved grid with no uniqueness proof —
+  // 53 of the 121 generated puzzles admit valid alternate completions, and the old
+  // exact-match against puzzle.solution rejected those as losses. Validate the real
+  // killer-sudoku win condition instead: full board, rows/cols/3x3 boxes each a 1-9
+  // permutation, every cage summing to its clue with no repeated digit. Any board passing
+  // this is a genuinely solved puzzle; nothing invalid can win.
+  for(var r=0;r<9;r++)for(var c=0;c<9;c++){if(G.cells[r][c]<1||G.cells[r][c]>9)return}
+  var seenRow=Array(9).fill(0),seenCol=Array(9).fill(0),seenBox=Array(9).fill(0);
   for(var r=0;r<9;r++)for(var c=0;c<9;c++){
-    if(G.cells[r][c]!==G.puzzle.solution[r][c])return;
+    var b=1<<(G.cells[r][c]-1),bi=Math.floor(r/3)*3+Math.floor(c/3);
+    if((seenRow[r]&b)||(seenCol[c]&b)||(seenBox[bi]&b))return;
+    seenRow[r]|=b;seenCol[c]|=b;seenBox[bi]|=b;
+  }
+  var cages=G.puzzle.cages;
+  for(var i=0;i<cages.length;i++){
+    var sum=0,seen=0;
+    for(var k=0;k<cages[i].cells.length;k++){
+      var cell=cages[i].cells[k],v=G.cells[cell[0]][cell[1]],b2=1<<(v-1);
+      if(seen&b2)return;
+      seen|=b2;sum+=v;
+    }
+    if(sum!==cages[i].sum)return;
   }
   endGame(true);
 }
@@ -945,7 +966,15 @@ canvas.addEventListener('touchmove',function(e){e.preventDefault()},{passive:fal
 })();
 
 // Cleanup / destroy function
-var _onVisChange=function(){if(document.visibilityState==='hidden'){stopTimer();saveBoard();if(audioCtx){try{audioCtx.close()}catch(e){}}audioCtx=null}};
+// P2 fix: the old handler only paused on hide — the timer never resumed when the page
+// became visible again, so one tab-away permanently froze the clock mid-game. Resume only
+// if a game is actually in progress and the player hadn't deliberately paused via Menu;
+// stopTimer() also CLEARED the interval, so the resume path must re-arm it or the flag
+// alone ticks nothing.
+var _onVisChange=function(){
+  if(document.visibilityState==='hidden'){stopTimer();saveBoard();if(audioCtx){try{audioCtx.close()}catch(e){}}audioCtx=null}
+  else if(G.puzzle&&!G.gameOver&&document.getElementById('menu-overlay').classList.contains('hidden')){G.timerRunning=true;if(!G.timerInterval){G.timerInterval=setInterval(tickTimer,1000)}}
+};
 var _onBeforeUnload=function(){stopTimer();saveBoard()};
 document.addEventListener('visibilitychange',_onVisChange);
 window.addEventListener('beforeunload',_onBeforeUnload);

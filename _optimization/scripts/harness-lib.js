@@ -64,6 +64,10 @@ function parseMarkupChildren(el, html, depth) {
     if (cls) String(cls[1]).split(/\s+/).forEach(t => t && child.classList._s.add(t)); // seed the live set only — className is a stale fallback view, classList.remove() only clears the set
     const idm = /\sid="([^"]*)"/.exec(m.attrs || '');
     if (idm) child.id = idm[1]; // deep static-markup nodes must be addressable by id (find-n-merge's per-screen X/PLAY/GOT IT buttons live past nested divs, where the els-extraction lazy match truncates)
+    // data-* attrs -> dataset: killer-sudoku wires .diff-btn/.puzzle-btn handlers that read
+    // this.dataset.diff / this.dataset.idx — a parsed node without dataset silently yields NaN
+    // (same regex as the find-n-merge els-extraction below)
+    for (const dm of String(m.attrs || '').matchAll(/\sdata-([a-zA-Z0-9_-]+)="([^"]*)"/g)) child.dataset[dm[1].replace(/-([a-z])/g, (c) => c[1].toUpperCase())] = dm[2];
     const oc = /\sonclick="([^"]*)"/.exec(m.attrs || '');
     if (oc) stashInlineHandler(child, oc[1]);
     if (m.content !== undefined) {
@@ -268,6 +272,14 @@ function bootGame(slug, opts) {
           // return the whole cache.
           if (cls && !tag) for (const id of Object.keys(els)) { const r = els[id]; if (!Array.isArray(r) && r.classList && r.classList.contains(cls)) out.push(r); }
           for (const id of Object.keys(els)) walk(els[id]);
+          // the parsed body tree is the real DOM — static class-wired markup (killer-sudoku's
+          // .diff-btn menu) only exists there; the els-registry stubs approximate it and miss
+          // nodes. Appended after the registry matches (existing index consumers unchanged);
+          // deduped because id stubs and parsed nodes are distinct objects covering the same
+          // markup — a dup would double-bind a click handler and fire it twice per click.
+          const seen = new Set(out);
+          const walkBody = (el) => { for (const c of (el.children || [])) { walkBody(c); const cn = String(c.className || ''); if (tag ? c.tagName === tag : (cls && cn.split(/\s+/).includes(cls)) || (cls && c.classList && c.classList.contains(cls))) { if (!seen.has(c)) { seen.add(c); out.push(c); } } } };
+          walkBody(sandbox.document.body);
           if (out.length) return out;
         }
         // attribute selectors `[k]` / `[k="v"]` (chains + optional tag): engines mark cells
@@ -299,6 +311,9 @@ function bootGame(slug, opts) {
       addEventListener(t, f) { (this.__dls = this.__dls || {})[t] = (this.__dls[t] || []).concat(f); },
       removeEventListener(t, f) { if (this.__dls && this.__dls[t]) this.__dls[t] = this.__dls[t].filter((x) => x !== f); },
       dispatch(t, ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); ((this.__dls || {})[t] || []).forEach(f => { try { f.call(this, ev); } catch (e) {} }); return true; },
+      // real DOM API (killer-sudoku endGame dispatches new Event('gameover') on document);
+      // window.dispatchEvent below already mirrors this for __wls
+      dispatchEvent(ev) { ev = ev || {}; ev.preventDefault = ev.preventDefault || (() => {}); ((this.__dls || {})[ev.type] || []).forEach(f => { try { f.call(this, ev); } catch (e) {} }); return true; },
       createElement: (tag) => makeEl({ tagName: String(tag || 'div').toUpperCase(), nodeName: String(tag || 'div').toUpperCase() }), // browsers report UPPER tagName (2026-08-25)
       createElementNS: () => makeEl(),
       getElementsByTagName(tag) { const out = []; const walk = (el) => { const cn = String(el.tagName || el.nodeName || ''); if (String(tag) === '*' || cn.toLowerCase() === String(tag).toLowerCase()) out.push(el); for (const c of (el.children || [])) walk(c); }; for (const id of Object.keys(els)) walk(els[id]); return out; },
