@@ -9,6 +9,72 @@
  //   setTimeout(sendBI, 200);
  // }
 
+ // UX-OPT 2026-08-22 R518: Blog post card-press feedback for dead_click false positive.
+ // R514 fixed best-instant-play-...html, R515 fixed magic-tiles. R518 scales the same fix
+ // to ALL 235 blog posts with .game-card / .site-card / .game-tile / .app-card via a single
+ // shared handler in game-footer.js (loaded by every blog page). Scoped to /blog/ and
+ // /zh/blog/ paths so game-page .game-card (the game UI wrapper, NOT a clickable card) is
+ // NEVER touched. Behavior on click:
+ //   1. If user clicked an inner <a>, do nothing (let the anchor navigate).
+ //   2. Otherwise add transient .gzcardpress class for 1.7s (covers gz-analytics.js 1.5s
+ //      capture-phase vs 1.5s-later state check window — R381/R382 spec).
+ //   3. If card contains an inner <a href="/...">, navigate to it.
+ // MutationObserver re-binds late-appended cards (some blog posts render via JS).
+ // Idempotent: __gzCardBound flag prevents double-binding on hot-reload / multi-call.
+ (function(){
+  var _p = location.pathname;
+  if (_p.indexOf('/blog/') !== 0 && _p.indexOf('/zh/blog/') !== 0) return;
+  // Defensive: only proceed if there's at least one card on the page
+  var _hasCard = document.querySelector('.game-card, .site-card, .game-tile, .app-card');
+  if (!_hasCard) return;
+  // Inject CSS once (cursor + .gzcardpress glow).
+  if (!document.getElementById('gz-r518-cardpress-css')) {
+   var _s = document.createElement('style');
+   _s.id = 'gz-r518-cardpress-css';
+   _s.textContent = '.game-card,.site-card,.game-tile,.app-card{cursor:pointer}'+
+    '.gzcardpress{box-shadow:0 0 0 3px rgba(78,205,196,.5),0 0 18px rgba(78,205,196,.25)!important;transform:translateY(-1px);transition:box-shadow .15s ease,transform .15s ease}';
+   document.head.appendChild(_s);
+  }
+  function _bindCard(card){
+   if (card.__gzCardBound) return;
+   card.__gzCardBound = true;
+   card.addEventListener('click', function(e){
+    if (e.target.closest && e.target.closest('a')) return;
+    card.classList.add('gzcardpress');
+    setTimeout(function(){ if (card && card.classList) card.classList.remove('gzcardpress'); }, 1700);
+    var innerLink = card.querySelector('a[href^="/"]');
+    if (innerLink) {
+     var href = innerLink.getAttribute('href');
+     if (href && href.charAt(0) === '/' && href.indexOf('//') !== 1 && href !== '/blog.html') {
+      window.location.href = href;
+     }
+    }
+   }, false);
+  }
+  function _initCards(){
+   var _cards = document.querySelectorAll('.game-card, .site-card, .game-tile, .app-card');
+   Array.prototype.forEach.call(_cards, _bindCard);
+   if (window.MutationObserver && !window.__gzCardMO) {
+    window.__gzCardMO = new MutationObserver(function(muts){
+     muts.forEach(function(m){
+      (m.addedNodes || []).forEach(function(n){
+       if (n.nodeType !== 1) return;
+       if (n.matches && n.matches('.game-card,.site-card,.game-tile,.app-card')) _bindCard(n);
+       var nested = n.querySelectorAll && n.querySelectorAll('.game-card,.site-card,.game-tile,.app-card');
+       if (nested) Array.prototype.forEach.call(nested, _bindCard);
+      });
+     });
+    });
+    window.__gzCardMO.observe(document.body, {childList: true, subtree: true});
+   }
+  }
+  if (document.readyState === 'loading') {
+   document.addEventListener('DOMContentLoaded', _initCards);
+  } else {
+   _initCards();
+  }
+ })();
+
  // Respect user dismissal — use sessionStorage so it persists within the tab
  if (sessionStorage.getItem('gz-footer-dismissed')) return;
 

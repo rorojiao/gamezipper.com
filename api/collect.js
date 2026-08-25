@@ -1,6 +1,8 @@
 // Vercel Serverless Function — gz-analytics proxy (POST-safe, no edge runtime)
-// Remove 'runtime=edge' to avoid Vercel routing-layer POST blocking
-const BI_SERVER_URL = 'https://packing-asset-drums-sarah.trycloudflare.com/api/collect';
+// Keep this fallback aligned with the live QuickTunnel endpoint in gz-analytics.js.
+// The previous packing-asset-drums-sarah URL expired, causing POST fallback requests
+// to fail even while the browser's direct gz-analytics endpoint remained healthy.
+const BI_SERVER_URL = 'https://vegetable-newspaper-allergy-iii.trycloudflare.com/api/collect';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',

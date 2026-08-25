@@ -96,7 +96,9 @@
       #level-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:10px;max-width:560px;width:100%;}
       .level-btn{aspect-ratio:1;width:100%;font-size:16px;font-weight:bold;background:rgba(255,255,255,0.07);border:2px solid rgba(255,214,128,0.35);border-radius:10px;color:#fff;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
       .level-btn .lv-stars{font-size:9px;color:#ffd680;line-height:1;}
-      .level-btn.locked{opacity:0.32;cursor:not-allowed;border-color:#444;background:rgba(255,255,255,0.03);color:#666;}
+      .level-btn.locked{opacity:.32;cursor:not-allowed;border-color:#444;background:rgba(255,255,255,.03);color:#666}
+      .level-btn.locked.shake{animation:bsLockedShake .38s ease-in-out}
+      @keyframes bsLockedShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-5px);}40%{transform:translateX(5px);}60%{transform:translateX(-3px);}80%{transform:translateX(3px);}}
       .level-btn.completed{border-color:#00ff88;background:rgba(0,255,136,0.08);}
       .level-btn:not(.locked):hover{transform:scale(1.06);background:rgba(255,200,100,0.18);}
       .level-btn.t0{border-top:3px solid #4ade80;} .level-btn.t1{border-top:3px solid #60a5fa;}
@@ -384,18 +386,18 @@
 
   </div>
 
-<script defer src="/adsterra-manager.js?v=v5174lazyep"></script><script src="/monetag-manager.js?v=v532aUnfilled" defer></script>
+<script defer src="/adsterra-manager.js?v=R449-flat"></script><script src="/monetag-manager.js?v=R449-flat" defer></script>
 <!-- UX-OPT 2026-08-05 R385: Variant B R362 fix. R383 swept empty-div + orphan-ins patterns but missed the original R362 Variant B (ins already inside div, but div lacked position:relative + contain:layout). Ins creative inflated 0->280px inside the div, div height grew, downstream siblings pushed -> CLS POOR. Fix: replace bare div with R362-styled div (position:relative + contain:layout paint style + overflow:hidden + max-height:280px + faint Sponsored label); upgrade ins to position:absolute so creative overlays on div without affecting flow. Same proven pattern as chess/ R362 (CLS 0.20 -> 0). -->
 <div id="gz-ad-below-game" style="position:relative;min-height:100px;max-height:280px;margin:16px auto;max-width:728px;text-align:center;overflow:hidden;contain:layout paint style;color:#666;font-size:.7em;background:transparent;border-radius:6px;box-sizing:border-box;line-height:100px"><span aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.78em;opacity:.3;letter-spacing:.05em;font-weight:500;pointer-events:none;transition:opacity .15s ease">Sponsored &middot; Advertisement</span>
   <!-- UX-OPT 2026-08-08 R389: ins moved inside the div from its previous sibling position (was orphan after R383 div, caused CLS POOR). -->
   <ins class="adsbygoogle" style="position:absolute!important;top:0!important;left:0!important;width:100%!important;max-width:728px!important;height:100%!important;max-height:280px!important;margin:0 auto!important;text-align:center;display:block" data-ad-client="ca-pub-8346383990981353" data-ad-slot="1099212472" data-ad-format="auto" data-full-width-responsive="true"></ins>
   <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
 </div>
-<script src="/gz-analytics.js?v=202608151335weekly-flat" defer></script>
+<script src="/gz-analytics.js?v=R449-flat" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
 <meta content="ca-pub-8346383990981353" name="google-adsense-platform-account">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
-<script src="/game-footer.js?v=20260710monetagoptg2" defer></script>
+<script src="/game-footer.js?v=R449-flat" defer></script>
 <script>
 "use strict";
 /* ===================== Config ===================== */
@@ -540,6 +542,20 @@ function buildLevelGrid(){
     grid.appendChild(btn);
   });
 }
+// UX-OPT 2026-08-24 R524: locked level-btn shake feedback (R382 Sub-case A pattern).
+// Click on locked btn has no handler → gz-analytics.js dead_click fires. Add .shake class
+// on click so the detector sees a className change. Use class delegation on the grid parent.
+(function(){
+  const grid=document.getElementById('level-grid');
+  if(!grid||grid.__gzLockedBound)return;
+  grid.__gzLockedBound=true;
+  grid.addEventListener('click',function(e){
+    var b=e.target.closest('.level-btn.locked');
+    if(!b||!grid.contains(b))return;
+    b.classList.add('shake');
+    setTimeout(function(){if(b&&b.classList)b.classList.remove('shake');},1700);
+  });
+})();
 
 /* ===================== Level Setup ===================== */
 function makeConfig(src){

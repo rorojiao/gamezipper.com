@@ -2,8 +2,13 @@
 // 1. Each grid solution is a valid 9x9 Sudoku
 // 2. Shared 3x3 boxes are consistent between overlapping grids
 // 3. Each puzzle has a unique solution matching the stored solution
+// Levels are inlined in index.html as `const LEVELS = [...]` (R47-Pitfall-50 fix).
 const fs = require('fs');
-const levels = JSON.parse(fs.readFileSync('/tmp/windmill_levels.json', 'utf8'));
+const path = require('path');
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+const m = html.match(/const LEVELS = (\[[\s\S]*?\]);/);
+if (!m) throw new Error('LEVELS not found in index.html');
+const levels = JSON.parse(m[1]);
 
 function isValid9x9(g) {
   for (let i = 0; i < 9; i++) {

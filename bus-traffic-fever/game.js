@@ -169,7 +169,16 @@ var G={
   // UX-OPT 2026-07-31 INP FIX: offscreen canvas for static wall hatch pattern (pre-rendered once per level load).
   // Replaces 5-10 ctx.beginPath/moveTo/lineTo/stroke calls per wall per frame with a single drawImage.
   // wallsCanvas holds the static grid cells + wall hatch + arrows; wallsCanvasW/H are its dimensions.
-  wallsCanvas:null,wallsCanvasW:0,wallsCanvasH:0,wallsCanvasDirty:true
+  wallsCanvas:null,wallsCanvasW:0,wallsCanvasH:0,wallsCanvasDirty:true,
+  // UX-OPT 2026-08-18 R491 INP FIX: per-bus offscreen canvas cache keyed by color+dir+len.
+  // Each level only has a small set of unique (color,dir,len) tuples (~10-15 buses), so we bake
+  // each unique bus to an offscreen canvas once per level load and drawImage it on every frame
+  // instead of recreating createLinearGradient + running 10 beginPath/stroke/fill per bus per
+  // frame. This drops the per-frame ctx-call cost on the input-handler main thread significantly,
+  // reducing INP POOR events on /bus-traffic-fever/ (6 events avg 2679ms post-R366, all Desktop
+  // Chrome 150/151 Edg 1360x746 — the input handler still competed with 16 buses × ~10 ctx calls
+  // each = ~160 calls/frame on tap).
+  busCache:{},busCanvasDirty:true
 };
 
 // ============ CANVAS SETUP ============
@@ -200,6 +209,8 @@ function resizeCanvas(){
   G.gridOY=(h-G.cellSize*lvl.rows)/2;
   // UX-OPT 2026-07-31 INP FIX: cellSize or canvas size changed → mark walls offscreen dirty
   G.wallsCanvasDirty=true;
+  // UX-OPT 2026-08-18 R491 INP FIX: also mark bus cache dirty on canvas resize
+  G.busCanvasDirty=true;
 }
 
 // ============ LEVEL LOADING ============
@@ -221,6 +232,9 @@ function loadLevel(idx){
   G.hintArrow=lvl.hintArrow||false;G.tutorialStep=0;
   G.history=[];G.animating=false;
   G.ripples=[];// R395: clear ripples when loading new level
+  // UX-OPT 2026-08-18 R491 INP FIX: mark bus cache dirty so renderBusesOffscreen() rebuilds
+  // for the new level's (color,dir,len) tuples on the next render() call.
+  G.busCanvasDirty=true;
   // Build grid
   G.grid=[];
   for(var r=0;r<=lvl.rows;r++){G.grid[r]=[];for(var c=0;c<=lvl.cols;c++)G.grid[r][c]=0;}
@@ -609,6 +623,9 @@ function render(dt){
   ctx.save();
   ctx.translate(G.gridOX,G.gridOY);
   // Buses
+  // UX-OPT 2026-08-18 R491 INP FIX: pre-render buses to offscreen cache. drawBus() becomes a
+  // drawImage lookup instead of recreating gradient + 10+ beginPath/stroke per bus per frame.
+  if(G.busCanvasDirty){renderBusesOffscreen();}
   G.buses.forEach(function(bus){
     if(!bus.alive)return;
     drawBus(ctx,bus);
@@ -666,28 +683,95 @@ function render(dt){
     ctx.restore();
   }
 }
+// UX-OPT 2026-08-18 R491 INP FIX: pre-render all unique (color,dir,len) bus tuples to an
+// offscreen canvas keyed cache, baked once per level load. drawBus() becomes a single
+// drawImage call instead of recreating a linear gradient + 10+ beginPath/stroke/fill calls
+// per bus per frame. This is the same pattern as R366 walls, applied to buses.
+function renderBusesOffscreen(){
+  G.busCache={};
+  var seen={};
+  G.buses.forEach(function(bus){
+    if(!bus.alive)return;
+    var key=bus.color+'|'+bus.dir+'|'+bus.len;
+    if(seen[key])return;
+    seen[key]=true;
+    // Compute bus body dimensions (matches drawBus layout: +3 padding from origin, -6 inset)
+    var w,h;
+    if(bus.dir==='l'||bus.dir==='r'){w=bus.len*G.cellSize-6;h=G.cellSize-6;}
+    else{w=G.cellSize-6;h=bus.len*G.cellSize-6;}
+    var dpr=window.devicePixelRatio||1;
+    var off=document.createElement('canvas');
+    off.width=Math.ceil(w*dpr);
+    off.height=Math.ceil(h*dpr);
+    var oc=off.getContext('2d');
+    oc.scale(dpr,dpr);
+    var x=0,y=0; // origin inside the offscreen canvas — drawBus offset is replicated by the drawImage translate
+    var col=COLORS[bus.color];
+    // Shadow
+    oc.fillStyle='rgba(0,0,0,0.3)';
+    roundRect(oc,x+2,y+3,w,h,10);oc.fill();
+    // Body gradient (one-time cost, baked into pixels)
+    var grad=oc.createLinearGradient(x,y,x,y+h);
+    grad.addColorStop(0,col);grad.addColorStop(1,shadeColor(col,-30));
+    oc.fillStyle=grad;
+    roundRect(oc,x,y,w,h,10);oc.fill();
+    // Border
+    oc.strokeStyle=shadeColor(col,30);oc.lineWidth=2;
+    oc.stroke();
+    // Windows (direction indicator)
+    oc.fillStyle='rgba(255,255,255,0.25)';
+    if(bus.dir==='r'){
+      roundRect(oc,x+w-h*0.7,y+h*0.15,h*0.5,h*0.4,4);oc.fill();
+      oc.fillStyle='rgba(255,255,255,0.6)';
+      drawArrow(oc,x+w-h*0.2,y+h/2,h*0.2,0);
+    }else if(bus.dir==='l'){
+      roundRect(oc,x+h*0.2,y+h*0.15,h*0.5,h*0.4,4);oc.fill();
+      oc.fillStyle='rgba(255,255,255,0.6)';
+      drawArrow(oc,x+h*0.2,y+h/2,h*0.2,Math.PI);
+    }else if(bus.dir==='d'){
+      roundRect(oc,x+w*0.15,y+h-w*0.7,w*0.4,w*0.5,4);oc.fill();
+      oc.fillStyle='rgba(255,255,255,0.6)';
+      drawArrow(oc,x+w/2,y+h-w*0.2,w*0.2,Math.PI/2);
+    }else if(bus.dir==='u'){
+      roundRect(oc,x+w*0.15,y+w*0.2,w*0.4,w*0.5,4);oc.fill();
+      oc.fillStyle='rgba(255,255,255,0.6)';
+      drawArrow(oc,x+w/2,y+w*0.2,w*0.2,-Math.PI/2);
+    }
+    // Icon — baked text. NB: emoji rendering may differ slightly across browsers but the
+    // overall shape/color is what users notice; emoji glyph stays readable in the cache.
+    oc.font=Math.floor(Math.min(w,h)*0.35)+'px sans-serif';
+    oc.textAlign='center';oc.textBaseline='middle';
+    oc.fillText(BUS_ICONS[bus.color]||'🚌',x+w/2,y+h/2);
+    G.busCache[key]={canvas:off,w:w,h:h};
+  });
+  G.busCanvasDirty=false;
+}
 function drawBus(ctx,bus){
   var x=bus.px,y=bus.py;
   var w,h;
   if(bus.dir==='l'||bus.dir==='r'){w=bus.len*G.cellSize-6;h=G.cellSize-6;x+=3;y+=3;}
   else{w=G.cellSize-6;h=bus.len*G.cellSize-6;x+=3;y+=3;}
+  // UX-OPT 2026-08-18 R491 INP FIX: cache lookup — single drawImage replaces ~13 ctx calls/bus/frame
+  var key=bus.color+'|'+bus.dir+'|'+bus.len;
+  var cached=G.busCache[key];
+  if(cached){
+    ctx.drawImage(cached.canvas,x,y,cached.w,cached.h);
+    return;
+  }
+  // Fallback inline render — only used if cache miss (shouldn't happen since renderBusesOffscreen
+  // pre-bakes every unique bus on level load, but kept for defensive safety if the cache is wiped).
   var col=COLORS[bus.color];
-  // Shadow
   ctx.fillStyle='rgba(0,0,0,0.3)';
   roundRect(ctx,x+2,y+3,w,h,10);ctx.fill();
-  // Body gradient
   var grad=ctx.createLinearGradient(x,y,x,y+h);
   grad.addColorStop(0,col);grad.addColorStop(1,shadeColor(col,-30));
   ctx.fillStyle=grad;
   roundRect(ctx,x,y,w,h,10);ctx.fill();
-  // Border
   ctx.strokeStyle=shadeColor(col,30);ctx.lineWidth=2;
   ctx.stroke();
-  // Windows (direction indicator)
   ctx.fillStyle='rgba(255,255,255,0.25)';
   if(bus.dir==='r'){
     roundRect(ctx,x+w-h*0.7,y+h*0.15,h*0.5,h*0.4,4);ctx.fill();
-    // Direction arrow
     ctx.fillStyle='rgba(255,255,255,0.6)';
     drawArrow(ctx,x+w-h*0.2,y+h/2,h*0.2,0);
   }else if(bus.dir==='l'){
@@ -703,7 +787,6 @@ function drawBus(ctx,bus){
     ctx.fillStyle='rgba(255,255,255,0.6)';
     drawArrow(ctx,x+w/2,y+w*0.2,w*0.2,-Math.PI/2);
   }
-  // Icon
   ctx.font=Math.floor(Math.min(w,h)*0.35)+'px sans-serif';
   ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText(BUS_ICONS[bus.color]||'🚌',x+w/2,y+h/2);

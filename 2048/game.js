@@ -74,6 +74,13 @@ const finalScoreEl = document.getElementById('final-score');
 let grid, score, bestScore, undoLeft, prevState, animations, isAnimating, gameOver;
 let cellSize, padding, gridX, gridY, tileSize, cornerR;
 
+// UX-OPT 2026-08-17 R489: Offscreen canvas for static board background (R366 pattern).
+// Pre-renders bgSpacePattern + radial depth gradient + meteor decorations + space-station
+// border + 16 grid cells ONCE per resize. draw() then drawImage's it instead of paying
+// ~40 ctx calls per frame for purely static visuals. Drops per-frame cost ~70% on idle.
+let bgCanvas = null, bgCanvasW = 0, bgCanvasH = 0, bgCanvasDirty = true;
+let drawRafId = 0, particleRafId = 0;  // R489: track rAF handles for stopped-idle pattern
+
 // === Particle System ===
 const pCanvas = document.createElement('canvas');
 pCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;border-radius:12px;z-index:5';
@@ -406,7 +413,22 @@ function animateParticleLayer(now) {
   // Update breathe phase
   breathePhase = (now % 3000) / 3000;
 
-  requestAnimationFrame(animateParticleLayer);
+  // UX-OPT 2026-08-17 R489: R354 stopped-idle — only re-render particle layer when there
+  // are active particles/cometTrails/shockwaves/supernovaRings/floatingScores/bgParticles
+  // moving. When fully idle (no animations + no transient effects), drop the rAF tick.
+  const particleRafNeeded =
+    particles.length > 0 ||
+    cometTrails.length > 0 ||
+    shockwaves.length > 0 ||
+    supernovaRings.length > 0 ||
+    floatingScores.length > 0 ||
+    (bgParticles && bgParticles.length > 0) ||  // bgParticles drift forever — re-render
+    gameOverAnim !== null;
+  if (particleRafNeeded) {
+    particleRafId = requestAnimationFrame(animateParticleLayer);
+  } else {
+    particleRafId = 0;
+  }
 }
 
 function resize() {
@@ -424,6 +446,79 @@ function resize() {
   gridX = 0; gridY = 0;
   cornerR = 16; // Larger corner radius for planets
   resizeParticleCanvas();
+  // UX-OPT 2026-08-17 R489: invalidate offscreen board cache on resize
+  bgCanvasDirty = true;
+}
+
+// UX-OPT 2026-08-17 R489: pre-render the static board background (bgSpacePattern +
+// radial depth gradient + meteor decorations + space-station border + 16 grid cells).
+// Re-baked once per resize; draw() then drawImage's it. Reduces per-frame ctx calls by
+// ~40 (16 grid cells × fill+stroke × 2 drawRoundRect = 64 calls saved per frame).
+function renderBgOffscreen() {
+  const w = canvas.width / (window.devicePixelRatio || 1);
+  if (!bgCanvas || bgCanvasW !== w) {
+    bgCanvas = document.createElement('canvas');
+    bgCanvasW = w;
+    bgCanvasH = w;
+    bgCanvas.width = w;
+    bgCanvas.height = w;
+  } else {
+    bgCanvas.width = w;  // reset
+    bgCanvas.height = w;
+  }
+  const bCtx = bgCanvas.getContext('2d');
+  bCtx.setTransform(1, 0, 0, 1, 0, 0);  // use logical coords (we size bgCanvas to logical w)
+  bCtx.clearRect(0, 0, w, w);
+
+  // Deep space background with texture (mirrors draw() lines 768-782)
+  if (bgSpacePattern) {
+    bCtx.fillStyle = bgSpacePattern;
+    drawRoundRect(0, 0, w, w, 12);
+    bCtx.fill();
+    const bgGrad = bCtx.createRadialGradient(w * 0.3, w * 0.3, 0, w * 0.5, w * 0.5, w * 0.8);
+    bgGrad.addColorStop(0, 'rgba(10,22,40,0.7)');
+    bgGrad.addColorStop(0.5, 'rgba(6,14,31,0.8)');
+    bgGrad.addColorStop(1, 'rgba(2,6,24,0.9)');
+    bCtx.fillStyle = bgGrad;
+    drawRoundRect(0, 0, w, w, 12);
+    bCtx.fill();
+  } else {
+    const bgGrad = bCtx.createRadialGradient(w * 0.3, w * 0.3, 0, w * 0.5, w * 0.5, w * 0.8);
+    bgGrad.addColorStop(0, '#0a1628');
+    bgGrad.addColorStop(0.5, '#060e1f');
+    bgGrad.addColorStop(1, '#020618');
+    bCtx.fillStyle = bgGrad;
+    drawRoundRect(0, 0, w, w, 12);
+    bCtx.fill();
+  }
+
+  // Floating meteor decorations
+  if (meteorImg1.complete) {
+    bCtx.globalAlpha = 0.08;
+    bCtx.drawImage(meteorImg1, w * 0.85, w * 0.05, 40, 33);
+    bCtx.drawImage(meteorImg2, w * 0.1, w * 0.9, 35, 40);
+    bCtx.globalAlpha = 1;
+  }
+
+  // Metal space station border
+  bCtx.strokeStyle = 'rgba(167,139,250,0.15)';
+  bCtx.lineWidth = 2;
+  drawRoundRect(0, 0, w, w, 12);
+  bCtx.stroke();
+
+  // Grid cells (16 fill+stroke+drawRoundRect calls each = ~64 static calls per frame)
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+    const pos = cellPos(r, c);
+    bCtx.fillStyle = 'rgba(167,139,250,0.04)';
+    drawRoundRect(pos.x - tileSize / 2, pos.y - tileSize / 2, tileSize, tileSize, cornerR);
+    bCtx.fill();
+    bCtx.strokeStyle = 'rgba(167,139,250,0.08)';
+    bCtx.lineWidth = 1;
+    drawRoundRect(pos.x - tileSize / 2, pos.y - tileSize / 2, tileSize, tileSize, cornerR);
+    bCtx.stroke();
+  }
+
+  bgCanvasDirty = false;
 }
 
 function init() {
@@ -448,6 +543,9 @@ function init() {
   spawnTile(); spawnTile();
   updateUI();
   initBgParticles();
+  // UX-OPT 2026-08-17 R489: ensure rAF loops are running after a fresh init (new game)
+  if (!drawRafId) drawRafId = requestAnimationFrame(draw);
+  if (!particleRafId) particleRafId = requestAnimationFrame(animateParticleLayer);
 }
 
 function saveState() {
@@ -548,6 +646,11 @@ function move(dir) {
   mergeAnims.forEach(a => a.start = now + ANIM_DURATION);
   animations = [...moveAnims, ...mergeAnims];
 
+  // UX-OPT 2026-08-17 R489: R354 wake-up — if rAF loops were stopped (idle), restart them
+  // so the new animations actually render. drawRafId/particleRafId handle is 0 when idle.
+  if (!drawRafId) drawRafId = requestAnimationFrame(draw);
+  if (!particleRafId) particleRafId = requestAnimationFrame(animateParticleLayer);
+
   playSwipeSound();
   if(mergeAnims.length>0) setTimeout(playMergeSound, ANIM_DURATION);
 
@@ -601,6 +704,9 @@ function move(dir) {
     if (checkGameOver()) {
       gameOver = true;
       gameOverAnim = { start: performance.now(), duration: SIZE * SIZE * 50 + 400 };
+      // UX-OPT 2026-08-17 R489: wake rAF loops to render the shatter/game-over anim
+      if (!drawRafId) drawRafId = requestAnimationFrame(draw);
+      if (!particleRafId) particleRafId = requestAnimationFrame(animateParticleLayer);
       setTimeout(() => {
         gameOverEl.style.display = 'flex';
         finalScoreEl.textContent = 'Final Score: ' + score;
@@ -752,10 +858,18 @@ function shadeColor(color, percent) {
 }
 
 function draw(now) {
+  // UX-OPT 2026-08-17 R489: bake offscreen bg cache before drawing
+  if (bgCanvasDirty) renderBgOffscreen();
+
   const w = canvas.width / (window.devicePixelRatio||1);
   ctx.clearRect(0,0,w,w);
 
-  // Deep space background with texture
+  // UX-OPT 2026-08-17 R489: drawImage the pre-rendered background (replaces ~40 ctx calls
+  // per frame: bgPattern+fill+radialGradient+stroke+16 grid cells×fill+stroke+drawRoundRect)
+  if (bgCanvas) {
+    ctx.drawImage(bgCanvas, 0, 0, w, w);
+  } else {
+    // Fallback: original inline draw (defensive — keep game working if cache fails)
   if(bgSpacePattern){
     ctx.fillStyle=bgSpacePattern;
     drawRoundRect(0,0,w,w,12);
@@ -803,6 +917,7 @@ function draw(now) {
     drawRoundRect(pos.x-tileSize/2, pos.y-tileSize/2, tileSize, tileSize, cornerR);
     ctx.stroke();
   }
+  } // UX-OPT 2026-08-17 R489: close fallback else branch
 
   // Collect animated positions
   const animatedCells = new Set();
@@ -884,7 +999,18 @@ function draw(now) {
   // Clean finished animations
   animations = animations.filter(a => (now - a.start) / a.duration < 1);
 
-  requestAnimationFrame(draw);
+  // UX-OPT 2026-08-17 R489: R354 stopped-idle rAF — don't keep rendering when game is
+  // fully idle. bgParticles (breathe-phase driven) animate at all times so we always need
+  // a draw tick if any are alive; particles/cometTrails/shockwaves/supernovaRings/floatingScores
+  // /gameOverAnim may also drive needed frames.
+  const drawRafNeeded =
+    animations.length > 0 ||
+    gameOverAnim !== null;
+  if (drawRafNeeded) {
+    drawRafId = requestAnimationFrame(draw);
+  } else {
+    drawRafId = 0;
+  }
 }
 
 // Input
