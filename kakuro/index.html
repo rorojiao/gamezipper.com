@@ -308,10 +308,28 @@
             return tryGeneratePuzzleSimple(size);
         }
 
+        // P0 fix (isolated whites): a white cell whose horizontal segment is length 1 is in
+        // no hRun, so fillGridBacktrack never assigns it -> solution value 0, and the player
+        // can only place 1-9, making the level permanently unwinnable (22 of 30 seeded levels
+        // hit this). Black such cells out; one pass is a fixpoint because an h-isolated cell
+        // is never another cell's horizontal white neighbour.
+        function repairPattern(pattern,size){
+            for(var i=0;i<size;i++){
+                for(var j=0;j<size;j++){
+                    if(pattern[i][j].black)continue;
+                    var hasLeft=(j>0&&!pattern[i][j-1].black);
+                    var hasRight=(j<size-1&&!pattern[i][j+1].black);
+                    if(!hasLeft&&!hasRight)pattern[i][j].black=true;
+                }
+            }
+            return pattern;
+        }
+
         function tryGeneratePuzzle(size,tier,rng){
-            var pattern=generatePattern(size,tier,rng);
+            var pattern=repairPattern(generatePattern(size,tier,rng),size);
             var hRuns=getHRuns(pattern,size);
             var vRuns=getVRuns(pattern,size);
+            if(hRuns.length<2)return null; // degenerate guard after repair: retry with next seed
             var grid=[];
             for(var i=0;i<size;i++){grid[i]=[];for(var j=0;j<size;j++)grid[i][j]=0;}
             if(!fillGridBacktrack(grid,pattern,hRuns,vRuns,0,rng))return null;
@@ -389,7 +407,11 @@
             var len=run.length;
             var combos=[];
             var minSum=0,maxSum=0;
-            for(var i=1;i<=len;i++){minSum+=i;maxSum+=9;}
+            // P0 fix (NULL generation): genCombos emits strictly-increasing DISTINCT digits, so the
+            // max run sum is (10-len)+...+9, not 9*len. With 9*len, targetSum routinely exceeded
+            // every possible combo (e.g. len 7 capped at 42, targets up to 63) -> combos empty ->
+            // all 20 seeded iterations failed -> fell through to the broken fallback puzzle.
+            for(var i=1;i<=len;i++){minSum+=i;maxSum+=(10-i);}
             var targetSum=minSum+Math.floor(rng()*(maxSum-minSum+1));
             genCombos([],len,targetSum,1,9,combos);
             if(combos.length===0)return false;
@@ -720,14 +742,41 @@
         }
 
         function checkWin(){
+            // P1 fix (false losses): the old check demanded player === state.solution exactly,
+            // but the generator does not prove uniqueness, so any valid alternate kakuro
+            // completion was rejected as a loss. Validate the actual genre win condition
+            // instead: every white cell filled 1-9, every run sums to its clue, digits
+            // distinct within each run. Any board passing this is a genuinely solved kakuro.
             var size=state.grid.length;
             for(var i=0;i<size;i++){
                 for(var j=0;j<size;j++){
                     if(!state.grid[i][j].black){
-                        if(state.player[i][j].value===0)return;
-                        if(state.solution&&state.solution[i][j].value!==state.player[i][j].value)return;
+                        var v=state.player[i][j].value;
+                        if(v<1||v>9)return;
                     }
                 }
+            }
+            var hRuns=getHRuns(state.grid,size);
+            var vRuns=getVRuns(state.grid,size);
+            for(var ri=0;ri<hRuns.length;ri++){
+                var run=hRuns[ri],sum=0,seen={};
+                for(var vi=0;vi<run.length;vi++){
+                    var val=state.player[run[vi].r][run[vi].c].value;
+                    sum+=val;
+                    if(seen[val])return;
+                    seen[val]=true;
+                }
+                if(sum!==state.grid[run[0].r][run[0].c-1].hClue)return;
+            }
+            for(var ri=0;ri<vRuns.length;ri++){
+                var run=vRuns[ri],sum=0,seen={};
+                for(var vi=0;vi<run.length;vi++){
+                    var val=state.player[run[vi].r][run[vi].c].value;
+                    sum+=val;
+                    if(seen[val])return;
+                    seen[val]=true;
+                }
+                if(sum!==state.grid[run[0].r-1][run[0].c].vClue)return;
             }
             winGame();
         }
@@ -873,7 +922,7 @@
                 grid[i]=[0,0,0,0,0,0,0];
                 for(var j=0;j<size;j++){
                     if(!pattern[i][j].black){
-                        grid[i][j]=1+(i+j)%9+1;
+                        grid[i][j]=1+(i+j)%9; // fix: the old 1+(i+j)%9+1 produced 2..10/11, out of the player's 1-9 range
                     }
                 }
             }
@@ -1068,7 +1117,11 @@
             document.getElementById('btn-hint').addEventListener('click',function(){initAudio();useHint();});
             document.getElementById('btn-erase').addEventListener('click',function(){initAudio();eraseCell();});
             document.getElementById('btn-menu-win').addEventListener('click',function(){playSFX('click');document.getElementById('win-overlay').classList.remove('active');stopBGM();switchScreen('menu');});
-            document.getElementById('btn-next').addEventListener('click',function(){playSFX('click');document.getElementById('win-overlay').classList.remove('active');stopBGM();if(state.tier>=0&&state.tier<4){startGame(state.tier,state.level+1);}else if(state.tier===4&&state.level<LEVELS_PER_TIER-1){startGame(state.tier,state.level+1);}else{switchScreen('menu');}});
+            document.getElementById('btn-next').addEventListener('click',function(){playSFX('click');document.getElementById('win-overlay').classList.remove('active');stopBGM();
+                // P2 fix (phantom levels): tiers 0-3 advanced past level 6 unconditionally,
+                // generating non-existent "level 7, 8..." under save keys the level grid never
+                // shows. Bound every tier like tier 4 was.
+                if(state.tier>=0&&state.level<LEVELS_PER_TIER-1){startGame(state.tier,state.level+1);}else{switchScreen('menu');}});
             canvas.game.addEventListener('pointerdown',function(e){
                 e.preventDefault();initAudio();
                 if(state.screen!=='game')return;
