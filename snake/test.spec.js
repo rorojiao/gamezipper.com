@@ -26,6 +26,11 @@ check('boundary/self collision reaches game over', /gameState=['"]over['"]/.test
 check('restart clears score and snake length', /function startGame\(\)[\s\S]*?snake=\[\{x:12,y:12\}\][\s\S]*?score=0/.test(html));
 check('best score persists', /localStorage\.setItem\(['"]snake_best['"],bestScore\)/.test(html) && /localStorage\.getItem\(['"]snake_best['"]\)/.test(html));
 check('native rAF cancellation wrapper', /_origCAF\.call\(window,id\)/.test(html));
+// UX-OPT 2026-08-26 R529: accumulator cap + visibility-aware rAF
+check('R529 accumulator cap on dt>1000ms', /if\(dt>1000\)\{accumulator=speed;\}/.test(html));
+check('R529 visibility-aware rAF cancel', /document\.addEventListener\('visibilitychange'/.test(html));
+check('R529 _snakeRafId tracked', /_snakeRafId/.test(html));
+check('R529 beforeunload cancels rAF', /addEventListener\('beforeunload',_snakeCancel\)/.test(html));
 check('site chrome complete', /monetag-manager\.js/.test(html) && /game-footer\.js/.test(html) && /id="gz-ad-below-game"/.test(html));
 check('sound control present', /id="soundToggle"/.test(html) && /sound-toggle\.js/.test(html));
 

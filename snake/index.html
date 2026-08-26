@@ -340,19 +340,25 @@ function startGame(){
   score=0;speed=150;eaten=0;specialFood=null;paused=false;
   document.getElementById('sc').textContent=0;
   const sbo=document.getElementById('share-btn-overlay');if(sbo)sbo.style.display='none';
-  spawnFood();gameState='play';lastTime=performance.now();showDpad();loop();
+  spawnFood();gameState='play';lastTime=performance.now();accumulator=0;showDpad();_snakeRafId=requestAnimationFrame(loop);
 }
 
 let lastTime=0,accumulator=0;
+let _snakeRafId=0;function _snakeCancel(){if(_snakeRafId){cancelAnimationFrame(_snakeRafId);_snakeRafId=0;}}
 function loop(){
-  if(gameState!=='play')return;
-  if(paused){draw();drawPause();requestAnimationFrame(loop);return;}
+  if(gameState!=='play'){_snakeRafId=0;return;}
+  if(paused){draw();drawPause();_snakeRafId=requestAnimationFrame(loop);return;}
   const now=performance.now(),dt=now-lastTime;lastTime=now;
-  accumulator+=dt;
+  // UX-OPT 2026-08-26 R529: cap accumulator — prevents 200-step burst on tab-refocus
+  // (backgrounded 30s → dt=30000ms → while-loop iterates 200× in one frame → INP=55s)
+  if(dt>1000){accumulator=speed;}else{accumulator+=dt;}
   if(specialFood){specialTimer-=dt;if(specialTimer<=0)specialFood=null;}
-  while(accumulator>=speed){step();accumulator-=speed;if(gameState!=='play')return;}
-  draw();requestAnimationFrame(loop);
+  while(accumulator>=speed){step();accumulator-=speed;if(gameState!=='play'){_snakeRafId=0;return;}}
+  draw();_snakeRafId=requestAnimationFrame(loop);
 }
+// UX-OPT 2026-08-26 R529: cancel rAF + reset accumulator when tab hidden to avoid burst catch-up
+document.addEventListener('visibilitychange',function(){if(document.hidden){_snakeCancel();accumulator=0;}else if(gameState==='play'&&!paused&&_snakeRafId===0){lastTime=performance.now();_snakeRafId=requestAnimationFrame(loop);}});
+window.addEventListener('beforeunload',_snakeCancel);
 
 function step(){
   dir=nextDir;
@@ -484,7 +490,7 @@ spawnFood();requestAnimationFrame(menuLoop);
 document.addEventListener('keydown',e=>{
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
   if(e.key==='Enter'&&(gameState==='menu'||gameState==='over')){startGame();return;}
-  if(e.key==='p'||e.key==='P'){if(gameState==='play'){paused=!paused;if(!paused){lastTime=performance.now();loop();}}return;}
+  if(e.key==='p'||e.key==='P'){if(gameState==='play'){paused=!paused;if(!paused){lastTime=performance.now();accumulator=0;_snakeRafId=requestAnimationFrame(loop);}}return;}
   if((gameState==='menu'||gameState==='over')&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d','W','A','S','D'].includes(e.key)){startGame();}
   if(gameState!=='play'||paused)return;
   switch(e.key){case'ArrowUp':setDir(0,-1);break;case'ArrowDown':setDir(0,1);break;case'ArrowLeft':setDir(-1,0);break;case'ArrowRight':setDir(1,0);break;}
