@@ -1693,6 +1693,11 @@
         // rejected. AdSense Tier 0 fills 95%+ of homepage banners in parallel, so the
         // Tier 2/3/4 chain was almost never reached AND never produced a fill when
         // it was. Cut to single-Tier for the homepage banner slot.
+        // v5.33 L2 R528: Skip fallback call when CONFIG.ZONES.inpagePush is in deadZones
+        // (always rejected). Eliminates 107 homepage_banner_no_fill events/7d (always
+        // paired with dead_zone_skip from loadZone itself). AdSense Tier 0 carries
+        // the only fill path; dead-zone caller adds BI noise without ever filling.
+        if (CONFIG.ZONES.deadZones && CONFIG.ZONES.deadZones.indexOf(CONFIG.ZONES.inpagePush) !== -1) return;
         loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
           container.setAttribute('data-filled', '1');
           markAdShown('homepage_banner');
