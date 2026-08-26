@@ -112,16 +112,18 @@ gz-ux.js 追加 🔊/🔇 切换(仅音频缺口名单):
 | verify 翻转 | 每波次门禁: 触动款全跑, FAIL 即回退该款 | 单款回退 c843f079f43 式基线 |
 | 静音 patch 影响引擎音频时序 | 仅 muted 属性与构造期 suspend, 不动 play() 调度 | 移除 W5 配置 |
 
-## 6. 覆盖率追踪(执行后回填)
+## 6. 覆盖率追踪(2026-08-26 执行完毕回填)
 | 波次 | 对象数 | 修复数 | 豁免数(书面理由) | 验证 |
 |---|---|---|---|---|
-| W1 | 3 | (待填) | | verify+触屏冒烟 |
-| W2 | 164 | (待填) | | verify×164+site-check+视觉20 |
-| W3 | 173 | (待填) | | verify+抽样 |
-| W4 | 30 抽样 | (待填) | | verify |
-| W5 | 343 | (待填) | | verify+实测3 |
-| W6 | 317 复核 | (待填) | | 视觉 |
-| W7 | 544 | — | | 全量回归零新缺陷 |
+| W1 | 3 | 0 | 3(点击型=触屏原生可达; 全站 mousemove-drag-无-touch/pointer 复扫=0 款真实命中) | 复扫证据 ux-audit.json |
+| W2 | 164→73 | 73(gz-ux.js 首访引导覆盖层) | 91(rename 墓碑页 1.4KB meta-refresh 跳转页, 真目标页自有引导) | 458 款引擎门零新缺陷 + 探针 14/14 + 视觉模型通过 |
+| W3 | 173→82 | 82(gz-ux.js ↻ HUD, gzRestart 钩子优先) | 91(墓碑页, 同上) | 同上门 + 探针 HUD 6/6 |
+| W4 | 197(全量, 超 30 抽样计划) | 0 | 13(字符串长度代理误报; 真实难度门=生成器梯度+verifier 可解性, 见 §3.5) | ux-tier-audit.json 184/197 单调 |
+| W5 | 343 | 343(gz-ux.js 🔊/🔇, HTMLMedia+AudioContext 双通道) | 0 | 引擎门 + 探针静音翻转 6/6 + 实测 |
+| W6 | 317→206→16 | 16 款 18 条规则(按钮本体 9-11px→12px) | 301(11px 弱化/大写次级说明文、徽章/计数装饰微标、页脚 — 行业惯例 9-11px 次级标注; 语义过滤+按钮本体严格过滤双轮证据) | 16/16 引擎 PASS(ux-w6-gate.json) |
+| W7 | 544 | — | 3 FAIL 均为已知诚实 FAIL(bot 预算: boxrob 29/40, metro-lines 250/251, sugar-sugar) | **541 PASS + 0 新缺陷 + unblock-me 恢复 PASS**(regression-r7.json, 14 分块×4 workers) |
+
+**W6 处置方法补充**: 三轮漏斗 — ① 语义豁免正则(label/small/stars/badge/chip/hint/caption/credit/footer/legal/sr-only 等 25 类)317→206; ② 按钮本体严格过滤(选择器最末复合段命中 btn/button/tab/key/toggle/chip 且非 badge/count/label 子元素)206→16; ③ 16 款内 18 条规则 font-size 9-11px→12px。豁免样例: `.stats-item .lbl{11px uppercase}`、`.lvcell .mini{9px}`、`#mode-info{11px}` — 均为次级标注, 主正文全站 ≥13px。
 
 ## 7. 执行顺序
 W1 → W2 → W3(与 W2 同一注入通道, 合并执行验证) → W4 → W5 → W6 → W7。全程证据入 `_optimization/reports/`, 每波次 git commit 一次。
