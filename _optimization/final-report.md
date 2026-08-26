@@ -183,3 +183,5 @@ http://localhost:8765/unblock-me/          # P0 修复样板: 50 关 1→15 锯�
 **R7 全量终验**: 544 款 14 分块×4 workers → **541 PASS + 3 已知诚实 FAIL, newFailures: [] , unblock-me 恢复 PASS**(regression-r7.json); site-check 9/9 缺陷=0; rebuild-store 544/541+3 missingEvidence=0; W6 修复款 16/16 引擎 PASS(ux-w6-gate.json) + 视觉模型复检 2 款按钮无溢出; W2/W5 探针 14/14+6/6。
 
 **已验证:** UX 战役 100% 覆盖(每款×每维度有结论, 每缺口要么修复要么书面豁免), 引擎层零新缺陷, 壳层 9 项全绿。
+
+**R8 合流后终验 (2026-08-26 14:38)**: 推送前 origin 又进 5 提交(test-library v1.232 / growth 队列 / R532 二号广告位 / eggy-car R531 存档修复 / R527 dead_click 重应用)。本地 UX 战役 4 提交 rebase 到 0ea6af47113 — 167 个双改文件(hunk 不相交)零冲突自动合并, 逐项复核: 367 页 gz-ux 注入全在 / W6 16 款字号全在 / eggy-car R531 修复在(唯一残留 `.btn .sub`/`.count` 为设计内豁免的按钮内次级标注)。终树全量 R8: **544 → 541 PASS + 3 已知诚实 FAIL, newFailures=[], unblock-me 保持恢复**; site-check 9/9 缺陷=0; rebuild-store 544/541+3 missingEvidence=0; chrome 进程自查 0。
