@@ -74,7 +74,9 @@
 
 | R5 | 2026-08-25 | 双副本收束: 与 origin/main(89 提交, R5xx 管线)真分叉合并 — merge -s ours 保 R4 树 + 逐文件证据门采纳对方 net-new 769 文件 | 341 款采纳游戏全量重验: 26 款对方版本实为**对 merge-base 已有修复的回归**(其 R5xx 批量脚本跑在过期文件上: battleship salvo 修复被回退、aqua-digger hudH 输入对齐被回退、akinator/backgammon/bag-puzzle 等); 另发现并修复本方采纳分类 bug(95 文件误采纳, 已全部回退) | 26 款回归全部回退我方 R4 版并逐款复验 PASS; 275 款对方 ops/性能版验证 PASS 采纳+证据刷新; arukone 新游戏 30/30; store 544 款 541 PASS+3 诚实 FAIL missingEvidence=0; site-check 9/9 缺陷=0; push f883f8b1644 | 采纳层零未验文件, 合并态全绿 |
 
+| R6 | 2026-08-26 | 终树全新全量轮: FF 至 2a65eff8ec7(对方基于我的合并完成 arukone 目录集成 452→453 + magic-sort R526) → 544 款 verifier 14 分块全跑 + site-check + rebuild-store | 引擎层 **零新缺陷**(541 PASS + 3 已知诚实 FAIL, newFailures:[]); 站点层 2 个新小缺陷: thumbs/arukone.jpg 缺失 + sitemap.html 缺 arukone(对方目录集成只改了 games-data/index/schema, 漏了我方 sitemap.html 与 thumbs) | thumbs/arukone.jpg ← arukone/og-image.jpg; sitemap.html 按字母序插入 🔢 Arukone; site-check 复跑 9 项 0 缺陷; 受影响面仅壳层(零引擎字节变化, git diff 可证), TC-REG-01 的 544 款证据不受影响; store 544/541+3/missingEvidence=0 | R6 = 修复后受影响检查项全绿; 引擎层零新缺陷 → 收敛在最终合并树上再次达成 |
+
 ## 6. 收敛结论
 
-R1(基线) → R2(全站验证+修复) → R3(全量回归, 16 翻转→修复, 含 2 个被旧 harness 桩掩埋的真引擎 bug) → **R4(全量回归零新缺陷) — 循环终止判据达成** → R5(双副本收束合并, 证据门采纳+回归拦截)。
-终态: **544 款** verify_engine 全覆盖(543 + arukone), **541 PASS + 3 诚实 FAIL**(bot 搜索预算卡点, 引擎均经独立证明无罪, 留人工复核); 视觉 E2E 551 页冒烟 + 58 张视觉模型深验零真实缺陷; 本周期累计修复真引擎缺陷 65+(18+ P0 级"上架即不可玩", 含 6 款完全不可赢), 37 款修复款经主会话独立二次复验 100% 复现; 双副本 183 提交分叉(本方 94 + 对方 89)以 mine-wins+验证门采纳收束为单一 main(f883f8b1644), 拦截对方 26 款回归。
+R1(基线) → R2(全站验证+修复) → R3(全量回归, 16 翻转→修复, 含 2 个被旧 harness 桩掩埋的真引擎 bug) → **R4(全量回归零新缺陷) — 循环终止判据达成** → R5(双副本收束合并, 证据门采纳+回归拦截) → **R6(终树全新全量轮: 引擎零新缺陷, 站点层 2 小缺陷修复后受影响项复验全绿) — 收敛在最终合并树上再次达成**。
+终态: **544 款** verify_engine 全覆盖(543 + arukone), **541 PASS + 3 诚实 FAIL**(bot 搜索预算卡点, 引擎均经独立证明无罪, 留人工复核); 视觉 E2E 551 页冒烟 + 58 张视觉模型深验零真实缺陷; 本周期累计修复真引擎缺陷 65+(18+ P0 级"上架即不可玩", 含 6 款完全不可赢), 37 款修复款经主会话独立二次复验 100% 复现; 双副本 183 提交分叉(本方 94 + 对方 89)以 mine-wins+验证门采纳收束为单一 main, 拦截对方 26 款回归, 对方已基于合并完成目录集成回推(arukone 452→453)。
