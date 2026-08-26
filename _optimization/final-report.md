@@ -156,3 +156,13 @@ http://localhost:8765/unblock-me/          # P0 修复样板: 50 关 1→15 锯�
 **终态**: store 544 款 = 541 PASS + 3 诚实 FAIL, missingEvidence=0; site-check 9/9 缺陷=0; push `f883f8b1644`(3c3532cde4f..f883f8b1644)。
 
 **给另一副本的提示**: 其 R5xx 批量脚本需先 rebase 到含本副本修复的 main 再跑, 否则会继续回退 2026-08-16..18 已修的引擎缺陷; 26 款回退清单见 f883f8b1644 提交信息。
+
+## 第四阶段 · R6 终树全量轮 (2026-08-26)
+
+对方副本基于 R5 合并完成 arukone 目录集成(452→453)+magic-sort R526 回推(2a65eff8ec7)。FF 后在最终树上跑全新全量轮:
+
+- **TC-REG-01**: 544 款 verify_engine 14 分块全跑 → **541 PASS + 3 已知诚实 FAIL, newFailures: []** (magic-sort R526 与 arukone 均在轮内 PASS)
+- **TC-REG-02**: site-check 揪出 2 个壳层新缺陷(对方目录集成漏了 thumbs/arukone.jpg 与 sitemap.html 条目) → 修复 → 复跑 9 项 0 缺陷
+- **TC-REG-03**: rebuild-store 544/541+3, missingEvidence=0
+
+**收敛在最终合并树上再次达成**(R6 引擎层零新缺陷; 修复面仅壳层, 零引擎字节变化)。终态推送 9929d8cdb3c。
