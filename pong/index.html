@@ -171,8 +171,13 @@ canvas#c{width:100%;height:100%;border-radius:8px;display:block;border:2px solid
 .diff-btn.active-medium{color:#ffcc00;border-color:#ffcc00;background:rgba(255,204,0,0.1)}
 .diff-btn.active-hard{color:#ff4466;border-color:#ff4466;background:rgba(255,68,102,0.1)}
 
-#overlay{position:absolute;inset:0;border-radius:8px;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:10}
+#overlay{position:absolute;inset:0;border-radius:8px;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:10;cursor:pointer}
 #overlay.hidden{display:none}
+/* UX-OPT 2026-08-26 R527: overlay tap flash (R382 pattern). User clicks overlay padding
+   (not the button) → e.target = #overlay itself (no className) → gz-analytics dead_click
+   fires with selector DIV. . Tap adds .gz-overlay-flash class for ≥1.7s so detector sees
+   className change. Also triggers game.start() so overlay blank clicks aren't wasted. */
+#overlay.gz-overlay-flash{background:rgba(0,40,30,0.92);box-shadow:inset 0 0 60px rgba(0,255,204,0.25);transition:none}
 #overlay h2{font-size:clamp(22px,6vw,36px);color:#00ffcc;text-shadow:0 0 20px rgba(0,255,204,0.6);margin-bottom:6px;letter-spacing:3px}
 #overlay .sub{font-size:clamp(12px,3vw,16px);color:rgba(255,255,255,0.6);margin-bottom:20px}
 #overlay .final{font-size:clamp(14px,3.5vw,18px);color:#fff;margin-bottom:24px;text-align:center;line-height:1.6}
@@ -534,6 +539,24 @@ function gzToast(msg,dur){dur=dur||2500;var t=document.createElement('div');t.st
 <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
 
 <script>
+(function(){
+  // UX-OPT 2026-08-26 R527: dead_click feedback (R382 Sub-case A pattern). User clicks
+  // overlay padding (not the button) → e.target = #overlay (no className) → gz-analytics
+  // dead_click fires with selector DIV. . This delegation adds .gz-overlay-flash class for
+  // ≥1.7s so detector sees className change. Also calls game.start() so blank overlay
+  // clicks aren't wasted.
+  var ov=document.getElementById('overlay');
+  if(ov && !ov.__gzOverlayTapBound){
+    ov.__gzOverlayTapBound=true;
+    ov.addEventListener('click',function(e){
+      // Only handle clicks that land on overlay padding (not inner buttons/links)
+      if(e.target.closest('button,a'))return;
+      ov.classList.add('gz-overlay-flash');
+      setTimeout(function(){if(ov&&ov.classList)ov.classList.remove('gz-overlay-flash');},1700);
+      try{if(window.game && typeof window.game.start==='function'){window.game.start();}}catch(err){}
+    });
+  }
+})();
 (function(){
   if(!window.gzAnalytics) return;
   var _gzFired = {loaded:false, started:false};

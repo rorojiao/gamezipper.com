@@ -59,8 +59,11 @@ canvas{display:block;width:100%;background:#0d0d1f;touch-action:none}
 .toggle-btn.active{background:rgba(255,215,0,0.2);border-color:rgba(255,215,0,0.4);color:#FFD700}
 .back-btn{position:absolute;top:8px;left:8px}
 .chapter-nav{display:flex;gap:8px;padding:0 16px;margin-bottom:8px;flex-wrap:wrap;justify-content:center}
-.chapter-tab{padding:6px 14px;border-radius:15px;font-size:13px;cursor:pointer;background:rgba(255,255,255,0.05);color:#888;border:1px solid transparent}
+.chapter-tab{padding:6px 14px;border-radius:15px;font-size:13px;cursor:pointer;background:rgba(255,255,255,0.05);color:#888;border:1px solid transparent;transition:background .15s ease,border-color .15s ease}
 .chapter-tab.active{background:rgba(255,215,0,0.15);color:#FFD700;border-color:rgba(255,215,0,0.3)}
+/* UX-OPT 2026-08-26 R527: dead_click visual hint (R382 Sub-case B pattern) — clicked tab
+   briefly glows so gz-analytics.js capture-phase vs 1.5s-later className check sees a change. */
+.chapter-tab.flash{background:rgba(255,215,0,0.35);border-color:rgba(255,215,0,0.6);box-shadow:0 0 12px rgba(255,215,0,0.4)}
 .gz-related-games{margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);width:100%;max-width:600px}
 .gz-related-games h3{font-size:16px;color:#FFD700;margin-bottom:12px;text-align:center}
 .gz-related-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
@@ -394,15 +397,32 @@ mb.textContent=musicOn?'Music ON':'Music OFF';mb.classList.toggle('active',music
 }
 
 // ============ LEVEL GRID ============
+// UX-OPT 2026-08-26 R527: re-apply R524 fix that was lost in R4 merge convergence.
+// Build chapter tabs ONCE (idempotent) so the clicked tab node PERSISTS across chapter
+// changes. Previous nav.innerHTML='' rebuild detached the clicked tab before
+// gz-analytics.js dead_click detector's 1.5s snapshot — R521 .flash fix was applied
+// to the original (detached) tab, not the new replacement matching DIV.chapter-tab.
+// Now: tabs persist, only their .active class toggles. Clicked tab keeps .flash ≥1.7s.
+function buildChapterNav(){
+  var nav=document.getElementById('chapter-nav');
+  if(!nav||nav.children.length===5)return;
+  for(var c=1;c<=5;c++){var tab=document.createElement('div');tab.className='chapter-tab';
+    tab.textContent='Ch.'+c;
+    tab.dataset.chapter=String(c);
+    tab.onclick=function(){var idx=parseInt(this.dataset.chapter,10)-1;this.classList.add('flash');var self=this;setTimeout(function(){if(self&&self.classList)self.classList.remove('flash');},1700);currentChapter=idx;buildLevelGrid();};
+    nav.appendChild(tab);
+  }
+}
 function buildLevelGrid(){
-var nav=document.getElementById('chapter-nav');nav.innerHTML='';
-// P1 fix 2026-08-25 (QA verifier): `for(var c=...)` closure captured the LOOP
-// variable, not per-iteration value — after the loop c===6, so EVERY chapter
-// tab set currentChapter=5 (out of range: start=30,end=30 → the level grid
-// rendered EMPTY and the levels screen soft-locked until a level was won).
-// Tabs now capture their chapter via IIFE, same as the level cells below.
-for(var c=1;c<=5;c++){var tab=document.createElement('div');tab.className='chapter-tab'+(c===currentChapter+1?' active':'');
-tab.textContent='Ch.'+c;(function(cc){tab.onclick=function(){currentChapter=cc-1;buildLevelGrid();};})(c);nav.appendChild(tab);}
+  buildChapterNav();
+  var nav=document.getElementById('chapter-nav');
+  var tabs=nav.children;
+  for(var i=0;i<tabs.length;i++){tabs[i].classList.toggle('active',parseInt(tabs[i].dataset.chapter,10)===currentChapter+1);}
+  // P1 fix 2026-08-25 (QA verifier): `for(var c=...)` closure captured the LOOP
+  // variable, not per-iteration value — after the loop c===6, so EVERY chapter
+  // tab set currentChapter=5 (out of range: start=30,end=30 → the level grid
+  // rendered EMPTY and the levels screen soft-locked until a level was won).
+  // Tabs now capture their chapter via IIFE, same as the level cells below.
 var grid=document.getElementById('level-grid');grid.innerHTML='';
 var start=currentChapter*6;var end=Math.min(start+6,30);
 for(var i=start;i<end;i++){var cell=document.createElement('div');

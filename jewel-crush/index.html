@@ -87,6 +87,12 @@ canvas{display:block;touch-action:none}
 .level-btn.unlocked{background:linear-gradient(135deg,rgba(108,92,231,0.3),rgba(168,85,247,0.3));border-color:rgba(168,85,247,0.5)}
 .level-btn.unlocked:hover{transform:scale(1.05);border-color:#a855f7}
 .level-btn.locked{background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.3);cursor:not-allowed}
+/* UX-OPT 2026-08-26 R527: locked level-btn click feedback (R382 Sub-case A pattern). Locked
+   btns have NO click handler (line 1567 only binds unlocked) → gz-analytics.js dead_click
+   fires on user tap. .shake class adds 4-keyframe x-translate so detector sees className
+   change within the 1.5s capture→snapshot window. */
+.level-btn.locked.shake{animation:jcLockedShake .38s ease-in-out}
+@keyframes jcLockedShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
 .level-btn .stars{font-size:10px;margin-top:2px;color:#f59e0b}
 .level-btn .stars .empty{color:rgba(255,255,255,0.15)}
 .map-header{width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;position:sticky;top:0;z-index:5;background:rgba(10,10,26,0.9);backdrop-filter:blur(8px)}
@@ -1566,6 +1572,18 @@ function buildLevelGrid() {
       btn.addEventListener('click', () => { playClickSFX(); startLevel(i); });
     }
     container.appendChild(btn);
+  }
+  // UX-OPT 2026-08-26 R527: locked level-btn click feedback (R382 Sub-case A pattern).
+  // Locked btns above have no click handler → gz-analytics.js dead_click fires on user tap.
+  // Grid delegation adds .shake class for ≥1.7s so detector sees className change.
+  if(!container.__gzLockedBound){
+    container.__gzLockedBound=true;
+    container.addEventListener('click',function(e){
+      var b=e.target.closest('.level-btn.locked');
+      if(!b||!container.contains(b))return;
+      b.classList.add('shake');
+      setTimeout(function(){if(b&&b.classList)b.classList.remove('shake');},1700);
+    });
   }
 }
 

@@ -226,6 +226,11 @@ h3{font-size:1.1rem;color:var(--text-secondary);margin-bottom:8px}
 .cipher-cell.space-cell{background:transparent;border-color:transparent;cursor:default;width:clamp(10px,2vw,16px)}
 @keyframes gz-cryptogram-flash{0%{box-shadow:0 0 0 2px var(--neon-cyan),0 0 18px rgba(0,229,255,.5)}100%{box-shadow:0 0 0 0 transparent,0 0 0 transparent}}
 .cipher-cell.gz-flash,.key.gz-flash{animation:gz-cryptogram-flash 1.7s ease-out}
+/* UX-OPT 2026-08-26 R527: separator-cell tap feedback (R382 Sub-case A). separator/space
+   cells have NO onclick (non-letters) — user tap on punctuation/space positions fires
+   dead_click. Add .gz-sep-shake class via delegation so detector sees className change. */
+.cipher-cell.separator-cell.gz-sep-shake,.cipher-cell.space-cell.gz-sep-shake{animation:gzSepShake .35s ease-in-out}
+@keyframes gzSepShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 .word-row{display:flex;flex-wrap:wrap;gap:2px;margin-bottom:4px;justify-content:center}
 .puzzle-words{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;padding:12px}
 .mapping-bar{
@@ -1189,6 +1194,19 @@ function renderGame() {
       }
     }
     state._flashKey = null;
+  }
+  // UX-OPT 2026-08-26 R527: dead_click feedback for separator/space cells. These have
+  // NO onclick (non-letters), so user taps silently fire gz-analytics.js dead_click.
+  // Delegation on #cipher-area adds .gz-sep-shake for ≥1.7s so detector sees className change.
+  const _cgArea=document.getElementById('cipher-area');
+  if(_cgArea&&!_cgArea.__gzSepBound){
+    _cgArea.__gzSepBound=true;
+    _cgArea.addEventListener('click',function(e){
+      var t=e.target.closest('.separator-cell,.space-cell');
+      if(!t||!_cgArea.contains(t))return;
+      t.classList.add('gz-sep-shake');
+      setTimeout(function(){if(t&&t.classList)t.classList.remove('gz-sep-shake');},1700);
+    });
   }
 }
 

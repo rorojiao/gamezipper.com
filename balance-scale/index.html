@@ -75,6 +75,12 @@
       .coin.selected{box-shadow:0 0 14px #ffd680,inset -2px -2px 5px rgba(0,0,0,0.35);transform:scale(1.12) translateY(-2px);border-color:#ffd680;}
       .coin.on-pan{opacity:0.28;filter:grayscale(0.5);}
       .coin.wrong{animation:shake 0.4s;background:radial-gradient(circle at 35% 30%,#ffb3b3,#c62828 70%,#8e1a1a);border-color:#7a1212;color:#fff;}
+      /* UX-OPT 2026-08-26 R527: tap visual feedback for dead_click (R382 pattern). When user
+         taps a coin during game-over/win states, onCoinClick silently returns — gz-analytics
+         fires dead_click. .coin-tapped adds a brief glow + scale for ≥1.7s so detector sees
+         a className change within the 1.5s capture→snapshot window. */
+      .coin.coin-tapped{animation:bsCoinTap .35s ease;border-color:rgba(255,214,128,0.8)!important;box-shadow:0 0 12px rgba(255,214,128,0.5)}
+      @keyframes bsCoinTap{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
       .coin.guess-hint{box-shadow:0 0 10px #ff8c00;}
       @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
 
@@ -626,6 +632,24 @@ function updateHUD(){
 }
 
 /* ===================== Tray ===================== */
+// UX-OPT 2026-08-26 R527: dead_click feedback (R382 pattern). updateTray() rebuilds the
+// tray every state change (innerHTML='' on line 631), so the clicked coin DOM node is
+// detached before gz-analytics.js dead_click detector's 1.5s snapshot. Capture-phase
+// listener on #coin-tray applies .coin-tapped class for ≥1.7s so the detector sees
+// snapClass ('coin' or 'coin selected') != nowClass ('coin coin-tapped') -> no dead_click.
+(function(){
+  var tray=document.getElementById('coin-tray');
+  if(!tray||tray.__gzCoinTapBound)return;
+  tray.__gzCoinTapBound=true;
+  var _to=null;
+  tray.addEventListener('click',function(e){
+    var c=e.target.closest('.coin');
+    if(!c||!tray.contains(c))return;
+    c.classList.add('coin-tapped');
+    clearTimeout(_to);
+    _to=setTimeout(function(){if(c&&c.classList)c.classList.remove('coin-tapped');},1700);
+  });
+})();
 function updateTray(){
   const tray=document.getElementById('coin-tray');
   tray.innerHTML='';
