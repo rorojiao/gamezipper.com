@@ -1064,6 +1064,10 @@ window._matterLoadPromise=new Promise((resolve,reject)=>{
     if(state==='game'){state='paused';pauseStart=performance.now();document.getElementById('pause-overlay').style.display='flex';}
     else if(state==='paused'){state='game';pausedTotal+=performance.now()-pauseStart;lastT=0;document.getElementById('pause-overlay').style.display='none';}
   }
+  // UX-OPT 2026-08-27 R548: cancel rAF + reset lastT when tab hidden to avoid Matter.js physics burst on tab-refocus (BI 7d 2 inp_worst events at ~40 SECONDS INP from 1 Edge Chrome user on 2026-08-20, same root cause as R529 snake)
+  function _pmCancelRaf(){if(rafId){cancelAnimationFrame(rafId);rafId=0;}}
+  document.addEventListener('visibilitychange',function(){if(document.hidden){_pmCancelRaf();}else if(state==='game'&&rafId===0){lastT=0;rafId=requestAnimationFrame(loop);}});
+  window.addEventListener('beforeunload',_pmCancelRaf);
   function showInstructions(){document.getElementById('instr-overlay').style.display='flex';}
   function hideInstructions(){document.getElementById('instr-overlay').style.display='none';}
 
