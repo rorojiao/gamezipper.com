@@ -119,6 +119,8 @@
      {n:'Bounce Bot',e:'🤖',u:'/bounce-bot/',c:'arcade'},
      {n:'Reaction Time',e:'⚡',u:'/reaction-time/',c:'skill'},
      {n:'Cloud Sheep',e:'☁️',u:'/cloud-sheep/',c:'puzzle'},
+    {n:'Liquid Connect',e:'💧',u:'/liquid-connect/',c:'puzzle'},
+    {n:'NYT Tiles',e:'🟦',u:'/nyt-tiles/',c:'puzzle'},
      {n:'Abyss Chef',e:'🍳',u:'/abyss-chef/',c:'puzzle'},
      {n:'Basketball Shoot',e:'🏀',u:'/basketball-shoot/',c:'arcade'},
      {n:'Glyph Quest',e:'🔤',u:'/glyph-quest/',c:'puzzle'},
