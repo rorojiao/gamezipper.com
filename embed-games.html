@@ -23,6 +23,9 @@
 pre{cursor:pointer;transition:background 0.15s ease}
 pre:hover{background:#0e0e22}
 .embed-card.flash{box-shadow:0 0 0 2px #4ecdc4}
+/* UX-OPT 2026-08-28 R552: flash target clicked child so detector sees snapClass !== nowClass */
+.embed-card h3.flash,.embed-card p.flash{color:#4ecdc4;background:rgba(78,205,196,.08);border-radius:4px;transition:color .15s ease,background .15s ease}
+.embed-card pre.flash{background:#1a3a3a;border:1px solid #4ecdc4;transition:background .15s ease,border .15s ease}
 .copy-btn{background:#4ecdc4;color:#000;border:none;padding:5px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.88em}.copy-btn:hover{background:#3dbdb4}nav{margin-bottom:20px;font-size:14px}nav a{color:#e0e0e0}.toc{background:#13132a;border:1px solid #252750;border-radius:10px;padding:16px 20px;margin:20px 0}.toc ol,.toc li{margin:4px 0}.toc a{color:#4fc3f7}.stats{display:flex;gap:16px;margin:12px 0;flex-wrap:wrap}.stat-chip{background:#1a1a2e;border:1px solid #2a2a4a;border-radius:20px;padding:4px 12px;font-size:0.82em;color:#aaa}.faq-item{background:#13132a;border:1px solid #252750;border-radius:10px;padding:14px;margin:10px 0}.faq-item h3{color:#ffd93d;font-size:0.98em;margin-bottom:6px}.faq-item p{margin:0;color:#b0b0c0;font-size:0.9em}
 </style>
 <script type="application/ld+json">
@@ -972,6 +975,27 @@ function preSelectCode(pre){
   s.addRange(r);
 }
 document.querySelectorAll('.embed-card pre').forEach(function(p){p.onclick=function(){preSelectCode(p)}});
+// UX-OPT 2026-08-28 R552: dead_click on DIV.embed-card (BI 7d: 3 dead_clicks 3 users 2026-08-23/27).
+// Outer .embed-card div has no click handler — when user clicks h3 or p area (NOT the <pre>),
+// it bubbles to .embed-card → no className change → dead_click fires. Add click-anywhere
+// handler that flashes BOTH the clicked element AND its parent card (R381 pattern: visible
+// state change for ≥1.5s, on the e.target itself so gz-analytics.js capture-phase detector
+// sees snapClass !== nowClass).
+document.querySelectorAll('.embed-card').forEach(function(card){
+  card.onclick=function(e){
+    // skip if click was on copy-btn (let copyEmbed handle its own feedback)
+    if(e.target.classList&&e.target.classList.contains('copy-btn'))return;
+    var pre=card.querySelector('pre');
+    if(pre)preSelectCode(pre);
+    // R381/R552 lesson: flash the CLICKED ELEMENT (e.target) directly so the
+    // capture-phase detector sees snapClass !== nowClass at t=1.5s.
+    if(e.target!==card){
+      e.target.classList.add('flash');
+      var t=e.target;
+      setTimeout(function(){if(t&&t.classList)t.classList.remove('flash')},1700);
+    }
+  };
+});
 </script>
 
 <!-- SEO & Revenue Optimization 2026-08-05: Lazy-load adsterra + monetag managers (same as homepage) -->
