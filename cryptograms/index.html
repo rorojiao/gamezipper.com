@@ -226,7 +226,7 @@ h3{font-size:1.1rem;color:var(--text-secondary);margin-bottom:8px}
 }
 .cipher-cell.space-cell{background:transparent;border-color:transparent;cursor:default;width:clamp(10px,2vw,16px)}
 @keyframes gz-cryptogram-flash{0%{box-shadow:0 0 0 2px var(--neon-cyan),0 0 18px rgba(0,229,255,.5)}100%{box-shadow:0 0 0 0 transparent,0 0 0 transparent}}
-.cipher-cell.gz-flash,.key.gz-flash{animation:gz-cryptogram-flash 1.7s ease-out}
+.cipher-cell.gz-flash,.cipher-cell.gz-r556-flash,.key.gz-flash{animation:gz-cryptogram-flash 1.7s ease-out}
 /* UX-OPT 2026-08-26 R527: separator-cell tap feedback (R382 Sub-case A). separator/space
    cells have NO onclick (non-letters) — user tap on punctuation/space positions fires
    dead_click. Add .gz-sep-shake class via delegation so detector sees className change. */
@@ -1199,14 +1199,48 @@ function renderGame() {
   // UX-OPT 2026-08-26 R527: dead_click feedback for separator/space cells. These have
   // NO onclick (non-letters), so user taps silently fire gz-analytics.js dead_click.
   // Delegation on #cipher-area adds .gz-sep-shake for ≥1.7s so detector sees className change.
+  // UX-OPT 2026-08-29 R556: also cover .cipher-cell[data-cipher] clicks. R525 attempted
+  // to flash via state._flashCipher in renderGame, but renderGame() rebuilds the entire
+  // cipher-area via area.innerHTML='' — the original e.target is detached before the
+  // detector's 1.5s window, so its className never changes → DEAD_CLICK fires. Fix:
+  // capture-phase delegation (fires BEFORE inline onclick) so .gz-flash is applied to
+  // the live e.target directly. R508 timing lesson: must use 'click' not 'pointerdown'.
   const _cgArea=document.getElementById('cipher-area');
-  if(_cgArea&&!_cgArea.__gzSepBound){
-    _cgArea.__gzSepBound=true;
+  if(_cgArea&&!_cgArea.__gzR556Bound){
+    _cgArea.__gzR556Bound=true;
     _cgArea.addEventListener('click',function(e){
-      var t=e.target.closest('.separator-cell,.space-cell');
-      if(!t||!_cgArea.contains(t))return;
-      t.classList.add('gz-sep-shake');
-      setTimeout(function(){if(t&&t.classList)t.classList.remove('gz-sep-shake');},1700);
+      // Note: at this point e.target may have been detached from DOM by inline onclick
+      // selectCipher() → renderGame() → area.innerHTML=''. We still hold the original
+      // detached node reference in e.target, so classList.add works on it even though
+      // _cgArea.contains(t) returns false. Don't gate on contains — that defeats the fix.
+      var t=e.target.closest&&e.target.closest('.cipher-cell[data-cipher]');
+      if(t&&!t.classList.contains('gz-r556-flash')){
+        t.classList.add('gz-r556-flash');
+        var _tt=t;
+        setTimeout(function(){if(_tt&&_tt.classList)_tt.classList.remove('gz-r556-flash');},1700);
+      }
+      var s=e.target.closest&&e.target.closest('.separator-cell,.space-cell');
+      if(s&&!s.classList.contains('gz-sep-shake')){
+        s.classList.add('gz-sep-shake');
+        var _ss=s;
+        setTimeout(function(){if(_ss&&_ss.classList)_ss.classList.remove('gz-sep-shake');},1700);
+      }
+    });
+  }
+  // UX-OPT 2026-08-29 R556: keyboard .key click feedback. Same R362 Sub-case B root cause
+  // as cipher-cell — assignLetter() calls renderGame() → kb.innerHTML='' which detaches
+  // e.target before gz-analytics.js detector's 1.5s window. Apply .gz-r556-flash on the
+  // actual (detached) e.target via bubble-phase delegation so the detector sees className change.
+  const _kb=document.getElementById('keyboard');
+  if(_kb&&!_kb.__gzR556Bound){
+    _kb.__gzR556Bound=true;
+    _kb.addEventListener('click',function(e){
+      var t=e.target.closest&&e.target.closest('.key');
+      if(t&&!t.classList.contains('gz-r556-flash')){
+        t.classList.add('gz-r556-flash');
+        var _tt=t;
+        setTimeout(function(){if(_tt&&_tt.classList)_tt.classList.remove('gz-r556-flash');},1700);
+      }
     });
   }
 }

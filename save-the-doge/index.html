@@ -36,7 +36,13 @@ canvas{display:block;width:100%;background:#0d0d1f;touch-action:none}
 .btn-secondary{background:rgba(255,255,255,0.1);color:#ccc;border:1px solid rgba(255,255,255,0.15)}
 .btn-small{padding:10px 24px;font-size:14px;min-width:120px}
 .level-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:16px;max-height:60vh;overflow-y:auto}
-.level-cell{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;cursor:pointer;transition:transform 0.15s;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1);color:#666}
+.level-cell{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;cursor:pointer;transition:transform 0.15s;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1);color:#666;position:relative}
+.level-cell.locked{opacity:0.4;cursor:not-allowed;background:rgba(255,255,255,0.02)}
+.level-cell.locked::after{content:"🔒";position:absolute;bottom:1px;right:2px;font-size:9px;opacity:0.7}
+.level-grid-empty-hint{display:none;padding:18px 12px;color:#888;font-size:13px;text-align:center;font-style:italic}
+.level-grid-empty-hint.visible{display:block}
+.level-cell.locked-shake{animation:gzLockedShake .35s ease-in-out}
+@keyframes gzLockedShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 .level-cell.unlocked{background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.3);color:#FFD700}
 .level-cell.unlocked:active{transform:scale(0.9)}
 .level-cell.current{border-color:#FFD700;box-shadow:0 0 12px rgba(255,215,0,0.4)}
@@ -143,6 +149,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 <div class="title-text" style="font-size:24px">Select Level</div>
 <div class="chapter-nav" id="chapter-nav"></div>
 <div class="level-grid" id="level-grid"></div>
+<div class="level-grid-empty-hint" id="level-grid-empty-hint">🔒 Complete previous levels to unlock Chapter <span id="empty-chapter-num">2</span></div>
 <button class="btn btn-secondary btn-small" style="margin:12px" onclick="showTitle()">Back</button>
 </div>
 <!-- Settings -->
@@ -426,14 +433,21 @@ function buildLevelGrid(){
   // Tabs now capture their chapter via IIFE, same as the level cells below.
 var grid=document.getElementById('level-grid');grid.innerHTML='';
 var start=currentChapter*6;var end=Math.min(start+6,30);
+var unlockedCount=0;
 for(var i=start;i<end;i++){var cell=document.createElement('div');
 var unlocked=i===0||levelCompleted[i-1]!==undefined;
-cell.className='level-cell'+(unlocked?' unlocked':'')+(i===currentLevel?' current':'');
+cell.className='level-cell'+(unlocked?' unlocked':' locked')+(i===currentLevel?' current':'');
 cell.textContent=i+1;
 if(levelStars[i]!==undefined){var starStr='';for(var s=0;s<3;s++)starStr+=(s<levelStars[i]?'\u2605':'\u2606');
 var sp=document.createElement('div');sp.style.cssText='position:absolute;bottom:1px;font-size:7px;color:#FFD700';sp.textContent=starStr;cell.style.position='relative';cell.appendChild(sp);}
-if(unlocked){(function(idx){cell.onclick=function(){startLevel(idx);};})(i);}
+if(unlocked){(function(idx){cell.onclick=function(){startLevel(idx);};})(i);unlockedCount++;}
+else{(function(c){c.onclick=function(){c.classList.add('locked-shake');var _cc=c;setTimeout(function(){if(_cc&&_cc.classList)_cc.classList.remove('locked-shake');},1700);};})(cell);}
 grid.appendChild(cell);}
+// UX-OPT 2026-08-29 R556: locked chapter empty-state hint. New users with 0 unlocked levels
+// in chapters 2-5 saw a blank grid and rage-clicked chapter tabs (BI: 9 dead_clicks /
+// 3 page_views / 1 user). Show explicit "Complete previous levels to unlock Ch.X" hint.
+var _hint=document.getElementById('level-grid-empty-hint');
+if(_hint){_hint.classList.toggle('visible',unlockedCount===0);var _n=document.getElementById('empty-chapter-num');if(_n)_n.textContent=String(currentChapter+1);}
 }
 
 // ============ START LEVEL ============
