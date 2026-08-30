@@ -2058,7 +2058,7 @@
           trackAdEvent('banner_fill', { network: 'monetag_skillful', position: position });
         }).catch(function() {
           // Tier 1 failed — keep hidden
-          trackAdEvent('banner_no_fill', { position: position, reason: 'v5.24_tier1_failed' });
+          trackAdEvent('banner_no_fill', { network: 'adsense', position: position, reason: 'v5.24_tier1_failed' });
         });
       }, 2000);
     }, CONFIG.TIMING.inGameBannerLoadDelay);
