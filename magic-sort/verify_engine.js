@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 'use strict';
-// Magic Sort per-game verifier (sweep 70, 2026-08-15)
-// IIFE-wrapped color-sort puzzle with 200K+ levels in `_LD`.
+// Magic Sort per-game verifier (sweep 70, 2026-08-15; R562 chunked-loader updated 2026-08-31)
+// IIFE-wrapped color-sort puzzle with 215K levels in `_LD`.
+// R562: levels split into 6 chunks; chunk 0 inlined as _CHUNK0_DATA, chunks 1-5 lazy-fetched.
+// _LD is now pre-sized (new Array(215000)) and populated chunk-by-chunk.
 // The game's own findHint()/isWin()/canPour()/executePour() are IIFE-scoped.
 // Strategy:
-//   1. Static: _LD array present + bottle/cap invariants
+//   1. Static: _LD array (or _CHUNKS_META) + bottle/cap invariants
 //   2. Source-grep: solver functions exist (findHint, isWin, canPour, executePour)
 //   3. In-page run via Kachilu: invoke findHint() closure, walk moves, verify isWin()
 //
@@ -20,8 +22,15 @@ const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 console.log('=== Magic Sort verifier ===');
 
 // Prong 1: critical source checks
+// R562: levels now in _CHUNKS_META + _CHUNK0_DATA + chunk loader. Accept any of:
+//   - old: _LD = [...]
+//   - new: _LD = new Array(N) + _CHUNK0_DATA + _CHUNKS_META
+const hasOldLD = /(?:var|let|const)\s+(?:LEVELS|_LD|_LEVELS)\s*=\s*\[/.test(html);
+const hasNewLD = /(?:var|let|const)\s+_LD\s*=\s*new\s+Array\s*\(/.test(html) &&
+                  /_CHUNKS_META/.test(html) &&
+                  /_CHUNK0_DATA/.test(html);
 const checks = {
-  levelsArray: /(?:var|let|const)\s+(?:LEVELS|_LD|_LEVELS)\s*=\s*\[/.test(html),
+  levelsArray: hasOldLD || hasNewLD,
   bottleCapacity: /CAPACITY\s*=\s*\d+/.test(html) || /bottles\[[^\]]+\]\.length\s*[<>]=?\s*\d+/.test(html),
   findHintFn: /function\s+findHint\s*\(/.test(html),
   isWinFn: /function\s+isWin\s*\(/.test(html),
@@ -81,7 +90,23 @@ function countTopLevelEntries(src, varName) {
   return commas + 1;
 }
 
-const levelsCount = countTopLevelEntries(html, '_LD') || countTopLevelEntries(html, 'LEVELS') || countTopLevelEntries(html, '_LEVELS');
+// R562: count _LD entries. For old format _LD = [...], bracket-balance counts top-level entries.
+// For new format, count from _CHUNK0_DATA inlined + meta total.
+let levelsCount = 0;
+if (hasOldLD) {
+  levelsCount = countTopLevelEntries(html, '_LD') || countTopLevelEntries(html, 'LEVELS') || countTopLevelEntries(html, '_LEVELS');
+} else if (hasNewLD) {
+  // Try to extract _CHUNKS_META total count: sum of `count:` values
+  const metaMatch = html.match(/_CHUNKS_META\s*=\s*\[([\s\S]*?)\];/);
+  if (metaMatch) {
+    const counts = [...metaMatch[1].matchAll(/count:\s*(\d+)/g)].map(m => parseInt(m[1], 10));
+    levelsCount = counts.reduce((a, b) => a + b, 0);
+  }
+  if (!levelsCount) {
+    // Fallback: count _CHUNK0_DATA entries
+    levelsCount = countTopLevelEntries(html, '_CHUNK0_DATA');
+  }
+}
 console.log(`\n--- Level catalog size ---`);
 console.log(`  _LD top-level entries: ${levelsCount}`);
 
