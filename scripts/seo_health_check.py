@@ -26,23 +26,35 @@ _session = requests.Session()
 _session.trust_env = False
 _session.headers.update({"User-Agent": "GameZipper-SEO-Checker/1.0"})
 
-def check_url(url, name, allow_redirects=False, timeout=15):
-    """Check URL accessibility and status code using requests."""
-    try:
-        resp = _session.get(url, timeout=timeout, allow_redirects=allow_redirects, verify=True)
-        content_preview = resp.text[:200] if resp.text else None
-        return {
-            "url": url, "name": name,
-            "status": resp.status_code,
-            "final_url": resp.url,
-            "content_preview": content_preview,
-            "ok": resp.status_code < 400,
-            "error": None
-        }
-    except requests.exceptions.SSLError as e:
-        return {"url": url, "name": name, "status": None, "final_url": None, "content_preview": None, "ok": False, "error": f"SSL Error: {e}"}
-    except Exception as e:
-        return {"url": url, "name": name, "status": None, "final_url": None, "content_preview": None, "ok": False, "error": str(e)}
+def check_url(url, name, allow_redirects=False, timeout=15, retries=2):
+    """Check URL accessibility and status code using requests.
+
+    Retries on transient network/SSL errors (GitHub Pages CDN flakes) before reporting failure.
+    Returns dict with ok=True/False and error reason; deterministic from any non-2xx final.
+    """
+    import time as _t
+    last_err = None
+    for attempt in range(retries + 1):
+        try:
+            resp = _session.get(url, timeout=timeout, allow_redirects=allow_redirects, verify=True)
+            content_preview = resp.text[:200] if resp.text else None
+            return {
+                "url": url, "name": name,
+                "status": resp.status_code,
+                "final_url": resp.url,
+                "content_preview": content_preview,
+                "ok": resp.status_code < 400,
+                "error": None
+            }
+        except (requests.exceptions.SSLError, requests.exceptions.Timeout,
+                requests.exceptions.ConnectionError) as e:
+            last_err = f"{type(e.__class__.__name__)}: {e}"
+            if attempt < retries:
+                _t.sleep(1.5 * (attempt + 1))  # 1.5s, 3s backoff
+                continue
+            return {"url": url, "name": name, "status": None, "final_url": None, "content_preview": None, "ok": False, "error": last_err}
+        except Exception as e:
+            return {"url": url, "name": name, "status": None, "final_url": None, "content_preview": None, "ok": False, "error": str(e)}
 
 def main():
     today = date.today().isoformat()
