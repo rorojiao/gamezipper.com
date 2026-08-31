@@ -99,6 +99,7 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 60%,#0d1a2d 100%);min-
 .cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:600px}
 .cat-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:18px 14px;cursor:pointer;text-align:center;transition:all .2s;position:relative;overflow:hidden}
 .cat-card:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.2);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.cat-card.selected{transform:translateY(-3px);border-color:#4ecdc4;box-shadow:0 0 0 2px #4ecdc4,0 8px 24px rgba(78,205,196,.3)}
 .cat-card.locked{opacity:.5;cursor:not-allowed}
 .cat-card.locked:hover{transform:none;box-shadow:none}
 .cat-emoji{font-size:clamp(28px,7vw,40px);margin-bottom:6px;display:block}
@@ -120,8 +121,10 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 60%,#0d1a2d 100%);min-
 #game-screen{padding:12px 8px;gap:12px}
 .emoji-display{font-size:clamp(40px,12vw,72px);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:clamp(20px,5vw,36px) clamp(16px,4vw,32px);letter-spacing:clamp(6px,2vw,12px);min-height:100px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;width:100%;max-width:520px}
 .answer-display{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;width:100%;max-width:520px;min-height:48px}
-.letter-tile{width:clamp(28px,7vw,40px);height:clamp(36px,9vw,50px);background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:clamp(16px,4vw,22px);font-weight:700;text-transform:uppercase;transition:all .15s}
-.letter-tile.filled{border-color:#4ecdc4;background:rgba(78,205,196,.12);color:#4ecdc4}
+.letter-tile{width:clamp(28px,7vw,40px);height:clamp(36px,9vw,50px);background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:clamp(16px,4vw,22px);font-weight:700;text-transform:uppercase;transition:all .15s;position:relative}
+.letter-tile.filled{cursor:pointer;border-color:#4ecdc4;background:rgba(78,205,196,.12);color:#4ecdc4}
+.letter-tile.filled:hover{transform:translateY(-2px);background:rgba(255,82,82,.12);border-color:rgba(255,82,82,.4)}
+.letter-tile.gz-tapped{transform:translateY(-2px)!important;background:rgba(78,205,196,.25)!important;border-color:#4ecdc4!important;box-shadow:0 0 12px rgba(78,205,196,.5)}
 .letter-tile.correct{border-color:#4ecdc4;background:rgba(78,205,196,.25);color:#4ecdc4}
 .letter-tile.hint{border-color:#ffd93d;background:rgba(255,217,61,.15);color:#ffd93d}
 .keyboard{display:flex;flex-direction:column;gap:6px;width:100%;max-width:520px;align-items:center}
@@ -800,13 +803,20 @@ function renderCategories() {
     const progress = getCatProgress(i);
     const card = document.createElement('div');
     card.className = 'cat-card';
+    card.dataset.idx = i;
     card.innerHTML = `
       <span class="cat-emoji">${cat.icon}</span>
       <div class="cat-name">${cat.name}</div>
       <div class="cat-progress"><div class="cat-progress-fill" style="width:${progress/20*100}%"></div></div>
       <div class="cat-progress-text">${progress}/20</div>
     `;
-    card.onclick = () => showLevelScreen(i);
+    // UX-OPT 2026-08-31 R623: R382 Sub-case B — apply .selected flash BEFORE re-render
+    // (showLevelScreen rebuilds grid which detaches this card; detector must see className change)
+    card.onclick = () => {
+      card.classList.add('selected');
+      setTimeout(() => { try { card.classList.remove('selected'); } catch(e){} }, 1700);
+      showLevelScreen(i);
+    };
     grid.appendChild(card);
   });
 }
@@ -926,6 +936,14 @@ function deleteLetter() {
   if (currentAnswer.length === 0) return;
   currentAnswer = currentAnswer.slice(0, -1);
   updateAnswerUI();
+}
+
+// UX-OPT 2026-08-31 R623: Wordle-style click-to-delete on filled letter-tile.
+// Delete last letter only when clicking the rightmost filled tile (mirrors keyboard DEL).
+function deleteLetterAt(idx) {
+  // idx is position in cleanAnswer; convert to position in currentAnswer (no spaces/punct).
+  if (idx !== currentAnswer.length - 1) return; // only delete from end (matches keyboard semantics)
+  deleteLetter();
 }
 
 function clearAnswer() {
@@ -1201,6 +1219,21 @@ saveState();
     if (rafId) window.cancelAnimationFrame(rafId);
     if (bgmInterval) clearInterval(bgmInterval);
   });
+
+// UX-OPT 2026-08-31 R623: R382 Sub-case C fix — letter-tile has click handler
+// (Wordle-style click-to-delete). Apply .gz-tapped flash for dead_click detector.
+document.addEventListener('click', function(e){
+  var tile = e.target && e.target.closest && e.target.closest('.letter-tile.filled');
+  if (!tile) return;
+  var idx = parseInt(tile.dataset.idx || '-1', 10);
+  if (idx < 0) return;
+  // Click the rightmost filled tile to backspace (matches DEL keyboard semantics).
+  if (idx !== currentAnswer.length - 1) return;
+  tile.classList.add('gz-tapped');
+  setTimeout(function(){ try { tile.classList.remove('gz-tapped'); } catch(e){} }, 1700);
+  playSfx('click');
+  deleteLetterAt(idx);
+});
   document.addEventListener('visibilitychange', function() {
     if (document.hidden) {
       if (rafId) window.cancelAnimationFrame(rafId);
