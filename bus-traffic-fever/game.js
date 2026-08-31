@@ -385,8 +385,14 @@ function saveUndoState(){
   G.history.push({buses:snap,moves:G.moves,combo:G.comboCount});
   if(G.history.length>20)G.history.shift();
 }
-function doUndo(){
-  if(G.undoLeft<=0||G.history.length===0||G.animating){showToast('No moves to undo!');return;}
+function doUndo(btn){
+  if(G.undoLeft<=0||G.history.length===0||G.animating){
+    // 2026-08-31 R620: silent return on valid (not disabled) powerup button triggers dead_click
+    // (toast shown on a DIFFERENT element). Add .rejected class to the clicked btn itself so
+    // gz-analytics.js 1.5s window sees snapClass != nowClass. Extends R393 disabled-only pattern.
+    if(btn){btn.classList.add('rejected');setTimeout(function(){btn.classList.remove('rejected');},1700);}
+    showToast('No moves to undo!');return;
+  }
   var snap=G.history.pop();
   G.moves=snap.moves;G.comboCount=snap.combo;
   snap.buses.forEach(function(s){
@@ -399,8 +405,12 @@ function doUndo(){
   updateHUD();updatePowerups();
   showToast('Move undone!');
 }
-function doHint(){
-  if(G.hintLeft<=0||G.animating){showToast('No hints left!');return;}
+function doHint(btn){
+  if(G.hintLeft<=0||G.animating){
+    // 2026-08-31 R620: see doUndo — silent return on valid powerup triggers dead_click
+    if(btn){btn.classList.add('rejected');setTimeout(function(){btn.classList.remove('rejected');},1700);}
+    showToast('No hints left!');return;
+  }
   // Find a bus that can exit
   for(var i=0;i<G.buses.length;i++){
     var bus=G.buses[i];
@@ -446,8 +456,12 @@ function canAnyBusMove(){
   }
   return false;
 }
-function doShuffle(){
-  if(G.shuffleLeft<=0||G.animating){showToast('No shuffles left!');return;}
+function doShuffle(btn){
+  if(G.shuffleLeft<=0||G.animating){
+    // 2026-08-31 R620: see doUndo — silent return on valid powerup triggers dead_click
+    if(btn){btn.classList.add('rejected');setTimeout(function(){btn.classList.remove('rejected');},1700);}
+    showToast('No shuffles left!');return;
+  }
   var undoLeft=G.undoLeft,hintLeft=G.hintLeft,shuffleLeft=G.shuffleLeft;
   // This is complex for grid games - instead of true shuffle, just undo all
   // For simplicity, reset to level start
@@ -1096,16 +1110,17 @@ function init(){
     showLevelSelect();
   });
   // Powerups
+  // 2026-08-11 R393: when disabled, still show visible feedback (rejected shake) so
+  // dead_click detector (1.5s window) sees snapClass != nowClass.
+  // 2026-08-31 R620: extended — silent-rejection (G.animating / G.history.length===0 with
+  // btn NOT disabled) also adds .rejected via do*() so dead_click doesn't fire there either.
   document.getElementById('pu-undo').addEventListener('click',function(){
-    // 2026-08-11 R393: when disabled, still show visible feedback (rejected shake) so
-    // dead_click detector (1.5s window) sees snapClass != nowClass. Otherwise clicks
-    // on disabled powerup buttons report as dead_click false positives.
     if(this.classList.contains('disabled')){
       this.classList.add('rejected');
       setTimeout(()=>this.classList.remove('rejected'),1700);
       return;
     }
-    resumeLoop();doUndo();
+    resumeLoop();doUndo(this);
   });
   document.getElementById('pu-hint').addEventListener('click',function(){
     if(this.classList.contains('disabled')){
@@ -1113,7 +1128,7 @@ function init(){
       setTimeout(()=>this.classList.remove('rejected'),1700);
       return;
     }
-    resumeLoop();doHint();
+    resumeLoop();doHint(this);
   });
   document.getElementById('pu-shuffle').addEventListener('click',function(){
     if(this.classList.contains('disabled')){
@@ -1121,7 +1136,7 @@ function init(){
       setTimeout(()=>this.classList.remove('rejected'),1700);
       return;
     }
-    resumeLoop();doShuffle();
+    resumeLoop();doShuffle(this);
   });
   // Win overlay
   document.getElementById('btn-win-next').addEventListener('click',function(){
