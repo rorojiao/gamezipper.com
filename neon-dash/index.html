@@ -35,6 +35,12 @@ html,body{width:100%;height:100%;overflow-x:hidden;background:#0a0a1a;font-famil
 canvas{display:block;touch-action:none;;width:100%;height:100%;border-radius:4px;image-rendering:pixelated}
 .overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:10;pointer-events:none}
 .overlay.active{display:flex}
+/* R625: pointer-events:auto on .overlay.active so clicks on empty area above/below title text
+land on the overlay (not the ad slot behind it). Click handler on titleScreen calls handleAction()
+so users who click on the dark starry background between topnav and the PLAY button can still
+start the game. Without this, elementFromPoint at e.g. (365, 146) returns the empty
+gz-ad-above-game div and rage_click detector fires after 3+ rapid clicks. */
+.overlay.active{pointer-events:auto;cursor:pointer}
 .overlay>*{pointer-events:auto}
 .neon-title{font-size:64px;font-weight:900;letter-spacing:8px;color:#00ffff;text-shadow:0 0 10px #00ffff,0 0 20px #00ffff,0 0 40px #00ffff,0 0 80px #0088ff;animation:neonPulse 2s ease-in-out infinite alternate}
 @keyframes neonPulse{from{text-shadow:0 0 10px #00ffff,0 0 20px #00ffff,0 0 40px #00ffff,0 0 80px #0088ff;filter:brightness(1)}to{text-shadow:0 0 15px #ff00ff,0 0 30px #ff00ff,0 0 60px #ff00ff,0 0 100px #ff0088;filter:brightness(1.15)}}
@@ -2550,6 +2556,15 @@ $death.addEventListener('touchstart', function(e) {
 }, {passive:false});
 
 // ============ BUTTON HANDLERS ============
+// UX-OPT 2026-09-01 R625: Click anywhere on the title screen overlay (including empty area
+// above/below the title text) starts the game. Without this, clicks at e.g. (365, 146) in the
+// dark starry area between topnav and NEON DASH text land on the gz-ad-above-game slot behind
+// the overlay, and rage_click detector fires after 3+ rapid clicks. e.target === $title means
+// click landed on the empty area (not on PLAY/LEVELS/color-picker children).
+$title.addEventListener('click', function(e) {
+  if (e.target !== $title) return;
+  if (gameState === 'title') startLevel(0);
+});
 document.getElementById('btnPlay').addEventListener('click', function() { startLevel(0); });
 document.getElementById('btnLevelSelect').addEventListener('click', function() { setGameState('levelSelect'); });
 document.getElementById('btnBackTitle').addEventListener('click', function() { setGameState('title'); });
