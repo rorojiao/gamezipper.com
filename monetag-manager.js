@@ -1915,7 +1915,12 @@
       // load. Empty placeholder stays visually neutral (no background, no border).
       // If the placeholder is reused (already exists in HTML), this cssText is NOT
       // applied — we trust the page's CSS to have reserved the right amount.
-      var bannerCSS = 'max-width:' + maxW + 'px;min-height:' + minH + 'px;' +
+      // R636: Added max-height:280px (R362 belt+suspenders pattern) so AdSense creative
+      // is bounded — without max-height, an creative growing to 250px+ would inflate the
+      // placeholder div and push downstream siblings (causing CLS). With max-height +
+      // overflow:hidden, creative is clipped but layout stays stable. min-height still
+      // reserves at least 90px (desktop) or 50px (mobile) for the placeholder.
+      var bannerCSS = 'max-width:' + maxW + 'px;min-height:' + minH + 'px;max-height:280px;' +
                       'margin:8px auto;text-align:center;overflow:hidden;';
 
       // Helper to create banner div
@@ -1934,12 +1939,21 @@
       // in HTML, reuse them in place — don't createElement + insertBefore (which
       // would trigger layout shift). The static placeholder has reserved
       // min-height via CSS so the space is held from initial layout.
+      //
+      // R636: For pre-placed placeholders (R360 era — 422 games), also apply the
+      // CSS reservation (bannerCSS) so the div reserves min-height even before
+      // AdSense fills. Without this, the empty <div></div> inflates from 0 → 90px
+      // (mobile) or 0 → 280px (desktop) when the creative loads, causing CLS.
+      // We overwrite cssText to ensure consistent reservation regardless of the
+      // page's existing inline styles (idempotent - cssText just resets).
       function getOrCreate(position) {
         var id = position === 'above' ? 'gz-ad-above-game' : 'gz-ad-below-canvas';
         var existing = $('#' + id);
         if (existing) {
           // Mark as reused so the CSS :has() rules work, but keep its in-DOM position.
           existing.setAttribute('data-gz-banner-reused', '1');
+          // Apply min-height/max-width reservation (R636 fix for R360-era placeholders)
+          existing.style.cssText = bannerCSS;
           return existing;
         }
         return createBannerDiv(position);
