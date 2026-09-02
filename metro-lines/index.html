@@ -228,7 +228,7 @@ const LEVELS=[
   {id:19,tier:'Hard',name:'Cross Connect',shapes:['circle','triangle','square','star','diamond','pentagon'],start:[{x:300,y:240,shape:'circle'},{x:980,y:240,shape:'star'},{x:640,y:180,shape:'triangle'},{x:300,y:500,shape:'diamond'},{x:980,y:500,shape:'pentagon'},{x:640,y:560,shape:'square'}],spawnInterval:2.5,spawnShapes:['circle','triangle','square','star','diamond','pentagon'],startLines:4,startTrains:4,startCarriages:2,startBridges:3,objective:{type:'connect',count:8},rivers:true,timeLimit:null},
   // Expert
   {id:20,tier:'Expert',name:'Megacity',shapes:['circle','triangle','square','star','diamond','pentagon','cross'],start:[{x:220,y:220,shape:'circle'},{x:480,y:180,shape:'triangle'},{x:760,y:200,shape:'square'},{x:1060,y:220,shape:'star'},{x:240,y:500,shape:'diamond'},{x:520,y:560,shape:'pentagon'},{x:820,y:540,shape:'cross'},{x:1080,y:500,shape:'circle'}],spawnInterval:2.4,spawnShapes:['circle','triangle','square','star','diamond','pentagon','cross'],startLines:5,startTrains:5,startCarriages:3,startBridges:4,objective:{type:'deliver',count:150},rivers:true,timeLimit:null},
-  {id:21,tier:'Expert',name:'Survive 5 Min',shapes:['circle','triangle','square','star','diamond','pentagon','cross'],start:[{x:280,y:220,shape:'circle'},{x:640,y:180,shape:'triangle'},{x:1000,y:220,shape:'square'},{x:280,y:500,shape:'star'},{x:640,y:560,shape:'diamond'},{x:1000,y:500,shape:'pentagon'}],spawnInterval:2.2,spawnShapes:['circle','triangle','square','star','diamond','pentagon','cross'],startLines:5,startTrains:5,startCarriages:3,startBridges:4,objective:{type:'survive',seconds:300},rivers:true,timeLimit:300},
+  {id:21,tier:'Expert',name:'Survive 5 Min',shapes:['circle','triangle','square','star','diamond','pentagon','cross'],start:[{x:280,y:220,shape:'circle'},{x:640,y:180,shape:'triangle'},{x:1000,y:220,shape:'square'},{x:280,y:500,shape:'star'},{x:640,y:560,shape:'diamond'},{x:1000,y:500,shape:'pentagon'}],spawnInterval:2.2,spawnShapes:['circle','triangle','square','star','diamond','pentagon','cross'],startLines:6,startTrains:6,startCarriages:4,startBridges:4,maxTrainsPerLine:3,objective:{type:'survive',seconds:300},rivers:true,timeLimit:300},
   {id:22,tier:'Expert',name:'Grand Central',shapes:['circle','triangle','square','star','diamond','pentagon','cross','gem'],start:[{x:220,y:220,shape:'circle'},{x:480,y:180,shape:'triangle'},{x:760,y:200,shape:'square'},{x:1060,y:220,shape:'star'},{x:240,y:500,shape:'diamond'},{x:520,y:560,shape:'pentagon'},{x:820,y:540,shape:'cross'},{x:1080,y:500,shape:'gem'}],spawnInterval:2,spawnShapes:['circle','triangle','square','star','diamond','pentagon','cross','gem'],startLines:6,startTrains:6,startCarriages:4,startBridges:4,objective:{type:'deliver',count:200},rivers:true,timeLimit:null}
 ];
 
@@ -501,8 +501,9 @@ function offerUpgrades(){
   state.pendingUpgrade=true; state.paused=true;
   const choices=[];
   if(state.availColors.length>0 && state.availLines<7) choices.push({kind:'line',label:'New Line',icon:'╱'});
-  // trains: allow if any line exists with <2 trains
-  const trainSlots=state.lines.filter(l=>l.stations.length>=2 && l.trains.length<2).length;
+  // trains: allow if any line exists with <maxTrainsPerLine trains (default 2; expert levels with high demand raise this)
+  const maxTrains = state.level.maxTrainsPerLine || 2;
+  const trainSlots=state.lines.filter(l=>l.stations.length>=2 && l.trains.length<maxTrains).length;
   if(state.availTrains<8 && (state.lines.length>0)) choices.push({kind:'train',label:'Extra Train',icon:'▤'});
   if(state.trains.length>0 && state.availCarriages<10) choices.push({kind:'carriage',label:'Carriage (+3 cap)',icon:'◫'});
   if(state.level.rivers && state.availBridges<10) choices.push({kind:'bridge',label:'Bridge',icon:'⋍'});
@@ -529,7 +530,8 @@ function applyUpgrade(choice){
          the train immediately to the eligible line with the fewest trains (same
          <2-per-line rule offerUpgrades uses); if no line can take it, keep it in
          inventory for the next line drawn. */
-      {const cand=state.lines.filter(l=>l.stations.length>=2&&l.trains.length<2).sort((a,b)=>a.trains.length-b.trains.length)[0];
+      {const maxTrains = state.level.maxTrainsPerLine || 2;
+       const cand=state.lines.filter(l=>l.stations.length>=2&&l.trains.length<maxTrains).sort((a,b)=>a.trains.length-b.trains.length)[0];
        if(cand) addTrainToLine(cand);}
       break;
     case 'carriage':
