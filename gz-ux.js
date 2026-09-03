@@ -69,6 +69,19 @@
     function onKey(e) { if (e.key === 'Enter' || e.key === 'Escape') { e.stopPropagation(); close(); } }
     document.addEventListener('keydown', onKey, true);
     btn.addEventListener('click', close);
+    // R650: dismiss on any-click anywhere in the overlay (rage_click fix).
+    // Without this, users who click outside the central button hit a no-op
+    // and rage-click (BI 7d: 11 rage_click antistress, similar pattern across
+    // all 100+ games using gz-ux-onboard). Capture-phase to fire BEFORE the
+    // game's own click handlers (avoid double-init races).
+    root.addEventListener('click', function dismissOverlay(e) {
+      if (e.target === btn) return;  // let btn.click() bubble normally
+      close();
+    }, true);
+    root.addEventListener('touchstart', function (e) {
+      if (e.target === btn) return;
+      close();
+    }, { capture: true, passive: true });
   }
 
   function hud() {
