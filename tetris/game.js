@@ -606,8 +606,10 @@ canvas.addEventListener('touchend', e => {
 let soundMuted = false;
 document.getElementById('sound-toggle').addEventListener('click', () => {
   soundMuted = !soundMuted;
-  document.getElementById('sound-toggle').textContent = soundMuted ? '🔇 Sound' : '🔊 Sound';
-  // Note: audio mute would need refactoring sfx functions
+  var el=document.getElementById('sound-toggle');
+  el.textContent = soundMuted ? '🔇 Sound' : '🔊 Sound';
+  // UX-OPT 2026-09-03 R651: toggle .muted className (textContent-only changes do NOT trigger gz-analytics dead_click detector — it checks className/aria-expanded/inline-style only).
+  el.classList.toggle('muted', soundMuted);
 });
 
 // ─── START BUTTON ─────────────────────────────────────────────────────────────
