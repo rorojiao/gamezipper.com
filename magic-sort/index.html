@@ -1312,6 +1312,8 @@ function checkAchievements() {
     if (!earnedAchievements[a.id] && a.check(stats)) {
       earnedAchievements[a.id] = true;
       newAchievement = a;
+      // [MS-tracker R643] achievement unlocked (fire per-achievement)
+      try { window.__msTrack && window.__msTrack('ms_achievement_unlocked', { id: a.id, name: a.name, icon: a.icon, lv: currentLevel }); } catch(e){}
     }
   }
   if (newAchievement) {
@@ -1333,6 +1335,8 @@ let timerPausedAt = 0; // timestamp when timer was paused, 0 = not paused
 
 // ─── Web Share API ───
 async function shareResult() {
+  // [MS-tracker R643] share button tap (Web Share API or clipboard fallback)
+  try { window.__msTrack && window.__msTrack('ms_share_used', { lv: currentLevel + 1, hasNative: !!navigator.share, stars: levelStars[currentLevel] || 1 }); } catch(e){}
   const stars = levelStars[currentLevel] || 1;
   const lv = currentLevel + 1;
   // Calculate progress for social hook
@@ -1414,6 +1418,8 @@ function claimDailyReward() {
   extraTubeUses += 1; // gift: +1 extra tube
   saveSave();
   saveDailyReward();
+  // [MS-tracker R643] daily reward claim event
+  try { window.__msTrack && window.__msTrack('ms_daily_reward_claimed', { streak: streakCount, totalTubes: extraTubeUses }); } catch(e){}
   return true;
 }
 loadDailyReward();
@@ -4157,6 +4163,8 @@ function handleDailyRewardTap(px, py) {
   const btnX = cx + (cardW - btnW) / 2;
   const btnY = cy + cardH - btnH - 16;
   if (hitTest(px, py, btnX, btnY, btnW, btnH)) {
+    // [MS-tracker R643] daily reward popup opened (claimDailyReward fires its own claimed event)
+    try { window.__msTrack && window.__msTrack('ms_daily_reward_popup_claimed', { source: 'menu_popup' }); } catch(e){}
     claimDailyReward();
     dailyRewardOpen = false;
     sfxWin();
@@ -4165,6 +4173,8 @@ function handleDailyRewardTap(px, py) {
   }
   if (!hitTest(px, py, cx, cy, cardW, cardH)) {
     // Tap outside card closes without claiming (no re-trigger today)
+    // [MS-tracker R643] daily reward dismissed without claim
+    try { window.__msTrack && window.__msTrack('ms_daily_reward_dismissed', { source: 'outside_tap' }); } catch(e){}
     dailyRewardOpen = false;
     dailyRewardClaimed[getDailySeed()] = true;
     saveDailyReward();
@@ -5660,6 +5670,8 @@ function onTap(px, py) {
     const dailyW = Math.min(200, W * 0.55);
     if (hitTest(px, py, W / 2 - dailyW / 2, nextBtnY, dailyW, 42) && splashTimer >= 0.8) {
       sfxClick();
+      // [MS-tracker R643] daily challenge start from splash
+      try { window.__msTrack && window.__msTrack('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'splash' }); } catch(e){}
       initLevel(dailyChallengeLevel);
     }
     nextBtnY += 42 + 10;
@@ -5667,12 +5679,23 @@ function onTap(px, py) {
     const randomW = Math.min(200, W * 0.55);
     if (hitTest(px, py, W / 2 - randomW / 2, nextBtnY, randomW, 42) && splashTimer >= 0.8) {
       sfxClick();
+      // [MS-tracker R643] random level pick from splash
+      try { window.__msTrack && window.__msTrack('ms_random_level_started', { source: 'splash' }); } catch(e){}
       // Pick a random unlocked level
       const unlocked = Object.keys(levelUnlocked).filter(k => levelUnlocked[k]).map(Number);
       if (unlocked.length > 0) {
         const pick = unlocked[Math.floor(Math.random() * unlocked.length)];
         initLevel(pick);
       }
+    }
+    // [R643] Splash tap-anywhere fallback: if user tapped in the dead-zone above
+    // the buttons (water drop icon area, y < by) and splashTimer has elapsed,
+    // treat it as PLAY tap. Eliminates rage_click clusters at y=141-144 in BI.
+    else if (py < by && splashTimer >= 0.8) {
+      sfxClick();
+      state = "menu";
+      menuScrollY = 0;
+      maybeShowDailyReward();
     }
     // Footer GameZipper.com link
     if (splashFooterLink && hitTest(px, py, splashFooterLink.x, splashFooterLink.y, splashFooterLink.w, splashFooterLink.h)) {
@@ -5722,7 +5745,10 @@ function onTap(px, py) {
             const lv = Number(jumpInput) - 1;
             if (jumpInput.length > 0 && lv >= 0 && lv < TOTAL_LEVELS && levelUnlocked[lv]) {
               jumpDialogOpen = false; jumpInput = "";
-              sfxClick(); initLevel(lv);
+              sfxClick();
+              // [MS-tracker R643] jump-to-level confirmed
+              try { window.__msTrack && window.__msTrack('ms_jump_confirmed', { lv: lv + 1 }); } catch(e){}
+              initLevel(lv);
             } else {
               sfxError();
             }
@@ -5749,15 +5775,24 @@ function onTap(px, py) {
     }
     // Daily challenge banner tap
     if (!isDailyDone() && hitTest(px, py, 8, 4, W - 16, 28)) {
-      sfxClick(); initLevel(dailyChallengeLevel); return;
+      sfxClick();
+      // [MS-tracker R643] daily challenge from menu banner
+      try { window.__msTrack && window.__msTrack('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'menu_banner' }); } catch(e){}
+      initLevel(dailyChallengeLevel); return;
     }
     // Jump button
     if (hitTest(px, py, W - 78, 8, 66, 30)) {
-      sfxClick(); jumpDialogOpen = true; jumpInput = ""; return;
+      sfxClick();
+      // [MS-tracker R643] jump dialog opened
+      try { window.__msTrack && window.__msTrack('ms_jump_dialog_opened', { fromMenu: true }); } catch(e){}
+      jumpDialogOpen = true; jumpInput = ""; return;
     }
     // Resume button (jump to last played level)
     if (lastPlayedLevel > 0 && lastPlayedLevel < TOTAL_LEVELS && hitTest(px, py, W - 158, 8, 72, 30)) {
-      sfxClick(); initLevel(lastPlayedLevel); return;
+      sfxClick();
+      // [MS-tracker R643] resume tapped
+      try { window.__msTrack && window.__msTrack('ms_resume_tapped', { lv: lastPlayedLevel + 1 }); } catch(e){}
+      initLevel(lastPlayedLevel); return;
     }
     const cols = Math.min(5, Math.floor((W - 30) / 68));
     const gap = 8;
@@ -5846,6 +5881,8 @@ function onTap(px, py) {
     }
     // Favorite/star toggle
     if (hitTest(px, py, 138, 36, 28, 28)) {
+      // [MS-tracker R643] favorite toggle
+      try { window.__msTrack && window.__msTrack('ms_favorite_toggled', { lv: currentLevel + 1, wasFav: !!favorites[currentLevel] }); } catch(e){}
       sfxClick();
       toggleFavorite(currentLevel);
       return;
@@ -5857,6 +5894,8 @@ function onTap(px, py) {
     }
     // Extra tube button
     if (hitTest(px, py, 10, 66, 80, 28)) {
+      // [MS-tracker R643] extra-tube button tap (track only — addExtraTube fires its own event on success)
+      try { window.__msTrack && window.__msTrack('ms_extra_tube_tap', { lv: currentLevel + 1, remaining: extraTubeUses }); } catch(e){}
       addExtraTube();
       return;
     }
@@ -5864,15 +5903,21 @@ function onTap(px, py) {
     const hudY = 36, hudBtnW = 46, hudBtnH = 28, hudGap = 5;
     const hudStartX = W - 14 - (hudBtnW * 4 + hudGap * 3);
     if (hitTest(px, py, hudStartX, hudY, hudBtnW, hudBtnH)) {
+      // [MS-tracker R643] menu/back button tapped mid-game
+      try { window.__msTrack && window.__msTrack('ms_menu_returned', { lv: currentLevel + 1, moves: moves }); } catch(e){}
       stopSolve();
       sfxClick(); state = "menu"; menuScrollY = 0; return;
     }
     if (hitTest(px, py, hudStartX + hudBtnW + hudGap, hudY, hudBtnW, hudBtnH)) {
+      // [MS-tracker R643] undo button tap
+      try { window.__msTrack && window.__msTrack('ms_undo_tap', { lv: currentLevel + 1, stackDepth: undoStack.length }); } catch(e){}
       if (!solving) undoMove(); return;
     }
     if (hitTest(px, py, hudStartX + (hudBtnW + hudGap) * 2, hudY, hudBtnW, hudBtnH)) {
       // Hint button - single click shows hint, double-click triggers auto-solve
       const nowClick = Date.now();
+      // [MS-tracker R643] hint button tap
+      try { window.__msTrack && window.__msTrack('ms_hint_tap', { lv: currentLevel + 1, n: numColors, moves: moves, doubleClick: hintTapCount > 0 && nowClick - hintTapTimer < 400 }); } catch(e){}
       if (solveConfirm) {
         // Second click - start solve
         solveConfirm = false;
@@ -5893,6 +5938,8 @@ function onTap(px, py) {
     }
     if (hitTest(px, py, hudStartX + (hudBtnW + hudGap) * 3, hudY, hudBtnW, hudBtnH)) {
       // Reset/Stop button
+      // [MS-tracker R643] reset button tap (or stop solve)
+      try { window.__msTrack && window.__msTrack('ms_reset_tap', { lv: currentLevel + 1, wasSolving: solving }); } catch(e){}
       if (solving) {
         stopSolve();
         sfxClick();
@@ -5907,6 +5954,8 @@ function onTap(px, py) {
 
     // Skip intro card on any tap
     if (levelIntroTimer > 0 && levelIntroStartLevel === currentLevel) {
+      // [MS-tracker R643] level intro dismissed early
+      try { window.__msTrack && window.__msTrack('ms_level_intro_dismissed', { lv: currentLevel + 1, n: numColors, autoSkip: false }); } catch(e){}
       levelIntroTimer = 0;
       return;
     }
