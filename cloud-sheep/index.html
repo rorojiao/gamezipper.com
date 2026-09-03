@@ -227,6 +227,7 @@ function gzShare(score){
 // ============ SPLASH SCREEN ============
 let gameStarted = false;
 function startGame() {
+  if (gameStarted) return;
   gameStarted = true;
   const splash = document.getElementById('splash');
   splash.classList.add('fade-out');
@@ -234,6 +235,21 @@ function startGame() {
   initAudio();
   startBGM();
 }
+// R649 UX fix: any click on splash overlay starts the game (not just the central button).
+// This prevents rage_click when users tap anywhere on the splash.
+(function(){
+  var sp = document.getElementById('splash');
+  if (!sp) return;
+  sp.addEventListener('click', function(e){
+    // Let the start button's onclick run normally (startGame is idempotent now).
+    startGame();
+  });
+  // Also accept touchstart for faster mobile dismiss
+  sp.addEventListener('touchstart', function(e){
+    if (gameStarted) return;
+    startGame();
+  }, {passive: true});
+})();
 
 // ============ GAME ENGINE ============
 const C = document.getElementById('c');
