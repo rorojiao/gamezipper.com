@@ -47,7 +47,7 @@
    auto-repoints nginx to the live tunnel URL. Rotating var EP here (R401 playbook) causes
    20min+ data gaps per GitHub Pages deploy + CDN cache cycle. See kanban R415/R416/R418.
    If bi.gamezipper.com/api/health fails: fix nginx/watchdog on 43.172, NOT this file. */
-  var EP = 'https://population-troops-dispatched-locate.trycloudflare.com/api/collect';
+  var EP = 'https://including-filed-skating-sam.trycloudflare.com/api/collect';
   // 2026-07-26: expose the watchdog-rotated endpoint so inline RUM scripts
   // (index.html Web-Vitals beacons) and adsterra-manager.js can resolve it
   // lazily instead of hardcoding tunnel URLs that die every few hours.
