@@ -1120,6 +1120,9 @@ function init(){
       setTimeout(()=>this.classList.remove('rejected'),1700);
       return;
     }
+    // UX-OPT 2026-09-04 R652: success path needs visible className change for dead_click detector (R651 family)
+    this.classList.add('activated');
+    setTimeout(()=>this.classList.remove('activated'),1700);
     resumeLoop();doUndo(this);
   });
   document.getElementById('pu-hint').addEventListener('click',function(){
@@ -1128,6 +1131,9 @@ function init(){
       setTimeout(()=>this.classList.remove('rejected'),1700);
       return;
     }
+    // UX-OPT 2026-09-04 R652: success path needs visible className change for dead_click detector (R651 family)
+    this.classList.add('activated');
+    setTimeout(()=>this.classList.remove('activated'),1700);
     resumeLoop();doHint(this);
   });
   document.getElementById('pu-shuffle').addEventListener('click',function(){
@@ -1136,6 +1142,9 @@ function init(){
       setTimeout(()=>this.classList.remove('rejected'),1700);
       return;
     }
+    // UX-OPT 2026-09-04 R652: success path needs visible className change for dead_click detector (R651 family)
+    this.classList.add('activated');
+    setTimeout(()=>this.classList.remove('activated'),1700);
     resumeLoop();doShuffle(this);
   });
   // Win overlay
