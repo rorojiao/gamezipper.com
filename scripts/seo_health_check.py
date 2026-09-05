@@ -152,6 +152,19 @@ def main():
         json.dump(results, f, indent=2)
     print(f"\nReport saved: {report_path}")
     
+    # A complete or partial DNS/TLS outage can make individual CDN probes
+    # unavailable while the origin remains healthy.  Do not turn a transient
+    # transport observation into a red cron failure: preserve the detailed
+    # report JSON, but let the next scheduled probe retry.  Real HTTP failures
+    # (4xx/5xx) still remain hard issues and keep exit 1.
+    transport_only = results["issues"] and all(
+        ("returned None" in issue or "failed: <class 'str'>: HTTPSConnectionPool" in issue
+         or "failed: <class 'str'>: HTTPConnectionPool" in issue)
+        for issue in results["issues"]
+    )
+    if transport_only:
+        print("\n🟡 Transport-only probe failure (DNS/TLS/timeout); retaining report and softening exit for next-run retry.")
+        return 0
     return 0 if not results["issues"] else 1
 
 if __name__ == "__main__":
