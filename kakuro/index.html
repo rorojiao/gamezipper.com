@@ -908,8 +908,15 @@
             switchScreen('game');
             // R658 fix: switchScreen flips .active → display:flex, but layout hasn't committed.
             // resizeCanvas() reads container.clientWidth which is still 0 → canvas stays 0×0.
-            // Defer resize via double-rAF so layout commits before measurement.
-            requestAnimationFrame(function(){requestAnimationFrame(resizeCanvas);});
+            // Defer resize via double-rAF + setTimeout fallback in case rAF doesn't fire
+            // (headless / background-tab throttle). Re-trigger until container has real dimensions.
+            function doResize(){
+              var c2=document.getElementById('game-grid-container');
+              if(c2&&c2.clientWidth>0){resizeCanvas();return;}
+              setTimeout(doResize,32);
+            }
+            requestAnimationFrame(function(){requestAnimationFrame(doResize);});
+            setTimeout(doResize,100);
         }
 
         function generateFallbackPuzzle(){
