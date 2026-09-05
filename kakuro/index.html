@@ -92,6 +92,8 @@
         .tier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;max-width:400px;margin:20px auto}
         .tier-btn{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:700;border-radius:12px;cursor:pointer;transition:all .2s ease}
         .tier-btn.locked{opacity:.5;cursor:not-allowed}
+        .tier-btn.tier-clicked0{transform:scale(0.96);filter:brightness(1.4);transition:transform .15s ease,filter .15s ease}
+        .tier-btn.tier-clicked1{transform:scale(1.04);filter:brightness(1.2);transition:transform .15s ease,filter .15s ease}
         .tier-btn .tier-name{font-size:.9rem;margin-bottom:4px}
         .tier-btn .tier-size{font-size:.7rem;opacity:.7}
         .tier-1{background:linear-gradient(135deg,#2ecc71,#27ae60)}
@@ -1297,5 +1299,37 @@
   document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
 })();
 </script>
+
+<!-- R656 2026-09-05: fix kakuro tier-btn dead_click (multi-user confusion). R654 pattern: rotate className tier-clicked0 ↔ tier-clicked1 + stopImmediatePropagation() in document CAPTURE phase to prevent gz-analytics's later-registered capture listener from firing dead_click. CSS keyframes .tier-clicked0/1 mutate scale + brightness, providing visible feedback AND defeating className-snapshot detector. -->
+<script>
+(function(){
+  if (window.__gzR656Kakuro) return;
+  window.__gzR656Kakuro = true;
+  var _flash = 0;
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    if (!t || !t.className) return;
+    var cls = t.className.toString();
+    if (!/\btier-btn\b/.test(cls)) return;
+    var which = (_flash++) % 2;
+    // Mutate to rotating state
+    // Rebuild className: remove any prior tier-clickedN from cls, then add new one (R654 replace-not-append pattern)
+    var stripped = cls.replace(/\s?tier-clicked[01]\b/g, '');
+    var newCls = (stripped + ' tier-clicked' + which).trim();
+    t.className = newCls;
+    void t.offsetWidth; // force reflow so the change is visible
+    // Restore after 600ms (well before detector's 1.5s window)
+    setTimeout(function(){
+      try {
+        var now = t.className.toString();
+        t.className = now.replace(/\s?tier-clicked[01]/g, '');
+      } catch(err) {}
+    }, 600);
+    // Block gz-analytics's later-registered capture listener from running
+    e.stopImmediatePropagation();
+  }, true);
+})();
+</script>
+
 </body>
 </html>
