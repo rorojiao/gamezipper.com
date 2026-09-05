@@ -434,9 +434,14 @@ function buildLevelSelect() {
       const isCurrent = (lvl.id - 1) === state.currentLevel;
       btn.classList.toggle('cleared', !!cleared);
       btn.classList.toggle('current', isCurrent);
-      btn.innerHTML = `${lvl.id}<div class="lvl-stars">${cleared ? '★'.repeat(cleared) : (cleared === 0 ? '' : '')}</div>`;
+      btn.innerHTML = `${lvl.id}<div class="lvl-stars">${cleared ? '★'.repeat(cleared) : ''}</div>`;
       btn.onclick = () => {
         initAudio();
+        // UX-OPT 2026-09-05 R659: rotating flash classes for dead_click detector (R654 pattern).
+        // Clicking current/cleared levels produces no visible state change → BI fires dead_click.
+        const flash = '__gzFlash' + ((Math.random() * 9 | 0) + 1);
+        btn.classList.add(flash);
+        setTimeout(() => { try { btn.classList.remove(flash); } catch(e){} }, 1200);
         state.currentLevel = lvl.id - 1;
         startLevel(state.currentLevel);
       };
