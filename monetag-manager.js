@@ -1,8 +1,26 @@
 /**
- * GameZipper Ad Manager v5.28-adsense-fix — see v5.28 changelog below
+ * GameZipper Ad Manager v5.34-deadzone-guard — see v5.34 changelog below
  *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ *
+ * v5.34 Changes (2026-09-05 — R651 dead-zone guard for second banner + mid-grid, kanban t_dailyAdRev_2026-09-05):
+ *   - 🪲 Fix: 132 homepage_banner_no_fill events/7d from BI 2026-09-05 — R528 v5.33 fix
+ *     (2026-08-09 deploy) only guarded showHomepageBanner. showHomepageSecondBanner
+ *     (#gz-home-banner-2) and showHomepageMidGrid (#gz-ad-mid-grid) still called
+ *     loadZone(CONFIG.ZONES.inpagePush) without the deadZones check. Since 11012002
+ *     is in deadZones (BI 0% fill since 2026-07-22), the call always rejects → produces
+ *     the catch() trackAdEvent → 132 wasted BI events/wk + 3 extra script loads.
+ *   - 🔧 Fix: Add the same `if (deadZones.indexOf(inpagePush) !== -1) return;` guard
+ *     in both functions, matching the showHomepageBanner pattern. Net effect:
+ *     ~80-130 fewer BI events/wk + 2 fewer script loads per homepage visit.
+ *   - 📊 Expected impact (BI 7d post-deploy): homepage_banner_no_fill from Monetag
+ *     drops from 132/wk → 5-15/wk (only the showHomepageBanner path may still fire
+ *     due to CDN lag). No revenue change (Monetag 11012002 is dead either way).
+ *   - 🛡️ Safety: pure guard addition, identical to existing R528 pattern. AdSense
+ *     Tier 0 (still active) is unaffected — it runs in parallel via loadAdSenseAd().
+ *     Revert by reverting monetag-manager.js (no other file touched).
+ *   - Version bumped 5.28-adsense-fix → 5.34-deadzone-guard.
  *
  * v5.28 Changes (2026-07-16 — homepage banner AdSense fix, kanban t_38c0542b / parent t_d3f23c1d):
  *   - 🪲 Fix: homepage banner 100% no_fill (14d BI: 0 fill / 25 no_fill). Two root causes
@@ -1749,6 +1767,10 @@
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
         if (!canShowAd('homepage_banner')) return;
+        // v5.34 R651: same dead-zone guard as showHomepageBanner (R528). 11012002 is in
+        // deadZones (0% fill since 2026-07-22, confirmed via BI 30+ no_fill/wk). Skipping
+        // the loadZone call eliminates the always-paired BI noise without affecting fill.
+        if (CONFIG.ZONES.deadZones && CONFIG.ZONES.deadZones.indexOf(CONFIG.ZONES.inpagePush) !== -1) return;
         // v5.23: same single-Tier cull as showHomepageBanner — Tier 2/3/4 were 100% dead ends
         loadZone(CONFIG.ZONES.inpagePush, container).then(function() {
           container.setAttribute('data-filled', '1');
@@ -1785,6 +1807,9 @@
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
         if (!canShowAd('homepage_banner')) return;
+        // v5.34 R651: dead-zone guard. 11012002 is in deadZones (0% fill since 2026-07-22).
+        // Skipping the loadZone call eliminates always-paired BI noise without affecting fill.
+        if (CONFIG.ZONES.deadZones && CONFIG.ZONES.deadZones.indexOf(CONFIG.ZONES.inpagePush) !== -1) return;
         // Monetag Skillful fallback. Resolve on script load, reject on error/timeout.
         // v5.25: Cut to single-Tier (11012002) + AdSense Tier 0 in parallel race.
         // Tier 2 (legacy Attractive 10687755, disabled since v5.3) + Tier 4 (Adsterra
