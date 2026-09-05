@@ -905,8 +905,11 @@
             document.getElementById('hint-counter').textContent=state.hintsLeft+' left';
             document.getElementById('level-display').textContent=tier===-1?'DAILY PUZZLE':TIER_NAMES[tier]+' - LEVEL '+(level+1);
             buildNumPad();
-            resizeCanvas();
             switchScreen('game');
+            // R658 fix: switchScreen flips .active → display:flex, but layout hasn't committed.
+            // resizeCanvas() reads container.clientWidth which is still 0 → canvas stays 0×0.
+            // Defer resize via double-rAF so layout commits before measurement.
+            requestAnimationFrame(function(){requestAnimationFrame(resizeCanvas);});
         }
 
         function generateFallbackPuzzle(){
