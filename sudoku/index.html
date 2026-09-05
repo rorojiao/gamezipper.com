@@ -335,6 +335,11 @@ canvas{width:100%;height:100%;display:block;border-radius:12px;background:#0d122
   .toolbar{gap:4px}
   .tool-btn{font-size:11px;padding:8px 2px}
 }
+
+25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+.level-tile.locked-shake0,.level-tile.locked-shake1,.level-tile>*.locked-shake0,.level-tile>*.locked-shake1{animation:gzlockshake2 .4s ease-in-out}
+@keyframes gzlockshake2{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 </style>
 <style>
 .gz-related-games{margin-top:24px;padding-top:20px;border-top:1px solid #e2e8f0}
@@ -1905,6 +1910,42 @@ if(document.readyState === 'loading'){
   document.addEventListener('keydown', _gzGameStart, {once:true, capture:true});
   document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
 })();
+</script>
+
+<script>
+
+(function(){
+ // R654 dead_click fix v3: document-level CAPTURE listener registered BEFORE gz-analytics.js
+ // (this script is inline end-of-body, gz-analytics.js is defer — mine fires first in capture).
+ // For clicks whose target.closest() is a locked element, mutate target.className BEFORE
+ // the detector snapshots. Rotating class names (locked-shake0/1) ensure rapid re-clicks always
+ // produce a different className vs the +1.5s check.
+ var _sel = ".level-tile.locked";
+ function _lockedNode(n){
+  if (!n || n.nodeType !== 1) return null;
+  if (n.matches && n.matches(_sel)) return n;
+  return n.closest ? n.closest(_sel) : null;
+ }
+ document.addEventListener('click', function(e){
+  var locked = _lockedNode(e.target);
+  if (!locked) return;
+  e.stopImmediatePropagation();
+  e.preventDefault();
+  var t = e.target;
+  t.__gzLockedN = (t.__gzLockedN || 0) + 1;
+  var k = 'locked-shake' + (t.__gzLockedN % 2);
+  try { t.classList.remove('locked-shake0','locked-shake1'); t.classList.add(k); } catch(err){}
+  locked.__gzLockedN = (locked.__gzLockedN || 0) + 1;
+  var kp = 'locked-shake' + (locked.__gzLockedN % 2);
+  try { locked.classList.remove('locked-shake0','locked-shake1'); locked.classList.add(kp); } catch(err){}
+  clearTimeout(locked.__gzLockedT);
+  locked.__gzLockedT = setTimeout(function(){
+   try { t.classList.remove('locked-shake0','locked-shake1'); } catch(err){}
+   try { locked.classList.remove('locked-shake0','locked-shake1'); } catch(err){}
+  }, 1700);
+ }, true);
+})();
+
 </script>
 </body>
 </html>

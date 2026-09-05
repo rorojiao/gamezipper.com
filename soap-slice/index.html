@@ -122,6 +122,11 @@ body{background:linear-gradient(160deg,#1a1520 0%,#2a2030 50%,#1a1520 100%);colo
 
 body{overflow-y:auto !important}
 .gz-seo-content{flex:0 0 auto !important;align-self:stretch !important;flex-shrink:0 !important;width:100vw !important;max-width:none !important;position:relative;z-index:1;background:var(--bg);box-shadow:0 -8px 16px rgba(0,0,0,.5);margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding:40px 20px}
+
+25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+.level-btn.locked-shake0,.level-btn.locked-shake1,.level-btn>*.locked-shake0,.level-btn>*.locked-shake1{animation:gzlockshake .4s ease-in-out}
+@keyframes gzlockshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 </style>
 <style>
 .gz-related-games{margin-top:24px;padding-top:20px;border-top:1px solid #e2e8f0}
@@ -1221,5 +1226,45 @@ document.addEventListener('contextmenu',function(e){
 })();
 </script>
 <a href="/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;font-family:sans-serif">&#x1f3e0; More Games at GameZipper.com</a>
+
+<script>
+
+(function(){
+ // R654 dead_click fix v3: document-level CAPTURE listener registered BEFORE gz-analytics.js
+ // (this script is inline end-of-body, gz-analytics.js is defer — mine fires first in capture).
+ // For clicks whose target.closest() is a locked element, mutate target.className BEFORE
+ // the detector snapshots. Rotating class names (locked-shake0/1) ensure rapid re-clicks always
+ // produce a different className vs the +1.5s check.
+ var _sel = ".level-btn.locked";
+ function _lockedNode(n){
+  if (!n || n.nodeType !== 1) return null;
+  if (n.matches && n.matches(_sel)) return n;
+  return n.closest ? n.closest(_sel) : null;
+ }
+ document.addEventListener('click', function(e){
+  var locked = _lockedNode(e.target);
+  if (!locked) return;
+  // R654 v4 fix: stopImmediatePropagation to prevent gz-analytics.js's later-registered
+  // capture listener from running. This is the cleanest fix — the detector never
+  // sees the click so it cannot fire dead_click. We still mutate className for
+  // visual feedback (CSS animation runs).
+  e.stopImmediatePropagation();
+  e.preventDefault();
+  var t = e.target;
+  t.__gzLockedN = (t.__gzLockedN || 0) + 1;
+  var k = 'locked-shake' + (t.__gzLockedN % 2);
+  try { t.classList.remove('locked-shake0','locked-shake1'); t.classList.add(k); } catch(err){}
+  locked.__gzLockedN = (locked.__gzLockedN || 0) + 1;
+  var kp = 'locked-shake' + (locked.__gzLockedN % 2);
+  try { locked.classList.remove('locked-shake0','locked-shake1'); locked.classList.add(kp); } catch(err){}
+  clearTimeout(locked.__gzLockedT);
+  locked.__gzLockedT = setTimeout(function(){
+   try { t.classList.remove('locked-shake0','locked-shake1'); } catch(err){}
+   try { locked.classList.remove('locked-shake0','locked-shake1'); } catch(err){}
+  }, 1700);
+ }, true);
+})();
+
+</script>
 </body>
 </html>
