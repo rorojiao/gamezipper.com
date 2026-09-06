@@ -1,3 +1,33 @@
+## [v1.243.0] - 2026-09-06
+### Added
+- 8 new machine-verifiable test cases from R360 industry research (4h cycle 122): the freshly-opened Chrome 157 enabled-by-default surface (3 enabled-by-default features per the chromestatuslite.com/?version=157 mirror — Approximate Geolocation accuracyMode + URL hosts disallow spaces + Web Bluetooth maxWriteWithoutResponseSize) plus the freshly-published Firefox 157 JPEG XL enabled-by-default contract (shipping 2026-09-29 per the Firefox Release Calendar + Mozilla Hacks blog) plus 4 cross-engine / mobile / GameZipper-applicable contracts sourced from the R625/R629/R630/R631/R633 2026-09 production UX-fix pattern log (canvas devicePixelRatio sharpness + audioContext resume inside pointerup + audioContext visibilitychange-resume + iOS safe-area-inset env()).
+- B-332 [P1] Chrome 157 Stable PositionOptions accuracyMode approximate Geolocation Without Precise-Location Prompt
+- B-333 [P1] Chrome 157 Stable URL Standard Disallow Spaces In Non-File URL Hosts (Interop2024 Compliance)
+- P-205 [P1] Canvas DevicePixelRatio (DPR) Sharpness Contract For Retina Mobile Screens
+- S-498 [P1] AudioContext resume() Inside Genuine User-Gesture Handler For iOS Safari + Mobile Chrome
+- S-499 [P1] AudioContext Re-Suspend On visibilitychange Return + AudioBufferSourceNode Recreate
+- A-057 [P1] iOS Safari + Android Chrome Notched-Device viewport-fit cover + env(safe-area-inset-*)
+- C-258 [P1] Chrome 157 + Edge 157 BluetoothRemoteGATTServer maxWriteWithoutResponseSize + Event
+- P-206 [P1] Firefox 157 Stable JPEG XL (image/jxl) Enabled By Default Via jxl-rs Rust Decoder
+### Sources
+- https://chromestatuslite.com/?version=157 (Chrome 157 enabled-by-default surface, 3 + 0 OT + 0 flagged + 0 deprecated + 0 removed; primary URL for B-332 + B-333 + C-258)
+- https://chromestatus.com/feature/5143609755828224 (Approximate Geolocation accuracyMode — B-332)
+- https://chromestatus.com/feature/5083335148437504 (URL Standard forbidden-host-code-point — B-333)
+- https://chromestatus.com/feature/5177569273053184 (Web Bluetooth maxWriteWithoutResponseSize — C-258)
+- https://hacks.mozilla.org/2026/08/intent-to-ship-jpeg-xl/ (Firefox 157 JPEG XL intent-to-ship blog, primary URL for P-206)
+- https://whattrainisitnow.com/calendar/ (Firefox Release Calendar 2026 — Firefox 157 release-day Sep 29)
+- https://www.phoronix.com/news/Firefox-JPEG-XL-2026-Plans (Mozilla Firefox 157 JPEG XL plan)
+- https://www.webpronews.com/firefox-sets-september-date-for-jpeg-xl-by-default-as-browser-support-converges/ (Firefox 157 JPEG XL cross-engine convergence)
+- https://web.dev/articles/canvas-hidipi (web.dev High DPI Canvas — supports P-205)
+- https://bugnet.io/blog/how-to-fix-web-game-canvas-blurry-retina (How to Fix a Blurry Canvas on Retina — supports P-205)
+- https://bugnet.io/blog/how-to-fix-web-game-audio-context-stuck-suspended-on-mobile (AudioContext Stuck Suspended on Mobile — supports S-498)
+- https://bugnet.io/blog/fix-html5-game-audio-cut-off-on-ios-background (HTML5 Game Audio Cut Off on iOS Background — supports S-499)
+- https://gist.github.com/fozzedout/5e77925381991a9570151550992baf14 (iPhone PWA game guide — supports A-057)
+- https://developer.chrome.com/docs/web-platform/page-lifecycle-api (Chrome Page Lifecycle API — supports S-499)
+### Distinctness
+- 8 contracts from a fresh surface combo (3 Chrome 157 enabled-by-default + 1 Firefox 157 enabled-by-default + 4 mobile/audio/iframe cross-engine contracts sourced from the 2026-09 production UX-fix pattern log), not duplicate coverage of the v1.242.0 iframe-integration + WebGPU + thermal + reduced-motion + ad-occlusion contracts or the v1.241.0 Firefox 155 + WebSocket-bfcache + autofill contracts.
+
+
 ## [v1.242.0] - 2026-09-05
 ### Added
 - 6 new machine-verifiable test cases from R359 industry research (4h cycle 121): embedded-game fullscreen/focus, sandbox storage/fallback, WebGPU-to-WebGL sustained frame pacing, mobile thermal/battery-safe rendering, reduced-motion/screen-jostle escape hatch, and small-screen ad occlusion.
