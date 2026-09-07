@@ -827,12 +827,26 @@ window.shareGame = shareGame;
     return;
   }
   
+  // R667 UX fix 2026-09-07: also dismiss splash-screen on first click.
+  // Bug chain: splash (z=9999) under tutorial (z=99999). Tutorial dismisses on click,
+  // but splash remains with pointer-events:auto, so user's 2nd click hits splash
+  // (no visible response). User rage-clicks 3+ times before bird finally flaps,
+  // generating multi-click rage_click BI signal.
+  var dismissSplash = function() {
+    var ss = document.getElementById('splash-screen');
+    if (ss && !ss.classList.contains('fade-out')) {
+      ss.classList.add('fade-out');
+      setTimeout(function(){ try { ss.remove(); } catch(e){} }, 500);
+    }
+  };
+
   // Set overlay fullscreen click/touch events to close
   var closeTut = function(e) {
     e && e.preventDefault && e.preventDefault();
     e && e.stopPropagation && e.stopPropagation();
     if (cvs) cvs.style.pointerEvents = 'auto';
     ov.remove();
+    dismissSplash();
     localStorage.setItem('tutorial-seen-' + window.location.pathname, '1');
   };
   
