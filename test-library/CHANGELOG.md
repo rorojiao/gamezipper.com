@@ -1,3 +1,35 @@
+## [v1.244.0] - 2026-09-07
+### Added
+|- 8 new machine-verifiable test cases from R361 industry research (4h cycle 123): (a) the freshly-discovered 4th Chrome 157 enabled-by-default feature that was added to the chromestatuslite.com/?version=157 mirror AFTER v1.243.0 R360 shipped (B-334 Web Bluetooth Make BluetoothRemoteGATTServer an EventTarget, the foundation contract for the v1.243.0 C-258 maxwritewithoutresponsesizechanged event), (b) 2 Chrome 160 stable deprecation graduations freshly-opened in the chromestatuslite.com/?version=160 mirror (C-260 Digital Credentials API protocol-filtering final-removal graduation of v1.225.0 S-479 + P-207 RTCPeerconnection.createDTMFSender Interop 2026 cleanup), (c) the Chrome 159 stable Web Bluetooth getDevices()/forget() companion method re-stated (W-496), and (d) 4 cross-engine / mobile UX contracts sourced from the ContextQA 2026 cross-browser rendering bugs article + the 2026 iOS Safari viewport / keyboard articles + the W3C WCAG 2.2 § 2.5.8 spec (B-335 iOS Safari cursor:pointer div-button click-through, B-336 iOS Safari 100vh instability vs 100svh/100dvh, C-259 iOS Safari documentElement.clientHeight + window.innerHeight not updated when soft keyboard opens, W-497 iOS Safari window.visualViewport API modern replacement, A-058 WCAG 2.2 § 2.5.8 Target Size Minimum 24x24 CSS pixels).
+|- B-334 [P1] Chrome 157 Stable Web Bluetooth Make BluetoothRemoteGATTServer an EventTarget Inheritance Change
+|- B-335 [P1] iOS Safari + iOS Chrome Custom Div-Based Button cursor:pointer Click-Through Bug
+|- B-336 [P1] iOS Safari 100vh Unit Instability Contract vs 100svh + 100dvh Viewport Units
+|- C-259 [P1] iOS Safari documentElement.clientHeight + window.innerHeight Are NOT Updated When The Soft Keyboard Opens
+|- C-260 [P1] Chrome 160 Stable Final Removal Of Digital Credentials API Protocol-Filtering
+|- P-207 [P1] Chrome 160 Stable Deprecation Of RTCPeerConnection.createDTMFSender() Per Interop 2026 Cleanup
+|- W-496 [P2] Chrome 159 Stable Web Bluetooth getDevices() + BluetoothDevice.forget() Re-Stated Contract
+|- W-497 [P2] iOS Safari window.visualViewport API For Tracking Soft-Keyboard Visibility + Layout Viewport Size
+|- A-058 [P1] WCAG 2.2 § 2.5.8 Target Size (Minimum) Compliance Contract For Mobile Game Buttons
+### Sources
+|- https://chromestatuslite.com/?version=157 (Chrome 157 enabled-by-default surface, 4 features confirmed 2026-09-07, the 4th feature added to the mirror AFTER v1.243.0 R360 closed on 2026-09-06; primary URL for B-334)
+|- https://chromestatuslite.com/?version=159 (Chrome 159 enabled-by-default surface, 1 feature — Web Bluetooth getDevices() and forget() — re-stated as W-496)
+|- https://chromestatuslite.com/?version=160 (Chrome 160 deprecation surface, 2 features — RTCPeerconnection.createDTMF deprecation + Digital Credentials API protocol-filtering final-removal)
+|- https://chromestatuslite.com/feature/5138797158334464 (Chrome Status feature page — Web Bluetooth: Make BluetoothRemoteGATTServer an EventTarget, supports B-334)
+|- https://webbluetoothcg.github.io/web-bluetooth/ (Web Bluetooth CG spec — the canonical spec for BluetoothRemoteGATTServer EventTarget + maxWriteWithoutResponseSize + getDevices() + forget())
+|- https://contextqa.com/blog/cross-browser-rendering-bugs-testing-2026/ (ContextQA 2026 cross-browser rendering bugs guide, March 12 2026 — the 68%-abandonment stat + the iOS WebKit monoculture analysis + the cursor:pointer iOS Safari div-button click-through bug class, supports B-335)
+|- https://wpcodetips.com/customization/666 (WP Code Tips Jan 4 2026 — Fix 100vh Issues on Mobile Safari — the svh vs dvh vs JS fallback decision tree, supports B-336)
+|- https://global.php.cn/faq/1797072165.html (Jun 26 2026 — Why does the vh unit of CSS jitter when the mobile soft keyboard pops up — supports B-336 + C-259)
+|- https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport (MDN VisualViewport docs, supports C-259 + W-497)
+|- https://wicg.github.io/visual-viewport/ (W3C Visual Viewport API spec, supports W-497)
+|- https://www.w3.org/TR/WCAG22/#target-size-minimum (W3C WCAG 2.2 § 2.5.8 Target Size (Minimum), supports A-058)
+|- https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html (W3C WCAG 2.2 § 2.5.8 Understanding document, supports A-058)
+|- https://chromestatus.com/feature/6492906882990080 (Chrome Status feature page — Digital Credentials API protocol-filtering final-removal, supports C-260)
+|- https://w3c-fedid.github.io/digital-credentials/ (W3C FedID Digital Credentials API spec, supports C-260)
+|- https://w3c.github.io/webrtc-pc/ (W3C WebRTC PC spec baseline confirming RTCPeerConnection.createDTMFSender() is Blink-only legacy, supports P-207)
+### Distinctness
+|- 8 contracts from a fresh surface combo: 1 missed Chrome 157 feature (B-334, the 4th enabled-by-default that v1.243.0 missed), 2 Chrome 160 deprecation graduations (C-260 + P-207, the FINAL-REMOVAL step of v1.225.0 deprecation-timeline contracts), 1 Chrome 159 Web Bluetooth re-statement (W-496), and 4 cross-engine/mobile UX contracts (B-335 + B-336 + C-259 + W-497 + A-058) sourced from the 2026 ContextQA cross-browser rendering bugs article + iOS Safari viewport/keyboard articles + W3C WCAG 2.2 § 2.5.8 spec — distinct from the v1.243.0 R360 Chrome 157 surfaces (B-332 + B-333 + C-258 + P-206), the v1.242.0 R359 iframe/WebGPU/thermal/reduced-motion/ad-occlusion contracts, the v1.241.0 R358 Firefox 155 contracts, the v1.240.0 R357 Chrome 156 + WCAG 2.2.2 + Edge unload contracts, and all prior cycles.
+
+
 ## [v1.243.0] - 2026-09-06
 ### Added
 - 8 new machine-verifiable test cases from R360 industry research (4h cycle 122): the freshly-opened Chrome 157 enabled-by-default surface (3 enabled-by-default features per the chromestatuslite.com/?version=157 mirror — Approximate Geolocation accuracyMode + URL hosts disallow spaces + Web Bluetooth maxWriteWithoutResponseSize) plus the freshly-published Firefox 157 JPEG XL enabled-by-default contract (shipping 2026-09-29 per the Firefox Release Calendar + Mozilla Hacks blog) plus 4 cross-engine / mobile / GameZipper-applicable contracts sourced from the R625/R629/R630/R631/R633 2026-09 production UX-fix pattern log (canvas devicePixelRatio sharpness + audioContext resume inside pointerup + audioContext visibilitychange-resume + iOS safe-area-inset env()).
