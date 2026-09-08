@@ -1422,6 +1422,17 @@ function claimDailyReward() {
   saveDailyReward();
   // [MS-tracker R643] daily reward claim event
   try { window.__msTrack && window.__msTrack('ms_daily_reward_claimed', { streak: streakCount, totalTubes: extraTubeUses }); } catch(e){}
+  // [R672] Celebrate: spawn confetti burst + trigger tube counter pulse animation
+  try {
+    spawnConfetti();
+    // Bounce the "+Tube X" pill in the HUD so the user sees the +1 land
+    if (typeof pulseTubeChip === 'function') pulseTubeChip();
+    else {
+      // Inline mini-pulse: schedule a temporary CSS class via a global var the
+      // render loop already handles. Falls through if render loop doesn't read it.
+      window._msTubePulseT = 24; // ~400ms at 60fps
+    }
+  } catch(e){}
   return true;
 }
 loadDailyReward();
@@ -4174,12 +4185,14 @@ function handleDailyRewardTap(px, py) {
     return true;
   }
   if (!hitTest(px, py, cx, cy, cardW, cardH)) {
-    // Tap outside card closes without claiming (no re-trigger today)
+    // Tap outside card closes popup but does NOT mark as claimed today —
+    // user can re-trigger by going back to splash → menu, so they don't lose
+    // their free +1 tube if they mis-tap. The popup won't auto-reappear in
+    // this same menu session (we just set the open flag to false) but will
+    // re-trigger on next splash → menu transition or refresh.
     // [MS-tracker R643] daily reward dismissed without claim
     try { window.__msTrack && window.__msTrack('ms_daily_reward_dismissed', { source: 'outside_tap' }); } catch(e){}
     dailyRewardOpen = false;
-    dailyRewardClaimed[getDailySeed()] = true;
-    saveDailyReward();
     return true;
   }
   return true;
@@ -4533,6 +4546,19 @@ renderFavorites._maxScroll = function() {
   return Math.max(0, totalRows * (cellH + gap) + 80 - H + 10);
 };
 
+// [R672] Estimate color count using the documented difficulty curve.
+// Mirrors the chunk-data distribution (tutorial: 2-7, easy: 8-10, medium: 11-14,
+// hard: 15-22, very-hard: 23-29) without loading chunks. Good enough for the
+// jump-dialog preview so users see "12 colors ⚠ Hard tier" before confirming.
+function estimateColorsForLevel(lv) {
+  if (lv <= 22) return Math.min(2 + Math.floor(lv / 7), 7);
+  if (lv <= 1847) return 8;
+  if (lv <= 9999) return 9 + Math.floor((lv - 1848) / 8000);
+  if (lv <= 79999) return 11 + Math.floor((lv - 10000) / 15000);
+  if (lv <= 154999) return 15 + Math.floor((lv - 80000) / 12000);
+  return 23 + Math.floor((lv - 155000) / 15000);
+}
+
 function renderJumpDialog() {
   // Dim overlay
   X.fillStyle = "rgba(5,5,30,0.75)";
@@ -4584,6 +4610,35 @@ function renderJumpDialog() {
   X.fillStyle = "rgba(255,255,255,0.35)";
   X.font = "400 11px 'Nunito',sans-serif";
   X.fillText(`1 – ${TOTAL_LEVELS}  (unlocked: ${Object.keys(levelUnlocked).length})`, W / 2, inputY + inputH + 16);
+
+  // [R672] Difficulty preview: shows what the entered level looks like
+  // (color count + tier label) so users who jump-to-lv15000+ know what they're getting
+  if (jumpInput.length > 0) {
+    const previewLv = Number(jumpInput);
+    if (previewLv >= 1 && previewLv <= TOTAL_LEVELS) {
+      // Compute the color count using the same curve logic as the chunk decoder
+      // We don't have decodeLevel() available here (requires chunk data); use the
+      // DIFF_SECTIONS lookup to find the matching tier label.
+      let tierName = "🌱 TUTORIAL";
+      let tierColor = "#2ed573";
+      for (let i = DIFF_SECTIONS.length - 1; i >= 0; i--) {
+        if (previewLv >= DIFF_SECTIONS[i].start + 1) {
+          tierName = DIFF_SECTIONS[i].label;
+          tierColor = DIFF_SECTIONS[i].color;
+          break;
+        }
+      }
+      X.font = "700 13px 'Nunito',sans-serif";
+      X.fillStyle = tierColor;
+      X.textAlign = "center";
+      X.fillText(tierName, W / 2, inputY + inputH + 36);
+      // Color count hint: estimate using the same curve as DIFF_SECTIONS start ranges
+      const nColors = estimateColorsForLevel(previewLv);
+      X.font = "400 11px 'Nunito',sans-serif";
+      X.fillStyle = nColors >= 12 ? "rgba(255,99,71,0.85)" : "rgba(255,255,255,0.55)";
+      X.fillText(`${nColors} colors  •  ${nColors >= 12 ? "⚠ Hard tier — use extra tubes!" : "challenging but solvable"}`, W / 2, inputY + inputH + 54);
+    }
+  }
 
   // Numpad (4 cols: 1-9, ⌫, 0, Go)
   const numPadTop = inputY + inputH + 30;
@@ -4741,15 +4796,22 @@ function renderGame() {
   const etbW = 80, etbH = 28;
   const etbEnabled = extraTubeUses > 0 && extraTubeUsed < MAX_EXTRA_TUBES && !solving && !animating;
   const etbLabel = "+ Tube " + extraTubeUses;
+  // [R672] Pulse animation when daily reward was just claimed (timer in frames)
+  const tubePulseT = (window._msTubePulseT || 0);
+  if (tubePulseT > 0) window._msTubePulseT = tubePulseT - 1;
+  const pulseScale = tubePulseT > 0 ? 1 + Math.sin(tubePulseT * 0.4) * 0.08 : 1;
+  const pulseGlow = tubePulseT > 0 ? 0.4 + Math.sin(tubePulseT * 0.5) * 0.3 : 0.2;
+  X.save();
+  X.translate(10 + etbW / 2, etbY + etbH / 2);
+  X.scale(pulseScale, pulseScale);
+  X.translate(-(10 + etbW / 2), -(etbY + etbH / 2));
   if (etbEnabled) {
-    X.save();
     roundRect(10, etbY, etbW, etbH, 6);
-    X.fillStyle = hoverBtn === 16 ? "rgba(46,213,115,0.35)" : "rgba(46,213,115,0.2)";
+    X.fillStyle = hoverBtn === 16 ? `rgba(46,213,115,${Math.min(0.6, 0.35 + pulseGlow)})` : `rgba(46,213,115,${pulseGlow})`;
     X.fill();
     X.strokeStyle = "rgba(46,213,115,0.6)";
     X.lineWidth = 1.2;
     X.stroke();
-    X.restore();
   } else {
     roundRect(10, etbY, etbW, etbH, 6);
     X.fillStyle = "rgba(255,255,255,0.05)";
@@ -4763,6 +4825,7 @@ function renderGame() {
   X.textAlign = "center";
   X.textBaseline = "middle";
   X.fillText(etbLabel, 10 + etbW / 2, etbY + etbH / 2);
+  X.restore();
 
   // ── Chapter Progress Bar (below HUD buttons) ──
   const progBarY = 96;
