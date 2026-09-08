@@ -115,7 +115,7 @@ for d in sorted(os.listdir('.')):
     try:
         with open(f'{d}/index.html', 'rb') as f:
             head = f.read(4096).decode('utf-8', errors='ignore')
-        if 'noindex,follow' in head and 'window.location.replace' in head:
+        if re.search(r'noindex,\s*follow', head) and 'window.location.replace' in head:
             continue
     except OSError:
         pass
