@@ -1377,7 +1377,15 @@ diffBtns.forEach(function(b){
 
 // ============ BUTTONS ============
 document.getElementById('bStart').addEventListener('click',function(){
-  cleanupGame();
+  // Do NOT call cleanupGame() here — it cancels the gameLoop rAF and
+  // newGame() never restarts it, leaving the canvas frozen at the menu
+  // (R170 sweep 2026-09-08 reproducer: 158250 transparent black pixels).
+  // Just clear timers/overlays and start a new game with the live loop.
+  G.timers.forEach(clearTimeout);
+  G.timers=[];
+  if(audioCtx){try{audioCtx.close()}catch(e){}audioCtx=null}
+  G.phase=PHASE.MENU;G.round=0;G.handNum=0;G.passDir=0;
+  G.trick=[];G.trickNum=0;G.trickLeader=0;
   hideOverlay('menuOverlay');
   newGame(G.difficulty);
 });
