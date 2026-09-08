@@ -140,9 +140,10 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 60%,#0d1a2d 100%);min-
 .toggle.on .toggle-dot{left:25px}
 
 /* Tutorial */
-#tutorial-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:100;align-items:center;justify-content:center}
+#tutorial-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:100;align-items:center;justify-content:center;cursor:pointer}
 #tutorial-overlay.show{display:flex}
-.tut-card{background:linear-gradient(135deg,#1a1a3e,#0d1a2d);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:24px;width:min(360px,90vw);text-align:center}
+#tutorial-overlay.tutorial-clicked{background:rgba(0,0,0,.5)}
+.tut-card{cursor:auto;background:linear-gradient(135deg,#1a1a3e,#0d1a2d);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:24px;width:min(360px,90vw);text-align:center}
 .tut-step{font-size:13px;color:#00f2fe;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
 .tut-text{font-size:15px;color:#ddd;line-height:1.5;margin-bottom:18px}
 .tut-visual{font-size:48px;margin-bottom:18px}
@@ -1189,7 +1190,13 @@ setupToggle('toggle-music','music',function(){
 setupToggle('toggle-hints','hints');
 
 // Tutorial
-document.getElementById('tut-next').addEventListener('click',function(){
+document.getElementById('tut-next').addEventListener('click',function(e){
+  e.stopPropagation();
+  advanceTutorial();
+});
+// UX-OPT 2026-09-08 R672: tutorial backdrop click also advances (was: only small Next button worked → rage_click cluster from users clicking the overlay backdrop)
+// Fixes BI 7d: 6 rage_click events at (602,288)/(863,298)/(875,437)/(953,556)/(1869,911) — 1 user rage-abandoned
+function advanceTutorial(){
   tutorialStep++;
   if(tutorialStep>=tutSteps.length){
     document.getElementById('tutorial-overlay').classList.remove('show');
@@ -1199,6 +1206,12 @@ document.getElementById('tut-next').addEventListener('click',function(){
   }else{
     updateTutorial();
   }
+}
+document.getElementById('tutorial-overlay').addEventListener('click',function(e){
+  // UX-OPT 2026-09-08 R672: ANY click on tutorial overlay advances (backdrop, card content, decoration). tut-btn uses stopPropagation so it doesn't double-fire.
+  e.target.classList.add('tutorial-clicked');
+  setTimeout(function(){if(e.target&&e.target.classList)e.target.classList.remove('tutorial-clicked');},1600);
+  advanceTutorial();
 });
 
 // Window resize
