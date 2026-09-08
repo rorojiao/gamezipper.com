@@ -1,3 +1,54 @@
+# Test Case Library Changelog
+
+
+## [v1.245.0] - 2026-09-08
+### Added
+- 8 new machine-verifiable test cases from R362 industry research (4h cycle 124): the freshly-confirmed Chrome 158 XSLT final removal (Nov 17 2026, the highest-impact Q4 2026 Chrome removal since Chrome 91 COEP) + the freshly-confirmed Chrome 2-week stable release cycle effective Sep 8 2026 starting with Chrome 153 (a release-cadence change that compresses the QA test window to ~1 week per major + invalidates the v1.235.0 PC-012 "even-week only" tracking assumption) + 6 freshly-canonicalized cross-engine contracts sourced from 2026-Q3 industry research (the iOS 26 visualViewport.offsetTop NOT-RESETTING-AFTER-KEYBOARD-DISMISSAL bug that breaks ALL fixed/sticky header+footer positioning for full-screen HTML5 games + the Scheduler.yield() cross-browser support contract for Chrome 129+ / Firefox 142+ / Safari NOT yet supported for INP-long-task breaking + the WebGPU Immediates Chrome 149-150 contract for 10x faster per-draw-call uniform updates currently DirectX 12 only + the CSS Anchor Positioning cross-browser Baseline 2026 contract for Chrome 125+/Safari 26+/Firefox 147+ for game tooltips + the Clickjacking Defense contract via CSP frame-ancestors + X-Frame-Options for the CVE-2026-38978 Transmission class of attacks + the Speculation Rules API contract for Chrome 109+ instant page navigation via prerender/prefetch).
+- B-337 [P1] Chrome 158 Stable XSLT Final Removal (Nov 17 2026)
+- B-338 [P1] Chrome Two-Week Stable Release Cycle Effective Sep 8 2026 (QA Cadence Compression)
+- C-261 [P1] iOS 26 Safari visualViewport.offsetTop NOT Reset After Soft Keyboard Dismissal (iPhone 12)
+- W-498 [P1] Scheduler.yield() Cross-Browser Contract For Breaking 50ms+ Long Tasks Into 5ms Chunks
+- W-499 [P2] WebGPU WGSL Immediates (Push Constants / Root Constants) Chrome 149+ DirectX 12 Only
+- P-208 [P2] CSS Anchor Positioning Cross-Browser Support Contract For 2026 (Chrome 125+/Safari 26+/Firefox 147+ Baseline)
+- S-500 [P1] Clickjacking Defense Contract Via CSP frame-ancestors + X-Frame-Options For Game Pages
+- A-059 [P2] Speculation Rules API Contract For Instant Game Page Navigation (Chrome 109+)
+### Sources
+- https://developer.chrome.com/docs/web-platform/deprecating-xslt (Chrome XSLT deprecation doc — Nov 17 2026 final removal — supports B-337)
+- https://support.google.com/chrome/a/answer/10314655?hl=en (Chrome Enterprise release notes — Chrome 158 XSLT removal — supports B-337)
+- https://chromeenterprise.google/resources/release-notes/ (Chrome Enterprise release notes — full Chrome 158 changelog — supports B-337)
+- https://developer.chrome.com/blog/chrome-two-week-release (Chrome 2-week release cycle blog post — Mar 3 2026 + Sep 8 2026 — supports B-338)
+- https://chromiumdash.appspot.com/schedule (Chromium Dash schedule — Chrome 158 stable cut Nov 17 2026 — supports B-337 + B-338)
+- https://chromestatus.com/ (Chrome Platform Status — current stable + beta + upcoming milestones — supports B-338)
+- https://developer.apple.com/forums/thread/800154 (Apple Developer Forums thread — iOS 26 visualViewport.offsetTop NOT reset — supports C-261)
+- https://stackoverflow.com/questions/79758083/ios-26-safari-visualviewport-change-after-dismissing-keyboard (StackOverflow — iOS 26 visualViewport bug + working example — supports C-261)
+- https://feedbackassistant.apple.com/feedback/FB19889436 (Apple Feedback Assistant — first user-reported bug from Sep 2025 — supports C-261)
+- https://feedbackassistant.apple.com/feedback/FB20249802 (Apple Feedback Assistant — second user-reported bug — supports C-261)
+- https://developer.chrome.com/blog/use-scheduler-yield (Chrome blog — Scheduler.yield for breaking long tasks — supports W-498)
+- https://developer.mozilla.org/en-US/docs/Web/API/Scheduler/yield (MDN Scheduler.yield docs — API surface + browser support — supports W-498)
+- https://caniuse.com/mdn-api_scheduler_yield (caniuse — Scheduler.yield browser support — Chrome 129+/Firefox 142+/Safari NOT supported — supports W-498)
+- https://web.dev/articles/optimize-long-tasks (web.dev long-tasks optimization — Scheduler.yield usage + INP improvement — supports W-498)
+- https://web-platform-dx.github.io/web-features-explorer/features/scheduler/ (Web Platform Features Explorer — Scheduler API support matrix — supports W-498)
+- https://developer.chrome.com/blog/new-in-webgpu-149-150 (Chrome blog — WebGPU Immediates + transient attachment validation — supports W-499)
+- https://groups.google.com/a/chromium.org/g/blink-dev/c/8LdEcW1CkNo/m/rrV3CUyGAAAJ (blink-dev intent-to-ship — WebGPU Immediates — supports W-499)
+- https://github.com/playcanvas/engine/issues/8917 (PlayCanvas issue — Investigate WebGPU Immediates — supports W-499)
+- https://github.com/gpuweb/gpuweb/pull/4666 (gpuweb PR — WebGPU Immediates spec — supports W-499)
+- https://caniuse.com/css-anchor-positioning (caniuse — CSS Anchor Positioning — Chrome 125+/Safari 26+/Firefox 147+ Baseline 2026 — supports P-208)
+- https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/position-area (MDN position-area docs — API + browser support — supports P-208)
+- https://drafts.csswg.org/css-anchor-position-1/ (W3C CSS Anchor Positioning spec — canonical spec — supports P-208)
+- https://mintec.co/blog/css-anchor-positioning-2026/ (Mintec 2026 — Browser support summary — supports P-208)
+- https://www.oddbird.net/2025/10/13/anchor-position-area-update/ (OddBird blog — Safari 26 anchor positioning Sep 2025 — supports P-208)
+- https://cheatsheetseries.owasp.org/cheatsheets/Clickjacking_Defense_Cheat_Sheet.html (OWASP Clickjacking Defense Cheat Sheet — canonical defense — supports S-500)
+- https://www.sentinelone.com/vulnerability-database/cve-2026-38978/ (SentinelOne — CVE-2026-38978 Transmission Clickjacking — supports S-500)
+- https://oneuptime.com/blog/post/2026-01-24-fix-clickjacking-vulnerabilities/view (oneuptime 2026-01-24 — CSP frame-ancestors + X-Frame-Options — supports S-500)
+- https://www.w3.org/TR/CSP3/#frame-ancestors-and-frame-options (W3C CSP3 spec — frame-ancestors interaction — supports S-500)
+- https://blog.qualys.com/vulnerabilities-threat-research/2015/10/20/clickjacking-a-common-implementation-mistake-that-can-put-your-websites-in-danger (Qualys blog — Common implementation mistake — supports S-500)
+- https://developer.chrome.com/docs/web-platform/prerender-pages (Chrome Speculation Rules prerender doc — API + eagerness — supports A-059)
+- https://developer.mozilla.org/en-US/docs/Web/API/Speculation_Rules_API (MDN Speculation Rules API docs — supports A-059)
+- https://codelabs.developers.google.com/speculation-rules (Google codelabs — Speculation Rules interactive tutorial — supports A-059)
+### Distinctness
+- 8 contracts from a fresh surface combo: (a) freshly-confirmed Chrome 158 XSLT removal (B-337, highest-impact Q4 2026 Chrome removal since Chrome 91 COEP, Nov 17 2026), (b) freshly-confirmed Chrome 2-week stable release cycle (B-338, cadence change Sep 8 2026 invalidating PC-012 even-week-only assumption), (c) iOS 26 visualViewport.offsetTop NOT-RESETTING-AFTER-KEYBOARD-DISMISSAL bug (C-261, CRITICAL fresh iOS 26 bug breaking ALL fixed/sticky header+footer positioning for full-screen HTML5 games + Apple acknowledged but NOT yet fixed as of Sep 2026), (d) freshly-canonicalized Scheduler.yield() cross-browser contract (W-498, Chrome 129+/Firefox 142+/Safari NOT yet supported — modern INP-long-task breaking API), (e) freshly-published WebGPU Immediates Chrome 149-150 (W-499, WGSL var<immediate> + setImmediates() for 10x faster per-draw-call uniform updates — DirectX 12 only), (f) freshly-canonicalized CSS Anchor Positioning cross-browser Baseline 2026 (P-208, Chrome 125+/Edge 125+/Safari 26+/Firefox 147+ — game tooltip contract), (g) freshly-canonicalized Clickjacking Defense (S-500, CSP frame-ancestors + X-Frame-Options for CVE-2026-38978 Transmission class), (h) freshly-canonicalized Speculation Rules API (A-059, HTML <script type="speculationrules"> for instant page navigation via prerender/prefetch, Chrome 109+ / Edge 109+, Firefox/Safari NOT yet supported) — distinct from the v1.244.0 R361 Chrome 157 + iOS Safari cross-engine contracts (B-332-B-336 + C-258-C-260 + P-206-P-207 + W-496-W-497 + A-058), the v1.243.0 R360 Chrome 157 + audioContext + iOS contracts, the v1.242.0 R359 iframe/WebGPU/thermal/reduced-motion/ad-occlusion contracts, and all prior cycles.
+
+
 ## [v1.244.0] - 2026-09-07
 ### Added
 |- 8 new machine-verifiable test cases from R361 industry research (4h cycle 123): (a) the freshly-discovered 4th Chrome 157 enabled-by-default feature that was added to the chromestatuslite.com/?version=157 mirror AFTER v1.243.0 R360 shipped (B-334 Web Bluetooth Make BluetoothRemoteGATTServer an EventTarget, the foundation contract for the v1.243.0 C-258 maxwritewithoutresponsesizechanged event), (b) 2 Chrome 160 stable deprecation graduations freshly-opened in the chromestatuslite.com/?version=160 mirror (C-260 Digital Credentials API protocol-filtering final-removal graduation of v1.225.0 S-479 + P-207 RTCPeerconnection.createDTMFSender Interop 2026 cleanup), (c) the Chrome 159 stable Web Bluetooth getDevices()/forget() companion method re-stated (W-496), and (d) 4 cross-engine / mobile UX contracts sourced from the ContextQA 2026 cross-browser rendering bugs article + the 2026 iOS Safari viewport / keyboard articles + the W3C WCAG 2.2 § 2.5.8 spec (B-335 iOS Safari cursor:pointer div-button click-through, B-336 iOS Safari 100vh instability vs 100svh/100dvh, C-259 iOS Safari documentElement.clientHeight + window.innerHeight not updated when soft keyboard opens, W-497 iOS Safari window.visualViewport API modern replacement, A-058 WCAG 2.2 § 2.5.8 Target Size Minimum 24x24 CSS pixels).
@@ -5292,8 +5343,6 @@
   - https://app.cinevva.com/guides/web-games-stack-2026.html (WebGL vs WebGPU vs WASM decision matrix)
   - https://sarkarishivam.com/blog/html5-vs-flash-vs-webgl (HTML5/Flash/WebGL performance comparison)
   - https://dinogame.gg/blog/webgpu-and-browser-games (WebGPU plus browser games 2026)
-
-# Test Case Library Changelog
 
 ## [v1.56.0] - 2026-06-15
 ### Added
