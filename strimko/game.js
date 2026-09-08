@@ -450,7 +450,10 @@
 
   function drawBoard() {
     const dpr = window.devicePixelRatio || 1;
-    const cw = Math.min(540, dom.canvas.parentElement.clientWidth - 8);
+    // Reserve vertical space for header HUD (~70px) + bottom gz-ad + footer (~140px total)
+    // so the canvas always fits within the viewport on short screens (e.g. 1280x577 laptop).
+    const hAvail = Math.max(220, window.innerHeight - 220);
+    const cw = Math.min(540, dom.canvas.parentElement.clientWidth - 8, hAvail);
     dom.canvas.style.width = cw + 'px';
     dom.canvas.style.height = cw + 'px';
     dom.canvas.width = cw * dpr;
