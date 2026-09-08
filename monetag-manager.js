@@ -1,8 +1,26 @@
-/**
- * GameZipper Ad Manager v5.34-deadzone-guard — see v5.34 changelog below
+/** 
+ * GameZipper Ad Manager v5.35-deadzone-fillInGameBanner — see v5.35 changelog below
  *
  * Architecture: Single unified ad script (IIFE)
  * Design: 100% modeled after Poki.com — "Call often, system decides when to show"
+ *
+ * v5.35 Changes (2026-09-08 — R670 dead-zone guard for fillInGameBanner in-game banner fallback, kanban t_dailyAdRev_2026-09-08):
+ *   - 🪲 Fix: 81 banner_no_fill events/7d from BI 2026-09-08 — R528 v5.33 (showHomepageBanner)
+ *     + v5.34 R651 (showHomepageSecondBanner/MidGrid) covered the 3 homepage callers but
+ *     fillInGameBanner() in-game banner fallback still calls loadZone(CONFIG.ZONES.inpagePush)
+ *     without the deadZones check. Since 11012002 is in deadZones (BI 0% fill since
+ *     2026-07-22), the call always rejects → produces catch() trackAdEvent → 81 wasted
+ *     BI events/wk + 2 extra script loads per game-page visit (above+below canvas).
+ *   - 🔧 Fix: Add the same `if (deadZones.indexOf(inpagePush) !== -1) return;` guard
+ *     to fillInGameBanner() Tier 2 setTimeout, matching the showHomepageBanner pattern.
+ *     AdSense Tier 0 (loadAdSenseAd, fills 85% of in-game banners) runs in parallel
+ *     and is unaffected.
+ *   - 📊 Expected impact (BI 7d post-deploy): banner_no_fill from Monetag
+ *     drops from 81/wk → 0/wk (above:41 + below:40). No revenue change (Monetag 11012002
+ *     dead either way). Pure BI noise + 2 fewer API calls per game-page visit.
+ *   - 🛡️ Safety: pure guard addition, identical to existing R528/R651 pattern.
+ *     Revert by reverting monetag-manager.js (no other file touched).
+ *   - Version bumped 5.34-deadzone-guard → 5.35-deadzone-fillInGameBanner.
  *
  * v5.34 Changes (2026-09-05 — R651 dead-zone guard for second banner + mid-grid, kanban t_dailyAdRev_2026-09-05):
  *   - 🪲 Fix: 132 homepage_banner_no_fill events/7d from BI 2026-09-05 — R528 v5.33 fix
@@ -2087,6 +2105,12 @@
       setTimeout(function() {
         if (container.getAttribute('data-filled')) return;
         if (!canShowAd('banner')) return;
+        // v5.35 R670: dead-zone guard for in-game banner fallback. 11012002 is in
+        // deadZones (0% fill since 2026-07-22). Same pattern as v5.33 R528 + v5.34 R651
+        // on homepage banner paths. Eliminates 81 banner_no_fill events/7d (above:41 +
+        // below:40) and 2 wasted API calls per game-page visit. AdSense Tier 0 (parallel
+        // race, loadAdSenseAd) unaffected — fills 85% of in-game banners.
+        if (CONFIG.ZONES.deadZones && CONFIG.ZONES.deadZones.indexOf(CONFIG.ZONES.inpagePush) !== -1) return;
         // v5.24: Cut to single-Tier (11012002 working) + AdSense Tier 0 in parallel
         // race. Tier 3 (legacy Attractive 10687755, dead since v5.3) removed — 100%
         // dead end. Same pattern as v5.23 homepage banner: remove dead-end chains.
