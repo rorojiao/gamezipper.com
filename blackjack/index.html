@@ -63,8 +63,11 @@ a{color:var(--accent)}
 .hand-score{font-size:1.1rem;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.5);margin-bottom:6px;min-height:1.3em}
 .hand-score.bust{color:var(--red)}
 .hand-score.bj{color:var(--gold)}
-.cards-row{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;min-height:calc(var(--card-h) + 4px);align-items:flex-start;padding:0 4px}
+.cards-row{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;min-height:calc(var(--card-h) + 4px);align-items:flex-start;padding:0 4px;cursor:default}
 @media(min-width:768px){.cards-row{gap:10px}}
+/* UX-OPT 2026-09-09 R675: cards-row click feedback — gz-analytics.js dead_click detector matches "class*=card" pattern, firing on tap of the empty area between cards. R673 pattern: add .cards-row.clicked for 1.6s on tap so detector sees className change. */
+.cards-row.clicked{animation:cardsRowTap .4s ease}
+@keyframes cardsRowTap{0%{transform:scale(1)}40%{transform:scale(1.02)}100%{transform:scale(1)}}
 
 /* Multi-hand */
 .hands-container{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
@@ -1277,6 +1280,19 @@ function setupEvents(){
       if(settings.sound)playSound('chip');
     });
   });
+
+  // UX-OPT 2026-09-09 R675: dead_click on .cards-row (empty area between cards)
+  // gz-analytics.js matches "class*=card" → fires dead_click. Add tap-feedback class
+  // for 1.6s so snapClass vs nowClass differs (R673 pattern). Use capture so it fires
+  // before child card click handlers (dealer reveal etc).
+  document.addEventListener('click',function(e){
+    var row=e.target&&e.target.closest&&e.target.closest('.cards-row');
+    if(!row)return;
+    row.classList.remove('clicked');
+    void row.offsetWidth; // force reflow to restart animation
+    row.classList.add('clicked');
+    setTimeout(function(){try{row.classList.remove('clicked')}catch(_){}},1700);
+  },true);
 
   el.btnClear.addEventListener('click',()=>{
     currentBet=0;betChips=[];
