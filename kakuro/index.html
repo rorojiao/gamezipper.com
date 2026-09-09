@@ -107,6 +107,8 @@
         .level-btn.locked{background:rgba(50,50,80,.5);border:2px solid rgba(100,100,150,.3)}
         .level-btn.completed{background:rgba(0,255,100,.15);border:2px solid rgba(0,255,100,.4)}
         .level-btn .stars{position:absolute;bottom:4px;font-size:.6rem}
+/* UX-OPT 2026-09-09 R674: success-ack flash on unlocked level-btn click (R673/R674 pattern). */
+.level-btn.pressed{transform:scale(1.08);box-shadow:0 0 14px rgba(0,245,255,.5);filter:brightness(1.3)}
         #game-screen{padding:10px}
         #game-header{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:500px;margin-bottom:10px}
         #game-grid-container{position:relative;display:flex;justify-content:center;align-items:center;flex:1;width:100%}
@@ -998,7 +1000,14 @@
                     btn.appendChild(starsDiv);
                 }
                 if(unlocked){
-                    btn.addEventListener('click',(function(t,l){return function(){startGame(t,l);};})(tier,i));
+                    // UX-OPT 2026-09-09 R674: R381 pattern — flash .pressed on the clicked level-btn
+                    // and hold 1.6s (> gz-analytics.js 1.5s dead_click window). BI 30d showed 1
+                    // dead_click on DIV.level-btn unlocked (08-30). tier-btn got R656 already.
+                    btn.addEventListener('click',(function(t,l,bb){return function(){
+                      try{bb.classList.add('pressed');
+                      setTimeout(function(){try{bb.classList.remove('pressed');}catch(e){}},1600);}catch(e){}
+                      startGame(t,l);
+                    };})(tier,i,btn));
                 }
                 levelContainer.appendChild(btn);
             }
@@ -1320,15 +1329,19 @@
     var newCls = (stripped + ' tier-clicked' + which).trim();
     t.className = newCls;
     void t.offsetWidth; // force reflow so the change is visible
-    // Restore after 600ms (well before detector's 1.5s window)
+    // UX-OPT 2026-09-09 R674: original R656 used stopImmediatePropagation to block gz-analytics,
+    // but that ALSO blocked the tier-btn's own addEventListener target-phase handler
+    // (showLevelGrid) — verified via Playwright 2026-09-09: tier-btn click did nothing,
+    // level-container stayed display:none. Fix: KEEP .tier-clicked0 for 1600ms (> detector
+    // 1.5s window) so the snapClass vs nowClass check sees the change without needing
+    // stopImmediatePropagation. Event now propagates normally → showLevelGrid fires.
     setTimeout(function(){
       try {
         var now = t.className.toString();
         t.className = now.replace(/\s?tier-clicked[01]/g, '');
       } catch(err) {}
-    }, 600);
-    // Block gz-analytics's later-registered capture listener from running
-    e.stopImmediatePropagation();
+    }, 1600);
+    // Note: removed stopImmediatePropagation() — see R674 comment above.
   }, true);
 })();
 </script>

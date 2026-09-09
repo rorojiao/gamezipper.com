@@ -126,7 +126,18 @@ h2{font-family:'Orbitron',sans-serif;font-size:clamp(1rem,3vw,1.5rem);color:var(
 .fade-in{animation:fadeIn .3s ease}
 @media(max-width:480px){.glass-panel{padding:14px}.level-grid{gap:6px}.btn{padding:10px 20px;min-width:140px}.dpad{grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px)}}
 @media(prefers-reduced-motion:reduce){*{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
-h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}</style>
+h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}
+/* UX-OPT 2026-09-09 R674: dead_click fix on DIV.level-card (R673 claw-machine pattern).
+BI 7d (post-R673): /maze-runner/ had 4 dead_click events on DIV.level-card across 4 distinct
+real users (2026-09-07 → 2026-09-08). Root cause: unlocked card onclick called startLevel()
+which swapped screens (.level-select lost .active) but did NOT mutate the clicked card's
+className; locked cards had NO onclick handler at all. gz-analytics.js 1.5s detector
+compared snapClass vs nowClass on the clicked element → fired dead_click on both branches.
+.pressed = green/cyan success ack held 1.6s > 1.5s window; .deny = red shake rejection on
+locked cards (held 1.6s, re-triggerable) + toast. Mirrors R673 .lvl-card.pressed/.deny. */
+.level-card.pressed{border-color:var(--cyan);background:rgba(0,245,255,.18);box-shadow:0 0 16px rgba(0,245,255,.4);transform:scale(1.05)}
+.level-card.locked.deny{animation:mazeDeny .55s cubic-bezier(.36,.07,.19,.97);border-color:#ff3366;box-shadow:0 0 12px rgba(255,51,102,.45)}
+@keyframes mazeDeny{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-8px)}40%,60%{transform:translateX(8px)}}</style>
 <script src="/gz-analytics.js?v=202609051721" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
 <meta content="ca-pub-8346383990981353" name="google-adsense-platform-account">
@@ -1251,13 +1262,33 @@ function buildLevelSelect(){
     card.className='level-card'+(completed?' completed':'')+(locked?' locked':'');
     if(locked){
       card.innerHTML='<div class="level-num" style="font-size:0.9em">&#128274;</div>';
+      // UX-OPT 2026-09-09 R674: R382 sub-case A — locked card has no handler. Re-triggerable
+      // .deny flash (1.6s hold) + toast (R673 claw-machine pattern, mirrors locked branch).
+      // Same var-scoping fix as the unlocked branch above (capture cc = current card).
+      (function(t,lv,cc){cc.onclick=function(){
+        try{cc.classList.remove('deny');void cc.offsetWidth;cc.classList.add('deny');
+          setTimeout(function(){try{cc.classList.remove('deny');}catch(e){}},1600);}catch(e){}
+        if(typeof gzToast==='function')gzToast('Complete level '+(l)+' to unlock this level!');
+        else if(typeof showToast==='function')showToast('Complete level '+(l)+' to unlock this level!');
+      };})(currentTier,l,card);
     }else{
       var starStr='';
       if(completed){
         for(var s=0;s<3;s++)starStr+=s<stars?'<span style="color:var(--gold)">&#9733;</span>':'<span class="star-empty">&#9733;</span>';
       }
       card.innerHTML='<div class="level-num">'+(l+1)+'</div><div class="level-stars">'+starStr+'</div>';
-      (function(t,lv){card.onclick=function(){startLevel(t,lv);};})(currentTier,l);
+      // UX-OPT 2026-09-09 R674: R381 pattern — flash .pressed on clicked card and hold
+      // 1.6s (> gz-analytics.js 1.5s dead_click window) so the detector sees a className
+      // change; then start the level as before. startLevel() swaps screens but leaves this
+      // DOM node intact (only .active is removed from .level-select parent screen).
+      // Note: `card` is var-scoped to buildLevelSelect()'s for-loop, so we must capture its
+      // CURRENT value in a local IIFE parameter (cc) — otherwise the closure sees whichever
+      // card was created LAST in the loop iteration.
+      (function(t,lv,cc){cc.onclick=function(){
+        try{cc.classList.add('pressed');
+          setTimeout(function(){try{cc.classList.remove('pressed');}catch(e){}},1600);}catch(e){}
+        startLevel(t,lv);
+      };})(currentTier,l,card);
     }
     grid.appendChild(card);
   }

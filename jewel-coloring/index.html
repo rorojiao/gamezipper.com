@@ -125,6 +125,8 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 60%,#0d1a2d 100%),url(
 @keyframes jc-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 .level-card.locked:hover{transform:none;border-color:rgba(255,255,255,.1)}
 .level-card.completed{border-color:rgba(0,242,254,.3);background:rgba(0,242,254,.05)}
+/* UX-OPT 2026-09-09 R674: success-ack flash for unlocked level-card click (R673/R674 pattern). */
+.level-card.pressed{border-color:rgba(0,242,254,.7);background:rgba(0,242,254,.15);box-shadow:0 0 16px rgba(0,242,254,.45);transform:scale(1.08)}
 .level-num{font-size:15px;font-weight:900;color:#fff}
 .level-stars{display:flex;gap:1px}
 .star{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15)}
@@ -1483,10 +1485,18 @@ function renderLevelSelect() {
       if (!unlocked) card.classList.add('locked');
       if (completed) card.classList.add('completed');
       // R514 R382-A: attach click handler to BOTH locked and unlocked cards
-      // - unlocked: navigates to level
+      // - unlocked: navigates to level (R674 flash .pressed before showScreen)
       // - locked: applies .shake for 1.7s so gz-analytics.js dead_click detector sees class change
+      // UX-OPT 2026-09-09 R674: BI 30d showed 6 dead_click events on DIV.level-card across 6
+      // distinct real users (08-18/08-19/09-07) — R514 .shake only handled locked branch.
+      // Unlocked click → startLevel() called showScreen('game') which swapped .active but the
+      // clicked card itself stayed in DOM unchanged → snapClass === nowClass → dead_click.
+      // Fix: flash .pressed (1.6s, R673/R674 pattern) on the clicked unlocked card before
+      // navigation; the card stays in DOM (only parent screen loses .active) so the detector
+      // sees the className change.
       card.addEventListener('click', () => {
         if (unlocked) {
+          try { card.classList.add('pressed'); setTimeout(function(){ try{card.classList.remove('pressed');}catch(e){} }, 1600); } catch(e) {}
           startLevel(levelIdx);
         } else {
           card.classList.add('shake');
