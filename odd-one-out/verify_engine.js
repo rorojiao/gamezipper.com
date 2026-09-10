@@ -180,5 +180,5 @@ T('score-accumulated', X().score() === expScore, X().score() + ' vs ' + expScore
 const pass = results.filter(r => r.ok).length;
 const fails = results.filter(r => !r.ok).map(r => r.name);
 console.log('odd-one-out: 30 levels via real taps + timer/hint/lock paths: ' + (fails.length ? 'FAIL' : 'PASS'));
-console.log(JSON.stringify({ pass, fail: fails.length, total: results.length, verdict: fails.length ? 'FAIL' : 'PASS', fails, extra: { fixes: 'P1 pizza emoji alt identical (unwinnable emoji levels), P1 progress never saved on completion, P2 final level stars never recorded' } }));
+console.log(JSON.stringify({ pass, fail: fails.length, total: results.length, verdict: fails.length ? 'FAIL' : 'PASS', fails, extra: { levelsSeen, runOk, runEndState: X() && X().st ? X().st() : null } }));
 process.exit(fails.length ? 1 : 0);
