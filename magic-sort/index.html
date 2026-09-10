@@ -3927,6 +3927,19 @@ function renderMenu() {
   X.textAlign = "center";
   X.fillText(`Stars ${totalStars}/${maxStars}  |  Done ${completedCount}/${TOTAL_LEVELS}  |  🏅${achieved}/${ACHIEVEMENTS.length}`, W / 2, 52);
 
+  // [R678] Find the recommended next-playable cell. Priority:
+  //   1. lastPlayedLevel if not yet completed (Resume case — visible elsewhere too)
+  //   2. The first level i where !levelStars[i] (incomplete)
+  //   3. Fallback to 0 (Tutorial)
+  // Bounded scan: only check up to lastPlayedLevel + 50. Typical progression
+  // is sequential, so the next incomplete cell is usually right after the
+  // last played. Beyond that we scan a fixed window [0, 50] for the tutorial.
+  let nextPlayableCell = 0;
+  const scanUpper = Math.min(TOTAL_LEVELS, Math.max(lastPlayedLevel + 50, 50));
+  for (let _ni = 0; _ni < scanUpper; _ni++) {
+    if (!levelStars[_ni] && levelUnlocked[_ni]) { nextPlayableCell = _ni; break; }
+  }
+
   // Mini progress bar
   const barW = Math.min(160, W * 0.45);
   const barH = 4;
@@ -4059,6 +4072,23 @@ function renderMenu() {
     X.lineWidth = 1.3;
     X.stroke();
 
+    // [R678] Pulse the recommended-next-playable cell (a halo + corner "▶"
+    // badge) so new users know where to tap. Computed once per render.
+    if (unlocked && stars === 0 && i === nextPlayableCell) {
+      const pulseT = (performance.now() / 800) % 1;
+      const pulseAlpha = 0.35 + 0.45 * (0.5 - Math.abs(0.5 - pulseT));
+      X.strokeStyle = `rgba(255,165,2,${pulseAlpha})`;
+      X.lineWidth = 3;
+      roundRect(x - 2, y - 2, cellW + 4, cellH + 4, 12);
+      X.stroke();
+      // Small "▶" hint in top-left corner of the recommended cell
+      X.fillStyle = "#ffa502";
+      X.font = `900 ${Math.round(cellW * 0.22)}px 'Nunito',sans-serif`;
+      X.textAlign = "left";
+      X.textBaseline = "top";
+      X.fillText("▶", x + 4, y + 3);
+    }
+
     // Level number
     X.fillStyle = unlocked ? "#fff" : "rgba(255,255,255,0.2)";
     X.font = `700 ${Math.round(cellW * 0.3)}px 'Nunito',sans-serif`;
@@ -4182,20 +4212,22 @@ function handleDailyRewardTap(px, py) {
     dailyRewardOpen = false;
     sfxWin();
     toastMsg = { text: "🎁 +1 Extra Tube claimed!", timer: 120, color: "#ffa502" };
-    return true;
+    return true; // consume tap
   }
   if (!hitTest(px, py, cx, cy, cardW, cardH)) {
-    // Tap outside card closes popup but does NOT mark as claimed today —
-    // user can re-trigger by going back to splash → menu, so they don't lose
-    // their free +1 tube if they mis-tap. The popup won't auto-reappear in
-    // this same menu session (we just set the open flag to false) but will
-    // re-trigger on next splash → menu transition or refresh.
+    // [R678] Tap outside card closes popup but ALSO passes the tap through to
+    // the menu (e.g. tapping on a level cell). Without this, the first cell
+    // tap was silently swallowed: popup dismissed, but the level cell tap was
+    // lost, forcing the user to tap a SECOND time. Root cause of the 12.7%
+    // start_rate — new users saw "tap PLAY → see grid → tap cell → nothing".
+    // We do NOT mark as claimed today, so the popup re-triggers on next
+    // splash→menu transition and the user can still claim their +1 tube.
     // [MS-tracker R643] daily reward dismissed without claim
     try { window.__msTrack && window.__msTrack('ms_daily_reward_dismissed', { source: 'outside_tap' }); } catch(e){}
     dailyRewardOpen = false;
-    return true;
+    return 'pass_through'; // signal onTap to continue with menu logic
   }
-  return true;
+  return true; // tap inside card but not on button — consume tap
 }
 
 // ─── Player Stats Dashboard ───
@@ -5706,9 +5738,16 @@ function onTap(px, py) {
   // Block taps during level transition
   if (transitionState > 0) return;
 
-  // Daily reward popup intercepts all taps when open
+  // Daily reward popup intercepts most taps when open. Outside-tap dismissal
+  // returns 'pass_through' so the same tap is also processed by menu logic
+  // (e.g. tapping a level cell) — see R678.
   if (state === "menu" && dailyRewardOpen) {
-    if (handleDailyRewardTap(px, py)) return;
+    const dailypopupResult = handleDailyRewardTap(px, py);
+    if (dailypopupResult === 'pass_through') {
+      // fall through to menu cell logic below
+    } else {
+      return;
+    }
   }
 
   // ── Splash ──
