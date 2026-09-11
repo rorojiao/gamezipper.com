@@ -462,8 +462,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":456,"url":"https://gamezipper.com/river-crossing/","name":"River Crossing"},
     {"@type":"ListItem","position":457,"url":"https://gamezipper.com/number-maze/","name":"Number Maze"},
     {"@type":"ListItem","position":458,"url":"https://gamezipper.com/strimko/","name":"Strimko"},
-    {"@type":"ListItem","position":459,"url":"https://gamezipper.com/magnets/","name":"Magnets"}
+    {"@type":"ListItem","position":459,"url":"https://gamezipper.com/magnets/","name":"Magnets"},
+    {"@type":"ListItem","position":460,"url":"https://gamezipper.com/tatami/","name":"Tatami"}
   ],
-  "numberOfItems":459,
+  "numberOfItems":460,
   "description":"460 free browser games you can play instantly"
 };
