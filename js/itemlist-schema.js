@@ -439,7 +439,6 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":434,"url":"https://gamezipper.com/balance-loop/","name":"Balance Loop"},
     {"@type":"ListItem","position":435,"url":"https://gamezipper.com/dotchi-loop/","name":"Dotchi-Loop"},
     {"@type":"ListItem","position":436,"url":"https://gamezipper.com/amibo/","name":"Amibo"},
-    
     {"@type":"ListItem","position":437,"url":"https://gamezipper.com/snake-pit/","name":"Snake Pit"},
     {"@type":"ListItem","position":438,"url":"https://gamezipper.com/hide-and-paint/","name":"Hide and Paint"},
     {"@type":"ListItem","position":439,"url":"https://gamezipper.com/punch-master/","name":"Punch Master"},
@@ -463,8 +462,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":457,"url":"https://gamezipper.com/number-maze/","name":"Number Maze"},
     {"@type":"ListItem","position":458,"url":"https://gamezipper.com/strimko/","name":"Strimko"},
     {"@type":"ListItem","position":459,"url":"https://gamezipper.com/magnets/","name":"Magnets"},
-    {"@type":"ListItem","position":460,"url":"https://gamezipper.com/tatami/","name":"Tatami"}
+    {"@type":"ListItem","position":460,"url":"https://gamezipper.com/tatami/","name":"Tatami"},
+    {"@type":"ListItem","position":461,"url":"https://gamezipper.com/sym-a-pix/","name":"Sym-a-Pix"}
   ],
-  "numberOfItems":460,
-  "description":"460 free browser games you can play instantly"
+  "numberOfItems":461,
+  "description":"461 free browser games you can play instantly"
 };
