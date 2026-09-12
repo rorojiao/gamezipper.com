@@ -846,6 +846,19 @@ window.shareGame = shareGame;
   };
 
   // Set overlay fullscreen click/touch events to close
+  // UX-OPT 2026-09-12 R683: auto-flap on first click.
+  // Bug: 1 user rage-clicked 3x at same point (357,375) post-R680c — splash fade made
+  // user think game was unresponsive. First click must give IMMEDIATE visual feedback.
+  // Wait 60ms to ensure splash pointer-events:none has propagated + canvas is hit-testable.
+  var autoStartFlap = function(target){
+    setTimeout(function(){
+      try {
+        if(target && target.dispatchEvent){
+          target.dispatchEvent(new PointerEvent('pointerdown', {bubbles:true, cancelable:true, button:0, pointerType:'mouse'}));
+        }
+      } catch(e){}
+    }, 60);
+  };
   var closeTut = function(e) {
     e && e.preventDefault && e.preventDefault();
     e && e.stopPropagation && e.stopPropagation();
@@ -853,6 +866,7 @@ window.shareGame = shareGame;
     ov.remove();
     dismissSplash();
     localStorage.setItem('tutorial-seen-' + window.location.pathname, '1');
+    if (cvs) autoStartFlap(cvs);
   };
   
   // Handle multiple event types
@@ -1016,7 +1030,17 @@ function gzToast(msg,dur){dur=dur||2500;var t=document.createElement('div');t.st
 (function(){
   var ss=document.getElementById('splash-screen');
   if(!ss)return;
-  function dismiss(){ss.classList.add('fade-out');setTimeout(function(){ss.remove()},500);}
+  // UX-OPT 2026-09-12 R683: also auto-flap when splash is dismissed via splash click/touch/keydown
+  function autoStartFlapOnDismiss(){
+    var c = document.querySelector('canvas');
+    if(!c) return;
+    setTimeout(function(){
+      try {
+        c.dispatchEvent(new PointerEvent('pointerdown', {bubbles:true, cancelable:true, button:0, pointerType:'mouse'}));
+      } catch(e){}
+    }, 60);
+  }
+  function dismiss(){ss.classList.add('fade-out');setTimeout(function(){ss.remove()},500);autoStartFlapOnDismiss();}
   ss.addEventListener('click',dismiss);
   ss.addEventListener('touchstart',dismiss,{passive:true});
   document.addEventListener('keydown',function e(){dismiss();document.removeEventListener('keydown',e);});
