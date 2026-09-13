@@ -479,6 +479,8 @@ async function _ensureChunk(chunkIdx) {
   if (!meta) throw new Error("Unknown chunk " + chunkIdx);
   if (meta.embedded) {
     _CHUNK_LOADED[chunkIdx] = true;
+    // R662: prefetch next chunk in background after embedded chunk "loads"
+    _prefetchAdjacentChunk(chunkIdx);
     return true;
   }
   const p = (async () => {
@@ -488,10 +490,31 @@ async function _ensureChunk(chunkIdx) {
     const data = await r.json();
     for (let k = 0; k < data.levels.length; k++) _LD[meta.offset + k] = data.levels[k];
     _CHUNK_LOADED[chunkIdx] = true;
+    // R662: prefetch next chunk after this one finishes (background, no UI blocking)
+    _prefetchAdjacentChunk(chunkIdx);
     return true;
   })();
   _CHUNK_PROMISES[chunkIdx] = p;
   return p;
+}
+
+// R662: background prefetch of chunk+1 (and chunk-1 if not yet loaded).
+// Uses browser connection multiplexing — does not block UI.
+// Skips if already loaded, in-flight, or if connection is save-data.
+function _prefetchAdjacentChunk(chunkIdx) {
+  try {
+    if (navigator.connection && navigator.connection.saveData) return;
+    const targets = [chunkIdx + 1, chunkIdx - 1];
+    for (const t of targets) {
+      if (t < 0 || t >= _CHUNKS_META.length) continue;
+      const m = _CHUNKS_META[t];
+      if (!m || m.embedded) continue;
+      if (_CHUNK_LOADED[t] || _CHUNK_PROMISES[t]) continue;
+      // Warm the cache — actual data assignment happens in main fetch on user action
+      const url = (window.MS_LEVELS_BASE || "/magic-sort/") + m.url;
+      fetch(url, { cache: "force-cache", priority: "low" }).catch(() => {});
+    }
+  } catch (e) { /* silent — prefetch is best-effort */ }
 }
 function _chunkIdxForLevel(idx) {
   for (let c = 0; c < _CHUNKS_META.length; c++) {
@@ -546,7 +569,11 @@ function precomputeSectionRowOffsets(cols) {
 }
 
 // ─── Game State ───
-let state = "splash"; // splash | menu | game | win | stats | favorites
+let state = "splash"; // splash | menu | game | win | stats | favorites | loading
+// R662: loading-state feedback vars (set in initLevel before chunk fetch)
+let loadingTargetLevel = -1;       // level being loaded (-1 when not loading)
+let loadingChunk = -1;             // chunk being fetched (0-5)
+let loadingStartTime = 0;          // ms timestamp when loading started (for min-display)
 let currentLevel = 0;
 let bottles = [];     // current game state (array of arrays)
 let numColors = 0;
@@ -2535,9 +2562,16 @@ async function initLevel(idx) {
   lastPlayedLevel = idx;
   shortcutsOpen = false;
   saveSave();
+  // R662: track chunk index for loading UI feedback (e.g. "Loading chunk 5/6…")
+  const targetChunk = _chunkIdxForLevel(idx);
+  // R662: enter "loading" state so user sees spinner while chunk fetches (chunk_5 is 13MB)
+  state = "loading";
+  loadingTargetLevel = idx;
+  loadingChunk = targetChunk;
+  loadingStartTime = Date.now();
   // R562: ensure chunk loaded before decoding
   try {
-    await _ensureChunk(_chunkIdxForLevel(idx));
+    await _ensureChunk(targetChunk);
   } catch (e) {
     if (window.__msTrack) window.__msTrack('ms_chunk_load_error', { idx: idx, err: String(e) });
     toastMsg = { text: "⚠ Failed to load levels — check connection", timer: 180, color: "#ff4757" };
@@ -4450,6 +4484,61 @@ renderStats._maxScroll = function() {
 
 // ─── Favorites / Bookmarked Levels Screen (2026-07-13) ───
 // Displays all starred levels in a scrollable grid. Tap to play, long-empty state.
+// R662: Loading state — spinner + chunk info during async chunk fetch
+// chunk_5 is 13MB so this can take seconds on slow connections.
+function renderLoading() {
+  drawBackground();
+  // Animated water drop icon (reuse splash drop for visual continuity)
+  const cx = W / 2;
+  const cy = H * 0.4;
+  const dropR = 28;
+  const bob = Math.sin(now * 0.004) * 5;
+  // Glow
+  const dg = X.createRadialGradient(cx, cy + bob, 5, cx, cy + bob, 60);
+  dg.addColorStop(0, "rgba(108,92,231,0.5)");
+  dg.addColorStop(1, "rgba(108,92,231,0)");
+  X.fillStyle = dg;
+  X.beginPath(); X.arc(cx, cy + bob, 60, 0, Math.PI * 2); X.fill();
+  // Drop shape
+  X.save();
+  X.translate(cx, cy + bob);
+  X.fillStyle = "#6c5ce7";
+  X.beginPath();
+  X.moveTo(0, -dropR);
+  X.bezierCurveTo(dropR * 0.9, -dropR * 0.4, dropR * 0.8, dropR * 0.6, 0, dropR);
+  X.bezierCurveTo(-dropR * 0.8, dropR * 0.6, -dropR * 0.9, -dropR * 0.4, 0, -dropR);
+  X.closePath();
+  X.fill();
+  // Highlight
+  X.fillStyle = "rgba(255,255,255,0.35)";
+  X.beginPath();
+  X.ellipse(-dropR * 0.3, -dropR * 0.2, dropR * 0.18, dropR * 0.32, -0.4, 0, Math.PI * 2);
+  X.fill();
+  X.restore();
+  // Title text
+  X.save();
+  X.fillStyle = "#ffffff";
+  X.font = "600 18px system-ui,-apple-system,sans-serif";
+  X.textAlign = "center";
+  X.textBaseline = "middle";
+  X.fillText("Loading Level " + (loadingTargetLevel + 1) + "…", cx, H * 0.62);
+  // Subtext: chunk info
+  X.fillStyle = "rgba(255,255,255,0.55)";
+  X.font = "13px system-ui,-apple-system,sans-serif";
+  if (loadingChunk === 0) {
+    X.fillText("Tutorial levels (ready)", cx, H * 0.66);
+  } else if (loadingChunk >= 1) {
+    const sizes = ["", "10K", "20K", "30K", "40K", "50K", "65K"];
+    X.fillText("Chunk " + loadingChunk + "/5 · " + (sizes[loadingChunk] || "?") + " levels", cx, H * 0.66);
+  }
+  // Animated dots (3 dots, fade in/out)
+  const dots = ".".repeat(Math.floor(now * 0.003) % 4);
+  X.fillStyle = "rgba(255,255,255,0.75)";
+  X.font = "600 16px system-ui,-apple-system,sans-serif";
+  X.fillText(dots, cx, H * 0.71);
+  X.restore();
+}
+
 function renderFavorites() {
   drawBackground();
 
@@ -5735,6 +5824,8 @@ function getPointerPos(e) {
 function onTap(px, py) {
   ensureAudio();
 
+  // R662: Block all taps while chunk is loading (avoids accidental mid-fetch taps)
+  if (state === "loading") return;
   // Block taps during level transition
   if (transitionState > 0) return;
 
@@ -6441,6 +6532,7 @@ function gameLoop(timestamp) {
   else if (state === "win") renderWin();
   else if (state === "stats") renderStats();
   else if (state === "favorites") renderFavorites();
+  else if (state === "loading") renderLoading();
 
   // Restore from scale transform
   if (transitionState > 0) {
