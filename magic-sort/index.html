@@ -587,6 +587,8 @@ let levelUnlocked = {};  // populated by loadSave() — all levels unlocked
 let animating = false;
 let anim = { from: -1, to: -1, color: -1, count: 0, progress: 0, startX: 0, startY: 0, endX: 0, endY: 0 };
 let splashTimer = 0;
+let splashAutoAdvanceTimer = 0; // R715: ticks up while on splash; auto-advances at 6s of inactivity
+let splashUserInteracted = false; // R715: any tap on splash marks interaction
 let winTimer = 0;
 let confetti = [];
 let bgParticles = [];
@@ -3911,6 +3913,29 @@ function renderSplash() {
   X.globalAlpha = 0.28;
   X.font = "500 10px 'Nunito',sans-serif";
   X.fillText("Press ? for keyboard shortcuts · Tap any bottle to select", W / 2, H - 10);
+  // [R715] Auto-advance countdown hint: shows remaining seconds before splash
+  // auto-advances to menu (BI 7d: 86% splash bounce rate). Pulsing dot + text.
+  // Drawn AFTER the t>=0.7 block, but only when buttons are visible.
+  if (!splashUserInteracted && splashAutoAdvanceTimer > 1.5 && t >= 0.7) {
+    const remaining = Math.max(0, 6.0 - splashAutoAdvanceTimer);
+    const pulse = 0.5 + 0.5 * Math.sin(now * 0.005);
+    const hintBt = Math.min((t - 0.7) / 0.3, 1);
+    // Recompute button Y from the same logic as t>=0.7 block
+    const _bw = Math.min(200, W * 0.55), _bh = 50;
+    const _by = H * 0.58;
+    // Skip Continue row if no lastPlayedLevel to find the bottom of all buttons
+    let _nextBtnY = _by + _bh + 12;
+    if (lastPlayedLevel > 0) _nextBtnY += 42 + 10;
+    _nextBtnY += 42 + 10; // Daily Challenge row
+    _nextBtnY += 42 + 10; // Random Level row
+    X.globalAlpha = hintBt * (0.35 + 0.25 * pulse);
+    X.fillStyle = "#a29bfe";
+    X.font = "500 11px 'Nunito',sans-serif";
+    X.textAlign = "center";
+    X.textBaseline = "middle";
+    X.fillText(`Auto-starting in ${Math.ceil(remaining)}s · Tap any button to stay`, W / 2, _nextBtnY + 58);
+    X.globalAlpha = ease;
+  }
   X.globalAlpha = ease;
   // Store footer link hit area for click detection
   splashFooterLink = { x: W / 2 - 50, y: H - 37, w: 100, h: 24 };
@@ -5843,6 +5868,8 @@ function onTap(px, py) {
 
   // ── Splash ──
   if (state === "splash") {
+    // R715: any tap on splash counts as interaction → cancel auto-advance
+    splashUserInteracted = true;
     const bw = Math.min(200, W * 0.55), bh = 50;
     const bx = W / 2 - bw / 2, by = H * 0.58;
     if (hitTest(px, py, bx, by, bw, bh) && splashTimer >= 0.8) {
@@ -6526,7 +6553,27 @@ function gameLoop(timestamp) {
     X.translate(-W / 2, -H / 2);
   }
 
-  if (state === "splash") renderSplash();
+  if (state === "splash") {
+    // R715: Auto-advance from splash to menu after 6s of no user interaction.
+    // Real-user BI 7d: 86% of splash impressions never tap PLAY → bounce.
+    // Auto-advance exposes the level grid where next-cell tap is immediate
+    // gameplay (R678 popup-pass-through ensures popup is dismissable in 1 tap).
+    if (!splashUserInteracted) {
+      splashAutoAdvanceTimer += dt;
+      if (splashAutoAdvanceTimer >= 6.0) {
+        splashUserInteracted = true;
+        // [MS-tracker R715] splash auto-advance: user was idle 6s on splash
+        try { window.__msTrack && window.__msTrack('ms_splash_auto_advance', { idleSec: 6, hasPlayedBefore: lastPlayedLevel > 0 }); } catch(e){}
+        state = "menu";
+        menuScrollY = 0;
+        maybeShowDailyReward();
+      } else {
+        renderSplash();
+      }
+    } else {
+      renderSplash();
+    }
+  }
   else if (state === "menu") renderMenu();
   else if (state === "game") renderGame();
   else if (state === "win") renderWin();
