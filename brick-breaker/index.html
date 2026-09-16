@@ -716,6 +716,35 @@ function shareGame(sc){
  </div>
 </div>
 
+<script>
+// UX-OPT 2026-09-16 R701: Show gz-cta when canvas scrolls out of view (rage-click prevention).
+// Pattern from R518 shared-handler + 2048 ctaTimer polling, generalized via IntersectionObserver
+// so it works on any canvas game without needing to know state variable names.
+// Real instance: flappy-wings 25 rage_clicks 7d (Sep 15 1 user 11 clicks at (742,442) on scrolled page),
+// snake 8, brick-breaker 7 — all rage-clicking where canvas used to be after scrolling past it.
+// Without this fix, user has no visible restart affordance and rage-clicks <li> elements below.
+(function(){
+  var cta=document.getElementById("gz-cta");
+  if(!cta)return;
+  var canvas=document.querySelector("canvas");
+  if(!canvas)return;
+  var ctaVisible=false;
+  var io=new IntersectionObserver(function(entries){
+    var e=entries[0];
+    var shouldShow = e.intersectionRatio < 0.3;
+    if(shouldShow && !ctaVisible){
+      cta.style.display="block";
+      ctaVisible=true;
+    } else if(!shouldShow && ctaVisible){
+      // Use explicit "none" not empty string - inline style="" does not reset computed display
+      cta.style.display="none";
+      ctaVisible=false;
+    }
+  },{threshold:[0,0.15,0.3,0.5,0.8,1]});
+  io.observe(canvas);
+})();
+</script>
+
 <section id="game-info" style="background:#f8fafc;color:#1e293b;padding:32px 20px;border-top:1px solid #e2e8f0">
  <div style="max-width:800px;margin:0 auto">
  <h2 style="color:#1e293b;font-size:1.4em;margin-bottom:12px">About Brick Breaker — Classic Block Breaking Arcade Game</h2>
