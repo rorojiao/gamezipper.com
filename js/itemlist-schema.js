@@ -465,8 +465,9 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":460,"url":"https://gamezipper.com/tatami/","name":"Tatami"},
     {"@type":"ListItem","position":461,"url":"https://gamezipper.com/sym-a-pix/","name":"Sym-a-Pix"},
     {"@type":"ListItem","position":462,"url":"https://gamezipper.com/dot-a-pix/","name":"Dot-a-Pix"},
-    {"@type":"ListItem","position":463,"url":"https://gamezipper.com/arrowsmith/","name":"Arrowsmith"}
+    {"@type":"ListItem","position":463,"url":"https://gamezipper.com/arrowsmith/","name":"Arrowsmith"},
+    {"@type":"ListItem","position":464,"url":"https://gamezipper.com/giraffe-path/","name":"Giraffe Path"}
   ],
-  "numberOfItems":463,
-  "description":"462 free browser games you can play instantly"
+  "numberOfItems":464,
+  "description":"464 free browser games you can play instantly"
 };
