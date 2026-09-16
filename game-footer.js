@@ -75,6 +75,53 @@
   }
  })();
 
+ // UX-OPT 2026-09-16 R703: Blog post .play-btn click feedback + nav fallback.
+ // BI 7d showed /blog/free-games-no-wifi-no-download.html with 19 rage_clicks (A.play-btn,
+ // single real user, 23 seconds). User clicked .play-btn anchor repeatedly without the page
+ // navigating — most likely browser extension or pop-up blocker intercepted the anchor's
+ // default action. Fix: add transient .playbtnpress class to .play-btn (visible press
+ // feedback so user SEES the click registered), AND schedule window.location.href as a
+ // 120ms-deferred fallback (if anchor default fires first, browser cancels the JS nav;
+ // if anchor default is blocked, JS nav fires).
+ // Gated on /blog/ + /zh/blog/ + presence of .play-btn so non-blog pages aren't touched.
+ (function(){
+  var _p2 = location.pathname;
+  if (_p2.indexOf('/blog/') !== 0 && _p2.indexOf('/zh/blog/') !== 0) return;
+  var _hasPlay = document.querySelector('a.play-btn');
+  if (!_hasPlay) return;
+  // Idempotent CSS injection
+  if (!document.getElementById('gz-r703-playbtn-css')) {
+   var _s2 = document.createElement('style');
+   _s2.id = 'gz-r703-playbtn-css';
+   _s2.textContent = 'a.play-btn.playbtnpress{transform:scale(0.94)!important;box-shadow:0 0 0 2px rgba(78,205,196,0.6),0 0 12px rgba(78,205,196,0.35)!important;transition:transform 80ms ease,box-shadow 80ms ease!important}';
+   document.head.appendChild(_s2);
+  }
+  function _handlePlayClick(e){
+   var a = e.target.closest && e.target.closest('a.play-btn');
+   if (!a) return;
+   // Visible press feedback — short duration so anchor default nav has time to start
+   a.classList.add('playbtnpress');
+   setTimeout(function(){ if (a && a.classList) a.classList.remove('playbtnpress'); }, 180);
+   // JS nav fallback after anchor default fires (120ms > browser nav threshold)
+   var href = a.getAttribute('href');
+   if (href && href.charAt(0) === '/' && href.indexOf('//') === -1 && href !== '/blog.html') {
+    setTimeout(function(){
+     // If still on the same page (anchor default was blocked), force navigate.
+     // If navigation succeeded, the page is unloading and this no-ops harmlessly.
+     if (location.pathname === _p2) window.location.href = href;
+    }, 120);
+   }
+  }
+  function _initPlay(){
+   document.addEventListener('click', _handlePlayClick, false);
+  }
+  if (document.readyState === 'loading') {
+   document.addEventListener('DOMContentLoaded', _initPlay);
+  } else {
+   _initPlay();
+  }
+ })();
+
  // Respect user dismissal — use sessionStorage so it persists within the tab
  if (sessionStorage.getItem('gz-footer-dismissed')) return;
 
