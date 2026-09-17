@@ -4274,17 +4274,19 @@ function handleDailyRewardTap(px, py) {
     return true; // consume tap
   }
   if (!hitTest(px, py, cx, cy, cardW, cardH)) {
-    // [R678] Tap outside card closes popup but ALSO passes the tap through to
-    // the menu (e.g. tapping on a level cell). Without this, the first cell
-    // tap was silently swallowed: popup dismissed, but the level cell tap was
-    // lost, forcing the user to tap a SECOND time. Root cause of the 12.7%
-    // start_rate — new users saw "tap PLAY → see grid → tap cell → nothing".
-    // We do NOT mark as claimed today, so the popup re-triggers on next
-    // splash→menu transition and the user can still claim their +1 tube.
-    // [MS-tracker R643] daily reward dismissed without claim
-    try { window.__msTrack && window.__msTrack('ms_daily_reward_dismissed', { source: 'outside_tap' }); } catch(e){}
+    // [R731] Tap outside card: AUTO-CLAIM (was: dismiss). R678 noted 12.7%
+    // start_rate root cause — user tapped outside thinking it would close
+    // the popup, but the tap was consumed silently. Now ANY tap on the popup
+    // (button OR outside) awards the +1 tube. This should lift the daily
+    // reward claim rate from 30% → 70%+ without forcing a modal UX. We mark
+    // popup_claimed with source='outside_tap_auto' for BI A/B tracking, and
+    // claimDailyReward() is idempotent on the seed key.
+    try { window.__msTrack && window.__msTrack('ms_daily_reward_popup_claimed', { source: 'outside_tap_auto' }); } catch(e){}
+    claimDailyReward();
     dailyRewardOpen = false;
-    return 'pass_through'; // signal onTap to continue with menu logic
+    sfxWin();
+    toastMsg = { text: "🎁 +1 Extra Tube claimed!", timer: 120, color: "#ffa502" };
+    return 'pass_through'; // also pass the tap through to the menu (R678 fix)
   }
   return true; // tap inside card but not on button — consume tap
 }
