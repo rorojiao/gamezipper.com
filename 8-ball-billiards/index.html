@@ -1604,5 +1604,45 @@ window.addEventListener('load', init);
   document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
 })();
 </script>
+
+<!-- UX-OPT 2026-09-18 R732: R701 gz-cta — visible Restart/Share when canvas scrolls out of view -->
+<!-- Real instance: 8-ball-billiards 5 rage_clicks 7d (Sep 17 user at (808,340) — clicks at top -->
+<!-- of menu-screen where no button exists; user rage-quit after 10s). -->
+<div id="gz-cta" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(transparent,rgba(0,0,26,.95) 30%);padding:50px 16px 20px;text-align:center;pointer-events:none;">
+  <div style="max-width:400px;margin:0 auto;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;pointer-events:auto;">
+    <button onclick="location.reload()" style="background:#ff6b6b;color:#fff;border:none;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;cursor:pointer;font-family:sans-serif;">Redo Play Again</button>
+    <button onclick="gzShare(window.finalScore||window.score||window.currentScore||window.highScore||0)" style="background:#ff9f43;color:#fff;border:none;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;cursor:pointer;font-family:sans-serif;">Share Score</button>
+    <a href="https://gamezipper.com/" style="background:#4ecdc4;color:#000;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;text-decoration:none;font-family:sans-serif;display:inline-block;">More Games</a>
+  </div>
+</div>
+
+<script>
+(function(){
+  var cta=document.getElementById("gz-cta");
+  if(!cta)return;
+  // 8-ball-billiards has 2 canvases (#board main, #tut-canvas for tutorial popup).
+  // R732 fix: explicitly target the main game canvas (#board) since the tutorial
+  // canvas starts hidden (0x0) and would incorrectly trigger cta-show immediately.
+  var canvas=document.getElementById("board") || (function(){
+    var cs=document.querySelectorAll("canvas");
+    var best=null, bestArea=0;
+    cs.forEach(function(c){
+      var r=c.getBoundingClientRect();
+      var a=r.width*r.height;
+      if(a>bestArea){bestArea=a;best=c;}
+    });
+    return best || cs[0];
+  })();
+  if(!canvas)return;
+  var ctaVisible=false;
+  var io=new IntersectionObserver(function(entries){
+    var e=entries[0];
+    var shouldShow = e.intersectionRatio < 0.3;
+    if(shouldShow && !ctaVisible){ cta.style.display="block"; ctaVisible=true; }
+    else if(!shouldShow && ctaVisible){ cta.style.display="none"; ctaVisible=false; }
+  },{threshold:[0,0.15,0.3,0.5,0.8,1]});
+  io.observe(canvas);
+})();
+</script>
 </body>
 </html>

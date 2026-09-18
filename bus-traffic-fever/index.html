@@ -318,5 +318,70 @@ canvas{display:block;touch-action:none}
   document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
 })();
 </script>
+
+<!-- UX-OPT 2026-09-18 R732: rage_click prevention on bus-traffic-fever -->
+<!-- (a) R701 gz-cta — visible Restart/Share when canvas scrolls out of view -->
+<!-- (b) R369 overlay click-to-action — clicking the full overlay area (not just the small button) -->
+<!--      synthesizes the relevant button click so users don't rage-tap empty overlay padding -->
+<!-- Real instance: 26 rage_clicks 7d (Sep 14-17), session 0kd8v2r00i 8 rapid clicks at (826,529) -->
+<!-- after u_stay only 16s — user rage-quit because start-overlay only responds to small btn-start-play -->
+<div id="gz-cta" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(transparent,rgba(0,0,26,.95) 30%);padding:50px 16px 20px;text-align:center;pointer-events:none;">
+  <div style="max-width:400px;margin:0 auto;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;pointer-events:auto;">
+    <button onclick="location.reload()" style="background:#ff6b6b;color:#fff;border:none;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;cursor:pointer;font-family:sans-serif;">Redo Play Again</button>
+    <button onclick="gzShare(window.finalScore||window.score||window.currentScore||window.highScore||0)" style="background:#ff9f43;color:#fff;border:none;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;cursor:pointer;font-family:sans-serif;">Share Score</button>
+    <a href="https://gamezipper.com/" style="background:#4ecdc4;color:#000;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;text-decoration:none;font-family:sans-serif;display:inline-block;">More Games</a>
+  </div>
+</div>
+
+<script>
+// UX-OPT 2026-09-18 R732 (a): IntersectionObserver — show gz-cta when canvas scrolls out of view
+// Pattern proven in R701 (flappy-wings/snake/brick-breaker) — generalized for any canvas game.
+(function(){
+  var cta=document.getElementById("gz-cta");
+  if(!cta)return;
+  var canvas=document.querySelector("canvas");
+  if(!canvas)return;
+  var ctaVisible=false;
+  var io=new IntersectionObserver(function(entries){
+    var e=entries[0];
+    var shouldShow = e.intersectionRatio < 0.3;
+    if(shouldShow && !ctaVisible){ cta.style.display="block"; ctaVisible=true; }
+    else if(!shouldShow && ctaVisible){ cta.style.display="none"; ctaVisible=false; }
+  },{threshold:[0,0.15,0.3,0.5,0.8,1]});
+  io.observe(canvas);
+})();
+
+// UX-OPT 2026-09-18 R732 (b): start-overlay click-to-action
+// Pattern from R369 (t-rex) — clicking anywhere on the visible overlay (except on existing buttons)
+// dispatches a click on the primary action button so users get a larger tap target.
+// Without this, users rage-tap the overlay padding (which has no click handler) thinking the
+// page is broken. Real instance: bus-traffic-fever 8 rage_clicks 17s in session 0kd8v2r00i.
+(function(){
+  var overlayMap = [
+    {ov:'start-overlay', btn:'btn-start-play'},
+    {ov:'win-overlay',    btn:'btn-win-replay'},
+    {ov:'fail-overlay',   btn:'btn-fail-retry'}
+  ];
+  overlayMap.forEach(function(m){
+    var ov = document.getElementById(m.ov);
+    var btn = document.getElementById(m.btn);
+    if(!ov || !btn) return;
+    ov.addEventListener('click', function(e){
+      // Skip if user clicked an actual button/link inside the overlay
+      var t = e.target;
+      while(t && t !== ov){
+        if(t.tagName === 'BUTTON' || t.tagName === 'A') return;
+        t = t.parentNode;
+      }
+      // Otherwise synthesize a click on the primary button
+      btn.click();
+    });
+  });
+  // CSS: make the overlay cursor look clickable
+  var style = document.createElement('style');
+  style.textContent = '#start-overlay,#win-overlay,#fail-overlay{cursor:pointer}';
+  document.head.appendChild(style);
+})();
+</script>
 </body>
 </html>
