@@ -89,6 +89,8 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
   <ins class="adsbygoogle" style="position:absolute!important;top:0!important;left:0!important;width:100%!important;max-width:728px!important;height:100%!important;max-height:280px!important;margin:0 auto!important;text-align:center;display:block" data-ad-client="ca-pub-8346383990981353" data-ad-slot="1099212472" data-ad-format="auto" data-full-width-responsive="true"></ins>
   <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
 </div>
+<div id="gz-ad-r733b" style="position:relative;min-height:100px;max-height:280px;margin:16px auto;max-width:728px;text-align:center;overflow:hidden;contain:layout paint style;color:#666;font-size:.7em;background:transparent;border-radius:6px;box-sizing:border-box;line-height:100px"><span aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.78em;opacity:.3;letter-spacing:.05em;font-weight:500;pointer-events:none;transition:opacity .15s ease">Sponsored &middot; Advertisement</span><ins class="adsbygoogle" style="position:absolute!important;top:0!important;left:0!important;width:100%!important;max-width:728px!important;height:100%!important;max-height:280px!important;margin:0 auto!important;text-align:center;display:block" data-ad-client="ca-pub-8346383990981353" data-ad-slot="7373732357" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({});</script></div>
+
 <script>
 "use strict";
 var GZ={
@@ -760,6 +762,48 @@ GZ.raf=requestAnimationFrame(loop);
   document.addEventListener('click', _gzGameStart, {once:true, capture:true});
   document.addEventListener('keydown', _gzGameStart, {once:true, capture:true});
   document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
+})();
+</script>
+<!-- UX-OPT 2026-09-18 R733: rage_click prevention - R701 gz-cta (canvas-scroll CTA) -->
+<!-- Pattern from R701/R732 - show Restart/Share/More-Games when canvas scrolls out of view -->
+<!-- Real instance: BI 7d rage_click=3 with only 6 PV (ragdoll-archers) - high rage rate -->
+<div id="gz-cta" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(transparent,rgba(0,0,26,.95) 30%);padding:50px 16px 20px;text-align:center;pointer-events:none;">
+  <div style="max-width:400px;margin:0 auto;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;pointer-events:auto;">
+    <button onclick="location.reload()" style="background:#ff6b6b;color:#fff;border:none;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;cursor:pointer;font-family:sans-serif;">Redo Play Again</button>
+    <button onclick="gzShare(window.finalScore||window.score||window.currentScore||window.highScore||0)" style="background:#ff9f43;color:#fff;border:none;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;cursor:pointer;font-family:sans-serif;">Share Score</button>
+    <a href="https://gamezipper.com/" style="background:#4ecdc4;color:#000;border-radius:50px;padding:12px 24px;font-weight:700;font-size:14px;text-decoration:none;font-family:sans-serif;display:inline-block;">More Games</a>
+  </div>
+</div>
+<script>
+// UX-OPT 2026-09-18 R733 (a): IntersectionObserver - show gz-cta when canvas scrolls out of view
+// Pattern proven in R701 (flappy-wings/snake/brick-breaker Sep 16) -> R732 (bus-traffic-fever Sep 18).
+// Generalized for any canvas game - try known main canvas IDs first, fall back to largest-by-area.
+(function(){
+  var cta=document.getElementById("gz-cta");
+  if(!cta)return;
+  var canvas = document.getElementById("c") || document.getElementById("board") || document.getElementById("gameCanvas") || document.getElementById("gc");
+  if(!canvas){
+    var canvases = document.querySelectorAll("canvas");
+    if(!canvases.length) return;
+    var largest = canvases[0], largestArea = 0;
+    canvases.forEach(function(c){
+      var a = c.clientWidth * c.clientHeight;
+      if(a > largestArea){largestArea=a; largest=c;}
+    });
+    canvas = largest;
+  }
+  var ctaVisible=false;
+  var io=new IntersectionObserver(function(entries){
+    var e=entries[0];
+    var r = canvas.getBoundingClientRect();
+    // R733 fix: skip if canvas has 0 size (pre-game, hidden menuScreen, etc)
+    // Only fire CTA when canvas was once visible AND scrolled out
+    if(r.width === 0 || r.height === 0){ return; }
+    var shouldShow = e.intersectionRatio < 0.3;
+    if(shouldShow && !ctaVisible){ cta.style.display="block"; ctaVisible=true; }
+    else if(!shouldShow && ctaVisible){ cta.style.display="none"; ctaVisible=false; }
+  },{threshold:[0,0.15,0.3,0.5,0.8,1]});
+  io.observe(canvas);
 })();
 </script>
 </body>
