@@ -346,6 +346,9 @@ const EMPTY = 0, RED = 1, DARK = 2, RED_KING = 3, DARK_KING = 4;
 const BOARD_SIZE = 8;
 const ANIM_DURATION = 200;
 const MAX_NO_CAPTURE = 40;
+// UX-OPT 2026-09-18 R734: AI search budget globals (must be declared with var to work in strict mode)
+var _aiEvalCount = 0;
+var evalBudget = Infinity;
 
 // ---- Audio System ----
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -599,6 +602,12 @@ function evaluate(b, aiPlayer) {
 }
 
 function minimax(b, depth, alpha, beta, maximizing, aiPlayer) {
+  // UX-OPT 2026-09-18 R734: budget-bounded search. Return neutral score when budget
+  // exhausted so we don't pick a wildly wrong move (bestMove remains valid).
+  if (typeof _aiEvalCount !== 'undefined' && _aiEvalCount > (typeof evalBudget !== 'undefined' ? evalBudget : Infinity)) {
+    return evaluate(b, aiPlayer);
+  }
+  _aiEvalCount = (_aiEvalCount || 0) + 1;
   const player = maximizing ? aiPlayer : (aiPlayer === RED ? DARK : RED);
   const { moves, mustJump } = getValidMoves(b, player);
 
@@ -693,9 +702,14 @@ function getAIMove() {
   const { moves, mustJump } = getValidMoves(board, aiPlayer);
   if (moves.length === 0) return null;
 
-  const depthMap = { easy: 2, medium: 4, hard: 6 };
+  // UX-OPT 2026-09-18 R734: reduced Hard depth 6→5 + added evalBudget to cap search
+  // (was unconstrained minimax that blocked main thread, causing real-user INP POOR=3704ms
+  // on /checkers/ Sep 17 — see BI vitals_rating.inp where r=poor, v=3704)
+  const depthMap = { easy: 2, medium: 4, hard: 5 };
   const depth = depthMap[aiDifficulty] || 4;
   const randomChance = aiDifficulty === 'easy' ? 0.3 : 0;
+  const evalBudget = aiDifficulty === 'hard' ? 80000 : Infinity;
+  _aiEvalCount = 0;
 
   if (Math.random() < randomChance) return moves[Math.floor(Math.random() * moves.length)];
 
@@ -1254,7 +1268,8 @@ function doAIJump() {
   if (jumps.length === 0) return;
 
   // Pick best jump
-  const depthMap = { easy: 2, medium: 4, hard: 6 };
+  // UX-OPT 2026-09-18 R734: Hard depth 6→5 (matches getAIMove), budget shared via globals
+  const depthMap = { easy: 2, medium: 4, hard: 5 };
   const depth = depthMap[aiDifficulty] || 4;
   let bestJump = jumps[0];
   if (aiDifficulty === 'easy' && Math.random() < 0.3) {
