@@ -1404,82 +1404,62 @@ function _gzPrecomputeRatings(games){for(var i=0;i<games.length;i++){var s=games
 // Main game initialization - called after games-data.js is loaded
 // Ensure gzFavs exists before render() uses it (full definition at line ~1128)
 if (typeof gzFavs === 'undefined') var gzFavs = [];
+// UX-OPT 2026-09-19 R746: chunked BUILD + chunked INSERT (was sync list.map() + rAF insert).
+// Root cause: 463-card list.map().join('') was synchronous — ~200-400ms on slow Windows desktop
+// Chrome, blocking the main thread during initial render AND filter clicks. The previous R691
+// fix only chunked the INSERT (insertAdjacentHTML between rAFs) — the map() itself was still a
+// single 200-400ms task that pushed INP on / (avg 1119ms, max 2784ms over 7d, 11 events 6 users).
+// Fix: chunk the BUILD into GZ_RENDER_CHUNK_SIZE batches via scheduler.yield() (rAF fallback).
+// Each build-chunk is ~5-10ms, yielding to the browser between them so user input is responsive.
+// Combined with the existing chunked insert, total sync time per chunk is bounded to ~10-15ms.
 function render(list){
-  // UX-OPT 2026-09-14 R691: Chunk innerHTML writes to keep click handler INP < 50ms
-  // Root cause: 463-card list.map().join('') + single innerHTML write + 463 IntersectionObserver.observe()
-  // calls = 290ms long task in headless, 600-1500ms on real Windows desktop with ad-blockers.
-  // Fix: split into chunks of GZ_RENDER_CHUNK_SIZE (24), insert each chunk between requestAnimationFrame
-  // ticks so the click handler returns quickly and the user can keep scrolling/clicking.
   var grid = document.getElementById('games');
   grid.innerHTML = '';  // clear synchronously (fast, no per-card cost)
-  // Pre-build all card HTML strings as one big string (string concat is cheap, ~7ms for 463 cards)
-  var allHtml = list.map((g,i) => {
-    // LCP-OPT: Mark first 4 above-fold game cards so CSS/content-visibility skips their paint
-    var lcpClass = i < 4 ? ' lcp-card' : '';
-    var lcpStyle = i < 4 ? 'content-visibility:visible;contain-intrinsic-size:auto;' : '';
-    return `
-    <a class="game-card${lcpClass}" href="${g.url}" data-cat="${g.cat}"${i < 4 ? ' fetchpriority="high"' : ''} itemscope itemtype="https://schema.org/Game" role="listitem" aria-label="${g.name} — ${g.tags[0]||''} game. Click to play." title="${g.name} — Click to play!">
-      <meta itemprop="name" content="${g.name}"><meta itemprop="url" content="https://gamezipper.com${g.url}"><meta itemprop="description" content="${(g.desc||'').replace(/"/g,'&quot;')}"><meta itemprop="genre" content="${g.cat}"><meta itemprop="gamePlatform" content="Web Browser"><meta itemprop="applicationCategory" content="Game"><meta itemprop="operatingSystem" content="Any"><meta itemprop="offers" content="https://schema.org/Offer"><meta itemprop="price" content="0"><meta itemprop="priceCurrency" content="USD">
-      ${g.isNew?'<span class="new-badge">🔥 NEW</span>':''}<button class="gz-fav-btn ${gzFavs.includes(g.name)?'active':''}" data-game="${g.name}" onclick="event.preventDefault();gzToggleFav(this.dataset.game)" aria-label="Toggle favorite ${g.name}">♥</button><button class="gz-card-share" onclick="event.preventDefault();event.stopPropagation();gzShareGame('${g.name}','${g.url}')" aria-label="Share ${g.name}" title="Share this game">↗</button>
-      <div class="game-thumb" style="${lcpStyle}background:${GAME_GRADIENTS[i%GAME_GRADIENTS.length]}" itemprop="image" itemscope itemtype="https://schema.org/ImageObject"><meta itemprop="contentUrl" content="https://gamezipper.com/og-image.webp">${g.emoji}<img class="gz-thumb-img" loading="lazy" decoding="async" src="/thumbs/${g.url.replace(/\//g,'')}.jpg" alt="" onerror="this.remove()">
-        <div class="overlay"><span class="play-label">▶ PLAY</span></div>
-      </div>
-      <div class="game-info" style="position:relative">
-        <h3 itemprop="name">${g.name}</h3>
-        <div class="desc" itemprop="description">${g.desc||''}</div>
-        <div class="tags">${g.tags.slice(0,6).map(t=>`<span class="tag" style="cursor:pointer" data-tag="${t}">${t}</span>`).join('')}</div>
-        <div class="gz-rating"><span class="gz-star">★★★★★</span><span class="gz-rating-num">${_gzRatingMap[g.name]||"4.8"}</span></div>
-        <div class="gz-card-tooltip"><span class="gz-tip-main">${g.tags.length?g.tags[0]+' Game':'Browser Game'}</span><span class="gz-tip-meta">Click or press <kbd>Enter</kbd> to play</span></div>
-      </div>
-    </a>`}).join('');
-  // R691: Split allHtml into chunks of GZ_RENDER_CHUNK_SIZE, insert between rAFs.
-  // rAF runs at ~60Hz (~16ms) which is fast enough for perceived "instant" fill but
-  // gives the main thread time to process input between chunks. Each chunk is a
-  // insertAdjacentHTML('beforeend', ...) which is faster than innerHTML=''+innerHTML=html
-  // because the parent grid stays intact and only the new nodes get parsed/attached.
+  if (!list || list.length === 0) { return; }
   var GZ_RENDER_CHUNK_SIZE = 24;
-  if (list.length === 0 || !allHtml) { return; }
-  // Fast path: if list is small (≤24), single innerHTML write is faster than rAF chunking
+  // Fast path: small list (<= 24) — single build + single insert is faster than chunking
   if (list.length <= GZ_RENDER_CHUNK_SIZE) {
-    grid.innerHTML = allHtml;
+    grid.innerHTML = _buildChunkHtml(list, 0);
     _gzRenderFinalize(grid, list);
     return;
   }
-  // Chunked path: insert GZ_RENDER_CHUNK_SIZE cards per rAF tick
-  var _gzRenderChunks = [];
-  for (var _ci = 0; _ci < allHtml.length; _ci += 65536) {  // ~64KB per chunk (approx 24 cards)
-    _gzRenderChunks.push(allHtml.substr(_ci, 65536));
+  // Chunked path: build GZ_RENDER_CHUNK_SIZE cards per yield, then insert them in next yield.
+  // Each iteration of the loop does at most ~10ms of work (build chunk + insertAdjacentHTML).
+  var _idx = 0;
+  var _hasYield = ('scheduler' in window) && ('yield' in window.scheduler);
+  function _buildChunkHtml(chunkList, offset) {
+    // Pure build, no DOM mutation. ~5-10ms for 24 cards on slow devices.
+    return chunkList.map(function(g, ci) {
+      var i = offset + ci;
+      var lcpClass = i < 4 ? ' lcp-card' : '';
+      var lcpStyle = i < 4 ? 'content-visibility:visible;contain-intrinsic-size:auto;' : '';
+      return '\n    <a class="game-card' + lcpClass + '" href="' + g.url + '" data-cat="' + g.cat + '"' + (i < 4 ? ' fetchpriority="high"' : '') + ' itemscope itemtype="https://schema.org/Game" role="listitem" aria-label="' + g.name + ' — ' + (g.tags[0]||'') + ' game. Click to play." title="' + g.name + ' — Click to play!">\n      <meta itemprop="name" content="' + g.name + '"><meta itemprop="url" content="https://gamezipper.com' + g.url + '"><meta itemprop="description" content="' + (g.desc||'').replace(/"/g,'"') + '"><meta itemprop="genre" content="' + g.cat + '"><meta itemprop="gamePlatform" content="Web Browser"><meta itemprop="applicationCategory" content="Game"><meta itemprop="operatingSystem" content="Any"><meta itemprop="offers" content="https://schema.org/Offer"><meta itemprop="price" content="0"><meta itemprop="priceCurrency" content="USD">\n      ' + (g.isNew?'<span class="new-badge">🔥 NEW</span>':'') + '<button class="gz-fav-btn ' + (gzFavs.includes(g.name)?'active':'') + '" data-game="' + g.name + '" onclick="event.preventDefault();gzToggleFav(this.dataset.game)" aria-label="Toggle favorite ' + g.name + '">♥</button><button class="gz-card-share" onclick="event.preventDefault();event.stopPropagation();gzShareGame(\'' + g.name + '\',\'' + g.url + '\')" aria-label="Share ' + g.name + '" title="Share this game">↗</button>\n      <div class="game-thumb" style="' + lcpStyle + 'background:' + GAME_GRADIENTS[i%GAME_GRADIENTS.length] + '" itemprop="image" itemscope itemtype="https://schema.org/ImageObject"><meta itemprop="contentUrl" content="https://gamezipper.com/og-image.webp">' + g.emoji + '<img class="gz-thumb-img" loading="lazy" decoding="async" src="/thumbs/' + g.url.replace(/\//g,'') + '.jpg" alt="" onerror="this.remove()">\n        <div class="overlay"><span class="play-label">▶ PLAY</span></div>\n      </div>\n      <div class="game-info" style="position:relative">\n        <h3 itemprop="name">' + g.name + '</h3>\n        <div class="desc" itemprop="description">' + (g.desc||'') + '</div>\n        <div class="tags">' + g.tags.slice(0,6).map(function(t){return '<span class="tag" style="cursor:pointer" data-tag="' + t + '">' + t + '</span>'}).join('') + '</div>\n        <div class="gz-rating"><span class="gz-star">★★★★★</span><span class="gz-rating-num">' + (_gzRatingMap[g.name]||"4.8") + '</span></div>\n        <div class="gz-card-tooltip"><span class="gz-tip-main">' + (g.tags.length?g.tags[0]+' Game':'Browser Game') + '</span><span class="gz-tip-meta">Click or press <kbd>Enter</kbd> to play</span></div>\n      </div>\n    </a>';
+    }).join('');
   }
-  // Better: split by card boundary using indexOf('<a class="game-card', _ci+GZ_RENDER_CHUNK_SIZE*700)
-  // Use approximate chunk size: each card is ~700 bytes avg
-  _gzRenderChunks = [];
-  var _avgCardBytes = Math.ceil(allHtml.length / list.length);
-  var _chunkBytes = Math.max(1, GZ_RENDER_CHUNK_SIZE) * _avgCardBytes;
-  var _cursor = 0;
-  while (_cursor < allHtml.length) {
-    var _next = _cursor + _chunkBytes;
-    if (_next >= allHtml.length) { _gzRenderChunks.push(allHtml.substr(_cursor)); break; }
-    // Find next card boundary to avoid splitting mid-tag
-    var _boundary = allHtml.indexOf('<a class="game-card', _next);
-    if (_boundary === -1 || _boundary >= _cursor + _chunkBytes * 2) {
-      _gzRenderChunks.push(allHtml.substr(_cursor, _next - _cursor));
-      _cursor = _next;
-    } else {
-      _gzRenderChunks.push(allHtml.substr(_cursor, _boundary - _cursor));
-      _cursor = _boundary;
-    }
-  }
-  var _gzChunkIdx = 0;
-  function _gzRenderNextChunk() {
-    if (_gzChunkIdx >= _gzRenderChunks.length) {
+  function _step() {
+    if (_idx >= list.length) {
       _gzRenderFinalize(grid, list);
       return;
     }
-    grid.insertAdjacentHTML('beforeend', _gzRenderChunks[_gzChunkIdx]);
-    _gzChunkIdx++;
-    requestAnimationFrame(_gzRenderNextChunk);
+    var chunk = list.slice(_idx, _idx + GZ_RENDER_CHUNK_SIZE);
+    var html = _buildChunkHtml(chunk, _idx);
+    grid.insertAdjacentHTML('beforeend', html);
+    _idx += GZ_RENDER_CHUNK_SIZE;
+    // Yield between chunks: scheduler.yield() if available (Chrome 129+), else rAF.
+    // This bounds sync work to ~10ms per step and keeps INP < 200ms even on slow devices.
+    if (_hasYield) { window.scheduler.yield().then(_step); }
+    else { requestAnimationFrame(_step); }
   }
-  requestAnimationFrame(_gzRenderNextChunk);
+  // First step: run synchronously to paint the first chunk ASAP (LCP), then yield.
+  var firstChunk = list.slice(0, GZ_RENDER_CHUNK_SIZE);
+  grid.insertAdjacentHTML('beforeend', _buildChunkHtml(firstChunk, 0));
+  _idx = GZ_RENDER_CHUNK_SIZE;
+  if (_idx < list.length) {
+    if (_hasYield) { window.scheduler.yield().then(_step); }
+    else { requestAnimationFrame(_step); }
+  } else {
+    _gzRenderFinalize(grid, list);
+  }
 }
 
 function _gzRenderFinalize(grid, list){
