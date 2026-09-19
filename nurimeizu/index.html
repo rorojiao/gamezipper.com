@@ -47,7 +47,12 @@ canvas{display:block;border-radius:8px;background:var(--surface);cursor:pointer;
 .btn:active{transform:translateY(0)}
 .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2))}
 .btn.hint-btn{background:linear-gradient(135deg,#f59e0b,#f97316)}
+.btn.hint-btn:disabled,.btn.hint-btn.shake:disabled{opacity:.4;cursor:not-allowed;background:#666}
 .btn .emoji{font-size:1rem}
+/* UX-OPT 2026-09-19 R750: R382-C fix on /nurimeizu/. BI 7d: 4 rage_clicks BUTTON.btn hint-btn (user 2f27..., Sept 18 15:47) — user exhausted 3 hints, kept clicking hint-btn, only toast showed at top:20px while button is at y=672 (viewport bottom). User never saw feedback. Fix: (1) add .shake class on rejection so clicked btn-hint visibly responds in-place; (2) set :disabled on btn-hint when hintsRemaining<=0 (prevents click entirely, primary fix). @keyframes shake borrowed from /block-blast/ style. */
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes shake-pulse{0%{transform:translateX(0) scale(1)}20%{transform:translateX(-5px) scale(1.05)}40%{transform:translateX(5px) scale(1.05)}60%{transform:translateX(-3px) scale(1.02)}100%{transform:translateX(0) scale(1)}}
+.btn.hint-btn.shake{animation:shake .35s ease;box-shadow:0 0 0 2px var(--err),0 0 12px rgba(239,68,68,.5)}
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--surface);color:var(--text);padding:8px 20px;border-radius:8px;border:1px solid var(--accent);font-size:0.9rem;z-index:100;transition:transform 0.3s;pointer-events:none}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.err{border-color:var(--err)}
@@ -282,13 +287,29 @@ function triggerWin(){
 }
 function launchConfetti(){const colors=["#6366f1","#8b5cf6","#22c55e","#fbbf24","#ef4444","#60a5fa"];for(let i=0;i<50;i++){const el=document.createElement("div");el.className="confetti";el.style.left=Math.random()*100+"%";el.style.background=colors[Math.floor(Math.random()*colors.length)];el.style.animation="confetti-fall "+(1+Math.random()*2)+"s "+Math.random()*0.5+"s ease-out forwards";el.style.borderRadius=Math.random()>0.5?"50%":"2px";document.body.appendChild(el);setTimeout(()=>el.remove(),4000)}}
 function showToastMsg(msg,type){const t=document.getElementById("toast");t.textContent=msg;t.className="toast show"+(type?" "+type:"");setTimeout(()=>t.className="toast",2000)}
-function loadLevel(idx){currentLevel=idx;userPaint={};hintsUsed=0;hintsRemaining=maxHints;isPlaying=true;hintCell=null;const lv=LEVELS[idx];document.getElementById("level-info").textContent="Level "+(idx+1)+" / "+LEVELS.length;document.getElementById("tier-info").textContent=lv.tierName;document.getElementById("hints-left").innerHTML="\uD83D\uDCA1 "+hintsRemaining;document.getElementById("win-overlay").classList.remove("show");drawBoard()}
+function loadLevel(idx){currentLevel=idx;userPaint={};hintsUsed=0;hintsRemaining=maxHints;isPlaying=true;hintCell=null;const lv=LEVELS[idx];document.getElementById("level-info").textContent="Level "+(idx+1)+" / "+LEVELS.length;document.getElementById("tier-info").textContent=lv.tierName;document.getElementById("hints-left").innerHTML="\uD83D\uDCA1 "+hintsRemaining;document.getElementById("win-overlay").classList.remove("show");
+  // UX-OPT 2026-09-19 R750: re-enable hint-btn on new level (R382-C pair)
+  var _hbtnReset=document.getElementById("btn-hint");if(_hbtnReset)_hbtnReset.disabled=false;
+  drawBoard()}
 function giveHint(){
-  if(hintsRemaining<=0||!isPlaying){showToastMsg("No hints remaining!","err");return}
+  // UX-OPT 2026-09-19 R750: R382-C silent-rejection fix. Show toast (existing) AND
+  // shake the hint-btn in-place so user sees feedback at the clicked button (not just top toast).
+  if(hintsRemaining<=0||!isPlaying){
+    showToastMsg("No hints remaining!","err");
+    var _hb=document.getElementById("btn-hint");
+    if(_hb){
+      _hb.classList.remove("shake");void _hb.offsetWidth;_hb.classList.add("shake");
+      setTimeout(function(){if(_hb.classList)_hb.classList.remove("shake");},1700);
+    }
+    return;
+  }
   const lv=getLevel();const sol=lv.solution;const candidates=[];
   for(let rid=0;rid<lv.rooms.length;rid++){const correct=sol.includes(rid)?"black":"white";const uv=userPaint[rid]||null;if(uv!==correct)candidates.push(rid)}
   if(!candidates.length){showToastMsg("Everything looks correct!","ok");return}
-  const rid=candidates[Math.floor(Math.random()*candidates.length)];const correct=sol.includes(rid)?"black":"white";userPaint[rid]=correct;hintsUsed++;hintsRemaining--;document.getElementById("hints-left").innerHTML="\uD83D\uDCA1 "+hintsRemaining;hintCell=lv.rooms[rid][0];sfxHint();drawBoard();showToastMsg(correct==="black"?"Room painted black":"Room painted white","ok");
+  const rid=candidates[Math.floor(Math.random()*candidates.length)];const correct=sol.includes(rid)?"black":"white";userPaint[rid]=correct;hintsUsed++;hintsRemaining--;document.getElementById("hints-left").innerHTML="\uD83D\uDCA1 "+hintsRemaining;
+  // UX-OPT 2026-09-19 R750: disable hint-btn when hints exhausted (primary R382-C fix — prevents click entirely)
+  if(hintsRemaining<=0){var _hbtn=document.getElementById("btn-hint");if(_hbtn)_hbtn.disabled=true;}
+  hintCell=lv.rooms[rid][0];sfxHint();drawBoard();showToastMsg(correct==="black"?"Room painted black":"Room painted white","ok");
 }
 function buildLevelGrid(){
   const grid=document.getElementById("level-grid");grid.innerHTML="";
