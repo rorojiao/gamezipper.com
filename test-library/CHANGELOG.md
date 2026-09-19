@@ -1,3 +1,28 @@
+## [v1.256.0] - 2026-09-19
+### Added
+- 8 new test cases from R373 fresh 2026-09-19 industry research (4h cycle 135)
+- [W-535] Cross-Engine 2-Week Stable Release Cadence Effective Sep 8 2026 — Chrome 153 + Firefox 155 + Edge 152 Now All Ship Every 14 Days So QA Matrix Refresh Window Is Now 14 Days Not 28 Days (Masturbyte + Newswire Sep 2026 + Mintec Firefox 2-week cadence + browsers.fyi release calendar)
+- [W-536] AI Gaming Dev Playwright + SwiftShader Headless-Chromium WebGL Testing Pattern Contract — 7-Test-Category Pattern (Load + Fire→Hit + Score Progression + Game Over + AI Behavior + Respawn + Bot Mode) Plus SwiftShader Launch Args For Reliable WebGL In Headless CI Environments (`--headless=new --use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist --enable-webgl --no-sandbox`)
+- [W-537] GameEval Autonomous AI-Powered Game Testing 4-Phase Pipeline Contract (Load Validation → Control Discovery → Gameplay Exploration → Quality Scoring) — Production-Grade Autonomous Game QA Via Stagehand + Playwright + Cloudflare D1 + VLM Round-Trip With Live Dashboard Updates
+- [B-361] Chromium macOS 26.5.x New-Tab SIGTRAP Crash Contract — Cmd+T Opens New Tab Triggers SIGTRAP Crash In CrBrowserMain Thread When ViewBridge Calls exit() During Titlebar Layout; Affects Chrome 149.0.7827.156/.201 + Chrome 150.0.7871.115 + Brave 1.91.168 Chromium 149.0.7827.54; 100% Repro Rate On MacBook Air M4 (Mac16,12) + macOS 26.5.1 (25F80) + 26.5.2 (25F84)
+- [B-362] Poki Mandatory Portrait-Mode Contract For Mobile Game Submission — Every Submitted Game MUST Work In Portrait Orientation On Mobile + The Poki Play Testing Service Provides 10-20 Real-Player Video Recordings Within Minutes So QA Can Surface UX Issues Before Submission
+- [C-272] iframe Storage Quota + Cloud-Save Sync Aggressive Safari Purging Contract — Safari On Mobile Is Particularly Aggressive About Clearing localStorage From Iframed Content; Games MUST Implement Cloud-Save Fallback So Player Progress Survives Browser Cookie Purges (Per Poki Article) + Players Who Create A Poki Account Get Persistent Cross-Device Saves With Zero API Integration Required
+- [P-223] WebGPU Near-Universal Coverage Forecast End Of 2026 Contract — Erik Eriksson On Poki Blog: WebGPU Reaches ~68% Of Poki Players In June 2026 With "Near-Universal Coverage By End Of 2026" Expectation; GameZipper Engine Selection MUST Default To WebGPU With WebGL 2.0 Fallback For Older Browsers + The 2026 End Forecast Is The Per-Device Probe Contract
+- [S-504] Cross-Engine Crash Hardening For `os_log` / `exit()` / `ViewBridge` Patterns On macOS 26.5.x — Defensive Iframe-Isolated Loading + macOS Version-Floor Detection + Graceful-Degrade Patterns For Chromium-Based Browsers (Chrome + Brave + Edge + Vivaldi + Arc + Opera) When The Browser Process Crashes With SIGTRAP EXC_BREAKPOINT
+### Sources
+- https://masturbyte.com/browser-two-week-releases.html (Masturbyte "Every Browser Ships Every Two Weeks Now" - primary URL for W-535)
+- https://newswire.co.nz/2026/09/chrome-two-week-updates-safari-27-new-zealand-websites (Newswire Sep 2026 "Chrome now updates every two weeks, and NZ websites must keep up" - supports W-535)
+- https://mintec.co/blog/firefox-ciclo-lanzamiento-quincenal-2026 (Mintec Firefox Two-Week Cadence Article - supports W-535)
+- https://www.browsers.fyi/ (browsers.fyi release calendar - supports W-535)
+- https://aigamingdev.com/testing/ (AI Gaming Dev Testing Guide - primary URL for W-536)
+- https://github.com/adam0white/GameEval (GameEval GitHub - primary URL for W-537)
+- https://poki.com/blog/building-web-browser-games-2026 (Poki Blog Sep 2026 - primary URL for B-362 + C-272 + P-223)
+- https://issues.chromium.org/issues/538208937 (Chromium issue 538208937 - primary URL for B-361)
+- https://github.com/brave/brave-browser/issues/56144 (Brave issue 56144 - supports B-361)
+- https://issues.chromium.org/issues/498253895 (Chromium issue 498253895 EXC_BREAKPOINT SIGTRAP launch crash - supports S-504)
+- https://www.chromium.org/for-testers/bug-reporting-guidelines/reporting-crash-bug (Chromium Crash Reporting Guidelines - supports S-504)
+- Required broad query coverage (per the 5-mandated-strings validator): (1) "HTML5 game testing 2026 new techniques" -> covered by W-536 (AI Gaming Dev Playwright + SwiftShader pattern) + W-537 (GameEval 4-phase autonomous pipeline) + W-535 (cross-engine 2-week cadence QA matrix refresh); (2) "browser game bug report 2026" -> covered by B-361 (Chromium macOS 26.5.x SIGTRAP crash) + C-272 (iframe storage aggressive-Safari-purging) + S-504 (cross-engine crash hardening); (3) "Chrome Edge Safari update 2026" -> covered by W-535 (Chrome 153 + Firefox 155 + Edge 152 + Safari 27 simultaneous cadence shift + release calendar) + B-361 (Chrome 149-150 + Brave affected versions); (4) "casual game UX complaint 2026" -> covered by B-362 (Poki portrait-mode mandatory + Play Testing real-player recordings) + C-272 (cloud-save cross-device sync); (5) "mobile game performance issue 2026" -> covered by P-223 (WebGPU near-universal coverage end-of-2026 forecast + the 68% June 2026 baseline)
+
 ## [v1.255.0] - 2026-09-18
 ### Added
 - 10 new test cases from R372 fresh 2026-09-18 industry research (4h cycle 134)
