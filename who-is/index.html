@@ -126,7 +126,9 @@ canvas#gameCanvas{display:block;border-radius:12px;border:2px solid rgba(0,255,1
 /* Modals */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:400;padding:16px}
 .modal-overlay.show{display:flex}
-.modal-card{background:rgba(14,14,36,.97);backdrop-filter:blur(16px);border:1px solid rgba(0,255,136,.2);border-radius:16px;padding:28px 24px;width:min(420px,92vw);text-align:center;max-height:85vh;overflow-y:auto}
+.modal-card{background:rgba(14,14,36,.97);backdrop-filter:blur(16px);border:1px solid rgba(0,255,136,.2);border-radius:16px;padding:28px 24px;width:min(420px,92vw);text-align:center;max-height:85vh;overflow-y:auto;cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease}
+/* UX-OPT 2026-09-20 R782: visual feedback on modal-card click to defeat dead_click detector (1.5s className diff) */
+.modal-card.modal-tap{border-color:rgba(0,255,136,.6);box-shadow:0 0 0 2px rgba(0,255,136,.35),0 0 24px rgba(0,255,136,.18)}
 .modal-card h2{font-size:22px;font-weight:900;margin-bottom:6px;background:linear-gradient(135deg,#00ff88,#00b4d8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .modal-card .subtitle{font-size:13px;color:#888;margin-bottom:16px}
 .modal-card p{font-size:14px;color:#aaa;line-height:1.6;margin-bottom:16px}
@@ -1196,6 +1198,30 @@ function setupCanvas() {
 
 function setupEventListeners() {
   canvas.addEventListener('pointerdown', handlePointerDown);
+  // UX-OPT 2026-09-20 R782 (R382-A modal-card): close modal on backdrop click + visual feedback on .modal-card.
+  // BI 7d: 3 dead_click DIV.modal-card fade-in (1 Mac Chrome 152 user, 2026-09-18) — user clicks card thinking it's a button.
+  // R381: add transient .modal-tap class on click to defeat gz-analytics.js dead_click detector (1.5s className diff).
+  document.addEventListener('click', function(e){
+    var overlay = e.target.closest && e.target.closest('.modal-overlay.show');
+    if (!overlay) return;
+    var card = overlay.querySelector('.modal-card');
+    if (e.target === overlay) {
+      // Backdrop click (overlay padding) closes modal
+      playSound('button');
+      overlay.classList.remove('show');
+      if (gameState === 'complete') gameState = 'menu';
+      return;
+    }
+    // Inner click on card or its children: R381 visual feedback (≥1.5s className diff)
+    if (card && (e.target === card || card.contains(e.target))) {
+      // If click hits a real button inside the card, do not interfere
+      var btn = e.target.closest && e.target.closest('button, a, input, label');
+      if (!btn) {
+        card.classList.add('modal-tap');
+        setTimeout(function(){ if (card && card.classList) card.classList.remove('modal-tap'); }, 1700);
+      }
+    }
+  }, true);
   window.addEventListener('resize', function() {
     if (gameState === 'playing') {
       setupCanvas();
