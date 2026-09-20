@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 
- <meta name="build" content="202602280224">
+ <meta name="build" content="R757-20260920">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0a1628"/>
@@ -254,6 +254,11 @@ let deathRotation=0,deathFallVy=0,deathY=0,flashAlpha=0;
 let deathPhase=0,deathTimer=0,slowMoTimer=0;
 let deathSquash=1,deathFragments=[];
 
+// R757: tap ripple feedback (R382-C pattern) — visible feedback at click site
+let tapRipples=[];
+// R757: "Tap again" hint alpha during GAMEOVER cooldown
+let retryHintAlpha=0;
+
 // Rainbow trail
 let rainbowTrail=[];
 const RAINBOW=['#4466dd','#6688ff','#88aaff','#44ccff','#22ffcc','#88ff88'];
@@ -338,14 +343,32 @@ function resetGame(){
   const sbo=document.getElementById('share-btn-overlay');if(sbo)sbo.style.display='none';
 }
 
-function flap(){
+function flap(cx,cy){
   try{const a=getAC();if(a.state==='suspended')a.resume();}catch(e){}
+  // R757: R382-C fix — every tap gets visible feedback (tap ripple at click site)
+  if(typeof cx==='number'&&typeof cy==='number'){
+    tapRipples.push({x:cx,y:cy,life:1});
+    if(tapRipples.length>20)tapRipples.shift();
+  }
   if(state===READY){state=PLAYING;resetGame();}
   if(state===PLAYING){bird.vy=FLAP;playFlapSound();}
-  if(state===GAMEOVER&&frameCount>30){state=PLAYING;resetGame();bird.vy=FLAP;playFlapSound();}
+  // R757: reduced cooldown 30->18 frames (~0.3s) + show retry hint if tap during cooldown
+  if(state===GAMEOVER&&frameCount>18){
+    state=PLAYING;resetGame();bird.vy=FLAP;playFlapSound();
+  } else if(state===GAMEOVER){
+    // Tap during cooldown — show "Tap again" hint (R382-C silent-rejection fix)
+    retryHintAlpha=1;
+  }
 }
 
-canvas.addEventListener('pointerdown',e=>{e.preventDefault();flap();});
+canvas.addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  const r=canvas.getBoundingClientRect();
+  // R757: convert client coords to canvas internal coords for accurate ripple placement
+  const sx=canvas.width/r.width, sy=canvas.height/r.height;
+  const cx=(e.clientX-r.left)*sx, cy=(e.clientY-r.top)*sy;
+  flap(cx,cy);
+});
 document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();flap();}});
 
 function collides(){
@@ -748,6 +771,39 @@ function draw(){
   drawGround();
   if(state===PLAYING)drawRainbowTrail();
   drawBird();
+
+  // R757: draw tap ripples at click site (R382-C visible feedback)
+  for(let i=tapRipples.length-1;i>=0;i--){
+    const r=tapRipples[i];
+    ctx.save();
+    ctx.globalAlpha=r.life*0.8;
+    ctx.strokeStyle='#fff';
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.arc(r.x,r.y,(1-r.life)*40+8,0,Math.PI*2);
+    ctx.stroke();
+    ctx.strokeStyle='rgba(78,205,196,'+(r.life*0.6)+')';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.arc(r.x,r.y,(1-r.life)*30+5,0,Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
+    r.life-=0.04;
+    if(r.life<=0)tapRipples.splice(i,1);
+  }
+  // R757: draw "Tap again to restart" hint during GAMEOVER cooldown
+  if(retryHintAlpha>0){
+    ctx.save();
+    ctx.globalAlpha=Math.min(1,retryHintAlpha);
+    ctx.fillStyle='#fff';
+    ctx.font='bold 22px Arial';
+    ctx.textAlign='center';
+    ctx.shadowColor='rgba(0,0,0,0.8)';
+    ctx.shadowBlur=8;
+    ctx.fillText('Tap again to restart',W/2,H*0.78);
+    ctx.restore();
+    retryHintAlpha-=0.025;
+  }
 
   // Particles
   for(const p of particles){
