@@ -6824,10 +6824,17 @@ requestAnimationFrame(gameLoop);
 </script>
 <script>
 /* ─── Magic Sort R420: commercial-break trigger (P2 quality) ───
+   R757 (2026-09-20): Bridge custom-event to monetag-manager.js
+   window.GZInterstitial.show(). Previously fired CustomEvent but
+   no listener — only 1 ms_commercial_break_request in 7d BI.
+   Now: every 3rd level-complete fires the actual interstitial
+   (AdSense Tier-0 78% / Monetag fallback), with 60s cooldown via
+   GZInterstitial's canShowAd() guard.
    Listens to the existing 'level-complete' CustomEvent fired by
    executePour() → isWin() branch. Every 3rd level complete fires:
      1) ms_commercial_break_request  → gz_ab buffer → BI events
-     2) CustomEvent 'commercial-break-request' → SDK hook point
+     2) window.GZInterstitial.show() → monetag-manager → AdSense/Monetag
+     3) CustomEvent 'commercial-break-request' → SDK hook point
    Purely behavior-extending; no UI / no canvas / no DOM mutation.
    Safe to remove: simply delete this <script> block.
 */
@@ -6865,6 +6872,23 @@ requestAnimationFrame(gameLoop);
         detail: { trigger: 'level_complete_every3', level: level, stars: stars, moves: moves }
       }));
     } catch(e){}
+    // R757: actually invoke the interstitial via monetag-manager.js.
+    // GZInterstitial.show() internally calls canShowAd() (60s cooldown)
+    // and races AdSense Tier-0 + Monetag fallback.
+    try {
+      if (window.GZInterstitial && typeof window.GZInterstitial.show === 'function') {
+        var p = window.GZInterstitial.show();
+        if (p && typeof p.then === 'function') {
+          p.then(function(){
+            try { window.__msTrack && window.__msTrack('ms_commercial_break_shown', { lv: level, stars: stars|0 }); } catch(e){}
+          }, function(){
+            try { window.__msTrack && window.__msTrack('ms_commercial_break_blocked', { lv: level, stars: stars|0 }); } catch(e){}
+          });
+        }
+      } else {
+        try { window.__msTrack && window.__msTrack('ms_commercial_break_no_sdk', { lv: level }); } catch(e){}
+      }
+    } catch(e){}
   }
   window.addEventListener('level-complete', function(ev){
     try {
@@ -6878,7 +6902,7 @@ requestAnimationFrame(gameLoop);
       _pushBreak(lv, d.stars, d.moves);
     } catch(e){}
   });
-  try { console.log('[MS-cb-trigger] ready (interval=3)'); } catch(e){}
+  try { console.log('[MS-cb-trigger] ready (interval=3, R757 bridged to GZInterstitial)'); } catch(e){}
 })();
 </script>
 
