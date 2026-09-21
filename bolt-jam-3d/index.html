@@ -636,6 +636,7 @@ let diskMeshes = [];    // diskMeshes[rodIdx] = [mesh, ...]
 let selectedMesh = null;
 let selectionRing = null;
 let particles = [];
+let clickRipples = []; // R788: visual feedback for missed canvas taps
 
 // ============================================================
 // STORAGE
@@ -1197,6 +1198,56 @@ function updateParticles(dt) {
 }
 
 // ============================================================
+// R788: CLICK RIPPLES (rage-click prevention)
+// ============================================================
+// A missed canvas tap (no rod hit) MUST produce visible feedback.
+// We spawn a thin expanding ring on the table surface at the click site
+// that fades out over 0.6s. Keeps the clicker from rage-tapping.
+function spawnClickRipple(point, type) {
+  const ringGeo = new THREE.RingGeometry(0.15, 0.32, 24);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: type === 'miss' ? 0xff8866 : 0x66ccff,
+    transparent: true,
+    opacity: 0.9,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = -Math.PI / 2; // lay flat on table
+  ring.position.copy(point);
+  ring.position.y = 0.06;
+  rodGroup.add(ring);
+  clickRipples.push(ring);
+
+  // Cap concurrent ripples so a rage burst doesn't pile up 100 meshes
+  if (clickRipples.length > 6) {
+    const old = clickRipples.shift();
+    rodGroup.remove(old);
+    old.geometry.dispose();
+    old.material.dispose();
+  }
+}
+
+function updateClickRipples(dt) {
+  for (let i = clickRipples.length - 1; i >= 0; i--) {
+    const r = clickRipples[i];
+    r.userData = r.userData || {};
+    r.userData.life = (r.userData.life ?? 0.6) - dt;
+    if (r.userData.life <= 0) {
+      rodGroup.remove(r);
+      r.geometry.dispose();
+      r.material.dispose();
+      clickRipples.splice(i, 1);
+      continue;
+    }
+    const t = 1 - r.userData.life / 0.6; // 0 -> 1
+    const scale = 1 + t * 2.5;
+    r.scale.set(scale, scale, scale);
+    r.material.opacity = 0.9 * (1 - t);
+  }
+}
+
+// ============================================================
 // HUD & BUTTONS
 // ============================================================
 function updateHUD() {
@@ -1292,7 +1343,12 @@ onResize();
 renderer.domElement.addEventListener('pointerdown', onPointerDown);
 
 function onPointerDown(event) {
-  if (gameState !== 'playing') return;
+  // R788: even when not playing, give a soft visual + toast so user knows
+  // the tap reached the canvas. Only block when gameState is fully blocking.
+  if (gameState !== 'playing') {
+    // Don't eat taps on UI overlays; let them bubble.
+    return;
+  }
   event.preventDefault();
   const rect = renderer.domElement.getBoundingClientRect();
   mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -1306,8 +1362,17 @@ function onPointerDown(event) {
     const rodIdx = obj.userData.rodIndex;
     if (rodIdx !== undefined) {
       handleRodClick(rodIdx);
+      return;
     }
   }
+  // R788: raycaster missed — give visible feedback at click site so the
+  // user knows the click registered (no more silent rejections).
+  // Re-raycast onto y=0 plane (table surface) to get accurate world XZ.
+  raycaster.setFromCamera(mouse, camera);
+  const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const worldPoint = new THREE.Vector3();
+  raycaster.ray.intersectPlane(groundPlane, worldPoint);
+  if (worldPoint) spawnClickRipple(worldPoint, 'miss');
 }
 
 // ============================================================
@@ -1327,6 +1392,7 @@ function animate(time) {
 
   // Animate particles
   updateParticles(dt);
+  updateClickRipples(dt);
 
   // Animate selected disk bobbing
   if (selectedMesh) {
