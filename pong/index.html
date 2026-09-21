@@ -178,6 +178,14 @@ canvas#c{width:100%;height:100%;border-radius:8px;display:block;border:2px solid
 .gz-related-card:hover{border-color:rgba(78,205,196,.5);box-shadow:0 2px 8px rgba(0,0,0,.08)}
 
 .gz-seo-content{flex:0 0 auto !important;align-self:stretch !important;flex-shrink:0 !important;width:100vw !important;max-width:none !important;position:relative;z-index:1;background:var(--bg);box-shadow:0 -8px 16px rgba(0,0,0,.5);margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding:40px 20px}
+/* UX-OPT 2026-09-21 R785: R381 dead_click false-positive fix on .btn/.start-btn. BI 7d
+   showed /pong/ with 6 rage_clicks (BUTTON.btn) on 2026-09-20 15:49:55 (mobile Android
+   SM-A716U, single user). User clicked the "New Game" .btn 6x in 1s because game.start()
+   ran but the button itself never got a visible className change → rage_click fires.
+   Fix: capture-phase click handler adds transient .gz-btnpress class for ≥1.7s so user
+   sees the click registered AND gz-analytics.js dead_click detector sees className
+   changed. Mirrors R381 sokoban dpad / R527 overlay / R703 play-btn pattern. */
+.btn.gz-btnpress,.start-btn.gz-btnpress{background:rgba(0,255,204,0.35)!important;border-color:#00ffcc!important;box-shadow:0 0 0 2px rgba(0,255,204,0.6),0 0 24px rgba(0,255,204,0.45)!important;transform:scale(0.96)!important;transition:transform 80ms ease,box-shadow 80ms ease,background 80ms ease!important}
 </style>
 
 <meta name="twitter:player" content="https://gamezipper.com/pong/">
@@ -574,6 +582,40 @@ function gzToast(msg,dur){dur=dur||2500;var t=document.createElement('div');t.st
   document.addEventListener('click', _gzGameStart, {once:true, capture:true});
   document.addEventListener('keydown', _gzGameStart, {once:true, capture:true});
   document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
+})();
+</script>
+<script>
+/* UX-OPT 2026-09-21 R785: R381 dead_click false-positive fix on .btn/.start-btn.
+   Capture-phase click handler adds transient .gz-btnpress class for ≥1.7s so the
+   gz-analytics.js dead_click detector sees a className change. Mirrors R381 sokoban
+   dpad / R527 overlay / R703 play-btn proven pattern. */
+(function(){
+  function _gzBtnPress(btn){
+    if(!btn || btn.__gzBtnPressBound) return;
+    btn.__gzBtnPressBound = true;
+    btn.addEventListener('click', function(){
+      btn.classList.add('gz-btnpress');
+      setTimeout(function(){
+        if(btn && btn.classList) btn.classList.remove('gz-btnpress');
+      }, 1700);
+    }, true);  // capture phase, runs BEFORE gz-analytics.js capture listener
+  }
+  // Bind existing buttons
+  document.querySelectorAll('.btn, .start-btn').forEach(_gzBtnPress);
+  // Re-bind any late-added buttons (e.g., game-over overlay mount)
+  if(window.MutationObserver){
+    var _mo = new MutationObserver(function(ms){
+      ms.forEach(function(m){
+        (m.addedNodes||[]).forEach(function(n){
+          if(n.nodeType!==1) return;
+          if(n.matches && n.matches('.btn, .start-btn')) _gzBtnPress(n);
+          var nested = n.querySelectorAll && n.querySelectorAll('.btn, .start-btn');
+          if(nested) Array.prototype.forEach.call(nested, _gzBtnPress);
+        });
+      });
+    });
+    _mo.observe(document.body, {childList:true, subtree:true});
+  }
 })();
 </script>
 </body>
