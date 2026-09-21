@@ -47,7 +47,7 @@ FOOTER_DC=$(grep -oE 'id="gz-stat-games"><span class="gz-counter" data-count="[0
 
 # 5. Cat counts
 declare -A CAT_HYML
-ALL_C=$(grep -oE 'cat-count\">[0-9]+' index.html | head -1 | grep -oE '[0-9]+$')
+ALL_C=$(grep -oE 'cat-count[^>]+>[0-9]+' index.html | head -11 | grep -oE '[0-9]+$' | paste -sd+ | bc)
 PUZZLE_C=$(grep -E '🧩 Puzzle.*cat-count' index.html | grep -oE 'cat-count\">[0-9]+' | grep -oE '[0-9]+$' | head -1)
 ARCADE_C=$(grep -E '🕹️ Arcade.*cat-count' index.html | grep -oE 'cat-count\">[0-9]+' | grep -oE '[0-9]+$' | head -1)
 IDLE_C=$(grep -E '⏰ Idle.*cat-count' index.html | grep -oE 'cat-count\">[0-9]+' | grep -oE '[0-9]+$' | head -1)
