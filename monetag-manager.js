@@ -859,6 +859,13 @@
       ins.setAttribute('data-ad-slot', slotId);
       ins.setAttribute('data-ad-format', 'auto');
       ins.setAttribute('data-full-width-responsive', 'true');  // v5.13: responsive=true (Poki: adapt to screen)
+      // R776: tag dynamic ins so initStaticInsFillObserver skips it (fillInGameBanner / autoFillContainer
+      // own this fill event via their own poll loop + state). Static HTML ins inside gz-ad-below-game
+      // (e.g. 737 on /pong/, 109 on /snake/) does NOT have this attribute and IS observed — restores
+      // BI visibility on 178 pages where 737 fills were silently dropped + 276 pages where 109
+      // fills were dropped. Safe because we never double-count: observer checks data-static-tracked
+      // after this, and autoFillContainer poll loop only sets data-filled (no BI event).
+      ins.setAttribute('data-gz-dynamic-adsense', '1');
       container.innerHTML = '';
       container.appendChild(ins);
       // v5.28: Give classic adsbygoogle.js 100ms to define window.adsbygoogle before push.
@@ -2308,13 +2315,18 @@
       // counted in BI. Probe 2026-08-01 showed parent containers have class
       // "gz-injected-banner-above" / "gz-injected-banner-below" — substring match
       // covers all variants.
+      // R776: skip the ID-based parent walk (gz-ad-above-game / gz-ad-below-canvas / gz-ad-below-game)
+      // for static HTML ins. The previous broad check skipped EVERY ins with such an ancestor,
+      // but autoFillContainer() doesn't actually emit a BI event for its dynamic 737 — only
+      // sets data-filled. So static ins inside these containers were silently dropped from BI.
+      // Now: dynamic ins (data-gz-dynamic-adsense="1") still get skipped via direct attribute
+      // check; in-game banner class injection still triggers. Static HTML ins are observed
+      // (restores ~50% of AdSense slot attribution on 454 pages).
+      if (ins.getAttribute && ins.getAttribute('data-gz-dynamic-adsense') === '1') return true;
       var p = ins.parentElement;
       while (p) {
         var pid = p.id || '';
         var pcls = (p.className || '').toString();
-        if (pid === 'gz-ad-above-game' || pid === 'gz-ad-below-canvas' ||
-            pid === 'gz-ad-below-game') return true;
-        if (/gz-ad-(above|below|below-canvas|below-game)/.test(pid)) return true;
         if (/gz-injected-banner/.test(pcls)) return true;
         if (p.getAttribute && p.getAttribute('data-filled')) return true;
         p = p.parentElement;
