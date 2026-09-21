@@ -126,6 +126,15 @@ function gzShare(score){
     max-height:280px!important;min-height:50px!important;
   }
 }
+
+/* UX-OPT 2026-09-22 R788b: /slope/ canvas click feedback (R788 family extension).
+   Without mousedown handler, desktop users clicking canvas during gameState=start/dead
+   get no feedback (silently dropped). Add visible press glow + cursor:pointer. */
+canvas#c.gz-canvas-press{
+  cursor:pointer;
+  box-shadow:inset 0 0 0 4px rgba(0,255,200,0.6),inset 0 0 60px rgba(0,255,200,0.18);
+  transition:box-shadow 0.18s ease;
+}
 </style>
 </head>
 <body>
@@ -136,6 +145,64 @@ function gzShare(score){
 <div id="gz-ad-above-game"></div>
 <canvas id="c"></canvas>
 <div id="gz-ad-below-canvas"></div>
+
+<script>
+/* UX-OPT 2026-09-22 R788b: /slope/ canvas mousedown mirror (R788 family).
+   game.js touchstart fires only on touch screens; desktop mouse clicks were silently
+   dropped on the start/dead overlays. Bridge: dispatch synthetic KeyboardEvents that
+   game.js ALREADY handles (Space/Enter → startGame/restartGame, Arrow keys → keys.left/right).
+   Also add visible .gz-canvas-press feedback (R381/R382 pattern) so the click is never silent. */
+(function(){
+  var c = document.getElementById('c');
+  if (!c) return;
+  function fireKey(key, type){
+    var ev = new KeyboardEvent(type, {key: key, code: key === ' ' ? 'Space' : key, bubbles: true, cancelable: true});
+    document.dispatchEvent(ev);
+  }
+  function fireMouse(target, type, x, y){
+    var ev = new MouseEvent(type, {clientX: x, clientY: y, button: 0, buttons: type === 'mousedown' ? 1 : 0, bubbles: true, cancelable: true});
+    target.dispatchEvent(ev);
+  }
+  // Click on canvas:
+  //  - Left half (< W*0.5) → ArrowLeft held (mirror touchLeft)
+  //  - Right half (>= W*0.5) → ArrowRight held (mirror touchRight)
+  //  - On mousedown, if gameState is start/dead, dispatch Space to start/restart.
+  // game.js reads document-level keydown/keyup for keys.* — MouseEvent doesn't reach those
+  // handlers, so we synthesize ArrowLeft/ArrowRight keydown+keyup on mousedown/mouseup.
+  var W = window.innerWidth || c.clientWidth || 1280;
+  var holding = null; // 'left' | 'right' | null
+  function release(){
+    if (holding) {
+      fireKey(holding === 'left' ? 'ArrowLeft' : 'ArrowRight', 'keyup');
+      holding = null;
+    }
+  }
+  c.addEventListener('mousedown', function(e){
+    if (e.button !== 0) return; // primary only
+    e.preventDefault();
+    c.classList.add('gz-canvas-press');
+    setTimeout(function(){ if (c.classList) c.classList.remove('gz-canvas-press'); }, 1700);
+    // start/restart: Space (game.js line 203-206 already wires Space to startGame/restartGame)
+    fireKey(' ', 'keydown');
+    fireKey(' ', 'keyup');
+    // mirror touchLeft/touchRight via Arrow keys
+    release();
+    holding = (e.clientX < W * 0.5) ? 'left' : 'right';
+    fireKey(holding === 'left' ? 'ArrowLeft' : 'ArrowRight', 'keydown');
+  });
+  // Release on mouseup anywhere so held direction doesn't stick
+  window.addEventListener('mouseup', release);
+  // Cancel hold if mouse leaves canvas
+  c.addEventListener('mouseleave', release);
+  // Cancel hold on Escape (game.js doesn't listen but user expects it)
+  document.addEventListener('keydown', function escListener(e){
+    if (e.key === 'Escape' && holding) {
+      release();
+      c.classList.remove('gz-canvas-press');
+    }
+  });
+})();
+</script>
 
 
 <div id="ui-overlay">
