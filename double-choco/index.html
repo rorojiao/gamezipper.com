@@ -267,9 +267,18 @@ else if(dir==='b'){ctx.beginPath();ctx.moveTo(gridOffsetX+c*cellSize,gridOffsetY
 if(hoverEdge){const parts=hoverEdge.split(',');const r=parseInt(parts[0]),c=parseInt(parts[1]),dir=parts[2];
 ctx.strokeStyle='rgba(99,102,241,0.5)';ctx.lineWidth=3;
 if(dir==='r'){ctx.beginPath();ctx.moveTo(gridOffsetX+(c+1)*cellSize,gridOffsetY+r*cellSize);ctx.lineTo(gridOffsetX+(c+1)*cellSize,gridOffsetY+(r+1)*cellSize);ctx.stroke();}
-else if(dir==='b'){ctx.beginPath();ctx.moveTo(gridOffsetX+c*cellSize,gridOffsetY+(r+1)*cellSize);ctx.lineTo(gridOffsetX+(c+1)*cellSize,gridOffsetY+(r+1)*cellSize);ctx.stroke();}}}
+else if(dir==='b'){ctx.beginPath();ctx.moveTo(gridOffsetX+c*cellSize,gridOffsetY+(r+1)*cellSize);ctx.lineTo(gridOffsetX+(c+1)*cellSize,gridOffsetY+(r+1)*cellSize);ctx.stroke();}}
+drawTapRipples();}  // R791 R382-C: overlay tap ripples
 
 let hoverEdge=null;
+// R791 R382-C: tap ripple system — visible feedback when click misses an edge threshold
+const tapRipples=[];
+function spawnTapRipple(x,y,color,type){tapRipples.push({x:x,y:y,life:1,maxLife:type==='locked'?0.45:0.32,color:color,type:type,r:type==='locked'?16:10});if(tapRipples.length>30)tapRipples.shift();}
+function updateTapRipples(dt){for(let i=tapRipples.length-1;i>=0;i--){const rp=tapRipples[i];rp.life-=dt/rp.maxLife;if(rp.life<=0)tapRipples.splice(i,1);}}
+function drawTapRipples(){for(let i=0;i<tapRipples.length;i++){const rp=tapRipples[i];const t=1-rp.life;const radius=rp.r+t*(rp.type==='locked'?24:14);const alpha=rp.life*(rp.type==='locked'?0.85:0.65);ctx.globalAlpha=alpha;ctx.strokeStyle=rp.color;ctx.lineWidth=rp.type==='locked'?3:2;ctx.beginPath();ctx.arc(rp.x,rp.y,radius,0,Math.PI*2);ctx.stroke();if(rp.type==='locked'&&rp.life>0.6){ctx.globalAlpha=alpha*1.2;ctx.fillStyle=rp.color;ctx.beginPath();ctx.arc(rp.x,rp.y,3,0,Math.PI*2);ctx.fill();}}ctx.globalAlpha=1;}
+// R791 R382-C: dedicated rAF loop for ripple decay (game is event-driven, no global rAF)
+let _rpLastT=performance.now();
+function _rpTick(now){const dt=Math.min((now-_rpLastT)/1000,0.05);_rpLastT=now;if(tapRipples.length){updateTapRipples(dt);renderGrid();}requestAnimationFrame(_rpTick);}requestAnimationFrame(_rpTick);
 function getEdgeAt(mx,my){
 const R=currentLevel.rows,C=currentLevel.cols;
 const x=mx-gridOffsetX,y=my-gridOffsetY;
@@ -301,7 +310,8 @@ const rect=canvas.getBoundingClientRect();
 const mx=(e.clientX-rect.left)*(canvas.width/rect.width);
 const my=(e.clientY-rect.top)*(canvas.height/rect.height);
 const edge=getEdgeAt(mx,my);
-if(!edge)return;
+// R791 R382-C: silent rejection when click misses edge threshold — show ripple so user knows click registered
+if(!edge){spawnTapRipple(mx,my,'rgba(255,120,80,0.85)','miss');return;}
 if(userBorders.has(edge)){userBorders.delete(edge);playSFX('off');}
 else{userBorders.add(edge);playSFX('on');}
 renderGrid();
@@ -314,7 +324,8 @@ const t=e.touches[0];const rect=canvas.getBoundingClientRect();
 const mx=(t.clientX-rect.left)*(canvas.width/rect.width);
 const my=(t.clientY-rect.top)*(canvas.height/rect.height);
 const edge=getEdgeAt(mx,my);
-if(!edge)return;
+// R791 R382-C: same fix for touch
+if(!edge){spawnTapRipple(mx,my,'rgba(255,120,80,0.85)','miss');return;}
 if(userBorders.has(edge)){userBorders.delete(edge);playSFX('off');}
 else{userBorders.add(edge);playSFX('on');}
 renderGrid();
@@ -436,6 +447,12 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopBGM();e
 window.addEventListener('beforeunload',()=>{stopBGM();if(audioCtx)audioCtx.close();});
 
 init();
+
+// R791 R382-C: expose tap ripple system to window for verification + future shared use
+window.tapRipples = tapRipples;
+window.spawnTapRipple = spawnTapRipple;
+window.updateTapRipples = updateTapRipples;
+window.drawTapRipples = drawTapRipples;
 </script>
 <script src="/gz-analytics.js?v=20260914131001bi69" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->

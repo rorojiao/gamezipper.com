@@ -1209,6 +1209,42 @@
             });
             ctx.globalAlpha = 1;
         }
+
+        // R791 R382-C: tap ripple system (separate from particles to avoid interference with success feedback)
+        const tapRipples = [];
+        function spawnTapRipple(x, y, color, type) {
+            tapRipples.push({ x: x, y: y, life: 1, maxLife: type === 'locked' ? 0.45 : 0.32, color: color, type: type, r: type === 'locked' ? 16 : 10 });
+            if (tapRipples.length > 30) tapRipples.shift();
+        }
+        function updateTapRipples(dt) {
+            for (let i = tapRipples.length - 1; i >= 0; i--) {
+                const rp = tapRipples[i];
+                rp.life -= dt / rp.maxLife;
+                if (rp.life <= 0) tapRipples.splice(i, 1);
+            }
+        }
+        function drawTapRipples() {
+            for (let i = 0; i < tapRipples.length; i++) {
+                const rp = tapRipples[i];
+                const t = 1 - rp.life;
+                const radius = rp.r + t * (rp.type === 'locked' ? 24 : 14);
+                const alpha = rp.life * (rp.type === 'locked' ? 0.85 : 0.6);
+                ctx.globalAlpha = alpha;
+                ctx.strokeStyle = rp.color;
+                ctx.lineWidth = rp.type === 'locked' ? 3 : 2;
+                ctx.beginPath();
+                ctx.arc(rp.x, rp.y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                if (rp.type === 'locked' && rp.life > 0.6) {
+                    ctx.globalAlpha = alpha * 1.2;
+                    ctx.fillStyle = rp.color;
+                    ctx.beginPath();
+                    ctx.arc(rp.x, rp.y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.globalAlpha = 1;
+        }
         
         // ============================================================
         // DRAWING FUNCTIONS
@@ -2016,6 +2052,7 @@
             
             // Update particles
             updateParticles(dt);
+            updateTapRipples(dt);  // R791 R382-C: tap ripple decay
             
             // Settings gear rotation
             if (STATE.settingsAngle !== undefined) {
@@ -2051,6 +2088,7 @@
             }
             
             drawParticles();
+            drawTapRipples();  // R791 R382-C: overlay tap ripples last
         }
         
         function gameLoop(timestamp) {
@@ -2085,6 +2123,8 @@
         function handleClick(coords) {
             initAudio();
             resumeAudio();
+            // R791 R382-C: visible feedback at every click site so user knows their tap was registered
+            spawnTapRipple(coords.x, coords.y, 'rgba(255,200,100,0.6)', 'miss');
             
             // Check buttons based on screen
             switch (STATE.screen) {
@@ -2459,7 +2499,13 @@
         }
         
         init();
-        
+
+        // R791 R382-C: expose tap ripple system to window for verification + future shared use
+        window.tapRipples = tapRipples;
+        window.spawnTapRipple = spawnTapRipple;
+        window.updateTapRipples = updateTapRipples;
+        window.drawTapRipples = drawTapRipples;
+
     })();
     </script>
 
