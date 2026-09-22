@@ -639,12 +639,14 @@ function drawTutorial(){
 
 function draw(){
  ctx.clearRect(0,0,W,H);
- if(state==='menu'){drawMenuBG();return}
+ if(state==='menu'){drawMenuBG();drawTapRipples();return}
  drawBG();
  if(state==='playing'){
   drawHUD();drawSlots();drawCustomers();drawIngredientBar();
   drawParticles();drawFloatingTexts();drawTutorial();
  }
+ // R799 R382-C: draw ripples on top so they're visible in any state
+ drawTapRipples();
 }
 
 function drawMenuBG(){
@@ -779,15 +781,52 @@ window._BUY=function(key,cost,lvlId){
 };
 
 /* ===== INPUT ===== */
+/* ===== R799 R382-C: tap ripple feedback for silent-reject branches ===== */
+var tapRipples=[];
+function spawnTapRipple(x,y,color,type){
+ tapRipples.push({x:x,y:y,life:1,maxLife:type==='locked'?0.45:0.32,color:color||'rgba(255,180,80,0.7)',type:type||'miss',r:type==='locked'?16:10});
+ if(tapRipples.length>30)tapRipples.shift();
+}
+function updateTapRipples(dt){
+ for(var i=tapRipples.length-1;i>=0;i--){
+  tapRipples[i].life-=dt/tapRipples[i].maxLife;
+  if(tapRipples[i].life<=0)tapRipples.splice(i,1);
+ }
+}
+function drawTapRipples(){
+ if(!tapRipples.length)return;
+ ctx.save();
+ for(var i=0;i<tapRipples.length;i++){
+  var rp=tapRipples[i];
+  var prog=1-rp.life;
+  var radius=rp.r*(1+prog*2.5);
+  ctx.globalAlpha=rp.life*0.85;
+  ctx.strokeStyle=rp.color;
+  ctx.lineWidth=2.5;
+  ctx.shadowColor=rp.color;
+  ctx.shadowBlur=6;
+  ctx.beginPath();
+  ctx.arc(rp.x,rp.y,radius,0,Math.PI*2);
+  ctx.stroke();
+ }
+ ctx.restore();
+}
+
 function handlePointer(e){
  e.preventDefault();
  initAudio();
- if(state!=='playing')return;
  var rect=cvs.getBoundingClientRect();
  var px=(e.clientX-rect.left)*(W/rect.width);
  var py=(e.clientY-rect.top)*(H/rect.height);
-
- if(tutActive&&tutStep<3){return}
+ // R799 R382-C: spawn ripple for silent-reject branches BEFORE returning
+ if(state!=='playing'){
+  spawnTapRipple(px,py,'rgba(255,180,80,0.7)','miss');
+  return;
+ }
+ if(tutActive&&tutStep<3){
+  spawnTapRipple(px,py,'rgba(255,120,80,0.9)','locked');
+  return;
+ }
 
  for(var i=0;i<customers.length;i++){
   var c=customers[i];
@@ -826,7 +865,10 @@ var lastT=performance.now(),rafId=null;
 function loop(now){
  rafId=requestAnimationFrame(loop);
  var dt=Math.min((now-lastT)/1000,.1);lastT=now;
- updateGame(dt);draw();
+ updateGame(dt);
+ // R799 R382-C: tick ripple decay so menu-state ripples fade naturally
+ updateTapRipples(dt);
+ draw();
 }
 
 function cleanup(){
@@ -834,7 +876,7 @@ function cleanup(){
  stopBGM();if(audioCtx){audioCtx.close().catch(function(){});audioCtx=null}
 }
 
-/* ===== INIT ===== */
+window.tapRipples=tapRipples;window.spawnTapRipple=spawnTapRipple;/* ===== INIT ===== */
 function init(){
  cvs=document.getElementById('gc');ctx=cvs.getContext('2d');
  resize();

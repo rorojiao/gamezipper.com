@@ -771,6 +771,10 @@ function gameLoop(timestamp){
     drawFruit(currentFruit, true);
   }
 
+  // R799 R382-C: tick + draw tap ripples on top of game state
+  updateTapRipples(dt);
+  drawTapRipples();
+
   drawParticles(dt);
   drawScorePopups(dt);
 
@@ -792,6 +796,38 @@ function gameLoop(timestamp){
 }
 
 // ===== INPUT =====
+/* ===== R799 R382-C: tap ripple feedback for silent-reject branches ===== */
+var tapRipples=[];
+function spawnTapRipple(x,y,color,type){
+  tapRipples.push({x:x,y:y,life:1,maxLife:type==='locked'?0.45:0.32,color:color||'rgba(255,180,80,0.7)',type:type||'miss',r:type==='locked'?16:10});
+  if(tapRipples.length>30)tapRipples.shift();
+}
+function updateTapRipples(dt){
+  for(var i=tapRipples.length-1;i>=0;i--){
+    tapRipples[i].life-=dt/tapRipples[i].maxLife;
+    if(tapRipples[i].life<=0)tapRipples.splice(i,1);
+  }
+}
+function drawTapRipples(){
+  if(!tapRipples.length)return;
+  ctx.save();
+  for(var i=0;i<tapRipples.length;i++){
+    var rp=tapRipples[i];
+    var prog=1-rp.life;
+    var radius=rp.r*(1+prog*2.5);
+    ctx.globalAlpha=rp.life*0.85;
+    ctx.strokeStyle=rp.color;
+    ctx.lineWidth=2.5;
+    ctx.shadowColor=rp.color;
+    ctx.shadowBlur=6;
+    ctx.beginPath();
+    ctx.arc(rp.x,rp.y,radius,0,Math.PI*2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+window.tapRipples=tapRipples;window.spawnTapRipple=spawnTapRipple;
+
 function getPointerX(e){
   var rect = canvas.getBoundingClientRect();
   var x = e.clientX - rect.left;
@@ -807,6 +843,15 @@ canvas.addEventListener("pointerdown", function(e){
   e.preventDefault();
   pointerX = getPointerX(e);
   pointerDown = true;
+  // R799 R382-C: spawn ripple BEFORE silent-reject branches so user gets visible feedback
+  var rect = canvas.getBoundingClientRect();
+  var py = (e.clientY - rect.top) * (H / rect.height);
+  if(!(gameState === "playing" && canDrop && currentFruit)){
+    var rippleColor = (gameState !== "playing")
+      ? 'rgba(255,120,80,0.9)'   /* locked: clicked while not playing */
+      : (currentFruit ? 'rgba(255,180,80,0.7)' : 'rgba(255,180,80,0.7)');  /* miss */
+    spawnTapRipple(pointerX, py, rippleColor, gameState !== "playing" ? 'locked' : 'miss');
+  }
   if(gameState === "playing" && canDrop && currentFruit){
     dropFruit();
   }
