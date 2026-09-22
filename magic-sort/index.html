@@ -596,6 +596,7 @@ let sortedParticles = []; // {x,y,vx,vy,life,size} star particles from completed
 let bubbles = []; // {bx,by,vy,size,alpha,life} surface bubbles per bottle
 let bottleWobbles = []; // per-bottle wobble: { amp, freq, phase, decay }
 let bottleBounces = []; // per-bottle bounce: { scale, velocity }
+let bottleShakes = [];  // R800: per-bottle horizontal shake for invalid-pour feedback
 
 // ── Accessibility: prefers-reduced-motion ──
 // Users who set OS-level "reduce motion" get a calmer experience:
@@ -2686,7 +2687,13 @@ function canPour(from, to) {
 
 function executePour(from, to) {
   if (animating || !canPour(from, to)) {
-    if (!canPour(from, to) && bottles[from].length > 0 && from !== to) sfxError();
+    if (!canPour(from, to) && bottles[from].length > 0 && from !== to) {
+      sfxError();
+      // R800: light horizontal shake on attempted target so player gets
+      // visible (not just audible) "can't pour here" feedback. Matches
+      // App-Store-quality mobile puzzle patterns.
+      bottleShakes[to] = { amp: 4.5, freq: 22, phase: 0, decay: 0.84 + Math.random() * 0.04 };
+    }
     return;
   }
   const fc = topColor(from);
@@ -3299,9 +3306,16 @@ function drawBottle(cx, cy, bw, bh, bottle, isSelected, isPourSource, isPourTarg
     scaleY = 1 + (1 - bounce.scale) * 0.6;
   }
 
+  // R800: horizontal shake offset for invalid-pour visual feedback.
+  // Applied as translation BEFORE any other transform so all bottle paths
+  // (stroke, water layers, badge) shift together.
+  const shake = bottleShakes[bottleIndex];
+  const shakeX = shake ? shake.amp * Math.sin(shake.phase) : 0;
+
   X.save();
 
-  // Apply bounce transform
+  // Apply shake translation (invalidate-axis) + bounce transform
+  if (shakeX !== 0) X.translate(shakeX, 0);
   if (scaleX !== 1 || scaleY !== 1) {
     X.translate(cx, cy);
     X.scale(scaleX, scaleY);
@@ -5028,6 +5042,30 @@ function renderGame() {
       i
     );
 
+    // ── R800: Valid target highlight ──
+    // When a source bottle is selected, indicate which bottles can RECEIVE
+    // a pour via a soft pulsing teal "↓" arrow above the rim. Sort-of
+    // "obvious hint" without auto-solving — App Store quality UX.
+    if (!animating && selectedBottle >= 0 && selectedBottle !== i && !isSorted(i) && canPour(selectedBottle, i)) {
+      const arrowPulse = 0.55 + 0.45 * Math.sin(now * 0.007);
+      const alpha = 0.45 + arrowPulse * 0.45;
+      const arrowY = layout.cy[i] - layout.bh / 2 - 14;
+      const arrowCY = arrowY + (1 - arrowPulse) * 2; // gentle hover
+      X.save();
+      X.fillStyle = `rgba(78,205,196,${alpha})`;
+      X.shadowColor = `rgba(78,205,196,${alpha * 0.85})`;
+      X.shadowBlur = 8 + arrowPulse * 6;
+      X.beginPath();
+      // ↓ chevron drawn as filled triangle pointing down
+      const half = 7;
+      X.moveTo(layout.cx[i] - half, arrowCY - half / 2);
+      X.lineTo(layout.cx[i] + half, arrowCY - half / 2);
+      X.lineTo(layout.cx[i], arrowCY + half);
+      X.closePath();
+      X.fill();
+      X.restore();
+    }
+
     // ── Phase 3 fx: "Almost Sorted" indicator ──
     // When a bottle has 3 same-color on top (1 pour from complete), show a pulsing teal dot
     if (!animating && !isSorted(i)) {
@@ -5804,6 +5842,15 @@ function update(dt) {
     if (w.amp < 0.05) bottleWobbles[i] = null;
   }
 
+  // ── R800: Bottle shake physics (damped horizontal oscillation for invalid-pour feedback) ──
+  for (let i = 0; i < bottleShakes.length; i++) {
+    const s = bottleShakes[i];
+    if (!s || s.amp < 0.05) { bottleShakes[i] = null; continue; }
+    s.phase += 0.18;
+    s.amp *= s.decay;
+    if (s.amp < 0.05) bottleShakes[i] = null;
+  }
+
   // ── Bottle bounce physics (spring back to scale 1) ──
   for (let i = 0; i < bottleBounces.length; i++) {
     const b = bottleBounces[i];
@@ -6198,6 +6245,9 @@ function onTap(px, py) {
             sfxSelect();
             // Tap bounce effect
             bottleBounces[i] = { scale: 1.06, velocity: 0 };
+            // R800: light haptic on selection (touch polish — only fires when
+            // available so desktop / unsupported browsers silently skip).
+            if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) {}
             // Tutorial step 1 → 2: user selected a bottle
             if (tutorialStep === 1) { tutorialStep = 2; }
           }
