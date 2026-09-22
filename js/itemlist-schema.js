@@ -466,8 +466,8 @@ const ITEMLIST_SCHEMA = {
     {"@type":"ListItem","position":461,"url":"https://gamezipper.com/arrowsmith/","name":"Arrowsmith"},
     {"@type":"ListItem","position":462,"url":"https://gamezipper.com/giraffe-path/","name":"Giraffe Path"},
     {"@type":"ListItem","position":463,"url":"https://gamezipper.com/bishop-path/","name":"Bishop Path"},
-    {"@type":"ListItem","position":464,"url":"https://gamezipper.com/camel-path/","name":"Camel Path"}
+    {"@type":"ListItem","position":464,"url":"https://gamezipper.com/camel-path/","name":"Camel Path"},{"@type":"ListItem","position":465,"url":"https://gamezipper.com/zebra-path/","name":"Zebra Path"}
   ],
-  "numberOfItems":464,
+  "numberOfItems":465,
   "description":"465 free browser games you can play instantly"
 };
