@@ -419,11 +419,53 @@ if(!was&&isUnlocked(t))newly.push(t.name);
 });
 return newly;
 }
+/* ===== R801 R382-C: tap ripple feedback for canvas pointerdown silent-reject ===== */
+// Root cause: pointerdown fires 'if(!toyInstance||!toyInstance.down)return;' — when
+// the toy is not yet open OR the toy has no 'down' handler, the click is silently
+// absorbed. BI 30d: /antistress/ has 15 rage_click on 15 page_views (100% rage rate).
+// UX fix: spawn a colored ripple at click site so user always sees feedback.
+var tapRipples=[];
+function spawnTapRipple(x,y,color,type){
+  tapRipples.push({x:x,y:y,life:1,maxLife:type==='locked'?0.45:0.32,color:color||'rgba(255,180,80,0.7)',type:type||'miss',r:type==='locked'?16:10});
+  if(tapRipples.length>30)tapRipples.shift();
+}
+function updateTapRipples(dt){
+  for(var i=tapRipples.length-1;i>=0;i--){
+    tapRipples[i].life-=dt/tapRipples[i].maxLife;
+    if(tapRipples[i].life<=0)tapRipples.splice(i,1);
+  }
+}
+function drawTapRipples(){
+  if(!tapRipples.length)return;
+  ctx.save();
+  for(var i=0;i<tapRipples.length;i++){
+    var rp=tapRipples[i];
+    var prog=1-rp.life;
+    var radius=rp.r*(1+prog*2.5);
+    ctx.globalAlpha=rp.life*0.85;
+    ctx.strokeStyle=rp.color;
+    ctx.lineWidth=2.5;
+    ctx.shadowColor=rp.color;
+    ctx.shadowBlur=6;
+    ctx.beginPath();
+    ctx.arc(rp.x,rp.y,radius,0,Math.PI*2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+window.tapRipples=tapRipples;window.spawnTapRipple=spawnTapRipple;window.updateTapRipples=updateTapRipples;window.drawTapRipples=drawTapRipples;
+
 function startLoop(){
+var _rLastT=performance.now();
 function frame(){
-if(!toyInstance)return;
+var _now=performance.now();
+var _dt=Math.min(0.1,(_now-_rLastT)/1000);
+_rLastT=_now;
+updateTapRipples(_dt);
+if(!toyInstance){drawTapRipples();animId=requestAnimationFrame(frame);return;}
 toyInstance.update();
 toyInstance.draw();
+drawTapRipples();
 animId=requestAnimationFrame(frame);
 }
 frame();
@@ -434,9 +476,11 @@ const t=e.touches?e.touches[0]||e.changedTouches[0]:e;
 return{x:t.clientX-r.left,y:t.clientY-r.top};
 }
 gameCanvas.addEventListener('pointerdown',e=>{
-if(!toyInstance||!toyInstance.down)return;
+const _p=getPos(e);
+if(!toyInstance){spawnTapRipple(_p.x,_p.y,'rgba(255,180,80,0.7)','miss');return;} // R801: no-toy feedback (yellow = miss)
+if(!toyInstance.down){spawnTapRipple(_p.x,_p.y,'rgba(255,120,80,0.7)','locked');return;} // R801: toy w/o down handler (orange = locked)
 resumeAudio();
-toyInstance.down(getPos(e),e);
+toyInstance.down(_p,e);
 });
 gameCanvas.addEventListener('pointermove',e=>{
 if(!toyInstance||!toyInstance.move)return;
