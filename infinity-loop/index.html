@@ -529,6 +529,9 @@ function render(){
   ctx.fill();
   ctx.restore();
  }
+
+ // UX-OPT R802: tap ripples on top of particles
+ drawTapRipples(ctx);
 }
 
 function drawTile(ctx,px,py,size,tile,glow){
@@ -593,6 +596,7 @@ function animate(time){
  if(raf)raf=requestAnimationFrame(animate);
  var dt=16;
  updateParticles(dt);
+ updateTapRipples(dt);
  render();
 }
 
@@ -870,28 +874,73 @@ function showVictory(){
 }
 
 // --- INPUT ---
+// UX-OPT 2026-09-23 R802: tap ripple state (R799 family) for silent-reject feedback
+var tapRipples=[];
+function spawnTapRipple(cx,cy,color){
+ tapRipples.push({x:cx,y:cy,r:6,maxR:28,life:1.0,maxLife:450,color:color||'rgba(255,180,80,0.7)'});
+}
+function updateTapRipples(dt){
+ for(var i=tapRipples.length-1;i>=0;i--){
+  var r=tapRipples[i];
+  r.life-=dt/r.maxLife;
+  r.r=r.maxR*(1-r.life);
+  if(r.life<=0)tapRipples.splice(i,1);
+ }
+}
+function drawTapRipples(ctx){
+ for(var i=0;i<tapRipples.length;i++){
+  var r=tapRipples[i];
+  ctx.save();
+  ctx.globalAlpha=Math.max(0,r.life*0.85);
+  ctx.strokeStyle=r.color;
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.arc(r.x,r.y,r.r,0,Math.PI*2);
+  ctx.stroke();
+  ctx.restore();
+ }
+}
+
 function handlePointer(e){
- e.preventDefault();
- if(isAnimating)return;
- var rect=e.target.getBoundingClientRect();
- var scaleX=e.target.width/rect.width;
- var scaleY=e.target.height/rect.height;
- var x=(e.clientX-rect.left)*scaleX;
- var y=(e.clientY-rect.top)*scaleY;
- var sz=parseInt(canvas.style.width)/gridSize;
- var tx=Math.floor(x/sz),ty=Math.floor(y/sz);
- if(tx<0||tx>=gridSize||ty<0||ty>=gridSize)return;
- var tile=scrambled[ty][tx];
- if(tile.type===TILE_EMPTY)return;
- playSFX('rotate');
- isAnimating=true;
- tile.rotation=(tile.rotation+1)%4;
- tile.targetRotation=tile.rotation;
- moves++;
- document.getElementById('movesDisplay').textContent=moves;
- setTimeout(function(){isAnimating=false;},100);
- if(checkWin()){
-  setTimeout(showVictory,300);
+ try {
+  e.preventDefault();
+  var rect=canvas.getBoundingClientRect();
+  var scaleX=e.target.width/rect.width;
+  var scaleY=e.target.height/rect.height;
+  var cx=e.clientX-rect.left;
+  var cy=e.clientY-rect.top;
+  if(isAnimating){
+   // UX-OPT R802: animation lock — orange ripple
+   spawnTapRipple(cx,cy,'rgba(255,120,80,0.85)');
+   return;
+  }
+  var x=cx*scaleX;
+  var y=cy*scaleY;
+  var sz=parseInt(canvas.style.width)/gridSize;
+  var tx=Math.floor(x/sz),ty=Math.floor(y/sz);
+  if(tx<0||tx>=gridSize||ty<0||ty>=gridSize){
+   // UX-OPT R802: out of grid — yellow ripple
+   spawnTapRipple(cx,cy,'rgba(255,180,80,0.7)');
+   return;
+  }
+  var tile=scrambled[ty][tx];
+  if(tile.type===TILE_EMPTY){
+   // UX-OPT R802: empty tile — yellow ripple
+   spawnTapRipple(cx,cy,'rgba(255,180,80,0.7)');
+   return;
+  }
+  playSFX('rotate');
+  isAnimating=true;
+  tile.rotation=(tile.rotation+1)%4;
+  tile.targetRotation=tile.rotation;
+  moves++;
+  document.getElementById('movesDisplay').textContent=moves;
+  setTimeout(function(){isAnimating=false;},100);
+  if(checkWin()){
+   setTimeout(showVictory,300);
+  }
+ } catch(err) {
+  if(typeof console!=='undefined') console.log('handlePointer err:', err.message);
  }
 }
 
@@ -934,6 +983,10 @@ showScreen('menu');
 
 canvas=document.getElementById('gameCanvas');
 canvas.addEventListener('pointerdown',handlePointer);
+
+// UX-OPT 2026-09-23 R802: export tap ripple state for verification
+window.tapRipples=tapRipples;
+window.spawnTapRipple=spawnTapRipple;
 
 document.getElementById('muteBtn').addEventListener('click',function(){
  initAudio();

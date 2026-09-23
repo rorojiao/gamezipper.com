@@ -80,8 +80,9 @@ body{background:radial-gradient(ellipse at center,#2a2210 0%,#1a1408 40%,#0d0a04
 #game-canvas{display:block;width:100%;border-radius:12px;background:radial-gradient(ellipse at center,#1a1408 0%,#0d0a04 100%);border:1px solid rgba(201,168,74,.15)}
 
 .controls{display:flex;gap:16px;width:min(440px,95vw);justify-content:center;padding:8px 0 4px}
-.crank-btn{flex:1;max-width:120px;padding:16px 8px;border-radius:12px;border:2px solid rgba(201,168,74,.3);background:rgba(74,124,89,.15);color:#e8dcc0;font-family:inherit;font-size:20px;font-weight:700;cursor:pointer;transition:all .1s;display:flex;flex-direction:column;align-items:center;gap:4px}
+.crank-btn{flex:1;max-width:120px;padding:16px 8px;border-radius:12px;border:2px solid rgba(201,168,74,.3);background:rgba(74,124,89,.15);color:#e8dcc0;font-family:inherit;font-size:20px;font-weight:700;cursor:pointer;transition:background 0.1s ease,box-shadow 0.1s ease;display:flex;flex-direction:column;align-items:center;gap:4px}
 .crank-btn:active{background:rgba(201,168,74,.25);transform:scale(.96)}
+.crank-btn.pressed{background:rgba(201,168,74,.45);box-shadow:0 0 18px rgba(201,168,74,.6);transform:scale(.96)}
 .crank-btn .label{font-size:11px;color:#9e8e6e;font-weight:400}
 
 .dial-info{width:min(440px,95vw);display:flex;flex-direction:column;gap:6px;padding:8px 0}
@@ -195,11 +196,11 @@ body{background:radial-gradient(ellipse at center,#2a2210 0%,#1a1408 40%,#0d0a04
 <div id="gz-ad-below-canvas"></div>
 
     <div class="controls">
-      <button class="crank-btn" onclick="turnCrank(-1)">
+      <button class="crank-btn" onclick="turnCrank(-1,this)">
         <span>&#8634;</span>
         <span class="label">CCW</span>
       </button>
-      <button class="crank-btn" onclick="turnCrank(1)">
+      <button class="crank-btn" onclick="turnCrank(1,this)">
         <span>&#8635;</span>
         <span class="label">CW</span>
       </button>
@@ -347,9 +348,17 @@ function checkWin(){
   return true;
 }
 
-function turnCrank(dir){
+function turnCrank(dir, btn){
   if(state.won)return;
   initAudio();
+  // UX-OPT 2026-09-23 R802: apply .pressed class so gz-analytics.js dead_click detector
+  // (1.5s className snapshot diff) sees visual feedback. R381 pattern proven.
+  if(btn){
+    btn.classList.add('pressed');
+    setTimeout(function(){
+      if(btn && btn.classList) btn.classList.remove('pressed');
+    }, 1700);
+  }
   var lv=LEVELS[state.levelIdx];
   state.crankPos=((state.crankPos+dir)%lv.M+lv.M)%lv.M;
   state.moves++;
