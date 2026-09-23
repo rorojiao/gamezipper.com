@@ -6,7 +6,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { JSDOM } = require(path.join(process.cwd(), '../node_modules/jsdom'));
+const { JSDOM } = require('jsdom');
 
 const DIRS = [[2,3],[3,2],[2,-3],[3,-2],[-2,3],[-3,2],[-2,-3],[-3,-2]];
 
@@ -39,9 +39,9 @@ function bfsShortest(n, wallsSet, start, goal) {
 }
 
 async function main() {
-  // Read data.js + game.js as inline scripts
-  const dataJs = fs.readFileSync('data.js', 'utf-8');
-  const gameJs = fs.readFileSync('game.js', 'utf-8');
+  // Read data.js + game.js as inline scripts (cwd-agnostic via __dirname)
+  const dataJs = fs.readFileSync(path.join(__dirname, 'data.js'), 'utf-8');
+  const gameJs = fs.readFileSync(path.join(__dirname, 'game.js'), 'utf-8');
   const html = `<!DOCTYPE html><html><body><div id="screen-title" class="screen active"></div>
 <div id="screen-levels" class="screen"></div>
 <div id="screen-game" class="screen"></div>

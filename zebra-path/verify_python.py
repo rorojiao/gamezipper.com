@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 """Zebra Path — Python structural verification.
 
 Validates 30 levels have unique shortest zebra paths.
@@ -92,7 +93,7 @@ def find_all_shortest(n, walls_set, start, goal):
 
 
 def main():
-    with open('levels.json') as f:
+    with open(os.path.join(os.path.dirname(__file__), 'levels.json')) as f:
         data = json.load(f)
     levels = data['levels']
     pass_count = 0

@@ -144,7 +144,7 @@ function verifyStoredPath(n, wallsSet, start, goal, storedPath) {
 }
 
 function main() {
-  const data = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+  const data = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8'));
   const levels = data.levels;
   console.log(`Verifying ${levels.length} Bishop Path levels (Node.js independent)...\n`);
 

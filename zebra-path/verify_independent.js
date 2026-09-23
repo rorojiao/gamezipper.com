@@ -89,7 +89,7 @@ function findAllShortest(n, wallsSet, start, goal) {
 }
 
 function main() {
-  const data = JSON.parse(fs.readFileSync('levels.json', 'utf-8'));
+  const data = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf-8'));
   const levels = data.levels;
   let passCount = 0;
   const failures = [];

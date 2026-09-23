@@ -7,7 +7,7 @@ const vm = require('vm');
 // Read game.js
 let gameJs;
 try {
-  gameJs = fs.readFileSync('game.js', 'utf8');
+  gameJs = fs.readFileSync(__dirname + '/game.js', 'utf8');
 } catch (e) {
   console.error('Could not read game.js:', e.message);
   process.exit(1);
@@ -87,7 +87,7 @@ sandbox.self = sandbox;
 sandbox.globalThis = sandbox;
 
 // Stub window.BISHOP_PATH_DATA with the levels data
-const levelsData = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+const levelsData = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8'));
 sandbox.BISHOP_PATH_DATA = levelsData;
 
 try {

@@ -125,7 +125,7 @@ def verify_stored_path(n, walls_set, start, goal, stored_path):
 
 
 def main():
-    with open('levels.json') as f:
+    with open(__import__('os').path.join(__import__('os').path.dirname(__file__), 'levels.json')) as f:
         data = json.load(f)
 
     levels = data['levels']
