@@ -64,7 +64,10 @@ const nav = el(g, 'chapter-nav'), grid = el(g, 'level-grid');
 ck('levelsel: 5 tabs', nav.children.length === 5, String(nav.children.length));
 ck('levelsel: ch1 6 cells', grid.children.length === 6, String(grid.children.length));
 ck('levelsel: L1 unlocked', grid.children[0].classList.contains('unlocked'));
-ck('levelsel: L2 locked inert', !grid.children[1].classList.contains('unlocked') && typeof grid.children[1].onclick !== 'function');
+// Locked cells DO carry an onclick (locked-shake feedback, line 449 in index.html).
+// The correctness contract is: a locked click must NOT start the level.
+// We assert that explicitly via the next-ck; here just assert the visual lock state.
+ck('levelsel: L2 locked visual', !grid.children[1].classList.contains('unlocked'));
 grid.children[1].dispatch('click', { type: 'click' });
 ck('levelsel: locked click ignored', el(g, 'go-btn-wrap').style.display === 'none');
 // P1 fix proof: tabs actually switch chapters now (previously every tab -> ch5 empty grid)
