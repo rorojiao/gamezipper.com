@@ -1887,6 +1887,16 @@ function getClickTarget(mx, my) {
 function handleClick(mx, my) {
   initAudio();
   var target = getClickTarget(mx, my);
+  // UX-OPT 2026-09-24 R778 R381-E: "tap anywhere" affordance on menu screen —
+  // splash advertises "Tap anywhere to play" but menu screen silently rejects center clicks.
+  // Users rage-click on Luna mascot / empty area between mascot and PLAY button (canvas-y 200-440)
+  // because PLAY button is at canvas-y 477-529 (low on screen, far from where user expects).
+  // Fix: if no target on menu screen, treat as PLAY → civSelect (matches splash's promise).
+  if (!target && STATE.screen === 'menu') {
+    spawnTapRipple(mx, my, 'rgba(78,205,196,0.7)', 'play-affordance');
+    STATE.screen = 'civSelect';
+    return;
+  }
   // R791 R382-C: silent rejection → visible feedback so user knows click was registered
   if (!target) { spawnTapRipple(mx, my, 'rgba(255,180,80,0.7)', 'miss'); return; }
   // R791 R382-C: rotation lock (STATE.animating) — clicking another hex during the 300ms animation returns silently
