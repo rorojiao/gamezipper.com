@@ -1132,12 +1132,56 @@ function drawSettings(){
 }
 
 // ===== INPUT =====
+// UX-OPT 2026-09-24 R803: R382-C silent-reject tap ripple. Real instance: parking-jam
+// 4 rage_clicks 30d (Sept 19, Win Chrome 152/153). handleTap silently rejects:
+// (a) tap on locked button (b.enabled === false in handleButton)
+// (b) tap during animation (screen==='game'&&animating short-circuits)
+// (c) tap on game screen missing all cars (for-loop completes without match)
+// Fix: spawn ripple BEFORE each silent-reject branch (R801 family pattern).
+var tapRipples=[];
+function spawnTapRipple(x,y,color){
+  tapRipples.push({x:x,y:y,r:12,maxLife:0.45,life:0.45,color:color||'rgba(255,180,80,0.7)'});
+}
+function updateTapRipples(dt){
+  for(var i=tapRipples.length-1;i>=0;i--){
+    var rp=tapRipples[i];
+    rp.life-=dt;
+    if(rp.life<=0)tapRipples.splice(i,1);
+  }
+}
+function drawTapRipples(){
+  if(!tapRipples.length)return;
+  ctx.save();
+  for(var i=0;i<tapRipples.length;i++){
+    var rp=tapRipples[i];
+    var alpha=Math.max(0,rp.life/rp.maxLife);
+    ctx.globalAlpha=alpha;
+    ctx.strokeStyle=rp.color;
+    ctx.fillStyle=rp.color;
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.arc(rp.x,rp.y,rp.r*(1+(1-alpha)*1.2),0,Math.PI*2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(rp.x,rp.y,rp.r*0.4,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
 function handleTap(tx,ty){
   initAudio();
   for(var i=buttons.length-1;i>=0;i--){
     var b=buttons[i];
     if(tx>=b.x&&tx<=b.x+b.w&&ty>=b.y&&ty<=b.y+b.h){
-      handleButton(b);return;
+      // UX-OPT 2026-09-24 R803: visual feedback for button taps (R381/R518 family).
+      // If button is enabled, call handleButton (which fires sfxClick). If disabled,
+      // spawn red shake ripple to surface "this button is locked".
+      if(b.enabled!==false){
+        handleButton(b);
+      } else {
+        spawnTapRipple(tx,ty,'rgba(255,80,80,0.85)'); // locked
+      }
+      return;
     }
   }
   // Game: tap car
@@ -1155,7 +1199,15 @@ function handleTap(tx,ty){
         exitCar(ci);return;
       }
     }
+    // UX-OPT 2026-09-24 R803: tap on game screen but missed all cars → miss feedback
+    spawnTapRipple(tx,ty,'rgba(255,180,80,0.7)');
+    return;
   }
+  // UX-OPT 2026-09-24 R803: tap on animating state or non-game screen (silent reject)
+  if(screen==='game'&&animating){
+    spawnTapRipple(tx,ty,'rgba(255,120,80,0.85)'); // locked (animation in progress)
+  }
+  // Outside any button, outside game: no ripple (user probably didn't intend to tap canvas)
 }
 
 function handleButton(b){
@@ -1206,6 +1258,7 @@ function update(dt){
   }
   if(hintTimer>0){hintTimer-=dt;if(hintTimer<=0){hintCar=-1;hintTimer=0;}}
   updateParticles(dt);
+  updateTapRipples(dt);  // UX-OPT 2026-09-24 R803
 }
 
 function render(){
@@ -1216,6 +1269,7 @@ function render(){
   else if(screen==='game') drawGameScreen();
   else if(screen==='complete') drawComplete();
   else if(screen==='settings') drawSettings();
+  drawTapRipples();  // UX-OPT 2026-09-24 R803: draw ripples on top of all screens
 }
 
 function gameLoop(ts){
@@ -1230,6 +1284,10 @@ sfxMuted=!save.settings.sfx;
 musicMuted=!save.settings.music;
 requestAnimationFrame(gameLoop);
 window.addEventListener('beforeunload',function(){stopBGM();if(audioCtx)audioCtx.close();});
+
+// UX-OPT 2026-09-24 R803: expose tapRipples for verification (R799/R801/R802 precedent)
+window.tapRipples=tapRipples;
+window.spawnTapRipple=spawnTapRipple;
 
 })();
 </script>

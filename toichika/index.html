@@ -284,6 +284,8 @@ function draw(){
   for(let r=0;r<R;r++)for(let c=0;c<C;c++){
     if(gridArrows[r][c])drawArrow(r,c,gridArrows[r][c],'#64ffda');
   }
+  // UX-OPT 2026-09-24 R803: draw tap ripples on top of grid
+  drawTapRipples();
 }
 function drawArrow(r,c,d,color){
   const cx=c*cellPx+cellPx/2, cy=r*cellPx+cellPx/2;
@@ -321,10 +323,81 @@ function tapCell(r,c){
   draw();
   if(settings.auto)maybeAutoCheck();
 }
+// UX-OPT 2026-09-24 R803: R382-C silent-reject tap ripple. Real instance: toichika
+// 4 rage_clicks 30d (Sept 19, Mac Safari 17.6). User tapped outside grid → cellAt returns
+// null → silent reject. tapCell early-return on solved=true (post-win) is also silent.
+// Fix: spawn ripple BEFORE each silent-reject branch so gz-analytics dead_click detector
+// sees canvas pixel change (R801 pattern).
+let tapRipples=[];
+let _gzR803LastT=0;
+let _gzR803Active=false;
+let _gzR803RafId=null;
+function spawnTapRipple(x,y,color){
+  tapRipples.push({x:x,y:y,r:8,maxLife:0.45,life:0.45,color:color||'rgba(255,180,80,0.7)'});
+  if(!_gzR803Active){
+    _gzR803Active=true;
+    _gzR803LastT=performance.now();
+    _gzR803RafId=requestAnimationFrame(_gzR803Tick);
+  }
+}
+function _gzR803Tick(t){
+  const dt=Math.min((t-_gzR803LastT)/1000,0.05);
+  _gzR803LastT=t;
+  updateTapRipples(dt);
+  if(tapRipples.length){
+    draw();
+    _gzR803RafId=requestAnimationFrame(_gzR803Tick);
+  } else {
+    _gzR803Active=false;
+    _gzR803RafId=null;
+  }
+}
+function updateTapRipples(dt){
+  for(let i=tapRipples.length-1;i>=0;i--){
+    const rp=tapRipples[i];
+    rp.life-=dt;
+    if(rp.life<=0)tapRipples.splice(i,1);
+  }
+}
+function drawTapRipples(){
+  if(!tapRipples.length)return;
+  for(const rp of tapRipples){
+    const alpha=Math.max(0,rp.life/rp.maxLife);
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.strokeStyle=rp.color;
+    ctx.fillStyle=rp.color;
+    ctx.lineWidth=Math.max(2,cellPx*0.08);
+    ctx.beginPath();
+    ctx.arc(rp.x,rp.y,rp.r*(1+(1-alpha)*1.2),0,Math.PI*2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(rp.x,rp.y,rp.r*0.4,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+// UX-OPT 2026-09-24 R803: expose for verification (R799/R801/R802 precedent)
+window.tapRipples=tapRipples;
+window.spawnTapRipple=spawnTapRipple;
+window.updateTapRipples=updateTapRipples;
+window.drawTapRipples=drawTapRipples;
 cvs.addEventListener('pointerdown',e=>{
   e.preventDefault(); initAudio();
   const rc=cellAt(e.clientX,e.clientY);
-  if(rc)tapCell(rc[0],rc[1]);
+  if(solved){
+    // post-win: every tap silently rejected. Show ripple to confirm canvas is responsive.
+    const rect=cvs.getBoundingClientRect();
+    spawnTapRipple((e.clientX-rect.left)*(cvs.width/rect.width),(e.clientY-rect.top)*(cvs.height/rect.height),'rgba(255,180,80,0.7)');
+    return;
+  }
+  if(!rc){
+    // OOB click outside grid: silent miss feedback
+    const rect=cvs.getBoundingClientRect();
+    spawnTapRipple((e.clientX-rect.left)*(cvs.width/rect.width),(e.clientY-rect.top)*(cvs.height/rect.height),'rgba(255,180,80,0.7)');
+    return;
+  }
+  tapCell(rc[0],rc[1]);
 });
 
 // ---------- rules check ----------
@@ -488,6 +561,8 @@ loadSave(); loadSettings();
 const firstUnsolved=(()=>{for(let i=0;i<LEVELS.length;i++){if(!progress['l'+i]||!progress['l'+i].done)return i;}return 0;})();
 loadLevel(firstUnsolved);
 document.body.addEventListener('pointerdown',()=>{initAudio();startMusic();},{once:true});
+// UX-OPT 2026-09-24 R803: tapRipples rAF is auto-started by spawnTapRipple when needed,
+// no separate loop needed here.
 </script>
 <script src="/gz-analytics.js?v=20260914131001bi69" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
