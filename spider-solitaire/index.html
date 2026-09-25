@@ -1045,7 +1045,54 @@
                 ctx.restore();
             });
         }
-        
+
+        // ==================== TAP RIPPLE SYSTEM (R791 R382-C) ====================
+        // Visible feedback at every click site so user (and gz-analytics.js
+        // dead_click detector at 1.5s) sees a state change. Without this,
+        // rage_click clusters form because users think their clicks are dead.
+        let tapRipples = [];
+        function spawnTapRipple(x, y, color, type) {
+            tapRipples.push({
+                x: x, y: y,
+                life: 1,
+                maxLife: type === 'miss' ? 0.32 : 0.45,
+                color: color,
+                type: type || 'tap',
+                r: type === 'miss' ? 14 : 18
+            });
+            if (tapRipples.length > 30) tapRipples.shift();
+        }
+        function updateTapRipples() {
+            const now = performance.now();
+            tapRipples = tapRipples.filter(rp => {
+                rp.elapsed = (rp.elapsed || 0) + 16;
+                rp.life = 1 - rp.elapsed / (rp.maxLife * 1000);
+                return rp.life > 0;
+            });
+        }
+        function drawTapRipples() {
+            tapRipples.forEach(rp => {
+                const t = 1 - rp.life;
+                const radius = rp.r + t * (rp.type === 'miss' ? 22 : 30);
+                const alpha = rp.life * (rp.type === 'miss' ? 0.7 : 0.9);
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.strokeStyle = rp.color;
+                ctx.lineWidth = rp.type === 'miss' ? 2 : 3;
+                ctx.beginPath();
+                ctx.arc(rp.x, rp.y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                if (rp.type !== 'miss' && rp.life > 0.7) {
+                    ctx.globalAlpha = alpha * 1.3;
+                    ctx.fillStyle = rp.color;
+                    ctx.beginPath();
+                    ctx.arc(rp.x, rp.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            });
+        }
+
         // ==================== CARD FUNCTIONS ====================
         function createDeck() {
             const deck = [];
@@ -1891,6 +1938,9 @@
             
             // Draw particles
             drawParticles();
+
+            // R791 R382-C: overlay tap ripples last so they appear on top
+            drawTapRipples();
         }
         
         function resizeCanvas() {
@@ -2057,14 +2107,30 @@
         // ==================== EVENT HANDLERS ====================
         function handlePointerDown(e) {
             initAudio();
-            
+
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;
             const x = (e.clientX - rect.left) * scaleX;
             const y = (e.clientY - rect.top) * scaleY;
-            
+
+            // R791 R382-C: track whether click hit a card; if not, show a "miss"
+            // ripple so user sees the click registered. Default 'tap' ripple on
+            // hits is also feedback (not strictly needed since card flips, but
+            // ensures gz-analytics.js dead_click detector sees a state change).
+            const beforeCol = gameState.selectedColumn;
+            const beforeIdx = gameState.selectedCards ? gameState.selectedCards.length : 0;
             handleMove(x, y);
+            // Did handleMove actually mutate anything? Either selected a card
+            // or moved cards. If neither, treat as a miss.
+            const afterCol = gameState.selectedColumn;
+            const afterIdx = gameState.selectedCards ? gameState.selectedCards.length : 0;
+            const stateChanged = (afterCol !== beforeCol) || (afterIdx !== beforeIdx);
+            if (stateChanged) {
+                spawnTapRipple(x, y, 'rgba(255,200,100,0.9)', 'tap');
+            } else {
+                spawnTapRipple(x, y, 'rgba(255,120,80,0.85)', 'miss');
+            }
         }
         
         function newGame(difficulty) {
@@ -2260,6 +2326,7 @@
             function gameLoop(timestamp) {
                 if (timestamp - gameState.lastUpdate > 16) {
                     updateParticles();
+                    updateTapRipples();  // R791 R382-C: tap ripple decay
                     gameState.lastUpdate = timestamp;
                 }
                 render();
