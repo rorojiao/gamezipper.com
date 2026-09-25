@@ -1406,6 +1406,25 @@ animate(0);
 // ============================================================
 // UI BUTTON EVENTS
 // ============================================================
+// UX-OPT 2026-09-25 R781 R381-E: menu-overlay backdrop click → start game.
+// Splash screen promises "Tap anywhere to play" but menu requires clicking the
+// small PLAY button. iPhone user 2026-09-21 rage-clicked (199-220, 249-286)
+// 8 times in 30s after splash dismissed, never finding PLAY at (130-260, 425-467).
+// Fix: click anywhere on menu-overlay (not on a button) starts the game, matching
+// the splash "tap anywhere" affordance. Backdrop tap doesn't dismiss to level-select
+// — it goes straight to PLAY (more intuitive default than LEVELS).
+document.getElementById('menu-overlay').addEventListener('click', (e) => {
+  if (e.target.closest('button')) return;  // button clicks handled by their own listeners
+  // Source of truth: menu-overlay visibility. gameState is IIFE-scoped (not on window).
+  if (document.getElementById('menu-overlay').classList.contains('hidden')) return;
+  // Splash dismissal leaves splash pointer-events:none, letting the same click
+  // bubble to menu-overlay. Filter: skip if splash still exists.
+  const splash = document.getElementById('splash-screen');
+  if (splash) return;
+  const progress = getProgress();
+  const level = progress.maxLevel || 1;
+  startLevel(level);
+});
 document.getElementById('play-btn').addEventListener('click', () => {
   const progress = getProgress();
   const level = progress.maxLevel || 1;
