@@ -835,6 +835,17 @@
   function loadAdSenseAd(container, slotId) {
     slotId = slotId || 'auto';
     return new Promise(function(resolve) {
+      // R817 2026-09-25: skip dynamic inject if container already has a static <ins> child.
+      // Index.html now pre-places a static <ins> inside gz-home-banner / gz-home-banner-2 (with
+      // data-gz-r817="1" marker). Without this guard, the line below would wipe the static ins
+      // before AdSense can fill it. The observer (initStaticInsFillObserver) picks up static
+      // <ins> fills via standard data-adsbygoogle-status polling — dynamic inject is not needed.
+      if (container && container.querySelector('ins.adsbygoogle:not([data-gz-dynamic-adsense])')) {
+        // Static <ins> already exists. Mark container as filled if observer detects a fill later;
+        // for now just resolve so callers (showHomepageBanner etc.) don't wait on a phantom inject.
+        setTimeout(resolve, 500);
+        return;
+      }
       // v5.28: Force classic adsbygoogle.js (no ?client= param) so push() actually works
       // for dynamically-added ins tags. Auto Ads (page-level, loaded by index.html) keeps
       // running in parallel — they use different request pipelines and don't conflict.
