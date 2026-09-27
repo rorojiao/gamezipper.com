@@ -334,8 +334,12 @@ const info=getNextUnlockInfo();
 if(info&&info.toys.includes(toy.name)){
 card.title=`Try ${info.threshold-info.current} more toy${info.threshold-info.current>1?'s':''} to unlock`;
 }
-// 2026-08-13 R428: locked toys still fire click bubbles — give visible rejection (R382 sub-case C pattern)
-card.addEventListener('click',()=>{card.classList.remove('shake');void card.offsetWidth;card.classList.add('shake');setTimeout(()=>card.classList.remove('shake'),600);
+// UX-OPT 2026-09-27 R816: R428 had 600ms shake timeout which is BELOW the 1.5s dead_click detector window
+// (gz-analytics.js L414-424). After shake removed at 600ms, snapClass == nowClass at 1.5s check → dead_click fires.
+// BI 7d real users: 2 dead_clicks on DIV.toy-card locked (Sep 22 + Sep 23 from 2 different users).
+// Fix: extend timeout to 1700ms (≥ 1.5s + buffer per R381 proven pattern). Also keep .shake class in the
+// style for at least 1.5s for visual continuity. 2026-08-13 R428: locked toys still fire click bubbles — give visible rejection (R382 sub-case C pattern)
+card.addEventListener('click',()=>{card.classList.remove('shake');void card.offsetWidth;card.classList.add('shake');setTimeout(()=>card.classList.remove('shake'),1700);
   if(info&&info.toys.includes(toy.name))showToast('Try '+(info.threshold-info.current)+' more toy'+((info.threshold-info.current)>1?'s':'')+' to unlock '+toy.name+'.');
   else showToast('Try more toys to unlock '+toy.name+'.');
 });
