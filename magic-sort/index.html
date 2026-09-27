@@ -6993,19 +6993,25 @@ requestAnimationFrame(gameLoop);
       }
     } catch(e){}
   }
+  // R825 (2026-09-27): switch trigger from "level-index % 3 === 0" to per-session
+  // completion count. Original R757 rule never fired in 30d BI (only 2 completes
+  // total, neither reached lv=3). Per-session counter fires on every completion;
+  // GZInterstitial.canShowAd('commercial_break') enforces 60s cooldown + global
+  // daily/session caps, so user is never spammed even if every complete fires here.
+  // Skip first complete per session (R757: avoid ad before player is engaged).
+  var __msCBSessionCompletes = 0;
   window.addEventListener('level-complete', function(ev){
     try {
       var d = (ev && ev.detail) || {};
       var lv = d.level;
       if (typeof lv !== 'number' || isNaN(lv)) return;
-      // Gate: every 3rd level only (L0/3/6/9/...). Skip first 2 levels
-      // to avoid showing an interstitial before the player is engaged.
-      if (lv <= 0) return;
-      if (lv % 3 !== 0) return;
+      __msCBSessionCompletes++;
+      if (__msCBSessionCompletes < 2) return; // skip 1st complete per session
+      if (__msCBSessionCompletes > 12) return; // hard cap: stop firing after 12 completes/session (well past daily-max)
       _pushBreak(lv, d.stars, d.moves);
     } catch(e){}
   });
-  try { console.log('[MS-cb-trigger] ready (interval=3, R757 bridged to GZInterstitial)'); } catch(e){}
+  try { console.log('[MS-cb-trigger] ready (per-session, R825 rate, R757 bridged to GZInterstitial)'); } catch(e){}
 })();
 </script>
 
