@@ -638,6 +638,8 @@ let menuCachedCols = 0;
 let menuSectionOffsets = null;
 let hoverBtn = -1;
 let splashFooterLink = null;
+// R857: Share button rect on splash — set each render, hit-tested in onTap()
+let splashShareBtn = null;
 let streakChipHit = null;  // R526: tappable streak chip rect (set during renderGame)
 
 // ─── Level Transition (smooth fade + scale between levels) ───
@@ -1367,28 +1369,79 @@ let levelStartTime = 0;
 let timerPausedAt = 0; // timestamp when timer was paused, 0 = not paused
 
 // ─── Web Share API ───
-async function shareResult() {
-  // [MS-tracker R643] share button tap (Web Share API or clipboard fallback)
-  try { window.__msTrack && window.__msTrack('ms_share_used', { lv: currentLevel + 1, hasNative: !!navigator.share, stars: levelStars[currentLevel] || 1 }); } catch(e){}
-  const stars = levelStars[currentLevel] || 1;
-  const lv = currentLevel + 1;
-  // Calculate progress for social hook
+// R857: unified share builder so splash + win overlay + menu all use the same
+// text and the same ms_share_used tracking schema.
+function _buildShareText(opts) {
+  const ctx = opts || {};
+  const lv = typeof ctx.lv === "number" ? ctx.lv : currentLevel + 1;
+  const stars = ctx.stars || (levelStars[currentLevel] || 1);
+  // R857: use a non-shadowing local name to avoid TDZ on outer `moves` let
+  const movesCount = typeof ctx.moves === "number" ? ctx.moves : moves;
   const totalCompleted = Object.keys(levelStars).length;
-  const pct = Math.round((totalCompleted / TOTAL_LEVELS) * 1000) / 10; // 1 decimal
+  const pct = Math.round((totalCompleted / TOTAL_LEVELS) * 1000) / 10;
   const pctStr = pct < 0.1 ? "<0.1" : pct.toFixed(1);
   const streakLine = streakCount >= 2 ? "🔥 " + streakCount + "-day streak!\n" :
                      streakCount === 1 ? "🔥 Started my daily streak!\n" : "";
   const pctLine = totalCompleted >= 1 ? ("🏆 " + totalCompleted + "/" + TOTAL_LEVELS.toLocaleString() + " sorted (" + pctStr + "%)\n") : "";
-  const text = `🧪 I just beat Level ${lv} on Magic Sort!\n` +
-               `${"⭐".repeat(stars)} (${moves} moves)\n` +
-               pctLine +
-               streakLine +
-               `Can you beat me? gamezipper.com/magic-sort/`;
-  if (navigator.share) {
-    try { await navigator.share({ title: `Magic Sort — Level ${lv}`, text, url: "https://gamezipper.com/magic-sort/" }); } catch(e){}
-  } else if (navigator.clipboard) {
-    try { await navigator.clipboard.writeText(text); sfxClick(); } catch(e){}
+  if (ctx.source === "splash") {
+    // Splash hook — discovery line, no level-specific stats (user hasn't played yet)
+    return `🧪 I'm sorting 220,000 water color puzzles on Magic Sort — 95+ achievements, 820+ difficulty tiers.\n` +
+           `Can you beat my score? gamezipper.com/magic-sort/`;
   }
+  if (ctx.source === "menu") {
+    // Menu hook — generic progress blurb
+    return `🧪 Magic Sort — water color sorting puzzle with 220,000 levels.\n` +
+           pctLine +
+           `Try it: gamezipper.com/magic-sort/`;
+  }
+  // win (default)
+  return `🧪 I just beat Level ${lv} on Magic Sort!\n` +
+         `${"⭐".repeat(stars)} (${movesCount} moves)\n` +
+         pctLine +
+         streakLine +
+         `Can you beat me? gamezipper.com/magic-sort/`;
+}
+
+async function shareResult(opts) {
+  const ctx = opts || {};
+  const source = ctx.source || "win";
+  // [MS-tracker R857] unified share tracking — source param tells us which surface
+  try { window.__msTrack && window.__msTrack('ms_share_used', {
+    source: source,
+    lv: currentLevel + 1,
+    hasNative: !!navigator.share,
+    stars: levelStars[currentLevel] || 1,
+    completedLevels: Object.keys(levelStars).length
+  }); } catch(e){}
+  const text = _buildShareText(ctx);
+  const url = "https://gamezipper.com/magic-sort/";
+  const title = source === "splash" ? "Magic Sort — 220,000 water color puzzles"
+              : source === "menu"  ? "Magic Sort — water color sorting puzzle"
+              : `Magic Sort — Level ${currentLevel + 1}`;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text, url });
+      // R857: confirm to user that share fired (was silent before)
+      try { window.__msTrack && window.__msTrack('ms_share_native_done', { source }); } catch(e){}
+      return;
+    } catch(e){ /* user cancelled — fall through to clipboard */ }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text + "\n" + url);
+      try { window.__msTrack && window.__msTrack('ms_share_clipboard_done', { source }); } catch(e){}
+      // R857: visible toast — was silent before, so user thought nothing happened
+      toastMsg = { text: "🔗 Link copied! Share it with friends", timer: 160, color: "#a29bfe" };
+      sfxClick();
+      return;
+    } catch(e){}
+  }
+  // Last-resort fallback: open Twitter intent with the text pre-filled
+  try {
+    const tw = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(url);
+    window.open(tw, "_blank", "noopener,noreferrer");
+    try { window.__msTrack && window.__msTrack('ms_share_twitter_fallback', { source }); } catch(e){}
+  } catch(e){}
 }
 
 // ─── Daily Challenge ───
@@ -3952,6 +4005,18 @@ function renderSplash() {
     drawButton(W / 2 - randomW / 2, nextBtnY, randomW, 42, "🎲  Random Level", hoverBtn === 5, true);
     nextBtnY += 42 + 10;
 
+    // R857: Share button — visible on the highest-traffic surface (splash) so
+    // every visitor can share, not just the <0.1% who reach the win overlay.
+    // Note: rect stored BEFORE nextBtnY += 42+10 below (mirrors FooterLink pattern)
+    // primary=true makes it solid purple so it's visible against dark splash bg
+    // (non-primary buttons use rgba(255,255,255,0.08) which is invisible on dark bg).
+    const shareW = Math.min(200, W * 0.55);
+    const shareY = nextBtnY;
+    drawButton(W / 2 - shareW / 2, shareY, shareW, 42, "🔗  Share Magic Sort", hoverBtn === 6, true);
+    nextBtnY += 42 + 10;
+    // Store share button rect for click handler (set each render, matches splashFooterLink pattern)
+    splashShareBtn = { x: W / 2 - shareW / 2, y: shareY, w: shareW, h: 42 };
+
     // Stats summary line on splash
     const splashCompleted = Object.keys(levelStars).length;
     if (splashCompleted > 0) {
@@ -3993,6 +4058,7 @@ function renderSplash() {
     if (lastPlayedLevel > 0) _nextBtnY += 42 + 10;
     _nextBtnY += 42 + 10; // Daily Challenge row
     _nextBtnY += 42 + 10; // Random Level row
+    _nextBtnY += 42 + 10; // R857: Share button row
     X.globalAlpha = hintBt * (0.35 + 0.25 * pulse);
     X.fillStyle = "#a29bfe";
     X.font = "500 11px 'Nunito',sans-serif";
@@ -6010,10 +6076,17 @@ function onTap(px, py) {
         initLevel(pick);
       }
     }
+    nextBtnY += 42 + 10;
+    // R857: Share button on splash — every visitor can share, even before first level.
+    // Bumped nextBtnY first so the share rect lives below Random Level.
+    if (splashShareBtn && hitTest(px, py, splashShareBtn.x, splashShareBtn.y, splashShareBtn.w, splashShareBtn.h) && splashTimer >= 0.8) {
+      shareResult({ source: 'splash' });
+      return;
+    }
     // [R643] Splash tap-anywhere fallback: if user tapped in the dead-zone above
     // the buttons (water drop icon area, y < by) and splashTimer has elapsed,
     // treat it as PLAY tap. Eliminates rage_click clusters at y=141-144 in BI.
-    else if (py < by && splashTimer >= 0.8) {
+    if (py < by && splashTimer >= 0.8) {
       sfxClick();
       state = "menu";
       menuScrollY = 0;
@@ -6345,7 +6418,7 @@ function onTap(px, py) {
     }
     // Share button (index 2)
     if (hitTest(px, py, bsX + bIdx * (wBtnW + wBtnGap), wBy, wBtnW, wBtnH)) {
-      shareResult(); return;
+      shareResult({ source: 'win' }); return;
     }
     bIdx++;
     // Menu button (index 3)
