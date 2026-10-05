@@ -649,12 +649,28 @@ function updateHUD(){
   if(!tray||tray.__gzCoinTapBound)return;
   tray.__gzCoinTapBound=true;
   var _to=null;
+  // UX-OPT 2026-10-05 R847: CAPTURE phase listener captures coin index BEFORE
+  // updateTray() destroys and re-creates the DOM. Then bubble listener applies
+  // .coin-tapped to the NEW coin at the same index. This handles both the
+  // text-node click bug (R527 had e.target.closest('.coin') returning null on
+  // Text nodes) AND the re-render-destroys-node race.
   tray.addEventListener('click',function(e){
-    var c=e.target.closest('.coin');
-    if(!c||!tray.contains(c))return;
-    c.classList.add('coin-tapped');
-    clearTimeout(_to);
-    _to=setTimeout(function(){if(c&&c.classList)c.classList.remove('coin-tapped');},1700);
+    var c=e.target;
+    while(c&&c!==tray&&!(c.classList&&c.classList.contains('coin')))c=c.parentNode;
+    if(!c||c===tray)return;
+    var idx=Array.prototype.indexOf.call(tray.children,c);
+    if(idx>=0) tray.__gzLastCoinIdx=idx;
+  },true);
+  tray.addEventListener('click',function(){
+    if(typeof tray.__gzLastCoinIdx==='number'){
+      var just=tray.children[tray.__gzLastCoinIdx];
+      tray.__gzLastCoinIdx=null;
+      if(just){
+        just.classList.add('coin-tapped');
+        clearTimeout(_to);
+        _to=setTimeout(function(){if(just&&just.classList)just.classList.remove('coin-tapped');},1700);
+      }
+    }
   });
 })();
 function updateTray(){

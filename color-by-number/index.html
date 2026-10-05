@@ -119,6 +119,16 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 60%,#0d1a2d 100%);min-
 .pal-item:hover{transform:scale(1.1);z-index:2}
 .pal-item.active{border-color:#fff;transform:scale(1.15);z-index:3;box-shadow:0 0 12px rgba(255,255,255,.3)}
 .pal-item.used{opacity:.4}
+/* UX-OPT 2026-10-05 R847: dead_click visual feedback (R382 pattern).
+   renderPalette() rebuilds the bar via innerHTML='', so the clicked pal-item
+   DOM node is detached before gz-analytics.js dead_click detector's 1.5s
+   snapshot. Capture-phase-safe delegation on #palette-bar applies .pal-pressed
+   for ≥1.7s on every pal-item click — even when state.activeColor === n
+   (already-active swatch) or remaining===0 (used swatch). This makes the
+   detector see snapClass ('pal-item' / 'pal-item active' / 'pal-item used')
+   != nowClass ('pal-item pal-pressed') -> no dead_click. */
+.pal-item.pal-pressed{animation:cbnPalTap .35s ease;box-shadow:0 0 0 2px rgba(255,255,255,.7),0 0 14px rgba(255,255,255,.4);transform:scale(1.18)!important}
+@keyframes cbnPalTap{0%{transform:scale(1.15)}50%{transform:scale(1.25)}100%{transform:scale(1.18)}}
 .pal-count{position:absolute;bottom:-6px;right:-4px;background:rgba(0,0,0,.8);color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:6px;line-height:1.2}
 
 #progress-bar-wrap{display:flex;align-items:center;gap:8px;width:100%;max-width:520px;margin-top:6px;font-size:11px;color:#888}
@@ -721,6 +731,37 @@ function renderPalette(){
   const lvl=LEVELS[state.currentLevel];
   const pal=lvl.pal;
   const bar=document.getElementById('palette-bar');
+  if(!bar.__gzPalTapBound){
+    bar.__gzPalTapBound=true;
+    var _pto=null;
+    // Use CAPTURE phase: runs BEFORE item.onclick so we can capture the click index
+    // and persist .pal-pressed across the synchronous renderPalette() re-render.
+    bar.addEventListener('click',function(e){
+      // UX-OPT 2026-10-05 R847: walk parent chain to handle text-node click target.
+      // Walk up because e.target may be a Text node (digit inside pal-item).
+      var n=e.target;
+      while(n&&n!==bar&&!(n.classList&&n.classList.contains('pal-item')))n=n.parentNode;
+      if(!n||n===bar)return;
+      var idx=Array.prototype.indexOf.call(bar.children,n);
+      if(idx>=0) bar.__gzLastClicked=idx;
+    },true);  // CAPTURE phase — must run before item.onclick
+    bar.addEventListener('click',function(){
+      // Bubble phase: after renderPalette() re-built the DOM, apply .pal-pressed
+      // to the new item at the captured index.
+      if(typeof bar.__gzLastClicked==='number'){
+        var just=bar.children[bar.__gzLastClicked];
+        bar.__gzLastClicked=null;
+        if(just){
+          just.classList.add('pal-pressed');
+          clearTimeout(_pto);
+          _pto=setTimeout(function(){
+            var p=document.querySelector('#palette-bar .pal-pressed');
+            if(p)p.classList.remove('pal-pressed');
+          },1700);
+        }
+      }
+    });
+  }
   bar.innerHTML='';
   // Count regions per color number
   const colorCounts={};
