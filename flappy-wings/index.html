@@ -19,12 +19,19 @@ html,body{padding-top:28px;width:100%;min-height:100%;overflow-y:auto;overflow-x
 canvas{display:block;width:100%;max-width:800px;max-height:calc(100vh - 60px);margin:0 auto;}
 
 /* ===== Splash BG ===== */
-#splash-screen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:url('splash-bg.webp') center/cover no-repeat;transition:opacity 0.5s ease}
+#splash-screen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:url('splash-bg.webp') center/cover no-repeat;transition:opacity 0.3s ease;cursor:pointer}
 #splash-screen.fade-out{opacity:0;pointer-events:none}
 #splash-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.6) 100%)}
 #splash-screen h1{position:relative;z-index:1;font-size:clamp(28px,8vw,52px);font-weight:900;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,0.8),0 0 40px rgba(0,0,0,0.5);letter-spacing:2px;text-align:center;padding:0 20px;font-family:'Segoe UI',system-ui,sans-serif}
 #splash-screen .splash-sub{position:relative;z-index:1;color:rgba(255,255,255,0.85);font-size:clamp(14px,3vw,18px);margin-top:16px;text-shadow:0 1px 8px rgba(0,0,0,0.6);letter-spacing:1px}
-#splash-screen .splash-hint{position:relative;z-index:1;color:rgba(255,255,255,0.5);font-size:12px;margin-top:40px;animation:pulse 2s ease-in-out infinite}
+/* UX-OPT 2026-10-05 R853: add prominent PLAY button on splash. R757 added tap ripple, R683 auto-flap,
+   but splash had no clear UI affordance. 1 user rage-clicked 69x at (205,311) over 90s (Pixel 10 mobile
+   Chrome 154) — confused, no visible feedback. Big button + pulse makes action impossible to miss. */
+#splash-screen .splash-btn{position:relative;z-index:1;margin-top:36px;background:linear-gradient(135deg,#4466dd,#6688ff);color:#fff;font-size:clamp(20px,5vw,28px);font-weight:bold;padding:18px 48px;border-radius:14px;border:3px solid rgba(255,255,255,0.4);box-shadow:0 4px 20px rgba(68,102,221,0.5),0 0 40px rgba(102,136,255,0.3);cursor:pointer;touch-action:manipulation;animation:splash-btn-pulse 1.5s ease-in-out infinite;letter-spacing:1px;font-family:'Segoe UI',system-ui,sans-serif;text-shadow:0 1px 3px rgba(0,0,0,0.3)}
+#splash-screen .splash-btn:hover{background:linear-gradient(135deg,#5577ee,#7799ff);transform:scale(1.05)}
+#splash-screen .splash-btn:active{transform:scale(0.96)}
+@keyframes splash-btn-pulse{0%,100%{box-shadow:0 4px 20px rgba(68,102,221,0.5),0 0 40px rgba(102,136,255,0.3)}50%{box-shadow:0 4px 30px rgba(68,102,221,0.7),0 0 60px rgba(102,136,255,0.5)}}
+#splash-screen .splash-hint{position:relative;z-index:1;color:rgba(255,255,255,0.85);font-size:clamp(13px,3vw,15px);margin-top:24px;animation:pulse 2s ease-in-out infinite;text-shadow:0 1px 4px rgba(0,0,0,0.6);font-weight:500}
 @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
 h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;padding:0;margin:-1px}</style>
  <script defer src="../game-audio.js?v=R449-flat"></script>
@@ -194,7 +201,7 @@ function gzShare(score){
 <body>
 <nav id="gz-topnav" style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:8px 16px;display:flex;justify-content:center;align-items:center;position:sticky;top:0;z-index:9999"><a href="https://gamezipper.com/" style="color:#fff;text-decoration:none;font-weight:bold;font-size:14px;animation:pulse-glow 2.5s ease-in-out infinite;display:inline-flex;align-items:center;gap:6px">&#x1F3AE; GameZipper — More Free Games</a></nav>
 <h1 class="gz-sr-only">Flappy Wings - Free Online Flying Game</h1>
-<div id="splash-screen"><h2>Play Flappy Wings Online Free - Bird Fly Game</h2><div class="splash-sub"> Free Online Game</div><div class="splash-hint">Tap anywhere to play</div></div>
+<div id="splash-screen"><h2>Play Flappy Wings Online Free - Bird Fly Game</h2><div class="splash-sub"> Free Online Game</div><button class="splash-btn" type="button">▶ PLAY</button><div class="splash-hint">Tap anywhere to play</div></div>
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;font-family:sans-serif;animation:pulse-glow 2.5s ease-in-out infinite">&#x1f3e0; More Games at GameZipper.com</a>
 
 
@@ -1120,17 +1127,38 @@ function gzToast(msg,dur){dur=dur||2500;var t=document.createElement('div');t.st
 (function(){
   var ss=document.getElementById('splash-screen');
   if(!ss)return;
-  // UX-OPT 2026-09-12 R683: also auto-flap when splash is dismissed via splash click/touch/keydown
+  // UX-OPT 2026-10-05 R853: auto-flap ripple at click site (was clientX=0/Y=0 from synthetic event, invisible top-left)
+  var _lastClickX=0,_lastClickY=0;
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    if(t && t.id==='c' || t && t.tagName==='CANVAS'){_lastClickX=e.clientX;_lastClickY=e.clientY;return;}
+    // capture from real clicks anywhere (splash dismiss path)
+    _lastClickX=e.clientX;_lastClickY=e.clientY;
+  },true);
   function autoStartFlapOnDismiss(){
     var c = document.querySelector('canvas');
     if(!c) return;
+    var rect = c.getBoundingClientRect();
+    // Convert client coords to canvas internal coords (matches canvas pointerdown handler logic)
+    var sx = c.width / rect.width, sy = c.height / rect.height;
+    var cx = (_lastClickX - rect.left) * sx;
+    var cy = (_lastClickY - rect.top) * sy;
     setTimeout(function(){
       try {
-        c.dispatchEvent(new PointerEvent('pointerdown', {bubbles:true, cancelable:true, button:0, pointerType:'mouse'}));
+        // Dispatch synthesized pointerdown using captured coords so tap ripple appears at click site.
+        // Bubble so canvas listener (registered for pointerdown, no capture flag) receives it.
+        var ev = new PointerEvent('pointerdown', {bubbles:true, cancelable:true, button:0, pointerType:'touch', clientX:_lastClickX, clientY:_lastClickY});
+        c.dispatchEvent(ev);
       } catch(e){}
     }, 60);
   }
-  function dismiss(){ss.classList.add('fade-out');setTimeout(function(){ss.remove()},500);autoStartFlapOnDismiss();}
+  function dismiss(){ss.classList.add('fade-out');setTimeout(function(){ss.remove()},300);autoStartFlapOnDismiss();}
+  // UX-OPT 2026-10-05 R853: also dismiss on splash PLAY button click (was relying on splash-bg click only)
+  var _splashBtn = ss.querySelector('.splash-btn');
+  if(_splashBtn){
+    _splashBtn.addEventListener('click',function(e){e.stopPropagation();dismiss();});
+    _splashBtn.addEventListener('touchend',function(e){e.stopPropagation();dismiss();});
+  }
   ss.addEventListener('click',dismiss);
   ss.addEventListener('touchstart',dismiss,{passive:true});
   document.addEventListener('keydown',function e(){dismiss();document.removeEventListener('keydown',e);});
