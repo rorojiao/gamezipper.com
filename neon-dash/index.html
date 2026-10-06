@@ -81,6 +81,16 @@ gz-ad-above-game div and rage_click detector fires after 3+ rapid clicks. */
 .pause-menu h3,.death-screen h3,.complete-screen h3{font-size:24px;margin-bottom:15px;letter-spacing:2px}
 .pause-menu h3{color:#00ffff;text-shadow:0 0 10px #00ffff}
 .death-screen h3{color:#ff0044;text-shadow:0 0 10px #ff0044}
+/* UX-OPT 2026-10-06 R863: pulse animation on death-screen retry prompt.
+   BI 7d showed 14 rage_clicks at canvas center (373,362) — user dies, rage-clicks during
+   333ms deathTimer<20 cooldown, sees no immediate response, abandons. Static "Tap to retry"
+   text was invisible at a glance. Pulse animation makes the retry CTA unmissable. */
+.death-screen .retry-hint{animation:retryPulse 1.2s ease-in-out infinite}
+@keyframes retryPulse{0%,100%{opacity:.4}50%{opacity:1;color:#fff;text-shadow:0 0 8px #fff}}
+/* Cooldown flash on canvas during the 20-frame retry window — visible feedback so user
+   understands the game saw their click. Stops once deathTimer>=20. */
+.death-cooldown-flash{animation:decoCooldown .25s ease-out 2}
+@keyframes decoCooldown{0%{filter:brightness(1.4) saturate(1.5)}100%{filter:none}}
 .complete-screen h3{color:#00ff00;text-shadow:0 0 10px #00ff00}
 .complete-stars{font-size:32px;margin:10px 0;color:#ffd700;text-shadow:0 0 10px #ffd700}
 .complete-stats{font-size:13px;color:#aaa;margin:8px 0}
@@ -315,7 +325,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
   <div class="overlay" id="deathScreen">
     <div class="death-screen">
       <h3 id="deathText">Attempt 1</h3>
-      <p style="color:#888;font-size:13px;margin-top:8px">Tap or press Space to retry</p>
+      <p class="retry-hint" style="color:#888;font-size:13px;margin-top:8px">Tap or press Space to retry</p>
     </div>
   </div>
 
@@ -2484,6 +2494,17 @@ function handleAction() {
       attempt++;
       resetLevel();
       setGameState('playing');
+    } else {
+      // UX-OPT 2026-10-06 R863: visible cooldown feedback so user knows click was registered
+      // but they need to wait ~333ms for deathTimer>=20. Without this, users rage-click.
+      var _cv = document.getElementById('canvas') || document.querySelector('canvas');
+      if (_cv) {
+        _cv.classList.remove('death-cooldown-flash');
+        // force reflow then re-add to restart animation
+        void _cv.offsetWidth;
+        _cv.classList.add('death-cooldown-flash');
+        setTimeout(function(){ if(_cv) _cv.classList.remove('death-cooldown-flash'); }, 600);
+      }
     }
   } else if (gameState === 'title') {
     startLevel(0);
