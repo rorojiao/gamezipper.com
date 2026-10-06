@@ -640,6 +640,7 @@ let hoverBtn = -1;
 let splashFooterLink = null;
 // R857: Share button rect on splash — set each render, hit-tested in onTap()
 let splashShareBtn = null;
+let hudShareBtn = null;  // R864: persistent share button on HUD top-right
 let streakChipHit = null;  // R526: tappable streak chip rect (set during renderGame)
 
 // ─── Level Transition (smooth fade + scale between levels) ───
@@ -3986,8 +3987,19 @@ function renderSplash() {
     const bx = W / 2 - bw / 2, by = H * 0.58;
     drawButton(bx, by, bw, bh, "▶  PLAY", hoverBtn === 0, true);
 
-    // Continue button (if player has played before)
+    // R864 2026-10-06: Promote Share button to position #2 (right under PLAY) so it's
+    // always visible above-the-fold on mobile. BI 7d: 0 ms_share_used events despite
+    // R857 placing it on splash — 4th position buried it. Moving above Continue/Daily.
+    // primary=true keeps it solid purple (rgba(255,255,255,0.08) invisible on dark bg).
     let nextBtnY = by + bh + 12;
+    const shareW = Math.min(200, W * 0.55);
+    const shareY = nextBtnY;
+    drawButton(W / 2 - shareW / 2, shareY, shareW, 42, "🔗  Share with Friends", hoverBtn === 6, true);
+    // Store share button rect for click handler (set each render, matches splashFooterLink pattern)
+    splashShareBtn = { x: W / 2 - shareW / 2, y: shareY, w: shareW, h: 42 };
+    nextBtnY += 42 + 10;
+
+    // Continue button (if player has played before)
     if (lastPlayedLevel > 0) {
       const contW = Math.min(200, W * 0.55);
       drawButton(W / 2 - contW / 2, nextBtnY, contW, 42, "⏩  Continue Lv." + (lastPlayedLevel + 1), hoverBtn === 1, false);
@@ -4004,18 +4016,6 @@ function renderSplash() {
     const randomW = Math.min(200, W * 0.55);
     drawButton(W / 2 - randomW / 2, nextBtnY, randomW, 42, "🎲  Random Level", hoverBtn === 5, true);
     nextBtnY += 42 + 10;
-
-    // R857: Share button — visible on the highest-traffic surface (splash) so
-    // every visitor can share, not just the <0.1% who reach the win overlay.
-    // Note: rect stored BEFORE nextBtnY += 42+10 below (mirrors FooterLink pattern)
-    // primary=true makes it solid purple so it's visible against dark splash bg
-    // (non-primary buttons use rgba(255,255,255,0.08) which is invisible on dark bg).
-    const shareW = Math.min(200, W * 0.55);
-    const shareY = nextBtnY;
-    drawButton(W / 2 - shareW / 2, shareY, shareW, 42, "🔗  Share Magic Sort", hoverBtn === 6, true);
-    nextBtnY += 42 + 10;
-    // Store share button rect for click handler (set each render, matches splashFooterLink pattern)
-    splashShareBtn = { x: W / 2 - shareW / 2, y: shareY, w: shareW, h: 42 };
 
     // Stats summary line on splash
     const splashCompleted = Object.keys(levelStars).length;
@@ -5050,6 +5050,13 @@ function renderGame() {
     X.fillText(goalText, W - 14, 28);
   }
 
+  // R864 2026-10-06: Persistent share icon in HUD top-right (mirrors Home button on left).
+  // BI 7d: 0 ms_share_used events despite R857 splash share + win overlay share.
+  // Splash/win share buttons are conditional on user clicking PLAY or winning — only ~3%
+  // of page_views actually trigger those surfaces. Persistent HUD icon guarantees every
+  // long-session player sees it. Source="hud" in tracker distinguishes from "splash"/"win".
+  drawButton(W - 38, 10, 28, 28, "📤", hoverBtn === 24, true);
+  hudShareBtn = { x: W - 38, y: 10, w: 28, h: 28 };
   // Sound toggle button (left side, below home)
   drawButton(10, 36, 28, 28, sfxEnabled ? "SFX" : "OFF", hoverBtn === 14, false);
   // BGM toggle button (right of SFX)
@@ -5813,7 +5820,7 @@ function renderWin() {
     drawButton(btnStartX + btnIdx * (btnW + btnGap), by, btnW, btnH, "Next ▶", hoverBtn === 21, true);
     btnIdx++;
   }
-  drawButton(btnStartX + btnIdx * (btnW + btnGap), by, btnW, btnH, "Share", hoverBtn === 23, false);
+  drawButton(btnStartX + btnIdx * (btnW + btnGap), by, btnW, btnH, "Share", hoverBtn === 23, true);
   btnIdx++;
   drawButton(btnStartX + btnIdx * (btnW + btnGap), by, btnW, btnH, "Menu", hoverBtn === 22, false);
 
@@ -6247,6 +6254,13 @@ function onTap(px, py) {
     // GameZipper home button
     if (hitTest(px, py, 10, 10, 28, 28)) {
       window.location.href = "/"; return;
+    }
+    // R864 2026-10-06: Persistent HUD share button — visible on every gameplay screen
+    // so users always have a way to share even mid-level (when splash/win are not visible).
+    // Source="hud" in tracker distinguishes from "splash"/"win" for funnel analytics.
+    if (hudShareBtn && hitTest(px, py, hudShareBtn.x, hudShareBtn.y, hudShareBtn.w, hudShareBtn.h)) {
+      shareResult({ source: 'hud' });
+      return;
     }
     // Sound toggle
     if (hitTest(px, py, 10, 36, 28, 28)) {
