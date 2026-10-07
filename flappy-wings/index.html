@@ -359,12 +359,13 @@ function flap(cx,cy){
   }
   if(state===READY){state=PLAYING;resetGame();}
   if(state===PLAYING){bird.vy=FLAP;playFlapSound();}
-  // R757: reduced cooldown 30->18 frames (~0.3s) + show retry hint if tap during cooldown
+  // R872: persistent retry hint when death animation completes — not just on tap
   if(state===GAMEOVER&&frameCount>18){
     state=PLAYING;resetGame();bird.vy=FLAP;playFlapSound();
   } else if(state===GAMEOVER){
-    // Tap during cooldown — show "Tap again" hint (R382-C silent-rejection fix)
-    retryHintAlpha=1;
+    // R872: persistent hint shown when death animation completes (deathPhase>=2)
+    // and kept alive during cooldown so user sees "tap to restart" BEFORE clicking
+    if(deathPhase>=2) retryHintAlpha=1;
   }
 }
 
@@ -798,19 +799,6 @@ function draw(){
     r.life-=0.04;
     if(r.life<=0)tapRipples.splice(i,1);
   }
-  // R757: draw "Tap again to restart" hint during GAMEOVER cooldown
-  if(retryHintAlpha>0){
-    ctx.save();
-    ctx.globalAlpha=Math.min(1,retryHintAlpha);
-    ctx.fillStyle='#fff';
-    ctx.font='bold 22px Arial';
-    ctx.textAlign='center';
-    ctx.shadowColor='rgba(0,0,0,0.8)';
-    ctx.shadowBlur=8;
-    ctx.fillText('Tap again to restart',W/2,H*0.78);
-    ctx.restore();
-    retryHintAlpha-=0.025;
-  }
 
   // Particles
   for(const p of particles){
@@ -835,6 +823,29 @@ function draw(){
   if(state===PLAYING)drawScore();
   if(state===READY){drawScore();drawReady();}
   if(state===GAMEOVER)drawGameOver();
+  // R872: draw persistent, pulsing "Tap anywhere to play again" hint — drawn AFTER GAMEOVER card
+  // Shown continuously when deathPhase>=2 + frameCount>18 (death animation complete)
+  // R872: draw persistent, pulsing "Tap anywhere to play again" hint during GAMEOVER
+  // Shown continuously after deathPhase>=2 (not just during cooldown taps)
+  if(retryHintAlpha>0){
+    ctx.save();
+    const _hAlpha=Math.min(1,retryHintAlpha);
+    ctx.globalAlpha=_hAlpha;
+    ctx.fillStyle='#fff';
+    ctx.font='bold 26px Arial';
+    ctx.textAlign='center';
+    ctx.shadowColor='rgba(0,0,0,0.9)';
+    ctx.shadowBlur=10;
+    // Pulsing scale effect: subtle 1.0 ↔ 1.08 oscillation
+    const _pulse=1+0.08*Math.sin(frameCount*0.12);
+    ctx.translate(W/2,H*0.78);
+    ctx.scale(_pulse,_pulse);
+    ctx.fillText('▶ Tap anywhere to play again',0,0);
+    ctx.restore();
+    retryHintAlpha-=0.018;  // slower decay so hint stays visible longer
+  }
+  // R872: keep retry hint alive during GAMEOVER (after death animation + cooldown)
+  if(state===GAMEOVER && deathPhase>=2 && frameCount>18) retryHintAlpha = 1;
 }
 
 function readyFloat(){
@@ -943,6 +954,7 @@ window.shareGame = shareGame;
   if (cvs) cvs.style.pointerEvents = 'none';
 })();
 </script>
+
  <script defer src="../game-audio-auto.js?v=R449-flat"></script>
 <script defer src="../sound-toggle.js?v=R449-flat"></script>
 <div id="share-btn-overlay" style="position:fixed;bottom:80px;right:16px;z-index:500;display:none;">
@@ -1033,6 +1045,63 @@ window.shareGame = shareGame;
  <a href="https://gamezipper.com/" style="display:inline-block;background:#4ecdc4;color:#000;font-weight:700;font-size:16px;padding:12px 32px;border-radius:50px;text-decoration:none;pointer-events:auto;font-family:sans-serif;">Play More Free Games →</a>
  </div>
 </div>
+
+<!-- R872: HTML-level "Play Again" overlay — bypasses canvas cooldown, has real click handler -->
+<div id="gz-playagain-r872" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10001;pointer-events:none;">
+ <button id="gz-playagain-btn-r872" type="button" style="background:linear-gradient(135deg,#4466dd,#6688ff);color:#fff;border:3px solid #fff;border-radius:14px;padding:18px 48px;font-weight:700;font-size:clamp(18px,4vw,24px);cursor:pointer;pointer-events:auto;font-family:sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.5);">
+  ▶ Play Again
+ </button>
+</div><!-- R872: Play Again HTML overlay handler (must run after element is in DOM) -->
+<script>
+(function(){
+  var _pa = document.getElementById('gz-playagain-r872');
+  var _btn = document.getElementById('gz-playagain-btn-r872');
+  if (!_pa || !_btn) return;
+  // Idempotent guard
+  if (_btn.__gzR872Bound) return;
+  _btn.__gzR872Bound = true;
+  
+  // Click handler: restart game WITHOUT waiting for canvas cooldown
+  function _restartGame(e){
+    e && e.preventDefault && e.preventDefault();
+    e && e.stopPropagation && e.stopPropagation();
+    // Use the exposed game API
+    if (window._gameState && typeof window._gameState.restart === 'function') {
+      window._gameState.restart();
+    }
+    // Hide the overlay
+    _pa.style.display = 'none';
+  }
+  
+  _btn.addEventListener('click', _restartGame, true);
+  _btn.addEventListener('touchend', _restartGame, true);
+  _btn.addEventListener('pointerdown', function(e){ e.stopPropagation(); }, true);
+  
+  // Watch for state changes via canvas state observable
+  // The game IIFE exposes window._gameState with getter for state
+  // Poll every 100ms (cheap, no observer needed)
+  var _lastState = 'READY';
+  setInterval(function(){
+    if (!window._gameState) return;
+    var _s = window._gameState.state;
+    if (_s !== _lastState) {
+      _lastState = _s;
+      if (_s === 'GAMEOVER' || _s === 2) {
+        // Show overlay after death animation completes (~600ms)
+        setTimeout(function(){
+          if (window._gameState && (window._gameState.state === 'GAMEOVER' || window._gameState.state === 2)) {
+            _pa.style.display = 'block';
+          }
+        }, 600);
+      } else {
+        _pa.style.display = 'none';
+      }
+    }
+  }, 100);
+})();
+</script>
+</script>
+
 
 <div id="gz-cta" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:linear-gradient(transparent,rgba(0,0,0,.95) 30%);padding:50px 16px 20px;text-align:center;pointer-events:none;">
  <div style="max-width:400px;margin:0 auto;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;pointer-events:auto;">
