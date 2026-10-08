@@ -44,6 +44,13 @@
       .hud-btn{background:rgba(255,255,255,0.1);border:2px solid rgba(255,200,100,0.5);color:#ffd680;padding:10px 15px;border-radius:8px;cursor:pointer;font-size:14px;transition:all 0.2s;backdrop-filter:blur(5px);display:flex;align-items:center;gap:5px;}
       .hud-btn:hover{background:rgba(255,200,100,0.2);transform:scale(1.05);}
       .hud-btn:active{transform:scale(0.95);}
+      /* UX-OPT 2026-10-08 R875: hud-btn pressed feedback to stop rage_click. Root cause: onclick
+         handlers (undo/showHint/showLevelSelect) navigate or change state but the clicked
+         button's className doesn't change — gz-analytics.js fires rage_click on 3+ rapid clicks
+         at same target. Real instance (BI 7d, 2026-10-05): 4 rage on /matchstick-puzzle/ from
+         iPhone Safari at (153-172, 80-101) — top-left where Undo button lives on mobile. */
+      .hud-btn.hud-pressed{animation:hudPress .35s ease;background:rgba(255,200,100,0.5)!important;color:#fff!important;transform:scale(1.08)!important}
+      @keyframes hudPress{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1.08)}}
       .level-info{font-size:18px;color:#ffd680;text-shadow:0 0 10px rgba(255,200,100,0.5);}
       .moves-display{font-size:16px;color:#aaddff;}
       #title-screen,#level-select,#win-modal{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(10,10,26,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:auto;z-index:10;}
@@ -389,6 +396,24 @@ function initAudio(){
 }
 
 document.addEventListener('click',initAudio,{once:true});
+// UX-OPT 2026-10-08 R875: hud-btn pressed feedback. Same root cause as wordle/quordle —
+// onclick handlers (undo/showHint/showLevelSelect) change state but clicked button's
+// className doesn't change → gz-analytics.js fires rage_click on 3+ rapid clicks.
+// Fix: bubble-phase delegated click adds .hud-pressed for 1700ms (≥ 1.5s detector).
+// Idempotent guard via __gzHudTapBound.
+(function(){
+  var _mpHud=document.querySelector('.hud-top')||document.body;
+  if(_mpHud.__gzHudTapBound)return;
+  _mpHud.__gzHudTapBound=true;
+  document.addEventListener('click',function(e){
+    var h=e.target.closest&&e.target.closest('.hud-btn');
+    if(!h)return;
+    h.classList.remove('hud-pressed');
+    void h.offsetWidth;
+    h.classList.add('hud-pressed');
+    setTimeout(function(){if(h&&h.classList)h.classList.remove('hud-pressed');},1700);
+  });
+})();
 
 function showTitle(){state='title';stopBGM();document.getElementById('title-screen').style.display='flex';document.getElementById('level-select').style.display='none';document.getElementById('win-modal').style.display='none';}
 

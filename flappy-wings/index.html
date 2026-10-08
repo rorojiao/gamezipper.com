@@ -375,6 +375,20 @@ canvas.addEventListener('pointerdown',e=>{
   // R757: convert client coords to canvas internal coords for accurate ripple placement
   const sx=canvas.width/r.width, sy=canvas.height/r.height;
   const cx=(e.clientX-r.left)*sx, cy=(e.clientY-r.top)*sy;
+  // UX-OPT 2026-10-08 R875b: ALWAYS spawn tap ripple as universal click acknowledgement
+  // (R873 pattern from antistress/). BI 7d: 78 rage on /flappy-wings/ from 1 Pixel 10 mobile
+  // Chrome 154 user — 69 clicks at exact (205,311) in 1s. R757 only spawned ripples on tap
+  // and during GAMEOVER cooldown (deathPhase<2, frameCount<=18), 8 clicks did NOTHING — bird
+  // is mid-death animation, tap registered in state but flap() didn't act because state
+  // check rejected. Burst-cooldown prevents 8-stack ripple mess during rage bursts.
+  if(!window.__gzR873RippleLast)window.__gzR873RippleLast={x:0,y:0,t:0};
+  var _dr=window.__gzR873RippleLast;
+  var _nowMs=performance.now();
+  if(_nowMs-_dr.t>200||Math.hypot(cx-_dr.x,cy-_dr.y)>30){
+    tapRipples.push({x:cx,y:cy,life:1,color:'rgba(180,180,200,0.4)',type:'ack',r:10});
+    if(tapRipples.length>20)tapRipples.shift();
+    _dr.x=cx;_dr.y=cy;_dr.t=_nowMs;
+  }
   flap(cx,cy);
 });
 document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();flap();}});
@@ -1099,7 +1113,6 @@ window.shareGame = shareGame;
     }
   }, 100);
 })();
-</script>
 </script>
 
 

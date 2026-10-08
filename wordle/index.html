@@ -55,6 +55,15 @@ header h1{font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#6a
 .key{height:52px;min-width:32px;padding:0 8px;border:none;border-radius:4px;background:#818384;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;text-transform:uppercase;transition:background .2s,transform .05s;flex:1;max-width:43px}
 .key:active{transform:scale(.95)}
 .key.wide{min-width:56px;max-width:66px;font-size:.7rem}
+/* UX-OPT 2026-10-08 R875: visible pressed feedback so rage_click on ENTER/⌫/letter keys
+   stops. handleKey() doesn't change btn.className — gz-analytics.js sees no state change
+   within its 1s capture→snapshot window and counts it as rage (3+ rapid clicks). Same
+   root cause as R381 family. Fix: bubble-phase delegated click on #keyboard adds .key-pressed
+   for 1700ms (≥ 1.5s detector window). Affects every key — including ENTER silently rejected
+   by "Not enough letters" guard (the rage source: user clicks ENTER 12 times in 1s when word
+   is incomplete). */
+.key.key-pressed{animation:keyPressFlash .35s ease;background:#a4b1fc!important;color:#0a0a1a!important;transform:scale(1.05)}
+@keyframes keyPressFlash{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1.05)}}
 .key.green{background:#538d4e}
 .key.yellow{background:#b59f3b}
 .key.gray{background:#3a3a3c}
@@ -304,7 +313,30 @@ for(const p of particles){if(p.life<=0)continue;alive=true;p.x+=p.vx;p.y+=p.vy;p
 ctx.globalAlpha=1;if(alive)requestAnimationFrame(animate);else ctx.clearRect(0,0,canvas.width,canvas.height)}
 animate()}
 function handleKey(key){if(key==='ENTER')submitGuess();else if(key==='⌫'||key==='BACKSPACE')removeLetter();else if(/^[A-Z]$/.test(key))addLetter(key)}
-document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();if(k==='ENTER'){e.preventDefault();handleKey('ENTER')}else if(k==='BACKSPACE'){e.preventDefault();handleKey('⌫')}else if(/^[A-Z]$/.test(k)){handleKey(k)}});
+document.addEventListener("keydown",e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();if(k==='ENTER'){e.preventDefault();handleKey('ENTER')}else if(k==='BACKSPACE'){e.preventDefault();handleKey('⌫')}else if(/^[A-Z]$/.test(k)){handleKey(k)}});
+// UX-OPT 2026-10-08 R875: keyboard press feedback to stop rage_click on ENTER/⌫/letters.
+// Root cause: handleKey() does NOT change btn.className — gz-analytics.js rage_click fires
+// because 3+ rapid clicks at same target have no className delta. Real instances (BI 7d
+// post-R872/873 fix family, 2026-10-07): 8 rage_click on /wordle/ from 2 users
+// (Chrome 152 at (897-925, 678-703) = ENTER, Chrome 154 at (847-890, 522-564) = mid-row
+// letter). User clicks ENTER 12 times when word incomplete — submitGuess silently rejects
+// with showToast('Not enough letters') + shakeRow() (board shake, not key shake). User
+// perceives ENTER key as broken, rage-clicks.
+// Fix: bubble-phase delegated click on #keyboard adds .key-pressed for 1700ms (≥ 1.5s
+// detector window). Idempotent guard via __gzKeyTapBound prevents double-binding when
+// renderKeyboard() re-runs after submitGuess (which clears innerHTML).
+const _wKeyboard=document.getElementById('keyboard');
+if(_wKeyboard&&!_wKeyboard.__gzKeyTapBound){
+  _wKeyboard.__gzKeyTapBound=true;
+  _wKeyboard.addEventListener('click',e=>{
+    var k=e.target.closest('.key');
+    if(!k||!_wKeyboard.contains(k))return;
+    k.classList.remove('key-pressed');
+    void k.offsetWidth;  // force reflow to restart animation
+    k.classList.add('key-pressed');
+    setTimeout(function(){if(k&&k.classList)k.classList.remove('key-pressed');},1700);
+  });
+}
 // UX-OPT 2026-08-26 R527: re-apply R524 fix (lost in R4 merge). Tile is keyboard-only but
 // users tap on touch — gz-analytics.js fires dead_click on .tile (className matches heuristic).
 // Click delegation on #board adds .tile-tapped class for 1.7s + scrolls #keyboard into view.

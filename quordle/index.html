@@ -59,6 +59,15 @@ h1{font-size:1.4rem;font-weight:700;letter-spacing:1px;background:linear-gradien
 .key{height:52px;min-width:32px;padding:0 8px;border-radius:6px;border:none;background:#818384;color:var(--text);font-size:.85rem;font-weight:600;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;text-transform:uppercase;transition:background .15s,transform .1s}
 .key:active{transform:scale(.95)}
 .key.wide{min-width:56px;font-size:.7rem}
+/* UX-OPT 2026-10-08 R875: keyboard press feedback to stop rage_click. Same pattern as
+   /wordle/ — handleKey() doesn't change btn.className, gz-analytics.js fires on 3+ rapid
+   clicks. Real instances (BI 7d): 4 rage on /quordle/ at (804-862, 615-645) which is
+   in the modal-backdrop area after statsModal opens. user clicked modal-area expecting
+   to dismiss, but statsModal covers the board and is at z-index:50 — clicks land on
+   the .modal-overlay backdrop. Combined fix: visible key feedback + .modal-overlay
+   click-to-close for #resultModal/#statsModal. */
+.key.key-pressed{animation:keyPressFlash .35s ease;background:var(--accent,#a4b1fc)!important;color:var(--bg,#0a0a1a)!important;transform:scale(1.05)}
+@keyframes keyPressFlash{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1.05)}}
 .key.green{background:var(--green)}
 .key.yellow{background:var(--yellow)}
 .key.gray{background:var(--gray)}
@@ -235,6 +244,23 @@ var currentCol=0;
 function addLetter(letter){if(currentCol>=5)return;for(var b=0;b<4;b++){if(boardSolved[b])continue;var tile=getTile(b,currentRow,currentCol);tile.textContent=letter.toUpperCase();tile.classList.add("filled")}currentCol++}
 function deleteLetter(){if(currentCol<=0)return;currentCol--;for(var b=0;b<4;b++){if(boardSolved[b])continue;var tile=getTile(b,currentRow,currentCol);tile.textContent="";tile.classList.remove("filled")}}
 document.addEventListener("keydown",function(e){if(e.ctrlKey||e.metaKey||e.altKey)return;if(e.key==="Enter"){handleKey("Enter")}else if(e.key==="Backspace"){handleKey("Del")}else if(e.key.length===1&&e.key.match(/[a-zA-Z]/)){handleKey(e.key)}});
+// UX-OPT 2026-10-08 R875: delegated keyboard click feedback. Same root cause as wordle/.
+// Pointerdown handler in buildKeyboard() at L211 calls handleKey but doesn't add a class
+// to the clicked button — gz-analytics.js sees no className change, fires rage_click on
+// 3+ rapid clicks. Fix: capture-phase delegated click on keyboardEl adds .key-pressed for
+// 1700ms. Idempotent guard via __gzKeyTapBound.
+var _qKeyboard=document.getElementById('keyboard');
+if(_qKeyboard&&!_qKeyboard.__gzKeyTapBound){
+  _qKeyboard.__gzKeyTapBound=true;
+  _qKeyboard.addEventListener('click',function(e){
+    var k=e.target.closest('.key');
+    if(!k||!_qKeyboard.contains(k))return;
+    k.classList.remove('key-pressed');
+    void k.offsetWidth;
+    k.classList.add('key-pressed');
+    setTimeout(function(){if(k&&k.classList)k.classList.remove('key-pressed');},1700);
+  },true);  // capture: runs BEFORE pointerdown handler at L211
+}
 // === TOAST ===
 var toastTimer=null;
 function showToast(msg){toastEl.textContent=msg;toastEl.classList.add("show");if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(function(){toastEl.classList.remove("show")},1500)}
