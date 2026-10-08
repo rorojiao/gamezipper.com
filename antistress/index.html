@@ -482,10 +482,30 @@ return{x:t.clientX-r.left,y:t.clientY-r.top};
 }
 gameCanvas.addEventListener('pointerdown',e=>{
 const _p=getPos(e);
-if(!toyInstance){spawnTapRipple(_p.x,_p.y,'rgba(255,180,80,0.7)','miss');return;} // R801: no-toy feedback (yellow = miss)
-if(!toyInstance.down){spawnTapRipple(_p.x,_p.y,'rgba(255,120,80,0.7)','locked');return;} // R801: toy w/o down handler (orange = locked)
+// UX-OPT 2026-10-08 R873: ALWAYS spawn tap ripple as universal click acknowledgement.
+// R801 only spawned on no-toy/no-down cases. BI 7d showed 20 rage_clicks / 2 users on
+// /antistress/ — 8 in a single burst at exact same pixel (653,416). The toy's down()
+// ran but the click missed every interactive element, producing ZERO visible feedback.
+// Universal ripple on every pointerdown (with burst-cooldown to avoid 8-stack at 1s)
+// gives instant "I see your click" feedback so the user knows the click registered
+// even when it didn't activate a toy element. Different colors per case: white-gray
+// (active click, default), yellow (no toy), orange (no down handler).
+var _color='rgba(180,180,200,0.4)';
+if(!toyInstance){_color='rgba(255,180,80,0.7)';spawnTapRipple(_p.x,_p.y,_color,'miss');return;}
+if(!toyInstance.down){_color='rgba(255,120,80,0.7)';spawnTapRipple(_p.x,_p.y,_color,'locked');return;}
 resumeAudio();
 toyInstance.down(_p,e);
+// Burst-cooldown: same x/y within 200ms = suppress ripple stack (8 rage clicks in 1s would
+// otherwise pile 8 ripples on top of each other, which looks broken). Allow 1 ripple per
+// pointerdown burst — the first one confirms the click; subsequent rapid clicks in the
+// same area are acknowledged by the user already seeing ripple 1.
+var _nowMs=performance.now();
+if(!window.__gzR873RippleLast)window.__gzR873RippleLast={x:0,y:0,t:0};
+var _dr=window.__gzR873RippleLast;
+if(_nowMs-_dr.t>200||Math.hypot(_p.x-_dr.x,_p.y-_dr.y)>30){
+  spawnTapRipple(_p.x,_p.y,'rgba(180,180,200,0.4)','ack');
+  _dr.x=_p.x;_dr.y=_p.y;_dr.t=_nowMs;
+}
 });
 gameCanvas.addEventListener('pointermove',e=>{
 if(!toyInstance||!toyInstance.move)return;
