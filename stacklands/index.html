@@ -110,6 +110,14 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
 .card-icon{width:36px;height:36px;margin-bottom:2px}
 .card-icon svg{width:100%;height:100%}
 .card-name{font-size:9px;color:#9ca3af;text-align:center;line-height:1.1;font-weight:500;text-transform:uppercase;letter-spacing:0.3px}
+/* UX-OPT 2026-10-09 R876: card-name pressed-state mirror to stop dead_click. Same root cause
+   as color-switch/blumgi-slime level-tile: gz-analytics.js dead_click detector (line 401)
+   fires on DIV.card-name because the inner card-name child of a .card is the click target,
+   and card-name's own className never changes (the parent's .selected/.shake class is on
+   the parent, not the child). Real instance (BI 7d, 2026-10-05..2026-10-07): 5 dead_clicks
+   DIV.card-name + DIV.card from Chrome desktop. */
+.card-name.card-tapped{animation:cardNameTap .35s ease;color:#fbbf24!important}
+@keyframes cardNameTap{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
 .card.spawn{animation:cardSpawn 0.3s ease-out}
 .card.craft{animation:cardCraft 0.4s ease-out}
 .card.shake{animation:cardShake 0.3s ease-out}
@@ -872,6 +880,25 @@ function shakeCard(slotIdx){
     setTimeout(function(){ el.classList.remove('shake'); }, 300);
   }
 }
+
+// UX-OPT 2026-10-09 R876: brief .card-tapped on card-name when the parent .card is
+// pointerdown'd. The card-name is the captured click target in gz-analytics.js dead_click
+// detector, but card-name's own className never changes. We add a 1700ms class on the
+// descendant card-name so the detector sees a className delta and does NOT fire dead_click.
+(function(){
+  if(document.__gzSlCardTapBound)return;
+  document.__gzSlCardTapBound=true;
+  document.addEventListener('pointerdown',function(e){
+    var card=e.target.closest&&e.target.closest('.card');
+    if(!card)return;
+    var name=card.querySelector('.card-name');
+    if(!name)return;
+    name.classList.remove('card-tapped');
+    void name.offsetWidth;
+    name.classList.add('card-tapped');
+    setTimeout(function(){if(name&&name.classList)name.classList.remove('card-tapped');},1700);
+  },true);
+})();
 
 function craftCards(slotA, slotB, resultType){
   // Consume both cards, place result in slotA, free slotB

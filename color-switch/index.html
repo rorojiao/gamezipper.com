@@ -81,6 +81,15 @@ html,body{width:100%;height:100%;overflow-x:hidden;background:#0a0a1f;font-famil
 .lvl-tile .lvl-num{font-size:15px}
 .lvl-tile .lvl-stars{font-size:10px;letter-spacing:1px;margin-top:2px;color:#FFD93D}
 .lvl-tile .lock-mark{position:absolute;top:4px;right:6px;font-size:10px;opacity:0.6}
+/* UX-OPT 2026-10-09 R876: lvl-tile pressed feedback to stop dead_click. Root cause: tile.onclick
+   synchronously calls startLevel() which calls showScreen() -> the lvl-tile's className
+   never changes (the parent grid stays mounted; only the level-screen overlay flips).
+   gz-analytics.js dead_click detector (line 401, capture phase on DIV/SPAN with /tile|btn/i
+   className) snapshots className before click, polls at 1500ms — sees identical className
+   -> fires dead_click. Real instance (BI 7d, 2026-10-05..2026-10-07): 21 dead_clicks
+   DIV.lvl-tile from Chrome 152/154 desktop. */
+.lvl-tile.lvl-pressed{animation:lvlPress .35s ease;background:rgba(80,227,194,0.18)!important;border-color:rgba(80,227,194,0.6)!important;transform:scale(1.05)!important}
+@keyframes lvlPress{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1.05)}}
 #ad-banner{position:fixed;bottom:0;left:0;width:100%;height:60px;background:rgba(0,0,0,0.6);z-index:30;display:flex;align-items:center;justify-content:center;font-size:11px;opacity:0.45;pointer-events:none;border-top:1px solid rgba(255,255,255,0.05)}
 .ad-slot{width:min(320px,95%);height:50px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.04);border-radius:8px;border:1px dashed rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);font-size:11px;text-align:center}
 #recommended-panel{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px;margin-top:14px;width:min(320px,90vw);text-align:left}
@@ -531,6 +540,22 @@ function setupInput(){
 }
 
 /* ---------- UI navigation ---------- */
+// UX-OPT 2026-10-09 R876: lvl-tile pressed feedback. Bubble-phase delegated click on
+// document adds .lvl-pressed for 1700ms (>= 1.5s detector window). Idempotent guard
+// via __gzLvlTapBound. CSS .lvl-tile.lvl-pressed (L84-92) gives the visible flash.
+// Re-applied to the NEW tile after buildLevelSelect() rebuilds the grid (same index).
+(function(){
+  if(document.__gzLvlTapBound)return;
+  document.__gzLvlTapBound=true;
+  document.addEventListener('click',function(e){
+    var t=e.target.closest&&e.target.closest('.lvl-tile');
+    if(!t)return;
+    t.classList.remove('lvl-pressed');
+    void t.offsetWidth;
+    t.classList.add('lvl-pressed');
+    setTimeout(function(){if(t&&t.classList)t.classList.remove('lvl-pressed');},1700);
+  });
+})();
 function showScreen(id){
   var screens=document.querySelectorAll('.screen');
   for(var i=0;i<screens.length;i++)screens[i].classList.remove('active');

@@ -87,6 +87,14 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 60%,#0d1a2d 100%);min-
 .level-tile:hover:not(.locked){transform:translateY(-2px);border-color:rgba(126,249,179,.5);background:rgba(126,249,179,.08)}
 .level-tile.locked{opacity:.4;cursor:not-allowed;color:#888}
 .level-tile.locked::after{content:"";position:absolute;top:50%;left:50%;width:18px;height:18px;transform:translate(-50%,-50%);background:rgba(255,255,255,.4);clip-path:polygon(50% 0,65% 35%,100% 40%,72% 65%,80% 100%,50% 80%,20% 100%,28% 65%,0 40%,35% 35%)}
+/* UX-OPT 2026-10-09 R876: level-tile pressed feedback to stop dead_click. Same root cause
+   as color-switch — tile.onclick triggers startLevel() which flips #game-screen display,
+   the .level-tile's own className never changes. gz-analytics.js dead_click detector
+   (line 401) snapshots className before click, polls at 1500ms, sees identical className
+   -> fires dead_click. Real instance (BI 7d, 2026-10-05..2026-10-07): 5 dead_clicks
+   DIV.level-tile from Chrome desktop. */
+.level-tile.lvl-pressed{animation:bsPress .35s ease;background:rgba(126,249,179,0.18)!important;border-color:rgba(126,249,179,0.6)!important;transform:scale(1.05)!important}
+@keyframes bsPress{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1.05)}}
 .level-stars{position:absolute;top:4px;right:4px;display:flex;gap:2px}
 .level-star{width:10px;height:10px;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);background:rgba(255,255,255,.15)}
 .level-star.earned{background:linear-gradient(180deg,#ffe17a,#ff9d3a);filter:drop-shadow(0 0 3px rgba(255,200,80,.6))}
@@ -2281,6 +2289,22 @@ function refreshMenuStats(){
   document.getElementById('total-stars').textContent = totalStars+"/90";
   document.getElementById('total-levels').textContent = completed+"/30";
 }
+
+// UX-OPT 2026-10-09 R876: level-tile pressed feedback (mirrors R847 for color-by-number).
+// Bubble-phase delegated click on document adds .lvl-pressed for 1700ms so the
+// gz-analytics.js dead_click detector sees a state change.
+(function(){
+  if(document.__gzBsLvlTapBound)return;
+  document.__gzBsLvlTapBound=true;
+  document.addEventListener('click',function(e){
+    var t=e.target.closest&&e.target.closest('.level-tile');
+    if(!t)return;
+    t.classList.remove('lvl-pressed');
+    void t.offsetWidth;
+    t.classList.add('lvl-pressed');
+    setTimeout(function(){if(t&&t.classList)t.classList.remove('lvl-pressed');},1700);
+  });
+})();
 
 function showScreen(name){
   document.getElementById('menu-screen').style.display = name === 'menu' ? 'flex' : 'none';
