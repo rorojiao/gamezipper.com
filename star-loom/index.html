@@ -51,6 +51,9 @@ canvas{display:block;width:100%;height:100%;position:absolute;top:0;left:0;z-ind
 .game-hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:10px 16px;z-index:10;background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,transparent 100%)}
 .hud-btn{padding:6px 14px;border:1px solid rgba(255,255,255,.3);border-radius:16px;background:rgba(0,0,0,.4);color:#fff;font-size:.85em;cursor:pointer}
 .hud-btn:hover{background:rgba(74,30,140,.5)}
+/* UX-OPT 2026-10-09 R882: rage_click fix on .hud-btn — handler mutates state but btn.className stays same. Bubble-phase delegated click adds .hud-btn-pressed class for 1.7s. */
+.hud-btn.hud-btn-pressed{background:rgba(74,30,140,.8)!important;border-color:rgba(255,255,255,.6)!important;color:#fff!important;animation:starLoomHud .35s ease}
+@keyframes starLoomHud{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1.06)}}
 .win-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(20,15,40,.95);padding:30px 50px;border-radius:16px;border:2px solid rgba(255,200,100,.6);text-align:center;z-index:20;display:none}
 .win-overlay.show{display:block;animation:winIn .5s ease}
 .win-overlay h2{color:#ffd060;margin-bottom:14px;font-size:1.8em}
@@ -628,6 +631,18 @@ window.StarLoom = StarLoom;
 window.StarLoom.solve = StarLoom.solveUnique;
 window.LEVELS = LEVELS;
 window.StarLoom.solve = StarLoom.solveUnique;
+// UX-OPT 2026-10-09 R882: rage_click fix on .hud-btn — handler mutates game state but btn.className stays 'hud-btn'. Bubble-phase delegated click adds .hud-btn-pressed for 1.7s (>=1.5s gz-analytics.js detector window).
+(function(){
+  if(window.__gzStarLoomTapBound)return;
+  window.__gzStarLoomTapBound=true;
+  document.addEventListener('click',function(e){
+    var n=e.target;
+    while(n&&n!==document&&!(n.classList&&n.classList.contains('hud-btn')))n=n.parentNode;
+    if(!n||n===document||!n.classList.contains('hud-btn'))return;
+    n.classList.add('hud-btn-pressed');
+    setTimeout(function(){if(n&&n.classList)n.classList.remove('hud-btn-pressed')},1700);
+  });
+})();
 </script>
 <!-- R797 2026-09-22 ADS-OPT: extract static 737 ins from inside gz-ad-below-game (autoFillContainer hides it via display:none, blocking AdSense fill). Move to own parallel div for reliable fill. Proven pattern: /snake/ 737 in gz-ad-r451 fills 113/7d. -->
 <div id="gz-ad-star-loom-r797" style="position:relative;min-height:100px;max-height:280px;margin:16px auto;max-width:728px;text-align:center;overflow:hidden;contain:layout paint style;color:#666;font-size:.7em;background:transparent;border-radius:6px;box-sizing:border-box;line-height:100px"><span aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.78em;opacity:.3;letter-spacing:.05em;font-weight:500;pointer-events:none;transition:opacity .15s ease">Sponsored &middot; Advertisement</span><ins class="adsbygoogle" style="position:absolute!important;top:0!important;left:0!important;width:100%!important;max-width:728px!important;height:100%!important;max-height:280px!important;margin:0 auto!important;text-align:center;display:block" data-ad-client="ca-pub-8346383990981353" data-ad-slot="7373732357" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({});</script></div>

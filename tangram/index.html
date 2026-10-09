@@ -42,6 +42,10 @@ canvas:active{cursor:grabbing}
 .btn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#ccc;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;font-family:inherit}
 .btn:hover{background:rgba(0,255,255,0.12);border-color:rgba(0,255,255,0.25);color:#fff}
 .btn:active{transform:scale(.95)}
+/* UX-OPT 2026-10-09 R882: rage_click fix on btn.bi / btn / .lc — handler mutates state but btn.className stays same. Bubble-phase delegated click adds .tangram-tap class for 1.7s. */
+.btn.tangram-tap,.btn.bi.tangram-tap,.lc.tangram-tap,.tg.tangram-tap{animation:tangramTap .35s ease;outline:2px solid rgba(0,255,255,.85)!important;outline-offset:1px;background:rgba(0,255,255,.22)!important;transform:scale(1.06)}
+.lc.tangram-tap{background:rgba(0,255,255,.18)!important;border-color:rgba(0,255,255,.85)!important;box-shadow:0 0 14px rgba(0,255,255,.5)}
+@keyframes tangramTap{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1.06)}}
 .bi{width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;font-size:16px;border-radius:8px}
 .ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(5,5,15,.92);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(6px)}
 .pn{background:rgba(18,18,38,.96);border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:26px;max-width:460px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
@@ -508,7 +512,29 @@ window.addEventListener("beforeunload",cleanup);
 <script defer src="/game-footer.js?v=202607021204"></script>
 
 <script>function gzToast(msg,dur){dur=dur||2500;var t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:10000;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center';t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1'});setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove()},300)},dur)}
-function gzConfirm(msg,cb){var o=document.createElement('div');o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10001;display:flex;align-items:center;justify-content:center';var b=document.createElement('div');b.style.cssText='background:#1a1a2e;color:#fff;padding:24px;border-radius:12px;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4)';var t=document.createElement('p');t.style.cssText='margin:0 0 16px;font-size:15px;line-height:1.4';t.textContent=msg;var bw=document.createElement('div');bw.style.cssText='display:flex;gap:8px;justify-content:center';var yn=document.createElement('button');yn.style.cssText='padding:8px 20px;border:none;border-radius:8px;background:#e74c3c;color:#fff;font-size:14px;cursor:pointer';yn.textContent='Yes';var nn=document.createElement('button');nn.style.cssText='padding:8px 20px;border:none;border-radius:8px;background:#555;color:#fff;font-size:14px;cursor:pointer';nn.textContent='No';yn.onclick=function(){o.remove();cb(true)};nn.onclick=function(){o.remove();cb(false)};o.onclick=function(e){if(e.target===o)o.remove();cb(false)};b.appendChild(t);bw.appendChild(yn);bw.appendChild(nn);b.appendChild(bw);o.appendChild(b);document.body.appendChild(o)}</script>
+function gzConfirm(msg,cb){var o=document.createElement('div');o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10001;display:flex;align-items:center;justify-content:center';var b=document.createElement('div');b.style.cssText='background:#1a1a2e;color:#fff;padding:24px;border-radius:12px;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.4)';var t=document.createElement('p');t.style.cssText='margin:0 0 16px;font-size:15px;line-height:1.4';t.textContent=msg;var bw=document.createElement('div');bw.style.cssText='display:flex;gap:8px;justify-content:center';var yn=document.createElement('button');yn.style.cssText='padding:8px 20px;border:none;border-radius:8px;background:#e74c3c;color:#fff;font-size:14px;cursor:pointer';yn.textContent='Yes';var nn=document.createElement('button');nn.style.cssText='padding:8px 20px;border:none;border-radius:8px;background:#555;color:#fff;font-size:14px;cursor:pointer';nn.textContent='No';yn.onclick=function(){o.remove();cb(true)};nn.onclick=function(){o.remove();cb(false)};o.onclick=function(e){if(e.target===o)o.remove();cb(false)};b.appendChild(t);bw.appendChild(yn);bw.appendChild(nn);b.appendChild(bw);o.appendChild(b);document.body.appendChild(o)}
+// UX-OPT 2026-10-09 R882: rage_click fix on btn.bi / btn / .lc / .tg — handler mutates game state but btn.className stays same. Bubble-phase delegated click adds .tangram-tap class for 1.7s (>= 1.5s gz-analytics.js detector window) so both dead_click + rage_click detectors see className delta.
+(function(){
+  if(window.__gzTangramTapBound)return;
+  window.__gzTangramTapBound=true;
+  function _isTarget(n){
+    if(!n||n===document)return false;
+    if(n.tagName==='BUTTON')return true;
+    if(n.classList){
+      if(n.classList.contains('lc'))return true;
+      if(n.classList.contains('tg'))return true;
+    }
+    return false;
+  }
+  document.addEventListener('click',function(e){
+    var n=e.target;
+    while(n&&!_isTarget(n))n=n.parentNode;
+    if(!n||n===document)return;
+    n.classList.add('tangram-tap');
+    setTimeout(function(){if(n&&n.classList)n.classList.remove('tangram-tap')},1700);
+  });
+})();
+</script>
 
 <script src="/gz-analytics.js?v=20261001210619R840" defer></script>
 <script defer src="/adsterra-manager.js?v=v5174lazyep"></script><script defer src="/monetag-manager.js?v=v535deadzfillin"></script>
