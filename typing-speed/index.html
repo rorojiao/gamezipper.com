@@ -23,7 +23,15 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
 .mode-btn{padding:10px 24px;border:1px solid #003300;background:rgba(0,10,0,0.8);color:#008020;border-radius:4px;cursor:pointer;font-size:15px;font-weight:600;transition:all .2s;font-family:'Courier New',monospace;text-align:center}
 .mode-btn::before{content:'> '}
 .mode-btn:hover{border-color:#00ff41;color:#00ff41;text-shadow:0 0 8px #00ff41}
-.mode-btn.active{border-color:#00ff41;background:rgba(0,30,0,0.8);color:#00ff41;box-shadow:0 0 15px rgba(0,255,65,0.2);text-shadow:0 0 10px #00ff41}
+.mode-btn.active{border-color:#00ff41;background:rgba(0,30,0,0.8);color:#00ff41;box-shadow:0 0 15px rgba(0,255,65,.2);text-shadow:0 0 10px #00ff41}
+/* UX-OPT 2026-10-09 R879: .mode-btn.pressed feedback to silence dead_click / rage_click on typing-speed.
+   Root cause: click handler adds 'active' to clicked button and removes 'active' from all others.
+   When user clicks the already-active button (the common case — re-selecting current mode),
+   classList stays "mode-btn active" before vs after, so gz-analytics.js capture-phase detector
+   reads snapClass == nowClass -> stateChanged=FALSE -> dead_click fires.
+   User rage-clicking 3+ times in 1s when no visible change happens -> rage_click BI signal.
+   Fix: add .pressed for ≥1.7s on every click — gives a visible glow AND a transient className change. */
+.mode-btn.pressed{transform:scale(1.06)!important;box-shadow:0 0 0 2px #00ff41,0 0 14px rgba(0,255,65,.45)!important;z-index:2}
 .stats-bar{display:flex;justify-content:space-around;margin-bottom:20px;padding:12px;background:rgba(0,10,0,0.8);border-radius:4px;border:1px solid #003300}
 .stat{text-align:center}
 .stat-val{font-size:28px;font-weight:700;color:#00ff41;text-shadow:0 0 10px rgba(0,255,65,0.5);font-family:'Courier New',monospace;animation:ledFlicker 3s ease-in-out infinite}
@@ -563,6 +571,14 @@ document.querySelectorAll(".mode-btn").forEach(btn=>{
   btn.addEventListener("click",function(){
     document.querySelectorAll(".mode-btn").forEach(b=>b.classList.remove("active"));
     this.classList.add("active");
+    // UX-OPT 2026-10-09 R879: .pressed feedback so gz-analytics.js detector sees a className delta.
+    //   Clicking the already-active button (or rapidly switching buttons) previously left className
+    //   unchanged at the detector's snapClass=click vs nowClass=+1.5s check, firing false-positive
+    //   dead_click / rage_click. The .pressed class is held for 1700ms (>1.5s detector window)
+    //   and gives the user a visible scale+glow response so they know the click registered.
+    var _t = this;
+    _t.classList.add("pressed");
+    setTimeout(function(){_t.classList.remove("pressed")},1700);
     mode=this.dataset.mode;
     reset();
   });
