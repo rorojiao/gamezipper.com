@@ -40,9 +40,21 @@ jobs:
         with:
           ref: main
       - uses: actions/configure-pages@v5
+      # 2026-10-09: _optimization/ has 4405 files (dev QA closed-loop evidence, scripts,
+      # vendor lib). All are non-production; including them pushed the repo past the
+      # actions/upload-pages-artifact@v3 10K-file limit (current HEAD = 18080 files).
+      # Stage a clean copy excluding dev-only top-level dirs, then upload from staging.
+      - name: Stage site (exclude dev-only dirs)
+        run: |
+          mkdir -p _pages_stage
+          rsync -a --exclude='_optimization' --exclude='_pages_stage' \
+                    --exclude='.git' --exclude='node_modules' \
+                    ./ _pages_stage/
+          echo "staged file count:"
+          find _pages_stage -type f | wc -l
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_pages_stage'
   deploy:
     needs: build
     runs-on: ubuntu-latest
