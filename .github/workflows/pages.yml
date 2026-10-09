@@ -36,36 +36,41 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # 2026-10-09: use sparse-checkout to only fetch production paths. HEAD = 10373
+      # files / 1.1GB; full checkout + actions/upload-pages-artifact@v3 hits the 1GB
+      # hard limit (10K files / 1GB / 10GB depending on runner). Sparse-checkout to the
+      # production paths (each game's index.html + required assets) keeps the artifact
+      # small. NOTE: this uses `with: sparse-checkout:` which is supported in
+      # actions/checkout@v4.
       - uses: actions/checkout@v4
         with:
           ref: main
+          sparse-checkout: |
+            /*
+            !/_optimization/
+            !/test-library/
+            !/qa-round-4/
+            !/monkey-mart-ref/
+            !/node_modules/
+            !/.git/
+            !/.github/
+            !/.audit/
+            !/.benchmarks/
+            !/.claude/
+            !/.cleanup/
+            !/.hermes/
+            !/.hermes-refs/
+            !/.hermes-ux-rounds/
+            !/.tools/
+            !/.well-known/
+            !/.backup-pre-perf-fix-20260719/
+            !/_hermes/
+            !/_pages_stage/
+          sparse-checkout-cone-mode: false
       - uses: actions/configure-pages@v5
-      # 2026-10-09: repo crossed the actions/upload-pages-artifact@v3 10K-file / 1GB
-      # hard limits. _optimization/ has 4405 files (dev QA closed-loop project, README
-      # explicitly states "Phase 5 final report delivered"), test-library/ is 278M of
-      # MASTER-TEST-CASES.md (not referenced from any HTML — internal QA history only),
-      # and dotfile dirs (.audit/, .benchmarks/, .hermes*, .tools/, .well-known/, ...)
-      # are dev/research artifacts that should not be served. Stage a clean copy of
-      # the production site only.
-      - name: Stage site (exclude dev-only paths)
-        run: |
-          mkdir -p _pages_stage
-          rsync -a --exclude='_optimization' --exclude='_pages_stage' \
-                    --exclude='.git' --exclude='.github' --exclude='node_modules' \
-                    --exclude='test-library' \
-                    --exclude='.audit' --exclude='.benchmarks' --exclude='.backup*' \
-                    --exclude='.claude' --exclude='.cleanup' --exclude='.tools' \
-                    --exclude='.hermes' --exclude='.hermes-refs' --exclude='.hermes-ux-rounds' \
-                    --exclude='.well-known' --exclude='qa-round-4' \
-                    --exclude='monkey-mart-ref' --exclude='_hermes' \
-                    ./ _pages_stage/
-          echo "staged file count:"
-          find _pages_stage -type f | wc -l
-          echo "staged size:"
-          du -sh _pages_stage | cut -f1
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: '_pages_stage'
+          path: '.'
   deploy:
     needs: build
     runs-on: ubuntu-latest
