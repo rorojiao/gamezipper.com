@@ -1,1 +1,0 @@
-daily_growth_2026-07-12.md
