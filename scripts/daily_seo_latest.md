@@ -1,1 +1,1 @@
-daily_seo_2026-09-22.md
+/home/junze/gamezipper.com/scripts/daily_seo_2026-10-09.md
