@@ -490,23 +490,30 @@ const _p=getPos(e);
 // gives instant "I see your click" feedback so the user knows the click registered
 // even when it didn't activate a toy element. Different colors per case: white-gray
 // (active click, default), yellow (no toy), orange (no down handler).
+//
+// UX-OPT 2026-10-10 R888: REMOVE the 200ms burst-cooldown. BI 7d post-R873 shows 49
+// rage_clicks from 2 Edge users across 10 PV — one user clicked 8 times at same pixel
+// (653,416) within 1s. R873's cooldown SUPPRESSED ripples 2-8 (within 200ms of click 1),
+// so the user saw ripple 1 only, then clicks 2-8 got NO visual ack → user rage-fired
+// thinking the game is broken. Stacked ripples at same (x,y) overlap perfectly anyway
+// (same color/life/radius → look identical) so removing the cooldown is visually neutral
+// but stops the rage-loop. spawnTapRipple already caps tapRipples at 30 entries
+// (oldest first via shift()) so memory is bounded even on 100-click rage.
+// gz-analytics.js dead_click detector (L395-425) only fires on DIV/SPAN/LABEL/LI/IMG/SVG/P,
+// NOT on CANVAS — so canvas click handlers can't produce false dead_click without a
+// dead_click fix. The R888 fix is just the burst-cooldown removal.
 var _color='rgba(180,180,200,0.4)';
-if(!toyInstance){_color='rgba(255,180,80,0.7)';spawnTapRipple(_p.x,_p.y,_color,'miss');return;}
-if(!toyInstance.down){_color='rgba(255,120,80,0.7)';spawnTapRipple(_p.x,_p.y,_color,'locked');return;}
-resumeAudio();
-toyInstance.down(_p,e);
-// Burst-cooldown: same x/y within 200ms = suppress ripple stack (8 rage clicks in 1s would
-// otherwise pile 8 ripples on top of each other, which looks broken). Allow 1 ripple per
-// pointerdown burst — the first one confirms the click; subsequent rapid clicks in the
-// same area are acknowledged by the user already seeing ripple 1.
-var _nowMs=performance.now();
-if(!window.__gzR873RippleLast)window.__gzR873RippleLast={x:0,y:0,t:0};
-var _dr=window.__gzR873RippleLast;
-if(_nowMs-_dr.t>200||Math.hypot(_p.x-_dr.x,_p.y-_dr.y)>30){
-  spawnTapRipple(_p.x,_p.y,'rgba(180,180,200,0.4)','ack');
-  _dr.x=_p.x;_dr.y=_p.y;_dr.t=_nowMs;
-}
+if(!toyInstance){_color='rgba(255,180,80,0.7)';spawnTapRipple(_p.x,_p.y,_color,'miss');}
+else if(!toyInstance.down){_color='rgba(255,120,80,0.7)';spawnTapRipple(_p.x,_p.y,_color,'locked');}
+else{resumeAudio();toyInstance.down(_p,e);spawnTapRipple(_p.x,_p.y,_color,'ack');}
 });
+// R888: NO dead_click fix needed — gz-analytics.js dead_click detector (L395-425) only
+// fires on DIV/SPAN/LABEL/LI/IMG/SVG/P, NOT CANVAS. So canvas click handlers can't
+// produce false dead_click regardless of whether className/style changes. Verified by
+// /home/junze/.openclaw/workspace/ad-test-results/verify-r888-detector.mjs CONTROL case
+// (no inline-style change, 3 clicks → 0 dead_click fires on canvas; only DIV/SPAN
+// clickable-looking elements fire).
+// The R888 fix above (remove burst-cooldown) is sufficient.
 gameCanvas.addEventListener('pointermove',e=>{
 if(!toyInstance||!toyInstance.move)return;
 toyInstance.move(getPos(e),e);
