@@ -380,15 +380,17 @@ canvas.addEventListener('pointerdown',e=>{
   // Chrome 154 user — 69 clicks at exact (205,311) in 1s. R757 only spawned ripples on tap
   // and during GAMEOVER cooldown (deathPhase<2, frameCount<=18), 8 clicks did NOTHING — bird
   // is mid-death animation, tap registered in state but flap() didn't act because state
-  // check rejected. Burst-cooldown prevents 8-stack ripple mess during rage bursts.
-  if(!window.__gzR873RippleLast)window.__gzR873RippleLast={x:0,y:0,t:0};
-  var _dr=window.__gzR873RippleLast;
-  var _nowMs=performance.now();
-  if(_nowMs-_dr.t>200||Math.hypot(cx-_dr.x,cy-_dr.y)>30){
-    tapRipples.push({x:cx,y:cy,life:1,color:'rgba(180,180,200,0.4)',type:'ack',r:10});
-    if(tapRipples.length>20)tapRipples.shift();
-    _dr.x=cx;_dr.y=cy;_dr.t=_nowMs;
-  }
+  // check rejected.
+  //
+  // UX-OPT 2026-10-10 R888b: REMOVE the 200ms burst-cooldown that R875b added. BI 7d post-R875b
+  // shows flappy-wings STILL has 22 rage_clicks from 1 user (Oct 5 13:20 — 69 clicks at exact
+  // (205,311) within 1s; Oct 7 11:33 — 9 clicks at (550,403); Oct 9 15:19 — 13 clicks at (198-208, 286-293)).
+  // Same root cause as R888 antistress: 200ms cooldown SUPPRESSES ripples 2-N within 200ms of click 1,
+  // user sees ripple 1 only then rage-fires clicks 2-N thinking game is unresponsive. Stack-capping
+  // via `if(tapRipples.length>20)tapRipples.shift()` already bounds memory. Stacked identical
+  // ripples at same (x,y) overlap perfectly anyway. Net effect: visually neutral, stops rage-loop.
+  tapRipples.push({x:cx,y:cy,life:1,color:'rgba(180,180,200,0.4)',type:'ack',r:10});
+  if(tapRipples.length>20)tapRipples.shift();
   flap(cx,cy);
 });
 document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();flap();}});
