@@ -98,6 +98,11 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a0a2e 50%,#0d1a2d 100%);min-
 @keyframes particleFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0.3)}}
 .float-text{position:absolute;color:#FFD700;font-weight:900;pointer-events:none;z-index:101;animation:floatUp .8s ease-out forwards;font-size:1.4em;text-shadow:0 0 8px rgba(255,215,0,.8)}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(0.7)}}
+/* UX-OPT 2026-10-10 R893: ring ripple expanding at click site (visual ack).
+   Quick + bold so user can't miss it on rapid-fire rage-click. */
+.gz-r893-ring{animation:gzR893Ring .35s ease-out forwards}
+@keyframes gzR893Ring{0%{opacity:.95;transform:scale(1);border-width:3px}50%{opacity:.7;transform:scale(3.5);border-width:2px}100%{opacity:0;transform:scale(6);border-width:1px}}
+@media(prefers-reduced-motion:reduce){.gz-r893-ring{animation:none;opacity:0}}
 
 /* Golden Cookie */
 #golden-cookie{position:absolute;width:70px;height:70px;cursor:pointer;display:none;z-index:200;animation:goldenPulse 1s ease-in-out infinite alternate}
@@ -876,7 +881,14 @@ state.cookies+=power;
 state.totalClicks++;
 state.totalBaked+=power;
 playSound('click');
-// Particle effect
+// UX-OPT 2026-10-10 R893: visual ack at click site (universal ring ripple).
+// e is MouseEvent or Touch — both have clientX/clientY. The ring gives user instant
+// feedback that click registered, even if they scroll-clicked at an offset position.
+var _clickX=(e&&typeof e.clientX==='number')?e.clientX:0;
+var _clickY=(e&&typeof e.clientY==='number')?e.clientY:0;
+spawnTapRipple(_clickX,_clickY,'rgba(255,200,80,0.95)');
+_gzR893RenderRing(_clickX,_clickY,'rgba(255,200,80,0.95)');
+// Particle effect (now also at click site — see R893 patch)
 spawnParticles(e);
 spawnFloatText(e,power);
 // Check achievements
@@ -884,11 +896,18 @@ checkAchievements();
 updateDisplay();
 }
 
+// UX-OPT 2026-10-10 R893: click feedback at CLICK SITE (was cookie center).
+// BI 7d post-R736: /cookie-clicker/ still had 80 rage_click from 2 users (01d224f1 CrOS 61,
+// 223f8be2 Win 19). Session traces showed scroll-while-click + clicks scattered across
+// canvas (519-572, 326-443 / 441-501, 289-348). Original spawnParticles used cookie center
+// (rect.left+w/2, rect.top+h/2), so feedback appeared 200-300px AWAY from click site — user
+// never saw feedback matching where they clicked → rage_click burst. R893 fix: spawn particles
+// + float-text at e.clientX/e.clientY (the actual click position) AND add a quick ring ripple
+// (R873/R791 universal ack pattern) for instant visual confirmation. Same fix shape proven
+// on flappy-wings (R757/R888b) and antistress (R873/R888).
 function spawnParticles(e){
-const wrapper=document.getElementById('cookie-wrapper');
-const rect=wrapper.getBoundingClientRect();
-const cx=rect.left+rect.width/2;
-const cy=rect.top+rect.height/2;
+const cx=(e&&typeof e.clientX==='number')?e.clientX:(window.innerWidth/2);
+const cy=(e&&typeof e.clientY==='number')?e.clientY:(window.innerHeight/2);
 for(let i=0;i<6;i++){
 const p=document.createElement('div');
 p.className='particle';
@@ -904,14 +923,54 @@ setTimeout(()=>p.remove(),800);
 }
 
 function spawnFloatText(e,amount){
-const wrapper=document.getElementById('cookie-wrapper');
-const rect=wrapper.getBoundingClientRect();
+const cx=(e&&typeof e.clientX==='number')?e.clientX:(window.innerWidth/2);
+const cy=(e&&typeof e.clientY==='number')?e.clientY:(window.innerHeight/2);
 const t=document.createElement('div');
 t.className='float-text';
 t.textContent='+'+fmt(amount);
-t.style.cssText=`left:${rect.left+rect.width/2+(-30+Math.random()*60)}px;top:${rect.top+rect.height/3}px`;
+t.style.cssText=`left:${cx-15+Math.random()*30}px;top:${cy-10}px`;
 document.body.appendChild(t);
 setTimeout(()=>t.remove(),800);
+}
+
+// UX-OPT 2026-10-10 R893: ring ripple at click site (universal ack pattern).
+// Larger and more persistent than particles — gives user INSTANT feedback that click registered,
+// even before the cookie increments. Burst-cooldown removed (R888 lesson): on every click, draw
+// a quick expanding ring at e.clientX/e.clientY that fades over 350ms. Memory bounded by
+// tapRipples cap of 30.
+let tapRipples=[];
+let _gzR893LastT=0;
+let _gzR893Active=false;
+let _gzR893RafId=null;
+function spawnTapRipple(x,y,color){
+tapRipples.push({x:x,y:y,maxLife:0.35,life:0.35,color:color||'rgba(255,200,80,0.95)'});
+if(!_gzR893Active){
+_gzR893Active=true;
+_gzR893LastT=performance.now();
+_gzR893RafId=requestAnimationFrame(_gzR893Tick);
+}
+if(tapRipples.length>30)tapRipples.shift();
+}
+function _gzR893Tick(t){
+const dt=Math.min((t-_gzR893LastT)/1000,0.05);
+_gzR893LastT=t;
+for(let i=tapRipples.length-1;i>=0;i--){
+const r=tapRipples[i];r.life-=dt;if(r.life<=0)tapRipples.splice(i,1);
+}
+if(tapRipples.length){_gzR893RafId=requestAnimationFrame(_gzR893Tick);}
+else{_gzR893Active=false;_gzR893RafId=null;}
+}
+window.tapRipples=tapRipples;
+window.spawnTapRipple=spawnTapRipple;
+// UX-OPT 2026-10-10 R893: DOM-based ring renderer. Each click creates a .gz-r893-ring div
+// at (x,y), expands 8→48px over 350ms via @keyframes gzR893Ring, opacity 0.95→0, then
+// auto-removes. Memory bounded by tapRipples length (max 30). DOM node removed at 360ms.
+function _gzR893RenderRing(x,y,color){
+const r=document.createElement('div');
+r.className='gz-r893-ring';
+r.style.cssText=`position:fixed;left:${x-4}px;top:${y-4}px;width:8px;height:8px;border:2px solid ${color};border-radius:50%;pointer-events:none;z-index:200;box-sizing:border-box;animation:gzR893Ring .35s ease-out forwards`;
+document.body.appendChild(r);
+setTimeout(()=>{if(r&&r.parentNode)r.parentNode.removeChild(r);},360);
 }
 
 function checkAchievements(){
