@@ -71,6 +71,7 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 html,body{width:100%;height:100%;overflow-x:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;}
 body{background:linear-gradient(135deg,#0a0a1a 0%,#1a0a2e 50%,#0a1a2e 100%);font-family:'Nunito',sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
+/* UX-OPT 2026-10-11 R678: move gz-ad-above-game outside #gameWrapper to prevent aspect-ratio wrap CLS. BI 7d: 1 CLS POOR avg 0.748 from duck-life. */
 #gameWrapper{position:relative;width:100%;max-width:800px;aspect-ratio:16/9;margin:0 auto;}
 canvas{display:block;width:100%;height:100%;border-radius:12px;touch-action:none;image-rendering:pixelated;}
 #gameWrapper::after{content:'';position:absolute;top:-2px;left:-2px;right:-2px;bottom:-2px;border-radius:14px;background:linear-gradient(135deg,#ff6b9d,#c44dff,#4dc9ff,#4dff88);z-index:-1;opacity:0.6;filter:blur(8px);animation:borderGlow 4s ease-in-out infinite alternate;}
@@ -107,9 +108,10 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 #gz-ad-above-game:empty,#gz-ad-below-canvas:empty{pointer-events:none}
 
 /* R360: R347 static in-game banner placeholders. */
+/* UX-OPT 2026-10-11 R680: align gz-ad CSS to monetag bannerCSS — prevent 50→90 grow CLS. 5 sites sweep: duck-life 1u×0.748. */
 #gz-ad-above-game,#gz-ad-below-canvas{
-  display:block;max-width:728px;width:100%;height:90px;min-height:50px;max-height:90px;
-  margin:6px auto;text-align:center;overflow:hidden;
+  display:block;max-width:728px;min-height:90px;max-height:280px;
+  margin:8px auto;text-align:center;overflow:hidden;
   contain:layout paint style;box-sizing:border-box;position:relative;
   background:transparent;border-radius:6px;
 }
@@ -117,7 +119,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 #gz-ad-above-game iframe,#gz-ad-below-canvas iframe{
   display:block;position:absolute!important;top:0!important;left:0!important;
   width:100%!important;max-width:728px!important;height:100%!important;
-  min-height:50px!important;max-height:90px!important;overflow:hidden;
+  min-height:90px!important;max-height:280px!important;overflow:hidden;
   border:0;
 }
 #gz-ad-above-game:empty::after,#gz-ad-below-canvas:empty::after{
@@ -126,12 +128,16 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
   letter-spacing:.05em;pointer-events:none;
 }
 @media(max-width:600px){
-  #gz-ad-above-game,#gz-ad-below-canvas{height:50px;min-height:50px;max-height:60px;margin:4px auto}
+  #gz-ad-above-game,#gz-ad-below-canvas{min-height:50px;max-height:280px;margin:8px auto}
   #gz-ad-above-game ins,#gz-ad-below-canvas ins,
   #gz-ad-above-game iframe,#gz-ad-below-canvas iframe{
-    max-height:60px!important;min-height:50px!important;
+    max-height:280px!important;min-height:50px!important;
   }
 }
+
+/* R680 extension: gz-ad-below-game inline style aligned to bannerCSS so monetag cssText rewrite is no-op on dimensions. Page CSS rule preserves contain:layout + position:relative for inner ins positioning. */
+#gz-ad-below-game{position:relative!important;contain:layout paint style!important;line-height:100px;box-sizing:border-box;background:transparent;border-radius:6px}
+#gz-ad-below-game ins,#gz-ad-below-game iframe{position:absolute!important;top:0!important;left:0!important;width:100%!important;max-width:728px!important;height:100%!important;max-height:280px!important;display:block;margin:0 auto;text-align:center;overflow:hidden;border:0}
 </style>
 </head>
 <body>
@@ -139,9 +145,10 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 <a href="https://gamezipper.com/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;font-family:sans-serif;animation:pulse-glow 2.5s ease-in-out infinite">&#x1f3e0; More Games at GameZipper.com</a><h1 class="gz-sr-only">Duck Life - Train & Race Your Duck Online</h1>
 <div class="page-title">Duck Life</div>
 <div class="page-subtitle">Train. Race. Become Champion!</div>
+<!-- R678 fix: gz-ad-above-game moved OUTSIDE #gameWrapper (was 1st child, aspect-ratio wrap CLS) -->
+<div id="gz-ad-above-game"></div>
 <div id="gameWrapper">
 
-<div id="gz-ad-above-game"></div>
   <canvas id="gameCanvas"></canvas>
 <div id="gz-ad-below-canvas"></div>
 
@@ -2405,7 +2412,7 @@ init();
 })();
 </script>
 <!-- UX-OPT 2026-08-05 R383: R362 non-canvas AdSense CLS fix applied to all blog/*.html. Original: <div id="gz-ad-below-game"></div> + standalone <ins class="adsbygoogle"> as siblings — AdSense creative inflates 0->280px inside <ins> in flow, pushes downstream content. Fix: div becomes position:relative + contain:layout paint style + overflow:hidden + max-height:280px; faint "Sponsored" label inside; <ins> becomes position:absolute with height:100% so its creative overlays on the div without affecting flow. Same pattern as chess/ R362 proven (CLS 0.20 -> 0). -->
-<div id="gz-ad-below-game" style="position:relative;min-height:100px;max-height:280px;margin:16px auto;max-width:728px;text-align:center;overflow:hidden;contain:layout paint style;color:#666;font-size:.7em;background:transparent;border-radius:6px;box-sizing:border-box;line-height:100px"><span aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.78em;opacity:.3;letter-spacing:.05em;font-weight:500;pointer-events:none;transition:opacity .15s ease">Sponsored &middot; Advertisement</span>
+<div id="gz-ad-below-game" style="max-width:728px;min-height:90px;max-height:280px;margin:8px auto;text-align:center;overflow:hidden;position:relative;contain:layout paint style;line-height:100px"><span aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.78em;opacity:.3;letter-spacing:.05em;font-weight:500;pointer-events:none;transition:opacity .15s ease">Sponsored &middot; Advertisement</span>
   <!-- UX-OPT 2026-08-08 R389: ins moved inside the div from its previous sibling position (was orphan after R383 div, caused CLS POOR). -->
   <ins class="adsbygoogle" style="position:absolute!important;top:0!important;left:0!important;width:100%!important;max-width:728px!important;height:100%!important;max-height:280px!important;margin:0 auto!important;text-align:center;display:block" data-ad-client="ca-pub-8346383990981353" data-ad-slot="1099212472" data-ad-format="auto" data-full-width-responsive="true"></ins>
   <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
