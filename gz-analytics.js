@@ -1,6 +1,6 @@
 /* gz-analytics.js — bi.gamezipper.com stable endpoint (R415 2026-08-14)
    R450 2026-08-22 23:30 CST: cron + watchdog fix (sort -u removed). EP -> ancient-mpegs-symposium-kiss (2026-10-05)
-   EP = https://ancient-mpegs-symposium-kiss.trycloudflare.com/api/collect (PRODUCTION-PROMOTED)
+   EP = https://earl-specification-writing-phase.trycloudflare.com/api/collect (PRODUCTION-PROMOTED)
    Path: browser → DNS (Porkbun → 43.172.69.197) → CapRover nginx → wash-editorials trycloudflare tunnel → gamezipper-bi server (10.10.29.67:8090)
    /api/ proxy added 2026-08-14 in captain.conf → upstream https://wash-editorials-opening-specific.trycloudflare.com
    See kanban R415. Replaces R413 trycloudflare random tunnel pattern.
