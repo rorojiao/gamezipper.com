@@ -622,6 +622,8 @@ let comboCount = 0;          // current consecutive smart pours
 let comboMaxThisLevel = 0;   // highest combo reached this level
 let comboFlashTimer = 0;     // frames to show combo popup (0 = hidden)
 let comboBestEver = 0;       // persisted across sessions
+let noProgressCount = 0;    // R880: consecutive non-progress pours (triggers stuck-prompt)
+let stuckPromptShown = false; // R880: only show stuck toast once per stuck-streak
 
 // ─── Sort Ripple Effect (Phase 2: visual feedback) ───
 // Golden expanding ring emitted when a bottle becomes fully sorted.
@@ -2706,6 +2708,8 @@ async function initLevel(idx) {
   comboCount = 0;
   comboMaxThisLevel = 0;
   comboFlashTimer = 0;
+  noProgressCount = 0;
+  stuckPromptShown = false;
   sortRipples = [];
   tapRipples = [];
   extraTubeUsed = 0;
@@ -2893,6 +2897,9 @@ function completePour() {
         checkAchievements();
       }
     }
+    // R880: smart pour clears stuck state
+    noProgressCount = 0;
+    stuckPromptShown = false;
   } else {
     // Non-progress pour: reset combo (pouring back and forth shouldn't build combo)
     if (comboCount >= 3) {
@@ -2900,6 +2907,18 @@ function completePour() {
       toastMsg = { text: `💥 ${comboCount}x Combo ended!`, timer: 80, color: "#ffa502" };
     }
     comboCount = 0;
+    // R880: count non-progress pours → gentle stuck-prompt nudge toward Hint button
+    // (only fires after level has at least 4 moves so it doesn't trigger on early exploration)
+    if (moves >= 4) {
+      noProgressCount++;
+      if (!stuckPromptShown && noProgressCount >= 5) {
+        toastMsg = { text: "💡 Stuck? Tap Hint to see the right pour", timer: 140, color: "#ffd32a" };
+        stuckPromptShown = true;
+        try { window.__msTrack && window.__msTrack('ms_stuck_prompt_shown', { lv: currentLevel + 1, n: numColors, moves: moves }); } catch(e){}
+      } else if (stuckPromptShown && noProgressCount === 10) {
+        toastMsg = { text: "💡 Double-tap Hint for Auto-Solve", timer: 140, color: "#ffd32a" };
+      }
+    }
   }
 
   // Check if any bottle just became sorted
@@ -3132,6 +3151,9 @@ function showHint() {
   hintTimer = Date.now();
   levelUsedHint = true;
   gStats.totalHintsUsed++;
+  // R880: hint tap acknowledges stuck state, clear the prompt
+  noProgressCount = 0;
+  stuckPromptShown = false;
   sfxHint();
 }
 
@@ -5077,6 +5099,21 @@ function renderGame() {
   drawButton(hudStartX + hudBtnW + hudGap, hudY, hudBtnW, hudBtnH, "↩ Undo", hoverBtn === 11, undoStack.length > 0 && !solving);
   // Hint button (shows solve confirm if solving, else label based on state)
   const hintLabel = solveConfirm ? "Auto?" : "Hint";
+  // R880: pulsing yellow border on Hint button when stuck (noProgressCount >= 5) to
+  // visually point the user at the discovered-but-not-tapped hint affordance.
+  // Glow fades out as soon as a smart pour happens (noProgressCount reset above).
+  if (stuckPromptShown && !solving && !solveConfirm) {
+    const pulse = 0.5 + 0.5 * Math.sin(now * 0.008);
+    const hintX = hudStartX + (hudBtnW + hudGap) * 2;
+    X.save();
+    X.strokeStyle = `rgba(255, 211, 42, ${0.4 + pulse * 0.5})`;
+    X.lineWidth = 2 + pulse * 1.5;
+    X.shadowColor = "#ffd32a";
+    X.shadowBlur = 8 + pulse * 8;
+    roundRect(hintX - 2, hudY - 2, hudBtnW + 4, hudBtnH + 4, 6);
+    X.stroke();
+    X.restore();
+  }
   drawButton(hudStartX + (hudBtnW + hudGap) * 2, hudY, hudBtnW, hudBtnH, hintLabel, hoverBtn === 15, !solving || !solveConfirm);
   drawButton(hudStartX + (hudBtnW + hudGap) * 3, hudY, hudBtnW, hudBtnH, solving ? "⏹ Stop" : "↻ Reset", hoverBtn === 12, true);
 
