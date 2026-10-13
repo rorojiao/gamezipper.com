@@ -54,6 +54,8 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 #toast.show{display:block;animation:fadeIn .3s}
 #toast.err{color:#f85149}
 @keyframes fadeIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes abcTap{0%{opacity:.7;transform:translate(-50%,-50%) scale(.4)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.2)}}
+.abc-tap{position:absolute;pointer-events:none;width:48px;height:48px;border-radius:50%;border:2px solid rgba(88,166,255,.7);background:radial-gradient(circle,rgba(88,166,255,.25) 0%,transparent 70%);animation:abcTap .5s ease-out forwards;z-index:80}
 #win{position:absolute;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(3px)}
 #win.show{display:flex}
 .wincard{background:linear-gradient(135deg,#161b22,#0d1117);border:1px solid rgba(88,166,255,.3);border-radius:16px;padding:28px 36px;text-align:center;max-width:320px;box-shadow:0 0 50px rgba(88,166,255,.15)}
@@ -408,6 +410,14 @@ function onPointerDown(e) {
   var x = e.clientX - rect.left;
   var y = e.clientY - rect.top;
   var pos = getCellAt(x, y);
+  // R922 2026-10-13: tap-ripple visual feedback so user sees every canvas click registered (drops rage_click)
+  // Fires for ALL canvas clicks (even misses) — fix for /easy-as-abc/ 7d 36 rage_click BI
+  var ripple = document.createElement('div');
+  ripple.className = 'abc-tap';
+  ripple.style.left = (rect.left + x) + 'px';
+  ripple.style.top = (rect.top + y) + 'px';
+  document.body.appendChild(ripple);
+  setTimeout(function(){ if (ripple.parentNode) ripple.parentNode.removeChild(ripple); }, 600);
   if (!pos) return;
   
   var level = LEVELS[curLevel];
