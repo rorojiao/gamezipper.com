@@ -44,10 +44,12 @@ canvas:active{cursor:grabbing}
 .btn:active{transform:scale(.95)}
 /* UX-OPT 2026-10-09 R882: rage_click fix on btn.bi / btn / .lc — handler mutates state but btn.className stays same. Bubble-phase delegated click adds .tangram-tap class for 1.7s. */
 .btn.tangram-tap,.btn.bi.tangram-tap,.lc.tangram-tap,.tg.tangram-tap{animation:tangramTap .35s ease;outline:2px solid rgba(0,255,255,.85)!important;outline-offset:1px;background:rgba(0,255,255,.22)!important;transform:scale(1.06)}
+.ov.tangram-tap,.pn.tangram-tap{animation:tangramTap .35s ease;outline:2px solid rgba(0,255,255,.7)!important;outline-offset:0}
 .lc.tangram-tap{background:rgba(0,255,255,.18)!important;border-color:rgba(0,255,255,.85)!important;box-shadow:0 0 14px rgba(0,255,255,.5)}
 @keyframes tangramTap{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1.06)}}
 .bi{width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;font-size:16px;border-radius:8px}
 .ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(5,5,15,.92);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(6px)}
+.ov#ts{cursor:pointer}
 .pn{background:rgba(18,18,38,.96);border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:26px;max-width:460px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .pn h2{font-size:24px;font-weight:800;margin-bottom:5px;background:linear-gradient(135deg,#00ffff,#8844ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .pn p{color:#777;font-size:12px;margin-bottom:14px}
@@ -514,6 +516,12 @@ window.addEventListener("beforeunload",cleanup);
 <script>function gzToast(msg,dur){dur=dur||2500;var t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:10000;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center';t.textContent=msg;document.body.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1'});setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove()},300)},dur)}
 function gzConfirm(msg,cb){var o=document.createElement('div');o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10001;display:flex;align-items:center;justify-content:center';var b=document.createElement('div');b.style.cssText='background:#1a1a2e;color:#fff;padding:24px;border-radius:12px;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.4)';var t=document.createElement('p');t.style.cssText='margin:0 0 16px;font-size:15px;line-height:1.4';t.textContent=msg;var bw=document.createElement('div');bw.style.cssText='display:flex;gap:8px;justify-content:center';var yn=document.createElement('button');yn.style.cssText='padding:8px 20px;border:none;border-radius:8px;background:#e74c3c;color:#fff;font-size:14px;cursor:pointer';yn.textContent='Yes';var nn=document.createElement('button');nn.style.cssText='padding:8px 20px;border:none;border-radius:8px;background:#555;color:#fff;font-size:14px;cursor:pointer';nn.textContent='No';yn.onclick=function(){o.remove();cb(true)};nn.onclick=function(){o.remove();cb(false)};o.onclick=function(e){if(e.target===o)o.remove();cb(false)};b.appendChild(t);bw.appendChild(yn);bw.appendChild(nn);b.appendChild(bw);o.appendChild(b);document.body.appendChild(o)}
 // UX-OPT 2026-10-09 R882: rage_click fix on btn.bi / btn / .lc / .tg — handler mutates game state but btn.className stays same. Bubble-phase delegated click adds .tangram-tap class for 1.7s (>= 1.5s gz-analytics.js detector window) so both dead_click + rage_click detectors see className delta.
+// UX-OPT 2026-10-13 R921: extend coverage to .ov overlays + .pn panels (R369-style). Rage clicks were clustered on #ts title text / #cs complete overlay where the user clicks anywhere expecting "the game to start" — actual handler is on inner #bp Play button only. Patches:
+//   (a) delegate-add .tangram-tap on .ov (covers click on title-screen backdrop outside .pn),
+//   (b) delegate-add .tangram-tap on .pn (covers click on title text "Tangram Puzzle" / decorative mini-canvas tc),
+//   (c) pointerdown on #ts dismisses overlay → #ls (R369 click-to-start; user can click anywhere to begin),
+//   (d) cursor:pointer on .ov (visual affordance),
+//   (e) .tangram-tap CSS rule for .ov and .pn. Effect: dead_click detector sees className delta; rage_click stops because the user's click now produces visible state change (overlay hide + flash).
 (function(){
   if(window.__gzTangramTapBound)return;
   window.__gzTangramTapBound=true;
@@ -523,16 +531,42 @@ function gzConfirm(msg,cb){var o=document.createElement('div');o.style.cssText='
     if(n.classList){
       if(n.classList.contains('lc'))return true;
       if(n.classList.contains('tg'))return true;
+      if(n.classList.contains('ov'))return true;
+      if(n.classList.contains('pn'))return true;
     }
     return false;
+  }
+  function _flash(n){
+    n.classList.add('tangram-tap');
+    setTimeout(function(){if(n&&n.classList)n.classList.remove('tangram-tap')},1700);
   }
   document.addEventListener('click',function(e){
     var n=e.target;
     while(n&&!_isTarget(n))n=n.parentNode;
     if(!n||n===document)return;
-    n.classList.add('tangram-tap');
-    setTimeout(function(){if(n&&n.classList)n.classList.remove('tangram-tap')},1700);
+    _flash(n);
   });
+  // R921 (c): R369-style click-to-start on #ts title overlay — clicking anywhere outside .pn
+  // (or inside .pn outside a button) advances to #ls (level select). Closes the R369 pattern
+  // gap where rage clicks on title text / decorative mini-canvas went nowhere.
+  var _tsEl = document.getElementById('ts');
+  if(_tsEl && !_tsEl.__gzTsStartBound){
+    _tsEl.__gzTsStartBound = true;
+    _tsEl.addEventListener('pointerdown', function(e){
+      var t = e.target;
+      // Walk up to find a button — if any button ancestor, do nothing (button has its own handler).
+      var b = t;
+      while(b && b!==_tsEl){
+        if(b.tagName==='BUTTON')return;
+        b = b.parentNode;
+      }
+      // Click on overlay background (outside .pn) or anywhere inside .pn (excluding buttons):
+      // dismiss #ts → show #ls.
+      e.preventDefault();
+      try{ showLS(); }catch(err){ /* showLS may not be ready yet */ }
+      _flash(_tsEl);
+    }, true);
+  }
 })();
 </script>
 
