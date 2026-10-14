@@ -79,6 +79,18 @@ canvas.outside-touch{touch-action:pan-y}
 .piece-btn.selected{border-color:var(--accent);background:rgba(255,184,77,0.15)}
 .piece-btn.placed{opacity:0.4;border-style:dashed}
 .piece-btn.disabled{cursor:not-allowed;opacity:0.5}
+/* UX-OPT 2026-10-14 R926: brief .piece-btn-tapped feedback for gz-analytics.js dead_click
+   detector. BI 7d: 3 dead_click on DIV.piece-btn (1 .selected + 2 generic). Root cause:
+   onClick calls renderPiecesTray() which does list.innerHTML='' — the original .piece-btn
+   is detached in <1ms. gz-analytics.js bubble-phase click listener reads snapClass from the
+   detached t (className preserved), but no className change happens at click time, so
+   snapClass == nowClass at 1.5s → dead_click fires. Fix: bubble-phase click listener
+   registered AFTER gz-analytics.js adds .piece-btn-tapped to t (now detached, but className
+   change still propagates). snapClass (before add) != nowClass (after add) → stateChanged=TRUE
+   → no dead_click. R847 DOM-rebuild-race family. */
+.piece-btn.piece-btn-tapped{animation:pieceBtnTap .35s ease;box-shadow:0 0 0 2px var(--accent),0 0 12px rgba(251,191,36,.35)!important}
+@keyframes pieceBtnTap{0%{transform:scale(1)}50%{transform:scale(1.12)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.piece-btn.piece-btn-tapped{animation:none!important}}
 .piece-preview{position:relative}
 .piece-preview-cell{position:absolute;width:14px;height:14px;border-radius:2px;background:var(--piece-color);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.3)}
 .piece-name{font-size:11px;font-weight:700;color:var(--piece-color);text-transform:uppercase}
@@ -932,6 +944,27 @@ window.loadLevel = function(idx) {
   origLoad(idx);
   startMusic();
 };
+
+// UX-OPT 2026-10-14 R926: bubble-phase click listener (registered AFTER gz-analytics.js)
+// adds transient .piece-btn-tapped class to clicked .piece-btn for 1700ms. R847 DOM-rebuild
+// race fix: original .piece-btn is destroyed by renderPiecesTray() but the detached t element
+// still has className accessible. Adding 'piece-btn-tapped' to t makes snapClass (read by
+// gz-analytics.js BEFORE this listener runs) != nowClass (read 1.5s later). stateChanged=TRUE
+// → dead_click no longer fires. Same pattern as R381/R382/R508 family.
+(function(){
+  if(window.__gzPbTapBound) return;
+  window.__gzPbTapBound = true;
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('.piece-btn');
+    if(!btn) return;
+    btn.classList.remove('piece-btn-tapped');
+    void btn.offsetWidth;
+    btn.classList.add('piece-btn-tapped');
+    setTimeout(function(){
+      if(btn && btn.classList) btn.classList.remove('piece-btn-tapped');
+    }, 1700);
+  });
+})();
 </script>
 </body>
 </html>

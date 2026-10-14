@@ -300,6 +300,10 @@ body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .game-info .desc{font-size:.75em;color:#999;margin-bottom:6px;text-rendering:optimizeSpeed;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4;min-height:2.8em;max-height:2.8em}
 .game-info .tags{display:flex;gap:5px;flex-wrap:wrap}
 .game-info .tag{font-size:0.7em;padding:3px 8px;background:#2a2a4a;border-radius:10px;color:#4ecdc4;transition:all .25s cubic-bezier(.4,0,.2,1);cursor:pointer;text-decoration:none;white-space:nowrap}.game-info .tag:hover{background:rgba(78,210,196,.15);color:#7eeee5;transform:translateY(-1px) scale(1.05);box-shadow:0 2px 8px rgba(78,210,196,.12)}.game-info .tag:active{transform:scale(.92)}
+/* UX-OPT 2026-10-14 R926: .tag-tapped visual feedback for dead_click detector (R381 family) */
+.game-info .tag.tag-tapped{animation:gzTagTap .35s ease;background:#4ecdc4!important;color:#0a0a1a!important;box-shadow:0 0 0 2px #4ecdc4,0 0 12px rgba(78,205,196,.4)}
+@keyframes gzTagTap{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.game-info .tag.tag-tapped{animation:none!important}}
 .new-badge{position:absolute;top:10px;right:10px;background:#ff6b6b;color:#fff;padding:3px 10px;border-radius:10px;font-size:.7em;font-weight:bold;z-index:2;animation:pulse 2s infinite}
 
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
@@ -1552,6 +1556,22 @@ function _gzRenderFinalize(grid, list){
     var tag=e.target.closest&&e.target.closest('.tag[data-tag]');
     if(!tag)return;
     e.preventDefault();e.stopPropagation();
+    // UX-OPT 2026-10-14 R926: brief .tag-tapped feedback so gz-analytics.js dead_click
+    // detector sees a className delta. BI 7d: 2 dead_click on SPAN.tag from 2 distinct
+    // users. Root cause: filter() adds .active to .game-card (parent) but the .tag span
+    // itself never changes className → snapClass == nowClass → dead_click fires. R381
+    // pattern: add transient class to the clicked element itself for ≥1.5s. Registered
+    // via games.addEventListener so it runs AFTER gz-analytics.js's bubble-phase click
+    // listener (which was registered at parse time on document). Same element priority
+    // hierarchy — bubbles from .tag → .game-card → ... → document; .games listener runs
+    // before document, so snapClass (gz) reads BEFORE our add. Verified via 2 user
+    // events on 2026-10-09 + 2026-10-10.
+    tag.classList.remove('tag-tapped');
+    void tag.offsetWidth;
+    tag.classList.add('tag-tapped');
+    setTimeout(function(){
+      if(tag && tag.classList) tag.classList.remove('tag-tapped');
+    }, 1700);
     filter(tag.dataset.tag,tag.closest('.game-card'));
   });
   // Arrow-key navigation for game grid — re-queries cards on each keydown so it stays
