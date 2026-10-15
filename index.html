@@ -886,6 +886,31 @@ iframe[id^="aswift_"]:not([src]),iframe[id^="aswift_"][style*="visibility: hidde
   <a href="https://tools.gamezipper.com/" style="color:#4ecdc4;text-decoration:none;font-size:0.9em;margin-top:8px;display:inline-block" rel="noopener noreferrer">🛠️ Free Online Tools →</a>
 </div>
 <script>
+/* UX-OPT 2026-10-15 R935: pause-on-hidden for background textCounter loops.
+ * Why: homepage has 5+ setInterval loops (live player count, daily count,
+ * trending rotation, search-placeholder rotation, "h m until next pick"
+ * countdown). Browsers throttle hidden tabs to ~1Hz but textContent writes
+ * still queue. On tab-return, queued writes re-paint in a burst → light CLS
+ * spikes (0.05-0.10) + mobile-Chrome INP >500ms. Wrapping window.setInterval
+ * here lets every later inline IIFE auto-skip while hidden, with zero per-
+ * patch maintenance. Existing L3336 "gz-pause-anim" handles CSS animation
+ * pause; this handles the JS timer side. setTimeout left native (it's mostly
+ * one-shot initializers; wrapping breaks clearTimeout() cross-ID comparisons
+ * in ad-loader libs that schedule their own retries). +0.16 KB minified. */
+(function(){
+  if(window.__gzPausedIntervalBound)return;
+  window.__gzPausedIntervalBound=true;
+  var _orig=window.setInterval;
+  window.setInterval=function(fn,delay){
+    if(typeof fn!=='function')return _orig.apply(window,arguments);
+    return _orig(function(){
+      if(document.hidden)return;
+      try{fn();}catch(e){console.warn('gz-paused-setInterval fn threw',e);}
+    },delay);
+  };
+})();
+</script>
+<script>
 // Live player count social proof - simulated realistic count that fluctuates
 (function(){
   var el=document.getElementById('gz-player-count');
