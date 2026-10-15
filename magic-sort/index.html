@@ -624,6 +624,7 @@ let comboFlashTimer = 0;     // frames to show combo popup (0 = hidden)
 let comboBestEver = 0;       // persisted across sessions
 let noProgressCount = 0;    // R880: consecutive non-progress pours (triggers stuck-prompt)
 let stuckPromptShown = false; // R880: only show stuck toast once per stuck-streak
+let extraTubeIntroShown = false; // R936: only show extra-tube tutorial intro once per session
 
 // ─── Sort Ripple Effect (Phase 2: visual feedback) ───
 // Golden expanding ring emitted when a bottle becomes fully sorted.
@@ -2721,10 +2722,23 @@ async function initLevel(idx) {
   levelIntroStartLevel = idx;
   // Upbeat start chime (catches the moment of beginning a new level)
   if (idx > 0 || !earnedAchievements.first_sort) sfxLevelStart();
-  // First-time tutorial: show on levels 0-2 only, then turn off permanently
-  if (idx <= 2 && !earnedAchievements.first_sort) {
-    tutorialStep = 1;
+  // R936 2026-10-16: Two-phase first-time tutorial:
+  //   Phase A (idx 0-2): the full select→pour→celebrate waterfall (unchanged).
+  //   Phase B (idx 3-5): only the Extra Tube intro (step 4) — users already know
+  //     select/pour from Phase A, but they may bounce at the first 4-color state.
+  //     BI 30d: 11 lv=10 starts → 0 completes → the n=2→n=4 cliff without guidance.
+  //   Triggered only for first-time players (first_sort achievement not earned yet).
+  //   Pre-existing tutorial logic unchanged for Phase A; Phase B uses tutorialStep=4.
+  if (idx <= 5 && !earnedAchievements.first_sort) {
+    if (idx <= 2) {
+      tutorialStep = 1;
+    } else {
+      // lv=3,4,5: Extra Tube intro — no select/pour re-explanation
+      tutorialStep = 4;
+      extraTubeIntroShown = false;
+    }
     tutorialTapCount = 0;
+    try { window.__msTrack && window.__msTrack('ms_tutorial_extended', { lv: currentLevel, n: numColors, idx_max: 5, phase: idx <= 2 ? 'A' : 'B', step: tutorialStep }); } catch(e){}
   } else {
     tutorialStep = 0;
   }
@@ -2753,6 +2767,8 @@ function addExtraTube() {
   bottleBounces[bottles.length - 1] = { scale: 1.15, velocity: 0 };
   // Vibrate on mobile
   if (navigator.vibrate) navigator.vibrate(30);
+  // R936: dismiss tutorial step 4 once the user has used Extra Tube (any tap dismisses later)
+  if (tutorialStep === 4) tutorialStep = 0;
   saveSave();
 }
 
@@ -3002,6 +3018,18 @@ function completePour() {
     }
     checkAchievements();
     saveSave();
+    // R936 2026-10-16: Post-win tutorial hint for lv=3-5 — teach Extra Tube affordance.
+    // Players who reach lv=3+ need to know about the +Tube button before they hit a
+    // stuck 4-color state. The hint fires after the win celebration toast clears (2s delay).
+    if (currentLevel >= 2 && currentLevel <= 4 && !earnedAchievements.first_sort) {
+      setTimeout(() => {
+        if (state === "win" && !extraTubeIntroShown) {
+          extraTubeIntroShown = true;
+          toastMsg = { text: "🧪 Need space? Tap + Tube for an extra bottle", timer: 220, color: "#74b9ff" };
+          try { window.__msTrack && window.__msTrack('ms_tutorial_extra_tube_hint', { lv: currentLevel + 1 }); } catch(e){}
+        }
+      }, 2200);
+    }
     // Dispatch custom event for interstitial ad system
     try {
       window.dispatchEvent(new CustomEvent("level-complete", { detail: { level: currentLevel, stars: stars, moves: moves } }));
@@ -5539,6 +5567,12 @@ function renderGame() {
       tutHighlightIdx = selectedBottle >= 0 ? selectedBottle : -1;
     } else if (tutorialStep === 3) {
       tutText = "🎉 Great! Sort all colors to win";
+    } else if (tutorialStep === 4) {
+      // R936: Extra Tube intro for lv=3-5 (Phase B tutorial). Use a static toast so
+      // it doesn't block gameplay; auto-dismiss on first +Tube tap or any bottle tap.
+      tutText = "🧪 Tap + Tube below to add space when stuck";
+      // Highlight left side HUD where +Tube button lives (no specific idx needed;
+      // the pulse is at the Extra Tube button position instead — see renderHUD).
     }
     // Subtle highlight pulse on target bottle
     if (tutHighlightIdx >= 0) {
@@ -6437,7 +6471,10 @@ function onTap(px, py) {
             // available so desktop / unsupported browsers silently skip).
             if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) {}
             // Tutorial step 1 → 2: user selected a bottle
-            if (tutorialStep === 1) { tutorialStep = 2; }
+            // Tutorial step 1 → 2: user selected a bottle
+            if (tutorialStep === 1) tutorialStep = 2;
+            // R936: tutorial step 4 (Extra Tube intro) auto-dismisses on first bottle interaction
+            if (tutorialStep === 4) { tutorialStep = 2; }
           }
         } else if (selectedBottle === i) {
           selectedBottle = -1;
@@ -6734,6 +6771,8 @@ document.addEventListener("keydown", (e) => {
           sfxSelect();
           bottleBounces[i] = { scale: 1.06, velocity: 0 };
           if (tutorialStep === 1) tutorialStep = 2;
+          // R936: tutorial step 4 (Extra Tube intro) auto-dismisses on first bottle interaction
+          if (tutorialStep === 4) { tutorialStep = 2; }
         }
       } else if (selectedBottle === i) {
         selectedBottle = -1;
