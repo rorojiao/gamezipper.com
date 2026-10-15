@@ -2,7 +2,7 @@
 // Keep this fallback aligned with the live QuickTunnel endpoint in gz-analytics.js.
 // The previous packing-asset-drums-sarah URL expired, causing POST fallback requests
 // to fail even while the browser's direct gz-analytics endpoint remained healthy.
-const BI_SERVER_URL = 'https://vegetable-newspaper-allergy-iii.trycloudflare.com/api/collect';
+const BI_SERVER_URL = 'https://vessel-refine-servers-arbitrary.trycloudflare.com/api/collect';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
