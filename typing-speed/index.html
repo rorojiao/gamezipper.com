@@ -52,7 +52,9 @@ h1{text-align:center;font-size:28px;margin:16px 0 8px;color:#00ff41;text-shadow:
 .input-area:focus{border-color:#33ff66;box-shadow:0 0 20px rgba(0,255,65,0.3)}
 .input-area::placeholder{color:#005500}
 .mobile-hint{display:none;text-align:center;color:#005500;font-size:13px;margin-top:8px}
-.result-card{display:none;background:rgba(0,10,0,0.9);border-radius:8px;padding:32px;text-align:center;border:1px solid #003300;margin-top:20px}
+.result-card{display:none;background:rgba(0,10,0,0.9);border-radius:8px;padding:32px;text-align:center;border:1px solid #003300;margin-top:20px;cursor:pointer}
+.result-card:active{background:rgba(0,30,0,0.95);transform:scale(0.99);transition:transform .1s ease,background .1s ease}
+.result-card.pressed{background:rgba(0,30,0,0.95);border-color:#33ff66;box-shadow:0 0 0 2px #33ff66,0 0 14px rgba(51,255,102,.35)}
 .result-card h2{font-size:24px;margin-bottom:20px;color:#00ff41;text-shadow:0 0 15px rgba(0,255,65,0.5)}
 .result-rank{font-size:64px;margin:16px 0}
 .result-rank-name{font-size:22px;font-weight:700;margin-bottom:20px;font-family:'Courier New',monospace}
@@ -585,6 +587,21 @@ document.querySelectorAll(".mode-btn").forEach(btn=>{
 });
 
 $d("restartBtn").addEventListener("click",reset);
+
+// UX-OPT 2026-10-17 R943b: dead_click on DIV.result-card (BI 7d 2026-10-15 3 events DIV.result-card,
+// 1 CrOS user). result-card had no click handler so click on its padding/empty area fired dead_click.
+// Fix: click handler on resultCard (mirrors restartBtn) + visible .pressed class for 1700ms so
+// the gz-analytics.js detector sees snapClass !== nowClass. Clicking the card = restart (matches user
+// intent: "I clicked the result to dismiss it / try again").
+(function(){
+  var rc=$d("resultCard");
+  if(!rc)return;
+  rc.addEventListener("click",function(){
+    rc.classList.add("pressed");
+    setTimeout(function(){if(rc&&rc.classList)rc.classList.remove("pressed")},1700);
+    reset();
+  });
+})();
 
 if(!localStorage.getItem("typing_tutorial_seen")){
   $d("tutorialOverlay").classList.add("show");
