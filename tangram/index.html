@@ -231,13 +231,70 @@ loadSave();soundOn=st.settings.sound!==false;musicOn=st.settings.music!==false;
 /* CANVAS */
 var canvas=document.getElementById("c"),ctx=canvas.getContext("2d");
 var W,H,cx,cy,trayX,trayY,mobile=false;
-function resize(){mobile=window.innerWidth<640;W=Math.min(window.innerWidth-16,860);H=Math.min(window.innerHeight-80,680);canvas.width=W;canvas.height=H;cx=mobile?W*.5:W*.38;cy=mobile?H*.4:H*.5;trayX=mobile?W*.5:W*.82;trayY=mobile?H*.78:cy}
+function resize(){mobile=window.innerWidth<640;W=Math.min(window.innerWidth-16,860);H=Math.min(window.innerHeight-80,680);canvas.width=W;canvas.height=H;cx=mobile?W*.5:W*.38;cy=mobile?H*.4:H*.5;trayX=mobile?W*.5:W*.82;trayY=mobile?H*.78:cy
+  silCacheDirty=true;refreshBakesIfDirty();resumeLoop();
+}
 resize();window.addEventListener("resize",resize);
 
 /* GAME STATE */
 var curLevel=0,pieces=[],dragPiece=null,dragOff={x:0,y:0};
 var levelTime=0,levelScore=0,hintsUsed=0,levelActive=false;
 var undoStack=[],particles=[],animFrame=null,lastTime=0;
+/* R938 R354+R366 helpers — scheduleNextFrame + offscreen-pre-render silhouette+tray caches */
+var silCache=null,silCacheLvl=-1,silCacheW=0,silCacheH=0,silCacheDirty=true;
+function bakeSilhouette(){
+  if(!silCache){silCache=document.createElement("canvas");silCache.width=W;silCache.height=H}
+  else if(silCache.width!==W||silCache.height!==H){silCache.width=W;silCache.height=H}
+  silCache.width=W;silCache.height=H;
+  var sctx=silCache.getContext("2d");
+  sctx.clearRect(0,0,W,H);
+  var sil=getSilWorld();
+  if(!sil||sil.length<3){silCacheDirty=true;return}  /* silhouette not yet built — keep dirty for next frame */
+  sctx.beginPath();sctx.moveTo(sil[0][0],sil[0][1]);
+  for(var i=1;i<sil.length;i++)sctx.lineTo(sil[i][0],sil[i][1]);
+  sctx.closePath();
+  sctx.strokeStyle="rgba(0,255,255,0.6)";sctx.lineWidth=2;sctx.stroke();
+  sctx.strokeStyle="rgba(0,255,255,0.25)";sctx.lineWidth=1;sctx.stroke();
+  silCacheDirty=false;
+}
+function bakeTray(){
+  var t=document.createElement("canvas");t.width=W;t.height=H;
+  var tctx=t.getContext("2d");
+  if(mobile){
+    tctx.fillStyle="rgba(255,255,255,0.015)";tctx.fillRect(0,H*0.7,W,H*0.3);
+    tctx.strokeStyle="rgba(255,255,255,0.04)";tctx.beginPath();tctx.moveTo(0,H*0.7);tctx.lineTo(W,H*0.7);tctx.stroke();
+  }else{
+    tctx.fillStyle="rgba(255,255,255,0.015)";tctx.fillRect(W*0.68,0,W*0.32,H);
+    tctx.strokeStyle="rgba(255,255,255,0.04)";tctx.beginPath();tctx.moveTo(W*0.68,0);tctx.lineTo(W*0.68,H);tctx.stroke();
+  }
+  return t;
+}
+var trayCache=null,trayCacheW=0,trayCacheH=0;
+function getTray(){
+  if(!trayCache||trayCacheW!==W||trayCacheH!==H){trayCache=bakeTray();trayCacheW=W;trayCacheH=H}
+  return trayCache;
+}
+function refreshBakesIfDirty(){
+  if(silCacheDirty) bakeSilhouette();
+}
+
+/* R938 R354: scheduleNextFrame — only paint when something changed */
+function isFullyIdle(){
+  if(animFrame===null) return true;
+  if(particles.length>0) return false;
+  if(dragPiece) return false;
+  return true;
+}
+function scheduleNextFrame(){
+  if(animFrame!==null) return;
+  animFrame=requestAnimationFrame(function(ts){
+    animFrame=null;
+    loop(ts);
+    if(!isFullyIdle()) scheduleNextFrame();
+  });
+}
+function resumeLoop(){scheduleNextFrame()}
+
 
 /* PIECE */
 function createPiece(idx){
@@ -300,8 +357,10 @@ function startLevel(idx){
   document.getElementById("hl").textContent=idx+1;
   document.getElementById("hn").textContent=lv.n;
   updateHUD();initAudio();startBGM();
+
+  silCacheDirty=true;refreshBakesIfDirty();resumeLoop();
 }
-function getSilWorld(){var lv=LVLS[curLevel];return lv.s.map(function(v){return[cx+v[0]*U,cy+v[1]*U]})}
+function getSilWorld(){var lv=LVLS[curLevel];if(!lv||!lv.s)return[];return lv.s.map(function(v){return[cx+v[0]*U,cy+v[1]*U]})}
 // P0 fix 2026-08-25: snap-to-slot. Exact tangram solutions need ~0.0003px drag
 // precision, which is humanly impossible; every level now carries per-piece
 // solution slots q=[dx,dy,rot,flip] (game units; piece center = cx+dx*U, cy+dy*U).
@@ -380,10 +439,13 @@ function completeLevel(){
     document.getElementById("cst").innerHTML=sh;
     document.getElementById("sb").innerHTML="<div>Base: <b>1000</b></div><div>Time: <b>+"+timeBonus+"</b></div><div>Hints: <b>-"+hintPen+"</b></div><div style='border-top:1px solid rgba(255,255,255,.1);margin-top:3px;padding-top:3px'>Total: <b style='color:#00ffff'>"+levelScore+"</b></div>";
   },500);
+
+  resumeLoop();
 }
 
 /* PARTICLES */
 function spawnP(x,y,n){for(var i=0;i<n;i++){var a=Math.random()*Math.PI*2,sp=2+Math.random()*4;particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,dc:.01+Math.random()*.02,col:COL[Math.floor(Math.random()*7)],sz:3+Math.random()*4})}}
+  resumeLoop();
 
 /* INPUT */
 var lastTap=0,lastTapPiece=null;
@@ -398,15 +460,24 @@ canvas.addEventListener("pointerdown",function(e){
     var idx=pieces.indexOf(p);pieces.splice(idx,1);pieces.push(p);
   }else{lastTap=now;lastTapPiece=null;dragPiece=null}
 });
-canvas.addEventListener("pointermove",function(e){e.preventDefault();if(!dragPiece)return;var pos=getPos(e);dragPiece.x=pos.x-dragOff.x;dragPiece.y=pos.y-dragOff.y});
+resumeLoop();
+canvas.addEventListener("pointermove",function(e){e.preventDefault();if(!dragPiece)return;var pos=getPos(e);dragPiece.x=pos.x-dragOff.x;dragPiece.y=pos.y-dragOff.y;resumeLoop();});
 canvas.addEventListener("pointerup",function(e){
-  e.preventDefault();if(!dragPiece)return;dragPiece.scale=1;
+  e.preventDefault();
+resumeLoop();if(!dragPiece)return;dragPiece.scale=1;
   var sil=getSilWorld(),centerIn=pip(dragPiece.x,dragPiece.y,sil)||onPoly(dragPiece.x,dragPiece.y,sil,.6);
-  if(centerIn){if(!dragPiece.placed)undoStack.push({p:dragPiece,tx:dragPiece.trayX,ty:dragPiece.trayY,wp:false});dragPiece.placed=true;sndPlace();spawnP(dragPiece.x,dragPiece.y,5)}
-  else{if(dragPiece.placed)undoStack.push({p:dragPiece,tx:dragPiece.x,ty:dragPiece.y,wp:true});dragPiece.placed=false;dragPiece.x=dragPiece.trayX;dragPiece.y=dragPiece.trayY}
+resumeLoop();
+  if(centerIn){if(!dragPiece.placed)undoStack.push({p:dragPiece,tx:dragPiece.trayX,ty:dragPiece.trayY,wp:false});
+resumeLoop();dragPiece.placed=true;sndPlace();
+resumeLoop();spawnP(dragPiece.x,dragPiece.y,5)}
+  else{if(dragPiece.placed)undoStack.push({p:dragPiece,tx:dragPiece.x,ty:dragPiece.y,wp:true});
+resumeLoop();dragPiece.placed=false;dragPiece.x=dragPiece.trayX;dragPiece.y=dragPiece.trayY}
   snapPiece(dragPiece);
+resumeLoop();
   dragPiece=null;setTimeout(checkWin,150);
+resumeLoop();
 });
+resumeLoop();
 canvas.addEventListener("contextmenu",function(e){e.preventDefault()});
 
 /* BUTTONS */
@@ -430,16 +501,10 @@ function render(){
   ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
   // Grid dots
   ctx.fillStyle="rgba(255,255,255,.025)";for(var gx=0;gx<W;gx+=25)for(var gy=0;gy<H;gy+=25)ctx.fillRect(gx,gy,1,1);
-  // Silhouette
-  var sil=getSilWorld();
-  var pulse=.12+Math.sin(Date.now()*.003)*.04;
-  ctx.beginPath();ctx.moveTo(sil[0][0],sil[0][1]);for(var i=1;i<sil.length;i++)ctx.lineTo(sil[i][0],sil[i][1]);ctx.closePath();
-  ctx.fillStyle="rgba(0,255,255,"+(pulse*.2)+")";ctx.fill();
-  ctx.strokeStyle="rgba(0,255,255,"+pulse+")";ctx.lineWidth=2;ctx.stroke();
-  ctx.strokeStyle="rgba(0,255,255,"+(pulse*.4)+")";ctx.lineWidth=1;ctx.stroke();
-  // Tray
-  if(mobile){ctx.fillStyle="rgba(255,255,255,.015)";ctx.fillRect(0,H*.7,W,H*.3);ctx.strokeStyle="rgba(255,255,255,.04)";ctx.beginPath();ctx.moveTo(0,H*.7);ctx.lineTo(W,H*.7);ctx.stroke()}
-  else{ctx.fillStyle="rgba(255,255,255,.015)";ctx.fillRect(W*.68,0,W*.32,H);ctx.strokeStyle="rgba(255,255,255,.04)";ctx.beginPath();ctx.moveTo(W*.68,0);ctx.lineTo(W*.68,H);ctx.stroke()}
+  // R938 R366: offscreen-pre-render silhouette+tray
+  refreshBakesIfDirty();
+  ctx.drawImage(getTray(),0,0);
+  if(silCache){var pulse=.12+Math.sin(Date.now()*.003)*.04;ctx.globalAlpha=Math.max(0,pulse*0.7);ctx.drawImage(silCache,0,0);ctx.globalAlpha=1}
   // Pieces
   pieces.forEach(function(p){
     var wv=getWorldVerts(p);ctx.save();
@@ -464,9 +529,9 @@ function loop(ts){
   if(levelActive){levelTime+=dt;if(Math.floor(levelTime)!==Math.floor(levelTime-dt))updateHUD()}
   particles.forEach(function(pt){pt.x+=pt.vx;pt.y+=pt.vy;pt.vy+=.08;pt.life-=pt.dc;pt.sz*=.98});
   particles=particles.filter(function(pt){return pt.life>0});
-  render();animFrame=requestAnimationFrame(loop);
+  render();
 }
-animFrame=requestAnimationFrame(loop);
+scheduleNextFrame();
 
 /* LEVEL SELECT */
 function showLS(){
