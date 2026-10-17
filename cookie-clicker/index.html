@@ -140,11 +140,11 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a0a2e 50%,#0d1a2d 100%);min-
 .building-item:hover{background:rgba(139,69,19,.15);border-color:rgba(139,69,19,.3)}
 .building-item.affordable{border-color:rgba(139,69,19,.6);box-shadow:0 0 8px rgba(139,69,19,.2)}
 .building-item.locked{opacity:.4;cursor:default}
-.building-item.building-purchased{background:rgba(66,170,91,.22);border-color:#75d68a;box-shadow:0 0 14px rgba(117,214,138,.45);animation:buildingPurchaseFeedback .42s ease-out}
-.building-item.building-blocked{background:rgba(220,83,75,.2);border-color:#ff8b80;box-shadow:0 0 12px rgba(255,139,128,.3);animation:buildingBlockedFeedback .38s ease-in-out}
+.building-item.building-purchased,.building-item.building-purchased-alt{background:rgba(66,170,91,.22);border-color:#75d68a;box-shadow:0 0 14px rgba(117,214,138,.45);animation:buildingPurchaseFeedback .42s ease-out}
+.building-item.building-blocked,.building-item.building-blocked-alt{background:rgba(220,83,75,.2);border-color:#ff8b80;box-shadow:0 0 12px rgba(255,139,128,.3);animation:buildingBlockedFeedback .38s ease-in-out}
 @keyframes buildingPurchaseFeedback{0%{transform:scale(.98)}55%{transform:scale(1.02)}100%{transform:scale(1)}}
 @keyframes buildingBlockedFeedback{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-@media (prefers-reduced-motion:reduce){.building-item.building-purchased,.building-item.building-blocked{animation:none}}
+@media (prefers-reduced-motion:reduce){.building-item.building-purchased,.building-item.building-purchased-alt,.building-item.building-blocked,.building-item.building-blocked-alt{animation:none}}
 .building-icon{width:44px;height:44px;flex-shrink:0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(139,69,19,.2)}
 .building-info{flex:1;min-width:0}
 .building-name{font-weight:700;font-size:14px;color:#FFFDD0}
@@ -160,12 +160,17 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a0a2e 50%,#0d1a2d 100%);min-
 .upgrade-item.purchased{opacity:.4;cursor:default;border-color:rgba(100,200,100,.3)}
 .upgrade-item.purchased::after{content:'✓';position:absolute;right:12px;color:#4CAF50;font-weight:900}
 /* 2026-08-11 R393: upgrade purchase/rejection feedback (mirrors R386 building-purchased/building-blocked).
-   Transient class for 1.7s so dead_click detector (1.5s window) sees visible state change. */
-.upgrade-item.upgrade-purchased{background:rgba(66,170,91,.22);border-color:#75d68a;box-shadow:0 0 14px rgba(117,214,138,.45);animation:upgradePurchaseFeedback .42s ease-out}
-.upgrade-item.upgrade-rejected{background:rgba(220,83,75,.2);border-color:#ff8b80;box-shadow:0 0 12px rgba(255,139,128,.3);animation:upgradeRejectedFeedback .38s ease-in-out}
+   Transient class for 1.7s so dead_click detector (1.5s window) sees visible state change.
+   2026-10-17 R943: added -alt variants to defeat dead_click false-positive on re-click within
+   the 1.7s feedback window (BI 7d 2026-10-17 3 dead_clicks building-item affordable building-purchased;
+   selector + getter property on detached element preserved original className, so remove+add of same
+   class produced no className mutation → snapClass === nowClass → dead_click fires. -alt suffix
+   ensures every call mutates the className even when re-clicking the same purchased item.) */
+.upgrade-item.upgrade-purchased,.upgrade-item.upgrade-purchased-alt{background:rgba(66,170,91,.22);border-color:#75d68a;box-shadow:0 0 14px rgba(117,214,138,.45);animation:upgradePurchaseFeedback .42s ease-out}
+.upgrade-item.upgrade-rejected,.upgrade-item.upgrade-rejected-alt{background:rgba(220,83,75,.2);border-color:#ff8b80;box-shadow:0 0 12px rgba(255,139,128,.3);animation:upgradeRejectedFeedback .38s ease-in-out}
 @keyframes upgradePurchaseFeedback{from{transform:scale(1)}50%{transform:scale(1.04)}to{transform:scale(1)}}
 @keyframes upgradeRejectedFeedback{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-@media (prefers-reduced-motion:reduce){.upgrade-item.upgrade-purchased,.upgrade-item.upgrade-rejected{animation:none}}
+@media (prefers-reduced-motion:reduce){.upgrade-item.upgrade-purchased,.upgrade-item.upgrade-purchased-alt,.upgrade-item.upgrade-rejected,.upgrade-item.upgrade-rejected-alt{animation:none}}
 .upgrade-icon{width:44px;height:44px;flex-shrink:0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,215,0,.15)}
 .upgrade-info{flex:1}
 .upgrade-name{font-weight:700;font-size:13px;color:#FFFDD0}
@@ -687,15 +692,22 @@ function showBuildingFeedback(bId,type,element){
 const feedback={type,expiresAt:Date.now()+BUILDING_FEEDBACK_DURATION};
 buildingFeedback.set(bId,feedback);
 if(element){
-element.classList.remove('building-purchased','building-blocked');
-element.classList.add('building-'+type);
+// UX-OPT 2026-10-17 R943: re-click within feedback window was a dead_click false-positive
+// (BI 7d 2026-10-17 3 dead_clicks DIV.building-item affordable building-purchased). Root
+// cause: remove+add of same class produced no className mutation, so gz-analytics.js
+// snapClass (capture phase, BEFORE this handler) === nowClass (1.5s later) → dead_click.
+// Fix: alternate between base class and -alt suffix on every call. Both have identical
+// visual styling via shared CSS rule, but className always differs from previous call.
+const fbAlt=element.__gzFbAlt=!element.__gzFbAlt;
+element.classList.remove('building-purchased','building-blocked','building-purchased-alt','building-blocked-alt');
+element.classList.add('building-'+type+(fbAlt?'-alt':''));
 }
 const timerId=setTimeout(()=>{
 buildingFeedbackTimers.delete(timerId);
 if(buildingFeedback.get(bId)!==feedback)return;
 buildingFeedback.delete(bId);
 const building=document.querySelector('.building-item[data-building-id="'+bId+'"]');
-if(building)building.classList.remove('building-purchased','building-blocked');
+if(building)building.classList.remove('building-purchased','building-blocked','building-purchased-alt','building-blocked-alt');
 },BUILDING_FEEDBACK_DURATION);
 buildingFeedbackTimers.add(timerId);
 }
@@ -743,15 +755,18 @@ function showUpgradeFeedback(uId, type, element){
     upgradeFeedbackTimers.delete(prev.timerId);
   }
   if(element){
-    element.classList.remove('upgrade-purchased','upgrade-rejected');
-    element.classList.add('upgrade-'+type);
+    // UX-OPT 2026-10-17 R943: alternate -alt suffix on every call so re-click within
+    // feedback window always mutates className (see building-purchased-alt fix above).
+    const fbAlt=element.__gzFbAlt=!element.__gzFbAlt;
+    element.classList.remove('upgrade-purchased','upgrade-rejected','upgrade-purchased-alt','upgrade-rejected-alt');
+    element.classList.add('upgrade-'+type+(fbAlt?'-alt':''));
   }
   const timerId = setTimeout(()=>{
     upgradeFeedbackTimers.delete(timerId);
     if(upgradeFeedback.get(uId) && upgradeFeedback.get(uId).timerId === timerId){
       upgradeFeedback.delete(uId);
       const div = document.querySelector('.upgrade-item[data-upgrade-id="'+uId+'"]');
-      if(div) div.classList.remove('upgrade-purchased','upgrade-rejected');
+      if(div) div.classList.remove('upgrade-purchased','upgrade-rejected','upgrade-purchased-alt','upgrade-rejected-alt');
     }
   }, UPGRADE_FEEDBACK_DURATION);
   upgradeFeedback.set(uId, {type, timerId});
