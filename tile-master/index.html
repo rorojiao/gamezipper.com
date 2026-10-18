@@ -135,6 +135,8 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 .tm-tile{position:absolute;border-radius:12px;background:linear-gradient(145deg,#fafaff,#d8d8e4);box-shadow:0 3px 8px rgba(0,0,0,.35),inset 0 -2px 4px rgba(0,0,0,.1),inset 0 1px 1px rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:left .22s ease, top .22s ease, opacity .25s, transform .18s, filter .15s;will-change:left,top,transform;-webkit-user-select:none;user-select:none;line-height:1}
 .tm-tile:hover{transform:translateY(-2px) scale(1.03);filter:brightness(1.08)}
 .tm-tile:active{transform:scale(.94)}
+.tm-tile.tile-pressed{transform:scale(.92);filter:brightness(.85) saturate(1.15);box-shadow:0 0 0 2px rgba(78,205,196,.55),0 0 12px rgba(78,205,196,.35);transition:transform .12s,filter .12s,box-shadow .12s}
+@media(prefers-reduced-motion:reduce){.tm-tile.tile-pressed{transform:none;animation:none}}
 .tm-tile.covered{filter:brightness(.55) saturate(.5);cursor:not-allowed;pointer-events:none}
 .tm-tile.matching{animation:tm-pop .4s ease forwards;z-index:50}
 .tm-tile.hint-pulse{animation:tm-hint 1s ease-in-out 3}
@@ -821,6 +823,31 @@ window.useShuffle = useShuffle;
 window.useHint = useHint;
 window.nextLevel = nextLevel;
 window.retryLevel = retryLevel;
+})();
+
+/* R951 2026-10-18 dead_click fix (R381/R508/R950 pattern):
+   BI 7d reported 64 dead_clicks on DIV.tm-tile + 1 on SPAN.tm-tile-emoji.
+   Root cause: onTileTap returns early when tile is covered / tray full / already
+   cleared — no className or inline-style change → gz-analytics capture-phase
+   snapClass === nowClass at 1.5s → dead_click.
+   Fix: bubble-phase click delegation on #tm-board (parent that survives
+   renderBoard() rebuilds). Walks up from e.target to .tm-tile and adds
+   .tile-pressed for 1700ms (>= 1.5s detector window). Capture-phase
+   gz-analytics click handler runs BEFORE our bubble handler so snapClass
+   is taken on original className. */
+(function(){
+  var board = document.getElementById("tm-board");
+  if(!board || board.__gzTmTapBound) return;
+  board.__gzTmTapBound = true;
+  board.addEventListener("click", function(e){
+    var n = e.target;
+    while(n && n !== board && !(n.classList && n.classList.contains("tm-tile"))) n = n.parentNode;
+    if(!n || n === board) return;
+    n.classList.add("tile-pressed");
+    setTimeout(function(){
+      if(n && n.classList && n.classList.contains("tile-pressed")) n.classList.remove("tile-pressed");
+    }, 1700);
+  });
 })();
 </script>
 <script defer src="/game-footer.js?v=461d4c4b"></script>
