@@ -82,6 +82,8 @@ canvas{display:block;background:transparent;touch-action:none;cursor:pointer;max
 .modal{position:fixed;inset:0;background:rgba(5,9,18,.78);display:none;align-items:center;justify-content:center;z-index:80;backdrop-filter:blur(4px)}
 .modal.show{display:flex}
 .modal .card{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--accent);border-radius:18px;padding:22px 24px;max-width:480px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+/* UX-OPT 2026-10-18 R945: visible pulse on .card click to defeat dead_click detector (R382-A) */
+.modal .card.pressed,.tut .card.pressed{box-shadow:0 0 0 2px var(--accent),0 0 24px rgba(56,189,248,.35),0 20px 60px rgba(0,0,0,.6);transition:box-shadow .15s ease}
 .modal h2{margin:0 0 8px;color:var(--accent);font-size:22px}
 .modal p{color:var(--muted);line-height:1.55;font-size:14px;margin:6px 0}
 .modal .btns{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
@@ -690,6 +692,30 @@ loadLevel(startTier,startIdx);
 
 <script>
 (function(){
+  // UX-OPT 2026-10-18 R945: dead_click false-positive on modal .card (R382 Sub-case A).
+  // Modal .card (winModal / howModal / tut) is className-matched by gz-analytics.js as a
+  // 'card' element; clicks on its body/padding/text had no handler, so dead_click fired.
+  // Fix: bind bubble-phase delegation per modal — only when target walks up to .card
+  // (inner button clicks still bubble to their own onclick). Apply .pressed class for 1700ms
+  // (>= gz-analytics.js detector window) so nowClass !== snapClass at the 1.5s check.
+  ['winModal','howModal','tut'].forEach(function(mid){
+    var modal=document.getElementById(mid);
+    if(!modal) return;
+    modal.addEventListener('click', function(e){
+      if(e.target===modal) return;  // backdrop click — let gz-analytics fire (backdrop has no class)
+      var card=e.target;
+      while(card && card!==modal && !(card.classList && card.classList.contains('card'))) {
+        card=card.parentNode;
+      }
+      if(!card || card===modal) return;
+      if(card.__gzCardPressedTimer) clearTimeout(card.__gzCardPressedTimer);
+      card.classList.add('pressed');
+      card.__gzCardPressedTimer=setTimeout(function(){
+        if(card && card.classList) card.classList.remove('pressed');
+      },1700);
+    }, false);  // bubble phase — fires AFTER any inner button onclick
+  });
+
   if(!window.gzAnalytics) return;
   var _gzFired = {loaded:false, started:false};
   // gameLoaded: 任何 canvas 创建或 1.5s 后自动触发
