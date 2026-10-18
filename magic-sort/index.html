@@ -623,6 +623,7 @@ let comboBestEver = 0;       // persisted across sessions
 let noProgressCount = 0;    // R880: consecutive non-progress pours (triggers stuck-prompt)
 let stuckPromptShown = false; // R880: only show stuck toast once per stuck-streak
 let extraTubeIntroShown = false; // R936: only show extra-tube tutorial intro once per session
+let hintUndoIntroShown = false; // R955: only show hint+undo tutorial intro once per session
 
 // ─── Sort Ripple Effect (Phase 2: visual feedback) ───
 // Golden expanding ring emitted when a bottle becomes fully sorted.
@@ -3025,6 +3026,22 @@ function completePour() {
           extraTubeIntroShown = true;
           toastMsg = { text: "🧪 Need space? Tap + Tube for an extra bottle", timer: 220, color: "#74b9ff" };
           try { window.__msTrack && window.__msTrack('ms_tutorial_extra_tube_hint', { lv: currentLevel + 1 }); } catch(e){}
+        }
+      }, 2200);
+    }
+    // R955 2026-10-19: Hint+Undo discovery onboarding — first-time users don't know
+    // ↩ Undo reverts a wrong pour and 💡 Hint suggests a move. BI 30d: ms_hint_used=1,
+    // ms_undo_used=0 lifetime (vs ms_share_used=1 post-R879). Fire after first win at
+    // lv 0-1 BEFORE R936's extra-tube intro (lv 2-4). 2.2s delay matches R936 so the
+    // win-celebration toast clears first. Wrapped in setTimeout + state guard so it
+    // doesn't fire if user navigates away. Mirrors R936 pattern: 1 toast, session-only
+    // flag (not persisted — gives fresh users the same discoverable intro).
+    if (currentLevel >= 0 && currentLevel <= 1 && !earnedAchievements.first_sort) {
+      setTimeout(() => {
+        if (state === "win" && !hintUndoIntroShown) {
+          hintUndoIntroShown = true;
+          toastMsg = { text: "↩ Undo mistakes • 💡 Hint suggests a move", timer: 220, color: "#74b9ff" };
+          try { window.__msTrack && window.__msTrack('ms_tutorial_hint_undo_intro', { lv: currentLevel + 1 }); } catch(e){}
         }
       }, 2200);
     }
