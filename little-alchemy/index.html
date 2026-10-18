@@ -72,6 +72,8 @@ header h1{font-size:clamp(1rem,3vw,1.3rem);font-weight:800;background:linear-gra
 .elem-card .emoji{font-size:1.4rem;display:block;margin-bottom:2px;line-height:1.2}
 .elem-card .name{font-size:.65rem;color:#c0c0e0;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .elem-card.new-discovery{animation:cardPop .5s ease}
+.elem-card.elem-pressed{box-shadow:0 0 0 2px rgba(0,240,255,.55),0 0 14px rgba(0,240,255,.35);background:rgba(255,255,255,.13);border-color:rgba(0,240,255,.35);transform:translateY(-1px) scale(1.04)}
+@media(prefers-reduced-motion:reduce){.elem-card.elem-pressed{transform:none;animation:none}}
 .overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(4px)}
 .overlay-content{background:linear-gradient(135deg,#1a1a3e,#2a2a5e);border:1px solid rgba(0,240,255,.2);border-radius:20px;padding:32px;text-align:center;max-width:380px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,.5)}
 .overlay-content h2{color:#00f0ff;margin-bottom:8px;font-size:1.4rem}
@@ -1275,6 +1277,30 @@ if(document.readyState==="loading"){
 } else {
   init();
 }
+
+/* UX-OPT 2026-10-18 R950: dead_click feedback for elem-card (R381/R508 pattern).
+   BI 7d: 2 dead_clicks on DIV.elem-card from 2 distinct real users (1 desktop Win Edge 154,
+   1 mobile Chrome 154). Root cause: cards have pointerdown handler only — click event fires
+   AFTER pointerdown creates workspace item, but elem-card's className never changes.
+   gz-analytics.js capture-phase snapClass (taken at click) === nowClass (at 1.5s) → dead_click.
+   Fix: bubble-phase click delegation on #element-grid. On click, walk up from e.target to
+   .elem-card and add .elem-pressed class for 1700ms (≥ 1.5s detector window).
+   Capture-phase gz-analytics click handler runs BEFORE our bubble handler so snapClass is
+   taken on original className. Survives all renderPanel() rebuilds (event delegation on parent). */
+(function(){
+  var grid = $("element-grid");
+  if(!grid || grid.__gzElemTapBound) return;
+  grid.__gzElemTapBound = true;
+  grid.addEventListener("click", function(e){
+    var n = e.target;
+    while(n && n !== grid && !(n.classList && n.classList.contains("elem-card"))) n = n.parentNode;
+    if(!n || n === grid) return;
+    n.classList.add("elem-pressed");
+    setTimeout(function(){
+      if(n && n.classList && n.classList.contains("elem-pressed")) n.classList.remove("elem-pressed");
+    }, 1700);
+  });
+})();
 
 })();
 </script>
