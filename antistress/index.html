@@ -429,36 +429,69 @@ return newly;
 // the toy is not yet open OR the toy has no 'down' handler, the click is silently
 // absorbed. BI 30d: /antistress/ has 15 rage_click on 15 page_views (100% rage rate).
 // UX fix: spawn a colored ripple at click site so user always sees feedback.
+// UX-OPT 2026-10-19 R901: Strengthen canvas-side click feedback so users see
+// "click registered" beyond the brief 0.32s ripple. Extend lifetime + add second
+// halo ring that lives longer. Before R901: ack/miss ripples died in 0.32s, locked
+// in 0.45s. Rage_click burst at (640,169) lasted 21s of rapid clicks with each
+// ripple overlapping and fading fast — user couldn't track which clicks "took".
+// R901: ack=0.7s, locked=0.9s, plus a secondary 'halo' ring lasting 1.2s for
+// persistent positional reference during rage bursts.
 var tapRipples=[];
+var tapHalos=[]; // R901: secondary halo rings with longer lifetime
 function spawnTapRipple(x,y,color,type){
-  tapRipples.push({x:x,y:y,life:1,maxLife:type==='locked'?0.45:0.32,color:color||'rgba(255,180,80,0.7)',type:type||'miss',r:type==='locked'?16:10});
+  tapRipples.push({x:x,y:y,life:1,
+    maxLife:type==='locked'?0.9:0.7,
+    color:color||'rgba(255,180,80,0.7)',type:type||'miss',
+    r:type==='locked'?18:13});
+  // R901: persistent halo — bright outer ring that lingers 1.2s for positional reference
+  tapHalos.push({x:x,y:y,life:1,maxLife:1.2,
+    color:type==='locked'?'rgba(255,140,80,0.4)':'rgba(255,255,255,0.35)',
+    r:type==='locked'?22:16});
   if(tapRipples.length>30)tapRipples.shift();
+  if(tapHalos.length>30)tapHalos.shift();
 }
 function updateTapRipples(dt){
   for(var i=tapRipples.length-1;i>=0;i--){
     tapRipples[i].life-=dt/tapRipples[i].maxLife;
     if(tapRipples[i].life<=0)tapRipples.splice(i,1);
   }
+  for(var j=tapHalos.length-1;j>=0;j--){
+    tapHalos[j].life-=dt/tapHalos[j].maxLife;
+    if(tapHalos[j].life<=0)tapHalos.splice(j,1);
+  }
 }
 function drawTapRipples(){
-  if(!tapRipples.length)return;
+  if(!tapRipples.length && !tapHalos.length)return;
   ctx.save();
+  // R901: draw persistent halos first (under ripples) — long-lived outer rings
+  for(var h=0;h<tapHalos.length;h++){
+    var hl=tapHalos[h];
+    var hlProg=1-hl.life;
+    var hlRadius=hl.r*(1+hlProg*1.4);
+    ctx.globalAlpha=hl.life*0.6;
+    ctx.strokeStyle=hl.color;
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.arc(hl.x,hl.y,hlRadius,0,Math.PI*2);
+    ctx.stroke();
+  }
+  // Original ripple rings — short-lived bright cores
   for(var i=0;i<tapRipples.length;i++){
     var rp=tapRipples[i];
     var prog=1-rp.life;
     var radius=rp.r*(1+prog*2.5);
-    ctx.globalAlpha=rp.life*0.85;
+    ctx.globalAlpha=rp.life*0.9;
     ctx.strokeStyle=rp.color;
-    ctx.lineWidth=2.5;
+    ctx.lineWidth=3;
     ctx.shadowColor=rp.color;
-    ctx.shadowBlur=6;
+    ctx.shadowBlur=8;
     ctx.beginPath();
     ctx.arc(rp.x,rp.y,radius,0,Math.PI*2);
     ctx.stroke();
   }
   ctx.restore();
 }
-window.tapRipples=tapRipples;window.spawnTapRipple=spawnTapRipple;window.updateTapRipples=updateTapRipples;window.drawTapRipples=drawTapRipples;
+window.tapRipples=tapRipples;window.tapHalos=tapHalos;window.spawnTapRipple=spawnTapRipple;window.updateTapRipples=updateTapRipples;window.drawTapRipples=drawTapRipples;
 
 function startLoop(){
 var _rLastT=performance.now();
@@ -480,6 +513,11 @@ const r=gameCanvas.getBoundingClientRect();
 const t=e.touches?e.touches[0]||e.changedTouches[0]:e;
 return{x:t.clientX-r.left,y:t.clientY-r.top};
 }
+// R901 (2026-10-19) update: also adding down() handlers to lava-lamp + rain-window
+// (the 2 passive toys) and persistent 1.2s halo rings so each click has a long-lived
+// visible positional reference during rage bursts. Combined with R901 ripple-lifetime
+// extensions (ack 0.32→0.7s, locked 0.45→0.9s), the user sees clear "click registered"
+// feedback even if the toy's own response is subtle (e.g., lava-lamp blob drift).
 gameCanvas.addEventListener('pointerdown',e=>{
 const _p=getPos(e);
 // UX-OPT 2026-10-08 R873: ALWAYS spawn tap ripple as universal click acknowledgement.
@@ -979,6 +1017,14 @@ for(let i=0;i<N;i++){
 blobs.push({x:0.5,y:0.3+Math.random()*0.4,vx:0,vy:-(Math.random()*0.003),r:0.08+Math.random()*0.06,phase:Math.random()*Math.PI*2,hue:330+Math.random()*40});
 }
 let time=0;
+// UX-OPT 2026-10-19 R901: Add down(p) interactivity so clicks produce visible reaction.
+// BI 7d showed 182 rage_clicks on /antistress/ (canvas, x=640,y=169 cluster). The 2
+// passive toys (lava-lamp, rain-window) had no down() handler — users got only the
+// short orange "locked" ripple (0.45s lifetime) with no visible toy response, so they
+// rage-clicked thinking the toy was broken. R901 makes every toy respond visibly:
+// lava-lamp pushes blobs away from click + spawns brief shockwave; rain-window adds
+// extra splashes at click point.
+let ripples=[]; // {x,y,r,maxR,life,maxLife,color}
 return{
 update(){
 time+=0.016;
@@ -991,6 +1037,12 @@ if(b.x<0.25){b.x=0.25;b.vx=0.001}
 if(b.x>0.75){b.x=0.75;b.vx=-0.001}
 b.vx*=0.99;b.vy*=0.999;
 });
+// R901: ripple update — expand and fade
+for(let i=ripples.length-1;i>=0;i--){
+ripples[i].life-=1/60/ripples[i].maxLife;
+ripples[i].r=ripples[i].maxR*(1-ripples[i].life);
+if(ripples[i].life<=0)ripples.splice(i,1);
+}
 },
 draw(){
 const g=ctx.createLinearGradient(0,0,0,H());
@@ -999,9 +1051,17 @@ ctx.fillStyle=g;ctx.fillRect(0,0,W(),H());
 const lx=W()*0.3,ly=H()*0.08,lw=W()*0.4,lh=H()*0.84;
 ctx.fillStyle='rgba(40,20,60,0.8)';
 ctx.beginPath();ctx.roundRect(lx,ly,lw,lh,lw/2);ctx.fill();
-ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=2;
+ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=2;
 ctx.beginPath();ctx.roundRect(lx,ly,lw,lh,lw/2);ctx.stroke();
 ctx.save();ctx.beginPath();ctx.roundRect(lx+4,ly+4,lw-8,lh-8,lw/2-4);ctx.clip();
+// R901: draw ripples — additive orange shockwave on top of blobs
+ripples.forEach(rp=>{
+ctx.beginPath();ctx.arc(rp.x,rp.y,rp.r,0,Math.PI*2);
+ctx.strokeStyle=`rgba(236,72,153,${rp.life*0.7})`;
+ctx.lineWidth=3;ctx.shadowColor='rgba(236,72,153,.6)';ctx.shadowBlur=12;
+ctx.stroke();
+});
+ctx.shadowBlur=0;
 blobs.forEach(b=>{
 const bx=lx+b.x*lw,by=ly+b.y*lh,br=b.r*Math.min(W(),H());
 const bg=ctx.createRadialGradient(bx,by,0,bx,by,br);
@@ -1015,7 +1075,21 @@ ctx.restore();
 const glow=ctx.createRadialGradient(W()/2,H()*0.7,0,W()/2,H()*0.7,W()*0.3);
 glow.addColorStop(0,'rgba(236,72,153,0.06)');glow.addColorStop(1,'rgba(236,72,153,0)');
 ctx.fillStyle=glow;ctx.fillRect(0,0,W(),H());
-}
+},
+// R901: tap pushes blobs away from click point + spawns visible shockwave ripple.
+// Conversions: click pos in pixels (px,py) → normalized (nx,ny) → relative to lamp box.
+down(p){
+const lx=W()*0.3+4,ly=H()*0.08+4,lw=W()*0.4-8,lh=H()*0.84-8;
+const nx=(p.x-lx)/lw,ny=(p.y-ly)/lh;
+ripples.push({x:p.x,y:p.y,r:0,maxR:Math.min(W(),H())*0.25,life:1,maxLife:0.7,color:'#ec4899'});
+blobs.forEach(b=>{
+const dx=b.x-nx,dy=b.y-ny,d=Math.hypot(dx,dy)+0.01;
+const force=0.04/Math.max(0.05,d*d*8);
+b.vx+=dx*force;b.vy+=dy*force*0.6;
+});
+},
+move(){},
+up(){}
 };
 }
 function createBouncingBalls(ctx,W,H){
@@ -1110,6 +1184,12 @@ function makeDrop(){
 return{x:Math.random()*1.1-0.05,y:Math.random(),speed:0.003+Math.random()*0.006,len:0.01+Math.random()*0.03,alpha:0.2+Math.random()*0.4}
 }
 let splashes=[];let time=0;
+// UX-OPT 2026-10-19 R901: Add down(p) interactivity so rain window responds to taps.
+// Before R901, rain-window was purely passive — clicks only spawned the orange
+// "locked" ripple for 0.45s with no other visible change. Users rage-clicked.
+// R901: tap creates a focused splash cluster at click point + briefly brightens the
+// ambient background glow. The existing random-splash logic stays intact.
+let tapGlows=[]; // {x,y,r,maxR,life,maxLife}
 return{
 update(){
 time+=0.016;
@@ -1124,6 +1204,12 @@ Object.assign(d,makeDrop());d.y=-0.05;
 for(let i=splashes.length-1;i>=0;i--){
 splashes[i].r+=0.5;splashes[i].a-=0.02;
 if(splashes[i].a<=0)splashes.splice(i,1);
+}
+// R901: tap glow update — expand and fade
+for(let i=tapGlows.length-1;i>=0;i--){
+tapGlows[i].life-=1/60/tapGlows[i].maxLife;
+tapGlows[i].r=tapGlows[i].maxR*(1-tapGlows[i].life);
+if(tapGlows[i].life<=0)tapGlows.splice(i,1);
 }
 },
 draw(){
@@ -1145,7 +1231,24 @@ splashes.forEach(s=>{
 ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
 ctx.strokeStyle=`rgba(150,180,210,${s.a})`;ctx.lineWidth=1;ctx.stroke();
 });
+// R901: draw tap glows — bright cyan-white rings at click points
+tapGlows.forEach(g=>{
+ctx.beginPath();ctx.arc(g.x,g.y,g.r,0,Math.PI*2);
+ctx.strokeStyle=`rgba(200,230,255,${g.life*0.5})`;
+ctx.lineWidth=2.5;ctx.shadowColor='rgba(150,200,255,.6)';ctx.shadowBlur=10;
+ctx.stroke();
+});
+ctx.shadowBlur=0;
+},
+// R901: tap creates 3 splashes at click point + brightens glow + spawns ripple
+down(p){
+tapGlows.push({x:p.x,y:p.y,r:0,maxR:Math.min(W(),H())*0.22,life:1,maxLife:0.7});
+for(let i=0;i<3;i++){
+splashes.push({x:p.x+(Math.random()-.5)*20,y:p.y+(Math.random()-.5)*20,r:3,a:0.7});
 }
+},
+move(){},
+up(){}
 };
 }
 function createLightSwitch(ctx,W,H){
