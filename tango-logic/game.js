@@ -422,6 +422,8 @@
     playWin();
     // Confetti
     confetti();
+// ADS-OPT 2026-10-19 R949: monetag commercial_break on tango-logic win (14 PV/7d, 0 CB fill lifetime)
+try { window.dispatchEvent(new CustomEvent('level-complete')); } catch(e) {}
   }
 
   function next() {
