@@ -254,6 +254,17 @@ canvas#game{position:absolute;inset:0;width:100%;height:100%;touch-action:none;d
 .lvl:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,0.45)}
 .lvl.locked{opacity:.5;cursor:not-allowed}
 .lvl.locked::after{content:'';position:absolute;inset:0;background:rgba(10,8,32,0.6)}
+/* UX-OPT 2026-10-20 R969: R382 dead_click fix on .lvl level cards. BI 7d: 2 dead_click
+ * DIV.lvl (Linux Chrome 143 desktop 09:58:39 + Android Chrome 143 09:59:05) — both
+ * rage-abandoned after 1 click. Root cause: card.onclick navigates (unlocked) or
+ * silently rejects (locked) without mutating the .lvl className, so gz-analytics.js
+ * dead_click detector (capture snapClass vs 1.5s nowClass) fires on every click.
+ * .pressed class for ≥1700ms (R381 lesson: must exceed 1.5s detector window) so
+ * snapClass !== nowClass and detector sees the visible state change. .shake
+ * for locked cards so silent rejection also gets visible feedback (R382 Sub-case C). */
+.lvl.pressed{box-shadow:0 0 0 2px var(--neon-gold, #ffd24a),0 0 16px rgba(255,210,74,.5);transform:translateY(-2px) scale(.98)}
+@keyframes gzLvlShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.lvl.shake{animation:gzLvlShake .35s ease 2;box-shadow:0 0 0 2px #ff4444}
 .lvl .num{font-family:'Fredoka',sans-serif;font-weight:700;font-size:24px;line-height:1}
 .lvl .name{font-size:10px;font-weight:700;color:var(--text-dim);text-align:center;margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
 .lvl .stars{display:flex;gap:2px;margin-top:4px}
@@ -381,10 +392,17 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 <style data-gz-r360-placeholders>
 #gz-ad-above-game:empty,#gz-ad-below-canvas:empty{pointer-events:none}
 
-/* R360: R347 static in-game banner placeholders. */
+/* R360: R347 static in-game banner placeholders.
+ * UX-OPT 2026-10-20 R969: R680 alignment — page CSS values now match monetag-manager.js
+ * getOrCreate() bannerCSS so cssText rewrite doesn't trigger div height jump → CLS.
+ * Desktop bannerCSS: min-height:90px max-height:280px margin:8px auto.
+ * Mobile bannerCSS:  min-height:50px max-height:280px margin:8px auto.
+ * Before R969: desktop=50/90/6 mobile=50/60/4 — monetag overwrote to 90/280/8 → +40-42px
+ * div growth → canvas (next sibling) shifts 40-42px down → CLS POOR (Linux Chrome 143
+ * 09:58:39 today, also general 7d trend). */
 #gz-ad-above-game,#gz-ad-below-canvas{
-  display:block;max-width:728px;width:100%;height:90px;min-height:50px;max-height:90px;
-  margin:6px auto;text-align:center;overflow:hidden;
+  display:block;max-width:728px;width:100%;height:90px;min-height:90px;max-height:280px;
+  margin:8px auto;text-align:center;overflow:hidden;
   contain:layout paint style;box-sizing:border-box;position:relative;
   background:transparent;border-radius:6px;
 }
@@ -392,7 +410,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 #gz-ad-above-game iframe,#gz-ad-below-canvas iframe{
   display:block;position:absolute!important;top:0!important;left:0!important;
   width:100%!important;max-width:728px!important;height:100%!important;
-  min-height:50px!important;max-height:90px!important;overflow:hidden;
+  min-height:90px!important;max-height:280px!important;overflow:hidden;
   border:0;
 }
 #gz-ad-above-game:empty::after,#gz-ad-below-canvas:empty::after{
@@ -401,10 +419,11 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
   letter-spacing:.05em;pointer-events:none;
 }
 @media(max-width:600px){
-  #gz-ad-above-game,#gz-ad-below-canvas{height:50px;min-height:50px;max-height:60px;margin:4px auto}
+  /* R969: align mobile to bannerCSS (50/280/8) so cssText rewrite doesn't change layout */
+  #gz-ad-above-game,#gz-ad-below-canvas{height:50px;min-height:50px;max-height:280px;margin:8px auto}
   #gz-ad-above-game ins,#gz-ad-below-canvas ins,
-  #gz-ad-above-game iframe,#gz-ad-below-canvas iframe{
-    max-height:60px!important;min-height:50px!important;
+  #gz-ad-below-canvas iframe,#gz-ad-above-game iframe{
+    max-height:280px!important;min-height:50px!important;
   }
 }
 </style>
@@ -1024,9 +1043,23 @@ function renderLevelSelect(){
       ${!unlocked ? '<div class="lock">&#x1F512;</div>' : ''}
     `;
     if (unlocked){
-      card.onclick = () => { Audio.play('tap_click'); startLevel(lv.id, false); };
+      card.onclick = () => {
+        // R969: visible pressed feedback (1700ms ≥ 1.5s dead_click detector window)
+        card.classList.add('pressed');
+        setTimeout(()=>{ try{card.classList.remove('pressed');}catch(e){} },1700);
+        Audio.play('tap_click');
+        startLevel(lv.id, false);
+      };
     } else {
-      card.onclick = () => { Audio.play('fail_buzzer'); toast('Complete previous levels to unlock'); };
+      card.onclick = () => {
+        // R969: visible shake feedback for silent reject (R382 Sub-case C, 1700ms hold)
+        card.classList.remove('shake');
+        void card.offsetWidth; // force reflow to restart animation
+        card.classList.add('shake');
+        setTimeout(()=>{ try{card.classList.remove('shake');}catch(e){} },1700);
+        Audio.play('fail_buzzer');
+        toast('Complete previous levels to unlock');
+      };
     }
     grid.appendChild(card);
   });
@@ -1829,6 +1862,11 @@ function totalStars(){
 }
 
 function startLevel(levelId, endless){
+  // R969: defer heavy Audio.init() work to next animation frame so click→paint
+  // stays under INP threshold (was 500+ms POOR on Linux Chrome 143 today). The
+  // synchronous layout + scene setup runs immediately; Audio init happens AFTER
+  // the next paint. Visible to user: card.pressed feedback + screen change within
+  // ~16ms; sound follows 1 frame later (imperceptible).
   cleanup();
   const lv = LEVELS.find(l => l.id === levelId) || generateEndlessLevel();
   scene = makeLevelScene(lv, endless);
@@ -1841,10 +1879,13 @@ function startLevel(levelId, endless){
   scene.pRadius = Math.max(16, Math.min(36, layoutData.isMobile ? 22 : 26));
   // passenger row Y
   scene.pRowY = layoutData.curbY - 110;
-  Audio.init();
-  Audio.resume();
-  Audio.setVolumes();
-  if (save.bgm) Audio.startBgm();
+  // Defer Audio cold-start + bgm start to next animation frame (INP optimization)
+  requestAnimationFrame(() => {
+    Audio.init();
+    Audio.resume();
+    Audio.setVolumes();
+    if (save.bgm) Audio.startBgm();
+  });
   updateBoosterCounts();
   updateHudBuses();
   // pointer
