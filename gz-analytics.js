@@ -82,6 +82,37 @@
   var OS = (N && N.platform) || '';
   var REFERRER = document.referrer || '';
 
+  // ==================== BOT REFERRER BLOCKLIST (R962, 2026-10-20) ====================
+  // dfvvf.pages.dev referral bot farm (30d ramp → 10-19 burst: 431 PV + 641 static_banner_fill
+  // on /embed-games.html in 24h). Real AdSense fill still happens in real Chrome+residential-IP
+  // browser, but BI fill_rate/UV/PV pollution + AdSense invalid-activity risk both rise with
+  // sustained bot flow. Silent drop at ps() entry — covers page_view + u_enter + u_click +
+  // gz_ad_event + all event types in a single chokepoint. Real users with non-matching referrer
+  // (incl. blank/internal/bing/google/ddg) are unaffected.
+  // NOTE: do NOT blanket-block *.pages.dev — legit users may have legitimate pages.dev sites
+  // that link to gamezipper.com (Cloudflare Pages = general purpose hosting). Add new bot farms
+  // as explicit entries only after a single-domain attack pattern is observed in BI.
+  var BOT_REFERRERS = [
+    'dfvvf.pages.dev',      // R962 primary — 30d sustained, 91% on 10-19
+    'glasspane.pages.dev',  // R962 sibling domain (2 visits 7d)
+    'varonexa.pages.dev'    // R962 sibling domain (11 visits 7d)
+  ];
+  function isBotReferrer(ref) {
+    if (!ref) return false;
+    // Extract hostname from URL: 'https://dfvvf.pages.dev:443/path?q=1' -> 'dfvvf.pages.dev'
+    var m = ref.match(/^https?:\/\/([^/?#:]+)/i);
+    if (!m) return false;
+    var host = m[1].toLowerCase();
+    // Exact match OR any subdomain (foo.dfvvf.pages.dev). Suffix check requires
+    // leading dot to avoid suffix-attack ('dfvvf.pages.dev.evil.com' is NOT matched).
+    for (var i = 0; i < BOT_REFERRERS.length; i++) {
+      if (host === BOT_REFERRERS[i] || host.endsWith('.' + BOT_REFERRERS[i])) return true;
+    }
+    return false;
+  }
+  var BOT_REF_DROPPED = 0;
+  try { window.__gzBotRefDropped = function() { return BOT_REF_DROPPED; }; } catch(e) {}
+
   function gB() {
     try { return JSON.parse(localStorage.getItem(BK) || '[]'); } catch(e) { return []; }
   }
@@ -106,6 +137,12 @@
     };
   }
   function ps(n, d) {
+    // R962 bot referrer gate: silently drop all events from known bot farms.
+    // Single chokepoint — covers page_view + u_enter + u_click + gz_ad_event.
+    if (isBotReferrer(document.referrer || '')) {
+      BOT_REF_DROPPED++;
+      return;
+    }
     var b = gB();
     var ev = base();
     ev.e = n; ev.d = d || {}; ev.t = Date.now();

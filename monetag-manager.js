@@ -899,8 +899,43 @@
   // Lightweight event log so we can see which network actually fires.
   // Each event: { type, network, zoneId, slotId, containerId, ts, meta }
   // Exposed as window.gzAdEvents for console inspection and external analytics.
+  // ==================== BOT REFERRER BLOCKLIST (v5.36, 2026-10-20 R962) ====================
+  // dfvvf.pages.dev referral bot farm (R962 burst 10-19: 431 PV + 641 static_banner_fill
+  // on /embed-games.html in 24h). Silent drop at trackAdEvent entry — single chokepoint
+  // covers all 40 callsites (static_banner_fill, banner_fill, container_ad_*, etc.).
+  // Real AdSense fill still happens in real Chrome+residential-IP browser but BI
+  // fill_rate pollution + AdSense invalid-activity risk both rise with sustained bot flow.
+  // gz-analytics.js ps() also gates the same domain — this is the second layer covering
+  // direct sendBeacon fallback path (window.GZ_COLLECT_ENDPOINT branch).
+  // NOTE: do NOT blanket-block *.pages.dev — legit users may have legitimate pages.dev
+  // sites that link to gamezipper.com (Cloudflare Pages = general purpose hosting).
+  // Add new bot farms as explicit entries after a single-domain attack pattern observed.
+  var BOT_REFERRERS = [
+    'dfvvf.pages.dev',      // R962 primary — 30d sustained, 91% on 10-19
+    'glasspane.pages.dev',  // R962 sibling domain (2 visits 7d)
+    'varonexa.pages.dev'    // R962 sibling domain (11 visits 7d)
+  ];
+  function isBotReferrer(ref) {
+    if (!ref) return false;
+    // Extract hostname from URL: 'https://dfvvf.pages.dev:443/path?q=1' -> 'dfvvf.pages.dev'
+    var m = ref.match(/^https?:\/\/([^/?#:]+)/i);
+    if (!m) return false;
+    var host = m[1].toLowerCase();
+    // Exact match OR any subdomain (foo.dfvvf.pages.dev). Suffix check requires
+    // leading dot to avoid suffix-attack ('dfvvf.pages.dev.evil.com' is NOT matched).
+    for (var i = 0; i < BOT_REFERRERS.length; i++) {
+      if (host === BOT_REFERRERS[i] || host.endsWith('.' + BOT_REFERRERS[i])) return true;
+    }
+    return false;
+  }
   var adEvents = [];
   function trackAdEvent(type, data) {
+    if (isBotReferrer(document.referrer || '')) {
+      // Silent drop: do NOT push to adEvents, do NOT forward to BI, do NOT log to GTM.
+      // Bot farms use real Chrome+residential-IP so AdSense may still fill, but BI events
+      // are bot-only and would distort fill_rate + trip invalid-activity heuristics.
+      return;
+    }
     var ev = { type: type, ts: Date.now() };
     for (var k in data) { if (Object.prototype.hasOwnProperty.call(data, k)) ev[k] = data[k]; }
     adEvents.push(ev);
