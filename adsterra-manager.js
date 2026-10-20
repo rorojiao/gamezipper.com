@@ -111,6 +111,35 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
   // tunnel-watchdog.sh, so this channel now follows rotations automatically.
   function biDirectEP() { return window.__GZ_COLLECT_EP || ''; }
 
+  // ── Bot referrer blocklist (R966, 2026-10-20) ──
+  // adsterra-manager.js track() is a THIRD BI path that the R962 two-layer gate
+  // never covered: channel 2 fires navigator.sendBeacon straight at the tunnel EP,
+  // bypassing gz-analytics.js ps() and monetag-manager.js trackAdEvent() entirely.
+  // Proven leak in production E2E: a blocked rotating-bot referrer
+  // (unseen-future-9f3a2b1c.netlify.app) still shipped 4 adsterra events
+  // (script_loaded, config_loaded, 2x cdn_health). cdn_health is the single
+  // largest gz_ad_event type at 8,147/7d, so bot traffic was materially
+  // inflating the ad-side BI volume. Gate at track() entry covers all of it.
+  // Kept in sync with gz-analytics.js + monetag-manager.js (see .audit/test-r966-botblock.js).
+  var BOT_REFERRERS = [
+    'dfvvf.pages.dev', 'glasspane.pages.dev', 'varonexa.pages.dev',
+    'assignment-notebook.netlify.app', 'playroomapi.netlify.app', 'vamp-games.netlify.app',
+    'vboard-delta.vercel.app', 'game-web-sandy-gamma.vercel.app',
+    'harveyspecter16.github.io', 'coolhiglers.github.io',
+    'shoaibbilal125134-crypto.github.io', 'sron2527.github.io', 'mskennedyj.github.io'
+  ];
+  var AUTO_DEPLOY_RE = /-[0-9a-f]{6,12}\.(?:netlify\.app|vercel\.app|pages\.dev|web\.app|onrender\.com|now\.sh)$/;
+  function isBotReferrer(ref) {
+    if (!ref) return false;
+    var m = ref.match(/^https?:\/\/([^/?#:]+)/i);
+    if (!m) return false;
+    var host = m[1].toLowerCase();
+    for (var i = 0; i < BOT_REFERRERS.length; i++) {
+      if (host === BOT_REFERRERS[i] || host.endsWith('.' + BOT_REFERRERS[i])) return true;
+    }
+    return AUTO_DEPLOY_RE.test(host);
+  }
+
   // ── Hardened track() — v5.17.3: dual-channel (BI batch + fire-and-forget)
   //     1) gzAnalytics.sendAd → gz-analytics.js batch buffer → trycloudflare tunnel → BI
   //        (best-effort, may be lost on tab close before 30s flush)
@@ -123,6 +152,11 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
   // console error spam. Channel 2 now resolves the tunnel lazily via
   // window.__GZ_COLLECT_EP so it survives watchdog rotations.
   function track(type, extra) {
+    // R966: drop the whole event (all 3 channels) for known bot-farm referrers.
+    if (isBotReferrer(document.referrer || '')) {
+      try { window.__gzAdsterraBotDrop = (window.__gzAdsterraBotDrop || 0) + 1; } catch (e) {}
+      return;
+    }
     var payload = Object.assign({ network: 'adsterra', type: type, t: Date.now() }, extra || {});
     // Channel 1: gzAnalytics.sendAd (BI batch pipeline, may be lost on quick nav)
     try {

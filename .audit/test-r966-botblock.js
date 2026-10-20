@@ -27,6 +27,7 @@ function extract(file) {
 const layers = {
   'gz-analytics.js': extract('gz-analytics.js'),
   'monetag-manager.js': extract('monetag-manager.js'),
+  'adsterra-manager.js': extract('adsterra-manager.js'),
 };
 
 // ---- MUST BLOCK -------------------------------------------------------------
