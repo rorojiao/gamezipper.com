@@ -111,7 +111,7 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 60%,#0d1a2d 100%);min-
 .game-meta{display:flex;align-items:center;gap:6px;font-size:12px;color:#888}
 .game-meta .dot{width:8px;height:8px;border-radius:50%;background:#2ecc71;flex-shrink:0}
 
-#canvas-wrap{position:relative;width:100%;max-width:520px;flex:1;overflow:hidden;touch-action:none;min-height:0}
+#canvas-wrap{position:relative;width:100%;max-width:520px;flex:1;overflow:hidden;touch-action:none;min-height:0;/* FIX R970-P1: square the flex row so the wrap cannot collapse to a 520x135 sliver on short viewports (that squeezed the canvas bitmap to 135x135 and stretched it). */ aspect-ratio:1/1;max-height:100%;margin:0 auto}
 #game-canvas{display:block;border-radius:10px;border:2px solid #2a2a4a;box-shadow:0 4px 30px rgba(0,0,0,.5);width:100%;height:100%;cursor:pointer;touch-action:none;background:#1a1a2e}
 
 #palette-bar{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;max-width:520px;margin-top:8px;flex-wrap:wrap;padding:0 4px}
@@ -722,9 +722,21 @@ function resizeCanvas(){
   const wrap=document.getElementById('canvas-wrap');
   const w=wrap.clientWidth;
   const h=wrap.clientHeight;
-  const size=Math.min(w,h);
+  const size=Math.max(64, Math.min(w,h));
   canvas.width=size;
   canvas.height=size;
+  // FIX R970-P1: the CSS box was width:100%;height:100% of a FLEX row (canvas-wrap is
+  // flex:1 with min-height:0), so on short viewports the wrap collapsed to e.g. 520x135
+  // while the backing store was min(520,135)=135. The 135x135 bitmap was then stretched
+  // into a 520x135 box (picture visibly distorted) AND hitTest() maps clicks with
+  // x -> x + canvas.width/2 - W/2, so anything past x=335 fell outside the 0..400 artwork
+  // and every tap there did nothing -> 19 dead_click + 6 rage_click in BI 7d.
+  // Pin the canvas to an exact square in CSS px so the bitmap box and the click mapping
+  // can never disagree, whatever the flex parent does.
+  canvas.style.width=size+'px';
+  canvas.style.height=size+'px';
+  canvas.style.marginLeft='auto';
+  canvas.style.marginRight='auto';
 }
 
 function renderPalette(){

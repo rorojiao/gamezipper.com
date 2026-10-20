@@ -362,12 +362,31 @@ function resizeCanvas() {
 
   const dpr = window.devicePixelRatio || 1;
   const cfg = DIFFICULTIES[difficulty];
-  const headerH = 140; // roughly ms-header + ms-hud + ms-controls
   const navH = 28;
+  // FIX R970-P1: /game-footer.js injects #game-footer as position:fixed;bottom:0;z-index:40
+  // (~41px tall) on top of the play area. R377 sized the canvas to fill the whole viewport
+  // height, so the bottom board row sat UNDER the footer and every click there hit the
+  // footer's "More Puzzle" anchor instead of the canvas -> dead_click/rage_click (BI 7d:
+  // 54 rage + 492 perf on /minesweeper/). Reserve a FIXED budget for it -- the footer is
+  // lazy-injected, so measuring offsetHeight here would read 0 on the first call and
+  // reserve nothing (same trap as the UI-reservation anti-pattern).
+  const FOOTER_RESERVE = 56;
+  // Measure the real wrap offset instead of the hardcoded 140px guess: the header + HUD +
+  // difficulty row render ~190px tall, so the old constant under-reserved by ~50px.
+  // Defensive: headless VM verifiers stub `canvas` without getBoundingClientRect.
+  let wrapTop = 140;
+  try {
+    if (canvas && typeof canvas.getBoundingClientRect === 'function') {
+      wrapTop = Math.ceil(canvas.getBoundingClientRect().top + window.scrollY) || 140;
+    }
+  } catch (e) { /* keep 140 */ }
   const availW = window.innerWidth - 8;
-  const availH = window.innerHeight - headerH - navH - 20;
+  const availH = Math.max(180, window.innerHeight - wrapTop - navH - FOOTER_RESERVE - 12);
 
   cellSize = Math.max(20, Math.min(64, Math.floor(Math.min(availW / cfg.cols, availH / cfg.rows)))); // R377: cap raised 36→64 so canvas fills the screen on desktop instead of being a tiny 324x324 widget; avoids rage-clicks caused by users missing the small target
+  // Hard guarantee: never let the board grow past the space we reserved, or the bottom row
+  // slides under the fixed footer again on short viewports (the 20px floor above can do this).
+  if (cellSize * cfg.rows > availH) cellSize = Math.max(8, Math.floor(availH / cfg.rows));
   boardPixelW = cfg.cols * cellSize;
   boardPixelH = cfg.rows * cellSize;
 
