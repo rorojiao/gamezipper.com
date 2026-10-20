@@ -4,7 +4,13 @@ const path = require('path');
 const vm = require('vm');
 
 const SLUG = 'sudoku';
-const HTML = fs.readFileSync(path.join(SLUG, 'index.html'), 'utf8');
+// R964 P1 (Pitfall #55 cwd-shadow class): anchor to __dirname so the verifier
+// reads THIS game's index.html regardless of the cwd it is invoked from.
+// Previously `path.join(SLUG,'index.html')` resolved relative to process.cwd(),
+// so `cd sudoku && node verify_engine.js` died with ENOENT while the repo-root
+// invocation silently audited the right file by luck.
+const HERE = __dirname;
+const HTML = fs.readFileSync(path.join(HERE, 'index.html'), 'utf8');
 
 function extractMainScript(html) {
   const re = /<script\b[^>]*>([\s\S]*?)<\/script>/g;
@@ -154,6 +160,38 @@ function validateSudoku(L) {
 
 const issues = [];
 const results = [];
+// R964 P1 (test-gate defect fix): the previous version used "min candidates"
+// as a UNIQUENESS PROXY and never ran a real solver. A puzzle can have a
+// single-candidate cell yet still admit multiple full solutions, so the proxy
+// could not prove uniqueness — exactly the "a low-budget/heuristic generation
+// check cannot prove uniqueness" failure class. Every level now goes through
+// all four required layers:
+//   L1 stored solution is a legal complete sudoku      (validateSudoku)
+//   L2 stored solution agrees with every clue         (validateSudoku)
+//   L3 INDEPENDENT solver, limit=2, returns exactly 1  (countSolutions below)
+//   L4 the game's own countSolutions agrees with L3    (sandbox.countSolutions)
+function countSolutions(b, maxN) {
+  let best = -1, bestCands = null;
+  for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+    if (b[r][c] === 0) {
+      const cs = candidates(b, r, c);
+      if (bestCands === null || cs.length < bestCands.length) { bestCands = cs; best = r * 9 + c; }
+    }
+  }
+  if (best < 0) return 1;
+  const r = Math.floor(best / 9), c = best % 9;
+  let count = 0;
+  for (const v of bestCands) {
+    b[r][c] = v;
+    count += countSolutions(b, maxN - count);
+    b[r][c] = 0;
+    if (count >= maxN) return count;
+  }
+  return count;
+}
+const clone = b => b.map(r => [...r]);
+
+let uniqueFail = 0, solverDisagree = 0, worstMs = 0, minCandsSum = 0;
 for (let idx = 0; idx < 30; idx++) {
   const tier = Math.floor(idx / 5);
   const within = idx % 5;
@@ -166,23 +204,50 @@ for (let idx = 0; idx < 30; idx++) {
     L = sandbox.generatePuzzle(givens, rand);
   } catch (e) { issues.push({ idx, err: 'gen threw: ' + e.message }); continue; }
   if (!L) { issues.push({ idx, err: 'gen returned null' }); continue; }
+  // L1 + L2
   const err = validateSudoku(L);
   if (err) { issues.push({ idx, err, tier: def.name }); continue; }
+  // L3 — independent solver, limit=2
+  const t0 = Date.now();
+  const n = countSolutions(clone(L.puzzle), 2);
+  const ms = Date.now() - t0;
+  worstMs = Math.max(worstMs, ms);
+  if (n !== 1) { uniqueFail++; issues.push({ idx, err: 'NOT UNIQUE (independent solver found ' + n + ')', tier: def.name }); continue; }
+  // L4 — the production engine solver must agree with the independent one
+  const eng = sandbox.countSolutions(clone(L.puzzle), 2);
+  if (eng !== n) { solverDisagree++; issues.push({ idx, err: 'solver disagreement: independent=' + n + ' engine=' + eng, tier: def.name }); continue; }
+  // L2b — the stored solution must BE the unique solution found by the solver
+  const solved = clone(L.puzzle);
+  if (!solveUnique(solved)) { issues.push({ idx, err: 'solver returned 1 but could not materialise a solution', tier: def.name }); continue; }
+  for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+    if (solved[r][c] !== L.solution[r][c]) { issues.push({ idx, err: 'stored solution differs from the unique solution at (' + r + ',' + c + ')', tier: def.name }); r = 9; c = 9; }
+  }
   let minN = 99;
   for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
-    if (L.puzzle[r][c] === 0) {
-      const cs = candidates(L.puzzle, r, c);
-      if (cs.length < minN) minN = cs.length;
-    }
+    if (L.puzzle[r][c] === 0) minN = Math.min(minN, candidates(L.puzzle, r, c).length);
   }
-  results.push({ idx, tier: def.name, givens, minCands: minN });
+  minCandsSum += minN;
+  results.push({ idx, tier: def.name, givens, minCands: minN, unique: n, ms });
+}
+function solveUnique(b) {
+  for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+    if (b[r][c] !== 0) continue;
+    for (const v of candidates(b, r, c)) {
+      b[r][c] = v;
+      if (solveUnique(b)) return true;
+      b[r][c] = 0;
+    }
+    return false;
+  }
+  return true;
 }
 
-console.log('Validated ' + results.length + '/30 levels');
+console.log('Validated ' + results.length + '/30 levels (4 layers: solution-valid, clue-consistent, independent-solver-unique, engine-solver-agrees)');
+console.log('Independent uniqueness solver (limit=2): ' + (results.length) + '/30 unique, worst ' + worstMs + 'ms, engine disagreements: ' + solverDisagree);
 console.log('Issues: ' + issues.length);
 if (issues.length) for (const i of issues.slice(0, 5)) console.log('  FAIL', i);
 const avgMin = results.reduce((a, r) => a + r.minCands, 0) / Math.max(1, results.length);
-console.log('Avg min candidates (uniqueness proxy): ' + avgMin.toFixed(2));
+console.log('Avg min candidates (difficulty proxy only, NOT a uniqueness proof): ' + avgMin.toFixed(2));
 const tierCounts = {};
 results.forEach(r => { tierCounts[r.tier] = (tierCounts[r.tier] || 0) + 1; });
 console.log('Per tier:', tierCounts);
