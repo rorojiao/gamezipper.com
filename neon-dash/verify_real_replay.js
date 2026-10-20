@@ -26,35 +26,65 @@ const doc = g.sandbox.document;
 const tap = () => { doc.dispatch('keydown', { code: 'Space', key: ' ', preventDefault() {} });
                     doc.dispatch('keyup', { code: 'Space', key: ' ', preventDefault() {} }); };
 
+/* Frame alignment: the plan assumes the first plan decision lands on the very first
+ * engine frame after startLevel (px == START_X). The harness needs a few pumps for the
+ * engine to settle, and each of those frames advances px, so without this correction the
+ * whole plan is replayed out of phase and the player jumps into hazards that the plan
+ * already accounted for. Realign by reading the engine's own px and skipping exactly the
+ * frames the engine already consumed. */
+const START_X = (function () {
+  const m = require('fs').readFileSync(require('path').join(__dirname, 'index.html'), 'utf8')
+    .match(/x:\s*([\d.]+),\s*y:\s*GROUND_Y\s*-\s*PLAYER_SIZE/);
+  return m ? parseFloat(m[1]) : 100;
+})();
+
+function alignToFrameZero() {
+  let guard = 0;
+  while (g.call('__ND.px()') > START_X && guard++ < 60) { doc.dispatch('keyup', { code: 'Space', key: ' ', preventDefault() {} }); g.pump(1); }
+  return g.call('__ND.px()');
+}
+
 let agree = 0, disagree = 0; const rows = [];
 const planByLvl = planner.planAll(20000);
+const ONLY_SOLVABLE = process.argv.includes('--solvable-only');
+const todo = planByLvl.map((r, i) => i).filter(i => !ONLY_SOLVABLE || planByLvl[i].solvable);
+console.log('replaying ' + todo.length + '/' + planByLvl.length + ' levels (START_X=' + START_X + ')');
 
-for (let i = 0; i < planner.LEVELS.length; i++) {
+for (const i of todo) {
   const lvl = i + 1;
   const rec = planByLvl[i];
   const plan = rec.plan || '';   // rec is the plan object; the string lives on .plan
   // fresh level, practice OFF (so the plan is the honest no-assist route)
   g.call('__ND.start(' + i + ')');
-  g.pump(3);
+  g.pump(1);
+  const pxAtStart = g.call('__ND.px()');
+  alignToFrameZero();
   const st0 = g.call('__ND.st()');
+  const speed = planner.LEVELS[i].speed || 6;
   let died = false, completed = false, steps = 0;
-  for (let f = 0; f < plan.length + 60; f++) {
-    if (plan[f] === 'J' || plan[f] === 'H') tap();
+  // start applying the plan at the frame whose px matches the plan's frame 0
+  let planIdx = 0;
+  const offsetFrames = Math.max(0, Math.round((pxAtStart - START_X) / speed));
+  for (let f = 0; f < plan.length + 120; f++) {
+    if (f >= offsetFrames && plan[f - offsetFrames] === 'J') tap();
+    if (f >= offsetFrames && plan[f - offsetFrames] === 'H') { doc.dispatch('keydown', { code: 'Space', key: ' ', preventDefault() {} }); }
+    if (f >= offsetFrames && plan[f - offsetFrames] === '.') doc.dispatch('keyup', { code: 'Space', key: ' ', preventDefault() {} });
     g.pump(1);
     steps++;
     const st = g.call('__ND.st()');
     if (st === 'complete' || st === 'levelComplete') { completed = true; break; }
     if (!g.call('__ND.alive()')) { died = true; break; }
   }
+  doc.dispatch('keyup', { code: 'Space', key: ' ', preventDefault() {} });
   const realLvl = g.call('__ND.lvl()');
   const verdict = rec.solvable
     ? (completed ? 'CONFIRMED' : (died ? 'MODEL-WRONG(died)' : 'MODEL-WRONG(timeout)'))
     : (plan.length === 0 ? 'INCONCLUSIVE(offline-search-unfinished)' : (died ? 'CONFIRMED-UNWINNABLE' : 'INCONCLUSIVE'));
   if (verdict.startsWith('CONFIRMED')) agree++; else if (verdict.startsWith('MODEL-WRONG')) disagree++;
   rows.push({ lvl, name: planner.LEVELS[i].name, offlineSolvable: rec.solvable,
-    offlineWhy: rec.why || '', planLen: plan.length, realVerdict: verdict, frames: steps,
-    startState: st0, engineLevel: realLvl });
-  process.stdout.write(`L${String(lvl).padStart(2)} ${planner.LEVELS[i].name.padEnd(19).slice(0,19)} offline=${(rec.solvable ? 'SOLVABLE' : rec.why).padEnd(9)} real=${verdict.padEnd(38)} frames=${steps} deaths=${g.call('__ND.deaths()')}\n`);
+    offlineWhy: rec.why || '', planLen: plan.length, pxAtStart, offsetFrames,
+    realVerdict: verdict, frames: steps, startState: st0, engineLevel: realLvl });
+  process.stdout.write(`L${String(lvl).padStart(2)} ${planner.LEVELS[i].name.padEnd(19).slice(0,19)} offline=${(rec.solvable ? 'SOLVABLE' : rec.why).padEnd(9)} px0=${pxAtStart} off=${offsetFrames} real=${verdict.padEnd(24)} frames=${steps} deaths=${g.call('__ND.deaths()')}\n`);
 }
 
 // post-run persistence check through the engine's own writeSave
