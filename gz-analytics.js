@@ -95,8 +95,34 @@
   var BOT_REFERRERS = [
     'dfvvf.pages.dev',      // R962 primary — 30d sustained, 91% on 10-19
     'glasspane.pages.dev',  // R962 sibling domain (2 visits 7d)
-    'varonexa.pages.dev'    // R962 sibling domain (11 visits 7d)
+    'varonexa.pages.dev',   // R962 sibling domain (11 visits 7d)
+    // R966 explicit entries whose hostname does NOT match AUTO_DEPLOY_RE below.
+    // BI 30d: every one of these shows the farm signature (0 dead_click, 1-2 vids
+    // emitting 150-270 events each) — see rotation evidence in the skill.
+    'assignment-notebook.netlify.app',
+    'playroomapi.netlify.app',
+    'vamp-games.netlify.app',
+    'vboard-delta.vercel.app',
+    'game-web-sandy-gamma.vercel.app',
+    'harveyspecter16.github.io',
+    'coolhiglers.github.io',
+    'shoaibbilal125134-crypto.github.io',
+    'sron2527.github.io',
+    'mskennedyj.github.io'
   ];
+  // R966 durable layer: auto-generated ephemeral DEPLOY-PREVIEW hostnames.
+  // The R962 denylist lost to rotation — by 10-20 the same farm had moved off the 3
+  // blocked pages.dev hosts onto a fresh domain every ~24h (14 distinct free-hosting
+  // domains in 30d). Matching the machine-issued SHAPE blocks the whole rotating
+  // class in one rule instead of chasing each new domain:
+  //   Netlify deploy  -> <random-adjective-noun>-<6-8 hex>.netlify.app
+  //   Vercel preview  -> <project>-<6-12 hex>.vercel.app
+  //   Cloudflare Page -> <project>-<hex>.pages.dev
+  // Deliberately NOT a blanket *.netlify.app / *.pages.dev block: a real site on those
+  // platforms is addressed by a human-readable project name with no hex suffix, so the
+  // shape rule cannot match it. Anchored with $ so a suffix-attack host
+  // ('x-8446ca.netlify.app.evil.com') does not match either.
+  var AUTO_DEPLOY_RE = /-[0-9a-f]{6,12}\.(?:netlify\.app|vercel\.app|pages\.dev|web\.app|onrender\.com|now\.sh)$/;
   function isBotReferrer(ref) {
     if (!ref) return false;
     // Extract hostname from URL: 'https://dfvvf.pages.dev:443/path?q=1' -> 'dfvvf.pages.dev'
@@ -108,7 +134,7 @@
     for (var i = 0; i < BOT_REFERRERS.length; i++) {
       if (host === BOT_REFERRERS[i] || host.endsWith('.' + BOT_REFERRERS[i])) return true;
     }
-    return false;
+    return AUTO_DEPLOY_RE.test(host);
   }
   var BOT_REF_DROPPED = 0;
   try { window.__gzBotRefDropped = function() { return BOT_REF_DROPPED; }; } catch(e) {}

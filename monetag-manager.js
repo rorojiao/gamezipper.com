@@ -913,8 +913,28 @@
   var BOT_REFERRERS = [
     'dfvvf.pages.dev',      // R962 primary — 30d sustained, 91% on 10-19
     'glasspane.pages.dev',  // R962 sibling domain (2 visits 7d)
-    'varonexa.pages.dev'    // R962 sibling domain (11 visits 7d)
+    'varonexa.pages.dev',   // R962 sibling domain (11 visits 7d)
+    // R966 explicit entries whose hostname does NOT match AUTO_DEPLOY_RE below.
+    'assignment-notebook.netlify.app',
+    'playroomapi.netlify.app',
+    'vamp-games.netlify.app',
+    'vboard-delta.vercel.app',
+    'game-web-sandy-gamma.vercel.app',
+    'harveyspecter16.github.io',
+    'coolhiglers.github.io',
+    'shoaibbilal125134-crypto.github.io',
+    'sron2527.github.io',
+    'mskennedyj.github.io'
   ];
+  // R966 durable layer: auto-generated ephemeral DEPLOY-PREVIEW hostnames. The R962
+  // denylist lost to rotation (14 distinct free-hosting domains in 30d, ~1 new/24h).
+  // Matching the machine-issued SHAPE blocks the rotating class in one rule:
+  //   Netlify deploy  -> <random-adjective-noun>-<6-8 hex>.netlify.app
+  //   Vercel preview  -> <project>-<6-12 hex>.vercel.app
+  //   Cloudflare Page -> <project>-<hex>.pages.dev
+  // A real site on those platforms uses a human-readable project name with no hex
+  // suffix, so the shape rule cannot match it. $ anchor blocks suffix-attack hosts.
+  var AUTO_DEPLOY_RE = /-[0-9a-f]{6,12}\.(?:netlify\.app|vercel\.app|pages\.dev|web\.app|onrender\.com|now\.sh)$/;
   function isBotReferrer(ref) {
     if (!ref) return false;
     // Extract hostname from URL: 'https://dfvvf.pages.dev:443/path?q=1' -> 'dfvvf.pages.dev'
@@ -926,7 +946,7 @@
     for (var i = 0; i < BOT_REFERRERS.length; i++) {
       if (host === BOT_REFERRERS[i] || host.endsWith('.' + BOT_REFERRERS[i])) return true;
     }
-    return false;
+    return AUTO_DEPLOY_RE.test(host);
   }
   var adEvents = [];
   function trackAdEvent(type, data) {
