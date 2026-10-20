@@ -262,7 +262,33 @@ resize();
 // ─── Web Audio ───
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx;
-function ensureAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+// R970 2026-10-21: INP POOR root cause. Constructing an AudioContext costs 100-300ms
+// cold on desktop Chrome/Edge. ensureAudio() used to run INLINE from the pointerdown
+// handler (onTap L6122 -> sfxClick -> playTone -> ensureAudio), blocking the
+// click→paint window. BI 7d evidence: INP 504ms + 1232ms POOR (Edg 155 / Chrome 154),
+// the two worst samples in the page's lifetime, while CLS stayed good (0.001-0.094)
+// — i.e. layout was never the problem, the input handler was.
+// Fix (R969 family, deferred-init): schedule construction on idle instead of inline.
+// Single-point fix — all 3 ensureAudio() call sites benefit.
+let _audioPending = false;
+function ensureAudio() {
+  if (audioCtx || _audioPending) return;
+  _audioPending = true;
+  const go = () => {
+    _audioPending = false;
+    try { audioCtx = new AudioCtx(); } catch (e) { audioCtx = null; }
+  };
+  // requestIdleCallback runs AFTER the current frame is painted, so it never
+  // extends the interaction's input delay. setTimeout fallback for Safari/Firefox.
+  if (typeof requestIdleCallback === "function") requestIdleCallback(go, { timeout: 1200 });
+  else setTimeout(go, 50);
+}
+// R970: resume() is a cheap state flip (the context already exists), so it is safe
+// to call inside the input handler. Autoplay policy keeps the ctx 'suspended' until a
+// real gesture, so this is what actually un-mutes audio on the first tap.
+function resumeAudio() {
+  if (audioCtx && audioCtx.state === "suspended") { try { audioCtx.resume(); } catch (e) {} }
+}
 
 function playTone(freq, dur, type, vol) {
     if (!sfxEnabled) return;
@@ -3015,12 +3041,21 @@ function completePour() {
     if (levelStartTime > 0 && (Date.now() - levelStartTime) < 30000) {
       window._speedWins = (window._speedWins || 0) + 1;
     }
+    // R970 2026-10-21 BUG FIX: both onboarding toasts below were DEAD CODE.
+    // `checkAchievements()` awards first_sort (s.completed >= 1) on the very first win,
+    // so any guard reading `earnedAchievements.first_sort` AFTER it runs is ALWAYS false.
+    // Both toasts were therefore unreachable — BI confirmed 0 lifetime fires:
+    // ms_tutorial_extra_tube_hint=0 (R936, shipped 10-16), ms_tutorial_hint_undo_intro=0
+    // (R955, shipped 10-19), against ms_level_complete=20 in the same window. The
+    // Hint/Undo/ExtraTube discovery arc never reached a single player.
+    // Fix: snapshot the flag BEFORE the award mutates it.
+    const wasFirstTimer = !earnedAchievements.first_sort;
     checkAchievements();
     saveSave();
     // R936 2026-10-16: Post-win tutorial hint for lv=3-5 — teach Extra Tube affordance.
     // Players who reach lv=3+ need to know about the +Tube button before they hit a
     // stuck 4-color state. The hint fires after the win celebration toast clears (2s delay).
-    if (currentLevel >= 2 && currentLevel <= 4 && !earnedAchievements.first_sort) {
+    if (currentLevel >= 2 && currentLevel <= 4 && wasFirstTimer) {
       setTimeout(() => {
         if (state === "win" && !extraTubeIntroShown) {
           extraTubeIntroShown = true;
@@ -3036,7 +3071,7 @@ function completePour() {
     // win-celebration toast clears first. Wrapped in setTimeout + state guard so it
     // doesn't fire if user navigates away. Mirrors R936 pattern: 1 toast, session-only
     // flag (not persisted — gives fresh users the same discoverable intro).
-    if (currentLevel >= 0 && currentLevel <= 1 && !earnedAchievements.first_sort) {
+    if (currentLevel >= 0 && currentLevel <= 1 && wasFirstTimer) {
       setTimeout(() => {
         if (state === "win" && !hintUndoIntroShown) {
           hintUndoIntroShown = true;
@@ -6119,7 +6154,11 @@ function getPointerPos(e) {
 }
 
 function onTap(px, py) {
+  // R970: do NOT construct the AudioContext here (100-300ms blocks click→paint →
+  // INP POOR). ensureAudio() now defers to requestIdleCallback. resumeAudio() is a
+  // cheap state flip on an already-built context, so audio still un-mutes on tap.
   ensureAudio();
+  resumeAudio();
 
   // R662: Block all taps while chunk is loading (avoids accidental mid-fetch taps)
   if (state === "loading") return;

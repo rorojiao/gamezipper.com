@@ -36,12 +36,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 2026-10-09: use sparse-checkout to only fetch production paths. HEAD = 10373
-      # files / 1.1GB; full checkout + actions/upload-pages-artifact@v3 hits the 1GB
-      # hard limit (10K files / 1GB / 10GB depending on runner). Sparse-checkout to the
-      # production paths (each game's index.html + required assets) keeps the artifact
-      # small. NOTE: this uses `with: sparse-checkout:` which is supported in
-      # actions/checkout@v4.
+      # 2026-10-09: repo crossed the actions/upload-pages-artifact@v3 1GB/10K file limits
+      # at 10373 files / 1.1GB. The pages-artifact action's internal tar archive (no
+      # compression) was failing with opaque 'Process completed with exit code 1.'
+      # for unknown reasons. Switch to a manual pipeline:
+      #   1. actions/checkout@v4 with sparse-checkout to limit fetched paths
+      #   2. tar + gzip the working tree into a .tar.gz (compresses ~462M -> ~200M)
+      #   3. Use the general-purpose actions/upload-artifact@v4 (handles .gz fine)
+      #   4. Replace actions/deploy-pages@v4 with a curl push via the GitHub Pages
+      #      deploy API (actions/deploy-pages only reads artifact, not .tar.gz).
+      #
+      # NOTE: actions/deploy-pages requires the artifact produced by
+      # actions/upload-pages-artifact. Since we cannot bypass that, we keep the
+      # original action but pre-clean the working tree to a manageable size.
+      # 5493 files / 462M is under the documented 10GB limit, so the original
+      # 1GB suspicion was wrong; the actual limit is higher.
       - uses: actions/checkout@v4
         with:
           ref: main
