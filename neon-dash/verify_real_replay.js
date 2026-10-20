@@ -38,11 +38,12 @@ const START_X = (function () {
   return m ? parseFloat(m[1]) : 100;
 })();
 
-function alignToFrameZero() {
-  let guard = 0;
-  while (g.call('__ND.px()') > START_X && guard++ < 60) { doc.dispatch('keyup', { code: 'Space', key: ' ', preventDefault() {} }); g.pump(1); }
-  return g.call('__ND.px()');
-}
+/* Offset handling: the plan assumes plan[0] lands on the first engine frame at
+ * px == START_X. player.x only ever increases, so there is nothing to "align" back to —
+ * pumping to reach START_X would just run the player into the first obstacle while alive.
+ * Instead read px once after startLevel and start applying the plan at the matching index
+ * (see offsetFrames below). An earlier version of this file tried to walk px back to
+ * START_X, ran 60 blind frames, killed the player, and then reported MODEL-DIVERGES. */
 
 let agree = 0, disagree = 0; const rows = [];
 const planByLvl = planner.planAll(20000);
@@ -58,7 +59,7 @@ for (const i of todo) {
   g.call('__ND.start(' + i + ')');
   g.pump(1);
   const pxAtStart = g.call('__ND.px()');
-  alignToFrameZero();
+
   const st0 = g.call('__ND.st()');
   const speed = planner.LEVELS[i].speed || 6;
   let died = false, completed = false, steps = 0;
