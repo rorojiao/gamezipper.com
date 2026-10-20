@@ -78,6 +78,9 @@ function findAllShortest(n, wallsSet, start, goal) {
           if (nr === goal[0] && nc === goal[1]) {
             foundLen = visited.get(sk(nr, nc));
           }
+        } else if (visited.get(sk(nr, nc)) === visited.get(sk(r, c)) + 1) {
+          const ps = parents.get(sk(nr, nc));
+          if (!ps.some(p => p[0] === r && p[1] === c)) ps.push([r, c]);
         }
       }
     }

@@ -83,6 +83,9 @@ def find_all_shortest(n, walls_set, start, goal):
                     next_layer.append((nr, nc))
                     if (nr, nc) == tuple(goal):
                         found_len = visited[(nr, nc)]
+                elif visited[(nr, nc)] == visited[cur] + 1:
+                    if cur not in parents[(nr, nc)]:
+                        parents[(nr, nc)].append(cur)
         if not next_layer:
             break
         layers.append(next_layer)
@@ -101,8 +104,14 @@ def find_all_shortest(n, walls_set, start, goal):
     return all_paths
 
 
-def generate_level(n, walls_count, rng, max_attempts=300):
-    """Generate one valid camel-path level with unique shortest path."""
+def generate_level(n, walls_count, rng, min_len=3, max_len=14, max_attempts=300):
+    """Generate one valid camel-path level with unique shortest path.
+
+    min_len/max_len bound the solution length so each difficulty tier can ask for
+    a genuinely longer path. Without an explicit min_len the generator always
+    accepted the first (shortest) candidate, so every level came out at the
+    minimum length and the tier curve collapsed to a flat line.
+    """
     for attempt in range(max_attempts):
         cells = [(r, c) for r in range(n) for c in range(n)]
         rng.shuffle(cells)
@@ -124,35 +133,37 @@ def generate_level(n, walls_count, rng, max_attempts=300):
                 queue.append((nr, nc))
 
         # Pick a goal that's reachable and far enough
-        candidates = [g for g in visited if g != tuple(start) and visited[g] >= 3]
+        candidates = [g for g in visited if g != tuple(start) and visited[g] >= min_len]
         if not candidates:
             continue
         rng.shuffle(candidates)
 
-        goal = candidates[0]  # take first candidate
+        # Prefer the farthest candidates first so long tiers can actually be long.
+        candidates.sort(key=lambda g: -visited[g])
 
-        # Try wall configurations
-        for wattempt in range(80):
-            wall_cells = [(r, c) for r in range(n) for c in range(n)
-                          if (r, c) != start and (r, c) != goal]
-            rng.shuffle(wall_cells)
-            walls = wall_cells[:walls_count]
-            walls_set = set(tuple(w) for w in walls)
+        for goal in candidates:
+            # Try wall configurations
+            for wattempt in range(40):
+                wall_cells = [(r, c) for r in range(n) for c in range(n)
+                              if (r, c) != start and (r, c) != goal]
+                rng.shuffle(wall_cells)
+                walls = wall_cells[:walls_count]
+                walls_set = set(tuple(w) for w in walls)
 
-            length, path = bfs_shortest(n, walls_set, start, goal)
-            if length is None or length < 3 or length > 14:
-                continue
+                length, path = bfs_shortest(n, walls_set, start, goal)
+                if length is None or length < min_len or length > max_len:
+                    continue
 
-            all_paths = find_all_shortest(n, walls_set, start, goal)
-            if len(all_paths) == 1:
-                return {
-                    'n': n,
-                    'start': list(start),
-                    'goal': list(goal),
-                    'walls': [list(w) for w in walls],
-                    'solution_path': [list(p) for p in path],
-                    'length': length,
-                }
+                all_paths = find_all_shortest(n, walls_set, start, goal)
+                if len(all_paths) == 1:
+                    return {
+                        'n': n,
+                        'start': list(start),
+                        'goal': list(goal),
+                        'walls': [list(w) for w in walls],
+                        'solution_path': [list(p) for p in path],
+                        'length': length,
+                    }
     return None
 
 
@@ -160,21 +171,24 @@ def main():
     rng = random.Random(20260921)
 
     levels = []
+    # (tier, n, walls_count, count, min_len)
+    # min_len rises per tier so the advertised 5-tier difficulty curve is real:
+    # a bigger board with more walls forces a longer forced path.
     tier_specs = [
-        ('Beginner', 5, 1, 6),
-        ('Easy',     6, 3, 6),
-        ('Medium',   7, 5, 6),
-        ('Hard',     8, 8, 6),
-        ('Expert',   9, 12, 6),
+        ('Beginner', 5, 1, 6, 3),
+        ('Easy',     6, 3, 6, 3),
+        ('Medium',   7, 5, 6, 4),
+        ('Hard',     8, 8, 6, 5),
+        ('Expert',   9, 12, 6, 5),
     ]
 
     level_id = 0
-    for tier_name, n, walls_count, count in tier_specs:
+    for tier_name, n, walls_count, count, min_len in tier_specs:
         attempts = 0
         tier_count = 0
-        while tier_count < count and attempts < count * 200:
+        while tier_count < count and attempts < count * 400:
             attempts += 1
-            lvl = generate_level(n, walls_count, rng)
+            lvl = generate_level(n, walls_count, rng, min_len=min_len)
             if lvl is None:
                 continue
             lvl['id'] = level_id
@@ -184,7 +198,8 @@ def main():
             tier_count += 1
             level_id += 1
 
-        print(f'{tier_name} ({n}x{n}): generated {tier_count}/{count}')
+        lens = [l['length'] for l in levels if l['tier'] == tier_name]
+        print(f'{tier_name} ({n}x{n}): generated {tier_count}/{count}  lengths={lens}')
 
     output = {
         'name': 'Camel Path',

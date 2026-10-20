@@ -81,6 +81,9 @@ def find_all_shortest(n, walls_set, start, goal):
                     next_layer.append((nr, nc))
                     if (nr, nc) == tuple(goal):
                         found_len = visited[(nr, nc)]
+                elif visited[(nr, nc)] == visited[cur] + 1:
+                    if cur not in parents[(nr, nc)]:
+                        parents[(nr, nc)].append(cur)
         if not next_layer:
             break
         layers.append(next_layer)
