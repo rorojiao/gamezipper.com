@@ -5,7 +5,9 @@
 // - Anchor cells are pre-filled and shown as colored dots.
 // - Player toggles cells by clicking/tapping.
 // - Win: player's filled-set matches the solution exactly.
-// - 3 stars: no hints used; 2 stars: 1 hint; 1 star: any other.
+// - 3 stars: no hints used; 2 stars: few hints; 1 star: most of the budget.
+// - Hint budget is per-level (hintBudget()): each hint reveals ONE cell, so a
+//   flat cap would leave the larger grids with too little information to finish.
 //
 // Conceptis Dot-a-Pix is "Pixel art with dots" — the picture is fully
 // defined by the level; anchors provide partial reveal so the player
@@ -15,7 +17,16 @@
   'use strict';
 
   const SAVE_KEY = 'dot_a_pix_save_v1';
-  const HINT_LIMIT = 3;
+  // R320: the hint budget is PER-LEVEL, not a global 3.
+  // A hint reveals exactly one cell, and checkWin() requires every cell to match
+  // the solution, so the player's only source of information is (anchors + hints).
+  // With a flat 3-hint cap the player could never reveal more than ~37% of the
+  // picture on Hard/Expert, leaving those levels effectively uncompletable and no
+  // star tier reachable. Size the budget so the player can always bring the
+  // revealed share of the filled cells to ~80%, clamped to [3, 45% of hidden cells].
+  const HINT_TARGET_SHARE = 0.80;   // revealed share of filled cells the budget must reach
+  const HINT_CAP_FRACTION = 0.45;   // never hand out more than this share of hidden cells
+  const HINT_MIN = 3;               // Beginner/Easy keep their original feel
   const TIER_COLORS = {
     'Beginner': '#5fa8ff',
     'Easy':     '#3ee07f',
@@ -314,6 +325,27 @@
   }
 
   // ==================== Game logic ====================
+
+  /**
+   * Number of hints the player gets on this level (R320).
+   * Sized so that (anchors + budget) reveals ~HINT_TARGET_SHARE of the picture's
+   * filled cells — enough for the silhouette to be readable — but never more than
+   * HINT_CAP_FRACTION of the hidden cells, so the level cannot be brute-forced.
+   */
+  function hintBudget(lev) {
+    if (!lev) return HINT_MIN;
+    const cells = lev.n * lev.n;
+    let filled = 0;
+    for (const row of lev.solution) for (const v of row) if (v === 1) filled++;
+    let anchorsOnFill = 0;
+    for (const a of lev.anchors) if (lev.solution[a.r][a.c] === 1) anchorsOnFill++;
+    const hidden = cells - lev.anchors.length;
+    if (!filled) return HINT_MIN;
+    const need = Math.ceil(filled * HINT_TARGET_SHARE) - anchorsOnFill;
+    const cap = Math.ceil(hidden * HINT_CAP_FRACTION);
+    return Math.max(HINT_MIN, Math.min(need, cap));
+  }
+
   function loadLevel(idx) {
     const lev = DOT_A_PIX_LEVELS.levels[idx];
     if (!lev) return;
@@ -329,7 +361,7 @@
     dom.levelTitle.textContent = `${lev.tier} #${idx + 1} — ${lev.name}`;
     dom.tierBadge.textContent = lev.tier;
     dom.tierBadge.style.background = TIER_COLORS[lev.tier];
-    dom.hintCount.textContent = HINT_LIMIT;
+    dom.hintCount.textContent = hintBudget(lev);
     // undoCount was placeholder; no-op
     showScreen('game');
     renderGrid();
@@ -395,7 +427,13 @@
 
   function showWin() {
     stopTimer();
-    const stars = hintsUsed === 0 ? 3 : hintsUsed === 1 ? 2 : 1;
+    // R320: stars are relative to the level's own hint budget so that 3 stars
+    // still means "completed without any help" on every tier. The old absolute
+    // rule (0/1/2+ hints) made 2 stars unreachable on levels whose budget is
+    // larger than 1, which is every Beginner+ level.
+    const budget = hintBudget(DOT_A_PIX_LEVELS.levels[currentLevel]);
+    const twoStarCap = Math.max(1, Math.floor(budget * 0.34));
+    const stars = hintsUsed === 0 ? 3 : hintsUsed <= twoStarCap ? 2 : 1;
     dom.stars.textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars);
     dom.winTime.textContent = `Solved in ${formatTime(timer)}`;
     dom.winMessage.textContent = `Level ${currentLevel + 1} — ${DOT_A_PIX_LEVELS.levels[currentLevel].name}`;
@@ -419,7 +457,9 @@
   }
 
   function useHint() {
-    if (hintsUsed >= HINT_LIMIT) {
+    const lev = DOT_A_PIX_LEVELS.levels[currentLevel];
+    const budget = hintBudget(lev);
+    if (hintsUsed >= budget) {
       playSFX('error');
       return;
     }
@@ -438,7 +478,7 @@
     const pick = candidates[Math.floor(Math.random() * candidates.length)];
     grid[pick.r][pick.c] = solution[pick.r][pick.c];
     hintsUsed++;
-    dom.hintCount.textContent = HINT_LIMIT - hintsUsed;
+    dom.hintCount.textContent = budget - hintsUsed;
     renderGrid();
     updateCounts();
     playSFX('hint');

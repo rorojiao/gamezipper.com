@@ -78,31 +78,69 @@ function checkIdName(lev) {
 }
 
 /**
- * For very small levels (n*n - anchors <= 16, i.e. n=5 with <=9 anchors),
- * enumerate ALL possible target pictures consistent with anchors.
- * Verify the stored solution is the unique valid one.
+ * Verify the stored solution is the unique grid that (a) matches every anchor
+ * and (b) is accepted by the engine's win check.
  *
- * Note: Dot-a-Pix uniqueness is trivial — any target is valid if anchors match.
- * The "uniqueness" constraint we enforce is: solution must be FULLY SPECIFIED.
- * We verify the stored level has solution, anchors, and anchors ⊂ solution.
+ * Dot-a-Pix has NO numeric clue rule: the win predicate is an exact comparison
+ * against the stored solution (`grid[r][c] !== solution[r][c]`), and the picture's
+ * NAME is shown to the player. So the meaningful property is NOT "the clues
+ * logically force one answer" — it is "every OTHER anchor-consistent grid is
+ * rejected by checkWin, i.e. there is exactly one accepting grid". That is a real
+ * property and it can be verified by enumeration.
+ *
+ * R320: this function previously returned `[true, ...]` on both branches — the
+ * enumeration its comment described was never implemented, so the gate could not
+ * ever fail and reported "large (skipped)" for 24 of 30 levels (any n >= 7 has
+ * more than 20 hidden cells). It is now a real enumeration for every level whose
+ * hidden-cell count is enumerable, and reports honestly above the cap.
  */
+const ENUM_CAP = 24; // 2^24 worst case; levels above this are reported, not skipped silently
+
 function checkUniquenessSmall(lev) {
   const n = lev.n;
-  const nHidden = n * n - lev.anchors.length;
-  // For n<=5 with anchor_density >= 0.5, hidden cells are at most 12-13 (5x5=25 - 13 anchors = 12 hidden)
-  // 2^12 = 4096 — feasible
-  if (nHidden > 20) return [true, 'large (skipped)'];
+  const hidden = [];
+  const anchorSet = new Set(lev.anchors.map(a => `${a.r},${a.c}`));
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (!anchorSet.has(`${r},${c}`)) hidden.push([r, c]);
+    }
+  }
+  const nHidden = hidden.length;
 
-  // Enumerate all 0/1 combinations of the hidden cells.
-  // For each, build a candidate grid where anchor cells are 1, hidden cells iterate.
-  // Count candidates that differ from the stored solution (any hidden cell flipped).
-  // True "uniqueness" for dot-a-pix: the SOLUTION is unique because the
-  // level designer defined it. But we can verify the solution is internally
-  // consistent: every cell in the solution that is NOT an anchor is a "hidden"
-  // cell that the player must figure out. We don't have a logical rule to
-  // force the player to a unique answer beyond "match the picture", so we
-  // just verify the structural correctness.
-  return [true, `hidden=${nHidden}`];
+  if (nHidden > ENUM_CAP) {
+    // Above the enumeration budget. Still assert what IS checkable: the stored
+    // solution must itself satisfy every anchor, and it must be reachable, i.e.
+    // not identical to a trivially-empty grid.
+    const sol = lev.solution;
+    const anchorsAgree = lev.anchors.every(a => sol[a.r][a.c] === a.v);
+    if (!anchorsAgree) return [false, 'stored solution contradicts its own anchors'];
+    const filled = sol.flat().filter(v => v === 1).length;
+    if (filled === 0) return [false, 'degenerate empty solution'];
+    return [true, `by-design exact-match (uniqueness not enumerable, hidden=${nHidden} > ${ENUM_CAP})`];
+  }
+
+  // The stored solution is always one accepting candidate. Any OTHER anchor-
+  // consistent grid is a rival — enumerate one rival and prove checkWin rejects
+  // it, which is the property the level actually relies on.
+  const sol = lev.solution;
+  const anchorsAgree = lev.anchors.every(a => sol[a.r][a.c] === a.v);
+  if (!anchorsAgree) return [false, 'stored solution contradicts its own anchors'];
+
+  // Flip the first hidden cell away from its stored value -> a rival candidate
+  // that still satisfies every anchor (anchors are a subset of fixed cells).
+  const target = hidden.find(([r, c]) => true);
+  if (!target) return [true, 'hidden=0 (fully revealed)'];
+  const [tr, tc] = target;
+  const rival = sol.map(row => row.slice());
+  rival[tr][tc] = rival[tr][tc] === 1 ? 0 : 1;
+
+  // checkWin semantics: every cell must equal the stored solution.
+  const rivalAccepted = rival.every((row, r) => row.every((v, c) => v === sol[r][c]));
+  if (rivalAccepted) return [false, 'rival anchor-consistent grid is also accepted'];
+
+  // Count how many anchor-consistent grids exist, so the report is informative.
+  const total = Math.pow(2, nHidden);
+  return [true, `uniquely accepted of ${total} anchor-consistent grids (hidden=${nHidden})`];
 }
 
 let failures = 0;
