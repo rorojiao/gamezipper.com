@@ -1,6 +1,6 @@
 // Independent verifier — re-checks every level: solvable, unique, solution matches.
 const fs = require('fs');
-const levels = JSON.parse(fs.readFileSync('levels.json', 'utf8'));
+const levels = JSON.parse(fs.readFileSync(__dirname + '/levels.json', 'utf8'));
 
 function pairKey(a, b) { return a < b ? a * 100 + b : b * 100 + a; }
 function dominoSet(maxVal) {

@@ -1,6 +1,6 @@
 // Dominosa QA Checklist - 40-point code-level audit
 const fs = require('fs');
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 const issues = [];
 
 console.log('=== Dominosa QA Checklist ===\n');
@@ -172,8 +172,16 @@ const closeScripts = (html.match(/<\/script>/g) || []).length;
 if(openScripts !== closeScripts) issues.push(`37. Script mismatch: ${openScripts} open, ${closeScripts} close`);
 else console.log('✓ 37. Script tags balanced');
 
-// 38. No eval()
-if(html.includes('eval(')) issues.push('38. Found eval()');
+// 38. No eval() — strip comments and string literals first, else a COMMENT
+// mentioning "cannot use eval(fn)" (line 975) false-flips this check.
+// Same principle as the gz-sr-only / canvas-RGB QA false-positive fixes.
+const htmlNoComments = html
+  .replace(/\/\*[\s\S]*?\*\//g, '')          // block comments
+  .replace(/(^|[^:])\/\/[^\n]*/g, '$1')      // line comments (keep http://)
+  .replace(/'(?:[^'\\\n]|\\.)*'/g, "''")      // single-quoted strings
+  .replace(/"(?:[^"\\\n]|\\.)*"/g, '""')      // double-quoted strings
+  .replace(/`(?:[^`\\]|\\.)*`/g, '``');       // template literals
+if (/(^|[^.\w$])eval\s*\(/.test(htmlNoComments)) issues.push('38. Found eval()');
 else console.log('✓ 38. No eval() calls');
 
 // 39. Safe DOM manipulation
@@ -181,7 +189,7 @@ if(html.match(/innerHTML\s*\+=/)) issues.push('39. innerHTML+= found (potential 
 else console.log('✓ 39. Safe DOM manipulation');
 
 // 40. File size check
-const size = fs.statSync('index.html').size;
+const size = fs.statSync(__dirname + '/index.html').size;
 const sizeKB = (size / 1024).toFixed(2);
 console.log(`✓ 40. File size: ${sizeKB} KB (target: ~50KB)`);
 

@@ -6,7 +6,7 @@
 const fs = require('fs');
 const vm = require('vm');
 
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 function extractFunction(code, name) {
   const idx = code.indexOf('function ' + name + '(');
   if (idx < 0) return '';

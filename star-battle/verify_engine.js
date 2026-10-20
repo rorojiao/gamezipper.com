@@ -6,7 +6,7 @@
  */
 const fs = require('fs');
 
-const html = fs.readFileSync('index.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
 
 // Extract LEVELS from HTML (const LEVELS = [...];)
 // R3 fix: load LEVELS via shared extractor (handles inline + JSON + compact)

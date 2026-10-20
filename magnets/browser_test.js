@@ -4,9 +4,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const html = fs.readFileSync('index.html', 'utf8');
-const data = fs.readFileSync('data.js', 'utf8');
-const game = fs.readFileSync('game.js', 'utf8');
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
+const data = fs.readFileSync(__dirname + '/data.js', 'utf8');
+const game = fs.readFileSync(__dirname + '/game.js', 'utf8');
 
 console.log('--- Browser smoke test ---');
 console.log(`HTML size: ${html.length}`);

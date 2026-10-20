@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const content = fs.readFileSync('index.html', 'utf-8');
+const content = fs.readFileSync(__dirname + '/index.html', 'utf-8');
 const match = content.match(/var LEVELS=\[(.*?)\];/s);
 if (!match) {
   console.log('FAIL: No LEVELS found');

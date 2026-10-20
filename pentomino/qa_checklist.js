@@ -18,6 +18,13 @@
 const fs = require('fs');
 const path = require('path');
 
+// R963: anchor every filesystem access to this script's directory. Without this,
+// running the checklist from the repo root silently audits /home/junze/gamezipper.com/index.html
+// (the HOMEPAGE) instead of pentomino/index.html — reporting 15 phantom failures.
+// Same bug class as game-commercial-readiness-audit Pitfall #50 (cwd-shadow).
+const HERE = __dirname;
+const gz = f => path.join(HERE, f);
+
 const REQUIRED = {
   title: /<title>[^<]+<\/title>/,
   viewport: /<meta\s+name=["']viewport["']\s+content=["'][^"']*width=device-width[^"']*["']/,
@@ -77,7 +84,7 @@ function checkSize(filename, maxKB) {
 
 function main() {
   const checks = [];
-  const indexFile = 'index.html';
+  const indexFile = gz('index.html');
 
   // HTML patterns
   const indexContent = fs.readFileSync(indexFile, 'utf-8');
@@ -87,8 +94,8 @@ function main() {
       // Check levels-data.js for LEVELS const
       let ok = false;
       let detail = 'not found';
-      if (fs.existsSync('levels-data.js')) {
-        const lc = fs.readFileSync('levels-data.js', 'utf-8');
+      if (fs.existsSync(gz('levels-data.js'))) {
+        const lc = fs.readFileSync(gz('levels-data.js'), 'utf-8');
         ok = pattern.test(lc);
         detail = ok ? 'matched in levels-data.js' : 'pattern not found in levels-data.js';
       } else {
@@ -124,18 +131,18 @@ function main() {
   for (const asset of ['icon.png', 'og-image.jpg', 'levels.json', 'verify_engine.js', 'verify_python.py', 'verify_independent.js']) {
     checks.push({
       name: 'asset_' + asset,
-      ok: fs.existsSync(asset),
-      detail: fs.existsSync(asset) ? `${fs.statSync(asset).size} bytes` : 'missing'
+      ok: fs.existsSync(gz(asset)),
+      detail: fs.existsSync(gz(asset)) ? `${fs.statSync(gz(asset)).size} bytes` : 'missing'
     });
   }
 
   // Icon size
-  checks.push({ name: 'icon_size', ...checkSize('icon.png', 50) });
-  checks.push({ name: 'og_image_size', ...checkSize('og-image.jpg', 200) });
+  checks.push({ name: 'icon_size', ...checkSize(gz('icon.png'), 50) });
+  checks.push({ name: 'og_image_size', ...checkSize(gz('og-image.jpg'), 200) });
 
   // levels.json valid + 30 levels
-  if (fs.existsSync('levels.json')) {
-    const data = JSON.parse(fs.readFileSync('levels.json', 'utf-8'));
+  if (fs.existsSync(gz('levels.json'))) {
+    const data = JSON.parse(fs.readFileSync(gz('levels.json'), 'utf-8'));
     checks.push({
       name: 'levels_count',
       ok: data.levels && data.levels.length === 30,
@@ -146,21 +153,21 @@ function main() {
   // Verifiers pass
   const { execSync } = require('child_process');
   try {
-    const out = execSync('python3 verify_python.py', { encoding: 'utf-8' });
+    const out = execSync('python3 ' + gz('verify_python.py'), { encoding: 'utf-8', cwd: HERE });
     const passLine = out.split('\n').find(l => l.includes('PASS') || l.includes('FAIL'));
     checks.push({ name: 'verify_python', ok: passLine && passLine.includes('PASS'), detail: passLine || 'no output' });
   } catch (e) {
     checks.push({ name: 'verify_python', ok: false, detail: 'exec error: ' + e.message.slice(0, 100) });
   }
   try {
-    const out = execSync('node verify_independent.js', { encoding: 'utf-8' });
+    const out = execSync('node ' + gz('verify_independent.js'), { encoding: 'utf-8', cwd: HERE });
     const passLine = out.split('\n').find(l => l.includes('PASS') || l.includes('FAIL'));
     checks.push({ name: 'verify_independent', ok: passLine && passLine.includes('PASS'), detail: passLine || 'no output' });
   } catch (e) {
     checks.push({ name: 'verify_independent', ok: false, detail: 'exec error: ' + e.message.slice(0, 100) });
   }
   try {
-    const out = execSync('node verify_engine.js', { encoding: 'utf-8' });
+    const out = execSync('node ' + gz('verify_engine.js'), { encoding: 'utf-8', cwd: HERE });
     const passLine = out.split('\n').find(l => l.includes('PASS') || l.includes('FAIL'));
     checks.push({ name: 'verify_engine', ok: passLine && passLine.includes('PASS'), detail: passLine || 'no output' });
   } catch (e) {
