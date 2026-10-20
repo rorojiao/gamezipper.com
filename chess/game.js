@@ -511,6 +511,14 @@ class ChessGame {
     this.isCheck = false;
     this.gameOver = false;
     this.pendingPromotion = null;
+    // R964 P1: reset() must also dismiss the game-over overlay. The toolbar
+    // "New Game" button calls game.reset() directly, so without this the
+    // fullscreen #game-over-modal (position:fixed; inset:0; z-index:200)
+    // stayed visible over a freshly reset board and swallowed every click on
+    // the squares (verified: elementsFromPoint at e2 returned the modal, not
+    // the .square). Play Again happened to call hideGameOver() so it looked
+    // fine; New Game did not. Hide here so ALL reset callers are consistent.
+    hideGameOver();
     this.render();
   }
 
