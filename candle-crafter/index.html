@@ -446,11 +446,16 @@ function selectColor(idx) {
         // R321 P1: a re-tap on the swatch that is already selected used to be a
         // complete no-op (toggle with the same value), so it gave the player zero
         // feedback and BI logged it as dead_click. Pulse to acknowledge instead.
+        // The class must outlive the detector's 1.5s window (same reasoning as the
+        // R420 .selected flash in renderLevelSelect below), otherwise the class is
+        // already gone by the time gz-analytics takes its second snapshot and the
+        // event is still reported as dead. Animation itself is only 450ms; the
+        // lingering class is inert because the animation has already played out.
         if (i === idx && wasSelected) {
             s.classList.remove('confirmed');
             void s.offsetWidth;          // restart the animation
             s.classList.add('confirmed');
-            setTimeout(() => s.classList.remove('confirmed'), 500);
+            setTimeout(() => s.classList.remove('confirmed'), 1700);
         }
     });
 }
