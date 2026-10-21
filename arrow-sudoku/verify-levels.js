@@ -30,7 +30,10 @@ function boxIndex(r, c, boxR, boxC, n) {
  */
 function countSolutions(puzzle, n, boxR, boxC, arrows, limit = 2, timeBudgetMs = 5000) {
   const grid = puzzle.map(row => row.slice());
-  const fullMask = (1 << (n + 1)) - 2; // bits 1..n
+  // R324 fix: the value loop below starts at v=1 and tests `avail & 1`, i.e. it maps
+  // BIT k -> VALUE k+1. The old mask (1<<(n+1))-2 set bits 1..n, which therefore
+  // admitted values 2..n+1 and NEVER admitted 1 -- a 4x4 grid could receive a 5.
+  const fullMask = (1 << n) - 1; // bits 0..n-1  =>  values 1..n
   const startTime = Date.now();
   let counter = 0;
   let nodes = 0;
@@ -57,17 +60,19 @@ function countSolutions(puzzle, n, boxR, boxC, arrows, limit = 2, timeBudgetMs =
   });
 
   function candidatesFor(r, c) {
+    // NOTE (R324): the value loop tests `avail & 1` with v starting at 1, so BIT k
+    // means VALUE k+1. Every mask in this file must therefore use 1 << (value - 1).
     let avail = fullMask;
-    // Row/col/box
     for (let i = 0; i < n; i++) {
-      if (grid[r][i]) avail &= ~(1 << grid[r][i]);
-      if (grid[i][c]) avail &= ~(1 << grid[i][c]);
+      if (grid[r][i]) avail &= ~(1 << (grid[r][i] - 1));
+      if (grid[i][c]) avail &= ~(1 << (grid[i][c] - 1));
     }
     const br = Math.floor(r / boxR) * boxR;
     const bc = Math.floor(c / boxC) * boxC;
     for (let i = 0; i < boxR; i++) {
       for (let j = 0; j < boxC; j++) {
-        if (grid[br + i][bc + j]) avail &= ~(1 << grid[br + i][bc + j]);
+        const bv = grid[br + i][bc + j];
+        if (bv) avail &= ~(1 << (bv - 1));
       }
     }
     // Arrow bounds
@@ -88,7 +93,9 @@ function countSolutions(puzzle, n, boxR, boxC, arrows, limit = 2, timeBudgetMs =
         const lo = Math.max(1, remaining - unfilled * n);
         const hi = Math.min(n, remaining - unfilled);
         let allowed = 0;
-        for (let v = lo; v <= hi; v++) allowed |= (1 << v);
+        // R324 fix: the value loop tests `avail & 1` with v starting at 1, i.e. BIT k
+        // means VALUE k+1. The old `1 << v` therefore admitted values lo+1..hi+1.
+        for (let v = lo; v <= hi; v++) allowed |= (1 << (v - 1));
         avail &= allowed;
       }
     }
