@@ -787,16 +787,43 @@ iframe[id^="aswift_"]:not([src]),iframe[id^="aswift_"][style*="visibility: hidde
     if(typeof window.adsbygoogle==='undefined')return true;
     return bait.offsetHeight===0;
   }
+  /* R971: true when AdSense has positively resolved this slot as filled. */
+  function statusIsFilled(el){
+    return el.getAttribute('data-ad-status')==='filled';
+  }
   function collapseAutoAds(){
     /* Walk all <ins class="adsbygoogle"> injected by Auto Ads; if any are empty
        (no iframe child OR ad-status unfilled) hide them. Also kill any
        standalone aswift iframes that are empty placeholders. */
     var ins=document.querySelectorAll('ins.adsbygoogle');
     ins.forEach(function(el){
+      /* R971: NEVER touch our own pre-placed static <ins> slots.
+         They carry an explicit numeric data-ad-slot (2948150237 / 7373732357 /
+         1099212472 / 1839274021) and are pushed by an inline script right after the
+         element. AdSense resolves them lazily, so at our first pass (1.5s) and at the
+         3.5s safety net their data-ad-status is STILL null -> the old condition
+         (status===null && !hasContent) matched and stamped .gz-ads-collapsed
+         (display:none!important) on all 4.
+         That is a self-defeating chicken-and-egg: a display:none <ins> is never
+         requested, so it can never fill, and nothing ever removed the class afterwards.
+         Result: homepage carried 4 dead slots on ~51% of all traffic (BI 2026-10-07..21:
+         static_banner_fill on '/' = 0 every single day).
+         Auto Ads placeholders are the only thing this guard exists for; they are marked
+         with data-ad-slot="auto" (or no slot at all), so gate strictly on that. */
+      var slot=el.getAttribute('data-ad-slot');
+      var isStaticSlot=!!slot&&slot!=='auto';
+      if(isStaticSlot){
+        /* Defensive: if an earlier pass (or a cached older bundle) already collapsed it,
+           restore it now that we know it is one of ours. */
+        if(statusIsFilled(el))el.classList.remove('gz-ads-collapsed');
+        return;
+      }
       var status=el.getAttribute('data-ad-status');
       var hasContent=el.querySelector('iframe');
       if(status==='unfilled'||(status===null&&!hasContent)){
         el.classList.add('gz-ads-collapsed');
+      }else{
+        el.classList.remove('gz-ads-collapsed');
       }
     });
     document.querySelectorAll('iframe[id^="aswift_"]').forEach(function(f){
