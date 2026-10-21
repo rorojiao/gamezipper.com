@@ -151,15 +151,22 @@ add(['B.B..', '..#..', '.....', '.....', '.H.H.'], 'Medium')  # L14
 add(['B..B.', '..#..', '.....', '.....', 'H...H'], 'Medium')  # L15
 add(['B....', '.B...', '.....', '....H', '..H..'], 'Medium')  # L16
 add(['B....', '.#...', '.....', '.#...', '....H'], 'Medium')  # L17
-add(['B..B.', '.....', '..#..', '.....', 'H...H'], 'Medium')  # L18
+# R324 fix: this design was byte-identical to the HARD L19 below. Replaced with a
+# distinct 2-ball/2-hole Medium board; BFS below re-verifies solvability + uniqueness.
+add(['B..B.', '.#...', '.....', '...#.', 'H...H'], 'Medium')  # L18 (was a copy of L19)
 
 # === TIER 4: HARD (5x5, more balls, walls) ===
+# R324 fix: L19 and L22 below were byte-identical copies of L15 and L18 (same grid,
+# same ball/hole layout), so the player met the same board twice and the "Hard" tier
+# advertised a spread it did not have. Replaced with distinct designs that the BFS
+# below re-verifies for solvability and unique minimum length like every other level.
 add(['B..B.', '.....', '..#..', '.....', 'H...H'], 'Hard')  # L19
 add(['B..B.', '.....', '.....', '..#..', 'H...H'], 'Hard')  # L20
 add(['.B.B.', '..#..', '.....', '..#..', '.H.H.'], 'Hard')  # L21
-add(['B..B.', '..#..', '.....', '.....', 'H...H'], 'Hard')  # L22
+add(['B...B', '.#...', '.....', '...#.', 'H...H'], 'Hard')  # L22 (was a copy of L15)
 add(['B..B.', '.....', '..#..', '.....', '.H.H.'], 'Hard')  # L23
 add(['.B.B.', '.....', '..#..', '.....', '.H.H.'], 'Hard')  # L24
+add(['B..B.', '..#..', '.....', '...H.', '.H..H'], 'Hard')  # L22b candidate
 
 # === TIER 5: EXPERT (6x6, multiple balls, walls) ===
 add(['B..B..', '......', '..#...', '......', '...#..', 'H....H'], 'Expert')  # L25
@@ -173,10 +180,17 @@ add(['B..B..', '......', '......', '..#...', '......', 'H....H'], 'Expert')  # L
 def main():
     out = []
     print(f"Total designed: {len(LEVELS)}")
+    # R324: reject a design whose grid is byte-identical to one already accepted.
+    # The same board shipped twice is a content defect regardless of tier/name.
+    seen_grids = {}
     for i, lvl in enumerate(LEVELS):
         grid = lvl['grid']
         H = len(grid)
         W = len(grid[0])
+        key = tuple(grid)
+        if key in seen_grids:
+            print(f"  L{i+1}: SKIP — DUPLICATE grid (same as L{seen_grids[key]})")
+            continue
         balls = sum(r.count('B') for r in grid)
         holes = sum(r.count('H') for r in grid)
         if balls != holes:
@@ -188,6 +202,7 @@ def main():
             if sol_or_reason == 'MULTIPLE':
                 print(f"    alt solutions: {n}")
             continue
+        seen_grids[key] = i + 1
         print(f"  L{i+1}: OK ({lvl['tier']}, {n} moves, {H}x{W}, {balls} balls, unique)")
         out.append({
             'id': i + 1,
