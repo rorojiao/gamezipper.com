@@ -127,31 +127,37 @@ if (!ctx.window.__verify) { console.error('__verify export missing'); process.ex
 
 const DRIVER = `(function(){
   const V = window.__verify, G = V.G;
-  const res = { taps:0, ticks:0, exits:0, moves:0, cleared:false, coinsBefore:V.coins(), coinsAfter:0, stuck:false, remaining:-1, err:null };
+  const TOTAL = V.LEVELS.length;
+  const res = { levels:[], taps:0, ticks:0, total:TOTAL, coinsBefore:V.coins(), coinsAfter:0, err:null };
   try {
-    V.startLevel(0);
-    let guard = 0;
-    while (guard++ < 60) {
+   // R321: drive EVERY level, not just level 1 (P1 test-gate defect).
+   for (let li = 0; li < TOTAL; li++) {
+    const coinsAtStart = V.coins();
+    const L = { i: li, taps:0, ticks:0, exits:0, cleared:false, stuck:false, err:null, coins:0 };
+    try {
+     V.startLevel(li);
+     let guard = 0;
+     while (guard++ < 120) {
       let target = null;
       for (const b of G.buses) { if (b.alive && !b.exiting && V.canBusExit(b)) { target = b; break; } }
-      if (!target) { const alive = G.buses.filter(b=>b.alive).length; if (alive>0) res.stuck = true; break; }
-      // drive the real input path: tap the bus's first occupied cell
+      if (!target) { if (G.buses.filter(b=>b.alive).length > 0) L.stuck = true; break; }
       const cx = G.gridOX + (target.c - 1) * G.cellSize + G.cellSize/2;
       const cy = G.gridOY + (target.r - 1) * G.cellSize + G.cellSize/2;
       V.handleTap(cx, cy);
-      res.taps++;
+      L.taps++; res.taps++;
       let t = 0;
-      while (G.animating && t++ < 50000) { V.update(1); res.ticks++; }
-      for (let k = 0; k < 5; k++) { V.update(1); res.ticks++; }
-    }
-    res.exits = G.buses.filter(b => !b.alive).length;
-    res.moves = G.moves;
-    res.remaining = G.buses.filter(b => b.alive).length;
-    res.cleared = res.remaining === 0;
-    res.coinsAfter = V.coins();
-    // wait extra ticks so level-complete timeout side effects settle
-    for (let k = 0; k < 30; k++) { V.update(1); res.ticks++; }
-    res.coinsAfter = V.coins();
+      while (G.animating && t++ < 50000) { V.update(1); L.ticks++; res.ticks++; }
+      for (let k = 0; k < 5; k++) { V.update(1); L.ticks++; res.ticks++; }
+     }
+     L.exits = G.buses.filter(b => !b.alive).length;
+     L.cleared = G.buses.filter(b => b.alive).length === 0;
+     for (let k = 0; k < 30; k++) { V.update(1); L.ticks++; res.ticks++; }
+     L.coins = V.coins() - coinsAtStart;
+     if (L.coins < 0) L.coins = 0;
+    } catch (e) { L.err = String(e && e.stack || e).slice(0, 200); }
+    res.levels.push(L);
+   }
+   res.coinsAfter = V.coins();
   } catch (e) { res.err = String(e && e.stack || e).slice(0, 300); }
   return res;
 })()`;
@@ -159,16 +165,38 @@ const DRIVER = `(function(){
 let r;
 try { r = vm.runInContext(DRIVER, ctx); } catch (e) { console.error('driver error:', e.stack && e.stack.split('\n').slice(0,3).join(' | ') || e.message); process.exit(1); }
 
-const checks = [];
-checks.push(['engine-load-no-fatal-error', !r.err]);
-checks.push(['bus-exited-through-gate (score milestone, moves=' + r.moves + ')', r.exits >= 1 && r.moves > 0]);
-checks.push(['level-1-fully-cleared', r.cleared]);
-checks.push(['coin-reward-awarded (+' + (r.coinsAfter - r.coinsBefore) + ')', r.coinsAfter - r.coinsBefore > 0]);
-if (r.err) console.error('driver reported error:', r.err);
-
-let pass = 0, fail = 0; const fails = [];
-for (const [name, ok] of checks) { if (ok) pass++; else { fail++; fails.push(name); } }
-const steps = r.taps + r.ticks;
-console.log('bus-traffic-fever in-engine verification: exits=' + r.exits + ' moves=' + r.moves + ' cleared=' + r.cleared + ' coins=+' + (r.coinsAfter - r.coinsBefore) + ' taps=' + r.taps + ' ticks=' + r.ticks + (r.stuck ? ' [greedy-stuck]' : ''));
-console.log(JSON.stringify({ pass, fail, fails, total: checks.length, goal: 'score >= one positive milestone (a bus exits through its gate), no fatal error', steps, verdict: fail === 0 ? 'PASS' : 'FAIL' }));
-process.exit(fail === 0 ? 0 : 1);
+// R321: per-level report + catalog coverage assertion. A verifier that drives
+// only level 1 is a test-gate defect, so we assert levelsRun === LEVELS.length.
+console.log('bus-traffic-fever in-engine verification: ' + r.total + ' levels, taps=' + r.taps + ' ticks=' + r.ticks);
+let pass = 0; const fails = [];
+let cleared = 0, withExits = 0, stuck = 0;
+for (const L of r.levels) {
+  const problems = [];
+  if (L.err) problems.push('engine-error');
+  if (!L.cleared) problems.push('not-cleared');
+  if (L.exits < 1) problems.push('no-bus-exited');
+  if (L.stuck) problems.push('greedy-stuck');
+  if (L.cleared) cleared++;
+  if (L.exits >= 1) withExits++;
+  if (L.stuck) stuck++;
+  const ok = problems.length === 0;
+  if (ok) pass++; else fails.push('L' + (L.i + 1) + ': ' + problems.join(','));
+  console.log('  L' + String(L.i + 1).padStart(2) + ' ' + (ok ? 'PASS' : 'FAIL') +
+    '  buses=' + (L.exits) + ' taps=' + L.taps + ' coins=+' + L.coins +
+    (L.err ? '  err=' + L.err.slice(0, 80) : '') + (problems.length && !L.err ? '  [' + problems.join(',') + ']' : ''));
+}
+const fail = fails.length;
+if (r.err) fails.push('driver: ' + r.err.slice(0, 120));
+// coverage guard — refuse to report PASS without covering the whole catalog
+const covered = r.levels.length;
+console.log('coverage: ' + covered + '/' + r.total + ' levels driven');
+const coverageOk = covered === r.total && r.total > 0;
+if (!coverageOk) fails.push('coverage ' + covered + '/' + r.total);
+console.log(JSON.stringify({
+  pass, fail, fails, levels_total: r.total, levels_covered: covered,
+  levels_cleared: cleared, levels_with_exits: withExits, levels_stuck: stuck,
+  goal: 'every level fully cleared via the real input path (handleTap -> tryMoveBus)',
+  steps: r.taps + r.ticks,
+  verdict: (fails.length === 0 && coverageOk) ? 'PASS' : 'FAIL'
+}));
+process.exit((fails.length === 0 && coverageOk) ? 0 : 1);

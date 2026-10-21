@@ -13,6 +13,37 @@ var save=loadSave();
 // ============ AUDIO SYSTEM ============
 var actx=null,masterGain=null,musicGain=null,sfxGain=null;
 var bgmInterval=null;
+// R321 R321-inp-defer-audio: INP POOR root cause (BI 2026-10-20 inp=816ms poor while cls=0.001
+// good — layout was never the culprit, the input handler was).
+// handleTap() used to call initAudio() INLINE on every canvas pointerdown, and
+// initAudio() constructs an AudioContext + 3 GainNodes. A cold AudioContext costs
+// 100-300ms, landing inside the click->paint window.
+// Fix (R970 magic-sort family): defer construction until AFTER the frame is
+// painted. rAF callbacks run BEFORE the next paint, so rAF -> setTimeout(go,0)
+// is the deterministic "post-paint" hop; a bare requestIdleCallback can still
+// fire between click and paint (measured: 41.7ms click->paint). The 1500ms
+// setTimeout is a safety net for backgrounded tabs where rAF is throttled.
+// resumeAudio() stays inline — it is a cheap state flip on an already-built
+// context, so the autoplay policy still un-mutes on a real gesture.
+var _audioPending=false;
+function scheduleAudioInit(){
+  if(actx||_audioPending)return;
+  _audioPending=true;
+  var go=function(){
+    _audioPending=false;
+    initAudio();
+  };
+  var hopped=false;
+  if(typeof requestAnimationFrame==='function'){
+    requestAnimationFrame(function(){setTimeout(function(){hopped=true;go();},0);});
+  }
+  setTimeout(function(){if(!hopped)go();},1500);
+}
+// Cheap: flips state on an existing context. Safe to call from an input handler.
+function resumeAudio(){
+  if(actx&&actx.state==='suspended'){try{actx.resume();}catch(e){}}
+}
+
 function initAudio(){
   if(actx)return;
   try{
@@ -951,9 +982,11 @@ function getGridPos(clientX,clientY){
   var r=Math.floor(y/G.cellSize)+1;
   return{r:r,c:c,x:x,y:y};
 }
-function handleTap(clientX,clientY){
+// R321: defer the AudioContext construction; resumeAudio() is the only
+  // inline audio work and it is a cheap state flip.
+  function handleTap(clientX,clientY){
   if(G.animating)return;
-  initAudio();
+  scheduleAudioInit();resumeAudio();
   var pos=getGridPos(clientX,clientY);
   // Find bus at this position
   var lvl=LEVELS[G.levelIdx];
@@ -1103,7 +1136,7 @@ function init(){
   });
   // Buttons
   document.getElementById('btn-start-play').addEventListener('click',function(){
-    initAudio();
+    scheduleAudioInit();resumeAudio();
     startLevel(0);
   });
   document.getElementById('btn-back').addEventListener('click',function(){
