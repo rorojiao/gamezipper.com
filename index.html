@@ -1657,8 +1657,18 @@ var _gzFT=null;function filter(cat,btn){if(_gzFT)clearTimeout(_gzFT);_gzFT=setTi
   grid.style.opacity='0.5';
   function _gzFilterWork(){var games=window._liveGames||[];
     var filtered=cat==='all'?games:games.filter(g=>g.cat===cat);
-    _gzAllGames=filtered;_gzShownCount=filtered.length;
-    render(filtered);
+    /* UX-OPT 2026-10-21 R973: filter renders the FIRST batch only, exactly like the
+       initial load in initGames(). It used to render the whole filtered list at once
+       (_gzShownCount=filtered.length), which meant one category click built a 392-card
+       grid: measured 584ms of main-thread busy and 3 long tasks >=100ms (worst 185ms) at
+       4x CPU throttle, with the grid growing to a 44,414px column -- that is the homepage
+       INP POOR signal in BI (n=14, avg 1171ms, max 4496ms over 7d).
+       Show More + the existing infinite-scroll sentinel now reveal the rest on demand,
+       which is the same interaction model the first paint already uses. */
+    _gzAllGames=filtered;
+    var batch=filtered.slice(0,GZ_INITIAL_COUNT);
+    _gzShownCount=batch.length;
+    render(batch);
     gzUpdateShowMoreBtn();
     grid.classList.add('loaded');grid.setAttribute('aria-busy','false');
     requestAnimationFrame(function(){grid.style.opacity='1'});}
