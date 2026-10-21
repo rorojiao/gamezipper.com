@@ -385,11 +385,24 @@ function startMusic(){
   }catch(e){}
 }
 function stopMusic(){musicOn=false;if(musicGain){try{musicGain.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.5)}catch(e){}}musicOsc=null}
-function toggleSound(){soundOn=!soundOn;document.getElementById('sound-btn').textContent='Sound: '+(soundOn?'ON':'OFF');playSFX('button')}
+// UX-OPT 2026-10-21 R323 P1: the audio toggles used to flip ONLY the module-level
+// soundOn/musicOn flags. saveState() persists state.soundOn/state.musicOn and
+// init() re-labels the buttons from state.*, so a toggle was silently discarded on
+// reload (button said OFF, localStorage kept true, next visit booted back ON).
+// Mirror into state.* and persist immediately on every toggle.
+function toggleSound(){
+  soundOn=!soundOn;
+  state.soundOn=soundOn;
+  document.getElementById('sound-btn').textContent='Sound: '+(soundOn?'ON':'OFF');
+  saveState();
+  playSFX('button');
+}
 function toggleMusic(){
   musicOn=!musicOn;
+  state.musicOn=musicOn;
   document.getElementById('music-btn').textContent='Music: '+(musicOn?'ON':'OFF');
   if(musicOn)startMusic();else stopMusic();
+  saveState();
   playSFX('button');
 }
 

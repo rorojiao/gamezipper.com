@@ -1154,7 +1154,11 @@ b:state.buildings,
 u:state.upgrades,
 a:state.achievements,
 pt:state.playTime,
-ls:Date.now()
+ls:Date.now(),
+// UX-OPT 2026-10-21 R323 P1: audio prefs were module-scoped `let`s that the save
+// blob never captured, so a user who muted the game got full volume on every reload.
+s:soundEnabled,
+m:musicEnabled
 };
 localStorage.setItem('cookieClicker',JSON.stringify(data));
 state.lastSave=Date.now();
@@ -1176,6 +1180,9 @@ state.upgrades=data.u||[];
 state.achievements=data.a||[];
 state.playTime=data.pt||0;
 state.lastSave=data.ls||Date.now();
+// UX-OPT 2026-10-21 R323 P1: restore audio prefs (absent key => keep the default ON).
+if(typeof data.s==='boolean')soundEnabled=data.s;
+if(typeof data.m==='boolean')musicEnabled=data.m;
 // Offline progress
 const elapsed=(Date.now()-state.lastSave)/1000;
 if(elapsed>1){
@@ -1345,6 +1352,7 @@ showToast('Game saved!');
 document.getElementById('sound-btn').addEventListener('click',()=>{
 soundEnabled=!soundEnabled;
 document.getElementById('sound-btn').textContent='Sound: '+(soundEnabled?'ON':'OFF');
+saveGame();
 });
 // Music
 document.getElementById('music-btn').addEventListener('click',()=>{
@@ -1352,6 +1360,7 @@ musicEnabled=!musicEnabled;
 document.getElementById('music-btn').textContent='Music: '+(musicEnabled?'ON':'OFF');
 if(musicEnabled){initAudio();startBGM();}
 else stopBGM();
+saveGame();
 });
 // Prestige
 document.getElementById('prestige-btn').addEventListener('click',()=>{
@@ -1396,7 +1405,12 @@ document.addEventListener('DOMContentLoaded',handleResize);
 });
 
 // ============ INIT ============
+// UX-OPT 2026-10-21 R323 P1: loadGame() now restores soundEnabled/musicEnabled, but the
+// button labels are hardcoded "Sound: ON"/"Music: ON" in the markup — re-label them here or
+// a restored preference would apply to the audio engine while the UI still claims ON.
 loadGame();
+document.getElementById('sound-btn').textContent='Sound: '+(soundEnabled?'ON':'OFF');
+document.getElementById('music-btn').textContent='Music: '+(musicEnabled?'ON':'OFF');
 calculateCPS();
 updateDisplay();
 updateBuildingsPanel();
