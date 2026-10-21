@@ -246,7 +246,7 @@ function checkUnique(level) {
 }
 
 // Main
-const data = JSON.parse(fs.readFileSync('stostone/levels.json', 'utf8'));
+const data = JSON.parse(fs.readFileSync(require('path').join(__dirname, 'levels.json'), 'utf8'));
 const levels = data.levels || data;
 
 console.log(`Verifying ${levels.length} Stostone levels...\n`);

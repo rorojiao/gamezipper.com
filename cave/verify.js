@@ -59,7 +59,7 @@ function visibility(whiteSet, rows, cols, cell){
   return count;
 }
 
-const data = JSON.parse(fs.readFileSync('cave/levels.json','utf8'));
+const data = JSON.parse(fs.readFileSync(require('path').join(__dirname, 'levels.json'),'utf8'));
 let pass=0, fail=0;
 for(const L of data.levels){
   const errs = [];

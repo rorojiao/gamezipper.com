@@ -7,7 +7,7 @@
 // numbered-density are preserved per level.
 'use strict';
 const fs = require('fs');
-const src = fs.readFileSync('hotaru-beam/index.html', 'utf8');
+const src = fs.readFileSync(require('path').join(__dirname, 'index.html'), 'utf8');
 const levSrc = src.slice(src.indexOf('var LEVELS=['), src.indexOf('];', src.indexOf('var LEVELS=[')) + 2);
 const LEVELS = new Function('return ' + levSrc.replace('var LEVELS=', ''))();
 const DIRS = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] };
@@ -190,7 +190,8 @@ function genLevel(meta, rng) {
 
 // meta per level from ORIGINAL data
 const brokenIds = process.argv.slice(2).map(Number);
-const out = fs.existsSync('hotaru-beam/_regen.json') ? JSON.parse(fs.readFileSync('hotaru-beam/_regen.json', 'utf8')) : {};
+const outPath = require('path').join(__dirname, '_regen.json');
+const out = fs.existsSync(outPath) ? JSON.parse(fs.readFileSync(outPath, 'utf8')) : {};
 for (const id of brokenIds) {
   const orig = LEVELS[id - 1];
   const numCount = orig.circles.filter(c => c.num >= 0).length;

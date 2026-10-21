@@ -1,7 +1,7 @@
 // Phase 6 Method 2: Count valid solutions per level (limited search).
 // This confirms the puzzle's uniqueness claim (or lack thereof).
 const fs = require('fs');
-const html = fs.readFileSync('japanese-sums/index.html', 'utf8');
+const html = fs.readFileSync(require('path').join(__dirname, 'index.html'), 'utf8');
 const m = html.match(/const LEVELS = (\[.*?\]);/s);
 const LEVELS = JSON.parse(m[1]);
 

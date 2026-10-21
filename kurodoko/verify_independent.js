@@ -5,7 +5,7 @@
 'use strict';
 const fs = require('fs');
 
-const levels = JSON.parse(fs.readFileSync('kurodoko/levels_final.json','utf8'));
+const levels = JSON.parse(fs.readFileSync(require('path').join(__dirname, 'levels_final.json'),'utf8'));
 
 function no2x2(grid, rows, cols) {
   for (let r = 0; r < rows-1; r++)

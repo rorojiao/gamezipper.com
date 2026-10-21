@@ -6,8 +6,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const SLUG = 'anti-knight-sudoku';
-const HTML = fs.readFileSync(path.join(SLUG, 'index.html'), 'utf8');
+// R322 Pitfall #55: anchor to __dirname so this works from ANY cwd (repo root
+// or the game dir). Previously it only worked from the repo root and threw
+// ENOENT on 'anti-knight-sudoku/index.html' when invoked from the game dir.
+const SLUG = __dirname;
+const HTML = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 
 // Extract LEVELS_DATA = [...] using balanced-bracket
 const idx = HTML.indexOf('const LEVELS_DATA');
