@@ -110,9 +110,18 @@
     };
   }
 
+  // R321-modal-mutex: close every open modal except `keep` (R340 defect class).
+  function closeOtherModals(keep) {
+    for (const key in dom) {
+      if (key.indexOf('modal') !== 0 || key === keep) continue;
+      const el = dom[key];
+      if (el && el.classList) el.classList.add('hidden');
+    }
+  }
+
   function bindEvents() {
     dom.btnPlay.addEventListener('click', () => { showScreen('levels'); renderLevels(); });
-    dom.btnHowto.addEventListener('click', () => dom.modalHowto.classList.remove('hidden'));
+    dom.btnHowto.addEventListener('click', () => { closeOtherModals('modalHowto'); dom.modalHowto.classList.remove('hidden'); });
     dom.btnCloseHowto.addEventListener('click', () => dom.modalHowto.classList.add('hidden'));
     dom.btnBackTitle.addEventListener('click', () => showScreen('title'));
     dom.btnHint.addEventListener('click', () => useHint());
@@ -122,6 +131,7 @@
     dom.btnMute.addEventListener('click', toggleMute);
     dom.btnMenu.addEventListener('click', () => {
       if (timer > 0) {
+        closeOtherModals('modalConfirm');
         dom.modalConfirm.classList.remove('hidden');
       } else {
         showScreen('levels');
@@ -129,7 +139,7 @@
     });
     dom.btnConfirmYes.addEventListener('click', () => { dom.modalConfirm.classList.add('hidden'); showScreen('levels'); });
     dom.btnConfirmNo.addEventListener('click', () => dom.modalConfirm.classList.add('hidden'));
-    dom.btnSettings.addEventListener('click', () => dom.modalSettings.classList.remove('hidden'));
+    dom.btnSettings.addEventListener('click', () => { closeOtherModals('modalSettings'); dom.modalSettings.classList.remove('hidden'); });
     dom.btnCloseSettings.addEventListener('click', () => dom.modalSettings.classList.add('hidden'));
     dom.setMusic.addEventListener('change', e => { musicEnabled = e.target.checked; saveSettings(); if (musicEnabled) playBgMusic(); else stopBgMusic(); });
     dom.setSfx.addEventListener('change', e => { sfxEnabled = e.target.checked; saveSettings(); });
@@ -156,7 +166,7 @@
       else if (k === 'h') { useHint(); }
       else if (k === 'u' || k === 'backspace') { undoStep(); playSfx('click'); }
       else if (k === 'escape') {
-        if (timer > 0) dom.modalConfirm.classList.remove('hidden');
+        if (timer > 0) { closeOtherModals('modalConfirm'); dom.modalConfirm.classList.remove('hidden'); }
         else showScreen('levels');
       } else if (k === 'm') { toggleMute(); }
     });

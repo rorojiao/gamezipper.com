@@ -83,13 +83,23 @@
     ].forEach(id => { dom[id] = document.getElementById(id); });
   }
 
+  // R321-modal-mutex: close every open modal except `keep`, so two full-screen
+  // z-index:50 overlays can never stack (R340 defect class).
+  function closeOtherModals(keep) {
+    for (const key in dom) {
+      if (key.indexOf('modal-') !== 0 || key === keep) continue;
+      const el = dom[key];
+      if (el && el.classList) el.classList.add('hidden');
+    }
+  }
+
   function bindEvents() {
     if (dom['btn-play']) dom['btn-play'].addEventListener('click', () => {
       try { renderLevels(); } catch(e) { console.error('[zebrapath] renderLevels:', e.message); }
       try { showScreen('levels'); } catch(e) { console.error('[zebrapath] showScreen:', e.message); }
     });
-    if (dom['btn-howto']) dom['btn-howto'].addEventListener('click', () => { if (dom['modal-howto']) dom['modal-howto'].classList.remove('hidden'); });
-    if (dom['btn-settings']) dom['btn-settings'].addEventListener('click', () => { if (dom['modal-settings']) dom['modal-settings'].classList.remove('hidden'); });
+    if (dom['btn-howto']) dom['btn-howto'].addEventListener('click', () => { if (dom['modal-howto']) closeOtherModals('modal-howto'); dom['modal-howto'].classList.remove('hidden'); });
+    if (dom['btn-settings']) dom['btn-settings'].addEventListener('click', () => { if (dom['modal-settings']) closeOtherModals('modal-settings'); dom['modal-settings'].classList.remove('hidden'); });
     if (dom['btn-close-howto']) dom['btn-close-howto'].addEventListener('click', () => { if (dom['modal-howto']) dom['modal-howto'].classList.add('hidden'); });
     if (dom['btn-close-settings']) dom['btn-close-settings'].addEventListener('click', () => { if (dom['modal-settings']) dom['modal-settings'].classList.add('hidden'); });
     if (dom['btn-back-title']) dom['btn-back-title'].addEventListener('click', () => showScreen('title'));
