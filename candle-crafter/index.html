@@ -107,6 +107,12 @@ body{background:linear-gradient(160deg,#1a1025 0%,#2d1b3d 40%,#1a1025 100%);colo
 .color-swatch:active{transform:scale(.9)}
 .color-swatch.selected{border-color:#fff;transform:scale(1.1);box-shadow:0 0 15px rgba(255,255,255,.3)}
 .color-swatch.disabled{opacity:.3;cursor:not-allowed}
+/* R321 P1: re-tapping the ALREADY-selected swatch used to change nothing
+   (classList.toggle('selected', i===idx) is a no-op when i is already
+   selected), so the tap produced zero feedback and gz-analytics correctly
+   logged it as dead_click. A short pulse confirms the input instead. */
+@keyframes swatchConfirm{0%{box-shadow:0 0 0 0 rgba(255,255,255,.55)}100%{box-shadow:0 0 0 14px rgba(255,255,255,0)}}
+.color-swatch.confirmed{animation:swatchConfirm .45s ease-out}
 .controls-bar{display:flex;gap:8px;justify-content:center;padding:6px 8px 10px;flex-shrink:0}
 .ctrl-btn{background:rgba(255,255,255,.08);color:#ccc;border:1px solid rgba(255,255,255,.1);padding:8px 16px;border-radius:10px;font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit;font-weight:600}
 .ctrl-btn:active{transform:scale(.92)}
@@ -433,9 +439,19 @@ function renderPalette() {
 function selectColor(idx) {
     const level = LEVELS[currentLevel];
     if (!level.colors.includes(idx)) return;
+    const wasSelected = selectedColor === idx;
     selectedColor = idx;
     document.querySelectorAll('.color-swatch').forEach((s, i) => {
         s.classList.toggle('selected', i === idx);
+        // R321 P1: a re-tap on the swatch that is already selected used to be a
+        // complete no-op (toggle with the same value), so it gave the player zero
+        // feedback and BI logged it as dead_click. Pulse to acknowledge instead.
+        if (i === idx && wasSelected) {
+            s.classList.remove('confirmed');
+            void s.offsetWidth;          // restart the animation
+            s.classList.add('confirmed');
+            setTimeout(() => s.classList.remove('confirmed'), 500);
+        }
     });
 }
 
