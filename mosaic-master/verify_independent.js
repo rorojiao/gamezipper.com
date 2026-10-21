@@ -46,9 +46,14 @@ function enumerateSubsets(region, k) {
   return out;
 }
 
+// Returns { count, timedOut }. R323 fix: a search that exhausts its time budget is
+// UNPROVEN, which is not the same as "0 solutions". The previous version returned a
+// bare integer, so a timeout surfaced as cnt=0 and the caller reported it as an
+// unsolvable level -- a false alarm on 10 of 30 perfectly valid levels.
 function countSolutionsForLevel(N, regions, clues, timeBudgetMs) {
   const start = Date.now();
   let count = 0;
+  let timedOut = false;
   const subs = regions.map((r, i) => enumerateSubsets(r, clues[i]));
   // Order regions by ascending number of subsets (most-constrained first)
   const order = subs.map((_, i) => i).sort((a, b) => subs[a].length - subs[b].length);
@@ -56,7 +61,7 @@ function countSolutionsForLevel(N, regions, clues, timeBudgetMs) {
 
   function dfs(depth) {
     if (count >= 2) return true;
-    if (Date.now() - start > timeBudgetMs) return true;
+    if (Date.now() - start > timeBudgetMs) { timedOut = true; return true; }
     if (depth === regions.length) {
       // Build placed set of [r,c] tuples
       const placedSet = new Set();
@@ -80,24 +85,49 @@ function countSolutionsForLevel(N, regions, clues, timeBudgetMs) {
     return false;
   }
   dfs(0);
-  return count;
+  return { count, timedOut };
 }
 
-let pass = 0, fail = 0;
+// Per-level budget, raised from 1500 ms. Measured on the R323 catalog: the 1.5 s
+// budget could not prove the harder 7x7/R=6 levels, which is what produced the
+// false "cnt=0" alarms. A timed-out level is now reported as UNPROVEN rather than
+// being silently counted as a failure, and the budget is retried once at 8x.
+const BASE_BUDGET_MS = 60000;
+const RETRY_BUDGET_MS = 480000;
+
+let pass = 0, fail = 0, unproven = 0;
 const failures = [];
+const unprovenList = [];
 for (const lv of data) {
-  const cnt = countSolutionsForLevel(lv.N, lv.regions, lv.clues, 1500);
-  if (cnt === 1) {
+  let res = countSolutionsForLevel(lv.N, lv.regions, lv.clues, BASE_BUDGET_MS);
+  if (res.timedOut) {
+    res = countSolutionsForLevel(lv.N, lv.regions, lv.clues, RETRY_BUDGET_MS);
+  }
+  const cnt = res.count;
+  if (res.timedOut) {
+    unproven++;
+    unprovenList.push(`L${lv.i + 1} (tier=${lv.tier})`);
+  } else if (cnt === 1) {
     pass++;
   } else {
     fail++;
-    failures.push(`L${lv.i+1}: cnt=${cnt}`);
+    failures.push(`L${lv.i + 1}: cnt=${cnt}`);
   }
 }
 console.log(`${pass}/${data.length} levels have unique solutions (independent verifier)`);
+if (unproven > 0) {
+  console.log(`UNPROVEN (search budget exhausted -- NOT a failure, raise the budget):`);
+  for (const u of unprovenList.slice(0, 8)) console.log(' ', u);
+}
 if (fail > 0) {
   console.log('Failures:');
   for (const f of failures.slice(0, 5)) console.log(' ', f);
   process.exit(1);
 }
-process.exit(0);
+if (unproven > 0) {
+  // A proven-unique count is what this gate exists to assert. If some levels could
+  // not be proven either way, the gate has NOT passed and must not exit 0.
+  console.log('VERDICT: FAIL (unproven levels)');
+  process.exit(2);
+}
+console.log('VERDICT: PASS (every level proven unique)');
