@@ -122,14 +122,68 @@ function countSolutions(lv, limit=3, maxTime=3000) {
   return count;
 }
 
-let uniqueCount = 0, multiCount = 0, timeoutCount = 0;
+// R322 correction. This script previously printed, UNCONDITIONALLY:
+//   'Note: puzzle claims "30 unique-solution levels" but multiple solutions exist.'
+// That is a false alarm for this game, and it was the reason a sweep would
+// "fix" a game that has nothing wrong with it.
+//
+// japanese-sums is an INTENTIONAL multi-solution variant (audit 2026-08-06,
+// documented in index.html next to checkWin()): the win predicate is
+// RULE-BASED, not solution-compare --
+//     checkWin(): every row and column must satisfy isLineSatisfied()
+// i.e. contiguous-group sums match the clues with no repeated digit, and
+// cells may be 0 (blank) or -1 (marked empty). Therefore "more than one
+// completion satisfies the clues" is the DESIGN, not a defect: a
+// correctly-reasoning player is never marked wrong.
+//
+// What IS a real defect is a level the player cannot complete at all.
+// So: assert each level is SOLVABLE (>=1 valid full completion exists) and
+// that the stored solution is accepted by the game's own rule check.
+// Uniqueness is reported as INFO only.
+let solvable = 0, multi = 0, timeout = 0;
+const unsolved = [];
 for (const lv of LEVELS) {
   const n = countSolutions(lv, 3, 3000);
-  if (n === 1) uniqueCount++;
-  else if (n === 0) console.log(`L${lv.n}: NO SOLUTIONS`);
-  else if (n === -1) timeoutCount++;
-  else multiCount++;
+  if (n === 0) unsolved.push(lv.n);
+  else if (n === -1) timeout++;
+  else if (n === 1) solvable++;
+  else { solvable++; multi++; }
 }
-console.log(`Unique: ${uniqueCount}/30, Multiple: ${multiCount}, Timeout: ${timeoutCount}`);
-console.log('Note: puzzle claims "30 unique-solution levels" but multiple solutions exist.');
-process.exit(0); // exit 0 = informational, not a fail
+
+// Independently confirm the stored solution is accepted by the game's OWN
+// rule check. This mirrors isLineSatisfied() from index.html exactly:
+// a value > 0 belongs to the current group, anything <= 0 (blank 0 or
+// marked-empty -1) ENDS the group; group count must equal clue count and
+// each group sum must equal the corresponding clue; no repeated digit.
+function lineSatisfied(vals, clues) {
+  const groups = [];
+  let cur = [];
+  for (const v of vals) {
+    if (v > 0) cur.push(v);
+    else if (cur.length > 0) { groups.push(cur.reduce((a, b) => a + b, 0)); cur = []; }
+  }
+  if (cur.length > 0) groups.push(cur.reduce((a, b) => a + b, 0));
+  if (groups.length !== clues.length) return false;
+  for (let i = 0; i < clues.length; i++) if (groups[i] !== clues[i]) return false;
+  const digits = vals.filter(v => v > 0);
+  return new Set(digits).size === digits.length;
+}
+function storedSolutionValid(lv) {
+  const s = lv.s, N = lv.N;
+  if (!s) return false;
+  for (let r = 0; r < N; r++) if (!lineSatisfied(s[r], lv.r[r] || [])) return false;
+  for (let c = 0; c < N; c++) {
+    if (!lineSatisfied(s.map(row => row[c]), lv.c[c] || [])) return false;
+  }
+  return true;
+}
+const badStored = LEVELS.filter(lv => !storedSolutionValid(lv)).map(lv => lv.n);
+
+console.log(`Solvable: ${solvable}/${LEVELS.length} (unique=${solvable - multi}, multi=${multi}) | Timeout: ${timeout}`);
+console.log(`Levels with NO valid completion (real P0): ${unsolved.length ? unsolved.join(',') : 'none'}`);
+console.log(`Levels whose STORED solution fails its own clues (real P0): ${badStored.length ? badStored.join(',') : 'none'}`);
+console.log('INFO: this variant is intentionally multi-solution by design (rule-based win check,');
+console.log('      documented in index.html). Non-uniqueness is NOT a defect.');
+if (unsolved.length || badStored.length) { console.log('VERDICT: FAIL'); process.exit(1); }
+console.log('VERDICT: PASS');
+process.exit(0);
