@@ -125,16 +125,38 @@ let loadErr = null;
 try { vm.runInContext(code, ctx); } catch (e) { loadErr = e; }
 if (loadErr) { console.error('engine load error:', loadErr.message); process.exit(1); }
 
-const DRIVER = "(function(){\nconst VE=window.__VE_park;let pass=0,fail=0,fails=[],failIdx=[];\nfor(let i=0;i<VE().LEVELS.length;i++){const L=VE().LEVELS[i];\n try{\n  VE().startLevel(i);\n  const gc=VE().gridCars();\n  let seqOK=true,why='';\n  for(let s=0;s<L.solution.length;s++){const ci=L.solution[s];\n   if(!VE().canCarExit(ci)){seqOK=false;why='car'+ci+'@step'+s;break;}\n   gc[ci].exited=true;}\n  const allOut=VE().checkAllExited()===true;\n  if(seqOK&&allOut)pass++;else{fail++;failIdx.push(i+1);fails.push('L'+(i+1)+(seqOK?'':' '+why)+(allOut?'':' notAllExited'));}\n }catch(e){fail++;failIdx.push(i+1);fails.push('L'+(i+1)+' EX:'+String(e.message).slice(0,60));}\n}\nreturn {pass:pass,fail:fail,total:VE().LEVELS.length,failIdx:failIdx,fails:fails.slice(0,15),verdict:fail===0?'PASS':'FAIL'};\n})()";
+const DRIVER = "(function(){\nconst VE=window.__VE_park;let pass=0,fail=0,fails=[],failIdx=[];\nlet totCars=0,totDec=0,degenerate=[];\nfor(let i=0;i<VE().LEVELS.length;i++){const L=VE().LEVELS[i];\n try{\n  VE().startLevel(i);\n  const gc=VE().gridCars();\n  let seqOK=true,why='';\n  for(let s=0;s<L.solution.length;s++){const ci=L.solution[s];\n   if(!VE().canCarExit(ci)){seqOK=false;why='car'+ci+'@step'+s;break;}\n   gc[ci].exited=true;}\n  const allOut=VE().checkAllExited()===true;\n  /* R325 P0 REGRESSION GATE.\n   * The shipped catalog used to hold exactly ONE car on all 30 levels, and canCarExit()\n   * additionally pinned every car to a single exit lane, so the only shippable level was a\n   * single car: one tap, no ordering, and the advertised 'clear all cars in the right order'\n   * mechanic never happened. A verifier that only replays level.solution[] cannot see that --\n   * a one-car level replays perfectly. So also assert, using the engine's OWN canCarExit, that\n   * the ordering constraint is real: at t=0 the movable cars must be a STRICT subset. */\n  VE().startLevel(i);\n  const gc0=VE().gridCars();\n  let openAt0=0;\n  for(let ci=0;ci<gc0.length;ci++){ if(VE().canCarExit(ci)) openAt0++; }\n  totCars+=gc0.length; totDec+=(gc0.length-openAt0);\n  if(gc0.length<2||openAt0>=gc0.length){ degenerate.push('L'+(i+1)+' cars='+gc0.length+' openAt0='+openAt0); }\n  if(seqOK&&allOut)pass++;else{fail++;failIdx.push(i+1);fails.push('L'+(i+1)+(seqOK?'':' '+why)+(allOut?'':' notAllExited'));}\n }catch(e){fail++;failIdx.push(i+1);fails.push('L'+(i+1)+' EX:'+String(e.message).slice(0,60));}\n}\nreturn {pass:pass,fail:fail,total:VE().LEVELS.length,failIdx:failIdx,fails:fails.slice(0,15),\n        extra:{cars:totCars,decisionPoints:totDec,degenerateLevels:degenerate.length},verdict:fail===0&&degenerate.length===0?'PASS':'FAIL'};\n})()";
 
 let result;
 try { result = vm.runInContext(DRIVER, ctx); }
 catch (e) { console.error('verify error:', e.message); process.exit(1); }
 if (!result || typeof result !== 'object') { console.error('driver returned no result'); process.exit(1); }
 if (result.info) console.log(result.info);
-const out = { pass: result.pass, fail: result.fail, total: result.total, failIdx: result.failIdx || [], verdict: result.fail === 0 ? 'PASS' : 'FAIL' };
+/* R325: the exit code must follow the driver's OWN verdict, not just the replay count.
+ * A one-car level replays its solution perfectly, so `fail === 0` alone cannot see the
+ * degeneracy; the driver also reports extra.degenerateLevels. Wiring only `fail` here made
+ * the gate report FAIL while still exiting 0 -- i.e. it could never fail a build, which is the
+ * no-op-gate defect in its purest form. Verified with a negative test: pointing the verifier at
+ * the old catalog now exits 1. */
+const extra = result.extra || {};
+const degenerate = Array.isArray(extra.degenerateLevels) ? extra.degenerateLevels.length
+                : (extra.degenerateLevels || 0);
+const failed = result.fail > 0 || degenerate > 0 || result.verdict !== 'PASS';
+const out = {
+  pass: result.pass, fail: result.fail, total: result.total, failIdx: result.failIdx || [],
+  verdict: failed ? 'FAIL' : 'PASS',
+};
 if (result.fails && result.fails.length) out.fails = result.fails;
-for (const k of ['warnDot0', 'extra']) if (result[k] !== undefined) out[k] = result[k];
+if (extra.cars !== undefined) out.cars = extra.cars;
+if (extra.decisionPoints !== undefined) out.decisionPoints = extra.decisionPoints;
+out.degenerateLevels = degenerate;
+if (degenerate) {
+  out.degenerateSample = Array.isArray(extra.degenerateLevels)
+    ? extra.degenerateLevels.slice(0, 6) : undefined;
+  console.error('DEGENERATE CATALOG: ' + degenerate + ' level(s) have <2 cars or no ordering ' +
+    'constraint (R325 P0 regression): ' + JSON.stringify(out.degenerateSample || ''));
+}
+for (const k of ['warnDot0']) if (result[k] !== undefined) out[k] = result[k];
 console.log('parking-jam in-engine verification: ' + out.pass + '/' + out.total + ' levels, verdict=' + out.verdict);
 console.log(JSON.stringify(out));
-process.exit(out.fail === 0 ? 0 : 1);
+process.exit(failed ? 1 : 0);
