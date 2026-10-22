@@ -165,11 +165,21 @@ function makeEl(extra) {
     // browser-accurate: setting style.left/top moves the rect (drag-geometry games like
     // black/moon-eclipse compute wins from two elements' rects). Falls back to the old
     // static 480x640 at origin when no inline position/size is set.
+    //
+    // R326 fix: a <canvas> with no explicit CSS size displays at its BACKING-STORE size
+    // (canvas.width x canvas.height) — that is what a browser does, and the makeEl()
+    // default of 480x640 is a stub artefact that must NOT win for a canvas. Returning it
+    // made getBoundingClientRect().width/height disagree with canvas.width/height, so an
+    // engine that correctly divides by display scale (see tangram R326) computed a bogus
+    // scale and broke its own verifier. Precedence: explicit inline CSS style -> canvas
+    // backing store -> offsetWidth/Height -> legacy 480x640 default for non-canvas.
     getBoundingClientRect() {
       const st = this.style || {};
       const l = parseFloat(st.left) || 0, t = parseFloat(st.top) || 0;
-      const w = parseFloat(st.width) || this.offsetWidth || 480;
-      const h = parseFloat(st.height) || this.offsetHeight || 640;
+      const isCanvas = String(this.tagName || '').toUpperCase() === 'CANVAS';
+      const cssW = parseFloat(st.width) || 0, cssH = parseFloat(st.height) || 0;
+      const w = cssW || (isCanvas ? this.width : 0) || this.offsetWidth || 480;
+      const h = cssH || (isCanvas ? this.height : 0) || this.offsetHeight || 640;
       return { left: l, top: t, right: l + w, bottom: t + h, width: w, height: h, x: l, y: t };
     },
     appendChild(c) { this.children.push(c); if (c && c.parentNode !== this) { c.parentNode = c.parentElement = this; } return c; }, insertBefore(c, ref) { const i = ref ? this.children.indexOf(ref) : -1; if (i < 0) this.children.push(c); else this.children.splice(i, 0, c); if (c && c.parentNode !== this) { c.parentNode = c.parentElement = this; } return c; }, get nextSibling() { if (this.parentNode && this.parentNode.children) { const i = this.parentNode.children.indexOf(this); return this.parentNode.children[i + 1] || null; } return null; }, removeChild(c) { const i = this.children.indexOf(c); if (i >= 0) this.children.splice(i, 1); return c; }, remove() { if (this.parentElement) this.parentElement.removeChild(this); }, parentElement: null,
@@ -294,6 +304,20 @@ function bootGame(slug, opts) {
     } else if (body.trim()) scripts.push(body);
   }
   const els = {};
+  // R326: id -> real tag name from the page markup. Lazily-created elements
+  // (getElementById / '#id' querySelector) used to all get tagName 'div', even for
+  // <canvas id="c">, which made getBoundingClientRect() take the non-canvas branch and
+  // report the stub 480x640 instead of the canvas backing store. Look the real tag up once.
+  const idTag = {};
+  for (const m of html.matchAll(/<([a-zA-Z][\w-]*)\b([^>]*)>/g)) {
+    const idm = /\sid="([^"]+)"/.exec(m[2] || '');
+    if (idm && !idTag[idm[1]]) idTag[idm[1]] = m[1].toUpperCase();
+  }
+  const makeById = (id) => {
+    const tag = idTag[id];
+    if (!tag) return makeEl({ id });
+    return makeEl({ id, tagName: tag, nodeName: tag });
+  };
   // a stand-in for the page's first <script> tag (ad-snippet insertBefore anchors on it)
   els[':script0'] = makeEl({ tagName: 'script', nodeName: 'script' });
   let seed = opts.seed || 424242;
@@ -322,12 +346,12 @@ function bootGame(slug, opts) {
     location: { href: 'http://localhost/' + slug + '/', search: '', hash: '', origin: 'http://localhost', protocol: 'http:', host: 'localhost', pathname: '/' + slug + '/', reload() {}, assign() {}, replace() {} },
     document: {
       getElementById: (id) => {
-        if (!els[id]) { els[id] = makeEl({ id }); els[id].parentNode = els[id].parentElement = sandbox.document.body; } // site-infra scripts walk .parentNode to inject banners
+        if (!els[id]) { els[id] = makeById(id); els[id].parentNode = els[id].parentElement = sandbox.document.body; } // site-infra scripts walk .parentNode to inject banners
         return els[id];
       },
       querySelector: (sel) => {
         const idm = /^#([A-Za-z][\w-]*)$/.exec(sel);
-        if (idm) { if (!els[idm[1]]) { els[idm[1]] = makeEl({ id: idm[1] }); els[idm[1]].parentNode = els[idm[1]].parentElement = sandbox.document.body; } return els[idm[1]]; } // #id aliases getElementById (engines bind via $()); parentNode wired for ad-infra walks
+        if (idm) { if (!els[idm[1]]) { els[idm[1]] = makeById(idm[1]); els[idm[1]].parentNode = els[idm[1]].parentElement = sandbox.document.body; } return els[idm[1]]; } // #id aliases getElementById (engines bind via $()); parentNode wired for ad-infra walks
         if (qsCompoundish(sel)) { const r = qsGeneral(sel, els, sandbox.document.body); if (r && r.length) return r[0]; }
         const k = 'q:' + sel;
         if (!els[k]) { els[k] = makeEl({ className: String(sel).replace(/^\./, '') }); els[k].parentElement = els[k].parentNode = sandbox.document.body; } // site-infra scripts inject banners via canvasWrap.parentNode (real DOM always has one)
@@ -452,7 +476,7 @@ function bootGame(slug, opts) {
   sandbox.window = sandbox; sandbox.globalThis = sandbox; sandbox.self = sandbox;
   if (opts.seedLS) for (const [k, v] of Object.entries(opts.seedLS)) sandbox.localStorage.setItem(k, v); // returning-player state
   // browsers expose every element id as a window property (named access); engines rely on it
-  for (const m of html.matchAll(/\sid="([A-Za-z][A-Za-z0-9_-]*)"/g)) { const id = m[1]; if (!(id in sandbox)) { sandbox[id] = els[id] || (els[id] = makeEl({ id })); } }
+  for (const m of html.matchAll(/\sid="([A-Za-z][A-Za-z0-9_-]*)"/g)) { const id = m[1]; if (!(id in sandbox)) { sandbox[id] = els[id] || (els[id] = makeById(id)); } }
   for (const m of html.matchAll(/<([a-zA-Z][a-zA-Z0-9]*)\b[^>]*?\sid="([A-Za-z][A-Za-z0-9_-]*)"[^>]*>/g)) {
     const el = els[m[2]]; if (!el || Array.isArray(el)) continue;
     const cls = /\sclass="([^"]*)"/.exec(m[0]); if (cls && !el.className) String(cls[1]).split(/\s+/).forEach(t => t && el.classList._s.add(t)); // live set only (see parseMarkupChildren)

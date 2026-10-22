@@ -22,8 +22,8 @@
  * never assigned); room-29 glass case opens:'30' out of range (unlock is a no-op —
  * unreachable anyway since floor4_key is wiped on room entry); duplicate items on repeat
  * search; cross-room requires rooms 4,5,8,19,22 need nav arrows to bypass.
- * Driving: real canvas pointerdown at hotspot centers (clientX=(h.x+h.w/2)*480,
- * clientY=(h.y+h.h/2)*640 — rect is the static 480x640 stub), real clicks on
+ * Driving: real canvas pointerdown at hotspot centers (clientX=r.left+(h.x+h.w/2)*r.width,
+ * clientY=r.top+(h.y+h.h/2)*r.height with r the canvas's live rect — R326), real clicks on
  * inventory items / hint button / nav arrows / menu buttons.
  */
 const fs = require('fs');
@@ -90,7 +90,16 @@ function bootEM(opts) {
 }
 function msg(ga) { return String(ga.els.messageBox.textContent); }
 function clickHot(ga, h) {
-  ga.els.gameCanvas.dispatch('pointerdown', { clientX: Math.round((h.x + h.w / 2) * 480), clientY: Math.round((h.y + h.h / 2) * 640) });
+  // R326: measure the canvas's real rect instead of assuming the harness stub is
+  // 480x640. The engine maps client -> logical space with W/rect.width, so clicking
+  // at (h.x+h.w/2)*rect.width reproduces the hotspot centre exactly for ANY rect —
+  // stub-sized or backing-store-sized. Hardcoding 480/640 silently broke the moment
+  // the harness started reporting a truthful canvas rect (R326 harness fix).
+  const r = ga.els.gameCanvas.getBoundingClientRect();
+  ga.els.gameCanvas.dispatch('pointerdown', {
+    clientX: Math.round(r.left + (h.x + h.w / 2) * r.width),
+    clientY: Math.round(r.top + (h.y + h.h / 2) * r.height),
+  });
   ga.pump(1);
 }
 function slots(ga) {

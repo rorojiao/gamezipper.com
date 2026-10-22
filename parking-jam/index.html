@@ -1239,7 +1239,13 @@ function handleButton(b){
   else if(action==='RESET PROGRESS'){gzConfirm('Reset all progress?',function(c){if(c){save=JSON.parse(JSON.stringify(defaultSave));saveSave(save);}})}
 }
 
-canvas.addEventListener('pointerdown',function(e){e.preventDefault();var r=canvas.getBoundingClientRect();handleTap(e.clientX-r.left,e.clientY-r.top)});
+// R326 P1 fix: CSS is `canvas{width:1280px;height:720px;max-width:100vw;max-height:80vh}`,
+// so max-height/100vw clamp the DISPLAY box and display aspect != backing aspect
+// (measured 1280x577 viewport: backing 1280x577 vs display 1280x461.6, sy=0.80).
+// handleTap() hit-tests button rects in BACKING space, so the old unscaled mapping
+// put every tap up to 115px off in Y -- clicking a car selected the wrong row or nothing.
+// Convert client coords into backing space with the measured scale first.
+canvas.addEventListener('pointerdown',function(e){e.preventDefault();var r=canvas.getBoundingClientRect();var sx=r.width?canvas.width/r.width:1,sy=r.height?canvas.height/r.height:1;handleTap((e.clientX-r.left)*sx,(e.clientY-r.top)*sy)});
 canvas.addEventListener('pointermove',function(e){e.preventDefault()});
 canvas.addEventListener('pointerup',function(e){e.preventDefault()});
 canvas.style.touchAction='none';
