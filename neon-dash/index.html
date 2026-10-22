@@ -166,13 +166,21 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
    (pointer-events:none does fix the click but also makes the ad unclickable,
    which is lost revenue.)
 
-   What DOES work, verified live before writing this: give the game's own title
-   screen its own stacking layer above the ad slots. #titleScreen is the element
-   the PLAY button lives in, so lifting just that one element fixes the click
-   without covering the other ad slots -- #gz-ad-above-game, #gz-ad-below-canvas
-   and #gz-ad-neon-dash-r797 all still returned their own IFRAME in the same
-   probe, so ad clicks are preserved. */
-#titleScreen{position:relative;z-index:2}
+   What DOES work, verified live before writing this: the overlay already participates
+   in a stacking context via .overlay{position:absolute;z-index:10}, but z-index:10
+   loses to the ad slot's inline z-index:30. Raising ONLY the z-index on the
+   ACTIVE overlay restores the hit test.
+
+   Two corrections found by re-testing against production, both recorded here
+   because the first attempt made things worse:
+   1. Do NOT set position:relative. That overrode .overlay's position:absolute,
+      dropped the overlay out of the canvas box, and pushed PLAY to y=951 on an
+      844px viewport -- below the fold, strictly worse than the original bug.
+   2. The overlay MUST keep position:absolute. With it restored, measured at
+      390x844: #gameContainer height 1294 -> 1023, PLAY y=951 -> 436, in view,
+      and elementsFromPoint at the PLAY centre returns BUTTON#btnPlay.
+   So this rule is z-index only, and deliberately does not touch position. */
+.overlay.active{z-index:40}
 #gz-ad-above-game:empty::after,#gz-ad-below-canvas:empty::after{
   content:"Sponsored · Advertisement";position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%);color:#1a3a5c;font-size:.7em;opacity:.35;
