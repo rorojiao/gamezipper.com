@@ -18,6 +18,13 @@ SKIP = {'js','css','assets','data','og-images','public','admin','api','tools',
 GOOD = re.compile(
     r'(rect\.width\s*/\s*canvas\.width|getBoundingClientRect\(\)\.width\s*/\s*canvas\.width'
     r'|clientX\s*-\s*[^;\n]*?\)\s*/\s*(r|rect|b|cv|canvas)\.width'
+    # ── R326 后补 (2026-10-22) ─────────────────────────────────────────────
+    # 官方修复范式是 `var sx = r.width ? canvas.width/r.width : 1` —— 即
+    # backing-store 尺寸 ÷ display 尺寸, 再乘到 client 坐标上。
+    # 旧 GOOD 只认 "display ÷ backing" 方向 (rect.width/canvas.width), 认不出
+    # 官方自己的修法 → 已修好的 tangram 被反复报成 candidate (假阳性),
+    # 下一个 QA sweep 会去"再修"一个已经正确的游戏。
+    r'|canvas\.width\s*/\s*\w+\.width|canvas\.height\s*/\s*\w+\.height'
     r'|dpr|scaleX|offsetWidth\s*/\s*canvas\.width'
     r'|getScaleX|scaleFactor|canvas\.getBoundingClientRect\(\)\.width)', re.I)
 # getPos patterns with NO division (i.e. BROKEN when aspect differs)
@@ -51,11 +58,13 @@ def main():
          "const t=s.replace(/^const\\s+(GAME_GRADIENTS|GAMES)\\s*=/gm,'var \\$1=');" \
          "const G=new Function(t+'; return GAMES;')();" \
          "console.log(JSON.stringify(G.filter(g=>g.status==='live')" \
-         ".map(g=>g.url.replace(/^\\//,'').replace(/\\/\$/,''))))" % ROOT
+         ".map(g=>g.url.replace(/^\\//,'').replace(/\\/$/,''))))" % ROOT
     live = json.loads(subprocess.run(['node','-e',js], capture_output=True, text=True, cwd=ROOT).stdout)
 
     findings = []
     for slug in live:
+        slug = slug.rstrip('/')          # ← 旧代码因 "\\$" 转义 bug 留下尾部 "/"
+        if slug in SKIP: continue        # ← SKIP 集合此前从未被使用 (dead code)
         idx = os.path.join(ROOT, slug, 'index.html')
         if not os.path.exists(idx): continue
         html = open(idx, errors='replace').read()
@@ -80,8 +89,13 @@ def main():
             findings.append(dict(slug=slug, css=css_rules[:2], naive=True, good=False))
     print(json.dumps({'live': len(live), 'candidates': len(findings),
                       'slugs': [f['slug'] for f in findings]}, indent=1))
-    with open('/tmp/qa-r326/canvas-aspect-candidates.json','w') as f:
+    # 输出目录用 scratch (TMPDIR), 不写死 /tmp/qa-r326 —— 旧代码在目录不存在时
+    # 直接 FileNotFoundError 崩掉 (exit 1), 检测器变成"永远失败"的一次性产物。
+    out_dir = os.path.join(os.environ.get('TMPDIR', '/tmp'), 'gz-canvas-aspect')
+    os.makedirs(out_dir, exist_ok=True)
+    with open(os.path.join(out_dir, 'canvas-aspect-candidates.json'), 'w') as f:
         json.dump(findings, f, indent=1)
+    print(f"wrote {out_dir}/canvas-aspect-candidates.json")
 
 if __name__ == '__main__':
     main()
