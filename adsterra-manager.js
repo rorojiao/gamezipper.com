@@ -173,8 +173,27 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
         var env = {
           e: 'gz_ad_event',
           d: payload,
-          t: Date.now()
+          t: Date.now(),
+          // R975: this envelope shipped WITHOUT the base() block that
+          // gz-analytics.js attaches to every event. server.py then had no
+          // path / device / browser to read, so EVERY channel-2 ad event was
+          // filed on "/" with an empty visitor identity (11.7k ad events/7d
+          // mis-attributed; homepage cdn_health was actually site-wide).
+          path: location.pathname,
+          site: location.hostname,
+          device: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'Mobile'
+                  : /Tablet|iPad/i.test(navigator.userAgent) ? 'Tablet' : 'Desktop',
+          screen: (window.innerWidth || 0) + 'x' + (window.innerHeight || 0),
+          browser: navigator.userAgent || '',
+          os: navigator.platform || '',
+          referrer: document.referrer || ''
         };
+        // Reuse the visitor identity gz-analytics.js already generated so
+        // channel-2 events join the same UV/session series as channel 1.
+        try {
+          env.vid = localStorage.getItem('gz_vid') || '';
+          env.sid = sessionStorage.getItem('gz_sid') || '';
+        } catch (e2) {}
         navigator.sendBeacon(ep, JSON.stringify(env));
       }
     } catch (e) {}

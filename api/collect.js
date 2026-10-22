@@ -42,19 +42,35 @@ export async function POST(request) {
   }
 
   const transformed = events.map(ev => {
-    const meta = { ...(ev.d || {}) };
+    const d = (ev.d && typeof ev.d === 'object') ? ev.d : {};
+    // R975: the old transform only understood the gz-analytics envelope
+    // ({e, d:{...}}) and hard-coded path='/', event='page_view', meta='{}'
+    // for anything else. The legacy public/t.js shape (evt/br/dev/scr/ref/dur)
+    // therefore arrived at BI as a fake homepage page_view with the payload
+    // destroyed, and the real browser UA never reached _BOT_FILTER at all.
+    const metaSrc = (ev.meta && typeof ev.meta === 'object') ? ev.meta : d;
+    const pick = (...keys) => {
+      for (const k of keys) {
+        const a = ev[k], b = d[k];
+        if (a !== undefined && a !== null && a !== '') return a;
+        if (b !== undefined && b !== null && b !== '') return b;
+      }
+      return '';
+    };
     return {
-      site: ev.s || 'gamezipper.com',
-      path: (ev.d && ev.d.u) || '/',
-      event: ev.e || 'page_view',
-      vid: (ev.d && ev.d.vid) || '',
-      sid: (ev.d && ev.d.sid) || '',
-      device: (ev.d && ev.d.device) || '',
-      screen: (ev.d && ev.d.screen) || '',
-      referrer: (ev.d && ev.d.ref) || '',
-      country: (ev.d && ev.d.country) || '',
-      duration: (ev.d && ev.d.dur) ? parseInt(ev.d.dur) : 0,
-      meta: JSON.stringify(meta),
+      site: pick('site', 's') || 'gamezipper.com',
+      path: pick('path', 'u') || '/',
+      event: pick('e', 'event', 'evt') || 'page_view',
+      vid: pick('vid') || '',
+      sid: pick('sid') || '',
+      device: pick('device', 'dev') || '',
+      screen: pick('screen', 'scr') || '',
+      browser: pick('browser', 'br') || '',
+      os: pick('os') || '',
+      referrer: pick('referrer', 'ref') || '',
+      country: pick('country') || '',
+      duration: parseInt(pick('duration', 'dur')) || 0,
+      meta: JSON.stringify(metaSrc),
     };
   });
 
