@@ -627,6 +627,90 @@ let anim = { from: -1, to: -1, color: -1, count: 0, progress: 0, startX: 0, star
 let splashTimer = 0;
 let splashAutoAdvanceTimer = 0; // R715: ticks up while on splash; auto-advances at 6s of inactivity
 let splashUserInteracted = false; // R715: any tap on splash marks interaction
+// R980 2026-10-23: funnel instrumentation + one-tap-start for brand-new players.
+// BI 7d (human-only, bots filtered): 24 visitors -> only 5 ever reached ms_level_start
+// (20.8%). Root cause proven in a real browser (Playwright, local server):
+//   tap PLAY -> state="menu" + maybeShowDailyReward() opens a blocking modal
+//   -> tap #2 claims/dismisses -> tap #3 hits a level cell -> ms_level_start
+// i.e. THREE taps and one modal before a new player sees a single tube. Returning
+// players also went through menu+modal. Fix below: new player taps PLAY once and
+// is IN level 1. Returning players keep the menu (they need level select).
+// Also adds ms_splash_shown / ms_play_tapped so the drop-off point is finally
+// measurable — before this, BI could not distinguish "never saw splash" from
+// "saw splash, never tapped".
+let splashShownTracked = false;   // fires ms_splash_shown once per page load
+let firstLevelStarted = false;    // true once any ms_level_start has fired this load
+let splashPlayTracked = false;    // fires ms_play_tapped once per page load
+
+// R980: a player is "brand new" when they have no progress at all — no level has
+// been played and no stars earned. Returning players (lastPlayedLevel > 0 or any
+// star) must keep the menu so Continue / level select stay reachable.
+function isNewPlayer() {
+  return lastPlayedLevel <= 0 && Object.keys(levelStars).length === 0;
+}
+
+// R980: funnel events. Guarded so each fires at most once per page load.
+// NOTE: the game's first splash frame can render BEFORE the analytics block at
+// the bottom of the document assigns window.__msTrack. A plain guarded call
+// would then be swallowed and the funnel top lost — exactly the blind spot this
+// instrumentation exists to close. So both events are PENDING until the tracker
+// exists, and ONE shared retry drains whichever is still pending.
+// (First attempt used a separate interval id per event and they cleared each
+// other's timer — trackPlayTapped succeeding starved trackSplashShown. Single
+// drain loop is the fix.)
+let splashShownPending = false;   // ms_splash_shown queued, tracker not ready yet
+let playTappedPending = false;   // ms_play_tapped queued, tracker not ready yet
+let splashShownRetry = 0;        // shared retry interval id (0 = not scheduled)
+let splashPlayTarget = "unknown"; // which splash control was tapped (play_button | tap_anywhere | auto_advance)
+
+function flushSplashFunnel() {
+  if (!window.__msTrack) {
+    if (!splashShownRetry) splashShownRetry = setInterval(flushSplashFunnel, 100);
+    return; // still no tracker — keep the timer alive
+  }
+  if (splashShownRetry) { clearInterval(splashShownRetry); splashShownRetry = 0; }
+  if (splashShownPending) {
+    splashShownPending = false;
+    splashShownTracked = true;
+    try { window.__msTrack('ms_splash_shown', { newPlayer: isNewPlayer(), hasPlayedBefore: lastPlayedLevel > 0 }); } catch(e){}
+  }
+  if (playTappedPending) {
+    playTappedPending = false;
+    splashPlayTracked = true;
+    try { window.__msTrack('ms_play_tapped', { target: splashPlayTarget, newPlayer: isNewPlayer() }); } catch(e){}
+  }
+}
+function trackSplashShown() {
+  if (splashShownTracked) return;
+  splashShownPending = true;
+  flushSplashFunnel();
+}
+function trackPlayTapped(target) {
+  if (splashPlayTracked) return;
+  splashPlayTarget = target;
+  playTappedPending = true;
+  flushSplashFunnel();
+}
+
+// R980: PLAY action. New players start level 1 immediately (one tap, no modal).
+// Returning players go to the menu exactly as before.
+function splashPlayAction(source) {
+  trackPlayTapped(source);
+  sfxClick();
+  if (isNewPlayer()) {
+    // One tap -> straight into gameplay. No intermediate menu, no daily-reward
+    // modal blocking the first move. The reward is still offered later, on the
+    // first win (see showDailyRewardAfterFirstWin).
+    try { window.__msTrack && window.__msTrack('ms_direct_start', { lv: 1 }); } catch(e){}
+    state = "menu";
+    menuScrollY = 0;
+    initLevel(0);
+    return;
+  }
+  state = "menu";
+  menuScrollY = 0;
+  maybeShowDailyReward();
+}
 let winTimer = 0;
 let confetti = [];
 let bgParticles = [];
@@ -4010,6 +4094,10 @@ function drawStarShape(cx, cy, outer, inner) {
 
 function renderSplash() {
   drawBackground();
+  // R980: fire ms_splash_shown once, the first frame the splash is actually drawn.
+  // This is the top of the funnel — without it BI cannot tell "never rendered"
+  // (slow load / bounce) apart from "rendered but never tapped".
+  trackSplashShown();
   splashTimer += 0.016;
   const t = Math.min(splashTimer / 1.2, 1);
   const ease = 1 - Math.pow(1 - t, 3);
@@ -6197,10 +6285,8 @@ function onTap(px, py) {
     const bw = Math.min(200, W * 0.55), bh = 50;
     const bx = W / 2 - bw / 2, by = H * 0.58;
     if (hitTest(px, py, bx, by, bw, bh) && splashTimer >= 0.8) {
-      sfxClick();
-      state = "menu";
-      menuScrollY = 0;
-      maybeShowDailyReward();
+      // R980: new players go straight into level 1 (one tap, no menu/modal hop)
+      splashPlayAction('play_button');
     }
     // Continue button
     let nextBtnY = by + bh + 12;
@@ -6245,10 +6331,8 @@ function onTap(px, py) {
     // the buttons (water drop icon area, y < by) and splashTimer has elapsed,
     // treat it as PLAY tap. Eliminates rage_click clusters at y=141-144 in BI.
     if (py < by && splashTimer >= 0.8) {
-      sfxClick();
-      state = "menu";
-      menuScrollY = 0;
-      maybeShowDailyReward();
+      // R980: same one-tap direct-start path as the PLAY button
+      splashPlayAction('tap_anywhere');
     }
     // Footer GameZipper.com link
     if (splashFooterLink && hitTest(px, py, splashFooterLink.x, splashFooterLink.y, splashFooterLink.w, splashFooterLink.h)) {
@@ -6466,6 +6550,11 @@ function onTap(px, py) {
       // [MS-tracker R643] menu/back button tapped mid-game
       try { window.__msTrack && window.__msTrack('ms_menu_returned', { lv: currentLevel + 1, moves: moves }); } catch(e){}
       stopSolve();
+      // R980: a brand-new player who direct-started (one-tap PLAY) skipped the
+      // daily-reward modal entirely. Offer it here, the first time they land on
+      // the menu, so the feature is deferred rather than dropped. claimDailyReward()
+      // is idempotent on the seed key, so a second offer cannot double-grant.
+      maybeShowDailyReward();
       sfxClick(); state = "menu"; menuScrollY = 0; return;
     }
     if (hitTest(px, py, hudStartX + hudBtnW + hudGap, hudY, hudBtnW, hudBtnH)) {
@@ -6910,9 +6999,10 @@ function gameLoop(timestamp) {
         splashUserInteracted = true;
         // [MS-tracker R715] splash auto-advance: user was idle 6s on splash
         try { window.__msTrack && window.__msTrack('ms_splash_auto_advance', { idleSec: 6, hasPlayedBefore: lastPlayedLevel > 0 }); } catch(e){}
-        state = "menu";
-        menuScrollY = 0;
-        maybeShowDailyReward();
+        // R980: route through the shared PLAY action so a brand-new idle player
+        // ALSO lands directly in level 1 instead of the menu+modal chain.
+        // Guarded: trackPlayTapped() is one-shot, and sfxClick() is harmless here.
+        splashPlayAction('auto_advance');
       } else {
         renderSplash();
       }
