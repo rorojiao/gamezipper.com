@@ -4,7 +4,10 @@
 const fs = require('fs');
 const vm = require('vm');
 
-const html = fs.readFileSync('/home/msdn/gamezipper.com/domino-chain/index.html', 'utf8');
+// Pitfall #50/#55/#68: anchor to __dirname. This previously read a HARDCODED
+// path to a different machine's checkout (/home/msdn/gamezipper.com), so the
+// script died with ENOENT on every host -- a gate that cannot report anything.
+const html = fs.readFileSync(require('path').join(__dirname, 'index.html'), 'utf8');
 
 // grab the largest inline <script> block (the game logic)
 const blocks = html.match(/<script>([\s\S]*?)<\/script>/g) || [];
