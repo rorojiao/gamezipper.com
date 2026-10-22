@@ -88,6 +88,21 @@ function buildSandbox() {
   function ImageStub() { const o = { width: 0, height: 0, onload: null, onerror: null, addEventListener: () => {} }; let _src = ''; Object.defineProperty(o, 'src', { get: () => _src, set: (v) => { _src = v; if (o.onload) { try { o.onload(); } catch (e) {} } } }); return o; }
   const elsById = new Map();
   const timerErrors = [];
+  // Timers are QUEUED, never run inline. A self-rescheduling setTimeout
+  // (ripple-effect's BGM playPad -> setTimeout(playPad, 4500)) recursed without
+  // bound under an inline shim and produced a fake "Maximum call stack size
+  // exceeded". drainTimers() below runs queued callbacks under a depth cap.
+  const pendingTimers = [];
+  function drainTimers(maxSteps) {
+    let steps = 0;
+    while (pendingTimers.length && steps < (maxSteps || 50)) {
+      const t = pendingTimers.shift();
+      steps++;
+      try { t.fn(); } catch (e) { timerErrors.push(String(e && e.message)); }
+    }
+    // A self-rescheduling timer (the BGM pad) legitimately never empties, so
+    // leftover timers are NOT an error. Only a callback that THROWS is.
+  }
   const MathClone = Object.assign(Object.create(Math), Math);
   const sandbox = {
     console, Math: MathClone, Date, JSON, Array, Object, Set, Map, Number, String, Boolean,
@@ -124,7 +139,12 @@ function buildSandbox() {
     localStorage: (() => { const m = {}; return { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, removeItem: (k) => { delete m[k]; }, clear: () => { for (const k in m) delete m[k]; } }; })(),
     sessionStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
     setInterval: () => 0, clearInterval: () => {},
-    setTimeout: (fn) => { try { return fn && fn(); } catch (e) { timerErrors.push(String(e && e.message)); return 0; } },
+    // NOTE: the callback MUST NOT run synchronously. ripple-effect's BGM
+    // `playPad()` self-reschedules via setTimeout(playPad, 4500); running the
+    // callback inline turns that loop into unbounded recursion and the harness
+    // reports "Maximum call stack size exceeded" — an artifact of the SHIM, not
+    // a defect in the game. Defer into a queue the driver can drain explicitly.
+    setTimeout: (fn, ms) => { pendingTimers.push({ fn: fn, ms: ms || 0 }); return pendingTimers.length; },
     clearTimeout: () => {},
     requestAnimationFrame: () => 0, cancelAnimationFrame: () => {},
     performance: { now: () => Date.now() },
@@ -137,6 +157,7 @@ function buildSandbox() {
     Event: function (t) { return { type: t }; },
     devicePixelRatio: 1,
     __timerErrors: timerErrors,
+    __drainTimers: drainTimers,
   };
   sandbox.window.document = sandbox.document;
   sandbox.window.localStorage = sandbox.localStorage;
@@ -230,6 +251,7 @@ const DRIVER = `(function(){
   for(const L of RE.LEVELS){
    try{
     const res=playAndAssert(L.id,false);
+    if(globalThis.__drainTimers)globalThis.__drainTimers(20);   // run queued timer callbacks (BGM pad, SFX chains) under a depth cap
     pass++;
     if(L.id===1||L.id===6||L.id===14||L.id===23||L.id===30)notes.push('L'+L.id+' ('+res.size+'x'+res.size+', diff '+L.difficulty.toFixed(2)+'): '+res.placed+' placed + '+res.givens+' givens, completed=true, stars='+res.stars+', hydrate '+res.genMs+'ms');
    }catch(e){fail++;failIdx.push(L.id);fails.push('L'+L.id+' EX:'+String(e.message).slice(0,90));}
