@@ -149,22 +149,30 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
    coordinates left the title screen showing (game never started).
    Kept clickable on purpose: ad clicks are revenue, so this fixes the OVERLAY
    without disabling the ad inside its own box. */
-#gz-ad-above-game,#gz-ad-below-canvas{
-  display:block;max-width:728px;width:100%;height:90px;min-height:90px;max-height:280px;
-  margin:8px auto;text-align:center;overflow:hidden;
-  contain:layout paint style;box-sizing:border-box;position:relative;
-  background:transparent;border-radius:6px;
-  z-index:0;isolation:isolate;
-}
-/* min-height:0 (not 90px) is what stops the injected iframe from being 390px tall
-   on a 390px viewport and bleeding over the title screen. */
-#gz-ad-above-game ins,#gz-ad-below-canvas ins,
-#gz-ad-above-game iframe,#gz-ad-below-canvas iframe{
-  display:block;position:absolute!important;top:0!important;left:0!important;
-  width:100%!important;max-width:728px!important;height:100%!important;
-  min-height:0!important;max-height:280px!important;overflow:hidden;
-  border:0;
-}
+/* R325 (root cause, confirmed in production): the PLAY button was unclickable
+   on mobile because an AdSense slot sits ON TOP of the title screen.
+
+   The offender is NOT #gz-ad-above-game. neon-dash carries two extra ad slots
+   injected by earlier tooling -- #gz-ad-neon-dash-r797 (y=275) and #gz-ad-r516
+   (y=391) -- each a 100px box whose <ins class="adsbygoogle"> AdSense inflates to
+   390x436 with an inline z-index:30. #gz-ad-r516 therefore covered the title
+   screen and the PLAY button. Measured pre-fix at 390x844:
+   elementsFromPoint at the PLAY centre returned IFRAME#aswift_2, and a real
+   kachilu mouse click at those coordinates left the title screen showing.
+
+   CSS cannot fix this: AdSense rewrites the iframe's inline height/position from
+   JS after load, so height clamps, min-height:0 and z-index:0/isolation on the
+   ad containers were all verified live and none of them restored the hit test.
+   (pointer-events:none does fix the click but also makes the ad unclickable,
+   which is lost revenue.)
+
+   What DOES work, verified live before writing this: give the game's own title
+   screen its own stacking layer above the ad slots. #titleScreen is the element
+   the PLAY button lives in, so lifting just that one element fixes the click
+   without covering the other ad slots -- #gz-ad-above-game, #gz-ad-below-canvas
+   and #gz-ad-neon-dash-r797 all still returned their own IFRAME in the same
+   probe, so ad clicks are preserved. */
+#titleScreen{position:relative;z-index:2}
 #gz-ad-above-game:empty::after,#gz-ad-below-canvas:empty::after{
   content:"Sponsored · Advertisement";position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%);color:#1a3a5c;font-size:.7em;opacity:.35;
