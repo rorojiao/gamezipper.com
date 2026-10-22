@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import os as _gzos
+_GZ_DIR = _gzos.path.dirname(_gzos.path.abspath(__file__))
+import os
 """
 Snake Pit level generator — serpentine Hamiltonian path + varied cuts.
 
@@ -252,7 +255,7 @@ def main():
             ok, msg = verify(snakes2, R, C)
             print(f"  L{idx} ({tier}): {R}x{C}, snakes={lvl['num_snakes']}, clues={len(lvl['clues'])} — {'PASS' if ok else 'FAIL '+msg}")
             levels.append(lvl)
-    with open("levels.json", "w") as f:
+    with open(os.path.join(_GZ_DIR, 'levels.json'), 'w') as f:
         json.dump(levels, f, separators=(",", ":"))
     passed = sum(1 for l in levels if verify(snakes_from(l["solution"], l["rows"], l["cols"]), l["rows"], l["cols"])[0])
     print(f"\n=== {len(levels)}/30 levels, {passed}/{len(levels)} PASS ===")

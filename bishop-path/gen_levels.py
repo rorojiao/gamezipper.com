@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import os as _gzos
+_GZ_DIR = _gzos.path.dirname(_gzos.path.abspath(__file__))
+import os
 """Bishop Path level generator.
 
 Rules:
@@ -207,7 +210,7 @@ def main():
         'levels': levels,
     }
 
-    with open('levels.json', 'w') as f:
+    with open(os.path.join(_GZ_DIR, 'levels.json'), 'w') as f:
         json.dump(output, f, indent=2)
     print(f'\nTotal: {len(levels)} levels written to levels.json')
 

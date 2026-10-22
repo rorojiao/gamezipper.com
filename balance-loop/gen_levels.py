@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import os as _gzos
+_GZ_DIR = _gzos.path.dirname(_gzos.path.abspath(__file__))
+import os
 """
 Balance Loop Level Generator v4 — Optimized solver with early pruning
 ======================================================================
@@ -336,7 +339,7 @@ if __name__ == "__main__":
         "total": len(levels)
     }
     
-    with open("levels.json", "w") as f:
+    with open(os.path.join(_GZ_DIR, 'levels.json'), 'w') as f:
         json.dump(output, f, indent=2)
     
     print("Saved to levels.json")

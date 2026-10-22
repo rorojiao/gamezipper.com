@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import os as _gzos
+_GZ_DIR = _gzos.path.dirname(_gzos.path.abspath(__file__))
+import os
 """
 Trebuchet Trajectory — Level Generator v4 (CALIBRATED)
 Key insight: projectile range R = v²sin(2θ)/g. For uniqueness we need each (p,a)
@@ -263,7 +266,7 @@ if __name__ == '__main__':
         s = '✅' if r['unique'] and r['solution_valid'] else '❌'
         print(f"  L{r['level']:2d} T{r['tier']} | h={r['hitters']} | u={r['unique']} | v={r['solution_valid']} | sol={r['sol']} | tgt={r['tgt']} {s}")
 
-    with open('levels.json','w') as f:
+    with open(os.path.join(_GZ_DIR, 'levels.json'), 'w') as f:
         json.dump(levels, f, indent=2)
     compact = []
     for lv in levels:

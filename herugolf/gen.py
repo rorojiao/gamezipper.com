@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import os as _gzos
+_GZ_DIR = _gzos.path.dirname(_gzos.path.abspath(__file__))
+import os
 """
 Herugolf Level Generator - FINAL, COMPLETE, ATOMIC
 
@@ -316,7 +319,7 @@ def main():
             level_id += 1
 
     output = {"levels": levels}
-    with open("levels.json", "w") as f:
+    with open(os.path.join(_GZ_DIR, 'levels.json'), 'w') as f:
         json.dump(output, f, separators=(",", ":"))
     print(f"\n✅ Wrote {len(levels)} levels to levels.json "
           f"({len(json.dumps(output))} bytes)", flush=True)

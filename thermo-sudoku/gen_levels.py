@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import os as _gzos
+_GZ_DIR = _gzos.path.dirname(_gzos.path.abspath(__file__))
+import os
 """
 Thermo Sudoku level generator (construction-guaranteed uniqueness).
 - Base grid: canonical cyclic Latin-square pattern (box_c multiplier, per skill pitfall) + 5 permutations.
@@ -252,7 +255,7 @@ def main():
         if made<cnt:
             print(f"  WARN {tier}: {made}/{cnt}",file=sys.stderr)
     out={'levels':levels}
-    with open('levels.json','w') as f:
+    with open(os.path.join(_GZ_DIR, 'levels.json'), 'w') as f:
         json.dump(out,f)
     print(f"WROTE {len(levels)} levels")
     # reverify all
