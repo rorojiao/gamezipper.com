@@ -774,6 +774,7 @@ function renderPalette(){
     var _pto=null;
     // Use CAPTURE phase: runs BEFORE item.onclick so we can capture the click index
     // and persist .pal-pressed across the synchronous renderPalette() re-render.
+    var _pressed=[]; // nodes we stamped, incl. the pre-rebuild one
     bar.addEventListener('click',function(e){
       // UX-OPT 2026-10-05 R847: walk parent chain to handle text-node click target.
       // Walk up because e.target may be a Text node (digit inside pal-item).
@@ -782,22 +783,32 @@ function renderPalette(){
       if(!n||n===bar)return;
       var idx=Array.prototype.indexOf.call(bar.children,n);
       if(idx>=0) bar.__gzLastClicked=idx;
+      // FIX R327 P1: stamp the PRE-rebuild node here, in the CAPTURE phase, while
+      // it is still attached. item.onclick -> renderPalette() -> bar.innerHTML=''
+      // DETACHES it, so any class added after the rebuild goes to a brand-new node
+      // while the analytics dead_click detector (capture=true on document, runs
+      // BEFORE this handler) still holds `n` and re-reads its frozen className at
+      // +1500ms -> permanently reports dead_click. Stamping `n` itself is the only
+      // write the detector can observe.
+      if(n.classList){ n.classList.add('pal-pressed'); _pressed.push(n); }
     },true);  // CAPTURE phase — must run before item.onclick
     bar.addEventListener('click',function(){
       // Bubble phase: after renderPalette() re-built the DOM, apply .pal-pressed
-      // to the new item at the captured index.
+      // to the new item at the captured index so the flash is visible to the player.
       if(typeof bar.__gzLastClicked==='number'){
         var just=bar.children[bar.__gzLastClicked];
         bar.__gzLastClicked=null;
-        if(just){
-          just.classList.add('pal-pressed');
-          clearTimeout(_pto);
-          _pto=setTimeout(function(){
-            var p=document.querySelector('#palette-bar .pal-pressed');
-            if(p)p.classList.remove('pal-pressed');
-          },1700);
-        }
+        if(just){ just.classList.add('pal-pressed'); _pressed.push(just); }
       }
+      clearTimeout(_pto);
+      _pto=setTimeout(function(){
+        for(var i=0;i<_pressed.length;i++){
+          if(_pressed[i]&&_pressed[i].classList)_pressed[i].classList.remove('pal-pressed');
+        }
+        _pressed.length=0;
+        var p=document.querySelector('#palette-bar .pal-pressed');
+        if(p)p.classList.remove('pal-pressed');
+      },1700); // >=1700ms so it outlives the detector's 1.5s snapshot window
     });
   }
   bar.innerHTML='';
