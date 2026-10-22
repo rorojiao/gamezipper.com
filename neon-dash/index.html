@@ -123,20 +123,46 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 .gz-related-card:hover{border-color:rgba(78,205,196,.5);box-shadow:0 2px 8px rgba(0,0,0,.08)}
 </style>
 <style data-gz-r360-placeholders>
-#gz-ad-above-game:empty,#gz-ad-below-canvas:empty{pointer-events:none}
+/* R325: the pointer-events guard must NOT depend on :empty. Once the ad network
+   injects its iframe the container stops being :empty and the guard silently
+   stops applying. On narrow viewports the injected iframe is sized to the full
+   ad slot (measured 390x390 at a 390px viewport) and, because the container is
+   position:relative while the gameplay UI below it is position:static, that
+   oversized iframe painted ON TOP of the title-screen PLAY button.
+   Verified before the fix at 390x844: elementsFromPoint at the PLAY centre
+   returned IFRAME#aswift_2, and after a real kachilu mouse click at those
+   coordinates the title screen was still showing (game never started).
 
-/* R360: R347 static in-game banner placeholders. */
+   Fix, chosen over blanket pointer-events:none because ad clicks are revenue:
+   keep the guard off :empty so it always applies to the CONTAINER's own padding
+   area, and give the container a stacking context (z-index:0 + isolation) so its
+   children can no longer paint above siblings that come later in the DOM. The
+   canvas and overlays are already positioned with z-index >= 5, so they now win
+   the hit test while the ad itself stays clickable inside its own box. */
+/* R325 + R360 (single authoritative block -- R360's old copy of the iframe rule
+   is removed below so these values are not overridden).
+   R325 fix: do not gate pointer-events on :empty (it stops being :empty once the
+   ad network injects its iframe), and give the container a stacking context so an
+   oversized injected iframe can no longer paint above the gameplay UI that
+   follows it in the DOM. Verified before the fix at 390x844: elementsFromPoint at
+   the PLAY centre returned IFRAME#aswift_2 and a real kachilu mouse click at those
+   coordinates left the title screen showing (game never started).
+   Kept clickable on purpose: ad clicks are revenue, so this fixes the OVERLAY
+   without disabling the ad inside its own box. */
 #gz-ad-above-game,#gz-ad-below-canvas{
   display:block;max-width:728px;width:100%;height:90px;min-height:90px;max-height:280px;
   margin:8px auto;text-align:center;overflow:hidden;
   contain:layout paint style;box-sizing:border-box;position:relative;
   background:transparent;border-radius:6px;
+  z-index:0;isolation:isolate;
 }
+/* min-height:0 (not 90px) is what stops the injected iframe from being 390px tall
+   on a 390px viewport and bleeding over the title screen. */
 #gz-ad-above-game ins,#gz-ad-below-canvas ins,
 #gz-ad-above-game iframe,#gz-ad-below-canvas iframe{
   display:block;position:absolute!important;top:0!important;left:0!important;
   width:100%!important;max-width:728px!important;height:100%!important;
-  min-height:90px!important;max-height:280px!important;overflow:hidden;
+  min-height:0!important;max-height:280px!important;overflow:hidden;
   border:0;
 }
 #gz-ad-above-game:empty::after,#gz-ad-below-canvas:empty::after{
@@ -146,9 +172,13 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 }
 @media(max-width:600px){
   #gz-ad-above-game,#gz-ad-below-canvas{height:50px;min-height:50px;max-height:280px;margin:8px auto}
+  /* R325: keep min-height:0 here too. This override is what made the injected
+     iframe 390x390 tall on a 390px viewport, and the container is only 50px, so
+     the iframe bled down over the title-screen PLAY button and swallowed the
+     click. The ad stays clickable; it is just no longer oversized. */
   #gz-ad-above-game ins,#gz-ad-below-canvas ins,
   #gz-ad-above-game iframe,#gz-ad-below-canvas iframe{
-    max-height:280px!important;min-height:50px!important;
+    max-height:280px!important;min-height:0!important;
   }
 }
 </style>

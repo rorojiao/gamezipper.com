@@ -138,10 +138,23 @@ function solve(lv, budgetMs) {
 
   const rebuild = node => { let plan = ''; while (node && node.from) { plan = node.ch + plan; node = node.from; } return plan; };
 
+  // R325: accumulate x exactly like the engine's per-frame `player.x += speed`.
+  let nx = START_X;
+
   while (true) {
     if (Date.now() - t0 > budgetMs) return { solvable: false, why: 'TIMEOUT', plan: '', frames, peak, ms: Date.now() - t0 };
     if (frames > 60000) return { solvable: false, why: 'FRAMECAP', plan: '', frames, peak, ms: Date.now() - t0 };
-    const nx = START_X + (frames + 1) * speed;
+    // R325: advance x the SAME way the engine does. The engine runs
+    // `player.x += speed` once per frame (index.html update(), ~L2841), which
+    // ACCUMULATES rounding error; this solver previously used the closed form
+    // START_X + (frames+1)*speed. The two disagree by ~5e-12 after ~200 frames
+    // of speed 4.2, and that flips a strict AABB tie: on Level 4 the spike inset
+    // at bx=1095 is compared as (x + 29) > 1095. Closed form gives exactly 1095.0
+    // -> false (survives); accumulated gives 1095.0000000000050022 -> true (dies).
+    // The planner therefore declared a level solvable that the real engine kills.
+    // The increment runs on EVERY iteration (the engine's first update() also
+    // moves x off START_X), matching the original `frames+1` semantics.
+    nx += speed;
     if (nx >= goal) {
       return { solvable: true, why: '', plan: rebuild(cur.values().next().value), frames, peak, ms: Date.now() - t0 };
     }

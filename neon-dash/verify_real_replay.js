@@ -57,25 +57,36 @@ for (const i of todo) {
   const plan = rec.plan || '';   // rec is the plan object; the string lives on .plan
   // fresh level, practice OFF (so the plan is the honest no-assist route)
   g.call('__ND.start(' + i + ')');
-  g.pump(1);
-  const pxAtStart = g.call('__ND.px()');
+    // Frame-phase alignment. The planner's plan[k] is the decision applied on the
+    // transition START_X + k*speed -> START_X + (k+1)*speed, i.e. the FIRST engine
+    // update() after startLevel already consumes plan[0].
+    //
+    // This harness used to call pump(1) before reading px, which silently consumed
+    // the 100->104 transition with NO input and then applied plan[0] one frame late.
+    // Every subsequent decision was therefore out of phase, which is what produced
+    // the bogus "MODEL-DIVERGES on all 4 solvable levels" verdict. resetLevel()
+    // hardcodes player.x = 100, so the offset is exactly 0 and NO pre-pump is
+    // correct. The px assertion below fails loudly if the engine ever changes that.
+    const pxAtStart = g.call('__ND.px()');
+    if (Math.abs(pxAtStart - START_X) > 0.001) {
+      console.error(`ABORT: engine start x=${pxAtStart} != planner START_X=${START_X}; plan phase would be wrong`);
+      process.exit(2);
+    }
 
-  const st0 = g.call('__ND.st()');
-  const speed = planner.LEVELS[i].speed || 6;
-  let died = false, completed = false, steps = 0;
-  // start applying the plan at the frame whose px matches the plan's frame 0
-  let planIdx = 0;
-  const offsetFrames = Math.max(0, Math.round((pxAtStart - START_X) / speed));
-  for (let f = 0; f < plan.length + 120; f++) {
-    if (f >= offsetFrames && plan[f - offsetFrames] === 'J') tap();
-    if (f >= offsetFrames && plan[f - offsetFrames] === 'H') { doc.dispatch('keydown', { code: 'Space', key: ' ', preventDefault() {} }); }
-    if (f >= offsetFrames && plan[f - offsetFrames] === '.') doc.dispatch('keyup', { code: 'Space', key: ' ', preventDefault() {} });
-    g.pump(1);
-    steps++;
-    const st = g.call('__ND.st()');
-    if (st === 'complete' || st === 'levelComplete') { completed = true; break; }
-    if (!g.call('__ND.alive()')) { died = true; break; }
-  }
+    const st0 = g.call('__ND.st()');
+    const speed = planner.LEVELS[i].speed || 6;
+    let died = false, completed = false, steps = 0;
+    const offsetFrames = 0;
+    for (let f = 0; f < plan.length + 120; f++) {
+      if (plan[f] === 'J') tap();
+      if (plan[f] === 'H') { doc.dispatch('keydown', { code: 'Space', key: ' ', preventDefault() {} }); }
+      if (plan[f] === '.') doc.dispatch('keyup', { code: 'Space', key: ' ', preventDefault() {} });
+      g.pump(1);
+      steps++;
+      const st = g.call('__ND.st()');
+      if (st === 'complete' || st === 'levelComplete') { completed = true; break; }
+      if (!g.call('__ND.alive()')) { died = true; break; }
+    }
   doc.dispatch('keyup', { code: 'Space', key: ' ', preventDefault() {} });
   const realLvl = g.call('__ND.lvl()');
   const verdict = rec.solvable
