@@ -131,7 +131,7 @@
    if (document.getElementById('game-footer')) return;
    var games = [
      {n:'Treasure Dig',e:'⛏️',u:'/treasure-dig/',c:'puzzle'},
-     {n:'Nurimaze',e:'🌀',u:'/nurimaze/',c:'puzzle'},
+     {n:"Nurimeizu",e:"🧩",u:"/nurimeizu/",c:"puzzle"},
      {n:'Pattern Matrix',e:'🔢',u:'/pattern-matrix/',c:'puzzle'},
      {n:'2048',e:'🔢',u:'/2048/',c:'puzzle'},
      {n:'Snake',e:'🐍',u:'/snake/',c:'arcade'},
@@ -161,7 +161,7 @@
      {n:'Gecko Out',e:'🦎',u:'/gecko-out/',c:'puzzle'},
      {n:'Beads Out',e:'📿',u:'/beads-out/',c:'puzzle'},
      {n:'Pocket Sort',e:'🪙',u:'/pocket-sort/',c:'puzzle'},
-     {n:'Emoji Merge',e:'🧩',u:'/emoji-merge/',c:'puzzle'},
+     {n:"Threes!",e:"🔢",u:"/threes/",c:"puzzle"},
      {n:'Slope',e:'⛷️',u:'/slope/',c:'arcade'},
      {n:'Bounce Bot',e:'🤖',u:'/bounce-bot/',c:'arcade'},
      {n:'Reaction Time',e:'⚡',u:'/reaction-time/',c:'skill'},
@@ -203,7 +203,7 @@
      {n:'Zuma Marble Shooter',e:'🔮',u:'/zuma/',c:'puzzle'},
       
       {n:'Nonogram Puzzle',e:'🔲',u:'/nonogram/',c:'puzzle'},
-      {n:'One Line Puzzle',e:'✏️',u:'/one-line-puzzle/',c:'puzzle'},
+      
       {n:'Parking Jam',e:'🚗',u:'/parking-jam/',c:'puzzle'},
       {n:'Pull the Pin',e:'📌',u:'/pull-the-pin/',c:'puzzle'},
       {n:'Sand Balls',e:'🏐',u:'/sand-balls/',c:'puzzle'},
@@ -261,11 +261,11 @@
       {n:'Euchre',e:'♠️',u:'/euchre/',c:'card'},
       {n:'Wordle',e:'🔤',u:'/wordle/',c:'puzzle'},
       {n:'Hidden Object',e:'🔍',u:'/hidden-object/',c:'puzzle'},
-      {n:'Tiny Fishing',e:'🎣',u:'/tiny-fishing/',c:'casual'},{n:"Build A Queen",e:"👗",u:"/build-a-queen/",c:"casual"},{n:"Threes!",e:"🀄",u:"/threes/",c:"puzzle"},
+      {n:'Tiny Fishing',e:'🎣',u:'/tiny-fishing/',c:'casual'},{n:"Build A Queen",e:"👗",u:"/build-a-queen/",c:"casual"},
       {n:'Doodle Jump',e:'🐸',u:'/doodle-jump/',c:'arcade'},
       {n:'Papas Freezeria',e:'🍦',u:'/papas-freezeria/',c:'simulation'},
       {n:'Gravity Run',e:'🏃',u:'/gravity-run/',c:'arcade'},
-      {n:'Cookie Clicker',e:'🍪',u:'/cookie-clicker/',c:'idle'},
+      
       {n:'Moto X3M',e:'🏍️',u:'/moto-x3m/',c:'racing'},
       {n:'Math 24',e:'🔢',u:'/math-24/',c:'puzzle'},
       {n:'Mind Reader',e:'🔮',u:'/akinator/',c:'puzzle'},
@@ -308,15 +308,15 @@
       
       {n:'Color Cars Parking',e:'🚗',u:'/color-cars-parking/',c:'puzzle'},
       {n:'Cryptograms',e:'🔐',u:'/cryptograms/',c:'puzzle'},
-      {n:'Threes',e:'3️⃣',u:'/threes/',c:'puzzle'},
+      
       
       {n:'Eggy Car',e:'🥚',u:'/eggy-car/',c:'driving'},
       {n:'Unpacking',e:'📦',u:'/unpacking/',c:'puzzle'},
       {n:'Merge Sweets',e:'🍰',u:'/merge-sweets/',c:'puzzle'},
       {n:'Traffic Escape',e:'🚗',u:'/traffic-escape/',c:'puzzle'},
-      {n:'Ball Sort',e:'🎱',u:'/ball-sort/',c:'puzzle'},
+      
       {n:'Slice Master',e:'🔪',u:'/slice-master/',c:'puzzle'},
-      {n:'TriPeaks Solitaire',e:'🃏',u:'/tripeaks-solitaire/',c:'card'},
+      
       {n:'Magic Tiles',e:'🎹',u:'/magic-tiles/',c:'puzzle'},
       {n:'Stick Hero',e:'🦸',u:'/stick-hero/',c:'skill'},
       {n:'Balls vs Bricks',e:'⚪',u:'/balls-vs-bricks/',c:'puzzle'},
@@ -324,13 +324,13 @@
 
 {n:'Wood Turning',e:'🪵',u:'/wood-turning/',c:'puzzle'},
 {n:"Crucible Alloy",e:"🔥",u:"/crucible-alloy/",c:"puzzle"},
-{n:"Armillary Align",e:"🌐",u:"/armillary-align/",c:"puzzle"},
+{n:"Antikythera Mechanism",e:"⚙️",u:"/antikythera-mechanism/",c:"puzzle"},
 {n:"Plug Master",e:"🔌",u:"/plug-master/",c:"puzzle"}
 ,{n:'Tetravex',e:'🔲',u:'/tetravex/',c:'puzzle'}
 ,{n:'Qwirkle',e:'🎮',u:'/qwirkle/',c:'puzzle'}
 ,{n:'Ships Finder',e:'🚢',u:'/ships-finder/',c:'puzzle'}
-,{n:'Nerdle',e:'🧠',u:'/nerdle/',c:'puzzle'},{n:"Klotski",e:"🧩",u:"/klotski/",c:"puzzle"},{n:"Green",e:"💚",u:"/green/",c:"puzzle"},{n:"Orange",e:"🧡",u:"/orange/",c:"puzzle"},{n:"Purple",e:"💜",u:"/purple/",c:"puzzle"},{n:"Red",e:"❤️",u:"/red/",c:"puzzle"},{n:"Catch the Cat",e:"🐱",u:"/catch-the-cat/",c:"puzzle"},
-{n:"Sticker Book Puzzle",e:"🎨",u:"/sticker-book-puzzle/",c:"puzzle"},{n:"Dotchi-Loop",e:"🔄",u:"/dotchi-loop/",c:"puzzle"},{n:"Chiyotsui",e:"🚪",u:"/chiyotsui/",c:"puzzle"}]
+,{n:'Nerdle',e:'🧠',u:'/nerdle/',c:'puzzle'},{n:"Klotski",e:"🧩",u:"/klotski/",c:"puzzle"},{n:"Catch the Cat",e:"🐱",u:"/catch-the-cat/",c:"puzzle"},
+{n:"Sticker Book Puzzle",e:"🎨",u:"/sticker-book-puzzle/",c:"puzzle"},{n:"Dotchi-Loop",e:"🔄",u:"/dotchi-loop/",c:"puzzle"},]
 
   var cur = location.pathname;
   var current = games.find(function(g){ return g && g.u === cur; });
@@ -363,14 +363,14 @@
 {name:'Chocolate Bean Storm',e:'🍫',u:'/bubble-shooter/',c:'arcade'},
 {name:'Waffle',e:'🧇',u:'/waffle/',c:'puzzle'},
 {name:'Contexto',e:'🧠',u:'/contexto/',c:'puzzle'},
-      {n:'Pinball',e:'🎱',u:'/pinball/',c:'arcade'},
-      {n:'Word Card Sort',e:'🃏',u:'/word-card-sort/',c:'puzzle'},
       
-      {n:'Stickman Swing',e:'🏃',u:'/stickman-swing/',c:'arcade'},
-      {n:'Threes!',e:'🔢',u:'/threes/',c:'puzzle'},
-      {n:'Find N Merge',e:'🔍',u:'/find-n-merge/',c:'puzzle'},
-  {n:'Cryptograms',e:'🔐',u:'/cryptograms/',c:'puzzle'},
-  {n:'Mekorama',e:'🤖',u:'/mekorama/',c:'puzzle'},
+      
+      
+      
+      
+      
+  
+  
       {n:'Jewel Crush',e:'💎',u:'/jewel-crush/',c:'puzzle'},
       {n:'Go Fish',e:'🐟',u:'/go-fish/',c:'card'},
       {n:'Guess The Emoji',e:'🤔',u:'/guess-the-emoji/',c:'puzzle'},
@@ -381,9 +381,9 @@
       
       
 {n:"Factory Balls",e:"🎨",u:"/factory-balls/",c:"puzzle"},
-{n:"4 Pics 1 Word",e:"🖼️",u:"/triple-match-3d/",c:"puzzle"},
-{n:"Antistress",e:"🧸",u:"/antistress/",c:"casual"},{n:"Monkey Mart",e:"🐒",u:"/monkey-mart/",c:"casual"},{n:"Gravity Drop",e:"🔴",u:"/gravity-drop/",c:"puzzle"},{n:'Number Nexus',e:'🔢',u:'/number-nexus/',c:'puzzle'},{n:'Poly Art 3D',e:'🎨',u:'/poly-art-3d/',c:'puzzle'},{n:"Baba Is You",e:"🧩",u:"/baba-is-you/",c:"puzzle"},{n:"Nut Sort",e:"🔩",u:"/nut-sort/",c:"puzzle"},
-{n:"Pop Them",e:"💥",u:"/magic-tiles/",c:"puzzle"},{n:"Heyawake",e:"\u25a2",u:"/heyawake/",c:"puzzle"},{n:"Gokigen Naname",e:"\u25c7",u:"/gokigen-naname/",c:"puzzle"},{n:"Stained Glass",e:"🎨",u:"/stained-glass/",c:"puzzle"},{n:"Sandtrix Classic",e:"🏖",u:"/sandtrix-classic/",c:"puzzle"},{n:"Sandtrix",e:"🏖️",u:"/sandtrix/",c:"puzzle"},
+{n:"Triple Match 3D",e:"🎯",u:"/triple-match-3d/",c:"puzzle"},
+{n:"Antistress",e:"🧸",u:"/antistress/",c:"casual"},{n:"Monkey Mart",e:"🐒",u:"/monkey-mart/",c:"casual"},{n:"Gravity Drop",e:"🔴",u:"/gravity-drop/",c:"puzzle"},{n:'Number Nexus',e:'🔢',u:'/number-nexus/',c:'puzzle'},{n:'Poly Art 3D',e:'🎨',u:'/poly-art-3d/',c:'puzzle'},{n:"Baba Is You",e:"🧩",u:"/baba-is-you/",c:"puzzle"},
+{n:"Heyawake",e:"\u25a2",u:"/heyawake/",c:"puzzle"},{n:"Gokigen Naname",e:"\u25c7",u:"/gokigen-naname/",c:"puzzle"},{n:"Stained Glass",e:"🎨",u:"/stained-glass/",c:"puzzle"},{n:"Sandtrix",e:"🏖️",u:"/sandtrix/",c:"puzzle"},
 {n:"Solitaire Roguelite",e:"\U0001f3f0",u:"/solitaire-roguelite/",c:"card"},
 
       
@@ -394,28 +394,28 @@
 {n:'Claw Master',e:'🦾',u:'/claw-machine/',c:'puzzle'},
       {n:'Nail Art Studio',e:'💅',u:'/nail-art/',c:'puzzle'},
       {n:'Odd One Out',e:'🔍',u:'/odd-one-out/',c:'puzzle'},
-      {n:'Ships Finder',e:'🚢',u:'/ships-finder/',c:'puzzle'},
-      {n:'Nerdle',e:'🧠',u:'/nerdle/',c:'puzzle'},
+      
+      
       {n:'Quoridor Strategy',e:'🧱',u:'/quoridor/',c:'puzzle'},
 {n:'Woodoku',e:'🪵',u:'/woodoku/',c:'puzzle'},{n:'Fill-a-Pix',e:'🔢',u:'/fill-a-pix/',c:'puzzle'},
-      {n:'Yellow',e:'💛',u:'/yellow/',c:'puzzle'},
+      
       {n:'Blue',e:'💙',u:'/blue/',c:'puzzle'},
-      {n:'Purple',e:'💜',u:'/purple/',c:'puzzle'},
-      {n:'Red',e:'❤️',u:'/red/',c:'puzzle'},
-      {n:'Hexa 2048',e:'🔷',u:'/hexa-2048/',c:'puzzle'},
+      
+      
+      
 
 
 {n:'Slide Cat',e:'🐱',u:'/slide-cat/',c:'puzzle'},
 
-{n:'Catch the Cat',e:'🐱',u:'/catch-the-cat/',c:'puzzle'},
-{n:'Sticker Book Puzzle',e:'🎨',u:'/sticker-book-puzzle/',c:'puzzle'},
+
+
 
 
 {n:'Pulse Path',e:'⚡',u:'/pulse-path/',c:'puzzle'},
 {n:'Rullo',e:'🔢',u:'/rullo/',c:'puzzle'},
 
 
-{n:'Renban',e:'🔢',u:'/renban/',c:'puzzle'}
+
 ]; }
    }
    function getDateSeed() {
