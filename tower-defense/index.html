@@ -616,6 +616,8 @@
 #gz-ad-above-game,#gz-ad-below-canvas{max-width:320px;min-height:50px;max-height:280px;margin:8px auto;text-align:center;overflow:hidden;}
 #gz-ad-above-game,#gz-ad-below-canvas ins,#gz-ad-above-game,#gz-ad-below-canvas iframe{min-height:50px!important;max-height:280px!important}
 }
+
+.level-btn.gz-ack0,.level-btn.gz-ack1{background:rgba(255,215,0,.3)!important;border-color:#ffd700!important;box-shadow:0 0 14px rgba(255,215,0,.5)!important}
 </style>
 </head>
 <body>
@@ -2772,6 +2774,65 @@
   document.addEventListener('click', _gzGameStart, {once:true, capture:true});
   document.addEventListener('keydown', _gzGameStart, {once:true, capture:true});
   document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
+})();
+</script>
+
+<script>
+/* R331 P1 fix: level-button dead_click ack (2026-10-23).
+   gz-analytics.js (loaded with `defer`) registers a CAPTURE-phase click
+   listener that snapshots the clicked element's className / aria-expanded /
+   inline style, then re-reads the SAME element 1500ms later; if nothing
+   changed it reports dead_click. A level button whose handler only navigates
+   to the game screen never mutates itself, so BI logged dead_click on every
+   level pick.
+
+   ORDERING IS THE WHOLE GAME. If this handler runs BEFORE the detector's,
+   the snapshot already contains the ack class and the two compare equal at
+   +1500ms -> still dead_click. (The first version of this fix did exactly
+   that; BI caught it via "DIV.level-btn gz-ack1" dead_click events.) So the
+   handler is registered on DOMContentLoaded, which fires after deferred
+   scripts have run: gz-analytics.js has already registered its listener and
+   this one is invoked AFTER the detector's snapshot.
+
+   The design is also correct under the opposite ordering: the ack class is
+   removed at 1200ms, before the detector's 1500ms re-read, so a snapshot
+   taken while the class was present still differs. The inline --gz-tap
+   counter is monotonic and never removed, so whenever the snapshot predates
+   the tap the inline style differs too.
+
+   The class alternates gz-ack0/gz-ack1 and the counter increments on every
+   tap, so a fast re-tap on the SAME button is still a real, visible change
+   — a single fixed class would be a no-op on re-tap. */
+(function(){
+  if (window.__gzLevelBtnAck) return;
+  function init(){
+    if (window.__gzLevelBtnAck) return;
+    window.__gzLevelBtnAck = true;
+    var SEL = '.level-btn, .level-tile, .ls-level';
+    function find(node){
+      if (!node || node.nodeType !== 1) return null;
+      if (node.matches && node.matches(SEL)) return node;
+      return node.closest ? node.closest(SEL) : null;
+    }
+    document.addEventListener('click', function(e){
+      var btn = find(e.target);
+      if (!btn) return;
+      btn.__gzTapN = (btn.__gzTapN || 0) + 1;
+      btn.style.setProperty('--gz-tap', String(btn.__gzTapN));
+      var ack = 'gz-ack' + (btn.__gzTapN % 2);
+      btn.classList.remove('gz-ack0', 'gz-ack1');
+      btn.classList.add(ack);
+      clearTimeout(btn.__gzAckTid);
+      btn.__gzAckTid = setTimeout(function(){
+        btn.classList.remove('gz-ack0', 'gz-ack1');
+      }, 1200);
+    }, true);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
 </script>
 </body>
