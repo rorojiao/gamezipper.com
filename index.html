@@ -303,6 +303,8 @@ body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sa
 .game-info .tag{font-size:0.7em;padding:3px 8px;background:#2a2a4a;border-radius:10px;color:#4ecdc4;transition:all .25s cubic-bezier(.4,0,.2,1);cursor:pointer;text-decoration:none;white-space:nowrap}.game-info .tag:hover{background:rgba(78,210,196,.15);color:#7eeee5;transform:translateY(-1px) scale(1.05);box-shadow:0 2px 8px rgba(78,210,196,.12)}.game-info .tag:active{transform:scale(.92)}
 /* UX-OPT 2026-10-14 R926: .tag-tapped visual feedback for dead_click detector (R381 family) */
 .game-info .tag.tag-tapped{animation:gzTagTap .35s ease;background:#4ecdc4!important;color:#0a0a1a!important;box-shadow:0 0 0 2px #4ecdc4,0 0 12px rgba(78,205,196,.4)}
+/* UX-OPT 2026-10-23 R978: .tag-active = persistent "this tag is the active filter" state (the transient .tag-tapped above only flashes for 1.7s) */
+.game-info .tag.tag-active{background:#4ecdc4!important;color:#0a0a1a!important;box-shadow:0 0 0 2px #4ecdc4,0 0 12px rgba(78,205,196,.55);font-weight:700}
 @keyframes gzTagTap{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
 @media(prefers-reduced-motion:reduce){.game-info .tag.tag-tapped{animation:none!important}}
 .new-badge{position:absolute;top:10px;right:10px;background:#ff6b6b;color:#fff;padding:3px 10px;border-radius:10px;font-size:.7em;font-weight:bold;z-index:2;animation:pulse 2s infinite}
@@ -1625,7 +1627,15 @@ function _gzRenderFinalize(grid, list){
     setTimeout(function(){
       if(tag && tag.classList) tag.classList.remove('tag-tapped');
     }, 1700);
-    filter(tag.dataset.tag,tag.closest('.game-card'));
+    // UX-OPT 2026-10-23 R978: tag chips are SEO KEYWORDS, not categories.
+    // filter(tag.dataset.tag) ran _gzFDo's `g.cat === cat` test, and no
+    // tag string ever equals a category ("star loom" != "puzzle"), so EVERY
+    // tag click filtered to zero games: the grid was emptied, the "no results"
+    // panel never showed (only doSearch toggled it), and the show-more button
+    // vanished. Measured in production before the fix: cards 24 -> 0,
+    // grid height 40px, noResults display:none. Route to the keyword
+    // matcher instead, which is what the chip's data-tag actually means.
+    _gzFilterByTag(tag.dataset.tag, tag);
   });
   // Arrow-key navigation for game grid — re-queries cards on each keydown so it stays
   // correct after re-render (show-more appends new cards). Uses grid-template-columns
@@ -1650,6 +1660,89 @@ function _gzRenderFinalize(grid, list){
   });
 })();
 
+
+/* UX-OPT 2026-10-23 R978 - keyword (tag) filtering for the homepage grid.
+   A `.tag[data-tag]` chip carries an SEO keyword ("star loom", "logic puzzle"),
+   NOT a category. The old handler routed it through the category filter, which
+   compared `g.cat === tag`; since no tag equals a category the filter matched
+   nothing and the grid was blanked with no explanation. This matches the same
+   keyword rule the search box already uses (name / desc / tags substring),
+   keeps the same result-count + no-results affordances, and lets the user get
+   back by clicking the same tag again, "All", or another category. */
+var _gzActiveTag = null;
+function _gzClearTagFilter(){
+  _gzActiveTag = null;
+  document.querySelectorAll('.game-info .tag.tag-active').forEach(function(el){ el.classList.remove('tag-active'); });
+  var rc0 = document.getElementById('gz-result-count');
+  if(rc0){ rc0.style.display='none'; rc0.textContent=''; }
+}
+function _gzTagMatches(g, q){
+  if(!g) return false;
+  var ql = q.toLowerCase();
+  if(g.name && g.name.toLowerCase().indexOf(ql) !== -1) return true;
+  if(g.desc && g.desc.toLowerCase().indexOf(ql) !== -1) return true;
+  var tg = g.tags || [];
+  for(var i=0;i<tg.length;i++){
+    if(String(tg[i]).toLowerCase().indexOf(ql) !== -1) return true;
+  }
+  return false;
+}
+function _gzFilterByTag(tag, chip){
+  var q = String(tag||'').trim();
+  if(!q) return;
+  var grid = document.getElementById('games');
+  var games = window._liveGames || [];
+  var results = games.filter(function(g){ return _gzTagMatches(g, q); });
+  var noResults = document.getElementById('gz-no-results');
+  var rc = document.getElementById('gz-result-count');
+  var sm = document.getElementById('gz-show-more-wrap');
+
+  function clearActiveTagChips(){
+    document.querySelectorAll('.game-info .tag.tag-active').forEach(function(el){ el.classList.remove('tag-active'); });
+  }
+
+  // Toggle: clicking the same tag again clears the keyword filter.
+  if(_gzActiveTag === q){
+    _gzClearTagFilter();
+    if(noResults) noResults.classList.remove('show');
+    var all = games.slice(0, GZ_INITIAL_COUNT);
+    _gzAllGames = games; _gzShownCount = all.length;
+    render(all);
+    gzUpdateShowMoreBtn();
+    if(sm) sm.style.display='none';
+    return;
+  }
+
+  _gzActiveTag = q;
+  clearActiveTagChips();
+
+  // A keyword filter supersedes the category selection.
+  document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('active'); b.removeAttribute('aria-current'); });
+
+  var batch = results.slice(0, GZ_INITIAL_COUNT);
+  _gzAllGames = results; _gzShownCount = batch.length;
+  render(batch);
+  gzUpdateShowMoreBtn();
+  if(grid){ grid.classList.add('loaded'); grid.setAttribute('aria-busy','false'); }
+
+  // Same affordances the search box uses, so the state is legible.
+  if(noResults) noResults.classList.toggle('show', results.length === 0);
+  if(rc){
+    rc.style.display = 'block';
+    rc.textContent = results.length
+      ? ('Showing ' + results.length + ' game' + (results.length===1?'':'s') + ' for "' + q + '"')
+      : ('No games found for "' + q + '"');
+  }
+  if(sm) sm.style.display = (results.length > GZ_INITIAL_COUNT) ? 'block' : 'none';
+
+  // R978: render() rebuilt #games, so the clicked chip node is gone. Re-apply the
+  // persistent highlight to the freshly-built chips that carry this tag,
+  // otherwise the filter state is invisible after the grid redraws.
+  var ql = q.toLowerCase();
+  document.querySelectorAll('.game-info .tag[data-tag]').forEach(function(el){
+    if(String(el.getAttribute('data-tag')||'').toLowerCase() === ql) el.classList.add('tag-active');
+  });
+}
 var _gzFT=null;function filter(cat,btn){if(_gzFT)clearTimeout(_gzFT);_gzFT=setTimeout(function(){_gzFDo(cat,btn)},80);return}function _gzFDo(cat,btn){
   document.querySelectorAll('.cat-btn').forEach(b=>{b.classList.remove('active');b.removeAttribute('aria-current')});
   if(btn){btn.classList.add('active');btn.setAttribute('aria-current','true')}else{var fb=document.querySelector('.cat-btn');fb.classList.add('active');fb.setAttribute('aria-current','true')}
@@ -1728,7 +1821,11 @@ liveGames.sort((a,b)=>(b.isNew?1:0)-(a.isNew?1:0));
 } // end initGames()
 // so GAMES data and const liveGames are lost while skeleton loaders persist.// Show More: progressive game loading
 function gzShowMoreGames(){var r=_gzAllGames.length-_gzShownCount;if(r<=0)return;var b=_gzAllGames.slice(_gzShownCount,_gzShownCount+GZ_SHOW_MORE_COUNT);_gzShownCount+=b.length;var g=document.getElementById('games');function buildHtml(){var h=b.map(function(gm,i){var idx=_gzShownCount-b.length+i;return '<a class="game-card visible" href="'+gm.url+'" data-cat="'+gm.cat+'" itemscope itemtype="https://schema.org/Game" role="listitem" aria-label="'+gm.name+' \u2014 '+(gm.tags[0]||'')+' game. Click to play." title="'+gm.name+' \u2014 Click to play!" style="opacity:1;transform:translateY(0)"><meta itemprop="name" content="'+gm.name+'"><meta itemprop="url" content="https://gamezipper.com'+gm.url+'">'+(gm.isNew?'<span class="new-badge">&#x1F525; NEW</span>':'')+'<button class="gz-fav-btn '+(gzFavs.includes(gm.name)?'active':'')+'" data-game="'+gm.name+'" onclick="event.preventDefault();gzToggleFav(this.dataset.game)" aria-label="Toggle favorite '+gm.name+'">&#x2665;</button><div class="game-thumb" style="background:'+GAME_GRADIENTS[idx%GAME_GRADIENTS.length]+'" itemprop="image"><meta itemprop="contentUrl" content="https://gamezipper.com/og-image.webp">'+gm.emoji+'<img class="gz-thumb-img" loading="lazy" decoding="async" src="/thumbs/'+gm.url.replace(/\//g,'')+'.jpg" alt="" onerror="this.remove()">'+'<div class="overlay"><span class="play-label">&#x25B6; PLAY</span></div></div><div class="game-info"><h3 itemprop="name">'+gm.name+'</h3><div class="desc" itemprop="description">'+gm.desc+'</div><div class="tags">'+gm.tags.slice(0,6).map(function(t){return '<span class="tag" style="cursor:pointer" data-tag="'+t+'">'+t+'</span>'}).join('')+'</div><div class="gz-rating"><span class="gz-star">&#x2606;&#x2606;&#x2606;&#x2606;&#x2606;</span><span class="gz-rating-num">'+(_gzRatingMap[gm.name]||"4.8")+'</span></div><div class="gz-card-tooltip">'+(gm.tags.length?gm.tags[0]+' Game':'Browser Game')+'<span class="gz-tip-meta">Click or press <kbd>Enter</kbd> to play</span></div></div></a>'}).join('');g.insertAdjacentHTML('beforeend',h);gzUpdateShowMoreBtn()};function _smRun(){if('scheduler' in window && 'yield' in window.scheduler){window.scheduler.yield().then(buildHtml)}else if(window.requestIdleCallback){window.requestIdleCallback(buildHtml,{timeout:50})}else{setTimeout(buildHtml,0)}};if(typeof document.startViewTransition==='function'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.startViewTransition(_smRun)}else{_smRun()}}
-function gzUpdateShowMoreBtn(){var w=document.getElementById('gz-show-more-wrap'),b=document.getElementById('gz-show-more'),rc=document.getElementById('gz-remaining-count'),h=document.getElementById('gz-progress-hint');if(!w||!b)return;var r=_gzAllGames.length-_gzShownCount;if(r<=0){w.style.display='none';return}w.style.display='block';rc.textContent='('+Math.min(r,GZ_SHOW_MORE_COUNT)+' more)';h.textContent='Showing '+_gzShownCount+' of '+_gzAllGames.length+' games';b.disabled=false}
+// UX-OPT 2026-10-23 R978: split the hint out so states with nothing left to
+// load (e.g. the full 466-card grid after clearing the search) can still state
+// the true count; previously only the "more to load" branch wrote the hint.
+function gzSetProgressHint(){var h=document.getElementById('gz-progress-hint');if(h)h.textContent='Showing '+_gzShownCount+' of '+_gzAllGames.length+' games';}
+function gzUpdateShowMoreBtn(){var w=document.getElementById('gz-show-more-wrap'),b=document.getElementById('gz-show-more'),rc=document.getElementById('gz-remaining-count');if(!w||!b)return;var r=_gzAllGames.length-_gzShownCount;if(r<=0){w.style.display='none';gzSetProgressHint();return}w.style.display='block';rc.textContent='('+Math.min(r,GZ_SHOW_MORE_COUNT)+' more)';gzSetProgressHint();b.disabled=false}
 // Infinite scroll: auto-load when sentinel visible (UX: reduces click friction, +15-30% engagement)
 (function(){var _gzAutoLoading=false;function setupInfiniteScroll(){var s=document.getElementById('gz-scroll-sentinel');if(!s||!('IntersectionObserver' in window))return;var obs=new IntersectionObserver(function(e){if(e[0].isIntersecting&&!_gzAutoLoading){var r=_gzAllGames.length-_gzShownCount;if(r>0){_gzAutoLoading=true;gzShowMoreGames();setTimeout(function(){_gzAutoLoading=false},300)}}},{rootMargin:'200px',threshold:0});obs.observe(s)}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',setupInfiniteScroll)}else{setupInfiniteScroll()}})();
 
@@ -2465,7 +2562,16 @@ if(h&&!el.classList.contains('open')){h.click();setTimeout(function(){el.scrollI
     var base = (typeof window._liveGames !== 'undefined') ? window._liveGames : [];
     if (!q) {
       _lastQ = null; _lastResults = null;
+      // UX-OPT 2026-10-23 R978: render(base) paints ALL 466 cards, so the
+      // pagination counters must say so too. They used to keep their stale
+      // pre-search value (48), which made Show More compute r = 466-48 > 0
+      // and append _gzAllGames[48..72] - games already on screen (duplicates).
+      _gzAllGames = base; _gzShownCount = base.length;
       render(base);
+      // R978: refresh the hint so it stops claiming "Showing 24 of 466" while
+      // all 466 cards are actually painted.
+      if(typeof gzSetProgressHint === 'function') gzSetProgressHint();
+      if(typeof gzUpdateShowMoreBtn === 'function') gzUpdateShowMoreBtn();
       noResults.classList.remove('show');
       var rc2=document.getElementById('gz-result-count');if(rc2)rc2.style.display='none';
       // UX-OPT 2026-07-19: restore the "Show More" button after the user clears the search box.
@@ -2489,6 +2595,15 @@ if(h&&!el.classList.contains('open')){h.click();setTimeout(function(){el.scrollI
       });
     }
     _lastQ = q; _lastResults = results;
+    // UX-OPT 2026-10-23 R978: the search renders `results`, so _gzAllGames /
+    // _gzShownCount must describe `results` and not the stale full catalogue.
+    // While they described the catalogue, the infinite-scroll sentinel and
+    // gzShowMoreGames() appended 24 UNRELATED games under the search results
+    // (measured in production: searching "sudoku" then scrolling appended
+    // Laser Maze, Hexxagon, Soap Slice, Dominosa, ... - 0 of 24 matched).
+    // Also drop any active tag filter: a new query supersedes it.
+    if(typeof _gzClearTagFilter === 'function') _gzClearTagFilter();
+    _gzAllGames = results; _gzShownCount = results.length;
     noResults.classList.toggle('show', results.length === 0);if(results.length===0){var sugBox=document.getElementById('gz-noresults-suggestions');if(sugBox){var allG=window._liveGames||[];var fuzzy=[];if(q.length>=2){fuzzy=allG.map(function(g){return{g:g,score:_gzLeven(q,g.name.toLowerCase())}}).filter(function(x){return x.score<=Math.max(2,Math.floor(q.length/2))}).sort(function(a,b){return a.score-b.score}).slice(0,5).map(function(x){return x.g})}var pops=fuzzy.length>=2?fuzzy:allG.filter(function(g){return['2048','Snake','Sudoku','Chess','Tetris','Solitaire','Minesweeper','Brick Breaker','Color Sort','Word Puzzle','Crossword','Magic Sort','Mahjong Solitaire','Checkers','Reversi'].some(function(p){return g.name.toLowerCase().indexOf(p.toLowerCase())!==-1})});if(pops.length<4)pops=allG.slice(0,8);var pk=pops.slice().sort(function(){return 0.5-Math.random()}).slice(0,5);var didMean=fuzzy.length>=2?'<div style="color:#4ecdc4;font-size:0.9em;margin-bottom:12px">💡 Did you mean:</div>':'';sugBox.innerHTML=didMean+pk.map(function(g){return'<a href="'+g.url+'" style="display:inline-flex;align-items:center;gap:6px;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:12px;padding:8px 14px;text-decoration:none;color:#fff;font-size:0.85em">'+g.emoji+' '+g.name+'</a>'}).join('')}}
     // UX-OPT 2026-07-19: actually render the filtered results into the DOM. Pre-fix, results
     // was only used for the rcText + title highlight — DOM still showed the original 24 cards
@@ -2650,6 +2765,10 @@ if(h&&!el.classList.contains('open')){h.click();setTimeout(function(){el.scrollI
 var _origFilter = window.filter;
 window.filter = function(cat, btn){
   if(window._gzClearSearch) window._gzClearSearch();
+  // UX-OPT 2026-10-23 R978: a category click must also drop the active
+  // keyword filter, otherwise the category render and the stale keyword
+  // state disagree (grid shows one set, chip shows another).
+  if(typeof _gzClearTagFilter === 'function') _gzClearTagFilter();
   if(_origFilter) _origFilter(cat, btn);
   // UX-OPT 2026-06-03: Track last selected category for returning visitors
   if(cat && cat !== 'all'){
