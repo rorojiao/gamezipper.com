@@ -328,25 +328,47 @@
     })();
   }
 
+  /* R988 — INP must only consider real interactions.
+     Event Timing reports hover (mouseover/pointerover/pointerenter/mouseout/...)
+     and scroll with interactionId === 0. Per the INP spec those are NOT
+     interactions and must not feed INP. Taking the max over every entry made
+     homepage "INP POOR" a measurement of mouse-hover churn across 466 cards:
+     BI showed 1-3 POOR UV/day at avg 843ms while a throttled trace of real
+     clicks showed no entry over 16ms. Hover cost is retained separately as
+     inp_hover so the main-thread congestion is still observable. */
+  var _gzIsInteraction = function(e){
+    if (typeof e.interactionId === 'number' && e.interactionId > 0) return true;
+    // Legacy engines with no interactionId: fall back to a discrete-input name list.
+    return /^(click|dblclick|auxclick|contextmenu|keydown|keyup|keypress|pointerdown|pointerup|mousedown|mouseup|touchstart|touchend)$/.test(e.name || '');
+  };
+
   /* INP Observer: Core Web Vitals 2025 */
   (function(){
     try {
       var _po2 = window.PerformanceObserver || window.webkitPerformanceObserver;
       if (_po2) {
         var _inpWorst = 0;
+        var _hoverWorst = 0;
         var _inpObs = new _po2(function(list) {
           var entries = list.getEntries();
           for (var i = 0; i < entries.length; i++) {
             var e = entries[i];
-            if (e.duration > _inpWorst) {
-              _inpWorst = Math.round(e.duration);
+            if (_gzIsInteraction(e)) {
+              if (e.duration > _inpWorst) _inpWorst = Math.round(e.duration);
+            } else if (e.duration > _hoverWorst) {
+              _hoverWorst = Math.round(e.duration);
             }
           }
         });
-        _inpObs.observe({ type: 'event', buffered: true, durationThreshold: 100 });
+        _inpObs.observe({ type: 'event', buffered: true, durationThreshold: 16 });
         document.addEventListener('visibilitychange', function() {
           if (document.visibilityState === 'hidden' && _inpWorst > 0) {
             ps('inp_worst', { u: P, dur: _inpWorst });
+          }
+          // R988: hover/scroll cost is no longer folded into INP — report it on its
+          // own so main-thread congestion stays visible instead of being discarded.
+          if (document.visibilityState === 'hidden' && _hoverWorst >= 200) {
+            ps('inp_hover', { u: P, dur: _hoverWorst });
           }
         });
       }
@@ -393,11 +415,30 @@
     if (!pObs2) return;
     try {
       // LCP
+      // R988: report on the same terms as CLS/INP below — finalize when the page
+      // hides. Reporting from the first buffered batch captured an LCP candidate
+      // that kept growing while an idle tab stayed open (BI homepage showed avg
+      // 66s / max 457s "LCP" — 61-minute sessions, not paint times). LCP candidates
+      // are also finalized at first user input, per the LCP spec.
+      var lcpW = 0;
       new pObs2(function(list){
         var entries = list.getEntries();
-        var last = entries[entries.length - 1];
-        if (last && !reported.lcp) { reported.lcp = true; ps('vitals_rating', { u: P, metric: 'lcp', v: Math.round(last.startTime), r: rate('lcp', last.startTime) }); }
+        for (var i = 0; i < entries.length; i++) {
+          var s = entries[i].startTime;
+          if (s > lcpW) lcpW = s;
+        }
       }).observe({ type: 'largest-contentful-paint', buffered: true });
+      var _lcpFinalize = function(){
+        if (reported.lcp || !lcpW) return;
+        reported.lcp = true;
+        ps('vitals_rating', { u: P, metric: 'lcp', v: Math.round(lcpW), r: rate('lcp', lcpW) });
+      };
+      ['pointerdown', 'keydown', 'click'].forEach(function(ev){
+        document.addEventListener(ev, _lcpFinalize, { capture: true, once: true, passive: true });
+      });
+      document.addEventListener('visibilitychange', function(){
+        if (document.visibilityState === 'hidden') _lcpFinalize();
+      });
       // CLS — sum all shifts, report on hide
       var clsSum = 0;
       new pObs2(function(list){
@@ -415,6 +456,10 @@
       var inpW = 0;
       new pObs2(function(list){
         for (var i = 0; i < list.getEntries().length; i++) {
+          // R988: only real interactions feed INP (see _gzIsInteraction above).
+          // This is the path that produced daily homepage INP POOR rows at
+          // avg 843ms from hover churn alone.
+          if (!_gzIsInteraction(list.getEntries()[i])) continue;
           if (list.getEntries()[i].duration > inpW) inpW = Math.round(list.getEntries()[i].duration);
         }
       }).observe({ type: 'event', buffered: true, durationThreshold: 16 });
