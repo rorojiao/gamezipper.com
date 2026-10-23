@@ -313,13 +313,33 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     }
   }
 
-  // ── CDN health probe — v5.17.3 hardened: BI-visible liveness check
+  // ── CDN network-reachability probe — v5.17.4 (R987)
   //     v5.17 used Image() — but effectivecpmnetwork returns HTML, not an image,
   //     so onerror fired for every probe and we polluted BI with 87+ false
-  //     'cdn_blocked' per zone per day. v5.17.3 switches to fetch({mode:'no-cors'})
-  //     which resolves on network completion regardless of content type. Status
-  //     'reachable' = DNS+TCP+HTTP round-trip succeeded. 'blocked' = network error
-  //     only (DNS NXDOMAIN, ERR_BLOCKED_BY_CLIENT, etc). 'timeout' = 5s no reply.
+  //     'cdn_blocked' per zone per day. v5.17.3 switched to fetch({mode:'no-cors'})
+  //     which resolves on network completion regardless of content type.
+  //
+  //     R987 CORRECTION — v5.17.3's status names were false greens:
+  //     a no-cors fetch returns an OPAQUE response. Its body and status code are
+  //     unreadable BY DESIGN, so v5.17.3 reported status:'reachable' for:
+  //        · a healthy zone serving real ad HTML
+  //        · HTTP 200 + the 118-byte "Anonymous Proxy detected." policy page
+  //        · HTTP 403 / 404 / 410 (revoked key, publisher suspension)
+  //        · HTTP 500 from a dead origin
+  //     All four are indistinguishable in the browser. Measured 2026-10-23 from
+  //     the patrol host: both zones return HTTP 200 / Content-Length 118 /
+  //     "Anonymous Proxy detected." — a response that serves no ad at all, yet
+  //     was logged as 'reachable'. This is a TRANSPORT probe and can only ever
+  //     prove DNS+TCP+HTTP completed. It must never be read as zone health.
+  //
+  //     The rename is the fix: 'reachable' implied "an ad was servable" and the
+  //     Adsterra cron (9488d0a3a7d6) gated on it as a zone-liveness signal, so a
+  //     total zone outage would have stayed green indefinitely. Real zone health
+  //     now comes from scripts/adsterra_zone_probe.py (server-side, reads the
+  //     body, 4-state verdict) — see ZONE_HEALTH_PROBE below.
+  //
+  //     Keep in sync with gamezipper-tools/adsterra-manager.js.
+  var ZONE_HEALTH_PROBE = 'scripts/adsterra_zone_probe.py'; // server-side authority
   function probeCdn(zoneId, url) {
     return new Promise(function (resolve) {
       var done = false;
@@ -332,9 +352,14 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
         fetch(url + '?cb=' + Date.now(), { method: 'GET', mode: 'no-cors', cache: 'no-store', redirect: 'follow' })
           .then(function (r) {
             if (done) return; done = true; clearTimeout(timer);
-            // Opaque response: type 'opaque', status 0 — but we know the network
-            // round-trip succeeded (DNS resolved, TCP connected, HTTP responded).
-            resolve({ zone: zoneId, status: 'reachable', ms: Date.now() - started });
+            // Opaque response: type 'opaque', status 0 — we know the network
+            // round-trip succeeded (DNS resolved, TCP connected, HTTP responded)
+            // and NOTHING more. `transport_ok` is the honest name; `reachable`
+            // was read by dashboards as "zone serving ads".
+            resolve({
+              zone: zoneId, status: 'transport_ok', ms: Date.now() - started,
+              scope: 'transport_only', authority: 'see ' + ZONE_HEALTH_PROBE
+            });
           })
           .catch(function (e) {
             if (done) return; done = true; clearTimeout(timer);
@@ -369,11 +394,11 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     armPop();
     track('script_loaded', {
       zones: ZONES,
-      v: '5.17.3',
+      v: '5.17.4',
       path: location.pathname,
       readyState: document.readyState
     });
-    track('config_loaded', { v: '5.17.3', popInterval: POP_INTERVAL });
+    track('config_loaded', { v: '5.17.4', popInterval: POP_INTERVAL });
     // Run CDN health probe asynchronously — doesn't block init.
     setTimeout(runCdnHealth, 1500);
   }
@@ -443,6 +468,6 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
   };
 
   try {
-    console.log('[GZAdsterra] v5.17.3 active — popunder(' + ZONES.popunder + ') + smartlink(' + ZONES.smartlink + ' iframe) + cdn_health probe');
+    console.log('[GZAdsterra] v5.17.4 active — popunder(' + ZONES.popunder + ') + smartlink(' + ZONES.smartlink + ' iframe) + cdn_health probe');
   } catch (e) {}
 })();
