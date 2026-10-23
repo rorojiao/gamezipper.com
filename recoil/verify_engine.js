@@ -262,12 +262,35 @@ if (Date.now() < T0 + 100000) {
 T('no-vm-errors', !(g.sandbox.__errors || []).some(e => /TypeError|ReferenceError|^(raf|timer): /.test(e)),
   JSON.stringify((g.sandbox.__errors || []).find(e => /TypeError|ReferenceError|^(raf|timer): /.test(e)) || '').slice(0, 120));
 
+// ---------- duplicate-level gate (Pitfall #73) ----------
+// Was previously a HARMLESS NOTE that told the reader "25/27/29 are data-identical duplicates —
+// design dup, not a bug". A note is a no-op gate: it printed on every run, asserted nothing, and
+// on 2026-10-23 (R333) three of thirty tier-5 levels were in fact the SAME board under three
+// names, with L29's hint still carrying an unfinished draft ("...now-empty path... wait.").
+// Now it is a real assertion, and the identity EXCLUDES `tier` (same board under two tier labels
+// is still the same puzzle the player meets twice). See verify_duplicates.js for the standalone
+// gate with its own negative control.
+{
+  const crypto = require('crypto');
+  const COSM = new Set(['id', 'name', 'hint', 'par', 'tier']);
+  const idOf = L => crypto.createHash('md5').update(JSON.stringify(
+    Object.keys(L).sort().filter(k => !COSM.has(k)).map(k => [k, L[k]]))).digest('hex').slice(0, 10);
+  const groups = new Map();
+  LV.forEach(L => { const h = idOf(L); if (!groups.has(h)) groups.set(h, []); groups.get(h).push(L.id); });
+  const dups = [...groups.entries()].filter(([, v]) => v.length > 1);
+  T('no-duplicate-levels', dups.length === 0, 'dup boards: ' + JSON.stringify(dups));
+  // negative control: the gate must still REJECT a catalog that contains a clone
+  const ctl = LV.concat([Object.assign({}, LV[0], { id: 999, name: 'Control Clone', tier: 5 })]);
+  const ctlSeen = new Set(ctl.map(idOf));
+  T('dupgate-negative-control', ctlSeen.size !== ctl.length, 'a cloned level was NOT detected — gate is a no-op');
+}
+
 const wonCount = chain.filter(x => x.endsWith(':won')).length;
 const parNotes = Object.keys(minShots).filter(id => minShots[id] > LV[id - 1].par)
   .map(id => 'L' + id + ' min' + minShots[id] + '>par' + LV[id - 1].par).join(' ');
 const out = { pass, fail, total: pass + fail, verdict: fail === 0 ? 'PASS' : 'FAIL', fails: fails.slice(0, 8),
   extra: { levels: wonCount + '/30', durS: Math.round((Date.now() - T0) / 1000),
-    notes: 'levels 25/27/29 are data-identical duplicates (9x9 braced cross) — design dup, not a bug; ' +
+    notes: 'L27/L29 rewritten (were byte-identical clones of L25); ' +
       'min-shots exceed par on: ' + (parNotes || 'none') + ' (star design only, all winnable); ' +
       'many walls/spikes arrays are [undefined,undefined] placeholders the loader skips = open boards' } };
 console.log('recoil: ' + wonCount + '/30 levels via real pointer swipes + per-shot live-state BFS: ' + out.verdict);
