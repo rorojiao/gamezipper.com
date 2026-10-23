@@ -2171,6 +2171,19 @@
         }
         if (Date.now() - adsenseStart > CONFIG.TIMING.inGameBannerMaxFillMs) {
           clearInterval(adsenseTimer);
+          // v5.36 R983: AdSense no-fill telemetry. This is the ONLY place that can
+          // report an in-game banner no-fill, because the one banner_no_fill emitter
+          // downstream (the Tier-2 Monetag .catch) sits behind the deadZones guard,
+          // and inpagePush 11012002 is permanently in deadZones -> that guard returns
+          // before loadZone(), so the catch never ran. The metric died with the last
+          // event on 2026-09-08 (v5.35 deploy day) and stayed at 0 for 44 days while
+          // ~50 of 360 injected slots/24h genuinely failed to fill. The 10s AdSense
+          // timeout IS the real no-fill path and it was silent.
+          // Deliberately upstream of the dead-zone guard: the signal must describe
+          // AdSense fill, not Monetag fallback. Pure observability - does not touch
+          // the ad request, the dead-zone decision, or ads.txt.
+          trackAdEvent('banner_no_fill', { network: 'adsense', position: position,
+            reason: 'adsense_timeout_' + CONFIG.TIMING.inGameBannerMaxFillMs + 'ms' });
         }
       }, 300);
 

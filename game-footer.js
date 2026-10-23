@@ -460,8 +460,18 @@
      idle: {t:'⏰ More Idle', u:'/idle-games.html'},
      card: {t:'🃏 More Card', u:'/card-games.html'},
       strategy: {t:'♟️ More Strategy', u:'/simulation-games.html'},
-      skill: {t:'⚡ More Skill', u:'/word-typing-games.html'}
-   };
+           skill: {t:'⚡ More Skill', u:'/word-typing-games.html'},
+          // R983: the game's own list uses 12 `c:` values but only 6 keys were declared
+          // here. `if (current && categoryLinks[current.c])` then skips the whole CTA
+          // block, so 15 game pages silently rendered no category link and no error was
+          // raised anywhere. Guardrail added in tools/check-footer-categories.mjs:
+          // this key set must be a superset of every `c:` in the list below.
+          // Only hubs that exist and return 200 are wired up. board/dice/racing/driving
+          // are deliberately NOT here - those hub pages 404, and a CTA pointing at a 404
+          // is worse than no CTA.
+           casual: {t:'🎧 More Casual', u:'/casual-games.html'},
+          simulation: {t:'🛠️ More Sim', u:'/simulation-games.html'}
+        };
 
    var d = document.createElement('section');
    d.id = 'game-footer';
