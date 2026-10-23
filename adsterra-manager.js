@@ -395,12 +395,51 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     fireSmartlinkPing();
   }, { passive: true, capture: true });
 
+  // ── Exit-intent smartlink (R976, 2026-10-23) ───────────────────────────────
+  // Why this exists: popunder + smartlink are the ONLY live revenue. AdSense is
+  // disapproved (revenue = 0, appeal pending) and the Monetag token is dead, so
+  // these two zones are the entire business.
+  //
+  // Both were gated behind a click that walks up to an <a> element. Game pages
+  // are canvas-driven — the user clicks the canvas, not links — so the game
+  // directories (269 pages, 2194 clean PV = 58% of sitewide 7d traffic)
+  // returned only 0.109 fills/PV, versus 0.264 on /blog and 0.326 on the
+  // homepage. The monetizable intent (user finished playing and is leaving)
+  // was never being converted.
+  //
+  // This adds exit intent as a SECOND trigger feeding the SAME canShowSmart()
+  // budget: one impression per 60 minutes per session, exactly as before. It
+  // does NOT raise frequency — if a same-origin <a> click already fired the
+  // ping this session, the sessionStorage timestamp makes this a no-op. Same
+  // zone, same billing, same cap.
+  //
+  // Smartlink rather than popunder deliberately: the popunder needs
+  // window.open, which browsers popup-block (BI logs it as
+  // no_fill reason=popup_blocked) and which steals a visible tab. The
+  // smartlink is a 1x1 hidden iframe Adsterra counts server-side — same
+  // money, no user-visible cost, no interruption of the play loop.
+  var EXIT_MIN_DWELL_MS = 30000;
+  var _gzPageLoadAt = Date.now();
+
+  document.addEventListener('mouseout', function (e) {
+    // Only a genuine leave-the-window gesture, not movement between elements.
+    if (e.relatedTarget !== null && e.relatedTarget !== undefined) return;
+    // Same heuristic monetag-manager v5.12 settled on: clientY > 30 means the
+    // pointer left from the middle/bottom, which is not exit intent. Browsers
+    // report negative OR 0-30 when leaving through the top edge — both are the
+    // gesture we want to catch.
+    if (typeof e.clientY === 'number' && e.clientY > 30) return;
+    // Don't monetise an instant bounce.
+    if (Date.now() - _gzPageLoadAt < EXIT_MIN_DWELL_MS) return;
+    fireSmartlinkPing();
+  }, { passive: true });
+
   window.GZAdsterraManager = {
     firePopunder: firePopunder,
     fireSmartlinkPing: fireSmartlinkPing,
     getSmartlinkUrl: function () { return SMARTLINK_URL; },
     zones: ZONES,
-    version: '5.17.3'
+    version: '5.18.0-exitintent'
   };
 
   try {
