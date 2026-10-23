@@ -353,13 +353,28 @@ if(_wKeyboard&&!_wKeyboard.__gzKeyTapBound){
 // Click delegation on #board adds .tile-tapped class for 1.7s + scrolls #keyboard into view.
 const _wBoard=document.getElementById('board');
 if(_wBoard){
-  let _gzTileTapTO=null;
+  // R331 P1 — two real defects in the R527 ack, both measured live:
+  //  (1) BI logged 15 dead_click on /wordle/ in 12 days with sel "DIV.tile tile-tapped".
+  //      A RE-TAP of the same tile inside the 1700ms window was a guaranteed zero-delta:
+  //      classList.add('tile-tapped') on an element that already carries the class
+  //      changes nothing, so gz-analytics' second snapshot equalled the first.
+  //      Same class as candle-crafter R321 (re-tap on an already-acknowledged control).
+  //  (2) ONE shared timeout guarded every tile. Tapping tile A then tile B cleared A's
+  //      pending removal, so A kept .tile-tapped forever — measured leak_staleCount=1
+  //      and t0.className still "tile filled tile-tapped" 2.6s later.
+  // Fix: a per-tile timer map, and a MONOTONIC inline marker. gz-analytics snapshots
+  // className + aria-expanded + the inline style attribute, and an attribute survives
+  // on a detached node — so --gz-tap yields a guaranteed delta on EVERY tap, including
+  // a re-tap, and survives renderBoard() replacing the tile on the next keystroke.
+  const _wTapTimers=new WeakMap(); let _wTapSeq=0;
   _wBoard.addEventListener('click',e=>{
     const t=e.target.closest('.tile');
     if(!t||!_wBoard.contains(t))return;
+    t.style.setProperty('--gz-tap',String(++_wTapSeq));
+    t.classList.remove('tile-tapped'); void t.offsetWidth;   // restart the pop animation
     t.classList.add('tile-tapped');
-    clearTimeout(_gzTileTapTO);
-    _gzTileTapTO=setTimeout(()=>{if(t&&t.classList)t.classList.remove('tile-tapped');},1700);
+    const prev=_wTapTimers.get(t); if(prev)clearTimeout(prev);
+    _wTapTimers.set(t,setTimeout(()=>{t.classList.remove('tile-tapped');t.style.removeProperty('--gz-tap');},1700));
     const kb=document.getElementById('keyboard');
     if(kb&&typeof kb.scrollIntoView==='function'){kb.scrollIntoView({behavior:'smooth',block:'nearest'});}
   });
