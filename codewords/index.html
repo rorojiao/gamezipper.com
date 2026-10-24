@@ -83,6 +83,10 @@ body{background:var(--bg1);background:radial-gradient(ellipse at top,var(--bg2),
 .grid-cell.hint .letter{color:var(--gold)}
 .grid-cell.selected .letter{color:var(--gold)}
 .grid-cell.correct .letter{color:#6afa6a}
+/* R334 P1: a hint cell is a GIVEN and cannot be edited. Flash it when the
+   player tries, so the refusal reads as feedback rather than a dead click. */
+.grid-cell.hint-locked{animation:gzhintshake .4s ease}
+@keyframes gzhintshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 .controls{display:flex;gap:6px;justify-content:center;margin:12px 0;flex-wrap:wrap}
 .controls button{background:var(--cell-bg);border:1px solid var(--border);border-radius:8px;color:var(--txt);padding:8px 16px;cursor:pointer;font-size:.85rem;transition:all .2s;font-family:inherit}
 .controls button:hover{border-color:var(--gold);background:var(--cell-sel)}
@@ -95,6 +99,22 @@ body{background:var(--bg1);background:radial-gradient(ellipse at top,var(--bg2),
 .kb-key:active{transform:scale(.92)}
 .kb-key.used{background:var(--cell-ok);border-color:#3a6a3a;color:#6afa6a}
 .kb-key.disabled{opacity:.3;cursor:not-allowed}
+/* R334 P2: live feedback line under the keyboard. When the player taps a
+   letter before picking a cell (or taps a letter that is not in this
+   puzzle), the game must SAY WHY nothing happened — otherwise the tap is
+   a genuine dead click (BI: "DIV.kb-key" / "DIV.kb-key used"). */
+.kb-msg{min-height:15px;text-align:center;color:var(--gold);font-size:.68rem;margin-top:5px;letter-spacing:.5px}
+/* R334 P2: tap ack on the in-game grid cells + keyboard keys. The
+   dead_click detector snapshots the clicked element's className and
+   re-reads the SAME element 1500ms later; renderGrid()/renderKeyboard()
+   replace their container via innerHTML='', so the node the detector
+   holds is DETACHED and its className is frozen forever. The capture-
+   phase stamp below is the only write the detector can observe.
+   `outline` is used deliberately: `.grid-cell.selected` owns `box-shadow`
+   and `.kb-key.used` owns `background`, so an ack that touched either
+   would visually replace the game's own state feedback. */
+.grid-cell.gz-ack0,.grid-cell.gz-ack1{outline:2px solid var(--gold-dim);outline-offset:-2px}
+.kb-key.gz-ack0,.kb-key.gz-ack1{outline:2px solid var(--gold-dim);outline-offset:-2px}
 .num-key{display:flex;flex-direction:column;align-items:center;gap:2px}
 .num-key .n{font-size:.7rem;color:var(--gold-dim)}
 .overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);display:none;justify-content:center;align-items:center;z-index:100}
@@ -217,6 +237,7 @@ body{background:var(--bg1);background:radial-gradient(ellipse at top,var(--bg2),
 <div class="kb-wrap">
 <div class="kb-label">Tap a cell, then choose a letter</div>
 <div class="keyboard" id="keyboard"></div>
+<div class="kb-msg" id="kb-msg" role="status" aria-live="polite"></div>
 </div>
 <div class="ad-slot" id="ad-game"></div>
 </div>
@@ -330,8 +351,11 @@ var rowEl=document.createElement('div');rowEl.className='grid-row';
 row.forEach(function(num,ci){
 var cell=document.createElement('div');
 cell.className='grid-cell';
-var letter=state.playerMap[num];
 var isHint=lv.h[num]!==undefined;
+/* R334 P1: a HINT is a given — render it from lv.h (the authoritative
+   source), never from the player's mutable map, so a hint cell can never
+   render blank or wrong even if playerMap is damaged. */
+var letter=isHint?lv.h[num]:state.playerMap[num];
 var solution=lv.s[num];
 if(isHint)cell.classList.add('hint');
 if(state.selectedNum===num)cell.classList.add('selected');
@@ -348,6 +372,34 @@ container.appendChild(rowEl);
 
 function selectCell(num){
 state.selectedNum=num;sfxClick();renderGrid();
+setKbMsg('');
+}
+
+/* R334 P2: explain a refused action instead of silently doing nothing.
+   BI logged 12x "DIV.kb-key used" + 4x "DIV.kb-key" + 10x "DIV.grid-cell"
+   dead_click on this game after the R331 level-button ack shipped. The
+   cause is NOT the level button (that one is fixed) — it is the in-game
+   controls:
+     (a) tapping a LETTER KEY with no cell selected: assignLetter()
+         returned immediately at `if(state.selectedNum<0)return;` — the
+         player saw absolutely nothing happen;
+     (b) tapping a letter that is not part of this puzzle: the key is
+         rendered `disabled` (opacity .3) and its onclick refuses, so
+         the tap is again invisible.
+   Both are real UX dead spots, so both now write a short line under the
+   keyboard saying what the player should do next. */
+var _kbMsgTid=null;
+function setKbMsg(txt){
+var el=document.getElementById('kb-msg');
+if(!el)return;
+el.textContent=txt||'';
+if(_kbMsgTid)clearTimeout(_kbMsgTid);
+if(txt){
+  _kbMsgTid=setTimeout(function(){
+    var e2=document.getElementById('kb-msg');
+    if(e2)e2.textContent='';
+  },2600);
+}
 }
 
 // ═══ Keyboard ═══
@@ -364,22 +416,96 @@ if(assignedLetters.has(lower))key.classList.add('used');
 if(!usedLetters.has(lower))key.classList.add('disabled');
 key.textContent=letter;
 if(!usedLetters.has(lower)){key.style.opacity='.2';}
-key.onclick=function(l){return function(){if(!this.classList.contains('disabled'))assignLetter(l);}}(lower);
+key.onclick=function(l){return function(){
+  /* R334 P2: a letter that is not in this puzzle is refused — say so,
+     otherwise the tap is invisible and BI logs it as a dead click. */
+  if(this.classList.contains('disabled')){sfxError();setKbMsg(l.toUpperCase()+' is not in this puzzle');return;}
+  assignLetter(l);
+}.bind(key);}(lower);
 container.appendChild(key);
 }
 }
 
 // ═══ Assign Letter ═══
+/* R334 P1 fix (2026-10-24): hint cells are GIVENS and must be immutable.
+
+   Before this fix, `assignLetter` had two defects that let a player destroy
+   a given:
+
+   (a) Assigning a letter to a HINT cell overwrote the given with the
+       player's (possibly wrong) letter, and the cell then rendered the
+       wrong letter with the gold "hint" class still applied.
+   (b) Assigning a letter that a HINT already owned DELETED that letter from
+       the hint's number, so the hint cell went completely EMPTY (the gold
+       class remained but the letter was gone).
+
+   (b) is the severe one: the player loses information the level gave them
+   for free, and because `clearErrors` deliberately skips hint cells
+   (`lv.h[n]===undefined`), the game's own "Clear" button cannot restore it
+   either — the level becomes unwinnable by ordinary play.
+
+   The fix mirrors what the sibling puzzle games already do:
+     - str8ts:  `if(cell.given || cell.black) return;`   (givens are locked)
+     - ripple-effect: `if(puzzle[r][c])return;`          (givens are locked)
+
+   Here a hint is any number present in lv.h, so:
+     - assigning INTO a hint number is refused (the given stays), and
+     - a letter already owned by a hint is never stripped from it.
+
+   The refusal is not silent: it plays the error sound and flashes the hint
+   cell, so the player gets immediate feedback instead of a dead click. */
 function assignLetter(letter){
-if(state.selectedNum<0)return;
+/* R334 P2: no cell selected -> tell the player what to do. Before this,
+   the tap was completely silent (the function just returned), which BI
+   recorded as a dead_click on "DIV.kb-key" / "DIV.kb-key used". */
+if(state.selectedNum<0){sfxError();setKbMsg('Tap a cell first, then pick a letter');return;}
 var lv=LEVELS[state.levelIdx];
-// Check if letter already assigned to another number
-for(var n in state.playerMap){if(state.playerMap[n]===letter&&parseInt(n)!==state.selectedNum){delete state.playerMap[n];}}
+var num=String(state.selectedNum);
+// (a) never overwrite a given (hint) cell
+if(lv.h[num]!==undefined){sfxError();flashHint(num);setKbMsg('That cell is a given — its letter is already fixed');return;}
+// (b) a letter owned by a hint belongs to that hint - never steal it.
+//     Read the ownership from lv.h (the authoritative given map), NOT from
+//     state.playerMap: if the player's map ever lost a hint entry, reading
+//     playerMap here would let the letter be stolen from the given.
+for(var hn in lv.h){
+  if(hn!==num && lv.h[hn]===letter){sfxError();flashHint(hn);setKbMsg(letter.toUpperCase()+' belongs to a given cell');return;}
+}
+setKbMsg('');
+// Check if letter already assigned to another number. Hinted numbers are
+// skipped outright: a given's letter must never be stripped from it.
+for(var n in state.playerMap){
+  if(lv.h[n]!==undefined)continue;
+  if(state.playerMap[n]===letter&&parseInt(n)!==state.selectedNum){delete state.playerMap[n];}
+}
 state.playerMap[state.selectedNum]=letter;
 var correct=lv.s[state.selectedNum]===letter;
 if(correct){sfxCorrect();}else{sfxPlace();}
 renderGrid();renderKeyboard();
 checkWin();
+}
+
+/* Visual feedback for a refused assignment on a given cell (R334).
+   Adds a short-lived class so the player sees WHY nothing happened.
+   The class is removed on a timer, so a re-tap is still a real change.
+
+   NOTE: a number appears in MANY cells of a codewords grid (level 1 has
+   "3" twice and "8" twice), so EVERY cell showing that number is flashed,
+   not just the first one found. */
+var _hintFlashTid=null;
+function flashHint(num){
+  renderGrid();
+  var cells=document.querySelectorAll('#puzzle-grid .grid-cell');
+  var hit=0;
+  for(var i=0;i<cells.length;i++){
+    var n=cells[i].querySelector('.num');
+    if(n&&n.textContent.trim()===String(num)){cells[i].classList.add('hint-locked');hit++;}
+  }
+  if(!hit)return;
+  if(_hintFlashTid)clearTimeout(_hintFlashTid);
+  _hintFlashTid=setTimeout(function(){
+    var all=document.querySelectorAll('#puzzle-grid .grid-cell.hint-locked');
+    for(var j=0;j<all.length;j++)all[j].classList.remove('hint-locked');
+  },1200);
 }
 
 // ═══ Hint ═══
@@ -407,9 +533,24 @@ renderGrid();renderKeyboard();
 }
 
 // ═══ Win Detection ═══
+/* R334 P1: a HINT is a GIVEN, so the win check must treat it as satisfied
+   no matter what the player's mutable map says.
+
+   Before this, checkWin() compared `state.playerMap[n]` against `lv.s[n]`
+   for EVERY number, including the hinted ones. A hint lives in playerMap
+   only because startLevel() copies it there — so if that entry was ever
+   lost, the level could never be completed, and the player's own "Clear"
+   button could not restore it (clearErrors() deliberately skips hinted
+   numbers). Reading the given from `lv.h` makes the level immune to that
+   class of soft-lock, and it is the same rule the renderer uses
+   (`isHint ? lv.h[num] : state.playerMap[num]`). */
 function checkWin(){
 var lv=LEVELS[state.levelIdx];
-for(var n in lv.s){if(state.playerMap[n]!==lv.s[n])return false;}
+for(var n in lv.s){
+  var given = (lv.h[n]!==undefined);
+  if(given){ if(lv.h[n]!==lv.s[n]) return false; continue; }
+  if(state.playerMap[n]!==lv.s[n])return false;
+}
 // Won!
 stopTimer();stopBGM();sfxWin();
 var time=Math.floor((Date.now()-state.startTime)/1000);
@@ -622,6 +763,102 @@ document.addEventListener('visibilitychange',function(){if(document.hidden){stop
       btn.__gzAckTid = setTimeout(function(){
         btn.classList.remove('gz-ack0', 'gz-ack1');
       }, 1200);
+    }, true);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script>
+/* R334 P2 fix: in-game control dead_click ack (2026-10-24).
+   gz-analytics.js (loaded with `defer`) registers a CAPTURE-phase click
+   listener on `document` that snapshots the clicked element's className /
+   aria-expanded / inline style, then re-reads that SAME element 1500ms
+   later; if nothing changed it reports dead_click.
+
+   The R331 fix above only covered the LEVEL buttons. BI kept logging
+   dead_click on the in-game controls after R331 shipped:
+       /codewords/  DIV.grid-cell            10 events / 4 UV
+       /codewords/  DIV.kb-key used          12 events / 5 UV
+       /codewords/  DIV.kb-key                4 events / 1 UV
+       /codewords/  DIV.grid-cell hint correct 3 events / 3 UV
+   (live traffic, after the R331 deploy at 2026-10-23 15:20)
+
+   TWO separate causes, and BOTH must be handled:
+
+   (1) THE NODE IS DETACHED BY THE RE-RENDER (the R327 "detached node"
+       pattern). `renderGrid()` and `renderKeyboard()` rebuild their whole
+       container with `container.innerHTML=''`, so the cell/key the player
+       tapped is REMOVED from the DOM and replaced by a brand-new node.
+       The detector still holds the OLD (detached) node, whose className
+       is frozen forever — so it reports dead_click no matter what the
+       game did. This is the same defect class color-by-number had; the
+       proven fix is to stamp the PRE-rebuild node in the CAPTURE phase,
+       which is the only write the detector can observe.
+
+   (2) THE ACTION WAS GENUINELY REFUSED. `assignLetter()` returned
+       immediately when no cell was selected, and a `disabled` key
+       (a letter that is not part of this puzzle) simply did nothing.
+       Both are now explained in a live message line under the keyboard
+       (see setKbMsg in the game script), so the player gets feedback
+       instead of a silent tap.
+
+   The capture-phase stamp is registered on DOMContentLoaded so it runs
+   AFTER gz-analytics.js has registered its own capture listener — the
+   detector's snapshot therefore happens BEFORE this handler adds the
+   ack class, which is the ordering that makes the class difference
+   visible. The monotonic inline `--gz-tap` counter is never removed, so
+   the inline-style comparison also differs under the opposite ordering.
+   The class alternates gz-ack0/gz-ack1 so a fast re-tap on the SAME
+   element is still a real change. */
+(function(){
+  if (window.__gzInGameAck) return;
+  function init(){
+    if (window.__gzInGameAck) return;
+    window.__gzInGameAck = true;
+    var SEL = '.grid-cell, .kb-key';
+    /* Every node we stamped, including the pre-rebuild ones. The removal
+       timer clears all of them, because the pre-rebuild node is no longer
+       in the document and cannot be found by a querySelector. */
+    var stamped = [];
+    var cleanupTid = null;
+    function find(node){
+      if (!node || node.nodeType !== 1) return null;
+      if (node.matches && node.matches(SEL)) return node;
+      return node.closest ? node.closest(SEL) : null;
+    }
+    function stamp(el){
+      if (!el || !el.classList) return;
+      el.__gzTapN = (el.__gzTapN || 0) + 1;
+      el.style.setProperty('--gz-tap', String(el.__gzTapN));
+      var ack = 'gz-ack' + (el.__gzTapN % 2);
+      el.classList.remove('gz-ack0', 'gz-ack1');
+      el.classList.add(ack);
+      stamped.push(el);
+      /* One self-rescheduling timer clears every stamped node, pre-rebuild
+         ones included. A permanent setInterval would be a timer leak
+         (QA rule: timers must be cleaned up), so the timer only lives
+         while there is something to clean. */
+      if (cleanupTid) clearTimeout(cleanupTid);
+      cleanupTid = setTimeout(function(){
+        cleanupTid = null;
+        for (var i = 0; i < stamped.length; i++) {
+          var n = stamped[i];
+          if (n && n.classList) n.classList.remove('gz-ack0', 'gz-ack1');
+        }
+        stamped.length = 0;
+      }, 1200);
+    }
+    document.addEventListener('click', function(e){
+      /* CAPTURE phase — runs BEFORE the game's own onclick, i.e. while
+         the tapped cell/key is still attached to the document. */
+      var el = find(e.target);
+      if (!el) return;
+      stamp(el);
     }, true);
   }
   if (document.readyState === 'loading') {
