@@ -174,7 +174,7 @@
 <div class="wrap">
   <header>
     <a class="brand" href="/" aria-label="GameZipper home"><span class="dot">S</span><span><b>GameZipper</b><small>Puzzle</small></span></a>
-    <button class="iconbtn" id="btn-sound" title="Sound" aria-label="Toggle sound">&#9834;</button>
+    <button class="iconbtn" id="btn-sound" title="Sound" aria-label="Toggle sound">🔊</button>
   </header>
 
   <div class="title-block">
@@ -761,6 +761,9 @@ function wire(){
   el('btn-howto').addEventListener('click',onceClick(function(){G.running=false;stopTimer();showScreen('howto');}));
   el('btn-sound').addEventListener('click',onceClick(function(){
     G.muted=!G.muted;
+    // R335 P2: the toolbar sound button had NO visible state change, so the
+    // player could not tell whether sound was on or off. Write the glyph.
+    syncSoundUI();
     if(G.muted){stopBGM();} else if(G.musicOn) {startBGM();}
     persist(); sfx('btn');
   }));
@@ -788,7 +791,7 @@ function wire(){
     if(G.solution){G.running=true;G.startTime=Date.now()-G.elapsed;startTimer();hideAllScreens();}else{showSplash();}
   }));
   el('set-sound').addEventListener('click',onceClick(function(){
-    G.muted=!G.muted; el('set-sound').textContent='Sound: '+(G.muted?'Off':'On');
+    G.muted=!G.muted; syncSoundUI();
     if(G.muted){stopBGM();} else if(G.musicOn) startBGM(); persist();
   }));
   el('set-music').addEventListener('click',onceClick(function(){
@@ -859,10 +862,18 @@ function cleanup(){
   if(G.rAF){cancelAnimationFrame(G.rAF); G.rAF=0;}
   if(G.audio){try{G.audio.close();}catch(e){} G.audio=null;}
 }
+// R335 P2: single source of truth for the sound-button glyph so the
+// toolbar button and the settings row can never disagree, and the icon
+// always reflects the persisted mute state.
+function syncSoundUI(){
+  var b=el('btn-sound'); if(b) b.textContent=G.muted?'🔇':'🔊';
+  var s=el('set-sound'); if(s) s.textContent='Sound: '+(G.muted?'Off':'On');
+}
 function init(){
   var s=loadSave();
   G.muted=s.muted||false; G.musicOn=(s.music!==undefined?s.music:true); G.curTier=s.lastTier||'All';
   G._progress=s.progress||{}; G._daily=s.daily||{}; G._tutSeen=s.tutSeen||false;
+  syncSoundUI();
   wire();
   showSplash();
 }

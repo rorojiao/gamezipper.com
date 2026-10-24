@@ -185,7 +185,7 @@
 <div class="wrap">
   <header>
     <a class="brand" href="/" aria-label="GameZipper home"><span class="dot">OE</span><span><b>GameZipper</b><small>Puzzle</small></span></a>
-    <button class="iconbtn" id="btn-sound" title="Sound" aria-label="Toggle sound">&#9834;</button>
+    <button class="iconbtn" id="btn-sound" title="Sound" aria-label="Toggle sound">🔊</button>
   </header>
 
   <div class="title-block">
@@ -783,7 +783,7 @@ function wire(){
   el('btn-howto').addEventListener('click',onceClick(function(){showScreen('howto');}));
   el('btn-sound').addEventListener('click',onceClick(function(){
     G.muted=!G.muted;
-    el('btn-sound').textContent=G.muted?'\u266B':'\u266B';
+    syncSoundUI();
     if(G.muted){stopBGM();} else if(G.musicOn) {startBGM();}
     persist(); sfx('btn');
   }));
@@ -815,7 +815,7 @@ function wire(){
     if(G.solution){G.running=true;G.startTime=Date.now()-G.elapsed;startTimer();hideAllScreens();}else{showSplash();}
   }));
   el('set-sound').addEventListener('click',onceClick(function(){
-    G.muted=!G.muted; el('set-sound').textContent='Sound: '+(G.muted?'Off':'On');
+    G.muted=!G.muted; syncSoundUI();
     if(G.muted){stopBGM();} else if(G.musicOn) startBGM();
     persist();
   }));
@@ -924,6 +924,13 @@ function cleanup(){
 }
 
 /* ============ INIT ============ */
+// R335 P2: single source of truth for the sound-button glyph so the
+// toolbar button and the settings row can never disagree, and the icon
+// always reflects the persisted mute state.
+function syncSoundUI(){
+  var b=el('btn-sound'); if(b) b.textContent=G.muted?'🔇':'🔊';
+  var s=el('set-sound'); if(s) s.textContent='Sound: '+(G.muted?'Off':'On');
+}
 function init(){
   sizeConfetti();
   var s=loadSave();
@@ -933,7 +940,7 @@ function init(){
   G._daily=s.daily||{};
   G._tutSeen=!!s.tutSeen;
   G.curTier=s.lastTier||'All';
-  el('set-sound').textContent='Sound: '+(G.muted?'Off':'On');
+  syncSoundUI();
   el('set-music').textContent='Music: '+(G.musicOn?'On':'Off');
   wire();
   setupCanvas();
