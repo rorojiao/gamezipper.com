@@ -41,7 +41,13 @@
       }
     return best;
   };
-  const RAD = cell * 0.10;
+  // Disc radius must be RESOLUTION-INDEPENDENT.  The dot is a STROKE of
+  // radius 0.12*cell with lineWidth max(1.5, 0.03*cell), so the stroke band
+  // starts at ~0.135*cell -- a 0.10*cell disc misses hollow dots entirely at
+  // large cell sizes (mobile cell=91.5 -> band starts at 12.4px, disc 9.15px).
+  // 0.25*cell comfortably contains the whole dot while still excluding a
+  // digit glyph (whose nearest ink is ~0.35*cell from the line).
+  const RAD = cell * 0.25;
   const DOT_ALPHA = 170;   // a dot stroke/fill reaches ~230; a bare line ~36
 
   let expH = 0, expV = 0, foundH = 0, foundV = 0;
