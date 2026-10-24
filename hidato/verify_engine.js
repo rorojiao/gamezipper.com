@@ -10,10 +10,18 @@ fs.writeFileSync(LOG, '');
 const trace = (m) => fs.appendFileSync(LOG, m + '\n');
 const g = bootGame('hidato', { inject: {
   anchor: 'function loadLevel(',
-  exports: `/* harness fidelity: stub createElement elements lack cloneNode; engine's openPicker
-     calls grid.cloneNode(true) on dead code (result discarded) — satisfy it */
-  (function(){ const o = document.createElement.bind(document); document.createElement = (t) => { const el = o(t); if (el) { if (!el.cloneNode) el.cloneNode = function(){ return el; }; if (!el.replaceWith) el.replaceWith = function(){}; } return el; };
-    const pg = document.getElementById('picker-grid'); if (pg && !pg.replaceWith) pg.replaceWith = function(){};
+  exports: `/* harness fidelity: stub createElement elements lack cloneNode — keep the
+     stub so a future engine change that DOES use cloneNode cannot crash the harness.
+     NOTE: the old code also stubbed replaceWith to a no-op because openPicker()
+     called $("#picker-grid").replaceWith(...) on what it called "dead code". That
+     stub is what HID a P0: the real DOM lost #picker-grid on the first open, so the
+     second open threw "Cannot read properties of null (reading 'replaceWith')" and
+     the number picker was permanently dead after the player's first placement.
+     The bug is fixed (openPicker no longer uses replaceWith), and the regression
+     gate that would have caught it is hidato/verify_picker_browser.js — it must
+     run in a REAL browser, because this harness's getElementById always returns
+     an element and therefore can never reproduce a null lookup. */
+  (function(){ const o = document.createElement.bind(document); document.createElement = (t) => { const el = o(t); if (el) { if (!el.cloneNode) el.cloneNode = function(){ return el; }; } return el; };
     const pk = document.getElementById('picker'); if (pk) Object.defineProperty(pk, 'firstChild', { get: function(){ return (this.children || []).length ? this.children[0] : null; } }); /* harness firstChild returns a text stub when empty; engine's while(firstChild) removeChild loop would spin forever */ })();
   globalThis.__T = {
     n: () => TOTAL_LEVELS,
