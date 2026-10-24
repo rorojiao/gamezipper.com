@@ -727,6 +727,33 @@ buildingFeedbackTimers.add(timerId);
 function updateDisplay(){
 document.getElementById('cookie-count').textContent=fmt(state.cookies)+' cookies';
 document.getElementById('cps-value').textContent=fmt(currentCPS)+'/s';
+// R335 P2: the shop only recomputed its affordable/locked classes when the
+// panel was rebuilt (on purchase), so earning cookies by clicking or via the
+// idle CPS tick left a buyable item rendered as `.locked` -> dimmed with
+// cursor:default. Refresh the affordance classes in place (no rebuild: that
+// would thrash the DOM and drop the hover/feedback state).
+refreshShopAffordability();
+}
+
+// R335 P2: recompute ONLY the affordable/locked classes on the existing rows.
+// The `locked` predicate is copied verbatim from updateBuildingsPanel() so the
+// two can never disagree.
+function refreshShopAffordability(){
+const bp=document.getElementById('buildings-panel');
+if(bp)bp.querySelectorAll('.building-item').forEach(function(div){
+var i=+div.dataset.buildingId; if(isNaN(i))return;
+var cost=getBuildingCost(i);
+var canAfford=state.cookies>=cost;
+div.classList.toggle('affordable',canAfford);
+div.classList.toggle('locked',state.buildings[i]===0&&!canAfford);
+});
+const up=document.getElementById('upgrades-panel');
+if(up)up.querySelectorAll('.upgrade-item').forEach(function(div){
+var id=div.dataset.upgradeId;
+var u=UPGRADES.find(function(x){return x.id===id;});
+if(!u)return;
+div.classList.toggle('affordable',state.cookies>=u.cost);
+});
 }
 
 function updateBuildingsPanel(){
