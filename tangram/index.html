@@ -251,6 +251,26 @@ resize();window.addEventListener("resize",resize);
 var curLevel=0,pieces=[],dragPiece=null,dragOff={x:0,y:0};
 var levelTime=0,levelScore=0,hintsUsed=0,levelActive=false;
 var undoStack=[],particles=[],animFrame=null,lastTime=0;
+/* R989 — tap acknowledgement for taps that hit NO piece.
+   BI 7d: /tangram/ had 157 rage_clicks (6 real users). Cross-source audit
+   classified every recorded coordinate with the game's own findPiece():
+     - Desktop/CrOS (44 clicks): 11/12 landed ON a piece -> that is the
+       double-tap-to-rotate mechanic (now-lastTap<350 && p===lastTapPiece),
+       a legitimate core mechanic. Not a bug.
+     - iPhone (90 clicks across 2 users): 18/18 landed on EMPTY canvas.
+   The empty-canvas branch was `else{lastTap=now;lastTapPiece=null;dragPiece=null}`
+   -> the tap was absorbed with ZERO visible response, so the user kept tapping
+   (the R381/R847/R889 family: handler runs, user sees nothing).
+   Fix: spawn a visible ripple + halo at the tap site so every tap on the
+   canvas is acknowledged. Same recipe as antistress R801/R873/R888/R901.
+   Lifetime is deliberately >0.5s (ack 0.7s, halo 1.2s): a shorter ripple dies
+   before the eye registers it and the user rage-taps anyway. */
+var tapMarks=[];
+function spawnTapMark(x,y,hit){
+  tapMarks.push({x:x,y:y,life:1,maxLife:hit?0.7:0.85,r:hit?13:16,
+    color:hit?"rgba(120,255,255,.75)":"rgba(255,190,90,.7)",hit:!!hit});
+  if(tapMarks.length>30)tapMarks.shift();
+}
 /* R938 R354+R366 helpers — scheduleNextFrame + offscreen-pre-render silhouette+tray caches */
 var silCache=null,silCacheLvl=-1,silCacheW=0,silCacheH=0,silCacheDirty=true;
 function bakeSilhouette(){
@@ -293,6 +313,11 @@ function refreshBakesIfDirty(){
 function isFullyIdle(){
   if(animFrame===null) return true;
   if(particles.length>0) return false;
+  // R989: an animating tap mark means the user just tapped — keep painting
+  // until the acknowledgement ripple fades, otherwise the stopped-idle loop
+  // (R354) would freeze the ripple on frame 1 and the user would still see
+  // nothing.
+  if(tapMarks.length>0) return false;
   if(dragPiece) return false;
   return true;
 }
@@ -301,7 +326,13 @@ function scheduleNextFrame(){
   animFrame=requestAnimationFrame(function(ts){
     animFrame=null;
     loop(ts);
-    if(!isFullyIdle()) scheduleNextFrame();
+    // R989: a live tap-acknowledgement mark must keep the loop running so the
+    // ripple actually animates. The R354 stopped-idle design only advances one
+    // frame per resumeLoop() call, so without this the mark was painted once
+    // and then froze on screen (still fully opaque) — the user would see a
+    // static dot, not a ripple, and keep tapping. Self-terminates: when the
+    // last mark expires tapMarks is empty and the loop stops again.
+    if(!isFullyIdle()||tapMarks.length>0) scheduleNextFrame();
   });
 }
 function resumeLoop(){scheduleNextFrame()}
@@ -471,11 +502,16 @@ function findPiece(x,y){for(var i=pieces.length-1;i>=0;i--){var wv=getWorldVerts
 
 canvas.addEventListener("pointerdown",function(e){
   e.preventDefault();initAudio();var pos=getPos(e),now=Date.now(),p=findPiece(pos.x,pos.y);
+  // R989: acknowledge EVERY tap. A tap that hits no piece used to be absorbed
+  // silently (else-branch below), which is what drove the iPhone rage_click
+  // cluster — 18/18 recorded iPhone taps landed on empty canvas.
+  spawnTapMark(pos.x,pos.y,!!p);
   if(p){
-    if(now-lastTap<350&&p===lastTapPiece){p.rot=(p.rot+1)%8;sndRotate();lastTap=0;lastTapPiece=null;return}
+    if(now-lastTap<350&&p===lastTapPiece){p.rot=(p.rot+1)%8;sndRotate();lastTap=0;lastTapPiece=null;resumeLoop();return}
     lastTap=now;lastTapPiece=p;dragPiece=p;dragOff={x:pos.x-p.x,y:pos.y-p.y};p.scale=1.06;sndPick();
     var idx=pieces.indexOf(p);pieces.splice(idx,1);pieces.push(p);
   }else{lastTap=now;lastTapPiece=null;dragPiece=null}
+  resumeLoop();
 });
 resumeLoop();
 canvas.addEventListener("pointermove",function(e){e.preventDefault();if(!dragPiece)return;var pos=getPos(e);dragPiece.x=pos.x-dragOff.x;dragPiece.y=pos.y-dragOff.y;resumeLoop();});
@@ -538,14 +574,40 @@ function render(){
   // Particles
   particles.forEach(function(pt){ctx.globalAlpha=pt.life;ctx.fillStyle=pt.col;ctx.beginPath();ctx.arc(pt.x,pt.y,pt.sz,0,Math.PI*2);ctx.fill()});
   ctx.globalAlpha=1;
+  // R989 — tap acknowledgement marks. Drawn AFTER pieces so the ring is
+  // always visible on top of whatever the user tapped.
+  for(var mi=0;mi<tapMarks.length;mi++){
+    var mk=tapMarks[mi],t=1-mk.life;
+    var rr=mk.r*(0.35+t*1.5);
+    ctx.globalAlpha=Math.max(0,mk.life*0.85);
+    ctx.strokeStyle=mk.color;ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.arc(mk.x,mk.y,rr,0,Math.PI*2);ctx.stroke();
+    // Inner filled dot gives a second, longer-lived positional reference.
+    ctx.globalAlpha=Math.max(0,mk.life*0.5);
+    ctx.fillStyle=mk.color;
+    ctx.beginPath();ctx.arc(mk.x,mk.y,mk.r*0.28*(1-t*0.4),0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
 }
 
 /* GAME LOOP */
 function loop(ts){
-  if(!lastTime)lastTime=ts;var dt=(ts-lastTime)/1000;lastTime=ts;
-  if(levelActive){levelTime+=dt;if(Math.floor(levelTime)!==Math.floor(levelTime-dt))updateHUD()}
+  if(!lastTime)lastTime=ts;
+  // R989: the R354 stopped-idle loop leaves `lastTime` stale, so the FIRST frame
+  // after an idle period carries a huge dt (seconds). That instantly expired
+  // the new tap-acknowledgement ripple (life -= dt/maxLife), so the user saw
+  // nothing — the exact bug being fixed. It also instantly killed any
+  // particles spawned after an idle period (the level-complete burst).
+  // Fix: split the clocks. `dtRaw` is wall-clock (used by the game timer so
+  // idle time still counts), `dt` is CLAMPED for animation so a long gap
+  // cannot skip an animation's whole lifetime in one frame.
+  var dtRaw=(ts-lastTime)/1000;lastTime=ts;
+  var dt=Math.min(dtRaw,0.05);
+  if(levelActive){levelTime+=dtRaw;if(Math.floor(levelTime)!=Math.floor(levelTime-dtRaw))updateHUD()}
   particles.forEach(function(pt){pt.x+=pt.vx;pt.y+=pt.vy;pt.vy+=.08;pt.life-=pt.dc;pt.sz*=.98});
   particles=particles.filter(function(pt){return pt.life>0});
+  // R989: advance + expire tap acknowledgement marks.
+  for(var tm=tapMarks.length-1;tm>=0;tm--){tapMarks[tm].life-=dt/tapMarks[tm].maxLife;if(tapMarks[tm].life<=0)tapMarks.splice(tm,1);}
   render();
 }
 scheduleNextFrame();
