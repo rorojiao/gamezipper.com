@@ -38,6 +38,13 @@ while read -r slug; do
       printf '%s\t%s\tBROWSER\tBROWSER\tskipped-in-node-leg\n' "$slug" "$b" >> "$OUT"
       continue
     fi
+    # Classify: a BROWSER gate that takes a baseUrl argument (e.g.
+    # hidato/verify_picker_browser.js). It drives a real browser, so it
+    # needs a URL -- invoking it without one is a GATE bug, not a game bug.
+    if grep -qE 'BROWSER (regression )?gate|browser gate' "$v" && grep -qE 'baseUrl|base_url|\[baseUrl\]' "$v"; then
+      printf '%s\t%s\tBROWSER\tBROWSER\tneeds-baseUrl-skip-in-node-leg\n' "$slug" "$b" >> "$OUT"
+      continue
+    fi
     # --- run from the game's own directory ---
     out=$( cd "$d" && timeout 90 node "./$b" 2>&1 )
     rc=$?
