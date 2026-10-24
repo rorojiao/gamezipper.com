@@ -282,6 +282,7 @@
   if (pObs) {
     (function() {
       var pd = {};
+      var fcpDone = false;   // R989: guard so FCP is published exactly once
       function obsH(list) {
         for (var i = 0; i < list.getEntries().length; i++) {
           var e = list.getEntries()[i];
@@ -294,6 +295,8 @@
             pd.lo = e.loadEventEnd - e.startTime;
             ps('perf', { u: P, ttfb: pd.tf, dns: pd.dn, tcp: pd.tc, fb: pd.fb, dl: pd.dl, lo: pd.lo });
           } else if (e.entryType === 'paint' && e.name === 'first-contentful-paint') {
+            if (fcpDone) continue;   // R989: never publish FCP twice
+            fcpDone = true;
             pd.fc = e.startTime;
             ps('perf', { u: P, fcp: pd.fc });
           } else if (e.entryType === 'largest-contentful-paint') {
@@ -304,19 +307,50 @@
           }
         }
       }
+      /* R989 — the paint observer MUST be buffered.
+         gz-analytics.js is loaded with `defer`, so it executes AFTER HTML
+         parsing. The 'first-contentful-paint' paint entry is queued the moment
+         the page paints — which is BEFORE this deferred script runs (FCP=984ms
+         vs DOMContentLoaded=1525ms measured on production). A non-buffered
+         observer only receives entries queued AFTER observe() was called, so
+         the real FCP entry was NEVER delivered and the site published the
+         load-time fallback instead (see chkFS below).
+         Verified against production: a non-buffered 'paint' observer created
+         after load receives [] while a buffered one immediately returns the
+         true first-contentful-paint with its original startTime.
+
+         Uses a SEPARATE PerformanceObserver for 'paint': the spec forbids
+         mixing `type` and `entryTypes` on one observer, and the other three
+         entry types keep their existing non-buffered behaviour so
+         navigation/LCP/layout-shift reporting is unchanged. */
+      var oPaint = new pObs(obsH);
+      try {
+        oPaint.observe({ type: 'paint', buffered: true });
+      } catch (e) {
+        try { oPaint.observe({ type: 'paint' }); } catch (e2) {}
+      }
       var o = new pObs(obsH);
-      o.observe({ entryTypes: ['navigation', 'paint', 'largest-contentful-paint', 'layout-shift'] });
+      o.observe({ entryTypes: ['navigation', 'largest-contentful-paint', 'layout-shift'] });
       window.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'hidden' && pd.cls) {
           ps('perf', { u: P, cls: pd.cls });
         }
       });
+      /* R989 — the load-time fallback.
+         This used to publish under the key `fcp`, which made BI's `meta.fcp`
+         mean "time from script start to window.load" on pages where the real
+         paint entry was never delivered. Because `gz-analytics.js` is deferred,
+         that was the COMMON case, so BI's FCP column was measuring load time
+         (inflated by late ad/third-party resources) rather than paint time.
+         It is now published as `loadReady`, which is what it actually is.
+         The genuine FCP is published by the buffered paint observer above.
+         Nothing is discarded: load readiness stays visible under an honest key. */
       function chkFS() {
         if (document.readyState === 'complete') {
-          ps('perf', { u: P, fcp: Date.now() - t0 });
+          ps('perf', { u: P, loadReady: Date.now() - t0 });
         } else {
           window.addEventListener('load', function() {
-            ps('perf', { u: P, fcp: Date.now() - t0 });
+            ps('perf', { u: P, loadReady: Date.now() - t0 });
           }, { once: true });
         }
       }
@@ -410,7 +444,7 @@
       if (metric === 'ttfb')return value <= 800  ? 'good' : value <= 1800 ? 'needs-improvement' : 'poor';
       return null;
     }
-    var reported = { lcp: false, cls: false, inp: false };
+    var reported = { lcp: false, cls: false, inp: false, fcp: false };
     var pObs2 = window.PerformanceObserver || window.webkitPerformanceObserver;
     if (!pObs2) return;
     try {
@@ -439,6 +473,30 @@
       document.addEventListener('visibilitychange', function(){
         if (document.visibilityState === 'hidden') _lcpFinalize();
       });
+      /* R989 — FCP as a rated vital.
+         The paint entry must be observed with buffered:true, otherwise a
+         deferred analytics script never receives it and the site has no true
+         FCP at all. rate('fcp') already existed but was unreachable.
+         FCP is final once painted, so it is reported as soon as it is known
+         (no need to wait for hide like LCP/CLS/INP). */
+      var fcpV = 0;
+      new pObs2(function(list){
+        for (var i = 0; i < list.getEntries().length; i++) {
+          var e = list.getEntries()[i];
+          if (e.name === 'first-contentful-paint' && e.startTime > fcpV) fcpV = e.startTime;
+        }
+      }).observe({ type: 'paint', buffered: true });
+      var _fcpReport = function(){
+        if (reported.fcp || !fcpV) return;
+        reported.fcp = true;
+        ps('vitals_rating', { u: P, metric: 'fcp', v: Math.round(fcpV), r: rate('fcp', fcpV) });
+      };
+      // The buffered observer callback is async; flush on the next tick too.
+      setTimeout(_fcpReport, 0);
+      document.addEventListener('visibilitychange', function(){
+        if (document.visibilityState === 'hidden') _fcpReport();
+      });
+      window.addEventListener('pagehide', _fcpReport);
       // CLS — sum all shifts, report on hide
       var clsSum = 0;
       new pObs2(function(list){
