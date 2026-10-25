@@ -1364,6 +1364,30 @@ for (let i = 0; i < 30; i++) {
   }
   simInfo.push('L' + (i + 1) + 'pol:' + why);
 }
+{ // proven-solution injection (R308 pattern): solutions.json holds per-level strokes that
+  // a stronger offline solver (solver_strong.js) proved by a multi-seed robustness gauntlet
+  // AND by real-engine replay. Injection NEVER bypasses verification - each injected plan is
+  // re-checked in the deterministic port on 2 seeds and then replayed on the real engine.
+  // It only supplies candidates for levels the shipped planner cannot synthesize (its
+  // static generator exceeds the 5s worker cap on the wall-heavy boards).
+  // ORDER MATTERS: this runs BEFORE the static fallback, so the static workers do not
+  // burn their 5s budget on levels that already have a proven plan (that contention was
+  // what made an unrelated level's worker miss its deadline -> a flaky gate result).
+  let SOL = null;
+  try { SOL = JSON.parse(require('fs').readFileSync(__dirname + '/solutions.json', 'utf8')); } catch (e) { SOL = null; }
+  if (SOL) for (const k of Object.keys(SOL)) {
+    if (k.startsWith('_') || k === 'source') continue;
+    const id = parseInt(k, 10);
+    if (!(id >= 1 && id <= 30) || !SOL[k] || !Array.isArray(SOL[k].strokes)) continue;
+    const i = id - 1;
+    if (ONLY && !ONLY.includes(id)) continue;
+    const plan = { lines: SOL[k].strokes.map(pts => ({ pts: pts.map(p => ({ x: p.x, y: p.y })) })) };
+    if (!plan.lines.length) continue;
+    let ok = false;
+    try { ok = simulate(LV[i], DIM.cw, DIM.ch, plan, 424242, 4200).ok && simulate(LV[i], DIM.cw, DIM.ch, plan, 11, 4200).ok; } catch (e) { ok = false; }
+    if (ok) { plans[i].push(plan); simInfo.push('L' + id + 'X'); } // X = injected+verified
+  }
+}
 { // static fallback for the levels the policy missed — workers run CONCURRENTLY so
   // the per-level gen deadline (5s) is paid once in wall time, not once per level
   const need = [];
@@ -1382,27 +1406,6 @@ for (let i = 0; i < 30; i++) {
       }
       simInfo.push('L' + (i + 1) + '-static-miss');
     });
-  }
-}
-{ // proven-solution injection (R308 pattern): solutions.json holds per-level strokes that
-  // a stronger offline solver (solver_strong.js) proved by a multi-seed robustness gauntlet
-  // AND by real-engine replay. Injection NEVER bypasses verification - each injected plan is
-  // re-checked in the deterministic port on 2 seeds and then replayed on the real engine.
-  // It only supplies candidates for levels the shipped planner cannot synthesize (its
-  // static generator exceeds the 5s worker cap on the wall-heavy boards).
-  let SOL = null;
-  try { SOL = JSON.parse(require('fs').readFileSync(__dirname + '/solutions.json', 'utf8')); } catch (e) { SOL = null; }
-  if (SOL) for (const k of Object.keys(SOL)) {
-    if (k.startsWith('_')) continue;
-    const id = parseInt(k, 10);
-    if (!(id >= 1 && id <= 30) || !SOL[k] || !Array.isArray(SOL[k].strokes)) continue;
-    const i = id - 1;
-    if (ONLY && !ONLY.includes(id)) continue;
-    const plan = { lines: SOL[k].strokes.map(pts => ({ pts: pts.map(p => ({ x: p.x, y: p.y })) })) };
-    if (!plan.lines.length) continue;
-    let ok = false;
-    try { ok = simulate(LV[i], DIM.cw, DIM.ch, plan, 424242, 4200).ok && simulate(LV[i], DIM.cw, DIM.ch, plan, 11, 4200).ok; } catch (e) { ok = false; }
-    if (ok) { plans[i].push(plan); simInfo.push('L' + id + 'X'); } // X = injected+verified
   }
 }
 if (process.env.SS_PROGRESS) console.error('offline done t=' + (Date.now() - T0) + ' :: ' + simInfo.join(' '));
