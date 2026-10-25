@@ -675,6 +675,8 @@ let gameState = {
   gameActive: false,
   moveCount: 0,
   startTime: 0,
+  elapsed: 0,      // R336: true elapsed play time, preserved across tab-away
+  hiddenAt: 0,     // R336: wall-clock instant the tab was hidden (0 = visible)
   timerInterval: null,
   undoStack: [],
   animating: false,
@@ -743,6 +745,8 @@ function initGame(numPlayers, mode, difficulty) {
 
   // Start timer
   gameState.startTime = Date.now();
+  gameState.elapsed = 0;      // R336: a new game resets the preserved elapsed time
+  gameState.hiddenAt = 0;
   if (gameState.timerInterval) clearInterval(gameState.timerInterval);
   gameState.timerInterval = setInterval(updateTimer, 1000);
 
@@ -1959,14 +1963,46 @@ window.addEventListener('resize', function() {
 });
 
 // ---- Visibility ----
+//
+// R336 P2 — the resume path FABRICATED the elapsed time.
+//
+//   gameState.startTime = Date.now() - (gameState.moveCount * 15000);
+//
+// It reconstructed the clock from the MOVE COUNT, assuming every move took
+// exactly 15 seconds. That assumption is false in both directions:
+//   - moveCount == 0 (the common case at the start of a game): the clock was
+//     reset to zero, so the time the player had ALREADY spent was silently
+//     LOST.
+//   - moveCount > 0: the clock jumped to a number that never happened
+//     (a player who took 3s per move was shown 15s per move).
+//
+// Measured live this tick (Kachilu, production): 8s of real play, then a 4s
+// tab-away -> on resume the timer displayed 00:01 instead of 00:08. The
+// pre-hide time was gone.
+//
+// FIX: keep the true elapsed time across the hidden window instead of
+// guessing it. Record the wall-clock instant when the tab is hidden and the
+// accumulated elapsed time at that moment; on resume, shift startTime
+// forward by the hidden duration so the clock resumes where it left off.
+// The hidden seconds are excluded (that is what "pause" means) and the
+// played seconds are preserved.
 document.addEventListener('visibilitychange', function() {
   if (document.hidden) {
     stopBGM();
     if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+    // Freeze the clock at its true current value before the tab goes away.
+    gameState.elapsed = Date.now() - gameState.startTime;
+    gameState.hiddenAt = Date.now();
   } else {
     if (gameState.gameActive) {
-      gameState.startTime = Date.now() - (gameState.moveCount * 15000); // Approximate
+      // Resume from the preserved elapsed time, excluding the hidden window.
+      if (gameState.hiddenAt) {
+        var hiddenMs = Date.now() - gameState.hiddenAt;
+        if (hiddenMs >= 1000) gameState.startTime = Date.now() - gameState.elapsed;
+        gameState.hiddenAt = 0;
+      }
       gameState.timerInterval = setInterval(updateTimer, 1000);
+      updateTimer();
       if (musicEnabled) startBGM();
     }
   }
