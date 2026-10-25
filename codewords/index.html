@@ -643,7 +643,49 @@ if(!tutSeen){setTimeout(showTutorial,500);}
 var pc=document.getElementById('particles');pc.width=window.innerWidth;pc.height=window.innerHeight;
 
 // Cleanup on page hide
-document.addEventListener('visibilitychange',function(){if(document.hidden){stopBGM();stopTimer();}else if(state.screen==='game'){startBGM();startTimer();}});
+//
+// R336 P2 — the pause was COSMETIC ONLY. stopTimer() clears the interval, so
+// the display freezes, but both the display and the score read
+//   (Date.now() - state.startTime)
+// and state.startTime was NEVER adjusted for the hidden period. So the
+// moment the tab became visible again the timer JUMPED forward by the entire
+// hidden duration, and checkWin()'s timeBonus (= max(0,300-time)*2, up to
+// 600 points) was computed from the same wall clock — i.e. a player who
+// switched tabs for 5 minutes silently lost their time bonus.
+//
+// Measured live this tick (Kachilu, production): displayed timer went
+// 0:04 -> 0:11 across a 5s hidden window in which only ~1s of visible time
+// elapsed, i.e. the hidden seconds were counted.
+//
+// Fix: shift state.startTime forward by the hidden duration when the tab
+// becomes visible again, so the wall-clock origin matches the time the player
+// was actually playing. The score's timeBonus then uses the same corrected
+// clock, so the two can never disagree.
+//
+// (The same accumulator model killer-sudoku uses — tick a counter instead of
+// reading the wall clock — would also work; shifting the origin keeps the
+// existing call sites and the win-time display unchanged.)
+var _gzHiddenAt=0;
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){
+    _gzHiddenAt=Date.now();
+    stopBGM();
+    stopTimer();
+  } else if(state.screen==='game'){
+    if(_gzHiddenAt){
+      var hiddenMs=Date.now()-_gzHiddenAt;
+      // Only shift for a genuine tab-away (>=1s); a sub-second visibility
+      // blip must not move the clock.
+      if(hiddenMs>=1000) state.startTime+=hiddenMs;
+      _gzHiddenAt=0;
+    }
+    startBGM();
+    startTimer();
+  }
+});
+// A tab closed while hidden must not leave the clock frozen for the next
+// visit; reset the marker so the next level starts from a clean origin.
+window.addEventListener('pagehide',function(){_gzHiddenAt=0;});
 </script>
 <script src="/gz-analytics.js?v=202610201215R966" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
