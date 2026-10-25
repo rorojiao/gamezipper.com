@@ -8,7 +8,10 @@
  * to the engine's stream (baseline trace: L3/L7/L8/L10/L11/L13 passed the 2-seed sim,
  * then failed 0/30 on the engine; L12's static planner hit its 5s worker cap).
  *
- * What this solver does differently (search-coverage, not budget):
+ * Search uses partial-credit, exhaustive coordinate neighbourhoods and fixed
+ * restarts, followed by counterexample-guided point-grid refinement.
+ *
+ * Proof requirements:
  *   1. STATIC draw-once line plans only — no state-dependent redraws, nothing to
  *      desync. Everything is decided before the first pumped frame.
  *   2. ROBUSTNESS GAUNTLET: every candidate must win across a fixed battery of
@@ -18,10 +21,9 @@
  *      verify_engine.js (GRAVITY..planner block) is eval'd at runtime and my loop
  *      calls its collideSeg/constants. A bitwise self-test asserts my loop matches
  *      the shipped simulate() exactly on t0=0/offset=0 plans.
- *   4. Candidate families: the shipped static planner (buildPlans, in workers with a
- *      generous per-level cap) PLUS a raw geometric sweep (ramps x release targets,
- *      two-leg staircases over a waypoint grid, shelf deflectors, ballistic cascades)
- *      with NO heuristic pre-filters — the gauntlet sim is the only judge.
+ *   4. Per-cup ramps, stairs, cascades and wall-endpoint detours (with rails).
+ *      Partial credit ranks fully satisfied cups, then capped fractional fills.
+ *      Finite sweeps replace pseudo-random Cartesian-product sampling.
  *   5. Engine replay through the REAL input path (canvas pointer drags), then a
  *      SECOND full engine replay of the recorded plan as the reproduction assert.
  *
@@ -32,9 +34,10 @@
  *
  * Exit codes: 0 = every target level has a final verdict (SOLVABLE or UNSOLVABLE);
  * 3 = at least one STILL-UNPROVEN. The shipped gate (verify_engine.js) is NOT
- * touched and its verdict is not affected by this script.
+ * touched. Only solutions that pass every proof channel are recorded for injection.
  *
  * Env: SS_LEVELS="24,29,30" (default the remaining three targets), SS_QUIET=1 (JSON only).
+ * SS_START_TUPLE optionally supplies one additional deterministic search start.
  * No network, no deps, fixed seed battery — reproducible. */
 const path = require('path');
 const fs = require('fs');
@@ -48,9 +51,7 @@ const OUT_FILE = path.join(HERE, 'solver_results.json');
 const TARGETS = (process.env.SS_LEVELS || '24,29,30').split(',').map(Number);
 const QUIET = !!process.env.SS_QUIET;
 const T0WALL = Date.now();
-// per-level budgets (INDEPENDENT, never shared)
-const BUD_SEARCH_MS = Number(process.env.SS_SEARCH_MS || 180000);
-if (!Number.isFinite(BUD_SEARCH_MS) || BUD_SEARCH_MS < 1000) throw Error('SS_SEARCH_MS must be at least 1000');   // screening + gauntlet per level, after generation
+// Search stops on finite sweep/refinement bounds; engine replays keep a safety cap.
 const BUD_ENGINE_MS = 90000;   // engine replay attempts per level
 const GLOBAL_DL = T0WALL + 20 * 60 * 1000; // whole-run cap 20 min
 
@@ -276,7 +277,7 @@ async function battery(lv, plan, seeds, offsets) {
   const jobs = seeds.flatMap(seed => offsets.map(offset => physicsPool.sim(lv, plan, seed, offset, 1, SIM_FRAMES)));
   const rs = await Promise.all(jobs);
   const pass = rs.filter(r => r.ok).length;
-  return { pass, tried:rs.length, rate:pass/rs.length, worst:rs.filter(r => !r.ok).pop() || null };
+  return { pass, tried:rs.length, rate:pass/rs.length, partial:rs.reduce((sum,r)=>sum+require('./staged_search').credit(lv,r),0)/rs.length, worst:rs.filter(r => !r.ok).pop() || null };
 }
 function gauntlet(lv, plan, tier) {
   return battery(lv, plan, tier === 1 ? T1_SEEDS : SEEDS, tier === 1 ? T1_OFFSETS : OFFSETS);
@@ -447,7 +448,6 @@ function supplyProof(lv, cw, ch) {
 // polylines ("parts": cascades have ballistic gaps between legs). A PLAN = one entry
 // per cup, including overlapping strokes. This is the search space: aim (target fx
 // across the cup mouth) x release geometry (ramp/stair/cascade) x rails x combination.
-function sig(plan) { return plan.lines.map(l => l.map(p => Math.round(p.x) + ',' + Math.round(p.y)).join('>')).join('|'); }
 function inBounds(pts) { return pts.every(p => p.x >= 2 && p.x <= CW - 2 && p.y >= 2 && p.y <= CH - 2); }
 function lvWalls(lv) { return lv.walls.map(w => ({ x1: w.x1 / 100 * CW, y1: w.y1 / 100 * CH, x2: w.x2 / 100 * CW, y2: w.y2 / 100 * CH })); }
 function cupCx(lv, ci) { return (lv.cups[ci].x + lv.cups[ci].w / 2) / 100 * CW; }
@@ -512,10 +512,9 @@ function cupCatalog(lv, ci, deadline) {
       }
     }
   }
-  return out;
+  return out.concat(require('./wall_routes.js')(lv,ci,{P,CW,CH}));
 }
 // Build a concrete plan from a per-cup selection: sample and optionally rail.
-const FXS = [0.08, 0.17, 0.25, 0.33, 0.42, 0.5, 0.58, 0.67, 0.75, 0.83, 0.92];
 function partVariants(parts, rails, open, lv) {
   // parts -> sampled polylines, optionally twin-railed (shipped toRails)
   if (!rails) return parts.map(pts => ({ pts: P.samplePath(pts) }));
@@ -537,79 +536,6 @@ function comboPlan(lv, sel, rails) {
   if (!lines.every(l => inBounds(l.pts))) return null;
   return { lines: lines.map(l => l.pts) };
 }
-function combosCompat(lv, sel) {
-  // every pair of parts from different cups must be line-compatible (shipped rule) —
-  // EXCEPT pairs sharing their start point (apex fan): strokes from one spout only
-  // touch at the apex, where the stream simply splits; the near-parallel rule exists
-  // to stop long chutes CAGING each other, which an immediately-diverging fan cannot do
-  const flat = [];
-  for (let i = 0; i < sel.length; i++)
-    for (const pts of sel[i].parts) flat.push({ cup: i, pts });
-  for (let a = 0; a < flat.length; a++) for (let b = a + 1; b < flat.length; b++) {
-    if (flat[a].cup === flat[b].cup) continue;
-    const A = P.samplePath(flat[a].pts), B = P.samplePath(flat[b].pts);
-    if (Math.hypot(A[0].x - B[0].x, A[0].y - B[0].y) < 3) continue; // shared apex
-    if (!P.linesCompat(A, B)) return false;
-  }
-  return true;
-}
-function* enumeratePlans(lv, deadline) {
-  const catalogs = lv.cups.map((_, ci) => cupCatalog(lv, ci, deadline));
-  log('catalog sizes: ' + catalogs.map(c => c.length).join(' x '));
-  if (catalogs.some(c => !c.length)) return;
-  // Stream the Cartesian product: no candidate-count ceiling and no materialized
-  // product. In particular, line compatibility is not a proof of impossibility,
-  // so overlapping candidate strokes are left for the physics to judge.
-  const total = catalogs.reduce((n,c) => n * BigInt(c.length), 1n);
-  const gcd = (a,b) => b ? gcd(b,a%b) : a;
-  // A coprime stride is a bijection over the entire product. Unlike a lexical
-  // prefix it changes every cup early, without discarding any combination.
-  let stride = total * 618033n / 1000000n + 1n;
-  while (gcd(stride,total) !== 1n) stride++;
-  for (let k=0n; k<total && Date.now()<=deadline; k++) {
-    let index = k * stride % total;
-    const sel = catalogs.map(c => {
-      const e = c[Number(index % BigInt(c.length))];
-      index /= BigInt(c.length); return e;
-    });
-    for (const rails of [0,8,10]) {
-      const plan = comboPlan(lv,sel,rails);
-      if (plan) yield {plan,gen:sel.map(e=>e.kind).join('+')+(rails?'+r'+rails:'')};
-    }
-  }
-}
-function fromBuildPlans(raw) { // shipped static planner output ({lines:[{pts}]}) -> my format
-  const out = [];
-  for (const p of (raw || [])) {
-    if (!p || !p.lines || p.phased) continue;
-    const lines = p.lines.map(l => l.pts);
-    if (!lines.length || !lines.every(inBounds)) continue;
-    out.push({ plan: { lines }, gen: 'buildPlans' });
-  }
-  return out;
-}
-
-// shipped static planner in a worker (same mechanism the gate uses, but a generous
-// per-level cap and all levels concurrently — never a shared budget)
-function buildPlansWorker(lv, capMs) {
-  return new Promise(resolve => {
-    let settled = false;
-    const done = v => { if (!settled) { settled = true; resolve(v); } };
-    const code = "const {parentPort,workerData}=require('worker_threads');" +
-      "const fs=require('fs');" +
-      "const src=fs.readFileSync(" + JSON.stringify(GATE) + ",'utf8');" +
-      "const slice=src.slice(src.indexOf('const GRAVITY'),src.indexOf('// ---------- boot + level data integrity')).replace(/^const /gm,'var ');" +
-      "eval(slice);" +
-      "parentPort.postMessage(JSON.stringify(buildPlans(workerData.lv,workerData.cw,workerData.ch)));";
-    let w;
-    try { w = new Worker(code, { eval: true, workerData: { lv, cw: CW, ch: CH } }); }
-    catch (e) { return done(null); }
-    const to = setTimeout(() => { try { w.terminate(); } catch (e2) {} done(null); }, capMs);
-    w.on('message', m => { clearTimeout(to); try { w.terminate(); } catch (e2) {} done(JSON.parse(m)); });
-    w.on('error', () => { clearTimeout(to); try { w.terminate(); } catch (e2) {} done(null); });
-  });
-}
-
 // ---------- engine replay (REAL input path: canvas pointer drags) ----------
 function dragLine(pts) {
   // CORRECT client mapping for this sandbox: the canvas stub's getBoundingClientRect
@@ -648,8 +574,7 @@ function engineRun(id1, plan, releaseFrames, deadline) {
 }
 
 // ---------- per-level pipeline ----------
-const results = [];
-async function solveLevel(id1, bpPromise) {
+async function solveLevel(id1) {
   const lv = LV[id1 - 1];
   LVsel = lv;
   const t0 = Date.now();
@@ -666,80 +591,63 @@ async function solveLevel(id1, bpPromise) {
     return rec;
   }
 
-  // Generation has its own independent cap; screening gets the full per-level
-  // budget after generation (a slow generator cannot consume tier0's allowance).
-  let bpRaw = null;
-  try { bpRaw = await bpPromise; } catch (e) { bpRaw = null; }
-  const searchStart = Date.now();
-  const searchDl = Math.min(searchStart + BUD_SEARCH_MS, GLOBAL_DL);
-  const generated = enumeratePlans(lv, searchDl);
-  const bp = fromBuildPlans(bpRaw);
   const stored = JSON.parse(fs.readFileSync(path.join(HERE,'solutions.json'),'utf8'))[id1];
-  const preferred = stored ? [{plan:{lines:stored.strokes},gen:'recorded',preferred:true}] : [];
+  const survivors = [];
+  let best = null;
+  fs.mkdirSync(path.join(HERE,'solver_logs'),{recursive:true});
+  if (stored) survivors.push({plan:{lines:stored.strokes},gen:'recorded',preferred:true});
   if (process.env.SS_CANDIDATES) {
     const file = path.resolve(process.env.SS_CANDIDATES);
     if (!file.startsWith(HERE + path.sep)) throw Error('Candidate file must be inside sugar-sugar/');
-    const extra = JSON.parse(fs.readFileSync(file,'utf8'))[id1] || [];
-    for (const c of extra) preferred.push({plan:c.plan || c,gen:'search-frontier',preferred:true});
+    for (const c of JSON.parse(fs.readFileSync(file,'utf8'))[id1] || [])
+      survivors.push({plan:c.plan || c,gen:'search-frontier',preferred:true});
   }
-  function* candidates() {
-    // Shipped splitter/chute plans are expensive to generate but cheap to try.
-    // Interleave the lazy catalog so neither family is starved.
-    yield* preferred;
-    let bi = 0, done = false;
-    while (!done || bi < bp.length) {
-      if (bi < bp.length) yield bp[bi++];
-      for (let i = 0; i < 3 && !done; i++) {
-        const next = generated.next(); done = next.done;
-        if (!done) yield next.value;
+  if (!survivors.length) {
+    const catalogs = lv.cups.map((_,ci) => cupCatalog(lv,ci,Infinity));
+    for (const catalog of catalogs) catalog.push({parts:[],kind:'empty'});
+    log('catalog sizes: '+catalogs.map(c=>c.length).join(' x '));
+    const {search} = require('./staged_search.js');
+    let refinementAttempts = 0;
+    const accept = async plan => {
+      const g1 = await gauntlet(lv,plan,1); rec.simsRun += g1.tried;
+      if (g1.pass === g1.tried) {
+        const g2 = await gauntletRec(lv,plan); rec.simsRun += g2.tried;
+        log('coordinate candidate battery '+g2.pass+'/'+g2.tried);
+        if (g2.pass === g2.tried) return plan;
       }
-    }
+      if (refinementAttempts++ > 0) return false;
+      return require('./refine_plan.js')(lv,plan,{CW,CH,P,log,
+        sim:(candidate,seed,offset)=>physicsPool.sim(lv,candidate,seed,offset,1,1500),
+        battery:async candidate=>{
+          const cases=SEEDS.flatMap(seed=>REC_OFFSETS.map(offset=>[seed,offset]));
+          return {cases,results:await Promise.all(cases.map(([seed,offset])=>physicsPool.sim(lv,candidate,seed,offset,1,4200)))};
+        },
+        save:row=>{rec.evidence.refinement={sims:row.sims,rounds:row.rounds,cases:row.cases,complete:row.complete};
+          fs.writeFileSync(path.join(HERE,'solver_logs','refine-'+id1+'.json'),JSON.stringify(row,null,1));}
+      });
+    };
+    const initial = process.env.SS_START_TUPLE ? [JSON.parse(process.env.SS_START_TUPLE)] : [];
+    for (const tuple of initial) if (tuple.length !== catalogs.length || tuple.some((n,i)=>!Number.isInteger(n)||n<0||n>=catalogs[i].length)) throw Error('Invalid SS_START_TUPLE');
+    const found = await search({lv,catalogs,workers:WORKERS,accept,initial,
+      combo:sel=>comboPlan(lv,sel,0),
+      sim:plan=>physicsPool.sim(lv,plan,424242,0,1,1500), log,
+      save:row=>fs.writeFileSync(path.join(HERE,'solver_logs','coordinate-'+id1+'.json'),JSON.stringify(row,null,1))});
+    survivors.push(...found.winners); rec.gens += found.sims; rec.simsRun += found.sims;
+    rec.simsRun += rec.evidence.refinement?.sims || 0;
+    rec.evidence.search = {...found,winners:found.winners.length, strategy:'deterministic coordinate descent; exhaustive single-coordinate sweeps'};
   }
-  log('L' + id1 + ' "' + lv.name + '": streaming plans (buildPlans=' + (bpRaw ? bpRaw.length : 'timeout/null') + ') generation t=' + (Date.now()-t0) + 'ms');
-  let best = null;
-  const survivors = [];
-  const t0cap = Math.min(searchDl, searchStart + Math.floor(BUD_SEARCH_MS * 0.65));
-  const TIER0_FRAMES = 1500;
-  const iterator = candidates();
-  let exhausted = false;
-  const near = [];
-  // At most one candidate per worker in flight, with results collected in input
-  // order. Limits are checked between batches, never halfway through a sim.
-  while (Date.now() < t0cap && survivors.length < 24 && !exhausted) {
-    const batch = [];
-    for (let i=0; i<WORKERS; i++) {
-      const next = iterator.next();
-      if (next.done) { exhausted = true; break; }
-      batch.push(next.value);
-    }
-    const rs = await Promise.all(batch.map(c => physicsPool.sim(lv,c.plan,424242,0,1,TIER0_FRAMES)));
-    rec.gens += batch.length; rec.simsRun += rs.length;
-    rs.forEach((r,i) => {
-      if (r.ok) survivors.push(batch[i]);
-      const fills = r.fills.map(v => Number(String(v).split('/')[0]));
-      const fractions = fills.map((v,ci) => Math.min(1,v/lv.cups[ci].need));
-      near.push({ ...batch[i], fills, score:Math.min(...fractions)+fractions.reduce((a,b)=>a+b,0)/lv.cups.length });
-    });
-    near.sort((a,b)=>b.score-a.score); near.length=Math.min(8,near.length);
-    if (survivors.some(c=>c.preferred)) break;
-    if (rec.gens % 128 === 0) log('L'+id1+' screened '+rec.gens+'; survivors='+survivors.length+'; best fills='+near[0].fills.join(','));
-  }
-  fs.mkdirSync(path.join(HERE,'solver_logs'),{recursive:true});
-  fs.writeFileSync(path.join(HERE,'solver_logs','near-'+id1+'.json'),JSON.stringify(near,null,1));
-  rec.evidence.search = { workers:WORKERS, screened:rec.gens, enumerationExhausted:exhausted, tier0Ms:Date.now()-searchStart };
-  log('L' + id1 + ' tier0 survivors: ' + survivors.length + '/' + rec.gens + ' screened t=' + (Date.now() - t0) + 'ms');
   // tier1 (6-sim mini-battery) — ranked pass, keep the top band by robustness
   const t1 = [];
   let t1worst = 0;
   for (const c2 of survivors) {
-    if (Date.now() >= searchDl) break;
+    if (Date.now() >= GLOBAL_DL) break;
     const g1 = await gauntlet(lv, c2.plan, 1);
     rec.simsRun += g1.tried;
     if (g1.pass < t1worst - 6 && t1.length >= 12) continue; // well below the band
     if (g1.pass === g1.tried) { t1.push({ ...c2, g: g1 }); continue; }
     if (t1.length < 12 || g1.pass > (t1[t1.length - 1].g ? t1[t1.length - 1].g.pass : 0)) {
       t1.push({ ...c2, g: g1 });
-      t1.sort((a, b) => (b.g.pass - b.g.tried) - (a.g.pass - a.g.tried));
+      t1.sort((a, b) => (b.g.pass - b.g.tried) - (a.g.pass - a.g.tried) || b.g.partial-a.g.partial);
       if (t1.length > 12) t1.length = 12;
       t1worst = t1[t1.length - 1].g.pass;
     }
@@ -749,7 +657,7 @@ async function solveLevel(id1, bpPromise) {
     // angle) so 4 near-identical ramps don't crowd the engine queue
     const bucket = p => p.plan.lines.length + '|' + p.plan.lines.map(l => Math.round(l[0].x / 30) + ',' + Math.round((l[l.length - 1].x - l[0].x) / 40)).join(';');
     const cnt = new Map();
-    t1.sort((a, b) => (b.g.pass - b.g.tried) - (a.g.pass - a.g.tried));
+    t1.sort((a, b) => (b.g.pass - b.g.tried) - (a.g.pass - a.g.tried) || b.g.partial-a.g.partial);
     const kept = [];
     for (const c2 of t1) {
       const b2 = bucket(c2);
@@ -768,16 +676,16 @@ async function solveLevel(id1, bpPromise) {
   { // rank the tier1 band on the full battery (each full battery = 48 sims ≈ tens of s
     // on chute plans) — top-2 candidates only, stop at the first perfect plan
     const ranked = t1.slice();
-    ranked.sort((a, b) => (b.g.pass - b.g.tried) - (a.g.pass - a.g.tried));
+    ranked.sort((a, b) => (b.g.pass - b.g.tried) - (a.g.pass - a.g.tried) || b.g.partial-a.g.partial);
     for (const c2 of ranked.slice(0, 2)) {
-      if (Date.now() >= searchDl) break;
+      if (Date.now() >= GLOBAL_DL) break;
       const g2 = await gauntlet(lv, c2.plan, 2);
       rec.simsRun += g2.tried;
       order.push({ ...c2, g: g2 });
       // Keep both ranked candidates: a 48/48 plan may still fail the wider
       // 96-case recorded battery. Only the latter earns a solution.
     }
-    order.sort((a, b) => (b.g.pass - b.g.tried) - (a.g.pass - a.g.tried));
+    order.sort((a, b) => (b.g.pass - b.g.tried) - (a.g.pass - a.g.tried) || b.g.partial-a.g.partial);
     if (order.length) {
       best = order[0];
       rec.robustness = { seedsPassed: best.g.pass, seedsTried: best.g.tried, rate: +best.g.rate.toFixed(3) };
@@ -885,7 +793,7 @@ async function solveLevel(id1, bpPromise) {
   // 4) verdict
   if (!rec.verdict) {
     rec.verdict = 'STILL-UNPROVEN';
-    rec.notes = 'search stopped within budget: ' + rec.gens + ' candidates, ' + rec.simsRun +
+    rec.notes = 'finite staged search produced no proven plan: ' + rec.gens + ' candidates, ' + rec.simsRun +
       ' sims, gauntlet' + (rec.robustness ? ' best ' + rec.robustness.seedsPassed + '/' + rec.robustness.seedsTried : ' produced nothing') +
       ', ' + rec.engineTries + ' engine tries. This is NOT an unsolvability claim.';
   }
@@ -894,29 +802,20 @@ async function solveLevel(id1, bpPromise) {
 }
 
 // ---------- main ----------
-(async () => {
-  // launch all buildPlans workers up front (concurrent wall time, independent budgets)
-  const CAP = 240000;
+if (require.main === module) (async () => {
+  // Workers evaluate deterministic batches; input order determines all choices.
   physicsPool = new PhysicsPool();
   await Promise.all(physicsPool.slots.map(s => s.ready));
   log('physics pool: ' + WORKERS + ' workers; all bitwise self-tests passed');
-  const recorded = JSON.parse(fs.readFileSync(path.join(HERE,'solutions.json'),'utf8'));
-  const supplied = process.env.SS_CANDIDATES
-    ? JSON.parse(fs.readFileSync(path.resolve(process.env.SS_CANDIDATES),'utf8')) : {};
-  const bpPromises = new Map(TARGETS.map(id1 => [id1, recorded[id1] || supplied[id1]?.length
-    ? Promise.resolve([]) : buildPlansWorker(LV[id1 - 1], CAP)]));
   const results = [];
   for (const id1 of TARGETS) {    if (Date.now() > GLOBAL_DL) {
       results.push({ level: id1, name: LV[id1 - 1].name, verdict: 'STILL-UNPROVEN',
         plan: null, robustness: null, evidence: {}, notes: 'global time budget exhausted before this level started' });
       continue;
     }
-    results.push(await solveLevel(id1, bpPromises.get(id1)));
+    results.push(await solveLevel(id1));
   }
   await physicsPool.close();
-
-  // settle any worker leaks
-  for (const [, pr] of bpPromises) pr.then(() => {}).catch(() => {});
 
   const counts = { SOLVABLE: 0, UNSOLVABLE: 0, 'STILL-UNPROVEN': 0 };
   for (const r of results) counts[r.verdict]++;
@@ -953,3 +852,5 @@ async function solveLevel(id1, bpPromise) {
   console.log(JSON.stringify({ counts, allSettled: out.allSettled, out: OUT_FILE, durS: Math.round((Date.now() - T0WALL) / 1000) }));
   process.exit(out.allSettled ? 0 : 3);
 })().catch(e => { console.error('solver_strong threw:', (e && e.stack) || e); process.exit(1); });
+
+module.exports = {LV, CW, CH, P, cupCatalog, comboPlan, simStatic, PhysicsPool, gauntletRec, SEEDS, REC_OFFSETS};
