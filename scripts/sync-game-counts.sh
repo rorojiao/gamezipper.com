@@ -130,6 +130,27 @@ check_cat "Skill       " "$GAMES_SKILL" "$SKILL_C"
 [ "$GAMES_COUNT" = "$FOOTER_DC" ] || { echo "❌ GAMES vs Footer data-count DRIFT ($GAMES_COUNT vs $FOOTER_DC)"; DRIFT=1; }
 [ "$GAMES_COUNT" = "$ALL_C" ] || { echo "❌ GAMES vs HTML All cat-count DRIFT ($GAMES_COUNT vs $ALL_C)"; DRIFT=1; }
 
+# R335: the public JSON feed advertised by publisher-partner.html and
+# embed-games.html as GET /api/games.json must match the live catalog.
+# A stale feed is a P1 (publishers pull it to build their own sites), so it
+# is a first-class sync check, not a build artifact.
+FEED="api/games.json"
+if [ ! -f "$FEED" ]; then
+  echo "❌ JSON feed MISSING ($FEED) — run: node scripts/gen-games-json.js"
+  DRIFT=1
+else
+  FEED_COUNT=$(node -e "const f=require('./api/games.json');console.log(f.length)" 2>/dev/null)
+  FEED_SLUGS=$(node -e "const f=require('./api/games.json');console.log(f.map(g=>g.slug).sort().join(','))" 2>/dev/null)
+  CAT_SLUGS=$(node -e "
+const fs=require('fs');
+const s=fs.readFileSync('js/games-data.js','utf8').replace(/^const\s+(GAME_GRADIENTS|GAMES)\s*=/gm,'var \$1=');
+const G=new Function(s+'; return GAMES;')();
+console.log(G.filter(g=>g.status==='live').map(g=>String(g.url).replace(/^\//,'').replace(/\/\$/,'')).sort().join(','));
+")
+  [ "$FEED_COUNT" = "$GAMES_COUNT" ] || { echo "❌ JSON feed count DRIFT ($FEED_COUNT vs $GAMES_COUNT)"; DRIFT=1; }
+  [ "$FEED_SLUGS" = "$CAT_SLUGS" ] || { echo "❌ JSON feed slug set DRIFT — run: node scripts/gen-games-json.js"; DRIFT=1; }
+fi
+
 if [ "$DRIFT" -ne 0 ]; then
   echo "=== DRIFT DETECTED — repair required ==="
   exit 1
