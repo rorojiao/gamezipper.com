@@ -223,7 +223,12 @@ canvas#board{display:block;border-radius:12px;border:2px solid rgba(255,107,157,
 
   <div class="menu-section">
     <h3>⚔️ Choose Difficulty</h3>
-    <button class="menu-btn primary" data-diff="0"><span class="diff-row"><span>🌱 Beginner<span class="diff-label">Random moves — learn the ropes</span></span><span class="diff-emoji">🌱</span></span></button>
+    <!-- R334 P2: the game SAVED its in-progress board on every move and on
+         beforeunload, and loadState() was fully implemented — but nothing ever
+         called it, so a returning player always lost their game. This button
+         restores the saved board. It is hidden when there is nothing saved. -->
+    <button class="menu-btn continue-btn" id="continue-btn" style="display:none;width:100%;padding:14px;margin-bottom:10px;border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.4px;text-align:left;padding-left:18px;background:linear-gradient(135deg,#06d6a0,#04a37c);color:#06251c">▶️ Continue Saved Game</button>
+    <button class="menu-btn primary" data-diff="0"><span class="diff-row"><span>🌱 Beginner<span class="diff-label">Random moves — learn the ropes</span><span class="diff-emoji">🌱</span></span></button>
     <button class="menu-btn primary" data-diff="1"><span class="diff-row"><span>😊 Easy<span class="diff-label">Greedy — grabs what it can</span></span><span class="diff-emoji">😊</span></span></button>
     <button class="menu-btn primary" data-diff="2"><span class="diff-row"><span>🤔 Medium<span class="diff-label">Thinks 2 moves ahead</span></span><span class="diff-emoji">🤔</span></span></button>
     <button class="menu-btn primary" data-diff="3"><span class="diff-row"><span>😎 Hard<span class="diff-label">Depth-3 minimax + corners</span></span><span class="diff-emoji">😎</span></span></button>
@@ -898,6 +903,39 @@ canvas.addEventListener('touchstart',e=>{
 },{passive:false});
 
 // ─── Controls ────────────────────────────────────────────────────
+// R334 P2: wire the previously-dead loadState(). The game has always saved
+// its board (every move + beforeunload); loadState() was implemented but
+// never called, so a returning player silently lost their game. The menu now
+// offers a Continue button whenever a non-finished save exists.
+function hasSavedGame(){
+  try{
+    const s=JSON.parse(localStorage.getItem(SAVE_KEY));
+    return !!(s && s.board && s.board.length && !s.gameOver);
+  }catch(e){ return false; }
+}
+function refreshContinueButton(){
+  const b=document.getElementById('continue-btn');
+  if(!b) return;
+  b.style.display = hasSavedGame() ? 'block' : 'none';
+}
+(function(){
+  const b=document.getElementById('continue-btn');
+  if(!b) return;
+  b.addEventListener('click',()=>{
+    initAudio();
+    if(loadState()){
+      el.menu.style.display='none';
+      el.game.style.display='flex';
+      el.resultOverlay.classList.remove('active');
+      updateHUD();
+      resizeCanvas();
+      if(!muted) startBgm();
+      saveState();
+    }else{
+      b.style.display='none';
+    }
+  });
+})();
 document.querySelectorAll('.menu-btn[data-diff]').forEach(btn=>{
   btn.addEventListener('click',()=>{ initAudio(); startBgm(); startGame(parseInt(btn.dataset.diff)); });
 });
@@ -917,6 +955,7 @@ function goMenu(){
   el.resultOverlay.classList.remove('active');
   stopBgm();
   updateMenuStats();
+  refreshContinueButton();   // R334 P2: show Continue when a saved game exists
 }
 function undo(){
   if(history.length<2 || gameOver || aiThinking){ toast('Nothing to undo'); return; }
@@ -1024,6 +1063,7 @@ if(savedTheme && THEMES[savedTheme]) currentTheme=savedTheme;
 buildThemeUI();
 updateMenuStats();
 updateAudioToggle();
+refreshContinueButton();   // R334 P2: surface a saved game on first load
 animLoop();
 // show menu first
 el.game.style.display='none';

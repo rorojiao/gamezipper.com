@@ -42,6 +42,14 @@
     cacheDom();
     bindEvents();
     loadSettings();
+    // R334 P2: restore the persisted best-times map. Without this the map
+    // stayed EMPTY for the whole session, so the guard
+    //   `if (!bestTimes[lv] || timer < bestTimes[lv])`
+    // was ALWAYS true -> the stored "best" became the LAST time played, and
+    // saveBestTimes() replaced the whole map with a single-entry map,
+    // destroying every other level's record. loadBestTimes() existed but was
+    // never called.
+    try { bestTimes = loadBestTimes() || {}; } catch (e) { bestTimes = {}; }
     showScreen('title');
     playBgMusic();
     try {
