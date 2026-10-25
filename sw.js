@@ -1,10 +1,10 @@
-// GameZipper Service Worker v17
+// GameZipper Service Worker v18
 // Pure game caching — Monetag push NOTIFICATIONS DISABLED per user request
 // Strategies: cache-first (static), stale-while-revalidate with 4h max-age (HTML), network-first (API)
 // v12: navigationPreload for faster TTFB on navigation requests
-// v17: bypass browser cache for /gz-analytics.js so EP rotation propagates immediately
+// v18: bypass browser cache for /gz-analytics.js so EP rotation propagates immediately
 //      (tunnel rotates every ~5min; SW would otherwise hold stale EP for the lifetime of the SW)
-const CACHE='gz-v66';
+const CACHE='gz-v67';
 const HTML_MAX_AGE=4*60*60*1000; // 4 hours in ms
 
 // === Install ===
@@ -16,49 +16,7 @@ self.addEventListener('install',e=>{
 
   // Precache top 5 game pages + offline fallback for instant access
   var precacheURLs=[
-    '/pocket-sort/',
-    '/goods-sort/','/100-doors/','/2048/','/akari/','/basketball-shoot/','/blackjack/','/brick-breaker/',
-    '/build-a-queen/','/chess/','/circuit-logic/','/color-helix-smash/','/color-sort/','/crossmath/','/crossword/','/cryptograms/','/fruit-slash/','/hex-minesweeper/','/heyawake/','/hidato/','/hotaru-beam/','/jelly-dye/','/letter-boxed/','/magic-sort/','/masyu/','/minesweeper/','/neon-run/','/nurikabe/','/nyt-tiles/','/shikaku/','/snake/','/solitaire/','/star-battle/','/strands/','/sudoku/','/sugar-sugar/','/suguru/','/tapa/','/tents/','/tetris/','/who-is/','/yajilin/','/stained-glass/','/meowdoku/','/sandtrix/',
-    '/solitaire-roguelite/',
-    '/knotwords/',
-    '/draw-bridge/',
-    '/gobble/',
-      '/screw-master/',
-    '/tomb-of-the-mask/',
-    '/emoji-merge/',
-    '/gecko-out/',
-    '/bus-traffic-fever/',
-    '/triple-match-3d/',
-    '/love-balls/',
-    '/arrow-puzzle/',
-    '/rope-rescue/',
-      '/brainrot-blocks/',
-      '/maze-paint/',
-      '/seating-puzzle/',
-      '/rule-rewrite/',
-      '/metro-lines/',
-      '/virus-buster/',
-    '/spin-rings/',
-    '/family-tree/',
-    '/gem-paint/',
-    '/gravity-orbit/'
-,
-    '/hotel-rush/',
-    '/mahjong-connect/',
-    '/zen-garden/',
-    '/centrifuge-separation/',
-    '/love-balls/',
-    'liquid-connect/',
-    'kropki-sudoku/',
-    'tents-and-trees/',
-    'sohei-sudoku/',
-    'tetra-fit/',
-    'teleport-jumper/',
-    'kurodoko/',
-    'gokigen-naname/',
-    '/geneva-drive/',
-    '/gyroscope-precession/',
-    '/orrery-planetary-gear/'];
+    '/pocket-sort/','/goods-sort/','/100-doors/','/2048/','/akari/','/basketball-shoot/','/blackjack/','/brick-breaker/','/build-a-queen/','/chess/','/circuit-logic/','/helix-jump/','/magic-sort/','/crossmath/','/crossword/','/cryptograms/','/slice-master/','/hex-minesweeper/','/heyawake/','/hidato/','/hotaru-beam/','/flood-fill/','/letter-boxed/','/masyu/','/minesweeper/','/neon-dash/','/nurikabe/','/nyt-tiles/','/shikaku/','/snake/','/solitaire/','/star-battle/','/strands/','/sudoku/','/sugar-sugar/','/suguru/','/tapa/','/tents/','/tetris/','/who-is/','/yajilin/','/stained-glass/','/sandtrix/','/solitaire-roguelite/','/knotwords/','/draw-bridge/','/gobble/','/pin-master/','/tomb-of-the-mask/','/threes/','/gecko-out/','/bus-traffic-fever/','/triple-match-3d/','/love-balls/','/arrow-puzzle/','/rope-rescue/','/woodoku/','/maze-paint/','/seating-puzzle/','/rule-rewrite/','/metro-lines/','/virus-buster/','/spin-rings/','/family-tree/','/color-by-number/','/gravity-orbit/','/hotel-rush/','/onet/','/zen-garden/','/centrifuge-separation/','/antikythera-mechanism/'];
   e.waitUntil(
     caches.open(CACHE).then(function(c){
       return Promise.allSettled(
