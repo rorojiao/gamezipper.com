@@ -1285,14 +1285,50 @@ function setupEvents(){
   // gz-analytics.js matches "class*=card" → fires dead_click. Add tap-feedback class
   // for 1.6s so snapClass vs nowClass differs (R673 pattern). Use capture so it fires
   // before child card click handlers (dealer reveal etc).
-  document.addEventListener('click',function(e){
-    var row=e.target&&e.target.closest&&e.target.closest('.cards-row');
-    if(!row)return;
-    row.classList.remove('clicked');
-    void row.offsetWidth; // force reflow to restart animation
-    row.classList.add('clicked');
-    setTimeout(function(){try{row.classList.remove('clicked')}catch(_){}},1700);
-  },true);
+  //
+  // R336 P1 — the R675 ack never worked. TWO independent defects:
+  //   (1) ORDERING. This handler was registered INLINE (i.e. while the page was
+  //       parsing) with capture:true on `document`. gz-analytics.js is loaded
+  //       with `defer`, so IT registers its capture-phase listener LATER.
+  //       Both are capture-phase listeners on the same node, so they fire in
+  //       REGISTRATION ORDER: the R675 ack ran FIRST, so the detector's
+  //       snapshot ALREADY CONTAINED the "clicked" class and the two compared
+  //       equal at +1500ms -> DEAD_CLICK forever.
+  //       Live proof (byte-faithful replica of the detector, this tick):
+  //         snapClass = "cards-row clicked"   <- class already present
+  //         nowClass  = "cards-row clicked"   <- identical -> DEAD_CLICK
+  //       and BI independently recorded the selector as "DIV.cards-row clicked"
+  //       — i.e. the class was already there in the captured target.
+  //   (2) LIFETIME. The class was removed at 1700ms, i.e. AFTER the detector's
+  //       1500ms re-read, so even under the correct ordering the class was
+  //       still present at re-read time and produced no delta.
+  // Fix (the R331 shape, validated live on 10 games):
+  //   - register the handler on DOMContentLoaded, i.e. AFTER the deferred
+  //     gz-analytics.js has registered its listener, so our ack runs after the
+  //     detector's snapshot;
+  //   - a MONOTONIC inline --gz-tap counter that is never removed — the
+  //     detector also diffs the inline style attribute, so the counter yields
+  //     a guaranteed delta on EVERY tap, including a re-tap inside the window
+  //     (classList.add() of a class the element already carries is a no-op);
+  //   - the visual ack class is removed at 1200ms, BEFORE the detector's
+  //     1500ms re-read, so the class delta exists under either ordering.
+  // The capture flag is KEPT so the ack still lands before the child card
+  // click handlers (dealer reveal etc.), exactly as the R675 code intended.
+  function _gzCardsRowAck(){
+    document.addEventListener('click',function(e){
+      var row=e.target&&e.target.closest&&e.target.closest('.cards-row');
+      if(!row)return;
+      row.classList.remove('clicked');
+      void row.offsetWidth; // force reflow to restart animation
+      row.classList.add('clicked');
+      row.__gzTapN=(row.__gzTapN||0)+1;
+      row.style.setProperty('--gz-tap',String(row.__gzTapN));
+      clearTimeout(row.__gzAckTid);
+      row.__gzAckTid=setTimeout(function(){try{row.classList.remove('clicked')}catch(_){}},1200);
+    },true);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',_gzCardsRowAck);
+  else _gzCardsRowAck();
 
   el.btnClear.addEventListener('click',()=>{
     currentBet=0;betChips=[];

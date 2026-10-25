@@ -87,6 +87,8 @@ canvas{display:block;cursor:pointer}
 .diff-btn:hover{border-color:var(--neon);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,229,255,.2)}
 .diff-btn .label{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px}
 .diff-btn .sub{font-size:11px;color:var(--dim)}
+/* R336 P1: difficulty-button tap acknowledgement (see the ack handler below). */
+.diff-btn.gz-ack0,.diff-btn.gz-ack1{border-color:var(--neon)!important;box-shadow:0 0 14px rgba(0,229,255,.45)!important}
 .daily-btn{grid-column:1/-1;background:linear-gradient(135deg,#1a0e3a,#0e2a4a);border-color:var(--gold);padding:16px}
 .daily-btn:hover{border-color:var(--gold);box-shadow:0 4px 12px rgba(255,215,0,.3)}
 .daily-btn .label{color:var(--gold)}
@@ -893,6 +895,50 @@ document.querySelectorAll('.diff-btn').forEach(function(btn){
     showPuzzleSelect(G.currentDiff);
   });
 });
+
+/* R336 P1 — .diff-btn is a DIV, so gz-analytics.js's dead_click detector
+   watches it: it snapshots className / aria-expanded / inline style in the
+   CAPTURE phase and re-reads the SAME element 1500ms later. A difficulty
+   button whose handler only calls showPuzzleSelect() never mutated itself,
+   so the detector reported DEAD_CLICK on every difficulty pick (BI recorded
+   "DIV.diff-btn" on 2026-10-24).
+
+   Two things are needed for a correct acknowledgement:
+     (1) ORDERING. The handler must be registered AFTER the deferred
+         gz-analytics.js has registered its capture listener, otherwise our
+         class is already present when the detector takes its snapshot and the
+         two compare equal at +1500ms. DOMContentLoaded fires after all
+         deferred scripts have executed, so registering there is correct.
+     (2) A MONOTONIC inline --gz-tap counter, never removed. The detector also
+         diffs the inline style attribute, and a class-only ack is a no-op on
+         a re-tap inside the window (classList.add of a class the element
+         already carries changes nothing).
+   The visual ack class is removed at 1200ms, i.e. BEFORE the detector's
+   1500ms re-read, so the class delta also exists under the opposite
+   ordering. */
+(function(){
+  if(window.__gzDiffBtnAck)return;
+  function init(){
+    if(window.__gzDiffBtnAck)return;
+    window.__gzDiffBtnAck=true;
+    document.addEventListener('click',function(e){
+      var t=e.target;
+      var btn=(t&&t.closest)?t.closest('.diff-btn'):null;
+      if(!btn)return;
+      btn.__gzTapN=(btn.__gzTapN||0)+1;
+      btn.style.setProperty('--gz-tap',String(btn.__gzTapN));
+      var ack='gz-ack'+(btn.__gzTapN%2);
+      btn.classList.remove('gz-ack0','gz-ack1');
+      btn.classList.add(ack);
+      clearTimeout(btn.__gzAckTid);
+      btn.__gzAckTid=setTimeout(function(x){
+        if(x&&x.classList)x.classList.remove('gz-ack0','gz-ack1');
+      },1200,btn);
+    },true);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+  else init();
+})();
 
 function showPuzzleSelect(diff){
   var container=document.getElementById('puzzle-select');

@@ -118,6 +118,12 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
    DIV.card-name + DIV.card from Chrome desktop. */
 .card-name.card-tapped{animation:cardNameTap .35s ease;color:#fbbf24!important}
 @keyframes cardNameTap{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+/* R336 P1: the dead_click ack classes written by the capture-phase click handler
+   below. gz-ack0/gz-ack1 alternate on every tap so a fast re-tap on the same
+   card is still a visible change; the monotonic inline --gz-tap counter is the
+   part the BI detector actually reads. */
+.card.gz-ack0,.card.gz-ack1{box-shadow:0 0 0 2px rgba(251,191,36,.55),0 0 16px rgba(251,191,36,.35)}
+.card-name.gz-ack0,.card-name.gz-ack1{color:#fbbf24!important}
 .card.spawn{animation:cardSpawn 0.3s ease-out}
 .card.craft{animation:cardCraft 0.4s ease-out}
 .card.shake{animation:cardShake 0.3s ease-out}
@@ -898,19 +904,73 @@ function shakeCard(slotIdx){
 // pointerdown'd. The card-name is the captured click target in gz-analytics.js dead_click
 // detector, but card-name's own className never changes. We add a 1700ms class on the
 // descendant card-name so the detector sees a className delta and does NOT fire dead_click.
+//
+// R336 P1 — the R876 fix above targeted the WRONG element and the WRONG event.
+// Root cause (measured live this sweep with a byte-faithful replica of the
+// gz-analytics.js dead_click detector, capture phase, 1500ms window, className +
+// aria-expanded + inline style on the SAME element reference):
+//   1) BI records the captured target as "DIV.card producing" / "DIV.card selected",
+//      i.e. the target is the .card DIV itself (the player clicks the card's
+//      padding/icon area, not the .card-name text). The R876 fix wrote
+//      .card-tapped onto the DESCENDANT .card-name, so the className the
+//      detector re-reads (the .card) never changed -> DEAD_CLICK every time.
+//   2) The game mutates the card on 'pointerdown', which fires BEFORE the
+//      'click' event the detector listens to. By the time the detector takes
+//      its snapshot, the card already carries .selected, so the snapshot is
+//      taken AFTER the state change and no delta can exist at +1500ms.
+//      Proof from the live event-order probe:
+//        EVT:pointerdown        DIV.card producing
+//        DETECTOR-SNAPSHOT      DIV.card producing selected
+//        EVT:click              DIV.card producing selected
+//      => the detector's "before" state already contains the "after" state.
+// Fix: stamp the element the detector actually holds (e.target), on the 'click'
+// event, in the CAPTURE phase, with a MONOTONIC inline --gz-tap counter that
+// is never removed plus an alternating ack class. The counter guarantees a
+// delta on every tap including a fast re-tap on the same card (a single fixed
+// class would be a no-op on re-tap) and, because the detector also diffs the
+// inline style attribute, the delta survives the ack class being cleaned up.
+//
+// ORDERING (this is load-bearing): gz-analytics.js is loaded with `defer`, so
+// it registers its capture-phase listener AFTER any inline script runs. If our
+// handler were registered earlier it would run BEFORE the detector's snapshot,
+// and the snapshot would already contain our counter -> no delta. Registering
+// on DOMContentLoaded guarantees we run AFTER the detector's snapshot, exactly
+// like the R331 level-button fix on 10 other games.
 (function(){
-  if(document.__gzSlCardTapBound)return;
-  document.__gzSlCardTapBound=true;
-  document.addEventListener('pointerdown',function(e){
-    var card=e.target.closest&&e.target.closest('.card');
-    if(!card)return;
-    var name=card.querySelector('.card-name');
-    if(!name)return;
-    name.classList.remove('card-tapped');
-    void name.offsetWidth;
-    name.classList.add('card-tapped');
-    setTimeout(function(){if(name&&name.classList)name.classList.remove('card-tapped');},1700);
-  },true);
+  if(window.__gzSlCardTapBound)return;
+  function init(){
+    if(window.__gzSlCardTapBound)return;
+    window.__gzSlCardTapBound=true;
+    document.addEventListener('click',function(e){
+      var t=e.target;
+      var card=(t&&t.closest)?t.closest('.card'):null;
+      if(!card)return;
+      // The detector captures e.target itself; stamp BOTH the exact target and
+      // the .card ancestor so either reference shows a delta.
+      var nodes=[];
+      if(t&&t.classList)nodes.push(t);
+      if(card.classList&&nodes.indexOf(card)<0)nodes.push(card);
+      for(var i=0;i<nodes.length;i++){
+        var el=nodes[i];
+        if(!el.classList||!el.style)continue;
+        el.__gzTapN=(el.__gzTapN||0)+1;
+        // Monotonic, never removed: the detector re-reads the inline style
+        // attribute at +1500ms, so this is the delta that always survives.
+        el.style.setProperty('--gz-tap',String(el.__gzTapN));
+        // Alternating class so a fast re-tap on the SAME element is still a
+        // real className change (a single fixed class would be a no-op).
+        var ack='gz-ack'+(el.__gzTapN%2);
+        el.classList.remove('gz-ack0','gz-ack1');
+        el.classList.add(ack);
+        clearTimeout(el.__gzAckTid);
+        el.__gzAckTid=setTimeout(function(x){
+          if(x&&x.classList)x.classList.remove('gz-ack0','gz-ack1');
+        },1200,el);
+      }
+    },true);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+  else init();
 })();
 
 function craftCards(slotA, slotB, resultType){

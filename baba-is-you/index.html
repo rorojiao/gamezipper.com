@@ -33,6 +33,19 @@ html,body{width:100%;height:100%;overflow-x:hidden;background:linear-gradient(13
 .chapter-btn h3{color:#fff;font-size:1.1rem;margin-bottom:5px}
 .chapter-btn p{color:#a5b4fc;font-size:0.85rem}
 .chapter-btn .stars{color:#fbbf24;margin-top:8px}
+/* R336 P1: locked-chapter explanation + tap acknowledgement.
+   .chapter-btn is a DIV, so gz-analytics.js's dead_click detector watches it:
+   it snapshots className / aria-expanded / inline style in the CAPTURE phase
+   and re-reads the SAME element 1500ms later. A chapter button whose handler
+   only navigates (or, worse, which had no handler at all) never mutated
+   itself, so BI logged "DIV.chapter-btn" dead_clicks. */
+.chapter-btn.locked{cursor:not-allowed;border-color:#3a3a5a}
+.chapter-btn.locked:hover{transform:none;box-shadow:none;border-color:#3a3a5a}
+.chapter-btn.shake{animation:chShake .4s ease}
+@keyframes chShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.chapter-btn.gz-ack0,.chapter-btn.gz-ack1{border-color:#a5b4fc!important;box-shadow:0 0 14px rgba(129,140,248,.55)!important}
+#chapter-msg{min-height:22px;color:#fbbf24;font-size:.9rem;text-align:center;opacity:0;transition:opacity .2s}
+#chapter-msg.show{opacity:1}
 #game-container{display:none;flex-direction:column;align-items:center;height:100vh;padding:10px}
 #top-bar{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:600px;padding:10px 5px}
 #level-title{font-size:1.2rem;color:#fff}
@@ -132,6 +145,7 @@ canvas{display:block;max-width:100%;max-height:100%;border-radius:8px;box-shadow
 <h2>BABA IS YOU</h2>
 <h2>Rule Manipulation Puzzle</h2>
 <div class="chapter-grid" id="chapter-grid"></div>
+<div id="chapter-msg" aria-live="polite"></div>
 </div>
 <div id="game-container">
 <div id="top-bar">
@@ -876,8 +890,38 @@ function buildChapterGrid(){
     btn.innerHTML='<h3>Chapter '+(c+1)+'</h3><p>'+CHAPTER_NAMES[c]+'</p><div class="stars">'+'★'.repeat(10)+'</div>';
     if(unlocked){
       btn.onclick=()=>showLevelSelect(c);
+    } else {
+      // R336 P1: a LOCKED chapter button had NO click handler at all — the
+      // player's tap produced zero feedback of any kind (no navigation, no
+      // message, no animation). gz-analytics.js's dead_click detector logged
+      // it ("DIV.chapter-btn", 4 events on 2026-10-24) and, more importantly,
+      // the player had no way to learn WHY the chapter is unavailable.
+      // Now it explains the requirement instead of silently swallowing the tap.
+      btn.classList.add('locked');
+      btn.onclick=()=>{
+        let prevMax=parseInt(localStorage.getItem('baba_max')||'0');
+        let need=c>0?CHAPTER_START[c-1]:0;
+        let msg='Chapter '+(c+1)+' is locked — finish Chapter '+c+' (reach level '+(need+1)+') to unlock it.';
+        showChapterMsg(msg);
+        btn.classList.remove('shake');void btn.offsetWidth;btn.classList.add('shake');
+      };
     }
     grid.appendChild(btn);
+  }
+}
+/* R336 P1: explain a refused action instead of silently doing nothing. */
+let _chMsgTid=null;
+function showChapterMsg(txt){
+  let el=document.getElementById('chapter-msg');
+  if(!el)return;
+  el.textContent=txt||'';
+  el.classList.add('show');
+  if(_chMsgTid)clearTimeout(_chMsgTid);
+  if(txt){
+    _chMsgTid=setTimeout(()=>{
+      let e2=document.getElementById('chapter-msg');
+      if(e2){e2.textContent='';e2.classList.remove('show');}
+    },3200);
   }
 }
 function showLevelSelect(ch){
@@ -1111,7 +1155,7 @@ if(gameState)render();
   function init(){
     if (window.__gzLevelBtnAck) return;
     window.__gzLevelBtnAck = true;
-    var SEL = '.level-btn, .level-tile, .ls-level';
+    var SEL = '.level-btn, .level-tile, .ls-level, .chapter-btn';
     function find(node){
       if (!node || node.nodeType !== 1) return null;
       if (node.matches && node.matches(SEL)) return node;
