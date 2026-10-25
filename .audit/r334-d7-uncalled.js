@@ -105,11 +105,22 @@ function analyse(slug) {
     if (NOT_A_FUNCTION.has(n)) continue;
     decls.set(n, (decls.get(n) || 0) + 1);
   }
+  // R334 FIX: a SELF-INVOKED IIFE — `(function validateLevels(){...})()` — is a
+  // LIVE function even though its name appears exactly once (the declaration).
+  // v3 counted only whole-word references, so every self-invoked IIFE was
+  // reported as dead. That produced false positives on one-line-puzzle,
+  // bus-jam-3d, pocket-sort and suguru (all four run a level-validating IIFE
+  // at load time). Detect the IIFE form and count it as a reference.
+  const selfInvoked = new Set();
+  for (const m of raw.matchAll(/\(\s*function\s+([A-Za-z_$][\w$]*)\s*\([\s\S]{0,8000}?\}\s*\)\s*\(\s*\)/g)) {
+    selfInvoked.add(m[1]);
+  }
   const unreferenced = [];
   for (const name of decls.keys()) {
     const esc = name.replace(/[$]/g, '\\$');
     let refs = 0;
     for (const m of code.matchAll(new RegExp('(?<![\\w$])' + esc + '(?![\\w$])', 'g'))) refs++;
+    if (selfInvoked.has(name)) refs++;   // the IIFE's own invocation counts
     if (refs <= decls.get(name)) {
       const inHtml = new RegExp('(?<![\\w$])' + esc + '(?![\\w$])').test(html);
       // v3: also accept a runtime-built inline handler
@@ -162,11 +173,15 @@ function main() {
   function unreferencedIn(src, raw) {
     const d = new Map();
     for (const m of src.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)) d.set(m[1], (d.get(m[1]) || 0) + 1);
+    // self-invoked IIFE counts as a reference (same rule as analyse())
+    const selfInvoked = new Set();
+    for (const m of raw.matchAll(/\(\s*function\s+([A-Za-z_$][\w$]*)\s*\([\s\S]{0,8000}?\}\s*\)\s*\(\s*\)/g)) selfInvoked.add(m[1]);
     const out = [];
     for (const name of d.keys()) {
       const esc = name.replace(/[$]/g, '\\$');
       let refs = 0;
       for (const m of src.matchAll(new RegExp('(?<![\\w$])' + esc + '(?![\\w$])', 'g'))) refs++;
+      if (selfInvoked.has(name)) refs++;
       if (refs <= d.get(name)) {
         if (!handlerRef(raw, name)) out.push(name);
       }
@@ -189,6 +204,14 @@ function main() {
   const codeC = stripNoise(synthC);
   const uncC = unreferencedIn(codeC, rawC);
   console.log(`   CONTROL C (dead render) unreferenced: ${uncC.join(',')}  (must contain drawDots)`);
+
+  // CONTROL D: a SELF-INVOKED IIFE is LIVE and must NOT be flagged.
+  // (function validateLevels(){ throw new Error('bad'); })();
+  const synthD = '(function validateLevels(){ if(1) throw new Error("x"); })();\nfunction deadThing(){ return 1; }\n';
+  const rawD = stripComments(synthD);
+  const codeD = stripNoise(synthD);
+  const uncD = unreferencedIn(codeD, rawD);
+  console.log(`   CONTROL D (self-invoked IIFE) unreferenced: ${uncD.join(',') || '(none)'}  (must NOT contain validateLevels; must contain deadThing)`);
 }
 
 main();
