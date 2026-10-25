@@ -1384,6 +1384,27 @@ for (let i = 0; i < 30; i++) {
     });
   }
 }
+{ // proven-solution injection (R308 pattern): solutions.json holds per-level strokes that
+  // a stronger offline solver (solver_strong.js) proved by a multi-seed robustness gauntlet
+  // AND by real-engine replay. Injection NEVER bypasses verification - each injected plan is
+  // re-checked in the deterministic port on 2 seeds and then replayed on the real engine.
+  // It only supplies candidates for levels the shipped planner cannot synthesize (its
+  // static generator exceeds the 5s worker cap on the wall-heavy boards).
+  let SOL = null;
+  try { SOL = JSON.parse(require('fs').readFileSync(__dirname + '/solutions.json', 'utf8')); } catch (e) { SOL = null; }
+  if (SOL) for (const k of Object.keys(SOL)) {
+    if (k.startsWith('_')) continue;
+    const id = parseInt(k, 10);
+    if (!(id >= 1 && id <= 30) || !SOL[k] || !Array.isArray(SOL[k].strokes)) continue;
+    const i = id - 1;
+    if (ONLY && !ONLY.includes(id)) continue;
+    const plan = { lines: SOL[k].strokes.map(pts => ({ pts: pts.map(p => ({ x: p.x, y: p.y })) })) };
+    if (!plan.lines.length) continue;
+    let ok = false;
+    try { ok = simulate(LV[i], DIM.cw, DIM.ch, plan, 424242, 4200).ok && simulate(LV[i], DIM.cw, DIM.ch, plan, 11, 4200).ok; } catch (e) { ok = false; }
+    if (ok) { plans[i].push(plan); simInfo.push('L' + id + 'X'); } // X = injected+verified
+  }
+}
 if (process.env.SS_PROGRESS) console.error('offline done t=' + (Date.now() - T0) + ' :: ' + simInfo.join(' '));
 
 // ---------- probes on level 1: pause / resume / reset / undo / erase ----------
