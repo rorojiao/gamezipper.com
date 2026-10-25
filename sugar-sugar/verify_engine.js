@@ -17,11 +17,15 @@ const g = bootGame('sugar-sugar', { inject: {
 // extra rAF chain (N x spawn/update per frame). All leaked chains tick at the SAME
 // virtual __now inside one pump frame — drop every tick after the first per frame
 // (dropped chains never re-register). Pure verifier shim; engine untouched.
+// NOTE: only a rAF-QUEUED tick may be dropped (it arrives WITH the frame timestamp
+// as its argument). startLevel() calls gameLoop() DIRECTLY (no argument) and that
+// call is what re-registers the rAF chain — dropping it left rafQ empty, the engine
+// frozen (0 spawns) and every level after the first needing 2 attempts.
 globalThis.__glLast = -1;
 var __oGL = gameLoop;
 gameLoop = function(){
   var now = performance.now();
-  if (now === globalThis.__glLast) return;
+  if (arguments.length && now === globalThis.__glLast) return;
   globalThis.__glLast = now;
   return __oGL.apply(this, arguments);
 };
@@ -1394,17 +1398,29 @@ T('reset-fresh', C('__SS.st().state') === 'playing' && C('__SS.st().lines') === 
 const n0 = C('__SS.st().lines');
 C('undoLine()'); g.pump(2); // empty-stack undo is safe
 T('undo-empty-safe', C('__SS.st().lines') === n0, 'lines=' + C('__SS.st().lines'));
-function dragLine(pts) { // real pointer stroke; map canvas px -> client coords through the stub rect
-  const rect = { w: 480, h: 640 };
-  const cx = x => x * (rect.w / DIM.cw), cy = y => y * (rect.h / DIM.ch);
+function canvasClient() { // the engine maps client->canvas px via (x-rect.left)*(cw/rect.width),
+  // so the INVERSE (canvas px -> client px) must use the canvas's REAL rect. The old
+  // hard-coded {w:480,h:640} was the pre-setupCanvas CSS size: the engine's setupCanvas
+  // makes the canvas SQUARE (size=min(w,h,560)), so the engine received a non-uniformly
+  // scaled polyline (x*1.035, y*1.379) and never saw the planned geometry at all.
+  const r = cv.getBoundingClientRect();
+  return { left: r.left || 0, top: r.top || 0, w: r.width || DIM.cw, h: r.height || DIM.ch };
+}
+function dragLine(pts) { // real pointer stroke; map canvas px -> client coords through the REAL rect
+  const r = canvasClient();
+  const cx = x => r.left + x * (r.w / DIM.cw), cy = y => r.top + y * (r.h / DIM.ch);
   cv.dispatch('pointerdown', { clientX: cx(pts[0].x), clientY: cy(pts[0].y), pointerId: 1, button: 0, preventDefault() {} });
-  for (let i = 1; i < pts.length; i++) cv.dispatch('pointermove', { clientX: cx(pts[i].x), clientY: cy(pts[i].y), pointerId: 1, preventDefault() {} });
-  cv.dispatch('pointerup', { clientX: cx(pts[pts.length - 1].x), clientY: cy(pts[pts.length - 1].y), pointerId: 1, preventDefault() {} });
+  for (let i = 1; i < pts.length; i++) cv.dispatch('pointermove', { clientX: cx(pts[i].x), clientY: cy(pts[i].y), pointerId: 1, button: 0, preventDefault() {} });
+  cv.dispatch('pointerup', { clientX: cx(pts[pts.length - 1].x), clientY: cy(pts[pts.length - 1].y), pointerId: 1, button: 0, preventDefault() {} });
 }
 dragLine([{ x: 50, y: 150 }, { x: 120, y: 170 }]);
 T('draw-adds-line', C('__SS.st().lines') === 1, 'lines=' + C('__SS.st().lines'));
 C('setTool("erase")');
-cv.dispatch('pointerdown', { clientX: 60 * 480 / DIM.cw, clientY: 160 * 640 / DIM.ch, pointerId: 1, button: 0, preventDefault() {} });
+{ // erase a canvas-px point within 20px of a drawn VERTEX (the engine's eraseNear
+  // measures distance to vertices, not to segments): (60,160) is 14px from (50,150).
+  const r = canvasClient();
+  cv.dispatch('pointerdown', { clientX: r.left + 60 * (r.w / DIM.cw), clientY: r.top + 160 * (r.h / DIM.ch), pointerId: 1, button: 0, preventDefault() {} });
+}
 T('erase-removes-line', C('__SS.st().lines') === 0, 'lines=' + C('__SS.st().lines'));
 C('setTool("draw")');
 C('resetLevel()'); g.pump(6);
