@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-/* solver_strong.js — strong per-level solver/verifier for the 8 unproven sugar-sugar
- * levels (L3, L7, L8, L9, L10, L11, L12, L13).
+/* solver_strong.js — parallel per-level solver/verifier for sugar-sugar.
  *
  * Why the shipped gate fails these: its plans are accepted on a 1-2 seed sim and its
  * adaptive policy plans re-draw lines on frame-critical state. The harness seeds
@@ -35,23 +34,25 @@
  * 3 = at least one STILL-UNPROVEN. The shipped gate (verify_engine.js) is NOT
  * touched and its verdict is not affected by this script.
  *
- * Env: SS_LEVELS="3,7,..." (default the 8 targets), SS_QUIET=1 (JSON only).
+ * Env: SS_LEVELS="24,29,30" (default the remaining three targets), SS_QUIET=1 (JSON only).
  * No network, no deps, fixed seed battery — reproducible. */
 const path = require('path');
 const fs = require('fs');
 const { Worker } = require('worker_threads');
+const WORKERS = Math.min(8, require('os').cpus().length);
 const { bootGame } = require('../_optimization/scripts/harness-lib.js');
 
 const HERE = __dirname;
 const GATE = path.join(HERE, 'verify_engine.js');
 const OUT_FILE = path.join(HERE, 'solver_results.json');
-const TARGETS = (process.env.SS_LEVELS || '3,7,8,9,10,11,12,13').split(',').map(Number);
+const TARGETS = (process.env.SS_LEVELS || '24,29,30').split(',').map(Number);
 const QUIET = !!process.env.SS_QUIET;
 const T0WALL = Date.now();
 // per-level budgets (INDEPENDENT, never shared)
-const BUD_SEARCH_MS = 80000;   // candidate generation + gauntlet per level
-const BUD_ENGINE_MS = 45000;   // engine replay attempts per level
-const GLOBAL_DL = T0WALL + 9.5 * 60 * 1000; // whole-run cap ~9.5 min
+const BUD_SEARCH_MS = Number(process.env.SS_SEARCH_MS || 180000);
+if (!Number.isFinite(BUD_SEARCH_MS) || BUD_SEARCH_MS < 1000) throw Error('SS_SEARCH_MS must be at least 1000');   // screening + gauntlet per level, after generation
+const BUD_ENGINE_MS = 90000;   // engine replay attempts per level
+const GLOBAL_DL = T0WALL + 20 * 60 * 1000; // whole-run cap 20 min
 
 const log = (...a) => { if (!QUIET) console.error(...a); };
 
@@ -117,7 +118,7 @@ const P = loadPhysics();
 // Bit-identical to the shipped simulate() for static {lines} plans at t0=0, offset=0
 // (asserted below). t0 = first frame at which the drawn lines exist; offset = number
 // of rng draws pre-consumed (models the engine's unknown-but-fixed stream alignment).
-function simStatic(lv, cw, ch, plan, seed, offset, t0, frameBudget) {
+function simStatic(lv, cw, ch, plan, seed, offset, t0, frameBudget, broadPhase = true) {
   const rng = P.mulberry(seed);
   for (let k = 0; k < offset; k++) rng();
   const disp = lv.disp.map(d => ({ x: d.x / 100 * cw, y: d.y / 100 * ch, color: d.color }));
@@ -127,6 +128,17 @@ function simStatic(lv, cw, ch, plan, seed, offset, t0, frameBudget) {
   let spawnCount = 0;
   let particles = [];
   const lines = plan.lines.map(l => ({ pts: l.pts || l }));
+  // Conservative broad phase only: a point outside a segment's bounding box
+  // expanded by its collision radius cannot collide. Calls that can affect a grain
+  // still run the unmodified shipped collideSeg, in exactly the original order.
+  const bounds = lines.map(l => l.pts.slice(1).map((b,j) => {
+    const a=l.pts[j]; return [Math.min(a.x,b.x),Math.max(a.x,b.x),Math.min(a.y,b.y),Math.max(a.y,b.y)];
+  }));
+  const wallBounds = walls.map(w => [Math.min(w.x1,w.x2),Math.max(w.x1,w.x2),Math.min(w.y1,w.y2),Math.max(w.y1,w.y2)]);
+  const near = (p,b) => {
+    const r=p.r+P.LT/2+1e-9;
+    return p.x>=b[0]-r && p.x<=b[1]+r && p.y>=b[2]-r && p.y<=b[3]+r;
+  };
   let active = t0 > 0 ? [] : lines;
   for (let f = 0; f < frameBudget; f++) {
     if (t0 > 0 && f === t0) active = lines;
@@ -153,10 +165,10 @@ function simStatic(lv, cw, ch, plan, seed, offset, t0, frameBudget) {
       if (p.x > cw - p.r) { p.x = cw - p.r; p.vx *= -P.BOUNCE; }
       if (p.y < p.r) { p.y = p.r; p.vy *= -P.BOUNCE; }
       if (p.y > ch + p.r * 2) { p.active = false; continue; }
-      for (let w = 0; w < walls.length; w++) P.collideSeg(p, walls[w].x1, walls[w].y1, walls[w].x2, walls[w].y2);
+      for (let w = 0; w < walls.length; w++) if (!broadPhase || near(p,wallBounds[w])) P.collideSeg(p, walls[w].x1, walls[w].y1, walls[w].x2, walls[w].y2);
       for (let l = 0; l < active.length; l++) {
         const pts = active[l].pts;
-        for (let j = 0; j < pts.length - 1; j++) P.collideSeg(p, pts[j].x, pts[j].y, pts[j + 1].x, pts[j + 1].y);
+        for (let j = 0; j < pts.length - 1; j++) if (!broadPhase || near(p,bounds[l][j])) P.collideSeg(p, pts[j].x, pts[j].y, pts[j + 1].x, pts[j + 1].y);
       }
       for (let c = 0; c < cups.length; c++) {
         const cup = cups[c];
@@ -203,26 +215,73 @@ const T1_SEEDS = [424242, 7, 987654], T1_OFFSETS = [0, 31];
 // whole call history; a plan proven over 6 alignments transfers to any of them)
 const REC_OFFSETS = [0, 7, 31, 63, 127, 200];
 const SIM_FRAMES = 4200;
+// Every worker evaluates the very same source strings as the coordinator. Jobs
+// contain all sim inputs; worker scheduling cannot affect RNG or physics state.
+class PhysicsPool {
+  constructor() {
+    this.queue = [];
+    this.slots = Array.from({ length: WORKERS }, () => {
+      const code = `const {parentPort,workerData}=require('worker_threads');
+        const SLICE=workerData.slice;
+        ${loadPhysics.toString()}
+        const P=loadPhysics();
+        ${simStatic.toString()}
+        for (const plan of workerData.plans) for (const seed of [424242,11,987654]) {
+          const a=P.simulate(workerData.lv,workerData.cw,workerData.ch,plan,seed,900);
+          const b=simStatic(workerData.lv,workerData.cw,workerData.ch,plan,seed,0,0,900);
+          if(a.ok!==b.ok || a.frame!==b.frame || JSON.stringify(a.fills)!==JSON.stringify(b.fills))
+            throw Error('worker physics self-test failed');
+        }
+        parentPort.postMessage({ready:true});
+        parentPort.on('message', job => {
+          parentPort.postMessage(simStatic(job.lv,job.cw,job.ch,job.plan,job.seed,job.offset,job.t0,job.frames));
+        });`;
+      const slot = { worker: new Worker(code, { eval: true, workerData: {
+        slice: SLICE, lv: LV[0], cw: CW, ch: CH, plans: [
+          {lines:[{pts:[{x:CW*.5,y:CH*.1},{x:CW*.45,y:CH*.5}]}]},
+          {lines:[{pts:[{x:CW*.5,y:CH*.08},{x:CW*.3,y:CH*.6},{x:CW*.42,y:CH*.84}]}]},
+          {lines:[]}
+        ] } }), pending: null };
+      slot.ready = new Promise((resolve, reject) => { slot.resolveReady=resolve; slot.rejectReady=reject; });
+      slot.worker.on('message', result => {
+        if (result.ready) { slot.resolveReady(); return; }
+        const pending = slot.pending; slot.pending = null;
+        pending.resolve(result); this.dispatch();
+      });
+      slot.worker.on('error', error => {
+        this.failure=error; slot.rejectReady(error);
+        if (slot.pending) slot.pending.reject(error);
+        for (const job of this.queue.splice(0)) job.reject(error);
+      });
+      return slot;
+    });
+  }
+  dispatch() {
+    for (const slot of this.slots) if (!slot.pending && this.queue.length) {
+      slot.pending = this.queue.shift();
+      slot.worker.postMessage(slot.pending.job);
+    }
+  }
+  sim(lv, plan, seed, offset, t0, frames) {
+    if (this.failure) return Promise.reject(this.failure);
+    return new Promise((resolve, reject) => {
+      this.queue.push({ job: { lv, plan, seed, offset, t0, frames, cw:CW, ch:CH }, resolve, reject });
+      this.dispatch();
+    });
+  }
+  async close() { await Promise.all(this.slots.map(s => s.worker.terminate())); }
+}
+let physicsPool;
+async function battery(lv, plan, seeds, offsets) {
+  const jobs = seeds.flatMap(seed => offsets.map(offset => physicsPool.sim(lv, plan, seed, offset, 1, SIM_FRAMES)));
+  const rs = await Promise.all(jobs);
+  const pass = rs.filter(r => r.ok).length;
+  return { pass, tried:rs.length, rate:pass/rs.length, worst:rs.filter(r => !r.ok).pop() || null };
+}
 function gauntlet(lv, plan, tier) {
-  const seeds = tier === 1 ? T1_SEEDS : SEEDS;
-  const offs = tier === 1 ? T1_OFFSETS : OFFSETS;
-  let pass = 0, tried = 0, worst = null;
-  for (const sd of seeds) for (const of2 of offs) {
-    tried++;
-    const r = simStatic(lv, CW, CH, plan, sd, of2, 1, SIM_FRAMES);
-    if (r.ok) pass++;
-    else { worst = r; }
-  }
-  return { pass, tried, rate: pass / tried, worst };
+  return battery(lv, plan, tier === 1 ? T1_SEEDS : SEEDS, tier === 1 ? T1_OFFSETS : OFFSETS);
 }
-function gauntletRec(lv, plan) { // full recorded-plan battery (16 seeds x 6 offsets)
-  let pass = 0, tried = 0;
-  for (const sd of SEEDS) for (const of2 of REC_OFFSETS) {
-    tried++;
-    if (simStatic(lv, CW, CH, plan, sd, of2, 1, SIM_FRAMES).ok) pass++;
-  }
-  return { pass, tried, rate: pass / tried };
-}
+function gauntletRec(lv, plan) { return battery(lv, plan, SEEDS, REC_OFFSETS); }
 
 // ---------- exact engine-stream replay (bitwise alignment identification) ----------
 // The harness Math.random is the LCG s = (s*1664525 + 1013904223) >>> 0, seeded
@@ -386,7 +445,7 @@ function supplyProof(lv, cw, ch) {
 // ---------- candidate generation ----------
 // Strokes are spout-anchored paths per cup. A catalog entry carries one or more
 // polylines ("parts": cascades have ballistic gaps between legs). A PLAN = one entry
-// per cup, all pairwise line-compatible. This is the search space: aim (target fx
+// per cup, including overlapping strokes. This is the search space: aim (target fx
 // across the cup mouth) x release geometry (ramp/stair/cascade) x rails x combination.
 function sig(plan) { return plan.lines.map(l => l.map(p => Math.round(p.x) + ',' + Math.round(p.y)).join('>')).join('|'); }
 function inBounds(pts) { return pts.every(p => p.x >= 2 && p.x <= CW - 2 && p.y >= 2 && p.y <= CH - 2); }
@@ -455,7 +514,7 @@ function cupCatalog(lv, ci, deadline) {
   }
   return out;
 }
-// build a concrete plan from a per-cup selection: sample, rail, compat-check
+// Build a concrete plan from a per-cup selection: sample and optionally rail.
 const FXS = [0.08, 0.17, 0.25, 0.33, 0.42, 0.5, 0.58, 0.67, 0.75, 0.83, 0.92];
 function partVariants(parts, rails, open, lv) {
   // parts -> sampled polylines, optionally twin-railed (shipped toRails)
@@ -494,29 +553,30 @@ function combosCompat(lv, sel) {
   }
   return true;
 }
-function enumeratePlans(lv, deadline) {
+function* enumeratePlans(lv, deadline) {
   const catalogs = lv.cups.map((_, ci) => cupCatalog(lv, ci, deadline));
-  if (catalogs.some(c => !c.length)) return [];
-  const out = [];
-  const seen = new Set();
-  const rec = (i, sel) => {
-    if (Date.now() > deadline || out.length >= 1400) return;
-    if (i === lv.cups.length) {
-      if (!combosCompat(lv, sel)) return;
-      for (const rails of [0, 8, 10]) {
-        const p = comboPlan(lv, sel, rails);
-        if (!p) continue;
-        const s = sig(p);
-        if (seen.has(s)) continue;
-        seen.add(s);
-        out.push({ plan: p, gen: sel.map(e2 => e2.kind).join('+') + (rails ? '+r' + rails : '') });
-      }
-      return;
+  log('catalog sizes: ' + catalogs.map(c => c.length).join(' x '));
+  if (catalogs.some(c => !c.length)) return;
+  // Stream the Cartesian product: no candidate-count ceiling and no materialized
+  // product. In particular, line compatibility is not a proof of impossibility,
+  // so overlapping candidate strokes are left for the physics to judge.
+  const total = catalogs.reduce((n,c) => n * BigInt(c.length), 1n);
+  const gcd = (a,b) => b ? gcd(b,a%b) : a;
+  // A coprime stride is a bijection over the entire product. Unlike a lexical
+  // prefix it changes every cup early, without discarding any combination.
+  let stride = total * 618033n / 1000000n + 1n;
+  while (gcd(stride,total) !== 1n) stride++;
+  for (let k=0n; k<total && Date.now()<=deadline; k++) {
+    let index = k * stride % total;
+    const sel = catalogs.map(c => {
+      const e = c[Number(index % BigInt(c.length))];
+      index /= BigInt(c.length); return e;
+    });
+    for (const rails of [0,8,10]) {
+      const plan = comboPlan(lv,sel,rails);
+      if (plan) yield {plan,gen:sel.map(e=>e.kind).join('+')+(rails?'+r'+rails:'')};
     }
-    for (const e of catalogs[i]) { sel.push(e); rec(i + 1, sel); sel.pop(); if (out.length >= 1400) return; }
-  };
-  rec(0, []);
-  return out;
+  }
 }
 function fromBuildPlans(raw) { // shipped static planner output ({lines:[{pts}]}) -> my format
   const out = [];
@@ -554,9 +614,7 @@ function buildPlansWorker(lv, capMs) {
 function dragLine(pts) {
   // CORRECT client mapping for this sandbox: the canvas stub's getBoundingClientRect
   // returns the backing store (cw x ch), so the engine's getCanvasPos is IDENTITY:
-  // clientX === canvas x. (The shipped gate's dragLine assumes the 480x640 stub
-  // default, which displaces every drawn stroke +3.4% in x and +37.9% in y — that
-  // replay-path defect is what killed its sim-verified plans; see report.)
+  // clientX === canvas x. This agrees with the corrected shipped gate mapping.
   const cx = x => x, cy = y => y;
   cv.dispatch('pointerdown', { clientX: cx(pts[0].x), clientY: cy(pts[0].y), pointerId: 1, button: 0, preventDefault() {} });
   for (let i = 1; i < pts.length; i++) cv.dispatch('pointermove', { clientX: cx(pts[i].x), clientY: cy(pts[i].y), pointerId: 1, preventDefault() {} });
@@ -595,7 +653,6 @@ async function solveLevel(id1, bpPromise) {
   const lv = LV[id1 - 1];
   LVsel = lv;
   const t0 = Date.now();
-  const dl = t0 + BUD_SEARCH_MS;
   const rec = { level: id1, name: lv.name, verdict: null, plan: null, robustness: null,
     evidence: {}, gens: 0, simsRun: 0, engineTries: 0, notes: '' };
 
@@ -609,57 +666,74 @@ async function solveLevel(id1, bpPromise) {
     return rec;
   }
 
-  // 1) candidates: per-cup catalogs x per-cup enumeration + shipped static planner
-  let cands = [];
-  const add = (gen, plan) => {
-    if (!plan || !plan.lines.length) return;
-    if (cands.some(c2 => c2.sig === sig(plan))) return;
-    cands.push({ gen, plan, sig: sig(plan) });
-  };
-  for (const { plan, gen } of enumeratePlans(lv, dl)) add(gen, plan);
+  // Generation has its own independent cap; screening gets the full per-level
+  // budget after generation (a slow generator cannot consume tier0's allowance).
   let bpRaw = null;
   try { bpRaw = await bpPromise; } catch (e) { bpRaw = null; }
-  for (const { plan } of fromBuildPlans(bpRaw)) add('buildPlans', plan);
-  // sim-fastest FIRST but keep buildPlans splitter designs visible early: interleave
-  // one buildPlans plan per 3 ramps so 1-dispenser multi-cup boards (L9) get their
-  // best family simmed within the tier0 cap (pure sorting starved them)
-  {
-    const fast = cands.filter(c2 => c2.gen !== 'buildPlans').sort((a, b) => a.plan.lines.length - b.plan.lines.length);
-    const bp = cands.filter(c2 => c2.gen === 'buildPlans');
-    const mixed = [];
-    let bi = 0;
-    for (let i = 0; i < fast.length; i++) {
-      mixed.push(fast[i]);
-      if (i % 3 === 2 && bi < bp.length) mixed.push(bp[bi++]);
+  const searchStart = Date.now();
+  const searchDl = Math.min(searchStart + BUD_SEARCH_MS, GLOBAL_DL);
+  const generated = enumeratePlans(lv, searchDl);
+  const bp = fromBuildPlans(bpRaw);
+  const stored = JSON.parse(fs.readFileSync(path.join(HERE,'solutions.json'),'utf8'))[id1];
+  const preferred = stored ? [{plan:{lines:stored.strokes},gen:'recorded',preferred:true}] : [];
+  if (process.env.SS_CANDIDATES) {
+    const file = path.resolve(process.env.SS_CANDIDATES);
+    if (!file.startsWith(HERE + path.sep)) throw Error('Candidate file must be inside sugar-sugar/');
+    const extra = JSON.parse(fs.readFileSync(file,'utf8'))[id1] || [];
+    for (const c of extra) preferred.push({plan:c.plan || c,gen:'search-frontier',preferred:true});
+  }
+  function* candidates() {
+    // Shipped splitter/chute plans are expensive to generate but cheap to try.
+    // Interleave the lazy catalog so neither family is starved.
+    yield* preferred;
+    let bi = 0, done = false;
+    while (!done || bi < bp.length) {
+      if (bi < bp.length) yield bp[bi++];
+      for (let i = 0; i < 3 && !done; i++) {
+        const next = generated.next(); done = next.done;
+        if (!done) yield next.value;
+      }
     }
-    for (; bi < bp.length; bi++) mixed.push(bp[bi]);
-    cands = mixed;
   }
-  rec.gens = cands.length;
-  log('L' + id1 + ' "' + lv.name + '": ' + cands.length + ' plans (buildPlans=' + (bpRaw ? bpRaw.length : 'timeout/null') + ') search t=' + (Date.now() - t0) + 'ms');
-
-  let best = null; // most-robust plan across the full battery (picked in step 3)
-  // 2) tiered gauntlet (the sim is the only judge; no geometric pre-filter beyond
-  //    drawability — cups/spout contact is implied by per-cup catalog construction)
-  const pool = cands;
-  // tier0 cheap kill — HARD cap: tier0 must never eat the whole level budget; it only
-  // has to FIND survivors, and hundreds is plenty for the next tiers to rank.
+  log('L' + id1 + ' "' + lv.name + '": streaming plans (buildPlans=' + (bpRaw ? bpRaw.length : 'timeout/null') + ') generation t=' + (Date.now()-t0) + 'ms');
+  let best = null;
   const survivors = [];
-  const t0cap = t0 + Math.floor(BUD_SEARCH_MS * 0.45);
-  const TIER0_FRAMES = 1500; // a win by f1500 wins at 4200 too (win-monotone); full
-  // 4200 re-verification happens for every engine-queued plan in the ranking battery
-  for (const c2 of pool) {
-    if (Date.now() > Math.min(dl, t0cap) || survivors.length >= 220) break;
-    const r = simStatic(lv, CW, CH, c2.plan, 424242, 0, 1, TIER0_FRAMES);
-    rec.simsRun++;
-    if (r.ok) survivors.push(c2);
+  const t0cap = Math.min(searchDl, searchStart + Math.floor(BUD_SEARCH_MS * 0.65));
+  const TIER0_FRAMES = 1500;
+  const iterator = candidates();
+  let exhausted = false;
+  const near = [];
+  // At most one candidate per worker in flight, with results collected in input
+  // order. Limits are checked between batches, never halfway through a sim.
+  while (Date.now() < t0cap && survivors.length < 24 && !exhausted) {
+    const batch = [];
+    for (let i=0; i<WORKERS; i++) {
+      const next = iterator.next();
+      if (next.done) { exhausted = true; break; }
+      batch.push(next.value);
+    }
+    const rs = await Promise.all(batch.map(c => physicsPool.sim(lv,c.plan,424242,0,1,TIER0_FRAMES)));
+    rec.gens += batch.length; rec.simsRun += rs.length;
+    rs.forEach((r,i) => {
+      if (r.ok) survivors.push(batch[i]);
+      const fills = r.fills.map(v => Number(String(v).split('/')[0]));
+      const fractions = fills.map((v,ci) => Math.min(1,v/lv.cups[ci].need));
+      near.push({ ...batch[i], fills, score:Math.min(...fractions)+fractions.reduce((a,b)=>a+b,0)/lv.cups.length });
+    });
+    near.sort((a,b)=>b.score-a.score); near.length=Math.min(8,near.length);
+    if (survivors.some(c=>c.preferred)) break;
+    if (rec.gens % 128 === 0) log('L'+id1+' screened '+rec.gens+'; survivors='+survivors.length+'; best fills='+near[0].fills.join(','));
   }
-  log('L' + id1 + ' tier0 survivors: ' + survivors.length + '/' + pool.length + ' t=' + (Date.now() - t0) + 'ms');
+  fs.mkdirSync(path.join(HERE,'solver_logs'),{recursive:true});
+  fs.writeFileSync(path.join(HERE,'solver_logs','near-'+id1+'.json'),JSON.stringify(near,null,1));
+  rec.evidence.search = { workers:WORKERS, screened:rec.gens, enumerationExhausted:exhausted, tier0Ms:Date.now()-searchStart };
+  log('L' + id1 + ' tier0 survivors: ' + survivors.length + '/' + rec.gens + ' screened t=' + (Date.now() - t0) + 'ms');
   // tier1 (6-sim mini-battery) — ranked pass, keep the top band by robustness
   const t1 = [];
   let t1worst = 0;
   for (const c2 of survivors) {
-    const g1 = gauntlet(lv, c2.plan, 1);
+    if (Date.now() >= searchDl) break;
+    const g1 = await gauntlet(lv, c2.plan, 1);
     rec.simsRun += g1.tried;
     if (g1.pass < t1worst - 6 && t1.length >= 12) continue; // well below the band
     if (g1.pass === g1.tried) { t1.push({ ...c2, g: g1 }); continue; }
@@ -696,11 +770,12 @@ async function solveLevel(id1, bpPromise) {
     const ranked = t1.slice();
     ranked.sort((a, b) => (b.g.pass - b.g.tried) - (a.g.pass - a.g.tried));
     for (const c2 of ranked.slice(0, 2)) {
-      if (Date.now() > dl && order.length) break;
-      const g2 = gauntlet(lv, c2.plan, 2);
+      if (Date.now() >= searchDl) break;
+      const g2 = await gauntlet(lv, c2.plan, 2);
       rec.simsRun += g2.tried;
       order.push({ ...c2, g: g2 });
-      if (g2.pass === g2.tried) break; // perfect — no better ranking exists
+      // Keep both ranked candidates: a 48/48 plan may still fail the wider
+      // 96-case recorded battery. Only the latter earns a solution.
     }
     order.sort((a, b) => (b.g.pass - b.g.tried) - (a.g.pass - a.g.tried));
     if (order.length) {
@@ -785,12 +860,10 @@ async function solveLevel(id1, bpPromise) {
     const r2 = engineRun(id1, cand.plan, 0, engineDl);
     tries.push({ gen: cand.gen + ':replay2', won: r2.won, frames: r2.frames, fills: r2.fills });
     // EVIDENCE 4: robustness battery on the ENGINE geometry (16 seeds x 6 RNG stream
-    // offsets). >=90% pass: cells occupied only by synthetic mulberry RNG (which the
-    // engine never reaches) legitimately fail, so PERFECT is not required (the old
-    // 96/96 criterion produced false L9 negatives)
-    const gsim = gauntletRec(lv, { lines: captured });
+    // offsets). All 96 must pass before recording a new proven solution.
+    const gsim = await gauntletRec(lv, { lines: captured });
     rec.simsRun += gsim.tried;
-    if (r2.won && gsim.pass / gsim.tried >= 0.9) {
+    if (r2.won && gsim.pass === gsim.tried) {
       rec.verdict = 'SOLVABLE';
       rec.plan = { kind: 'static', strokes: captured, releaseFrames: 0, seedBattery: { seeds: SEEDS, offsets: REC_OFFSETS }, note: 'strokes = ENGINE-captured geometry (post 3px resample), replayable 1:1' };
       rec.evidence.replay = {
@@ -812,7 +885,7 @@ async function solveLevel(id1, bpPromise) {
   // 4) verdict
   if (!rec.verdict) {
     rec.verdict = 'STILL-UNPROVEN';
-    rec.notes = 'search exhausted within budget: ' + rec.gens + ' candidates, ' + rec.simsRun +
+    rec.notes = 'search stopped within budget: ' + rec.gens + ' candidates, ' + rec.simsRun +
       ' sims, gauntlet' + (rec.robustness ? ' best ' + rec.robustness.seedsPassed + '/' + rec.robustness.seedsTried : ' produced nothing') +
       ', ' + rec.engineTries + ' engine tries. This is NOT an unsolvability claim.';
   }
@@ -823,8 +896,15 @@ async function solveLevel(id1, bpPromise) {
 // ---------- main ----------
 (async () => {
   // launch all buildPlans workers up front (concurrent wall time, independent budgets)
-  const CAP = 45000;
-  const bpPromises = new Map(TARGETS.map(id1 => [id1, buildPlansWorker(LV[id1 - 1], CAP)]));
+  const CAP = 240000;
+  physicsPool = new PhysicsPool();
+  await Promise.all(physicsPool.slots.map(s => s.ready));
+  log('physics pool: ' + WORKERS + ' workers; all bitwise self-tests passed');
+  const recorded = JSON.parse(fs.readFileSync(path.join(HERE,'solutions.json'),'utf8'));
+  const supplied = process.env.SS_CANDIDATES
+    ? JSON.parse(fs.readFileSync(path.resolve(process.env.SS_CANDIDATES),'utf8')) : {};
+  const bpPromises = new Map(TARGETS.map(id1 => [id1, recorded[id1] || supplied[id1]?.length
+    ? Promise.resolve([]) : buildPlansWorker(LV[id1 - 1], CAP)]));
   const results = [];
   for (const id1 of TARGETS) {    if (Date.now() > GLOBAL_DL) {
       results.push({ level: id1, name: LV[id1 - 1].name, verdict: 'STILL-UNPROVEN',
@@ -833,6 +913,8 @@ async function solveLevel(id1, bpPromise) {
     }
     results.push(await solveLevel(id1, bpPromises.get(id1)));
   }
+  await physicsPool.close();
+
   // settle any worker leaks
   for (const [, pr] of bpPromises) pr.then(() => {}).catch(() => {});
 
@@ -845,6 +927,18 @@ async function solveLevel(id1, bpPromise) {
     counts, allSettled: counts['STILL-UNPROVEN'] === 0,
     results,
   };
+  const solutionFile = path.join(HERE, 'solutions.json');
+  const solutions = JSON.parse(fs.readFileSync(solutionFile, 'utf8'));
+  let solutionsChanged = false;
+  for (const r of results) if (r.verdict === 'SOLVABLE') {
+    const entry = {
+      name:r.name, releaseFrames:r.plan.releaseFrames, robustness:r.robustness, strokes:r.plan.strokes
+    };
+    if (JSON.stringify(solutions[r.level]) !== JSON.stringify(entry)) {
+      solutions[r.level] = entry; solutionsChanged = true;
+    }
+  }
+  if (solutionsChanged) fs.writeFileSync(solutionFile, JSON.stringify(solutions, null, 1) + '\n');
   fs.writeFileSync(OUT_FILE, JSON.stringify(out, null, 1));
 
   console.log('=== sugar-sugar strong solver — per-level verdicts (L' + TARGETS.join(',L') + ') ===');

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /* replay_plans.js — standalone REPLAY verifier for solver_strong.js results.
- * Loads ONLY the recorded plans from solver_results.json (no search) and, for every
+ * Loads ONLY the recorded plans from solutions.json (no search) and, for every
  * SOLVABLE level, re-asserts the win through BOTH channels:
  *   1. the REAL engine (canvas pointer drags through the level-card entry path), and
  *   2. the engine's OWN RNG stream: capture entry -> identify the exact LCG alignment
  *      from the frame-0 particle snapshot -> simStaticLCG on the recorded strokes
  *      (engine geometry) must win within ±2 frames of the engine run (bitwise-equal
  *      trajectories were probe-verified; the window only covers sampling latency).
- * plus 3. the robustness battery (16 seeds x 6 stream offsets, mulberry) >= 90%.
+ * plus 3. the robustness battery (16 seeds x 6 stream offsets, mulberry), all 96 must pass.
  * The physics slice is asserted bitwise-equal to the gate's simulate() on every run.
  * Exit 0 iff every SOLVABLE level reproduces; 4 otherwise. Fixed battery, no network.
  */
@@ -17,7 +17,14 @@ const { bootGame } = require('../_optimization/scripts/harness-lib.js');
 
 const HERE = __dirname;
 const GATE = path.join(HERE, 'verify_engine.js');
-const RES = JSON.parse(fs.readFileSync(path.join(HERE, 'solver_results.json'), 'utf8'));
+const SOLUTIONS = JSON.parse(fs.readFileSync(path.join(HERE, 'solutions.json'), 'utf8'));
+const SEEDS = [424242, 11, 987654, 7, 13, 99, 12345, 777, 31337, 271828, 112358, 4242, 5150, 8675309, 60601, 90210];
+const OFFSETS = [0, 7, 31, 63, 127, 200];
+const RES = { results:Object.entries(SOLUTIONS).filter(([id]) => /^\d+$/.test(id)).map(([id, r]) => ({
+  level:Number(id), verdict:'SOLVABLE', plan:{ strokes:r.strokes, releaseFrames:r.releaseFrames,
+    seedBattery:{ seeds:SEEDS, offsets:OFFSETS } }
+})) };
+if (!RES.results.length) throw Error('No recorded solutions to replay');
 
 const g = bootGame('sugar-sugar', { inject: {
   anchor: 'var DAILY_SEED = Math.floor(Date.now() / 86400000);',
@@ -68,15 +75,27 @@ const lifted = solverSrc.slice(lstart, lend).replace(/^const LCG_A/m, 'var LCG_A
 const { identifyAlignment, simStaticLCG } = globalThis;
 globalThis.P = P; // lifted simStaticLCG resolves P.<physics> dynamically
 
-function simStatic(lv, cw, ch, plan, seed, offset, t0, frameBudget) {
+function simStatic(lv, cw, ch, plan, seed, offset, t0, frameBudget, broadPhase = true) {
   const rng = P.mulberry(seed);
   for (let k = 0; k < offset; k++) rng();
   const disp = lv.disp.map(d => ({ x: d.x / 100 * cw, y: d.y / 100 * ch, color: d.color }));
   const cups = lv.cups.map(c => ({ x: c.x / 100 * cw, y: c.y / 100 * ch, w: c.w / 100 * cw, h: c.h / 100 * ch, color: c.color, need: c.need, fill: 0 }));
   const walls = lv.walls.map(w => ({ x1: w.x1 / 100 * cw, y1: w.y1 / 100 * ch, x2: w.x2 / 100 * cw, y2: w.y2 / 100 * ch }));
   const maxSpawn = lv.spawnTotal;
-  let spawnCount = 0, particles = [];
+  let spawnCount = 0;
+  let particles = [];
   const lines = plan.lines.map(l => ({ pts: l.pts || l }));
+  // Conservative broad phase only: a point outside a segment's bounding box
+  // expanded by its collision radius cannot collide. Calls that can affect a grain
+  // still run the unmodified shipped collideSeg, in exactly the original order.
+  const bounds = lines.map(l => l.pts.slice(1).map((b,j) => {
+    const a=l.pts[j]; return [Math.min(a.x,b.x),Math.max(a.x,b.x),Math.min(a.y,b.y),Math.max(a.y,b.y)];
+  }));
+  const wallBounds = walls.map(w => [Math.min(w.x1,w.x2),Math.max(w.x1,w.x2),Math.min(w.y1,w.y2),Math.max(w.y1,w.y2)]);
+  const near = (p,b) => {
+    const r=p.r+P.LT/2+1e-9;
+    return p.x>=b[0]-r && p.x<=b[1]+r && p.y>=b[2]-r && p.y<=b[3]+r;
+  };
   let active = t0 > 0 ? [] : lines;
   for (let f = 0; f < frameBudget; f++) {
     if (t0 > 0 && f === t0) active = lines;
@@ -90,9 +109,11 @@ function simStatic(lv, cw, ch, plan, seed, offset, t0, frameBudget) {
         }
       }
     }
+    let alive = 0;
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
       if (!p.active) continue;
+      alive++;
       p.vy += P.GRAVITY;
       const sp = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
       if (sp > 8) { p.vx *= 8 / sp; p.vy *= 8 / sp; }
@@ -101,22 +122,27 @@ function simStatic(lv, cw, ch, plan, seed, offset, t0, frameBudget) {
       if (p.x > cw - p.r) { p.x = cw - p.r; p.vx *= -P.BOUNCE; }
       if (p.y < p.r) { p.y = p.r; p.vy *= -P.BOUNCE; }
       if (p.y > ch + p.r * 2) { p.active = false; continue; }
-      for (let w = 0; w < walls.length; w++) P.collideSeg(p, walls[w].x1, walls[w].y1, walls[w].x2, walls[w].y2);
+      for (let w = 0; w < walls.length; w++) if (!broadPhase || near(p,wallBounds[w])) P.collideSeg(p, walls[w].x1, walls[w].y1, walls[w].x2, walls[w].y2);
       for (let l = 0; l < active.length; l++) {
         const pts = active[l].pts;
-        for (let j = 0; j < pts.length - 1; j++) P.collideSeg(p, pts[j].x, pts[j].y, pts[j + 1].x, pts[j + 1].y);
+        for (let j = 0; j < pts.length - 1; j++) if (!broadPhase || near(p,bounds[l][j])) P.collideSeg(p, pts[j].x, pts[j].y, pts[j + 1].x, pts[j + 1].y);
       }
       for (let c = 0; c < cups.length; c++) {
-        const cup2 = cups[c];
-        if (p.x > cup2.x && p.x < cup2.x + cup2.w && p.y > cup2.y && p.y < cup2.y + cup2.h * 0.6) {
-          if (cup2.color === 0 || cup2.color === p.color) { cup2.fill++; p.active = false; break; }
+        const cup = cups[c];
+        if (p.x > cup.x && p.x < cup.x + cup.w && p.y > cup.y && p.y < cup.y + cup.h * 0.6) {
+          if (cup.color === 0 || cup.color === p.color) { cup.fill++; p.active = false; break; }
         }
       }
     }
     if (particles.length > P.MAXP) particles = particles.filter(p2 => p2.active);
     if (cups.every(c => c.fill >= c.need)) return { ok: true, frame: f, fills: cups.map(c => c.fill) };
+    // early exit EXACTLY matching the shipped sim's outcome space: once spawning is
+    // exhausted and no particle is alive, fills can never change again. (Without this
+    // the loop runs all `frameBudget` frames and the gauntlet becomes ~10x slower.)
+    if (spawnCount >= maxSpawn && alive === 0)
+      return { ok: false, fills: cups.map(c => c.fill + '/' + c.need), spawned: spawnCount, deadAt: f };
   }
-  return { ok: false, fills: cups.map(c => c.fill + '/' + c.need) };
+  return { ok: false, fills: cups.map(c => c.fill + '/' + c.need), spawned: spawnCount };
 }
 
 // boot-time bitwise self-test: my simStatic === shipped simulate (t0=0/offset=0)
@@ -143,7 +169,7 @@ function dragLine(pts) {
   cv.dispatch('pointerup', { clientX: pts[pts.length - 1].x, clientY: pts[pts.length - 1].y, pointerId: 1, preventDefault() {} });
 }
 
-console.log('replay_plans: asserting ' + RES.results.filter(r => r.verdict === 'SOLVABLE').length + ' SOLVABLE plans from solver_results.json');
+console.log('replay_plans: asserting ' + RES.results.filter(r => r.verdict === 'SOLVABLE').length + ' SOLVABLE plans from solutions.json');
 const MAX_TRIES = 4; // per-level attempts: the capture click produces naturally
 // different grain folds per attempt, so a plan whose first fill-landing fold can
 // genuinely flip may need try 2 — exactly what the solver itself does.
@@ -191,7 +217,7 @@ for (const rec of RES.results) {
         if (simStatic(lv, CW, CH, plan, sd, of2, 1, 4200).ok) pass++;
       }
     }
-    ok = engOK && exactOK && pass / tried >= 0.9;
+    ok = engOK && exactOK && pass === tried;
     if (!ok && attempt < MAX_TRIES) console.log('L' + id1 + ' attempt ' + attempt + ' insufficient (engine ' + (engOK ? 'WON' : 'FAIL ' + st.fills.join(',')) + ', exact ' + (exactOK ? 'ok' : 'mismatch') + ') — retrying');
   }
   if (!ok) okAll = false;
