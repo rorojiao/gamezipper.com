@@ -35,7 +35,7 @@ import re
 import subprocess
 import datetime
 import sys
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 
 base = "https://gamezipper.com"
 SKIP_DIRS = {
@@ -75,6 +75,93 @@ def git_last_modified_date(rel_path: str) -> str | None:
     return None
 
 
+# ── R996: cache-buster-only diffs must NOT bump lastmod ──────────────────────
+#
+# A commit that only rewrites a `?v=<token>` script version changes nothing a
+# crawler can see. Bumping lastmod for it is an "artificial freshness bump":
+# Google explicitly ignores lastmod values that change without a real content
+# change, which teaches it to distrust the whole field.
+#
+# The 2026-06-09 fix used the ADD date for game pages to avoid exactly that
+# "everything says today" behaviour — but it over-corrected: it froze lastmod
+# at the add date forever, so 456 of 819 URLs still claimed 2026-07-29 even
+# after their content genuinely changed (R974 CSS, R975/R976 ad-trigger
+# rework, R334 layout fixes). Google reads a stale lastmod as "this URL has
+# not changed since July" and under-crawls it.
+#
+# Correct rule: lastmod = the most recent commit that changed the CONTENT,
+# floored by the add date.  Buster-only commits are skipped.
+#
+# Implementation: for each commit touching the file, compare the removed vs
+# added lines after normalising away version tokens. If the multisets are
+# equal, the commit only touched version strings -> skip it and look at the
+# previous commit.
+
+_VER_TOKEN_RE = re.compile(
+    r'(?:\?v=|&v=|/v=)[A-Za-z0-9_.-]+'      # ?v=R976exitintent  &v=abc
+    r'|\bR\d+[A-Za-z0-9]*\b'                  # R976exitintent  R450flat
+    r'|\bv\d+[A-Za-z0-9]+\b'                  # v535deadzfillin2R966
+)
+
+
+def _norm_diff_line(line: str) -> str:
+    """Normalise a diff line so version-token-only edits compare equal."""
+    s = _VER_TOKEN_RE.sub('V', line)
+    s = re.sub(r'\s+', ' ', s)
+    return s.strip()
+
+
+def _commit_is_buster_only(sha: str, rel_path: str) -> bool | None:
+    """True if `sha` changed `rel_path` ONLY in version tokens.
+
+    Returns None when the commit did not touch the file at all.
+    """
+    try:
+        diff = subprocess.check_output(
+            ['git', 'show', '--format=', '-U0', sha, '--', rel_path],
+            stderr=subprocess.DEVNULL, text=True,
+        )
+    except subprocess.CalledProcessError:
+        return None
+    removed, added = [], []
+    for line in diff.splitlines():
+        if line.startswith(('+++', '---')):
+            continue
+        if line.startswith('-'):
+            removed.append(_norm_diff_line(line[1:]))
+        elif line.startswith('+'):
+            added.append(_norm_diff_line(line[1:]))
+    if not removed and not added:
+        return None
+    return Counter(removed) == Counter(added)
+
+
+def git_last_content_change_date(rel_path: str) -> str | None:
+    """Most recent commit that changed the file's CONTENT (not just a buster)."""
+    try:
+        shas = subprocess.check_output(
+            ['git', 'log', '--format=%H', '--', rel_path],
+            stderr=subprocess.DEVNULL, text=True,
+        ).split()
+    except subprocess.CalledProcessError:
+        return None
+    for sha in shas:
+        buster_only = _commit_is_buster_only(sha, rel_path)
+        if buster_only is None:      # commit did not touch this file
+            continue
+        if buster_only:              # only a ?v= bump -> keep looking back
+            continue
+        try:
+            out = subprocess.check_output(
+                ['git', 'show', '-s', '--format=%aI', sha],
+                stderr=subprocess.DEVNULL, text=True,
+            ).strip()
+        except subprocess.CalledProcessError:
+            continue
+        return out[:10] if out else None
+    return None
+
+
 def mtime_date(rel_path: str) -> str:
     """YYYY-MM-DD from filesystem mtime (fallback when not in git)."""
     try:
@@ -85,12 +172,24 @@ def mtime_date(rel_path: str) -> str:
 
 
 def lastmod_for(rel_path: str, *, prefer_add_date: bool) -> str:
-    """Get lastmod for a file. prefer_add_date=True uses the first add date
-    (good for game pages where we want the real creation date)."""
+    """Get lastmod for a file.
+
+    prefer_add_date=True (game pages): the last date the page's CONTENT
+    actually changed, floored by the original add date.  Cache-buster-only
+    commits are ignored (see R996 above) so a `?v=` bump never counts as a
+    content change, but a real CSS/JS/HTML edit does.
+
+    prefer_add_date=False (static/category/blog): the most recent commit that
+    touched the file, as before.
+    """
+    add = git_first_add_date(rel_path)
     if prefer_add_date:
-        d = git_first_add_date(rel_path)
-        if d:
-            return d
+        content = git_last_content_change_date(rel_path)
+        candidates = [d for d in (add, content) if d]
+        if candidates:
+            return max(candidates)
+        if add:
+            return add
     d = git_last_modified_date(rel_path)
     if d:
         return d
