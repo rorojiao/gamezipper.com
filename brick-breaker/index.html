@@ -16,10 +16,10 @@ html,body{overflow-x:hidden;max-width:100vw;}
 body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
 
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a1628;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;overflow-y:auto;overflow-x:hidden;touch-action:none}
+body{background:#0a1628;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;overflow-y:auto;overflow-x:hidden;touch-action:pan-y}
 @keyframes lifePopup{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-80%) scale(1)}}
 @keyframes lifeFlash{0%{opacity:1}100%{opacity:0}}
-canvas{border:2px solid #1a3a5c;border-radius:8px;margin-top:32px;display:block}
+canvas{border:2px solid #1a3a5c;border-radius:8px;margin-top:32px;display:block;touch-action:none}
 #hud{color:#e0e0e0;font-size:15px;display:flex;gap:20px;margin-top:8px}
 .nav{position:fixed;top:0;left:0;width:100%;height:28px;background:#0a1628;display:flex;align-items:center;justify-content:space-between;padding:0 10px;box-sizing:border-box;z-index:100;font-size:13px;color:#e0e0e0}
 .nav a{color:#e0e0e0;text-decoration:none}
@@ -250,19 +250,61 @@ function gzShare(score){
 </div>
 
 <div id="gz-ad-above-game"></div>
-<canvas id="c"></canvas>
-<div id="gz-ad-below-canvas"></div>
 
 <div id="hud"><span>Score: <b id="sc">0</b></span><span>Best: <b id="bs">0</b></span><span>Lives: <b id="lv">3</b></span><span>Level: <b id="lvl">1</b></span></div>
+
+<canvas id="c"></canvas>
+<div id="gz-ad-below-canvas"></div>
 <script defer src="../game-audio.js?v=R449-flat"></script>
 <script defer src="../sound-toggle.js?v=R449-flat"></script>
 <script>
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
-let CW = canvas.width = window.innerWidth;
-let CH = canvas.height = window.innerHeight - 56;
-let W = CW, H = CH;
-window.addEventListener('resize', () => { CW = canvas.width = window.innerWidth; CH = canvas.height = window.innerHeight - 56; W = CW; H = CH; });
+let CW = 0, CH = 0, W = 0, H = 0;
+// UX-OPT 2026-10-26 R991: fit the play stage to the viewport.
+// The canvas used to be sized window.innerHeight-56 while sitting ~162-187px below the
+// top of the document (sticky nav 32 + ad slot 90 + margins), so its bottom edge landed
+// ~114px PAST the viewport bottom. The paddle is drawn at CH-30 and the ball rests at
+// CH-50 -> both rendered below the fold on EVERY viewport, and body{touch-action:none}
+// froze touch scrolling so the player could not scroll to them either.
+// BI 7d (real users): 23 rage_clicks on 2026-10-24 on /brick-breaker/, 17 of them at the
+// identical pixel (787,391) -- a Silk/Amazon-Fire tablet user repeatedly tapping a paddle
+// they could not see. Now the stage is sized to the space actually left below the chrome
+// above it, and the paddle/ball are re-anchored to the new floor whenever it changes.
+var GZ_STAGE_RESERVE = 56; // fixed footer bar (44) + sound toggle clearance
+function fitStage(){
+  var rect = canvas.getBoundingClientRect();
+  var top = rect.top + (window.scrollY||0); // chrome above the canvas
+  var avail = Math.max(220, Math.floor(window.innerHeight - top - GZ_STAGE_RESERVE));
+  var w = Math.max(240, Math.floor(window.innerWidth));
+  CW = canvas.width = w;
+  CH = canvas.height = avail;
+  W = CW; H = CH;
+  // re-anchor the player-controlled elements to the new floor
+  if(typeof paddle!=='undefined'&&paddle){
+    paddle.y = CH-30;
+    if(paddle.x>CW-paddle.w)paddle.x=CW-paddle.w;
+    if(paddle.x<0)paddle.x=0;
+  }
+  if(typeof balls!=='undefined'&&balls&&balls.length){
+    for(var i=0;i<balls.length;i++){ if(balls[i].y>CH-balls[i].r) balls[i].y = CH-balls[i].r; }
+  }
+}
+fitStage();
+function refitStage(){
+  fitStage();
+  if(typeof gameState!=='undefined'&&gameState==='menu'&&typeof drawMenu==='function') drawMenu();
+}
+window.addEventListener('resize', refitStage);
+window.addEventListener('load', refitStage);
+// The ad slot above the canvas can grow when a creative fills in (90px -> 280px),
+// which moves the canvas down and shrinks the space left for the stage. Re-fit
+// whenever that slot changes height so the paddle never slides under the fold again.
+if(typeof ResizeObserver!=='undefined'){
+  var _gzAdObs=new ResizeObserver(function(){ refitStage(); });
+  var _gzAdSlot=document.getElementById('gz-ad-above-game');
+  if(_gzAdSlot) _gzAdObs.observe(_gzAdSlot);
+}
 
 var bestScore=+(localStorage.getItem('brick_best')||0);
 var score=0,lives=3,currentLevel=1,gameState='menu',paused=false;
@@ -535,6 +577,20 @@ function drawPause(){
 }
 
 var maxUnlockedLevel=Math.max(1,parseInt(localStorage.getItem('brick_maxLevel')||'1'));
+// UX-OPT 2026-10-26 R991: one geometry for the level-select grid, shared by the
+// renderer (drawMenu) and the hit-test (levelSelect) so they can never disagree,
+// and sized to fit the viewport-fitted stage.
+function levelGridGeom(){
+  var gap=6, top=108, bottom=CH-26;
+  var availH=Math.max(60,bottom-top);
+  var cols=10;
+  while(cols>5 && cols*48+(cols-1)*gap+20>CW) cols--;
+  var rows=Math.ceil(50/cols);
+  var bw=Math.max(24,Math.min(48,Math.floor((CW-20-(cols-1)*gap)/cols)));
+  var bh=Math.max(16,Math.min(32,Math.floor((availH-(rows-1)*gap)/rows)));
+  var startX=(CW-cols*(bw+gap)+gap)/2;
+  return {cols:cols,rows:rows,bw:bw,bh:bh,gap:gap,startX:startX,startY:top};
+}
 function drawMenu(){
   ctx.fillStyle='#0a1628';ctx.fillRect(0,0,CW,CH);
   ctx.fillStyle='#4ecdc4';ctx.font='bold 32px Arial';ctx.textAlign='center';
@@ -542,7 +598,8 @@ function drawMenu(){
   ctx.fillStyle='#e0e0e0';ctx.font='16px Arial';
   ctx.fillText('Select Level:',CW/2,95);
   // Draw level grid
-  var cols=8,bw=48,bh=32,gap=6,startX=(CW-cols*(bw+gap)+gap)/2,startY=115;
+  var g=levelGridGeom();
+  var cols=g.cols,bw=g.bw,bh=g.bh,gap=g.gap,startX=g.startX,startY=g.startY;
   for(var i=0;i<50;i++){
     var col=i%cols,row=Math.floor(i/cols);
     var bx=startX+col*(bw+gap),by=startY+row*(bh+gap);
@@ -563,11 +620,11 @@ canvas.addEventListener('click',function levelSelect(e){
   if(gameState!=='menu')return;
   var rect=canvas.getBoundingClientRect();
   var mx=(e.clientX-rect.left)*(CW/rect.width),my=(e.clientY-rect.top)*(CH/rect.height);
-  var cols=8,bw=48,bh=32,gap=6,startX=(CW-cols*(bw+gap)+gap)/2,startY=115;
+  var g=levelGridGeom();
   for(var i=0;i<50;i++){
-    var col=i%cols,row=Math.floor(i/cols);
-    var bx=startX+col*(bw+gap),by=startY+row*(bh+gap);
-    if(mx>=bx&&mx<=bx+bw&&my>=by&&my<=by+bh&&i+1<=maxUnlockedLevel){
+    var col=i%g.cols,row=Math.floor(i/g.cols);
+    var bx=g.startX+col*(g.bw+g.gap),by=g.startY+row*(g.bh+g.gap);
+    if(mx>=bx&&mx<=bx+g.bw&&my>=by&&my<=by+g.bh&&i+1<=maxUnlockedLevel){
       startGame(i+1);return;
     }
   }
