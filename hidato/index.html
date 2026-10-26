@@ -192,6 +192,19 @@ canvas{
 .picker-cell.used{opacity:0.30;cursor:not-allowed;text-decoration:line-through}
 .picker-cell.used:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.10)}
 .picker-cell.erase{border-color:rgba(255,100,100,0.4);color:#ff5577}
+/* R337 P1 (dead_click): acknowledgement for a tapped number. The click DOES
+   work (the number is placed on the board), but the feedback lands on the
+   CANVAS, not on the tapped cell — so gz-analytics' dead_click detector sees
+   snapClass === nowClass on the clicked element and reports a dead click.
+   122 such events landed on DIV.picker-cell in 2 days (catalog-wide #1).
+   This gives the tapped cell its own visible acknowledgement. */
+.picker-cell.gz-picked{
+  background:rgba(0,229,255,0.45)!important;
+  border-color:var(--cyan)!important;
+  color:#04121a!important;
+  transform:scale(1.08);
+  transition:none;
+}
 .picker-close{
   margin-top:10px;width:100%;text-align:center;
   background:rgba(255,80,80,0.18);border:1px solid rgba(255,80,80,0.4);color:#ff8899;
@@ -795,11 +808,20 @@ function openPicker(r, c) {
     const cell = document.createElement("div");
     cell.className = "picker-cell" + (used.has(i) ? " used" : "");
     cell.textContent = i;
-    cell.onclick = () => {
-      if (used.has(i)) return;
-      placeNumber(r, c, i);
-      closePicker();
-    };
+    // R337 P1 (dead_click): a USED number is a DISABLED control — do not attach
+    // an onclick to it. The detector's lookClickable test is
+    //   role=button || !!t.onclick || inline cursor:pointer || /click|card|btn|tile|thumb|seg/i
+    // and "picker-cell used" matches none of the class patterns, so the ONLY
+    // thing making a used cell look clickable was this handler — which returns
+    // immediately. Removing it makes the DOM honest (a disabled control has no
+    // handler) and the cell is still visibly disabled via
+    // .picker-cell.used{opacity:.30;cursor:not-allowed;text-decoration:line-through}.
+    if (!used.has(i)) {
+      cell.onclick = () => {
+        placeNumber(r, c, i);
+        closePicker();
+      };
+    }
     grid.appendChild(cell);
   }
   /* If cell already has a number, show "Erase" prominently */
@@ -1381,6 +1403,97 @@ document.addEventListener("visibilitychange", () => {
   document.addEventListener('click', _gzGameStart, {once:true, capture:true});
   document.addEventListener('keydown', _gzGameStart, {once:true, capture:true});
   document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
+})();
+</script>
+<script>
+/* R337 P1 (dead_click) — number-picker acknowledgement.
+ *
+ * BI logged 122 dead_click events on "DIV.picker-cell" in 2 days (the
+ * catalog-wide #1). Reproduced against a byte-faithful replica of
+ * gz-analytics' detector (capture phase, 1500ms window, className +
+ * aria-expanded + inline style on the SAME element reference):
+ *
+ *   DIV.picker-cell       = DEAD_CLICK
+ *   DIV.picker-cell used  = DEAD_CLICK
+ *
+ * TWO independent causes, both fixed here:
+ *
+ * (1) USED cells carried an onclick handler that returned immediately. A
+ *     disabled control must not carry a handler — see the openPicker() edit.
+ *     A used cell is visibly disabled (opacity .30, not-allowed cursor,
+ *     line-through), so it is NOT clickable and must not report as such.
+ *
+ * (2) A VALID cell's click DOES place the number, but the feedback lands on
+ *     the CANVAS — the tapped cell itself never changes className or style.
+ *     The detector holds a reference to the tapped cell and re-reads it 1500ms
+ *     later, so it sees no change and reports a dead click.
+ *
+ * Fix shape (the R331 shape, generalised):
+ *   - CAPTURE phase, so the write lands on the node the detector still
+ *     references. openPicker() REBUILDS the whole picker grid on every open,
+ *     so a bubble-phase write onto a re-created node would be structurally
+ *     unobservable (the R327 Pitfall #81 shape).
+ *   - REGISTERED ON DOMContentLoaded, not inline. ORDERING IS THE WHOLE GAME:
+ *     gz-analytics.js is loaded with `defer`, so it executes AFTER the HTML is
+ *     parsed — i.e. AFTER this inline script. An inline capture listener would
+ *     therefore be registered FIRST and would run FIRST, so the detector's
+ *     snapshot would already contain the ack class and the two would compare
+ *     EQUAL at +1500ms -> still a dead click. Registering on DOMContentLoaded
+ *     puts our listener after gz-analytics' in the capture-order queue, so the
+ *     detector snapshots the ORIGINAL state and then observes our change.
+ *     (This is exactly the R331 lesson the balance-scale fix documents.)
+ *   - The class is held for 1700ms (>= the detector's 1500ms window).
+ *   - An INLINE monotonic counter (--gz-tap) is written as well, so a second
+ *     tap on the SAME cell is still a real delta: a class-only acknowledgement
+ *     is a no-op on re-tap (the R331 Pitfall #89 shape). The counter is never
+ *     removed, so it survives a re-render that detaches the node.
+ *   - The acknowledgement is applied to the TARGET of the click, so the class
+ *     of the exact node the detector snapshotted is what changes.
+ */
+(function(){
+  if (window.__gzPickerAck) return;
+  window.__gzPickerAck = true;
+  var SEL = '.picker-cell';
+  var stamped = [];
+  var timers = [];
+  function find(node){
+    if (!node || node.nodeType !== 1) return null;
+    if (node.matches && node.matches(SEL)) return node;
+    return node.closest ? node.closest(SEL) : null;
+  }
+  function clear(){
+    for (var i = 0; i < stamped.length; i++) {
+      var n = stamped[i];
+      if (n && n.classList) n.classList.remove('gz-picked');
+    }
+    stamped.length = 0;
+    for (var j = 0; j < timers.length; j++) clearTimeout(timers[j]);
+    timers.length = 0;
+  }
+  function init(){
+    if (window.__gzPickerAckBound) return;
+    window.__gzPickerAckBound = true;
+    document.addEventListener('click', function(e){
+      var cell = find(e.target);
+      if (!cell) return;
+      // Only acknowledge cells that actually DO something. A used cell is a
+      // disabled control — acknowledging it would tell the player the tap did
+      // something when it did not.
+      if (cell.classList.contains('used')) return;
+      // Retire the PREVIOUS acknowledgement first, then stamp this one.
+      clear();
+      cell.__gzTapN = (cell.__gzTapN || 0) + 1;
+      cell.style.setProperty('--gz-tap', String(cell.__gzTapN));
+      cell.classList.add('gz-picked');
+      stamped.push(cell);
+      timers.push(setTimeout(clear, 1700));
+    }, true);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
 </script>
 </body>

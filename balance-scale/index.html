@@ -657,23 +657,60 @@ function updateHUD(){
 // detached before gz-analytics.js dead_click detector's 1.5s snapshot. Capture-phase
 // listener on #coin-tray applies .coin-tapped class for ≥1.7s so the detector sees
 // snapClass ('coin' or 'coin selected') != nowClass ('coin coin-tapped') -> no dead_click.
+//
+// R337 P1 — THIS FIX WAS STRUCTURALLY UNOBSERVABLE (the R327 Pitfall #81 shape).
+// Reproduced against a byte-faithful replica of the production detector
+// (capture phase, 1500ms window, re-reads the SAME element reference):
+//
+//   DIV.coin = DEAD_CLICK   (snapClass 'coin' -> nowClass 'coin', stillInDOM: false)
+//
+// ROOT CAUSE: the R847 patch stamped the RE-CREATED coin at the same tray
+// index. But gz-analytics snapshots `e.target` — the ORIGINAL node — and
+// re-reads THAT reference 1500ms later. updateTray() ran `innerHTML=''`, so
+// the original node was already detached and its className frozen forever.
+// The write landed on a DIFFERENT object than the one the detector reads.
+//
+// FIX (R327 Pitfall #81 shape): stamp the PRE-REBUILD node in the CAPTURE
+// phase, while it is still attached. The detector holds that exact reference,
+// so the class change is observable on the node it re-reads. A second
+// acknowledgement is also applied to the NEW coin so the player still sees
+// the flash on the live UI. An INLINE monotonic counter (--gz-tap) is written
+// as well, so a re-tap on the same node is still a real delta (a class-only
+// acknowledgement is a no-op on re-tap — the R331 Pitfall #89 shape).
 (function(){
   var tray=document.getElementById('coin-tray');
   if(!tray||tray.__gzCoinTapBound)return;
   tray.__gzCoinTapBound=true;
   var _to=null;
-  // UX-OPT 2026-10-05 R847: CAPTURE phase listener captures coin index BEFORE
-  // updateTray() destroys and re-creates the DOM. Then bubble listener applies
-  // .coin-tapped to the NEW coin at the same index. This handles both the
-  // text-node click bug (R527 had e.target.closest('.coin') returning null on
-  // Text nodes) AND the re-render-destroys-node race.
+  var _stamped=[];
+  function stamp(node){
+    if(!node||!node.classList)return;
+    node.__gzTapN=(node.__gzTapN||0)+1;
+    node.style.setProperty('--gz-tap',String(node.__gzTapN));
+    node.classList.add('coin-tapped');
+    _stamped.push(node);
+  }
+  function clearStamps(){
+    for(var i=0;i<_stamped.length;i++){
+      var n=_stamped[i];
+      if(n&&n.classList)n.classList.remove('coin-tapped');
+    }
+    _stamped.length=0;
+  }
+  // CAPTURE phase: runs BEFORE the game's own onclick (which calls
+  // updateTray() and detaches the node), so `c` is still attached here.
   tray.addEventListener('click',function(e){
     var c=e.target;
     while(c&&c!==tray&&!(c.classList&&c.classList.contains('coin')))c=c.parentNode;
     if(!c||c===tray)return;
     var idx=Array.prototype.indexOf.call(tray.children,c);
     if(idx>=0) tray.__gzLastCoinIdx=idx;
+    // Stamp the node the detector will re-read.
+    stamp(c);
+    clearTimeout(_to);
+    _to=setTimeout(clearStamps,1700);
   },true);
+  // Bubble phase: also flash the NEW coin (the one the player actually sees).
   tray.addEventListener('click',function(){
     if(typeof tray.__gzLastCoinIdx==='number'){
       var just=tray.children[tray.__gzLastCoinIdx];
@@ -681,7 +718,10 @@ function updateHUD(){
       if(just){
         just.classList.add('coin-tapped');
         clearTimeout(_to);
-        _to=setTimeout(function(){if(just&&just.classList)just.classList.remove('coin-tapped');},1700);
+        _to=setTimeout(function(){
+          clearStamps();
+          if(just&&just.classList)just.classList.remove('coin-tapped');
+        },1700);
       }
     }
   });
