@@ -95,9 +95,27 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
   var ADS_ENABLED = (window.GZ_ADS_ENABLED !== undefined) ? window.GZ_ADS_ENABLED : true;
   if (!ADS_ENABLED) return;
 
-  // ── Direct URLs from Publisher API (confirmed working) ──
+  // ── Direct URLs from Publisher API ──
   var POPUNDER_URL  = 'https://www.effectivecpmnetwork.com/zdq0x5zp?key=25eaa5c5041a6ef2f33d056e5feeb8d2';
-  var SMARTLINK_URL = 'https://www.effectivecpmnetwork.com/wvrk4xu035?key=e820da8370828a60705d61ac29bfe589';
+  // R1003 (2026-10-28): the smartlink URL below was a HAND-COPIED stale form.
+  // Adsterra's own Publisher API (GET /publisher/placements.json) is the
+  // authority for which URL serves placement 30130928, and it returns:
+  //     "id": 30130928, "title": "Smartlink_1",
+  //     "direct_url": "https://araplhn.org/4/e820da8370828a60705d61ac29bfe589"
+  // The old effectivecpmnetwork.com/wvrk4xu035?key=<same key> form is NOT the
+  // current direct_url for this placement. It still answered HTTP 200 (an
+  // empty body), so every client-side signal looked healthy -- but the
+  // request was never attributed to placement 30130928, so it never billed:
+  //   GET /publisher/stats.json?group_by=placement  (365d and all-time)
+  //     -> 30130929 Popunder_1 : 1556 impressions, $9.17   (bills)
+  //     -> 30130928 Smartlink_1:    0 impressions, $0.00   (365 days, ZERO)
+  // while BI logged ~1466 distinct smartlink "fill" events since 2026-07-18.
+  // Those BI fills were PHANTOM: fireSmartlinkPing() calls track('fill')
+  // unconditionally right after appendChild(), never verifying that Adsterra
+  // served or attributed anything. The whole R976 exit-intent "recovery" was
+  // measured against that phantom metric and produced $0 revenue.
+  // Never hand-copy a zone URL again -- read direct_url from the API.
+  var SMARTLINK_URL = 'https://araplhn.org/4/e820da8370828a60705d61ac29bfe589';
 
   var ZONES = {
     popunder:  '30130929',
@@ -307,7 +325,26 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
       setTimeout(function () {
         try { iframe.parentNode && iframe.parentNode.removeChild(iframe); } catch (e) {}
       }, 6000);
-      track('fill', { zone: ZONES.smartlink, format: 'smartlink_iframe' });
+      // R1003 (2026-10-28): this used to be track('fill', ...) fired UNCONDITIONALLY
+      // the instant the iframe element was appended. It proved only that we created
+      // a DOM node — never that Adsterra served or ATTRIBUTED anything.
+      //
+      // Consequence (measured): placement 30130928 logged ~980 "fill" events in
+      // 14 days while Adsterra's own API reported 0 impressions / $0.00 for that
+      // placement over 365 days. The BI "fill" metric was 100% PHANTOM, and the
+      // whole R976 exit-intent "recovery" was measured against that phantom —
+      // so a dead placement looked like a healthy one for a year.
+      //
+      // A Smartlink is a DIRECT link: revenue is booked server-side when the
+      // offer is served AND attributed to our zone. Nothing on the client can
+      // confirm that. So report what we can actually prove — that we REQUESTED
+      // an ad — under a name that cannot be mistaken for money:
+      //   fill_attempt = we asked Adsterra for an ad (NOT a billed impression)
+      //   fill         = reserved for a delivery we can actually evidence
+      // The per-placement comparison in ad_revenue_daily_facts.sh now diffs
+      // claimed attempts against Adsterra's official per-placement impressions,
+      // so a phantom can never masquerade as revenue again.
+      track('fill_attempt', { zone: ZONES.smartlink, format: 'smartlink_iframe' });
     } catch (e) {
       track('no_fill', { zone: ZONES.smartlink, format: 'smartlink_iframe', reason: 'iframe_failed' });
     }
