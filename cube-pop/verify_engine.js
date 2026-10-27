@@ -115,10 +115,19 @@ function attempt(lv) {
 }
 
 const solved = [];
+/* R336 FIX: the per-level "not solved" notes used to be pushed into the SAME
+ * `fails` array that T() writes to. T() increments the `fail` counter; a raw
+ * push does not. So a run could print verdict:"PASS" next to a non-empty
+ * `fails` array (L5/L11 on a random board) — two different meanings in one
+ * field, which is exactly the "a verdict that prints but asserts nothing"
+ * trap (audit Pitfall #62/#85). The levels the bot did not crack are now
+ * reported in their own field (`extra.unwon`) and the gate's own failure
+ * text stays in `fails`. */
+const unwon = [];
 for (let lv = 1; lv <= N; lv++) {
   let ok = false;
   for (let t = 0; t < 12 && !ok; t++) ok = attempt(lv);
-  if (ok) solved.push(lv); else fails.push('L' + lv + ' objectives not met');
+  if (ok) solved.push(lv); else unwon.push('L' + lv + ' objectives not met');
 }
 T('levels-won', solved.length >= N - 3, solved.length + '/' + N + ' won:[' + solved.join(',') + '] missing:[' + [...Array(N).keys()].map(x => x + 1).filter(x => !solved.includes(x)).join(',') + ']'); // random boards; 3-level allowance
 
@@ -126,7 +135,7 @@ T('no-vm-errors', !(g.sandbox.__errors || []).some(e => /TypeError|ReferenceErro
   JSON.stringify((g.sandbox.__errors || []).find(e => /TypeError|ReferenceError/.test(e)) || '').slice(0, 120));
 
 const out = { pass, fail, total: pass + fail, verdict: fail === 0 ? 'PASS' : 'FAIL', fails: fails.slice(0, 6),
-  extra: { won: solved.length + '/' + N, note: 'real canvas taps pop groups (engine doClear/gravity/cascades), hammer power-up via its button for crate objectives; random grids retried' } };
+  extra: { won: solved.length + '/' + N, unwon: unwon.slice(0, 8), note: 'real canvas taps pop groups (engine doClear/gravity/cascades), hammer power-up via its button for crate objectives; random grids retried (each level gets 12 fresh boards, so a level listed in extra.unwon is a stochastic bot miss, not a proven-unwinnable level)' } };
 console.log('cube-pop: ' + solved.length + '/' + N + ' objectives met via real taps: ' + out.verdict);
 console.log(JSON.stringify(out));
 process.exit(fail === 0 ? 0 : 1);
