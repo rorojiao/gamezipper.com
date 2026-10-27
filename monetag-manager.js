@@ -1239,12 +1239,23 @@
 
   // ==================== COMMERCIAL BREAK (Poki-model core, v5 视觉升级) ====================
   // 对标 Poki: 毛玻璃覆盖层 + 品牌文案 + 进度条 + 倒计时
-  function commercialBreak() {
+  // R1007 (2026-10-28): `source` parameter added so the BI funnel can attribute
+  // each commercial break to the trigger that caused it.
+  function commercialBreak(source) {
     return new Promise(function(resolve) {
       if (!canShowAd('commercial_break')) {
+        // R1007: the break was requested but a guard blocked it. tools.gamezipper.com
+        // already emits commercial_break_skipped; gamezipper.com emitted NEITHER
+        // invoked nor skipped -> the commercial-break fill rate had no denominator
+        // (only fill / no_fill outcomes, and no_fill only fires on the Monetag tier
+        // failing, so "AdSense missed and nothing rendered" was invisible).
+        trackAdEvent('commercial_break_skipped', { reason: 'frequency_cap', source: source || 'manual' });
         resolve();
         return;
       }
+      // R1007: the break was ACTUALLY shown (all guards passed). This is the
+      // denominator every fill-rate number must be divided by.
+      trackAdEvent('commercial_break_invoked', { source: source || 'manual', isGamePage: state.isGamePage });
 
       // 创建 Poki-style 毛玻璃覆盖层
       var overlay = document.createElement('div');
@@ -1539,7 +1550,7 @@
       watchBtn.onclick = function() {
         overlay.remove();
         // Show commercial break as the "rewarded" ad
-        commercialBreak().then(function() {
+        commercialBreak('rewarded_watch').then(function() {
           storageSet(usedKey, now());
           unmuteAllAudio();
           resolve(true);
@@ -1561,7 +1572,7 @@
       if (state.prerollTriggered) return;
       if (interacted) return;
       state.prerollTriggered = true;
-      commercialBreak();
+      commercialBreak('preroll');
     }
 
     function onFirstInteraction() {
@@ -1740,7 +1751,7 @@
     breakDebounce = n;
     
     // Poki model: call commercialBreak, system decides if ad shows
-    commercialBreak();
+    commercialBreak(source);
   }
 
   // ==================== HOMEPAGE PRIMARY BANNER (above #header / hero) ====================
@@ -2329,7 +2340,7 @@
       footerLinks.forEach(function(link) {
         link.addEventListener('click', function(e) {
           // Trigger commercial break before navigation
-          commercialBreak();
+          commercialBreak('game_footer_link');
         }, { passive: true });
       });
     }, 3000);
@@ -2695,7 +2706,7 @@
   // Backward compatibility stubs
   window.GZMonetagSafe = window.GZMonetagSafe || {};
   if (!window.GZMonetagSafe.maybeLoad) {
-    window.GZMonetagSafe.maybeLoad = function() { return commercialBreak(); };
+    window.GZMonetagSafe.maybeLoad = function() { return commercialBreak('legacy_maybeLoad'); };
   }
   window.GZNativeAd = window.GZNativeAd || {};
   window.GZAdSenseAuto = window.GZAdSenseAuto || {};
@@ -2705,7 +2716,7 @@
       if (container) loadAdSenseAd(container);
     };
   }
-  window.GZInterstitial = { show: function() { return commercialBreak(); } };
+  window.GZInterstitial = { show: function() { return commercialBreak('legacy_interstitial'); } };
 
   // Auto-init
   if (document.readyState === 'loading') {
