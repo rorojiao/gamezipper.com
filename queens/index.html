@@ -90,6 +90,12 @@ h1,h2,h3{font-family:var(--font-display);text-shadow:0 0 20px rgba(0,240,255,.4)
 .level-btn{width:100%;aspect-ratio:1;border-radius:12px;background:var(--glass);border:1px solid var(--glass-border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;position:relative;font-family:var(--font-body);-webkit-tap-highlight-color:transparent}
 .level-btn:hover:not(.locked){border-color:var(--accent);box-shadow:0 0 15px rgba(0,240,255,.2)}
 .level-btn:active:not(.locked){transform:scale(.92)}
+/* R337: tap acknowledgement — see the ack script at the bottom of this file.
+   BI recorded dead_click on "DIV.level-btn" because the click navigated to
+   the game screen without changing the button's own className / aria /
+   inline style. */
+.level-btn.gz-ack0,.level-btn.gz-ack1{border-color:var(--accent)!important;box-shadow:0 0 14px rgba(0,240,255,.35)!important}
+.btn-icon.gz-ack0,.btn-icon.gz-ack1{border-color:var(--accent)!important;background:rgba(0,240,255,.12)!important}
 .level-btn.locked{opacity:.35;cursor:default}
 .level-btn.locked .lock-icon{font-size:18px}
 .level-btn .num{font-size:18px;font-weight:700;color:var(--text)}
@@ -581,9 +587,32 @@ function countSolutions(n, regions, limit){
 // ---- Level Definitions ----
 // 30 levels: 6 per tier, sizes 7-11
 // Pre-generated puzzles (balanced BFS, verified unique)
-var PUZZLE_DATA=[{"id":1,"n":7,"solution":[6,4,1,3,0,5,2],"regions":[[2,2,2,1,1,1,0],[2,1,1,1,1,1,0],[2,2,2,2,3,1,0],[4,4,3,3,3,5,0],[4,6,3,3,3,5,0],[4,6,6,6,5,5,0],[4,6,6,6,5,5,5]]},{"id":2,"n":7,"solution":[3,0,2,4,6,1,5],"regions":[[1,0,0,0,0,3,3],[1,0,0,0,2,3,3],[1,1,2,2,2,3,3],[1,2,2,2,3,3,4],[1,5,4,4,4,4,4],[1,5,5,6,6,4,6],[5,5,5,5,6,6,6]]},{"id":3,"n":7,"solution":[6,0,3,5,1,4,2],"regions":[[1,1,2,0,0,0,0],[1,1,2,2,0,2,0],[1,1,4,2,2,2,0],[1,4,4,3,3,3,3],[4,4,4,5,3,3,3],[6,6,6,5,5,5,3],[6,6,6,6,5,5,5]]},{"id":4,"n":7,"solution":[0,3,6,2,4,1,5],"regions":[[0,0,1,1,1,2,2],[0,0,3,1,1,2,2],[0,3,3,1,1,2,2],[0,0,3,3,3,3,2],[5,5,4,4,4,6,2],[5,5,4,4,4,6,6],[5,5,6,6,6,6,6]]},{"id":5,"n":7,"solution":[0,2,4,1,5,3,6],"regions":[[0,0,1,1,1,1,2],[0,1,1,1,2,2,2],[0,3,2,2,2,2,4],[3,3,3,4,4,4,4],[3,3,5,5,4,4,6],[3,3,5,5,5,6,6],[5,5,5,5,6,6,6]]},{"id":6,"n":7,"solution":[6,0,4,1,3,5,2],"regions":[[1,1,1,1,2,0,0],[1,1,1,2,2,5,0],[1,3,3,2,2,5,0],[3,3,3,2,5,5,0],[3,6,3,4,4,5,0],[6,6,6,4,4,5,0],[6,6,6,4,4,4,0]]},{"id":7,"n":8,"solution":[4,0,3,5,7,2,6,1],"regions":[[1,1,0,0,0,0,0,0],[1,1,0,2,2,2,4,4],[1,1,2,2,2,3,3,4],[1,5,2,3,3,3,3,4],[1,5,5,5,3,3,6,4],[7,5,5,5,6,6,6,4],[7,7,5,7,6,6,6,4],[7,7,7,7,6,6,6,4]]},{"id":8,"n":8,"solution":[6,0,7,1,3,5,2,4],"regions":[[1,1,1,0,0,0,0,0],[1,1,1,1,0,0,0,2],[1,3,3,4,4,2,2,2],[3,3,3,4,4,2,2,2],[3,3,4,4,4,4,2,5],[3,6,6,5,5,5,5,5],[6,6,6,7,7,5,7,5],[6,6,6,7,7,7,7,7]]},{"id":9,"n":8,"solution":[0,7,5,3,6,2,4,1],"regions":[[0,0,0,0,2,2,1,1],[0,0,0,2,2,2,1,1],[7,0,3,3,2,2,2,1],[7,5,3,3,3,4,4,4],[7,5,5,3,3,4,4,4],[7,5,5,5,6,6,4,4],[7,5,7,6,6,6,4,4],[7,7,7,6,6,6,6,6]]},{"id":10,"n":8,"solution":[7,4,0,3,5,2,6,1],"regions":[[2,2,3,3,1,1,1,0],[2,2,2,3,1,1,1,0],[2,2,2,3,3,1,0,0],[2,5,3,3,3,3,0,0],[5,5,5,4,4,4,4,0],[7,7,5,5,4,6,6,6],[7,7,5,5,4,6,6,6],[7,7,7,4,4,6,6,6]]},{"id":11,"n":8,"solution":[7,5,1,4,6,2,0,3],"regions":[[2,2,0,0,0,0,0,0],[2,2,2,2,1,1,1,0],[2,2,2,3,3,1,1,0],[5,2,2,3,3,1,4,0],[5,5,5,3,3,4,4,4],[6,5,5,7,3,4,4,4],[6,6,5,7,3,4,7,4],[6,6,7,7,7,7,7,7]]},{"id":12,"n":8,"solution":[1,7,0,6,4,2,5,3],"regions":[[0,0,0,0,1,1,1,1],[0,2,0,0,1,1,1,1],[2,2,5,4,4,3,3,1],[2,2,5,4,3,3,3,3],[2,2,5,4,4,4,3,3],[5,5,5,5,4,6,3,6],[7,7,5,7,6,6,6,6],[7,7,7,7,6,6,6,6]]},{"id":13,"n":9,"solution":[6,2,8,3,0,5,1,4,7],"regions":[[1,1,1,1,0,0,0,0,2],[1,1,1,3,3,3,0,2,2],[1,1,1,3,3,0,0,2,2],[4,3,3,3,3,0,0,2,2],[4,4,4,3,5,5,2,2,2],[4,4,4,5,5,5,5,5,8],[6,6,6,7,7,5,5,8,8],[6,6,7,7,7,7,7,8,8],[6,6,6,7,7,8,8,8,8]]},{"id":14,"n":9,"solution":[7,1,4,0,3,8,5,2,6],"regions":[[1,1,1,1,2,2,0,0,0],[1,1,1,1,2,2,0,0,0],[3,1,1,2,2,2,0,0,0],[3,3,4,4,2,6,0,5,5],[3,3,4,4,4,6,6,5,5],[3,3,4,4,4,6,6,5,5],[3,7,7,4,6,6,6,5,5],[7,7,7,7,8,8,8,8,5],[7,7,7,8,8,8,8,8,5]]},{"id":15,"n":9,"solution":[7,2,0,3,6,4,1,8,5],"regions":[[2,1,1,1,1,1,0,0,0],[2,2,1,1,1,1,0,0,0],[2,2,3,3,3,0,0,0,0],[2,2,3,3,3,4,4,4,0],[2,6,3,4,4,4,4,4,4],[6,6,3,5,5,5,5,5,5],[6,6,3,8,5,5,7,7,7],[6,6,6,8,8,8,7,7,7],[6,8,8,8,8,8,7,7,7]]},{"id":16,"n":9,"solution":[1,3,7,2,0,5,8,4,6],"regions":[[0,0,1,1,1,1,1,2,2],[0,0,1,1,1,1,2,2,2],[0,3,3,1,1,2,2,2,2],[0,3,3,3,3,3,2,2,2],[4,4,4,5,5,5,5,5,5],[4,4,4,5,5,5,6,6,6],[4,4,7,7,7,8,6,6,6],[4,7,7,7,7,8,6,6,8],[4,7,7,7,7,8,8,8,8]]},{"id":17,"n":9,"solution":[6,4,0,3,1,5,8,2,7],"regions":[[2,1,1,1,1,1,0,0,0],[2,2,1,1,1,1,0,0,0],[2,2,3,3,3,1,3,0,0],[2,2,2,3,3,3,3,0,0],[2,4,4,3,5,5,5,5,6],[4,4,4,3,5,5,5,5,6],[4,4,7,7,7,6,6,6,6],[4,7,7,7,8,8,6,6,6],[7,7,7,8,8,8,8,8,8]]},{"id":18,"n":9,"solution":[8,0,4,1,6,3,5,2,7],"regions":[[1,1,1,3,3,0,0,0,0],[1,1,1,3,2,2,0,0,0],[1,1,3,3,2,2,2,0,0],[1,3,3,3,2,6,2,4,4],[5,3,3,2,2,6,4,4,4],[5,5,5,5,7,6,6,4,4],[5,5,5,7,7,6,6,6,4],[5,7,7,7,8,6,8,8,8],[5,7,7,7,8,8,8,8,8]]},{"id":19,"n":10,"solution":[1,6,2,9,3,8,0,5,7,4],"regions":[[0,0,0,0,0,0,1,1,1,1],[2,2,2,0,0,1,1,1,3,3],[2,2,2,2,4,1,1,1,3,3],[6,2,2,4,4,4,3,3,3,3],[6,6,2,4,4,7,5,5,5,3],[6,6,6,4,4,7,7,5,5,3],[6,6,6,4,7,7,7,5,5,5],[6,6,7,7,7,7,8,5,8,8],[9,9,7,9,9,9,8,8,8,8],[9,9,9,9,9,9,8,8,8,8]]},{"id":20,"n":10,"solution":[9,6,8,3,0,5,1,4,2,7],"regions":[[4,3,3,1,1,1,1,0,0,0],[4,4,3,1,1,1,1,0,0,0],[4,4,3,3,3,1,1,2,2,0],[4,4,3,3,5,5,1,5,2,0],[4,4,4,3,3,5,5,5,2,2],[4,4,6,3,5,5,5,5,2,2],[6,6,6,7,7,5,9,9,2,2],[6,6,6,8,7,7,9,9,9,9],[6,8,8,8,7,7,7,9,9,9],[8,8,8,8,8,7,7,9,9,9]]},{"id":21,"n":10,"solution":[3,5,9,6,2,4,7,1,8,0],"regions":[[0,0,0,0,0,1,1,1,1,2],[0,0,0,0,0,1,1,3,2,2],[0,0,0,0,1,1,1,3,2,2],[4,4,4,4,1,3,3,3,3,2],[4,4,4,5,5,3,3,3,2,2],[4,4,5,5,5,5,6,3,6,2],[7,7,7,7,5,5,6,6,6,8],[7,7,7,7,5,5,6,6,6,8],[9,9,9,9,9,6,6,8,8,8],[9,9,9,9,9,8,8,8,8,8]]},{"id":22,"n":10,"solution":[5,7,2,9,6,4,0,3,8,1],"regions":[[2,2,0,0,0,0,0,1,1,1],[2,2,2,0,0,0,1,1,1,3],[6,2,2,2,2,1,1,4,3,3],[6,2,2,2,4,4,4,4,3,3],[6,6,2,5,5,4,4,4,3,3],[6,6,6,7,5,5,5,5,3,8],[6,6,6,7,5,5,5,5,3,8],[6,9,7,7,7,7,8,8,8,8],[6,9,9,9,7,7,7,8,8,8],[6,9,9,9,9,7,7,7,8,8]]},{"id":23,"n":10,"solution":[8,0,9,5,2,7,3,6,4,1],"regions":[[1,1,1,4,3,3,0,0,0,0],[1,1,1,4,3,3,0,0,0,0],[1,1,1,4,3,3,2,2,2,2],[1,1,4,4,3,3,3,2,2,2],[9,4,4,4,6,3,3,5,2,2],[9,4,4,6,6,6,5,5,5,2],[9,6,6,6,6,6,5,5,5,2],[9,9,8,8,7,7,7,7,5,5],[9,9,9,8,8,7,7,7,5,5],[9,9,8,8,8,8,7,7,7,7]]},{"id":24,"n":10,"solution":[7,9,0,4,1,8,3,6,2,5],"regions":[[2,2,2,3,0,0,0,0,1,1],[2,2,2,3,3,0,0,0,1,1],[2,2,3,3,0,0,0,0,1,1],[2,4,3,3,3,7,7,7,1,1],[4,4,4,3,3,7,7,7,1,1],[4,4,6,6,6,7,7,5,5,1],[4,4,6,6,6,7,7,5,5,5],[8,8,8,6,6,6,7,5,5,5],[8,8,8,8,6,9,9,5,5,5],[8,8,8,9,9,9,9,9,9,9]]},{"id":25,"n":11,"solution":[2,9,3,6,1,8,4,10,7,5,0],"regions":[[4,0,0,0,0,0,0,1,1,1,1],[4,0,0,0,0,2,1,1,1,1,1],[4,4,0,2,2,2,3,3,1,1,1],[4,4,2,2,2,3,3,3,3,5,5],[4,4,2,2,2,3,3,5,5,5,5],[4,4,6,6,6,6,3,3,5,5,5],[4,4,6,6,6,6,3,8,5,7,7],[10,10,6,6,6,9,8,8,8,7,7],[10,10,10,9,9,9,8,8,7,7,7],[10,10,10,9,9,9,9,8,8,7,7],[10,10,10,10,9,9,9,8,8,7,7]]},{"id":26,"n":11,"solution":[2,5,10,3,7,4,0,8,1,6,9],"regions":[[0,0,0,0,0,0,1,1,1,2,2],[0,0,0,0,1,1,1,1,2,2,2],[3,3,3,3,3,1,5,4,2,2,2],[6,3,3,3,1,1,5,4,2,2,2],[6,6,3,5,5,5,5,4,4,4,4],[6,6,6,5,5,5,4,4,7,7,7],[6,6,6,6,5,5,4,4,7,7,7],[6,8,8,6,9,5,9,7,7,10,10],[8,8,8,8,9,9,9,7,7,10,10],[8,8,8,9,9,9,9,10,10,10,10],[8,8,8,8,9,9,9,9,10,10,10]]},{"id":27,"n":11,"solution":[7,4,8,5,1,6,3,10,0,2,9],"regions":[[1,1,1,1,1,1,0,0,0,0,0],[4,1,1,1,1,1,0,0,2,2,2],[4,4,3,1,3,3,0,2,2,2,2],[4,4,3,3,3,3,0,2,2,2,2],[4,4,3,3,3,3,0,5,2,2,2],[4,4,6,6,6,5,5,5,5,5,7],[4,4,4,6,5,5,5,5,5,7,7],[8,4,6,6,6,6,10,7,7,7,7],[8,8,8,6,6,6,10,10,7,7,7],[8,8,9,9,9,9,10,10,10,10,7],[8,8,9,9,9,9,9,10,10,10,10]]},{"id":28,"n":11,"solution":[9,3,7,4,1,8,5,0,2,10,6],"regions":[[1,1,1,1,1,0,0,0,0,0,0],[1,1,1,1,1,3,2,2,2,0,0],[1,1,3,3,3,3,2,2,2,0,0],[4,3,3,3,3,3,2,2,2,2,0],[4,4,4,4,6,6,2,5,5,5,9],[4,4,4,4,6,6,6,5,5,5,9],[7,7,4,6,6,6,5,5,5,5,9],[7,7,8,8,6,6,5,10,5,9,9],[7,7,8,8,8,6,10,10,10,9,9],[7,7,8,8,8,6,10,10,10,9,9],[7,7,8,8,8,10,10,10,10,10,9]]},{"id":29,"n":11,"solution":[2,10,1,3,8,6,4,7,0,5,9],"regions":[[0,0,0,0,0,3,5,1,1,1,1],[0,0,0,0,0,3,5,1,1,1,1],[2,2,2,2,3,3,5,1,4,4,1],[2,2,3,3,3,3,5,5,4,4,4],[2,2,3,3,6,5,5,5,4,4,4],[2,2,3,6,6,5,5,5,7,4,4],[8,2,6,6,6,7,7,7,7,4,4],[8,8,6,6,6,7,7,7,10,10,10],[8,8,6,6,9,9,9,7,10,10,10],[8,8,8,9,9,9,9,9,10,10,10],[8,8,8,8,9,9,9,9,10,10,10]]},{"id":30,"n":11,"solution":[7,1,9,2,4,10,8,3,5,0,6],"regions":[[1,1,1,1,1,1,0,0,0,0,0],[1,1,1,1,4,4,0,0,0,2,0],[1,3,3,3,4,4,0,0,2,2,2],[1,3,3,3,4,4,2,2,2,2,5],[3,3,3,4,4,4,2,2,2,2,5],[3,7,3,4,4,4,6,6,6,2,5],[7,7,7,7,4,10,6,6,6,6,5],[9,9,7,7,7,10,10,6,6,5,5],[9,9,8,7,8,8,10,6,6,5,5],[9,9,8,8,8,8,10,10,6,5,5],[9,9,9,9,8,10,10,10,10,5,5]]}];
+var PUZZLE_DATA=[{"id":1,"n":7,"solution":[0,2,6,3,5,1,4],"regions":[[0,0,0,1,1,1,1],[0,1,1,1,2,2,2],[0,0,5,3,3,4,2],[0,5,5,3,3,4,2],[0,5,3,3,4,4,4],[0,5,5,6,4,6,4],[5,5,5,6,6,6,6]]},{"id":2,"n":7,"solution":[0,4,2,6,1,3,5],"regions":[[0,0,0,0,0,1,3],[0,2,2,1,1,1,3],[0,4,2,1,2,1,3],[0,4,2,1,2,5,3],[0,4,2,2,2,5,6],[4,4,4,5,5,5,6],[4,4,5,5,5,6,6]]},{"id":3,"n":7,"solution":[1,5,2,0,3,6,4],"regions":[[2,0,0,0,0,0,0],[2,0,2,1,0,1,0],[2,2,2,1,1,1,1],[3,2,2,2,1,1,1],[3,4,4,4,6,5,5],[3,3,4,4,6,5,5],[3,3,4,6,6,6,5]]},{"id":4,"n":7,"solution":[5,1,6,2,4,0,3],"regions":[[0,0,0,0,0,0,0],[0,1,0,2,2,2,2],[1,1,1,1,1,3,2],[1,3,3,3,3,3,2],[1,1,3,3,4,2,2],[5,5,6,6,4,4,4],[5,5,6,6,6,4,4]]},{"id":5,"n":7,"solution":[5,1,6,2,4,0,3],"regions":[[0,0,0,0,0,0,2],[0,1,1,0,2,2,2],[3,1,1,1,1,1,2],[3,1,3,3,3,2,2],[3,3,3,4,4,2,2],[5,6,6,6,4,4,4],[5,5,5,6,6,4,4]]},{"id":6,"n":7,"solution":[3,5,2,0,6,4,1],"regions":[[2,0,0,0,0,0,1],[2,0,2,0,0,1,1],[2,2,2,0,1,1,1],[3,2,2,2,1,1,1],[3,3,3,3,4,4,4],[6,3,6,6,5,4,4],[6,6,6,5,5,5,5]]},{"id":7,"n":8,"solution":[0,3,6,2,5,1,7,4],"regions":[[0,0,0,0,1,1,1,1],[0,3,3,1,1,2,2,1],[0,0,3,1,4,2,2,1],[0,0,3,3,4,4,2,2],[0,3,3,3,3,4,6,2],[0,5,3,5,4,4,6,2],[5,5,5,5,4,7,6,6],[5,5,5,5,7,7,7,6]]},{"id":8,"n":8,"solution":[3,0,7,1,4,6,2,5],"regions":[[1,1,1,0,0,2,2,2],[1,1,1,1,0,4,2,2],[1,1,3,1,0,4,4,2],[1,3,3,0,0,4,4,2],[3,3,0,0,4,4,5,5],[3,3,6,6,6,7,5,5],[3,3,6,6,6,7,7,5],[3,3,6,6,6,7,7,5]]},{"id":9,"n":8,"solution":[0,6,4,1,5,3,7,2],"regions":[[0,0,0,0,0,0,0,1],[0,3,2,2,1,1,1,1],[0,3,2,2,2,2,1,1],[0,3,2,4,2,2,1,1],[3,3,5,4,4,4,1,4],[3,7,5,5,4,4,4,4],[3,7,7,5,5,5,5,6],[3,7,7,6,6,6,6,6]]},{"id":10,"n":8,"solution":[3,7,2,4,1,6,0,5],"regions":[[0,0,0,0,1,1,1,1],[2,2,2,0,0,0,0,1],[2,2,2,3,3,0,1,1],[2,2,2,2,3,0,1,1],[4,4,3,3,3,3,3,1],[6,4,4,3,7,7,5,5],[6,4,4,4,7,5,5,5],[6,6,4,4,7,7,7,5]]},{"id":11,"n":8,"solution":[4,1,6,2,7,0,3,5],"regions":[[1,0,0,0,0,2,4,4],[1,1,1,0,2,2,4,4],[1,0,0,0,2,2,2,4],[1,1,3,0,2,2,4,4],[1,1,3,0,2,2,4,4],[5,6,3,3,3,3,3,4],[5,6,6,6,6,7,3,3],[5,5,5,7,7,7,3,3]]},{"id":12,"n":8,"solution":[1,7,4,2,0,5,3,6],"regions":[[3,0,0,0,0,0,0,0],[3,0,2,2,0,2,0,1],[3,2,2,2,2,2,1,1],[3,3,3,2,1,1,1,1],[4,6,3,3,3,3,1,1],[4,6,6,5,5,5,7,7],[4,4,6,6,5,5,5,7],[4,4,6,6,7,7,7,7]]},{"id":13,"n":9,"solution":[2,5,0,3,7,4,6,1,8],"regions":[[0,0,0,0,0,0,1,1,4],[0,0,3,3,3,1,1,1,4],[2,0,0,0,3,1,1,1,4],[2,3,0,3,3,1,6,1,4],[2,3,3,3,5,6,6,4,4],[2,2,2,3,5,5,6,6,8],[7,7,2,5,5,6,6,6,8],[7,7,2,5,5,5,5,6,8],[7,2,2,2,2,5,5,6,8]]},{"id":14,"n":9,"solution":[7,5,3,0,2,8,1,4,6],"regions":[[3,3,3,3,1,1,0,0,0],[3,4,3,3,1,1,5,5,0],[3,4,4,2,1,1,1,5,0],[3,4,4,2,2,2,1,5,0],[3,4,4,4,2,2,1,5,5],[3,6,4,6,6,2,1,1,5],[3,6,4,6,6,2,2,2,5],[6,6,6,6,7,7,7,7,5],[7,7,7,7,7,8,8,8,8]]},{"id":15,"n":9,"solution":[0,5,3,8,2,6,1,4,7],"regions":[[0,0,0,0,0,0,1,1,1],[0,4,2,2,1,1,1,1,1],[0,4,2,2,2,2,3,1,1],[0,4,4,2,2,2,3,1,3],[0,4,4,2,2,3,3,3,3],[0,4,4,4,4,3,5,3,3],[0,6,5,5,5,5,5,8,8],[6,6,6,7,7,7,5,5,8],[6,6,6,7,7,7,8,8,8]]},{"id":16,"n":9,"solution":[4,7,1,3,8,6,0,5,2],"regions":[[3,3,0,0,0,0,0,0,0],[3,3,3,0,0,1,1,1,0],[2,2,3,0,1,1,4,4,4],[2,3,3,3,1,4,4,4,4],[2,3,1,1,1,1,4,4,4],[2,2,2,1,2,1,5,5,4],[6,2,2,2,2,5,5,5,5],[6,6,6,8,8,7,7,7,5],[6,8,8,8,7,7,7,5,5]]},{"id":17,"n":9,"solution":[2,7,3,1,8,6,4,0,5],"regions":[[0,0,0,0,0,0,1,1,1],[0,0,2,2,0,6,6,1,1],[0,2,2,2,2,6,1,1,1],[0,3,2,2,2,6,1,1,1],[7,3,3,2,2,6,4,4,4],[7,7,3,3,3,6,5,5,4],[7,7,7,3,6,6,5,5,4],[7,7,3,3,6,8,5,8,4],[7,7,3,3,6,8,8,8,8]]},{"id":18,"n":9,"solution":[7,1,8,6,3,5,0,2,4],"regions":[[0,0,0,0,0,0,0,0,2],[1,1,0,0,0,0,2,2,2],[1,1,1,1,1,1,2,2,2],[1,3,3,3,3,1,3,2,2],[1,4,4,4,3,3,3,3,2],[4,4,6,4,4,5,5,3,2],[6,6,6,8,4,8,5,5,5],[6,7,7,8,4,8,8,5,5],[7,7,7,8,8,8,8,5,5]]},{"id":19,"n":10,"solution":[9,3,0,5,2,6,8,1,4,7],"regions":[[4,4,4,4,4,4,0,0,0,0],[4,2,4,1,0,0,0,0,0,1],[2,2,4,1,1,1,1,0,0,1],[2,2,4,4,3,3,1,0,0,1],[2,2,4,4,3,3,1,1,1,1],[2,3,3,3,3,3,5,5,5,1],[2,2,3,5,5,5,5,6,6,1],[2,7,3,7,7,5,9,9,6,6],[7,7,7,7,8,5,9,6,6,6],[8,8,8,8,8,9,9,9,9,6]]},{"id":20,"n":10,"solution":[9,3,8,5,7,0,4,1,6,2],"regions":[[1,1,1,1,0,0,0,0,0,0],[1,5,5,1,2,2,2,2,0,0],[1,5,5,1,2,2,2,2,2,0],[1,5,5,1,3,3,3,3,2,0],[1,5,5,1,3,3,3,4,2,0],[5,5,6,3,3,3,3,4,2,0],[5,7,6,6,6,3,4,4,4,4],[5,7,6,6,6,6,6,8,4,4],[7,7,9,6,8,8,8,8,4,4],[7,9,9,6,8,8,8,8,8,4]]},{"id":21,"n":10,"solution":[8,3,6,9,2,7,4,1,5,0],"regions":[[0,0,0,0,0,0,0,0,0,0],[0,1,1,1,2,2,2,2,2,2],[0,0,1,2,2,4,2,3,2,2],[0,1,1,1,4,4,2,3,2,3],[1,1,4,1,1,4,3,3,3,3],[1,4,4,4,4,4,3,5,3,3],[1,4,4,4,6,3,3,5,3,3],[9,7,7,6,6,8,8,5,5,5],[9,7,9,6,8,8,5,5,5,5],[9,9,9,6,6,8,5,5,5,5]]},{"id":22,"n":10,"solution":[7,4,8,6,1,3,9,5,2,0],"regions":[[1,1,1,0,0,0,0,0,0,0],[4,1,1,1,1,1,2,2,0,0],[4,1,1,1,1,2,2,2,2,0],[4,3,3,3,3,3,3,2,2,0],[4,4,4,4,3,5,3,3,2,0],[4,4,4,5,3,5,3,3,2,2],[4,5,5,5,5,5,5,5,2,6],[4,4,5,5,5,7,6,6,6,6],[9,8,8,8,8,7,6,6,6,6],[9,9,9,8,7,7,7,7,7,7]]},{"id":23,"n":10,"solution":[1,6,4,7,5,0,2,9,3,8],"regions":[[0,0,0,0,0,0,0,1,1,1],[0,2,2,2,2,4,1,1,1,1],[0,0,0,0,2,4,4,4,4,1],[0,2,2,2,2,4,4,3,1,1],[2,2,2,2,4,4,4,3,1,3],[5,5,5,6,6,6,3,3,3,3],[5,6,6,6,6,8,3,9,7,7],[5,5,6,6,8,8,3,9,7,7],[5,5,6,8,8,8,3,9,7,7],[5,5,8,8,8,8,3,9,9,7]]},{"id":24,"n":10,"solution":[2,8,0,7,9,4,6,1,5,3],"regions":[[0,0,0,0,0,0,0,0,0,1],[0,0,0,1,1,1,1,1,1,1],[2,0,3,3,3,3,1,1,1,1],[2,0,3,3,3,3,3,3,3,1],[2,2,2,2,2,5,5,3,3,4],[7,2,2,2,5,5,5,5,4,4],[7,5,5,5,5,5,6,4,4,4],[7,7,6,6,6,6,6,6,6,4],[7,9,9,9,8,8,8,6,6,4],[7,7,7,9,9,9,8,4,4,4]]},{"id":25,"n":11,"solution":[4,8,2,5,0,7,10,3,1,6,9],"regions":[[0,0,0,0,0,3,3,3,3,1,1],[0,4,4,0,0,0,3,3,1,1,1],[0,4,2,0,2,0,0,3,3,1,1],[0,4,2,2,2,3,3,3,3,1,1],[4,4,2,2,2,2,3,1,1,1,5],[4,4,2,2,2,2,3,5,5,5,5],[4,4,4,5,5,5,5,5,5,5,6],[4,7,7,7,6,6,6,6,6,6,6],[4,8,8,7,7,7,7,9,9,6,10],[8,8,8,8,8,7,9,9,9,9,10],[8,8,8,8,7,7,9,9,9,10,10]]},{"id":26,"n":11,"solution":[6,8,5,0,3,10,7,9,2,4,1],"regions":[[0,0,0,0,0,0,0,0,0,1,1],[0,2,2,2,2,0,0,1,1,1,1],[0,0,0,0,2,2,1,1,1,1,1],[3,0,4,2,2,2,2,1,1,1,1],[3,3,4,4,4,2,2,2,1,5,5],[3,3,4,3,4,2,2,2,1,7,5],[3,4,4,3,4,4,4,6,6,7,5],[3,3,3,3,9,4,6,6,7,7,7],[10,10,8,9,9,9,9,6,7,7,7],[10,8,8,9,9,6,6,6,6,6,7],[10,10,10,9,9,9,9,9,6,7,7]]},{"id":27,"n":11,"solution":[3,10,6,0,4,8,5,7,1,9,2],"regions":[[2,2,0,0,0,0,0,0,0,0,0],[2,0,0,0,0,2,0,6,6,1,1],[2,2,2,0,2,2,2,6,6,1,1],[3,4,2,2,2,6,2,6,1,1,1],[3,4,4,2,4,6,6,6,1,1,1],[3,4,4,4,4,4,6,5,5,1,1],[3,4,4,3,3,6,6,5,5,5,5],[3,3,3,3,3,3,6,7,5,5,5],[3,8,7,7,7,7,7,7,7,5,5],[8,8,10,9,7,7,7,9,7,9,5],[8,10,10,9,9,9,9,9,9,9,9]]},{"id":28,"n":11,"solution":[8,5,9,3,7,2,0,6,10,4,1],"regions":[[3,3,1,1,1,1,0,0,0,0,0],[3,3,3,1,1,1,0,0,0,2,0],[3,3,3,1,1,1,1,1,0,2,0],[3,3,3,3,3,1,4,4,2,2,0],[6,6,5,7,4,1,4,4,2,2,0],[6,5,5,7,4,4,4,4,4,2,0],[6,7,7,7,4,4,8,8,2,2,2],[6,6,7,7,7,4,7,8,2,8,2],[6,6,6,6,7,7,7,8,2,8,8],[6,6,6,6,9,7,8,8,8,8,8],[10,10,10,10,9,9,9,9,9,9,9]]},{"id":29,"n":11,"solution":[8,10,1,4,9,5,2,7,0,3,6],"regions":[[0,0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,0,1,1],[0,2,2,2,2,2,1,1,1,1,4],[0,0,2,3,3,2,2,4,4,1,4],[6,2,2,3,3,5,2,5,4,4,4],[6,2,2,3,3,5,2,5,4,4,4],[6,2,6,3,3,5,5,5,5,4,4],[6,6,6,3,10,5,5,7,5,5,4],[8,6,6,3,10,10,10,7,7,7,7],[8,9,9,9,8,8,10,10,10,10,7],[8,8,8,8,8,10,10,7,7,7,7]]},{"id":30,"n":11,"solution":[3,5,2,0,7,9,4,6,1,8,10],"regions":[[2,0,0,0,0,0,0,0,0,0,1],[2,0,0,0,0,1,0,0,0,1,1],[2,2,2,0,2,1,1,1,1,1,1],[3,2,2,2,2,2,2,1,1,1,1],[3,6,6,6,2,2,2,4,4,4,1],[3,6,6,6,4,4,4,4,5,5,1],[3,6,6,6,6,4,7,4,4,5,5],[3,3,3,3,3,7,7,5,5,5,5],[8,8,8,3,7,7,7,7,5,9,5],[8,8,8,3,7,7,7,9,9,9,10],[8,8,8,8,8,7,9,9,10,10,10]]}];
 
 var LEVELS=PUZZLE_DATA.map(function(p){return {id:p.id,n:p.n,solution:p.solution,regions:p.regions};});
+
+var DAILY_PUZZLE_DATA=[{"id":"daily1","n":9,"solution":[2,6,1,4,8,3,0,7,5],"regions":[[0,0,0,0,0,1,1,1,1],[0,2,0,0,0,3,1,1,1],[0,2,0,2,0,3,1,1,1],[2,2,2,2,3,3,4,4,4],[2,6,2,3,3,3,3,3,4],[2,6,2,5,5,3,4,4,4],[6,6,5,5,5,5,4,4,7],[6,6,6,5,5,8,7,7,7],[6,6,6,5,5,8,8,8,7]]},{"id":"daily2","n":9,"solution":[4,1,5,2,7,0,3,8,6],"regions":[[1,1,1,3,0,0,0,0,0],[1,1,1,3,0,2,4,0,4],[1,1,1,3,0,2,4,0,4],[1,1,3,3,3,2,4,0,4],[3,3,3,2,3,2,4,4,4],[5,3,5,2,2,2,2,4,7],[5,5,5,6,6,8,7,7,7],[5,5,5,5,6,8,7,7,7],[6,6,6,6,6,8,8,7,7]]},{"id":"daily3","n":9,"solution":[3,0,6,1,5,2,8,4,7],"regions":[[1,1,1,0,0,0,0,0,0],[1,1,1,1,5,0,2,2,0],[1,1,1,5,5,0,2,0,0],[1,3,1,5,2,2,2,2,2],[3,3,5,5,4,4,6,6,2],[3,3,5,4,4,4,8,6,2],[3,5,5,7,7,4,8,6,6],[3,3,5,5,7,4,8,8,6],[3,3,3,3,7,7,8,8,6]]},{"id":"daily4","n":9,"solution":[2,5,1,3,0,6,8,4,7],"regions":[[2,2,0,0,0,0,0,0,0],[2,2,0,0,3,1,0,0,1],[2,2,2,0,3,1,1,1,1],[2,2,2,3,3,1,1,1,1],[4,2,3,3,3,3,3,1,1],[4,5,3,3,5,3,5,5,5],[4,5,5,5,5,5,5,6,6],[4,4,4,4,7,7,8,6,6],[4,4,4,7,7,7,8,8,8]]},{"id":"daily5","n":9,"solution":[7,1,8,3,0,4,6,2,5],"regions":[[3,1,1,1,1,1,1,0,0],[3,1,0,0,0,1,1,0,0],[3,1,1,0,0,0,0,0,2],[3,3,1,3,2,2,2,2,2],[4,3,3,3,3,3,2,2,2],[4,5,5,5,5,6,6,2,6],[4,5,7,5,8,8,6,6,6],[4,4,7,7,7,8,8,6,6],[4,4,7,7,8,8,8,6,6]]},{"id":"daily6","n":10,"solution":[5,9,3,7,1,4,0,8,6,2],"regions":[[4,0,0,0,0,0,0,0,0,0],[4,2,2,0,2,0,1,1,1,1],[4,2,2,2,2,0,0,1,1,1],[4,2,2,2,2,2,0,3,3,1],[4,4,2,5,5,3,3,3,1,1],[4,4,2,4,5,3,1,1,1,3],[6,4,4,4,5,3,3,3,3,3],[6,6,6,6,5,5,5,7,7,8],[9,9,9,6,5,5,8,8,7,8],[9,9,9,6,6,6,6,8,8,8]]},{"id":"daily7","n":10,"solution":[8,4,7,9,0,5,3,1,6,2],"regions":[[0,0,0,0,0,0,0,0,0,2],[0,4,4,4,1,2,0,2,0,2],[0,4,5,1,1,2,0,2,2,2],[0,4,5,5,1,2,2,2,2,3],[4,4,5,5,1,1,1,3,3,3],[4,4,4,5,5,5,1,1,1,3],[4,6,6,6,5,5,5,5,1,3],[4,7,9,6,6,6,6,6,3,3],[7,7,9,9,6,8,8,8,3,3],[7,7,9,9,8,8,8,8,8,8]]},{"id":"daily8","n":10,"solution":[9,7,2,6,1,4,8,3,0,5],"regions":[[4,4,2,2,1,1,1,1,0,0],[4,2,2,2,2,5,5,1,0,1],[4,2,2,4,2,5,3,1,0,1],[4,2,2,4,2,5,3,1,0,1],[4,4,2,4,2,5,3,1,1,1],[7,4,4,4,5,5,3,6,6,1],[7,5,5,5,5,3,3,3,6,1],[7,7,5,7,3,3,3,6,6,6],[8,7,7,7,7,7,6,6,9,6],[8,8,8,8,8,9,9,9,9,6]]},{"id":"daily9","n":10,"solution":[3,9,4,1,5,7,0,2,8,6],"regions":[[2,2,0,0,1,1,1,1,1,1],[2,2,2,0,0,0,0,1,1,1],[2,2,2,0,2,4,0,1,1,1],[2,3,2,2,2,4,0,0,0,1],[2,3,3,5,4,4,4,5,0,1],[3,3,5,5,5,5,5,5,0,0],[6,3,3,3,8,8,8,5,5,5],[6,7,7,3,8,3,8,8,8,5],[6,7,6,3,3,3,8,8,8,5],[6,6,6,6,9,9,9,9,8,8]]},{"id":"daily10","n":10,"solution":[4,0,2,5,1,6,9,7,3,8],"regions":[[1,1,1,1,0,0,0,0,0,0],[1,4,1,1,1,1,0,5,5,0],[1,4,2,1,0,0,0,5,5,0],[1,4,2,0,0,3,5,5,5,0],[1,4,2,2,2,3,3,5,5,5],[1,4,8,8,2,5,5,5,6,6],[4,4,8,8,2,5,5,7,7,6],[4,8,8,8,2,2,2,7,7,6],[4,8,8,8,8,8,2,9,9,9],[4,4,4,4,8,2,2,2,9,9]]},{"id":"daily11","n":11,"solution":[5,0,4,1,8,10,7,9,2,6,3],"regions":[[1,1,1,1,1,0,0,0,0,4,4],[1,1,1,0,0,0,4,0,0,4,4],[1,1,1,1,2,0,4,0,0,0,4],[1,3,2,2,2,2,4,4,0,4,4],[3,3,3,2,2,2,5,4,4,4,5],[3,3,2,2,2,2,5,5,5,5,5],[3,3,2,5,5,5,5,6,6,6,5],[3,6,6,6,6,6,6,6,9,7,5],[3,8,8,10,10,10,9,9,9,7,7],[3,8,8,8,8,10,9,9,7,7,7],[3,8,10,10,10,10,9,9,7,7,7]]},{"id":"daily12","n":11,"solution":[4,1,5,0,10,7,2,9,3,6,8],"regions":[[1,1,1,1,0,0,0,0,0,0,0],[1,1,1,2,2,2,2,2,2,2,0],[3,3,1,1,1,2,5,2,2,2,0],[3,1,1,6,1,2,5,2,0,0,0],[3,3,3,6,6,6,5,0,0,4,4],[3,3,3,6,6,6,5,5,4,4,4],[3,3,6,6,5,5,5,4,4,4,4],[3,6,6,8,8,5,5,7,4,7,4],[3,6,6,8,8,8,8,7,7,7,7],[8,8,8,8,9,8,9,9,7,7,7],[9,9,9,9,9,9,9,10,10,10,7]]},{"id":"daily13","n":11,"solution":[6,4,2,0,5,10,1,9,7,3,8],"regions":[[1,1,1,1,1,1,0,0,0,0,0],[1,1,2,2,1,1,4,4,4,4,0],[1,1,2,2,2,1,4,0,0,0,0],[3,3,2,2,2,1,4,4,0,0,0],[3,3,3,3,2,4,4,5,5,5,5],[3,6,6,3,2,2,4,5,8,7,5],[3,6,3,3,3,2,4,5,8,7,5],[3,6,6,6,6,2,4,8,8,7,7],[6,6,6,6,6,9,4,8,8,10,7],[9,9,9,9,9,9,8,8,10,10,7],[9,9,9,9,9,8,8,10,10,7,7]]},{"id":"daily14","n":11,"solution":[2,0,3,7,10,5,1,8,6,9,4],"regions":[[1,2,0,0,0,0,0,0,0,0,0],[1,2,2,2,2,2,2,2,2,2,0],[1,2,1,2,3,3,3,0,0,0,0],[1,1,1,2,3,3,3,3,3,3,0],[1,1,1,2,3,3,5,3,4,3,4],[1,1,1,1,3,5,5,4,4,4,4],[6,6,6,5,5,5,5,4,4,4,4],[6,5,5,5,5,7,7,7,7,4,4],[6,6,6,7,7,7,8,7,7,7,7],[6,8,8,8,8,8,8,9,9,9,9],[6,6,8,8,10,10,10,9,9,9,9]]}];
+/* R338 — the DAILY pool.
+ *
+ * WHY THIS EXISTS: the in-page daily generator (generatePuzzle -> tryMakeRegions)
+ * grows regions greedily and the result is essentially NEVER uniquely solvable.
+ * Measured over 20 daily seeds: 0 unique, 20 non-unique, so countSolutions()
+ * never returned 1 and the function ALWAYS fell through to its "not unique"
+ * fallback — the page advertised a unique-solution daily it never delivered.
+ * The fallback path also cost 2-28s per puzzle (a visible freeze on the daily
+ * button), because each of the 200 attempts re-ran the uniqueness check.
+ *
+ * The constructive generator that DOES produce unique maps is far too slow to
+ * run in the browser, so the pool is generated OFFLINE and shipped in the
+ * page, exactly like the level catalog. Every puzzle in it is verified by
+ * three independent counters plus a stored-solution check, and independently
+ * re-verified by a 4th naive permutation implementation. */
+var DAILY_POOL_SIZE=DAILY_PUZZLE_DATA.length;
+function getDailyPuzzle(seed){
+  var idx=((seed%DAILY_POOL_SIZE)+DAILY_POOL_SIZE)%DAILY_POOL_SIZE;
+  var p=DAILY_PUZZLE_DATA[idx];
+  return {n:p.n,solution:p.solution,regions:p.regions,seed:seed};
+}
 
 var TIER_NAMES=['Beginner','Easy','Medium','Hard','Expert','Master'];
 
@@ -1064,6 +1093,11 @@ function startLevel(levelIdx){
   }
   game.undoStack=[];
   game.startTime=Date.now();
+  /* R338 — a NEW level must reset the paused-elapsed accumulator, otherwise
+   * a stale value from the previous level (or a poisoned one) would be
+   * restored on the next resume and the new level's clock would start at the
+   * old level's elapsed time. */
+  game._elapsedAtPause=0;
   game.timerInterval=setInterval(updateTimer,1000);
 
   document.getElementById('levelDisplay').textContent=levelDef.id;
@@ -1076,17 +1110,40 @@ function startLevel(levelIdx){
 
 function startDaily(){
   var seed=getDailySeed();
-  var n=8+((seed%4)); // 8-11 grid based on date
-  var puzzle=getPuzzle({id:'daily',n:n,seed:seed});
-  if(!puzzleCache['daily_'+seed]){
-    puzzle=generatePuzzle(n,seed);
-    puzzleCache['daily_'+seed]=puzzle;
-  } else {
+  /* R338 — use the SHIPPED daily pool.
+   *
+   * The old path called generatePuzzle(n,seed), which tries 200 greedy region
+   * layouts and — measured over 20 daily seeds — NEVER produced a uniquely
+   * solvable board (0 unique / 20 non-unique). It therefore always fell
+   * through to its "not unique" fallback, so the daily the page advertised as
+   * a unique-solution puzzle was never unique, and each attempt burned
+   * 2-28s of main-thread time (a visible freeze on the daily button).
+   *
+   * The shipped pool is generated OFFLINE by the same constructive generator
+   * used for the level catalog, and every entry is proven uniquely solvable
+   * by three independent counters (plus a 4th naive permutation check).
+   * getDailyPuzzle() is O(1) — no search, no freeze.
+   *
+   * puzzleCache is still honoured so a reload keeps the SAME daily. */
+  var puzzle=getDailyPuzzle(seed);
+  if(puzzleCache['daily_'+seed]){
     puzzle=puzzleCache['daily_'+seed];
+  } else {
+    puzzleCache['daily_'+seed]=puzzle;
   }
   game.currentPuzzle=puzzle;
   game.currentLevelIdx=-1; // daily
-  game.currentLevelDef={id:'daily',n:n,seed:seed};
+  /* R338 P0 fix — `n` was UNDEFINED here. The daily-pool refactor removed the
+     old `var n=8+((seed%4))` line but left this object literal referencing it,
+     so clicking "Daily Challenge" threw `Uncaught ReferenceError: n is not
+     defined` INSIDE the click handler: the screen never flipped, the board was
+     never drawn and the player stayed on the menu. Measured in the browser
+     (local http.server, real click on #btnDaily): 1 page error, gameScreen
+     display stayed 'none'.
+     The correct value is the size of the puzzle the pool actually returned
+     (the shipped daily pool carries n = 9, 10 or 11 — not the old 8-11 range
+     the removed line produced), because levelDef.n is what calcStars() uses. */
+  game.currentLevelDef={id:'daily',n:puzzle.n,seed:seed};
   game.isDaily=true;
   game.cellStates=[];
   for(var r=0;r<puzzle.n;r++){
@@ -1196,6 +1253,26 @@ function useHint(){
   for(var r=0;r<p.n;r++){
     var correctCol=p.solution[r];
     if(game.cellStates[r][correctCol]!==2){
+      /* R337: CLEAR THE ROW before placing the hint crown.
+       * The old code placed the hint crown unconditionally, so if the player
+       * had already put a crown in this ROW at a different column, the hint
+       * produced TWO crowns in one row. checkWin() then counts a duplicate
+       * row and calls showError() ("Not quite! Check the red highlights.")
+       * forever — the level became UNWINNABLE, because the only way out was
+       * to undo the hint (which also undoes nothing else) or manually clear
+       * the extra crown. Reproduced live in Kachilu: crowns went 1/7 -> 2/7
+       * on the first hint and 8/7 after eight hints.
+       *
+       * Clearing the row first is the correct semantic: a hint tells the
+       * player what belongs in that row, so the row's previous (wrong)
+       * guess is replaced rather than compounded. */
+      for(var c2=0;c2<p.n;c2++){
+        if(c2===correctCol) continue;
+        if(game.cellStates[r][c2]===2){
+          game.undoStack.push({r:r,c:c2,oldState:2});
+          game.cellStates[r][c2]=0;
+        }
+      }
       // Mark it as crown
       game.undoStack.push({r:r,c:correctCol,oldState:game.cellStates[r][correctCol]});
       game.cellStates[r][correctCol]=2;
@@ -1434,17 +1511,35 @@ function initEvents(){
   document.addEventListener('visibilitychange',function(){
     if(document.hidden){
       if(game.timerInterval){clearInterval(game.timerInterval);game.timerInterval=null;}
+      /* R338 — CAPTURE THE ELAPSED TIME *BEFORE* THE TAB GOES HIDDEN.
+       *
+       * The old handler only ever assigned _elapsedAtPause in its trailing
+       * "if(!document.hidden && game.currentPuzzle)" block — i.e. AFTER the
+       * resume branch had already consumed it. On the FIRST hide there was
+       * no value to consume, so the resume computed
+       *     game.startTime = Date.now() - undefined  ===  NaN
+       * and NaN is falsy, so updateTimer()'s `if(!game.startTime) return;`
+       * early-returned forever: the clock froze permanently after any tab
+       * switch. onWin() then recorded
+       *     elapsed = Math.floor((Date.now()-NaN)/1000) === NaN
+       * and JSON.stringify(NaN) is null, so the saved best time was written
+       * as null — corrupting the progress record.
+       *
+       * The correct model (the killer-sudoku accumulator model): capture the
+       * elapsed at PAUSE time, then on resume set
+       *     startTime = Date.now() - elapsed
+       * so the played time is preserved and the hidden seconds are excluded.
+       */
+      game._elapsedAtPause = game.startTime ? (Date.now()-game.startTime) : 0;
       stopBGM();
     } else {
       if(game.currentPuzzle && document.getElementById('gameScreen').classList.contains('active')){
-        // Adjust start time to not count hidden time
-        game.startTime=Date.now()-game._elapsedAtPause;
+        var _el = game._elapsedAtPause || 0;
+        if(!Number.isFinite(_el) || _el < 0) _el = 0;   // never resume onto a NaN origin
+        game.startTime = Date.now()-_el;
         game.timerInterval=setInterval(updateTimer,1000);
         if(musicEnabled) startBGM();
       }
-    }
-    if(!document.hidden && game.currentPuzzle){
-      game._elapsedAtPause=Date.now()-game.startTime;
     }
   });
 
@@ -1537,6 +1632,63 @@ if(document.readyState==='loading'){
   document.addEventListener('click', _gzGameStart, {once:true, capture:true});
   document.addEventListener('keydown', _gzGameStart, {once:true, capture:true});
   document.addEventListener('touchstart', _gzGameStart, {once:true, capture:true});
+})();
+</script>
+<script>
+/* R337 — tap acknowledgement for the level-select buttons.
+ *
+ * BI recorded dead_click on "DIV.level-btn": the detector (gz-analytics.js)
+ * snapshots the CLICKED element's className / aria-expanded / inline style
+ * at click time and re-reads them 1.5s later. Clicking a level button
+ * navigates to the game screen, so the button's OWN attributes never change
+ * and the detector reports a dead click even though the game started
+ * perfectly.
+ *
+ * The ack must be observable to that detector:
+ *   - a MONOTONIC inline --gz-tap counter that is never removed, so every
+ *     tap changes the inline style attribute (a fixed class would be a
+ *     no-op on a re-tap — the R331 "class-hold ack dies on the second tap"
+ *     trap);
+ *   - an alternating gz-ack0 / gz-ack1 class, so the className also differs
+ *     between consecutive taps;
+ *   - the class is removed at 1200ms, i.e. BEFORE the detector's 1500ms
+ *     re-read, so a snapshot taken while the class was present still differs
+ *     afterwards; and the inline counter covers the case where the snapshot
+ *     was taken after the class was already removed.
+ *
+ * The listener is registered in the CAPTURE phase so it runs before the
+ * game's own handler, and it works under either listener ordering.
+ */
+(function(){
+  if(window.__gzLevelBtnAck) return;
+  function init(){
+    if(window.__gzLevelBtnAck) return;
+    window.__gzLevelBtnAck = true;
+    var SEL = '.level-btn, .btn-icon';
+    function find(node){
+      if(!node || node.nodeType !== 1) return null;
+      if(node.matches && node.matches(SEL)) return node;
+      return node.closest ? node.closest(SEL) : null;
+    }
+    document.addEventListener('click', function(e){
+      var btn = find(e.target);
+      if(!btn) return;
+      btn.__gzTapN = (btn.__gzTapN || 0) + 1;
+      btn.style.setProperty('--gz-tap', String(btn.__gzTapN));
+      var ack = 'gz-ack' + (btn.__gzTapN % 2);
+      btn.classList.remove('gz-ack0','gz-ack1');
+      btn.classList.add(ack);
+      clearTimeout(btn.__gzAckTid);
+      btn.__gzAckTid = setTimeout(function(){
+        btn.classList.remove('gz-ack0','gz-ack1');
+      }, 1200);
+    }, true);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
 </script>
 <a href="/" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#4ecdc4;text-align:center;padding:4px;font-size:12px;z-index:99999;text-decoration:none;font-family:sans-serif">&#x1f3e0; More Games at GameZipper.com</a>

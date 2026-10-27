@@ -217,50 +217,103 @@ const UNIQLIMIT = 2;
 
 let pass = 0, fail = 0;
 const failures = [];
-console.log('\nlevel |  n | indep | page | brute | stored | regions');
-for (const p of PUZZLE_DATA) {
-  const n = p.n, regions = p.regions, sol = p.solution;
-  const errs = [];
 
-  if (!Array.isArray(sol) || sol.length !== n) errs.push('solution.length != n');
-  if (!Array.isArray(regions) || regions.length !== n) errs.push('regions not n x n');
-  else for (const row of regions) if (!Array.isArray(row) || row.length !== n) { errs.push('regions row != n'); break; }
-  if (errs.length) {
-    fail++; failures.push({ id: p.id, errs });
-    console.log('  ' + String(p.id).padStart(2) + '  | ' + n + ' |  SHAPE ERROR: ' + errs.join('; '));
-    continue;
+/* ---------------------------------------------------------------
+ * Shared level gate. Used for BOTH the shipped level catalog and the
+ * pre-generated DAILY pool — a daily puzzle that is not unique is the
+ * same defect as a level that is not unique, and the daily pool used to
+ * be produced by a runtime generator that ALWAYS produced a
+ * multi-solution puzzle.
+ * --------------------------------------------------------------- */
+function gateLevels(list, label) {
+  let lpass = 0, lfail = 0;
+  const lfailures = [];
+  console.log('\n== ' + label + ' (' + list.length + ') ==');
+  console.log('level |  n | indep | page | brute | stored | regions');
+  for (const p of list) {
+    const n = p.n, regions = p.regions, sol = p.solution;
+    const errs = [];
+
+    if (!Array.isArray(sol) || sol.length !== n) errs.push('solution.length != n');
+    if (!Array.isArray(regions) || regions.length !== n) errs.push('regions not n x n');
+    else for (const row of regions) if (!Array.isArray(row) || row.length !== n) { errs.push('regions row != n'); break; }
+    if (errs.length) {
+      lfail++; lfailures.push({ id: p.id, errs });
+      console.log('  ' + String(p.id).padStart(2) + '  | ' + n + ' |  SHAPE ERROR: ' + errs.join('; '));
+      continue;
+    }
+
+    // region ids must be 0..n-1: the page's countSolutions uses an ARRAY of
+    // length n indexed by region id, so an id >= n reads as undefined ->
+    // "region unused" -> a SOLVER blind spot, not a data bug
+    let maxReg = -1;
+    for (const row of regions) for (const v of row) if (v > maxReg) maxReg = v;
+    if (maxReg >= n) errs.push('region id ' + maxReg + ' >= n=' + n + ' (page solver blind spot)');
+
+    const indep = countAll(n, regions, UNIQLIMIT).length;
+    const page = pageCount(n, regions, UNIQLIMIT);
+    const brute = bruteCount(n, regions, UNIQLIMIT);
+
+    if (indep !== page) errs.push('independent(' + indep + ') != page(' + page + ')');
+    if (indep !== brute) errs.push('independent(' + indep + ') != brute(' + brute + ')');
+    if (indep !== 1) errs.push('NOT UNIQUE: ' + (indep >= UNIQLIMIT ? '>=' + UNIQLIMIT : indep) + ' solutions');
+
+    const werr = checkWinAccepts(n, regions, sol);
+    if (werr) errs.push('stored solution rejected by engine: ' + werr);
+
+    const cerr = regionsConnected(n, regions);
+    if (cerr) errs.push(cerr);
+
+    const ok = errs.length === 0;
+    if (ok) lpass++; else { lfail++; lfailures.push({ id: p.id, errs }); }
+    console.log('  ' + String(p.id).padStart(2) + '  | ' + n + ' | ' + String(indep).padStart(4) + ' | ' + String(page).padStart(4) + ' | ' + String(brute).padStart(5) + ' | ' + (werr ? 'NO ' : 'yes') + '      | ' + (cerr || 'ok') + (ok ? '' : '   <== ' + errs.join('; ')));
   }
-
-  // region ids must be 0..n-1: the page's countSolutions uses an ARRAY of
-  // length n indexed by region id, so an id >= n reads as undefined ->
-  // "region unused" -> a SOLVER blind spot, not a data bug
-  let maxReg = -1;
-  for (const row of regions) for (const v of row) if (v > maxReg) maxReg = v;
-  if (maxReg >= n) errs.push('region id ' + maxReg + ' >= n=' + n + ' (page solver blind spot)');
-
-  const indep = countAll(n, regions, UNIQLIMIT).length;
-  const page = pageCount(n, regions, UNIQLIMIT);
-  const brute = bruteCount(n, regions, UNIQLIMIT);
-
-  if (indep !== page) errs.push('independent(' + indep + ') != page(' + page + ')');
-  if (indep !== brute) errs.push('independent(' + indep + ') != brute(' + brute + ')');
-  if (indep !== 1) errs.push('NOT UNIQUE: ' + (indep >= UNIQLIMIT ? '>=' + UNIQLIMIT : indep) + ' solutions');
-
-  const werr = checkWinAccepts(n, regions, sol);
-  if (werr) errs.push('stored solution rejected by engine: ' + werr);
-
-  const cerr = regionsConnected(n, regions);
-  if (cerr) errs.push(cerr);
-
-  const ok = errs.length === 0;
-  if (ok) pass++; else { fail++; failures.push({ id: p.id, errs }); }
-  console.log('  ' + String(p.id).padStart(2) + '  | ' + n + ' | ' + String(indep).padStart(4) + ' | ' + String(page).padStart(4) + ' | ' + String(brute).padStart(5) + ' | ' + (werr ? 'NO ' : 'yes') + '      | ' + (cerr || 'ok') + (ok ? '' : '   <== ' + errs.join('; ')));
+  console.log(label + ': ' + lpass + '/' + list.length + ' levels uniquely solvable');
+  if (lfailures.length) {
+    console.log(label + ' FAILS:');
+    for (const f of lfailures) console.log('  ' + label + ' ' + f.id + ': ' + f.errs.join('; '));
+  }
+  return { pass: lpass, fail: lfail, failures: lfailures };
 }
 
-console.log('\nQueens: ' + pass + '/' + PUZZLE_DATA.length + ' levels uniquely solvable');
-if (fail > 0) {
+const catRes = gateLevels(PUZZLE_DATA, 'Queens catalog');
+
+/* ---- the DAILY pool (R337) --------------------------------------- */
+let dailyRes = { pass: 0, fail: 0, failures: [] };
+const rawDaily = extractArray(html, /var DAILY_PUZZLE_DATA\s*=\s*\[/);
+if (rawDaily) {
+  let DAILY_PUZZLE_DATA;
+  try { DAILY_PUZZLE_DATA = eval('(' + '[' + rawDaily + ']' + ')'); }
+  catch (e) { console.error('DAILY_PUZZLE_DATA parse error: ' + e.message); process.exit(2); }
+  if (!Array.isArray(DAILY_PUZZLE_DATA) || !DAILY_PUZZLE_DATA.length) {
+    console.error('DAILY_PUZZLE_DATA empty'); process.exit(2);
+  }
+  dailyRes = gateLevels(DAILY_PUZZLE_DATA, 'Queens daily pool');
+
+  // The pool must not ship the SAME board twice (a player meeting the same
+  // puzzle twice is a content defect) and must span more than one grid size.
+  const seen = new Map();
+  for (const p of DAILY_PUZZLE_DATA) {
+    const key = p.n + '|' + JSON.stringify(p.regions);
+    if (seen.has(key)) { dailyRes.fail++; dailyRes.failures.push({ id: p.id, errs: ['duplicate of ' + seen.get(key)] }); }
+    else seen.set(key, p.id);
+  }
+  const sizes = new Set(DAILY_PUZZLE_DATA.map(p => p.n));
+  if (sizes.size < 2) { dailyRes.fail++; dailyRes.failures.push({ id: 'pool', errs: ['pool covers only one grid size'] }); }
+  console.log('Daily pool: ' + sizes.size + ' grid sizes (' + [...sizes].sort((a, b) => a - b).join(',') + '), ' + seen.size + ' distinct boards');
+} else {
+  console.log('\n(no DAILY_PUZZLE_DATA in this file — daily pool gate skipped)');
+}
+
+pass = catRes.pass;
+fail = catRes.fail + dailyRes.fail;
+failures.push.apply(failures, catRes.failures);
+failures.push.apply(failures, dailyRes.failures);
+
+console.log('\nQueens: ' + catRes.pass + '/' + PUZZLE_DATA.length + ' levels uniquely solvable');
+if (failures.length) {
   console.log('\nFAILS:');
-  for (const f of failures) console.log('  Level ' + f.id + ': ' + f.errs.join('; '));
+  for (const f of failures) console.log('  ' + f.id + ': ' + f.errs.join('; '));
 }
 console.log('\nVERDICT: ' + (fail === 0 ? 'PASS' : 'FAIL'));
 process.exit(fail === 0 ? 0 : 1);
