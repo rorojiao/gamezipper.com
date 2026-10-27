@@ -52,7 +52,14 @@ while read -r slug; do
     outr=$( cd "$ROOT" && timeout 150 node "$slug/$b" 2>&1 )
     rcr=$?
     # verdict line
-    verdict=$(printf '%s' "$out" | grep -oiE 'VERDICT[^"]{0,40}|PASS[^"]{0,20}|FAIL[^"]{0,20}' | tail -1 | tr -d '\n' | cut -c1-60)
+    # R336 FIX: same lying-verdict regex as r335-verifier-gate.sh — the old
+    # pattern matched the JSON key "fails":[...] and recorded PASSing
+    # verifiers as "fails" in the TSV, which every later sweep reads.
+    verdict=$(printf '%s' "$out" | grep -oE '"verdict"[[:space:]]*:[[:space:]]*"[A-Za-z]+"' | tail -1 | grep -oE '"[A-Za-z]+"$' | tr -d '"')
+    if [ -z "$verdict" ]; then
+      verdict=$(printf '%s' "$out" | grep -oE '"fail"[[:space:]]*:[[:space:]]*[0-9]+' | tail -1 | grep -oE '[0-9]+$')
+      if [ -z "$verdict" ]; then verdict="rc=$rc"; else verdict="fail=$verdict"; fi
+    fi
     printf '%s\t%s\t%d\t%d\t%s\n' "$slug" "$b" "$rc" "$rcr" "$verdict" >> "$OUT"
   done
 done < /tmp/r334-live-slugs.txt

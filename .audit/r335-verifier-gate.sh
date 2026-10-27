@@ -52,7 +52,19 @@ while read -r slug; do
     outr=$( cd "$ROOT" && timeout 150 node "$slug/$b" 2>&1 )
     rcr=$?
     # verdict line
-    verdict=$(printf '%s' "$out" | grep -oiE 'VERDICT[^"]{0,40}|PASS[^"]{0,20}|FAIL[^"]{0,20}' | tail -1 | tr -d '\n' | cut -c1-60)
+    # R336 FIX: the old pattern was `grep -oiE 'VERDICT[...]|PASS[...]|FAIL[...]'`
+    # which is CASE-INSENSITIVE and unbounded, so it matched the JSON key
+    # `"fails":[...]` — every passing verifier whose output contains that key
+    # (which is most of them) was recorded as "fails" in the TSV even though
+    # its exit code was 0 and its real verdict was "PASS". The TSV is read by
+    # every later sweep, so a verdict column that lies manufactures phantom
+    # findings. Now the VERDICT field is read first and, when absent, the
+    # `"fail":N` counter decides.
+    verdict=$(printf '%s' "$out" | grep -oE '"verdict"[[:space:]]*:[[:space:]]*"[A-Za-z]+"' | tail -1 | grep -oE '"[A-Za-z]+"$' | tr -d '"')
+    if [ -z "$verdict" ]; then
+      verdict=$(printf '%s' "$out" | grep -oE '"fail"[[:space:]]*:[[:space:]]*[0-9]+' | tail -1 | grep -oE '[0-9]+$')
+      if [ -z "$verdict" ]; then verdict="rc=$rc"; else verdict="fail=$verdict"; fi
+    fi
     printf '%s\t%s\t%d\t%d\t%s\n' "$slug" "$b" "$rc" "$rcr" "$verdict" >> "$OUT"
   done
 done < /tmp/r335-live-slugs.txt
