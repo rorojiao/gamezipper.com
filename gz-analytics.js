@@ -47,7 +47,7 @@
    auto-repoints nginx to the live tunnel URL. Rotating var EP here (R401 playbook) causes
    20min+ data gaps per GitHub Pages deploy + CDN cache cycle. See kanban R415/R416/R418.
    If bi.gamezipper.com/api/health fails: fix nginx/watchdog on 43.172, NOT this file. */
-  var EP = 'https://table-workplace-terminals-dark.trycloudflare.com/api/collect';
+  var EP = 'https://mission-lots-raw-forecast.trycloudflare.com/api/collect';
   // 2026-07-26: expose the watchdog-rotated endpoint so inline RUM scripts
   // (index.html Web-Vitals beacons) and adsterra-manager.js can resolve it
   // lazily instead of hardcoding tunnel URLs that die every few hours.
@@ -363,17 +363,44 @@
   }
 
   /* R988 — INP must only consider real interactions.
-     Event Timing reports hover (mouseover/pointerover/pointerenter/mouseout/...)
-     and scroll with interactionId === 0. Per the INP spec those are NOT
+     Event Timing reports hover (mouseover/pointerover/pointerenter/mouseout/...) and
+     scroll with interactionId === 0. Per the INP spec those are NOT
      interactions and must not feed INP. Taking the max over every entry made
      homepage "INP POOR" a measurement of mouse-hover churn across 466 cards:
      BI showed 1-3 POOR UV/day at avg 843ms while a throttled trace of real
      clicks showed no entry over 16ms. Hover cost is retained separately as
-     inp_hover so the main-thread congestion is still observable. */
+     inp_hover so the main-thread congestion is still observable.
+
+     R990 — completes R988. R988's predicate was:
+         if (interactionId is a number && > 0) -> interaction
+         else -> match the event NAME against a discrete-input list
+     The else-branch also fires when interactionId IS a number and equals 0,
+     which is the modern-Chrome case for "not an interaction". And that name
+     list contained pointerdown|pointerup|mousedown|mouseup|touchstart|touchend
+     — exactly the events a SCROLL GESTURE emits with interactionId === 0.
+     Measured consequence: a touch-scroll with the main thread busy for 920ms
+     produced touchstart/pointerdown entries with interactionId === 0 that the
+     old predicate scored as INP=920ms, while the spec-scored value was 0ms
+     (no interaction happened at all). That is a real user scrolling, and it
+     was published to BI as a slow interaction. BI: 5 of 22 homepage INP POOR
+     rows (10d) came from sessions with ZERO clicks — INP is defined over
+     interactions, so those rows were provably false.
+     Fix: when the engine reports interactionId as a number, that number is
+     authoritative (spec: only interactionId > 0 is an interaction). The
+     name-based fallback now applies ONLY to engines with no interactionId
+     property at all, and only to unambiguous discrete-input names.
+     The excluded cost is NOT discarded: scroll-gesture pointer/touch entries
+     are re-homed to a new inp_scroll channel, and hover stays in inp_hover. */
   var _gzIsInteraction = function(e){
-    if (typeof e.interactionId === 'number' && e.interactionId > 0) return true;
-    // Legacy engines with no interactionId: fall back to a discrete-input name list.
-    return /^(click|dblclick|auxclick|contextmenu|keydown|keyup|keypress|pointerdown|pointerup|mousedown|mouseup|touchstart|touchend)$/.test(e.name || '');
+    // Modern engines (Chrome/Edge/Safari) always expose interactionId as a
+    // number. 0 means "not part of a discrete interaction" (hover, scroll, or
+    // a pointer/touch event that never became a click) — must NOT feed INP.
+    if (typeof e.interactionId === 'number') return e.interactionId > 0;
+    // Legacy engines with no interactionId property at all: fall back to the
+    // unambiguous discrete-input names only. pointerdown/pointerup/mousedown/
+    // mouseup/touchstart/touchend are AMBIGUOUS — a scroll gesture emits them
+    // too — so counting them here would re-introduce the false positive.
+    return /^(click|dblclick|auxclick|contextmenu|keydown|keyup|keypress)$/.test(e.name || '');
   };
 
   /* INP Observer: Core Web Vitals 2025 */
@@ -383,14 +410,21 @@
       if (_po2) {
         var _inpWorst = 0;
         var _hoverWorst = 0;
+        // R990: scroll-gesture pointer/touch entries (interactionId === 0) are
+        // no longer INP, but their duration IS real main-thread congestion.
+        // Re-homed to its own channel so nothing is discarded.
+        var _scrollWorst = 0;
         var _inpObs = new _po2(function(list) {
           var entries = list.getEntries();
           for (var i = 0; i < entries.length; i++) {
             var e = entries[i];
             if (_gzIsInteraction(e)) {
               if (e.duration > _inpWorst) _inpWorst = Math.round(e.duration);
-            } else if (e.duration > _hoverWorst) {
-              _hoverWorst = Math.round(e.duration);
+            } else {
+              if (e.duration > _hoverWorst) _hoverWorst = Math.round(e.duration);
+              if (/^(pointerdown|pointerup|mousedown|mouseup|touchstart|touchend)$/.test(e.name || '')) {
+                if (e.duration > _scrollWorst) _scrollWorst = Math.round(e.duration);
+              }
             }
           }
         });
@@ -403,6 +437,10 @@
           // own so main-thread congestion stays visible instead of being discarded.
           if (document.visibilityState === 'hidden' && _hoverWorst >= 200) {
             ps('inp_hover', { u: P, dur: _hoverWorst });
+          }
+          // R990: scroll-gesture congestion, split out from hover.
+          if (document.visibilityState === 'hidden' && _scrollWorst >= 200) {
+            ps('inp_scroll', { u: P, dur: _scrollWorst });
           }
         });
       }
