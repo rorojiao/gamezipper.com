@@ -1053,8 +1053,17 @@ if (LEVELS.length > 0) {
  * re-read of the inline style attribute always differs from the snapshot.
  *
  * The ack class alternates gz-ack0 / gz-ack1 so the className also differs
- * between consecutive taps, and it is removed after 1700ms so the highlight
- * does not stick.
+ * between consecutive taps. It is removed after 1200ms — i.e. BEFORE the
+ * detector's 1500ms re-read, not after it. That ordering is what makes the
+ * fix correct under BOTH listener orderings (the R336 blackjack lesson):
+ *   - det-first (the production order here): the snapshot predates the tap,
+ *     so the class and the inline counter both differ at the re-read;
+ *   - ack-first: the snapshot already contains gz-ack1, so the class must be
+ *     GONE by the re-read for the two to differ. A 1700ms removal leaves it
+ *     present and the two compare equal -> the dead_click survives.
+ * The 1200ms form is the one already proven by baba-is-you and slice-master.
+ * The highlight still reads as a flash: 1200ms is well past the ~400ms a
+ * player perceives as "it responded".
  *
  * The listener is registered on DOMContentLoaded so it runs AFTER the deferred
  * gz-analytics.js has registered its own capture listener — the detector then
@@ -1078,7 +1087,7 @@ if (LEVELS.length > 0) {
       clearTimeout(card.__gzAckTid);
       card.__gzAckTid = setTimeout(function(){
         if (card && card.classList) card.classList.remove('gz-ack0','gz-ack1');
-      }, 1700);
+      }, 1200);
     }, true);
   }
   if (document.readyState === 'loading') {

@@ -44,6 +44,17 @@ canvas{display:block;position:fixed;top:0;left:0;width:100vw;height:100vh;touch-
 .ch-card{width:130px;padding:1rem .7rem;background:rgba(0,245,255,0.06);border:1px solid rgba(0,245,255,0.15);border-radius:14px;cursor:pointer;text-align:center;transition:all .15s}
 .ch-card:hover:not(.locked){background:rgba(0,245,255,0.12);transform:translateY(-2px)}
 .ch-card.locked{opacity:.4;cursor:not-allowed;filter:grayscale(.6)}
+/* R338 P1 — the locked-chapter tap now has visible feedback (shake + message),
+   and the acknowledgement class gives gz-analytics.js's dead_click detector a
+   real state change to observe on the SAME element reference it re-reads.
+   The class is removed at 1700ms (>= the detector's 1500ms window) and an
+   inline monotonic counter (--gz-tap) makes a re-tap a real delta too
+   (R331 Pitfall #89: a class-only ack is a no-op on the second tap). */
+.ch-card.shake{animation:chShake .4s ease}
+@keyframes chShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.ch-card.gz-ack0,.ch-card.gz-ack1{border-color:#00f5ff!important;box-shadow:0 0 14px rgba(0,245,255,.45)!important}
+#chapter-msg{min-height:22px;margin-top:10px;color:#ffd700;font-size:.85rem;text-align:center;opacity:0;transition:opacity .2s}
+#chapter-msg.show{opacity:1}
 .ch-card .ch-num{font-family:'Orbitron',sans-serif;font-size:.75rem;color:#00f5ff;margin-bottom:4px}
 .ch-card .ch-name{font-size:.85rem;font-weight:700;margin-bottom:6px}
 .ch-card .ch-stars{color:#ffd700;font-size:.75rem}
@@ -169,6 +180,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 <div class="glass" style="text-align:center;max-width:520px">
 <div class="sec-title">SELECT CHAPTER</div>
 <div class="ch-grid" id="chGrid"></div>
+<div id="chapter-msg" aria-live="polite"></div>
 </div>
 </div>
 
@@ -671,7 +683,44 @@ function buildChapters(){
     var st=0;for(var i=(ch-1)*10;i<ch*10;i++)st+=getStars(i);
     card.innerHTML='<div class="ch-num">Chapter '+ch+'</div><div class="ch-name">'+CH_NAMES[ch]+'</div><div class="ch-stars">'+st+'/30 ★</div>';
     if(isChapterUnlocked(ch))(function(c){card.onclick=function(){playClick();buildLevels(c);showScr('scr_levels');};})(ch);
+    else (function(c,el){
+      // R338 P1: a LOCKED chapter card had NO click handler at all — the tap
+      // produced zero feedback of any kind (no navigation, no message, no
+      // animation), so the player had no way to learn WHY the chapter is
+      // unavailable. gz-analytics.js's dead_click detector logged it
+      // ("DIV.ch-card", 10 events on 2026-10-27) and the player's tap was a
+      // total no-op. Now it explains the requirement instead of silently
+      // swallowing the tap (same shape as the baba-is-you R336 fix).
+      el.onclick=function(){
+        playClick();
+        // The unlock rule (checkChapterUnlocks): chapter c opens once 7 levels
+        // of chapter c-1 have at least one star. The message states the
+        // threshold EXPLICITLY (7 of 10) — telling the player only "of the 10
+        // levels" would leave the actual requirement ambiguous.
+        var prev=c-1, prevStart=(prev-1)*10, done=0, NEED=7;
+        for(var i=prevStart;i<prevStart+10;i++){if(getStars(i)>0)done++;}
+        showChapterMsg('Chapter '+c+' is locked — earn at least 1 star on '+NEED+
+          ' of the 10 levels in Chapter '+prev+' ('+CH_NAMES[prev]+') to unlock it. '+
+          'You have '+done+'/'+NEED+' so far.');
+        el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');
+      };
+    })(ch,card);
     g.appendChild(card);
+  }
+}
+/* R338 P1: explain a refused action instead of silently doing nothing. */
+var _chMsgTid=null;
+function showChapterMsg(txt){
+  var el=document.getElementById('chapter-msg');
+  if(!el)return;
+  el.textContent=txt||'';
+  el.classList.add('show');
+  if(_chMsgTid)clearTimeout(_chMsgTid);
+  if(txt){
+    _chMsgTid=setTimeout(function(){
+      var e2=document.getElementById('chapter-msg');
+      if(e2){e2.textContent='';e2.classList.remove('show');}
+    },3200);
   }
 }
 
@@ -920,6 +969,60 @@ function cleanup(){
 window.addEventListener('beforeunload',cleanup);
 
 init();
+})();
+</script>
+<script>
+/* R338 P1 — dead_click acknowledgement for the chapter cards.
+ *
+ * BI recorded 10 dead_click events on "DIV.ch-card" (2026-10-27, the most
+ * recent dead_click of ANY live game). Root cause: a LOCKED chapter card had
+ * NO click handler at all, so the tap produced no navigation, no message and
+ * no animation — a total no-op, and the player had no way to learn why.
+ *
+ * The handler above now explains the requirement. This block additionally
+ * guarantees the detector can OBSERVE a change:
+ *   - the listener runs in the CAPTURE phase, so it stamps the element while
+ *     it is still attached (R327 Pitfall #81: a write that lands on a
+ *     re-created node is invisible to the detector, which re-reads the
+ *     ORIGINAL reference);
+ *   - an inline monotonic counter (--gz-tap) changes on EVERY tap, because a
+ *     class-only acknowledgement is a no-op on the second tap (R331
+ *     Pitfall #89);
+ *   - the alternating gz-ack0 / gz-ack1 class makes the className differ
+ *     between consecutive taps;
+ *   - the class is removed at 1200ms, i.e. BEFORE the detector's 1500ms
+ *     re-read. This is what makes the fix correct under BOTH listener
+ *     orderings (the R336 blackjack lesson): if the detector's snapshot was
+ *     taken while the class was present, the class is gone by the re-read so
+ *     the two still differ; and if the snapshot predates the tap, the
+ *     inline counter differs instead. A 1700ms removal would leave the
+ *     class present at the 1500ms re-read and re-introduce the dead_click.
+ */
+(function(){
+  if(window.__gzChapterAck) return;
+  function init(){
+    if(window.__gzChapterAck) return;
+    window.__gzChapterAck = true;
+    var SEL = '.ch-card';
+    document.addEventListener('click', function(e){
+      var card = e.target;
+      if(!card || card.nodeType !== 1) return;
+      if(card.matches && card.matches(SEL)) card = card;
+      else card = card.closest ? card.closest(SEL) : null;
+      if(!card) return;
+      card.__gzTapN = (card.__gzTapN || 0) + 1;
+      card.style.setProperty('--gz-tap', String(card.__gzTapN));
+      var ack = 'gz-ack' + (card.__gzTapN % 2);
+      card.classList.remove('gz-ack0','gz-ack1');
+      card.classList.add(ack);
+      clearTimeout(card.__gzAckTid);
+      card.__gzAckTid = setTimeout(function(){
+        card.classList.remove('gz-ack0','gz-ack1');
+      }, 1200);
+    }, true);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>
 <script>var sa=document.createElement('script');sa.src='/adsterra-manager.js?v=R450exitintentR976';document.head.appendChild(sa);</script><script>var s=document.createElement('script');s.src='/monetag-manager.js?v=v535deadzfillin2R966';document.head.appendChild(s);</script>

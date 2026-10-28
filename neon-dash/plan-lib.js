@@ -180,7 +180,7 @@ function planAll(budgetMs) {
 }
 
 module.exports = {
-  LEVELS, solve, planAll, extractArray,
+  LEVELS, solve, planAll, extractArray, step, aabb, levelLength,
   CONSTS: { GROUND_Y, PLAYER_SIZE, PLAYER_HIT, GRAVITY_CUBE, JUMP_FORCE, GRAVITY_SHIP, FLY_FORCE, CANVAS_W, CANVAS_H, START_X },
 };
 

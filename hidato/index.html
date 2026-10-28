@@ -1458,7 +1458,14 @@ document.addEventListener("visibilitychange", () => {
  *     puts our listener after gz-analytics' in the capture-order queue, so the
  *     detector snapshots the ORIGINAL state and then observes our change.
  *     (This is exactly the R331 lesson the balance-scale fix documents.)
- *   - The class is held for 1700ms (>= the detector's 1500ms window).
+ *   - The class is held for 1200ms — i.e. BEFORE the detector's 1500ms
+ *     re-read, not after it. This is what makes the acknowledgement correct
+ *     under BOTH listener orderings (the R336 blackjack lesson): if the
+ *     detector's snapshot already contains the class (ack-first), the class
+ *     must be GONE by the re-read for the two to differ. A 1700ms hold
+ *     leaves it present, the two compare equal, and the dead_click
+ *     survives the fix. The 1200ms form is the one already proven by
+ *     baba-is-you, slice-master and hexa-bridges.
  *   - An INLINE monotonic counter (--gz-tap) is written as well, so a second
  *     tap on the SAME cell is still a real delta: a class-only acknowledgement
  *     is a no-op on re-tap (the R331 Pitfall #89 shape). The counter is never
@@ -1502,7 +1509,7 @@ document.addEventListener("visibilitychange", () => {
       cell.style.setProperty('--gz-tap', String(cell.__gzTapN));
       cell.classList.add('gz-picked');
       stamped.push(cell);
-      timers.push(setTimeout(clear, 1700));
+      timers.push(setTimeout(clear, 1200));
     }, true);
   }
   if (document.readyState === 'loading') {

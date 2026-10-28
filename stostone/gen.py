@@ -11,6 +11,8 @@ Key insight: small regions with high clue-to-size ratio → more likely unique.
 import json, random, sys, time
 from collections import deque
 from itertools import combinations
+import os
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 def neighbors4(i, n):
     r, c = divmod(i, n)
@@ -245,7 +247,7 @@ def main():
             print(f"  ⚠️ {tier_name}: {len(tier_levels)}/{count} after {attempts}")
         levels.extend(tier_levels)
 
-    with open('stostone/levels.json', 'w') as f:
+    with open(os.path.join(HERE, "levels.json"), 'w') as f:
         json.dump({'levels': levels, 'count': len(levels)}, f)
     print(f"\n✅ Generated {len(levels)} levels")
 
