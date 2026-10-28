@@ -460,6 +460,43 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     init();
   }
 
+  // ── R1009 (2026-10-29) — PRE-FIRE the smartlink ping on the FIRST user
+  //     interaction, instead of only at navigation time.
+  //
+  //     Why (measured, not theorised):
+  //     The Smartlink impression is booked by Adsterra's attribution form POST,
+  //     which happens INSIDE the hidden iframe we append to THIS document. When
+  //     the document navigates away, the browser aborts that in-flight request.
+  //     Measured survival curve (hidden iframe -> araplhn.org attribution POST):
+  //         navigate 0ms after ping   -> attribution request NEVER SENT (0 req)
+  //         navigate 200ms after     -> NEVER SENT
+  //         navigate 600ms after     -> NEVER SENT
+  //         navigate 1200ms after    -> sent
+  //         stay on the page         -> sent + BOOKED
+  //     Production fired the ping from the same-origin <a> click handler, i.e.
+  //     ~0ms before the navigation — the exact worst case. That is why
+  //     placement 30130928 showed 0 booked impressions for 365 days while
+  //     BI kept logging 'fill_attempt' events (the DOM node existed; the
+  //     request died with the page).
+  //
+  //     The popunder zone (30130929) was unaffected because window.open() makes
+  //     a SEPARATE top-level document that survives the parent's teardown.
+  //
+  //     Fix: fire the ping on the first REAL user interaction with the page
+  //     (pointerdown / touchstart / keydown) — the user is still on the page
+  //     for seconds afterwards, so the request completes and books. The
+  //     existing click/exit-intent handlers stay as fallbacks; the 60-minute
+  //     sessionStorage cooldown guarantees we still fire at most once per hour.
+  var _gzSmartPrefired = false;
+  function prefireSmartlink() {
+    if (_gzSmartPrefired) return;
+    _gzSmartPrefired = true;
+    try { fireSmartlinkPing(); } catch (e) {}
+  }
+  document.addEventListener('pointerdown', prefireSmartlink, { passive: true, capture: true });
+  document.addEventListener('touchstart', prefireSmartlink, { passive: true, capture: true });
+  document.addEventListener('keydown', prefireSmartlink, { passive: true, capture: true });
+
   // ── On user clicking any game card (same-origin), fire smartlink ping.
   //     This is the primary fill path for v5.17 — much more frequent than popunder.
   document.addEventListener('click', function (e) {
