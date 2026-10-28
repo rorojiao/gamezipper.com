@@ -1,5 +1,19 @@
 /**
- * GameZipper Adsterra Ad Manager v5.17.4 (2026-07-26)
+ * GameZipper Adsterra Ad Manager v5.17.5 (2026-07-26)
+ * v5.17.5 Changes (R1008 - Smartlink attribution FIX):
+ *   - 🐛 Fix: the hidden Smartlink iframe used
+ *     sandbox="allow-scripts allow-same-origin". Chromium BLOCKS form
+ *     submission in a sandbox without allow-forms, and Adsterra's Smartlink
+ *     books the impression ONLY through the attribution form submit
+ *     (POST/GET to /4/<key>?refer=gamezipper.com&ps1=..&st1=..&sht=..).
+ *     Measured 2026-10-29 in real Chromium against the real Adsterra origin:
+ *       production sandbox            -> 0 attributed requests (form blocked)
+ *       + allow-forms                  -> 1 attributed request per load
+ *     That is why placement 30130928 showed ~980 BI "fill" events while
+ *     Adsterra's own API reported 0 impressions / $0.00 over 365 days:
+ *     our requests never reached Adsterra's attribution endpoint.
+ *   - Added allow-forms to the Smartlink iframe sandbox ONLY (the popunder
+ *     iframe is untouched). Keep the iframe hidden 1x1 and cross-origin.
  * ─────────────────────────────────────────────────
  * v5.17.4 Changes (endpoint hygiene — kills dead-tunnel console spam):
  *   - 🐛 Fix: channel 2 pointed at a hardcoded tunnel URL
@@ -319,7 +333,7 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
       iframe.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;border:0;visibility:hidden;';
       iframe.setAttribute('aria-hidden', 'true');
       iframe.setAttribute('tabindex', '-1');
-      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
       document.body.appendChild(iframe);
       // Remove after 6s — long enough for impression pixel, short enough to clean up.
       setTimeout(function () {
