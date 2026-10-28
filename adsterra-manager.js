@@ -316,6 +316,29 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
   //     server-side, no popup, no UI disruption.
   var SMART_KEY = 'gz_adst_smart_ts';
   var SMART_INTERVAL = 60 * 60 * 1000; // 60min cooldown per session
+  // R1010 (2026-10-29): the cooldown used to be written AT PING TIME, before
+  // the attribution request had even left the browser. Combined with the R1009
+  // teardown bug that made the failure mode WORSE than doing nothing:
+  //   1. user clicks a game card -> pre-fire runs -> iframe starts loading
+  //   2. the page navigates ~100ms later -> browser aborts the request
+  //   3. the cooldown timestamp is ALREADY written -> the slot is spent
+  //   4. the next page (same tab, same origin, sessionStorage survives
+  //      navigation) cannot fire for another 60 minutes
+  // Measured: page1_attrib_req=0, page2_attrib_req=0, booked +0.
+  //
+  // Fix: only COMMIT the cooldown once the request is provably dispatched.
+  // The hidden iframe's form submit is what books the impression, so we wait
+  // for the iframe to load and only then write the timestamp. If the document
+  // is torn down before that, the timer never runs, the slot is NOT spent,
+  // and the next page can fire.
+  var SMART_COMMIT_DELAY = 2500; // ms; the attribution POST is dispatched well before this
+  var SMART_IFRAME_TTL = 10000;  // ms; keep the iframe alive long enough to finish the submit
+  // R1010: an in-memory, per-document guard. The cooldown lives in
+  // sessionStorage, but it is only committed 2.5s AFTER the ping, so without
+  // this guard the pointerdown pre-fire AND the click handler would each open
+  // their own iframe within that 2.5s window -> two impressions per page.
+  // This flag dies with the document, so the next page can fire again.
+  var _gzSmartFired = false;
   function canShowSmart() {
     try {
       var ts = sessionStorage.getItem(SMART_KEY);
@@ -325,8 +348,10 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
   }
 
   function fireSmartlinkPing() {
+    if (_gzSmartFired) return;
     if (!canShowSmart()) return;
-    try { sessionStorage.setItem(SMART_KEY, String(Date.now())); } catch (e) {}
+    _gzSmartFired = true;
+    // R1010: do NOT write the cooldown here — see the note above.
     try {
       var iframe = document.createElement('iframe');
       iframe.src = SMARTLINK_URL;
@@ -335,10 +360,17 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
       iframe.setAttribute('tabindex', '-1');
       iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
       document.body.appendChild(iframe);
-      // Remove after 6s — long enough for impression pixel, short enough to clean up.
+      // R1010: commit the cooldown only after the request had time to be
+      // dispatched. If the document is destroyed first (the user navigated),
+      // this timer never runs and the slot stays free for the next page.
+      setTimeout(function () {
+        try { sessionStorage.setItem(SMART_KEY, String(Date.now())); } catch (e) {}
+      }, SMART_COMMIT_DELAY);
+      // Remove the iframe later than the commit: removing it too early can
+      // abort a form submit that is still in flight.
       setTimeout(function () {
         try { iframe.parentNode && iframe.parentNode.removeChild(iframe); } catch (e) {}
-      }, 6000);
+      }, SMART_IFRAME_TTL);
       // R1003 (2026-10-28): this used to be track('fill', ...) fired UNCONDITIONALLY
       // the instant the iframe element was appended. It proved only that we created
       // a DOM node — never that Adsterra served or ATTRIBUTED anything.
