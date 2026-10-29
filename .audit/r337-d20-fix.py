@@ -43,8 +43,13 @@ ROOT = os.environ.get('GZ_SITE_ROOT', '/home/junze/gamezipper.com')
 CLASSIFY = os.path.join(ROOT, '.audit/r337-d20-classify.js')
 
 REPL = [
-    (re.compile(r'hand-crafted', re.I), 'generated'),
-    (re.compile(r'handcrafted', re.I), 'generated'),
+    # R338: the claim can wear several synonym forms. The detector's CLAIM_RE
+    # matches all of them, so the fixer must be able to rewrite all of them —
+    # otherwise a synonym-form defect would be flagged but never repaired.
+    (re.compile(r'hand[-\s]?crafted', re.I), 'generated'),
+    (re.compile(r'hand[-\s]?built', re.I), 'generated'),
+    (re.compile(r'hand[-\s]?designed', re.I), 'generated'),
+    (re.compile(r'hand[-\s]?authored', re.I), 'generated'),
 ]
 
 APPLY = '--apply' in sys.argv
@@ -60,8 +65,8 @@ def procedural_games():
 
 
 def strip_adjective(s):
-    s = re.sub(r'hand-crafted', 'generated', s, flags=re.I)
-    s = re.sub(r'handcrafted', 'generated', s, flags=re.I)
+    for pat, rep in REPL:
+        s = pat.sub(rep, s)
     return s
 
 
@@ -89,7 +94,10 @@ for slug in targets:
         continue
     src = open(path, encoding='utf-8').read()
 
-    before_n = len(re.findall(r'hand-?crafted', src, re.I))
+    # R338: count EVERY claim form the detector recognises, not just
+    # "hand-?crafted" — otherwise a synonym-form claim is reported NO_CLAIM
+    # and the defect is flagged by the gate but never repaired by the fixer.
+    before_n = len(re.findall(r'hand[-\s]?(?:crafted|built|designed|authored)', src, re.I))
     if before_n == 0:
         report.append({'slug': slug, 'status': 'NO_CLAIM'})
         continue
@@ -99,7 +107,7 @@ for slug in targets:
     for pat, rep in REPL:
         new, n = pat.subn(rep, new)
         replaced += n
-    remaining = len(re.findall(r'hand-?crafted', new, re.I))
+    remaining = len(re.findall(r'hand[-\s]?(?:crafted|built|designed|authored)', new, re.I))
 
     # SAFETY 1: everything outside the adjective is byte-identical
     if strip_adjective(src) != strip_adjective(new):
@@ -116,9 +124,15 @@ for slug in targets:
     if not ok:
         report.append({'slug': slug, 'status': 'ABORT_JSONLD', 'detail': detail})
         continue
-    # SAFETY 4: byte delta == exactly the adjective shrink
-    exp_delta = sum(len('generated') - len(m.group(0))
-                     for m in re.finditer(r'hand-?crafted', src, re.I))
+    # SAFETY 4: byte delta == exactly the adjective shrink.
+    # R338: the expected delta must be computed from the SAME replacement
+    # patterns that were applied — a hardcoded `hand-?crafted` pattern made
+    # the synonym forms ("hand-built", "hand-designed") abort with a bogus
+    # "expected 0 got -1", i.e. the safety check itself blocked the fix.
+    exp_delta = 0
+    for pat, rep in REPL:
+        exp_delta += sum(len(rep) - len(m.group(0))
+                         for m in pat.finditer(src))
     actual_delta = len(new) - len(src)
     if actual_delta != exp_delta:
         report.append({'slug': slug, 'status': 'ABORT_DELTA',

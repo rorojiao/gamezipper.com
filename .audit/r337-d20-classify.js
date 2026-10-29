@@ -17,12 +17,30 @@
 const fs = require('fs');
 const path = require('path');
 
+// R338 UPGRADE: the v1 classifier below was BIDIRECTIONALLY distorted and is
+// retained only as a fallback. It produced:
+//   FALSE NEGATIVES — a game's catalog was invisible to it, so a real
+//     PROCEDURAL game was reported STATIC/UNKNOWN:
+//       yajilin (`var LV=`), tangram (`var LVLS=`), bus-traffic-fever
+//       (`game.js:var LEVELS=`), number-maze (`data.js`), labyrinth
+//       (`var LEVELS=[]` + anonymous IIFE pushes), blumgi-slime
+//       (`const LEVELS = buildLevels()`), teleport-jumper
+//       (`var LEVELS=(function(){ var L=[]; ... return L; })()`)
+//   FALSE POSITIVES — an EMPTY catalog or a METADATA array was read as an
+//       authored level catalog:
+//       color-by-number, lockpick, hex-minesweeper, crossmath
+// The v2 classifier (.audit/r338-d20-classify-v2.js) resolves all of those.
+// It is the SINGLE SOURCE OF TRUTH now; this file is a thin delegator so the
+// legacy detector (.audit/r337-d20-handcrafted.js) and fixer
+// (.audit/r337-d20-fix.py) keep working against the corrected logic.
+const V2 = require('./r338-d20-classify-v2.js');
+
 const ROOT = process.env.GZ_SITE_ROOT || path.resolve(__dirname, '..');
 
 const NAME_RE = /(generat|makePuzzle|buildLevel|createLevel|randomLevel|randomize|makeBoard|newPuzzle)/i;
 const RANDOM_RE = /Math\.random\s*\(|mulberry32\s*\(|seededRandom\s*\(|seedRng\s*\(|\brng\s*\(|\brandomSeed|\bnextRand\b/;
 
-function classify(slug) {
+function classifyV1(slug) {
   const dir = path.join(ROOT, slug);
   const idx = path.join(dir, 'index.html');
   if (!fs.existsSync(idx)) return { kind: 'ERROR', why: 'no index.html' };
@@ -63,6 +81,22 @@ function classify(slug) {
     }
   }
   return { kind: 'UNKNOWN', why: 'no shipped catalog, no detected generator' };
+}
+
+// The v2 classifier is authoritative. It is the only one that can resolve
+// the alias / external-file / empty-plus-builder / direct-IIFE catalog shapes,
+// and it is the only one that recognises a SEED-DERIVED catalog (entries that
+// carry only a `seed`, with the board drawn from it at load time).
+// v1 is kept ONLY as a fallback for the case where v2 throws, so a crash in
+// the newer logic can never silently turn into "no defects found".
+function classify(slug) {
+  try {
+    const v2 = V2.classify(slug);
+    if (v2 && v2.kind && v2.kind !== 'ERROR') return v2;
+    return v2;
+  } catch (e) {
+    return { kind: 'UNKNOWN', why: 'v2 classifier failed (' + e.message + '); v1 fallback: ' + classifyV1(slug).why };
+  }
 }
 
 function liveGames() {

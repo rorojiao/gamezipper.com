@@ -42,7 +42,18 @@ const cal = [
   ['numbrix', 'STATIC'],
   ['suguru', 'STATIC'],
   ['tapa', 'STATIC'],
-  ['blumgi-slime', 'UNKNOWN'],   // authored literals in a builder function
+  // R338: v1 could not see `const LEVELS = buildLevels()` and reported
+  // UNKNOWN; the v2 classifier resolves it to STATIC — buildLevels() pushes
+  // AUTHORED literals, so the game IS handcrafted.
+  ['blumgi-slime', 'STATIC'],
+  // R338: a PROCEDURAL game whose catalog entries carry only a seed.
+  ['unpuzzle', 'PROCEDURAL'],
+  // R338: alias / external-file / direct-IIFE catalog shapes that v1 missed.
+  ['yajilin', 'STATIC'],
+  ['bus-traffic-fever', 'STATIC'],
+  ['number-maze', 'STATIC'],
+  ['labyrinth', 'STATIC'],
+  ['teleport-jumper', 'STATIC'],
 ];
 let calFail = 0;
 for (const [slug, want] of cal) {
