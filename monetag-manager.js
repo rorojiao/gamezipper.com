@@ -1241,8 +1241,17 @@
   // 对标 Poki: 毛玻璃覆盖层 + 品牌文案 + 进度条 + 倒计时
   // R1007 (2026-10-28): `source` parameter added so the BI funnel can attribute
   // each commercial break to the trigger that caused it.
+  var commercialBreakInFlight = false;
   function commercialBreak(source) {
+    var ownsCommercialBreak = false;
     return new Promise(function(resolve) {
+      if (commercialBreakInFlight) {
+        trackAdEvent('commercial_break_skipped', { reason: 'break_in_flight', source: source || 'manual' });
+        resolve();
+        return;
+      }
+      commercialBreakInFlight = true;
+      ownsCommercialBreak = true;
       if (!canShowAd('commercial_break')) {
         // R1007: the break was requested but a guard blocked it. tools.gamezipper.com
         // already emits commercial_break_skipped; gamezipper.com emitted NEITHER
@@ -1250,6 +1259,13 @@
         // (only fill / no_fill outcomes, and no_fill only fires on the Monetag tier
         // failing, so "AdSense missed and nothing rendered" was invisible).
         trackAdEvent('commercial_break_skipped', { reason: 'frequency_cap', source: source || 'manual' });
+        commercialBreakInFlight = false;
+        resolve();
+        return;
+      }
+      if (document.getElementById('gz-cb-overlay')) {
+        trackAdEvent('commercial_break_skipped', { reason: 'overlay_present', source: source || 'manual' });
+        commercialBreakInFlight = false;
         resolve();
         return;
       }
@@ -1462,8 +1478,13 @@
         if (overlay.parentNode) overlay.remove();
         unmuteAllAudio();
         markAdShown('commercial_break');
+        commercialBreakInFlight = false;
         resolve();
       }
+    }).catch(function(error) {
+      // Promise executors reject on throws; only the owner may unlock the break.
+      if (ownsCommercialBreak) commercialBreakInFlight = false;
+      throw error;
     });
   }
 
