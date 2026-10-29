@@ -41,6 +41,13 @@ const extractLevels = require(path.join(__dirname, 'gz-extract-levels.js'));
 const COSMETIC = new Set([
   'id', 'name', 'label', 'desc', 'description', 'tier', 'par', 'tutorial',
   'hint', 'difficulty', 'order', 'index', 'note',
+  // R338: measured/derived fields are NOT part of the puzzle identity.
+  // kurodoko shipped `solve_ms` (the solver's own timing) on every level, so
+  // two levels with the same board but different measured runtimes were
+  // treated as DIFFERENT, and two with identical runtimes were treated as
+  // the same board. Timing is an artifact of the measurement, not of the
+  // puzzle the player meets.
+  'solve_ms', 'solveTime', 'elapsed', 'duration_ms', 'gen_time',
 ]);
 
 // Games whose level payload is only a difficulty preset and whose board is
