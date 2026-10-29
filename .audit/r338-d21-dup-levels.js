@@ -52,7 +52,19 @@ const COSMETIC = new Set([
 
 // Games whose level payload is only a difficulty preset and whose board is
 // regenerated per index / per session -> NOT a player-visible duplicate.
-const SPEC_PROCEDURAL = new Set(['flood-fill', 'pocket-sort', 'paper-io', 'brick-breaker']);
+//
+// balance-scale (R338): every level entry is just
+// {coins, type, weighings} - a DIFFICULTY PRESET. The actual puzzle is
+// drawn at load time in setupLevel(): `fakeIndex=Math.floor(Math.random()*
+// cfg.coins)` and, for type 'unknown', `fakeType=Math.random()<0.5?'heavy':
+// 'light'`. Two entries with the same preset therefore resolve to two
+// DIFFERENT concrete puzzles (different fake coin, possibly different
+// heaviness), so the player never meets the same board twice. Its 30
+// entries are a difficulty curve, not 30 distinct boards.
+const SPEC_PROCEDURAL = new Set([
+  'flood-fill', 'pocket-sort', 'paper-io', 'brick-breaker',
+  'balance-scale',
+]);
 
 function ident(l) {
   if (l === undefined || l === null) return '__UNDEFINED__';
