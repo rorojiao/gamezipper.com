@@ -504,6 +504,10 @@ function chooseAIMove(b,level){
 
 // ─── Game state ──────────────────────────────────────────────────
 let board=emptyBoard(), turn=HUMAN, difficulty=0, history=[], selected=null, hintedMove=null, gameOver=false, aiThinking=false;
+// R339 P1: `history` is capped at 40 entries (pushHistory shifts), so history.length is NOT a
+// reliable move counter on long games — and after a save/restore it only reflects the restored
+// slice. Track the real ply count separately so the HUD and the saved blob agree.
+let moveCount=0;
 const SAVE_KEY='hexxagon_save_v1', STATS_KEY='hexxagon_stats_v1', THEME_KEY='hexxagon_theme_v1', MUTE_KEY='hexxagon_mute_v1';
 
 const THEMES = {
@@ -762,6 +766,7 @@ function startGame(level){
   board=emptyBoard();
   turn=HUMAN;
   history=[];
+  moveCount=0;                     // R339 P1: reset the real ply counter
   selected=null; hintedMove=null; gameOver=false; aiThinking=false;
   animPieces=[];
   el.menu.style.display='none';
@@ -776,7 +781,7 @@ function updateHUD(){
   el.redCount.textContent=c.red; el.blueCount.textContent=c.blue;
   el.pinfoRed.classList.toggle('active',turn===HUMAN&&!gameOver);
   el.pinfoBlue.classList.toggle('active',turn===AI&&!gameOver);
-  el.moveCounter.textContent='Move '+(history.length+1)+' · '+DIFF_NAMES[difficulty];
+  el.moveCounter.textContent='Move '+(moveCount+1)+' · '+DIFF_NAMES[difficulty];
   if(gameOver){ el.turnLabel.textContent='Game over'; }
   else if(turn===HUMAN){ el.turnLabel.textContent=selected?'Your turn — pick a destination':'Your turn — select a piece'; }
   else { el.turnLabel.textContent=aiThinking?'Blue is thinking…':"Blue's turn"; }
@@ -794,6 +799,7 @@ function doMove(m,player){
   }
   board=applyMove(board,m,player);
   turn=opp(player);                       // hand turn to the other player
+  moveCount++;                             // R339 P1: real ply counter (history is capped at 40)
   // sounds
   if(player===HUMAN){
     if(m.type==='clone') sfxClone(); else sfxJump();
@@ -804,6 +810,7 @@ function doMove(m,player){
   selected=null; hintedMove=null;
   updateHUD();
   needsRedraw=true;
+  saveState();                    // R339 P1: persist the board after EVERY move
   setTimeout(checkContinue,320);
 }
 
@@ -961,7 +968,7 @@ function undo(){
   if(history.length<2 || gameOver || aiThinking){ toast('Nothing to undo'); return; }
   // pop AI move + human move (2 plies)
   history.pop(); const h=history.pop();
-  if(h){ board=h.board; turn=h.turn; selected=null; hintedMove=null; animPieces=[]; updateHUD(); needsRedraw=true; sfxSelect(); }
+  if(h){ board=h.board; turn=h.turn; selected=null; hintedMove=null; animPieces=[]; moveCount=Math.max(0,moveCount-2); updateHUD(); needsRedraw=true; sfxSelect(); saveState(); } // R339 P1: persist the undo
 }
 function showHint(){
   if(gameOver||aiThinking||turn!==HUMAN){ toast('Wait your turn'); return; }
@@ -1001,7 +1008,17 @@ function buildThemeUI(){
 function saveState(){
   try{
     if(!board) return;
-    localStorage.setItem(SAVE_KEY,JSON.stringify({board:Array.from(board.entries()),turn,difficulty,history:history.slice(-6),gameOver}));
+    // R339 P1: `history[i].board` is a Map -> JSON.stringify(Map) yields {} -> the old
+    // loadState()'s `new Map(h.board)` THREW and loadState() returned false, so a saved
+    // game could never be restored once the history was non-empty. Serialise each
+    // history board as an entries array (same shape as the top-level board).
+    localStorage.setItem(SAVE_KEY,JSON.stringify({
+      board:Array.from(board.entries()),
+      turn,difficulty,
+      moveCount:moveCount,
+      history:history.slice(-12).map(h=>({board:Array.from(h.board.entries()),turn:h.turn})),
+      gameOver
+    }));
   }catch(e){}
 }
 function loadState(){
@@ -1009,7 +1026,9 @@ function loadState(){
     const s=JSON.parse(localStorage.getItem(SAVE_KEY));
     if(!s||!s.board) return false;
     board=new Map(s.board); turn=s.turn; difficulty=s.difficulty; gameOver=s.gameOver||false;
-    history=(s.history||[]).map(h=>({board:new Map(h.board),turn:h.turn})); 
+    // accept both shapes: entries array (current) or {} (legacy, pre-R339 blobs)
+    history=(s.history||[]).filter(h=>h&&Array.isArray(h.board)).map(h=>({board:new Map(h.board),turn:h.turn}));
+    moveCount=(typeof s.moveCount==='number')?s.moveCount:history.length;
     selected=null; hintedMove=null; aiThinking=false;
     return true;
   }catch(e){ return false; }

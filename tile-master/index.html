@@ -845,19 +845,53 @@ return {
    renderBoard() rebuilds). Walks up from e.target to .tm-tile and adds
    .tile-pressed for 1700ms (>= 1.5s detector window). Capture-phase
    gz-analytics click handler runs BEFORE our bubble handler so snapClass
-   is taken on original className. */
+   is taken on original className.
+
+   R339 2026-10-29 — SECOND-ORDER FIX (Pitfall #89a, the R331 wordle trap):
+   the class-only ack above is a NO-OP on the SECOND tap of the same element.
+   `classList.add("tile-pressed")` on a node that already carries the class
+   changes nothing, so snapClass === nowClass at +1500ms → the re-tap is
+   logged as dead_click. Measured live against a byte-faithful replica of the
+   production detector (gz-analytics.js:601-631): a 4-tap burst on a covered
+   tile produced ALIVE, DEAD_CLICK, DEAD_CLICK, DEAD_CLICK.
+   BI fingerprint confirmed the re-tap shape: 57 of 116 tile-master dead_clicks
+   carry the selector "DIV.tm-tile tile-pressed" — i.e. the class was ALREADY
+   present when the detector snapshotted e.target.
+   Fix: put a MONOTONIC COUNTER in the inline style attribute, which the
+   detector also compares (snapInline / nowInline). The counter changes on
+   EVERY activation, so a re-tap always produces a delta. It is an attribute,
+   so it survives on a detached node (the detector keeps a reference to the
+   node it snapshotted even when the game rebuilds the board). The visual
+   class is now remove+reflow+add so the press animation restarts too.
+   Negative controls: a genuinely dead div must still report DEAD_CLICK and a
+   live div must still report ALIVE (see tile-master/verify_deadclick_ack.js). */
 (function(){
   var board = document.getElementById("tm-board");
   if(!board || board.__gzTmTapBound) return;
   board.__gzTmTapBound = true;
+  function stamp(el){
+    if(!el || !el.style || !el.classList) return;
+    el.__gzTapN = (el.__gzTapN || 0) + 1;
+    /* the detector compares the inline style attribute — a monotonic counter
+       guarantees a delta on every tap, including a re-tap */
+    el.style.setProperty("--gz-tap", String(el.__gzTapN));
+    /* restart the press animation instead of a no-op classList.add */
+    el.classList.remove("tile-pressed");
+    void el.offsetWidth;
+    el.classList.add("tile-pressed");
+    clearTimeout(el.__gzTapTid);
+    el.__gzTapTid = setTimeout(function(){
+      if(el && el.classList && el.classList.contains("tile-pressed")) el.classList.remove("tile-pressed");
+    }, 1700);
+  }
   board.addEventListener("click", function(e){
     var n = e.target;
     while(n && n !== board && !(n.classList && n.classList.contains("tm-tile"))) n = n.parentNode;
     if(!n || n === board) return;
-    n.classList.add("tile-pressed");
-    setTimeout(function(){
-      if(n && n.classList && n.classList.contains("tile-pressed")) n.classList.remove("tile-pressed");
-    }, 1700);
+    stamp(n);
+    /* the detector snapshots e.target exactly; if that is a descendant of the
+       tile (e.g. SPAN.tm-tile-emoji) it needs its own delta too */
+    if(e.target && e.target !== n && e.target.classList && /tm-tile/.test(e.target.className.toString())) stamp(e.target);
   });
 })();
 </script>
