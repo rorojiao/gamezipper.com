@@ -8,9 +8,38 @@ import { JSDOM } from 'jsdom';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const fixed = readFileSync(new URL('../monetag-manager.js', import.meta.url), 'utf8');
-const original = execFileSync('git', ['show', 'HEAD:monetag-manager.js'], {
-  cwd: root, encoding: 'utf8', maxBuffer: 1024 * 1024,
-});
+
+// The negative control needs the PRE-FIX bytes. It used to read
+// `git show HEAD:monetag-manager.js`, which silently rotted the moment the
+// fix was committed: HEAD then held the FIXED file, so the control compared
+// the fix against itself and failed with "negative control must reproduce two
+// overlays - 1 !== 2".
+//
+// Resolve it properly instead: walk the history of monetag-manager.js and
+// take the NEWEST revision that does NOT contain the fix marker. That is
+// stable across future commits, rebases and squashes, and it is real
+// production bytes rather than a simulated one.
+const MARKER = 'commercialBreakInFlight';
+function preFixBytes() {
+  const override = process.env.R1013_PREFIX_REF;
+  const shas = execFileSync('git', ['log', '--format=%H', '--', 'monetag-manager.js'], {
+    cwd: root, encoding: 'utf8', maxBuffer: 1024 * 1024,
+  }).trim().split('\n').filter(Boolean);
+  if (override) shas.unshift(override);
+  for (const sha of shas) {
+    let bytes;
+    try {
+      bytes = execFileSync('git', ['show', `${sha}:monetag-manager.js`], {
+        cwd: root, encoding: 'utf8', maxBuffer: 1024 * 1024,
+      });
+    } catch { continue; }
+    if (!bytes.includes(MARKER)) return bytes;
+  }
+  throw new Error(
+    'no pre-fix revision of monetag-manager.js found in git history ' +
+    '(the negative control needs one; set R1013_PREFIX_REF to override)');
+}
+const original = preFixBytes();
 
 function sandbox(bytes, fill = true) {
   // No resources option: jsdom cannot fetch scripts/iframes. outside-only also
