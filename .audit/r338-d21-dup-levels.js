@@ -29,8 +29,14 @@
 // Exit 0 = no duplicate levels; exit 1 = duplicates found; exit 2 = usage error.
 const fs = require('fs');
 const path = require('path');
-const ROOT = path.resolve(__dirname, '..');
-const extractLevels = require(path.join(ROOT, '.audit', 'gz-extract-levels.js'));
+// GZ_SITE_ROOT lets the detector run against an ALTERNATE checkout (e.g. an
+// isolated worktree under review). Without it the detector always reads the
+// repo it lives in, so "run it on the worktree" silently audits the MAIN
+// tree instead — the cwd-shadow trap (Pitfall #55/#68).
+const ROOT = process.env.GZ_SITE_ROOT
+  ? path.resolve(process.env.GZ_SITE_ROOT)
+  : path.resolve(__dirname, '..');
+const extractLevels = require(path.join(__dirname, 'gz-extract-levels.js'));
 
 const COSMETIC = new Set([
   'id', 'name', 'label', 'desc', 'description', 'tier', 'par', 'tutorial',

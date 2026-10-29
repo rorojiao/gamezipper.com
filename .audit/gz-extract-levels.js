@@ -99,7 +99,14 @@ function extractFromJson(slugDir){
 }
 
 function extractLevels(slug){
-  const slugDir=path.resolve(__dirname,'..', slug);
+  // GZ_SITE_ROOT lets the extractor read an ALTERNATE checkout (an isolated
+  // worktree under review). Without it the extractor always resolves against
+  // the repo it lives in, so auditing a worktree silently reads the MAIN tree
+  // — the cwd-shadow trap (Pitfall #55/#68).
+  const ROOT = process.env.GZ_SITE_ROOT
+    ? path.resolve(process.env.GZ_SITE_ROOT)
+    : path.resolve(__dirname,'..');
+  const slugDir=path.join(ROOT, slug);
   const htmlPath=path.join(slugDir,'index.html');
   if(fs.existsSync(htmlPath)){
     const html=fs.readFileSync(htmlPath,'utf8');
