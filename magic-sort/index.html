@@ -508,6 +508,9 @@ const _CHUNKS_META = [
 const _LD = new Array(220000);
 const _CHUNK_LOADED = {};
 const _CHUNK_PROMISES = {};
+// R1002: set for a chunk whose first load attempt failed — the retry bypasses
+// the HTTP cache so a cached error response (e.g. a CDN 403) is never replayed.
+const _CHUNK_RETRY = {};
 // R937 (2026-10-16): chunk 0 levels (lv=0-9999, 895KB) moved to magic-sort/levels/chunk_0.json — lazy-loaded via _ensureChunk(). Was inline const _CHUNK0_DATA blocking HTML parse for ~800ms on cold cache.
 const TOTAL_LEVELS = 220000;
 async function _ensureChunk(chunkIdx) {
@@ -523,7 +526,10 @@ async function _ensureChunk(chunkIdx) {
   }
   const p = (async () => {
     const url = (window.MS_LEVELS_BASE || "/magic-sort/") + meta.url;
-    const r = await fetch(url, { cache: "force-cache" });
+    // R1002: a retry must NOT reuse a cached error response. The first attempt
+    // uses force-cache (fast path); a retry uses no-store so a cached 403 from
+    // the CDN is never replayed.
+    const r = await fetch(url, _CHUNK_RETRY[chunkIdx] ? { cache: "no-store" } : { cache: "force-cache" });
     if (!r.ok) throw new Error("Failed to load " + url + ": " + r.status);
     const data = await r.json();
     for (let k = 0; k < data.levels.length; k++) _LD[meta.offset + k] = data.levels[k];
@@ -533,6 +539,17 @@ async function _ensureChunk(chunkIdx) {
     return true;
   })();
   _CHUNK_PROMISES[chunkIdx] = p;
+  // R1002: NEVER cache a rejected promise. The old code kept the failed
+  // promise in _CHUNK_PROMISES forever, so one transient fetch failure (403 /
+  // offline) bricked that chunk for the rest of the session — every retry
+  // replayed the same rejection and the player could never load a level.
+  // BI: ms_chunk_load_error x2 in production, both sessions ended immediately
+  // (one visitor left at once). Evict on rejection so the next attempt
+  // re-fetches; mark the chunk so the retry bypasses the HTTP cache.
+  p.catch(function () {
+    if (_CHUNK_PROMISES[chunkIdx] === p) delete _CHUNK_PROMISES[chunkIdx];
+    _CHUNK_RETRY[chunkIdx] = true;
+  });
   return p;
 }
 
@@ -550,7 +567,12 @@ function _prefetchAdjacentChunk(chunkIdx) {
       if (_CHUNK_LOADED[t] || _CHUNK_PROMISES[t]) continue;
       // Warm the cache — actual data assignment happens in main fetch on user action
       const url = (window.MS_LEVELS_BASE || "/magic-sort/") + m.url;
-      fetch(url, { cache: "force-cache", priority: "low" }).catch(() => {});
+      // R1002: if the warm-up fails, the error response may sit in the HTTP
+      // cache. Mark the chunk so the real fetch bypasses the cache instead of
+      // replaying that cached error.
+      fetch(url, { cache: "force-cache", priority: "low" })
+        .then(function (r) { if (!r.ok) _CHUNK_RETRY[t] = true; })
+        .catch(function () { _CHUNK_RETRY[t] = true; });
     }
   } catch (e) { /* silent — prefetch is best-effort */ }
 }
@@ -2810,7 +2832,10 @@ async function initLevel(idx) {
     await _ensureChunk(targetChunk);
   } catch (e) {
     if (window.__msTrack) window.__msTrack('ms_chunk_load_error', { idx: idx, err: String(e) });
-    toastMsg = { text: "⚠ Failed to load levels — check connection", timer: 180, color: "#ff4757" };
+    // R1002: the chunk is now retryable (the failed promise is evicted), so
+    // tell the player to try the level again instead of implying the levels
+    // are broken.
+    toastMsg = { text: "⚠ Could not load levels — tap the level to retry", timer: 180, color: "#ff4757" };
     sfxError();
     state = "menu";
     return;
