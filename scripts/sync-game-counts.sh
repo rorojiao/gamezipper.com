@@ -151,6 +151,23 @@ console.log(G.filter(g=>g.status==='live').map(g=>String(g.url).replace(/^\//,''
   [ "$FEED_SLUGS" = "$CAT_SLUGS" ] || { echo "❌ JSON feed slug set DRIFT — run: node scripts/gen-games-json.js"; DRIFT=1; }
 fi
 
+# 6. Prose count drift (R1015)
+# The structured checks above (GAMES array / schema / data-count / cat-count /
+# JSON feed) are ALL satisfied even when the human-readable marketing prose
+# still advertises the old number. R1015 shipped exactly that: production said
+# "466+ games" while the catalog and every structured counter already said 467.
+# A wrong game count on landing pages under-states inventory to advertisers and
+# mismatches the catalog search engines index -> revenue problem, not cosmetic.
+#
+# scripts/prose_count_check.py scans rendered copy for count-bearing phrases
+# (plain "467+ games" and URL-encoded "467%20%2B%20games"), whitelists the live
+# catalog size plus per-category totals, and skips JSON-LD "position" values,
+# JS milestone maps and test/log artifacts.
+PROSE_RC=0
+PROSE_OUT=$(python3 scripts/prose_count_check.py "$GAMES_COUNT" "$GAMES_CATS" 2>&1) || PROSE_RC=$?
+echo "$PROSE_OUT" | sed 's/^/  /'
+[ "$PROSE_RC" -eq 0 ] || DRIFT=1
+
 if [ "$DRIFT" -ne 0 ]; then
   echo "=== DRIFT DETECTED — repair required ==="
   exit 1
