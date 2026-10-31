@@ -1,7 +1,19 @@
 #!/usr/bin/env node
 // Independent Kurodoko verifier — confirms all 30 levels have unique solutions
-// AND the stored solution_grid satisfies all rules.
+// AND the stored solution_grid satisfies ALL rules.
+//
+// RULE SET (must match the page copy AND the engine's checkSolution()):
+//   1. every row contains exactly row_hints[r] WHITE cells
+//   2. every column contains exactly col_hints[c] WHITE cells
+//   3. no 2x2 block is entirely black
+//   4. NO TWO BLACK CELLS SHARE AN EDGE (orthogonally adjacent)
+//   5. all white cells form a single orthogonally-connected region
+//
 // This is a FRESH implementation (not the generator's solver) to catch rule-blindness bugs.
+// NOTE (R338 fix): the previous version of this file checked only rules 1-3+5 and therefore
+// reported "ALL 30 LEVELS VERIFIED" on a catalog where 28/30 levels were UNSOLVABLE under
+// the advertised edge rule. Rule 4 below is a hard gate, and the negative self-test at the
+// bottom proves this verifier can still FAIL.
 'use strict';
 const fs = require('fs');
 
@@ -11,6 +23,16 @@ function no2x2(grid, rows, cols) {
   for (let r = 0; r < rows-1; r++)
     for (let c = 0; c < cols-1; c++)
       if (grid[r][c]&&grid[r+1][c]&&grid[r][c+1]&&grid[r+1][c+1]) return false;
+  return true;
+}
+
+function noEdgeAdjacentBlacks(grid, rows, cols) {
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++) {
+      if (!grid[r][c]) continue;
+      if (r+1 < rows && grid[r+1][c]) return false;
+      if (c+1 < cols && grid[r][c+1]) return false;
+    }
   return true;
 }
 
@@ -50,15 +72,17 @@ function verifySolutionRules(level) {
   const grid = solution_grid.map(row => row.map(v => v === 1));
   // 4. no 2x2 black
   if (!no2x2(grid, rows, cols)) return '2x2 black area found';
-  // 5. white connected
+  // 5. NO TWO BLACKS SHARE AN EDGE (advertised rule — was missing before R338)
+  if (!noEdgeAdjacentBlacks(grid, rows, cols)) return 'two black cells share an edge';
+  // 6. white connected
   if (!whiteConnected(grid, rows, cols)) return 'white cells not connected';
-  // 6. row hints match
+  // 7. row hints match
   for (let r = 0; r < rows; r++) {
     let white = 0;
     for (let c = 0; c < cols; c++) if (!grid[r][c]) white++;
     if (white !== row_hints[r]) return `row ${r}: white=${white} != hint=${row_hints[r]}`;
   }
-  // 7. col hints match
+  // 8. col hints match
   for (let c = 0; c < cols; c++) {
     let white = 0;
     for (let r = 0; r < rows; r++) if (!grid[r][c]) white++;
@@ -67,7 +91,7 @@ function verifySolutionRules(level) {
   return null; // null = valid
 }
 
-// Count solutions (fresh CP solver)
+// Count solutions (fresh CP solver) under the FULL rule set.
 const WHITE_DOM = 1, BLACK_DOM = 2, BOTH_DOM = 3;
 function countSolutions(rows, cols, rowHints, colHints, limit) {
   const dom = new Uint8Array(rows*cols).fill(BOTH_DOM);
@@ -98,6 +122,12 @@ function countSolutions(rows, cols, rowHints, colHints, limit) {
         for (let i=0;i<4;i++){ if(dom[ids[i]]===BLACK_DOM)b++; else if(dom[ids[i]]===BOTH_DOM){if(ui>=0){ui=-2;break;}ui=i;} }
         if (b===3 && ui>=0) { if(dom[ids[ui]]&WHITE_DOM){dom[ids[ui]]=WHITE_DOM;changed=true;}else return false; }
       }
+      // edge rule propagation: two blacks may never be orthogonally adjacent
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        if (dom[r*cols+c] !== BLACK_DOM) continue;
+        if (c+1 < cols) { const j=r*cols+c+1; if(dom[j]===BLACK_DOM) return false; if(dom[j]===BOTH_DOM){dom[j]=WHITE_DOM;changed=true;} }
+        if (r+1 < rows) { const j=(r+1)*cols+c; if(dom[j]===BLACK_DOM) return false; if(dom[j]===BOTH_DOM){dom[j]=WHITE_DOM;changed=true;} }
+      }
     }
     return true;
   }
@@ -107,6 +137,7 @@ function countSolutions(rows, cols, rowHints, colHints, limit) {
     for(let r=0;r<rows;r++){let w=0;for(let c=0;c<cols;c++)if(!grid[r][c])w++;if(w!==rowHints[r])return false;}
     for(let c=0;c<cols;c++){let w=0;for(let r=0;r<rows;r++)if(!grid[r][c])w++;if(w!==colHints[c])return false;}
     if(!no2x2(grid,rows,cols))return false;
+    if(!noEdgeAdjacentBlacks(grid,rows,cols))return false;
     return whiteConnected(grid,rows,cols);
   }
   function search(){
@@ -152,8 +183,34 @@ for (let i = 0; i < levels.length; i++) {
     console.log(`OK   [${i}] ${lvl.id} (${lvl.rows}x${lvl.cols}): UNIQUE + VALID`);
   }
 }
+
+// ---- NEGATIVE SELF-TEST: prove this gate can still FAIL (R338) ----
+// A hand-built level whose stored solution has two orthogonally adjacent blacks
+// MUST be rejected. If this control passes silently the gate is a no-op.
+(function negativeSelfTest() {
+  const bad = {
+    rows: 3, cols: 3, row_hints: [3, 2, 3], col_hints: [3, 2, 3],
+    solution_grid: [[0,0,0],[0,1,1],[0,0,0]],  // (1,1)-(1,2) share an edge
+  };
+  const err = verifySolutionRules(bad);
+  if (!err || !/share an edge/.test(err)) {
+    console.log('NEGATIVE SELF-TEST FAILED: edge-adjacent solution was NOT rejected');
+    allValid = false;
+  } else {
+    console.log(`negative self-test OK (edge-adjacent rejected: "${err}")`);
+  }
+  // and a genuinely multi-solution hint vector must be counted as 2
+  const multi = countSolutions(3, 3, [2,2,3], [2,3,2], 5);
+  if (multi !== 2) {
+    console.log(`NEGATIVE SELF-TEST FAILED: multi-solution vector counted ${multi}, expected 2`);
+    allUnique = false;
+  } else {
+    console.log('negative self-test OK (multi-solution vector counted 2)');
+  }
+})();
+
 console.log('\n=== SUMMARY ===');
 console.log(`Rules valid: ${allValid ? 'ALL PASS' : 'FAILURES'}`);
 console.log(`Unique: ${allUnique ? 'ALL PASS' : 'FAILURES'}`);
-console.log(allValid && allUnique ? '\n✅ ALL 30 LEVELS VERIFIED' : '\n❌ VERIFICATION FAILED');
+console.log(allValid && allUnique ? `\n✅ ALL ${levels.length} LEVELS VERIFIED` : '\n❌ VERIFICATION FAILED');
 process.exit(allValid && allUnique ? 0 : 1);
