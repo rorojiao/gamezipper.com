@@ -17,7 +17,7 @@ import subprocess
 import sys
 import tempfile
 
-SRC = '/tmp/gz-sq-r1014/set-quest'
+SRC = '/home/junze/gamezipper.com/set-quest'
 
 # (label, filename, python callable that mutates the text, expected: checklist fails)
 MUTATIONS = []
@@ -57,6 +57,16 @@ def _m_zombie(t):
     return t.replace('</body>',
                       '<script src="https://m2d.m2cdn.me/multitag-multi.js">'
                       '</script></body>')
+
+
+@mut('drop the mobile top-ad reorder (cards fall below fold)',
+    'index.html')
+def _m_adfold(t):
+    # R1014: without .gz-ad-top{order:99} on narrow screens the filled
+    # AdSense slot pushes the bottom row of the 9-card board below the
+    # fold — a card the player cannot reason about when hunting a SET.
+    return t.replace('@media (max-width:640px){\n  .gz-ad-top{order:99}\n}',
+                      '/* mobile ad reorder removed */')
 
 
 @mut('inject 1ktower', 'index.html')

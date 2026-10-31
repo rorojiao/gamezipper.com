@@ -250,6 +250,40 @@ def main():
         page.screenshot(path=f'{OUT}/04-mobile-gameplay.png')
         page.screenshot(path=f'{OUT}/05-mobile-full.png', full_page=True)
 
+        # --- R1014 regression: a FILLED AdSense slot must not hide cards ---
+        # The top ad slot (.gz-ad-top) has no fill on a local server, so the
+        # board fits trivially. In PRODUCTION the slot fills to ~390px and
+        # pushed the bottom row of the 9-card board below the fold. Simulate
+        # a filled slot at phone width and assert all 9 cards stay visible.
+        # (A SET triple can only be found by comparing all nine cards.)
+        page.set_viewport_size({'width': 390, 'height': 844})
+        page.wait_for_timeout(400)
+        page.evaluate("""() => {
+            const a = document.querySelector('.gz-ad-top');
+            const ins = a && a.querySelector('ins.adsbygoogle');
+            if (ins) { ins.style.height = '390px'; ins.style.minHeight = '390px'; }
+            if (a) { a.style.height = '390px'; a.style.minHeight = '390px'; }
+        }""")
+        page.wait_for_timeout(600)
+        vis = page.evaluate("""() => {
+            const vh = window.innerHeight;
+            const cards = [...document.querySelectorAll('#board .card')];
+            let fully = 0, clickable = 0;
+            cards.forEach(c => {
+                const r = c.getBoundingClientRect();
+                if (r.top >= 0 && r.bottom <= vh) fully++;
+                const el = document.elementFromPoint(
+                    r.left + r.width / 2, Math.min(r.top + r.height / 2, vh - 3));
+                if (el && (el === c || c.contains(el))) clickable++;
+            });
+            return {fully, clickable, total: cards.length};
+        }""")
+        check('mobile w/ filled ad: all 9 cards above the fold',
+              vis['fully'] == 9, f"{vis['fully']}/9 visible")
+        check('mobile w/ filled ad: all 9 cards hit-testable',
+              vis['clickable'] == 9, f"{vis['clickable']}/9 clickable")
+        page.screenshot(path=f'{OUT}/06-mobile-filled-ad.png')
+
         browser.close()
 
     failed = [r for r in results if not r[1]]

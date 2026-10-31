@@ -328,6 +328,16 @@ check('M05 mobile breakpoint @media', /@media\s*\(max-width:\s*\d+px\)/.test(HTM
 check('M06 safe-area-inset usage', /env\(safe-area-inset-top\)/.test(HTML) && /env\(safe-area-inset-bottom\)/.test(HTML));
 check('M07 touch-action manipulation', /touch-action:manipulation/.test(HTML));
 
+// R1014: the AdSense slot above the game fills to ~390px on a phone-width
+// viewport, which pushed the bottom row of the 9-card board below the fold.
+// A SET triple can only be found by comparing all NINE cards at once, so a
+// card hidden below the fold breaks the core mechanic. The fix keeps the
+// <ins> in the DOM (ad revenue untouched) but reorders it below the game on
+// narrow screens, so it must be present in the CSS.
+check('M08 top ad slot reordered below game on mobile',
+  /@media\s*\(max-width:\s*6[0-9]0px\)\s*\{\s*\.gz-ad-top\{order:\s*99\s*\}\s*\}/.test(HTML),
+  'expected .gz-ad-top{order:99} inside a <=640px media query');
+
 // ---------- N. The three verifiers actually PASS ----------
 function runVerifier(cmd, args, name) {
   const r = spawnSync(cmd, args, { cwd: HERE, encoding: 'utf8', timeout: 120000 });
