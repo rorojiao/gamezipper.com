@@ -117,10 +117,34 @@ check('C01 screen-menu', /id="screen-menu"/.test(HTML));
 check('C02 screen-levels', /id="screen-levels"/.test(HTML));
 check('C03 screen-game', /id="screen-game"/.test(HTML));
 for (const id of ['btn-play', 'btn-how', 'btn-hint', 'btn-undo', 'btn-reset-level',
-  'btn-check', 'btn-back-menu', 'btn-back-levels', 'btn-next', 'btn-prev',
+  'btn-back-menu', 'btn-back-levels', 'btn-next', 'btn-prev',
   'btn-replay', 'btn-next-win', 'btn-close-how']) {
   check(`C04 button #${id}`, new RegExp(`id="${id}"`).test(HTML));
 }
+// C04b: the canonical contract is "the third card is checked automatically"
+// (public FAQ JSON-LD + the shipped browser gate browser_qa.py both rely on
+// it). A visible Check button is therefore NOT part of the contract, and the
+// dead one that used to ship could only ever toast 'Select three cards'.
+// Assert the mechanic itself, not the absence of one widget.
+check('C04b third card auto-evaluates', /selected\.length === 3\) evaluateTriple\(\)/.test(HTML));
+check('C04c no dead Check button', !/id="btn-check"/.test(HTML) && !/function doCheck\(/.test(HTML));
+check('C04d no Check keybinding', !/e\.key === 'c'/.test(HTML));
+// C04e: error feedback must be painted AFTER the selection clear, otherwise
+// updateSelectionUI() strips 'errflash'/'shake' in the same tick and the
+// player never sees the red flash or the shake animation.
+// NOTE: strip comments before the ordering assertion. A comment that merely
+// mentions 'updateSelectionUI()' would satisfy the substring search and make
+// this check unfalsifiable (R963 pitfall class: source-text substring checks
+// matching comments). This was caught by the mutation suite.
+const _evalBody = (HTML.match(/function evaluateTriple\(\)\s*\{[\s\S]*?\n\}/) || [''])[0];
+const _evalCode = _evalBody
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+const _flashAt = _evalCode.indexOf("classList.add('errflash'");
+const _clearAt = _evalCode.indexOf('updateSelectionUI()');
+check('C04e error flash painted after selection clear',
+  _flashAt !== -1 && _clearAt !== -1 && _flashAt > _clearAt,
+  `flash@${_flashAt} clear@${_clearAt}`);
 for (const id of ['board', 'err-count', 'hint-count', 'selected-count', 'level-label',
   'g-meta', 'g-timer', 'g-status', 'win-stars', 'win-stats', 'overlay-win',
   'overlay-how', 'toast', 'confetti', 'tiers', 'tiers-menu']) {

@@ -143,6 +143,46 @@ def _m_ogimage(t):
     return re.sub(r'<meta property="og:image"[^>]*>', '', t, count=1)
 
 
+# --- Interaction-contract mutations -------------------------------------
+# These guard the two P1 defects fixed in R341: the dead '#btn-check'
+# control and the invisible errflash/shake error feedback. A gate that
+# cannot fail is not a gate (R963 pitfall class), so each new checklist
+# assertion gets a mutation that must make the checklist exit non-zero.
+
+
+@mut('remove the third-card auto-evaluation', 'index.html')
+def _m_noautoeval(t):
+    # Kills the canonical mechanic -> C04b must fail.
+    return t.replace('if (selected.length === 3) evaluateTriple();',
+                      'if (selected.length === 3) { /* auto-eval removed */ }')
+
+
+@mut('re-add the dead Check button', 'index.html')
+def _m_readdcheck(t):
+    # Reintroduces the dead control -> C04c must fail.
+    return t.replace('<div class="tools">',
+                      '<div class="tools">\n'
+                      '<button class="btn ghost" id="btn-check">Check</button>')
+
+
+@mut('paint the error flash before the selection clear', 'index.html')
+def _m_flashorder(t):
+    # Restores the ordering bug: updateSelectionUI() then wipes
+    # 'errflash'/'shake' in the same tick -> C04e must fail.
+    old = ("  updateSelectionUI();\n"
+           "  flagged.forEach(i => {\n"
+           "    const el = cardEl(i);\n"
+           "    if (el) el.classList.add('errflash', 'shake');\n"
+           "  });")
+    new = ("  flagged.forEach(i => {\n"
+           "    const el = cardEl(i);\n"
+           "    if (el) el.classList.add('errflash', 'shake');\n"
+           "  });\n"
+           "  updateSelectionUI();")
+    assert old in t, 'flash-order mutation anchor missing'
+    return t.replace(old, new, 1)
+
+
 def run_checklist(d):
     p = subprocess.run(['node', 'qa_checklist.js'], cwd=d,
                        capture_output=True, text=True)
