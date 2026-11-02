@@ -41,8 +41,19 @@ function main() {
 
   // ---- engine data access + offline solution validation ----
   const nLevels = g.call('LEVELS.length');
-  T('data:level-count', nLevels === 33, 'n=' + nLevels);
+  T('data:level-count', nLevels === 30, 'n=' + nLevels);
   const LEVELS = JSON.parse(g.call('JSON.stringify(LEVELS)'));
+  // D21 duplicate-level gate (Pitfall #73): identity excludes cosmetic fields AND tier
+  {
+    const seen = new Map(), dups = [];
+    for (const lv of LEVELS) {
+      const o = {};
+      for (const k in lv) if (!['id', 'name', 'tier', 'label', 'desc', 'hint'].includes(k)) o[k] = lv[k];
+      const key = JSON.stringify(o, Object.keys(o).sort());
+      if (seen.has(key)) dups.push(seen.get(key) + '==' + lv.name); else seen.set(key, lv.name);
+    }
+    T('data:no-duplicate-levels', dups.length === 0, dups.join(' | '));
+  }
   let dataOk = true, dataBad = '';
   for (const lv of LEVELS) {
     const occ = new Set();
@@ -78,10 +89,10 @@ function main() {
   T('nav:level-select', d.getElementById('level-select').style.display !== 'none' && d.getElementById('title-screen').style.display === 'none');
   const grid = d.getElementById('level-grid');
   const lastKids = () => grid.children.slice(-nLevels); // innerHTML='' keeps stub children; last batch = current render
-  T('grid:33-buttons', lastKids().length === 33, 'n=' + lastKids().length);
+  T('grid:30-buttons', lastKids().length === 30, 'n=' + lastKids().length);
   T('grid:L1-unlocked', !lastKids()[0].classList.contains('locked'));
   T('grid:L2-locked', lastKids()[1].classList.contains('locked'));
-  T('grid:L33-locked', lastKids()[32].classList.contains('locked'));
+  T('grid:L30-locked', lastKids()[29].classList.contains('locked'));
   T('grid:none-completed', lastKids().every(b => !b.classList.contains('completed')));
 
   // ---- L1: half solution -> undo oracle -> finish ----
@@ -193,20 +204,20 @@ function main() {
   const kids = lastKids();
   T('chain:all-33-completed', kids.every(b => b.classList.contains('completed')));
   T('chain:all-33-unlocked', kids.every(b => !b.classList.contains('locked')));
-  T('chain:save-unlocked-33', JSON.parse(g.ls._m['klotski_save']).unlocked === 33);
+  T('chain:save-unlocked-N', JSON.parse(g.ls._m['klotski_save']).unlocked === nLevels);
   T('chain:no-errors', errs(g).length === 0, errs(g).join(' ;; ').slice(0, 200));
 
   // ---- boot 2: persistence ----
   const g2 = bootGame('klotski', { seedLS: Object.assign({}, g.ls._m) });
   const d2 = g2.sandbox.document;
   T('boot2:no-errors', errs(g2).length === 0, errs(g2).join(' ;; ').slice(0, 200));
-  T('boot2:progress-loaded', g2.call('state.unlocked') === 33 && g2.call('state.stars[0]') === 3);
+  T('boot2:progress-loaded', g2.call('state.unlocked') === nLevels && g2.call('state.stars[0]') === 3);
   const fb2 = snip => d2.querySelectorAll('button').find(b => b.onclick && String(b.onclick).includes(snip));
   fb2('showLevelSelect()').click();
   const kids2 = d2.getElementById('level-grid').children.slice(-nLevels);
   T('boot2:grid-all-completed', kids2.every(b => b.classList.contains('completed')));
-  kids2[32].click(); // L33 directly
-  T('boot2:L33-loads', d2.getElementById('level-name').textContent.indexOf('Level 33:') === 0, d2.getElementById('level-name').textContent);
+  kids2[nLevels - 1].click(); // last level directly
+  T('boot2:last-loads', d2.getElementById('level-name').textContent.indexOf('Level ' + nLevels + ':') === 0, d2.getElementById('level-name').textContent);
   fb2('showLevelSelect()').click();
   d2.getElementById('level-grid').children.slice(-nLevels)[0].click(); // L1 replay
   const cv2 = d2.getElementById('game-canvas');
