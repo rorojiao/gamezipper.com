@@ -75,7 +75,8 @@ function main() {
   t('30. AudioContext sfx', gameJs.includes('playSFX') || gameJs.includes('playSfx'));
   t('31. localStorage save', gameJs.includes('localStorage'));
   t('32. localStorage settings key', gameJs.includes('dot_a_pix_settings'));
-  t('33. Hint system', gameJs.includes('useHint') && gameJs.includes('HINT_LIMIT'));
+  // R320 renamed the flat HINT_LIMIT cap to a per-level hintBudget(); accept either naming.
+  t('33. Hint system', gameJs.includes('useHint') && (gameJs.includes('HINT_LIMIT') || gameJs.includes('hintBudget')));
   t('34. Reset level', gameJs.includes('resetLevel'));
   t('35. Check win', gameJs.includes('checkWin'));
   t('36. Timer', gameJs.includes('startTimer'));
