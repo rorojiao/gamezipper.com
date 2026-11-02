@@ -569,7 +569,14 @@
   })();
 
   /* Rage Click Detection: user rapidly clicks same spot 3+ times in 1s
-     — strong signal of broken UI / dead buttons / no feedback              */
+     — strong signal of broken UI / dead buttons / no feedback
+     R1034 (2026-11-02): CANVAS/SVG exempt — the game rendering surface.
+     Rapid repeated clicks on a canvas ARE the gameplay in clicker-genre
+     games (2026-10-27 /cookie-clicker/: 598 rage_click from 1 uv, all
+     CANVAS targets with full feedback: gz-r893-ring/float-text/particle).
+     "Dead UI" cannot be judged from outside a canvas (feedback lives in
+     game state), so rage_click on a gameplay surface is a systematic
+     false positive. dead_click keeps covering real clickable DOM.        */
   (function(){
     var _rcLastTarget = null;
     var _rcLastTime = 0;
@@ -578,6 +585,14 @@
     document.addEventListener('click', function(e){
       var now = Date.now();
       var x = e.clientX || 0, y = e.clientY || 0;
+      var tg = e.target;
+      var tn = (tg && tg.tagName) ? tg.tagName.toUpperCase() : '';
+      if (tn === 'CANVAS' || tn === 'SVG' || (tg && tg.ownerSVGElement)) {
+        // gameplay surface: break any rage chain, do not count
+        _rcCount = 0; _rcLastTarget = null;
+        _rcLastTime = now; _rcLastX = x; _rcLastY = y;
+        return;
+      }
       var sameArea = Math.abs(x - _rcLastX) < 30 && Math.abs(y - _rcLastY) < 30;
       if (e.target === _rcLastTarget && now - _rcLastTime < 1000 && sameArea) {
         _rcCount++;
