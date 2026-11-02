@@ -107,7 +107,15 @@ def run_shard(job):
                 if len(examples) < 5:
                     examples.append({"idx": gidx, "kind": "unproven", "n": n})
             continue
-        # Terminal state must actually be solved (independent re-validation)
+        # Terminal state must actually be solved. solve() operates on copies — the
+        # caller's b is UNMODIFIED — so the original `is_solved(b)` re-validated the
+        # START state and manufactured 211,930 'terminal_not_solved' phantoms on the
+        # 2026-10-30 run (gate self-defeat, cf. Pitfall #62/#75). Correct shape:
+        # replay the emitted moves onto the decoded start state, then re-validate.
+        for mv in moves:
+            fr, to, count = mv[0], mv[1], mv[2]
+            for _ in range(count):
+                b[to].append(b[fr].pop())
         if not is_solved(b):
             key = "terminal_not_solved"
             inv_fail[key] = inv_fail.get(key, 0) + 1
