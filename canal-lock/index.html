@@ -64,6 +64,10 @@ canvas{display:block;touch-action:none}
 .lc{aspect-ratio:1;background:linear-gradient(135deg,#1a3a52,#0e2438);border:2px solid #1a3a52;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-size:18px;font-weight:700;color:#e0e0e0;position:relative}
 .lc:active{transform:scale(.92)}
 .lc.lk{opacity:.3;cursor:not-allowed}
+/* QA R1038 (2026-11-03, BI dead_click "DIV.lc"/"DIV.lc lk"): tapping an unlocked card navigates but never changes the card itself, and tapping a locked card produced zero feedback. Every tap now writes a monotonic inline --gz-tap counter (guaranteed per-tap delta, survives re-tap and node detachment) + a 1700ms ack class that outlives gz-analytics' 1500ms dead_click snapshot window; locked cards additionally shake. */
+.lc.gz-ack{box-shadow:0 0 0 3px rgba(77,208,225,.9)}
+.lc.lk.gz-ack{animation:lc-shake .45s}
+@keyframes lc-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
 .lc.cp{border-color:#4dd0e1}
 .lc .st{font-size:9px;position:absolute;bottom:2px;line-height:1}
 .lc .pr{font-size:8px;color:#667;position:absolute;top:2px;right:3px}
@@ -504,6 +508,22 @@ function init(){
   var _fc=setInterval(function(){var f=document.getElementById('game-footer');if(f&&f.offsetHeight>0){if(CL){rc();dw()}clearInterval(_fc);}},2000);
   setTimeout(function(){clearInterval(_fc);},30000);
 }
+// QA R1038 (2026-11-03): dead_click feedback on level cards (see CSS note above).
+// Capture-phase delegation on #tl so it fires even if stl() re-renders the container,
+// and the write lands on the node gz-analytics' snapshot still references (Pitfall #81).
+(function(){
+  var tl=document.getElementById('tl');
+  if(!tl||tl.__gzAckBound)return;
+  tl.__gzAckBound=true;
+  var n=0;
+  tl.addEventListener('click',function(e){
+    var x=e.target&&e.target.closest?e.target.closest('.lc'):null;
+    if(!x||!tl.contains(x))return;
+    x.style.setProperty('--gz-tap',String(++n));
+    x.classList.remove('gz-ack');void x.offsetWidth;x.classList.add('gz-ack');
+    clearTimeout(x._gzack);x._gzack=setTimeout(function(){x.classList.remove('gz-ack')},1700);
+  },true);
+})();
 window.addEventListener('DOMContentLoaded',init);
 </script>
 <script defer src="/game-footer.js?v=202607021204"></script>

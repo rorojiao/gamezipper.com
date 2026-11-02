@@ -46,6 +46,11 @@ h1{font-size:1.4rem;font-weight:700;letter-spacing:1px;background:linear-gradien
 .row{display:flex;gap:var(--gap)}
 .tile{width:var(--tile-size);height:var(--tile-size);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:700;text-transform:uppercase;border-radius:4px;transition:transform .1s;perspective:600px}
 .tile.filled{border-color:#565758;animation:popIn .1s ease}
+/* QA R1038 (2026-11-03, BI dead_click "DIV.tile"/"DIV.tile filled"): .tile matches gz-analytics'
+   lookClickable regex, but tiles were display-only — every tap produced zero feedback. Tiles now ack
+   every tap (monotonic inline --gz-tap counter + 1700ms class, per-tap delta guaranteed even on re-tap)
+   and the last typed tile of the active row acts as Backspace (standard mobile Wordle affordance). */
+.tile.gz-ack{outline:2px solid #565764;outline-offset:2px}
 .tile.reveal{animation:flipIn .3s ease forwards}
 .tile.green{background:var(--green);border-color:var(--green)}
 .tile.yellow{background:var(--yellow);border-color:var(--yellow)}
@@ -260,6 +265,29 @@ if(_qKeyboard&&!_qKeyboard.__gzKeyTapBound){
     k.classList.add('key-pressed');
     setTimeout(function(){if(k&&k.classList)k.classList.remove('key-pressed');},1700);
   },true);  // capture: runs BEFORE pointerdown handler at L211
+}
+// QA R1038 (2026-11-03): tile tap feedback + tap-to-delete affordance (see CSS note at .tile.gz-ack).
+// Tiles' ids are tile-<board>-<row>-<col>; all unsolved boards share one input line (addLetter),
+// so tapping the LAST filled tile on any board's active row = deleteLetter(), tapping an earlier
+// filled tile shakes the keyboard (letters are not individually removable in Wordle semantics).
+var _qBoards=document.getElementById('boards');
+if(_qBoards&&!_qBoards.__gzTileTapBound){
+  _qBoards.__gzTileTapBound=true;
+  var _qTap=0;
+  _qBoards.addEventListener('click',function(e){
+    var t=e.target&&e.target.closest?e.target.closest('.tile'):null;
+    if(!t||!_qBoards.contains(t))return;
+    t.style.setProperty('--gz-tap',String(++_qTap));
+    t.classList.remove('gz-ack');void t.offsetWidth;t.classList.add('gz-ack');
+    clearTimeout(t._gzack);t._gzack=setTimeout(function(){t.classList.remove('gz-ack')},1700);
+    if(gameOver||submitting)return;
+    var m=/^tile-(\d+)-(\d+)-(\d+)$/.exec(t.id);
+    if(!m)return;
+    var b=+m[1],row=+m[2],col=+m[3];
+    if(boardSolved[b]||row!==currentRow)return;
+    if(col===currentCol-1){deleteLetter();}
+    else if(col<currentCol-1){shakeKeyboard();}
+  },true);
 }
 // === TOAST ===
 var toastTimer=null;
