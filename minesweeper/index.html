@@ -177,6 +177,8 @@
 
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{overflow-x:hidden;max-width:100vw;}
+/* UX-OPT 2026-11-02 R1037: production probe saw a spurious window resize at t=8.5s (canvas h 458->450 + ad boxes re-centering) caused by the page scrollbar appearing/changing viewport width after splash removal / ad fill. scrollbar-gutter reserves the track permanently so viewport width never changes -> no resize-driven canvas re-size mid-session. */
+html{scrollbar-gutter:stable}
 .mute-toggle.muted{background:rgba(255,107,107,.5)!important} /* UX-OPT R664 visible muted state */
 
 /* ── Layout ── */
@@ -295,8 +297,9 @@ body{
      The fixed #game-footer (~41px) sits on top of the viewport bottom, so the
      reservation must leave that band clear or the bottom board row becomes unclickable.
      188 -> 244 keeps the CSS pre-JS reservation <= the JS-computed size (no CLS). */
+  /* UX-OPT 2026-11-02 R1037: 244 -> 360 because the in-flow #gz-ad-above-game box (90px + 16px margins) now precedes the canvas wrap (R678 decouple). Keeps static CSS height <= the JS resizeCanvas height (R970 rule: no grow-on-resize shift). */
   width:min(calc(100vw - 8px), 576px);
-  height:min(calc(100vh - 244px), 576px);
+  height:min(calc(100vh - 360px), 576px);
   aspect-ratio:1/1;
   max-width:calc(100vw - 8px);
   box-sizing:border-box;
@@ -515,13 +518,12 @@ function toggleMute(){
 </div>
 
 <!-- Canvas -->
-<div class="ms-canvas-wrap">
-
+<!-- UX-OPT 2026-11-02 R1037 (R678 decouple): ad boxes were flex siblings of the canvas inside the row-centered .ms-canvas-wrap. When AdSense/Monetag creative filled at t~8.5s the flex row re-centered: probe on prod showed DIV#gz-ad-above-game and DIV#gz-ad-below-canvas jumping y=484->431 (-53px) with CANVAS#ms-canvas h=458->450 in the SAME layout commit (BI 7d: 67 CLS POOR events, avg=0.359, max=1.165). Ad boxes are now static block siblings above/below the wrap: creative growth can never move the canvas, and canvas resize can never move the ads. -->
 <div id="gz-ad-above-game"></div>
+<div class="ms-canvas-wrap">
  <canvas id="ms-canvas" width="576" height="576"></canvas>
-<div id="gz-ad-below-canvas"></div>
-
 </div>
+<div id="gz-ad-below-canvas"></div>
 
 <!-- Keyboard hint -->
 <div class="ms-hint"> Arrow keys to move · Space/Enter to reveal · F to flag · R to restart</div>
