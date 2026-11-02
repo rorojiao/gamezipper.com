@@ -1,5 +1,8 @@
 /**
  * GameZipper Adsterra Ad Manager v5.17.5 (2026-07-26)
+ *   R1035 (2026-11-02): popunder now arms on canvas clicks + gameplay
+ *   keydown (was impossible on canvas games; popunder is the paying
+ *   placement). 25-min cap unchanged; fills carry trigger=click|key.
  * v5.17.5 Changes (R1008 - Smartlink attribution FIX):
  *   - 🐛 Fix: the hidden Smartlink iframe used
  *     sandbox="allow-scripts allow-same-origin". Chromium BLOCKS form
@@ -253,7 +256,7 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     return true;
   }
 
-  function firePopunder() {
+  function firePopunder(trigger) {
     if (!canShowPop()) {
       track('pop_skipped', { zone: ZONES.popunder, reason: 'cooldown' });
       return;
@@ -266,9 +269,9 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     if (w) {
       try { w.blur(); } catch (e) {}
       try { window.focus(); } catch (e) {}
-      track('fill', { zone: ZONES.popunder, format: 'popunder' });
+      track('fill', { zone: ZONES.popunder, format: 'popunder', trigger: trigger || 'click' });
     } else {
-      track('no_fill', { zone: ZONES.popunder, format: 'popunder', reason: 'popup_blocked' });
+      track('no_fill', { zone: ZONES.popunder, format: 'popunder', reason: 'popup_blocked', trigger: trigger || 'click' });
     }
   }
 
@@ -288,10 +291,17 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     }
 
     // Don't hijack game UI
+    // R1035 (2026-11-02): CANVAS removed from this exclusion list.
+    //   Data: popunder (30130929) is the only placement with real eCPM
+    //   (~$5.7/1k vs smartlink ~$0.36), and it could NEVER fire on
+    //   click-driven canvas games — gamers never click a non-excluded
+    //   element. /t-rex/: 74 PV / 7d, 0 popunder, 0 smartlink.
+    //   Gameplay clicks now arm the popunder too; the 25-min
+    //   localStorage+BroadcastChannel cooldown caps frequency and the
+    //   new `trigger` field makes every fill auditable in BI.
     var gameEl = e.target;
     while (gameEl) {
-      if (gameEl.tagName === 'CANVAS' ||
-          gameEl.tagName === 'BUTTON' ||
+      if (gameEl.tagName === 'BUTTON' ||
           (gameEl.id && (gameEl.id.indexOf('btn-') === 0 || gameEl.id.indexOf('game') === 0 || gameEl.id.indexOf('overlay') >= 0)) ||
           (gameEl.className && typeof gameEl.className === 'string' &&
            (gameEl.className.indexOf('menu-btn') >= 0 || gameEl.className.indexOf('overlay') >= 0 ||
@@ -310,6 +320,24 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
       try { localStorage.setItem(POP_KEY, String(e.data)); } catch (err) {}
     };
   }
+
+  // ── R1035 (2026-11-02) — gameplay KEYDOWN arms the popunder for
+  //     keyboard-driven games (T-Rex etc: space/arrows ARE the gameplay;
+  //     a desktop session can last minutes without ever clicking).
+  //     Only gameplay-intent keys; browser shortcuts and auto-repeat are
+  //     ignored; form fields untouched. window.open() inside a keydown
+  //     handler is a user gesture, so popup blockers accept it.
+  var GAMEPLAY_KEYS = [' ', 'Spacebar', 'ArrowUp', 'ArrowDown', 'ArrowLeft',
+    'ArrowRight', 'Enter', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'];
+  document.addEventListener('keydown', function (e) {
+    if (!popArmed) return;
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (GAMEPLAY_KEYS.indexOf(e.key) === -1) return;
+    var t = e.target;
+    if (t && t.closest && t.closest('input,textarea,select,button,a')) return;
+    popArmed = false;
+    firePopunder('key');
+  }, { passive: true, capture: true });
 
   // ── Smartlink ping — v5.17 new: same-origin clicks register impressions
   //     via a hidden iframe. Adsterra counts the iframe load as an impression
@@ -477,11 +505,11 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     armPop();
     track('script_loaded', {
       zones: ZONES,
-      v: '5.17.4',
+      v: '5.17.5',
       path: location.pathname,
       readyState: document.readyState
     });
-    track('config_loaded', { v: '5.17.4', popInterval: POP_INTERVAL });
+    track('config_loaded', { v: '5.17.5', popInterval: POP_INTERVAL });
     // Run CDN health probe asynchronously — doesn't block init.
     setTimeout(runCdnHealth, 1500);
   }
