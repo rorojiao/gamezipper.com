@@ -1,3 +1,18 @@
+## [v1.284.0] - 2026-11-03
+### Added
+- 10 new machine-verifiable test cases from R401 (4h cycle 163). **This cycle mined the two previously-unmined WebKit annual-series posts: Safari 27.2 stable release notes (webkit.org/blog/18515, Oct 26, 20 enumerated fixes) and Safari 27.1 iPhone Duo features (webkit.org/blog/18486, Oct 23, Device Posture + Viewport Segments APIs). Chrome/Edge/Firefox channels recorded unchanged via direct feed probes (Edge 158 WP notes still 404; chromestatuslite 158 Enabled(19) unchanged; MDN FF156-158 Lit-rendered bodies; FF157-159 already mined). iOS 26 Game Mode + Pixel 11 ANGLE + Roblox x86<156 nuggets verified already covered by P-252 / A-086 / S-553 before skipping.**
+
+- [S-554] **[case]** Safari 27.2 Stable Floor (Oct 26 2026) Across iOS/macOS 27.2 + Tahoe/Sequoia Backport — Probe Browser Version Not OS Major; Chrome Floor Unchanged (feed-verified no Nov stable)
+- [B-405] **[case]** Safari 27.1 iPhone Duo Foldable Viewport Contract — device-posture MQ + navigator.devicePosture + viewport-segments MQ Feature-Flagged; Canvas Re-layout On Posture Change
+- [B-406] **[case]** CSS Grid Lanes `flow-tolerance` Renamed To `fit-tolerance` In Safari 27.2 (Deprecated Alias Holds) — Support + Serialization + Removal Probes
+- [B-407] **[case]** Safari 27.2 Fixed animation-range-start/end Under CSS zoom (Incl. Inherited Zoom) — Zoom=1 vs zoom=2 Scroll-Progress Gate
+- [W-599] **[case]** Safari 27.2 Media-Stack Fix Cluster: MSE play() Promise For Clear SourceBuffers + MMS startstreaming + decodeAudioData AAC/M4A + Decoder-Invalidation Black Screen
+- [W-600] **[case]** Transient-Activation Incorrect-Discard Fix (Safari 27.2): Clipboard/Share Button MUST Succeed On First Click, Never Double-Tap
+- [W-601] **[case]** WebGPU executeBundles() With drawIndirect/drawIndexedIndirect Frame-Rate Collapse (27.1 Signature, 27.2 Fix) — rAF-Wrapped Pacing Gate
+- [W-602] **[case]** window load MUST Fire When A readystatechange Handler Starts A New Load (Safari 27.2 Fix 186475302) — Preloader Race Floor
+- [W-603] **[case]** CNAME-Across-Registrable-Domain Navigation-Response Cookie 7-Day Cap Removed In Safari 27.2 — Portal Save-Cookie Lifetime Probe
+- [A-093] **[case]** Safari 27.2 AX-Trio: aria-labelledby MUST Include Canvas/List Content In Names + aria-live Re-Render No-Duplicate Announcements + iOS date/time/color Pop-Up-Button Roles
+
 ## [v1.283.0] - 2026-11-02
 ### Added
 - 8 new machine-verifiable test cases from R400 (4h cycle 162). **This cycle mined the two un-mined October desktop stable notes (Oct 27 milestone promotion + Oct 29 security update), the Edge 156.0.4314.42 main-release relnote (native-XSLT deprecation schedule + eMudhra CA corroboration of S-551), and the freshly-indexed WebKit TP 255 notes (real URL /blog/18482/ — the guessed /blog/18449/ was again the wrong-page trap). The web_search standard backend RECOVERED (full outage in v1.282.0) and supplied the playproof soft-lock taxonomy, Roblox Web Play ~5m crash corroboration, BugNet error-observability guide, iOS 26 FPS-collapse field threads and casual-UX feedback guides. Traps re-confirmed: chromestatuslite ?version=159 silently resolves to Chrome 158 and its Enabled-count wobbled 21→19 across cycles (mirror instability); MDN Firefox/156 article body is still Lit placeholders; Edge 158 web-platform notes and Chrome 158 release-notes both 404 (Edge 157 stable ships Nov 5, Chrome 158 stable Nov 17).**
