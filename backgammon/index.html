@@ -765,33 +765,28 @@ render();
 }
 }
 function getClickTarget(x,y){
+/* FIX(QA 2026-11-03): hit-test was not the inverse of the drawn layout — column formulas
+   contradicted getPointX (clicking point 8's checker returned 7; points 1-5,10,11,16,17,20-22
+   were unclickable). Now nearest drawn point column in the clicked row, gated to the row zone. */
 var bw=65*scale,bh=28*scale;
 var bx=(W-4*bw)/2;
 var offX=W-25*scale;
 if(x>=offX)return'off';
 var barX=bx+2*bw;
 if(x>barX-12*scale&&x<barX+12*scale)return'bar';
-if(y<bh*2+4){
-if(x>bx&&x<bx+2*bw){
-var col=Math.floor((x-bx)/(bw/2));
-return col<12?24-col:13+(col-12);
+var wantTop=y<H/2;
+var best=null,bd=1e9,bo=-1;
+for(var p=1;p<=24;p++){
+if((p<=12)!==wantTop)continue;
+var dx=Math.abs(x-getPointX(p));
+var occ=Math.abs(G.board[p]||0);
+if(dx<bd-1||(dx<=bd+1&&occ>bo)){bd=dx;best=p;bo=occ;}
 }
-if(x>bx+2*bw&&x<bx+4*bw){
-var col2=Math.floor((x-bx-2*bw)/(bw/2));
-return col2<12?18-col2:7+(col2-12);
-}
-}
-if(y>H-bh*2-4){
-if(x>bx&&x<bx+2*bw){
-var col3=Math.floor((x-bx)/(bw/2));
-return col3<12?12+col3:1+(col3-12);
-}
-if(x>bx+2*bw&&x<bx+4*bw){
-var col4=Math.floor((x-bx-2*bw)/(bw/2));
-return col4<12?6+col4:19-(col4-12);
-}
-}
-return null;
+if(bd>bw/2)return null;
+var yRow=wantTop?bh*2+4:H-bh*2-4;
+var reach=4*20*scale+18*scale+8;
+if(Math.abs(y-yRow)>reach)return null;
+return best;
 }
 function render(){
 ctx.clearRect(0,0,W,H);
