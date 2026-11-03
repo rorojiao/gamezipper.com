@@ -270,6 +270,11 @@
     playClick();
 
     if (state === 'idle' || state === 'result') {
+      // FIX(R344): mid-round 'result' is a 900ms transition with an auto-advance
+      // timer already running; an extra click (mashing/double-tap) must NOT
+      // silently wipe recorded times and restart the game from round 1.
+      // Only restart when the FINAL result screen is shown.
+      if (state === 'result' && !resultScreen.classList.contains('show')) return;
       startGame();
       return;
     }
