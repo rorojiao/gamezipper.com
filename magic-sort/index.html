@@ -529,9 +529,42 @@ async function _ensureChunk(chunkIdx) {
     // R1002: a retry must NOT reuse a cached error response. The first attempt
     // uses force-cache (fast path); a retry uses no-store so a cached 403 from
     // the CDN is never replayed.
-    const r = await fetch(url, _CHUNK_RETRY[chunkIdx] ? { cache: "no-store" } : { cache: "force-cache" });
-    if (!r.ok) throw new Error("Failed to load " + url + ": " + r.status);
-    const data = await r.json();
+    // R1045: a HUNG CDN connection (BI 7d: 3 of 9 play-start sessions froze on
+    // the loading spinner with NO ms_chunk_load_error — the fetch never
+    // resolved or rejected) must become a visible retry, not an endless
+    // spinner. Timeout scales with chunk size (chunk_5 is 13MB; a slow phone
+    // can legitimately need ~30s). On timeout/failure we wait 1.2s and retry
+    // once with no-store before surfacing the error toast in initLevel.
+    const timeoutMs = 12000 + meta.count * 0.3;
+    const doFetch = () => {
+      const opts = _CHUNK_RETRY[chunkIdx] ? { cache: "no-store" } : { cache: "force-cache" };
+      let timer = null;
+      if (typeof AbortController === "function") {
+        const ctl = new AbortController();
+        timer = setTimeout(() => ctl.abort(), timeoutMs);
+        opts.signal = ctl.signal;
+      }
+      return fetch(url, opts)
+        .then(function (r) {
+          if (timer) clearTimeout(timer);
+          if (!r.ok) throw new Error("Failed to load " + url + ": " + r.status);
+          return r.json();
+        })
+        .catch(function (e) {
+          if (timer) clearTimeout(timer);
+          if (e && e.name === "AbortError") throw new Error("Chunk fetch timed out after " + timeoutMs + "ms");
+          throw e;
+        });
+    };
+    let data;
+    try {
+      data = await doFetch();
+    } catch (e1) {
+      _CHUNK_RETRY[chunkIdx] = true;
+      try { window.__msTrack && window.__msTrack("ms_chunk_retry", { idx: chunkIdx, url: meta.url, err: String(e1) }); } catch (e) {}
+      await new Promise(function (res) { setTimeout(res, 1200); });
+      data = await doFetch();
+    }
     for (let k = 0; k < data.levels.length; k++) _LD[meta.offset + k] = data.levels[k];
     _CHUNK_LOADED[chunkIdx] = true;
     // R662: prefetch next chunk after this one finishes (background, no UI blocking)
@@ -7131,6 +7164,19 @@ function gameLoop(timestamp) {
 
   requestAnimationFrame(gameLoop);
 }
+
+// R1045: warm chunk_0 (start-level chunk, ~895KB → chunk_0.json) while the
+// splash is on screen, so PLAY / 6s auto-advance starts the first level with
+// zero spinner latency. BI showed the cold chunk-0 fetch is the exact step
+// where play-start sessions die (3/9 never reached ms_level_start). Fires
+// ~0.8-2.5s after boot — well before the 6s auto-advance — and is deduped
+// with the initLevel fetch via _CHUNK_PROMISES. Failures are silent here;
+// the real fetch (with retry) happens when the player actually starts.
+(function _warmChunk0() {
+  const go = () => { try { const p = _ensureChunk(0); if (p && p.catch) p.catch(function () {}); } catch (e) {} };
+  if (typeof requestIdleCallback === "function") requestIdleCallback(go, { timeout: 2500 });
+  else setTimeout(go, 800);
+})();
 
 // Kick off the main loop. (Previously a "use strict" + 11MB inline script could
 // leave `let`-declared game state in a Temporal Dead Zone when the first rAF
