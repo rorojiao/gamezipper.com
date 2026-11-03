@@ -47,7 +47,7 @@
    auto-repoints nginx to the live tunnel URL. Rotating var EP here (R401 playbook) causes
    20min+ data gaps per GitHub Pages deploy + CDN cache cycle. See kanban R415/R416/R418.
    If bi.gamezipper.com/api/health fails: fix nginx/watchdog on 43.172, NOT this file. */
-  var EP = 'https://soap-singh-literature-enormous.trycloudflare.com/api/collect';
+  var EP = 'https://mostly-korean-older-tones.trycloudflare.com/api/collect';
   // 2026-07-26: expose the watchdog-rotated endpoint so inline RUM scripts
   // (index.html Web-Vitals beacons) and adsterra-manager.js can resolve it
   // lazily instead of hardcoding tunnel URLs that die every few hours.
@@ -57,6 +57,28 @@
   var T = 30000;
   var P = location.pathname;
   var N = navigator;
+
+  /* R1043 — background-tab-open hygiene for paint metrics.
+     Chrome does not render background tabs: 'first-contentful-paint' and
+     'largest-contentful-paint' entries fire only when the tab is FIRST
+     SHOWN. For a page opened in a background tab the entry startTime is
+     wall-clock time-until-looked-at, not paint latency — BI 7d showed
+     fcp outliers of 61,651,392ms and 2,059,256ms while the same pages had
+     healthy p50s (star-loom p50=356ms max=34min; homepage vitals_rating
+     fcp avg 13.6s). Flag such samples with meta.bt=1 so BI filters them
+     without discarding the value (R988: re-home, never drop).
+     Detection is exact: a background-tab open has NO paint entry yet while
+     visibilityState is already hidden. A foreground open that was later
+     backgrounded HAS a paint entry already (it painted while visible). */
+  var _gzHiddenOpen = (function(){
+    try {
+      if (document.prerendering) return true;
+      if (document.visibilityState !== 'hidden') return false;
+      var paints = (performance.getEntriesByType && performance.getEntriesByType('paint')) || [];
+      return paints.length === 0;
+    } catch (e) { return false; }
+  })();
+  function _btFlag(o){ if (_gzHiddenOpen) o.bt = 1; return o; }
 
   // Visitor/session/device metadata — generated once per page load, attached to every event
   // (BI Server /api/collect reads these as top-level fields for UV/session/device split)
@@ -298,10 +320,10 @@
             if (fcpDone) continue;   // R989: never publish FCP twice
             fcpDone = true;
             pd.fc = e.startTime;
-            ps('perf', { u: P, fcp: pd.fc });
+            ps('perf', _btFlag({ u: P, fcp: pd.fc }));
           } else if (e.entryType === 'largest-contentful-paint') {
             pd.lc = e.startTime;
-            ps('perf', { u: P, lcp: pd.lc });
+            ps('perf', _btFlag({ u: P, lcp: pd.lc }));
           } else if (e.entryType === 'layout-shift' && !e.hadRecentInput) {
             pd.cls = (pd.cls || 0) + e.value;
           }
@@ -503,7 +525,7 @@
       var _lcpFinalize = function(){
         if (reported.lcp || !lcpW) return;
         reported.lcp = true;
-        ps('vitals_rating', { u: P, metric: 'lcp', v: Math.round(lcpW), r: rate('lcp', lcpW) });
+        ps('vitals_rating', _btFlag({ u: P, metric: 'lcp', v: Math.round(lcpW), r: rate('lcp', lcpW) }));
       };
       ['pointerdown', 'keydown', 'click'].forEach(function(ev){
         document.addEventListener(ev, _lcpFinalize, { capture: true, once: true, passive: true });
@@ -527,7 +549,7 @@
       var _fcpReport = function(){
         if (reported.fcp || !fcpV) return;
         reported.fcp = true;
-        ps('vitals_rating', { u: P, metric: 'fcp', v: Math.round(fcpV), r: rate('fcp', fcpV) });
+        ps('vitals_rating', _btFlag({ u: P, metric: 'fcp', v: Math.round(fcpV), r: rate('fcp', fcpV) }));
       };
       // The buffered observer callback is async; flush on the next tick too.
       setTimeout(_fcpReport, 0);
