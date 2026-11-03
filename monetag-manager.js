@@ -1984,11 +1984,17 @@
     if (!container) return;
     if (container.getAttribute('data-filled')) return;
 
-    // Hide by default — only show if an ad actually fills. Prevents white box on fill failure.
+    // R1040 CLS FIX (2026-11-03, patrol-fix): removed the hide-first dance.
+    // cls-probe trace on knotwords: display:none at ~1.5s removed the reserved
+    // 100px+16 margin box from flow → upward jump v=0.0944 (total CLS 0.105 POOR).
+    // AND a hidden container blocks its own AdSense fill (R971 chicken-and-egg:
+    // display:none <ins> is never requested, so it can never fill, so it never
+    // un-hides). Same decision R347 already made for injectInGameBanners:
+    // keep the placeholder in-flow with its reserved min-height; container CSS is
+    // transparent bg + faint label, so there is no "white box" to prevent.
     var wasHidden = container.style.display === 'none';
     if (!wasHidden) {
       container.setAttribute('data-gz-orig-display', container.style.display || '');
-      container.style.display = 'none';
     }
 
     setTimeout(function() {
@@ -2008,8 +2014,9 @@
           markAdShown('container');
           container.style.display = container.getAttribute('data-gz-orig-display') || 'block';
         }).catch(function() {
-          // All tiers exhausted — keep hidden (no white box)
-          container.style.display = 'none';
+          // R1040: keep in-flow (see hide-first comment above) — collapsing on
+          // no-fill would itself be a late layout shift; box is transparent, reserved.
+          container.setAttribute('data-gz-nofill', '1');
           trackAdEvent('container_ad_no_fill', { network: 'monetag', reason: 'v5.24_all_tiers_exhausted' });
         });
       }, 2000);
