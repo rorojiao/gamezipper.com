@@ -89,16 +89,15 @@ def run_shard(job):
                 examples.append({"idx": gidx, "kind": "invariant", "reason": reason})
             continue
         n, b = parsed
-        moves, states = solve(
+        moves, states, why = solve(
             b,
             max_states=LEVEL_BUDGET["states"],
             time_limit_ms=LEVEL_BUDGET["time_ms"],
         )
         if moves is None:
-            # Distinguish "proved unsolvable" from "gave up": the port returns
-            # state_count; if it stopped because the stack emptied (rather than
-            # the budget), the level is genuinely unsolvable.
-            if states < LEVEL_BUDGET["states"]:
+            # QA R343 fix: only stack exhaustion proves unsolvability; a
+            # time-budget stop is UNPROVEN, never "unsolvable".
+            if why == "exhausted":
                 unsolvable.append(gidx)
                 if len(examples) < 5:
                     examples.append({"idx": gidx, "kind": "unsolvable", "n": n})
