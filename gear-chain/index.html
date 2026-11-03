@@ -631,7 +631,11 @@ function render(){
   var pos=getLayout();
   var prop=computePropagation();
   var win=checkWin();
-  state.solved=win;
+  // R1039 P0 FIX: do NOT set state.solved here. draw() runs ~16ms after a tap,
+  // i.e. BEFORE handleTap's setTimeout(100ms) calls onLevelWin(); this side-effect
+  // made onLevelWin's `if(state.solved)return;` guard bail on EVERY win, so the
+  // win overlay/stars/save never fired in production (all 30 levels unwinnable live).
+  // state.solved is owned exclusively by onLevelWin/startLevel now.
 
   // Draw connections first
   drawConnections(pos,prop);
