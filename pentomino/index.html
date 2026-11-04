@@ -538,17 +538,20 @@ function removePiece(pieceIdx) {
     if (gridState[i] === pieceIdx) gridState[i] = -1;
   }
   piecesUsed.delete(pieceIdx);
+  hintCells.delete(pieceIdx);
   renderPiecesTray();
   draw();
   playClick();
 }
 
 function clearBoard() {
+  const keep = new Set();
+  for (const cells of hintCells.values()) for (const i of cells) keep.add(i);
   for (let i = 0; i < gridState.length; i++) {
-    if (!hintCells.has(i)) gridState[i] = -1;
+    if (!keep.has(i)) gridState[i] = -1;
   }
   piecesUsed.clear();
-  for (const pieceIdx of hintCells.values()) piecesUsed.add(pieceIdx);
+  for (const pieceIdx of hintCells.keys()) piecesUsed.add(pieceIdx);
   renderPiecesTray();
   draw();
   playClick();
@@ -774,8 +777,9 @@ function draw() {
 cvs.addEventListener('mousemove', (e) => {
   if (!lv) return;
   const rect = cvs.getBoundingClientRect();
-  const cx = e.clientX - rect.left;
-  const cy = e.clientY - rect.top;
+  const scale = rect.width ? cvs.width / rect.width : 1;
+  const cx = (e.clientX - rect.left) * scale;
+  const cy = (e.clientY - rect.top) * scale;
   const c = Math.floor(cx / cellPx);
   const r = Math.floor(cy / cellPx);
   if (r >= 0 && r < rows && c >= 0 && c < cols) {
@@ -796,8 +800,9 @@ cvs.addEventListener('click', (e) => {
   if (!lv) return;
   initAudio();
   const rect = cvs.getBoundingClientRect();
-  const cx = e.clientX - rect.left;
-  const cy = e.clientY - rect.top;
+  const scale = rect.width ? cvs.width / rect.width : 1;
+  const cx = (e.clientX - rect.left) * scale;
+  const cy = (e.clientY - rect.top) * scale;
   const c = Math.floor(cx / cellPx);
   const r = Math.floor(cy / cellPx);
   if (r < 0 || r >= rows || c < 0 || c >= cols) return;
@@ -836,8 +841,9 @@ cvs.addEventListener('touchstart', (e) => {
   initAudio();
   const touch = e.touches[0];
   const rect = cvs.getBoundingClientRect();
-  const cx = touch.clientX - rect.left;
-  const cy = touch.clientY - rect.top;
+  const scale = rect.width ? cvs.width / rect.width : 1;
+  const cx = (touch.clientX - rect.left) * scale;
+  const cy = (touch.clientY - rect.top) * scale;
   const c = Math.floor(cx / cellPx);
   const r = Math.floor(cy / cellPx);
   if (r < 0 || r >= rows || c < 0 || c >= cols) return;
