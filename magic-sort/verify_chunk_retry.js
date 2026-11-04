@@ -57,7 +57,7 @@ function makeSandbox(fetchImpl) {
   const sandbox = {
     window: {},
     navigator: { connection: { saveData: false } },
-    console, setTimeout,
+    console, setTimeout, clearTimeout, AbortController,
     fetch: fetchImpl,
   };
   sandbox.window = sandbox;
@@ -96,13 +96,19 @@ async function attempt(sb) {
   const results = [];
 
   // --- A: transient failure then recovery ---
+  // R1045 shipped design: _ensureChunk performs ONE internal no-store retry
+  // inside the same call, so the FIRST external attempt already recovers
+  // (r1 === true) after exactly 2 fetches. The pre-R1045 expectation
+  // (r1 === ERROR, external attempt2 retries) is obsolete — same contract,
+  // one retry layer lower. Assert fetch #2 used no-store (B covers modes).
   {
     const f = stubFetch(['fail', 'ok']);
     const sb = makeSandbox(f);
     const r1 = await attempt(sb);
     const r2 = await attempt(sb);
-    const ok = (r1 === 'ERROR' && r2 === true && f.calls.length === 2);
-    results.push([ok, 'A: transient 403 -> retry succeeds (fetch called twice)', r1, r2, f.calls.length]);
+    const ok = (r1 === true && r2 === true && f.calls.length === 2 &&
+                f.calls[1] && f.calls[1].opts && f.calls[1].opts.cache === 'no-store');
+    results.push([ok, 'A: transient 403 -> internal no-store retry recovers in-call (fetch x2)', r1, r2, f.calls.length]);
     allOk &= ok;
   }
 
@@ -139,6 +145,38 @@ async function attempt(sb) {
     const r2 = await attempt(sb);
     const ok = (r1 === true && r2 === true && f.calls.length === 1);
     results.push([ok, 'D: healthy chunk resolves immediately and is cached (no extra fetch)', r1, r2, f.calls.length]);
+    allOk &= ok;
+  }
+
+  // --- E: HUNG fetch (R1045 root cause) — never settles -> AbortController
+  // timeout must fire, then the internal no-store retry recovers the level. ---
+  {
+    const calls = [];
+    const f = async function (url, opts) {
+      calls.push({ url, opts });
+      if (calls.length === 1) {
+        // hang forever unless the shipped code aborts us
+        return new Promise((_, rej) => {
+          if (opts && opts.signal) {
+            opts.signal.addEventListener('abort', () => {
+              const e = new Error('The operation was aborted');
+              e.name = 'AbortError';
+              rej(e);
+            });
+          }
+        });
+      }
+      return { ok: true, status: 200, json: async () => ({ levels: [[2, 1, 2, 0, 0]] }) };
+    };
+    const sb = makeSandbox(f);
+    const t0 = Date.now();
+    const r1 = await attempt(sb);
+    const elapsed = Date.now() - t0;
+    // timeoutMs = 12000 + count*0.3 >= 12s; abort must actually have fired
+    const ok = (r1 === true && calls.length === 2 && elapsed >= 11500 &&
+                calls[1].opts && calls[1].opts.cache === 'no-store' &&
+                calls[0].opts && !!calls[0].opts.signal);
+    results.push([ok, 'E: hung fetch aborted at timeout -> internal retry recovers', r1, `elapsed=${elapsed}ms`, calls.length]);
     allOk &= ok;
   }
 
