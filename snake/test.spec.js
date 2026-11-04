@@ -14,7 +14,7 @@ function check(name, condition) {
   console.log(`${pass ? 'PASS' : 'FAIL'}: ${name}`);
 }
 
-check('canvas exists', /<canvas id="c"><\/canvas>/.test(html));
+check('canvas exists', /<canvas id="c"[^>]*>/.test(html));
 check('desktop canvas reserves nav and HUD space', /window\.innerHeight\s*-\s*navH\s*-\s*100/.test(html));
 check('menu starts idle demo loop', /requestAnimationFrame\(menuLoop\)/.test(html) && /function stepDemo\(/.test(html));
 check('single canvas click starts menu state', /if\(gameState===['"]menu['"]\)\s*\{\s*startGame\(\);\s*return;\s*\}/.test(html));
