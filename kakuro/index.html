@@ -121,11 +121,28 @@
         .num-btn.action{background:rgba(150,100,255,.2);border:2px solid rgba(150,100,255,.4);color:#bf00ff}
         .num-btn.erase{background:rgba(255,80,80,.2);border:2px solid rgba(255,80,80,.4);color:#ff5050}
         #controls-bar{display:flex;justify-content:space-around;align-items:center;width:100%;max-width:500px;margin-top:10px;padding:10px;border-radius:12px}
+        @media (max-height:870px) and (max-width:500px){
+            /* R347: at 390x844 the numpad "?" row bottom was 858-868 (>844, page
+               unscrollable). 11 pad buttons in 5 cols = 3 rows; go 6 cols (2 rows)
+               and compress ctrl-btn metrics. Canvas size unchanged (350 stays fit). */
+            #numpad{grid-template-columns:repeat(6,1fr);max-width:360px;gap:6px;padding:6px}
+            .ctrl-btn{padding:4px 10px;font-size:.72rem}
+            .ctrl-btn .icon{font-size:1.1rem}
+            /* the in-flow ad slots inflate the grid container past the phone height
+               when filled: clamp heights and margins, trim screen top padding */
+            #gz-ad-below-canvas{height:60px!important;max-height:60px!important;overflow:hidden}
+            #gz-ad-above-game,#gz-ad-below-canvas{margin:4px 0!important}
+            #game-grid-container{max-height:470px;overflow:hidden}
+            #game-screen,#menu-screen,#title-screen{padding-top:12px}
+            #controls-bar{padding:6px;margin-top:6px}
+            #game-header{margin-bottom:6px}
+        }
         .ctrl-btn{display:flex;flex-direction:column;align-items:center;font-size:.8rem;cursor:pointer;padding:8px 16px;border-radius:8px;transition:all .2s ease}
         .ctrl-btn:hover{background:rgba(255,255,255,.1)}
         .ctrl-btn.active{background:rgba(0,245,255,.2)}
         .ctrl-btn .icon{font-size:1.5rem;margin-bottom:2px}
         .ctrl-btn .label{font-weight:500}
+        .ctrl-btn.gz-pressed{background:rgba(0,245,255,.35);box-shadow:inset 0 0 0 1px rgba(0,245,255,.6)}
         #win-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200}
         #win-overlay.active{display:flex}
         #win-canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:-1}
@@ -1149,10 +1166,16 @@
             document.getElementById('toggle-sfx').addEventListener('click',function(){state.settings.sfx=!state.settings.sfx;applySettings();saveGame();});
             document.getElementById('toggle-bgm').addEventListener('click',function(){state.settings.bgm=!state.settings.bgm;applySettings();if(state.settings.bgm)startBGM();else stopBGM();saveGame();});
             document.getElementById('toggle-errors').addEventListener('click',function(){state.settings.errors=!state.settings.errors;applySettings();saveGame();if(state.screen==='game')renderGame();});
-            document.getElementById('btn-undo').addEventListener('click',function(){initAudio();undo();});
-            document.getElementById('btn-notes').addEventListener('click',function(){initAudio();toggleNotes();});
-            document.getElementById('btn-hint').addEventListener('click',function(){initAudio();useHint();});
-            document.getElementById('btn-erase').addEventListener('click',function(){initAudio();eraseCell();});
+            // dead_click ack (R347): UNDO/HINT/ERASE clicks with no-op preconditions
+            // (empty undo stack, nothing to erase) or class-less effects (hint counter)
+            // left the ctrl-btn className identical at the detector's 1500ms poll ->
+            // BI dead_click on DIV.ctrl-btn. Hold a pressed class >=1600ms so the
+            // pressed state is observable at 1.5s for every click, valid or not.
+            function ctrlAck(btn){btn.classList.add('gz-pressed');if(btn._gzT)clearTimeout(btn._gzT);btn._gzT=setTimeout(function(){btn.classList.remove('gz-pressed');},1600);}
+            document.getElementById('btn-undo').addEventListener('click',function(){initAudio();ctrlAck(this);undo();});
+            document.getElementById('btn-notes').addEventListener('click',function(){initAudio();ctrlAck(this);toggleNotes();});
+            document.getElementById('btn-hint').addEventListener('click',function(){initAudio();ctrlAck(this);useHint();});
+            document.getElementById('btn-erase').addEventListener('click',function(){initAudio();ctrlAck(this);eraseCell();});
             document.getElementById('btn-menu-win').addEventListener('click',function(){playSFX('click');document.getElementById('win-overlay').classList.remove('active');stopBGM();switchScreen('menu');});
             document.getElementById('btn-next').addEventListener('click',function(){playSFX('click');document.getElementById('win-overlay').classList.remove('active');stopBGM();
                 // P2 fix (phantom levels): tiers 0-3 advanced past level 6 unconditionally,
