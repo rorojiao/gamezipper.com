@@ -75,7 +75,7 @@ canvas{display:block;touch-action:none}
 #game-view{display:none;position:fixed;inset:0;z-index:1000;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3))}
 #game-view .game-top{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;position:absolute;top:0;left:0;right:0;z-index:10}
 #game-view .game-title{font-size:clamp(.9rem,3vw,1.2rem);font-weight:700;background:linear-gradient(90deg,var(--neon1),var(--neon4));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-#game-view canvas{width:100%;height:100%}
+#game-view canvas{width:100%;height:auto;display:block}
 .back-btn{background:var(--glass);border:1px solid var(--glass-b);border-radius:12px;padding:6px 14px;color:#fff;font-size:.85rem;cursor:pointer;backdrop-filter:blur(8px);transition:all .2s}
 .back-btn:hover{background:rgba(255,255,255,.15)}
 .tooltip{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);border:1px solid var(--glass-b);border-radius:12px;padding:8px 16px;font-size:.8rem;color:var(--neon1);white-space:nowrap;pointer-events:none;animation:tooltipFade 3s forwards;z-index:20}
@@ -450,8 +450,13 @@ document.getElementById('gz-topnav').style.display='flex';
 renderGallery();renderRecent();
 }
 function resizeCanvas(){
+// R349 QA FIX (P2): canvas height was full window.innerHeight while the canvas sits
+// below .game-top + ad-above slots (~66px), so the bottom 66px of every toy canvas
+// was permanently clipped (fixed-position overlay cannot scroll it into view).
+// Size to the actually visible viewport below the canvas' top edge.
+const top = gameCanvas.getBoundingClientRect().top || 0;
 gameCanvas.width=window.innerWidth;
-gameCanvas.height=window.innerHeight;
+gameCanvas.height=Math.max(320, window.innerHeight - top);
 }
 function checkUnlocks(){
 const prev=Object.keys(state.toyUses).length;
