@@ -271,7 +271,7 @@ function playLose(){[400,350,300,250].forEach((f,i)=>setTimeout(()=>playTone(f,.
 function playReveal(idx){setTimeout(()=>playFlip(),idx*300)}
 let toastTimer=null;
 function showToast(msg,dur=1500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),dur)}
-function showModal(id){document.getElementById(id+'Modal').classList.add('active');if(id==='stats')updateStatsUI()}
+function showModal(id){document.querySelectorAll('.modal-overlay.active').forEach(m=>m.classList.remove('active'));document.getElementById(id+'Modal').classList.add('active');if(id==='stats')updateStatsUI()}
 function hideModal(id){document.getElementById(id+'Modal').classList.remove('active')}
 function updateStatsUI(){document.getElementById('statPlayed').textContent=stats.played;document.getElementById('statWinPct').textContent=stats.played?Math.round(stats.wins/stats.played*100):0;document.getElementById('statStreak').textContent=stats.streak;document.getElementById('statMaxStreak').textContent=stats.maxStreak;
 const distDiv=document.getElementById('distribution');distDiv.innerHTML='';
@@ -308,15 +308,15 @@ btn.textContent=key;btn.onclick=()=>handleKey(key);rowDiv.appendChild(btn)}kb.ap
 function updateKeyStates(){keyStates={};for(const g of G.guesses){const res=evaluate(g,G.answer);for(let i=0;i<g.length;i++){const l=g[i].toUpperCase();const rank=letterRank[res[i]]||0;const cur=letterRank[keyStates[l]]||0;if(rank>cur)keyStates[l]=res[i]}}}
 function addLetter(l){if(G.gameOver||G.current.length>=G.wordLen)return;G.current+=l.toLowerCase();playClick();renderBoard()}
 function removeLetter(){if(G.gameOver||!G.current.length)return;G.current=G.current.slice(0,-1);playClick();renderBoard()}
-function submitGuess(){if(G.gameOver)return;if(G.current.length!==G.wordLen){showToast('Not enough letters');shakeRow();playInvalid();return}
+function submitGuess(){if(G.gameOver)return;if(G.guesses.length>=G.maxGuesses){showToast('Game over');return}if(G.current.length!==G.wordLen){showToast('Not enough letters');shakeRow();playInvalid();return}
 if(!isValidWord(G.current,G.wordLen)){showToast('Not in word list');shakeRow();playInvalid();return}
 if(G.hardMode&&G.guesses.length>0){const err=checkHardMode(G.current,G.guesses);if(err){showToast(err);shakeRow();playInvalid();return}}
 G.guesses.push(G.current);
 const res=evaluate(G.current,G.answer);updateKeyStates();
 const row=G.guesses.length-1;
-for(let i=0;i<G.wordLen;i++){const tile=document.getElementById(`t${row}_${i}`);setTimeout(()=>{tile.classList.add('reveal',res[i]);playReveal(i)},i*300)}
+for(let i=0;i<G.wordLen;i++){const tile=document.getElementById(`t${row}_${i}`);if(!tile)continue;setTimeout(()=>{tile.classList.add('reveal',res[i]);playReveal(i)},i*300)}
 G.current='';
-setTimeout(()=>{if(G.current===''||G.guesses[G.guesses.length-1]===G.answer){
+setTimeout(()=>{if(G.current===''||G.guesses.length>=G.maxGuesses||G.guesses[G.guesses.length-1]===G.answer){
 if(G.guesses[G.guesses.length-1]===G.answer){G.won=true;G.gameOver=true;const gn=G.guesses.length;if(!stats.dist[gn])stats.dist[gn]=0;stats.dist[gn]++;stats.wins++;stats.streak++;if(stats.streak>stats.maxStreak)stats.maxStreak=stats.streak;stats.played++;
 setTimeout(()=>{playWin();celebrateWin();showToast('Brilliant!',2000);setTimeout(()=>showModal('stats'),2200)},G.wordLen*300+100);
 }else if(G.guesses.length>=G.maxGuesses){G.gameOver=true;stats.played++;stats.streak=0;
