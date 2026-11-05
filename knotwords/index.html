@@ -498,17 +498,10 @@ renderGame();
 }
 });
 
-document.addEventListener('keydown',e=>{
-if(!game||!game.active||!game.selected)return;
-if(e.key.length===1&&e.key.match(/[a-z]/i)){
-const{r,c}=game.selected;
-if(game.grid[r][c]===1){
-game.playerGrid[r][c]=e.key.toLowerCase();
-const bId=game.bundleMap[r][c];
-if(bId>=0)game.bundleBankUsed[bId][e.key.toLowerCase()]=(game.bundleBankUsed[bId][e.key.toLowerCase()]||0)+1;
-playPlace();
-addParticle(game.offsetX+c*game.cellSize+game.cellSize/2,game.offsetY+r*game.cellSize+game.cellSize/2,BUNDLE_COLORS[bId%BUNDLE_COLORS.length]);
-if(checkSolved()){
+// R349 QA FIX (P2): unified win trigger — also called after Reveal hint, which previously
+// never ran checkSolved, leaving hint-only players unable to ever win.
+function finishWin(){
+if(!game||game.solved)return;
 game.solved=true;game.active=false;
 playVictory();
 const stars=getStars();
@@ -519,6 +512,7 @@ saveData.stats.totalStars+=stars;
 if(!saveData.stats.bestTime[game.level]||elapsed<saveData.stats.bestTime[game.level])saveData.stats.bestTime[game.level]=elapsed;
 saveSave();
 setTimeout(()=>{
+if(!game)return;
 document.getElementById('victoryStars').innerHTML=
 [1,2,3].map(i=>`<span class="star ${i<=stars?'earned':''}">★</span>`).join('');
 document.getElementById('victoryStats').innerHTML=`
@@ -529,9 +523,20 @@ document.getElementById('nextLevelBtn').style.display=game.level<30?'inline-bloc
 document.getElementById('victoryOverlay').classList.add('active');
 },500);
 spawnCelebration();
-}else{
 renderGame();
 }
+
+document.addEventListener('keydown',e=>{
+if(!game||!game.active||!game.selected)return;
+if(e.key.length===1&&e.key.match(/[a-z]/i)){
+const{r,c}=game.selected;
+if(game.grid[r][c]===1){
+game.playerGrid[r][c]=e.key.toLowerCase();
+const bId=game.bundleMap[r][c];
+if(bId>=0)game.bundleBankUsed[bId][e.key.toLowerCase()]=(game.bundleBankUsed[bId][e.key.toLowerCase()]||0)+1;
+playPlace();
+addParticle(game.offsetX+c*game.cellSize+game.cellSize/2,game.offsetY+r*game.cellSize+game.cellSize/2,BUNDLE_COLORS[bId%BUNDLE_COLORS.length]);
+if(checkSolved()){finishWin();}else{renderGame();}
 }
 }
 if(e.key==='Backspace'&&game.selected){
@@ -636,7 +641,7 @@ ctx.stroke();
 
 // Letter
 if(letter){
-ctx.fillStyle=isCorrect?'#e0e0f0':'rgba(255,255,255,0.7)';
+ctx.fillStyle=isCorrect?'#e0e0f0':(game.checkUntil&&Date.now()<game.checkUntil?'#ff5566':'rgba(255,255,255,0.7)');
 ctx.font=`bold ${Math.floor(cs*0.5)}px sans-serif`;
 ctx.textAlign='center';ctx.textBaseline='middle';
 ctx.fillText(letter.toUpperCase(),x+cs/2,y+cs/2);
@@ -701,13 +706,15 @@ const x=e.clientX-rect.left;const y=e.clientY-rect.top;
 // Back button
 if(y<35&&x<70){showLevelSelect();return}
 
-// Hint buttons
+// Hint buttons (R349 QA FIX: split Reveal | Check hit regions; Reveal now triggers win check — P2 hint-only soft-lock; Check flashes wrong letters P3)
 if(y<35&&x>W-200){
+if(x>W-105){game.checkUntil=Date.now()+1500;playHint();renderGame();return}
 const bId=game.selected?game.bundleMap[game.selected.r][game.selected.c]:-1;
 if(bId>=0){
 game.hintsUsed++;
 game.playerGrid[game.selected.r][game.selected.c]=game.solution[game.selected.r][game.selected.c];
 playHint();renderGame();
+if(checkSolved())finishWin();
 }
 }
 });
@@ -734,20 +741,7 @@ const bId=game.bundleMap[r][c];
 if(bId>=0)game.bundleBankUsed[bId][l]=(game.bundleBankUsed[bId][l]||0)+1;
 playPlace();
 addParticle(game.offsetX+c*game.cellSize+game.cellSize/2,game.offsetY+r*game.cellSize+game.cellSize/2,BUNDLE_COLORS[bId%BUNDLE_COLORS.length]);
-if(checkSolved()){
-game.solved=true;game.active=false;playVictory();
-const stars=getStars();const elapsed=Math.round((Date.now()-game.startTime)/1000);
-saveData.completed[game.level]={stars,time:elapsed,hints:game.hintsUsed};
-saveData.stats.solved++;saveData.stats.streak++;saveData.stats.totalStars+=stars;
-saveSave();
-setTimeout(()=>{
-document.getElementById('victoryStars').innerHTML=[1,2,3].map(i=>`<span class="star ${i<=stars?'earned':''}">★</span>`).join('');
-document.getElementById('victoryStats').innerHTML=`<div>Time: ${Math.floor(elapsed/60)}:${(elapsed%60).toString().padStart(2,'0')}</div><div>Hints: ${game.hintsUsed}</div>`;
-document.getElementById('nextLevelBtn').style.display=game.level<30?'inline-block':'none';
-document.getElementById('victoryOverlay').classList.add('active');
-spawnCelebration();
-},500);
-}
+if(checkSolved())finishWin();
 renderGame();
 }
 };
