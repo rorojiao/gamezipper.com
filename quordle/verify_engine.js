@@ -11,6 +11,9 @@ const g = bootGame('quordle', { inject: {
     solved: () => boardSolved.slice(),
     st: () => ({ row: currentRow, gameOver: gameOver, gameWon: gameWon }),
     practice: () => startNewGame('practice'),
+    val: () => Array.from(VAL),
+    modal: () => ({ open: document.getElementById('resultModal').classList.contains('open'), html: String(document.getElementById('resultContent').innerHTML || '') }), // harness textContent does NOT aggregate children; innerHTML getter returns the assigned markup (real DOM aggregates — live probe verified separately)
+    close: () => closeModal('resultModal'),
   };`,
 } });
 
@@ -46,6 +49,23 @@ for (let round = 0; round < 3; round++) {
   rounds++;
 }
 T('practice-wins', wins === rounds, wins + '/' + rounds);
+
+/* P2 regression (QA R1038 follow-up 2026-11-05): result modal must open POPULATED on
+ * both paths. Old bugs: lose branch revealAnswers() threw at row index 9 (nonexistent)
+ * so the modal never opened; #resultContent was always empty (win modal was a blank box). */
+const wmod = g.call('__Q.modal()'); // last round ended in a win; 800ms modal timer already pumped
+T('win-modal-open-populated', wmod.open === true && /You Win/.test(wmod.html), JSON.stringify(wmod).slice(0, 140));
+g.call('__Q.close()'); g.pump(2);
+g.call('__Q.practice()'); g.pump(2);
+const sols2 = g.call('__Q.sols()');
+const wrong = (g.call('__Q.val()') || []).filter(w => !sols2.includes(w)).slice(0, 9);
+for (const w of wrong) { type(w); g.pump(125); }
+g.pump(60); // +500ms result-modal timer
+const lst = g.call('__Q.st()');
+const lmod = g.call('__Q.modal()');
+T('lose-over', lst.gameOver && !lst.gameWon && lst.row === 9, JSON.stringify(lst));
+T('lose-modal-open', lmod.open === true, JSON.stringify(lmod).slice(0, 120));
+T('lose-modal-populated', /Quordle/.test(lmod.html), lmod.html.slice(0, 80));
 
 T('no-vm-errors', !(g.sandbox.__errors || []).some(e => /TypeError|ReferenceError/.test(e)),
   JSON.stringify((g.sandbox.__errors || []).find(e => /TypeError|ReferenceError/.test(e)) || '').slice(0, 120));
