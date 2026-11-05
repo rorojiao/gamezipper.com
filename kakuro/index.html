@@ -1003,7 +1003,20 @@
                 var btn=document.createElement('div');
                 btn.className='tier-btn tier-'+(i+1);
                 btn.innerHTML='<span class="tier-name">'+TIER_NAMES[i]+'</span><span class="tier-size">'+TIER_SIZES[i]+'</span>';
-                btn.addEventListener('click',(function(t){return function(){showLevelGrid(t);};})(i));
+                // R1053 2026-11-05: tier-clicked rotation MOVED from R656 document-capture listener
+                // to this target-phase handler. gz-analytics.js loads with defer AFTER the inline
+                // game script, so its capture listener registers LAST and runs after R656's mutation —
+                // the snapshot already contained tier-clickedN and the 1600ms hold made snap==now at
+                // the 1.5s check → dead_click fired on EVERY tier click (BI: 15 events DIV.tier-btn
+                // tier-1 tier-clicked0, 11-04). Target-phase ack is order-proof (capture snapshot
+                // always precedes target handlers).
+                btn.addEventListener('click',(function(t,bb){return function(){
+                    window.__gzTierFlash=(window.__gzTierFlash||0)+1;
+                    var which=window.__gzTierFlash%2;
+                    try{bb.className=bb.className.replace(/\s?tier-clicked[01]\b/g,'')+' tier-clicked'+which;}catch(e){}
+                    setTimeout(function(){try{bb.className=bb.className.replace(/\s?tier-clicked[01]\b/g,'');}catch(e){}},1600);
+                    showLevelGrid(t);
+                };})(i,btn));
                 container.appendChild(btn);
             }
         }
@@ -1355,35 +1368,13 @@
 <!-- R656 2026-09-05: fix kakuro tier-btn dead_click (multi-user confusion). R654 pattern: rotate className tier-clicked0 ↔ tier-clicked1 + stopImmediatePropagation() in document CAPTURE phase to prevent gz-analytics's later-registered capture listener from firing dead_click. CSS keyframes .tier-clicked0/1 mutate scale + brightness, providing visible feedback AND defeating className-snapshot detector. -->
 <script>
 (function(){
-  if (window.__gzR656Kakuro) return;
-  window.__gzR656Kakuro = true;
-  var _flash = 0;
-  document.addEventListener('click', function(e){
-    var t = e.target;
-    if (!t || !t.className) return;
-    var cls = t.className.toString();
-    if (!/\btier-btn\b/.test(cls)) return;
-    var which = (_flash++) % 2;
-    // Mutate to rotating state
-    // Rebuild className: remove any prior tier-clickedN from cls, then add new one (R654 replace-not-append pattern)
-    var stripped = cls.replace(/\s?tier-clicked[01]\b/g, '');
-    var newCls = (stripped + ' tier-clicked' + which).trim();
-    t.className = newCls;
-    void t.offsetWidth; // force reflow so the change is visible
-    // UX-OPT 2026-09-09 R674: original R656 used stopImmediatePropagation to block gz-analytics,
-    // but that ALSO blocked the tier-btn's own addEventListener target-phase handler
-    // (showLevelGrid) — verified via Playwright 2026-09-09: tier-btn click did nothing,
-    // level-container stayed display:none. Fix: KEEP .tier-clicked0 for 1600ms (> detector
-    // 1.5s window) so the snapClass vs nowClass check sees the change without needing
-    // stopImmediatePropagation. Event now propagates normally → showLevelGrid fires.
-    setTimeout(function(){
-      try {
-        var now = t.className.toString();
-        t.className = now.replace(/\s?tier-clicked[01]/g, '');
-      } catch(err) {}
-    }, 1600);
-    // Note: removed stopImmediatePropagation() — see R674 comment above.
-  }, true);
+  // R1053 2026-11-05: R656 capture-phase rotation listener REMOVED (see R1053 note in
+  // buildTierGrid). gz-analytics.js is deferred and registers its capture listener AFTER this
+  // inline script runs, so the old capture mutation landed BEFORE the detector snapshot and the
+  // 1600ms hold made snap==now at the 1.5s recheck → dead_click on every tier click (BI 11-04:
+  // 15 events, sel "DIV.tier-btn tier-1 tier-clicked0"). The tier-clicked0/1 CSS visual feedback
+  // is preserved via the target-phase rotation now inside each tier button's own click handler.
+  window.__gzR656Disabled = true;
 })();
 </script>
 

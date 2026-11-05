@@ -54,6 +54,13 @@ canvas{display:block;width:100%;background:#0d0d1f;touch-action:none}
 .ink-bar{height:100%;background:linear-gradient(90deg,#FF8C00,#FFD700);border-radius:6px;transition:width 0.1s}
 .hud-btn{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .hud-btn:active{background:rgba(255,255,255,0.2)}
+/* R1053 2026-11-05: dead_click burst (DIV.hud-btn x9/1s, BI 11-05 05:38) — back/undo/hint
+   change NOTHING on themselves, and undo-on-empty / hint-when-disabled were silent no-ops.
+   Target-phase class ack held 1600ms > gz-analytics 1.5s snapshot window (kakuro R336 ctrlAck
+   family, order-proof: capture snapshot always precedes target handler). */
+.hud-btn.gz-ack{background:rgba(120,220,140,0.35);box-shadow:0 0 10px rgba(120,220,140,0.5)}
+.hud-btn.gz-rej,.level-cell.gz-rej{animation:gzLockedShake .3s;box-shadow:0 0 0 2px rgba(255,90,90,0.8)}
+.level-cell.gz-ack{background:rgba(255,215,0,0.35);border-color:rgba(255,215,0,0.6)}
 .timer-bar{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);width:200px;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;z-index:5}
 .timer-fill{height:100%;background:linear-gradient(90deg,#00D4FF,#00FF88);border-radius:4px;transition:width 0.1s}
 .result-popup{background:rgba(20,20,40,0.95);border-radius:20px;padding:32px;text-align:center;max-width:320px;width:90%;border:1px solid rgba(255,255,255,0.1)}
@@ -109,6 +116,10 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
   letter-spacing:.05em;pointer-events:none;
 }
 @media(max-width:600px){
+/* R1053 2026-11-05: #go-btn-wrap is absolute-bottom-anchored to #game-wrap, which on
+   small screens extends past the fold (ads) → GO button bottom=906>844, core action
+   needs scroll. Anchor to viewport on mobile; verified via elementsFromPoint (not covered). */
+#go-btn-wrap{position:fixed!important;bottom:16px!important;left:50%!important;transform:translateX(-50%)!important;z-index:50!important}
   #gz-ad-above-game,#gz-ad-below-canvas{height:50px;min-height:50px;max-height:280px;margin:8px auto;}
   #gz-ad-above-game ins,#gz-ad-below-canvas ins,
   #gz-ad-above-game iframe,#gz-ad-below-canvas iframe{
@@ -138,7 +149,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 
 <!-- HUD -->
 <div class="hud" id="hud" style="display:none">
-<div class="hud-btn" id="btn-back" onclick="showLevelSelect()">&#9664;</div>
+<div class="hud-btn" id="btn-back" onclick="gzAck(this);showLevelSelect()">&#9664;</div>
 <div class="ink-bar-wrap"><div class="ink-bar" id="ink-bar" style="width:100%"></div></div>
 <div style="display:flex;gap:8px">
 <div class="hud-btn" id="btn-undo" onclick="undoLine()">&#8630;</div>
@@ -236,6 +247,8 @@ var currentChapter = 0;
 var inkUsed = 0;
 var inkMax = 400;
 var drawnLines = [];
+// R1053 2026-11-05: target-phase visual ack (dead_click fix; see CSS block).
+function gzAck(el,bad){if(!el||!el.classList)return;el.classList.remove('gz-ack','gz-rej');void el.offsetWidth;el.classList.add(bad?'gz-rej':'gz-ack');var t=el;setTimeout(function(){if(t&&t.classList)t.classList.remove('gz-ack','gz-rej');},1600);}
 var currentDraw = [];
 var isDrawing = false;
 var simTimer = 0;
@@ -458,7 +471,7 @@ cell.className='level-cell'+(unlocked?' unlocked':' locked')+(i===currentLevel?'
 cell.textContent=i+1;
 if(levelStars[i]!==undefined){var starStr='';for(var s=0;s<3;s++)starStr+=(s<levelStars[i]?'\u2605':'\u2606');
 var sp=document.createElement('div');sp.style.cssText='position:absolute;bottom:1px;font-size:7px;color:#FFD700';sp.textContent=starStr;cell.style.position='relative';cell.appendChild(sp);}
-if(unlocked){(function(idx){cell.onclick=function(){startLevel(idx);};})(i);unlockedCount++;}
+if(unlocked){(function(idx,cc){cell.onclick=function(){gzAck(cc,false);startLevel(idx);};})(i,cell);unlockedCount++;}
 else{(function(c){c.onclick=function(){c.classList.add('locked-shake');var _cc=c;setTimeout(function(){if(_cc&&_cc.classList)_cc.classList.remove('locked-shake');},1700);};})(cell);}
 grid.appendChild(cell);}
 // UX-OPT 2026-08-29 R556: locked chapter empty-state hint. New users with 0 unlocked levels
@@ -512,13 +525,16 @@ function undoLine(){
 if(drawnLines.length>0){var line=drawnLines.pop();
 var len=0;for(var i=1;i<line.pts.length;i++){var dx=line.pts[i].x-line.pts[i-1].x;var dy=line.pts[i].y-line.pts[i-1].y;len+=Math.sqrt(dx*dx+dy*dy);}
 inkUsed=Math.max(0,inkUsed-len);updateInkBar();playTone(300,0.1,'triangle',0.1);}
+else{gzAck(document.getElementById('btn-undo'),true);playTone(150,0.12,'square',0.08);}
 }
 
 // ============ HINT ============
 function useHint(){
 if(GS==='lose'||GS==='playing'){
+gzAck(document.getElementById('btn-hint'),false);
 if(!hintShown[currentLevel]){hintShown[currentLevel]=true;saveSave();}
 showingHint=true;playTone(523,0.2,'sine',0.1);setTimeout(function(){showingHint=false;},3000);}
+else{gzAck(document.getElementById('btn-hint'),true);}
 }
 
 // ============ START SIMULATION ============
