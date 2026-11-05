@@ -299,13 +299,24 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     //   Gameplay clicks now arm the popunder too; the 25-min
     //   localStorage+BroadcastChannel cooldown caps frequency and the
     //   new `trigger` field makes every fill auditable in BI.
+    // R1055 (2026-11-05): COMPLETED the R1035 intent. R1035 removed the bare
+    // CANVAS tag but left the id^='game' / class~='game' exclusions, which
+    // re-excluded exactly the gameplay surfaces: live DOM probes
+    // (ad-test-results/r1055-hitprobe2.mjs) show moto-x3m CANVAS#gameCanvas,
+    // sukima+tetris DIV#game-wrap, knotwords CANVAS#gameCanvas, sudoku
+    // DIV#game-screen, labyrinth DIV#game, bus-traffic-fever+maze-paint
+    // DIV#game-container, magic-tiles CANVAS#gameCanvas -> board clicks could
+    // NEVER fire the only paying placement. BI 7d: sukima 28 PV / 0 adsterra
+    // attempts, moto-x3m 14 PV / 0, tetris 36 PV / clicks never fire (key
+    // trigger only). Only genuine UI chrome (BUTTON, btn-*, *overlay*,
+    // menu-btn, ctrl-btn) stays excluded.
     var gameEl = e.target;
     while (gameEl) {
       if (gameEl.tagName === 'BUTTON' ||
-          (gameEl.id && (gameEl.id.indexOf('btn-') === 0 || gameEl.id.indexOf('game') === 0 || gameEl.id.indexOf('overlay') >= 0)) ||
+          (gameEl.id && (gameEl.id.indexOf('btn-') === 0 || gameEl.id.indexOf('overlay') >= 0)) ||
           (gameEl.className && typeof gameEl.className === 'string' &&
            (gameEl.className.indexOf('menu-btn') >= 0 || gameEl.className.indexOf('overlay') >= 0 ||
-            gameEl.className.indexOf('ctrl-btn') >= 0 || gameEl.className.indexOf('game') >= 0))) {
+            gameEl.className.indexOf('ctrl-btn') >= 0))) {
         return;
       }
       gameEl = gameEl.parentElement;
@@ -505,11 +516,11 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     armPop();
     track('script_loaded', {
       zones: ZONES,
-      v: '5.17.5',
+      v: '5.17.6',
       path: location.pathname,
       readyState: document.readyState
     });
-    track('config_loaded', { v: '5.17.5', popInterval: POP_INTERVAL });
+    track('config_loaded', { v: '5.17.6', popInterval: POP_INTERVAL });
     // Run CDN health probe asynchronously — doesn't block init.
     setTimeout(runCdnHealth, 1500);
   }
@@ -616,6 +627,6 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
   };
 
   try {
-    console.log('[GZAdsterra] v5.17.5 active — popunder(' + ZONES.popunder + ') + smartlink(' + ZONES.smartlink + ' iframe) + cdn_health probe');
+    console.log('[GZAdsterra] v5.17.6 active — popunder(' + ZONES.popunder + ') + smartlink(' + ZONES.smartlink + ' iframe) + cdn_health probe');
   } catch (e) {}
 })();
