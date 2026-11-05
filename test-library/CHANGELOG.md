@@ -1,3 +1,23 @@
+## [v1.286.0] - 2026-11-05
+### Added
+- [C-286] Safari TP 256 JSC DFG optimizer miscompilation fixture suite (10 constructs, tier-up A/B) [P1]
+- [W-609] Safari TP 256 CanvasTextDrawingStyles adds lang / fontKerning / fontStretch / fontVariantCaps / textRendering / direction:inherit [P1]
+- [B-411] Safari TP 256 six-defect WebGL/graphics cluster (gradient texture black pixels, BGRX VideoFrame, WebGL in workers, lazy framebuffer, GPU-reset context death) [P1]
+- [S-556] Safari TP 256 cross-origin iframe click wrongly activating same-origin ancestor :active — clickjacking-relevant state channel [P1]
+- [A-095] Safari TP 256 previous-tap-treated-as-hover pointer state-machine contamination for touch game controls [P1]
+- [B-412] Chrome 158 + Safari TP 256 convergence: object-fit/object-position/object-view-box on SVG in object/embed + degenerate-SVG sizing fixes [P2]
+- [W-610] Chrome 159 SVG Path Data API getPathData()/setPathData() structured SVGPathData command lists [P2]
+- [W-611] Chrome 159 MediaSession setMicrophoneActive()/setCameraActive() return Promise<undefined> awaitable state contract [P2]
+- [W-612] Edge 157 Origin Trial: User-Agent Image Replacement API — observe browser-initiated image replacement of page content [P2]
+- [C-287] Safari TP 256 module worker re-evaluates entry script when worker imports its own URL — singleton double-init guard [P2]
+
+### Sources — v1.286.0
+- Safari TP 256 release notes (webkit.org/blog/18602, Nov 4 2026) — full-text pass, 7 cases
+- Edge 157 Web Platform release notes (learn.microsoft.com, Nov 5 2026) — upstream re-list, 20-entry dedupe ledger, 1 fresh OT entry
+- chromestatuslite.com ?version=159 mirror flip to Chrome Release 159 Enabled(21) — first read, 2 cases; ?version=158 re-capture — 1 leftover co-mined
+- Required broad query coverage: (1) "HTML5 game testing 2026 new techniques" -> C-286, C-287, W-610 deterministic-fixture patterns; (2) "browser game bug report 2026" -> B-411, S-556, A-095 shipped-WebKit-defect mining; (3) "Chrome Edge Safari update 2026" -> W-609, W-610, W-611, W-612, B-412 same-week three-vendor surfaces; (4) "casual game UX complaint 2026" -> A-095, S-556 touch/press-feedback contracts; (5) "mobile game performance issue 2026" -> B-411 WebGL allocation/worker regressions, C-286 hot-loop corruption.
+- Same-source skips (no-re-mining rule): Arm Performance Studio post (P-248/P-249 v1.280.0), Keiko deterministic runner (W-556 clock overlap), donohoe.dev NYT offline-resume gripe (C-272 lineage).
+
 ## [v1.285.0] - 2026-11-04
 ### Added
 - 9 new machine-verifiable test cases from R402 (4h cycle 164). **This cycle mined the Nov 3 Chrome stable wave that landed AFTER the R401 probe window (Stable 157.0.8103.38/.39 — 213 fixes, 7 Criticals concentrated in Dawn/ANGLE/WebGL/Prerender/Geometry/Core; Extended Stable diverged to 156.0.8078.88 with 55 fixes; Android 157.0.8103.38; loose CVE-scan parity verified 213==213 / 55==55) + the brand-new WebKit Adaptive Dark Mode post (blog/18541, Nov 3, Safari 27.3 beta) + both WebTransport backlog items explicitly carried by v1.282.0 (reliability attributes + WebTransportReceiveStream/getStats — re-verified entry-level on the Chrome 158 Enabled(18) mirror after 21→19→18 count oscillation) + Chrome 158 WebHID-on-Android default enablement (W-489 graduation) + skippable post-run tally UX (Nex Playground community feedback). release-notes/157 STILL 404 one day after 157 stable shipped — feed remains the authoritative stable surface (third consecutive overnight flip). Unstar.app Nov ad material skipped as same-source with B-363; Roblox-Browser-Play settings-persistence nugget deferred as thin single-report.**
