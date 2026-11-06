@@ -1,3 +1,40 @@
+## [v1.287.0] - 2026-11-06
+
+### Added — 10 new machine-verifiable test cases (R404, 4h cycle 166)
+
+- [W-613] Chrome 159 `WebTransport.exportKeyingMaterial()` (255-byte label/context, 1–4096 output, H3 CONNECT stream-ID context binding) + Firefox 160 BREAKING call signature (context required, `outputLength`, previously fixed 32 bytes) — multiplayer handshake feature-probe gate [P1]
+- [W-614] Firefox 160 removes non-standard `incomingHighWaterMark`/`outgoingHighWaterMark`, ships spec `incoming/outgoingMaxBufferedDatagrams` datagram-count backpressure with `in`-operator detection contract [P1]
+- [W-615] Chrome 159 + Firefox 160 `WebTransportOptions.datagramsReadableType: "bytes"` → readable byte stream + BYOB zero-allocation datagram reads (option-probe capability gate) [P2]
+- [B-413] Chrome 159 background layer count independence — computed `background-*` list length keeps the author's comma-count; used-value raster must stay pixel-identical [P1]
+- [B-414] Chrome 159 makes `AccentColor`/`AccentColorText` follow the effective `accent-color` — reverses B-300's OS-accent expectation; `accent-color: auto` control keeps the legacy path green [P2]
+- [B-415] Chrome 159 `CSSImportRule.styleSheet === null` when no associated stylesheet (incl. false `supports()` condition) — null-gate before cssRules traversal [P2]
+- [W-616] Chrome 159 Regular Expression Buffer Boundaries `\A`/`\z`/`\Z` in u/v-mode regexps — U+2028/newline end-of-string spoofing fixtures for name/chat validators, legacy-mode trap [P2]
+- [B-416] Safari TP 256 SVG text trio — SVG 2 text layout algorithm (324088), `textPath` re-layout when `d` changes on a `display:none` path (323938), % `y`/`dy` resolve against viewport HEIGHT (323847) [P1]
+- [B-417] Safari TP 256 WebGPU cluster — `texture-component-swizzle` createView (324543), GPUTexture/GPUBindGroup release fix (323838), ImageBitmap→texture copy fix (324352), offscreen readback perf (323834) [P2]
+- [B-418] Safari TP 256 media cluster — MediaRecorder timeslice-stop final-chunk loss (324405), WebCodecs FLAC always-fail fix (324640), Opus >2ch (324615), WebVTT exact alignment keywords (324444) [P2]
+
+### Sources — v1.287.0
+
+- https://chromestatuslite.com/?version=159 — Chrome Release 159 Enabled-by-default full-text pass (21 cards / 22 unique feature IDs): primary URL for W-613 (4860330806214656), W-615 (5148774971342848), B-413 (5144333908049920), B-414 (6207138742534144), B-415 (5123480866783232), W-616 (5187917373898752). WebTransportError alignment (5158277221580800) flipped FLAGGED→Enabled — candidate deferred to R405 (10-case cap), re-probe required.
+- https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/160 — Firefox 160 stable release notes live 2026-11-06 (landing day): primary URL for W-613 (Firefox bug 2079306), W-614 (2023587), W-615 (2007755); headers/responseHeaders (2081470/2033220) = cross-vendor convergence with W-483/W-551, no new case; PlatformInfo arm64 (2080310) add-on surface skipped; experimental CSSNumericValue arithmetic — graduation probe queued.
+- https://webkit.org/blog/18602/release-notes-for-safari-technology-preview-256/ — TP256 full re-read, R403 deferred backlog mined: primary URL for B-416/B-417/B-418 (all bug IDs in-case).
+- https://chromereleases.googleblog.com + https://browsercalendar.com/ — cadence corroboration: Chrome 158 Early Stable desktop 158.0.8127.18/.19 (Nov 4), Android stable 157.0.8103.46 + Android early-stable 158.0.8127.22 (Nov 5), Beta 158.0.8127.18/.13/.22 (Nov 4); Chrome 158 stable ETA 2026-11-17, Edge 157 stable ETA 2026-11-30, FF160 2026-11-06 landed. No new case (Early-Stable cohort lineage pinned by W-565/W-575/W-604-era).
+- Negative controls kept: developer.chrome.com/release-notes/157 still 404 (4th consecutive cycle); learn.microsoft.com Edge web-platform release-notes/158 still 404 (11th consecutive cycle); Edge release-notes channel unchanged.
+- Same-mechanism rejections (corroboration only, no duplicate cases): congestionControl→W-594; Sanitizer javascriptURLs→S-547+W-595; @property optional descriptors→B-307; prerender cross-origin frames→C-284/C-285; Enhanced TextMetrics→W-527/W-569; single-axis scroll containers→W-565/W-575 enumeration; AudioWorklet shared MessagePort→W-529.
+- Required broad query coverage (5 mandated strings, verbatim): (1) "HTML5 game testing 2026 new techniques" → Keiko (unchanged R403 skip), arxiv 2208.02335 (2022 golden-diff lineage), defold/headspin/gamemaker tooling docs — skip, corroborate B-416 deterministic A/B pattern; (2) "browser game bug report 2026" → itch.io/Travian/eternagame/coolrpg bug threads — product-specific, no transferable mechanism (skip); (3) "Chrome Edge Safari update 2026" → browsercalendar.com schedule source (FF160 landing day, Chrome 158 ETA), web.dev July post already-mined period, androidauthority Chrome paste item → R405 clipboard verification; (4) "casual game UX complaint 2026" → appmagic/azurgames/cinevva market reports — no testable mechanism (skip); B-413/B-414 are the UX-visible palette harvest; (5) "mobile game performance issue 2026" → Arm PerfStudio (same source as P-248/P-249), Pixel 11 / DK Bananza threads (device-level, skip), unity blog (generic) — corroborate B-417 readback budget.
+
+### Fixed
+
+- Repaired the R403 filename mismatch: MASTER-TEST-CASES-v1.285.0.md contained the v1.286.0 section because R403 skipped the git mv; renamed to MASTER-TEST-CASES-v1.286.0.md (commit 7e79d6c1fc) before this v1.287.0 bump.
+
+### Next-cycle priority re-probes
+
+- Chrome 158 stable 2026-11-17 (Early Stable 158.0.8127.18/.19 shipped Nov 4 — recheck daily); release-notes/157 flip (day 4 of 404).
+- csl 159 enabled-but-unmined: SpeechRecognitionResult timestamps (5811907077472256), WebTransportError alignment/serialization (5158277221580800), Datagram writable sendGroup/sendOrder deep contract (5183354944225280), single-axis scroll-snap snap-area details (5086608215900160).
+- FF160 experimental CSSNumericValue arithmetic graduation probe; TP256 unmined: unicode-bidi ::cue on WebVTT, WKWebsiteDataStore proxy connection pool, audio trimmed-timing accuracy, Geolocation secure-context, VideoFrame colorSpace items.
+- Edge 157 stable 2026-11-30 + Edge release-notes channel; Roblox settings-persistence follow-up (carried from v1.285.0).
+
+
 ## [v1.286.0] - 2026-11-05
 ### Added
 - [C-286] Safari TP 256 JSC DFG optimizer miscompilation fixture suite (10 constructs, tier-up A/B) [P1]
