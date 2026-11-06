@@ -2415,6 +2415,52 @@
   //   3) Dedupe via data-static-tracked attribute; emit one event per fill.
   //   4) Skip ins inside containers already claimed by fillInGameBanner() (their
   //      fill events are emitted by the existing 300ms poll loop).
+  // R1058 (2026-11-06): Clamp AdSense auto-ads orphan <ins> injected as direct
+  // BODY children. Production probes on /antistress/ (BI vitals_rating.cls POOR
+  // 0.409/0.352 constant, desktop Chrome/Edge) show the SDK inserting an
+  // in-flow body-level ins that grows 0→438→1004px, pushing #gz-ad-r520 /
+  // #gz-ad-below-game / .gz-related-games down 330-390px per fill. Our own
+  // placements (manual pushes + injected banners) live inside #gz-ad-* /
+  // .gz-injected-banner containers that already reserve + cap at 280px
+  // (R362/R636 standard); only the body-level auto placement was unbounded.
+  // Apply the same 280px cap synchronously at insertion (MutationObserver
+  // microtask runs before the next layout pass) so late creative growth can
+  // never reflow the document.
+  function initOrphanAutoInsClamp() {
+    if (state.orphanInsClampActive) return;
+    state.orphanInsClampActive = true;
+    function clampOrphan(ins) {
+      if (ins.__gzR1058Clamped) return;
+      ins.__gzR1058Clamped = 1;
+      // Only direct-body orphans. Manual/auto-fill ins inside our reserved
+      // containers keep their existing (already CLS-safe) geometry.
+      if (!ins.parentElement || ins.parentElement.tagName !== 'BODY') return;
+      ins.style.setProperty('max-height', '280px', 'important');
+      ins.style.setProperty('overflow', 'hidden', 'important');
+      ins.style.setProperty('contain', 'layout paint', 'important');
+    }
+    try {
+      var pre = document.querySelectorAll('body > ins.adsbygoogle');
+      for (var i = 0; i < pre.length; i++) clampOrphan(pre[i]);
+      var mo = new MutationObserver(function (muts) {
+        for (var m = 0; m < muts.length; m++) {
+          var added = muts[m].addedNodes;
+          if (!added) continue;
+          for (var j = 0; j < added.length; j++) {
+            var n = added[j];
+            if (n.nodeType === 1 && n.tagName === 'INS' && n.classList &&
+                n.classList.contains('adsbygoogle')) clampOrphan(n);
+          }
+        }
+      });
+      mo.observe(document.body, { childList: true });
+      // Auto ads inject within the first ~10s; stop observing after 30s to keep
+      // the observer from churning on SPA-ish DOM churn for the rest of a long
+      // play session.
+      setTimeout(function () { try { mo.disconnect(); } catch (e) {} }, 30000);
+    } catch (e) { /* non-fatal */ }
+  }
+
   function initStaticInsFillObserver() {
     if (state.staticInsObserverActive) return;
     state.staticInsObserverActive = true;
@@ -2622,6 +2668,7 @@
     // an ad was needed. Loading early is essentially free (single 30KB script,
     // preconnect already in place) and unlocks 30-50% more fill.
     loadAdSenseScript();
+    initOrphanAutoInsClamp(); // R1058: must run in the same tick as auto-ads preload
     // Preconnect to Google AdSense / DoubleClick
     ['https://pagead2.googlesyndication.com', 'https://googleads.g.doubleclick.net'].forEach(function(origin) {
       try {
