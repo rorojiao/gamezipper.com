@@ -767,6 +767,21 @@ function splashPlayAction(source) {
   maybeShowDailyReward();
 }
 let winTimer = 0;
+// ── R1057 (2026-11-06): win-screen auto-advance + shared button layout ──
+// The win card is the last screen every winner sees, but continuing required an
+// exact tap on the 90×40 "Next ▶". Two real defects found in BI-driven audit:
+//   1) the 4-button row (4×90+3×8 = 384px) OVERFLOWS viewports ≤384px wide —
+//      on a 320px phone the Menu button is clipped by 32px;
+//   2) the tap handler had its own copy of the layout with hit Y at 210/193
+//      while renderWin draws at 223/206 — a 13px hit-test skew.
+// Water-sort competitors (Water Sort Puzzle, Magic Sort!) chain into the next
+// level automatically — the "one more" compulsion loop. Fix: one layout source
+// of truth (winBtnLayout) used by render + hit-test, and idle auto-advance to
+// the next level after WIN_AUTO_MS with a visible countdown on Next. Cancelled
+// by any win-screen button tap, the share sheet, or an open daily-reward popup.
+let winAutoCancelled = false;
+const WIN_AUTO_MS = 4200;          // idle on win card -> next level
+const WIN_AUTO_COUNTDOWN_MS = 2500; // countdown render starts here
 let confetti = [];
 let bgParticles = [];
 let sortedParticles = []; // {x,y,vx,vy,life,size} star particles from completed bottles
@@ -3143,6 +3158,7 @@ function completePour() {
     stopSolve();
     state = "win";
     winTimer = Date.now();
+    winAutoCancelled = false; // R1057: fresh win -> arm the auto-advance
     // [MS-tracker] fire level_complete event with stars, moves, duration
     try { window.__msTrack && window.__msTrack('ms_level_complete', { lv: currentLevel, n: numColors, moves: moves, autoSolve: solving }); } catch(e){}
     // Stars: based on moves vs numColors (scales with puzzle complexity)
@@ -5903,6 +5919,23 @@ function renderGame() {
   }
 }
 
+// R1057: single source of truth for the win-card button layout. renderWin()
+// and the win tap handler previously carried separate copies — the copies
+// disagreed on Y by 13px and hard-coded 90px widths that clipped on phones.
+function winBtnLayout() {
+  const cardH = 300;
+  const cardY = (H - cardH) / 2 - 15;
+  const gap = 8;
+  const hasNext = currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1];
+  const n = hasNext ? 4 : 3;
+  const btnW = Math.min(90, (W - 24 - (n - 1) * gap) / n);
+  const btnH = 40;
+  const totalW = n * btnW + (n - 1) * gap;
+  const bsX = W / 2 - totalW / 2;
+  const by = cardY + (streakCount >= 2 || getMilestoneEmoji(currentLevel) ? 223 : 206);
+  return { btnW, btnH, bsX, by, gap, hasNext };
+}
+
 function renderWin() {
   drawBackground();
   renderGame(); // draw game behind
@@ -6090,17 +6123,20 @@ function renderWin() {
   X.textBaseline = "top";
   X.fillText(overallPct + "% complete (" + totalCompleted + "/" + TOTAL_LEVELS + ")", W / 2, wProgY + wProgH + 2);
 
-  // Buttons
-  const btnW = 90, btnH = 40, btnGap = 8;
-  const totalBtns = (currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1]) ? 4 : 3;
-  const totalW = totalBtns * btnW + (totalBtns - 1) * btnGap;
-  const btnStartX = W / 2 - totalW / 2;
-  const by = cardY + (streakCount >= 2 || milestone ? 223 : 206);
+  // Buttons — R1057: shared adaptive layout (winBtnLayout) instead of the old
+  // hard-coded 90px copy that overflowed ≤384px viewports.
+  const wL = winBtnLayout();
+  const btnW = wL.btnW, btnH = wL.btnH, btnGap = wL.gap;
+  const totalBtns = wL.hasNext ? 4 : 3;
+  const btnStartX = wL.bsX;
+  const by = wL.by;
   drawButton(btnStartX, by, btnW, btnH, "↻ Retry", hoverBtn === 20, false);
   let btnIdx = 1;
-  const hasNext = currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1];
+  const hasNext = wL.hasNext;
+  let nextBtnX = 0;
   if (hasNext) {
-    drawButton(btnStartX + btnIdx * (btnW + btnGap), by, btnW, btnH, "Next ▶", hoverBtn === 21, true);
+    nextBtnX = btnStartX + btnIdx * (btnW + btnGap);
+    drawButton(nextBtnX, by, btnW, btnH, "Next ▶", hoverBtn === 21, true);
     btnIdx++;
   }
   // [R879 2026-10-11] Win-overlay share label polish: "Share" → "📤 Share Win".
@@ -6116,6 +6152,29 @@ function renderWin() {
   drawButton(btnStartX + btnIdx * (btnW + btnGap), by, btnW, btnH, "📤 Share Win", hoverBtn === 23, true);
   btnIdx++;
   drawButton(btnStartX + btnIdx * (btnW + btnGap), by, btnW, btnH, "Menu", hoverBtn === 22, false);
+
+  // R1057: auto-advance countdown — a veil sweeps off the Next button from
+  // WIN_AUTO_COUNTDOWN_MS until update() fires the advance at WIN_AUTO_MS.
+  // Any button tap leaves the win state first, so this is self-cancelling;
+  // share/daily-reward overlays additionally latch winAutoCancelled or block
+  // the advance directly (see update()).
+  if (hasNext && !winAutoCancelled && !dailyRewardOpen) {
+    const autoEl = Date.now() - winTimer;
+    if (autoEl >= WIN_AUTO_COUNTDOWN_MS && autoEl < WIN_AUTO_MS) {
+      const frac = Math.min(1, (autoEl - WIN_AUTO_COUNTDOWN_MS) / (WIN_AUTO_MS - WIN_AUTO_COUNTDOWN_MS));
+      X.save();
+      X.fillStyle = "rgba(16,20,42,0.45)";
+      roundRect(nextBtnX + btnW * frac, by, Math.max(2, btnW * (1 - frac)), btnH, Math.min(8, btnW * (1 - frac) / 2));
+      X.fill();
+      const pulse = 0.5 + 0.5 * Math.sin(now * 0.005);
+      X.fillStyle = `rgba(162,155,254,${0.45 + 0.25 * pulse})`;
+      X.font = "600 11px 'Nunito',sans-serif";
+      X.textAlign = "center";
+      X.textBaseline = "middle";
+      X.fillText(`Next level in ${Math.max(1, Math.ceil((WIN_AUTO_MS - autoEl) / 1000))}s · tap a button to stay`, W / 2, by + btnH + 13);
+      X.restore();
+    }
+  }
 
   // Confetti
   for (const c of confetti) {
@@ -6168,6 +6227,20 @@ function update(dt) {
       transitionAlpha = 0;
       transitionScale = 1;
     }
+  }
+
+  // R1057: win-card idle -> auto-start next level (competitor compulsion loop;
+  // BI audit: continuing depended on an exact small-button tap). Guards:
+  //   - winAutoCancelled latches on fire (no double advance during the fade)
+  //     and on Share; any other win button leaves state "win" first.
+  //   - dailyRewardOpen: never yank the board out from under the reward popup.
+  //   - transitionState === 0: don't re-enter an in-flight transition.
+  if (state === "win" && transitionState === 0 && !winAutoCancelled && !dailyRewardOpen &&
+      currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1] &&
+      Date.now() - winTimer >= WIN_AUTO_MS) {
+    winAutoCancelled = true;
+    try { window.__msTrack && window.__msTrack('ms_win_auto_advance', { lv: currentLevel, n: numColors, autoSolve: solving }); } catch(e){}
+    initLevelTransition(currentLevel + 1);
   }
 
   if (animating) {
@@ -6707,17 +6780,14 @@ function onTap(px, py) {
 
   // ── Win ──
   if (state === "win") {
-    const cardW = Math.min(300, W * 0.85);
-    const cardH = 300;
-    const cardX = (W - cardW) / 2;
-    const cardY = (H - cardH) / 2 - 15;
-    const wBtnW = 90, wBtnH = 40, wBtnGap = 8;
-    const milestone = getMilestoneEmoji(currentLevel);
-    const hasNextBtn = currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1];
-    const totalBtns = hasNextBtn ? 4 : 3;
-    const totalBtnW = totalBtns * wBtnW + (totalBtns - 1) * wBtnGap;
-    const bsX = W / 2 - totalBtnW / 2;
-    const wBy = cardY + (streakCount >= 2 || milestone ? 210 : 193);
+    // R1057: shared layout — fixes the old copy's 13px hit-test skew
+    // (hit Y was 210/193 vs drawn 223/206) and the 90px-width overflow
+    // on ≤384px viewports that clipped the Menu button.
+    const wL = winBtnLayout();
+    const wBtnW = wL.btnW, wBtnH = wL.btnH, wBtnGap = wL.gap;
+    const hasNextBtn = wL.hasNext;
+    const bsX = wL.bsX;
+    const wBy = wL.by;
 
     // Retry button (index 0)
     if (hitTest(px, py, bsX, wBy, wBtnW, wBtnH)) {
@@ -6733,6 +6803,8 @@ function onTap(px, py) {
     }
     // Share button (index 2)
     if (hitTest(px, py, bsX + bIdx * (wBtnW + wBtnGap), wBy, wBtnW, wBtnH)) {
+      // R1057: the share sheet suspends JS; never auto-advance behind it.
+      winAutoCancelled = true;
       shareResult({ source: 'win' }); return;
     }
     bIdx++;
@@ -7206,7 +7278,7 @@ requestAnimationFrame(gameLoop);
 // a blank canvas). Removed: native requestAnimationFrame already handles
 // lifecycle, and browsers auto-cancel pending rAFs on page unload.
 </script>
-<script src="/gz-analytics.js?v=202611051630R1056" defer></script>
+<script src="/gz-analytics.js?v=202611071100R1062" defer></script>
 <script defer src="/adsterra-manager.js?v=R1055popex"></script><script defer src="/monetag-manager.js?v=v535deadzfillin2R966"></script>
 <!-- UX-OPT 2026-08-05 R383: R362 non-canvas AdSense CLS fix applied to all blog/*.html. Original: <div id="gz-ad-below-game"></div> + standalone <ins class="adsbygoogle"> as siblings — AdSense creative inflates 0->280px inside <ins> in flow, pushes downstream content. Fix: div becomes position:relative + contain:layout paint style + overflow:hidden + max-height:280px; faint "Sponsored" label inside; <ins> becomes position:absolute with height:100% so its creative overlays on the div without affecting flow. Same pattern as chess/ R362 proven (CLS 0.20 -> 0). -->
 <!-- R797 2026-09-22 ADS-OPT: extract static 737 ins from inside gz-ad-below-game (autoFillContainer hides it via display:none, blocking AdSense fill). Move to own parallel div for reliable fill. Proven pattern: /snake/ 737 in gz-ad-r451 fills 113/7d. -->

@@ -1,0 +1,80 @@
+=== bank / pool / hint ===
+512:let hintsLeft = 3;
+948:  hintsLeft = 3;
+1084:function showHint() {
+1085:  if (!currentPuzzle || hintsLeft <= 0) return;
+1108:  hintsLeft--;
+1109:  document.getElementById('hints-count').textContent = hintsLeft;
+1110:  document.getElementById('hints-display').textContent = `${hintsLeft}/3`;
+1111:  if (hintsLeft <= 0) {
+1129:function revealPuzzle() {
+1154:  const hintsUsed = 3 - hintsLeft;
+
+=== showHint body ===
+function showHint() {
+  if (!currentPuzzle || hintsLeft <= 0) return;
+  playSound('ding');
+
+  // Find first incomplete word
+  let targetWord = null;
+  let targetCell = null;
+
+  for (const w of currentPuzzle.words) {
+    if (completedWords.has(w.id)) continue;
+    const cells = getWordCells(w.id);
+    for (const {row, col} of cells) {
+      if (!userGrid[row][col] || userGrid[row][col] !== grid[row][col].letter) {
+        targetWord = w;
+        targetWord = w;
+        targetCell = {row, col};
+        break;
+      }
+    }
+    if (targetWord) break;
+  }
+
+  if (!targetWord || !targetCell) return;
+
+  hintsLeft--;
+  document.getElementById('hints-count').textContent = hintsLeft;
+  document.getElementById('hints-display').textContent = `${hintsLeft}/3`;
+  if (hintsLeft <= 0) {
+    document.getElementById('hint-btn').style.display = 'none';
+  }
+
+  userGrid[targetCell.row][targetCell.col] = grid[targetCell.row][targetCell.col].letter;
+  const cell = document.querySelector(`.cell[data-row="${targetCell.row}"][data-col="${targetCell.col}"]`);
+  if (cell) {
+    const inp = cell.querySelector('input');
+    if (inp) inp.value = grid[targetCell.row][targetCell.col].letter;
+    cell.classList.add('revealed');
+    cell.classList.add('correct');
+    setTimeout(() => cell.classList.remove('revealed'), 1500);
+  }
+
+  selectWord(targetWord.id);
+  checkWordCompletion();
+}
+
+=== revealPuzzle body ===
+function revealPuzzle() {
+  playSound('click');
+  if (!currentPuzzle) return;
+  for (let r = 0; r < currentPuzzle.rows; r++) {
+    for (let c = 0; c < currentPuzzle.cols; c++) {
+      if (grid[r][c]) {
+        userGrid[r][c] = grid[r][c].letter;
+        const cell = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+        if (cell) {
+          const inp = cell.querySelector('input');
+          if (inp) inp.value = grid[r][c].letter;
+          cell.classList.add('revealed');
+        }
+      }
+    }
+  }
+  currentPuzzle.words.forEach(w => {
+    completedWords.add(w.id);
+    markWordComplete(w.id);
+  });
+}

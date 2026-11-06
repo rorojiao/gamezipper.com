@@ -155,6 +155,9 @@ canvas#game{position:absolute;inset:0;width:100%;height:100%;touch-action:none;d
 }
 .btn:hover{background:linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.05))}
 .btn:active{transform:scale(.96)}
+/* R1062 (2026-11-07): pressed ack class — gz-analytics dead_click/rage detectors
+   snapshot className at click time; a held class ≥1700ms proves the handler ran. */
+.btn.pressed{box-shadow:0 0 0 2px var(--neon-gold,#ffd24a),0 0 16px rgba(255,210,74,.5);transform:scale(.97)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.primary{
   background:linear-gradient(180deg,#7a3dff,#a44dff);
@@ -377,7 +380,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" as="style" onload="this.rel='stylesheet';this.onload=null"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap"></noscript>
-<script src="/gz-analytics.js?v=202611051630R1056" defer></script>
+<script src="/gz-analytics.js?v=202611071100R1062" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
 <meta content="ca-pub-8346383990981353" name="google-adsense-platform-account">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
@@ -1134,8 +1137,18 @@ function showTutorialStep(){
   $('tutDots').innerHTML = TUT_STEPS.map((_,i)=>`<span class="tut-step-dot ${i===tutStep?'on':''}"></span>`).join('');
   $('tutNext').textContent = tutStep === TUT_STEPS.length-1 ? 'Got it!' : 'Next';
 }
-$('tutNext').onclick = () => {
+$('tutNext').onclick = function() {
   Audio.play('tap_click');
+  /* R1062 (2026-11-07): visible pressed ack (hold 1700ms ≥ gz-analytics dead_click
+     1.5s snapshot window). BI 11-05 21:09-21:13 rage_click×3 BUTTON.btn.primary.small
+     (tutNext) — tutorial card swaps step content; button text Next→Got it! changes
+     but className never does, so multi-tap through steps read as no-progress rage.
+     Own-press guard skips when a previous ack is still on (rapid taps = progress).
+     NOTE: regular function (not arrow) so `this` = button. */
+  if (!this.classList.contains('pressed')) {
+    this.classList.add('pressed');
+    setTimeout(()=>{ try{this.classList.remove('pressed');}catch(e){} },1700);
+  }
   tutStep++;
   if (tutStep >= TUT_STEPS.length){
     save.tutorialDone = true; persistSave();

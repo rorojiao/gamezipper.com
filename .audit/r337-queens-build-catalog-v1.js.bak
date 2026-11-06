@@ -1,0 +1,112 @@
+#!/usr/bin/env node
+/* R337 queens — PRODUCTION level generator.
+ *
+ * Writes a new PUZZLE_DATA catalog where EVERY level is:
+ *   - UNIQUELY SOLVABLE (exactly one solution under the engine's rules), and
+ *   - CONNECTED (every region is one contiguous blob, as the game draws it).
+ *
+ * INDEPENDENT VERIFICATION (three separate implementations must agree):
+ *   1. our own exact enumerator (exactCount, limit=5)
+ *   2. the PAGE's own countSolutions() (parsed out of queens/index.html)
+ *   3. the assumption-free brute force in .audit/r337-queens-brute.js
+ */
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+const G = require('./r337-queens-gen7.js');
+
+const HERE = __dirname;
+const html = fs.readFileSync(path.join(HERE, '..', 'queens', 'index.html'), 'utf8');
+
+/* assumption-free brute force — completely separate implementation.
+ * Enumerates row-major with a previous-row adjacency filter, then re-validates
+ * EVERY completed placement with a full pairwise rule check written from the
+ * engine's rule list (one per row / one per col / one per region / no two
+ * crowns within the 8-neighbourhood). */
+function bruteCount(n, regions) {
+  let count = 0;
+  const colHas = new Array(n).fill(false);
+  const regHas = new Map();
+  const placed = new Array(n).fill(-1);
+  function pairwiseValid() {
+    const rows = new Set(), cols = new Set(), regs = new Set();
+    for (let r = 0; r < n; r++) {
+      const c = placed[r];
+      if (c < 0) return false;
+      if (rows.has(r)) return false; rows.add(r);
+      if (cols.has(c)) return false; cols.add(c);
+      const reg = regions[r][c];
+      if (regs.has(reg)) return false; regs.add(reg);
+    }
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      if (Math.abs(i - j) <= 1 && Math.abs(placed[i] - placed[j]) <= 1) return false;
+    }
+    return true;
+  }
+  (function bt(row) {
+    if (count >= 5) return;
+    if (row === n) { if (pairwiseValid()) count++; return; }
+    for (let c = 0; c < n; c++) {
+      if (colHas[c]) continue;
+      const reg = regions[row][c];
+      if (regHas.get(reg)) continue;
+      // 8-neighbourhood adjacency: only the PREVIOUS row can be adjacent
+      // (|dr| <= 1), and within it |dc| <= 1.
+      if (row > 0 && Math.abs(placed[row - 1] - c) <= 1) continue;
+      placed[row] = c; colHas[c] = true; regHas.set(reg, true);
+      bt(row + 1);
+      colHas[c] = false; regHas.delete(reg); placed[row] = -1;
+    }
+  })(0);
+  return count;
+}
+
+const SIZES = [7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11];
+const out = [];
+const t0 = Date.now();
+let seedCounter = 1000;
+
+for (let id = 1; id <= 30; id++) {
+  const n = SIZES[id - 1];
+  let made = null, madeSol = null, tries = 0;
+  while (!made && tries < 400) {
+    tries++;
+    seedCounter++;
+    const sol = G.ctx.__pq(n, G.mulberry32(seedCounter * 31 + n));
+    if (!sol) continue;
+    for (let att = 0; att < 12 && !made; att++) {
+      const MINREG = Math.max(3, Math.floor(n / 2));
+      const g = G.buildUnique(n, sol, G.mulberry32(seedCounter * 7919 + n * 104729 + att * 977), 400000, MINREG);
+      if (!g) continue;
+      made = g; madeSol = sol;
+    }
+  }
+  if (!made) { console.error('FAILED to build level ' + id + ' (n=' + n + ')'); process.exit(1); }
+
+  // three-way verification
+  const exact = G.exactCount(n, made, 5);
+  const page = G.ctx.__cs(n, made, 5);
+  const brute = bruteCount(n, made);
+  const err = G.validate(n, made, madeSol);
+  const conn = G.connectedOK(n, made);
+  if (!(exact === 1 && page === 1 && brute === 1 && err === null && conn)) {
+    console.error('VERIFY FAILED level ' + id + ': exact=' + exact + ' page=' + page + ' brute=' + brute + ' err=' + err + ' conn=' + conn);
+    process.exit(1);
+  }
+  // region size sanity
+  const sizes = [];
+  for (let R = 0; R < n; R++) {
+    let k = 0;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (made[r][c] === R) k++;
+    sizes.push(k);
+  }
+  const minS = Math.min(...sizes), maxS = Math.max(...sizes);
+  if (minS < Math.max(3, Math.floor(n / 2))) { console.error('level ' + id + ' has a tiny region (' + minS + ')'); process.exit(1); }
+  out.push({ id, n, solution: madeSol, regions: made });
+  console.log('L' + id + ' n=' + n + ' unique+connected  regionSize ' + minS + '..' + maxS + '  tries=' + tries + '  (' + ((Date.now() - t0) / 1000).toFixed(1) + 's)');
+}
+
+const js = 'var PUZZLE_DATA=' + JSON.stringify(out) + ';';
+fs.writeFileSync(path.join(HERE, 'queens-puzzle-data.new.js'), js);
+console.log('---');
+console.log('wrote ' + out.length + ' levels to .audit/queens-puzzle-data.new.js (' + js.length + ' bytes) in ' + ((Date.now() - t0) / 1000).toFixed(1) + 's');

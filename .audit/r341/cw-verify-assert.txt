@@ -1,0 +1,80 @@
+=== verify_engine.js: clue/answer/count assertions ===
+3: * 'input'/'keydown' dispatches (the engine's own listeners), clue-item clicks, inline
+5: * revealPuzzle/showStart). Covers: data validity (intersections/bounds, all 30),
+6: * ALL 30 puzzles solved through real typing (3 stars), timer interval, hint x3
+13:let pass = 0, fail = 0; const fails = [];
+14:const T = (n, ok, info) => { if (ok) pass++; else { fail++; fails.push(n + ': ' + info); } };
+19:const N = g.call('PUZZLES.length');
+24:  const P = g.call('PUZZLES');
+28:    for (const w of p.words) for (let i = 0; i < w.answer.length; i++) {
+32:      if (m.has(k) && m.get(k) !== w.answer[i]) bad += 'P' + (pi + 1) + ' clash@' + k + ';';
+33:      if (!m.has(k)) m.set(k, w.answer[i]);
+44:  for (const w of P.words) for (let i = 0; i < w.answer.length; i++) {
+46:    type(r, c, w.answer[i]);
+48:  g.pump(25); // 300ms puzzleComplete timer
+69:  fixed.join('') === p2.words[0].answer.slice(0, 3),
+70:  'left=' + g.call('hintsLeft') + ' ug0=' + JSON.stringify(fixed) + ' want=' + p2.words[0].answer.slice(0, 3));
+112:// clue click: first down clue is d1, whose first cell re-selects a1 (same priority rule)
+113:const clueEl = E('down-clues').children[0];
+114:clueEl.onclick && clueEl.onclick();
+115:T('clue-click', g.call('selectedWordId') === 'a1', g.call('selectedWordId'));
+119:// wrong answer flash path (no crash) + autosave debounce
+131:  if (g.call('PUZZLES.indexOf(currentPuzzle)') !== i) { stuck = 'P' + (i + 1) + ' not active'; break; }
+139:      g.call('completedWords.size') === g.call('currentPuzzle.words.length');
+140:    if (!allFilled) stuck = 'P30 reveal incomplete';
+143:T('all-30-solved', !stuck, stuck || '30/30');
+154:const out = { pass, fail, total: pass + fail, verdict: fail === 0 ? 'PASS' : 'FAIL', fails: fails.slice(0, 6),
+159:process.exit(fail === 0 ? 0 : 1);
+
+=== renderClues ===
+function renderClues(puzzle) {
+  const across = puzzle.words.filter(w => w.dir === 'across').sort((a, b) => a.num - b.num);
+  const down = puzzle.words.filter(w => w.dir === 'down').sort((a, b) => a.num - b.num);
+  const acrossEl = document.getElementById('across-clues');
+  const downEl = document.getElementById('down-clues');
+  if (!acrossEl || !downEl) return;
+
+  acrossEl.innerHTML = '';
+  downEl.innerHTML = '';
+
+  across.forEach(w => {
+    const item = document.createElement('div');
+    item.className = 'clue-item';
+    item.id = `clue-${w.id}`;
+    item.innerHTML = `<span class="num">${w.num}.</span> ${w.clue}`;
+    // 2026-08-11 R393: transient .clicked class for dead_click detector coverage
+    item.onclick = () => {
+      item.classList.add('clicked');
+      setTimeout(() => item.classList.remove('clicked'), 1700);
+      selectWord(w.id);
+      playSound('click');
+    };
+    acrossEl.appendChild(item);
+  });
+
+  down.forEach(w => {
+    const item = document.createElement('div');
+    item.className = 'clue-item';
+    item.id = `clue-${w.id}`;
+    item.innerHTML = `<span class="num">${w.num}.</span> ${w.clue}`;
+    // 2026-08-11 R393: transient .clicked class for dead_click detector coverage
+    item.onclick = () => {
+      item.classList.add('clicked');
+      setTimeout(() => item.classList.remove('clicked'), 1700);
+      selectWord(w.id);
+      playSound('click');
+    };
+    downEl.appendChild(item);
+  });
+}
+
+function getWordCells(wordId) {
+  const w = currentPuzzle.words.find(x => x.id === wordId);
+  if (!w) return [];
+  const cells = [];
+  for (let i = 0; i < w.answer.length; i++) {
+    const r = w.dir === 'across' ? w.row : w.row + i;
+    const c = w.dir === 'across' ? w.col + i : w.col;
+    cells.push({row: r, col: c});
+  }
+  return cells;

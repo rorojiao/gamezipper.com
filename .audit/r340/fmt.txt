@@ -1,0 +1,108 @@
+=== opencode availability ===
+ls: cannot access '/home/junze/.npm-global/bin/opencode': No such file or directory
+opencode NOT on PATH
+
+=== pentomino levels.json first 2 records ===
+top keys: [ 'levels' ]
+count: 30
+{
+ "rows": 1,
+ "cols": 5,
+ "outline": [
+  "#####"
+ ],
+ "pieces": [
+  "I"
+ ],
+ "solution": [
+  "IIIII"
+ ],
+ "tier": "Beginner"
+}
+---
+{
+ "rows": 4,
+ "cols": 3,
+ "outline": [
+  "###",
+  "###",
+  "###",
+  "#.."
+ ],
+ "pieces": [
+  "U",
+  "Y"
+ ],
+ "solution": [
+  "YUU",
+  "YYU",
+  "YUU",
+  "Y.."
+ ],
+ "tier": "Easy"
+}
+
+=== pentomino levels-data.js first 700 chars ===
+const LEVELS=[{"t":"Beginner","r":1,"c":5,"o":[1,1,1,1,1],"s":[1,1,1,1,1],"p":["I"]},{"t":"Beginner","r":5,"c":1,"o":[1,1,1,1,1],"s":[1,1,1,1,1],"p":["I"]},{"t":"Beginner","r":2,"c":4,"o":[1,1,1,1,1,0,0,0],"s":[3,3,3,3,3,-1,-1,-1],"p":["N"]},{"t":"Beginner","r":2,"c":4,"o":[1,1,1,1,1,0,0,0],"s":[2,2,2,2,2,-1,-1,-1],"p":["L"]},{"t":"Beginner","r":1,"c":5,"o":[1,1,1,1,1],"s":[1,1,1,1,1],"p":["I"]},{"t":"Beginner","r":2,"c":4,"o":[1,1,1,1,1,0,0,0],"s":[3,3,3,3,3,-1,-1,-1],"p":["N"]},{"t":"Easy","r":4,"c":3,"o":[1,1,1,1,1,1,1,1,1,1,0,0],"s":[4,4,4,5,4,4,5,5,5,5,-1,-1],"p":["T","P"]},{"t":"Easy","r":2,"c":7,"o":[1,1,1,1,1,1,1,1,1,1,0,0,0,0],"s":[4,4,1,1,1,1,1,4,4,4,-1,-1,-1,-1],"p":["P","I"]},{"t
+
+=== gen_levels.py PENTOMINOES table ===
+#!/usr/bin/env python3
+import os as _gzos
+_GZ_DIR = _gzos.path.dirname(_gzos.path.abspath(__file__))
+import os
+"""Pentomino Fill level generator.
+
+Rules: given an outline shape and a subset of pentomino pieces, place pieces
+inside the outline so they fully cover it without overlap. Each piece can be
+rotated (and reflected for asymmetric pieces).
+
+Strategy:
+  1. Hand-craft outline shapes per tier with known-unique solution.
+  2. Verify each level has exactly 1 valid placement via backtracking solver.
+  3. If a hand-crafted shape fails, regenerate with a different shape.
+
+Difficulty tiers (6 levels each, 30 total):
+  - Beginner: 5-10 cells (1-2 pieces), simple shapes
+  - Easy:     15-20 cells (3-4 pieces), 1 cut
+  - Medium:   20-25 cells (4-5 pieces), 2 cuts
+  - Hard:     25-30 cells (5-6 pieces), complex shapes
+  - Expert:   30-35 cells (6-7 pieces), irregular shapes
+"""
+import json
+import random
+import sys
+from copy import deepcopy
+
+# 12 standard pentominoes. F is shown; F' (mirror) is generated via reflection.
+PENTOMINOES = {
+    'F': [(0, 1), (1, 0), (1, 1), (1, 2), (2, 0)],
+    'I': [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)],
+    'L': [(0, 0), (1, 0), (2, 0), (3, 0), (3, 1)],
+    'N': [(0, 1), (1, 1), (2, 1), (3, 0), (3, 1)],
+    'P': [(0, 0), (0, 1), (1, 0), (1, 1), (2, 0)],
+    'T': [(0, 0), (0, 1), (0, 2), (1, 1), (2, 1)],
+    'U': [(0, 0), (0, 1), (1, 0), (2, 0), (2, 1)],
+    'V': [(0, 0), (1, 0), (2, 0), (2, 1), (2, 2)],
+    'W': [(0, 0), (1, 0), (1, 1), (2, 1), (2, 2)],
+    'X': [(0, 1), (1, 0), (1, 1), (1, 2), (2, 1)],
+    'Y': [(0, 1), (1, 1), (2, 0), (2, 1), (3, 1)],
+    'Z': [(0, 0), (0, 1), (1, 1), (2, 1), (2, 2)],
+}
+
+
+def normalize(piece):
+    min_r = min(r for r, c in piece)
+    min_c = min(c for r, c in piece)
+    return tuple(sorted((r - min_r, c - min_c) for r, c in piece))
+
+
+def rotate_cw(piece):
+    return tuple(sorted((-c, r) for r, c in piece))
+
+
+def reflect(piece):
+    return tuple(sorted((r, -c) for r, c in piece))
+
+
+def all_orientations(name):
+    base = PENTOMINOES[name]

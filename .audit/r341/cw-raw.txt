@@ -1,0 +1,85 @@
+=== P0 raw definition (lines 4-24) ===
+const PUZZLES = [
+  {
+    title: "Weather Watch",
+    difficulty: "easy",
+    rows: 7, cols: 7,
+    words: [
+      {id:'a1',dir:'across',row:0,col:0,answer:'SUNNY',clue:'Bright and clear weather (5)',num:1},
+      {id:'a6',dir:'across',row:2,col:0,answer:'CLOUD',clue:'Sky cotton (5)',num:6},
+      {id:'a7',dir:'across',row:4,col:0,answer:'RAIN',clue:'Water from sky (4)',num:7},
+      {id:'d1',dir:'down',row:0,col:0,answer:'SEC',clue:'Fill in (3)',num:1},
+      {id:'d2',dir:'down',row:0,col:1,answer:'URL',clue:'Fill in (3)',num:2},
+      {id:'d3',dir:'down',row:0,col:2,answer:'NCO',clue:'Fill in (3)',num:3},
+      {id:'d4',dir:'down',row:0,col:3,answer:'NOUS',clue:'Fill in (4)',num:4},
+      {id:'d5',dir:'down',row:0,col:4,answer:'YODA',clue:'Fill in (4)',num:5}
+    ]
+  },
+  {
+    title: "Color Palette",
+    difficulty: "easy",
+    rows: 7, cols: 7,
+    words: [
+
+=== buildGrid (640-700) ===
+  const overlay = document.getElementById('win-overlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+// ── Grid Building ─────────────────────────────────────────────────────────────
+function buildGrid(puzzle) {
+  const { rows, cols, words } = puzzle;
+  const g = Array.from({length: rows}, () => Array(cols).fill(null));
+  const u = Array.from({length: rows}, () => Array(cols).fill(''));
+
+  const numberMap = {};
+  const sortedWords = [...words].sort((a, b) => {
+    if (a.row !== b.row) return a.row - b.row;
+    return a.col - b.col;
+  });
+
+  let numCounter = 1;
+  for (const w of sortedWords) {
+    const key = `${w.row},${w.col}`;
+    if (!(key in numberMap)) {
+      numberMap[key] = numCounter++;
+    }
+    w.num = numberMap[key];
+  }
+
+  for (const w of words) {
+    for (let i = 0; i < w.answer.length; i++) {
+      const r = w.dir === 'across' ? w.row : w.row + i;
+      const c = w.dir === 'across' ? w.col + i : w.col;
+      if (!g[r][c]) {
+        g[r][c] = { wordIds: [w.id], letter: w.answer[i], number: null };
+      } else {
+        g[r][c].wordIds.push(w.id);
+      }
+      if (i === 0) {
+        g[r][c].number = w.num;
+      }
+    }
+  }
+  return { grid: g, userGrid: u };
+}
+
+function renderGrid(puzzle) {
+  const { rows, cols } = puzzle;
+  const container = document.getElementById('crossword-grid');
+  if (!container) return;
+  container.innerHTML = '';
+  container.style.gridTemplateColumns = `repeat(${cols}, 36px)`;
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+
+      if (!grid[r][c]) {
+        cell.classList.add('block');
+      } else {
+        const num = grid[r][c].number;
+        if (num) {

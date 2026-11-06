@@ -1,0 +1,159 @@
+=== buildGrid + loadPuzzle ===
+  const overlay = document.getElementById('win-overlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+// ── Grid Building ─────────────────────────────────────────────────────────────
+function buildGrid(puzzle) {
+  const { rows, cols, words } = puzzle;
+  const g = Array.from({length: rows}, () => Array(cols).fill(null));
+  const u = Array.from({length: rows}, () => Array(cols).fill(''));
+
+  const numberMap = {};
+  const sortedWords = [...words].sort((a, b) => {
+    if (a.row !== b.row) return a.row - b.row;
+    return a.col - b.col;
+  });
+
+  let numCounter = 1;
+  for (const w of sortedWords) {
+    const key = `${w.row},${w.col}`;
+    if (!(key in numberMap)) {
+      numberMap[key] = numCounter++;
+    }
+    w.num = numberMap[key];
+  }
+
+  for (const w of words) {
+    for (let i = 0; i < w.answer.length; i++) {
+      const r = w.dir === 'across' ? w.row : w.row + i;
+      const c = w.dir === 'across' ? w.col + i : w.col;
+      if (!g[r][c]) {
+        g[r][c] = { wordIds: [w.id], letter: w.answer[i], number: null };
+      } else {
+        g[r][c].wordIds.push(w.id);
+      }
+      if (i === 0) {
+        g[r][c].number = w.num;
+      }
+    }
+  }
+  return { grid: g, userGrid: u };
+}
+
+function renderGrid(puzzle) {
+  const { rows, cols } = puzzle;
+  const container = document.getElementById('crossword-grid');
+  if (!container) return;
+  container.innerHTML = '';
+  container.style.gridTemplateColumns = `repeat(${cols}, 36px)`;
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+
+      if (!grid[r][c]) {
+        cell.classList.add('block');
+      } else {
+        const num = grid[r][c].number;
+        if (num) {
+=== check / win ===
+  gameStarted = true;
+  timerInterval = setInterval(() => {
+    seconds++;
+    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const s = String(seconds % 60).padStart(2, '0');
+    const timerEl = document.getElementById('timer');
+    if (timerEl) timerEl.textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+function checkWordCompletion() {
+  startTimer();
+  if (!currentPuzzle) return;
+
+  currentPuzzle.words.forEach(w => {
+    if (completedWords.has(w.id)) return;
+    const cells = getWordCells(w.id);
+    const allFilled = cells.every(({row, col}) => userGrid[row][col] !== '');
+    if (allFilled) {
+      const correct = cells.every(({row, col}) =>
+        userGrid[row][col] === grid[row][col].letter
+      );
+      if (correct) {
+        completedWords.add(w.id);
+        markWordComplete(w.id);
+        playSound('success');
+      }
+    }
+  });
+
+  if (completedWords.size === currentPuzzle.words.length) {
+    setTimeout(puzzleComplete, 300);
+  }
+}
+
+function markWordComplete(wordId) {
+  const cells = getWordCells(wordId);
+  cells.forEach(({row, col}) => {
+    const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+    if (cell) cell.classList.add('correct');
+  });
+  const clueEl = document.getElementById(`clue-${wordId}`);
+  if (clueEl) clueEl.classList.add('completed');
+}
+
+function checkAnswer() {
+  playSound('click');
+  if (!currentPuzzle) return;
+  let hasErrors = false;
+  let hasEmpty = false;
+
+  currentPuzzle.words.forEach(w => {
+    const cells = getWordCells(w.id);
+    cells.forEach(({row, col}) => {
+      if (!userGrid[row][col]) {
+        hasEmpty = true;
+        const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+        if (cell) {
+          cell.classList.add('wrong');
+          setTimeout(() => cell.classList.remove('wrong'), 600);
+        }
+      } else if (userGrid[row][col] !== grid[row][col].letter) {
+        hasErrors = true;
+        const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+        if (cell) {
+          cell.classList.add('wrong');
+          setTimeout(() => cell.classList.remove('wrong'), 600);
+        }
+      }
+    });
+  });
+
+  if (hasErrors) {
+    playSound('wrong');
+  } else if (hasEmpty) {
+    playSound('buzz');
+  } else {
+    playSound('success');
+  }
+}
+
+function clearGrid() {
+  playSound('click');
+  if (!currentPuzzle) return;
+  userGrid = Array.from({length: currentPuzzle.rows}, () => Array(currentPuzzle.cols).fill(''));
+  document.querySelectorAll('.cell input').forEach(inp => inp.value = '');
+  document.querySelectorAll('.cell').forEach(c => {
+    c.classList.remove('correct','wrong','revealed');
+  });
+  completedWords = new Set();
+  document.querySelectorAll('.clue-item').forEach(c => c.classList.remove('completed'));
+  autoSaveProgress();
+}
+
+function showHint() {
+  if (!currentPuzzle || hintsLeft <= 0) return;

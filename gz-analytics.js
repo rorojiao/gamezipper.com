@@ -673,6 +673,23 @@
                  class family shipped by rounds R381-R1053; persistent state classes
                  (active/selected/open) are NOT exempted. */
               var _gzAckLive = /(?:^|\s)[\w-]*(?:pressed|press|tapped|clicked|ack|rej|shake|bump)[\w-]*(?:\s|$)/i;
+              /* R1062 (2026-11-07): rebuild-detachment false positive.
+                 Games whose handler rebuilds the DOM on every interaction
+                 (tetravex updateTray()/showLevels() innerHTML=''; zen-garden
+                 level grid; 8-ball tutorial) DESTROY the clicked node as the
+                 direct result of a SUCCESSFUL interaction — level select,
+                 tile pick-up, tutorial Next all navigate away and replace
+                 the subtree. The 1.5s callback then compares the detached
+                 node's frozen className (never changes) → stateChanged=false
+                 → false dead_click on exactly the pages' most-used controls
+                 (BI 2026-11-06: /tetravex/ 5 dead in one unload burst:
+                 level-card + 4×tray-tile at 19:27:13; /zen-garden/ 1
+                 level-card). isConnected=false ⇒ the click handler ran and
+                 deliberately removed this element ⇒ the interaction was
+                 processed; a genuinely dead control always stays attached. */
+              if (!stateChanged && !t.isConnected) {
+                return; // node was rebuilt away by a working handler — alive
+              }
               if (!stateChanged && !_gzAckLive.test(snapClass)) {
                 ps('dead_click', { u: P, sel: sel });
               }

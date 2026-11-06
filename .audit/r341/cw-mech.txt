@@ -1,0 +1,165 @@
+=== showHint ===
+function showHint() {
+  if (!currentPuzzle || hintsLeft <= 0) return;
+  playSound('ding');
+
+  // Find first incomplete word
+  let targetWord = null;
+  let targetCell = null;
+
+  for (const w of currentPuzzle.words) {
+    if (completedWords.has(w.id)) continue;
+    const cells = getWordCells(w.id);
+    for (const {row, col} of cells) {
+      if (!userGrid[row][col] || userGrid[row][col] !== grid[row][col].letter) {
+        targetWord = w;
+        targetWord = w;
+        targetCell = {row, col};
+        break;
+      }
+    }
+    if (targetWord) break;
+  }
+
+  if (!targetWord || !targetCell) return;
+
+  hintsLeft--;
+  document.getElementById('hints-count').textContent = hintsLeft;
+  document.getElementById('hints-display').textContent = `${hintsLeft}/3`;
+  if (hintsLeft <= 0) {
+    document.getElementById('hint-btn').style.display = 'none';
+  }
+
+  userGrid[targetCell.row][targetCell.col] = grid[targetCell.row][targetCell.col].letter;
+  const cell = document.querySelector(`.cell[data-row="${targetCell.row}"][data-col="${targetCell.col}"]`);
+  if (cell) {
+    const inp = cell.querySelector('input');
+    if (inp) inp.value = grid[targetCell.row][targetCell.col].letter;
+    cell.classList.add('revealed');
+    cell.classList.add('correct');
+    setTimeout(() => cell.classList.remove('revealed'), 1500);
+  }
+
+  selectWord(targetWord.id);
+  checkWordCompletion();
+}
+=== checkWordCompletion ===
+function checkWordCompletion() {
+  startTimer();
+  if (!currentPuzzle) return;
+
+  currentPuzzle.words.forEach(w => {
+    if (completedWords.has(w.id)) return;
+    const cells = getWordCells(w.id);
+    const allFilled = cells.every(({row, col}) => userGrid[row][col] !== '');
+    if (allFilled) {
+      const correct = cells.every(({row, col}) =>
+        userGrid[row][col] === grid[row][col].letter
+      );
+      if (correct) {
+        completedWords.add(w.id);
+        markWordComplete(w.id);
+        playSound('success');
+      }
+    }
+  });
+
+  if (completedWords.size === currentPuzzle.words.length) {
+    setTimeout(puzzleComplete, 300);
+  }
+}
+=== checkAnswer / puzzleComplete ===
+function checkAnswer() {
+  playSound('click');
+  if (!currentPuzzle) return;
+  let hasErrors = false;
+  let hasEmpty = false;
+
+  currentPuzzle.words.forEach(w => {
+    const cells = getWordCells(w.id);
+    cells.forEach(({row, col}) => {
+      if (!userGrid[row][col]) {
+        hasEmpty = true;
+        const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+        if (cell) {
+          cell.classList.add('wrong');
+          setTimeout(() => cell.classList.remove('wrong'), 600);
+        }
+      } else if (userGrid[row][col] !== grid[row][col].letter) {
+        hasErrors = true;
+        const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+        if (cell) {
+          cell.classList.add('wrong');
+          setTimeout(() => cell.classList.remove('wrong'), 600);
+        }
+      }
+    });
+  });
+
+  if (hasErrors) {
+    playSound('wrong');
+  } else if (hasEmpty) {
+    playSound('buzz');
+  } else {
+    playSound('success');
+  }
+}
+=== hint/letter pool? ===
+139:      {id:'a1',dir:'across',row:0,col:0,answer:'CLUES',clue:'Detective hints (5)',num:1},
+440:      {id:'a1',dir:'across',row:0,col:0,answer:'CLUES',clue:'Detective hints (5)',num:1},
+512:let hintsLeft = 3;
+571:function calculateStars(time, hintsUsed) {
+572:  // 3 stars: no hints + fast time; 2 stars: 1 hint or medium time; 1 star: completed
+574:  if (hintsUsed === 0 && time <= 120) return 3;
+575:  if (hintsUsed <= 1 && time <= 300) return 2;
+948:  hintsLeft = 3;
+967:  const hintsCountEl = document.getElementById('hints-count');
+968:  const hintsDisplayEl = document.getElementById('hints-display');
+969:  const hintBtn = document.getElementById('hint-btn');
+971:  if (hintsCountEl) hintsCountEl.textContent = '3';
+972:  if (hintsDisplayEl) hintsDisplayEl.textContent = '3/3';
+973:  if (hintBtn) hintBtn.style.display = '';
+1077:    c.classList.remove('correct','wrong','revealed');
+1085:  if (!currentPuzzle || hintsLeft <= 0) return;
+1108:  hintsLeft--;
+1109:  document.getElementById('hints-count').textContent = hintsLeft;
+1110:  document.getElementById('hints-display').textContent = `${hintsLeft}/3`;
+1111:  if (hintsLeft <= 0) {
+1112:    document.getElementById('hint-btn').style.display = 'none';
+1120:    cell.classList.add('revealed');
+1122:    setTimeout(() => cell.classList.remove('revealed'), 1500);
+1129:function revealPuzzle() {
+1140:          cell.classList.add('revealed');
+1154:  const hintsUsed = 3 - hintsLeft;
+1155:  const stars = calculateStars(seconds, hintsUsed);
+1166:  const msg = `Time: ${m}:${s} | Hints: ${hintsUsed} | Stars: ${getStarHTML(stars)}`;
+=== how a cell becomes filled ===
+706:        const input = document.createElement('input');
+707:        input.maxLength = 1;
+708:        input.value = userGrid[r][c];
+709:        input.addEventListener('input', (e) => onInput(r, c, e.target.value));
+710:        input.addEventListener('keydown', (e) => onKeyDown(r, c, e));
+711:        input.addEventListener('focus', () => selectCell(r, c));
+712:        input.addEventListener('click', (e) => { e.stopPropagation(); selectCell(r, c); });
+713:        cell.appendChild(input);
+716:          const inp = cell.querySelector('input');
+845:  userGrid[row][col] = letter;
+846:  const input = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"] input`);
+847:  if (input) input.value = letter;
+871:    userGrid[row][col] = '';
+935:    const inp = cell.querySelector('input');
+959:          userGrid[r][c] = saved[r][c];
+1007:    const allFilled = cells.every(({row, col}) => userGrid[row][col] !== '');
+1010:        userGrid[row][col] === grid[row][col].letter
+1044:      if (!userGrid[row][col]) {
+1051:      } else if (userGrid[row][col] !== grid[row][col].letter) {
+1075:  document.querySelectorAll('.cell input').forEach(inp => inp.value = '');
+1096:      if (!userGrid[row][col] || userGrid[row][col] !== grid[row][col].letter) {
+1115:  userGrid[targetCell.row][targetCell.col] = grid[targetCell.row][targetCell.col].letter;
+1118:    const inp = cell.querySelector('input');
+1135:        userGrid[r][c] = grid[r][c].letter;
+1138:          const inp = cell.querySelector('input');
+1185:    userGrid[selectedCell.row][selectedCell.col] = e.key.toUpperCase();
+1188:      const inp = cell.querySelector('input');
+1198:    userGrid[selectedCell.row][selectedCell.col] = '';
+1201:      const inp = cell.querySelector('input');

@@ -1,0 +1,126 @@
+=== pentomino copy claims ===
+29:{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What are Pentominoes?","acceptedAnswer":{"@type":"Answer","text":"Pentominoes are flat shapes made of 5 connected squares. There are exactly 12 free pentominoes, named F, I, L, N, P, T, U, V, W, X, Y, Z. Pentomino tiling puzzles challenge you to fill a rectangular or irregular outline with a specified set of pieces."}},{"@type":"Question","name":"How do you play Pentominoes?","acceptedAnswer":{"@type":"Answer","text":"Each level shows an outline shape and a list of available pentominoes. Tap a piece in the side tray to select it, then tap a grid cell to place the piece with its top-left at that cell. Tap the piece again to cycle through rotation and reflection. Tap an already-placed piece to remove it."}},{"@type":"Question","name":"Is Pentominoes free?","acceptedAnswer":{"@type":"Answer","text":"Yes, completely free in your browser. No download required, mobile-friendly."}},{"@type":"Question","name":"How many levels does Pentominoes have?","acceptedAnswer":{"@type":"Answer","text":"30 unique-solution levels across 5 difficulty tiers: Beginner (1-2 pieces), Easy (2 pieces), Medium (3 pieces), Hard (4 pieces), and Expert (5-6 pieces). Every puzzle has exactly one valid solution."}}]}
+128:<div class="subtitle">Fill the outline with 12 classic pentominoes</div>
+130:The 12 free pentominoes are flat shapes of 5 connected squares, named F, I, L, N, P, T, U, V, W, X, Y, Z.<br>
+135:<div class="menu-desc" style="font-size:11px">30 handcrafted unique-solution puzzles<br>5 difficulty tiers · 12 pentominoes</div>
+150:<li>• Each puzzle has <b>exactly one</b> solution.</li>
+
+=== pentomino verifiers: shape tables + assertions ===
+--- pentomino/verify_engine.js (293 lines)
+5: * a solution (or on level load via gz-debug). Mirrors verify_python.py rules.
+13:  const PENTOMINOES = {
+17:    N: [[0, 1], [1, 1], [2, 1], [3, 0], [3, 1]],
+49:    const base = PENTOMINOES[name];
+96:      const unique = [];
+98:        if (!seen.has(p.key)) { seen.add(p.key); unique.push(p); }
+100:      placements[name] = unique;
+103:    const solutions = [];
+105:      if (solutions.length >= cap) return;
+107:        solutions.push(current.slice().sort().join('|'));
+126:    return solutions.length;
+154:    const validPieces = pieces.every((p) => p in PENTOMINOES) && new Set(pieces).size === pieces.length;
+158:      detail: `${pieces.length} unique pieces: ${pieces.join(',')}`,
+161:    // 3. Unique solution
+164:      name: 'unique_solution',
+166:      detail: `${nSols} solutions found (cap=2)`,
+174:   * Verify a user's placed solution.
+262:  const exported = { verifyLevel, checkUserSolution, allOrientations, countUniqueSolutions, PENTOMINOES };
+--- pentomino/verify_independent.js (168 lines)
+14:const PENTOMINOES = {
+18:  N: [[0, 1], [1, 1], [2, 1], [3, 0], [3, 1]],
+50:  const base = PENTOMINOES[name];
+100:    const unique = [];
+104:        unique.push(p);
+107:    placements[name] = unique;
+110:  const solutions = [];
+113:    if (solutions.length >= cap) return;
+115:      solutions.push(current.slice().sort().join('|'));
+134:  return solutions.length;
+161:    console.log(`Level ${String(i + 1).padStart(2)} [${lv.tier.padEnd(8)}] ${mark} (${nSols} solutions)`);
+--- pentomino/verify_python.py (242 lines)
+5:  - Outline + solution grid match in dimensions
+8:  - Each piece appears exactly once in solution
+11:  - Outline + specified pieces yields exactly 1 valid placement (uniqueness)
+17:PENTOMINOES = {
+21:    'N': [(0, 1), (1, 1), (2, 1), (3, 0), (3, 1)],
+48:    base = PENTOMINOES[name]
+68:def count_unique_solutions(outline_set, pieces_names, cap=2):
+69:    """Count unique placements up to `cap`."""
+85:        unique = []
+90:                unique.append((cells, ar, ac))
+91:        placements[name] = unique
+93:    solutions = []
+97:        if len(solutions) >= cap:
+100:            solutions.append(tuple(sorted(c[0] for c in current)))
+111:    return len(solutions)
+126:    solution_strs = level['solution']
+128:    # 1. Outline and solution grid dimensions match
+130:    solution_grid = parse_grid(solution_strs)
+
+=== codex config profiles ===
+AGENTS.md
+app-server-control
+app-server-daemon
+config.toml
+config.toml.bak
+config.toml.bak.solpi-20260911
+goals_1.sqlite
+goals_1.sqlite-shm
+goals_1.sqlite-wal
+hermes-auto.config.toml
+58:[projects."/home/junze/.hermes/hermes-agent"]
+67:[projects."/tmp/hermes-gamezipper-tools-20260810"]
+94:[projects."/mnt/data/home-junze-data/.hermes/cache/scratch/bi-fix-r998"]
+97:[projects."/mnt/data/home-junze-data/.hermes/cache/scratch/r1011-fix"]
+100:[projects."/mnt/data/home-junze-data/.hermes/cache/scratch/r1013/gz-work"]
+
+=== sym-a-pix generator ===
+__pycache__
+browser_test.py
+browser_test_filled.png
+browser_test_game.png
+browser_test_levels.png
+browser_test_mobile_game.png
+browser_test_mobile_levels.png
+browser_test_mobile_title.png
+browser_test_title.png
+browser_test_win.png
+data.js
+game.js
+gen_levels.py
+gen_levels_v2.py
+gen_levels_v3.py
+icon.png
+index.html
+levels.json
+make_art.py
+og-image.jpg
+qa_checklist.js
+verify_engine.js
+verify_independent.js
+verify_python.py
+7:3. Build a Fill-a-Pix-style propagation solver that, given a set of anchors,
+25:LEVELS_PATH = Path(__file__).parent / "levels.json"
+28:from gen_levels import LEVELS, build_grid, compute_clues
+31:def neighbors(n, r, c):
+43:def propagate(n, anchors):
+54:    for a in anchors:
+112:def propagate_overlap(n, anchors, max_passes=200):
+113:    """Stronger propagation: includes overlap cross-reference between clues.
+115:    For each pair of clues (A, B), if all neighbors of A except possibly some overlap with
+121:    for a in anchors:
+167:        # 2) Overlap cross-reference between clues
+239:def solve_unique(n, anchors, cap=2):
+252:    for a in anchors:
+271:    def prune():
+286:    def bt():
+309:def minimize_anchors(n, full_anchors, seed, target_frac=0.5):
+310:    """Iteratively remove anchors while maintaining uniqueness via propagation + backtracking.
+316:    anchors = list(full_anchors)
+317:    rng.shuffle(anchors)
+319:    for a in list(anchors):
+321:        test = [x for x in anchors if not (x["r"] == a["r"] and x["c"] == a["c"]) and
+330:            anchors = test
+335:            anchors = test
+337:        if len(anchors) <= target_frac * len(full_anchors):
+339:    return anchors, removed

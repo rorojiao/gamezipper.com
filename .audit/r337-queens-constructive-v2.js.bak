@@ -1,0 +1,211 @@
+#!/usr/bin/env node
+/* R337 queens — CONSTRUCTIVE unique-level generator (v2).
+ *
+ * MONOTONICITY (the property that makes this work):
+ *   A cell that is not assigned to any region cannot hold a crown. Assigning
+ *   a cell x to a region R only ADDS a possible crown position, so the set of
+ *   solutions of a partial map is a SUBSET of the solution set of any
+ *   completion of it.
+ *   => If the FINAL map has exactly one solution, then EVERY prefix of the
+ *      assignment order has exactly one solution too (S is always valid, and
+ *      the prefix's solution set is a subset of the final's).
+ *   => Therefore we can build the map greedily while keeping the count at 1,
+ *      and the count can NEVER exceed 1 on the way (assigning can only add
+ *      solutions, so if it ever reached 2 the final could not be unique).
+ *
+ *   Consequence: the search never has to UNDO a region assignment for
+ *   uniqueness reasons — it only has to try a different region for a cell.
+ *
+ * CONNECTIVITY: the game draws each region as one contiguous blob, so the
+ *   final map must have every region connected. Connectivity is checked on the
+ *   COMPLETED map; a map that fails is discarded and the search restarts with
+ *   a different seed (connectivity is not a per-assignment property, so it
+ *   cannot be maintained greedily without over-constraining the search).
+ */
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+const html = fs.readFileSync(path.join(__dirname, '..', 'queens', 'index.html'), 'utf8');
+
+function grabFunction(src, name) {
+  const re = new RegExp('function\\s+' + name + '\\s*\\(');
+  const m = re.exec(src); if (!m) return null;
+  const open = src.indexOf('{', m.index);
+  let i = open + 1, depth = 1;
+  while (i < src.length && depth > 0) { const c = src[i]; if (c === '{') depth++; else if (c === '}') depth--; i++; }
+  return src.slice(m.index, i);
+}
+let src = '';
+for (const n of ['makeRNG', 'tryPlaceQueens', 'countSolutions', 'getNeighbors']) src += grabFunction(html, n) + '\n';
+const ctx = { Math, console: { log: () => {} } };
+vm.createContext(ctx);
+vm.runInContext(src + '\nthis.__pq=tryPlaceQueens; this.__cs=countSolutions;', ctx);
+
+/* count solutions; a cell with region < 0 cannot hold a crown */
+function countUpTo(n, regions, limit) {
+  const colUsed = new Array(n).fill(false);
+  const regUsed = new Map();
+  const placed = new Array(n).fill(-1);
+  let count = 0;
+  (function bt(row) {
+    if (count >= limit) return;
+    if (row === n) { count++; return; }
+    for (let c = 0; c < n; c++) {
+      if (colUsed[c]) continue;
+      const reg = regions[row][c];
+      if (reg < 0) continue;
+      if (regUsed.get(reg)) continue;
+      if (row > 0 && Math.abs(c - placed[row - 1]) <= 1) continue;
+      placed[row] = c; colUsed[c] = true; regUsed.set(reg, true);
+      bt(row + 1);
+      colUsed[c] = false; regUsed.delete(reg); placed[row] = -1;
+    }
+  })(0);
+  return count;
+}
+function validate(n, regions, cols) {
+  const rows = new Set(), colsS = new Set(), regs = new Set();
+  for (let r = 0; r < n; r++) {
+    const c = cols[r];
+    if (c < 0 || c >= n) return 'col oob';
+    if (rows.has(r)) return 'row dup'; rows.add(r);
+    if (colsS.has(c)) return 'col dup'; colsS.add(c);
+    const reg = regions[r][c];
+    if (regs.has(reg)) return 'region dup'; regs.add(reg);
+  }
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    if (Math.abs(i - j) <= 1 && Math.abs(cols[i] - cols[j]) <= 1) return 'adjacent';
+  }
+  return null;
+}
+function componentsOf(n, regions, rid) {
+  const cells = [];
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (regions[r][c] === rid) cells.push([r, c]);
+  const seen = new Set(); const comps = [];
+  for (const cell of cells) {
+    const k = cell[0] + ',' + cell[1];
+    if (seen.has(k)) continue;
+    const st = [cell]; const comp = []; seen.add(k);
+    while (st.length) {
+      const [r, c] = st.pop(); comp.push([r, c]);
+      for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+        const nr = r + dr, nc = c + dc;
+        if (nr < 0 || nr >= n || nc < 0 || nc >= n) continue;
+        if (regions[nr][nc] !== rid) continue;
+        const kk = nr + ',' + nc; if (seen.has(kk)) continue; seen.add(kk); st.push([nr, nc]);
+      }
+    }
+    comps.push(comp);
+  }
+  return comps;
+}
+function connectedOK(n, regions) {
+  for (let R = 0; R < n; R++) if (componentsOf(n, regions, R).length !== 1) return false;
+  return true;
+}
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* Build a uniquely-solvable map. Returns the grid or null.
+ *
+ * When `requireAdjacent` is set, a cell may only join a region that already
+ * has a 4-adjacent cell. Since each region starts as its single queen cell,
+ * this makes every region CONNECTED by induction.
+ */
+function buildUnique(n, sol, rng, nodeCap, requireAdjacent) {
+  const grid = [];
+  for (let r = 0; r < n; r++) { grid.push([]); for (let c = 0; c < n; c++) grid[r][c] = -1; }
+  for (let r = 0; r < n; r++) grid[r][sol[r]] = r;
+
+  // order the unassigned cells: nearest-to-queen first (so regions grow
+  // around their queen), randomised within a band
+  const cells = [];
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+    if (grid[r][c] >= 0) continue;
+    let d = Infinity;
+    for (let rr = 0; rr < n; rr++) d = Math.min(d, Math.abs(rr - r) + Math.abs(sol[rr] - c));
+    cells.push({ r, c, d });
+  }
+  cells.sort((a, b) => a.d - b.d);
+  for (let i = cells.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const t = cells[i]; cells[i] = cells[j]; cells[j] = t;
+  }
+  const order = cells.map(x => [x.r, x.c]);
+
+  let nodes = 0;
+  function adjacentRegions(r, c) {
+    const opts = [];
+    for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nr >= n || nc < 0 || nc >= n) continue;
+      const R = grid[nr][nc];
+      if (R >= 0 && opts.indexOf(R) < 0) opts.push(R);
+    }
+    return opts;
+  }
+  function rec(i) {
+    if (++nodes > nodeCap) return false;
+    if (i === order.length) return true;
+    const [r, c] = order[i];
+    let opts;
+    if (requireAdjacent) {
+      opts = adjacentRegions(r, c);
+      // also allow a region that has no cell yet? every region has its queen,
+      // so a region with a queen is always "present"; adjacency is required.
+    } else {
+      opts = [];
+      for (let R = 0; R < n; R++) opts.push(R);
+    }
+    for (let k = opts.length - 1; k > 0; k--) {
+      const j = Math.floor(rng() * (k + 1));
+      const t = opts[k]; opts[k] = opts[j]; opts[j] = t;
+    }
+    for (const R of opts) {
+      grid[r][c] = R;
+      if (countUpTo(n, grid, 2) === 1) {
+        if (rec(i + 1)) return true;
+      }
+      grid[r][c] = -1;
+    }
+    return false;
+  }
+  if (!rec(0)) return null;
+  if (countUpTo(n, grid, 3) !== 1) return null;
+  if (validate(n, grid, sol) !== null) return null;
+  return grid;
+}
+
+module.exports = { countUpTo, validate, connectedOK, buildUnique, mulberry32, ctx, componentsOf };
+
+if (require.main === module) {
+  const n = parseInt(process.argv[2] || '7', 10);
+  const tries = parseInt(process.argv[3] || '5', 10);
+  console.log('R337 queens — constructive v2, n=' + n);
+  const t0 = Date.now();
+  let ok = 0, connOk = 0;
+  for (let seed = 1; seed <= tries; seed++) {
+    const sol = ctx.__pq(n, mulberry32(seed * 31 + n));
+    if (!sol) continue;
+    let grid = null;
+    for (let att = 0; att < 12 && !grid; att++) {
+      grid = buildUnique(n, sol, mulberry32(seed * 7919 + n * 104729 + att * 977), 400000, true);
+    }
+    if (!grid) { console.log('  seed=' + seed + ' NO UNIQUE MAP'); continue; }
+    const exact = countUpTo(n, grid, 5);
+    const page = ctx.__cs(n, grid, 5);
+    const err = validate(n, grid, sol);
+    const conn = connectedOK(n, grid);
+    ok++;
+    if (conn) connOk++;
+    console.log('  seed=' + seed + ': exact=' + exact + ' page=' + page + ' err=' + err + ' connected=' + conn +
+      '  (' + ((Date.now() - t0) / 1000).toFixed(2) + 's)');
+  }
+  console.log('n=' + n + ': ' + ok + '/' + tries + ' unique, ' + connOk + ' connected, ' + ((Date.now() - t0) / 1000).toFixed(1) + 's');
+}
