@@ -143,5 +143,72 @@ try {
   process.exit(1);
 }
 
+// Prong 4 (R1061): physics-step execution — the GRAVITY/FLIP_COOLDOWN undefined-constant
+// regression (commit aea12e91f4) survived the old gate because nothing ever executed
+// updateGame(). Extract updateGame + the declared ALL-CAPS constants and run 120 frames
+// in the same sandbox with a flip input. Physics MUST change vy/y and MUST NOT throw.
+try {
+  // scan only executable JS blocks (skip JSON-LD), strip comments + string literals,
+  // and ignore property accesses (X.NAME) and object-literal keys (NAME:).
+  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).join('\n');
+  const code = scripts
+    .replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ')
+    .replace(/'(?:\\.|[^'\\])*'/g, "''").replace(/"(?:\\.|[^"\\])*"/g, '""');
+  const refs = [...code.matchAll(/(^|[^.\w$])([A-Z][A-Z0-9_]{3,})\b(?![\w$:])/g)].map(m => m[2]);
+  const capsUsed = new Set(refs);
+  const capsDeclared = new Set([...code.matchAll(/\b(?:const|let|var|function)\s+([A-Z][A-Z0-9_]{3,})\b/g)].map(m => m[1]));
+  const browserCaps = new Set(['ZONE_SELECT', 'Infinity', 'JSON']);
+  const capsMissing = [...capsUsed].filter(n => !capsDeclared.has(n) && !browserCaps.has(n));
+  console.log(`\nP4 undefined ALL_CAPS refs: ${capsMissing.length ? capsMissing.join(',') : 'none'}`);
+  if (capsMissing.length) { console.log('FAIL: referenced-but-undefined constants found'); process.exit(1); }
+
+  const ugMatch = html.match(/function\s+updateGame\s*\(\s*\)\s*\{[\s\S]*?^\}/m);
+  if (!ugMatch) { console.log('FAIL: updateGame not extractable'); process.exit(1); }
+  // Run the ENTIRE game script as-is in a mocked DOM sandbox, then drive real
+  // startLevel(1) + 120 updateGame() frames with one flip input.
+  const mkCtx = () => {
+    const el = (tag) => ({
+      style: {}, classList: { add(){}, remove(){}, contains(){ return false; } },
+      textContent: '', innerHTML: '', width: 1280, height: 800,
+      getContext: () => ({ fillRect(){}, clearRect(){}, fillText(){}, beginPath(){}, moveTo(){}, lineTo(){}, stroke(){}, fill(){}, save(){}, restore(){}, translate(){}, scale(){}, rotate(){}, arc(){}, closePath(){}, ellipse(){}, drawImage(){}, createLinearGradient:()=>({addColorStop(){}}), createRadialGradient:()=>({addColorStop(){}}), measureText:()=>({width:0}), getImageData:()=>({data:[]}), fillStyle:'', strokeStyle:'', lineWidth:1, font:'' }),
+      addEventListener(){}, getBoundingClientRect: () => ({x:0,y:0,width:1280,height:800}),
+      appendChild(){}, children: [],
+    });
+    const sb = {
+      console, Math, Date, JSON, Object, Array, String, Number, Boolean, Set, Map, Infinity, NaN, isNaN, parseInt, parseFloat,
+      setTimeout: () => 0, clearTimeout: () => {}, setInterval: () => 0, clearInterval: () => {},
+      requestAnimationFrame: () => 0, cancelAnimationFrame: () => {},
+      performance: { now: () => Date.now() },
+      localStorage: { _d: {}, getItem(k){ return this._d[k] ?? null; }, setItem(k, v){ this._d[k] = String(v); }, removeItem(k){ delete this._d[k]; } },
+      AudioContext: function(){ const param = () => ({ value: 0, setValueAtTime(){}, linearRampToValueAtTime(){}, exponentialRampToValueAtTime(){}, cancelScheduledValues(){} });
+        return { state: 'running', destination: {}, currentTime: 0, resume: () => {}, createBuffer: () => ({ getChannelData: () => new Float32Array() }), createBufferSource: () => ({ connect(){}, start(){}, stop(){}, buffer: null, loop: false, playbackRate: param() }), createGain: () => ({ connect(){}, disconnect(){}, gain: param() }), createOscillator: () => ({ connect(){}, disconnect(){}, start(){}, stop(){}, frequency: param(), detune: param(), type: '' }), createBiquadFilter: () => ({ connect(){}, frequency: param(), Q: param(), type: '' }) }; },
+      navigator: { userAgent: 'verifier' },
+      location: { href: 'https://gamezipper.com/bounce-bot/' },
+      matchMedia: () => ({ matches: false, addEventListener(){} }),
+    };
+    sb.window = sb;
+    sb.addEventListener = () => {}; sb.removeEventListener = () => {};
+    sb.innerWidth = 1280; sb.innerHeight = 800;
+    sb.document = { getElementById: () => el('div'), querySelector: () => el('div'), querySelectorAll: () => [], addEventListener(){}, createElement: () => el('div'), body: el('body'), hidden: false };
+    return sb;
+  };
+  const ctx2 = vm.createContext(mkCtx());
+  const gameScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).join('\n');
+  vm.runInContext(gameScript, ctx2, { timeout: 20000 });
+  vm.runInContext('startLevel(1, false)', ctx2);
+  if (vm.runInContext('state', ctx2) !== 2) { console.log('FAIL: real startLevel did not set PLAYING'); process.exit(1); }
+  const y0 = vm.runInContext('player.y', ctx2);
+  for (let i = 0; i < 120; i++) {
+    if (i === 1) vm.runInContext('inputJustPressed = true', ctx2); // one flip input
+    vm.runInContext('updateGame()', ctx2);
+  }
+  const phys = vm.runInContext('({y:player.y,vy:player.vy,gdir:player.gravityDir,x:Math.round(player.x)})', ctx2);
+  console.log(`P4 physics after 120 frames (1 flip at frame 2): y0=${y0} -> y=${Math.round(phys.y)} vy=${Math.round(phys.vy)} gdir=${phys.gdir} x=${phys.x}`);
+  if (phys.vy === 0 && Math.abs(phys.y - y0) < 0.01) { console.log('FAIL: physics inert — gravity/flip not executing'); process.exit(1); }
+} catch (e) {
+  console.log('FAIL: P4 physics test threw:', e.message);
+  process.exit(1);
+}
+
 console.log('\n=== ALL CHECKS PASSED ===');
 console.log(`bounce-bot: ${LEVELS.length} levels, source checks OK, engine startLevel(1) succeeds`);

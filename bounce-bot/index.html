@@ -138,6 +138,14 @@ resize();
 
 const floor = H - 60;
 
+// R1061 P0 fix: GRAVITY/FLIP_COOLDOWN were REFERENCED in updateGame() (L1267/L1275)
+// but never defined — commit aea12e91f4 (2026-07-29) introduced the refs without the
+// constants. Every frame after start threw ReferenceError → vy frozen, no collisions,
+// no death, no win: bot glided invincibly. bouncy platforms impulse vy=±12, so
+// GRAVITY=0.8 px/frame^2 gives ~90px apex arcs; 15-frame cooldown blocks double-flip spam.
+const GRAVITY = 0.8;
+const FLIP_COOLDOWN = 15;
+
 // ============================================================
 // generated LEVELS 1-12
 // ============================================================
@@ -151,12 +159,25 @@ const floor = H - 60;
 //   getZone(n): 5 zones of 6 levels each (1-6=Z0, 7-12=Z1, 13-18=Z2, 19-24=Z3, 25-30=Z4)
 //   getSpeed(n): 3.0 at L1 → linear ramp → capped 8.0 at L26+ (Speed Demon achievement needs >6)
 function getZone(n){ return Math.min(Math.floor((Math.max(1,n)-1)/6), 4); }
+// R1061 P0 fix (2): consumers read level.zone as an OBJECT — drawBackground uses
+// zone.bg[0..3], drawLevel uses z.ground/z.accent/z.obstacle, HUD uses zone.name,
+// particles use zone.particles. The 2026-07-29 restore (aea12e91f4) redefined
+// getZone to return an INDEX and dropped the ZONES table, so every PLAYING frame
+// threw "reading '0'" at zone.bg[0] and NOTHING (level/player/HUD) ever drew.
+// Restored per-zone palettes matching the themed decorations in drawBackground.
+const ZONES = [
+  { name:'Factory',     bg:['#1a1d29','#232838','#2b3244','#151823'], ground:'#4a5568', accent:'#63f2ff', obstacle:'#ff5566', particles:'rgba(120,160,255,0.12)' },
+  { name:'Greenhouse',  bg:['#0e2318','#143222','#1a402c','#0b1c13'], ground:'#3f6b4f', accent:'#7bed9f', obstacle:'#ff6b81', particles:'rgba(140,255,170,0.12)' },
+  { name:'Data Center', bg:['#0a1428','#0f1f3d','#14294f','#081020'], ground:'#31456e', accent:'#4dabf7', obstacle:'#ff8787', particles:'rgba(80,160,255,0.15)' },
+  { name:'Sky Bridge',  bg:['#2b4a72','#3c6da5','#5b8fc7','#8fbde8'], ground:'#5f7fa8', accent:'#ffd43b', obstacle:'#ff6b6b', particles:'rgba(255,255,255,0.2)' },
+  { name:'Launch Pad',  bg:['#0b0e1a','#141a30','#1d2547','#2a1a3d'], ground:'#44376b', accent:'#ff922b', obstacle:'#ff4757', particles:'rgba(255,255,255,0.18)' },
+];
 function getSpeed(n){ return Math.min(3 + (Math.max(1,n)-1)*0.2, 8); }
 
 function craftLevel(n) {
   const floor = H-60;
   const mid = floor/2;
-  const zone = getZone(n);
+  const zone = ZONES[getZone(n)];
   const speed = getSpeed(n);
   const lvl = { num:n, speed, zone, width:0, platforms:[], obstacles:[], cores:[], stars:[], checkpoint:null, portals:[], lasers:[], fogDensity:0 };
 
@@ -423,7 +444,7 @@ function craftLevel(n) {
 // ============================================================
 function generateLevel(n) {
   const speed = getSpeed(n);
-  const zone = getZone(n);
+  const zone = ZONES[getZone(n)];
   const lvl = { num:n, speed, zone, width: 3000+n*200, platforms:[], obstacles:[], cores:[], stars:[], checkpoint:null, portals:[], lasers:[], fogDensity:0 };
 
   const floor = H-60;
