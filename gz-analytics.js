@@ -26,6 +26,14 @@
    Previous events flow: gz-analytics → Cloudflare Tunnel → BI server (10.10.29.67:8090)
 */
 (function() {
+  // R1064 2026-11-07 (patrol-fix R1064): never send analytics when the PAGE ITSELF is
+  // served from a local origin (dev/QA probes). Incident: an emulated-iPhone probe page
+  // served off http://127.0.0.1:6502 posted fake vitals_rating CLS 0.671/1.851 on
+  // /train-tracks/ into production BI; the UX cron re-reported them as real-user POOR
+  // days later. Probes pointed at https://gamezipper.com are unaffected (hostname not local).
+  // Also covers file:// (empty hostname).
+  var _h = location.hostname;
+  if (!_h || /^127\./.test(_h) || /^(localhost|0\.0\.0\.0|\[::1\]|::1)$/i.test(_h)) return;
   var SITE = location.hostname;   // use real hostname so tools.gamezipper.com works too
   // PERMANENT BI endpoint = sail-surrounding trycloudflare tunnel (active since 2026-07-15 07:16 CST).
   // Verified alive 2026-07-15 22:56 CST (kanban t_de988703 round 2):
