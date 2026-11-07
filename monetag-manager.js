@@ -2644,6 +2644,10 @@
 
   function init() {
     if (state.initialized) return;
+    // R1066 (2026-11-07): crawler UAs (meta-webindexer et al.) execute page JS
+    // from datacenter IPs; bot ad fetches are invalid-traffic exposure + BI
+    // noise, never revenue. Same guard as adsterra-manager.js.
+    if (/bot|crawler|spider|headless|webindexer|lighthouse/i.test(navigator.userAgent || '')) return;
     state.initialized = true;
 
     // v5.3: load Monetag zone backoff state (lazy cleanup of expired entries).

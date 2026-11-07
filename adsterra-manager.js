@@ -512,6 +512,12 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
   var _initialized = false;
   function init() {
     if (_initialized) return;
+    // R1066 (2026-11-07): crawler UAs run our JS from datacenter IPs
+    // (meta-webindexer alone: 2849 page_views on 11-06, 115 adsterra
+    // script/config loads + 79 adsense fills in 7d). Bots do not monetize;
+    // their ad fetches only add invalid-traffic exposure (AdSense account is
+    // appeal-pending, Adsterra zones have a disapproval precedent) and pollute BI.
+    if (/bot|crawler|spider|headless|webindexer|lighthouse/i.test(navigator.userAgent || '')) return;
     _initialized = true;
     armPop();
     track('script_loaded', {
