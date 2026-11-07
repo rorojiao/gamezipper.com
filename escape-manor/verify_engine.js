@@ -140,9 +140,11 @@ function doIdentity(ga, r, tag) {
   ck('a-menu-ch1-open', !btns0[1].classList.contains('locked'));
   ck('a-menu-ch-locked', [2, 3, 4, 5].every(i => btns0[i].classList.contains('locked')) &&
     String(btns0[2].textContent).indexOf('[Locked]') >= 0);
-  // locked chapter click is a no-op (no handler): still on menu
+  // locked chapter click shows unlock hint (R1108 UX fix), stays on menu
   btns0[2].dispatch('click', {}); ga.pump(2);
   ck('a-menu-locked-noop', ga.els.menuOverlay.style.display === 'flex');
+  ck('a-menu-locked-msg', msg(ga).indexOf('Finish Chapter 1 to unlock Chapter 2') >= 0, msg(ga).slice(0, 60));
+  ga.els.messageBox.textContent = ''; // clear hint before room-level message invariants
 
   // New Game -> room 0
   btns0[0].dispatch('click', {}); ga.pump(3);
