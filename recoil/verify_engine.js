@@ -131,6 +131,7 @@ function playLevel(id, deadline) { // per-shot: re-solve from LIVE state, play 1
     if (st.gs !== 'play') return { r: 'bad-state:' + st.gs, firstShot };
     const dirs = solveLevel(st, 16);
     if (!dirs) return { r: 'unsolvable', at: st.p, shots: st.shots, firstShot };
+    if (id === 1) console.log('L1 shot#' + (k + 1) + ' dir=' + JSON.stringify(dirs[0]));
     swipe(dirs[0]);
     const gs = settle(6000);
     if (gs !== 'play' && gs !== 'win') return { r: 'after-swipe:' + gs, firstShot };
