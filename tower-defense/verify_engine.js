@@ -65,7 +65,14 @@ function towerCard(icon) { // real panel cards (createElement + addEventListener
   return null;
 }
 const cnv = () => g.els['gameCanvas'];
-function tap(x, y) { cnv().dispatch('pointerdown', { clientX: x, clientY: y, preventDefault() {} }); }
+function tap(x, y) {
+  // R1107: canvas bitmap is world-size (1000x600), CSS box is scaled by resizeCanvas.
+  // A real pointerdown carries CSS coords; convert world -> CSS exactly like a browser.
+  const c = cnv();
+  const sw = parseFloat(c.style && c.style.width) || c.width;
+  const sh = parseFloat(c.style && c.style.height) || c.height;
+  c.dispatch('pointerdown', { clientX: x * sw / c.width, clientY: y * sh / c.height, preventDefault() {} });
+}
 function spaceWave() { g.sandbox.document.dispatch('keydown', { code: 'Space', key: ' ', preventDefault() {} }); }
 
 // ---- title -> level select -> level 1 ----
@@ -257,7 +264,7 @@ T('no-vm-errors', !(g.sandbox.__errors || []).some(e => /TypeError|ReferenceErro
   JSON.stringify((g.sandbox.__errors || []).find(e => /TypeError|ReferenceError|^(raf|timer): /.test(e)) || '').slice(0, 120));
 
 const out = { pass, fail, total: pass + fail, verdict: fail === 0 ? 'PASS' : 'FAIL', fails: fails.slice(0, 8),
-  extra: { won: wonLv + '/30', defeats, stuck: stuck || '', note: 'path world 1000x600 assumes a >=1000px container; on narrow phones most of the path lies outside the placement grid (responsive flaw, desktop unaffected)' } };
+  extra: { won: wonLv + '/30', defeats, stuck: stuck || '', note: 'R1107: bitmap pinned to 1000x600 world, CSS box scaled uniformly — path fully visible at any viewport; verifier taps go through world->CSS conversion exactly like a browser' } };
 console.log('tower-defense: ' + wonLv + '/30 levels cleared via real card clicks + canvas taps + Space waves: ' + out.verdict + (stuck ? ' [' + stuck + ']' : ''));
 console.log(JSON.stringify(out));
 process.exit(fail === 0 ? 0 : 1);

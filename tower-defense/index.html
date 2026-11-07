@@ -1934,19 +1934,30 @@
     function resizeCanvas() {
         const container = document.getElementById('gameScreen');
         const rect = container.getBoundingClientRect();
-        
+
         const hudHeight = 60;
         const panelHeight = 120;
-        const availableHeight = rect.height - hudHeight - panelHeight;
-        
-        canvas.width = rect.width;
-        canvas.height = availableHeight;
+        const availableWidth = Math.max(320, rect.width);
+        const availableHeight = Math.max(240, rect.height - hudHeight - panelHeight);
+
+        /* FIX(R1107 2026-11-07): LEVEL_PATHS waypoints live in a fixed 1000x600 world,
+           but the bitmap used to be 1:1 with the CSS box (canvas.width = rect.width).
+           On any screen narrower than ~1000px or shorter than ~780px (390px phone:
+           path exit invisible; 1280x577 desktop: path y>397 clipped) enemies walked
+           off-canvas and towers could only be placed on the visible sliver.
+           Keep the bitmap at WORLD size and scale uniformly via CSS instead. */
+        canvas.width = 1000;
+        canvas.height = 600;
+        const s = Math.min(availableWidth / 1000, availableHeight / 600);
+        canvas.style.width = Math.floor(1000 * s) + 'px';
+        canvas.style.height = Math.floor(600 * s) + 'px';
+        canvas.style.margin = '0 auto';
         canvasWidth = canvas.width;
         canvasHeight = canvas.height;
-        
-        // Calculate cell size based on canvas size
+
+        // cell size in world units: 20 cols x 12 rows grid over the world
         cellSize = Math.max(40, Math.min(50, canvasWidth / 20));
-        
+
         buildGrid();
     }
 
@@ -2034,8 +2045,9 @@
         if (gameState.paused || gameState.gameOver) return;
         
         const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        // R1107: bitmap is world-size (1000x600), CSS box is scaled — map input to world space
+        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
         
         // Check if clicking on existing tower
         for (const tower of gameState.towers) {
@@ -2059,8 +2071,8 @@
 
     function handlePointerMove(e) {
         const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
         
         hoverCell = getCellAt(x, y);
         
