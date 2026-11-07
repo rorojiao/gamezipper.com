@@ -172,6 +172,7 @@ function playLevel(li){
  var mx=parseInt(localStorage.getItem('baba_max')||'0');
  if(!(mx>=li+1))throw new Error('baba_max not advanced ('+mx+')');
  ov.classList.remove('active');
+ console.log('L' + (li + 1) + ' path: ' + path.join(','));
  return path.length;
 }
 var lvls=BB.L();

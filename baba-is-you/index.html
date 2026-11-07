@@ -962,10 +962,14 @@ function handleKey(e){
 }
 let touchStart=null;
 function handleTouch(e){
-  if(e.touches.length!==1)return;
-  let t=e.touches[0];
-  if(!touchStart){touchStart={x:t.clientX,y:t.clientY};return}
+  /* FIX(R1107 2026-11-07): touchend carries an EMPTY e.touches — the old guard
+     `if(e.touches.length!==1)return;` discarded every swipe, so mobile users
+     could not move at all. Read the lifted finger from changedTouches. */
+  let t=(e.changedTouches&&e.changedTouches.length===1)?e.changedTouches[0]
+       :(e.touches&&e.touches.length===1?e.touches[0]:null);
+  if(!t||!touchStart)return;
   let dx=t.clientX-touchStart.x,dy=t.clientY-touchStart.y;
+  touchStart=null;
   if(Math.abs(dx)<10&&Math.abs(dy)<10)return;
   let dir=null;
   if(Math.abs(dx)>Math.abs(dy)){
@@ -973,7 +977,6 @@ function handleTouch(e){
   } else {
     dir={x:0,y:dy>0?1:-1};
   }
-  touchStart=null;
   initAudio();
   playMove();
   step(dir);
