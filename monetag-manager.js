@@ -2648,6 +2648,12 @@
     // from datacenter IPs; bot ad fetches are invalid-traffic exposure + BI
     // noise, never revenue. Same guard as adsterra-manager.js.
     if (/bot|crawler|spider|headless|webindexer|lighthouse/i.test(navigator.userAgent || '')) return;
+    // R1067 (2026-11-07): fake-fingerprint farm traffic passes the UA regex —
+    // iPhone UA + navigator.platform Win32 is physically impossible. BI 11-07:
+    // single IP 128.242.109.148 (NTT) = 6.5k events/371 sids, iPhone Safari/604.1
+    // UA without Version/ token, fired 487 adsterra config loads + 322 AdSense
+    // static fills. Real iPhone/iPod reports platform "iPhone"/"iPod".
+    if (/iPhone|iPod/.test(navigator.userAgent || '') && !/^(iPhone|iPod)$/.test(navigator.platform || '')) return;
     state.initialized = true;
 
     // v5.3: load Monetag zone backoff state (lazy cleanup of expired entries).
