@@ -1325,6 +1325,16 @@ function setupEvents(){
       row.style.setProperty('--gz-tap',String(row.__gzTapN));
       clearTimeout(row.__gzAckTid);
       row.__gzAckTid=setTimeout(function(){try{row.classList.remove('clicked')}catch(_){}},1200);
+      // R1118 (BI 11-07 20:37 + 11-02: dead_click sel "DIV.card-front"): the
+      // detector snapshots the CLICKED element, not ancestors — row-level ack
+      // is invisible when the tap lands on a card face. Mark the card itself
+      // with a monotonically-increasing inline counter (guaranteed style delta
+      // on every tap, incl. re-taps — R1056 counter pattern).
+      var face=e.target&&e.target.closest&&e.target.closest('.card-front,.card-back');
+      if(face){
+        face.__gzTapN=(face.__gzTapN||0)+1;
+        face.style.setProperty('--gz-tap',String(face.__gzTapN));
+      }
     },true);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',_gzCardsRowAck);

@@ -1007,6 +1007,16 @@ init();
     document.addEventListener('click', function(e){
       var card = e.target;
       if(!card || card.nodeType !== 1) return;
+      // R1118 (BI 11-07: dead_click sel "DIV.btn-row"): popup Retry/Next row
+      // matches the /btn/ lookClickable pattern; a tap in the gap between the
+      // buttons changes nothing -> booked dead. Counter ack on the row itself
+      // (inline style delta guaranteed, R1056 pattern). Taps ON the buttons
+      // are excluded — they rebuild the popup (isConnected guard covers it).
+      if(e.target.matches && e.target.matches('.btn-row')){
+        e.target.__gzTapN=(e.target.__gzTapN||0)+1;
+        e.target.style.setProperty('--gz-tap',String(e.target.__gzTapN));
+        return;
+      }
       if(card.matches && card.matches(SEL)) card = card;
       else card = card.closest ? card.closest(SEL) : null;
       if(!card) return;
