@@ -75,9 +75,18 @@
 html,body{width:100%;height:100%;overflow-x:hidden;user-select:none;-webkit-user-select:none;
 background:linear-gradient(135deg,#0a0a1a 0%,#1a1a2e 50%,#0a0a1a 100%);
 font-family:'Inter',system-ui,sans-serif;color:#e0e0e0;}
-body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;position:relative;}
+/* UX-OPT 2026-11-08 R1113c (R668c pattern): body flex column + justify-content:center
+   re-centers the WHOLE column whenever late content grows (SEO section 21→210px at
+   t=143ms via game-footer.js). The 768px canvas was clipped 676→538 in-viewport =
+   phantom CLS 0.095 on every load (BI POOR 0.336/0.369 compound). Block flow pins
+   top-down: canvas geometry becomes immutable. */
+body{min-height:100vh;position:relative;text-align:center;}
 h1,h2,h3,.title-font{font-family:'Orbitron',sans-serif;}
-canvas#gameCanvas{display:block;touch-action:none;}
+/* UX-OPT 2026-11-08 R1113: R345 canvas-resize CLS. Canvas had no intrinsic size ->
+   painted 300x150, then init()'s resizeCanvas() expanded it to innerWidth x innerHeight
+   (100vw x 100vh) ~2.4-4.8s later -> single layout shift v=0.3247 (BI 7d POOR 0.336/0.369).
+   Reserve the FINAL size from first paint so the JS resize is a no-op. */
+canvas#gameCanvas{display:block;touch-action:none;width:100vw;height:100vh;min-height:400px;flex-shrink:0;contain:layout paint style;}
 .glass{background:rgba(255,255,255,0.06);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
 border:1px solid rgba(255,255,255,0.1);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.3);}
 .neon-text{color:#00ff88;text-shadow:0 0 10px rgba(0,255,136,0.5),0 0 20px rgba(0,255,136,0.3),0 0 40px rgba(0,255,136,0.15);}
@@ -246,9 +255,20 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 <nav id="gz-topnav" style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:8px 16px;display:flex;justify-content:center;align-items:center;position:sticky;top:0;z-index:9999"><a href="https://gamezipper.com/" style="color:#fff;text-decoration:none;font-weight:bold;font-size:14px;animation:pulse-glow 2.5s ease-in-out infinite;display:inline-flex;align-items:center;gap:6px">&#x1F3AE; GameZipper — More Free Games</a></nav>
 
 
-<div id="gz-ad-above-game"></div>
+<style data-gz-r1113>
+/* UX-OPT 2026-11-08 R1113: static ad placeholders had NO styles (h=0) until
+   monetag-manager injectInGameBanners() rewrote their cssText (90px) ~1.2s after
+   paint — body grew 819→999→1137 and the flex-centered canvas was clipped
+   676→538 (three CLS shifts); BI showed 0.336/0.369 POOR. Pre-apply the EXACT
+   bannerCSS values monetag writes (desktop 90 / mobile 50, max 280) via
+   class+!important (R907: class !important survives cssText rewrite) so the
+   rewrite is a no-op and geometry never changes. */
+.gz-r1113-adslot{display:block!important;max-width:728px!important;min-width:320px!important;min-height:90px!important;max-height:280px!important;margin:8px auto!important;text-align:center;overflow:hidden;contain:layout paint style!important;}
+@media(max-width:600px){.gz-r1113-adslot{max-width:320px!important;min-height:50px!important;}}
+</style>
+<div id="gz-ad-above-game" class="gz-r1113-adslot"></div>
 <canvas id="gameCanvas"></canvas>
-<div id="gz-ad-below-canvas"></div>
+<div id="gz-ad-below-canvas" class="gz-r1113-adslot"></div>
 
 
 <div id="gameUI">
