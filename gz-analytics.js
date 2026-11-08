@@ -192,6 +192,13 @@
       device: DEVICE, screen: SCREEN, browser: BROWSER, os: OS, referrer: REFERRER
     };
   }
+  // R1117b (2026-11-09): mirror the R1067 fingerprint-farm predicate into the
+  // BI chokepoint. Ad managers have guarded it since 11-07 but page_view/
+  // u_enter still flowed from impossible fingerprints (iPhone/iPod UA +
+  // non-iPhone platform) — BI /magic-sort/ 7d had such rows as the page's
+  // only "mobile" visits.
+  var _fakeFP = /iPhone|iPod/.test(UA) && !/^(iPhone|iPod)$/.test(OS);
+
   function ps(n, d) {
     // R962 bot referrer gate: silently drop all events from known bot farms.
     // Single chokepoint — covers page_view + u_enter + u_click + gz_ad_event.
@@ -199,9 +206,11 @@
       BOT_REF_DROPPED++;
       return;
     }
+    if (_fakeFP) return;  // R1117b fingerprint farm drop
     var b = gB();
     var ev = base();
     ev.e = n; ev.d = d || {}; ev.t = Date.now();
+    if (document.prerendering) ev.d.pr = 1;  // R1117: tag prerender-doc events
     b.push(ev);
     sB(b);
   }
@@ -223,20 +232,46 @@
     else { fetch(url, { method: 'POST', body: d, keepalive: true, headers: { 'Content-Type': 'application/json' } }).catch(function(){}); }
   }
 
-  setInterval(function() {
+  // R1117 (2026-11-09): speculation-rules prerender ghosts. Homepage hover
+  // rules (eagerness moderate on .game-card) + dynamic recent-game prerender
+  // run this whole script in a HIDDEN prerender document that the user may
+  // never activate: page_view/u_enter queue immediately, game ms_* piggyback
+  // writes queue too, and pagehide-on-discard flushed them to BI.
+  // BI 7d /magic-sort/: 13/24 "visits" were page_view+u_enter rows timestamped
+  // while the same sid was visibly on another page (carousel sweep hovers).
+  // Gate: never network-flush while document.prerendering; on activation
+  // (prerenderingchange) flush as normal (the visit becomes real); on
+  // discard (pagehide while still prerendering) drop only this document's
+  // own rows (pr tag, or same-path since this doc booted), leave other
+  // tabs' buffered events untouched.
+  var _prBoot = Date.now() - 500;
+  function _flushTick() {
+    if (document.prerendering) return;
     var b = gB();
     if (b.length) { snd(b); sB([]); }
-  }, T);
+  }
+  setInterval(_flushTick, T);
 
   window.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'hidden') {
-      var b = gB();
-      if (b.length) { snd(b); sB([]); }
-    }
+    if (document.visibilityState === 'hidden') _flushTick();
   });
   window.addEventListener('pagehide', function() {
+    if (document.prerendering) {
+      try {
+        var a = gB();
+        var keep = a.filter(function(e){
+          return !(e && (e.pr === 1 || (e.d && e.d.pr === 1) ||
+                         (e.path === P && (e.t || 0) >= _prBoot)));
+        });
+        if (keep.length !== a.length) sB(keep);
+      } catch(e) {}
+      return;
+    }
     var b = gB();
     if (b.length) { snd(b); sB([]); }
+  });
+  document.addEventListener('prerenderingchange', function() {
+    setTimeout(_flushTick, 0);
   });
 
   var st = { fC: 0, mS: 0, en: 0, gL: false, gS: false, gE: false };
@@ -721,6 +756,11 @@
 
   if (requestIdleCallback) {
     requestIdleCallback(function() {
+      if (document.prerendering) return;  // R1117: idle flush fires even in
+      // hidden prerender docs (Chrome runs idle callbacks there) — was the real
+      // ghost leak: page_view/u_enter/ms_* batch sent seconds after prerender
+      // start, before any pagehide gate could purge. Activation's
+      // prerenderingchange flush covers activated docs instead.
       var b = gB();
       if (b.length) { snd(b); sB([]); }
     }, { timeout: 5000 });
