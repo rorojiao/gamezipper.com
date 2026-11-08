@@ -251,7 +251,34 @@ canvas{display:block;touch-action:none}
 
 <div class="toast" id="toast"></div>
 <script src="/gz-analytics.js?v=202611071645R1064localguard" defer></script>
-<script defer src="/adsterra-manager.js?v=20261107R1067pfmismatch"></script><script defer src="/monetag-manager.js?v=20261107R1067pfmismatch"></script>
+<script>
+/* R1113 (2026-11-08): idle-defer ad managers — R1054 pattern (scheduler.yield ->
+   requestIdleCallback -> 2s fallback). BI today: inp_worst 1904/1118ms POOR with no
+   idle-defer on this page; R1054 proved ad-manager execution colliding with the
+   first-interaction window (gz_ad_event +-5s correlation) is the INP root cause on
+   this exact class of page. Static adsbygoogle banners untouched. Version params
+   kept identical to the previous tags (R1067 cache chain). */
+(function(){
+  function loadAdManager(){
+    if(window.GZ_LOAD_ADSTERRA!==false){
+      var sAd=document.createElement('script');
+      sAd.src='/adsterra-manager.js?v=20261107R1067pfmismatch';
+      sAd.defer=true;
+      document.head.appendChild(sAd);
+    }
+    var s=document.createElement('script');
+    s.src='/monetag-manager.js?v=20261107R1067pfmismatch';
+    document.head.appendChild(s);
+  }
+  if('scheduler' in window && 'yield' in window.scheduler){
+    scheduler.yield().then(loadAdManager);
+  }else if('requestIdleCallback' in window){
+    requestIdleCallback(loadAdManager,{timeout:3000});
+  }else{
+    setTimeout(loadAdManager,2000);
+  }
+})();
+</script>
 <script src="game.js?v=R449-flat" defer></script>
 
 <!-- Analytics -->
