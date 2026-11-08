@@ -839,8 +839,16 @@ function handlePointer(e){
   return;
  }
  if(tutActive&&tutStep<3){
-  spawnTapRipple(px,py,'rgba(255,120,80,0.9)','locked');
-  return;
+  // R1114 P1: tutorial steps are ACTION-gated (tutStep advances inside takeOrder/
+  // addIngredient/serveDish, all reachable only through this handler). The old blanket
+  // return swallowed every tap, soft-locking first play ("Tap a customer" but taps
+  // never hit takeOrder — Kachilu fresh-visit repro 11-09). Only lock taps that match
+  // no actionable target (waiting customer / slot row / ingredient bar).
+  var tHit=false;
+  for(var ti=0;ti<customers.length;ti++){var tc=customers[ti];if(tc.state==='wait'&&px>tc.x-39&&px<tc.x+39&&py>tc.y-27&&py<tc.y+27){tHit=true;break;}}
+  if(!tHit){var tsy0=getSlotY(),tsy1=getSlotY()+getSlotH();for(var ts=0;ts<SLOT_COUNT;ts++){if(px>=getSlotX(ts)&&px<getSlotX(ts+1)&&py>=tsy0&&py<tsy1){tHit=true;break;}}}
+  if(!tHit&&py>=getIngBarY())tHit=true;
+  if(!tHit){spawnTapRipple(px,py,'rgba(255,120,80,0.9)','locked');return;}
  }
 
  for(var i=0;i<customers.length;i++){
