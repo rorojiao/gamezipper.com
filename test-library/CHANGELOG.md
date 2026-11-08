@@ -1,3 +1,35 @@
+## [v1.289.0] - 2026-11-08
+
+### Added — 10 new machine-verifiable test cases (R406, 4h cycle 168)
+
+- [W-624] **[P1] Firefox 160 Stable ships WebTransport `headers` option + `responseHeaders`** — CONNECT-handshake header contract now Chromium+Gecko; relax "Chromium-only" gates; Safari still WebTransport-absent [P1]
+- [W-625] **[P2] Firefox 160 `runtime.PlatformInfo` arch `arm64` replaces `aarch64`** — extension enum-matches on `aarch64` silently misclassify ARM64 devices post-update; union-set detector [P2]
+- [W-626] **[P2] Firefox 160 experimental `blocking="render"` on JS-inserted `<link>/<script>/<style>`** — flag `dom.element.blocking.enabled`; FOUC-free injected-skin primitive; reflection + paint-order fixtures [P2]
+- [W-627] **[P2] Firefox 160 experimental CSSNumericValue `add/sub/mul/div`** — flag `layout.css.typed-om.enabled`; handle CSSUnitValue vs CSSMathSum return shapes [P2]
+- [W-628] **[P1] Firefox 159 Sanitizer strips AT PARSE TIME — adjacent sanitized text merges into ONE text node** — childNodes/text-run-counting renderers see engine-divergent tree shapes; normalize runs before indexing (bug 2070498) [P1]
+- [B-421] **[P2] CSS typed arithmetic Baseline Newly Available (FF158 + Chrome/Edge 140)** — same-type cross-unit division in calc() → unitless `<number>`; mismatched-type stays invalid on every engine [P2]
+- [B-422] **[P2] Firefox 158 `getBBox({fill,stroke})` honored on `<tspan>/<textPath>`** — stroke-inclusive span bounds fix under-sized SVG HUD hit-boxes; assert the delta, not API acceptance (bug 2072680) [P2]
+- [B-423] **[P2] Firefox 159 WebGL `EXT_clip_control` (driver-gated)** — clipControlEXT clip-depth [0,1] remap probe; per-device availability matrix, never hard-assert non-null [P2]
+- [C-288] **[P1] Five-state panel honesty: loading / empty / failed / stale-kept / failed-refresh MUST render distinct copy + data-retention + CTAs** — generic "No results" collapse is a defect (dev.to Oct 29 + syp.vn + NN/g) [P1]
+- [A-096] **[P2] Cursor-size-agnostic interaction contract: Chromium scales cursors >64 DIP (was: >128 DIP dropped); OS/assistive enlarged cursors obscure targets** — cursor image size must never be the sole semantic channel; DOM/canvas mirror required [P2]
+
+### Cycle notes (R406, 2026-11-08)
+
+- Priority re-probe list from v1.288.0 executed: MDN Releases/158/159/160/161 ALL live — the R405 '159 stable/160 beta' sidebar conflict against browsercalendar's FF160 Nov-6 landing is RESOLVED as MDN lag; 160 carries stable + experimental sections, 161 is the Nightly stub.
+- csl159 mirror: WebTransportError alignment card now **dual-listed Enabled(20)+Flagged(1)** — third recorded oscillation (R404 FLAGGED→Enabled deferred, R405 FLAGGED(1), R406 dual) — matches the card's 'serialization default behind writer kill switch' wording; W-619 stays flag-gated, serialization sub-assertions must pass with the flag OFF.
+- Negative controls: developer.chrome.com/release-notes/157 + /158 404 for the 6th consecutive cycle; ?version=160 mirror still renders 'Chrome Release 159' (unminted); webkit index unchanged (TP 256 + 18541 newest, no Safari 27.3 GA flip); Edge stable latest 157.0.4341.42 (Nov 5) with 158 stable ETA Nov 19 pending.
+- Chrome RSS Nov 4-6: desktop Early-Stable 158.0.8127.18/.19 + Beta .2 (Nov 4), Android stable 158.0.8127.22 (Nov 5), Dev 159.0.8144.0 (Nov 6), ChromeOS 156.0.8078.93 (Nov 6) — rollout facts only, no new desktop stable, full 158 stable ETA Nov 17 stands.
+- Dedupe rejections logged: FF158 Notification-navigate / Accept-jxl / deliveryType / getStats (G-199/G-201/W-468/W-620/W-606 lineage), scroll-driven Baseline (B-407/W-467), margin-trim (B-315), symbols() (B-330), :navigation-source (B-326), text modules + retry (W-477/B-353), CSS random (B-314).
+- Deferred fresh items (mandatory re-probe): scoped custom element registries (FF159, Baseline Newly available per web.dev, zero coverage verified), FF158 WebGPU float32-blendable, Firefox high-contrast theme customization.
+
+### Next-cycle mandatory re-probe checklist
+
+- learn.microsoft.com Edge web-platform release-notes/159 + Edge stable channel at Edge 158 stable landing (Nov 19 ETA).
+- chromestatuslite ?version=160 minting + csl159 Enabled/Flagged counts for the W-619 third-state check.
+- webkit.org index for Safari 27.3 GA (Adaptive Dark Mode 'only'-keyword flip) + TP 257.
+- developer.mozilla.org Firefox Releases/161 content + whether FF161 enters beta.
+- web.dev November roundup ('New to the web platform in November') — first pass at scoped custom element registry fixtures if still unmined.
+
 ## [v1.288.0] - 2026-11-07
 
 ### Added — 9 new machine-verifiable test cases (R405, 4h cycle 167)
