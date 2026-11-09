@@ -295,7 +295,34 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 </div>
 <div id="gz-ad-r729" style="position:relative;min-height:100px;max-height:280px;margin:16px auto;max-width:728px;text-align:center;overflow:hidden;contain:layout paint style;color:#666;font-size:.7em;background:transparent;border-radius:6px;box-sizing:border-box;line-height:100px"><span aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.78em;opacity:.3;letter-spacing:.05px;font-weight:500;pointer-events:none;transition:opacity .15s ease">Sponsored &middot; Advertisement</span><ins class="adsbygoogle" style="position:absolute!important;top:0!important;left:0!important;width:100%!important;max-width:728px!important;height:100%!important;max-height:280px!important;margin:0 auto!important;text-align:center;display:block" data-ad-client="ca-pub-8346383990981353" data-ad-slot="7373732357" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({});</script></div>
 <script src="/game-footer.js?v=202607021204" defer></script>
-<script defer src="/adsterra-manager.js?v=20261107R1067pfmismatch"></script><script defer src="/monetag-manager.js?v=20261107R1067pfmismatch"></script>
+<script>
+/* R1119 (2026-11-09): idle-defer ad managers — extends proven R1054 (antistress) / R1063 (2048) fix to /stacklands/.
+   BI evidence: inp_worst 1256/952/864ms (session 9eboahwhbk) + 1168ms (l4qacmgwjt), both Android-9 AFTSS
+   (Fire TV Stick — slowest device class on site), 11-08. inp_worst+inp_hover+inp_scroll report identical
+   dur = R1054 shared-blocking-task signature (three EventTiming entries queued behind one task); every
+   poor row coincides with a gz_ad_event burst in the same second. Idle-defer chain mirrors R1054/R1063:
+   scheduler.yield -> requestIdleCallback(3000) -> setTimeout 2000. Static adsbygoogle divs untouched. */
+(function(){
+  function loadAdManager(){
+    if(window.GZ_LOAD_ADSTERRA!==false){
+      var sAd=document.createElement('script');
+      sAd.src='/adsterra-manager.js?v=20261107R1067pfmismatch';
+      sAd.defer=true;
+      document.head.appendChild(sAd);
+    }
+    var s=document.createElement('script');
+    s.src='/monetag-manager.js?v=20261107R1067pfmismatch';
+    document.head.appendChild(s);
+  }
+  if('scheduler' in window && 'yield' in window.scheduler){
+    scheduler.yield().then(loadAdManager);
+  }else if('requestIdleCallback' in window){
+    requestIdleCallback(loadAdManager,{timeout:3000});
+  }else{
+    setTimeout(loadAdManager,2000);
+  }
+})();
+</script>
 
 <script>
 "use strict";
