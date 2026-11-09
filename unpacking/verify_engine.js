@@ -34,7 +34,8 @@ const g = bootGame('unpacking', {
         for (var i = 0; i < un.length; i++) {
           var s = boxSlot(L, un.length, i);
           var r = Math.max(12, L.itemS * 0.4);
-          if (s.x - r < 0 || s.x + r > W || s.y + r > H) return { bad: i, x: Math.round(s.x), y: Math.round(s.y), W: W, H: H };
+          if (s.x - r < 0 || s.x + r > W || s.y + r > H) return { bad: i, x: Math.round(s.x), y: Math.round(s.y), W: W, H: H, why: 'offcanvas' };
+          if (s.y + r > H - 56) return { bad: i, x: Math.round(s.x), y: Math.round(s.y), H: H, why: 'footer-band' };
         }
         return true;
       },
