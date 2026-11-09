@@ -25,7 +25,13 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0a0a1a;overflow-x:hidden;user-select:none;-webkit-user-select:none;touch-action:none;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
-canvas{display:block;width:100%;height:100%;position:fixed;top:0;left:0}
+canvas{display:block;width:100%;height:100vh;height:100svh;background:#0d1330}
+/* R1124 QA: canvas was position:fixed fullscreen → all in-flow site chrome (AdSense
+   INS/iframes ~375x375, related cards, fixed #game-footer) painted ON TOP of the canvas
+   and swallowed every menu CTA tap (elementsFromPoint(PLAY)==aswift iframe, desktop AND
+   mobile). Canvas now flows as the first full-viewport block; chrome scrolls below it.
+   Click coords converted rect-relative (see toLocal). */
+#game-footer{position:static!important}
 </style>
 <script src="/gz-analytics.js?v=20261109R1123clswindow" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
@@ -1010,17 +1016,23 @@ function getInput() {
 }
 
 // Mouse/Touch
+// R1124: canvas is in-flow now → convert client coords to canvas-local logical px.
+function toLocal(cx, cy) {
+  const r = C.getBoundingClientRect();
+  return [(cx - r.left) * W / r.width, (cy - r.top) * H / r.height];
+}
 function handlePointerDown(x, y) {
   resumeAudio(); initAudio();
-  mouseX = x; mouseY = y;
+  const p = toLocal(x, y);
+  mouseX = p[0]; mouseY = p[1];
   if (gameState === 'playing' || gameState === 'endless') {
     if (isMobile) {
-      if (x < W * 0.5) touchBrake = true; else touchAccel = true;
+      if (p[0] < W * 0.5) touchBrake = true; else touchAccel = true;
     }
   }
 }
 function handlePointerUp() { touchAccel = false; touchBrake = false; }
-function handlePointerMove(x, y) { mouseX = x; mouseY = y; }
+function handlePointerMove(x, y) { const p = toLocal(x, y); mouseX = p[0]; mouseY = p[1]; }
 
 C.addEventListener('mousedown', e => { e.preventDefault(); handlePointerDown(e.clientX, e.clientY); });
 C.addEventListener('mousemove', e => handlePointerMove(e.clientX, e.clientY));
@@ -1874,7 +1886,7 @@ function handleClick(x, y) {
   }
 }
 
-C.addEventListener('click', e => { handleClick(e.clientX, e.clientY); });
+C.addEventListener('click', e => { const p = toLocal(e.clientX, e.clientY); handleClick(p[0], p[1]); });
 
 // Scroll
 C.addEventListener('wheel', e => {
