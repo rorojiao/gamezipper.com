@@ -1,3 +1,53 @@
+## [v1.290.0] - 2026-11-09
+
+### Added — 11 new machine-verifiable test cases (R407, 4h cycle 169)
+
+- [W-629] **[P1] Firefox 159 ships scoped custom element registries — Baseline 2026 "Newly available"** — `new CustomElementRegistry()` + `customElementRegistry` property on Document/Element/ShadowRoot; iframe-hub tag-name collisions fixable per-subtree; probe `"customElementRegistry" in Element.prototype`, global-define collision throws, scoped defs don't leak (bug 2070506) [P1]
+- [W-630] **[P1] Firefox 159 enables CSS scroll-driven animations by default — all four engines now shipped** — capability floor moves up but Firefox<=158 false branch retained; `CSS.supports('animation-timeline','scroll()')` probe + fallback parity + reduced-motion pairing fixtures (bug 1324602) [P1]
+- [W-631] **[P2] Firefox 159 WebDriver BiDi `emulation.setMediaFeaturesOverride` (prefers-color-scheme only)** — deterministic dark/light QA without OS prefs; BiDi-command + matchMedia repaint + per-session isolation fixtures (bug 2064354) [P2]
+- [W-632] **[P2] Firefox 159 `GPUDevice.limits` reports ADJUSTED stage-specific storage limits** — requested-value assumptions break per-device; pool sizing from live device.limits, reported<=requested invariant, cross-engine requested-vs-reported matrix probe (bug 2006720; FF161 WIP line = version-instability corroboration) [P2]
+- [W-633] **[P2] Firefox 159 flags CSS numeric factory functions into workers/paint-worklets (`layout.css.namespace.exposed-in-workers-and-worklets`)** — three-state probe (window/worker/pref); factory exposure != arithmetic availability; off-main-thread HUD math capability-gated per scope (bug 2079188) [P2]
+- [W-634] **[P1] Visibility-signal split: window/app switches and suspend DON'T fire Page Visibility — away-time must derive from persisted timestamp deltas** — Melvor #4995 overnight-accrual fragmentation specimen; hasFocus/blur/suspend three-path fixtures + away-box merging + <1% error tolerance [P1]
+- [B-450] **[P1] WebGPU render-target orientation flips intermittently while WebGL stays upright (Unity 6.6 browser postmortem)** — engine-disagreement on row origin; no per-backend flip rule — in-shader 4px sentinel dot + both-corner readback self-calibration + deliberate-inversion control fixture [P1]
+- [B-451] **[P2] Screenshot bug-reports corrupt under RGB-stride assumptions — WebGPU delivers RGBA** — tripling/stripe signature artifact; stride assert or auto-detect scoring at every framebuffer->image boundary; bug-report image validation gate + graphics-section plain-text report [P2]
+- [B-452] **[P1] Brave WebGL capability-contract breakage trio: `webgl` context exposes WebGL2-only extension set (ANGLE_instanced_arrays etc. vanish), fingerprinting profile reports unsupported, GPU-crash storms disable acceleration per session** — live `getSupportedExtensions()` enumeration truth, WebGL1->WebGL2 downgrade path, crash-session restart guidance, Brave QA-matrix row (#57736/#54335/#52749) [P1]
+- [C-289] **[P1] Dead-UI-while-audio-plays partial-asset-failure state demands a render-progress watchdog** — reels-audio-runs/canvas-empty/input-dead (Pogo Slots Oct 11 2026); audio silence while draw-calls==0, bounded retry-reload-of-failed-group-only, phantom-input suppression, score-preserving soft reload [P1]
+- [C-290] **[P1] Cross-window focus-vs-visibility split: focus loss keeps `visibilityState=="visible"`** — desktop cross-window path where S-042 visibility pause does NOT fire; (visibility,focus) pair arbitration, blur-timestamped auto-pause, two-window input arbitration, PiP/launcher BroadcastChannel state bridge [P1]
+
+### Cycle notes (R407, 2026-11-09)
+
+- MDN Releases/159 FIRST LIVE capture: six shipped web-platform changes mined four (W-629/630/631/632) + experimental factory-in-workers (W-633); masonry legacy removal = negative control (grid-lanes family already W-527/B-406); EXT_texture_norm16 + mirror_clamp_to_edge = B-423 driver-gate lineage reaffirm, no new case.
+- R406 deferred ledger CLOSED: scoped custom element registries -> mined W-629 (MDN constructor page: Baseline 2026 Newly available since Oct 2026; webfeatures.dev corroboration); FF160 "WebGPU limits" deferral -> shipped in FF159 not 161, mined W-632 with lineage correction; FF160 factory-functions deferral -> feature entry lives in FF159 experimental, mined W-633. STILL DEFERRED: FF158 EXT_texture_float float32-blendability (not surfaced in any fetched FF158/159/160 page), Firefox high-contrast theme customization (absent from FF159/160/161 notes).
+- FF161 = pre-release stub (no stable-bound web-platform section, no Removed features) — mined only the GPUDevice.limits WIP line as W-632 corroboration.
+- Negative controls (zero churn): Edge stable notes newest 159.0.4725.93 Aug 31 + WebView2 1.0.3239.30 Sep 22 (B-431 cohort math holds); Edge site-impact list unchanged; Chrome RSS Nov 6 = Android 142/143 + Enterprise 143.0.7499.192/193 + Beta 159.0.8510.0 + Dev 160.0.8548.0 — no 159-stable, no 144.0.7559.142 follow-on (B-432 holds; next trigger = 159 stable promotion); ChromeStatusLite ?version=159 recapture Enabled 21 (was 19 — re-classification oscillation, nothing game-relevant new) / OT 24 / Flagged 17 / Deprecated 13 / Removed 1; Chrome notes 157/158 404 for the SEVENTH consecutive cycle; webkit index unchanged; web.dev web-platform-11-2026 URL live but content identical to Oct roundup.
+- Evidence-integrity flags: EA Pogo thread body quoted from search-index snippet (developer.ea.com refuses agent fetches — flagged in C-289 case); Brave trio + Melvor #4995 verified verbatim via search-index + GitHub API respectively; Blocks postmortem fetched direct (Nov 7 2026).
+- Dedupe rejections logged: scroll-driven "Baseline" as standalone (W-467/B-407/C-269 lineage — W-630 only the FF-default flip obligation), masonry removal (W-527/B-406), BiDi locale/timezone family (W-399), light-dark() CSS surface (W-381), canvas fingerprint noise (S-455), SwiftShader blocklist (P-224), anti-cheat fingerprint arms race (G-197), interstitial/modal hygiene (C-284), panel honesty taxonomy (C-288 — C-289 supplies the distinct watchdog machinery), iOS app-switcher pause (S-042 — C-290 is the desktop cross-window path where visibilitychange does not fire).
+
+### Next-cycle mandatory re-probe checklist
+
+- developer.mozilla.org Firefox Releases/158 for EXT_texture_float float32 blendability + high-contrast theme customization (two carried deferrals).
+- developer.chrome.com release-notes/159 on stable promotion (~mid-Nov cadence trigger) + 157/158 404 streak; chromestatuslite ?version=160 minting + csl159 Enabled/Flagged counts (21 now — watch W-619 third-state oscillation).
+- FF161 notes for beta-cycle content (web-platform section + Removed features when minted).
+- Edge stable channel at 159.x follow-on + site-impact dated entries.
+- webkit.org index for Safari 27.3 GA + TP 257; web.dev December roundup for W-629 Baseline date drift check.
+
+### Sources (v1.290.0)
+
+- https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/159 (first live capture; W-629/630/631/632 shipped + W-633 experimental)
+- https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/CustomElementRegistry (Baseline 2026 Newly available since Oct 2026)
+- https://webfeatures.dev/scoped-custom-element-registries (Baseline corroboration)
+- https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/160 (R406 coverage audit — W-627 already live)
+- https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/161 (pre-release stub; GPUDevice.limits WIP corroboration)
+- https://www.blocksbeyondthestars.com/en/post/when-the-hud-suddenly-stood-on-its-head-in-the-browser (Nov 7 2026 WebGPU cutover postmortem — B-450/B-451)
+- https://github.com/MelvorIdle/melvoridle.github.io/issues/4995 (GitHub API verified — W-634/C-290)
+- https://github.com/brave/brave-browser/issues/57736 + https://github.com/brave/brave-browser/issues/54335 + https://github.com/brave/brave-browser/issues/52749 (B-452)
+- https://developer.ea.com/en-us/communities/discussions/pogo-slots/slot-spinning-sounds-no-gfx (Oct 11 2026 — C-289; search-index snippet quoted, fetch refused)
+- https://learn.microsoft.com/en-us/microsoft-edge/web-platform/release-notes/159 + /deployedge/microsoft-edge-relnote-stable-channel + /microsoft-edge/web-platform/site-impacting-changes (negative controls)
+- https://chromestatuslite.com/?version=159 (recapture) + https://developer.chrome.com/release-notes/157 + /158 (404 x7) + Chrome Releases RSS (Nov 6) + https://webkit.org/blog/ (unchanged) + https://web.dev/blog/web-platform-11-2026 (content == Oct roundup)
+- Required broad query coverage (five mandated strings): (1) "HTML5 game testing 2026 new techniques" -> Baseline/metadata-driven gating (W-629); (2) "browser game bug report 2026" -> Blocks postmortem (B-450/B-451) + EA Pogo (C-289); (3) "Chrome Edge Safari update 2026" -> negative-control ledger (no new Chromium stable surface; B-431/B-432 hold); (4) "casual game UX complaint 2026" -> Melvor #4995 idle-accrual complaint class (W-634/C-290); (5) "mobile game performance issue 2026" -> Brave fork capability-contract breakage class (B-452).
+
+---
+
 ## [v1.289.0] - 2026-11-08
 
 ### Added — 10 new machine-verifiable test cases (R406, 4h cycle 168)
