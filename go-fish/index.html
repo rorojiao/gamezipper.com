@@ -1369,9 +1369,27 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
   // ---- CANVAS TAP DETECTION ----
   var lastTapTime = 0;
 
+  // GAME-OFF-BAND guard (R1121): the canvas paints innerHeight tall but the R1113
+  // pre-reserved ad slots (90+16 desktop / 50+16 mobile) push its TOP down by ~106px,
+  // so h-based geometry hid the player hand (y=h-145) ~178px BELOW the fold on the
+  // 1280x577 default viewport — first real QA tap at h-145 missed (hand cards live at
+  // canvas y=440-520), hand only reachable by scrolling. Clamp h to the viewport band
+  // actually occupied by the canvas. (R1115 footer-band family; go-fish BI 0 rage/dead
+  // because only 15 PV/7d, low traffic hides it.)
+  function effH() {
+    var h = window.innerHeight;
+    var above = document.getElementById('gz-ad-above-game');
+    var below = document.getElementById('gz-ad-below-canvas');
+    var res = 0;
+    if (above && above.offsetParent !== null) { try { var ra = above.getBoundingClientRect(), rb = below && below.getBoundingClientRect(); res = (rb && rb.top > ra.bottom ? rb.top : ra.bottom) - ra.top + 16; } catch (e) { res = 106; } }
+    var f = document.getElementById('game-footer');
+    if (f && getComputedStyle(f).position === 'fixed') res += f.getBoundingClientRect().height;
+    return Math.max(h - res, Math.min(h, 420));
+  }
+
   function getCardPositions(hand, area) {
     var w = window.innerWidth;
-    var h = window.innerHeight;
+    var h = effH();
     var positions = [];
     var n = hand.length;
     if (n === 0) return positions;
