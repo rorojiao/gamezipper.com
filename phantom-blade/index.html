@@ -350,12 +350,19 @@ function getFooterH(){ var f=document.getElementById('game-footer'); return (f&&
 function getGameH(){ return window.innerHeight - 28 - getFooterH(); }
 let W = canvas.width = window.innerWidth;
 let H = canvas.height = getGameH();
-window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = getGameH(); });
+window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = getGameH(); layoutDisc(); });
 // R276: poll for game-footer appearance and re-resize
-(function(){var c=setInterval(function(){var f=document.getElementById('game-footer');if(f&&f.offsetHeight>0){H=canvas.height=getGameH();clearInterval(c);}},2000);setTimeout(function(){clearInterval(c);},30000);})();
+(function(){var c=setInterval(function(){var f=document.getElementById('game-footer');if(f&&f.offsetHeight>0){H=canvas.height=getGameH();layoutDisc();clearInterval(c);}},2000);setTimeout(function(){clearInterval(c);},30000);})();
 
 // Dynamic positions
 let DISC_X=200,DISC_Y=180,DISC_R=80,KNIFE_LEN=50;
+// R1124 P0: DISC_* were labeled "dynamic" but NEVER recomputed — on desktop (W=1280)
+// the disc sat at a hard-coded (200,180,r80) top-left while knives launched from
+// x=W/2=640 straight up, so the flight never intersected the disc: every desktop
+// level was impossible (queue froze after first throw). Mobile (~390px wide) only
+// worked by coincidence. Recompute geometry from W/H on load, resize and footer reflow.
+function layoutDisc(){DISC_X=W/2;DISC_Y=H*0.42;DISC_R=Math.max(70,Math.min(110,Math.min(W,H)*0.16));}
+layoutDisc();
 const KNIFE_W=4,COLLISION_ANGLE=0.12;
 
 // Sound
@@ -524,6 +531,14 @@ try{const s=JSON.parse(localStorage.getItem('pb_save')||'{}');level=s.level||0;h
 function save(){try{localStorage.setItem('pb_save',JSON.stringify({level,highScore,score}));}catch(e){}}
 
 function togglePause(){if(state!=='playing')return;paused=!paused;document.getElementById('pauseBtn').textContent=paused?'▶':'⏸';}
+// R1124 P1: the HUD spans call PB.togglePause()/PB.toggleSound() but these were never
+// assigned on the PB namespace (IIFE-scoped functions) -> every pause/sound click threw
+// "PB.togglePause is not a function" and the buttons were dead chrome.
+PB.togglePause=togglePause;
+PB.toggleSound=toggleSound;
+// R1124 QA probe (read-only): state machine visibility for automated deep QA,
+// same pattern as R1115 __probe — no gameplay effect.
+PB.__probe={getState:()=>state,getQueue:()=>knifeQueue,getStuck:()=>stuckKnives.filter(k=>k.isPlayer).length,getLevel:()=>level,getFailed:()=>failedThisLevel,getFrame:()=>animFrame,getFly:()=>flyingKnife?{x:Math.round(flyingKnife.x),y:Math.round(flyingKnife.y)}:null,geom:()=>({W,H,DX:Math.round(DISC_X),DY:Math.round(DISC_Y),DR:Math.round(DISC_R)})};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')togglePause();});
 
 function initLevel(){
@@ -934,6 +949,11 @@ function update(){
       knifeGhosts.push({x:k.x,y:k.y});
       if(knifeGhosts.length>10)knifeGhosts.shift();
       k.y-=k.speed*dt;
+      // R1124 P1: off-screen cleanup — a knife that flies past the top without ever
+      // reaching the disc used to leave flyingKnife!=null forever, blocking every
+      // subsequent throwKnife() call (queue soft-lock). Miss = clear it, reset combo.
+      if(k.y < -KNIFE_LEN-30){flyingKnife=null;knifeGhosts=[];combo=0;}
+      else{
       const dy=k.y-DISC_Y,dx=k.x-DISC_X,dist=Math.sqrt(dx*dx+dy*dy);
       if(dist<=DISC_R+5){
         let na=Math.atan2(dy,dx)-discAngle;
@@ -998,6 +1018,7 @@ function update(){
           state='levelComplete';levelCompleteTimer=2;shatterDisc();shakeTimer=0.6;flashTimer=0.15;flashColor='#FFFFFF';
           if(score>highScore)highScore=score;save();
         }
+      }
       }
     }
     drawGemTargets();drawFlyingKnife();drawKnifeQueue();drawScore();drawFloatingTexts(dt);
