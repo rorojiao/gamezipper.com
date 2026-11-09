@@ -733,6 +733,16 @@
               if (!stateChanged && !t.isConnected) {
                 return; // node was rebuilt away by a working handler — alive
               }
+              /* R1121 (2026-11-09): decorative card-face exemption. BI /blackjack/
+                 11-07 20:37 + 02:14: DIV.card-front dead_click ×3 — the .card /
+                 .card-front elements are pure CSS-flip visuals; every Blackjack
+                 control is a <button>. Users instinctively tap the cards they were
+                 just dealt; the tap is harmless, not a broken affordance.
+                 Sibling family (tetravex/zen-garden level cards) is NOT exempt —
+                 those ARE the controls; the exemption word pair (card + face/
+                 front/back) keeps any real card-tap game (slap games) covered. */
+              var _gzDecorCard = /(?:^|[\s.\-])card[\s\-]?(?:front|back|face)(?:$|[\s.\-])/i;
+              if (_gzDecorCard.test(sel)) return;
               if (!stateChanged && !_gzAckLive.test(snapClass)) {
                 ps('dead_click', { u: P, sel: sel });
               }
