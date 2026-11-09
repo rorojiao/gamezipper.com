@@ -32,7 +32,10 @@ for (let i = 0; i < N; i++) {
     if (g.call('__MX2.dead()')) { if (!wasDead) deaths++; wasDead = true; } else wasDead = false;
     if (b.x > maxX + 3) maxX = b.x;
     const walls = g.call('__MX2.walls()');
-    const nearWall = walls.find(wx => b.x > wx - 90 && b.x < wx + 40);
+    // R1124: tighten wall-contact window to actual hitbox proximity. The old 90px
+    // look-ahead braked before the launch ramp and killed jump speed, contradicting
+    // the retuned wall geometry (wall y:395 h:40 — clearable at ramp launch speed).
+    const nearWall = walls.find(wx => b.x > wx - 30 && b.x < wx + 45);
     const stalled = Math.abs(b.vx) < 25 && g.call('__MX2.grounded()');
     rev = nearWall !== undefined && stalled && (b.x > nearWall - 90);
     if (rev) {
@@ -40,8 +43,10 @@ for (let i = 0; i < N; i++) {
       if (reverseFrames > 45) { reverseFrames = 0; hold('ArrowDown', false); hold('ArrowUp', true); }
     } else {
       hold('ArrowDown', false); hold('ArrowUp', true); reverseFrames = 0;
-      const approaching = nearWall !== undefined;
-      const want = (b.ang < -0.15 || approaching) ? 'ArrowRight' : b.ang > 0.15 ? 'ArrowLeft' : null;
+      // R1124: pure angle-based landing control, matching the human-like policy
+      // verified in /tmp/mx3-zoom.js probe (lv14: 0 deaths, levelComplete). The old
+      // `approaching` forced a right-lean mid-flight over ramps and destabilized landing.
+      const want = b.ang < -0.15 ? 'ArrowRight' : b.ang > 0.15 ? 'ArrowLeft' : null;
       if (want !== lean) { if (lean) hold(lean, false); if (want) hold(want, true); lean = want; }
     }
     g.pump(1);
