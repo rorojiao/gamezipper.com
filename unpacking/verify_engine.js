@@ -21,15 +21,22 @@ const g = bootGame('unpacking', {
       lay: () => lay(),
       cvs: () => cvs, W: () => W, H: () => H,
       play: () => cvs._play || null,
-      // mirror of the engine's own box layout math (renderGame/onDown) for item id
+      // engine's own slot geometry (no mirror math — cannot drift)
       boxPos: function (id) {
         var L = lay();
         var un = boxItems.filter(function (b) { return !b.placed; });
-        var ipr = Math.min(un.length, 8);
-        var sp = L.boxW / (ipr + 1);
-        var sx = L.boxX + sp;
-        for (var i = 0; i < un.length; i++) if (un[i].id === id) return { x: sx + i * sp, y: L.boxY + L.boxH / 2 };
+        for (var i = 0; i < un.length; i++) if (un[i].id === id) { var s = boxSlot(L, un.length, i); return { x: s.x, y: s.y }; }
         return null;
+      },
+      boxAllOnCanvas: function () {
+        var L = lay();
+        var un = boxItems.filter(function (b) { return !b.placed; });
+        for (var i = 0; i < un.length; i++) {
+          var s = boxSlot(L, un.length, i);
+          var r = Math.max(12, L.itemS * 0.4);
+          if (s.x - r < 0 || s.x + r > W || s.y + r > H) return { bad: i, x: Math.round(s.x), y: Math.round(s.y), W: W, H: H };
+        }
+        return true;
       },
       targets: () => LV[curLv].items.map(function(it){ return { t: it.t, r: it.r, c: it.c }; }),
       ls: () => { try { return localStorage.getItem('up1'); } catch (e) { return null; } },
@@ -90,6 +97,8 @@ const solved = [], notes = [];
 const T0 = Date.now();
 for (let li = 0; li < 30 && Date.now() - T0 < 95000; li++) {
   if (g.call('__R.lv()') !== li) { notes.push('chain broken at L' + (li + 1)); fails.push('chain broken at L' + (li + 1)); break; }
+  const onC = g.call('__R.boxAllOnCanvas()');
+  T('slots-on-canvas-L' + (li + 1), onC === true, JSON.stringify(onC));
   const res = solveLevel();
   if (res !== true) { notes.push('L' + (li + 1) + ' ' + res); fails.push('L' + (li + 1) + ' not won (' + res + ')'); break; }
   const expStars = li === 0 ? 2 : 3; // L1 carries the 1 test error -> 2 stars
