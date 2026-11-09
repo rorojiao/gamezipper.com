@@ -600,19 +600,39 @@
         if (document.visibilityState === 'hidden') _fcpReport();
       });
       window.addEventListener('pagehide', _fcpReport);
-      // CLS — sum all shifts, report on hide
-      var clsSum = 0;
+      // CLS — R1123: session-window metric (CWV spec since 2021), NOT the
+      // pre-2021 cumulative sum this used. A cumulative sum over a long engaged
+      // session inflates past the 0.25 POOR threshold from micro-shifts spread
+      // minutes apart (BI: /hexxagon/ cls=1.509 over a 147s session while no
+      // 5s window exceeded ~0.03). Spec rules (web-vitals v3): a shift opens a
+      // NEW window if gap since previous shift > 20s or window span >= 5s;
+      // metric = max window sum. perf 'cls' line (L371) stays cumulative for
+      // continuity.
+      var _clsWin = 0, _clsWinStart = 0, _clsLast = 0, _clsBest = 0;
       new pObs2(function(list){
-        for (var i = 0; i < list.getEntries().length; i++) {
-          if (!list.getEntries()[i].hadRecentInput) clsSum += list.getEntries()[i].value;
+        var es = list.getEntries();
+        for (var i = 0; i < es.length; i++) {
+          var e = es[i];
+          if (e.hadRecentInput) continue;
+          if (!_clsWin || e.startTime - _clsLast > 20000 || e.startTime - _clsWinStart >= 5000) {
+            if (_clsWin > _clsBest) _clsBest = _clsWin;
+            _clsWin = 0; _clsWinStart = e.startTime;
+          }
+          _clsWin += e.value;
+          _clsLast = e.startTime;
+          if (_clsWin > _clsBest) _clsBest = _clsWin;
         }
       }).observe({ type: 'layout-shift', buffered: true });
-      document.addEventListener('visibilitychange', function(){
-        if (document.visibilityState === 'hidden' && !reported.cls && clsSum) {
+      var _clsReport = function(){
+        if (!reported.cls && _clsBest) {
           reported.cls = true;
-          ps('vitals_rating', { u: P, metric: 'cls', v: Math.round(clsSum * 1000) / 1000, r: rate('cls', clsSum) });
+          ps('vitals_rating', { u: P, metric: 'cls', v: Math.round(_clsBest * 1000) / 1000, r: rate('cls', _clsBest) });
         }
+      };
+      document.addEventListener('visibilitychange', function(){
+        if (document.visibilityState === 'hidden') _clsReport();
       });
+      window.addEventListener('pagehide', _clsReport);
       // INP — use existing _inpWorst logic
       var inpW = 0;
       new pObs2(function(list){
