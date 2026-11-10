@@ -465,9 +465,15 @@ function buildLevelGrid(){
 var grid=document.getElementById('level-grid');grid.innerHTML='';
 var start=currentChapter*6;var end=Math.min(start+6,30);
 var unlockedCount=0;
+// R1126 P3 fix: "current" ring used the in-memory currentLevel, which resets to 0 on
+// reload — a returning player who had cleared levels 1-2 still saw level 1 highlighted.
+// The ring now marks the first unlocked-but-uncompleted level in this chapter.
+var curMark=-1;
+for(var q=start;q<end;q++){if((q===0||levelCompleted[q-1]!==undefined)&&levelCompleted[q]===undefined){curMark=q;break;}}
+if(curMark<0)curMark=currentLevel;
 for(var i=start;i<end;i++){var cell=document.createElement('div');
 var unlocked=i===0||levelCompleted[i-1]!==undefined;
-cell.className='level-cell'+(unlocked?' unlocked':' locked')+(i===currentLevel?' current':'');
+cell.className='level-cell'+(unlocked?' unlocked':' locked')+(i===curMark?' current':'');
 cell.textContent=i+1;
 if(levelStars[i]!==undefined){var starStr='';for(var s=0;s<3;s++)starStr+=(s<levelStars[i]?'\u2605':'\u2606');
 var sp=document.createElement('div');sp.style.cssText='position:absolute;bottom:1px;font-size:7px;color:#FFD700';sp.textContent=starStr;cell.style.position='relative';cell.appendChild(sp);}

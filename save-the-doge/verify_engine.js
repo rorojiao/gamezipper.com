@@ -168,6 +168,7 @@ ck('boot2: sound restored in LS', JSON.parse(g2.ls.getItem('std_v1')).sound === 
 clickBody(g2, 'Play');
 const gr2 = g2.els['level-grid'];
 ck('boot2: L3 unlocked (done[1])', gr2.children[2].classList.contains('unlocked'), 'cells');
+ck('boot2: current ring on L3, not L1 (R1126)', gr2.children[2].classList.contains('current') && !gr2.children[0].classList.contains('current'), gr2.children.map(c=>c.className).join('|'));
 ck('boot2: L4 locked', !gr2.children[3].classList.contains('unlocked'));
 ck('boot2: L1 star row 1*', String(gr2.children[0].children[0].textContent) === '★☆☆', String(gr2.children[0].children[0] && gr2.children[0].children[0].textContent)); // grid star rows unspaced; win screen uses spaces
 gr2.children[2].dispatch('click', { type: 'click' });
