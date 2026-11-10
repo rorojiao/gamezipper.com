@@ -49,15 +49,56 @@ if (holeRadius(1) < minOrbR) {
 }
 console.log(`✅ hole radius (${holeRadius(1).toFixed(2)}) ≥ smallest orb radius (${minOrbR})`);
 
-// Simulate level 1
-const lv1 = LEVELS[0];
-const target = lv1.target;
-const massPerOrb = minOrbSize * 0.5 + 0.5;  // from consumeObject()
-const orbsNeeded = Math.max(0, target - 1);
-console.log(`\nLevel 1: target=${target}, mass_per_orb=${massPerOrb}, orbs_needed=${orbsNeeded}`);
-for (let i = 1; i <= 10; i++) {
-  const m2 = 1 + i * massPerOrb;
-  console.log(`  after ${i} eats: mass=${m2.toFixed(1)}, radius=${holeRadius(m2).toFixed(2)}`);
+// ── All-level chain solvability sweep (R1129: was level-1 only) ──
+// Greedy model mirrors index.html runtime:
+//   consume: o.radius <= hole.radius && dist < hole.radius * CONSUME_LENIENCY(1.0)
+//   growth:  mass += obj.size * 0.5 + 0.5
+//   win:     mass >= target (1★), target*1.1 (2★), target*1.3 (3★)
+// Greedy eats smallest-first = maximally permissive chain order; if this
+// fails, no order works. Walls: hole must pass wall gaps with radius <= gap/2;
+// check target mass is reachable while radius still fits the narrowest gap.
+const ARENA_W = 800, ARENA_H = 800;
+let fails = 0;
+LEVELS.forEach((def, i) => {
+  const n = i + 1;
+  const items = [];
+  (def.orbs || []).forEach(o => { for (let k = 0; k < o.n; k++) items.push(o.s); });
+  (def.moving || []).forEach(o => { for (let k = 0; k < o.n; k++) items.push(o.s); });
+  items.sort((a, b) => a - b);
+  let mass = 1;
+  let idx = 0;
+  // chain: eat smallest edible repeatedly
+  while (idx < items.length && orbRadius(items[idx]) <= holeRadius(mass)) {
+    mass += items[idx] * 0.5 + 0.5;
+    idx++;
+  }
+  const totalMass = 1 + items.reduce((a, s) => a + s * 0.5 + 0.5, 0);
+  const oneStar = mass >= def.target;
+  // wall-gap guard: narrowest horizontal gap the hole must cross
+  let narrowestGap = Infinity;
+  for (const w of (def.walls || [])) {
+    // gaps between wall segments and arena borders on the same y-band
+    const segs = (def.walls || []).filter(o => Math.abs(o.y - w.y) < w.h);
+    let gaps = [];
+    let prev = 0;
+    for (const s2 of segs.sort((a, b) => a.x - b.x)) { gaps.push(s2.x - prev); prev = s2.x + s2.w; }
+    gaps.push(ARENA_W - prev);
+    gaps = gaps.filter(g => g > 0);
+    if (gaps.length) narrowestGap = Math.min(narrowestGap, Math.min(...gaps));
+  }
+  const gapRadiusLimit = narrowestGap === Infinity ? Infinity : narrowestGap / 2;
+  const gapMassLimit = gapRadiusLimit === Infinity ? Infinity : (gapRadiusLimit / MASS_RADIUS_SCALE) ** 2;
+  const gapOk = def.target <= gapMassLimit; // can win before outgrowing gaps
+  if (!oneStar || !gapOk) {
+    fails++;
+    console.log(`❌ FAIL level ${n}: chainMass=${mass.toFixed(1)} target=${def.target} total=${totalMass.toFixed(1)} gapMassLimit=${gapMassLimit === Infinity ? '∞' : gapMassLimit.toFixed(0)} wallGapOk=${gapOk}`);
+  } else if (n <= 3 || n === LEVELS.length) {
+    console.log(`✓ level ${n}: chain reaches ${mass.toFixed(1)} ≥ target ${def.target}${totalMass >= def.target * 1.3 ? ' (3★-capable)' : ''}`);
+  }
+});
+if (fails) {
+  console.log(`\n=== FAIL: ${fails}/${LEVELS.length} levels unsolvable ===`);
+  process.exit(1);
 }
-console.log('\n=== PASS: level 1 + general radius invariant ===');
+console.log(`\n=== PASS: ${LEVELS.length}/${LEVELS.length} levels chain-solvable (greedy smallest-first) + wall-gap guard ===`);
 process.exit(0);
