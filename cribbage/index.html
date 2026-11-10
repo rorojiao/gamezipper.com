@@ -550,6 +550,7 @@ function afterDiscards(){
   updateHUD();
   render();
   if(G.currentPlayer===1)setTimeout(doAIPegg,600);
+  else setTimeout(doHumanGoCheck,600);
 }
 
 function startPegging(){
@@ -560,6 +561,7 @@ function startPegging(){
   G.phase=PHASE.PEGGING;
   updateHUD();
   if(G.currentPlayer===1)setTimeout(doAIPegg,600);
+  else setTimeout(doHumanGoCheck,600);
 }
 
 // ============ PEGGING ============
@@ -615,6 +617,7 @@ function playPegCard(pi,card){
         }else{
           G.currentPlayer=0;
           render();
+          setTimeout(doHumanGoCheck,G.animationsEnabled?900:400);
         }
       },G.animationsEnabled?800:300);
     }
@@ -626,11 +629,11 @@ function playPegCard(pi,card){
 }
 
 function endPeggingRound(lastPlayer){
-  // Award Go points
+  // Award Go points: the player who played the last successful card scores 1 for go
   if(G.playTotal<31){
-    var goPlayer=1-lastPlayer;
-    G.players[goPlayer].totalScore+=G.playTotal===31?2:1;
-    addScorePopup(goPlayer,G.playTotal===31?2:1,'Go!');
+    var goPlayer=lastPlayer;
+    G.players[goPlayer].totalScore+=1;
+    addScorePopup(goPlayer,1,'Go!');
     sndScore();
     spawnPegParticles(goPlayer);
   }
@@ -644,7 +647,7 @@ function endPeggingRound(lastPlayer){
     G.currentPlayer=lastPlayer;
     updateHUD();
     if(G.currentPlayer===1)setTimeout(doAIPegg,500);
-    else render();
+    else{render();setTimeout(doHumanGoCheck,500);}
   }
 }
 
@@ -695,6 +698,21 @@ function showGoMessage(pi){
   toast(msg);
 }
 
+function doHumanGoCheck(){
+  // Rule fix: when it is the human's pegging turn but they have no playable card
+  // (or empty hand), they must be able to say Go — otherwise the game soft-locks.
+  if(G.phase!==PHASE.PEGGING||G.currentPlayer!==0||!G.players[0].isHuman)return;
+  if(getValidPegCards(0).length>0)return;
+  toast('You say Go');
+  sndGo();
+  G.goCount++;
+  if(G.goCount>=2){
+    setTimeout(function(){endPeggingRound(1)},G.animationsEnabled?600:200);
+  }else{
+    G.currentPlayer=1;
+    setTimeout(doAIPegg,G.animationsEnabled?700:300);
+  }
+}
 function doAIPegg(){
   if(G.phase!==PHASE.PEGGING||G.currentPlayer!==1)return;
   var valid=getValidPegCards(1);
@@ -706,6 +724,7 @@ function doAIPegg(){
     else{
       G.currentPlayer=0;
       render();
+      setTimeout(doHumanGoCheck,G.animationsEnabled?900:400);
     }
     return;
   }
