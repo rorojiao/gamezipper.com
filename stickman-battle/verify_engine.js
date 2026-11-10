@@ -21,7 +21,19 @@ const result=JSON.parse(vm.runInContext(`(function(){
  var afterContinue={level:s.currentLevel,score:s.score};
  s.player.health=0;q.endLevel(false);
  var savedAfterDefeat=JSON.parse(localStorage.getItem('stickmanBattle_save'));
- return JSON.stringify({initial:initial,savedAfterWin:savedAfterWin,stars:stars,afterContinue:afterContinue,savedAfterDefeat:savedAfterDefeat,
- pass:savedAfterWin.level===2&&afterContinue.level===2&&stars==='★★★'&&savedAfterDefeat.level===2});
+ // R1126 hitbox regression: a grounded punch/kick MUST land on a grounded opponent at the
+ // ranges the AI maintains (50..80px). Pre-fix punch y-band was y+20..45 vs opponent centre
+ // y+50 -> punch NEVER hit (battle was an unkillable stalemate, BI rage clicks).
+ q.startGame();
+ var s3=q.getState(),P=s3.player,E=s3.enemy;
+ P.x=200;P.y=300;P.facing=1;P.attackTimer=0;P.stunned=0;P.state='idle';
+ E.x=270;E.y=300;E.health=100;E.stunned=0;
+ P.punch();
+ var punchHit=E.health<100;
+ P.attackTimer=0;P.stunned=0;E.health=100;E.x=275;
+ P.kick();
+ var kickHit=E.health<100;
+ return JSON.stringify({initial:initial,savedAfterWin:savedAfterWin,stars:stars,afterContinue:afterContinue,savedAfterDefeat:savedAfterDefeat,punchHit:punchHit,kickHit:kickHit,
+ pass:savedAfterWin.level===2&&afterContinue.level===2&&stars==='★★★'&&savedAfterDefeat.level===2&&punchHit&&kickHit});
 })()`,ctx));
 console.log(JSON.stringify(result,null,2));if(!result.pass)process.exit(1);
