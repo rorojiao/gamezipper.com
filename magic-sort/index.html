@@ -255,8 +255,56 @@ canvas{display:block;position:absolute;top:0;left:0;z-index:2}
 // ═══════════════════════════════════════════
 // Magic Sort - Water Color Sorting Puzzle
 // ═══════════════════════════════════════════
+// ═══ R1131 boot telemetry ═══
+// BI 7d: 8/21 magic-sort page_view sessions engaged 30-60s with ZERO ms_* events,
+// and gz-analytics.js captures no JS errors — a dead boot is invisible in BI.
+// (R1045 lesson: missing events are a signal — instrument the failure path.)
+// Diagnosis matrix:
+//   page_view, no ms_boot                      => game script never parsed/ran
+//   ms_boot + ms_boot_error, no splash         => boot exception (msg/line in meta)
+//   ms_boot, no error, no splash               => rAF starved (bg tab / bfcache hold)
+//   ms_boot + ms_canvas_fail                   => getContext null (low-mem/privacy)
+var _bootQ = [], _bootTimer = 0, _bootClosed = false, _bootErrSeen = 0;
+function _bootSend(name, meta) {
+  for (var _bi = 0; _bi < _bootQ.length; _bi++) if (_bootQ[_bi][0] === name) return;
+  _bootQ.push([name, meta || {}]);
+  _bootFlushQ();
+  if (_bootQ.length && !_bootTimer) _bootTimer = setInterval(_bootFlushQ, 100);
+}
+function _bootFlushQ() {
+  if (!window.__msTrack) return; // tracker lands ~145ms in; drain queue when it does
+  while (_bootQ.length) {
+    var _be = _bootQ.shift();
+    try { window.__msTrack(_be[0], _be[1]); } catch (e) {}
+  }
+  if (_bootTimer) { clearInterval(_bootTimer); _bootTimer = 0; }
+}
+window.addEventListener("error", function (ev) {
+  if (_bootClosed || _bootErrSeen >= 3) return; // boot-window only, first 3 errors
+  _bootErrSeen++;
+  try {
+    _bootSend("ms_boot_error", {
+      msg: String(ev.message || "").slice(0, 160),
+      src: String(ev.filename || "").slice(-60),
+      line: ev.lineno || 0, col: ev.colno || 0
+    });
+  } catch (e) {}
+});
+_bootSend("ms_boot", { vis: document.visibilityState, scr: (window.innerWidth || 0) + "x" + (window.innerHeight || 0) });
 const C = document.getElementById("c");
-const X = C.getContext("2d");
+const X = C ? C.getContext("2d") : null;
+if (!X) {
+  // Low-memory WebViews / canvas-blocked browsers get a null context here; without
+  // this guard every later X.* call throws and the page dies silently around its ads.
+  _bootSend("ms_canvas_fail", { dpr: window.devicePixelRatio || 1, mem: navigator.deviceMemory || 0 });
+  try {
+    var _fb = document.createElement("div");
+    _fb.setAttribute("style", "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;padding:32px;font:600 18px/1.6 system-ui,sans-serif;color:#e8f0fe;background:rgba(10,16,32,.93)");
+    _fb.textContent = "Your browser couldn't start the game canvas. Close other tabs or switch browsers, then reload.";
+    document.body.appendChild(_fb);
+  } catch (e) {}
+  throw new Error("magic-sort: canvas 2d unavailable");
+}
 let W, H, dpr;
 
 function resize() {
@@ -4172,6 +4220,7 @@ function renderSplash() {
   // This is the top of the funnel — without it BI cannot tell "never rendered"
   // (slow load / bounce) apart from "rendered but never tapped".
   trackSplashShown();
+  _bootClosed = true; // R1131: splash visibly drawn — close the boot-error window
   splashTimer += 0.016;
   const t = Math.min(splashTimer / 1.2, 1);
   const ease = 1 - Math.pow(1 - t, 3);
