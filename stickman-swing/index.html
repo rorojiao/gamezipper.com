@@ -58,6 +58,13 @@
 html,body{width:100%;height:100%;overflow-x:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3a 50%,#0d0d2b 100%);font-family:'Inter',sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
 canvas{display:block;touch-action:none;cursor:pointer;border-radius:8px}
+/* UX-OPT 2026-11-10 R1125 (R345): canvas had NO size reservation — first paint 300x150, then JS resize to full viewport => 0.204 single shift (t=122ms, momentum probe repro). CSS now reserves exactly what resize() produces (prod-measured footer=41px, cap 720px).
+   R1125b: body is a flex column (min-height:100vh) — when nav+ads+canvas exceeded 100vh the flex algorithm SHRANK the canvas (679->455) and crushed the 90px ad placeholders to 0/29, then they sprang back on scroll => 0.203 shift. flex-shrink:0 pins everything; body just grows past 100vh (page scrolls). */
+#gameCanvas{width:min(100vw,1280px);height:min(calc(100vh - 41px),720px);max-width:100vw;box-sizing:border-box;flex-shrink:0}
+#gz-ad-above-game,#gz-ad-below-canvas{flex-shrink:0}
+/* R1125c: html,body height:100% made body a viewport-height flex box that crushes children.
+   min-height lets it grow; justify-content:center still centers short content, long content just stacks. */
+body{height:auto;min-height:100vh}
 .overlay{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none;opacity:0;transition:opacity .3s}
 .overlay.active{pointer-events:all;opacity:1}
 .panel{background:rgba(10,10,30,.92);border:1px solid rgba(0,245,255,.25);border-radius:20px;padding:32px 36px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 8px 32px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);max-width:420px;width:90%;text-align:center;transform:scale(.9);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
@@ -127,7 +134,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 #gz-ad-above-game,#gz-ad-below-canvas{ /* UX-OPT 2026-10-21 R970: reservation aligned to monetag bannerCSS so
    getOrCreate()'s style.cssText rewrite is a no-op (was 50px -> 90px
    grow at t~1.2s = layout shift). */
-  display:block;max-width:728px;width:100%;height:90px;min-height:90px;max-height:280px;
+  display:block;max-width:728px;width:100%;height:90px;min-height:90px;max-height:90px;
   margin:8px auto;text-align:center;overflow:hidden;
   contain:layout paint style;box-sizing:border-box;position:relative;
   background:transparent;border-radius:6px;
@@ -170,7 +177,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 <nav id="gz-topnav" style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:8px 16px;display:flex;justify-content:center;align-items:center;position:sticky;top:0;z-index:9999"><a href="https://gamezipper.com/" style="color:#fff;text-decoration:none;font-weight:bold;font-size:14px;animation:pulse-glow 2.5s ease-in-out infinite;display:inline-flex;align-items:center;gap:6px">&#x1F3AE; GameZipper — More Free Games</a></nav>
 
 <div id="gz-ad-above-game"></div>
-<canvas id="gameCanvas"></canvas>
+<canvas id="gameCanvas" width="1280" height="720"></canvas>
 <div id="gz-ad-below-canvas"></div>
 
 
@@ -862,7 +869,9 @@ function resize() {
   const w = Math.min(window.innerWidth, 1280);
   // R276 fix (Bug #14b): subtract game-footer height so .progress-bar (position:fixed;bottom:0) isn't covered
   var footerEl = document.getElementById('game-footer');
-  var footerH = (footerEl && footerEl.offsetHeight > 0) ? footerEl.offsetHeight : 0;
+  // R1125: default 41px (prod-measured game-footer height) BEFORE footer injects, so first
+  // resize() == the CSS reservation in #gameCanvas => zero layout shift at parse time.
+  var footerH = (footerEl && footerEl.offsetHeight > 0) ? footerEl.offsetHeight : 41;
   const h = Math.min(window.innerHeight - footerH, 720);
   canvas.style.width = w + 'px';
   canvas.style.height = h + 'px';
@@ -1831,7 +1840,8 @@ init();
 <!-- 🏠 Home Link -->
 <a href="https://gamezipper.com/" style="position:fixed;top:12px;left:12px;z-index:10000;font-size:24px;text-decoration:none;background:rgba(0,0,0,0.5);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;" aria-label="Home">🏠</a>
 
-<section style="content-visibility:auto;contain-intrinsic-size:auto 350px" class="gz-related-games" aria-label="Related games">
+<!-- UX-OPT 2026-11-10 R1125: R1049 CV rubberband — placeholder reserved 350px vs actual 235px, momentum scroll snapped -115px (prod probe CLS=0.2097 POOR, BI 0.336 11-09). Section <300px => CV paint-skip negligible, removed. -->
+<section class="gz-related-games" aria-label="Related games">
 <h3>You Might Also Like</h3>
 <div class="gz-related-grid">
 <a href="/2048/" class="gz-related-card"><span class="gz-related-name">2048 Unblocked — Play Free 2048 Puzzle Game Online No Download</span></a>
@@ -1841,7 +1851,7 @@ init();
 <a href="/wordle/" class="gz-related-card"><span class="gz-related-name">Play Wordle Online Free</span></a>
 </div>
 </section>
-<div class="gz-blog-links" style="max-width:800px;margin:20px auto;padding:0 20px;content-visibility:auto;contain-intrinsic-size:auto 250px">
+<div class="gz-blog-links" style="max-width:800px;margin:20px auto;padding:0 20px"><!-- UX-OPT 2026-11-10 R1125: removed content-visibility:auto;contain-intrinsic-size:auto 250px (actual h=90px, -160px snap on scroll wake) -->
 <h3 style="font-size:16px;color:#e6fffb;margin-bottom:10px">📚 Game Tips &amp; Guides</h3>
 <div style="display:flex;flex-wrap:wrap;gap:8px"><a href="/blog/best-free-browser-games-2026.html" style="display:inline-block;padding:6px 14px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">Best Free Browser Games 2026</a><a href="/blog/best-browser-games-2026-no-download.html" style="display:inline-block;padding:6px 14px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">25 Best Browser Games 2026</a><a href="/blog/free-games-no-download.html" style="display:inline-block;padding:6px 14px;background:#1a1f34;border:1px solid #2a3252;border-radius:999px;text-decoration:none;color:#fff;font-size:13px">Free Games — No Download Needed </a></div>
 <p style="margin-top:10px"><a href="/blog.html" style="color:#4ecdc4;font-size:.85em;text-decoration:none">View all 296 articles →</a></p>
