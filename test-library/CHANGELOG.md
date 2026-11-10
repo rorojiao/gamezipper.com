@@ -1,3 +1,52 @@
+## [v1.291.0] - 2026-11-10
+
+### Added — 9 new machine-verifiable test cases (R408, 4h cycle 170)
+
+- [S-557] [P0] Chrome Stable 157.0.8103.50/.51 Nov 9 nine-fix update: CVE-2026-125350 XML UAF EXPLOITED IN THE WILD (first 2026 XML-component ITW, 3-day report-to-patch) + CVE-2026-125345 High WebGL uninitialized resource + CVE-2026-125346 second XML UAF (Neonix, bug still restricted) + Compositing BO / GPU OOB / V8 type confusion Highs; Extended Stable 156.0.8078.96 ships a DIVERGENT 11-fix set covering only 4 of the 9 Desktop CVEs (ES stays unpatched vs 125343/125344/125348/125349/125342) — per-channel version floors + per-CVE applicability matrix + XML/SVG reachability inventory + staged-rollout lag SLA (Android 157.0.8103.50 gated on Play rollout).
+- [W-635] [P1] WebGPU float32-blendable on Firefox 158 stable (r32float/rg32float/rgba32float blend) — CLOSED the R406→R407 deferred ledger item; device.features.has exact-string probe + float-blend readback epsilon + RGBA8 fallback-equivalence; never UA-sniff.
+- [W-636] [P2] Firefox 158 BiDi permissions.setPermission camera/mic scripting + captureScreenshot imageSize + startScreencast destinationFolder + zero-size TakeScreenshot error contract — harness drives media permissions without prompts; zero-size capture = error shape, never empty image.
+- [W-637] [P2] Firefox 158 zeroed automation touch start/move tolerances — scrolls from exactly dispatch position; cross-engine gesture fixtures produce different scroll offsets; per-engine delta normalization before filing bugs.
+- [B-453] [P1] Firefox 158 WebRTC H.264/AV1 codec-level downscale (profile-level-id / level-idx) + MediaCapabilities.encodingInfo supported-but-downscaled truth split — three-state encoder capability; quality ladders key off RTCOutboundRtpStreamStats, not pre-flight encodingInfo.
+- [C-291] [P1] Offline mid-game resume wall (NYT Games field report): local in-progress state MUST resume offline; network gates only for server actions; blocking online screens MUST expose hit-testable exit (B-341 dead-end family).
+- [C-292] [P1] Round-level crash recovery (2026 casual review corpus + porting churn case study): per-transition checkpoints, cold-load exact board-hash restore after unclean exit, survives browser restart — meta-only saves named first-class churn driver.
+- [A-097] [P2] aria-busy on Firefox for Android (158): live score/timer regions toggle aria-busy through batched updates; desktop+Android parity runs; pre-158 Android = known-degraded cohort.
+- [P-253] [P1] Pixel 11 PowerVR C-Series ANGLE-default microstutter (AndroidAuthority Nov 9: Sep 2026 system update made ANGLE default; pipeline/shader-cache rebuild spikes; ANGLE Preferences A/B toggle): WEBGL_debug_renderer_info ANGLE-Imagination detection, first-use texture/program spike budget (p95 ≤8ms delta, no >33ms cluster), loading-screen pre-warm contract.
+
+### Re-probes & negative controls (v1.291.0 cycle)
+
+- developer.mozilla.org Firefox Releases/158: first FULL web-dev capture (19 li items) — five mined, ledger item float32-blendable CLOSED; high-contrast theme customization STILL DEFERRED (0 hits).
+- developer.mozilla.org Firefox Releases/161: pre-release stub (section headers, ZERO li) — unchanged since R407.
+- developer.chrome.com /release-notes/157, /158, /159: 404 EIGHTH consecutive cycle; csl mirror still canonical fallback.
+- chromestatuslite.com ?version=160: byte-identical to csl159 (30202 B) — Chrome 160 still unminted.
+- chromereleases RSS Nov 9: Desktop Stable 157.0.8103.50/.51 (9 fixes, CVE-2026-125350 ITW), Extended Stable 156.0.8078.96 (11 fixes, divergent set), Chrome for Android 157.0.8103.50, ChromeOS Beta 158.0.8127.24 — all mined.
+- learn.microsoft.com Edge stable relnotes: newest unchanged 157.0.4341.42 (Nov 5); Edge 158 stable ETA Nov 19 pending.
+- learn.microsoft.com Edge web-platform release-notes/159: FLIPPED live→404 since R407 first capture (URL instability logged).
+- webkit.org/blog index: newest article still TP 256 (mined) — no TP 257, no Safari 27.3 GA; dry 5th cycle.
+- web.dev/blog/web-platform-11-2026: FLIPPED live→404 (was content-equivalent in R407) — November roundup URL unstable; December roundup expected.
+
+### High-priority re-probes (v1.292.0)
+
+- Chrome release-notes/157+/158+/159 minting (8-cycle 404 streak; csl159/160 recapture for flip detection).
+- Edge 158 stable (Nov 19 ETA) + web-platform release-notes/158 change-check + /159 re-mint.
+- webkit.org TP 257 / Safari 27.3 GA flip (5 cycles dry; Adaptive Dark Mode mint).
+- MDN Firefox Releases/161 web-dev section minting (beta channel flip).
+- Firefox high-contrast theme customization deferral — re-probe Releases/159/160/161 pages.
+- ChromeOS 158.0.8127.24 beta → stable M-158 note (G-family cohort matrix, S-550 discipline).
+- Chrome 158 full stable rollout completion → B-432 activation check.
+
+### Sources (v1.291.0)
+
+- https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/158 (first full web-dev capture — W-635/W-636/W-637/B-453/A-097)
+- https://chromereleases.googleblog.com/feeds/posts/default?alt=rss (Nov 9: Desktop/Extended-Stable/Android/ChromeOS-Beta bodies captured verbatim — S-557)
+- https://www.androidauthority.com/pixel-11-game-performance-issues-3648468/ (Nov 9, 2026 — P-253; tech-oracle mechanism corroboration)
+- https://donohoe.dev/posts/nyt-games-offline-ux/ (NYT Games offline resume field report — C-291)
+- Google Play casual-puzzle review corpus + 2026 web-porting churn case studies via "casual game UX complaint 2026" cluster (C-292)
+- Search cluster executed 2026-11-10: "HTML5 game testing 2026 new techniques" → W-636/W-637/A-097; "browser game bug report 2026" → S-557/C-292; "Chrome Edge Safari update 2026" → S-557/W-635/636/637/B-453/A-097; "casual game UX complaint 2026" → C-291/C-292/P-253; "mobile game performance issue 2026" → P-253/S-557 (Android fleet)/W-635 (mobile GPU capability matrix).
+
+### Required broad query coverage (R408)
+
+(1) "HTML5 game testing 2026 new techniques" -> W-636 (BiDi QA primitives) + W-637 (cross-engine gesture calibration) + A-097 (a11y parity fixtures); (2) "browser game bug report 2026" -> S-557 (XML UAF ITW + WebGL CVE) + C-292 (crash-restart review corpus); (3) "Chrome Edge Safari update 2026" -> S-557 + FF158 five-case family + Edge controls; (4) "casual game UX complaint 2026" -> C-291 + C-292 + P-253; (5) "mobile game performance issue 2026" -> P-253 + Android 157.0.8103.50 rollout lag + W-635 per-device GPU capability.
+
 ## [v1.290.0] - 2026-11-09
 
 ### Added — 11 new machine-verifiable test cases (R407, 4h cycle 169)
