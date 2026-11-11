@@ -359,6 +359,12 @@ function resize(){
   dpr=window.devicePixelRatio||1;
   var wrap=document.getElementById('gameWrap');
   W=wrap.clientWidth;H=wrap.clientHeight;
+  // Bug-fix R1136: fixed discardBar occluded player hand on short viewports
+  // (hand drawn at H-cardH-15 fell behind the bar / below the fold -> discard soft-lock).
+  var bar=document.getElementById('discardBar');
+  var res=(bar&&bar.style.display!=='none')?(bar.offsetHeight||64):16;
+  var topLim=window.innerHeight-canvas.getBoundingClientRect().top-res-6;
+  if(topLim>240&&topLim<H)H=topLim;
   canvas.width=W*dpr;canvas.height=H*dpr;
   canvas.style.width=W+'px';canvas.style.height=H+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -470,6 +476,7 @@ function showDiscardUI(){
   document.getElementById('discardBar').style.display='flex';
   G.discardSelected=[];
   updateDiscardButton();
+  resize();
   render();
 }
 
@@ -481,6 +488,7 @@ function updateDiscardButton(){
 
 function doHumanDiscard(){
   document.getElementById('discardBar').style.display='none';
+  resize();
   G.discardSelected.forEach(function(c){removeCard(G.players[0].hand,c);G.crib.push(c)});
   G.discardSelected=[];
   sortHand(G.players[0].hand);
@@ -1567,6 +1575,7 @@ document.getElementById('bDiscardDone').addEventListener('click',function(){
 document.getElementById('bDiscardCancel').addEventListener('click',function(){
   G.discardSelected=[];
   document.getElementById('discardBar').style.display='none';
+  resize();
   sndClick();
 });
 
