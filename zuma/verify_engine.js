@@ -21,13 +21,15 @@ const g = bootGame('zuma', { inject: {
     cfg: (i) => { const c = LEVELS[i]; return { colors: c.colors, count: c.marbleCount, ivl: c.spawnInterval, tl: c.timeLimit }; },
     st: () => gameState, lv: () => currentLevel, sc: () => [scale, offsetX, offsetY],
     chainPos: () => chain.map(m => { const q = pathPoints[Math.min(Math.floor(m.pathIdx), pathPoints.length - 1)] || { x: GAME_W / 2, y: GAME_H / 2 };
-      return { c: m.color, x: q.x, y: q.y, pop: m.popping, pu: m.isPowerup ? m.powerType : null }; }),
+      return { c: m.color, x: q.x, y: q.y, pop: m.popping, i: m.pathIdx, pu: m.isPowerup ? m.powerType : null }; }),
     len: () => chain.length, pp: () => pathPoints.length,
     cur: () => currentColor, nxt: () => nextColor, frog: () => frogAngle,
     sm: () => shootingMarble ? [Math.round(shootingMarble.x), Math.round(shootingMarble.y), shootingMarble.color] : null,
     ov: (id) => !document.getElementById(id).classList.contains('hidden'),
     save: () => saveData, pw: () => powerUps, actp: () => activePowers,
     score: () => score, timer: () => gameTimer, spawned: () => marblesSpawned,
+    sd: () => suddenDeath,
+    pidx: () => { const m = chain.find(x => !x.popping); return m ? m.pathIdx : -1; },
   };`,
 } });
 let pass = 0, fail = 0; const fails = [];
@@ -109,8 +111,10 @@ function pickTarget(ch, c) { // {tx,ty} a real tap that pops (>=3) or builds a p
     if (ch[t].pop) continue;             //    (checkMatches counts the inserted marble: 2 + 1 = 3)
     const h = firstHit(ch[t].x, ch[t].y, ch);
     if (h >= 0 && runIfInsert(ch, h, c) >= 3) {
-      const d = Math.hypot(ch[t].x - CX, ch[t].y - CY);
-      if (!best || d < best.d) best = { tx: ch[t].x, ty: ch[t].y, d };
+      // survival-first: pop the run CLOSEST TO THE SKULL (largest pathIdx) —
+      // removing head marbles is what actually delays the loss.
+      const headness = ch[h] ? ch[h].i : 0;
+      if (!best || headness > best.headness) best = { tx: ch[t].x, ty: ch[t].y, headness };
     }
   }
   if (best) return best;
@@ -120,8 +124,8 @@ function pickTarget(ch, c) { // {tx,ty} a real tap that pops (>=3) or builds a p
     const rc = ch[t + 1] && !ch[t + 1].pop && ch[t + 1].c === c;
     if (lc || rc) continue;
     if (firstHit(ch[t].x, ch[t].y, ch) === t) {
-      const d = Math.hypot(ch[t].x - CX, ch[t].y - CY);
-      if (!best || d < best.d) best = { tx: ch[t].x, ty: ch[t].y, d };
+      const hn = ch[t].i;
+      if (!best || hn > best.hn) best = { tx: ch[t].x, ty: ch[t].y, hn };
     }
   }
   return best;
@@ -138,7 +142,7 @@ function pumpSettle() { // through the engine's 50ms checkMatches + 300ms pop + 
   for (let f = 0; f < 120; f++) {
     g.pump(2);
     const l = call('__ZU.len()');
-    if (l === last) { if (++same >= 15) return; } else { same = 0; last = l; }
+    if (l === last) { if (++same >= 6) return; } else { same = 0; last = l; }
   }
 }
 function botAction() { // fires one real pointerdown; returns what it did
@@ -157,17 +161,24 @@ function botAction() { // fires one real pointerdown; returns what it did
 }
 let powerDone = false, powerNote = 'none-granted-in-played-levels';
 function tryPower() {
-  if (powerDone) return;
   const pw = call('__ZU.pw()');
-  const key = Object.keys(pw).find(k => pw[k] > 0);
+  const act = call('__ZU.actp()');
+  // spend aggressively: backward/slow buy time under sudden death, bomb/lightning
+  // clear bulk when the chain is long. Assert the FIRST use only.
+  const key = (pw.backward && !act.backward) ? 'backward'
+    : (pw.slow && !act.slow) ? 'slow'
+    : (pw.bomb && call('__ZU.len()') >= 12) ? 'bomb'
+    : (pw.lightning && call('__ZU.len()') >= 8) ? 'lightning'
+    : Object.keys(pw).find(k => pw[k] > 0);
   if (!key) return;
+  if (powerDone && (key === 'colorBomb' || key === 'slow')) return; // colorBomb needs aim logic we don't model
   const id = { backward: 'powerBackward', slow: 'powerSlow', bomb: 'powerBomb', colorBomb: 'powerColorBomb', lightning: 'powerLightning' }[key];
   const before = { pw: pw[key], len: call('__ZU.len()'), act: call('__ZU.actp()')[key] || 0 };
   g.els[id].click(); g.pump(5);
   const after = { pw: call('__ZU.pw()')[key], len: call('__ZU.len()'), act: call('__ZU.actp()')[key] || 0 };
   const instant = key === 'bomb' || key === 'colorBomb' || key === 'lightning';
   const worked = after.pw === before.pw - 1 && (after.act > 0 || after.len < before.len || instant);
-  T('power-collect-and-use', worked, key + ' ' + JSON.stringify(before) + '->' + JSON.stringify(after));
+  if (!powerDone) T('power-collect-and-use', worked, key + ' ' + JSON.stringify(before) + '->' + JSON.stringify(after));
   powerDone = true; powerNote = key;
 }
 function playLevel(deadlineMs) { // 'win' | 'gameover' | 'stuck' | 'budget'
@@ -221,6 +232,30 @@ T('save-unlocks-progress', (svF.completed || []).length === wins &&
   (svF.completed || []).every(c => c <= wins), 'completed=' + svF.completed.length + ' wins=' + wins);
 T('no-vm-errors', !(g.sandbox.__errors || []).some(e => /TypeError|ReferenceError/.test(e)),
   JSON.stringify((g.sandbox.__errors || []).find(e => /TypeError|ReferenceError/.test(e)) || '').slice(0, 90));
+
+// ---- R1135: timer is a REAL constraint (P2 fake-timer fix) ----
+// (1) every level's own spawn pacing must fit inside its timeLimit (+15s headroom),
+//     else timer-timeout game-over would make the level unwinnable.
+let tlBad = '';
+for (let i = 0; i < 30; i++) {
+  const c = call('__ZU.cfg(' + i + ')');
+  if (c.ivl * c.count / 1000 + 15 > c.tl) tlBad += 'L' + (i + 1) + '(' + (c.ivl * c.count / 1000).toFixed(1) + 's>=' + c.tl + ')';
+}
+T('spawn-need-fits-timeLimit', tlBad === '', tlBad);
+// (2) dynamic: a fresh L1 left unplayed must arm SUDDEN DEATH at t=0, visibly
+// x10-accelerate the chain, and reach the skull -> the documented game-over.
+lbtns[0].click(); g.pump(3);
+T('restart-for-sd-test', call('__ZU.st()') === 'playing' && call('__ZU.timer()') === call('__ZU.cfg(0)').tl && call('__ZU.sd()') === false,
+  'st=' + call('__ZU.st()') + ' t=' + call('__ZU.timer()'));
+for (let f = 0; f < 5450 && call('__ZU.timer()') > 0; f++) g.pump(1);
+T('timeout-arms-sudden-death', call('__ZU.sd()') === true && call('__ZU.st()') === 'playing' && call('__ZU.timer()') === 0,
+  'sd=' + call('__ZU.sd()') + ' st=' + call('__ZU.st()') + ' t=' + call('__ZU.timer()'));
+const p1 = call('__ZU.pidx()'); g.pump(120); const p2 = call('__ZU.pidx()');
+// base L1 crawl = 0.0003*0.8*60 = 0.0144 idx/frame (1.73 over 120f); x10 => ~17.3
+T('sudden-death-accelerates-x10', (p2 - p1) > 10, 'delta120f=' + (p2 - p1).toFixed(2));
+for (let f = 0; f < 25000 && call('__ZU.st()') === 'playing'; f += 10) g.pump(10);
+T('sudden-death-leads-to-skull-loss', call('__ZU.st()') === 'gameover' && call('__ZU.ov("gameOverScreen")') === true,
+  'st=' + call('__ZU.st()') + ' ov=' + call('__ZU.ov("gameOverScreen")'));
 
 const out = { pass, fail, total: pass + fail, verdict: fail === 0 ? 'PASS' : 'FAIL', fails: fails.slice(0, 8),
   extra: { levels: wins + '/30', stuck, power: powerNote, secs: Math.round((Date.now() - tAll) / 1000),

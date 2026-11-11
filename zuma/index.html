@@ -542,6 +542,17 @@ body > .gz-related-games,body > .gz-blog-links{flex:0 0 100%;width:100%;max-widt
         let spawnTimer = 0;
         let marblesSpawned = 0; // FIX(P0): total marbles spawned this level — spawn gating must not use the live chain length
         let gameTimer = 60;
+        // R1135 P2 (design fix): the documented loss condition (HowTo: "If any marble
+        // reaches the golden skull ... the game is over") was unreachable in practice —
+        // the chain crawls at ~0.86px/s, so terminal arrival takes ~50min and the
+        // "Time" HUD was a pure bonus counter with no consequence. Time-out now arms
+        // SUDDEN DEATH: the chain accelerates, making the skull reachable and the
+        // countdown meaningful without inventing an undocumented instant-loss rule.
+        let suddenDeath = false;
+        // SD accelerates the chain so an UNATTENDED level reaches the skull at
+        // exactly 2x its timeLimit (timer out + an equal grace window). Derived per
+        // level from its own crawl rate & path length; clamped for sanity.
+        let sdMult = 10;
         let timerInterval = null;
         let paused = false;
         let frogAngle = 0;
@@ -619,6 +630,14 @@ body > .gz-related-games,body > .gz-blog-links{flex:0 0 100%;width:100%;max-widt
                     timeLimit: 60,
                     path: getPathTier5(i)
                 });
+            }
+            // R1135: timeLimit must cover the level's own spawn pacing
+            // (marbleCount x spawnInterval) + 15s clearance headroom, else the
+            // timer-to-gameOver end makes the level mathematically unwinnable.
+            // Only tier-5 levels (L25-30, spawn-need 60-65.3s vs 60s) were bumped.
+            for (const lvl of levels) {
+                const floorTL = Math.ceil(lvl.spawnInterval * lvl.marbleCount / 1000) + 15;
+                if (lvl.timeLimit < floorTL) lvl.timeLimit = floorTL;
             }
             return levels;
         }
@@ -1025,6 +1044,7 @@ body > .gz-related-games,body > .gz-blog-links{flex:0 0 100%;width:100%;max-widt
             score = 0;
             spawnTimer = 0;
             gameTimer = levelConfig.timeLimit;
+            suddenDeath = false;
             powerUps = { backward: 0, slow: 0, bomb: 0, colorBomb: 0, lightning: 0 };
             activePowers = {};
             marbleQueue = [];
@@ -1058,6 +1078,14 @@ body > .gz-related-games,body > .gz-blog-links{flex:0 0 100%;width:100%;max-widt
                     updateUI();
                     if (gameTimer <= 0) {
                         gameTimer = 0;
+                        if (!suddenDeath && gameState === 'playing') {
+                            suddenDeath = true;
+                            // arrive at the skull two timeLimits after the countdown
+                            // ends: the crawl covers speed*3600*timeLimit points,
+                            // the remainder must be covered in twice that duration.
+                            const crawl = levelConfig.speed * 3600 * levelConfig.timeLimit;
+                            sdMult = Math.min(30, Math.max(2, (pathPoints.length - 2 - crawl) / (2 * Math.max(1, crawl))));
+                        }
                     }
                 }
             }, 1000);
@@ -1271,7 +1299,9 @@ body > .gz-related-games,body > .gz-blog-links{flex:0 0 100%;width:100%;max-widt
         function update(dt) {
             if (gameState !== 'playing' || isPaused) return;
 
-            const speedMult = activePowers.slow ? 0.5 : 1;
+            // suddenDeath (timer hit 0): chain accelerates (sdMult) — makes the
+            // golden-skull loss real; "slow" powerup still halves the rate.
+            const speedMult = (activePowers.slow ? 0.5 : 1) * (suddenDeath ? sdMult : 1);
             const speed = levelConfig.speed * speedMult * dt;
 
             // Spawn
@@ -1296,7 +1326,13 @@ body > .gz-related-games,body > .gz-blog-links{flex:0 0 100%;width:100%;max-widt
                 }
             });
 
-            // Push marbles apart to maintain spacing
+            // Push marbles apart to maintain spacing.
+            // R1135 P1: once the block was full, this push chain propagated into
+            // the head and DEADLOCKED it at ~96% of the path (chain spacing 48.4px
+            // vs path pitch 41.2px at MARBLE_R=22). The skull was then mathematically
+            // unreachable at full chain — the game could never be lost. The lead
+            // marble (chain[0]) is excluded from backward pushes, so the block
+            // compresses spacing instead of locking, and the skull stays reachable.
             for (let i = 0; i < chain.length - 1; i++) {
                 const m1 = chain[i];
                 const m2 = chain[i + 1];
@@ -1309,7 +1345,7 @@ body > .gz-related-games,body > .gz-blog-links{flex:0 0 100%;width:100%;max-widt
                     const overlap = (minDist - dist) / 2;
                     const dx = (pos2.x - pos1.x) / dist;
                     const dy = (pos2.y - pos1.y) / dist;
-                    m1.pathIdx -= overlap * 0.5;
+                    if (i > 0) m1.pathIdx -= overlap * 0.5; // never push the lead back
                     m2.pathIdx += overlap * 0.5;
                     m1.pathIdx = Math.max(0, m1.pathIdx);
                     m2.pathIdx = Math.min(pathPoints.length - 1, m2.pathIdx);
