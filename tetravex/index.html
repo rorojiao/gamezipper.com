@@ -497,7 +497,34 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 50%,#0d1a2d 100%);min-
     showToast('Select a tile from the tray first!');
   }
 
-  CANVAS.addEventListener('pointerdown',handlePointerDown);
+  // R1135: drag-drop support. Press that starts on a tray tile selects (pointerdown);
+  // releasing over an empty cell places it. canvasDownActive distinguishes tap-to-place
+  // (pointerdown already handled on canvas) from drag-release.
+  let canvasDownActive=false;
+  CANVAS.addEventListener('pointerdown',function(e){canvasDownActive=true;handlePointerDown(e);});
+  // document-level: touch pointerup implicitly targets the tray tile (implicit pointer
+  // capture), so a canvas-only listener would miss touch drags. getCell uses clientX/Y.
+  document.addEventListener('pointerup',function(e){
+    if(!canvasDownActive&&state.selectedTileId!==null){
+      const cell=getCell(e);
+      if(cell&&!state.grid[cell.r][cell.c]){
+        const tile=state.tray.find(t=>t.id===state.selectedTileId);
+        if(tile&&!tile.used){
+          tile.used=true;
+          state.grid[cell.r][cell.c]=tile;
+          state.moveHistory.push({action:'place',tileId:tile.id,r:cell.r,c:cell.c});
+          state.moves++;
+          playSound('place');
+          spawnParticles(cell.r,cell.c,'#f39c12');
+          state.selectedTileId=null;
+          render();
+          updateTray();
+          checkWin();
+        }
+      }
+    }
+    canvasDownActive=false;
+  });
 
   function render(){
     CTX.fillStyle=COLORS.bg;
@@ -642,13 +669,22 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 50%,#0d1a2d 100%);min-
         <div class="center">·</div>
       `;
       if(!tile.used){
-        div.onclick=()=>{
-          if(state.selectedTileId===tile.id){
-            state.selectedTileId=null;
-          }else{
+        // R1135: pointerdown-select + click fallback. Tutorial says "Drag tiles from the
+        // tray onto the grid"; drag users never produced a click on the tile, so drags were
+        // silent no-ops (BI dead_click DIV.tray-tile 11-06). Pointerdown makes drag work.
+        let selByPointer=false;
+        div.addEventListener('pointerdown',()=>{
+          selByPointer=true;
+          if(state.selectedTileId!==tile.id){
             state.selectedTileId=tile.id;
             playSound('select');
+            updateTray();
           }
+        });
+        div.onclick=()=>{
+          if(selByPointer){selByPointer=false;return;}
+          state.selectedTileId=tile.id;
+          playSound('select');
           updateTray();
         };
       }
