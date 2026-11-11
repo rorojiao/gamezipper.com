@@ -1,3 +1,54 @@
+## [v1.292.0] - 2026-11-11
+
+### Added — 9 new machine-verifiable test cases (R409, 4h cycle 171)
+
+- [S-558] [P1] Nov 10 2026 multi-fork patch cascade: Chrome 157.0.8103.50/.51 → Edge 157.0.4341.46 + Vivaldi 8.3.4191.35 + Brave 1.99.56 within ~24h under four different build numbers, while Firefox 160.0 ships AS A SECURITY UPDATE on major-version day + ESR 140.17/115.42 concurrent advisories (mfsa2026-99/-98) — per-FORK floor maps (four build namespaces, one upstream CVE set), fork version strings parse per-fork never cross-fork lexicographic, FF majors are security-relevant floor-bump events (W-612 window logic updated), ESR per-line cohort maps, and Edge RN page LAGS client builds (fetched 2026-11-11 still .42) — floor probes read UA/client-hints not vendor RN pages.
+- [W-641] [P1] Chrome 159 origin trial WebAuthn Conditional UI Passive Mode (Ambient): navigator.credentials.get() passkey suggestion with NO login form, non-modal, promise NEVER resolves for credential-less users — OT-gate probe, time-bounded waits (harness timeouts not catch-blocks for the negative case), no-form non-modal suggestion contract, one-action accept path survives focus changes. Sole new csl159 item (page 30,202→31,073 B; 20 enabled fully deduped to W-611..W-624; flagged WebTransportError deduped W-619).
+- [B-456] [P1] Firefox 160 on-device Web Speech API desktop-only (40 languages, no Android, no cloud): 'SpeechRecognition' in window flips false→true on desktop Gecko at the Nov 10 floor; voice gates must be engine×form-factor (matrix probe desktop+Android pairs), offline on-device recognition contract, unsupported-lang error path, permission-state gate. Distinct from W-413/W-443/W-621 Chrome lanes.
+- [B-454] [P1] Firefox 159 removes legacy masonry grid syntax (grid-template-columns/rows: masonry + masonry-auto-flow invalid; bug 2077170): silent parse-time degradation to flat grid — CSS.supports floor probe flips exactly at Oct 27, card-grid non-overlap/non-zero-height degradation fixture, grid-lanes (display: grid-lanes / inline-grid-lanes) probed as separate forward capability, zero catalog hits for the mechanism.
+- [W-638] [P2] Firefox 159 WebGL EXT_texture_mirror_clamp_to_edge (MIRROR_CLAMP_TO_EDGE_EXT wrap, half-width symmetric-glow textures, driver-gated, bug 1908749): exact-string probe with null/non-null both live, mirror/clamp sampling readback vs CPU reference, cross-engine matrix Chrome/Safari absent, full-texture fallback behind probe never UA-gate.
+- [W-639] [P2] Firefox 159 WebGL2 EXT_texture_norm16 default-on driver-gated (16-bit normalized textures/renderbuffers, bug 1735401): probe under WebGL2, RGB16/RGBA16 readback precision ≥12-bit fixture, 2x RGBA8 memory ledger in quality ladders, RGBA8 dither fallback bit-determinism.
+- [B-455] [P2] Firefox 160 aliases ::-webkit-input-placeholder to ::placeholder (bug 2083700): selector-support matrix flips false→true at floor, dual-vendor rule collision → computed placeholder color via getComputedStyle pseudo query, auth-modal input styling audit; zero catalog hits for the mechanism.
+- [B-457] [P2] Firefox 160 stops dispatching non-standard MozScrolledAreaChanged to web pages (Firefox-UI only; pref layout.scrolled-area-changed.content.enabled restores, bug 2079865): removed-event liveness probe (0 invocations on 160+ vs ≥1 on ≤159), CI grep gate for new Moz-prefixed web-event listeners, ResizeObserver migration contract, pref-restore not fleet-representative; zero catalog hits.
+- [W-640] [P2] Firefox 160 WebDriver BiDi triple shift: script.evaluate/callFunction with userActivation:false no longer clears pre-existing activation (bug 2084107 — activation-preserving evaluate changes harness assumptions for user-activation-gated bug dating); Set-Cookie/proxy-authenticate/www-authenticate newline-merged headers split into individual network-event entries (bug 1940389 — ad cookie parsers must parse BOTH shapes across the floor, per-cookie visibility not string counts — flips same day as S-558 wave); machine-readable CDDL for all moz: vendor extensions (bug 2057588 — pin+validate schema in CI). Distinct from W-636 (FF158 BiDi commands), boundary C-240 (TP250 consume-activation, opposite direction).
+
+### Re-probes & negative controls (v1.292.0 cycle)
+
+- developer.mozilla.org Firefox Releases/160: FLIPPED pre-release stub → FULL web-dev capture (168 KB, captured 2026-11-11) as Firefox 160.0 shipped — release-notes marketing page live "Released November 10, 2026"; five cases mined (B-455/B-456/B-457/W-640 + FF-major-as-security-update into S-558).
+- developer.mozilla.org Firefox Releases/159 (live): leftover unmined surface closed — legacy masonry removal (B-454), EXT_texture_mirror_clamp_to_edge (W-638), EXT_texture_norm16 (W-639); remaining FF159 items deduped to R407/R408 captures.
+- chromestatuslite.com ?version=159: grew 30,202 B → 31,073 B — now renders "Chrome Release 159" summary (20 shipped / 1 origin trial / 1 flagged); enabled list fully deduped to W-611..W-624 (WebTransport datagrams/getStats/TextMetrics/Sanitizer/accent-color/scroll-snap/prerender/MediaSession/CSSImportRule/@property all already mined), flagged WebTransportError deduped W-619; sole new = WebAuthn Passive Mode OT (W-641, quoted verbatim).
+- chromestatuslite.com ?version=160: STILL resolves to Chrome 159 content (31,073 B) — Chrome 160 unminted NINTH consecutive cycle.
+- developer.chrome.com /release-notes/157 and /158: 404 NINTH consecutive cycle (76 KB soft pages); csl mirror remains canonical fallback.
+- learn.microsoft.com Edge stable relnotes (fetched 2026-11-11): newest STILL 157.0.4341.42 — Edge 157.0.4341.46 build already shipping per cascade note ⇒ RN-page lag logged into S-558; Edge 158 stable ETA Nov 19 pending.
+- learn.microsoft.com Edge web-platform release-notes/158: live 78,156 B — every CSS/HTML/SVG/WebAPI/DevTools/WebView2 item deduped (W-617/W-618/W-623/W-606/B-402/W-611 family, W-623 already carries Preview Runtime 158.0.4370.1).
+- webkit.org/blog index: newest article STILL Technology Preview 256 — TP 257 / Safari 27.3 GA SIXTH dry cycle; Adaptive Dark Mode (18541) and Safari 27.2 features (18515) re-confirmed as previously-mined (B-408/B-382/B-406/B-407/B-554/B-599/B-602 family).
+- mozilla.org security advisories index (400,028 B captured): mfsa2026-99 = Firefox ESR 140.17 (≥10 CVE IDs captured), mfsa2026-98 = ESR 115.42, mfsa2026-97 labeled "Firefox 157" (label anomaly vs 158/159/160 train — logged, not a case), mfsa2026-95/-96 Thunderbird — ESR cohort drift mined into S-558.
+- chromereleases googleblog /2026/11/: no new desktop posts since Nov 9 (S-557 already covers both Nov 9 post URL variants); ddg html fallback endpoint returned HTTP 202 challenge pages (14 KB) — dead this cycle.
+- browsers.fyi API cross-check: Chrome 157 (Nov 3 base), Edge 157 (Nov 5), Safari 27.2 (Oct 26), Firefox 160 (Nov 10) — consistent with case floors.
+
+### High-priority re-probes (v1.293.0)
+
+- csl160 mint check (9-cycle streak) + developer.chrome.com release-notes/159 first mint after 9-cycle 404.
+- Edge 158 stable Nov 19 ETA + Edge RN page catch-up to 4341.46 verbatim body (confirm secondary-source build numbers first-hand) + Vivaldi 8.3.4191.35 / Brave 1.99.56 first-hand changelogs.
+- MDN Firefox Releases/161 stub flip; Firefox 160.0.x security advisory enumeration (mfsa for 160 line).
+- webkit.org TP 257 / Safari 27.3 GA / Adaptive Dark Mode mint (6 cycles dry).
+- Chrome 158 full stable rollout completion → B-432 activation check; ChromeOS 158.0.8127.24 beta → M-158 stable note.
+- WebAuthn Passive Mode OT → next-channel status (OT-only → trial extension / stable signal).
+
+### Sources (v1.292.0)
+
+- https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/160 (FLIPPED stub→full — B-455/B-456/B-457/W-640/S-558)
+- https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/159 (leftover surface — B-454/W-638/W-639)
+- https://chromestatuslite.com/?version=159 (31,073 B Chrome 159 summary — W-641; dedup ledger above)
+- https://www.mozilla.org/en-US/firefox/160.0/releasenotes/ ("Released November 10, 2026") + https://www.mozilla.org/en-US/security/advisories/ (mfsa2026-95..-99)
+- saferpc.info Updates 2026-11-10 (secondary: Brave 1.99.56 / Edge 157.0.4341.46 / Vivaldi 8.3.4191.35 / FF 160.0-as-security-update — logged with lag/anomaly caveats) + https://www.browsers.fyi/api/ cross-check
+- https://learn.microsoft.com/en-us/deployedge/microsoft-edge-relnote-stable-channel (still .42 — RN-lag evidence for S-558)
+- Search cluster executed 2026-11-11 (native web_search SSL-EOF outage; mcp minimax_search organic fallback): "HTML5 game testing 2026 new techniques" → W-640 (BiDi QA primitives) harvest; "browser game bug report November 2026" → XSLT/XPath deprecation Nov 17 warning corroborates mined W-579/W-622 family (no new case); "casual game UX complaint 2026" → Safari 27.3 vertical-tabs UI-chrome report (not machine-verifiable, intentional skip) + BGA iPad toolbar native-UI (skip); "mobile game performance issue 2026 jank" → frame-time 0.1%-variance methodology corroborates P-245/P-252/P-217 (no new case); "Chrome Edge Safari update November 2026" → S-558 cascade + B-456/B-455 corroboration.
+
+### Required broad query coverage (R409)
+
+(1) "HTML5 game testing 2026 new techniques" -> W-640 (BiDi activation/cookie/CDDL harness contracts); (2) "browser game bug report 2026" -> S-558 (multi-fork cascade) + XSLT corroboration (dedup); (3) "Chrome Edge Safari update 2026" -> S-558/B-454/B-455/B-456/W-638/W-639/W-641 (browser-train harvest this cycle is release-notes-first); (4) "casual game UX complaint 2026" -> intentional-skip ledger (UI-chrome only) + B-456 (voice-control UX availability); (5) "mobile game performance issue 2026" -> W-638/W-639 (per-device GPU memory/precision ladders) + P-family corroboration (no new case). All five literal queries executed (native cluster + minimax organic equivalents), outage logged above.
+
 ## [v1.291.0] - 2026-11-10
 
 ### Added — 9 new machine-verifiable test cases (R408, 4h cycle 170)
