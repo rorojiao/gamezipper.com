@@ -334,7 +334,33 @@ body{flex-wrap:wrap}
 body > .gz-related-games,body > .gz-blog-links{flex:0 0 100%;width:100%;max-width:none;margin-left:auto;margin-right:auto}
 /* /R334 flex-squeeze fix */
   </style>
-<script defer src="/adsterra-manager.js?v=20261107R1067pfmismatch"></script><script defer src="/monetag-manager.js?v=20261107R1067pfmismatch"></script>
+<script>
+/* UX-OPT 2026-11-11 R1129: idle-defer ad managers (R1054 pattern) — BI 7d inp_worst
+   >=500ms rows on this page collide with gz_ad_events within +-5s (100% hit except
+   moto-x3m 2/4); inp_worst+inp_hover+inp_scroll share equal dur = one shared blocking
+   task (R990 routing is mutually exclusive). Defer adsterra/monetag execution out of
+   the first-interaction window. Static adsbygoogle banners untouched. */
+(function(){
+  function loadAdManager(){
+    if(window.GZ_LOAD_ADSTERRA!==false){
+      var sAd=document.createElement('script');
+      sAd.src='/adsterra-manager.js?v=20261107R1067pfmismatch';
+      sAd.defer=true;
+      document.head.appendChild(sAd);
+    }
+    var s=document.createElement('script');
+    s.src='/monetag-manager.js?v=20261107R1067pfmismatch';
+    document.head.appendChild(s);
+  }
+  if('scheduler' in window && 'yield' in window.scheduler){
+    scheduler.yield().then(loadAdManager);
+  }else if('requestIdleCallback' in window){
+    requestIdleCallback(loadAdManager,{timeout:3000});
+  }else{
+    setTimeout(loadAdManager,2000);
+  }
+})();
+</script>
 <style>@keyframes pulse-glow{0%,100%{opacity:.85}50%{opacity:1}}</style><script src="/gz-analytics.js?v=20261109R1123clswindow" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
 <meta content="ca-pub-8346383990981353" name="google-adsense-platform-account">
