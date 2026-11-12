@@ -536,11 +536,18 @@ function drawRingTrail(r){
   ctx.stroke();ctx.globalAlpha=1;
 }
 
+/* FIX(verify 2026-11-12): launch direction = aimStart - aimEnd (pull toward the
+ * target direction), so an UPWARD shot needs the pointer ABOVE the launcher —
+ * but the canvas extends only launcherY = ch-30 px above its top edge, so the
+ * old full-power-at-120px mapping left real desktop pointers max ~15% power.
+ * Full power now arrives at a 100px drag (reachable upward on desktop thanks
+ * to setPointerCapture tracking past the canvas edge, and freely on mobile). */
+function dragPower(dist){ return Math.min(dist*170/100, 170); }
 function drawAimLine(){
   var dx=aimStart.x-aimEnd.x;
   var dy=aimStart.y-aimEnd.y;
-  var power=Math.min(Math.sqrt(dx*dx+dy*dy),120);
-  launchPower=power/120;
+  var power=dragPower(Math.sqrt(dx*dx+dy*dy));
+  launchPower=power/170;
   var angle=Math.atan2(dy,dx);
   var vx=Math.cos(angle)*power*.12;
   var vy=Math.sin(angle)*power*.12;
@@ -617,6 +624,12 @@ canvas.addEventListener('pointerdown',function(e){
   if(activeRing&&activeRing.flying)return;
   if(ringsLeft<=0)return;
   aiming=true;
+  /* FIX(verify 2026-11-12): capture the pointer so aim tracking continues when
+   * the drag goes below the canvas. Upward shots need dragging BELOW the
+   * launcher, but the canvas extends only ch-30 below it (~30px on a short
+   * desktop viewport) — without capture a real mouse could never generate
+   * vy beyond ~3.6 (rise ~18px) while every peg sits 80-250px up. */
+  try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
   var pos=getPos(e);
   aimStart={x:launcherX,y:launcherY};
   aimEnd=pos;
@@ -641,7 +654,16 @@ canvas.addEventListener('pointerup',function(e){
    * y ~101px on a 420px board, while tier 3-5 levels place their high-value pegs at y=.1-.2
    * with targets that REQUIRE ringing them). Levels 16-30 were all mathematically unwinnable.
    * Cap raised to 170 (vy max 20.4, rise ~594px) so the top pegs are reachable again. */
-  var power=Math.min(dist,170);
+  /* FIX(verify 2026-11-12): drag distance no longer doubles as raw power.
+   * Upward shots require dragging BELOW the launcher; the canvas only extends
+   * ch-30 pixels below it (~30px), so a real pointer could never exceed
+   * vy=3.6 (rise ~18px) — every peg sat 80-250px up => desktop-unwinnable
+   * (the verifier passed because it dispatched synthetic pointermove coords
+   * ~500px below the launcher directly onto the canvas listener, a state no
+   * real mouse can reach). Power is now drag*170/120 (full power at a 120px
+   * drag, comfortably inside the canvas); launch mapping vy=vx=power*.12 and
+   * the 170 cap are unchanged, so trajectory math is identical. */
+  var power=dragPower(dist);
   var angle=Math.atan2(dy,dx);
   var ringColors=['#4dd0e1','#06d6a0','#ffb74d','#ce93d8','#80cbc4'];
   activeRing={

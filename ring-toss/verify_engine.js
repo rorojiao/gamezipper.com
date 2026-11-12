@@ -6,7 +6,7 @@
  * scoring, win detection (checkWin -> wonLevel -> win overlay via the engine's own
  * setTimeout) stay in the engine; the sim only chooses where to aim. */
 const { bootGame } = require('../_optimization/scripts/harness-lib.js');
-const g = bootGame('ring-toss', { inject: {
+const g = bootGame('ring-toss', { viewport: [1280, 577], inject: {
   anchor: 'function updateRing(r){',
   exports: `globalThis.__S = {
   n: () => LEVELS.length,
@@ -58,6 +58,20 @@ function simulate(cw, ch, wind, walls, pegs, lx, ly, vx, vy, wantPegY) {
 function bestShot(state) {
   const { cw, ch, lx, ly, wind } = state.info;
   const pegs = state.pegs, walls = state.walls;
+  // REAL-INPUT GATE (FIX 2026-11-12): the drag endpoint must be reachable by a
+  // real pointer. Canvas bounds horizontally/vertically, plus up to 120px below
+  // the canvas bottom — pointerdown now setPointerCapture's, so tracking below
+  // the canvas works in a real browser (verified live 2026-11-12); the drag
+  // must also pass the engine's dist>=15 threshold.
+  const epOk = (ang, pw) => {
+    const L = Math.min(pw*100/170, 100);
+    if (L < 15) return false;
+    // GROUND TRUTH (dbg-instrumented replay 2026-11-12): launch vector = aimStart - aimEnd,
+    // so to launch at angle a the pointer must end at launcher - launchUnit*L
+    // (downward drag below the launcher -> upward launch; verified vy<0 for ey>ly live).
+    const ex = lx - Math.cos(ang)*L, ey = ly - Math.sin(ang)*L;
+    return ex >= 4 && ex <= cw-4 && ey >= 4 && ey <= ch + 120;
+  };
   let best = null;
   for (const coarse of [true, false]) {
     const aStep = coarse ? 0.03 : 0.004, pStep = coarse ? 6 : 1;
@@ -67,6 +81,7 @@ function bestShot(state) {
         const vx = Math.cos(ang) * pw * 0.12, vy = Math.sin(ang) * pw * 0.12;
         const res = simulate(cw, ch, wind, walls, pegs, lx, ly, vx, vy);
         if (res.peg === undefined) continue;
+        if (!epOk(ang, pw)) continue;
         const p = pegs[res.peg];
         const val = p.pts + p.stack * 5; // stack combo the engine will award
         if (!best || val > best.val) best = { val, ang, pw };
@@ -82,7 +97,7 @@ function bestShot(state) {
         const ang = best.ang + dA, pw = Math.min(170, Math.max(24, best.pw + dP));
         const vx = Math.cos(ang) * pw * 0.12, vy = Math.sin(ang) * pw * 0.12;
         const res = simulate(cw, ch, wind, walls, pegs, lx, ly, vx, vy);
-        if (res.peg !== undefined) {
+        if (res.peg !== undefined && epOk(ang, pw)) {
           const p = pegs[res.peg];
           const val = p.pts + p.stack * 5;
           if (val > best.val || (val === best.val && Math.abs(dA) < 0.01)) best = { val, ang, pw };
@@ -111,7 +126,11 @@ for (let i = 0; i < N && Date.now() < DEADLINE; i++) {
       ptr('pointerdown', 100, 100); ptr('pointermove', info.lx - 60, info.ly - 60); ptr('pointerup', info.lx - 60, info.ly - 60);
       misses++;
     } else {
-      const ex = info.lx - Math.cos(shot.ang) * shot.pw, ey = info.ly - Math.sin(shot.ang) * shot.pw;
+      // drag mapping FIX 2026-11-12: power = drag*170/120 (drag <=120px stays inside canvas).
+      // launch vector = aimStart - aimEnd, so drag endpoint = launcher - launchUnit*L
+      const dragLen = Math.min(shot.pw*100/170, 100);
+      // endpoint = launcher - launchUnit*dragLen (pull-back launch, see epOk above)
+      const ex = info.lx - Math.cos(shot.ang) * dragLen, ey = info.ly - Math.sin(shot.ang) * dragLen;
       ptr('pointerdown', info.lx, info.ly);
       ptr('pointermove', ex, ey);
       ptr('pointerup', ex, ey);
