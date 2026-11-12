@@ -1,5 +1,10 @@
 /**
  * GameZipper Adsterra Ad Manager v5.17.5 (2026-07-26)
+ *   R1133 (2026-11-12): popunder now FIRES on capture-phase pointerdown —
+ *   drag games calling preventDefault() on canvas pointerdown (magic-sort,
+ *   qwirkle) suppress the compat click chain, so the click path never fired
+ *   there (magic-sort: 31 loads / 0 fills / 2-of-29 sessions in 7d).
+ *   Fills carry trigger=pointer|click|key.
  *   R1035 (2026-11-02): popunder now arms on canvas clicks + gameplay
  *   keydown (was impossible on canvas games; popunder is the paying
  *   placement). 25-min cap unchanged; fills carry trigger=click|key.
@@ -326,6 +331,46 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     firePopunder();
   }, { passive: true, capture: true });
 
+  // ── R1133 (2026-11-12) — popunder fires on POINTERDOWN (capture) ──
+  //   Data: BI 7d (11-05..11-12) adsterra attempt-coverage on top gz pages:
+  //   magic-sort 2/29 sessions, qwirkle 1/23, phantom-blade 5/22 — magic-sort
+  //   had 31 manager loads and ZERO popunder fills in 7d. Root cause:
+  //   drag-driven canvas games (magic-sort CANVAS#c line 6907, qwirkle
+  //   boardCanvas/handCanvas) call preventDefault() on their canvas
+  //   pointerdown, which suppresses the compat mousedown/click chain in
+  //   Chromium — the click listener above never fires during gameplay, so
+  //   the only paying placement (popunder ~$5.7/1k vs smartlink ~$0.36)
+  //   was unreachable. pointerdown IS an activation-triggering input event
+  //   (window.open accepted), and a capture listener on the document runs
+  //   before any game handler can cancel it. Same guards as the click path:
+  //   same-origin <a> keeps the smartlink route, UI chrome (BUTTON, btn-*,
+  //   *overlay*, menu-btn, ctrl-btn) returns without consuming the arm,
+  //   25-min localStorage+BroadcastChannel cooldown unchanged. Fills audit
+  //   in BI as trigger='pointer'.
+  document.addEventListener('pointerdown', function (e) {
+    if (!popArmed || e.isPrimary === false) return;
+    var target = e.target;
+    while (target && target.tagName !== 'A') target = target.parentElement;
+    if (target && target.href && target.href.indexOf(location.origin) === 0) {
+      // Links stay on the non-popup smartlink path — prefireSmartlink on
+      // pointerdown below already covers it; per-doc guard dedupes.
+      return;
+    }
+    var gameEl = e.target;
+    while (gameEl) {
+      if (gameEl.tagName === 'BUTTON' ||
+          (gameEl.id && (gameEl.id.indexOf('btn-') === 0 || gameEl.id.indexOf('overlay') >= 0)) ||
+          (gameEl.className && typeof gameEl.className === 'string' &&
+           (gameEl.className.indexOf('menu-btn') >= 0 || gameEl.className.indexOf('overlay') >= 0 ||
+            gameEl.className.indexOf('ctrl-btn') >= 0))) {
+        return;
+      }
+      gameEl = gameEl.parentElement;
+    }
+    popArmed = false;
+    firePopunder('pointer');
+  }, { passive: true, capture: true });
+
   if (_bc) {
     _bc.onmessage = function (e) {
       try { localStorage.setItem(POP_KEY, String(e.data)); } catch (err) {}
@@ -528,11 +573,11 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     armPop();
     track('script_loaded', {
       zones: ZONES,
-      v: '5.17.6',
+      v: '5.17.7',
       path: location.pathname,
       readyState: document.readyState
     });
-    track('config_loaded', { v: '5.17.6', popInterval: POP_INTERVAL });
+    track('config_loaded', { v: '5.17.7', popInterval: POP_INTERVAL });
     // Run CDN health probe asynchronously — doesn't block init.
     setTimeout(runCdnHealth, 1500);
   }
@@ -635,10 +680,10 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     fireSmartlinkPing: fireSmartlinkPing,
     getSmartlinkUrl: function () { return SMARTLINK_URL; },
     zones: ZONES,
-    version: '5.18.0-exitintent'
+    version: '5.18.1-pointerfire'
   };
 
   try {
-    console.log('[GZAdsterra] v5.17.6 active — popunder(' + ZONES.popunder + ') + smartlink(' + ZONES.smartlink + ' iframe) + cdn_health probe');
+    console.log('[GZAdsterra] v5.17.7 active — popunder(' + ZONES.popunder + ') + smartlink(' + ZONES.smartlink + ' iframe) + cdn_health probe');
   } catch (e) {}
 })();
