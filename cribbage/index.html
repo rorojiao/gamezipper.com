@@ -775,7 +775,9 @@ function aiChoosePegCard(pi,valid){
 function startShow(){
   G.phase=PHASE.SHOW;
   G.showPhase=0;
-  G.countingPlayer=1-G.dealer;
+  // Bug-fix R1139: start at player 0 so BOTH hands are counted then the crib.
+  // Old `1-G.dealer` skipped the dealer's own hand when dealer===0.
+  G.countingPlayer=0;
   showNextCount();
 }
 
@@ -789,7 +791,8 @@ function showNextCount(){
 
 function countHand(hand,label){
   var scoring=computeAllScoring(hand,G.starter);
-  showScoreBreakdown(hand,scoring,label,G.countingPlayer===G.dealer&&G.countingPlayer===1);
+  // Bug-fix R1139: crib panel is countingPlayer===2 (label arg is isCrib).
+  showScoreBreakdown(hand,scoring,label,G.countingPlayer===2);
 }
 
 function showScoreBreakdown(hand,scoring,title,isCrib){
@@ -810,7 +813,10 @@ function showScoreBreakdown(hand,scoring,title,isCrib){
   tbl.innerHTML=html;
   document.getElementById('scoreTitle').textContent=title+' - '+total+' pts';
   G.currentScore=total;
-  G.currentScorer=G.countingPlayer;
+  // Bug-fix R1139: crib (countingPlayer===2) scores for the DEALER.
+  // Old code set currentScorer=2 → continueShow read G.players[2].totalScore →
+  // TypeError softlock after every hand's crib panel.
+  G.currentScorer=(G.countingPlayer===2)?G.dealer:G.countingPlayer;
   G.currentIsCrib=isCrib;
   showOverlay('scoreOverlay');
   sndScore();
