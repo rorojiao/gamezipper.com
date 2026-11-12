@@ -281,6 +281,11 @@ function _bootFlushQ() {
 }
 window.addEventListener("error", function (ev) {
   if (_bootClosed || _bootErrSeen >= 3) return; // boot-window only, first 3 errors
+  // R1134: ad SDK push errors (AdSense "adsbygoogle.push() already has ads"
+  // TagError) fire inside the boot window and were 100% of ms_boot_error
+  // traffic in BI — they never stop the game. Filter known ad noise so a real
+  // boot exception can't be crowded out by the 3-error cap.
+  if (/adsbygoogle|pagead|googlesyndication|adsense|monetag|propellerads/i.test(String(ev.message || ""))) return;
   _bootErrSeen++;
   try {
     _bootSend("ms_boot_error", {
@@ -4403,26 +4408,40 @@ function renderSplash() {
 function renderMenu() {
   drawBackground();
 
-  // Daily challenge banner (if not done today)
-  if (!isDailyDone()) {
-    const bannerH = 28;
-    const bannerY = 4;
+  // Daily challenge banner — [R1134 2026-11-13] BI lifetime: ms_daily_challenge_started
+  // = 0 taps despite splash button + menu banner both existing → placement was
+  // discoverable-in-name-only (thin static 28px strip, 11px text, no motion).
+  // R955 lesson: glow pulse + post-salient-moment placement converts. Taller,
+  // breathing glow, and a done-state so the daily ritual is visible every day.
+  {
+    const bannerH = 34;
+    const bannerY = 72;
+    const dcDone = isDailyDone();
+    const dcPulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.004);
     X.save();
     const bannerGrad = X.createLinearGradient(0, bannerY, W, bannerY);
-    bannerGrad.addColorStop(0, "rgba(255,107,53,0.15)");
-    bannerGrad.addColorStop(0.5, "rgba(255,165,2,0.2)");
-    bannerGrad.addColorStop(1, "rgba(255,107,53,0.15)");
+    bannerGrad.addColorStop(0, dcDone ? "rgba(255,107,53,0.06)" : "rgba(255,107,53,0.15)");
+    bannerGrad.addColorStop(0.5, dcDone ? "rgba(255,165,2,0.08)" : "rgba(255,165,2,0.2)");
+    bannerGrad.addColorStop(1, dcDone ? "rgba(255,107,53,0.06)" : "rgba(255,107,53,0.15)");
+    if (!dcDone) { X.shadowColor = "rgba(255,165,2," + (0.3 + dcPulse * 0.35) + ")"; X.shadowBlur = 6 + dcPulse * 10; }
     X.fillStyle = bannerGrad;
     roundRect(8, bannerY, W - 16, bannerH, 6);
     X.fill();
-    X.strokeStyle = "rgba(255,165,2,0.3)";
+    X.shadowBlur = 0;
+    X.strokeStyle = dcDone ? "rgba(255,165,2,0.15)" : "rgba(255,165,2," + (0.35 + dcPulse * 0.3) + ")";
     X.lineWidth = 1;
     X.stroke();
-    X.fillStyle = "#ffa502";
-    X.font = "600 11px 'Nunito',sans-serif";
     X.textAlign = "center";
     X.textBaseline = "middle";
-    X.fillText("Daily Challenge: Level " + (dailyChallengeLevel + 1) + " — Tap to play!", W / 2, bannerY + bannerH / 2);
+    if (!dcDone) {
+      X.fillStyle = "#ffa502";
+      X.font = "700 13px 'Nunito',sans-serif";
+      X.fillText("🗓 Daily Challenge · Level " + (dailyChallengeLevel + 1) + " — Tap to play!", W / 2, bannerY + bannerH / 2);
+    } else {
+      X.fillStyle = "rgba(255,255,255,0.45)";
+      X.font = "600 11px 'Nunito',sans-serif";
+      X.fillText("✓ Challenge done — new puzzle every day", W / 2, bannerY + bannerH / 2);
+    }
     X.restore();
   }
 
@@ -4431,7 +4450,7 @@ function renderMenu() {
   X.font = `800 ${Math.round(Math.min(W * 0.07, 32))}px 'Baloo 2','Nunito',sans-serif`;
   X.textAlign = "center";
   X.textBaseline = "middle";
-  const headerY = isDailyDone() ? 34 : 48;
+  const headerY = 124; // R1134: below topnav+banner stack
   X.fillText("Select Level", W / 2, headerY);
 
   // Stats bar — completed count & stars with progress bar
@@ -4442,7 +4461,7 @@ function renderMenu() {
   X.fillStyle = "rgba(255,255,255,0.45)";
   X.font = "600 11px 'Nunito',sans-serif";
   X.textAlign = "center";
-  X.fillText(`Stars ${totalStars}/${maxStars}  |  Done ${completedCount}/${TOTAL_LEVELS}  |  🏅${achieved}/${ACHIEVEMENTS.length}`, W / 2, 52);
+  X.fillText(`Stars ${totalStars}/${maxStars}  |  Done ${completedCount}/${TOTAL_LEVELS}  |  🏅${achieved}/${ACHIEVEMENTS.length}`, W / 2, 142);
 
   // [R678] Find the recommended next-playable cell. Priority:
   //   1. lastPlayedLevel if not yet completed (Resume case — visible elsewhere too)
@@ -4461,7 +4480,7 @@ function renderMenu() {
   const barW = Math.min(160, W * 0.45);
   const barH = 4;
   const barX = (W - barW) / 2;
-  const barY = 60;
+  const barY = 150;
   roundRect(barX, barY, barW, barH, 2);
   X.fillStyle = "rgba(255,255,255,0.1)";
   X.fill();
@@ -4476,21 +4495,21 @@ function renderMenu() {
   }
 
   // Back button → GameZipper home
-  drawButton(12, 8, 90, 30, "← Home", hoverBtn === 100, false);
+  drawButton(12, 36, 90, 30, "← Home", hoverBtn === 100, false);
 
   // Stats dashboard button (next to Home)
-  drawButton(106, 8, 56, 30, "📊 Stats", hoverBtn === 103, false);
+  drawButton(106, 36, 56, 30, "📊 Stats", hoverBtn === 103, false);
 
   // Favorites button (next to Stats) — shows count badge
   const favN = favoriteCount();
-  drawButton(166, 8, 56, 30, favN > 0 ? ("⭐ " + favN) : "⭐ Fav", hoverBtn === 104, favN > 0);
+  drawButton(166, 36, 56, 30, favN > 0 ? ("⭐ " + favN) : "⭐ Fav", hoverBtn === 104, favN > 0);
 
   // Jump to level button
-  drawButton(W - 78, 8, 66, 30, "Jump", hoverBtn === 101, true);
+  drawButton(W - 78, 36, 66, 30, "Jump", hoverBtn === 101, true);
 
   // Resume button (jump to last played level) — shown if player has progress
   if (lastPlayedLevel > 0 && lastPlayedLevel < TOTAL_LEVELS) {
-    drawButton(W - 158, 8, 72, 30, "▶ Lv." + (lastPlayedLevel + 1), hoverBtn === 102, true);
+    drawButton(W - 158, 36, 72, 30, "▶ Lv." + (lastPlayedLevel + 1), hoverBtn === 102, true);
   }
 
   // Grid
@@ -4499,7 +4518,7 @@ function renderMenu() {
   const cellW = (W - 24 - (cols - 1) * gap) / cols;
   const cellH = cellW;
   const headerH = 28; // space for difficulty section headers
-  const gridTop = 70 - menuScrollY;
+  const gridTop = 160 - menuScrollY;
 
   // Track which section headers have been drawn (to avoid duplicates in same viewport)
   const drawnSections = new Set();
@@ -4633,12 +4652,12 @@ function renderMenu() {
   // Account for section header height in scroll area
   const sectionCount = DIFF_SECTIONS.filter(s => s.start < TOTAL_LEVELS).length;
   const headerRows = Math.ceil(sectionCount * headerH / (cellH + gap));
-  menuMaxScroll = Math.max(0, (totalRows + headerRows) * (cellH + gap) + 80 - H + 10);
+  menuMaxScroll = Math.max(0, (totalRows + headerRows) * (cellH + gap) + 170 - H + 10);
 
   // ── Scrollbar indicator ──
   if (menuMaxScroll > 0) {
     const sbH = Math.max(30, H * (H / (H + menuMaxScroll)));
-    const sbY = 70 + (H - 70 - sbH) * (menuScrollY / menuMaxScroll);
+    const sbY = 160 + (H - 160 - sbH) * (menuScrollY / menuMaxScroll);
     const sbX = W - 5;
     X.fillStyle = "rgba(255,255,255,0.12)";
     roundRect(sbX, sbY, 3, sbH, 1.5);
@@ -4758,10 +4777,10 @@ function renderStats() {
   X.font = `800 ${Math.round(Math.min(W * 0.07, 30))}px 'Baloo 2','Nunito',sans-serif`;
   X.textAlign = "center";
   X.textBaseline = "middle";
-  X.fillText("📊 Player Stats", W / 2, 34);
+  X.fillText("📊 Player Stats", W / 2, 50);
 
   // Back button
-  drawButton(12, 8, 80, 30, "← Back", hoverBtn === 110, false);
+  drawButton(12, 36, 80, 30, "← Back", hoverBtn === 110, false);
 
   // ── Compute stats ──
   const completedCount = Object.keys(levelStars).length;
@@ -4772,12 +4791,12 @@ function renderStats() {
   // Scrollable content area
   X.save();
   X.beginPath();
-  X.rect(0, 60, W, H - 60);
+  X.rect(0, 68, W, H - 68);
   X.clip();
 
   const cardW = W - 24;
   const cardX = 12;
-  let cy = 60 - statsScrollY;
+  let cy = 68 - statsScrollY;
   const cardGap = 8;
 
   // ── Card helper ──
@@ -4945,11 +4964,11 @@ function renderStats() {
   X.restore(); // clip restore
 
   // ── Scrollbar ──
-  const contentH = cy + statsScrollY - 60;
+  const contentH = cy + statsScrollY - 68;
   const maxStatsScroll = Math.max(0, contentH - (H - 60));
   if (maxStatsScroll > 0) {
     const sbH = Math.max(30, (H - 60) * ((H - 60) / contentH));
-    const sbY = 60 + (H - 60 - sbH) * (statsScrollY / maxStatsScroll);
+    const sbY = 68 + (H - 68 - sbH) * (statsScrollY / maxStatsScroll);
     X.fillStyle = "rgba(255,255,255,0.12)";
     roundRect(W - 5, sbY, 3, sbH, 1.5);
     X.fill();
@@ -5032,10 +5051,10 @@ function renderFavorites() {
   X.font = `800 ${Math.round(Math.min(W * 0.07, 30))}px 'Baloo 2','Nunito',sans-serif`;
   X.textAlign = "center";
   X.textBaseline = "middle";
-  X.fillText("⭐ Favorite Levels", W / 2, 34);
+  X.fillText("⭐ Favorite Levels", W / 2, 50);
 
   // Back button
-  drawButton(12, 8, 80, 30, "← Back", hoverBtn === 110, false);
+  drawButton(12, 36, 80, 30, "← Back", hoverBtn === 110, false);
 
   const favs = favoriteList();
   const favN = favs.length;
@@ -5044,7 +5063,7 @@ function renderFavorites() {
   X.fillStyle = "rgba(255,215,0,0.7)";
   X.font = "600 12px 'Nunito',sans-serif";
   X.textAlign = "center";
-  X.fillText(favN + " favorited level" + (favN !== 1 ? "s" : ""), W / 2, 54);
+  X.fillText(favN + " favorited level" + (favN !== 1 ? "s" : ""), W / 2, 64);
 
   // Empty state
   if (favN === 0) {
@@ -5072,7 +5091,7 @@ function renderFavorites() {
   const gap = 8;
   const cellW = (W - 24 - (cols - 1) * gap) / cols;
   const cellH = cellW;
-  const gridTop = 68 - favScrollY;
+  const gridTop = 78 - favScrollY;
 
   // Viewport culling
   const visStart = Math.max(0, Math.floor((favScrollY - 4) / (cellH + gap)) * cols);
@@ -6202,6 +6221,31 @@ function renderWin() {
   btnIdx++;
   drawButton(btnStartX + btnIdx * (btnW + btnGap), by, btnW, btnH, "Menu", hoverBtn === 22, false);
 
+  // [R1134 2026-11-13] Post-win daily-challenge nudge row — R955 lesson: the win
+  // card is the only high-attention surface; splash-button + menu-banner placement
+  // measured 0 daily-challenge taps lifetime in BI. Row sits inside the card below
+  // the button row (by+40+8+24 ≤ cardY+300 either branch of winBtnLayout).
+  if (!isDailyDone() && dailyChallengeLevel >= 0) {
+    const dcRowY = by + btnH + 8, dcRowH = 24;
+    const dcRowX = cardX + 14, dcRowW = cardW - 28;
+    const dcP = 0.5 + 0.5 * Math.sin(Date.now() * 0.004);
+    X.save();
+    X.shadowColor = "rgba(255,165,2," + (0.25 + dcP * 0.3) + ")";
+    X.shadowBlur = 5 + dcP * 8;
+    X.fillStyle = "rgba(255,165,2,0.14)";
+    roundRect(dcRowX, dcRowY, dcRowW, dcRowH, 5); X.fill();
+    X.shadowBlur = 0;
+    X.strokeStyle = "rgba(255,165,2," + (0.4 + dcP * 0.3) + ")";
+    X.lineWidth = 1;
+    roundRect(dcRowX, dcRowY, dcRowW, dcRowH, 5); X.stroke();
+    X.fillStyle = "#ffd93d";
+    X.font = "700 11px 'Nunito',sans-serif";
+    X.textAlign = "center";
+    X.textBaseline = "middle";
+    X.fillText("🗓 Daily Challenge Lv " + (dailyChallengeLevel + 1) + " — tap to play", W / 2, dcRowY + dcRowH / 2);
+    X.restore();
+  }
+
   // R1057: auto-advance countdown — a veil sweeps off the Next button from
   // WIN_AUTO_COUNTDOWN_MS until update() fires the advance at WIN_AUTO_MS.
   // Any button tap leaves the win state first, so this is self-cancelling;
@@ -6579,33 +6623,33 @@ function onTap(px, py) {
       return;
     }
 
-    if (hitTest(px, py, 12, 8, 90, 30)) {
+    if (hitTest(px, py, 12, 36, 90, 30)) {
       window.location.href = "/"; return;
     }
     // Stats dashboard button
-    if (hitTest(px, py, 106, 8, 56, 30)) {
+    if (hitTest(px, py, 106, 36, 56, 30)) {
       sfxClick(); statsScrollY = 0; state = "stats"; return;
     }
     // Favorites button
-    if (hitTest(px, py, 166, 8, 56, 30)) {
+    if (hitTest(px, py, 166, 36, 56, 30)) {
       sfxClick(); favScrollY = 0; state = "favorites"; return;
     }
-    // Daily challenge banner tap
-    if (!isDailyDone() && hitTest(px, py, 8, 4, W - 16, 28)) {
+    // Daily challenge banner tap (R1134: height 28→34, keep in sync with renderMenu)
+    if (!isDailyDone() && hitTest(px, py, 8, 72, W - 16, 34)) {
       sfxClick();
       // [MS-tracker R643] daily challenge from menu banner
       try { window.__msTrack && window.__msTrack('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'menu_banner' }); } catch(e){}
       initLevel(dailyChallengeLevel); return;
     }
     // Jump button
-    if (hitTest(px, py, W - 78, 8, 66, 30)) {
+    if (hitTest(px, py, W - 78, 36, 66, 30)) {
       sfxClick();
       // [MS-tracker R643] jump dialog opened
       try { window.__msTrack && window.__msTrack('ms_jump_dialog_opened', { fromMenu: true }); } catch(e){}
       jumpDialogOpen = true; jumpInput = ""; return;
     }
     // Resume button (jump to last played level)
-    if (lastPlayedLevel > 0 && lastPlayedLevel < TOTAL_LEVELS && hitTest(px, py, W - 158, 8, 72, 30)) {
+    if (lastPlayedLevel > 0 && lastPlayedLevel < TOTAL_LEVELS && hitTest(px, py, W - 158, 36, 72, 30)) {
       sfxClick();
       // [MS-tracker R643] resume tapped
       try { window.__msTrack && window.__msTrack('ms_resume_tapped', { lv: lastPlayedLevel + 1 }); } catch(e){}
@@ -6616,7 +6660,7 @@ function onTap(px, py) {
     const cellW = (W - 24 - (cols - 1) * gap) / cols;
     const cellH = cellW;
     const headerH = 28;
-    const gridTop = 70 - menuScrollY;
+    const gridTop = 160 - menuScrollY;
     // Ensure offsets are computed for tap handling
     if (cols !== menuCachedCols) {
       menuCachedCols = cols;
@@ -6861,12 +6905,22 @@ function onTap(px, py) {
     if (hitTest(px, py, bsX + bIdx * (wBtnW + wBtnGap), wBy, wBtnW, wBtnH)) {
       sfxClick(); state = "menu"; menuScrollY = 0; return;
     }
+    // [R1134] Daily-challenge nudge row (geometry must match the win render block:
+    // cardW/cardX mirror the win card constants)
+    const _dcCardW = Math.min(300, W * 0.85), _dcCardX = (W - _dcCardW) / 2;
+    if (!isDailyDone() && dailyChallengeLevel >= 0 &&
+        hitTest(px, py, _dcCardX + 14, wBy + wBtnH + 8, _dcCardW - 28, 24)) {
+      winAutoCancelled = true;
+      sfxClick();
+      try { window.__msTrack && window.__msTrack('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'win' }); } catch(e){}
+      initLevel(dailyChallengeLevel); return;
+    }
   }
 
   // ── Stats ──
   if (state === "stats") {
     // Back button
-    if (hitTest(px, py, 12, 8, 80, 30)) {
+    if (hitTest(px, py, 12, 36, 80, 30)) {
       sfxClick(); state = "menu"; return;
     }
   }
@@ -6874,7 +6928,7 @@ function onTap(px, py) {
   // ── Favorites ──
   if (state === "favorites") {
     // Back button
-    if (hitTest(px, py, 12, 8, 80, 30)) {
+    if (hitTest(px, py, 12, 36, 80, 30)) {
       sfxClick(); state = "menu"; return;
     }
     // Grid cell taps → launch level
@@ -6885,7 +6939,7 @@ function onTap(px, py) {
       const gap = 8;
       const cellW = (W - 24 - (cols - 1) * gap) / cols;
       const cellH = cellW;
-      const gridTop = 68 - favScrollY;
+      const gridTop = 78 - favScrollY;
       // Only test visible cells
       const visStart = Math.max(0, Math.floor((favScrollY - 4) / (cellH + gap)) * cols);
       const visEnd = Math.min(favN, visStart + cols * (Math.ceil(H / (cellH + gap)) + 3));
