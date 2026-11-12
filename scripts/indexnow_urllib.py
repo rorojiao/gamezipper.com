@@ -166,6 +166,34 @@ def _is_dns_dead_error(exc):
             or "[Errno -2]" in reason_str)
 
 
+def _is_tls_dead_error(exc):
+    """R1134 (2026-11-12): detect TLS handshake / connect timeout class errors.
+
+    The 2026-11-12 GFW DPI blackhole failure was `TimeoutError: _ssl.c:983:
+    The handshake operation timed out` — transport is unusable even though DNS
+    resolved, exactly the same situation R685 handles for dead DNS. Trigger the
+    DoH+IP-direct fallback for it too (China-edge IPs bypass the DPI path).
+    """
+    if isinstance(exc, TimeoutError):
+        return True
+    reason_str = str(getattr(exc, "reason", exc))
+    return ("handshake operation timed out" in reason_str
+            or "timed out" in reason_str
+            or "Operation timed out" in reason_str)
+
+
+# R1134: global wall-clock budget. fetch + 2 endpoints x (3 retries + fallback
+# chain) can exceed the 300s cron timeout when every attempt burns full socket
+# timeouts. Stay well under it; when the budget runs out, fail fast instead of
+# starting another retry.
+_START = time.monotonic()
+_BUDGET_SECS = 240
+
+
+def _budget_left():
+    return _BUDGET_SECS - (time.monotonic() - _START)
+
+
 def _try_ip_direct_chain(req, timeout=30):
     """Try all known IPs for req.host via _open_ip_direct, return first success.
 
@@ -207,16 +235,21 @@ def _open_with_retry(req, timeout=30):
         except _RETRIABLE as exc:
             last_err = exc
             # R685 DoH+IP-direct fallback: when DNS is systemically dead (gaierror
-            # [-3] or [-2]), resolve via alidns DoH and try every known IP for the
-            # host. _try_ip_direct_chain returns first non-5xx response.
-            if _is_dns_dead_error(exc):
-                try:
-                    resp = _try_ip_direct_chain(req, timeout=timeout)
-                    if resp is not None:
-                        return resp
-                except Exception as ip_exc:
-                    last_err = ip_exc
-        if attempt < _RETRIES:
+            # [-3] or [-2]) OR the TLS path is blackholed (R1134 handshake/connect
+            # timeout), resolve via alidns DoH and try every known IP for the host.
+            # _try_ip_direct_chain returns first non-5xx response.
+            if _is_dns_dead_error(exc) or _is_tls_dead_error(exc):
+                if _budget_left() > 20:
+                    # Give the fallback chain at most ~1/3 of remaining budget so
+                    # retries of the primary path still fit inside the cron window.
+                    chain_timeout = min(timeout, max(5, int(_budget_left() // 3)))
+                    try:
+                        resp = _try_ip_direct_chain(req, timeout=chain_timeout)
+                        if resp is not None:
+                            return resp
+                    except Exception as ip_exc:
+                        last_err = ip_exc
+        if attempt < _RETRIES and _budget_left() > 30:
             time.sleep(1.5 * (attempt + 1))  # 1.5s, 3s backoff
             continue
         raise RuntimeError(f"transport failed after {_RETRIES + 1} attempts: {last_err}") from last_err
