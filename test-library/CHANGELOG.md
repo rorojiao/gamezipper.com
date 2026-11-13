@@ -1,3 +1,70 @@
+## [v1.294.0] - 2026-11-13
+
+### Added - 8 new machine-verifiable test cases (R411, 4h cycle 173)
+
+1. **S-562 [P1]** Firefox 2026-11-10 multi-ESR wave partial-backport CVE-set arithmetic — MFSA 2026-126 (ESR 115.45, 28 CVEs) vs MFSA 2026-127 (ESR 153.7, 81 CVEs): computed this cycle 28/81/intersection-26, only-in-115.45 = {CVE-2026-109736, CVE-2026-124952}, only-in-153.7 = 55 — non-subset in BOTH directions, so a UA-major floor is a structural false-green; per-advisory (CVE, component, impact) set diffs mandatory; Thunderbird 160/153.7 advisories (mfsa2026-128 103 CVEs / mfsa2026-129) logged as engine-sharing-but-no-browser-surface exclusions.
+2. **S-563 [P1]** V8 compacting-GC evacuation silent renderer death ("Aw, Snap, no JS exceptions at all"; fixed V8 15.0.245.14) with console-log heap-churn amplifier (100-200 MB short-lived strings); black-box streamed logger survives the kill; decisive A/B = same sha256-identical binary via CDP across CfT 150.0.7871.46 (V8 15.0.245.13, crashes) vs 149.0.7827.201 (post-fix V8 tag, clean) with >=20-run repeat counts and INVERTED majors proving the V8 tag is the invariant; "About can show 150 while the process runs 149" pending-restart classification; `--js-flags=--no-compact` documented-not-assumed.
+3. **P-254 [P1]** Boot blank-canvas watchdog — all-200 + clean-console + canvas-attached yet 18 s black at 10 Mbps (20.9 MB preload, zero progress handlers, 1920x1280 canvas, Phaser, measured 2026-07-31): first-frame pixel non-blank assertion under CDP throttled profiles, loader UI built only from in-memory assets, monotonic-progress anti-degenerate control.
+4. **P-255 [P2]** Texture VRAM ledger from image headers not file size — 6.92 MB PNG at 3375x3375 = 43 MB RGBA VRAM, two sheets 86 MB before menu, mobile browser "kills it. Silently. No exception"; build-time sum(w*h*4) gate per device class with same-dimensions-smaller-file still fails fixture; 4096x4096 sheet-ceiling remediation.
+5. **W-642 [P1]** Input-ready race (BoardgameArena bug 240233, closed 2026-11-07) — "a click that happens before the board handler are registered ... There is no message displayed about this."; shipped contract = board self-check/repair after load and on first click; fixture sweeps ready-signal delay {0,250,1000,3000} ms asserting acted-or-explained for every click, handler re-bind probe, dropped-input counter summing to every dispatched click.
+6. **W-643 [P2]** Firefox 161 beta (GA 2026-11-24) WebTransport `anticipatedConcurrentIncomingUnidirectionalStreams`/`...BidirectionalStreams` properties + constructor options (bug 2007825) — cross-engine NAME matrix vs W-617's Edge/Chromium 158 `incoming{Bi,Uni}directionalStreams` init hints; round-trip option read-back; hint-not-hard-limit control; MDN Releases/161 flipped stub -> full (155,543 B), experimental section empty this cycle.
+7. **B-607 [P2]** Bugzilla 2089043 REST verbatim: RESOLVED FIXED / S2 / "[Linux/Wayland] DMABuf WebGL color corruption still present in Firefox 159.0.1 on Intel UHD 730" / target_milestone "162 Branch" — the 159.0.1 uplift (B-603) missed the Intel ADL-S + Mesa cohort; triage "white cannot become blue from a channel swap" => luminance-zero signature is a distinct fault class: known-color patch matrix classifier {healthy, permutation, whitewashed}, cohort self-classifier (Wayland + Intel ADL-S renderer string), two-pref bisect ladder `widget.dmabuf-webgl.enabled` then `gfx.canvas.accelerated`, per-cohort expectation window 159.0.1..161.x -> green at 162+ only after re-probe.
+8. **C-294 [P1]** Edge per-fork XSLT deprecation timeline from the Stable Channel notes (announcement added 2026-11-03): disabled by default on Canary/Dev/Beta at 157, on Stable at 159; mitigations = XSLTEnabled policy + deprecation origin trial, both stopping at 176; MC1509789; `type="text/css"` PI unaffected control; per-channel existence matrix and per-fork cohort table (Edge dates != Chrome S-473/B-337/W-574 dates); migration parity fixture.
+
+### Provenance
+
+- Primary, fetched direct 2026-11-13: MFSA 2026-126/-127/-128/-129 (headers + CVE-set arithmetic); MDN Firefox Releases/161 (full, 155,543 B); Edge Stable + Extended-Stable release-notes pages; Bugzilla 2089043 via REST API; Chrome Releases 2026/11 index (no newer desktop post than the S-559 Nov-11 cluster; one CfT beta build non-mined); chromestatuslite 160/159; developer.chrome.com release-notes 157/158/159/160; webkit.org blog index.
+- Search-derived with provenance labels: theodorylabs V8 postmortem (S-563), slowden boot-black-screen postmortem (P-254/P-255; game delisted, editorial note, figures as-of 2026-07-31), BoardgameArena bug 240233 (W-642).
+- Skipped with reason: ANGLE Metal 64-entry pipeline-cache overflow report (Hackintosh non-standard config, driver artifacts — deferred pending stock-hardware fixture); appimp complaint taxonomy (soft data); Gamespace particle-semantics essay (not machine-gateable yet).
+
+### Broad-query coverage (mandated searches executed this cycle)
+
+- "HTML5 game testing 2026 new techniques" -> thin SERP, corroborated determinism/CSP tooling; fed no direct case (negative result logged).
+- "browser game bug report 2026" -> harvested BoardgameArena 240233 (W-642) and the theodorylabs V8 postmortem (S-563).
+- "Chrome Edge Safari update 2026" -> Edge XSLTEnabled announcement (C-294), browsers.wiki next-release ETAs (Chrome 158 exp. Nov 17, Edge 158 Nov 19, FF 161 Nov 24, Safari 27.3 unannounced), testmuai Chrome 158 staged-rollout corroboration.
+- "casual game UX complaint 2026" -> appimp taxonomy (glitch 29% / crash 19% / ads 16%) corroborates C-293 + S-563 buckets; Gamespace flash-semantics essay deferred.
+- "mobile game performance issue 2026" -> slowden postmortem (P-254/P-255 mobile silent-kill + VRAM ledger).
+
+### Re-probes & negative controls (this cycle)
+
+- csl160 renders "Chrome Release 159" 10 cycles after mint; now byte-identical to csl159 except canonical link (both 30,298 B; shrunk from 31,073 B at mint, Enabled 20 -> 19 — one item aged out).
+- developer.chrome.com release-notes/157/158/159/160 all soft-404 (generic title, ~266 KB pages).
+- webkit.org blog: newest substantive = Safari 26.4 features post (Aug 20) — eighth consecutive WebKit-dry cycle; Safari 27.3 GA still unannounced.
+- Edge Stable notes version table still ends at 157.0.4341.42 (shipping .46 since R409) — RN table lag now 4 cycles; Extended-Stable notes same .42.
+- Native web_search healthy (no DDG fallback); DDG html endpoint now returns 403 challenge (toolchain note, non-blocking).
+
+### High-priority re-probes for the next cycle (R412)
+
+- Chrome 158 stable expected ~Nov 17 (browsers.wiki ETA) — first big desktop-major event since 157; check chromereleases index + csl160 mint.
+- Edge 158 stable expected ~Nov 19 — verify RN table moves to 158.0.x.x and XSLT stable-default flip per C-294.
+- Firefox 161 GA Nov 24 — re-probe MDN Releases/161 full page (beta->stable) and the anticipated-streams properties (W-643).
+- Safari 27.3 GA window — webkit.org/blog + apple dev release notes; B-604/B-605/A-098 beta expectations pending GA verification.
+- Bugzilla 2089043 uplift watch: 162 Branch target — re-check status/see_also at 162 beta (B-607).
+- MFSA 2026-130+ and any Thunderbird/ESR set drift (S-562 arithmetic re-run).
+- eMudhra PKI removal 2026-11-16 onset (S-561 trust-anchor window).
+- BGA 240233 class: sweep for sibling "first click ignored" reports in other engines' trackers (W-642 corpus growth).
+
+### Sources (this cycle, full URLs)
+
+- https://www.mozilla.org/en-US/security/advisories/mfsa2026-126/
+- https://www.mozilla.org/en-US/security/advisories/mfsa2026-127/
+- https://www.mozilla.org/en-US/security/advisories/mfsa2026-128/
+- https://www.mozilla.org/en-US/security/advisories/mfsa2026-129/
+- https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/161
+- https://learn.microsoft.com/en-us/deployedge/microsoft-edge-relnote-stable-channel
+- https://learn.microsoft.com/en-us/deployedge/microsoft-edge-relnote-extended-stable-channel
+- https://bugzilla.mozilla.org/show_bug.cgi?id=2089043
+- https://chromestatuslite.com/?version=160
+- https://chromestatuslite.com/?version=159
+- https://chromereleases.googleblog.com/2026/11/
+- https://github.com/theodorylabs/web-port-postmortem
+- https://www.slowden.com/post/the-day-the-canvas-went-black/
+- https://boardgamearena.com/bug?id=240233
+- https://www.testmuai.com/blog/webdriver-vs-selenium-vs-playwright-ai-testing/
+- https://github.com/nullmoth/angle/issues/1 (deferred candidate)
+- https://www.appimp.com/2026/07/mobile-puzzle-word-game-ux.html (corroboration)
+- https://webkit.org/blog/ (dry-cycle control)
+
 ## [v1.293.0] - 2026-11-12
 
 ### Added - 9 new machine-verifiable test cases (R410, 4h cycle 172)
