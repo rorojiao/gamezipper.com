@@ -149,6 +149,9 @@ function doIdentity(ga, r, tag) {
   // New Game -> room 0
   btns0[0].dispatch('click', {}); ga.pump(3);
   ck('a-play', ga.els.menuOverlay.style.display === 'none');
+  // R1136 UX fix (R1144 synced): every room entry announces '<title> · Room n/6',
+  // 1-based within the chapter — this is the navArrow rage-click confirmation.
+  ck('a-entry-announce', msg(ga) === ROOMS[0].title + ' \u00b7 Room 1/6', msg(ga));
   ck('a-nav-p0-fix', ga.els.navRight.style.display === 'flex' && ga.els.navLeft.style.display === 'none', ga.els.navRight.style.display + '/' + ga.els.navLeft.style.display);
   ck('a-hud', ga.els.chapterInfo.textContent === 'Chapter 1 - The Entrance Hall' && ga.els.hintBtn.textContent === 'Hint (3)' && ga.els.hintBtn.disabled === false && ga.els.timerDisplay.textContent === '00:00');
   ck('a-inv-8-empty', slots(ga).length === 8 && slots(ga).every(s => s.empty));
@@ -156,9 +159,12 @@ function doIdentity(ga, r, tag) {
   const R = i => ROOMS[i];
   const byId = (r, id) => r.hotspots.find(h => h.id === id);
 
-  // empty-canvas click deselects, no crash, no message
+  // empty-canvas click deselects, no crash, adds no message. R1136: the box now still
+  // holds the room-entry announcement from startRoom — assert the click leaves it
+  // unchanged (an empty click must not emit its own message).
+  const m0 = msg(ga);
   ga.els.gameCanvas.dispatch('pointerdown', { clientX: 10, clientY: 10 }); ga.pump(1);
-  ck('a-empty-click', msg(ga) === '');
+  ck('a-empty-click', msg(ga) === m0, msg(ga));
 
   // ROOM 0: examine, search, duplicate re-search (P3 as-is), wrong/right item on door
   clickHot(ga, byId(R(0), 'painting'));
@@ -179,10 +185,12 @@ function doIdentity(ga, r, tag) {
   // empty click deselects
   ga.els.gameCanvas.dispatch('pointerdown', { clientX: 10, clientY: 10 }); ga.pump(1);
   ck('a-deselect', slots(ga)[0].sel === false);
-  // select brass key -> door -> room 1 (inventory wiped on room change: documented)
+  // select brass key -> door -> room 1 (inventory wiped on room change: documented).
+  // R1136: unlock+advance overwrites the transient 'Unlocked!' with the new room's
+  // entry announcement — assert that contract (title is the success confirmation).
   slotsSel(ga, 1);
   clickHot(ga, byId(R(0), 'door'));
-  ck('a-unlock-room1', msg(ga) === 'Unlocked!' && ga.els.navLeft.style.display === 'flex');
+  ck('a-unlock-room1', msg(ga) === R(1).title + ' \u00b7 Room 2/6' && ga.els.navLeft.style.display === 'flex', msg(ga));
   ck('a-room1-inv-wiped', slots(ga).every(s => s.empty));
   ck('a-room1-hud', ga.els.hintBtn.textContent === 'Hint (3)');
 
@@ -194,7 +202,7 @@ function doIdentity(ga, r, tag) {
   ck('a-room1-key', slotWithIcon(ga, 'W') === 0);
   slotsSel(ga, 0);
   clickHot(ga, byId(R(1), 'locker'));
-  ck('a-room1-locker', msg(ga) === 'Unlocked!');
+  ck('a-room1-locker', msg(ga) === R(2).title + ' \u00b7 Room 3/6', msg(ga)); // R1136: advance announces room 2
 
   // ROOM 2: lantern collect; 'locked' doorway message; dead-end documented -> navRight (P0 fix)
   doIdentity(ga, R(2), 'a-room2');
@@ -221,7 +229,7 @@ function doIdentity(ga, r, tag) {
   ck('a-room3-key', slotWithIcon(ga, 'F') === 0);
   slotsSel(ga, 0);
   clickHot(ga, byId(R(3), 'fireplace'));
-  ck('a-room3-fireplace', msg(ga) === 'Unlocked!');
+  ck('a-room3-fireplace', msg(ga) === R(4).title + ' \u00b7 Room 5/6', msg(ga)); // R1136: advance announces room 4
 
   // ROOM 4 (code puzzle room — modal UI is dead code, door needs brass_key from room 2):
   doIdentity(ga, R(4), 'a-room4');
@@ -231,7 +239,7 @@ function doIdentity(ga, r, tag) {
   clickHot(ga, byId(R(4), 'desk'));
   // R1125 P2 fix: cross-room key ledger — brass_key was found in room 0 and is NOT a
   // room-4 item, so the desk auto-opens without selection and advances to room 5.
-  ck('a-room4-crosskey-ledger', msg(ga) === 'Unlocked!', msg(ga));
+  ck('a-room4-crosskey-ledger', msg(ga) === R(5).title + ' \u00b7 Room 6/6', msg(ga)); // R1136: advance announces room 5
   ck('a-room4-advance', ga.els.chapterInfo.textContent === 'Chapter 1 - The Entrance Hall', ga.els.chapterInfo.textContent); // desk advanced us into room 5
 
   // ROOM 5: locked doors message; brass_key found; red_gem cross-room gap; nav on
@@ -244,7 +252,7 @@ function doIdentity(ga, r, tag) {
   clickHot(ga, byId(R(5), 'door1'));
   // R1125: red_gem was found in room 1 (umbrella) -> cross-room ledger auto-opens door1
   // and advances directly into room 6 (nextRoom:6), no navRight needed.
-  ck('a-room5-redgem-ledger', msg(ga) === 'Unlocked!', msg(ga));
+  ck('a-room5-redgem-ledger', msg(ga) === R(6).title + ' \u00b7 Room 1/6', msg(ga)); // R1136: advances into chapter 2 room 0, announced 1-based
   ck('a-room5-advance', ga.els.chapterInfo.textContent === 'Chapter 2 - The Library', ga.els.chapterInfo.textContent);
 
   // SWEEP rooms 6..28: identity + puzzle-solution item + navRight; chapter HUD at borders
