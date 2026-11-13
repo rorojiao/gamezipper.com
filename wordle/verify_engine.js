@@ -11,6 +11,8 @@ const g = bootGame('wordle', { inject: {
                     guesses: G.guesses.length, wordLen: G.wordLen, max: G.maxGuesses }),
     practice: (len) => { document.getElementById('wordLen').value = String(len); startPractice(); },
     toast: () => (document.getElementById('toast') || {}).textContent || '',
+    stats: () => ({ played: stats.played, wins: stats.wins, streak: stats.streak }),
+    validWrong: (n) => Array.from(S4).filter(w => w !== G.answer).slice(0, n),
   };`,
 } });
 
@@ -41,6 +43,17 @@ for (const len of [4, 5, 6]) {
   const done = g.call('__W.state()');
   T(`len${len}-win-via-keys`, done.won === true && done.gameOver === true, JSON.stringify(done).slice(0, 90));
 }
+
+// R1142 regression: 6 guesses fired back-to-back (faster than the deferred resolve
+// timer) must settle the game exactly ONCE — stats.played increments by exactly 1.
+g.call('__W.practice(4)'); g.pump(2);
+const base = g.call('__W.stats()');
+for (const w of g.call('__W.validWrong(7)')) { type(w); enter(); }
+g.pump(200);
+const after = g.call('__W.stats()');
+const done4 = g.call('__W.state()');
+T('rapid-lose-counts-played-once', done4.gameOver === true && done4.won === false && done4.guesses === 7 && after.played === base.played + 1,
+  `played ${base.played}->${after.played} over=${done4.gameOver} won=${done4.won} g=${done4.guesses} max=${done4.max}`);
 
 T('no-vm-errors', !(g.sandbox.__errors || []).some(e => /TypeError|ReferenceError/.test(e)),
   JSON.stringify((g.sandbox.__errors || []).find(e => /TypeError|ReferenceError/.test(e)) || '').slice(0, 120));
