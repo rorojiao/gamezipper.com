@@ -143,6 +143,10 @@ const solveTap = () => {
   tapCard((s.currentPattern.correctIndex + 1) % 4); // answered=true must block the second tap
   g.pump(2);
   T('double-tap-guarded', st().score === 100 && st().selectedChoice === s.currentPattern.correctIndex);
+  // R1146: the 3 unselected cards must be visibly dimmed + inert after answering
+  // (kills the post-answer dead zone behind BI dead_click x3 on DIV.choice-card).
+  T('post-answer-dim', cards().filter((c) => c.classList.contains('answered-dim')).length === 3 &&
+    cards()[s.currentPattern.correctIndex].classList.contains('answered-dim') === false);
   g.pump(50); // 800ms -> level-complete modal
   T('level1-modal', E('modal-overlay').style.display === 'flex' && String(E('modal-title').textContent) === 'Correct!' &&
     String(E('modal-stars').textContent) === '★★★' && String(E('modal-score-text').textContent) === '+100 points');

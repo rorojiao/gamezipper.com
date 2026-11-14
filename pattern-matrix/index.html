@@ -92,6 +92,11 @@ canvas.pattern-cell.question{border:2px dashed rgba(91,140,255,.5);background:rg
 .choice-card.correct{border-color:#44cc88;background:rgba(68,204,136,.2);animation:correctPulse .5s ease}
 .choice-card.wrong{border-color:#ff4466;background:rgba(255,68,102,.2);animation:wrongShake .4s ease}
 .choice-card.eliminated{opacity:.2;pointer-events:none}
+/* R1146 (BI 2026-11-14): /pattern-matrix/ DIV.choice-card dead_click x3 — after
+   answering, 800-1500ms passes before showLevelComplete while unselected cards
+   still look clickable; selectChoice early-returns and swallows the taps.
+   Dim + disable them the instant the answer lands (feedback, no silent zone). */
+.choice-card.answered-dim{opacity:.35;pointer-events:none}
 .choice-card .choice-label{position:absolute;top:4px;left:6px;font-size:10px;font-weight:700;color:#667}
 canvas.choice-canvas{display:block;max-width:90%;max-height:90%}
 
@@ -1096,6 +1101,14 @@ function selectChoice(idx){
     state.timers.push(setTimeout(function(){
       showLevelComplete(0);
     }, 1500));
+  }
+
+  // R1146: post-answer dead zone — dim + inert every card that can no longer
+  // react (BI dead_click x3 on DIV.choice-card), keep the feedback visuals.
+  for(var ci = 0; ci < cards.length; ci++){
+    if(ci === idx) continue;
+    if(idx !== p.correctIndex && ci === p.correctIndex) continue;
+    cards[ci].classList.add('answered-dim');
   }
 }
 
