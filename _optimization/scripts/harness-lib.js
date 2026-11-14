@@ -139,7 +139,9 @@ function makeEl(extra) {
   const elBase = { tagName: 'div', nodeName: 'div' };
   const el = {
     id: '', className: '', textContent: '', innerHTML: '', value: '',
-    style: { setProperty() {} }, dataset: {},
+    // methods live on the prototype so cloneNode's Object.keys(style) copies only real
+    // inline-style props, not the fn stubs (R1142c unhide scripts call removeProperty)
+    style: { __proto__: { setProperty() {}, removeProperty() {}, getPropertyValue() { return ''; } } }, dataset: {},
     classList: { _s: new Set(), add(...c) { c.forEach(x => this._s.add(x)); }, remove(...c) { c.forEach(x => this._s.delete(x)); }, toggle(c, f) { const on = f === undefined ? !this._s.has(c) : !!f; on ? this._s.add(c) : this._s.delete(c); return on; }, contains(c) { return this._s.has(c) || String(el.className).split(/\s+/).includes(c); } }, // className assignments and classList must agree (boggle's getDieFromEvent checks classList after engines set className directly)
     children: [], width: 480, height: 640, clientWidth: 480, clientHeight: 640, offsetWidth: 480, offsetHeight: 640, scrollWidth: 480, scrollHeight: 640,
     disabled: false, hidden: false, checked: false,

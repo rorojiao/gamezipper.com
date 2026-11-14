@@ -680,7 +680,12 @@ canvas.addEventListener('pointercancel',function(e){e.preventDefault()});
 // -- Resize --
 function resize(){
   var wrap=document.getElementById('board-wrap');if(!wrap)return;
-  cW=Math.min(wrap.clientWidth,520);cSz=cW/gSz;
+  // P2 UX fix (R1147): on short viewports the 520px board pushed the bottom row
+  // below the fold (rage/dead clicks on unreachable row) — clamp by available height
+  var rect=wrap.getBoundingClientRect();
+  var top=Math.max(rect.top>0?rect.top:60,60);
+  var availH=window.innerHeight-top-16;
+  cW=Math.max(240,Math.min(wrap.clientWidth,520,availH));cSz=cW/gSz;
   canvas.width=cW*window.devicePixelRatio;canvas.height=cW*window.devicePixelRatio;
   canvas.style.width=cW+'px';canvas.style.height=cW+'px';
   ctx.setTransform(window.devicePixelRatio,0,0,window.devicePixelRatio,0,0);
