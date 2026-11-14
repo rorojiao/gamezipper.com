@@ -1,3 +1,24 @@
+## [v1.295.0] - 2026-11-14
+
+### Added - 9 new machine-verifiable test cases (R412, 4h cycle 174)
+
+1. **B-608 [P1]** DMABuf family third member — Bugzilla 2092687 "2D->WebGL texImage2D R/B swap still broken in 160.0" (regressed by 2070629) with THREE-SOURCE gating control matrix: (A) accelerated-2D-canvas source swaps 255,0,0 -> 0,0,255, (B) `createImageBitmap` source clean, (C) raw `Uint8Array` clean — source-type axis joins B-603's size axis and B-607's signature axis; 2026-11-14 triage verbatim: "the same as bug 2089043... fix landed just after the 160.0 build so it is in 160.0.1 and current beta (161)" -> uplift ledger correction against B-607's 162-only window; 2090953 hue-shift RESOLVED DUPLICATE -> dedup-by-signature-first rule; pref-flip partial-mitigation per-asset assertion.
+2. **W-644 [P1]** `document.fonts.ready` never resolving when an UNUSED @font-face has failing `local()` then `url()` — fixed twice in the Safari line (TP 256 bug 189243828 + Safari 27.3 bug 191158203, both verbatim this cycle); deterministic unused-face fixture + `Promise.race` deadline control; boot gates must timeout-wrap fonts.ready + 2 s BI watchdog.
+3. **W-645 [P2]** CSSOM mutation trio (TP 256): `replaceSync()` on detached constructed stylesheet APPENDS not replaces and corrupts shared-contents sheets (189634428); `CSSMatrixComponent.toMatrix()` internal-DOMMatrix aliasing (189653766); `setProperty()` !important custom-property override (189765758) — three deterministic fixtures for runtime-skinning/theming games.
+4. **W-646 [P2]** Module-loader semantics pair: module worker self-import double evaluation (TP 256 188303176) + failed-HTTP-import cached forever so `import()` could not retry (27.3 182908208) — eval-counter and one-shot-500 flip-server fixtures, mobile-network recovery contract.
+5. **W-647 [P1]** JIT miscompile micro-oracle pack — 10 value-oracle probes mined from TP 256 DFG regressions (logical-NOT, Math.trunc/index integer conversion, >>32-bit-mask shift count, RegExp-as-function, Map/Set undefined-iterable, inlined bound sort comparator, BigInt64 out-of-range includes, Math.sumPrecise, negative-length RangeError) + 27.3 RegExp.test lastIndex-loss and sort-stability change; four-engine CI canary with mutation-test anti-vacuous rule; complements S-563 (catches WRONG-MATH silence, not crash silence).
+6. **W-648 [P2]** `worker.terminate()` must kill a worker blocked in `Atomics.wait()` (TP 256 147482360, 10-year-old defect) — SAB counter-stop + no-ghost-message killability fixture for Atomics-gated game workers; explicit terminate at pagehide.
+7. **S-564 [P1]** Origin-Agent-Cluster polarity inversion (27.3 182112072): OAC `?1` now DISABLES clustering and `document.domain` is accessible BY DEFAULT in WebKit while Chromium keeps it restricted — 6-cell {header on/off} x {engine} polarity probe for ad-iframe/SDK cross-subdomain shims; BI segmentation by (engine, header).
+8. **A-099 [P1]** Accessible-name leak triple (27.3): sibling-spill past aria-labelledby target (185108892), `::marker` excluded from names while TP 256 makes markers EXPOSED in the tree (185422271 + 189838099 coupled invariants), `display:none` content exposed in AX tree (189824370) — AX-tree string-equality fixtures; hidden-overlay AT misattribution hazard.
+9. **S-565 [P2]** Edge same-day double security hop 157.0.4341.57 + .60 (both 2026-11-13) with empty at-ship CVE ledger ("CVE's will be added as soon as available") + Android .53 ITW fix landing before desktop ledger annotation; release-notes TABLE LAG (recorded R409-R411) self-resolved (.46/.57/.60 now listed) -> table restored as authoritative ground truth; floor probe = build enumeration, empty-CVE-section semantics = "fixes present, identities pending".
+
+### Provenance
+
+- Safari Technology Preview 256 release notes (webkit.org/blog/18602, dated 2026-11-04, first capture this cycle — R411's "WebKit dry" note was stale): https://webkit.org/blog/18602/release-notes-for-safari-technology-preview-256/ (200, 82,926 B)
+- Safari 27.3 release notes JSON (developer.apple.com tutorials data path, first successful capture): 200, 144,107 B — full Accessibility/Animations/CSS/Canvas/Forms/Web-API fix lists mined
+- Bugzilla REST: bug 2092687 + comments (regression cause 2070629, 2026-11-14 triage ledger), 2090953 (DUPLICATE), 2087301 + comments (fixture verbatim, mozregression window, pref workaround)
+- Edge Stable Channel release notes + microsoft-edge-relnotes-security (November 13/11/9 entries verbatim); Chrome releases blog index 2026/11 re-checked — no desktop stable post after Nov 11 (S-559 stands), ChromeOS Nov 13 post non-CVE; web.dev Baseline-October roundup; chromestatuslite/?version=160 still resolves to 159 (4th consecutive cycle).
+
 ## [v1.294.0] - 2026-11-13
 
 ### Added - 8 new machine-verifiable test cases (R411, 4h cycle 173)
