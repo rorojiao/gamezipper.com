@@ -373,7 +373,7 @@ function confirmPendingMistake(){
 }
 function onCellClick(e){if(e.detail===0)return;handleCellTap(e.currentTarget)}
 function onCellTouchEnd(e){e.preventDefault();handleCellTap(e.currentTarget)}
-function handleCellTap(cell){if(G.completed)return;const r=+cell.dataset.r,c=+cell.dataset.c;if(G.locked[r][c]){Audio.sfxClick();return}const cur=G.grid[r][c];
+function handleCellTap(cell){if(G.completed)return;const r=+cell.dataset.r,c=+cell.dataset.c;if(G.locked[r][c]){Audio.sfxClick();/* R1146 BI: locked cells were a silent no-op — rage_click (BI /zen-garden/ DIV.cell n=3, 11-10 07:44 + 11-13 03:25) and the dead_click detector saw no class/style change (gz-analytics _gzAckLive). Transient locked-ack shake = detector-visible + player-visible "this stone is fixed" feedback; same token pattern as R1111 level cards. */cell.classList.add('locked-ack');clearTimeout(cell._gzAckT);cell._gzAckT=setTimeout(()=>cell.classList.remove('locked-ack'),1700);try{cell.animate([{transform:'translateX(0)'},{transform:'translateX(-3px)'},{transform:'translateX(3px)'},{transform:'translateX(0)'}],{duration:320})}catch(e){}return}const cur=G.grid[r][c];
   /* P2 2026-08-25 (pendingMistake): confirm the previous stone only when the player has
      moved on to a DIFFERENT cell; cycling the same cell away is a transient, never a
      mistake. Confirmed against the pre-tap board so the new tap cannot retroactively
