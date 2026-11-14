@@ -1585,13 +1585,19 @@ document.getElementById('bDiscardCancel').addEventListener('click',function(){
   sndClick();
 });
 
+// R1146 P1: re-entrancy guards. Rapid/rage clicks on Continue double-ran continueShow():
+// phantom double-score add, skipped crib panel (countingPlayer++ twice past scheduled
+// showNextCount), and duplicate endGame() scheduling (double win count in stats).
+// BI rage_click .btn.accent (bScoreContinue/bPlayAgain) 207 events in 7d.
+// Same pattern as bDiscardDone's length===2 guard above.
 document.getElementById('bScoreContinue').addEventListener('click',function(){
-  hideOverlay('scoreOverlay');
-  continueShow();
+  if(!document.getElementById('scoreOverlay').classList.contains('active'))return; // pending panel transition — ignore
+  continueShow(); // hides scoreOverlay itself
   sndClick();
 });
 
 document.getElementById('bPlayAgain').addEventListener('click',function(){
+  if(!document.getElementById('gameOverOverlay').classList.contains('active'))return;
   hideOverlay('gameOverOverlay');
   cleanupGame();
   newGame(G.difficulty);
