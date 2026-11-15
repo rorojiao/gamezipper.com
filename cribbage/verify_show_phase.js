@@ -8,7 +8,13 @@
  * dealer's own hand was never counted.
  * Layer 1: static wiring. Layer 2: engine-driven show chain for dealer=0 and
  * dealer=1 — all 5 cards' worth (2 hands + crib) must be credited, scorer for
- * crib must be the dealer, chain must end in game_over with zero errors. */
+ * crib must be the dealer.
+ * R1155 P1 addendum: the chain used to call endGame after the FIRST deal's
+ * crib panel regardless of score — matches ended at 2-6 with "No winner this
+ * round." while the UI promises "First to 121 points wins". Now the chain
+ * chains into nextHand (dealer alternates) unless someone reached 121.
+ * Assertions updated: low totals -> chain ends in a fresh 'discard' hand with
+ * dealer flipped; s0=120 -> chain ends in 'game_over' with s0>=121. */
 const fs = require('fs');
 const path = require('path');
 const { bootGame } = require('../_optimization/scripts/harness-lib.js');
@@ -20,10 +26,11 @@ T('wire-start-at-0', /G\.countingPlayer=0;\s*\n?\s*showNextCount\(\);/.test(src.
 T('wire-scorer-dealer-map', /G\.currentScorer=\(G\.countingPlayer===2\)\?G\.dealer:G\.countingPlayer;/.test(src), 'crib panel must credit the dealer, not index 2');
 T('wire-iscrib-flag', /showScoreBreakdown\(hand,scoring,label,G\.countingPlayer===2\)/.test(src), 'isCrib must be countingPlayer===2');
 
-function runShow(dealer) {
+function runShow(dealer, s0i) {
+  s0i = s0i || 0;
   const g = bootGame('cribbage', { inject: {
     anchor: 'function continueShow(){',
-    exports: "globalThis.__T = { ng: () => newGame(1), go: () => { G.phase='pegging'; G.dealer=" + dealer + "; G.starter={suit:'S',rank:5,value:5}; G.players[0].hand=[{suit:'S',rank:5,value:5},{suit:'H',rank:6,value:6},{suit:'D',rank:7,value:7},{suit:'C',rank:10,value:10}]; G.players[1].hand=[{suit:'S',rank:2,value:2},{suit:'H',rank:3,value:3},{suit:'D',rank:9,value:9},{suit:'C',rank:10,value:10}]; G.crib=[{suit:'S',rank:4,value:4},{suit:'H',rank:8,value:8},{suit:'D',rank:10,value:10},{suit:'C',rank:13,value:10}]; G.players[0].totalScore=0; G.players[1].totalScore=0; startShow(); }, ph: () => G.phase, cp: () => G.countingPlayer, sc: () => G.currentScorer, s0: () => G.players[0].totalScore, s1: () => G.players[1].totalScore, cont: () => continueShow() };",
+    exports: "globalThis.__T = { ng: () => newGame(1), go: () => { G.phase='pegging'; G.dealer=" + dealer + "; G.starter={suit:'S',rank:5,value:5}; G.players[0].hand=[{suit:'S',rank:5,value:5},{suit:'H',rank:6,value:6},{suit:'D',rank:7,value:7},{suit:'C',rank:10,value:10}]; G.players[1].hand=[{suit:'S',rank:2,value:2},{suit:'H',rank:3,value:3},{suit:'D',rank:9,value:9},{suit:'C',rank:10,value:10}]; G.crib=[{suit:'S',rank:4,value:4},{suit:'H',rank:8,value:8},{suit:'D',rank:10,value:10},{suit:'C',rank:13,value:10}]; G.players[0].totalScore=" + s0i + "; G.players[1].totalScore=0; startShow(); }, ph: () => G.phase, cp: () => G.countingPlayer, sc: () => G.currentScorer, dl: () => G.dealer, s0: () => G.players[0].totalScore, s1: () => G.players[1].totalScore, cont: () => continueShow() };",
   } });
   if (g.loadErrors.length) return { err: 'load: ' + JSON.stringify(g.loadErrors[0]).slice(0, 100) };
   g.call('__T.ng()'); g.pump(5);
@@ -31,12 +38,12 @@ function runShow(dealer) {
   const scorers = []; let panels = 0;
   for (let it = 0; it < 10; it++) {
     for (let pf = 0; pf < 20; pf++) { g.pump(30); if (g.call('__T.cp()') !== undefined && g.sandbox.__lastPanel !== false) break; }
-    if (g.call('__T.ph()') === 'game_over' || panels >= 3) break;
+    if (g.call('__T.ph()') === 'game_over' || g.call('__T.ph()') === 'discard' || panels >= 3) break;
     scorers.push(g.call('__T.sc()')); panels++;
     g.call('__T.cont()');
   }
-  for (let pf = 0; pf < 60 && g.call('__T.ph()') !== 'game_over'; pf++) g.pump(30); // endGame queued at setTimeout 800ms
-  return { panels, scorers, s0: g.call('__T.s0()'), s1: g.call('__T.s1()'), ph: g.call('__T.ph()'), errs: (g.sandbox.__errors || []).concat(g.loadErrors || []).slice(0, 4) };
+  for (let pf = 0; pf < 60 && g.call('__T.ph()') !== 'game_over' && g.call('__T.ph()') !== 'discard'; pf++) g.pump(30); // endGame/nextHand queued at setTimeout 800ms
+  return { panels, scorers, s0: g.call('__T.s0()'), s1: g.call('__T.s1()'), ph: g.call('__T.ph()'), dl: g.call('__T.dl()'), errs: (g.sandbox.__errors || []).concat(g.loadErrors || []).slice(0, 4) };
 }
 
 // Expected show totals for our fixed layouts (starter S5 included):
@@ -47,7 +54,16 @@ for (const dealer of [0, 1]) {
   T('d' + dealer + '-three-panels', r.panels === 3, JSON.stringify(r));
   T('d' + dealer + '-scorers-0-1-dealer', JSON.stringify(r.scorers) === JSON.stringify([0, 1, dealer]), JSON.stringify(r.scorers));
   T('d' + dealer + '-both-scored', (r.s0 || 0) > 0 && (r.s1 || 0) > 0, JSON.stringify(r));
-  T('d' + dealer + '-reaches-game-over', r.ph === 'game_over', 'ph=' + r.ph);
+  // R1155: under 121 the chain must deal a NEW hand (dealer alternates), not end the match
+  T('d' + dealer + '-chains-next-hand', r.ph === 'discard', 'ph=' + r.ph);
+  T('d' + dealer + '-dealer-flipped', r.dl === 1 - dealer, 'dl=' + r.dl);
+}
+// R1155: reaching 121 must end the match with a winner
+{
+  const r = runShow(0, 120);
+  T('near121-ends-game', r.ph === 'game_over', 'ph=' + r.ph);
+  T('near121-winner-score', (r.s0 || 0) >= 121, 's0=' + r.s0);
+  T('near121-no-errors', !r.err && (!r.errs || r.errs.length === 0), (r.err || JSON.stringify(r.errs || [])).slice(0, 160));
 }
 console.log('show-phase verifier: PASS=' + pass + ' FAIL=' + fail);
 if (fail) { console.log('FAILS:\n' + fails.join('\n')); process.exit(1); }

@@ -668,6 +668,12 @@
     var _rcCount = 0;
     var _rcLastX = 0, _rcLastY = 0;
     document.addEventListener('click', function(e){
+      // R1155: keyboard-synthesised clicks (Enter/Space on a focused button)
+      // fire with clientX/Y=0 and detail=0. Rapid key-repeat (cribbage deal,
+      // tetravex restart) chained into rage bursts at x=0,y=0 (2026-11-13/14:
+      // cribbage 51, zen-garden 20, tetravex 13 — all detail=0 artifacts).
+      // Only real mouse clicks (detail>=1) may feed the rage detector.
+      if (!e.detail) return;
       var now = Date.now();
       var x = e.clientX || 0, y = e.clientY || 0;
       var tg = e.target;

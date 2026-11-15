@@ -100,7 +100,7 @@ canvas{display:block;touch-action:none;cursor:pointer;width:100%;height:100%}
 }
 </style>
 <link rel="icon" type="image/png" href="/favicon.ico">
-<script src="/gz-analytics.js?v=20261109R1123clswindow" defer></script>
+<script src="/gz-analytics.js?v=20261116R1155" defer></script>
 <!-- AdSense Auto Ads: 2026-06-20 page-level integration (mirrors tools.gamezipper.com) -->
 <meta content="ca-pub-8346383990981353" name="google-adsense-platform-account">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
@@ -902,8 +902,28 @@ function continueShow(){
   if(G.countingPlayer<=2){
     setTimeout(showNextCount,300);
   }else{
-    setTimeout(endGame,800);
+    // R1155 P1: the game promises "First to 121 points wins" but the show
+    // chain used to call endGame after the crib panel of the FIRST deal —
+    // every match ended at tiny scores with "No winner this round."
+    // Rule fix: keep dealing hands (dealer alternates) until someone >=121.
+    if(G.players[0].totalScore>=121||G.players[1].totalScore>=121){
+      setTimeout(endGame,800);
+    }else{
+      setTimeout(nextHand,800);
+    }
   }
+}
+
+function nextHand(){
+  G.dealer=1-G.dealer;
+  G.currentPlayer=1-G.dealer;
+  G.countingPlayer=0;
+  G.currentScore=0;
+  G.showPhase=0;
+  G.undoStack=[];
+  G.lastScorer=null;
+  G.lastScore=0;
+  dealHand();
 }
 
 function endGame(){
