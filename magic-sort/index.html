@@ -279,6 +279,24 @@ function _bootFlushQ() {
   }
   if (_bootTimer) { clearInterval(_bootTimer); _bootTimer = 0; }
 }
+
+// [R1156 2026-11-16] Generic queue-before-tracker. QA A/B proved __msTrack can
+// land >2.5s after load when ad scripts stall the doc-bottom scripts, so the
+// bare `window.__msTrack &&` guard silently DROPS early clicks (tap Daily/Random
+// /Share in the first seconds = event lost — exactly the funnel we are measuring).
+// _msSend queues and drains once the tracker exists. One timer, self-clearing
+// (R980 starvation lesson: never let two queues share a timer that one clears).
+var _msQ = [], _msQTimer = 0;
+function _msSend(name, meta) {
+  if (window.__msTrack) { try { window.__msTrack(name, meta || {}); } catch (e) {} return; }
+  _msQ.push([name, meta || {}]);
+  if (_msQ.length > 50) _msQ.shift();
+  if (!_msQTimer) _msQTimer = setInterval(function () {
+    if (!window.__msTrack) return;
+    clearInterval(_msQTimer); _msQTimer = 0;
+    while (_msQ.length) { var _q = _msQ.shift(); try { window.__msTrack(_q[0], _q[1]); } catch (e) {} }
+  }, 100);
+}
 window.addEventListener("error", function (ev) {
   if (_bootClosed || _bootErrSeen >= 3) return; // boot-window only, first 3 errors
   // R1134: ad SDK push errors (AdSense "adsbygoogle.push() already has ads"
@@ -614,7 +632,7 @@ async function _ensureChunk(chunkIdx) {
       data = await doFetch();
     } catch (e1) {
       _CHUNK_RETRY[chunkIdx] = true;
-      try { window.__msTrack && window.__msTrack("ms_chunk_retry", { idx: chunkIdx, url: meta.url, err: String(e1) }); } catch (e) {}
+      try { _msSend("ms_chunk_retry", { idx: chunkIdx, url: meta.url, err: String(e1) }); } catch (e) {}
       await new Promise(function (res) { setTimeout(res, 1200); });
       data = await doFetch();
     }
@@ -809,7 +827,7 @@ function splashPlayAction(source) {
     // One tap -> straight into gameplay. No intermediate menu, no daily-reward
     // modal blocking the first move. The reward is still offered later, on the
     // first win (see showDailyRewardAfterFirstWin).
-    try { window.__msTrack && window.__msTrack('ms_direct_start', { lv: 1 }); } catch(e){}
+    try { _msSend('ms_direct_start', { lv: 1 }); } catch(e){}
     state = "menu";
     menuScrollY = 0;
     initLevel(0);
@@ -1597,7 +1615,7 @@ function checkAchievements() {
       earnedAchievements[a.id] = true;
       newAchievement = a;
       // [MS-tracker R643] achievement unlocked (fire per-achievement)
-      try { window.__msTrack && window.__msTrack('ms_achievement_unlocked', { id: a.id, name: a.name, icon: a.icon, lv: currentLevel }); } catch(e){}
+      try { _msSend('ms_achievement_unlocked', { id: a.id, name: a.name, icon: a.icon, lv: currentLevel }); } catch(e){}
     }
   }
   if (newAchievement) {
@@ -1658,7 +1676,7 @@ async function shareResult(opts) {
   const ctx = opts || {};
   const source = ctx.source || "win";
   // [MS-tracker R857] unified share tracking — source param tells us which surface
-  try { window.__msTrack && window.__msTrack('ms_share_used', {
+  try { _msSend('ms_share_used', {
     source: source,
     lv: currentLevel + 1,
     hasNative: !!navigator.share,
@@ -1674,14 +1692,14 @@ async function shareResult(opts) {
     try {
       await navigator.share({ title, text, url });
       // R857: confirm to user that share fired (was silent before)
-      try { window.__msTrack && window.__msTrack('ms_share_native_done', { source }); } catch(e){}
+      try { _msSend('ms_share_native_done', { source }); } catch(e){}
       return;
     } catch(e){ /* user cancelled — fall through to clipboard */ }
   }
   if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
       await navigator.clipboard.writeText(text + "\n" + url);
-      try { window.__msTrack && window.__msTrack('ms_share_clipboard_done', { source }); } catch(e){}
+      try { _msSend('ms_share_clipboard_done', { source }); } catch(e){}
       // R857: visible toast — was silent before, so user thought nothing happened
       toastMsg = { text: "🔗 Link copied! Share it with friends", timer: 160, color: "#a29bfe" };
       sfxClick();
@@ -1692,7 +1710,7 @@ async function shareResult(opts) {
   try {
     const tw = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(url);
     window.open(tw, "_blank", "noopener,noreferrer");
-    try { window.__msTrack && window.__msTrack('ms_share_twitter_fallback', { source }); } catch(e){}
+    try { _msSend('ms_share_twitter_fallback', { source }); } catch(e){}
   } catch(e){}
 }
 
@@ -1757,7 +1775,7 @@ function claimDailyReward() {
   saveSave();
   saveDailyReward();
   // [MS-tracker R643] daily reward claim event
-  try { window.__msTrack && window.__msTrack('ms_daily_reward_claimed', { streak: streakCount, totalTubes: extraTubeUses }); } catch(e){}
+  try { _msSend('ms_daily_reward_claimed', { streak: streakCount, totalTubes: extraTubeUses }); } catch(e){}
   // [R672] Celebrate: spawn confetti burst + trigger tube counter pulse animation
   try {
     spawnConfetti();
@@ -2932,7 +2950,7 @@ async function initLevel(idx) {
   try {
     await _ensureChunk(targetChunk);
   } catch (e) {
-    if (window.__msTrack) window.__msTrack('ms_chunk_load_error', { idx: idx, err: String(e) });
+    _msSend('ms_chunk_load_error', { idx: idx, err: String(e) });
     // R1002: the chunk is now retryable (the failed promise is evicted), so
     // tell the player to try the level again instead of implying the levels
     // are broken.
@@ -2986,7 +3004,7 @@ async function initLevel(idx) {
       extraTubeIntroShown = false;
     }
     tutorialTapCount = 0;
-    try { window.__msTrack && window.__msTrack('ms_tutorial_extended', { lv: currentLevel, n: numColors, idx_max: 5, phase: idx <= 2 ? 'A' : 'B', step: tutorialStep }); } catch(e){}
+    try { _msSend('ms_tutorial_extended', { lv: currentLevel, n: numColors, idx_max: 5, phase: idx <= 2 ? 'A' : 'B', step: tutorialStep }); } catch(e){}
   } else {
     tutorialStep = 0;
   }
@@ -2994,7 +3012,7 @@ async function initLevel(idx) {
   // Start BGM if enabled (deferred to ensure audio context is ready)
   if (bgmEnabled && !bgmPlaying) setTimeout(() => startBGM(), 500);
   // [MS-tracker] fire level_start event + reset per-level deadlock flag
-  try { window.__msTrack && window.__msTrack('ms_level_start', { lv: currentLevel, n: numColors, mode: 'normal' }); window.__msDeadlockFired = false; } catch(e){}
+  try { _msSend('ms_level_start', { lv: currentLevel, n: numColors, mode: 'normal' }); window.__msDeadlockFired = false; } catch(e){}
 }
 
 function addExtraTube() {
@@ -3008,7 +3026,7 @@ function addExtraTube() {
   extraTubeUses--;
   extraTubeUsed++;
   // [MS-tracker] fire extra_tube event (player used power-up)
-  try { window.__msTrack && window.__msTrack('ms_extra_tube', { lv: currentLevel, remaining: extraTubeUses }); } catch(e){}
+  try { _msSend('ms_extra_tube', { lv: currentLevel, remaining: extraTubeUses }); } catch(e){}
   undoStack.push({ type: 'extraTube' });
   sfxHint();
   // Trigger bounce on the new bottle
@@ -3178,7 +3196,7 @@ function completePour() {
       if (!stuckPromptShown && noProgressCount >= 5) {
         toastMsg = { text: "💡 Stuck? Tap Hint to see the right pour", timer: 140, color: "#ffd32a" };
         stuckPromptShown = true;
-        try { window.__msTrack && window.__msTrack('ms_stuck_prompt_shown', { lv: currentLevel + 1, n: numColors, moves: moves }); } catch(e){}
+        try { _msSend('ms_stuck_prompt_shown', { lv: currentLevel + 1, n: numColors, moves: moves }); } catch(e){}
       } else if (stuckPromptShown && noProgressCount === 10) {
         toastMsg = { text: "💡 Double-tap Hint for Auto-Solve", timer: 140, color: "#ffd32a" };
       }
@@ -3213,7 +3231,7 @@ function completePour() {
     winTimer = Date.now();
     winAutoCancelled = false; // R1057: fresh win -> arm the auto-advance
     // [MS-tracker] fire level_complete event with stars, moves, duration
-    try { window.__msTrack && window.__msTrack('ms_level_complete', { lv: currentLevel, n: numColors, moves: moves, autoSolve: solving }); } catch(e){}
+    try { _msSend('ms_level_complete', { lv: currentLevel, n: numColors, moves: moves, autoSolve: solving }); } catch(e){}
     // Stars: based on moves vs numColors (scales with puzzle complexity)
     // Minimum moves ~ numColors * 4; 3* at ~25% overhead, 2* at ~100% overhead
     const threshold1 = numColors * 5; // excellent (3 stars)
@@ -3284,7 +3302,7 @@ function completePour() {
         if (state === "win" && !extraTubeIntroShown) {
           extraTubeIntroShown = true;
           toastMsg = { text: "🧪 Need space? Tap + Tube for an extra bottle", timer: 220, color: "#74b9ff" };
-          try { window.__msTrack && window.__msTrack('ms_tutorial_extra_tube_hint', { lv: currentLevel + 1 }); } catch(e){}
+          try { _msSend('ms_tutorial_extra_tube_hint', { lv: currentLevel + 1 }); } catch(e){}
         }
       }, 2200);
     }
@@ -3300,7 +3318,7 @@ function completePour() {
         if (state === "win" && !hintUndoIntroShown) {
           hintUndoIntroShown = true;
           toastMsg = { text: "↩ Undo mistakes • 💡 Hint suggests a move", timer: 220, color: "#74b9ff" };
-          try { window.__msTrack && window.__msTrack('ms_tutorial_hint_undo_intro', { lv: currentLevel + 1 }); } catch(e){}
+          try { _msSend('ms_tutorial_hint_undo_intro', { lv: currentLevel + 1 }); } catch(e){}
         }
       }, 2200);
     }
@@ -3316,7 +3334,7 @@ function completePour() {
     if (isDeadlocked()) {
       toastMsg = { text: "🔒 No moves left! Tap Undo ↩ or Reset 🔄", timer: 200, color: "#ff6348" };
       // [MS-tracker] fire deadlock event (player stuck on this level; only fires once per level until state resets)
-      try { if (!window.__msDeadlockFired) { window.__msDeadlockFired = true; window.__msTrack && window.__msTrack('ms_deadlock', { lv: currentLevel, n: numColors, moves: moves }); } } catch(e){}
+      try { if (!window.__msDeadlockFired) { window.__msDeadlockFired = true; _msSend('ms_deadlock', { lv: currentLevel, n: numColors, moves: moves }); } } catch(e){}
       sfxError();
     }
   }
@@ -3325,7 +3343,7 @@ function completePour() {
 function undoMove() {
   if (undoStack.length === 0 || animating) return;
   // [MS-tracker] fire undo_used event (only on actual undo attempt success)
-  try { window.__msTrack && window.__msTrack('ms_undo_used', { lv: currentLevel, stack: undoStack.length }); } catch(e){}
+  try { _msSend('ms_undo_used', { lv: currentLevel, stack: undoStack.length }); } catch(e){}
   gStats.totalUndos++;
   const u = undoStack.pop();
   if (u.type === 'extraTube') {
@@ -3482,7 +3500,7 @@ function startSolve() {
   hintActive = false;
   hintMove = null;
   // [MS-tracker] fire hint_used event (player requested auto-solve)
-  try { window.__msTrack && window.__msTrack('ms_hint_used', { lv: currentLevel, n: numColors, moves: allMoves.length }); } catch(e){}
+  try { _msSend('ms_hint_used', { lv: currentLevel, n: numColors, moves: allMoves.length }); } catch(e){}
   sfxHint();
   // Start first move after a short delay
   setTimeout(executeNextSolveMove, 400);
@@ -4750,7 +4768,7 @@ function handleDailyRewardTap(px, py) {
   const btnY = cy + cardH - btnH - 16;
   if (hitTest(px, py, btnX, btnY, btnW, btnH)) {
     // [MS-tracker R643] daily reward popup opened (claimDailyReward fires its own claimed event)
-    try { window.__msTrack && window.__msTrack('ms_daily_reward_popup_claimed', { source: 'menu_popup' }); } catch(e){}
+    try { _msSend('ms_daily_reward_popup_claimed', { source: 'menu_popup' }); } catch(e){}
     claimDailyReward();
     dailyRewardOpen = false;
     sfxWin();
@@ -4765,7 +4783,7 @@ function handleDailyRewardTap(px, py) {
     // reward claim rate from 30% → 70%+ without forcing a modal UX. We mark
     // popup_claimed with source='outside_tap_auto' for BI A/B tracking, and
     // claimDailyReward() is idempotent on the seed key.
-    try { window.__msTrack && window.__msTrack('ms_daily_reward_popup_claimed', { source: 'outside_tap_auto' }); } catch(e){}
+    try { _msSend('ms_daily_reward_popup_claimed', { source: 'outside_tap_auto' }); } catch(e){}
     claimDailyReward();
     dailyRewardOpen = false;
     sfxWin();
@@ -6339,7 +6357,7 @@ function update(dt) {
       currentLevel + 1 < TOTAL_LEVELS && levelUnlocked[currentLevel + 1] &&
       Date.now() - winTimer >= WIN_AUTO_MS) {
     winAutoCancelled = true;
-    try { window.__msTrack && window.__msTrack('ms_win_auto_advance', { lv: currentLevel, n: numColors, autoSolve: solving }); } catch(e){}
+    try { _msSend('ms_win_auto_advance', { lv: currentLevel, n: numColors, autoSolve: solving }); } catch(e){}
     initLevelTransition(currentLevel + 1);
   }
 
@@ -6539,12 +6557,12 @@ function onTap(px, py) {
         } else if (r.key === 'daily') {
           sfxClick();
           // [MS-tracker R643] daily challenge start from splash
-          try { window.__msTrack && window.__msTrack('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'splash' }); } catch(e){}
+          try { _msSend('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'splash' }); } catch(e){}
           initLevel(dailyChallengeLevel);
         } else if (r.key === 'random') {
           sfxClick();
           // [MS-tracker R643] random level pick from splash
-          try { window.__msTrack && window.__msTrack('ms_random_level_started', { source: 'splash' }); } catch(e){}
+          try { _msSend('ms_random_level_started', { source: 'splash' }); } catch(e){}
           // Pick a random unlocked level
           const unlocked = Object.keys(levelUnlocked).filter(k => levelUnlocked[k]).map(Number);
           if (unlocked.length > 0) {
@@ -6612,7 +6630,7 @@ function onTap(px, py) {
               jumpDialogOpen = false; jumpInput = "";
               sfxClick();
               // [MS-tracker R643] jump-to-level confirmed
-              try { window.__msTrack && window.__msTrack('ms_jump_confirmed', { lv: lv + 1 }); } catch(e){}
+              try { _msSend('ms_jump_confirmed', { lv: lv + 1 }); } catch(e){}
               initLevel(lv);
             } else {
               sfxError();
@@ -6642,21 +6660,21 @@ function onTap(px, py) {
     if (!isDailyDone() && hitTest(px, py, 8, 72, W - 16, 34)) {
       sfxClick();
       // [MS-tracker R643] daily challenge from menu banner
-      try { window.__msTrack && window.__msTrack('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'menu_banner' }); } catch(e){}
+      try { _msSend('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'menu_banner' }); } catch(e){}
       initLevel(dailyChallengeLevel); return;
     }
     // Jump button
     if (hitTest(px, py, W - 78, 36, 66, 30)) {
       sfxClick();
       // [MS-tracker R643] jump dialog opened
-      try { window.__msTrack && window.__msTrack('ms_jump_dialog_opened', { fromMenu: true }); } catch(e){}
+      try { _msSend('ms_jump_dialog_opened', { fromMenu: true }); } catch(e){}
       jumpDialogOpen = true; jumpInput = ""; return;
     }
     // Resume button (jump to last played level)
     if (lastPlayedLevel > 0 && lastPlayedLevel < TOTAL_LEVELS && hitTest(px, py, W - 158, 36, 72, 30)) {
       sfxClick();
       // [MS-tracker R643] resume tapped
-      try { window.__msTrack && window.__msTrack('ms_resume_tapped', { lv: lastPlayedLevel + 1 }); } catch(e){}
+      try { _msSend('ms_resume_tapped', { lv: lastPlayedLevel + 1 }); } catch(e){}
       initLevel(lastPlayedLevel); return;
     }
     const cols = Math.min(5, Math.floor((W - 30) / 68));
@@ -6709,7 +6727,7 @@ function onTap(px, py) {
     // Streak chip tap (R526: tappable streak badge → opens stats)
     if (streakChipHit && hitTest(px, py, streakChipHit.x, streakChipHit.y, streakChipHit.w, streakChipHit.h)) {
       sfxClick();
-      try { window.__msTrack && window.__msTrack('ms_streak_chip_click', { streak: streakCount, best: gStats.bestStreak }); } catch(e){}
+      try { _msSend('ms_streak_chip_click', { streak: streakCount, best: gStats.bestStreak }); } catch(e){}
       state = "stats";
       statsScrollY = 0;
       return;
@@ -6754,7 +6772,7 @@ function onTap(px, py) {
     // Favorite/star toggle
     if (hitTest(px, py, 138, 36, 28, 28)) {
       // [MS-tracker R643] favorite toggle
-      try { window.__msTrack && window.__msTrack('ms_favorite_toggled', { lv: currentLevel + 1, wasFav: !!favorites[currentLevel] }); } catch(e){}
+      try { _msSend('ms_favorite_toggled', { lv: currentLevel + 1, wasFav: !!favorites[currentLevel] }); } catch(e){}
       sfxClick();
       toggleFavorite(currentLevel);
       return;
@@ -6767,7 +6785,7 @@ function onTap(px, py) {
     // Extra tube button
     if (hitTest(px, py, 10, 66, 80, 28)) {
       // [MS-tracker R643] extra-tube button tap (track only — addExtraTube fires its own event on success)
-      try { window.__msTrack && window.__msTrack('ms_extra_tube_tap', { lv: currentLevel + 1, remaining: extraTubeUses }); } catch(e){}
+      try { _msSend('ms_extra_tube_tap', { lv: currentLevel + 1, remaining: extraTubeUses }); } catch(e){}
       addExtraTube();
       return;
     }
@@ -6776,7 +6794,7 @@ function onTap(px, py) {
     const hudStartX = W - 14 - (hudBtnW * 4 + hudGap * 3);
     if (hitTest(px, py, hudStartX, hudY, hudBtnW, hudBtnH)) {
       // [MS-tracker R643] menu/back button tapped mid-game
-      try { window.__msTrack && window.__msTrack('ms_menu_returned', { lv: currentLevel + 1, moves: moves }); } catch(e){}
+      try { _msSend('ms_menu_returned', { lv: currentLevel + 1, moves: moves }); } catch(e){}
       stopSolve();
       // R980: a brand-new player who direct-started (one-tap PLAY) skipped the
       // daily-reward modal entirely. Offer it here, the first time they land on
@@ -6787,14 +6805,14 @@ function onTap(px, py) {
     }
     if (hitTest(px, py, hudStartX + hudBtnW + hudGap, hudY, hudBtnW, hudBtnH)) {
       // [MS-tracker R643] undo button tap
-      try { window.__msTrack && window.__msTrack('ms_undo_tap', { lv: currentLevel + 1, stackDepth: undoStack.length }); } catch(e){}
+      try { _msSend('ms_undo_tap', { lv: currentLevel + 1, stackDepth: undoStack.length }); } catch(e){}
       if (!solving) undoMove(); return;
     }
     if (hitTest(px, py, hudStartX + (hudBtnW + hudGap) * 2, hudY, hudBtnW, hudBtnH)) {
       // Hint button - single click shows hint, double-click triggers auto-solve
       const nowClick = Date.now();
       // [MS-tracker R643] hint button tap
-      try { window.__msTrack && window.__msTrack('ms_hint_tap', { lv: currentLevel + 1, n: numColors, moves: moves, doubleClick: hintTapCount > 0 && nowClick - hintTapTimer < 400 }); } catch(e){}
+      try { _msSend('ms_hint_tap', { lv: currentLevel + 1, n: numColors, moves: moves, doubleClick: hintTapCount > 0 && nowClick - hintTapTimer < 400 }); } catch(e){}
       if (solveConfirm) {
         // Second click - start solve
         solveConfirm = false;
@@ -6816,7 +6834,7 @@ function onTap(px, py) {
     if (hitTest(px, py, hudStartX + (hudBtnW + hudGap) * 3, hudY, hudBtnW, hudBtnH)) {
       // Reset/Stop button
       // [MS-tracker R643] reset button tap (or stop solve)
-      try { window.__msTrack && window.__msTrack('ms_reset_tap', { lv: currentLevel + 1, wasSolving: solving }); } catch(e){}
+      try { _msSend('ms_reset_tap', { lv: currentLevel + 1, wasSolving: solving }); } catch(e){}
       if (solving) {
         stopSolve();
         sfxClick();
@@ -6832,7 +6850,7 @@ function onTap(px, py) {
     // Skip intro card on any tap
     if (levelIntroTimer > 0 && levelIntroStartLevel === currentLevel) {
       // [MS-tracker R643] level intro dismissed early
-      try { window.__msTrack && window.__msTrack('ms_level_intro_dismissed', { lv: currentLevel + 1, n: numColors, autoSkip: false }); } catch(e){}
+      try { _msSend('ms_level_intro_dismissed', { lv: currentLevel + 1, n: numColors, autoSkip: false }); } catch(e){}
       levelIntroTimer = 0;
       return;
     }
@@ -6916,7 +6934,7 @@ function onTap(px, py) {
         hitTest(px, py, _dcCardX + 14, wBy + wBtnH + 8, _dcCardW - 28, 24)) {
       winAutoCancelled = true;
       sfxClick();
-      try { window.__msTrack && window.__msTrack('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'win' }); } catch(e){}
+      try { _msSend('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'win' }); } catch(e){}
       initLevel(dailyChallengeLevel); return;
     }
   }
@@ -7235,7 +7253,7 @@ function gameLoop(timestamp) {
       if (splashAutoAdvanceTimer >= 6.0) {
         splashUserInteracted = true;
         // [MS-tracker R715] splash auto-advance: user was idle 6s on splash
-        try { window.__msTrack && window.__msTrack('ms_splash_auto_advance', { idleSec: 6, hasPlayedBefore: lastPlayedLevel > 0 }); } catch(e){}
+        try { _msSend('ms_splash_auto_advance', { idleSec: 6, hasPlayedBefore: lastPlayedLevel > 0 }); } catch(e){}
         // R980: route through the shared PLAY action so a brand-new idle player
         // ALSO lands directly in level 1 instead of the menu+modal chain.
         // Guarded: trackPlayTapped() is one-shot, and sfxClick() is harmless here.
@@ -7566,13 +7584,13 @@ requestAnimationFrame(gameLoop);
         var p = window.GZInterstitial.show();
         if (p && typeof p.then === 'function') {
           p.then(function(){
-            try { window.__msTrack && window.__msTrack('ms_commercial_break_shown', { lv: level, stars: stars|0 }); } catch(e){}
+            try { _msSend('ms_commercial_break_shown', { lv: level, stars: stars|0 }); } catch(e){}
           }, function(){
-            try { window.__msTrack && window.__msTrack('ms_commercial_break_blocked', { lv: level, stars: stars|0 }); } catch(e){}
+            try { _msSend('ms_commercial_break_blocked', { lv: level, stars: stars|0 }); } catch(e){}
           });
         }
       } else {
-        try { window.__msTrack && window.__msTrack('ms_commercial_break_no_sdk', { lv: level }); } catch(e){}
+        try { _msSend('ms_commercial_break_no_sdk', { lv: level }); } catch(e){}
       }
     } catch(e){}
   }
