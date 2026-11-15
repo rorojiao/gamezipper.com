@@ -293,8 +293,9 @@ let radius, centerX, centerY;
 
 function initBgCanvas() {
   bgCanvas = document.getElementById('bg-canvas');
-  bgCanvas.width = window.innerWidth;
-  bgCanvas.height = window.innerHeight;
+  // QA R1149: match displayed box (see resizeCanvas) so starfield isn't stretched
+  bgCanvas.width = bgCanvas.clientWidth || window.innerWidth;
+  bgCanvas.height = bgCanvas.clientHeight || window.innerHeight;
   const bgCtx = bgCanvas.getContext('2d');
   // Draw starfield
   bgCtx.fillStyle = '#000';
@@ -321,8 +322,11 @@ function setupGameCanvas() {
 
 function resizeCanvas() {
   if (!gameCanvas) return;
-  gameCanvas.width = window.innerWidth;
-  gameCanvas.height = window.innerHeight;
+  // QA R1149 P1: container has min-height:640px so CSS box can exceed innerHeight;
+  // internal was window.innerHeight (577) vs displayed 640 → 11% vertical stretch,
+  // click hit-test (unscaled clientX/Y) missed visible star positions. backing = displayed box.
+  gameCanvas.width = gameCanvas.clientWidth || window.innerWidth;
+  gameCanvas.height = gameCanvas.clientHeight || window.innerHeight;
   drawGame();
 }
 
