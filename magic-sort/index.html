@@ -4219,6 +4219,23 @@ function drawStarShape(cx, cy, outer, inner) {
 // SCREENS
 // ═══════════════════════════════════════════
 
+// [R1156 2026-11-16] Single source of truth for the splash button column.
+// renderSplash draws these rows and onTap hit-tests the SAME rows in the SAME
+// order. Historically the two drifted (R864 moved Share in draw only → every
+// row below PLAY mis-hit one row over). Row geometry: PLAY 50h, others 42h,
+// 10px gaps. Order: play, share, [continue if lastPlayedLevel>0], daily, random.
+function splashRows() {
+  const bw = Math.min(200, W * 0.55), bh = 50;
+  const rw = Math.min(200, W * 0.55), rx = W / 2 - rw / 2;
+  const rows = [{ key: 'play', x: W / 2 - bw / 2, y: H * 0.58, w: bw, h: bh }];
+  let y = H * 0.58 + bh + 12;
+  rows.push({ key: 'share', x: rx, y, w: rw, h: 42 }); y += 52;
+  if (lastPlayedLevel > 0) { rows.push({ key: 'continue', x: rx, y, w: rw, h: 42 }); y += 52; }
+  rows.push({ key: 'daily', x: rx, y, w: rw, h: 42 }); y += 52;
+  rows.push({ key: 'random', x: rx, y, w: rw, h: 42 });
+  return rows;
+}
+
 function renderSplash() {
   drawBackground();
   // R980: fire ms_splash_shown once, the first frame the splash is actually drawn.
@@ -4315,39 +4332,33 @@ function renderSplash() {
   if (t >= 0.7) {
     const bt = Math.min((t - 0.7) / 0.3, 1);
     X.globalAlpha = bt;
-    const bw = Math.min(200, W * 0.55), bh = 50;
-    const bx = W / 2 - bw / 2, by = H * 0.58;
-    drawButton(bx, by, bw, bh, "▶  PLAY", hoverBtn === 0, true);
+    // [R1156] Draw from splashRows() — the SAME geometry onTap hit-tests.
+    const rows = splashRows();
+    drawButton(rows[0].x, rows[0].y, rows[0].w, rows[0].h, "▶  PLAY", hoverBtn === 0, true);
 
-    // R864 2026-10-06: Promote Share button to position #2 (right under PLAY) so it's
-    // always visible above-the-fold on mobile. BI 7d: 0 ms_share_used events despite
-    // R857 placing it on splash — 4th position buried it. Moving above Continue/Daily.
-    // primary=true keeps it solid purple (rgba(255,255,255,0.08) invisible on dark bg).
-    let nextBtnY = by + bh + 12;
-    const shareW = Math.min(200, W * 0.55);
-    const shareY = nextBtnY;
-    drawButton(W / 2 - shareW / 2, shareY, shareW, 42, "🔗  Share with Friends", hoverBtn === 6, true);
-    // Store share button rect for click handler (set each render, matches splashFooterLink pattern)
-    splashShareBtn = { x: W / 2 - shareW / 2, y: shareY, w: shareW, h: 42 };
-    nextBtnY += 42 + 10;
+    // R864 2026-10-06: Share button at position #2 (right under PLAY). R1156 note:
+    // R864 moved the DRAW but not the onTap hit row order → zones were off by a
+    // full row for ~6 weeks (tap drawn Daily started Random level). Fixed via
+    // splashRows() shared by draw + hit.
+    const shareRow = rows[1];
+    drawButton(shareRow.x, shareRow.y, shareRow.w, shareRow.h, "🔗  Share with Friends", hoverBtn === 6, true);
+    splashShareBtn = { x: shareRow.x, y: shareRow.y, w: shareRow.w, h: shareRow.h };
+    let rowIdx = 2;
 
     // Continue button (if player has played before)
     if (lastPlayedLevel > 0) {
-      const contW = Math.min(200, W * 0.55);
-      drawButton(W / 2 - contW / 2, nextBtnY, contW, 42, "⏩  Continue Lv." + (lastPlayedLevel + 1), hoverBtn === 1, false);
-      nextBtnY += 42 + 10;
+      const rC = rows[rowIdx++];
+      drawButton(rC.x, rC.y, rC.w, rC.h, "⏩  Continue Lv." + (lastPlayedLevel + 1), hoverBtn === 1, false);
     }
 
     // Daily Challenge button
     const dailyDone = isDailyDone();
-    const dailyW = Math.min(200, W * 0.55);
-    drawButton(W / 2 - dailyW / 2, nextBtnY, dailyW, 42, (dailyDone ? "✅ " : "🔥 ") + "Daily Challenge", hoverBtn === 2, true);
-    nextBtnY += 42 + 10;
+    const rD = rows[rowIdx++];
+    drawButton(rD.x, rD.y, rD.w, rD.h, (dailyDone ? "✅ " : "🔥 ") + "Daily Challenge", hoverBtn === 2, true);
 
     // Random Level button (picks any unlocked level)
-    const randomW = Math.min(200, W * 0.55);
-    drawButton(W / 2 - randomW / 2, nextBtnY, randomW, 42, "🎲  Random Level", hoverBtn === 5, true);
-    nextBtnY += 42 + 10;
+    const rR = rows[rowIdx++];
+    drawButton(rR.x, rR.y, rR.w, rR.h, "🎲  Random Level", hoverBtn === 5, true);
 
     // Stats summary line on splash
     const splashCompleted = Object.keys(levelStars).length;
@@ -4355,7 +4366,7 @@ function renderSplash() {
       const splashTotalStars = Object.values(levelStars).reduce((a, b) => a + b, 0);
       X.fillStyle = "rgba(255,255,255,0.3)";
       X.font = "500 11px 'Nunito',sans-serif";
-      X.fillText(splashTotalStars + " ★  |  " + splashCompleted + "/" + TOTAL_LEVELS + " levels  |  Tubes: " + extraTubeUses + (streakCount >= 2 ? "  |  🔥" + streakCount + " streak" : ""), W / 2, nextBtnY + 58);
+      X.fillText(splashTotalStars + " ★  |  " + splashCompleted + "/" + TOTAL_LEVELS + " levels  |  Tubes: " + extraTubeUses + (streakCount >= 2 ? "  |  🔥" + streakCount + " streak" : ""), W / 2, rR.y + 52 + 58);
     }
     // ── New: subtle "any key" hint below stats ──
     X.globalAlpha = 0.22;
@@ -4382,15 +4393,11 @@ function renderSplash() {
     const remaining = Math.max(0, 6.0 - splashAutoAdvanceTimer);
     const pulse = 0.5 + 0.5 * Math.sin(now * 0.005);
     const hintBt = Math.min((t - 0.7) / 0.3, 1);
-    // Recompute button Y from the same logic as t>=0.7 block
-    const _bw = Math.min(200, W * 0.55), _bh = 50;
+    // Recompute button bottom from the shared splashRows() layout (R1156) —
+    // must track whatever renderSplash above actually drew.
+    const _rows = splashRows();
     const _by = H * 0.58;
-    // Skip Continue row if no lastPlayedLevel to find the bottom of all buttons
-    let _nextBtnY = _by + _bh + 12;
-    if (lastPlayedLevel > 0) _nextBtnY += 42 + 10;
-    _nextBtnY += 42 + 10; // Daily Challenge row
-    _nextBtnY += 42 + 10; // Random Level row
-    _nextBtnY += 42 + 10; // R857: Share button row
+    const _nextBtnY = _rows[_rows.length - 1].y + 42 + 10;
     X.globalAlpha = hintBt * (0.35 + 0.25 * pulse);
     X.fillStyle = "#a29bfe";
     X.font = "500 11px 'Nunito',sans-serif";
@@ -6506,50 +6513,47 @@ function onTap(px, py) {
   if (state === "splash") {
     // R715: any tap on splash counts as interaction → cancel auto-advance
     splashUserInteracted = true;
-    const bw = Math.min(200, W * 0.55), bh = 50;
-    const bx = W / 2 - bw / 2, by = H * 0.58;
-    if (hitTest(px, py, bx, by, bw, bh) && splashTimer >= 0.8) {
-      // R980: new players go straight into level 1 (one tap, no menu/modal hop)
-      splashPlayAction('play_button');
-    }
-    // Continue button
-    let nextBtnY = by + bh + 12;
-    if (lastPlayedLevel > 0) {
-      const contW = Math.min(200, W * 0.55);
-      if (hitTest(px, py, W / 2 - contW / 2, nextBtnY, contW, 42) && splashTimer >= 0.8) {
-        sfxClick();
-        initLevel(lastPlayedLevel);
+    // [R1156 2026-11-16] SPLASH HIT-ZONE MISALIGNMENT (P0): R864 moved the Share row
+    // to position #2 in renderSplash but onTap kept the old row order → every row
+    // below PLAY was shifted up one row. Real-click Playwright proof (returning
+    // player, 1280x800): tap drawn Share = share AND Continue double-fire (zones
+    // overlapped on the same rect); tap drawn Continue = started Daily Challenge
+    // lv188947; tap drawn Daily = ms_random_level_started; tap drawn Random = dead
+    // zone. Explains ms_daily_challenge_started = 0 lifetime and R864 Share events.
+    // Fix: one shared row layout (splashRows) for draw AND hit, iterate top-down,
+    // exactly one action per tap. splashShareBtn rect stays for any external users.
+    const rows = splashRows();
+    const by = rows[0].y;
+    if (splashTimer >= 0.8) {
+      for (const r of rows) {
+        if (!hitTest(px, py, r.x, r.y, r.w, r.h)) continue;
+        if (r.key === 'play') {
+          // R980: new players go straight into level 1 (one tap, no menu/modal hop)
+          splashPlayAction('play_button');
+        } else if (r.key === 'share') {
+          // R857: Share on splash — every visitor can share, even before first level.
+          shareResult({ source: 'splash' });
+        } else if (r.key === 'continue') {
+          sfxClick();
+          initLevel(lastPlayedLevel);
+        } else if (r.key === 'daily') {
+          sfxClick();
+          // [MS-tracker R643] daily challenge start from splash
+          try { window.__msTrack && window.__msTrack('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'splash' }); } catch(e){}
+          initLevel(dailyChallengeLevel);
+        } else if (r.key === 'random') {
+          sfxClick();
+          // [MS-tracker R643] random level pick from splash
+          try { window.__msTrack && window.__msTrack('ms_random_level_started', { source: 'splash' }); } catch(e){}
+          // Pick a random unlocked level
+          const unlocked = Object.keys(levelUnlocked).filter(k => levelUnlocked[k]).map(Number);
+          if (unlocked.length > 0) {
+            const pick = unlocked[Math.floor(Math.random() * unlocked.length)];
+            initLevel(pick);
+          }
+        }
+        return;
       }
-      nextBtnY += 42 + 10;
-    }
-    // Daily Challenge button
-    const dailyW = Math.min(200, W * 0.55);
-    if (hitTest(px, py, W / 2 - dailyW / 2, nextBtnY, dailyW, 42) && splashTimer >= 0.8) {
-      sfxClick();
-      // [MS-tracker R643] daily challenge start from splash
-      try { window.__msTrack && window.__msTrack('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'splash' }); } catch(e){}
-      initLevel(dailyChallengeLevel);
-    }
-    nextBtnY += 42 + 10;
-    // Random Level button
-    const randomW = Math.min(200, W * 0.55);
-    if (hitTest(px, py, W / 2 - randomW / 2, nextBtnY, randomW, 42) && splashTimer >= 0.8) {
-      sfxClick();
-      // [MS-tracker R643] random level pick from splash
-      try { window.__msTrack && window.__msTrack('ms_random_level_started', { source: 'splash' }); } catch(e){}
-      // Pick a random unlocked level
-      const unlocked = Object.keys(levelUnlocked).filter(k => levelUnlocked[k]).map(Number);
-      if (unlocked.length > 0) {
-        const pick = unlocked[Math.floor(Math.random() * unlocked.length)];
-        initLevel(pick);
-      }
-    }
-    nextBtnY += 42 + 10;
-    // R857: Share button on splash — every visitor can share, even before first level.
-    // Bumped nextBtnY first so the share rect lives below Random Level.
-    if (splashShareBtn && hitTest(px, py, splashShareBtn.x, splashShareBtn.y, splashShareBtn.w, splashShareBtn.h) && splashTimer >= 0.8) {
-      shareResult({ source: 'splash' });
-      return;
     }
     // [R643] Splash tap-anywhere fallback: if user tapped in the dead-zone above
     // the buttons (water drop icon area, y < by) and splashTimer has elapsed,
