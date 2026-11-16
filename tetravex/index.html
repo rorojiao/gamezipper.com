@@ -120,6 +120,8 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 50%,#0d1a2d 100%);min-
 .level-card:hover{border-color:#3498db;transform:scale(1.05)}
 .level-card.locked{opacity:.4;pointer-events:none}
 .level-card.completed{border-color:#27ae60;background:rgba(39,174,96,.15)}
+/* UX-OPT 2026-11-16 R1156: R1111's persistent 'entered' marker self-defeats on a re-click of the SAME card within one render (snapshot already carries entered → snap==now → dead). Transient 'tapped' ack (R1125 cribbage pattern) re-arms per click and is exempt from the R1056 ack-overlap guard. BI 11-14 12:04 'DIV.level-card entered' post-R1111. */
+.level-card.tapped{background:rgba(52,152,219,.35);border-color:#7ec3ff;box-shadow:0 0 20px rgba(52,152,219,.5)}
 .level-number{font-size:18px;font-weight:700;margin-bottom:4px}
 .level-stars{font-size:14px;color:#f39c12}
 
@@ -951,7 +953,7 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 50%,#0d1a2d 100%);min-
       const div=document.createElement('div');
       div.className='level-card'+(unlocked?'':' locked')+(completed?' completed':'');
       div.innerHTML=`<div class="level-number">${i}</div><div class="level-stars">${completed?getStarsString(completed.stars):'🔒'}</div>`;
-      if(unlocked)div.onclick=()=>{div.classList.add('entered');/* R1111 pattern: level select navigates for real but the dead_click detector only watches this card's class/aria/style — mark state so BI stops miscounting working navigation (prod BI 11-07 20:31 'DIV.level-card') */loadLevel(i)};
+      if(unlocked)div.onclick=()=>{div.classList.add('entered');div.classList.add('tapped');if(div._gzTapT)clearTimeout(div._gzTapT);div._gzTapT=setTimeout(function(){div.classList.remove('tapped')},1700);/* R1111 pattern: level select navigates for real but the dead_click detector only watches this card's class/aria/style — mark state so BI stops miscounting working navigation (prod BI 11-07 20:31 'DIV.level-card') */loadLevel(i)};
       grid.appendChild(div);
     }
     showScreen('level-select');

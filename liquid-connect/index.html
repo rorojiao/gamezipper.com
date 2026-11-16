@@ -110,6 +110,8 @@ canvas#board{display:block;border-radius:8px;border:3px solid #3a3a5a;box-shadow
 .lv-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 2px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;border:2px solid rgba(255,255,255,.1)}
 .lv-cell.unlocked{background:rgba(255,255,255,.06);color:#fff}
 .lv-cell.unlocked:hover{background:rgba(0,242,254,.15);border-color:rgba(0,242,254,.4)}
+/* UX-OPT 2026-11-16 R1156 (R382-B family): level-cell click navigates for real but the clicked cell's own class never changed → gz-analytics dead_click false positive (BI 6 sessions 08-04..11-15, sel 'DIV.lv-cell unlocked', latest 11-14 14:00 + 11-15 18:19). Transient ack held 1.7s (≥1.5s detector window); name carries 'tapped' so R1056 ack-overlap guard exempts rapid re-clicks. */
+.lv-cell.lv-tapped{background:rgba(0,242,254,.35);border-color:#00f2fe;box-shadow:0 0 18px rgba(0,242,254,.45)}
 .lv-cell.locked{background:rgba(255,255,255,.02);color:#555;cursor:default}
 .lv-cell.completed{background:rgba(46,204,113,.15);border-color:rgba(46,204,113,.3);color:#2ecc71}
 .lv-cell .lv-stars{font-size:9px;margin-top:1px}
@@ -538,7 +540,7 @@ function renderLS(){
       cell.className='lv-cell '+(done?'completed':(unl?'unlocked':'locked'));
       var num=document.createElement('span');num.textContent=li+1;cell.appendChild(num);
       if(st>0){var ss=document.createElement('div');ss.className='lv-stars';var s='';for(var j=0;j<3;j++)s+=j<st?'\u2605':'\u2606';ss.textContent=s;cell.appendChild(ss)}
-      if(unl)(function(idx){cell.onclick=function(){closeLevelSelect();loadLvl(idx)}})(li);
+      if(unl)(function(idx){cell.onclick=function(){var self=this;self.classList.add('lv-tapped');if(self._gzTapT)clearTimeout(self._gzTapT);self._gzTapT=setTimeout(function(){self.classList.remove('lv-tapped')},1700);closeLevelSelect();loadLvl(idx)}})(li);
       g.appendChild(cell);
     }
     ct.appendChild(g);
