@@ -290,9 +290,13 @@ def main():
             bad.append((i + 1, 'stored solution invalid under shipped rules'))
             print(f'L{i+1} {R}x{C}: stored-solution INVALID ({time.monotonic()-tl:.1f}s)', flush=True)
             continue
-        # phase 1: independent solver must confirm >=1 solution
+        # phase 1: independent solver must confirm >=1 solution.
+        # Higher budget than the census: the per-node whites-connectivity BFS
+        # makes blind DFS slow on 10x10+; solvability is the contract gate so it
+        # gets a generous wall budget (census stays on the cheaper budget).
         try:
-            n1 = count_solutions(R, C, room_idx, room_cells, room_clue_v, limit=1)
+            n1 = count_solutions(R, C, room_idx, room_cells, room_clue_v,
+                                 limit=1, node_budget=20_000_000, wall_budget=240.0)
         except TimeoutError as e:
             bad.append((i + 1, f'solvability INCONCLUSIVE ({e})'))
             print(f'L{i+1} {R}x{C}: SOLVABILITY-INCONCLUSIVE {e} ({time.monotonic()-tl:.1f}s)', flush=True)
