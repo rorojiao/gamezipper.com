@@ -99,6 +99,22 @@ test('async validation errors return their intended 400 response, not a 500', as
   assert.equal((await response.json()).error, 'submission_too_fast');
 });
 
+test('CORS preflight permits browser cache headers used by hard refreshes', async () => {
+  const response = await worker.fetch(new Request('https://wishes.gamezipper.com/api/wishes', {
+    method: 'OPTIONS',
+    headers: {
+      Origin: 'https://gamezipper.com',
+      'Access-Control-Request-Method': 'GET',
+      'Access-Control-Request-Headers': 'cache-control, pragma',
+    },
+  }), {});
+  assert.equal(response.status, 204);
+  const allowed = response.headers.get('access-control-allow-headers') || '';
+  assert.match(allowed, /Content-Type/);
+  assert.match(allowed, /Cache-Control/);
+  assert.match(allowed, /Pragma/);
+});
+
 test('streamed request bodies are capped even without Content-Length', async () => {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
