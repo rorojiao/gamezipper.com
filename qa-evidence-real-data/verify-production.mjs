@@ -18,7 +18,7 @@ try {
   page.on('requestfailed', request => failedRequests.push(`${request.url()} :: ${request.failure()?.errorText || 'failed'}`));
   await page.goto(`${BASE}/?qa=realdata`, { waitUntil: 'load', timeout: 90000 });
   await page.waitForFunction(() => window.__gzPublicStats && Number.isSafeInteger(window.__gzPublicStats.playedToday), null, { timeout: 15000 });
-  await sleep(1200);
+  await sleep(6000);
   const homepage = await page.evaluate(() => {
     const nav = performance.getEntriesByType('navigation')[0];
     const stats = performance.getEntriesByType('resource').find(entry => entry.name.includes('/api/public-stats'));

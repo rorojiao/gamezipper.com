@@ -53,7 +53,7 @@ Playwright bundled Chromium tested `https://gamezipper.com/`:
 - Console errors: 0; page errors: 0; failed requests: 0.
 - DOM values equal the real BI response for both counters and the duplicate live badge.
 - 20/20 sampled production game pages returned HTTP 200, exposed game controls, accepted interaction and had no game-code exception.
-- Statistics started after `load` (`load=5556.3ms`, `statsStart=5557ms`), so the BI request does not block rendering. Its duration was 2657ms and remained asynchronous.
+- Statistics started after `load` (`load=5841.6ms`, `statsStart=5842.4ms`), so the BI request does not block rendering. Its duration was 808ms and remained asynchronous.
 - 467 games are synchronized across catalog/schema/header/footer/categories.
 - Evidence: `production-browser-regression.json`, `production-homepage-top.png`, `production-homepage-full.png`, `final-game-count-sync.txt` (`=== ALL IN SYNC ===`).
 
