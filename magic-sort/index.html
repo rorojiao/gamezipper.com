@@ -1793,11 +1793,18 @@ loadDailyReward();
 
 // ─── Daily Reward popup state ───
 let dailyRewardOpen = false;
-function maybeShowDailyReward() {
+// R1168 (2026-11-18): impression instrumentation. R1156-class lesson: a feature
+// with 0 events for 4 weeks straight (lifetime claims died exactly at the R980
+// deploy, 31 before) could not be diagnosed as "never shown" vs "shown, ignored"
+// because no shown-event existed. One event per open, tagged with the surface.
+function maybeShowDailyReward(source) {
   if (!dailyRewardClaimed[getDailySeed()]) {
     dailyRewardOpen = true;
+    try { _msSend('ms_daily_reward_popup_shown', { source: source || 'menu' }); } catch(e){}
   }
 }
+// R1168: guard flag for the pending win-card offer timer (see win handler).
+let dailyRewardOfferPending = false;
 
 // Difficulty sections for level select
 const DIFF_SECTIONS = [
@@ -2915,7 +2922,17 @@ function loadSave() {
 }
 function saveSave() {
   try {
-    localStorage.setItem("magicSort_v2", JSON.stringify({ stars: levelStars, sfx: sfxEnabled, cb: colorblindMode, lastPlayed: lastPlayedLevel, bestMoves: bestMoves, bestTimes: bestTimes, extraTubeUses: extraTubeUses, streakCount, lastPlayDate, levelsToday, gStats, fav: favorites }));
+    // R1168: read-modify-write. The old fresh-object write silently dropped
+    // sibling keys that saveDailySave (dailyCompleted) and saveDailyReward
+    // (dailyRewardClaimed) had just persisted — a claim could never survive the
+    // next saveSave(), so the same day's +1 tube was farmable across reloads.
+    const d = JSON.parse(localStorage.getItem("magicSort_v2") || "{}");
+    d.stars = levelStars; d.sfx = sfxEnabled; d.cb = colorblindMode;
+    d.lastPlayed = lastPlayedLevel; d.bestMoves = bestMoves; d.bestTimes = bestTimes;
+    d.extraTubeUses = extraTubeUses; d.streakCount = streakCount;
+    d.lastPlayDate = lastPlayDate; d.levelsToday = levelsToday; d.gStats = gStats;
+    d.fav = favorites;
+    localStorage.setItem("magicSort_v2", JSON.stringify(d));
   } catch (e) {}
 }
 loadSave();
@@ -3232,6 +3249,26 @@ function completePour() {
     winAutoCancelled = false; // R1057: fresh win -> arm the auto-advance
     // [MS-tracker] fire level_complete event with stars, moves, duration
     try { _msSend('ms_level_complete', { lv: currentLevel, n: numColors, moves: moves, autoSolve: solving }); } catch(e){}
+    // R1168: deferred daily-reward offer on the WIN CARD. R980's one-tap-start
+    // comment promised "the reward is still offered later, on the first win
+    // (see showDailyRewardAfterFirstWin)" — but that function was never shipped.
+    // Since R980, new players route PLAY -> level -> win -> R1057 auto-advance
+    // and never touch the menu, so the popup (rendered only in renderMenu,
+    // tap-routed only for state==="menu") literally cannot appear for them:
+    // lifetime claims = 0 since the 10-23 deploy (was 31 in the prior 5 weeks).
+    // Timing: opens at 1200ms post-win, BEFORE the countdown veil (2500ms) and
+    // the auto-advance (4200ms). dailyRewardOpen already blocks auto-advance in
+    // update(); after the claim the advance resumes on the next tick.
+    if (!dailyRewardClaimed[getDailySeed()] && !dailyRewardOfferPending) {
+      dailyRewardOfferPending = true;
+      setTimeout(() => {
+        dailyRewardOfferPending = false;
+        if (state === "win" && transitionState === 0 && !dailyRewardOpen &&
+            !winAutoCancelled && !dailyRewardClaimed[getDailySeed()]) {
+          maybeShowDailyReward('win_card');
+        }
+      }, 1200);
+    }
     // Stars: based on moves vs numColors (scales with puzzle complexity)
     // Minimum moves ~ numColors * 4; 3* at ~25% overhead, 2* at ~100% overhead
     const threshold1 = numColors * 5; // excellent (3 stars)
@@ -6314,6 +6351,9 @@ function renderWin() {
     X.restore();
   }
 
+  // R1168: daily reward popup overlay on the win card (offer armed in win handler).
+  if (dailyRewardOpen) renderDailyRewardPopup();
+
   X.restore();
 }
 
@@ -6518,7 +6558,10 @@ function onTap(px, py) {
   // Daily reward popup intercepts most taps when open. Outside-tap dismissal
   // returns 'pass_through' so the same tap is also processed by menu logic
   // (e.g. tapping a level cell) — see R678.
-  if (state === "menu" && dailyRewardOpen) {
+  // R1168: also intercept in the "win" state — the win-card daily-reward offer
+  // draws the popup over the win card; on win, 'pass_through' means a tap that
+  // lands on a win button claims AND acts (claim + continue = intended flow).
+  if ((state === "menu" || state === "win") && dailyRewardOpen) {
     const dailypopupResult = handleDailyRewardTap(px, py);
     if (dailypopupResult === 'pass_through') {
       // fall through to menu cell logic below
@@ -6925,7 +6968,11 @@ function onTap(px, py) {
     bIdx++;
     // Menu button (index 3)
     if (hitTest(px, py, bsX + bIdx * (wBtnW + wBtnGap), wBy, wBtnW, wBtnH)) {
-      sfxClick(); state = "menu"; menuScrollY = 0; return;
+      sfxClick(); state = "menu"; menuScrollY = 0;
+      // R1168: reaching the menu via the win card must offer an unclaimed
+      // daily reward (the pre-R980 behaviour this route silently lost).
+      maybeShowDailyReward('menu_return');
+      return;
     }
     // [R1134] Daily-challenge nudge row (geometry must match the win render block:
     // cardW/cardX mirror the win card constants)
