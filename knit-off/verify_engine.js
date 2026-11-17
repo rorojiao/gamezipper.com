@@ -188,7 +188,7 @@ T('lsel-50', btns.length === 50 && groups.length === 5, btns.length + ' btns');
 /* unlock rule is l <= lastLevel (one-at-a-time, not tier batches): 1-3 completed, 4 current, 5+ locked */
 T('lsel-cells', btns[0].classList.contains('completed') && textOf(btns[0]) === '***' &&
   btns[3].classList.contains('current') && textOf(btns[3]) === '4' && typeof btns[3].onclick === 'function' &&
-  btns[4].classList.contains('locked') && textOf(btns[4]) === '?' && typeof btns[4].onclick !== 'function' &&
+  btns[4].classList.contains('locked') && textOf(btns[4]) === '?' && typeof btns[4].onclick === 'function' &&
   btns[49].classList.contains('locked') && textOf(btns[49]) === '?', [0, 3, 4, 49].map(i => textOf(btns[i]) + '/' + (btns[i].classList._s ? [...btns[i].classList._s].join(',') : '')).join(' | '));
 btns[1].click(); // replay completed L2
 T('lsel-jump-l2', textOf(els['level-label']) === 'Level 2' && !els['level-select'].classList.contains('show'), textOf(els['level-label']));
