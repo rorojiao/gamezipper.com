@@ -125,9 +125,10 @@ const divs = (grid.children || []).filter(x => String(x.className).includes('tie
 const cells = (grid.children || []).filter(x => String(x.className).includes('level-cell'));
 T('lsel-cells-30', cells.length === 30 && divs.length === 5, cells.length + ' cells ' + divs.length + ' dividers');
 T('lsel-l1-unlocked', typeof cells[0].onclick === 'function' && textOf(cells[0]).indexOf('1') === 0 && textOf(cells[0]).indexOf('🔒') < 0, textOf(cells[0]));
-T('lsel-l2-locked', typeof cells[1].onclick !== 'function' && textOf(cells[1]).indexOf('🔒') >= 0, textOf(cells[1]));
-cells[2].click(); // locked -> nothing happens
-T('lsel-locked-click-noop', els['menu-screen'].style.display !== 'none' && !shown(els['levelselect-modal']) === false, 'modal still open');
+// R1169 UX sync: locked cells now give shake+sfx feedback (was silent no-op; BI rage_click 'level-cell locked'); click still must not navigate
+T('lsel-l2-locked', typeof cells[1].onclick === 'function' && cells[1].className.indexOf('locked') >= 0 && textOf(cells[1]).indexOf('🔒') >= 0, textOf(cells[1]));
+cells[2].click(); // locked -> shake feedback only, no navigation
+T('lsel-locked-click-noop', els['menu-screen'].style.display !== 'none' && shown(els['levelselect-modal']) === true, 'modal still open');
 sb.closeModal('levelselect-modal');
 
 /* controls bar buttons wired */

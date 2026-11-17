@@ -126,6 +126,8 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 .level-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;background:rgba(255,255,255,.6);border:2px solid rgba(255,255,255,.5);cursor:pointer;transition:all .2s;font-weight:800;color:#3a2050;font-size:14px;gap:2px}
 .level-cell:hover:not(.locked){background:rgba(245,130,174,.15);border-color:#f582ae;transform:scale(1.05)}
 .level-cell.locked{opacity:.35;cursor:not-allowed;filter:grayscale(.6)}
+@keyframes shakeX{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.level-cell.locked-shake{animation:shakeX .4s ease}
 .level-cell .stars{font-size:9px;color:#ffd166;letter-spacing:-1px}
 .tier-divider{grid-column:1/-1;font-size:12px;font-weight:800;color:#8bd3dd;text-transform:uppercase;letter-spacing:1.5px;margin:8px 0 2px;padding:4px 0;border-bottom:1px solid rgba(139,211,221,.2)}
 .win-stars{font-size:38px;text-align:center;margin:10px 0;letter-spacing:4px}
@@ -1549,6 +1551,14 @@ window.openLevelSelect = function(){
         if(!lastRAF) loop(performance.now());
         else if(!_rafId) _rafId = _origRAF.call(window, loop);
       };})(i);
+    } else {
+      // R1169: locked cells were silent no-ops (BI rage_click on locked level cells) — add shake + sfx
+      cell.onclick = function(){
+        initAudio(); if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
+        playSfx('pick'); haptic(15);
+        cell.classList.remove('locked-shake'); void cell.offsetWidth; cell.classList.add('locked-shake');
+        setStatus('Complete level '+i+' to unlock','warn');
+      };
     }
     grid.appendChild(cell);
   }
