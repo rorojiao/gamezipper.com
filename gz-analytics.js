@@ -35,27 +35,9 @@
   var _h = location.hostname;
   if (!_h || /^127\./.test(_h) || /^(localhost|0\.0\.0\.0|\[::1\]|::1)$/i.test(_h)) return;
   var SITE = location.hostname;   // use real hostname so tools.gamezipper.com works too
-  // PERMANENT BI endpoint = sail-surrounding trycloudflare tunnel (active since 2026-07-15 07:16 CST).
-  // Verified alive 2026-07-15 22:56 CST (kanban t_de988703 round 2):
-  //   GET /api/health → HTTP 200, POST /api/collect → HTTP 200, event lands in DB ✓
-  // 2026-07-15 22:55 FINDING: bi.gamezipper.com (Cloudflare Pages) is a STUB.
-  //   It returns HTTP 204 to POST /api/collect but does NOT persist anything
-  //   (openapi.json shows DIFFERENT endpoints — GameZipper BI with /puzzle/* routes,
-  //   NOT the local FastAPI on 10.10.29.67:8090 with /api/gsc/* routes).
-  //   Comment in earlier versions claiming "bi.gamezipper.com is permanent BI endpoint"
-  //   is FALSE — that endpoint silently drops events.
-  // The systemd cloudflared-bi.service (RestartSec=5, --retries -1) auto-restarts
-  //   on failure. New trycloudflare URL printed to journal after restart. Update this
-  //   var EP after each restart by running:
-  //     journalctl -u cloudflared-bi -n 30 --no-pager | grep trycloudflare.com
-  // DO NOT switch back to bi.gamezipper.com — that's a 204-stub, not the BI server.
-/* ⛔ R415+ ARCHITECTURE (2026-08-14): EP is PERMANENTLY /api/collect
-   DO NOT rotate this URL on tunnel changes. QuickTunnel rotation is handled server-side:
-   43.172.69.197 CapRover nginx /api/ + / proxy + gz_bi_tunnel_watchdog.sh (60s systemd timer)
-   auto-repoints nginx to the live tunnel URL. Rotating var EP here (R401 playbook) causes
-   20min+ data gaps per GitHub Pages deploy + CDN cache cycle. See kanban R415/R416/R418.
-   If bi.gamezipper.com/api/health fails: fix nginx/watchdog on 43.172, NOT this file. */
-  var EP = 'https://fluid-managing-russia-reid.trycloudflare.com/api/collect';
+  // Stable public endpoint backed by the persistent GameZipper BI SQLite store.
+  // Presence heartbeats and public homepage aggregates use this same service.
+  var EP = 'https://bi.gamezipper.com/api/collect';
   // 2026-07-26: expose the watchdog-rotated endpoint so inline RUM scripts
   // (index.html Web-Vitals beacons) and adsterra-manager.js can resolve it
   // lazily instead of hardcoding tunnel URLs that die every few hours.
@@ -307,6 +289,17 @@
 
   // Page view (BI overview aggregates on event='page_view', not 'u_enter')
   ps('page_view', { u: P, ref: REFERRER });
+
+  // Real active-session signal: initial visible view + one heartbeat per minute.
+  // No presence event is generated while hidden or in an unactivated prerender.
+  function presence() {
+    if (document.visibilityState === 'visible' && !document.prerendering) {
+      ps('presence', { u: P });
+    }
+  }
+  presence();
+  setInterval(presence, 60000);
+  document.addEventListener('visibilitychange', presence);
 
   // Time-based engagement milestones (30s and 60s)
   setTimeout(function() {

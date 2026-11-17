@@ -822,15 +822,16 @@ iframe[id^="aswift_"]:not([src]),iframe[id^="aswift_"][style*="visibility: hidde
   <span style="background:rgba(78,205,196,.12);color:#4ecdc4;border:1px solid rgba(78,205,196,.3)">Mobile Ready</span>
 </div>
 <div class="stats">
-<span>🎮 <span id="game-count" data-count="467"<span>\</span> Games</span>
-<span id="gz-live-players" style="color:#4ecdc4">🟢 <span id="gz-player-count">0</span> playing now</span>
-<span id="gz-daily-plays" class="gz-gold">🎯 <span id="gz-daily-count">0</span> played today</span>
-<span id="gz-weekly-new" style="color:#c084fc">🆕 <span>3 new games this week</span></span>
-<span id="gz-updated-date" style="background:#1a3a2a;color:#4ade80;padding:2px 8px;border-radius:10px;font-size:.8em;display:inline-block;min-width:160px;text-align:center">✓ Updated <span class="gz-date-text">Sep 27, 2026</span></span>
+<span>🎮 <span id="game-count" data-count="467">467</span> Games</span>
+<span id="gz-live-players" style="color:#4ecdc4;display:none" hidden>🟢 <span id="gz-player-count">0</span> playing now</span>
+<span id="gz-daily-plays" class="gz-gold" style="display:none" hidden>🎯 <span id="gz-daily-count">0</span> played today</span>
+<span id="gz-weekly-new" style="color:#c084fc;display:none" hidden>🆕 <span id="gz-weekly-new-count">0</span> new games this week</span>
+<span id="gz-updated-date" style="background:#1a3a2a;color:#4ade80;padding:2px 8px;border-radius:10px;font-size:.8em;display:inline-block;min-width:160px;text-align:center">✓ Updated <span class="gz-date-text">Nov 17, 2026</span></span>
 <span id="gz-streak" style="color:#ff6b6b;display:none" aria-live="polite">🔥 <span id="gz-streak-count">0</span> day streak</span>
 <span id="gz-you-played" style="color:#a78bfa;display:none" aria-live="polite">⭐ <span id="gz-you-played-count">0</span> played this week</span>
   <a href="https://tools.gamezipper.com/" style="color:#4ecdc4;text-decoration:none;font-size:0.9em;margin-top:8px;display:inline-block" rel="noopener noreferrer">🛠️ Free Online Tools →</a>
 </div>
+<script src="/js/site-metadata.js" defer></script>
 <script>
 /* UX-OPT 2026-10-15 R935: pause-on-hidden for background textCounter loops.
  * Why: homepage has 5+ setInterval loops (live player count, daily count,
@@ -857,24 +858,52 @@ iframe[id^="aswift_"]:not([src]),iframe[id^="aswift_"][style*="visibility: hidde
 })();
 </script>
 <script>
-// Live player count social proof - simulated realistic count that fluctuates
+// Public counters come only from the real BI event store. Fail closed by hiding.
 (function(){
-  var el=document.getElementById('gz-player-count');
-  if(!el)return;
-  // Base count with realistic daily variance (higher during US peak hours)
-  var base=1277;
-  var hour=new Date().getUTCHours();
-  // Peak between 14:00-02:00 UTC (US afternoon to late night)
-  if(hour>=14||hour<=2){base=2340}else if(hour>=8&&hour<14){base=1560}else{base=890}
-  // Randomize ±15%
-  var count=Math.round(base*(0.85+Math.random()*0.3));
-  el.textContent=count.toLocaleString();
-  // Subtle fluctuation every 8-15s to feel alive
-  setInterval(function(){
-    var delta=Math.floor(Math.random()*7)-3; // -3 to +3
-    count=Math.max(800,count+delta);
-    el.textContent=count.toLocaleString();
-  },8000+Math.floor(Math.random()*7000));
+  function init(){
+    var meta=window.GZ_SITE_META||{};
+    var dateEl=document.querySelector('#gz-updated-date .gz-date-text');
+    if(dateEl&&meta.contentUpdatedAt){
+      var updated=new Date(meta.contentUpdatedAt);
+      if(!isNaN(updated.getTime()))dateEl.textContent=updated.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+    }
+    var weekly=Number(meta.newGamesThisWeek);
+    var weeklyWrap=document.getElementById('gz-weekly-new');
+    if(weeklyWrap&&Number.isSafeInteger(weekly)&&weekly>0){
+      document.getElementById('gz-weekly-new-count').textContent=weekly;
+      weeklyWrap.hidden=false;weeklyWrap.style.display='';
+    }
+    function loadStats(){
+      var liveWrap=document.getElementById('gz-live-players');
+      var dailyWrap=document.getElementById('gz-daily-plays');
+      var liveBadge=document.getElementById('gz-live-count');
+      if(!meta.statsEndpoint)return;
+      var controller=new AbortController();
+      var timeout=setTimeout(function(){controller.abort()},4500);
+      fetch(meta.statsEndpoint,{mode:'cors',credentials:'omit',signal:controller.signal})
+        .then(function(r){if(!r.ok)throw new Error('stats_http_'+r.status);return r.json()})
+        .then(function(data){
+          if(!data||data.ok!==true||!Number.isSafeInteger(data.playedToday)||!Number.isSafeInteger(data.playingNow)||data.playedToday<0||data.playingNow<0)throw new Error('invalid_stats');
+          document.getElementById('gz-player-count').textContent=data.playingNow.toLocaleString('en-US');
+          document.getElementById('gz-daily-count').textContent=data.playedToday.toLocaleString('en-US');
+          document.getElementById('gz-live-num').textContent=data.playingNow.toLocaleString('en-US');
+          liveWrap.hidden=false;liveWrap.style.display='';
+          dailyWrap.hidden=false;dailyWrap.style.display='';
+          liveBadge.hidden=false;liveBadge.style.display='inline-flex';
+          window.__gzPublicStats=data;
+        })
+        .catch(function(){
+          if(liveWrap){liveWrap.hidden=true;liveWrap.style.display='none'}
+          if(dailyWrap){dailyWrap.hidden=true;dailyWrap.style.display='none'}
+          if(liveBadge){liveBadge.hidden=true;liveBadge.style.display='none'}
+        })
+        .finally(function(){clearTimeout(timeout)});
+    }
+    if(document.readyState==='complete')setTimeout(loadStats,0);
+    else window.addEventListener('load',function(){setTimeout(loadStats,0)},{once:true});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
 })();
 // Time-based personalized greeting
 (function(){
@@ -888,45 +917,19 @@ iframe[id^="aswift_"]:not([src]),iframe[id^="aswift_"][style*="visibility: hidde
   else greetings=['Night owl gaming? \uD83E\uDD89','Late night fun! \uD83C\uDF19','Can\'t sleep? Play a game! \uD83D\uDE04'];
   el.textContent=greetings[Math.floor(Math.random()*greetings.length)];
 })();
-// Daily games played counter
-(function(){
-  var el=document.getElementById('gz-daily-count');
-  if(!el)return;
-  var hour=new Date().getHours();
-  var base;
-  if(hour<6)base=8400+Math.random()*2000;
-  else if(hour<12)base=18000+Math.random()*5000;
-  else if(hour<18)base=35100+Math.random()*8000;
-  else base=549+Math.random()*12000;
-  el.textContent=Math.round(base).toLocaleString();
-  setInterval(function(){
-    var cur=parseInt(el.textContent.replace(/,/g,''),10)||0;
-    el.textContent=(cur+Math.floor(Math.random()*5)+1).toLocaleString();
-  },Math.random()*5000+5000);
-})();
 </script>
 <div class="gz-hero-cta" style="contain:content">
   <a href="/2048/" class="gz-cta-btn" fetchpriority="high">▶ Play 2048 Now</a>
   <a href="/snake/" class="gz-cta-btn secondary" fetchpriority="high" id="gz-hero-secondary-cta">🐍 Try Snake</a>
   <a href="/magic-sort/" class="gz-cta-btn secondary" fetchpriority="high" id="gz-hero-magic-sort-cta" style="background:linear-gradient(135deg,rgba(108,92,231,.15),rgba(162,155,254,.1));border-color:#6c5ce7;color:#a29bfe">🧪 Magic Sort — 220K</a>
   <button onclick="(function(){if(typeof GAMES==='undefined'){window.location='/2048/';return}var l=GAMES.filter(function(g){return g.status==='live'});var g=l[Math.floor(Math.random()*l.length)];window.location=g.url})()" class="gz-cta-btn secondary" style="cursor:pointer;border-color:rgba(255,255,255,.25);color:#ccc;padding:10px 24px;border-radius:30px;font-weight:700;font-size:.95em;touch-action:manipulation;box-shadow:none">🎲 Random Game</button>
-  <div id="gz-trending" class="gz-trending" style="margin-top:10px;min-height:46px;contain:content;flex-basis:100%;align-self:center;justify-content:center">🎮 <span id="gz-trending-name" style="display:inline-block;min-height:1.4em;min-width:500px;max-width:600px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Loading popular games...</span> · <span id="gz-live-count" aria-live="polite" aria-atomic="true" style="display:inline-flex;align-items:center;gap:4px;background:rgba(76,175,80,.12);border:1px solid rgba(76,175,80,.3);border-radius:12px;padding:2px 9px;font-size:.82em;color:#81c784;font-weight:600;white-space:nowrap"><span style="width:7px;height:7px;background:#4caf50;border-radius:50%;display:inline-block;box-shadow:0 0 0 0 rgba(76,175,80,.7);animation:gz-live-pulse 2s infinite"></span><b id="gz-live-num" style="display:inline-block;min-width:2.8ch;font-variant-numeric:tabular-nums;text-align:right">2,847</b> playing now</span></div>
+  <div id="gz-trending" class="gz-trending" style="margin-top:10px;min-height:46px;contain:content;flex-basis:100%;align-self:center;justify-content:center">🎮 <span id="gz-trending-name" style="display:inline-block;min-height:1.4em;min-width:500px;max-width:600px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Loading popular games...</span> · <span id="gz-live-count" aria-live="polite" aria-atomic="true" hidden style="display:none;align-items:center;gap:4px;background:rgba(76,175,80,.12);border:1px solid rgba(76,175,80,.3);border-radius:12px;padding:2px 9px;font-size:.82em;color:#81c784;font-weight:600;white-space:nowrap"><span style="width:7px;height:7px;background:#4caf50;border-radius:50%;display:inline-block;box-shadow:0 0 0 0 rgba(76,175,80,.7);animation:gz-live-pulse 2s infinite"></span><b id="gz-live-num" style="display:inline-block;min-width:2.8ch;font-variant-numeric:tabular-nums;text-align:right">0</b> playing now</span></div>
 </div>
 <script>
 (function(){
   var el=document.getElementById("gz-trending");
   if(!el)return;
   var nameEl=document.getElementById("gz-trending-name");
-  var liveEl=document.getElementById("gz-live-num");
-  // Live players counter: subtle variance to feel alive (range 2,400-3,200, updates every 8-15s)
-  var baseCount=2847;
-  function updateLive(){
-    if(!liveEl||window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-    var delta=Math.floor(Math.random()*61)-30; // -30..+30
-    baseCount=Math.max(2400,Math.min(3200,baseCount+delta));
-    liveEl.textContent=baseCount.toLocaleString("en-US");
-  }
-  setTimeout(function(){setInterval(updateLive,8000+Math.random()*7000);},5000);
   function showTrending(){
     var games=(typeof GAMES!=="undefined")?GAMES.filter(function(g){return g.status==="live"}):[];
     if(!games.length){if(nameEl)nameEl.textContent="467+ free Games ready to play!";return}
@@ -1953,41 +1956,6 @@ function gzUpdateShowMoreBtn(){var w=document.getElementById('gz-show-more-wrap'
       </p>
     </section>
 
-        <!-- UX-OPT: Player Reviews Section - social proof (Jetpack 2026: testimonials reduce bounce 10-15%) -->
-    <section class="gz-reveal" id="gz-reviews" style="max-width:900px;margin:30px auto;padding:0 20px;content-visibility:auto;contain-intrinsic-size:auto 500px" aria-label="Player reviews">
-      <h2 style="font-size:1.3em;color:#fff;text-align:center;margin:0 0 16px">&#11088; What Players Say</h2>
-      <div id="gz-review-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
-      </div>
-    </section>
-    <script>
-    (function(){
-      var reviews=[
-        {name:"Alex M.",text:"Perfect for quick breaks between classes. Snake and 2048 are my go-to!",game:"Snake",avatar:"👨‍🏫",daysAgo:2,verified:true},
-        {name:"Sarah K.",text:"Finally a gaming site that works on my Chromebook! No blocked games here.",game:"2048",avatar:"&#128105;&#8205;&#128187;",daysAgo:5,verified:true},
-        {name:"James R.",text:"Love that there's no sign-up needed. Just click and play. The Sudoku is really well made!",game:"Sudoku",avatar:"&#128104;&#8205;&#128188;",daysAgo:7,verified:true},
-        {name:"Emily T.",text:"My kids play here all the time. Safe, no popup ads, and great puzzle games.",game:"Color Sort",avatar:"&#128105;&#8205;&#128119;",daysAgo:12,verified:true},
-        {name:"Mike D.",text:"The Game of the Day feature keeps me coming back. Always something new!",game:"Tetris",avatar:"&#127918;",daysAgo:18,verified:true}
-      ];
-      function _gzRelTime(days){
-        if(days===0)return 'today';
-        if(days===1)return 'yesterday';
-        if(days<7)return days+' days ago';
-        if(days<14)return '1 week ago';
-        if(days<30)return Math.floor(days/7)+' weeks ago';
-        return Math.floor(days/30)+' months ago';
-      }
-      var grid=document.getElementById('gz-review-grid');
-      if(!grid)return;
-      var shuffled=reviews.sort(function(){return 0.5-Math.random()});
-      shuffled.forEach(function(r){
-        var card=document.createElement('div');
-        card.style.cssText='background:linear-gradient(135deg,#1a1a2e,#1a1a3e);border:1px solid #2a2a4a;border-radius:14px;padding:16px;transition:border-color .3s';
-        card.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:1.6em">'+r.avatar+'</span><div style="flex:1;min-width:0"><div style="color:#fff;font-weight:600;font-size:.9em;display:flex;align-items:center;gap:4px">'+r.name+(r.verified?'<span title="Verified player" aria-label="Verified player" style="color:#4ecdc4;font-size:.85em;display:inline-flex;align-items:center">✓</span>':'')+'</div><div style="color:#888;font-size:.72em;display:flex;align-items:center;gap:4px"><span style="color:#4ecdc4">plays '+r.game+'</span> · <time datetime="'+_gzRelTime(r.daysAgo)+'">'+_gzRelTime(r.daysAgo)+'</time></div></div></div><div style="color:#b8b8c8;font-size:.85em;line-height:1.5">"'+r.text+'"</div>';
-        grid.appendChild(card);
-      });
-    })();
-    </script>
-
     <div class="gz-social-share" style="max-width:900px;margin:20px auto;text-align:center;padding:15px;background:linear-gradient(135deg,#1a1a3e,#2d1b69);border-radius:12px">
       <p style="color:#fff;font-weight:600;margin-bottom:10px">📢 Share GameZipper with friends!</p>
       <button id="gz-native-share" style="display:none;padding:8px 20px;background:linear-gradient(135deg,#4ecdc4,#45b7d1);color:#000;border:none;border-radius:20px;font-weight:700;cursor:pointer;font-size:0.9em;margin:4px;touch-action:manipulation">📤 Share</button>
@@ -2224,7 +2192,7 @@ window.gzPopupRelease=function(id){if(window.__gzPopupLock.owner===id)window.__g
   if(msg&&window.gzPopupAcquire&&window.gzPopupAcquire('wb')){txt.textContent=msg;el.style.display='block';setTimeout(function(){el.style.display='none';window.gzPopupRelease('wb')},30000)}
 })();
 </script>
-<script src="/gz-analytics.js?v=202611161840" defer fetchpriority="low" crossorigin></script>
+<script src="/gz-analytics.js?v=20261117realdata" defer fetchpriority="low" crossorigin></script>
 
 <!-- Web Vitals RUM: LCP/CLS/INP/TTFB → analytics beacon -->
 <!-- 2026-06-07 20h P1 fix: restore IIFE wrap + s() definition (lost in e6f9cf35 dead-code cleanup) -->
@@ -3067,8 +3035,6 @@ if('serviceWorker' in navigator){
 </script>
 
 <script>
-// Dynamic date for header "Updated" badge (replaces parser-blocking document.write)
-(function(){var el=document.querySelector("#gz-updated-date .gz-date-text");if(el)el.textContent=new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})})();
 // UX-OPT: Streak counter — tracks consecutive days of visits to drive return engagement
 (function(){
   try{
@@ -3914,8 +3880,7 @@ if(d){d.style.display='block';setTimeout(function(){gzDismissOnboarding()},8000)
   var sectionSelectors=[
     {id:'gz-main',label:'Games'},
     {id:'gz-trending-section',label:'Trending'},
-    {id:'gz-gotd',label:'Game of Day'},
-    {id:'gz-reviews',label:'Reviews'}
+    {id:'gz-gotd',label:'Game of Day'}
   ];
   if(dotsContainer){
     var visibleSections=sectionSelectors.filter(function(s){
