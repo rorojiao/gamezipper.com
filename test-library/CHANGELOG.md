@@ -1,3 +1,24 @@
+## [v1.299.0] - 2026-11-18
+
+### Added - 7 new machine-verifiable test cases (R416, 4h cycle 178)
+
+1. **S-566** [P1] Chrome 158 desktop stable GA (Nov 17): 158.0.8127.36/.37, 204 fixes; measured severity shape 6C/62H/82M/54L with 4/6 criticals on GPU/ANGLE/Media/WebAudio; loose-scan CVE-token parity 204/204 holds; same-day ES 156.0.8078.108/.109 with inverted 3C/70H/5M/1L and computed 15/204 overlap (cohort non-subset re-confirmed); Android 158.0.8127.42 suffix divergence; per-channel floor maps + WebAudio-UAF audio-stress fixture; AI-fuzz reporter cohort ledger note
+2. **S-567** [P1] MFSA 2026-130 Firefox 160.0.1 dot release (announced Nov 17, impact high): CVE-2026-130020 CanvasWebGL Android privilege escalation + CVE-2026-130021 Audio/Video Playback UAF; dot-floor 160.0 vs 160.0.1 UA probe; twice-weekly MFSA-index-max cadence (index +269 B was the only surface signal); mfsa2026-129 = Thunderbird 153.7 no web surface
+3. **B-613** [P2] FF161 second drift wave (MDN 160,080 -> 162,244 B): CSS random() + <random-key> (snapshot-hazard rule: determinism-asserted surfaces must not use CSS random(); same-key coherence probe), NavigationTransition.to (navigateerror attribution, completes W-656 matrix), cross-document view transitions + blocking="render" Nightly-default flips (W-626 graduation drift; first-wave items already B-612, WebTransport already W-643)
+4. **W-660** [P2] WebKit "Introducing spatial CSS: A developer preview" (blog 18621, Nov 16, visionOS Safari 27.3): spatial:portal / portal model transforms / position-anchor / @environment-map / portal-action:orbit / requestVolumetricScene(); gated by Settings>Apps>Safari>Advanced>Feature flags>CSS Portals; flag-off zero-error-cascade + cross-engine no-leak probes; <model> baseline deduped (B-248/W-426)
+5. **P-262** [P1] Android 17 jank family: DeliQueue OS-scheduler regression hitting casual titles on Pixel 8/9/10 (androidheadlines full-text verbatim) + Pixel 11 ANGLE-default state-transition microstutter (androidauthority media-tested: first-seen effects = jank signature, native-GL switch worst-frame <100ms) + PUBGMobile SMS interruption one-minute collapse (user-reported); contract = Android long-session FPS sampler with build+GL-path tagging, first-use transition budget with loading-screen warmup, bounded interruption recovery gate, OS-cohort attribution discipline
+6. **A-104** [P1] Touch selection-stickiness & gesture-disambiguation contract (r/slaythespire mobile threads verbatim): down=preview/up=commit/drag-out=cancel state machine, empty-tap deselect required, displacement-threshold tap-vs-scroll classifier (scripted CDP fixtures), long-press-confirm/undo for destructive commits (vendor setting existence), bottom system-gesture inset drag-origin cancel; library baseline mis-tap/mispick = 0
+7. **A-105** [P2] WebHID GA on Android Chrome 158 via csl158 (first cycle resolving Release 158): Android 17/API-37-ONLY + WebView-EXCLUDED ("no device chooser UI") three-axis cohort gate; navigator.hid matrix (Android >=158 x OS >=17 x non-wv), getDevices [] pre-permission, activation-gated requestDevice; distinct from W-489 (Chrome 154 specialized-devices flag)
+
+### Re-probe / dedup ledger (R416)
+
+- csl158 14-feature dedup audit: 13/14 already minted (B-400/B-401/B-402/P-251/W-623/W-617/W-618/B-412/B-316-line/W-449/B-419); sole new = WebHID-Android -> A-105. Edge web-platform/158 live (78,536 B) 1:1 deduped to W-623. Flagged "Opening links in a split tab" + Direct Sockets SSM = ledger-only.
+- developer.chrome.com/release-notes/158 STILL 404 (76,886 B soft-404 body) at GA: csl mirror is the only 158 feature-text source; W-654 hygiene rule: hunt version N features only when the mirror title resolves Release N.
+- Edge stable table newest 157.0.4341.60 (76,131 B); Edge 158 GA ETA Nov 19 TOMORROW -> next cycle mints the 158 first-build floor + S-473 fork re-probe if 176.x ships. WebView2 Preview Runtime 158.0.4370.1 (Nov 5) ledger note.
+- Chrome RSS 939,217 B new baseline (feed window widened); Nov 18 Chrome Beta for Android 159.0.8154.18 ledger-only. MFSA index 400,297 B (+269 B) max mfsa2026-130. MDN FF162 154,759 B (+2 B, no drift). WebKit blog: no new TP (256 still newest); HomeView deduped C-295.
+- Non-minted with dedup held: Skullgirls recommended-devices (P-260/P-261), Arm hidden-perf-post (P-248 family), unstar claim-latency/confirmation-dialog complaints (A-104 + existing reward-undo coverage).
+- Required broad query coverage (per the 5-mandated-strings validator): (1) HTML5 game testing -> P-262 + A-104 + S-566 parity scan; (2) browser game bug report -> S-566/S-567/P-262; (3) Chrome Edge Safari update -> S-566 + A-105 mirror flip + Edge 158 ETA ledger + W-660; (4) casual game UX complaint -> A-104 + W-660; (5) mobile game performance -> P-262 + A-105 standing on P-252/P-256/P-259/P-261.
+
 ## [v1.298.0] - 2026-11-17
 
 ### Added - 10 new machine-verifiable test cases (R415, 4h cycle 177)
