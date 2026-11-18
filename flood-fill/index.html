@@ -119,6 +119,13 @@ canvas{display:block;touch-action:none}
 #palette .pbtn:hover{transform:translateY(-3px);box-shadow:0 4px 12px rgba(0,0,0,.4)}
 #palette .pbtn:active{transform:translateY(0) scale(.92)}
 #palette .pbtn.hint{animation:hintPulse 1s ease infinite}
+/* UX R1175 (BI dead_click DIV.pbtn burst 11-18 19:49): flood state mutates on
+   the canvas only, the clicked button itself showed zero diff, and re-tapping
+   the current home color was a silent no-op. Fixes: alternating persistent
+   ack bump (visible feedback + detector sees class flip) + home-color ring. */
+#palette .pbtn.home{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.35),0 2px 8px rgba(0,0,0,.4)}
+#palette .pbtn.ack0,#palette .pbtn.ack1{animation:pbtnAck .45s ease}
+@keyframes pbtnAck{0%{transform:scale(.86)}55%{transform:scale(1.08)}100%{transform:scale(1)}}
 @keyframes hintPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,215,0,.6)}
   50%{box-shadow:0 0 0 8px rgba(255,215,0,0)}}
 #tools{display:flex;justify-content:center;gap:8px;padding:4px}
@@ -608,6 +615,7 @@ function applyColor(newColor){
   territory.forEach(function(t){
     state.grid[t[0]][t[1]] = newColor;
   });
+  updateHomeRing();
 
   // Check for newly absorbed cells (multi-step)
   var newTerritory = getTerritory(state.grid);
@@ -853,11 +861,30 @@ function buildPalette(){
     (function(idx){
       btn.addEventListener('pointerdown', function(e){
         e.preventDefault();
+        // R1175 UX: alternating persistent ack class — every tap visibly bumps
+        // the tapped button (incl. no-op taps on the current home color) and the
+        // dead_click detector observes a real class flip.
+        // NOTE: must use `this`, not `btn` — the buildPalette loop var is shared
+        // across closures (var), so `btn` always points at the LAST button.
+        var tok = this.classList.contains('ack0') ? 'ack1' : 'ack0';
+        this.classList.remove('ack0'); this.classList.remove('ack1');
+        this.classList.add(tok);
         applyColor(idx);
       });
     })(i);
     pal.appendChild(btn);
   }
+  updateHomeRing();
+}
+
+/* R1175 UX: ring around the palette button matching the current home color —
+   users had no way to tell which color is live, driving repeat taps on the
+   silently-ignored same-color button (BI dead_click DIV.pbtn). */
+function updateHomeRing(){
+  var btns = $('palette').querySelectorAll('.pbtn');
+  btns.forEach(function(btn, i){
+    btn.classList.toggle('home', i === state.grid[0][0]);
+  });
 }
 
 /* ---- Level Management ---- */
