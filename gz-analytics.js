@@ -713,6 +713,11 @@
           var snapClass = t.className.toString();
           var snapAria = t.getAttribute('aria-expanded') || '';
           var snapInline = t.getAttribute('style') || '';
+          // R1173: was the element actually visible at click time? (A click can
+          // only land on something the user could see; keep the fact explicit so
+          // the hidden-at-check exemption below can never mask a click that
+          // landed on an already-hidden element.)
+          var snapVisible = t.getClientRects().length !== 0;
           // After 1.5s, check if any state changed (= onclick worked = NOT dead)
           setTimeout(function(){
             if (location.pathname === P && Date.now() - clickedAt >= 1400) {
@@ -735,6 +740,13 @@
                  class family shipped by rounds R381-R1053; persistent state classes
                  (active/selected/open) are NOT exempted. */
               var _gzAckLive = /(?:^|\s)[\w-]*(?:pressed|press|tapped|clicked|ack|rej|shake|bump)[\w-]*(?:\s|$)/i;
+              /* R1173: homepage how-to-play steps ack with flash0/flash1
+                 (alternating so back-to-back clicks re-trigger the CSS anim).
+                 Token not in the R1056 family → BI 11-17 19:59 / DIV.gz-step
+                 flash0 + DIV.gz-step-i flash0 dead_click pair while the user
+                 had just watched both cards light up. Exact-token match so
+                 any control permanently NAMED flash* is unaffected mid-word. */
+              var _gzAckFlash = /(?:^|\s)flash\d*(?:\s|$)/;
               /* R1062 (2026-11-07): rebuild-detachment false positive.
                  Games whose handler rebuilds the DOM on every interaction
                  (tetravex updateTray()/showLevels() innerHTML=''; zen-garden
@@ -748,9 +760,27 @@
                  level-card + 4×tray-tile at 19:27:13; /zen-garden/ 1
                  level-card). isConnected=false ⇒ the click handler ran and
                  deliberately removed this element ⇒ the interaction was
-                 processed; a genuinely dead control always stays attached. */
+                 processed; a genuinely dead control always stays attached.
               if (!stateChanged && !t.isConnected) {
                 return; // node was rebuilt away by a working handler — alive
+              } */
+              /* R1173 (2026-11-18): generalized the R1062 exemption to
+                 hidden-not-detached. The R1172 dismiss-by-card-click pattern
+                 (overlay/dialog closes via PARENT classList.remove('show') →
+                 display:none): the clicked card node stays CONNECTED with an
+                 unchanged className, yet the user watched the whole dialog
+                 vanish — a genuinely visible outcome the className diff can
+                 never see. BI proof of the underlying demand: /nuritwin/
+                 DIV.overlay-card dead_click ×14 (11-17 19:39 + 11-18 03:18 +
+                 11-18 07:26 arrival batches, ALL pre-R1172 deploy 13:24 GMT).
+                 getClientRects()==0 at check time while visible at click time
+                 ⇒ the handler hid the subtree ⇒ interaction processed. A
+                 genuinely dead control stays visible. Covers win/settings/
+                 level/title overlays on nuritwin + the gz-ob-card family +
+                 every future dismiss-by-class-toggle page, one file, no
+                 per-page ack needed. */
+              if (!stateChanged && (!t.isConnected || (snapVisible && t.getClientRects().length === 0))) {
+                return; // rebuilt away OR hidden by a working handler — alive
               }
               /* R1121 (2026-11-09): decorative card-face exemption. BI /blackjack/
                  11-07 20:37 + 02:14: DIV.card-front dead_click ×3 — the .card /
@@ -762,7 +792,7 @@
                  front/back) keeps any real card-tap game (slap games) covered. */
               var _gzDecorCard = /(?:^|[\s.\-])card[\s\-]?(?:front|back|face)(?:$|[\s.\-])/i;
               if (_gzDecorCard.test(sel)) return;
-              if (!stateChanged && !_gzAckLive.test(snapClass)) {
+              if (!stateChanged && !_gzAckLive.test(snapClass) && !_gzAckFlash.test(snapClass)) {
                 ps('dead_click', { u: P, sel: sel });
               }
             }
