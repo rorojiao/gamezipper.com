@@ -1750,7 +1750,10 @@ function winLevel(){
     ls.jumps = game.jumps;
   }
   // Unlock next level
-  const idx = game.world*5 + game.level + 1;
+  // R1170 P2 fix: off-by-one — unlocked counts playable tiles (1 = tile0). Cleared
+  // tile k must raise unlocked to k+2, otherwise the next tile stays locked in level
+  // select even after being beaten (verified live: win L1 -> unlocked stayed 1).
+  const idx = game.world*5 + game.level + 2;
   if(idx > game.save.unlocked && idx <= 30) game.save.unlocked = idx;
   saveProgress();
   // Show modal
@@ -2496,6 +2499,19 @@ function togglePause(){
    UI WIRING
    ============================ */
 function initUI(){
+  // R1170: BI dead_click x106 on DIV.modal-card — card/backdrop clicks were silent no-ops.
+  // Advance each modal's primary action on card-background or backdrop click (same pattern
+  // as R1169 stickman-swing overlay backdrop). Reset modal maps to safe Cancel, never confirm.
+  var PRIMARY={'death-modal':'btn-retry','win-modal':'btn-win-next','pause-modal':'btn-resume','settings-modal':'btn-settings-close','reset-modal':'btn-reset-cancel'};
+  Object.keys(PRIMARY).forEach(function(id){
+    var screen=document.getElementById(id);
+    if(!screen)return;
+    screen.addEventListener('click',function(e){
+      if(e.target.closest('button,input,.toggle'))return;
+      var pb=document.getElementById(PRIMARY[id]);
+      if(pb)pb.click();
+    });
+  });
   // Menu buttons
   document.getElementById('btn-play').addEventListener('click', () => {
     sfxClick(); showScreen('levels'); buildLevelSelect();

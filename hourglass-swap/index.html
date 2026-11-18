@@ -57,6 +57,8 @@ canvas{display:block;margin:0 auto;touch-action:none}
 .lvl-btn{aspect-ratio:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-weight:700;font-size:18px;transition:all .15s;color:#eee;position:relative}
 .lvl-btn:active{transform:scale(.92)}
 .lvl-btn.locked{opacity:.3;cursor:not-allowed}
+@keyframes shakeX{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.lvl-btn.locked-shake{animation:shakeX 0.4s ease}
 .lvl-btn.completed{background:rgba(218,165,32,.15);border-color:rgba(218,165,32,.3);color:#f4a460}
 .lvl-btn .mini-stars{font-size:9px;position:absolute;bottom:4px}
 .lvl-btn.perfect{border-color:rgba(255,215,0,.6);box-shadow:0 0 8px rgba(255,215,0,.2)}
@@ -224,7 +226,11 @@ var rafId=null,timers=[];
 // ==================== CANVAS SIZE ====================
 function resize(){
   var w=Math.min(window.innerWidth,600);
-  var h=window.innerHeight;
+  // R1170 P2 (mobile UI reservation): canvas was sized to full innerHeight while sitting
+  // ~74px below #gz-ad-above-game; bottom bar (Start/Hint hit zones) fell below the fold
+  // and html,body has touch-action:none so touch users could not scroll to it.
+  var top=(canvas.getBoundingClientRect().top+window.scrollY)||0;
+  var h=Math.max(360,window.innerHeight-top);
   var dpr=window.devicePixelRatio||1;
   canvas.width=w*dpr;canvas.height=h*dpr;
   canvas.style.width=w+'px';canvas.style.height=h+'px';
@@ -767,6 +773,14 @@ function buildLevelGrid(){
         sfxClick();initAudio();startBGM();
         loadLevel(i);state.screen='game';
         document.getElementById('level-overlay').classList.add('hidden');
+      });
+    }else{
+      // R1170: BI dead_click x97 on DIV.lvl-btn.locked — silent no-op. R1165 pattern:
+      // always-on handler with shake + low SFX + toast naming the gate.
+      btn.addEventListener('click',function(){
+        initAudio();playTone(180,0.09,'square',0.08);
+        btn.classList.remove('locked-shake');void btn.offsetWidth;btn.classList.add('locked-shake');
+        showToast('Clear Level '+lv.id+' first');
       });
     }
     grid.appendChild(btn);

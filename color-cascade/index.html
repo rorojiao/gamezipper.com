@@ -58,6 +58,8 @@ canvas{display:block;position:absolute;top:0;left:0}
 .level-btn.unlocked{border-color:#0af;background:rgba(0,150,255,.1)}
 .level-btn.unlocked:hover{background:rgba(0,150,255,.25);transform:scale(1.08)}
 .level-btn.locked{opacity:.4;cursor:default}
+@keyframes shakeX{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.level-btn.locked-shake{animation:shakeX 0.4s ease}
 .level-btn .mini-stars{font-size:clamp(8px,1.5vw,11px);margin-top:2px}
 .tutorial-overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:100;transition:opacity .3s}
 .tutorial-overlay.hidden{opacity:0;pointer-events:none}
@@ -449,8 +451,14 @@ const ld=this.save.levels[i+1];
 const unlocked=i===0||(this.save.levels[i]&&this.save.levels[i].done);
 const stars=ld?ld.stars:0;
 let sh="";for(let s=0;s<3;s++)sh+=`<span style="color:${s<stars?'#fc0':'#333'}">★</span>`;
-g.innerHTML+=`<div class="level-btn ${unlocked?'unlocked':'locked'}" ${unlocked?`onclick="G.startLevel(${i+1})"`:''}>${i+1}<div class="mini-stars">${sh}</div></div>`;
+g.innerHTML+=`<div class="level-btn ${unlocked?'unlocked':'locked'}" onclick="${unlocked?`G.startLevel(${i+1})`:`G.lockedTap(this)`}">${i+1}<div class="mini-stars">${sh}</div></div>`;
 }
+},
+lockedTap(el){
+// R1170: BI dead_click x122 on DIV.level-btn.locked — locked tiles were silent no-ops.
+// Same class as R1165 kakuro/hex-minesweeper: give shake + click SFX feedback.
+try{G.audio.tone(180,.09,"square",.08);}catch(e){}
+el.classList.remove("locked-shake");void el.offsetWidth;el.classList.add("locked-shake");
 },
 startLevel(n){
 this.levelIdx=n;this.state="playing";this.paused=false;

@@ -430,6 +430,12 @@ function render(){
   drawEndpoint(G.start[0],G.start[1],'#5fdc8a','S');
   drawEndpoint(G.goal[0],G.goal[1],'#ffd166','G');
   // hover edge highlight
+  if(G.denyFlash&&performance.now()-G.denyFlash.t<400){
+    var dfc=cellCenter(G.denyFlash.cell[0],G.denyFlash.cell[1]);
+    var dfa=0.5*(1-(performance.now()-G.denyFlash.t)/400);
+    ctx.fillStyle='rgba(255,80,80,'+dfa.toFixed(3)+')';
+    ctx.fillRect(dfc[0]-CELL/2,dfc[1]-CELL/2,CELL,CELL);
+  }
   if(G.hover){drawHover();}
   // particles
   drawParticles();
@@ -534,7 +540,15 @@ function edgeFromPoint(px,py){
 function toggleSeg(a,b){
   var k=segKey(a,b);
   // don't allow placing on blocker clue cells
-  if(G.clueMap[a[0]+','+a[1]]||G.clueMap[b[0]+','+b[1]])return;
+  if(G.clueMap[a[0]+','+a[1]]||G.clueMap[b[0]+','+b[1]]){
+    // R1170: BI dead_click x92 — walls touching blocker clue cells were silently
+    // rejected. Give low SFX + red flash on the blocker so "why" is visible (R1165 pattern).
+    sfx('error');
+    var bl=G.clueMap[a[0]+','+a[1]]?a:b;
+    G.denyFlash={cell:bl,t:performance.now()};
+    render();
+    return;
+  }
   if(G.segs[k]){delete G.segs[k];G.undoStack.push({type:'del',k:k});sfx('erase');}
   else{G.segs[k]=true;G.undoStack.push({type:'add',k:k});sfx('place');burst(cellCenter((a[0]+b[0])/2,(a[1]+b[1])/2)[0],cellCenter((a[0]+b[0])/2,(a[1]+b[1])/2)[1],'rgba(160,200,255,0.8)',3);}
   render();
@@ -545,6 +559,11 @@ function handlePointer(e,isMove){
   var edge=edgeFromPoint(px,py);
   if(isMove){G.hover=edge;render();return;}
   if(edge){toggleSeg(edge.a,edge.b);}
+  else if(G.screen==='game'&&performance.now()-(G._tapSfxT||0)>700){
+    // R1170: BI dead_click/rage_click — taps in canvas padding/outside grid were
+    // silent no-ops; give throttled low SFX so the tap is acknowledged.
+    G._tapSfxT=performance.now();sfx('click');
+  }
 }
 function onPointerDown(e){e.preventDefault();ensureAudio();handlePointer(e,false);}
 function onPointerMove(e){if(G.screen==='game')handlePointer(e,true);}
