@@ -351,6 +351,10 @@ function getGameH(){ return window.innerHeight - 28 - getFooterH(); }
 let W = canvas.width = window.innerWidth;
 let H = canvas.height = getGameH();
 window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = getGameH(); layoutDisc(); });
+// R1174: game-footer is lazy-injected ~10-15s after init, so H was computed with footerH=0 and the
+// canvas bottom (incl. knife launch strip) overflowed the first viewport by ~64px on mobile.
+// Re-fit once the footer appears (known lazy-injection lesson: kuroclone R1 canvas-reservation).
+(function watchFooter(){ if(document.getElementById('game-footer')){ var nh=getGameH(); if(Math.abs(nh-H)>8){ W=canvas.width=window.innerWidth; H=canvas.height=nh; layoutDisc(); } return; } setTimeout(watchFooter,500); })();
 // R276: poll for game-footer appearance and re-resize
 (function(){var c=setInterval(function(){var f=document.getElementById('game-footer');if(f&&f.offsetHeight>0){H=canvas.height=getGameH();layoutDisc();clearInterval(c);}},2000);setTimeout(function(){clearInterval(c);},30000);})();
 
