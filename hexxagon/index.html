@@ -867,7 +867,13 @@ function endGame(){
 function handleBoardClick(px,py){
   if(gameOver||aiThinking||turn!==HUMAN) return;
   const cell=pixelToCell(px,py);
-  if(!cell) return;
+  if(!cell){
+    // R1172 BI: rage_click on CANVAS dead zones (hex-corner margins, e.g. x=187 y=358-435,
+    // x=640 y=514) were completely silent — acknowledge with a throttled hint toast.
+    const now=Date.now();
+    if(now-(window.__hexDeadAck||0)>1500){ window.__hexDeadAck=now; toast('Tap one of your blue pieces, then a destination'); sfxInvalid(); }
+    return;
+  }
   const k=key(cell.q,cell.r);
   initAudio();
   // if a destination was chosen
