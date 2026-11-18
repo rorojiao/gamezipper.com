@@ -60,7 +60,11 @@ const smMissing = liveSlugs.filter(s => !smSet.has(s));
 // sitemap entry survived the R2 dedup. That is detectable precisely: the dir
 // exists, is NOT a known static page, and its URL is NOT live.
 const STATIC_PAGES = new Set(['blog', 'contact', 'cookie-policy', 'terms', 'fun-web-games', 'zh',
-  'sitemap', 'embed-games', 'publisher-partner', 'about', 'index', 'rss', 'sitemap.xml']);
+  'sitemap', 'embed-games', 'publisher-partner', 'about', 'index', 'rss', 'sitemap.xml',
+  // R406: moderated wish-wall page (commit 90f82b6933, 2026-11-18) — a legit
+  // non-game sitemap entry that carries <script>, so the shape heuristic
+  // flags it. It is a static page: not in GAMES, no canvas gameplay.
+  'wishes']);
 const smExtra = [...smSet].filter(s => {
   if (liveSet.has(s)) return false;
   if (!/^[a-z0-9-]+$/.test(s)) return false;      // not a game-slug shape (category pages etc.)
