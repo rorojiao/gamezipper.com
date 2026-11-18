@@ -285,7 +285,8 @@ async function deliverWishEmail(env, wish) {
     return status;
   };
 
-  if (!env.RESEND_API_KEY || !env.WISH_EMAIL_TO || !env.WISH_EMAIL_FROM) {
+  const hasCustomSender = typeof env.WISH_EMAIL_SENDER === 'function';
+  if ((!hasCustomSender && !env.RESEND_API_KEY) || !env.WISH_EMAIL_TO || !env.WISH_EMAIL_FROM) {
     return updateStatus('not_configured');
   }
 
@@ -312,6 +313,16 @@ async function deliverWishEmail(env, wish) {
     + '</body></html>';
 
   try {
+    if (hasCustomSender) {
+      const result = await env.WISH_EMAIL_SENDER({
+        from: env.WISH_EMAIL_FROM,
+        to: env.WISH_EMAIL_TO.split(',').map(value => value.trim()).filter(Boolean),
+        subject,
+        text,
+        html,
+      });
+      return updateStatus('sent', result && typeof result.id === 'string' ? result.id : '');
+    }
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -531,7 +542,7 @@ async function listAdminWishes(request, env, url) {
       added: Number(stats.added || 0),
       emailFailed: Number(stats.email_failed || 0),
     },
-    emailConfigured: Boolean(env.RESEND_API_KEY && env.WISH_EMAIL_TO && env.WISH_EMAIL_FROM),
+    emailConfigured: Boolean((env.RESEND_API_KEY || typeof env.WISH_EMAIL_SENDER === 'function') && env.WISH_EMAIL_TO && env.WISH_EMAIL_FROM),
   });
 }
 
