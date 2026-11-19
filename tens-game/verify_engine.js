@@ -81,19 +81,70 @@ function safeCellFor(v, preferred, exclude) {
   return null;
 }
 /* burn a turn: place any current choice somewhere safe (never in `exclude` — those
- * cells are reserved for the move being staged) until choices contain `want` */
+ * cells are reserved for the move being staged); if no non-clearing cell remains,
+ * fall back to a CLEARING placement (real play frees space this way — a fill-only
+ * burn saturates the 25-cell board and can no longer reach the complement).
+ * `want` is absent from choices here, so a clearing burn can never consume a staged tile. */
+function burnAny(label, exclude, opts) {
+  const ch = choicesArr();
+  const gA = gridArr();
+  const preferClear = !!(opts && opts.preferClear);
+  const noClear = !!(opts && opts.noClear);
+  const banClear = new Set(((opts && opts.banClear) || []).map(p => p[0] + ',' + p[1]));
+  const reserve = new Set((exclude || []).map(p => p[0] + ',' + p[1]));
+  const empty = [];
+  for (let r = 0; r < GS; r++) for (let c = 0; c < GS; c++) {
+    if (gA[r][c] !== 0) continue;
+    if (reserve.has(r + ',' + c)) continue;
+    empty.push([r, c]);
+  }
+  /* a clearing placement must not consume a reserved tile (pair partner) nor sit
+   * in a column that compaction would shift reserved tiles in; pass 1 fills, pass 2 clears.
+   * NOTE: the engine bottom-compacts ALL columns on any clear (verified 2026-11-19),
+   * so staged scenarios must use noClear waits and hygiene must pre-clear staging columns. */
+  function safeClearAt(r, c, v) {
+    const want = 10 - v;
+    for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+      const rr = r + dr, cc = c + dc;
+      if (rr < 0 || rr >= GS || cc < 0 || cc >= GS) continue;
+      if (gA[rr][cc] === want && reserve.has(rr + ',' + cc)) return false;
+    }
+    return true;
+  }
+  const passes = noClear ? [false] : (preferClear ? [true, false] : [false, true]);
+  for (const clearingPass of passes) {
+    for (let i = 0; i < ch.length; i++) {
+      for (const [r, c] of empty) {
+        if (clearingPass && (banClear.has(r + ',' + c) || !safeClearAt(r, c, ch[i]))) continue;
+        if (makesClear(gA, r, c, ch[i]) !== clearingPass) continue;
+        selectChoice(i);
+        if (place(r, c, ch[i]) !== null) continue;
+        if (settle(label) === null) return true;
+      }
+    }
+  }
+  return false;
+}
+/* fill-only wait: clearing during a staged wait would gravity-shift the staged
+ * tiles (global compaction), so waits never clear; hygiene phases keep room. */
 function waitChoiceValue(want, label, exclude) {
   for (let t = 0; t < 70; t++) {
     const ch = choicesArr();
     const idx = ch.indexOf(want);
     if (idx >= 0) { selectChoice(idx); return true; }
-    selectChoice(0);
-    const cell = safeCellFor(ch[0], null, exclude);
-    if (!cell) return false;
-    const e = place(cell[0], cell[1], ch[0]); if (e) return false;
-    const s = settle(label); if (s) return false;
+    if (!burnAny(label, exclude, { noClear: true })) return false;
   }
   return false;
+}
+/* non-clearing placements only as choice-reroll filler. `banClear` = cells whose
+ * clear would gravity-shift reserved staging cells (engine compacts all columns). */
+function belowReserveBan(reserve) {
+  const byCol = {};
+  for (const [r, c] of (reserve || [])) byCol[c] = Math.min(byCol[c] === undefined ? GS : byCol[c], r);
+  const ban = [];
+  for (const c of Object.keys(byCol))
+    for (let r = byCol[c] + 1; r < GS; r++) ban.push([r, +c]);
+  return ban;
 }
 
 /* ---------- boot A ---------- */
@@ -140,6 +191,34 @@ T('tutorial-close', !els['tutorial-modal'].classList.contains('visible'));
   }
 }
 
+/* pre-B hygiene: B stages column 0 and must land on an empty column with room for
+ * a fill-only complement wait. Clear debris (including in col0), filler never in col0. */
+{
+  for (let h = 0; h < 80; h++) {
+    const gA = gridArr();
+    const colEmpty = gA.every(row => row[0] === 0);
+    const empt = gA.flat().filter(v => v === 0).length;
+    if (colEmpty && empt >= 14) break;
+    const ch = choicesArr();
+    const empty = [];
+    for (let r = 0; r < GS; r++) for (let c = 0; c < GS; c++) if (gA[r][c] === 0) empty.push([r, c]);
+    let acted = false;
+    for (const pass of [true, false]) {
+      if (acted) break;
+      for (let i = 0; i < ch.length && !acted; i++) {
+        for (const [r, c] of empty) {
+          if (!pass && c === 0) continue; /* filler never enters B's staging column */
+          if (makesClear(gA, r, c, ch[i]) !== pass) continue;
+          selectChoice(i);
+          if (place(r, c, ch[i]) !== null) continue;
+          if (settle('preB-hyg') === null) { acted = true; break; }
+        }
+      }
+    }
+    if (!acted) break;
+  }
+}
+
 /* scenario B: corruption regression — column stack, clear bottom pair, gravity drops p3 into placed cell */
 {
   const RES = [[4, 0]]; /* reserved: the complement slot */
@@ -173,18 +252,18 @@ T('tutorial-close', !els['tutorial-modal'].classList.contains('visible'));
   }
   if (okAll) {
     const y = vals[3];
-    const got = waitChoiceValue(10 - y, 'B-comp', RES);
+    const got = waitChoiceValue(10 - y, 'B-comp', RES.concat([[0, 0], [1, 0], [2, 0], [3, 0]]));
     T('corrupt-setup-ok', got, 'stack=' + JSON.stringify(vals));
     if (got) {
       selectChoice(choicesArr().indexOf(10 - y));
       tapCell(4, 0);
       const s = settle('B-clear');
       const gB = gridArr();
-      /* random burn tiles elsewhere can legally chain extra clears, so assert the
-       * engine-exact gravity INVARIANT (every column bottom-packed) + that the pair
-       * scored, not one exact layout */
+      /* placements may legally float anywhere (no support requirement); only
+       * CLEARED columns get gravity-compacted. Assert col0 is bottom-packed
+       * after the (3,0)+(4,0) clear and that the pair scored. */
       let packed = true;
-      for (let c = 0; c < GS; c++) for (let r = 0; r < GS - 1; r++) { if (gB[r][c] !== 0 && gB[r + 1][c] === 0) packed = false; } /* no tile floating above a hole */
+      for (let r = 0; r < GS - 1; r++) { if (gB[r][0] !== 0 && gB[r + 1][0] === 0) packed = false; } /* no tile floating above a hole in the cleared column */
       T('gravity-invariant', s === null && packed && g.call('__TG.score') >= 10,
         'packed=' + packed + ' score=' + g.call('__TG.score') + ' grid=' + JSON.stringify(gB));
       /* P2 regression: undo must be a no-op now (placed tile was cleared) */
@@ -196,15 +275,42 @@ T('tutorial-close', !els['tutorial-modal'].classList.contains('visible'));
   } else T('corrupt-setup-ok', false, 'stuck at ' + notes.join('; '));
 }
 
+/* board hygiene: scenarios A/B leave burn debris that can saturate the 25-cell board
+ * before scenario C stages its double pair. Clear-first (filler as reroll) until
+ * columns 0/1 are fully empty (any later clear compacts every column, so no debris
+ * may sit above the staging cells) and the board has room for a fill-only wait. */
+{
+  const STAGE = new Set(['0,1', '1,0', '1,1']);
+  for (let h = 0; h < 80; h++) {
+    const gA = gridArr();
+    const c01 = gA.every(row => row[0] === 0 && row[1] === 0);
+    const empt = gA.flat().filter(v => v === 0).length;
+    if (c01 && empt >= 14) break;
+    const ch = choicesArr();
+    const empty = [];
+    for (let r = 0; r < GS; r++) for (let c = 0; c < GS; c++) if (gA[r][c] === 0) empty.push([r, c]);
+    let acted = false;
+    for (const pass of [true, false]) {
+      if (acted) break;
+      for (let i = 0; i < ch.length && !acted; i++) {
+        for (const [r, c] of empty) {
+          if (!pass && (c === 0 || c === 1)) continue; /* filler never enters C's staging columns */
+          if (makesClear(gA, r, c, ch[i]) !== pass) continue;
+          selectChoice(i);
+          if (place(r, c, ch[i]) !== null) continue;
+          if (settle('hygiene') === null) { acted = true; break; }
+        }
+      }
+    }
+    if (!acted) break;
+  }
+}
+
 /* scenario C: one placement creating two pairs (bonus scoring) */
 {
   const RESC = [[1, 0], [1, 1]]; /* reserved: the two staging slots */
   function burnC() {
-    const ch = choicesArr();
-    const cell = safeCellFor(ch[0], null, RESC);
-    if (!cell) return null;
-    selectChoice(0); place(cell[0], cell[1], ch[0]);
-    return settle('C-burn') === null ? cell : null;
+    return burnAny('C-burn', RESC.concat([[0, 1]]), { noClear: true }) ? [0, 0] : null;
   }
   const v1 = (() => {
     for (let i = 0; i < 40; i++) {
@@ -236,7 +342,7 @@ T('tutorial-close', !els['tutorial-modal'].classList.contains('visible'));
     okC = e2 === null;
     if (!okC) T('double-pair-setup', false, 'e2=' + e2);
     if (okC) {
-      const okComp = waitChoiceValue(10 - tv, 'C4', RESC);
+      const okComp = waitChoiceValue(10 - tv, 'C4', RESC.concat([[0, 1]]));
       okC = okComp;
       if (!okComp) T('double-pair-setup', false, 'no complement for tv=' + tv);
       if (okComp) {
