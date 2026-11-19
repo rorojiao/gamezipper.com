@@ -187,7 +187,7 @@ var LEVELS=[{r:5,c:5,rg:[0,0,0,0,0,0,0,1,0,0,1,1,1,0,0,1,2,2,2,2,1,2,2,2,2],s:"0
 var PUZZLES=LEVELS.map(function(l){var clues={};for(var k in l.cl)clues[k]=l.cl[k];var rg=[];for(var i=0;i<l.r;i++){rg[i]=[];for(var j=0;j<l.c;j++)rg[i][j]=l.rg[i*l.c+j];}var sol=[];for(var i=0;i<l.r*l.c;i++)sol[i]=parseInt(l.s[i]);return{rows:l.r,cols:l.c,regions:rg,sol:sol,clues:clues,tier:Math.floor(LEVELS.indexOf(l)/6)};});
 var TIER_NAMES=["Beginner","Easy","Medium","Hard","Expert"];
 var TIER_TIMES=[60,90,150,210,300];
-var state={screen:"title",level:0,grid:null,regions:null,clues:null,sol:null,rows:5,cols:5,mode:"shade",hints:3,hintCells:{},timerStart:0,elapsed:0,timerRef:null,soundOn:true,musicOn:true,autoCheck:true,hoverR:-1,hoverC:-1,particles:[],lastTime:0,rafRef:null,audioCtx:null,bgmNodes:[],flashCells:{}};
+var state={screen:"title",level:0,grid:null,regions:null,clues:null,sol:null,rows:5,cols:5,mode:"shade",hints:3,hintCells:{},timerStart:0,elapsed:0,timerRef:null,soundOn:true,musicOn:true,autoCheck:true,hoverR:-1,hoverC:-1,particles:[],lastTime:0,rafRef:null,audioCtx:null,bgmNodes:[],flashCells:{},errFlash:{}};
 function getSave(){try{var d=localStorage.getItem("nuritwinV1");return d?JSON.parse(d):null;}catch(e){return null;}}
 function putSave(d){try{localStorage.setItem("nuritwinV1",JSON.stringify(d));}catch(e){}}
 function initSave(){var s=getSave();if(!s)s={v:1,levels:[],best:[],sfx:true,music:true,autoCheck:true};while(s.levels.length<PUZZLES.length)s.levels.push(0);while(s.best.length<PUZZLES.length)s.best.push(0);if(s.sfx===undefined)s.sfx=true;if(s.music===undefined)s.music=true;if(s.autoCheck===undefined)s.autoCheck=true;return s;}
@@ -197,7 +197,7 @@ function startLevel(idx){
   state.level=idx;var p=PUZZLES[idx];state.rows=p.rows;state.cols=p.cols;state.regions=p.regions;state.sol=p.sol;state.clues=p.clues;
   state.grid=[];for(var r=0;r<p.rows;r++){state.grid[r]=[];for(var c=0;c<p.cols;c++)state.grid[r][c]=0;}
   // Pre-fill clue cells as unshadable? No - clues are just indicators. Cells start empty.
-  state.hints=3;state.hintCells={};state.elapsed=0;state.timerStart=Date.now();
+  state.hints=3;state.hintCells={};state.errFlash={};state.elapsed=0;state.timerStart=Date.now();
   clearTimer();state.timerRef=setInterval(function(){state.elapsed=(Date.now()-state.timerStart)/1000;document.getElementById('timerLabel').textContent=fmtTime(state.elapsed);},500);
   document.getElementById('lvlLabel').textContent=(idx+1)+"/30";
   document.getElementById('tierLabel').textContent=TIER_NAMES[p.tier];
@@ -258,11 +258,15 @@ function drawBoard(){var canvas=document.getElementById('board');var ctx=canvas.
   for(var i=0;i<viol.length;i++){var v=viol[i];ctx.strokeRect(v[1]*cs,v[0]*cs,2*cs,2*cs);}
   // flash cells
   for(var key in state.flashCells){var parts=key.split(',');var r=parseInt(parts[0]),c=parseInt(parts[1]);ctx.fillStyle='rgba(0,217,255,'+state.flashCells[key]+')';ctx.fillRect(c*cs,r*cs,cs,cs);}
+  // R1176: failed-Check offending cells flash red
+  for(var key in state.errFlash){var parts=key.split(',');var r=parseInt(parts[0]),c=parseInt(parts[1]);ctx.fillStyle='rgba(255,50,80,'+state.errFlash[key]+')';ctx.fillRect(c*cs,r*cs,cs,cs);}
   // particles
   for(var i=0;i<state.particles.length;i++){var p=state.particles[i];ctx.fillStyle=p.color;ctx.globalAlpha=p.life;ctx.fillRect(p.x-p.size/2,p.y-p.size/2,p.size,p.size);ctx.globalAlpha=1;}
 }
 
 function checkViolations(){var viol=[];for(var r=0;r<state.rows-1;r++)for(var c=0;c<state.cols-1;c++){if(state.grid[r][c]===1&&state.grid[r][c+1]===1&&state.grid[r+1][c]===1&&state.grid[r+1][c+1]===1)viol.push([r,c]);}return viol;}
+function flagErrBlocks(blocks){for(var b=0;b<blocks.length;b++)for(var i=0;i<blocks[b].length;i++)state.errFlash[blocks[b][i][0]+','+blocks[b][i][1]]=0.7;}
+function flagErrCells(cells){for(var i=0;i<cells.length;i++)state.errFlash[cells[i][0]+','+cells[i][1]]=0.7;}
 
 function getBlocksInRegion(rid){var cells=[];for(var r=0;r<state.rows;r++)for(var c=0;c<state.cols;c++)if(state.regions[r][c]===rid&&state.grid[r][c]===1)cells.push([r,c]);var visited={};var blocks=[];for(var i=0;i<cells.length;i++){var cell=cells[i];var key=cell[0]+','+cell[1];if(visited[key])continue;var comp=[cell];visited[key]=true;var stack=[cell];while(stack.length){var cur=stack.pop();for(var d=0;d<4;d++){var nr=cur[0]+[[-1,0],[1,0],[0,-1],[0,1]][d][0],nc=cur[1]+[[-1,0],[1,0],[0,-1],[0,1]][d][1];if(nr<0||nr>=state.rows||nc<0||nc>=state.cols)continue;var nk=nr+','+nc;if(visited[nk]||state.regions[nr][nc]!==rid||state.grid[nr][nc]!==1)continue;visited[nk]=true;comp.push([nr,nc]);stack.push([nr,nc]);}}blocks.push(comp);}return blocks;}
 
@@ -270,18 +274,18 @@ function checkSolution(silent){var p=PUZZLES[state.level];var allRegions={};for(
   // 1. no 2x2
   for(var r=0;r<state.rows-1;r++)for(var c=0;c<state.cols-1;c++){if(state.grid[r][c]===1&&state.grid[r][c+1]===1&&state.grid[r+1][c]===1&&state.grid[r+1][c+1]===1){if(!silent)playSfx('error');return false;}}
   // 2. each region has exactly 2 equal-size connected blocks
-  for(var rid in allRegions){var blocks=getBlocksInRegion(parseInt(rid));if(blocks.length!==2)return false;if(blocks[0].length!==blocks[1].length)return false;}
+  for(var rid in allRegions){var blocks=getBlocksInRegion(parseInt(rid));if(blocks.length!==2||blocks[0].length!==blocks[1].length){if(!silent){playSfx('error');flagErrBlocks(blocks);}return false;}}/* R1176 QA 2026-11-19: rules 2/3/4 failed silently on explicit Check => BI rage_click x3 on .btn; now error SFX + red flash of offending cells */
   // 3. all shaded connected across regions
-  var shaded=[];for(var r=0;r<state.rows;r++)for(var c=0;c<state.cols;c++)if(state.grid[r][c]===1)shaded.push([r,c]);if(shaded.length===0)return false;var visited={};visited[shaded[0][0]+','+shaded[0][1]]=true;var stack=[shaded[0]];while(stack.length){var cur=stack.pop();for(var d=0;d<4;d++){var nr=cur[0]+[[-1,0],[1,0],[0,-1],[0,1]][d][0],nc=cur[1]+[[-1,0],[1,0],[0,-1],[0,1]][d][1];if(nr<0||nr>=state.rows||nc<0||nc>=state.cols)continue;var nk=nr+','+nc;if(visited[nk]||state.grid[nr][nc]!==1)continue;visited[nk]=true;stack.push([nr,nc]);}}var visitedCount=0;for(var k in visited)visitedCount++;if(visitedCount!==shaded.length)return false;
+  var shaded=[];for(var r=0;r<state.rows;r++)for(var c=0;c<state.cols;c++)if(state.grid[r][c]===1)shaded.push([r,c]);if(shaded.length===0)return false;var visited={};visited[shaded[0][0]+','+shaded[0][1]]=true;var stack=[shaded[0]];while(stack.length){var cur=stack.pop();for(var d=0;d<4;d++){var nr=cur[0]+[[-1,0],[1,0],[0,-1],[0,1]][d][0],nc=cur[1]+[[-1,0],[1,0],[0,-1],[0,1]][d][1];if(nr<0||nr>=state.rows||nc<0||nc>=state.cols)continue;var nk=nr+','+nc;if(visited[nk]||state.grid[nr][nc]!==1)continue;visited[nk]=true;stack.push([nr,nc]);}}var visitedCount=0;for(var k in visited)visitedCount++;if(visitedCount!==shaded.length){if(!silent){playSfx('error');flagErrCells(shaded);}return false;}
   // 4. clue check
-  for(var key in state.clues){var parts=key.split(',');var r=parseInt(parts[0]),c=parseInt(parts[1]);var rid=state.regions[r][c];var blocks=getBlocksInRegion(rid);if(blocks.length!==2||blocks[0].length!==state.clues[key]||blocks[1].length!==state.clues[key])return false;}
+  for(var key in state.clues){var parts=key.split(',');var r=parseInt(parts[0]),c=parseInt(parts[1]);var rid=state.regions[r][c];var blocks=getBlocksInRegion(rid);if(blocks.length!==2||blocks[0].length!==state.clues[key]||blocks[1].length!==state.clues[key]){if(!silent){playSfx('error');flagErrBlocks(blocks);flagErrCells([[r,c]]);}return false;}}
   // WIN!
   onWin();return true;}
 
 function onWin(){clearTimer();stopRAF();stopBGM();playSfx('win');var time=state.elapsed;var tier=PUZZLES[state.level].tier;var par=TIER_TIMES[tier];var stars=time<par*0.5?3:time<par?2:1;saveBest(state.level,time,stars);spawnConfetti();document.getElementById('winStars').textContent='*'.repeat(stars)+'.'.repeat(3-stars);document.getElementById('winTitle').textContent=stars===3?'Perfect!':'Solved!';document.getElementById('winText').textContent='Level '+(state.level+1)+' complete in '+fmtTime(time)+'. '+(stars===3?'Outstanding!':stars===2?'Great job!':'Well done!');try { window.dispatchEvent(new CustomEvent('level-complete')); } catch(e) { /* ADS-OPT 2026-10-17 R938 */ }setTimeout(function(){document.getElementById('winOverlay').classList.add('show');},400);}
 
 function spawnConfetti(){var colors=['#00d9ff','#ff006e','#ffd700','#00ff88','#ff8800'];for(var i=0;i<60;i++){state.particles.push({x:Math.random()*window.innerWidth,y:-20,vx:(Math.random()-0.5)*200,vy:Math.random()*200+100,size:Math.random()*8+4,color:colors[Math.floor(Math.random()*colors.length)],life:1});}}
-function updateParticles(dt){for(var i=state.particles.length-1;i>=0;i--){var p=state.particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=300*dt;p.life-=dt*0.5;if(p.life<=0)state.particles.splice(i,1);}for(var key in state.flashCells){state.flashCells[key]-=dt*2;if(state.flashCells[key]<=0)delete state.flashCells[key];}}
+function updateParticles(dt){for(var i=state.particles.length-1;i>=0;i--){var p=state.particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=300*dt;p.life-=dt*0.5;if(p.life<=0)state.particles.splice(i,1);}for(var key in state.flashCells){state.flashCells[key]-=dt*2;if(state.flashCells[key]<=0)delete state.flashCells[key];}for(var ek in state.errFlash){state.errFlash[ek]-=dt*0.7;if(state.errFlash[ek]<=0)delete state.errFlash[ek];}}
 
 // Web Audio
 function ensureAudio(){if(!state.audioCtx){try{state.audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}return state.audioCtx;}
