@@ -997,6 +997,7 @@ function handleTileClick(tile) {
   if (!state.selectedTile) {
     state.selectedTile = tile;
     if (tile.el) {
+      ackTile(tile.el); // R1177: fast select+deselect nets class back to base
       tile.el.classList.add('selected');
       tile.el.classList.add('select-pop');
       tile.el.addEventListener('animationend', function h() {
@@ -1009,12 +1010,18 @@ function handleTileClick(tile) {
   }
 
   if (state.selectedTile.id === tile.id) {
-    state.selectedTile.el.classList.remove('selected');
-    if (state.selectedTile.el) {
-      state.selectedTile.el.classList.add('deselect-pop');
-      state.selectedTile.el.addEventListener('animationend', function h() {
-        state.selectedTile.el.classList.remove('deselect-pop');
-        state.selectedTile.el.removeEventListener('animationend', h);
+    // UX R1177 (pre-existing crash, HEAD reproducible): this handler used to
+    // read state.selectedTile.el, but selectedTile is nulled synchronously
+    // below while the animationend fires ~0.2s later -> TypeError on EVERY
+    // deselect + deselect-pop class never cleaned. Capture el lexically,
+    // same pattern the type-switch branch already uses (prevEl).
+    const curEl = state.selectedTile.el;
+    if (curEl) {
+      curEl.classList.remove('selected');
+      curEl.classList.add('deselect-pop');
+      curEl.addEventListener('animationend', function h() {
+        curEl.classList.remove('deselect-pop');
+        curEl.removeEventListener('animationend', h);
       });
     }
     state.selectedTile = null;
@@ -1035,6 +1042,7 @@ function handleTileClick(tile) {
     }
     state.selectedTile = tile;
     if (tile.el) {
+      ackTile(tile.el); // R1177
       tile.el.classList.add('selected');
       tile.el.classList.add('select-pop');
       tile.el.addEventListener('animationend', function h() {
