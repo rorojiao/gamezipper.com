@@ -104,6 +104,9 @@ canvas{display:block;touch-action:none}
 #canvasWrap{position:relative;border-radius:16px;overflow:hidden;
   background:#16162e;margin:8px 0;box-shadow:0 4px 20px rgba(0,0,0,.4)}
 #gameCanvas{width:100%;height:auto;display:block}
+/* R1178 QA: visual ack for canvas taps (incl. no-op home-color taps) */
+#gameCanvas.ack0,#gameCanvas.ack1{animation:tapBump .22s ease}
+@keyframes tapBump{40%{transform:scale(.985)}}
 #overlay{position:absolute;inset:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;
   background:rgba(13,13,26,.92);border-radius:16px;gap:12px;z-index:5}
@@ -681,6 +684,11 @@ function setupCanvas(){
   var canvas = state.canvas;
   var wrap = canvas.parentElement;
   var w = Math.max(320, wrap.clientWidth || 320);
+  // R1178 QA: square board + palette overflowed short desktop viewports
+  // (canvas bottom 807 + palette y921 vs vh 577, fixed footer band on top of it).
+  // Reserve header+palette+footer budget so the board fits above the fold.
+  var hBudget = (window.innerHeight || 800) - 330;
+  if (w > hBudget && hBudget >= 220) w = hBudget;
   var dpr = window.devicePixelRatio || 1;
   canvas.width = w * dpr;
   canvas.height = w * dpr;
@@ -1210,6 +1218,21 @@ function init(){
     $('tutorial').classList.add('hidden');
     progress.levelReached = 1;
     saveProgress();
+  });
+
+  // R1178 QA: board looked interactive but only palette accepted input
+  // (BI rage_click tag=CANVAS x39 / 6 visitors / 7d). A tap on a board cell now
+  // plays that cell's color, same as the matching palette button; always acks.
+  $('gameCanvas').addEventListener('pointerdown', function(e){
+    if(state.gameWon || state.gameOver || state.transitioning) return;
+    var rect = state.canvas.getBoundingClientRect();
+    var c = Math.floor((e.clientX - rect.left) / state.cellSize);
+    var rr = Math.floor((e.clientY - rect.top) / state.cellSize);
+    if(rr < 0 || rr >= state.gridSize || c < 0 || c >= state.gridSize) return;
+    var tok = state.canvas.classList.contains('ack0') ? 'ack1' : 'ack0';
+    state.canvas.classList.remove('ack0'); state.canvas.classList.remove('ack1');
+    state.canvas.classList.add(tok);
+    applyColor(state.grid[rr][c]);
   });
 
   // Settings toggles
