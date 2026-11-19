@@ -3249,6 +3249,12 @@ function completePour() {
     winAutoCancelled = false; // R1057: fresh win -> arm the auto-advance
     // [MS-tracker] fire level_complete event with stars, moves, duration
     try { _msSend('ms_level_complete', { lv: currentLevel, n: numColors, moves: moves, autoSolve: solving }); } catch(e){}
+    // [R1181] dc-nudge impression denominator: lifetime ms_daily_challenge_started
+    // = 0 with 3 placements shipped; measure shows-vs-started to know whether the
+    // fix is a visibility problem or an intent problem.
+    if (!isDailyDone() && dailyChallengeLevel >= 0) {
+      try { _msSend('ms_win_daily_row_shown', { lv: currentLevel }); } catch(e){}
+    }
     // R1168: deferred daily-reward offer on the WIN CARD. R980's one-tap-start
     // comment promised "the reward is still offered later, on the first win
     // (see showDailyRewardAfterFirstWin)" — but that function was never shipped.
@@ -4410,6 +4416,18 @@ function renderSplash() {
     const dailyDone = isDailyDone();
     const rD = rows[rowIdx++];
     drawButton(rD.x, rD.y, rD.w, rD.h, (dailyDone ? "✅ " : "🔥 ") + "Daily Challenge", hoverBtn === 2, true);
+    // [R1181] R880-family breathing ring while the daily is unclaimed — the
+    // row exists on splash since R643 and has ZERO lifetime taps; make the ONE
+    // retention-hook row visually moving (draw-only, hit zones unchanged).
+    if (!dailyDone) {
+      const gp = 0.5 + 0.5 * Math.sin(now * 0.008);
+      X.save();
+      X.strokeStyle = "rgba(255,165,2," + (0.35 + gp * 0.35) + ")";
+      X.lineWidth = 2;
+      roundRect(rD.x - 2, rD.y - 2, rD.w + 4, rD.h + 4, 10);
+      X.stroke();
+      X.restore();
+    }
 
     // Random Level button (picks any unlocked level)
     const rR = rows[rowIdx++];
@@ -6066,6 +6084,21 @@ function winBtnLayout() {
   return { btnW, btnH, bsX, by, gap, hasNext };
 }
 
+// [R1181 2026-11-20] Daily-challenge nudge row — ONE layout for draw + hit
+// (R1156 class rule). R1134's original row (by+btnH+8) was structurally dead:
+// (a) the veil countdown text (baseline by+btnH+13) drew THROUGH it;
+// (b) the R1168 daily-reward popup (card bottom H/2+110, CLAIM button
+//     H/2+58..94) covered it for the entire popup-open window — i.e. for
+//     almost every first-win-of-day, which is all current traffic;
+// (c) the "Lv 188947" label read as intimidation to new players.
+// Now at by+btnH+22: below the veil text band, below the popup card edge,
+// still inside the drawn card (bottom H/2+145 in either winBtnLayout branch).
+function winDcRow() {
+  const wL = winBtnLayout();
+  const cardW = Math.min(300, W * 0.85), cardX = (W - cardW) / 2;
+  return { x: cardX + 14, y: wL.by + wL.btnH + 22, w: cardW - 28, h: 24 };
+}
+
 function renderWin() {
   drawBackground();
   renderGame(); // draw game behind
@@ -6283,28 +6316,28 @@ function renderWin() {
   btnIdx++;
   drawButton(btnStartX + btnIdx * (btnW + btnGap), by, btnW, btnH, "Menu", hoverBtn === 22, false);
 
-  // [R1134 2026-11-13] Post-win daily-challenge nudge row — R955 lesson: the win
-  // card is the only high-attention surface; splash-button + menu-banner placement
-  // measured 0 daily-challenge taps lifetime in BI. Row sits inside the card below
-  // the button row (by+40+8+24 ≤ cardY+300 either branch of winBtnLayout).
+  // [R1134 → R1181] Post-win daily-challenge nudge row. Geometry now comes from
+  // the shared winDcRow() (see winBtnLayout) — R1134's y was covered by the
+  // daily-reward popup and overprinted by the veil countdown text (see there).
   if (!isDailyDone() && dailyChallengeLevel >= 0) {
-    const dcRowY = by + btnH + 8, dcRowH = 24;
-    const dcRowX = cardX + 14, dcRowW = cardW - 28;
+    const dcR = winDcRow();
     const dcP = 0.5 + 0.5 * Math.sin(Date.now() * 0.004);
     X.save();
     X.shadowColor = "rgba(255,165,2," + (0.25 + dcP * 0.3) + ")";
     X.shadowBlur = 5 + dcP * 8;
     X.fillStyle = "rgba(255,165,2,0.14)";
-    roundRect(dcRowX, dcRowY, dcRowW, dcRowH, 5); X.fill();
+    roundRect(dcR.x, dcR.y, dcR.w, dcR.h, 5); X.fill();
     X.shadowBlur = 0;
     X.strokeStyle = "rgba(255,165,2," + (0.4 + dcP * 0.3) + ")";
     X.lineWidth = 1;
-    roundRect(dcRowX, dcRowY, dcRowW, dcRowH, 5); X.stroke();
+    roundRect(dcR.x, dcR.y, dcR.w, dcR.h, 5); X.stroke();
     X.fillStyle = "#ffd93d";
     X.font = "700 11px 'Nunito',sans-serif";
     X.textAlign = "center";
     X.textBaseline = "middle";
-    X.fillText("🗓 Daily Challenge Lv " + (dailyChallengeLevel + 1) + " — tap to play", W / 2, dcRowY + dcRowH / 2);
+    // R1181: drop the giant Lv number (a new player at Lv1 seeing "Lv 188947"
+    // reads as a wall, not an invitation).
+    X.fillText("🗓 Today's Challenge — tap to play", W / 2, dcR.y + dcR.h / 2);
     X.restore();
   }
 
@@ -6561,9 +6594,13 @@ function onTap(px, py) {
   // R1168: also intercept in the "win" state — the win-card daily-reward offer
   // draws the popup over the win card; on win, 'pass_through' means a tap that
   // lands on a win button claims AND acts (claim + continue = intended flow).
+  // R1181: exception for the daily-challenge nudge row — a popup-closing tap
+  // must not also launch the daily level (accidental launch risk, see win branch).
+  let _rewardJustClosed = false;
   if ((state === "menu" || state === "win") && dailyRewardOpen) {
     const dailypopupResult = handleDailyRewardTap(px, py);
     if (dailypopupResult === 'pass_through') {
+      _rewardJustClosed = true;
       // fall through to menu cell logic below
     } else {
       return;
@@ -6974,11 +7011,13 @@ function onTap(px, py) {
       maybeShowDailyReward('menu_return');
       return;
     }
-    // [R1134] Daily-challenge nudge row (geometry must match the win render block:
-    // cardW/cardX mirror the win card constants)
-    const _dcCardW = Math.min(300, W * 0.85), _dcCardX = (W - _dcCardW) / 2;
-    if (!isDailyDone() && dailyChallengeLevel >= 0 &&
-        hitTest(px, py, _dcCardX + 14, wBy + wBtnH + 8, _dcCardW - 28, 24)) {
+    // [R1134→R1181] Daily-challenge nudge row — shared winDcRow() geometry.
+    // Suppression: when a daily-reward pass_through tap just claimed+closed the
+    // popup on THIS tap, don't also start the daily level (tap was aimed at the
+    // popup area, not the row).
+    const dcR = winDcRow();
+    if (!isDailyDone() && dailyChallengeLevel >= 0 && !_rewardJustClosed &&
+        hitTest(px, py, dcR.x, dcR.y, dcR.w, dcR.h)) {
       winAutoCancelled = true;
       sfxClick();
       try { _msSend('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'win' }); } catch(e){}
