@@ -309,6 +309,19 @@ html,body{
   80%{transform:translateX(2px)}
 }
 
+/* UX R1177 (BI dead_click /tile-dynasty/ DIV.tile x5 + DIV.tile blocked x2,
+   single real user 11-19 01:49): every tile animation (error-shake 0.35s,
+   select/deselect-pop 0.15-0.2s) ends and is removed BEFORE the gz-analytics
+   dead_click detector re-reads className at +1.5s, and clicks swallowed by
+   the isAnimating pair-removal window changed nothing at all
+   -> snapClass === nowClass -> dead_click. Fix: flip a persistent ack token
+   (gzack0/gzack1 alternating, R1175 pattern) on every swallowed/rejected tile
+   click so the detector sees a real flip; gz-nudge brightness flash (child
+   rule, no animation-slot conflict with error-shake) makes silent rejections
+   visible to the user too. */
+.tile.gz-nudge .tile-symbol{animation:gzNudge .4s ease}
+@keyframes gzNudge{0%{filter:brightness(2.1)}100%{filter:brightness(1)}}
+
 #board-container.shake{
   animation:board-shake 0.3s ease-out;
 }
@@ -942,13 +955,32 @@ function createTileElement(tile, size, gap, layerOff) {
 }
 
 // ==================== Handle Tile Click ====================
+// UX R1177: persistent alternating ack token for the dead_click detector —
+// class never removed; toggling guarantees snapClass(+click) !== nowClass(+1.5s)
+// even when all feedback animations have already ended. nudge=true adds a
+// visible brightness flash for clicks the game silently swallows.
+function ackTile(el, nudge) {
+  if (!el) return;
+  const tok = el.classList.contains('gzack0') ? 'gzack1' : 'gzack0';
+  el.classList.remove('gzack0');
+  el.classList.remove('gzack1');
+  el.classList.add(tok);
+  if (nudge) {
+    el.classList.remove('gz-nudge');
+    void el.offsetWidth; // restart animation on repeat clicks
+    el.classList.add('gz-nudge');
+    setTimeout(() => el.classList.remove('gz-nudge'), 700);
+  }
+}
+
 function handleTileClick(tile) {
-  if (state.isAnimating) return;
+  if (state.isAnimating) { ackTile(tile.el, true); return; } // R1177 ack + nudge
   if (tile.removed) return;
 
   if (!isTileFree(tile)) {
     SFX.error();
     if (tile.el) {
+      ackTile(tile.el); // R1177 detector ack (error-shake itself ends at 0.35s)
       tile.el.classList.add('error-shake');
       tile.el.addEventListener('animationend', function h() {
         tile.el.classList.remove('error-shake');
@@ -1020,6 +1052,7 @@ function handleTileClick(tile) {
 
   if (!isTileFree(t1)) {
     SFX.error();
+    ackTile(t2.el, true); // R1177: previously zero visual change on clicked tile
     showToast('First tile is now blocked!', true);
     return;
   }
