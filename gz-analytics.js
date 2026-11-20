@@ -37,7 +37,7 @@
   var SITE = location.hostname;   // use real hostname so tools.gamezipper.com works too
   // Stable public endpoint backed by the persistent GameZipper BI SQLite store.
   // Presence heartbeats and public homepage aggregates use this same service.
-  var EP = 'https://piece-illustrated-totally-academic.trycloudflare.com/api/collect';
+  var EP = 'https://analyzed-professionals-stylish-literally.trycloudflare.com/api/collect';
   // 2026-07-26: expose the watchdog-rotated endpoint so inline RUM scripts
   // (index.html Web-Vitals beacons) and adsterra-manager.js can resolve it
   // lazily instead of hardcoding tunnel URLs that die every few hours.
