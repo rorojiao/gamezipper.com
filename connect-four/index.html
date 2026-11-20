@@ -389,6 +389,7 @@ var winLine = [];
 var undoUsed = false;
 var lastMove = null;
 var aiThinking = false;
+var pendingCol = null; // R1187: click intent queued while animating/AI thinking
 var soundEnabled = true;
 var particles = [];
 var rafId = null;
@@ -590,14 +591,14 @@ function drawBoard() {
     ctx.restore();
   }
 
-  // Hover preview
-  if (!gameOver && !animating && hoverCol >= 0 && !aiThinking) {
+  // Hover preview (also shows queued pending move in player's color while AI thinks)
+  if (!gameOver && !animating && hoverCol >= 0 && (!aiThinking || (pendingCol !== null && hoverCol === pendingCol))) {
     var dropRow = getDropY(hoverCol);
     if (dropRow >= 0) {
       var cx = bx + hoverCol * cs + cs / 2;
       var cy = by + cs / 2;
       ctx.globalAlpha = 0.4;
-      drawDisc(cx, cy, currentPlayer, false);
+      drawDisc(cx, cy, (aiThinking && pendingCol === hoverCol) ? RED : currentPlayer, false);
       ctx.globalAlpha = 1;
     }
   }
@@ -649,6 +650,7 @@ function initBoard() {
   undoUsed = false;
   lastMove = null;
   hoverCol = -1;
+  pendingCol = null;
   aiThinking = false;
 }
 function dropDisc(col, player) {
@@ -951,6 +953,17 @@ function aiMove() {
           currentPlayer = RED;
           undoUsed = false;
           updateUI();
+          // R1187: consume a click queued by the player during AI turn/animation
+          if (pendingCol !== null) {
+            var pc = pendingCol;
+            pendingCol = null;
+            if (getDropY(pc) >= 0) {
+              setTimeout(function() { if (!gameOver && currentPlayer === RED && !animating && !aiThinking) makeMove(pc); }, 80);
+            } else {
+              hoverCol = -1;
+              drawBoard();
+            }
+          }
         }
       });
     }
@@ -1199,12 +1212,19 @@ function endGame(result) {
 
 // ---- INPUT ----
 function handleCanvasClick(e) {
-  if (gameOver || animating || aiThinking) return;
+  if (gameOver) return;
   var rect = canvas.getBoundingClientRect();
   var x = (e.clientX || e.touches[0].clientX) - rect.left;
   var col = getColFromX(x);
   if (col < 0 || col >= COLS) return;
+  if (animating || aiThinking) {
+    // R1187: queue intent instead of silently swallowing (BI rage_click n=3 class).
+    // Ghost preview shows the queued column; consumed after the AI move lands.
+    if (gameMode === 'ai') { pendingCol = col; hoverCol = col; drawBoard(); }
+    return;
+  }
   if (gameMode === 'ai' && currentPlayer === YELLOW) return;
+  pendingCol = null;
   makeMove(col);
 }
 function handleCanvasMove(e) {
