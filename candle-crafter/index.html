@@ -529,6 +529,20 @@ function selectColor(idx) {
     selectedColor = idx;
     document.querySelectorAll('.color-swatch').forEach((s, i) => {
         s.classList.toggle('selected', i === idx);
+        // R1181: persistent alternating ack token (R1175 flood-fill / R1177
+        // tile-dynasty pattern). Single-selection palette: rapid A→B→C swatch
+        // clicks move .selected to the newest swatch, so every earlier clicked
+        // swatch's className REVERTS before gz-analytics' +1.5s dead_click
+        // snapshot → snapClass === nowClass → false dead_click (BI 11-19
+        // 20:22:03: 3 clicks, 3 dead_clicks, single session). The gzack token
+        // is never removed by design, so each click is a durable class change;
+        // it also matches the detector's _gzAckLive exemption for re-clicks.
+        if (i === idx) {
+            const tok = s.classList.contains('gzack0') ? 'gzack1' : 'gzack0';
+            s.classList.remove('gzack0');
+            s.classList.remove('gzack1');
+            s.classList.add(tok);
+        }
         // R321 P1: a re-tap on the swatch that is already selected used to be a
         // complete no-op (toggle with the same value), so it gave the player zero
         // feedback and BI logged it as dead_click. Pulse to acknowledge instead.
