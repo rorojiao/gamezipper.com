@@ -108,6 +108,8 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 60%,#0d1a2d 100%);min-
   .game-controls{gap:8px}
   .control-btn{padding:10px 16px;font-size:13px}
 }
+#sp-toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:4000;background:#1a1a3e;color:#fff;border:1px solid rgba(255,255,255,.25);padding:10px 16px;border-radius:10px;font-size:14px;max-width:86vw;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .25s}
+#sp-toast.show{opacity:1}
 </style>
 <style data-gz-r360-placeholders>
 #gz-ad-above-game:empty,#gz-ad-below-canvas:empty{pointer-events:none}
@@ -154,6 +156,7 @@ body{background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 60%,#0d1a2d 100%);min-
 </style>
 </head>
 <body>
+<div id="sp-toast" role="status" aria-live="polite"></div>
 <h1 class="gz-sr-only">Snake Pit — Region Division Snake Puzzle</h1>
 <div id="app">
   <div id="menu-screen">
@@ -466,6 +469,17 @@ function renderGrid() {
   }
 }
 
+function showMsg(msg) {
+  // R1186: replace blocking native alert() with non-blocking toast (mobile UX + rAF/timer continuity)
+  try {
+    const el = document.getElementById('sp-toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), 3500);
+  } catch (e) {}
+}
+
 function checkSolution() {
   const level = LEVELS[state.currentLevel];
   const R = level.rows, C = level.cols;
@@ -476,7 +490,7 @@ function checkSolution() {
   // Rule 1: no unset cells (every cell must be assigned to a snake)
   for (let i = 0; i < grid.length; i++) {
     if (!grid[i] || grid[i] === 0) {
-      alert('Some cells are not assigned to a snake yet. Keep painting!');
+      showMsg('Some cells are not assigned to a snake yet. Keep painting!');
       return;
     }
   }
@@ -507,7 +521,7 @@ function checkSolution() {
   for (const id in snakeCells) {
     const cells = snakeCells[id];
     if (cells.length < 2) {
-      alert(`Snake ${id} has fewer than 2 cells. Snakes must be at least 2 cells long.`);
+      showMsg(`Snake ${id} has fewer than 2 cells. Snakes must be at least 2 cells long.`);
       return;
     }
     // degree check + count endpoints
@@ -517,13 +531,13 @@ function checkSolution() {
       const r = Math.floor(idx / C), c = idx % C;
       const { count } = orthSame(r, c, parseInt(id));
       if (count > 2) {
-        alert(`Snake ${id} branches at row ${r+1}, col ${c+1}. Snakes must be one-cell-wide paths (max 2 neighbours).`);
+        showMsg(`Snake ${id} branches at row ${r+1}, col ${c+1}. Snakes must be one-cell-wide paths (max 2 neighbours).`);
         return;
       }
       if (count === 1) endpoints++;
     }
     if (endpoints !== 2) {
-      alert(`Snake ${id} has ${endpoints} endpoints. A snake must have exactly 2 endpoints.`);
+      showMsg(`Snake ${id} has ${endpoints} endpoints. A snake must have exactly 2 endpoints.`);
       return;
     }
     // 2x2 check
@@ -540,7 +554,7 @@ function checkSolution() {
           }
         }
         if (allIn) {
-          alert(`Snake ${id} has a 2x2 block at row ${r+1}, col ${c+1}. Snakes must be one cell wide.`);
+          showMsg(`Snake ${id} has a 2x2 block at row ${r+1}, col ${c+1}. Snakes must be one cell wide.`);
           return;
         }
       }
@@ -554,7 +568,7 @@ function checkSolution() {
         if (grid[ar * C + ac] !== parseInt(id)) continue;
         // diagonal neighbour of same snake: need orth bridge at (r,ac) or (ar,c)
         if (!cellSet.has(r * C + ac) && !cellSet.has(ar * C + c)) {
-          alert(`Snake ${id} folds back on itself near row ${r+1}, col ${c+1}. Snakes may not touch themselves even diagonally.`);
+          showMsg(`Snake ${id} folds back on itself near row ${r+1}, col ${c+1}. Snakes may not touch themselves even diagonally.`);
           return;
         }
       }
@@ -570,7 +584,7 @@ function checkSolution() {
     const id = grid[r * C + c];
     const len = snakeCells[id] ? snakeCells[id].length : 0;
     if (len !== clue.val) {
-      alert(`The cell at row ${r+1}, col ${c+1} has clue ${clue.val} but its snake has ${len} cells.`);
+      showMsg(`The cell at row ${r+1}, col ${c+1} has clue ${clue.val} but its snake has ${len} cells.`);
       return;
     }
   }
@@ -583,7 +597,7 @@ function checkSolution() {
     const id = grid[r * C + c];
     const { count } = orthSame(r, c, id);
     if (count !== 1) {
-      alert(`The circle at row ${r+1}, col ${c+1} is not at a snake endpoint. Circles mark endpoints (exactly 1 same-snake neighbour required).`);
+      showMsg(`The circle at row ${r+1}, col ${c+1} is not at a snake endpoint. Circles mark endpoints (exactly 1 same-snake neighbour required).`);
       return;
     }
   }
@@ -608,7 +622,7 @@ function checkSolution() {
           if (nr < 0 || nr >= R || nc < 0 || nc >= C) continue;
           const nid = grid[nr * C + nc];
           if (nid !== id && idSet.has(nid)) {
-            alert(`Two snakes of length ${L} touch orthogonally. Same-length snakes may not share an edge.`);
+            showMsg(`Two snakes of length ${L} touch orthogonally. Same-length snakes may not share an edge.`);
             return;
           }
         }
@@ -691,7 +705,7 @@ function showHint() {
     if (state.userGrid[i] !== sol[i]) candidates.push(i);
   }
   if (candidates.length === 0) {
-    alert('All cells already match the solution!');
+    showMsg('All cells already match the solution!');
     return;
   }
   const pick = candidates[Math.floor(Math.random() * candidates.length)];
