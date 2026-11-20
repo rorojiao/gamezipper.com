@@ -224,13 +224,32 @@ def _try_ip_direct_chain(req, timeout=30):
     return None
 
 
-def _open_with_retry(req, timeout=30):
+def _open_with_retry(req, timeout=30, read=False):
+    """Open (and optionally fully read) the response inside the retry boundary.
+
+    R1185 (2026-11-20): the daily cron died with `TimeoutError: The read
+    operation timed out` raised by the caller's `response.read()` *after*
+    _open_with_retry had already returned — a mid-body socket stall was outside
+    the retry chain. When read=True the body is consumed inside each attempt,
+    so transient read stalls now retry (and a TimeoutError here still trips the
+    R1134 TLS-dead → DoH+IP-direct fallback). Returns (response, body_or_None);
+    when read=True the response is already closed.
+    """
     last_err = None
     for attempt in range(_RETRIES + 1):
         try:
             resp = OPENER.open(req, timeout=timeout)
             if resp is not None:
-                return resp
+                if read:
+                    try:
+                        body = resp.read()
+                    finally:
+                        try:
+                            resp.close()
+                        except Exception:
+                            pass
+                    return resp, body
+                return resp, None
             last_err = RuntimeError("OPENER.open returned None")
         except _RETRIABLE as exc:
             last_err = exc
@@ -246,7 +265,16 @@ def _open_with_retry(req, timeout=30):
                     try:
                         resp = _try_ip_direct_chain(req, timeout=chain_timeout)
                         if resp is not None:
-                            return resp
+                            if read:
+                                try:
+                                    body = resp.read()
+                                finally:
+                                    try:
+                                        resp.__exit__(None, None, None)
+                                    except Exception:
+                                        pass
+                                return resp, body
+                            return resp, None
                     except Exception as ip_exc:
                         last_err = ip_exc
         if attempt < _RETRIES and _budget_left() > 30:
@@ -257,8 +285,8 @@ def _open_with_retry(req, timeout=30):
 
 def fetch_urls():
     req = urllib.request.Request(SITEMAP, headers={"User-Agent": "GameZipper-IndexNow/1.0"})
-    with _open_with_retry(req) as response:
-        root = ET.fromstring(response.read())
+    response, body = _open_with_retry(req, read=True)
+    root = ET.fromstring(body)
     urls = [node.text.strip() for node in root.findall(".//{*}loc") if node.text]
     if not urls:
         raise RuntimeError("sitemap contains no URLs")
@@ -276,8 +304,10 @@ def submit(endpoint, urls):
         "Content-Type": "application/json; charset=utf-8",
         "User-Agent": "GameZipper-IndexNow/1.0",
     })
-    with _open_with_retry(req) as response:
-        return response.status
+    # R1185: tuple return + read=True keeps the whole response cycle inside the
+    # retry boundary (IndexNow POST bodies are empty/tiny).
+    response, _ = _open_with_retry(req, read=True)
+    return response.status
 
 
 def main():
