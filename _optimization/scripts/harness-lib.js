@@ -446,6 +446,7 @@ function bootGame(slug, opts) {
         return null;
       },
       createTextNode: t => ({ textContent: t }),
+      createComment: t => ({ nodeType: 8, data: String(t), textContent: String(t) }), // R413: R1182 detach-until-DCL scripts use createComment; stub lacked it -> boot-clean phantom FAIL
       body: makeEl(), head: makeEl(), documentElement: makeEl(),
       hidden: false, visibilityState: 'visible', readyState: 'complete', cookie: '',
     },
