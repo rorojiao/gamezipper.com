@@ -111,6 +111,11 @@ canvas{display:block;touch-action:none;cursor:pointer}
 .level-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer;transition:all .15s;position:relative}
 .level-card:hover{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.3)}
 .level-card.locked{opacity:.3;cursor:not-allowed}
+/* R1188: locked cards were silent no-ops (R1170/R1165 class) — add explicit
+   shake feedback; monotonic --gz-tap inline counter keeps gz-analytics from
+   re-reporting repeated taps as dead_click (nail-art R331 pattern). */
+.level-card.locked-shake{animation:gzShakeX .4s ease}
+@keyframes gzShakeX{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 .level-card .lv-num{font-size:14px;font-weight:700}
 .level-card .lv-stars{font-size:10px;color:#ffd700}
 .tutorial-overlay{background:rgba(0,0,0,.9)}
@@ -1279,6 +1284,15 @@ function buildLevelSelect(){
           startLevel(n);
         });
       })(i);
+    } else {
+      // R1188: locked cards had NO listener = silent no-op (R1170 class).
+      (function(el){
+        el.addEventListener('click', function(){
+          try{ensureAudio();playTone(180,.09,'square',.08);}catch(e){}
+          el.classList.remove('locked-shake');void el.offsetWidth;el.classList.add('locked-shake');
+          try{el.__gzTapN=(el.__gzTapN||0)+1;el.style.setProperty('--gz-tap',String(el.__gzTapN));}catch(e){}
+        });
+      })(card);
     }
     grid.appendChild(card);
   }
