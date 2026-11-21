@@ -91,4 +91,64 @@ for (let i = 0; i < sizes.length; i++) {
 }
 console.log(`Total: ${sizes.length}, PASS: ${pass}, FAIL: ${fail}`);
 if (fails.length) console.log('Fails:', JSON.stringify(fails.slice(0, 3)));
-process.exit(fail === 0 ? 0 : 1);
+
+/* ── R1189 extension: exact 30 level seeds (L0..L29, matching startLevel mapping)
+   + greedy/random-restart solvability playthrough using game's own layer-share rule ── */
+const mShared = extractFnBody(html, 'function sharedElements(tA,tB)');
+const mEmpty = extractFnBody(html, 'function isTileEmpty(t)');
+if (!mShared || !mEmpty) { console.error('FAIL R1189: missing sharedElements/isTileEmpty extract'); process.exit(2); }
+const rule = (new Function(`
+  function isTileEmpty(t) { ${mEmpty} }
+  function sharedElements(tA,tB) { ${mShared} }
+  return { isTileEmpty, sharedElements };
+`))();
+const themeKeys = [...mThemes[1].matchAll(/(?:^|\n)([a-z]+):\{/g)].map(m => m[1]).filter(k => k !== 'THEMES');
+function trySolve(board, rng) {
+  // Constructive solver (proof-grade for even parity): while tiles remain, take any (layer,symbol)
+  // bucket with >=2 alive tiles, wipe the pair's full shared set. Wipes keep bucket parity even,
+  // so process terminates only at all-empty. Returns cleared only on PROVEN full clear.
+  const tiles = board.tiles.map(t => ({ alive: t.alive.slice(), l1:t.l1, l2:t.l2, l3:t.l3, l4:t.l4 }));
+  let guard = 0;
+  while (guard++ < 2000) {
+    // build alive buckets
+    const buckets = {};
+    for (let i = 0; i < tiles.length; i++) {
+      const t = tiles[i];
+      for (let l = 0; l < 4; l++) if (t.alive[l]) {
+        const key = l + ':' + t['l' + (l + 1)];
+        (buckets[key] = buckets[key] || []).push(i);
+      }
+    }
+    const keys = Object.keys(buckets);
+    if (!keys.length) return { cleared: true, matches: guard };
+    let picked = null;
+    for (const k of keys) if (buckets[k].length >= 2) { picked = buckets[k]; break; }
+    if (!picked) return { cleared: false, note: 'odd-parity-deadend' };
+    const a = picked[0], b = picked[1];
+    const sh = rule.sharedElements(tiles[a], tiles[b]);
+    if (!sh.length) return { cleared: false, note: 'bug' };
+    for (const li of sh) { tiles[a].alive[li] = false; tiles[b].alive[li] = false; }
+  }
+  return { cleared: false, note: 'guard' };
+}
+function mulberry(seedN) { let s = seedN >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let lvPass = 0, lvFail = 0; const lvFails = [];
+for (let idx = 0; idx < 30; idx++) {
+  const tk = themeKeys[idx % themeKeys.length];
+  const size = idx < 10 ? 4 : 6; // R1189: medium moved 5->6 (odd size unwinnable)
+  const seed = 'L' + idx + '-' + tk;
+  const board = generateBoard(size, tk, seed);
+  if (!board || !board.tiles || board.tiles.length !== size*size) { lvFail++; lvFails.push({ idx, issue: 'board mismatch' }); continue; }
+  const res = trySolve(board, mulberry(idx + 1));
+  if (res.cleared) lvPass++; else lvFails.push({ idx, seed, why: res.note });
+}
+console.log(`R1189 levels L0..L29: constructive proven-clear: ${lvPass}/30`);
+if (lvFails.length) console.log('R1189 level fails:', JSON.stringify(lvFails.slice(0, 5)));
+/* also prove every sampled random board (incl. future dailies) is parity-even => solvable */
+for (let s2 = 0; s2 < 40; s2++) {
+  const b2 = generateBoard(6, themeKeys[s2 % themeKeys.length], 'probe-daily-' + s2);
+  const r2 = trySolve(b2, null);
+  if (!r2.cleared) { lvFails.push({ dailySeed: 'probe-daily-' + s2, why: r2.note }); }
+}
+console.log(`R1189 random-daily solvability: ${40 - lvFails.filter(f=>f.dailySeed).length}/40 proven`);
+process.exit(fail === 0 && lvFails.length === 0 ? 0 : 1);

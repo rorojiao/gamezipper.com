@@ -468,7 +468,10 @@ L4:['🎙️','📻','🎚️','🎛️','💿','📀','📼','📷','📹','�
 
 var DIFFS={
 easy:{size:4,theme:'animals',levels:10,label:'Easy',chainTarget:5},
-medium:{size:5,theme:'nature',levels:10,label:'Medium',chainTarget:8},
+/* R1189 P1 FIX: size 5 (25 tiles/layer, odd) made perfect-clear mathematically impossible —
+   each wipe removes exactly 2 tiles from one (layer,symbol) bucket, so every bucket must be
+   even, but an odd per-layer total forces odd buckets. All 10 medium levels were unwinnable. */
+medium:{size:6,theme:'nature',levels:10,label:'Medium',chainTarget:8},
 hard:{size:6,theme:'food',levels:10,label:'Hard',chainTarget:12}
 };
 
@@ -649,6 +652,19 @@ for(var j2=tiles.length-1;j2>0;j2--){
 var k2=Math.floor(rng()*(j2+1));
 var tmp=tiles[j2];tiles[j2]=tiles[k2];tiles[k2]=tmp;
 }
+/* R1189 P1 FIX: parity repair — every (layer,symbol) bucket must be even or the board can
+   never be fully cleared (wipes always remove 2 tiles from one bucket). Random-fallback
+   assignments above could leave odd buckets. Pair up odd buckets deterministically:
+   move one tile from one odd bucket to the other. Even parity => constructive win exists. */
+for(var pl=0;pl<4;pl++){
+var pcounts={};
+for(var pi=0;pi<totalTiles;pi++){var ps=tiles[pi]['l'+(pl+1)];pcounts[ps]=(pcounts[ps]||0)+1;}
+var oddB=[];for(var key in pcounts)if(pcounts[key]%2===1)oddB.push(+key);
+for(var pp=0;pp+1<oddB.length;pp+=2){
+var sJ=oddB[pp+1],sI=oddB[pp];
+for(var pi2=0;pi2<totalTiles;pi2++){if(tiles[pi2]['l'+(pl+1)]===sJ){tiles[pi2]['l'+(pl+1)]=sI;break;}}
+}
+}
 return{tiles:tiles,size:size,theme:themeKey,seed:seed,layerSizes:actualSizes};
 }
 
@@ -794,6 +810,7 @@ lastInteractionTime=Date.now();
 setupCanvas();
 updateUI();
 showScreen('game');
+startRenderLoop(); /* R1189 P0 FIX: startDaily never started the rAF loop — canvas stayed blank (0 px drawn), Daily entry unplayable */
 startBGM();
 }
 
@@ -1541,9 +1558,10 @@ window.addEventListener('beforeunload',cleanup);
 document.addEventListener('visibilitychange',function(){
 if(document.hidden){
 if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
-}else if(currentState==='game'){
-lastTime=performance.now();
-animFrame=requestAnimationFrame(loop);
+}else if(currentMode==='game'&&board){
+/* R1189 P1 FIX: handler referenced undefined currentState/loop (ReferenceError on every
+   refocus; render loop never resumed -> frozen canvas). Restart via startRenderLoop. */
+if(!animFrame)startRenderLoop();
 }
 });
 
