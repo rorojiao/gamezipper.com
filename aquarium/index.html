@@ -474,7 +474,12 @@ function drawParticles(){
 let pressTimer=null, pressCell=null, longPressed=false;
 function eventCell(e){
   const rect=cv.getBoundingClientRect();
-  const x=(e.clientX-rect.left), y=(e.clientY-rect.top);
+  // QA R1190 P1: map client coords through the actual CSS-displayed rect. The old
+  // code assumed rect.width == logical px; when the CSS max-width squeezes the
+  // canvas (390px phone: style 362 vs displayed 337) every click drifts up to
+  // ~0.7 cell at the far edge — edge rows/cols land in the wrong cell.
+  const sx=cv.width/rect.width/((window.devicePixelRatio||1)), sy=cv.height/rect.height/((window.devicePixelRatio||1));
+  const x=(e.clientX-rect.left)*sx, y=(e.clientY-rect.top)*sy;
   const n=curLevel.n;
   const col=Math.floor((x-PAD-GUTTER)/CELL), row=Math.floor((y-PAD)/CELL);
   if(row<0||row>=n||col<0||col>=n) return null;
