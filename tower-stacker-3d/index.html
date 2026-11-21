@@ -2012,7 +2012,32 @@ init();
 </script>
 <h1 class="gz-sr-only">Tower Stacker 3D</h1>
 <script defer src="/game-footer.js?v=R449-flat"></script>
-<script defer src="/adsterra-manager.js?v=20261112R1133pointerfire"></script><script defer src="/monetag-manager.js?v=20261107R1067pfmismatch"></script>
+<script>
+/* UX-OPT 2026-11-21 R1185: idle-defer ad managers (R1054 pattern) — BI 7d inp_worst
+   >=500ms row on this page collides with gz_ad_events within 5s, R1129 gate (100%);
+   page had no idle guard. Defer adsterra/monetag execution out of the
+   first-interaction window. Static adsbygoogle banners untouched. */
+(function(){
+  function loadAdManager(){
+    if(window.GZ_LOAD_ADSTERRA!==false){
+      var sAd=document.createElement('script');
+      sAd.src='/adsterra-manager.js?v=20261112R1133pointerfire';
+      sAd.defer=true;
+      document.head.appendChild(sAd);
+    }
+    var s=document.createElement('script');
+    s.src='/monetag-manager.js?v=20261107R1067pfmismatch';
+    document.head.appendChild(s);
+  }
+  if('scheduler' in window && 'yield' in window.scheduler){
+    scheduler.yield().then(loadAdManager);
+  }else if('requestIdleCallback' in window){
+    requestIdleCallback(loadAdManager,{timeout:3000});
+  }else{
+    setTimeout(loadAdManager,2000);
+  }
+})();
+</script>
 
 <section style="content-visibility:auto;contain-intrinsic-size:auto 350px" class="gz-related-games" aria-label="Related games">
 <h3>You Might Also Like</h3>
