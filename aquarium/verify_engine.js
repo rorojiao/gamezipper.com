@@ -63,7 +63,10 @@ function mkEl(extra) {
     dispatchEvent: () => {},
     appendChild: function (c) { c.parentElement = this; c.parentNode = this; return c; }, removeChild: function (c) { return c; }, remove: () => {},
     querySelector: () => mkEl(), querySelectorAll: () => [],
-    getBoundingClientRect: () => ({ left: 0, top: 0, width: 400, height: 400, right: 400, bottom: 400 }),
+    // QA R1190 verifier-sync (R1144 rule): eventCell now maps through rect, so the
+    // stub rect must mirror the style size setupCanvas assigns (was fixed 400x400,
+    // which desynced from px for n>=7 boards).
+    getBoundingClientRect: function () { const w = parseFloat(this.style && this.style.width) || 400, h = parseFloat(this.style && this.style.height) || w; return { left: 0, top: 0, width: w, height: h, right: w, bottom: h }; },
     setAttribute: () => {}, getAttribute: () => '',
     getContext: () => uni(),
     focus: () => {}, blur: () => {}, click: () => {},
