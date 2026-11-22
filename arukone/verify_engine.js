@@ -1,146 +1,134 @@
 #!/usr/bin/env node
 /**
- * Arukone (Number Link) in-engine verifier.
- * Loads the LEVELS data from index.html and verifies each level's embedded solver
- * produces exactly 1 solution.
+ * Arukone (Number Link) in-engine verifier — R1191 rewrite.
+ * Loads LEVELS from index.html and proves each level has EXACTLY 1 solution under
+ * strict chain semantics identical to the in-page engine: each pair is a simple
+ * orthogonal path A->B; paths may not touch other pairs' clue cells or each other;
+ * all W*H cells covered. Cap=2 solution search; deadline exhaustion => incomplete
+ * => FAIL (timeout is never treated as proof).
  */
-
 const fs = require('fs');
+const path = require('path');
 
-const html = fs.readFileSync('/home/junze/gamezipper.com/arukone/index.html', 'utf-8');
-// Extract LEVELS array from script tag
-const match = html.match(/var LEVELS=(\[.*?\]);/s);
+const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8');
+const match = html.match(/var LEVELS=(\[.*?\]);\n/s);
 if (!match) {
     console.error('Could not extract LEVELS from index.html');
     process.exit(1);
 }
-
 const levelsData = JSON.parse(match[1]);
-
-function neighbors4(r, c, N) {
-    const result = [];
-    const deltas = [[-1,0],[1,0],[0,-1],[0,1]];
-    for (const [dr, dc] of deltas) {
-        const nr = r + dr;
-        const nc = c + dc;
-        if (nr >= 0 && nr < N && nc >= 0 && nc < N) {
-            result.push([nr, nc]);
-        }
-    }
-    return result;
+if (!Array.isArray(levelsData) || levelsData.length === 0) {
+    console.error('EMPTY_LEVELS');
+    process.exit(1);
 }
 
-function solveInEngine(N, pairs, timeLimitMs) {
-    const pairCount = pairs.length;
-    const grid = [];
-    for (let r = 0; r < N; r++) {
-        grid.push(new Array(N).fill(-1));
+function countSolutions(N, pairs, cap, deadline) {
+    const K = pairs.length;
+    const E = new Map();
+    for (let pid = 0; pid < K; pid++) {
+        E.set(pairs[pid][0][0] + ',' + pairs[pid][0][1], pid);
+        E.set(pairs[pid][1][0] + ',' + pairs[pid][1][1], pid);
     }
-    for (let pid = 0; pid < pairCount; pid++) {
-        const [[r1, c1], [r2, c2]] = pairs[pid];
-        grid[r1][c1] = pid;
-        grid[r2][c2] = pid;
+    const occupied = new Set();
+    const order = [...Array(K).keys()].sort((a, b) =>
+        (Math.abs(pairs[a][0][0] - pairs[a][1][0]) + Math.abs(pairs[a][0][1] - pairs[a][1][1])) -
+        (Math.abs(pairs[b][0][0] - pairs[b][1][0]) + Math.abs(pairs[b][0][1] - pairs[b][1][1])));
+    let count = 0;
+
+    function key(r, c) { return r + ',' + c; }
+
+    function neighbors(r, c, out) {
+        out.length = 0;
+        if (r > 0) out.push(r - 1, c);
+        if (r < N - 1) out.push(r + 1, c);
+        if (c > 0) out.push(r, c - 1);
+        if (c < N - 1) out.push(r, c + 1);
+        return out;
     }
 
-    const solutions = [];
-    const SOL_LIMIT = 2;
-    const startTime = Date.now();
+    function reachable(pid) {
+        const ar = pairs[pid][0][0], ac = pairs[pid][0][1];
+        const br = pairs[pid][1][0], bc = pairs[pid][1][1];
+        const seen = new Set([key(ar, ac)]);
+        const q = [[ar, ac]];
+        while (q.length) {
+            const [r, c] = q.pop();
+            for (let d = 0; d < 4; d++) {
+                const nr = r + (d === 0 ? -1 : d === 1 ? 1 : 0);
+                const nc = c + (d === 2 ? -1 : d === 3 ? 1 : 0);
+                if (nr < 0 || nr >= N || nc < 0 || nc >= N) continue;
+                const k = key(nr, nc);
+                if (seen.has(k) || occupied.has(k)) continue;
+                if (E.has(k) && k !== key(br, bc)) continue;
+                if (k === key(br, bc)) return true;
+                seen.add(k); q.push([nr, nc]);
+            }
+        }
+        return false;
+    }
 
-    function isPathInternalOk(r, c, pid) {
-        const existing = [];
-        for (let rr = 0; rr < N; rr++) {
-            for (let cc = 0; cc < N; cc++) {
-                if (grid[rr][cc] === pid && !(rr === r && cc === c)) {
-                    existing.push([rr, cc]);
+    function dfs(idx, placedInteriors) {
+        if (count >= cap) return true;
+        if (Date.now() > deadline) return false;
+        if (idx === order.length) {
+            if (2 * K + placedInteriors === N * N) count++;
+            return true;
+        }
+        const pid = order[idx];
+        const ar = pairs[pid][0][0], ac = pairs[pid][0][1];
+        const br = pairs[pid][1][0], bc = pairs[pid][1][1];
+        const pathArr = [[ar, ac]];
+        const pset = new Set([key(ar, ac)]);
+
+        function walk() {
+            if (count >= cap) return true;
+            if (Date.now() > deadline) return false;
+            const r = pathArr[pathArr.length - 1][0];
+            const c = pathArr[pathArr.length - 1][1];
+            if (r === br && c === bc) {
+                if (pathArr.length >= 2) {
+                    for (let i = 1; i < pathArr.length - 1; i++) occupied.add(key(pathArr[i][0], pathArr[i][1]));
+                    let ok = true;
+                    for (let q = idx + 1; q < order.length && ok; q++) ok = reachable(order[q]);
+                    let res = ok ? dfs(idx + 1, placedInteriors + pathArr.length - 2) : true;
+                    for (let i = 1; i < pathArr.length - 1; i++) occupied.delete(key(pathArr[i][0], pathArr[i][1]));
+                    return res;
                 }
+                return true;
             }
+            for (let d = 0; d < 4; d++) {
+                const nr = r + (d === 0 ? -1 : d === 1 ? 1 : 0);
+                const nc = c + (d === 2 ? -1 : d === 3 ? 1 : 0);
+                if (nr < 0 || nr >= N || nc < 0 || nc >= N) continue;
+                const k = key(nr, nc);
+                if (pset.has(k) || occupied.has(k)) continue;
+                if (E.has(k) && k !== key(br, bc)) continue;
+                pathArr.push([nr, nc]); pset.add(k);
+                const res = walk();
+                pathArr.pop(); pset.delete(k);
+                if (!res) return false;
+            }
+            return true;
         }
-        if (existing.length === 0) return false;
-        return existing.some(([er, ec]) => Math.abs(er - r) + Math.abs(ec - c) === 1);
+        return walk();
     }
 
-    function isPathContinuous(pid) {
-        const cells = new Set();
-        for (let r = 0; r < N; r++) {
-            for (let c = 0; c < N; c++) {
-                if (grid[r][c] === pid) {
-                    cells.add(`${r},${c}`);
-                }
-            }
-        }
-        if (cells.size === 0) return true;
-        const a = pairs[pid][0];
-        const aKey = `${a[0]},${a[1]}`;
-        if (!cells.has(aKey)) return false;
-        const visited = new Set([aKey]);
-        const queue = [a];
-        while (queue.length > 0) {
-            const [r, c] = queue.shift();
-            for (const [nr, nc] of neighbors4(r, c, N)) {
-                const key = `${nr},${nc}`;
-                if (cells.has(key) && !visited.has(key)) {
-                    visited.add(key);
-                    queue.push([nr, nc]);
-                }
-            }
-        }
-        return visited.size === cells.size;
-    }
-
-    const cellOrder = [];
-    for (let r = 0; r < N; r++) {
-        for (let c = 0; c < N; c++) {
-            cellOrder.push([r, c]);
-        }
-    }
-
-    function backtrack(idx) {
-        if (solutions.length >= SOL_LIMIT) return;
-        if (Date.now() - startTime > timeLimitMs) return;
-        if (idx === cellOrder.length) {
-            for (let pid = 0; pid < pairCount; pid++) {
-                if (!isPathContinuous(pid)) return;
-            }
-            solutions.push(grid.map(row => [...row]));
-            return;
-        }
-        const [r, c] = cellOrder[idx];
-        if (grid[r][c] !== -1) {
-            backtrack(idx + 1);
-            return;
-        }
-        const pids = [];
-        for (let i = 0; i < pairCount; i++) pids.push(i);
-        for (let i = pids.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [pids[i], pids[j]] = [pids[j], pids[i]];
-        }
-        for (const pid of pids) {
-            if (!isPathInternalOk(r, c, pid)) continue;
-            grid[r][c] = pid;
-            backtrack(idx + 1);
-            grid[r][c] = -1;
-            if (solutions.length >= SOL_LIMIT) return;
-        }
-    }
-
-    backtrack(0);
-    return solutions;
+    const complete = dfs(0, 0);
+    return { count, complete };
 }
 
-let passed = 0;
-let failed = 0;
+let passed = 0, failed = 0;
 for (const lv of levelsData) {
     // Compact format: [i, tier, r, c, pairs, solution]
     const N = lv[2];
     const rawPairs = lv[4];
     const pairs = rawPairs.map(p => [[p[0], p[1]], [p[2], p[3]]]);
-    const sols = solveInEngine(N, pairs, 8000);
-    if (sols.length === 1) {
-        passed++;
-    } else {
+    const t0 = Date.now();
+    const res = countSolutions(N, pairs, 2, t0 + 240000);
+    if (res.count === 1 && res.complete) passed++;
+    else {
         failed++;
-        console.log(`L${lv[0]}: FAIL (${sols.length} solutions)`);
+        console.log(`L${lv[0]}: FAIL solutions=${res.count} complete=${res.complete}`);
     }
 }
 console.log(`verify_engine.js: ${passed}/${levelsData.length} PASS`);
