@@ -628,6 +628,7 @@
       if (s.musicEnabled != null) { musicEnabled = s.musicEnabled; dom.setMusic.checked = musicEnabled; }
       if (s.sfxEnabled != null) { sfxEnabled = s.sfxEnabled; dom.setSfx.checked = sfxEnabled; }
     } catch (e) {}
+    if (dom.btnMute) dom.btnMute.textContent = musicEnabled ? '🔊' : '🔇';
   }
 
   function toggleMute() {
@@ -637,6 +638,7 @@
     dom.setSfx.checked = sfxEnabled;
     if (musicEnabled) playBgMusic(); else stopBgMusic();
     saveSettings();
+    if (dom.btnMute) dom.btnMute.textContent = musicEnabled ? '🔊' : '🔇';
   }
 
   // Audio

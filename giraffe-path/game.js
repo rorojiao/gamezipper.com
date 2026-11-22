@@ -629,6 +629,7 @@
     saveSettings();
     if (!musicEnabled) stopBgMusic();
     else playBgMusic();
+    if (dom.btnMute) dom.btnMute.textContent = musicEnabled ? '🔊' : '🔇';
   }
 
   function loadSettings() {
@@ -639,6 +640,7 @@
       dom.setMusic.checked = musicEnabled;
       dom.setSfx.checked = sfxEnabled;
     } catch (e) {}
+    if (dom.btnMute) dom.btnMute.textContent = musicEnabled ? '🔊' : '🔇';
   }
 
   function saveSettings() {

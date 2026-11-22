@@ -617,6 +617,7 @@
     saveSettings();
     if (!musicEnabled) stopBgMusic();
     else playBgMusic();
+    if (dom['btnMute']) dom['btnMute'].textContent = musicEnabled ? '🔊' : '🔇';
   }
 
   function loadSettings() {
@@ -627,6 +628,7 @@
       if (dom['setMusic']) dom['setMusic'].checked = musicEnabled;
       if (dom['setSfx']) dom['setSfx'].checked = sfxEnabled;
     } catch (e) {}
+    if (dom['btnMute']) dom['btnMute'].textContent = musicEnabled ? '🔊' : '🔇';
   }
 
   function saveSettings() {
