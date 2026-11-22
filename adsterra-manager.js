@@ -1,5 +1,17 @@
 /**
- * GameZipper Adsterra Ad Manager v5.17.5 (2026-07-26)
+ * GameZipper Adsterra Ad Manager v5.17.8 (2026-11-22)
+ *   R1194 (2026-11-22): popunder COOLDOWN COMMITS ONLY ON SUCCESS (R1010
+ *   pattern applied to the pop side). BI 14d: popup_blocked rose from 0-5/day
+ *   pre-R1133 to 7-30/day after (7d share = 41% of popunder attempts) —
+ *   iOS Safari / Telegram in-app / most Android Chrome do NOT grant user
+ *   activation for window.open() from pointerdown. Blocked attempts burned the
+ *   sitewide 25-min localStorage slot with $0 chance to bill, and every new
+ *   page in that session kept re-arming + re-blocking (BI noise). Fix: write
+ *   POP_KEY/BroadcastChannel only when window.open returned a window; and on
+ *   the first block from a mobile UA set a sessionStorage kill-switch so the
+ *   rest of that tab-session never arms (those browsers can never serve it).
+ *   Desktop transient blocks keep a retry: the slot is not spent, next page
+ *   arms normally.
  *   R1133 (2026-11-12): popunder now FIRES on capture-phase pointerdown —
  *   drag games calling preventDefault() on canvas pointerdown (magic-sort,
  *   qwirkle) suppress the compat click chain, so the click path never fired
@@ -247,6 +259,7 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
 
   // ── Popunder ──
   var POP_KEY = 'gz_adst_pop_ts';
+  var POP_SESS_BLOCK_KEY = 'gz_adst_pop_blocked'; // R1194: per-tab-session kill after a mobile block
   var POP_INTERVAL = 25 * 60 * 1000; // 25min cooldown
   var _bc = null;
   try { _bc = new BroadcastChannel('gz_adst_popunder'); } catch (e) {}
@@ -255,6 +268,7 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
 
   function canShowPop() {
     try {
+      if (sessionStorage.getItem(POP_SESS_BLOCK_KEY)) return false; // R1194
       var ts = localStorage.getItem(POP_KEY);
       if (ts && Date.now() - parseInt(ts, 10) < POP_INTERVAL) return false;
     } catch (e) {}
@@ -266,17 +280,26 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
       track('pop_skipped', { zone: ZONES.popunder, reason: 'cooldown' });
       return;
     }
-    try { localStorage.setItem(POP_KEY, String(Date.now())); } catch (e) {}
-    if (_bc) try { _bc.postMessage(Date.now()); } catch (e) {}
-
+    // R1194: do NOT commit the 25-min slot before window.open — a
+    // popup-blocked attempt books nothing but used to burn the sitewide
+    // slot (same R1010 lesson the smartlink cooldown already fixed).
     var w = null;
     try { w = window.open(POPUNDER_URL, '_blank'); } catch (e) {}
     if (w) {
+      try { localStorage.setItem(POP_KEY, String(Date.now())); } catch (e) {}
+      if (_bc) try { _bc.postMessage(Date.now()); } catch (e) {}
       try { w.blur(); } catch (e) {}
       try { window.focus(); } catch (e) {}
       track('fill', { zone: ZONES.popunder, format: 'popunder', trigger: trigger || 'click' });
     } else {
       track('no_fill', { zone: ZONES.popunder, format: 'popunder', reason: 'popup_blocked', trigger: trigger || 'click' });
+      // R1194: mobile Safari/WebView/Telegram-in-app block window.open from
+      // every gesture shape — they can NEVER serve the popunder this session.
+      // Kill the arm for the whole tab-session (one logged block per session,
+      // zero slot damage). Desktop keeps the next-page retry.
+      if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '')) {
+        try { sessionStorage.setItem(POP_SESS_BLOCK_KEY, '1'); } catch (e) {}
+      }
     }
   }
 
@@ -573,11 +596,11 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
     armPop();
     track('script_loaded', {
       zones: ZONES,
-      v: '5.17.7',
+      v: '5.17.8',
       path: location.pathname,
       readyState: document.readyState
     });
-    track('config_loaded', { v: '5.17.7', popInterval: POP_INTERVAL });
+    track('config_loaded', { v: '5.17.8', popInterval: POP_INTERVAL });
     // Run CDN health probe asynchronously — doesn't block init.
     setTimeout(runCdnHealth, 1500);
   }
