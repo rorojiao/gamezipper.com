@@ -74,8 +74,10 @@ const entryRe = /\{[^{}]*name:\"[^\"]*\"[^{}]*cat:\"([^\"]+)\"[^{}]*\}/g;
 let m;
 while ((m = entryRe.exec(inner)) !== null) {
   const entry = m[0];
-  // Check if this entry is hidden
-  if (/status:\s*[\"']hidden[\"']/.test(entry)) continue;
+  // R421: count ONLY live status entries (beta demoted from display;
+  // entries with no status field = legacy default live)
+  const sm = entry.match(/status:[^\w]*(\w+)/);
+  if (sm && sm[1] !== 'live') continue;
   cats[m[1]] = (cats[m[1]] || 0) + 1;
 }
 console.log(JSON.stringify(cats));
