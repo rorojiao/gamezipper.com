@@ -180,6 +180,22 @@
   // non-iPhone platform) — BI /magic-sort/ 7d had such rows as the page's
   // only "mobile" visits.
   var _fakeFP = /iPhone|iPod/.test(UA) && !/^(iPhone|iPod)$/.test(OS);
+  // R1193 (2026-11-22): desktop x86_64 UA claiming an ARM platform = fingerprint farm.
+  // BI 7d: os='Linux armv81' + UA 'X11; Linux x86_64' pool (2 UA variants, 650 events,
+  // 28/3667 PV, referrers utm_source=deveam / playhoponline.com) emitted 89 vitals_rating
+  // rows that fabricated CLS POOR on / (1.017), /t-rex/ (0.972), /cloud-sheep/ (0.978),
+  // /2048/, /chess/, /cookie-clicker/ (0.501 — R1185 watchlist false lead) plus INP
+  // worst 3344ms /checkers/. Sessions browse 9-10 paths in <10min with 240-412 events.
+  // Native Raspberry-Pi Chrome is NOT hit: its UA carries 'X11; Linux armv7l/armv81',
+  // not 'x86_64'. Android WebView (UA 'Linux; Android', platform 'Linux armv7l/8l') is
+  // consistent and stays. Only the X11-x86_64-UA + ARM-platform contradiction drops.
+  var _x11ArmFP = /X11; Linux x86_64/.test(UA) && /^Linux arm/i.test(OS);
+
+  // R1193: tag genuine iframe-embed sessions (R1129 embed-farm contention: vitals measured
+  // under host-page multi-iframe contention skew CLS/INP; triage must be able to isolate
+  // them without guessing from referrers). window.self!==window.top works cross-origin.
+  var _inFrame = false;
+  try { _inFrame = window.self !== window.top; } catch (e) { _inFrame = true; }
 
   function ps(n, d) {
     // R962 bot referrer gate: silently drop all events from known bot farms.
@@ -188,11 +204,12 @@
       BOT_REF_DROPPED++;
       return;
     }
-    if (_fakeFP) return;  // R1117b fingerprint farm drop
+    if (_fakeFP || _x11ArmFP) return;  // R1117b + R1193 fingerprint farm drop
     var b = gB();
     var ev = base();
     ev.e = n; ev.d = d || {}; ev.t = Date.now();
     if (document.prerendering) ev.d.pr = 1;  // R1117: tag prerender-doc events
+    if (_inFrame) ev.d.emb = 1;  // R1193: iframe-embed session tag
     b.push(ev);
     sB(b);
   }
