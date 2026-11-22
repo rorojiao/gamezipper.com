@@ -24,7 +24,7 @@ if (engIdx < 0) { console.error('engine script not found'); process.exit(1); }
 const ANCHOR = 'window.__bf3d = { state, LEVELS, SKINS };';
 if (!scripts[engIdx].includes(ANCHOR)) { console.error('surgery anchor not found'); process.exit(1); }
 scripts[engIdx] = scripts[engIdx].replace(ANCHOR,
-  'window.__bf3d = { state, LEVELS, SKINS, loadLevel: loadLevel, update: update, restartLevel: restartLevel };');
+  'window.__bf3d = { state, LEVELS, SKINS, loadLevel: loadLevel, update: update, restartLevel: restartLevel };\n  (function(){ var __o = onBottleSuccess; onBottleSuccess = function(){ window.__bf3d.sc = (window.__bf3d.sc || 0) + 1; return __o.apply(null, arguments); }; })();');
 
 function mkAny() {
   const f = function () { return anyP; };
@@ -256,6 +256,14 @@ const DRIVER = `(function(){
     }
     res.levels[1] = { screen: state.screen, result: state.result, score: state.totalScore, attempts: attempts };
     res.attempts += attempts;
+    // R1192 regression gate: in a real browser there is a 600ms window between landing and
+    // completeLevel during which a settled bottle used to re-pass the platform-crossing test
+    // every frame and re-fire onBottleSuccess (~36x: streak 37, bottles 37/1). The sandbox
+    // setTimeout stub fires <=2000ms callbacks immediately, hiding that window; replay it here.
+    (function(){ var scB = A.sc || 0; state.screen = 'playing';
+      for (var f = 0; f < 60; f++) frame();
+      res.extraSuccessesL1 = (A.sc || 0) - scB;
+      state.screen = 'resultModal'; })();
     // levels 11 (moving platform) and 30 (bars+wind+mover) via engine loadLevel
     [10, 29].forEach(function(idx){
       const r = play(idx, 40);
@@ -285,6 +293,7 @@ checks.push(['level30-master-completed (' + JSON.stringify(res30.result || res30
 checks.push(['score>0 (L1 score=' + res1.score + ')', (res1.score || 0) > 0]);
 checks.push(['save-persisted (stars 1/11/30 = ' + lvStars(1) + '/' + lvStars(11) + '/' + lvStars(30) + ')', lvStars(1) >= 1 && lvStars(11) >= 1 && lvStars(30) >= 1]);
 checks.push(['next-level-unlocked (L2=' + (saved && saved.levels && !!saved.levels[2] && saved.levels[2].unlocked) + ')', !!(saved && saved.levels && saved.levels[2] && saved.levels[2].unlocked)]);
+checks.push(['R1192 land-idempotent 60-frame post-land window (extra successes=' + r.extraSuccessesL1 + ')', (r.extraSuccessesL1 || 0) === 0]);
 let pass = 0, fail = 0; const fails = [];
 for (const [name, ok] of checks) { if (ok) pass++; else { fail++; fails.push(name); } }
 console.log('bottle-flip-3d in-engine verification: L1 ' + JSON.stringify(res1) + ' | L11 ' + JSON.stringify(res11) + ' | L30 ' + JSON.stringify(res30) + ' | attempts=' + r.attempts + ' frames=' + r.frames);

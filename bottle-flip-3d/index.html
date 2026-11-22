@@ -1468,6 +1468,12 @@ function update(dt) {
   // Bottle update
   if (state.bottle) {
     const b = state.bottle;
+    // R1192 FIX (P1): a landed bottle kept passing the platform-crossing test every frame
+    // (vy=0 -> gravity re-accumulates -> prevBot/bBot window re-satisfied), re-firing
+    // onBottleSuccess ~36x during the 600ms before completeLevel: streak inflated 37x,
+    // bottlesLeft went negative, "37/1 bottles" + toast spam in the result modal.
+    // Freeze physics once settled.
+    if (!b.landed) {
     // Apply wind
     let wind = 0;
     for (const ob of (state.level.obstacles || [])) {
@@ -1573,6 +1579,7 @@ function update(dt) {
     if (b.y > state.H + 200) {
       onBottleFail(b);
     }
+    }
   }
 
   // Update particles
@@ -1638,6 +1645,8 @@ function onBottleSuccess(b, kind, platform) {
 }
 
 function onBottleFail(b) {
+  if (b.settled) return;
+  b.settled = true;
   sfx('land-fail');
   state.streak = 0;
   state.attempt += 1;
