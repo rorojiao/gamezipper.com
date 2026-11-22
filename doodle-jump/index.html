@@ -121,7 +121,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 <h1 class="gz-sr-only">Doodle Jump - Vertical Platformer Game</h1>
 
 
-<div id="wrap" style="position:relative;display:inline-block">
+<div id="wrap" style="position:relative;display:block;width:fit-content;margin:0 auto">
 
 <div id="gz-ad-above-game"></div>
 <canvas id="gc"></canvas>
@@ -860,6 +860,30 @@ document.addEventListener("keyup",function(e){
 if(e.key==="ArrowLeft"||e.key==="a")inputLeft=false;
 if(e.key==="ArrowRight"||e.key==="d")inputRight=false;
 });
+// R1190 P2 fix (BI rage x=548-552 on BODY, Telegram embed ~560px wide): steering was
+// canvas-only, so drags starting in the side margin were silently ignored and the
+// doodler fell. Capture drag/tap at document level while playing; map clientX to
+// canvas space. Buttons/overlays keep their own click handling.
+document.addEventListener("pointerdown",function(e){
+if(state!=="playing")return;
+if(e.target.closest&&e.target.closest('.btn,#overScreen,#startScreen,a,button'))return;
+e.preventDefault();initAudio();
+var rect=canvas.getBoundingClientRect();
+touchStartX=e.clientX-rect.left;touchX=touchStartX;
+});
+document.addEventListener("pointermove",function(e){
+if(touchStartX===null||state!=="playing")return;
+var rect=canvas.getBoundingClientRect();
+touchX=e.clientX-rect.left;
+});
+document.addEventListener("pointerup",function(e){
+if(touchStartX===null)return;
+var rect=canvas.getBoundingClientRect();
+var dx=(e.clientX-rect.left)-touchStartX;
+if(Math.abs(dx)<8)shoot(); // tap to shoot
+touchStartX=null;touchX=null;
+});
+if(false){
 canvas.addEventListener("pointerdown",function(e){
 e.preventDefault();initAudio();
 if(state==="start")return;
@@ -878,6 +902,7 @@ if(Math.abs(dx)<8)shoot(); // tap to shoot
 }
 touchStartX=null;touchX=null;
 });
+}
 canvas.addEventListener("pointerleave",function(){
 touchStartX=null;touchX=null;inputLeft=false;inputRight=false;
 });
