@@ -283,10 +283,32 @@ def _open_with_retry(req, timeout=30, read=False):
         raise RuntimeError(f"transport failed after {_RETRIES + 1} attempts: {last_err}") from last_err
 
 
+def _get_body(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "GameZipper-IndexNow/1.0"})
+    _, body = _open_with_retry(req, read=True)
+    if body is None:
+        raise RuntimeError(f"empty body from {url}")
+    return body
+
+
 def fetch_urls():
-    req = urllib.request.Request(SITEMAP, headers={"User-Agent": "GameZipper-IndexNow/1.0"})
-    response, body = _open_with_retry(req, read=True)
+    body = _get_body(SITEMAP)
     root = ET.fromstring(body)
+    if root.tag.endswith("sitemapindex"):
+        # R1197: sitemap.xml is now a <sitemapindex> (games/pages/blog split,
+        # commit 6d960f041f). Expand every child sitemap so IndexNow keeps the
+        # full URL set — without this the daily submit silently dropped from
+        # 821 URLs to 3 (the index entries themselves).
+        urls = []
+        for node in root.findall(".//{*}sitemap/{*}loc"):
+            sub = (node.text or "").strip()
+            if not sub:
+                continue
+            sroot = ET.fromstring(_get_body(sub))
+            urls.extend(t.strip() for t in (n.text for n in sroot.findall(".//{*}loc")) if t)
+        if not urls:
+            raise RuntimeError("sitemap index contains no URLs")
+        return urls
     urls = [node.text.strip() for node in root.findall(".//{*}loc") if node.text]
     if not urls:
         raise RuntimeError("sitemap contains no URLs")

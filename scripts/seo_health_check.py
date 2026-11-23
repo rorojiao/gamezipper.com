@@ -123,6 +123,35 @@ def check_sitemap_content(site, xml_text, results, checks):
     a = analyze_sitemap(xml_text, site)
     checks["sitemap_xml"].update(a)
 
+    # R1197: sitemap.xml may be a <sitemapindex> pointing at sub-sitemaps
+    # (games/pages/blog split, commit 6d960f041f). The URL floor must be judged
+    # against the AGGREGATE across children, not the handful of index entries —
+    # otherwise a healthy 823-URL site reads as "only 3 URLs (floor 700)".
+    if "<sitemapindex" in xml_text[:500]:
+        children = re.findall(r"<loc>\s*(.*?)\s*</loc>", xml_text, re.S)
+        agg = {"unique_locs": 0, "total_locs": 0, "with_lastmod": 0,
+               "duplicate_locs": 0, "coverage_pct": 0.0, "newest_lastmod": None,
+               "is_index": True, "sub_sitemaps": []}
+        newest = []
+        for child_url in children:
+            cb = fetch_body(child_url)
+            if cb is None:
+                issues.append(f"[WARN] {site} sub-sitemap body fetch returned None: {child_url}")
+                continue
+            ca = analyze_sitemap(cb, site)
+            agg["total_locs"] += ca["total_locs"]
+            agg["unique_locs"] += ca["unique_locs"]
+            agg["with_lastmod"] += ca["with_lastmod"]
+            agg["duplicate_locs"] += ca["duplicate_locs"]
+            if ca.get("newest_lastmod"):
+                newest.append(ca["newest_lastmod"])
+            agg["sub_sitemaps"].append({"url": child_url, **ca})
+        agg["coverage_pct"] = (round(agg["with_lastmod"] * 100.0 / agg["total_locs"], 2)
+                               if agg["total_locs"] else 0.0)
+        agg["newest_lastmod"] = max(newest) if newest else None
+        checks["sitemap_xml"].update(agg)
+        a = agg
+
     floor = SITEMAP_MIN_URLS.get(site)
     if a["unique_locs"] == 0:
         issues.append(f"[CRITICAL] {site}/sitemap.xml has 0 URLs (generator likely broken)")
