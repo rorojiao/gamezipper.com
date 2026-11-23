@@ -67,6 +67,13 @@ body{background:#0a0a1a;min-height:100vh}
 .gz-hud-title{font-size:14px;font-weight:700;color:#8be9fd;white-space:nowrap}
 .gz-hud-info{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px}
 .gz-btn{background:rgba(139,233,253,0.12);border:1px solid rgba(139,233,253,0.3);color:#8be9fd;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600}
+/* UX-OPT 2026-11-23 R1195: BI rage_click cluster (390-430px Android, taps x=368-392 y=118-128) = user missing the 29x26px btnMenu (≡) and rapid-retapping. Enlarge HUD touch targets to >=38px tall / menu >=44px wide. */
+.gz-hud-info .gz-btn{min-height:38px;padding:8px 12px;display:inline-flex;align-items:center}
+#btnMenu{min-width:44px;justify-content:center}
+.gz-btn.gz-shake{animation:arukoneShake .4s ease}
+@keyframes arukoneShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.gz-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:rgba(20,20,40,.95);border:1px solid rgba(139,233,253,.4);color:#e6f7ff;padding:10px 16px;border-radius:8px;font-size:13px;z-index:9999;pointer-events:none;opacity:0;transition:opacity .2s}
+.gz-toast.show{opacity:1}
 .gz-btn:hover{background:rgba(139,233,253,0.2)}
 .gz-btn:disabled{opacity:0.4;cursor:not-allowed}
 #canvas-wrap{position:relative;width:100%;margin:0 auto;display:flex;justify-content:center;align-items:center}
@@ -277,7 +284,12 @@ function onPointerUp(e){e.preventDefault();isDragging=false;activeKey=null;}
 
 // Hint: reveals the solution for one path
 function orderSolPath(lv,pid){var sol=lv[5],pr=lv[4][pid];var cells=[];for(var r=0;r<lv[3];r++)for(var c=0;c<lv[2];c++)if(sol[r][c]===pid)cells.push([r,c]);var dirs=[[-1,0],[1,0],[0,-1],[0,1]];function degOf(cc){var d=0;for(var q=0;q<4;q++){var nr=cc[0]+dirs[q][0],nc=cc[1]+dirs[q][1];for(var j=0;j<cells.length;j++){if(cells[j][0]===nr&&cells[j][1]===nc){d++;break;}}}return d;}var start=cells[0];for(var i=0;i<cells.length;i++){if(degOf(cells[i])===1){start=cells[i];break;}}var out=[start],used={};used[start[0]+','+start[1]]=1;while(out.length<cells.length){var last=out[out.length-1],nxt=null;for(var j=0;j<cells.length;j++){var cc=cells[j];if(used[cc[0]+','+cc[1]])continue;if(Math.abs(last[0]-cc[0])+Math.abs(last[1]-cc[1])===1){nxt=cc;break;}}if(!nxt)break;out.push(nxt);used[nxt[0]+','+nxt[1]]=1;}return out;}
-function showHint(){if(state.hints<=0){playSFX('error');return;}var lv=getCurrentLevel();var pairs=lv[4];var sol=lv[5];
+// UX-OPT 2026-11-23 R1195: visible ack for silent-rejection paths (R989c pattern) — error SFX alone is inaudible on muted mobile
+// UX-OPT 2026-11-23 R1195: pre-existing ReferenceError — autoCheck was referenced (showHint auto-check path) but never defined; 3 pageerrors per hint. Feature never worked (checkSolution result was discarded anyway); defining as false kills the errors with zero behavior change. Enabling later needs a silent checkSolution variant + onWin wiring.
+var autoCheck=false;
+function shakeBtn(b){if(!b)return;b.classList.remove('gz-shake');void b.offsetWidth;b.classList.add('gz-shake');setTimeout(function(){if(b)b.classList.remove('gz-shake')},500);}
+function arukoneToast(msg){var t=document.getElementById('arukoneToast');if(!t){t=document.createElement('div');t.id='arukoneToast';t.className='gz-toast';document.body.appendChild(t);}t.textContent=msg;t.classList.add('show');clearTimeout(t._tm);t._tm=setTimeout(function(){t.classList.remove('show')},1800);}
+function showHint(){if(state.hints<=0){playSFX('error');shakeBtn(document.getElementById('btnHint'));arukoneToast('No hints left');return;}var lv=getCurrentLevel();var pairs=lv[4];var sol=lv[5];
 for(var pid=0;pid<pairs.length;pid++){var key='p'+pid;var pd=state.paths[key];var needReveal=false;
  if(!pd){needReveal=true;}
  else{var solSet={};for(var r=0;r<lv[3];r++)for(var c=0;c<lv[2];c++){if(sol[r][c]===pid)solSet[r+','+c]=1;}var ok=pd.path.length===Object.keys(solSet).length;if(ok){for(var i=0;i<pd.path.length;i++){if(!solSet[pd.path[i][0]+','+pd.path[i][1]]){ok=false;break;}}}if(!ok)needReveal=true;}
@@ -306,10 +318,10 @@ function init(){loadProgress();canvas=document.getElementById('board');ctx=canva
 document.getElementById('btnPlay').onclick=function(){initAudio();playSFX('click');renderLevelSelect();showScreen('levelSelect');};
 document.getElementById('btnBackToTitle').onclick=function(){playSFX('click');showScreen('titleScreen');stopBGM();};
 document.getElementById('btnMenu').onclick=function(){playSFX('click');renderLevelSelect();showScreen('levelSelect');};
-document.getElementById('btnUndo').onclick=function(){playSFX('click');var lastKey=null;if(state.lastTouched&&state.paths[state.lastTouched])lastKey=state.lastTouched;else{for(var key in state.paths)lastKey=key;}if(lastKey){var pd=state.paths[lastKey];if(pd.path.length>1)pd.path.pop();else delete state.paths[lastKey];state.lastTouched=null;drawGrid();}};
+document.getElementById('btnUndo').onclick=function(){playSFX('click');var lastKey=null;if(state.lastTouched&&state.paths[state.lastTouched])lastKey=state.lastTouched;else{for(var key in state.paths)lastKey=key;}if(lastKey){var pd=state.paths[lastKey];if(pd.path.length>1)pd.path.pop();else delete state.paths[lastKey];state.lastTouched=null;drawGrid();}else{shakeBtn(this);arukoneToast('Nothing to undo');}};
 document.getElementById('btnErase').onclick=function(){state.mode=state.mode==='erase'?'draw':'erase';document.getElementById('btnErase').style.background=state.mode==='erase'?'rgba(255,107,107,0.3)':'rgba(139,233,253,0.12)';playSFX('click');};
 document.getElementById('btnHint').onclick=function(){showHint();};
-document.getElementById('btnCheck').onclick=function(){if(checkSolution()){onWin();}else{playSFX('error');}};
+document.getElementById('btnCheck').onclick=function(){if(checkSolution()){onWin();}else{playSFX('error');shakeBtn(this);arukoneToast('Not solved yet — check the connections');}};
 document.getElementById('btnNext').onclick=function(){document.getElementById('winOverlay').classList.remove('show');if(state.lv+1<LEVELS.length){state.lv++;state.hints=3;state.paths={};sessionClues={};state.startTime=Date.now();resizeCanvas();updateHUD();drawGrid();}else{alert('You completed all 30 levels! 🎉');renderLevelSelect();showScreen('levelSelect');}};
 document.getElementById('btnReplay').onclick=function(){document.getElementById('winOverlay').classList.remove('show');state.hints=3;state.paths={};sessionClues={};state.startTime=Date.now();resizeCanvas();updateHUD();drawGrid();};
 canvas.addEventListener('pointerdown',onPointerDown);canvas.addEventListener('pointermove',onPointerMove);canvas.addEventListener('pointerup',onPointerUp);canvas.addEventListener('pointercancel',onPointerUp);
