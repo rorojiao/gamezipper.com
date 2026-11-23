@@ -37,6 +37,7 @@ LINE_NUMBER_RE = re.compile(r'^\s*\d+\s*[|\t]\s*\S')
 
 DEFAULT_MIN_URLS = 600
 EXPECTED_ROOT = '{http://www.sitemaps.org/schemas/sitemap/0.9}urlset'
+EXPECTED_INDEX = '{http://www.sitemaps.org/schemas/sitemap/0.9}sitemapindex'
 EXPECTED_NS = 'http://www.sitemaps.org/schemas/sitemap/0.9'
 
 
@@ -60,8 +61,14 @@ def fetch_url(url: str, timeout: float = 30.0) -> str:
         return r.read().decode('utf-8')
 
 
-def verify(body: str, min_urls: int = DEFAULT_MIN_URLS) -> dict[str, Any]:
-    """Run all checks against `body`. Returns a result dict."""
+def verify(body: str, min_urls: int = DEFAULT_MIN_URLS, resolver=None) -> dict[str, Any]:
+    """Run all checks against `body`. Returns a result dict.
+
+    If the document is a <sitemapindex>, each child <loc> is resolved via
+    `resolver(loc_url) -> body` and verified recursively; URL counts are
+    aggregated across children. (R424: sitemap.xml became a sitemapindex in
+    commit 6d960f041f; the old urlset-only expectation false-FAILed.)
+    """
     result = {
         'checks': {},
         'ok': True,
@@ -88,13 +95,39 @@ def verify(body: str, min_urls: int = DEFAULT_MIN_URLS) -> dict[str, Any]:
     try:
         root = ET.fromstring(body)
         root_tag = root.tag
-        ns_ok = root_tag == EXPECTED_ROOT
-        for url in root.findall(f'{{{EXPECTED_NS}}}url'):
-            url_count += 1
-            if url.find(f'{{{EXPECTED_NS}}}loc') is not None:
-                loc_count += 1
-            if url.find(f'{{{EXPECTED_NS}}}lastmod') is not None:
-                lastmod_count += 1
+        ns_ok = root_tag in (EXPECTED_ROOT, EXPECTED_INDEX)
+        if root_tag == EXPECTED_INDEX:
+            children = []
+            for sm in root.findall(f'{{{EXPECTED_NS}}}sitemap'):
+                loc_el = sm.find(f'{{{EXPECTED_NS}}}loc')
+                loc = (loc_el.text or '').strip() if loc_el is not None else ''
+                child = {'loc': loc, 'ok': False, 'url_count': 0,
+                         'lastmod_count': 0, 'error': 'no resolver for child sitemaps'}
+                if resolver:
+                    try:
+                        cres = verify(resolver(loc), min_urls=0, resolver=resolver)
+                        cuc = cres['checks']['url_count']
+                        child.update(ok=cres['ok'], url_count=cuc['count'],
+                                     lastmod_count=cuc['lastmod_count'], error=None)
+                        url_count += cuc['count']
+                        loc_count += cuc['loc_count']
+                        lastmod_count += cuc['lastmod_count']
+                    except Exception as e:  # noqa: BLE001 — report, don't crash the gate
+                        child['error'] = str(e)
+                children.append(child)
+            result['checks']['sitemapindex_children'] = {
+                'ok': bool(children) and all(c['ok'] for c in children),
+                'children': children,
+            }
+            if not children or not all(c['ok'] for c in children):
+                result['ok'] = False
+        else:
+            for url in root.findall(f'{{{EXPECTED_NS}}}url'):
+                url_count += 1
+                if url.find(f'{{{EXPECTED_NS}}}loc') is not None:
+                    loc_count += 1
+                if url.find(f'{{{EXPECTED_NS}}}lastmod') is not None:
+                    lastmod_count += 1
     except ET.ParseError as e:
         xml_ok = False
         xml_err = str(e)
@@ -185,12 +218,23 @@ def main(argv: list[str]) -> int:
     args = p.parse_args(argv)
 
     source = args.path
+    resolver: Any = None
     try:
         if args.url:
             source = args.url
             body = fetch_url(args.url)
+            resolver = fetch_url
         else:
             body = fetch_local(args.path)
+
+            def _local_child(loc_url, _path=args.path):
+                child = os.path.join(
+                    os.path.dirname(_path) or '.',
+                    os.path.basename(loc_url.rstrip('/')),
+                )
+                return fetch_local(child)
+
+            resolver = _local_child
     except (OSError, urllib.error.URLError) as e:
         msg = f'read error: {e}'
         if args.json:
@@ -199,7 +243,7 @@ def main(argv: list[str]) -> int:
             print(msg, file=sys.stderr)
         return 5
 
-    result = verify(body, min_urls=args.min_urls)
+    result = verify(body, min_urls=args.min_urls, resolver=resolver)
 
     # In strict mode, also fail if lastmod coverage < 100%
     if args.strict:

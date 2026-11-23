@@ -45,7 +45,19 @@ console.log('  itemlist_missing =', ilMissing.length ? ilMissing.join(',') : 'no
 console.log('  itemlist_extra   =', ilExtra.length ? ilExtra.join(',') : 'none');
 
 // 4. sitemap
-const sm = fs.readFileSync(R('sitemap.xml'), 'utf8');
+// R424 FIX: sitemap.xml became a <sitemapindex> (commit 6d960f041f). Read the
+// index and aggregate all child sitemap-*.xml files shipped alongside it.
+// Also: since R421 the sitemap intentionally carries live + beta game URLs
+// (repo convention), so "extra" means NOT in the catalog at all (true orphan),
+// not merely "not live".
+const catalogSlugs = GAMES.map(g => norm(g.url));
+const catalogSet = new Set(catalogSlugs);
+let sm = fs.readFileSync(R('sitemap.xml'), 'utf8');
+if (/<sitemapindex/.test(sm)) {
+  const childFiles = [...sm.matchAll(/<loc>https:\/\/gamezipper\.com\/([^<]+)<\/loc>/g)]
+    .map(x => x[1]).filter(f => fs.existsSync(R(f)));
+  sm = childFiles.map(f => fs.readFileSync(R(f), 'utf8')).join('\n');
+}
 const smAll = [...sm.matchAll(/<loc>https:\/\/gamezipper\.com\/([^<]*)<\/loc>/g)].map(x => x[1]);
 const smSet = new Set(smAll.map(norm).filter(Boolean));
 const smMissing = liveSlugs.filter(s => !smSet.has(s));
@@ -66,7 +78,7 @@ const STATIC_PAGES = new Set(['blog', 'contact', 'cookie-policy', 'terms', 'fun-
   // flags it. It is a static page: not in GAMES, no canvas gameplay.
   'wishes']);
 const smExtra = [...smSet].filter(s => {
-  if (liveSet.has(s)) return false;
+  if (catalogSet.has(s)) return false;            // R424: live OR beta catalog entry is legit
   if (!/^[a-z0-9-]+$/.test(s)) return false;      // not a game-slug shape (category pages etc.)
   if (STATIC_PAGES.has(s)) return false;          // R334: known static pages are legit sitemap entries
   if (!fs.existsSync(R(s))) return false;         // not a dir on disk
@@ -83,12 +95,14 @@ console.log('  sitemap_missing =', smMissing.length ? smMissing.join(',') : 'non
 console.log('  sitemap_extra_dirs =', smExtra.length ? smExtra.join(',') : 'none');
 
 // 5. test-library games-list
+// R424 FIX: since R421 the repo convention is games-list.json == ALL catalog
+// entries (live + beta), not just live. Compare against the full catalog set.
 const tlRaw = JSON.parse(fs.readFileSync(R('test-library/games-list.json'), 'utf8'));
 const tlArr = Array.isArray(tlRaw) ? tlRaw : (tlRaw.games || tlRaw.data || []);
 const tlSet = new Set(tlArr.map(g => norm(g.slug)));
-const tlMissing = liveSlugs.filter(s => !tlSet.has(s));
-const tlExtra = [...tlSet].filter(s => !liveSet.has(s));
-console.log(`test-library: entries=${tlArr.length}`);
+const tlMissing = catalogSlugs.filter(s => !tlSet.has(s));
+const tlExtra = [...tlSet].filter(s => !catalogSet.has(s));
+console.log(`test-library: entries=${tlArr.length} (catalog=${catalogSet.size})`);
 console.log('  tl_missing =', tlMissing.length ? tlMissing.join(',') : 'none');
 console.log('  tl_extra   =', tlExtra.length ? tlExtra.join(',') : 'none');
 
@@ -119,9 +133,10 @@ for (const [cat, n] of Object.entries(liveByCat)) {
   if (catCounts[cat] !== n) catDrift.push(`${cat}: HTML ${catCounts[cat]} vs GAMES ${n}`);
 }
 // categories present in HTML but with no live games
+// R424 FIX: HTML counter 0 with 0 live games is CONSISTENT, not drift.
 for (const [cat, n] of Object.entries(catCounts)) {
   if (cat === 'all') continue;
-  if (!liveByCat[cat]) catDrift.push(`${cat}: HTML ${n} but 0 live games`);
+  if (!liveByCat[cat] && n !== 0) catDrift.push(`${cat}: HTML ${n} but 0 live games`);
 }
 console.log('index data-count values =', dataCounts.join(','));
 console.log('index cat-counts        =', JSON.stringify(catCounts));
