@@ -139,7 +139,6 @@ var games = [
       {n:'Reaction Time',e:'⚡',u:'/reaction-time/',c:'arcade'},
       {n:'Steam Whacker',e:'⚙️',u:'/whack-a-mole/',c:'arcade'},
       {n:'Memory Master',e:'🎪',u:'/memory-match/',c:'card'},
-      {n:'Tangle Master',e:'🕸️',u:'/tangle-master/',c:'puzzle'},
       {n:'Queens Puzzle',e:'👑',u:'/queens/',c:'puzzle'},
       {n:'Set Quest',e:'🃏',u:'/set-quest/',c:'puzzle'},
       {n:'Tango Logic',e:'☀️',u:'/tango-logic/',c:'puzzle'},
