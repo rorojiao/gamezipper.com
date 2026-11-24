@@ -60,7 +60,7 @@ const MODE = process.argv[2] || '';
 
 /* ---- claim surfaces -------------------------------------------------------- */
 /* "unique solution", "exactly one unique solution", "unique-solution levels", ... */
-const CLAIM_RE = /(unique[ -]?(canonical )?solution|exactly one (unique )?solution|one unique solution|unique puzzle solution|solution is unique|unique-solution|unique puzzle|has a unique solution|uniquely solvable)/i;
+const CLAIM_RE = /(unique[ -]?(canonical )?solution|exactly one (unique )?solution|one unique solution|unique puzzle solution|solution is unique|unique-solution|has a unique solution|uniquely solvable|solver-verified to have a single solution)/i;
 
 /* ---- gate: does it ASSERT uniqueness? ------------------------------------- */
 /* Three complementary signals.  Calibrated against a labelled set: every gate that
@@ -241,6 +241,16 @@ function selfTest(rows) {
   // R424 removed the uniqueness copy from lights-out; with no claim on any
   // surface, OK-with-no-gate is the correct verdict.
   if (lo) ok(lo.verdict === 'OK' && !lo.claimPage && !lo.claimCatalog, 'lights-out is OK post-R424 copy fix — ' + lo.verdict);
+  // R433: hitori ships an independent uniqueness counter (verify-levels.js,
+  // 30/30 unique+valid); the page claim is now guarded -> OK with asserting gate.
+  const hitori = by('hitori');
+  ok(!!hitori, 'hitori is in the catalog');
+  if (hitori) ok(hitori.verdict === 'OK' && hitori.claimPage && hitori.asserting.includes('verify-levels.js'), 'hitori claim is guarded by verify-levels.js post-R433 — got ' + hitori.verdict + ' asserting=' + hitori.asserting);
+  // R433: akari's false uniqueness FAQ was rewritten to an at-least-one-solution
+  // promise; no CLAIM_RE surface remains (multi-solution is legal there).
+  const akari = by('akari');
+  ok(!!akari, 'akari is in the catalog');
+  if (akari) ok(akari.verdict === 'OK' && !akari.claimPage, 'akari is OK post-R433 copy fix — got ' + akari.verdict + ' claimPage=' + akari.claimPage);
 
   console.log('== no game may be mislabelled OK while claiming uniqueness with no gate ==');
   const leaks = rows.filter(r => r.verdict === 'OK' && (r.claimPage || r.claimCatalog) && !r.asserting && !r.byDesign);
