@@ -166,8 +166,13 @@
     const dpr = window.devicePixelRatio || 1;
     c.width = W2 * dpr;
     c.height = W2 * dpr;
-    c.style.width = W2 + 'px';
-    c.style.height = W2 + 'px';
+    // R1201: CSS max-width:100% shrinks width but inline height stayed W2 -> board
+    // rendered vertically stretched on mobile (347x540 box for 540x540 content).
+    // Clamp BOTH CSS dims to the container so cells stay square.
+    const parentW = c.parentElement ? c.parentElement.clientWidth : 0;
+    const cssSize = parentW > 50 ? Math.min(W2, parentW - 4) : W2;
+    c.style.width = cssSize + 'px';
+    c.style.height = cssSize + 'px';
     const ctx = c.getContext('2d');
     ctx.scale(dpr, dpr);
     return { cellSize, totalSize: W2 };
@@ -643,6 +648,11 @@ try { window.dispatchEvent(new CustomEvent('level-complete')); } catch(e) {}
           if (_settings.music) startBGM(); else stopBGM();
           break;
       }
+    });
+
+    // R1201: re-clamp canvas CSS size on viewport change
+    window.addEventListener('resize', () => {
+      if (_grid && document.getElementById('screen-game').classList.contains('active')) drawGrid();
     });
 
     // Cleanup on unload
