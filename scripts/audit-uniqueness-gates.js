@@ -77,7 +77,17 @@ const BYDESIGN_RE = /(does NOT claim uniqueness|multi-?solution by design|not un
 /* ---- player-harm: win check compares board to the stored solution ---------- */
 const WINCOMPARE_RE = /(\[[^\]]*\]\s*!==\s*[A-Za-z_$][\w.$]*\.?solution|\[[^\]]*\]\s*!==\s*solution|board\s*\[[^\]]*\]\s*\[[^\]]*\]\s*!==\s*[A-Za-z_$][\w.$]*\.?solution|cell\s*!==\s*solution|!==\s*lv\.solution|!==\s*p\.solution|!==\s*LEVELS\[[^\]]*\]\.solution)/i;
 
-const GATE_FILES = ['verify_engine.js', 'verify_independent.js', 'verify_python.py', 'verify_levels.js', 'verify_unique.js'];
+/* R432 fix: the old fixed list missed hyphenated/variant gate names that
+ * actually ship in the catalog (verify-levels.js, verify_unique_search.js,
+ * verify_unique_crosscheck.js, verify_unique.py, verify_unique_bruteforce.py).
+ * That produced 5 false P0-PLAYER-HARM verdicts (thermo/odd-even/arrow/
+ * sandwich/ripple all ship counting gates under those names).
+ * Now: scan the game dir for ANY verify*.{js,py} file. */
+function gateFiles(dir) {
+  let names = [];
+  try { names = fs.readdirSync(dir); } catch (e) { return []; }
+  return names.filter(n => /^verify[_-]?.*\.(js|py|ts)$/i.test(n));
+}
 
 function read(p) { try { return fs.readFileSync(p, 'utf8'); } catch (e) { return ''; } }
 function stripTags(h) { return h.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' '); }
@@ -128,7 +138,7 @@ function main() {
     const claim = claimPage || claimCatalog;
 
     const gates = [];
-    for (const name of GATE_FILES) {
+    for (const name of gateFiles(dir)) {
       const p = path.join(dir, name);
       if (fs.existsSync(p)) gates.push({ name, text: read(p) });
     }
@@ -222,11 +232,15 @@ function selfTest(rows) {
   if (queens) ok(queens.verdict !== 'P0-PLAYER-HARM', 'queens is not P0 (its win check is rule-based) — got ' + queens.verdict);
   const kojun = by('kojun');
   ok(!!kojun, 'kojun is in the catalog');
-  if (kojun) ok(kojun.verdict === 'P2-CATALOG-FALSE-CLAIM', 'kojun is P2 (gate says multi-solution by design, catalog claims unique) — got ' + kojun.verdict);
+  // R424 fixed the uniqueness copy for kojun/japanese-sums/lights-out:
+  // no claim remains on any surface, so OK is the correct verdict now.
+  if (kojun) ok(kojun.verdict === 'OK' && !kojun.claimPage && !kojun.claimCatalog, 'kojun is OK post-R424 copy fix — got ' + kojun.verdict);
   const js2 = by('japanese-sums');
-  if (js2) ok(js2.verdict === 'P2-CATALOG-FALSE-CLAIM', 'japanese-sums is P2 — got ' + js2.verdict);
+  if (js2) ok(js2.verdict === 'OK' && !js2.claimPage && !js2.claimCatalog, 'japanese-sums is OK post-R424 copy fix — got ' + js2.verdict);
   const lo = by('lights-out');
-  if (lo) ok(lo.verdict !== 'OK' || lo.asserting.length > 0, 'lights-out verdict sane — ' + lo.verdict);
+  // R424 removed the uniqueness copy from lights-out; with no claim on any
+  // surface, OK-with-no-gate is the correct verdict.
+  if (lo) ok(lo.verdict === 'OK' && !lo.claimPage && !lo.claimCatalog, 'lights-out is OK post-R424 copy fix — ' + lo.verdict);
 
   console.log('== no game may be mislabelled OK while claiming uniqueness with no gate ==');
   const leaks = rows.filter(r => r.verdict === 'OK' && (r.claimPage || r.claimCatalog) && !r.asserting && !r.byDesign);
