@@ -99,9 +99,14 @@ if [ "$HTTP_CODE" != "200" ]; then
   exit 2
 fi
 
-# Verify the body
+# Verify the body.
+# R428 (2026-11-24): pass --url, not the local TMPF. Since 6d960f041f the
+# production sitemap.xml is a <sitemapindex>; verify_sitemap.py resolves each
+# child <loc>. With a local path the resolver looked for /tmp/sitemap-games.xml
+# etc. (never fetched) -> urls=0 -> hourly false FAIL since 2026-07-21.
+# --url makes the script fetch the index AND children itself (fetch_url resolver).
 set +e
-VERIFY_JSON=$(cd /home/msdn/gamezipper.com && python3 scripts/verify_sitemap.py --json --min-urls "$MIN_URLS" "$TMPF" 2>&1)
+VERIFY_JSON=$(cd /home/msdn/gamezipper.com && python3 scripts/verify_sitemap.py --json --min-urls "$MIN_URLS" --url "$SITEMAP_URL" 2>&1)
 EXIT=$?
 set -e
 
