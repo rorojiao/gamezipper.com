@@ -124,9 +124,12 @@ function tap(ga, r, c) {
   const offX = ga.call('gridOffsetX'), offY = ga.call('gridOffsetY'), cs = ga.call('cellSize');
   cv.dispatch('pointerdown', { clientX: offX + c * cs + cs / 2, clientY: offY + r * cs + cs / 2 });
 }
-function tapTo(ga, r, c, letter) { // cycle from null to the target letter
+function tapTo(ga, r, c, letter) { // cycle from the cell's CURRENT state to the target letter
   const L = LEVELS[ga.call('curLevel')];
-  const k = letter === null ? L.letters : 'ABCDEFGHIJ'.indexOf(letter) + 1;
+  const target = letter === null ? 0 : 'ABCDEFGHIJ'.indexOf(letter) + 1;
+  const cur = ga.call(`(playerGrid[${r}][${c}]===null?0:'ABCDEFGHIJ'.indexOf(playerGrid[${r}][${c}])+1)`);
+  const cyc = L.letters + 1; // cycle is null->A->...->(letter N)->null
+  const k = (target - cur + cyc) % cyc;
   for (let i = 0; i < k; i++) tap(ga, r, c);
 }
 function solveLevelByTaps(ga) {
