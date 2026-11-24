@@ -88,6 +88,13 @@ canvas#board{display:block;border-radius:10px;border:3px solid #3a3a5a;width:100
 .palette-label{width:100%;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
 .cmd-block{width:44px;height:44px;border-radius:8px;border:2px solid rgba(255,255,255,.15);font-family:inherit;font-size:8px;font-weight:700;color:#0a0a1a;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.1;touch-action:none}
 .cmd-block:active{transform:scale(.92)}
+/* R1202 (2026-11-24): dead_click visual feedback (R381/R847 family). BI 30d:
+   5 sessions / 35 dead_clicks on cmd-block/slot — clicks had no visible ack on
+   the clicked element. Class names carry tapped/rej tokens so gz-analytics
+   R1056 rapid-re-click guard recognizes them as transient acks. */
+.cmd-block.gz-tapped{box-shadow:0 0 0 2px #00ddff,0 0 12px rgba(0,221,255,.55);transform:scale(.92)}
+.cmd-block.gz-rej,.slot.gz-rej,.sub-slot.gz-rej{animation:gzCrShake .3s ease}
+@keyframes gzCrShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 .cmd-fwd{background:linear-gradient(135deg,#00ddff,#0099cc)}
 .cmd-tl{background:linear-gradient(135deg,#aa66ff,#7733cc);color:#fff}
 .cmd-tr{background:linear-gradient(135deg,#ff66aa,#cc3388);color:#fff}
@@ -474,19 +481,29 @@ function renderPalette(){
     if(cd.id==='P1'&&lv.p1===0){el.classList.add('disabled')}
     if(cd.id==='P2'&&lv.p2===0){el.classList.add('disabled')}
     el.textContent=cd.label;
-    el.onclick=function(){addCommand(cd.id)};
+    el.onclick=function(){var ok=addCommand(cd.id);gzFlash(el,ok?'gz-tapped':'gz-rej');};
     p.appendChild(el);
   });
 }
+/* R1202: transient visual ack on the clicked element (>=1.7s to cover the
+   gz-analytics dead_click 1.5s state-change window). */
+function gzFlash(el,cls){
+  if(!el)return;
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
+  setTimeout(function(){if(el&&el.classList)el.classList.remove(cls)},1700);
+}
 function addCommand(cmd){
-  if(running)return;
+  if(running)return false;
   var lv=LEVELS[curLevel],target=editTarget==='p1'?sub1:editTarget==='p2'?sub2:program;
   var limit=editTarget==='p1'?lv.p1:editTarget==='p2'?lv.p2:lv.slots;
-  if(editTarget==='p1'&&lv.p1===0)return;
-  if(editTarget==='p2'&&lv.p2===0)return;
+  if(editTarget==='p1'&&lv.p1===0)return false;
+  if(editTarget==='p2'&&lv.p2===0)return false;
   /* Subroutines may contain primitive commands only; recursion is intentionally disabled. */
-  if(editTarget!=='main'&&(cmd==='P1'||cmd==='P2'))return;
-  if(target.length<limit){target.push(cmd);renderProgram()}
+  if(editTarget!=='main'&&(cmd==='P1'||cmd==='P2'))return false;
+  if(target.length<limit){target.push(cmd);renderProgram();return true}
+  return false;
 }
 function selectEditTarget(target){
   if(running)return;
@@ -507,9 +524,10 @@ function renderProgram(){
     var s=document.createElement('div');s.className='slot';s.id='slot-'+i;
     var n=document.createElement('span');n.className='slot-num';n.textContent=(i+1);s.appendChild(n);
     if(program[i]){s.classList.add('filled');var ic=document.createElement('span');ic.className='cmd-icon';ic.textContent=program[i];s.appendChild(ic)}
-    s.onclick=function(idx){return function(){if(!running&&program[idx]){program.splice(idx,1);renderProgram()}}}(i);
+    s.onclick=function(idx){return function(){if(running){gzFlash(s,'gz-rej');return}if(program[idx]){program.splice(idx,1);renderProgram()}else{sg.__gzRejIdx=idx}}}(i);
     sg.appendChild(s);
   }
+  if(sg.__gzRejIdx!=null){var _rs=document.getElementById('slot-'+sg.__gzRejIdx);sg.__gzRejIdx=null;if(_rs)gzFlash(_rs,'gz-rej');}
   /* P1 */
   var s1=document.getElementById('sub1');s1.innerHTML='';
   var sa1=document.getElementById('sub1-area');
@@ -519,7 +537,7 @@ function renderProgram(){
   for(var i=0;i<lv.p1;i++){
     var s=document.createElement('div');s.className='sub-slot';s.id='sub1slot-'+i;
     if(sub1[i]){s.classList.add('filled');s.textContent=sub1[i]}
-    s.onclick=function(idx){return function(){if(!running&&sub1[idx]){sub1.splice(idx,1);renderProgram()}}}(i);
+    s.onclick=function(idx){return function(){if(running){gzFlash(s,'gz-rej');return}if(sub1[idx]){sub1.splice(idx,1);renderProgram()}}}(i);
     s1.appendChild(s);
   }
   /* P2 */
@@ -531,7 +549,7 @@ function renderProgram(){
   for(var i=0;i<lv.p2;i++){
     var s=document.createElement('div');s.className='sub-slot';s.id='sub2slot-'+i;
     if(sub2[i]){s.classList.add('filled');s.textContent=sub2[i]}
-    s.onclick=function(idx){return function(){if(!running&&sub2[idx]){sub2.splice(idx,1);renderProgram()}}}(i);
+    s.onclick=function(idx){return function(){if(running){gzFlash(s,'gz-rej');return}if(sub2[idx]){sub2.splice(idx,1);renderProgram()}}}(i);
     s2.appendChild(s);
   }
 }
