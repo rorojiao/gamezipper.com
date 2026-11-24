@@ -44,6 +44,11 @@ http_errors = []
 ERROR_PROBE = """
 window.__gzErrs = [];
 window.addEventListener('error', function (e) {
+  // capture=true also catches RESOURCE load failures (e.target = <script>/<img>),
+  // which carry no message/filename. Those are HTTP failures, tracked separately
+  // via page.on('requestfailed'); here only JS runtime errors count.
+  if (e.target !== window && e.target !== document) return;
+  if (!e.message) return;
   window.__gzErrs.push({ msg: e.message, src: e.filename || '' });
 }, true);
 """
@@ -182,10 +187,10 @@ def main():
         # (adsbygoogle.js and friends) throw intermittently on every shipped
         # game and are not our bug.
         page_errs = page.evaluate('() => window.__gzErrs || []')
-        own_errs = [e for e in page_errs if not is_third_party(e.get('src', ''))]
-        third_errs = [e for e in page_errs if is_third_party(e.get('src', ''))]
+        own_errs = [e for e in page_errs if not is_third_party(e.get('src') or '')]
+        third_errs = [e for e in page_errs if is_third_party(e.get('src') or '')]
         check('no uncaught errors from game code', len(own_errs) == 0,
-              '; '.join(f'{e["msg"][:80]} @ {e["src"][:60]}' for e in own_errs[:3])
+              '; '.join(f'{(e.get("msg") or "")[:80]} @ {(e.get("src") or "")[:60]}' for e in own_errs[:3])
               if own_errs else 'clean')
         real_console = [e for e in console_errors
                         if 'favicon' not in e.lower()
@@ -291,7 +296,7 @@ def main():
     if third_errs:
         print(f'(third-party ad-script errors, ignored: {len(third_errs)})')
         for e in third_errs[:3]:
-            print(f'    {e["msg"][:70]} @ {e["src"][:70]}')
+            print(f'    {(e.get("msg") or "")[:70]} @ {(e.get("src") or "")[:70]}')
     if http_errors:
         tp_http = [h for h in http_errors
                    if any(t in h for t in THIRD_PARTY)]

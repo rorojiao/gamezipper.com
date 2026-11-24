@@ -17,7 +17,7 @@ import subprocess
 import sys
 import tempfile
 
-SRC = '/home/junze/gamezipper.com/set-quest'
+SRC = os.path.dirname(os.path.abspath(__file__))
 
 # (label, filename, python callable that mutates the text, expected: checklist fails)
 MUTATIONS = []
