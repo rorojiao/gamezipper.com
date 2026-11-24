@@ -190,6 +190,7 @@ canvas{width:100%;height:100%;border-radius:12px;cursor:pointer;touch-action:non
 <div class="menu-content">
 <h2 class="menu-title">BACKGAMMON</h2>
 <p class="subtitle">Classic board game of luck and strategy</p>
+<button class="action-btn" id="resume-btn" style="display:none" onclick="resumeSavedGame()">Resume Game</button>
 <button class="action-btn" onclick="startGame('ai')">Play vs AI</button>
 <button class="action-btn" onclick="startGame('local')">Local 2-Player</button>
 <button class="action-btn secondary" onclick="showTutorial()">How to Play</button>
@@ -221,10 +222,27 @@ window.onbeforeunload=cleanup;
 loadSettings();
 if(!localStorage.getItem('bg_tutorial_done')){
 $('#menu-overlay').classList.remove('hidden');
+}else if(localStorage.getItem('bg_game_state')){
+$('#menu-overlay').classList.remove('hidden');
+var rb=$('#resume-btn');if(rb)rb.style.display='';
 }else{
 $('#menu-overlay').classList.add('hidden');
 startGame('ai');
 }
+}
+function resumeSavedGame(){
+var saved=localStorage.getItem('bg_game_state');
+if(!saved){startGame('ai');return;}
+try{
+var state=JSON.parse(saved);
+G.board=state.board;G.bar=state.bar;G.borneOff=state.borneOff;G.dice=state.dice;G.diceUsed=state.diceUsed;G.turn=state.turn;G.scores=state.scores;G.matchLength=state.matchLength;G.aiLevel=state.aiLevel;G.gameMode=state.gameMode||'ai';
+G.gameOver=false;G.canUndo=false;G.history=[];G.selected=null;
+G.moves=calcMoves();
+$('#menu-overlay').classList.add('hidden');
+msg(G.gameMode==='ai'&&G.turn==='black'?'AI thinking...':'Your turn - Roll dice');
+updateUI();render();
+if(G.gameMode==='ai'&&G.turn==='black')setTimeout(aiTurn,500);
+}catch(e){startGame('ai');}
 }
 function resize(){
 canvas.width=canvas.offsetWidth*2;
@@ -259,6 +277,7 @@ $('#menu-overlay').classList.add('hidden');
 msg('Roll dice to start your turn');
 updateUI();
 render();
+saveGameState();
 }
 function confirmNewGame(){
 if(G.gameMode==='menu')return;
@@ -268,10 +287,11 @@ startGame(G.gameMode);
 }
 function resignGame(){
 if(G.gameOver||G.gameMode==='menu')return;
+G.gameOver=true;
 var pts=G.turn==='white'?1:0;
 awardPoints(G.turn==='white'?'black':'white',pts);
 msg(G.turn==='white'?'You resigned - Black wins!':'White resigned - You win!');
-G.gameOver=true;
+clearSavedGame();
 play('lose');
 updateUI();
 }
@@ -470,6 +490,7 @@ G.selected=null;
 msg(G.turn==='white'?'Your turn - Roll dice':G.gameMode==='ai'?'AI thinking...':'Black turn - Roll dice');
 updateUI();
 render();
+saveGameState();
 if(G.turn==='black'&&G.gameMode==='ai'){
 setTimeout(aiTurn,500);
 }
@@ -481,6 +502,7 @@ return null;
 }
 function handleWin(winner){
 G.gameOver=true;
+clearSavedGame();
 var pts=1;
 var msgText=winner==='white'?'White':'Black';
 var opp=winner==='white'?'black':'white';
