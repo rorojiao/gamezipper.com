@@ -1,5 +1,10 @@
 /**
- * GameZipper Adsterra Ad Manager v5.17.8 (2026-11-22)
+ * GameZipper Adsterra Ad Manager v5.17.9 (2026-11-25)
+ *   R1205 (2026-11-25): desktop popup_blocked retry is CAPPED AT ONE per
+ *   tab-session. BI 11-19..25: 20 desktop sessions logged a block; only 1 ever
+ *   filled (after exactly one retry); 7 sessions with >=2 blocks never filled
+ *   (worst: 6 block toasts in one day). The 2nd block now sets the same
+ *   sessionStorage kill-switch R1194 applies to mobile on the 1st.
  *   R1194 (2026-11-22): popunder COOLDOWN COMMITS ONLY ON SUCCESS (R1010
  *   pattern applied to the pop side). BI 14d: popup_blocked rose from 0-5/day
  *   pre-R1133 to 7-30/day after (7d share = 41% of popunder attempts) —
@@ -260,6 +265,7 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
   // ── Popunder ──
   var POP_KEY = 'gz_adst_pop_ts';
   var POP_SESS_BLOCK_KEY = 'gz_adst_pop_blocked'; // R1194: per-tab-session kill after a mobile block
+  var POP_SESS_BLOCK_CNT = 'gz_adst_pop_blocked_n'; // R1205: desktop block-retry counter
   var POP_INTERVAL = 25 * 60 * 1000; // 25min cooldown
   var _bc = null;
   try { _bc = new BroadcastChannel('gz_adst_popunder'); } catch (e) {}
@@ -299,6 +305,17 @@ v5.17.2 Changes (cron-resilient — sends direct BI beacons on init):
       // zero slot damage). Desktop keeps the next-page retry.
       if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '')) {
         try { sessionStorage.setItem(POP_SESS_BLOCK_KEY, '1'); } catch (e) {}
+      } else {
+        // R1205: desktop next-page retry converts in 1/20 blocked sessions only
+        // (BI 11-19..25: 7 desktop sessions logged >=2 blocks, 0 ever filled; the
+        // single converter filled after exactly ONE retry). Cap the retry at one:
+        // the 2nd block in a tab-session sets the same kill-switch (users with
+        // site-level popup blocking saw up to 6 block toasts/day before).
+        try {
+          var nb = parseInt(sessionStorage.getItem(POP_SESS_BLOCK_CNT) || '0', 10) + 1;
+          sessionStorage.setItem(POP_SESS_BLOCK_CNT, String(nb));
+          if (nb >= 2) sessionStorage.setItem(POP_SESS_BLOCK_KEY, '1');
+        } catch (e) {}
       }
     }
   }
