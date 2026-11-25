@@ -5,8 +5,8 @@
 
 const fs = require('fs');
 
-const html = fs.readFileSync('/home/junze/gamezipper.com/t-rex/index.html', 'utf8');
-const gamejs = fs.existsSync('/home/junze/gamezipper.com/t-rex/game.js') ? fs.readFileSync('/home/junze/gamezipper.com/t-rex/game.js', 'utf8') : '';
+const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
+const gamejs = fs.existsSync(__dirname + '/game.js') ? fs.readFileSync(__dirname + '/game.js', 'utf8') : '';
 
 console.log('=== t-rex verifier ===');
 
