@@ -62,6 +62,34 @@ for (let i = 0; i < N; i++) {
 }
 T('all-levels-won', solved.length === N, solved.length + '/' + N + ' missing:[' +
   [...Array(N).keys()].map(x => x + 1).filter(x => !solved.includes(x)).join(',') + ']');
+
+// REGRESSION 2026-11-26 (P2 fix): L29 Phoenix clues admit 42 valid solutions. Completion must be
+// clue-satisfaction, not stored-sol equality. Fill an ALTERNATIVE clue-valid grid (differs from
+// stored sol in 10 cells) through the same real pointer path and require completion.
+const ALT_PHOENIX = [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,0,0,0,1,1,1,1,1,0,0,0,1,1,0,1,0,0,0,0,1,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0];
+{
+  const li = 28;
+  g.call(`__T.start(${li})`);
+  g.pump(2);
+  const size = g.call('__T.size()');
+  const cells = g.call('__T.cells()');
+  for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) {
+    cells[r * size + c].dataset.row = String(r);
+    cells[r * size + c].dataset.col = String(c);
+  }
+  const key2 = k => g.sandbox.document.dispatch('keydown', { key: k, code: 'Key' + k.toUpperCase(), preventDefault() {} });
+  key2('f');
+  for (let k = 0; k < size * size; k++) {
+    if (ALT_PHOENIX[k] === 1) { const cell = cells[k]; cell.dispatch('pointerdown', { target: cell, preventDefault() {} }); cell.dispatch('pointerup', { target: cell, preventDefault() {} }); }
+  }
+  key2('x');
+  for (let k = 0; k < size * size; k++) {
+    if (ALT_PHOENIX[k] === 0) { const cell = cells[k]; cell.dispatch('pointerdown', { target: cell, preventDefault() {} }); cell.dispatch('pointerup', { target: cell, preventDefault() {} }); }
+  }
+  g.pump(5);
+  T('alt-solution-wins-L29', g.call('__T.done()') === true, 'alternative clue-valid grid must complete (clue-satisfaction rule)');
+}
+
 T('no-vm-errors', !(g.sandbox.__errors || []).some(e => /TypeError|ReferenceError/.test(e)),
   JSON.stringify((g.sandbox.__errors || []).find(e => /TypeError|ReferenceError/.test(e)) || '').slice(0, 160));
 
