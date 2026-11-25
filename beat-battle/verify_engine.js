@@ -159,7 +159,10 @@ const DRIVER = `(function(){
       brk: [Game.hpP, Game.hpG, Game.hpO, Game.hpM].join('/'), maxCombo: Game.maxCombo, frames: guard };
   }
   try {
-    [1, 13, 30].forEach(function(lid){ res.levels[lid] = playLevel(lid); });
+    // R1208-QA: full-chart coverage — every one of the 30 note charts must be
+    // winnable by a perfect-timing bot (rhythm-game "solvability" = chart is
+    // playable at its own scroll/bpm; 3-level sampling left 27 charts unguarded).
+    for (let lid = 1; lid <= LEVELS.length; lid++) res.levels[lid] = playLevel(lid);
   } catch (e) { res.err = String(e && e.stack || e).slice(0, 300); }
   return res;
 })()`;
@@ -174,12 +177,14 @@ try { saved = JSON.parse(sandbox.localStorage.getItem('beatbattle_v1') || 'null'
 const L = r.levels || {};
 const checks = [];
 checks.push(['engine-load-no-fatal-error', !r.err && !loadErrors.length]);
-checks.push(['level1-won (hp=' + (L[1] && L[1].hp) + ' brk=' + (L[1] && L[1].brk) + ')', L[1] && L[1].win]);
-checks.push(['level13-won (hp=' + (L[13] && L[13].hp) + ' brk=' + (L[13] && L[13].brk) + ')', L[13] && L[13].win]);
-checks.push(['level30-won (hp=' + (L[30] && L[30].hp) + ' brk=' + (L[30] && L[30].brk) + ')', L[30] && L[30].win]);
-checks.push(['save-persisted (stars keys=' + (saved && saved.stars ? Object.keys(saved.stars).join(',') : 'none') + ')', !!(saved && saved.stars && saved.stars[1] && saved.stars[13] && saved.stars[30])]);
+checks.push(['levels-catalog-30', ctx.LEVELS.length === 30]);
+const lost = [];
+for (let lid = 1; lid <= 30; lid++) { if (!L[lid] || !L[lid].win) lost.push(lid + (L[lid] ? '(hp=' + L[lid].hp + ' brk=' + L[lid].brk + ')' : '(not-run)')); }
+checks.push(['all-30-levels-won' + (lost.length ? ' lost=' + lost.join(',') : ''), lost.length === 0]);
+const starsOk = saved && saved.stars && Object.keys(saved.stars).length === 30;
+checks.push(['save-persisted (stars keys=' + (saved && saved.stars ? Object.keys(saved.stars).length : 'none') + '/30)', !!starsOk]);
 let pass = 0, fail = 0; const fails = [];
 for (const [name, ok] of checks) { if (ok) pass++; else { fail++; fails.push(name); } }
 console.log('beat-battle in-engine verification: L1 ' + JSON.stringify(L[1]) + ' | L13 ' + JSON.stringify(L[13]) + ' | L30 ' + JSON.stringify(L[30]) + ' | presses=' + r.presses + ' frames=' + r.frames);
-console.log(JSON.stringify({ pass, fail, fails, total: checks.length, goal: 'win 3 representative levels (1 Beginner / 13 Normal / 30 Master) via real keydown->pressLane->_press with perfect-timing play; stars+combo saved to localStorage', steps: r.frames, verdict: fail === 0 ? 'PASS' : 'FAIL' }));
+console.log(JSON.stringify({ pass, fail, fails, total: checks.length, goal: 'win ALL 30 levels via real keydown->pressLane->_press with perfect-timing play; stars+combo saved to localStorage', steps: r.frames, verdict: fail === 0 ? 'PASS' : 'FAIL' }));
 process.exit(fail === 0 ? 0 : 1);

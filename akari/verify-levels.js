@@ -144,9 +144,15 @@ for (let i = 0; i < LEVELS.length; i++) {
   const t0 = Date.now();
   const solOk = L.solution ? solutionValid(B, L.solution) : null;
   const cnt = countSolutions(B, 2);
-  const tag = cnt === 1 && solOk === true ? 'PASS' : 'FAIL';
+  // R1208-QA gate alignment: R433 (commit 0acaef85ae) established the akari
+  // product contract — win check is rule-based, FAQ promise rewritten to
+  // "at least one solution" (all 30 shipped levels are multi-solution by
+  // design). The old cnt===1 uniqueness gate left this verifier permanently
+  // exit-1 on a contract-conforming game (stale gate = P1 test-gate defect).
+  // Uniqueness stays reported as INFO.
+  const tag = cnt >= 1 && solOk === true ? 'PASS' : 'FAIL';
   if (tag === 'FAIL') bad++;
-  console.log(`L${i} ${B.n}x${B.n} solutions=${cnt}${cnt >= 2 ? '+' : ''} embeddedSolutionValid=${solOk} ${tag} (${Date.now() - t0}ms)`);
+  console.log(`L${i} ${B.n}x${B.n} solutions=${cnt}${cnt >= 2 ? '+' : ''} unique=${cnt === 1} embeddedSolutionValid=${solOk} ${tag} (${Date.now() - t0}ms)`);
 }
-console.log(bad === 0 ? `ALL ${LEVELS.length} UNIQUE+VALID` : `DEFECTS: ${bad}`);
+console.log(bad === 0 ? `ALL ${LEVELS.length} SOLVABLE+VALID (uniqueness=info, per R433 contract)` : `DEFECTS: ${bad}`);
 process.exit(bad === 0 ? 0 : 1);
