@@ -714,8 +714,11 @@ canvas.addEventListener('mousedown', e => {
     return;
   }
   if (state.screen === 'levelSelect') {
-    const lvl = Math.floor((e.clientX - W * 0.15) / (W * 0.12));
-    const tier = Math.floor((e.clientY - H * 0.12) / (H * 0.15));
+    // FIX(r440 2026-11-26): use canvas-relative coords (was viewport clientX/Y,
+    // which shifted the picked tier down by the canvas top offset under the nav).
+    const pos = getPos(e);
+    const lvl = Math.floor((pos.x - W * 0.15) / (W * 0.12));
+    const tier = Math.floor((pos.y - H * 0.12) / (H * 0.15));
     const idx = tier * 6 + lvl;
     if (idx >= 0 && idx < 30) {
       initLevel(idx);
@@ -755,9 +758,11 @@ canvas.addEventListener('touchstart', e => {
     return;
   }
   if (state.screen === 'levelSelect') {
+    // FIX(r440 2026-11-26): canvas-relative coords (see mousedown fix above)
     const touch = e.touches[0];
-    const lvl = Math.floor((touch.clientX - W * 0.15) / (W * 0.12));
-    const tier = Math.floor((touch.clientY - H * 0.12) / (H * 0.15));
+    const pos = getPos(e);
+    const lvl = Math.floor((pos.x - W * 0.15) / (W * 0.12));
+    const tier = Math.floor((pos.y - H * 0.12) / (H * 0.15));
     const idx = tier * 6 + lvl;
     if (idx >= 0 && idx < 30) {
       initLevel(idx);
@@ -1217,41 +1222,47 @@ function renderLevelSelect() {
 }
 
 canvas.addEventListener('click', e => {
+  // FIX(r440 2026-11-26): hit zones compared VIEWPORT clientX/Y against canvas-internal
+  // H thresholds. Canvas is offset (top≈138px under nav), so every zone was shifted ~138px
+  // upward: clicking the drawn "Menu" text on the win/lost overlay fired Next/Try-Again
+  // instead, and "Menu" was unreachable. Convert to canvas-relative coords and align zones
+  // with the drawn text (win: Next@0.68H, Menu@0.76H; lost: TryAgain@0.52H, Menu@0.60H).
+  const rect = canvas.getBoundingClientRect();
+  const cx = e.clientX - rect.left;
+  const cy = e.clientY - rect.top;
   if (state.screen === 'levelSelect') {
-    if (e.clientX < 60 && e.clientY > H - 40) {
+    if (cx < 60 && cy > H - 40) {
       state.screen = 'menu';
     }
     if (state.won) {
-      if (e.clientY > H * 0.72 && state.level < 29) {
-        initLevel(state.level + 1);
-      } else if (e.clientY > H * 0.64 && state.level === 29) {
-        state.screen = 'levelSelect';
-      } else if (e.clientY > H * 0.7) {
+      if (cy > H * 0.60 && cy < H * 0.76) {
+        if (state.level < 29) initLevel(state.level + 1);
+        else state.screen = 'levelSelect';
+      } else if (cy >= H * 0.76) {
         state.screen = 'levelSelect';
       }
     } else if (state.lost) {
-      if (e.clientY > H * 0.44) {
+      if (cy > H * 0.44 && cy < H * 0.58) {
         initLevel(state.level);
-      } else if (e.clientY > H * 0.54) {
+      } else if (cy >= H * 0.58) {
         state.screen = 'levelSelect';
       }
     }
   } else if (state.screen === 'game') {
     if (state.won) {
-      if (e.clientY > H * 0.72 && state.level < 29) {
-        initLevel(state.level + 1);
-      } else if (e.clientY > H * 0.64 && state.level === 29) {
-        state.screen = 'levelSelect';
-      } else if (e.clientY > H * 0.7) {
+      if (cy > H * 0.60 && cy < H * 0.76) {
+        if (state.level < 29) initLevel(state.level + 1);
+        else state.screen = 'levelSelect';
+      } else if (cy >= H * 0.76) {
         state.screen = 'levelSelect';
       }
     } else if (state.lost) {
-      if (e.clientY > H * 0.44) {
+      if (cy > H * 0.44 && cy < H * 0.58) {
         initLevel(state.level);
-      } else if (e.clientY > H * 0.54) {
+      } else if (cy >= H * 0.58) {
         state.screen = 'levelSelect';
       }
-    } else if (e.clientY > H - 40 && e.clientX < 80) {
+    } else if (cy > H - 40 && cx < 80) {
       state.screen = 'levelSelect';
     }
   }
