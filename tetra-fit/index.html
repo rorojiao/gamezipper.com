@@ -57,6 +57,7 @@
       align-items: center;
       min-height: 100vh;
       padding: 10px;
+      padding-bottom: 84px; /* R1207: reserve space for fixed #game-footer band (hidato R1151) */
     }
 
     .header {
@@ -83,6 +84,12 @@
       gap: 15px;
       max-width: 800px;
       width: 100%;
+      /* R1207 Bug14b-7: fixed #game-footer (z:40, bottom band ~56px) overlapped the
+         .controls row on 390x844 — Reset/Hint/Next taps booked as footer related-game
+         links (BI rage cluster on .btn-secondary). Lift game UI above footer
+         (wordle R343 / hidato R1151 pattern) + reserve scroll space below. */
+      position: relative;
+      z-index: 50;
     }
 
     .level-info {
@@ -1074,19 +1081,26 @@
       for (let i = 0; i < level.pieces.length; i++) {
         if (!placedPieces.some(p => p.index === i)) {
           const pieceKey = level.pieces[i];
-          const shape = pieceRotations[`${currentLevel}-${i}`] || SHAPES[pieceKey];
-          for (const [r, c] of level.cells) {
-            if (canPlace(r, c, shape)) {
-              clearHighlights();
-              for (const [dr, dc] of shape) {
-                const cell = document.querySelector(`.cell[data-row="${r+dr}"][data-col="${c+dc}"]`);
-                if (cell) {
-                  cell.style.animation = 'none';
-                  cell.offsetHeight;
-                  cell.style.animation = 'shake 0.5s ease-in-out';
+          const baseShape = pieceRotations[`${currentLevel}-${i}`] || SHAPES[pieceKey];
+          // R1207 P2: hint was silent when the piece's CURRENT rotation fits nowhere (e.g.
+          // vertical I4 on a 2-row grid) — users rage-clicked Hint (BI rage cluster on
+          // .btn-secondary). Try current rotation first, then other rotations.
+          const norm = JSON.stringify(normalizeShape(baseShape));
+          const rots = [baseShape, ...getAllRotations(baseShape).filter(r => JSON.stringify(r) !== norm)];
+          for (const shape of rots) {
+            for (const [r, c] of level.cells) {
+              if (canPlace(r, c, shape)) {
+                clearHighlights();
+                for (const [dr, dc] of shape) {
+                  const cell = document.querySelector(`.cell[data-row="${r+dr}"][data-col="${c+dc}"]`);
+                  if (cell) {
+                    cell.style.animation = 'none';
+                    cell.offsetHeight;
+                    cell.style.animation = 'shake 0.5s ease-in-out';
+                  }
                 }
+                return;
               }
-              return;
             }
           }
         }
