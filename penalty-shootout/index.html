@@ -960,12 +960,32 @@ function startSavePhase(){
 function aiKickBall(){
   if(!S.aiTarget) return;
   var tx = S.aiTarget.x, ty = S.aiTarget.y;
-  var dx = tx - S.ball.x, dy = ty - S.ball.y;
+  /* R1207 P0: with gravity 0.06 + airDrag 0.992, a speed-7 shot peaks ~50-90px
+     SHORT of goalLineY (max rise ~231px from spotY 480) — the AI could never
+     score and every save round softlocked in aiFlying (ball fell below canvas
+     forever; BI dead_click x12 + rage x35). Solve the launch speed by simulating
+     the same drag+gravity integration the ball uses, so the trajectory crosses
+     the target while still rising. Capped at the player's max power (16). */
+  var bx = S.ball.x, by = S.ball.y;
+  var dx = tx - bx, dy = ty - by;
   var dist = Math.sqrt(dx*dx+dy*dy);
-  var speed = 7;
+  var speed = 16, lo = 4, hi = 16;
+  for (var it2 = 0; it2 < 14; it2++){
+    var v = (lo + hi) / 2;
+    var sx = bx, sy = by, svx = dx/dist*v, svy = dy/dist*v, reach = false;
+    for (var tf = 0; tf < 260; tf++){
+      svx *= CFG.airDrag; svy *= CFG.airDrag; svy += CFG.gravity;
+      sx += svx; sy += svy;
+      if (sy <= ty && svy < 0){ reach = true; break; }
+      if (sy > CFG.H + 60) break;
+    }
+    if (reach){ speed = v; hi = v; } else { lo = v; }
+  }
   S.ball.vx = dx/dist * speed;
   S.ball.vy = dy/dist * speed;
-  S.ball.spin = S.aiTarget.curve;
+  /* R1207: raw curve (±2) integrates to Δvx≈±8 over the flight — ball sails far
+     out of frame; scale so curved shots curl realistically but stay on target. */
+  S.ball.spin = S.aiTarget.curve * 0.35;
   S.ball.power = 0.7;
   S.phase = "aiFlying";
   playKick();
@@ -1056,7 +1076,7 @@ function updateBall(dt){
   }
 
   /* Ball went off screen — miss */
-  if(b.y < -20 || b.x < -20 || b.x > cw+20){
+  if(b.y < -20 || b.x < -20 || b.x > CFG.W+20 || b.y > CFG.H+60){
     b.visible = false;
     onShotComplete(false, false);
   }
@@ -1292,6 +1312,9 @@ function showScreen(id){
   if(id){ var el=document.getElementById(id); if(el) el.classList.remove("hidden"); }
 }
 
+/* R1207 P1: endMatch/resetToTitle call hideHUD() but only showHUD(show) was
+   defined -> ReferenceError aborted endMatch (streak/bracket/save skipped). */
+function hideHUD(){ showHUD(false); }
 function showHUD(show){
   var hud = document.getElementById("hud");
   var instr = document.getElementById("instrBar");
@@ -1542,7 +1565,11 @@ function onPointerDown(e){
       S.aimStart = pos; S.aimEnd = pos; S.aimCurve = [pos];
       S.dragging = true;
     }
-  } else if(S.phase==="saving" && S.diveChoice===null && S.aiTarget===null){
+  } else if(S.phase==="saving" && S.diveChoice===null){
+    /* R1207 P1: was also gated on aiTarget===null — the AI picks its target
+       600-1200ms into the save phase, silently closing the dive window long before
+       the kick; late taps did nothing (BI dead_click x12 + rage x35 on this game).
+       Accept the dive any time before aiKickBall fires. */
     /* Check dive zones */
     var zones = [
       {x:CFG.goalLeftX+50, y:CFG.crossbarY+30},
