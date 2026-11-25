@@ -48,6 +48,9 @@
  *   node scripts/audit-uniqueness-gates.js                # human report
  *   node scripts/audit-uniqueness-gates.js --tsv          # machine-readable
  *   node scripts/audit-uniqueness-gates.js --defects-only # just the worklist
+ *   node scripts/audit-uniqueness-gates.js --live-only    # only status:"live" games (R434:
+ *                                                         #  the convergence gate is live-scope;
+ *                                                         #  beta backlog must not flip the verdict)
  *   node scripts/audit-uniqueness-gates.js --self-test    # detector regression
  * Exit: 0 = no defects, 1 = defects found, 2 = usage/IO error.
  */
@@ -121,7 +124,9 @@ function winCheckBody(html) {
 }
 
 function main() {
-  const games = catalog();
+  let games = catalog();
+  const LIVE_ONLY = MODE === '--live-only';
+  if (LIVE_ONLY) games = games.filter(g => g && g.status === 'live');
   const rows = [];
   for (const g of games) {
     if (!g || !g.url) continue;
@@ -186,6 +191,7 @@ function main() {
   const bySev = { P0: 0, P1: 0, P2: 0 };
   for (const r of defects) bySev[r.severity]++;
   console.log('=== uniqueness-promise audit vs shipped gates (R992) ===');
+  console.log('scope: ' + (LIVE_ONLY ? 'status:"live" only' : 'all registered games'));
   console.log('games audited: ' + rows.length);
   console.log('claim on a player-visible surface: ' + rows.filter(r => r.claimPage).length);
   console.log('claim in catalog desc/tags only:   ' + rows.filter(r => r.claimCatalog && !r.claimPage).length);
