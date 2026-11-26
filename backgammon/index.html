@@ -222,6 +222,7 @@ window.onbeforeunload=cleanup;
 loadSettings();
 if(!localStorage.getItem('bg_tutorial_done')){
 $('#menu-overlay').classList.remove('hidden');
+if(localStorage.getItem('bg_game_state')){var rb0=$('#resume-btn');if(rb0)rb0.style.display='';} /* FIX(R1213): saved game was unreachable until tutorial opened */
 }else if(localStorage.getItem('bg_game_state')){
 $('#menu-overlay').classList.remove('hidden');
 var rb=$('#resume-btn');if(rb)rb.style.display='';
@@ -771,7 +772,7 @@ render();
 }
 }else{
 var occ=G.board[pt]||0;
-if(occ*G.turn>0){
+if(occ*(G.turn==='white'?1:-1)>0){ /* FIX(R1213): occ*G.turn was number*string=NaN, own-checker selection never fired */
 G.selected=pt;
 msg('Selected point ' + pt);
 render();
@@ -1299,7 +1300,7 @@ function isBlotRisk(from,to){
         var target=newPos+die*dir;
         if(target>=1&&target<=24){
             var occ=G.board[target]||0;
-            if(occ*G.turn===-1&&Math.abs(occ)===1)return true;
+            if(occ*(G.turn==='white'?1:-1)===-1&&Math.abs(occ)===1)return true; /* FIX(R1213): NaN comparison, blot risk always false */
         }
     }
     return false;
@@ -1790,7 +1791,7 @@ function analyzeOpponentBlots(){
 function getBestBearoffMove(){
     if(!canBearOff(G.turn))return null;
     var home=G.turn==='white'?WHITE_HOME:BLACK_HOME;
-    var myPts=Object.keys(G.board).filter(function(p){return G.board.hasOwnProperty(p)&&G.board[p]*G.turn>0&&home.indexOf(parseInt(p))!==-1;});
+    var myPts=Object.keys(G.board).filter(function(p){return G.board.hasOwnProperty(p)&&G.board[p]*(G.turn==='white'?1:-1)>0&&home.indexOf(parseInt(p))!==-1;}); /* FIX(R1213): NaN comparison, myPts always empty */
     var moves=G.moves.filter(function(m){return m.to==='off';});
     if(moves.length===0)return null;
     var best=moves[0];
