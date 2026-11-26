@@ -39,6 +39,21 @@ for (let i = 0; i < N; i++) {
 }
 T('all-levels-won', solved.length === N, solved.length + '/' + N + ' missing:[' +
   [...Array(N).keys()].map(x => x + 1).filter(x => !solved.includes(x)).join(',') + ']');
+
+// R1216 regression: number-first "paint" flow must NOT silently overwrite the
+// last placed cell when switching palette numbers (selectNum side-effect bug).
+g.call('__T.start(0)'); g.pump(2);
+g.call('selectNum(4)'); tap(0, 1);
+const a1 = g.call('grid[0][1]');
+g.call('selectNum(5)'); g.pump(1);
+const a2 = g.call('grid[0][1]');
+T('paint-no-overwrite', a1 === 4 && a2 === 4, `afterPlace=${a1},afterNumSwitch=${a2}`);
+// cell-first flow must still place: erase, select empty cell (selectedNum=0), pick number
+g.call('selectNum(0)'); tap(0, 1);
+tap(0, 1);
+g.call('selectNum(2)');
+const a3 = g.call('grid[0][1]');
+T('cell-first-place', a3 === 2, 'v=' + a3);
 T('no-vm-errors', !(g.sandbox.__errors || []).some(e => /TypeError|ReferenceError/.test(e)),
   JSON.stringify((g.sandbox.__errors || []).find(e => /TypeError|ReferenceError/.test(e)) || '').slice(0, 160));
 
