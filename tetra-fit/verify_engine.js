@@ -263,6 +263,7 @@ const txt = (ga, id) => String(ga.els[id].textContent); // engine assigns number
   ok(!gid(ga, 'win-modal').classList.contains('active') && txt(ga, 'level-num') === '1', 'a12-close-stays');
   gid(ga, 'btn-modal-next').dispatch('click', {});
   ok(txt(ga, 'level-num') === '2' && txt(ga, 'level-name') === 'Block Drop' && !gid(ga, 'win-modal').classList.contains('active'), 'a12-next-l2', txt(ga, 'level-num'));
+  ok(ga.sandbox.localStorage.getItem('tetra-fit-level') === '1', 'a12-ls-advances', ga.sandbox.localStorage.getItem('tetra-fit-level')); // R1216: advancing must persist the new level (reload returns to current, not just-won)
   ok(gid(ga, 'btn-next').disabled === true && gid(ga, 'btn-prev').disabled === false, 'a12-nav-gating-l2');
 
   // L2 win: O4 at (0,0), I2 vertical at (0,2)
