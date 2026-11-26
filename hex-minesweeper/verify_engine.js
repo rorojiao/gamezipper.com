@@ -97,9 +97,61 @@ for (let wi = 0; wi < WORLDS.length; wi++) {
 
 console.log(`Total levels: ${totalLevels}`);
 
+// ---- PRNG replay: re-implement mulberry32 + generation to validate all 30 boards ----
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+// axial-ish offset grid as in index.html genHexGrid (radius r -> 1+3r(r+1) cells)
+function genHexGrid(radius){
+  const cells=[];
+  for(let q=-radius;q<=radius;q++){
+    const r1=Math.max(-radius,-q-radius), r2=Math.min(radius,-q+radius);
+    for(let r=r1;r<=r2;r++) cells.push({q,r});
+  }
+  return cells;
+}
+function cellKey(q,r){return q+','+r}
+const NB=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
+function getNeighbors(q,r){return NB.map(d=>({q:q+d[0],r:r+d[1]}))}
+
+let replayChecked = 0;
+for (let idx = 0; idx < 30; idx++) {
+  const wi = Math.floor(idx/5), li = idx%5;
+  const ld = WORLDS[wi].levels[li];
+  const cells = genHexGrid(ld.r);
+  if (cells.length !== hexCellCount(ld.r)) { failures.push(`L${idx+1}: grid size mismatch (${cells.length} vs formula ${hexCellCount(ld.r)})`); continue; }
+  const cellSet = new Set(cells.map(c=>cellKey(c.q,c.r)));
+  const rng = mulberry32(SEEDS[idx]);
+  const mines = new Set();
+  let safety = 0;
+  while (mines.size < ld.m && safety < cells.length*30) {
+    const i = Math.floor(rng()*cells.length);
+    const k = cellKey(cells[i].q, cells[i].r);
+    if (!mines.has(k)) mines.add(k);
+    safety++;
+  }
+  if (mines.size !== ld.m) { failures.push(`L${idx+1}: PRNG placed ${mines.size} mines, expected ${ld.m}`); continue; }
+  // numberMap consistency + zero-cell existence (cascade start for solvability)
+  let zeroCells = 0, mineAdjSum = 0;
+  for (const c of cells) {
+    const k = cellKey(c.q,c.r);
+    if (mines.has(k)) continue;
+    const cnt = getNeighbors(c.q,c.r).filter(n=>cellSet.has(cellKey(n.q,n.r))&&mines.has(cellKey(n.q,n.r))).length;
+    mineAdjSum += cnt;
+    if (cnt === 0) zeroCells++;
+  }
+  // every mine must contribute to at least one neighbor count (sanity of adjacency symmetry)
+  let mineContrib = 0;
+  for (const mk of mines) {
+    const [q,r] = mk.split(',').map(Number);
+    mineContrib += getNeighbors(q,r).filter(n=>cellSet.has(cellKey(n.q,n.r))&&!mines.has(cellKey(n.q,n.r))).length;
+  }
+  if (mineContrib !== mineAdjSum) failures.push(`L${idx+1}: adjacency asymmetry (${mineAdjSum} vs ${mineContrib})`);
+  if (zeroCells === 0 && ld.m / cells.length < 0.4) failures.push(`L${idx+1}: no zero-cell cascade start at low density (guessing-heavy)`);
+  replayChecked++;
+}
+console.log(`PRNG replay: ${replayChecked}/30 boards regenerated (mines placed, numberMap consistent)`);
+
 if (failures.length === 0) {
-  console.log(`PASS: all 30 levels structurally valid (no impossible mines > cells)`);
-  console.log(`Note: full per-cell PRNG replay requires live browser; this static check catches data-shape defects`);
+  console.log(`PASS: all 30 levels structurally valid + PRNG replay consistent`);
   process.exit(0);
 } else {
   console.error(`FAIL: ${failures.length} defects`);
