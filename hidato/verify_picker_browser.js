@@ -114,19 +114,31 @@ function unwrap(raw) {
 }
 
 const session = 'r334-hid-picker';
-const url = base + '/' + slug + '/index.html?v=' + Date.now();
-kb(['--session', session, 'open', url]);
-kb(['--session', session, 'wait', '8000']);
-const raw = kb(['--session', session, 'eval', '--base64', Buffer.from(PROBE).toString('base64')]);
+const PROD = 'https://gamezipper.com';
+function runAt(b) {
+  const url = b + '/' + slug + '/index.html?v=' + Date.now();
+  kb(['--session', session, 'open', url]);
+  kb(['--session', session, 'wait', '8000']);
+  const raw = kb(['--session', session, 'eval', '--base64', Buffer.from(PROBE).toString('base64')]);
+  return unwrap(raw);
+}
+let baseUsed = base;
+let res = runAt(base);
+// A foreign app can squat on the default port (e.g. an upload server on 8899
+// that answers every path) — "no State global" means we are NOT on hidato.
+if ((!res || res.ERROR) && base !== PROD) {
+  console.log('  note: ' + base + ' did not serve hidato (' + (res && res.ERROR) + ') — falling back to ' + PROD);
+  baseUsed = PROD;
+  res = runAt(PROD);
+}
 kb(['--session', session, 'close']);
 
-const res = unwrap(raw);
 if (!res || res.ERROR) {
   console.log('hidato picker gate: PROBE-FAIL ' + (res && res.ERROR ? res.ERROR : String(raw).slice(0, 160)));
   process.exit(1);
 }
 
-console.log('hidato picker-reopen gate (' + base + ')');
+console.log('hidato picker-reopen gate (' + baseUsed + ')');
 console.log('  grid ' + res.n + 'x' + res.n + ', empty cells probed: ' + res.empties);
 (res.steps || []).forEach(s => {
   console.log('  step' + s.index + ': picker=' + s.pickerVisible + ' cells=' + s.cellCount
