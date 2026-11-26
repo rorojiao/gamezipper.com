@@ -191,6 +191,16 @@
   // consistent and stays. Only the X11-x86_64-UA + ARM-platform contradiction drops.
   var _x11ArmFP = /X11; Linux x86_64/.test(UA) && /^Linux arm/i.test(OS);
 
+  // R1213 (2026-11-26): social/search CRAWLER UAs execute page JS and post real
+  // vitals/page_view events that look human. BI 7d: meta-webindexer +
+  // meta-externalagent (Facebook) = 42% of page_view (1731/4151) and 28% of
+  // vitals_rating (1650/5862), incl 23 fake CLS POOR rows (0.438 on the
+  // /helix-jump/ watchlist). Crawlers are not users — drop their sessions at
+  // the ps() chokepoint (same pattern as R962/R1117b/R1193). Explicit tokens
+  // only; real-browser UAs never carry these names. HeadlessChrome is NOT
+  // listed: test-library synthetic monitoring posts it on purpose.
+  var _crawlerUA = /(meta-webindexer|meta-externalagent|googleother|bingpreview|yandexbot|bytespider|petalbot|ahrefsbot|semrushbot|dotbot|barkruptbot)/i.test(UA);
+
   // R1193: tag genuine iframe-embed sessions (R1129 embed-farm contention: vitals measured
   // under host-page multi-iframe contention skew CLS/INP; triage must be able to isolate
   // them without guessing from referrers). window.self!==window.top works cross-origin.
@@ -204,7 +214,7 @@
       BOT_REF_DROPPED++;
       return;
     }
-    if (_fakeFP || _x11ArmFP) return;  // R1117b + R1193 fingerprint farm drop
+    if (_fakeFP || _x11ArmFP || _crawlerUA) return;  // R1117b + R1193 farm + R1213 crawler drop
     var b = gB();
     var ev = base();
     ev.e = n; ev.d = d || {}; ev.t = Date.now();
