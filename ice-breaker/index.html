@@ -198,7 +198,7 @@ h1.gz-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-let W, H, scale;
+let W, H, scale, worldOffX = 0, worldOffY = 0;
 const GRAVITY = 600;
 const ICE_DENSITY = 0.001;
 const WOOD_DENSITY = 0.0007;
@@ -218,6 +218,12 @@ function resize() {
   canvas.style.height = availH + 'px';
   canvas.style.width = W + 'px';
   scale = Math.min(W / 800, H / 600);
+  // FIX(r1217 QA): levels are authored for an 800x600 world but were drawn in raw
+  // canvas coords — on short desktop canvases (H<600) the boat/goal rendered BELOW
+  // the canvas bottom (goal.y=520..580) and on narrow mobile (W<800) the right half
+  // of the ice field was off-canvas. Map world -> canvas (uniform scale + center).
+  worldOffX = (W - 800 * scale) / 2;
+  worldOffY = (H - 600 * scale) / 2;
 }
 window.addEventListener('resize', resize);
 resize();
@@ -614,9 +620,10 @@ function updatePhysics(dt) {
     p.y += p.vy * dt;
 
     if (p.x < 0) { p.x = 0; p.vx = Math.abs(p.vx) * BOUNCE; }
-    if (p.x + p.w > W) { p.x = W - p.w; p.vx = -Math.abs(p.vx) * BOUNCE; }
+    // r1217: physics runs in the 800x600 world, not viewport-sized canvas coords
+    if (p.x + p.w > 800) { p.x = 800 - p.w; p.vx = -Math.abs(p.vx) * BOUNCE; }
 
-    if (p.y + p.h > H + 200) {
+    if (p.y + p.h > 800) {
       p.dead = true;
     }
 
@@ -645,7 +652,7 @@ function updatePhysics(dt) {
       if (!inPiece) {
         v.fallSpeed += GRAVITY * dt;
         v.y += v.fallSpeed * dt;
-        if (v.y > H + 50) {
+        if (v.y > 650) {
           state.lost = true;
           playSound('fail');
         }
@@ -707,6 +714,11 @@ function getPos(e) {
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
+// r1217: cut drawing happens in world coords; convert screen-space pointer pos.
+function toWorld(p) {
+  return { x: (p.x - worldOffX) / scale, y: (p.y - worldOffY) / scale };
+}
+
 canvas.addEventListener('mousedown', e => {
   initAudio();
   if (state.screen === 'menu') {
@@ -728,7 +740,7 @@ canvas.addEventListener('mousedown', e => {
   }
   if (state.screen === 'game' && !state.won && !state.lost) {
     drawing = true;
-    const pos = getPos(e);
+    const pos = toWorld(getPos(e));
     drawStart = { x: pos.x, y: pos.y };
     drawEnd = { x: pos.x, y: pos.y };
   }
@@ -736,14 +748,14 @@ canvas.addEventListener('mousedown', e => {
 
 canvas.addEventListener('mousemove', e => {
   if (drawing) {
-    const pos = getPos(e);
+    const pos = toWorld(getPos(e));
     drawEnd = { x: pos.x, y: pos.y };
   }
 });
 
 canvas.addEventListener('mouseup', e => {
   if (drawing && state.screen === 'game') {
-    const pos = getPos(e);
+    const pos = toWorld(getPos(e));
     drawEnd = { x: pos.x, y: pos.y };
     tryCut();
   }
@@ -772,7 +784,7 @@ canvas.addEventListener('touchstart', e => {
   }
   if (state.screen === 'game' && !state.won && !state.lost) {
     drawing = true;
-    const pos = getPos(e);
+    const pos = toWorld(getPos(e));
     drawStart = { x: pos.x, y: pos.y };
     drawEnd = { x: pos.x, y: pos.y };
   }
@@ -781,7 +793,7 @@ canvas.addEventListener('touchstart', e => {
 canvas.addEventListener('touchmove', e => {
   e.preventDefault();
   if (drawing) {
-    const pos = getPos(e);
+    const pos = toWorld(getPos(e));
     drawEnd = { x: pos.x, y: pos.y };
   }
 }, { passive: false });
@@ -982,6 +994,13 @@ function renderGame() {
   const lvl = LEVELS[state.level];
   const goal = lvl.goal;
 
+  // r1217: world (boat/pieces/vikings/particles/cut-line) is authored for an
+  // 800x600 space; map it into the viewport-sized canvas (uniform scale + center)
+  // so the boat/goal is never drawn off-canvas on short/narrow viewports.
+  ctx.save();
+  ctx.translate(worldOffX, worldOffY);
+  ctx.scale(scale, scale);
+
   renderBoat(goal.x, goal.y, goal.w, goal.h);
 
   state.pieces.forEach(p => renderPiece(p));
@@ -1013,6 +1032,7 @@ function renderGame() {
     ctx.lineTo(drawEnd.x, drawEnd.y);
     ctx.stroke();
   }
+  ctx.restore();
 
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.fillRect(10, 10, 180, 80);
