@@ -41,7 +41,7 @@
 :root{--bg1:#0a0a1a;--bg2:#12122a;--bg3:#1a1a3e;--cyan:#00d4ff;--cyan2:#4dd9ff;--mag:#ff006e;--gold:#ffd700;--txt:#e8eaf6;--dim:#9fa8c7;--cell-bg:rgba(255,255,255,0.06);--given-bg:rgba(255,255,255,0.12);--sel-border:#00d4ff;--err-bg:rgba(255,0,80,0.2);--ok-bg:rgba(0,255,128,0.15);--shadow:0 8px 32px rgba(0,0,0,0.4)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow-x:hidden}
-body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Roboto,sans-serif;color:var(--txt);background:linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));background-attachment:fixed;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none;min-height:100vh}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Roboto,sans-serif;color:var(--txt);background:linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));background-attachment:fixed;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;min-height:100vh}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 600px 400px at 20% 20%,rgba(0,212,255,0.06),transparent 60%),radial-gradient(ellipse 600px 400px at 80% 80%,rgba(255,0,110,0.05),transparent 60%)}
 .wrap{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:8px}
 canvas{display:block;margin:0 auto;touch-action:none}
@@ -240,7 +240,7 @@ var LEVELS=[
 
 var SAVE_KEY="fillomino_save";
 var state="title", currentLevel=0, grid=[], selR=-1, selC=-1, selectedNum=0;
-var timerSec=0, timerInterval=null, history=[], audioCtx=null, soundOn=true, bgmNodes=[];
+var timerSec=0, timerInterval=null, undoStack=[], audioCtx=null, soundOn=true, bgmNodes=[];
 var dailyMode=false, dailySeed=0;
 var canvas, ctx, cellSize=40, gridPx=0;
 var particles=[];
@@ -321,7 +321,7 @@ function startLevel(idx){
   var lv=LEVELS[idx];var s=lv.s;
   grid=[];for(var r=0;r<s;r++){grid[r]=[];for(var c=0;c<s;c++)grid[r][c]=0;}
   for(var i=0;i<lv.g.length;i++){var g=lv.g[i];grid[g[0]][g[1]]=g[2];}
-  selR=-1;selC=-1;selectedNum=0;history=[];timerSec=0;
+  selR=-1;selC=-1;selectedNum=0;undoStack=[];timerSec=0;
   document.getElementById('levelName').textContent=lv.n;
   showScreen('gameScreen');state='game';
   setupCanvas(lv);buildPalette(lv);startTimer();startBGM();draw();
@@ -333,7 +333,7 @@ function startDaily(){
   var lv=generateDaily(dailySeed);dailyMode=true;currentLevel=-1;
   var s=lv.s;grid=[];for(var r=0;r<s;r++){grid[r]=[];for(var c=0;c<s;c++)grid[r][c]=0;}
   for(var i=0;i<lv.g.length;i++){var g=lv.g[i];grid[g[0]][g[1]]=g[2];}
-  selR=-1;selC=-1;selectedNum=0;history=[];timerSec=0;
+  selR=-1;selC=-1;selectedNum=0;undoStack=[];timerSec=0;
   document.getElementById('levelName').textContent='Daily '+dailySeed;
   showScreen('gameScreen');state='game';
   setupCanvas(lv);buildPalette(lv);startTimer();startBGM();draw();
@@ -407,14 +407,14 @@ function placeNumber(r,c,n){
   var isGiven=false;for(var i=0;i<lv.g.length;i++){if(lv.g[i][0]===r&&lv.g[i][1]===c){isGiven=true;break;}}
   if(isGiven)return;
   if(grid[r][c]===n)return;
-  history.push({r:r,c:c,v:grid[r][c]});
+  undoStack.push({r:r,c:c,v:grid[r][c]});
   grid[r][c]=n;sfxPlace();draw();
   checkWin();
 }
 
 function doUndo(){
-  if(history.length===0)return;sfxClick();
-  var h=history.pop();grid[h.r][h.c]=h.v;draw();
+  if(undoStack.length===0)return;sfxClick();
+  var h=undoStack.pop();grid[h.r][h.c]=h.v;draw();
 }
 
 function doHint(){
@@ -425,7 +425,7 @@ function doHint(){
     if(grid[r][c]!==sol[r][c])emptyCells.push([r,c]);}
   if(emptyCells.length===0)return;
   var cell=emptyCells[Math.floor(Math.random()*emptyCells.length)];
-  history.push({r:cell[0],c:cell[1],v:grid[cell[0]][cell[1]]});
+  undoStack.push({r:cell[0],c:cell[1],v:grid[cell[0]][cell[1]]});
   grid[cell[0]][cell[1]]=sol[cell[0]][cell[1]];
   sfxComplete();draw();checkWin();
 }
