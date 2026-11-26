@@ -4487,7 +4487,7 @@ function renderSplash() {
     X.font = "500 11px 'Nunito',sans-serif";
     X.textAlign = "center";
     X.textBaseline = "middle";
-    X.fillText(`Auto-starting in ${Math.ceil(remaining)}s · Tap any button to stay`, W / 2, _nextBtnY + 58);
+    X.fillText(`Auto-starting in ${Math.ceil(remaining)}s · Tap PLAY to start now`, W / 2, _nextBtnY + 58);
     X.globalAlpha = ease;
   }
   X.globalAlpha = ease;
@@ -6620,8 +6620,14 @@ function onTap(px, py) {
 
   // ── Splash ──
   if (state === "splash") {
-    // R715: any tap on splash counts as interaction → cancel auto-advance
-    splashUserInteracted = true;
+    // [R1216 2026-11-27] R715's "any tap permanently cancels auto-advance" was the
+    // splash→play leak: BI 7d had sessions lingering 60s+ on splash after a stray tap
+    // (row gaps are 10px, side margins ~80px on 360px phones, area below last row) —
+    // the tap did NOTHING and killed the 6s auto-advance forever. Auto-advance is the
+    // dominant conversion path (lifetime: 83 auto_advance vs 22 play_button taps).
+    // New semantics: only taps that FIRE an action cancel auto-advance; stray taps
+    // restart the 6s idle countdown (ms_splash_stray_tap instrumented, R1045 lesson:
+    // instrument the failure path).
     // [R1156 2026-11-16] SPLASH HIT-ZONE MISALIGNMENT (P0): R864 moved the Share row
     // to position #2 in renderSplash but onTap kept the old row order → every row
     // below PLAY was shifted up one row. Real-click Playwright proof (returning
@@ -6638,27 +6644,37 @@ function onTap(px, py) {
         if (!hitTest(px, py, r.x, r.y, r.w, r.h)) continue;
         if (r.key === 'play') {
           // R980: new players go straight into level 1 (one tap, no menu/modal hop)
+          splashUserInteracted = true; // R1216: intentional action cancels auto-advance
           splashPlayAction('play_button');
         } else if (r.key === 'share') {
           // R857: Share on splash — every visitor can share, even before first level.
+          splashUserInteracted = true; // R1216
           shareResult({ source: 'splash' });
         } else if (r.key === 'continue') {
+          splashUserInteracted = true; // R1216
           sfxClick();
           initLevel(lastPlayedLevel);
         } else if (r.key === 'daily') {
+          splashUserInteracted = true; // R1216
           sfxClick();
           // [MS-tracker R643] daily challenge start from splash
           try { _msSend('ms_daily_challenge_started', { lv: dailyChallengeLevel + 1, source: 'splash' }); } catch(e){}
           initLevel(dailyChallengeLevel);
         } else if (r.key === 'random') {
-          sfxClick();
-          // [MS-tracker R643] random level pick from splash
-          try { _msSend('ms_random_level_started', { source: 'splash' }); } catch(e){}
-          // Pick a random unlocked level
+          // R1216: new players have no unlocked levels -> Random tap is a silent no-op;
+          // treat it as a stray tap (restart countdown) instead of killing auto-advance.
           const unlocked = Object.keys(levelUnlocked).filter(k => levelUnlocked[k]).map(Number);
           if (unlocked.length > 0) {
+            splashUserInteracted = true;
+            sfxClick();
+            // [MS-tracker R643] daily/random level pick from splash
+            try { _msSend('ms_random_level_started', { source: 'splash' }); } catch(e){}
             const pick = unlocked[Math.floor(Math.random() * unlocked.length)];
             initLevel(pick);
+          } else {
+            splashAutoAdvanceTimer = 0;
+            try { _msSend('ms_splash_stray_tap', { why: 'random_empty', ty: Math.round(py / H * 100) }); } catch(e){}
+            return;
           }
         }
         return;
@@ -6669,12 +6685,18 @@ function onTap(px, py) {
     // treat it as PLAY tap. Eliminates rage_click clusters at y=141-144 in BI.
     if (py < by && splashTimer >= 0.8) {
       // R980: same one-tap direct-start path as the PLAY button
+      splashUserInteracted = true; // R1216
       splashPlayAction('tap_anywhere');
+      return; // R1216: action fired — do NOT also emit stray-tap below
     }
     // Footer GameZipper.com link
     if (splashFooterLink && hitTest(px, py, splashFooterLink.x, splashFooterLink.y, splashFooterLink.w, splashFooterLink.h)) {
       window.location.href = "/"; return;
     }
+    // [R1216] Stray tap (no row, no tap-anywhere, no footer): restart the 6s
+    // idle countdown instead of permanently cancelling auto-advance.
+    splashAutoAdvanceTimer = 0;
+    try { _msSend('ms_splash_stray_tap', { ty: Math.round(py / H * 100) }); } catch(e){}
     return;
   }
 
