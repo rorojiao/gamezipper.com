@@ -23,8 +23,10 @@ T('instance-exists', !!gm);
     if (st.gameOver) break;
     if (gm.animating || gm.aiThinking) { g.pump(4); await yieldTick(); continue; }
     if (st.currentPlayer === 1) {
-      let pit = -1;
-      for (let i = 0; i < 6; i++) if (st.board[i] > 0) { pit = i; break; }
+      // pick the fullest own pit (greedy-first-pit drains own side and ends the
+      // game legitimately in ~7 moves — R1212: that was a driver defect, not a game bug)
+      let pit = -1, best = 0;
+      for (let i = 0; i < 6; i++) if (st.board[i] > best) { best = st.board[i]; pit = i; }
       if (pit < 0) { g.pump(10); await yieldTick(); continue; }
       gm._executeMove(1, pit); // the canvas-click callee (async)
       moves++;
@@ -36,7 +38,11 @@ T('instance-exists', !!gm);
     }
   }
   const seeds = gm.state.board[6] + gm.state.board[13];
-  T('moves-executed', moves >= 8, 'moves=' + moves);
+  const total = gm.state.board.reduce((a, b) => a + b, 0);
+  // R1212: conservation is the real invariant; a short game is legitimate Kalah
+  // (one side empties -> opponent captures remainder). moves>=8 was a false gate.
+  T('moves-executed', moves >= 5 || gm.state.gameOver, 'moves=' + moves);
+  T('seed-conservation', total === 48, 'total=' + total);
   T('stores-filled', seeds > 4, 'seeds=' + seeds);
   T('game-concluded', gm.state.gameOver === true || moves >= 40, 'over=' + gm.state.gameOver + ' moves=' + moves);
   T('no-vm-errors', !(g.sandbox.__errors || []).some(e => /TypeError|ReferenceError/.test(e)),
