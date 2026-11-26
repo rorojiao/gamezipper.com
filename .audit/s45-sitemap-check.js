@@ -1,0 +1,11 @@
+const fs=require('fs');
+const src=fs.readFileSync('js/games-data.js','utf8');
+const t=src.replace(/^const\s+(GAME_GRADIENTS|GAMES)\s*=/gm,'var $1=');
+const GAMES=new Function(t+'; return GAMES;')();
+const live=new Set(GAMES.filter(g=>g.status==='live').map(g=>g.url.replace(/^\//,'').replace(/\/$/,'')));
+const sm=fs.readFileSync('sitemap-games.xml','utf8');
+const urls=new Set([...sm.matchAll(/gamezipper\.com\/([a-z0-9-]+)\/<\/loc>/g)].map(m=>m[1]));
+console.log('sitemap-games urls:',urls.size,'live:',live.size);
+console.log('live missing from sitemap:',[...live].filter(s=>!urls.has(s)).slice(0,10));
+const extra=[...urls].filter(s=>!live.has(s));
+console.log('sitemap extra (not live):',extra.length, extra.slice(0,12));
