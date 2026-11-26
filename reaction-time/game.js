@@ -126,6 +126,12 @@
   var times = [];
   var startTime = 0;
   var timeoutId = null;
+  // R1213 (BI rage_click /reaction-time/ DIV.yellow x3 + DIV.result, Edge desktop
+  // 11-26; user reloaded 4x in 90s): after a FOUL the round auto-restarts after
+  // 1.2s while the frustrated user is still mashing the box -> the stale mashes
+  // land in the fresh 'waiting' state and foul again -> FOUL spiral -> reload.
+  // Swallow clicks for a short grace window after every AUTO round restart.
+  var clickGraceUntil = 0;
   var gameArea = null;
   var stateText = null;
   var stateSub = null;
@@ -280,6 +286,9 @@
     }
 
     if (state === 'waiting') {
+      // R1213: stale mashes from a just-finished FOUL (or a result transition)
+      // must not instantly foul the fresh round — swallow them in the grace window.
+      if (performance.now() < clickGraceUntil) return;
       // FOUL - clicked too early
       clearTimeouts();
       setState('foul');
@@ -287,8 +296,20 @@
       flashScreen();
       playFoul();
       setTimeout(function(){
+        clickGraceUntil = performance.now() + 700;
         nextRound();
       }, 1200);
+      return;
+    }
+
+    if (state === 'foul') {
+      // R1213: acknowledge mashing during the FOUL pause (ripple+sound already
+      // fire above); pulse the FOUL text so the burst feels received, and do
+      // NOT let it fall through silently with zero visual response.
+      stateText.classList.remove('rej');
+      void stateText.offsetWidth;
+      stateText.classList.add('rej');
+      setTimeout(function(){ stateText.classList.remove('rej'); }, 600);
       return;
     }
 
@@ -303,6 +324,7 @@
       setState('result');
       setText(reactionMs + 'ms', rating.text);
       setTimeout(function(){
+        clickGraceUntil = performance.now() + 700;
         nextRound();
       }, 900);
       return;
