@@ -207,6 +207,12 @@ winModalShown();
 const dSave = JSON.parse(g.ls.getItem('outside_sudoku_save_v1') || '{}').progress['daily-' + dateStr];
 ck('daily:solve+save-3stars', !errD && g.els['winStars'].textContent === '★★★' && dSave && dSave.stars === 3, errD || JSON.stringify(dSave));
 extra.daily = { date: dateStr, idx: wantIdx, stars: dSave ? dSave.stars : null };
+// R454 regression: winNext from a solved daily must NOT propagate the daily flag
+// (pre-fix, the FOLLOWING level was flagged daily and its win overwrote daily-<date> instead of crediting lvl-<idx>)
+const liB = g.call('S.levelIdx');
+click('winNext');
+const adv = g.call('S.levelIdx') === liB + 1;
+ck('daily:winNext-clears-daily-flag', !adv || g.call('S.isDaily') === false, 'isDaily=' + g.call('S.isDaily') + ' li=' + liB + '->' + g.call('S.levelIdx'));
 click('winLevels');
 
 // ---------- given cells are immutable ----------
@@ -221,7 +227,7 @@ g.sandbox.dispatchEvent({ type: 'beforeunload' });
 g.pump(2);
 ck('cleanup:beforeunload-clean', true);
 ck('runtime:no-errors', (g.sandbox.__errors || []).length === 0, (g.sandbox.__errors || []).slice(0, 3).join(' | '));
-extra.notes.push('P2 (documented, not fixed): winNext propagates S.isDaily — finishing the daily then Next starts the FOLLOWING level still flagged daily, so its win overwrites the daily-<date> save key instead of crediting lvl-<idx>');
+extra.notes.push('R454 FIXED: winNext no longer propagates S.isDaily (was: finishing the daily then Next flagged the FOLLOWING level daily, overwriting the daily-<date> save key instead of crediting lvl-<idx>); regression asserted by daily:winNext-clears-daily-flag above');
 
 // ---------- tally ----------
 const pass = results.filter(r => r.ok).length;

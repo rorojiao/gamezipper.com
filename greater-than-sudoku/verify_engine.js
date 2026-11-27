@@ -115,6 +115,9 @@ function independentVerify(level, deadline) {
 }
 
 let pass = 0, fail = 0; const fails = [];
+// R454 static gate: winNext must not propagate the daily flag (P2: next level's win
+// would overwrite daily-<date> save key instead of crediting lvl-<idx>)
+if (/bind\('winNext'.*startLevel\(ni,S\.isDaily\);/.test(html)) { fail++; fails.push('static-gate: winNext propagates S.isDaily (R454)'); }
 const t0 = Date.now();
 const LEVELS = ctx.__api.LEVELS_DATA;
 const jsonLevels = JSON.parse(fs.readFileSync(path.join(__dirname, 'levels.json'), 'utf8')).levels;

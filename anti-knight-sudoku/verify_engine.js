@@ -88,6 +88,12 @@ function validate(L) {
 }
 
 const issues = [];
+// R454 static gate: winNext must not propagate the daily flag (P2: next level's win
+// would overwrite daily-<date> save key instead of crediting lvl-<idx>)
+if (/bind\('winNext'.*startLevel\(ni,S\.isDaily\);/.test(HTML)) {
+  console.log('FAIL static-gate: winNext propagates S.isDaily (daily save-key overwrite, R454)');
+  process.exit(1);
+}
 const tierCount = {};
 for (let i = 0; i < levels.length; i++) {
   const L = levels[i];

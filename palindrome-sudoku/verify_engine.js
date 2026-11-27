@@ -178,6 +178,12 @@ winModalShown();
 const dSave = JSON.parse(g.ls.getItem('palindrome_sudoku_save_v1') || '{}').progress['daily-' + dateStr];
 ck('daily:solve+save-3stars', !errD && g.els['winStars'].textContent === '★★★' && dSave && dSave.stars === 3, errD || JSON.stringify(dSave));
 extra.daily = { date: dateStr, idx: wantIdx, stars: dSave ? dSave.stars : null };
+// R454 regression: winNext from a solved daily must NOT propagate the daily flag
+// (pre-fix, the FOLLOWING level was flagged daily and its win overwrote daily-<date> instead of crediting lvl-<idx>)
+const liB = g.call('S.levelIdx');
+click('winNext');
+const adv = g.call('S.levelIdx') === liB + 1;
+ck('daily:winNext-clears-daily-flag', !adv || g.call('S.isDaily') === false, 'isDaily=' + g.call('S.isDaily') + ' li=' + liB + '->' + g.call('S.levelIdx'));
 click('winLevels');
 
 // ---------- given cells immutable ----------
