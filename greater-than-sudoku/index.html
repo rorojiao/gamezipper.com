@@ -175,8 +175,7 @@ canvas#board{touch-action:none;display:block;border-radius:14px;}
 </style>
 </head>
 <body>
-<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8346383990981353" data-ad-slot="1099212472" data-ad-format="auto" data-full-width-responsive="true"></ins>
-<script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
+<!-- R455 P2: the orphan top-of-body <ins class="adsbygoogle" style="display:block"> + push() moved into #gz-ad-below-game (R362 contained-div pattern) — in-flow at body top it shifted header/title/board/numpad down ~390px when AdSense filled it (mobile: numpad fully below fold). -->
 <div class="wrap">
   <header>
     <a class="brand" href="/"><span class="dot">GZ</span><span><b>GameZipper</b><small>Puzzle Hub</small></span></a>
@@ -356,7 +355,22 @@ function boxDims(N){ return N===4?[2,2]:N===6?[2,3]:[3,3]; }
 function setupCanvas(){
   const N=S.N, wrapW=canvas.parentElement.clientWidth;
   const maxByW=Math.min(wrapW, 460);
-  const availH=Math.max(260, window.innerHeight-310);
+  // R455 P2 fix (sweep-41 mobile-reachability invariant): static 310 reserve
+  // under-reserves on mobile — header+title+legend+hud+ad slots stack taller than
+  // desktop, so at 390x844 the board bottom landed at 1009 and the numpad at 1146
+  // (fully below the fold). Same measured-reserve pattern as palindrome/outside-sudoku.
+  const toolbarEl=document.querySelector('#gameScreen .toolbar');
+  const numpadEl=document.getElementById('numpad');
+  const footEl=document.querySelector('#gameScreen .foot');
+  const boardWrapEl=document.querySelector('.board-wrap');
+  const topRaw=boardWrapEl?boardWrapEl.getBoundingClientRect().top+window.scrollY:NaN;
+  const topOfBoard=Number.isFinite(topRaw)?topRaw:200;
+  const belowSpace=(toolbarEl&&toolbarEl.offsetHeight?toolbarEl.offsetHeight:60)+(numpadEl&&numpadEl.offsetHeight?numpadEl.offsetHeight:170)+(footEl&&footEl.offsetHeight?footEl.offsetHeight:30)+30;
+  const measuredReserve=topOfBoard+belowSpace;
+  const vh=window.innerHeight;
+  const staticReserve = vh<=560 ? 280 : (vh<=700 ? 340 : 430);
+  const reserve = Math.max(staticReserve, Math.min(measuredReserve, vh-160));
+  const availH=Math.max(180, vh-reserve);
   const maxBoard=Math.min(maxByW, availH);
   cellSize=Math.max(20, Math.floor(maxBoard/N));
   boardPx=cellSize*N;
@@ -733,7 +747,11 @@ if(!localStorage.getItem(TUT_KEY)){ setTimeout(()=>openTut(),600); }
 <script defer src="/game-footer.js?v=20261122P1"></script>
 <script defer src="/adsterra-manager.js?v=20261125R1205popcap"></script><script defer src="/monetag-manager.js?v=20261107R1067pfmismatch"></script>
 <!-- UX-OPT 2026-08-05 R383: R362 non-canvas AdSense CLS fix applied to all blog/*.html. Original: <div id="gz-ad-below-game"></div> + standalone <ins class="adsbygoogle"> as siblings — AdSense creative inflates 0->280px inside <ins> in flow, pushes downstream content. Fix: div becomes position:relative + contain:layout paint style + overflow:hidden + max-height:280px; faint "Sponsored" label inside; <ins> becomes position:absolute with height:100% so its creative overlays on the div without affecting flow. Same pattern as chess/ R362 proven (CLS 0.20 -> 0). -->
-<div id="gz-ad-below-game" style="position:relative;min-height:100px;max-height:280px;margin:16px auto;max-width:728px;text-align:center;overflow:hidden;contain:layout paint style;color:#666;font-size:.7em;background:transparent;border-radius:6px;box-sizing:border-box;line-height:100px"><span aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.78em;opacity:.3;letter-spacing:.05em;font-weight:500;pointer-events:none;transition:opacity .15s ease">Sponsored &middot; Advertisement</span></div>
+<div id="gz-ad-below-game" style="position:relative;min-height:100px;max-height:280px;margin:16px auto;max-width:728px;text-align:center;overflow:hidden;contain:layout paint style;color:#666;font-size:.7em;background:transparent;border-radius:6px;box-sizing:border-box;line-height:100px"><span aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.78em;opacity:.3;letter-spacing:.05em;font-weight:500;pointer-events:none;transition:opacity .15s ease">Sponsored &middot; Advertisement</span>
+  <!-- R455 P2: orphan top-of-body <ins> (display:block, in-flow) was the AdSense slot; when filled it inflated 0->280px at body top and shifted the whole game down (CLS). Moved into the R362 contained div as position:absolute overlay, matching palindrome-sudoku R389. -->
+  <ins class="adsbygoogle" style="position:absolute!important;top:0!important;left:0!important;width:100%!important;max-width:728px!important;height:100%!important;max-height:280px!important;margin:0 auto!important;text-align:center;display:block" data-ad-client="ca-pub-8346383990981353" data-ad-slot="1099212472" data-ad-format="auto" data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
+</div>
 
 <section style="content-visibility:auto;contain-intrinsic-size:auto 350px" class="gz-related-games" aria-label="Related games">
 <h3>You Might Also Like</h3>
