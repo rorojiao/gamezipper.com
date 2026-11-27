@@ -1711,6 +1711,7 @@ class Car {
     this.damage = 0;
     this.dead = false;
     this.finished = false;
+    this.released = false; // R453: car waits until first stroke released (matches _onPointerUp intent)
     this.onGround = false;
     this.groundedSegments = [];
     this.prevVy = 0;
@@ -1742,6 +1743,7 @@ class Car {
   }
   update(dt, segments, wind = 0) {
     if (this.dead || this.finished) return;
+    if (!this.released) { this.prevVy = this.vy; return; } // R453 P0: hold car until first stroke released (was driving on level load, before player could draw)
     this.engineTime += dt;
     this.prevVy = this.vy;
     // Gravity
@@ -2208,6 +2210,7 @@ class Game {
       this.audio.playDrawRelease();
       // Release car if first line drawn
       if (this.drawnLines.length === 1 && this.car) {
+        this.car.released = true; // R453: physics gate opens only now
         this.car.vx = 10; // Start moving
       }
     }
