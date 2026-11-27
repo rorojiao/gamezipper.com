@@ -64,6 +64,12 @@ canvas{display:block;margin:0 auto;touch-action:none}
 .level-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;transition:all .15s}
 .level-card:hover{background:rgba(255,255,255,0.1);border-color:var(--cyan)}
 .level-card.locked{opacity:0.35;cursor:default}
+/* R1221: locked level cards + palette re-clicks were silent no-ops
+   (BI dead_click DIV.level-card locked / DIV.num-btn ×8 burst 11-26) —
+   shake+SFX ack with monotonic --gz-tap (R1196/R1170 pattern). */
+.gz-r1221-ack{animation:gzShakeX .4s ease}
+@keyframes gzShakeX{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@media(prefers-reduced-motion:reduce){.gz-r1221-ack{animation:none}}
 .level-card.locked:hover{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1)}
 .level-card .num{font-size:20px;font-weight:700;color:var(--cyan)}
 .level-card .name{font-size:11px;color:var(--dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -75,6 +81,7 @@ canvas{display:block;margin:0 auto;touch-action:none}
 .palette .num-btn.active{background:var(--cyan);color:#0a0a1a;border-color:var(--cyan)}
 .palette .tool-btn{width:38px;height:38px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--dim);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
 .palette .tool-btn:hover{background:rgba(255,255,255,0.1)}
+.palette .tool-btn.active{background:var(--cyan);color:#0a0a1a;border-color:var(--cyan)}
 .win-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center}
 .win-overlay.show{display:flex}
 .win-panel{background:linear-gradient(135deg,#12122e,#1a1a3e);border:1px solid var(--cyan);border-radius:16px;padding:30px 24px;text-align:center;max-width:340px;width:90%}
@@ -273,7 +280,7 @@ function showLevelSelect(){
     for(var i=tierStart[t];i<tierStart[t]+(t<4?6:6);i++){
       var locked=i>0&&save.stars[i-1]===0;
       var starStr="";for(var s=1;s<=3;s++)starStr+=s<=save.stars[i]?"*":"-";
-      html+='<div class="level-card'+(locked?' locked':'')+'" onclick="'+(locked?'':'startLevel('+i+')')+'"><div class="num">'+(i+1)+'</div><div class="name">'+LEVELS[i].n+'</div><div class="stars-row">'+starStr+'</div></div>';
+      html+='<div class="level-card'+(locked?' locked':'')+'" onclick="'+(locked?'lockedAck(this)':'startLevel('+i+')')+'"><div class="num">'+(i+1)+'</div><div class="name">'+LEVELS[i].n+'</div><div class="stars-row">'+starStr+'</div></div>';
     }
     html+='</div>';
   }
@@ -289,6 +296,11 @@ function playTone(freq,dur,type,vol){
   o.connect(g);g.connect(audioCtx.destination);o.start();g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+(dur||0.1));o.stop(audioCtx.currentTime+(dur||0.1)+0.01);}catch(e){}
 }
 function sfxClick(){playTone(600,0.06,'sine',0.06);}
+function lockedAck(el){
+  try{sfxError();}catch(e){}
+  el.classList.remove('gz-r1221-ack');void el.offsetWidth;el.classList.add('gz-r1221-ack');
+  try{el.__gzTapN=(el.__gzTapN||0)+1;el.style.setProperty('--gz-tap',String(el.__gzTapN));}catch(e){}
+}
 function sfxPlace(){playTone(800,0.08,'sine',0.07);}
 function sfxError(){playTone(200,0.2,'sawtooth',0.05);}
 function sfxComplete(){playTone(523,0.15,'sine',0.08);setTimeout(function(){playTone(659,0.15,'sine',0.08);},100);setTimeout(function(){playTone(784,0.2,'sine',0.1);},200);}
@@ -389,19 +401,24 @@ function setupCanvas(lv){
 function buildPalette(lv){
   var maxVal=0;for(var i=0;i<lv.g.length;i++)maxVal=Math.max(maxVal,lv.g[i][2]);
   var html='';for(var n=1;n<=Math.min(maxVal+2,9);n++){
-    html+='<div class="num-btn" data-num="'+n+'" onclick="selectNum('+n+')">'+n+'</div>';}
-  html+='<div class="tool-btn" onclick="selectNum(0)" title="Erase">X</div>';
+    html+='<div class="num-btn" data-num="'+n+'" onclick="selectNum('+n+',this)">'+n+'</div>';}
+  html+='<div class="tool-btn" onclick="selectNum(0,this)" title="Erase">X</div>';
   document.getElementById('palette').innerHTML=html;
 }
 
-function selectNum(n){
+function selectNum(n,el){
+  var prev=selectedNum;
   selectedNum=n;sfxClick();
   document.querySelectorAll('.num-btn').forEach(function(b){
     b.classList.toggle('active',parseInt(b.dataset.num)===n);});
+  var tb=document.querySelector('.tool-btn');if(tb)tb.classList.toggle('active',n===0);
   // Only place into a cell that was selected but NOT yet filled (cell-first flow).
   // handlePointer clears selR/selC after placing, so switching numbers in the
   // number-first "paint" flow no longer silently overwrites the last placed cell.
   if(selR>=0&&selC>=0){placeNumber(selR,selC,n);selR=-1;selC=-1;}
+  // R1221: re-clicking the already-selected number with no placement was a
+  // silent no-op (BI dead_click DIV.num-btn ×8 burst) — ack it visibly.
+  if(el&&n===prev)lockedAck(el);
 }
 
 function placeNumber(r,c,n){
