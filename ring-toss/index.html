@@ -783,10 +783,16 @@ function buildLevelGrid(){
 }
 
 /* ---- 按钮 ---- */
+/* R1218: modal mutual exclusion (R340 class) — QA E2E found ov-help+ov-levels
+   both .show simultaneously; stacking modals with z-index:auto confuse clicks. */
+function openModal(id){
+  ['ov-win','ov-fail','ov-levels','ov-help'].forEach(function(m){ if(m!==id)$(m).classList.remove('show'); });
+  $(id).classList.add('show');
+}
 function setupButtons(){
   $('btn-reset').onclick=function(){loadLevel(curLevel);};
-  $('btn-levels').onclick=function(){buildLevelGrid();$('ov-levels').classList.add('show');};
-  $('btn-help').onclick=function(){$('ov-help').classList.add('show');};
+  $('btn-levels').onclick=function(){buildLevelGrid();openModal('ov-levels');};
+  $('btn-help').onclick=function(){openModal('ov-help');};
   $('btn-sound').onclick=function(){
     soundOn=!soundOn;
     $('btn-sound').textContent=soundOn?'Sound':'Muted';
@@ -799,15 +805,13 @@ function setupButtons(){
     $('ov-win').classList.remove('show');loadLevel(curLevel);
   };
   $('win-levels').onclick=function(){
-    $('ov-win').classList.remove('show');
-    buildLevelGrid();$('ov-levels').classList.add('show');
+    buildLevelGrid();openModal('ov-levels');
   };
   $('fail-retry').onclick=function(){
     $('ov-fail').classList.remove('show');loadLevel(curLevel);
   };
   $('fail-levels').onclick=function(){
-    $('ov-fail').classList.remove('show');
-    buildLevelGrid();$('ov-levels').classList.add('show');
+    buildLevelGrid();openModal('ov-levels');
   };
   $('lv-close').onclick=function(){$('ov-levels').classList.remove('show');};
   $('help-close').onclick=function(){$('ov-help').classList.remove('show');};
