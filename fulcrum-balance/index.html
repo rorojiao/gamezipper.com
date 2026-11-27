@@ -187,7 +187,33 @@ canvas{display:block;touch-action:none}
 <button id="menu-btn">Menu</button>
 </div>
 </div>
-<script defer src="/adsterra-manager.js?v=20261125R1205popcap"></script><script defer src="/monetag-manager.js?v=20261107R1067pfmismatch"></script>
+<script>
+/* UX-OPT 2026-11-27 R1217: idle-defer ad managers (R1054 pattern) — BI 7d inp_worst
+   >=500ms rows on this page collide with gz_ad_events within +-5s (100% hit except
+   moto-x3m 2/4); inp_worst+inp_hover+inp_scroll share equal dur = one shared blocking
+   task (R990 routing is mutually exclusive). Defer adsterra/monetag execution out of
+   the first-interaction window. Static adsbygoogle banners untouched. */
+(function(){
+  function loadAdManager(){
+    if(window.GZ_LOAD_ADSTERRA!==false){
+      var sAd=document.createElement('script');
+      sAd.src='/adsterra-manager.js?v=20261125R1205popcap';
+      sAd.defer=true;
+      document.head.appendChild(sAd);
+    }
+    var s=document.createElement('script');
+    s.src='/monetag-manager.js?v=20261107R1067pfmismatch';
+    document.head.appendChild(s);
+  }
+  if('scheduler' in window && 'yield' in window.scheduler){
+    scheduler.yield().then(loadAdManager);
+  }else if('requestIdleCallback' in window){
+    requestIdleCallback(loadAdManager,{timeout:3000});
+  }else{
+    setTimeout(loadAdManager,2000);
+  }
+})();
+</script>
 <script defer src="/game-footer.js?v=20261122P1"></script>
 <!-- AdSense display ad (moved from head to body, R349 fix pattern) -->
 <!-- R684 2026-09-12 ADS-OPT: swap 109/737 — 737 first in DOM (workhorse, fills 100%), 109 second (R681 dedup lesson). BI 7d 109=42 vs 737=374 fills. -->
