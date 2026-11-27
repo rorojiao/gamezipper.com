@@ -435,19 +435,39 @@ function doHint(){
 
 function doCheck(){
   var lv=currentLevel>=0?LEVELS[currentLevel]:generateDaily(dailySeed);
-  var errors=false;
+  var empty=false;
   for(var r=0;r<lv.s;r++)for(var c=0;c<lv.s;c++){
-    if(grid[r][c]===0)errors=true;
+    if(grid[r][c]===0)empty=true;
   }
-  if(errors)sfxError();else sfxComplete();
+  if(empty||!gridValid())sfxError();else sfxComplete();
   draw();
 }
 
+// R1218 P1: Fillomino levels are not solution-unique (independent solver found >=2 valid
+// tilings on 17/30 levels). Exact-match checkWin stranded players who filled a different
+// legal solution: board full, doCheck said "success", win never fired. Win condition is
+// now the Fillomino rule itself: every cell filled AND every same-number component has
+// exactly that many cells.
+function gridValid(){
+  var s=grid.length;
+  var seen=[];for(var r=0;r<s;r++){seen[r]=[];for(var c=0;c<s;c++)seen[r][c]=false;}
+  for(var r=0;r<s;r++)for(var c=0;c<s;c++){
+    var v=grid[r][c];
+    if(v===0)return false;
+    if(seen[r][c])continue;
+    var size=0,stack=[[r,c]];seen[r][c]=true;
+    while(stack.length){var cur=stack.pop();size++;
+      var cr=cur[0],cc=cur[1];
+      var nb=[[-1,0],[1,0],[0,-1],[0,1]];
+      for(var d=0;d<4;d++){var nr=cr+nb[d][0],nc=cc+nb[d][1];
+        if(nr>=0&&nr<s&&nc>=0&&nc<s&&!seen[nr][nc]&&grid[nr][nc]===v){seen[nr][nc]=true;stack.push([nr,nc]);}}}
+    if(size!==v)return false;
+  }
+  return true;
+}
+
 function checkWin(){
-  var lv=currentLevel>=0?LEVELS[currentLevel]:generateDaily(dailySeed);
-  var sol=lv.sol;
-  for(var r=0;r<lv.s;r++)for(var c=0;c<lv.s;c++){
-    if(grid[r][c]!==sol[r][c])return;}
+  if(!gridValid())return;
   onWin();
 }
 
