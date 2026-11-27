@@ -155,7 +155,33 @@
 <meta content="ca-pub-8346383990981353" name="google-adsense-platform-account">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8346383990981353" crossorigin="anonymous"></script>
 <!-- Monetag ad manager (Poki-style adaptive ad system) -->
-<script defer src="/adsterra-manager.js?v=20261125R1205popcap"></script><script src="/monetag-manager.js?v=20261107R1067pfmismatch" defer></script>
+<script>
+/* UX-OPT 2026-11-27 R1220: idle-defer ad managers (R1054 pattern) — BI 7d inp_worst
+   >=500ms rows on this page collide with gz_ad_event bursts in the same second as the
+   blocked u_click; inp_worst+inp_hover+inp_scroll share equal dur = one shared blocking
+   task (R990 routing is mutually exclusive). Defer adsterra/monetag execution out of
+   the first-interaction window. Static adsbygoogle banners untouched. */
+(function(){
+  function loadAdManager(){
+    if(window.GZ_LOAD_ADSTERRA!==false){
+      var sAd=document.createElement('script');
+      sAd.src='/adsterra-manager.js?v=20261125R1205popcap';
+      sAd.defer=true;
+      document.head.appendChild(sAd);
+    }
+    var s=document.createElement('script');
+    s.src='/monetag-manager.js?v=20261107R1067pfmismatch';
+    document.head.appendChild(s);
+  }
+  if('scheduler' in window && 'yield' in window.scheduler){
+    scheduler.yield().then(loadAdManager);
+  }else if('requestIdleCallback' in window){
+    requestIdleCallback(loadAdManager,{timeout:3000});
+  }else{
+    setTimeout(loadAdManager,2000);
+  }
+})();
+</script>
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
