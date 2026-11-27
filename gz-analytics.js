@@ -806,7 +806,25 @@
                  level/title overlays on nuritwin + the gz-ob-card family +
                  every future dismiss-by-class-toggle page, one file, no
                  per-page ack needed. */
-              if (!stateChanged && (!t.isConnected || (snapVisible && t.getClientRects().length === 0))) {
+              /* R1218 (2026-11-27): generalize R1173 to opacity-hidden screens.
+                 14 live games hide screens with .hidden{opacity:0;pointer-events:none}
+                 + opacity transition (color-cascade, code-robot family). Such nodes
+                 keep layout boxes → getClientRects() stays non-empty → R1173
+                 exemption never fires → false dead_click on the most-used control
+                 (level-btn) of every fade-transition game. BI: /color-cascade/
+                 DIV.level-btn.unlocked ×11 across 7 sessions (11-22..11-26), users
+                 stayed 100s+ after the "dead" click; live repro shows the click
+                 works (game-screen hidden:false, canvas 193k px).
+                 Effective invisibility = self or any ancestor opacity:0 /
+                 visibility:hidden. snapVisible still gates the click itself. */
+              function _gzEffInvisible(n){
+                for(;n&&n!==document.documentElement;n=n.parentElement){
+                  var s=getComputedStyle(n);
+                  if(s.opacity==='0'||s.visibility==='hidden'||s.display==='none')return true;
+                }
+                return false;
+              }
+              if (!stateChanged && (!t.isConnected || (snapVisible && (t.getClientRects().length === 0 || _gzEffInvisible(t))))) {
                 return; // rebuilt away OR hidden by a working handler — alive
               }
               /* R1121 (2026-11-09): decorative card-face exemption. BI /blackjack/
