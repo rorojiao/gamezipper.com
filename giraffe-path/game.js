@@ -229,6 +229,11 @@
     dom.hudLevel.textContent = `${id + 1}/${window.GIRAFFE_PATH_DATA.levels.length}`;
     timer = 0;
     showScreen('game');
+    // UX-OPT 2026-11-28 R1221: win overlay was shown but NEVER hidden by
+    // startLevel/resetLevel → after solving, "Next →"/"Replay" left the overlay
+    // on screen, locking the game (same template bug as bishop-path). Hide on
+    // every (re)start.
+    dom.winOverlay.classList.add('hidden');
     draw();
   }
 
@@ -236,6 +241,7 @@
     playerPath = [startCell];
     hintsUsed = 0;
     timer = 0;
+    dom.winOverlay.classList.add('hidden'); // R1221
     startTimer();
     draw();
   }

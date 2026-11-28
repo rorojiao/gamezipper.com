@@ -228,6 +228,11 @@
     dom.hudLevel.textContent = `${id + 1}/${window.BISHOP_PATH_DATA.levels.length}`;
     timer = 0;
     showScreen('game');
+    // UX-OPT 2026-11-28 R1221: win overlay was shown once (L315) and NEVER hidden
+    // by startLevel/resetLevel → after solving, "Next →"/"Replay" left the overlay
+    // on screen, locking the game (BI: 11 rage_clicks on BUTTON.btn primary +
+    // 1 on btn secondary at same coords, then bounce). Hide it on every (re)start.
+    dom.winOverlay.classList.add('hidden');
     draw();
   }
 
@@ -235,6 +240,7 @@
     playerPath = [startCell];
     hintsUsed = 0;
     timer = 0;
+    dom.winOverlay.classList.add('hidden'); // R1221
     startTimer();
     draw();
   }
