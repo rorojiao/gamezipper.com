@@ -342,7 +342,24 @@ let cellSize=44, boardPx=0, dpr=1;
 function setupCanvas(){
   const N=S.N, wrapW=canvas.parentElement.clientWidth;
   const maxByW=Math.min(wrapW, 460);
-  const availH=Math.max(260, window.innerHeight-310);
+  // R455c: reserve must subtract in-flow ad slots + toolbar + numpad + fixed footer band,
+  // measured live, so the numpad's last row never hides under the fixed game-footer at 390x844.
+  const boardWrapEl=canvas.parentElement;
+  const toolbarEl=document.querySelector('#gameScreen .toolbar');
+  const numpadEl=document.getElementById('numpad');
+  const footEl=document.querySelector('#gameScreen .foot');
+  const adBelowEl=document.getElementById('gz-ad-below-canvas');
+  const adAboveEl=document.getElementById('gz-ad-above-game');
+  const topRaw=boardWrapEl?boardWrapEl.getBoundingClientRect().top+window.scrollY:NaN;
+  const topOfBoard=Number.isFinite(topRaw)?topRaw:200;
+  const siteFootEl=document.getElementById('game-footer');
+  const siteFootH=siteFootEl&&siteFootEl.offsetHeight?Math.max(0,window.innerHeight-siteFootEl.getBoundingClientRect().top)+10:76;
+  const belowSpace=(toolbarEl&&toolbarEl.offsetHeight||50)+(numpadEl&&numpadEl.offsetHeight||170)+(footEl&&footEl.offsetHeight||30)+30+siteFootH+(adBelowEl?adBelowEl.offsetHeight:60)+(adAboveEl?adAboveEl.offsetHeight:0);
+  const measuredReserve=topOfBoard+belowSpace;
+  const vh=window.innerHeight;
+  const staticReserve = vh<=560 ? 280 : (vh<=700 ? 340 : 430);
+  const reserve = Math.max(staticReserve, Math.min(measuredReserve, vh-160));
+  const availH=Math.max(120, vh-reserve);
   const maxBoard=Math.min(maxByW, availH);
   cellSize=Math.max(20, Math.floor(maxBoard/N));
   boardPx=cellSize*N;
@@ -350,6 +367,12 @@ function setupCanvas(){
   canvas.width=boardPx*dpr; canvas.height=boardPx*dpr;
   canvas.style.width=boardPx+'px'; canvas.style.height=boardPx+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  const gsEl=document.getElementById('gameScreen');
+  if(gsEl){
+    const needH=topOfBoard+boardPx+((adBelowEl&&adBelowEl.offsetHeight)||60)+((toolbarEl&&toolbarEl.offsetHeight)||50)+((numpadEl&&numpadEl.offsetHeight)||170)+((footEl&&footEl.offsetHeight)||30)+30;
+    if(needH+siteFootH+16>vh){gsEl.style.paddingBottom=(siteFootH+16)+'px';document.body.style.overflowY='auto';}
+    else gsEl.style.paddingBottom='0px';
+  }
 }
 
 // Region ID for a cell from the level data
@@ -681,6 +704,12 @@ renderSoundBtn();
 
 // resize / visibility
 window.addEventListener('resize',()=>{ if(S.screen==='game'){setupCanvas();drawBoard(performance.now());} });
+// R455c: in-flow ad slots grow AFTER board sizing and the fixed site footer overlays the viewport bottom;
+// re-fit when ANY in-screen slot resizes and once at 4s (footer/ad settle window) so the numpad stays reachable.
+(function(){ const slots=['gz-ad-below-game','gz-ad-below-canvas','gz-ad-above-game'].map(id=>document.getElementById(id)).filter(Boolean);
+  if(slots.length&&'ResizeObserver' in window){ const ro=new ResizeObserver(()=>{ if(S.screen==='game'){setupCanvas();drawBoard(performance.now());} }); slots.forEach(s=>ro.observe(s)); }
+  setTimeout(()=>{ if(S.screen==='game'){setupCanvas();drawBoard(performance.now());} },4000);
+})();
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&S.screen==='game'&&!S.paused&&!S.finished){S.paused=true;document.getElementById('pauseModal').classList.remove('hidden');stopBGM();} });
 window.addEventListener('beforeunload',cleanupAll);
 window.addEventListener('pagehide',cleanupAll);

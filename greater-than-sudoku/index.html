@@ -366,12 +366,15 @@ function setupCanvas(){
   const topRaw=boardWrapEl?boardWrapEl.getBoundingClientRect().top+window.scrollY:NaN;
   const topOfBoard=Number.isFinite(topRaw)?topRaw:200;
   const siteFootEl=document.getElementById('game-footer');const siteFootH=siteFootEl&&siteFootEl.offsetHeight?Math.max(0,window.innerHeight-siteFootEl.getBoundingClientRect().top)+10:76;
-  const belowSpace=(toolbarEl&&toolbarEl.offsetHeight?toolbarEl.offsetHeight:60)+(numpadEl&&numpadEl.offsetHeight?numpadEl.offsetHeight:170)+(footEl&&footEl.offsetHeight?footEl.offsetHeight:30)+30+siteFootH;
+  const adBelowEl=document.getElementById('gz-ad-below-canvas');const adAboveEl=document.getElementById('gz-ad-above-game');
+  // R455c: R970 monetag banner slots (gz-ad-above-game / gz-ad-below-canvas) were never subtracted
+  // and the R455b observer watched the wrong slot id for these games -> numpad stayed under the fixed footer.
+  const belowSpace=(toolbarEl&&toolbarEl.offsetHeight?toolbarEl.offsetHeight:60)+(numpadEl&&numpadEl.offsetHeight?numpadEl.offsetHeight:170)+(footEl&&footEl.offsetHeight?footEl.offsetHeight:30)+30+siteFootH+(adBelowEl?adBelowEl.offsetHeight:60)+(adAboveEl?adAboveEl.offsetHeight:60);
   const measuredReserve=topOfBoard+belowSpace;
   const vh=window.innerHeight;
   const staticReserve = vh<=560 ? 280 : (vh<=700 ? 340 : 430);
   const reserve = Math.max(staticReserve, Math.min(measuredReserve, vh-160));
-  const availH=Math.max(180, vh-reserve);
+  const availH=Math.max(120, vh-reserve); // R455c: 180 floor blocked the shrink that keeps numpad clear of the fixed footer band
   const maxBoard=Math.min(maxByW, availH);
   cellSize=Math.max(20, Math.floor(maxBoard/N));
   boardPx=cellSize*N;
@@ -379,6 +382,14 @@ function setupCanvas(){
   canvas.width=boardPx*dpr; canvas.height=boardPx*dpr;
   canvas.style.width=boardPx+'px'; canvas.style.height=boardPx+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  // R455c fallback: even at min board the fixed site footer overlays the viewport bottom band —
+  // add footer-band padding to the game screen and allow scrolling so the numpad is never unreachable.
+  const gsEl=document.getElementById('gameScreen');
+  if(gsEl){
+    const needH=topOfBoard+boardPx+((adBelowEl&&adBelowEl.offsetHeight)||60)+((toolbarEl&&toolbarEl.offsetHeight)||60)+((numpadEl&&numpadEl.offsetHeight)||170)+((footEl&&footEl.offsetHeight)||30)+30;
+    if(needH+siteFootH+16>vh){gsEl.style.paddingBottom=(siteFootH+16)+'px';document.body.style.overflowY='auto';}
+    else gsEl.style.paddingBottom='0px';
+  }
 }
 
 // ---- inequality check helpers (live, against player grid) ----
@@ -735,8 +746,8 @@ renderSoundBtn();
 window.addEventListener('resize',()=>{ if(S.screen==='game'){setupCanvas();drawBoard(performance.now());} });
 // R455b: in-flow ad slot grows AFTER board sizing and the fixed site footer overlays the viewport bottom;
 // re-fit the board when the ad slot resizes and once more at 4s (footer/ad settle window) so the numpad stays above the fold.
-(function(){ const slot=document.getElementById('gz-ad-below-game');
-  if(slot&&'ResizeObserver' in window){ new ResizeObserver(()=>{ if(S.screen==='game'){setupCanvas();drawBoard(performance.now());} }).observe(slot); }
+(function(){ const slots=['gz-ad-below-game','gz-ad-below-canvas','gz-ad-above-game'].map(id=>document.getElementById(id)).filter(Boolean);
+  if(slots.length&&'ResizeObserver' in window){ const ro=new ResizeObserver(()=>{ if(S.screen==='game'){setupCanvas();drawBoard(performance.now());} }); slots.forEach(s=>ro.observe(s)); }
   setTimeout(()=>{ if(S.screen==='game'){setupCanvas();drawBoard(performance.now());} },4000);
 })();
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&S.screen==='game'&&!S.paused&&!S.finished){S.paused=true;document.getElementById('pauseModal').classList.remove('hidden');stopBGM();} });
