@@ -571,9 +571,36 @@ function setupCanvas(){
   var wrap=document.querySelector(".canvas-wrap");
   var w=wrap.clientWidth-16;
   var h=wrap.clientHeight-16;
-  var size=Math.min(w,h,560);
+  // R455c (2026-11-28): .canvas-wrap{min-height:500px} was a fixed constant never recomputed;
+  // at 390x844 the toolbar bottom (787-836) sat under the fixed game-footer band (788-844) and
+  // its taps were stolen by footer links (elementsFromPoint = A). Reserve measured in-flow ad
+  // slots + toolbar + fixed footer band so the toolbar always lands above the footer band.
+  // R413 note: harness stubs give EVERY element offsetHeight==640 and innerHeight==640;
+  // clamp implausible reserves (element taller than viewport = stub artifact) to 0.
+  function oh(el){var v=(el&&el.offsetHeight)?el.offsetHeight:0;return v>=vh?0:v;}
+  var vh=window.innerHeight||720;
+  var topBarEl=document.querySelector(".game-top-bar");
+  var toolbarEl=document.querySelector(".game-toolbar");
+  var adAboveEl=document.getElementById("gz-ad-above-game");
+  var adBelowEl=document.getElementById("gz-ad-below-canvas");
+  var footEl=document.getElementById("game-footer");
+  var fTop=(footEl&&footEl.getBoundingClientRect)?footEl.getBoundingClientRect().top:NaN;
+  var siteFootH=(footEl&&footEl.offsetHeight&&Number.isFinite(fTop))?Math.max(0,vh-fTop)+10:76;
+  if(!(siteFootH>=0)||siteFootH>=vh)siteFootH=76;
+  var topRaw=(wrap&&wrap.getBoundingClientRect)?wrap.getBoundingClientRect().top:NaN;
+  var topSpace=Number.isFinite(topRaw)?topRaw:(oh(topBarEl)+8);
+  var below=oh(toolbarEl)+oh(adBelowEl)+oh(adAboveEl)+siteFootH+30;
+  var availH=Math.max(120,vh-topSpace-below);
+  var size=Math.min(w,h,560,availH);
+  if(wrap&&wrap.style)wrap.style.minHeight=(size+16)+"px";
   canvas.width=size;canvas.height=size;
   cw=size;ch=size;
+  var gsEl=document.getElementById("gameScreen");
+  if(gsEl){
+    var needH=topSpace+size+oh(toolbarEl)+oh(adBelowEl)+siteFootH+16;
+    if(needH>vh){gsEl.style.paddingBottom=(siteFootH+16)+'px';if(document.body&&document.body.style)document.body.style.overflowY='auto';}
+    else gsEl.style.paddingBottom='0px';
+  }
 }
 
 function loadLevelData(lvl){
