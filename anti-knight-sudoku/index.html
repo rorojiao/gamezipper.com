@@ -382,7 +382,7 @@ function setupCanvas(){
   const vh=window.innerHeight;
   const staticReserve = vh<=560 ? 280 : (vh<=700 ? 340 : 430);
   const reserve = Math.max(staticReserve, Math.min(measuredReserve, vh-160));
-  const availH=Math.max(180, vh-reserve);
+  const availH=Math.max(120, vh-reserve); // R455c: 180 floor blocked the shrink that keeps numpad clear of the fixed footer band
   const maxBoard=Math.min(maxByW, availH);
   cellSize=Math.max(20, Math.floor(maxBoard/N));
   boardPx=cellSize*N;
@@ -390,6 +390,14 @@ function setupCanvas(){
   canvas.width=boardPx*dpr; canvas.height=boardPx*dpr;
   canvas.style.width=boardPx+'px'; canvas.style.height=boardPx+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  // R455c fallback: even at min board the fixed site footer overlays the viewport bottom band —
+  // add footer-band padding to the game screen and allow scrolling so the numpad is never unreachable.
+  const gsEl=document.getElementById('gameScreen');
+  if(gsEl){
+    const needH=topOfBoard+boardPx+((adBelowEl&&adBelowEl.offsetHeight)||60)+((toolbarEl&&toolbarEl.offsetHeight)||60)+((numpadEl&&numpadEl.offsetHeight)||170)+((footEl&&footEl.offsetHeight)||30)+30;
+    if(needH+siteFootH+16>vh){gsEl.style.paddingBottom=(siteFootH+16)+'px';document.body.style.overflowY='auto';}
+    else gsEl.style.paddingBottom='0px';
+  }
 }
 
 // knight-neighbour offsets (8 L-shaped cells: +-1,+-2 or +-2,+-1)
