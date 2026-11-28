@@ -373,7 +373,8 @@ function setupCanvas(){
   const boardWrapEl=document.querySelector('.board-wrap');
   const topRaw=boardWrapEl?boardWrapEl.getBoundingClientRect().top+window.scrollY:NaN;
   const topOfBoard=Number.isFinite(topRaw)?topRaw:200;
-  const belowSpace=(toolbarEl&&toolbarEl.offsetHeight?toolbarEl.offsetHeight:60)+(numpadEl&&numpadEl.offsetHeight?numpadEl.offsetHeight:170)+(footEl&&footEl.offsetHeight?footEl.offsetHeight:30)+30;
+  const siteFootEl=document.getElementById('game-footer');const siteFootH=siteFootEl&&siteFootEl.offsetHeight?Math.max(0,window.innerHeight-siteFootEl.getBoundingClientRect().top)+10:76;
+  const belowSpace=(toolbarEl&&toolbarEl.offsetHeight?toolbarEl.offsetHeight:60)+(numpadEl&&numpadEl.offsetHeight?numpadEl.offsetHeight:170)+(footEl&&footEl.offsetHeight?footEl.offsetHeight:30)+30+siteFootH;
   const measuredReserve=topOfBoard+belowSpace;
   const vh=window.innerHeight;
   const staticReserve = vh<=560 ? 280 : (vh<=700 ? 340 : 430);
@@ -690,6 +691,12 @@ renderSoundBtn();
 
 // resize / visibility
 window.addEventListener('resize',()=>{ if(S.screen==='game'){setupCanvas();drawBoard(performance.now());} });
+// R455b: in-flow ad slot grows AFTER board sizing and the fixed site footer overlays the viewport bottom;
+// re-fit the board when the ad slot resizes and once more at 4s (footer/ad settle window) so the numpad stays above the fold.
+(function(){ const slot=document.getElementById('gz-ad-below-game');
+  if(slot&&'ResizeObserver' in window){ new ResizeObserver(()=>{ if(S.screen==='game'){setupCanvas();drawBoard(performance.now());} }).observe(slot); }
+  setTimeout(()=>{ if(S.screen==='game'){setupCanvas();drawBoard(performance.now());} },4000);
+})();
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&S.screen==='game'&&!S.paused&&!S.finished){S.paused=true;document.getElementById('pauseModal').classList.remove('hidden');stopBGM();} });
 window.addEventListener('beforeunload',cleanupAll);
 window.addEventListener('pagehide',cleanupAll);
