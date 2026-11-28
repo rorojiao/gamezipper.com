@@ -25,16 +25,17 @@ const SRC = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 const LEVELS = JSON.parse(SRC.match(/var LEVELS=(\[[\s\S]*?\]);/)[1]);
 if (LEVELS.length !== 30) { console.log(JSON.stringify({ pass: 0, fail: 1, total: 1, verdict: 'FAIL', fails: ['LEVELS parse got ' + LEVELS.length], extra: {} })); process.exit(1); }
 
-// geometry replica (resize() gives cw=480, ch=640 in the harness)
+// geometry replica (resize() gives cw=480, ch=570 in the harness: 640 - 70 footer reserve, R455c 2026-11-28)
+const CH = 570;
 function glassCenter(i, n) {
   const maxGW = Math.min(120, (480 - 40) / n - 10);
   const gh = maxGW * 1.6;
   const totalW = n * maxGW + (n - 1) * 16;
   const startX = (480 - totalW) / 2;
-  const startY = 640 * 0.35;
+  const startY = CH * 0.35;
   return [startX + i * (maxGW + 16) + maxGW / 2, startY + gh / 2];
 }
-const START_BTN = [100, 610], HINT_BTN = [314, 610], MENU_BTN = [447, 610]; // Start 16..204, Hint 220..408, Menu 430..464 (post P2 fix)
+const START_BTN = [100, CH - 30], HINT_BTN = [314, CH - 30], MENU_BTN = [447, CH - 30]; // Start 16..204, Hint 220..408, Menu 430..464 (post P2 fix); btnY=ch-48, btnH=36
 
 function tap(g, x, y) { el(g, 'c').dispatch('pointerdown', { clientX: x, clientY: y, pointerId: 1, button: 0, preventDefault() {}, type: 'pointerdown' }); }
 function pumpUntil(g, cond, maxFrames, step) {
@@ -49,7 +50,7 @@ const litStars = (g) => el(g, 'win-stars').children.filter(c => String(c.classNa
 const g = harness.bootGame('hourglass-swap');
 ck('boot: no load errors', (g.loadErrors || []).length === 0, (g.loadErrors || []).join(' | '));
 ck('boot: menu visible', vis(g, 'menu-overlay') && !vis(g, 'level-overlay'));
-ck('boot: canvas sized', el(g, 'c').width === 480 && el(g, 'c').height === 640, el(g, 'c').width + 'x' + el(g, 'c').height);
+ck('boot: canvas sized', el(g, 'c').width === 480 && el(g, 'c').height === 570, el(g, 'c').width + 'x' + el(g, 'c').height);
 
 // settings round-trip
 el(g, 'settings-btn').dispatch('click', { type: 'click' });
