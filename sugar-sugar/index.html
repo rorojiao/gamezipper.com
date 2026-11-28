@@ -575,30 +575,30 @@ function setupCanvas(){
   canvas.width=size;canvas.height=size;
   cw=size;ch=size;
   if(wrap&&wrap.style)wrap.style.minHeight=(size+16)+"px";
-  // R455c (2026-11-28): content chain topBar+ad-above+wrap(padding+canvas+inner ads)+ad-below+
-  // toolbar totals ~846px at 390x844 → toolbar (787+) sat under the fixed game-footer band (788+),
-  // footer <a> stole every toolbar tap (elementsFromPoint=A). Measure toolbar bottom after layout
-  // and shrink the square canvas 1:1 for the deficit; floor 120. Harness stubs measure bottom<=0
-  // or implausible footH so sandbox sizing is untouched (R413).
+  // R455c (2026-11-28): .canvas-wrap{flex:1} stretches the gameScreen column so .game-toolbar
+  // ALWAYS lands at the viewport bottom (778-844 at 390x844) where the fixed #game-footer band
+  // (788-844) steals its taps (elementsFromPoint = footer <A>). Canvas shrinking cannot help —
+  // flex growth re-eats the space. Fix: reserve the measured footer band as gameScreen padding.
+  // Harness stubs report footer rect top=0 -> implausible geometry -> skip (R413, sandbox layout
+  // untouched; verify_engine stays 30/30).
   var tl=document.querySelector(".game-toolbar");
   var ft=document.getElementById("game-footer");
   var vh=window.innerHeight||720;
   var rawFoot=(ft&&ft.getBoundingClientRect)?vh-ft.getBoundingClientRect().top:NaN;
   var footValid=Number.isFinite(rawFoot)&&rawFoot>=10&&rawFoot<vh/2;
-  var footH=footValid?rawFoot:56;
   var gsEl=document.getElementById("gameScreen");
-  var scrollable=gsEl&&gsEl.scrollHeight>gsEl.clientHeight+1; // scrollable screens reach toolbar by scrolling; no canvas sacrifice
-  // Only trust the feedback loop when a PLAUSIBLE fixed-footer band was measured (or the footer
-  // is not yet injected); harness stubs report footer rect top=0 -> implausible -> skip, sandbox
-  // sizing untouched (R413).
-  if(tl&&tl.getBoundingClientRect&&!scrollable&&(footValid||!ft)){
-    var bottom=tl.getBoundingClientRect().bottom;
-    var limit=vh-footH-10;
-    if(bottom>limit){
-      size=Math.max(120,size-Math.ceil(bottom-limit));
-      canvas.width=size;canvas.height=size;
-      cw=size;ch=size;
-      if(wrap&&wrap.style)wrap.style.minHeight=(size+16)+"px";
+  if(gsEl&&gsEl.style&&(footValid||!ft)){
+    var footH=footValid?rawFoot:56;
+    var needPad=footH+12;
+    if(gsEl.style.paddingBottom!==needPad+"px")gsEl.style.paddingBottom=needPad+"px";
+    if(tl&&tl.getBoundingClientRect){
+      var bottom=tl.getBoundingClientRect().bottom;
+      if(bottom>vh-footH-4){
+        // residual overlap after padding (e.g., lazy ad growth): shrink square canvas 1:1.
+        var size2=Math.max(120,cw-Math.ceil(bottom-(vh-footH-4)));
+        canvas.width=size2;canvas.height=size2;cw=size2;ch=size2;
+        if(wrap&&wrap.style)wrap.style.minHeight=(size2+16)+"px";
+      }
     }
   }
 }
